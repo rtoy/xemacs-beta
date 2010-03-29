@@ -1754,6 +1754,7 @@ struct buffer_stats
 {
   struct usage_stats u;
   Bytecount text;
+  /* Ancillary Lisp */
   Bytecount markers;
   Bytecount extents;
 };
@@ -1787,8 +1788,8 @@ compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
 		      struct usage_stats *ustats)
 {
   stats->text    += compute_buffer_text_usage   (b, ustats);
-  stats->markers += compute_buffer_marker_usage (b, ustats);
-  stats->extents += compute_buffer_extent_usage (b, ustats);
+  stats->markers += compute_buffer_marker_usage (b);
+  stats->extents += compute_buffer_extent_usage (b);
 }
 
 static void
@@ -1976,7 +1977,7 @@ vars_of_buffer (void)
   /* This function can GC */
 #ifdef MEMORY_USAGE_STATS
   OBJECT_HAS_PROPERTY
-    (buffer, memusage_stats_list, list3 (Qtext, Qmarkers, Qextents));
+    (buffer, memusage_stats_list, list4 (Qtext, Qt, Qmarkers, Qextents));
 #endif /* MEMORY_USAGE_STATS */
 
   staticpro (&QSFundamental);

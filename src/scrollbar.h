@@ -1,5 +1,6 @@
 /* Define scrollbar instance.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -65,9 +66,8 @@ void update_window_scrollbars (struct window *w,
 			       struct window_mirror *mirror,
 			       int active, int horiz_only);
 #ifdef MEMORY_USAGE_STATS
-int compute_scrollbar_instance_usage (struct device *d,
-				      struct scrollbar_instance *inst,
-				      struct usage_stats *ustats);
+Bytecount compute_all_scrollbar_instance_usage (struct scrollbar_instance *
+						inst);
 #endif
 
 extern Lisp_Object Vscrollbar_width, Vscrollbar_height;

@@ -81,6 +81,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #include "bytecode.h"
 #include "elhash.h"
+#include "gc.h"
 #include "opaque.h"
 
 Lisp_Object Qhash_tablep;
@@ -420,15 +421,16 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
     write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
+#ifdef ERROR_CHECK_STRUCTURES
+#define USED_IF_ERROR_CHECK_STRUCTURES(x) x
+#else
+#define USED_IF_ERROR_CHECK_STRUCTURES(x) UNUSED (x)
+#endif
+
 #ifndef NEW_GC
 static void
 free_hentries (htentry *hentries,
-#ifdef ERROR_CHECK_STRUCTURES
-	       Elemcount size
-#else /* not ERROR_CHECK_STRUCTURES) */
-	       Elemcount UNUSED (size)
-#endif /* not ERROR_CHECK_STRUCTURES) */
-	       )
+	       Elemcount USED_IF_ERROR_CHECK_STRUCTURES (size))
 {
 #ifdef ERROR_CHECK_STRUCTURES
   /* Ensure a crash if other code uses the discarded entries afterwards. */
@@ -481,9 +483,9 @@ static const struct memory_description htentry_union_description_1[] = {
   /* Note: XD_INDIRECT in this table refers to the surrounding table,
      and so this will work. */
 #ifdef NEW_GC
-  { XD_LISP_OBJECT_BLOCK_PTR, HASH_TABLE_NON_WEAK,
+  { XD_INLINE_LISP_OBJECT_BLOCK_PTR, HASH_TABLE_NON_WEAK,
     XD_INDIRECT (0, 1), { &htentry_description } },
-  { XD_LISP_OBJECT_BLOCK_PTR, 0, XD_INDIRECT (0, 1),
+  { XD_INLINE_LISP_OBJECT_BLOCK_PTR, 0, XD_INDIRECT (0, 1),
     { &htentry_weak_description }, XD_FLAG_UNION_DEFAULT_ENTRY },
 #else /* not NEW_GC */
   { XD_BLOCK_PTR, HASH_TABLE_NON_WEAK, XD_INDIRECT (0, 1),
@@ -508,20 +510,12 @@ const struct memory_description hash_table_description[] = {
   { XD_END }
 };
 
-#ifdef NEW_GC
 DEFINE_DUMPABLE_LISP_OBJECT ("hash-table", hash_table,
 			     mark_hash_table, print_hash_table,
-			     0, hash_table_equal, hash_table_hash,
-			     hash_table_description,
-			     Lisp_Hash_Table);
-#else /* not NEW_GC */
-DEFINE_DUMPABLE_LISP_OBJECT ("hash-table", hash_table,
-			     mark_hash_table, print_hash_table,
-			     finalize_hash_table,
+			     IF_OLD_GC (finalize_hash_table),
 			     hash_table_equal, hash_table_hash,
 			     hash_table_description,
 			     Lisp_Hash_Table);
-#endif /* not NEW_GC */
 
 static Lisp_Hash_Table *
 xhash_table (Lisp_Object hash_table)
@@ -1558,7 +1552,7 @@ elisp_map_remhash (maphash_function_t predicate,
   Lisp_Object mo_obj = (obj);				\
   if (!marked_p (mo_obj))				\
     {							\
-      kkcc_gc_stack_push_lisp_object (mo_obj, 0, -1);	\
+      kkcc_gc_stack_push_lisp_object_0 (mo_obj);	\
       did_mark = 1;					\
     }							\
 } while (0)

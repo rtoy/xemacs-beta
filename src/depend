@@ -11,7 +11,7 @@ CONFIG_H=
 LISP_H=
 #else
 CONFIG_H=config.h
-LISP_H=lisp.h compiler.h config.h dumper.h gc.h general-slots.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h $(LISP_UNION_H)
+LISP_H=lisp.h array.h compiler.h config.h dumper.h gc.h general-slots.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h $(LISP_UNION_H)
 #endif
 
 #if defined(HAVE_MS_WINDOWS)
@@ -111,6 +111,7 @@ abbrev.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.
 alloc.o: $(CONFIG_H) $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h coding-system-slots.h conslots.h console-impl.h console-stream.h console.h device.h elhash.h events.h extents-impl.h extents.h file-coding.h frame-impl.h frame.h frameslots.h glyphs.h intl-auto-encap-win32.h keymap-buttons.h lstream.h opaque.h process.h profile.h redisplay.h scrollbar.h specifier.h sysdep.h sysfile.h systime.h syswindows.h window-impl.h window.h winslots.h
 alloca.o: $(CONFIG_H) $(LISP_H)
 alsaplay.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h intl-auto-encap-win32.h sound.h sysfile.h syswindows.h
+array.o: $(CONFIG_H) $(LISP_H) insdel.h
 blocktype.o: $(CONFIG_H) $(LISP_H) blocktype.h
 buffer.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h commands.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h elhash.h extents.h faces.h file-coding.h frame-impl.h frame.h frameslots.h insdel.h intl-auto-encap-win32.h lstream.h ndir.h process.h redisplay.h scrollbar.h select.h specifier.h syntax.h sysdir.h sysfile.h syswindows.h window.h
 bytecode.o: $(CONFIG_H) $(LISP_H) backtrace.h buffer.h bufslots.h bytecode-ops.h bytecode.h casetab.h charset.h chartab.h opaque.h redisplay.h scrollbar.h syntax.h window.h
@@ -133,7 +134,6 @@ doprnt.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.
 dragdrop.o: $(CONFIG_H) $(LISP_H) dragdrop.h
 dump-data.o: $(CONFIG_H) $(LISP_H) dump-data.h
 dumper.o: $(CONFIG_H) $(LISP_H) coding-system-slots.h console-stream.h console.h dump-data.h elhash.h file-coding.h intl-auto-encap-win32.h lstream.h specifier.h sysfile.h syswindows.h
-dynarr.o: $(CONFIG_H) $(LISP_H)
 ecrt0.o: $(CONFIG_H)
 editfns.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h commands.h console.h device.h events.h frame.h insdel.h intl-auto-encap-win32.h keymap-buttons.h line-number.h ndir.h process.h redisplay.h scrollbar.h sysdep.h sysdir.h sysfile.h sysproc.h syspwd.h syssignal.h systime.h syswindows.h window.h
 elhash.o: $(CONFIG_H) $(LISP_H) bytecode.h elhash.h opaque.h
@@ -172,7 +172,7 @@ hash.o: $(CONFIG_H) $(LISP_H) hash.h
 hpplay.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h sound.h
 imgproc.o: $(CONFIG_H) $(LISP_H) imgproc.h
 indent.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h console.h device.h extents.h faces.h frame.h glyphs.h insdel.h redisplay.h scrollbar.h specifier.h window-impl.h window.h winslots.h
-inline.o: $(CONFIG_H) $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h coding-system-slots.h conslots.h console-gtk.h console-impl.h console-msw.h console.h database.h device-impl.h device.h devslots.h elhash.h events.h extents-impl.h extents.h faces.h file-coding.h font-mgr.h frame-impl.h frame.h frameslots.h glyphs-x.h glyphs.h gui.h intl-auto-encap-win32.h keymap-buttons.h keymap.h lstream.h objects-impl.h objects.h opaque.h process.h rangetab.h redisplay.h scrollbar.h specifier.h syntax.h sysdll.h sysfile.h sysgtk.h systime.h syswindows.h toolbar.h tooltalk.h ui-gtk.h window-impl.h window.h winslots.h xintrinsic.h
+inline.o: $(CONFIG_H) $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h coding-system-slots.h conslots.h console-gtk-impl.h console-gtk.h console-impl.h console-msw-impl.h console-msw.h console-stream-impl.h console-stream.h console-tty-impl.h console-tty.h console-x-impl.h console-x.h console.h database.h device-impl.h device.h devslots.h elhash.h events.h extents-impl.h extents.h faces.h file-coding.h font-mgr.h frame-impl.h frame.h frameslots.h glyphs.h gui.h intl-auto-encap-win32.h keymap-buttons.h keymap.h lstream.h objects-impl.h objects-tty-impl.h objects-tty.h objects.h opaque.h process.h rangetab.h redisplay.h scrollbar.h specifier.h syntax.h sysdll.h sysfile.h sysgtk.h systime.h systty.h syswindows.h toolbar.h tooltalk.h ui-gtk.h window-impl.h window.h winslots.h xintrinsic.h
 input-method-motif.o: $(CONFIG_H) $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h EmacsFrame.h conslots.h console-impl.h console-x-impl.h console-x.h console.h device.h frame-impl.h frame.h frameslots.h redisplay.h specifier.h xintrinsic.h xmotif.h
 input-method-xlib.o: $(CONFIG_H) $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h EmacsFrame.h buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console-x-impl.h console-x.h console.h device-impl.h device.h devslots.h events.h frame-impl.h frame.h frameslots.h keymap-buttons.h redisplay.h scrollbar.h specifier.h systime.h window-impl.h window.h winslots.h xintrinsic.h
 insdel.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h console.h device.h extents.h frame.h insdel.h line-number.h lstream.h redisplay.h

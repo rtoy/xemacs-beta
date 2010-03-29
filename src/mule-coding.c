@@ -2839,14 +2839,15 @@ iso2022_putprop (Lisp_Object codesys,
   return 1;
 }
 
-static void
-iso2022_finalize_coding_stream (
 #ifdef ENABLE_COMPOSITE_CHARS
-				struct coding_stream *str
+#define USED_IF_COMPOSITE_CHARS(x) x
 #else
-				struct coding_stream *UNUSED (str)
+#define USED_IF_COMPOSITE_CHARS(x) UNUSED (x)
 #endif
-				)
+
+static void
+iso2022_finalize_coding_stream (struct coding_stream *
+				USED_IF_COMPOSITE_CHARS (str))
 {
 #ifdef ENABLE_COMPOSITE_CHARS
   struct iso2022_coding_stream *data =
@@ -3247,7 +3248,10 @@ iso2022_finalize_detection_state (struct detection_state *st)
 {
   struct iso2022_detector *data = DETECTION_STATE_DATA (st, iso2022);
   if (data->iso)
-    xfree (data->iso);
+    {
+      xfree (data->iso);
+      data->iso = 0;
+    }
 }
 
 

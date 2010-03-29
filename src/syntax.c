@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with syntax tables; also word and list parsing.
    Copyright (C) 1985-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -542,8 +542,11 @@ void
 uninit_buffer_syntax_cache (struct buffer *UNUSED_IF_NEW_GC (buf))
 {
 #ifndef NEW_GC
-  xfree (buf->syntax_cache);
-  buf->syntax_cache = 0;
+  if (buf->syntax_cache)
+    {
+      xfree (buf->syntax_cache);
+      buf->syntax_cache = 0;
+    }
 #endif /* not NEW_GC */
 }
 
