@@ -840,6 +840,7 @@ TEMACS_COMMON_OBJS= \
 	$(OUTDIR)\abbrev.obj \
 	$(OUTDIR)\alloc.obj \
 	$(OUTDIR)\alloca.obj \
+	$(OUTDIR)\array.obj \
 	$(OUTDIR)\blocktype.obj \
 	$(OUTDIR)\buffer.obj \
 	$(OUTDIR)\bytecode.obj \
@@ -857,7 +858,6 @@ TEMACS_COMMON_OBJS= \
 	$(OUTDIR)\doc.obj \
 	$(OUTDIR)\doprnt.obj \
 	$(OUTDIR)\dragdrop.obj \
-	$(OUTDIR)\dynarr.obj \
 	$(OUTDIR)\editfns.obj \
 	$(OUTDIR)\elhash.obj \
 	$(OUTDIR)\emacs.obj \
