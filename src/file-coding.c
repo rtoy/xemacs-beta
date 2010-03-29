@@ -377,22 +377,13 @@ const struct sized_memory_description coding_system_empty_extra_description = {
   0, coding_system_empty_extra_description_1
 };
 
-#ifdef NEW_GC
 DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
 				     mark_coding_system,
 				     print_coding_system,
-				     0, 0, 0, coding_system_description,
-				     sizeof_coding_system,
-				     Lisp_Coding_System);
-#else /* not NEW_GC */
-DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
-				     mark_coding_system,
-				     print_coding_system,
-				     finalize_coding_system,
+				     IF_OLD_GC (finalize_coding_system),
 				     0, 0, coding_system_description,
 				     sizeof_coding_system,
 				     Lisp_Coding_System);
-#endif /* not NEW_GC */
 
 /************************************************************************/
 /*                       Creating coding systems                        */
@@ -2713,6 +2704,7 @@ chain_finalize_coding_stream_1 (struct chain_coding_stream *data)
 	    Lstream_delete (XLSTREAM ((data->lstreams)[i]));
 	}
       xfree (data->lstreams);
+      data->lstreams = 0;
     }
 }
 

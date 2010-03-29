@@ -2060,9 +2060,15 @@ do {						\
   if ((ei)->mallocp_)				\
     {						\
       if ((ei)->data_)				\
-	xfree ((ei)->data_);			\
+        {					\
+  	  xfree ((ei)->data_);			\
+	  (ei)->data_ = 0;			\
+	}					\
       if ((ei)->extdata_)			\
-	xfree ((ei)->extdata_);			\
+	{					\
+	  xfree ((ei)->extdata_);		\
+	  (ei)->extdata_ = 0;			\
+	}					\
       eiinit_malloc (ei);			\
     }						\
   else						\

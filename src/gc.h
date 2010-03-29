@@ -1,5 +1,6 @@
 /* New incremental garbage collector for XEmacs.
    Copyright (C) 2005 Marcus Crestani.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -106,31 +107,42 @@ extern int allow_incremental_gc;
 
 void recompute_need_to_garbage_collect (void);
 
+#ifdef DEBUG_XEMACS
+#define KKCC_DEBUG_ARGS , level, pos
+#define DECLARE_KKCC_DEBUG_ARGS , int level, int pos
+#else
+#define KKCC_DEBUG_ARGS
+#define DECLARE_KKCC_DEBUG_ARGS
+#endif
+
 
 /* KKCC mark algorithm. */
+void kkcc_gc_stack_push_lisp_object (Lisp_Object obj DECLARE_KKCC_DEBUG_ARGS);
+void kkcc_gc_stack_repush_dirty_object (Lisp_Object obj
+					DECLARE_KKCC_DEBUG_ARGS);
+
 #ifdef DEBUG_XEMACS
-void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj, int level, int pos);
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj, level, pos)
-void kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj, int level, int pos);
-#define kkcc_gc_stack_repush_dirty_object(obj) \
-  kkcc_gc_stack_repush_dirty_object_1 (obj, 0, -2)
-void kkcc_backtrace (void);
+#define kkcc_gc_stack_push_lisp_object_0(obj) \
+  kkcc_gc_stack_push_lisp_object (obj, 0, -1)
+void kkcc_backtrace_1 (int size, int detailed);
+void kkcc_short_backtrace (void);
+void kkcc_detailed_backtrace (void);
+void kkcc_short_backtrace_full (void);
+void kkcc_detailed_backtrace_full (void);
 #else
-void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj);
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj)
-void kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj);
-#define kkcc_gc_stack_repush_dirty_object(obj) \
-  kkcc_gc_stack_repush_dirty_object_1 (obj)
-#define kkcc_backtrace()
+#define kkcc_gc_stack_push_lisp_object_0(obj) \
+  kkcc_gc_stack_push_lisp_object (obj)
+#define kkcc_detailed_backtrace()
 #endif
 
 #ifdef NEW_GC
 
 /* Repush objects that are caught by the write barrier. */
-#define gc_write_barrier(obj) kkcc_gc_stack_repush_dirty_object (obj);
-
+#ifdef DEBUG_XEMACS
+#define gc_write_barrier(obj) kkcc_gc_stack_repush_dirty_object (obj, 0, -2)
+#else
+#define gc_write_barrier(obj) kkcc_gc_stack_repush_dirty_object (obj)
+#endif
 
 /* GC functions: */
 

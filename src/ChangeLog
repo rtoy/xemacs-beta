@@ -1,3 +1,325 @@
+2010-03-28  Ben Wing  <ben@xemacs.org>
+
+	* window.c (find_window_mirror_internal):
+	Stop looking if no window mirror, and return 0.
+	
+	* window.c (window_display_lines):
+	* window.c (window_display_buffer):
+	* window.c (set_window_display_buffer):
+	Don't need to update window mirror before calling find_window_mirror
+	because does the updating automatically.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (struct):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (lisp_object_memory_usage_full):
+	* alloc.c (compute_memusage_stats_length):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	Add fields to the `lrecord_implementation' structure to list an
+	offset into the array of extra statistics in a
+	`struct generic_usage_stats' and a length, listing the first slice
+	of ancillary Lisp-object memory.  Compute automatically in
+	compute_memusage_stats_length().  Use to add an entry
+	`FOO-lisp-ancillary-storage' for object type FOO.
+
+	Don't crash when an int or char is given to object-memory-usage,
+	signal an error instead.
+
+	Add functions lisp_object_memory_usage_full() and
+	lisp_object_memory_usage() to compute the total memory usage of an
+	object (sum of object, non-Lisp attached, and Lisp ancillary
+	memory).
+	
+	* array.c:
+	* array.c (gap_array_memory_usage):
+	* array.h:
+	Add function to return memory usage of a gap array.
+	
+	* buffer.c (struct buffer_stats):
+	* buffer.c (compute_buffer_usage):
+	* buffer.c (vars_of_buffer):
+	* extents.c (compute_buffer_extent_usage):
+	* marker.c:
+	* marker.c (compute_buffer_marker_usage):
+	* extents.h:
+	* lisp.h:
+	Remove `struct usage_stats' arg from compute_buffer_marker_usage()
+	and compute_buffer_extent_usage() -- these are ancillary Lisp
+	objects and don't get accumulated into `struct usage_stats';
+	change the value of `memusage_stats_list' so that `markers' and
+	`extents' memory is in Lisp-ancillary, where it belongs.
+
+	In compute_buffer_marker_usage(), use lisp_object_memory_usage()
+	rather than lisp_object_storage_size().
+	
+	* casetab.c:
+	* casetab.c (case_table_memory_usage):
+	* casetab.c (vars_of_casetab):
+	* emacs.c (main_1):
+	Add memory usage stats for case tables.
+	
+	* lisp.h:
+	Add comment explaining the `struct generic_usage_stats' more,
+	as well as the new fields in lrecord_implementation.
+
+	* console-impl.h:
+	* console-impl.h (struct console_methods):
+	* scrollbar-gtk.c:
+	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage):
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage):
+	* scrollbar-x.c:
+	* scrollbar-x.c (x_compute_scrollbar_instance_usage):
+	* scrollbar.c:
+	* scrollbar.c (struct scrollbar_instance_stats):
+	* scrollbar.c (compute_all_scrollbar_instance_usage):
+	* scrollbar.c (scrollbar_instance_memory_usage):
+	* scrollbar.c (scrollbar_objects_create):
+	* scrollbar.c (vars_of_scrollbar):
+	* scrollbar.h:
+	* symsinit.h:
+	* window.c:
+	* window.c (find_window_mirror_maybe):
+	* window.c (struct window_mirror_stats):
+	* window.c (compute_window_mirror_usage):
+	* window.c (window_mirror_memory_usage):
+	* window.c (compute_window_usage):
+	* window.c (window_objects_create):
+	* window.c (syms_of_window):
+	* window.c (vars_of_window):
+	Redo memory-usage associated with windows, window mirrors, and
+	scrollbar instances.  Should fix crash in find_window_mirror,
+	among other things.  Properly assign memo ry to object memory,
+	non-Lisp extra memory, and Lisp ancillary memory.  For example,
+	redisplay structures are non-Lisp memory hanging off a window
+	mirror, not a window; make it an ancillary Lisp-object field.
+	Window mirrors and scrollbar instances have their own statistics,
+	among other things.
+	 
+2010-03-24  Ben Wing  <ben@xemacs.org>
+
+	* array.h:
+	* array.h (XD_LISP_DYNARR_DESC):
+	* dumper.c (pdump_register_sub):
+	* dumper.c (pdump_store_new_pointer_offsets):
+	* dumper.c (pdump_reloc_one_mc):
+	* elhash.c:
+	* gc.c  (lispdesc_one_description_line_size):
+	* gc.c (kkcc_marking):
+	* lrecord.h:
+	* lrecord.h (IF_NEW_GC):
+	* lrecord.h (enum memory_description_type):
+	* lrecord.h (enum data_description_entry_flags):
+	* lrecord.h (struct opaque_convert_functions):
+	Rename XD_LISP_OBJECT_BLOCK_PTR to XD_INLINE_LISP_OBJECT_BLOCK_PTR
+	and document it in lrecord.h.
+
+	* data.c:
+	* data.c (finish_marking_weak_lists):
+	* data.c (continue_marking_ephemerons):
+	* data.c (finish_marking_ephemerons):
+	* elhash.c (MARK_OBJ):
+	* gc.c:
+	* gc.c (lispdesc_indirect_count_1):
+	* gc.c (struct):
+	* gc.c (kkcc_bt_push):
+	* gc.c (kkcc_gc_stack_push):
+	* gc.c (kkcc_gc_stack_push_lisp_object):
+	* gc.c (kkcc_gc_stack_repush_dirty_object):
+	* gc.c (KKCC_DO_CHECK_FREE):
+	* gc.c (mark_object_maybe_checking_free):
+	* gc.c (mark_struct_contents):
+	* gc.c (mark_lisp_object_block_contents):
+	* gc.c (register_for_finalization):
+	* gc.c (mark_object):
+	* gc.h:
+	* lisp.h:
+	* profile.c:
+	* profile.c (mark_profiling_info_maphash):
+	Clean up KKCC code related to DEBUG_XEMACS.  Rename
+	kkcc_backtrace() to kkcc_backtrace_1() and add two params: a
+	`size' arg to control how many stack elements to print and a
+	`detailed' arg to control whether Lisp objects are printed using
+	`debug_print()'.  Create front-ends to kkcc_backtrace_1() --
+	kkcc_detailed_backtrace(), kkcc_short_backtrace(),
+	kkcc_detailed_backtrace_full(), kkcc_short_backtrace_full(), as
+	well as shortened versions kbt(), kbts(), kbtf(), kbtsf() -- to
+	call it with various parameter values.  Add an `is_lisp' field to
+	the stack and backtrace structures and use it to keep track of
+	whether an object pushed onto the stack is a Lisp object or a
+	non-Lisp structure; in kkcc_backtrace_1(), don't try to print a
+	non-Lisp structure as a Lisp object.
+	
+	* elhash.c:
+	* extents.c:
+	* file-coding.c:
+	* lrecord.h:
+	* lrecord.h (IF_NEW_GC):
+	* marker.c:
+	* marker.c (Fmarker_buffer):
+	* mule-coding.c:
+	* number.c:
+	* rangetab.c:
+	* specifier.c:
+	New macros IF_OLD_GC(), IF_NEW_GC() to simplify declaration of
+	Lisp objects when a finalizer may exist in one but not the other.
+	Use them appropriately.
+
+	* extents.c (finalize_extent_info):
+	Don't zero out data->soe and data->extents before trying to free,
+	else we get memory leaks.
+	
+	* lrecord.h (enum lrecord_type):
+	Make the first lrecord type have value 1 not 0 so that 0 remains
+	without implementation and attempts to interpret zeroed memory
+	as a Lisp object will be more obvious.
+
+	* array.c (Dynarr_free):
+	* device-msw.c (msprinter_delete_device):
+	* device-tty.c (free_tty_device_struct):
+	* device-tty.c (tty_delete_device):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dialog-x.c:
+	* emacs.c (free_argc_argv):
+	* emodules.c (attempt_module_delete):
+	* file-coding.c (chain_finalize_coding_stream_1):
+	* file-coding.c (chain_finalize_coding_stream):
+	* glyphs-eimage.c:
+	* glyphs-eimage.c (jpeg_instantiate_unwind):
+	* glyphs-eimage.c (gif_instantiate_unwind):
+	* glyphs-eimage.c (png_instantiate_unwind):
+	* glyphs-eimage.c (tiff_instantiate_unwind):
+	* imgproc.c:
+	* imgproc.c (build_EImage_quantable):
+	* insdel.c (uninit_buffer_text):
+	* mule-coding.c (iso2022_finalize_detection_state):
+	* objects-tty.c (tty_finalize_color_instance):
+	* objects-tty.c (tty_finalize_font_instance):
+	* objects-tty.c (tty_font_list):
+	* process.c:
+	* process.c (finalize_process):
+	* redisplay.c (add_propagation_runes):
+	* scrollbar-gtk.c:
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance):
+	* scrollbar-gtk.c (gtk_release_scrollbar_instance):
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_free_scrollbar_instance):
+	* scrollbar-msw.c (unshow_that_mofo):
+	* scrollbar-x.c (x_free_scrollbar_instance):
+	* scrollbar-x.c (x_release_scrollbar_instance):
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* syntax.c:
+	* syntax.c (uninit_buffer_syntax_cache):
+	* text.h (eifree):
+	If possible, whenever we call xfree() on a field in a structure,
+	set the field to 0 afterwards.  A lot of code is written so that
+	it checks the value being freed to see if it is non-zero before
+	freeing it -- doing this and setting the value to 0 afterwards
+	ensures (a) we won't try to free twice if the cleanup code is
+	called twice; (b) if the object itself stays around, KKCC won't
+	crash when attempting to mark the freed field.
+
+	* rangetab.c:
+	Add a finalization method when not NEW_GC to avoid memory leaks.
+	(#### We still get memory leaks when NEW_GC; need to convert gap
+	array to Lisp object).
+
+2010-03-22  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (objs):
+	* array.c:
+	* array.c (gap_array_adjust_markers):
+	* array.c (gap_array_move_gap):
+	* array.c (gap_array_make_gap):
+	* array.c (gap_array_insert_els):
+	* array.c (gap_array_delete_els):
+	* array.c (gap_array_make_marker):
+	* array.c (gap_array_delete_marker):
+	* array.c (gap_array_delete_all_markers):
+	* array.c (gap_array_clone):
+	* array.h:
+	* depend:
+	* emacs.c (main_1):
+	* extents.c:
+	* extents.c (EXTENT_GAP_ARRAY_AT):
+	* extents.c (extent_list_num_els):
+	* extents.c (extent_list_locate):
+	* extents.c (extent_list_at):
+	* extents.c (extent_list_delete_all):
+	* extents.c (allocate_extent_list):
+	* extents.c (syms_of_extents):
+	* extents.h:
+	* extents.h (XEXTENT_LIST_MARKER):
+	* lisp.h:
+	* rangetab.c:
+	* rangetab.c (mark_range_table):
+	* rangetab.c (print_range_table):
+	* rangetab.c (range_table_equal):
+	* rangetab.c (range_table_hash):
+	* rangetab.c (verify_range_table):
+	* rangetab.c (get_range_table_pos):
+	* rangetab.c (Fmake_range_table):
+	* rangetab.c (Fcopy_range_table):
+	* rangetab.c (Fget_range_table):
+	* rangetab.c (put_range_table):
+	* rangetab.c (Fclear_range_table):
+	* rangetab.c (Fmap_range_table):
+	* rangetab.c (unified_range_table_bytes_needed):
+	* rangetab.c (unified_range_table_copy_data):
+	* rangetab.c (unified_range_table_lookup):
+	* rangetab.h:
+	* rangetab.h (struct range_table_entry):
+	* rangetab.h (struct Lisp_Range_Table):
+	* rangetab.h (rangetab_gap_array_at):
+	* symsinit.h:
+	Rename dynarr.c to array.c.  Move gap array from extents.c to array.c.
+	Extract dynarr, gap array and stack-like malloc into new file array.h.
+	Rename GAP_ARRAY_NUM_ELS -> gap_array_length().  Add gap_array_at(),
+	gap_array_atp().
+
+	Rewrite range table code to use gap arrays.  Make put_range_table()
+	smarter so that its operation is O(log n) for adding a localized
+	range.
+
+	* gc.c (lispdesc_block_size_1):
+	Don't ABORT() when two elements are located at the same place.
+	This will happen with a size-0 gap array -- both parts of the array
+	(before and after gap) are in the same place.
+
+2010-03-21  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (assert_proper_sizing):
+	* alloc.c (c_readonly):
+	* alloc.c (malloced_storage_size):
+	* alloc.c (fixed_type_block_overhead):
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (inc_lrecord_stats):
+	* alloc.c (dec_lrecord_stats):
+	* alloc.c (pluralize_word):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (compute_memusage_stats_length):
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (Fgarbage_collect):
+	* mc-alloc.c:
+	* mc-alloc.c (mc_alloced_storage_size):
+	* mc-alloc.h:
+	No functionality change here.  Collect the allocations-statistics
+	code that was scattered throughout alloc.c into one place.  Add
+	remaining section headings so that all sections have headings
+	clearly identifying the start of the section and its purpose.
+	Expose mc_alloced_storage_size() even when not MEMORY_USAGE_STATS;
+	this fixes build problems and is related to the export of
+	lisp_object_storage_size() and malloced_storage_size() when
+	non-MEMORY_USAGE_STATS in the previous change set.
+
 2010-03-22  Vin Shelton  <acs@xemacs.org>
 
 	* window.c (vars_of_window): Move HAVE_SCROLLBARS test so the code

@@ -574,6 +574,7 @@ msprinter_delete_device (struct device *d)
 
 #ifndef NEW_GC
       xfree (d->device_data);
+      d->device_data = 0;
 #endif /* not NEW_GC */
     }
 }

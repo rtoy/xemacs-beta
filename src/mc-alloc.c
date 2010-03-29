@@ -962,7 +962,6 @@ get_free_list_size_value (EMACS_INT free_index)
 }
 
 
-#ifdef MEMORY_USAGE_STATS
 Bytecount
 mc_alloced_storage_size (Bytecount claimed_size, struct usage_stats *stats)
 {
@@ -979,7 +978,6 @@ mc_alloced_storage_size (Bytecount claimed_size, struct usage_stats *stats)
 
   return used_size;
 }
-#endif /* not MEMORY_USAGE_STATS */
 
 
 

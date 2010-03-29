@@ -3,7 +3,7 @@
    Copyright (C) 1994 Amdahl Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -102,6 +102,7 @@ mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
       assert (!NILP (ptr));
       DestroyWindow (SCROLLBAR_MSW_HANDLE (sb));
       xfree (sb->scrollbar_data);
+      sb->scrollbar_data = 0;
     }
 }
 
@@ -423,23 +424,15 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
 
 #ifdef MEMORY_USAGE_STATS
 
-static int
+static Bytecount
 mswindows_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 					    struct scrollbar_instance *inst,
 					    struct usage_stats *ustats)
 {
-  int total = 0;
+  struct mswindows_scrollbar_data *data =
+    (struct mswindows_scrollbar_data *) inst->scrollbar_data;
 
-  while (inst)
-    {
-      struct mswindows_scrollbar_data *data =
-	(struct mswindows_scrollbar_data *) inst->scrollbar_data;
-
-      total += malloced_storage_size (data, sizeof (*data), ustats);
-      inst = inst->next;
-    }
-
-  return total;
+  return malloced_storage_size (data, sizeof (*data), ustats);
 }
 
 #endif /* MEMORY_USAGE_STATS */

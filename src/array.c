@@ -1,6 +1,7 @@
-/* Support for dynamic arrays.
-   Copyright (C) 1993 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003, 2004, 2005, 2010 Ben Wing.
+/* Support for dynarrs and other types of dynamic arrays.
+   Copyright (c) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (c) 1993, 1995 Sun Microsystems, Inc.
+   Copyright (c) 1995, 1996, 2000, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -23,8 +24,17 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Ben Wing, December 1993. */
 
-/*
+#include <config.h>
+#include "lisp.h"
 
+#include "insdel.h"
+
+
+/*****************************************************************************/
+/*                       "dynarr" a.k.a. dynamic array                       */
+/*****************************************************************************/
+
+/*
 A "dynamic array" or "dynarr" is a contiguous array of fixed-size elements
 where there is no upper limit (except available memory) on the number of
 elements in the array.  Because the elements are maintained contiguously,
@@ -233,9 +243,6 @@ Use the following functions/macros:
 
 */
 
-#include <config.h>
-#include "lisp.h"
-
 static const struct memory_description const_Ascbyte_ptr_description_1[] = {
   { XD_ASCII_STRING, 0 },
   { XD_END }
@@ -396,16 +403,22 @@ Dynarr_free (void *d)
   if (dy->base && !DUMPEDP (dy->base))
     {
       if (!dy->lisp_imp)
-	xfree (dy->base);
+	{
+	  xfree (dy->base);
+	  dy->base = 0;
+	}
     }
-  if(!DUMPEDP (dy))
+  if (!DUMPEDP (dy))
     {
       if (!dy->lisp_imp)
 	xfree (dy);
     }
 #else /* not NEW_GC */
   if (dy->base && !DUMPEDP (dy->base))
-    xfree (dy->base);
+    {
+      xfree (dy->base);
+      dy->base = 0;
+    }
   if(!DUMPEDP (dy))
     xfree (dy);
 #endif /* not NEW_GC */
@@ -456,6 +469,11 @@ Dynarr_memory_usage (void *d, struct usage_stats *stats)
 }
 
 #endif /* MEMORY_USAGE_STATS */
+
+
+/*****************************************************************************/
+/*                           stack-like allocation                           */
+/*****************************************************************************/
 
 /* Version of malloc() that will be extremely efficient when allocation
    nearly always occurs in LIFO (stack) order.
@@ -524,3 +542,468 @@ stack_like_free (void *val)
       ABORT ();
     }
 }
+
+
+/*****************************************************************************/
+/*                           Generalized gap array                           */
+/*****************************************************************************/
+
+/* A "gap array" is an array that has a "gap" somewhere in the middle of it,
+   so that insertions and deletions near the gap -- or in general, highly
+   localized insertions and deletions -- are very fast.  Inserting or
+   deleting works by first moving the gap to the insertion or deletion
+   position and then shortening or lengthening the gap as necessary.  The
+   idea comes from the gap used in storing text in a buffer.
+
+   The gap array interface differs in a number of ways from dynarrs (####
+   and should be changed so that it works the same as dynarrs):
+
+   (1) There aren't separate type-specific gap array types.  As a result,
+       operations like gap_array_at() require that the type be specified as
+       one of the arguments.  It is often more convenient to use a macro
+       wrapper around this operation.
+
+   (2) The gap array type is itself a stretchy array rather than using a
+       separate block of memory to store the array.  This means that certain
+       operations (especially insertions) may relocate the the gap array,
+       and as a result return a pointer to the (possibly) moved gap array,
+       which must be stored back into the location where the gap array
+       pointer resides.  This also means that the caller must worry about
+       cloning the gap array in the case where it has been dumped, or you
+       will get an ABORT() inside of xrealloc().
+
+   (3) Fewer operations are available than for dynarrs, and may have
+       different names and/or different calling conventions.
+
+   (4) The mechanism for creating "Lisp-object gap arrays" isn't completely
+       developed.  Currently it's only possible to create a gap-array Lisp
+       object that wraps Lisp_Object pointers (not Lisp object structures
+       directly), and only under NEW_GC.
+
+   (5) Gap arrays have a concept of a "gap array marker" that properly
+       tracks insertions and deletions; no such thing exists in dynarrs.
+       It exists in gap arrays because it's necessary for their use in
+       implementing extent lists.
+ */
+
+extern const struct sized_memory_description gap_array_marker_description;
+
+static const struct memory_description gap_array_marker_description_1[] = { 
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (Gap_Array_Marker, next) },
+#else /* not NEW_GC */
+  { XD_BLOCK_PTR, offsetof (Gap_Array_Marker, next), 1,
+    { &gap_array_marker_description } },
+#endif /* not NEW_GC */
+  { XD_END }
+};
+
+#ifdef NEW_GC
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("gap-array-marker", gap_array_marker,
+				    0, gap_array_marker_description_1,
+				    struct gap_array_marker);
+#else /* not NEW_GC */
+const struct sized_memory_description gap_array_marker_description = {
+  sizeof (Gap_Array_Marker),
+  gap_array_marker_description_1
+};
+#endif /* not NEW_GC */
+
+static const struct memory_description lispobj_gap_array_description_1[] = {
+  XD_GAP_ARRAY_DESC (&lisp_object_description),
+  { XD_END }
+};
+
+#ifdef NEW_GC
+
+static Bytecount
+size_gap_array (Lisp_Object obj)
+{
+  Gap_Array *ga = XGAP_ARRAY (obj);
+  return gap_array_byte_size (ga);
+}
+
+DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT ("gap-array", gap_array,
+					      0,
+					      lispobj_gap_array_description_1,
+					      size_gap_array,
+					      struct gap_array);
+#else /* not NEW_GC */
+const struct sized_memory_description lispobj_gap_array_description = {
+  0, lispobj_gap_array_description_1
+};
+#endif /* (not) NEW_GC */
+
+#ifndef NEW_GC
+static Gap_Array_Marker *gap_array_marker_freelist;
+#endif /* not NEW_GC */
+
+/* This generalizes the "array with a gap" model used to store buffer
+   characters.  This is based on the stuff in insdel.c and should
+   probably be merged with it.  This is not extent-specific and should
+   perhaps be moved into a separate file. */
+
+/* ------------------------------- */
+/*        internal functions       */
+/* ------------------------------- */
+
+/* Adjust the gap array markers in the range (FROM, TO].  Parallel to
+   adjust_markers() in insdel.c. */
+
+static void
+gap_array_adjust_markers (Gap_Array *ga, Memxpos from,
+			  Memxpos to, Elemcount amount)
+{
+  Gap_Array_Marker *m;
+
+  for (m = ga->markers; m; m = m->next)
+    m->pos = do_marker_adjustment (m->pos, from, to, amount);
+}
+
+static void
+gap_array_recompute_derived_values (Gap_Array *ga)
+{
+  ga->offset_past_gap = ga->elsize * (ga->gap + ga->gapsize);
+  ga->els_past_gap = ga->numels - ga->gap;
+}
+
+/* Move the gap to array position POS.  Parallel to move_gap() in
+   insdel.c but somewhat simplified. */
+
+static void
+gap_array_move_gap (Gap_Array *ga, Elemcount pos)
+{
+  Elemcount gap = ga->gap;
+  Elemcount gapsize = ga->gapsize;
+
+  if (pos < gap)
+    {
+      memmove (GAP_ARRAY_MEMEL_ADDR (ga, pos + gapsize),
+	       GAP_ARRAY_MEMEL_ADDR (ga, pos),
+	       (gap - pos)*ga->elsize);
+      gap_array_adjust_markers (ga, (Memxpos) pos, (Memxpos) gap,
+				gapsize);
+    }
+  else if (pos > gap)
+    {
+      memmove (GAP_ARRAY_MEMEL_ADDR (ga, gap),
+	       GAP_ARRAY_MEMEL_ADDR (ga, gap + gapsize),
+	       (pos - gap)*ga->elsize);
+      gap_array_adjust_markers (ga, (Memxpos) (gap + gapsize),
+				(Memxpos) (pos + gapsize), - gapsize);
+    }
+  ga->gap = pos;
+
+  gap_array_recompute_derived_values (ga);
+}
+
+/* Make the gap INCREMENT characters longer.  Parallel to make_gap() in
+   insdel.c.  The gap array may be moved, so assign the return value back
+   to the array pointer. */
+
+static Gap_Array *
+gap_array_make_gap (Gap_Array *ga, Elemcount increment)
+{
+  Elemcount real_gap_loc;
+  Elemcount old_gap_size;
+
+  /* If we have to get more space, get enough to last a while.  We use
+     a geometric progression that saves on realloc space. */
+  increment += 100 + ga->numels / 8;
+
+#ifdef NEW_GC
+  if (ga->is_lisp)
+    ga = (Gap_Array *) mc_realloc (ga,
+				   offsetof (Gap_Array, array) +
+				   (ga->numels + ga->gapsize + increment) *
+				   ga->elsize);
+  else
+#endif /* not NEW_GC */
+    ga = (Gap_Array *) xrealloc (ga,
+				 offsetof (Gap_Array, array) +
+				 (ga->numels + ga->gapsize + increment) *
+				 ga->elsize);
+  if (ga == 0)
+    memory_full ();
+
+  real_gap_loc = ga->gap;
+  old_gap_size = ga->gapsize;
+
+  /* Call the newly allocated space a gap at the end of the whole space.  */
+  ga->gap = ga->numels + ga->gapsize;
+  ga->gapsize = increment;
+
+  /* Move the new gap down to be consecutive with the end of the old one.
+     This adjusts the markers properly too.  */
+  gap_array_move_gap (ga, real_gap_loc + old_gap_size);
+
+  /* Now combine the two into one large gap.  */
+  ga->gapsize += old_gap_size;
+  ga->gap = real_gap_loc;
+
+  gap_array_recompute_derived_values (ga);
+
+  return ga;
+}
+
+/* ------------------------------- */
+/*        external functions       */
+/* ------------------------------- */
+
+Bytecount
+gap_array_byte_size (Gap_Array *ga)
+{
+  return offsetof (Gap_Array, array) + (ga->numels + ga->gapsize) * ga->elsize;
+}
+
+/* Insert NUMELS elements (pointed to by ELPTR) into the specified
+   gap array at POS.  The gap array may be moved, so assign the
+   return value back to the array pointer. */
+
+Gap_Array *
+gap_array_insert_els (Gap_Array *ga, Elemcount pos, void *elptr,
+		      Elemcount numels)
+{
+  assert (pos >= 0 && pos <= ga->numels);
+  if (ga->gapsize < numels)
+    ga = gap_array_make_gap (ga, numels - ga->gapsize);
+  if (pos != ga->gap)
+    gap_array_move_gap (ga, pos);
+
+  memcpy (GAP_ARRAY_MEMEL_ADDR (ga, ga->gap), (char *) elptr,
+	  numels*ga->elsize);
+  ga->gapsize -= numels;
+  ga->gap += numels;
+  ga->numels += numels;
+  gap_array_recompute_derived_values (ga);
+  /* This is the equivalent of insert-before-markers.
+
+     #### Should only happen if marker is "moves forward at insert" type.
+     */
+
+  gap_array_adjust_markers (ga, pos - 1, pos, numels);
+  return ga;
+}
+
+/* Delete NUMELS elements from the specified gap array, starting at FROM. */
+
+void
+gap_array_delete_els (Gap_Array *ga, Elemcount from, Elemcount numdel)
+{
+  Elemcount to = from + numdel;
+  Elemcount gapsize = ga->gapsize;
+
+  assert (from >= 0);
+  assert (numdel >= 0);
+  assert (to <= ga->numels);
+
+  /* Make sure the gap is somewhere in or next to what we are deleting.  */
+  if (to < ga->gap)
+    gap_array_move_gap (ga, to);
+  if (from > ga->gap)
+    gap_array_move_gap (ga, from);
+
+  /* Relocate all markers pointing into the new, larger gap
+     to point at the end of the text before the gap.  */
+  gap_array_adjust_markers (ga, to + gapsize, to + gapsize,
+			    - numdel - gapsize);
+
+  ga->gapsize += numdel;
+  ga->numels -= numdel;
+  ga->gap = from;
+  gap_array_recompute_derived_values (ga);
+}
+
+Gap_Array_Marker *
+gap_array_make_marker (Gap_Array *ga, Elemcount pos)
+{
+  Gap_Array_Marker *m;
+
+  assert (pos >= 0 && pos <= ga->numels);
+#ifdef NEW_GC
+    m = XGAP_ARRAY_MARKER (ALLOC_NORMAL_LISP_OBJECT (gap_array_marker));
+#else /* not NEW_GC */
+  if (gap_array_marker_freelist)
+    {
+      m = gap_array_marker_freelist;
+      gap_array_marker_freelist = gap_array_marker_freelist->next;
+    }
+  else
+    m = xnew (Gap_Array_Marker);
+#endif /* not NEW_GC */
+
+  m->pos = GAP_ARRAY_ARRAY_TO_MEMORY_POS (ga, pos);
+  m->next = ga->markers;
+  ga->markers = m;
+  return m;
+}
+
+void
+gap_array_delete_marker (Gap_Array *ga, Gap_Array_Marker *m)
+{
+  Gap_Array_Marker *p, *prev;
+
+  for (prev = 0, p = ga->markers; p && p != m; prev = p, p = p->next)
+    ;
+  assert (p);
+  if (prev)
+    prev->next = p->next;
+  else
+    ga->markers = p->next;
+#ifndef NEW_GC
+  m->next = gap_array_marker_freelist;
+  m->pos = 0xDEADBEEF; /* -559038737 base 10 */
+  gap_array_marker_freelist = m;
+#endif /* not NEW_GC */
+}
+
+#ifndef NEW_GC
+void
+gap_array_delete_all_markers (Gap_Array *ga)
+{
+  Gap_Array_Marker *p, *next;
+
+  for (p = ga->markers; p; p = next)
+    {
+      next = p->next;
+      p->next = gap_array_marker_freelist;
+      p->pos = 0xDEADBEEF; /* -559038737 as an int */
+      gap_array_marker_freelist = p;
+    }
+}
+#endif /* not NEW_GC */
+
+void
+gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, Elemcount pos)
+{
+  assert (pos >= 0 && pos <= ga->numels);
+  m->pos = GAP_ARRAY_ARRAY_TO_MEMORY_POS (ga, pos);
+}
+
+Gap_Array *
+make_gap_array (Elemcount elsize, int USED_IF_NEW_GC (do_lisp))
+{
+  Gap_Array *ga;
+#ifdef NEW_GC
+  /* #### I don't quite understand why it's necessary to make all these
+     internal objects into Lisp objects under NEW_GC.  It's a pain in the
+     ass to code around this.  I'm proceeding on the assumption that it's
+     not really necessary to do it after all, and so we only make a Lisp-
+     object gap array when the object being held is a Lisp_Object, i.e. a
+     pointer to a Lisp object.  In the case where instead we hold a `struct
+     range_table_entry', just blow it off.  Otherwise we either need to do
+     a bunch of painful and/or boring rewriting. --ben */
+  if (do_lisp)
+    {
+      ga = XGAP_ARRAY (ALLOC_SIZED_LISP_OBJECT (sizeof (Gap_Array),
+						gap_array));
+      ga->is_lisp = 1;
+    }
+  else
+#endif /* not NEW_GC */
+    ga = xnew_and_zero (Gap_Array);
+  ga->elsize = elsize;
+  return ga;
+}
+
+Gap_Array *
+gap_array_clone (Gap_Array *ga)
+{
+  Bytecount size = gap_array_byte_size (ga);
+  Gap_Array *ga2;
+  Gap_Array_Marker *m;
+
+#ifdef NEW_GC
+  if (ga->is_lisp)
+    {
+      ga2 = XGAP_ARRAY (ALLOC_SIZED_LISP_OBJECT (size, gap_array));
+      copy_lisp_object (wrap_gap_array (ga2), wrap_gap_array (ga));
+    }
+  else
+#endif
+    {
+      ga2 = (Gap_Array *) xmalloc (size);
+      memcpy (ga2, ga, size);
+    }
+  ga2->markers = NULL;
+  for (m = ga->markers; m; m = m->next)
+    gap_array_make_marker (ga2, m->pos);
+  return ga2;
+}
+
+#ifndef NEW_GC
+void
+free_gap_array (Gap_Array *ga)
+{
+  gap_array_delete_all_markers (ga);
+  xfree (ga);
+}
+#endif /* not NEW_GC */
+
+#ifdef MEMORY_USAGE_STATS
+
+/* Return memory usage for gap array GA.  The returned value is the total
+   amount of bytes actually being used for the gap array, including all
+   overhead.  The extra amount of space in the gap array that is used
+   for the gap is counted in GAP_OVERHEAD, not in WAS_REQUESTED.
+   If NEW_GC, space for gap-array markers is returned through MARKER_ANCILLARY;
+   otherwise it's added into the gap array usage. */
+
+Bytecount
+gap_array_memory_usage (Gap_Array *ga, struct usage_stats *stats,
+			Bytecount *marker_ancillary)
+{
+  Bytecount total = 0;
+
+  /* We have to be a bit tricky here because not all of the
+     memory that malloc() will claim as "requested" was actually
+     requested -- some of it makes up the gap. */
+
+  Bytecount size = gap_array_byte_size (ga);
+  Bytecount gap_size = ga->gapsize * ga->elsize;
+  Bytecount malloc_used = malloced_storage_size (ga, size, 0);
+  total += malloc_used;
+  stats->was_requested += size - gap_size;
+  stats->gap_overhead += gap_size;
+  stats->malloc_overhead += malloc_used - size;
+
+#ifdef NEW_GC
+  {
+    Bytecount marker_usage = 0;
+    Gap_Array_Marker *p;
+
+    for (p = ga->markers; p; p = p->next)
+      marker_usage += lisp_object_memory_usage (wrap_gap_array_marker (p));
+    if (marker_ancillary)
+      *marker_ancillary = marker_usage;
+  }
+#else
+  {
+    Gap_Array_Marker *p;
+
+    for (p = ga->markers; p; p = p->next)
+      total += malloced_storage_size (p, sizeof (p), stats);
+    if (marker_ancillary)
+      *marker_ancillary = 0;
+  }
+#endif /* (not) NEW_GC */
+  
+  return total;
+}
+
+#endif /* MEMORY_USAGE_STATS */
+
+
+/*****************************************************************************/
+/*                              Initialization                               */
+/*****************************************************************************/
+
+void
+syms_of_array (void)
+{
+#ifdef NEW_GC
+  INIT_LISP_OBJECT (gap_array_marker);
+  INIT_LISP_OBJECT (gap_array);
+#endif /* NEW_GC */
+}
+

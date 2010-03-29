@@ -1,5 +1,5 @@
 /* Why the hell is XEmacs so fucking slow?
-   Copyright (C) 1996, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 1996, 2002, 2003, 2004, 2010 Ben Wing.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -25,6 +25,7 @@ Boston, MA 02111-1307, USA.  */
 #include "backtrace.h"
 #include "bytecode.h"
 #include "elhash.h"
+#include "gc.h"
 #include "hash.h"
 #include "profile.h"
 
@@ -609,7 +610,7 @@ mark_profiling_info_maphash (const void *void_key,
 			     void *UNUSED (void_closure))
 {
 #ifdef USE_KKCC
-  kkcc_gc_stack_push_lisp_object (GET_LISP_FROM_VOID (void_key), 0, -1);
+  kkcc_gc_stack_push_lisp_object_0 (GET_LISP_FROM_VOID (void_key));
 #else /* NOT USE_KKCC */
   mark_object (GET_LISP_FROM_VOID (void_key));
 #endif /* NOT USE_KKCC */

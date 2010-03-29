@@ -187,6 +187,8 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct lrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) 0
+#define IF_NEW_GC(x) x
+#define IF_OLD_GC(x) 0
 #else /* not NEW_GC */
 #define ALLOC_NORMAL_LISP_OBJECT(type) alloc_automanaged_lcrecord (&lrecord_##type)
 #define ALLOC_SIZED_LISP_OBJECT(size, type) \
@@ -194,6 +196,8 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct old_lcrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) (XRECORD_LHEADER_IMPLEMENTATION(obj)->frob_block_p)
+#define IF_NEW_GC(x) 0
+#define IF_OLD_GC(x) x
 #endif /* not NEW_GC */
 
 #define LISP_OBJECT_UID(obj) (XRECORD_LHEADER (obj)->uid)
@@ -310,7 +314,9 @@ enum lrecord_type
   /* Symbol value magic types come first to make SYMBOL_VALUE_MAGIC_P fast.
      #### This should be replaced by a symbol_value_magic_p flag
      in the Lisp_Symbol lrecord_header. */
-  lrecord_type_symbol_value_forward,      /*  0 */
+  /* Don't assign any type to 0, so in case we come across zeroed memory
+     it will be more obvious when printed */
+  lrecord_type_symbol_value_forward = 1,
   lrecord_type_symbol_value_varalias,
   lrecord_type_symbol_value_lisp_magic,
   lrecord_type_symbol_value_buffer_local,
@@ -508,8 +514,8 @@ struct lrecord_implementation
 
   /**********************************************************************/
   /* Remaining stuff is not assignable statically using
-     DEFINE_*_LISP_OBJECT, but must be assigned with OBJECT_HAS_METHOD
-     or the like. */
+     DEFINE_*_LISP_OBJECT, but must be assigned with OBJECT_HAS_METHOD,
+     OBJECT_HAS_PROPERTY or the like. */
 
   /* These functions allow any object type to have builtin property
      lists that can be manipulated from the lisp level with
@@ -536,34 +542,73 @@ struct lrecord_implementation
 
 #ifdef MEMORY_USAGE_STATS
   /* Return memory-usage information about the object in question, stored
-     into STATS. */
+     into STATS.
+
+     Two types of information are stored: storage (including overhead) for
+     ancillary non-Lisp structures attached to the object, and storage
+     (including overhead) for ancillary Lisp objects attached to the
+     object.  The third type of memory-usage information (storage for the
+     object itself) is not noted here, because it's computed automatically
+     by the calling function.  Also, the computed storage for ancillary
+     Lisp objects is the sum of all three source of memory associated with
+     the Lisp object: the object itself, ancillary non-Lisp structures and
+     ancillary Lisp objects.  Note also that the `struct usage_stats u' at
+     the beginning of the STATS structure is for ancillary non-Lisp usage
+     *ONLY*; do not store any memory into it related to ancillary Lisp
+     objects.
+
+     Note that it may be subjective which Lisp objects are considered
+     "attached" to the object.  Some guidelines:
+
+     -- Lisp objects which are "internal" to the main object and not
+        accessible except through the main object should be included
+     -- Objects linked by a weak reference should *NOT* be included
+  */
   void (*memory_usage) (Lisp_Object obj, struct generic_usage_stats *stats);
-
-  /* Number of additional type-specific statistics related to memory usage.
-     Automatically calculated (see compute_memusage_stats_length()) based
-     on the value placed in `memusage_stats_list'. */
-  Elemcount num_extra_memusage_stats;
-
-  /* Number of additional type-specific statistics related to
-     non-Lisp-Object memory usage for this object.  Automatically
-     calculated (see compute_memusage_stats_length()) based on the value
-     placed in `memusage_stats_list'. */
-  Elemcount num_extra_nonlisp_memusage_stats;
 
   /* List of tags to be given to the extra statistics, one per statistic.
      Qnil or Qt can be present to separate off different slices.  Qnil
-     separates different slices within the same type of statistics.
-     Qt separates slices corresponding to different types of statistics.
+     separates different slices within the same group of statistics.
+     These represent different ways of partitioning the same memory space.
+     Qt separates different groups; these represent different spaces of
+     memory.
+
      If Qt is not present, all slices describe extra non-Lisp-Object memory
-     associated with a Lisp object.  If Qt is present, slices after Qt
-     describe non-Lisp-Object memory and slices before Qt describe
-     Lisp-Object memory logically associated with the object.  For example,
-     if the object is a table, then Lisp-Object memory might be the entries
-     in the table.  This info is only advisory since it will duplicate
-     memory described elsewhere and since it may not be possible to be
-     completely accurate if the same object occurs multiple times in the
-     table. */
+     associated with a Lisp object.  If Qt is present, slices before Qt
+     describe non-Lisp-Object memory, as before, and slices after Qt
+     describe ancillary Lisp-Object memory logically associated with the
+     object.  For example, if the object is a table, then ancillary
+     Lisp-Object memory might be the entries in the table.  This info is
+     only advisory since it will duplicate memory described elsewhere and
+     since it may not be possible to be completely accurate, e.g. it may
+     not be clear what to count in "ancillary objects", and the value may
+     be too high if the same object occurs multiple times in the table. */
   Lisp_Object memusage_stats_list;
+
+  /* --------------------------------------------------------------------- */
+
+  /* The following are automatically computed based on the value in
+     `memusage_stats_list' (see compute_memusage_stats_length()). */
+
+  /* Total number of additional type-specific statistics related to memory
+     usage. */
+  Elemcount num_extra_memusage_stats;
+
+  /* Number of additional type-specific statistics belonging to the first
+     slice of the group describing non-Lisp-Object memory usage for this
+     object.  These stats occur starting at offset 0. */
+  Elemcount num_extra_nonlisp_memusage_stats;
+
+  /* The offset into the extra statistics at which the Lisp-Object
+     memory-usage statistics begin. */
+  Elemcount offset_lisp_ancillary_memusage_stats;
+
+  /* Number of additional type-specific statistics belonging to the first
+     slice of the group describing Lisp-Object memory usage for this
+     object.  These stats occur starting at offset
+     `offset_lisp_ancillary_memusage_stats'. */
+  Elemcount num_extra_lisp_ancillary_memusage_stats;
+
 #endif /* MEMORY_USAGE_STATS */
 };
 
@@ -974,16 +1019,27 @@ void tick_lrecord_stats (const struct lrecord_header *h,
 
     XD_LISP_OBJECT
 
-  A Lisp object.  This is also the type to use for pointers to other lrecords
+  A Lisp_Object.  This is also the type to use for pointers to other lrecords
   (e.g. struct frame *).
 
     XD_LISP_OBJECT_ARRAY
 
-  An array of Lisp objects or (equivalently) pointers to lrecords.
+  An array of Lisp_Objects or (equivalently) pointers to lrecords.
   The parameter (i.e. third element) is the count.  This would be declared
   as Lisp_Object foo[666].  For something declared as Lisp_Object *foo,
   use XD_BLOCK_PTR, whose description parameter is a sized_memory_description
   consisting of only XD_LISP_OBJECT and XD_END.
+
+    XD_INLINE_LISP_OBJECT_BLOCK_PTR
+
+  An pointer to a contiguous block of inline Lisp objects -- i.e., the Lisp
+  object itself rather than a Lisp_Object pointer is stored in the block.
+  This is used only under NEW_GC and is useful for increased efficiency when
+  an array of the same kind of object is needed.  Examples of the use of this
+  type are Lisp dynarrs, where the array elements are inline Lisp objects
+  rather than non-Lisp structures, as is normally the case; and hash tables,
+  where the key/value pairs are encapsulated as hash-table-entry objects and
+  an array of inline hash-table-entry objects is stored.
 
     XD_LO_LINK
 
@@ -1150,7 +1206,7 @@ enum memory_description_type
   XD_LISP_OBJECT_ARRAY,
   XD_LISP_OBJECT,
 #ifdef NEW_GC
-  XD_LISP_OBJECT_BLOCK_PTR,
+  XD_INLINE_LISP_OBJECT_BLOCK_PTR,
 #endif /* NEW_GC */
   XD_LO_LINK,
   XD_OPAQUE_PTR,
@@ -1200,10 +1256,9 @@ enum data_description_entry_flags
      lcrecord-lists, where the objects have had their type changed to
      lrecord_type_free and also have had their free bit set, but we mark
      them as normal. */
-  XD_FLAG_FREE_LISP_OBJECT = 8
+  XD_FLAG_FREE_LISP_OBJECT = 8,
 #endif /* not NEW_GC */
 #if 0
-  ,
   /* Suggestions for other possible flags: */
 
   /* Eliminate XD_UNION_DYNAMIC_SIZE and replace it with a flag, like this. */
@@ -1215,7 +1270,7 @@ enum data_description_entry_flags
      expanded and we need to stick a pointer in the second slot (although
      we could still ensure that the second slot in the first entry was NULL
      or <0). */
-  XD_FLAG_DESCRIPTION_MAP = 32
+  XD_FLAG_DESCRIPTION_MAP = 32,
 #endif
 };
 
@@ -1258,20 +1313,20 @@ struct opaque_convert_functions
 
      This function must put a pointer to the opaque result in *data
      and its size in *size. */
-  void (*convert)(const void *object, void **data, Bytecount *size);
+  void (*convert) (const void *object, void **data, Bytecount *size);
 
   /* Post-conversion cleanup.  Optional (null if not provided).
 
      When provided it will be called post-dumping to free any storage
      allocated for the conversion results. */
-  void (*convert_free)(const void *object, void *data, Bytecount size);
+  void (*convert_free) (const void *object, void *data, Bytecount size);
 
   /* De-conversion.
 
      At reload time, rebuilds the object from the converted form.
      "object" is 0 for the PTR case, return is ignored in the DATA
      case. */
-  void *(*deconvert)(void *object, void *data, Bytecount size);
+  void *(*deconvert) (void *object, void *data, Bytecount size);
 
 };
 
@@ -2024,6 +2079,12 @@ MODULE_API void zero_sized_lisp_object (Lisp_Object obj, Bytecount size);
 MODULE_API void zero_nonsized_lisp_object (Lisp_Object obj);
 Bytecount lisp_object_storage_size (Lisp_Object obj,
 				    struct usage_stats *ustats);
+Bytecount lisp_object_memory_usage_full (Lisp_Object object,
+					 Bytecount *storage_size,
+					 Bytecount *extra_nonlisp_storage,
+					 Bytecount *extra_lisp_storage,
+					 struct generic_usage_stats *stats);
+Bytecount lisp_object_memory_usage (Lisp_Object object);
 void free_normal_lisp_object (Lisp_Object obj);
 
 
