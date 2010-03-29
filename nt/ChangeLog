@@ -1,3 +1,8 @@
+2010-03-29  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak (TEMACS_COMMON_OBJS): Add array.obj and remove
+	dynarr.obj, to catch up with Ben's changes of 2010-03-28.
+
 2010-03-08  Vin Shelton  <acs@xemacs.org>
 
 	* xemacs.mak (batch_test_emacs): The test harness no longer
