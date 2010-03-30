@@ -1,3 +1,29 @@
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (lisp_object_memory_usage_full):
+	Don't crash if passed a non-record object (int or char).
+	
+	* alloc.c (tree_memory_usage_1):
+	* lrecord.h:
+	New function tree_memory_usage() to return the memory usage of
+	a tree of conses and/or vectors.
+	
+	* lisp.h:
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	Add SAFE_LIST_LOOP_* functions for looping over a list not known
+	to be correct or non-circular, but without signalling an error --
+	instead, just stop enumerating when an error detected.
+	
+	* emacs.c (main_1):
+	* specifier.c:
+	* specifier.c (specifier_memory_usage):
+	* specifier.c (vars_of_specifier):
+	* symsinit.h:
+	Add memory usage info for specifiers.
+
 2010-03-28  Ben Wing  <ben@xemacs.org>
 
 	* window.c (find_window_mirror_internal):
