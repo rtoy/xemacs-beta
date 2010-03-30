@@ -1,13 +1,13 @@
-;;; mule-charset.el --- Charset functions for Mule. -*- coding: iso-2022-7bit; -*-
+;;; mule-charset.el --- Charset functions for Mule.
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Copyright (C) 1992, 2001 Free Software Foundation, Inc.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1996 Sun Microsystems.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2005, 2010 Ben Wing.
 
-;; Author: Unknown
+;; Author: Mostly Ben Wing
 ;; Keywords: i18n, mule, internal
 
 ;; This file is part of XEmacs.
@@ -23,7 +23,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -34,6 +34,12 @@
 ;; These functions are not compatible at the bytecode level with Emacs/Mule,
 ;; and they never will be.  -sb [1999-05-26]
 
+;; Most of this file was written by Ben Wing, including all of the charset
+;; tag code and the charset creation code, and some of the
+;; charset-properties code.  Translation table stuff from FSF (?) with
+;; mods from ?.  Various extra authors in the charset-properties code.
+;; Author of charsets-in-string: ?
+
 ;;; Code:
 
 ;;;; Classifying text according to charsets
@@ -42,7 +48,7 @@
   "Return a list of the charsets in STRING."
   (let (res)
     (with-string-as-buffer-contents string
-      ;; charsets-in-region now in C. 
+      ;; charsets-in-region now in C.
       (setq res (charsets-in-region (point-min) (point-max))))
     res))
 
@@ -51,7 +57,11 @@
 (defalias 'find-charset-region 'charsets-in-region)
 
 
-;;;; Charset accessors
+;;;; Charset properties and accessors
+
+(defun charset-or-charset-name-p (obj)
+  "Return true if OBJ is a charset object or a symbol naming a charset."
+  (or (charsetp obj) (and (symbolp obj) (not (null (find-charset obj))))))
 
 (defun charset-iso-graphic-plane (charset)
   "Return the `graphic' property of CHARSET.
@@ -62,9 +72,21 @@ See `make-charset'."
   "Return the final byte of the ISO 2022 escape sequence designating CHARSET."
   (charset-property charset 'final))
 
+(defun charset-iso-2022-p (charset)
+  "Return whether CHARSET is normally encodable using an ISO-2022 coding system.
+\"Normally encodable\" means that CHARSET can be designated using a standard
+ISO 2022 escape sequence.  Almost any charset can be encoded in ISO-2022 by
+using the extension allowing UTF-8 to be embedded in an ISO-2022 encoding,
+but that does not count as \"normally encodable\"."
+  (not (null (charset-property charset 'final))))
+
 (defun charset-chars (charset)
   "Return the number of characters per dimension of CHARSET."
   (charset-property charset 'chars))
+
+(defun charset-offset (charset)
+  "Return the minimum index per dimension of CHARSET."
+  (charset-property charset 'offset))
 
 (defun charset-width (charset)
   "Return the number of display columns per character of CHARSET.
@@ -83,7 +105,7 @@ Only left-to-right is currently implemented."
 ;; Not in GNU Emacs/Mule
 (defun charset-registry (charset)
   "Obsolete; use charset-registries instead. "
-  (lwarn 'xintl 'warning 
+  (lwarn 'xintl 'warning
     "charset-registry is obsolete--use charset-registries instead. ")
   (when (charset-property charset 'registries)
     (elt (charset-property charset 'registries) 0)))
@@ -102,8 +124,8 @@ Only left-to-right is currently implemented."
     (lwarn 'xintl 'warning
       "Regexps no longer allowed for charset-registry. Treating %s%s"
       registry " as a string."))
-  (set-charset-registries 
-   charset 
+  (set-charset-registries
+   charset
    (apply 'vector registry (append (charset-registries charset) nil))))
 
 (make-obsolete 'set-charset-registry 'set-charset-registries)
@@ -118,67 +140,32 @@ See `make-charset'."
    1)
 
 (defun charset-skip-chars-string (charset)
-  "Given  CHARSET, return a string suitable for for `skip-chars-forward'.
+  "Given CHARSET, return a string suitable for for `skip-chars-forward'.
 Passing the string to `skip-chars-forward' will cause it to skip all
 characters in CHARSET."
   (setq charset (get-charset charset))
-  (cond 
-   ;; Aargh, the general algorithm doesn't work for these charsets, because
-   ;; make-char strips the high bit. Hard code them.
-   ((eq (find-charset 'ascii) charset) "\x00-\x7f")
-   ((eq (find-charset 'control-1) charset) "\x80-\x9f")
-   (t 
-    (let (charset-lower charset-upper row-upper row-lower)
-      (if (= 1 (charset-dimension charset))
-          (condition-case args-out-of-range
-              (make-char charset #x100)
-            (args-out-of-range 
-             (setq charset-lower (third args-out-of-range)
-                   charset-upper (fourth args-out-of-range))
-             (format "%c-%c"
-                     (make-char charset charset-lower)
-                     (make-char charset charset-upper))))
-        (condition-case args-out-of-range
-            (make-char charset #x100 #x22)
-          (args-out-of-range
-           (setq row-lower (third args-out-of-range)
-                 row-upper (fourth args-out-of-range))))
-        (condition-case args-out-of-range
-            (make-char charset #x22 #x100)
-          (args-out-of-range
-           (setq charset-lower (third args-out-of-range)
-                 charset-upper (fourth args-out-of-range))))
-        (format "%c-%c"
-                (make-char charset row-lower charset-lower)
-                (make-char charset row-upper charset-upper)))))))
-;; From GNU. 
-(defun map-charset-chars (func charset)
-  "Use FUNC to map over all characters in CHARSET for side effects.
-FUNC is a function of two args, the start and end (inclusive) of a
-character code range.  Thus FUNC should iterate over [START, END]."
-  (check-argument-type #'functionp func)
-  (check-argument-type #'charsetp (setq charset (find-charset charset)))
   (let* ((dim (charset-dimension charset))
 	 (chars (charset-chars charset))
-	 (start (if (= chars 94)
-		    33
-		  32)))
-    (if (= dim 1)
-        (cond 
-         ((eq (find-charset 'ascii) charset) (funcall func ?\x00 ?\x7f))
-         ((eq (find-charset 'control-1) charset) (funcall func ?\x80 ?\x9f))
-         (t 
-          (funcall func
-                   (make-char charset start)
-                   (make-char charset (+ start chars -1)))))
-      (dotimes (i chars)
-	(funcall func
-		 (make-char charset (+ i start) start)
-		 (make-char charset (+ i start) (+ start chars -1)))))))
+	 (offset (charset-offset charset))
+	 (lowchar (if (= dim 1)
+		      (make-char charset offset)
+		    (make-char charset
+			       (first offset)
+			       (second offset))))
+	 (highchar (if (= dim 1)
+		       (make-char charset (+ offset chars -1))
+		     (make-char charset
+				(+ (first offset) (first chars) -1)
+				(+ (second offset) (second chars) -1)))))
+    (unless (and lowchar highchar)
+      (signal-error 'invalid-argument
+		    `("Charset not encodable in a buffer" ,charset)))
+    (format "%c-%c" lowchar highchar)))
 
 ;;;; Define setf methods for all settable Charset properties
 
 (defsetf charset-registry    set-charset-registry)
+(defsetf charset-ccl-program set-charset-ccl-program)
 (defsetf charset-ccl-program set-charset-ccl-program)
 (defsetf charset-registries  set-charset-registries)
 
@@ -288,14 +275,14 @@ character, say TO-ALT, FROM is also translated to TO-ALT."
 ; VEC is an array of 256 elements to map unibyte codes to multibyte characters.
 ; See also the variable `nonascii-translation-table'."
 ;   (let ((table (make-char-table 'translation-table))
-; 	(rev-table (make-char-table 'translation-table))
-; 	(i 0)
-; 	ch)
+;	(rev-table (make-char-table 'translation-table))
+;	(i 0)
+;	ch)
 ;     (while (< i 256)
 ;       (setq ch (aref vec i))
 ;       (aset table i ch)
 ;       (if (>= ch 256)
-; 	  (aset rev-table ch i))
+;	  (aset rev-table ch i))
 ;       (setq i (1+ i)))
 ;     (set-char-table-extra-slot table 0 rev-table)
 ;     table))
@@ -339,19 +326,542 @@ no such translation table instead of returning nil."
       (error 'invalid-argument "No such translation table" table-or-name)))
 
 
-;; Setup auto-fill-chars for charsets that should invoke auto-filling.
-;; SPACE and NEWLINE are already set.
-(let ((l '(katakana-jisx0201
-	   japanese-jisx0208 japanese-jisx0212
-	   chinese-gb2312 chinese-big5-1 chinese-big5-2)))
-  (while l
-    (put-char-table (car l) t auto-fill-chars)
-    (setq l (cdr l))))
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                                                                           ;
+;                                                                           ;
 ;                                charsets                                   ;
+;                                                                           ;
+;                                                                           ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;       Charset tags: General functions       ;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar charset-tag-to-properties-mapping (make-hash-table)
+  "Mapping from full-form charset tag to property list of tag's properties.")
+(puthash 'default/default '(parent nil) charset-tag-to-properties-mapping)
+
+(defvar charset-tag-to-charset-mapping (make-hash-table)
+  "Mapping from full-form charset tag to list of charsets matching the tag.")
+
+(defvar charset-tag-short-to-full-mapping (make-hash-table)
+  "Mapping from short-form charset tag to list of full-form tags.")
+(puthash 'default '(default/default) charset-tag-short-to-full-mapping)
+
+(defvar charset-tag-function-list nil
+  "Alist of (NAME . FUNCTION) for defined charset-tag functions.")
+
+(defun charset-tag-p (obj)
+  "Return t if OBJ is a charset tag."
+  ;; Check for both full-form and short-form tags.
+  (not (null (or (gethash obj charset-tag-to-properties-mapping)
+		 (gethash obj charset-tag-short-to-full-mapping)))))
+
+(defun charset-or-charset-tag-p (obj)
+  "Return t if OBJ is a charset, charset name, or charset tag."
+  (cond ((charset-or-charset-name-p obj) t)
+	((charset-tag-p obj) t)
+	((and (listp obj) (every #'charset-or-charset-tag-p obj)) t)
+	(t nil)))
+
+(defsubst charset-tag-full-p (tag)
+  "Return true if charset tag TAG is in full form."
+  (not (null (string-match "/" (symbol-name tag)))))
+
+(defun charset-tag-name (tag)
+  "Return the NAME portion of TAG."
+  (if (not (charset-tag-full-p tag)) tag
+    (let* ((name (symbol-name tag))
+	   (val (string-match "\\(.*\\)/\\(.*\\)" name)))
+      (assert val)
+      (intern (match-string 1 name)))))
+
+(defun charset-tag-to-full-tags (tag)
+  "Return list of full tags matching TAG."
+  (if (charset-tag-full-p tag) (list tag)
+    (gethash tag charset-tag-short-to-full-mapping)))
+
+(defun charset-tag-property (tag property)
+  "Return a property of a charset tag."
+  (getf (charset-tag-properties tag) property))
+
+(defun charset-tag-properties (tag)
+  "Return the list of properties of a charset tag."
+  (gethash tag charset-tag-to-properties-mapping))
+
+(defun* define-charset-tag (tag &key list parent function doc-string)
+  "Define a charset tag.
+PARENT specifies the parent(s) of the tag.  PARENT can be a symbol or list
+of symbols.  If PARENT is omitted, `default' is used.
+TAG is a symbol.  TAG can either in the full form of `NAME/CATEGORY' or
+the short form of `NAME', in which case the category will be taken
+to be the first parent.  For example,
+
+\(define-charset-tag 'japanese 'language)
+
+is the same as
+
+\(define-charset-tag 'japanese/language 'language)
+
+If the tags in PARENT are not in full-form, the category `default' will
+be assumed.
+
+DOC-STRING is optional documentation for the tag.
+
+FUNCTION is a one-argument predicate that is given a charset and should
+return true or false.  If specified, this tag is automatically true for
+all charsets matching the function.
+
+LIST is a list of charsets or other tags.  If given, TAG is a list tag,
+and when specified in a precedence list, the value of LIST will be
+substituted, in order.  This is useful for ensuring that certain charsets
+end up in front of or behind certain other ones.
+
+Charset tags can be used in place of charsets in charset precedence lists,
+which are used for converting Unicode characters and codepoints into
+charset codepoints.  See `make-char' for more information on charsets and
+charset codepoints, and `unicode-to-char' for more information on
+charset precedence lists.
+
+In a charset precedence list, charset tags match all charsets with the tag
+specified in the charset's `tags' property (see `make-charset').  If a
+short tag name is given, all tags with the same name match.  For example,
+if charset tags `japanese/language' and `japanese/writing-system' both
+exist, then the charset tag `japanese' in a charset precedence list matches
+both of these tags."
+  ;; Coerce arguments to normal form
+  (unless parent (setq parent 'default))
+  (unless (listp parent) (setq parent (list parent)))
+  (setq parent (loop for par in parent
+		 collect (if (charset-tag-full-p par) par
+			   (intern (format "%s/default" par)))))
+  (unless (charset-tag-full-p tag)
+    (setq tag (intern (format "%s/%s" tag (charset-tag-name (first parent))))))
+
+  ;; Check for redefinition of existing tag
+  (when (gethash tag charset-tag-to-properties-mapping)
+    (signal-error 'invalid-change `("Can't redefine existing tag" ,tag)))
+
+  ;; Add to hash tables
+  (puthash tag `(parent ,parent doc-string ,doc-string function ,function
+		 list ,list)
+	   charset-tag-to-properties-mapping)
+  (let ((tag-name (charset-tag-name tag)))
+    (push tag (gethash tag-name charset-tag-short-to-full-mapping)))
+
+  ;; If a function is given, add to the list of known charset-tag functions,
+  ;; and iterate over existing charsets, making note of charsets for which
+  ;; the function is true.
+  (when function
+    (push `(,tag . ,function) charset-tag-function-list)
+    (loop for cs in (charset-list) do
+      (when (funcall function cs)
+	(register-charset-tags-1 cs tag))))
+
+  ;; Validate the value of `list'.
+  (when list
+    (loop for elt in list do
+      (check-argument-type 'charset-or-charset-tag-p elt)))
+  )
+
+(defun charset-tag-to-charset-list (tag)
+  "Return list of all charsets matching TAG or any of its ancestors.
+If TAG has a :list property, fetch the value of that property and recursively
+  process each element of the list.
+If TAG is in full form, return a list of all charsets directly matching TAG,
+  followed by the result of recursively processing TAG's parents.
+If TAG is in short form (see `define-charset-tag'), return the result of
+  recursively processing all tags with the same short form.
+If TAG is a charset, just return a list of that charset.
+If TAG is a list, return a list of charsets matching all tags given in the
+  list.
+This is called from the C code."
+  (cond ((or (charsetp tag) (and (symbolp tag) (find-charset tag)))
+	 (list (find-charset tag)))
+	((listp tag)
+	 ;; We could use `intersection', but that doesn't produce a "stable"
+	 ;; intersection -- it iterates over the second list instead of the
+	 ;; first one, and returns the values in backwards order.
+	 (reduce #'(lambda (list1 list2)
+		     (loop for l in list1
+		       if (memq l list2)
+		       collect l))
+		 (mapcar #'charset-tag-to-charset-list tag)))
+	(t
+	 (check-argument-type 'charset-tag-p tag)
+	 (remove-duplicates
+	  ;; First map to list of full tags ...
+	  (let ((full-tags (charset-tag-to-full-tags tag)))
+	    (cond ((null full-tags) nil)
+		  ((= 1 (length full-tags))
+		   ;; If there's only one, then:
+		   (let* ((full-tag (first full-tags))
+			  (props (charset-tag-properties full-tag))
+			  (list (getf props 'list)))
+		     ;; 1. If a list tag, recurse over the elements of the
+		     ;;    list.
+		     (if list
+			 (loop for l in list
+			   append (charset-tag-to-charset-list l))
+		       ;; 2. Else, recursively loop over all parents ...
+		       (let* ((ancestor-charsets
+			       (loop for par in (getf props 'parent)
+				 append (charset-tag-to-charset-list par))))
+			 ;; ... then add charsets for the tag itself.
+			 ;; Technically the order of these is undefined,
+			 ;; but we may as well make it agree with the
+			 ;; order the charsets are added, so it is halfway
+			 ;; reasonable.
+			 (append (reverse
+				  (gethash full-tag
+					   charset-tag-to-charset-mapping))
+				 ancestor-charsets)))))
+		  (t
+		   ;; Otherwise, loop over all full tags.
+		   (loop for full-tag in full-tags
+		     append (charset-tag-to-charset-list full-tag)))))
+	  :from-end t))))
+
+(defun register-charset-tags-1 (charset full-tag)
+  ;; Actually make a note of this CHARSET/FULL-TAG combination.
+  (pushnew (get-charset charset)
+	   (gethash full-tag charset-tag-to-charset-mapping)))
+
+(defun register-charset-tags (charset tags)
+  "Register CHARSET as having `tags' property TAGS.
+This is intended to be called from `make-charset'."
+  (setq charset (get-charset charset))
+  ;; Iterate over all tags ...
+  (loop for tag in tags do
+    ;; Iterate over all full tags matching each tag ...
+    (loop for full-tag in (charset-tag-to-full-tags tag) do
+      ;; Add to list of charsets for the full tag.
+      (register-charset-tags-1 charset full-tag)))
+  ;; Also process function tags.
+  (loop for (tag . function) in charset-tag-function-list do
+    (when (funcall function charset)
+      (register-charset-tags-1 charset tag))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;       Define the charset tags       ;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defun do-define-charset-tags (category stuff)
+  ;; STUFF should be a list of (CLASS PARENTS DOC), where PARENTS or DOC
+  ;; may be omitted.  For each element, define a charset tag CLASS with
+  ;; parents PARENTS (a single element or a list), and doc-string DOC.
+  ;; If PARENTS is omitted, CATEGORY is the parent.  Both CLASS and PARENTS
+  ;; should specify short-form tags, which will have CATEGORY added to make
+  ;; them full-form.
+  (loop for (class parents doc) in stuff
+    for parents = (or parents category)
+    for parents = (if (listp parents) parents (list parents))
+    do
+    (define-charset-tag
+      (intern (format "%s/%s" class category))
+      :parent (loop for par in parents
+		collect (if (eq par category) category
+			  (intern (format "%s/%s" par category))))
+      :doc-string doc)))
+
+;; define classes of scripts
+
+(define-charset-tag 'script)
+
+(define-charset-tag 'charset
+  :doc-string "Used for functional tags describing properties of a charset.")
+
+(loop for (name fun) in
+  '((one-column (= 1 (charset-property charset 'columns)))
+    (two-column (= 2 (charset-property charset 'columns)))
+    (one-dimension (= 1 (charset-property charset 'dimension)))
+    (two-dimension (= 2 (charset-property charset 'dimension)))
+    (iso2022 (not (null (charset-property charset 'final))))
+    (left-to-right (eq 'l2r (charset-property charset 'direction)))
+    (right-to-left (eq 'r2l (charset-property charset 'direction)))
+    (encodable (charset-encodable-p charset)))
+  do
+  (define-charset-tag name :parent 'charset
+    :function `(lambda (charset)
+		 (setq charset (get-charset charset))
+		 ,fun)))
+
+;; define scripts that are part of writing systems
+
+(do-define-charset-tags 'script
+			'((western)
+			  (eastern)
+			  (east-asian eastern)
+			  (south-asian eastern)
+			  (middle-eastern eastern)
+			  (alphabetic)
+			  (abjad)
+			  (abugida)
+			  (syllabic)
+			  (semi-syllabic)
+			  (logographic)
+			  (control-chars)))
+
+;; define classes of writing systems
+
+(define-charset-tag 'writing-system)
+
+(do-define-charset-tags 'writing-system
+			'((simple)
+			  (complex)))
+
+;; define the simple scripts that also serve as writing systems
+
+(loop for (script-and-writing-system script-parents doc) in
+  '((latin (western alphabetic) "Latin letters, aka Roman letters")
+    (cyrillic (western alphabetic))
+    (greek (western alphabetic))
+    (arabic (middle-eastern abjad))
+    (hebrew (middle-eastern abjad))
+    (thai (south-asian abugida))
+    (lao (south-asian abugida))
+    (tibetan (south-asian abugida))
+    (ethiopic (middle-eastern abugida))
+    (devanagari (south-asian abugida)))
+  do
+  (do-define-charset-tags 'script
+			  (list (list script-and-writing-system
+				      script-parents doc)))
+  (do-define-charset-tags 'writing-system
+			  (list (list script-and-writing-system nil doc))))
+
+;; define scripts that are part of writing systems
+
+(do-define-charset-tags
+ 'script
+ '((kanji (east-asian logographic))
+   (kana (east-asian syllabic))
+   (hirigana (kana))
+   (katakana (kana))
+   ;; Wikipedia claims that Hangul is actually a "featural alphabet" rather
+   ;; than a syllabary, but that's getting very obscure.
+   (hangul (east-asian syllabic))
+   (bopomofo (east-asian semi-syllabic))))
+
+;; define complex writing systems
+
+(do-define-charset-tags
+ 'writing-system
+ '((japanese complex)
+   (chinese complex)
+   (traditional-chinese chinese)
+   (simplified-chinese chinese)
+   (korean complex)))
+
+;; define families
+
+(define-charset-tag 'family)
+
+(do-define-charset-tags
+ 'family
+ '((national-standard)
+   (iso8859)
+   (windows)
+   (windows-ansi windows)
+   (windows-oem windows)
+   (macintosh)
+   (ebcdic)
+   (jis national-standard)
+   (gb national-standard)
+   (cns national-standard)
+   (kns national-standard)
+   (tis national-standard)
+   (is national-standard)
+   (koi8)
+   ))
+
+;; define languages
+
+(define-charset-tag 'language)
+
+(do-define-charset-tags
+ 'language
+ '(
+   ;; GEOGRAPHIC REGIONS
+   (european)
+   (asian)
+   (west-asian asian)
+   (caucasus west-asian)
+   (middle-eastern asian)
+   (central-asian asian)
+   (east-asian asian)
+   (south-asian asian)
+   (southeast-asian asian)
+   (african)
+   (north-african african)
+   (subsaharan-african african)
+
+   ;; LANGUAGE FAMILIES
+   (indo-european)
+   (romance (indo-european european))
+   (germanic (indo-european european))
+   (balto-slavic (indo-european european))
+   (slavic balto-slavic)
+   (celtic (indo-european european))
+   (baltic balto-slavic)
+   (greek (indo-european european))
+   (albanian (indo-european european))
+   (indo-iranian indo-european)
+   (iranian indo-european)
+   (indic (indo-european south-asian))
+
+   (afroasiatic)
+   (semitic afroasiatic)
+   (berber afroasiatic)
+   (chadic afroasiatic)
+   (cushitic afroasiatic)
+
+   (uralic)
+   (finno-ugric (uralic european))
+   (finno-permic finno-ugric)
+   (ugric finno-ugric)
+
+   (altaic)
+   (mongolic (altaic east-asian))
+   (tungusic (altaic east-asian))
+   (turkic altaic)
+
+   (niger-congo subsaharan-african)
+   (bantu niger-congo)
+
+   (sino-tibetan)
+   (tibeto-burman sino-tibetan)
+
+   (dravidian south-asian)
+   (austro-asiatic)
+   (austronesian)
+   (eskimo-aleut)
+   (nilo-saharan)
+   (south-caucasian central-asian)
+
+   ;; ROMANCE LANGUAGES
+
+   (french romance)
+   (spanish romance)
+   (portuguese romance)
+   (italian romance)
+   (romanian romance)
+
+   ;; GERMANIC LANGUAGES
+
+   (west-germanic germanic)
+   (english west-germanic)
+   (german west-germanic)
+   (dutch west-germanic)
+
+   (north-germanic germanic)
+   (swedish north-germanic)
+   (danish north-germanic)
+   (norwegian north-germanic)
+   (icelandic north-germanic)
+
+   ;; SLAVIC LANGUAGES
+
+   (east-slavic slavic)
+   (russian east-slavic)
+   (ukrainian east-slavic)
+   (belarusian east-slavic)
+
+   (west-slavic slavic)
+   (polish west-slavic)
+   (czech west-slavic)
+   (slovak west-slavic)
+   (sorbian west-slavic)
+
+   (south-slavic slavic)
+   (bulgarian south-slavic)
+   (serbian south-slavic)
+   (croatian south-slavic)
+   (macedonian south-slavic)
+   (slovenian south-slavic)
+
+   ;; OTHER EUROPEAN LANGUAGES
+
+   (irish celtic)
+   (welsh celtic)
+   (breton celtic)
+
+   (latvian baltic)
+   (lithuanian baltic)
+
+   (finnish (finno-permic european))
+   (estonian (finno-permic european))
+   (hungarian (ugric european))
+
+   ;; MIDDLE-EASTERN LANGUAGES
+
+   (hebrew (semitic middle-eastern))
+   (arabic (semitic middle-eastern))
+   (amharic (semitic subsaharan-african))
+
+   ;; WEST ASIAN, CENTRAL ASIAN LANGUAGES
+
+   (persian (iranian west-asian))
+   (pashto (iranian central-asian))
+   (kurdish (iranian west-asian))
+   (tajik (iranian central-asian))
+
+   (turkish (turkic west-asian))
+   (kazakh (turkic central-asian))
+   (uzbek (turkic central-asian))
+
+   ;; SOUTH-ASIAN LANGUAGES
+
+   (hindi indic)
+   (urdu indic)
+   (marathi indic)
+   (gujarati indic)
+   (bengali indic)
+   (punjabi indic)
+   (oriya indic)
+   (sindhi indic)
+   (sinhala indic)
+   ;; etc.
+
+   (tamil dravidian)
+   (telugu dravidian)
+   (malayalam dravidian)
+   (kannada dravidian)
+
+   ;; SOUTHEAST ASIAN, EAST ASIAN LANGUAGES
+
+   (thai southeast-asian)
+   (lao southeast-asian)
+   (vietnamese southeast-asian)
+
+   (chinese (sino-tibetan east-asian))
+   ;; #### or should tibetan be central-asian?
+   (tibetan (sino-tibetan east-asian))
+   (burmese (sino-tibetan southeast-asian))
+   (japanese east-asian)
+   (korean east-asian)
+   (mongolian mongolic)
+
+   ))
+
+;; misc
+
+(unless (featurep 'unicode-internal)
+  (define-charset-tag 'jit
+    :doc-string
+"Just-in-time (JIT) charsets used for holding undefined Unicode characters."))
+(define-charset-tag 'internal
+  :doc-string
+"Charsets used for internal purposes.  Generally should be left alone.")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;       GNU EMACS CHARSETS        ;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Synched up with: FSF 21.1.
 
@@ -423,762 +933,594 @@ no such translation table instead of returning nil."
 ;; japanese-jisx0213-1 "JISX0213.2000-1"
 ;; japanese-jisx0213-2 "JISX0213.2000-2"
 
-;;; Begin stuff from international/mule-conf.el.
-
-; ;;; Definitions of character sets.
-
-; ;; Basic (official) character sets.  These character sets are treated
-; ;; efficiently with respect to buffer memory.
-
-; ;; Syntax:
-; ;; (define-charset CHARSET-ID CHARSET
-; ;;   [ DIMENSION CHARS WIDTH DIRECTION ISO-FINAL-CHAR ISO-GRAPHIC-PLANE
-; ;;     SHORT-NAME LONG-NAME DESCRIPTION ])
-; ;; ASCII charset is defined in src/charset.c as below.
-; ;; (define-charset 0 ascii
-; ;;    [1 94 1 0 ?B 0 "ASCII" "ASCII" "ASCII (ISO646 IRV)"])
-
-; ;; 1-byte charsets.  Valid range of CHARSET-ID is 128..143.
-
-; ;; CHARSET-ID 128 is not used.
-
-; ; An extra level of commenting means an official (done in C) charset.
-; ; (make-charset 'latin-iso8859-1 
-; ; 	      "Right-Hand Part of Latin Alphabet 1 (ISO/IEC 8859-1): ISO-IR-100"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-1"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?A
-; ; 		graphic 1
-; ; 		short-name "RHP of Latin-1"
-; ; 		long-name "RHP of Latin-1 (ISO 8859-1): ISO-IR-100"
-; ; 		))
-
-; ; (make-charset 'latin-iso8859-2 
-; ; 	      "Right-Hand Part of Latin Alphabet 2 (ISO/IEC 8859-2): ISO-IR-101"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-2"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?B
-; ; 		graphic 1
-; ; 		short-name "RHP of Latin-2"
-; ; 		long-name "RHP of Latin-2 (ISO 8859-2): ISO-IR-101"
-; ; 		))
-
-; ; (make-charset 'latin-iso8859-3 
-; ; 	      "Right-Hand Part of Latin Alphabet 3 (ISO/IEC 8859-3): ISO-IR-109"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-3"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?C
-; ; 		graphic 1
-; ; 		short-name "RHP of Latin-3"
-; ; 		long-name "RHP of Latin-3 (ISO 8859-3): ISO-IR-109"
-; ; 		))
-
-; ; (make-charset 'latin-iso8859-4 
-; ; 	      "Right-Hand Part of Latin Alphabet 4 (ISO/IEC 8859-4): ISO-IR-110"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-4"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?D
-; ; 		graphic 1
-; ; 		short-name "RHP of Latin-4"
-; ; 		long-name "RHP of Latin-4 (ISO 8859-4): ISO-IR-110"
-; ; 		))
-
-; ; (make-charset 'thai-tis620 
-; ; 	      "Right-Hand Part of TIS620.2533 (Thai): ISO-IR-166"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "TIS620"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?T
-; ; 		graphic 1
-; ; 		short-name "RHP of TIS620"
-; ; 		long-name "RHP of Thai (TIS620): ISO-IR-166"
-; ; 		))
-
-; ; (make-charset 'greek-iso8859-7 
-; ; 	      "Right-Hand Part of Latin/Greek Alphabet (ISO/IEC 8859-7): ISO-IR-126"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-7"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?F
-; ; 		graphic 1
-; ; 		short-name "RHP of ISO8859/7"
-; ; 		long-name "RHP of Greek (ISO 8859-7): ISO-IR-126"
-; ; 		))
-
-; ; (make-charset 'arabic-iso8859-6 
-; ; 	      "Right-Hand Part of Latin/Arabic Alphabet (ISO/IEC 8859-6): ISO-IR-127"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-6"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction r2l
-; ; 		final ?G
-; ; 		graphic 1
-; ; 		short-name "RHP of ISO8859/6"
-; ; 		long-name "RHP of Arabic (ISO 8859-6): ISO-IR-127"
-; ; 		))
-
-; ; (make-charset 'hebrew-iso8859-8 
-; ; 	      "Right-Hand Part of Latin/Hebrew Alphabet (ISO/IEC 8859-8): ISO-IR-138"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-8"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction r2l
-; ; 		final ?H
-; ; 		graphic 1
-; ; 		short-name "RHP of ISO8859/8"
-; ; 		long-name "RHP of Hebrew (ISO 8859-8): ISO-IR-138"
-; ; 		))
-
-; ; (make-charset 'katakana-jisx0201 
-; ; 	      "Katakana Part of JISX0201.1976"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "JISX0201"
-; ; 		chars 94
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?I
-; ; 		graphic 1
-; ; 		short-name "JISX0201 Katakana"
-; ; 		long-name "Japanese Katakana (JISX0201.1976)"
-; ; 		))
-
-; ; (make-charset 'latin-jisx0201 
-; ; 	      "Roman Part of JISX0201.1976"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "JISX0201"
-; ; 		chars 94
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?J
-; ; 		graphic 0
-; ; 		short-name "JISX0201 Roman"
-; ; 		long-name "Japanese Roman (JISX0201.1976)"
-; ; 		))
-
-
-; ;; CHARSET-ID is not used 139.
-
-; ; (make-charset 'cyrillic-iso8859-5 
-; ; 	      "Right-Hand Part of Latin/Cyrillic Alphabet (ISO/IEC 8859-5): ISO-IR-144"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-5"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?L
-; ; 		graphic 1
-; ; 		short-name "RHP of ISO8859/5"
-; ; 		long-name "RHP of Cyrillic (ISO 8859-5): ISO-IR-144"
-; ; 		))
-
-; ; (make-charset 'latin-iso8859-9 
-; ; 	      "Right-Hand Part of Latin Alphabet 5 (ISO/IEC 8859-9): ISO-IR-148"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-9"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?M
-; ; 		graphic 1
-; ; 		short-name "RHP of Latin-5"
-; ; 		long-name "RHP of Latin-5 (ISO 8859-9): ISO-IR-148"
-; ; 		))
-
-; ; (make-charset 'latin-iso8859-15 
-; ; 	      "Right-Hand Part of Latin Alphabet 9 (ISO/IEC 8859-15): ISO-IR-203"
-; ; 	      '(dimension
-; ; 		1
-; ; 		registry "ISO8859-15"
-; ; 		chars 96
-; ; 		columns 1
-; ; 		direction l2r
-; ; 		final ?b
-; ; 		graphic 1
-; ; 		short-name "RHP of Latin-9"
-; ; 		long-name "RHP of Latin-9 (ISO 8859-15): ISO-IR-203"
-; ; 		))
-
-; (make-charset 'latin-iso8859-14 
-; 	      "Right-Hand Part of Latin Alphabet 8 (ISO/IEC 8859-14)"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-14"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?_
-; 		graphic 1
-; 		short-name "RHP of Latin-8"
-; 		long-name "RHP of Latin-8 (ISO 8859-14)"
-; 		))
-
-
-; ;; 2-byte charsets.  Valid range of CHARSET-ID is 144..153.
-
-; ; (make-charset 'japanese-jisx0208-1978 
-; ; 	      "JISX0208.1978 Japanese Kanji (so called \"old JIS\"): ISO-IR-42"
-; ; 	      '(dimension
-; ; 		2
-; ; 		registry "JISX0208.1990"
-; ; 		registry "JISX0208.1978"
-; ; 		chars 94
-; ; 		columns 2
-; ; 		direction l2r
-; ; 		final ?@
-; ; 		graphic 0
-; ; 		short-name "JISX0208.1978"
-; ; 		long-name "JISX0208.1978 (Japanese): ISO-IR-42"
-; ; 		))
-
-; ; (make-charset 'chinese-gb2312 
-; ; 	      "GB2312 Chinese simplified: ISO-IR-58"
-; ; 	      '(dimension
-; ; 		2
-; ; 		registry "GB2312.1980"
-; ; 		chars 94
-; ; 		columns 2
-; ; 		direction l2r
-; ; 		final ?A
-; ; 		graphic 0
-; ; 		short-name "GB2312"
-; ; 		long-name "GB2312: ISO-IR-58"
-; ; 		))
-
-; ; (make-charset 'japanese-jisx0208 
-; ; 	      "JISX0208.1983/1990 Japanese Kanji: ISO-IR-87"
-; ; 	      '(dimension
-; ; 		2
-; ; 		chars 94
-; ; 		columns 2
-; ; 		direction l2r
-; ; 		final ?B
-; ; 		graphic 0
-; ; 		short-name "JISX0208"
-; ; 		long-name "JISX0208.1983/1990 (Japanese): ISO-IR-87"
-; ; 		))
-
-; ; (make-charset 'korean-ksc5601 
-; ; 	      "KSC5601 Korean Hangul and Hanja: ISO-IR-149"
-; ; 	      '(dimension
-; ; 		2
-; ; 		registry "KSC5601.1989"
-; ; 		chars 94
-; ; 		columns 2
-; ; 		direction l2r
-; ; 		final ?C
-; ; 		graphic 0
-; ; 		short-name "KSC5601"
-; ; 		long-name "KSC5601 (Korean): ISO-IR-149"
-; ; 		))
-
-; ; (make-charset 'japanese-jisx0212 
-; ; 	      "JISX0212 Japanese supplement: ISO-IR-159"
-; ; 	      '(dimension
-; ; 		2
-; ; 		registry "JISX0212"
-; ; 		chars 94
-; ; 		columns 2
-; ; 		direction l2r
-; ; 		final ?D
-; ; 		graphic 0
-; ; 		short-name "JISX0212"
-; ; 		long-name "JISX0212 (Japanese): ISO-IR-159"
-; ; 		))
-
-; ; (make-charset 'chinese-cns11643-1 
-; ; 	      "CNS11643 Plane 1 Chinese traditional: ISO-IR-171"
-; ; 	      '(dimension
-; ; 		2
-; ; 		registry "CNS11643.1992-1"
-; ; 		chars 94
-; ; 		columns 2
-; ; 		direction l2r
-; ; 		final ?G
-; ; 		graphic 0
-; ; 		short-name "CNS11643-1"
-; ; 		long-name "CNS11643-1 (Chinese traditional): ISO-IR-171"
-; ; 		))
-
-; ; (make-charset 'chinese-cns11643-2 
-; ; 	      "CNS11643 Plane 2 Chinese traditional: ISO-IR-172"
-; ; 	      '(dimension
-; ; 		2
-; ; 		registry "CNS11643.1992-2"
-; ; 		chars 94
-; ; 		columns 2
-; ; 		direction l2r
-; ; 		final ?H
-; ; 		graphic 0
-; ; 		short-name "CNS11643-2"
-; ; 		long-name "CNS11643-2 (Chinese traditional): ISO-IR-172"
-; ; 		))
-
-; (make-charset 'japanese-jisx0213-1 "JISX0213 Plane 1 (Japanese)"
-; 	      '(dimension
-; 		2
-; 		registry "JISX0213.2000-1"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?O
-; 		graphic 0
-; 		short-name "JISX0213-1"
-; 		long-name "JISX0213-1"
-; 		))
-
-; ; (make-charset 'chinese-big5-1 
-; ; 	      "Frequently used part (A141-C67F) of Big5 (Chinese traditional)"
-; ; 	      '(dimension
-; ; 		2
-; ; 		registry "Big5"
-; ; 		chars 94
-; ; 		columns 2
-; ; 		direction l2r
-; ; 		final ?0
-; ; 		graphic 0
-; ; 		short-name "Big5 (Level-1)"
-; ; 		long-name "Big5 (Level-1) A141-C67F"
-; ; 		))
-
-; ; (make-charset 'chinese-big5-2 
-; ; 	      "Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"
-; ; 	      '(dimension
-; ; 		2
-; ; 		registry "Big5"
-; ; 		chars 94
-; ; 		columns 2
-; ; 		direction l2r
-; ; 		final ?1
-; ; 		graphic 0
-; ; 		short-name "Big5 (Level-2)"
-; ; 		long-name "Big5 (Level-2) C940-FEFE"
-; ; 		))
-
-
-; ;; Additional (private) character sets.  These character sets are
-; ;; treated less space-efficiently in the buffer.
-
-; ;; Syntax:
-; ;; (define-charset CHARSET-ID CHARSET
-; ;;   [ DIMENSION CHARS WIDTH DIRECTION ISO-FINAL-CHAR ISO-GRAPHIC-PLANE
-; ;;     SHORT-NAME LONG-NAME DESCRIPTION ])
+;;; In international/mule-conf.el in GNU Emacs.
 
 ; ;; ISO-2022 allows a use of character sets not registered in ISO with
 ; ;; final characters `0' (0x30) through `?' (0x3F).  Among them, Emacs
 ; ;; reserves `0' through `9' to support several private character sets.
 ; ;; The remaining final characters `:' through `?' are for users.
 
-; ;; 1-byte 1-column charsets.  Valid range of CHARSET-ID is 160..223.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;; DEFINITION OF INTERNAL CHARSETS ;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; (make-charset 'chinese-sisheng 
-; 	      "SiSheng characters for PinYin/ZhuYin"
-; 	      '(dimension
-; 		1
-; 		registry "sisheng_cwnn"
-; 		chars 94
-; 		columns 1
-; 		direction l2r
-; 		final ?0
-; 		graphic 0
-; 		short-name "SiSheng"
-; 		long-name "SiSheng (PinYin/ZhuYin)"
-; 		))
+;; NOTE NOTE NOTE NOTE NOTE:
+;;
+;; We must define these charsets FIRST if we want them to end up with
+;; "official" rather than "private" ID's under old-Mule.  This matters in
+;; that charsets with official ID's are stored more efficiently (with one
+;; less byte) than charsets with private ID's.
 
+;; Old comment, may not be completely accurate: [[ We also put many
+;; charsets here, rather than in the individual files devoted to particular
+;; languages (as we did before), because we need to load the Unicode tables
+;; for them *before* loading any files containing characters from these
+;; character sets. (If/when these files are converted to UTF-8, the problem
+;; will conceivably go away, at least for Unicode-internal -- but then the
+;; opposite problem would exist for old-Mule, if this is still being
+;; preserved.) ]]
 
-; ;; IPA characters for phonetic symbols.
-; (make-charset 'ipa "IPA (International Phonetic Association)"
-; 	      '(dimension
-; 		1
-; 		registry "MuleIPA"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?0
-; 		graphic 1
-; 		short-name "IPA"
-; 		long-name "IPA"
-; 		))
+;; Here is one option for a more sensible keyword-based interface onto
+;; charset creation:
 
+;(defun* make-charset* (name short-name &key long-name doc-string dimension
+;		       offset chars direction registries columns graphic
+;		       final ccl-program unicode-map tags)
+;  "Make a charset.  This is an alternative interface to `make-charset'.
+;This interface uses keyword properties instead of a list of properties,
+;and takes a mandatory short-name parameter rather than a doc string.
+;NAME is a symbol, the charset's name.  SHORT-NAME is a string describing
+; the charset briefly, and will be used as the `short-name' property.
+;The keys :long-name, :doc-string, :dimension, :registries, :columns,
+; :graphic, :final, :ccl-program, and :unicode-map will be used to
+; set the associated charset properties.  If unspecified, :long-name defaults
+; to `short-name', and :doc-string defaults to :long-name."
+;  (setq long-name (or long-name short-name))
+;  (setq doc-string (or doc-string long-name))
+;  (make-charset name doc-string
+;		`(short-name ,short-name
+;		  long-name ,long-name
+;		  ,@(and dimension `(dimension ,dimension))
+;		  ,@(and offset `(offset ,offset))
+;		  ,@(and chars `(chars ,chars))
+;		  ,@(and direction `(direction ,direction))
+;		  ,@(and registries `(registries ,registries))
+;		  ,@(and columns `(columns ,columns))
+;		  ,@(and graphic `(graphic ,graphic))
+;		  ,@(and final `(final ,final))
+;		  ,@(and ccl-program `(ccl-program ,ccl-program))
+;		  ,@(and unicode-map `(unicode-map ,unicode-map))
+;		  ,@(and unicode-map `(tags ,tags))
+;		  )))
 
-; ;; Vietnamese VISCII.  VISCII is 1-byte character set which contains
-; ;; more than 96 characters.  Since Emacs can't handle it as one
-; ;; character set, it is divided into two: lower case letters and upper
-; ;; case letters.
-; (make-charset 'vietnamese-viscii-lower "VISCII1.1 lower-case"
-; 	      '(dimension
-; 		1
-; 		registry "VISCII1.1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?1
-; 		graphic 1
-; 		short-name "VISCII lower"
-; 		long-name "VISCII lower-case"
-; 		))
+(defun* make-128-byte-charset (name short-name &key long-name
+			       doc-string unicode-map tags)
+  "Make a one-dimension size-128 charset.
+NAME is a symbol, the charset's name.
+SHORT-NAME is a string describing the charset briefly, and will be used as
+the `short-name' property.
 
-; (make-charset 'vietnamese-viscii-upper "VISCII1.1 upper-case"
-; 	      '(dimension
-; 		1
-; 		registry "VISCII1.1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?2
-; 		graphic 1
-; 		short-name "VISCII upper"
-; 		long-name "VISCII upper-case"
-; 		))
+The keys :long-name, :doc-string, :unicode-map and :tags will be used to
+set the associated charset properties.  If unspecified, :long-name defaults
+to `short-name', and :doc-string defaults to :long-name."
+  (setq long-name (or long-name short-name))
+  (setq doc-string (or doc-string long-name))
+  (make-charset name doc-string
+		`(dimension 1
+		  offset 128
+		  chars 128
+		  ,@(and unicode-map `(unicode-map ,unicode-map))
+		  short-name ,short-name
+		  long-name ,long-name
+		  ,@(and tags `(tags ,tags))
+		  )))
 
+;;;;;;;;;;;;;;;;;;;;; ASCII, Control-1, Composite, etc. ;;;;;;;;;;;;;;;;;;;;
 
-; ;; For Arabic, we need three different types of character sets.
-; ;; Digits are of direction left-to-right and of width 1-column.
-; ;; Others are of direction right-to-left and of width 1-column or
-; ;; 2-column.
-; (make-charset 'arabic-digit "Arabic digit"
-; 	      '(dimension
-; 		1
-; 		registry "MuleArabic-0"
-; 		chars 94
-; 		columns 1
-; 		direction l2r
-; 		final ?2
-; 		graphic 0
-; 		short-name "Arabic digit"
-; 		long-name "Arabic digit"
-; 		))
-
-; (make-charset 'arabic-1-column "Arabic 1-column"
-; 	      '(dimension
-; 		1
-; 		registry "MuleArabic-1"
-; 		chars 94
-; 		columns 1
-; 		direction r2l
-; 		final ?3
-; 		graphic 0
-; 		short-name "Arabic 1-col"
-; 		long-name "Arabic 1-column"
-; 		))
-
+; #### No equivalent of the following charset from FSF
 
 ; ;; ASCII with right-to-left direction.
-; (make-charset 'ascii-right-to-left 
-; 	      "ASCII (left half of ISO 8859-1) with right-to-left direction"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-1"
-; 		chars 94
-; 		columns 1
-; 		direction r2l
-; 		final ?B
-; 		graphic 0
-; 		short-name "rev ASCII"
-; 		long-name "ASCII with right-to-left direction"
-; 		))
+; (make-charset 'ascii-right-to-left
+;	      "ASCII (left half of ISO 8859-1) with right-to-left direction"
+;	      '(dimension
+;		1
+;		registries ["ISO8859-1"]
+;		chars 94
+;		columns 1
+;		direction r2l
+;		final ?B
+;		graphic 0
+;		short-name "rev ASCII"
+;		long-name "ASCII with right-to-left direction"
+;		))
+(set-charset-tags 'ascii '(latin))
+(set-charset-tags 'control-1 '(control-chars))
+(set-charset-tags 'composite '(internal))
+(unless (featurep 'unicode-internal)
+  (set-charset-tags 'jit-ucs-charset-0 '(jit internal)))
+
+;; Windows Glyph List 4
+(init-windows-glyph-list-4) ;; in unicode.el
+(fmakunbound 'init-windows-glyph-list-4) ;; we don't want it dumped
+
+;;;;;;;;;;;;;;;;;;;;; ISO 8859 ;;;;;;;;;;;;;;;;;;;;
+
+(defun* make-iso8859-charset (symbol str8859 short-name alphabet-name
+			      iso-ir-name final tags &key doc-string direction)
+  (let ((doc-string
+	 (or doc-string
+	     (format "Right-Hand Part of %s (ISO/IEC %s): %s"
+		     alphabet-name str8859 iso-ir-name))))
+    (make-charset
+     symbol doc-string
+     `(dimension 1
+       offset 160
+       chars 96
+       short-name ,short-name
+       long-name ,(format "RHP of %s (ISO %s): %s"
+			  short-name str8859 iso-ir-name)
+       unicode-map
+       (,(format "unicode/unicode-consortium/ISO8859/%s.TXT" str8859) #xA0)
+       registries ,(vector (format "ISO%s" str8859))
+       final ,final
+       tags ,(cons 'iso8859 tags)
+       direction ,(or direction 'l2r)))))
+
+;; This is defined internally because it's (probably) needed early on,
+;; and because it needs to have a very specific charset ID.
+;(make-iso8859-charset 'latin-iso8859-1 "8859-1" "Latin-1" "Latin Alphabet 1"
+;		      "ISO-IR-100" ?A '(latin))
+(set-charset-tags 'latin-iso8859-1 '(latin))
+(make-iso8859-charset 'latin-iso8859-2 "8859-2" "Latin-2" "Latin Alphabet 2"
+		      "ISO-IR-101" ?B '(latin))
+(make-iso8859-charset 'latin-iso8859-3 "8859-3" "Latin-3" "Latin Alphabet 3"
+		      "ISO-IR-109" ?C '(latin))
+(make-iso8859-charset 'latin-iso8859-4 "8859-4" "Latin-4" "Latin Alphabet 4"
+		      "ISO-IR-110" ?D '(latin))
+(make-iso8859-charset 'latin-iso8859-9 "8859-9" "Latin-5" "Latin Alphabet 5"
+		      "ISO-IR-148" ?M '(latin))
+(make-iso8859-charset 'latin-iso8859-15 "8859-15" "Latin-9 (Euro Sign)"
+		      "Latin Alphabet 9" "ISO-IR-203" ?b '(latin)
+		      :doc-string
+		      "European Supplementary Latin Set (\"Latin 9\") (Euro Sign) (ISO/IEC 8859-15): ISO-IR-203
+FIELD OF UTILIZATION: \"Communication and processing of text in European
+languages. The set provides for the languages enumerated in ISO/IEC
+8859-1. In addition, it contains the EURO SIGN and provides support for the
+French, and Finnish languages in addition.\"")
+
+(make-iso8859-charset 'greek-iso8859-7 "8859-7" "Greek" "Latin/Greek Alphabet"
+		      "ISO-IR-126" ?F '(greek))
+(make-iso8859-charset 'cyrillic-iso8859-5 "8859-5" "Cyrillic"
+		      "Latin/Cyrillic Alphabet" "ISO-IR-144" ?L '(cyrillic))
+(make-iso8859-charset 'hebrew-iso8859-8 "8859-8" "Hebrew"
+		      "Latin/Hebrew Alphabet" "ISO-IR-138" ?H '(hebrew)
+		      :direction 'r2l)
+(make-iso8859-charset 'arabic-iso8859-6 "8859-6" "Arabic"
+		      "Latin/Arabic Alphabet" "ISO-IR-127" ?G '(arabic)
+		      :direction 'r2l)
+
+;;;;;;;;;;;;;;;;;;;;; Japanese ;;;;;;;;;;;;;;;;;;;;
+
+(make-charset
+ 'katakana-jisx0201
+ "Katakana Part of JISX0201.1976"
+ '(dimension 1
+   chars 94
+   final ?I
+   graphic 1
+   short-name "Japanese (JISX0201 Kana)"
+   long-name "Japanese Katakana (JISX0201.1976)"
+   registries ["jisx0201.1976-0"]
+   unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0201.TXT"
+		#xA0)
+   tags (jis katakana japanese)
+   ))
+
+(make-charset
+ 'latin-jisx0201
+ "Roman Part of JISX0201.1976"
+ '(dimension 1
+   chars 94
+   final ?J
+   graphic 0
+   short-name "Japanese (JISX0201 Roman)"
+   long-name "Japanese Roman (JISX0201.1976)"
+   registries ["jisx0201.1976-0"]
+   unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0201.TXT"
+		#x21 #x7F)
+   tags (jis latin/script japanese)
+   ))
 
 
-; ;; Lao script.
-; ;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
-; (make-charset 'lao "Lao characters (ISO10646 0E80..0EDF)"
-; 	      '(dimension
-; 		1
-; 		registry "MuleLao-1"
-; 		chars 94
-; 		columns 1
-; 		direction l2r
-; 		final ?1
-; 		graphic 0
-; 		short-name "Lao"
-; 		long-name "Lao"
-; 		))
+(make-charset
+ 'japanese-jisx0208-1978
+ "JISX0208.1978 Japanese Kanji (so called \"old JIS\"): ISO-IR-42"
+ '(dimension 2
+   chars 94
+   final ?@
+   graphic 0
+   short-name "Japanese (JISX0208.1978)"
+   long-name "Japanese (JISX0208.1978): ISO-IR-42"
+   registries ["jisx0208.1978-0" "jisc6226.1978-0"]
+   ;; @@#### FIXME This is not correct!!!!!!!!!!!!
+   unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0208.TXT" nil nil nil ignore-first-column)
+   tags (jis kanji japanese)
+   ))
 
+(make-charset
+ 'japanese-jisx0208
+ "JISX0208.1983/1990 Japanese Kanji: ISO-IR-87"
+ '(dimension 2
+   chars 94
+   final ?B
+   graphic 0
+   short-name "Japanese (JISX0208)"
+   long-name "JISX0208.1983/1990 (Japanese): ISO-IR-87"
+   registries ["jisx0208.1983-0" "jisx0208.1990-0"]
+   unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0208.TXT" nil nil nil ignore-first-column)
+   tags (jis kanji japanese)
+   ))
 
-; ;; CHARSET-IDs 168..223 are not used.
+(make-charset
+ 'japanese-jisx0212
+ "JISX0212 Japanese supplement: ISO-IR-159"
+ '(dimension 2
+   chars 94
+   final ?D
+   graphic 0
+   short-name "Japanese (JISX0212)"
+   long-name "JISX0212 (Japanese): ISO-IR-159"
+   registries ["jisx0212.1990-0"]
+   unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0212.TXT")
+   tags (jis kanji japanese)
+   ))
 
-; ;; 1-byte 2-column charsets.  Valid range of CHARSET-ID is 224..239.
+(when (featurep 'unicode-internal)
+  ;; We can support Shift-JIS directly.
+  (make-charset
+   'japanese-shift-jis
+   ;; You could imagine trying to declare this to be an "algorithmic" charset
+   ;; with indices shifted in a programmatic way from JIS X 0208:1997.
+   ;; However, besides being a lot of hassle for little gain (how many other
+   ;; such algorithmic charsets would there be?), I'm pretty sure that
+   ;; Shift-JIS adds at least a couple of characters not present in
+   ;; JIS X 0208:1997.
+   "Shift-JIS Japanese encoding of JIS X 0208:1997"
+   '(dimension 2
+     ;; See comments in mule-coding.c.
+     ;; First byte is in the range [80-9F], [E0-EF]; second byte is in the
+     ;; range [40-7E], [80-FC]
+     chars (112 189)
+     offset (128 64)
+     short-name "Japanese (Shift-JIS)"
+     long-name "Japanese (Shift-JIS)"
+     ;; @@#### FIXME This is the X registry; is it right?
+     registries ["sjis"]
+     unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/SHIFTJIS.TXT"
+		  #x8000)
+     tags (jis kanji japanese)
+     ))
+  )
 
-; (make-charset 'arabic-2-column "Arabic 2-column"
-; 	      '(dimension
-; 		1
-; 		registry "MuleArabic-2"
-; 		chars 94
-; 		columns 2
-; 		direction r2l
-; 		final ?4
-; 		graphic 0
-; 		short-name "Arabic 2-col"
-; 		long-name "Arabic 2-column"
-; 		))
+;;;;;;;;;;;;;;;;;;;;; Chinese ;;;;;;;;;;;;;;;;;;;;
 
+(make-charset
+ 'chinese-gb2312
+ "GB2312 Chinese simplified: ISO-IR-58"
+ '(dimension 2
+   chars 94
+   final ?A
+   graphic 0
+   short-name "Chinese simplified (GB2312)"
+   long-name "Chinese simplified (GB2312): ISO-IR-58"
+   registries ["gb2312.1980-0" "gb2312.80&gb8565.88-0"]
+   unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/GB2312.TXT")
+   tags (gb kanji simplified-chinese chinese/language)
+   ))
+
+(make-charset
+ 'chinese-cns11643-1
+ "CNS11643 Plane 1 Chinese traditional: ISO-IR-171"
+ '(dimension 2
+   chars 94
+   final ?G
+   graphic 0
+   short-name "Chinese traditional (CNS11643-1)"
+   long-name "Chinese traditional (CNS11643-1): ISO-IR-171"
+   registries ["CNS11643.1992-1"]
+   ;; Currently, CNS11643.TXT is based on CNS 11643-1986 (with planes 1, 2,
+   ;; and 14, and no Unicode codepoint assignments outside of the BMP),
+   ;; where the files in mule-ucs/chinese-cns11643-*.txt are based on
+   ;; CNS 11643-1992 (with planes 1-7 and codepoint assignments outside of
+   ;; the BMP).
+   ;;unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/CNS11643.TXT"
+   ;;             #x10000 #x1FFFF #x-10000)
+   unicode-map ("unicode/mule-ucs/chinese-cns11643-1.txt")
+   tags (cns kanji traditional-chinese chinese/language)
+   ))
+
+(make-charset
+ 'chinese-cns11643-2
+ "CNS11643 Plane 2 Chinese traditional: ISO-IR-172"
+ '(dimension 2
+   chars 94
+   final ?H
+   graphic 0
+   short-name "Chinese traditional (CNS11643-2)"
+   long-name "Chinese traditional (CNS11643-2): ISO-IR-172"
+   registries ["CNS11643.1992-2"]
+   ;; See above.
+   ;;unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/CNS11643.TXT"
+   ;;             #x20000 #x2FFFF #x-20000)
+   unicode-map ("unicode/mule-ucs/chinese-cns11643-2.txt")
+   tags (cns kanji traditional-chinese chinese/language)
+   ))
+
+(if (featurep 'unicode-internal)
+    ;; We can support Big5 directly.
+    (make-charset
+     'chinese-big5
+     "Big5 (Chinese traditional)"
+     '(dimension 2
+       ;; Big5 claims to be a 94x157 charset, but with gaps in the middle.
+       ;; In particular, the rows are (theoretically) indexed from A1 - FE
+       ;; and the columns from 40 - 7E and A1 - FE.  In fact, there are gaps
+       ;; in the rows as well (rows C7 and C8 are missing, as well as rows
+       ;; FA - FE), but that appears to be due to accident -- i.e. they just
+       ;; ran out of chars and/or wanted to make room for expansion.  Note
+       ;; also that the gap at C7 and C8 is due to the Level-1/Level-2
+       ;; division of Big5 (see below).  The 94 rows are those between
+       ;; A1 and FE, inclusive.  The 157 columns count the sum of the columns
+       ;; in each disjoint set.  For us, we need to use the size of the range
+       ;; [40, FE], which is 191.
+       chars (94 191)
+       offset (161 64)
+       short-name "Chinese traditional (Big5)"
+       long-name "Chinese traditional (Big5)"
+       registries ["big5.eten-0"]
+       unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT")
+       tags (kanji traditional-chinese chinese/language)
+       ))
+  ;; Old Mule situation; we can only handle up to 96x96 charsets.
+  ;; So we split it into two charsets.  According to Ken Lunde's CJKV
+  ;; book, Big5 itself is split into "Big Five Level 1" (rows A1-C6)
+  ;; and "Big Five Level 2" (rows C9-F9), with the latter containing
+  ;; less used characters.  We split the same way then coerce the
+  ;; result into a 94x94 block.
+  (make-charset
+   'chinese-big5-1
+   "Frequently used part (A141-C67F) of Big5 (Chinese traditional)"
+   '(dimension 2
+     chars 94
+     final ?0
+     graphic 0
+     short-name "Chinese traditional (Big5), L1"
+     long-name "Chinese traditional (Big5) (Level-1) A141-C67F"
+     registries ["big5.eten-0"]
+     ;; no unicode map, see chinese-big5-2
+     tags (kanji traditional-chinese chinese/language)
+     ))
+  (make-charset
+   'chinese-big5-2
+   "Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"
+   '(dimension 2
+     chars 94
+     final ?1
+     graphic 0
+     short-name "Chinese traditional (Big5), L2"
+     long-name "Chinese traditional (Big5) (Level-2) C940-FEFE"
+     registries ["big5.eten-0"]
+     ;; HACK HACK HACK!  The `big5' special flag tells the internal code
+     ;; in Fload_unicode_mapping_table() to take codepoints out of the
+     ;; Big5 table, convert them to a codepoint in a "fake" chinese-big5-1
+     ;; or chinese-big5-2, and store appropriately.  Hence, it actually
+     ;; ignores the name of the charset on which the property is set and
+     ;; always stores in the "right" place.  Correspondingly, we must set
+     ;; the property on big5-2, not 1, so that both charsets will be
+     ;; created by the time we initialize the map.
+     unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT"
+		  nil nil nil big5)
+     tags (kanji traditional-chinese chinese/language)
+     ))
+  )
+
+;;;;;;;;;;;;;;;;;;;;; Korean ;;;;;;;;;;;;;;;;;;;;
+
+(make-charset
+ 'korean-ksc5601
+ "KSC5601 Korean Hangul and Hanja: ISO-IR-149"
+ '(dimension 2
+   chars 94
+   final ?C
+   graphic 0
+   short-name "Korean (KSC5601)"
+   long-name "Korean (KSC5601): ISO-IR-149"
+					;registries ["KSC5601.1989"]
+   registries ["ksc5601.1987-0"]
+   ;; Note that KSC5601.TXT as currently distributed is NOT what
+   ;; it claims to be!  See comments in KSX1001.TXT.
+   unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/KSX1001.TXT" )
+   tags (ksc kanji hangul korean)
+   ))
+
+;;;;;;;;;;;;;;;;;;;;; Thai ;;;;;;;;;;;;;;;;;;;;
+
+(make-charset
+ 'thai-tis620
+ "Right-Hand Part of TIS620.2533 (Thai): ISO-IR-166"
+ '(dimension 1
+   chars 96
+   final ?T
+   graphic 1
+   short-name "Thai (TIS620)"
+   long-name "RHP of Thai (TIS620): ISO-IR-166"
+   registries ["tis620.2529-1"]
+   unicode-map ("unicode/mule-ucs/thai-tis620.txt" nil nil #x80)
+   tags (tis thai)
+   ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;; DEFINITION OF OTHER CHARSETS ;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; APPROPRIATE FILE: vietnamese.el
+;; CAN'T BE DEFINED THERE BECAUSE: The sample text in the file has
+;; Vietnamese chars.  In old-Mule, they will end up in a JIT charset unless
+;; the charset is already defined.
+
+;; Vietnamese VISCII.  VISCII is 1-byte character set which contains
+;; more than 96 characters.  Since Emacs can't handle it as one
+;; character set, it is divided into two: lower case letters and upper
+;; case letters.
+(make-charset
+ 'vietnamese-viscii-lower "VISCII1.1 lower-case"
+ '(dimension 1
+   registries ["VISCII1.1"]
+   chars 96
+   final ?1
+   graphic 1
+   unicode-map ("unicode/mule-ucs/vietnamese-viscii-lower.txt"
+		nil nil #x80)
+   short-name "VISCII lower"
+   long-name "VISCII lower-case"
+   tags (latin vietnamese)
+   ))
+
+(make-charset
+ 'vietnamese-viscii-upper "VISCII1.1 upper-case"
+ '(dimension 1
+   registries ["VISCII1.1"]
+   chars 96
+   final ?2
+   graphic 1
+   unicode-map ("unicode/mule-ucs/vietnamese-viscii-upper.txt"
+		nil nil #x80)
+   short-name "VISCII upper"
+   long-name "VISCII upper-case"
+   tags (latin vietnamese)
+   ))
 
 ; ;; Indian scripts.  Symbolic charset for data exchange.  Glyphs are
 ; ;; not assigned.  They are automatically converted to each Indian
 ; ;; script which IS-13194 supports.
 
-; (make-charset 'indian-is13194 
-; 	      "Generic Indian charset for data exchange with IS 13194"
-; 	      '(dimension
-; 		1
-; 		registry "IS13194-Devanagari"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?5
-; 		graphic 1
-; 		short-name "IS 13194"
-; 		long-name "Indian IS 13194"
-; 		))
+(make-charset
+ 'indian-is13194
+ "Generic Indian charset for data exchange with IS 13194"
+ '(dimension 1
+   registries ["IS13194-Devanagari"]
+   chars 94
+   columns 2
+   final ?5
+   graphic 1
+   unicode-map ("unicode/mule-ucs/indian-is13194.txt"
+		nil nil #x80)
+   short-name "IS 13194"
+   long-name "Indian IS 13194"
+   tags (devanagari indic)
+   ))
 
+;; Actual Glyph for 1-column width.
+(make-charset
+ 'indian-1-column
+ "Indian charset for 2-column width glyphs"
+ '(dimension 2
+   registries ["MuleIndian-1"]
+   chars 94
+   columns 1
+   final ?6
+   graphic 0
+   short-name "Indian 1-col"
+   long-name "Indian 1 Column"
+   tags (devanagari indic)
+   ))
 
-; ;; CHARSET-IDs 226..239 are not used.
+;; Actual Glyph for 2-column width.
+(make-charset
+ 'indian-2-column
+ "Indian charset for 2-column width glyphs"
+ '(dimension    2
+   registries ["MuleIndian-2"]
+   chars 94
+   columns 2
+   final ?5
+   graphic 0
+   short-name "Indian 2-col"
+   long-name "Indian 2 Column"
+   tags (devanagari indic)
+   ))
 
-; ;; 2-byte 1-column charsets.  Valid range of CHARSET-ID is 240..244.
+;; Lao script.
+;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
+(make-charset
+ 'lao "Lao characters (ISO10646 0E80..0EDF)"
+ '(dimension 1
+   registries ["MuleLao-1"]
+   chars 94
+   final ?1
+   graphic 0
+   unicode-map ("unicode/other/lao.txt")
+   short-name "Lao"
+   long-name "Lao"
+   tags (lao)
+   ))
 
-; ;; Actual Glyph for 1-column width.
-; (make-charset 'indian-1-column 
-; 	      "Indian charset for 2-column width glyphs"
-; 	      '(dimension
-; 		2
-; 		registry "MuleIndian-1"
-; 		chars 94
-; 		columns 1
-; 		direction l2r
-; 		final ?6
-; 		graphic 0
-; 		short-name "Indian 1-col"
-; 		long-name "Indian 1 Column"
-; 		))
+;; APPROPRIATE FILE: ethiopic.el
+;; CAN'T BE DEFINED THERE BECAUSE: The charset is used inside of that file.
 
+;; Ethiopic characters (Amharic and Tigrinya).
+(make-charset
+ 'ethiopic "Ethiopic characters"
+ '(dimension 2
+   registries ["Ethiopic-Unicode"]
+   chars 94
+   final ?3
+   graphic 0
+   unicode-map ("unicode/mule-ucs/ethiopic.txt")
+   short-name "Ethiopic"
+   long-name "Ethiopic characters"
+   tags (ethiopic)
+   ))
 
-; (make-charset 'tibetan-1-column "Tibetan 1 column glyph"
-; 	      '(dimension
-; 		2
-; 		registry "MuleTibetan-1"
-; 		chars 94
-; 		columns 1
-; 		direction l2r
-; 		final ?8
-; 		graphic 0
-; 		short-name "Tibetan 1-col"
-; 		long-name "Tibetan 1 column"
-; 		))
+(make-charset
+ 'tibetan-1-column "Tibetan 1 column glyph"
+ '(dimension 2
+   registries ["MuleTibetan-1"]
+   chars 94
+   columns 1
+   final ?8
+   graphic 0
+   short-name "Tibetan 1-col"
+   long-name "Tibetan 1 column"
+   tags (tibetan)
+   ))
 
+;; Tibetan script.
+(make-charset
+ 'tibetan "Tibetan characters"
+ '(dimension 2
+   registries ["MuleTibetan-2"]
+   chars 94
+   columns 2
+   final ?7
+   graphic 0
+   unicode-map ("unicode/mule-ucs/tibetan.txt")
+   short-name "Tibetan 2-col"
+   long-name "Tibetan 2 column"
+   tags (tibetan)
+   ))
 
-; ;; Subsets of Unicode.
+;; GNU Emacs has the charsets:
 
-; (make-charset 'mule-unicode-2500-33ff 
-; 	      "Unicode characters of the range U+2500..U+33FF."
-; 	      '(dimension
-; 		2
-; 		registry "ISO10646-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?2
-; 		graphic 0
-; 		short-name "Unicode subset 2"
-; 		long-name "Unicode subset (U+2500..U+33FF)"
-; 		))
+;;     mule-unicode-2500-33ff
+;;     mule-unicode-e000-ffff
+;;     mule-unicode-0100-24ff
 
-
-; (make-charset 'mule-unicode-e000-ffff 
-; 	      "Unicode characters of the range U+E000..U+FFFF."
-; 	      '(dimension
-; 		2
-; 		registry "ISO10646-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?3
-; 		graphic 0
-; 		short-name "Unicode subset 3"
-; 		long-name "Unicode subset (U+E000+FFFF)"
-; 		))
-
-
-; (make-charset 'mule-unicode-0100-24ff 
-; 	      "Unicode characters of the range U+0100..U+24FF."
-; 	      '(dimension
-; 		2
-; 		registry "ISO10646-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?1
-; 		graphic 0
-; 		short-name "Unicode subset"
-; 		long-name "Unicode subset (U+0100..U+24FF)"
-; 		))
-
-
-; ;; 2-byte 2-column charsets.  Valid range of CHARSET-ID is 245..254.
-
-; ;; Ethiopic characters (Amahric and Tigrigna).
-; (make-charset 'ethiopic "Ethiopic characters"
-; 	      '(dimension
-; 		2
-; 		registry "Ethiopic-Unicode"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?3
-; 		graphic 0
-; 		short-name "Ethiopic"
-; 		long-name "Ethiopic characters"
-; 		))
-
-
-; ;; Chinese CNS11643 Plane3 thru Plane7.  Although these are official
-; ;; character sets, the use is rare and don't have to be treated
-; ;; space-efficiently in the buffer.
-; (make-charset 'chinese-cns11643-3 
-; 	      "CNS11643 Plane 3 Chinese Traditional: ISO-IR-183"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-3"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?I
-; 		graphic 0
-; 		short-name "CNS11643-3"
-; 		long-name "CNS11643-3 (Chinese traditional): ISO-IR-183"
-; 		))
-
-; (make-charset 'chinese-cns11643-4 
-; 	      "CNS11643 Plane 4 Chinese Traditional: ISO-IR-184"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-4"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?J
-; 		graphic 0
-; 		short-name "CNS11643-4"
-; 		long-name "CNS11643-4 (Chinese traditional): ISO-IR-184"
-; 		))
-
-; (make-charset 'chinese-cns11643-5 
-; 	      "CNS11643 Plane 5 Chinese Traditional: ISO-IR-185"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-5"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?K
-; 		graphic 0
-; 		short-name "CNS11643-5"
-; 		long-name "CNS11643-5 (Chinese traditional): ISO-IR-185"
-; 		))
-
-; (make-charset 'chinese-cns11643-6 
-; 	      "CNS11643 Plane 6 Chinese Traditional: ISO-IR-186"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-6"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?L
-; 		graphic 0
-; 		short-name "CNS11643-6"
-; 		long-name "CNS11643-6 (Chinese traditional): ISO-IR-186"
-; 		))
-
-; (make-charset 'chinese-cns11643-7 
-; 	      "CNS11643 Plane 7 Chinese Traditional: ISO-IR-187"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-7"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?M
-; 		graphic 0
-; 		short-name "CNS11643-7"
-; 		long-name "CNS11643-7 (Chinese traditional): ISO-IR-187"
-; 		))
-
-
-; ;; Actual Glyph for 2-column width.
-; (make-charset 'indian-2-column 
-; 	      "Indian charset for 2-column width glyphs"
-; 	      '(dimension
-; 		2
-; 		registry "MuleIndian-2"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?5
-; 		graphic 0
-; 		short-name "Indian 2-col"
-; 		long-name "Indian 2 Column"
-; 		))
-
-
-; ;; Tibetan script.
-; (make-charset 'tibetan "Tibetan characters"
-; 	      '(dimension
-; 		2
-; 		registry "MuleTibetan-2"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?7
-; 		graphic 0
-; 		short-name "Tibetan 2-col"
-; 		long-name "Tibetan 2 column"
-; 		))
-
-
-; ;; CHARSET-ID 253 is not used.
-
-; ;; JISX0213 Plane 2
-; (make-charset 'japanese-jisx0213-2 "JISX0213 Plane 2 (Japanese)"
-; 	      '(dimension
-; 		2
-; 		registry "JISX0213.2000-2"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?P
-; 		graphic 0
-; 		short-name "JISX0213-2"
-; 		long-name "JISX0213-2"
-; 		))
+;; built-in.  This is hack--and an incomplete hack at that--against the
+;; spirit and the letter of standard ISO 2022 character sets.  Instead of
+;; this, we have the jit-ucs-charset-N Mule character sets, created in
+;; unicode.c on encountering a Unicode code point that we don't recognise,
+;; and saved in ISO 2022 coding systems using the UTF-8 escape described in
+;; ISO-IR 196.
 
 ;;; mule-charset.el ends here
-

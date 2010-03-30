@@ -3,6 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2005, 2010 Ben Wing.
 
 ;; Keywords: multilingual, Korean
 
@@ -29,19 +30,24 @@
 
 ;;; Code:
 
-; (make-charset 'korean-ksc5601 
-; 	      "KSC5601 Korean Hangul and Hanja: ISO-IR-149"
-; 	      '(dimension
-; 		2
-; 		registry "KSC5601.1989"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?C
-; 		graphic 0
-; 		short-name "KSC5601"
-; 		long-name "KSC5601 (Korean): ISO-IR-149"
-; 		))
+;; See comments in mule-coding.c.
+;; Hangul uses the range [84 - D3], [41 - 7E, 81 - FE]
+;; Symbols and Hanja use [D8 - DE, E0 - F9], [31 - 7E, 91 - FE]
+;; So for our purposes, this is [84 - F9], [31 - FE]
+(make-charset
+ 'korean-johab
+ "Johab (Korean)"
+ '(dimension
+   2
+   registries ["johab"] ;; @@#### FIXME
+   chars (118 206)
+   offset (#x84 #x31)
+   unicode-map
+   ("unicode/unicode-consortium/EASTASIA/OBSOLETE/JOHAB.TXT" #x8000)
+   short-name "Johab"
+   long-name "Johab (Korean)"
+   tags (windows-ansi kanji korean)
+   ))
 
 ;; Syntax of Korean characters.
 (loop for row from 33 to  34 do
@@ -57,7 +63,6 @@
  "ISO-2022-INT-1 (Korean)"
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
-   safe-charsets (ascii korean-ksc5601)
    short t
    seven t
    lock-shift t
@@ -93,7 +98,6 @@
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
    mnemonic "ko/EUC"
-   safe-charsets (ascii korean-ksc5601)
    documentation
    "Korean EUC (Extended Unix Code), the standard Korean encoding on Unix.
 This follows the same overall EUC principles (see the description under
@@ -124,7 +128,6 @@ G1: Korean-KSC5601"
    force-g1-on-output t
    seven t
    lock-shift t
-   safe-charsets (ascii korean-ksc5601)
    mnemonic "Ko/7bit"
    documentation "Coding-System used for communication with mail in Korea."
    eol-type lf))
@@ -135,7 +138,7 @@ G1: Korean-KSC5601"
  "Korean" '((setup-function . setup-korean-environment-internal)
 	    (exit-function . exit-korean-environment)
 	    (tutorial . "TUTORIAL.ko")
-	    (charset korean-ksc5601)
+	    (charset korean-ksc5601 korean)
 	    (coding-system euc-kr iso-2022-kr)
 	    (coding-priority euc-kr iso-2022-kr)
 	    (locale "ko_KR.eucKR" "ko_KR.EUC" "ko_KR.euc" "ko_KR" "ko")
