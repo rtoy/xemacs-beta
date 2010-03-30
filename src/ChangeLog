@@ -1,5 +1,11 @@
 2010-03-29  Ben Wing  <ben@xemacs.org>
 
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	Need to cast 0 to void (so both parts of conditional expression
+	have void type) to fix C++ compilation.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
 	* alloc.c:
 	* alloc.c (lisp_object_storage_size):
 	* alloc.c (Fobject_memory_usage):
