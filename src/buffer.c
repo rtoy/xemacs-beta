@@ -234,11 +234,9 @@ static const struct memory_description buffer_text_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("buffer-text", buffer_text,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       buffer_text_description_1,
-			       Lisp_Buffer_Text);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("buffer-text", buffer_text,
+				      0, buffer_text_description_1,
+				      Lisp_Buffer_Text);
 #endif /* NEW_GC */
 
 static const struct sized_memory_description buffer_text_description = {
@@ -304,9 +302,9 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     {
       if (!BUFFER_LIVE_P (b))
-	printing_unreadable_object ("#<killed buffer>");
+	printing_unreadable_object_fmt ("#<killed buffer>");
       else
-	printing_unreadable_object ("#<buffer %s>", XSTRING_DATA (b->name));
+	printing_unreadable_object_fmt ("#<buffer %s>", XSTRING_DATA (b->name));
     }
   else if (!BUFFER_LIVE_P (b))
     write_ascstring (printcharfun, "#<killed buffer>");
@@ -333,11 +331,10 @@ cleanup_buffer_undo_lists (void)
 /* We do not need a finalize method to handle a buffer's children list
    because all buffers have `kill-buffer' applied to them before
    they disappear, and the children removal happens then. */
-DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
-			       0, /*dumpable-flag*/
-                               mark_buffer, print_buffer, 0, 0, 0,
-			       buffer_description,
-			       struct buffer);
+DEFINE_NODUMP_LISP_OBJECT ("buffer", buffer, mark_buffer,
+			   print_buffer, 0, 0, 0,
+			   buffer_description,
+			   struct buffer);
 
 DEFUN ("bufferp", Fbufferp, 1, 1, 0, /*
 Return t if OBJECT is an editor buffer.
@@ -603,11 +600,11 @@ get_truename_buffer (REGISTER Lisp_Object filename)
 static struct buffer *
 allocate_buffer (void)
 {
-  struct buffer *b = ALLOC_LCRECORD_TYPE (struct buffer, &lrecord_buffer);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (buffer);
 
-  COPY_LCRECORD (b, XBUFFER (Vbuffer_defaults));
+  copy_lisp_object (obj, Vbuffer_defaults);
 
-  return b;
+  return XBUFFER (obj);
 }
 
 static Lisp_Object
@@ -1755,76 +1752,52 @@ the normal hook `change-major-mode-hook'.
 
 struct buffer_stats
 {
-  int text;
-  int markers;
-  int extents;
-  int other;
+  struct usage_stats u;
+  Bytecount text;
+  /* Ancillary Lisp */
+  Bytecount markers;
+  Bytecount extents;
 };
 
 static Bytecount
-compute_buffer_text_usage (struct buffer *b, struct overhead_stats *ovstats)
+compute_buffer_text_usage (struct buffer *b, struct usage_stats *ustats)
 {
-  int was_requested = b->text->z - 1;
-  Bytecount gap = b->text->gap_size + b->text->end_gap_size;
-  Bytecount malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
+  Bytecount was_requested, gap, malloc_use;
 
-  ovstats->gap_overhead    += gap;
-  ovstats->was_requested   += was_requested;
-  ovstats->malloc_overhead += malloc_use - (was_requested + gap);
+  /* Killed buffer? */
+  if (!b->text)
+    return 0;
+
+  /* Indirect buffer shares its text with someone else, so don't double-
+     count the text */
+  if (b->base_buffer)
+    return 0;
+
+  was_requested = b->text->z - 1;
+  gap = b->text->gap_size + b->text->end_gap_size;
+  malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
+
+  ustats->gap_overhead    += gap;
+  ustats->was_requested   += was_requested;
+  ustats->malloc_overhead += malloc_use - (was_requested + gap);
   return malloc_use;
 }
 
 static void
 compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
-		      struct overhead_stats *ovstats)
+		      struct usage_stats *ustats)
 {
-  xzero (*stats);
-  stats->other   += LISPOBJ_STORAGE_SIZE (b, sizeof (*b), ovstats);
-  stats->text    += compute_buffer_text_usage   (b, ovstats);
-  stats->markers += compute_buffer_marker_usage (b, ovstats);
-  stats->extents += compute_buffer_extent_usage (b, ovstats);
+  stats->text    += compute_buffer_text_usage   (b, ustats);
+  stats->markers += compute_buffer_marker_usage (b);
+  stats->extents += compute_buffer_extent_usage (b);
 }
 
-DEFUN ("buffer-memory-usage", Fbuffer_memory_usage, 1, 1, 0, /*
-Return stats about the memory usage of buffer BUFFER.
-The values returned are in the form of an alist of usage types and byte
-counts.  The byte counts attempt to encompass all the memory used
-by the buffer (separate from the memory logically associated with a
-buffer or frame), including internal structures and any malloc()
-overhead associated with them.  In practice, the byte counts are
-underestimated because certain memory usage is very hard to determine
-\(e.g. the amount of memory used inside the Xt library or inside the
-X server) and because there is other stuff that might logically
-be associated with a window, buffer, or frame (e.g. window configurations,
-glyphs) but should not obviously be included in the usage counts.
-
-Multiple slices of the total memory usage may be returned, separated
-by a nil.  Each slice represents a particular view of the memory, a
-particular way of partitioning it into groups.  Within a slice, there
-is no overlap between the groups of memory, and each slice collectively
-represents all the memory concerned.
-*/
-       (buffer))
+static void
+buffer_memory_usage (Lisp_Object buffer, struct generic_usage_stats *gustats)
 {
-  struct buffer_stats stats;
-  struct overhead_stats ovstats;
-  Lisp_Object val = Qnil;
+  struct buffer_stats *stats = (struct buffer_stats *) gustats;
 
-  CHECK_BUFFER (buffer); /* dead buffers should be allowed, no? */
-  xzero (ovstats);
-  compute_buffer_usage (XBUFFER (buffer), &stats, &ovstats);
-
-  val = acons (Qtext,    make_int (stats.text),    val);
-  val = acons (Qmarkers, make_int (stats.markers), val);
-  val = acons (Qextents, make_int (stats.extents), val);
-  val = acons (Qother,   make_int (stats.other),   val);
-  val = Fcons (Qnil, val);
-  val = acons (Qactually_requested, make_int (ovstats.was_requested),   val);
-  val = acons (Qmalloc_overhead,    make_int (ovstats.malloc_overhead), val);
-  val = acons (Qgap_overhead,       make_int (ovstats.gap_overhead),    val);
-  val = acons (Qdynarr_overhead,    make_int (ovstats.dynarr_overhead), val);
-
-  return Fnreverse (val);
+  compute_buffer_usage (XBUFFER (buffer), stats, &stats->u);
 }
 
 #endif /* MEMORY_USAGE_STATS */
@@ -1908,11 +1881,19 @@ The values returned are in the form of a plist of properties and values.
 
 
 void
+buffer_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (buffer, memory_usage);
+#endif
+}
+
+void
 syms_of_buffer (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (buffer);
+  INIT_LISP_OBJECT (buffer);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (buffer_text);
+  INIT_LISP_OBJECT (buffer_text);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qbuffer_live_p);
@@ -1972,9 +1953,6 @@ syms_of_buffer (void)
   DEFSUBR (Fbarf_if_buffer_read_only);
   DEFSUBR (Fbury_buffer);
   DEFSUBR (Fkill_all_local_variables);
-#ifdef MEMORY_USAGE_STATS
-  DEFSUBR (Fbuffer_memory_usage);
-#endif
 #if defined (DEBUG_XEMACS) && defined (MULE)
   DEFSUBR (Fbuffer_char_byte_converion_info);
   DEFSUBR (Fstring_char_byte_converion_info);
@@ -1997,6 +1975,11 @@ void
 vars_of_buffer (void)
 {
   /* This function can GC */
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY
+    (buffer, memusage_stats_list, list4 (Qtext, Qt, Qmarkers, Qextents));
+#endif /* MEMORY_USAGE_STATS */
+
   staticpro (&QSFundamental);
   staticpro (&QSscratch);
 
@@ -2143,9 +2126,8 @@ List of functions called with no args to query before killing a buffer.
 do									  \
 {									  \
   struct symbol_value_forward *I_hate_C =				  \
-    alloc_lrecord_type (struct symbol_value_forward,			  \
-			&lrecord_symbol_value_forward);			  \
-  /*mcpro ((Lisp_Object) I_hate_C);*/					\
+    XSYMBOL_VALUE_FORWARD (ALLOC_NORMAL_LISP_OBJECT (symbol_value_forward));	  \
+  /*mcpro ((Lisp_Object) I_hate_C);*/					  \
 									  \
   I_hate_C->magic.value = &(buffer_local_flags.field_name);		  \
   I_hate_C->magic.type = forward_type;					  \
@@ -2179,8 +2161,6 @@ do {									 \
 	  1  /* lisp_readonly bit */					 \
 	},								 \
 	0, /* next */							 \
-	0, /* uid  */							 \
-	0  /* free */							 \
       },								 \
       &(buffer_local_flags.field_name),					 \
       forward_type							 \
@@ -2219,7 +2199,7 @@ do {									 \
 static void
 nuke_all_buffer_slots (struct buffer *b, Lisp_Object zap)
 {
-  ZERO_LCRECORD (b);
+  zero_nonsized_lisp_object (wrap_buffer (b));
 
   b->extent_info = Qnil;
   b->indirect_children = Qnil;
@@ -2234,13 +2214,15 @@ common_init_complex_vars_of_buffer (void)
 {
   /* Make sure all markable slots in buffer_defaults
      are initialized reasonably, so mark_buffer won't choke. */
-  struct buffer *defs = ALLOC_LCRECORD_TYPE (struct buffer, &lrecord_buffer);
-  struct buffer *syms = ALLOC_LCRECORD_TYPE (struct buffer, &lrecord_buffer);
+  Lisp_Object defobj = ALLOC_NORMAL_LISP_OBJECT (buffer);
+  struct buffer *defs = XBUFFER (defobj);
+  Lisp_Object symobj = ALLOC_NORMAL_LISP_OBJECT (buffer);
+  struct buffer *syms = XBUFFER (symobj);
 
   staticpro_nodump (&Vbuffer_defaults);
   staticpro_nodump (&Vbuffer_local_symbols);
-  Vbuffer_defaults = wrap_buffer (defs);
-  Vbuffer_local_symbols = wrap_buffer (syms);
+  Vbuffer_defaults = defobj;
+  Vbuffer_local_symbols = symobj;
 
   nuke_all_buffer_slots (syms, Qnil);
   nuke_all_buffer_slots (defs, Qnil);
@@ -2297,6 +2279,8 @@ common_init_complex_vars_of_buffer (void)
        The local flag bits are in the local_var_flags slot of the
        buffer.  */
 
+    set_lheader_implementation ((struct lrecord_header *)
+				&buffer_local_flags, &lrecord_buffer);
     nuke_all_buffer_slots (&buffer_local_flags, make_int (-2));
     buffer_local_flags.filename		   = always_local_no_default;
     buffer_local_flags.directory	   = always_local_no_default;

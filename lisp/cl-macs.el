@@ -297,27 +297,22 @@ ARGLIST allows full Common Lisp conventions."
 	   (mapcar 'cl-upcase-arg arg)))
 	(t arg)))                         ; Maybe we are in initializer
 
-;; npak@ispras.ru
+;; npak@ispras.ru, modified by ben@666.com
 ;;;###autoload
-(defun cl-function-arglist (name arglist &optional omit-name)
+(defun cl-function-arglist (arglist)
   "Returns string with printed representation of arguments list.
 Supports Common Lisp lambda lists."
-  ;; #### I would just change this so that OMIT-NAME is always true and
-  ;; eliminate the argument, but this function is autoloaded, which means
-  ;; someone might be using it somewhere.
   (if (not (or (listp arglist) (symbolp arglist)))
       "Not available"
     (check-argument-type #'true-list-p arglist)
     (let ((print-gensym nil))
       (condition-case nil
-          (prin1-to-string
-	   (let ((args (cond ((null arglist) nil)
-			     ((listp arglist) (cl-upcase-arg arglist))
-			     ((symbolp arglist)
-			      (cl-upcase-arg (list '&rest arglist)))
-			     (t (wrong-type-argument 'listp arglist)))))
-	     (if omit-name args
-	       (cons (if (eq name 'cl-none) 'lambda name) args))))
+	  (let ((args (cond ((null arglist) nil)
+			    ((listp arglist) (cl-upcase-arg arglist))
+			    ((symbolp arglist)
+			     (cl-upcase-arg (list '&rest arglist)))
+			    (t (wrong-type-argument 'listp arglist)))))
+	    (if args (prin1-to-string args) "()"))
 	(t "Not available")))))
 
 (defun cl-transform-lambda (form bind-block)
@@ -325,7 +320,7 @@ Supports Common Lisp lambda lists."
 	 (bind-defs nil) (bind-enquote nil)
 	 (bind-inits nil) (bind-lets nil) (bind-forms nil)
 	 (header nil) (simple-args nil)
-         (complex-arglist (cl-function-arglist bind-block args t))
+         (complex-arglist (cl-function-arglist args))
          (doc ""))
     (while (or (stringp (car body)) (eq (car-safe (car body)) 'interactive))
       (push (pop body) header))
@@ -352,7 +347,7 @@ Supports Common Lisp lambda lists."
     ;; Add CL lambda list to documentation, if the CL lambda list differs
     ;; from the non-CL lambda list. npak@ispras.ru
     (unless (equal complex-arglist
-                   (cl-function-arglist bind-block simple-args t))
+                   (cl-function-arglist simple-args))
       (and (stringp (car header)) (setq doc (pop header)))
       ;; Stick the arguments onto the end of the doc string in a way that
       ;; will be recognized specially by `function-arglist'.
@@ -499,8 +494,7 @@ Supports Common Lisp lambda lists."
 			  (list t
 				(list
 				 'error
-				 (format "Keyword argument %%s not one of %s"
-					 keys)
+                                 ''invalid-keyword-argument
 				 (list 'car var)))))))
 	    (push (list 'let (list (list var restarg)) check) bind-forms)))
       (while (and (eq (car args) '&aux) (pop args))
@@ -2164,6 +2158,8 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf face-background (f &optional s) (x) (list 'set-face-background f x s))
 (defsetf face-background-pixmap (f &optional s) (x)
   (list 'set-face-background-pixmap f x s))
+(defsetf face-background-placement (f &optional s) (x)
+  (list 'set-face-background-placement f x s))
 (defsetf face-font (f &optional s) (x) (list 'set-face-font f x s))
 (defsetf face-foreground (f &optional s) (x) (list 'set-face-foreground f x s))
 (defsetf face-underline-p (f &optional s) (x)
@@ -3296,50 +3292,113 @@ surrounded by (block NAME ...)."
 	    (list 'let (list (list temp val)) (subst temp val res)))))
     form))
 
-;; XEmacs; inline delete-duplicates if it's called with a literal
-;; #'equal or #'eq and no other keywords, we want the speed in
-;; font-lock.el.
+(define-compiler-macro delete-dups (list)
+  `(delete-duplicates (the list ,list) :test #'equal :from-end t))
+
+;; XEmacs; inline delete-duplicates if it's called with one of the
+;; common compile-time constant tests and an optional :from-end
+;; argument, we want the speed in font-lock.el.
 (define-compiler-macro delete-duplicates (&whole form cl-seq &rest cl-keys)
   (let ((listp-check 
-         (if (memq (car-safe cl-seq)
-                   ;; No need to check for a list at runtime with these. We
-                   ;; could expand the list, but these are all the functions
-                   ;; in the relevant context at the moment.
-                   '(nreverse append nconc mapcan mapcar))
-             t
-           '(listp begin))))
-    (cond ((and (= 4 (length form))
-                (eq :test (third form))
-                (or (equal '(quote eq) (fourth form))
-                    (equal '(function eq) (fourth form))))
-           `(let* ((begin ,cl-seq)
-                   (cl-seq begin))
-             (if ,listp-check
-                 (progn
-                   (while cl-seq
-                     (setq cl-seq (setcdr cl-seq (delq (car cl-seq)
-                                                       (cdr cl-seq)))))
-                   begin)
-               ;; Call cl-delete-duplicates explicitly, to avoid the form
-               ;; getting compiler-macroexpanded again:
-               (cl-delete-duplicates begin ',cl-keys nil))))
-          ((and (= 4 (length form))
-                (eq :test (third form))
-                (or (equal '(quote equal) (fourth form))
-                    (equal '(function equal) (fourth form))))
-           `(let* ((begin ,cl-seq)
-                   (cl-seq begin))
-             (if ,listp-check
-                 (progn
-                   (while cl-seq
-                     (setq cl-seq (setcdr cl-seq (delete (car cl-seq)
-                                                         (cdr cl-seq)))))
-                   begin)
-               ;; Call cl-delete-duplicates explicitly, to avoid the form
-               ;; getting compiler-macroexpanded again:
-               (cl-delete-duplicates begin ',cl-keys nil))))
+         (cond
+          ((memq (car-safe cl-seq)
+                 ;; No need to check for a list at runtime with these. We
+                 ;; could expand the list, but these are all the functions
+                 ;; in the relevant context at the moment.
+                 '(nreverse append nconc mapcan mapcar string-to-list))
+             t)
+          ((and (listp cl-seq) (eq (first cl-seq) 'the)
+                (eq (second cl-seq) 'list))
+           ;; Allow users to force this, if they really want to.
+           t)
           (t
-           form))))
+           '(listp begin)))))
+    (cond ((loop
+	     for relevant-key-values
+	     in '((:test 'eq)
+		  (:test #'eq)
+		  (:test 'eq :from-end nil)
+		  (:test #'eq :from-end nil))
+	     ;; One of the above corresponds exactly to CL-KEYS:
+	     thereis (not (set-difference cl-keys relevant-key-values
+					  :test #'equal)))
+           `(let* ((begin ,cl-seq)
+		   cl-seq)
+             (if ,listp-check
+                 (progn
+                   (while (memq (car begin) (cdr begin))
+                     (setq begin (cdr begin)))
+                   (setq cl-seq begin)
+                   (while (cddr cl-seq)
+                     (if (memq (cadr cl-seq) (cddr cl-seq))
+                         (setcdr (cdr cl-seq) (cddr cl-seq)))
+                     (setq cl-seq (cdr cl-seq)))
+                   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+          ((loop
+	     for relevant-key-values
+	     in '((:test 'eq :from-end t)
+		  (:test #'eq :from-end t))
+	     ;; One of the above corresponds exactly to CL-KEYS:
+	     thereis (not (set-difference cl-keys relevant-key-values
+					  :test #'equal)))
+           `(let* ((begin ,cl-seq)
+		   (cl-seq begin))
+             (if ,listp-check
+                 (progn
+                   (while cl-seq
+                     (setq cl-seq (setcdr cl-seq
+                                          (delq (car cl-seq) (cdr cl-seq)))))
+                   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+
+          ((loop
+	     for relevant-key-values
+	     in '((:test 'equal)
+		  (:test #'equal)
+		  (:test 'equal :from-end nil)
+		  (:test #'equal :from-end nil))
+	     ;; One of the above corresponds exactly to CL-KEYS:
+	     thereis (not (set-difference cl-keys relevant-key-values
+					  :test #'equal)))
+           `(let* ((begin ,cl-seq)
+		   cl-seq)
+             (if ,listp-check
+                 (progn
+		   (while (member (car begin) (cdr begin))
+		     (setq begin (cdr begin)))
+		   (setq cl-seq begin)
+		   (while (cddr cl-seq)
+		     (if (member (cadr cl-seq) (cddr cl-seq))
+			 (setcdr (cdr cl-seq) (cddr cl-seq)))
+		     (setq cl-seq (cdr cl-seq)))
+		   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+          ((loop
+	     for relevant-key-values
+	     in '((:test 'equal :from-end t)
+		  (:test #'equal :from-end t))
+	     ;; One of the above corresponds exactly to CL-KEYS:
+	     thereis (not (set-difference cl-keys relevant-key-values
+					  :test #'equal)))
+           `(let* ((begin ,cl-seq)
+                   (cl-seq begin))
+             (if ,listp-check
+                 (progn
+                   (while cl-seq
+                     (setq cl-seq
+			   (setcdr cl-seq (delete (car cl-seq) (cdr cl-seq)))))
+		   begin)
+               ;; Call cl-delete-duplicates explicitly, to avoid the form
+               ;; getting compiler-macroexpanded again:
+               (cl-delete-duplicates begin ',cl-keys nil))))
+          (t form))))
 
 ;; XEmacs; it's perfectly reasonable, and often much clearer to those
 ;; reading the code, to call regexp-quote on a constant string, which is
@@ -3550,10 +3609,10 @@ the byte optimizer in those cases."
 ;;	  (t form)))))
 
 (define-compiler-macro notany (&whole form &rest cl-rest)
-  (cons 'not (cons 'some (cdr cl-rest))))
+  `(not (some ,@(cdr form))))
 
 (define-compiler-macro notevery (&whole form &rest cl-rest)
-  (cons 'not (cons 'every (cdr cl-rest))))
+  `(not (every ,@(cdr form))))
 
 (define-compiler-macro constantly (&whole form value &rest more-values)
   (cond

@@ -46,6 +46,214 @@
 	put categories in alphabetical order, move remaning "misc"
 	stuff to bottom.
 
+2010-03-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* hyper-apropos.el (hyper-apropos-get-doc):
+	Use help.el's #'function-arglist, #'function-documentation,
+	#'symbol-file in this function, instead of rolling our own.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-memory-usage):
+	* diagnose.el (show-object-memory-usage-stats):
+	Further changes to correspond with changes in the C code;
+	add an additional column in show-object-memory-usage-stats showing
+	the ancillary Lisp overhead used with each type; shrink columns for
+	windows in show-memory-usage to get it to fit in 79 chars.
+
+2010-03-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-char-display):
+	Behave better on builds without database support, and for
+	characters where no font is available. Especially relevant on
+	Win32.
+
+2010-03-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-win-xfree86.el (x-win-init-xfree86):
+	If iso-left-tab (something ISO-specified and portable in theory;
+	in practice only seen with XFree86 and derived non-US layouts)
+	exists on the keyboard layout, make it equivalent to shift-tab,
+	addressing the issue FKtPp sees in
+	http://mid.gmane.org/1269358206.4873.1.camel@fktpp-laptop .
+
+2010-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (cl-prettyprint):
+	Handle (function ...) specially here, as we do (quote ...).
+
+2010-03-20  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-memory-usage):
+	* diagnose.el (show-object-memory-usage-stats):
+	Further changes to correspond with changes in the C code;
+	add an additional column showing the overhead used with each type,
+	and add it into the grand total memory usage.
+
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-object-memory-usage-stats):
+	Rewrite to take into account non-lisp-storage statistics
+	returned by garbage-collect-1 and friends.
+
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* diagnose.el (show-memory-usage):
+	Rewrite to take into account API changes in memory-usage functions.
+
+2010-03-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (notany, notevery):
+	Correct these compiler macros.
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Fix bug in generating display-table entries for error octet characters.
+
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* test-harness.el (test-harness-from-buffer):
+	Undo change of e.g. (Assert (equalp ...)) to (Assert-equalp ...).
+	Get rid of `Assert-equalp' and friends, `Assert-test', and
+	`Assert-test-not'.  Instead, make `Assert' smart enough to do the
+	equivalent functionality when an expression like (Assert (equalp ...))
+	is seen.
+
+2010-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* setup-paths.el (paths-find-emacs-roots)
+	(paths-construct-info-path):
+	Pass :from-end t to the delete-duplicates calls in these
+	functions, now the compiler macro no longer defaults it to t.
+
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* disp-table.el:
+	* disp-table.el (standard-display-g1):
+	* disp-table.el (standard-display-graphic):
+	Fix up docs; add comments about authorship.
+
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* test-harness.el:
+	* test-harness.el (test-harness-backtrace): New.
+	* test-harness.el (test-harness-assertion-failure-do-debug):
+	* test-harness.el (test-harness-unexpected-error-do-debug):
+	Use the print settings from edebug.el to make backtraces not
+	be so huge.
+
+2010-03-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-compiled-obj-to-list):
+	Remove this function, printing a compiled object to a string and
+	then reading back a substring is senseless, just use the
+	compiled-function slot accessor functions.
+
+2010-03-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (delete-duplicates):
+	Correct the logic of this compiler macro when :from-end is nil,
+	avoiding a hang in query-coding-tests.el. Thanks for the reports,
+	Vin and Mats!
+
+2010-03-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.el (process-args):
+	Use #'subseq here, not #'substring, fixing the native Windows
+	build. Thank you for the error report, Vin!
+
+2010-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move byte code #o117 to #'subseq, not #'substring.
+	Make #'substring available as an alias for #'subseq in Lisp.
+	* bytecomp.el (79, subseq, substring):
+	* bytecomp.el (byte-compile-subseq): New.
+	* update-elc.el (update-elc-chop-extension): Use #'subseq, not
+	#'substring, the latter is not yet available.
+	* subr.el (substring): New alias, to #'subseq.
+
+2010-03-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (delete-dups): New compiler macro for this function,
+	expanding to inline byte codes.
+	(delete-duplicates): Handle the :from-end argument correctly in
+	this compiler macro.
+
+2010-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-seq.el (cl-parsing-keywords):
+	* cl-macs.el (cl-do-arglist):
+	Use the new invalid-keyword-argument error here.
+
+2010-02-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Back out Ben's revision c673987f5f3d.
+	* coding.el:
+	Add a compiler macro for #'make-coding-system on non-Mule builds
+	too, to fix the problem he addressed with that changeset.
+	* mule/make-coding-system.el (fixed-width-private-use-start):
+	Don't call (decode-char ... 'ucs) here, it can make bootstrapping
+	harder.
+
+2010-02-26  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el (autoload-featurep-protect-autoloads):
+	Always insert a coding-system cookie, either raw-text-unix or
+	escape-quoted.  As before, insert an error statement when an
+	escape-quoted auto-autoload is loaded in a non-Mule XEmacs.
+
+	This fixes problems when the default coding system is UTF-8,
+	as in Cygwin.  Under some circumstances, the file can get
+	written out as raw text and read in as UTF-8, where invididual
+	high-bytes are usually invalid UTF-8 sequences and lead to
+	error octets in the buffer; when written out again, these
+	force escape-quoted.  Result: auto-autoloads.el for the
+	source-tree lisp/ directory would end up as escape-quoted.
+
+2010-02-25  Didier Verna  <didier@xemacs.org>
+
+	The background-placement face property.
+	* cl-macs.el (face-background-placement): New defsetf.
+	* cus-face.el (custom-face-attributes):
+	* faces.el (face-interactive):
+	* faces.el (set-face-property):
+	* faces.el (face-equal):
+	* faces.el (init-other-random-faces): Update.
+	* faces.el (face-background-placement):
+	* faces.el (set-face-background-placement):
+	* faces.el (face-background-placement-instance):
+	* faces.el (face-background-placement-instance-p):
+	* frame.el (set-frame-background-placement):
+	* frame.el (frame-background-placement):
+	* frame.el (frame-background-placement-instance):
+	* objects.el (make-face-background-placement-specifier): New.
+
+2010-02-25  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el (make-autoload):
+	Call cl-function-arglist with one arg.
+	
+	* cl-macs.el (cl-function-arglist):
+	* cl-macs.el (cl-transform-lambda):
+	Make cl-function-arglist take only one arg, the arglist; no
+	function name passed.  Also make sure to print () instead of nil
+	when empty arglist, or function-documentation-1 won't recognize
+	the arguments: line.
+	* help.el (function-arglist): If empty arg, don't display extra
+	space after function name.
+
+2010-02-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (constantly):
+	Normally return a compiled function from #'constantly if we are
+	handed a single argument. Shouldn't actually matter, the overhead
+	for returning a single constant in a lambda form vs. in a compiled
+	function is minuscule, but using compiled functions as much as
+	possible is good style in XEmacs, our interpreter is not stellar
+	(nor indeed should it need to be).
+
 2010-02-23  Ben Wing  <ben@xemacs.org>
 
 	* help.el: fux typo in comment. (oops)
@@ -89,29 +297,6 @@
 	compiling the file -- `Skip-Test-Unless' isn't available in the
 	environment during byte-compilation so we can't call it then.
 	
-2010-02-22  Ben Wing  <ben@xemacs.org>
-
-	* mule/make-coding-system.el:
-	* mule/make-coding-system.el (fixed-width-generate-helper):
-	* mule/make-coding-system.el (fixed-width-private-use-start): Removed.
-	* mule/make-coding-system.el (fixed-width-create-decode-encode-tables):
-	* coding.el:
-	* coding.el (decode-char): New.
-	* coding.el (featurep):
-	* coding.el (encode-char): New.
-	* dumped-lisp.el (preloaded-file-list):
-	Dump make-coding-system.  Aidan's hack to avoid dumping this file
-	never really worked right -- with some configurations (not clear
-	exactly which ones) `make-coding-system.el' gets dumped anyway due to
-	calls to `make-coding-system' in unicode.el, with the result that
-	the documentation of functions in make-coding-system.el gets lost.
-
-	Also needed to remove defvar fixed-width-private-use-start and
-	incorporate it inline, due to bootstrapping issues -- the call to
-	decode-char introduced a cross-dependency between unicode.el and
-	make-coding-system.el.
-	
-
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* cl-seq.el:

@@ -1,7 +1,7 @@
 /* Conversion functions for I18N encodings, but not Unicode (in separate file).
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2545,7 +2545,7 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	  if (EQ (charset, Vcharset_control_1))
 	    {
 	      if (XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)
-		  && fit_to_be_escape_quoted (c))
+		  && fit_to_be_escape_quoted (c - 0x20))
 		Dynarr_add (dst, ISO_CODE_ESC);
 	      /* you asked for it ... */
 	      Dynarr_add (dst, c - 0x20);
@@ -2839,14 +2839,15 @@ iso2022_putprop (Lisp_Object codesys,
   return 1;
 }
 
-static void
-iso2022_finalize_coding_stream (
 #ifdef ENABLE_COMPOSITE_CHARS
-				struct coding_stream *str
+#define USED_IF_COMPOSITE_CHARS(x) x
 #else
-				struct coding_stream *UNUSED (str)
+#define USED_IF_COMPOSITE_CHARS(x) UNUSED (x)
 #endif
-				)
+
+static void
+iso2022_finalize_coding_stream (struct coding_stream *
+				USED_IF_COMPOSITE_CHARS (str))
 {
 #ifdef ENABLE_COMPOSITE_CHARS
   struct iso2022_coding_stream *data =
@@ -3247,7 +3248,10 @@ iso2022_finalize_detection_state (struct detection_state *st)
 {
   struct iso2022_detector *data = DETECTION_STATE_DATA (st, iso2022);
   if (data->iso)
-    xfree (data->iso);
+    {
+      xfree (data->iso);
+      data->iso = 0;
+    }
 }
 
 

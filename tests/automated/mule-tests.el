@@ -1,4 +1,5 @@
 ;; Copyright (C) 1999 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Hrvoje Niksic <hniksic@xemacs.org>
 ;; Maintainers: Hrvoje Niksic <hniksic@xemacs.org>,
@@ -65,7 +66,7 @@ the Assert macro checks for correctness."
 	  ;; buffer.
 	  (with-temp-buffer
 	    (insert string)
-	    (Assert-equal (buffer-string) string))
+	    (Assert (equal (buffer-string) string)))
 	;; For use without test harness: use a normal buffer, so that
 	;; you can also test whether redisplay works.
 	(switch-to-buffer (get-buffer-create "test"))
@@ -152,12 +153,12 @@ This is a naive implementation in Lisp.  "
   (dolist (coding-system '(utf-8 windows-1251 macintosh big5))
     (when (find-coding-system coding-system)
       (find-file existing-file-name coding-system)
-      (Assert-eq (find-coding-system coding-system)
-                  buffer-file-coding-system)
+      (Assert (eq (find-coding-system coding-system)
+                  buffer-file-coding-system))
       (kill-buffer nil)
       (find-file nonexistent-file-name coding-system)
-      (Assert-eq (find-coding-system coding-system)
-                  buffer-file-coding-system)
+      (Assert (eq (find-coding-system coding-system)
+                  buffer-file-coding-system))
       (set-buffer-modified-p nil)
       (kill-buffer nil)))
   (delete-file existing-file-name))
@@ -177,9 +178,9 @@ This is a naive implementation in Lisp.  "
 	      (char2 (make-char charset2 69)))
 	  `(let ((string (make-string 1000 ,char1)))
 	     (fillarray string ,char2)
-	     (Assert-eq (aref string 0) ,char2)
-	     (Assert-eq (aref string (1- (length string))) ,char2)
-	     (Assert-eq (length string) 1000)))))
+	     (Assert (eq (aref string 0) ,char2))
+	     (Assert (eq (aref string (1- (length string))) ,char2))
+	     (Assert (eq (length string) 1000))))))
     (fillarray-test ascii latin-iso8859-1)
     (fillarray-test ascii latin-iso8859-2)
     (fillarray-test latin-iso8859-1 ascii)
@@ -188,7 +189,7 @@ This is a naive implementation in Lisp.  "
   ;; Test aset
   (let ((string (string (make-char 'ascii 69) (make-char 'latin-iso8859-2 69))))
     (aset string 0 (make-char 'latin-iso8859-2 42))
-    (Assert-eq (aref string 1) (make-char 'latin-iso8859-2 69)))
+    (Assert (eq (aref string 1) (make-char 'latin-iso8859-2 69))))
 
   ;;---------------------------------------------------------------
   ;; Test coding system functions
@@ -210,8 +211,8 @@ This is a naive implementation in Lisp.  "
   (define-coding-system-alias 'mule-tests-alias 'binary)
   (Assert (coding-system-alias-p 'mule-tests-alias))
   (Assert (not (coding-system-canonical-name-p 'mule-tests-alias)))
-  (Assert-eq (get-coding-system 'binary) (get-coding-system 'mule-tests-alias))
-  (Assert-eq 'binary (coding-system-aliasee 'mule-tests-alias))
+  (Assert (eq (get-coding-system 'binary) (get-coding-system 'mule-tests-alias)))
+  (Assert (eq 'binary (coding-system-aliasee 'mule-tests-alias)))
   (Assert (not (coding-system-alias-p 'mule-tests-alias-unix)))
   (Assert (not (coding-system-alias-p 'mule-tests-alias-dos)))
   (Assert (not (coding-system-alias-p 'mule-tests-alias-mac)))
@@ -219,8 +220,8 @@ This is a naive implementation in Lisp.  "
   (define-coding-system-alias 'mule-tests-alias (get-coding-system 'binary))
   (Assert (coding-system-alias-p 'mule-tests-alias))
   (Assert (not (coding-system-canonical-name-p 'mule-tests-alias)))
-  (Assert-eq (get-coding-system 'binary) (get-coding-system 'mule-tests-alias))
-  (Assert-eq 'binary (coding-system-aliasee 'mule-tests-alias))
+  (Assert (eq (get-coding-system 'binary) (get-coding-system 'mule-tests-alias)))
+  (Assert (eq 'binary (coding-system-aliasee 'mule-tests-alias)))
   (Assert (not (coding-system-alias-p 'mule-tests-alias-unix)))
   (Assert (not (coding-system-alias-p 'mule-tests-alias-dos)))
   (Assert (not (coding-system-alias-p 'mule-tests-alias-mac)))
@@ -228,9 +229,9 @@ This is a naive implementation in Lisp.  "
   (define-coding-system-alias 'nested-mule-tests-alias 'mule-tests-alias)
   (Assert (coding-system-alias-p 'nested-mule-tests-alias))
   (Assert (not (coding-system-canonical-name-p 'nested-mule-tests-alias)))
-  (Assert-eq (get-coding-system 'binary) (get-coding-system 'nested-mule-tests-alias))
-  (Assert-eq (coding-system-aliasee 'nested-mule-tests-alias) 'mule-tests-alias)
-  (Assert-eq 'mule-tests-alias (coding-system-aliasee 'nested-mule-tests-alias))
+  (Assert (eq (get-coding-system 'binary) (get-coding-system 'nested-mule-tests-alias)))
+  (Assert (eq (coding-system-aliasee 'nested-mule-tests-alias) 'mule-tests-alias))
+  (Assert (eq 'mule-tests-alias (coding-system-aliasee 'nested-mule-tests-alias)))
   (Assert (not (coding-system-alias-p 'nested-mule-tests-alias-unix)))
   (Assert (not (coding-system-alias-p 'nested-mule-tests-alias-dos)))
   (Assert (not (coding-system-alias-p 'nested-mule-tests-alias-mac)))
@@ -266,8 +267,8 @@ This is a naive implementation in Lisp.  "
   (define-coding-system-alias 'mule-tests-alias 'iso-8859-7)
   (Assert (coding-system-alias-p 'mule-tests-alias))
   (Assert (not (coding-system-canonical-name-p 'mule-tests-alias)))
-  (Assert-eq (get-coding-system 'iso-8859-7) (get-coding-system 'mule-tests-alias))
-  (Assert-eq 'iso-8859-7 (coding-system-aliasee 'mule-tests-alias))
+  (Assert (eq (get-coding-system 'iso-8859-7) (get-coding-system 'mule-tests-alias)))
+  (Assert (eq 'iso-8859-7 (coding-system-aliasee 'mule-tests-alias)))
   (Assert (coding-system-alias-p 'mule-tests-alias-unix))
   (Assert (coding-system-alias-p 'mule-tests-alias-dos))
   (Assert (coding-system-alias-p 'mule-tests-alias-mac))
@@ -275,26 +276,26 @@ This is a naive implementation in Lisp.  "
   (define-coding-system-alias 'mule-tests-alias (get-coding-system 'iso-8859-7))
   (Assert (coding-system-alias-p 'mule-tests-alias))
   (Assert (not (coding-system-canonical-name-p 'mule-tests-alias)))
-  (Assert-eq (get-coding-system 'iso-8859-7) (get-coding-system 'mule-tests-alias))
-  (Assert-eq 'iso-8859-7 (coding-system-aliasee 'mule-tests-alias))
+  (Assert (eq (get-coding-system 'iso-8859-7) (get-coding-system 'mule-tests-alias)))
+  (Assert (eq 'iso-8859-7 (coding-system-aliasee 'mule-tests-alias)))
   (Assert (coding-system-alias-p 'mule-tests-alias-unix))
   (Assert (coding-system-alias-p 'mule-tests-alias-dos))
   (Assert (coding-system-alias-p 'mule-tests-alias-mac))
-  (Assert-eq (find-coding-system 'mule-tests-alias-mac)
-	      (find-coding-system 'iso-8859-7-mac))
+  (Assert (eq (find-coding-system 'mule-tests-alias-mac)
+	      (find-coding-system 'iso-8859-7-mac)))
 
   (define-coding-system-alias 'nested-mule-tests-alias 'mule-tests-alias)
   (Assert (coding-system-alias-p 'nested-mule-tests-alias))
   (Assert (not (coding-system-canonical-name-p 'nested-mule-tests-alias)))
-  (Assert-eq (get-coding-system 'iso-8859-7)
-	      (get-coding-system 'nested-mule-tests-alias))
-  (Assert-eq (coding-system-aliasee 'nested-mule-tests-alias) 'mule-tests-alias)
-  (Assert-eq 'mule-tests-alias (coding-system-aliasee 'nested-mule-tests-alias))
+  (Assert (eq (get-coding-system 'iso-8859-7)
+	      (get-coding-system 'nested-mule-tests-alias)))
+  (Assert (eq (coding-system-aliasee 'nested-mule-tests-alias) 'mule-tests-alias))
+  (Assert (eq 'mule-tests-alias (coding-system-aliasee 'nested-mule-tests-alias)))
   (Assert (coding-system-alias-p 'nested-mule-tests-alias-unix))
   (Assert (coding-system-alias-p 'nested-mule-tests-alias-dos))
   (Assert (coding-system-alias-p 'nested-mule-tests-alias-mac))
-  (Assert-eq (find-coding-system 'nested-mule-tests-alias-unix)
-	      (find-coding-system 'iso-8859-7-unix))
+  (Assert (eq (find-coding-system 'nested-mule-tests-alias-unix)
+	      (find-coding-system 'iso-8859-7-unix)))
 
   (Check-Error-Message
    error "Attempt to create a coding system alias loop"
@@ -351,28 +352,51 @@ This is a naive implementation in Lisp.  "
     (loop for j from 0 below (length string) do
       (aset string j (aref greek-string (mod j 96))))
     (loop for k in '(0 1 58 59) do
-      (Assert-equal (substring string (* 96 k) (* 96 (1+ k))) greek-string)))
+      (Assert (equal (substring string (* 96 k) (* 96 (1+ k))) greek-string))))
 
   (let ((greek-string (charset-char-string 'greek-iso8859-7))
 	(string (make-string (* 96 60) ??)))
    (loop for j from (1- (length string)) downto 0 do
      (aset string j (aref greek-string (mod j 96))))
    (loop for k in '(0 1 58 59) do
-     (Assert-equal (substring string (* 96 k) (* 96 (1+ k))) greek-string)))
+     (Assert (equal (substring string (* 96 k) (* 96 (1+ k))) greek-string))))
 
   (let ((ascii-string (charset-char-string 'ascii))
 	(string (make-string (* 94 60) (make-char 'greek-iso8859-7 57))))
    (loop for j from 0 below (length string) do
       (aset string j (aref ascii-string (mod j 94))))
     (loop for k in '(0 1 58 59) do
-      (Assert-equal (substring string (* 94 k) (+ 94 (* 94 k))) ascii-string)))
+      (Assert (equal (substring string (* 94 k) (+ 94 (* 94 k))) ascii-string))))
 
   (let ((ascii-string (charset-char-string 'ascii))
 	(string (make-string (* 94 60) (make-char 'greek-iso8859-7 57))))
     (loop for j from (1- (length string)) downto 0 do
       (aset string j (aref ascii-string (mod j 94))))
     (loop for k in '(0 1 58 59) do
-      (Assert-equal (substring string (* 94 k) (* 94 (1+ k))) ascii-string)))
+      (Assert (equal (substring string (* 94 k) (* 94 (1+ k))) ascii-string))))
+
+  ;;---------------------------------------------------------------
+  ;; Test string character conversion
+  ;;---------------------------------------------------------------
+
+  ;; #### This should test all coding systems!
+
+  (let ((all-octets (let ((s (make-string 256 ?\000)))
+		      (loop for i from (1- (length s)) downto 0 do
+			(aset s i (int-char i)))
+		      s))
+	(escape-quoted-result (let ((schar '(27 155 142 143 14 15))
+				    (s (make-string 262 ?\000))
+				    (pos 0))
+				(loop for ord from 0 to 255 do
+				  (when (member ord schar)
+				    (aset s pos ?\033)
+				    (incf pos))
+				  (aset s pos (int-char ord))
+				  (incf pos))
+				s)))
+    (Assert (string= (encode-coding-string all-octets 'escape-quoted)
+		     escape-quoted-result)))
 
   ;;---------------------------------------------------------------
   ;; Test file-system character conversion (and, en passant, file ops)
@@ -415,8 +439,8 @@ This is a naive implementation in Lisp.  "
     (when working-symlinks
       (make-symbolic-link name1 name2)
       (Assert (file-exists-p name2))
-      (Assert-equal (file-truename name2) name1)
-      (Assert-equal (file-truename name1) name1))
+      (Assert (equal (file-truename name2) name1))
+      (Assert (equal (file-truename name1) name1)))
     (ignore-file-errors (delete-file name1))
     (ignore-file-errors (delete-file name2))
     (ignore-file-errors (delete-file name3)))
@@ -434,8 +458,8 @@ This is a naive implementation in Lisp.  "
       do
       (progn
 	(set-unicode-conversion scaron code)
-	(Assert-eq code (char-to-unicode scaron))
-	(Assert-eq scaron (unicode-to-char code '(latin-iso8859-2))))
+	(Assert (eq code (char-to-unicode scaron)))
+	(Assert (eq scaron (unicode-to-char code '(latin-iso8859-2)))))
       finally (set-unicode-conversion scaron initial-unicode))
     (Check-Error wrong-type-argument (set-unicode-conversion scaron -10000)))
 
@@ -450,37 +474,37 @@ This is a naive implementation in Lisp.  "
     (let* ((xemacs-character (car (append 
 				  (decode-coding-string utf-8-char 'utf-8) 
 				  nil)))
-	   (xemacs-charset (char-charset xemacs-character)))
+	   (xemacs-charset (car (split-char xemacs-character))))
 
       ;; Trivial test of the UTF-8 support of the escape-quoted character set. 
-      (Assert-equal (decode-coding-string utf-8-char 'utf-8)
+      (Assert (equal (decode-coding-string utf-8-char 'utf-8)
 		     (decode-coding-string (concat "\033%G" utf-8-char)
-					   'escape-quoted))
+					   'escape-quoted)))
 
       ;; Check that the reverse mapping holds. 
-      (Assert-equal (unicode-code-point-to-utf-8-string 
+      (Assert (equal (unicode-code-point-to-utf-8-string 
 		      (encode-char xemacs-character 'ucs))
-		     utf-8-char)
+		     utf-8-char))
 
       ;; Check that, if this character has been JIT-allocated, it is encoded
       ;; in escape-quoted using the corresponding UTF-8 escape. 
       (when (charset-property xemacs-charset 'encode-as-utf-8)
-	(Assert-equal (concat "\033%G" utf-8-char)
-		       (encode-coding-string xemacs-character 'escape-quoted))
-	(Assert-equal (concat "\033%G" utf-8-char)
-		       (encode-coding-string xemacs-character 'ctext)))))
+	(Assert (equal (concat "\033%G" utf-8-char)
+		       (encode-coding-string xemacs-character 'escape-quoted)))
+	(Assert (equal (concat "\033%G" utf-8-char)
+		       (encode-coding-string xemacs-character 'ctext))))))
 
   (loop
     for (code-point utf-16-big-endian utf-16-little-endian) 
     in '((#x10000 "\xd8\x00\xdc\x00" "\x00\xd8\x00\xdc")
          (#x10FFFD "\xdb\xff\xdf\xfd" "\xff\xdb\xfd\xdf"))
     do
-    (Assert-equal (encode-coding-string 
+    (Assert (equal (encode-coding-string 
                     (decode-char 'ucs code-point) 'utf-16)
-                   utf-16-big-endian)
-    (Assert-equal (encode-coding-string 
+                   utf-16-big-endian))
+    (Assert (equal (encode-coding-string 
                     (decode-char 'ucs code-point) 'utf-16-le)
-                   utf-16-little-endian))
+                   utf-16-little-endian)))
 
          
   ;;---------------------------------------------------------------
@@ -497,11 +521,11 @@ This is a naive implementation in Lisp.  "
 	 (write-multibyte-character r0 r1))) 
       "CCL program that writes two control-1 multibyte characters.") 
  
-    (Assert-equal 
+    (Assert (equal 
 	     (ccl-execute-on-string 'ccl-write-two-control-1-chars  
 				    ccl-vector "") 
 	     (format "%c%c" (make-char 'control-1 0) 
-		     (make-char 'control-1 31)))
+		     (make-char 'control-1 31))))
 
     (define-ccl-program ccl-unicode-two-control-1-chars 
       `(1 
@@ -539,11 +563,11 @@ This is a naive implementation in Lisp.  "
 	       ;; (maybe we should):
 	       (eq 'lf (coding-system-eol-type coding-system)))
       ;; These coding systems are round-trip compatible with themselves.
-      (Assert-equal (encode-coding-string 
+      (Assert (equal (encode-coding-string 
 		      (decode-coding-string all-possible-octets
 					    coding-system)
 		      coding-system)
-		     all-possible-octets
+		     all-possible-octets)
               (format "checking %s is transparent" coding-system))))
 
   ;;---------------------------------------------------------------
@@ -557,17 +581,17 @@ This is a naive implementation in Lisp.  "
 	     hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
 	     katakana-jisx0201 korean-ksc5601 latin-iso8859-1
 	     latin-iso8859-2 vietnamese-viscii-lower)))
-      (Assert-equal 
+      (Assert (equal 
        ;; The sort is to make the algorithm of charsets-in-region
        ;; irrelevant.
        (sort (charsets-in-region (point-min) (point-max))
 	     #'string<)
-       sorted-charsets-in-HELLO)
-      (Assert-equal 
+       sorted-charsets-in-HELLO))
+      (Assert (equal 
        (sort (charsets-in-string (buffer-substring (point-min)
 						   (point-max)))
 	     #'string<)
-       sorted-charsets-in-HELLO)))
+       sorted-charsets-in-HELLO))))
 
   ;;---------------------------------------------------------------
   ;; Language environments, and whether the specified values are sane.
@@ -580,7 +604,7 @@ This is a naive implementation in Lisp.  "
     do
     ;; s-l-e can call #'require, which says "Loading ..."
     (Silence-Message (set-language-environment language))
-    (Assert-equal language current-language-environment)
+    (Assert (equal language current-language-environment))
 
     (setq language-input-method
 	  (get-language-info language 'input-method))
@@ -600,7 +624,7 @@ This is a naive implementation in Lisp.  "
        ;; s-i-m can load files.
        (Silence-Message
 	(set-input-method language-input-method))
-       (Assert-equal language-input-method current-input-method)))
+       (Assert (equal language-input-method current-input-method))))
 
     (dolist (charset (get-language-info language 'charset))
       (Assert (charsetp (find-charset charset))))

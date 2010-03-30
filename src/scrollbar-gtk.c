@@ -3,6 +3,7 @@
    Copyright (C) 1994 Amdhal Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -65,6 +66,7 @@ gtk_free_scrollbar_instance (struct scrollbar_instance *instance)
 	}
 
       xfree (instance->scrollbar_data);
+      instance->scrollbar_data = 0;
     }
 }
 
@@ -474,23 +476,15 @@ gtk_update_frame_scrollbars (struct frame *f)
 }
 
 #ifdef MEMORY_USAGE_STATS
-static int
+static Bytecount
 gtk_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 				      struct scrollbar_instance *inst,
-				      struct overhead_stats *ovstats)
+				      struct usage_stats *ustats)
 {
-  int total = 0;
+  struct gtk_scrollbar_data *data =
+    (struct gtk_scrollbar_data *) inst->scrollbar_data;
 
-  while (inst)
-    {
-      struct gtk_scrollbar_data *data =
-	(struct gtk_scrollbar_data *) inst->scrollbar_data;
-
-      total += malloced_storage_size (data, sizeof (*data), ovstats);
-      inst = inst->next;
-    }
-
-  return total;
+  return malloced_storage_size (data, sizeof (*data), ustats);
 }
 
 #endif /* MEMORY_USAGE_STATS */

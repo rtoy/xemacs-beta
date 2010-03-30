@@ -5,7 +5,7 @@
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002, 2010 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -464,27 +464,42 @@ The optional third argument CHARSET is, for the moment, ignored."
   (and (query-coding-string char coding-system)
        (encode-coding-string char coding-system)))
 
-(defun decode-char (quote-ucs code &optional restriction) 
-  "FSF compatibility--return Mule character with Unicode codepoint CODE.
-The second argument must be 'ucs, the third argument is ignored.  "
-  ;; We're prepared to accept invalid Unicode in unicode-to-char, but not in
-  ;; this function, which is the API that should actually be used, since
-  ;; it's available in GNU and in Mule-UCS.
-  (check-argument-range code #x0 #x10FFFF)
-  (assert (eq quote-ucs 'ucs) t
-	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
-  (unicode-to-char code))
+(if (featurep 'mule)
+    (progn
+      ;; Under Mule, we do much of the complicated coding system creation in
+      ;; Lisp and especially at compile time. We need some function
+      ;; definition for this function to be created in this file, but we can
+      ;; leave assigning the docstring to the autoload cookie
+      ;; handling later. Thankfully; that docstring is big.
+      (autoload 'make-coding-system "mule/make-coding-system")
 
-(defun encode-char (char quote-ucs &optional restriction)
-  "FSF compatibility--return the Unicode code point of CHAR.
-The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs) t
-	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
-  (char-to-unicode char))
+      ;; (During byte-compile before dumping, make-coding-system may already
+      ;; have been loaded, make sure not to overwrite the correct compiler
+      ;; macro:)
+      (when (eq 'autoload (car (symbol-function 'make-coding-system)))
+        ;; Make sure to pick up the correct compiler macro when compiling
+        ;; files:
+        (define-compiler-macro make-coding-system (&whole form name type
+                                                   &optional description props)
+          (load (second (symbol-function 'make-coding-system)))
+          (funcall (get 'make-coding-system 'cl-compiler-macro)
+                   form name type description props))))
 
-(unless (featurep 'mule)
   ;; Mule's not available; 
   (fset 'make-coding-system (symbol-function 'make-coding-system-internal))
+  (define-compiler-macro make-coding-system (&whole form name type
+                                             &optional description props)
+    (cond
+     ;; We shouldn't normally see these forms under non-Mule; they're all in
+     ;; the mule/ subdirectory.
+     ((equal '(quote fixed-width) type)
+      form)
+     ((byte-compile-constp type)
+      `(funcall (or (and (fboundp 'make-coding-system-internal)
+                         'make-coding-system-internal) 'make-coding-system)
+        ,@(cdr form)))
+     (t form)))
+
   (define-coding-system-alias 'escape-quoted 'binary)
 
   ;; These are so that gnus and friends work when not mule:

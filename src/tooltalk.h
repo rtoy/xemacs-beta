@@ -27,14 +27,14 @@ Boston, MA 02111-1307, USA.
 #include TT_C_H_FILE
 
 typedef struct Lisp_Tooltalk_Message Lisp_Tooltalk_Message;
-DECLARE_LRECORD (tooltalk_message, Lisp_Tooltalk_Message);
+DECLARE_LISP_OBJECT (tooltalk_message, Lisp_Tooltalk_Message);
 #define XTOOLTALK_MESSAGE(x) XRECORD (x, tooltalk_message, Lisp_Tooltalk_Message)
 #define wrap_tooltalk_message(p) wrap_record (p, tooltalk_message)
 #define TOOLTALK_MESSAGEP(x) RECORDP (x, tooltalk_message)
 #define CHECK_TOOLTALK_MESSAGE(x) CHECK_RECORD (x, tooltalk_message)
 
 typedef struct Lisp_Tooltalk_Pattern Lisp_Tooltalk_Pattern;
-DECLARE_LRECORD (tooltalk_pattern, Lisp_Tooltalk_Pattern);
+DECLARE_LISP_OBJECT (tooltalk_pattern, Lisp_Tooltalk_Pattern);
 #define XTOOLTALK_PATTERN(x) XRECORD (x, tooltalk_pattern, Lisp_Tooltalk_Pattern)
 #define wrap_tooltalk_pattern(p) wrap_record (p, tooltalk_pattern)
 #define TOOLTALK_PATTERNP(x) RECORDP (x, tooltalk_pattern)

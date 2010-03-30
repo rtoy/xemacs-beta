@@ -1,3 +1,116 @@
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* automated/c-tests.el:
+	* automated/c-tests.el (when):
+	Use `with-temp-buffer' so results don't get written into source
+	file.
+
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* automated/base64-tests.el (bt-base64-encode-string):
+	* automated/base64-tests.el (bt-base64-decode-string):
+	* automated/base64-tests.el (for):
+	* automated/byte-compiler-tests.el:
+	* automated/byte-compiler-tests.el (before-and-after-compile-equal):
+	* automated/case-tests.el (downcase-string):
+	* automated/case-tests.el (uni-mappings):
+	* automated/ccl-tests.el (ccl-test-normal-expr):
+	* automated/ccl-tests.el (ccl-test-map-instructions):
+	* automated/ccl-tests.el (ccl-test-suites):
+	* automated/database-tests.el (delete-database-files):
+	* automated/extent-tests.el (let):
+	* automated/extent-tests.el (insert):
+	* automated/extent-tests.el (props):
+	* automated/file-tests.el:
+	* automated/file-tests.el (for):
+	* automated/hash-table-tests.el (test):
+	* automated/hash-table-tests.el (for):
+	* automated/hash-table-tests.el (ht):
+	* automated/hash-table-tests.el (iterations):
+	* automated/hash-table-tests.el (h1):
+	* automated/hash-table-tests.el (equal):
+	* automated/hash-table-tests.el (=):
+	* automated/lisp-tests.el:
+	* automated/lisp-tests.el (eq):
+	* automated/lisp-tests.el (test-setq):
+	* automated/lisp-tests.el (my-vector):
+	* automated/lisp-tests.el (x):
+	* automated/lisp-tests.el (equal):
+	* automated/lisp-tests.el (y):
+	* automated/lisp-tests.el (featurep):
+	* automated/lisp-tests.el (=):
+	* automated/lisp-tests.el (six):
+	* automated/lisp-tests.el (three):
+	* automated/lisp-tests.el (one):
+	* automated/lisp-tests.el (two):
+	* automated/lisp-tests.el (five):
+	* automated/lisp-tests.el (test1):
+	* automated/lisp-tests.el (division-test):
+	* automated/lisp-tests.el (for):
+	* automated/lisp-tests.el (check-function-argcounts):
+	* automated/lisp-tests.el (z):
+	* automated/lisp-tests.el (eql):
+	* automated/lisp-tests.el (test-harness-risk-infloops):
+	* automated/lisp-tests.el (erase-buffer):
+	* automated/lisp-tests.el (sym):
+	* automated/lisp-tests.el (new-char):
+	* automated/lisp-tests.el (new-load-file-name):
+	* automated/lisp-tests.el (cl-floor):
+	* automated/lisp-tests.el (foo):
+	* automated/md5-tests.el (lambda):
+	* automated/md5-tests.el (large-string):
+	* automated/md5-tests.el (mapcar):
+	* automated/md5-tests.el (insert):
+	* automated/mule-tests.el:
+	* automated/mule-tests.el (test-chars):
+	* automated/mule-tests.el (existing-file-name):
+	* automated/mule-tests.el (featurep):
+	* automated/query-coding-tests.el (featurep):
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (insert):
+	* automated/regexp-tests.el (Assert):
+	* automated/regexp-tests.el (=):
+	* automated/regexp-tests.el (featurep):
+	* automated/regexp-tests.el (text):
+	* automated/regexp-tests.el (text1):
+	* automated/regexp-tests.el ("aáa"):
+	* automated/regexp-tests.el (eql):
+	* automated/search-tests.el (insert):
+	* automated/search-tests.el (featurep):
+	* automated/search-tests.el (let):
+	* automated/search-tests.el (boundp):
+	* automated/symbol-tests.el:
+	* automated/symbol-tests.el (name):
+	* automated/symbol-tests.el (check-weak-list-unique):
+	* automated/symbol-tests.el (string):
+	* automated/symbol-tests.el (list):
+	* automated/symbol-tests.el (foo):
+	* automated/symbol-tests.el (eq):
+	* automated/symbol-tests.el (fresh-keyword-name):
+	* automated/symbol-tests.el (print-gensym):
+	* automated/symbol-tests.el (mysym):
+	* automated/syntax-tests.el (test-forward-word):
+	* automated/syntax-tests.el (test-backward-word):
+	* automated/syntax-tests.el (test-syntax-table):
+	* automated/syntax-tests.el (with-syntax-table):
+	* automated/syntax-tests.el (Skip-Test-Unless):
+	* automated/syntax-tests.el (with):
+	* automated/tag-tests.el (testfile):
+	* automated/weak-tests.el (w):
+	* automated/weak-tests.el (p):
+	* automated/weak-tests.el (a):
+	Undo change of e.g. (Assert (equalp ...)) to (Assert-equalp ...).
+	Get rid of `Assert-equalp' and friends, `Assert-test', and
+	`Assert-test-not'.  Instead, make `Assert' smart enough to do the
+	equivalent functionality when an expression like (Assert (equalp ...))
+	is seen.
+
+2010-03-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el (string character conversion):
+	Test escape-quoted for the range U+0000 to U+00FF.
+	Inspired by Ben's patch to fix quoting of specials from C1 controls.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* reproduce-crashes.el (8):

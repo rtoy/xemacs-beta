@@ -1,6 +1,6 @@
 /* Commonly-used symbols -- include file
    Copyright (C) 1995 Sun Microsystems.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -46,9 +46,9 @@ To sort the crap in this file, use the following:
 SYMBOL (Qabort);
 SYMBOL_KEYWORD (Q_accelerator);
 SYMBOL_KEYWORD (Q_active);
-SYMBOL (Qactually_requested);
 SYMBOL (Qafter);
 SYMBOL (Qall);
+SYMBOL_KEYWORD (Q_allow_other_keys);
 SYMBOL (Qand);
 SYMBOL (Qappend);
 SYMBOL (Qascii);
@@ -114,7 +114,6 @@ SYMBOL (Qdisplay);
 SYMBOL (Qdoc_string);
 SYMBOL (Qdocumentation);
 SYMBOL (Qduplex);
-SYMBOL (Qdynarr_overhead);
 SYMBOL (Qemergency);
 SYMBOL (Qempty);
 SYMBOL (Qencode_as_utf_8);
@@ -142,7 +141,6 @@ SYMBOL (Qfrom_unicode);
 SYMBOL (Qfull_assoc);
 SYMBOL (Qfuncall);
 SYMBOL (Qfunction);
-SYMBOL (Qgap_overhead);
 SYMBOL (Qgarbage_collection);
 SYMBOL (Qgeneric);
 SYMBOL (Qgeometry);
@@ -192,7 +190,6 @@ SYMBOL (Qlittle_endian);
 SYMBOL (Qlocale);
 SYMBOL (Qlow);
 SYMBOL (Qmagic);
-SYMBOL (Qmalloc_overhead);
 SYMBOL_KEYWORD (Q_margin_width);
 SYMBOL (Qmarkers);
 SYMBOL (Qmax);

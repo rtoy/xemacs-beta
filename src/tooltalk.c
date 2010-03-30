@@ -1,7 +1,7 @@
 /* Tooltalk support for Emacs.
    Copyright (C) 1993, 1994 Sun Microsystems, Inc.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -147,7 +147,7 @@ Lisp_Object Qtooltalk_messagep;
 
 struct Lisp_Tooltalk_Message
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object plist_sym, callback;
   Tt_message m;
 };
@@ -172,30 +172,28 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Tooltalk_Message *p = XTOOLTALK_MESSAGE (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string (printcharfun, "#<tooltalk-message id:0x%lx 0x%x>",
-		    (long) (p->m), p->header.uid);
+		    (long) (p->m), LISP_OBJECT_UID (obj));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-message", tooltalk_message,
-			       0, /*dumpable-flag*/
-                               mark_tooltalk_message, print_tooltalk_message,
-                               0, 0, 0, 
-			       tooltalk_message_description,
-			       Lisp_Tooltalk_Message);
+DEFINE_NODUMP_LISP_OBJECT ("tooltalk-message", tooltalk_message,
+			   mark_tooltalk_message, print_tooltalk_message,
+			   0, 0, 0, 
+			   tooltalk_message_description,
+			   Lisp_Tooltalk_Message);
 
 static Lisp_Object
 make_tooltalk_message (Tt_message m)
 {
-  Lisp_Object val;
-  Lisp_Tooltalk_Message *msg =
-    ALLOC_LCRECORD_TYPE (Lisp_Tooltalk_Message, &lrecord_tooltalk_message);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (tooltalk_message);
+  Lisp_Tooltalk_Message *msg = XTOOLTALK_MESSAGE (obj);
 
   msg->m = m;
   msg->callback = Qnil;
   msg->plist_sym = Fmake_symbol (Tooltalk_Message_plist_str);
-  return wrap_tooltalk_message (msg);
+  return obj;
 }
 
 Tt_message
@@ -224,7 +222,7 @@ Lisp_Object Qtooltalk_patternp;
 
 struct Lisp_Tooltalk_Pattern
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object plist_sym, callback;
   Tt_pattern p;
 };
@@ -249,31 +247,29 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Tooltalk_Pattern *p = XTOOLTALK_PATTERN (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string (printcharfun, "#<tooltalk-pattern id:0x%lx 0x%x>",
-		    (long) (p->p), p->header.uid);
+		    (long) (p->p), LISP_OBJECT_UID (obj));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-pattern", tooltalk_pattern,
-			       0, /*dumpable-flag*/
-                               mark_tooltalk_pattern, print_tooltalk_pattern,
-                               0, 0, 0, 
-			       tooltalk_pattern_description,
-			       Lisp_Tooltalk_Pattern);
+DEFINE_NODUMP_LISP_OBJECT ("tooltalk-pattern", tooltalk_pattern,
+			   mark_tooltalk_pattern, print_tooltalk_pattern,
+			   0, 0, 0, 
+			   tooltalk_pattern_description,
+			   Lisp_Tooltalk_Pattern);
 
 static Lisp_Object
 make_tooltalk_pattern (Tt_pattern p)
 {
-  Lisp_Tooltalk_Pattern *pat =
-    ALLOC_LCRECORD_TYPE (Lisp_Tooltalk_Pattern, &lrecord_tooltalk_pattern);
-  Lisp_Object val;
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (tooltalk_pattern);
+  Lisp_Tooltalk_Pattern *pat = XTOOLTALK_PATTERN (obj);
 
   pat->p = p;
   pat->callback = Qnil;
   pat->plist_sym = Fmake_symbol (Tooltalk_Pattern_plist_str);
 
-  return wrap_tooltalk_pattern (pat);
+  return obj;
 }
 
 static Tt_pattern
@@ -1314,8 +1310,8 @@ Returns t if successful, nil otherwise.
 void
 syms_of_tooltalk (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (tooltalk_message);
-  INIT_LRECORD_IMPLEMENTATION (tooltalk_pattern);
+  INIT_LISP_OBJECT (tooltalk_message);
+  INIT_LISP_OBJECT (tooltalk_pattern);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qtooltalk_messagep);
   DEFSUBR (Ftooltalk_message_p);

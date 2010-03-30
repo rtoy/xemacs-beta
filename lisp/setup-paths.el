@@ -150,11 +150,11 @@ ROOT-P is a function that tests whether a root is plausible."
             (and configure-prefix-directory
                  (list (file-name-as-directory
                         configure-prefix-directory))))
-           :test #'equal))
+           :test #'equal :from-end t))
 	 (installation-roots
 	  (remove-if-not root-p potential-installation-roots)))
     (delete-duplicates (nconc invocation-roots installation-roots)
-                       :test #'equal)))
+                       :test #'equal :from-end t)))
 
 (defun paths-find-site-lisp-directory (roots)
   "Find the site Lisp directory of the XEmacs hierarchy.
@@ -281,8 +281,8 @@ respectively."
             (nconc
              (paths-directories-which-exist configure-info-path)
              (paths-directories-which-exist paths-default-info-directories))
-           :test #'equal)))
-     :test #'equal)))
+           :test #'equal :from-end t)))
+     :test #'equal :from-end t)))
 
 (defun paths-find-doc-directory (roots)
   "Find the documentation directory.

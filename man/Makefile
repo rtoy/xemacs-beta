@@ -46,7 +46,6 @@ PHOTODIR = ../etc/photos
 info_files = \
 	$(INFODIR)/beta.info \
 	$(INFODIR)/cl.info \
-	$(INFODIR)/custom.info \
 	$(INFODIR)/emodules.info \
 	$(INFODIR)/external-widget.info \
 	$(INFODIR)/info.info \
@@ -63,7 +62,6 @@ info_files = \
 html_files = \
 	$(HTMLDIR)/beta.html \
 	$(HTMLDIR)/cl.html \
-	$(HTMLDIR)/custom.html \
 	$(HTMLDIR)/emodules.html \
 	$(HTMLDIR)/external-widget.html \
 	$(HTMLDIR)/info.html \
@@ -80,7 +78,6 @@ html_files = \
 dvi_files = \
 	beta.dvi \
 	cl.dvi \
-	custom.dvi \
 	emodules.dvi \
 	external-widget.dvi \
 	info.dvi \
@@ -97,7 +94,6 @@ dvi_files = \
 pdf_files = \
        beta.pdf \
        cl.pdf \
-       custom.pdf \
        emodules.pdf \
        external-widget.pdf \
        info.pdf \
@@ -245,9 +241,6 @@ $(INFODIR)/beta.info : beta.texi
 $(INFODIR)/cl.info : cl.texi
 	$(MAKEINFO) -o $(INFODIR)/cl.info cl.texi
 
-$(INFODIR)/custom.info : custom.texi
-	$(MAKEINFO) -o $(INFODIR)/custom.info custom.texi
-
 $(INFODIR)/emodules.info : emodules.texi
 	$(MAKEINFO) -o $(INFODIR)/emodules.info emodules.texi
 
@@ -352,9 +345,6 @@ $(HTMLDIR)/beta.html : beta.texi
 
 $(HTMLDIR)/cl.html : cl.texi
 	$(TEXI2HTML_SPLIT) cl.texi
-
-$(HTMLDIR)/custom.html : custom.texi
-	$(TEXI2HTML_SPLIT) custom.texi
 
 $(HTMLDIR)/emodules.html : emodules.texi
 	$(TEXI2HTML_SPLIT) emodules.texi

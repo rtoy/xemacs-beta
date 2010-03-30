@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Ben Wing
+;; Copyright (C) 2010 Didier Verna
 
 ;; Author: Chuck Thompson <cthomp@xemacs.org>
 ;; Author: Ben Wing <ben@xemacs.org>
@@ -193,5 +194,19 @@ Valid instantiators for face-boolean specifiers are
    the instantiator would not be valid), and optionally a value which,
    if non-nil, means to invert the sense of the inherited property."
   (make-specifier-and-init 'face-boolean spec-list))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; face-background-placement specifiers
+
+(defun make-face-background-placement-specifier (spec-list)
+  "Return a new `face-background-placement' specifier object.
+SPEC-LIST can be a list of specifications (each of which is a cons of a
+locale and a list of instantiators), a single instantiator, or a list
+of instantiators.  See `make-specifier' for a detailed description of
+how specifiers work.
+
+Valid instantiators for face-background-placement specifiers are:
+-- absolute or relative (symbols),
+-- a vector of one element: a face to inherit from."
+  (make-specifier-and-init 'face-background-placement spec-list))
 
 ;;; fontcolor.el ends here.

@@ -4,6 +4,7 @@
 **
 ** Created by: William M. Perry <wmperry@gnu.org>
 ** Copyright (c) 2000 William M. Perry <wmperry@gnu.org>
+** Copyright (C) 2010 Ben Wing.
 **
 ** This file is part of XEmacs.
 **
@@ -295,7 +296,8 @@ import_gtk_type (GtkType t)
 static emacs_ffi_data *
 allocate_ffi_data (void)
 {
-  emacs_ffi_data *data = ALLOC_LCRECORD_TYPE (emacs_ffi_data, &lrecord_emacs_ffi);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (emacs_ffi);
+  emacs_ffi_data *data = XFFI (obj);
 
   data->return_type = GTK_TYPE_NONE;
   data->n_args = 0;
@@ -325,7 +327,7 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 		    int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<ffi %S", 1, XFFI (obj)->function_name);
   if (XFFI (obj)->n_args)
@@ -333,11 +335,10 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string (printcharfun, " %p>", (void *)XFFI (obj)->function_ptr);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("ffi", emacs_ffi,
-			       0, /*dumpable-flag*/
-			       mark_ffi_data, ffi_object_printer,
-			       0, 0, 0, 
-			       ffi_data_description, emacs_ffi_data);
+DEFINE_NODUMP_LISP_OBJECT ("ffi", emacs_ffi,
+			   mark_ffi_data, ffi_object_printer,
+			   0, 0, 0, 
+			   ffi_data_description, emacs_ffi_data);
 
 #if defined (__cplusplus)
 #define MANY_ARGS ...
@@ -795,7 +796,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			  int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_ascstring (printcharfun, "#<GtkObject (");
   if (XGTK_OBJECT (obj)->alive_p)
@@ -806,7 +807,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static Lisp_Object
-object_getprop (Lisp_Object obj, Lisp_Object prop)
+emacs_gtk_object_getprop (Lisp_Object obj, Lisp_Object prop)
 {
   Lisp_Object rval = Qnil;
   Lisp_Object prop_name = Qnil;
@@ -870,7 +871,7 @@ object_getprop (Lisp_Object obj, Lisp_Object prop)
 }
 
 static int
-object_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
+emacs_gtk_object_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 {
   GtkArgInfo *info = NULL;
   Lisp_Object prop_name = Qnil;
@@ -923,44 +924,28 @@ mark_gtk_object_data (Lisp_Object obj)
 }
 
 static void
-emacs_gtk_object_finalizer (void *header, int for_disksave)
+emacs_gtk_object_finalizer (Lisp_Object obj)
 {
-  emacs_gtk_object_data *data = (emacs_gtk_object_data *) header;
-
-  if (for_disksave)
-    {
-      Lisp_Object obj = wrap_emacs_gtk_object (data);
-
-
-      invalid_operation
-	("Can't dump an emacs containing GtkObject objects", obj);
-    }
+  emacs_gtk_object_data *data = XEMACS_GTK_OBJECT_DATA (obj);
 
   if (data->alive_p)
-    {
-      gtk_object_unref (data->object);
-    }
+    gtk_object_unref (data->object);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkObject", emacs_gtk_object,
-					  0, /*dumpable-flag*/
-					  mark_gtk_object_data,
-					  emacs_gtk_object_printer,
-					  emacs_gtk_object_finalizer,
-					  0, /* equality */
-					  0, /* hash */
-					  gtk_object_data_description,
-					  object_getprop,
-					  object_putprop,
-					  0, /* rem prop */
-					  0, /* plist */
-					  emacs_gtk_object_data);
+DEFINE_NODUMP_LISP_OBJECT ("GtkObject", emacs_gtk_object,
+			   mark_gtk_object_data,
+			   emacs_gtk_object_printer,
+			   emacs_gtk_object_finalizer,
+			   0, /* equality */
+			   0, /* hash */
+			   gtk_object_data_description,
+			   emacs_gtk_object_data);
 
 static emacs_gtk_object_data *
 allocate_emacs_gtk_object_data (void)
 {
-  emacs_gtk_object_data *data = ALLOC_LCRECORD_TYPE (emacs_gtk_object_data,
-						     &lrecord_emacs_gtk_object);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (emacs_gtk_object);
+  emacs_gtk_object_data *data = XGTK_OBJECT (obj);
 
   data->object = NULL;
   data->alive_p = FALSE;
@@ -1114,7 +1099,7 @@ emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_ascstring (printcharfun, "#<GtkBoxed (");
   write_cistring (printcharfun, gtk_type_name (XGTK_BOXED (obj)->object_type));
@@ -1138,19 +1123,14 @@ emacs_gtk_boxed_hash (Lisp_Object obj, int UNUSED (depth))
   return (HASH2 ((Hashcode) data->object, data->object_type));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkBoxed", emacs_gtk_boxed,
-					  0, /*dumpable-flag*/
-					  0, /* marker function */
-					  emacs_gtk_boxed_printer,
-					  0, /* nuker */
-					  emacs_gtk_boxed_equality,
-					  emacs_gtk_boxed_hash,
-					  emacs_gtk_boxed_description,
-					  0, /* get prop */
-					  0, /* put prop */
-					  0, /* rem prop */
-					  0, /* plist */
-					  emacs_gtk_boxed_data);
+DEFINE_NODUMP_LISP_OBJECT ("GtkBoxed", emacs_gtk_boxed,
+			   0, /* marker function */
+			   emacs_gtk_boxed_printer,
+			   0, /* nuker */
+			   emacs_gtk_boxed_equality,
+			   emacs_gtk_boxed_hash,
+			   emacs_gtk_boxed_description,
+			   emacs_gtk_boxed_data);
 /* Currently defined GTK_TYPE_BOXED structures are:
 
    GtkAccelGroup -
@@ -1168,8 +1148,8 @@ DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkBoxed", emacs_gtk_boxed,
 static emacs_gtk_boxed_data *
 allocate_emacs_gtk_boxed_data (void)
 {
-  emacs_gtk_boxed_data *data = ALLOC_LCRECORD_TYPE (emacs_gtk_boxed_data,
-						    &lrecord_emacs_gtk_boxed);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (emacs_gtk_boxed);
+  emacs_gtk_boxed_data *data = XGTK_BOXED (obj);
 
   data->object = NULL;
   data->object_type = GTK_TYPE_INVALID;
@@ -1353,11 +1333,19 @@ The cdr is a list of all the magic properties it has.
 
 
 void
+ui_gtk_objects_create (void)
+{
+  OBJECT_HAS_METHOD (emacs_gtk_object, getprop);
+  OBJECT_HAS_METHOD (emacs_gtk_object, putprop);
+  /* #### No remprop or plist methods */
+}
+
+void
 syms_of_ui_gtk (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (emacs_ffi);
-  INIT_LRECORD_IMPLEMENTATION (emacs_gtk_object);
-  INIT_LRECORD_IMPLEMENTATION (emacs_gtk_boxed);
+  INIT_LISP_OBJECT (emacs_ffi);
+  INIT_LISP_OBJECT (emacs_gtk_object);
+  INIT_LISP_OBJECT (emacs_gtk_boxed);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qemacs_ffip);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qemacs_gtk_objectp);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qemacs_gtk_boxedp);

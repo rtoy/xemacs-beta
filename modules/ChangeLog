@@ -1,3 +1,45 @@
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* base64/base64.c:
+	* base64/base64.c (Fbase64_encode):
+	* base64/base64.c (Fbase64_decode):
+	* base64/base64.c (syms_of_base64):
+	Fix file to follow GNU coding standards for indentation, spacing
+	before parens.
+
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (print_pgconn):
+	* postgresql/postgresql.c (print_pgresult):
+	printing_unreadable_object -> printing_unreadable_object_fmt.
+
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* ldap/eldap.c (print_ldap):
+	printing_unreadable_object -> printing_unreadable_object_fmt.
+
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (finalize_pgconn):
+	* postgresql/postgresql.c (finalize_pgresult):
+	* ldap/eldap.c (finalize_ldap):
+	Fix the finalizers to go with the new calling sequence.  Done
+	previously but somehow got lost.
+
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (allocate_pgconn):
+	* postgresql/postgresql.c (allocate_pgresult):
+	* postgresql/postgresql.h (struct Lisp_PGconn):
+	* postgresql/postgresql.h (struct Lisp_PGresult):
+	* ldap/eldap.c (allocate_ldap):
+	* ldap/eldap.h (struct Lisp_LDAP):
+	Same changes as in src/ dir.  See large log there in ChangeLog,
+	but basically:
+
+	ALLOC_LISP_OBJECT -> ALLOC_NORMAL_LISP_OBJECT
+	LISP_OBJECT_HEADER -> NORMAL_LISP_OBJECT_HEADER
+
 2010-02-06  Ben Wing  <ben@xemacs.org>
 
 	* canna/canna_api.c:

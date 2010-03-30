@@ -3,7 +3,7 @@
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
-   Copyright (C) 2003 Ben Wing.
+   Copyright (C) 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -96,12 +96,10 @@ mark_scrollbar_instance (Lisp_Object obj)
     return Qnil;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("scrollbar-instance", scrollbar_instance,
-			       0, /*dumpable-flag*/
-			       mark_scrollbar_instance,
-			       internal_object_printer, 0, 0, 0, 
-			       scrollbar_instance_description,
-			       struct scrollbar_instance);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("scrollbar-instance", scrollbar_instance,
+				    mark_scrollbar_instance,
+				    scrollbar_instance_description,
+				    struct scrollbar_instance);
 
 static void
 free_scrollbar_instance (struct scrollbar_instance *instance,
@@ -114,7 +112,7 @@ free_scrollbar_instance (struct scrollbar_instance *instance,
       struct device *d = XDEVICE (frame->device);
 
       MAYBE_DEVMETH (d, free_scrollbar_instance, (instance));
-      /* not worth calling free_managed_lcrecord() -- scrollbar instances
+      /* not worth calling free_normal_lisp_object() -- scrollbar instances
 	 are not created that frequently and it's dangerous. */
     }
 }
@@ -198,9 +196,8 @@ static struct scrollbar_instance *
 create_scrollbar_instance (struct frame *f, int vertical)
 {
   struct device *d = XDEVICE (f->device);
-  struct scrollbar_instance *instance =
-    ALLOC_LCRECORD_TYPE (struct scrollbar_instance,
-			 &lrecord_scrollbar_instance);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (scrollbar_instance);
+  struct scrollbar_instance *instance = XSCROLLBAR_INSTANCE (obj);
 
   MAYBE_DEVMETH (d, create_scrollbar_instance, (f, vertical, instance));
 
@@ -260,23 +257,41 @@ release_scrollbar_instance (struct frame *f, int vertical,
 
 #ifdef MEMORY_USAGE_STATS
 
-int
-compute_scrollbar_instance_usage (struct device *d,
-				  struct scrollbar_instance *inst,
-				  struct overhead_stats *ovstats)
+struct scrollbar_instance_stats
 {
-  int total = 0;
+  struct usage_stats u;
+  Bytecount device_data;
+};
 
-  if (HAS_DEVMETH_P(d, compute_scrollbar_instance_usage))
-    total += DEVMETH (d, compute_scrollbar_instance_usage, (d, inst, ovstats));
+Bytecount
+compute_all_scrollbar_instance_usage (struct scrollbar_instance *inst)
+{
+  Bytecount total = 0;
 
   while (inst)
     {
-      total += LISPOBJ_STORAGE_SIZE (inst, sizeof (*inst), ovstats);
+      total += lisp_object_memory_usage (wrap_scrollbar_instance (inst));
       inst = inst->next;
     }
 
   return total;
+}
+
+static void
+scrollbar_instance_memory_usage (Lisp_Object scrollbar_instance,
+				 struct generic_usage_stats *gustats)
+{
+  struct scrollbar_instance_stats *stats =
+    (struct scrollbar_instance_stats *) gustats;
+  struct scrollbar_instance *inst = XSCROLLBAR_INSTANCE (scrollbar_instance);
+  struct device *d = FRAME_XDEVICE (inst->mirror->frame);
+  Bytecount total = 0;
+
+  if (HAS_DEVMETH_P (d, compute_scrollbar_instance_usage))
+    total += DEVMETH (d, compute_scrollbar_instance_usage, (d, inst,
+							    &gustats->u));
+
+  stats->device_data = total;
 }
 
 #endif /* MEMORY_USAGE_STATS */
@@ -926,9 +941,16 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
 /************************************************************************/
 
 void
+scrollbar_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (scrollbar_instance, memory_usage);
+#endif
+}
+void
 syms_of_scrollbar (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (scrollbar_instance);
+  INIT_LISP_OBJECT (scrollbar_instance);
 
   DEFSYMBOL (Qscrollbar_line_up);
   DEFSYMBOL (Qscrollbar_line_down);
@@ -964,6 +986,12 @@ syms_of_scrollbar (void)
 void
 vars_of_scrollbar (void)
 {
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY
+    (scrollbar_instance, memusage_stats_list,
+     list1 (intern ("device-data")));
+#endif /* MEMORY_USAGE_STATS */
+
   DEFVAR_LISP ("scrollbar-pointer-glyph", &Vscrollbar_pointer_glyph /*
 *The shape of the mouse-pointer when over a scrollbar.
 This is a glyph; use `set-glyph-image' to change it.

@@ -50,7 +50,7 @@ DECLARE_CONSOLE_TYPE (gtk);
 struct gtk_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   /* Gtk application info. */
   GtkWidget *gtk_app_shell;
@@ -115,7 +115,7 @@ struct gtk_device
 #ifdef NEW_GC
 typedef struct gtk_device Lisp_Gtk_Device;
 
-DECLARE_LRECORD (gtk_device, Lisp_Gtk_Device);
+DECLARE_LISP_OBJECT (gtk_device, Lisp_Gtk_Device);
 
 #define XGTK_DEVICE(x) \
   XRECORD (x, gtk_device, Lisp_Gtk_Device)
@@ -144,7 +144,7 @@ DECLARE_LRECORD (gtk_device, Lisp_Gtk_Device);
 struct gtk_frame
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 
   /* The widget of this frame. */
@@ -159,6 +159,11 @@ struct gtk_frame
   /* The widget of the edit portion of this frame; this is a GtkDrawingArea,
      and the window of this widget is what the redisplay code draws on. */
   GtkWidget *edit_widget;
+  /* #### WARNING: this does not currently work. -- dvl
+     Position of the edit widget above, for absolute background placement.
+     
+     int x, y;
+  */
 
   /* Lists the widgets above the text area, in the proper order. */
   GtkWidget *top_widgets[MAX_CONCURRENT_TOP_WIDGETS];
@@ -203,7 +208,7 @@ struct gtk_frame
 #ifdef NEW_GC
 typedef struct gtk_frame Lisp_Gtk_Frame;
 
-DECLARE_LRECORD (gtk_frame, Lisp_Gtk_Frame);
+DECLARE_LISP_OBJECT (gtk_frame, Lisp_Gtk_Frame);
 
 #define XGTK_FRAME(x) \
   XRECORD (x, gtk_frame, Lisp_Gtk_Frame)
@@ -213,6 +218,10 @@ DECLARE_LRECORD (gtk_frame, Lisp_Gtk_Frame);
 
 #define FRAME_GTK_DATA(f) FRAME_TYPE_DATA (f, gtk)
 
+/* #### WARNING: this does not currently work. -- dvl
+   #define FRAME_GTK_X(f) (FRAME_GTK_DATA (f)->x)
+   #define FRAME_GTK_Y(f) (FRAME_GTK_DATA (f)->y)
+*/
 #define FRAME_GTK_SHELL_WIDGET(f)	    (FRAME_GTK_DATA (f)->widget)
 #define FRAME_GTK_CONTAINER_WIDGET(f) (FRAME_GTK_DATA (f)->container)
 #define FRAME_GTK_MENUBAR_WIDGET(f)   (FRAME_GTK_DATA (f)->menubar_widget)

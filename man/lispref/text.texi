@@ -2118,7 +2118,7 @@ defaults for text properties.  We consider this too bogus to implement.
 
   Copying text between strings and buffers preserves the properties
 along with the characters; this includes such diverse functions as
-@code{substring}, @code{insert}, and @code{buffer-substring}.
+@code{subseq}, @code{insert}, and @code{buffer-substring}.
 
 @menu
 * Examining Properties::	Looking at the properties of one character.

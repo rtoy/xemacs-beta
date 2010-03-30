@@ -1,5 +1,6 @@
 /* Define general gutter support.
    Copyright (C) 1999 Andy Piper.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -35,18 +36,6 @@ DECLARE_SPECIFIER_TYPE (gutter);
 
 #define DEFAULT_GUTTER_WIDTH		40
 #define DEFAULT_GUTTER_BORDER_WIDTH	2
-
-enum gutter_pos
-{
-  TOP_GUTTER     = 0,
-  BOTTOM_GUTTER  = 1,
-  LEFT_GUTTER    = 2,
-  RIGHT_GUTTER   = 3
-};
-
-/* Iterate over all possible gutter positions */
-#define GUTTER_POS_LOOP(var) \
-  for (var = (enum gutter_pos) 0; var < 4; var = (enum gutter_pos) (var + 1))
 
 extern Lisp_Object Qgutter;
 
@@ -97,13 +86,13 @@ int display_boxes_in_gutter_p (struct frame *f, struct display_box* db,
 
 /* these macros predicate size on position and type of window */
 #define WINDOW_REAL_TOP_GUTTER_BOUNDS(w)	\
-   WINDOW_REAL_GUTTER_BOUNDS (w,TOP_GUTTER)
+   WINDOW_REAL_GUTTER_BOUNDS (w, TOP_EDGE)
 #define WINDOW_REAL_BOTTOM_GUTTER_BOUNDS(w)	\
-   WINDOW_REAL_GUTTER_BOUNDS (w,BOTTOM_GUTTER)
+   WINDOW_REAL_GUTTER_BOUNDS (w, BOTTOM_EDGE)
 #define WINDOW_REAL_LEFT_GUTTER_BOUNDS(w)	\
-   WINDOW_REAL_GUTTER_BOUNDS (w,LEFT_GUTTER)
+   WINDOW_REAL_GUTTER_BOUNDS (w, LEFT_EDGE)
 #define WINDOW_REAL_RIGHT_GUTTER_BOUNDS(w)	\
-   WINDOW_REAL_GUTTER_BOUNDS (w,RIGHT_GUTTER)
+   WINDOW_REAL_GUTTER_BOUNDS (w, RIGHT_EDGE)
 
 #define FRAME_GUTTER_VISIBLE(f, pos) \
    WINDOW_REAL_GUTTER_VISIBLE (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f)), pos)
@@ -118,13 +107,9 @@ int display_boxes_in_gutter_p (struct frame *f, struct display_box* db,
 WINDOW_GUTTER (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f)), pos)
 
 /* these macros predicate size on position and type of window */
-#define FRAME_TOP_GUTTER_BOUNDS(f) \
-   WINDOW_REAL_GUTTER_BOUNDS (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f)), TOP_GUTTER)
-#define FRAME_BOTTOM_GUTTER_BOUNDS(f) \
-   WINDOW_REAL_GUTTER_BOUNDS (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f)), BOTTOM_GUTTER)
-#define FRAME_LEFT_GUTTER_BOUNDS(f) \
-   WINDOW_REAL_GUTTER_BOUNDS (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f)), LEFT_GUTTER)
-#define FRAME_RIGHT_GUTTER_BOUNDS(f) \
-   WINDOW_REAL_GUTTER_BOUNDS (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f)), RIGHT_GUTTER)
+#define FRAME_TOP_GUTTER_BOUNDS(f) FRAME_GUTTER_BOUNDS (f, TOP_EDGE)
+#define FRAME_BOTTOM_GUTTER_BOUNDS(f) FRAME_GUTTER_BOUNDS (f, BOTTOM_EDGE)
+#define FRAME_LEFT_GUTTER_BOUNDS(f) FRAME_GUTTER_BOUNDS (f, LEFT_EDGE)
+#define FRAME_RIGHT_GUTTER_BOUNDS(f) FRAME_GUTTER_BOUNDS (f, RIGHT_EDGE)
 
 #endif /* INCLUDED_gutter_h_ */

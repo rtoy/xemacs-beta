@@ -1,5 +1,6 @@
 /* New allocator for XEmacs.
    Copyright (C) 2005 Marcus Crestani.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -122,12 +123,10 @@ EMACS_INT mc_finalize_for_disksave (void);
 
 /* Functions and macros related with allocation statistics: */
 
-#ifdef MEMORY_USAGE_STATS
 /* Returns the real size, including overhead, which is actually alloced
    for an object with given claimed_size. */
 Bytecount mc_alloced_storage_size (Bytecount claimed_size,
-				   struct overhead_stats *stats);
-#endif /* MEMORY_USAGE_STATS */
+				   struct usage_stats *stats);
 
 
 /* Incremental Garbage Collector / Write Barrier Support: */

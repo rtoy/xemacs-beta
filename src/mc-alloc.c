@@ -417,20 +417,6 @@ EMACS_INT memory_shortage;
 
 /*--- misc functions ---------------------------------------------------*/
 
-/* moved here from alloc.c */
-#ifdef ERROR_CHECK_GC
-static void
-deadbeef_memory (void *ptr, Bytecount size)
-{
-  UINT_32_BIT *ptr4 = (UINT_32_BIT *) ptr;
-  Bytecount beefs = size >> 2;
-
-  /* In practice, size will always be a multiple of four.  */
-  while (beefs--)
-    (*ptr4++) = 0xDEADBEEF; /* -559038737 base 10 */
-}
-#endif /* ERROR_CHECK_GC */
-
 /* Visits all pages (page_headers) hooked into the used heap pages
    list and executes f with the current page header as
    argument. Needed for sweep.  Returns number of processed pages. */
@@ -976,9 +962,8 @@ get_free_list_size_value (EMACS_INT free_index)
 }
 
 
-#ifdef MEMORY_USAGE_STATS
 Bytecount
-mc_alloced_storage_size (Bytecount claimed_size, struct overhead_stats *stats)
+mc_alloced_storage_size (Bytecount claimed_size, struct usage_stats *stats)
 {
   size_t used_size = 
     get_used_list_size_value (get_used_list_index (claimed_size));
@@ -993,7 +978,6 @@ mc_alloced_storage_size (Bytecount claimed_size, struct overhead_stats *stats)
 
   return used_size;
 }
-#endif /* not MEMORY_USAGE_STATS */
 
 
 

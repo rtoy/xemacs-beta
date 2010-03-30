@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct window;
 
-DECLARE_LRECORD (window, struct window);
+DECLARE_LISP_OBJECT (window, struct window);
 #define XWINDOW(x) XRECORD (x, window, struct window)
 #define wrap_window(p) wrap_record (p, window)
 #define WINDOWP(x) RECORDP (x, window)
@@ -81,14 +81,12 @@ Lisp_Object window_buffer (struct window *w);
 
 struct window_mirror;
 
-DECLARE_LRECORD (window_mirror, struct window_mirror);
+DECLARE_LISP_OBJECT (window_mirror, struct window_mirror);
 #define XWINDOW_MIRROR(x) XRECORD (x, window_mirror, struct window_mirror)
 #define wrap_window_mirror(p) wrap_record (p, window_mirror)
 #define WINDOW_MIRRORP(x) RECORDP (x, window_mirror)
 #define CHECK_WINDOW_MIRROR(x) CHECK_RECORD (x, window_mirror)
 #define CONCHECK_WINDOW_MIRROR(x) CONCHECK_RECORD (x, window_mirror)
-
-DECLARE_LRECORD (window_configuration, struct window_config);
 
 EXFUN (Fget_buffer_window, 3);
 EXFUN (Fmove_to_window_line, 2);

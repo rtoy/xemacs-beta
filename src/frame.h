@@ -60,7 +60,7 @@ extern Lisp_Object Qunsplittable, Quse_backing_store, Qvisible, Qvisual_bell;
 extern Lisp_Object Vframe_icon_title_format, Vframe_title_format;
 extern Lisp_Object Vmouse_motion_handler;
 
-DECLARE_LRECORD (frame, struct frame);
+DECLARE_LISP_OBJECT (frame, struct frame);
 #define XFRAME(x) XRECORD (x, frame, struct frame)
 #define wrap_frame(p) wrap_record (p, frame)
 #define FRAMEP(x) RECORDP (x, frame)
@@ -160,5 +160,19 @@ void update_frame_icon (struct frame *f);
 void invalidate_vertical_divider_cache_in_frame (struct frame *f);
 
 void init_frame (void);
+
+enum edge_pos
+{
+  TOP_EDGE,
+  BOTTOM_EDGE,
+  LEFT_EDGE,
+  RIGHT_EDGE,
+  NUM_EDGES
+};
+
+/* Iterate over all possible edge positions */
+#define EDGE_POS_LOOP(var)				\
+  for (var = (enum edge_pos) 0; var < NUM_EDGES;	\
+       var = (enum edge_pos) (var + 1))
 
 #endif /* INCLUDED_frame_h_ */

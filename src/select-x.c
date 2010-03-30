@@ -1,6 +1,6 @@
 /* X Selection processing for XEmacs
    Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -691,10 +691,8 @@ x_handle_selection_request (XSelectionRequestEvent *event)
     event->type = 0;
     /* Data need not have been allocated; cf. select-convert-to-delete in
        lisp/select.el . */
-    if ((Rawbyte *)0 != data)
-    {
+    if (data)
       xfree (data);
-    }
   }
 
   unbind_to (count);

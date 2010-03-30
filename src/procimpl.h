@@ -39,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
 struct process_methods
 {
   void (*print_process_data) (Lisp_Process *proc, Lisp_Object printcharfun);
-  void (*finalize_process_data) (Lisp_Process *proc, int for_disksave);
+  void (*finalize_process_data) (Lisp_Process *proc);
   void (*alloc_process_data) (Lisp_Process *p);
   void (*init_process_io_handles) (Lisp_Process *p,
 				   void* in, void* out, void *err, int flags);
@@ -94,7 +94,7 @@ extern struct process_methods the_process_methods;
 
 struct Lisp_Process
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Exit code if process has terminated,
      signal which stopped/interrupted process

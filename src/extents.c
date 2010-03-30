@@ -231,95 +231,13 @@ Boston, MA 02111-1307, USA.  */
 #include "gutter.h"
 
 /* ------------------------------- */
-/*            gap array            */
-/* ------------------------------- */
-
-/* Note that this object is not extent-specific and should perhaps be
-   moved into another file. */
-
-/* Holds a marker that moves as elements in the array are inserted and
-   deleted, similar to standard markers. */
-
-typedef struct gap_array_marker
-{
-#ifdef NEW_GC
-  struct lrecord_header header;
-#endif /* NEW_GC */
-  int pos;
-  struct gap_array_marker *next;
-} Gap_Array_Marker;
-
-
-/* Holds a "gap array", which is an array of elements with a gap located
-   in it.  Insertions and deletions with a high degree of locality
-   are very fast, essentially in constant time.  Array positions as
-   used and returned in the gap array functions are independent of
-   the gap. */
-
-/* Layout of gap array:
-
-   <------ gap ------><---- gapsize ----><----- numels - gap ---->
-   <---------------------- numels + gapsize --------------------->
-
-   For marking purposes, we use two extra variables computed from
-   the others -- the offset to the data past the gap, plus the number
-   of elements in that data:
-
-   offset_past_gap = elsize * (gap + gapsize)
-   els_past_gap = numels - gap
-*/
-
-
-typedef struct gap_array
-{
-#ifdef NEW_GC
-  struct lrecord_header header;
-#endif /* NEW_GC */
-  Elemcount gap;
-  Elemcount gapsize;
-  Elemcount numels;
-  Bytecount elsize;
-  /* Redundant numbers computed from the others, for marking purposes */
-  Bytecount offset_past_gap;
-  Elemcount els_past_gap;
-  Gap_Array_Marker *markers;
-  /* this is a stretchy array */
-  char array[1];
-} Gap_Array;
-
-#ifndef NEW_GC
-static Gap_Array_Marker *gap_array_marker_freelist;
-#endif /* not NEW_GC */
-
-/* Convert a "memory position" (i.e. taking the gap into account) into
-   the address of the element at (i.e. after) that position.  "Memory
-   positions" are only used internally and are of type Memxpos.
-   "Array positions" are used externally and are of type int. */
-#define GAP_ARRAY_MEMEL_ADDR(ga, memel) ((ga)->array + (ga)->elsize*(memel))
-
-/* Number of elements currently in a gap array */
-#define GAP_ARRAY_NUM_ELS(ga) ((ga)->numels)
-
-#define GAP_ARRAY_ARRAY_TO_MEMORY_POS(ga, pos) \
-  ((pos) <= (ga)->gap ? (pos) : (pos) + (ga)->gapsize)
-
-#define GAP_ARRAY_MEMORY_TO_ARRAY_POS(ga, pos) \
-  ((pos) <= (ga)->gap ? (pos) : (pos) - (ga)->gapsize)
-
-/* Convert an array position into the address of the element at
-   (i.e. after) that position. */
-#define GAP_ARRAY_EL_ADDR(ga, pos) ((pos) < (ga)->gap ? \
-  GAP_ARRAY_MEMEL_ADDR(ga, pos) : \
-  GAP_ARRAY_MEMEL_ADDR(ga, (pos) + (ga)->gapsize))
-
-/* ------------------------------- */
 /*          extent list            */
 /* ------------------------------- */
 
 typedef struct extent_list_marker
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Gap_Array_Marker *m;
   int endp;
@@ -329,7 +247,7 @@ typedef struct extent_list_marker
 typedef struct extent_list
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Gap_Array *start;
   Gap_Array *end;
@@ -379,13 +297,7 @@ static Extent_List_Marker *extent_list_marker_freelist;
 #define EXTENT_E_LESS_EQUAL(e1,e2) \
   EXTENT_E_LESS_EQUAL_VALS (e1, extent_start (e2), extent_end (e2))
 
-#define EXTENT_GAP_ARRAY_AT(ga, pos) (* (EXTENT *) GAP_ARRAY_EL_ADDR(ga, pos))
-
-/* ------------------------------- */
-/*    auxiliary extent structure   */
-/* ------------------------------- */
-
-struct extent_auxiliary extent_auxiliary_defaults;
+#define EXTENT_GAP_ARRAY_AT(ga, pos) gap_array_at (ga, pos, EXTENT)
 
 /* ------------------------------- */
 /*     buffer-extent primitives    */
@@ -394,7 +306,7 @@ struct extent_auxiliary extent_auxiliary_defaults;
 typedef struct stack_of_extents
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Extent_List *extents;
   Memxpos pos; /* Position of stack of extents.  EXTENTS is the list of
@@ -441,6 +353,8 @@ typedef int Endpoint_Index;
 #define DE_MUST_BE_ATTACHED 2
 
 Lisp_Object Vlast_highlighted_extent;
+
+Lisp_Object Vextent_auxiliary_defaults;
 
 Lisp_Object QSin_map_extents_internal;
 
@@ -510,269 +424,7 @@ Lisp_Object Vdefault_text_properties;
    changes */
 int in_modeline_generation;
 
-
-/************************************************************************/
-/*                       Generalized gap array                          */
-/************************************************************************/
-
-/* This generalizes the "array with a gap" model used to store buffer
-   characters.  This is based on the stuff in insdel.c and should
-   probably be merged with it.  This is not extent-specific and should
-   perhaps be moved into a separate file. */
-
-/* ------------------------------- */
-/*        internal functions       */
-/* ------------------------------- */
-
-/* Adjust the gap array markers in the range (FROM, TO].  Parallel to
-   adjust_markers() in insdel.c. */
-
-static void
-gap_array_adjust_markers (Gap_Array *ga, Memxpos from,
-			  Memxpos to, Elemcount amount)
-{
-  Gap_Array_Marker *m;
-
-  for (m = ga->markers; m; m = m->next)
-    m->pos = do_marker_adjustment (m->pos, from, to, amount);
-}
-
-static void
-gap_array_recompute_derived_values (Gap_Array *ga)
-{
-  ga->offset_past_gap = ga->elsize * (ga->gap + ga->gapsize);
-  ga->els_past_gap = ga->numels - ga->gap;
-}
-
-/* Move the gap to array position POS.  Parallel to move_gap() in
-   insdel.c but somewhat simplified. */
-
-static void
-gap_array_move_gap (Gap_Array *ga, Elemcount pos)
-{
-  Elemcount gap = ga->gap;
-  Elemcount gapsize = ga->gapsize;
-
-  if (pos < gap)
-    {
-      memmove (GAP_ARRAY_MEMEL_ADDR (ga, pos + gapsize),
-	       GAP_ARRAY_MEMEL_ADDR (ga, pos),
-	       (gap - pos)*ga->elsize);
-      gap_array_adjust_markers (ga, (Memxpos) pos, (Memxpos) gap,
-				gapsize);
-    }
-  else if (pos > gap)
-    {
-      memmove (GAP_ARRAY_MEMEL_ADDR (ga, gap),
-	       GAP_ARRAY_MEMEL_ADDR (ga, gap + gapsize),
-	       (pos - gap)*ga->elsize);
-      gap_array_adjust_markers (ga, (Memxpos) (gap + gapsize),
-				(Memxpos) (pos + gapsize), - gapsize);
-    }
-  ga->gap = pos;
-
-  gap_array_recompute_derived_values (ga);
-}
-
-/* Make the gap INCREMENT characters longer.  Parallel to make_gap() in
-   insdel.c.  The gap array may be moved, so assign the return value back
-   to the array pointer. */
-
-static Gap_Array *
-gap_array_make_gap (Gap_Array *ga, Elemcount increment)
-{
-  Elemcount real_gap_loc;
-  Elemcount old_gap_size;
-
-  /* If we have to get more space, get enough to last a while.  We use
-     a geometric progression that saves on realloc space. */
-  increment += 100 + ga->numels / 8;
-
-#ifdef NEW_GC
-  ga = (Gap_Array *) mc_realloc (ga,
-				 offsetof (Gap_Array, array) +
-				 (ga->numels + ga->gapsize + increment) *
-				 ga->elsize);
-#else /* not NEW_GC */
-  ga = (Gap_Array *) xrealloc (ga,
-			       offsetof (Gap_Array, array) +
-			       (ga->numels + ga->gapsize + increment) *
-			       ga->elsize);
-#endif /* not NEW_GC */
-  if (ga == 0)
-    memory_full ();
-
-  real_gap_loc = ga->gap;
-  old_gap_size = ga->gapsize;
-
-  /* Call the newly allocated space a gap at the end of the whole space.  */
-  ga->gap = ga->numels + ga->gapsize;
-  ga->gapsize = increment;
-
-  /* Move the new gap down to be consecutive with the end of the old one.
-     This adjusts the markers properly too.  */
-  gap_array_move_gap (ga, real_gap_loc + old_gap_size);
-
-  /* Now combine the two into one large gap.  */
-  ga->gapsize += old_gap_size;
-  ga->gap = real_gap_loc;
-
-  gap_array_recompute_derived_values (ga);
-
-  return ga;
-}
-
-/* ------------------------------- */
-/*        external functions       */
-/* ------------------------------- */
-
-/* Insert NUMELS elements (pointed to by ELPTR) into the specified
-   gap array at POS.  The gap array may be moved, so assign the
-   return value back to the array pointer. */
-
-static Gap_Array *
-gap_array_insert_els (Gap_Array *ga, Elemcount pos, void *elptr,
-		      Elemcount numels)
-{
-  assert (pos >= 0 && pos <= ga->numels);
-  if (ga->gapsize < numels)
-    ga = gap_array_make_gap (ga, numels - ga->gapsize);
-  if (pos != ga->gap)
-    gap_array_move_gap (ga, pos);
-
-  memcpy (GAP_ARRAY_MEMEL_ADDR (ga, ga->gap), (char *) elptr,
-	  numels*ga->elsize);
-  ga->gapsize -= numels;
-  ga->gap += numels;
-  ga->numels += numels;
-  gap_array_recompute_derived_values (ga);
-  /* This is the equivalent of insert-before-markers.
-
-     #### Should only happen if marker is "moves forward at insert" type.
-     */
-
-  gap_array_adjust_markers (ga, pos - 1, pos, numels);
-  return ga;
-}
-
-/* Delete NUMELS elements from the specified gap array, starting at FROM. */
-
-static void
-gap_array_delete_els (Gap_Array *ga, Elemcount from, Elemcount numdel)
-{
-  Elemcount to = from + numdel;
-  Elemcount gapsize = ga->gapsize;
-
-  assert (from >= 0);
-  assert (numdel >= 0);
-  assert (to <= ga->numels);
-
-  /* Make sure the gap is somewhere in or next to what we are deleting.  */
-  if (to < ga->gap)
-    gap_array_move_gap (ga, to);
-  if (from > ga->gap)
-    gap_array_move_gap (ga, from);
-
-  /* Relocate all markers pointing into the new, larger gap
-     to point at the end of the text before the gap.  */
-  gap_array_adjust_markers (ga, to + gapsize, to + gapsize,
-			    - numdel - gapsize);
-
-  ga->gapsize += numdel;
-  ga->numels -= numdel;
-  ga->gap = from;
-  gap_array_recompute_derived_values (ga);
-}
-
-static Gap_Array_Marker *
-gap_array_make_marker (Gap_Array *ga, Elemcount pos)
-{
-  Gap_Array_Marker *m;
-
-  assert (pos >= 0 && pos <= ga->numels);
-#ifdef NEW_GC
-    m = alloc_lrecord_type (Gap_Array_Marker, &lrecord_gap_array_marker);
-#else /* not NEW_GC */
-  if (gap_array_marker_freelist)
-    {
-      m = gap_array_marker_freelist;
-      gap_array_marker_freelist = gap_array_marker_freelist->next;
-    }
-  else
-    m = xnew (Gap_Array_Marker);
-#endif /* not NEW_GC */
-
-  m->pos = GAP_ARRAY_ARRAY_TO_MEMORY_POS (ga, pos);
-  m->next = ga->markers;
-  ga->markers = m;
-  return m;
-}
-
-static void
-gap_array_delete_marker (Gap_Array *ga, Gap_Array_Marker *m)
-{
-  Gap_Array_Marker *p, *prev;
-
-  for (prev = 0, p = ga->markers; p && p != m; prev = p, p = p->next)
-    ;
-  assert (p);
-  if (prev)
-    prev->next = p->next;
-  else
-    ga->markers = p->next;
-#ifndef NEW_GC
-  m->next = gap_array_marker_freelist;
-  m->pos = 0xDEADBEEF; /* -559038737 base 10 */
-  gap_array_marker_freelist = m;
-#endif /* not NEW_GC */
-}
-
-#ifndef NEW_GC
-static void
-gap_array_delete_all_markers (Gap_Array *ga)
-{
-  Gap_Array_Marker *p, *next;
-
-  for (p = ga->markers; p; p = next)
-    {
-      next = p->next;
-      p->next = gap_array_marker_freelist;
-      p->pos = 0xDEADBEEF; /* -559038737 as an int */
-      gap_array_marker_freelist = p;
-    }
-}
-#endif /* not NEW_GC */
-
-static void
-gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, Elemcount pos)
-{
-  assert (pos >= 0 && pos <= ga->numels);
-  m->pos = GAP_ARRAY_ARRAY_TO_MEMORY_POS (ga, pos);
-}
-
-#define gap_array_marker_pos(ga, m) \
-  GAP_ARRAY_MEMORY_TO_ARRAY_POS (ga, (m)->pos)
-
-static Gap_Array *
-make_gap_array (Elemcount elsize)
-{
-#ifdef NEW_GC
-  Gap_Array *ga = alloc_lrecord_type (Gap_Array, &lrecord_gap_array);
-#else /* not NEW_GC */
-  Gap_Array *ga = xnew_and_zero (Gap_Array);
-#endif /* not NEW_GC */
-  ga->elsize = elsize;
-  return ga;
-}
-
-#ifndef NEW_GC
-static void
-free_gap_array (Gap_Array *ga)
-{
-  gap_array_delete_all_markers (ga);
-  xfree (ga);
-}
-#endif /* not NEW_GC */
+int debug_soe;
 
 
 /************************************************************************/
@@ -792,7 +444,7 @@ free_gap_array (Gap_Array *ga)
 */
 
 /* Number of elements in an extent list */
-#define extent_list_num_els(el) GAP_ARRAY_NUM_ELS (el->start)
+#define extent_list_num_els(el) gap_array_length (el->start)
 
 /* Return the position at which EXTENT is located in the specified extent
    list (in the display order if ENDP is 0, in the e-order otherwise).
@@ -806,7 +458,7 @@ static int
 extent_list_locate (Extent_List *el, EXTENT extent, int endp, int *foundp)
 {
   Gap_Array *ga = endp ? el->end : el->start;
-  int left = 0, right = GAP_ARRAY_NUM_ELS (ga);
+  int left = 0, right = gap_array_length (ga);
   int oldfoundpos, foundpos;
   int found;
 
@@ -826,7 +478,7 @@ extent_list_locate (Extent_List *el, EXTENT extent, int endp, int *foundp)
   /* Now we're at the beginning of all equal extents. */
   found = 0;
   oldfoundpos = foundpos = left;
-  while (foundpos < GAP_ARRAY_NUM_ELS (ga))
+  while (foundpos < gap_array_length (ga))
     {
       EXTENT e = EXTENT_GAP_ARRAY_AT (ga, foundpos);
       if (e == extent)
@@ -881,7 +533,7 @@ extent_list_at (Extent_List *el, Memxpos pos, int endp)
 {
   Gap_Array *ga = endp ? el->end : el->start;
 
-  assert (pos >= 0 && pos < GAP_ARRAY_NUM_ELS (ga));
+  assert (pos >= 0 && pos < gap_array_length (ga));
   return EXTENT_GAP_ARRAY_AT (ga, pos);
 }
 
@@ -918,8 +570,8 @@ extent_list_delete (Extent_List *el, EXTENT extent)
 static void
 extent_list_delete_all (Extent_List *el)
 {
-  gap_array_delete_els (el->start, 0, GAP_ARRAY_NUM_ELS (el->start));
-  gap_array_delete_els (el->end, 0, GAP_ARRAY_NUM_ELS (el->end));
+  gap_array_delete_els (el->start, 0, gap_array_length (el->start));
+  gap_array_delete_els (el->end, 0, gap_array_length (el->end));
 }
 
 static Extent_List_Marker *
@@ -928,7 +580,7 @@ extent_list_make_marker (Extent_List *el, int pos, int endp)
   Extent_List_Marker *m;
 
 #ifdef NEW_GC
-  m = alloc_lrecord_type (Extent_List_Marker, &lrecord_extent_list_marker);
+  m = XEXTENT_LIST_MARKER (ALLOC_NORMAL_LISP_OBJECT (extent_list_marker));
 #else /* not NEW_GC */
   if (extent_list_marker_freelist)
     {
@@ -977,12 +629,12 @@ static Extent_List *
 allocate_extent_list (void)
 {
 #ifdef NEW_GC
-  Extent_List *el = alloc_lrecord_type (Extent_List, &lrecord_extent_list);
+  Extent_List *el = XEXTENT_LIST (ALLOC_NORMAL_LISP_OBJECT (extent_list));
 #else /* not NEW_GC */
   Extent_List *el = xnew (Extent_List);
 #endif /* not NEW_GC */
-  el->start = make_gap_array (sizeof (EXTENT));
-  el->end = make_gap_array (sizeof (EXTENT));
+  el->start = make_gap_array (sizeof (EXTENT), 1);
+  el->end = make_gap_array (sizeof (EXTENT), 1);
   el->markers = 0;
   return el;
 }
@@ -1003,48 +655,49 @@ free_extent_list (Extent_List *el)
 /************************************************************************/
 
 static const struct memory_description extent_auxiliary_description[] ={
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, begin_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, end_glyph) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, parent) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, children) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, invisible) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, read_only) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, mouse_face) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, initial_redisplay_function) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, before_change_functions) },
-  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, after_change_functions) },
+#define SLOT(x) \
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, x) },
+  EXTENT_AUXILIARY_SLOTS
+#undef SLOT
   { XD_END }
 };
 static Lisp_Object
 mark_extent_auxiliary (Lisp_Object obj)
 {
   struct extent_auxiliary *data = XEXTENT_AUXILIARY (obj);
-  mark_object (data->begin_glyph);
-  mark_object (data->end_glyph);
-  mark_object (data->invisible);
-  mark_object (data->children);
-  mark_object (data->read_only);
-  mark_object (data->mouse_face);
-  mark_object (data->initial_redisplay_function);
-  mark_object (data->before_change_functions);
-  mark_object (data->after_change_functions);
-  return data->parent;
+#define SLOT(x) mark_object (data->x);
+  EXTENT_AUXILIARY_SLOTS
+#undef SLOT
+
+  return Qnil;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
-			       0, /*dumpable-flag*/
-                               mark_extent_auxiliary, internal_object_printer,
-			       0, 0, 0, extent_auxiliary_description,
-			       struct extent_auxiliary);
-void
-allocate_extent_auxiliary (EXTENT ext)
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("extent-auxiliary",
+				      extent_auxiliary,
+				      mark_extent_auxiliary,
+				      extent_auxiliary_description,
+				      struct extent_auxiliary);
+
+
+static Lisp_Object
+allocate_extent_auxiliary (void)
 {
-  Lisp_Object extent_aux;
-  struct extent_auxiliary *data =
-    ALLOC_LCRECORD_TYPE (struct extent_auxiliary, &lrecord_extent_auxiliary);
-  COPY_LCRECORD (data, &extent_auxiliary_defaults);
-  extent_aux = wrap_extent_auxiliary (data);
-  ext->plist = Fcons (extent_aux, ext->plist);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (extent_auxiliary);
+  struct extent_auxiliary *data = XEXTENT_AUXILIARY (obj);
+
+#define SLOT(x) data->x = Qnil;
+  EXTENT_AUXILIARY_SLOTS
+#undef SLOT
+
+  return obj;
+}
+
+void
+attach_extent_auxiliary (EXTENT ext)
+{
+  Lisp_Object obj = allocate_extent_auxiliary ();
+
+  ext->plist = Fcons (obj, ext->plist);
   ext->flags.has_aux = 1;
 }
 
@@ -1080,69 +733,7 @@ static void free_soe (struct stack_of_extents *soe);
 #endif /* not NEW_GC */
 static void soe_invalidate (Lisp_Object obj);
 
-extern const struct sized_memory_description gap_array_marker_description;
-
-static const struct memory_description gap_array_marker_description_1[] = { 
-#ifdef NEW_GC
-  { XD_LISP_OBJECT, offsetof (Gap_Array_Marker, next) },
-#else /* not NEW_GC */
-  { XD_BLOCK_PTR, offsetof (Gap_Array_Marker, next), 1,
-    { &gap_array_marker_description } },
-#endif /* not NEW_GC */
-  { XD_END }
-};
-
-#ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("gap-array-marker", gap_array_marker,
-			       0, /*dumpable-flag*/
-                               0, 0, 0, 0, 0, 
-			       gap_array_marker_description_1,
-			       struct gap_array_marker);
-#else /* not NEW_GC */
-const struct sized_memory_description gap_array_marker_description = {
-  sizeof (Gap_Array_Marker),
-  gap_array_marker_description_1
-};
-#endif /* not NEW_GC */
-
-static const struct memory_description lispobj_gap_array_description_1[] = { 
-  { XD_ELEMCOUNT, offsetof (Gap_Array, gap) },
-  { XD_BYTECOUNT, offsetof (Gap_Array, offset_past_gap) },
-  { XD_ELEMCOUNT, offsetof (Gap_Array, els_past_gap) },
-#ifdef NEW_GC
-  { XD_LISP_OBJECT, offsetof (Gap_Array, markers) },
-#else /* not NEW_GC */
-  { XD_BLOCK_PTR, offsetof (Gap_Array, markers), 1,
-    { &gap_array_marker_description }, XD_FLAG_NO_KKCC },
-#endif /* not NEW_GC */
-  { XD_BLOCK_ARRAY, offsetof (Gap_Array, array), XD_INDIRECT (0, 0),
-    { &lisp_object_description } },
-  { XD_BLOCK_ARRAY, XD_INDIRECT (1, offsetof (Gap_Array, array)),
-    XD_INDIRECT (2, 0), { &lisp_object_description } },
-  { XD_END }
-};
-
-#ifdef NEW_GC
-
-static Bytecount
-size_gap_array (const void *lheader)
-{
-  Gap_Array *ga = (Gap_Array *) lheader;
-  return offsetof (Gap_Array, array) + (ga->numels + ga->gapsize) * ga->elsize;
-}
-
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("gap-array", gap_array,
-					0, /*dumpable-flag*/
-					0, 0, 0, 0, 0, 
-					lispobj_gap_array_description_1,
-					size_gap_array,
-					struct gap_array);
-#else /* not NEW_GC */
-static const struct sized_memory_description lispobj_gap_array_description = {
-  sizeof (Gap_Array),
-  lispobj_gap_array_description_1
-};
-
+#ifndef NEW_GC
 extern const struct sized_memory_description extent_list_marker_description;
 #endif /* not NEW_GC */
 
@@ -1160,11 +751,10 @@ static const struct memory_description extent_list_marker_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("extent-list-marker", extent_list_marker,
-			       0, /*dumpable-flag*/
-                               0, 0, 0, 0, 0, 
-			       extent_list_marker_description_1,
-			       struct extent_list_marker);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("extent-list-marker",
+				    extent_list_marker,
+				    0, extent_list_marker_description_1,
+				    struct extent_list_marker);
 #else /* not NEW_GC */
 const struct sized_memory_description extent_list_marker_description = {
   sizeof (Extent_List_Marker),
@@ -1189,11 +779,9 @@ static const struct memory_description extent_list_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("extent-list", extent_list,
-			       0, /*dumpable-flag*/
-                               0, 0, 0, 0, 0, 
-			       extent_list_description_1,
-			       struct extent_list);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("extent-list", extent_list,
+				    0, extent_list_description_1,
+				    struct extent_list);
 #else /* not NEW_GC */
 static const struct sized_memory_description extent_list_description = {
   sizeof (Extent_List),
@@ -1212,11 +800,9 @@ static const struct memory_description stack_of_extents_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("stack-of-extents", stack_of_extents,
-			       0, /*dumpable-flag*/
-                               0, 0, 0, 0, 0, 
-			       stack_of_extents_description_1,
-			       struct stack_of_extents);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("stack-of-extents", stack_of_extents,
+				    0, stack_of_extents_description_1,
+				    struct stack_of_extents);
 #else /* not NEW_GC */
 static const struct sized_memory_description stack_of_extents_description = {
   sizeof (Stack_Of_Extents),
@@ -1267,24 +853,13 @@ mark_extent_info (Lisp_Object obj)
   return Qnil;
 }
 
-#ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
-			       0, /*dumpable-flag*/
-                               mark_extent_info, internal_object_printer,
-			       0, 0, 0, 
-			       extent_info_description,
-			       struct extent_info);
-#else /* not NEW_GC */
+#ifndef NEW_GC
+
 static void
-finalize_extent_info (void *header, int for_disksave)
+finalize_extent_info (Lisp_Object obj)
 {
-  struct extent_info *data = (struct extent_info *) header;
+  struct extent_info *data = XEXTENT_INFO (obj);
 
-  if (for_disksave)
-    return;
-
-  data->soe = 0;
-  data->extents = 0;
   if (data->soe)
     {
       free_soe (data->soe);
@@ -1297,25 +872,23 @@ finalize_extent_info (void *header, int for_disksave)
     }
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
-			       0, /*dumpable-flag*/
-                               mark_extent_info, internal_object_printer,
-			       finalize_extent_info, 0, 0, 
-			       extent_info_description,
-			       struct extent_info);
 #endif /* not NEW_GC */
+
+DEFINE_NODUMP_LISP_OBJECT ("extent-info", extent_info,
+			   mark_extent_info, internal_object_printer,
+			   IF_OLD_GC (finalize_extent_info), 0, 0, 
+			   extent_info_description,
+			   struct extent_info);
 
 static Lisp_Object
 allocate_extent_info (void)
 {
-  Lisp_Object extent_info;
-  struct extent_info *data =
-    ALLOC_LCRECORD_TYPE (struct extent_info, &lrecord_extent_info);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (extent_info);
+  struct extent_info *data = XEXTENT_INFO (obj);
 
-  extent_info = wrap_extent_info (data);
   data->extents = allocate_extent_list ();
   data->soe = 0;
-  return extent_info;
+  return obj;
 }
 
 void
@@ -1472,15 +1045,11 @@ init_buffer_extents (struct buffer *b)
 void
 uninit_buffer_extents (struct buffer *b)
 {
-#ifndef NEW_GC
-  struct extent_info *data = XEXTENT_INFO (b->extent_info);
-#endif /* not NEW_GC */
-
   /* Don't destroy the extents here -- there may still be children
      extents pointing to the extents. */
   detach_all_extents (wrap_buffer (b));
 #ifndef NEW_GC
-  finalize_extent_info (data, 0);
+  finalize_extent_info (b->extent_info);
 #endif /* not NEW_GC */
 }
 
@@ -1551,24 +1120,7 @@ buffer_or_string_stack_of_extents_force (Lisp_Object object)
   return info->soe;
 }
 
-/* #### don't even think of #define'ing this, the prototype of
-   print_extent_1 has changed! */
-/* #define SOE_DEBUG */
-
-#ifdef SOE_DEBUG
-
-static void print_extent_1 (char *buf, Lisp_Object extent);
-
-static void
-print_extent_2 (EXTENT e)
-{
-  Lisp_Object extent;
-  char buf[200];
-
-  extent = wrap_extent (e);
-  print_extent_1 (buf, extent);
-  fputs (buf, stdout);
-}
+#ifdef DEBUG_XEMACS
 
 static void
 soe_dump (Lisp_Object obj)
@@ -1580,29 +1132,29 @@ soe_dump (Lisp_Object obj)
 
   if (!soe)
     {
-      printf ("No SOE");
+      stderr_out ("No SOE");
       return;
     }
   sel = soe->extents;
-  printf ("SOE pos is %d (memxpos %d)\n",
-	  soe->pos < 0 ? soe->pos :
-	  buffer_or_string_memxpos_to_bytexpos (obj, soe->pos),
-	  soe->pos);
+  stderr_out ("SOE pos is %ld (memxpos %ld)\n",
+	      soe->pos < 0 ? soe->pos :
+	      buffer_or_string_memxpos_to_bytexpos (obj, soe->pos),
+	      soe->pos);
   for (endp = 0; endp < 2; endp++)
     {
-      printf (endp ? "SOE end:" : "SOE start:");
+      stderr_out (endp ? "SOE end:" : "SOE start:");
       for (i = 0; i < extent_list_num_els (sel); i++)
 	{
 	  EXTENT e = extent_list_at (sel, i, endp);
-	  putchar ('\t');
-	  print_extent_2 (e);
+	  stderr_out ("\t");
+	  debug_print (wrap_extent (e));
 	}
-      putchar ('\n');
+      stderr_out ("\n");
     }
-  putchar ('\n');
+  stderr_out ("\n");
 }
 
-#endif
+#endif /* DEBUG_XEMACS */
 
 /* Insert EXTENT into OBJ's stack of extents, if necessary. */
 
@@ -1611,23 +1163,30 @@ soe_insert (Lisp_Object obj, EXTENT extent)
 {
   Stack_Of_Extents *soe = buffer_or_string_stack_of_extents (obj);
 
-#ifdef SOE_DEBUG
-  printf ("Inserting into SOE: ");
-  print_extent_2 (extent);
-  putchar ('\n');
+#ifdef DEBUG_XEMACS
+  if (debug_soe)
+    {
+      stderr_out ("Inserting into SOE: ");
+      debug_print (wrap_extent (extent));
+      stderr_out ("\n");
+    }
 #endif
   if (!soe || soe->pos < extent_start (extent) ||
       soe->pos > extent_end (extent))
     {
-#ifdef SOE_DEBUG
-      printf ("(not needed)\n\n");
+#ifdef DEBUG_XEMACS
+      if (debug_soe)
+	stderr_out ("(not needed)\n\n");
 #endif
       return;
     }
   extent_list_insert (soe->extents, extent);
-#ifdef SOE_DEBUG
-  puts ("SOE afterwards is:");
-  soe_dump (obj);
+#ifdef DEBUG_XEMACS
+  if (debug_soe)
+    {
+      stderr_out ("SOE afterwards is:\n");
+      soe_dump (obj);
+    }
 #endif
 }
 
@@ -1638,23 +1197,30 @@ soe_delete (Lisp_Object obj, EXTENT extent)
 {
   Stack_Of_Extents *soe = buffer_or_string_stack_of_extents (obj);
 
-#ifdef SOE_DEBUG
-  printf ("Deleting from SOE: ");
-  print_extent_2 (extent);
-  putchar ('\n');
+#ifdef DEBUG_XEMACS
+  if (debug_soe)
+    {
+      stderr_out ("Deleting from SOE: ");
+      debug_print (wrap_extent (extent));
+      stderr_out ("\n");
+    }
 #endif
   if (!soe || soe->pos < extent_start (extent) ||
       soe->pos > extent_end (extent))
     {
-#ifdef SOE_DEBUG
-      puts ("(not needed)\n");
+#ifdef DEBUG_XEMACS
+      if (debug_soe)
+	stderr_out ("(not needed)\n\n");
 #endif
       return;
     }
   extent_list_delete (soe->extents, extent);
-#ifdef SOE_DEBUG
-  puts ("SOE afterwards is:");
-  soe_dump (obj);
+#ifdef DEBUG_XEMACS
+  if (debug_soe)
+    {
+      stderr_out ("SOE afterwards is:\n");
+      soe_dump (obj);
+    }
 #endif
 }
 
@@ -1674,11 +1240,12 @@ soe_move (Lisp_Object obj, Memxpos pos)
   assert (bel);
 #endif
 
-#ifdef SOE_DEBUG
-  printf ("Moving SOE from %d (memxpos %d) to %d (memxpos %d)\n",
-	  soe->pos < 0 ? soe->pos :
-	  buffer_or_string_memxpos_to_bytexpos (obj, soe->pos), soe->pos,
-	  buffer_or_string_memxpos_to_bytexpos (obj, pos), pos);
+#ifdef DEBUG_XEMACS
+  if (debug_soe)
+    stderr_out ("Moving SOE from %ld (memxpos %ld) to %ld (memxpos %ld)\n",
+		soe->pos < 0 ? soe->pos :
+		buffer_or_string_memxpos_to_bytexpos (obj, soe->pos), soe->pos,
+		buffer_or_string_memxpos_to_bytexpos (obj, pos), pos);
 #endif
   if (soe->pos < pos)
     {
@@ -1692,8 +1259,9 @@ soe_move (Lisp_Object obj, Memxpos pos)
     }
   else
     {
-#ifdef SOE_DEBUG
-      puts ("(not needed)\n");
+#ifdef DEBUG_XEMACS
+      if (debug_soe)
+	stderr_out ("(not needed)\n\n");
 #endif
       return;
     }
@@ -1778,9 +1346,12 @@ soe_move (Lisp_Object obj, Memxpos pos)
   }
 
   soe->pos = pos;
-#ifdef SOE_DEBUG
-  puts ("SOE afterwards is:");
-  soe_dump (obj);
+#ifdef DEBUG_XEMACS
+  if (debug_soe)
+    {
+      stderr_out ("SOE afterwards is:\n");
+      soe_dump (obj);
+    }
 #endif
 }
 
@@ -1800,8 +1371,8 @@ static struct stack_of_extents *
 allocate_soe (void)
 {
 #ifdef NEW_GC
-  struct stack_of_extents *soe = 
-    alloc_lrecord_type (struct stack_of_extents, &lrecord_stack_of_extents);
+  struct stack_of_extents *soe =
+    XSTACK_OF_EXTENTS (ALLOC_NORMAL_LISP_OBJECT (stack_of_extents));
 #else /* not NEW_GC */
   struct stack_of_extents *soe = xnew_and_zero (struct stack_of_extents);
 #endif /* not NEW_GC */
@@ -3222,10 +2793,10 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 	      Lisp_Object function = extent_initial_redisplay_function (e);
 	      Lisp_Object obj;
 
-	      /* printf ("initial redisplay function called!\n "); */
+	      /* stderr_out ("initial redisplay function called!\n "); */
 
-	      /* print_extent_2 (e);
-	         printf ("\n"); */
+	      /* debug_print (wrap_extent (e));
+	         stderr_out ("\n"); */
 
 	      /* FIXME: One should probably inhibit the displaying of
 		 this extent to reduce flicker */
@@ -3253,7 +2824,7 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 
 /* These are the basic helper functions for handling the allocation of
    extent objects.  They are similar to the functions for other
-   lrecord objects.  allocate_extent() is in alloc.c, not here. */
+   frob-block objects.  allocate_extent() is in alloc.c, not here. */
 
 static Lisp_Object
 mark_extent (Lisp_Object obj)
@@ -3310,8 +2881,6 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun,
       if (NILP (v)) continue;
       write_fmt_string_lisp (printcharfun, "%S ", 1, XCAR (tail));
     }
-
-  write_fmt_string (printcharfun, "0x%lx", (long) ext);
 }
 
 static void
@@ -3355,10 +2924,11 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       if (print_readably)
 	{
 	  if (!EXTENT_LIVE_P (XEXTENT (obj)))
-	    printing_unreadable_object ("#<destroyed extent>");
+	    printing_unreadable_object_fmt ("#<destroyed extent 0x%x>",
+					    LISP_OBJECT_UID (obj));
 	  else
-	    printing_unreadable_object ("#<extent 0x%lx>",
-		   (long) XEXTENT (obj));
+	    printing_unreadable_object_fmt ("#<extent 0x%x>",
+					    LISP_OBJECT_UID (obj));
 	}
 
       if (!EXTENT_LIVE_P (XEXTENT (obj)))
@@ -3368,17 +2938,19 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  write_ascstring (printcharfun, "#<extent ");
 	  print_extent_1 (obj, printcharfun, escapeflag);
 	  write_ascstring (printcharfun, extent_detached_p (XEXTENT (obj))
-			  ? " from " : " in ");
+			  ? "from " : "in ");
 	  write_fmt_string (printcharfun, "%s%s%s", title, name, posttitle);
 	}
     }
   else
     {
       if (print_readably)
-	printing_unreadable_object ("#<extent>");
+	printing_unreadable_object_fmt ("#<extent 0x%x>",
+					LISP_OBJECT_UID (obj));
       write_ascstring (printcharfun, "#<extent");
     }
-  write_ascstring (printcharfun, ">");
+
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3479,20 +3051,17 @@ extent_plist (Lisp_Object obj)
   return Fextent_properties (obj);
 }
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
-						1, /*dumpable-flag*/
-						mark_extent,
-						print_extent,
-						/* NOTE: If you declare a
-						   finalization method here,
-						   it will NOT be called.
-						   Shaft city. */
-						0,
-						extent_equal, extent_hash,
-						extent_description,
-						extent_getprop, extent_putprop,
-						extent_remprop, extent_plist,
-						struct extent);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("extent", extent,
+					mark_extent,
+					print_extent,
+					/* NOTE: If you declare a
+					   finalization method here,
+					   it will NOT be called.
+					   Shaft city. */
+					0,
+					extent_equal, extent_hash,
+					extent_description,
+					struct extent);
 
 /************************************************************************/
 /*			basic extent accessors				*/
@@ -4059,12 +3628,10 @@ copy_extent (EXTENT original, Bytexpos from, Bytexpos to, Lisp_Object object)
       /* also need to copy the aux struct.  It won't work for
 	 this extent to share the same aux struct as the original
 	 one. */
-      struct extent_auxiliary *data =
-	ALLOC_LCRECORD_TYPE (struct extent_auxiliary,
-			     &lrecord_extent_auxiliary);
+      Lisp_Object ea = ALLOC_NORMAL_LISP_OBJECT (extent_auxiliary);
 
-      COPY_LCRECORD (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
-      XCAR (e->plist) = wrap_extent_auxiliary (data);
+      copy_lisp_object (ea, XCAR (original->plist));
+      XCAR (e->plist) = ea;
     }
 
   {
@@ -7371,7 +6938,7 @@ If two or more extents with conflicting non-nil values for PROP overlap
  use the text-property primitives.)
 
 This function looks only at extents created using the text-property primitives.
-To look at all extents, use `next-single-char-property-change'.
+To look at all extents, use `previous-single-char-property-change'.
 */
        (pos, prop, object, limit))
 {
@@ -7398,7 +6965,7 @@ If two or more extents with conflicting non-nil values for PROP overlap
  use the text-property primitives.)
 
 This function looks at all extents.  To look at only extents created using the
-text-property primitives, use `next-single-char-property-change'.
+text-property primitives, use `next-single-property-change'.
 */
        (pos, prop, object, limit))
 {
@@ -7426,7 +6993,7 @@ If two or more extents with conflicting non-nil values for PROP overlap
  use the text-property primitives.)
 
 This function looks at all extents.  To look at only extents created using the
-text-property primitives, use `next-single-char-property-change'.
+text-property primitives, use `previous-single-property-change'.
 */
        (pos, prop, object, limit))
 {
@@ -7436,9 +7003,8 @@ text-property primitives, use `next-single-char-property-change'.
 
 #ifdef MEMORY_USAGE_STATS
 
-int
-compute_buffer_extent_usage (struct buffer *UNUSED (b),
-			     struct overhead_stats *UNUSED (ovstats))
+Bytecount
+compute_buffer_extent_usage (struct buffer *UNUSED (b))
 {
   /* #### not yet written */
   return 0;
@@ -7452,17 +7018,24 @@ compute_buffer_extent_usage (struct buffer *UNUSED (b),
 /************************************************************************/
 
 void
+extent_objects_create (void)
+{
+  OBJECT_HAS_METHOD (extent, getprop);
+  OBJECT_HAS_METHOD (extent, putprop);
+  OBJECT_HAS_METHOD (extent, remprop);
+  OBJECT_HAS_METHOD (extent, plist);
+}
+
+void
 syms_of_extents (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (extent);
-  INIT_LRECORD_IMPLEMENTATION (extent_info);
-  INIT_LRECORD_IMPLEMENTATION (extent_auxiliary);
+  INIT_LISP_OBJECT (extent);
+  INIT_LISP_OBJECT (extent_info);
+  INIT_LISP_OBJECT (extent_auxiliary);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (gap_array_marker);
-  INIT_LRECORD_IMPLEMENTATION (gap_array);
-  INIT_LRECORD_IMPLEMENTATION (extent_list_marker);
-  INIT_LRECORD_IMPLEMENTATION (extent_list);
-  INIT_LRECORD_IMPLEMENTATION (stack_of_extents);
+  INIT_LISP_OBJECT (extent_list_marker);
+  INIT_LISP_OBJECT (extent_list);
+  INIT_LISP_OBJECT (stack_of_extents);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qextentp);
@@ -7582,24 +7155,17 @@ syms_of_extents (void)
 }
 
 void
-reinit_vars_of_extents (void)
-{
-  extent_auxiliary_defaults.begin_glyph = Qnil;
-  extent_auxiliary_defaults.end_glyph = Qnil;
-  extent_auxiliary_defaults.parent = Qnil;
-  extent_auxiliary_defaults.children = Qnil;
-  extent_auxiliary_defaults.priority = 0;
-  extent_auxiliary_defaults.invisible = Qnil;
-  extent_auxiliary_defaults.read_only = Qnil;
-  extent_auxiliary_defaults.mouse_face = Qnil;
-  extent_auxiliary_defaults.initial_redisplay_function = Qnil;
-  extent_auxiliary_defaults.before_change_functions = Qnil;
-  extent_auxiliary_defaults.after_change_functions = Qnil;
-}
-
-void
 vars_of_extents (void)
 {
+#ifdef DEBUG_XEMACS 
+  DEFVAR_BOOL ("debug-soe", &debug_soe /*
+If non-nil, display debugging information about the SOE ("stack of extents").
+The SOE is a cache of extents overlapping a specified region, used to
+speed up `map-extents' and certain other functions.
+*/ );
+  debug_soe = 0;
+#endif /* DEBUG_XEMACS */
+
   DEFVAR_INT ("mouse-highlight-priority", &mouse_highlight_priority /*
 The priority to use for the mouse-highlighting pseudo-extent
 that is used to highlight extents with the `mouse-face' attribute set.
@@ -7641,4 +7207,8 @@ functions `get-text-property' or `get-char-property' are called.
 
   QSin_map_extents_internal = build_defer_string ("(in map-extents-internal)");
   staticpro (&QSin_map_extents_internal);
+
+  Vextent_auxiliary_defaults =
+    allocate_extent_auxiliary ();
+  staticpro (&Vextent_auxiliary_defaults);
 }

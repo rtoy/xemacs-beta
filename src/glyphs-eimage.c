@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994, 1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005, 2010 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -177,10 +177,16 @@ jpeg_instantiate_unwind (Lisp_Object unwind_obj)
     jpeg_destroy_decompress (data->cinfo_ptr);
 
   if (data->instream)
-    retry_fclose (data->instream);
+    {
+      retry_fclose (data->instream);
+      data->instream = 0;
+    }
 
   if (data->eimage)
-    xfree (data->eimage);
+    {
+      xfree (data->eimage);
+      data->eimage = 0;
+    }
 
   return Qnil;
 }
@@ -577,10 +583,14 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
   if (data->giffile)
     {
       DGifCloseFile (data->giffile);
-      FreeSavedImages(data->giffile);
+      FreeSavedImages (data->giffile);
+      data->giffile = 0;
     }
   if (data->eimage)
-    xfree (data->eimage);
+    {
+      xfree (data->eimage);
+      data->eimage = 0;
+    }
 
   return Qnil;
 }
@@ -878,10 +888,16 @@ png_instantiate_unwind (Lisp_Object unwind_obj)
     }
 
   if (data->instream)
-    retry_fclose (data->instream);
+    {
+      retry_fclose (data->instream);
+      data->instream = 0;
+    }
 
   if (data->eimage)
-    xfree (data->eimage);
+    {
+      xfree (data->eimage);
+      data->eimage = 0;
+    }
 
   return Qnil;
 }
@@ -1134,10 +1150,14 @@ tiff_instantiate_unwind (Lisp_Object unwind_obj)
   free_opaque_ptr (unwind_obj);
   if (data->tiff)
     {
-      TIFFClose(data->tiff);
+      TIFFClose (data->tiff);
+      data->tiff = 0;
     }
   if (data->eimage)
-    xfree (data->eimage);
+    {
+      xfree (data->eimage);
+      data->eimage = 0;
+    }
 
   return Qnil;
 }

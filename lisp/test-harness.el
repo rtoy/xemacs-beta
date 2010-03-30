@@ -194,6 +194,12 @@ The output file's name is made by appending `c' to the end of FILENAME."
     (kill-buffer input-buffer)
     ))
 
+(defsubst test-harness-backtrace ()
+  "Display a reasonable-size backtrace."
+  (let ((print-escape-newlines t)
+	(print-length 50))
+    (backtrace nil t)))
+
 (defsubst test-harness-assertion-failure-do-debug (error-info)
   "Maybe enter debugger or display a backtrace on assertion failure.
 ERROR-INFO is a cons of the args (SIG . DATA) that were passed to `signal'.
@@ -206,7 +212,7 @@ is non-nil."
 		test-harness-assertion-failure-enter-debugger)
 	   (funcall debugger 'error error-info))
 	  (test-harness-assertion-failure-show-backtrace
-	   (backtrace nil t)))))
+	   (test-harness-backtrace)))))
 
 (defsubst test-harness-unexpected-error-do-debug (error-info)
   "Maybe enter debugger or display a backtrace on unexpected error.
@@ -220,7 +226,7 @@ is non-nil."
 		test-harness-unexpected-error-enter-debugger)
 	   (funcall debugger 'error error-info))
 	  (test-harness-unexpected-error-show-backtrace
-	   (backtrace nil t)))))
+	   (test-harness-backtrace)))))
 
 (defsubst test-harness-unexpected-error-condition-handler (error-info context-msg)
   "Condition handler for when unexpected errors occur.
@@ -392,6 +398,29 @@ Optional FAILING-CASE describes the particular failure.  Optional
 DESCRIPTION describes the assertion; by default, the unevalated assertion
 expression is given.  FAILING-CASE and DESCRIPTION are useful when Assert
 is used in a loop."
+	(let ((test-assertion assertion)
+	      (negated nil))
+	  (when (and (listp test-assertion)
+		     (= 2 (length test-assertion))
+		     (memq (car test-assertion) '(not null)))
+	    (setq test-assertion (cadr test-assertion))
+	    (setq negated t))
+	  (when (and (listp test-assertion)
+		     (= 3 (length test-assertion))
+		     (member (car test-assertion)
+			     '(eq eql equal equalp = string= < <= > >=)))
+	    (let* ((test (car test-assertion))
+		   (testval (second test-assertion))
+		   (expected (third test-assertion))
+		   (failmsg `(format ,(if negated
+					  "%S shouldn't be `%s' to %S but is"
+					"%S should be `%s' to %S but isn't")
+			      ,testval ',test ,expected)))
+	      (setq failing-case (if failing-case
+				     `(concat 
+				       (format "%S, " ,failing-case)
+				       ,failmsg)
+				   failmsg)))))
 	(let ((description
 	       (or description `(quote ,assertion))))
 	  `(condition-case nil
@@ -418,95 +447,6 @@ is used in a loop."
 		    (Print-Pass "%S" ,description)
 		    (incf passes)))
 	    (cl-assertion-failed nil))))
-
-;;;;; BEGIN DEFINITION OF SPECIFIC KINDS OF ASSERT MACROS
-
-      (defmacro Assert-test (test testval expected &optional failing-case
-			     description)
-	"Test passes if TESTVAL compares correctly to EXPECTED using TEST.
-TEST should be a two-argument predicate (i.e. a function of two arguments
-that returns t or nil), such as `eq', `eql', `equal', `equalp', `=', `<=',
-'>', 'file-newer-than-file-p' etc.  Optional FAILING-CASE describes the
-particular failure; any value given here will be concatenated with a phrase
-describing the expected and actual values of the comparison.  Optional
-DESCRIPTION describes the assertion; by default, the unevalated comparison
-expressions are given.  FAILING-CASE and DESCRIPTION are useful when Assert
-is used in a loop."
-	(let* ((assertion `(,test ,testval ,expected))
-	       (failmsg `(format "%S should be `%s' to %S but isn't"
-			  ,testval ',test ,expected))
-	       (failmsg2 (if failing-case `(concat 
-					   (format "%S, " ,failing-case)
-					   ,failmsg)
-			  failmsg)))
-	  `(Assert ,assertion ,failmsg2 ,description)))
-
-      (defmacro Assert-test-not (test testval expected &optional failing-case
-				 description)
-	"Test passes if TESTVAL does not compare correctly to EXPECTED using TEST.
-TEST should be a two-argument predicate (i.e. a function of two arguments
-that returns t or nil), such as `eq', `eql', `equal', `equalp', `=', `<=',
-'>', 'file-newer-than-file-p' etc.  Optional FAILING-CASE describes the
-particular failure; any value given here will be concatenated with a phrase
-describing the expected and actual values of the comparison.  Optional
-DESCRIPTION describes the assertion; by default, the unevalated comparison
-expressions are given.  FAILING-CASE and DESCRIPTION are useful when Assert
-is used in a loop."
-	(let* ((assertion `(not (,test ,testval ,expected)))
-	       (failmsg `(format "%S shouldn't be `%s' to %S but is"
-			  ,testval ',test ,expected))
-	       (failmsg2 (if failing-case `(concat 
-					   (format "%S, " ,failing-case)
-					   ,failmsg)
-			  failmsg)))
-	  `(Assert ,assertion ,failmsg2 ,description)))
-
-      ;; Specific versions of `Assert-test'.  These are just convenience
-      ;; functions, functioning identically to `Assert-test', and duplicating
-      ;; the doc string for each would be too annoying.
-      (defmacro Assert-eq (testval expected &optional failing-case
-			   description)
-	`(Assert-test eq ,testval ,expected ,failing-case ,description))
-      (defmacro Assert-eql (testval expected &optional failing-case
-			    description)
-	`(Assert-test eql ,testval ,expected ,failing-case ,description))
-      (defmacro Assert-equal (testval expected &optional failing-case
-			      description)
-	`(Assert-test equal ,testval ,expected ,failing-case ,description))
-      (defmacro Assert-equalp (testval expected &optional failing-case
-			      description)
-	`(Assert-test equalp ,testval ,expected ,failing-case ,description))
-      (defmacro Assert-string= (testval expected &optional failing-case
-			      description)
-	`(Assert-test string= ,testval ,expected ,failing-case ,description))
-      (defmacro Assert= (testval expected &optional failing-case
-			 description)
-	`(Assert-test = ,testval ,expected ,failing-case ,description))
-      (defmacro Assert<= (testval expected &optional failing-case
-			  description)
-	`(Assert-test <= ,testval ,expected ,failing-case ,description))
-
-      ;; Specific versions of `Assert-test-not'.  These are just convenience
-      ;; functions, functioning identically to `Assert-test-not', and
-      ;; duplicating the doc string for each would be too annoying.
-      (defmacro Assert-not-eq (testval expected &optional failing-case
-			       description)
-	`(Assert-test-not eq ,testval ,expected ,failing-case ,description))
-      (defmacro Assert-not-eql (testval expected &optional failing-case
-				description)
-	`(Assert-test-not eql ,testval ,expected ,failing-case ,description))
-      (defmacro Assert-not-equal (testval expected &optional failing-case
-				  description)
-	`(Assert-test-not equal ,testval ,expected ,failing-case ,description))
-      (defmacro Assert-not-equalp (testval expected &optional failing-case
-				   description)
-	`(Assert-test-not equalp ,testval ,expected ,failing-case ,description))
-      (defmacro Assert-not-string= (testval expected &optional failing-case
-				    description)
-	`(Assert-test-not string= ,testval ,expected ,failing-case ,description))
-      (defmacro Assert-not= (testval expected &optional failing-case
-			     description)
-	`(Assert-test-not = ,testval ,expected ,failing-case ,description))
 
       (defmacro Check-Error (expected-error &rest body)
 	(let ((quoted-body (if (= 1 (length body))

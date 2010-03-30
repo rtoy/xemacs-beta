@@ -1,6 +1,6 @@
 /* Various functions for X11R5+ input methods, using the Xlib interface.
    Copyright (C) 1996 Sun Microsystems.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -411,10 +411,15 @@ XIM_SetGeometry (struct frame *f)
       if (needed->width == 0)   /* Use XNArea instead of XNAreaNeeded */
         XIC_Value (Get, xic, XNStatusAttributes, XNArea, &needed);
 
+      /* #### This will partially cover the gutter if there is a bottom
+	 gutter.  Perhaps what was intended was FRAME_PANED_RIGHT_EDGE()
+	 and FRAME_PANED_BOTTOM_EDGE()?  That will actually place itself
+	 in the paned area (covering the right edge of the minibuffer)
+	 in all circumstances. */
       area.width  = needed->width;
       area.height = needed->height;
-      area.x = FRAME_RIGHT_BORDER_START  (f) - area.width;
-      area.y = FRAME_BOTTOM_BORDER_START (f) - area.height;
+      area.x = FRAME_RIGHT_INTERNAL_BORDER_START  (f) - area.width;
+      area.y = FRAME_BOTTOM_INTERNAL_BORDER_START (f) - area.height;
 
 #ifdef DEBUG_XIM
       stderr_out ("Putting StatusArea in x=%d y=%d w=%d h=%d\n",
@@ -430,10 +435,10 @@ XIM_SetGeometry (struct frame *f)
       /* We include the border because Preedit window might be larger
          than display line at edge. #### FIX: we should adjust to make
          sure that there is always room for the spot sub-window */
-      area.x      = FRAME_LEFT_BORDER_START (f);
-      area.y      = FRAME_TOP_BORDER_START  (f);
-      area.width  = FRAME_RIGHT_BORDER_END  (f) - area.x;
-      area.height = FRAME_BOTTOM_BORDER_END (f) - area.y;
+      area.x      = FRAME_LEFT_INTERNAL_BORDER_START (f);
+      area.y      = FRAME_TOP_INTERNAL_BORDER_START  (f);
+      area.width  = FRAME_RIGHT_INTERNAL_BORDER_END  (f) - area.x;
+      area.height = FRAME_BOTTOM_INTERNAL_BORDER_END (f) - area.y;
       XIC_Value(Set, xic, XNPreeditAttributes, XNArea, &area);
     }
 

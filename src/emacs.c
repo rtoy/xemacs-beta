@@ -766,6 +766,7 @@ free_argc_argv (Wexttext **argv)
   while (argv[elt])
     {
       xfree (argv[elt]);
+      argv[elt] = 0;
       elt++;
     }
   xfree (argv);
@@ -1464,13 +1465,32 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
       /* Make sure that eistrings can be created. */
       init_eistring_once_early ();
+    }
+#ifdef PDUMP
+  else if (!restart)	      /* after successful pdump_load()
+				 (note, we are inside ifdef PDUMP) */
+    {
+      reinit_alloc_early ();
+      reinit_gc_early ();
+      reinit_symbols_early ();
+#ifndef NEW_GC
+      reinit_opaque_early ();
+#endif /* not NEW_GC */
+      reinit_eistring_early ();
+#ifdef WITH_NUMBER_TYPES
+      reinit_vars_of_number ();
+#endif
+    }
+#endif /* PDUMP */
 
+  if (!initialized)
+    {
       /* Now declare all the symbols and define all the Lisp primitives.
 
 	 The *only* thing that the syms_of_*() functions are allowed to do
 	 is call one of the following:
 
-	 INIT_LRECORD_IMPLEMENTATION()
+	 INIT_LISP_OBJECT()
 	 defsymbol(), DEFSYMBOL(), or DEFSYMBOL_MULTIWORD_PREDICATE()
 	 defsubr() (i.e. DEFSUBR)
 	 deferror(), DEFERROR(), or DEFERROR_STANDARD()
@@ -1489,6 +1509,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef NEW_GC
       syms_of_vdb ();
 #endif /* NEW_GC */
+      syms_of_array ();
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
@@ -1538,8 +1559,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_frame ();
       syms_of_general ();
       syms_of_glyphs ();
+#ifdef HAVE_WINDOW_SYSTEM
       syms_of_glyphs_eimage ();
       syms_of_glyphs_shared ();
+#endif
       syms_of_glyphs_widget ();
       syms_of_gui ();
       syms_of_gutter ();
@@ -1547,6 +1570,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_intl ();
       syms_of_keymap ();
       syms_of_lread ();
+      syms_of_lstream ();
       syms_of_macros ();
       syms_of_marker ();
       syms_of_md5 ();
@@ -1730,7 +1754,36 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #if defined (HAVE_POSTGRESQL) && !defined (HAVE_SHLIB)
       syms_of_postgresql ();
 #endif
+    }
 
+  if (!initialized
+#ifdef PDUMP
+      || !restart
+#endif
+      )
+    {
+      buffer_objects_create ();
+      casetab_objects_create ();
+      extent_objects_create ();
+      face_objects_create ();
+      frame_objects_create ();
+      glyph_objects_create ();
+      hash_table_objects_create ();
+      lstream_objects_create ();
+#ifdef MULE
+      mule_charset_objects_create ();
+#endif
+#ifdef HAVE_SCROLLBARS
+      scrollbar_objects_create ();
+#endif
+#ifdef HAVE_GTK
+      ui_gtk_objects_create ();
+#endif
+      window_objects_create ();
+    }
+
+  if (!initialized)
+    {
       /* Now create the subtypes for the types that have them.
 	 We do this before the vars_*() because more symbols
 	 may get initialized here. */
@@ -1873,7 +1926,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 called before the any calls to the other macros. */
 
       image_instantiator_format_create ();
+#ifdef HAVE_WINDOW_SYSTEM
       image_instantiator_format_create_glyphs_eimage ();
+#endif
       image_instantiator_format_create_glyphs_widget ();
 #ifdef HAVE_TTY
       image_instantiator_format_create_glyphs_tty ();
@@ -1892,17 +1947,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   else if (!restart)	      /* after successful pdump_load()
 				 (note, we are inside ifdef PDUMP) */
     {
-      reinit_alloc_early ();
-      reinit_gc_early ();
-      reinit_symbols_early ();
-#ifndef NEW_GC
-      reinit_opaque_early ();
-#endif /* not NEW_GC */
-      reinit_eistring_early ();
-#ifdef WITH_NUMBER_TYPES
-      reinit_vars_of_number ();
-#endif
-
       reinit_console_type_create_stream ();
 #ifdef HAVE_TTY
       reinit_console_type_create_tty ();
@@ -2021,8 +2065,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	    - make_int()
 	    - make_char()
 	    - make_extent()
-	    - BASIC_ALLOC_LCRECORD()
-	    - ALLOC_LCRECORD_TYPE()
+	    - ALLOC_NORMAL_LISP_OBJECT()
+	    - ALLOC_SIZED_LISP_OBJECT()
 	    - Fcons()
 	    - listN()
             - make_lcrecord_list()
@@ -2054,6 +2098,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_buffer ();
       vars_of_bytecode ();
       vars_of_callint ();
+      vars_of_casetab ();
       vars_of_chartab ();
       vars_of_cmdloop ();
       vars_of_cmds ();
@@ -2074,6 +2119,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_dragdrop ();
 #endif
       vars_of_editfns ();
+      vars_of_elhash ();
       vars_of_emacs ();
       vars_of_eval ();
 
@@ -2104,7 +2150,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_frame ();
       vars_of_gc ();
       vars_of_glyphs ();
+#ifdef HAVE_WINDOW_SYSTEM
       vars_of_glyphs_eimage ();
+#endif
       vars_of_glyphs_widget ();
       vars_of_gui ();
       vars_of_gutter ();
@@ -2299,6 +2347,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
     {
       /* Now do additional vars_of_*() initialization that happens both
 	 at dump time and after pdump load. */
+      reinit_vars_of_alloc ();
       reinit_vars_of_buffer ();
       reinit_vars_of_bytecode ();
       reinit_vars_of_console ();
@@ -2312,7 +2361,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       reinit_vars_of_event_stream ();
       reinit_vars_of_events ();
-      reinit_vars_of_extents ();
       reinit_vars_of_file_coding ();
       reinit_vars_of_fileio ();
 #ifdef USE_C_FONT_LOCK
@@ -4054,6 +4102,20 @@ assert_failed (const Ascbyte *file, int line, const Ascbyte *expr)
 #endif /* !defined (ASSERTIONS_DONT_ABORT) */
   inhibit_non_essential_conversion_operations--;
   in_assert_failed--;
+}
+
+/* This is called when an assert() fails or when ABORT() is called -- both
+   of those are defined in the preprocessor to an expansion involving
+   assert_failed(). */
+void
+assert_equal_failed (const Ascbyte *file, int line, EMACS_INT x, EMACS_INT y,
+		     const Ascbyte *exprx, const Ascbyte *expry)
+{
+  Ascbyte bigstr[1000]; /* #### Could overflow, but avoids any need to do any
+			   allocation, even alloca(), hence safer */
+  sprintf (bigstr, "%s (%ld) should == %s (%ld) but doesn't",
+	   exprx, x, expry, y);
+  assert_failed (file, line, bigstr);
 }
 
 /* -------------------------------------- */

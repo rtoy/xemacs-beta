@@ -119,9 +119,9 @@ bit_vector_hash (Lisp_Object obj, int UNUSED (depth))
 }
 
 static Bytecount
-size_bit_vector (const void *lheader)
+size_bit_vector (Lisp_Object obj)
 {
-  Lisp_Bit_Vector *v = (Lisp_Bit_Vector *) lheader;
+  Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector, unsigned long, bits,
 				       BIT_VECTOR_LONG_STORAGE (bit_vector_length (v)));
 }
@@ -131,15 +131,14 @@ static const struct memory_description bit_vector_description[] = {
 };
 
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("bit-vector", bit_vector,
-					1, /*dumpable-flag*/
-					mark_bit_vector,
-					print_bit_vector, 0,
-					bit_vector_equal,
-					bit_vector_hash,
-					bit_vector_description,
-					size_bit_vector,
-					Lisp_Bit_Vector);
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("bit-vector", bit_vector,
+				     mark_bit_vector,
+				     print_bit_vector, 0,
+				     bit_vector_equal,
+				     bit_vector_hash,
+				     bit_vector_description,
+				     size_bit_vector,
+				     Lisp_Bit_Vector);
 
 
 DEFUN ("identity", Fidentity, 1, 1, 0, /*
@@ -947,30 +946,6 @@ safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth)
   return arg;
 }
 
-DEFUN ("substring", Fsubstring, 2, 3, 0, /*
-Return the substring of STRING starting at START and ending before END.
-END may be nil or omitted; then the substring runs to the end of STRING.
-If START or END is negative, it counts from the end.
-Relevant parts of the string-extent-data are copied to the new string.
-*/
-       (string, start, end))
-{
-  Charcount ccstart, ccend;
-  Bytecount bstart, blen;
-  Lisp_Object val;
-
-  CHECK_STRING (string);
-  CHECK_INT (start);
-  get_string_range_char (string, start, end, &ccstart, &ccend,
-			 GB_HISTORICAL_STRING_BEHAVIOR);
-  bstart = string_index_char_to_byte (string, ccstart);
-  blen = string_offset_char_to_byte_len (string, bstart, ccend - ccstart);
-  val = make_string (XSTRING_DATA (string) + bstart, blen);
-  /* Copy any applicable extent information into the new string. */
-  copy_string_extents (val, string, 0, bstart, blen);
-  return val;
-}
-
 DEFUN ("subseq", Fsubseq, 2, 3, 0, /*
 Return the subsequence of SEQUENCE starting at START and ending before END.
 END may be omitted; then the subsequence runs to the end of SEQUENCE.
@@ -983,10 +958,24 @@ are copied to the new string.
 {
   EMACS_INT len, s, e;
 
-  CHECK_SEQUENCE (sequence);
-
   if (STRINGP (sequence))
-    return Fsubstring (sequence, start, end);
+    {
+      Charcount ccstart, ccend;
+      Bytecount bstart, blen;
+      Lisp_Object val;
+
+      CHECK_INT (start);
+      get_string_range_char (sequence, start, end, &ccstart, &ccend,
+                             GB_HISTORICAL_STRING_BEHAVIOR);
+      bstart = string_index_char_to_byte (sequence, ccstart);
+      blen = string_offset_char_to_byte_len (sequence, bstart, ccend - ccstart);
+      val = make_string (XSTRING_DATA (sequence) + bstart, blen);
+      /* Copy any applicable extent information into the new string. */
+      copy_string_extents (val, sequence, 0, bstart, blen);
+      return val;
+    }
+
+  CHECK_SEQUENCE (sequence);
 
   len = XINT (Flength (sequence));
 
@@ -4766,7 +4755,7 @@ Lisp_Object Qyes_or_no_p;
 void
 syms_of_fns (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (bit_vector);
+  INIT_LISP_OBJECT (bit_vector);
 
   DEFSYMBOL (Qstring_lessp);
   DEFSYMBOL (Qidentity);
@@ -4796,7 +4785,6 @@ syms_of_fns (void)
   DEFSUBR (Fcopy_sequence);
   DEFSUBR (Fcopy_alist);
   DEFSUBR (Fcopy_tree);
-  DEFSUBR (Fsubstring);
   DEFSUBR (Fsubseq);
   DEFSUBR (Fnthcdr);
   DEFSUBR (Fnth);
