@@ -218,6 +218,7 @@ void hash_table_objects_create (void);
 void lstream_objects_create (void);
 void mule_charset_objects_create (void);
 void scrollbar_objects_create (void);
+void specifier_objects_create (void);
 void ui_gtk_objects_create (void);
 void window_objects_create (void);
 
