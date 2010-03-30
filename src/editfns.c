@@ -1,7 +1,7 @@
 /* Lisp functions pertaining to editing.
    Copyright (C) 1985-1987, 1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 1996, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 

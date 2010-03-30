@@ -1,3 +1,10 @@
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0208.TXT:
+	0x2140 mapped to 005C REVERSE SOLIDUS (i.e. backslash) instead of
+	FF3C FULLWIDTH REVERSE SOLIDUS, which screwed up reading in of
+	quail/greek.el.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* dbxrc.in:

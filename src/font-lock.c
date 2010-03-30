@@ -561,6 +561,8 @@ find_context (struct buffer *buf, Charbpos pt)
 	      }
             else if (context_cache.context == context_none)
 	      {
+		/* Calling syntax_match() in the syntax table, not the mirror
+		   table, is correct; see syntax_match() */
 		Lisp_Object stringtermobj =
 		  syntax_match (scache->syntax_table, c);
 		Ichar stringterm;

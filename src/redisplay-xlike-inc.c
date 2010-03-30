@@ -37,6 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h"
 #include "debug.h"
 #include "device-impl.h"
 #include "faces.h"
@@ -122,7 +123,6 @@ static void XLIKE_window_output_end (struct window *w);
 /*                                                                          */
 /****************************************************************************/
 
-
      /* Note: We do not use the Xmb*() functions and XFontSets, nor the
 	Motif XFontLists and CompoundStrings.
 	Those functions are generally losing for a number of reasons.
@@ -177,9 +177,10 @@ struct textual_run
    the 8-bit versions in computing runs and runes, it would seem.
 */
 
-#if !defined(USE_XFT) && !defined(MULE)
+#if !defined (USE_XFT) && !defined (MULE)
 static int
-separate_textual_runs_nomule (unsigned char *text_storage,
+separate_textual_runs_nomule (struct buffer * UNUSED (buf),
+			      unsigned char *text_storage,
 			      struct textual_run *run_storage,
 			      const Ichar *str, Charcount len,
 			      struct face_cachel *UNUSED(cachel))
@@ -198,7 +199,7 @@ separate_textual_runs_nomule (unsigned char *text_storage,
 }
 #endif
 
-#if defined(USE_XFT) && !defined(MULE)
+#if defined (USE_XFT) && !defined (MULE)
 /*
   Note that in this configuration the "Croatian hack" of using an 8-bit,
   non-Latin-1 font to get localized display without Mule simply isn't
@@ -209,10 +210,11 @@ separate_textual_runs_nomule (unsigned char *text_storage,
   #### Is there an alignment issue with text_storage?
 */
 static int
-separate_textual_runs_xft_nomule (unsigned char *text_storage,
+separate_textual_runs_xft_nomule (struct buffer * UNUSED (buf),
+				  unsigned char *text_storage,
 				  struct textual_run *run_storage,
 				  const Ichar *str, Charcount len,
-				  struct face_cachel *UNUSED(cachel))
+				  struct face_cachel *UNUSED (cachel))
 {
   int i;
   if (!len)
@@ -225,19 +227,20 @@ separate_textual_runs_xft_nomule (unsigned char *text_storage,
 
   for (i = 0; i < len; i++)
     {
-      *(XftChar16 *)text_storage = str[i];
-      text_storage += sizeof(XftChar16);
+      *(XftChar16 *) text_storage = str[i];
+      text_storage += sizeof (XftChar16);
     }
   return 1;
 }
 #endif
 
-#if defined(USE_XFT) && defined(MULE)
+#if defined (USE_XFT) && defined (MULE)
 static int
-separate_textual_runs_xft_mule (unsigned char *text_storage,
+separate_textual_runs_xft_mule (struct buffer *buf,
+				unsigned char *text_storage,
 				struct textual_run *run_storage,
 				const Ichar *str, Charcount len,
-				struct face_cachel *UNUSED(cachel))
+				struct face_cachel *UNUSED (cachel))
 {
   Lisp_Object prev_charset = Qunbound;
   int runs_so_far = 0, i;
@@ -250,18 +253,27 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
   for (i = 0; i < len; i++)
     {
       Ichar ch = str[i];
-      Lisp_Object charset = ichar_charset(ch);
-      int ucs = ichar_to_unicode(ch);
+      Lisp_Object charset;
+      int byte1, byte2;
+      int ucs = ichar_to_unicode (ch, CONVERR_SUBSTITUTE);
 
-      /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
-	 REPLACMENT CHARACTER. */
+      /* @@#### This use of CONVERR_SUBSTITUTE is somewhat bogus.
+	 It will substitute a '?' if we can't convert.  Not clear whether
+	 this will work or not.  Problem is that we really shouldn't
+	 be doing things on a charset level. */
+      buffer_ichar_to_charset_codepoint (ch, buf, &charset, &byte1, &byte2,
+					 CONVERR_SUBSTITUTE);
+
+      /* If UCS is greater than 0xFFFF, set ucs2 to REPLACMENT
+	 CHARACTER. */
       /* That means we can't handle characters outside of the BMP for now */
-      ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
+      ucs = (ucs & ~0xFFFF) ? UNICODE_REPLACEMENT_CHAR : ucs;
 
       if (!EQ (charset, prev_charset))
 	{
 	  if (runs_so_far)
-	    run_storage[runs_so_far-1].len = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
+	    run_storage[runs_so_far-1].len =
+	      (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
 	  run_storage[runs_so_far].ptr = text_storage;
 	  run_storage[runs_so_far].dimension = 2;
 	  run_storage[runs_so_far].charset = charset;
@@ -269,17 +281,18 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
 	  runs_so_far++;
 	}
 
-      *(XftChar16 *)text_storage = ucs;
-      text_storage += sizeof(XftChar16);
+      * (XftChar16 *) text_storage = ucs;
+      text_storage += sizeof (XftChar16);
     }
 
   if (runs_so_far)
-    run_storage[runs_so_far-1].len = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
+    run_storage[runs_so_far-1].len =
+      (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
   return runs_so_far;
 }
 #endif
 
-#if !defined(USE_XFT) && defined(MULE)
+#if !defined (USE_XFT) && defined (MULE)
 /*
   This is the most complex function of this group, due to the various
   indexing schemes used by different fonts.  For our purposes, they
@@ -291,15 +304,15 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
   irregular indexes, and must be translated ad hoc.  In XEmacs ad hoc
   translations are accomplished with CCL programs. */
 static int
-separate_textual_runs_mule (unsigned char *text_storage,
+separate_textual_runs_mule (struct buffer *buf,
+			    unsigned char *text_storage,
 			    struct textual_run *run_storage,
 			    const Ichar *str, Charcount len,
 			    struct face_cachel *cachel)
 {
   Lisp_Object prev_charset = Qunbound;
   int runs_so_far = 0, i;
-  Ibyte charset_leading_byte = LEADING_BYTE_ASCII;
-  int dimension = 1, graphic = 0, need_ccl_conversion = 0;
+  int dimension = 1, need_ccl_conversion = 0;
   Lisp_Object ccl_prog;
   struct ccl_program char_converter;
 
@@ -309,12 +322,35 @@ separate_textual_runs_mule (unsigned char *text_storage,
     {
       Ichar ch = str[i];
       Lisp_Object charset;
-      int byte1, byte2;		/* BREAKUP_ICHAR dereferences the addresses
-				   of its arguments as pointer to int. */
-      BREAKUP_ICHAR (ch, charset, byte1, byte2);
+      int byte1, byte2;
+
+      buffer_ichar_to_charset_codepoint (ch, buf, &charset, &byte1, &byte2,
+					 CONVERR_FAIL);
+      /* If we can't convert, substitute a '~' (CANT_DISPLAY_CHAR). */
+      /* @@#### This is extremely bogus.  We want it to substitute the
+	 Unicode replacement character, but there's no charset for this.
+	 We really shouldn't be doing things on a charset level. */
+      if (NILP (charset))
+	{
+	  charset = Vcharset_ascii;
+	  byte1 = 0;
+	  byte2 = CANT_DISPLAY_CHAR;
+	}
+      dimension = XCHARSET_DIMENSION (charset);
+
+      /* NOTE: Formerly we used to retrieve the XCHARSET_GRAPHIC() here
+	 and use it below to determine whether to push the bytes into
+	 the 128-255 range.  This is now handled automatically by the
+	 `offset' property of charsets, which should agree with `graphic'.
+         Logically, the `offset' property describes the numeric indices
+	 of the characters, such as when they are used to index an array
+	 or font, while the `graphic' property indicates which register
+	 to select when encoding using iso2022. */
 
       if (!EQ (charset, prev_charset))
 	{
+	  int offs;
+
 	  /* At this point, dimension' and `prev_charset' refer to just-
 	     completed run.  `runs_so_far' and `text_storage' refer to the
 	     run about to start. */
@@ -335,18 +371,16 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	     These flags are almost mutually exclusive, but we're sloppy
 	     about resetting "shadowed" flags.  So the flags must be checked
 	     in the proper order in computing byte1 and byte2, below. */
-	  charset_leading_byte = XCHARSET_LEADING_BYTE(charset);
-	  translate_to_ucs_2 =
-	    bit_vector_bit (FACE_CACHEL_FONT_FINAL_STAGE (cachel),
-			    charset_leading_byte - MIN_LEADING_BYTE);
+
+	  offs = FACE_CACHEL_OFFSET_ENSURE (cachel, charset);
+
+	  translate_to_ucs_2 = Stynarr_at (cachel->font_final_stage, offs);
 	  if (translate_to_ucs_2)
 	    {
 	      dimension = 2;
 	    }
 	  else
 	    {
-	      dimension = XCHARSET_DIMENSION (charset);
-
 	      /* Check for CCL charset.
 		 If setup_ccl_program fails, we'll get a garbaged display.
 		 This should never happen, and even if it does, it should
@@ -360,15 +394,8 @@ separate_textual_runs_mule (unsigned char *text_storage,
 		{
 		  need_ccl_conversion = 1;
 		}
-	      else 
-		{
-		  /* The charset must have an ISO 2022-compatible font index.
-		     There are 2 "registers" (what such fonts use as index).
-		     GL (graphic == 0) has the high bit of each octet reset,
-		     GR (graphic == 1) has it set. */
-		  graphic   = XCHARSET_GRAPHIC (charset);
-		  need_ccl_conversion = 0;
-		}
+	      /* Else, the charset must have an ISO 2022-compatible font index.
+	       */
 	    }
 
 	  /* Initialize metadata for current run. */
@@ -384,37 +411,31 @@ separate_textual_runs_mule (unsigned char *text_storage,
       /* Must check flags in this order.  See comment above. */
       if (translate_to_ucs_2)
 	{
-	  int ucs = ichar_to_unicode(ch);
+	  int ucs = ichar_to_unicode (ch, CONVERR_SUBSTITUTE);
 	  /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
 	     REPLACMENT CHARACTER. */
-	  ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
+	  ucs = (ucs & ~0xFFFF) ? UNICODE_REPLACEMENT_CHAR : ucs;
 
 	  byte1 = ucs >> 8;
-	  byte2 = ucs;
+	  byte2 = ucs & 0xFF;
 	}
       else if (need_ccl_conversion)
 	{
-	  char_converter.reg[0] = charset_leading_byte;
+	  internal_to_external_charset_codepoint (charset, byte1, byte2,
+						  &byte1, &byte2, 1);
+	  char_converter.reg[0] = XCHARSET_ID (charset);
 	  char_converter.reg[1] = byte1;
 	  char_converter.reg[2] = byte2;
-	  ccl_driver (&char_converter, 0, 0, 0, 0, CCL_MODE_ENCODING);
+	  ccl_driver (&char_converter, 0, buf, 0, 0, 0, CCL_MODE_ENCODING);
 	  byte1 = char_converter.reg[1];
 	  byte2 = char_converter.reg[2];
-	}
-      else if (graphic == 0)
-	{
-	  byte1 &= 0x7F;
-	  byte2 &= 0x7F;
-	}
-      else
-	{
-	  byte1 |= 0x80;
-	  byte2 |= 0x80;
+	  get_external_charset_codepoint (charset, make_int (byte1), make_int (byte2),
+					  &byte1, &byte2, 1);
 	}
 
-      *text_storage++ = (unsigned char)byte1;
-
-      if (2 == dimension) *text_storage++ = (unsigned char)byte2;
+      if (dimension == 2)
+	*text_storage++ = (unsigned char) byte1;
+      *text_storage++ = (unsigned char) byte2;
     }
 
   if (runs_so_far)
@@ -431,25 +452,26 @@ separate_textual_runs_mule (unsigned char *text_storage,
 #endif
 
 static int
-separate_textual_runs (unsigned char *text_storage,
+separate_textual_runs (struct buffer *buf,
+		       unsigned char *text_storage,
 		       struct textual_run *run_storage,
 		       const Ichar *str, Charcount len,
 		       struct face_cachel *cachel)
 {
-#if defined(USE_XFT) && defined(MULE)
-  return separate_textual_runs_xft_mule (text_storage, run_storage,
+#if defined (USE_XFT) && defined (MULE)
+  return separate_textual_runs_xft_mule (buf, text_storage, run_storage,
 					 str, len, cachel);
 #endif
-#if defined(USE_XFT) && !defined(MULE)
-  return separate_textual_runs_xft_nomule (text_storage, run_storage,
+#if defined (USE_XFT) && !defined (MULE)
+  return separate_textual_runs_xft_nomule (buf, text_storage, run_storage,
 					   str, len, cachel);
 #endif
-#if !defined(USE_XFT) && defined(MULE)
-  return separate_textual_runs_mule (text_storage, run_storage,
+#if !defined (USE_XFT) && defined (MULE)
+  return separate_textual_runs_mule (buf, text_storage, run_storage,
 				     str, len, cachel);
 #endif
-#if !defined(USE_XFT) && !defined(MULE)
-  return separate_textual_runs_nomule (text_storage, run_storage,
+#if !defined (USE_XFT) && !defined (MULE)
+  return separate_textual_runs_nomule (buf, text_storage, run_storage,
 				       str, len, cachel);
 #endif
 }
@@ -532,8 +554,8 @@ XLIKE_text_width (struct window *w, struct face_cachel *cachel,
   int nruns;
   int i;
 
-  nruns = separate_textual_runs (text_storage, runs, str, len, 
-				 cachel);
+  nruns = separate_textual_runs (WINDOW_XBUFFER (w), text_storage, runs, str,
+				 len, cachel);
 
   for (i = 0; i < nruns; i++)
     width_so_far += XLIKE_text_width_single_run (f, cachel, runs + i);
@@ -610,7 +632,9 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
   findex = rb->findex;
   xpos = rb->xpos;
   if (rb->type == RUNE_CHAR)
-    charset = ichar_charset (rb->object.chr.ch);
+    /* @@#### fix me */
+    charset = buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+						     rb->object.chr.ch);
 
   if (end < 0)
     end = Dynarr_length (rba);
@@ -622,7 +646,10 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
+	  /* @@#### fix me */
+	  && EQ (charset,
+		 buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+							rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -645,7 +672,10 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = ichar_charset (rb->object.chr.ch);
+	      /* @@#### fix me */
+	      charset =
+		buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+						       rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{
@@ -1106,8 +1136,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 			    height);
     }
 
-  nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
-				 Dynarr_length (buf), cachel);
+  nruns = separate_textual_runs (WINDOW_XBUFFER (w), text_storage, runs,
+				 Dynarr_begin (buf), Dynarr_length (buf),
+				 cachel);
 
   for (i = 0; i < nruns; i++)
     {
