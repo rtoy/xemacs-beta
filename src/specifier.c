@@ -3724,10 +3724,48 @@ instantiators.
   return DISPLAYTABLE_SPECIFIERP (object) ? Qt : Qnil;
 }
 
+
+
+#ifdef MEMORY_USAGE_STATS
+
+struct specifier_stats
+{
+  struct usage_stats u;
+  /* Ancillary Lisp */
+  Bytecount global, device, frame, window, buffer, fallback;
+  Bytecount magic_parent;
+};
+
+static void
+specifier_memory_usage (Lisp_Object specifier,
+			struct generic_usage_stats *gustats)
+{
+  struct specifier_stats *stats = (struct specifier_stats *) gustats;
+  Lisp_Specifier *spec = XSPECIFIER (specifier);
+
+  stats->global = tree_memory_usage (spec->global_specs, 1);
+  stats->device = tree_memory_usage (spec->device_specs, 1);
+  stats->frame = tree_memory_usage (spec->frame_specs, 1);
+  stats->window = tree_memory_usage (spec->window_specs, 1);
+  stats->buffer = tree_memory_usage (spec->buffer_specs, 1);
+  stats->fallback = tree_memory_usage (spec->fallback, 1);
+  if (SPECIFIERP (spec->magic_parent))
+    stats->magic_parent = lisp_object_memory_usage (spec->magic_parent);
+}
+
+#endif /* MEMORY_USAGE_STATS */
 
 /************************************************************************/
 /*                           Initialization                             */
 /************************************************************************/
+
+void
+specifier_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (specifier, memory_usage);
+#endif
+}
 
 void
 syms_of_specifier (void)
@@ -3852,6 +3890,13 @@ reinit_specifier_type_create (void)
 void
 vars_of_specifier (void)
 {
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY (specifier, memusage_stats_list,
+		       listu (Qt, Qglobal, Qdevice, Qframe, Qwindow, Qbuffer,
+			      Qfallback, intern ("magic-parent"),
+			      Qunbound));
+#endif /* MEMORY_USAGE_STATS */
+
   Vcached_specifiers = Qnil;
   staticpro (&Vcached_specifiers);
 

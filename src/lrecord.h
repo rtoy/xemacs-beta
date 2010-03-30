@@ -2085,6 +2085,7 @@ Bytecount lisp_object_memory_usage_full (Lisp_Object object,
 					 Bytecount *extra_lisp_storage,
 					 struct generic_usage_stats *stats);
 Bytecount lisp_object_memory_usage (Lisp_Object object);
+Bytecount tree_memory_usage (Lisp_Object arg, int vectorp);
 void free_normal_lisp_object (Lisp_Object obj);
 
 
