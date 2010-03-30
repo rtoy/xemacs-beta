@@ -2126,7 +2126,7 @@ PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
 									\
        (CONSP (hare) ? ((elt = XCAR (hare)), 1) :			\
 	(NILP (hare) ? 0 :						\
-	 ((signalp ? signal_malformed_list_error (list) : 0), 0)));	\
+	 ((signalp ? signal_malformed_list_error (list) : (void) 0), 0)));\
 									\
        hare = XCDR (hare),						\
 	 (void)								\
@@ -2134,7 +2134,7 @@ PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
 	  &&								\
 	  ((((len & 1) != 0) && (tortoise = XCDR (tortoise), 0)),	\
 	   (EQ (hare, tortoise) &&					\
-            ((signalp ? signal_circular_list_error (list) : 0), 0)))))
+            ((signalp ? signal_circular_list_error (list) : (void) 0), 0)))))
 
 #define PRIVATE_EXTERNAL_LIST_LOOP_6(elt, list, len, hare,		\
 				     tortoise, suspicion_length)	\
