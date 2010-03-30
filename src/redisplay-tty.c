@@ -428,7 +428,8 @@ tty_clear_region (Lisp_Object window, struct device* UNUSED (d),
 		  struct frame * f, face_index findex, int x, int y,
 		  int width, int height, Lisp_Object UNUSED (fcolor),
 		  Lisp_Object UNUSED (bcolor),
-		  Lisp_Object UNUSED (background_pixmap))
+		  Lisp_Object UNUSED (background_pixmap),
+		  Lisp_Object UNUSED (background_placement))
 {
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
   int line;

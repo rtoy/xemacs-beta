@@ -612,9 +612,7 @@ Return 3 values:
 	  ((memq (car plst) indicator-list)
 	   (return (values (car plst) (cadr plst) plst))))))
 
-;; See our compiler macro in cl-macs.el, we will only pass back the
-;; actual lambda list in interpreted code or if we've been funcalled
-;; (from #'apply or #'mapcar or whatever).
+;; See also the compiler macro in cl-macs.el.
 (defun constantly (value &rest more-values)
   "Construct a function always returning VALUE, and possibly MORE-VALUES.
 
@@ -622,7 +620,24 @@ The constructed function accepts any number of arguments, and ignores them.
 
 Members of MORE-VALUES, if provided, will be passed as multiple values; see
 `multiple-value-bind' and `multiple-value-setq'."
-  `(lambda (&rest ignore) (values-list ',(cons value more-values))))
+  (symbol-macrolet
+      ((arglist '(&rest ignore)))
+    (if (or more-values (eval-when-compile (not (cl-compiling-file))))
+        `(lambda ,arglist (values-list ',(cons value more-values)))
+      (make-byte-code
+       arglist
+       (eval-when-compile
+         (let ((compiled (byte-compile-sexp #'(lambda (&rest ignore)
+                                                (declare (ignore ignore))
+                                                'placeholder))))
+           (assert (and
+                    (equal [placeholder]
+                           (compiled-function-constants compiled))
+                    (= 1 (compiled-function-stack-depth compiled)))
+		   t
+		   "Our assumptions about compiled code appear not to hold.")
+           (compiled-function-instructions compiled)))
+       (vector value) 1))))
 
 ;;; Hash tables.
 
@@ -673,15 +688,19 @@ Members of MORE-VALUES, if provided, will be passed as multiple values; see
 
 (defun cl-prettyprint (form)
   "Insert a pretty-printed rendition of a Lisp FORM in current buffer."
-  (let ((pt (point)) last)
+  (let ((pt (point)) last just)
     (insert "\n" (prin1-to-string form) "\n")
     (setq last (point))
     (goto-char (1+ pt))
-    (while (search-forward "(quote " last t)
-      (delete-backward-char 7)
-      (insert "'")
+    (while (re-search-forward "(\\(?:\\(?:function\\|quote\\) \\)" last t)
+      (delete-region (match-beginning 0) (match-end 0))
+      (if (= (length "(function ") (- (match-end 0) (match-beginning 0)))
+	  (insert "#'")
+	(insert "'"))
+      (setq just (point))
       (forward-sexp)
-      (delete-char 1))
+      (delete-char 1)
+      (goto-char just))
     (goto-char (1+ pt))
     (cl-do-prettyprint)))
 

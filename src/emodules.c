@@ -257,9 +257,13 @@ attempt_module_delete (int mod)
   if (dll_close (modules[mod].dlhandle) == 0)
     {
       xfree (modules[mod].soname);
+      modules[mod].soname = 0;
       xfree (modules[mod].modname);
+      modules[mod].modname = 0;
       xfree (modules[mod].modver);
+      modules[mod].modver = 0;
       xfree (modules[mod].modtitle);
+      modules[mod].modtitle = 0;
       modules[mod].dlhandle = 0;
       modules[mod].used = 0;
     }

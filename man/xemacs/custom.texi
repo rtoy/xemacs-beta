@@ -2080,6 +2080,8 @@ Change the background color of the given @var{face}.
 Change the background pixmap of the given @var{face}.
 @item M-x set-face-background-pixmap-file
 A simpler version but with filename completion.
+@item M-x set-face-background-placement
+Change the placement of the background pixmap of the given @var{face}.
 @item M-x set-face-font
 Change the font of the given @var{face}.
 @item M-x set-face-foreground
@@ -2160,6 +2162,18 @@ Alternately, you can use a simpler version of
 @code{set-face-background-pixmap-file}. This function does not give you
 as much control on the pixmap instantiator, but provides filename
 completion.
+
+@findex set-face-background-placement
+You can set the placement of the background pixmap of the specified
+@var{face} with the function @code{set-face-background-placement}. The
+placement argument can be either @code{absolute} or @code{relative} (the
+default). A @code{relative} placement means that the pixmap is attached
+to the frame and moves with it. An @code{absolute} placement means that
+the pixmap is rather attached to the frame's root window, so that when
+you move the frame on the screen, it will appear to ``slide'' on the
+pixmap. This placement mode can be used to achieve pseudo-translucency
+for a frame, for example by setting the default face's background pixmap
+to the root window's one.
 
 @findex set-face-font
 You can set the font of the specified @var{face} with the function

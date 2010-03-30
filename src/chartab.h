@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Char_Table_Entry
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* In the interests of simplicity, we just use a fixed 96-entry
      table.  If we felt like being smarter, we could make this
@@ -51,7 +51,7 @@ struct Lisp_Char_Table_Entry
 };
 typedef struct Lisp_Char_Table_Entry Lisp_Char_Table_Entry;
 
-DECLARE_LRECORD (char_table_entry, Lisp_Char_Table_Entry);
+DECLARE_LISP_OBJECT (char_table_entry, Lisp_Char_Table_Entry);
 #define XCHAR_TABLE_ENTRY(x) \
   XRECORD (x, char_table_entry, Lisp_Char_Table_Entry)
 #define wrap_char_table_entry(p) wrap_record (p, char_table_entry)
@@ -80,7 +80,7 @@ enum char_table_type
 
 struct Lisp_Char_Table
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object ascii[NUM_ASCII_CHARS];
   Lisp_Object default_;
@@ -128,7 +128,7 @@ struct Lisp_Char_Table
 };
 typedef struct Lisp_Char_Table Lisp_Char_Table;
 
-DECLARE_LRECORD (char_table, Lisp_Char_Table);
+DECLARE_LISP_OBJECT (char_table, Lisp_Char_Table);
 #define XCHAR_TABLE(x) XRECORD (x, char_table, Lisp_Char_Table)
 #define wrap_char_table(p) wrap_record (p, char_table)
 #define CHAR_TABLEP(x) RECORDP (x, char_table)

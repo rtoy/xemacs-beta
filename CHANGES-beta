@@ -1,3 +1,133 @@
+to XEmacs 21.5.30 "harblegarble"
+
+by Ben Wing:
+
+debugging:
+
+-- make objects consistently print a UID, with a separate number space per
+   object type
+-- add variable `debug-soe' for debugging stack-of-extents code in extents.c
+-- correctly note pdumped objects in memory-usage stats returned by
+   `garbage-collect' and `object-memory-usage-stats'.
+-- make VDB debugging functions (e.g. `test-segfault', which causes an
+   immediate crash!) conditional on `--with-debug'
+-- rename `debug-xemacs-searches' -> `debug-searches'
+-- Turn on "compiled-function annotation hack" so that compiled-function
+   objects print the function they are assigned to
+-- Resurrect byte-metering code when --with-debug; enable with variables
+   `byte-code-meter', `byte-metering-on'
+-- Add more checks for invalid byte code; when a byte-code-related crash
+   occurs, output the last 100 instructions processed
+
+documentation:
+
+-- fix to `previous/next-single[-char]-property-change'
+
+Lisp API:
+
+-- `set-frame-displayable-pixel-height' and friends had bugs in them, esp.
+   on MS Windows, where they didn't work; fixed
+-- `frame-pixel-height', `set-frame-pixel-height' and friends will now
+   use updated values for frame size (as of next redisplay) when the frame
+   was previously resized but a redisplay has not yet happened
+-- When `set-case-table' called with a length-256 vector, don't overwrite
+   existing case table; instead, populate a new table
+-- Fix internal case comparisons to use the "canonical case mapping" so that
+   they always work even in the presence of complex case mappings (other
+   than just upper -> lower and lower -> upper)
+-- In `scan-lists' and friends, when an error occurs, return a `scan-error'
+   along with two arguments specifying the range in which the error occurred,
+   for GNU compatibility
+
+Internals:
+
+-- reduce lcrecord header size from 3 words to 2
+-- major change to the way Lisp objects are defined and declared; introduce
+   a cleaner surface-layer API that eliminates references to "lrecords" and
+   "lcrecords", and uses "frob-block object" in place of "basic object"/
+   "simple object"/etc.
+-- new disksave method for Lisp objects, separated out from the finalize method
+-- Lisp objects now must specify a print method; use either
+   internal_object_printer() or external_object_printer() as a default
+-- equal method for Lisp objects has new `foldcase' param, to implement
+   case-folding comparison ala `equalp'
+-- various changes to frame-geometry macros in frame-impl.h, gutter.h, etc.,
+   and frame-sizing code in frame.c
+-- Major rewrite, updated documentation to dynarr functions and macros
+-- Major updates to internals manual and long comments in C files:
+   frame geometry, specifier authors, MS-Windows compilation flags, xlike
+   mechanism, ...
+-- Rename LISP_TO_VOID -> STORE_LISP_IN_VOID,
+   VOID_TO_LISP -> GET_LISP_FROM_VOID; add STORE_VOID_IN_LISP,
+   GET_VOID_FROM_LISP
+-- Convert various source files to UTF-8
+-- File renames:
+   select-common.h -> select-xlike-inc.c
+   xgccache.{ch} -> gccache-x.{ch}
+   toolbar-common.{ch} -> toolbar-xlike.{ch}
+-- New files:
+   bytecode-ops.h
+   sysgtk.h, sysgdkx.h
+   keymap-buttons.h, keymap-slots.h
+-- Deleted files:
+   event-gtk.h
+-- Major reworking of DFC macros e.g. EXTERNAL_TO_C_STRING renamed to
+   EXTERNAL_TO_ITEXT; make them return their values when possible rather
+   than storing into a named variable
+-- Eliminate unused second argument to xfree()
+-- separate HAVE_XFT into HAVE_XFT and USE_XFT, to facilitate compiling
+   simultaneously with X and GTK
+-- Move `equalp' to C
+
+Testing:
+
+-- Move test-harness.el to Lisp directory
+
+Building:
+
+-- Fix `--quick-build' so full rebuilds don't happen when changes are made
+   to files like lisp.h, config.h that are included by all C files
+-- Fix C++ build on Cygwin when configured with --have-database
+
+User-Visible Bug Fixes:
+
+-- `escape-quoted' was failing to add escape quoting to Control-1 characters;
+   many potential byte-code-related crashes may have resulted from the old
+   behavior
+-- Fix a redisplay bug where args to default_face_height_and_width() were
+   in wrong order
+-- "speedy insert" code (to make `revert-buffer' preserve extents, markers,
+   etc. in unmodified sections of a reverted file) was broken with binary
+   files
+-- File-locking code now names lock files .#FN# instead of .#FN, to avoid
+   problems with programs that e.g. try to process all .c or .h files
+-- Fix a crash in frame creation due to lack of call to reset_glyph_cachels()
+-- Fix long-standing bug: searching for Control-1 chars didn't work
+-- Turn on `load-ignore-out-of-date-elc-files' by default
+
+
+
+by Didier Verna:
+
+Lisp API:
+
+-- new `background-placement' property of faces; with a value of `absolute',
+   the background pixmap is drawn relative to the root window, allowing
+   seamless integration with the desktop background
+
+by Jerry James:
+
+Lisp API:
+
+-- signal an error instead of crashing when encountering a ratio like 1/0
+
+Internals:
+
+-- locate and add copyright notices to various files in preparation for
+   move to GPL v3
+
+
+
 to XEmacs 21.5.29 "garbanzo"
 
 Major Features and Backward Incompatible Changes

@@ -542,7 +542,7 @@ free_charset_unicode_tables (Lisp_Object charset)
 
 static Bytecount
 compute_from_unicode_table_size_1 (void *table, int level,
-				   struct overhead_stats *stats)
+				   struct usage_stats *stats)
 {
   int i;
   Bytecount size = 0;
@@ -590,7 +590,7 @@ compute_from_unicode_table_size_1 (void *table, int level,
 
 static Bytecount
 compute_to_unicode_table_size_1 (void *table, int level,
-				 struct overhead_stats *stats)
+				 struct usage_stats *stats)
 {
   Bytecount size = 0;
 
@@ -615,7 +615,7 @@ compute_to_unicode_table_size_1 (void *table, int level,
 
 Bytecount
 compute_from_unicode_table_size (Lisp_Object charset,
-				 struct overhead_stats *stats)
+				 struct usage_stats *stats)
 {
   return (compute_from_unicode_table_size_1
 	  (XCHARSET_FROM_UNICODE_TABLE (charset),
@@ -625,7 +625,7 @@ compute_from_unicode_table_size (Lisp_Object charset,
 
 Bytecount
 compute_to_unicode_table_size (Lisp_Object charset,
-			       struct overhead_stats *stats)
+			       struct usage_stats *stats)
 {
   return (compute_to_unicode_table_size_1
 	  (XCHARSET_TO_UNICODE_TABLE (charset),

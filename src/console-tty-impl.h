@@ -40,7 +40,7 @@ DECLARE_CONSOLE_TYPE (tty);
 struct tty_console
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   int infd, outfd;
   Lisp_Object instream, outstream;
@@ -207,7 +207,7 @@ struct tty_console
 #ifdef NEW_GC
 typedef struct tty_console Lisp_Tty_Console;
 
-DECLARE_LRECORD (tty_console, Lisp_Tty_Console);
+DECLARE_LISP_OBJECT (tty_console, Lisp_Tty_Console);
 
 #define XTTY_CONSOLE(x) \
   XRECORD (x, tty_console, Lisp_Tty_Console)
@@ -256,7 +256,7 @@ DECLARE_LRECORD (tty_console, Lisp_Tty_Console);
 struct tty_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 #ifdef HAVE_TERMIOS
   speed_t ospeed;		/* Output speed (from sg_ospeed) */
@@ -268,7 +268,7 @@ struct tty_device
 #ifdef NEW_GC
 typedef struct tty_device Lisp_Tty_Device;
 
-DECLARE_LRECORD (tty_device, Lisp_Tty_Device);
+DECLARE_LISP_OBJECT (tty_device, Lisp_Tty_Device);
 
 #define XTTY_DEVICE(x) \
   XRECORD (x, tty_device, Lisp_Tty_Device)

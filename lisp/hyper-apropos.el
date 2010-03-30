@@ -730,7 +730,7 @@ See also `hyper-apropos' and `hyper-describe-function'."
 	    (local mode-name)
 	    global local-str global-str
 	    font fore back undl
-	    aliases alias-desc desc)
+	    aliases alias-desc desc arglist)
 	(save-excursion
 	  (set-buffer (get-buffer-create hyper-apropos-help-buf))
 	  ;;(setq standard-output (current-buffer))
@@ -764,21 +764,19 @@ See also `hyper-apropos' and `hyper-describe-function'."
 					       (bytecode . "compiled Lisp ")
 					       (autoload . "autoloaded Lisp ")
 					       (lambda   . "Lisp "))))
-				  desc
-				  (case symtype
-				    ((autoload) (format ",\n(autoloaded from \"%s\")"
-							(nth 1 newsym)))
-				    ((bytecode) (format ",\n(loaded from \"%s\")"
-							(symbol-file symbol)))))
+				  desc ",\n(loaded from \""
+                                  (or (symbol-file symbol 'defun)
+                                      "[no file information available]")
+                                  "\")")
 		     local (current-local-map)
 		     global (current-global-map)
 		     obsolete (get symbol 'byte-obsolete-info)
-		     doc (or (condition-case nil
-				 (documentation symbol)
-			       (void-function
-				"(alias for undefined function)")
-			       (error "(unexpected error from `documention')"))
-			     "function not documented"))
+		     doc (function-documentation symbol t)
+                     arglist (replace-in-string
+                              (function-arglist symbol)
+                              (format "^(%s "
+                                      (regexp-quote (symbol-name symbol)))
+                              "("))
 	       (save-excursion
 		 (set-buffer hyper-apropos-help-buf)
 		 (goto-char (point-max))
@@ -802,32 +800,7 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		      'hyper-apropos-warning))
 		 (setq beg (point))
 		 (insert-face "arguments: " 'hyper-apropos-heading)
-		 (cond ((eq symtype 'lambda)
-			(princ (or (nth 1 newsym) "()")))
-		       ((eq symtype 'bytecode)
-			(princ (or (compiled-function-arglist newsym)
-				   "()")))
-		       ((and (or (eq symtype 'subr) (eq symtype 'autoload))
-			     (string-match
-                              "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'"
-			      doc))
-			(insert (substring doc
-					   (match-beginning 1)
-					   (match-end 1)))
-			(setq doc (substring doc 0 (match-beginning 0))))
-		       ((and (eq symtype 'subr)
-			     (string-match
-			      "\
-\[\n\t ]*([^\n\t )]+[\t ]*\\([^\n)]+\\)?)\\(:[\t ]*\\|\n?\\'\\)"
-			      doc))
-			(insert "("
-				(if (match-end 1)
-				    (substring doc
-					       (match-beginning 1)
-					       (match-end 1)))
-				")")
-			(setq doc (substring doc (match-end 0))))
-		       (t (princ "[not available]")))
+                 (princ arglist)
 		 (insert "\n\n")
 		 (hyper-apropos-insert-face doc)
 		 (insert "\n")
@@ -944,14 +917,14 @@ See also `hyper-apropos' and `hyper-describe-function'."
 	     (progn
 	       (setq ok t)
 	       (copy-face symbol 'hyper-apropos-temp-face 'global)
-	       (mapcar #'(lambda (property)
-			   (setq symtype (face-property-instance symbol
-								 property))
-			   (if symtype
-			       (set-face-property 'hyper-apropos-temp-face
-						  property
-						  symtype)))
-		       built-in-face-specifiers)
+	       (mapc #'(lambda (property)
+                         (setq symtype (face-property-instance symbol
+                                                               property))
+                         (if symtype
+                             (set-face-property 'hyper-apropos-temp-face
+                                                property
+                                                symtype)))
+                     built-in-face-specifiers)
 	       (setq font (cons (face-property-instance symbol 'font nil 0 t)
 				(face-property-instance symbol 'font))
 		     fore (cons (face-foreground-instance symbol nil 0 t)

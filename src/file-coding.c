@@ -2,7 +2,7 @@
    #### rename me to coding-system.c or coding.c
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -297,7 +297,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Coding_System *c = XCODING_SYSTEM (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<coding-system %s ", 1, c->name);
   print_coding_system_properties (obj, printcharfun);
@@ -318,21 +318,19 @@ print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 
 #ifndef NEW_GC
 static void
-finalize_coding_system (void *header, int for_disksave)
+finalize_coding_system (Lisp_Object obj)
 {
-  Lisp_Object cs = wrap_coding_system ((Lisp_Coding_System *) header);
   /* Since coding systems never go away, this function is not
      necessary.  But it would be necessary if we changed things
      so that coding systems could go away. */
-  if (!for_disksave) /* see comment in lstream.c */
-    MAYBE_XCODESYSMETH (cs, finalize, (cs));
+  MAYBE_XCODESYSMETH (obj, finalize, (obj));
 }
 #endif /* not NEW_GC */
 
 static Bytecount
-sizeof_coding_system (const void *header)
+sizeof_coding_system (Lisp_Object obj)
 {
-  const Lisp_Coding_System *p = (const Lisp_Coding_System *) header;
+  const Lisp_Coding_System *p = XCODING_SYSTEM (obj);
   return offsetof (Lisp_Coding_System, data) + p->methods->extra_data_size;
 }
 
@@ -379,24 +377,13 @@ const struct sized_memory_description coding_system_empty_extra_description = {
   0, coding_system_empty_extra_description_1
 };
 
-#ifdef NEW_GC
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
-					1, /*dumpable-flag*/
-					mark_coding_system,
-					print_coding_system,
-					0, 0, 0, coding_system_description,
-					sizeof_coding_system,
-					Lisp_Coding_System);
-#else /* not NEW_GC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
-					1, /*dumpable-flag*/
-					mark_coding_system,
-					print_coding_system,
-					finalize_coding_system,
-					0, 0, coding_system_description,
-					sizeof_coding_system,
-					Lisp_Coding_System);
-#endif /* not NEW_GC */
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
+				     mark_coding_system,
+				     print_coding_system,
+				     IF_OLD_GC (finalize_coding_system),
+				     0, 0, coding_system_description,
+				     sizeof_coding_system,
+				     Lisp_Coding_System);
 
 /************************************************************************/
 /*                       Creating coding systems                        */
@@ -1005,9 +992,8 @@ allocate_coding_system (struct coding_system_methods *codesys_meths,
 			Lisp_Object name)
 {
   Bytecount total_size = offsetof (Lisp_Coding_System, data) + data_size;
-  Lisp_Coding_System *codesys =
-    (Lisp_Coding_System *) BASIC_ALLOC_LCRECORD (total_size,
-						 &lrecord_coding_system);
+  Lisp_Object obj = ALLOC_SIZED_LISP_OBJECT (total_size, coding_system);
+  Lisp_Coding_System *codesys = XCODING_SYSTEM (obj);
 
   codesys->methods = codesys_meths;
 #define MARKED_SLOT(x) codesys->x = Qnil;
@@ -1407,13 +1393,15 @@ make_internal_coding_system (Lisp_Object existing, const Ascbyte *prefix,
 }
 
 DEFUN ("make-coding-system-internal", Fmake_coding_system_internal, 2, 4, 0, /*
-See `make-coding-system'.  This does much of the work of that function.
+Create a new coding system object, and register NAME as its name.
 
+With Mule support, this does much of the work of `make-coding-system'.
 Without Mule support, it does all the work of that function, and an alias
-exists, mapping `make-coding-system' to
-`make-coding-system-internal'. You'll need a non-Mule XEmacs to read the
-complete docstring. Or you can just read it in make-coding-system.el;
-something like the following should work:
+exists, mapping `make-coding-system' to `make-coding-system-internal'.
+
+You'll need a Mule XEmacs to read the complete docstring. Or you can
+just read it in make-coding-system.el; something like the following
+should work:
 
  \\[find-function-other-window] find-file RET \\[find-file] mule/make-coding-system.el RET
 
@@ -1452,12 +1440,8 @@ Use `define-coding-system-alias' instead.
     invalid_operation_2 ("Coding systems not same type",
 			 old_coding_system, new_coding_system);
 
-  {
-    Lisp_Coding_System *to = XCODING_SYSTEM (new_coding_system);
-    Lisp_Coding_System *from = XCODING_SYSTEM (old_coding_system);
-    COPY_SIZED_LCRECORD (to, from, sizeof_coding_system (from));
-    to->name = new_name;
-  }
+  copy_lisp_object (new_coding_system, old_coding_system);
+  XCODING_SYSTEM (new_coding_system)->name = new_name;
   return new_coding_system;
 }
 
@@ -2720,6 +2704,7 @@ chain_finalize_coding_stream_1 (struct chain_coding_stream *data)
 	    Lstream_delete (XLSTREAM ((data->lstreams)[i]));
 	}
       xfree (data->lstreams);
+      data->lstreams = 0;
     }
 }
 
@@ -4508,7 +4493,7 @@ gzip_convert (struct coding_stream *str,
 void
 syms_of_file_coding (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (coding_system);
+  INIT_LISP_OBJECT (coding_system);
 
   DEFSUBR (Fvalid_coding_system_type_p);
   DEFSUBR (Fcoding_system_type_list);

@@ -2,6 +2,7 @@
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
@@ -132,8 +133,6 @@ void emacs_Xt_event_handler (Widget wid, XtPointer closure, XEvent *event,
 			     Boolean *continue_to_dispatch);
 
 static int last_quit_check_signal_tick_count;
-
-Lisp_Object Qsans_modifiers;
 
 #define THIS_IS_X
 #include "event-xlike-inc.c"
@@ -1898,6 +1897,25 @@ emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
       break;
 
     case ConfigureNotify:
+      {
+	XEvent xev;
+	
+	/* Let's eat all events of that type to avoid useless
+	   reconfigurations. */
+	while (XCheckTypedWindowEvent
+	       (DEVICE_X_DISPLAY (XDEVICE (FRAME_DEVICE (f))),
+		XtWindow (FRAME_X_TEXT_WIDGET (f)),
+		ConfigureNotify,
+		&xev)
+	       == True);
+      }
+      /* #### NOTE: in fact, the frame faces didn't really change, but if some
+	 #### of them have their background-placement property set to
+	 #### absolute, we need a redraw. This is semantically equivalent to
+	 #### changing the background pixmap. -- dvl */
+      x_get_frame_text_position (f);
+      MARK_FRAME_FACES_CHANGED (f);
+
 #ifdef HAVE_XIM
       XIM_SetGeometry (f);
 #endif
@@ -3024,8 +3042,6 @@ emacs_Xt_event_add_widget_actions (XtAppContext ctx)
 void
 syms_of_event_Xt (void)
 {
-  DEFSYMBOL (Qsans_modifiers);
-  DEFSYMBOL (Qself_insert_command);
 }
 
 void

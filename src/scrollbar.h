@@ -1,5 +1,6 @@
 /* Define scrollbar instance.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -27,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct scrollbar_instance
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Used by the frame caches. */
   struct scrollbar_instance *next;
@@ -47,7 +48,7 @@ struct scrollbar_instance
   void *scrollbar_data;
 };
 
-DECLARE_LRECORD (scrollbar_instance, struct scrollbar_instance);
+DECLARE_LISP_OBJECT (scrollbar_instance, struct scrollbar_instance);
 #define XSCROLLBAR_INSTANCE(x) XRECORD (x, scrollbar_instance, struct scrollbar_instance)
 #define wrap_scrollbar_instance(p) wrap_record (p, scrollbar_instance)
 #define SCROLLBAR_INSTANCEP(x) RECORDP (x, scrollbar_instance)
@@ -65,9 +66,8 @@ void update_window_scrollbars (struct window *w,
 			       struct window_mirror *mirror,
 			       int active, int horiz_only);
 #ifdef MEMORY_USAGE_STATS
-int compute_scrollbar_instance_usage (struct device *d,
-				      struct scrollbar_instance *inst,
-				      struct overhead_stats *ovstats);
+Bytecount compute_all_scrollbar_instance_usage (struct scrollbar_instance *
+						inst);
 #endif
 
 extern Lisp_Object Vscrollbar_width, Vscrollbar_height;

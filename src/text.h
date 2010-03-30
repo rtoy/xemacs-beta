@@ -47,6 +47,33 @@ char *strupr (char *);
 
 BEGIN_C_DECLS
 
+/************************************************************************/
+/*        A short intro to the format of text and of characters         */
+/************************************************************************/
+
+/*
+   "internally formatted text" and the term "internal format" in
+   general are likely to refer to the format of text in buffers and
+   strings; "externally formatted text" and the term "external format"
+   refer to any text format used in the O.S. or elsewhere outside of
+   XEmacs.  The format of text and of a character are related and
+   there must be a one-to-one relationship (hopefully through a
+   relatively simple algorithmic means of conversion) between a string
+   of text and an equivalent array of characters, but the conversion
+   between the two is NOT necessarily trivial.
+
+   In a non-Mule XEmacs, allowed characters are numbered 0 through
+   255, where no fixed meaning is assigned to them, but (when
+   representing text, rather than bytes in a binary file) in practice
+   the lower half represents ASCII and the upper half some other 8-bit
+   character set (chosen by setting the font, case tables, syntax
+   tables, etc. appropriately for the character set through ad-hoc
+   means such as the `iso-8859-1' file and the
+   `standard-display-european' function).
+   
+   For more info, see `text.c' and the Internals Manual.
+*/
+
 /* ---------------------------------------------------------------------- */
 /*                     Super-basic character properties                   */
 /* ---------------------------------------------------------------------- */
@@ -163,6 +190,29 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
  */
 
 #define MAX_ICHAR_LEN 4
+
+#endif /* not MULE */
+
+#ifdef MULE
+
+MODULE_API int non_ascii_valid_ichar_p (Ichar ch);
+
+/* Return whether the given Ichar is valid.
+ */
+
+DECLARE_INLINE_HEADER (
+int
+valid_ichar_p (Ichar ch)
+)
+{
+  return (! (ch & ~0xFF)) || non_ascii_valid_ichar_p (ch);
+}
+
+#else /* not MULE */
+
+/* This works when CH is negative, and correctly returns non-zero only when CH
+   is in the range [0, 255], inclusive. */
+#define valid_ichar_p(ch) (! (ch & ~0xFF))
 
 #endif /* not MULE */
 
@@ -2010,9 +2060,15 @@ do {						\
   if ((ei)->mallocp_)				\
     {						\
       if ((ei)->data_)				\
-	xfree ((ei)->data_);			\
+        {					\
+  	  xfree ((ei)->data_);			\
+	  (ei)->data_ = 0;			\
+	}					\
       if ((ei)->extdata_)			\
-	xfree ((ei)->extdata_);			\
+	{					\
+	  xfree ((ei)->extdata_);		\
+	  (ei)->extdata_ = 0;			\
+	}					\
       eiinit_malloc (ei);			\
     }						\
   else						\

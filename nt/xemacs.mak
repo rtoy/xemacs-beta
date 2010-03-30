@@ -840,6 +840,7 @@ TEMACS_COMMON_OBJS= \
 	$(OUTDIR)\abbrev.obj \
 	$(OUTDIR)\alloc.obj \
 	$(OUTDIR)\alloca.obj \
+	$(OUTDIR)\array.obj \
 	$(OUTDIR)\blocktype.obj \
 	$(OUTDIR)\buffer.obj \
 	$(OUTDIR)\bytecode.obj \
@@ -857,7 +858,6 @@ TEMACS_COMMON_OBJS= \
 	$(OUTDIR)\doc.obj \
 	$(OUTDIR)\doprnt.obj \
 	$(OUTDIR)\dragdrop.obj \
-	$(OUTDIR)\dynarr.obj \
 	$(OUTDIR)\editfns.obj \
 	$(OUTDIR)\elhash.obj \
 	$(OUTDIR)\emacs.obj \
@@ -1488,7 +1488,6 @@ INFODIR = $(SRCROOT)\info
 INFO_FILES= \
 	$(INFODIR)\beta.info \
 	$(INFODIR)\cl.info \
-	$(INFODIR)\custom.info \
 	$(INFODIR)\emodules.info \
 	$(INFODIR)\external-widget.info \
 	$(INFODIR)\info.info \
@@ -1659,7 +1658,7 @@ info:	makeinfo-test $(INFO_FILES)
 ########################### Automated tests
 
 testdir = ../tests/automated
-batch_test_emacs = $(BATCH_PACKAGES) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
+batch_test_emacs = $(BATCH_PACKAGES) -l test-harness -f batch-test-emacs $(testdir)
 
 check:
 	cd $(BLDSRC)

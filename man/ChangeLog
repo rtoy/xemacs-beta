@@ -4,6 +4,114 @@
 	* internals/internals.texi (Modules for other Display-Related Lisp Objects):
 	objects*.[ch] -> fontcolor*.[ch].
 
+2010-03-18  Mike Sperber  <mike@xemacs.org>
+
+	* xemacs/startup.texi (Startup Paths): Reflect the (long-ago)
+	change from `lib' to `share' for the architecture-independent
+	directories.
+
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Working with Lisp Objects):
+	* internals/internals.texi (Writing Macros):
+	* internals/internals.texi (lrecords):
+	More rewriting to correspond with changes from
+	*LRECORD* to *LISP_OBJECT*.
+
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Introduction to Allocation):
+	* internals/internals.texi (Integers and Characters):
+	* internals/internals.texi (Allocation from Frob Blocks):
+	* internals/internals.texi (lrecords):
+	* internals/internals.texi (Low-level allocation):
+	Rewrite section on allocation of Lisp objects to reflect the new
+	reality.  Remove references to nonexistent XSETINT and XSETCHAR.
+
+2010-03-04  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (list-to-texinfo): Removed.
+	* internals/internals.texi (convert-list-to-texinfo): New.
+	* internals/internals.texi (table-to-texinfo): Removed.
+	* internals/internals.texi (convert-table-to-texinfo): New.
+	Update Lisp functions at top to newest versions.
+	
+	* internals/internals.texi (A History of Emacs):
+	* internals/internals.texi (Through Version 18):
+	* internals/internals.texi (Lucid Emacs):
+	* internals/internals.texi (XEmacs):
+	* internals/internals.texi (The XEmacs Split):
+	* internals/internals.texi (Modules for Other Aspects of the Lisp Interpreter and Object System):
+	* internals/internals.texi (Introduction to Writing C Code):
+	* internals/internals.texi (Writing Good Comments):
+	* internals/internals.texi (Writing Macros):
+	* internals/internals.texi (Major Textual Changes):
+	* internals/internals.texi (Great Integral Type Renaming):
+	* internals/internals.texi (How to Regression-Test):
+	* internals/internals.texi (Creating a Branch):
+	* internals/internals.texi (Dynamic Arrays):
+	* internals/internals.texi (Allocation by Blocks):
+	* internals/internals.texi (mark_object):
+	* internals/internals.texi (gc_sweep):
+	* internals/internals.texi (Byte-Char Position Conversion):
+	* internals/internals.texi (Searching and Matching):
+	* internals/internals.texi (Introduction to Multilingual Issues #3):
+	* internals/internals.texi (Byte Types):
+	* internals/internals.texi (Different Ways of Seeing Internal Text):
+	* internals/internals.texi (Buffer Positions):
+	* internals/internals.texi (Basic internal-format APIs):
+	* internals/internals.texi (The DFC API):
+	* internals/internals.texi (General Guidelines for Writing Mule-Aware Code):
+	* internals/internals.texi (Mule-izing Code):
+	* internals/internals.texi (Locales):
+	* internals/internals.texi (More about code pages):
+	* internals/internals.texi (More about locales):
+	* internals/internals.texi (Unicode support under Windows):
+	* internals/internals.texi (The Frame):
+	* internals/internals.texi (The Non-Client Area):
+	* internals/internals.texi (The Client Area):
+	* internals/internals.texi (The Paned Area):
+	* internals/internals.texi (Text Areas):
+	* internals/internals.texi (The Displayable Area):
+	* internals/internals.texi (Event Queues):
+	* internals/internals.texi (Event Stream Callback Routines):
+	* internals/internals.texi (Focus Handling):
+	* internals/internals.texi (Future Work -- Autodetection):
+	Replace " with ``, '' (not complete, maybe about halfway through).
+
+2010-03-03  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Intro to Window and Frame Geometry):
+	* internals/internals.texi (The Paned Area):
+	* internals/internals.texi (The Displayable Area):
+	Update to make note of e.g. the fact that the bottom gutter is
+	actually above the minibuffer.
+
+2010-03-02  Jerry James  <james@xemacs.org>
+
+	* custom.texi: Delete, redundant with xemacs/custom.texi and
+	lispref/customize.texi.
+	* Makefile: Remove all rules relating to custom.texi.
+
+2010-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/tips.texi (Comment Tips):
+	* lispref/text.texi (Text Properties):
+	* lispref/strings.texi (Creating Strings):
+	* lispref/processes.texi (Input to Processes):
+	* lispref/functions.texi (Argument List):
+	* lispref/extents.texi (Duplicable Extents):
+	Move examples that used substring to using subseq; in
+	strings.texi, do not change the examples, but document that in
+	this XEmacs, it is an alias for subseq, and that there may be some
+	incompatibilities if you depend on that.
+
+2010-02-25  Didier Verna  <didier@xemacs.org>
+
+	The background-placement face property.
+	* xemacs/custom.texi (Faces): Document it.
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Intro to Window and Frame Geometry):

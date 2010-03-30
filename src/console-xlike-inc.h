@@ -169,6 +169,8 @@ typedef unsigned long XLIKE_PIXEL;
 #define XLIKE_GC_LINE_WIDTH GCLineWidth
 #define XLIKE_GC_STIPPLE GCStipple
 #define XLIKE_GC_TILE GCTile
+#define XLIKE_GC_TS_X_ORIGIN GCTileStipXOrigin
+#define XLIKE_GC_TS_Y_ORIGIN GCTileStipYOrigin
 
 #define XLIKE_GX_COPY GXcopy
 #define XLIKE_GX_XOR GXxor
@@ -258,6 +260,8 @@ typedef gulong   XLIKE_PIXEL;
 #define XLIKE_GC_LINE_WIDTH GDK_GC_LINE_WIDTH
 #define XLIKE_GC_STIPPLE GDK_GC_STIPPLE
 #define XLIKE_GC_TILE GDK_GC_TILE
+#define XLIKE_GC_TS_X_ORIGIN GDK_GC_TS_X_ORIGIN
+#define XLIKE_GC_TS_Y_ORIGIN GDK_GC_TS_Y_ORIGIN
 
 #define XLIKE_GX_COPY GDK_COPY
 #define XLIKE_GX_XOR GDK_XOR

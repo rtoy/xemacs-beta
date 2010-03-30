@@ -160,7 +160,6 @@ in dumped-lisp.el and is not itself listed.")
        "code-process"
        ;; Provide basic commands to set coding systems to user
        "code-cmds"
-       (when (featurep 'mule) "mule/make-coding-system")
        "unicode"
 	;;;;;;;;;;;;;;;;;; MULE support
        (when (featurep 'mule)

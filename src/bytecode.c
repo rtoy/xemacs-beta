@@ -1,7 +1,7 @@
 /* Execution of byte code produced by bytecomp.el.
    Implementation of compiled-function objects.
    Copyright (C) 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 1995, 2002 Ben Wing.
+   Copyright (C) 1995, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -65,22 +65,21 @@ static Lisp_Object
 make_compiled_function_args (int totalargs)
 {
   Lisp_Compiled_Function_Args *args;
-  args = (Lisp_Compiled_Function_Args *) 
-    alloc_lrecord 
-    (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
-				   Lisp_Object, args, totalargs),
-     &lrecord_compiled_function_args);
+  args = XCOMPILED_FUNCTION_ARGS
+    (ALLOC_SIZED_LISP_OBJECT 
+     (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
+				    Lisp_Object, args, totalargs),
+      compiled_function_args));
   args->size = totalargs;
   return wrap_compiled_function_args (args);
 }
 
 static Bytecount
-size_compiled_function_args (const void *lheader)
+size_compiled_function_args (Lisp_Object obj)
 {
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
 				       Lisp_Object, args,
-				       ((Lisp_Compiled_Function_Args *) 
-					lheader)->size);
+				       XCOMPILED_FUNCTION_ARGS (obj)->size);
 }
 
 static const struct memory_description compiled_function_args_description[] = {
@@ -90,13 +89,12 @@ static const struct memory_description compiled_function_args_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("compiled-function-args",
-					compiled_function_args,
-					1, /*dumpable-flag*/
-					0, 0, 0, 0, 0,
-					compiled_function_args_description,
-					size_compiled_function_args,
-					Lisp_Compiled_Function_Args);
+DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT ("compiled-function-args",
+					      compiled_function_args,
+					      0,
+					      compiled_function_args_description,
+					      size_compiled_function_args,
+					      Lisp_Compiled_Function_Args);
 #endif /* NEW_GC */
 
 EXFUN (Ffetch_bytecode, 1);
@@ -1573,11 +1571,11 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	break;
       }
 
-    case Bsubstring:
+    case Bsubseq:
       {
 	Lisp_Object arg2 = POP;
 	Lisp_Object arg1 = POP;
-	TOP_LVALUE = Fsubstring (TOP, arg1, arg2);
+	TOP_LVALUE = Fsubseq (TOP, arg1, arg2);
 	break;
       }
 
@@ -2247,7 +2245,8 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
-  write_ascstring (printcharfun, print_readably ? "#[" : "#<compiled-function ");
+  write_ascstring (printcharfun, print_readably ? "#[" :
+		   "#<compiled-function ");
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   if (!print_readably)
     {
@@ -2300,7 +2299,10 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
     }
 
   UNGCPRO;
-  write_ascstring (printcharfun, print_readably ? "]" : ">");
+  if (print_readably)
+    write_ascstring (printcharfun, "]");
+  else
+    write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 
@@ -2374,14 +2376,13 @@ static const struct memory_description compiled_function_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
-				     1, /*dumpable_flag*/
-				     mark_compiled_function,
-				     print_compiled_function, 0,
-				     compiled_function_equal,
-				     compiled_function_hash,
-				     compiled_function_description,
-				     Lisp_Compiled_Function);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("compiled-function", compiled_function,
+					mark_compiled_function,
+					print_compiled_function, 0,
+					compiled_function_equal,
+					compiled_function_hash,
+					compiled_function_description,
+					Lisp_Compiled_Function);
 
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
@@ -2756,9 +2757,9 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 void
 syms_of_bytecode (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (compiled_function);
+  INIT_LISP_OBJECT (compiled_function);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (compiled_function_args);
+  INIT_LISP_OBJECT (compiled_function_args);
 #endif /* NEW_GC */
 
   DEFERROR_STANDARD (Qinvalid_byte_code, Qinvalid_state);
@@ -2823,14 +2824,14 @@ integer, it is incremented each time that symbol's function is called.
 static void
 init_opcode_table_multi_op (Opcode op)
 {
-  const Ascbyte *basename = opcode_name_table[op];
+  const Ascbyte *base = opcode_name_table[op];
   Ascbyte temp[300];
   int i;
 
   for (i = 1; i < 7; i++)
     {
       assert (!opcode_name_table[op + i]);
-      sprintf (temp, "%s+%d", basename, i);
+      sprintf (temp, "%s+%d", base, i);
       opcode_name_table[op + i] = xstrdup (temp);
     }
 }

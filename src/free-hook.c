@@ -1,4 +1,5 @@
-/* This file is part of XEmacs.
+/* Copyright (C) 2010 Ben Wing.
+This file is part of XEmacs.
 
 XEmacs is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -26,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
    * Trying to free a pointer not returned by malloc.
    * Trying to realloc a pointer not returned by malloc.
 
-   In addition, every word of every block freed is set to 0xdeadbeef
+   In addition, every word of every block freed is set to 0xDEADBEEF
    (-559038737).  This causes many uses of freed storage to be trapped or
    recognized.
 
@@ -43,10 +44,10 @@ Boston, MA 02111-1307, USA.  */
    return addresses.
 
    If UNMAPPED_FREE is defined, instead of setting every word of freed
-   storage to 0xdeadbeef, every call to malloc goes on its own page(s).
+   storage to 0xDEADBEEF, every call to malloc goes on its own page(s).
    When free() is called, the block is read and write protected.  This
    is very useful when debugging, since it usually generates a bus error
-   when the deadbeef hack might only cause some garbage to be printed.
+   when the DEADBEEF hack might only cause some garbage to be printed.
    However, this is too slow for everyday use, since it takes an enormous
    number of pages.
 
@@ -170,7 +171,7 @@ check_free (void *ptr)
       if (strict_free_check)
 	mprotect (ptr, rounded_up_size, PROT_NONE);
 #else
-      /* Set every word in the block to 0xdeadbeef */
+      /* Set every word in the block to 0xDEADBEEF */
       if (strict_free_check)
 	{
 	  unsigned long long_length = (size + (sizeof (long) - 1))
@@ -180,7 +181,7 @@ check_free (void *ptr)
           /* Not using the DEADBEEF_CONSTANT #define, since we don't know
            * that allocation sizes will be multiples of eight. */
 	  for (i = 0; i < long_length; i++)
-	    ((unsigned long *) ptr)[i] = 0xdeadbeef;
+	    ((unsigned long *) ptr)[i] = 0xDEADBEEF;
 	}
 #endif
       free_queue[current_free].address = ptr;

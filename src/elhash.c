@@ -1,6 +1,6 @@
 /* Implementation of the hash table lisp object type.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2004, 2010 Ben Wing.
    Copyright (C) 1997 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -81,10 +81,11 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #include "bytecode.h"
 #include "elhash.h"
+#include "gc.h"
 #include "opaque.h"
 
 Lisp_Object Qhash_tablep;
-static Lisp_Object Qhashtable, Qhash_table;
+static Lisp_Object Qhashtable, Qhash_table, Qmake_hash_table;
 static Lisp_Object Qweakness, Qvalue, Qkey_or_value, Qkey_and_value;
 static Lisp_Object Vall_weak_hash_tables;
 static Lisp_Object Qrehash_size, Qrehash_threshold;
@@ -96,7 +97,7 @@ static Lisp_Object Qnon_weak, Q_type, Q_data;
 
 struct Lisp_Hash_Table
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Elemcount size;
   Elemcount count;
   Elemcount rehash_count;
@@ -280,6 +281,28 @@ hash_table_hash (Lisp_Object hash_table, int UNUSED (depth))
   return XHASH_TABLE (hash_table)->count;
 }
 
+#ifdef MEMORY_USAGE_STATS
+
+struct hash_table_stats
+{
+  struct usage_stats u;
+  Bytecount hentries;
+};
+
+static void
+hash_table_memory_usage (Lisp_Object hashtab,
+			 struct generic_usage_stats *gustats)
+{
+  Lisp_Hash_Table *ht = XHASH_TABLE (hashtab);
+  struct hash_table_stats *stats = (struct hash_table_stats *) gustats;
+  stats->hentries +=
+    malloced_storage_size (ht->hentries,
+			   sizeof (htentry) * (ht->size + 1),
+			   &stats->u);
+}
+
+#endif /* MEMORY_USAGE_STATS */
+
 
 /* Printing hash tables.
 
@@ -395,25 +418,24 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     write_ascstring (printcharfun, ")");
   else
-    write_fmt_string (printcharfun, " 0x%x>", ht->header.uid);
+    write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
+
+#ifdef ERROR_CHECK_STRUCTURES
+#define USED_IF_ERROR_CHECK_STRUCTURES(x) x
+#else
+#define USED_IF_ERROR_CHECK_STRUCTURES(x) UNUSED (x)
+#endif
 
 #ifndef NEW_GC
 static void
 free_hentries (htentry *hentries,
-#ifdef ERROR_CHECK_STRUCTURES
-	       size_t size
-#else /* not ERROR_CHECK_STRUCTURES) */
-	       size_t UNUSED (size)
-#endif /* not ERROR_CHECK_STRUCTURES) */
-	       )
+	       Elemcount USED_IF_ERROR_CHECK_STRUCTURES (size))
 {
 #ifdef ERROR_CHECK_STRUCTURES
   /* Ensure a crash if other code uses the discarded entries afterwards. */
-  htentry *e, *sentinel;
-
-  for (e = hentries, sentinel = e + size; e < sentinel; e++)
-    * (unsigned long *) e = 0xdeadbeef; /* -559038737 base 10 */
+  deadbeef_memory (hentries,
+		   (Rawbyte *) (hentries + size) - (Rawbyte *) hentries);
 #endif
 
   if (!DUMPEDP (hentries))
@@ -421,14 +443,11 @@ free_hentries (htentry *hentries,
 }
 
 static void
-finalize_hash_table (void *header, int for_disksave)
+finalize_hash_table (Lisp_Object obj)
 {
-  if (!for_disksave)
-    {
-      Lisp_Hash_Table *ht = (Lisp_Hash_Table *) header;
-      free_hentries (ht->hentries, ht->size);
-      ht->hentries = 0;
-    }
+  Lisp_Hash_Table *ht = XHASH_TABLE (obj);
+  free_hentries (ht->hentries, ht->size);
+  ht->hentries = 0;
 }
 #endif /* not NEW_GC */
 
@@ -455,20 +474,18 @@ static const struct sized_memory_description htentry_weak_description = {
   htentry_weak_description_1
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("hash-table-entry", hash_table_entry,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       htentry_description_1,
-			       Lisp_Hash_Table_Entry);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("hash-table-entry", hash_table_entry,
+				      0, htentry_description_1,
+				      Lisp_Hash_Table_Entry);
 #endif /* NEW_GC */
 
 static const struct memory_description htentry_union_description_1[] = {
   /* Note: XD_INDIRECT in this table refers to the surrounding table,
      and so this will work. */
 #ifdef NEW_GC
-  { XD_LISP_OBJECT_BLOCK_PTR, HASH_TABLE_NON_WEAK,
+  { XD_INLINE_LISP_OBJECT_BLOCK_PTR, HASH_TABLE_NON_WEAK,
     XD_INDIRECT (0, 1), { &htentry_description } },
-  { XD_LISP_OBJECT_BLOCK_PTR, 0, XD_INDIRECT (0, 1),
+  { XD_INLINE_LISP_OBJECT_BLOCK_PTR, 0, XD_INDIRECT (0, 1),
     { &htentry_weak_description }, XD_FLAG_UNION_DEFAULT_ENTRY },
 #else /* not NEW_GC */
   { XD_BLOCK_PTR, HASH_TABLE_NON_WEAK, XD_INDIRECT (0, 1),
@@ -493,22 +510,12 @@ const struct memory_description hash_table_description[] = {
   { XD_END }
 };
 
-#ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
-			       1, /*dumpable-flag*/
-                               mark_hash_table, print_hash_table,
-			       0, hash_table_equal, hash_table_hash,
-			       hash_table_description,
-			       Lisp_Hash_Table);
-#else /* not NEW_GC */
-DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
-			       1, /*dumpable-flag*/
-                               mark_hash_table, print_hash_table,
-			       finalize_hash_table,
-			       hash_table_equal, hash_table_hash,
-			       hash_table_description,
-			       Lisp_Hash_Table);
-#endif /* not NEW_GC */
+DEFINE_DUMPABLE_LISP_OBJECT ("hash-table", hash_table,
+			     mark_hash_table, print_hash_table,
+			     IF_OLD_GC (finalize_hash_table),
+			     hash_table_equal, hash_table_hash,
+			     hash_table_description,
+			     Lisp_Hash_Table);
 
 static Lisp_Hash_Table *
 xhash_table (Lisp_Object hash_table)
@@ -533,6 +540,17 @@ compute_hash_table_derived_values (Lisp_Hash_Table *ht)
     ((double) ht->size * ht->rehash_threshold);
   ht->golden_ratio = (Elemcount)
     ((double) ht->size * (.6180339887 / (double) sizeof (Lisp_Object)));
+}
+
+static htentry *
+allocate_hash_table_entries (Elemcount size)
+{
+#ifdef NEW_GC
+  return XHASH_TABLE_ENTRY (alloc_lrecord_array
+			    (size, &lrecord_hash_table_entry));
+#else /* not NEW_GC */
+  return xnew_array_and_zero (htentry, size);
+#endif /* not NEW_GC */
 }
 
 Lisp_Object
@@ -579,8 +597,8 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 			      double rehash_threshold,
 			      enum hash_table_weakness weakness)
 {
-  Lisp_Object hash_table;
-  Lisp_Hash_Table *ht = ALLOC_LCRECORD_TYPE (Lisp_Hash_Table, &lrecord_hash_table);
+  Lisp_Object hash_table = ALLOC_NORMAL_LISP_OBJECT (hash_table);
+  Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
 
   ht->test_function = test_function;
   ht->hash_function = hash_function;
@@ -602,15 +620,7 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
   compute_hash_table_derived_values (ht);
 
   /* We leave room for one never-occupied sentinel htentry at the end.  */
-#ifdef NEW_GC
-  ht->hentries = (htentry *) alloc_lrecord_array (sizeof (htentry), 
-						  ht->size + 1,
-						  &lrecord_hash_table_entry); 
-#else /* not NEW_GC */
-  ht->hentries = xnew_array_and_zero (htentry, ht->size + 1);
-#endif /* not NEW_GC */
-
-  hash_table = wrap_hash_table (ht);
+  ht->hentries = allocate_hash_table_entries (ht->size + 1);
 
   if (weakness == HASH_TABLE_NON_WEAK)
     ht->next_weak = Qunbound;
@@ -993,29 +1003,27 @@ arguments: (&key TEST SIZE REHASH-SIZE REHASH-THRESHOLD WEAKNESS)
 */
        (int nargs, Lisp_Object *args))
 {
-  int i = 0;
-  Lisp_Object test	       = Qnil;
-  Lisp_Object size	       = Qnil;
-  Lisp_Object rehash_size      = Qnil;
-  Lisp_Object rehash_threshold = Qnil;
-  Lisp_Object weakness	       = Qnil;
+#ifdef NO_NEED_TO_HANDLE_21_4_CODE
+  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 5,
+                  (test, size, rehash_size, rehash_threshold, weakness),
+                  NULL, weakness = Qunbound), 0);
+#else
+  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 6,
+                  (test, size, rehash_size, rehash_threshold, weakness,
+		   type), (type = Qunbound, weakness = Qunbound), 0);
 
-  while (i + 1 < nargs)
+  if (EQ (weakness, Qunbound))
     {
-      Lisp_Object keyword = args[i++];
-      Lisp_Object value   = args[i++];
-
-      if      (EQ (keyword, Q_test))		 test		  = value;
-      else if (EQ (keyword, Q_size))		 size		  = value;
-      else if (EQ (keyword, Q_rehash_size))	 rehash_size	  = value;
-      else if (EQ (keyword, Q_rehash_threshold)) rehash_threshold = value;
-      else if (EQ (keyword, Q_weakness))	 weakness	  = value;
-      else if (EQ (keyword, Q_type))/*obsolete*/ weakness	  = value;
-      else invalid_constant ("Invalid hash table property keyword", keyword);
+      if (EQ (weakness, Qunbound) && !EQ (type, Qunbound))
+        {
+          weakness = type;
+        }
+      else
+        {
+          weakness = Qnil;
+        }
     }
-
-  if (i < nargs)
-    sferror ("Hash table property requires a value", args[i]);
+#endif
 
 #define VALIDATE_VAR(var) \
 if (!NILP (var)) hash_table_##var##_validate (Q##var, var, ERROR_ME);
@@ -1041,27 +1049,21 @@ The keys and values will not themselves be copied.
        (hash_table))
 {
   const Lisp_Hash_Table *ht_old = xhash_table (hash_table);
-  Lisp_Hash_Table *ht = ALLOC_LCRECORD_TYPE (Lisp_Hash_Table, &lrecord_hash_table);
-  COPY_LCRECORD (ht, ht_old);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (hash_table);
+  Lisp_Hash_Table *ht = XHASH_TABLE (obj);
+  copy_lisp_object (obj, hash_table);
 
-#ifdef NEW_GC
-  ht->hentries = (htentry *) alloc_lrecord_array (sizeof (htentry),
-						  ht_old->size + 1,
-						  &lrecord_hash_table_entry);
-#else /* not NEW_GC */
-  ht->hentries = xnew_array (htentry, ht_old->size + 1);
-#endif /* not NEW_GC */
+  /* We leave room for one never-occupied sentinel htentry at the end.  */
+  ht->hentries = allocate_hash_table_entries (ht_old->size + 1);
   memcpy (ht->hentries, ht_old->hentries, (ht_old->size + 1) * sizeof (htentry));
-
-  hash_table = wrap_hash_table (ht);
 
   if (! EQ (ht->next_weak, Qunbound))
     {
       ht->next_weak = Vall_weak_hash_tables;
-      Vall_weak_hash_tables = hash_table;
+      Vall_weak_hash_tables = obj;
     }
 
-  return hash_table;
+  return obj;
 }
 
 static void
@@ -1075,13 +1077,8 @@ resize_hash_table (Lisp_Hash_Table *ht, Elemcount new_size)
 
   old_entries = ht->hentries;
 
-#ifdef NEW_GC
-  ht->hentries = (htentry *) alloc_lrecord_array (sizeof (htentry),
-						    new_size + 1,
-						    &lrecord_hash_table_entry);
-#else /* not NEW_GC */
-  ht->hentries = xnew_array_and_zero (htentry, new_size + 1);
-#endif /* not NEW_GC */
+  /* We leave room for one never-occupied sentinel htentry at the end.  */
+  ht->hentries = allocate_hash_table_entries (new_size + 1);
   new_entries = ht->hentries;
 
   compute_hash_table_derived_values (ht);
@@ -1107,13 +1104,8 @@ void
 pdump_reorganize_hash_table (Lisp_Object hash_table)
 {
   const Lisp_Hash_Table *ht = xhash_table (hash_table);
-#ifdef NEW_GC
-  htentry *new_entries = 
-    (htentry *) alloc_lrecord_array (sizeof (htentry), ht->size + 1,
-				     &lrecord_hash_table_entry);
-#else /* not NEW_GC */
-  htentry *new_entries = xnew_array_and_zero (htentry, ht->size + 1);
-#endif /* not NEW_GC */
+  /* We leave room for one never-occupied sentinel htentry at the end.  */
+  htentry *new_entries = allocate_hash_table_entries (ht->size + 1);
   htentry *e, *sentinel;
 
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
@@ -1560,7 +1552,7 @@ elisp_map_remhash (maphash_function_t predicate,
   Lisp_Object mo_obj = (obj);				\
   if (!marked_p (mo_obj))				\
     {							\
-      kkcc_gc_stack_push_lisp_object (mo_obj, 0, -1);	\
+      kkcc_gc_stack_push_lisp_object_0 (mo_obj);	\
       did_mark = 1;					\
     }							\
 } while (0)
@@ -1829,6 +1821,14 @@ The value is returned as (HIGH . LOW).
 /************************************************************************/
 
 void
+hash_table_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (hash_table, memory_usage);
+#endif
+}
+
+void
 syms_of_elhash (void)
 {
   DEFSUBR (Fhash_table_p);
@@ -1854,6 +1854,7 @@ syms_of_elhash (void)
   DEFSYMBOL_MULTIWORD_PREDICATE (Qhash_tablep);
   DEFSYMBOL (Qhash_table);
   DEFSYMBOL (Qhashtable);
+  DEFSYMBOL (Qmake_hash_table);
   DEFSYMBOL (Qweakness);
   DEFSYMBOL (Qvalue);
   DEFSYMBOL (Qkey_or_value);
@@ -1877,11 +1878,20 @@ syms_of_elhash (void)
 }
 
 void
+vars_of_elhash (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY
+    (hash_table, memusage_stats_list, list1 (intern ("hash-entries")));
+#endif /* MEMORY_USAGE_STATS */
+}
+
+void
 init_elhash_once_early (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (hash_table);
+  INIT_LISP_OBJECT (hash_table);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (hash_table_entry);
+  INIT_LISP_OBJECT (hash_table_entry);
 #endif /* NEW_GC */
 
   /* This must NOT be staticpro'd */

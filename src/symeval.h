@@ -1,6 +1,6 @@
 /* Definitions of symbol-value forwarding for XEmacs Lisp interpreter.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -77,7 +77,7 @@ typedef EMACS_INT Fixnum;
 
 struct symbol_value_magic
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   void *value;
   enum symbol_value_type type;
 };
@@ -141,7 +141,7 @@ struct symbol_value_forward
   int (*magicfun) (Lisp_Object sym, Lisp_Object *val, Lisp_Object in_object,
 		   int flags);
 };
-DECLARE_LRECORD (symbol_value_forward, struct symbol_value_forward);
+DECLARE_LISP_OBJECT (symbol_value_forward, struct symbol_value_forward);
 #define XSYMBOL_VALUE_FORWARD(x) \
 	XRECORD (x, symbol_value_forward, struct symbol_value_forward)
 #define symbol_value_forward_forward(m) ((void *)((m)->magic.value))
@@ -228,7 +228,7 @@ struct symbol_value_buffer_local
   Lisp_Object current_buffer;
   Lisp_Object current_alist_element;
 };
-DECLARE_LRECORD (symbol_value_buffer_local, struct symbol_value_buffer_local);
+DECLARE_LISP_OBJECT (symbol_value_buffer_local, struct symbol_value_buffer_local);
 #define XSYMBOL_VALUE_BUFFER_LOCAL(x) \
 	XRECORD (x, symbol_value_buffer_local, struct symbol_value_buffer_local)
 #define SYMBOL_VALUE_BUFFER_LOCAL_P(x) RECORDP (x, symbol_value_buffer_local)
@@ -253,7 +253,7 @@ struct symbol_value_lisp_magic
   Lisp_Object harg[MAGIC_HANDLER_MAX];
   Lisp_Object shadowed;
 };
-DECLARE_LRECORD (symbol_value_lisp_magic, struct symbol_value_lisp_magic);
+DECLARE_LISP_OBJECT (symbol_value_lisp_magic, struct symbol_value_lisp_magic);
 #define XSYMBOL_VALUE_LISP_MAGIC(x) \
 	XRECORD (x, symbol_value_lisp_magic, struct symbol_value_lisp_magic)
 #define SYMBOL_VALUE_LISP_MAGIC_P(x) RECORDP (x, symbol_value_lisp_magic)
@@ -266,7 +266,7 @@ struct symbol_value_varalias
   Lisp_Object aliasee;
   Lisp_Object shadowed;
 };
-DECLARE_LRECORD (symbol_value_varalias,	struct symbol_value_varalias);
+DECLARE_LISP_OBJECT (symbol_value_varalias,	struct symbol_value_varalias);
 #define XSYMBOL_VALUE_VARALIAS(x) \
 	XRECORD (x, symbol_value_varalias, struct symbol_value_varalias)
 #define SYMBOL_VALUE_VARALIAS_P(x) RECORDP (x, symbol_value_varalias)
@@ -401,8 +401,7 @@ MODULE_API void defvar_magic (const Ascbyte *symbol_name,
 do									\
 {									\
   struct symbol_value_forward *I_hate_C =				\
-    alloc_lrecord_type (struct symbol_value_forward,			\
-		        &lrecord_symbol_value_forward);			\
+    XSYMBOL_VALUE_FORWARD (ALLOC_NORMAL_LISP_OBJECT (symbol_value_forward));	\
   /*  mcpro ((Lisp_Object) I_hate_C);*/					\
 									\
   MARK_LRECORD_AS_LISP_READONLY (I_hate_C);				\
@@ -426,11 +425,8 @@ do									\
 	  1, /* mark bit */						\
 	  1, /* c_readonly bit */					\
 	  1, /* lisp_readonly bit */					\
-          0  /* unused */                                               \
 	},								\
 	0, /* next */							\
-	0, /* uid  */							\
-	0  /* free */							\
       },								\
       c_location,							\
       forward_type							\
@@ -489,7 +485,7 @@ do									    \
 void flush_all_buffer_local_cache (void);
 
 struct multiple_value {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Elemcount count;
   Elemcount allocated_count; 
   Elemcount first_desired;
@@ -497,7 +493,7 @@ struct multiple_value {
 };
 typedef struct multiple_value multiple_value;
 
-DECLARE_LRECORD (multiple_value, multiple_value);
+DECLARE_LISP_OBJECT (multiple_value, multiple_value);
 #define MULTIPLE_VALUEP(x) RECORDP (x, multiple_value)
 
 #define XMULTIPLE_VALUE(x) XRECORD (x, multiple_value, multiple_value)

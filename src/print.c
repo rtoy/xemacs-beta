@@ -1415,7 +1415,7 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	if (EQ (obj, tortoise) && len > 0)
 	  {
 	    if (print_readably)
-	      printing_unreadable_object ("circular list");
+	      printing_unreadable_object_fmt ("circular list");
 	    else
 	      write_ascstring (printcharfun, "... <circular list>");
 	    break;
@@ -1523,7 +1523,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 DOESNT_RETURN
-printing_unreadable_object (const Ascbyte *fmt, ...)
+printing_unreadable_object_fmt (const Ascbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -1537,70 +1537,48 @@ printing_unreadable_object (const Ascbyte *fmt, ...)
 }
 
 DOESNT_RETURN
-printing_unreadable_lcrecord (Lisp_Object obj, const Ibyte *name)
+printing_unreadable_lisp_object (Lisp_Object obj, const Ibyte *name)
 {
-  struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
-
-#ifndef NEW_GC
-  /* This must be a real lcrecord */
-  assert (!LHEADER_IMPLEMENTATION (&header->lheader)->basic_p);
-#endif
+  struct lrecord_header *header = (struct lrecord_header *) XPNTR (obj);
+  const struct lrecord_implementation *imp =
+    XRECORD_LHEADER_IMPLEMENTATION (obj);
 
   if (name)
-    printing_unreadable_object
-      ("#<%s %s 0x%x>",
-#ifdef NEW_GC
-       LHEADER_IMPLEMENTATION (header)->name,
-#else /* not NEW_GC */
-       LHEADER_IMPLEMENTATION (&header->lheader)->name,
-#endif /* not NEW_GC */
-       name,
-       header->uid);
+    printing_unreadable_object_fmt ("#<%s %s 0x%x>", imp->name, name, header->uid);
   else
-    printing_unreadable_object
-      ("#<%s 0x%x>",
-#ifdef NEW_GC
-       LHEADER_IMPLEMENTATION (header)->name,
-#else /* not NEW_GC */
-       LHEADER_IMPLEMENTATION (&header->lheader)->name,
-#endif /* not NEW_GC */
-       header->uid);
+    printing_unreadable_object_fmt ("#<%s 0x%x>", imp->name, header->uid);
 }
 
 void
-default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
-			int UNUSED (escapeflag))
+external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			 int UNUSED (escapeflag))
 {
-  struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
-
-#ifndef NEW_GC
-  /* This must be a real lcrecord */
-  assert (!LHEADER_IMPLEMENTATION (&header->lheader)->basic_p);
-#endif
+  struct lrecord_header *header = (struct lrecord_header *) XPNTR (obj);
+  const struct lrecord_implementation *imp =
+    XRECORD_LHEADER_IMPLEMENTATION (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string (printcharfun, "#<%s 0x%x>",
-#ifdef NEW_GC
-		    LHEADER_IMPLEMENTATION (header)->name,
-#else /* not NEW_GC */
-		    LHEADER_IMPLEMENTATION (&header->lheader)->name,
-#endif /* not NEW_GC */
-		    header->uid);
+  write_fmt_string (printcharfun, "#<%s 0x%x>", imp->name, header->uid);
 }
 
 void
 internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
+  if (print_readably)
+    printing_unreadable_object_fmt
+      ("#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%x>",
+       XRECORD_LHEADER_IMPLEMENTATION (obj)->name, LISP_OBJECT_UID (obj));
+
   /* Internal objects shouldn't normally escape to the Lisp level;
      that's why we say "XEmacs bug?".  This can happen, however, when
      printing backtraces. */
   write_fmt_string (printcharfun,
-		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%x>",
 		    XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
-		    (unsigned long) XPNTR (obj));
+		    LISP_OBJECT_UID (obj));
 }
 
 enum printing_badness
@@ -1935,11 +1913,13 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	      }
 	  }
 
-	if (LHEADER_IMPLEMENTATION (lheader)->printer)
-	  ((LHEADER_IMPLEMENTATION (lheader)->printer)
-	   (obj, printcharfun, escapeflag));
-	else
-	  internal_object_printer (obj, printcharfun, escapeflag);
+	/* Either use a custom-written printer, or use
+	   internal_object_printer or external_object_printer, depending on
+	   whether the object is internal (not visible at Lisp level) or
+	   external. */
+	assert (LHEADER_IMPLEMENTATION (lheader)->printer);
+	((LHEADER_IMPLEMENTATION (lheader)->printer)
+	 (obj, printcharfun, escapeflag));
 	break;
       }
 
@@ -2437,19 +2417,10 @@ debug_p4 (Lisp_Object obj)
 	debug_out ("<< bad object type=%d 0x%lx>>", header->type,
 		   (EMACS_INT) header);
       else
-#ifdef NEW_GC
 	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
 		   LHEADER_IMPLEMENTATION (header)->name,
 		   (EMACS_INT) header,
 		   (EMACS_INT) ((struct lrecord_header *) header)->uid);
-#else /* not NEW_GC */
-	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
-		   LHEADER_IMPLEMENTATION (header)->name,
-		   (EMACS_INT) header,
-		   (EMACS_INT) (LHEADER_IMPLEMENTATION (header)->basic_p ?
-				((struct lrecord_header *) header)->uid :
-				((struct old_lcrecord_header *) header)->uid));
-#endif /* not NEW_GC */
     }
 }
 

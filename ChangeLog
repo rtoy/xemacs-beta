@@ -1,3 +1,17 @@
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* CHANGES-beta:
+	Partially updated with last couple of months worth of changes.
+
+2010-03-18  Mike Sperber  <mike@xemacs.org>
+
+	* INSTALL: Reflect change from `lib' to `share'; also, document
+	how to invoke configure to get the old setting.
+
+	* configure.ac: Set LATE_PACKAGE_DIRECTORIES_USER_DEFINED if
+	`datadir' was changed; set `with_late_packages' to something
+	sensible for this case.
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* configure.ac (XE_COMPLEX_ARG):

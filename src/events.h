@@ -123,7 +123,7 @@ enum alternative_key_chars
 struct Lisp_Key_Data
 {
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   /* What keysym this is; a character or a symbol. */
   Lisp_Object keysym;
@@ -186,7 +186,7 @@ typedef struct Lisp_Key_Data Lisp_Key_Data;
 #define SET_KEY_DATA_MODIFIERS(d, m) ((d)->modifiers = m)
 
 #ifdef EVENT_DATA_AS_OBJECTS
-DECLARE_LRECORD (key_data, Lisp_Key_Data);
+DECLARE_LISP_OBJECT (key_data, Lisp_Key_Data);
 #define XKEY_DATA(x) XRECORD (x, key_data, Lisp_Key_Data)
 #define wrap_key_data(p) wrap_record (p, key_data)
 #define KEY_DATAP(x) RECORDP (x, key_data)
@@ -219,7 +219,7 @@ DECLARE_LRECORD (key_data, Lisp_Key_Data);
 struct Lisp_Button_Data
 {
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   /* What button went down or up. */
   int button;
@@ -232,7 +232,7 @@ struct Lisp_Button_Data
 typedef struct Lisp_Button_Data Lisp_Button_Data;
 
 #ifdef EVENT_DATA_AS_OBJECTS
-DECLARE_LRECORD (button_data, Lisp_Button_Data);
+DECLARE_LISP_OBJECT (button_data, Lisp_Button_Data);
 #define XBUTTON_DATA(x) XRECORD (x, button_data, Lisp_Button_Data)
 #define wrap_button_data(p) wrap_record (p, button_data)
 #define BUTTON_DATAP(x) RECORDP (x, button_data)
@@ -271,7 +271,7 @@ DECLARE_LRECORD (button_data, Lisp_Button_Data);
 struct Lisp_Motion_Data
 {
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   /* Where it was after it moved (in pixels). */
   int x, y;
@@ -281,7 +281,7 @@ struct Lisp_Motion_Data
 typedef struct Lisp_Motion_Data Lisp_Motion_Data;
 
 #ifdef EVENT_DATA_AS_OBJECTS
-DECLARE_LRECORD (motion_data, Lisp_Motion_Data);
+DECLARE_LISP_OBJECT (motion_data, Lisp_Motion_Data);
 #define XMOTION_DATA(x) XRECORD (x, motion_data, Lisp_Motion_Data)
 #define wrap_motion_data(p) wrap_record (p, motion_data)
 #define MOTION_DATAP(x) RECORDP (x, motion_data)
@@ -313,7 +313,7 @@ DECLARE_LRECORD (motion_data, Lisp_Motion_Data);
 struct Lisp_Process_Data
 {
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   /* the XEmacs "process" object in question */
   Lisp_Object process;
@@ -321,7 +321,7 @@ struct Lisp_Process_Data
 typedef struct Lisp_Process_Data Lisp_Process_Data;
 
 #ifdef EVENT_DATA_AS_OBJECTS
-DECLARE_LRECORD (process_data, Lisp_Process_Data);
+DECLARE_LISP_OBJECT (process_data, Lisp_Process_Data);
 #define XPROCESS_DATA(x) XRECORD (x, process_data, Lisp_Process_Data)
 #define wrap_process_data(p) wrap_record (p, process_data)
 #define PROCESS_DATAP(x) RECORDP (x, process_data)
@@ -352,7 +352,7 @@ struct Lisp_Timeout_Data
     object		The object passed to that function.
 */
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   int interval_id;
   int id_number;
@@ -362,7 +362,7 @@ struct Lisp_Timeout_Data
 typedef struct Lisp_Timeout_Data Lisp_Timeout_Data;
 
 #ifdef EVENT_DATA_AS_OBJECTS
-DECLARE_LRECORD (timeout_data, Lisp_Timeout_Data);
+DECLARE_LISP_OBJECT (timeout_data, Lisp_Timeout_Data);
 #define XTIMEOUT_DATA(x) XRECORD (x, timeout_data, Lisp_Timeout_Data)
 #define wrap_timeout_data(p) wrap_record(p, timeout_data)
 #define TIMEOUT_DATAP(x) RECORDP (x, timeout_data)
@@ -411,7 +411,7 @@ struct Lisp_Eval_Data
     object		Argument of function.
 */
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   Lisp_Object function;
   Lisp_Object object;
@@ -419,7 +419,7 @@ struct Lisp_Eval_Data
 typedef struct Lisp_Eval_Data Lisp_Eval_Data;
 
 #ifdef EVENT_DATA_AS_OBJECTS
-DECLARE_LRECORD (eval_data, Lisp_Eval_Data);
+DECLARE_LISP_OBJECT (eval_data, Lisp_Eval_Data);
 #define XEVAL_DATA(x) XRECORD (x, eval_data, Lisp_Eval_Data)
 #define wrap_eval_data(p) wrap_record(p, eval_data)
 #define EVAL_DATAP(x) RECORDP (x, eval_data)
@@ -464,7 +464,7 @@ struct Lisp_Misc_User_Data
 			values for other types of misc_user_events.
 */
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   Lisp_Object function;
   Lisp_Object object;
@@ -475,7 +475,7 @@ struct Lisp_Misc_User_Data
 typedef struct Lisp_Misc_User_Data Lisp_Misc_User_Data;
 
 #ifdef EVENT_DATA_AS_OBJECTS
-DECLARE_LRECORD (misc_user_data, Lisp_Misc_User_Data);
+DECLARE_LISP_OBJECT (misc_user_data, Lisp_Misc_User_Data);
 #define XMISC_USER_DATA(x) XRECORD (x, misc_user_data, Lisp_Misc_User_Data)
 #define wrap_misc_user_data(p) wrap_record(p, misc_user_data)
 #define MISC_USER_DATAP(x) RECORDP (x, misc_user_data)
@@ -541,7 +541,7 @@ struct Lisp_Magic_Eval_Data
 
 */
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
   void (*internal_function) (Lisp_Object);
   Lisp_Object object;
@@ -549,7 +549,7 @@ struct Lisp_Magic_Eval_Data
 typedef struct Lisp_Magic_Eval_Data Lisp_Magic_Eval_Data;
 
 #ifdef EVENT_DATA_AS_OBJECTS
-DECLARE_LRECORD (magic_eval_data, Lisp_Magic_Eval_Data);
+DECLARE_LISP_OBJECT (magic_eval_data, Lisp_Magic_Eval_Data);
 #define XMAGIC_EVAL_DATA(x) XRECORD (x, magic_eval_data, Lisp_Magic_Eval_Data)
 #define wrap_magic_eval_data(p) wrap_record(p, magic_eval_data)
 #define MAGIC_EVAL_DATAP(x) RECORDP (x, magic_eval_data)
@@ -597,7 +597,7 @@ struct Lisp_Magic_Data
 */
 
 #ifdef EVENT_DATA_AS_OBJECTS
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
 #endif /* EVENT_DATA_AS_OBJECTS */
 
   union {
@@ -616,7 +616,7 @@ struct Lisp_Magic_Data
 typedef struct Lisp_Magic_Data Lisp_Magic_Data;
 
 #ifdef EVENT_DATA_AS_OBJECTS
-DECLARE_LRECORD (magic_data, Lisp_Magic_Data);
+DECLARE_LISP_OBJECT (magic_data, Lisp_Magic_Data);
 #define XMAGIC_DATA(x) XRECORD (x, magic_data, Lisp_Magic_Data)
 #define wrap_magic_data(p) wrap_record(p, magic_data)
 #define MAGIC_DATAP(x) RECORDP (x, magic_data)
@@ -660,7 +660,7 @@ DECLARE_LRECORD (magic_data, Lisp_Magic_Data);
 
 struct Lisp_Timeout
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   int id; /* Id we use to identify the timeout over its lifetime */
   int interval_id; /* Id for this particular interval; this may
                       be different each time the timeout is
@@ -675,7 +675,7 @@ struct Lisp_Timeout
 };
 typedef struct Lisp_Timeout Lisp_Timeout;
 
-DECLARE_LRECORD (timeout, Lisp_Timeout);
+DECLARE_LISP_OBJECT (timeout, Lisp_Timeout);
 #define XTIMEOUT(x) XRECORD (x, timeout, Lisp_Timeout)
 #define wrap_timeout(p) wrap_record (p, timeout)
 #define TIMEOUTP(x) RECORDP (x, timeout)
@@ -690,7 +690,7 @@ struct Lisp_Event
      - Likewise for events chained in the command builder.
      - Otherwise it's Qnil.
    */
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   Lisp_Object           next;
   emacs_event_type      event_type;
 
@@ -747,14 +747,14 @@ struct Lisp_Event
 #endif /* not EVENT_DATA_AS_OBJECTS */
 };
 
-DECLARE_LRECORD (event, Lisp_Event);
+DECLARE_LISP_OBJECT (event, Lisp_Event);
 #define XEVENT(x) XRECORD (x, event, Lisp_Event)
 #define wrap_event(p) wrap_record (p, event)
 #define EVENTP(x) RECORDP (x, event)
 #define CHECK_EVENT(x) CHECK_RECORD (x, event)
 #define CONCHECK_EVENT(x) CONCHECK_RECORD (x, event)
 
-DECLARE_LRECORD (command_builder, struct command_builder);
+DECLARE_LISP_OBJECT (command_builder, struct command_builder);
 
 #define EVENT_CHANNEL(a) ((a)->channel)
 #define XEVENT_CHANNEL(ev) (XEVENT (ev)->channel)
@@ -1117,7 +1117,7 @@ void event_stream_unixoid_delete_io_streams (Lisp_Object instream,
  */
 struct command_builder
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   Lisp_Object console; /* back pointer to the console this command
                           builder is for */
 #if 0

@@ -1,6 +1,6 @@
 /* Markers: examining, setting and killing.
    Copyright (C) 1985, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -60,7 +60,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Marker *marker = XMARKER (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<marker 0x%lx>", (long) marker);
+    printing_unreadable_object_fmt ("#<marker 0x%x>", LISP_OBJECT_UID (obj));
 
   write_ascstring (printcharfun, GETTEXT ("#<marker "));
   if (!marker->buffer)
@@ -73,7 +73,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun,
     }
   if (marker->insertion_type)
     write_ascstring (printcharfun, " insertion-type=t");
-  write_fmt_string (printcharfun, " 0x%lx>", (long) marker);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -107,28 +107,17 @@ static const struct memory_description marker_description[] = {
 
 #ifdef NEW_GC
 static void
-finalize_marker (void *header, int for_disksave)
+finalize_marker (Lisp_Object obj)
 {
-  if (!for_disksave) 
-    {
-      Lisp_Object tem = wrap_marker (header);
-      unchain_marker (tem);
-    }
+  unchain_marker (obj);
 }
+#endif /* NEW_GC */
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
-				     1, /*dumpable-flag*/
-				     mark_marker, print_marker,
-				     finalize_marker,
-				     marker_equal, marker_hash,
-				     marker_description, Lisp_Marker);
-#else /* not NEW_GC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
-				     1, /*dumpable-flag*/
-				     mark_marker, print_marker, 0,
-				     marker_equal, marker_hash,
-				     marker_description, Lisp_Marker);
-#endif /* not NEW_GC */
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
+					mark_marker, print_marker,
+					IF_NEW_GC (finalize_marker),
+					marker_equal, marker_hash,
+					marker_description, Lisp_Marker);
 
 /* Operations on markers. */
 
@@ -503,25 +492,15 @@ Return t if there are markers pointing at POSITION in the current buffer.
 
 #ifdef MEMORY_USAGE_STATS
 
-int
-compute_buffer_marker_usage (struct buffer *b, struct overhead_stats *ovstats)
+Bytecount
+compute_buffer_marker_usage (struct buffer *b)
 {
   Lisp_Marker *m;
-  int total = 0;
-  int overhead;
+  Bytecount total = 0;
 
   for (m = BUF_MARKERS (b); m; m = m->next)
-    total += sizeof (Lisp_Marker);
-  ovstats->was_requested += total;
-#ifdef NEW_GC
-  overhead = mc_alloced_storage_size (total, 0);
-#else /* not NEW_GC */
-  overhead = fixed_type_block_overhead (total);
-#endif /* not NEW_GC */
-  /* #### claiming this is all malloc overhead is not really right,
-     but it has to go somewhere. */
-  ovstats->malloc_overhead += overhead;
-  return total + overhead;
+    total += lisp_object_memory_usage (wrap_marker (m));
+  return total;
 }
 
 #endif /* MEMORY_USAGE_STATS */
@@ -530,7 +509,7 @@ compute_buffer_marker_usage (struct buffer *b, struct overhead_stats *ovstats)
 void
 syms_of_marker (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (marker);
+  INIT_LISP_OBJECT (marker);
 
   DEFSUBR (Fmarker_position);
   DEFSUBR (Fmarker_buffer);

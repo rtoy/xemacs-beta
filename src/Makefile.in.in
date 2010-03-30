@@ -183,6 +183,10 @@ debug_objs=debug.o tests.o
 event_unixoid_objs=event-unixoid.o
 #endif
 
+#ifdef HAVE_WINDOW_SYSTEM
+glyphs_objs=glyphs-eimage.o glyphs-shared.o
+#endif
+
 #ifdef HAVE_GPM
 gpm_objs=gpmevent.o
 #endif
@@ -270,19 +274,18 @@ vdb_objs=vdb-fake.o
 ## if they all come out null.
 
 objs=\
- abbrev.o alloc.o alloca.o \
+ abbrev.o alloc.o alloca.o array.o \
  $(balloon_help_objs) blocktype.o buffer.o bytecode.o \
  callint.o casefiddle.o casetab.o chartab.o \
  $(clash_detection_objs) cmdloop.o cmds.o $(coding_system_objs) console.o \
  console-stream.o\
  data.o $(database_objs) $(debug_objs) device.o dired.o doc.o doprnt.o\
- dynarr.o \
  editfns.o elhash.o emacs.o emodules.o eval.o events.o\
  event-stream.o $(event_unixoid_objs) $(extra_objs) extents.o\
  faces.o file-coding.o fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o \
  font-lock.o frame.o\
- gc.o general.o glyphs.o glyphs-eimage.o glyphs-shared.o\
- glyphs-widget.o $(gpm_objs) $(gtk_objs) $(gtk_gui_objs) $(gui_objs) \
+ gc.o general.o glyphs.o $(glyphs_objs) glyphs-widget.o \
+ $(gpm_objs) $(gtk_objs) $(gtk_gui_objs) $(gui_objs) \
  gutter.o\
  hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\

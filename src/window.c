@@ -55,7 +55,7 @@ Lisp_Object Qwindowp, Qwindow_live_p;
 Lisp_Object Qdisplay_buffer;
 
 #ifdef MEMORY_USAGE_STATS
-Lisp_Object Qface_cache, Qglyph_cache, Qline_start_cache, Qother_redisplay;
+Lisp_Object Qface_cache, Qglyph_cache, Qline_start_cache, Qredisplay_structs;
 #ifdef HAVE_SCROLLBARS
 Lisp_Object Qscrollbar_instances;
 #endif
@@ -182,11 +182,9 @@ static const struct memory_description face_cachel_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("face-cachel", face_cachel,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       face_cachel_description_1,
-			       Lisp_Face_Cachel);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("face-cachel", face_cachel,
+				      0, face_cachel_description_1,
+				      Lisp_Face_Cachel);
 #endif /* NEW_GC */
 
 static const struct sized_memory_description face_cachel_description = {
@@ -204,11 +202,9 @@ static const struct memory_description face_cachel_dynarr_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("face-cachel-dynarr", face_cachel_dynarr,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       face_cachel_dynarr_description_1,
-			       face_cachel_dynarr);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("face-cachel-dynarr", face_cachel_dynarr,
+				      0, face_cachel_dynarr_description_1,
+				      face_cachel_dynarr);
 #else /* not NEW_GC */
 static const struct sized_memory_description face_cachel_dynarr_description = {
   sizeof (face_cachel_dynarr),
@@ -222,11 +218,9 @@ static const struct memory_description glyph_cachel_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("glyph-cachel", glyph_cachel,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       glyph_cachel_description_1,
-			       Lisp_Glyph_Cachel);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("glyph-cachel", glyph_cachel,
+				      0, glyph_cachel_description_1,
+				      Lisp_Glyph_Cachel);
 #endif /* NEW_GC */
 
 static const struct sized_memory_description glyph_cachel_description = {
@@ -244,11 +238,10 @@ static const struct memory_description glyph_cachel_dynarr_description_1[] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("glyph-cachel-dynarr", glyph_cachel_dynarr,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       glyph_cachel_dynarr_description_1,
-			       glyph_cachel_dynarr);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("glyph-cachel-dynarr",
+				      glyph_cachel_dynarr, 0,
+				      glyph_cachel_dynarr_description_1,
+				      glyph_cachel_dynarr);
 #else /* not NEW_GC */
 static const struct sized_memory_description glyph_cachel_dynarr_description = {
   sizeof (glyph_cachel_dynarr),
@@ -316,7 +309,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Object buf;
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_ascstring (printcharfun, "#<window");
   buf = XWINDOW_BUFFER (obj);
@@ -328,13 +321,13 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
       Lisp_Object name = XBUFFER (buf)->name;
       write_fmt_string_lisp (printcharfun, " on %S", 1, name);
     }
-  write_fmt_string (printcharfun, " 0x%x>", XWINDOW (obj)->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static void
-finalize_window (void *header, int UNUSED (for_disksave))
+finalize_window (Lisp_Object obj)
 {
-  struct window *w = (struct window *) header;
+  struct window *w = XWINDOW (obj);
 
   if (w->line_start_cache)
     {
@@ -375,10 +368,9 @@ make_saved_buffer_point_cache (void)
   return make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("window", window,
-			       0, /*dumpable-flag*/
-                               mark_window, print_window, finalize_window,
-			       0, 0, window_description, struct window);
+DEFINE_NODUMP_LISP_OBJECT ("window", window,
+			   mark_window, print_window, finalize_window,
+			   0, 0, window_description, struct window);
 
 #define INIT_DISP_VARIABLE(field, initialization)	\
   p->field[CURRENT_DISP] = initialization;		\
@@ -397,8 +389,8 @@ DEFINE_LRECORD_IMPLEMENTATION ("window", window,
 Lisp_Object
 allocate_window (void)
 {
-  struct window *p = ALLOC_LCRECORD_TYPE (struct window, &lrecord_window);
-  Lisp_Object val = wrap_window (p);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (window);
+  struct window *p = XWINDOW (obj);
 
 #define WINDOW_SLOT(slot) p->slot = Qnil;
 #include "winslots.h"
@@ -432,7 +424,7 @@ allocate_window (void)
   p->windows_changed = 1;
   p->shadow_thickness_changed = 1;
 
-  return val;
+  return obj;
 }
 #undef INIT_DISP_VARIABLE
 
@@ -531,19 +523,18 @@ mark_window_mirror (Lisp_Object obj)
     return Qnil;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("window-mirror", window_mirror,
-			       0, /*dumpable-flag*/
-                               mark_window_mirror, internal_object_printer,
-			       0, 0, 0, window_mirror_description,
-			       struct window_mirror);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("window-mirror", window_mirror,
+				    mark_window_mirror,
+				    window_mirror_description,
+				    struct window_mirror);
 
 /* Create a new window mirror structure and associated redisplay
    structs. */
 static struct window_mirror *
 new_window_mirror (struct frame *f)
 {
-  struct window_mirror *t =
-    ALLOC_LCRECORD_TYPE (struct window_mirror, &lrecord_window_mirror);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (window_mirror);
+  struct window_mirror *t = XWINDOW_MIRROR (obj);
 
   t->frame = f;
   t->current_display_lines = Dynarr_new (display_line);
@@ -636,7 +627,7 @@ static struct window_mirror *
 find_window_mirror_internal (Lisp_Object win, struct window_mirror *rmir,
 			    struct window *w)
 {
-  for (; !NILP (win); win = XWINDOW (win)->next, rmir = rmir->next)
+  for (; !NILP (win) && rmir; win = XWINDOW (win)->next, rmir = rmir->next)
     {
       if (w == XWINDOW (win))
 	return rmir;
@@ -687,7 +678,7 @@ free_window_mirror (struct window_mirror *mir)
 #endif
       free_display_structs (mir);
       mir = mir->next;
-      /* not worth calling free_managed_lcrecord() -- window mirrors
+      /* not worth calling free_normal_lisp_object() -- window mirrors
 	 are not created that frequently and it's dangerous.  we don't
 	 know for sure that there aren't other pointers around -- e.g.
 	 in a scrollbar instance. */
@@ -715,6 +706,18 @@ find_window_mirror (struct window *w)
   struct frame *f = XFRAME (w->frame);
   if (f->mirror_dirty)
     update_frame_window_mirror (f);
+  return find_window_mirror_internal (f->root_window,
+				      XWINDOW_MIRROR (f->root_mirror), w);
+}
+
+/* Given a real window, return its mirror structure, if it exists.
+   Don't do any updating. */
+static struct window_mirror *
+find_window_mirror_maybe (struct window *w)
+{
+  struct frame *f = XFRAME (w->frame);
+  if (!WINDOW_MIRRORP (f->root_mirror))
+    return 0;
   return find_window_mirror_internal (f->root_window,
 				      XWINDOW_MIRROR (f->root_mirror), w);
 }
@@ -761,8 +764,6 @@ window_display_lines (struct window *w, int which)
 {
   struct window_mirror *t;
 
-  if (XFRAME (w->frame)->mirror_dirty)
-    update_frame_window_mirror (XFRAME (w->frame));
   t = find_window_mirror (w);
   assert (t);
 
@@ -784,8 +785,6 @@ window_display_buffer (struct window *w)
 {
   struct window_mirror *t;
 
-  if (XFRAME (w->frame)->mirror_dirty)
-    update_frame_window_mirror (XFRAME (w->frame));
   t = find_window_mirror (w);
   assert (t);
 
@@ -797,8 +796,6 @@ set_window_display_buffer (struct window *w, struct buffer *b)
 {
   struct window_mirror *t;
 
-  if (XFRAME (w->frame)->mirror_dirty)
-    update_frame_window_mirror (XFRAME (w->frame));
   t = find_window_mirror (w);
   assert (t);
 
@@ -1813,10 +1810,8 @@ of this area, while the scrollbars are considered to be inside.
   struct window *w = decode_window (window);
   struct frame *f = XFRAME (w->frame);
 
-  int left =
-    w->pixel_left - FRAME_LEFT_BORDER_END (f) - FRAME_LEFT_GUTTER_BOUNDS (f);
-  int top =
-    w->pixel_top - FRAME_TOP_BORDER_END (f) - FRAME_TOP_GUTTER_BOUNDS (f);
+  int left = w->pixel_left - FRAME_PANED_LEFT_EDGE (f);
+  int top = w->pixel_top - FRAME_PANED_TOP_EDGE (f);
 
   return list4 (make_int (left),
 		make_int (top),
@@ -2146,7 +2141,7 @@ mark_window_as_deleted (struct window *w)
   /* Free the extra data structures attached to windows immediately so
      they don't sit around consuming excess space.  They will be
      reinitialized by the window-configuration code as necessary. */
-  finalize_window ((void *) w, 0);
+  finalize_window (wrap_window (w));
 
   /* Nobody should be accessing anything in this object any more,
      and making them Qnil allows for better GC'ing in case a pointer
@@ -3874,12 +3869,11 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
 static void
 make_dummy_parent (Lisp_Object window)
 {
-  Lisp_Object new_;
   struct window *o = XWINDOW (window);
-  struct window *p = ALLOC_LCRECORD_TYPE (struct window, &lrecord_window);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (window);
+  struct window *p = XWINDOW (obj);
 
-  new_ = wrap_window (p);
-  COPY_LCRECORD (p, o);
+  copy_lisp_object (obj, window);
 
   /* Don't copy the pointers to the line start cache or the face
      instances. */
@@ -3899,13 +3893,13 @@ make_dummy_parent (Lisp_Object window)
     make_image_instance_cache_hash_table ();
 
   /* Put new into window structure in place of window */
-  replace_window (window, new_);
+  replace_window (window, obj);
 
   o->next = Qnil;
   o->prev = Qnil;
   o->vchild = Qnil;
   o->hchild = Qnil;
-  o->parent = new_;
+  o->parent = obj;
 
   p->start[CURRENT_DISP] = Qnil;
   p->start[DESIRED_DISP] = Qnil;
@@ -5168,103 +5162,106 @@ some_window_value_changed (Lisp_Object UNUSED (specifier),
 
 #ifdef MEMORY_USAGE_STATS
 
+struct window_mirror_stats
+{
+  struct usage_stats u;
+  /* Ancilliary non-lisp */
+  Bytecount redisplay_structs;
+#ifdef HAVE_SCROLLBARS
+  /* Ancilliary Lisp */
+  Bytecount scrollbar;
+#endif
+};
+
 struct window_stats
 {
-  int face;
-  int glyph;
+  struct usage_stats u;
+  /* Ancillary non-Lisp */
+  Bytecount line_start;
+  /* The next two: ancillary non-Lisp under old-GC, ancillary Lisp under
+     NEW_GC */
+  Bytecount face;
+  Bytecount glyph;
+  /* The next two are copied out of the window mirror, which is an ancillary
+     Lisp structure; the first is non-Lisp, the second Lisp, but from our
+     perspective, they are both counted as Lisp */
+  Bytecount redisplay_structs;
 #ifdef HAVE_SCROLLBARS
-  int scrollbar;
+  Bytecount scrollbar;
 #endif
-  int line_start;
-  int other_redisplay;
-  int other;
+  /* Remaining memory associated with window mirror (ancillary Lisp) */
+  Bytecount window_mirror;
 };
 
 static void
 compute_window_mirror_usage (struct window_mirror *mir,
-			     struct window_stats *stats,
-			     struct overhead_stats *ovstats)
+			     struct window_mirror_stats *stats)
 {
-  if (!mir)
-    return;
-  stats->other += LISPOBJ_STORAGE_SIZE (mir, sizeof (*mir), ovstats);
+  stats->redisplay_structs =
+    compute_display_line_dynarr_usage (mir->current_display_lines, &stats->u)
+    +
+    compute_display_line_dynarr_usage (mir->desired_display_lines, &stats->u);
 #ifdef HAVE_SCROLLBARS
-  {
-    struct device *d = XDEVICE (FRAME_DEVICE (mir->frame));
-
-    stats->scrollbar +=
-      compute_scrollbar_instance_usage (d, mir->scrollbar_vertical_instance,
-					ovstats);
-    stats->scrollbar +=
-      compute_scrollbar_instance_usage (d, mir->scrollbar_horizontal_instance,
-					ovstats);
-  }
+  stats->scrollbar =
+    compute_all_scrollbar_instance_usage (mir->scrollbar_vertical_instance) +
+    compute_all_scrollbar_instance_usage (mir->scrollbar_horizontal_instance);
 #endif /* HAVE_SCROLLBARS */
-  stats->other_redisplay +=
-    compute_display_line_dynarr_usage (mir->current_display_lines, ovstats);
-  stats->other_redisplay +=
-    compute_display_line_dynarr_usage (mir->desired_display_lines, ovstats);
+}
+
+
+static void
+window_mirror_memory_usage (Lisp_Object window_mirror,
+			    struct generic_usage_stats *gustats)
+{
+  struct window_mirror_stats *stats = (struct window_mirror_stats *) gustats;
+
+  compute_window_mirror_usage (XWINDOW_MIRROR (window_mirror), stats);
 }
 
 static void
 compute_window_usage (struct window *w, struct window_stats *stats,
-		      struct overhead_stats *ovstats)
+		      struct usage_stats *ustats)
 {
-  xzero (*stats);
-  stats->other += LISPOBJ_STORAGE_SIZE (w, sizeof (*w), ovstats);
-  stats->face += compute_face_cachel_usage (w->face_cachels, ovstats);
-  stats->glyph += compute_glyph_cachel_usage (w->glyph_cachels, ovstats);
-  stats->line_start +=
-    compute_line_start_cache_dynarr_usage (w->line_start_cache, ovstats);
-  compute_window_mirror_usage (find_window_mirror (w), stats, ovstats);
+  stats->line_start =
+    compute_line_start_cache_dynarr_usage (w->line_start_cache, ustats);
+  stats->face = compute_face_cachel_usage (w->face_cachels,
+					   IF_OLD_GC (ustats));
+  stats->glyph = compute_glyph_cachel_usage (w->glyph_cachels,
+					     IF_OLD_GC (ustats));
+  {
+    struct window_mirror *wm;
+
+    wm = find_window_mirror_maybe (w);
+    if (wm)
+      {
+	struct generic_usage_stats gustats;
+	struct window_mirror_stats *wmstats;
+	Bytecount total;
+	total = lisp_object_memory_usage_full (wrap_window_mirror (wm),
+					       NULL, NULL, NULL, &gustats);
+	wmstats = (struct window_mirror_stats *) &gustats;
+	stats->redisplay_structs = wmstats->redisplay_structs;
+	total -= stats->redisplay_structs;
+#ifdef HAVE_SCROLLBARS
+	stats->scrollbar = wmstats->scrollbar;
+	total -= stats->scrollbar;
+#endif
+	stats->window_mirror = total;
+      }
+  }
 }
 
-DEFUN ("window-memory-usage", Fwindow_memory_usage, 1, 1, 0, /*
-Return stats about the memory usage of window WINDOW.
-The values returned are in the form of an alist of usage types and byte
-counts.  The byte counts attempt to encompass all the memory used
-by the window (separate from the memory logically associated with a
-buffer or frame), including internal structures and any malloc()
-overhead associated with them.  In practice, the byte counts are
-underestimated because certain memory usage is very hard to determine
-\(e.g. the amount of memory used inside the Xt library or inside the
-X server) and because there is other stuff that might logically
-be associated with a window, buffer, or frame (e.g. window configurations,
-glyphs) but should not obviously be included in the usage counts.
-
-Multiple slices of the total memory usage may be returned, separated
-by a nil.  Each slice represents a particular view of the memory, a
-particular way of partitioning it into groups.  Within a slice, there
-is no overlap between the groups of memory, and each slice collectively
-represents all the memory concerned.
-*/
-       (window))
+static void
+window_memory_usage (Lisp_Object window, struct generic_usage_stats *gustats)
 {
-  struct window_stats stats;
-  struct overhead_stats ovstats;
-  Lisp_Object val = Qnil;
+  struct window_stats *stats = (struct window_stats *) gustats;
 
-  CHECK_WINDOW (window); /* dead windows should be allowed, no? */
-  xzero (ovstats);
-  compute_window_usage (XWINDOW (window), &stats, &ovstats);
-
-  val = acons (Qface_cache,          make_int (stats.face),              val);
-  val = acons (Qglyph_cache,         make_int (stats.glyph),             val);
-#ifdef HAVE_SCROLLBARS
-  val = acons (Qscrollbar_instances, make_int (stats.scrollbar),         val);
-#endif
-  val = acons (Qline_start_cache,    make_int (stats.line_start),        val);
-  val = acons (Qother_redisplay,     make_int (stats.other_redisplay),   val);
-  val = acons (Qother,               make_int (stats.other),             val);
-  val = Fcons (Qnil, val);
-  val = acons (Qactually_requested,  make_int (ovstats.was_requested),   val);
-  val = acons (Qmalloc_overhead,     make_int (ovstats.malloc_overhead), val);
-  val = acons (Qdynarr_overhead,     make_int (ovstats.dynarr_overhead), val);
-
-  return Fnreverse (val);
+  compute_window_usage (XWINDOW (window), stats, &stats->u);
 }
 
 #endif /* MEMORY_USAGE_STATS */
+
+
 
 /* Mark all subwindows of a window as deleted.  The argument
    W is actually the subwindow tree of the window in question. */
@@ -5418,7 +5415,7 @@ debug_print_window (Lisp_Object window, int level)
     if (!NILP (buffer) && BUFFERP (buffer))
       stderr_out (" on %s", XSTRING_DATA (XBUFFER (buffer)->name));
   }
-  stderr_out (" 0x%x>", XWINDOW (window)->header.uid);
+  stderr_out (" 0x%x>", LISP_OBJECT_UID (window));
 
   while (!NILP (child))
     {
@@ -5442,15 +5439,24 @@ debug_print_windows (struct frame *f)
 /************************************************************************/
 
 void
+window_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (window, memory_usage);
+  OBJECT_HAS_METHOD (window_mirror, memory_usage);
+#endif
+}
+
+void
 syms_of_window (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (window);
-  INIT_LRECORD_IMPLEMENTATION (window_mirror);
+  INIT_LISP_OBJECT (window);
+  INIT_LISP_OBJECT (window_mirror);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (face_cachel);
-  INIT_LRECORD_IMPLEMENTATION (face_cachel_dynarr);
-  INIT_LRECORD_IMPLEMENTATION (glyph_cachel);
-  INIT_LRECORD_IMPLEMENTATION (glyph_cachel_dynarr);
+  INIT_LISP_OBJECT (face_cachel);
+  INIT_LISP_OBJECT (face_cachel_dynarr);
+  INIT_LISP_OBJECT (glyph_cachel);
+  INIT_LISP_OBJECT (glyph_cachel_dynarr);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qwindowp);
@@ -5464,8 +5470,7 @@ syms_of_window (void)
 #ifdef HAVE_SCROLLBARS
   DEFSYMBOL (Qscrollbar_instances);
 #endif
-  DEFSYMBOL (Qother_redisplay);
-  /* Qother in general.c */
+  DEFSYMBOL (Qredisplay_structs);
 #endif
 
   DEFSYMBOL (Qtruncate_partial_width_windows);
@@ -5543,9 +5548,6 @@ syms_of_window (void)
   DEFSUBR (Fscroll_other_window);
   DEFSUBR (Fcenter_to_window_line);
   DEFSUBR (Fmove_to_window_line);
-#ifdef MEMORY_USAGE_STATS
-  DEFSUBR (Fwindow_memory_usage);
-#endif
   DEFSUBR (Fcurrent_pixel_column);
   DEFSUBR (Fcurrent_pixel_row);
 }
@@ -5561,6 +5563,34 @@ reinit_vars_of_window (void)
 void
 vars_of_window (void)
 {
+#ifdef MEMORY_USAGE_STATS
+  Lisp_Object l;
+
+  l = listu (Qline_start_cache,
+#ifdef NEW_GC
+	     Qt,
+#endif
+	     Qface_cache, Qglyph_cache,
+#ifndef NEW_GC
+	     Qt,
+#endif
+	     Qredisplay_structs,
+#ifdef HAVE_SCROLLBARS
+	     Qscrollbar_instances,
+#endif
+	     intern ("window-mirror"),
+	     Qunbound);
+
+  OBJECT_HAS_PROPERTY (window, memusage_stats_list, l);
+
+  l = listu (Qredisplay_structs,
+#ifdef HAVE_SCROLLBARS
+	     Qt, Qscrollbar_instances,
+#endif
+	     Qunbound);
+  OBJECT_HAS_PROPERTY (window_mirror, memusage_stats_list, l);
+#endif /* MEMORY_USAGE_STATS */
+
   DEFVAR_BOOL ("scroll-on-clipped-lines", &scroll_on_clipped_lines /*
 *Non-nil means to scroll if point lands on a line which is clipped.
 */ );

@@ -1,3 +1,2044 @@
+2010-03-28  Ben Wing  <ben@xemacs.org>
+
+	* window.c (find_window_mirror_internal):
+	Stop looking if no window mirror, and return 0.
+	
+	* window.c (window_display_lines):
+	* window.c (window_display_buffer):
+	* window.c (set_window_display_buffer):
+	Don't need to update window mirror before calling find_window_mirror
+	because does the updating automatically.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (struct):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (lisp_object_memory_usage_full):
+	* alloc.c (compute_memusage_stats_length):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	Add fields to the `lrecord_implementation' structure to list an
+	offset into the array of extra statistics in a
+	`struct generic_usage_stats' and a length, listing the first slice
+	of ancillary Lisp-object memory.  Compute automatically in
+	compute_memusage_stats_length().  Use to add an entry
+	`FOO-lisp-ancillary-storage' for object type FOO.
+
+	Don't crash when an int or char is given to object-memory-usage,
+	signal an error instead.
+
+	Add functions lisp_object_memory_usage_full() and
+	lisp_object_memory_usage() to compute the total memory usage of an
+	object (sum of object, non-Lisp attached, and Lisp ancillary
+	memory).
+	
+	* array.c:
+	* array.c (gap_array_memory_usage):
+	* array.h:
+	Add function to return memory usage of a gap array.
+	
+	* buffer.c (struct buffer_stats):
+	* buffer.c (compute_buffer_usage):
+	* buffer.c (vars_of_buffer):
+	* extents.c (compute_buffer_extent_usage):
+	* marker.c:
+	* marker.c (compute_buffer_marker_usage):
+	* extents.h:
+	* lisp.h:
+	Remove `struct usage_stats' arg from compute_buffer_marker_usage()
+	and compute_buffer_extent_usage() -- these are ancillary Lisp
+	objects and don't get accumulated into `struct usage_stats';
+	change the value of `memusage_stats_list' so that `markers' and
+	`extents' memory is in Lisp-ancillary, where it belongs.
+
+	In compute_buffer_marker_usage(), use lisp_object_memory_usage()
+	rather than lisp_object_storage_size().
+	
+	* casetab.c:
+	* casetab.c (case_table_memory_usage):
+	* casetab.c (vars_of_casetab):
+	* emacs.c (main_1):
+	Add memory usage stats for case tables.
+	
+	* lisp.h:
+	Add comment explaining the `struct generic_usage_stats' more,
+	as well as the new fields in lrecord_implementation.
+
+	* console-impl.h:
+	* console-impl.h (struct console_methods):
+	* scrollbar-gtk.c:
+	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage):
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage):
+	* scrollbar-x.c:
+	* scrollbar-x.c (x_compute_scrollbar_instance_usage):
+	* scrollbar.c:
+	* scrollbar.c (struct scrollbar_instance_stats):
+	* scrollbar.c (compute_all_scrollbar_instance_usage):
+	* scrollbar.c (scrollbar_instance_memory_usage):
+	* scrollbar.c (scrollbar_objects_create):
+	* scrollbar.c (vars_of_scrollbar):
+	* scrollbar.h:
+	* symsinit.h:
+	* window.c:
+	* window.c (find_window_mirror_maybe):
+	* window.c (struct window_mirror_stats):
+	* window.c (compute_window_mirror_usage):
+	* window.c (window_mirror_memory_usage):
+	* window.c (compute_window_usage):
+	* window.c (window_objects_create):
+	* window.c (syms_of_window):
+	* window.c (vars_of_window):
+	Redo memory-usage associated with windows, window mirrors, and
+	scrollbar instances.  Should fix crash in find_window_mirror,
+	among other things.  Properly assign memo ry to object memory,
+	non-Lisp extra memory, and Lisp ancillary memory.  For example,
+	redisplay structures are non-Lisp memory hanging off a window
+	mirror, not a window; make it an ancillary Lisp-object field.
+	Window mirrors and scrollbar instances have their own statistics,
+	among other things.
+	 
+2010-03-24  Ben Wing  <ben@xemacs.org>
+
+	* array.h:
+	* array.h (XD_LISP_DYNARR_DESC):
+	* dumper.c (pdump_register_sub):
+	* dumper.c (pdump_store_new_pointer_offsets):
+	* dumper.c (pdump_reloc_one_mc):
+	* elhash.c:
+	* gc.c  (lispdesc_one_description_line_size):
+	* gc.c (kkcc_marking):
+	* lrecord.h:
+	* lrecord.h (IF_NEW_GC):
+	* lrecord.h (enum memory_description_type):
+	* lrecord.h (enum data_description_entry_flags):
+	* lrecord.h (struct opaque_convert_functions):
+	Rename XD_LISP_OBJECT_BLOCK_PTR to XD_INLINE_LISP_OBJECT_BLOCK_PTR
+	and document it in lrecord.h.
+
+	* data.c:
+	* data.c (finish_marking_weak_lists):
+	* data.c (continue_marking_ephemerons):
+	* data.c (finish_marking_ephemerons):
+	* elhash.c (MARK_OBJ):
+	* gc.c:
+	* gc.c (lispdesc_indirect_count_1):
+	* gc.c (struct):
+	* gc.c (kkcc_bt_push):
+	* gc.c (kkcc_gc_stack_push):
+	* gc.c (kkcc_gc_stack_push_lisp_object):
+	* gc.c (kkcc_gc_stack_repush_dirty_object):
+	* gc.c (KKCC_DO_CHECK_FREE):
+	* gc.c (mark_object_maybe_checking_free):
+	* gc.c (mark_struct_contents):
+	* gc.c (mark_lisp_object_block_contents):
+	* gc.c (register_for_finalization):
+	* gc.c (mark_object):
+	* gc.h:
+	* lisp.h:
+	* profile.c:
+	* profile.c (mark_profiling_info_maphash):
+	Clean up KKCC code related to DEBUG_XEMACS.  Rename
+	kkcc_backtrace() to kkcc_backtrace_1() and add two params: a
+	`size' arg to control how many stack elements to print and a
+	`detailed' arg to control whether Lisp objects are printed using
+	`debug_print()'.  Create front-ends to kkcc_backtrace_1() --
+	kkcc_detailed_backtrace(), kkcc_short_backtrace(),
+	kkcc_detailed_backtrace_full(), kkcc_short_backtrace_full(), as
+	well as shortened versions kbt(), kbts(), kbtf(), kbtsf() -- to
+	call it with various parameter values.  Add an `is_lisp' field to
+	the stack and backtrace structures and use it to keep track of
+	whether an object pushed onto the stack is a Lisp object or a
+	non-Lisp structure; in kkcc_backtrace_1(), don't try to print a
+	non-Lisp structure as a Lisp object.
+	
+	* elhash.c:
+	* extents.c:
+	* file-coding.c:
+	* lrecord.h:
+	* lrecord.h (IF_NEW_GC):
+	* marker.c:
+	* marker.c (Fmarker_buffer):
+	* mule-coding.c:
+	* number.c:
+	* rangetab.c:
+	* specifier.c:
+	New macros IF_OLD_GC(), IF_NEW_GC() to simplify declaration of
+	Lisp objects when a finalizer may exist in one but not the other.
+	Use them appropriately.
+
+	* extents.c (finalize_extent_info):
+	Don't zero out data->soe and data->extents before trying to free,
+	else we get memory leaks.
+	
+	* lrecord.h (enum lrecord_type):
+	Make the first lrecord type have value 1 not 0 so that 0 remains
+	without implementation and attempts to interpret zeroed memory
+	as a Lisp object will be more obvious.
+
+	* array.c (Dynarr_free):
+	* device-msw.c (msprinter_delete_device):
+	* device-tty.c (free_tty_device_struct):
+	* device-tty.c (tty_delete_device):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dialog-x.c:
+	* emacs.c (free_argc_argv):
+	* emodules.c (attempt_module_delete):
+	* file-coding.c (chain_finalize_coding_stream_1):
+	* file-coding.c (chain_finalize_coding_stream):
+	* glyphs-eimage.c:
+	* glyphs-eimage.c (jpeg_instantiate_unwind):
+	* glyphs-eimage.c (gif_instantiate_unwind):
+	* glyphs-eimage.c (png_instantiate_unwind):
+	* glyphs-eimage.c (tiff_instantiate_unwind):
+	* imgproc.c:
+	* imgproc.c (build_EImage_quantable):
+	* insdel.c (uninit_buffer_text):
+	* mule-coding.c (iso2022_finalize_detection_state):
+	* objects-tty.c (tty_finalize_color_instance):
+	* objects-tty.c (tty_finalize_font_instance):
+	* objects-tty.c (tty_font_list):
+	* process.c:
+	* process.c (finalize_process):
+	* redisplay.c (add_propagation_runes):
+	* scrollbar-gtk.c:
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance):
+	* scrollbar-gtk.c (gtk_release_scrollbar_instance):
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_free_scrollbar_instance):
+	* scrollbar-msw.c (unshow_that_mofo):
+	* scrollbar-x.c (x_free_scrollbar_instance):
+	* scrollbar-x.c (x_release_scrollbar_instance):
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* syntax.c:
+	* syntax.c (uninit_buffer_syntax_cache):
+	* text.h (eifree):
+	If possible, whenever we call xfree() on a field in a structure,
+	set the field to 0 afterwards.  A lot of code is written so that
+	it checks the value being freed to see if it is non-zero before
+	freeing it -- doing this and setting the value to 0 afterwards
+	ensures (a) we won't try to free twice if the cleanup code is
+	called twice; (b) if the object itself stays around, KKCC won't
+	crash when attempting to mark the freed field.
+
+	* rangetab.c:
+	Add a finalization method when not NEW_GC to avoid memory leaks.
+	(#### We still get memory leaks when NEW_GC; need to convert gap
+	array to Lisp object).
+
+2010-03-22  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (objs):
+	* array.c:
+	* array.c (gap_array_adjust_markers):
+	* array.c (gap_array_move_gap):
+	* array.c (gap_array_make_gap):
+	* array.c (gap_array_insert_els):
+	* array.c (gap_array_delete_els):
+	* array.c (gap_array_make_marker):
+	* array.c (gap_array_delete_marker):
+	* array.c (gap_array_delete_all_markers):
+	* array.c (gap_array_clone):
+	* array.h:
+	* depend:
+	* emacs.c (main_1):
+	* extents.c:
+	* extents.c (EXTENT_GAP_ARRAY_AT):
+	* extents.c (extent_list_num_els):
+	* extents.c (extent_list_locate):
+	* extents.c (extent_list_at):
+	* extents.c (extent_list_delete_all):
+	* extents.c (allocate_extent_list):
+	* extents.c (syms_of_extents):
+	* extents.h:
+	* extents.h (XEXTENT_LIST_MARKER):
+	* lisp.h:
+	* rangetab.c:
+	* rangetab.c (mark_range_table):
+	* rangetab.c (print_range_table):
+	* rangetab.c (range_table_equal):
+	* rangetab.c (range_table_hash):
+	* rangetab.c (verify_range_table):
+	* rangetab.c (get_range_table_pos):
+	* rangetab.c (Fmake_range_table):
+	* rangetab.c (Fcopy_range_table):
+	* rangetab.c (Fget_range_table):
+	* rangetab.c (put_range_table):
+	* rangetab.c (Fclear_range_table):
+	* rangetab.c (Fmap_range_table):
+	* rangetab.c (unified_range_table_bytes_needed):
+	* rangetab.c (unified_range_table_copy_data):
+	* rangetab.c (unified_range_table_lookup):
+	* rangetab.h:
+	* rangetab.h (struct range_table_entry):
+	* rangetab.h (struct Lisp_Range_Table):
+	* rangetab.h (rangetab_gap_array_at):
+	* symsinit.h:
+	Rename dynarr.c to array.c.  Move gap array from extents.c to array.c.
+	Extract dynarr, gap array and stack-like malloc into new file array.h.
+	Rename GAP_ARRAY_NUM_ELS -> gap_array_length().  Add gap_array_at(),
+	gap_array_atp().
+
+	Rewrite range table code to use gap arrays.  Make put_range_table()
+	smarter so that its operation is O(log n) for adding a localized
+	range.
+
+	* gc.c (lispdesc_block_size_1):
+	Don't ABORT() when two elements are located at the same place.
+	This will happen with a size-0 gap array -- both parts of the array
+	(before and after gap) are in the same place.
+
+2010-03-21  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (assert_proper_sizing):
+	* alloc.c (c_readonly):
+	* alloc.c (malloced_storage_size):
+	* alloc.c (fixed_type_block_overhead):
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (inc_lrecord_stats):
+	* alloc.c (dec_lrecord_stats):
+	* alloc.c (pluralize_word):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (compute_memusage_stats_length):
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (Fgarbage_collect):
+	* mc-alloc.c:
+	* mc-alloc.c (mc_alloced_storage_size):
+	* mc-alloc.h:
+	No functionality change here.  Collect the allocations-statistics
+	code that was scattered throughout alloc.c into one place.  Add
+	remaining section headings so that all sections have headings
+	clearly identifying the start of the section and its purpose.
+	Expose mc_alloced_storage_size() even when not MEMORY_USAGE_STATS;
+	this fixes build problems and is related to the export of
+	lisp_object_storage_size() and malloced_storage_size() when
+	non-MEMORY_USAGE_STATS in the previous change set.
+
+2010-03-22  Vin Shelton  <acs@xemacs.org>
+
+	* window.c (vars_of_window): Move HAVE_SCROLLBARS test so the code
+	can compile under Visual Studio 6.
+
+2010-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (tick_lrecord_stats):
+	Fix the union build after Ben's last change, don't assume that a
+	Lisp_Object will fit into a Bytecount.
+
+2010-03-20  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (init_lrecord_stats):
+	* alloc.c (free_normal_lisp_object):
+	* alloc.c (struct):
+	* alloc.c (clear_lrecord_stats):
+	* alloc.c (tick_lrecord_stats):
+	* alloc.c (COUNT_FROB_BLOCK_USAGE):
+	* alloc.c (COPY_INTO_LRECORD_STATS):
+	* alloc.c (sweep_strings):
+	* alloc.c (UNMARK_string):
+	* alloc.c (gc_sweep_1):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (object_dead_p):
+	* alloc.c (fixed_type_block_overhead):
+	* alloc.c (lisp_object_storage_size):
+	* emacs.c (main_1):
+	* lisp.h:
+	* lrecord.h:
+	Export lisp_object_storage_size() and malloced_storage_size() even
+	when not MEMORY_USAGE_STATS, to get the non-MEMORY_USAGE_STATS
+	build to compile.
+
+	Don't export fixed_type_block_overhead() any more.
+
+	Some code cleanup, rearrangement, add some section headers.
+
+	Clean up various bugs especially involving computation of overhead
+	and double-counting certain usage in total_gc_usage.  Add
+	statistics computing the overhead used by all types.  Don't add a
+	special entry for string headers in the object-memory-usage-stats
+	because it's already present as just "string".  But do count the
+	overhead used by long strings.  Don't try to call the
+	memory_usage() methods when NEW_GC because there's nowhere obvious
+	in the sweep stage to make the calls.
+	
+	* marker.c (compute_buffer_marker_usage):
+	Just use lisp_object_storage_size() rather than trying to
+	reimplement it.
+
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (struct):
+	* alloc.c (tick_lrecord_stats):
+	* alloc.c (gc_sweep_1):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (compute_memusage_stats_length):
+	Call new memory-usage mechanism at sweep time to compute extra
+	memory utilization for all objects.  Add up the values element-by-
+	element to get an aggregrate set of statistics, where each is the
+	sum of the values of a single statistic across different objects
+	of the same type.  At end of sweep time, call
+	finish_object_memory_usage_stats() to add up all the aggreggrate
+	stats that are related to non-Lisp memory storage to compute
+	a single value, and add it to the list of values returned by
+	`garbage-collect' and `object-memory-usage-stats'.
+	
+	* buffer.c (compute_buffer_text_usage):
+	Don't crash on buffers without text (killed buffers?) and don't
+	double-count indirect buffers.
+	
+	* elhash.c:
+	* elhash.c (hash_table_objects_create):
+	* elhash.c (vars_of_elhash):
+	* symsinit.h:
+	Add memory-usage method to count the size of `hentries'.
+	
+	* emacs.c (main_1):
+	Call new functions in elhash.c, frame.c at init.
+	
+	* frame.c:
+	* frame.c (compute_frame_usage):
+	* frame.c (frame_memory_usage):
+	* frame.c (frame_objects_create):
+	* symsinit.h:
+	Add memory-usage method to count gutter display structures,
+	subwindow exposures.
+	
+	* gc.c (gc_finish):
+	* lisp.h:
+	Declare finish_object_memory_usage_stats(), call it in gc_finish().
+	
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (INIT_MEMORY_USAGE_STATS):
+	New value in implementation struct to track number of non-Lisp-memory
+	statistics.  Computed in alloc.c.
+	
+
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (listu):
+	* alloc.c (listn):
+	* alloc.c (Fobject_memory_usage_stats):
+	* alloc.c (compute_memusage_stats_length):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (Ftotal_object_memory_usage):
+	* alloc.c (malloced_storage_size):
+	* alloc.c (common_init_alloc_early):
+	* alloc.c (reinit_alloc_objects_early):
+	* alloc.c (reinit_alloc_early):
+	* alloc.c (init_alloc_once_early):
+	* alloc.c (syms_of_alloc):
+	* alloc.c (reinit_vars_of_alloc):
+	* buffer.c:
+	* buffer.c (struct buffer_stats):
+	* buffer.c (compute_buffer_text_usage):
+	* buffer.c (compute_buffer_usage):
+	* buffer.c (buffer_memory_usage):
+	* buffer.c (buffer_objects_create):
+	* buffer.c (syms_of_buffer):
+	* buffer.c (vars_of_buffer):
+	* console-impl.h (struct console_methods):
+	* dynarr.c (Dynarr_memory_usage):
+	* emacs.c (main_1):
+	* events.c (clear_event_resource):
+	* extents.c:
+	* extents.c (compute_buffer_extent_usage):
+	* extents.c (extent_objects_create):
+	* extents.h:
+	* faces.c:
+	* faces.c (compute_face_cachel_usage):
+	* faces.c (face_objects_create):
+	* faces.h:
+	* general-slots.h:
+	* glyphs.c:
+	* glyphs.c (compute_glyph_cachel_usage):
+	* glyphs.c (glyph_objects_create):
+	* glyphs.h:
+	* lisp.h:
+	* lisp.h (struct usage_stats):
+	* lrecord.h:
+	* lrecord.h (enum lrecord_type):
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE):
+	* lrecord.h (DEFINE_DUMPABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (MAKE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (MAKE_MODULE_LISP_OBJECT):
+	* lrecord.h (INIT_LISP_OBJECT):
+	* lrecord.h (INIT_MODULE_LISP_OBJECT):
+	* lrecord.h (UNDEF_LISP_OBJECT):
+	* lrecord.h (UNDEF_MODULE_LISP_OBJECT):
+	* lrecord.h (DECLARE_LISP_OBJECT):
+	* lrecord.h (DECLARE_MODULE_API_LISP_OBJECT):
+	* lrecord.h (DECLARE_MODULE_LISP_OBJECT):
+	* lstream.c:
+	* lstream.c (syms_of_lstream):
+	* lstream.c (vars_of_lstream):
+	* marker.c:
+	* marker.c (compute_buffer_marker_usage):
+	* mc-alloc.c (mc_alloced_storage_size):
+	* mc-alloc.h:
+	* mule-charset.c:
+	* mule-charset.c (struct charset_stats):
+	* mule-charset.c (compute_charset_usage):
+	* mule-charset.c (charset_memory_usage):
+	* mule-charset.c (mule_charset_objects_create):
+	* mule-charset.c (syms_of_mule_charset):
+	* mule-charset.c (vars_of_mule_charset):
+	* redisplay.c:
+	* redisplay.c (compute_rune_dynarr_usage):
+	* redisplay.c (compute_display_block_dynarr_usage):
+	* redisplay.c (compute_glyph_block_dynarr_usage):
+	* redisplay.c (compute_display_line_dynarr_usage):
+	* redisplay.c (compute_line_start_cache_dynarr_usage):
+	* redisplay.h:
+	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage):
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage):
+	* scrollbar-x.c (x_compute_scrollbar_instance_usage):
+	* scrollbar.c (compute_scrollbar_instance_usage):
+	* scrollbar.h:
+	* symbols.c:
+	* symbols.c (reinit_symbol_objects_early):
+	* symbols.c (init_symbols_once_early):
+	* symbols.c (reinit_symbols_early):
+	* symbols.c (defsymbol_massage_name_1):
+	* symsinit.h:
+	* ui-gtk.c:
+	* ui-gtk.c (emacs_gtk_object_getprop):
+	* ui-gtk.c (emacs_gtk_object_putprop):
+	* ui-gtk.c (ui_gtk_objects_create):
+	* unicode.c (compute_from_unicode_table_size_1):
+	* unicode.c (compute_to_unicode_table_size_1):
+	* unicode.c (compute_from_unicode_table_size):
+	* unicode.c (compute_to_unicode_table_size):
+	* window.c:
+	* window.c (struct window_stats):
+	* window.c (compute_window_mirror_usage):
+	* window.c (compute_window_usage):
+	* window.c (window_memory_usage):
+	* window.c (window_objects_create):
+	* window.c (syms_of_window):
+	* window.c (vars_of_window):
+	* window.h:
+	Redo memory-usage mechanism, make it general; add way of dynamically
+	initializing Lisp object types -- OBJECT_HAS_METHOD(), similar to
+	CONSOLE_HAS_METHOD().
+
+	(1) Create OBJECT_HAS_METHOD(), OBJECT_HAS_PROPERTY() etc. for
+	specifying that a Lisp object type has a particular method or
+	property.  Call such methods with OBJECT_METH, MAYBE_OBJECT_METH,
+	OBJECT_METH_OR_GIVEN; retrieve properties with OBJECT_PROPERTY.
+	Methods that formerly required a DEFINE_*GENERAL_LISP_OBJECT() to
+	specify them (getprop, putprop, remprop, plist, disksave) now
+	instead use the dynamic-method mechanism.  The main benefit of
+	this is that new methods or properties can be added without
+	requiring that the declaration statements of all existing methods
+	be modified.  We have to make the `struct lrecord_implementation'
+	non-const, but I don't think this should have any effect on speed --
+	the only possible method that's really speed-critical is the
+	mark method, and we already extract those out into a separate
+	(non-const) array for increased cache locality.
+
+	Object methods need to be reinitialized after pdump, so we put
+	them in separate functions such as face_objects_create(),
+	extent_objects_create() and call them appropriately from emacs.c
+	The only current object property (`memusage_stats_list') that
+	objects can specify is a Lisp object and gets staticpro()ed so it
+	only needs to be set during dump time, but because it references
+	symbols that might not exist in a syms_of_() function, we
+	initialize it in vars_of_().  There is also an object property
+	(`num_extra_memusage_stats') that is automatically initialized based
+	on `memusage_stats_list'; we do that in reinit_vars_of_alloc(),
+	which is called after all vars_of_() functions are called.
+
+	`disksaver' method was renamed `disksave' to correspond with the
+	name normally given to the function (e.g. disksave_lstream()).
+
+	(2) Generalize the memory-usage mechanism in `buffer-memory-usage',
+	`window-memory-usage', `charset-memory-usage' into an object-type-
+	specific mechanism called by a single function
+	`object-memory-usage'.  (Former function `object-memory-usage'
+	renamed to `total-object-memory-usage').  Generalize the mechanism
+	of different "slices" so that we can have different "classes" of
+	memory described and different "slices" onto each class; `t'
+	separates classes, `nil' separates slices.  Currently we have
+	three classes defined: the memory of an object itself,
+	non-Lisp-object memory associated with the object (e.g. arrays or
+	dynarrs stored as fields in the object), and Lisp-object memory
+	associated with the object (other internal Lisp objects stored in
+	the object).  This isn't completely finished yet and we might need
+	to further separate the "other internal Lisp objects" class into
+	two classes.
+
+	The memory-usage mechanism uses a `struct usage_stats' (renamed
+	from `struct overhead_stats') to describe a malloc-view onto a set
+	of allocated memory (listing how much was requested and various
+	types of overhead) and a more general `struct generic_usage_stats'
+	(with a `struct usage_stats' in it) to hold all statistics about
+	object memory.  `struct generic_usage_stats' contains an array of
+	32 Bytecounts, which are statistics of unspecified semantics.  The
+	intention is that individual types declare a corresponding struct
+	(e.g. `struct window_stats') with the same structure but with
+	specific fields in place of the array, corresponding to specific
+	statistics.  The number of such statistics is an object property
+	computed from the list of tags (Lisp symbols describing the
+	statistics) stored in `memusage_stats_list'.  The idea here is to
+	allow particular object types to customize the number and
+	semantics of the statistics where completely avoiding consing.
+	This doesn't matter so much yet, but the intention is to have the
+	memory usage of all objects computed at the end of GC, at the same
+	time as other statistics are currently computed.  The values for
+	all statistics for a single type would be added up to compute
+	aggregate values for all objects of a specific type.  To make this
+	efficient, we can't allow any memory allocation at all.
+
+	(3) Create some additional functions for creating lists that
+	specify the elements directly as args rather than indirectly through
+	an array: listn() (number of args given), listu() (list terminated
+	by Qunbound).
+
+	(4) Delete a bit of remaining unused C window_config stuff, also
+	unused lrecord_type_popup_data.
+	
+	
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* tests.c:
+	* tests.c (Ftest_data_format_conversion):
+	Need to GCPRO newly created objects or we'll eventually get
+	a crash due to occurrence of call2().
+
+2010-03-16  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (make_lcrecord_list):
+	* alloc.c (alloc_managed_lcrecord):
+	Fix compilation problems identified by Robert Delius Royar.
+	
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* extents.c (Fprevious_single_property_change):
+	* extents.c (Fnext_single_char_property_change):
+	* extents.c (Fprevious_single_char_property_change):
+	Fix see-also portion of documentation string.
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (c_readonly):
+	* alloc.c (deadbeef_memory):
+	* alloc.c (make_compiled_function):
+	* alloc.c (make_button_data):
+	* alloc.c (make_motion_data):
+	* alloc.c (make_process_data):
+	* alloc.c (make_timeout_data):
+	* alloc.c (make_magic_data):
+	* alloc.c (make_magic_eval_data):
+	* alloc.c (make_eval_data):
+	* alloc.c (make_misc_user_data):
+	* alloc.c (noseeum_make_marker):
+	* alloc.c (ADDITIONAL_FREE_string):
+	* alloc.c (common_init_alloc_early):
+	* alloc.c (init_alloc_once_early):
+	* bytecode.c (print_compiled_function):
+	* bytecode.c (mark_compiled_function):
+	* casetab.c:
+	* casetab.c (print_case_table):
+	* console.c:
+	* console.c (print_console):
+	* database.c (print_database):
+	* database.c (finalize_database):
+	* device-msw.c (sync_printer_with_devmode):
+	* device-msw.c (print_devmode):
+	* device-msw.c (finalize_devmode):
+	* device.c:
+	* device.c (print_device):
+	* elhash.c:
+	* elhash.c (print_hash_table):
+	* eval.c (print_multiple_value):
+	* eval.c (mark_multiple_value):
+	* events.c (deinitialize_event):
+	* events.c (print_event):
+	* events.c (event_equal):
+	* extents.c:
+	* extents.c (soe_dump):
+	* extents.c (soe_insert):
+	* extents.c (soe_delete):
+	* extents.c (soe_move):
+	* extents.c (extent_fragment_update):
+	* extents.c (print_extent_1):
+	* extents.c (print_extent):
+	* extents.c (vars_of_extents):
+	* frame.c:
+	* frame.c (print_frame):
+	* free-hook.c:
+	* free-hook.c (check_free):
+	* glyphs.c:
+	* glyphs.c (print_image_instance):
+	* glyphs.c (print_glyph):
+	* gui.c:
+	* gui.c (copy_gui_item):
+	* hash.c:
+	* hash.c (NULL_ENTRY):
+	* hash.c (KEYS_DIFFER_P):
+	* keymap.c (print_keymap):
+	* keymap.c (MARKED_SLOT):
+	* lisp.h:
+	* lrecord.h:
+	* lrecord.h (LISP_OBJECT_UID):
+	* lrecord.h (set_lheader_implementation):
+	* lrecord.h (struct old_lcrecord_header):
+	* lstream.c (print_lstream):
+	* lstream.c (finalize_lstream):
+	* marker.c (print_marker):
+	* marker.c (marker_equal):
+	* mc-alloc.c (visit_all_used_page_headers):
+	* mule-charset.c:
+	* mule-charset.c (print_charset):
+	* objects.c (print_color_instance):
+	* objects.c (print_font_instance):
+	* objects.c (finalize_font_instance):
+	* opaque.c (print_opaque):
+	* opaque.c (print_opaque_ptr):
+	* opaque.c (equal_opaque_ptr):
+	* print.c (internal_object_printer):
+	* print.c (enum printing_badness):
+	* rangetab.c (print_range_table):
+	* rangetab.c (range_table_equal):
+	* specifier.c (print_specifier):
+	* specifier.c (finalize_specifier):
+	* symbols.c:
+	* symbols.c (print_symbol_value_magic):
+	* tooltalk.c:
+	* tooltalk.c (print_tooltalk_message):
+	* tooltalk.c (print_tooltalk_pattern):
+	* window.c (print_window):
+	* window.c (debug_print_window):
+	(1) Make lrecord UID's have a separate UID space for each object.
+	Otherwise, with 20-bit UID's, we rapidly wrap around, especially
+	when common objects like conses and strings increment the UID value
+	for every object created. (Originally I tried making two UID spaces,
+	one for objects that always print readably and hence don't display
+	the UID, and one for other objects.  But certain objects like markers
+	for which a UID is displayed are still generated rapidly enough that
+	UID overflow is a serious issue.) This also has the advantage of
+	making UID values smaller, hence easier to remember -- their main
+	purpose is to make it easier to keep track of different objects of
+	the same type when debugging code.  Make sure we dump lrecord UID's
+	so that we don't have problems with pdumped and non-dumped objects
+	having the same UID.
+
+	(2) Display UID's consistently whenever an object (a) doesn't
+	consistently print readably (objects like cons and string, which
+	always print readably, can't display a UID), and (b) doesn't
+	otherwise have a unique property that makes objects of a
+	particular type distinguishable. (E.g. buffers didn't and still
+	don't print an ID, but the buffer name uniquely identifies the
+	buffer.) Some types, such as event, extent, compiled-function,
+	didn't always (or didn't ever) display an ID; others (such as
+	marker, extent, lstream, opaque, opaque-ptr, any object using
+	internal_object_printer()) used to display the actual machine
+	pointer instead.
+
+	(3) Rename NORMAL_LISP_OBJECT_UID to LISP_OBJECT_UID; make it work
+	over all Lisp objects and take a Lisp object, not a struct pointer.
+
+	(4) Some misc cleanups in alloc.c, elhash.c.
+
+	(5) Change code in events.c that "deinitializes" an event so that
+	it doesn't increment the event UID counter in the process.  Also
+	use deadbeef_memory() to overwrite memory instead of doing the same
+	with custom code.  In the process, make deadbeef_memory() in
+	alloc.c always available, and delete extraneous copy in mc-alloc.c.
+	Also capitalize all uses of 0xDEADBEEF.  Similarly in elhash.c
+	call deadbeef_memory().
+
+	(6) Resurrect "debug SOE" code in extents.c.  Make it conditional
+	on DEBUG_XEMACS and on a `debug-soe' variable, rather than on
+	SOE_DEBUG.  Make it output to stderr, not stdout.
+
+	(7) Delete some custom print methods that were identical to
+	external_object_printer().
+
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	* lisp.h (redo-symbols): Removed.
+	Put the Lisp variables and symbols where they belong, with other
+	stuff related to the file they're in.
+	
+	* event-Xt.c (THIS_IS_X):
+	* event-Xt.c (syms_of_event_Xt):
+	* event-Xt.c (reinit_vars_of_event_Xt):
+	* event-gtk.c:
+	* event-gtk.c (syms_of_event_gtk):
+	* event-gtk.c (reinit_vars_of_event_gtk):
+	* event-stream.c:
+	* event-stream.c (syms_of_event_stream):
+	* event-stream.c (reinit_vars_of_event_stream):
+	* events.c (reinit_vars_of_events):
+	* events.c (vars_of_events):
+	`sans-modifiers' was defsymbol'ed more than once.  Move it to
+	events-stream.c. `self-insert-command' was defsymbol'ed more than once.
+	Vevent_resource should be staticpro_nodump()ed as it's declared in
+	a reinit_*() method.
+	
+	* lread.c (vars_of_lread):
+	Vfile_domain wasn't staticpro'ed.
+	
+	* minibuf.c:
+	* minibuf.c (reinit_complex_vars_of_minibuf):
+	Vminibuffer_zero and Vecho_area_buffer weren't staticpro'ed.
+
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* redisplay-msw.c:
+	* redisplay-msw.c (mswindows_output_dibitmap_region):
+	* redisplay-msw.c (mswindows_output_pixmap):
+	* redisplay-msw.c (mswindows_clear_region):
+	Have a crack at implementing the `absolute' property for
+	background pixmaps.  It seems to work; however, things don't
+	work quite right in relation to window sizing/moving.  In particular,
+	ideally when you move the window the background should stay in place
+	but it doesn't; instead it moves, and when you hit C-l it gets
+	redrawn in the "proper" place.  When resizing you get some serious
+	jitter, apparently as first the image gets moved then redrawn in
+	the correct offset position.  #### Not sure how to fix this.
+
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (alloc_sized_lrecord_1):
+	* alloc.c (alloc_sized_lrecord_array):
+	* alloc.c (old_alloc_sized_lcrecord):
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (mark_lcrecord_list):
+	* alloc.c (alloc_managed_lcrecord):
+	* alloc.c (free_managed_lcrecord):
+	* alloc.c (tick_lcrecord_stats):
+	* alloc.c (sweep_lcrecords_1):
+	* buffer.c (print_buffer):
+	* buffer.c (DEFVAR_BUFFER_LOCAL_1):
+	* casetab.c:
+	* casetab.c (print_case_table):
+	* console.c (print_console):
+	* console.c (DEFVAR_CONSOLE_LOCAL_1):
+	* data.c (print_weak_list):
+	* data.c (print_weak_box):
+	* data.c (print_ephemeron):
+	* data.c (ephemeron_equal):
+	* database.c (print_database):
+	* database.c (finalize_database):
+	* device-msw.c (sync_printer_with_devmode):
+	* device-msw.c (print_devmode):
+	* device-msw.c (finalize_devmode):
+	* device.c:
+	* device.c (print_device):
+	* elhash.c:
+	* elhash.c (print_hash_table):
+	* eval.c (print_subr):
+	* eval.c (print_multiple_value):
+	* event-stream.c (event_stream_resignal_wakeup):
+	* events.c (clear_event_resource):
+	* events.c (zero_event):
+	* events.c (print_event):
+	* extents.c:
+	* extents.c (print_extent):
+	* file-coding.c (print_coding_system):
+	* font-mgr.c:
+	* font-mgr.c (Ffc_init):
+	* frame.c:
+	* frame.c (print_frame):
+	* gc.c:
+	* gc.c (GC_CHECK_NOT_FREE):
+	* glyphs.c:
+	* glyphs.c (print_image_instance):
+	* glyphs.c (print_glyph):
+	* gui.c (print_gui_item):
+	* gui.c (copy_gui_item):
+	* keymap.c (print_keymap):
+	* keymap.c (MARKED_SLOT):
+	* lisp.h:
+	* lisp.h (struct Lisp_String):
+	* lisp.h (DEFUN):
+	* lisp.h (DEFUN_NORETURN):
+	* lrecord.h:
+	* lrecord.h (NORMAL_LISP_OBJECT_UID):
+	* lrecord.h (struct lrecord_header):
+	* lrecord.h (set_lheader_implementation):
+	* lrecord.h (struct old_lcrecord_header):
+	* lrecord.h (struct free_lcrecord_header):
+	* marker.c (print_marker):
+	* mule-charset.c:
+	* mule-charset.c (print_charset):
+	* objects.c (print_color_instance):
+	* objects.c (print_font_instance):
+	* objects.c (finalize_font_instance):
+	* print.c (print_cons):
+	* print.c (printing_unreadable_object_fmt):
+	* print.c (printing_unreadable_lisp_object):
+	* print.c (external_object_printer):
+	* print.c (internal_object_printer):
+	* print.c (debug_p4):
+	* print.c (ext_print_begin):
+	* process.c (print_process):
+	* rangetab.c (print_range_table):
+	* rangetab.c (range_table_equal):
+	* scrollbar.c (free_scrollbar_instance):
+	* specifier.c (print_specifier):
+	* specifier.c (finalize_specifier):
+	* symbols.c (guts_of_unbound_marker):
+	* symeval.h:
+	* symeval.h (DEFVAR_SYMVAL_FWD):
+	* tooltalk.c:
+	* tooltalk.c (print_tooltalk_message):
+	* tooltalk.c (print_tooltalk_pattern):
+	* ui-gtk.c (ffi_object_printer):
+	* ui-gtk.c (emacs_gtk_object_printer):
+	* ui-gtk.c (emacs_gtk_boxed_printer):
+	* window.c (print_window):
+	* window.c (free_window_mirror):
+	* window.c (debug_print_window):
+	* xemacs.def.in.in:
+	(1) printing_unreadable_object -> printing_unreadable_object_fmt.
+	(2) printing_unreadable_lcrecord -> printing_unreadable_lisp_object
+	    and fix up so it no longer requires an lcrecord.
+
+	These previous changes eliminate most of the remaining places where
+	the terms `lcrecord' and `lrecord' occurred outside of specialized
+	code.
+
+	(3) Fairly major change: Reduce the number of words in an lcrecord
+	from 3 to 2.  The third word consisted of a uid that duplicated the
+	lrecord uid, and a single free bit, which was moved into the lrecord
+	structure.  This reduces the size of the `uid' slot from 21 bits to
+	20 bits.  Arguably this isn't enough -- we could easily have more than
+	1,000,000 or so objects created in a session.  The answer is
+	   (a) It doesn't really matter if we overflow the uid field because
+	       it's only used for debugging, to identify an object uniquely
+	       (or pretty much so).
+	   (b) If we cared about it overflowing and wanted to reduce this,
+	       we could make it so that cons, string, float and certain other
+	       frob-block types that never print out the uid simply don't
+	       store a uid in them and don't increment the lrecord_uid_counter.
+
+	(4) In conjunction with (3), create new macro NORMAL_LISP_OBJECT_UID()
+	    and use it to abstract out the differences between NEWGC and old-GC
+	    in accessing the `uid' value from a "normal Lisp Object pointer".
+
+	(5) In events.c, use zero_nonsized_lisp_object() in place of custom-
+	    written equivalent.  In font-mgr.c use external_object_printer()
+	    in place of custom-written equivalents.
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* number.c (bignum_finalize):
+	* number.c (ratio_finalize):
+	* number.c (bigfloat_finalize):
+	Fix the finalizers to go with the new calling sequence.  Done
+	previously but somehow got lost.
+
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* frame.c (change_frame_size_1):
+	Add a comment about where FRAME_PIXWIDTH/FRAME_PIXHEIGHT is set.
+	
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* frame.c:
+	* frame.c (Fframe_pixel_height):
+	* frame.c (Fframe_displayable_pixel_height):
+	* frame.c (Fframe_pixel_width):
+	* frame.c (Fframe_displayable_pixel_width):
+	* frame.c (Fset_frame_pixel_height):
+	* frame.c (Fset_frame_displayable_pixel_height):
+	* frame.c (Fset_frame_pixel_width):
+	* frame.c (Fset_frame_displayable_pixel_width):
+	* frame.c (get_frame_char_size):
+	* frame.c (change_frame_size_1):
+	Make it so that `frame-pixel-height', `set-frame-pixel-height', etc.
+	use updated values for the displayable or total pixel size that
+	will reflect what will happen as of the next redisplay.  This
+	basically means using the character-cell height and converting
+	on-the-fly to pixel units.  In the process, make sure FRAME_CHARWIDTH/
+	FRAME_CHARHEIGHT are always correct and change
+	get_frame_char_size() to simply use them; the old logic in that
+	function was inlined into change_frame_size_1(), which is the only
+	place that needs the logic.
+
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* frame.c:
+	* frame.c (frame_live_p):
+	* frame.c (Fframep):
+	* frame.c (Fdisable_frame):
+	* frame.c (Fenable_frame):
+	* frame.c (Fraise_frame):
+	* frame.c (Fframe_name):
+	* frame.c (Fset_frame_height):
+	* frame.c (internal_set_frame_size):
+	* frame.c (adjust_frame_size):
+	Add documentation on the different types of units used to measure
+	frame size.
+
+	Add section headers to the various sections.
+	
+	Rearrange the location of some functions in the file to keep
+	related functions together.  This especially goes for frame-sizing
+	functions (internal_set_frame_size() and adjust_frame_size()),
+	which have been moved so that they form a group with
+	change_frame_size() and change_frame_size_1().
+
+	No functionality should change.
+
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (old_alloc_sized_lcrecord):
+	* alloc.c (very_old_free_lcrecord):
+	* alloc.c (copy_lisp_object):
+	* alloc.c (zero_sized_lisp_object):
+	* alloc.c (zero_nonsized_lisp_object):
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (free_normal_lisp_object):
+	* alloc.c (FREE_FIXED_TYPE_WHEN_NOT_IN_GC):
+	* alloc.c (ALLOC_FROB_BLOCK_LISP_OBJECT):
+	* alloc.c (Fcons):
+	* alloc.c (noseeum_cons):
+	* alloc.c (make_float):
+	* alloc.c (make_bignum):
+	* alloc.c (make_bignum_bg):
+	* alloc.c (make_ratio):
+	* alloc.c (make_ratio_bg):
+	* alloc.c (make_ratio_rt):
+	* alloc.c (make_bigfloat):
+	* alloc.c (make_bigfloat_bf):
+	* alloc.c (size_vector):
+	* alloc.c (make_compiled_function):
+	* alloc.c (Fmake_symbol):
+	* alloc.c (allocate_extent):
+	* alloc.c (allocate_event):
+	* alloc.c (make_key_data):
+	* alloc.c (make_button_data):
+	* alloc.c (make_motion_data):
+	* alloc.c (make_process_data):
+	* alloc.c (make_timeout_data):
+	* alloc.c (make_magic_data):
+	* alloc.c (make_magic_eval_data):
+	* alloc.c (make_eval_data):
+	* alloc.c (make_misc_user_data):
+	* alloc.c (Fmake_marker):
+	* alloc.c (noseeum_make_marker):
+	* alloc.c (size_string_direct_data):
+	* alloc.c (make_uninit_string):
+	* alloc.c (make_string_nocopy):
+	* alloc.c (mark_lcrecord_list):
+	* alloc.c (alloc_managed_lcrecord):
+	* alloc.c (free_managed_lcrecord):
+	* alloc.c (sweep_lcrecords_1):
+	* alloc.c (malloced_storage_size):
+	* buffer.c (allocate_buffer):
+	* buffer.c (compute_buffer_usage):
+	* buffer.c (DEFVAR_BUFFER_LOCAL_1):
+	* buffer.c (nuke_all_buffer_slots):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* buffer.h (struct buffer_text):
+	* buffer.h (struct buffer):
+	* bytecode.c:
+	* bytecode.c (make_compiled_function_args):
+	* bytecode.c (size_compiled_function_args):
+	* bytecode.h (struct compiled_function_args):
+	* casetab.c (allocate_case_table):
+	* casetab.h (struct Lisp_Case_Table):
+	* charset.h (struct Lisp_Charset):
+	* chartab.c (fill_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (make_char_table_entry):
+	* chartab.c (copy_char_table_entry):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (put_char_table):
+	* chartab.h (struct Lisp_Char_Table_Entry):
+	* chartab.h (struct Lisp_Char_Table):
+	* console-gtk-impl.h (struct gtk_device):
+	* console-gtk-impl.h (struct gtk_frame):
+	* console-impl.h (struct console):
+	* console-msw-impl.h (struct Lisp_Devmode):
+	* console-msw-impl.h (struct mswindows_device):
+	* console-msw-impl.h (struct msprinter_device):
+	* console-msw-impl.h (struct mswindows_frame):
+	* console-msw-impl.h (struct mswindows_dialog_id):
+	* console-stream-impl.h (struct stream_console):
+	* console-stream.c (stream_init_console):
+	* console-tty-impl.h (struct tty_console):
+	* console-tty-impl.h (struct tty_device):
+	* console-tty.c (allocate_tty_console_struct):
+	* console-x-impl.h (struct x_device):
+	* console-x-impl.h (struct x_frame):
+	* console.c (allocate_console):
+	* console.c (nuke_all_console_slots):
+	* console.c (DEFVAR_CONSOLE_LOCAL_1):
+	* console.c (common_init_complex_vars_of_console):
+	* data.c (make_weak_list):
+	* data.c (make_weak_box):
+	* data.c (make_ephemeron):
+	* database.c:
+	* database.c (struct Lisp_Database):
+	* database.c (allocate_database):
+	* database.c (finalize_database):
+	* device-gtk.c (allocate_gtk_device_struct):
+	* device-impl.h (struct device):
+	* device-msw.c:
+	* device-msw.c (mswindows_init_device):
+	* device-msw.c (msprinter_init_device):
+	* device-msw.c (finalize_devmode):
+	* device-msw.c (allocate_devmode):
+	* device-tty.c (allocate_tty_device_struct):
+	* device-x.c (allocate_x_device_struct):
+	* device.c:
+	* device.c (nuke_all_device_slots):
+	* device.c (allocate_device):
+	* dialog-msw.c (handle_question_dialog_box):
+	* elhash.c:
+	* elhash.c (struct Lisp_Hash_Table):
+	* elhash.c (finalize_hash_table):
+	* elhash.c (make_general_lisp_hash_table):
+	* elhash.c (Fcopy_hash_table):
+	* elhash.h (htentry):
+	* emacs.c (main_1):
+	* eval.c:
+	* eval.c (size_multiple_value):
+	* event-stream.c (finalize_command_builder):
+	* event-stream.c (allocate_command_builder):
+	* event-stream.c (free_command_builder):
+	* event-stream.c (event_stream_generate_wakeup):
+	* event-stream.c (event_stream_resignal_wakeup):
+	* event-stream.c (event_stream_disable_wakeup):
+	* event-stream.c (event_stream_wakeup_pending_p):
+	* events.h (struct Lisp_Timeout):
+	* events.h (struct command_builder):
+	* extents-impl.h:
+	* extents-impl.h (struct extent_auxiliary):
+	* extents-impl.h (struct extent_info):
+	* extents-impl.h (set_extent_no_chase_aux_field):
+	* extents-impl.h (set_extent_no_chase_normal_field):
+	* extents.c:
+	* extents.c (gap_array_marker):
+	* extents.c (gap_array):
+	* extents.c (extent_list_marker):
+	* extents.c (extent_list):
+	* extents.c (stack_of_extents):
+	* extents.c (gap_array_make_marker):
+	* extents.c (extent_list_make_marker):
+	* extents.c (allocate_extent_list):
+	* extents.c (SLOT):
+	* extents.c (mark_extent_auxiliary):
+	* extents.c (allocate_extent_auxiliary):
+	* extents.c (attach_extent_auxiliary):
+	* extents.c (size_gap_array):
+	* extents.c (finalize_extent_info):
+	* extents.c (allocate_extent_info):
+	* extents.c (uninit_buffer_extents):
+	* extents.c (allocate_soe):
+	* extents.c (copy_extent):
+	* extents.c (vars_of_extents):
+	* extents.h:
+	* faces.c (allocate_face):
+	* faces.h (struct Lisp_Face):
+	* faces.h (struct face_cachel):
+	* file-coding.c:
+	* file-coding.c (finalize_coding_system):
+	* file-coding.c (sizeof_coding_system):
+	* file-coding.c (Fcopy_coding_system):
+	* file-coding.h (struct Lisp_Coding_System):
+	* file-coding.h (MARKED_SLOT):
+	* fns.c (size_bit_vector):
+	* font-mgr.c:
+	* font-mgr.c (finalize_fc_pattern):
+	* font-mgr.c (print_fc_pattern):
+	* font-mgr.c (Ffc_pattern_p):
+	* font-mgr.c (Ffc_pattern_create):
+	* font-mgr.c (Ffc_name_parse):
+	* font-mgr.c (Ffc_name_unparse):
+	* font-mgr.c (Ffc_pattern_duplicate):
+	* font-mgr.c (Ffc_pattern_add):
+	* font-mgr.c (Ffc_pattern_del):
+	* font-mgr.c (Ffc_pattern_get):
+	* font-mgr.c (fc_config_create_using):
+	* font-mgr.c (fc_strlist_to_lisp_using):
+	* font-mgr.c (fontset_to_list):
+	* font-mgr.c (Ffc_config_p):
+	* font-mgr.c (Ffc_config_up_to_date):
+	* font-mgr.c (Ffc_config_build_fonts):
+	* font-mgr.c (Ffc_config_get_cache):
+	* font-mgr.c (Ffc_config_get_fonts):
+	* font-mgr.c (Ffc_config_set_current):
+	* font-mgr.c (Ffc_config_get_blanks):
+	* font-mgr.c (Ffc_config_get_rescan_interval):
+	* font-mgr.c (Ffc_config_set_rescan_interval):
+	* font-mgr.c (Ffc_config_app_font_add_file):
+	* font-mgr.c (Ffc_config_app_font_add_dir):
+	* font-mgr.c (Ffc_config_app_font_clear):
+	* font-mgr.c (size):
+	* font-mgr.c (Ffc_config_substitute):
+	* font-mgr.c (Ffc_font_render_prepare):
+	* font-mgr.c (Ffc_font_match):
+	* font-mgr.c (Ffc_font_sort):
+	* font-mgr.c (finalize_fc_config):
+	* font-mgr.c (print_fc_config):
+	* font-mgr.h:
+	* font-mgr.h (struct fc_pattern):
+	* font-mgr.h (XFC_PATTERN):
+	* font-mgr.h (struct fc_config):
+	* font-mgr.h (XFC_CONFIG):
+	* frame-gtk.c (allocate_gtk_frame_struct):
+	* frame-impl.h (struct frame):
+	* frame-msw.c (mswindows_init_frame_1):
+	* frame-x.c (allocate_x_frame_struct):
+	* frame.c (nuke_all_frame_slots):
+	* frame.c (allocate_frame_core):
+	* gc.c:
+	* gc.c (GC_CHECK_NOT_FREE):
+	* glyphs.c (finalize_image_instance):
+	* glyphs.c (allocate_image_instance):
+	* glyphs.c (Fcolorize_image_instance):
+	* glyphs.c (allocate_glyph):
+	* glyphs.c (unmap_subwindow_instance_cache_mapper):
+	* glyphs.c (register_ignored_expose):
+	* glyphs.h (struct Lisp_Image_Instance):
+	* glyphs.h (struct Lisp_Glyph):
+	* glyphs.h (struct glyph_cachel):
+	* glyphs.h (struct expose_ignore):
+	* gui.c (allocate_gui_item):
+	* gui.h (struct Lisp_Gui_Item):
+	* keymap.c (struct Lisp_Keymap):
+	* keymap.c (make_keymap):
+	* lisp.h:
+	* lisp.h (struct Lisp_String_Direct_Data):
+	* lisp.h (struct Lisp_String_Indirect_Data):
+	* lisp.h (struct Lisp_Vector):
+	* lisp.h (struct Lisp_Bit_Vector):
+	* lisp.h (DECLARE_INLINE_LISP_BIT_VECTOR):
+	* lisp.h (struct weak_box):
+	* lisp.h (struct ephemeron):
+	* lisp.h (struct weak_list):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER):
+	* lrecord.h (struct lcrecord_list):
+	* lstream.c (finalize_lstream):
+	* lstream.c (sizeof_lstream):
+	* lstream.c (Lstream_new):
+	* lstream.c (Lstream_delete):
+	* lstream.h (struct lstream):
+	* marker.c:
+	* marker.c (finalize_marker):
+	* marker.c (compute_buffer_marker_usage):
+	* mule-charset.c:
+	* mule-charset.c (make_charset):
+	* mule-charset.c (compute_charset_usage):
+	* objects-impl.h (struct Lisp_Color_Instance):
+	* objects-impl.h (struct Lisp_Font_Instance):
+	* objects-tty-impl.h (struct tty_color_instance_data):
+	* objects-tty-impl.h (struct tty_font_instance_data):
+	* objects-tty.c (tty_initialize_color_instance):
+	* objects-tty.c (tty_initialize_font_instance):
+	* objects.c (finalize_color_instance):
+	* objects.c (Fmake_color_instance):
+	* objects.c (finalize_font_instance):
+	* objects.c (Fmake_font_instance):
+	* objects.c (reinit_vars_of_objects):
+	* opaque.c:
+	* opaque.c (sizeof_opaque):
+	* opaque.c (make_opaque_ptr):
+	* opaque.c (free_opaque_ptr):
+	* opaque.h:
+	* opaque.h (Lisp_Opaque):
+	* opaque.h (Lisp_Opaque_Ptr):
+	* print.c (printing_unreadable_lcrecord):
+	* print.c (external_object_printer):
+	* print.c (debug_p4):
+	* process.c (finalize_process):
+	* process.c (make_process_internal):
+	* procimpl.h (struct Lisp_Process):
+	* rangetab.c (Fmake_range_table):
+	* rangetab.c (Fcopy_range_table):
+	* rangetab.h (struct Lisp_Range_Table):
+	* scrollbar.c:
+	* scrollbar.c (create_scrollbar_instance):
+	* scrollbar.c (compute_scrollbar_instance_usage):
+	* scrollbar.h (struct scrollbar_instance):
+	* specifier.c (finalize_specifier):
+	* specifier.c (sizeof_specifier):
+	* specifier.c (set_specifier_caching):
+	* specifier.h (struct Lisp_Specifier):
+	* specifier.h (struct specifier_caching):
+	* symeval.h:
+	* symeval.h (SYMBOL_VALUE_MAGIC_P):
+	* symeval.h (DEFVAR_SYMVAL_FWD):
+	* symsinit.h:
+	* syntax.c (init_buffer_syntax_cache):
+	* syntax.h (struct syntax_cache):
+	* toolbar.c:
+	* toolbar.c (allocate_toolbar_button):
+	* toolbar.c (update_toolbar_button):
+	* toolbar.h (struct toolbar_button):
+	* tooltalk.c (struct Lisp_Tooltalk_Message):
+	* tooltalk.c (make_tooltalk_message):
+	* tooltalk.c (struct Lisp_Tooltalk_Pattern):
+	* tooltalk.c (make_tooltalk_pattern):
+	* ui-gtk.c:
+	* ui-gtk.c (allocate_ffi_data):
+	* ui-gtk.c (emacs_gtk_object_finalizer):
+	* ui-gtk.c (allocate_emacs_gtk_object_data):
+	* ui-gtk.c (allocate_emacs_gtk_boxed_data):
+	* ui-gtk.h:
+	* window-impl.h (struct window):
+	* window-impl.h (struct window_mirror):
+	* window.c (finalize_window):
+	* window.c (allocate_window):
+	* window.c (new_window_mirror):
+	* window.c (mark_window_as_deleted):
+	* window.c (make_dummy_parent):
+	* window.c (compute_window_mirror_usage):
+	* window.c (compute_window_usage):
+
+	Overall point of this change and previous ones in this repository:
+
+	(1) Introduce new, clearer terminology: everything other than int
+	or char is a "record" object, which comes in two types: "normal
+	objects" and "frob-block objects".  Fix up all places that
+	referred to frob-block objects as "simple", "basic", etc.
+
+	(2) Provide an advertised interface for doing operations on Lisp
+	objects, including creating new types, that is clean and
+	consistent in its naming, uses the above-referenced terms and
+	avoids referencing "lrecords", "old lcrecords", etc., which should
+	hide under the surface.
+
+	(3) Make the size_in_bytes and finalizer methods take a
+	Lisp_Object rather than a void * for consistency with other methods.
+
+	(4) Separate finalizer method into finalizer and disksaver, so
+	that normal finalize methods don't have to worry about disksaving.
+
+	Other specifics:
+	
+	(1) Renaming:
+
+	LISP_OBJECT_HEADER -> NORMAL_LISP_OBJECT_HEADER
+	ALLOC_LISP_OBJECT -> ALLOC_NORMAL_LISP_OBJECT
+	implementation->basic_p -> implementation->frob_block_p
+	ALLOCATE_FIXED_TYPE_AND_SET_IMPL -> ALLOC_FROB_BLOCK_LISP_OBJECT
+	*FCCONFIG*, wrap_fcconfig -> *FC_CONFIG*, wrap_fc_config
+	*FCPATTERN*, wrap_fcpattern -> *FC_PATTERN*, wrap_fc_pattern
+
+	(the last two changes make the naming of these macros consistent
+	with the naming of all other macros, since the objects are named
+	fc-config and fc-pattern with a hyphen)
+	
+	(2) Lots of documentation fixes in lrecord.h.
+
+	(3) Eliminate macros for copying, freeing, zeroing objects, getting
+	their storage size.  Instead, new functions:
+
+	zero_sized_lisp_object()
+	zero_nonsized_lisp_object()
+	lisp_object_storage_size()
+	free_normal_lisp_object()
+	(copy_lisp_object() already exists)
+	LISP_OBJECT_FROB_BLOCK_P() (actually a macro)
+
+	Eliminated:
+
+	free_lrecord()
+	zero_lrecord()
+	copy_lrecord()
+	copy_sized_lrecord()
+	old_copy_lcrecord()
+	old_copy_sized_lcrecord()
+	old_zero_lcrecord()
+	old_zero_sized_lcrecord()
+	LISP_OBJECT_STORAGE_SIZE()
+	COPY_SIZED_LISP_OBJECT()
+	COPY_SIZED_LCRECORD()
+	COPY_LISP_OBJECT()
+	ZERO_LISP_OBJECT()
+	FREE_LISP_OBJECT()
+
+	(4) Catch the remaining places where lrecord stuff was used directly
+	and use the advertised interface, e.g. alloc_sized_lrecord() ->
+	ALLOC_SIZED_LISP_OBJECT().
+
+	(5) Make certain statically-declared pseudo-objects
+	(buffer_local_flags, console_local_flags) have their lheader
+	initialized correctly, so things like copy_lisp_object() can work
+	on them.  Make extent_auxiliary_defaults a proper heap object
+	Vextent_auxiliary_defaults, and make extent auxiliaries dumpable
+	so that this object can be dumped.  allocate_extent_auxiliary()
+	now just creates the object, and attach_extent_auxiliary()
+	creates an extent auxiliary and attaches to an extent, like the
+	old allocate_extent_auxiliary().
+	
+	(6) Create EXTENT_AUXILIARY_SLOTS macro, similar to the foo-slots.h
+	files but in a macro instead of a file.  The purpose is to avoid
+	duplication when iterating over all the slots in an extent auxiliary.
+	Use it.
+
+	(7) In lstream.c, don't zero out object after allocation because
+	allocation routines take care of this.
+
+	(8) In marker.c, fix a mistake in computing marker overhead.
+
+	(9) In print.c, clean up printing_unreadable_lcrecord(),
+	external_object_printer() to avoid lots of ifdef NEW_GC's.
+
+	(10) Separate toolbar-button allocation into a separate 
+	allocate_toolbar_button() function for use in the example code
+	in lrecord.h.
+	
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (very_old_free_lcrecord):
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (make_lcrecord_list):
+	* alloc.c (alloc_managed_lcrecord):
+	* alloc.c (free_managed_lcrecord):
+	* alloc.c (sweep_lcrecords_1):
+	* buffer.c:
+	* bytecode.c:
+	* bytecode.c (Fcompiled_function_p):
+	* chartab.c:
+	* console-impl.h:
+	* console-impl.h (CONSOLE_TYPE_P):
+	* console.c:
+	* console.c (set_quit_events):
+	* data.c:
+	* data.c (Fmake_ephemeron):
+	* database.c:
+	* database.c (finalize_database):
+	* database.c (Fclose_database):
+	* device-msw.c:
+	* device-msw.c (finalize_devmode):
+	* device-msw.c (allocate_devmode):
+	* device.c:
+	* elhash.c:
+	* elhash.c (finalize_hash_table):
+	* eval.c:
+	* eval.c (bind_multiple_value_limits):
+	* event-stream.c:
+	* event-stream.c (finalize_command_builder):
+	* events.c:
+	* events.c (mark_event):
+	* extents.c:
+	* extents.c (finalize_extent_info):
+	* extents.c (uninit_buffer_extents):
+	* faces.c:
+	* file-coding.c:
+	* file-coding.c (finalize_coding_system):
+	* file-coding.h:
+	* file-coding.h (struct coding_system_methods):
+	* file-coding.h (struct detector):
+	* floatfns.c:
+	* floatfns.c (extract_float):
+	* fns.c:
+	* fns.c (Fidentity):
+	* font-mgr.c (finalize_fc_pattern):
+	* font-mgr.c (finalize_fc_config):
+	* frame.c:
+	* glyphs.c:
+	* glyphs.c (finalize_image_instance):
+	* glyphs.c (unmap_subwindow_instance_cache_mapper):
+	* gui.c:
+	* gui.c (gui_error):
+	* keymap.c:
+	* lisp.h (struct Lisp_Symbol):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER):
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE):
+	* lrecord.h (DEFINE_DUMPABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_FROB_BLOCK_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_FROB_BLOCK_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_INTERNAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_SIZABLE_INTERNAL_LISP_OBJECT):
+	* lrecord.h (MAKE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_SIZABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_GENERAL_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_SIZABLE_LISP_OBJECT):
+	* lrecord.h (DEFINE_NODUMP_MODULE_SIZABLE_GENERAL_LISP_OBJECT):
+	* lrecord.h (MAKE_MODULE_LISP_OBJECT):
+	* lstream.c:
+	* lstream.c (finalize_lstream):
+	* lstream.c (disksave_lstream):
+	* marker.c:
+	* marker.c (finalize_marker):
+	* mule-charset.c (make_charset):
+	* number.c:
+	* objects.c:
+	* objects.c (finalize_color_instance):
+	* objects.c (finalize_font_instance):
+	* opaque.c:
+	* opaque.c (make_opaque_ptr):
+	* process-nt.c:
+	* process-nt.c (nt_finalize_process_data):
+	* process-nt.c (nt_deactivate_process):
+	* process.c:
+	* process.c (finalize_process):
+	* procimpl.h (struct process_methods):
+	* scrollbar.c:
+	* scrollbar.c (free_scrollbar_instance):
+	* specifier.c (finalize_specifier):
+	* symbols.c:
+	* toolbar.c:
+	* toolbar.c (Ftoolbar_button_p):
+	* tooltalk.c:
+	* ui-gtk.c:
+	* ui-gtk.c (emacs_gtk_object_finalizer):
+	* ui-gtk.c (allocate_emacs_gtk_boxed_data):
+	* window.c:
+	* window.c (finalize_window):
+	* window.c (mark_window_as_deleted):
+
+	Separate out regular and disksave finalization.  Instead of a
+	FOR_DISKSAVE argument to the finalizer, create a separate object
+	method `disksaver'.  Make `finalizer' have only one argument.
+
+	Go through and separate out all finalize methods into finalize
+	and disksave.  Delete lots of thereby redundant disksave checking.
+	Delete places that signal an error if we attempt to disksave --
+	all of these objects are non-dumpable and we will get an error
+	from pdump anyway if we attempt to dump them.  After this is done,
+	only one object remains that has a disksave method -- lstream.
+
+	Change DEFINE_*_LISP_OBJECT_WITH_PROPS to DEFINE_*_GENERAL_LISP_OBJECT,
+	which is used for specifying either property methods or disksave
+	methods (or in the future, any other less-used methods).
+	
+	Remove the for_disksave argument to finalize_process_data.  Don't
+	provide a disksaver for processes because no one currently needs
+	it.
+
+	Clean up various places where objects didn't provide a print method.
+	It was made mandatory in previous changes, and all methods now
+	either provide their own print method or use internal_object_printer
+	or external_object_printer.
+
+	Change the definition of CONSOLE_LIVE_P to use the contype enum
+	rather than looking into the conmeths structure -- in some weird
+	situations with dead objects, the conmeths structure is NULL,
+	and printing such objects from debug_print() will crash if we try
+	to look into the conmeths structure.
+	
+
+2005-11-22  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (assert_proper_sizing):
+	* alloc.c (alloc_sized_lrecord_1):
+	* alloc.c (alloc_sized_lrecord):
+	* alloc.c (noseeum_alloc_sized_lrecord):
+	* alloc.c (alloc_lrecord):
+	* alloc.c (old_alloc_sized_lcrecord):
+	* alloc.c (make_vector_internal):
+	* alloc.c (make_bit_vector_internal):
+	* alloc.c (alloc_automanaged_sized_lcrecord):
+	* buffer.c (allocate_buffer):
+	* buffer.c (DEFVAR_BUFFER_LOCAL_1):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* casetab.c (allocate_case_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (make_char_table_entry):
+	* chartab.c (copy_char_table_entry):
+	* chartab.c (Fcopy_char_table):
+	* console.c (allocate_console):
+	* console.c (DEFVAR_CONSOLE_LOCAL_1):
+	* console.c (common_init_complex_vars_of_console):
+	* data.c (make_weak_list):
+	* data.c (make_weak_box):
+	* data.c (make_ephemeron):
+	* database.c (allocate_database):
+	* device-msw.c (allocate_devmode):
+	* device.c (allocate_device):
+	* dialog-msw.c (handle_question_dialog_box):
+	* elhash.c (make_general_lisp_hash_table):
+	* elhash.c (Fcopy_hash_table):
+	* emacs.c (main_1):
+	* event-stream.c:
+	* event-stream.c (allocate_command_builder):
+	* event-stream.c (free_command_builder):
+	* event-stream.c (mark_timeout):
+	* event-stream.c (event_stream_generate_wakeup):
+	* event-stream.c (event_stream_resignal_wakeup):
+	* event-stream.c (event_stream_disable_wakeup):
+	* event-stream.c (reinit_vars_of_event_stream):
+	* extents.c (allocate_extent_auxiliary):
+	* extents.c (allocate_extent_info):
+	* extents.c (copy_extent):
+	* faces.c (allocate_face):
+	* file-coding.c (allocate_coding_system):
+	* frame.c (allocate_frame_core):
+	* glyphs.c (allocate_image_instance):
+	* glyphs.c (allocate_glyph):
+	* gui.c (allocate_gui_item):
+	* keymap.c (make_keymap):
+	* lrecord.h:
+	* lrecord.h (ALLOC_LCRECORD):
+	* lrecord.h (ALLOC_SIZED_LCRECORD):
+	* lrecord.h (struct old_lcrecord_header):
+	* lrecord.h (old_alloc_lcrecord_type):
+	* lrecord.h (alloc_lrecord_type):
+	* lrecord.h (noseeum_alloc_lrecord_type):
+	* lstream.c (Lstream_new):
+	* mule-charset.c (make_charset):
+	* objects.c (Fmake_color_instance):
+	* objects.c (Fmake_font_instance):
+	* objects.c (reinit_vars_of_objects):
+	* opaque.c (make_opaque):
+	* opaque.c (make_opaque_ptr):
+	* process.c (make_process_internal):
+	* rangetab.c (Fmake_range_table):
+	* rangetab.c (Fcopy_range_table):
+	* scrollbar.c (create_scrollbar_instance):
+	* specifier.c (make_specifier_internal):
+	* symbols.c (Fdefvaralias):
+	* toolbar.c (update_toolbar_button):
+	* tooltalk.c (make_tooltalk_message):
+	* tooltalk.c (make_tooltalk_pattern):
+	* ui-gtk.c (allocate_ffi_data):
+	* ui-gtk.c (allocate_emacs_gtk_object_data):
+	* ui-gtk.c (allocate_emacs_gtk_boxed_data):
+	* window.c (allocate_window):
+	* window.c (new_window_mirror):
+	* window.c (make_dummy_parent):
+	Create a simpler interface for allocating/declaring Lisp objects;
+	documented in lrecord.h.
+
+	ALLOC_LCRECORD_TYPE -> ALLOC_LISP_OBJECT (returns a Lisp object
+	                                          rather than a pointer),
+	BASIC_ALLOC_LCRECORD -> ALLOC_SIZED_LISP_OBJECT
+	DEFINE_LRECORD_IMPLEMENTATION -> DEFINE_*_LISP_OBJECT
+	DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION -> DEFINE_*SIZABLE_*LISP_OBJECT
+	DEFINE_LRECORD_*IMPLEMENTATION_WITH_PROPS -> DEFINE_*GENERAL_LISP_OBJECT
+	DEFINE_BASIC_LRECORD_IMPLEMENTATION -> DEFINE_*FROB_BLOCK_LISP_OBJECT
+	DEFINE_DUMPABLE_*/DEFINE_NODUMP_* instead of a 0 or 1 dumpable flag
+	DEFINE_*INTERNAL_* for "internal" Lisp objects (shouldn't escape
+							to Lisp)
+	DEFINE_EXTERNAL_* -> DEFINE_MODULE_*
+	MAKE_LRECORD_IMPLEMENTATION -> MAKE_LISP_OBJECT
+	MAKE_EXTERNAL_LRECORD_IMPLEMENTATION -> MAKE_MODULE_LISP_OBJECT
+	DECLARE_LRECORD -> DECLARE_LISP_OBJECT
+	INIT_LRECORD_IMPLEMENTATION -> INIT_LISP_OBJECT
+	alloc_lrecord -> alloc_sized_lrecord (since it takes a size)
+	
+	Dynarr_newf, Dynarr_lisp_newf: takes a Bytecount instead of an int
+
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* mule-coding.c:
+	* mule-coding.c (iso2022_encode):
+	Horrible bug: `escape-quoted' was failing to escape-quote special
+	characters in the 0x80 - 0x9F range.  Who knows what breakage ensued?
+	SAME BUG IN XEMACS 21.4; MUST BE FIXED THERE TOO.
+
+2010-03-03  Ben Wing  <ben@xemacs.org>
+
+	* lrecord.h: Fix outdated comment.
+
+2010-03-03  Ben Wing  <ben@xemacs.org>
+
+	* emacs.c:
+	* emacs.c (assert_equal_failed):
+	* lisp.h:
+	* lisp.h (assert_equal):
+	New fun assert_equal, asserting that two values == each other, and
+	printing out both values upon failure.
+	
+	* frame-gtk.c (gtk_initialize_frame_size):
+	* frame-impl.h:
+	* frame-impl.h (FRAME_TOP_INTERNAL_BORDER_START):
+	* frame-impl.h (FRAME_BOTTOM_INTERNAL_BORDER_START):
+	* frame-impl.h (FRAME_LEFT_INTERNAL_BORDER_START):
+	* frame-impl.h (FRAME_PANED_TOP_EDGE):
+	* frame-impl.h (FRAME_NONPANED_SIZE):
+	* frame-x.c (x_initialize_frame_size):
+	* frame.c:
+	* gutter.c (get_gutter_coords):
+	* gutter.c (calculate_gutter_size):
+	* gutter.h:
+	* gutter.h (WINDOW_REAL_TOP_GUTTER_BOUNDS):
+	* gutter.h (FRAME_TOP_GUTTER_BOUNDS):
+	* input-method-xlib.c:
+	* input-method-xlib.c (XIM_SetGeometry):
+	* redisplay-output.c (clear_left_border):
+	* redisplay-output.c (clear_right_border):
+	* redisplay-output.c (redisplay_output_pixmap):
+	* redisplay-output.c (redisplay_clear_region):
+	* redisplay-output.c (redisplay_clear_top_of_window):
+	* redisplay-output.c (redisplay_clear_to_window_end):
+	* redisplay-xlike-inc.c (XLIKE_clear_frame):
+	* redisplay.c:
+	* redisplay.c (UPDATE_CACHE_RETURN):
+	* redisplay.c (pixel_to_glyph_translation):
+	* toolbar.c (update_frame_toolbars_geometry):
+	* window.c (Fwindow_pixel_edges):
+	Get rid of some redundant macros.  Consistently use the
+	FRAME_TOP_*_START, FRAME_RIGHT_*_END, etc. format.  Rename
+	FRAME_*_BORDER_* to FRAME_*_INTERNAL_BORDER_*. Comment out
+	FRAME_BOTTOM_* for gutters and the paned area due to the
+	uncertainty over where the paned area actually begins. (Eventually
+	we should probably move the gutters outside the minibuffer so that
+	the paned area is contiguous.) Use FRAME_PANED_* more often in the
+	code to make things clearer.
+
+	Update the diagram to show that the bottom gutter is inside the
+	minibuffer (!) and that there are "junk boxes" when you have left
+	and/or right gutters (dead boxes that are mistakenly left uncleared,
+	unlike the corresponding scrollbar dead boxes).  Update the text
+	appropriately to cover the bottom gutter position, etc.
+
+	Rewrite gutter-geometry code to use the FRAME_*_GUTTER_* in place of
+	equivalent expressions referencing other frame elements, to make the
+	code more portable in case we move around the gutter location.
+
+	Cleanup FRAME_*_GUTTER_BOUNDS() in gutter.h.
+
+	Add some #### GEOM! comments where I think code is incorrect --
+	typically, it wasn't fixed up properly when the gutter was added.
+
+	Some cosmetic changes.
+	
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	* text.h:
+	Move inclusion point of text.h earlier in lisp.h -- just before
+	the definition of characters, which needs some of the stuff in
+	text.h.  With text.h later, some basic character properties had to
+	be defined in lisp.h -- put them back into text.h where they belong.
+	Move some text in lisp.h at the point of text.h inclusion into
+	text.h -- it serves as a mini-introduction.
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (objs):
+	glyphs-shared.o, glyphs-eimage.o only needed when HAVE_WINDOW_SYSTEM.
+	glyphs-widget.o should be too, but we need a bit of work ifdeffing
+	out the subwindow stuff from redisplay.c et al.
+	
+	* bytecode.c (init_opcode_table_multi_op):
+	Change var name to avoid shadowing with `basename'.
+	
+	* emacs.c (main_1):
+	Don't call init/etc. routines for glyphs-shared, glyphs-eimage unless
+	HAVE_WINDOW_SYSTEM is defined.
+	
+	* linuxplay.c:
+	* linuxplay.c (sighandler):
+	* vdb-posix.c (vdb_fault_handler):
+	Use const for variables holding string constants to avoid C++
+	warnings.
+
+2010-03-02  Jerry James  <james@xemacs.org>
+
+	* lread.c (read_atom): Signal a read error upon encountering a
+	ratio constant with a zero denominator.
+
+2010-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsubstring): Removed.
+	* search.c (Freplace_match):
+	* minibuf.c (Ftry_completion):
+	* lisp.h:
+	* keymap.c (ensure_meta_prefix_char_keymapp):
+	* dired.c (user_name_completion, file_name_completion):
+	* console-x.c (x_canonicalize_console_connection):
+	* bytecode.c (Bsubseq):
+	* bytecode-ops.h (subseq):
+	Move #'substring to Lisp, as an alias for #'subseq; change all
+	C Fsubstring() calls to Fsubseq(), change the Bsubstring bytecode
+	to Bsubseq.
+
+	Motivation; not accepting vectors in #'substring is incompatible
+	with GNU, and Common Lisp prefers #'subseq, it has no #'substring.
+
+2010-03-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (print_multiple_value):
+	Say #<INTERNAL OBJECT (XEmacs bug?) ...> when printing these, for
+	consistency with the rest of the print code.
+
+2010-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS): New macro, for parsing keyword
+	arguments from C subrs.
+	* elhash.c (Fmake_hash_table): Use it.
+	* general-slots.h (Q_allow_other_keys): Add this symbol.
+	* eval.c (non_nil_allow_other_keys_p):
+	(invalid_keyword_argument):
+	New functions, called from the keyword argument parsing code.
+	* data.c (init_errors_once_early):
+	Add the new invalid-keyword-argument error here.
+
+2010-02-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (Fmake_coding_system_internal):
+	Be somewhat clearer in this docstring, especially for the sake of
+	people running non-Mule builds who will see this docstring when
+	they do F1 f make-coding-system RET.
+
+2010-02-25  Didier Verna  <didier@xemacs.org>
+
+	The background-placement face property.
+	* console-x-impl.h (struct x_frame): Add new slots x and y.
+	* console-x-impl.h (FRAME_X_X, FRAME_X_Y): New slot accessors.
+	* console-gtk-impl.h: Fake something similar for potential port.
+	* frame-x.c (x_get_frame_text_position): New function.
+	* frame-x.c (x_init_frame_3): Use it.
+	* event-Xt.c (emacs_Xt_handle_magic_event): Eat spurious
+	ConfigureNotify events, get the frame position and mark frame
+	faces changed.
+	* objects-impl.h: The face_background_placement_specifier
+	structure and its accessors.
+	* objects.c: New symbols Qabsolute and Qrelative.
+	* objects.c (face_background_placement_create):
+	* objects.c (face_background_placement_mark):
+	* objects.c (face_background_placement_instantiate):
+	* objects.c (face_background_placement_validate):
+	* objects.c (face_background_placement_after_change):
+	* objects.c (set_face_background_placement_attached_to): New.
+	* objects.h (set_face_background_palcement_attached_to): Declare
+	the one above.
+	* objects.c (syms_of_objects):
+	* objects.c (specifier_type_create_objects):
+	* objects.c (reinit_specifier_type_create_objects):
+	* objects.c (reinit_vars_of_objects): Update for the modifications
+	above.
+	* console-xlike-inc.h (XLIKE_GC_TS_X_ORIGIN, XLIKE_GC_TS_X_ORIGIN): 
+	New X11/Gtk compatibility macros.
+	* redisplay-xlike-inc.c (XLIKE_get_gc): Add a background placement
+	argument and handle it.
+	* gtk-glue.c (face_to_gc):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap):
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line):
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor): Update
+	accordingly.
+	* console-impl.h (struct console_methods): Add a background
+	placement (Lisp_Object) argument to the clear_region method.
+	* console-stream.c (stream_clear_region):
+	* redisplay-tty.c (tty_clear_region):
+	* redisplay-msw.c (mswindows_clear_region):
+	* redisplay-xlike-inc.c (XLIKE_clear_region): Update accordingly.
+	* redisplay-output.c (redisplay_clear_region): Handle the
+	background placement property and update the call to the
+	clear_region method.
+	* faces.h (struct Lisp_Face):
+	* faces.h (struct face_cachel): Add a background placement slot.
+	* faces.h (WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT): New accessor.
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (mark_face_cachels):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (reset_face_cachel):
+	* faces.c (Fmake_face):
+	* faces.c (Fcopy_face): Handle the background placement property.
+	* faces.c (syms_of_faces):
+	* faces.c (vars_of_faces):
+	* faces.c (complex_vars_of_faces): Update accordingly.
+
+2010-02-25  Ben Wing  <ben@xemacs.org>
+
+	* frame-impl.h:
+	Create some new macros for more clearly getting the size/edges
+	of various rectangles surrounding the paned area.
+	* frame.c (change_frame_size_1):
+	Use the new macros.  Clean up change_frame_size_1 and make sure
+	the internal border width gets taken into account -- that was what
+	was causing the clipped bottom and right.
+
+2010-02-25  Ben Wing  <ben@xemacs.org>
+
+	* EmacsFrame.c (EmacsFrameSetValues):
+	* frame-impl.h:
+	* frame-impl.h (struct frame):
+	* frame-impl.h (FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT):
+	* frame-impl.h (FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_HEIGHT):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_VISIBLE):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BOUNDS):
+	* frame.h:
+	* frame.h (enum edge_pos):
+	* gutter.c:
+	* gutter.c (get_gutter_coords):
+	* gutter.c (display_boxes_in_gutter_p):
+	* gutter.c (construct_window_gutter_spec):
+	* gutter.c (calculate_gutter_size_from_display_lines):
+	* gutter.c (calculate_gutter_size):
+	* gutter.c (output_gutter):
+	* gutter.c (clear_gutter):
+	* gutter.c (mark_gutters):
+	* gutter.c (gutter_extent_signal_changed_region_maybe):
+	* gutter.c (update_gutter_geometry):
+	* gutter.c (update_frame_gutter_geometry):
+	* gutter.c (update_frame_gutters):
+	* gutter.c (reset_gutter_display_lines):
+	* gutter.c (redraw_exposed_gutter):
+	* gutter.c (redraw_exposed_gutters):
+	* gutter.c (free_frame_gutters):
+	* gutter.c (decode_gutter_position):
+	* gutter.c (Fset_default_gutter_position):
+	* gutter.c (Fgutter_pixel_width):
+	* gutter.c (Fgutter_pixel_height):
+	* gutter.c (recompute_overlaying_specifier):
+	* gutter.c (gutter_specs_changed_1):
+	* gutter.c (gutter_specs_changed):
+	* gutter.c (top_gutter_specs_changed):
+	* gutter.c (bottom_gutter_specs_changed):
+	* gutter.c (left_gutter_specs_changed):
+	* gutter.c (right_gutter_specs_changed):
+	* gutter.c (gutter_geometry_changed_in_window):
+	* gutter.c (init_frame_gutters):
+	* gutter.c (specifier_vars_of_gutter):
+	* gutter.h:
+	* gutter.h (WINDOW_REAL_TOP_GUTTER_BOUNDS):
+	* gutter.h (FRAME_TOP_GUTTER_BOUNDS):
+	* lisp.h (enum edge_style):
+	* native-gtk-toolbar.c:
+	* native-gtk-toolbar.c (gtk_output_toolbar):
+	* native-gtk-toolbar.c (gtk_clear_toolbar):
+	* native-gtk-toolbar.c (gtk_output_frame_toolbars):
+	* native-gtk-toolbar.c (gtk_initialize_frame_toolbars):
+	* toolbar-msw.c:
+	* toolbar-msw.c (TOOLBAR_HANDLE):
+	* toolbar-msw.c (allocate_toolbar_item_id):
+	* toolbar-msw.c (mswindows_clear_toolbar):
+	* toolbar-msw.c (mswindows_output_toolbar):
+	* toolbar-msw.c (mswindows_move_toolbar):
+	* toolbar-msw.c (mswindows_redraw_exposed_toolbars):
+	* toolbar-msw.c (mswindows_initialize_frame_toolbars):
+	* toolbar-msw.c (mswindows_output_frame_toolbars):
+	* toolbar-msw.c (mswindows_clear_frame_toolbars):
+	* toolbar-msw.c (DELETE_TOOLBAR):
+	* toolbar-msw.c (mswindows_free_frame_toolbars):
+	* toolbar-msw.c (mswindows_get_toolbar_button_text):
+	* toolbar-xlike.c:
+	* toolbar-xlike.c (__prepare_button_area):
+	* toolbar-xlike.c (XLIKE_OUTPUT_BUTTONS_LOOP):
+	* toolbar-xlike.c (xlike_output_toolbar):
+	* toolbar-xlike.c (xlike_clear_toolbar):
+	* toolbar-xlike.c (xlike_output_frame_toolbars):
+	* toolbar-xlike.c (xlike_clear_frame_toolbars):
+	* toolbar-xlike.c (xlike_redraw_exposed_toolbar):
+	* toolbar-xlike.c (xlike_redraw_exposed_toolbars):
+	* toolbar-xlike.c (xlike_redraw_frame_toolbars):
+	* toolbar.c:
+	* toolbar.c (decode_toolbar_position):
+	* toolbar.c (Fset_default_toolbar_position):
+	* toolbar.c (mark_frame_toolbar_buttons_dirty):
+	* toolbar.c (compute_frame_toolbar_buttons):
+	* toolbar.c (set_frame_toolbar):
+	* toolbar.c (compute_frame_toolbars_data):
+	* toolbar.c (update_frame_toolbars_geometry):
+	* toolbar.c (init_frame_toolbars):
+	* toolbar.c (get_toolbar_coords):
+	* toolbar.c (CHECK_TOOLBAR):
+	* toolbar.c (toolbar_buttons_at_pixpos):
+	* toolbar.c (CTB_ERROR):
+	* toolbar.c (recompute_overlaying_specifier):
+	* toolbar.c (specifier_vars_of_toolbar):
+	* toolbar.h:
+	* toolbar.h (SET_TOOLBAR_WAS_VISIBLE_FLAG):
+	Create new enum edge_pos with TOP_EDGE, BOTTOM_EDGE, LEFT_EDGE,
+	RIGHT_EDGE; subsume TOP_BORDER, TOP_GUTTER, enum toolbar_pos,
+	enum gutter_pos, etc.
+
+	Create EDGE_POS_LOOP, subsuming GUTTER_POS_LOOP.
+
+	Create NUM_EDGES, use in many places instead of hardcoded '4'.
+
+	Instead of top_toolbar_was_visible, bottom_toolbar_was_visible,
+	etc. make an array toolbar_was_visible[NUM_EDGES].  This increases
+	the frame size by 15 bytes or so (could be 3 if we use Boolbytes)
+	but hardly seems w to matter -- frames are heavy weight objects
+	anyway.  Same with top_gutter_was_visible, etc.
+	
+	Remove duplicated SET_TOOLBAR_WAS_VISIBLE_FLAG and put defn in
+	one place (toolbar.h).
+
+2010-02-24  Didier Verna  <didier@xemacs.org>
+
+	Modify XLIKE_get_gc's prototype.
+	* redisplay-xlike-inc.c (XLIKE_get_gc): Take a frame instead of a
+	device as first argument.
+	* redisplay-xlike-inc.c (XLIKE_output_string): Update caller.
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_output_blank): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_clear_region): Ditto.
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor): Ditto.
+	* console-gtk.h (gtk_get_gc):  Take a frame instead of a device as
+	first argument.
+	* gtk-glue.c (face_to_gc): Update caller.
+
+2010-02-24  Didier Verna  <didier@xemacs.org>
+
+	* glyphs.c: Clarify comment about potential_pixmap_file_instantiator.
+	* glyphs.c (xbm_mask_file_munging): Clarify comment, remove
+	unreachable condition and provide a cuple of assertions.
+	* glyphs.c (xbm_normalize): Clarify comments, error on mask file
+	not found.
+	* glyphs.c (xface_normalize): Ditto, and handle inline data properly.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* EmacsFrame.c:

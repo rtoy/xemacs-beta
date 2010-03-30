@@ -240,7 +240,7 @@ x_canonicalize_console_connection (Lisp_Object connection, Error_Behavior errb)
 
     split_up_display_spec (connection, &hostname_length, &display_length,
 			   &screen_length);
-    hostname = Fsubstring (connection, Qzero, make_int (hostname_length));
+    hostname = Fsubseq (connection, Qzero, make_int (hostname_length));
     hostname = canonicalize_host_name (hostname);
     connection = concat2 (hostname,
 			  make_string (XSTRING_DATA (connection)

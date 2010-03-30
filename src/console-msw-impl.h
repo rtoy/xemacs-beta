@@ -57,7 +57,7 @@ DECLARE_CONSOLE_TYPE (msprinter);
 
 struct Lisp_Devmode
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Pointer to the DEVMODE structure */
   DEVMODEW *devmode;
@@ -82,7 +82,7 @@ struct Lisp_Devmode
 struct mswindows_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Lisp_Object fontlist;		/* List of (STRING . FIXED-P), device fonts */
   HDC hcdc;			/* Compatible DC */
@@ -94,7 +94,7 @@ struct mswindows_device
 #ifdef NEW_GC
 typedef struct mswindows_device Lisp_Mswindows_Device;
 
-DECLARE_LRECORD (mswindows_device, Lisp_Mswindows_Device);
+DECLARE_LISP_OBJECT (mswindows_device, Lisp_Mswindows_Device);
 
 #define XMSWINDOWS_DEVICE(x) \
   XRECORD (x, mswindows_device, Lisp_Mswindows_Device)
@@ -110,7 +110,7 @@ DECLARE_LRECORD (mswindows_device, Lisp_Mswindows_Device);
 struct msprinter_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   HDC hdc, hcdc;		/* Printer and the comp. DCs */
   HANDLE hprinter;
@@ -122,7 +122,7 @@ struct msprinter_device
 #ifdef NEW_GC
 typedef struct msprinter_device Lisp_Msprinter_Device;
 
-DECLARE_LRECORD (msprinter_device, Lisp_Msprinter_Device);
+DECLARE_LISP_OBJECT (msprinter_device, Lisp_Msprinter_Device);
 
 #define XMSPRINTER_DEVICE(x) \
   XRECORD (x, msprinter_device, Lisp_Msprinter_Device)
@@ -168,7 +168,7 @@ DECLARE_LRECORD (msprinter_device, Lisp_Msprinter_Device);
 struct mswindows_frame
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 
   /* win32 window handle */
@@ -230,7 +230,7 @@ struct mswindows_frame
 #ifdef NEW_GC
 typedef struct mswindows_frame Lisp_Mswindows_Frame;
 
-DECLARE_LRECORD (mswindows_frame, Lisp_Mswindows_Frame);
+DECLARE_LISP_OBJECT (mswindows_frame, Lisp_Mswindows_Frame);
 
 #define XMSWINDOWS_FRAME(x) \
   XRECORD (x, mswindows_frame, Lisp_Mswindows_Frame)
@@ -312,7 +312,7 @@ struct msprinter_frame
 
 struct mswindows_dialog_id
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object frame;
   Lisp_Object callbacks;

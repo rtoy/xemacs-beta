@@ -411,49 +411,49 @@ EmacsFrameSetValues (Widget cur_widget, Widget UNUSED (req_widget),
       if (cur->emacs_frame.top_toolbar_height !=
 	  new_->emacs_frame.top_toolbar_height)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_size[TOP_TOOLBAR],
+	  (Vtoolbar_size[TOP_EDGE],
 	   make_int (new_->emacs_frame.top_toolbar_height),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.bottom_toolbar_height !=
 	  new_->emacs_frame.bottom_toolbar_height)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_size[BOTTOM_TOOLBAR],
+	  (Vtoolbar_size[BOTTOM_EDGE],
 	   make_int (new_->emacs_frame.bottom_toolbar_height),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.left_toolbar_width !=
 	  new_->emacs_frame.left_toolbar_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_size[LEFT_TOOLBAR],
+	  (Vtoolbar_size[LEFT_EDGE],
 	   make_int (new_->emacs_frame.left_toolbar_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.right_toolbar_width !=
 	  new_->emacs_frame.right_toolbar_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_size[RIGHT_TOOLBAR],
+	  (Vtoolbar_size[RIGHT_EDGE],
 	   make_int (new_->emacs_frame.right_toolbar_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.top_toolbar_border_width !=
 	  new_->emacs_frame.top_toolbar_border_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_border_width[TOP_TOOLBAR],
+	  (Vtoolbar_border_width[TOP_EDGE],
 	   make_int (new_->emacs_frame.top_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.bottom_toolbar_border_width !=
 	  new_->emacs_frame.bottom_toolbar_border_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_border_width[BOTTOM_TOOLBAR],
+	  (Vtoolbar_border_width[BOTTOM_EDGE],
 	   make_int (new_->emacs_frame.bottom_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.left_toolbar_border_width !=
 	  new_->emacs_frame.left_toolbar_border_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_border_width[LEFT_TOOLBAR],
+	  (Vtoolbar_border_width[LEFT_EDGE],
 	   make_int (new_->emacs_frame.left_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.right_toolbar_border_width !=
 	  new_->emacs_frame.right_toolbar_border_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_border_width[RIGHT_TOOLBAR],
+	  (Vtoolbar_border_width[RIGHT_EDGE],
 	   make_int (new_->emacs_frame.right_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
 #endif /* HAVE_TOOLBARS */

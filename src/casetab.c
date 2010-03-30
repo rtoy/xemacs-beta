@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with case tables.
    Copyright (C) 1987, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -105,12 +105,12 @@ print_case_table (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Case_Table *ct = XCASE_TABLE (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_fmt_string_lisp
     (printcharfun, "#<case-table downcase=%s upcase=%s canon=%s eqv=%s ", 4,
      CASE_TABLE_DOWNCASE (ct), CASE_TABLE_UPCASE (ct),
      CASE_TABLE_CANON (ct), CASE_TABLE_EQV (ct));
-  write_fmt_string (printcharfun, "0x%x>", ct->header.uid);
+  write_fmt_string (printcharfun, "0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static const struct memory_description case_table_description [] = {
@@ -122,16 +122,15 @@ static const struct memory_description case_table_description [] = {
 };
 
 
-DEFINE_LRECORD_IMPLEMENTATION("case-table", case_table,
-			      1, /*dumpable-flag*/
-			      mark_case_table, print_case_table, 0,
-			      0, 0, case_table_description, Lisp_Case_Table);
+DEFINE_DUMPABLE_LISP_OBJECT ("case-table", case_table,
+			     mark_case_table, print_case_table, 0,
+			     0, 0, case_table_description, Lisp_Case_Table);
 
 static Lisp_Object
 allocate_case_table (int init_tables)
 {
-  Lisp_Case_Table *ct =
-    ALLOC_LCRECORD_TYPE (Lisp_Case_Table, &lrecord_case_table);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (case_table);
+  Lisp_Case_Table *ct = XCASE_TABLE (obj);
 
   if (init_tables)
     {
@@ -147,7 +146,7 @@ allocate_case_table (int init_tables)
       SET_CASE_TABLE_CANON (ct, Qnil);
       SET_CASE_TABLE_EQV (ct, Qnil);
     }
-  return wrap_case_table (ct);
+  return obj;
 }
 
 DEFUN ("make-case-table", Fmake_case_table, 0, 0, 0, /*
@@ -509,10 +508,42 @@ See `set-case-table' for more info on case tables.
 }
 
 
+#ifdef MEMORY_USAGE_STATS
+
+struct case_table_stats
+{
+  struct usage_stats u;
+  /* Ancillary Lisp */
+  Bytecount downcase, upcase, case_canon, case_eqv;
+};
+
+static void
+case_table_memory_usage (Lisp_Object casetab,
+			 struct generic_usage_stats *gustats)
+{
+  struct case_table_stats *stats = (struct case_table_stats *) gustats;
+
+  stats->downcase = lisp_object_memory_usage (XCASE_TABLE_DOWNCASE (casetab));
+  stats->upcase = lisp_object_memory_usage (XCASE_TABLE_UPCASE (casetab));
+  stats->case_canon = lisp_object_memory_usage (XCASE_TABLE_CANON (casetab));
+  stats->case_eqv = lisp_object_memory_usage (XCASE_TABLE_EQV (casetab));
+}
+
+#endif /* MEMORY_USAGE_STATS */
+
+
+void
+casetab_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (case_table, memory_usage);
+#endif
+}
+
 void
 syms_of_casetab (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (case_table);
+  INIT_LISP_OBJECT (case_table);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qcase_tablep);
   DEFSYMBOL (Qdowncase);
@@ -528,6 +559,19 @@ syms_of_casetab (void)
   DEFSUBR (Fcopy_case_table);
   DEFSUBR (Fset_case_table);
   DEFSUBR (Fset_standard_case_table);
+}
+
+void
+vars_of_casetab (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY (case_table, memusage_stats_list,
+		       list5 (Qt,
+			      intern ("downcase"),
+			      intern ("upcase"),
+			      intern ("case-canon"),
+			      intern ("case-eqv")));
+#endif /* MEMORY_USAGE_STATS */
 }
 
 void
