@@ -3679,14 +3679,19 @@ Bytecount
 lisp_object_storage_size (Lisp_Object obj, struct usage_stats *ustats)
 {
 #ifndef NEW_GC
-  const struct lrecord_implementation *imp =
-    XRECORD_LHEADER_IMPLEMENTATION (obj);
+  const struct lrecord_implementation *imp;
 #endif /* not NEW_GC */
-  Bytecount size = lisp_object_size (obj);
+  Bytecount size;
+
+  if (!LRECORDP (obj))
+    return 0;
+
+  size = lisp_object_size (obj);
 
 #ifdef NEW_GC
   return mc_alloced_storage_size (size, ustats);
 #else
+  imp = XRECORD_LHEADER_IMPLEMENTATION (obj);
   if (imp->frob_block_p)
     {
       Bytecount overhead =
@@ -4194,9 +4199,9 @@ itself.
   Lisp_Object val = Qnil;
   Lisp_Object stats_list;
 
-  if (INTP (object) || CHARP (object))
-    invalid_argument ("No memory associated with immediate objects (int or char)",
-		      object);
+  if (!LRECORDP (object))
+    invalid_argument
+      ("No memory associated with immediate objects (int or char)", object);
 
   stats_list = OBJECT_PROPERTY (object, memusage_stats_list);
 
@@ -4269,17 +4274,18 @@ lisp_object_memory_usage_full (Lisp_Object object, Bytecount *storage_size,
 			       struct generic_usage_stats *stats)
 {
   Bytecount total;
-  struct lrecord_implementation *imp = XRECORD_LHEADER_IMPLEMENTATION (object);
 
   total = lisp_object_storage_size (object, NULL);
   if (storage_size)
     *storage_size = total;
 
-  if (HAS_OBJECT_METH_P (object, memory_usage))
+  if (LRECORDP (object) && HAS_OBJECT_METH_P (object, memory_usage))
     {
       int i;
       struct generic_usage_stats gustats;
       Bytecount sum;
+      struct lrecord_implementation *imp =
+	XRECORD_LHEADER_IMPLEMENTATION (object);
 
       xzero (gustats);
       OBJECT_METH (object, memory_usage, (object, &gustats));
@@ -4318,6 +4324,46 @@ Bytecount
 lisp_object_memory_usage (Lisp_Object object)
 {
   return lisp_object_memory_usage_full (object, NULL, NULL, NULL, NULL);
+}
+
+static Bytecount
+tree_memory_usage_1 (Lisp_Object arg, int vectorp, int depth)
+{
+  Bytecount total = 0;
+
+  if (depth > 200)
+    return total;
+    
+  if (CONSP (arg))
+    {
+      SAFE_LIST_LOOP_3 (elt, arg, tail)
+	{
+	  total += lisp_object_memory_usage (tail);
+	  if (CONSP (elt) || VECTORP (elt))
+	    total += tree_memory_usage_1 (elt, vectorp, depth + 1);
+	  if (VECTORP (XCDR (tail))) /* hack for (a b . [c d]) */
+	    total += tree_memory_usage_1 (XCDR (tail), vectorp, depth +1);
+	}
+    }
+  else if (VECTORP (arg) && vectorp)
+    {
+      int i = XVECTOR_LENGTH (arg);
+      int j;
+      total += lisp_object_memory_usage (arg);
+      for (j = 0; j < i; j++)
+	{
+	  Lisp_Object elt = XVECTOR_DATA (arg) [j];
+	  if (CONSP (elt) || VECTORP (elt))
+	    total += tree_memory_usage_1 (elt, vectorp, depth + 1);
+	}
+    }
+  return total;
+}
+
+Bytecount
+tree_memory_usage (Lisp_Object arg, int vectorp)
+{
+  return tree_memory_usage_1 (arg, vectorp, 0);
 }
 
 #endif /* MEMORY_USAGE_STATS */

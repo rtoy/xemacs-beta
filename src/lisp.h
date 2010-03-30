@@ -2119,21 +2119,46 @@ EMACS_INT len;								\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
 		      tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
 
-
-#define PRIVATE_EXTERNAL_LIST_LOOP_6(elt, list, len, hare,		\
-				     tortoise, suspicion_length)	\
+#define PRIVATE_UNVERIFIED_LIST_LOOP_7(elt, list, len, hare,		\
+				       tortoise, suspicion_length,	\
+                                       signalp)				\
   for (tortoise = hare = list, len = 0;					\
 									\
        (CONSP (hare) ? ((elt = XCAR (hare)), 1) :			\
 	(NILP (hare) ? 0 :						\
-	 (signal_malformed_list_error (list), 0)));			\
+	 ((signalp ? signal_malformed_list_error (list) : 0), 0)));	\
 									\
        hare = XCDR (hare),						\
 	 (void)								\
 	 ((++len > suspicion_length)					\
 	  &&								\
 	  ((((len & 1) != 0) && (tortoise = XCDR (tortoise), 0)),	\
-	   (EQ (hare, tortoise) && (signal_circular_list_error (list), 0)))))
+	   (EQ (hare, tortoise) &&					\
+            ((signalp ? signal_circular_list_error (list) : 0), 0)))))
+
+#define PRIVATE_EXTERNAL_LIST_LOOP_6(elt, list, len, hare,		\
+				     tortoise, suspicion_length)	\
+  PRIVATE_UNVERIFIED_LIST_LOOP_7 (elt, list, len, hare, tortoise,	\
+                                  suspicion_length, 1)
+
+#define PRIVATE_SAFE_LIST_LOOP_6(elt, list, len, hare,			\
+				 tortoise, suspicion_length)		\
+  PRIVATE_UNVERIFIED_LIST_LOOP_7 (elt, list, len, hare, tortoise,	\
+                                  suspicion_length, 0)
+
+/* Similar to EXTERNAL_LIST_LOOP_2() but don't signal when an error
+   is detected, just stop. */
+#define SAFE_LIST_LOOP_2(elt, list)					\
+Lisp_Object elt, hare_##elt, tortoise_##elt;				\
+EMACS_INT len_##elt;							\
+PRIVATE_SAFE_LIST_LOOP_6 (elt, list, len_##elt, hare_##elt,		\
+		          tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
+
+#define SAFE_LIST_LOOP_3(elt, list, tail)				\
+Lisp_Object elt, tail, tortoise_##elt;					\
+EMACS_INT len_##elt;							\
+PRIVATE_SAFE_LIST_LOOP_6 (elt, list, len_##elt, tail,			\
+		          tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
 
 /* GET_LIST_LENGTH and GET_EXTERNAL_LIST_LENGTH:
 

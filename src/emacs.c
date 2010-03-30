@@ -1776,6 +1776,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_SCROLLBARS
       scrollbar_objects_create ();
 #endif
+      specifier_objects_create ();
 #ifdef HAVE_GTK
       ui_gtk_objects_create ();
 #endif
