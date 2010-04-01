@@ -1172,9 +1172,10 @@ font_enum_callback_1 (ENUMLOGFONTEXW *lpelfe,
    "family::::charset" for TrueType fonts, "family::size::charset"
    otherwise. */
 
-static int
+static Lisp_Object
 sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
-			 Lisp_Object UNUSED (pred))
+			 Lisp_Object UNUSED (pred),
+                         Lisp_Object UNUSED (key_function))
 {
   Ibyte *font1, *font2;
   Ibyte *c1, *c2;
@@ -1188,16 +1189,16 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
     5. Courier New over other families.
   */
 
-  /* The sort function should return > 0 if OBJ1 < OBJ2, < 0 otherwise.
+  /* The sort function should return non-nil if OBJ1 < OBJ2, nil otherwise.
      NOTE: This is backwards from the way qsort() works. */
 
   t1 = !NILP (XCDR (obj1));
   t2 = !NILP (XCDR (obj2));
 
   if (t1 && !t2)
-    return 1;
+    return Qt;
   if (t2 && !t1)
-    return -1;
+    return Qnil;
 
   font1 = XSTRING_DATA (XCAR (obj1));
   font2 = XSTRING_DATA (XCAR (obj2));
@@ -1209,9 +1210,9 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
   t2 = !qxestrcasecmp_ascii (c2 + 1, "western");
 
   if (t1 && !t2)
-    return 1;
+    return Qt;
   if (t2 && !t1)
-    return -1;
+    return Qnil;
 
   c1 -= 2;
   c2 -= 2;
@@ -1219,9 +1220,9 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
   t2 = *c2 == ':';
 
   if (t1 && !t2)
-    return 1;
+    return Qt;
   if (t2 && !t1)
-    return -1;
+    return Qnil;
 
   if (!t1 && !t2)
     {
@@ -1234,25 +1235,25 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
       t2 = qxeatoi (c2 + 1) - 10;
 
       if (abs (t1) < abs (t2))
-	return 1;
+	return Qt;
       else if (abs (t2) < abs (t1))
-	return -1;
+	return Qnil;
       else if (t1 < t2)
 	/* Prefer a smaller font over a larger one just as far away
 	   because the smaller one won't upset the total line height if it's
 	   just a few chars. */
-	return 1;
+	return Qt;
     }
 
   t1 = !qxestrncasecmp_ascii (font1, "courier new:", 12);
   t2 = !qxestrncasecmp_ascii (font2, "courier new:", 12);
 
   if (t1 && !t2)
-    return 1;
+    return Qt;
   if (t2 && !t1)
-    return -1;
+    return Qnil;
 
-  return -1;
+  return Qnil;
 }
 
 /*
@@ -1278,7 +1279,7 @@ mswindows_enumerate_fonts (HDC hdc)
   qxeEnumFontFamiliesEx (hdc, &logfont, (FONTENUMPROCW) font_enum_callback_1,
 			 (LPARAM) (&font_enum), 0);
 
-  return list_sort (font_enum.list, Qnil, sort_font_list_function);
+  return list_sort (font_enum.list, sort_font_list_function, Qnil, Qidentity);
 }
 
 static HFONT

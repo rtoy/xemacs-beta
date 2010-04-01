@@ -500,8 +500,7 @@ found."
     (if doc-fn
 	(funcall doc-fn apropos-accumulator))
     (setq apropos-accumulator
-	  (sort apropos-accumulator (lambda (a b)
-				      (string-lessp (car a) (car b)))))
+	  (sort* apropos-accumulator #'string-lessp :key #'car))
     (and apropos-label-face
 	 (or (symbolp apropos-label-face)
 	     (facep apropos-label-face)) ; XEmacs

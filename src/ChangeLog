@@ -1,3 +1,27 @@
+2010-03-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (STRING_DATA_TO_OBJECT_ARRAY)
+	(BIT_VECTOR_TO_OBJECT_ARRAY, c_merge_predicate_key)
+	(c_merge_predicate_nokey, list_merge, array_merge)
+	(list_array_merge_into_list, list_list_merge_into_array)
+	(list_array_merge_into_array, CHECK_KEY_ARGUMENT, Fmerge)
+	(list_sort, array_sort, FsortX):
+	Move #'sort*, #'fill, #'merge from cl-seq.el to C, extending the
+	implementations of Fsort, Ffillarray, and merge() to do so.
+
+	* keymap.c (keymap_submaps, map_keymap_sort_predicate)
+	(describe_map_sort_predicate):
+	Change the calling semantics of the C sort predicates to return a
+	non-nil Lisp object if the first argument is less than the second,
+	rather than C integers.
+
+	* fontcolor-msw.c (sort_font_list_function): 
+	* fileio.c (build_annotations):
+	* dired.c (Fdirectory_files):
+	* abbrev.c (Finsert_abbrev_table_description):
+	Call list_sort instead of Fsort, list_merge instead of merge() in
+	these functions.
+
 2010-03-29  Ben Wing  <ben@xemacs.org>
 
 	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):

@@ -3649,6 +3649,9 @@ the byte optimizer in those cases."
 			    t "Placeholders should each have been used once")))
 	,(compiled-function-stack-depth compiled))))))
 
+(define-compiler-macro stable-sort (&whole form &rest cl-rest)
+  (cons 'sort* (cdr form)))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)
