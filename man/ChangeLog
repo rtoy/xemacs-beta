@@ -1,3 +1,10 @@
+2010-04-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/lists.texi (Rearrangement):
+	Update the documentation of #'sort here, now that it accepts any
+	type of sequence and the KEY keyword argument. (Though this is
+	probably now the wrong place for this function, given that.)
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (A Summary of the Various XEmacs Modules):

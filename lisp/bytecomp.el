@@ -3510,8 +3510,8 @@ If FORM is a lambda or a macro, byte-compile it as a function."
                                 (null (memq 'quoted-lambda
                                             byte-compile-warnings))
                                 (byte-compile-warn
-                                 "Passing a quoted lambda to #'%s, forcing \
-function quoting" (car form))))
+                                 "Passing a quoted lambda (arg %d) to #'%s, \
+forcing function quoting" ,en (car form))))
                       (setcar fn 'function))))
           (byte-compile-normal-call form)))
 
@@ -3548,6 +3548,25 @@ function quoting" (car form))))
 	    "Discarding the result of #'maplist; maybe you meant #'mapl?"))
        (setq form (cons 'mapl (cdr form))))
   (byte-compile-funarg form))
+
+;; For when calls to #'sort or #'mapcar have more than two args, something
+;; recent XEmacs can handle, but GNU and 21.4 can't.
+(defmacro byte-compile-maybe-add-* (complex max)
+  `#'(lambda (form)
+       (when (> (length (cdr form)) ,max)
+         (when (memq 'callargs byte-compile-warnings)
+           (byte-compile-warn
+            "#'%s called with %d arguments, using #'%s instead"
+            (car form) (length (cdr form)) ',complex))
+         (setq form (cons ',complex (cdr form))))
+       (funcall (or (get ',complex 'byte-compile)
+                    'byte-compile-normal-call) form)))
+
+(defalias 'byte-compile-mapcar (byte-compile-maybe-add-* mapcar* 2))
+
+(defalias 'byte-compile-sort (byte-compile-maybe-add-* sort* 2))
+
+(defalias 'byte-compile-fillarray (byte-compile-maybe-add-* fill 2))
 
 ;; (function foo) must compile like 'foo, not like (symbol-function 'foo).
 ;; Otherwise it will be incompatible with the interpreter,
@@ -3725,7 +3744,8 @@ function quoting" (car form))))
 (byte-defop-compiler-1 while)
 (byte-defop-compiler-1 funcall)
 (byte-defop-compiler-1 apply byte-compile-funarg)
-(byte-defop-compiler-1 mapcar byte-compile-maybe-mapc)
+(byte-defop-compiler-1 mapcar byte-compile-mapcar)
+(byte-defop-compiler-1 mapcar* byte-compile-maybe-mapc)
 (byte-defop-compiler-1 mapatoms byte-compile-funarg)
 (byte-defop-compiler-1 mapconcat byte-compile-funarg)
 (byte-defop-compiler-1 mapc byte-compile-funarg)
@@ -3743,7 +3763,6 @@ function quoting" (car form))))
 (byte-defop-compiler-1 map-plist byte-compile-funarg)
 (byte-defop-compiler-1 map-range-table byte-compile-funarg)
 (byte-defop-compiler-1 map-syntax-table byte-compile-funarg)
-(byte-defop-compiler-1 mapcar* byte-compile-maybe-mapc)
 
 (byte-defop-compiler-1 remove-if byte-compile-funarg)
 (byte-defop-compiler-1 remove-if-not byte-compile-funarg)
@@ -3771,8 +3790,9 @@ function quoting" (car form))))
 (byte-defop-compiler-1 get-window-with-predicate byte-compile-funarg)
 
 (byte-defop-compiler-1 map byte-compile-funarg-2)
+(byte-defop-compiler-1 map-into byte-compile-funarg-2)
 (byte-defop-compiler-1 apropos-internal byte-compile-funarg-2)
-(byte-defop-compiler-1 sort byte-compile-funarg-2)
+(byte-defop-compiler-1 sort byte-compile-sort)
 (byte-defop-compiler-1 sort* byte-compile-funarg-2)
 (byte-defop-compiler-1 stable-sort byte-compile-funarg-2)
 (byte-defop-compiler-1 substitute-if byte-compile-funarg-2)
@@ -3793,6 +3813,7 @@ function quoting" (car form))))
 (byte-defop-compiler-1 let*)
 
 (byte-defop-compiler-1 integerp)
+(byte-defop-compiler-1 fillarray)
 
 (defun byte-compile-progn (form)
   (byte-compile-body-do-effect (cdr form)))

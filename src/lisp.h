@@ -5170,15 +5170,21 @@ EXFUN (Fremassq, 2);
 EXFUN (Freplace_list, 2);
 MODULE_API EXFUN (Freverse, 1);
 EXFUN (Fsafe_length, 1);
-EXFUN (Fsort, 2);
 EXFUN (Fstring_equal, 2);
 EXFUN (Fstring_lessp, 2);
 EXFUN (Fsubseq, 3);
 EXFUN (Fvalid_plist_p, 1);
 
-Lisp_Object list_sort (Lisp_Object, Lisp_Object,
-		       int (*) (Lisp_Object, Lisp_Object, Lisp_Object));
-Lisp_Object merge (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
+                        Lisp_Object (*c_predicate) (Lisp_Object o1,
+                                                    Lisp_Object o2,
+                                                    Lisp_Object pred,
+                                                    Lisp_Object keyf),
+                        Lisp_Object predicate, Lisp_Object key_func);
+Lisp_Object list_sort (Lisp_Object list,
+                       Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object, 
+                                                   Lisp_Object, Lisp_Object),
+                       Lisp_Object predicate, Lisp_Object key_func);
 
 void bump_string_modiff (Lisp_Object);
 Lisp_Object memq_no_quit (Lisp_Object, Lisp_Object);

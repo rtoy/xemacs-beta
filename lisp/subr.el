@@ -1784,8 +1784,7 @@ See also `special-operator-p', `subr-min-args', `subr-max-args',
 ;; they're used reasonably often, since they've been around for a long time
 ;; and they're portable to GNU.
 
-;; Used in fileio.c if format-annotate-function has a function binding
-;; (which it won't have before this file is loaded):
+;; No longer used in C, now list_merge() accepts a KEY argument.
 (defun car-less-than-car (a b)
   "Return t if the car of A is numerically less than the car of B."
   (< (car a) (car b)))
