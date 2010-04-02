@@ -42,6 +42,18 @@
 #define Bytecount ssize_t
 #endif /* emacs */
 
+#ifndef emacs
+# ifdef __cplusplus
+#  define BEGIN_C_DECLS extern "C" {
+#  define END_C_DECLS }
+# else
+#  define BEGIN_C_DECLS
+#  define END_C_DECLS
+# endif
+#endif /* emacs */
+
+BEGIN_C_DECLS
+
 /* POSIX says that <sys/types.h> must be included (by the caller) before
    <regex.h>.  */
 
@@ -534,5 +546,7 @@ enum regex_debug
   };
 
 extern int debug_regexps;
+
+END_C_DECLS
 
 #endif /* INCLUDED_regex_h_ */

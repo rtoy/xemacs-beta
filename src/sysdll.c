@@ -368,9 +368,9 @@ search_linked_libs (const struct mach_header * mh, const Ibyte *symbol)
 	  struct mach_header *wh;
 
 	  if ((wh = (struct mach_header *)
-	       my_find_image((Rawbyte *)
+	       my_find_image((const Chbyte *)
 			     (((struct dylib_command *) lc)->
-			      dylib.name.offset + (Rawbyte *) lc))))
+			      dylib.name.offset + (const Chbyte *) lc))))
 	    {
 	      Extbyte *symext =
 		ITEXT_TO_EXTERNAL (symbol, Qdll_symbol_encoding);
@@ -442,7 +442,7 @@ dll_variable (dll_handle h, const Ibyte *n)
   MAYBE_PREPEND_UNDERSCORE (n);
   next = ITEXT_TO_EXTERNAL (n, Qdll_variable_name_encoding);
 
-  sym = NSLookupSymbolInModule ((NSModule) h, n);
+  sym = NSLookupSymbolInModule ((NSModule) h, (const Chbyte *)n);
   if (sym == 0) return 0;
   return (dll_var) NSAddressOfSymbol (sym);
 }
