@@ -1528,7 +1528,13 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
 
   define_key_parser (list, &raw_key);
 
-  if (
+  /* The first zero is needed for Apple's i686-apple-darwin8-g++-4.0.1,
+     otherwise the build fails with:
+
+     In function ‘void key_desc_list_to_event(Lisp_Object, Lisp_Object, int)’:
+     cc1plus: error: expected primary-expression
+     cc1plus: error: expected `)'  */
+  if (0 ||
 #define INCLUDE_BUTTON_ZERO
 #define FROB(num)				\
       EQ (raw_key.keysym, Qbutton##num) ||	\
