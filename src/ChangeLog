@@ -1,5 +1,11 @@
 2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fns.c (FsortX, Ffill):
+	Don't try to be clever with the ascii_begin string header slot in
+	these function, just call init_string_ascii_begin().
+
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Avoid build failure, Apple's g++-4.0.1, Mac OS 10.4.
 	* sysdll.c (search_linked_libs, dll_variable): Correct some casts
 	for the C++ build.

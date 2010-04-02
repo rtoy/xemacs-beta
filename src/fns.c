@@ -2671,8 +2671,6 @@ arguments: (SEQUENCE PREDICATE &key (KEY #'IDENTITY))
   else if (STRINGP (sequence))
     {
       Ibyte *strdata = XSTRING_DATA (sequence);
-      Elemcount string_ascii_begin = 0;
-      Ichar ch;
 
       sequence_len = string_char_length (sequence);
 
@@ -2686,24 +2684,10 @@ arguments: (SEQUENCE PREDICATE &key (KEY #'IDENTITY))
       CHECK_LISP_WRITEABLE (sequence);
       for (i = 0; i < sequence_len; ++i)
         {
-          ch = XCHAR (sequence_carray[i]);
-          strdata += set_itext_ichar (strdata, ch);
-
-          if (string_ascii_begin <= i)
-            {
-              if (byte_ascii_p (ch))
-                {
-                  string_ascii_begin = i;
-                }
-              else
-                {
-                  string_ascii_begin = MAX_STRING_ASCII_BEGIN;
-                }
-            }
+          strdata += set_itext_ichar (strdata, XCHAR (sequence_carray[i]));
         }
 
-      XSET_STRING_ASCII_BEGIN (sequence, min (string_ascii_begin,
-                                              MAX_STRING_ASCII_BEGIN));
+      init_string_ascii_begin (sequence);
       bump_string_modiff (sequence);
       sledgehammer_check_ascii_begin (sequence);
     }
@@ -3836,10 +3820,7 @@ arguments: (SEQUENCE ITEM &key (START 0) END)
 	memcpy (p, item_buf, item_bytecount);
       *p = '\0';
 
-      XSET_STRING_ASCII_BEGIN (sequence,
-			       item_bytecount == 1 ?
-			       min (new_bytecount, MAX_STRING_ASCII_BEGIN) :
-			       0);
+      init_string_ascii_begin (sequence);
       bump_string_modiff (sequence);
       sledgehammer_check_ascii_begin (sequence);
     }
