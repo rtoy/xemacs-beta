@@ -1,3 +1,10 @@
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-char-unicode-data):
+	Don't give up if describe-char-use-cache is t and the database
+	isn't readable, warn and insert the entire UnicodeData.txt file
+	instead.
+
 2010-04-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-seq.el (fill, sort*, merge): Move these functions to fns.c.
