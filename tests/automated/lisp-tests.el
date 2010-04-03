@@ -2138,35 +2138,52 @@ via the hepatic alpha-tocopherol transfer protein")))
 		      for char being each element in-ref res
 		      do (setf char (int-to-char int-char))
 		      finally return res)))
-  (let ((equal-lists
-	 '((111111111111111111111111111111111111111111111111111
-	    111111111111111111111111111111111111111111111111111.0)
-	   (0 0.0 0.000 -0 -0.0 -0.000 #b0 0/5 -0/5)
-	   (21845 #b101010101010101 #x5555)
-	   (1.5 1.500000000000000000000000000000000000000000000000000000000
-		3/2)
-	   (-55 -110/2)
-	   ;; Can't use this, these values aren't `='.
-	   ;;(-12345678901234567890123457890123457890123457890123457890123457890
-	   ;; -12345678901234567890123457890123457890123457890123457890123457890.0)
-	   )))
-    (loop for li in equal-lists do
-      (loop for (x . tail) on li do
-	(loop for y in tail do
-	  (Assert (equalp x y))
-	  (Assert (equalp y x))))))
 
-  (let ((diff-list
-	 `(0 1 2 3 1000 5000000000 5555555555555555555555555555555555555
-	   -1 -2 -3 -1000 -5000000000 -5555555555555555555555555555555555555
-	   1/2 1/3 2/3 8/2 355/113 (/ 3/2 0.2) (/ 3/2 0.7)
-	   55555555555555555555555555555555555555555/2718281828459045
-	   0.111111111111111111111111111111111111111111111111111111111111111
-	   1e+300 1e+301 -1e+300 -1e+301)))
-    (loop for (x . tail) on diff-list do
-      (loop for y in tail do
-	(Assert (not (equalp x y)))
-	(Assert (not (equalp y x))))))
+  (macrolet
+      ((equalp-equal-list-tests (equal-list)
+	 (let (res)
+	   (setq equal-lists (eval equal-list))
+	   (loop for li in equal-lists do
+	     (loop for (x . tail) on li do
+	       (loop for y in tail do
+		 (push `(Assert (equalp ,(quote-maybe x)
+					,(quote-maybe y))) res)
+		 (push `(Assert (equalp ,(quote-maybe y)
+					,(quote-maybe x))) res))))
+	   (cons 'progn (nreverse res))))
+       (equalp-diff-list-tests (diff-list)
+	 (let (res)
+	   (setq diff-list (eval diff-list))
+	   (loop for (x . tail) on diff-list do
+	     (loop for y in tail do
+	       (push `(Assert (not (equalp ,(quote-maybe x)
+					   ,(quote-maybe y)))) res)
+	       (push `(Assert (not (equalp ,(quote-maybe y)
+					   ,(quote-maybe x)))) res)))
+	   (cons 'progn (nreverse res)))))
+    (equalp-equal-list-tests
+     `(,@(when (featurep 'bignum)
+	  (read "((111111111111111111111111111111111111111111111111111
+		111111111111111111111111111111111111111111111111111.0))"))
+       (0 0.0 0.000 -0 -0.0 -0.000 #b0 ,@(when (featurep 'ratio) '(0/5 -0/5)))
+       (21845 #b101010101010101 #x5555)
+       (1.5 1.500000000000000000000000000000000000000000000000000000000
+	    ,@(when (featurep 'ratio) '(3/2)))
+       ;; Can't use this, these values aren't `='.
+       ;;(-12345678901234567890123457890123457890123457890123457890123457890
+       ;; -12345678901234567890123457890123457890123457890123457890123457890.0)
+       (-55 -55.000 ,@(when (featurep 'ratio) '(-110/2)))))
+    (equalp-diff-list-tests
+     `(0 1 2 3 1000 5000000000
+       ,@(when (featurep 'bignum)
+	   (read "(5555555555555555555555555555555555555
+                       -5555555555555555555555555555555555555)"))
+       -1 -2 -3 -1000 -5000000000 
+       1/2 1/3 2/3 8/2 355/113
+       ,@(when (featurep 'ratio) (mapcar* #'/ '(3/2 3/2) '(0.2 0.7)))
+       55555555555555555555555555555555555555555/2718281828459045
+       0.111111111111111111111111111111111111111111111111111111111111111
+       1e+300 1e+301 -1e+300 -1e+301)))
 
   (Assert (equalp "hi there" "Hi There")
 	  "checking equalp isn't case-sensitive")
@@ -2231,7 +2248,7 @@ via the hepatic alpha-tocopherol transfer protein")))
 		       (let ((aragh (make-char-table 'generic)))
 			 (put-char-table ?\u0080 "hi there" aragh)
 			 aragh)))
-	  "checking #'equalp fails correctly, char-tables")
+	  "checking #'equalp fails correctly, char-tables"))
 
 ;; There are more tests available for equalp here: 
 ;;
