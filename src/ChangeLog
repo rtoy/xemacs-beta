@@ -1,3 +1,11 @@
+2010-04-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Ffill):
+	Be much more careful about resizing a string argument, update
+	pointers to within the string data that may have been relocated
+	with the string resize. Fixes a test hang reported by Vin Shelton;
+	thanks, Vin.
+
 2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (FsortX, Ffill):

@@ -3795,10 +3795,9 @@ arguments: (SEQUENCE ITEM &key (START 0) END)
  retry:
   if (STRINGP (sequence))
     {
-      Bytecount old_bytecount, new_bytecount, item_bytecount;
+      Bytecount prefix_bytecount, item_bytecount, delta;
       Ibyte item_buf[MAX_ICHAR_LEN];
-      Ibyte *p;
-      Ibyte *pend;
+      Ibyte *p, *pend;
 
       CHECK_CHAR_COERCE_INT (item);
 
@@ -3808,17 +3807,26 @@ arguments: (SEQUENCE ITEM &key (START 0) END)
 
       p = XSTRING_DATA (sequence);
       p = (Ibyte *) itext_n_addr (p, starting);
-      old_bytecount = p - XSTRING_DATA (sequence);
+      prefix_bytecount = p - XSTRING_DATA (sequence);
 
       ending = min (ending, string_char_length (sequence));
       pend = (Ibyte *) itext_n_addr (p, ending - starting); 
+      delta = ((ending - starting) * item_bytecount) - (pend - p);
 
-      new_bytecount = old_bytecount + (item_bytecount * (ending - starting));
-      resize_string (sequence, -1, new_bytecount - old_bytecount);
+      /* Resize the string if the bytecount for the area being modified is
+	 different. */
+      if (delta)
+	{
+	  resize_string (sequence, prefix_bytecount, delta);
+	  /* No need to zero-terminate the string, resize_string has done
+	     that for us. */
+	  p = XSTRING_DATA (sequence) + prefix_bytecount;
+	  pend = p + ((ending - starting) * item_bytecount);
+	}
 
       for (; p < pend; p += item_bytecount)
 	memcpy (p, item_buf, item_bytecount);
-      *p = '\0';
+
 
       init_string_ascii_begin (sequence);
       bump_string_modiff (sequence);
