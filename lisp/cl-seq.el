@@ -176,26 +176,6 @@ otherwise, FUNCTION is called with no arguments, and its result returned."
 				  (cl-check-key (pop cl-seq))))))
       cl-accum)))
 
-(defun fill (seq item &rest cl-keys)
-  "Fill the elements of SEQ with ITEM.
-Keywords supported:  :start :end
-:start and :end specify a subsequence of SEQ; see `remove*' for more
-information."
-  (cl-parsing-keywords ((:start 0) :end) ()
-    (if (listp seq)
-	(let ((p (nthcdr cl-start seq))
-	      (n (if cl-end (- cl-end cl-start) 8000000)))
-	  (while (and p (>= (setq n (1- n)) 0))
-	    (setcar p item)
-	    (setq p (cdr p))))
-      (or cl-end (setq cl-end (length seq)))
-      (if (and (= cl-start 0) (= cl-end (length seq)))
-	  (fillarray seq item)
-	(while (< cl-start cl-end)
-	  (aset seq cl-start item)
-	  (setq cl-start (1+ cl-start)))))
-    seq))
-
 (defun replace (cl-seq1 cl-seq2 &rest cl-keys)
   "Replace the elements of SEQ1 with the elements of SEQ2.
 SEQ1 is destructively modified, then returned.
@@ -670,49 +650,16 @@ of SEQ2."
 	  (if cl-from-end (setq cl-end2 cl-pos) (setq cl-start2 (1+ cl-pos))))
 	(and (< cl-start2 cl-end2) cl-pos)))))
 
-(defun sort* (cl-seq cl-pred &rest cl-keys)
-  "Sort the argument SEQUENCE according to PREDICATE.
-This is a destructive function; it reuses the storage of SEQUENCE if possible.
-Keywords supported:  :key
-:key specifies a one-argument function that transforms elements of SEQUENCE
-into \"comparison keys\" before the test predicate is applied.  See
-`member*' for more information."
-  (if (nlistp cl-seq)
-      (replace cl-seq (apply 'sort* (append cl-seq nil) cl-pred cl-keys))
-    (cl-parsing-keywords (:key) ()
-      (if (memq cl-key '(nil identity))
-	  (sort cl-seq cl-pred)
-	(sort cl-seq (function (lambda (cl-x cl-y)
-				 (funcall cl-pred (funcall cl-key cl-x)
-					  (funcall cl-key cl-y)))))))))
-
 (defun stable-sort (cl-seq cl-pred &rest cl-keys)
   "Sort the argument SEQUENCE stably according to PREDICATE.
 This is a destructive function; it reuses the storage of SEQUENCE if possible.
 Keywords supported:  :key
 :key specifies a one-argument function that transforms elements of SEQUENCE
 into \"comparison keys\" before the test predicate is applied.  See
-`member*' for more information."
-  (apply 'sort* cl-seq cl-pred cl-keys))
+`member*' for more information.
 
-(defun merge (cl-type cl-seq1 cl-seq2 cl-pred &rest cl-keys)
-  "Destructively merge the two sequences to produce a new sequence.
-TYPE is the sequence type to return, SEQ1 and SEQ2 are the two
-argument sequences, and PRED is a `less-than' predicate on the elements.
-Keywords supported:  :key
-:key specifies a one-argument function that transforms elements of SEQ1 and
-SEQ2 into \"comparison keys\" before the test predicate is applied.  See
-`member*' for more information."
-  (or (listp cl-seq1) (setq cl-seq1 (append cl-seq1 nil)))
-  (or (listp cl-seq2) (setq cl-seq2 (append cl-seq2 nil)))
-  (cl-parsing-keywords (:key) ()
-    (let ((cl-res nil))
-      (while (and cl-seq1 cl-seq2)
-	(if (funcall cl-pred (cl-check-key (car cl-seq2))
-		     (cl-check-key (car cl-seq1)))
-	    (push (pop cl-seq2) cl-res)
-	  (push (pop cl-seq1) cl-res)))
-      (coerce (nconc (nreverse cl-res) cl-seq1 cl-seq2) cl-type))))
+arguments: (SEQUENCE PREDICATE &key (KEY #'IDENTITY))"
+  (apply 'sort* cl-seq cl-pred cl-keys))
 
 ;;; See compiler macro in cl-macs.el
 (defun member* (cl-item cl-list &rest cl-keys)

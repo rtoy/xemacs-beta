@@ -54,9 +54,9 @@ Boston, MA 02111-1307, USA.  */
 /* NOTE: This symbol is also used in lread.c */
 #define FEATUREP_SYNTAX
 
-Lisp_Object Qstring_lessp;
+Lisp_Object Qstring_lessp, Qsort, Qmerge, Qfill;
 Lisp_Object Qidentity;
-Lisp_Object Qvector, Qarray, Qbit_vector;
+Lisp_Object Qvector, Qarray, Qbit_vector, QsortX;
 
 Lisp_Object Qbase64_conversion_error;
 
@@ -1936,100 +1936,82 @@ See also the function `nreverse', which is used more often.
   return reversed_list;
 }
 
-static Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
-                               Lisp_Object lisp_arg,
-                               int (*pred_fn) (Lisp_Object, Lisp_Object,
-                                               Lisp_Object lisp_arg));
-
-/* The sort function should return > 0 if OBJ1 < OBJ2, < 0 otherwise.
-   NOTE: This is backwards from the way qsort() works. */
-
-Lisp_Object
-list_sort (Lisp_Object list,
-           Lisp_Object lisp_arg,
-           int (*pred_fn) (Lisp_Object obj1, Lisp_Object obj2,
-                           Lisp_Object lisp_arg))
+static Lisp_Object
+c_merge_predicate_key (Lisp_Object obj1, Lisp_Object obj2,
+                       Lisp_Object pred, Lisp_Object key_func)
 {
-  struct gcpro gcpro1, gcpro2, gcpro3;
-  Lisp_Object back, tem;
-  Lisp_Object front = list;
-  Lisp_Object len = Flength (list);
+  struct gcpro gcpro1;
+  Lisp_Object args[3];
 
-  if (XINT (len) < 2)
-    return list;
+  /* We could use call2() and call3() here, but we're called O(nlogn) times
+     for a sequence of length n, it make some sense to inline them. */
+  args[0] = key_func;
+  args[1] = obj1;
+  args[2] = Qnil;
 
-  len = make_int (XINT (len) / 2 - 1);
-  tem = Fnthcdr (len, list);
-  back = Fcdr (tem);
-  Fsetcdr (tem, Qnil);
+  GCPRO1 (args[0]);
+  gcpro1.nvars = countof (args);
 
-  GCPRO3 (front, back, lisp_arg);
-  front = list_sort (front, lisp_arg, pred_fn);
-  back = list_sort (back, lisp_arg, pred_fn);
-  UNGCPRO;
-  return list_merge (front, back, lisp_arg, pred_fn);
+  obj1 = IGNORE_MULTIPLE_VALUES (Ffuncall (2, args));
+
+  args[1] = obj2;
+  obj2 = IGNORE_MULTIPLE_VALUES (Ffuncall (2, args));
+
+  args[0] = pred;
+  args[1] = obj1;
+  args[2] = obj2;
+
+  RETURN_UNGCPRO (IGNORE_MULTIPLE_VALUES (Ffuncall (countof (args), args)));
 }
-
-
-static int
-merge_pred_function (Lisp_Object obj1, Lisp_Object obj2,
-                     Lisp_Object pred)
-{
-  Lisp_Object tmp;
-
-  /* prevents the GC from happening in call2 */
-  /* Emacs' GC doesn't actually relocate pointers, so this probably
-     isn't strictly necessary */
-  int speccount = begin_gc_forbidden ();
-  tmp = call2 (pred, obj1, obj2);
-  unbind_to (speccount);
-
-  if (NILP (tmp))
-    return -1;
-  else
-    return 1;
-}
-
-DEFUN ("sort", Fsort, 2, 2, 0, /*
-Sort LIST, stably, comparing elements using PREDICATE.
-Returns the sorted list.  LIST is modified by side effects.
-PREDICATE is called with two elements of LIST, and should return T
-if the first element is "less" than the second.
-*/
-       (list, predicate))
-{
-  return list_sort (list, predicate, merge_pred_function);
-}
-
-Lisp_Object
-merge (Lisp_Object org_l1, Lisp_Object org_l2,
-       Lisp_Object pred)
-{
-  return list_merge (org_l1, org_l2, pred, merge_pred_function);
-}
-
 
 static Lisp_Object
+c_merge_predicate_nokey (Lisp_Object obj1, Lisp_Object obj2,
+                         Lisp_Object pred, Lisp_Object UNUSED (key_func))
+{
+  struct gcpro gcpro1;
+  Lisp_Object args[3];
+
+  /* This is (almost) the implementation of call2, it makes some sense to
+     inline it here. */
+  args[0] = pred;
+  args[1] = obj1;
+  args[2] = obj2;
+
+  GCPRO1 (args[0]);
+  gcpro1.nvars = countof (args);
+
+  RETURN_UNGCPRO (IGNORE_MULTIPLE_VALUES (Ffuncall (countof (args), args)));
+}
+
+Lisp_Object
 list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
-            Lisp_Object lisp_arg,
-            int (*pred_fn) (Lisp_Object, Lisp_Object, Lisp_Object lisp_arg))
+            Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object,
+                                        Lisp_Object, Lisp_Object),
+            Lisp_Object predicate, Lisp_Object key_func)
 {
   Lisp_Object value;
   Lisp_Object tail;
   Lisp_Object tem;
   Lisp_Object l1, l2;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  int looped = 0;
 
   l1 = org_l1;
   l2 = org_l2;
   tail = Qnil;
   value = Qnil;
 
+  if (NULL == c_predicate)
+    {
+      c_predicate = EQ (key_func, Qidentity) ?
+        c_merge_predicate_nokey : c_merge_predicate_key;
+    }
+
   /* It is sufficient to protect org_l1 and org_l2.
      When l1 and l2 are updated, we copy the new values
      back into the org_ vars.  */
 
-  GCPRO4 (org_l1, org_l2, lisp_arg, value);
+  GCPRO4 (org_l1, org_l2, predicate, value);
 
   while (1)
     {
@@ -2050,7 +2032,7 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
 	  return value;
 	}
 
-      if (((*pred_fn) (Fcar (l2), Fcar (l1), lisp_arg)) < 0)
+      if (NILP (c_predicate (Fcar (l2), Fcar (l1), predicate, key_func)))
 	{
 	  tem = l1;
 	  l1 = Fcdr (l1);
@@ -2067,9 +2049,666 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
       else
 	Fsetcdr (tail, tem);
       tail = tem;
+
+      if (++looped % CIRCULAR_LIST_SUSPICION_LENGTH) continue;
+
+      /* Just check the lists aren't circular:*/
+      {
+        EXTERNAL_LIST_LOOP_1 (l1)
+          {
+          }
+      }
+      {
+        EXTERNAL_LIST_LOOP_1 (l2)
+          {
+          }
+      }
     }
 }
 
+static void
+array_merge (Lisp_Object *dest, Elemcount dest_len,
+             Lisp_Object *front, Elemcount front_len,
+             Lisp_Object *back, Elemcount back_len,
+             Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object,
+                                         Lisp_Object, Lisp_Object),
+             Lisp_Object predicate, Lisp_Object key_func)
+{
+  Elemcount ii, fronting, backing;
+  Lisp_Object *front_staging = front;
+  Lisp_Object *back_staging = back;
+  struct gcpro gcpro1, gcpro2;
+
+  assert (dest_len == (back_len + front_len));
+
+  if (0 == dest_len)
+    {
+      return;
+    }
+
+  if (front >= dest && front < (dest + dest_len))
+    {
+      front_staging = alloca_array (Lisp_Object, front_len);
+
+      for (ii = 0; ii < front_len; ++ii)
+        {
+          front_staging[ii] = front[ii];
+        }
+    }
+
+  if (back >= dest && back < (dest + dest_len))
+    {
+      back_staging = alloca_array (Lisp_Object, back_len);
+
+      for (ii = 0; ii < back_len; ++ii)
+        {
+          back_staging[ii] = back[ii];
+        }
+    }
+
+  GCPRO2 (front_staging[0], back_staging[0]);
+  gcpro1.nvars = front_len;
+  gcpro2.nvars = back_len;
+
+  for (ii = fronting = backing = 0; ii < dest_len; ++ii)
+    {
+      if (fronting >= front_len)
+        {
+          while (ii < dest_len)
+            {
+              dest[ii] = back_staging[backing];
+              ++ii, ++backing;
+            }
+          UNGCPRO;
+          return;
+        }
+
+      if (backing >= back_len)
+        {
+          while (ii < dest_len)
+            {
+              dest[ii] = front_staging[fronting];
+              ++ii, ++fronting;
+            }
+          UNGCPRO;
+          return;
+        }
+
+      if (NILP (c_predicate (back_staging[backing], front_staging[fronting],
+                             predicate, key_func)))
+        {
+          dest[ii] = front_staging[fronting];
+          ++fronting;
+        }
+      else
+        {
+          dest[ii] = back_staging[backing];
+          ++backing;
+        }
+    }
+
+  UNGCPRO;
+}
+
+static Lisp_Object
+list_array_merge_into_list (Lisp_Object list,
+                            Lisp_Object *array, Elemcount array_len,
+                            Lisp_Object (*c_predicate) (Lisp_Object,
+                                                        Lisp_Object,
+                                                        Lisp_Object,
+                                                        Lisp_Object),
+                            Lisp_Object predicate, Lisp_Object key_func,
+                            Boolint reverse_order)
+{
+  Lisp_Object tail = Qnil, value = Qnil;
+  struct gcpro gcpro1, gcpro2, gcpro3;
+  Elemcount array_index = 0;
+  int looped = 0;
+
+  GCPRO3 (list, tail, value);
+
+  while (1)
+    {
+      if (NILP (list))
+        {
+          UNGCPRO;
+
+          if (NILP (tail))
+            {
+              return Flist (array_len, array);
+            }
+
+          Fsetcdr (tail, Flist (array_len - array_index, array + array_index));
+          return value;
+        }
+
+      if (array_index >= array_len)
+        {
+          UNGCPRO;
+          if (NILP (tail))
+            {
+              return list;
+            }
+
+          Fsetcdr (tail, list);
+          return value;
+        }
+
+
+      if (reverse_order ?
+          !NILP (c_predicate (Fcar (list), array [array_index], predicate,
+                              key_func)) :
+          NILP (c_predicate (array [array_index], Fcar (list), predicate,
+                             key_func)))
+        {
+          if (NILP (tail))
+            {
+              value = tail = list;
+            }
+          else
+            {
+              Fsetcdr (tail, list);
+              tail = XCDR (tail);
+            }
+
+          list = Fcdr (list);
+        }
+      else
+        {
+          if (NILP (tail))
+            {
+              value = tail = Fcons (array [array_index], Qnil);
+            }
+          else
+            {
+              Fsetcdr (tail, Fcons (array [array_index], tail));
+              tail = XCDR (tail);
+            }
+          ++array_index;
+        }
+
+      if (++looped % CIRCULAR_LIST_SUSPICION_LENGTH) continue;
+
+      {
+        EXTERNAL_LIST_LOOP_1 (list)
+          {
+          }
+      }
+    }
+}
+
+static void
+list_list_merge_into_array (Lisp_Object *output, Elemcount output_len,
+                            Lisp_Object list_one, Lisp_Object list_two,
+                            Lisp_Object (*c_predicate) (Lisp_Object,
+                                                        Lisp_Object,
+                                                        Lisp_Object,
+                                                        Lisp_Object),
+                            Lisp_Object predicate, Lisp_Object key_func)
+{
+  Elemcount output_index = 0;
+
+  while (output_index < output_len)
+    {
+      if (NILP (list_one))
+        {
+          while (output_index < output_len)
+            {
+              output [output_index] = Fcar (list_two);
+              list_two = Fcdr (list_two), ++output_index;
+            }
+          return;
+        }
+
+      if (NILP (list_two))
+        {
+          while (output_index < output_len)
+            {
+              output [output_index] = Fcar (list_one);
+              list_one = Fcdr (list_one), ++output_index;
+            }
+          return;
+        }
+
+      if (NILP (c_predicate (Fcar (list_two), Fcar (list_one), predicate,
+                             key_func)))
+        {
+          output [output_index] = XCAR (list_one);
+          list_one = XCDR (list_one);
+        }
+      else
+        {
+          output [output_index] = XCAR (list_two);
+          list_two = XCDR (list_two);
+        }
+
+      ++output_index;
+
+      /* No need to check for circularity. */
+    }
+}
+
+static void
+list_array_merge_into_array (Lisp_Object *output, Elemcount output_len,
+                             Lisp_Object list,
+                             Lisp_Object *array, Elemcount array_len,
+                             Lisp_Object (*c_predicate) (Lisp_Object,
+                                                         Lisp_Object,
+                                                         Lisp_Object,
+                                                         Lisp_Object),
+                             Lisp_Object predicate, Lisp_Object key_func,
+                             Boolint reverse_order)
+{
+  Elemcount output_index = 0, array_index = 0;
+
+  while (output_index < output_len)
+    {
+      if (NILP (list))
+        {
+          if (array_len - array_index != output_len - output_index)
+            {
+              invalid_state ("List length modified during merge", Qunbound);
+            }
+
+          while (array_index < array_len)
+            {
+              output [output_index++] = array [array_index++];
+            }
+
+          return;
+        }
+
+      if (array_index >= array_len)
+        {
+          while (output_index < output_len)
+            {
+              output [output_index++] = Fcar (list);
+              list = Fcdr (list);
+            }
+
+          return;
+        }
+
+      if (reverse_order ? 
+          !NILP (c_predicate (Fcar (list), array [array_index], predicate,
+                              key_func)) :
+          NILP (c_predicate (array [array_index], Fcar (list), predicate,
+                             key_func)))
+        {
+          output [output_index] = XCAR (list);
+          list = XCDR (list);
+        }
+      else
+        {
+          output [output_index] = array [array_index];
+          ++array_index;
+        }
+
+      ++output_index;
+    }
+}
+
+#define STRING_DATA_TO_OBJECT_ARRAY(strdata, c_array, counter, len)     \
+  do {                                                                  \
+    c_array = alloca_array (Lisp_Object, len);                          \
+    for (counter = 0; counter < len; ++counter)                         \
+      {                                                                 \
+        c_array[counter] = make_char (itext_ichar (strdata));           \
+        INC_IBYTEPTR (strdata);                                         \
+      }                                                                 \
+  } while (0)
+
+#define BIT_VECTOR_TO_OBJECT_ARRAY(v, c_array, counter, len) do {       \
+    c_array = alloca_array (Lisp_Object, len);                          \
+    for (counter = 0; counter < len; ++counter)                         \
+      {                                                                 \
+        c_array[counter] = make_int (bit_vector_bit (v, counter));      \
+      }                                                                 \
+  } while (0)
+
+/* This macro might eventually find a better home than here. */
+
+#define CHECK_KEY_ARGUMENT(key, c_predicate)				\
+    do {								\
+      if (NILP (key))							\
+	{								\
+	  key = Qidentity;						\
+	}								\
+									\
+      if (EQ (key, Qidentity))						\
+	{								\
+	  c_predicate = c_merge_predicate_nokey;			\
+	}								\
+      else								\
+	{								\
+	  key = indirect_function (key, 1);				\
+	  c_predicate = c_merge_predicate_key;				\
+	}								\
+    } while (0)
+
+DEFUN ("merge", Fmerge, 4, MANY, 0, /*
+Destructively merge SEQUENCE-ONE and SEQUENCE-TWO, producing a new sequence.
+
+TYPE is the type of sequence to return.  PREDICATE is a `less-than'
+predicate on the elements.
+
+Optional keyword argument KEY is a function used to extract an object to be
+used for comparison from each element of SEQUENCE-ONE and SEQUENCE-TWO.
+
+arguments: (TYPE SEQUENCE-ONE SEQUENCE-TWO PREDICATE &key (KEY #'IDENTITY))
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object type = args[0], sequence_one = args[1], sequence_two = args[2],
+    predicate = args[3], result = Qnil;
+  Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object);
+
+  PARSE_KEYWORDS (Qmerge, nargs, args, 4, 1, (key), NULL, 0);
+
+  CHECK_SEQUENCE (sequence_one);
+  CHECK_SEQUENCE (sequence_two);
+
+  CHECK_KEY_ARGUMENT (key, c_predicate);
+
+  if (EQ (type, Qlist) && (LISTP (sequence_one) || LISTP (sequence_two)))
+    {
+      if (NILP (sequence_two))
+        {
+          result = Fappend (2, args + 1);
+        }
+      else if (NILP (sequence_one))
+        {
+          args[3] = Qnil; /* Overwriting PREDICATE, and losing its GC
+                             protection, but that doesn't matter. */
+          result = Fappend (2, args + 2);
+        }
+      else if (CONSP (sequence_one) && CONSP (sequence_two))
+	{
+	  result = list_merge (sequence_one, sequence_two, c_predicate,
+                               predicate, key);
+	}
+      else
+        {
+          Lisp_Object *array_storage, swap;
+          Elemcount array_length, i;
+          Boolint reverse_order = 0;
+
+          if (!CONSP (sequence_one))
+            {
+              /* Make sequence_one the cons, sequence_two the array: */
+              swap = sequence_one;
+              sequence_one = sequence_two;
+              sequence_two = swap;
+              reverse_order = 1;
+            }
+
+          if (VECTORP (sequence_two))
+            {
+              array_storage = XVECTOR_DATA (sequence_two);
+              array_length = XVECTOR_LENGTH (sequence_two);
+            }
+          else if (STRINGP (sequence_two))
+            {
+              Ibyte *strdata = XSTRING_DATA (sequence_two);
+              array_length = string_char_length (sequence_two);
+              /* No need to GCPRO, characters are immediate. */
+              STRING_DATA_TO_OBJECT_ARRAY (strdata, array_storage, i,
+                                           array_length);
+
+            }
+          else
+            {
+              Lisp_Bit_Vector *v = XBIT_VECTOR (sequence_two);
+              array_length = bit_vector_length (v);
+              /* No need to GCPRO, fixnums are immediate. */
+              BIT_VECTOR_TO_OBJECT_ARRAY (v, array_storage, i, array_length);
+            }
+
+          result = list_array_merge_into_list (sequence_one,
+                                               array_storage, array_length,
+                                               c_predicate,
+                                               predicate, key,
+                                               reverse_order);
+        }
+    }
+  else
+    {
+      Elemcount sequence_one_len = XINT (Flength (sequence_one)),
+        sequence_two_len = XINT (Flength (sequence_two)), i;
+      Elemcount output_len = 1 + sequence_one_len + sequence_two_len;
+      Lisp_Object *output = alloca_array (Lisp_Object, output_len),
+        *sequence_one_storage = NULL, *sequence_two_storage = NULL;
+      Boolint do_coerce = !(EQ (type, Qvector) || EQ (type, Qstring)
+                            || EQ (type, Qbit_vector) || EQ (type, Qlist));
+      Ibyte *strdata = NULL;
+      Lisp_Bit_Vector *v = NULL;
+      struct gcpro gcpro1;
+
+      output[0] = do_coerce ? Qlist : type;
+      for (i = 1; i < output_len; ++i)
+	{
+	  output[i] = Qnil;
+	}
+
+      GCPRO1 (output[0]);
+      gcpro1.nvars = output_len;
+
+      if (VECTORP (sequence_one))
+        {
+          sequence_one_storage = XVECTOR_DATA (sequence_one);
+        }
+      else if (STRINGP (sequence_one))
+        {
+          strdata = XSTRING_DATA (sequence_one);
+          STRING_DATA_TO_OBJECT_ARRAY (strdata, sequence_one_storage,
+                                       i, sequence_one_len);
+        }
+      else if (BIT_VECTORP (sequence_one))
+        {
+          v = XBIT_VECTOR (sequence_one);
+          BIT_VECTOR_TO_OBJECT_ARRAY (v, sequence_one_storage,
+                                      i, sequence_one_len);
+        }
+
+      if (VECTORP (sequence_two))
+        {
+          sequence_two_storage = XVECTOR_DATA (sequence_two);
+        }
+      else if (STRINGP (sequence_two))
+        {
+          strdata = XSTRING_DATA (sequence_two);
+          STRING_DATA_TO_OBJECT_ARRAY (strdata, sequence_two_storage,
+                                       i, sequence_two_len);
+        }
+      else if (BIT_VECTORP (sequence_two))
+        {
+          v = XBIT_VECTOR (sequence_two);
+          BIT_VECTOR_TO_OBJECT_ARRAY (v, sequence_two_storage,
+                                      i, sequence_two_len);
+        }
+
+      if (LISTP (sequence_one) && LISTP (sequence_two))
+        {
+          list_list_merge_into_array (output + 1, output_len - 1,
+                                      sequence_one, sequence_two,
+                                      c_predicate, predicate,
+                                      key);
+        }
+      else if (LISTP (sequence_one))
+        {
+          list_array_merge_into_array (output + 1, output_len - 1,
+                                       sequence_one,
+                                       sequence_two_storage,
+                                       sequence_two_len,
+                                       c_predicate, predicate,
+                                       key, 0);
+        }
+      else if (LISTP (sequence_two))
+        {
+          list_array_merge_into_array (output + 1, output_len - 1,
+                                       sequence_two,
+                                       sequence_one_storage,
+                                       sequence_one_len,
+                                       c_predicate, predicate,
+                                       key, 1);
+        }
+      else
+        {
+          array_merge (output + 1, output_len - 1,
+                       sequence_one_storage, sequence_one_len,
+                       sequence_two_storage, sequence_two_len,
+                       c_predicate, predicate,
+                       key);
+        }
+
+      result = Ffuncall (output_len, output);
+
+      if (do_coerce)
+	{
+	  result = call2 (Qcoerce, result, type);
+	}
+
+      UNGCPRO;
+    }
+
+  return result;
+}
+
+/* The sort function should return non-nil if OBJ1 < OBJ2, nil otherwise.
+   NOTE: This is backwards from the way qsort() works. */
+Lisp_Object
+list_sort (Lisp_Object list,
+           Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object, 
+                                       Lisp_Object, Lisp_Object),
+           Lisp_Object predicate, Lisp_Object key_func)
+{
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  Lisp_Object back, tem;
+  Lisp_Object front = list;
+  Lisp_Object len = Flength (list);
+
+  if (XINT (len) < 2)
+    return list;
+
+  if (NULL == c_predicate)
+    {
+      c_predicate = EQ (key_func, Qidentity) ? c_merge_predicate_nokey :
+        c_merge_predicate_key;
+    }
+
+  len = make_int (XINT (len) / 2 - 1);
+  tem = Fnthcdr (len, list);
+  back = Fcdr (tem);
+  Fsetcdr (tem, Qnil);
+
+  GCPRO4 (front, back, predicate, key_func);
+  front = list_sort (front, c_predicate, predicate, key_func);
+  back = list_sort (back, c_predicate, predicate, key_func);
+
+  RETURN_UNGCPRO (list_merge (front, back, c_predicate, predicate, key_func));
+}
+
+static void
+array_sort (Lisp_Object *array, Elemcount array_len,
+            Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object, 
+                                        Lisp_Object, Lisp_Object),
+            Lisp_Object predicate, Lisp_Object key_func)
+{
+  Elemcount split;
+
+  if (array_len < 2)
+    return;
+
+  split = array_len / 2;
+
+  array_sort (array, split, c_predicate, predicate, key_func);
+  array_sort (array + split, array_len - split, c_predicate, predicate,
+	      key_func);
+  array_merge (array, array_len, array, split, array + split,
+	       array_len - split, c_predicate, predicate, key_func);
+}            
+
+DEFUN ("sort*", FsortX, 2, MANY, 0, /*
+Sort SEQUENCE, comparing elements using PREDICATE.
+Returns the sorted sequence.  SEQUENCE is modified by side effect.
+
+PREDICATE is called with two elements of SEQUENCE, and should return t if
+the first element is `less' than the second.
+
+Optional keyword argument KEY is a function used to extract an object to be
+used for comparison from each element of SEQUENCE.
+
+In this implementation, sorting is always stable; but call `stable-sort' if
+this stability is important to you, other implementations may not make the
+same guarantees.
+
+arguments: (SEQUENCE PREDICATE &key (KEY #'IDENTITY))
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object sequence = args[0], predicate = args[1];
+  Lisp_Object *sequence_carray;
+  Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object, Lisp_Object,
+                              Lisp_Object);
+  Elemcount sequence_len, i;
+
+  PARSE_KEYWORDS (QsortX, nargs, args, 2, 1, (key), NULL, 0);
+
+  CHECK_SEQUENCE (sequence);
+
+  CHECK_KEY_ARGUMENT (key, c_predicate);
+
+  if (LISTP (sequence))
+    {
+      sequence = list_sort (sequence, c_predicate, predicate, key);
+    }
+  else if (VECTORP (sequence))
+    {
+      array_sort (XVECTOR_DATA (sequence), XVECTOR_LENGTH (sequence),
+                  c_predicate, predicate, key);
+    }
+  else if (STRINGP (sequence))
+    {
+      Ibyte *strdata = XSTRING_DATA (sequence);
+
+      sequence_len = string_char_length (sequence);
+
+      STRING_DATA_TO_OBJECT_ARRAY (strdata, sequence_carray, i, sequence_len);
+
+      /* No GCPRO necessary, characters are immediate. */
+      array_sort (sequence_carray, sequence_len, c_predicate, predicate, key);
+
+      strdata = XSTRING_DATA (sequence);
+
+      CHECK_LISP_WRITEABLE (sequence);
+      for (i = 0; i < sequence_len; ++i)
+        {
+          strdata += set_itext_ichar (strdata, XCHAR (sequence_carray[i]));
+        }
+
+      init_string_ascii_begin (sequence);
+      bump_string_modiff (sequence);
+      sledgehammer_check_ascii_begin (sequence);
+    }
+  else if (BIT_VECTORP (sequence))
+    {
+      Lisp_Bit_Vector *v = XBIT_VECTOR (sequence);
+      sequence_len = bit_vector_length (v);
+
+      BIT_VECTOR_TO_OBJECT_ARRAY (v, sequence_carray, i, sequence_len);
+
+      /* No GCPRO necessary, bits are immediate. */
+      array_sort (sequence_carray, sequence_len, c_predicate, predicate, key);
+
+      for (i = 0; i < sequence_len; ++i)
+        {
+          set_bit_vector_bit (v, i, XINT (sequence_carray [i]));
+        }
+    }
+
+  return sequence;
+}
 
 /************************************************************************/
 /*	  	        property-list functions				*/
@@ -3124,69 +3763,126 @@ Do not use it.
 }
 
 
-DEFUN ("fillarray", Ffillarray, 2, 2, 0, /*
-Destructively modify ARRAY by replacing each element with ITEM.
-ARRAY is a vector, bit vector, or string.
+DEFUN ("fill", Ffill, 2, MANY, 0, /*
+Destructively modify SEQUENCE by replacing each element with ITEM.
+SEQUENCE is a list, vector, bit vector, or string.
+
+Optional keyword START is the index of the first element of SEQUENCE
+to be modified, and defaults to zero.  Optional keyword END is the
+exclusive upper bound on the elements of SEQUENCE to be modified, and
+defaults to the length of SEQUENCE.
+
+arguments: (SEQUENCE ITEM &key (START 0) END)
 */
-       (array, item))
+       (int nargs, Lisp_Object *args))
 {
- retry:
-  if (STRINGP (array))
+  Lisp_Object sequence = args[0];
+  Lisp_Object item = args[1];
+  Elemcount starting = 0, ending = EMACS_INT_MAX, ii;
+
+  PARSE_KEYWORDS (Qfill, nargs, args, 2, 2, (start, end),
+                  (start = Qzero, end = Qunbound), 0);
+
+  CHECK_NATNUM (start);
+  starting = XINT (start);
+
+  if (!UNBOUNDP (end))
     {
-      Bytecount old_bytecount = XSTRING_LENGTH (array);
-      Bytecount new_bytecount;
-      Bytecount item_bytecount;
+      CHECK_NATNUM (end);
+      ending = XINT (end);
+    }
+
+ retry:
+  if (STRINGP (sequence))
+    {
+      Bytecount prefix_bytecount, item_bytecount, delta;
       Ibyte item_buf[MAX_ICHAR_LEN];
-      Ibyte *p;
-      Ibyte *end;
+      Ibyte *p, *pend;
 
       CHECK_CHAR_COERCE_INT (item);
 
-      CHECK_LISP_WRITEABLE (array);
-      sledgehammer_check_ascii_begin (array);
+      CHECK_LISP_WRITEABLE (sequence);
+      sledgehammer_check_ascii_begin (sequence);
       item_bytecount = set_itext_ichar (item_buf, XCHAR (item));
-      new_bytecount = item_bytecount * (Bytecount) string_char_length (array);
 
-      resize_string (array, -1, new_bytecount - old_bytecount);
+      p = XSTRING_DATA (sequence);
+      p = (Ibyte *) itext_n_addr (p, starting);
+      prefix_bytecount = p - XSTRING_DATA (sequence);
 
-      for (p = XSTRING_DATA (array), end = p + new_bytecount;
-	   p < end;
-	   p += item_bytecount)
+      ending = min (ending, string_char_length (sequence));
+      pend = (Ibyte *) itext_n_addr (p, ending - starting); 
+      delta = ((ending - starting) * item_bytecount) - (pend - p);
+
+      /* Resize the string if the bytecount for the area being modified is
+	 different. */
+      if (delta)
+	{
+	  resize_string (sequence, prefix_bytecount, delta);
+	  /* No need to zero-terminate the string, resize_string has done
+	     that for us. */
+	  p = XSTRING_DATA (sequence) + prefix_bytecount;
+	  pend = p + ((ending - starting) * item_bytecount);
+	}
+
+      for (; p < pend; p += item_bytecount)
 	memcpy (p, item_buf, item_bytecount);
-      *p = '\0';
 
-      XSET_STRING_ASCII_BEGIN (array,
-			       item_bytecount == 1 ?
-			       min (new_bytecount, MAX_STRING_ASCII_BEGIN) :
-			       0);
-      bump_string_modiff (array);
-      sledgehammer_check_ascii_begin (array);
+
+      init_string_ascii_begin (sequence);
+      bump_string_modiff (sequence);
+      sledgehammer_check_ascii_begin (sequence);
     }
-  else if (VECTORP (array))
+  else if (VECTORP (sequence))
     {
-      Lisp_Object *p = XVECTOR_DATA (array);
-      Elemcount len = XVECTOR_LENGTH (array);
-      CHECK_LISP_WRITEABLE (array);
-      while (len--)
-	*p++ = item;
+      Lisp_Object *p = XVECTOR_DATA (sequence);
+      CHECK_LISP_WRITEABLE (sequence);
+
+      ending = min (ending, XVECTOR_LENGTH (sequence));
+      for (ii = starting; ii < ending; ++ii)
+        {
+          p[ii] = item;
+        }
     }
-  else if (BIT_VECTORP (array))
+  else if (BIT_VECTORP (sequence))
     {
-      Lisp_Bit_Vector *v = XBIT_VECTOR (array);
-      Elemcount len = bit_vector_length (v);
+      Lisp_Bit_Vector *v = XBIT_VECTOR (sequence);
       int bit;
       CHECK_BIT (item);
       bit = XINT (item);
-      CHECK_LISP_WRITEABLE (array);
-      while (len--)
-	set_bit_vector_bit (v, len, bit);
+      CHECK_LISP_WRITEABLE (sequence);
+
+      ending = min (ending, bit_vector_length (v));
+      for (ii = starting; ii < ending; ++ii)
+        {
+          set_bit_vector_bit (v, ii, bit);
+        }
+    }
+  else if (LISTP (sequence))
+    {
+      Elemcount counting = 0;
+
+      EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
+        {
+          if (counting >= starting)
+            {
+              if (counting < ending)
+                {
+                  XSETCAR (tail, item);
+                }
+              else if (counting == ending)
+                {
+                  break;
+                }
+            }
+          ++counting;
+        }
     }
   else
     {
-      array = wrong_type_argument (Qarrayp, array);
+      sequence = wrong_type_argument (Qsequencep, sequence);
       goto retry;
     }
-  return array;
+  return sequence;
 }
 
 Lisp_Object
@@ -4758,12 +5454,16 @@ syms_of_fns (void)
   INIT_LISP_OBJECT (bit_vector);
 
   DEFSYMBOL (Qstring_lessp);
+  DEFSYMBOL (Qsort);
+  DEFSYMBOL (Qmerge);
+  DEFSYMBOL (Qfill);
   DEFSYMBOL (Qidentity);
   DEFSYMBOL (Qvector);
   DEFSYMBOL (Qarray);
   DEFSYMBOL (Qstring);
   DEFSYMBOL (Qlist);
   DEFSYMBOL (Qbit_vector);
+  defsymbol (&QsortX, "sort*");
 
   DEFSYMBOL (Qyes_or_no_p);
 
@@ -4814,7 +5514,9 @@ syms_of_fns (void)
   DEFSUBR (Fremrassq);
   DEFSUBR (Fnreverse);
   DEFSUBR (Freverse);
-  DEFSUBR (Fsort);
+  DEFSUBR (FsortX);
+  Ffset (intern ("sort"), QsortX);
+  DEFSUBR (Fmerge);
   DEFSUBR (Fplists_eq);
   DEFSUBR (Fplists_equal);
   DEFSUBR (Flax_plists_eq);
@@ -4839,7 +5541,9 @@ syms_of_fns (void)
   DEFSUBR (Fequal);
   DEFSUBR (Fequalp);
   DEFSUBR (Fold_equal);
-  DEFSUBR (Ffillarray);
+  DEFSUBR (Ffill);
+  Ffset (intern ("fillarray"), Qfill);
+
   DEFSUBR (Fnconc);
   DEFSUBR (FmapcarX);
   DEFSUBR (Fmapvector);

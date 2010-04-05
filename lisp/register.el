@@ -175,7 +175,7 @@ The Lisp value REGISTER is a character."
   "Display a list of nonempty registers saying briefly what they contain."
   (interactive)
   (let ((list (copy-sequence register-alist)))
-    (setq list (sort list (lambda (a b) (< (car a) (car b)))))
+    (setq list (sort* list #'< :key #'car))
     (with-output-to-temp-buffer "*Output*"
       (dolist (elt list)
 	(when (get-register (car elt))
