@@ -1,3 +1,14 @@
+2010-04-04  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c (put_char_table):
+	* text.h (rep_bytes_by_first_byte):
+	* text.h (valid_ibyteptr_p):
+	Fix compile errors/warnings when not --with-mule.
+
+	* font-mgr.c (fc_config_create_using):
+	* fontcolor-xlike-inc.c (XFUN):
+	Fix compile warnings when --with-xft.
+
 2010-03-29  Ben Wing  <ben@xemacs.org>
 
 	Fix bugs, make map-char-table smarter.

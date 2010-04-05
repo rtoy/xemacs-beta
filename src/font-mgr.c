@@ -498,7 +498,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
 enum DestroyFontsetP { DestroyNo = 0, DestroyYes = 1 };
 
 static Lisp_Object
-fc_config_create_using (FcConfig * (*create_function) ())
+fc_config_create_using (FcConfig * (*create_function) (void))
 {
   FcConfig *fc = (*create_function) ();
   Lisp_Object configs = XWEAK_LIST_LIST (Vfc_config_weak_list);

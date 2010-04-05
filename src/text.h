@@ -378,12 +378,13 @@ unicode_error_octet_code_p (int code)
 
 #ifndef MULE
 
-#define rep_bytes_by_first_byte(fb) 1
-#define ibyte_first_byte_p(ptr) 1
-#define byte_ascii_p(byte) 1
+#define rep_bytes_by_first_byte(fb) ((void) (fb), 1)
+#define ibyte_first_byte_p(ptr) ((void) (ptr), 1)
+#define byte_ascii_p(byte) ((void) (byte), 1)
 #define MAX_ICHAR_LEN 1
+#define ICHAR_MAX 255
 /* This appears to work both for values > 255 and < 0. */
-#define valid_ichar_p(ch) (! (ch & ~0xFF))
+#define valid_ichar_p(ch) (! ((ch) & ~0xFF))
 
 #else /* MULE */
 
@@ -1124,11 +1125,7 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
 /* Given an itext, does it point to the beginning of a character?
  */
 
-#ifdef MULE
-# define valid_ibyteptr_p(ptr) ibyte_first_byte_p (* (ptr))
-#else
-# define valid_ibyteptr_p(ptr) 1
-#endif
+#define valid_ibyteptr_p(ptr) ibyte_first_byte_p (*(ptr))
 
 /* If error-checking is enabled, assert that the given itext points to
    the beginning of a character and make sure the rest of the character
