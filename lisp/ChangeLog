@@ -1,3 +1,34 @@
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (describe-char-unicode-data):
+	Don't give up if describe-char-use-cache is t and the database
+	isn't readable, warn and insert the entire UnicodeData.txt file
+	instead.
+
+2010-04-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-seq.el (fill, sort*, merge): Move these functions to fns.c.
+	(stable-sort): Make this docstring reflect the argument names used
+	in the #'sort* docstring.
+	* cl-macs.el (stable-sort): Make #'stable-sort exactly equivalent
+	to #'sort* in compiled code.
+
+	* bytecomp.el (byte-compile-maybe-add-*):
+	New macro, for functions like #'sort and #'mapcar that, to be
+	strictly compatible, should only take two args, but in our
+	implementation can take more, because they're aliases of #'sort*
+	and #'mapcar*.
+	(byte-compile-mapcar, byte-compile-sort, byte-compile-fillarray):
+	Use this new macro.
+	(map-into): Add a byte-compile method for #'map-into in passing.
+
+	* apropos.el (apropos-print): Use #'sort* with a :key argument,
+	now it's in C.
+	* compat.el (extent-at): Ditto.
+	* register.el (list-registers): Ditto.
+	* package-ui.el (pui-list-packages): Ditto.
+	* help.el (sorted-key-descriptions): Ditto. 
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* dumped-lisp.el (preloaded-file-list):

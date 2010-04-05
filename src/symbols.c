@@ -500,7 +500,8 @@ If optional 2nd arg PREDICATE is non-nil, only symbols for which
   closure.accumulation = Qnil;
   GCPRO1 (closure.accumulation);
   map_obarray (Vobarray, apropos_mapper, &closure);
-  closure.accumulation = Fsort (closure.accumulation, Qstring_lessp);
+  closure.accumulation = list_sort (closure.accumulation, NULL, Qstring_lessp,
+                                    Qidentity);
   UNGCPRO;
   return closure.accumulation;
 }

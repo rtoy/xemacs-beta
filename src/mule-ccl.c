@@ -953,7 +953,7 @@ ccl_driver (struct ccl_program *ccl,
   register Lisp_Object *ccl_prog = ccl->prog;
   const unsigned char *src = source, *src_end = src + src_bytes;
   int jump_address;
-  int i, j, op;
+  int i = 0, j, op;
   int stack_idx = ccl->stack_idx;
   /* Instruction counter of the current CCL code. */
   int this_ic = 0;
