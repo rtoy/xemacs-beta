@@ -111,7 +111,6 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
       Display *dpy = DEVICE_X_DISPLAY (d);
       Extbyte *extname;
       XftFont *rf;
-      const Ibyte *the_nonreloc;
 
       if (!NILP(reloc))
 	{

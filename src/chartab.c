@@ -452,8 +452,8 @@ put_char_table (Lisp_Object chartab, Ichar start, Ichar end, Lisp_Object val)
   int levels;
 #ifndef MAXIMIZE_CHAR_TABLE_DEPTH
   int code_levels;
-#endif
   int catp = XCHAR_TABLE_CATEGORY_P (chartab);
+#endif
 
   /* DO NOT check to see whether START and END are valid Ichars.  They
      might not be (e.g. if we pass `t' to `put-char-table' so as to set
@@ -464,12 +464,13 @@ put_char_table (Lisp_Object chartab, Ichar start, Ichar end, Lisp_Object val)
      will always be passed valid Ichars.  Only when mapping do we have
      to worry, and then we find the nearest valid Ichar up or down. */
 
-  GET_CHAR_LEVELS (end, code_levels);
 
   levels = CHARTAB_LEVELS (XCHAR_TABLE_LEVELS (chartab));
   text_checking_assert (levels >= 1 && levels <= 4);
 
 #ifndef MAXIMIZE_CHAR_TABLE_DEPTH
+  GET_CHAR_LEVELS (end, code_levels);
+
   /* Make sure the chartab's tables have at least as many levels as
      the code point has. */
   if (levels < code_levels)
