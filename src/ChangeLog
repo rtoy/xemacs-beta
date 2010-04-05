@@ -1,5 +1,12 @@
 2010-04-04  Ben Wing  <ben@xemacs.org>
 
+	* fontcolor-xlike-inc.c (mule_to_fc_charset):
+	* fontcolor-xlike-inc.c (struct charset_reporter):
+	Don't try to kludgily look directly into the Unicode tables; use
+	the API provided.
+
+2010-04-04  Ben Wing  <ben@xemacs.org>
+
 	* chartab.c (put_char_table):
 	* text.h (rep_bytes_by_first_byte):
 	* text.h (valid_ibyteptr_p):
