@@ -90,7 +90,7 @@ marker_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-marker_hash (Lisp_Object obj, int UNUSED (depth))
+marker_hash (Lisp_Object obj, int UNUSED (depth), Boolint UNUSED (equalp))
 {
   Hashcode hash = (Hashcode) XMARKER (obj)->buffer;
   if (hash)

@@ -5234,7 +5234,7 @@ Non-nil inhibits recording of input-events to recent-keys ring.
   inhibit_input_event_recording = 0;
 
   Vkeyboard_translate_table =
-    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, Qequal);
 
   DEFVAR_BOOL ("try-alternate-layouts-for-commands",
 	       &try_alternate_layouts_for_commands /*

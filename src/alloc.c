@@ -1691,12 +1691,12 @@ vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-vector_hash (Lisp_Object obj, int depth)
+vector_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   return HASH2 (XVECTOR_LENGTH (obj),
 		internal_array_hash (XVECTOR_DATA (obj),
 				     XVECTOR_LENGTH (obj),
-				     depth + 1));
+				     depth + 1, equalp));
 }
 
 static const struct memory_description vector_description[] = {

@@ -2348,14 +2348,14 @@ compiled_function_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-compiled_function_hash (Lisp_Object obj, int depth)
+compiled_function_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (obj);
   return HASH3 ((f->flags.documentationp << 2) +
 		(f->flags.interactivep << 1) +
 		f->flags.domainp,
-		internal_hash (f->instructions, depth + 1),
-		internal_hash (f->constants,    depth + 1));
+		internal_hash (f->instructions, depth + 1, 0),
+		internal_hash (f->constants,    depth + 1, 0));
 }
 
 static const struct memory_description compiled_function_description[] = {

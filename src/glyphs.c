@@ -94,6 +94,7 @@ Lisp_Object Vimage_instance_type_list;
 Lisp_Object Vglyph_type_list;
 
 int disable_animated_pixmaps;
+static Lisp_Object Vimage_instance_hash_table_test;
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (nothing);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (inherit);
@@ -1259,7 +1260,7 @@ image_instance_live_p (Lisp_Object instance)
 }
 
 static Hashcode
-image_instance_hash (Lisp_Object obj, int depth)
+image_instance_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Image_Instance *i = XIMAGE_INSTANCE (obj);
   Hashcode hash = HASH5 (LISP_HASH (IMAGE_INSTANCE_DOMAIN (i)),
@@ -1267,7 +1268,7 @@ image_instance_hash (Lisp_Object obj, int depth)
 			  IMAGE_INSTANCE_MARGIN_WIDTH (i),
 			  IMAGE_INSTANCE_HEIGHT (i),
 			  internal_hash (IMAGE_INSTANCE_INSTANTIATOR (i),
-					 depth + 1));
+					 depth + 1, 0));
 
   ERROR_CHECK_IMAGE_INSTANCE (obj);
 
@@ -1278,7 +1279,7 @@ image_instance_hash (Lisp_Object obj, int depth)
 
     case IMAGE_TEXT:
       hash = HASH2 (hash, internal_hash (IMAGE_INSTANCE_TEXT_STRING (i),
-					 depth + 1));
+					 depth + 1, 0));
       break;
 
     case IMAGE_MONO_PIXMAP:
@@ -1287,7 +1288,7 @@ image_instance_hash (Lisp_Object obj, int depth)
       hash = HASH4 (hash, IMAGE_INSTANCE_PIXMAP_DEPTH (i),
 		    IMAGE_INSTANCE_PIXMAP_SLICE (i),
 		    internal_hash (IMAGE_INSTANCE_PIXMAP_FILENAME (i),
-				   depth + 1));
+				   depth + 1, 0));
       break;
 
     case IMAGE_WIDGET:
@@ -1295,10 +1296,12 @@ image_instance_hash (Lisp_Object obj, int depth)
 	 displayed. */
       hash = HASH5 (hash,
 		    LISP_HASH (IMAGE_INSTANCE_WIDGET_TYPE (i)),
-		    internal_hash (IMAGE_INSTANCE_WIDGET_PROPS (i), depth + 1),
-		    internal_hash (IMAGE_INSTANCE_WIDGET_ITEMS (i), depth + 1),
+		    internal_hash (IMAGE_INSTANCE_WIDGET_PROPS (i),
+                                   depth + 1, 0),
+		    internal_hash (IMAGE_INSTANCE_WIDGET_ITEMS (i),
+                                   depth + 1, 0),
 		    internal_hash (IMAGE_INSTANCE_LAYOUT_CHILDREN (i),
-				   depth + 1));
+				   depth + 1, 0));
     case IMAGE_SUBWINDOW:
       hash = HASH2 (hash, (EMACS_INT) IMAGE_INSTANCE_SUBWINDOW_ID (i));
       break;
@@ -3202,29 +3205,29 @@ image_mark (Lisp_Object obj)
 }
 
 static int
-instantiator_eq_equal (Lisp_Object obj1, Lisp_Object obj2)
+instantiator_eq_equal (const Hash_Table_Test *UNUSED (http),
+                       Lisp_Object obj1, Lisp_Object obj2)
 {
   if (EQ (obj1, obj2))
     return 1;
 
   else if (CONSP (obj1) && CONSP (obj2))
     {
-      return instantiator_eq_equal (XCAR (obj1), XCAR (obj2))
-	&&
-	instantiator_eq_equal (XCDR (obj1), XCDR (obj2));
+      return instantiator_eq_equal (NULL, XCAR (obj1), XCAR (obj2))
+	&& instantiator_eq_equal (NULL, XCDR (obj1), XCDR (obj2));
     }
   return 0;
 }
 
 static Hashcode
-instantiator_eq_hash (Lisp_Object obj)
+instantiator_eq_hash (const Hash_Table_Test *UNUSED (http), Lisp_Object obj)
 {
   if (CONSP (obj))
     {
       /* no point in worrying about tail recursion, since we're not
 	 going very deep */
-      return HASH2 (instantiator_eq_hash (XCAR (obj)),
-		    instantiator_eq_hash (XCDR (obj)));
+      return HASH2 (instantiator_eq_hash (NULL, XCAR (obj)),
+		    instantiator_eq_hash (NULL, XCDR (obj)));
     }
   return LISP_HASH (obj);
 }
@@ -3233,10 +3236,9 @@ instantiator_eq_hash (Lisp_Object obj)
 Lisp_Object
 make_image_instance_cache_hash_table (void)
 {
-  return make_general_lisp_hash_table
-    (instantiator_eq_hash, instantiator_eq_equal,
-     30, -1.0, -1.0,
-     HASH_TABLE_KEY_CAR_VALUE_WEAK);
+  return make_general_lisp_hash_table (Vimage_instance_hash_table_test, 30,
+                                       -1.0, -1.0,
+                                       HASH_TABLE_KEY_CAR_VALUE_WEAK);
 }
 
 static Lisp_Object
@@ -3737,14 +3739,14 @@ glyph_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-glyph_hash (Lisp_Object obj, int depth)
+glyph_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   depth++;
 
   /* No need to hash all of the elements; that would take too long.
      Just hash the most common ones. */
-  return HASH2 (internal_hash (XGLYPH (obj)->image, depth),
-		internal_hash (XGLYPH (obj)->face,  depth));
+  return HASH2 (internal_hash (XGLYPH (obj)->image, depth, 0),
+		internal_hash (XGLYPH (obj)->face,  depth, 0));
 }
 
 static Lisp_Object
@@ -4759,7 +4761,8 @@ redisplay_subwindow (Lisp_Object subwindow)
      we might need. We can get better hashing by making the depth
      negative - currently it will recurse down 7 levels.*/
   IMAGE_INSTANCE_DISPLAY_HASH (ii) = internal_hash (subwindow,
-						    IMAGE_INSTANCE_HASH_DEPTH);
+						    IMAGE_INSTANCE_HASH_DEPTH,
+                                                    0);
 
   unbind_to (count);
 }
@@ -4778,7 +4781,7 @@ image_instance_changed (Lisp_Object subwindow)
 {
   Lisp_Image_Instance* ii = XIMAGE_INSTANCE (subwindow);
 
-  if (internal_hash (subwindow, IMAGE_INSTANCE_HASH_DEPTH) !=
+  if (internal_hash (subwindow, IMAGE_INSTANCE_HASH_DEPTH, 0) !=
       IMAGE_INSTANCE_DISPLAY_HASH (ii))
     return 1;
   /* #### I think there is probably a bug here. This gets called for
@@ -5523,6 +5526,12 @@ vars_of_glyphs (void)
 				     list6 (Qtext, Qmono_pixmap, Qcolor_pixmap,
 					    Qpointer, Qsubwindow, Qwidget));
   staticpro (&Vimage_instance_type_list);
+
+  /* The Qunbound name means this test is not available from Lisp. */
+  Vimage_instance_hash_table_test
+    = define_hash_table_test (Qunbound, instantiator_eq_equal,
+                              instantiator_eq_hash, Qunbound, Qunbound);
+  staticpro (&Vimage_instance_hash_table_test);
 
   /* glyphs */
 

@@ -3970,9 +3970,9 @@ reinit_vars_of_mule_coding (void)
 void
 vars_of_mule_coding (void)
 {
-  /* This needs to be HASH_TABLE_EQ, there's a corner case where
-     HASH_TABLE_EQUAL won't work. */
+  /* This needs to be Qeq, there's a corner case where
+     Qequal won't work. */
   Vfixed_width_query_ranges_cache
-   = make_lisp_hash_table (32, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
+   = make_lisp_hash_table (32, HASH_TABLE_KEY_WEAK, Qeq);
   staticpro (&Vfixed_width_query_ranges_cache);
 }

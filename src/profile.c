@@ -138,16 +138,16 @@ create_profile_tables (void)
   create_timing_profile_table ();
   if (NILP (Vtotal_timing_profile_table))
     Vtotal_timing_profile_table =
-      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, Qeq);
   if (NILP (Vcall_count_profile_table))
     Vcall_count_profile_table =
-      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, Qeq);
   if (NILP (Vgc_usage_profile_table))
     Vgc_usage_profile_table =
-      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, Qeq);
   if (NILP (Vtotal_gc_usage_profile_table))
     Vtotal_gc_usage_profile_table =
-      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, Qeq);
 }
 
 static Lisp_Object
@@ -476,7 +476,7 @@ copy_hash_table_or_blank (Lisp_Object table)
 {
   return !NILP (table) ? Fcopy_hash_table (table) :
     make_lisp_hash_table (100, HASH_TABLE_NON_WEAK,
-			  HASH_TABLE_EQ);
+			  Qeq);
 }
 
 DEFUN ("get-profiling-info", Fget_profiling_info, 0, 0, 0, /*
@@ -515,7 +515,7 @@ are recorded
   const void *overhead;
 
   closure.timing =
-    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, Qequal);
 
   if (big_profile_table)
     {

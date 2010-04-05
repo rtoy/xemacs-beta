@@ -253,7 +253,7 @@ keymap_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-keymap_hash (Lisp_Object obj, int depth)
+keymap_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Keymap *k = XKEYMAP (obj);
   Hashcode hash = 0xCAFEBABE; /* why not? */
@@ -261,7 +261,7 @@ keymap_hash (Lisp_Object obj, int depth)
   depth++;
 
 #define MARKED_SLOT(x) \
-  hash = HASH2 (hash, internal_hash (k->x, depth));
+  hash = HASH2 (hash, internal_hash (k->x, depth, 0));
 #define MARKED_SLOT_NOCOMPARE(x)
 #include "keymap-slots.h"
 
@@ -787,12 +787,12 @@ make_keymap (Elemcount size)
   if (size != 0) /* hack for copy-keymap */
     {
       keymap->table =
-	make_lisp_hash_table (size, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+	make_lisp_hash_table (size, HASH_TABLE_NON_WEAK, Qeq);
       /* Inverse table is often less dense because of duplicate key-bindings.
          If not, it will grow anyway. */
       keymap->inverse_table =
 	make_lisp_hash_table (size * 3 / 4, HASH_TABLE_NON_WEAK,
-			      HASH_TABLE_EQ);
+			      Qeq);
     }
   return obj;
 }

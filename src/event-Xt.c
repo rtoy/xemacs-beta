@@ -231,7 +231,7 @@ x_reset_key_mapping (struct device *d)
     Fclrhash (hash_table);
   else
     xd->x_keysym_map_hash_table = hash_table =
-      make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+      make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, Qequal);
 
   for (keysym = xd->x_keysym_map,
 	 keysyms_per_code = xd->x_keysym_map_keysyms_per_code,

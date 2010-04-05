@@ -2329,10 +2329,10 @@ vars_of_intl_win32 (void)
 {
 #ifdef MULE
   Vmswindows_charset_code_page_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vmswindows_charset_code_page_table);
   Vmswindows_charset_registry_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vmswindows_charset_registry_table);
 #endif /* MULE */
 }

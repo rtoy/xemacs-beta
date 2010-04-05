@@ -784,7 +784,7 @@ make_directory_hash_table (const Ibyte *path)
     {
       DIRENTRY *dp;
       Lisp_Object hash =
-	make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+	make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, Qeq);
 
       while ((dp = qxe_readdir (d)))
 	{

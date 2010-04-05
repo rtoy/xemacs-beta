@@ -433,7 +433,7 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-event_hash (Lisp_Object obj, int depth)
+event_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Event *e = XEVENT (obj);
   Hashcode hash;
@@ -446,8 +446,8 @@ event_hash (Lisp_Object obj, int depth)
 
     case timeout_event:
       return HASH3 (hash,
-		    internal_hash (EVENT_TIMEOUT_FUNCTION (e), depth + 1),
-		    internal_hash (EVENT_TIMEOUT_OBJECT (e), depth + 1));
+		    internal_hash (EVENT_TIMEOUT_FUNCTION (e), depth + 1, 0),
+		    internal_hash (EVENT_TIMEOUT_OBJECT (e), depth + 1, 0));
 
     case key_press_event:
       return HASH3 (hash, LISP_HASH (EVENT_KEY_KEYSYM (e)),
@@ -462,18 +462,18 @@ event_hash (Lisp_Object obj, int depth)
 
     case misc_user_event:
       return HASH5 (hash,
-		    internal_hash (EVENT_MISC_USER_FUNCTION (e), depth + 1),
-		    internal_hash (EVENT_MISC_USER_OBJECT (e), depth + 1),
+		    internal_hash (EVENT_MISC_USER_FUNCTION (e), depth + 1, 0),
+		    internal_hash (EVENT_MISC_USER_OBJECT (e), depth + 1, 0),
 		    EVENT_MISC_USER_BUTTON (e), EVENT_MISC_USER_MODIFIERS (e));
 
     case eval_event:
-      return HASH3 (hash, internal_hash (EVENT_EVAL_FUNCTION (e), depth + 1),
-		    internal_hash (EVENT_EVAL_OBJECT (e), depth + 1));
+      return HASH3 (hash, internal_hash (EVENT_EVAL_FUNCTION (e), depth + 1, 0),
+		    internal_hash (EVENT_EVAL_OBJECT (e), depth + 1, 0));
 
     case magic_eval_event:
       return HASH3 (hash,
 		    (Hashcode) EVENT_MAGIC_EVAL_INTERNAL_FUNCTION (e),
-		    internal_hash (EVENT_MAGIC_EVAL_OBJECT (e), depth + 1));
+		    internal_hash (EVENT_MAGIC_EVAL_OBJECT (e), depth + 1, 0));
 
     case magic_event:
       return HASH2 (hash, event_stream_hash_magic_event (e));

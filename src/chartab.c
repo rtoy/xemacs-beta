@@ -128,11 +128,11 @@ char_table_entry_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-char_table_entry_hash (Lisp_Object obj, int depth)
+char_table_entry_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
 
-  return internal_array_hash (cte->level2, 96, depth + 1);
+  return internal_array_hash (cte->level2, 96, depth + 1, equalp);
 }
 
 static const struct memory_description char_table_entry_description[] = {
@@ -369,17 +369,17 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-char_table_hash (Lisp_Object obj, int depth)
+char_table_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
   Hashcode hashval = internal_array_hash (ct->ascii, NUM_ASCII_CHARS,
-					   depth + 1);
+                                          depth + 1, equalp);
 #ifdef MULE
   hashval = HASH2 (hashval,
 		   internal_array_hash (ct->level1, NUM_LEADING_BYTES,
-					depth + 1));
+					depth + 1, equalp));
 #endif /* MULE */
-  return HASH2 (hashval, internal_hash (ct->default_, depth + 1));
+  return HASH2 (hashval, internal_hash (ct->default_, depth + 1, equalp));
 }
 
 static const struct memory_description char_table_description[] = {

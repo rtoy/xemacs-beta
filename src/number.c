@@ -80,9 +80,16 @@ bignum_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-bignum_hash (Lisp_Object obj, int UNUSED (depth))
+bignum_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
 {
-  return bignum_hashcode (XBIGNUM_DATA (obj));
+  if (equalp)
+    {
+      return FLOAT_HASHCODE_FROM_DOUBLE (bignum_to_double (XBIGNUM_DATA (obj)));
+    }
+  else
+    {
+      return bignum_hashcode (XBIGNUM_DATA (obj));
+    }
 }
 
 static void
@@ -170,9 +177,16 @@ ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-ratio_hash (Lisp_Object obj, int UNUSED (depth))
+ratio_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
 {
-  return ratio_hashcode (XRATIO_DATA (obj));
+  if (equalp)
+    {
+      return FLOAT_HASHCODE_FROM_DOUBLE (ratio_to_double (XRATIO_DATA (obj)));
+    }
+  else
+    {
+      return ratio_hashcode (XRATIO_DATA (obj));
+    }
 }
 
 static const struct memory_description ratio_description[] = {
@@ -274,9 +288,17 @@ bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-bigfloat_hash (Lisp_Object obj, int UNUSED (depth))
+bigfloat_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
 {
-  return bigfloat_hashcode (XBIGFLOAT_DATA (obj));
+  if (equalp)
+    {
+      return
+        FLOAT_HASHCODE_FROM_DOUBLE (bigfloat_to_double (XBIGFLOAT_DATA (obj)));
+    }
+  else
+    {
+      return bigfloat_hashcode (XBIGFLOAT_DATA (obj));
+    }
 }
 
 static const struct memory_description bigfloat_description[] = {

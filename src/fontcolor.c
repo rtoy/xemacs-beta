@@ -137,7 +137,7 @@ color_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-color_instance_hash (Lisp_Object obj, int depth)
+color_instance_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
   struct device *d = DEVICEP (c->device) ? XDEVICE (c->device) : 0;
@@ -359,11 +359,11 @@ font_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-font_instance_hash (Lisp_Object obj, int depth)
+font_instance_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   return internal_hash (font_instance_truename_internal
 			(obj, ERROR_ME_DEBUG_WARN),
-			depth + 1);
+			depth + 1, 0);
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("font-instance", font_instance,
@@ -819,9 +819,9 @@ initialize_charset_font_caches (struct device *d)
 {
   /* Note that the following tables are bi-level. */
   d->charset_font_cache_stage_1 =
-    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, Qeq);
   d->charset_font_cache_stage_2 =
-    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, Qeq);
 }
 
 void
@@ -949,7 +949,7 @@ font_instantiate (Lisp_Object UNUSED (specifier),
 	    {
 	      /* need to make a sub hash table. */
 	      hash_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
-						 HASH_TABLE_EQUAL);
+						 Qequal);
 	      Fputhash (charset, hash_table, cache);
 	    }
 	  else

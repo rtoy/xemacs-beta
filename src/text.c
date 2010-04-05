@@ -5170,9 +5170,9 @@ vars_of_text (void)
   composite_char_col_next = 32;
 
   Vcomposite_char_string2char_hash_table =
-    make_lisp_hash_table (500, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (500, HASH_TABLE_NON_WEAK, Qequal);
   Vcomposite_char_char2string_hash_table =
-    make_lisp_hash_table (500, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (500, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vcomposite_char_string2char_hash_table);
   staticpro (&Vcomposite_char_char2string_hash_table);
 #endif /* ENABLE_COMPOSITE_CHARS */

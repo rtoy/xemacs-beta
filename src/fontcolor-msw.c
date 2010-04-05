@@ -1393,7 +1393,8 @@ mswindows_color_instance_equal (Lisp_Color_Instance *c1,
 }
 
 static Hashcode
-mswindows_color_instance_hash (Lisp_Color_Instance *c, int UNUSED (depth))
+mswindows_color_instance_hash (Lisp_Color_Instance *c, int UNUSED (depth),
+                               Boolint UNUSED (equalp))
 {
   return (unsigned long) COLOR_INSTANCE_MSWINDOWS_COLOR (c);
 }
@@ -2336,7 +2337,7 @@ vars_of_fontcolor_mswindows (void)
 {
 #ifdef MULE
   Vfont_signature_data =
-    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, Qequal);
   staticpro (&Vfont_signature_data);
 #endif /* MULE */
 }

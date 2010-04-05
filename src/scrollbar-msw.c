@@ -490,5 +490,5 @@ vars_of_scrollbar_mswindows (void)
 
   staticpro (&Vmswindows_scrollbar_instance_table);
   Vmswindows_scrollbar_instance_table =
-    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, Qeq);
 }

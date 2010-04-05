@@ -365,7 +365,7 @@ finalize_window (Lisp_Object obj)
 static Lisp_Object
 make_saved_buffer_point_cache (void)
 {
-  return make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
+  return make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, Qeq);
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("window", window,

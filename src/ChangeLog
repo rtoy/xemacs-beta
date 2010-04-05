@@ -80,11 +80,62 @@
 	with the string resize. Fixes a test hang reported by Vin Shelton;
 	thanks, Vin.
 
+2010-04-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.h:
+	* elhash.c (struct Hash_Table_Test, lisp_object_eql_equal)
+	(lisp_object_eql_hash, lisp_object_equal_equal)
+	(lisp_object_equal_hash, lisp_object_equalp_hash)
+	(lisp_object_equalp_equal, lisp_object_general_hash)
+	(lisp_object_general_equal, Feq_hash, Feql_hash, Fequal_hash)
+	(Fequalp_hash, define_hash_table_test, Fdefine_hash_table_test)
+	(init_elhash_once_early, mark_hash_table_tests, string_equalp_hash):
+	* glyphs.c (vars_of_glyphs):
+	Add a new hash table test in C, #'equalp.
+	Make it possible to specify new hash table tests with functions
+	define_hash_table_test, #'define-hash-table-test.
+	Use define_hash_table_test() in glyphs.c.
+	Expose the hash functions (besides that used for #'equal) to Lisp,
+	for people writing functions to be used with #'define-hash-table-test.
+	Call define_hash_table_test() very early in temacs, to create the
+	built-in hash table tests.
+
+	* ui-gtk.c (emacs_gtk_boxed_hash):
+	* specifier.h (struct specifier_methods):
+	* specifier.c (specifier_hash):
+	* rangetab.c (range_table_entry_hash, range_table_hash):
+	* number.c (bignum_hash, ratio_hash, bigfloat_hash):
+	* marker.c (marker_hash):
+	* lrecord.h (struct lrecord_implementation):
+	* keymap.c (keymap_hash):
+	* gui.c (gui_item_id_hash, gui_item_hash):
+	* glyphs.c (image_instance_hash, glyph_hash):
+	* glyphs-x.c (x_image_instance_hash):
+	* glyphs-msw.c (mswindows_image_instance_hash):
+	* glyphs-gtk.c (gtk_image_instance_hash):
+	* frame-msw.c (mswindows_set_title_from_ibyte):
+	* fontcolor.c (color_instance_hash, font_instance_hash):
+	* fontcolor-x.c (x_color_instance_hash):
+	* fontcolor-tty.c (tty_color_instance_hash):
+	* fontcolor-msw.c (mswindows_color_instance_hash):
+	* fontcolor-gtk.c (gtk_color_instance_hash):
+	* fns.c (bit_vector_hash):
+	* floatfns.c (float_hash):
+	* faces.c (face_hash):
+	* extents.c (extent_hash):
+	* events.c (event_hash):
+	* data.c (weak_list_hash, weak_box_hash):
+	* chartab.c (char_table_entry_hash, char_table_hash):
+	* bytecode.c (compiled_function_hash):
+	* alloc.c (vector_hash):
+	Change the various object hash methods to take a new EQUALP
+	parameter, hashing appropriately for #'equalp if it is true.
+
 2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (FsortX, Ffill):
 	Don't try to be clever with the ascii_begin string header slot in
-	these function, just call init_string_ascii_begin().
+	these functions, just call init_string_ascii_begin().
 
 2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
 

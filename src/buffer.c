@@ -640,7 +640,7 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
 
   b->generated_modeline_string = Fmake_string (make_int (84), make_int (' '));
   b->modeline_extent_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
-						   HASH_TABLE_EQ);
+                                                   Qeq);
 
 
   return buf;
