@@ -2633,12 +2633,12 @@ weak_list_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-weak_list_hash (Lisp_Object obj, int depth)
+weak_list_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   struct weak_list *w = XWEAK_LIST (obj);
 
   return HASH2 ((Hashcode) w->type,
-		internal_hash (w->list, depth + 1));
+		internal_hash (w->list, depth + 1, equalp));
 }
 
 Lisp_Object
@@ -3105,11 +3105,11 @@ weak_box_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-weak_box_hash (Lisp_Object obj, int depth)
+weak_box_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   struct weak_box *wb = XWEAK_BOX (obj);
 
-  return internal_hash (wb->value, depth + 1);
+  return internal_hash (wb->value, depth + 1, equalp);
 }
 
 Lisp_Object
@@ -3326,9 +3326,9 @@ ephemeron_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-ephemeron_hash(Lisp_Object obj, int depth)
+ephemeron_hash(Lisp_Object obj, int depth, Boolint equalp)
 {
-  return internal_hash (XEPHEMERON_REF (obj), depth + 1);
+  return internal_hash (XEPHEMERON_REF (obj), depth + 1, equalp);
 }
 
 Lisp_Object

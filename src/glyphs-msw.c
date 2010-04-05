@@ -2168,7 +2168,8 @@ mswindows_image_instance_equal (Lisp_Image_Instance *p1,
 }
 
 static Hashcode
-mswindows_image_instance_hash (Lisp_Image_Instance *p, int UNUSED (depth))
+mswindows_image_instance_hash (Lisp_Image_Instance *p, int UNUSED (depth),
+                               Boolint UNUSED (equalp))
 {
   switch (IMAGE_INSTANCE_TYPE (p))
     {

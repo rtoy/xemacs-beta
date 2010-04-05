@@ -4605,7 +4605,7 @@ coding_system_type_create (void)
 
   staticpro (&Vcoding_system_hash_table);
   Vcoding_system_hash_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
 
   the_coding_system_type_entry_dynarr = Dynarr_new (coding_system_type_entry);
   dump_add_root_block_ptr (&the_coding_system_type_entry_dynarr,
@@ -4792,7 +4792,7 @@ Setting this has no effect.  It is purely for FSF compatibility.
   enable_multibyte_characters = 1;
 
   Vchain_canonicalize_hash_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qequal);
   staticpro (&Vchain_canonicalize_hash_table);
 
 #ifdef DEBUG_XEMACS
@@ -4805,7 +4805,7 @@ Information is displayed on stderr.
 
 #ifdef MULE
   Vdefault_query_coding_region_chartab_cache
-    = make_lisp_hash_table (25, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    = make_lisp_hash_table (25, HASH_TABLE_NON_WEAK, Qequal);
   staticpro (&Vdefault_query_coding_region_chartab_cache);
 #endif
 }

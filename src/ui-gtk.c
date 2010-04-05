@@ -1117,7 +1117,8 @@ emacs_gtk_boxed_equality (Lisp_Object o1, Lisp_Object o2, int UNUSED (depth))
 }
 
 static Hashcode
-emacs_gtk_boxed_hash (Lisp_Object obj, int UNUSED (depth))
+emacs_gtk_boxed_hash (Lisp_Object obj, int UNUSED (depth),
+                      Boolint UNUSED (equalp))
 {
   emacs_gtk_boxed_data *data = XGTK_BOXED(obj);
   return (HASH2 ((Hashcode) data->object, data->object_type));

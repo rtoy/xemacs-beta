@@ -894,6 +894,9 @@ for details.
 {
   /* This function can GC */
   Lisp_Object tp;
+  static int locate_file_called;
+
+  ++locate_file_called;
 
   CHECK_STRING (filename);
 
@@ -3480,7 +3483,7 @@ character escape syntaxes or just read them incorrectly.
 
   Vlocate_file_hash_table = make_lisp_hash_table (200,
 						  HASH_TABLE_NON_WEAK,
-						  HASH_TABLE_EQUAL);
+						  Qequal);
   staticpro (&Vlocate_file_hash_table);
 #ifdef DEBUG_XEMACS
   symbol_value (XSYMBOL (intern ("Vlocate-file-hash-table")))

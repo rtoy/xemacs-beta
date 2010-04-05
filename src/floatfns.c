@@ -183,11 +183,9 @@ float_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-float_hash (Lisp_Object obj, int UNUSED (depth))
+float_hash (Lisp_Object obj, int UNUSED (depth), Boolint UNUSED (equalp))
 {
-  /* mod the value down to 32-bit range */
-  /* #### change for 64-bit machines */
-  return (unsigned long) fmod (extract_float (obj), 4e9);
+  return FLOAT_HASHCODE_FROM_DOUBLE (extract_float (obj));
 }
 
 static const struct memory_description float_description[] = {

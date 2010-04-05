@@ -103,7 +103,7 @@ equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 /* This will not work correctly for opaques with subobjects! */
 
 static Hashcode
-hash_opaque (Lisp_Object obj, int UNUSED (depth))
+hash_opaque (Lisp_Object obj, int UNUSED (depth), int UNUSED (equalp))
 {
   if (XOPAQUE_SIZE (obj) == sizeof (unsigned long))
     return *((Hashcode *) XOPAQUE_DATA (obj));
@@ -144,7 +144,7 @@ equal_opaque_ptr (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-hash_opaque_ptr (Lisp_Object obj, int UNUSED (depth))
+hash_opaque_ptr (Lisp_Object obj, int UNUSED (depth), int UNUSED (equalp))
 {
   return (Hashcode) XOPAQUE_PTR (obj)->ptr;
 }

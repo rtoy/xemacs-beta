@@ -483,7 +483,8 @@ gtk_image_instance_equal (struct Lisp_Image_Instance *p1,
 }
 
 static Hashcode
-gtk_image_instance_hash (struct Lisp_Image_Instance *p, int UNUSED (depth))
+gtk_image_instance_hash (struct Lisp_Image_Instance *p, int UNUSED (depth),
+                         Boolint UNUSED (equalp))
 {
   switch (IMAGE_INSTANCE_TYPE (p))
     {

@@ -160,7 +160,7 @@ gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
   if (!(HASH_TABLEP(Vgtk_seen_characters)))
     {
       Vgtk_seen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
-						   HASH_TABLE_EQUAL);
+						   Qequal);
     }
 
   /* Might give the user an opaque error if make_lisp_hash_table fails,

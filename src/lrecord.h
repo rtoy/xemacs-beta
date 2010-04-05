@@ -334,6 +334,7 @@ enum lrecord_type
   lrecord_type_weak_list,
   lrecord_type_bit_vector,
   lrecord_type_float,
+  lrecord_type_hash_table_test,
   lrecord_type_hash_table,
   lrecord_type_lstream,
   lrecord_type_process,
@@ -489,7 +490,7 @@ struct lrecord_implementation
      hash to the same value in order for hash tables to work properly.
      This means that `hash' can be NULL only if the `equal' method is
      also NULL. */
-  Hashcode (*hash) (Lisp_Object, int);
+  Hashcode (*hash) (Lisp_Object, int, Boolint);
 
   /* Data layout description for your object.  See long comment below. */
   const struct memory_description *description;

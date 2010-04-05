@@ -348,7 +348,7 @@ specifier_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-specifier_hash (Lisp_Object obj, int depth)
+specifier_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   Lisp_Specifier *s = XSPECIFIER (obj);
 
@@ -356,11 +356,11 @@ specifier_hash (Lisp_Object obj, int depth)
      many places where data can be stored.  We pick what are perhaps
      the most likely places where interesting stuff will be. */
   return HASH5 ((HAS_SPECMETH_P (s, hash) ?
-		 SPECMETH (s, hash, (obj, depth)) : 0),
+		 SPECMETH (s, hash, (obj, depth, equalp)) : 0),
 		(Hashcode) s->methods,
-		internal_hash (s->global_specs, depth + 1),
-		internal_hash (s->frame_specs,  depth + 1),
-		internal_hash (s->buffer_specs, depth + 1));
+		internal_hash (s->global_specs, depth + 1, equalp),
+		internal_hash (s->frame_specs,  depth + 1, equalp),
+		internal_hash (s->buffer_specs, depth + 1, equalp));
 }
 
 inline static Bytecount
@@ -3912,6 +3912,6 @@ vars_of_specifier (void)
   staticpro (&Vunlock_ghost_specifiers);
 
   Vcharset_tag_lists =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vcharset_tag_lists);
 }

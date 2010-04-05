@@ -3004,13 +3004,13 @@ extent_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-extent_hash (Lisp_Object obj, int depth)
+extent_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   struct extent *e = XEXTENT (obj);
   /* No need to hash all of the elements; that would take too long.
      Just hash the most common ones. */
   return HASH3 (extent_start (e), extent_end (e),
-		internal_hash (extent_object (e), depth + 1));
+		internal_hash (extent_object (e), depth + 1, 0));
 }
 
 static const struct memory_description extent_description[] = {
@@ -7200,10 +7200,10 @@ functions `get-text-property' or `get-char-property' are called.
      to do `eq' comparison because the lists of faces are already
      memoized. */
   Vextent_face_memoize_hash_table =
-    make_lisp_hash_table (100, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (100, HASH_TABLE_VALUE_WEAK, Qequal);
   staticpro (&Vextent_face_reverse_memoize_hash_table);
   Vextent_face_reverse_memoize_hash_table =
-    make_lisp_hash_table (100, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (100, HASH_TABLE_KEY_WEAK, Qeq);
 
   QSin_map_extents_internal = build_defer_string ("(in map-extents-internal)");
   staticpro (&QSin_map_extents_internal);

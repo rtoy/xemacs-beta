@@ -1,3 +1,10 @@
+2010-04-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/hash-tables.texi (Introduction to Hash Tables):
+	Document that we now support #'equalp as a hash table test by
+	default, and mention #'define-hash-table-test.
+	(Working With Hash Tables): Document #'define-hash-table-test.
+
 2010-04-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/lists.texi (Rearrangement):

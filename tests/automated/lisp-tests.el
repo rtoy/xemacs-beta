@@ -2149,7 +2149,10 @@ via the hepatic alpha-tocopherol transfer protein")))
 		 (push `(Assert (equalp ,(quote-maybe x)
 					,(quote-maybe y))) res)
 		 (push `(Assert (equalp ,(quote-maybe y)
-					,(quote-maybe x))) res))))
+					,(quote-maybe x))) res)
+                 (push `(Assert (eql (equalp-hash ,(quote-maybe y))
+                                     (equalp-hash ,(quote-maybe x))))
+                       res))))
 	   (cons 'progn (nreverse res))))
        (equalp-diff-list-tests (diff-list)
 	 (let (res)
@@ -2160,7 +2163,13 @@ via the hepatic alpha-tocopherol transfer protein")))
 					   ,(quote-maybe y)))) res)
 	       (push `(Assert (not (equalp ,(quote-maybe y)
 					   ,(quote-maybe x)))) res)))
-	   (cons 'progn (nreverse res)))))
+	   (cons 'progn (nreverse res))))
+       (Assert-equalp (object-one object-two &optional failing-case description)
+         `(progn
+           (Assert (equalp ,object-one ,object-two)
+                   ,@(if failing-case
+                         (list failing-case description)))
+           (Assert (eql (equalp-hash ,object-one) (equalp-hash ,object-two))))))
     (equalp-equal-list-tests
      `(,@(when (featurep 'bignum)
 	  (read "((111111111111111111111111111111111111111111111111111
@@ -2183,72 +2192,78 @@ via the hepatic alpha-tocopherol transfer protein")))
        ,@(when (featurep 'ratio) (mapcar* #'/ '(3/2 3/2) '(0.2 0.7)))
        55555555555555555555555555555555555555555/2718281828459045
        0.111111111111111111111111111111111111111111111111111111111111111
-       1e+300 1e+301 -1e+300 -1e+301)))
+       1e+300 1e+301 -1e+300 -1e+301))
 
-  (Assert (equalp "hi there" "Hi There")
-	  "checking equalp isn't case-sensitive")
-  (Assert (equalp 99 99.0)
-	  "checking equalp compares numerical values of different types")
-  (Assert (null (equalp 99 ?c))
-	  "checking equalp does not convert characters to numbers")
-  ;; Fixed in Hg d0ea57eb3de4.
-  (Assert (null (equalp "hi there" [hi there]))
-	  "checking equalp doesn't error with string and non-string")
-  (Assert (equalp "ABCDEEFGH\u00CDJ" string-variable)
-	  "checking #'equalp is case-insensitive with an upcased constant") 
-  (Assert (equalp "abcdeefgh\xedj" string-variable)
-	  "checking #'equalp is case-insensitive with a downcased constant")
-  (Assert (equalp string-variable string-variable)
-	  "checking #'equalp works when handed the same string twice")
-  (Assert (equalp string-variable "aBcDeeFgH\u00Edj")
-	  "check #'equalp is case-insensitive with a variable-cased constant")
-  (Assert (equalp "" (bit-vector)) 
-	  "check empty string and empty bit-vector are #'equalp.")
-  (Assert (equalp (string) (bit-vector)) 
-	  "check empty string and empty bit-vector are #'equalp, no constants")
-  (Assert (equalp "hi there" (vector ?h ?i ?\  ?t ?h ?e ?r ?e))
-	  "check string and vector with same contents #'equalp")
-  (Assert (equalp (string ?h ?i ?\  ?t ?h ?e ?r ?e)
-		  (vector ?h ?i ?\  ?t ?h ?e ?r ?e))
-	  "check string and vector with same contents #'equalp, no constants")
-  (Assert (equalp [?h ?i ?\  ?t ?h ?e ?r ?e]
-		  (string ?h ?i ?\  ?t ?h ?e ?r ?e))
-	  "check string and vector with same contents #'equalp, vector constant")
-  (Assert (equalp [0 1.0 0.0 0 1]
-		 (bit-vector 0 1 0 0 1))
-	  "check vector and bit-vector with same contents #'equalp,\
+    (Assert-equalp "hi there" "Hi There"
+                   "checking equalp isn't case-sensitive")
+    (Assert-equalp
+     99 99.0
+     "checking equalp compares numerical values of different types")
+    (Assert (null (equalp 99 ?c))
+            "checking equalp does not convert characters to numbers")
+    ;; Fixed in Hg d0ea57eb3de4.
+    (Assert (null (equalp "hi there" [hi there]))
+            "checking equalp doesn't error with string and non-string")
+    (Assert-equalp
+     "ABCDEEFGH\u00CDJ" string-variable
+     "checking #'equalp is case-insensitive with an upcased constant") 
+    (Assert-equalp
+     "abcdeefgh\xedj" string-variable
+     "checking #'equalp is case-insensitive with a downcased constant")
+    (Assert-equalp string-variable string-variable
+                   "checking #'equalp works when handed the same string twice")
+    (Assert (equalp string-variable "aBcDeeFgH\u00Edj")
+            "check #'equalp is case-insensitive with a variable-cased constant")
+    (Assert-equalp "" (bit-vector)
+                   "check empty string and empty bit-vector are #'equalp.")
+    (Assert-equalp
+     (string) (bit-vector)
+     "check empty string and empty bit-vector are #'equalp, no constants")
+    (Assert-equalp "hi there" (vector ?h ?i ?\  ?t ?h ?e ?r ?e)
+                   "check string and vector with same contents #'equalp")
+    (Assert-equalp
+     (string ?h ?i ?\  ?t ?h ?e ?r ?e)
+     (vector ?h ?i ?\  ?t ?h ?e ?r ?e)
+     "check string and vector with same contents #'equalp, no constants")
+    (Assert-equalp
+     [?h ?i ?\  ?t ?h ?e ?r ?e]
+     (string ?h ?i ?\  ?t ?h ?e ?r ?e)
+     "check string and vector with same contents #'equalp, vector constant")
+    (Assert-equalp [0 1.0 0.0 0 1]
+                   (bit-vector 0 1 0 0 1)
+                   "check vector and bit-vector with same contents #'equalp,\
  vector constant")
-  (Assert (not (equalp [0 2 0.0 0 1]
-		       (bit-vector 0 1 0 0 1)))
-	  "check vector and bit-vector with different contents not #'equalp,\
+    (Assert (not (equalp [0 2 0.0 0 1]
+                  (bit-vector 0 1 0 0 1)))
+            "check vector and bit-vector with different contents not #'equalp,\
  vector constant")
-  (Assert (equalp #*01001
-		 (vector 0 1.0 0.0 0 1))
+    (Assert-equalp #*01001
+                   (vector 0 1.0 0.0 0 1)
 	  "check vector and bit-vector with same contents #'equalp,\
  bit-vector constant")
-  (Assert (equalp ?\u00E9 Eacute-character)
-	  "checking characters are case-insensitive, one constant")
-  (Assert (not (equalp ?\u00E9 (aref (format "%c" ?a) 0)))
-	  "checking distinct characters are not equalp, one constant")
-  (Assert (equalp t (and))
-	  "checking symbols are correctly #'equalp")
-  (Assert (not (equalp t (or nil '#:t)))
-	  "checking distinct symbols with the same name are not #'equalp")
-  (Assert (equalp #s(char-table type generic data (?\u0080 "hi-there"))
-		  (let ((aragh (make-char-table 'generic)))
-		    (put-char-table ?\u0080 "hi-there" aragh)
-		    aragh))
-	  "checking #'equalp succeeds correctly, char-tables")
-  (Assert (equalp #s(char-table type generic data (?\u0080 "hi-there"))
-		  (let ((aragh (make-char-table 'generic)))
-		    (put-char-table ?\u0080 "HI-THERE" aragh)
-		    aragh))
-	  "checking #'equalp succeeds correctly, char-tables")
-  (Assert (not (equalp #s(char-table type generic data (?\u0080 "hi-there"))
-		       (let ((aragh (make-char-table 'generic)))
-			 (put-char-table ?\u0080 "hi there" aragh)
-			 aragh)))
-	  "checking #'equalp fails correctly, char-tables"))
+    (Assert-equalp ?\u00E9 Eacute-character
+                   "checking characters are case-insensitive, one constant")
+    (Assert (not (equalp ?\u00E9 (aref (format "%c" ?a) 0)))
+            "checking distinct characters are not equalp, one constant")
+    (Assert-equalp t (and)
+                   "checking symbols are correctly #'equalp")
+    (Assert (not (equalp t (or nil '#:t)))
+            "checking distinct symbols with the same name are not #'equalp")
+    (Assert-equalp #s(char-table type generic data (?\u0080 "hi-there"))
+                   (let ((aragh (make-char-table 'generic)))
+                     (put-char-table ?\u0080 "hi-there" aragh)
+                     aragh)
+                   "checking #'equalp succeeds correctly, char-tables")
+    (Assert-equalp #s(char-table type generic data (?\u0080 "hi-there"))
+                   (let ((aragh (make-char-table 'generic)))
+                     (put-char-table ?\u0080 "HI-THERE" aragh)
+                     aragh)
+                   "checking #'equalp succeeds correctly, char-tables")
+    (Assert (not (equalp #s(char-table type generic data (?\u0080 "hi-there"))
+                  (let ((aragh (make-char-table 'generic)))
+                    (put-char-table ?\u0080 "hi there" aragh)
+                    aragh)))
+            "checking #'equalp fails correctly, char-tables")))
 
 ;; There are more tests available for equalp here: 
 ;;

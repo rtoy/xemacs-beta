@@ -193,7 +193,7 @@ struct console_methods
 				      Lisp_Color_Instance *,
 				      int depth);
   Hashcode (*color_instance_hash_method) (Lisp_Color_Instance *,
-					   int depth);
+                                          int depth);
   Lisp_Object (*color_instance_rgb_components_method) (Lisp_Color_Instance *);
   int (*valid_color_name_p_method) (struct device *, Lisp_Object color);
   Lisp_Object (*color_list_method) (void);

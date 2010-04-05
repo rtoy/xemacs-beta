@@ -521,7 +521,7 @@ populate:
   /* Come with empty hash table */
   if (NILP (FRAME_MSWINDOWS_MENU_HASH_TABLE (f)))
     FRAME_MSWINDOWS_MENU_HASH_TABLE (f) =
-      make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+      make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qequal);
   else
     Fclrhash (FRAME_MSWINDOWS_MENU_HASH_TABLE (f));
 
@@ -832,7 +832,7 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
 
   current_menudesc = menu_desc;
   current_hash_table =
-    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, Qequal);
   menu = create_empty_popup_menu ();
   Fputhash (hmenu_to_lisp_object (menu), Qnil, current_hash_table);
   top_level_menu = menu;

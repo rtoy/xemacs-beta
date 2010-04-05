@@ -1872,7 +1872,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		  }
 #else /* not NEW_GC */
 		Lisp_String *l = (Lisp_String *) lheader;
-		if (!debug_can_access_memory (l->data_, l->size_))
+		if (l->size_ && !debug_can_access_memory (l->data_, l->size_))
 		  {
 		    printing_major_badness (printcharfun,
 		       "BAD STRING DATA", (int) (lheader->type),

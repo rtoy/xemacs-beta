@@ -428,7 +428,7 @@ tty_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
       /* All the keysyms we deal with are character objects; therefore, we
 	 can use eq as the test without worrying. */
       Vtty_seen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
-					       HASH_TABLE_EQ);
+					       Qeq);
     }
 
   /* Might give the user an opaque error if make_lisp_hash_table fails,

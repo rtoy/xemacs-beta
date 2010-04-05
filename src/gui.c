@@ -596,28 +596,28 @@ mark_gui_item (Lisp_Object obj)
 }
 
 static Hashcode
-gui_item_hash (Lisp_Object obj, int depth)
+gui_item_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Gui_Item *p = XGUI_ITEM (obj);
 
-  return HASH2 (HASH6 (internal_hash (p->name, depth + 1),
-		       internal_hash (p->callback, depth + 1),
-		       internal_hash (p->callback_ex, depth + 1),
-		       internal_hash (p->suffix, depth + 1),
-		       internal_hash (p->active, depth + 1),
-		       internal_hash (p->included, depth + 1)),
-		HASH6 (internal_hash (p->config, depth + 1),
-		       internal_hash (p->filter, depth + 1),
-		       internal_hash (p->style, depth + 1),
-		       internal_hash (p->selected, depth + 1),
-		       internal_hash (p->keys, depth + 1),
-		       internal_hash (p->value, depth + 1)));
+  return HASH2 (HASH6 (internal_hash (p->name, depth + 1, 0),
+		       internal_hash (p->callback, depth + 1, 0),
+		       internal_hash (p->callback_ex, depth + 1, 0),
+		       internal_hash (p->suffix, depth + 1, 0),
+		       internal_hash (p->active, depth + 1, 0),
+		       internal_hash (p->included, depth + 1, 0)),
+		HASH6 (internal_hash (p->config, depth + 1, 0),
+		       internal_hash (p->filter, depth + 1, 0),
+		       internal_hash (p->style, depth + 1, 0),
+		       internal_hash (p->selected, depth + 1, 0),
+		       internal_hash (p->keys, depth + 1, 0),
+		       internal_hash (p->value, depth + 1, 0)));
 }
 
 int
 gui_item_id_hash (Lisp_Object hashtable, Lisp_Object gitem, int slot)
 {
-  int hashid = gui_item_hash (gitem, 0);
+  int hashid = gui_item_hash (gitem, 0, 0);
   int id = GUI_ITEM_ID_BITS (hashid, slot);
   while (!UNBOUNDP (Fgethash (make_int (id), hashtable, Qunbound)))
     {

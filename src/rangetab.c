@@ -163,13 +163,15 @@ range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-range_table_entry_hash (struct range_table_entry *rte, int depth)
+range_table_entry_hash (struct range_table_entry *rte, int depth,
+                        Boolint equalp)
 {
-  return HASH3 (rte->first, rte->last, internal_hash (rte->val, depth + 1));
+  return HASH3 (rte->first, rte->last,
+                internal_hash (rte->val, depth + 1, equalp));
 }
 
 static Hashcode
-range_table_hash (Lisp_Object obj, int depth)
+range_table_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
@@ -182,7 +184,7 @@ range_table_hash (Lisp_Object obj, int depth)
       for (i = 0; i < size; i++)
 	hash = HASH2 (hash,
 		      range_table_entry_hash
-		      (rangetab_gap_array_atp (rt->entries, i), depth));
+		      (rangetab_gap_array_atp (rt->entries, i), depth, equalp));
       return hash;
     }
 
@@ -192,7 +194,8 @@ range_table_hash (Lisp_Object obj, int depth)
   for (i = 0; i < 5; i++)
     hash = HASH2 (hash,
 		  range_table_entry_hash
-		  (rangetab_gap_array_atp (rt->entries, i*size/5), depth));
+		  (rangetab_gap_array_atp (rt->entries, i*size/5),
+                   depth, equalp));
   return hash;
 }
 

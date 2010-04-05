@@ -178,7 +178,7 @@ face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-face_hash (Lisp_Object obj, int depth)
+face_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Face *f = XFACE (obj);
 
@@ -186,9 +186,9 @@ face_hash (Lisp_Object obj, int depth)
 
   /* No need to hash all of the elements; that would take too long.
      Just hash the most common ones. */
-  return HASH3 (internal_hash (f->foreground, depth),
-		internal_hash (f->background, depth),
-		internal_hash (f->font,       depth));
+  return HASH3 (internal_hash (f->foreground, depth, 0),
+		internal_hash (f->background, depth, 0),
+		internal_hash (f->font,       depth, 0));
 }
 
 static Lisp_Object
@@ -2187,10 +2187,10 @@ vars_of_faces (void)
 {
   staticpro (&Vpermanent_faces_cache);
   Vpermanent_faces_cache =
-    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vtemporary_faces_cache);
   Vtemporary_faces_cache =
-    make_lisp_hash_table (0, HASH_TABLE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (0, HASH_TABLE_WEAK, Qeq);
 
   staticpro (&Vdefault_face);
   Vdefault_face = Qnil;

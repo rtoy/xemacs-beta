@@ -83,17 +83,68 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "gc.h"
 #include "opaque.h"
+#include "buffer.h"
 
 Lisp_Object Qhash_tablep;
+Lisp_Object Qeq, Qeql, Qequal, Qequalp;
+Lisp_Object Qeq_hash, Qeql_hash, Qequal_hash, Qequalp_hash;
+
 static Lisp_Object Qhashtable, Qhash_table, Qmake_hash_table;
 static Lisp_Object Qweakness, Qvalue, Qkey_or_value, Qkey_and_value;
 static Lisp_Object Vall_weak_hash_tables;
 static Lisp_Object Qrehash_size, Qrehash_threshold;
 static Lisp_Object Q_size, Q_test, Q_weakness, Q_rehash_size, Q_rehash_threshold;
+static Lisp_Object Vhash_table_test_eq, Vhash_table_test_eql;
+static Lisp_Object Vhash_table_test_weak_list;
 
 /* obsolete as of 19990901 in xemacs-21.2 */
 static Lisp_Object Qweak, Qkey_weak, Qvalue_weak, Qkey_or_value_weak;
 static Lisp_Object Qnon_weak, Q_type, Q_data;
+
+/* A hash table test, with its associated hash function. equal_function may
+   call lisp_equal_function, and hash_function similarly may call
+   lisp_hash_function. */
+struct Hash_Table_Test
+{
+  NORMAL_LISP_OBJECT_HEADER header;
+  Lisp_Object name;
+  hash_table_equal_function_t equal_function;
+  hash_table_hash_function_t hash_function;
+  Lisp_Object lisp_equal_function;
+  Lisp_Object lisp_hash_function;
+};
+
+static Lisp_Object
+mark_hash_table_test (Lisp_Object obj)
+{
+  Hash_Table_Test *http = XHASH_TABLE_TEST (obj);
+
+  mark_object (http->name);
+  mark_object (http->lisp_equal_function);
+  mark_object (http->lisp_hash_function);
+
+  return Qnil;
+}
+
+static const struct memory_description hash_table_test_description_1[] =
+  {
+    { XD_LISP_OBJECT, offsetof (struct Hash_Table_Test, name) },
+    { XD_LISP_OBJECT, offsetof (struct Hash_Table_Test, lisp_equal_function) },
+    { XD_LISP_OBJECT, offsetof (struct Hash_Table_Test, lisp_hash_function) },
+    { XD_END }
+  };
+
+static const struct sized_memory_description hash_table_test_description =
+  {
+    sizeof (struct Hash_Table_Test),
+    hash_table_test_description_1
+  };
+
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("hash-table-test", hash_table_test,
+				      mark_hash_table_test,
+                                      hash_table_test_description_1,
+                                      Hash_Table_Test);
+/* A hash table. */
 
 struct Lisp_Hash_Table
 {
@@ -104,9 +155,8 @@ struct Lisp_Hash_Table
   double rehash_size;
   double rehash_threshold;
   Elemcount golden_ratio;
-  hash_table_hash_function_t hash_function;
-  hash_table_test_function_t test_function;
   htentry *hentries;
+  Lisp_Object test;
   enum hash_table_weakness weakness;
   Lisp_Object next_weak;     /* Used to chain together all of the weak
 			        hash tables.  Don't mark through this. */
@@ -119,16 +169,17 @@ struct Lisp_Hash_Table
 #define HASH_TABLE_DEFAULT_SIZE 16
 #define HASH_TABLE_DEFAULT_REHASH_SIZE 1.3
 #define HASH_TABLE_MIN_SIZE 10
-#define HASH_TABLE_DEFAULT_REHASH_THRESHOLD(size, test_function)   \
-  (((size) > 4096 && NULL == (test_function)) ? 0.7 : 0.6)
+#define HASH_TABLE_DEFAULT_REHASH_THRESHOLD(size, test)   \
+  (((size) > 4096 && EQ (Vhash_table_test_eq, test)) ? 0.7 : 0.6)
 
-#define HASHCODE(key, ht)						\
-  ((((ht)->hash_function ? (ht)->hash_function (key) : LISP_HASH (key))	\
-    * (ht)->golden_ratio)						\
-   % (ht)->size)
+#define HASHCODE(key, ht, http)						\
+  ((((!EQ (Vhash_table_test_eq, ht->test)) ?                            \
+     (http)->hash_function (http, key) :                                \
+     LISP_HASH (key)) * (ht)->golden_ratio) % (ht)->size)
 
-#define KEYS_EQUAL_P(key1, key2, testfun) \
-  (EQ (key1, key2) || ((testfun) && (testfun) (key1, key2)))
+#define KEYS_EQUAL_P(key1, key2, test, http)                      \
+  (EQ (key1, key2) || ((!EQ (Vhash_table_test_eq, test) &&        \
+                        (http->equal_function) (http, key1, key2))))
 
 #define LINEAR_PROBING_LOOP(probe, entries, size)		\
   for (;							\
@@ -187,28 +238,92 @@ hash_table_size (Elemcount requested_size)
 
 
 static int
-lisp_object_eql_equal (Lisp_Object obj1, Lisp_Object obj2)
+lisp_object_eql_equal (const Hash_Table_Test *UNUSED (http), Lisp_Object obj1,
+                       Lisp_Object obj2)
 {
   return EQ (obj1, obj2) ||
     (NON_FIXNUM_NUMBER_P (obj1) && internal_equal (obj1, obj2, 0));
 }
 
 static Hashcode
-lisp_object_eql_hash (Lisp_Object obj)
+lisp_object_eql_hash (const Hash_Table_Test *UNUSED (http), Lisp_Object obj)
 {
-  return NON_FIXNUM_NUMBER_P (obj) ? internal_hash (obj, 0) : LISP_HASH (obj);
+  return NON_FIXNUM_NUMBER_P (obj) ?
+    internal_hash (obj, 0, 0) : LISP_HASH (obj);
 }
 
 static int
-lisp_object_equal_equal (Lisp_Object obj1, Lisp_Object obj2)
+lisp_object_equal_equal (const Hash_Table_Test *UNUSED (http),
+                         Lisp_Object obj1, Lisp_Object obj2)
 {
   return internal_equal (obj1, obj2, 0);
 }
 
 static Hashcode
-lisp_object_equal_hash (Lisp_Object obj)
+lisp_object_equal_hash (const Hash_Table_Test *UNUSED (http), Lisp_Object obj)
 {
-  return internal_hash (obj, 0);
+  return internal_hash (obj, 0, 0);
+}
+
+static Hashcode
+lisp_object_equalp_hash (const Hash_Table_Test *UNUSED (http), Lisp_Object obj)
+{
+  return internal_hash (obj, 0, 1);
+}
+
+static int
+lisp_object_equalp_equal (const Hash_Table_Test *UNUSED (http),
+                          Lisp_Object obj1, Lisp_Object obj2)
+{
+  return internal_equalp (obj1, obj2, 0);
+}
+
+static Hashcode
+lisp_object_general_hash (const Hash_Table_Test *http, Lisp_Object obj)
+{
+  struct gcpro gcpro1;
+  Lisp_Object args[2] = { http->lisp_hash_function, obj }, res;
+  
+  /* Make sure any weakly referenced objects don't get collected before the
+     funcall: */
+  GCPRO1 (args[0]);
+  gcpro1.nvars = countof (args);
+  res = IGNORE_MULTIPLE_VALUES (Ffuncall (countof (args), args));
+  UNGCPRO;
+
+  if (INTP (res))
+    {
+      return (Hashcode) (XINT (res));
+    }
+
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (res))
+    {
+      if (bignum_fits_emacs_int_p (XBIGNUM_DATA (res)))
+        {
+          return (Hashcode) bignum_to_emacs_int (XBIGNUM_DATA (res));
+        }
+
+      signal_error (Qrange_error, "Not a valid hash code", res);
+    }
+#endif
+
+  dead_wrong_type_argument (Qintegerp, res);
+}
+
+static int
+lisp_object_general_equal (const Hash_Table_Test *http, Lisp_Object obj1,
+                           Lisp_Object obj2)
+{
+  struct gcpro gcpro1;
+  Lisp_Object args[] = { http->lisp_equal_function, obj1, obj2 }, res;
+
+  GCPRO1 (args[0]);
+  gcpro1.nvars = countof (args);
+  res = IGNORE_MULTIPLE_VALUES (Ffuncall (countof (args), args));
+  UNGCPRO;
+
+  return !(NILP (res));
 }
 
 
@@ -231,6 +346,9 @@ mark_hash_table (Lisp_Object obj)
 	    mark_object (e->value);
 	  }
     }
+
+  mark_object (ht->test);
+
   return Qnil;
 }
 
@@ -252,8 +370,8 @@ hash_table_equal (Lisp_Object hash_table1, Lisp_Object hash_table2, int depth,
   Lisp_Hash_Table *ht2 = XHASH_TABLE (hash_table2);
   htentry *e, *sentinel;
 
-  if ((ht1->test_function != ht2->test_function) ||
-      (ht1->weakness      != ht2->weakness)      ||
+  if (!(EQ (ht1->test, ht2->test)) ||
+      (ht1->weakness      != ht2->weakness)   ||
       (ht1->count         != ht2->count))
     return 0;
 
@@ -276,7 +394,8 @@ hash_table_equal (Lisp_Object hash_table1, Lisp_Object hash_table2, int depth,
    Examining all entries is too expensive, and examining a random
    subset does not yield a correct hash function. */
 static Hashcode
-hash_table_hash (Lisp_Object hash_table, int UNUSED (depth))
+hash_table_hash (Lisp_Object hash_table, int UNUSED (depth),
+                 int UNUSED (equalp))
 {
   return XHASH_TABLE (hash_table)->count;
 }
@@ -366,17 +485,11 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
   write_ascstring (printcharfun,
 		  print_readably ? "#s(hash-table" : "#<hash-table");
 
-  /* These checks have a kludgy look to them, but they are safe.
-     Due to nature of hashing, you cannot use arbitrary
-     test functions anyway.  */
-  if (!ht->test_function)
-    write_ascstring (printcharfun, " :test eq");
-  else if (ht->test_function == lisp_object_equal_equal)
-    write_ascstring (printcharfun, " :test equal");
-  else if (ht->test_function == lisp_object_eql_equal)
-    DO_NOTHING;
-  else
-    ABORT ();
+  if (!(EQ (ht->test, Vhash_table_test_eql)))
+    {
+      write_fmt_string_lisp (printcharfun, " :test %S",
+                             1, XHASH_TABLE_TEST (ht->test)->name);
+    }
 
   if (ht->count || !print_readably)
     {
@@ -405,8 +518,7 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
     }
 
   if (ht->rehash_threshold
-      != HASH_TABLE_DEFAULT_REHASH_THRESHOLD (ht->size,
-					      ht->test_function))
+      != HASH_TABLE_DEFAULT_REHASH_THRESHOLD (ht->size, ht->test))
     {
       float_to_string (pigbuf, ht->rehash_threshold);
       write_fmt_string (printcharfun, " :rehash-threshold %s", pigbuf);
@@ -507,6 +619,7 @@ const struct memory_description hash_table_description[] = {
   { XD_UNION,	   offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT (1, 0),
     { &htentry_union_description } },
   { XD_LO_LINK,    offsetof (Lisp_Hash_Table, next_weak) },
+  { XD_LISP_OBJECT,offsetof (Lisp_Hash_Table, test) },
   { XD_END }
 };
 
@@ -553,45 +666,10 @@ allocate_hash_table_entries (Elemcount size)
 #endif /* not NEW_GC */
 }
 
-Lisp_Object
-make_standard_lisp_hash_table (enum hash_table_test test,
-			       Elemcount size,
-			       double rehash_size,
-			       double rehash_threshold,
-			       enum hash_table_weakness weakness)
-{
-  hash_table_hash_function_t hash_function =  0;
-  hash_table_test_function_t test_function = 0;
-
-  switch (test)
-    {
-    case HASH_TABLE_EQ:
-      test_function = 0;
-      hash_function = 0;
-      break;
-
-    case HASH_TABLE_EQL:
-      test_function = lisp_object_eql_equal;
-      hash_function = lisp_object_eql_hash;
-      break;
-
-    case HASH_TABLE_EQUAL:
-      test_function = lisp_object_equal_equal;
-      hash_function = lisp_object_equal_hash;
-      break;
-
-    default:
-      ABORT ();
-    }
-
-  return make_general_lisp_hash_table (hash_function, test_function,
-				       size, rehash_size, rehash_threshold,
-				       weakness);
-}
+static Lisp_Object decode_hash_table_test (Lisp_Object obj);
 
 Lisp_Object
-make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
-			      hash_table_test_function_t test_function,
+make_general_lisp_hash_table (Lisp_Object test,
 			      Elemcount size,
 			      double rehash_size,
 			      double rehash_threshold,
@@ -600,8 +678,9 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
   Lisp_Object hash_table = ALLOC_NORMAL_LISP_OBJECT (hash_table);
   Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
 
-  ht->test_function = test_function;
-  ht->hash_function = hash_function;
+  assert (HASH_TABLE_TESTP (test));
+
+  ht->test = test;
   ht->weakness = weakness;
 
   ht->rehash_size =
@@ -609,7 +688,7 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 
   ht->rehash_threshold =
     rehash_threshold > 0.0 ? rehash_threshold :
-    HASH_TABLE_DEFAULT_REHASH_THRESHOLD (size, ht->test_function);
+    HASH_TABLE_DEFAULT_REHASH_THRESHOLD (size, ht->test);
 
   if (size < HASH_TABLE_MIN_SIZE)
     size = HASH_TABLE_MIN_SIZE;
@@ -631,11 +710,11 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 }
 
 Lisp_Object
-make_lisp_hash_table (Elemcount size,
-		      enum hash_table_weakness weakness,
-		      enum hash_table_test test)
+make_lisp_hash_table (Elemcount size, enum hash_table_weakness weakness,
+                      Lisp_Object test)
 {
-  return make_standard_lisp_hash_table (test, size, -1.0, -1.0, weakness);
+  test = decode_hash_table_test (test);
+  return make_general_lisp_hash_table (test, size, -1.0, -1.0, weakness);
 }
 
 /* Pretty reading of hash tables.
@@ -678,12 +757,14 @@ hash_table_weakness_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
   if (EQ (value, Qkey_or_value))	return 1;
   if (EQ (value, Qvalue))		return 1;
 
+#ifndef NO_NEED_TO_HANDLE_21_4_CODE
   /* Following values are obsolete as of 19990901 in xemacs-21.2 */
   if (EQ (value, Qnon_weak))		return 1;
   if (EQ (value, Qweak))		return 1;
   if (EQ (value, Qkey_weak))		return 1;
   if (EQ (value, Qkey_or_value_weak))	return 1;
   if (EQ (value, Qvalue_weak))		return 1;
+#endif
 
   maybe_invalid_constant ("Invalid hash table weakness",
 			     value, Qhash_table, errb);
@@ -700,12 +781,14 @@ decode_hash_table_weakness (Lisp_Object obj)
   if (EQ (obj, Qkey_or_value))		return HASH_TABLE_KEY_VALUE_WEAK;
   if (EQ (obj, Qvalue))			return HASH_TABLE_VALUE_WEAK;
 
+#ifndef NO_NEED_TO_HANDLE_21_4_CODE
   /* Following values are obsolete as of 19990901 in xemacs-21.2 */
   if (EQ (obj, Qnon_weak))		return HASH_TABLE_NON_WEAK;
   if (EQ (obj, Qweak))			return HASH_TABLE_WEAK;
   if (EQ (obj, Qkey_weak))		return HASH_TABLE_KEY_WEAK;
   if (EQ (obj, Qkey_or_value_weak))	return HASH_TABLE_KEY_VALUE_WEAK;
   if (EQ (obj, Qvalue_weak))		return HASH_TABLE_VALUE_WEAK;
+#endif
 
   invalid_constant ("Invalid hash table weakness", obj);
   RETURN_NOT_REACHED (HASH_TABLE_NON_WEAK);
@@ -715,26 +798,40 @@ static int
 hash_table_test_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 			  Error_Behavior errb)
 {
-  if (EQ (value, Qnil))	  return 1;
-  if (EQ (value, Qeq))	  return 1;
-  if (EQ (value, Qequal)) return 1;
-  if (EQ (value, Qeql))	  return 1;
+  Lisp_Object lookup;
 
-  maybe_invalid_constant ("Invalid hash table test",
-			  value, Qhash_table, errb);
-  return 0;
+  if (NILP (value))
+    {
+      return 1;
+    }
+
+  lookup = Fassq (value, XWEAK_LIST_LIST (Vhash_table_test_weak_list));
+  if (NILP (lookup))
+    {
+      maybe_invalid_constant ("Invalid hash table test",
+                              value, Qhash_table, errb);
+    }
+
+  return 1;
 }
 
-static enum hash_table_test
+static Lisp_Object
 decode_hash_table_test (Lisp_Object obj)
 {
-  if (EQ (obj, Qnil))	return HASH_TABLE_EQL;
-  if (EQ (obj, Qeq))	return HASH_TABLE_EQ;
-  if (EQ (obj, Qequal)) return HASH_TABLE_EQUAL;
-  if (EQ (obj, Qeql))	return HASH_TABLE_EQL;
+  Lisp_Object result;
 
-  invalid_constant ("Invalid hash table test", obj);
-  RETURN_NOT_REACHED (HASH_TABLE_EQ);
+  if (NILP (obj))
+    {
+      obj = Qeql;
+    }
+
+  result = Fassq (obj, XWEAK_LIST_LIST (Vhash_table_test_weak_list));
+  if (NILP (result))
+    {
+      invalid_constant ("Invalid hash table test", obj);
+    }
+  
+  return XCDR (result);
 }
 
 static int
@@ -865,7 +962,9 @@ hash_table_instantiate (Lisp_Object plist)
           else if (EQ (key, Qrehash_threshold)) rehash_threshold = value;
           else if (EQ (key, Qweakness))	    weakness	     = value;
           else if (EQ (key, Qdata))		    data	     = value;
+#ifndef NO_NEED_TO_HANDLE_21_4_CODE
           else if (EQ (key, Qtype))/*obsolete*/ weakness	     = value;
+#endif
           else if (KEYWORDP (key))
             signal_error (Qinvalid_read_syntax, 
                           "can't mix keyword and non-keyword hash table syntax",
@@ -875,14 +974,14 @@ hash_table_instantiate (Lisp_Object plist)
     }
 
   /* Create the hash table.  */
-  hash_table = make_standard_lisp_hash_table
+  hash_table = make_general_lisp_hash_table
     (decode_hash_table_test (test),
      decode_hash_table_size (size),
      decode_hash_table_rehash_size (rehash_size),
      decode_hash_table_rehash_threshold (rehash_threshold),
      decode_hash_table_weakness (weakness));
 
-  /* I'm not sure whether this can GC, but better safe than sorry.  */
+  /* This can GC with a user-specified test. */
   {
     struct gcpro gcpro1;
     GCPRO1 (hash_table);
@@ -924,8 +1023,10 @@ structure_type_create_hash_table_structure_name (Lisp_Object structure_name)
   define_structure_type_keyword (st, Qweakness, hash_table_weakness_validate);
   define_structure_type_keyword (st, Qdata, hash_table_data_validate);
 
+#ifndef NO_NEED_TO_HANDLE_21_4_CODE
   /* obsolete as of 19990901 in xemacs-21.2 */
   define_structure_type_keyword (st, Qtype, hash_table_weakness_validate);
+#endif
 }
 
 /* Create a built-in Lisp structure type named `hash-table'.
@@ -956,10 +1057,13 @@ DEFUN ("make-hash-table", Fmake_hash_table, 0, MANY, 0, /*
 Return a new empty hash table object.
 Use Common Lisp style keywords to specify hash table properties.
 
-Keyword :test can be `eq', `eql' (default) or `equal'.
-Comparison between keys is done using this function.
-If speed is important, consider using `eq'.
-When storing strings in the hash table, you will likely need to use `equal'.
+Keyword :test can be `eq', `eql' (default), `equal' or `equalp'.
+Comparison between keys is done using this function.  If speed is important,
+consider using `eq'.  When storing strings in the hash table, you will
+likely need to use `equal' or `equalp' (for case-insensitivity).  With other
+objects, consider using a test function defined with
+`define-hash-table-test', an emacs extension to this Common Lisp hash table
+API.
 
 Keyword :size specifies the number of keys likely to be inserted.
 This number of entries can be inserted without enlarging the hash table.
@@ -1006,7 +1110,7 @@ arguments: (&key TEST SIZE REHASH-SIZE REHASH-THRESHOLD WEAKNESS)
 #ifdef NO_NEED_TO_HANDLE_21_4_CODE
   PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 5,
                   (test, size, rehash_size, rehash_threshold, weakness),
-                  NULL, weakness = Qunbound), 0);
+                  NULL, 0);
 #else
   PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 6,
                   (test, size, rehash_size, rehash_threshold, weakness,
@@ -1034,7 +1138,7 @@ if (!NILP (var)) hash_table_##var##_validate (Q##var, var, ERROR_ME);
   VALIDATE_VAR (rehash_threshold);
   VALIDATE_VAR (weakness);
 
-  return make_standard_lisp_hash_table
+  return make_general_lisp_hash_table
     (decode_hash_table_test (test),
      decode_hash_table_size (size),
      decode_hash_table_rehash_size (rehash_size),
@@ -1071,6 +1175,7 @@ resize_hash_table (Lisp_Hash_Table *ht, Elemcount new_size)
 {
   htentry *old_entries, *new_entries, *sentinel, *e;
   Elemcount old_size;
+  Hash_Table_Test *http = XHASH_TABLE_TEST (ht->test);
 
   old_size = ht->size;
   ht->size = new_size;
@@ -1086,7 +1191,7 @@ resize_hash_table (Lisp_Hash_Table *ht, Elemcount new_size)
   for (e = old_entries, sentinel = e + old_size; e < sentinel; e++)
     if (!HTENTRY_CLEAR_P (e))
       {
-	htentry *probe = new_entries + HASHCODE (e->key, ht);
+	htentry *probe = new_entries + HASHCODE (e->key, ht, http);
 	LINEAR_PROBING_LOOP (probe, new_entries, new_size)
 	  ;
 	*probe = *e;
@@ -1107,11 +1212,12 @@ pdump_reorganize_hash_table (Lisp_Object hash_table)
   /* We leave room for one never-occupied sentinel htentry at the end.  */
   htentry *new_entries = allocate_hash_table_entries (ht->size + 1);
   htentry *e, *sentinel;
+  Hash_Table_Test *http = XHASH_TABLE_TEST (ht->test);
 
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
     if (!HTENTRY_CLEAR_P (e))
       {
-	htentry *probe = new_entries + HASHCODE (e->key, ht);
+	htentry *probe = new_entries + HASHCODE (e->key, ht, http);
 	LINEAR_PROBING_LOOP (probe, new_entries, ht->size)
 	  ;
 	*probe = *e;
@@ -1135,19 +1241,21 @@ enlarge_hash_table (Lisp_Hash_Table *ht)
 htentry *
 find_htentry (Lisp_Object key, const Lisp_Hash_Table *ht)
 {
-  hash_table_test_function_t test_function = ht->test_function;
+  Lisp_Object test = ht->test;
+  Hash_Table_Test *http = XHASH_TABLE_TEST (test);
+
   htentry *entries = ht->hentries;
-  htentry *probe = entries + HASHCODE (key, ht);
+  htentry *probe = entries + HASHCODE (key, ht, http);
 
   LINEAR_PROBING_LOOP (probe, entries, ht->size)
-    if (KEYS_EQUAL_P (probe->key, key, test_function))
+    if (KEYS_EQUAL_P (probe->key, key, test, http))
       break;
 
   return probe;
 }
 
 /* A version of Fputhash() that increments the value by the specified
-   amount and dispenses will all error checks.  Assumes that tables does
+   amount and dispenses with all error checks.  Assumes that tables does
    comparison using EQ.  Used by the profiling routines to avoid
    overhead -- profiling overhead was being recorded at up to 15% of the
    total time. */
@@ -1156,8 +1264,9 @@ void
 inchash_eq (Lisp_Object key, Lisp_Object table, EMACS_INT offset)
 {
   Lisp_Hash_Table *ht = XHASH_TABLE (table);
+  Hash_Table_Test *http = XHASH_TABLE_TEST (ht->test);
   htentry *entries = ht->hentries;
-  htentry *probe = entries + HASHCODE (key, ht);
+  htentry *probe = entries + HASHCODE (key, ht, http);
 
   LINEAR_PROBING_LOOP (probe, entries, ht->size)
     if (EQ (probe->key, key))
@@ -1213,6 +1322,7 @@ Hash KEY to VALUE in HASH-TABLE, and return VALUE.
 static void
 remhash_1 (Lisp_Hash_Table *ht, htentry *entries, htentry *probe)
 {
+  Hash_Table_Test *http = XHASH_TABLE_TEST (ht->test);
   Elemcount size = ht->size;
   CLEAR_HTENTRY (probe);
   probe++;
@@ -1221,7 +1331,7 @@ remhash_1 (Lisp_Hash_Table *ht, htentry *entries, htentry *probe)
   LINEAR_PROBING_LOOP (probe, entries, size)
     {
       Lisp_Object key = probe->key;
-      htentry *probe2 = entries + HASHCODE (key, ht);
+      htentry *probe2 = entries + HASHCODE (key, ht, http);
       LINEAR_PROBING_LOOP (probe2, entries, size)
 	if (EQ (probe2->key, key))
 	  /* htentry at probe doesn't need to move. */
@@ -1279,16 +1389,15 @@ Return the number of entries in HASH-TABLE.
 }
 
 DEFUN ("hash-table-test", Fhash_table_test, 1, 1, 0, /*
-Return the test function of HASH-TABLE.
-This can be one of `eq', `eql' or `equal'.
+Return HASH-TABLE's test.
+
+This can be one of `eq', `eql', `equal', `equalp', or some symbol supplied
+as the NAME argument to `define-hash-table-test', which see.
 */
        (hash_table))
 {
-  hash_table_test_function_t fun = xhash_table (hash_table)->test_function;
-
-  return (fun == lisp_object_eql_equal   ? Qeql   :
-	  fun == lisp_object_equal_equal ? Qequal :
-	  Qeq);
+  CHECK_HASH_TABLE (hash_table);
+  return XHASH_TABLE_TEST (XHASH_TABLE (hash_table)->test)->name;
 }
 
 DEFUN ("hash-table-size", Fhash_table_size, 1, 1, 0, /*
@@ -1711,7 +1820,7 @@ prune_weak_hash_tables (void)
 /* Return a hash value for an array of Lisp_Objects of size SIZE. */
 
 Hashcode
-internal_array_hash (Lisp_Object *arr, int size, int depth)
+internal_array_hash (Lisp_Object *arr, int size, int depth, Boolint equalp)
 {
   int i;
   Hashcode hash = 0;
@@ -1720,7 +1829,7 @@ internal_array_hash (Lisp_Object *arr, int size, int depth)
   if (size <= 5)
     {
       for (i = 0; i < size; i++)
-	hash = HASH2 (hash, internal_hash (arr[i], depth));
+	hash = HASH2 (hash, internal_hash (arr[i], depth, equalp));
       return hash;
     }
 
@@ -1728,9 +1837,76 @@ internal_array_hash (Lisp_Object *arr, int size, int depth)
      A slightly better approach would be to offset by some
      noise factor from the points chosen below. */
   for (i = 0; i < 5; i++)
-    hash = HASH2 (hash, internal_hash (arr[i*size/5], depth));
+    hash = HASH2 (hash, internal_hash (arr[i*size/5], depth, equalp));
 
   return hash;
+}
+
+/* This needs to be algorithmically the same as
+   internal_array_hash(). Unfortunately, for strings with non-ASCII content,
+   it has to be O(2N), I don't see a reasonable alternative to hashing
+   sequence relying on their length. It is O(1) for pure ASCII strings,
+   though. */
+
+static Hashcode
+string_equalp_hash (Lisp_Object string)
+{
+  Bytecount len = XSTRING_LENGTH (string),
+    ascii_begin = (Bytecount) XSTRING_ASCII_BEGIN (string);
+  const Ibyte *ptr = XSTRING_DATA (string), *pend = ptr + len;
+  Charcount clen;
+  Hashcode hash = 0;
+
+  if (len == ascii_begin)
+    {
+      clen = len;
+    }
+  else
+    {
+      clen = string_char_length (string);
+    }
+
+  if (clen <= 5)
+    {
+      while (ptr < pend)
+        {
+          hash = HASH2 (hash,
+                        LISP_HASH (make_char (CANONCASE (NULL,
+                                                         itext_ichar (ptr)))));
+          INC_IBYTEPTR (ptr);
+        }
+    }
+  else
+    {
+      int ii;
+
+      if (clen == len)
+        {
+          for (ii = 0; ii < 5; ii++)
+            {
+              hash = HASH2 (hash,
+                            LISP_HASH (make_char
+                                       (CANONCASE (NULL,
+                                                   ptr[ii * clen / 5]))));
+            }
+        }
+      else
+        {
+          Charcount this_char = 0, last_char = 0;
+          for (ii = 0; ii < 5; ii++)
+            {
+              this_char = ii * clen / 5;
+              ptr = itext_n_addr (ptr, this_char - last_char);
+              last_char = this_char;
+
+              hash = HASH2 (hash,
+                            LISP_HASH (make_char
+                                       (CANONCASE (NULL, itext_ichar (ptr)))));
+            }
+        }
+    }
+
+  return HASH2 (clen, hash);
 }
 
 /* Return a hash value for a Lisp_Object.  This is for use when hashing
@@ -1746,7 +1922,7 @@ internal_array_hash (Lisp_Object *arr, int size, int depth)
    hash, but practically this won't ever happen. */
 
 Hashcode
-internal_hash (Lisp_Object obj, int depth)
+internal_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   if (depth > 5)
     return 0;
@@ -1761,18 +1937,18 @@ internal_hash (Lisp_Object obj, int depth)
       if (!CONSP(XCDR(obj)))
 	{
 	  /* special case for '(a . b) conses */
-	  return HASH2(internal_hash(XCAR(obj), depth),
-		       internal_hash(XCDR(obj), depth));
+	  return HASH2(internal_hash(XCAR(obj), depth, equalp),
+		       internal_hash(XCDR(obj), depth, equalp));
 	}
 
       /* Don't simply tail recurse; we want to hash lists with the
 	 same contents in distinct orders differently. */
-      hash = internal_hash(XCAR(obj), depth);
+      hash = internal_hash(XCAR(obj), depth, equalp);
 
       obj = XCDR(obj);
       for (s = 1; s < 6 && CONSP(obj); obj = XCDR(obj), s++)
 	{
-	  h = internal_hash(XCAR(obj), depth);
+	  h = internal_hash(XCAR(obj), depth, equalp);
 	  hash = HASH3(hash, h, s);
 	}
 
@@ -1780,6 +1956,11 @@ internal_hash (Lisp_Object obj, int depth)
     }
   if (STRINGP (obj))
     {
+      if (equalp)
+        {
+          return string_equalp_hash (obj);
+        }
+
       return hash_string (XSTRING_DATA (obj), XSTRING_LENGTH (obj));
     }
   if (LRECORDP (obj))
@@ -1787,34 +1968,247 @@ internal_hash (Lisp_Object obj, int depth)
       const struct lrecord_implementation
 	*imp = XRECORD_LHEADER_IMPLEMENTATION (obj);
       if (imp->hash)
-	return imp->hash (obj, depth);
+	return imp->hash (obj, depth, equalp);
+    }
+
+  if (equalp)
+    {
+      if (CHARP (obj))
+        {
+          /* Characters and numbers of the same numeric value hash
+             differently, which is fine, they're not equalp. */
+          return LISP_HASH (make_char (CANONCASE (NULL, XCHAR (obj))));
+        }
+
+      if (INTP (obj))
+        {
+          return FLOAT_HASHCODE_FROM_DOUBLE ((double) (XINT (obj)));
+        }
     }
 
   return LISP_HASH (obj);
 }
 
-DEFUN ("sxhash", Fsxhash, 1, 1, 0, /*
-Return a hash value for OBJECT.
-\(equal obj1 obj2) implies (= (sxhash obj1) (sxhash obj2)).
+DEFUN ("eq-hash", Feq_hash, 1, 1, 0, /*
+Return a hash value for OBJECT appropriate for use with `eq.'
 */
        (object))
 {
-  return make_int (internal_hash (object, 0));
+  return make_integer (XPNTRVAL (object));
 }
 
-#if 0
-DEFUN ("internal-hash-value", Finternal_hash_value, 1, 1, 0, /*
-Hash value of OBJECT.  For debugging.
-The value is returned as (HIGH . LOW).
+DEFUN ("eql-hash", Feql_hash, 1, 1, 0, /*
+Return a hash value for OBJECT appropriate for use with `eql.'
 */
        (object))
 {
-  /* This function is pretty 32bit-centric. */
-  Hashcode hash = internal_hash (object, 0);
-  return Fcons (hash >> 16, hash & 0xffff);
+  EMACS_INT hashed = lisp_object_eql_hash (NULL, object);
+  return make_integer (hashed);
 }
-#endif
 
+DEFUN ("equal-hash", Fequal_hash, 1, 1, 0, /*
+Return a hash value for OBJECT appropriate for use with `equal.'
+\(equal obj1 obj2) implies (= (equal-hash obj1) (equal-hash obj2)).
+*/
+       (object))
+{
+  EMACS_INT hashed = internal_hash (object, 0, 0);
+  return make_integer (hashed);
+}
+
+DEFUN ("equalp-hash", Fequalp_hash, 1, 1, 0, /*
+Return a hash value for OBJECT appropriate for use with `equalp.'
+*/
+       (object))
+{
+  EMACS_INT hashed = internal_hash (object, 0, 1);
+  return make_integer (hashed);
+}
+
+static Lisp_Object
+make_hash_table_test (Lisp_Object name,
+                      hash_table_equal_function_t equal_function,
+                      hash_table_hash_function_t hash_function,
+                      Lisp_Object lisp_equal_function,
+                      Lisp_Object lisp_hash_function)
+{
+  Lisp_Object result = ALLOC_NORMAL_LISP_OBJECT (hash_table_test);
+  Hash_Table_Test *http = XHASH_TABLE_TEST (result);
+
+  http->name = name;
+  http->equal_function = equal_function;
+  http->hash_function = hash_function;
+  http->lisp_equal_function = lisp_equal_function;
+  http->lisp_hash_function = lisp_hash_function;
+
+  return result;
+}
+
+Lisp_Object
+define_hash_table_test (Lisp_Object name,
+                        hash_table_equal_function_t equal_function,
+                        hash_table_hash_function_t hash_function,
+                        Lisp_Object lisp_equal_function,
+                        Lisp_Object lisp_hash_function)
+{
+  Lisp_Object result = make_hash_table_test (name, equal_function,
+                                             hash_function,
+                                             lisp_equal_function,
+                                             lisp_hash_function);
+  XWEAK_LIST_LIST (Vhash_table_test_weak_list)
+    = Fcons (Fcons (name, result),
+             XWEAK_LIST_LIST (Vhash_table_test_weak_list));
+
+  return result;
+}
+
+DEFUN ("define-hash-table-test", Fdefine_hash_table_test, 3, 3, 0, /*
+Define a new hash table test with name NAME, a symbol.
+
+In a hash table created with NAME as its test, use EQUAL-FUNCTION to compare
+keys, and HASH-FUNCTION for computing hash codes of keys.
+
+EQUAL-FUNCTION must be a function taking two arguments and returning non-nil
+if both arguments are the same.  HASH-FUNCTION must be a function taking one
+argument and returning an integer that is the hash code of the argument.
+
+Computation should use the whole value range of the underlying machine long
+type.  In XEmacs this will necessitate bignums for values above
+`most-positive-fixnum' but below (1+ (* most-positive-fixnum 2)) and
+analagous values below `most-negative-fixnum'.  Relatively poor hashing
+performance is guaranteed in a build without bignums.
+
+This function returns t if successful, and errors if NAME
+cannot be defined as a hash table test.
+*/
+       (name, equal_function, hash_function))
+{
+  Lisp_Object min, max, lookup;
+
+  CHECK_SYMBOL (name);
+
+  lookup = Fassq (name, XWEAK_LIST_LIST (Vhash_table_test_weak_list));
+
+  if (!NILP (lookup))
+    {
+      invalid_change ("Cannot redefine existing hash table test", name);
+    }
+
+  min = Ffunction_min_args (equal_function);
+  max = Ffunction_max_args (equal_function);
+
+  if (!((XINT (min) <= 2) && (NILP (max) || 2 <= XINT (max))))
+    {
+      signal_wrong_number_of_arguments_error (equal_function, 2);
+    }
+
+  min = Ffunction_min_args (hash_function);
+  max = Ffunction_max_args (hash_function);
+
+  if (!((XINT (min) <= 1) && (NILP (max) || 1 <= XINT (max))))
+    {
+      signal_wrong_number_of_arguments_error (hash_function, 1);
+    }
+
+  define_hash_table_test (name, lisp_object_general_equal,
+                          lisp_object_general_hash, equal_function,
+                          hash_function);
+  return Qt;
+}
+
+DEFUN ("valid-hash-table-test-p", Fvalid_hash_table_test_p, 1, 1, 0, /*
+Return t if OBJECT names a hash table test, nil otherwise.
+
+A valid hash table test is one of the symbols `eq', `eql', `equal',
+`equalp', or some symbol passed as the NAME argument to
+`define-hash-table-test'.  As a special case, `nil' is regarded as
+equivalent to `eql'.
+*/
+       (object))
+{
+  Lisp_Object lookup;
+
+  if (NILP (object))
+    {
+      return Qt;
+    }
+
+  lookup = Fassq (object, XWEAK_LIST_LIST (Vhash_table_test_weak_list));
+
+  if (!NILP (lookup))
+    {
+      return Qt;
+    }
+
+  return Qnil;
+}
+
+DEFUN ("hash-table-test-list", Fhash_table_test_list, 0, 0, 0, /*
+Return a list of symbols naming valid hash table tests.
+These can be passed as the value of the TEST keyword to `make-hash-table'.
+This list does not include nil, regarded as equivalent to `eql' by
+`make-hash-table'.
+*/
+       ())
+{
+  Lisp_Object result = Qnil;
+
+  LIST_LOOP_2 (test, XWEAK_LIST_LIST (Vhash_table_test_weak_list))
+    {
+      if (!UNBOUNDP (XCAR (test)))
+        {
+          result = Fcons (XCAR (test), result);
+        }
+    }
+
+  return result;
+}
+
+DEFUN ("hash-table-test-equal-function",
+       Fhash_table_test_equal_function, 1, 1, 0, /*
+Return the comparison function used for hash table test TEST.
+See `define-hash-table-test' and `make-hash-table'.
+*/
+       (test))
+{
+  Lisp_Object lookup;
+
+  if (NILP (test))
+    {
+      test = Qeql;
+    }
+
+  lookup = Fassq (test, XWEAK_LIST_LIST (Vhash_table_test_weak_list));
+  if (NILP (lookup))
+    {
+      invalid_argument ("Not a defined hash table test", test);
+    }
+
+  return XHASH_TABLE_TEST (XCDR (lookup))->lisp_equal_function;
+}
+
+DEFUN ("hash-table-test-hash-function",
+       Fhash_table_test_hash_function, 1, 1, 0, /*
+Return the hash function used for hash table test TEST.
+See `define-hash-table-test' and `make-hash-table'.
+*/
+       (test))
+{
+  Lisp_Object lookup;
+
+  if (NILP (test))
+    {
+      test = Qeql;
+    }
+
+  lookup = Fassq (test, XWEAK_LIST_LIST (Vhash_table_test_weak_list));
+  if (NILP (lookup))
+    {
+      invalid_argument ("Not a defined hash table test", test);
+    }
+
+  return XHASH_TABLE_TEST (XCDR (lookup))->lisp_hash_function;
+}
 
 /************************************************************************/
 /*                            initialization                            */
@@ -1846,12 +2240,21 @@ syms_of_elhash (void)
   DEFSUBR (Fhash_table_rehash_threshold);
   DEFSUBR (Fhash_table_weakness);
   DEFSUBR (Fhash_table_type); /* obsolete */
-  DEFSUBR (Fsxhash);
-#if 0
-  DEFSUBR (Finternal_hash_value);
-#endif
+
+  DEFSUBR (Feq_hash);
+  DEFSUBR (Feql_hash);
+  DEFSUBR (Fequal_hash);
+  Ffset (intern ("sxhash"), intern ("equal-hash"));
+  DEFSUBR (Fequalp_hash);
+
+  DEFSUBR (Fdefine_hash_table_test);
+  DEFSUBR (Fvalid_hash_table_test_p);
+  DEFSUBR (Fhash_table_test_list);
+  DEFSUBR (Fhash_table_test_equal_function);
+  DEFSUBR (Fhash_table_test_hash_function);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qhash_tablep);
+
   DEFSYMBOL (Qhash_table);
   DEFSYMBOL (Qhashtable);
   DEFSYMBOL (Qmake_hash_table);
@@ -1880,6 +2283,22 @@ syms_of_elhash (void)
 void
 vars_of_elhash (void)
 {
+  Lisp_Object weak_list_list = XWEAK_LIST_LIST (Vhash_table_test_weak_list);
+
+  /* This var was staticpro'd and initialised in
+     init_elhash_once_early, but its Vall_weak_lists isn't sane, since
+     that was done before vars_of_data() was called. Create a sane
+     weak list object now, set its list appropriately, assert that our
+     data haven't been garbage collected. */
+  assert (!NILP (Fassq (Qeq, weak_list_list)));
+  assert (!NILP (Fassq (Qeql, weak_list_list)));
+  assert (!NILP (Fassq (Qequal, weak_list_list)));
+  assert (!NILP (Fassq (Qequalp, weak_list_list)));
+  assert (4 == XINT (Flength (weak_list_list)));
+
+  Vhash_table_test_weak_list = make_weak_list (WEAK_LIST_KEY_ASSOC);
+  XWEAK_LIST_LIST (Vhash_table_test_weak_list) = weak_list_list;
+
 #ifdef MEMORY_USAGE_STATS
   OBJECT_HAS_PROPERTY
     (hash_table, memusage_stats_list, list1 (intern ("hash-entries")));
@@ -1890,11 +2309,40 @@ void
 init_elhash_once_early (void)
 {
   INIT_LISP_OBJECT (hash_table);
+  INIT_LISP_OBJECT (hash_table_test);
+
 #ifdef NEW_GC
   INIT_LISP_OBJECT (hash_table_entry);
 #endif /* NEW_GC */
 
+  /* init_elhash_once_early() is called very early, we can't have these
+     DEFSYMBOLs in syms_of_elhash(), unfortunately. */
+
+  DEFSYMBOL (Qeq);
+  DEFSYMBOL (Qeql);
+  DEFSYMBOL (Qequal);
+  DEFSYMBOL (Qequalp);
+
+  DEFSYMBOL (Qeq_hash);
+  DEFSYMBOL (Qeql_hash);
+  DEFSYMBOL (Qequal_hash);
+  DEFSYMBOL (Qequalp_hash);
+
   /* This must NOT be staticpro'd */
   Vall_weak_hash_tables = Qnil;
   dump_add_weak_object_chain (&Vall_weak_hash_tables);
+ 
+  staticpro (&Vhash_table_test_weak_list);
+  Vhash_table_test_weak_list = make_weak_list (WEAK_LIST_KEY_ASSOC);
+
+  staticpro (&Vhash_table_test_eq);
+  Vhash_table_test_eq = define_hash_table_test (Qeq, NULL, NULL, Qeq, Qeq_hash);
+  staticpro (&Vhash_table_test_eql);
+  Vhash_table_test_eql
+    = define_hash_table_test (Qeql, lisp_object_eql_equal,
+                              lisp_object_eql_hash, Qeql, Qeql_hash);
+  (void) define_hash_table_test (Qequal, lisp_object_equal_equal,
+                                 lisp_object_equal_hash, Qequal, Qequal_hash);
+  (void) define_hash_table_test (Qequalp, lisp_object_equalp_equal,
+                                 lisp_object_equalp_hash, Qequalp, Qequalp_hash);
 }

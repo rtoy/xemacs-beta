@@ -1121,7 +1121,7 @@ vars_of_mule_charset (void)
 
   staticpro (&Vcharset_hash_table);
   Vcharset_hash_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
 }
 
 void

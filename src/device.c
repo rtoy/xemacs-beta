@@ -222,9 +222,9 @@ allocate_device (Lisp_Object console)
 
   /* #### is 20 reasonable? */
   d->color_instance_cache =
-    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, Qequal);
   d->font_instance_cache =
-    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, Qequal);
 #ifdef MULE
   initialize_charset_font_caches (d);
 #endif
@@ -234,7 +234,7 @@ allocate_device (Lisp_Object console)
      time there aren't very many different masks that will be used.
      */
   d->image_instance_cache =
-    make_lisp_hash_table (5, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (5, HASH_TABLE_NON_WEAK, Qeq);
 
   UNGCPRO;
   return d;
