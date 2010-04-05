@@ -1,3 +1,77 @@
+2010-04-04  Ben Wing  <ben@xemacs.org>
+
+	* font-mgr.c:
+	* font-mgr.c (fc_standard_properties):
+	* font-mgr.c (Ffc_pattern_p):
+	* font-mgr.c (Ffc_pattern_create):
+	* font-mgr.c (Ffc_name_parse):
+	* font-mgr.c (Ffc_name_unparse):
+	* font-mgr.c (Ffc_pattern_duplicate):
+	* font-mgr.c (Ffc_pattern_add):
+	* font-mgr.c (Ffc_pattern_del):
+	* font-mgr.c (Ffc_pattern_get):
+	* font-mgr.c (fc_config_create_using):
+	* font-mgr.c (fc_strlist_to_lisp_using):
+	* font-mgr.c (fontset_to_list):
+	* font-mgr.c (Ffc_config_p):
+	* font-mgr.c (Ffc_config_create):
+	* font-mgr.c (Ffc_config_destroy):
+	* font-mgr.c (Ffc_config_up_to_date):
+	* font-mgr.c (Ffc_config_build_fonts):
+	* font-mgr.c (Ffc_config_get_config_dirs):
+	* font-mgr.c (Ffc_config_get_font_dirs):
+	* font-mgr.c (Ffc_config_get_config_files):
+	* font-mgr.c (Ffc_config_get_cache):
+	* font-mgr.c (Ffc_config_get_fonts):
+	* font-mgr.c (Ffc_config_set_current):
+	* font-mgr.c (Ffc_config_get_blanks):
+	* font-mgr.c (Ffc_config_get_rescan_interval):
+	* font-mgr.c (Ffc_config_set_rescan_interval):
+	* font-mgr.c (Ffc_config_app_font_add_file):
+	* font-mgr.c (Ffc_config_app_font_add_dir):
+	* font-mgr.c (Ffc_config_app_font_clear):
+	* font-mgr.c (Ffc_init_load_config):
+	* font-mgr.c (Ffc_init_load_config_and_fonts):
+	* font-mgr.c (Ffc_config_get_current):
+	* font-mgr.c (size):
+	* font-mgr.c (Ffc_font_render_prepare):
+	* font-mgr.c (Ffc_font_match):
+	* font-mgr.c (Ffc_font_sort):
+	* font-mgr.c (Ffc_init):
+	* font-mgr.c (Ffc_get_version):
+	* font-mgr.c (Ffc_init_reinitialize):
+	* font-mgr.c (Ffc_init_bring_up_to_date):
+	* font-mgr.c (Fxlfd_font_name_p):
+	* font-mgr.c (make_xlfd_font_regexp):
+	* font-mgr.c (syms_of_font_mgr):
+	* font-mgr.c (vars_of_font_mgr):
+	* font-mgr.c (complex_vars_of_font_mgr):
+	Fix the code to conform to GNU style standards.
+	Rename xft-debug-level to debug-xft.
+	
+	* fontcolor-x.c:
+	* fontcolor-x.c (vars_of_fontcolor_x):
+	Rename debug-x-objects to debug-x-fonts.
+	
+	* fontcolor-xlike-inc.c:
+	* fontcolor-xlike-inc.c (DEBUG_FONTS1):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS4):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP1):
+	* fontcolor-xlike-inc.c (count_hyphens):
+	* fontcolor-xlike-inc.c (XFUN):
+	* fontcolor-xlike-inc.c (xlistfonts_checking_charset):
+	* fontcolor-xlike-inc.c (xft_find_charset_font):
+	Misc. code fixes, mostly cosmetic.  Get rid of some warnings.
+	Fix the code to conform to GNU style standards.
+	
+	* lisp.h:
+	* print.c:
+	* print.c (debug_out_lisp):
+	New function for doing printf-like formatting involving Lisp objects
+	and outputting to the debug output.
+
 2010-03-29  Ben Wing  <ben@xemacs.org>
 
 	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
