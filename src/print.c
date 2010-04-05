@@ -2465,6 +2465,33 @@ debug_print (Lisp_Object debug_print_obj)
   external_debug_print (debug_print_obj, EXT_PRINT_ALL);
 }
 
+/* Printf-style output when the objects being printed are Lisp objects.
+   Calling style is e.g.
+
+   debug_out_lisp ("Called foo(%s %s)\n", 2, arg0, arg1)
+*/
+
+void
+debug_out_lisp (const CIbyte *format, int nargs, ...)
+{
+  /* This function cannot GC, since GC is forbidden */
+  struct debug_bindings bindings;
+  int specdepth = debug_print_enter (&bindings);
+  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
+  va_list va;
+  int i;
+  Ibyte *msgout;
+
+  va_start (va, nargs);
+  for (i = 0; i < nargs; i++)
+    args[i] = va_arg (va, Lisp_Object);
+  va_end (va);
+  msgout = emacs_vsprintf_malloc_lisp (format, Qnil, nargs, args, NULL);
+  debug_out ("%s", msgout);
+  xfree (msgout);
+  unbind_to (specdepth);
+}
+
 /* Getting tired of typing debug_print() ... */
 void dp (Lisp_Object debug_print_obj);
 void
