@@ -1,3 +1,9 @@
+2010-04-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame.c (print_frame):
+	When printing a frame, print its device, making the output of
+	#'frame-list a lot more helpful if using gnuclient.
+
 2010-04-04  Ben Wing  <ben@xemacs.org>
 
 	* font-mgr.c:
