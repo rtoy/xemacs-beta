@@ -1,3 +1,15 @@
+2010-04-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* toolbar-msw.c (allocate_toolbar_item_id)
+	(mswindows_output_toolbar):
+	* menubar-msw.c (allocate_menu_item_id, checksum_menu_item): 
+	* glyphs-msw.c (mswindows_image_instance_hash):
+	* fontcolor-msw.c (mswindows_color_instance_equal):
+	* device-msw.c (hash_devmode):
+	Call internal_hash() with the correct number of arguments, declare
+	various hash methods with the correct number of arguments, fixing
+	the Win32 build. Thank you Vin.
+
 2010-04-04  Ben Wing  <ben@xemacs.org>
 
 	* font-mgr.c:

@@ -1185,14 +1185,14 @@ equal_devmode (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-hash_devmode (Lisp_Object obj, int depth)
+hash_devmode (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Devmode *dm = XDEVMODE (obj);
 
   return HASH3 (XDEVMODE_SIZE (dm),
 		dm->devmode ? memory_hash (dm->devmode, XDEVMODE_SIZE (dm))
 		: 0,
-		internal_hash (dm->printer_name, depth + 1));
+		internal_hash (dm->printer_name, depth + 1, 0));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("msprinter-settings", devmode,

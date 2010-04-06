@@ -160,9 +160,9 @@ hmenu_to_lisp_object (HMENU hmenu)
 static Lisp_Object
 allocate_menu_item_id (Lisp_Object path, Lisp_Object name, Lisp_Object suffix)
 {
-  UINT id = MENU_ITEM_ID_BITS (HASH3 (internal_hash (path, 0),
-				      internal_hash (name, 0),
-				      internal_hash (suffix, 0)));
+  UINT id = MENU_ITEM_ID_BITS (HASH3 (internal_hash (path, 0, 0),
+				      internal_hash (name, 0, 0),
+				      internal_hash (suffix, 0, 0)));
   do {
       id = MENU_ITEM_ID_BITS (id + 1);
   } while (GetMenuState (top_level_menu, id, MF_BYCOMMAND) != 0xFFFFFFFF);
@@ -202,18 +202,18 @@ checksum_menu_item (Lisp_Object item)
       if (separator_string_p (XSTRING_DATA (item)))
 	return 13;
       else
-	return internal_hash (item, 0) + 13;
+	return internal_hash (item, 0, 0) + 13;
     }
   else if (CONSP (item))
     {
       /* Submenu - hash by its string name + 0 */
-      return internal_hash (XCAR (item), 0);
+      return internal_hash (XCAR (item), 0, 0);
     }
   else if (VECTORP (item))
     {
       /* An ordinary item - hash its name and callback form. */
-      return HASH2 (internal_hash (XVECTOR_DATA(item)[0], 0),
-		    internal_hash (XVECTOR_DATA(item)[1], 0));
+      return HASH2 (internal_hash (XVECTOR_DATA(item)[0], 0, 0),
+		    internal_hash (XVECTOR_DATA(item)[1], 0, 0));
     }
 
   /* An error - will be caught later */
