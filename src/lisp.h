@@ -2274,21 +2274,46 @@ EMACS_INT len;								\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
 		      tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
 
-
-#define PRIVATE_EXTERNAL_LIST_LOOP_6(elt, list, len, hare,		\
-				     tortoise, suspicion_length)	\
+#define PRIVATE_UNVERIFIED_LIST_LOOP_7(elt, list, len, hare,		\
+				       tortoise, suspicion_length,	\
+                                       signalp)				\
   for (tortoise = hare = list, len = 0;					\
 									\
        (CONSP (hare) ? ((elt = XCAR (hare)), 1) :			\
 	(NILP (hare) ? 0 :						\
-	 (signal_malformed_list_error (list), 0)));			\
+	 ((signalp ? signal_malformed_list_error (list) : (void) 0), 0)));\
 									\
        hare = XCDR (hare),						\
 	 (void)								\
 	 ((++len > suspicion_length)					\
 	  &&								\
 	  ((((len & 1) != 0) && (tortoise = XCDR (tortoise), 0)),	\
-	   (EQ (hare, tortoise) && (signal_circular_list_error (list), 0)))))
+	   (EQ (hare, tortoise) &&					\
+            ((signalp ? signal_circular_list_error (list) : (void) 0), 0)))))
+
+#define PRIVATE_EXTERNAL_LIST_LOOP_6(elt, list, len, hare,		\
+				     tortoise, suspicion_length)	\
+  PRIVATE_UNVERIFIED_LIST_LOOP_7 (elt, list, len, hare, tortoise,	\
+                                  suspicion_length, 1)
+
+#define PRIVATE_SAFE_LIST_LOOP_6(elt, list, len, hare,			\
+				 tortoise, suspicion_length)		\
+  PRIVATE_UNVERIFIED_LIST_LOOP_7 (elt, list, len, hare, tortoise,	\
+                                  suspicion_length, 0)
+
+/* Similar to EXTERNAL_LIST_LOOP_2() but don't signal when an error
+   is detected, just stop. */
+#define SAFE_LIST_LOOP_2(elt, list)					\
+Lisp_Object elt, hare_##elt, tortoise_##elt;				\
+EMACS_INT len_##elt;							\
+PRIVATE_SAFE_LIST_LOOP_6 (elt, list, len_##elt, hare_##elt,		\
+		          tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
+
+#define SAFE_LIST_LOOP_3(elt, list, tail)				\
+Lisp_Object elt, tail, tortoise_##elt;					\
+EMACS_INT len_##elt;							\
+PRIVATE_SAFE_LIST_LOOP_6 (elt, list, len_##elt, tail,			\
+		          tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
 
 /* GET_LIST_LENGTH and GET_EXTERNAL_LIST_LENGTH:
 
@@ -5322,15 +5347,21 @@ EXFUN (Fremassq, 2);
 EXFUN (Freplace_list, 2);
 MODULE_API EXFUN (Freverse, 1);
 EXFUN (Fsafe_length, 1);
-EXFUN (Fsort, 2);
 EXFUN (Fstring_equal, 2);
 EXFUN (Fstring_lessp, 2);
 EXFUN (Fsubseq, 3);
 EXFUN (Fvalid_plist_p, 1);
 
-Lisp_Object list_sort (Lisp_Object, Lisp_Object,
-		       int (*) (Lisp_Object, Lisp_Object, Lisp_Object));
-Lisp_Object merge (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
+                        Lisp_Object (*c_predicate) (Lisp_Object o1,
+                                                    Lisp_Object o2,
+                                                    Lisp_Object pred,
+                                                    Lisp_Object keyf),
+                        Lisp_Object predicate, Lisp_Object key_func);
+Lisp_Object list_sort (Lisp_Object list,
+                       Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object, 
+                                                   Lisp_Object, Lisp_Object),
+                       Lisp_Object predicate, Lisp_Object key_func);
 
 void bump_string_modiff (Lisp_Object);
 Lisp_Object memq_no_quit (Lisp_Object, Lisp_Object);

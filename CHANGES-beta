@@ -105,7 +105,73 @@ User-Visible Bug Fixes:
 -- Fix long-standing bug: searching for Control-1 chars didn't work
 -- Turn on `load-ignore-out-of-date-elc-files' by default
 
+by Aidan Kehoe:
 
+Documentation:
+
+-- add argument information to remaining MANY or UNEVALLED C subrs.
+-- add arglist info for autoloaded functions and macros.
+-- correct the docstring for #'range-table-type.
+-- change "special form" to "special operator" in our sources and manuals
+-- use DOC for dumped file names; Xref to source-lisp if readable, symbol-file
+-- update documentation for #'sort in the lispref
+
+Tests:
+
+-- add tests for the regexp-ranges-treat-control-1-chars badly bug.
+-- fix some test failures, mule-tests.el.
+
+Lisp API:
+
+-- add `file-system-ignore-case-p', use it.
+-- if STRING is constant, call regexp-quote at compile time.
+-- make #'letf not error if handed a #'values form.
+-- rationalise duplicated functionality, #'custom-quote, #'quote-maybe.
+-- serialise non-default hash table rehash thresholds correctly; use this.
+-- fix issue 546, use next-single-char-property-change in list-mode.el
+-- make COLUMN optional in #'indent-region, as in GNU.
+-- use keywords, not ordinary symbols, in the structure syntax for hash tables.
+-- fix hash tables, #'member*, #'assoc*, #'eql compiler macros if bignums
+-- move the various map* functions to C; add #'map-into.
+-- make canoncase visible to Lisp; use it with chars in internal_equalp.
+-- move #'some, #'every to C, implementing them with mapcarX.
+-- remove a couple of XEmacs-specific duplicate functions, find-paths.el
+-- add a new optional ESCAPE-CHAR argument to #'split-string-by-char.
+-- add #'constantly, as specified by ANSI Common Lisp.
+-- handle the :from-end argument correctly, #'delete-duplicates compiler macro.
+-- make #'substring an alias of #'subseq; give the latter the byte code.
+-- remove #'byte-compile-compiled-obj-to-list, bytecomp.el
+-- handle (function ...) specially, cl-prettyprint.
+-- move #'merge, #'sort*, #'fill to C. alias #'sort, #'fillarray to latter two.
+
+Lisp implementation:
+
+-- don't cons with #'mapcar calls where the result is discarded
+-- fix modeline-mousable, other faces that inherit from modeline, on startup.
+-- be much more comprehensive in our use of byte-compile-funarg.
+-- resolve the unregistered-CCL-programs-get-garbage-collected problem
+   correctly
+-- remove attempted support for 1996-era emacs without self-quoting keywords.
+-- use uninterned symbols instead of variable names with _
+-- eliminate funcalls, #'handle-pre-motion-command-current-command-is-motion
+-- make iso-left-tab equivalent to shift-tab, XFree86
+-- behave better with no database support or no associated font, descr-text.el
+-- use #'function-arglist, etc. from help.el, not reimplementing them,
+   hyper-apropos
+
+internal implementation:
+
+-- remove Fsave_window_excursion from window.c, it's overridden by Lisp.
+-- make readlink_or_correct_case function correctly on Darwin.
+-- no need to fatal () on startup if $PWD doesn't exist; chdir to "/" instead.
+-- don't attempt to free dumped data, alloc.c:resize_string()
+-- call character_to_event on characters received from XIM, event-Xt.c
+-- dump the arabic-iso8859-6 character set, again, for the sake of XKB input
+-- always use our rint(), for rounding consistency with the bignum code.
+-- be more careful about canonical integer forms when dealing with ratios.
+-- don't use Boyer-Moore if repeated octets & case-insensitive search.
+-- do not assume #'format-decode exists in fileio.c.
+-- add a PARSE_KEYWORDS macro, use it in #'make-hash-table.
 
 by Didier Verna:
 

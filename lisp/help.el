@@ -1731,9 +1731,8 @@ there is no variable around that point, nil is returned."
 The sorting is done by length (shortest bindings first), and the bindings
 are separated with SEPARATOR (\", \" by default)."
   (mapconcat 'key-description
-	     (sort keys #'(lambda (x y)
-			    (< (length x) (length y))))
-	     (or separator ", ")))
+             (sort* keys #'< :key #'length)
+             (or separator ", ")))
 
 (defun where-is (definition &optional insert)
   "Print message listing key sequences that invoke specified command.

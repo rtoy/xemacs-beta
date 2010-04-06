@@ -686,52 +686,54 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
     (when (characterp char)
       (setq char (encode-char char 'ucs)))
     (with-temp-buffer
-      (if describe-char-use-cache
-          ;; Use the database info.
-          (let ((database-handle (open-database
-                                  (unidata-generate-database-file-name
-                                   describe-char-unicodedata-file
-                                   (eighth (file-attributes
-                                            describe-char-unicodedata-file))
-                                   unidata-database-format)
-                                  unidata-database-format
-                                  nil "r"
-                                  #o644 'no-conversion-unix))
-                (coding-system-for-read 'no-conversion-unix)
-                key lookup)
-            (unless database-handle
-              (error 'io-error 
-                     (format "Could not open %s as a %s database"
-                             (unidata-generate-database-file-name
-                              describe-char-unicodedata-file
-                              (eighth (file-attributes
-                                       describe-char-unicodedata-file))
-                              unidata-database-format)
-                             unidata-database-format)))
-            (setq key (format "%04X" char)
-                  lookup (get-database key database-handle))
-            (if lookup
-                ;; Okay, we have information on that character in particular.
-                (progn (setq lookup (read lookup))
-                       (insert-file-contents describe-char-unicodedata-file nil
-                                             (first lookup) (second lookup)))
-              ;; No information on that character in particular. Do we have
-              ;; range information? If so, load and check for our desired
-              ;; character.
-              (setq lookup (get-database "range-information" database-handle)
-                    lookup (if lookup (read lookup))
-                    lookup (if lookup (get-range-table char lookup)))
-              (when lookup 
-                (insert-file-contents describe-char-unicodedata-file nil
-                                      (first lookup) (second lookup))))
-            (close-database database-handle))
-
-        ;; Otherwise, insert the whole file (the FSF approach).
-        (set-buffer (get-buffer-create " *Unicode Data*"))
-        (when (zerop (buffer-size))
-          ;; Don't use -literally in case of DOS line endings.
-          (insert-file-contents describe-char-unicodedata-file)))
-
+      (let ((coding-system-for-read coding-system-for-read)
+            database-handle key lookup)
+        (if (and describe-char-use-cache
+                 (prog1
+                     (setq database-handle
+                           (open-database
+                            (unidata-generate-database-file-name
+                             describe-char-unicodedata-file
+                             (eighth (file-attributes
+                                      describe-char-unicodedata-file))
+                             unidata-database-format)
+                            unidata-database-format
+                            nil "r"
+                            #o644 'no-conversion-unix))
+                   (unless database-handle
+                     (warn "Could not open %s as a %s database"
+                           (unidata-generate-database-file-name
+                            describe-char-unicodedata-file
+                            (eighth (file-attributes
+                                     describe-char-unicodedata-file))
+                            unidata-database-format)
+                           unidata-database-format))))
+            (progn
+              ;; Use the database info.
+              (setq coding-system-for-read 'no-conversion-unix
+                    key (format "%04X" char)
+                    lookup (get-database key database-handle))
+              (if lookup
+                  ;; Okay, we have information on that character in particular.
+                  (progn (setq lookup (read lookup))
+                         (insert-file-contents describe-char-unicodedata-file
+                                               nil (first lookup)
+                                               (second lookup)))
+                ;; No information on that character in particular. Do we
+                ;; have range information? If so, load and check for our
+                ;; desired character.
+                (setq lookup (get-database "range-information" database-handle)
+                      lookup (if lookup (read lookup))
+                      lookup (if lookup (get-range-table char lookup)))
+                (when lookup 
+                  (insert-file-contents describe-char-unicodedata-file nil
+                                        (first lookup) (second lookup))))
+              (close-database database-handle))
+          ;; Otherwise, insert the whole file (the FSF approach).
+          (set-buffer (get-buffer-create " *Unicode Data*"))
+          (when (zerop (buffer-size))
+            ;; Don't use -literally in case of DOS line endings.
+            (insert-file-contents describe-char-unicodedata-file))))
       (goto-char (point-min))
       (let ((hex (format "%04X" char))
             found first last unihan-match unihan-info unihan-database-handle

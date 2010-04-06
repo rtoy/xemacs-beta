@@ -1,8 +1,8 @@
-/* X-specific Lisp objects.
+/* X-specific fonts and colors.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -48,7 +48,7 @@ Boston, MA 02111-1307, USA.  */
 int x_handle_non_fully_specified_fonts;
 
 #ifdef DEBUG_XEMACS 
-Fixnum debug_x_objects;
+Fixnum debug_x_fonts;
 #endif /* DEBUG_XEMACS */
 
 
@@ -943,10 +943,10 @@ void
 vars_of_fontcolor_x (void)
 {
 #ifdef DEBUG_XEMACS
-  DEFVAR_INT ("debug-x-objects", &debug_x_objects /*
-If non-zero, display debug information about X objects
+  DEFVAR_INT ("debug-x-fonts", &debug_x_fonts /*
+If non-zero, display debug information about X fonts
 */ );
-  debug_x_objects = 0;
+  debug_x_fonts = 0;
 #endif
 
   DEFVAR_BOOL ("x-handle-non-fully-specified-fonts",
