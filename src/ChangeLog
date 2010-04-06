@@ -6,6 +6,163 @@
 	the API provided.
 
 2010-04-04  Ben Wing  <ben@xemacs.org>
+2010-04-04  Ben Wing  <ben@xemacs.org>
+
+	* font-mgr.c:
+	* font-mgr.c (fc_standard_properties):
+	* font-mgr.c (Ffc_pattern_p):
+	* font-mgr.c (Ffc_pattern_create):
+	* font-mgr.c (Ffc_name_parse):
+	* font-mgr.c (Ffc_name_unparse):
+	* font-mgr.c (Ffc_pattern_duplicate):
+	* font-mgr.c (Ffc_pattern_add):
+	* font-mgr.c (Ffc_pattern_del):
+	* font-mgr.c (Ffc_pattern_get):
+	* font-mgr.c (fc_config_create_using):
+	* font-mgr.c (fc_strlist_to_lisp_using):
+	* font-mgr.c (fontset_to_list):
+	* font-mgr.c (Ffc_config_p):
+	* font-mgr.c (Ffc_config_create):
+	* font-mgr.c (Ffc_config_destroy):
+	* font-mgr.c (Ffc_config_up_to_date):
+	* font-mgr.c (Ffc_config_build_fonts):
+	* font-mgr.c (Ffc_config_get_config_dirs):
+	* font-mgr.c (Ffc_config_get_font_dirs):
+	* font-mgr.c (Ffc_config_get_config_files):
+	* font-mgr.c (Ffc_config_get_cache):
+	* font-mgr.c (Ffc_config_get_fonts):
+	* font-mgr.c (Ffc_config_set_current):
+	* font-mgr.c (Ffc_config_get_blanks):
+	* font-mgr.c (Ffc_config_get_rescan_interval):
+	* font-mgr.c (Ffc_config_set_rescan_interval):
+	* font-mgr.c (Ffc_config_app_font_add_file):
+	* font-mgr.c (Ffc_config_app_font_add_dir):
+	* font-mgr.c (Ffc_config_app_font_clear):
+	* font-mgr.c (Ffc_init_load_config):
+	* font-mgr.c (Ffc_init_load_config_and_fonts):
+	* font-mgr.c (Ffc_config_get_current):
+	* font-mgr.c (size):
+	* font-mgr.c (Ffc_font_render_prepare):
+	* font-mgr.c (Ffc_font_match):
+	* font-mgr.c (Ffc_font_sort):
+	* font-mgr.c (Ffc_init):
+	* font-mgr.c (Ffc_get_version):
+	* font-mgr.c (Ffc_init_reinitialize):
+	* font-mgr.c (Ffc_init_bring_up_to_date):
+	* font-mgr.c (Fxlfd_font_name_p):
+	* font-mgr.c (make_xlfd_font_regexp):
+	* font-mgr.c (syms_of_font_mgr):
+	* font-mgr.c (vars_of_font_mgr):
+	* font-mgr.c (complex_vars_of_font_mgr):
+	Fix the code to conform to GNU style standards.
+	Rename xft-debug-level to debug-xft.
+	
+	* fontcolor-x.c:
+	* fontcolor-x.c (vars_of_fontcolor_x):
+	Rename debug-x-objects to debug-x-fonts.
+	
+	* fontcolor-xlike-inc.c:
+	* fontcolor-xlike-inc.c (DEBUG_FONTS1):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS4):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP1):
+	* fontcolor-xlike-inc.c (count_hyphens):
+	* fontcolor-xlike-inc.c (XFUN):
+	* fontcolor-xlike-inc.c (xlistfonts_checking_charset):
+	* fontcolor-xlike-inc.c (xft_find_charset_font):
+	Misc. code fixes, mostly cosmetic.  Get rid of some warnings.
+	Fix the code to conform to GNU style standards.
+	
+	* lisp.h:
+	* print.c:
+	* print.c (debug_out_lisp):
+	New function for doing printf-like formatting involving Lisp objects
+	and outputting to the debug output.
+
+2010-04-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Ffill):
+	Be much more careful about resizing a string argument, update
+	pointers to within the string data that may have been relocated
+	with the string resize. Fixes a test hang reported by Vin Shelton;
+	thanks, Vin.
+
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (FsortX, Ffill):
+	Don't try to be clever with the ascii_begin string header slot in
+	these function, just call init_string_ascii_begin().
+
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Avoid build failure, Apple's g++-4.0.1, Mac OS 10.4.
+	* sysdll.c (search_linked_libs, dll_variable): Correct some casts
+	for the C++ build.
+	* regex.h (END_C_DECLS, BEGIN_C_DECLS): Wrap function declarations
+	in extern "C" { ... } on the C++ build.
+	* mule-ccl.c (ccl_driver): Initialise i, silencing a warning on
+	a C++ build.
+	* keymap.c (key_desc_list_to_event):
+	Work around a bug in Apple's g++-4.0.1.
+
+2010-03-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (STRING_DATA_TO_OBJECT_ARRAY)
+	(BIT_VECTOR_TO_OBJECT_ARRAY, c_merge_predicate_key)
+	(c_merge_predicate_nokey, list_merge, array_merge)
+	(list_array_merge_into_list, list_list_merge_into_array)
+	(list_array_merge_into_array, CHECK_KEY_ARGUMENT, Fmerge)
+	(list_sort, array_sort, FsortX):
+	Move #'sort*, #'fill, #'merge from cl-seq.el to C, extending the
+	implementations of Fsort, Ffillarray, and merge() to do so.
+
+	* keymap.c (keymap_submaps, map_keymap_sort_predicate)
+	(describe_map_sort_predicate):
+	Change the calling semantics of the C sort predicates to return a
+	non-nil Lisp object if the first argument is less than the second,
+	rather than C integers.
+
+	* fontcolor-msw.c (sort_font_list_function): 
+	* fileio.c (build_annotations):
+	* dired.c (Fdirectory_files):
+	* abbrev.c (Finsert_abbrev_table_description):
+	Call list_sort instead of Fsort, list_merge instead of merge() in
+	these functions.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	Need to cast 0 to void (so both parts of conditional expression
+	have void type) to fix C++ compilation.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (lisp_object_memory_usage_full):
+	Don't crash if passed a non-record object (int or char).
+	
+	* alloc.c (tree_memory_usage_1):
+	* lrecord.h:
+	New function tree_memory_usage() to return the memory usage of
+	a tree of conses and/or vectors.
+	
+	* lisp.h:
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	Add SAFE_LIST_LOOP_* functions for looping over a list not known
+	to be correct or non-circular, but without signalling an error --
+	instead, just stop enumerating when an error detected.
+	
+	* emacs.c (main_1):
+	* specifier.c:
+	* specifier.c (specifier_memory_usage):
+	* specifier.c (vars_of_specifier):
+	* symsinit.h:
+	Add memory usage info for specifiers.
+
+2010-03-28  Ben Wing  <ben@xemacs.org>
 
 	* chartab.c (put_char_table):
 	* text.h (rep_bytes_by_first_byte):

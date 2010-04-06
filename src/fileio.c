@@ -3680,7 +3680,7 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);     /* Check basic validity of return value */
-      annotations = merge (annotations, res, Qcar_less_than_car);
+      annotations = list_merge (annotations, res, NULL, Qlss, Qcar);
       p = Fcdr (p);
     }
 
@@ -3711,7 +3711,7 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);
-      annotations = merge (annotations, res, Qcar_less_than_car);
+      annotations = list_merge (annotations, res, NULL, Qlss, Qcar);
       p = Fcdr (p);
     }
 

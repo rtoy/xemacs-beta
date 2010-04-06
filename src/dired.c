@@ -180,7 +180,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   unbind_to (speccount);	/* This will close the dir */
 
   if (NILP (nosort))
-    list = Fsort (Fnreverse (list), Qstring_lessp);
+    list = list_sort (Fnreverse (list), NULL, Qstring_lessp, Qidentity);
 
   RETURN_UNGCPRO (list);
 }

@@ -35,6 +35,11 @@
 	Also pass unicode-encapsulate and make-case-conv targets down
 	to src/Makefile.in.in.
 
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* CHANGES-beta:
+	Update with my changes to the trunk since 2009-09-20.
+
 2010-03-18  Ben Wing  <ben@xemacs.org>
 
 	* CHANGES-beta:

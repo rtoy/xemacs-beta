@@ -34,27 +34,53 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-xlike-inc.h"
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+#define DEBUG_FONTS1(format, arg)		\
+do {						\
+  if (debug_x_fonts)				\
+    debug_out (format, arg);			\
+} while (0)
 
-#ifdef DEBUG_XEMACS
-# define DEBUG_OBJECTS(FORMAT, ...)  \
-     do { if (debug_x_objects) stderr_out(FORMAT, __VA_ARGS__); } while (0)
-#else  /* DEBUG_XEMACS */
-# define DEBUG_OBJECTS(format, ...)
-#endif /* DEBUG_XEMACS */
+#define DEBUG_FONTS2(format, arg1, arg2)	\
+do {						\
+  if (debug_x_fonts)				\
+    debug_out (format, arg1, arg2);		\
+} while (0)
 
-#elif defined(__GNUC__)
+#define DEBUG_FONTS3(format, arg1, arg2, arg3)	\
+do {						\
+  if (debug_x_fonts)				\
+    debug_out (format, arg1, arg2, arg3);	\
+} while (0)
 
-#ifdef DEBUG_XEMACS
-# define DEBUG_OBJECTS(format, args...)  \
-  do { if (debug_x_objects) stderr_out(format, args ); } while (0)
-#else  /* DEBUG_XEMACS */
-# define DEBUG_OBJECTS(format, args...)
-#endif /* DEBUG_XEMACS */
+#define DEBUG_FONTS4(format, arg1, arg2, arg3, arg4)	\
+do {							\
+  if (debug_x_fonts)					\
+    debug_out (format, arg1, arg2, arg3, arg4);		\
+} while (0)
 
-#else /* defined(__STDC_VERSION__) [...] */
-# define DEBUG_OBJECTS	(void)
-#endif
+#define DEBUG_FONTS_LISP1(format, arg)		\
+do {						\
+  if (debug_x_fonts)				\
+    debug_out_lisp (format, 1, arg);		\
+} while (0)
+
+#define DEBUG_FONTS_LISP2(format, arg1, arg2)	\
+do {						\
+  if (debug_x_fonts)				\
+    debug_out_lisp (format, 2, arg1, arg2);	\
+} while (0)
+
+#define DEBUG_FONTS_LISP3(format, arg1, arg2, arg3)	\
+do {							\
+  if (debug_x_fonts)					\
+    debug_out_lisp (format, 3, arg1, arg2, arg3);	\
+} while (0)
+
+#define DEBUG_FONTS_LISP4(format, arg1, arg2, arg3, arg4)	\
+do {								\
+  if (debug_x_fonts)						\
+    debug_out_lisp (format, 4, arg1, arg2, arg3, arg4);		\
+} while (0)
 
 #ifdef MULE
 
@@ -62,14 +88,14 @@ Boston, MA 02111-1307, USA.  */
    at run-time.  For other code it isn't. */
 
 static int 
-count_hyphens(const Ibyte *str, Bytecount length, Ibyte **last_hyphen)
+count_hyphens (const Ibyte *str, Bytecount length, Ibyte **last_hyphen)
 {
   int hyphen_count = 0; 
   const Ibyte *hyphening = str;
   const Ibyte *new_hyphening;
 
   for (hyphen_count = 0; 
-       NULL != (new_hyphening = (Ibyte *) memchr((const void *)hyphening, '-', length));
+       NULL != (new_hyphening = (Ibyte *) memchr ((const void *)hyphening, '-', length));
        hyphen_count++)
     {
       ++new_hyphening;
@@ -112,7 +138,7 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
       Extbyte *extname;
       XftFont *rf;
 
-      if (!NILP(reloc))
+      if (!NILP (reloc))
 	{
 	  the_nonreloc = XSTRING_DATA (reloc);
 	  extname = LISP_STRING_TO_EXTERNAL (reloc, Qx_font_name_encoding);
@@ -140,7 +166,7 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
      */
   if (EQ (charset, Vcharset_ascii) && 
       (!memchr (the_nonreloc, '*', the_length))
-      && (5 > (count_hyphens(the_nonreloc, the_length, NULL))))
+      && (5 > (count_hyphens (the_nonreloc, the_length, NULL))))
     {
       return 1;
     }
@@ -152,20 +178,20 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
   else if (STAGE_INITIAL == stage)
     {
       registries = XCHARSET_REGISTRIES (charset);
-      if (NILP(registries))
+      if (NILP (registries))
 	{
 	  return 0;
 	}
     }
-  else assert(0);
+  else assert (0);
 
   CHECK_VECTOR (registries);
-  registries_len = XVECTOR_LENGTH(registries);
+  registries_len = XVECTOR_LENGTH (registries);
 
   for (i = 0; i < registries_len; ++i)
     {
-      if (!(STRINGP(XVECTOR_DATA(registries)[i]))
-     	  || (XSTRING_LENGTH(XVECTOR_DATA(registries)[i]) > the_length))
+      if (!(STRINGP (XVECTOR_DATA (registries)[i]))
+     	  || (XSTRING_LENGTH (XVECTOR_DATA (registries)[i]) > the_length))
      	{
      	  continue;
      	}
@@ -176,10 +202,10 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
      	  "Alphabetic case distinctions are allowed but are for human
      	  readability concerns only. Conforming X servers will perform
      	  matching on font name query or open requests independent of case." */
-       if (0 == qxestrcasecmp(XSTRING_DATA(XVECTOR_DATA(registries)[i]), 
+       if (0 == qxestrcasecmp (XSTRING_DATA (XVECTOR_DATA (registries)[i]), 
      			      the_nonreloc + (the_length - 
      					      XSTRING_LENGTH
-     					      (XVECTOR_DATA(registries)[i]))))
+     					      (XVECTOR_DATA (registries)[i]))))
      	 {
      	   return 1;
      	 }
@@ -188,31 +214,34 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
 }
 
 static Lisp_Object
-xlistfonts_checking_charset (Lisp_Object device, const Extbyte *xlfd,
+xlistfonts_checking_charset (Lisp_Object device, const Ibyte *xlfd,
 			     Lisp_Object charset, 
 			     enum font_specifier_matchspec_stages stage)
 {
   Extbyte **names;
   Lisp_Object result = Qnil;
   int count = 0, i;
-  DECLARE_EISTRING(ei_single_result);
+  DECLARE_EISTRING (ei_single_result);
+  Extbyte *fontext;
 
+  DEBUG_FONTS2 ("xlistfonts_checking_charset called, XLFD %s stage %s",
+		xlfd, stage == STAGE_INITIAL ? "initial" : "final");
+  DEBUG_FONTS_LISP1 (" charset %s\n", charset);
+  fontext = ITEXT_TO_EXTERNAL (xlfd, Qx_font_name_encoding); 
   names = XListFonts (GET_XLIKE_DISPLAY (XDEVICE (device)),
-		      xlfd, MAX_FONT_COUNT, &count);
+		      fontext, MAX_FONT_COUNT, &count);
 
   for (i = 0; i < count; ++i)
     {
-      eireset(ei_single_result);
-      eicpy_ext(ei_single_result, names[i], Qx_font_name_encoding);
+      eireset (ei_single_result);
+      eicpy_ext (ei_single_result, names[i], Qx_font_name_encoding);
 
-      if (DEVMETH_OR_GIVEN(XDEVICE (device), font_spec_matches_charset,
+      if (DEVMETH_OR_GIVEN (XDEVICE (device), font_spec_matches_charset,
 			   (XDEVICE (device), charset,
-			    eidata(ei_single_result), Qnil, 0,
+			    eidata (ei_single_result), Qnil, 0,
 			    -1, stage), 0))
 	{
-	  result = eimake_string(ei_single_result);
-	  DEBUG_OBJECTS ("in xlistfonts_checking_charset, returning %s\n", 
-			 eidata(ei_single_result));
+	  result = eimake_string (ei_single_result);
 	  break;
 	}
     }
@@ -222,6 +251,7 @@ xlistfonts_checking_charset (Lisp_Object device, const Extbyte *xlfd,
       XFreeFontNames (names);
     }
 
+  DEBUG_FONTS_LISP1 ("xlistfonts_checking_charset returns %s\n", result);
   return result;
 }
 
@@ -388,7 +418,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
      I don't believe this is documented.  */
 
   DEBUG_XFT1 (1, "confirming charset for font instance %s\n", 
-	      XSTRING_DATA(font));
+	      XSTRING_DATA (font));
 
   /* #### this looks like a fair amount of work, but the basic design
      has never been rethought, and it should be
@@ -526,7 +556,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	if (cr->rfc3066)
 	  {
 	    DECLARE_DEBUG_FONTNAME (name);
-	    CHECKING_LANG (0, eidata(name), cr->language);
+	    CHECKING_LANG (0, eidata (name), cr->language);
 	    lang = cr->rfc3066;
 	  }
 	else if (cr->charset)
@@ -572,18 +602,18 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 		 Should we just store it into the truename right here? */
 	      DECLARE_DEBUG_FONTNAME (name);
 	      DEBUG_XFT2 (0, "Xft font %s supports %s\n",
-			  eidata(name), lang);
+			  eidata (name), lang);
 #ifdef RETURN_LONG_FONTCONFIG_NAMES
-	      result = eimake_string(eistr_fullname);
+	      result = eimake_string (eistr_fullname);
 #else
-	      result = eimake_string(eistr_longname);
+	      result = eimake_string (eistr_longname);
 #endif
 	    }
 	  else
 	    {
 	      DECLARE_DEBUG_FONTNAME (name);
 	      DEBUG_XFT2 (0, "Xft font %s doesn't support %s\n",
-			  eidata(name), lang);
+			  eidata (name), lang);
 	      result = Qnil;
 	    }
 
@@ -602,7 +632,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	    {
 	      if (v.type != FcTypeLangSet) /* excessive paranoia */
 		{
-		  ASSERT_ASCTEXT_ASCII(FcTypeOfValueToString(v));
+		  ASSERT_ASCTEXT_ASCII (FcTypeOfValueToString (v));
 		  /* Urk!  Fall back and punt to core font. */
 		  DEBUG_XFT1 (0, "Unexpected type of lang value (%s)\n",
 			       FcTypeOfValueToString (v));
@@ -613,24 +643,24 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 		{
 		  DECLARE_DEBUG_FONTNAME (name);
 		  DEBUG_XFT2 (0, "Xft font %s supports %s\n",
-			      eidata(name), lang);
+			      eidata (name), lang);
 #ifdef RETURN_LONG_FONTCONFIG_NAMES
-		  result = eimake_string(eistr_fullname);
+		  result = eimake_string (eistr_fullname);
 #else
-		  result = eimake_string(eistr_longname);
+		  result = eimake_string (eistr_longname);
 #endif
 		}
 	      else
 		{
 		  DECLARE_DEBUG_FONTNAME (name);
 		  DEBUG_XFT2 (0, "Xft font %s doesn't support %s\n",
-			      eidata(name), lang);
+			      eidata (name), lang);
 		  result = Qnil;
 		}
 	    }
 	  else
 	    {
-	      ASSERT_ASCTEXT_ASCII(FcResultToString(r));
+	      ASSERT_ASCTEXT_ASCII (FcResultToString (r));
 	      DEBUG_XFT1 (0, "Getting lang: unexpected result=%s\n",
 			  FcResultToString (r));
 	      result = Qnil;
@@ -661,12 +691,12 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
   Ibyte *hyphening, *new_hyphening;
   Bytecount xlfd_length;
 
-  DECLARE_EISTRING(ei_xlfd_without_registry);
-  DECLARE_EISTRING(ei_xlfd);
+  DECLARE_EISTRING (ei_xlfd_without_registry);
+  DECLARE_EISTRING (ei_xlfd);
 
 #ifdef USE_XFT 
-  result = xft_find_charset_font(font, charset, stage);
-  if (!NILP(result)) 
+  result = xft_find_charset_font (font, charset, stage);
+  if (!NILP (result)) 
     {
       return result;
     }
@@ -676,11 +706,11 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
     {
     case STAGE_INITIAL:
       {
-	if (!(NILP(XCHARSET_REGISTRIES(charset))) 
-	    && VECTORP(XCHARSET_REGISTRIES(charset)))
+	if (!(NILP (XCHARSET_REGISTRIES (charset))) 
+	    && VECTORP (XCHARSET_REGISTRIES (charset)))
 	  {
-	    registries_len = XVECTOR_LENGTH(XCHARSET_REGISTRIES(charset));
-	    registries = XCHARSET_REGISTRIES(charset);
+	    registries_len = XVECTOR_LENGTH (XCHARSET_REGISTRIES (charset));
+	    registries = XCHARSET_REGISTRIES (charset);
 	  }
 	break;
       }
@@ -692,18 +722,18 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
       }
     default:
       {
-	assert(0);
+	assert (0);
 	break;
       }
     }
 
-  eicpy_lstr(ei_xlfd, font);
-  hyphening = eidata(ei_xlfd);
-  xlfd_length = eilen(ei_xlfd);
+  eicpy_lstr (ei_xlfd, font);
+  hyphening = eidata (ei_xlfd);
+  xlfd_length = eilen (ei_xlfd);
 
   /* Count the hyphens in the string, moving new_hyphening to just after the
      last one. */
-  hyphen_count = count_hyphens(hyphening, xlfd_length, &new_hyphening);
+  hyphen_count = count_hyphens (hyphening, xlfd_length, &new_hyphening);
 
   if (0 == registries_len || (5 > hyphen_count && 
 			      !(1 == xlfd_length && '*' == *hyphening)))
@@ -711,10 +741,7 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
       /* No proper XLFD specified, or we can't modify the pattern to change
 	 the registry and encoding to match what we want, or we have no
 	 information on the registry needed.  */
-      eito_external(ei_xlfd, Qx_font_name_encoding); 
-      DEBUG_OBJECTS ("about to xlistfonts_checking_charset, XLFD %s\n",
-		     eidata(ei_xlfd));
-      result = xlistfonts_checking_charset (device, eiextdata(ei_xlfd),
+      result = xlistfonts_checking_charset (device, eidata (ei_xlfd),
 					    charset, stage);
       /* No need to loop through the available registries; return
 	 immediately. */
@@ -724,7 +751,7 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
     {
       /* It's a single asterisk. We can add the registry directly to the
          end. */
-      eicpy_ch(ei_xlfd_without_registry, '*');
+      eicpy_ch (ei_xlfd_without_registry, '*');
     }
   else 
     {
@@ -740,12 +767,12 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
 	;
       ++new_hyphening;
 
-      eicpy_ei(ei_xlfd_without_registry, ei_xlfd); 
+      eicpy_ei (ei_xlfd_without_registry, ei_xlfd); 
 
       /* Manipulate ei_xlfd_without_registry, using the information about
 	 ei_xlfd, to which it's identical. */
-      eidel(ei_xlfd_without_registry, new_hyphening - hyphening, -1, 
-	    eilen(ei_xlfd) - (new_hyphening - hyphening), -1);
+      eidel (ei_xlfd_without_registry, new_hyphening - hyphening, -1, 
+	    eilen (ei_xlfd) - (new_hyphening - hyphening), -1);
 
     }
 
@@ -756,18 +783,14 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
      anyway, where before the X server did its search, transferred huge
      amounts of data, and then we proceeded to do a regexp search on that
      data. */
-  for (j = 0; j < registries_len && NILP(result); ++j)
+  for (j = 0; j < registries_len && NILP (result); ++j)
     {
-      eireset(ei_xlfd);
-      eicpy_ei(ei_xlfd, ei_xlfd_without_registry);
+      eireset (ei_xlfd);
+      eicpy_ei (ei_xlfd, ei_xlfd_without_registry);
 
-      eicat_lstr(ei_xlfd, XVECTOR_DATA(registries)[j]);
+      eicat_lstr (ei_xlfd, XVECTOR_DATA (registries)[j]);
 
-      eito_external(ei_xlfd, Qx_font_name_encoding); 
-
-      DEBUG_OBJECTS ("about to xlistfonts_checking_charset, XLFD %s\n",
-		     eidata(ei_xlfd));
-      result = xlistfonts_checking_charset (device, eiextdata(ei_xlfd),
+      result = xlistfonts_checking_charset (device, eidata (ei_xlfd),
 					    charset, stage);
     }
 
@@ -777,8 +800,8 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
      for ASCII means our frame geometry calculations are
      inconsistent, and that we may crash. */
 
-  if (1 == xlfd_length && EQ(charset, Vcharset_ascii) && NILP(result)
-      && ('*' == eigetch(ei_xlfd_without_registry, 0)))
+  if (1 == xlfd_length && EQ (charset, Vcharset_ascii) && NILP (result)
+      && ('*' == eigetch (ei_xlfd_without_registry, 0)))
 
     {
       int have_latin1 = 0;
@@ -790,7 +813,7 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
 
       for (j = 0; j < registries_len; ++j)
 	{
-	  if (0 == qxestrcasecmp(XSTRING_DATA(XVECTOR_DATA(registries)[j]),
+	  if (0 == qxestrcasecmp (XSTRING_DATA (XVECTOR_DATA (registries)[j]),
 				 (Ibyte *) FALLBACK_ASCII_REGISTRY))
 	    {
 	      have_latin1 = 1;
@@ -800,21 +823,21 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
 
       if (!have_latin1)
 	{
-	  Lisp_Object new_registries = make_vector(registries_len + 1, Qnil);
+	  Lisp_Object new_registries = make_vector (registries_len + 1, Qnil);
 
-	  XVECTOR_DATA(new_registries)[0]
-	    = build_ascstring(FALLBACK_ASCII_REGISTRY);
+	  XVECTOR_DATA (new_registries)[0]
+	    = build_ascstring (FALLBACK_ASCII_REGISTRY);
 
-	  memcpy(XVECTOR_DATA(new_registries) + 1,
-		 XVECTOR_DATA(registries),
-		 sizeof XVECTOR_DATA(registries)[0] * 
-		 XVECTOR_LENGTH(registries));
+	  memcpy (XVECTOR_DATA (new_registries) + 1,
+		 XVECTOR_DATA (registries),
+		 sizeof XVECTOR_DATA (registries)[0] * 
+		 XVECTOR_LENGTH (registries));
 
 	  /* Calling set_charset_registries instead of overwriting the
 	     value directly, to allow the charset font caches to be
 	     invalidated and a change to the default face to be
 	     noted.  */
-	  set_charset_registries(charset, new_registries);
+	  set_charset_registries (charset, new_registries);
 
 	  warn_when_safe (Qface, Qwarning,
 			  "Your ASCII charset registries contain nothing "
@@ -833,7 +856,7 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
 	  /* We preserve a copy of the connection name for the error message
 	     after the device is deleted. */
 	  eicpy_lstr (ei_connection_name, 
-		      DEVICE_CONNECTION (XDEVICE(device)));
+		      DEVICE_CONNECTION (XDEVICE (device)));
 
 	  stderr_out ("Cannot find a font for ASCII, deleting device on %s\n",
 		      eidata (ei_connection_name));
