@@ -1393,8 +1393,7 @@ mswindows_color_instance_equal (Lisp_Color_Instance *c1,
 }
 
 static Hashcode
-mswindows_color_instance_hash (Lisp_Color_Instance *c, int UNUSED (depth),
-                               Boolint UNUSED (equalp))
+mswindows_color_instance_hash (Lisp_Color_Instance *c, int UNUSED (depth))
 {
   return (unsigned long) COLOR_INSTANCE_MSWINDOWS_COLOR (c);
 }
