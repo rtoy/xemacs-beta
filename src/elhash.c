@@ -79,11 +79,13 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+
+#include "buffer.h"
 #include "bytecode.h"
+#include "casetab.h"
 #include "elhash.h"
 #include "gc.h"
 #include "opaque.h"
-#include "buffer.h"
 
 Lisp_Object Qhash_tablep;
 Lisp_Object Qeq, Qeql, Qequal, Qequalp;
@@ -443,8 +445,8 @@ hash_table_memory_usage (Lisp_Object hashtab,
 
    #<hash-table size 2/13 data (key1 value1 key2 value2) 0x874d>
 
-   The data is truncated to four pairs, and the rest is shown with
-   `...'.  This printer does not cons.  */
+   The data is truncated to `print-table-nonreadably-length' pairs, and the
+   rest is shown with `...'.  This printer does not cons.  */
 
 
 /* Print the data of the hash table.  This maps through a Lisp
@@ -460,9 +462,11 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
     if (!HTENTRY_CLEAR_P (e))
       {
+	QUIT;
 	if (count > 0)
 	  write_ascstring (printcharfun, " ");
-	if (!print_readably && count > 3)
+	if (!print_readably && INTP (Vprint_table_nonreadably_length)
+	    && count > XINT (Vprint_table_nonreadably_length))
 	  {
 	    write_ascstring (printcharfun, "...");
 	    break;
@@ -1927,14 +1931,14 @@ internal_hash (Lisp_Object obj, int depth, Boolint equalp)
   if (depth > 5)
     return 0;
 
-  if (CONSP(obj)) 
+  if (CONSP (obj))
     {
       Hashcode hash, h;
       int s;
 
       depth += 1;
 
-      if (!CONSP(XCDR(obj)))
+      if (!CONSP (XCDR (obj)))
 	{
 	  /* special case for '(a . b) conses */
 	  return HASH2(internal_hash(XCAR(obj), depth, equalp),
@@ -1945,8 +1949,8 @@ internal_hash (Lisp_Object obj, int depth, Boolint equalp)
 	 same contents in distinct orders differently. */
       hash = internal_hash(XCAR(obj), depth, equalp);
 
-      obj = XCDR(obj);
-      for (s = 1; s < 6 && CONSP(obj); obj = XCDR(obj), s++)
+      obj = XCDR (obj);
+      for (s = 1; s < 6 && CONSP (obj); obj = XCDR (obj), s++)
 	{
 	  h = internal_hash(XCAR(obj), depth, equalp);
 	  hash = HASH3(hash, h, s);

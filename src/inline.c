@@ -55,6 +55,7 @@ Boston, MA 02111-1307, USA.  */
 #include "events.h"
 #include "extents-impl.h"
 #include "faces.h"
+#include "file-coding.h"
 #include "frame-impl.h"
 #include "glyphs.h"
 #include "gui.h"
@@ -67,6 +68,7 @@ Boston, MA 02111-1307, USA.  */
 #include "specifier.h"
 #include "symeval.h"
 #include "syntax.h"
+#include "unicode.h"
 #include "window.h"
 
 /* If we demand !defined (HAVE_SHLIB) the INLINE_HEADERS aren't instantiated.
@@ -122,8 +124,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-gtk-impl.h"
 #include "ui-gtk.h"
 #endif
-
-#include "file-coding.h"
 
 #ifdef TOOLTALK
 #include "tooltalk.h"

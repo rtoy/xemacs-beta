@@ -102,18 +102,32 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
+  int maxlen;
 
   if (print_readably)
-    write_fmt_string_lisp (printcharfun, "#s(range-table type %s data (",
-			   1, range_table_type_to_symbol (rt->type));
+    {
+      write_fmt_string_lisp (printcharfun, "#s(range-table type %s data (",
+			     1, range_table_type_to_symbol (rt->type));
+      maxlen = INT_MAX;
+    }
   else
-    write_ascstring (printcharfun, "#<range-table ");
+    {
+      write_ascstring (printcharfun, "#<range-table ");
+      maxlen = INTP (Vprint_table_nonreadably_length) ?
+	XINT (Vprint_table_nonreadably_length) : INT_MAX;
+    }
   for (i = 0; i < gap_array_length (rt->entries); i++)
     {
       struct range_table_entry rte = rangetab_gap_array_at (rt->entries, i);
       int so, ec;
+      QUIT;
       if (i > 0)
 	write_ascstring (printcharfun, " ");
+      if (i > maxlen)
+	{
+	  write_ascstring (printcharfun, "...");
+	  break;
+	}
       switch (rt->type)
 	{
 	case RANGE_START_CLOSED_END_OPEN: so = 0, ec = 0; break;
@@ -635,6 +649,8 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 
   if (insert_me_here > 0)
     {
+      /* #### Shouldn't the comparison method be specifiable instead of
+	 always `eq'? */
       struct range_table_entry *entry =
 	rangetab_gap_array_atp (rt->entries, insert_me_here - 1);
       if (EQ (val, entry->val) && entry->last == first)
@@ -650,6 +666,8 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 
   if (insert_me_here < gap_array_length (rt->entries) - 1)
     {
+      /* #### Shouldn't the comparison method be specifiable instead of
+	 always `eq'? */
       struct range_table_entry *entry =
 	rangetab_gap_array_atp (rt->entries, insert_me_here + 1);
       if (EQ (val, entry->val) && entry->first == last)

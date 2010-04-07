@@ -4,7 +4,7 @@
 ;;   Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped, internal
@@ -1447,8 +1447,8 @@ error occurred (i.e. the handler itself)."
 	       ;; Try to eliminate the part of the backtrace
 	       ;; above where the error occurred.
 	       (if (string-match
-		    (concat "bind (\\(?:.* \\)?" (symbol-name handler-arg-name)
-			    "\\(?:.* \\)?)[ \t\n]*\\(?:(lambda \\|#<compiled-function \\)("
+		    (concat "bind (\\(?:.*? \\)?" (symbol-name handler-arg-name)
+			    "\\(?:.*? \\)?)[ \t\n]*\\(?:(lambda \\|#<compiled-function \\)("
 			    (symbol-name handler-arg-name)
 			    ").*\n\\(\\(?:.\\|\n\\)*\\)$")
 		    bt) (match-string 1 bt) bt))))
@@ -1466,6 +1466,7 @@ Usage looks like
     [:class CLASS]
     [:level LEVEL]
     [:resignal RESIGNAL]
+    [:debug DEBUG]
     BODY)
 
 Return value without error is whatever BODY returns.  With error, return
@@ -1474,16 +1475,19 @@ occurs), which defaults to nil.  OPERATION is given in the warning message.
 CLASS and LEVEL are the warning class and level (default to class
 `general', level `warning').  If NO-BACKTRACE is given, no backtrace is
 displayed.  If RESIGNAL is given, the error is resignaled after the warning
-is displayed and the ERROR-FORM is executed."
+is displayed and the ERROR-FORM is executed.  If DEBUG is given, the
+debugger is entered."
   (let ((operation "unknown")
 	(error-form nil)
 	(no-backtrace nil)
 	(class ''general)
 	(level ''warning)
 	(resignal nil)
+	(debug nil)
 	(cte-cc-var '#:cte-cc-var)
 	(call-trapping-errors-arg '#:call-trapping-errors-Ldc9FC5Hr))
-    (let* ((keys '(operation error-form no-backtrace class level resignal))
+    (let* ((keys '(operation error-form no-backtrace class level resignal
+		   debug))
 	   (keys-with-colon
 	    (mapcar #'(lambda (sym)
 			(intern (concat ":" (symbol-name sym)))) keys)))
@@ -1492,29 +1496,32 @@ is displayed and the ERROR-FORM is executed."
 	       (key (intern (substring (symbol-name key-with-colon) 1))))
 	  (set key (pop keys-body)))))
     `(condition-case ,(if resignal cte-cc-var nil)
-	 (call-with-condition-handler
-	     #'(lambda (,call-trapping-errors-arg)
-		 (let ((errstr (error-message-string
-				,call-trapping-errors-arg)))
-		   ,(if no-backtrace
-			`(lwarn ,class ,level
-			   (if (warning-level-<
-				,level
-				display-warning-minimum-level)
-			       "Error in %s: %s"
-			     "Error in %s:\n%s\n")
-			   ,operation errstr)
-		      `(lwarn ,class ,level
-			 "Error in %s: %s\n\nBacktrace follows:\n\n%s"
-			 ,operation errstr
-			 (backtrace-in-condition-handler-eliminating-handler
-			  ',call-trapping-errors-arg)))))
-	     #'(lambda ()
-		 (progn ,@keys-body)))
-       (error
-	,error-form
-	,@(if resignal `((signal (car ,cte-cc-var) (cdr ,cte-cc-var)))))
-       )))
+      (call-with-condition-handler
+	  #'(lambda (,call-trapping-errors-arg)
+	      (let ((errstr (error-message-string
+			     ,call-trapping-errors-arg)))
+		,@(if debug `((funcall debugger 'error
+				       ,call-trapping-errors-arg)))
+		,(if no-backtrace
+		     `(lwarn ,class ,level
+		       (if (warning-level-<
+			    ,level
+			    display-warning-minimum-level)
+			   "Error in %s: %s"
+			 "Error in %s:\n%s\n")
+		       ,operation errstr)
+		   `(lwarn ,class ,level
+		     "Error in %s: %s\n\nBacktrace follows:\n\n%s"
+		     ,operation errstr
+		     (backtrace-in-condition-handler-eliminating-handler
+		      ',call-trapping-errors-arg)))
+		))
+	  #'(lambda ()
+	      (progn ,@keys-body)))
+      (error
+       ,error-form
+       ,@(if resignal `((signal (car ,cte-cc-var) (cdr ,cte-cc-var)))))
+      )))
 
 ;;;; Miscellanea.
 
