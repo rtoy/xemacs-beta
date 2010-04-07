@@ -131,7 +131,7 @@ SYMBOL_MODULE_API (Qfile_name);
 SYMBOL_KEYWORD (Q_filter);
 SYMBOL (Qfinal);
 SYMBOL (Qfixnum);
-SYMBOL (Qfixnump);
+SYMBOL_MODULE_API (Qfixnump);
 SYMBOL (Qfloat);
 SYMBOL (Qfont);
 SYMBOL (Qframe);

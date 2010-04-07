@@ -1,3 +1,16 @@
+2010-04-06  Ben Wing  <ben@xemacs.org>
+
+	* elhash.c (Feq_hash):
+	Cast to EMACS_INT to fix warning.
+
+	* elhash.c (internal_hash):
+	* elhash.c (Feql_hash):
+	Fix spacing before parens.
+	
+	* general-slots.h:
+	* xemacs.def.in.in:
+	Export Qfixnump to fix eldap.c link error.
+
 2010-04-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* toolbar-msw.c (allocate_toolbar_item_id)
