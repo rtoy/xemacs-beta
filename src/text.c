@@ -1480,6 +1480,27 @@ non_ascii_itext_ichar (const Ibyte *str)
 #endif /* UNICODE_INTERNAL */
 }
 
+/* Convert a charset codepoint (guaranteed not to be ASCII) into a
+   character in the internal string representation.  Return number
+   of bytes written out.  FAIL controls what happens when the charset
+   codepoint cannot be converted to Unicode. */
+Bytecount
+non_ascii_charset_codepoint_to_itext (Lisp_Object charset, int c1, int c2,
+				      Ibyte *ptr, enum converr fail)
+{
+  Ichar ch;
+
+  text_checking_assert (!EQ (charset, Vcharset_ascii));
+  ch = charset_codepoint_to_ichar (charset, c1, c2, fail);
+
+  if (ch < 0)
+    return 0;
+  /* We can't rely on the converted character being non-ASCII.  For
+     example, JISX0208 codepoint (33, 64) == Unicode 0x5C (ASCII
+     backslash). */
+  return set_itext_ichar (ptr, ch);
+}
+
 #ifndef UNICODE_INTERNAL
 
 /* Return whether CH is a valid Ichar, assuming it's >= 0x100.
@@ -1846,6 +1867,8 @@ old_mule_round_down_to_valid_ichar (int charpos)
 
 #endif /* not UNICODE_INTERNAL */
 
+#endif /* MULE */
+
 /* Take a possibly invalid Ichar value (must be >= 0) and move upwards as
    necessary until we find the first valid Ichar.  Return -1 if we're above
    all valid Ichars. */
@@ -1861,8 +1884,10 @@ round_up_to_valid_ichar (int charpos)
     return (Ichar) (LAST_UTF_16_SURROGATE + 1);
   text_checking_assert (charpos > ICHAR_MAX);
   return -1;
-#else
+#elif defined (MULE)
   return old_mule_round_up_to_valid_ichar (charpos);
+#else
+  return -1;
 #endif
 }
 
@@ -1880,33 +1905,12 @@ round_down_to_valid_ichar (int charpos)
     return ICHAR_MAX;
   text_checking_assert (valid_unicode_surrogate (charpos));
   return (Ichar) (FIRST_UTF_16_SURROGATE - 1);
-#else
+#elif defined (MULE)
   return old_mule_round_down_to_valid_ichar (charpos);
+#else
+  return 255;
 #endif
 }
-
-/* Convert a charset codepoint (guaranteed not to be ASCII) into a
-   character in the internal string representation.  Return number
-   of bytes written out.  FAIL controls what happens when the charset
-   codepoint cannot be converted to Unicode. */
-Bytecount
-non_ascii_charset_codepoint_to_itext (Lisp_Object charset, int c1, int c2,
-				      Ibyte *ptr, enum converr fail)
-{
-  Ichar ch;
-
-  text_checking_assert (!EQ (charset, Vcharset_ascii));
-  ch = charset_codepoint_to_ichar (charset, c1, c2, fail);
-
-  if (ch < 0)
-    return 0;
-  /* We can't rely on the converted character being non-ASCII.  For
-     example, JISX0208 codepoint (33, 64) == Unicode 0x5C (ASCII
-     backslash). */
-  return set_itext_ichar (ptr, ch);
-}
-
-#endif /* MULE */
 
 /****************************************************************************/
 /*--------------------------------------------------------------------------*/

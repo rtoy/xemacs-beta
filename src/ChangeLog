@@ -1,3 +1,25 @@
+2010-04-07  Ben Wing  <ben@xemacs.org>
+
+	* redisplay-msw.c (mswindows_output_vertical_divider):
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	* search.c (byte_scan_buffer):
+	Rename some variables to avoid warnings about global shadowings.
+	
+	* text.c:
+	* text.c (non_ascii_charset_codepoint_to_itext):
+	* text.c (round_up_to_valid_ichar):
+	* text.c (round_down_to_valid_ichar):
+	Provide round_down_to_valid_ichar() and round_up_to_valid_ichar()
+	when not Mule.
+	
+	* unicode.c (autoload_charset_unicode_tables):
+	Don't fclose() in the first stage since we will do it later when
+	we unbind, and doubly fclosing is fatal in Linux glibc.
+	
+	* window.c:
+	Put ifdefs around find_window_mirror_maybe() to avoid warnings.
+
 2010-04-06  Ben Wing  <ben@xemacs.org>
 
 	* elhash.c (Feq_hash):
