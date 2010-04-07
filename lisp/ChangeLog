@@ -1,3 +1,10 @@
+2010-04-07  Didier Verna  <didier@xemacs.org>
+
+	* font-lock.el (lisp-font-lock-keywords-2): Add missing CL style
+	lambda list constructs (&key etc.).
+	* lisp-mode.el (lisp-function-and-type-regexp): Recognize defun*
+	as well as defun.
+
 2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* descr-text.el (describe-char-unicode-data):

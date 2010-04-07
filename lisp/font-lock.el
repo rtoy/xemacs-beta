@@ -2259,7 +2259,9 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
     '("\\<:\\sw+\\>" 0 font-lock-reference-face prepend)
     ;;
     ;; ELisp and CLisp `&' keywords as types.
-    '("\\<\\&\\(optional\\|rest\\|whole\\)\\>" . font-lock-type-face)
+    '("\\<\\&\\(\
+optional\\|rest\\|body\\|whole\\|key\\|allow-other-keys\\|aux\\|environment\
+\\)\\>" . font-lock-type-face)
     ))
   "Gaudy level highlighting for Lisp modes.")
 
