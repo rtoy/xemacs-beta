@@ -2368,11 +2368,16 @@ Unicode tables or in the charset:
 				  Fexpand_file_name
 				  (build_ascstring ("../etc"),
 				   Vlisp_directory));
+  /* We do two passes over the file.  The first pass determines the actual
+     limits, for each row, of the charset codepoints with translations in
+     that row.  Then, we allocate the to-tables to hold exactly those limits,
+     and in the second stage we process the translations. */
   for (stage = 0; stage < 2; stage++)
     {
       file = qxe_fopen (XSTRING_DATA (filename), READ_TEXT);
       if (!file)
 	report_file_error ("Cannot open", filename);
+      /* Ensure that files get closed even in the event of an error */
       record_unwind_protect (cerrar_el_fulano, make_opaque_ptr (file));
       while (fgets (line, sizeof (line), file))
 	{
@@ -2534,11 +2539,8 @@ Unicode tables or in the charset:
       if (ferror (file))
 	report_file_error ("IO error when reading", filename);
 
-      /* If first stage, close file; we will open it again in the second
-	 stage.  Otherwise, we close the file when we unbind. */
       if (stage == 0)
 	{
-	  fclose (file);
 #ifndef UNICODE_INTERNAL
 	  if (flgs & LOAD_UNICODE_BIG5)
 	    {
@@ -2560,7 +2562,7 @@ Unicode tables or in the charset:
 	}
     }
 
-  unbind_to (fondo); /* close file, permit GC */
+  unbind_to (fondo); /* close files, permit GC */
   return Qnil;
 }
 

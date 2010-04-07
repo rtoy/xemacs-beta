@@ -689,20 +689,20 @@ byte_scan_buffer (struct buffer *buf, Ichar target, Bytebpos st, Bytebpos en,
 	  Raw_Ichar raw = ichar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st < lim && count > 0)
 	    {
-	      Bytebpos ceil;
+	      Bytebpos ceiling;
 	      Ibyte *bufptr;
 
-	      ceil = BYTE_BUF_CEILING_OF (buf, st);
-	      ceil = min (lim, ceil);
+	      ceiling = BYTE_BUF_CEILING_OF (buf, st);
+	      ceiling = min (lim, ceiling);
 	      bufptr = (Ibyte *) memchr (BYTE_BUF_BYTE_ADDRESS (buf, st),
-					   raw, ceil - st);
+					   raw, ceiling - st);
 	      if (bufptr)
 		{
 		  count--;
 		  st = BYTE_BUF_PTR_BYTE_POS (buf, bufptr) + 1;
 		}
 	      else
-		st = ceil;
+		st = ceiling;
 	    }
 	}
 
@@ -740,16 +740,16 @@ byte_scan_buffer (struct buffer *buf, Ichar target, Bytebpos st, Bytebpos en,
 	  Raw_Ichar raw = ichar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st > lim && count < 0)
 	    {
-	      Bytebpos floor;
+	      Bytebpos flor; /* Avoid warning shadowing global floor() */
 	      Ibyte *bufptr;
-	      Ibyte *floorptr;
+	      Ibyte *florptr;
 
-	      floor = BYTE_BUF_FLOOR_OF (buf, st);
-	      floor = max (lim, floor);
+	      flor = BYTE_BUF_FLOOR_OF (buf, st);
+	      flor = max (lim, flor);
 	      /* No memrchr() ... */
 	      bufptr = BYTE_BUF_BYTE_ADDRESS_BEFORE (buf, st);
-	      floorptr = BYTE_BUF_BYTE_ADDRESS (buf, floor);
-	      while (bufptr >= floorptr)
+	      florptr = BYTE_BUF_BYTE_ADDRESS (buf, flor);
+	      while (bufptr >= florptr)
 		{
 		  st--;
 		  /* At this point, both ST and BUFPTR refer to the same

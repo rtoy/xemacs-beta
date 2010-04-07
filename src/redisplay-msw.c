@@ -1176,14 +1176,14 @@ mswindows_output_vertical_divider (struct window *w, int UNUSED (clear_unused))
   int abs_shadow = abs (shadow);
   int line_width = XINT (w->vertical_divider_line_width);
   int div_left = WINDOW_RIGHT (w) - window_divider_width (w);
-  int y1 = WINDOW_TOP (w);
-  int y2 = WINDOW_BOTTOM (w);
+  int ytop = WINDOW_TOP (w);
+  int ybot = WINDOW_BOTTOM (w);
 
   /* Clear left and right spacing areas */
   if (spacing)
     {
-      rect.top = y1;
-      rect.bottom = y2;
+      rect.top = ytop;
+      rect.bottom = ybot;
       mswindows_update_dc (hdc, Qnil,
 		   WINDOW_FACE_CACHEL_BACKGROUND (w, DEFAULT_INDEX), Qnil);
       rect.right = WINDOW_RIGHT (w);
@@ -1195,8 +1195,8 @@ mswindows_output_vertical_divider (struct window *w, int UNUSED (clear_unused))
     }
   
   /* Clear divider face */
-  rect.top = y1 + abs_shadow;
-  rect.bottom = y2 - abs_shadow;
+  rect.top = ytop + abs_shadow;
+  rect.bottom = ybot - abs_shadow;
   rect.left = div_left + spacing + abs_shadow;
   rect.right = rect.left + line_width;
   if (rect.left < rect.right)

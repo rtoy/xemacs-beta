@@ -731,6 +731,8 @@ find_window_mirror (struct window *w)
 				      XWINDOW_MIRROR (f->root_mirror), w);
 }
 
+#ifdef MEMORY_USAGE_STATS
+
 /* Given a real window, return its mirror structure, if it exists.
    Don't do any updating. */
 static struct window_mirror *
@@ -742,6 +744,8 @@ find_window_mirror_maybe (struct window *w)
   return find_window_mirror_internal (f->root_window,
 				      XWINDOW_MIRROR (f->root_mirror), w);
 }
+
+#endif /* MEMORY_USAGE_STATS */
 
 /*****************************************************************************
  find_window_by_pixel_pos
