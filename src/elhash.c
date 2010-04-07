@@ -1927,29 +1927,29 @@ internal_hash (Lisp_Object obj, int depth, Boolint equalp)
   if (depth > 5)
     return 0;
 
-  if (CONSP(obj)) 
+  if (CONSP (obj)) 
     {
       Hashcode hash, h;
       int s;
 
       depth += 1;
 
-      if (!CONSP(XCDR(obj)))
+      if (!CONSP (XCDR (obj)))
 	{
 	  /* special case for '(a . b) conses */
-	  return HASH2(internal_hash(XCAR(obj), depth, equalp),
-		       internal_hash(XCDR(obj), depth, equalp));
+	  return HASH2 (internal_hash (XCAR(obj), depth, equalp),
+			internal_hash (XCDR (obj), depth, equalp));
 	}
 
       /* Don't simply tail recurse; we want to hash lists with the
 	 same contents in distinct orders differently. */
-      hash = internal_hash(XCAR(obj), depth, equalp);
+      hash = internal_hash (XCAR (obj), depth, equalp);
 
-      obj = XCDR(obj);
-      for (s = 1; s < 6 && CONSP(obj); obj = XCDR(obj), s++)
+      obj = XCDR (obj);
+      for (s = 1; s < 6 && CONSP (obj); obj = XCDR (obj), s++)
 	{
-	  h = internal_hash(XCAR(obj), depth, equalp);
-	  hash = HASH3(hash, h, s);
+	  h = internal_hash (XCAR (obj), depth, equalp);
+	  hash = HASH3 (hash, h, s);
 	}
 
       return hash;
@@ -1994,7 +1994,7 @@ Return a hash value for OBJECT appropriate for use with `eq.'
 */
        (object))
 {
-  return make_integer (XPNTRVAL (object));
+  return make_integer ((EMACS_INT) XPNTRVAL (object));
 }
 
 DEFUN ("eql-hash", Feql_hash, 1, 1, 0, /*

@@ -314,6 +314,7 @@ specpdl_depth_counter		/* specpdl_depth */
 Qconsp				/* CHECK_CONS */
 Qcritical			/* QUIT, QUITP */
 Qdelete
+Qfixnump			/* CHECK_INT */
 Qfile_name			/* Qdll_filename_encoding */
 Qintegerp			/* CHECK_INT, CONCHECK_INT */
 Qinvalid_argument
