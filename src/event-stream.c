@@ -4946,7 +4946,7 @@ vars_of_event_stream (void)
   DEFVAR_LISP ("echo-keystrokes", &Vecho_keystrokes /*
 *Nonzero means echo unfinished commands after this many seconds of pause.
 */ );
-  Vecho_keystrokes = make_int (1);
+  Vecho_keystrokes = Qone;
 
   DEFVAR_INT ("auto-save-interval", &auto_save_interval /*
 *Number of keyboard input characters between auto-saves.

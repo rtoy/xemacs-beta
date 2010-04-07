@@ -1,0 +1,14 @@
+README for Unicode Consortium mapping files in XEmacs.
+
+Copyright (c) 2007  The Free Software Foundation, Inc.
+Copyright (c) 2010 Ben Wing.
+
+This file is part of XEmacs.  It is licensed to you under the
+conditions of the GNU General Public License, version 2 or any later
+version published by the FSF, at your option.
+
+The files in this directory came from
+http://www.unicode.org/Public/MAPPINGS/.  See also the file `COPYING' in
+this directory for more info about where the files came from and when.
+
+See the README in the parent directory for more info about these tables.

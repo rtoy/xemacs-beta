@@ -1,4 +1,4 @@
-;;; mule-x-init.el --- initialization code for X Windows under MULE -*- coding: iso-2022-7bit; -*-
+;;; mule-x-init.el --- initialization code for X Windows under MULE
 ;; Copyright (C) 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1996, 2002 Ben Wing <ben@xemacs.org>
 

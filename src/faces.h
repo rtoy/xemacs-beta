@@ -1,6 +1,6 @@
 /* Face data structures.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 2002, 2010 Ben Wing
+   Copyright (C) 1995, 2002, 2005, 2010 Ben Wing
    Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
@@ -24,9 +24,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef INCLUDED_faces_h_
 #define INCLUDED_faces_h_
-
-#include "charset.h" /* for NUM_LEADING_BYTES */
-#include "specifier.h"
 
 /* a Lisp_Face is the C object corresponding to a face.  There is one
    of these per face.  It basically contains all of the specifiers for
@@ -117,6 +114,21 @@ struct Lisp_Face
 
 #define NUM_STATIC_CACHEL_FACES 4
 
+typedef struct
+{
+  Stynarr_declare (int, NUM_STATIC_CACHEL_FACES);
+} int_stynarr;
+
+typedef struct
+{
+  Stynarr_declare (unsigned_char, NUM_STATIC_CACHEL_FACES);
+} unsigned_char_stynarr;
+
+typedef struct
+{
+  Stynarr_declare (Lisp_Object_pair, NUM_STATIC_CACHEL_FACES);
+} Lisp_Object_pair_stynarr;
+
 typedef struct face_cachel face_cachel;
 struct face_cachel
 {
@@ -148,9 +160,8 @@ struct face_cachel
 
      The order of the faces here is decreasing extent priority. */
   Lisp_Object face;
-  int merged_faces_static[NUM_STATIC_CACHEL_FACES];
-  int_dynarr *merged_faces;
-  int nfaces;
+
+  int_stynarr merged_faces;
 
   /* The values stored here are computed by calling specifier_instance()
      on the appropriate specifiers.  This means that we will have either
@@ -162,15 +173,14 @@ struct face_cachel
 
   Lisp_Object foreground;
   Lisp_Object background;
-  /* There are currently 128 or 129 possible charsets under Mule.  For the
-     moment we just take the easy way out and allocate space for each
-     of them.  This avoids messing with Dynarrs.
 
-     #### We should look into this and probably clean it up
-     to use Dynarrs.  This may be a big space hog as is.
-     sjt sez: doesn't look like it, my total face cache is 170KB.
-     Could be reduced to maybe 50KB. */
-  Lisp_Object font[NUM_LEADING_BYTES];
+  /* Static dynarr, mapping charsets to font objects.  Note: The use of an
+     unordered list like this make lookup O(n), potentially slower than a
+     hash table; but the associated constant will be very small, and it's
+     rare that there will be very many charsets associated with this cachel
+     (at most 128 in the previous scheme, and many fewer in practice, often
+     only one). */
+  Lisp_Object_pair_stynarr font;
 
   Lisp_Object display_table;
   Lisp_Object background_pixmap;
@@ -185,8 +195,7 @@ struct face_cachel
 
   /* Used when merging to tell if the above field represents an actual
      value of this face or a fallback value. */
-  DECLARE_INLINE_LISP_BIT_VECTOR(NUM_LEADING_BYTES) font_specified;
-
+  unsigned_char_stynarr font_specified;
   unsigned int foreground_specified :1;
   unsigned int background_specified :1;
   unsigned int display_table_specified :1;
@@ -228,13 +237,12 @@ struct face_cachel
      storing a "blank font" if the instantiation fails. */
   unsigned int dirty :1;
   unsigned int updated :1;
-
-  DECLARE_INLINE_LISP_BIT_VECTOR(NUM_LEADING_BYTES) font_updated; 
+  unsigned_char_stynarr font_updated;
 
   /* Whether the font for the charset in question was determined in the
      "final stage"; that is, the last stage Lisp code could specify it,
      after the initial stage and before the fallback. */ 
-  DECLARE_INLINE_LISP_BIT_VECTOR(NUM_LEADING_BYTES) font_final_stage; 
+  unsigned_char_stynarr font_final_stage;
 };
 
 #ifdef NEW_GC
@@ -260,14 +268,15 @@ Lisp_Object ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 						 Lisp_Object domain,
 						 Lisp_Object charset);
 void ensure_face_cachel_complete (struct face_cachel *cachel,
-				  Lisp_Object domain,
-				  unsigned char *charsets);
+				  Lisp_Object domain, Ichar *ptr,
+				  Charcount len);
 void update_face_cachel_data (struct face_cachel *cachel,
 			      Lisp_Object domain,
 			      Lisp_Object face);
-void face_cachel_charset_font_metric_info (struct face_cachel *cachel,
-					   unsigned char *charsets,
-					   struct font_metric_info *fm);
+void face_cachel_char_font_metric_info (struct face_cachel *cachel,
+					Lisp_Object domain,
+					Ichar *ptr, Charcount len,
+					struct font_metric_info *fm);
 void mark_face_cachels (face_cachel_dynarr *elements);
 void mark_face_cachels_as_clean (struct window *w);
 void mark_face_cachels_as_not_updated (struct window *w);
@@ -308,55 +317,105 @@ void default_face_font_info (Lisp_Object domain, int *ascent,
 void default_face_width_and_height (Lisp_Object domain, int *width,
 				    int *height);
 
-#define FACE_CACHEL_FONT(cachel, charset) \
-  (cachel->font[XCHARSET_LEADING_BYTE (charset) - MIN_LEADING_BYTE])
+/* Return the font corresponding to CHARSET in CACHEL, or Qunbound if not
+   found.  Could just use FACE_CACHEL_OFFSET() below. */
 
-#define FACE_CACHEL_FONT_UPDATED(x)			\
-  ((struct Lisp_Bit_Vector *)(&((x)->font_updated)))
-#define FACE_CACHEL_FONT_SPECIFIED(x)			\
-  ((struct Lisp_Bit_Vector *)(&((x)->font_specified)))
-#define FACE_CACHEL_FONT_FINAL_STAGE(x)			\
-  ((struct Lisp_Bit_Vector *)(&((x)->font_final_stage)))
+DECLARE_INLINE_HEADER (
+Lisp_Object
+FACE_CACHEL_FONT (struct face_cachel *cachel, Lisp_Object charset)
+)
+{
+  int i;
+  for (i = 0; i < Stynarr_length (cachel->font); i++)
+    {
+      Lisp_Object_pair *el = Stynarr_atp (cachel->font, i);
+      if (EQ (el->key, charset))
+	return el->value;
+    }
+  return Qunbound;
+}
+
+/* Return the offset corresponding to CHARSET in CACHEL, or -1 if not
+   found. */
+
+DECLARE_INLINE_HEADER (
+int
+FACE_CACHEL_OFFSET (struct face_cachel *cachel, Lisp_Object charset)
+)
+{
+  int i;
+  for (i = 0; i < Stynarr_length (cachel->font); i++)
+    {
+      Lisp_Object_pair *el = Stynarr_atp (cachel->font, i);
+      if (EQ (el->key, charset))
+	return i;
+    }
+  return -1;
+}
+
+/* Return the offset corresponding to CHARSET in CACHEL; if necessary, add
+   the charset to cachel, with font value of Qunbound. */
+
+DECLARE_INLINE_HEADER (
+int
+FACE_CACHEL_OFFSET_ENSURE (struct face_cachel *cachel, Lisp_Object charset)
+)
+{
+  int i = FACE_CACHEL_OFFSET (cachel, charset);
+  if (i == -1)
+    {
+      Lisp_Object_pair lop;
+      lop.key = charset;
+      lop.value = Qunbound;
+      i = Stynarr_length (cachel->font);
+      Stynarr_add (cachel->font, lop);
+      Stynarr_add (cachel->font_specified, 0);
+      Stynarr_add (cachel->font_updated, 0);
+      Stynarr_add (cachel->font_final_stage, 0);
+    }
+  return i;
+}
 
 #define WINDOW_FACE_CACHEL(window, index) \
   Dynarr_atp ((window)->face_cachels, index)
 
-#define FACE_CACHEL_FINDEX_UNSAFE(cachel, offset)			     \
-  ((offset) < NUM_STATIC_CACHEL_FACES					     \
-   ? (cachel)->merged_faces_static[offset]				     \
-   : Dynarr_at ((cachel)->merged_faces, (offset) - NUM_STATIC_CACHEL_FACES))
+/* UNSAFE because it evaluates OFFSET and (CACHEL) multiply */
+#define FACE_CACHEL_FINDEX_UNSAFE(cachel, offset)                       \
+  Stynarr_at (cachel->merged_faces, offset)
+#define FACE_CACHEL_NFACES(cachel)                                      \
+  Stynarr_length (cachel->merged_faces)
 
-#define WINDOW_FACE_CACHEL_FACE(window, index)				\
+#define WINDOW_FACE_CACHEL_FACE(window, index)                          \
   (WINDOW_FACE_CACHEL (window, index)->face)
-#define WINDOW_FACE_CACHEL_FOREGROUND(window, index)			\
+#define WINDOW_FACE_CACHEL_FOREGROUND(window, index)                    \
   (WINDOW_FACE_CACHEL (window, index)->foreground)
-#define WINDOW_FACE_CACHEL_BACKGROUND(window, index)			\
+#define WINDOW_FACE_CACHEL_BACKGROUND(window, index)                    \
   (WINDOW_FACE_CACHEL (window, index)->background)
 /* #### This can be referenced by various functions,
    but face_cachels isn't initialized for the stream device.
    Since it doesn't need the value we just return nil here to avoid
    blowing up in multiple places. */
-#define WINDOW_FACE_CACHEL_FONT(window, index, charset)			\
-  ((window)->face_cachels					\
-   ? FACE_CACHEL_FONT (WINDOW_FACE_CACHEL (window, index), charset)	\
+#define WINDOW_FACE_CACHEL_FONT(window, index, charset)                 \
+  ((window)->face_cachels                                               \
+   ? FACE_CACHEL_FONT (WINDOW_FACE_CACHEL (window, index), charset)     \
    : Qnil)
-#define WINDOW_FACE_CACHEL_DISPLAY_TABLE(window, index)			\
+#define WINDOW_FACE_CACHEL_DISPLAY_TABLE(window, index)                 \
   (WINDOW_FACE_CACHEL (window, index)->display_table)
-#define WINDOW_FACE_CACHEL_BACKGROUND_PIXMAP(window, index)		\
+#define WINDOW_FACE_CACHEL_BACKGROUND_PIXMAP(window, index)             \
   (WINDOW_FACE_CACHEL (window, index)->background_pixmap)
 #define WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT(window, index)		\
   (WINDOW_FACE_CACHEL (window, index)->background_placement)
 #define WINDOW_FACE_CACHEL_DIRTY(window, index)				\
   (WINDOW_FACE_CACHEL (window, index)->dirty)
-#define WINDOW_FACE_CACHEL_UNDERLINE_P(window, index)			\
+#define WINDOW_FACE_CACHEL_UNDERLINE_P(window, index)                   \
   (WINDOW_FACE_CACHEL (window, index)->underline)
-#define WINDOW_FACE_CACHEL_HIGHLIGHT_P(window, index)			\
+#define WINDOW_FACE_CACHEL_HIGHLIGHT_P(window, index)                   \
   (WINDOW_FACE_CACHEL (window, index)->highlight)
-#define WINDOW_FACE_CACHEL_DIM_P(window, index)				\
+#define WINDOW_FACE_CACHEL_DIM_P(window, index)                         \
   (WINDOW_FACE_CACHEL (window, index)->dim)
-#define WINDOW_FACE_CACHEL_BLINKING_P(window, index)			\
+#define WINDOW_FACE_CACHEL_BLINKING_P(window, index)                    \
   (WINDOW_FACE_CACHEL (window, index)->blinking)
-#define WINDOW_FACE_CACHEL_REVERSE_P(window, index)			\
+#define WINDOW_FACE_CACHEL_REVERSE_P(window, index)                     \
   (WINDOW_FACE_CACHEL (window, index)->reverse)
 
 #define FACE_PROPERTY_SPECIFIER(face, property) Fget (face, property, Qnil)

@@ -808,6 +808,33 @@ decode_domain (Lisp_Object domain)
   return domain;
 }
 
+/* Return the buffer of the domain if uniquely determinable; else, return
+   Qnil. */
+Lisp_Object
+MAYBE_DOMAIN_BUFFER (Lisp_Object obj)
+{
+  Lisp_Object win = DOMAIN_WINDOW (obj);
+  if (WINDOWP (win))
+    return WINDOW_BUFFER (XWINDOW (win));
+  else
+    return Qnil;
+}
+
+/* Try hard to get a buffer from a domain.  If not uniquely determinable,
+   return current buffer. @@#### Maybe we should use the buffer of the
+   selected window. */
+Lisp_Object
+DOMAIN_BUFFER (Lisp_Object obj)
+{
+  Lisp_Object win = DOMAIN_WINDOW (obj);
+  if (WINDOWP (win))
+    return WINDOW_BUFFER (XWINDOW (win));
+  else
+    /* @@#### See comments above */
+    return wrap_buffer (current_buffer);
+}
+
+
 
 /************************************************************************/
 /*                                 Tags                                 */

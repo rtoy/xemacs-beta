@@ -312,43 +312,31 @@ FcTypeOfValueToString (FcValue v)
 }
 
 static FcCharSet *
-mule_to_fc_charset (Lisp_Object cs)
+mule_to_fc_charset (Lisp_Object charset)
 {
   int ucode, i, j;
+  int l1, l2, h1, h2;
   FcCharSet *fccs;
 
-  CHECK_CHARSET (cs);
+  CHECK_CHARSET (charset);
   fccs = FcCharSetCreate ();
-  /* #### do we also need to deal with 94 vs. 96 charsets?
-     ie, how are SP and DEL treated in ASCII?  non-graphic should return -1 */
-  if (1 == XCHARSET_DIMENSION (cs))
-    /* Unicode tables are indexed by offsets from ASCII SP, not by ASCII */
-    for (i = 0; i < 96; i++)
-      {
-	ucode = ((int *) XCHARSET_TO_UNICODE_TABLE (cs))[i];
-	if (ucode >= 0)
-	  /* #### should check for allocation failure */
-	  FcCharSetAddChar (fccs, (FcChar32) ucode);
-      }
-  else if (2 == XCHARSET_DIMENSION (cs))
-    /* Unicode tables are indexed by offsets from ASCII SP, not by ASCII */
-    for (i = 0; i < 96; i++)
-      for (j = 0; j < 96; j++)
-      {
-	ucode = ((int **) XCHARSET_TO_UNICODE_TABLE (cs))[i][j];
-	if (ucode >= 0)
-	  /* #### should check for allocation failure */
-	  FcCharSetAddChar (fccs, (FcChar32) ucode);
-      }
-  else
-    {
-      FcCharSetDestroy (fccs);
-      fccs = NULL;
-    }
+
+  get_charset_limits (charset, &l1, &l2, &h1, &h2);
+
+  /* @@#### This needs major fixing.  We need to be passed the character,
+     not the charset. */
+  for (i = l1; i <= h1; i++)
+    for (j = l2; j <= h2; j++)
+      if ((ucode = charset_codepoint_to_unicode (charset, i, j, CONVERR_FAIL))
+	  >= 0)
+	/* #### should check for allocation failure */
+	FcCharSetAddChar (fccs, (FcChar32) ucode);
+
   return fccs;
 }
 
-struct charset_reporter {
+struct charset_reporter
+{
   Lisp_Object *charset;
   /* This is a debug facility, require ASCII. */
   const Ascbyte *language;	/* ASCII, please */
@@ -388,13 +376,17 @@ static struct charset_reporter charset_table[] =
     { &Vcharset_latin_iso8859_15, NULL, NULL },
     { &Vcharset_thai_tis620, "Thai", "th" },
     /* We don't have an arabic charset.  bidi issues, I guess? */
-    /* { &Vcharset_arabic_iso8859_6, "Arabic", "ar" }, */
+    { &Vcharset_arabic_iso8859_6, "Arabic", "ar" },
     { &Vcharset_hebrew_iso8859_8, "Hebrew", "he" },
     /* #### probably close enough for Ukraine? */
     { &Vcharset_cyrillic_iso8859_5, "Russian", "ru" },
+#ifdef UNICODE_INTERNAL
+    { &Vcharset_chinese_big5, "traditional Chinese", "zh-tw" },
+#else
     /* #### these probably are not quite right */
     { &Vcharset_chinese_big5_1, "traditional Chinese", "zh-tw" },
     { &Vcharset_chinese_big5_2, "traditional Chinese", "zh-tw" },
+#endif
     { NULL, NULL, NULL }
   };
 

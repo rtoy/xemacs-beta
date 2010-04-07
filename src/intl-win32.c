@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "charset.h"
 #include "elhash.h"
 #include "faces.h"
 #include "file-coding.h"
@@ -1194,18 +1195,17 @@ Set the CODE-PAGE for the CHARSET.
 Lisp_Object 
 mswindows_get_code_page_charset (int code_page)
 {
-  Lisp_Object charset_tail;
   Lisp_Object charset = Qunbound;
 
-  LIST_LOOP (charset_tail, Fcharset_list ())
+  LIST_LOOP_2 (charset_name, Fcharset_list ())
     {
       Lisp_Object charset_code_page;
 
-      charset_code_page = Fmswindows_charset_code_page (XCAR (charset_tail));
+      charset_code_page = Fmswindows_charset_code_page (charset_name);
       if (INTP (charset_code_page) &&
 	  code_page == XINT (charset_code_page))
 	{
-	  charset = Fget_charset (XCAR (charset_tail));
+	  charset = Fget_charset (charset_name);
 	  break;
 	}
     }
@@ -1246,18 +1246,17 @@ Set the REGISTRY for the CHARSET.
 static Lisp_Object 
 mswindows_get_registry_charset (Ibyte *registry)
 {
-  Lisp_Object charset_tail;
   Lisp_Object charset = Qunbound;
 
-  LIST_LOOP (charset_tail, Fcharset_list ())
+  LIST_LOOP_2 (charset_name, Fcharset_list ())
     {
       Lisp_Object charset_registry;
 
-      charset_registry = Fmswindows_charset_registry (XCAR (charset_tail));
+      charset_registry = Fmswindows_charset_registry (charset_name);
       if (STRINGP (charset_registry) &&
 	  !qxestrcasecmp (XSTRING_DATA (charset_registry), registry))
 	{
-	  charset = Fget_charset (XCAR (charset_tail));
+	  charset = Fget_charset (charset_name);
 	  break;
 	}
     }
@@ -1686,6 +1685,11 @@ static const struct memory_description
   { XD_END }
 };
 
+static const struct memory_description
+  mswindows_multibyte_to_unicode_coding_stream_description[] = {
+  { XD_END }
+};
+
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (mswindows_multibyte_to_unicode);
 
 static void
@@ -2051,10 +2055,10 @@ convert_unicode_to_multibyte_dynarr (const Extbyte *src, Bytecount n,
 
 static Bytecount
 mswindows_multibyte_to_unicode_convert (struct coding_stream *str,
-					const unsigned char *src,
-					unsigned_char_dynarr *dst,
-					Bytecount n)
+					const UExtbyte *src,
+					Bytecount n, unsigned_char_dynarr *dst)
 {
+  /* @@#### Need to properly handle errors here */
   unsigned char *new_src = (unsigned char *) src;
   int i;
   struct mswindows_multibyte_to_unicode_coding_stream *data =
@@ -2150,12 +2154,17 @@ static const struct memory_description
   { XD_END }
 };
 
+static const struct memory_description
+  mswindows_multibyte_coding_stream_description[] = {
+  { XD_END }
+};
+
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (mswindows_multibyte);
 
 static Bytecount
 mswindows_multibyte_convert (struct coding_stream *UNUSED (str),
-			     const UExtbyte *UNUSED (src),
-			     unsigned_char_dynarr *UNUSED (dst), Bytecount n)
+			     const unsigned char *UNUSED (src),
+			     Bytecount n, unsigned_char_dynarr *UNUSED (dst))
 {
   Bytecount orign = n;
   /* should never be called; is preprocessed away in the
@@ -2350,7 +2359,7 @@ determine_if_using_unicode (void)
 void
 complex_vars_of_intl_win32 (void)
 {
-  Fmake_coding_system_internal
+  Fmake_coding_system
     (Qmswindows_unicode, Qunicode,
      build_defer_string ("MS Windows Unicode"),
      nconc2 (list4 (Qdocumentation,
