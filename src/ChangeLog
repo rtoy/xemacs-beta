@@ -1,3 +1,14 @@
+2010-04-09  Didier Verna  <didier@xemacs.org>
+
+	* fontcolor-xlike-inc.c (DEBUG_FONTS2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS4):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP1):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP4): Conditionalize
+	definitions on DEBUG_XEMACS, provide empty definitions otherwise.
+
 2010-04-06  Ben Wing  <ben@xemacs.org>
 
 	* elhash.c (Feq_hash):
