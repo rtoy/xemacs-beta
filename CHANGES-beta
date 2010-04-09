@@ -2,26 +2,50 @@ to XEmacs 21.5.30 "harblegarble"
 
 by Ben Wing:
 
-debugging:
+Debugging (Lisp level):
 
 -- make objects consistently print a UID, with a separate number space per
    object type
 -- add variable `debug-soe' for debugging stack-of-extents code in extents.c
+-- add variable debug-regexps for debugging regexp code, takes list of areas
+   to show info about
 -- correctly note pdumped objects in memory-usage stats returned by
    `garbage-collect' and `object-memory-usage-stats'.
 -- make VDB debugging functions (e.g. `test-segfault', which causes an
    immediate crash!) conditional on `--with-debug'
 -- rename `debug-xemacs-searches' -> `debug-searches'
+-- rename `xft-debug-level' -> `debug-xft'
+-- rename `debug-x-objects' -> `debug-x-fonts'
 -- Turn on "compiled-function annotation hack" so that compiled-function
    objects print the function they are assigned to
 -- Resurrect byte-metering code when --with-debug; enable with variables
    `byte-code-meter', `byte-metering-on'
 -- Add more checks for invalid byte code; when a byte-code-related crash
    occurs, output the last 100 instructions processed
+-- Improved memory-usage mechanism -- removal of `*-memory-usage' in favor
+   of generalized `object-memory-usage'; `show-memory-usage' and
+   `show-object-memory-usage-stats' show, in addition to regular object usage,
+   associated non-Lisp usage as well as ancillary Lisp object usage;
+   `garbage-collect' and `object-memory-usage-stats' return information on
+   storage overhead, associated non-Lisp usage and ancillary Lisp usage
 
-documentation:
+Lisp documentation:
 
 -- fix to `previous/next-single[-char]-property-change'
+-- Document the keywords to the various sequence/list functions:
+     reduce, fill, replace, remove*, remove-if, remove-if-not, delete*,
+     delete-if, delete-if-not, remove-duplicates, delete-duplicates,
+     substitute, substitute-if, substitute-if-not, nsubstitute,
+     nsubstitute-if, nsubstitute-if-not, find, find-if, find-if-not,
+     position, position-if, position-if-not, count, count-if, count-if-not,
+     mismatch, search, sort*, stable-sort, merge, member*, member-if,
+     member-if-not, assoc*, assoc-if, assoc-if-not, rassoc*, rassoc-if,
+     rassoc-if-not, union, nunion, intersection, nintersection,
+     set-difference, nset-difference, set-exclusive-or, nset-exclusive-or,
+     subsetp, subst-if, subst-if-not, nsubst, nsubst-if, nsubst-if-not,
+     sublis, nsublis, tree-equal, cl-tree-equal-rec, pushnew, adjoin, subst
+-- fix so that Common-Lisp argument lists get properly displayed in
+   function documentation
 
 Lisp API:
 
@@ -38,56 +62,300 @@ Lisp API:
 -- In `scan-lists' and friends, when an error occurs, return a `scan-error'
    along with two arguments specifying the range in which the error occurred,
    for GNU compatibility
+-- Functions for dealing with conditional compilation of code depending on
+   presence or absence of features:
+   -- error-unless-tests-match -- signal an error unless a test expression
+      matches when file is compiled and loaded
+   -- byte-compile-file-being-compiled -- return name of file being
+      byte-compiled
+   -- compiled-if, compiled-when -- like `if' or `when' but test is evaluated
+      at compile time
+-- Functions for doing stable set operations
+   -- stable-union, stable-intersection
 
-Internals:
+Internals: Lisp objects
 
 -- reduce lcrecord header size from 3 words to 2
 -- major change to the way Lisp objects are defined and declared; introduce
    a cleaner surface-layer API that eliminates references to "lrecords" and
    "lcrecords", and uses "frob-block object" in place of "basic object"/
-   "simple object"/etc.
+   "simple object"/etc.:
+   
+   Renamed:
+
+     ALLOC_LCRECORD_TYPE -> ALLOC_NORMAL_LISP_OBJECT (returns a Lisp object
+                                rather than a pointer)
+     ALLOCATE_FIXED_TYPE_AND_SET_IMPL -> ALLOC_FROB_BLOCK_LISP_OBJECT
+     BASIC_ALLOC_LCRECORD -> ALLOC_SIZED_LISP_OBJECT
+     DEFINE_LRECORD_IMPLEMENTATION -> DEFINE_*_LISP_OBJECT
+     DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION -> DEFINE_*SIZABLE_*LISP_OBJECT
+     DEFINE_LRECORD_*IMPLEMENTATION_WITH_PROPS -> DEFINE_*LISP_OBJECT, and
+        use OBJECT_HAS_METHOD() for the getprop, etc. methods
+     DEFINE_BASIC_LRECORD_IMPLEMENTATION -> DEFINE_*FROB_BLOCK_LISP_OBJECT
+     DEFINE_DUMPABLE_*/DEFINE_NODUMP_* instead of a 0 or 1 dumpable flag
+     DEFINE_*INTERNAL_* for "internal" Lisp objects (shouldn't escape
+                                                     to Lisp)
+     DEFINE_EXTERNAL_* -> DEFINE_MODULE_*
+     MAKE_LRECORD_IMPLEMENTATION -> MAKE_LISP_OBJECT
+     MAKE_EXTERNAL_LRECORD_IMPLEMENTATION -> MAKE_MODULE_LISP_OBJECT
+     DECLARE_LRECORD -> DECLARE_LISP_OBJECT
+     INIT_LRECORD_IMPLEMENTATION -> INIT_LISP_OBJECT
+     LCRECORD_HEADER -> NORMAL_LISP_OBJECT_HEADER
+     alloc_lrecord -> alloc_sized_lrecord (since it takes a size)
+     printing_unreadable_object -> printing_unreadable_object_fmt
+     printing_unreadable_lcrecord -> printing_unreadable_lisp_object
+
+   New:
+
+     lisp_object_storage_size() -- storage used for Lisp object including
+                                   overhead
+     LISP_OBJECT_UID() -- UID of Lisp object
+     zero_sized_lisp_object() -- zero out a Lisp object of variable size
+     zero_nonsized_lisp_object() -- zero out a Lisp object of fixed size
+     free_normal_lisp_object() -- free a non-frob-block Lisp object
+     LISP_OBJECT_FROB_BLOCK_P() -- return whether a Lisp object is a
+                                  frob-block object
+     IF_OLD_GC, IF_NEW_GC -- simplify declaration of Lisp objects w.r.t. NEW-GC
+                             when a finalizer may exist in one but not the
+                             other
+
+   Eliminated:
+
+     free_lrecord()
+     FREE_LISP_OBJECT():
+       Use free_normal_lisp_object()
+
+     old_zero_lcrecord()
+     old_zero_sized_lcrecord()
+     ZERO_LISP_OBJECT()
+     zero_lrecord():
+       Use zero_sized_lisp_object(), zero_nonsized_lisp_object()
+
+     copy_lrecord()
+     copy_sized_lrecord()
+     old_copy_lcrecord()
+     old_copy_sized_lcrecord()
+     COPY_SIZED_LISP_OBJECT()
+     COPY_SIZED_LCRECORD()
+     COPY_LISP_OBJECT():
+       Use copy_lisp_object()
+
+     LISP_OBJECT_STORAGE_SIZE():
+       Use lisp_object_storage_size()
+
 -- new disksave method for Lisp objects, separated out from the finalize method
+-- new, non-static way of initializing Lisp object methods; used for disksave,
+   getprop, putprop, remprop, object_plist, various memory-usage methods:
+   OBJECT_HAS_METHOD(), OBJECT_HAS_PROPERTY(), etc.
 -- Lisp objects now must specify a print method; use either
    internal_object_printer() or external_object_printer() as a default
 -- equal method for Lisp objects has new `foldcase' param, to implement
    case-folding comparison ala `equalp'
--- various changes to frame-geometry macros in frame-impl.h, gutter.h, etc.,
-   and frame-sizing code in frame.c
--- Major rewrite, updated documentation to dynarr functions and macros
--- Major updates to internals manual and long comments in C files:
-   frame geometry, specifier authors, MS-Windows compilation flags, xlike
-   mechanism, ...
+-- Each type of Lisp object has separate UID space
+-- Redo and generalize memory-usage mechanism, add memory-usage methods for
+   various objects; the following objects now have memory-usage methods:
+   buffers, case tables, hash tables, frames, charsets, scrollbar instances,
+   specifiers, windows, window mirrors
 -- Rename LISP_TO_VOID -> STORE_LISP_IN_VOID,
    VOID_TO_LISP -> GET_LISP_FROM_VOID; add STORE_VOID_IN_LISP,
    GET_VOID_FROM_LISP
+-- Other renames:
+   XD_LISP_OBJECT_BLOCK_PTR -> XD_INLINE_LISP_OBJECT_BLOCK_PTR
+-- Other new functions and macros:
+   lisp_object_memory_usage() -- memory usage of Lisp object, including
+                                 associated non-Lisp usage and ancillary Lisp
+                                 usage
+   tree_memory_usage() -- memory usage of a tree of conses and/or vectors
+   SAFE_LIST_LOOP_* -- loop over a possibly invalid list without signalling
+                       an error
+   listn() -- variable-argument list creation, number of arguments specified
+   listu() -- variable-argument list creation, terminated with Qunbound
+
+-- Make the first lrecord type have value 1 not 0 so that attempts to
+   interpret 0'd memory as a Lisp object will fail more obviously
+
+Internals: Arrays and Tables
+
+-- Major rewrite, updated documentation to dynarr functions and macros
+
+   Rename:
+
+        Dynarr_add_lisp_string -> Dynarr_add_ext_lisp_string
+        Dynarr_set_length -> Dynarr_set_lengthr ("restricted")
+        Dynarr_increment -> Dynarr_incrementr
+        Dynarr_resize_if -> Dynarr_resize_to_add
+
+   New functions:
+
+        Dynarr_elsize = dy->elsize_
+        Dynarr_set_length(): Set length, resizing as necessary
+        Dynarr_set_length_and_zero(): Set length, resizing as necessary,
+          zeroing out new elements
+        Dynarr_increase_length(), Dynarr_increase_length_and_zero():
+          Optimization of Dynarr_set_length(), Dynarr_set_length_and_zero()
+          when size is known to increase
+        Dynarr_resize_to_fit(): Resize as necessary to fit a given length.
+        Dynarr_set(): Set element at a given position, increasing length
+          as necessary and setting any newly created positions to 0
+        ERROR_CHECK_DYNARR, dynarr_checking_assert()
+
+-- Extracted and generalized gap array code from extents.c to array.c
+-- Rewrite range tables to use gap arrays; redo put_range_table() so it's
+   O(log n) when adding a localized range
+
+Internals: Misc
+
+-- Collect allocation-statistics code in one place
+-- if (...) ABORT (); --> assert ();
+-- various changes to frame-geometry macros in frame-impl.h, gutter.h, etc.,
+   and frame-sizing code in frame.c:
+   -- TOP_BORDER, BOTTOM_BORDER, etc. -> TOP_EDGE, BOTTOM_EDGE, etc.
+   -- GUTTER_POS_LOOP -> EDGE_POS_LOOP
+   -- hardcoded use of '4' -> NUM_EDGES
+   -- default_face_height_and_width -> default_face_width_and_height, with
+        arguments reversed
+   -- width/height arguments reversed in the following, to put width first:
+        -- default_face_font_info
+	-- default_face_height_and_width (see above)
+	-- check_frame_size
+	-- frame_size_valid_p (made into a static function)
+        -- change_frame_size and
+        -- change_frame_size_1
+   -- FRAME_BORDER_* -> FRAME_INTERNAL_BORDER_*
+   -- new FRAME_INTERNAL_BORDER_SIZE(), FRAME_REAL_TOOLBAR_BOUNDS()
+   -- pixel_to_char_size -> pixel_to_frame_unit_size
+   -- char_to_pixel_size -> frame_unit_to_pixel_size
+   -- pixel_to_real_char_size -> pixel_to_char_size
+   -- char_to_real_pixel_size -> char_to_pixel_size
+   -- Eliminate old round_size_to_char, because it didn't really
+      do anything differently from round_size_to_real_char()
+   -- round_size_to_real_char -> round_size_to_char; any places that
+      called the old round_size_to_char should just call the new one.
+-- Major updates to internals manual and long comments in C files:
+   frame geometry, specifier authors, MS-Windows compilation flags, xlike
+   mechanism, magic symbols, lrecords, NEW-GC, dynarrs, ...
+-- Major reworking of DFC macros e.g. EXTERNAL_TO_C_STRING renamed to
+   EXTERNAL_TO_ITEXT; make them return their values when possible rather
+   than storing into a named variable:
+
+	EXTERNAL_TO_C_STRING -> EXTERNAL_TO_ITEXT
+	EXTERNAL_TO_C_STRING_MALLOC -> EXTERNAL_TO_ITEXT_MALLOC
+	SIZED_EXTERNAL_TO_C_STRING -> SIZED_EXTERNAL_TO_ITEXT
+	SIZED_EXTERNAL_TO_C_STRING_MALLOC -> SIZED_EXTERNAL_TO_ITEXT_MALLOC
+	C_STRING_TO_EXTERNAL -> ITEXT_TO_EXTERNAL
+	C_STRING_TO_EXTERNAL_MALLOC -> ITEXT_TO_EXTERNAL_MALLOC
+	LISP_STRING_TO_EXTERNAL
+	LISP_STRING_TO_EXTERNAL_MALLOC
+	LISP_STRING_TO_TSTR
+	C_STRING_TO_TSTR -> ITEXT_TO_TSTR
+	TSTR_TO_C_STRING -> TSTR_TO_ITEXT
+
+	The following four still return their values through parameters,
+	since they have more than one value to return:
+	
+	C_STRING_TO_SIZED_EXTERNAL -> ITEXT_TO_SIZED_EXTERNAL
+	LISP_STRING_TO_SIZED_EXTERNAL
+	C_STRING_TO_SIZED_EXTERNAL_MALLOC -> ITEXT_TO_SIZED_EXTERNAL_MALLOC
+	LISP_STRING_TO_SIZED_EXTERNAL_MALLOC
+
+-- Eliminate unused second argument to xfree()
+-- Whenever xfree() a structure field, set the field to 0 afterwards, to
+   protect against double free or possible attempt to interpret the field
+   later on
+-- Move `equalp' to C
+-- Rename `enum font_specifier_matchspec_stages':
+   initial -> STAGE_INITIAL
+   final -> STAGE_FINAL
+   impossible -> NUM_MATCHSPEC_STAGES
+-- Rename:
+   PROCESSING_X_CODE -> THIS_IS_X
+   PROCESSING_GTK_CODE -> THIS_IS_GTK
+-- Rename:
+	write_c_string -> write_cistring
+	build_intstring -> build_istring
+	build_string -> build_cistring
+	build_ext_string -> build_extstring
+	make_ext_string -> make_extstring
+	buffer_insert_c_string -> buffer_insert_ascstring
+	intern_int -> intern_istring
+-- Lots of cleanup of (not-yet-working) message translation code
+-- Lots of Mule-izing:
+   -- change raw `char *' to some characterized type to indicate the
+      semantics properly
+   -- change all occurrences of Qnative to some more specific encoding
+   -- create new encodings:
+        -- Qtime_function_encoding
+           Qtime_zone_encoding
+           Quser_name_encoding
+           Qerror_message_encoding
+           Qjpeg_error_message_encoding
+           Qtooltalk_encoding
+           Qgtk_encoding
+           Qx_error_message_encoding
+-- Major unification of X and GTK redisplay code into "xlike" code, creation
+   of "xlike" mechanism
+-- Rename:
+   LOCAL_TO_WIN32_FILE_FORMAT -> LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN
+   WIN32_TO_LOCAL_FILE_FORMAT -> INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT
+   LOCAL_FILE_FORMAT_TO_TSTR -> LISP_LOCAL_FILE_FORMAT_TO_TSTR.
+   LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR -> LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR
+   Create new LOCAL_FILE_FORMAT_TO_TSTR
+-- Redo the code in code-init.el that initializes coding-system defaults
+-- separate HAVE_XFT into HAVE_XFT and USE_XFT, to facilitate compiling
+   simultaneously with X and GTK
+
+File Additions, Deletions, Renames, etc.
+
 -- Convert various source files to UTF-8
 -- File renames:
    select-common.h -> select-xlike-inc.c
    xgccache.{ch} -> gccache-x.{ch}
    toolbar-common.{ch} -> toolbar-xlike.{ch}
+   objects*.{ch} -> fontcolor*.{ch}
+   dynarr.c -> array.c
 -- New files:
    bytecode-ops.h
    sysgtk.h, sysgdkx.h
    keymap-buttons.h, keymap-slots.h
 -- Deleted files:
    event-gtk.h
--- Major reworking of DFC macros e.g. EXTERNAL_TO_C_STRING renamed to
-   EXTERNAL_TO_ITEXT; make them return their values when possible rather
-   than storing into a named variable
--- Eliminate unused second argument to xfree()
--- separate HAVE_XFT into HAVE_XFT and USE_XFT, to facilitate compiling
-   simultaneously with X and GTK
--- Move `equalp' to C
+-- File moves:
+   moved test-harness.el to Lisp directory
+   moved etc/gdbinit.in to src/.gdbinit.in.in
 
-Testing:
+Internals: Debugging
 
--- Move test-harness.el to Lisp directory
+-- New function debug_out_lisp() -- printf-like formatting for Lisp objects,
+   debug output
+-- Expand the KKCC backtrace mechanism -- new functions:
+   kkcc_short_backtrace()
+   kkcc_short_backtrace_full()
+   kkcc_detailed_backtrace()
+   kkcc_detailed_backtrace_full()
+-- Make print code even more careful about checking for bad memory,
+   bad object types, circular objects, etc.
+-- When --with-debug, set `debug-on-error' so we get an abort to debugger
+   upon Lisp error
 
 Building:
 
 -- Fix `--quick-build' so full rebuilds don't happen when changes are made
    to files like lisp.h, config.h that are included by all C files
 -- Fix C++ build on Cygwin when configured with --have-database
+-- Always insert a coding-system cookie in autoload files, fixing problems
+   when default coding system is UTF-8, as under Cygwin
+-- Redo compile warning system, turn on a number of warnings that had
+   mistakenly gotten turned off
+-- Fix so that builds properly under gcc v4, g++ v4
+-- Make `--with-error-checking' be the same as `--with-error-checking=all'
+-- Expand documentation of `--with-debug'
+-- Use -export-all-symbols instead of broken -export-dynamic on Cygwin/MinGW
+-- Add fix-perms target to correct permissions on executable/non-exec files
+-- rename all instances of --enable-FOO to --with-FOO.
+-- Fix make-mswin-unicode.pl so that it can work with Cygwin w32api headers
+   as well as actual VC++ headers
+-- make-msgfile.lex: Long documentation on what should be done if we ever want
+   message translation to work.
 
 User-Visible Bug Fixes:
 
@@ -104,6 +372,11 @@ User-Visible Bug Fixes:
 -- Fix a crash in frame creation due to lack of call to reset_glyph_cachels()
 -- Fix long-standing bug: searching for Control-1 chars didn't work
 -- Turn on `load-ignore-out-of-date-elc-files' by default
+-- Fix crash in event-TTY code when reading an event non-interactively
+-- Use UTF-8 consistently as encoding default under Cygwin 1.7
+-- Fix broken code in computing fastmap for [^...] regexps under Mule
+-- Fix display-table entries for error-octet characters so they display
+   as originally intended
 
 by Aidan Kehoe:
 
