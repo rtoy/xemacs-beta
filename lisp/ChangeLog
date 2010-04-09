@@ -1,3 +1,9 @@
+2010-04-09  Didier Verna  <didier@xemacs.org>
+
+	* hyper-apropos.el (hyper-apropos-get-doc): Use [not available]
+	when a function's arglist is unknown (this happens for autoloaded
+	functions).
+
 2010-04-07  Didier Verna  <didier@xemacs.org>
 
 	* font-lock.el (lisp-font-lock-keywords-2): Add missing CL style
