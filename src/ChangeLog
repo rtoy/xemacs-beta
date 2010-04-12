@@ -1,3 +1,40 @@
+2010-04-12  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* lisp.h:
+	* lisp.h (XREALLOC_ARRAY):
+	* text.h:
+	Port charset_codepoint_to_itext(), buffer_itext_to_charset_codepoint(),
+	EXTBYTE_STRING_TO_ALLOCA(), `enum converr' from ben-unicode-internal,
+	for use with the mule-wnnfns.c changes.
+	
+	* mule-wnnfns.c:
+	* mule-wnnfns.c (Fwnn_open):
+	* mule-wnnfns.c (Fwnn_dict_add):
+	* mule-wnnfns.c (Fwnn_dict_list):
+	* mule-wnnfns.c (Fwnn_get_zenkouho):
+	* mule-wnnfns.c (Fwnn_inspect):
+	* mule-wnnfns.c (Fwnn_bunsetu_kanji):
+	* mule-wnnfns.c (Fwnn_bunsetu_yomi):
+	* mule-wnnfns.c (Fwnn_word_info):
+	* mule-wnnfns.c (Fwnn_dict_search):
+	* mule-wnnfns.c (Fwnn_get_msg):
+	* mule-wnnfns.c (Fwnn_fuzokugo_set):
+	* mule-wnnfns.c (Fwnn_fuzokugo_get):
+	* mule-wnnfns.c (Fwnn_hinsi_list):
+	* mule-wnnfns.c (Fwnn_fisys_dict_add):
+	* mule-wnnfns.c (Fwnn_fiusr_dict_add):
+	* mule-wnnfns.c (Fwnn_notrans_dict_add):
+	* mule-wnnfns.c (Fwnn_bmodify_dict_add):
+	* mule-wnnfns.c (reinit_vars_of_mule_wnn):
+	* mule-wnnfns.c (vars_of_mule_wnn):
+	* mule-wnnfns.c (w2m):
+	* mule-wnnfns.c (m2w):
+	* mule-wnnfns.c (yes_or_no):
+	* mule-wnnfns.c (puts2):
+	* mule-wnnfns.c (check_wnn_server_type):
+	Mule-ize, borrowed from ben-unicode-internal.
+
 2010-04-09  Ben Wing  <ben@xemacs.org>
 
 	* fileio.c (check_writable):
