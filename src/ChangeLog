@@ -1,3 +1,34 @@
+2010-04-09  Ben Wing  <ben@xemacs.org>
+
+	* fileio.c (check_writable):
+	* fileio.c (Fdo_auto_save):
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	* redisplay.c (create_text_block):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (redisplay_device):
+	* redisplay.c (window_line_number):
+	* redisplay.c (point_would_be_visible):
+	* redisplay.c (compute_display_line_dynarr_usage):
+	* specifier.c (prune_specifiers):
+	* specifier.c (finalize_specifier):
+	* specifier.c (make_magic_specifier):
+	* specifier.c (charset_matches_specifier_tag_set_p):
+	* specifier.c (Fdefine_specifier_tag):
+	* specifier.c (setup_device_initial_specifier_tags):
+	* specifier.c (bodily_specifier):
+	* specifier.c (add_spec_to_ghost_specifier):
+	* specifier.c (remove_ghost_specifier):
+	* specifier.c (set_specifier_fallback):
+	* specifier.c (specifier_instance_from_inst_list):
+	* specifier.c (set_specifier_caching):
+	Fix coding style to correspond to GNU standard.
+
 2010-04-09  Didier Verna  <didier@xemacs.org>
 
 	* fontcolor-xlike-inc.c (DEBUG_FONTS2):
