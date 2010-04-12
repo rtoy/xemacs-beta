@@ -1,5 +1,12 @@
 2010-04-12  Ben Wing  <ben@xemacs.org>
 
+	* specifier.c (specifier_memory_usage):
+	Disable specifier memory-usage stats for now.  Sometimes they can
+	end up with circularities in them and I'm not sure exactly whats
+	going on to produce them.
+
+2010-04-12  Ben Wing  <ben@xemacs.org>
+
 	* charset.h:
 	* lisp.h:
 	* lisp.h (XREALLOC_ARRAY):

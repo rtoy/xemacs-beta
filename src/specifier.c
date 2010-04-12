@@ -3737,12 +3737,19 @@ struct specifier_stats
 };
 
 static void
-specifier_memory_usage (Lisp_Object specifier,
-			struct generic_usage_stats *gustats)
+specifier_memory_usage (Lisp_Object UNUSED (specifier),
+			struct generic_usage_stats * UNUSED (gustats))
 {
+#if 0
   struct specifier_stats *stats = (struct specifier_stats *) gustats;
   Lisp_Specifier *spec = XSPECIFIER (specifier);
 
+  /* #### FIXME -- sometimes it appears that the specs, or at least global
+     specs, can have circularities in the tree structure.  This makes
+     everything much slower and in fact can result in a hang with 100% CPU.
+     Need to investigate properly and figure out what's going on here,
+     since the specs are copied when stored in and so supposedly, circular
+     structures shouldn't exist. */
   stats->global = tree_memory_usage (spec->global_specs, 1);
   stats->device = tree_memory_usage (spec->device_specs, 1);
   stats->frame = tree_memory_usage (spec->frame_specs, 1);
@@ -3751,6 +3758,7 @@ specifier_memory_usage (Lisp_Object specifier,
   stats->fallback = tree_memory_usage (spec->fallback, 1);
   if (SPECIFIERP (spec->magic_parent))
     stats->magic_parent = lisp_object_memory_usage (spec->magic_parent);
+#endif
 }
 
 #endif /* MEMORY_USAGE_STATS */
