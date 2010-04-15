@@ -640,7 +640,7 @@ do									\
   type##_dynarr *els;				\
   int nels;					\
   int nels_static;				\
-  type els_static[num_static];			\
+  type els_static[num_static]
 
 typedef struct
 {
