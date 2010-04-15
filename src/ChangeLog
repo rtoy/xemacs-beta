@@ -1,3 +1,8 @@
+2010-04-14  Ben Wing  <ben@xemacs.org>
+
+	* array.h (Stynarr_declare):
+	Remove extra semi-colon leading to syntax errors.
+
 2010-04-07  Ben Wing  <ben@xemacs.org>
 
 	* redisplay-msw.c (mswindows_output_vertical_divider):
