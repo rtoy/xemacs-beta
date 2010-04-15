@@ -2044,7 +2044,7 @@ for current buffer."
 		   ;; Without this guard, `normal-mode' would potentially run
 		   ;; the major mode function twice: once via `set-auto-mode'
 		   ;; and once via `hack-local-variables'.
-		   (if (not (eq mode major-mode))
+		   (if (and (not (eq mode major-mode)) (fboundp mode))
 		       (funcall mode))
 		   ))
 		(set-any-p
@@ -2091,8 +2091,9 @@ for current buffer."
   "\"Set\" one variable in a local variables spec.
 A few variable names are treated specially."
   (cond ((eq var 'mode)
-	 (funcall (intern (concat (downcase (symbol-name val))
-				  "-mode"))))
+	 (and (fboundp (setq val (intern (concat (downcase (symbol-name val))
+						 "-mode"))))
+	      (funcall val)))
 	((eq var 'coding)
 	 ;; We have already handled coding: tag in set-auto-coding.
 	 nil)
