@@ -1,3 +1,9 @@
+2010-04-15  Ben Wing  <ben@xemacs.org>
+
+	* device-x.c (x_init_device):
+	Don't declare something const if we're going to modify it.
+	Clean up code to follow GNU coding standards.
+
 2010-04-12  Ben Wing  <ben@xemacs.org>
 
 	* specifier.c (specifier_memory_usage):
