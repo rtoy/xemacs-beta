@@ -1,3 +1,13 @@
+2010-04-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el (hack-local-variables-prop-line)
+	(hack-one-local-variable):
+	Only attempt to call MODENAME-mode on encountering a
+	-*-MODENAME-*- line if the corresponding symbol has a function
+	binding, avoiding an error if, for example, opening a log file
+	with XLFDs and wild cards. Thanks for the bug report, Henrique
+	Martins!
+
 2010-04-09  Didier Verna  <didier@xemacs.org>
 
 	* hyper-apropos.el (hyper-apropos-get-doc): Use [not available]
