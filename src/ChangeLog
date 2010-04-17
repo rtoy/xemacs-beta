@@ -1,3 +1,18 @@
+2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fdocumentation):
+	If we have a zero length doc string in DOC, as may happen for
+	undocumented compiled function objects which nonetheless have file
+	information stored, return nil.
+	(Fsnarf_documentation):
+	DOC info existing for compiled functions without docstrings is
+	perfectly legitimate, now the file is also used to store file names.
+	* bytecode.c (set_compiled_function_documentation):
+	Allow this function to set the documentation successfully for
+	compiled function objects that don't currently have documentation;
+	most relevant for functions without docstrings which have file
+	information stored in DOC.
+
 2010-04-15  Ben Wing  <ben@xemacs.org>
 
 	* device-x.c (x_init_device):

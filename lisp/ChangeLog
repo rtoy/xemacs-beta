@@ -1,3 +1,13 @@
+2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadup.el (load-history): Be a bit more discriminate in the
+	entries we remove from load-history, only removing those where the
+	information is entirely available from DOC.
+	Fixes problems finding the files that dumped undocumented
+	variables were loaded from, reported by Didier Verna.
+	* loadhist.el (symbol-file): Correct a regexp here, I had
+	forgotten to double a backslash.
+
 2010-04-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (hack-local-variables-prop-line)

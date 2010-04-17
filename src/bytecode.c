@@ -2562,22 +2562,36 @@ compiled_function_annotation (Lisp_Compiled_Function *f)
 
 #endif
 
-/* used only by Snarf-documentation; there must be doc already. */
+/* used only by Snarf-documentation. */
 void
 set_compiled_function_documentation (Lisp_Compiled_Function *f,
 				     Lisp_Object new_doc)
 {
-  assert (f->flags.documentationp);
   assert (INTP (new_doc) || STRINGP (new_doc));
 
-  if (f->flags.interactivep && f->flags.domainp)
-    XCAR (f->doc_and_interactive) = new_doc;
-  else if (f->flags.interactivep)
-    XCAR (f->doc_and_interactive) = new_doc;
-  else if (f->flags.domainp)
-    XCAR (f->doc_and_interactive) = new_doc;
+  if (f->flags.documentationp)
+    {
+      if (f->flags.interactivep && f->flags.domainp)
+        XCAR (f->doc_and_interactive) = new_doc;
+      else if (f->flags.interactivep)
+        XCAR (f->doc_and_interactive) = new_doc;
+      else if (f->flags.domainp)
+        XCAR (f->doc_and_interactive) = new_doc;
+      else
+        f->doc_and_interactive = new_doc;
+    }
   else
-    f->doc_and_interactive = new_doc;
+    {
+      f->flags.documentationp = 1;
+      if (f->flags.interactivep || f->flags.domainp)
+        {
+          f->doc_and_interactive = Fcons (new_doc, f->doc_and_interactive);
+        }
+      else
+        {
+          f->doc_and_interactive = new_doc;
+        }
+    }
 }
 
 
