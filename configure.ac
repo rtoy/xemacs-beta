@@ -2832,11 +2832,11 @@ GTK_CONFIG=no
 
 if test "$with_gnome" != "no"; then
    AC_MSG_CHECKING(for GNOME configuration script)
-   for possible in gnome-config
+   for possible in libgnome-2.0
    do
-      possible_version=`${possible} --version 2> /dev/null`
-      if test "x${possible_version}" != "x"; then
-              GNOME_CONFIG="${possible}"
+      pkg-config --exists $possible
+      if test $?; then
+              GNOME_CONFIG="pkg-config"
               with_gnome=yes
               with_gtk=yes
               break
@@ -2846,8 +2846,8 @@ if test "$with_gnome" != "no"; then
 fi
 
 if test "${GNOME_CONFIG}" != "no"; then
-      GNOME_LIBS=`${GNOME_CONFIG} --libs gnomeui`
-      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags gnomeui`
+      GNOME_LIBS=`${GNOME_CONFIG} --libs libgnomeui-2.0`
+      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags libgnomeui-2.0`
       AC_DEFINE(HAVE_GNOME)
       XE_APPEND(${GNOME_LIBS}, libs_gtk)
       XE_APPEND(${GNOME_CFLAGS}, c_switch_gtk)
@@ -2855,11 +2855,11 @@ fi
 
 if test "$with_gtk" != "no";then
    AC_MSG_CHECKING(for GTK configuration script)
-   for possible in gtk12-config gtk14-config gtk-config
+   for possible in gtk+-2.0
    do
-      possible_version=`${possible} --version 2> /dev/null`
+      possible_version=`$GNOME_CONFIG {possible} --version 2> /dev/null`
       if test "x${possible_version}" != "x"; then
-              GTK_CONFIG="${possible}"
+              GTK_CONFIG="$GNOME_CONFIG ${possible}"
 	      case "${possible_version}" in
         	1.0.*) AC_MSG_WARN([GTK 1.2 is required, please upgrade your version of GTK.]); with_gtk=no;;
 	        1.3.*) AC_MSG_WARN([GTK 1.3 is not supported right now]); with_gtk=no;;
@@ -2867,6 +2867,10 @@ if test "$with_gtk" != "no";then
 			with_gtk=yes
 			break
 			;;
+                0.22*)
+                        with_gtk=yes
+                        break
+                        ;;
 	        *)     AC_MSG_WARN([Found unsupported version of GTK: $possible_version]);;
 	      esac
       fi
