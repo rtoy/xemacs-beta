@@ -1,6 +1,7 @@
 2010-04-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_initialize_frame_size): 
+	Remove ifndef HAVE_GNOME around gnome-parse-geometry and get_number.
 	Use gtk geometry functions.
 	Include gutter.h for frame size calculations.
 
