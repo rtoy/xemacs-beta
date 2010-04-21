@@ -29,12 +29,12 @@ GtkType GTK_TYPE_GDK_GC = 0;
 #include "fontcolor-gtk-impl.h"
 
 static GtkType
-xemacs_type_register (gchar *name, GtkType parent)
+xemacs_type_register (const gchar *name, GtkType parent)
 {
   GtkType type_id;
   GtkTypeInfo info;
 
-  info.type_name = name;
+  info.type_name = (gchar *) name;
   info.object_size = 0;
   info.class_size = 0;
   info.class_init_func = NULL;
