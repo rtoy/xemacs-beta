@@ -1,3 +1,9 @@
+2010-04-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_initialize_frame_size): 
+	Use gtk geometry functions.
+	Include gutter.h for frame size calculations.
+
 2010-04-06  Ben Wing  <ben@xemacs.org>
 
 	* elhash.c (Feq_hash):

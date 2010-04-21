@@ -41,9 +41,12 @@ Boston, MA 02111-1307, USA.  */
 #include "console-gtk.h"
 #include <X11/Xlib.h>
 
-#define GDK_DRAWABLE(x) (GdkDrawable *) (x)
+#ifndef GDK_DRAWABLE
+//#define GDK_DRAWABLE(x) (GdkDrawable *) (x)
+#endif
 #define GET_GTK_WIDGET_WINDOW(x) (GTK_WIDGET (x)->window)
 #define GET_GTK_WIDGET_PARENT(x) (GTK_WIDGET (x)->parent)
+#define GCHAR(x) ((gchar *)x)
 
 DECLARE_CONSOLE_TYPE (gtk);
 
