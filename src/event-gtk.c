@@ -135,7 +135,8 @@ handle_focus_event_1 (struct frame *f, int in_p)
 	GTK_WIDGET_UNSET_FLAGS (FRAME_GTK_TEXT_WIDGET (f), GTK_HAS_FOCUS);
     }
     gtk_widget_grab_focus (FRAME_GTK_TEXT_WIDGET (f));
-    gtk_widget_draw_focus (FRAME_GTK_TEXT_WIDGET (f));
+    // Note: what is this replaced with?
+    // gtk_widget_draw_focus (FRAME_GTK_TEXT_WIDGET (f));
 
     {
 	Lisp_Object frm;
