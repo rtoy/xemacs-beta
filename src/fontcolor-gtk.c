@@ -188,10 +188,9 @@ gtk_color_instance_equal (struct Lisp_Color_Instance *c1,
 }
 
 static Hashcode
-gtk_color_instance_hash (struct Lisp_Color_Instance *c, int UNUSED (depth),
-                         Boolint UNUSED (equalp))
+gtk_color_instance_hash (struct Lisp_Color_Instance *c, int UNUSED (depth))
 {
-    return (gdk_color_hash (COLOR_INSTANCE_GTK_COLOR (c), NULL));
+  return (gdk_color_hash (COLOR_INSTANCE_GTK_COLOR (c)));
 }
 
 static Lisp_Object
