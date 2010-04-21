@@ -62,7 +62,7 @@ gtk_xemacs_get_type (void)
     {
       static const GtkTypeInfo xemacs_info =
       {
-	"GtkXEmacs",
+	(gchar *) "GtkXEmacs",
 	sizeof (GtkXEmacs),
 	sizeof (GtkXEmacsClass),
 	(GtkClassInitFunc) gtk_xemacs_class_init,
