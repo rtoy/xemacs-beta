@@ -354,7 +354,9 @@ gtk_mark_device (struct device *d)
 static void
 free_gtk_device_struct (struct device *d)
 {
+  //xfree (DEVICE_GTK_DATA (d));
   xfree (d->device_data);
+  d->device_data = 0;
 }
 #endif /* not NEW_GC */
 
@@ -384,7 +386,9 @@ gtk_delete_device (struct device *d)
 #endif
     }
 
+#ifndef NEW_GC
   free_gtk_device_struct (d);
+#endif
 }
 
 
