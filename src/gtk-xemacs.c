@@ -204,14 +204,12 @@ smash_scrollbar_specifiers (struct frame *f, GtkStyle *style)
   Lisp_Object frame;
   int slider_size = 0;
   int hsize, vsize;
-  GtkRangeClass *klass;
 
   frame = wrap_frame (f);
 
-  klass = (GtkRangeClass *) gtk_type_class (GTK_TYPE_SCROLLBAR);
-  slider_size = klass->slider_width;
-  hsize = slider_size + (style->klass->ythickness * 2);
-  vsize = slider_size + (style->klass->xthickness * 2);
+  slider_size = style->slider_width;
+  hsize = slider_size + (style->ythickness * 2);
+  vsize = slider_size + (style->xthickness * 2);
 
   style = gtk_style_attach (style,
 			    GTK_WIDGET (DEVICE_GTK_APP_SHELL (XDEVICE (FRAME_DEVICE (f))))->window);
@@ -228,12 +226,12 @@ static void
 smash_toolbar_specifiers(struct frame *f, GtkStyle *style)
 {
   Lisp_Object frame;
-  GtkStyleClass *klass = (GtkStyleClass *) style->klass;
 
   frame = wrap_frame (f);
 
-  Fadd_spec_to_specifier (Vtoolbar_shadow_thickness, make_int (klass->xthickness),
-			  Qnil, list2 (Qgtk, Qdefault), Qprepend);
+  Fadd_spec_to_specifier (Vtoolbar_shadow_thickness,
+			  make_int (style->xthickness), Qnil, 
+			  list2 (Qgtk, Qdefault), Qprepend);
 }
 #endif /* HAVE_TOOLBARS */
 
