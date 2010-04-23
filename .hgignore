@@ -14,7 +14,7 @@ info/.*\.info(-[0-9]+)?$
 ^Makefile$
 ^Makefile\.in$
 ^autom4te\.cache
-^config\.(log|status)$
+^config\.(log|status|cache)$
 ^lib-src/DOC$
 ^lib-src/(GNUmakefile|Makefile(\.in)?)$
 ^lib-src/config\.values$
