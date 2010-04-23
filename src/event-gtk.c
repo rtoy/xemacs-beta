@@ -107,6 +107,8 @@ static int last_quit_check_signal_tick_count;
 #define THIS_IS_GTK
 #include "event-xlike-inc.c"
 
+Time x_focus_timestamp_really_sucks_fix_me_better;
+
 
 /************************************************************************/
 /*                           magic-event handling                       */
@@ -122,6 +124,7 @@ handle_focus_event_1 (struct frame *f, int in_p)
      box cursor for redisplay, but we don't call any hooks or do any
      select-frame stuff until after the sit-for.
    */
+  x_focus_timestamp_really_sucks_fix_me_better = time(0);
 
     if (in_p)
     {
