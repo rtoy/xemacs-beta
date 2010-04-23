@@ -16,31 +16,37 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 Boston, MA 02111-1301, USA.  */
 
-GtkType GTK_TYPE_ARRAY = 0;
-GtkType GTK_TYPE_STRING_ARRAY = 0;
-GtkType GTK_TYPE_FLOAT_ARRAY = 0;
-GtkType GTK_TYPE_INT_ARRAY = 0;
-GtkType GTK_TYPE_LISTOF = 0;
-GtkType GTK_TYPE_STRING_LIST = 0;
-GtkType GTK_TYPE_OBJECT_LIST = 0;
-GtkType GTK_TYPE_GDK_GC = 0;
+GType GTK_TYPE_ARRAY = 0;
+GType GTK_TYPE_STRING_ARRAY = 0;
+GType GTK_TYPE_FLOAT_ARRAY = 0;
+GType GTK_TYPE_INT_ARRAY = 0;
+GType GTK_TYPE_LISTOF = 0;
+GType GTK_TYPE_STRING_LIST = 0;
+GType GTK_TYPE_OBJECT_LIST = 0;
+GType GTK_TYPE_GDK_GC = 0;
 
 #include "console-gtk.h"
 #include "fontcolor-gtk-impl.h"
 
-static GtkType
-xemacs_type_register (const gchar *name, GtkType parent)
+static GType
+xemacs_type_register (const gchar *name, GType parent)
 {
-  GtkType type_id;
-  GtkTypeInfo info;
+  GType type_id;
+  GTypeInfo info;
 
-  info.type_name = (gchar *) name;
+  info.class_size = 0;  //?
+  info.base_init = NULL;
+  into.base_finalize = NULL;
+
+  info.class_init = NULL;
+  info.class_finalize = NULL;
+  info.class_data = 0;
+
+  info.instance_size = 0;
+  info.n_preallocs = 0;
   info.object_size = 0;
-  info.class_size = 0;
-  info.class_init_func = NULL;
-  info.object_init_func = NULL;
-  info.reserved_1 = NULL;
-  info.reserved_2 = NULL;
+  info.instanace_init = 0;
+  info.value_table = 0;
 
   type_id = gtk_type_unique (parent, &info);
 
@@ -64,7 +70,7 @@ xemacs_init_gtk_classes (void)
 }
 
 static void
-xemacs_list_to_gtklist (Lisp_Object obj, GtkArg *arg)
+xemacs_list_to_gtklist (Lisp_Object obj, GType *arg)
 {
   CHECK_LIST (obj);
 
@@ -133,7 +139,7 @@ __make_string_mapper (gpointer data, gpointer user_data)
 }
 
 static Lisp_Object
-xemacs_gtklist_to_list (GtkArg *arg)
+xemacs_gtklist_to_list (GType *arg)
 {
   Lisp_Object rval = Qnil;
 
@@ -156,7 +162,7 @@ xemacs_gtklist_to_list (GtkArg *arg)
 }
 
 static void
-xemacs_list_to_array (Lisp_Object obj, GtkArg *arg)
+xemacs_list_to_array (Lisp_Object obj, GType *arg)
 {
   CHECK_LIST (obj);
 

@@ -54,16 +54,16 @@ Lisp_Object Venumeration_info;
 
 static GHashTable *dll_cache;
 
-Lisp_Object gtk_type_to_lisp (GtkArg *arg);
-int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg);
-int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg);
+Lisp_Object gtk_type_to_lisp (GType *arg);
+int lisp_to_gtk_type (Lisp_Object obj, GType *arg);
+int lisp_to_gtk_ret_type (Lisp_Object obj, GType *arg);
 #if 0
-void describe_gtk_arg (GtkArg *arg);
+void describe_gtk_arg (GType *arg);
 #endif
 guint symbol_to_enum (Lisp_Object obj, GtkType t);
-static guint lisp_to_flag (Lisp_Object obj, GtkType t);
-static Lisp_Object flags_to_list (guint value, GtkType t);
-static Lisp_Object enum_to_symbol (guint value, GtkType t);
+static guint lisp_to_flag (Lisp_Object obj, GType t);
+static Lisp_Object flags_to_list (guint value, GType t);
+static Lisp_Object enum_to_symbol (guint value, GType t);
 
 #define NIL_OR_VOID_P(x) (NILP (x) || EQ (x, Qvoid))
 
@@ -123,7 +123,7 @@ EXFUN (Fgtk_import_type, 1);
 static struct hash_table *internal_type_hash;
 
 static int
-type_already_imported_p (GtkType t)
+type_already_imported_p (GType t)
 {
   void *retval = NULL;
 
@@ -164,7 +164,7 @@ type_already_imported_p (GtkType t)
 }
 
 static void
-mark_type_as_imported (GtkType t)
+mark_type_as_imported (GType t)
 {
   if (type_already_imported_p (t))
     return;
@@ -172,12 +172,12 @@ mark_type_as_imported (GtkType t)
   puthash ((void *) t, (void *) 1, internal_type_hash);
 }
 
-static void import_gtk_type (GtkType t);
+static void import_gtk_type (GType t);
 
 static void
-import_gtk_object_internal (GtkType the_type)
+import_gtk_object_internal (GType the_type)
 {
-  GtkType original_type = the_type;
+  GType original_type = the_type;
   int first_time = 1;
 
   do
@@ -245,7 +245,7 @@ import_gtk_object_internal (GtkType the_type)
 }
 
 static void
-import_gtk_enumeration_internal (GtkType the_type)
+import_gtk_enumeration_internal (GType the_type)
 {
   GtkEnumValue *vals = gtk_type_enum_get_values (the_type);
   Lisp_Object assoc = Qnil;
@@ -268,7 +268,7 @@ import_gtk_enumeration_internal (GtkType the_type)
 }
 
 static void
-import_gtk_type (GtkType t)
+import_gtk_type (GType t)
 {
   if (type_already_imported_p (t))
     {
@@ -388,7 +388,7 @@ typedef GList * (*__LIST_fn) (MANY_ARGS);
     if (freep) xfree (v);			\
   } while (0)
 
-static gpointer __allocate_object_storage (GtkType t)
+static gpointer __allocate_object_storage (GType t)
 {
   size_t s = 0;
   void *rval = NULL;
@@ -458,7 +458,7 @@ static gpointer __allocate_object_storage (GtkType t)
   return (rval);
 }
 
-static Lisp_Object type_to_marshaller_type (GtkType t)
+static Lisp_Object type_to_marshaller_type (GType t)
 {
   switch (GTK_FUNDAMENTAL_TYPE (t))
     {
@@ -618,7 +618,7 @@ Import a function into the XEmacs namespace.
 
       EXTERNAL_LIST_LOOP_2 (elt, value)
 	{
-	  GtkType the_type;
+	  GType the_type;
 	  Lisp_Object marshaller_type = Qnil;
 
 	  CHECK_SYMBOL (elt);
@@ -899,7 +899,7 @@ emacs_gtk_object_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 
   if (lisp_to_gtk_type (value, &args[0]))
     {
-      gui_error ("Error converting to GtkType", value);
+      gui_error ("Error converting to GType", value);
     }
 
   if (!(info->arg_flags & GTK_ARG_WRITABLE))
@@ -1158,7 +1158,7 @@ allocate_emacs_gtk_boxed_data (void)
   return (data);
 }
 
-Lisp_Object build_gtk_boxed (void *obj, GtkType t)
+Lisp_Object build_gtk_boxed (void *obj, GType t)
 {
   Lisp_Object retval = Qnil;
   emacs_gtk_boxed_data *data = NULL;
@@ -1193,7 +1193,7 @@ This is for loading dependency DLLs into XEmacs.
 */
        (type))
 {
-  GtkType t;
+  GType t;
 
   if (SYMBOLP (type))
     type = Fsymbol_name (type);
@@ -1210,7 +1210,7 @@ This is for loading dependency DLLs into XEmacs.
 }
 
 DEFUN ("gtk-object-type", Fgtk_object_type, 1, 1, 0, /*
-Return the GtkType of OBJECT.
+Return the GType of OBJECT.
 */
        (object))
 {
@@ -1226,7 +1226,7 @@ The cdr is a list of all the magic properties it has.
        (type))
 {
   Lisp_Object rval, signals, props;
-  GtkType t;
+  GType t;
 
   props = signals = rval = Qnil;
 
@@ -1460,38 +1460,39 @@ void describe_gtk_arg (GtkArg *arg)
 }
 #endif
 
-Lisp_Object gtk_type_to_lisp (GtkArg *arg)
+Lisp_Object gtk_type_to_lisp (GType
+ *arg)
 {
-  switch (GTK_FUNDAMENTAL_TYPE (arg->type))
+  switch (GTK_FUNDAMENTAL_TYPE (G_TYPE_FROM_CLASS (arg)))
     {
-    case GTK_TYPE_NONE:
+    case G_TYPE_NONE:
       return (Qnil);
-    case GTK_TYPE_CHAR:
+    case G_TYPE_CHAR:
       return (make_char (GTK_VALUE_CHAR (*arg)));
-    case GTK_TYPE_UCHAR:
+    case G_TYPE_UCHAR:
       return (make_char (GTK_VALUE_UCHAR (*arg)));
-    case GTK_TYPE_BOOL:
+    case G_TYPE_BOOLEAN:
       return (GTK_VALUE_BOOL (*arg) ? Qt : Qnil);
-    case GTK_TYPE_INT:
+    case G_TYPE_INT:
       return (make_int (GTK_VALUE_INT (*arg)));
-    case GTK_TYPE_UINT:
+    case G_TYPE_UINT:
       return (make_int (GTK_VALUE_INT (*arg)));
-    case GTK_TYPE_LONG:		/* I think these are wrong! */
+    case G_TYPE_LONG:		/* I think these are wrong! */
       return (make_int (GTK_VALUE_INT (*arg)));
-    case GTK_TYPE_ULONG:	/* I think these are wrong! */
+    case G_TYPE_ULONG:	/* I think these are wrong! */
       return (make_int (GTK_VALUE_INT (*arg)));
-    case GTK_TYPE_FLOAT:
+    case G_TYPE_FLOAT:
       return (make_float (GTK_VALUE_FLOAT (*arg)));
-    case GTK_TYPE_DOUBLE:
+    case G_TYPE_DOUBLE:
       return (make_float (GTK_VALUE_DOUBLE (*arg)));
-    case GTK_TYPE_STRING:
+    case G_TYPE_STRING:
       return (build_cistring (GTK_VALUE_STRING (*arg)));
-    case GTK_TYPE_FLAGS:
+    case G_TYPE_FLAGS:
       return (flags_to_list (GTK_VALUE_FLAGS (*arg), arg->type));
-    case GTK_TYPE_ENUM:
+    case G_TYPE_ENUM:
       return (enum_to_symbol (GTK_VALUE_ENUM (*arg), arg->type));
-    case GTK_TYPE_BOXED:
-      if (arg->type == GTK_TYPE_GDK_EVENT)
+    case G_TYPE_BOXED:
+      if (arg->type == G_TYPE_GDK_EVENT)
 	{
 	  return (gdk_event_to_emacs_event((GdkEvent *) GTK_VALUE_BOXED (*arg)));
 	}
@@ -1500,7 +1501,7 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
 	return (build_gtk_boxed (GTK_VALUE_BOXED (*arg), arg->type));
       else
 	return (Qnil);
-    case GTK_TYPE_POINTER:
+    case G_TYPE_POINTER:
       if (GTK_VALUE_POINTER (*arg))
 	{
 	  Lisp_Object rval;
@@ -1510,13 +1511,13 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
 	}
       else
 	return (Qnil);
-    case GTK_TYPE_OBJECT:
+    case G_TYPE_OBJECT:
       if (GTK_VALUE_OBJECT (*arg))
 	return (build_gtk_object (GTK_VALUE_OBJECT (*arg)));
       else
 	return (Qnil);
 
-    case GTK_TYPE_CALLBACK:
+    case G_TYPE_CALLBACK:
       {
 	Lisp_Object rval;
 
@@ -1526,7 +1527,7 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
       }
 
     default:
-      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, GTK_TYPE_LISTOF))
+      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, G_TYPE_LISTOF))
 	{
 	  if (!GTK_VALUE_POINTER (*arg))
 	    return (Qnil);
@@ -1547,9 +1548,9 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
   switch (GTK_FUNDAMENTAL_TYPE (arg->type))
     {
       /* flag types */
-    case GTK_TYPE_NONE:
+    case G_TYPE_NONE:
       return (0);
-    case GTK_TYPE_CHAR:
+    case G_TYPE_CHAR:
       {
 	Ichar c;
 
@@ -1558,7 +1559,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	GTK_VALUE_CHAR (*arg) = c;
       }
       break;
-    case GTK_TYPE_UCHAR:
+    case G_TYPE_UCHAR:
       {
 	Ichar c;
 
@@ -1567,11 +1568,11 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	GTK_VALUE_CHAR (*arg) = c;
       }
       break;
-    case GTK_TYPE_BOOL:
+    case G_TYPE_BOOLEAN:
       GTK_VALUE_BOOL (*arg) = NILP (obj) ? FALSE : TRUE;
       break;
-    case GTK_TYPE_INT:
-    case GTK_TYPE_UINT:
+    case G_TYPE_INT:
+    case G_TYPE_UINT:
       if (NILP (obj) || EQ (Qt, obj))
 	{
 	  /* For we are a kind mistress and allow sending t/nil for
@@ -1587,18 +1588,18 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	  GTK_VALUE_INT(*arg) = XINT (obj);
 	}
       break;
-    case GTK_TYPE_LONG:
-    case GTK_TYPE_ULONG:
+    case G_TYPE_LONG:
+    case G_TYPE_ULONG:
       ABORT();
-    case GTK_TYPE_FLOAT:
+    case G_TYPE_FLOAT:
       CHECK_INT_OR_FLOAT (obj);
       GTK_VALUE_FLOAT(*arg) = extract_float (obj);
       break;
-    case GTK_TYPE_DOUBLE:
+    case G_TYPE_DOUBLE:
       CHECK_INT_OR_FLOAT (obj);
       GTK_VALUE_DOUBLE(*arg) = extract_float (obj);
       break;
-    case GTK_TYPE_STRING:
+    case G_TYPE_STRING:
       if (NILP (obj))
 	GTK_VALUE_STRING (*arg) = NULL;
       else
@@ -1607,12 +1608,12 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	  GTK_VALUE_STRING (*arg) = (char *) XSTRING_DATA (obj);
 	}
       break;
-    case GTK_TYPE_ENUM:
-    case GTK_TYPE_FLAGS:
+    case G_TYPE_ENUM:
+    case G_TYPE_FLAGS:
       /* Convert a lisp symbol to a GTK enum */
       GTK_VALUE_ENUM(*arg) = lisp_to_flag (obj, arg->type);
       break;
-    case GTK_TYPE_BOXED:
+    case G_TYPE_BOXED:
       if (NILP (obj))
 	{
 	  GTK_VALUE_BOXED(*arg) = NULL;
@@ -1621,19 +1622,19 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	{
 	  GTK_VALUE_BOXED(*arg) = XGTK_BOXED (obj)->object;
 	}
-      else if (arg->type == GTK_TYPE_STYLE)
+      else if (arg->type == G_TYPE_STYLE)
 	{
 	  obj = Ffind_face (obj);
 	  CHECK_FACE (obj);
 	  GTK_VALUE_BOXED(*arg) = face_to_style (obj);
 	}
-      else if (arg->type == GTK_TYPE_GDK_GC)
+      else if (arg->type == G_TYPE_GDK_GC)
 	{
 	  obj = Ffind_face (obj);
 	  CHECK_FACE (obj);
 	  GTK_VALUE_BOXED(*arg) = face_to_gc (obj);
 	}
-      else if (arg->type == GTK_TYPE_GDK_WINDOW)
+      else if (arg->type == G_TYPE_GDK_WINDOW)
 	{
 	  if (GLYPHP (obj))
 	    {
@@ -1667,7 +1668,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	    }
 	  break;
 	}
-      else if (arg->type == GTK_TYPE_GDK_COLOR)
+      else if (arg->type == G_TYPE_GDK_COLOR)
 	{
 	  if (COLOR_SPECIFIERP (obj))
 	    {
@@ -1691,7 +1692,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	      invalid_argument ("Don't know how to convert to GdkColor", obj);
 	    }
 	}
-      else if (arg->type == GTK_TYPE_GDK_FONT)
+      else if (arg->type == G_TYPE_GDK_FONT)
 	{
 	  if (SYMBOLP (obj))
 	    {
@@ -1737,7 +1738,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	}
       break;
 
-    case GTK_TYPE_POINTER:
+    case G_TYPE_POINTER:
       if (NILP (obj))
 	GTK_VALUE_POINTER(*arg) = NULL;
       else
@@ -1745,17 +1746,17 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
       break;
 
       /* structured types */
-    case GTK_TYPE_SIGNAL:
-    case GTK_TYPE_ARGS: /* This we can do as a list of values */
-    case GTK_TYPE_C_CALLBACK:
-    case GTK_TYPE_FOREIGN:
+    case G_TYPE_SIGNAL:
+    case G_TYPE_ARGS: /* This we can do as a list of values */
+    case G_TYPE_C_CALLBACK:
+    case G_TYPE_FOREIGN:
       stderr_out ("Do not know how to convert `%s' from lisp!\n", gtk_type_name (arg->type));
       return (-1);
 
 #if 0
       /* #### BILL! */
       /* This is not used, and does not work with union type */
-    case GTK_TYPE_CALLBACK:
+    case G_TYPE_CALLBACK:
       {
 	GUI_ID id;
 
@@ -1773,7 +1774,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 #endif
 
       /* base type of the object system */
-    case GTK_TYPE_OBJECT:
+    case G_TYPE_OBJECT:
       if (NILP (obj))
 	GTK_VALUE_OBJECT (*arg) = NULL;
       else
@@ -1827,9 +1828,9 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
   switch (GTK_FUNDAMENTAL_TYPE (arg->type))
     {
       /* flag types */
-    case GTK_TYPE_NONE:
+    case G_TYPE_NONE:
       return (0);
-    case GTK_TYPE_CHAR:
+    case G_TYPE_CHAR:
       {
 	Ichar c;
 
@@ -1838,7 +1839,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	*(GTK_RETLOC_CHAR (*arg)) = c;
       }
       break;
-    case GTK_TYPE_UCHAR:
+    case G_TYPE_UCHAR:
       {
 	Ichar c;
 
@@ -1847,11 +1848,11 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	*(GTK_RETLOC_CHAR (*arg)) = c;
       }
       break;
-    case GTK_TYPE_BOOL:
+    case G_TYPE_BOOLEAN:
       *(GTK_RETLOC_BOOL (*arg)) = NILP (obj) ? FALSE : TRUE;
       break;
-    case GTK_TYPE_INT:
-    case GTK_TYPE_UINT:
+    case G_TYPE_INT:
+    case G_TYPE_UINT:
       if (NILP (obj) || EQ (Qt, obj))
 	{
 	  /* For we are a kind mistress and allow sending t/nil for
@@ -1867,18 +1868,18 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	  *(GTK_RETLOC_INT(*arg)) = XINT (obj);
 	}
       break;
-    case GTK_TYPE_LONG:
-    case GTK_TYPE_ULONG:
+    case G_TYPE_LONG:
+    case G_TYPE_ULONG:
       ABORT();
-    case GTK_TYPE_FLOAT:
+    case G_TYPE_FLOAT:
       CHECK_INT_OR_FLOAT (obj);
       *(GTK_RETLOC_FLOAT(*arg)) = extract_float (obj);
       break;
-    case GTK_TYPE_DOUBLE:
+    case G_TYPE_DOUBLE:
       CHECK_INT_OR_FLOAT (obj);
       *(GTK_RETLOC_DOUBLE(*arg)) = extract_float (obj);
       break;
-    case GTK_TYPE_STRING:
+    case G_TYPE_STRING:
       if (NILP (obj))
 	*(GTK_RETLOC_STRING (*arg)) = NULL;
       else
@@ -1887,12 +1888,12 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	  *(GTK_RETLOC_STRING (*arg)) = (char *) XSTRING_DATA (obj);
 	}
       break;
-    case GTK_TYPE_ENUM:
-    case GTK_TYPE_FLAGS:
+    case G_TYPE_ENUM:
+    case G_TYPE_FLAGS:
       /* Convert a lisp symbol to a GTK enum */
       *(GTK_RETLOC_ENUM(*arg)) = lisp_to_flag (obj, arg->type);
       break;
-    case GTK_TYPE_BOXED:
+    case G_TYPE_BOXED:
       if (NILP (obj))
 	{
 	  *(GTK_RETLOC_BOXED(*arg)) = NULL;
@@ -1901,19 +1902,19 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	{
 	  *(GTK_RETLOC_BOXED(*arg)) = XGTK_BOXED (obj)->object;
 	}
-      else if (arg->type == GTK_TYPE_STYLE)
+      else if (arg->type == G_TYPE_STYLE)
 	{
 	  obj = Ffind_face (obj);
 	  CHECK_FACE (obj);
 	  *(GTK_RETLOC_BOXED(*arg)) = face_to_style (obj);
 	}
-      else if (arg->type == GTK_TYPE_GDK_GC)
+      else if (arg->type == G_TYPE_GDK_GC)
 	{
 	  obj = Ffind_face (obj);
 	  CHECK_FACE (obj);
 	  *(GTK_RETLOC_BOXED(*arg)) = face_to_gc (obj);
 	}
-      else if (arg->type == GTK_TYPE_GDK_WINDOW)
+      else if (arg->type == G_TYPE_GDK_WINDOW)
 	{
 	  if (GLYPHP (obj))
 	    {
@@ -1947,7 +1948,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	    }
 	  break;
 	}
-      else if (arg->type == GTK_TYPE_GDK_COLOR)
+      else if (arg->type == G_TYPE_GDK_COLOR)
 	{
 	  if (COLOR_SPECIFIERP (obj))
 	    {
@@ -1971,7 +1972,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	      invalid_argument ("Don't know how to convert to GdkColor", obj);
 	    }
 	}
-      else if (arg->type == GTK_TYPE_GDK_FONT)
+      else if (arg->type == G_TYPE_GDK_FONT)
 	{
 	  if (SYMBOLP (obj))
 	    {
@@ -2017,7 +2018,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	}
       break;
 
-    case GTK_TYPE_POINTER:
+    case G_TYPE_POINTER:
       if (NILP (obj))
 	*(GTK_RETLOC_POINTER(*arg)) = NULL;
       else
@@ -2025,17 +2026,17 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
       break;
 
       /* structured types */
-    case GTK_TYPE_SIGNAL:
-    case GTK_TYPE_ARGS: /* This we can do as a list of values */
-    case GTK_TYPE_C_CALLBACK:
-    case GTK_TYPE_FOREIGN:
+    case G_TYPE_SIGNAL:
+    case G_TYPE_ARGS: /* This we can do as a list of values */
+    case G_TYPE_C_CALLBACK:
+    case G_TYPE_FOREIGN:
       stderr_out ("Do not know how to convert `%s' from lisp!\n", gtk_type_name (arg->type));
       return (-1);
 
 #if 0
       /* #### BILL! */
       /* This is not used, and does not work with union type */
-    case GTK_TYPE_CALLBACK:
+    case G_TYPE_CALLBACK:
       {
 	GUI_ID id;
 
@@ -2053,7 +2054,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 #endif
 
       /* base type of the object system */
-    case GTK_TYPE_OBJECT:
+    case G_TYPE_OBJECT:
       if (NILP (obj))
 	*(GTK_RETLOC_OBJECT (*arg)) = NULL;
       else
@@ -2067,7 +2068,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
       break;
 
     default:
-      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, GTK_TYPE_ARRAY))
+      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, G_TYPE_ARRAY))
 	{
 	  if (NILP (obj))
 	    *(GTK_RETLOC_POINTER(*arg)) = NULL;
@@ -2076,7 +2077,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	      xemacs_list_to_array (obj, arg);
 	    }
 	}
-      else if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, GTK_TYPE_LISTOF))
+      else if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, G_TYPE_LISTOF))
 	{
 	  if (NILP (obj))
 	    *(GTK_RETLOC_POINTER(*arg)) = NULL;
@@ -2098,7 +2099,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 
 /* This is used in glyphs-gtk.c as well */
 static Lisp_Object
-get_enumeration (GtkType t)
+get_enumeration (GType t)
 {
   Lisp_Object alist;
 
@@ -2118,7 +2119,7 @@ get_enumeration (GtkType t)
 }
 
 guint
-symbol_to_enum (Lisp_Object obj, GtkType t)
+symbol_to_enum (Lisp_Object obj, GType t)
 {
   Lisp_Object alist = get_enumeration (t);
   Lisp_Object value = Qnil;
@@ -2141,7 +2142,7 @@ symbol_to_enum (Lisp_Object obj, GtkType t)
 }
 
 static guint
-lisp_to_flag (Lisp_Object obj, GtkType t)
+lisp_to_flag (Lisp_Object obj, GType t)
 {
   guint val = 0;
 
@@ -2169,7 +2170,7 @@ lisp_to_flag (Lisp_Object obj, GtkType t)
 }
 
 static Lisp_Object
-flags_to_list (guint value, GtkType t)
+flags_to_list (guint value, GType t)
 {
   Lisp_Object rval = Qnil;
   Lisp_Object alist = get_enumeration (t);
@@ -2187,7 +2188,7 @@ flags_to_list (guint value, GtkType t)
 }
 
 static Lisp_Object
-enum_to_symbol (guint value, GtkType t)
+enum_to_symbol (guint value, GType t)
 {
   Lisp_Object alist = get_enumeration (t);
   Lisp_Object cell = Qnil;
