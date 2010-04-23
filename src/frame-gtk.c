@@ -32,8 +32,8 @@ Boston, MA 02111-1307, USA.  */
 #include "events.h"
 #include "extents.h"
 #include "faces.h"
-#include "frame-impl.h"
 #include "gutter.h"
+#include "frame-impl.h"
 #include "window.h"
 
 #ifdef HAVE_DRAGNDROP
@@ -533,6 +533,9 @@ get_number (const char **geometry)
   return value * mult;
 }
 
+/*
+ */
+
 /**
  * gnome_parse_geometry
  * @geometry: geometry string to be parsed
@@ -609,14 +612,9 @@ gnome_parse_geometry (const gchar *geometry, gint *xpos,
   return TRUE;
 }
 
-/* Note: use gtk_window_set_geometry_hints -- jsparkes@gmail.com */
 static void
 gtk_initialize_frame_size (struct frame *f)
 {
-  GdkGeometry hint;
-  GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
-
-  /* Gtk also wants min and max width and height */
   gint x = 10, y = 10, w = 80, h = 30;
 
   if (STRINGP (Vgtk_initial_geometry))
@@ -628,28 +626,22 @@ gtk_initialize_frame_size (struct frame *f)
 	  h = 30;
 	}
     }
-  
-  hint.base_height = h;
-  hint.base_width  = w;
-  gtk_window_set_geometry_hints (GTK_WINDOW (shell), shell, &hint, GDK_HINT_BASE_SIZE);
-  /* This may not work until the widget is realized. */
-  gtk_window_parse_geometry (GTK_WINDOW (shell), (gchar *) XSTRING_DATA (Vgtk_initial_geometry));
-			     
+
   /* set the position of the frame's root window now.  When the
      frame was created, the position was initialized to (0,0). */
   {
     struct window *win = XWINDOW (f->root_window);
-    
+
     WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
     WINDOW_TOP (win) = FRAME_PANED_TOP_EDGE (f);
-    
+
     if (!NILP (f->minibuffer_window))
       {
 	win = XWINDOW (f->minibuffer_window);
 	WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
       }
   }
-  
+
   gtk_set_initial_frame_size (f, x, y, w, h);
 }
 
@@ -905,8 +897,8 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   gtk_signal_connect (GTK_OBJECT (shell), "delete-event", GTK_SIGNAL_FUNC (delete_event_cb), f);
 
   {
-    static char *events_to_frob[] = { (char *)"focus-in-event",
-				      (char *)"focus-out-event",
+    static const gchar *events_to_frob[] = { "focus-in-event",
+				      "focus-out-event",
 				      "enter-notify-event",
 				      "leave-notify-event",
 				      "map-event",
