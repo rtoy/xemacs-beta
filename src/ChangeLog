@@ -1,7 +1,26 @@
 2010-04-22  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* config.h.in: 
-	Add WORDS_BIGENDIAN check back.  It's used in src/glyphs-gtk.h.
+	* gtk-xemacs.c (smash_scrollbar_specifiers, smash_toolbar_specifiers):
+	Slider width is now in GtkStyle instance, not class.
+
+	* device-gtk.c (gtk_delete_device):
+	NEW_GC doesn't allow/require freeing device directly.
+
+2010-04-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_color_instance_hash):
+	Remove gtk_color_instance_hash equalp argument.
+
+	* gtk-glue.c (xemacs_type_register):
+	Change arg to const to avoid C++ warning.
+
+	* gtk-xemacs.c (gtk_xemacs_get_type):
+	Cast to avoid C++ const warning.
+
+	* frame-gtk.c (gtk_initialize_frame_size):
+	Remove ifndef HAVE_GNOME around gnome-parse-geometry and get_number.
+	Use gtk geometry functions.
+	Include gutter.h for frame size calculations.
 
 2010-04-06  Ben Wing  <ben@xemacs.org>
 
@@ -7594,7 +7613,7 @@
 
 	* XEmacs 21.5.29 "garbanzo" is released.
 
-2009-03-08  Ville Skyttä  <scop@xemacs.org>
+2009-03-08  Ville Skytt  <scop@xemacs.org>
 
 	* glyphs-gtk.c (init_image_instance_from_gdk_pixmap): Apply the
 	2008-03-05 change from Dominique Quatravaux here as well even
@@ -8811,7 +8830,7 @@
 	constant on 64-bit platforms when making sure pointers haven't
 	been freed twice.
 
-2007-05-22  Ville Skyttä  <scop@xemacs.org>
+2007-05-22  Ville Skytt  <scop@xemacs.org>
 
 	* Makefile.in.in ($(LISP)/finder-inf.el): Set lisp-directory
 	to $(LISP) to ensure we're working with the correct finder*.
@@ -13818,7 +13837,7 @@
 
 	* event-gtk.c: Recognise AltGr as a valid modifier.
 
-2005-01-12  Ville Skyttä  <scop@xemacs.org>
+2005-01-12  Ville Skytt  <scop@xemacs.org>
 
 	* console-x.h: #include X11/keysym.h before xintrinsic.h.
 
@@ -17050,7 +17069,7 @@
 	* lrecord.h (DECLARE_MODULE_API_LRECORD): Also define when not
 	ERROR_CHECK_TYPES.
 
-2003-08-19  René Kyllingstad <listmailxemacs@kyllingstad.com>
+2003-08-19  Ren Kyllingstad <listmailxemacs@kyllingstad.com>
 
 	* alloc.c (kkcc_gc_stack_init):
 	(kkcc_gc_stack_realloc): Missing casts for the return value of
@@ -17101,7 +17120,7 @@
 	adjust the GCPRO record via GCPRO_STACK just before a GC may
 	occur.
 
-2003-07-31  René Kyllingstad  <listmailxemacs@kyllingstad.com>
+2003-07-31  Ren Kyllingstad  <listmailxemacs@kyllingstad.com>
 
 	* event-msw.c (mswindows_enqueue_mouse_button_event):
 	* event-msw.c (mswindows_wnd_proc):
@@ -20768,8 +20787,8 @@
 
 	* data.c (prune_weak_boxes): Rewrite for better readability.
 
-2002-06-23  Martin Köbele  <martin@mkoebele.de>
-	    Jens Müller <jmueller@informatik.uni-tuebingen.de>
+2002-06-23  Martin Kbele  <martin@mkoebele.de>
+	    Jens Mller <jmueller@informatik.uni-tuebingen.de>
 	    Mike Sperber <mike@xemacs.org>
 
 	* lrecord.h (lrecord_type): add lrecord_type_ephemeron
@@ -22296,7 +22315,7 @@
 	* process.c (syms_of_process):
 	Add process-has-separate-stderr-p, used by call-process-internal.
 
-2002-05-28  Martin Köbele <mkoebele@mkoebele.de>, Jens Müller <jmueller@informatik.uni-tuebingen.de>
+2002-05-28  Martin Kbele <mkoebele@mkoebele.de>, Jens Mller <jmueller@informatik.uni-tuebingen.de>
 
 	* lrecord.h (lrecord_type): Add lrecord_type_weak_box to
 	lrecord_type enumeration.
