@@ -1,5 +1,11 @@
 2010-04-22  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* fontcolor-gtk.c (gtk_color_instance_hash):
+	Update hash function to match usage in fontcolor-x.c
+
+	* event-gtk.c (handle_focus_event_1):
+	Extend X focus timestamp klduge to Gtk.
+
 	* console-xlike-inc.h: 
 	Fix GET_XLIKE_DISPLAY for gtk.
 
