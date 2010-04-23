@@ -1,5 +1,12 @@
 2010-04-22  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* frame-gtk.c (gtk_create_widgets):
+	Declare array const to avoid C++ warning.
+	(get_number, gnome_parse_geometry):
+	Re-enable local geometry parsing temporarily.
+
+	* config.h.in: 
+	Add WORDS_BIGENDIAN check back.  It's used in src/glyphs-gtk.h.
 	* gtk-xemacs.c (smash_scrollbar_specifiers, smash_toolbar_specifiers):
 	Slider width is now in GtkStyle instance, not class.
 
