@@ -1,3 +1,8 @@
+2010-04-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* config.h.in: 
+	Add WORDS_BIGENDIAN check back.  It's used in src/glyphs-gtk.h.
+
 2010-04-06  Ben Wing  <ben@xemacs.org>
 
 	* elhash.c (Feq_hash):
@@ -6,7 +11,7 @@
 	* elhash.c (internal_hash):
 	* elhash.c (Feql_hash):
 	Fix spacing before parens.
-	
+
 	* general-slots.h:
 	* xemacs.def.in.in:
 	Export Qfixnump to fix eldap.c link error.
