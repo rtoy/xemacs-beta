@@ -1,7 +1,12 @@
 2010-04-22  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_bevel_area):
+	Cast GtkShadowStyle to edge_style for C++ compile.
+	(our_draw_bitmap): 
+	Implement using GDK, not XLib.
+
 	* fontcolor-gtk.c (gtk_color_instance_hash):
-	Update hash function to match usage in fontcolor-x.c
+	Update hash function to match usage in fontcolor-x.c.
 
 	* event-gtk.c (handle_focus_event_1):
 	Extend X focus timestamp klduge to Gtk.

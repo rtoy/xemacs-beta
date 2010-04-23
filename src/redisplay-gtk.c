@@ -46,11 +46,11 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
   else
     switch (style)
       {
-      case EDGE_BEVEL_IN: style = GTK_SHADOW_IN; break;
-      case EDGE_BEVEL_OUT: style = GTK_SHADOW_OUT; break;
-      case EDGE_ETCHED_IN: style = GTK_SHADOW_ETCHED_IN; break;
-      case EDGE_ETCHED_OUT: style = GTK_SHADOW_ETCHED_OUT; break;
-      default: ABORT (); style = GTK_SHADOW_OUT;
+      case EDGE_BEVEL_IN: style = (edge_style)GTK_SHADOW_IN; break;
+      case EDGE_BEVEL_OUT: style = (edge_style)GTK_SHADOW_OUT; break;
+      case EDGE_ETCHED_IN: style = (edge_style)GTK_SHADOW_ETCHED_IN; break;
+      case EDGE_ETCHED_OUT: style = (edge_style)GTK_SHADOW_ETCHED_OUT; break;
+      default: ABORT (); style = (edge_style)GTK_SHADOW_OUT;
       }
 
   /* Do we want to have some magic constants to set
@@ -79,7 +79,7 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
 /* This makes me feel incredibly dirty... but there is no other way to
    get this done right other than calling clear_area before every
    single $#!%@ing piece of text, which I do NOT want to do. */
-#define USE_X_SPECIFIC_DRAW_ROUTINES 1
+#define USE_X_SPECIFIC_DRAW_ROUTINES 0
 
 #include "sysgdkx.h"
 
@@ -151,30 +151,19 @@ our_draw_bitmap (GdkDrawable *drawable,
 		 gint         width,
 		 gint         height)
 {
-  GdkWindowPrivate *drawable_private;
-  GdkWindowPrivate *src_private;
-  GdkGCPrivate *gc_private;
-
   g_return_if_fail (drawable != NULL);
   g_return_if_fail (src != NULL);
   g_return_if_fail (gc != NULL);
 
-  drawable_private = (GdkWindowPrivate*) drawable;
-  src_private = (GdkWindowPrivate*) src;
-  if (drawable_private->destroyed || src_private->destroyed)
-    return;
-  gc_private = (GdkGCPrivate*) gc;
+  gint src_width, src_height;
+
+  gdk_drawable_get_size (src, &src_width, &src_height);
+
 
   if (width == -1)
-    width = src_private->width;
+    width = src_width;
   if (height == -1)
-    height = src_private->height;
+    height = src_height;
 
-  XCopyPlane (drawable_private->xdisplay,
-	     src_private->xwindow,
-	     drawable_private->xwindow,
-	     gc_private->xgc,
-	     xsrc, ysrc,
-	     width, height,
-	     xdest, ydest, 1L);
+  gdk_draw_drawable(drawable, gc, src,  xsrc, ysrc, xdest, ydest, width, height);
 }
