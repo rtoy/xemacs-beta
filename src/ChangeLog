@@ -1,5 +1,14 @@
 2010-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_add_tab_item): 
+	Use GINT_TO_POINTER.
+
+	* frame-gtk.c (gtk_init_frame_1):
+	Use GINT_TO_POINTER.
+
+	* event-gtk.c (emacs_gtk_add_timeout):
+	Use GPOINTER_TO_INT.
+
 	* glyphs-gtk.c (convert_EImage_to_GDKImage):
 	(convert_EImage_to_GDKImage):
 	Use G_BIG_ENDIAN instead of WORDS_BIGENDIAN.

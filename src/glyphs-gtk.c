@@ -2503,7 +2503,7 @@ gtk_add_tab_item(Lisp_Object image_instance,
 		 Lisp_Object domain, int UNUSED (i))
 {
   Lisp_Object name;
-  int hash_id = 0;
+  gint hash_id = 0;
   char *c_name = NULL;
   GtkWidget* box;
 
@@ -2542,7 +2542,7 @@ gtk_add_tab_item(Lisp_Object image_instance,
     function.
   */
   gtk_object_set_data(GTK_OBJECT(box), GTK_DATA_TAB_HASHCODE_IDENTIFIER,
-		      (gpointer) hash_id);
+		      GINT_TO_POINTER (hash_id));
 
   gtk_notebook_append_page (nb, box, gtk_label_new (c_name));
 }
