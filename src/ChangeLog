@@ -1,3 +1,9 @@
+2010-04-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (convert_EImage_to_GDKImage):
+	(convert_EImage_to_GDKImage):
+	Use G_BIG_ENDIAN instead of WORDS_BIGENDIAN.
+
 2010-04-22  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_bevel_area):
