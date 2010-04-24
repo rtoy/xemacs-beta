@@ -1,3 +1,23 @@
+2010-04-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_event_name):
+	Return event name as "EventXX" until I figure out event name lookup.
+	(Fgtk_style_info):
+	Leave font name out for now.
+
+	* ui-gtk.c (import_gtk_enumeration_internal):
+	Convert to GObject.
+	(type_already_imported_p):
+	Use Gtk 2.X constants.
+	(import_gtk_flags_internal):
+	Create.
+	(import_gtk_type):
+	Flags and enumerations are implemented separately now.
+	(import_gtk_object_internal):
+	Update to use GObject.
+	(__allocate_object_storage):
+	Use g_type_query and instance_size.
+
 2010-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_add_tab_item): 
