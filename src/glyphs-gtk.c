@@ -255,7 +255,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 	      gr = *ip++;
 	      bl = *ip++;
 	      conv.val = pixarray[QUANT_GET_COLOR(qtable,rd,gr,bl)];
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 	      if (outimg->byte_order == GDK_MSB_FIRST)
 		for (q = 4-byte_cnt; q < 4; q++) *dp++ = conv.cp[q];
 	      else
@@ -330,7 +330,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 		bl = *ip++ >> (8 - bbits);
 
 	      conv.val = (rd << rshift) | (gr << gshift) | (bl << bshift);
-#if WORDS_BIGENDIAN
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 	      if (outimg->byte_order == GDK_MSB_FIRST)
 		for (q = 4-byte_cnt; q < 4; q++) *dp++ = conv.cp[q];
 	      else
