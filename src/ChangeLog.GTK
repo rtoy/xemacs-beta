@@ -1,5 +1,10 @@
 2010-04-26  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (emacs_gtk_object_getprop):
+	Started conversion to 2.X.
+	(Fgtk_describe_type):
+	Converted to 2.X.
+
 	* config.h.in:
 	We don't need WORDS_BIGENDIAN.
 
