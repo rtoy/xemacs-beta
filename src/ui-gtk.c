@@ -799,6 +799,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
     printing_unreadable_lisp_object (obj, 0);
 
   write_ascstring (printcharfun, "#<GtkObject (");
+  /* Haven't found alive indicator in 2.X */
   if (XGTK_OBJECT (obj)->alive_p)
     write_cistring (printcharfun, gtk_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
   else
@@ -811,7 +812,8 @@ emacs_gtk_object_getprop (Lisp_Object obj, Lisp_Object prop)
 {
   Lisp_Object rval = Qnil;
   Lisp_Object prop_name = Qnil;
-  GtkArgInfo *info = NULL;
+  GParamSpec *info = NULL;
+  gchar *name = NULL;
   char *err;
   GtkArg args[2];
 
@@ -819,9 +821,11 @@ emacs_gtk_object_getprop (Lisp_Object obj, Lisp_Object prop)
 
   prop_name = Fsymbol_name (prop);
 
-  args[0].name = (char *) XSTRING_DATA (prop_name);
+  name = (char *) XSTRING_DATA (prop_name);
 
-  err = gtk_object_arg_get_info (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object),
+  /* Check class and instance property? */
+
+  err = g_object_get (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object),
 				 args[0].name,
 				 &info);
 
@@ -1218,6 +1222,15 @@ Return the GType of OBJECT.
   return (make_int (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
 }
 
+DEFUN ("g-object-type", Fg_object_type, 1, 1, 0, /*
+Return the GType of OBJECT.
+*/
+       (object))
+{
+  CHECK_GTK_OBJECT (object);
+  return (make_int (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
+}
+
 DEFUN ("gtk-describe-type", Fgtk_describe_type, 1, 1, 0, /*
 Returns a cons of two lists describing the Gtk object TYPE.
 The car is a list of all the signals that it will emit.
@@ -1237,8 +1250,8 @@ The cdr is a list of all the magic properties it has.
 
   if (STRINGP (type))
     {
-      t = gtk_type_from_name ((gchar*) XSTRING_DATA (type));
-      if (t == GTK_TYPE_INVALID)
+      t = g_type_from_name ((gchar*) XSTRING_DATA (type));
+      if (t == G_TYPE_INVALID)
 	{
 	  invalid_argument ("Not a GTK type", type);
 	}
@@ -1247,9 +1260,11 @@ The cdr is a list of all the magic properties it has.
     {
       CHECK_INT (type);
       t = XINT (type);
+      gchar *name = g_type_name (t);
+      // assert name is not "INVALID"
     }
 
-  if (GTK_FUNDAMENTAL_TYPE (t) != GTK_TYPE_OBJECT)
+  if (G_IS_OBJECT (t) != TRUE)
     {
       invalid_argument ("Not a GtkObject", type);
     }
@@ -1258,10 +1273,9 @@ The cdr is a list of all the magic properties it has.
   ** registered... damn GTK and its lazy loading
   */
   {
-    GtkArg args[3];
-    GtkObject *obj = gtk_object_newv (t, 0, args);
-
-    gtk_object_destroy(obj);
+    GParameter args[3];
+    gpointer *obj = gtk_object_newv (t, 0, args);
+    /* No need to explictly destroy. */
   }
 
   do
@@ -1270,22 +1284,21 @@ The cdr is a list of all the magic properties it has.
 
       /* Do the magic arguments first */
       {
-	GtkArg *args;
-	guint32 *flags;
-	guint n_args;
+	GParamSpec *params = NULL;
+	guint n_params;
 
-	args = gtk_object_query_args(t,&flags,&n_args);
+	params = g_object_class_list_properties (obj, &n_params);
 
-	for (i = 0; i < n_args; i++)
+	for (i = 0; i < n_params; i++)
 	  {
-	    props = Fcons (Fcons (intern (gtk_type_name(args[i].type)),
-				  intern (args[i].name)), props);
+	    assert (G_IS_PARAM_SPEC (params[i]));
+	    props = Fcons (Fcons (intern (G_PARAM_SPEC_TYPE_NAME (params[i])),
+				  intern (params[i]->name)), props);
 	  }
 
-	g_free (args);
-	g_free (flags);
+	g_free (params);
       }
-
+#if 0
       /* Now the signals */
       {
 	GtkObjectClass *klass;
@@ -1328,7 +1341,7 @@ The cdr is a list of all the magic properties it has.
     } while (t != GTK_TYPE_INVALID);
 
   rval = Fcons (signals, props);
-
+#endif
   return (rval);
 }
 
