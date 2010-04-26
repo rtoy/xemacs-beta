@@ -565,7 +565,7 @@ emacs_gtk_add_timeout (EMACS_TIME thyme)
     milliseconds = 1;
   timeout->timeout_id = gtk_timeout_add (milliseconds,
 					 gtk_timeout_callback,
-					 (gpointer) timeout);
+					 GINT_TO_POINTER(timeout));
   return timeout->id;
 }
 
