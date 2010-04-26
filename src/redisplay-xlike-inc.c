@@ -182,7 +182,7 @@ static int
 separate_textual_runs_nomule (unsigned char *text_storage,
 			      struct textual_run *run_storage,
 			      const Ichar *str, Charcount len,
-			      struct face_cachel *UNUSED(cachel))
+			      struct face_cachel *UNUSED (cachel))
 {
   if (!len)
     return 0;
@@ -212,7 +212,7 @@ static int
 separate_textual_runs_xft_nomule (unsigned char *text_storage,
 				  struct textual_run *run_storage,
 				  const Ichar *str, Charcount len,
-				  struct face_cachel *UNUSED(cachel))
+				  struct face_cachel *UNUSED (cachel))
 {
   int i;
   if (!len)
@@ -226,7 +226,7 @@ separate_textual_runs_xft_nomule (unsigned char *text_storage,
   for (i = 0; i < len; i++)
     {
       *(XftChar16 *)text_storage = str[i];
-      text_storage += sizeof(XftChar16);
+      text_storage += sizeof (XftChar16);
     }
   return 1;
 }
@@ -237,7 +237,7 @@ static int
 separate_textual_runs_xft_mule (unsigned char *text_storage,
 				struct textual_run *run_storage,
 				const Ichar *str, Charcount len,
-				struct face_cachel *UNUSED(cachel))
+				struct face_cachel *UNUSED (cachel))
 {
   Lisp_Object prev_charset = Qunbound;
   int runs_so_far = 0, i;
@@ -250,8 +250,8 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
   for (i = 0; i < len; i++)
     {
       Ichar ch = str[i];
-      Lisp_Object charset = ichar_charset(ch);
-      int ucs = ichar_to_unicode(ch);
+      Lisp_Object charset = ichar_charset (ch);
+      int ucs = ichar_to_unicode (ch);
 
       /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
 	 REPLACMENT CHARACTER. */
@@ -270,7 +270,7 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
 	}
 
       *(XftChar16 *)text_storage = ucs;
-      text_storage += sizeof(XftChar16);
+      text_storage += sizeof (XftChar16);
     }
 
   if (runs_so_far)
@@ -335,7 +335,7 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	     These flags are almost mutually exclusive, but we're sloppy
 	     about resetting "shadowed" flags.  So the flags must be checked
 	     in the proper order in computing byte1 and byte2, below. */
-	  charset_leading_byte = XCHARSET_LEADING_BYTE(charset);
+	  charset_leading_byte = XCHARSET_LEADING_BYTE (charset);
 	  translate_to_ucs_2 =
 	    bit_vector_bit (FACE_CACHEL_FONT_FINAL_STAGE (cachel),
 			    charset_leading_byte - MIN_LEADING_BYTE);
@@ -384,7 +384,7 @@ separate_textual_runs_mule (unsigned char *text_storage,
       /* Must check flags in this order.  See comment above. */
       if (translate_to_ucs_2)
 	{
-	  int ucs = ichar_to_unicode(ch);
+	  int ucs = ichar_to_unicode (ch);
 	  /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
 	     REPLACMENT CHARACTER. */
 	  ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
@@ -1225,8 +1225,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 					clip_end - clip_start, height };
 
 		XUnionRectWithRegion (&clip_box, clip_reg, clip_reg); 
-		XftDrawSetClip(xftDraw, clip_reg);
-		XDestroyRegion(clip_reg);
+		XftDrawSetClip (xftDraw, clip_reg);
+		XDestroyRegion (clip_reg);
 	      }
 
 	    if (!bgc)
@@ -1248,19 +1248,19 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		struct textual_run *run = &runs[i];
 		int rect_width = x_text_width_single_run (f, cachel, run);
 #ifndef USE_XFTTEXTENTS_TO_AVOID_FONT_DROPPINGS
-		int rect_height = FONT_INSTANCE_ASCENT(fi)
-				  + FONT_INSTANCE_DESCENT(fi) + 1;
+		int rect_height = FONT_INSTANCE_ASCENT (fi)
+				  + FONT_INSTANCE_DESCENT (fi) + 1;
 #else
-		int rect_height = FONT_INSTANCE_ASCENT(fi)
-				  + FONT_INSTANCE_DESCENT(fi);
+		int rect_height = FONT_INSTANCE_ASCENT (fi)
+				  + FONT_INSTANCE_DESCENT (fi);
 		XGlyphInfo gi;
 		if (run->dimension == 2) {
 		  XftTextExtents16 (dpy,
-				    FONT_INSTANCE_X_XFTFONT(fi),
+				    FONT_INSTANCE_X_XFTFONT (fi),
 				    (XftChar16 *) run->ptr, run->len, &gi);
 		} else {
 		  XftTextExtents8 (dpy,
-				   FONT_INSTANCE_X_XFTFONT(fi),
+				   FONT_INSTANCE_X_XFTFONT (fi),
 				   run->ptr, run->len, &gi);
 		}
 		rect_height = rect_height > gi.height
@@ -1453,13 +1453,13 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 					cursor_width, height };
 	    
 		XUnionRectWithRegion (&clip_box, clip_reg, clip_reg); 
-		XftDrawSetClip(xftDraw, clip_reg);
-		XDestroyRegion(clip_reg);
+		XftDrawSetClip (xftDraw, clip_reg);
+		XDestroyRegion (clip_reg);
 	      }
 	      { /* draw background rectangle & draw text */
-		int rect_height = FONT_INSTANCE_ASCENT(fi)
-				  + FONT_INSTANCE_DESCENT(fi);
-		int rect_width = x_text_width_single_run(f, cachel, &runs[i]);
+		int rect_height = FONT_INSTANCE_ASCENT (fi)
+				  + FONT_INSTANCE_DESCENT (fi);
+		int rect_width = x_text_width_single_run (f, cachel, &runs[i]);
 		XftColor xft_color;
 
 		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
@@ -1475,7 +1475,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 				   (XftChar16 *) runs[i].ptr, runs[i].len);
 	      }
 
-	      XftDrawSetClip(xftDraw, 0);
+	      XftDrawSetClip (xftDraw, 0);
 	    }
 	  else			/* core font, not Xft */
 #endif /* USE_XFT */
@@ -1772,7 +1772,7 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
  Draw a vertical divider down the right side of the given window.
  ****************************************************************************/
 static void
-XLIKE_output_vertical_divider (struct window *w, int USED_IF_X(clear))
+XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);

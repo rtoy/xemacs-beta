@@ -89,7 +89,7 @@ with `defface' and `custom-declare-face'."
           built-in-file
         ;; This is a bit heuristic, but shouldn't realistically be a
         ;; problem:
-        (if (string-match "\.elc?$" built-in-file)
+        (if (string-match #r"\.elc?$" built-in-file)
             (concat (if (file-readable-p source-lisp)
 			source-lisp
 		      lisp-directory)

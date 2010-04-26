@@ -2322,7 +2322,7 @@ check_writable (const Ibyte *filename)
   GENERIC_MAPPING genericMapping;
   DWORD accessMask;
   PRIVILEGE_SET PrivilegeSet;
-  DWORD dwPrivSetSize = sizeof( PRIVILEGE_SET );
+  DWORD dwPrivSetSize = sizeof ( PRIVILEGE_SET );
   BOOL fAccessGranted = FALSE;
   DWORD dwAccessAllowed;
   Extbyte *fnameext;
@@ -2330,48 +2330,57 @@ check_writable (const Ibyte *filename)
   LOCAL_FILE_FORMAT_TO_TSTR (filename, fnameext);
 
   // First check for a normal file with the old-style readonly bit
-  attributes = qxeGetFileAttributes(fnameext);
-  if (FILE_ATTRIBUTE_READONLY == (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
+  attributes = qxeGetFileAttributes (fnameext);
+  if (FILE_ATTRIBUTE_READONLY ==
+      (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
     return 0;
 
   /* Win32 prototype lacks const. */
-  error = qxeGetNamedSecurityInfo(fnameext, SE_FILE_OBJECT, 
-				  DACL_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
-				  &psidOwner, &psidGroup, &pDacl, &pSacl, &pDesc);
-  if(error != ERROR_SUCCESS) { // FAT?
-    attributes = qxeGetFileAttributes(fnameext);
-    return (attributes & FILE_ATTRIBUTE_DIRECTORY) || (0 == (attributes & FILE_ATTRIBUTE_READONLY));
-  }
+  error = qxeGetNamedSecurityInfo (fnameext, SE_FILE_OBJECT, 
+				   DACL_SECURITY_INFORMATION|
+				   GROUP_SECURITY_INFORMATION|
+				   OWNER_SECURITY_INFORMATION,
+				  &psidOwner, &psidGroup, &pDacl, &pSacl,
+				   &pDesc);
+  if (error != ERROR_SUCCESS)
+    { // FAT?
+      attributes = qxeGetFileAttributes (fnameext);
+      return (attributes & FILE_ATTRIBUTE_DIRECTORY) ||
+	(0 == (attributes & FILE_ATTRIBUTE_READONLY));
+    }
 
   genericMapping.GenericRead = FILE_GENERIC_READ;
   genericMapping.GenericWrite = FILE_GENERIC_WRITE;
   genericMapping.GenericExecute = FILE_GENERIC_EXECUTE;
   genericMapping.GenericAll = FILE_ALL_ACCESS;
 
-  if(!ImpersonateSelf(SecurityDelegation)) {
-    return 0;
-  }
-  if(!OpenThreadToken(GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE, &tokenHandle)) {
-    return 0;
-  }
+  if (!ImpersonateSelf (SecurityDelegation))
+    {
+      return 0;
+    }
+  if (!OpenThreadToken (GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE,
+		       &tokenHandle))
+    {
+      return 0;
+    }
 
   accessMask = GENERIC_WRITE;
-  MapGenericMask(&accessMask, &genericMapping);
+  MapGenericMask (&accessMask, &genericMapping);
 
-  if(!AccessCheck(pDesc, tokenHandle, accessMask, &genericMapping,
+  if (!AccessCheck(pDesc, tokenHandle, accessMask, &genericMapping,
 		  &PrivilegeSet,       // receives privileges used in check
 		  &dwPrivSetSize,      // size of PrivilegeSet buffer
 		  &dwAccessAllowed,    // receives mask of allowed access rights
 		  &fAccessGranted)) 
     {
-      CloseHandle(tokenHandle);
+      CloseHandle (tokenHandle);
       RevertToSelf();
-      LocalFree(pDesc);
+      LocalFree (pDesc);
       return 0;
     }
-  CloseHandle(tokenHandle);
+  CloseHandle (tokenHandle);
   RevertToSelf();
-  LocalFree(pDesc);
+  LocalFree (pDesc);
   return fAccessGranted == TRUE;
 #elif defined (HAVE_EACCESS)
   return (qxe_eaccess (filename, W_OK) >= 0);
@@ -2959,7 +2968,7 @@ under Mule, is very difficult.)
 
 	  RETURN_UNGCPRO
 	    (Fsignal (Qfile_error,
-		      list2 (build_msg_string("not a regular file"),
+		      list2 (build_msg_string ("not a regular file"),
 			     filename)));
 	}
     }
@@ -4261,7 +4270,7 @@ Non-nil second argument means save only current buffer.
 	      auto_saved++;
 
 	      /* Handler killed their own buffer! */
-	      if (!BUFFER_LIVE_P(b))
+	      if (!BUFFER_LIVE_P (b))
 		continue;
 
 	      b->auto_save_modified = BUF_MODIFF (b);

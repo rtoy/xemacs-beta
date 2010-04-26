@@ -47,6 +47,35 @@ char *strupr (char *);
 
 BEGIN_C_DECLS
 
+/* Forward compatibility from ben-unicode-internal: Following used for
+   functions that do character conversion and need to handle errors. */
+
+enum converr
+  {
+    /* ---- Basic actions ---- */
+
+    /* Do nothing upon failure and return a failure indication.
+       Same as what happens when the *_raw() version is called. */
+    CONVERR_FAIL,
+    /* abort() on failure, i.e. crash. */
+    CONVERR_ABORT,
+    /* Signal a Lisp error. */
+    CONVERR_ERROR,
+    /* Try to "recover" and continue processing.  Currently this is always
+       the same as CONVERR_SUBSTITUTE, where one of the substitution
+       characters defined below (CANT_CONVERT_*) is used. */
+    CONVERR_SUCCEED,
+
+    /* ---- More specific actions ---- */
+
+    /* Substitute something (0xFFFD, the Unicode replacement character,
+       when converting to Unicode or to a Unicode-internal Ichar, JISX0208
+       GETA mark when converting to non-Mule Ichar). */
+    CONVERR_SUBSTITUTE,
+    /* Use private Unicode space when converting to Unicode. */
+    CONVERR_USE_PRIVATE
+  };
+
 /************************************************************************/
 /*        A short intro to the format of text and of characters         */
 /************************************************************************/

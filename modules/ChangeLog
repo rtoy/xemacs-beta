@@ -1,3 +1,9 @@
+2010-04-12  Ben Wing  <ben@xemacs.org>
+
+	* canna/canna_api.c:
+	* canna/canna_api.c (Fcanna_henkan_begin):
+	Fixes for errors reported in smoketest build.
+
 2010-03-12  Ben Wing  <ben@xemacs.org>
 
 	* base64/base64.c:
