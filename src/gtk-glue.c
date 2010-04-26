@@ -36,7 +36,7 @@ xemacs_type_register (const gchar *name, GType parent)
 
   info.class_size = 0;  //?
   info.base_init = NULL;
-  into.base_finalize = NULL;
+  info.base_finalize = NULL;
 
   info.class_init = NULL;
   info.class_finalize = NULL;
@@ -44,11 +44,10 @@ xemacs_type_register (const gchar *name, GType parent)
 
   info.instance_size = 0;
   info.n_preallocs = 0;
-  info.object_size = 0;
-  info.instanace_init = 0;
+  info.instance_init = 0;
   info.value_table = 0;
 
-  type_id = gtk_type_unique (parent, &info);
+  type_id = g_type_register_static (parent, name, &info, NULL);
 
   return (type_id);
 }
@@ -73,8 +72,9 @@ static void
 xemacs_list_to_gtklist (Lisp_Object obj, GType *arg)
 {
   CHECK_LIST (obj);
+ 
 
-  if (arg->type == GTK_TYPE_STRING_LIST)
+  if (*arg == GTK_TYPE_STRING_LIST)
     {
       Lisp_Object temp = obj;
       GList *strings = NULL;
@@ -93,9 +93,9 @@ xemacs_list_to_gtklist (Lisp_Object obj, GType *arg)
 	  temp = XCDR (temp);
 	}
 
-      GTK_VALUE_POINTER (*arg) = strings;
+      G_TYPE_POINTER (*arg) = strings;
     }
-  else if (arg->type == GTK_TYPE_OBJECT_LIST)
+  else if (*arg == GTK_TYPE_OBJECT_LIST)
     {
       Lisp_Object temp = obj;
       GList *objects = NULL;
@@ -143,9 +143,9 @@ xemacs_gtklist_to_list (GType *arg)
 {
   Lisp_Object rval = Qnil;
 
-  if (GTK_VALUE_POINTER (*arg))
+  if (G_TYPE_IS_ABSTRACT (*arg))
     {
-      if (arg->type == GTK_TYPE_STRING_LIST)
+      if (*arg == GTK_TYPE_STRING_LIST)
 	{
 	  g_list_foreach ((GList*) GTK_VALUE_POINTER (*arg), __make_string_mapper, &rval);
 	}
@@ -192,15 +192,15 @@ xemacs_list_to_array (Lisp_Object obj, GType *arg)
     GTK_VALUE_POINTER (*arg) = array;				\
   } while (0);
   
-  if (arg->type == GTK_TYPE_STRING_ARRAY)
+  if (*arg == GTK_TYPE_STRING_ARRAY)
     {
       FROB (gchar *, CHECK_STRING, (gchar*) XSTRING_DATA);
     }
-  else if (arg->type == GTK_TYPE_FLOAT_ARRAY)
+  else if (*arg == GTK_TYPE_FLOAT_ARRAY)
     {
       FROB (gfloat, CHECK_FLOAT, extract_float);
     }
-  else if (arg->type == GTK_TYPE_INT_ARRAY)
+  else if (*arg == GTK_TYPE_INT_ARRAY)
     {
       FROB (gint, CHECK_INT, XINT);
     }
