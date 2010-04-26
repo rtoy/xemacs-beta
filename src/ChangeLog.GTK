@@ -1,3 +1,56 @@
+2010-04-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_class_init):
+	Don't use gtk_xemacs_draw.
+	(smash_scrollbar_specifiers):
+	Use fixed slider width for now.
+
+2010-04-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_bevel_area):
+	Cast GtkShadowStyle to edge_style for C++ compile.
+	(our_draw_bitmap): 
+	Implement using GDK, not XLib.
+
+	* fontcolor-gtk.c (gtk_color_instance_hash):
+	Update hash function to match usage in fontcolor-x.c.
+
+	* event-gtk.c (handle_focus_event_1):
+	Extend X focus timestamp klduge to Gtk.
+
+	* console-xlike-inc.h: 
+	Fix GET_XLIKE_DISPLAY for gtk.
+
+	* frame-gtk.c (gtk_create_widgets):
+	Declare array const to avoid C++ warning.
+	(get_number, gnome_parse_geometry):
+	Re-enable local geometry parsing temporarily.
+
+	* config.h.in: 
+	Add WORDS_BIGENDIAN check back.  It's used in src/glyphs-gtk.h.
+	
+	* gtk-xemacs.c (smash_scrollbar_specifiers, smash_toolbar_specifiers):
+	Slider width is now in GtkStyle instance, not class.
+
+	* device-gtk.c (gtk_delete_device):
+	NEW_GC doesn't allow/require freeing device directly.
+
+2010-04-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_color_instance_hash):
+	Remove gtk_color_instance_hash equalp argument.
+
+	* gtk-glue.c (xemacs_type_register):
+	Change arg to const to avoid C++ warning.
+
+	* gtk-xemacs.c (gtk_xemacs_get_type):
+	Cast to avoid C++ const warning.
+
+	* frame-gtk.c (gtk_initialize_frame_size):
+	Remove ifndef HAVE_GNOME around gnome-parse-geometry and get_number.
+	Use gtk geometry functions.
+	Include gutter.h for frame size calculations.
+
 2000-10-03  William M. Perry  <wmperry@aventail.com>
 
 	* objects-gtk.c (gtk_font_instance_truename): Make sure we get the
