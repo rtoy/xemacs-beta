@@ -142,11 +142,11 @@ type_already_imported_p (GType t)
     case GTK_TYPE_STRING:
     case GTK_TYPE_BOXED:
     case GTK_TYPE_POINTER:
-    case GTK_TYPE_SIGNAL:
-    case GTK_TYPE_ARGS:
-    case GTK_TYPE_CALLBACK:
-    case GTK_TYPE_C_CALLBACK:
-    case GTK_TYPE_FOREIGN:
+      //case GTK_TYPE_SIGNAL:
+      //case GTK_TYPE_ARGS:
+      //case GTK_TYPE_CALLBACK:
+      //case GTK_TYPE_C_CALLBACK:
+      //case GTK_TYPE_FOREIGN:
 	return (1);
     }
 
@@ -1460,15 +1460,15 @@ void describe_gtk_arg (GtkArg *arg)
 }
 #endif
 
-Lisp_Object gtk_type_to_lisp (GType
- *arg)
+Lisp_Object gtk_type_to_lisp (GValue *arg)
 {
-  switch (GTK_FUNDAMENTAL_TYPE (G_TYPE_FROM_CLASS (arg)))
+  //  G_TYPE_IS_VALUE_TYPE
+  switch (G_VALUE_TYPE (G_TYPE_FROM_CLASS (arg)))
     {
     case G_TYPE_NONE:
       return (Qnil);
     case G_TYPE_CHAR:
-      return (make_char (GTK_VALUE_CHAR (*arg)));
+      return (make_char (g_value_get_char (*arg)));
     case G_TYPE_UCHAR:
       return (make_char (GTK_VALUE_UCHAR (*arg)));
     case G_TYPE_BOOLEAN:
@@ -1481,16 +1481,20 @@ Lisp_Object gtk_type_to_lisp (GType
       return (make_int (GTK_VALUE_INT (*arg)));
     case G_TYPE_ULONG:	/* I think these are wrong! */
       return (make_int (GTK_VALUE_INT (*arg)));
+    case G_TYPE_INT64:	/* bignum? */
+      return (make_int (GTK_VALUE_INT (*arg)));
+    case G_TYPE_UINT64:	/* bignum? */
+      return (make_int (GTK_VALUE_INT (*arg)));
+    case G_TYPE_ENUM:
+      return (enum_to_symbol (GTK_VALUE_ENUM (*arg), arg->type));
+    case G_TYPE_FLAGS:
+      return (flags_to_list (GTK_VALUE_FLAGS (*arg), arg->type));
     case G_TYPE_FLOAT:
       return (make_float (GTK_VALUE_FLOAT (*arg)));
     case G_TYPE_DOUBLE:
       return (make_float (GTK_VALUE_DOUBLE (*arg)));
     case G_TYPE_STRING:
       return (build_cistring (GTK_VALUE_STRING (*arg)));
-    case G_TYPE_FLAGS:
-      return (flags_to_list (GTK_VALUE_FLAGS (*arg), arg->type));
-    case G_TYPE_ENUM:
-      return (enum_to_symbol (GTK_VALUE_ENUM (*arg), arg->type));
     case G_TYPE_BOXED:
       if (arg->type == G_TYPE_GDK_EVENT)
 	{
@@ -1516,6 +1520,9 @@ Lisp_Object gtk_type_to_lisp (GType
 	return (build_gtk_object (GTK_VALUE_OBJECT (*arg)));
       else
 	return (Qnil);
+      //case G_TYPE_PARAM:
+      //case G_TYPE_GTYPE
+      
 
     case G_TYPE_CALLBACK:
       {
