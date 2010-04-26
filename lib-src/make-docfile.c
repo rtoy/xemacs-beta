@@ -1084,6 +1084,7 @@ scan_lisp_file (const char *filename, const char *mode)
     {
       char buffer[BUFSIZ];
       char type;
+      int no_docstring = 0;
 
       /* If not at end of line, skip till we get to one.  */
       if (c != '\n')
@@ -1187,7 +1188,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	      fprintf (stderr, "## non-docstring in %s (%s)\n",
 		       buffer, filename);
 #endif
-	      continue;
+	      no_docstring = 1;
 	    }
 	}
 
@@ -1217,7 +1218,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  fprintf (stderr, "## non-docstring in %s (%s)\n",
 			   buffer, filename);
 #endif
-		  continue;
+                  no_docstring = 1;
 		}
 	    }
 	}
@@ -1276,7 +1277,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  fprintf (stderr, "## non-docstring in %s (%s)\n",
 			   buffer, filename);
 #endif
-		  continue;
+		  no_docstring = 1;
 		}
 	    }
 	}
@@ -1333,7 +1334,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  fprintf (stderr, "## non-docstring in %s (%s)\n",
 			   buffer, filename);
 #endif
-		  continue;
+                  no_docstring = 1;
 		}
 	    }
 	}
@@ -1391,7 +1392,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  fprintf (stderr, "## non-docstring in %s (%s)\n",
 			   buffer, filename);
 #endif
-		  continue;
+                  no_docstring = 1;
 		}
 	    }
 	}
@@ -1422,15 +1423,18 @@ scan_lisp_file (const char *filename, const char *mode)
       putc (037, outfile);
       putc (type, outfile);
       fprintf (outfile, "%s\n", buffer);
-      if (saved_string)
-	{
-	  fputs (saved_string, outfile);
-	  /* Don't use one dynamic doc string twice.  */
-	  free (saved_string);
-	  saved_string = 0;
-	}
-      else
-	read_c_string (infile, 1, 0);
+      if (!no_docstring)
+        {
+          if (saved_string)
+            {
+              fputs (saved_string, outfile);
+              /* Don't use one dynamic doc string twice.  */
+              free (saved_string);
+              saved_string = 0;
+            }
+          else
+            read_c_string (infile, 1, 0);
+        }
     }
   fclose (infile);
   return 0;

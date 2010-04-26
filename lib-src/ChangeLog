@@ -1,3 +1,9 @@
+2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.c (scan_lisp_file):
+	Even if a function doesn't have a doc string, store its file name
+	in DOC.
+
 2010-03-02  Ben Wing  <ben@xemacs.org>
 
 	* digest-doc.c:

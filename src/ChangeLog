@@ -1,3 +1,110 @@
+2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fdocumentation):
+	If we have a zero length doc string in DOC, as may happen for
+	undocumented compiled function objects which nonetheless have file
+	information stored, return nil.
+	(Fsnarf_documentation):
+	DOC info existing for compiled functions without docstrings is
+	perfectly legitimate, now the file is also used to store file names.
+	* bytecode.c (set_compiled_function_documentation):
+	Allow this function to set the documentation successfully for
+	compiled function objects that don't currently have documentation;
+	most relevant for functions without docstrings which have file
+	information stored in DOC.
+
+2010-04-15  Ben Wing  <ben@xemacs.org>
+
+	* device-x.c (x_init_device):
+	Don't declare something const if we're going to modify it.
+	Clean up code to follow GNU coding standards.
+
+2010-04-12  Ben Wing  <ben@xemacs.org>
+
+	* specifier.c (specifier_memory_usage):
+	Disable specifier memory-usage stats for now.  Sometimes they can
+	end up with circularities in them and I'm not sure exactly whats
+	going on to produce them.
+
+2010-04-12  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* lisp.h:
+	* lisp.h (XREALLOC_ARRAY):
+	* text.h:
+	Port charset_codepoint_to_itext(), buffer_itext_to_charset_codepoint(),
+	EXTBYTE_STRING_TO_ALLOCA(), `enum converr' from ben-unicode-internal,
+	for use with the mule-wnnfns.c changes.
+	
+	* mule-wnnfns.c:
+	* mule-wnnfns.c (Fwnn_open):
+	* mule-wnnfns.c (Fwnn_dict_add):
+	* mule-wnnfns.c (Fwnn_dict_list):
+	* mule-wnnfns.c (Fwnn_get_zenkouho):
+	* mule-wnnfns.c (Fwnn_inspect):
+	* mule-wnnfns.c (Fwnn_bunsetu_kanji):
+	* mule-wnnfns.c (Fwnn_bunsetu_yomi):
+	* mule-wnnfns.c (Fwnn_word_info):
+	* mule-wnnfns.c (Fwnn_dict_search):
+	* mule-wnnfns.c (Fwnn_get_msg):
+	* mule-wnnfns.c (Fwnn_fuzokugo_set):
+	* mule-wnnfns.c (Fwnn_fuzokugo_get):
+	* mule-wnnfns.c (Fwnn_hinsi_list):
+	* mule-wnnfns.c (Fwnn_fisys_dict_add):
+	* mule-wnnfns.c (Fwnn_fiusr_dict_add):
+	* mule-wnnfns.c (Fwnn_notrans_dict_add):
+	* mule-wnnfns.c (Fwnn_bmodify_dict_add):
+	* mule-wnnfns.c (reinit_vars_of_mule_wnn):
+	* mule-wnnfns.c (vars_of_mule_wnn):
+	* mule-wnnfns.c (w2m):
+	* mule-wnnfns.c (m2w):
+	* mule-wnnfns.c (yes_or_no):
+	* mule-wnnfns.c (puts2):
+	* mule-wnnfns.c (check_wnn_server_type):
+	Mule-ize, borrowed from ben-unicode-internal.
+
+2010-04-09  Ben Wing  <ben@xemacs.org>
+
+	* fileio.c (check_writable):
+	* fileio.c (Fdo_auto_save):
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	* redisplay.c (create_text_block):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (redisplay_device):
+	* redisplay.c (window_line_number):
+	* redisplay.c (point_would_be_visible):
+	* redisplay.c (compute_display_line_dynarr_usage):
+	* specifier.c (prune_specifiers):
+	* specifier.c (finalize_specifier):
+	* specifier.c (make_magic_specifier):
+	* specifier.c (charset_matches_specifier_tag_set_p):
+	* specifier.c (Fdefine_specifier_tag):
+	* specifier.c (setup_device_initial_specifier_tags):
+	* specifier.c (bodily_specifier):
+	* specifier.c (add_spec_to_ghost_specifier):
+	* specifier.c (remove_ghost_specifier):
+	* specifier.c (set_specifier_fallback):
+	* specifier.c (specifier_instance_from_inst_list):
+	* specifier.c (set_specifier_caching):
+	Fix coding style to correspond to GNU standard.
+
+2010-04-09  Didier Verna  <didier@xemacs.org>
+
+	* fontcolor-xlike-inc.c (DEBUG_FONTS2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS4):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP1):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP4): Conditionalize
+	definitions on DEBUG_XEMACS, provide empty definitions otherwise.
+
 2010-04-06  Ben Wing  <ben@xemacs.org>
 
 	* elhash.c (Feq_hash):

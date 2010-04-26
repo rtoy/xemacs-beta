@@ -772,11 +772,14 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		     global (current-global-map)
 		     obsolete (get symbol 'byte-obsolete-info)
 		     doc (function-documentation symbol t)
-                     arglist (replace-in-string
-                              (function-arglist symbol)
-                              (format "^(%s "
-                                      (regexp-quote (symbol-name symbol)))
-                              "("))
+                     arglist (let ((farglist (function-arglist symbol)))
+			       (if farglist
+				   (replace-in-string
+				    farglist
+				    (format "^(%s "
+					(regexp-quote (symbol-name symbol)))
+				    "(")
+				 "[not available]")))
 	       (save-excursion
 		 (set-buffer hyper-apropos-help-buf)
 		 (goto-char (point-max))
