@@ -301,16 +301,31 @@ The value is measured in seconds.  This only applies if
   :group 'keyboard)
 
 ;That damn RMS went off and implemented something differently, after
-;we had already implemented it.  We can't support both properly until
-;we have Lisp magic variables.
-;(defvar suggest-key-bindings t
-;  "*FSFmacs equivalent of `teach-extended-commands-*'.
-;Provided for compatibility only.
-;Non-nil means show the equivalent key-binding when M-x command has one.
-;The value can be a length of time to show the message for.
-;If the value is non-nil and not a number, we wait 2 seconds.")
-;
-;(make-obsolete-variable 'suggest-key-bindings 'teach-extended-commands-p)
+;we had already implemented it.
+(defcustom suggest-key-bindings t
+  "*FSFmacs equivalent of `teach-extended-commands-p'.
+Provided for compatibility only.
+Non-nil means show the equivalent key-binding when M-x command has one.
+The value can be a length of time to show the message for, in seconds.
+
+If the value is non-nil and not a number, we wait the number of seconds
+specified by `teach-extended-commands-timeout'."
+  :type '(choice
+          (const :tag "off" nil)
+          (integer :tag "time" 2)
+          (other :tag "on")))
+
+(dontusethis-set-symbol-value-handler
+ 'suggest-key-bindings
+ 'set-value
+ #'(lambda (sym args fun harg handler)
+     (setq args (car args))
+     (if (null args)
+         (setq teach-extended-commands-p nil)
+       (setq teach-extended-commands-p t
+             teach-extended-commands-timeout
+             (or (and (integerp args) args)
+                 (and args teach-extended-commands-timeout))))))
 
 (defun execute-extended-command (prefix-arg)
   "Read a command name from the minibuffer using 'completing-read'.
