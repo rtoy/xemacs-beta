@@ -1,3 +1,10 @@
+2010-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fquote, Ffunction): Error on more than one argument to
+	these special operators.
+	* data.c (syms_of_data): Move Qquote to general-slots.h from this
+	file, now it's used in eval.c
+
 2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doc.c (Fdocumentation):

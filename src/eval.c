@@ -1273,6 +1273,15 @@ represented as `(quote x)').
 */
        (args))
 {
+  int nargs;
+
+  GET_LIST_LENGTH (args, nargs);
+  if (nargs != 1)
+    {
+      Fsignal (Qwrong_number_of_arguments,
+               list2 (Qquote, make_int (nargs)));
+    }
+
   return XCAR (args);
 }
 
@@ -1344,6 +1353,15 @@ represented as `(function x)').
 */
        (args))
 {
+  int nargs;
+
+  GET_LIST_LENGTH (args, nargs);
+  if (nargs != 1)
+    {
+      Fsignal (Qwrong_number_of_arguments,
+               list2 (Qfunction, make_int (nargs)));
+    }
+
   return XCAR (args);
 }
 
