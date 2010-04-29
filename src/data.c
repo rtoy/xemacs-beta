@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "syssignal.h"
 #include "sysfloat.h"
 
-Lisp_Object Qnil, Qt, Qquote, Qlambda, Qunbound;
+Lisp_Object Qnil, Qt, Qlambda, Qunbound;
 Lisp_Object Qerror_conditions, Qerror_message;
 Lisp_Object Qerror, Qquit, Qsyntax_error, Qinvalid_read_syntax;
 Lisp_Object Qlist_formation_error, Qstructure_formation_error;
@@ -3516,7 +3516,6 @@ syms_of_data (void)
   INIT_LISP_OBJECT (ephemeron);
   INIT_LISP_OBJECT (weak_box);
 
-  DEFSYMBOL (Qquote);
   DEFSYMBOL (Qlambda);
   DEFSYMBOL (Qlistp);
   DEFSYMBOL (Qtrue_list_p);
