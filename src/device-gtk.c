@@ -399,21 +399,15 @@ gtk_delete_device (struct device *d)
 const char *
 gtk_event_name (GdkEventType event_type)
 {
-#if 0
-  GtkEnumValue *vals = gtk_type_enum_get_values (GTK_TYPE_GDK_EVENT_TYPE);
+  //GtkEnumValue *vals = gtk_type_enum_get_values (GTK_TYPE_GDK_EVENT_TYPE);
 
-  while (vals && ((GdkEventType)(vals->value) != event_type)) vals++;
+  //while (vals && ((GdkEventType)(vals->value) != event_type)) vals++;
 
-  if (vals)
-    return (vals->value_nick);
+  //if (vals)
+  //return (vals->value_nick);
 
-  return (NULL);
-
-#else  
-  char *name = (char *)xmalloc_and_zero (10);
-  sprintf (name, "%s%02d", name, event_type);
-  return name;
-#endif
+  //return (NULL);
+  return "GdkEvent";
 }
 
 
@@ -673,8 +667,8 @@ Get the style information for a Gtk device.
   FROB_COLOR (base, "base");
 #undef FROB_COLOR
 
-  // --jsparkes
-  // result = nconc2 (result, list2 (Qfont, convert_font (style->font)));
+  result = nconc2 (result, list2 (Qfont,
+                                  convert_font (gtk_style_get_font (style))));
 
 #define FROB_PIXMAP(state) (style->rc_style->bg_pixmap_name[state] ? build_cistring (style->rc_style->bg_pixmap_name[state]) : Qnil)
 
