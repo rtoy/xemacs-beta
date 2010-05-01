@@ -1,83 +1,109 @@
-2010-04-24  Jeff Sparkes  <jsparkes@gmail.com>
+2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* device-gtk.c (gtk_event_name):
-	Return event name as "EventXX" until I figure out event name lookup.
-	(Fgtk_style_info):
-	Leave font name out for now.
+	* doc.c (Fdocumentation):
+	If we have a zero length doc string in DOC, as may happen for
+	undocumented compiled function objects which nonetheless have file
+	information stored, return nil.
+	(Fsnarf_documentation):
+	DOC info existing for compiled functions without docstrings is
+	perfectly legitimate, now the file is also used to store file names.
+	* bytecode.c (set_compiled_function_documentation):
+	Allow this function to set the documentation successfully for
+	compiled function objects that don't currently have documentation;
+	most relevant for functions without docstrings which have file
+	information stored in DOC.
 
-	* ui-gtk.c (import_gtk_enumeration_internal):
-	Convert to GObject.
-	(type_already_imported_p):
-	Use Gtk 2.X constants.
-	(import_gtk_flags_internal):
-	Create.
-	(import_gtk_type):
-	Flags and enumerations are implemented separately now.
-	(import_gtk_object_internal):
-	Update to use GObject.
-	(__allocate_object_storage):
-	Use g_type_query and instance_size.
+2010-04-15  Ben Wing  <ben@xemacs.org>
 
-2010-04-23  Jeff Sparkes  <jsparkes@gmail.com>
+	* device-x.c (x_init_device):
+	Don't declare something const if we're going to modify it.
+	Clean up code to follow GNU coding standards.
 
-	* glyphs-gtk.c (gtk_add_tab_item): 
-	Use GINT_TO_POINTER.
+2010-04-12  Ben Wing  <ben@xemacs.org>
 
-	* frame-gtk.c (gtk_init_frame_1):
-	Use GINT_TO_POINTER.
+	* specifier.c (specifier_memory_usage):
+	Disable specifier memory-usage stats for now.  Sometimes they can
+	end up with circularities in them and I'm not sure exactly whats
+	going on to produce them.
 
-	* event-gtk.c (emacs_gtk_add_timeout):
-	Use GPOINTER_TO_INT.
+2010-04-12  Ben Wing  <ben@xemacs.org>
 
-	* glyphs-gtk.c (convert_EImage_to_GDKImage):
-	(convert_EImage_to_GDKImage):
-	Use G_BIG_ENDIAN instead of WORDS_BIGENDIAN.
-
-2010-04-22  Jeff Sparkes  <jsparkes@gmail.com>
-
-	* redisplay-gtk.c (XLIKE_bevel_area):
-	Cast GtkShadowStyle to edge_style for C++ compile.
-	(our_draw_bitmap): 
-	Implement using GDK, not XLib.
-
-	* fontcolor-gtk.c (gtk_color_instance_hash):
-	Update hash function to match usage in fontcolor-x.c.
-
-	* event-gtk.c (handle_focus_event_1):
-	Extend X focus timestamp klduge to Gtk.
-
-	* console-xlike-inc.h: 
-	Fix GET_XLIKE_DISPLAY for gtk.
-
-	* frame-gtk.c (gtk_create_widgets):
-	Declare array const to avoid C++ warning.
-	(get_number, gnome_parse_geometry):
-	Re-enable local geometry parsing temporarily.
-
-	* config.h.in: 
-	Add WORDS_BIGENDIAN check back.  It's used in src/glyphs-gtk.h.
+	* charset.h:
+	* lisp.h:
+	* lisp.h (XREALLOC_ARRAY):
+	* text.h:
+	Port charset_codepoint_to_itext(), buffer_itext_to_charset_codepoint(),
+	EXTBYTE_STRING_TO_ALLOCA(), `enum converr' from ben-unicode-internal,
+	for use with the mule-wnnfns.c changes.
 	
-	* gtk-xemacs.c (smash_scrollbar_specifiers, smash_toolbar_specifiers):
-	Slider width is now in GtkStyle instance, not class.
+	* mule-wnnfns.c:
+	* mule-wnnfns.c (Fwnn_open):
+	* mule-wnnfns.c (Fwnn_dict_add):
+	* mule-wnnfns.c (Fwnn_dict_list):
+	* mule-wnnfns.c (Fwnn_get_zenkouho):
+	* mule-wnnfns.c (Fwnn_inspect):
+	* mule-wnnfns.c (Fwnn_bunsetu_kanji):
+	* mule-wnnfns.c (Fwnn_bunsetu_yomi):
+	* mule-wnnfns.c (Fwnn_word_info):
+	* mule-wnnfns.c (Fwnn_dict_search):
+	* mule-wnnfns.c (Fwnn_get_msg):
+	* mule-wnnfns.c (Fwnn_fuzokugo_set):
+	* mule-wnnfns.c (Fwnn_fuzokugo_get):
+	* mule-wnnfns.c (Fwnn_hinsi_list):
+	* mule-wnnfns.c (Fwnn_fisys_dict_add):
+	* mule-wnnfns.c (Fwnn_fiusr_dict_add):
+	* mule-wnnfns.c (Fwnn_notrans_dict_add):
+	* mule-wnnfns.c (Fwnn_bmodify_dict_add):
+	* mule-wnnfns.c (reinit_vars_of_mule_wnn):
+	* mule-wnnfns.c (vars_of_mule_wnn):
+	* mule-wnnfns.c (w2m):
+	* mule-wnnfns.c (m2w):
+	* mule-wnnfns.c (yes_or_no):
+	* mule-wnnfns.c (puts2):
+	* mule-wnnfns.c (check_wnn_server_type):
+	Mule-ize, borrowed from ben-unicode-internal.
 
-	* device-gtk.c (gtk_delete_device):
-	NEW_GC doesn't allow/require freeing device directly.
+2010-04-09  Ben Wing  <ben@xemacs.org>
 
-2010-04-21  Jeff Sparkes  <jsparkes@gmail.com>
+	* fileio.c (check_writable):
+	* fileio.c (Fdo_auto_save):
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	* redisplay.c (create_text_block):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (redisplay_device):
+	* redisplay.c (window_line_number):
+	* redisplay.c (point_would_be_visible):
+	* redisplay.c (compute_display_line_dynarr_usage):
+	* specifier.c (prune_specifiers):
+	* specifier.c (finalize_specifier):
+	* specifier.c (make_magic_specifier):
+	* specifier.c (charset_matches_specifier_tag_set_p):
+	* specifier.c (Fdefine_specifier_tag):
+	* specifier.c (setup_device_initial_specifier_tags):
+	* specifier.c (bodily_specifier):
+	* specifier.c (add_spec_to_ghost_specifier):
+	* specifier.c (remove_ghost_specifier):
+	* specifier.c (set_specifier_fallback):
+	* specifier.c (specifier_instance_from_inst_list):
+	* specifier.c (set_specifier_caching):
+	Fix coding style to correspond to GNU standard.
 
-	* fontcolor-gtk.c (gtk_color_instance_hash):
-	Remove gtk_color_instance_hash equalp argument.
+2010-04-09  Didier Verna  <didier@xemacs.org>
 
-	* gtk-glue.c (xemacs_type_register):
-	Change arg to const to avoid C++ warning.
-
-	* gtk-xemacs.c (gtk_xemacs_get_type):
-	Cast to avoid C++ const warning.
-
-	* frame-gtk.c (gtk_initialize_frame_size):
-	Remove ifndef HAVE_GNOME around gnome-parse-geometry and get_number.
-	Use gtk geometry functions.
-	Include gutter.h for frame size calculations.
+	* fontcolor-xlike-inc.c (DEBUG_FONTS2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS4):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP1):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP4): Conditionalize
+	definitions on DEBUG_XEMACS, provide empty definitions otherwise.
 
 2010-04-06  Ben Wing  <ben@xemacs.org>
 

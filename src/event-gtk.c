@@ -1343,6 +1343,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 	       processing so send a null event into XEmacs to make sure it
 	       does nothing.
 	    */
+#if 0
 	    if (!NILP (Vmenu_accelerator_enabled)
 		&& gtk_accel_groups_activate(GTK_OBJECT (FRAME_GTK_SHELL_WIDGET(frame)),
 					     key_event->keyval,
@@ -1351,6 +1352,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 		zero_event(emacs_event);
 		return 1;
 	      }
+#endif
 #endif
 
 	    /* This used to compute the frame from the given X window and

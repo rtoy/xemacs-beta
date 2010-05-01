@@ -90,7 +90,7 @@ gtk_xemacs_class_init (GtkXEmacsClass *class_)
 
   widget_class->size_allocate = gtk_xemacs_size_allocate;
   widget_class->size_request = gtk_xemacs_size_request;
-  widget_class->draw = gtk_xemacs_draw;
+  //widget_class->draw = gtk_xemacs_draw;
   widget_class->expose_event = gtk_xemacs_expose;
   widget_class->realize = gtk_xemacs_realize;
   widget_class->button_press_event = emacs_gtk_button_event_handler;
@@ -207,7 +207,9 @@ smash_scrollbar_specifiers (struct frame *f, GtkStyle *style)
 
   frame = wrap_frame (f);
 
-  slider_size = style->slider_width;
+  // Note: where do I get this?  -- jsparkes
+  //slider_size = style->slider_width;
+  slider_size = 4;
   hsize = slider_size + (style->ythickness * 2);
   vsize = slider_size + (style->xthickness * 2);
 
