@@ -2846,8 +2846,8 @@ if test "$with_gnome" != "no"; then
 fi
 
 if test "${GNOME_CONFIG}" != "no"; then
-      GNOME_LIBS=`${GNOME_CONFIG} --libs libgnomeui-2.0`
-      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags libgnomeui-2.0`
+      GNOME_LIBS=`${GNOME_CONFIG} --libs libgnomeui-2.0 pango pangoxft`
+      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags libgnomeui-2.0 pango pangoxft`
       AC_DEFINE(HAVE_GNOME)
       XE_APPEND(${GNOME_LIBS}, libs_gtk)
       XE_APPEND(${GNOME_CFLAGS}, c_switch_gtk)

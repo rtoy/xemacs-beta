@@ -11922,8 +11922,8 @@ $as_echo "${GNOME_CONFIG}" >&6; }
 fi
 
 if test "${GNOME_CONFIG}" != "no"; then
-      GNOME_LIBS=`${GNOME_CONFIG} --libs libgnomeui-2.0`
-      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags libgnomeui-2.0`
+      GNOME_LIBS=`${GNOME_CONFIG} --libs libgnomeui-2.0 pango pangoxft`
+      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags libgnomeui-2.0 pango pangoxft`
       $as_echo "#define HAVE_GNOME 1" >>confdefs.h
 
       libs_gtk="$libs_gtk ${GNOME_LIBS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${GNOME_LIBS}\" to \$libs_gtk"; fi

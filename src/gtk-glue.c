@@ -16,17 +16,16 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 Boston, MA 02111-1301, USA.  */
 
-GType GTK_TYPE_ARRAY = 0;
-GType GTK_TYPE_STRING_ARRAY = 0;
-GType GTK_TYPE_FLOAT_ARRAY = 0;
-GType GTK_TYPE_INT_ARRAY = 0;
-GType GTK_TYPE_LISTOF = 0;
-GType GTK_TYPE_STRING_LIST = 0;
-GType GTK_TYPE_OBJECT_LIST = 0;
-GType GTK_TYPE_GDK_GC = 0;
+GType GTK_TYPE_STRING_GARRAY = 0;
+GType GTK_TYPE_FLOAT_GARRAY = 0;
+GType GTK_TYPE_INT_GARRAY = 0;
+GType GTK_TYPE_SLIST = 0;
+GType GTK_TYPE_STRING_SLIST = 0;
+GType GTK_TYPE_OBJECT_SLIST = 0;
 
 #include "console-gtk.h"
 #include "fontcolor-gtk-impl.h"
+#include "frame.h"
 
 static GType
 xemacs_type_register (const gchar *name, GType parent)
@@ -47,7 +46,7 @@ xemacs_type_register (const gchar *name, GType parent)
   info.instance_init = 0;
   info.value_table = 0;
 
-  type_id = g_type_register_static (parent, name, &info, NULL);
+  type_id = g_type_register_static (parent, name, &info, (GTypeFlags)0);
 
   return (type_id);
 }
@@ -55,26 +54,32 @@ xemacs_type_register (const gchar *name, GType parent)
 static void
 xemacs_init_gtk_classes (void)
 {
-  if (!GTK_TYPE_ARRAY)
+#if 0
+  /* These are all stored as GValue or GValueArray */
+  /* Why aren't GLib types GOBjects? */
+  if (!GTK_TYPE_GARRAY)
     {
-      GTK_TYPE_ARRAY = xemacs_type_register ("GtkArrayOf", 0);
-      GTK_TYPE_STRING_ARRAY = xemacs_type_register ("GtkArrayOfString", GTK_TYPE_ARRAY);
-      GTK_TYPE_FLOAT_ARRAY = xemacs_type_register ("GtkArrayOfFloat", GTK_TYPE_ARRAY);
-      GTK_TYPE_INT_ARRAY = xemacs_type_register ("GtkArrayOfInteger", GTK_TYPE_ARRAY);
-      GTK_TYPE_LISTOF = xemacs_type_register ("GtkListOf", 0);
+      GTK_TYPE_GARRAY = xemacs_type_register ("GArray", 0);
+      GTK_TYPE_LIST = xemacs_type_register ("GSList", 0);
       GTK_TYPE_STRING_LIST = xemacs_type_register ("GtkListOfString", GTK_TYPE_LISTOF);
       GTK_TYPE_OBJECT_LIST = xemacs_type_register ("GtkListOfObject", GTK_TYPE_LISTOF);
-      GTK_TYPE_GDK_GC = xemacs_type_register ("GdkGC", GTK_TYPE_BOXED);
   }
+#endif
 }
 
 static void
-xemacs_list_to_gtklist (Lisp_Object obj, GType *arg)
+xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
 {
   CHECK_LIST (obj);
- 
 
-  if (*arg == GTK_TYPE_STRING_LIST)
+  printf ("%d\n", (int) arg);
+  ABORT();
+
+#if 0
+  assert (G_TYPE_IS_VALUE (arg));
+#endif
+ 
+  //if (*arg == GTK_TYPE_POINTER)
     {
       Lisp_Object temp = obj;
       GList *strings = NULL;
@@ -93,10 +98,14 @@ xemacs_list_to_gtklist (Lisp_Object obj, GType *arg)
 	  temp = XCDR (temp);
 	}
 
-      G_TYPE_POINTER (*arg) = strings;
+#if 0
+      arg = strings;
+#endif
     }
-  else if (*arg == GTK_TYPE_OBJECT_LIST)
+    //  else if (*arg == GTK_TYPE_OBJECT_LIST)
     {
+      ABORT();
+#if 0
       Lisp_Object temp = obj;
       GList *objects = NULL;
 
@@ -115,8 +124,9 @@ xemacs_list_to_gtklist (Lisp_Object obj, GType *arg)
 	}
 
       GTK_VALUE_POINTER (*arg) = objects;
+#endif
     }
-  else
+    //else
     {
       ABORT ();
     }
@@ -126,8 +136,8 @@ static void
 __make_gtk_object_mapper (gpointer data, gpointer user_data)
 {
   Lisp_Object *rv = (Lisp_Object *) user_data;
-
-  *rv = Fcons (build_gtk_object (GTK_OBJECT (data)), *rv);
+  assert (G_IS_OBJECT (data));
+  *rv = Fcons (build_gtk_object (G_OBJECT (data)), *rv);
 }
 
 static void
@@ -142,7 +152,7 @@ static Lisp_Object
 xemacs_gtklist_to_list (GType *arg)
 {
   Lisp_Object rval = Qnil;
-
+#if 0
   if (G_TYPE_IS_ABSTRACT (*arg))
     {
       if (*arg == GTK_TYPE_STRING_LIST)
@@ -158,13 +168,37 @@ xemacs_gtklist_to_list (GType *arg)
 	  ABORT ();
 	}
     }
+#endif
   return (rval);
 }
 
+int lisp_to_gtk_type (Lisp_Object obj, GValue *arg);
+
 static void
-xemacs_list_to_array (Lisp_Object obj, GType *arg)
+xemacs_list_to_array (Lisp_Object obj, GValue *arg)
 {
+  int len = 0;
+  GValueArray *array;
+  GValue val;
+
   CHECK_LIST (obj);
+  assert (G_VALUE_TYPE (arg) == G_TYPE_BOXED);
+  g_value_init (arg, G_TYPE_VALUE_ARRAY);
+
+  GET_LIST_LENGTH (obj, len);
+  /* Does g_value_array need to be pre-allocated? */
+  array = g_value_array_new (len);
+
+  LIST_LOOP_3 (elt, obj, tail)
+    {
+      g_value_reset (&val);
+      lisp_to_gtk_type (elt, &val);
+      g_value_array_append (array, &val);
+    }
+
+  g_value_set_boxed (arg, array);
+
+#ifdef JSPARKES
 
 #define FROB(ret_type,check_fn,extract_fn) \
   do {								\
@@ -194,21 +228,22 @@ xemacs_list_to_array (Lisp_Object obj, GType *arg)
   
   if (*arg == GTK_TYPE_STRING_ARRAY)
     {
-      FROB (gchar *, CHECK_STRING, (gchar*) XSTRING_DATA);
+      //FROB (gchar *, CHECK_STRING, (gchar*) XSTRING_DATA);
     }
   else if (*arg == GTK_TYPE_FLOAT_ARRAY)
     {
-      FROB (gfloat, CHECK_FLOAT, extract_float);
+      //FROB (gfloat, CHECK_FLOAT, extract_float);
     }
   else if (*arg == GTK_TYPE_INT_ARRAY)
     {
-      FROB (gint, CHECK_INT, XINT);
+      //FROB (gint, CHECK_INT, XINT);
     }
   else
     {
       ABORT ();
     }
 #undef FROB
+#endif
 }
 
 static GdkGC *
@@ -259,7 +294,9 @@ face_to_style (Lisp_Object face)
 	style->bg_pixmap[i] = XIMAGE_INSTANCE_GTK_PIXMAP (pm);
     }
 
+#ifdef JSPARKES
   style->font = FONT_INSTANCE_GTK_FONT (XFONT_INSTANCE (font));
+#endif
 
   return (style);
 }

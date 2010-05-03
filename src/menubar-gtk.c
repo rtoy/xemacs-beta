@@ -449,7 +449,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
    that made sure callbacks and such were GCPRO-ed
 */
 static void
-__remove_gcpro_by_id (gpointer user_data)
+__remove_gcpro_by_id (gpointer user_data, GObject *previous_location)
 {
   ungcpro_popup_callbacks ((GUI_ID) user_data);
 }
@@ -692,7 +692,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       if (id)
 	{
 	  /* If the menu item had a GUI_ID that means it was a filter menu */
-	  __remove_gcpro_by_id (id);
+	  __remove_gcpro_by_id (id, NULL);
 	  gtk_signal_disconnect_by_func (GTK_OBJECT (reuse),
 					 GTK_SIGNAL_FUNC (__activate_menu),
 					 (gpointer) 0x01 );
@@ -1236,7 +1236,7 @@ create_menubar_widget (struct frame *f)
 
   FRAME_GTK_MENUBAR_WIDGET (f) = menubar;
   gtk_object_set_data (GTK_OBJECT (menubar), XEMACS_MENU_GUIID_TAG, (gpointer) id);
-  gtk_object_weakref (GTK_OBJECT (menubar), __remove_gcpro_by_id, (gpointer) id);
+  gtk_object_weakref (GTK_OBJECT (menubar), __remove_gcpro_by_id, (gpointer) id, NULL);
 }
 
 static int
@@ -1458,7 +1458,7 @@ See the definition of `popup-menu' for more information on the format of MENU.
 {
   GtkWidget *w = menu_descriptor_to_widget (menu, NULL);
 
-  return (w ? build_gtk_object (GTK_OBJECT (w)) : Qnil);
+  return (w ? build_gtk_object (G_OBJECT (w)) : Qnil);
 }
 
 

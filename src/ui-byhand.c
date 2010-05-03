@@ -73,7 +73,13 @@ Return a cons cell (WIDTH . HEIGHT) of the default button box child size.
 {
   gint width, height;
 
+#ifdef JSPARKES
+  /* Doesn't seem to exist in Gtk-2.0 */
   gtk_button_box_get_child_size_default (&width, &height);
+#else
+  width = 24;
+  height = 24;
+#endif
 
   return (Fcons (make_int (width), make_int (height)));
 }
@@ -87,7 +93,12 @@ Return a cons cell (X . Y) of the default button box ipadding.
 {
   gint x, y;
 
-  gtk_button_box_get_child_ipadding_default (&x, &y);
+  /* Need a widget here */
+#ifdef JSPARKES
+  gtk_box_get_spacing (&x, &y);
+#else
+  x = 2; y = 2;
+#endif
 
   return (Fcons (make_int (x), make_int (y)));
 }
@@ -245,8 +256,8 @@ Return a cons of (pixmap . mask) at ROW,COLUMN in CLIST.
 			XINT (row), XINT (column),
 			&pixmap, &mask);
 
-  return (Fcons (pixmap ? build_gtk_boxed (pixmap, GTK_TYPE_GDK_WINDOW) : Qnil,
-		 mask ? build_gtk_boxed (mask, GTK_TYPE_GDK_WINDOW) : Qnil));
+  return (Fcons (pixmap ? build_gtk_object (G_OBJECT (pixmap)) : Qnil,
+		 mask ? build_gtk_object (G_OBJECT (mask)) : Qnil));
 }
 
 DEFUN ("gtk-clist-get-pixtext", Fgtk_clist_get_pixtext, 3, 3, 0, /*
@@ -272,8 +283,8 @@ Return a list of (pixmap mask text) at ROW,COLUMN in CLIST.
 			 XINT (row), XINT (column), &text, &spacing,
 			 &pixmap, &mask);
 
-  return (list3 (pixmap ? build_gtk_boxed (pixmap, GTK_TYPE_GDK_WINDOW) : Qnil,
-		 mask ? build_gtk_boxed (mask, GTK_TYPE_GDK_WINDOW) : Qnil,
+  return (list3 (pixmap ? build_gtk_object (G_OBJECT (pixmap)) : Qnil,
+		 mask ? build_gtk_object (G_OBJECT (mask)) : Qnil,
 		 (text && text[0]) ? build_cistring (text) : Qnil));
 }
 
@@ -344,8 +355,8 @@ Return a cons cell of (PIXMAP . MASK) from GtkPixmap OBJECT.
 
   gtk_pixmap_get (GTK_PIXMAP (XGTK_OBJECT (object)->object), &pixmap, &mask);
 
-  return (Fcons (pixmap ? build_gtk_object (GTK_OBJECT (pixmap)) : Qnil,
-		 mask ? build_gtk_object (GTK_OBJECT (mask)) : Qnil));
+  return (Fcons (pixmap ? build_gtk_object (G_OBJECT (pixmap)) : Qnil,
+		 mask ? build_gtk_object (G_OBJECT (mask)) : Qnil));
 }
 
 DEFUN ("gtk-curve-get-vector", Fgtk_curve_get_vector, 2, 2, 0, /*
@@ -479,7 +490,7 @@ Return the pointer position relative to WIDGET as a cons of (X . Y).
    that made sure callbacks and such were GCPRO-ed
 */
 static void
-__remove_gcpro_by_id (gpointer user_data)
+__remove_gcpro_by_id (gpointer user_data, GObject *old_location)
 {
   ungcpro_popup_callbacks ((GUI_ID) user_data);
 }
@@ -537,7 +548,7 @@ generic_toolbar_insert_item (Lisp_Object toolbar,
 
   id = new_gui_id ();
   gcpro_popup_callbacks (id, callback);
-  gtk_object_weakref (XGTK_OBJECT (toolbar)->object, __remove_gcpro_by_id,
+  g_object_weak_ref (XGTK_OBJECT (toolbar)->object, __remove_gcpro_by_id,
 		      (gpointer) id);
 
   if (NILP (position))
@@ -564,7 +575,7 @@ generic_toolbar_insert_item (Lisp_Object toolbar,
     }
 
 
-  return (w ? build_gtk_object (GTK_OBJECT (w)) : Qnil);
+  return (w ? build_gtk_object (G_OBJECT (w)) : Qnil);
 }
 
 DEFUN ("gtk-toolbar-append-item", Fgtk_toolbar_append_item, 6, 7, 0, /*
@@ -593,6 +604,8 @@ Adds a new button to the beginning (left or top edges) of the given toolbar.
   return (generic_toolbar_insert_item (toolbar,text,tooltip_text,tooltip_private_text,icon,callback,data,Qnil,position));
 }
 
+#ifdef JSPARKES
+
 /* GtkCTree is an abomination in the eyes of the object system. */
 static void
 __emacs_gtk_ctree_recurse_internal (GtkCTree *ctree, GtkCTreeNode *node, gpointer user_data)
@@ -602,8 +615,8 @@ __emacs_gtk_ctree_recurse_internal (GtkCTree *ctree, GtkCTreeNode *node, gpointe
   closure = GET_LISP_FROM_VOID (user_data);
 
   call3 (XCAR (closure),
-	 build_gtk_object (GTK_OBJECT (ctree)),
-	 build_gtk_boxed (node, GTK_TYPE_CTREE_NODE),
+	 build_gtk_object (G_OBJECT (ctree)),
+	 build_gtk_boxed (node, G_TYPE_CTREE_NODE),
 	 XCDR (closure));
 }
 
@@ -682,6 +695,7 @@ void gtk_ctree_pre_recursive_to_depth            (GtkCTree     *ctree,
   return (Qnil);
 }
 
+#endif
 void syms_of_ui_byhand (void)
 {
   DEFSUBR (Fgtk_toolbar_append_item);
@@ -705,5 +719,7 @@ void syms_of_ui_byhand (void)
   DEFSUBR (Fgtk_label_get);
   DEFSUBR (Fgtk_notebook_query_tab_label_packing);
   DEFSUBR (Fgtk_widget_get_pointer);
+#ifdef JSPARKES
   DEFSUBR (Fgtk_ctree_recurse);
+#endif
 }

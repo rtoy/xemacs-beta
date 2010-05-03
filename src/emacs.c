@@ -2393,7 +2393,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 #ifdef HAVE_GTK
       reinit_vars_of_event_gtk ();
+#ifdef HAVE_MENUBARS
       reinit_vars_of_menubar_gtk ();
+#endif
 #endif
 
 #ifdef HAVE_X_WINDOWS
