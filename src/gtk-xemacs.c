@@ -209,7 +209,7 @@ smash_scrollbar_specifiers (struct frame *f, GtkStyle *style)
 
   // Note: where do I get this?  -- jsparkes
   //slider_size = style->slider_width;
-  slider_size = 4;
+  slider_size = 10;
   hsize = slider_size + (style->ythickness * 2);
   vsize = slider_size + (style->xthickness * 2);
 
