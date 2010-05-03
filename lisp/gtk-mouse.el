@@ -35,6 +35,7 @@
 (defvar gtk-pointers-initialized nil)
 
 (defun gtk-init-pointers ()
+  (setq gtk-pointers-initialized t) ;; --jsparkes
   (if gtk-pointers-initialized
       nil
     (set-glyph-image text-pointer-glyph

@@ -95,7 +95,7 @@ gtk_xemacs_menubar_get_type (void)
 
   if (!xemacs_menubar_type)
     {
-      static const GtkTypeInfo xemacs_menubar_info =
+      static const GTypeInfo xemacs_menubar_info =
       {
 	"GtkXEmacsMenubar",
 	sizeof (GtkXEmacsMenubar),
@@ -189,21 +189,22 @@ struct _GtkXEmacsAccelLabelClass
   GtkAccelLabelClass	 parent_class;
 };
 
-static GtkType	  gtk_xemacs_accel_label_get_type(void);
+static GType	  gtk_xemacs_accel_label_get_type(void);
 static GtkWidget* gtk_xemacs_accel_label_new(const gchar *string);
 static void       gtk_xemacs_set_accel_keys(GtkXEmacsAccelLabel* l,
 				       Lisp_Object keys);
 static void       gtk_xemacs_accel_label_class_init(GtkXEmacsAccelLabelClass *klass);
 static void       gtk_xemacs_accel_label_init(GtkXEmacsAccelLabel *xemacs);
 
-static GtkType
+static GType
 gtk_xemacs_accel_label_get_type(void)
 {
-  static GtkType xemacs_accel_label_type = 0;
+  static 
+GType xemacs_accel_label_type = 0;
 
   if (!xemacs_accel_label_type)
     {
-      static const GtkTypeInfo xemacs_accel_label_info =
+      static const GTypeInfo xemacs_accel_label_info =
       {
 	"GtkXEmacsAccelLabel",
 	sizeof (GtkXEmacsAccelLabel),
@@ -448,7 +449,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
    that made sure callbacks and such were GCPRO-ed
 */
 static void
-__remove_gcpro_by_id (gpointer user_data)
+__remove_gcpro_by_id (gpointer user_data, GObject *previous_location)
 {
   ungcpro_popup_callbacks ((GUI_ID) user_data);
 }
@@ -617,7 +618,8 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       {
 	GtkWidget *bogus_item = gtk_menu_item_new_with_label ("A suitably long label here...");
 
-	gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_FIRSTTIME_TAG, (gpointer)0x01);
+	gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_FIRSTTIME_TAG,
+                             GINT_TO_POINTER ()0x01);
 	gtk_widget_show_all (bogus_item);
 	gtk_menu_append (GTK_MENU (submenu), bogus_item);
       }
@@ -659,8 +661,10 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	    invalid_argument ("unknown menu cascade keyword", cascade);
 	}
 
-      gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG, STORE_LISP_IN_VOID (desc));
-      gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_FILTER_TAG, STORE_LISP_IN_VOID (hook_fn));
+      gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG,
+                           STORE_LISP_IN_VOID (desc));
+      gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_FILTER_TAG,
+                           STORE_LISP_IN_VOID (hook_fn));
 
       if ((!NILP (config_tag)
 	   && NILP (Fmemq (config_tag, Vmenubar_configuration)))
@@ -691,7 +695,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       if (id)
 	{
 	  /* If the menu item had a GUI_ID that means it was a filter menu */
-	  __remove_gcpro_by_id (id);
+	  __remove_gcpro_by_id (id, NULL);
 	  gtk_signal_disconnect_by_func (GTK_OBJECT (reuse),
 					 GTK_SIGNAL_FUNC (__activate_menu),
 					 (gpointer) 0x01 );
@@ -718,16 +722,16 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       GUI_ID id = new_gui_id ();
 
       gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_GUIID_TAG,
-			   (gpointer) id);
+                           GUINT_TO_POINTER (id));
 
       /* Make sure we gcpro the menu descriptions */
       gcpro_popup_callbacks (id, desc);
       gtk_object_weakref (GTK_OBJECT (menu_item), __remove_gcpro_by_id,
-			  (gpointer) id);
+			  GUINT_TO_POINTER (id));
 
       gtk_signal_connect (GTK_OBJECT (menu_item), "activate",
 			  GTK_SIGNAL_FUNC (__activate_menu),
-			  (gpointer) 0x01);
+			  GUINT_TO_POINTER (0x01));
     }
 
   return (menu_item);
@@ -1234,8 +1238,8 @@ create_menubar_widget (struct frame *f)
 		      GTK_SIGNAL_FUNC (run_menubar_hook), NULL);
 
   FRAME_GTK_MENUBAR_WIDGET (f) = menubar;
-  gtk_object_set_data (GTK_OBJECT (menubar), XEMACS_MENU_GUIID_TAG, (gpointer) id);
-  gtk_object_weakref (GTK_OBJECT (menubar), __remove_gcpro_by_id, (gpointer) id);
+  gtk_object_set_data (GTK_OBJECT (menubar), XEMACS_MENU_GUIID_TAG, GUINT_TO_POINTER (id));
+  gtk_object_weakref (GTK_OBJECT (menubar), __remove_gcpro_by_id, GUINT_TO_POINTER (id)), NULL);
 }
 
 static int
@@ -1457,7 +1461,7 @@ See the definition of `popup-menu' for more information on the format of MENU.
 {
   GtkWidget *w = menu_descriptor_to_widget (menu, NULL);
 
-  return (w ? build_gtk_object (GTK_OBJECT (w)) : Qnil);
+  return (w ? build_gtk_object (G_OBJECT (w)) : Qnil);
 }
 
 

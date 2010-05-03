@@ -689,7 +689,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     Extbyte *path;
     const Extbyte *format;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
-    const Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
+    Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
     Extbyte *locale_end;
 
     if (STRINGP (Vx_app_defaults_directory) &&
@@ -720,28 +720,26 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     if (!access (path, R_OK))
       XrmCombineFileDatabase (path, &db, False);
 
-    if ((locale_end = strchr(locale, '.'))) {
-      *locale_end = '\0';
-      sprintf (path, format, data_dir, locale);
+    if ((locale_end = strchr (locale, '.')))
+      {
+	*locale_end = '\0';
+	sprintf (path, format, data_dir, locale);
 
-      if (!access (path, R_OK))
-	XrmCombineFileDatabase (path, &db, False);
-    }
+	if (!access (path, R_OK))
+	  XrmCombineFileDatabase (path, &db, False);
+      }
 
-    if ((locale_end = strchr(locale, '_'))) {
-      *locale_end = '\0';
-      sprintf (path, format, data_dir, locale);
+    if ((locale_end = strchr (locale, '_')))
+      {
+	*locale_end = '\0';
+	sprintf (path, format, data_dir, locale);
 
-      if (!access (path, R_OK))
-	XrmCombineFileDatabase (path, &db, False);
-    }
+	if (!access (path, R_OK))
+	  XrmCombineFileDatabase (path, &db, False);
+      }
 
   no_data_directory:
-    {
-      /* Cast off const for G++ 4.3. */
-      Extbyte *temp = (Extbyte *) locale;
-      xfree (temp);
-    }
+    xfree (locale);
  }
 #endif /* MULE */
 

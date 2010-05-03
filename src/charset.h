@@ -1,7 +1,7 @@
 /* Header for charsets.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -554,6 +554,46 @@ breakup_ichar_1 (Ichar c, Lisp_Object *charset, int *c1, int *c2)
 
 #define BREAKUP_ICHAR(c, charset, c1, c2) \
   breakup_ichar_1 (c, &(charset), &(c1), &(c2))
+
+/* Forward compatibility from ben-unicode-internal: Convert a charset
+   codepoint into a character in the internal string representation.
+   Return number of bytes written out.  FAIL controls failure mode when
+   charset conversion to Unicode is not possible (unused as of yet). */
+DECLARE_INLINE_HEADER (
+Bytecount
+charset_codepoint_to_itext (Lisp_Object charset, int c1, int c2, Ibyte *ptr,
+			    enum converr UNUSED (fail))
+)
+{
+  Ichar ch;
+
+  if (EQ (charset, Vcharset_ascii))
+    {
+      ptr[0] = (Ibyte) c2;
+      return 1;
+    }
+
+  ch = make_ichar (charset, c1, c2);
+
+  /* We can't rely on the converted character being non-ASCII.  For
+     example, JISX0208 codepoint (33, 64) == Unicode 0x5C (ASCII
+     backslash). */
+  return set_itext_ichar (ptr, ch);
+}
+
+/* Forward compatibility from ben-unicode-internal */
+
+DECLARE_INLINE_HEADER (
+void
+buffer_itext_to_charset_codepoint (const Ibyte *ptr,
+				   struct buffer *UNUSED (buf),
+				   Lisp_Object *charset, int *c1, int *c2,
+				   enum converr UNUSED (fail))
+)
+{
+  Ichar ch = itext_ichar (ptr);
+  breakup_ichar_1 (ch, charset, c1, c2);
+}
 
 void get_charset_limits (Lisp_Object charset, int *low, int *high);
 int ichar_to_unicode (Ichar chr);
