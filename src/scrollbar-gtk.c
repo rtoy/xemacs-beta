@@ -82,8 +82,8 @@ static gboolean
 scrollbar_drag_hack_cb (GtkWidget *UNUSED (w), GdkEventButton *UNUSED (ev),
 			gpointer v)
 {
-  vertical_drag_in_progress = (int) v;
-  inhibit_slider_size_change = (int) v;
+  vertical_drag_in_progress = GPOINTER_TO_INT (v);
+  inhibit_slider_size_change = GPOINTER_TO_INT (v);
   return (FALSE);
 }
 
@@ -282,8 +282,8 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
              scrolls around in the XEmacs frame manually.  So we
              update the slider manually here.
 	  */
-	  if (!modified_p)
-	    gtk_range_slider_update (GTK_RANGE (wid));
+	  if (!modified_p) 
+	    gtk_range_set_adjustment (GTK_RANGE (wid), adj);
 
 	  instance->scrollbar_instance_changed = 0;
 	}
@@ -398,10 +398,10 @@ static gboolean
 scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
 {
   /* This function can GC */
-  int vertical = (int) user_data;
+  int vertical = GPOINTER_TO_INT (user_data);
   struct frame *f = (struct frame*) gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_FRAME_IDENTIFIER);
   struct scrollbar_instance *instance;
-  GUI_ID id = (GUI_ID) gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER);
+  GUI_ID id = GPOINTER_TO_UINT (gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER));
   Lisp_Object win, frame;
   struct window_mirror *mirror;
   Lisp_Object event_type = Qnil;
@@ -420,7 +420,8 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
     return(FALSE);
   instance = vertical ? mirror->scrollbar_vertical_instance : mirror->scrollbar_horizontal_instance;
   frame = WINDOW_FRAME (XWINDOW (win));
-
+#if 0
+-- jsparkes
   inhibit_slider_size_change = 0;
   switch (GTK_RANGE (SCROLLBAR_GTK_WIDGET (instance))->scroll_type)
     {
@@ -449,7 +450,7 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
     default:
       ABORT();
     }
-
+#endif
   signal_special_gtk_user_event (frame, event_type, event_data);
 
   return (TRUE);

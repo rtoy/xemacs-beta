@@ -16,33 +16,39 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 Boston, MA 02111-1301, USA.  */
 
-GtkType GTK_TYPE_ARRAY = 0;
-GtkType GTK_TYPE_STRING_ARRAY = 0;
-GtkType GTK_TYPE_FLOAT_ARRAY = 0;
-GtkType GTK_TYPE_INT_ARRAY = 0;
-GtkType GTK_TYPE_LISTOF = 0;
-GtkType GTK_TYPE_STRING_LIST = 0;
-GtkType GTK_TYPE_OBJECT_LIST = 0;
-GtkType GTK_TYPE_GDK_GC = 0;
+GType GTK_TYPE_STRING_GARRAY = 0;
+GType GTK_TYPE_FLOAT_GARRAY = 0;
+GType GTK_TYPE_INT_GARRAY = 0;
+GType GTK_TYPE_SLIST = 0;
+GType GTK_TYPE_STRING_SLIST = 0;
+GType GTK_TYPE_OBJECT_SLIST = 0;
 
 #include "console-gtk.h"
 #include "fontcolor-gtk-impl.h"
+#include "frame.h"
 
-static GtkType
-xemacs_type_register (const gchar *name, GtkType parent)
+int lisp_to_gtk_type (Lisp_Object obj, GValue *arg);
+
+static GType
+xemacs_type_register (const gchar *name, GType parent)
 {
-  GtkType type_id;
-  GtkTypeInfo info;
+  GType type_id;
+  GTypeInfo info;
 
-  info.type_name = (gchar *) name;
-  info.object_size = 0;
-  info.class_size = 0;
-  info.class_init_func = NULL;
-  info.object_init_func = NULL;
-  info.reserved_1 = NULL;
-  info.reserved_2 = NULL;
+  info.class_size = 0;  //?
+  info.base_init = NULL;
+  info.base_finalize = NULL;
 
-  type_id = gtk_type_unique (parent, &info);
+  info.class_init = NULL;
+  info.class_finalize = NULL;
+  info.class_data = 0;
+
+  info.instance_size = 0;
+  info.n_preallocs = 0;
+  info.instance_init = 0;
+  info.value_table = 0;
+
+  type_id = g_type_register_static (parent, name, &info, (GTypeFlags)0);
 
   return (type_id);
 }
@@ -50,25 +56,47 @@ xemacs_type_register (const gchar *name, GtkType parent)
 static void
 xemacs_init_gtk_classes (void)
 {
-  if (!GTK_TYPE_ARRAY)
+#if 0
+  /* These are all stored as GValue or GValueArray */
+  /* Why aren't GLib types GOBjects? */
+  if (!GTK_TYPE_GARRAY)
     {
-      GTK_TYPE_ARRAY = xemacs_type_register ("GtkArrayOf", 0);
-      GTK_TYPE_STRING_ARRAY = xemacs_type_register ("GtkArrayOfString", GTK_TYPE_ARRAY);
-      GTK_TYPE_FLOAT_ARRAY = xemacs_type_register ("GtkArrayOfFloat", GTK_TYPE_ARRAY);
-      GTK_TYPE_INT_ARRAY = xemacs_type_register ("GtkArrayOfInteger", GTK_TYPE_ARRAY);
-      GTK_TYPE_LISTOF = xemacs_type_register ("GtkListOf", 0);
+      GTK_TYPE_GARRAY = xemacs_type_register ("GArray", 0);
+      GTK_TYPE_LIST = xemacs_type_register ("GSList", 0);
       GTK_TYPE_STRING_LIST = xemacs_type_register ("GtkListOfString", GTK_TYPE_LISTOF);
       GTK_TYPE_OBJECT_LIST = xemacs_type_register ("GtkListOfObject", GTK_TYPE_LISTOF);
-      GTK_TYPE_GDK_GC = xemacs_type_register ("GdkGC", GTK_TYPE_BOXED);
   }
+#endif
 }
 
 static void
-xemacs_list_to_gtklist (Lisp_Object obj, GtkArg *arg)
+xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
 {
+  int len;
+  GValueArray *array;
   CHECK_LIST (obj);
 
-  if (arg->type == GTK_TYPE_STRING_LIST)
+  /*
+   * The list is converted into an array.   I'll figure out
+   * how to a make a real list later, perhaps.  -jsparkes
+   */
+  GET_LIST_LENGTH (obj, len);
+  //array = g_array_new (0, TRUE, sizeof (GValue *));  // XXX leak?
+  g_value_array_new (len);
+
+  SAFE_LIST_LOOP_2 (elt, obj)
+    {
+      GValue tmp, *copy;
+      lisp_to_gtk_type (elt, &tmp);
+      g_value_copy (&tmp, copy);/* leak XXX */
+      g_value_array_append (array, copy);
+    }
+
+  g_value_init (arg, G_TYPE_VALUE_ARRAY);
+  g_value_set_boxed (arg, array);
+
+#if 0
+  //if (*arg == GTK_TYPE_POINTER)
     {
       Lisp_Object temp = obj;
       GList *strings = NULL;
@@ -87,10 +115,14 @@ xemacs_list_to_gtklist (Lisp_Object obj, GtkArg *arg)
 	  temp = XCDR (temp);
 	}
 
-      GTK_VALUE_POINTER (*arg) = strings;
+
+      arg = strings;
+
     }
-  else if (arg->type == GTK_TYPE_OBJECT_LIST)
+    //  else if (*arg == GTK_TYPE_OBJECT_LIST)
     {
+      ABORT();
+
       Lisp_Object temp = obj;
       GList *objects = NULL;
 
@@ -110,18 +142,20 @@ xemacs_list_to_gtklist (Lisp_Object obj, GtkArg *arg)
 
       GTK_VALUE_POINTER (*arg) = objects;
     }
-  else
+    else 
     {
       ABORT ();
     }
+#endif
+
 }
 
 static void
 __make_gtk_object_mapper (gpointer data, gpointer user_data)
 {
   Lisp_Object *rv = (Lisp_Object *) user_data;
-
-  *rv = Fcons (build_gtk_object (GTK_OBJECT (data)), *rv);
+  assert (G_IS_OBJECT (data));
+  *rv = Fcons (build_gtk_object (G_OBJECT (data)), *rv);
 }
 
 static void
@@ -133,13 +167,13 @@ __make_string_mapper (gpointer data, gpointer user_data)
 }
 
 static Lisp_Object
-xemacs_gtklist_to_list (GtkArg *arg)
+xemacs_gtklist_to_list (GType *arg)
 {
   Lisp_Object rval = Qnil;
-
-  if (GTK_VALUE_POINTER (*arg))
+#if 0
+  if (G_TYPE_IS_ABSTRACT (*arg))
     {
-      if (arg->type == GTK_TYPE_STRING_LIST)
+      if (*arg == GTK_TYPE_STRING_LIST)
 	{
 	  g_list_foreach ((GList*) GTK_VALUE_POINTER (*arg), __make_string_mapper, &rval);
 	}
@@ -152,13 +186,35 @@ xemacs_gtklist_to_list (GtkArg *arg)
 	  ABORT ();
 	}
     }
+#endif
   return (rval);
 }
 
 static void
-xemacs_list_to_array (Lisp_Object obj, GtkArg *arg)
+xemacs_list_to_array (Lisp_Object obj, GValue *arg)
 {
+  int len = 0;
+  GValueArray *array;
+  GValue val;
+
   CHECK_LIST (obj);
+  assert (G_VALUE_TYPE (arg) == G_TYPE_BOXED);
+  g_value_init (arg, G_TYPE_VALUE_ARRAY);
+
+  GET_LIST_LENGTH (obj, len);
+  /* Does g_value_array need to be pre-allocated? */
+  array = g_value_array_new (len);
+
+  LIST_LOOP_3 (elt, obj, tail)
+    {
+      g_value_reset (&val);
+      lisp_to_gtk_type (elt, &val);
+      g_value_array_append (array, &val);
+    }
+
+  g_value_set_boxed (arg, array);
+
+#ifdef JSPARKES
 
 #define FROB(ret_type,check_fn,extract_fn) \
   do {								\
@@ -186,23 +242,24 @@ xemacs_list_to_array (Lisp_Object obj, GtkArg *arg)
     GTK_VALUE_POINTER (*arg) = array;				\
   } while (0);
   
-  if (arg->type == GTK_TYPE_STRING_ARRAY)
+  if (*arg == GTK_TYPE_STRING_ARRAY)
     {
-      FROB (gchar *, CHECK_STRING, (gchar*) XSTRING_DATA);
+      //FROB (gchar *, CHECK_STRING, (gchar*) XSTRING_DATA);
     }
-  else if (arg->type == GTK_TYPE_FLOAT_ARRAY)
+  else if (*arg == GTK_TYPE_FLOAT_ARRAY)
     {
-      FROB (gfloat, CHECK_FLOAT, extract_float);
+      //FROB (gfloat, CHECK_FLOAT, extract_float);
     }
-  else if (arg->type == GTK_TYPE_INT_ARRAY)
+  else if (*arg == GTK_TYPE_INT_ARRAY)
     {
-      FROB (gint, CHECK_INT, XINT);
+      //FROB (gint, CHECK_INT, XINT);
     }
   else
     {
       ABORT ();
     }
 #undef FROB
+#endif
 }
 
 static GdkGC *
@@ -253,7 +310,9 @@ face_to_style (Lisp_Object face)
 	style->bg_pixmap[i] = XIMAGE_INSTANCE_GTK_PIXMAP (pm);
     }
 
+#ifdef JSPARKES
   style->font = FONT_INSTANCE_GTK_FONT (XFONT_INSTANCE (font));
+#endif
 
   return (style);
 }

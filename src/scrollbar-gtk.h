@@ -45,7 +45,7 @@ typedef struct _scrollbar_values
 struct gtk_scrollbar_data
 {
   /* Unique scrollbar identifier and name. */
-  unsigned int id;
+  guint id;
 
   /* Is set if we have already set the backing_store attribute correctly */
   char backing_store_initialized;

@@ -1442,6 +1442,16 @@ do {						\
   memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);	\
 } while (0)
 
+/* Make an alloca'd copy of a Extbyte * */
+#define EXTBYTE_STRING_TO_ALLOCA(p, lval)	\
+do {						\
+  Extbyte **_esta_ = (Extbyte **) &(lval);	\
+  const Extbyte *_esta_2 = (p);			\
+  Bytecount _esta_3 = strlen (_esta_2);		\
+  *_esta_ = alloca_extbytes (1 + _esta_3);	\
+  memcpy (*_esta_, _esta_2, 1 + _esta_3);	\
+} while (0)
+
 /* ----------------- convenience functions for reallocation --------------- */
 
 #define XREALLOC_ARRAY(ptr, type, len) \
