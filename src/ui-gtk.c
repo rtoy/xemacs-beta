@@ -1711,7 +1711,11 @@ int lisp_to_gtk_type (Lisp_Object obj, GValue *arg)
 	}
       break;
     case G_TYPE_ENUM:
-      g_value_set_enum (arg, symbol_to_gtk_enum (obj, arg));
+      {
+        GValue enumValue;
+        gint val = symbol_to_gtk_enum (obj, &enumValue);
+        g_value_set_enum (arg, val);
+      }
       break;
     case G_TYPE_FLAGS:
       /* Convert a lisp symbol to a GTK enum */
@@ -2188,8 +2192,10 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg)
 
   return (0);
 }
-#endif
 
+#endif
+ 
+/* This is used in glyphs-gtk.c as well */
 static Lisp_Object
 get_enumeration (const GValue *arg)
 {
