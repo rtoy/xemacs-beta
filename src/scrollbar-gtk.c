@@ -82,8 +82,8 @@ static gboolean
 scrollbar_drag_hack_cb (GtkWidget *UNUSED (w), GdkEventButton *UNUSED (ev),
 			gpointer v)
 {
-  vertical_drag_in_progress = (int) v;
-  inhibit_slider_size_change = (int) v;
+  vertical_drag_in_progress = GPOINTER_TO_INT (v);
+  inhibit_slider_size_change = GPOINTER_TO_INT (v);
   return (FALSE);
 }
 
@@ -398,10 +398,10 @@ static gboolean
 scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
 {
   /* This function can GC */
-  int vertical = (int) user_data;
+  int vertical = GPOINTER_TO_INT (user_data);
   struct frame *f = (struct frame*) gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_FRAME_IDENTIFIER);
   struct scrollbar_instance *instance;
-  GUI_ID id = (GUI_ID) gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER);
+  GUI_ID id = GPOINTER_TO_UINT (gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER));
   Lisp_Object win, frame;
   struct window_mirror *mirror;
   Lisp_Object event_type = Qnil;
