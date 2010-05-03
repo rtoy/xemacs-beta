@@ -1693,9 +1693,11 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 		 height, x, y);
 #else /* THIS_IS_GTK */
       USED (dpy);
+      #ifdef JSPARKES
       gdk_draw_pixmap (GDK_DRAWABLE (x_win), gc,
 		       IMAGE_INSTANCE_GTK_PIXMAP (p),
 		       xoffset, yoffset, x, y, width, height);
+      #endif
 #endif /* THIS_IS_GTK */
     }
   else
@@ -1706,9 +1708,11 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 		  xoffset, yoffset, width, height, x, y, 1L);
 #else /* THIS_IS_GTK */
       USED (dpy);
+      #ifdef JSPARKES
       our_draw_bitmap (GDK_DRAWABLE (x_win), gc,
 		       IMAGE_INSTANCE_GTK_PIXMAP (p),
 		       xoffset, yoffset, x, y, width, height);
+      #endif
 #endif /* THIS_IS_GTK */
     }
 }
