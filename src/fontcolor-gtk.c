@@ -257,7 +257,6 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   f->ascent = gf->ascent;
   f->descent = gf->descent;
   f->height = gf->ascent + gf->descent;
-  f->height = gf->ascent;
 
   /* Now lets figure out the width of the font.
      We could use a longer string and get the averaage length */
