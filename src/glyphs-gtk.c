@@ -861,7 +861,8 @@ void init_image_instance_from_gdk_pixmap (struct Lisp_Image_Instance *ii,
 
   gtk_initialize_pixmap_image_instance (ii, IMAGE_COLOR_PIXMAP);
 
-  gdk_window_get_geometry (gdk_pixmap, NULL, NULL, &width, &height, &depth);
+  depth = gdk_drawable_get_depth (pixmap);
+  gdk_drawable_get_size (pixmap, &w, &h);
 
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) = Qnil;
   IMAGE_INSTANCE_GTK_PIXMAP (ii) = gdk_pixmap;
@@ -1249,7 +1250,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   int force_mono;
   gint w, h;
   struct gcpro gcpro1, gcpro2, gcpro3;
-  const Binbyte * volatile dstring;
+  const Extbyte * volatile dstring;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
     gui_error ("Not a Gtk device", device);
@@ -1282,8 +1283,6 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 					   &nsymbols);
   assert (!NILP (data));
 
-  ABORT ();
-#if 0
   dstring = LISP_STRING_TO_EXTERNAL (data, Qbinary);
 
   /*
@@ -1335,7 +1334,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   if (!pixmap)
     signal_image_error ("Error reading pixmap", data);
 
-  gdk_window_get_geometry (pixmap, NULL, NULL, &w, &h, &depth);
+  depth = gdk_drawable_get_depth (pixmap);
+  gdk_drawable_get_size (pixmap, &w, &h);
 
   IMAGE_INSTANCE_GTK_PIXMAP (ii) = pixmap;
   IMAGE_INSTANCE_PIXMAP_MASK (ii) = mask;
@@ -1370,7 +1370,6 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     default:
       ABORT ();
     }
-#endif
   UNGCPRO;
 }
 #endif /* HAVE_XPM */
@@ -1497,11 +1496,12 @@ extern gint symbol_to_gtk_enum (Lisp_Object, GType);
 static guint resource_name_to_resource (Lisp_Object name,
 					enum image_instance_type type)
 {
-#if 0
   if (type == IMAGE_POINTER)
-    return (symbol_to_gtk_enum (name, GTK_TYPE_GDK_CURSOR_TYPE));
+    {
+      // return (symbol_to_gtk_enum (name, G_TYPE_ENUM));
+      return 1;
+    }
   else
-#endif
     return (0);
 }
 
@@ -1510,7 +1510,7 @@ resource_symbol_to_type (Lisp_Object data)
 {
   if (EQ (data, Qcursor))
     return IMAGE_POINTER;
-#if 0
+#ifdef JSPARKES
   else if (EQ (data, Qicon))
     return IMAGE_ICON;
   else if (EQ (data, Qbitmap))

@@ -234,12 +234,12 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 			      Lisp_Object UNUSED (device), Error_Behavior errb)
 {
   GdkFont *gf;
-  XFontStruct *xf;
   const char *extname;
 
   extname = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
 
-  //gf = gdk_font_load_for_display (extname);
+  /* Load font or fontset? */
+  /* gf = gdk_font_load_for_display (extname); --jsparkes */
   gf = gdk_font_load (extname);
 
   if (!gf)
@@ -249,77 +249,22 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
       return 0;
     }
 
-  xf = (XFontStruct*) GDK_FONT_XFONT (gf);
-
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   f->data = xnew (struct gtk_font_instance_data);
   FONT_INSTANCE_GTK_FONT (f) = gf;
+  /* Kludge until we support Pango. --jsparkes */
   f->ascent = gf->ascent;
   f->descent = gf->descent;
   f->height = gf->ascent + gf->descent;
+  f->height = gf->ascent;
 
-  /* Now lets figure out the width of the font */
-  {
-    /* following change suggested by Ted Phelps <phelps@dstc.edu.au> */
-    unsigned int def_char = 'n'; /*xf->default_char;*/
-    unsigned int byte1, byte2;
-
-  once_more:
-    byte1 = def_char >> 8;
-    byte2 = def_char & 0xFF;
-
-    if (xf->per_char)
-      {
-	/* Old versions of the R5 font server have garbage (>63k) as
-	   def_char. 'n' might not be a valid character. */
-	if (byte1 < xf->min_byte1         ||
-	    byte1 > xf->max_byte1         ||
-	    byte2 < xf->min_char_or_byte2 ||
-	    byte2 > xf->max_char_or_byte2)
-	  f->width = 0;
-	else
-	  f->width = xf->per_char[(byte1 - xf->min_byte1) *
-				  (xf->max_char_or_byte2 -
-				   xf->min_char_or_byte2 + 1) +
-				  (byte2 - xf->min_char_or_byte2)].width;
-      }
-    else
-      f->width = xf->max_bounds.width;
-
-    /* Some fonts have a default char whose width is 0.  This is no good.
-       If that's the case, first try 'n' as the default char, and if n has
-       0 width too (unlikely) then just use the max width. */
-    if (f->width == 0)
-      {
-	if (def_char == xf->default_char)
-	  f->width = xf->max_bounds.width;
-	else
-	  {
-	    def_char = xf->default_char;
-	    goto once_more;
-	  }
-      }
-  }
-
-  /* If all characters don't exist then there could potentially be
-     0-width characters lurking out there.  Not setting this flag
-     trips an optimization that would make them appear to have width
-     to redisplay.  This is bad.  So we set it if not all characters
-     have the same width or if not all characters are defined.
-     */
-  /* #### This sucks.  There is a measurable performance increase
-     when using proportional width fonts if this flag is not set.
-     Unfortunately so many of the fucking X fonts are not fully
-     defined that we could almost just get rid of this damn flag and
-     make it an assertion. */
-  f->proportional_p = (xf->min_bounds.width != xf->max_bounds.width ||
-		       (/* x_handle_non_fully_specified_fonts */ 0 &&
-			!xf->all_chars_exist));
-#if 0
-  f->width = gdk_char_width (gf, 'n');
-  f->proportional_p = (gdk_char_width (gf, '|') != gdk_char_width (gf, 'W')) ? 1 : 0;
-#endif
+  /* Now lets figure out the width of the font.
+     We could use a longer string and get the averaage length */
+  /* f->width = gdk_text_width (gf, "abcdefghijklmnopqrstuvwxyz", 26)/26; */
+  f->width = gdk_text_width (gf, "n", 1); /* em or en? */
+  f->proportional_p = (gdk_text_width (gf, "|", 1) !=
+                       gdk_text_width (gf, "W", 1));
   return 1;
 }
 
