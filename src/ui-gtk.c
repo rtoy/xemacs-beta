@@ -56,8 +56,8 @@ static GHashTable *dll_cache;
 
 Lisp_Object gtk_type_to_lisp (GValue *arg);
 int lisp_to_gtk_type (Lisp_Object obj, GValue *arg);
-int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg);
 #if 0
+int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg);
 void describe_gtk_arg (GType *arg);
 #endif
 gint symbol_to_gtk_enum (Lisp_Object obj, GValue *);
@@ -1102,7 +1102,8 @@ __internal_callback_marshal (GObject *obj, gpointer data, guint n_args,
   signal_fake_event ();
 
   if (G_VALUE_TYPE (&args[n_args]) != G_TYPE_NONE)
-    lisp_to_gtk_ret_type (rval, &args[n_args]);
+    //lisp_to_gtk_ret_type (rval, &args[n_args]);
+    lisp_to_gtk_type (rval, &args[n_args]);
 
   UNGCPRO;
 }
@@ -1541,7 +1542,7 @@ void describe_gtk_arg (GtkParamSpec *arg)
 }
 #endif
 
-Lisp_Object gtk_type_to_lisp (const GValue *arg)
+Lisp_Object gtk_type_to_lisp (GValue *arg)
 {
   if (G_TYPE_IS_FUNDAMENTAL (G_VALUE_TYPE (arg)))
     {
@@ -1912,7 +1913,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GValue *arg)
 */
 int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg)
 {
-  switch (GTK_FUNDAMENTAL_TYPE (arg->type))
+  switch (G_TYPE_FUNDAMENTAL (G_VALUE_TYPE (arg)))
     {
       /* flag types */
     case G_TYPE_NONE:
@@ -1923,7 +1924,8 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg)
 
 	CHECK_CHAR_COERCE_INT (obj);
 	c = XCHAR (obj);
-	*(GTK_RETLOC_CHAR (*arg)) = c;
+	//*(GTK_RETLOC_CHAR (*arg)) = c;
+        g_value_set_char (arg, c);
       }
       break;
     case G_TYPE_UCHAR:
@@ -1932,11 +1934,13 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg)
 
 	CHECK_CHAR_COERCE_INT (obj);
 	c = XCHAR (obj);
-	*(GTK_RETLOC_CHAR (*arg)) = c;
+	//*(GTK_RETLOC_CHAR (*arg)) = c;
+        g_value_set_uchar (arg, (unsigned char) c);
       }
       break;
     case G_TYPE_BOOLEAN:
-      *(GTK_RETLOC_BOOL (*arg)) = NILP (obj) ? FALSE : TRUE;
+      //*(GTK_RETLOC_BOOL (*arg)) = NILP (obj) ? FALSE : TRUE;
+      g_value_set_boolean (arg, NILP (obj) ? FALSE : TRUE);
       break;
     case G_TYPE_INT:
     case G_TYPE_UINT:
@@ -1947,7 +1951,8 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg)
              gint in the header files, but actually treat it like a
              bool.  *sigh*
 	  */
-	  *(GTK_RETLOC_INT(*arg)) = NILP (obj) ? 0 : 1;
+	 // *(GTK_RETLOC_INT(*arg)) = NILP (obj) ? 0 : 1;
+          g_value_set_int (arg, NILP (obj) ? 0 : 1);
 	}
       else
 	{
@@ -2183,10 +2188,8 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg)
 
   return (0);
 }
-
 #endif
- 
-/* This is used in glyphs-gtk.c as well */
+
 static Lisp_Object
 get_enumeration (const GValue *arg)
 {

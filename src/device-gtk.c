@@ -107,7 +107,7 @@ decode_gtk_device (Lisp_Object device)
 extern Lisp_Object
 xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w);
 
-extern Lisp_Object __get_gtk_font_truename (PangoFontDescription *gdk_font,
+extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font,
 					    int expandp);
 
 #define convert_font(f) __get_gtk_font_truename (f, 0)
@@ -668,7 +668,8 @@ Get the style information for a Gtk device.
   FROB_COLOR (base, "base");
 #undef FROB_COLOR
 
-  result = nconc2 (result, list2 (Qfont, convert_font (style->font_desc)));
+  result = nconc2 (result, list2 (Qfont,
+                                  convert_font (gtk_style_get_font (style))));
 
 #define FROB_PIXMAP(state) (style->rc_style->bg_pixmap_name[state] ? build_cistring (style->rc_style->bg_pixmap_name[state]) : Qnil)
 
