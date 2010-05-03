@@ -107,7 +107,8 @@ decode_gtk_device (Lisp_Object device)
 extern Lisp_Object
 xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w);
 
-extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
+extern Lisp_Object __get_gtk_font_truename (PangoFontDescription *gdk_font,
+					    int expandp);
 
 #define convert_font(f) __get_gtk_font_truename (f, 0)
 
@@ -399,14 +400,15 @@ gtk_delete_device (struct device *d)
 const char *
 gtk_event_name (GdkEventType event_type)
 {
-  GtkEnumValue *vals = gtk_type_enum_get_values (GTK_TYPE_GDK_EVENT_TYPE);
+  //GtkEnumValue *vals = gtk_type_enum_get_values (GTK_TYPE_GDK_EVENT_TYPE);
 
-  while (vals && ((GdkEventType)(vals->value) != event_type)) vals++;
+  //while (vals && ((GdkEventType)(vals->value) != event_type)) vals++;
 
-  if (vals)
-    return (vals->value_nick);
+  //if (vals)
+  //return (vals->value_nick);
 
-  return (NULL);
+  //return (NULL);
+  return "GdkEvent";
 }
 
 
@@ -666,7 +668,7 @@ Get the style information for a Gtk device.
   FROB_COLOR (base, "base");
 #undef FROB_COLOR
 
-  result = nconc2 (result, list2 (Qfont, convert_font (style->font)));
+  result = nconc2 (result, list2 (Qfont, convert_font (style->font_desc)));
 
 #define FROB_PIXMAP(state) (style->rc_style->bg_pixmap_name[state] ? build_cistring (style->rc_style->bg_pixmap_name[state]) : Qnil)
 

@@ -239,6 +239,7 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 
   extname = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
 
+  //gf = gdk_font_load_for_display (extname);
   gf = gdk_font_load (extname);
 
   if (!gf)
@@ -459,9 +460,16 @@ valid_font_name_p (Display *dpy, char *name)
 Lisp_Object
 __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
 {
-  Display *dpy = GDK_FONT_XDISPLAY (gdk_font);
-  GSList *names = ((GdkFontPrivate *) gdk_font)->names;
+  //Display *dpy = GDK_FONT_XDISPLAY (gdk_font);
+  //GSList *names = ((GdkFontPrivate *) gdk_font)->names;
   Lisp_Object font_name = Qnil;
+  char *name = (char *) gdk_x11_font_get_name (gdk_font);
+
+  //name = GDK_FONT_X_FONT (gdk_font);
+  if (name != NULL)
+    font_name = build_cistring (name);
+
+#if 0
 
   while (names)
     {
@@ -492,6 +500,7 @@ __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
 	}
       names = names->next;
     }
+#endif
   return (font_name);
 }
 

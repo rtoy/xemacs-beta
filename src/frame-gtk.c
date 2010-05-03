@@ -681,7 +681,7 @@ delete_event_cb (GtkWidget *UNUSED (w), GdkEvent *UNUSED (ev),
 }
 
 extern gboolean emacs_shell_event_handler (GtkWidget *wid, GdkEvent *event, gpointer closure);
-extern Lisp_Object build_gtk_object (GtkObject *obj);
+extern Lisp_Object build_gtk_object (GObject *obj);
 
 #ifndef GNOME_IS_APP
 #define GNOME_IS_APP(x) 0
@@ -935,9 +935,9 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   gtk_widget_set_name (container, "XEmacs::container");
   gtk_widget_set_name (text, "XEmacs::text");
 
-  FRAME_GTK_LISP_WIDGETS(f)[0] = build_gtk_object (GTK_OBJECT (shell));
-  FRAME_GTK_LISP_WIDGETS(f)[1] = build_gtk_object (GTK_OBJECT (container));
-  FRAME_GTK_LISP_WIDGETS(f)[2] = build_gtk_object (GTK_OBJECT (text));
+  FRAME_GTK_LISP_WIDGETS(f)[0] = build_gtk_object (G_OBJECT (shell));
+  FRAME_GTK_LISP_WIDGETS(f)[1] = build_gtk_object (G_OBJECT (container));
+  FRAME_GTK_LISP_WIDGETS(f)[2] = build_gtk_object (G_OBJECT (text));
 
   gtk_widget_realize (shell);
 }

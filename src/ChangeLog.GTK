@@ -354,7 +354,8 @@
 	* ui-gtk.c (lisp_to_gtk_type): Know how to deal with
 	GTK_TYPE_GDK_GC.
 
-	* gtk-glue.c: Need to defien a GTK type for GdkGC so that we can
+	* gtk-glue.c: Need to defien a GTK type for 
+	GdkGC so that we can
 	import all the GDK drawing primitives.
 	(face_to_gc): New function to convert a face object to a GC.
 

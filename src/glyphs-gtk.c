@@ -155,6 +155,10 @@ Lisp_Object Qgtk_widget_instantiate_internal, Qgtk_widget_property_internal;
 Lisp_Object Qgtk_widget_redisplay_internal, Qgtk_widget_set_style;
 #endif
 
+#ifdef HAVE_GTK
+Lisp_Object Vgtk_cursor_names;
+#endif
+
 
 /************************************************************************/
 /*                      image instance methods                          */
@@ -594,6 +598,30 @@ locate_pixmap_file (Lisp_Object name)
 /************************************************************************/
 /*                           cursor functions                           */
 /************************************************************************/
+
+#ifdef HAVE_GTK
+/*
+ * Cursor names are stored a list, since they are retrieved by name.
+ * The first one is default. We initialize a few useful ones here,
+ * the rest are done in lisp.
+ */
+static void 
+check_cursor_names ()
+{
+  if (NILP (Vgtk_cursor_names))
+    {
+      Lisp_Object names = Qnil;
+      Vgtk_cursor_names = call2 (intern ("make-hashtable"), 
+                                 make_int (101), Qequal);
+      names = Fcons (build_ascstring ("x-cursor"), names);
+      names = Fcons (build_ascstring ("arrow"), names);
+      names = Fcons (build_ascstring ("dot"), names);
+      names = Fcons (build_ascstring ("xterm"), names);
+
+      Vgtk_cursor_names = Fnreverse (names);
+    }
+}
+#endif
 
 /* Check that this server supports cursors of size WIDTH * HEIGHT.  If
    not, signal an error.  INSTANTIATOR is only used in the error
@@ -1254,6 +1282,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 					   &nsymbols);
   assert (!NILP (data));
 
+  ABORT ();
+#if 0
   dstring = LISP_STRING_TO_EXTERNAL (data, Qbinary);
 
   /*
@@ -1340,7 +1370,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     default:
       ABORT ();
     }
-
+#endif
   UNGCPRO;
 }
 #endif /* HAVE_XPM */
@@ -1462,14 +1492,16 @@ gtk_resource_possible_dest_types (void)
   return IMAGE_POINTER_MASK | IMAGE_COLOR_PIXMAP_MASK;
 }
 
-extern guint symbol_to_enum (Lisp_Object, GtkType);
+extern gint symbol_to_gtk_enum (Lisp_Object, GType);
 
 static guint resource_name_to_resource (Lisp_Object name,
 					enum image_instance_type type)
 {
+#if 0
   if (type == IMAGE_POINTER)
-    return (symbol_to_enum (name, GTK_TYPE_GDK_CURSOR_TYPE));
+    return (symbol_to_gtk_enum (name, GTK_TYPE_GDK_CURSOR_TYPE));
   else
+#endif
     return (0);
 }
 
@@ -1843,6 +1875,7 @@ static GdkCursorType
 cursor_name_to_index (const char *name)
 {
     int i;
+#if 0
     static char *the_gdk_cursors[GDK_NUM_GLYPHS];
 
     if (!the_gdk_cursors[GDK_BASED_ARROW_UP])
@@ -1906,6 +1939,7 @@ cursor_name_to_index (const char *name)
 	  return (GdkCursorType) i;
 	}
     }
+#endif
     return (GdkCursorType) -1;
 }
 
@@ -2571,7 +2605,7 @@ static void gtk_tab_control_callback(GtkNotebook *notebook,
 	return;
       frame = wrap_frame (f);
 
-      id             = (int) gtk_object_get_data(GTK_OBJECT(page->child),
+      //id             = (int) gtk_object_get_data(GTK_OBJECT(page->child),
 						 GTK_DATA_TAB_HASHCODE_IDENTIFIER);
       image_instance = Fgethash(make_int_verify(id),
 				FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE(f), Qnil);
@@ -2774,7 +2808,9 @@ console_type_create_glyphs_gtk (void)
   CONSOLE_HAS_METHOD (gtk, print_image_instance);
   CONSOLE_HAS_METHOD (gtk, finalize_image_instance);
   CONSOLE_HAS_METHOD (gtk, image_instance_equal);
+#if 0
   CONSOLE_HAS_METHOD (gtk, image_instance_hash);
+#endif
   CONSOLE_HAS_METHOD (gtk, colorize_image_instance);
   CONSOLE_HAS_METHOD (gtk, init_image_instance_from_eimage);
   CONSOLE_HAS_METHOD (gtk, locate_pixmap_file);
@@ -2924,6 +2960,13 @@ This is used by the `make-image-instance' function (however, note that if
 the environment variable XBMLANGPATH is set, it is consulted first).
 */ );
   Vgtk_bitmap_file_path = Qnil;
+
+#ifdef HAVE_GTK
+  DEFVAR_LISP ("gtk-cursor-names", &Vgtk_cursor_names /*
+A list of Gtk cursor names and internal integer values.
+*/);
+  Vgtk_cursor_names = Qnil;
+#endif
 }
 
 void

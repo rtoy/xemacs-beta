@@ -55,6 +55,10 @@ Boston, MA 02111-1307, USA.  */
 #define NEED_GCCACHE_H
 #define NEED_GLYPHS_H
 #define NEED_OBJECTS_IMPL_H
+
+#if defined (HAVE_GTK) && !defined (THIS_IS_GTK)
+#define THIS_IS_GTK
+#endif
 #include "console-xlike-inc.h"
 
 #include "sysproc.h" /* for select() */
