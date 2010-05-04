@@ -628,24 +628,17 @@ check_cursor_names ()
    message. */
 
 static void
-check_pointer_sizes (unsigned int UNUSED (width), unsigned int UNUSED (height),
-		     Lisp_Object UNUSED (instantiator))
+check_pointer_sizes (GdkDisplay *display, guint width, guint height,
+		     Lisp_Object instantiator)
 {
-    /* #### BILL!!! There is no way to call XQueryBestCursor from Gdk! */
-#if 0
-  unsigned int best_width, best_height;
-  if (! XQueryBestCursor (DisplayOfScreen (xs), RootWindowOfScreen (xs),
-			  width, height, &best_width, &best_height))
-    /* this means that an X error of some sort occurred (we trap
-       these so they're not fatal). */
-    gui_error ("XQueryBestCursor() failed?", instantiator);
+  guint max_width, max_height;
 
-  if (width > best_width || height > best_height)
+  gdk_display_get_maximal_cursor_size(display, &max_width, &max_height);
+  if (width > max_width || height > max_height)
     signal_ferror_with_frob (Qgui_error, instantiator,
 			     "pointer too large (%dx%d): "
 			     "server requires %dx%d or smaller",
-			     width, height, best_width, best_height);
-#endif
+			     width, height, max_width, max_height);
 }
 
 static void
@@ -728,7 +721,9 @@ image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
   w = IMAGE_INSTANCE_PIXMAP_WIDTH (ii);
   h = IMAGE_INSTANCE_PIXMAP_HEIGHT (ii);
 
-  check_pointer_sizes (w, h, instantiator);
+  check_pointer_sizes (gtk_widget_get_display
+                       (DEVICE_GTK_APP_SHELL (XDEVICE (device))),
+                       w, h, instantiator);
 
   /* If the loaded pixmap has colors allocated (meaning it came from an
      XPM file), then use those as the default colors for the cursor we
@@ -1072,7 +1067,8 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	GdkColor fg_color, bg_color;
 	GdkPixmap *source;
 
-	check_pointer_sizes (width, height, instantiator);
+	check_pointer_sizes (gdk_drawable_get_display (draw), width, height,
+                             instantiator);
 
 	source = gdk_pixmap_create_from_data (draw, (char *) bits, width, height, 1, &black, &white);
 
