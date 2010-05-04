@@ -1411,6 +1411,51 @@ The cdr is a list of all the magic properties it has.
   return (rval);
 }
 
+
+DEFUN ("g-type-from-name", Fg_type_from_name, 1, 1, 0, /*
+Return the GType of NAME.
+The type is returned as a string, so this is a type validator.
+*/
+       (type_name))
+{
+  CHECK_STRING (type_name);
+  gchar *name = (gchar *)XSTRING_DATA (type_name);
+  return (build_ascstring (g_type_name (g_type_from_name (name))));
+}
+
+DEFUN ("g-object-class-list-properties", Fg_object_class_list_properties, 1, 1, 0, /*
+Return a list of all properties for CLASS name.
+*/
+       (name))
+{
+  GType gt;
+  GObject *obj;
+  Lisp_Object prop_list = Qnil;
+  GParamSpec **props;
+  guint n_props, i;
+  
+  CHECK_STRING (name);
+  gt = g_type_from_name ((gchar *)XSTRING_DATA (name));
+  if (gt == G_TYPE_INVALID)
+    invalid_state ("type does not exist", name);
+                            
+  obj = (GObject *)g_object_newv (gt, 0, NULL);
+  if (obj == NULL)
+    invalid_state("Unable to create GObject of class", name);
+
+  props = g_object_class_list_properties (G_OBJECT_CLASS (obj),
+                                                       &n_props);
+  for (i = 0; i < n_props; i++) 
+    {
+      GValue v;
+      g_value_init (&v, props[i]->value_type);
+      prop_list = Fcons (gtk_type_to_lisp (&v), prop_list);
+    }
+  g_free (props);
+  g_free (obj);
+  return prop_list;
+}
+
 
 void
 ui_gtk_objects_create (void)
@@ -1438,6 +1483,8 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fgtk_fundamental_type);
   DEFSUBR (Fgtk_object_type);
   DEFSUBR (Fgtk_describe_type);
+  DEFSUBR (Fg_type_from_name);
+  DEFSUBR (Fg_object_class_list_properties);
 #ifdef HAVE_WIDGETS
   syms_of_widget_accessors ();
 #endif
