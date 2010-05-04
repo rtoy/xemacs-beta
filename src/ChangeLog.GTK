@@ -2,7 +2,7 @@
 
 	* console-gtk-impl.h (struct gtk_device):
 	* device-gtk.c (gtk_init_device):
-	Add a PangoContext to gtk-device.
+	Add a PangoContext to gtk device.
 
 XXXXXX - too many changes in one big commit to document.
 
