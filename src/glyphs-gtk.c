@@ -1406,7 +1406,7 @@ gtk_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   int i, stattis;
   char *p, *bits, *bp;
   const char * volatile emsg = 0;
-  const char * volatile dstring;
+  char * volatile dstring;
 
   assert (!NILP (data));
 
@@ -1874,16 +1874,15 @@ static char *__downcase (const char *name)
 static GdkCursorType
 cursor_name_to_index (const char *name)
 {
-    int i;
-#if 0
-    static char *the_gdk_cursors[GDK_NUM_GLYPHS];
+    static char *the_gdk_cursors[GDK_LAST_CURSOR];
+    guint i;
 
     if (!the_gdk_cursors[GDK_BASED_ARROW_UP])
     {
 	/* Need to initialize the array */
 	/* Supposedly since this array is static it should be
 	   initialized to NULLs for us, but I'm very paranoid. */
-	for (i = 0; i < GDK_NUM_GLYPHS; i++)
+	for (i = 0; i < GDK_LAST_CURSOR; i++)
 	{
 	    the_gdk_cursors[i] = NULL;
 	}
@@ -1931,7 +1930,7 @@ cursor_name_to_index (const char *name)
 #undef FROB_CURSOR
     }
 
-    for (i = 0; i < GDK_NUM_GLYPHS; i++)
+    for (i = 0; i < GDK_LAST_CURSOR; i++)
     {
 	if (!the_gdk_cursors[i]) continue;
 	if (!strcmp (the_gdk_cursors[i], name))
@@ -1939,7 +1938,6 @@ cursor_name_to_index (const char *name)
 	  return (GdkCursorType) i;
 	}
     }
-#endif
     return (GdkCursorType) -1;
 }
 
