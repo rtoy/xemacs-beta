@@ -1017,7 +1017,7 @@ allocate_emacs_gtk_object_data (void)
 static void
 __notice_object_destruction (GtkObject *UNUSED (obj), gpointer user_data)
 {
-  ungcpro_popup_callbacks ((GUI_ID) user_data);
+  ungcpro_popup_callbacks ((GUI_ID) GPOINTER_TO_UINT (user_data));
 }
 
 Lisp_Object build_gtk_object (GObject *obj)
@@ -1026,7 +1026,7 @@ Lisp_Object build_gtk_object (GObject *obj)
   emacs_gtk_object_data *data = NULL;
   GUI_ID id = 0;
 
-  id = (GUI_ID) g_object_get_data (obj, GTK_DATA_GUI_IDENTIFIER);
+  id = (GUI_ID) GPOINTER_TO_UINT (g_object_get_data (obj , GTK_DATA_GUI_IDENTIFIER));
 
   if (id)
     {
