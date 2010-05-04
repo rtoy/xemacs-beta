@@ -287,7 +287,9 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   DEVICE_GTK_VISUAL (d) = visual;
   DEVICE_GTK_COLORMAP (d) = cmap;
   DEVICE_GTK_DEPTH (d) = visual->depth;
-
+  DEVICE_GTK_CONTEXT (d) = pango_context_new ();
+  assert (DEVICE_GTK_CONTEXT (d) != NULL);
+  
   {
     GtkWidget *w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
@@ -386,7 +388,7 @@ gtk_delete_device (struct device *d)
 	enable_strict_free_check ();
 #endif
     }
-
+  /* g_free(DEVICE_GTK_CONTEXT (d)); */
 #ifndef NEW_GC
   free_gtk_device_struct (d);
 #endif
