@@ -28,7 +28,7 @@
 
 ;; This file is dumped with XEmacs.
 
-(defvar gtk-type-aliases '((GtkType . guint)
+(defvar gtk-type-aliases '((GType . guint)
 			   (GdkAtom . gulong)
 			   (GdkBitmap . GdkWindow)
 			   (time_t    . guint)
@@ -39,7 +39,7 @@
   "An assoc list of aliases for commonly used GTK types that are not
 really part of the object system.")
 
-(defvar gtk-ffi-debug nil
+(defvar gtk-ffi-debug t
   "If non-nil, all functions defined wiht `gtk-import-function' will be checked
 for missing marshallers.")
 
