@@ -1323,7 +1323,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       */
       (bgc ? gdk_draw_text : gdk_draw_text_image)
 	(GDK_DRAWABLE (x_win), FONT_INSTANCE_GTK_FONT (fi), gc, xpos,
-	 dl->ypos, (char *) runs[i].ptr, runs[i].len * runs[i].dimension);
+	 dl->ypos-height, (char *) runs[i].ptr, runs[i].len * runs[i].dimension);
 #endif /* (not) THIS_IS_X */
 	}
 
