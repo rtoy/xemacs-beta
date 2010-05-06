@@ -28,7 +28,7 @@
 
 ;; This file is dumped with XEmacs.
 
-(defvar gtk-type-aliases '((GtkType . guint)
+(defvar gtk-type-aliases '((GType . guint)
 			   (GdkAtom . gulong)
 			   (GdkBitmap . GdkWindow)
 			   (time_t    . guint)
