@@ -107,8 +107,13 @@ decode_gtk_device (Lisp_Object device)
 extern Lisp_Object
 xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w);
 
+#ifdef HAVE_PANGO
+extern Lisp_Object __get_gtk_font_truename (PangoFont *gdk_font,
+					    int expandp);
+#else
 extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font,
 					    int expandp);
+#endif
 
 #define convert_font(f) __get_gtk_font_truename (f, 0)
 
@@ -287,9 +292,19 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   DEVICE_GTK_VISUAL (d) = visual;
   DEVICE_GTK_COLORMAP (d) = cmap;
   DEVICE_GTK_DEPTH (d) = visual->depth;
-  DEVICE_GTK_CONTEXT (d) = pango_context_new ();
-  assert (DEVICE_GTK_CONTEXT (d) != NULL);
-  
+
+  /* Should this be easier to figure out? --jsparkes */
+  {
+#ifdef HAVE_PANGO
+    GdkDisplay *disp = gdk_display_get_default ();
+    GdkScreen *screen = gdk_display_get_default_screen (disp);
+    PangoFontMap *fmap = pango_xft_get_font_map(disp, screen);
+    DEVICE_GTK_CONTEXT (d) = pango_font_map_create_context(fmap);
+    //  DEVICE_GTK_CONTEXT (d) = pango_xft_get_context (display, 0);
+    DEVICE_GTK_CONTEXT (d) = pango_context_new ();
+    assert (DEVICE_GTK_CONTEXT (d) != NULL);
+#endif
+  }
   {
     GtkWidget *w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 

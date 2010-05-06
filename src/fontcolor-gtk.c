@@ -231,39 +231,67 @@ gtk_color_list (void)
 static int
 gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 			      Lisp_Object UNUSED (name),
-			      Lisp_Object UNUSED (device), Error_Behavior errb)
+			      Lisp_Object device, Error_Behavior errb)
 {
-  GdkFont *gf;
   const char *extname;
+#ifdef HAVE_PANGO
+  PangoFont *pf;
+  PangoFontMetrics *pfm;
+  PangoFontDescription *pfd;
+  PangoLanguage *lang;
+#else
+  GdkFont *pf;
+#endif
 
   extname = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
 
-  /* Load font or fontset? */
-  /* gf = gdk_font_load_for_display (extname); --jsparkes */
-  gf = gdk_font_load (extname);
-
-  if (!gf)
+#ifdef HAVE_PANGO
+  /* Should this be default language? --jsparkes */
+  lang = pango_context_get_language (DEVICE_GTK_CONTEXT (XDEVICE (device)));
+  /* How do we get XLFD information into a font description? --jsparkes */
+  FONT_INSTANCE_GTK_FONT_DESC (f) = pango_font_description_new ();
+  pf = pango_context_load_font (DEVICE_GTK_CONTEXT (XDEVICE (device)),
+                                FONT_INSTANCE_GTK_FONT_DESC (f));
+#else
+  pf = gdk_font_load (extname);
+  gdk_font_ref (pf);
+#endif
+  
+  if (!pf)
     {
       maybe_signal_error (Qgui_error, "couldn't load font", f->name,
 			  Qfont, errb);
       return 0;
     }
 
+  
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
-  f->data = xnew (struct gtk_font_instance_data);
-  FONT_INSTANCE_GTK_FONT (f) = gf;
-  /* Kludge until we support Pango. --jsparkes */
-  f->ascent = gf->ascent;
-  f->descent = gf->descent;
-  f->height = gf->ascent + gf->descent;
+  f->data = xnew_and_zero (struct gtk_font_instance_data);
 
-  /* Now lets figure out the width of the font.
-     We could use a longer string and get the averaage length */
-  /* f->width = gdk_text_width (gf, "abcdefghijklmnopqrstuvwxyz", 26)/26; */
-  f->width = gdk_text_width (gf, "n", 1); /* em or en? */
-  f->proportional_p = (gdk_text_width (gf, "|", 1) !=
-                       gdk_text_width (gf, "W", 1));
+  FONT_INSTANCE_GTK_FONT (f) = pf;
+#ifdef HAVE_PANGO
+  pfm = pango_font_get_metrics (pf,
+                                pango_context_get_language (DEVICE_GTK_CONTEXT (XDEVICE (device))));
+  FONT_INSTANCE_GTK_FONT_METRICS (f) = pfm;
+  f->ascent  = pango_font_metrics_get_ascent (pfm);
+  f->descent = pango_font_metrics_get_descent (pfm);
+  f->height = f->ascent + f->descent;
+
+  pfd = pango_font_describe_with_absolute_size(pf);
+  /* g_free (FONT_INSTANCE_GTK_FONT_DESC (f); */
+  FONT_INSTANCE_GTK_FONT_DESC (f) = pfd;
+  f->width = pango_font_metrics_get_approximate_char_width (pfm);
+  f->proportional_p = f->width !=
+    pango_font_metrics_get_approximate_digit_width (pfm);
+#else
+  f->ascent  = pf->ascent;
+  f->descent = pf->descent;
+  f->height = f->ascent + f->descent;
+
+  f->width = gdk_char_width(pf, 'n');
+  f->proportional_p = gdk_char_width(pf, '|') != gdk_char_width(pf, 'W');
+#endif  
   return 1;
 }
 
@@ -273,7 +301,7 @@ gtk_print_font_instance (struct Lisp_Font_Instance *f,
 			 int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun, " 0x%lx",
-		    (unsigned long) gdk_font_id (FONT_INSTANCE_GTK_FONT (f)));
+		    (unsigned long) FONT_INSTANCE_GTK_FONT (f));
 }
 
 static void
@@ -283,7 +311,12 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
     {
       if (DEVICE_LIVE_P (XDEVICE (f->device)))
 	{
-	    gdk_font_unref (FONT_INSTANCE_GTK_FONT (f));
+#ifdef HAVE_PANGO
+          /* pango_font_free (FONT_INSTANCE_GTK_FONT (f)); */
+          pango_font_description_free (FONT_INSTANCE_GTK_FONT_DESC (f));
+#else
+          gdk_font_unref (FONT_INSTANCE_GTK_FONT (f));
+#endif
 	}
       xfree (f->data);
       f->data = 0;
@@ -291,7 +324,11 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
 }
 
 /* Forward declarations for X specific functions at the end of the file */
-Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
+#ifdef HAVE_PANGO
+Lisp_Object __get_gtk_font_truename (PangoFont *, int expandp);
+#else
+Lisp_Object __get_gtk_font_truename (GdkFont *, int expandp);
+#endif
 static Lisp_Object __gtk_font_list_internal (const char *pattern);
 
 static Lisp_Object
@@ -401,19 +438,30 @@ valid_font_name_p (Display *dpy, char *name)
   return (nnames != 0);
 }
 
+#ifdef HAVE_PANGO
 Lisp_Object
-__get_gtk_font_truename (GdkFont *gdk_font, int expandp)
+__get_gtk_font_truename (PangoFont *pango_font, int expandp)
 {
-  //Display *dpy = GDK_FONT_XDISPLAY (gdk_font);
-  //GSList *names = ((GdkFontPrivate *) gdk_font)->names;
   Lisp_Object font_name = Qnil;
-  char *name = (char *) gdk_x11_font_get_name (gdk_font);
 
-  //name = GDK_FONT_X_FONT (gdk_font);
+  font_name = build_ascstring("a pango font");
+}
+
+#else
+Lisp_Object
+__get_gtk_font_truename (GdkFont *font, int expandp)
+{
+  Lisp_Object font_name = Qnil;
+  //Display *dpy = GDK_FONT_XDISPLAY (font);
+  char *name = (char *) gdk_x11_font_get_name (font);
+
+  //name = GDK_FONT_X_FONT font);
   if (name != NULL)
     font_name = build_cistring (name);
-
+  else
+    font_name = build_ascstring ("unable to get font true name");
 #if 0
+  GSList *names = ((GdkFontPrivate *) font)->names;
 
   while (names)
     {
@@ -447,6 +495,7 @@ __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
 #endif
   return (font_name);
 }
+#endif /* HAVE_PANGO */
 
 static Lisp_Object __gtk_font_list_internal (const char *pattern)
 {
