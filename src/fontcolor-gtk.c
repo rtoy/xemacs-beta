@@ -249,9 +249,11 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   /* Should this be default language? --jsparkes */
   lang = pango_context_get_language (DEVICE_GTK_CONTEXT (XDEVICE (device)));
   /* How do we get XLFD information into a font description? --jsparkes */
-  FONT_INSTANCE_GTK_FONT_DESC (f) = pango_font_description_new ();
-  pf = pango_context_load_font (DEVICE_GTK_CONTEXT (XDEVICE (device)),
-                                FONT_INSTANCE_GTK_FONT_DESC (f));
+  //FONT_INSTANCE_GTK_FONT_DESC (f) = pango_font_description_new ();
+  PangoContext *context = gdk_pango_context_get ();
+  pf = pango_context_load_font (context, 
+/*   pf = pango_context_load_font (DEVICE_GTK_CONTEXT (XDEVICE (device)), */
+/*                                 FONT_INSTANCE_GTK_FONT_DESC (f)); */
 #else
   pf = gdk_font_load (extname);
   gdk_font_ref (pf);
@@ -263,6 +265,11 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 			  Qfont, errb);
       return 0;
     }
+  else
+    {
+      stderr_out ("loaded font %s\n", extname);
+    }
+    
 
   
   /* Don't allocate the data until we're sure that we will succeed,
