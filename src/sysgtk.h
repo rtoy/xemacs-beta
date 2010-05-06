@@ -33,7 +33,10 @@ Boston, MA 02111-1307, USA.  */
 #include <gtk/gtk.h>
 #include <gtk/gtkfixed.h>
 #include <gdk/gdk.h>
+#include <gdk/gdkx.h>
 #include <gdk/gdkkeysyms.h>
 #include <glib.h>
+#include <pango/pango.h>
+#include <pango/pangoxft.h>
 
 #endif /* INCLUDED_sysgtk_h_ */
