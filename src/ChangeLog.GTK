@@ -1,7 +1,10 @@
 2010-05-06  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Draw the filled rectangle with the background before drawing the text.
+
 	* redisplay-gtk.c (gdk_draw_text_image):
-	Remove unused X specifc text drawing now that we use pango.
+	Remove unused X specific text drawing now that we use pango.
 
 	* redisplay-xlike-inc.c (XLIKE_output_string):
 	For pango, y is top to bottom.

@@ -1011,7 +1011,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
   /* Text-related variables */
   Lisp_Object bg_pmap;
-  XLIKE_GC bgc, gc;
+  XLIKE_GC gc, bgc;
   int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
   int ypos = XLIKE_DISPLAY_LINE_YPOS (dl);
   int len = Dynarr_length (buf);
@@ -1100,16 +1100,18 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
        && !NILP (w->text_cursor_visible_p)) || NILP (bg_pmap))
     bgc = 0;
   else
-    bgc = XLIKE_get_gc (f, Qnil, cachel->foreground, cachel->background,
-			bg_pmap, cachel->background_placement, Qnil);
-
-  if (bgc)
     {
+      bgc = XLIKE_get_gc (f, Qnil, cachel->foreground, cachel->background,
+                          bg_pmap, cachel->background_placement, Qnil);
+#ifdef THIS_IS_X
       XLIKE_FILL_RECTANGLE (dpy, x_win, bgc, clip_start,
 			    ypos, clip_end - clip_start,
 			    height);
+#else
+      gdk_draw_rectangle (GDK_DRAWABLE (x_win), bgc, TRUE,  clip_start, ypos,
+                          clip_end - clip_start, height);
+#endif
     }
-
   nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
 				 Dynarr_length (buf), cachel);
 
@@ -1321,9 +1323,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	 dimension of the text.  This will do the right thing for
 	 single-dimension runs as well of course.
       */
-      (bgc ? gdk_draw_text : gdk_draw_text_image)
+          //   gdk_draw_rectangle (GDK_DRAWABLE (x_win), gc, TRUE,  clip_start,
+          //                  ypos, clip_end - clip_start, height);
+
+      gdk_draw_text_image
 	(GDK_DRAWABLE (x_win), FONT_INSTANCE_GTK_FONT (fi), gc, xpos,
-	 dl->ypos-height, (char *) runs[i].ptr, runs[i].len * runs[i].dimension);
+	 dl->ypos-height, (char *) runs[i].ptr, runs[i].len);
 #endif /* (not) THIS_IS_X */
 	}
 
@@ -1635,7 +1640,7 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 {
   struct device *d = XDEVICE (f->device);
   XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  /* XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f); */
   XLIKE_GC gc;
   XLIKE_GCVALUES gcv;
   unsigned long pixmap_mask;
