@@ -405,7 +405,8 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
 {
   /* This function can GC */
   GtkAdjustment *adj = gtk_range_get_adjustment (range);
-  int vertical = GPOINTER_TO_INT (user_data);
+  int vertical = gtk_orientable_get_orientation ((GtkOrientable *)range) ==
+    GTK_ORIENTATION_VERTICAL;
   struct frame *f = 0;
   struct scrollbar_instance *instance;
   GUI_ID id;
@@ -440,18 +441,26 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
   switch (scroll)
     {
     case GTK_SCROLL_PAGE_BACKWARD:
+    case GTK_SCROLL_PAGE_UP:
+    case GTK_SCROLL_START:
       event_type = vertical ? Qscrollbar_page_up : Qscrollbar_page_left;
       event_data = Fcons (win, Qnil);
       break;
     case GTK_SCROLL_PAGE_FORWARD:
+    case GTK_SCROLL_PAGE_DOWN:
+    case GTK_SCROLL_END:
       event_type = vertical ? Qscrollbar_page_down : Qscrollbar_page_right;
       event_data = Fcons (win, Qnil);
       break;
     case GTK_SCROLL_STEP_FORWARD:
+    case GTK_SCROLL_STEP_DOWN:
+    case GTK_SCROLL_STEP_LEFT:
       event_type = vertical ? Qscrollbar_line_down : Qscrollbar_char_right;
       event_data = win;
       break;
     case GTK_SCROLL_STEP_BACKWARD:
+    case GTK_SCROLL_STEP_UP:
+    case GTK_SCROLL_STEP_RIGHT:
       event_type = vertical ? Qscrollbar_line_up : Qscrollbar_char_left;
       event_data = win;
       break;
@@ -465,6 +474,8 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
       ABORT();
     }
   signal_special_gtk_user_event (frame, event_type, event_data);
+  if (scroll != GTK_SCROLL_NONE)
+    gtk_adjustment_value_changed (adj);
 
   return (TRUE);
 }

@@ -3,7 +3,8 @@
 	* scrollbar-gtk.c (gtk_create_scrollbar_instance):
 	Connect to signal from scrollbar to get 1.X like behaviour
 	from the scrollbar.  Assert check the signal connect calls.
-
+	(scrollbar_cb): Handle all GtkScrollType enum values.
+	
 	* ui-gtk.c (build_gtk_object): 
 	Use g_object_get_qdata now that key is a GQuark.
 
