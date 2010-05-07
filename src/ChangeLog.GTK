@@ -1,7 +1,11 @@
 2010-05-06  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Remove unused X specifc text drawing now that we use pango.
+
 	* redisplay-xlike-inc.c (XLIKE_output_string):
 	For pango, y is top to bottom.
+	(XLIKE_output_string): 
 
 	* redisplay-gtk.c (gdk_draw_text_image):
 	Use a simple pango layout to draw text.  It does not erase the
