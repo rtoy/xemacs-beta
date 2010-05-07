@@ -310,6 +310,9 @@ import_gtk_type (GType t)
     {
       return;
     }
+
+  stderr_out ("import_gtk_type %0x %s\n", (gpointer)t, gtk_type_name(t));
+
   if (G_TYPE_IS_FUNDAMENTAL (t))
     {
       switch (t)
@@ -321,14 +324,17 @@ import_gtk_type (GType t)
 	  import_gtk_flags_internal (t);
 	  break;
 	default:
-	  ABORT();
+          stderr_out ("import_gtk_type %s\n", gtk_type_name(t));
+          //	  ABORT();
 	  break;
 	}
     }
   else if (G_IS_OBJECT (t)) 
     import_gtk_object_internal (t);
-  else 
-    ABORT ();
+  else
+    {
+      stderr_out ("import_gtk_type unknown %s\n", gtk_type_name(t));
+    }
 
   mark_type_as_imported (t);
 }
@@ -535,6 +541,8 @@ static Lisp_Object type_to_marshaller_type (GType t)
     case G_TYPE_POINTER:
       return (build_ascstring ("POINTER"));
     default:
+      stderr_out ("type_to_marshaller type %s\n", gtk_type_name(t));
+      
       ABORT();
       /* I can't put this in the main switch statement because it is a
          new fundamental type that is not fixed at compile time.
@@ -586,6 +594,7 @@ Import a variable into the XEmacs namespace.
 
   initialize_dll_cache ();
   xemacs_init_gtk_classes ();
+  g_type_init();
 
   arg.value_type = gtk_type_from_name ((char *) XSTRING_DATA (type));
 
@@ -700,8 +709,7 @@ Import a function into the XEmacs namespace.
     }
   else
     {
-      ABORT();
-      //marshaller = concat3 (marshaller, build_ascstring ("_"), type_to_marshaller_type (G_TYPE_NONE));
+      marshaller = concat3 (marshaller, build_ascstring ("_"), type_to_marshaller_type (G_TYPE_NONE));
     }
 
   rettype = Fsymbol_name (rettype);

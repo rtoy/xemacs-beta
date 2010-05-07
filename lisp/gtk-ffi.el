@@ -40,7 +40,7 @@
 really part of the object system.")
 
 (defvar gtk-ffi-debug nil
-  "If non-nil, all functions defined wiht `gtk-import-function' will be checked
+  "If non-nil, all functions defined with `gtk-import-function' will be checked
 for missing marshallers.")
 
 (defun gtk-ffi-check-function (func)

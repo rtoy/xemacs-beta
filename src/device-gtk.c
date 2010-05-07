@@ -196,6 +196,8 @@ mode.
   gnome_init ("XEmacs", EMACS_VERSION, argc, argv);
 #endif /* INFODOCK */
 #else
+  stderr_out ("gtk_init\n");
+
   gtk_init (&argc, &argv);
 #endif
 
@@ -213,6 +215,7 @@ mode.
   speed_up_interrupts ();
 
   free_argc_argv (argv);
+  done = 1;
   return (Qt);
 }
 

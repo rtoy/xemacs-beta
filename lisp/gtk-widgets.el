@@ -1155,12 +1155,12 @@
 		     (guint     . build))
 
 
-(gtk-import-function GtkType gtk_plug_get_type)
+(gtk-import-function GtkType g_type_get_plugin)
 (gtk-import-function GtkWidget gtk_plug_new guint)
 (gtk-import-function nil gtk_plug_construct GtkPlug guint)
 
 
-(gtk-import-function GtkType gtk_progress_get_type)
+(gtk-import-function GtkType gtk_progresss_get_type)
 (gtk-import-function nil gtk_progress_set_show_text GtkProgress gint)
 (gtk-import-function nil gtk_progress_set_text_alignment GtkProgress gfloat gfloat)
 (gtk-import-function nil gtk_progress_set_format_string GtkProgress GtkString)
