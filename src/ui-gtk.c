@@ -183,7 +183,7 @@ import_gtk_object_internal (GType the_type)
 {
   //GType original_type = the_type;
   int first_time = 1;
-
+  stderr_out ("import_gtk_object_internal %s\n", g_type_name (the_type));
   do
     {
 #ifdef JSPARKES
@@ -635,6 +635,12 @@ Import a function into the XEmacs namespace.
   Lisp_Object marshaller = Qnil;
   emacs_ffi_data *data = NULL;
   gint n_args = 0;
+  static int initialized = 0;
+
+  if (initialized == 0) {
+    g_type_init();
+    initialized = 1;
+  }
 #if 0
   dll_handle h = NULL;
 #endif
@@ -1428,6 +1434,8 @@ The type is returned as a string, so this is a type validator.
 {
   CHECK_STRING (type_name);
   gchar *name = (gchar *)XSTRING_DATA (type_name);
+  guint t = g_type_from_name (name);
+  const gchar *n2 = g_type_name (t);
   return (build_ascstring (g_type_name (g_type_from_name (name))));
 }
 
@@ -1437,6 +1445,7 @@ Return a list of all properties for CLASS name.
        (name))
 {
   GType gt;
+  GObjectClass *type_class = NULL;
   GObject *obj;
   Lisp_Object prop_list = Qnil;
   GParamSpec **props;
@@ -1446,13 +1455,12 @@ Return a list of all properties for CLASS name.
   gt = g_type_from_name ((gchar *)XSTRING_DATA (name));
   if (gt == G_TYPE_INVALID)
     invalid_state ("type does not exist", name);
-                            
-  obj = (GObject *)g_object_newv (gt, 0, NULL);
+
+  type_class = (GObjectClass *)g_type_class_peek (gt);
   if (obj == NULL)
     invalid_state("Unable to create GObject of class", name);
 
-  props = g_object_class_list_properties (G_OBJECT_CLASS (obj),
-                                                       &n_props);
+  props = g_object_class_list_properties (type_class, &n_props);
   for (i = 0; i < n_props; i++) 
     {
       GValue v;
