@@ -985,7 +985,6 @@ void gdk_draw_text_image (GdkDrawable *drawable,
 			  gint         y,
 			  const gchar *text,
 			  gint         text_length);
-
 #endif /* THIS_IS_GTK */
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,
@@ -1103,15 +1102,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     {
       bgc = XLIKE_get_gc (f, Qnil, cachel->foreground, cachel->background,
                           bg_pmap, cachel->background_placement, Qnil);
-#ifdef THIS_IS_X
       XLIKE_FILL_RECTANGLE (dpy, x_win, bgc, clip_start,
 			    ypos, clip_end - clip_start,
 			    height);
-#else
-      gdk_draw_rectangle (GDK_DRAWABLE (x_win), bgc, TRUE,  clip_start, ypos,
-                          clip_end - clip_start, height);
-#endif
     }
+
   nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
 				 Dynarr_length (buf), cachel);
 
@@ -1323,12 +1318,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	 dimension of the text.  This will do the right thing for
 	 single-dimension runs as well of course.
       */
-          //   gdk_draw_rectangle (GDK_DRAWABLE (x_win), gc, TRUE,  clip_start,
-          //                  ypos, clip_end - clip_start, height);
-
-      gdk_draw_text_image
-	(GDK_DRAWABLE (x_win), FONT_INSTANCE_GTK_FONT (fi), gc, xpos,
-	 dl->ypos-height, (char *) runs[i].ptr, runs[i].len);
+          {
+            gdk_draw_text_image (GDK_DRAWABLE (x_win),
+                                 FONT_INSTANCE_GTK_FONT (fi), gc, xpos,
+                                 dl->ypos, (char *)runs[i].ptr, runs[i].len);
+          }
 #endif /* (not) THIS_IS_X */
 	}
 
@@ -1518,10 +1512,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		 length by the dimension of the text.  This will do the
 		 right thing for single-dimension runs as well of course.
 	      */
-	      gdk_draw_text_image (GDK_DRAWABLE (x_win),
-				   FONT_INSTANCE_GTK_FONT (fi), cgc, xpos,
-				   dl->ypos, (char *) runs[i].ptr,
-				   runs[i].len * runs[i].dimension);
+              gdk_draw_text_image (GDK_DRAWABLE (x_win),
+                                   FONT_INSTANCE_GTK_FONT (fi), gc, xpos,
+                                   dl->ypos, (char *)runs[i].ptr, runs[i].len);
 #endif /* (not) THIS_IS_X */
 
 	      XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
