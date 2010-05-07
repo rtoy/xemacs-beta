@@ -2599,8 +2599,8 @@ static void gtk_tab_control_callback(GtkNotebook *notebook,
 	return;
       frame = wrap_frame (f);
 
-      //id             = (int) gtk_object_get_data(GTK_OBJECT(page->child),
-						 GTK_DATA_TAB_HASHCODE_IDENTIFIER);
+      id             = (int) g_object_get_qdata(GTK_OBJECT(page->child),
+                                               GTK_DATA_TAB_HASHCODE_IDENTIFIER);
       image_instance = Fgethash(make_int_verify(id),
 				FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE(f), Qnil);
       callback       = Fgethash(make_int(id),

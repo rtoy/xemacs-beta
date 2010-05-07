@@ -1,29 +1,56 @@
+2010-05-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (build_gtk_object): 
+	Use g_object_get_qdata now that key is a GQuark.
+
+	* menubar-gtk.c (XEMACS_MENU_DESCR_TAG, XEMACS_MENU_FILTER_TAG,
+	XEMACS_MENU_GUIID_TAG, XEMACS_MENU_FIRSTTIME_TAG):
+	Use GQuark instead of string for GObject data key.
+	(__activate_menu):
+	Use g_object_get_qdata now that key is a GQuark.
+	(menu_convert): Ditto.
+	(menu_create_menubar): Ditto.
+	(gtk_popup_menu): Ditto.
+
+	* glyphs-gtk.c (gtk_tab_control_callback):
+	Use g_object_get_qdata now that key is a GQuark.
+
+	* frame-gtk.c (gtk_widget_to_frame):
+	Use g_object_get_qdata now that key is a GQuark.
+	(gtk_popup_frame): Ditto.
+	(gtk_get_frame_parent):
+	get_data is now a g_object method, not gtk_object.
+
+	* console-gtk-impl.h (GTK_DATA_FRAME_IDENTIFIER,
+	GTK_DATA_TAB_HASHCODE_IDENTIFIER, GTK_DATA_GUI_IDENTIFIER):
+	Use GQuark instead of string for GObject data key.
+
+
 2010-05-06  Jeff Sparkes  <jsparkes@gmail.com>
+        * redisplay-xlike-inc.c (XLIKE_output_string):
+          Draw the filled rectangle with the background before drawing the text.
 
-	* redisplay-xlike-inc.c (XLIKE_output_string):
-	Draw the filled rectangle with the background before drawing the text.
+        * redisplay-gtk.c (gdk_draw_text_image):
+          Remove unused X specific text drawing now that we use pango.
 
-	* redisplay-gtk.c (gdk_draw_text_image):
-	Remove unused X specific text drawing now that we use pango.
+        * redisplay-xlike-inc.c (XLIKE_output_string):
+          For pango, y is top to bottom.
+          (XLIKE_output_string): 
 
-	* redisplay-xlike-inc.c (XLIKE_output_string):
-	For pango, y is top to bottom.
-	(XLIKE_output_string): 
+        * redisplay-gtk.c (gdk_draw_text_image):
+          Use a simple pango layout to draw text.  It does not erase the
+          background.
 
-	* redisplay-gtk.c (gdk_draw_text_image):
-	Use a simple pango layout to draw text.  It does not erase the
-	background.
+        * fontcolor-gtk-impl.h (struct gtk_font_instance_data):
+        Add pango font data.
+        (FONT_INSTANCE_GTK_FONT_DESC):
+        Add macros for pango font data access.
 
-	* fontcolor-gtk-impl.h (struct gtk_font_instance_data):
-	Add pango font data.
-	(FONT_INSTANCE_GTK_FONT_DESC):
-	Add macros for pango font data access.
-
-	* fontcolor-gtk.c (gtk_initialize_font_instance):
-	Add pango font size initialization.
-	(gtk_finalize_font_instance):
-	Add pango font finalization.
-	(__get_gtk_font_truename): 
+        * fontcolor-gtk.c (gtk_initialize_font_instance):
+        Add pango font size initialization.
+        (gtk_finalize_font_instance):
+        Add pango font finalization.
+        (__get_gtk_font_truename): 
 	Add pango font truename function.
 
 	* device-gtk.c:
@@ -94,7 +121,8 @@ XXXXXX - too many changes in one big commit to document.
 	* device-gtk.c (gtk_delete_device):
 	NEW_GC doesn't allow/require freeing device directly.
 
-2010-04-21  Jeff Sparkes  <jsparkes@gmail.com>
+2010-04-21  Jeff Sparkes  <jsparkes@gmail
+  .com>
 
 	* fontcolor-gtk.c (gtk_color_instance_hash):
 	Remove gtk_color_instance_hash equalp argument.
@@ -398,7 +426,7 @@ XXXXXX - too many changes in one big commit to document.
 	* ui-gtk.c (lisp_to_gtk_type): Know how to deal with
 	GTK_TYPE_GDK_GC.
 
-	* gtk-glue.c: Need to defien a GTK type for 
+	* gtk-glue.c: Need to define a GTK type for 
 	GdkGC so that we can
 	import all the GDK drawing primitives.
 	(face_to_gc): New function to convert a face object to a GC.

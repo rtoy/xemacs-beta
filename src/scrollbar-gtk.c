@@ -102,8 +102,10 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   SCROLLBAR_GTK_VDRAG_ORIG_VALUE (instance) = -1;
   SCROLLBAR_GTK_LAST_VALUE (instance) = adj->value;
 
-  gtk_object_set_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER, (void *) SCROLLBAR_GTK_ID (instance));
-  gtk_object_set_data (GTK_OBJECT (adj), GTK_DATA_FRAME_IDENTIFIER, f);
+  g_object_set_qdata (G_OBJECT (GTK_OBJECT (adj)), GTK_DATA_GUI_IDENTIFIER,
+                      (void *) SCROLLBAR_GTK_ID (instance));
+  g_object_set_qdata (G_OBJECT (GTK_OBJECT (adj)), GTK_DATA_FRAME_IDENTIFIER,
+                      f);
 
   sb = GTK_SCROLLBAR (vertical ? gtk_vscrollbar_new (adj) : gtk_hscrollbar_new (adj));
   SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
@@ -136,10 +138,11 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
 
 #define UPDATE_DATA_FIELD(field)				\
   if (new_##field >= 0 &&					\
-      SCROLLBAR_GTK_POS_DATA (inst).field != new_##field) {	\
-    SCROLLBAR_GTK_POS_DATA (inst).field = new_##field;		\
-    inst->scrollbar_instance_changed = 1;			\
-  }
+      SCROLLBAR_GTK_POS_DATA (inst).field != new_##field)	\
+    {                                                           \
+      SCROLLBAR_GTK_POS_DATA (inst).field = new_##field;        \
+      inst->scrollbar_instance_changed = 1;			\
+    }
 
 /* A device method. */
 /* #### The -1 check is such a hack. */
@@ -282,7 +285,7 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
              scrolls around in the XEmacs frame manually.  So we
              update the slider manually here.
 	  */
-	  if (!modified_p) 
+	  //if (!modified_p) 
 	    gtk_range_set_adjustment (GTK_RANGE (wid), adj);
 
 	  instance->scrollbar_instance_changed = 0;
@@ -399,9 +402,11 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
 {
   /* This function can GC */
   int vertical = GPOINTER_TO_INT (user_data);
-  struct frame *f = (struct frame*) gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_FRAME_IDENTIFIER);
+  struct frame *f = (struct frame*)
+    g_object_get_qdata (G_OBJECT (GTK_OBJECT (adj)), GTK_DATA_FRAME_IDENTIFIER);
   struct scrollbar_instance *instance;
-  GUI_ID id = GPOINTER_TO_UINT (gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER));
+  GUI_ID id = GPOINTER_TO_UINT (g_object_get_qdata (G_OBJECT (GTK_OBJECT (adj)),
+                                                    GTK_DATA_GUI_IDENTIFIER));
   Lisp_Object win, frame;
   struct window_mirror *mirror;
   Lisp_Object event_type = Qnil;
@@ -515,3 +520,5 @@ vars_of_scrollbar_gtk (void)
 {
   Fprovide (intern ("gtk-scrollbars"));
 }
+
+  

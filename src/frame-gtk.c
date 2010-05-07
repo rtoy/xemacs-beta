@@ -128,8 +128,8 @@ gtk_widget_to_frame (GtkWidget *w)
 
   for (; w; w = w->parent)
     {
-      if ((f = (struct frame *) gtk_object_get_data (GTK_OBJECT (w),
-						     GTK_DATA_FRAME_IDENTIFIER)))
+      if ((f = (struct frame *) g_object_get_qdata (G_OBJECT(GTK_OBJECT (w)),
+                                                      GTK_DATA_FRAME_IDENTIFIER)))
 	return (f);
     }
 
@@ -849,7 +849,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
   /* Add a mapping from widget to frame to help widget callbacks quickly find
      their corresponding frame. */
-  gtk_object_set_data (GTK_OBJECT (shell), GTK_DATA_FRAME_IDENTIFIER, f);
+  g_object_set_qdata (G_OBJECT (GTK_OBJECT (shell)), GTK_DATA_FRAME_IDENTIFIER, f);
 
   FRAME_GTK_SHELL_WIDGET (f) = shell;
 
@@ -950,7 +950,8 @@ gtk_popup_frame (struct frame *f)
 {
   /* */
 
-  if (gtk_object_get_data (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f)), UNMAPPED_DATA_IDENTIFIER))
+  if (g_object_get_data (G_OBJECT (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f))),
+                          UNMAPPED_DATA_IDENTIFIER))
     {
       FRAME_GTK_TOTALLY_VISIBLE_P (f) = 0;
       f->visible = 0;
@@ -1129,8 +1130,9 @@ gtk_set_frame_pointer (struct frame *f)
 static Lisp_Object
 gtk_get_frame_parent (struct frame *f)
 {
-  GtkWidget *parentwid = (GtkWidget*) gtk_object_get_data (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
-							   TRANSIENT_DATA_IDENTIFIER);
+  GtkWidget *parentwid = (GtkWidget*)
+    g_object_get_data (G_OBJECT (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f))),
+                       TRANSIENT_DATA_IDENTIFIER);
 
     /* find the frame whose wid is parentwid */
     if (parentwid)
