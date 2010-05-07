@@ -1,5 +1,9 @@
 2010-05-07  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance):
+	Connect to signal from scrollbar to get 1.X like behaviour
+	from the scrollbar.  Assert check the signal connect calls.
+
 	* ui-gtk.c (build_gtk_object): 
 	Use g_object_get_qdata now that key is a GQuark.
 
