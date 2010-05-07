@@ -1,5 +1,16 @@
 2010-05-07  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Remove obsolete workarounds for clearing rectangle mismatches.
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Calculate size with pango_layout_get_pixel_size.  This also needs
+	to be changed in XLIKE_TEXT_WIDTH somehow. Works best with a
+	monospaced font.
+
+	* scrollbar-gtk.c (scrollbar_cb):
+	Callback now gets GtkRange* and GtkScrollType arguments.
+
 	* scrollbar-gtk.c (gtk_create_scrollbar_instance):
 	Connect to signal from scrollbar to get 1.X like behaviour
 	from the scrollbar.  Assert check the signal connect calls.

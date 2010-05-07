@@ -91,19 +91,15 @@ gdk_draw_text_image (GdkDrawable *drawable,
 		     const gchar *text,
 		     gint         text_length)
 {
-  int width = gdk_text_width (font, text, text_length);
-  int height = gdk_text_height (font, text, text_length);
+  int width;
+  int height;
   PangoLayout *layout;
-  GdkGCValues values;
-
-  gdk_gc_get_values (gc, &values);
 
   layout = pango_layout_new (gdk_pango_context_get ());
+  //layout = gtk_widget_create_pango_layout (drawable, text);
   pango_layout_set_text (layout, text, text_length);
-
-  /* Rectangle needs to be drawn with foreground = gc.background. */
-  /*  gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height); */
-  gdk_draw_layout (drawable, gc, x, y, layout);
+  pango_layout_get_pixel_size (layout, &width, &height);
+  gdk_draw_layout (drawable, gc, x, y-height, layout);
   g_object_unref (layout);
 }
 
