@@ -79,7 +79,6 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
 /* This makes me feel incredibly dirty... but there is no other way to
    get this done right other than calling clear_area before every
    single $#!%@ing piece of text, which I do NOT want to do. */
-#define USE_X_SPECIFIC_DRAW_ROUTINES 0
 
 #include "sysgdkx.h"
 
@@ -92,7 +91,6 @@ gdk_draw_text_image (GdkDrawable *drawable,
 		     const gchar *text,
 		     gint         text_length)
 {
-#if !USE_X_SPECIFIC_DRAW_ROUTINES
   int width = gdk_text_width (font, text, text_length);
   int height = gdk_text_height (font, text, text_length);
   PangoLayout *layout;
@@ -103,51 +101,10 @@ gdk_draw_text_image (GdkDrawable *drawable,
   layout = pango_layout_new (gdk_pango_context_get ());
   pango_layout_set_text (layout, text, text_length);
 
-  /* Rectangle needs to be drawn with foreground = gc.background.
-  gdk_draw_rectangle (drawable, gc, TRUE, x, y, width, height);
-  */
+  /* Rectangle needs to be drawn with foreground = gc.background. */
+  /*  gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height); */
   gdk_draw_layout (drawable, gc, x, y, layout);
   g_object_unref (layout);
-#else
-  GdkWindowPrivate *drawable_private;
-  GdkFontPrivate *font_private;
-  GdkGCPrivate *gc_private;
-
-  g_return_if_fail (drawable != NULL);
-  g_return_if_fail (font != NULL);
-  g_return_if_fail (gc != NULL);
-  g_return_if_fail (text != NULL);
-
-  drawable_private = (GdkWindowPrivate*) drawable;
-  if (drawable_private->destroyed)
-    return;
-  gc_private = (GdkGCPrivate*) gc;
-  font_private = (GdkFontPrivate*) font;
-
-  if (font->type == GDK_FONT_FONT)
-    {
-      XFontStruct *xfont = (XFontStruct *) font_private->xfont;
-      XSetFont(drawable_private->xdisplay, gc_private->xgc, xfont->fid);
-      if ((xfont->min_byte1 == 0) && (xfont->max_byte1 == 0))
-	{
-	  XDrawImageString (drawable_private->xdisplay, drawable_private->xwindow,
-			    gc_private->xgc, x, y, text, text_length);
-	}
-      else
-	{
-	  XDrawImageString16 (drawable_private->xdisplay, drawable_private->xwindow,
-			      gc_private->xgc, x, y, (XChar2b *) text, text_length / 2);
-	}
-    }
-  else if (font->type == GDK_FONT_FONTSET)
-    {
-      XFontSet fontset = (XFontSet) font_private->xfont;
-      XmbDrawImageString (drawable_private->xdisplay, drawable_private->xwindow,
-			  fontset, gc_private->xgc, x, y, text, text_length);
-    }
-  else
-    g_error("undefined font type\n");
-#endif
 }
 
 static void
