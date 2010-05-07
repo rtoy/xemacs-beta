@@ -1,4 +1,4 @@
-;;; gtk-init.el --- initialization code for mswindows
+;;; gtk-init.el --- initialization code for Gtk
 ;; Copyright (C) 1990, 1993, 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois.
 ;; Copyright (C) 1995, 1996 Ben Wing.
