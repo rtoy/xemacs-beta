@@ -311,7 +311,7 @@ import_gtk_type (GType t)
       return;
     }
 
-  stderr_out ("import_gtk_type %0x %s\n", (gpointer)t, gtk_type_name(t));
+  stderr_out ("import_gtk_type %0x %s\n", (unsigned int)t, gtk_type_name(t));
 
   if (G_TYPE_IS_FUNDAMENTAL (t))
     {
@@ -1040,7 +1040,7 @@ Lisp_Object build_gtk_object (GObject *obj)
   emacs_gtk_object_data *data = NULL;
   GUI_ID id = 0;
 
-  id = (GUI_ID) GPOINTER_TO_UINT (g_object_get_data (obj , GTK_DATA_GUI_IDENTIFIER));
+  id = (GUI_ID) GPOINTER_TO_UINT (g_object_get_qdata (obj , GTK_DATA_GUI_IDENTIFIER));
 
   if (id)
     {
@@ -1056,7 +1056,7 @@ Lisp_Object build_gtk_object (GObject *obj)
       retval = wrap_emacs_gtk_object (data);
 
       id = new_gui_id ();
-      g_object_set_data (obj, GTK_DATA_GUI_IDENTIFIER, (gpointer) id);
+      g_object_set_qdata (obj, GTK_DATA_GUI_IDENTIFIER, (gpointer) id);
       gcpro_popup_callbacks (id, retval);
       g_object_ref (obj);
       g_signal_connect (obj, "destroy", GTK_SIGNAL_FUNC (__notice_object_destruction), (gpointer)id);
@@ -1435,7 +1435,6 @@ The type is returned as a string, so this is a type validator.
   CHECK_STRING (type_name);
   gchar *name = (gchar *)XSTRING_DATA (type_name);
   guint t = g_type_from_name (name);
-  const gchar *n2 = g_type_name (t);
   return (build_ascstring (g_type_name (g_type_from_name (name))));
 }
 

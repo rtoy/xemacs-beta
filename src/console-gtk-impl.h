@@ -254,12 +254,12 @@ DECLARE_LISP_OBJECT (gtk_frame, Lisp_Gtk_Frame);
 extern struct console_type *gtk_console_type;
 
 /* Special data used to quickly identify the frame that contains a widget. */
-#define GTK_DATA_FRAME_IDENTIFIER "xemacs::frame"
+#define GTK_DATA_FRAME_IDENTIFIER g_quark_from_string ("xemacs::frame")
 
 /* The hashcode in the frame hash table of a tab_control tab's callback data. */
-#define GTK_DATA_TAB_HASHCODE_IDENTIFIER "xemacs::tab_hashcode"
+#define GTK_DATA_TAB_HASHCODE_IDENTIFIER g_quark_static_string ("xemacs::tab_hashcode")
 
-#define GTK_DATA_GUI_IDENTIFIER "xemacs::gui_id"
+#define GTK_DATA_GUI_IDENTIFIER g_quark_from_string ("xemacs::gui_id")
 
 #endif /* HAVE_GTK */
 #endif /* INCLUDED_console_gtk_impl_h_ */
