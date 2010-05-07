@@ -1,3 +1,8 @@
+2010-05-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (scrollbar_cb):
+	Callback now gets GtkRange* and GtkScrollType arguments.
+
 2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doc.c (Fdocumentation):

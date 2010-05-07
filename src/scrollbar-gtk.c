@@ -35,7 +35,9 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs-gtk.h"
 #include "scrollbar-gtk.h"
 
-static gboolean scrollbar_cb (GtkAdjustment *adj, gpointer user_data);
+static gboolean scrollbar_cb (GtkRange *, GtkScrollType scroll,
+                              gdouble value, gpointer user_data);
+
 
 /* Used to prevent changing the size of the slider while drag
    scrolling, under Motif.  This is necessary because the Motif
@@ -110,14 +112,14 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   sb = GTK_SCROLLBAR (vertical ? gtk_vscrollbar_new (adj) : gtk_hscrollbar_new (adj));
   SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
 
-  gtk_signal_connect (GTK_OBJECT (adj),"value-changed",
-		      GTK_SIGNAL_FUNC (scrollbar_cb), (gpointer) vertical);
+  assert(g_signal_connect (GTK_OBJECT (sb),"change-value",
+                           G_CALLBACK (scrollbar_cb), (gpointer) vertical));
+  assert(gtk_signal_connect (GTK_OBJECT (sb), "button-press-event",
+                             GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 1));
+  assert(gtk_signal_connect (GTK_OBJECT (sb), "button-release-event",
+                             GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 0));
 
-  gtk_signal_connect (GTK_OBJECT (sb), "button-press-event",
-		      GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 1);
-  gtk_signal_connect (GTK_OBJECT (sb), "button-release-event",
-		      GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 0);
-
+  /* Do we need to connect to "destroy" too? --jsparkes */
   gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)), SCROLLBAR_GTK_WIDGET (instance), 0, 0);
 
   /*
@@ -398,22 +400,29 @@ find_scrollbar_window_mirror (struct frame *f, GUI_ID id)
 }
 
 static gboolean
-scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
+scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
+              gpointer user_data)
 {
   /* This function can GC */
+  GtkAdjustment *adj = gtk_range_get_adjustment (range);
   int vertical = GPOINTER_TO_INT (user_data);
-  struct frame *f = (struct frame*)
-    g_object_get_qdata (G_OBJECT (GTK_OBJECT (adj)), GTK_DATA_FRAME_IDENTIFIER);
+  struct frame *f = 0;
   struct scrollbar_instance *instance;
-  GUI_ID id = GPOINTER_TO_UINT (g_object_get_qdata (G_OBJECT (GTK_OBJECT (adj)),
-                                                    GTK_DATA_GUI_IDENTIFIER));
+  GUI_ID id;
+  gdouble position = gtk_adjustment_get_value (adj);
   Lisp_Object win, frame;
   struct window_mirror *mirror;
   Lisp_Object event_type = Qnil;
   Lisp_Object event_data = Qnil;
 
+  f = (struct frame*) g_object_get_qdata (G_OBJECT (GTK_OBJECT (adj)),
+                                          GTK_DATA_FRAME_IDENTIFIER);
   if (!f)
     return(FALSE);
+
+  id = GPOINTER_TO_UINT (g_object_get_qdata (G_OBJECT (GTK_OBJECT (adj)),
+                                             GTK_DATA_GUI_IDENTIFIER));
+  assert (id !=  0);
 
   mirror = find_scrollbar_window_mirror (f, id);
   if (!mirror)
@@ -425,10 +434,10 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
     return(FALSE);
   instance = vertical ? mirror->scrollbar_vertical_instance : mirror->scrollbar_horizontal_instance;
   frame = WINDOW_FRAME (XWINDOW (win));
-#if 0
--- jsparkes
+  GtkRange *r = GTK_RANGE (SCROLLBAR_GTK_WIDGET (instance));
   inhibit_slider_size_change = 0;
-  switch (GTK_RANGE (SCROLLBAR_GTK_WIDGET (instance))->scroll_type)
+  /* Todo: add horizontal events from gtk-2.X */
+  switch (scroll)
     {
     case GTK_SCROLL_PAGE_BACKWARD:
       event_type = vertical ? Qscrollbar_page_up : Qscrollbar_page_left;
@@ -455,7 +464,6 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
     default:
       ABORT();
     }
-#endif
   signal_special_gtk_user_event (frame, event_type, event_data);
 
   return (TRUE);
