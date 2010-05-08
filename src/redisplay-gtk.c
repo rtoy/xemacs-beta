@@ -82,17 +82,23 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
 
 #include "sysgdkx.h"
 
+/*
+ * Only this function can erase the text area because the text area
+ * is calculated by pango.   The layout is currently not shared.  There
+ * can only be one PangoLayout per line, I think. --jsparkes
+ */
 static void
 gdk_draw_text_image (GdkDrawable *drawable,
 		     GdkFont     *font,
 		     GdkGC       *gc,
+		     GdkGC       *bgc,
 		     gint         x,
 		     gint         y,
 		     const gchar *text,
 		     gint         text_length)
 {
-  int width = gdk_text_width (font, text, text_length);
-  int height = gdk_text_height (font, text, text_length);
+  int width = -1;
+  int height = -1;
   PangoLayout *layout;
   GdkGCValues values;
 
@@ -100,9 +106,10 @@ gdk_draw_text_image (GdkDrawable *drawable,
 
   layout = pango_layout_new (gdk_pango_context_get ());
   pango_layout_set_text (layout, text, text_length);
+  pango_layout_get_pixel_size (layout, &width, &height);
 
-  /* Rectangle needs to be drawn with foreground = gc.background. */
-  /*  gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height); */
+  if (bgc != 0)
+    gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
   gdk_draw_layout (drawable, gc, x, y, layout);
   g_object_unref (layout);
 }
