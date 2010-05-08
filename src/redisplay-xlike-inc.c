@@ -981,6 +981,7 @@ static
 void gdk_draw_text_image (GdkDrawable *drawable,
 			  GdkFont     *font,
 			  GdkGC       *gc,
+                          GdkGC       *bgc,
 			  gint         x,
 			  gint         y,
 			  const gchar *text,
@@ -1103,13 +1104,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     {
       bgc = XLIKE_get_gc (f, Qnil, cachel->foreground, cachel->background,
                           bg_pmap, cachel->background_placement, Qnil);
-#ifdef THIS_IS_X
+#ifndef THIS_IS_GTK
+      /* Gtk text width is unknown */
       XLIKE_FILL_RECTANGLE (dpy, x_win, bgc, clip_start,
 			    ypos, clip_end - clip_start,
 			    height);
-#else
-      gdk_draw_rectangle (GDK_DRAWABLE (x_win), bgc, TRUE,  clip_start, ypos,
-                          clip_end - clip_start, height);
 #endif
     }
   nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
@@ -1206,7 +1205,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  bg = XFT_FROB_LISP_COLOR (cachel->background, 0);
 #endif
 	  gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
-			     Qdim, Qnil, Qnil);
+			     bg_pmap, cachel->background_placement, Qnil);
 	}
       else
 	{
@@ -1323,12 +1322,20 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	 dimension of the text.  This will do the right thing for
 	 single-dimension runs as well of course.
       */
-          //   gdk_draw_rectangle (GDK_DRAWABLE (x_win), gc, TRUE,  clip_start,
-          //                  ypos, clip_end - clip_start, height);
-
-      gdk_draw_text_image
-	(GDK_DRAWABLE (x_win), FONT_INSTANCE_GTK_FONT (fi), gc, xpos,
-	 dl->ypos-height, (char *) runs[i].ptr, runs[i].len);
+          {
+            GdkGC *localgc = bgc;
+            /* The cursor clip rectangle is completely wrong for
+               the pango layout code. */
+            
+            if (localgc == 0)
+              localgc = XLIKE_get_gc (f, font, cachel->background,
+                                      cachel->foreground, bg_pmap,
+                                      cachel->background_placement, Qnil);
+            gdk_draw_text_image (GDK_DRAWABLE (x_win),
+                                 FONT_INSTANCE_GTK_FONT (fi), gc, localgc,
+                                 xpos, dl->ypos-height, (char *) runs[i].ptr,
+                                 runs[i].len);
+          }
 #endif /* (not) THIS_IS_X */
 	}
 
@@ -1518,12 +1525,21 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		 length by the dimension of the text.  This will do the
 		 right thing for single-dimension runs as well of course.
 	      */
-	      gdk_draw_text_image (GDK_DRAWABLE (x_win),
-				   FONT_INSTANCE_GTK_FONT (fi), cgc, xpos,
-				   dl->ypos, (char *) runs[i].ptr,
-				   runs[i].len * runs[i].dimension);
+              {
+                GdkGC *localgc = bgc;
+                
+                if (localgc == 0)
+                  localgc = XLIKE_get_gc (f, font, cursor_cachel->background,
+                                          cursor_cachel->background,
+                                          Qnil, Qnil, Qnil);
+                XLIKE_SET_CLIP_RECTANGLE (dpy, localgc, cursor_start, ypos,
+                                          &clip_box);
+                gdk_draw_text_image (GDK_DRAWABLE (x_win),
+                                     FONT_INSTANCE_GTK_FONT (fi), cgc, bgc,xpos,
+                                     dl->ypos, (char *) runs[i].ptr,
+                                     runs[i].len * runs[i].dimension);
+              }
 #endif /* (not) THIS_IS_X */
-
 	      XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
 	    }
 	}
