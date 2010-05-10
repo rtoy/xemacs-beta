@@ -1,3 +1,20 @@
+2010-05-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status):
+	Replace deprecated code. Notify the scrollbar when the slider
+	value changes
+
+2010-05-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Use pango_layout_get_pixel_size to get the true size of the text
+	rectangle.  Fill that rectangle with the given background GC.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Don't erase the background here because the true text width can't
+	be calculated without pango.  Create a background GC if it doesn't
+	exist.
+
 2010-05-07  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-xlike-inc.c (XLIKE_output_string):
