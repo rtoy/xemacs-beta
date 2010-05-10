@@ -2,7 +2,7 @@
 
 	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status):
 	Replace deprecated code. Notify the scrollbar when the slider
-	value changes
+	value changes.  Update the scrollbar when the buffer changes.
 
 2010-05-08  Jeff Sparkes  <jsparkes@gmail.com>
 

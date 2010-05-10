@@ -292,7 +292,11 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
              scrolls around in the XEmacs frame manually.  So we
              update the slider manually here.
 	  */
-	  if (!modified_p)
+	  if (modified_p)
+            {
+              gtk_adjustment_changed (adj);
+            }
+          else 
             {
               gtk_range_set_adjustment (GTK_RANGE (wid), adj);
               gtk_adjustment_value_changed (adj);
