@@ -221,6 +221,7 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
 	  GtkAdjustment *adj = gtk_range_get_adjustment (GTK_RANGE (wid));
 	  scrollbar_values *pos_data = & SCROLLBAR_GTK_POS_DATA (instance);
 	  int modified_p = 0;
+          gboolean valued_changed = 0;
 
 	  /* We do not want to update the size all the time if we can
              help it.  This cuts down on annoying flicker.
@@ -228,7 +229,7 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
 	  if ((wid->allocation.width != pos_data->scrollbar_width) ||
 	      (wid->allocation.height != pos_data->scrollbar_height))
 	    {
-	      gtk_widget_set_usize (wid,
+	      gtk_widget_set_size_request (wid,
 				    pos_data->scrollbar_width,
 				    pos_data->scrollbar_height);
 
@@ -280,16 +281,23 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
 	  adj->page_increment = pos_data->slider_size + 1;
 	  adj->step_increment = w->max_line_len - 1;
 	  adj->page_size = pos_data->slider_size + 1;
-	  adj->value = pos_data->slider_position;
+          if (adj->value != pos_data->slider_position)
+            {
+              adj->value = pos_data->slider_position;
+              valued_changed = 1;
+            }
 
 	  /* But, if we didn't resize or move the scrollbar, the
              widget will not get redrawn correctly when the user
              scrolls around in the XEmacs frame manually.  So we
              update the slider manually here.
 	  */
-	  //if (!modified_p) 
-	    gtk_range_set_adjustment (GTK_RANGE (wid), adj);
-
+	  if (!modified_p)
+            {
+              gtk_range_set_adjustment (GTK_RANGE (wid), adj);
+              gtk_adjustment_value_changed (adj);
+            }
+          
 	  instance->scrollbar_instance_changed = 0;
 	}
 
@@ -437,7 +445,6 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
   frame = WINDOW_FRAME (XWINDOW (win));
   GtkRange *r = GTK_RANGE (SCROLLBAR_GTK_WIDGET (instance));
   inhibit_slider_size_change = 0;
-  /* Todo: add horizontal events from gtk-2.X */
   switch (scroll)
     {
     case GTK_SCROLL_PAGE_BACKWARD:
@@ -466,7 +473,7 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
       break;
     case GTK_SCROLL_NONE:
     case GTK_SCROLL_JUMP:
-      inhibit_slider_size_change = 1;
+      /* inhibit_slider_size_change = 1; */
       event_type = vertical ? Qscrollbar_vertical_drag : Qscrollbar_horizontal_drag;
       event_data = Fcons (win, make_int ((int)adj->value));
       break;
@@ -476,6 +483,7 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
   signal_special_gtk_user_event (frame, event_type, event_data);
   if (scroll != GTK_SCROLL_NONE)
     gtk_adjustment_value_changed (adj);
+  gtk_adjustment_changed (adj);
 
   return (TRUE);
 }
