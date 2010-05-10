@@ -221,6 +221,7 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
 	  GtkAdjustment *adj = gtk_range_get_adjustment (GTK_RANGE (wid));
 	  scrollbar_values *pos_data = & SCROLLBAR_GTK_POS_DATA (instance);
 	  int modified_p = 0;
+          gboolean valued_changed = 0;
 
 	  /* We do not want to update the size all the time if we can
              help it.  This cuts down on annoying flicker.
@@ -280,7 +281,11 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
 	  adj->page_increment = pos_data->slider_size + 1;
 	  adj->step_increment = w->max_line_len - 1;
 	  adj->page_size = pos_data->slider_size + 1;
-	  adj->value = pos_data->slider_position;
+          if (adj->value != pos_data->slider_position)
+            {
+              adj->value = pos_data->slider_position;
+              valued_changed = 1;
+            }
 
 	  /* But, if we didn't resize or move the scrollbar, the
              widget will not get redrawn correctly when the user
