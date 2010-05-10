@@ -1,3 +1,9 @@
+2010-05-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status):
+	Replace deprecated code. Notify the scrollbar when the slider
+	value changes
+
 2010-05-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (gdk_draw_text_image):
