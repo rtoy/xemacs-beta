@@ -1,6 +1,13 @@
 2010-05-10  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (gdk_draw_text_image):
+	Take a struct textual run* argument and handle the wide char
+	case ourselves.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Call gdk_draw_text_image directly with a struct textual_run *.
+
+	* redisplay-gtk.c (gdk_draw_text_image):
 	Put back plain Gdk text rendering, pango not complete.
 	(gdk_draw_text_image_wc):
 	Wide char version of text display.
