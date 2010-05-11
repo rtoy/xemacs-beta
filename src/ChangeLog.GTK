@@ -1,5 +1,13 @@
 2010-05-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Put back plain Gdk text rendering, pango not complete.
+	(gdk_draw_text_image_wc):
+	Wide char version of text display.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Call wide char version of text image draw where required.
+
 	* ui-gtk.c (IS_XEMACS_GTK_FUNDAMENTAL_TYPE):
 	Use GType, not GtkType.
 
