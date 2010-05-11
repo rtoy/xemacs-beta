@@ -1,5 +1,9 @@
 2010-05-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* faces.c (complex_vars_of_faces):
+	Set the fallback font to a monospaced lucidatypewriter.  Without
+	the -m-, gdk loads a proportiional font.
+
 	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status):
 	Replace deprecated code. Notify the scrollbar when the slider
 	value changes
