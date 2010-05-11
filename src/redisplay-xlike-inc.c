@@ -980,6 +980,11 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 static void
 gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
                      GdkGC *bgc, gint x, gint y, struct textual_run *run);
+
+static void
+gdk_draw_text_blank (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
+                     GdkGC *bgc, gint x, gint y);
+
 #endif /* THIS_IS_GTK */
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,
@@ -1960,8 +1965,13 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 	{
 	  if (NILP (bar_cursor_value))
 	    {
+#ifndef THIS_IS_GTK
 	      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
 				    fi->width, cursor_height);
+#else
+              gdk_draw_text_blank (x_win, FONT_INSTANCE_GTK_FONT (fi),
+                                   gc, 0, cursor_start, cursor_y);
+#endif
 	    }
 	  else
 	    {
@@ -1981,13 +1991,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
           XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
                                 fi->width - 1, cursor_height - 1);
 #else
-          struct textual_run run;
-          run.charset = Vcharset_ascii;
-          run.dimension = 1;
-          run.ptr = (unsigned char *)"a";
-          run.len = 1;
-          gdk_draw_text_image (x_win, FONT_INSTANCE_GTK_FONT (fi),
-                               gc, gc, cursor_start, cursor_y, &run);
+          gdk_draw_text_blank (x_win, FONT_INSTANCE_GTK_FONT (fi),
+                               gc, 0, cursor_start, cursor_y);
 #endif
         }
     }
