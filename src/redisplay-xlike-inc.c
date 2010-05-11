@@ -977,14 +977,9 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
  The cursor is drawn sometimes whether or not CURSOR is set. ???
  ****************************************************************************/
 #ifdef THIS_IS_GTK
-static
-void gdk_draw_text_image (GdkDrawable *drawable,
-			  GdkFont     *font,
-			  GdkGC       *gc,
-			  gint         x,
-			  gint         y,
-			  const gchar *text,
-			  gint         text_length);
+static void
+gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
+                     GdkGC *bgc, gint x, gint y, struct textual_run *run);
 #endif /* THIS_IS_GTK */
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,
@@ -1201,7 +1196,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  bg = XFT_FROB_LISP_COLOR (cachel->background, 0);
 #endif
 	  gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
-			     Qdim, Qnil, Qnil);
+			     bg_pmap, cachel->background_placement, Qnil);
 	}
       else
 	{
@@ -1319,9 +1314,18 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	 single-dimension runs as well of course.
       */
           {
+            GdkGC *localgc = bgc;
+            /* The cursor clip rectangle is completely wrong for
+               the pango layout code. */
+            
+            if (localgc == 0)
+              localgc = XLIKE_get_gc (f, font, cachel->background,
+                                      cachel->foreground, bg_pmap,
+                                      cachel->background_placement, Qnil);
+
             gdk_draw_text_image (GDK_DRAWABLE (x_win),
-                                 FONT_INSTANCE_GTK_FONT (fi), gc, xpos,
-                                 dl->ypos, (char *)runs[i].ptr, runs[i].len);
+                                 FONT_INSTANCE_GTK_FONT (fi), gc, localgc,
+                                 xpos, dl->ypos, &runs[i]);
           }
 #endif /* (not) THIS_IS_X */
 	}
@@ -1493,8 +1497,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      clip_box.width = cursor_width;
 	      clip_box.height = height;
 
-	      XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
-					&clip_box);
+              //	      XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
+              //			&clip_box);
 #ifdef THIS_IS_X
 	      if (runs[i].dimension == 1)
 		XDrawImageString (dpy, x_win, cgc, xpos, dl->ypos,
@@ -1512,9 +1516,19 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		 length by the dimension of the text.  This will do the
 		 right thing for single-dimension runs as well of course.
 	      */
-              gdk_draw_text_image (GDK_DRAWABLE (x_win),
-                                   FONT_INSTANCE_GTK_FONT (fi), gc, xpos,
-                                   dl->ypos, (char *)runs[i].ptr, runs[i].len);
+              {
+                GdkGC *localgc = bgc;
+                
+                if (localgc == 0)
+                  localgc = XLIKE_get_gc (f, font, cursor_cachel->background,
+                                          cursor_cachel->background,
+                                          Qnil, Qnil, Qnil);
+                XLIKE_SET_CLIP_RECTANGLE (dpy, localgc, cursor_start, dl->ypos,
+                                          &clip_box);
+                gdk_draw_text_image (GDK_DRAWABLE (x_win),
+                                     FONT_INSTANCE_GTK_FONT (fi), cgc,
+                                     localgc, xpos, dl->ypos, &runs[i]);
+              }
 #endif /* (not) THIS_IS_X */
 
 	      XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
@@ -1588,8 +1602,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (!focus && NILP (bar_cursor_value))
 	{
+#ifdef THIS_IS_GTK
+	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, tmp_y -
+                                tmp_height - 1,
+				cursor_width - 1, tmp_height - 1);
+#else
 	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, tmp_y,
 				cursor_width - 1, tmp_height - 1);
+#endif
 	}
       else if (focus && !NILP (bar_cursor_value))
 	{
@@ -1901,7 +1921,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 
   if (NILP (bg_pmap))
     gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
-		       Qnil, Qnil, Qnil, Qnil);
+		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
+                       Qnil, Qnil, Qnil);
   else
     gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
 		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
@@ -1955,10 +1976,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 	    }
 	}
       else if (NILP (bar_cursor_value))
-	{
-	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
-				fi->width - 1, cursor_height - 1);
-	}
+        XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
+                              fi->width - 1, cursor_height - 1);
     }
 }
 

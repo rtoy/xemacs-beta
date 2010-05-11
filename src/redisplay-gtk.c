@@ -82,25 +82,49 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
 
 #include "sysgdkx.h"
 
-static void
-gdk_draw_text_image (GdkDrawable *drawable,
-		     GdkFont     *font,
-		     GdkGC       *gc,
-		     gint         x,
-		     gint         y,
-		     const gchar *text,
-		     gint         text_length)
-{
-  int width;
-  int height;
-  PangoLayout *layout;
+/*
+ * Only this function can erase the text area because the text area
+ * is calculated by pango.   The layout is currently not shared.  There
+ * can only be one PangoLayout per line, I think. --jsparkes
+ */
 
+static void
+gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
+		     GdkGC *bgc, gint x, gint y, struct textual_run *run)
+{
+  int width = -1;
+  int height = -1;
+#ifdef USE_PANGO
+  PangoLayout *layout;
+#endif
+
+#ifdef USE_PANGO
   layout = pango_layout_new (gdk_pango_context_get ());
   //layout = gtk_widget_create_pango_layout (drawable, text);
   pango_layout_set_text (layout, text, text_length);
   pango_layout_get_pixel_size (layout, &width, &height);
-  gdk_draw_layout (drawable, gc, x, y-height, layout);
+
+  if (bgc != 0)
+    gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+  gdk_draw_layout (drawable, gc, x, y, layout);
   g_object_unref (layout);
+#else
+  height = font->ascent + font->descent;
+  if (run->dimension == 1)
+    {
+      width  = gdk_text_width (font, (gchar *)run->ptr, run->len);
+      if (bgc != 0)
+        gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+      gdk_draw_text (drawable, font, gc, x, y, (gchar *)run->ptr, run->len);
+    }
+  else
+    {
+      width  = gdk_text_width_wc (font, (GdkWChar *)run->ptr, run->len);
+      if (bgc != 0)
+        gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+      gdk_draw_text_wc (drawable, font, gc, x, y, (GdkWChar *)run->ptr, run->len);
+    }
+#endif
 }
 
 static void

@@ -83,7 +83,7 @@ DECLARE_LISP_OBJECT (emacs_gtk_boxed, emacs_gtk_boxed_data);
 #define GTK_BOXEDP(x) RECORDP (x, emacs_gtk_boxed)
 #define CHECK_GTK_BOXED(x) CHECK_RECORD (x, emacs_gtk_boxed)
 
-extern Lisp_Object build_gtk_boxed (void *obj, GtkType t);
+extern Lisp_Object build_gtk_boxed (void *obj, GType t);
 
 #ifdef JSPARKES
 /*
