@@ -87,23 +87,19 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
  * is calculated by pango.   The layout is currently not shared.  There
  * can only be one PangoLayout per line, I think. --jsparkes
  */
+
 static void
-gdk_draw_text_image (GdkDrawable *drawable,
-		     GdkFont     *font,
-		     GdkGC       *gc,
-		     GdkGC       *bgc,
-		     gint         x,
-		     gint         y,
-		     const gchar *text,
-		     gint         text_length)
+gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
+		     GdkGC *bgc, gint x, gint y, gchar *text,
+		     gint text_length)
 {
   int width = -1;
   int height = -1;
+#ifdef USE_PANGO
   PangoLayout *layout;
-  GdkGCValues values;
+#endif
 
-  gdk_gc_get_values (gc, &values);
-
+#ifdef USE_PANGO
   layout = pango_layout_new (gdk_pango_context_get ());
   pango_layout_set_text (layout, text, text_length);
   pango_layout_get_pixel_size (layout, &width, &height);
@@ -112,6 +108,42 @@ gdk_draw_text_image (GdkDrawable *drawable,
     gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
   gdk_draw_layout (drawable, gc, x, y, layout);
   g_object_unref (layout);
+#else
+  width  = gdk_text_width  (font, text, text_length);
+  height = font->ascent + font->descent;
+  if (bgc != 0)
+    gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+  gdk_draw_text (drawable, font, gc, x, y, text, text_length);
+#endif
+}
+
+static void
+gdk_draw_text_image_wc (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
+                        GdkGC *bgc, gint x, gint y, GdkWChar *text,
+                        gint text_length)
+{
+  int width = -1;
+  int height = -1;
+#ifdef USE_PANGO
+  PangoLayout *layout;
+#endif
+
+#ifdef USE_PANGO
+  layout = pango_layout_new (gdk_pango_context_get ());
+  pango_layout_set_text (layout, text, text_length);
+  pango_layout_get_pixel_size (layout, &width, &height);
+
+  if (bgc != 0)
+    gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+  gdk_draw_layout (drawable, gc, x, y, layout);
+  g_object_unref (layout);
+#else
+  width  = gdk_text_width_wc  (font, text, text_length);
+  height = font->ascent + font->descent;
+  if (bgc != 0)
+    gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+  gdk_draw_text_wc (drawable, font, gc, x, y, text, text_length);
+#endif
 }
 
 static void
