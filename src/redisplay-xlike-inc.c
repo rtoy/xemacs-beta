@@ -979,14 +979,9 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #ifdef THIS_IS_GTK
 static void
 gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
-                     GdkGC *bgc, gint x, gint y, gchar *text,
-                     gint text_length);
-static void
-gdk_draw_text_image_wc (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
-                        GdkGC *bgc, gint x, gint y, GdkWChar *text,
-                        gint text_length);
-
+                     GdkGC *bgc, gint x, gint y, struct textual_run *run);
 #endif /* THIS_IS_GTK */
+
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,
 		     Ichar_dynarr *buf, int xpos, int xoffset, int clip_start,
@@ -1329,16 +1324,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                                       cachel->foreground, bg_pmap,
                                       cachel->background_placement, Qnil);
 
-            if (runs[i].dimension == 1) 
-              gdk_draw_text_image (GDK_DRAWABLE (x_win),
-                                   FONT_INSTANCE_GTK_FONT (fi), gc, localgc,
-                                   xpos, dl->ypos, (char *) runs[i].ptr,
-                                   runs[i].len);
-            else
-              gdk_draw_text_image_wc (GDK_DRAWABLE (x_win),
-                                      FONT_INSTANCE_GTK_FONT (fi), gc, localgc,
-                                      xpos, dl->ypos, (GdkWChar *) runs[i].ptr,
-                                      runs[i].len);
+            gdk_draw_text_image (GDK_DRAWABLE (x_win),
+                                 FONT_INSTANCE_GTK_FONT (fi), gc, localgc,
+                                 xpos, dl->ypos, &runs[i]);
           }
 #endif /* (not) THIS_IS_X */
 	}
@@ -1538,19 +1526,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                                           Qnil, Qnil, Qnil);
                 XLIKE_SET_CLIP_RECTANGLE (dpy, localgc, cursor_start, dl->ypos,
                                           &clip_box);
-                if (runs[i].dimension == 1)
-                  gdk_draw_text_image (GDK_DRAWABLE (x_win),
-                                       FONT_INSTANCE_GTK_FONT (fi), cgc,
-                                       localgc, xpos, dl->ypos,
-                                       (char *) runs[i].ptr,
-                                       runs[i].len);
-                else
-                  gdk_draw_text_image_wc (GDK_DRAWABLE (x_win),
-                                       FONT_INSTANCE_GTK_FONT (fi), cgc,
-                                       localgc, xpos, dl->ypos,
-                                       (GdkWChar *) runs[i].ptr,
-                                       runs[i].len);
-                  
+                gdk_draw_text_image (GDK_DRAWABLE (x_win),
+                                     FONT_INSTANCE_GTK_FONT (fi), cgc,
+                                     localgc, xpos, dl->ypos, &runs[i]);
               }
 #endif /* (not) THIS_IS_X */
 	      XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
