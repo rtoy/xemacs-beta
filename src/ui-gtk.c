@@ -44,7 +44,7 @@
 #include "gtk-glue.c"
 
 /* Is the fundamental type of 't' the xemacs defined fundamental type 'type'? */
-#define IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t,type) (((GtkType) GTK_FUNDAMENTAL_TYPE(t)) == (type))
+#define IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t,type) (((GType) GTK_FUNDAMENTAL_TYPE(t)) == (type))
 
 Lisp_Object Qemacs_ffip;
 Lisp_Object Qemacs_gtk_objectp;

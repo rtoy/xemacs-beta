@@ -1,5 +1,50 @@
 2010-05-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Take a struct textual run* argument and handle the wide char
+	case ourselves.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Call gdk_draw_text_image directly with a struct textual_run *.
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Put back plain Gdk text rendering, pango not complete.
+	(gdk_draw_text_image_wc):
+	Wide char version of text display.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Call wide char version of text image draw where required.
+
+	* ui-gtk.c (IS_XEMACS_GTK_FUNDAMENTAL_TYPE):
+	Use GType, not GtkType.
+
+	* ui-gtk.h: build_gtk_boxed now takes a GType arg, not GtkType
+
+	* console-gtk-impl.h (struct gtk_device):
+	Add pango context inside ifdef USE_PANGO.  (We don't want to
+	use HAVE_PANGO because the pango code isn't ready.)
+
+	* console-xlike-inc.h (XLIKE_TEXT_WIDTH_WIDE):
+	Use USE_PANGO instead of HAVE_PANGO.
+
+	* device-gtk.c:
+	Add pango font name lookup functions.
+	(gtk_init_device):
+	Initialize PangoContext for device.
+
+	* fontcolor-gtk.c (gtk_initialize_font_instance):
+	Add ifdef'd code for initializing pango fonts.
+
+	* fontcolor-gtk-impl.h (struct gtk_font_instance_data):
+	Add pango information to font instance data.
+
+	* sysgtk.h:
+	Include pango headers.
+
+	* faces.c (complex_vars_of_faces):
+	Set the fallback font to a monospaced lucidatypewriter.  Without
+	the -m-, gdk loads a proportiional font.
+
 	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status):
 	Replace deprecated code. Notify the scrollbar when the slider
 	value changes.  Update the scrollbar when the buffer changes.
@@ -33,6 +78,9 @@
 	from the scrollbar.  Assert check the signal connect calls.
 	(scrollbar_cb): Handle all GtkScrollType enum values.
 	
+	* scrollbar-gtk.c (scrollbar_cb):
+	Callback now gets GtkRange* and GtkScrollType arguments.
+
 	* ui-gtk.c (build_gtk_object): 
 	Use g_object_get_qdata now that key is a GQuark.
 

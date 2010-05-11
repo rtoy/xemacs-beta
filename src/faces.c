@@ -2437,7 +2437,7 @@ complex_vars_of_faces (void)
       Fcons
       (Fcons
        (list1 (device_symbol),
-	build_ascstring ("-*-lucidatypewriter-medium-r-*-*-*-120-*-*-*-*-*-*")),
+	build_ascstring ("-*-lucidatypewriter-medium-r-*-*-*-120-*-*-m-*-*-*")),
        inst_list);
 
 #endif /* !HAVE_XFT */

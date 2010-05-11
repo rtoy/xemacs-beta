@@ -107,8 +107,8 @@ decode_gtk_device (Lisp_Object device)
 extern Lisp_Object
 xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w);
 
-#ifdef HAVE_PANGO
-extern Lisp_Object __get_gtk_font_truename (PangoFont *gdk_font,
+#ifdef USE_PANGO
+extern Lisp_Object __get_gtk_font_truename (PangoFont *font,
 					    int expandp);
 #else
 extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font,
@@ -298,7 +298,7 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   /* Should this be easier to figure out? --jsparkes */
   {
-#ifdef HAVE_PANGO
+#ifdef USE_PANGO
     GdkDisplay *disp = gdk_display_get_default ();
     GdkScreen *screen = gdk_display_get_default_screen (disp);
     PangoFontMap *fmap = pango_xft_get_font_map(disp, screen);

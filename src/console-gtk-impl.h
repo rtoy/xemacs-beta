@@ -66,7 +66,9 @@ struct gtk_device
   int depth;
   GdkColormap *device_cmap;
 
+#ifdef USE_PANGO
   PangoContext *context;
+#endif
   
   /* Used by x_bevel_modeline in redisplay-x.c */
   GdkBitmap *gray_pixmap;
