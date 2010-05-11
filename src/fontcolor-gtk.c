@@ -235,17 +235,23 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 {
   GdkFont *gf;
   const char *extname;
+#ifdef USE_PANGO
   PangoFontDescription *pango_desc;
-  
+#endif
   extname = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
 
   /* Load font or fontset? */
-  /* gf = gdk_font_load_for_display (extname); --jsparkes */
+#ifdef USE_PANGO
   pango_desc = pango_font_description_new ();
   pango_font_description_set_family (pango_desc, extname);
+  pango_font_description_set_size (pango_desc, 12);
   char *nm = pango_font_description_to_string (pango_desc);
-
+#else
+  /* Loading a fontset gives a lot of warning about missing charsets,
+     including iso-8859-1.  We probably require a font map as well. */
+  /* gf = gdk_fontset_load (extname); */
   gf = gdk_font_load (extname);
+#endif
 
   if (!gf)
     {
@@ -262,10 +268,6 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   f->ascent = gf->ascent;
   f->descent = gf->descent;
   f->height = gf->ascent + gf->descent;
-
-  /* Now lets figure out the width of the font.
-     We could use a longer string and get the averaage length */
-  /* f->width = gdk_text_width (gf, "abcdefghijklmnopqrstuvwxyz", 26)/26; */
   f->width = gdk_text_width (gf, "n", 1); /* em or en? */
   f->proportional_p = (gdk_text_width (gf, "|", 1) !=
                        gdk_text_width (gf, "W", 1));
