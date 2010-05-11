@@ -1976,8 +1976,20 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 	    }
 	}
       else if (NILP (bar_cursor_value))
-        XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
-                              fi->width - 1, cursor_height - 1);
+        {
+#ifndef THIS_IS_GTK
+          XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
+                                fi->width - 1, cursor_height - 1);
+#else
+          struct textual_run run;
+          run.charset = Vcharset_ascii;
+          run.dimension = 1;
+          run.ptr = (unsigned char *)"a";
+          run.len = 1;
+          gdk_draw_text_image (x_win, FONT_INSTANCE_GTK_FONT (fi),
+                               gc, gc, cursor_start, cursor_y, &run);
+#endif
+        }
     }
 }
 
