@@ -128,6 +128,19 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
 }
 
 static void
+gdk_draw_text_blank (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
+		     GdkGC *bgc, gint x, gint y)
+{
+  int width = -1;
+  int height = font->ascent + font->descent;
+
+  width  = gdk_text_width (font, " ", 1);
+  if (bgc != 0)
+    gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+  gdk_draw_text (drawable, font, gc, x, y, " ", 1);
+}
+  
+static void
 our_draw_bitmap (GdkDrawable *drawable,
 		 GdkGC       *gc,
 		 GdkPixmap   *src,
