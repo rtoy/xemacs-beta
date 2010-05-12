@@ -982,8 +982,8 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
                      GdkGC *bgc, gint x, gint y, struct textual_run *run);
 
 static void
-gdk_draw_text_blank (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
-                     GdkGC *bgc, gint x, gint y);
+gdk_draw_text_char (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
+                     GdkGC *bgc, gint x, gint y, gchar blank);
 
 #endif /* THIS_IS_GTK */
 void
@@ -1875,6 +1875,7 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
 		    shadow_thickness, EDGE_ALL, style);
 }
 
+
 /*****************************************************************************
  XLIKE_output_blank
 
@@ -1969,8 +1970,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 	      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
 				    fi->width, cursor_height);
 #else
-              gdk_draw_text_blank (x_win, FONT_INSTANCE_GTK_FONT (fi),
-                                   gc, 0, cursor_start, cursor_y);
+              gdk_draw_text_char (x_win, FONT_INSTANCE_GTK_FONT (fi),
+                                  gc, 0, cursor_start, cursor_y, ' ');
 #endif
 	    }
 	  else
@@ -1991,8 +1992,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
           XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
                                 fi->width - 1, cursor_height - 1);
 #else
-          gdk_draw_text_blank (x_win, FONT_INSTANCE_GTK_FONT (fi),
-                               gc, 0, cursor_start, cursor_y);
+          gdk_draw_text_char (x_win, FONT_INSTANCE_GTK_FONT (fi),
+                              gc, 0, cursor_start, cursor_y, ' ');
 #endif
         }
     }
