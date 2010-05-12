@@ -90,7 +90,7 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
 
 static void
 gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
-		     GdkGC *bgc, gint x, gint y, struct textual_run *run)
+		     GdkGC *bgc, gint x, gint y, gchar *text, gint len)
 {
   int width = -1;
   int height = -1;
@@ -99,31 +99,33 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
 #endif
 
 #ifdef USE_PANGO
-  layout = pango_layout_new (gdk_pango_context_get ());
-  //layout = gtk_widget_create_pango_layout (drawable, text);
+  Display *disp = GDK_DRAWABLE_XDISPLAY (drawable);
+  int screen = GDK_SCREEN_XNUMBER (gdk_drawable_get_screen (drawable));
+
+  /* Xft render */
+  //context = pango_xft_get_context (display, screen);
+  //layout = pango_layout_new (context);
+  /* Gtk render */
+  context = gtk_widget_get_pango_context (widget);
+  layout = pango_layout_new (context);
+
   pango_layout_set_text (layout, text, text_length);
   pango_layout_get_pixel_size (layout, &width, &height);
 
   if (bgc != 0)
     gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+
+  /* xft draw */
+  //pango_xft_layout_render (xft_draw, xft_color, layout, x, y);
+  /* Gtk draw */
   gdk_draw_layout (drawable, gc, x, y, layout);
-  g_object_unref (layout);
+  //g_object_unref (layout);
 #else
   height = font->ascent + font->descent;
-  if (run->dimension == 1)
-    {
-      width  = gdk_text_width (font, (gchar *)run->ptr, run->len);
-      if (bgc != 0)
-        gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
-      gdk_draw_text (drawable, font, gc, x, y, (gchar *)run->ptr, run->len);
-    }
-  else
-    {
-      width  = gdk_text_width_wc (font, (GdkWChar *)run->ptr, run->len);
-      if (bgc != 0)
-        gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
-      gdk_draw_text_wc (drawable, font, gc, x, y, (GdkWChar *)run->ptr, run->len);
-    }
+  width  = gdk_text_width (font, text, len);
+  if (bgc != 0)
+    gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+  gdk_draw_text (drawable, font, gc, x, y, text, len);
 #endif
 }
 
@@ -152,5 +154,6 @@ our_draw_bitmap (GdkDrawable *drawable,
   if (height == -1)
     height = src_height;
 
-  gdk_draw_drawable(drawable, gc, src,  xsrc, ysrc, xdest, ydest, width, height);
+  gdk_draw_drawable(drawable, gc, src,  xsrc, ysrc, xdest, ydest,
+                    width, height);
 }
