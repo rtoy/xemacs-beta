@@ -1,5 +1,8 @@
 2010-05-12  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Use min() to clarify some math.
+
 	* redisplay-gtk.c (gdk_draw_text_char): 
 	Rename gdk_draw_text_char to gdk_draw_text_char and take
 	a character argument.

@@ -1049,9 +1049,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 			      Dynarr_length (buf));
 
   /* Regularize the variables passed in. */
-
-  if (clip_start < xpos)
-    clip_start = xpos;
+  clip_start = min (clip_start, xpos);
   clip_end = xpos + width;
   if (clip_start >= clip_end)
     /* It's all clipped out. */
@@ -1100,6 +1098,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     bgc = 0;
   else
     {
+      /* Clear the cursor location? */
       bgc = XLIKE_get_gc (f, Qnil, cachel->foreground, cachel->background,
                           bg_pmap, cachel->background_placement, Qnil);
       XLIKE_FILL_RECTANGLE (dpy, x_win, bgc, clip_start,
@@ -1145,10 +1144,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
 	      /* Make sure we don't clear below the real bottom of the
 		 line. */
-	      if (ypos1_string > ypos2_line)
-		ypos1_string = ypos2_line;
-	      if (ypos2_string > ypos2_line)
-		ypos2_string = ypos2_line;
+              ypos1_string = min (ypos1_string, ypos2_line);
+              ypos2_string = min (ypos2_string, ypos2_line);
 
 	      if (ypos1_line < ypos1_string)
 		{
@@ -1325,7 +1322,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
             
             if (localgc == 0)
               localgc = XLIKE_get_gc (f, font, cachel->background,
-                                      cachel->foreground, bg_pmap,
+                                      cachel->background, bg_pmap,
                                       cachel->background_placement, Qnil);
 
             gdk_draw_text_image (GDK_DRAWABLE (x_win),
@@ -1525,11 +1522,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                 GdkGC *localgc = bgc;
                 
                 if (localgc == 0)
-                  localgc = XLIKE_get_gc (f, font, cursor_cachel->background,
-                                          cursor_cachel->background,
+                  localgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
+                                          cursor_cachel->foreground,
                                           Qnil, Qnil, Qnil);
                 XLIKE_SET_CLIP_RECTANGLE (dpy, localgc, cursor_start, dl->ypos,
                                           &clip_box);
+                cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
+                                        cursor_cachel->background,
+                                        Qnil, Qnil, Qnil);
                 gdk_draw_text_image (GDK_DRAWABLE (x_win),
                                      FONT_INSTANCE_GTK_FONT (fi), cgc,
                                      localgc, xpos, dl->ypos, &runs[i]);
@@ -1590,8 +1590,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       if (tmp_y + tmp_height > (int) (ypos + height))
 	{
 	  tmp_y = ypos + height - tmp_height;
-	  if (tmp_y < (int) ypos)
-	    tmp_y = ypos;
+          tmp_y = min (tmp_y, ypos);
 	  tmp_height = ypos + height - tmp_y;
 	}
 
