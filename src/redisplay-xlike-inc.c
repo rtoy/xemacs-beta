@@ -979,7 +979,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #ifdef THIS_IS_GTK
 static void
 gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
-                     GdkGC *bgc, gint x, gint y, struct textual_run *run);
+                     GdkGC *bgc, gint x, gint y, gchar *text, gint len);
 #endif /* THIS_IS_GTK */
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,
@@ -1325,7 +1325,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
             gdk_draw_text_image (GDK_DRAWABLE (x_win),
                                  FONT_INSTANCE_GTK_FONT (fi), gc, localgc,
-                                 xpos, dl->ypos, &runs[i]);
+                                 xpos, dl->ypos, (char *)runs[i].ptr,
+                                 runs[i].len);
           }
 #endif /* (not) THIS_IS_X */
 	}
@@ -1527,7 +1528,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                                           &clip_box);
                 gdk_draw_text_image (GDK_DRAWABLE (x_win),
                                      FONT_INSTANCE_GTK_FONT (fi), cgc,
-                                     localgc, xpos, dl->ypos, &runs[i]);
+                                     localgc, xpos, dl->ypos,
+                                     (char *)runs[i].ptr, runs[i].len);
               }
 #endif /* (not) THIS_IS_X */
 
