@@ -577,7 +577,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 
 	  gtk_misc_set_alignment (GTK_MISC (accel_label), 0.0, 0.5);
           gtk_label_set_use_underline (GTK_LABEL (accel_label), TRUE);
-          // accel_key = XCHAR (menu_line_to_
+          accel_key = gtk_label_parse_uline (GTK_LABEL (accel_label), temp_menu_name);
 	  menu_item = gtk_menu_item_new ();
 	  gtk_container_add (GTK_CONTAINER (menu_item), accel_label);
 	  gtk_widget_show (accel_label);
