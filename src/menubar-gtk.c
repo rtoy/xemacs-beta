@@ -95,9 +95,9 @@ gtk_xemacs_menubar_get_type (void)
 
   if (!xemacs_menubar_type)
     {
-      static const GTypeInfo xemacs_menubar_info =
+      static const GtkTypeInfo xemacs_menubar_info =
       {
-	"GtkXEmacsMenubar",
+	(gchar *)"GtkXEmacsMenubar",
 	sizeof (GtkXEmacsMenubar),
 	sizeof (GtkXEmacsMenubarClass),
 	(GtkClassInitFunc) gtk_xemacs_menubar_class_init,
@@ -199,14 +199,13 @@ static void       gtk_xemacs_accel_label_init(GtkXEmacsAccelLabel *xemacs);
 static GType
 gtk_xemacs_accel_label_get_type(void)
 {
-  static 
-GType xemacs_accel_label_type = 0;
+  static GType xemacs_accel_label_type = 0;
 
   if (!xemacs_accel_label_type)
     {
-      static const GTypeInfo xemacs_accel_label_info =
+      static const GtkTypeInfo xemacs_accel_label_info =
       {
-	"GtkXEmacsAccelLabel",
+	(gchar *)"GtkXEmacsAccelLabel",
 	sizeof (GtkXEmacsAccelLabel),
 	sizeof (GtkXEmacsAccelLabelClass),
 	(GtkClassInitFunc) gtk_xemacs_accel_label_class_init,
@@ -302,9 +301,9 @@ menu_name_to_accelerator (Ibyte *name)
 }
 
 #define XEMACS_MENU_DESCR_TAG g_quark_from_string ("xemacs::menu::description")
-#define XEMACS_MENU_FILTER_TAG q_quark_from_string ("xemacs::menu::filter")
-#define XEMACS_MENU_GUIID_TAG q_quark_from_string ("xemacs::menu::gui_id")
-#define XEMACS_MENU_FIRSTTIME_TAG q_quark_from_string ("xemacs::menu::first_time")
+#define XEMACS_MENU_FILTER_TAG "xemacs::menu::filter"
+#define XEMACS_MENU_GUIID_TAG "xemacs::menu::gui_id"
+#define XEMACS_MENU_FIRSTTIME_TAG "xemacs::menu::first_time"
 
 static void __activate_menu(GtkMenuItem *, gpointer);
 
@@ -321,7 +320,7 @@ __torn_off_sir(GtkMenuItem *UNUSED (item), gpointer user_data)
       Lisp_Object menu_desc = Qnil;
       GtkWidget *old_submenu = GTK_MENU_ITEM (menu_item)->submenu;
 
-      menu_desc = GET_LISP_FROM_VOID (g_object_get_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG));
+      menu_desc = GET_LISP_FROM_VOID (gtk_object_get_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG));
 
       /* GCPRO all of our very own */
       gcpro_popup_callbacks (id, menu_desc);
@@ -369,7 +368,7 @@ static void
 __activate_menu(GtkMenuItem *item, gpointer user_data)
 {
   Lisp_Object desc;
-  gpointer force_clear = g_object_get_qdata (GTK_OBJECT (item), XEMACS_MENU_FIRSTTIME_TAG);
+  gpointer force_clear = gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_FIRSTTIME_TAG);
 
   gtk_object_set_data (GTK_OBJECT (item), XEMACS_MENU_FIRSTTIME_TAG, 0x00);
 
@@ -386,7 +385,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
       return;
     }
 
-  desc = GET_LISP_FROM_VOID (g_object_get_qdata (GTK_OBJECT (item), XEMACS_MENU_DESCR_TAG));
+  desc = GET_LISP_FROM_VOID (g_object_get_qdata (G_OBJECT (item), XEMACS_MENU_DESCR_TAG));
 
 #ifdef TEAR_OFF_MENUS
   /* Lets stick in a detacher just for giggles */
@@ -401,11 +400,11 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
 
   if (user_data)
     {
-      GUI_ID id = (GUI_ID) g_object_get_qdata (GTK_OBJECT (item), XEMACS_MENU_GUIID_TAG);
+      GUI_ID id = (GUI_ID) GPOINTER_TO_INT (gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_GUIID_TAG));
       Lisp_Object hook_fn;
       struct gcpro gcpro1, gcpro2;
 
-      hook_fn = GET_LISP_FROM_VOID (g_object_get_qdata (GTK_OBJECT (item), XEMACS_MENU_FILTER_TAG));
+      hook_fn = GET_LISP_FROM_VOID (gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_FILTER_TAG));
 
       GCPRO2 (desc, hook_fn);
 
@@ -430,8 +429,12 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
 	}
       else
 	{
+#ifdef JSPARKES
 	  next = menu_descriptor_to_widget_1 (child,
 					      gtk_menu_ensure_uline_accel_group (GTK_MENU (item->submenu)));
+#else
+          
+#endif
 	}
 
       if (!next)
@@ -449,9 +452,9 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
    that made sure callbacks and such were GCPRO-ed
 */
 static void
-__remove_gcpro_by_id (gpointer user_data, GObject *previous_location)
+__remove_gcpro_by_id (gpointer user_data)
 {
-  ungcpro_popup_callbacks ((GUI_ID) user_data);
+  ungcpro_popup_callbacks ((GUI_ID) GPOINTER_TO_INT (user_data));
 }
 
 static void
@@ -573,15 +576,15 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	  guint accel_key;
 
 	  gtk_misc_set_alignment (GTK_MISC (accel_label), 0.0, 0.5);
-	  accel_key = gtk_label_parse_uline (GTK_LABEL (accel_label), temp_menu_name);
-
+          gtk_label_set_use_underline (GTK_LABEL (accel_label), TRUE);
+          // accel_key = XCHAR (menu_line_to_
 	  menu_item = gtk_menu_item_new ();
 	  gtk_container_add (GTK_CONTAINER (menu_item), accel_label);
 	  gtk_widget_show (accel_label);
 
 	  if (menubar_accel_group)
 	    gtk_widget_add_accelerator (menu_item,
-					"activate_item",
+					"activate",
 					menubar_accel_group,
 					accel_key, GDK_MOD1_MASK,
 					GTK_ACCEL_LOCKED);
@@ -660,7 +663,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	    invalid_argument ("unknown menu cascade keyword", cascade);
 	}
 
-      gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG, STORE_LISP_IN_VOID (desc));
+      g_object_set_qdata (G_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG, STORE_LISP_IN_VOID (desc));
       gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_FILTER_TAG, STORE_LISP_IN_VOID (hook_fn));
 
       if ((!NILP (config_tag)
@@ -687,12 +690,12 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
   */
   if (reuse)
     {
-      gpointer id = g_object_get_qdata (GTK_OBJECT (reuse), XEMACS_MENU_GUIID_TAG);
+      gpointer id = gtk_object_get_data (GTK_OBJECT (reuse), XEMACS_MENU_GUIID_TAG);
 
       if (id)
 	{
 	  /* If the menu item had a GUI_ID that means it was a filter menu */
-	  __remove_gcpro_by_id (id, NULL);
+	  __remove_gcpro_by_id (id);
 	  gtk_signal_disconnect_by_func (GTK_OBJECT (reuse),
 					 GTK_SIGNAL_FUNC (__activate_menu),
 					 (gpointer) 0x01 );
@@ -890,7 +893,8 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 
 	  temp_label = convert_underscores (label_buffer);
 	  main_label = gtk_xemacs_accel_label_new (NULL);
-	  accel_key = gtk_label_parse_uline (GTK_LABEL (main_label), temp_label);
+	  /* accel_key = */
+          gtk_label_set_use_underline (GTK_LABEL (main_label), TRUE);
 	  free (temp_label);
 	}
 
@@ -1027,9 +1031,10 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 
 	  if (accel_group)
 	    gtk_widget_add_accelerator (widget,
-					"activate_item",
+					(gchar *)"activate_item",
 					accel_group,
-					accel_key, 0,
+					accel_key,
+                                        (GdkModifierType)0,
 					GTK_ACCEL_LOCKED);
 	}
 
@@ -1088,7 +1093,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
   gboolean right_justify = FALSE;
   Lisp_Object value = descr;
   GtkWidget *menubar = FRAME_GTK_MENUBAR_WIDGET (f);
-  GUI_ID id = (GUI_ID) g_object_get_qdata (GTK_OBJECT (menubar), XEMACS_MENU_GUIID_TAG);
+  GUI_ID id = (GUI_ID) GPOINTER_TO_INT (gtk_object_get_data (GTK_OBJECT (menubar), XEMACS_MENU_GUIID_TAG));
   guint menu_position = 0;
   GtkAccelGroup *menubar_accel_group;
 
@@ -1176,7 +1181,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
     while ((l = g_list_nth (GTK_MENU_SHELL (menubar)->children, menu_position)))
       {
 	gpointer data = l->data;
-	g_list_remove_link (GTK_MENU_SHELL (menubar)->children, l);
+	l = g_list_remove_link (GTK_MENU_SHELL (menubar)->children, l);
 
 	if (data)
 	  {
@@ -1236,7 +1241,7 @@ create_menubar_widget (struct frame *f)
 
   FRAME_GTK_MENUBAR_WIDGET (f) = menubar;
   gtk_object_set_data (GTK_OBJECT (menubar), XEMACS_MENU_GUIID_TAG, (gpointer) id);
-  gtk_object_weakref (GTK_OBJECT (menubar), __remove_gcpro_by_id, (gpointer) id, NULL);
+  gtk_object_weakref (GTK_OBJECT (menubar), __remove_gcpro_by_id, (gpointer) id);
 }
 
 static int
@@ -1415,7 +1420,7 @@ gtk_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   widget = menu_descriptor_to_widget (menu_desc, NULL);
   menu = GTK_MENU_ITEM (widget)->submenu;
   gtk_widget_set_name (widget, "XEmacsPopupMenu");
-  id = gtk_object_get_qdata (GTK_OBJECT (widget), XEMACS_MENU_GUIID_TAG);
+  id = gtk_object_get_data (GTK_OBJECT (widget), XEMACS_MENU_GUIID_TAG);
 
   __activate_menu (GTK_MENU_ITEM (widget), id);
 
