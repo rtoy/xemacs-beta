@@ -6,10 +6,29 @@
 
 2010-05-12  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* redisplay-gtk.c (gdk_draw_text_image):
-	Revert from taking a struct textual run argument.  Some incomplete
-	changes to pango drawing.
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Use min() to clarify some math.
 
+	* redisplay-gtk.c (gdk_draw_text_char): 
+	Rename gdk_draw_text_char to gdk_draw_text_char and take
+	a character argument.
+	
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	Rename gdk_draw_text_char to gdk_draw_text_char and pass
+	a space as the character argument.
+
+2010-05-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	Use new gdk draw blank function.
+
+	* redisplay-gtk.c (gdk_draw_text_blank):
+	Extract a new function.
+
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	Display a text space instead of a rectangle for an
+	onscreen blank.
+	
 2010-05-10  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (gdk_draw_text_image):
