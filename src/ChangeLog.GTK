@@ -1,5 +1,11 @@
 2010-05-14  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c (XLIKE_output_cursor):
+	New function that displays the cursor, but unfortunately not the
+	character underneath.  Still, it's a display improvement.
+	(XLIKE_output_blank):
+	Use same args for XLIKE_DRAW_RECTANGLE in Gtk and non-Gtk cases.
+
 	* redisplay-gtk.c (gdk_draw_text_image):
 	gdk_draw_rectangle starts from top left corner.
 	(gdk_draw_text_char): Ditto.
