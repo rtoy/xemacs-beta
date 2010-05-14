@@ -106,6 +106,10 @@ static void XLIKE_output_horizontal_line (struct window *w,
 static void XLIKE_output_eol_cursor (struct window *w,
 				     struct display_line *dl,
 				     int xpos, face_index findex);
+static void XLIKE_output_cursor (struct window *w,
+                                 struct display_line *dl,
+                                 int xpos, face_index findex, int width,
+                                 char c);
 static void XLIKE_clear_frame_windows (Lisp_Object window);
 static void XLIKE_bevel_area (struct window *w, face_index findex,
 			      int x, int y, int width, int height,
@@ -659,11 +663,14 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 		    }
 		  else
 		    {
-		      Dynarr_add (buf, rb->object.chr.ch);
-		      XLIKE_output_string (w, dl, buf, xpos, 0, start_pixpos,
-					   rb->width, findex, 1,
-					   cursor_start, cursor_width,
-					   cursor_height);
+		      XLIKE_output_cursor (w, dl, xpos, findex, cursor_width,
+                                           rb->object.chr.ch);
+                      
+                      //		      Dynarr_add (buf, rb->object.chr.ch);
+		      //XLIKE_output_string (w, dl, buf, xpos, 0, start_pixpos,
+                      //			   rb->width, findex, 1,
+                      //			   cursor_start, cursor_width,
+                      //			   cursor_height);
 		      Dynarr_reset (buf);
 		    }
 
@@ -979,7 +986,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #ifdef THIS_IS_GTK
 static void
 gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
-                     GdkGC *bgc, gint x, gint y, struct textual_run *run);
+                     GdkGC *bgc, gint x, gint y, gchar *text, gint len);
 
 static void
 gdk_draw_text_char (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
@@ -1099,11 +1106,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   else
     {
       /* Clear the cursor location? */
-      bgc = XLIKE_get_gc (f, Qnil, cachel->foreground, cachel->background,
+      bgc = XLIKE_get_gc (f, Qnil, cachel->background, cachel->background,
                           bg_pmap, cachel->background_placement, Qnil);
       XLIKE_FILL_RECTANGLE (dpy, x_win, bgc, clip_start,
-			    ypos, clip_end - clip_start,
-			    height);
+                           ypos, clip_end - clip_start,
+                           height);
     }
 
   nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
@@ -1327,7 +1334,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
             gdk_draw_text_image (GDK_DRAWABLE (x_win),
                                  FONT_INSTANCE_GTK_FONT (fi), gc, localgc,
-                                 xpos, dl->ypos, &runs[i]);
+                                 xpos, dl->ypos, (gchar *) runs[i].ptr,
+                                 runs[i].len);
           }
 #endif /* (not) THIS_IS_X */
 	}
@@ -1413,7 +1421,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
 	  ascent = gfont->ascent;
 	  descent = gfont->descent;
-	  uthick = 1;
+	  uthick = 2;
 #endif /* THIS_IS_GTK */
 
 	  upos = ascent - ((ascent + descent) / 2) + 1;
@@ -1429,8 +1437,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		XLIKE_DRAW_LINE (dpy, x_win, gc, xpos, dl->ypos - upos,
 				 xpos + this_width, dl->ypos - upos);
 	      else if (uthick > 1)
-		XLIKE_FILL_RECTANGLE (dpy, x_win, gc, xpos, dl->ypos + upos,
-				      this_width, uthick);
+                XLIKE_FILL_RECTANGLE (dpy, x_win, gc, xpos, dl->ypos + upos,
+                                      this_width, uthick);
 	    }
 	}
 
@@ -1499,8 +1507,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      clip_box.width = cursor_width;
 	      clip_box.height = height;
 
-              //	      XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
-              //			&clip_box);
+              XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
+                                        &clip_box);
 #ifdef THIS_IS_X
 	      if (runs[i].dimension == 1)
 		XDrawImageString (dpy, x_win, cgc, xpos, dl->ypos,
@@ -1532,7 +1540,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                                         Qnil, Qnil, Qnil);
                 gdk_draw_text_image (GDK_DRAWABLE (x_win),
                                      FONT_INSTANCE_GTK_FONT (fi), cgc,
-                                     localgc, xpos, dl->ypos, &runs[i]);
+                                     localgc, xpos, dl->ypos, (gchar *)runs[i].ptr,
+                                     runs[i].len);
               }
 #endif /* (not) THIS_IS_X */
 
@@ -1606,14 +1615,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (!focus && NILP (bar_cursor_value))
 	{
-#ifdef THIS_IS_GTK
-	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, tmp_y -
-                                tmp_height - 1,
+	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, tmp_y, 
 				cursor_width - 1, tmp_height - 1);
-#else
-	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, tmp_y,
-				cursor_width - 1, tmp_height - 1);
-#endif
 	}
       else if (focus && !NILP (bar_cursor_value))
 	{
@@ -1965,13 +1968,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 	{
 	  if (NILP (bar_cursor_value))
 	    {
-#ifndef THIS_IS_GTK
 	      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
 				    fi->width, cursor_height);
-#else
-              gdk_draw_text_char (x_win, FONT_INSTANCE_GTK_FONT (fi),
-                                  gc, 0, cursor_start, cursor_y, ' ');
-#endif
 	    }
 	  else
 	    {
@@ -1987,13 +1985,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 	}
       else if (NILP (bar_cursor_value))
         {
-#ifndef THIS_IS_GTK
           XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
                                 fi->width - 1, cursor_height - 1);
-#else
-          gdk_draw_text_char (x_win, FONT_INSTANCE_GTK_FONT (fi),
-                              gc, 0, cursor_start, cursor_y, ' ');
-#endif
         }
     }
 }
@@ -2162,6 +2155,77 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
       XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, x, cursor_y, width - 1,
 			    cursor_height - 1);
     }
+}
+
+static void
+XLIKE_output_cursor (struct window *w, struct display_line *dl, int xpos,
+                     face_index findex, int width, char ch)
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+  Lisp_Object window;
+
+  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc = NULL;
+  face_index elt = get_builtin_face_cache_index (w, Vtext_cursor_face);
+  struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, elt);
+
+  int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
+  Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
+							 WINDOW_BUFFER (w));
+
+  int x = xpos;
+  int y = XLIKE_DISPLAY_LINE_YPOS (dl);
+  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
+  int cursor_height, cursor_y;
+  int defheight, defascent;
+
+  window = wrap_window (w);
+  redisplay_clear_region (window, findex, x, y, width, height);
+
+  if (NILP (w->text_cursor_visible_p))
+    return;
+
+  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
+		     Qnil, Qnil, Qnil);
+
+  default_face_font_info (window, &defascent, 0, 0, &defheight, 0);
+
+  /* make sure the cursor is entirely contained between y and y+height */
+  cursor_height = min (defheight, height) - 2;
+  cursor_y = max (y, min (y + height - cursor_height,
+			  dl->ypos - defascent));
+
+  if (focus)
+    {
+#ifdef HAVE_XIM
+      XIM_SetSpotLocation (f, x - 2 , cursor_y + cursor_height - 2);
+#endif /* HAVE_XIM */
+
+      if (NILP (bar_cursor_value))
+	{
+	  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, cursor_y, width,
+				cursor_height);
+	}
+      else
+	{
+	  int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
+
+	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
+                             Qnil, Qnil,
+			     make_int (bar_width));
+	  XLIKE_DRAW_LINE (dpy, x_win, gc, x + bar_width - 1, cursor_y,
+			   x + bar_width - 1, cursor_y + cursor_height - 1);
+	}
+    }
+  else if (NILP (bar_cursor_value))
+    {
+      XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, x, cursor_y+1, width - 1,
+			    cursor_height - 1);
+    }
+  //  gdk_draw_text_image (GDK_DRAWABLE (x_win),  FONT_INSTANCE_GTK_FONT (fi), gc, bgc,
+  //                     x, cursor_y + 1, dl->xpos, 1);
 }
 
 static void
