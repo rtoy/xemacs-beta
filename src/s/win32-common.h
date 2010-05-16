@@ -30,3 +30,5 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define an identifier for all MS Windows systems -- Cygwin, native, MinGW */
 #define WIN32_ANY
+
+#define DEFAULT_FILE_SYSTEM_IGNORE_CASE 1

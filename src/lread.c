@@ -894,9 +894,6 @@ for details.
 {
   /* This function can GC */
   Lisp_Object tp;
-  static int locate_file_called;
-
-  ++locate_file_called;
 
   CHECK_STRING (filename);
 
@@ -918,8 +915,7 @@ for details.
 static Lisp_Object
 locate_file_refresh_hashing (Lisp_Object directory)
 {
-  Lisp_Object hash =
-    make_directory_hash_table (XSTRING_DATA (directory));
+  Lisp_Object hash = make_directory_hash_table (directory);
 
   if (!NILP (hash))
     Fputhash (directory, hash, Vlocate_file_hash_table);
@@ -3483,7 +3479,12 @@ character escape syntaxes or just read them incorrectly.
 
   Vlocate_file_hash_table = make_lisp_hash_table (200,
 						  HASH_TABLE_NON_WEAK,
-						  Qequal);
+#ifdef DEFAULT_FILE_SYSTEM_IGNORE_CASE
+						  Qequalp
+#else
+						  Qequal
+#endif
+						  );
   staticpro (&Vlocate_file_hash_table);
 #ifdef DEBUG_XEMACS
   symbol_value (XSYMBOL (intern ("Vlocate-file-hash-table")))

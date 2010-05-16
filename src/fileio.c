@@ -108,6 +108,8 @@ int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Vdirectory_sep_char;
 
+int default_file_system_ignore_case;
+
 #ifdef HAVE_FSYNC
 /* Nonzero means skip the call to fsync in Fwrite-region.  */
 int write_region_inhibit_fsync;
@@ -4560,6 +4562,16 @@ on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.
 */ );
   Vdirectory_sep_char = make_char (DEFAULT_DIRECTORY_SEP);
+
+  DEFVAR_CONST_BOOL ("default-file-system-ignore-case", &default_file_system_ignore_case /*
+What `file-system-ignore-case-p' returns by default.
+This is in the case that nothing in `file-system-case-alist' matches.
+*/ );
+#ifdef DEFAULT_FILE_SYSTEM_IGNORE_CASE
+  default_file_system_ignore_case = DEFAULT_FILE_SYSTEM_IGNORE_CASE;
+#else
+  default_file_system_ignore_case = 0;
+#endif
 }
 
 void
