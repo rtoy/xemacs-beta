@@ -663,14 +663,11 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 		    }
 		  else
 		    {
-		      XLIKE_output_cursor (w, dl, xpos, findex, cursor_width,
-                                           rb->object.chr.ch);
-                      
-                      //		      Dynarr_add (buf, rb->object.chr.ch);
-		      //XLIKE_output_string (w, dl, buf, xpos, 0, start_pixpos,
-                      //			   rb->width, findex, 1,
-                      //			   cursor_start, cursor_width,
-                      //			   cursor_height);
+                      Dynarr_add (buf, rb->object.chr.ch);
+		      XLIKE_output_string (w, dl, buf, xpos, 0, start_pixpos,
+                                           rb->width, findex, 1,
+                                           cursor_start, cursor_width,
+                      			   cursor_height);
 		      Dynarr_reset (buf);
 		    }
 
@@ -988,10 +985,6 @@ static void
 gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
                      GdkGC *bgc, gint x, gint y, gchar *text, gint len);
 
-static void
-gdk_draw_text_char (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
-                     GdkGC *bgc, gint x, gint y, gchar blank);
-
 #endif /* THIS_IS_GTK */
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,
@@ -1116,6 +1109,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
 				 Dynarr_length (buf), cachel);
 
+#ifdef THIS_IS_GTK
+  /* XXX Horrible kludge to force display of the only block cursor
+     I can get to work correctly!   -- jsparkes */
+  if (NILP (bar_cursor_value))
+    focus = 0;
+#endif
   for (i = 0; i < nruns; i++)
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
@@ -1538,6 +1537,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                 cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
                                         cursor_cachel->background,
                                         Qnil, Qnil, Qnil);
+                gdk_gc_set_function (gc, GDK_COPY);
                 gdk_draw_text_image (GDK_DRAWABLE (x_win),
                                      FONT_INSTANCE_GTK_FONT (fi), cgc,
                                      localgc, xpos, dl->ypos, (gchar *)runs[i].ptr,
@@ -1718,11 +1718,11 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 		 height, x, y);
 #else /* THIS_IS_GTK */
       USED (dpy);
-      #ifdef JSPARKES
+#ifdef JSPARKES
       gdk_draw_pixmap (GDK_DRAWABLE (x_win), gc,
 		       IMAGE_INSTANCE_GTK_PIXMAP (p),
 		       xoffset, yoffset, x, y, width, height);
-      #endif
+#endif
 #endif /* THIS_IS_GTK */
     }
   else
@@ -2155,77 +2155,6 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
       XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, x, cursor_y, width - 1,
 			    cursor_height - 1);
     }
-}
-
-static void
-XLIKE_output_cursor (struct window *w, struct display_line *dl, int xpos,
-                     face_index findex, int width, char ch)
-{
-  struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
-  Lisp_Object window;
-
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc = NULL;
-  face_index elt = get_builtin_face_cache_index (w, Vtext_cursor_face);
-  struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, elt);
-
-  int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
-  Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
-							 WINDOW_BUFFER (w));
-
-  int x = xpos;
-  int y = XLIKE_DISPLAY_LINE_YPOS (dl);
-  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
-  int cursor_height, cursor_y;
-  int defheight, defascent;
-
-  window = wrap_window (w);
-  redisplay_clear_region (window, findex, x, y, width, height);
-
-  if (NILP (w->text_cursor_visible_p))
-    return;
-
-  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
-		     Qnil, Qnil, Qnil);
-
-  default_face_font_info (window, &defascent, 0, 0, &defheight, 0);
-
-  /* make sure the cursor is entirely contained between y and y+height */
-  cursor_height = min (defheight, height) - 2;
-  cursor_y = max (y, min (y + height - cursor_height,
-			  dl->ypos - defascent));
-
-  if (focus)
-    {
-#ifdef HAVE_XIM
-      XIM_SetSpotLocation (f, x - 2 , cursor_y + cursor_height - 2);
-#endif /* HAVE_XIM */
-
-      if (NILP (bar_cursor_value))
-	{
-	  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, cursor_y, width,
-				cursor_height);
-	}
-      else
-	{
-	  int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
-
-	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
-                             Qnil, Qnil,
-			     make_int (bar_width));
-	  XLIKE_DRAW_LINE (dpy, x_win, gc, x + bar_width - 1, cursor_y,
-			   x + bar_width - 1, cursor_y + cursor_height - 1);
-	}
-    }
-  else if (NILP (bar_cursor_value))
-    {
-      XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, x, cursor_y+1, width - 1,
-			    cursor_height - 1);
-    }
-  //  gdk_draw_text_image (GDK_DRAWABLE (x_win),  FONT_INSTANCE_GTK_FONT (fi), gc, bgc,
-  //                     x, cursor_y + 1, dl->xpos, 1);
 }
 
 static void
