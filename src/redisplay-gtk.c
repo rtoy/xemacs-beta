@@ -124,22 +124,11 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
   height = font->ascent + font->descent;
   width  = gdk_text_width (font, text, len);
   if (bgc != 0)
-    gdk_draw_rectangle (drawable, bgc, TRUE, x, y-height+2, width, height-1);
+    /* The rectangle and text areas don't quite fit, so I have to the
+       te height a little --jsparkes */
+    gdk_draw_rectangle (drawable, bgc, TRUE, x, y-height+3, width, height);
   gdk_draw_text (drawable, font, gc, x, y, text, len);
 #endif
-}
-
-static void
-gdk_draw_text_char (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
-		     GdkGC *bgc, gint x, gint y, gchar blank)
-{
-  int width = -1;
-  int height = font->ascent + font->descent;
-
-  width  = gdk_text_width (font, &blank, 1);
-  if (bgc != 0)
-    gdk_draw_rectangle (drawable, bgc, TRUE, x, y-height+1, width, height);
-  gdk_draw_text (drawable, font, gc, x, y, &blank, 1);
 }
   
 static void
