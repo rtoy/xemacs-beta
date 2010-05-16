@@ -46,6 +46,7 @@ Lisp_Object Qdirectory_files;
 Lisp_Object Qfile_name_completion;
 Lisp_Object Qfile_name_all_completions;
 Lisp_Object Qfile_attributes;
+Lisp_Object Qfile_system_ignore_case_p;
 
 static Lisp_Object
 close_directory_unwind (Lisp_Object unwind_obj)
@@ -777,14 +778,21 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 
 
 Lisp_Object
-make_directory_hash_table (const Ibyte *path)
+make_directory_hash_table (Lisp_Object path)
 {
   DIR *d;
-  if ((d = qxe_opendir (path)))
+  if ((d = qxe_opendir (XSTRING_DATA (path))))
     {
+      Lisp_Object hash_table_test = Qequal, hash = Qnil;
       DIRENTRY *dp;
-      Lisp_Object hash =
-	make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, Qeq);
+
+      if (!UNBOUNDP (XSYMBOL_FUNCTION (Qfile_system_ignore_case_p))
+          && !NILP (call1 (Qfile_system_ignore_case_p, path)))
+        {
+          hash_table_test = Qequalp;
+        }
+
+      hash = make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, hash_table_test);
 
       while ((dp = qxe_readdir (d)))
 	{
@@ -942,6 +950,7 @@ syms_of_dired (void)
   DEFSYMBOL (Qfile_name_completion);
   DEFSYMBOL (Qfile_name_all_completions);
   DEFSYMBOL (Qfile_attributes);
+  DEFSYMBOL (Qfile_system_ignore_case_p);
 
   DEFSUBR (Fdirectory_files);
   DEFSUBR (Ffile_name_completion);
