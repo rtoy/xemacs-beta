@@ -124,7 +124,7 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
   height = font->ascent + font->descent;
   width  = gdk_text_width (font, text, len);
   if (bgc != 0)
-    gdk_draw_rectangle (drawable, bgc, TRUE, x, y-height+1, width, height);
+    gdk_draw_rectangle (drawable, bgc, TRUE, x, y-height+2, width, height-1);
   gdk_draw_text (drawable, font, gc, x, y, text, len);
 #endif
 }

@@ -1,3 +1,8 @@
+2010-05-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Shrink the cursor rectangle to avoid left over lines.
+
 2010-05-14  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-xlike-inc.c (XLIKE_output_cursor):
@@ -14,7 +19,8 @@
 
 	* menubar-gtk.c (gtk_xemacs_menubar_get_type):
 	Update to 2.0 so that it compiles.
-	(gtk_xemacs_accel_label_get_type): 
+	(gtk_xemacs_accel_label_get_type, menu_convert): Add parsing of
+	label accelerator back so that it gets added to the menu correctly.
 
 2010-05-12  Jeff Sparkes  <jsparkes@gmail.com>
 
