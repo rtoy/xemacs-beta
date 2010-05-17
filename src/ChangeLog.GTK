@@ -1,7 +1,19 @@
+2010-05-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_xlike_pixmap):
+	Enable gdk_draw_pixmap, it tests okay.  Drawing a bitmap
+	still needs work.
+
 2010-05-16  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Force outline cursor to be used for block mode cursor display,
+	since I can't make the regular one work correctly. Remove
+	gdk_draw_text_char.
+
 	* redisplay-gtk.c (gdk_draw_text_image):
-	Shrink the cursor rectangle to avoid left over lines.
+	Shrink the cursor rectangle to avoid left over lines.  Remove
+	gdk_draw_text_char.
 
 2010-05-14  Jeff Sparkes  <jsparkes@gmail.com>
 
