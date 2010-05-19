@@ -1,3 +1,8 @@
+2010-05-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c: Use GQuarks instead of text keys for attaching
+	data to widgets.
+
 2010-05-18  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* scrollbar-gtk.c (gtk_create_scrollbar_instance):
