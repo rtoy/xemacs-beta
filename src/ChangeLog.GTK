@@ -1,5 +1,8 @@
 2010-05-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* fontcolor-gtk.c (gtk_initialize_font_instance):
+	Add USE_PANGO code.
+
 	* device-gtk.c (Fgtk_style_info): Can only determine font
 	name using pango.
 

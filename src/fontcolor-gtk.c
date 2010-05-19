@@ -233,24 +233,33 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 			      Lisp_Object UNUSED (name),
 			      Lisp_Object UNUSED (device), Error_Behavior errb)
 {
-  GdkFont *gf;
   const char *extname;
 #ifdef USE_PANGO
   PangoFontDescription *pango_desc;
+  //Display *disp = GDK_DRAWABLE_XDISPLAY (drawable);
+  //int screen = GDK_SCREEN_XNUMBER (gdk_drawable_get_screen (drawable));
+  PangoFont *gf;
+#else
+  GdkFont *gf;
 #endif
+  
+
   extname = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
 
-  /* Load font or fontset? */
 #ifdef USE_PANGO
-  pango_desc = pango_font_description_new ();
-  pango_font_description_set_family (pango_desc, extname);
+  //context = pango_xft_get_context (display, screen);
+  pango_desc = pango_font_description_from_string ("monospace 12");
+  //pango_font_description_set_family (pango_desc, extname);
   pango_font_description_set_size (pango_desc, 12);
+  gf = pango_load_font (pango_desc);
   char *nm = pango_font_description_to_string (pango_desc);
+
 #else
   /* Loading a fontset gives a lot of warning about missing charsets,
      including iso-8859-1.  We probably require a font map as well. */
   /* gf = gdk_fontset_load (extname); */
   gf = gdk_font_load (extname);
+  
 #endif
 
   if (!gf)
@@ -259,7 +268,9 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 			  Qfont, errb);
       return 0;
     }
-
+#ifdef USE_PANGO
+  debug_out ("loaded font %s\n", nm);
+#endif
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   f->data = xnew (struct gtk_font_instance_data);
