@@ -299,12 +299,17 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   /* Should this be easier to figure out? --jsparkes */
   {
 #ifdef USE_PANGO
-    GdkDisplay *disp = gdk_display_get_default ();
-    GdkScreen *screen = gdk_display_get_default_screen (disp);
-    PangoFontMap *fmap = pango_xft_get_font_map(disp, screen);
-    DEVICE_GTK_CONTEXT (d) = pango_font_map_create_context(fmap);
-    //  DEVICE_GTK_CONTEXT (d) = pango_xft_get_context (display, 0);
-    DEVICE_GTK_CONTEXT (d) = pango_context_new ();
+    PangoFontDescription *pango_desc;
+    Display *disp = GDK_DRAWABLE_XDISPLAY (drawable);
+    int screen = GDK_SCREEN_XNUMBER (gdk_drawable_get_screen (drawable));
+
+    context = pango_xft_get_context (display, screen);
+    pango_desc = pango_font_description_new ();
+/*     pango_desc = pango_font_description_from_string ("monospace 12"); */
+    pango_font_description_set_family (pango_desc, extname);
+/*     pango_font_description_set_size (pango_desc, 12); */
+
+    DEVICE_GTK_CONTEXT (d) = context;
     assert (DEVICE_GTK_CONTEXT (d) != NULL);
 #endif
   }
@@ -689,7 +694,12 @@ Get the style information for a Gtk device.
 #undef FROB_COLOR
 
   result = nconc2 (result, list2 (Qfont,
-                                  convert_font (gtk_style_get_font (style))));
+#ifdef USE_PANGO
+                                  build_cistring (pango_font_description_to_string (style->font_desc))
+#else
+                                  convert_font (style->font_desc)
+#endif
+                                  ));
 
 #define FROB_PIXMAP(state) (style->rc_style->bg_pixmap_name[state] ? build_cistring (style->rc_style->bg_pixmap_name[state]) : Qnil)
 

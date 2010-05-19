@@ -135,7 +135,9 @@ DECLARE_LISP_OBJECT (gtk_device, Lisp_Gtk_Device);
 #define DEVICE_GTK_VISUAL(d)	(DEVICE_GTK_DATA (d)->visual)
 #define DEVICE_GTK_DEPTH(d)	(DEVICE_GTK_DATA (d)->depth)
 #define DEVICE_GTK_COLORMAP(d) 	(DEVICE_GTK_DATA (d)->device_cmap)
+#ifdef USE_PANGO
 #define DEVICE_GTK_CONTEXT(d) 	(DEVICE_GTK_DATA (d)->context)
+#endif
 #define DEVICE_GTK_APP_SHELL(d) 	(DEVICE_GTK_DATA (d)->gtk_app_shell)
 #define DEVICE_GTK_GC_CACHE(d) 	(DEVICE_GTK_DATA (d)->gc_cache)
 #define DEVICE_GTK_GRAY_PIXMAP(d) (DEVICE_GTK_DATA (d)->gray_pixmap)
