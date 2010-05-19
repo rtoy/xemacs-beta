@@ -1,5 +1,8 @@
 2010-05-19  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* device-gtk.c (gtk_init_device): Create PangoContext and
+	PangoFontMap in device initialization.
+
 	* menubar-gtk.c: Use GQuarks instead of text keys for attaching
 	data to widgets.
 
