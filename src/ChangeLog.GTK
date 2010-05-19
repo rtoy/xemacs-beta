@@ -1,5 +1,9 @@
 2010-05-19  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c: Use g_type* functions instead of deprecated gtk_type*
+	ones. Rename lisp_to_gtk_type to lisp_to_g_value.
+	* gtk-glue.c: use renamed function.
+
 	* menubar-gtk.c: Use GQuarks instead of text keys for attaching
 	data to widgets.
 
