@@ -296,23 +296,6 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   DEVICE_GTK_COLORMAP (d) = cmap;
   DEVICE_GTK_DEPTH (d) = visual->depth;
 
-  /* Should this be easier to figure out? --jsparkes */
-  {
-#ifdef USE_PANGO
-    PangoFontDescription *pango_desc;
-    Display *disp = GDK_DRAWABLE_XDISPLAY (drawable);
-    int screen = GDK_SCREEN_XNUMBER (gdk_drawable_get_screen (drawable));
-
-    context = pango_xft_get_context (display, screen);
-    pango_desc = pango_font_description_new ();
-/*     pango_desc = pango_font_description_from_string ("monospace 12"); */
-    pango_font_description_set_family (pango_desc, extname);
-/*     pango_font_description_set_size (pango_desc, 12); */
-
-    DEVICE_GTK_CONTEXT (d) = context;
-    assert (DEVICE_GTK_CONTEXT (d) != NULL);
-#endif
-  }
   {
     GtkWidget *w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
@@ -320,6 +303,25 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
     gtk_container_add (GTK_CONTAINER (w), app_shell);
 
     gtk_widget_realize (w);
+    {
+#ifdef USE_PANGO
+      PangoContext *context = 0;
+      PangoFontDescription *pango_desc = 0;
+      PangoFontMap *font_map = 0;
+      Display *disp = GDK_DISPLAY_XDISPLAY (gtk_widget_get_display (w));
+      int screen = GDK_SCREEN_XNUMBER (gtk_widget_get_screen (w));
+
+      context = pango_xft_get_context (disp, screen);
+      DEVICE_GTK_CONTEXT (d) = context;
+
+      pango_desc = pango_font_description_new ();
+      font_map = pango_xft_get_font_map (disp, screen);
+
+      DEVICE_GTK_FONT_MAP (d) = font_map;
+      /* pango_desc = pango_font_description_from_string ("monospace 12"); */
+      /* pango_font_description_set_size (pango_desc, 12); */
+#endif
+    }
   }
 
   DEVICE_GTK_APP_SHELL (d) = app_shell;
