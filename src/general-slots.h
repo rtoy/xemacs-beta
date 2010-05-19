@@ -240,6 +240,7 @@ SYMBOL (Qquery_coding_clear_highlights);
 SYMBOL (Qquery_coding_warning_face);
 SYMBOL (Qquestion);
 SYMBOL_KEYWORD (Q_question);
+SYMBOL (Qquote);
 SYMBOL (Qradio);
 SYMBOL (Qrassoc);
 SYMBOL (Qrassq);

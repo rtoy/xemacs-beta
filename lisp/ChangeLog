@@ -1,3 +1,18 @@
+2010-05-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el (default-file-system-ignore-case):
+	Move this to fileio.c, where it's a constant boolean variable
+	initialised at dump time.
+
+2010-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmdloop.el (suggest-key-bindings):
+	Make this available, documenting that it's for GNU Emacs
+	compatibility.
+	Implement it in terms of teach-extended-commands-p and
+	teach-extended-commands-timeout, using Ben's
+	set-symbol-value-handler functionality.
+
 2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* loadup.el (load-history): Be a bit more discriminate in the

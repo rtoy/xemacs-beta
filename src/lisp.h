@@ -4504,8 +4504,7 @@ extern Lisp_Object Qdevice_live_p;
 extern Lisp_Object Vx_initial_argv_list;
 
 /* Defined in dired.c */
-Lisp_Object make_directory_hash_table (const Ibyte *);
-Lisp_Object wasteful_word_to_lisp (unsigned int);
+Lisp_Object make_directory_hash_table (Lisp_Object);
 
 /* Defined in doc.c */
 EXFUN (Fsubstitute_command_keys, 1);

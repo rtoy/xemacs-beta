@@ -1,3 +1,39 @@
+2010-05-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move `default-file-system-ignore-case' to C; pay attention to it
+	in creating the directory hash tables for #'locate-file. Fix a bug
+	where #'eq was specified when creating directory hash tables in
+	dired.c. 
+
+	* config.h.in (DEFAULT_FILE_SYSTEM_IGNORE_CASE): This is 1 on
+	Darwin.
+	* dired.c (make_directory_hash_table): If
+	#'file-system-ignore-case-p gives non-nil for a directory, created
+	the associated hash table with #'equalp as its test. Never use
+	#'eq as a directory hash table test.
+	* fileio.c (vars_of_fileio):
+	Move `default-file-system-ignore-case' here, so it can be a
+	constant boolean reflecting a compile-time #define.
+	* lisp.h: Update the declaration of make_directory_hash_table;
+	remove the declaration of wasteful_word_to_lisp, which was
+	#ifdef'd out.
+	* lread.c (Flocate_file): Take out a debugging statement from
+	this function.
+	(locate_file_refresh_hashing): Call make_directory_hash_table with
+	a Lisp string, not an Ibyte pointer.
+	(vars_of_lread): If DEFAULT_FILE_SYSTEM_IGNORE_CASE is defined,
+	use #'equalp as the hash table test for locate-file-hash-table,
+	not #'equal.
+	* s/win32-common.h (DEFAULT_FILE_SYSTEM_IGNORE_CASE):
+	Case should normally be ignored in file names on Win32.
+
+2010-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fquote, Ffunction): Error on more than one argument to
+	these special operators.
+	* data.c (syms_of_data): Move Qquote to general-slots.h from this
+	file, now it's used in eval.c
+
 2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doc.c (Fdocumentation):
@@ -129,6 +165,12 @@
 	Call internal_hash() with the correct number of arguments, declare
 	various hash methods with the correct number of arguments, fixing
 	the Win32 build. Thank you Vin.
+
+2010-04-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame.c (print_frame):
+	When printing a frame, print its device, making the output of
+	#'frame-list a lot more helpful if using gnuclient.
 
 2010-04-04  Ben Wing  <ben@xemacs.org>
 
