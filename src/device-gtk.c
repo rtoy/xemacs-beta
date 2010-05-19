@@ -693,14 +693,13 @@ Get the style information for a Gtk device.
   FROB_COLOR (base, "base");
 #undef FROB_COLOR
 
-  result = nconc2 (result, list2 (Qfont,
 #ifdef USE_PANGO
+  result = nconc2 (result, list2 (Qfont,
                                   build_cistring (pango_font_description_to_string (style->font_desc))
-#else
-                                  convert_font (style->font_desc)
-#endif
+                                  /* convert_font (style->font_desc) */
                                   ));
-
+#endif
+  
 #define FROB_PIXMAP(state) (style->rc_style->bg_pixmap_name[state] ? build_cistring (style->rc_style->bg_pixmap_name[state]) : Qnil)
 
   if (style->rc_style)
