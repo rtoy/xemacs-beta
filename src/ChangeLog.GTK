@@ -1,5 +1,8 @@
 2010-05-19  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_bevel_area): Commented out use of shadow
+	enums until they're updated to 2.X values.
+
 	* ui-gtk.c: Use g_type* functions instead of deprecated gtk_type*
 	ones. Rename lisp_to_gtk_type to lisp_to_g_value.
 	Remove lisp_to_gtk_ret_type, lisp_to_gvalue now does that job.

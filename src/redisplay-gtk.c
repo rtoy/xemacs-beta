@@ -46,11 +46,13 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
   else
     switch (style)
       {
+#ifdef JSPARKES
       case EDGE_BEVEL_IN: style = (edge_style)GTK_SHADOW_IN; break;
       case EDGE_BEVEL_OUT: style = (edge_style)GTK_SHADOW_OUT; break;
       case EDGE_ETCHED_IN: style = (edge_style)GTK_SHADOW_ETCHED_IN; break;
       case EDGE_ETCHED_OUT: style = (edge_style)GTK_SHADOW_ETCHED_OUT; break;
       default: ABORT (); style = (edge_style)GTK_SHADOW_OUT;
+#endif
       }
 
   /* Do we want to have some magic constants to set
