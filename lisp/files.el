@@ -4515,17 +4515,8 @@ absolute one."
 
 ;; END SYNC WITH FSF 21.2.
 
-;; XEmacs:
-(defvar default-file-system-ignore-case (and
-                                         (memq system-type '(windows-nt
-                                                             cygwin32
-							     darwin))
-                                         t)
-  "What `file-system-ignore-case-p' returns by default.
-This is in the case that nothing in `file-system-case-alist' matches.")
-
-;; Question; do any of the Linuxes mount Windows partitions in a fixed
-;; place?
+;; XEmacs. Question; do any of the Linuxes mount Windows partitions in
+;; a fixed place?
 (defvar file-system-case-alist nil
   "Alist to decide where file name case is significant. 
 

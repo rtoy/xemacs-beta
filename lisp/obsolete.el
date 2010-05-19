@@ -273,6 +273,8 @@ Predefined tests are `eq', `eql', and `equal'.  Default is `eql'."
   parent)
 (make-compatible 'set-keymap-parent 'set-keymap-parents)
 
+(make-compatible-variable 'suggest-key-bindings 'teach-extended-commands-p)
+
 ;; too bad there's not a way to check for aref, assq, and nconc
 ;; being called on the values of functions known to return keymaps,
 ;; or known to return vectors of events instead of strings...
