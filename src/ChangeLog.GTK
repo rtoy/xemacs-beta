@@ -1,5 +1,8 @@
 2010-05-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance):
+	Set continuous update flag to try to fix scrollbar drag.
+
 	* glyphs.c (image_instance_hash):
 	Remove duplicate hash functions.
 
