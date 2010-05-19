@@ -111,6 +111,7 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
 
   sb = GTK_SCROLLBAR (vertical ? gtk_vscrollbar_new (adj) : gtk_hscrollbar_new (adj));
   SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
+  gtk_range_set_update_policy (GTK_RANGE (sb), GTK_UPDATE_CONTINUOUS);
 
   assert(g_signal_connect (GTK_OBJECT (sb),"change-value",
                            G_CALLBACK (scrollbar_cb), (gpointer) vertical));
