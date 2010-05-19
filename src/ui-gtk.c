@@ -51,13 +51,13 @@ Lisp_Object Qemacs_gtk_objectp;
 Lisp_Object Qemacs_gtk_boxedp;
 Lisp_Object Qvoid;
 Lisp_Object Vgtk_enumeration_info;
+Lisp_Object Vgtk_types;
 
 static GHashTable *dll_cache;
 
 static Lisp_Object g_type_to_lisp (GValue *arg);
 static int lisp_to_g_value (Lisp_Object obj, GValue *arg);
 #if 0
-int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg);
 void describe_gtk_arg (GType *arg);
 #endif
 gint symbol_to_gtk_enum (Lisp_Object obj, GValue *);
@@ -120,13 +120,9 @@ This is for loading dependency DLLs into XEmacs.
 /* Gtk object importing */
 EXFUN (Fgtk_import_type, 1);
 
-static struct hash_table *internal_type_hash;
-
 static int
 type_already_imported_p (GType t)
 {
-  void *retval = NULL;
-
   /* These are cases that we don't need to import */
   switch (GTK_FUNDAMENTAL_TYPE (t))
     {
@@ -154,16 +150,15 @@ type_already_imported_p (GType t)
 	return (1);
     }
 
-  if (!internal_type_hash)
+  if (NILP (Vgtk_types))
     {
-      internal_type_hash = make_hash_table (163);
+      Vgtk_types = call2 (intern ("make-hashtable"), 
+                                     make_int (163), Qequal);
       return (0);
     }
 
-  if (gethash ((void *)t, internal_type_hash, (const void **)&retval))
-    {
+  if (!NILP (Fgethash (make_int (G_VALUE_TYPE (t)), Vgtk_types, Qnil)))
       return (1);
-    }
   return (0);
 }
 
@@ -173,7 +168,11 @@ mark_type_as_imported (GType t)
   if (type_already_imported_p (t))
     return;
 
-  puthash ((void *) t, (void *) 1, internal_type_hash);
+  /* Value should be a symbol? */
+  const gchar *name = g_type_name (t);
+  Lisp_Object value  = Fmake_symbol (make_string ((const Ibyte *)name, strlen (name)));
+
+  Fputhash (make_int (G_VALUE_TYPE (t)), value, (Vgtk_types));
 }
 
 static void import_gtk_type (GType t);
@@ -1444,7 +1443,7 @@ Return a list of all properties for CLASS name.
 {
   GType gt;
   GObjectClass *type_class = NULL;
-  GObject *obj;
+  GObject *obj = 0;
   Lisp_Object prop_list = Qnil;
   GParamSpec **props;
   guint n_props, i;
@@ -1517,6 +1516,11 @@ A hashtable holding type information about GTK enumerations and flags.
 Do NOT modify unless you really understand ui-gtk.c.
 */);
   Vgtk_enumeration_info = Qnil;
+  DEFVAR_LISP ("gtk-types", &Vgtk_types /*
+A hashtable holding type information about imported GTK types and name.
+Intended for read-only debugging.
+*/);
+  Vgtk_types = Qnil;
   vars_of_glade ();
 }
 
@@ -1968,293 +1972,6 @@ int lisp_to_g_value (Lisp_Object obj, GValue *arg)
 
   return (0);
 }
-
-#ifdef JSPARKES
-/* Convert lisp types to GTK return types.  This is identical to
-   lisp_to_g_value() except that the macro used to set the value is
-   different.
-
-   ### There should be some way of combining these two functions.
-*/
-int lisp_to_gtk_ret_type (Lisp_Object obj, GValue *arg)
-{
-  switch (G_TYPE_FUNDAMENTAL (G_VALUE_TYPE (arg)))
-    {
-      /* flag types */
-    case G_TYPE_NONE:
-      return (0);
-    case G_TYPE_CHAR:
-      {
-	Ichar c;
-
-	CHECK_CHAR_COERCE_INT (obj);
-	c = XCHAR (obj);
-	//*(GTK_RETLOC_CHAR (*arg)) = c;
-        g_value_set_char (arg, c);
-      }
-      break;
-    case G_TYPE_UCHAR:
-      {
-	Ichar c;
-
-	CHECK_CHAR_COERCE_INT (obj);
-	c = XCHAR (obj);
-	//*(GTK_RETLOC_CHAR (*arg)) = c;
-        g_value_set_uchar (arg, (unsigned char) c);
-      }
-      break;
-    case G_TYPE_BOOLEAN:
-      //*(GTK_RETLOC_BOOL (*arg)) = NILP (obj) ? FALSE : TRUE;
-      g_value_set_boolean (arg, NILP (obj) ? FALSE : TRUE);
-      break;
-    case G_TYPE_INT:
-    case G_TYPE_UINT:
-      if (NILP (obj) || EQ (Qt, obj))
-	{
-	  /* For we are a kind mistress and allow sending t/nil for
-             1/0 to stupid GTK functions that say they take guint or
-             gint in the header files, but actually treat it like a
-             bool.  *sigh*
-	  */
-	 // *(GTK_RETLOC_INT(*arg)) = NILP (obj) ? 0 : 1;
-          g_value_set_int (arg, NILP (obj) ? 0 : 1);
-	}
-      else
-	{
-	  CHECK_INT (obj);
-	  *(GTK_RETLOC_INT(*arg)) = XINT (obj);
-	}
-      break;
-    case G_TYPE_LONG:
-    case G_TYPE_ULONG:
-      ABORT();
-    case G_TYPE_FLOAT:
-      CHECK_INT_OR_FLOAT (obj);
-      *(GTK_RETLOC_FLOAT(*arg)) = extract_float (obj);
-      break;
-    case G_TYPE_DOUBLE:
-      CHECK_INT_OR_FLOAT (obj);
-      *(GTK_RETLOC_DOUBLE(*arg)) = extract_float (obj);
-      break;
-    case G_TYPE_STRING:
-      if (NILP (obj))
-	*(GTK_RETLOC_STRING (*arg)) = NULL;
-      else
-	{
-	  CHECK_STRING (obj);
-	  *(GTK_RETLOC_STRING (*arg)) = (char *) XSTRING_DATA (obj);
-	}
-      break;
-    case G_TYPE_ENUM:
-    case G_TYPE_FLAGS:
-      /* Convert a lisp symbol to a GTK enum */
-      *(GTK_RETLOC_ENUM(*arg)) = lisp_to_gtk_flag (obj, arg->type);
-      break;
-    case G_TYPE_BOXED:
-      if (NILP (obj))
-	{
-	  *(GTK_RETLOC_BOXED(*arg)) = NULL;
-	}
-      else if (GTK_BOXEDP (obj))
-	{
-	  *(GTK_RETLOC_BOXED(*arg)) = XGTK_BOXED (obj)->object;
-	}
-      else if (arg->type == G_TYPE_STYLE)
-	{
-	  obj = Ffind_face (obj);
-	  CHECK_FACE (obj);
-	  *(GTK_RETLOC_BOXED(*arg)) = face_to_style (obj);
-	}
-      else if (arg->type == G_TYPE_GDK_GC)
-	{
-	  obj = Ffind_face (obj);
-	  CHECK_FACE (obj);
-	  *(GTK_RETLOC_BOXED(*arg)) = face_to_gc (obj);
-	}
-      else if (arg->type == G_TYPE_GDK_WINDOW)
-	{
-	  if (GLYPHP (obj))
-	    {
-	      Lisp_Object window = Fselected_window (Qnil);
-	      Lisp_Object instance =
-		glyph_image_instance (obj, window, ERROR_ME_DEBUG_WARN, 1);
-	      struct Lisp_Image_Instance *p = XIMAGE_INSTANCE (instance);
-
-	      switch (XIMAGE_INSTANCE_TYPE (instance))
-		{
-		case IMAGE_TEXT:
-		case IMAGE_POINTER:
-		case IMAGE_SUBWINDOW:
-		case IMAGE_NOTHING:
-		  *(GTK_RETLOC_BOXED(*arg)) = NULL;
-		  break;
-
-		case IMAGE_MONO_PIXMAP:
-		case IMAGE_COLOR_PIXMAP:
-		  *(GTK_RETLOC_BOXED(*arg)) = IMAGE_INSTANCE_GTK_PIXMAP (p);
-		  break;
-		}
-	    }
-	  else if (GTK_OBJECTP (obj) && GTK_IS_WIDGET (XGTK_OBJECT (obj)->object))
-	    {
-	      *(GTK_RETLOC_BOXED(*arg)) = GTK_WIDGET (XGTK_OBJECT (obj))->window;
-	    }
-	  else
-	    {
-	      invalid_argument ("Don't know how to convert object to GDK_WINDOW", obj);
-	    }
-	  break;
-	}
-      else if (G_VALUE_TYPE (arg) == G_TYPE_COLOR)
-	{
-	  if (COLOR_SPECIFIERP (obj))
-	    {
-	      /* If it is a specifier, we just convert it to an
-                 instance, and let the ifs below handle it.
-	      */
-	      obj = Fspecifier_instance (obj, Qnil, Qnil, Qnil);
-	    }
-	  
-	  if (COLOR_INSTANCEP (obj))
-	    {
-	      /* Easiest one */
-	      *(GTK_RETLOC_BOXED(*arg)) = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (obj));
-	    }
-	  else if (STRINGP (obj))
-	    {
-	      invalid_argument ("Please use a color specifier or instance, not a string", obj);
-	    }
-	  else
-	    {
-	      invalid_argument ("Don't know how to convert to GdkColor", obj);
-	    }
-	}
-      else if (arg->type == G_TYPE_GDK_FONT)
-	{
-	  if (SYMBOLP (obj))
-	    {
-	      /* If it is a symbol, we treat that as a face name */
-	      obj = Ffind_face (obj);
-	    }
-
-	  if (FACEP (obj))
-	    {
-	      /* If it is a face, we just grab the font specifier, and
-                 cascade down until we finally reach a FONT_INSTANCE
-	      */
-	      obj = Fget (obj, Qfont, Qnil);
-	    }
-
-	  if (FONT_SPECIFIERP (obj))
-	    {
-	      /* If it is a specifier, we just convert it to an
-                 instance, and let the ifs below handle it
-	      */
-	      obj = Fspecifier_instance (obj, Qnil, Qnil, Qnil);
-	    }
-
-	  if (FONT_INSTANCEP (obj))
-	    {
-	      /* Easiest one */
-	      *(GTK_RETLOC_BOXED(*arg)) = FONT_INSTANCE_GTK_FONT (XFONT_INSTANCE (obj));
-	    }
-	  else if (STRINGP (obj))
-	    {
-	      invalid_argument ("Please use a font specifier or instance, not a string", obj);
-	    }
-	  else
-	    {
-	      invalid_argument ("Don't know how to convert to GdkColor", obj);
-	    }
-	}
-      else
-	{
-	  /* Unknown type to convert to boxed */
-	  stderr_out ("Don't know how to convert to boxed!\n");
-	  *(GTK_RETLOC_BOXED(*arg)) = NULL;
-	}
-      break;
-
-    case G_TYPE_POINTER:
-      if (NILP (obj))
-	*(GTK_RETLOC_POINTER(*arg)) = NULL;
-      else
-	*(GTK_RETLOC_POINTER(*arg)) = STORE_LISP_IN_VOID (obj);
-      break;
-
-      /* structured types */
-    case G_TYPE_SIGNAL:
-    case G_TYPE_ARGS: /* This we can do as a list of values */
-    case G_TYPE_C_CALLBACK:
-    case G_TYPE_FOREIGN:
-      stderr_out ("Do not know how to convert `%s' from lisp!\n", g_type_name (arg->type));
-      return (-1);
-
-#if 0
-      /* #### BILL! */
-      /* This is not used, and does not work with union type */
-    case G_TYPE_CALLBACK:
-      {
-	GUI_ID id;
-
-	id = new_gui_id ();
-	obj = Fcons (Qnil, obj); /* Empty data */
-	obj = Fcons (make_int (id), obj);
-
-	gcpro_popup_callbacks (id, obj);
-
-	*(GTK_RETLOC_CALLBACK(*arg)).marshal = __internal_callback_marshal;
-	*(GTK_RETLOC_CALLBACK(*arg)).data = (gpointer) obj;
-	*(GTK_RETLOC_CALLBACK(*arg)).notify = __internal_callback_destroy;
-      }
-      break;
-#endif
-
-      /* base type of the object system */
-    case G_TYPE_OBJECT:
-      if (NILP (obj))
-	*(GTK_RETLOC_OBJECT (*arg)) = NULL;
-      else
-	{
-	  CHECK_GTK_OBJECT (obj);
-	  if (XGTK_OBJECT (obj)->alive_p)
-	    *(GTK_RETLOC_OBJECT (*arg)) = XGTK_OBJECT (obj)->object;
-	  else
-	    invalid_argument ("Attempting to pass dead object to GTK function", obj);
-	}
-      break;
-
-    default:
-      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, G_TYPE_ARRAY))
-	{
-	  if (NILP (obj))
-	    *(GTK_RETLOC_POINTER(*arg)) = NULL;
-	  else
-	    {
-	      xemacs_list_to_array (obj, arg);
-	    }
-	}
-      else if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, G_TYPE_LISTOF))
-	{
-	  if (NILP (obj))
-	    *(GTK_RETLOC_POINTER(*arg)) = NULL;
-	  else
-	    {
-	      xemacs_list_to_gtklist (obj, arg);
-	    }
-	}
-      else
-	{
-	  stderr_out ("Do not know how to convert `%s' from lisp!\n", g_type_name (arg->type));
-	  ABORT();
-	}
-      break;
-    }
-
-  return (0);
-}
-
-#endif
  
 /* This is used in glyphs-gtk.c as well */
 static Lisp_Object
