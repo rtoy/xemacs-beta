@@ -1,5 +1,8 @@
 2010-05-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs.c (image_instance_hash):
+	Remove duplicate hash functions.
+
 	* fontcolor-gtk.c (gtk_initialize_font_instance):
 	Add USE_PANGO code.
 
