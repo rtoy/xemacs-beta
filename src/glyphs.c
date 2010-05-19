@@ -1260,7 +1260,7 @@ image_instance_live_p (Lisp_Object instance)
 }
 
 static Hashcode
-image_instance_hash (Lisp_Object obj, int depth)
+image_instance_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Image_Instance *i = XIMAGE_INSTANCE (obj);
   Hashcode hash = HASH5 (LISP_HASH (IMAGE_INSTANCE_DOMAIN (i)),
@@ -1314,12 +1314,6 @@ image_instance_hash (Lisp_Object obj, int depth)
 		(XDEVICE (image_instance_device (obj)),
 		 image_instance_hash, (i, depth),
 		 0));
-}
-
-static Hashcode
-image_instance_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
-{
-  return image_instance_hash (obj, depth, 0); 
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("image-instance", image_instance,
