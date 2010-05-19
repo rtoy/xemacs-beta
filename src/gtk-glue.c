@@ -27,7 +27,7 @@ GType GTK_TYPE_OBJECT_SLIST = 0;
 #include "fontcolor-gtk-impl.h"
 #include "frame.h"
 
-extern int lisp_to_gtk_type (Lisp_Object obj, GValue *arg);
+static int lisp_to_g_value (Lisp_Object obj, GValue *arg);
 
 static GType
 xemacs_type_register (const gchar *name, GType parent)
@@ -88,7 +88,7 @@ xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
   SAFE_LIST_LOOP_2 (elt, obj)
     {
       GValue tmp, *copy;
-      lisp_to_gtk_type (elt, &tmp);
+      lisp_to_g_value (elt, &tmp);
       g_value_copy (&tmp, copy);/* leak XXX */
       g_value_array_append (array, copy);
     }
@@ -196,8 +196,6 @@ xemacs_gtklist_to_list (GType *arg)
   return (rval);
 }
 
-int lisp_to_gtk_type (Lisp_Object obj, GValue *arg);
-
 static void
 xemacs_list_to_array (Lisp_Object obj, GValue *arg)
 {
@@ -216,7 +214,7 @@ xemacs_list_to_array (Lisp_Object obj, GValue *arg)
   LIST_LOOP_3 (elt, obj, tail)
     {
       g_value_reset (&val);
-      lisp_to_gtk_type (elt, &val);
+      lisp_to_g_value (elt, &val);
       g_value_array_append (array, &val);
     }
 
