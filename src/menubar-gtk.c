@@ -332,7 +332,7 @@ __torn_off_sir(GtkMenuItem *UNUSED (item), gpointer user_data)
       Lisp_Object menu_desc = Qnil;
       GtkWidget *old_submenu = GTK_MENU_ITEM (menu_item)->submenu;
 
-      menu_desc = GET_LISP_FROM_VOID (gtk_object_get_qdata (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG));
+      menu_desc = GET_LISP_FROM_VOID (g_object_get_qdata (G_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG));
 
       /* GCPRO all of our very own */
       gcpro_popup_callbacks (id, menu_desc);
@@ -406,7 +406,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
     GtkWidget *w = gtk_tearoff_menu_item_new ();
     gtk_widget_show (w);
     gtk_menu_append (GTK_MENU (item->submenu), w);
-    gtk_signal_connect (GTK_OBJECT (w), "activate", GTK_SIGNAL_FUNC (__torn_off_sir), item);
+    g_signal_connect (G_OBJECT (w), "activate", GTK_SIGNAL_FUNC (__torn_off_sir), item);
   }
 #endif
 
@@ -612,8 +612,8 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       gtk_widget_show (submenu);
 
       if (!reuse)
-	gtk_signal_connect (GTK_OBJECT (menu_item), "destroy",
-			    GTK_SIGNAL_FUNC (__kill_stupid_gtk_timer), NULL);
+	g_signal_connect (G_OBJECT (menu_item), "destroy",
+                          GTK_SIGNAL_FUNC (__kill_stupid_gtk_timer), NULL);
 
       /* Without this sometimes a submenu gets left on the screen -
       ** urk
@@ -709,8 +709,8 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	  /* If the menu item had a GUI_ID that means it was a filter menu */
 	  __remove_gcpro_by_id (id);
 	  gtk_signal_disconnect_by_func (GTK_OBJECT (reuse),
-					 GTK_SIGNAL_FUNC (__activate_menu),
-					 (gpointer) 0x01 );
+                                       GTK_SIGNAL_FUNC (__activate_menu),
+                                       (gpointer) 0x01);
 	}
       else
 	{
@@ -725,9 +725,9 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
   if (NILP (hook_fn))
     {
       /* Generic menu builder */
-      gtk_signal_connect (GTK_OBJECT (menu_item), "activate",
-			  GTK_SIGNAL_FUNC (__activate_menu),
-			  NULL);
+      g_signal_connect (G_OBJECT (menu_item), "activate",
+                        GTK_SIGNAL_FUNC (__activate_menu),
+                        NULL);
     }
   else
     {
@@ -741,9 +741,9 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       gtk_object_weakref (GTK_OBJECT (menu_item), __remove_gcpro_by_id,
 			  (gpointer) id);
 
-      gtk_signal_connect (GTK_OBJECT (menu_item), "activate",
-			  GTK_SIGNAL_FUNC (__activate_menu),
-			  (gpointer) 0x01);
+      g_signal_connect (G_OBJECT (menu_item), "activate",
+                        GTK_SIGNAL_FUNC (__activate_menu),
+                        (gpointer) 0x01);
     }
 
   return (menu_item);
@@ -1022,15 +1022,15 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 
       gtk_widget_set_sensitive (widget, ! NILP (active_p));
 
-      gtk_signal_connect (GTK_OBJECT (widget), "activate-item",
-			  GTK_SIGNAL_FUNC (__generic_button_callback),
-			  STORE_LISP_IN_VOID (callback));
+      g_signal_connect (G_OBJECT (widget), "activate-item",
+                        GTK_SIGNAL_FUNC (__generic_button_callback),
+                        STORE_LISP_IN_VOID (callback));
 
-      gtk_signal_connect (GTK_OBJECT (widget), "activate",
-			  GTK_SIGNAL_FUNC (__generic_button_callback),
-			  STORE_LISP_IN_VOID (callback));
+      g_signal_connect (G_OBJECT (widget), "activate",
+                        GTK_SIGNAL_FUNC (__generic_button_callback),
+                        STORE_LISP_IN_VOID (callback));
 
-      /* Now that all the information about the menu item is know, set the
+      /* Now that all the information about the menu item is known, set the
 	 remaining properties.
       */
       
@@ -1248,8 +1248,8 @@ create_menubar_widget (struct frame *f)
       gtk_box_pack_start (GTK_BOX (FRAME_GTK_CONTAINER_WIDGET (f)), menubar, FALSE, FALSE, 0);
     }
 
-  gtk_signal_connect (GTK_OBJECT (menubar), "button-press-event",
-		      GTK_SIGNAL_FUNC (run_menubar_hook), NULL);
+  g_signal_connect (G_OBJECT (menubar), "button-press-event",
+                    GTK_SIGNAL_FUNC (run_menubar_hook), NULL);
 
   FRAME_GTK_MENUBAR_WIDGET (f) = menubar;
   g_object_set_qdata (G_OBJECT (menubar), XEMACS_MENU_GUIID_TAG, (gpointer) id);
@@ -1459,8 +1459,8 @@ gtk_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   gtk_widget_show (menu);
 
   popup_up_p++;
-  gtk_signal_connect (GTK_OBJECT (menu), "deactivate",
-		      GTK_SIGNAL_FUNC (popdown_menu_cb), NULL);
+  g_signal_connect (G_OBJECT (menu), "deactivate",
+                    GTK_SIGNAL_FUNC (popdown_menu_cb), NULL);
 		      
   gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
 		  eev ? EVENT_BUTTON_BUTTON (eev) : 0,

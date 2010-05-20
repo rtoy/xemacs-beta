@@ -104,20 +104,20 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   SCROLLBAR_GTK_VDRAG_ORIG_VALUE (instance) = -1;
   SCROLLBAR_GTK_LAST_VALUE (instance) = adj->value;
 
-  g_object_set_qdata (G_OBJECT (GTK_OBJECT (adj)), GTK_DATA_GUI_IDENTIFIER,
+  g_object_set_qdata (G_OBJECT (G_OBJECT (adj)), GTK_DATA_GUI_IDENTIFIER,
                       (void *) SCROLLBAR_GTK_ID (instance));
-  g_object_set_qdata (G_OBJECT (GTK_OBJECT (adj)), GTK_DATA_FRAME_IDENTIFIER,
+  g_object_set_qdata (G_OBJECT (G_OBJECT (adj)), GTK_DATA_FRAME_IDENTIFIER,
                       f);
 
   sb = GTK_SCROLLBAR (vertical ? gtk_vscrollbar_new (adj) : gtk_hscrollbar_new (adj));
   SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
   gtk_range_set_update_policy (GTK_RANGE (sb), GTK_UPDATE_CONTINUOUS);
 
-  assert(g_signal_connect (GTK_OBJECT (sb),"change-value",
+  assert(g_signal_connect (G_OBJECT (sb),"change-value",
                            G_CALLBACK (scrollbar_cb), (gpointer) vertical));
-  assert(gtk_signal_connect (GTK_OBJECT (sb), "button-press-event",
+  assert(g_signal_connect (G_OBJECT (sb), "button-press-event",
                              GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 1));
-  assert(gtk_signal_connect (GTK_OBJECT (sb), "button-release-event",
+  assert(g_signal_connect (G_OBJECT (sb), "button-release-event",
                              GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 0));
 
   /* Do we need to connect to "destroy" too? --jsparkes */
@@ -429,12 +429,12 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
   Lisp_Object event_type = Qnil;
   Lisp_Object event_data = Qnil;
 
-  f = (struct frame*) g_object_get_qdata (G_OBJECT (GTK_OBJECT (adj)),
+  f = (struct frame*) g_object_get_qdata (G_OBJECT (adj),
                                           GTK_DATA_FRAME_IDENTIFIER);
   if (!f)
     return(FALSE);
 
-  id = GPOINTER_TO_UINT (g_object_get_qdata (G_OBJECT (GTK_OBJECT (adj)),
+  id = GPOINTER_TO_UINT (g_object_get_qdata (G_OBJECT (adj),
                                              GTK_DATA_GUI_IDENTIFIER));
   assert (id !=  0);
 

@@ -1345,7 +1345,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 	    */
 #if 0
 	    if (!NILP (Vmenu_accelerator_enabled)
-		&& gtk_accel_groups_activate(GTK_OBJECT (FRAME_GTK_SHELL_WIDGET(frame)),
+		&& gtk_accel_groups_activate(G_OBJECT (FRAME_GTK_SHELL_WIDGET(frame)),
 					     key_event->keyval,
 					     (GdkModifierType) *state))
 	      {

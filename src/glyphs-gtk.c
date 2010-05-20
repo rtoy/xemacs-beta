@@ -2569,8 +2569,8 @@ gtk_add_tab_item(Lisp_Object image_instance,
     worry about the garbage collector running between here and the callback
     function.
   */
-  gtk_object_set_data(GTK_OBJECT(box), GTK_DATA_TAB_HASHCODE_IDENTIFIER,
-		      (gpointer) hash_id);
+  g_object_set_data(G_OBJECT(box), GTK_DATA_TAB_HASHCODE_IDENTIFIER,
+                    (gpointer) hash_id);
 
   gtk_notebook_append_page (nb, box, gtk_label_new (c_name));
 }
@@ -2599,8 +2599,8 @@ static void gtk_tab_control_callback(GtkNotebook *notebook,
 	return;
       frame = wrap_frame (f);
 
-      id             = (int) g_object_get_qdata(GTK_OBJECT(page->child),
-                                               GTK_DATA_TAB_HASHCODE_IDENTIFIER);
+      id = (int) g_object_get_qdata(G_OBJECT(page->child),
+                                    GTK_DATA_TAB_HASHCODE_IDENTIFIER);
       image_instance = Fgethash(make_int_verify(id),
 				FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE(f), Qnil);
       callback       = Fgethash(make_int(id),
@@ -2684,8 +2684,8 @@ gtk_tab_control_instantiate (Lisp_Object image_instance,
   gtk_notebook_set_page(nb, selected);
 
   /* Call per-tab lisp callback when a tab is pressed. */
-  gtk_signal_connect (GTK_OBJECT (nb), "switch-page",
-		      GTK_SIGNAL_FUNC (gtk_tab_control_callback), NULL);
+  g_signal_connect (G_OBJECT (nb), "switch-page",
+                    GTK_SIGNAL_FUNC (gtk_tab_control_callback), NULL);
 }
 
 /* Set the properties of a tab control */
