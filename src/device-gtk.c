@@ -337,12 +337,12 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
                             gdk_atom_intern("CLIPBOARD", FALSE),
 			    GDK_SELECTION_TYPE_STRING, 0);
   
-  gtk_signal_connect (GTK_OBJECT (app_shell), "selection_get",
+  g_signal_connect (G_OBJECT (app_shell), "selection_get",
 		      GTK_SIGNAL_FUNC (emacs_gtk_selection_handle), NULL);
-  gtk_signal_connect (GTK_OBJECT (app_shell), "selection_clear_event",
+  g_signal_connect (G_OBJECT (app_shell), "selection_clear_event",
                       GTK_SIGNAL_FUNC (emacs_gtk_selection_clear_event_handle),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (app_shell), "selection_received",
+  g_signal_connect (G_OBJECT (app_shell), "selection_received",
 		      GTK_SIGNAL_FUNC (emacs_gtk_selection_received), NULL);
 
   DEVICE_GTK_WM_COMMAND_FRAME (d) = Qnil;

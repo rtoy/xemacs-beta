@@ -128,8 +128,8 @@ gtk_widget_to_frame (GtkWidget *w)
 
   for (; w; w = w->parent)
     {
-      if ((f = (struct frame *) g_object_get_qdata (G_OBJECT(GTK_OBJECT (w)),
-                                                      GTK_DATA_FRAME_IDENTIFIER)))
+      if ((f = (struct frame *) g_object_get_qdata (G_OBJECT(w),
+                                                    GTK_DATA_FRAME_IDENTIFIER)))
 	return (f);
     }
 
@@ -841,7 +841,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   {
       /* If this is a transient window, keep the parent info around */
       GtkWidget *parentwid = FRAME_GTK_SHELL_WIDGET (XFRAME (parent));
-      gtk_object_set_data (GTK_OBJECT (shell), TRANSIENT_DATA_IDENTIFIER, parentwid);
+      g_object_set_data (G_OBJECT (shell), TRANSIENT_DATA_IDENTIFIER, parentwid);
       gtk_window_set_transient_for (GTK_WINDOW (shell), GTK_WINDOW (parentwid));
   }
 
@@ -849,7 +849,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
   /* Add a mapping from widget to frame to help widget callbacks quickly find
      their corresponding frame. */
-  g_object_set_qdata (G_OBJECT (GTK_OBJECT (shell)), GTK_DATA_FRAME_IDENTIFIER, f);
+  g_object_set_qdata (G_OBJECT (G_OBJECT (shell)), GTK_DATA_FRAME_IDENTIFIER, f);
 
   FRAME_GTK_SHELL_WIDGET (f) = shell;
 
@@ -867,12 +867,12 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   gtk_drag_dest_set (text, GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT,
 		     dnd_target_table, dnd_n_targets,
 		     GDK_ACTION_COPY | GDK_ACTION_LINK | GDK_ACTION_ASK);
-  gtk_signal_connect (GTK_OBJECT (text), "drag_drop",
-		      GTK_SIGNAL_FUNC (dragndrop_dropped), text);
-  gtk_signal_connect (GTK_OBJECT (text), "drag_data_received",
-		      GTK_SIGNAL_FUNC (dragndrop_data_received), text);
-  gtk_signal_connect (GTK_OBJECT (text), "drag_data_get",
-		      GTK_SIGNAL_FUNC (dragndrop_get_drag), NULL);
+  g_signal_connect (G_OBJECT (text), "drag_drop",
+                    G_SIGNAL_FUNC (dragndrop_dropped), text);
+  g_signal_connect (GTK_OBJECT (text), "drag_data_received",
+                    G_SIGNAL_FUNC (dragndrop_data_received), text);
+  g_signal_connect (G_OBJECT (text), "drag_data_get",
+                    GTK_SIGNAL_FUNC (dragndrop_get_drag), NULL);
 #endif
 
 #ifdef HAVE_MENUBARS
@@ -894,7 +894,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
     gtk_box_pack_end (GTK_BOX (container), text, TRUE, TRUE, 0);
 
   /* Connect main event handler */
-  gtk_signal_connect (GTK_OBJECT (shell), "delete-event", GTK_SIGNAL_FUNC (delete_event_cb), f);
+  g_signal_connect (G_OBJECT (shell), "delete-event", GTK_SIGNAL_FUNC (delete_event_cb), f);
 
   {
     static const gchar *events_to_frob[] = { "focus-in-event",
@@ -915,12 +915,12 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
     for (i = 0; events_to_frob[i]; i++)
       {
-	gtk_signal_connect (GTK_OBJECT (shell), events_to_frob[i],
-			    GTK_SIGNAL_FUNC (emacs_shell_event_handler), f);
+	g_signal_connect (G_OBJECT (shell), events_to_frob[i],
+                          GTK_SIGNAL_FUNC (emacs_shell_event_handler), f);
       }
   }
 
-  gtk_signal_connect (GTK_OBJECT (shell), "size-allocate", GTK_SIGNAL_FUNC (resize_event_cb), f);
+  g_signal_connect (G_OBJECT (shell), "size-allocate", GTK_SIGNAL_FUNC (resize_event_cb), f);
 
   /* This might be safe to call now... */
   /* gtk_signal_connect (GTK_OBJECT (shell), "event", GTK_SIGNAL_FUNC (emacs_shell_event_handler), f); */

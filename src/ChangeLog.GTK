@@ -1,5 +1,29 @@
 2010-05-20  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* device-gtk.c (gtk_init_device): Use Gtk 2.x accessors instead of
+	Gtk 1.X ones. Use G_OBJECT instead of GTK_OBJECT. Use
+	g_object_set_data instead of gtk_object_set_data. Use
+	g_signal_connect instead of gtk_signal_connect.
+
+	* event-gtk.c (gtk_event_to_emacs_event): Ditto.
+
+	* frame-gtk.c (gtk_widget_to_frame): Ditto.
+	(gtk_create_widgets): Ditto.
+
+	* glyphs-gtk.c (gtk_add_tab_item): Ditto.
+	(gtk_tab_control_callback): Ditto.
+	(gtk_tab_control_instantiate): Ditto.
+
+	* menubar-gtk.c (__torn_off_sir): Ditto.
+	(__activate_menu): Ditto.
+	(menu_convert): Ditto.
+	(create_menubar_widget): Ditto.
+	(gtk_popup_menu): Ditto.
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Ditto
+	(gtk_create_scrollbar_instance): Ditto.
+	(scrollbar_cb): Ditto.
+
 	* menubar-gtk.c: Add quark for menu bar tag.
 	(gtk_xemacs_menubar_new): Use quark to store frame association.
 	Create a regular menu bar, not the one defined in this file.
