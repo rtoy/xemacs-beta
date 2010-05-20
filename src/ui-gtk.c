@@ -124,6 +124,7 @@ static int
 type_already_imported_p (GType t)
 {
   /* These are cases that we don't need to import */
+#if 0
   switch (GTK_FUNDAMENTAL_TYPE (t))
     {
     case G_TYPE_CHAR:
@@ -149,7 +150,7 @@ type_already_imported_p (GType t)
       //case G_TYPE_GTYPE:
 	return (1);
     }
-
+#endif
   if (NILP (Vgtk_types))
     {
       Vgtk_types = call2 (intern ("make-hashtable"), 
@@ -270,13 +271,11 @@ import_gtk_flags_internal (GType the_type)
   
   while (vals && vals->value_name)
     {
-      assoc = Fcons (Fcons (intern (vals->value_nick), make_int (vals->value)), assoc);
-      assoc = Fcons (Fcons (intern (vals->value_name), make_int (vals->value)), assoc);
+      acons (intern (vals->value_nick), make_int (vals->value), assoc);
+      acons (intern (vals->value_name), make_int (vals->value), assoc);
       vals++;
     }
-
-  assoc = Fnreverse (assoc);
-
+  /* Should we also index by name? I want to... --jsparkes */
   Fputhash (make_int (the_type), assoc, Vgtk_enumeration_info);
 }
 
@@ -292,13 +291,11 @@ import_gtk_enumeration_internal (GType the_type)
 
   while (vals && vals->value_name)
     {
-      assoc = Fcons (Fcons (intern (vals->value_nick), make_int (vals->value)), assoc);
-      assoc = Fcons (Fcons (intern (vals->value_name), make_int (vals->value)), assoc);
+      acons (intern (vals->value_nick), make_int (vals->value), assoc);
+      acons (intern (vals->value_name), make_int (vals->value), assoc);
       vals++;
     }
-  
-  assoc = Fnreverse (assoc);
-  
+ 
   Fputhash (make_int (the_type), assoc, Vgtk_enumeration_info);
 }
 
@@ -312,22 +309,10 @@ import_gtk_type (GType t)
 
   stderr_out ("import_gtk_type %d %s\n", (unsigned int)t, g_type_name(t));
 
-  if (G_TYPE_IS_FUNDAMENTAL (t))
-    {
-      switch (t)
-	{
-	case G_TYPE_ENUM:
-	  import_gtk_enumeration_internal (t);
-	  break;
-	case G_TYPE_FLAGS:
-	  import_gtk_flags_internal (t);
-	  break;
-	default:
-          stderr_out ("import_gtk_type %s\n", g_type_name(t));
-          //	  ABORT();
-	  break;
-	}
-    }
+  if (G_TYPE_IS_ENUM (t))
+    import_gtk_enumeration_internal (t);
+  else if (G_TYPE_IS_FLAGS (t))
+    import_gtk_flags_internal (t);
   else if (G_IS_OBJECT (t)) 
     import_gtk_object_internal (t);
   else
@@ -512,7 +497,6 @@ static gpointer __allocate_object_storage (GParamSpec t)
 
 static Lisp_Object type_to_marshaller_type (GType t)
 {
-  assert (G_TYPE_IS_FUNDAMENTAL (t));
   switch (G_TYPE_FUNDAMENTAL (t))
     {
     case G_TYPE_NONE:
