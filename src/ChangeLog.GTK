@@ -1,3 +1,9 @@
+2010-05-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (import_gtk_flags_internal): Use acons to build alist.
+	(import_gtk_enumeration_internal): Ditto.
+	(import_gtk_type): Check for enum and flag derived types.
+
 2010-05-19  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_bevel_area): Commented out use of shadow
