@@ -57,6 +57,8 @@ static GQuark XEMACS_MENU_GUIID_TAG =
   g_quark_from_string ("xemacs::menu::gui_id");
 static GQuark XEMACS_MENU_FIRSTTIME_TAG =
   g_quark_from_string ("xemacs::menu::first_time");
+static GQuark XEMACS_MENU_FRAME_TAG =
+  g_quark_from_string ("xemacs::menu::frame");
 
 
 static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group);
@@ -70,6 +72,8 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup*
 ** to be bigger than the text widget.  This prevents weird resizing
 ** when jumping around between buffers with radically different menu
 ** sizes.
+**
+** Currently unused --jsparkes
 */
 
 #define GTK_XEMACS_MENUBAR(obj)		GTK_CHECK_CAST (obj, gtk_xemacs_menubar_get_type (), GtkXEmacsMenubar)
@@ -163,8 +167,13 @@ gtk_xemacs_menubar_size_request	(GtkWidget *widget, GtkRequisition *requisition)
 GtkWidget *
 gtk_xemacs_menubar_new (struct frame *f)
 {
+#if 0
   GtkXEmacsMenubar *menubar = (GtkXEmacsMenubar*) gtk_type_new (gtk_xemacs_menubar_get_type ());
   menubar->frame = f;
+#endif
+  GtkWidget *menubar = gtk_menu_bar_new ();
+  /* I don't think this is used.  --jsparkes */
+  g_object_set_qdata (G_OBJECT (menubar), XEMACS_MENU_FRAME_TAG, f);
   return (GTK_WIDGET (menubar));
 }
 
@@ -380,8 +389,8 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
     {
       GtkWidget *selected = gtk_menu_get_active (GTK_MENU (item->submenu));
 
-      gtk_container_foreach (GTK_CONTAINER (item->submenu),(GtkCallback) __maybe_destroy,
-			     selected);
+     gtk_container_foreach (GTK_CONTAINER (item->submenu),
+                            (GtkCallback) __maybe_destroy, selected);
     }
   else if (gtk_container_children (GTK_CONTAINER (item->submenu)))
     {

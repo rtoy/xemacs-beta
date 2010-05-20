@@ -1,3 +1,11 @@
+2010-05-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c: Add quark for menu bar tag.
+	(gtk_xemacs_menubar_new): Use quark to store frame association.
+	Create a regular menu bar, not the one defined in this file.
+	There is a resize problem that shrinks the main window that may be
+	caused by our implementation.
+
 2010-05-19  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_bevel_area): Commented out use of shadow
