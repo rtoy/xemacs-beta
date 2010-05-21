@@ -144,11 +144,11 @@ our_draw_bitmap (GdkDrawable *drawable,
 		 gint         width,
 		 gint         height)
 {
+  gint src_width, src_height;
+
   g_return_if_fail (drawable != NULL);
   g_return_if_fail (src != NULL);
   g_return_if_fail (gc != NULL);
-
-  gint src_width, src_height;
 
   gdk_drawable_get_size (src, &src_width, &src_height);
 

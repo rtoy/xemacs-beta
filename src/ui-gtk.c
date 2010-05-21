@@ -166,12 +166,11 @@ type_already_imported_p (GType t)
 static void
 mark_type_as_imported (GType t)
 {
-  if (type_already_imported_p (t))
-    return;
-
-  /* Value should be a symbol? */
   const gchar *name = g_type_name (t);
   Lisp_Object value  = Fmake_symbol (make_string ((const Ibyte *)name, strlen (name)));
+
+  if (type_already_imported_p (t))
+    return;
 
   Fputhash (make_int (G_VALUE_TYPE (t)), value, (Vgtk_types));
 }

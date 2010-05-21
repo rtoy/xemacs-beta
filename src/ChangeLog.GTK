@@ -1,5 +1,12 @@
 2010-05-21  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-glue.c (xemacs_list_to_gtklist): Move all declarations
+	before code. (Bad C++ habits)
+	(xemacs_list_to_gtklist): Ditto.
+	(xemacs_list_to_array): Ditto.
+	redisplay-gtk.c (our_draw_bitmap): Ditto.
+	ui-gtk.c (mark_type_as_imported): Ditto.
+
 	* glyphs-gtk.c (gtk_tab_control_callback): Use GLib type
 	conversion macros for attached data.
 	(gtk_tab_control_callback): Ditto.  GNoteBookPage no longer has a
