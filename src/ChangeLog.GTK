@@ -1,3 +1,10 @@
+2010-05-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (check_cursor_names): Use (void) instead of () as
+	argument list.
+
+	* ui-gtk.c (check_enumeration_hashtable): Ditto
+
 2010-05-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (import_gtk_flags_internal): Use acons to build alist.

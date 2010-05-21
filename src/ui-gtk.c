@@ -251,7 +251,7 @@ import_gtk_object_internal (GType the_type)
 }
 
 static void 
-check_enumeration_hashtable ()
+check_enumeration_hashtable (void)
 {
   if (NILP (Vgtk_enumeration_info))
     Vgtk_enumeration_info = call2 (intern ("make-hashtable"), 
@@ -378,7 +378,7 @@ DEFINE_NODUMP_LISP_OBJECT ("ffi", emacs_ffi,
 #define MANY_ARGS
 #endif
 
-typedef void (*pfv)();
+typedef void (*pfv)(void);
 typedef GtkObject * (*__OBJECT_fn) (MANY_ARGS);
 typedef gint (*__INT_fn) (MANY_ARGS);
 typedef void (*__NONE_fn) (MANY_ARGS);
