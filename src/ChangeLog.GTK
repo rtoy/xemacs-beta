@@ -1,5 +1,10 @@
 2010-05-21  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_tab_control_callback): Use GLib type
+	conversion macros for attached data.
+	(gtk_tab_control_callback): Ditto.  GNoteBookPage no longer has a
+	child, so attach the data to the widget itself.
+
 	* console-gtk-impl.h (GTK_DATA_TAB_HASHCODE_IDENTIFIER): Correctly
 	define as a GQuark.
 
