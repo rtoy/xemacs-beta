@@ -606,7 +606,7 @@ locate_pixmap_file (Lisp_Object name)
  * the rest are done in lisp.
  */
 static void 
-check_cursor_names ()
+check_cursor_names (void)
 {
   if (NILP (Vgtk_cursor_names))
     {
