@@ -1,5 +1,8 @@
 2010-05-21  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* console-gtk-impl.h (GTK_DATA_TAB_HASHCODE_IDENTIFIER): Correctly
+	define as a GQuark.
+
 	* glyphs-gtk.c (check_cursor_names): Use (void) instead of () as
 	argument list.
 

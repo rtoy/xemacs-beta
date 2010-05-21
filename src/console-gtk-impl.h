@@ -261,7 +261,7 @@ extern struct console_type *gtk_console_type;
 #define GTK_DATA_FRAME_IDENTIFIER g_quark_from_string ("xemacs::frame")
 
 /* The hashcode in the frame hash table of a tab_control tab's callback data. */
-#define GTK_DATA_TAB_HASHCODE_IDENTIFIER g_quark_static_string ("xemacs::tab_hashcode")
+#define GTK_DATA_TAB_HASHCODE_IDENTIFIER g_quark_from_string ("xemacs::tab_hashcode")
 
 #define GTK_DATA_GUI_IDENTIFIER g_quark_from_string ("xemacs::gui_id")
 
