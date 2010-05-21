@@ -73,10 +73,10 @@ xemacs_init_gtk_classes (void)
 static void
 xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
 {
-  CHECK_LIST (obj);
   int len;
   GValueArray *array;
   
+  CHECK_LIST (obj);
   /*
    * The list is converted into an array.   I'll figure out
    * how to a make a real list later, perhaps.  --jsparkes
@@ -85,13 +85,15 @@ xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
   //array = g_array_new (0, TRUE, sizeof (GValue *));  // XXX leak?
   array = g_value_array_new (len);
 
-  SAFE_LIST_LOOP_2 (elt, obj)
-    {
-      GValue tmp, *copy;
-      lisp_to_g_value (elt, &tmp);
-      g_value_copy (&tmp, copy);/* leak XXX */
-      g_value_array_append (array, copy);
-    }
+  {
+    SAFE_LIST_LOOP_2 (elt, obj)
+      {
+        GValue tmp, *copy;
+        lisp_to_g_value (elt, &tmp);
+        g_value_copy (&tmp, copy);/* leak XXX */
+        g_value_array_append (array, copy);
+      }
+  }
 
   g_value_init (arg, G_TYPE_VALUE_ARRAY);
   g_value_set_boxed (arg, array);
@@ -211,12 +213,14 @@ xemacs_list_to_array (Lisp_Object obj, GValue *arg)
   /* Does g_value_array need to be pre-allocated? */
   array = g_value_array_new (len);
 
-  LIST_LOOP_3 (elt, obj, tail)
-    {
-      g_value_reset (&val);
-      lisp_to_g_value (elt, &val);
-      g_value_array_append (array, &val);
-    }
+  {
+    LIST_LOOP_3 (elt, obj, tail)
+      {
+        g_value_reset (&val);
+        lisp_to_g_value (elt, &val);
+        g_value_array_append (array, &val);
+      }
+  }
 
   g_value_set_boxed (arg, array);
 
