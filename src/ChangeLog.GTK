@@ -1,3 +1,7 @@
+2010-05-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-glue.c (face_to_style): Figured out how to the font on a GtkStyle.
+
 2010-05-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* device-gtk.c (gtk_init_device): Use Gtk 2.x accessors instead of
