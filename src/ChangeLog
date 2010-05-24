@@ -1,3 +1,8 @@
+2010-05-24  Mike Sperber  <mike@xemacs.org>
+
+	* lread.c (read1): Accept #B<binary>, #O<octal>, and #X<hex>, just
+	like GNU Emacs.
+
 2010-05-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Move `default-file-system-ignore-case' to C; pay attention to it
