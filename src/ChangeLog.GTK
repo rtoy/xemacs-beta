@@ -1,3 +1,8 @@
+2010-05-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_to_marshaller_type): Always check fundamental
+	types first.  Next check for GObjects and then enums or flags.
+
 2010-05-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-glue.c (face_to_style): Figured out how to the font on a GtkStyle.

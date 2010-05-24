@@ -512,50 +512,55 @@ static gpointer __allocate_object_storage (GParamSpec t)
 
 static Lisp_Object type_to_marshaller_type (GType t)
 {
-  assert (G_TYPE_IS_FUNDAMENTAL (t));
-  switch (G_TYPE_FUNDAMENTAL (t))
-    {
-    case G_TYPE_NONE:
-      return (build_ascstring ("NONE"));
-      /* flag types */
-    case G_TYPE_CHAR:
-    case G_TYPE_UCHAR:
-      return (build_ascstring ("CHAR"));
-    case G_TYPE_BOOLEAN:
-      return (build_ascstring ("BOOL"));
-    case G_TYPE_ENUM:
-    case G_TYPE_FLAGS:
-    case G_TYPE_INT:
-    case G_TYPE_UINT:
-      return (build_ascstring ("INT"));
-    case G_TYPE_LONG:
-    case G_TYPE_ULONG:
-      return (build_ascstring ("LONG"));
-    case G_TYPE_FLOAT:
-    case G_TYPE_DOUBLE:
-      return (build_ascstring ("FLOAT"));
-    case G_TYPE_STRING:
-      return (build_ascstring ("STRING"));
-    case G_TYPE_BOXED:
-    case G_TYPE_POINTER:
-      return (build_ascstring ("POINTER"));
-    default:
-      stderr_out ("type_to_marshaller type %s\n", g_type_name(t));
+  if (G_TYPE_IS_FUNDAMENTAL (t))
+    switch (G_TYPE_FUNDAMENTAL (t))
+      {
+      case G_TYPE_NONE:
+        return (build_ascstring ("NONE"));
+        /* flag types */
+      case G_TYPE_CHAR:
+      case G_TYPE_UCHAR:
+        return (build_ascstring ("CHAR"));
+      case G_TYPE_BOOLEAN:
+        return (build_ascstring ("BOOL"));
+      case G_TYPE_ENUM:
+      case G_TYPE_FLAGS:
+      case G_TYPE_INT:
+      case G_TYPE_UINT:
+        return (build_ascstring ("INT"));
+      case G_TYPE_LONG:
+      case G_TYPE_ULONG:
+        return (build_ascstring ("LONG"));
+      case G_TYPE_FLOAT:
+      case G_TYPE_DOUBLE:
+        return (build_ascstring ("FLOAT"));
+      case G_TYPE_STRING:
+        return (build_ascstring ("STRING"));
+      case G_TYPE_BOXED:
+      case G_TYPE_POINTER:
+      case G_TYPE_OBJECT:
+        return (build_ascstring ("POINTER"));
+      default:
+        stderr_out ("type_to_marshaller type %s\n", g_type_name(t));
       
-      ABORT();
-      /* I can't put this in the main switch statement because it is a
-         new fundamental type that is not fixed at compile time.
-         *sigh*
-	 */
-#ifdef JSPARKES
-      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_ARRAY))
-	return (build_ascstring ("ARRAY"));
+        ABORT();
+      }
+  /* This is the base of almost all Gtk objects. */
+  if (g_type_is_a (t, G_TYPE_OBJECT))
+    return type_to_marshaller_type (G_TYPE_OBJECT);
+  
+  /* Derived enums and flags */
+  if (G_TYPE_IS_ENUM (t) || G_TYPE_IS_FLAGS (t))
+    return type_to_marshaller_type (G_TYPE_ENUM);
 
-      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_LISTOF))
-	return (build_ascstring ("LIST"));
-      return (Qnil);
+#ifdef JSPARKES
+  if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_ARRAY))
+    return (build_ascstring ("ARRAY"));
+
+  if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_LISTOF))
+    return (build_ascstring ("LIST"));
 #endif
-    }
+  stderr_out ("type_to_marshaller type %s\n", g_type_name(t));
   ABORT ();
   return (Qnil);
 }
