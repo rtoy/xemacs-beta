@@ -2652,11 +2652,11 @@ retry:
             /* bit vectors */
 	  case '*': return read_bit_vector (readcharfun);
             /* #o10 => 8 -- octal constant syntax */
-	  case 'o': return read_integer (readcharfun, 8);
+	  case 'o': case 'O': return read_integer (readcharfun, 8);
             /* #xdead => 57005 -- hex constant syntax */
-	  case 'x': return read_integer (readcharfun, 16);
+	  case 'x': case 'X': return read_integer (readcharfun, 16);
             /* #b010 => 2 -- binary constant syntax */
-	  case 'b': return read_integer (readcharfun, 2);
+	  case 'b': case 'B': return read_integer (readcharfun, 2);
 	    /* #r"raw\stringt" -- raw string syntax */
 	  case 'r': return read_raw_string(readcharfun);
             /* #s(foobar key1 val1 key2 val2) -- structure syntax */
