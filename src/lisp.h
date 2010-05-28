@@ -4554,6 +4554,7 @@ EXFUN (Fbolp, 1);
 EXFUN (Fbuffer_substring, 3);
 EXFUN (Fchar_after, 2);
 EXFUN (Fchar_to_string, 1);
+EXFUN (Fcurrent_time, 0);
 EXFUN (Fdelete_region, 3);
 EXFUN (Feobp, 1);
 EXFUN (Feolp, 1);

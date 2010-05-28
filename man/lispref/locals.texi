@@ -25,8 +25,14 @@ define such variables for their internal use; we don't list them here.
 @item buffer-backed-up
 @pxref{Backup Files}
 
+@item buffer-display-count
+@xref{Buffers and Windows}.
+
 @item buffer-display-table
 @pxref{Display Tables}
+
+@item buffer-display-time
+@xref{Buffers and Windows}.
 
 @item buffer-file-format
 @pxref{Format Conversion}

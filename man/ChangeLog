@@ -1,3 +1,12 @@
+2010-05-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* lispref/windows.texi (Buffers and Windows):
+	Document buffer-display-count and buffer-display-time with
+	descriptions from GNU emacs lispref.
+
+	* lispref/locals.texi (Standard Buffer-Local Variables):
+	Add buffer-display-count and buffer-display-time.
+
 2010-04-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/hash-tables.texi (Introduction to Hash Tables):

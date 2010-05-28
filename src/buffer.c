@@ -2307,6 +2307,8 @@ common_init_complex_vars_of_buffer (void)
 #ifdef MULE
     buffer_local_flags.category_table	= resettable;
 #endif
+    buffer_local_flags.display_time     = always_local_no_default;
+    buffer_local_flags.display_count    = make_int (0);
 
     buffer_local_flags.modeline_format		  = make_int (1<<0);
     buffer_local_flags.abbrev_mode		  = make_int (1<<1);
@@ -2799,6 +2801,18 @@ List of formats to use when saving this buffer.
 Formats are defined by `format-alist'.  This variable is
 set when a file is visited.  Automatically local in all buffers.
 */ );
+
+  DEFVAR_BUFFER_LOCAL ("buffer-display-count", display_count /*
+A number incremented each time this buffer is displayed in a window.
+The function `set-window-buffer' updates it.
+*/ );
+
+  DEFVAR_BUFFER_LOCAL ("buffer-display-time", display_time /*
+Time stamp updated each time this buffer is displayed in a window.
+The function `set-window-buffer' updates this variable
+to the value obtained by calling `current-time'.
+If the buffer has never been shown in a window, the value is nil.
+*/);
 
   DEFVAR_BUFFER_LOCAL_MAGIC ("buffer-invisibility-spec", invisibility_spec /*
 Invisibility spec of this buffer.

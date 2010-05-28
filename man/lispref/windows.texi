@@ -705,6 +705,12 @@ This function returns @code{nil}.
 @end example
 @end defun
 
+@defvar buffer-display-count
+This buffer-local variable records the number of times a buffer has been
+displayed in a window.  It is incremented each time
+@code{set-window-buffer} is called for the buffer.
+@end defvar
+
 @defun window-buffer &optional window
 This function returns the buffer that @var{window} is displaying.  If
 @var{window} is omitted, this function returns the buffer for the
@@ -728,6 +734,16 @@ cyclic ordering of windows, starting from the selected window.
 The remaining arguments control which windows to consider.  They have
 the same meaning as for @code{next-window}.
 @end defun
+
+
+@defvar buffer-display-time
+This variable records the time at which a buffer was last made visible
+in a window.  It is always local in each buffer; each time
+@code{set-window-buffer} is called, it sets this variable to
+@code{(current-time)} in the specified buffer (@pxref{Time of Day}).
+When a buffer is first created, @code{buffer-display-time} starts out
+with the value @code{nil}.
+@end defvar
 
 @node Displaying Buffers
 @section Displaying Buffers in Windows

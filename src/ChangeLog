@@ -3,6 +3,19 @@
 	* lread.c (read1): Accept #B<binary>, #O<octal>, and #X<hex>, just
 	like GNU Emacs.
 
+2010-05-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* buffer.c (complex_vars_of_buffer):
+	Add buffer local variables buffer-display-count and
+	buffer-display-time.
+	(common_init_complex_vars_of_buffer):
+	Initialize them here.
+
+	* bufslots.h: Add slots for buffer-display-count and buffer-display-time.
+
+	* window.c (Fset_window_buffer): Update buffer-display-count and
+	buffer-display-time whenever a buffer is displayed.
+
 2010-05-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Move `default-file-system-ignore-case' to C; pay attention to it
