@@ -706,9 +706,8 @@ This function returns @code{nil}.
 @end defun
 
 @defvar buffer-display-count
-This buffer-local variable records the number of times a buffer has been
-displayed in a window.  It is incremented each time
-@code{set-window-buffer} is called for the buffer.
+This variable, local to a given buffer, reflects the number of times
+XEmacs has displayed the buffer in a window.
 @end defvar
 
 @defun window-buffer &optional window
