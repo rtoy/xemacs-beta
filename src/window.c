@@ -3757,6 +3757,11 @@ global or per-frame buffer ordering.
 
       Fset_buffer (buffer);
     }
+  if (NILP (XBUFFER (buffer)->display_count))
+    XBUFFER (buffer)->display_count = make_int (1);
+  else
+    XBUFFER (buffer)->display_count = make_int (1 + XINT (XBUFFER (buffer)->display_count));
+  XBUFFER (buffer)->display_time = Fcurrent_time();
   return Qnil;
 }
 
