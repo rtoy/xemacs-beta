@@ -1,3 +1,11 @@
+2010-05-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/windows.texi (Buffers and Windows):
+	Reword the documentation of `buffer-display-count';
+	`buffer-display-time's documentation was taken from a version of
+	the GNU elisp manuwal with a compatible licence,
+	`buffer-display-count' was not.
+
 2010-05-17  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* lispref/windows.texi (Buffers and Windows):
