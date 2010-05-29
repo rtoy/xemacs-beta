@@ -1,3 +1,13 @@
+2010-05-28  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* mc-alloc.c: 
+	* mc-alloc.c (visit_all_used_page_headers): 
+	* mc-alloc.c (install_page_in_used_list): 
+	* mc-alloc.c (mc_alloc_1): 
+	* mc-alloc.c (init_mc_allocator): 
+	* mc-alloc.c (Fmc_alloc_memory_usage): Allocate lrecord arrays in
+	own size class.
+
 2010-05-24  Mike Sperber  <mike@xemacs.org>
 
 	* lread.c (read1): Accept #B<binary>, #O<octal>, and #X<hex>, just
