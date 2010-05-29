@@ -1,5 +1,10 @@
 2010-05-28  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
+	* window.c (compute_window_usage): Unbreak `show-memory-usage' for
+	NEW_GC.
+
+2010-05-28  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
 	* mc-alloc.c: 
 	* mc-alloc.c (visit_all_used_page_headers): 
 	* mc-alloc.c (install_page_in_used_list): 
