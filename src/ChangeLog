@@ -1,3 +1,14 @@
+2010-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fontcolor-msw.c (mswindows_X_color_map): Sort this, case
+	insensitively, by the color name.
+	(colormap_t_compare): New function.
+	(mswindows_string_to_color): When using symbolic color names, use
+	binary search, not linear search.
+	(mswindows_color_list): No need to start from the beginning of the
+	array and call #'nreverse to get the colors in an intuitive order,
+	just build the list starting from the end of the array.
+
 2010-05-28  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* window.c (compute_window_usage): Unbreak `show-memory-usage' for
