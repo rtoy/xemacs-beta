@@ -1,3 +1,8 @@
+2010-05-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_map_subwindow): Replace deprecated code with
+	gtk_widget_queue_draw().
+
 2010-05-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (type_to_marshaller_type): Always check fundamental
