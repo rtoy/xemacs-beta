@@ -99,16 +99,8 @@
 
 ;;; Code:
 
-(defvar cl-emacs-type (cond ((or (and (fboundp 'epoch::version)
-				      (symbol-value 'epoch::version))
-				 (string-lessp emacs-version "19")) 18)
-			    ((string-match "XEmacs" emacs-version)
-			     'lucid)
-			    (t 19)))
-
 (defvar cl-optimize-speed 1)
 (defvar cl-optimize-safety 1)
-
 
 (defvar custom-print-functions nil
   "This is a list of functions that format user objects for printing.
@@ -119,7 +111,6 @@ printer proceeds to the next function on the list.
 
 This variable is not used at present, but it is defined in hopes that
 a future Emacs interpreter will be able to use it.")
-
 
 ;;; Predicates.
 
@@ -206,7 +197,6 @@ See `member*' for the meaning of :test, :test-not and :key."
 	  val
 	  (and (< end (length str)) (substring str end))))
 
-
 ;;; Control structures.
 
 ;; The macros `when' and `unless' are so useful that we want them to
@@ -214,7 +204,6 @@ See `member*' for the meaning of :test, :test-not and :key."
 ;; Note: FSF Emacs moved them to subr.el in FSF 20.
 
 (defalias 'cl-map-extents 'map-extents)
-
 
 ;;; Blocks and exits.
 
@@ -260,7 +249,6 @@ definitions to shadow the loaded ones for use in file byte-compilation."
       (setq cl-macro (cadr (assq (symbol-name cl-macro) cl-env))))
     cl-macro))
 
-
 ;;; Declarations.
 
 (defvar cl-compiling-file nil)
@@ -288,7 +276,6 @@ definitions to shadow the loaded ones for use in file byte-compilation."
 		      specs)))
     (if (cl-compiling-file) (list* 'eval-when '(compile load eval) body)
       (cons 'progn body))))   ; avoid loading cl-macs.el for eval-when
-
 
 ;;; Symbols.
 
@@ -363,12 +350,13 @@ If ARG is not a string, it is ignored."
 (defconst float-epsilon nil)
 (defconst float-negative-epsilon nil)
 
-
 ;;; Sequence functions.
 
 (defalias 'copy-seq 'copy-sequence)
 
-(defalias 'svref 'aref)
+;; XEmacs; #'mapcar* is in C.
+
+(defalias 'svref 'aref) ;; Compiler macro in cl-macs.el
 
 ;;; List functions.
 
@@ -530,16 +518,6 @@ If ARG is not a string, it is ignored."
   (cdr (cdr (cdr (cdr x)))))
 
 ;;; `last' is implemented as a C primitive, as of 1998-11
-;;(defun last* (x &optional n)
-;;  "Returns the last link in the list LIST.
-;;With optional argument N, returns Nth-to-last link (default 1)."
-;;  (if n
-;;      (let ((m 0) (p x))
-;;	(while (consp p) (incf m) (pop p))
-;;	(if (<= n 0) p
-;;	  (if (< n m) (nthcdr (- m n) x) x)))
-;;    (while (consp (cdr x)) (pop x))
-;;    x))
 
 (defun list* (arg &rest rest)   ; See compiler macro in cl-macs.el
   "Return a new list with specified args as elements, cons'd to last arg.
@@ -561,19 +539,6 @@ Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
     (nreverse res)))
 
 ;;; `copy-list' is implemented as a C primitive, as of 1998-11
-
-;(defun copy-list (list)
-;  "Return a copy of a list, which may be a dotted list.
-;The elements of the list are not copied, just the list structure itself."
-;  (if (consp list)
-;      (let ((res nil))
-;	(while (consp list) (push (pop list) res))
-;	(prog1 (nreverse res) (setcdr res list)))
-;    (car list)))
-
-(defun cl-maclisp-member (item list)
-  (while (and list (not (equal item (car list)))) (setq list (cdr list)))
-  list)
 
 (defalias 'cl-member 'memq)   ; for compatibility with old CL package
 (defalias 'cl-floor 'floor*)
@@ -612,12 +577,16 @@ See `member*' for the meaning of :test, :test-not and :key."
 	       cl-tree (cons a d))))
 	(t cl-tree)))
 
-(defun acons (a b c)
+(defun acons (key value alist)
   "Return a new alist created by adding (KEY . VALUE) to ALIST."
-  (cons (cons a b) c))
+  (cons (cons key value) alist))
 
-(defun pairlis (a b &optional c) (nconc (mapcar* 'cons a b) c))
-
+(defun pairlis (keys values &optional alist)
+  "Make an alist from KEYS and VALUES.
+Return a new alist composed by associating KEYS to corresponding VALUES;
+the process stops as soon as KEYS or VALUES run out.
+If ALIST is non-nil, the new pairs are prepended to it."
+  (nconc (mapcar* 'cons keys values) alist))
 
 ;;; Miscellaneous.
 
@@ -667,10 +636,8 @@ See `member*' for the meaning of :test, :test-not and :key."
    ((loop) defun (&rest &or symbolp form))
    ((ignore-errors) 0 (&rest form))))
 
-
 ;;; This goes here so that cl-macs can find it if it loads right now.
-(provide 'cl-19)     ; usage: (require 'cl-19 "cl")
-
+(provide 'cl-19)
 
 ;;; Things to do after byte-compiler is loaded.
 ;;; As a side effect, we cause cl-macs to be loaded when compiling, so

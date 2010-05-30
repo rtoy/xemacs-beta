@@ -1,3 +1,42 @@
+2010-05-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el: Remove extraneous empty lines.
+	Remove the commented-out Lisp implementation of #'last,
+	#'copy-list.
+	Remove #'cl-maclisp-member.
+	(acons, pairlis): Have the argument list reflect the docstring for
+	these functions.
+
+	* cl-macs.el (defun*): Have the argument list reflect the
+	docstring.
+	Document the syntax of keywords in ARGLIST.
+	(defmacro*): Have the argument list reflect the docstring.
+	Document &body, &whole and &environment.
+	(function*): Have the argument list reflect the docstring.
+	(loop): Have the argument list reflect the docstring.
+	(eval-when, dolist, dotimes, do-symbols, flet, labels, macrolet,
+	symbol-macrolet):
+	Specify the argument list using the arguments: (...) syntax.
+	(define-setf-method, rotatef, defsubst*): Have the argument list
+	reflect the docstring.
+	(letf, letf*): 
+	Specify the argument list using the arguments: (...) syntax.
+	(svref, acons, pairlis): Add compiler macros for these functions.
+
+	* cl-extra.el: Remove the commented-out Lisp implementation of
+	#'equalp. If we want to look at it, it's in version control.
+	(cl-expt): Remove this. The subr #'expt is always available.
+	Call #'cl-float-limits at dump time.
+	Remove the commented-out Lisp implementation of #'subseq.
+	(concatenate): Use (error 'invalid-argument ...) here, if TYPE is
+	not understood.
+	(list-length): Don't manually get the length of a list, call
+	#'length and return nil if the list is circular.
+
+	* byte-optimize.el (equalp): This needs
+	byte-optimize-binary-predicate as its optimizer, as do the other
+	equality predicates.
+
 2010-05-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (default-file-system-ignore-case):
