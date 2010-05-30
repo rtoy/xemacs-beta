@@ -1,3 +1,8 @@
+2010-05-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (float-time): Add this function, available in editfns.c
+	in GNU.
+
 2010-05-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (default-file-system-ignore-case):
