@@ -175,8 +175,8 @@
 ;;; Program structure.
 
 ;;;###autoload
-(defmacro defun* (name args &rest body)
-  "(defun* NAME ARGLIST [DOCSTRING] BODY...): define NAME as a function.
+(defmacro defun* (name arglist &optional docstring &rest body)
+  "Define NAME as a function.
 Like normal `defun', except ARGLIST allows full Common Lisp conventions,
 and BODY is implicitly surrounded by (block NAME ...).
 
@@ -193,7 +193,24 @@ and BODY is implicitly surrounded by (block NAME ...).
    bound to nil.
 
 -- &key specifies keyword arguments.  The format of each argument is
-   VAR || ( { VAR || (KEYWORD VAR) } [INITFORM [SVAR]])  -- #### document me.
+   VAR || ( { VAR || (KEYWORD VAR) } [INITFORM [SVAR]]).  
+
+   If VAR is specified on its own, VAR is bound within BODY to the value
+   supplied by the caller for the corresponding keyword; for example, &key
+   my-value means callers write :my-value RUNTIME-EXPRESSION.
+
+   If (VAR INITFORM) is specified, INITFORM is an expression evaluated at
+   runtime to determine a default value for VAR.
+
+   If (VAR INITFORM SVAR) is specified, SVAR is variable available within
+   BODY that is non-nil if VAR was explicitly specified in the calling
+   expression.
+
+   If ((KEYWORD VAR)) is specified, KEYWORD is the keyword to be used by
+   callers, and VAR is the corresponding variable binding within BODY.
+
+   In calls to NAME, values for a given keyword may be supplied multiple
+   times.  The first value is the only one used.
 
 -- &allow-other-keys means that if other keyword arguments are given that are
    not specifically list in the arg list, they are allowed, rather than an
@@ -203,13 +220,13 @@ and BODY is implicitly surrounded by (block NAME ...).
    The format of each binding is VAR || (VAR [INITFORM]) -- exactly like the
    format of `let'/`let*' bindings.
 "
-  (let* ((res (cl-transform-lambda (cons args body) name))
+  (let* ((res (cl-transform-lambda (list* arglist docstring body) name))
 	 (form (list* 'defun name (cdr res))))
     (if (car res) (list 'progn (car res) form) form)))
 
 ;;;###autoload
-(defmacro defmacro* (name args &rest body)
-  "(defmacro* NAME ARGLIST [DOCSTRING] BODY...): define NAME as a macro.
+(defmacro defmacro* (name arglist &optional docstring &rest body)
+  "Define NAME as a macro.
 Like normal `defmacro', except ARGLIST allows full Common Lisp conventions,
 and BODY is implicitly surrounded by (block NAME ...).
 
@@ -219,7 +236,18 @@ and BODY is implicitly surrounded by (block NAME ...).
    &aux are allowed, as in `defun*'.
 
 -- Three additional lambda-list keywords are allowed: &body, &whole, and
-   &environment.  #### Document me.
+   &environment:
+
+   &body is equivalent to &rest, but is intended to indicate that the
+   following arguments are the body of some piece of code, and should be
+   indented as such.
+
+   &whole must come first; it is followed by a single variable that, at
+   macro expansion time, reflects all the arguments supplied to the macro,
+   as if it had been declared with a single &rest argument.
+
+   &environment specifies local semantics for various macros for use within
+   the expansion of BODY.  See the ENVIRONMENT argument to `macroexpand'.
 
 -- The macro arg list syntax allows for \"destructuring\" -- see also
    `destructuring-bind', which destructures exactly like `defmacro*', and
@@ -248,20 +276,20 @@ and BODY is implicitly surrounded by (block NAME ...).
        are ignored, not enough arguments cause the remaining parameters to
        receive a value of nil, etc.
 "
-  (let* ((res (cl-transform-lambda (cons args body) name))
+  (let* ((res (cl-transform-lambda (list* arglist docstring body) name))
 	 (form (list* 'defmacro name (cdr res))))
     (if (car res) (list 'progn (car res) form) form)))
 
 ;;;###autoload
-(defmacro function* (func)
-  "(function* SYMBOL-OR-LAMBDA): introduce a function.
+(defmacro function* (symbol-or-lambda)
+  "Introduce a function.
 Like normal `function', except that if argument is a lambda form, its
 ARGLIST allows full Common Lisp conventions."
-  (if (eq (car-safe func) 'lambda)
-      (let* ((res (cl-transform-lambda (cdr func) 'cl-none))
+  (if (eq (car-safe symbol-or-lambda) 'lambda)
+      (let* ((res (cl-transform-lambda (cdr symbol-or-lambda) 'cl-none))
 	     (form (list 'function (cons 'lambda (cdr res)))))
 	(if (car res) (list 'progn (car res) form) form))
-    (list 'function func)))
+    (list 'function symbol-or-lambda)))
 
 (defun cl-transform-function-property (func prop form)
   (let ((res (cl-transform-lambda form func)))
@@ -555,10 +583,12 @@ results will be the same."
 
 ;;;###autoload
 (defmacro eval-when (when &rest body)
-  "(eval-when (WHEN...) BODY...): control when BODY is evaluated.
+  "Control when BODY is evaluated.
 If `compile' is in WHEN, BODY is evaluated when compiled at top-level.
 If `load' is in WHEN, BODY is evaluated when loaded after top-level compile.
-If `eval' is in WHEN, BODY is evaluated when interpreted or at non-top-level."
+If `eval' is in WHEN, BODY is evaluated when interpreted or at non-top-level.
+
+arguments: ((&rest WHEN) &body BODY)"
   (if (and (fboundp 'cl-compiling-file) (cl-compiling-file)
 	   (not cl-not-toplevel) (not (boundp 'for-effect)))  ; horrible kludge
       (let ((comp (or (memq 'compile when) (memq :compile-toplevel when)))
@@ -768,8 +798,8 @@ This is compatible with Common Lisp, but note that `defun' and
 (defvar loop-result-var) (defvar loop-steps) (defvar loop-symbol-macs)
 
 ;;;###autoload
-(defmacro loop (&rest args)
-  "(loop CLAUSE...): The Common Lisp `loop' macro.
+(defmacro loop (&rest clauses)
+  "The Common Lisp `loop' macro.
 
 The loop macro consists of a series of clauses, which do things like
 iterate variables, set conditions for exiting the loop, accumulating values
@@ -1050,8 +1080,8 @@ either `being each foo' or `being the foos'.)
     Specify the name for block surrounding the loop, in place of nil.
     (See `block'.)
 "
-  (if (not (memq t (mapcar 'symbolp (delq nil (delq t (copy-list args))))))
-      (list 'block nil (list* 'while t args))
+  (if (not (memq t (mapcar 'symbolp (delq nil (delq t (copy-list clauses))))))
+      (list 'block nil (list* 'while t clauses))
     (let ((loop-name nil)	(loop-bindings nil)
 	  (loop-body nil)	(loop-steps nil)
 	  (loop-result nil)	(loop-result-explicit nil)
@@ -1059,8 +1089,8 @@ either `being each foo' or `being the foos'.)
 	  (loop-accum-var nil)	(loop-accum-vars nil)
 	  (loop-initially nil)	(loop-finally nil)
 	  (loop-map-form nil)   (loop-first-flag nil)
-	  (loop-destr-temps nil) (loop-symbol-macs nil))
-      (setq args (append args '(cl-end-loop)))
+	  (loop-destr-temps nil) (loop-symbol-macs nil)
+          (args (append clauses '(cl-end-loop))))
       (while (not (eq (car args) 'cl-end-loop)) (cl-parse-loop-clause))
       (if loop-finish-flag
 	  (push (list (list loop-finish-flag t)) loop-bindings))
@@ -1646,9 +1676,11 @@ Format is: (do* ((VAR INIT [STEP])...) (END-TEST [RESULT...]) BODY...)"
 
 ;;;###autoload
 (defmacro dolist (spec &rest body)
-  "(dolist (VAR LIST [RESULT]) BODY...): loop over a list.
+  "Loop over a list.
 Evaluate BODY with VAR bound to each `car' from LIST, in turn.
-Then evaluate RESULT to get return value, default nil."
+Then evaluate RESULT to get return value, default nil.
+
+arguments: ((VAR LIST &optional RESULT) &body BODY)"
   (let ((temp (gensym "--dolist-temp--")))
     (list 'block nil
 	  (list* 'let (list (list temp (nth 1 spec)) (car spec))
@@ -1661,10 +1693,12 @@ Then evaluate RESULT to get return value, default nil."
 
 ;;;###autoload
 (defmacro dotimes (spec &rest body)
-  "(dotimes (VAR COUNT [RESULT]) BODY...): loop a certain number of times.
+  "Loop a certain number of times.
 Evaluate BODY with VAR bound to successive integers from 0, inclusive,
 to COUNT, exclusive.  Then evaluate RESULT to get return value, default
-nil."
+nil.
+
+arguments: ((VAR COUNT &optional RESULT) &body BODY)"
   (let ((temp (gensym "--dotimes-temp--")))
     (list 'block nil
 	  (list* 'let (list (list temp (nth 1 spec)) (list (car spec) 0))
@@ -1674,9 +1708,11 @@ nil."
 
 ;;;###autoload
 (defmacro do-symbols (spec &rest body)
-  "(dosymbols (VAR [OBARRAY [RESULT]]) BODY...): loop over all symbols.
+  "Loop over all symbols.
 Evaluate BODY with VAR bound to each interned symbol, or to each symbol
-from OBARRAY."
+from OBARRAY.
+
+arguments: ((VAR &optional OBARRAY RESULT) &body BODY)"
   ;; Apparently this doesn't have an implicit block.
   (list 'block nil
 	(list 'let (list (car spec))
@@ -1718,11 +1754,13 @@ a `let' form, except that the list of symbols can be computed at run-time."
 ;;; This should really have some way to shadow 'byte-compile properties, etc.
 ;;;###autoload
 (defmacro flet (bindings &rest body)
-  "(flet ((FUNC ARGLIST BODY...) ...) FORM...): make temporary function defns.
+  "Make temporary function definitions.
 This is an analogue of `let' that operates on the function cell of FUNC
 rather than its value cell.  The FORMs are evaluated with the specified
 function definitions in place, then the definitions are undone (the FUNCs
-go back to their previous definitions, or lack thereof)."
+go back to their previous definitions, or lack thereof).
+
+arguments: (((FUNC ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
   (list* 'letf*
 	 (mapcar
 	  #'(lambda (x)
@@ -1743,9 +1781,11 @@ go back to their previous definitions, or lack thereof)."
 
 ;;;###autoload
 (defmacro labels (bindings &rest body)
-  "(labels ((FUNC ARGLIST BODY...) ...) FORM...): make temporary func bindings.
+  "Make temporary func bindings.
 This is like `flet', except the bindings are lexical instead of dynamic.
-Unlike `flet', this macro is fully compliant with the Common Lisp standard."
+Unlike `flet', this macro is fully compliant with the Common Lisp standard.
+
+arguments: (((FUNC ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
   (let ((vars nil) (sets nil) (cl-macro-environment cl-macro-environment))
     (while bindings
       (let ((var (gensym)))
@@ -1763,8 +1803,10 @@ Unlike `flet', this macro is fully compliant with the Common Lisp standard."
 ;; byte compilers.
 ;;;###autoload
 (defmacro macrolet (bindings &rest body)
-  "(macrolet ((NAME ARGLIST BODY...) ...) FORM...): make temporary macro defns.
-This is like `flet', but for macros instead of functions."
+  "Make temporary macro definitions.
+This is like `flet', but for macros instead of functions.
+
+arguments: (((NAME ARGLIST &optional DOCSTRING &body body) &rest MACROS) &body FORM)"
   (if (cdr bindings)
       (list 'macrolet
 	    (list (car bindings)) (list* 'macrolet (cdr bindings) body))
@@ -1778,9 +1820,11 @@ This is like `flet', but for macros instead of functions."
 
 ;;;###autoload
 (defmacro symbol-macrolet (bindings &rest body)
-  "(symbol-macrolet ((NAME EXPANSION) ...) FORM...): make symbol macro defns.
+  "Make symbol macro definitions.
 Within the body FORMs, references to the variable NAME will be replaced
-by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...)."
+by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...).
+
+arguments: (((NAME EXPANSION) &rest SYMBOL-MACROS) &body FORM)"
   (if (cdr bindings)
       (list 'symbol-macrolet
 	    (list (car bindings)) (list* 'symbol-macrolet (cdr bindings) body))
@@ -1992,20 +2036,20 @@ Returns the first of the multiple values given by FORM."
 ;;; Generalized variables.
 
 ;;;###autoload
-(defmacro define-setf-method (func args &rest body)
-  "(define-setf-method NAME ARGLIST BODY...): define a `setf' method.
-This method shows how to handle `setf's to places of the form (NAME ARGS...).
-The argument forms ARGS are bound according to ARGLIST, as if NAME were
+(defmacro define-setf-method (name arglist &rest body)
+  "Define a `setf' method.
+This method shows how to handle `setf's to places of the form (NAME ARGLIST...).
+The argument forms are bound according to ARGLIST, as if NAME were
 going to be expanded as a macro, then the BODY forms are executed and must
 return a list of five elements: a temporary-variables list, a value-forms
 list, a store-variables list (of length one), a store-form, and an access-
 form.  See `defsetf' for a simpler way to define most setf-methods."
   (append '(eval-when (compile load eval))
 	  (if (stringp (car body))
-	      (list (list 'put (list 'quote func) '(quote setf-documentation)
+	      (list (list 'put (list 'quote name) '(quote setf-documentation)
 			  (pop body))))
 	  (list (cl-transform-function-property
-		 func 'setf-method (cons args body)))))
+		 name 'setf-method (cons arglist body)))))
 (defalias 'define-setf-expander 'define-setf-method)
 
 ;;;###autoload
@@ -2566,18 +2610,18 @@ Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
       form)))
 
 ;;;###autoload
-(defmacro rotatef (&rest args)
-  "(rotatef PLACE...): rotate left among PLACEs.
+(defmacro rotatef (&rest places)
+  "Rotate left among PLACES.
 Example: (rotatef A B C) sets A to B, B to C, and C to A.  It returns nil.
 Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
-  (if (not (memq nil (mapcar 'symbolp args)))
-      (and (cdr args)
+  (if (not (memq nil (mapcar 'symbolp places)))
+      (and (cdr places)
 	   (let ((sets nil)
-		 (first (car args)))
-	     (while (cdr args)
-	       (setq sets (nconc sets (list (pop args) (car args)))))
-	     (nconc (list 'psetf) sets (list (car args) first))))
-    (let* ((places (reverse args))
+		 (first (car places)))
+	     (while (cdr places)
+	       (setq sets (nconc sets (list (pop places) (car places)))))
+	     (nconc (list 'psetf) sets (list (car places) first))))
+    (let* ((places (reverse places))
 	   (temp (gensym "--rotatef--"))
 	   (form temp))
       (while (cdr places)
@@ -2613,14 +2657,16 @@ Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
 
 ;;;###autoload
 (defmacro letf (bindings &rest body)
-  "(letf ((PLACE VALUE) ...) BODY...): temporarily bind to PLACEs.
+  "Temporarily bind to PLACEs.
 This is the analogue of `let', but with generalized variables (in the
 sense of `setf') for the PLACEs.  Each PLACE is set to the corresponding
 VALUE, then the BODY forms are executed.  On exit, either normally or
 because of a `throw' or error, the PLACEs are set back to their original
 values.  Note that this macro is *not* available in Common Lisp.
 As a special case, if `(PLACE)' is used instead of `(PLACE VALUE)',
-the PLACE is not modified before executing BODY."
+the PLACE is not modified before executing BODY.
+
+arguments: (((PLACE VALUE) &rest BINDINGS) &body BODY)"
   (if (and (not (cdr bindings)) (cdar bindings) (symbolp (caar bindings)))
       (list* 'let bindings body)
     (let ((lets nil)
@@ -2715,14 +2761,16 @@ the PLACE is not modified before executing BODY."
 
 ;;;###autoload
 (defmacro letf* (bindings &rest body)
-  "(letf* ((PLACE VALUE) ...) BODY...): temporarily bind to PLACEs.
+  "Temporarily bind to PLACES.
 This is the analogue of `let*', but with generalized variables (in the
 sense of `setf') for the PLACEs.  Each PLACE is set to the corresponding
 VALUE, then the BODY forms are executed.  On exit, either normally or
 because of a `throw' or error, the PLACEs are set back to their original
 values.  Note that this macro is *not* available in Common Lisp.
 As a special case, if `(PLACE)' is used instead of `(PLACE VALUE)',
-the PLACE is not modified before executing BODY."
+the PLACE is not modified before executing BODY.
+
+arguments: (((PLACE VALUE) &rest BINDINGS) &body BODY)"
   (if (null bindings)
       (cons 'progn body)
     (setq bindings (reverse bindings))
@@ -3163,26 +3211,29 @@ and then returning foo."
       (byte-compile-normal-call form)
     (byte-compile-form form)))
 
-(defmacro defsubst* (name args &rest body)
-  "(defsubst* NAME ARGLIST [DOCSTRING] BODY...): define NAME as a function.
+(defmacro defsubst* (name arglist &optional docstring &rest body)
+  "Define NAME as a function.
 Like `defun', except the function is automatically declared `inline',
 ARGLIST allows full Common Lisp conventions, and BODY is implicitly
 surrounded by (block NAME ...)."
-  (let* ((argns (cl-arglist-args args)) (p argns)
-	 (pbody (cons 'progn body))
+  (let* ((argns (cl-arglist-args arglist)) (p argns)
+         (exec-body (if (or (stringp docstring) (null docstring))
+                        body
+                      (cons docstring body)))
+	 (pbody (cons 'progn exec-body))
 	 (unsafe (not (cl-safe-expr-p pbody))))
-    (while (and p (eq (cl-expr-contains args (car p)) 1)) (pop p))
+    (while (and p (eq (cl-expr-contains arglist (car p)) 1)) (pop p))
     (list 'progn
 	  (if p nil   ; give up if defaults refer to earlier args
 	    (list 'define-compiler-macro name
-		  (if (memq '&key args)
-		      (list* '&whole 'cl-whole '&cl-quote args)
-		    (cons '&cl-quote args))
+		  (if (memq '&key arglist)
+		      (list* '&whole 'cl-whole '&cl-quote arglist)
+		    (cons '&cl-quote arglist))
 		  (list* 'cl-defsubst-expand (list 'quote argns)
-			 (list 'quote (list* 'block name body))
+			 (list 'quote (list* 'block name exec-body))
 			 (not (or unsafe (cl-expr-access-order pbody argns)))
-			 (and (memq '&key args) 'cl-whole) unsafe argns)))
-	  (list* 'defun* name args body))))
+			 (and (memq '&key arglist) 'cl-whole) unsafe argns)))
+	  (list* 'defun* name arglist docstring body))))
 
 (defun cl-defsubst-expand (argns body simple whole unsafe &rest argvs)
   (if (and whole (not (cl-safe-expr-p (cons 'progn argvs)))) whole
@@ -3651,6 +3702,15 @@ the byte optimizer in those cases."
 
 (define-compiler-macro stable-sort (&whole form &rest cl-rest)
   (cons 'sort* (cdr form)))
+
+(define-compiler-macro svref (&whole form)
+  (cons 'aref (cdr form)))
+
+(define-compiler-macro acons (a b c)
+  `(cons (cons ,a ,b) ,c))
+
+(define-compiler-macro pairlis (a b &optional c)
+  `(nconc (mapcar* #'cons ,a ,b) ,c))
 
 (mapc
  #'(lambda (y)

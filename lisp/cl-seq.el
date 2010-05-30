@@ -50,10 +50,6 @@
 
 ;;; Code:
 
-(or (memq 'cl-19 features)
-    (error "Tried to load `cl-seq' before `cl'!"))
-
-
 ;;; Keyword parsing.  This is special-cased here so that we can compile
 ;;; this file independent from cl-macs.
 
