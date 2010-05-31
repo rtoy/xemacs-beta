@@ -101,6 +101,12 @@ struct frame
      whether to re-layout windows by a call to change_frame_size early
      in redisplay_frame. */
   int current_toolbar_size[NUM_EDGES];
+
+#ifdef HAVE_GTK
+  void *gtk_toolbars[NUM_EDGES];
+  unsigned int gtk_toolbar_checksum[NUM_EDGES];
+#endif
+  
 #endif
 
   /* Size of gutters as seen by redisplay. This is used to determine
@@ -781,6 +787,13 @@ extern int frame_changed;
 #define FRAME_NONPANED_SIZE(f, pos)					\
   (FRAME_REAL_TOOLBAR_BOUNDS (f, pos) + FRAME_INTERNAL_BORDER_SIZE (f, pos) + \
    FRAME_GUTTER_BOUNDS (f, pos))
+
+#ifdef HAVE_TOOLBARS
+#ifdef HAVE_GTK
+#define FRAME_GTK_TOOLBAR_WIDGET(f) f->gtk_toolbars
+#define FRAME_GTK_TOOLBAR_CHECKSUM(f, pos) f->gtk_toolbar_checksum[pos]
+#endif
+#endif
 
 
 
