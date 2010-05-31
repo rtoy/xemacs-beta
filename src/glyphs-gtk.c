@@ -2086,7 +2086,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 	  gtk_widget_map (wid);
 	}
 
-      gtk_widget_draw (wid, NULL);
+      gtk_widget_queue_draw (wid);
     }
 }
 
@@ -2684,8 +2684,8 @@ gtk_tab_control_instantiate (Lisp_Object image_instance,
   gtk_notebook_set_page(nb, selected);
 
   /* Call per-tab lisp callback when a tab is pressed. */
-  gtk_signal_connect (GTK_OBJECT (nb), "switch-page",
-		      GTK_SIGNAL_FUNC (gtk_tab_control_callback), NULL);
+  g_signal_connect (G_OBJECT (nb), "switch-page",
+                    GTK_SIGNAL_FUNC (gtk_tab_control_callback), NULL);
 }
 
 /* Set the properties of a tab control */
