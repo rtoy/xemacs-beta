@@ -1,3 +1,9 @@
+2010-05-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.el (current-display-table):
+	Use keywords in the structure syntax here, now we've moved to that
+	by default in C.
+
 2010-05-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.el: Remove extraneous empty lines.

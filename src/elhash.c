@@ -99,7 +99,7 @@ static Lisp_Object Vhash_table_test_weak_list;
 
 /* obsolete as of 19990901 in xemacs-21.2 */
 static Lisp_Object Qweak, Qkey_weak, Qvalue_weak, Qkey_or_value_weak;
-static Lisp_Object Qnon_weak, Q_type, Q_data;
+static Lisp_Object Qnon_weak;
 
 /* A hash table test, with its associated hash function. equal_function may
    call lisp_equal_function, and hash_function similarly may call
@@ -757,7 +757,7 @@ hash_table_weakness_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
   if (EQ (value, Qkey_or_value))	return 1;
   if (EQ (value, Qvalue))		return 1;
 
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
   /* Following values are obsolete as of 19990901 in xemacs-21.2 */
   if (EQ (value, Qnon_weak))		return 1;
   if (EQ (value, Qweak))		return 1;
@@ -781,7 +781,7 @@ decode_hash_table_weakness (Lisp_Object obj)
   if (EQ (obj, Qkey_or_value))		return HASH_TABLE_KEY_VALUE_WEAK;
   if (EQ (obj, Qvalue))			return HASH_TABLE_VALUE_WEAK;
 
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
   /* Following values are obsolete as of 19990901 in xemacs-21.2 */
   if (EQ (obj, Qnon_weak))		return HASH_TABLE_NON_WEAK;
   if (EQ (obj, Qweak))			return HASH_TABLE_WEAK;
@@ -1015,6 +1015,7 @@ structure_type_create_hash_table_structure_name (Lisp_Object structure_name)
   define_structure_type_keyword (st, Q_weakness, hash_table_weakness_validate);
   define_structure_type_keyword (st, Q_data, hash_table_data_validate);
 
+#ifdef NEED_TO_HANDLE_21_4_CODE
   /* Next the mutually exclusive, older, non-keyword syntax: */
   define_structure_type_keyword (st, Qtest, hash_table_test_validate);
   define_structure_type_keyword (st, Qsize, hash_table_size_validate);
@@ -1023,7 +1024,6 @@ structure_type_create_hash_table_structure_name (Lisp_Object structure_name)
   define_structure_type_keyword (st, Qweakness, hash_table_weakness_validate);
   define_structure_type_keyword (st, Qdata, hash_table_data_validate);
 
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
   /* obsolete as of 19990901 in xemacs-21.2 */
   define_structure_type_keyword (st, Qtype, hash_table_weakness_validate);
 #endif
@@ -1037,7 +1037,9 @@ void
 structure_type_create_hash_table (void)
 {
   structure_type_create_hash_table_structure_name (Qhash_table);
+#ifdef NEED_TO_HANDLE_21_4_CODE
   structure_type_create_hash_table_structure_name (Qhashtable); /* compat */
+#endif
 }
 
 
@@ -2277,7 +2279,6 @@ syms_of_elhash (void)
   DEFKEYWORD (Q_rehash_size);
   DEFKEYWORD (Q_rehash_threshold);
   DEFKEYWORD (Q_weakness);
-  DEFKEYWORD (Q_type); /* obsolete */
 }
 
 void
