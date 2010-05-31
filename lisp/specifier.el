@@ -999,7 +999,7 @@ proceed as if LOCALE were a domain."
 ;; initialised; that's why this is here, and not in x-init.el, these days.
 
 (set-specifier current-display-table 
-               #s(char-table type generic data (?\xA0 ?\x20))
+               #s(char-table :type generic :data (?\xA0 ?\x20))
                'global)
 
 ;;; specifier.el ends here

@@ -1,3 +1,29 @@
+2010-05-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* rangetab.c (print_range_table, rangetab_instantiate)
+	(structure_type_create_rangetab):
+	* chartab.c (print_char_table, chartab_instantiate)
+	(structure_type_create_chartab):
+	* faces.c (syms_of_faces, print_face, face_validate):
+
+	Move structure syntax in these files to using keywords by default,
+	as is done in Common Lisp and GNU Emacs, accepting for the moment
+	the older non-keywords syntax too.
+
+	* glyphs.h: No need to have Q_data here.
+	* general-slots.h: Add Q_data, Q_type here.
+
+	* config.h.in (NEED_TO_HANDLE_21_4_CODE):
+	New #define, always 1 for the moment, replacing the previous
+	never-really-used NO_NEED_TO_HANDLE_21_4_CODE, and avoiding
+	confusing syntax.
+	
+	* eval.c (Ffuncall): Wrap the hack that allows #'throw to be
+	funcalled in #ifdef NEED_TO_HANDLE_21_4_CODE.
+	* elhash.c (syms_of_elhash): Move Q_type, Q_data to
+	general-slots.h. Change to NEED_TO_HANDLE_21_4_CODE throughout
+	this file.
+
 2010-05-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fontcolor-msw.c (mswindows_X_color_map): Sort this, case

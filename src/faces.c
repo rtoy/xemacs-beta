@@ -44,7 +44,7 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Qfacep;
 Lisp_Object Qforeground, Qbackground, Qdisplay_table;
 Lisp_Object Qbackground_pixmap, Qbackground_placement, Qunderline, Qdim;
-Lisp_Object Qblinking, Qstrikethru;
+Lisp_Object Qblinking, Qstrikethru, Q_name;
 
 Lisp_Object Qinit_face_from_resources;
 Lisp_Object Qinit_frame_faces;
@@ -132,7 +132,7 @@ print_face (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 
   if (print_readably)
     {
-      write_fmt_string_lisp (printcharfun, "#s(face name %S)", 1, face->name);
+      write_fmt_string_lisp (printcharfun, "#s(face :name %S)", 1, face->name);
     }
   else
     {
@@ -342,6 +342,8 @@ face_validate (Lisp_Object data, Error_Behavior errb)
   int name_seen = 0;
   Lisp_Object valw = Qnil;
 
+  /* #### This syntax is very limited, given all the face properties that
+     actually exist. At least implement those in reset_face()! */
   data = Fcdr (data); /* skip over Qface */
   while (!NILP (data))
     {
@@ -350,7 +352,7 @@ face_validate (Lisp_Object data, Error_Behavior errb)
       data = Fcdr (data);
       valw = Fcar (data);
       data = Fcdr (data);
-      if (EQ (keyw, Qname))
+      if (EQ (keyw, Qname) || EQ (keyw, Q_name))
 	name_seen = 1;
       else
 	ABORT ();
@@ -2170,6 +2172,8 @@ syms_of_faces (void)
   DEFSYMBOL (Qinit_global_faces);
   DEFSYMBOL (Qinit_device_faces);
   DEFSYMBOL (Qinit_frame_faces);
+
+  DEFKEYWORD (Q_name);
 }
 
 void
@@ -2178,8 +2182,10 @@ structure_type_create_faces (void)
   struct structure_type *st;
 
   st = define_structure_type (Qface, face_validate, face_instantiate);
-
+#ifdef NEED_TO_HANDLE_21_4_CODE
   define_structure_type_keyword (st, Qname, face_name_validate);
+#endif
+  define_structure_type_keyword (st, Q_name, face_name_validate);
 }
 
 void

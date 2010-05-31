@@ -4117,12 +4117,16 @@ arguments: (FUNCTION &rest ARGS)
 	}
       else if (max_args == UNEVALLED) /* Can't funcall a special operator */
 	{
+
+#ifdef NEED_TO_HANDLE_21_4_CODE
           /* Ugh, ugh, ugh. */
           if (EQ (fun, XSYMBOL_FUNCTION (Qthrow)))
             {
               args[0] = Qobsolete_throw;
               goto retry;
             }
+#endif /* NEED_TO_HANDLE_21_4_CODE */
+
 	  goto invalid_function;
 	}
       else
