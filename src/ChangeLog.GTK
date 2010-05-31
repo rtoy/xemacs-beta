@@ -1,3 +1,29 @@
+2010-05-31  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-impl.h (struct frame): Add gtk_toolbars here.  This is the
+	wrong place, but it's used for now.  Add a checksum slot.
+	(FRAME_GTK_TOOLBAR_WIDGET): Define accessor.
+	(FRAME_GTK_TOOLBAR_CHECKSUM): Define accessor.
+
+	* toolbar-gtk.c (gtk_toolbar_callback): Link to lisp callback.
+	(gtk_clear_toolbar): Delete toolbar widgets.  Disabled.
+	(gtk_clear_frame_toolbars): Clear all toolbars on frame.
+	(gtk_output_toolbar): Create Gtk toolbar and buttons.
+	(gtk_output_frame_toolbars): Loop and create visible toolbars.
+	(console_type_create_toolbar_gtk): Define output, initialize and
+	free methods.
+	(vars_of_toolbar_gtk): Provide 'toolbar-gtk.
+
+2010-05-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_map_subwindow): Replace deprecated code with
+	gtk_widget_queue_draw().
+
+2010-05-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_to_marshaller_type): Always check fundamental
+	types first.  Next check for GObjects and then enums or flags.
+
 2010-05-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-glue.c (xemacs_list_to_gtklist): Move all declarations
