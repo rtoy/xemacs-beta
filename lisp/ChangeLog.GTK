@@ -1,3 +1,8 @@
+2010-06-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-ffi.el (gtk-type-aliases): Define GtkString as gchararray
+	and GdkWindow as a pointer.
+
 2000-09-12  William M. Perry  <wmperry@aventail.com>
 
 	* dialog-gtk.el (popup-builtin-open-dialog): Went back to
