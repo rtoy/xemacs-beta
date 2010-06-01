@@ -124,7 +124,6 @@ static int
 type_already_imported_p (GType t)
 {
   /* These are cases that we don't need to import */
-#if 0
   switch (GTK_FUNDAMENTAL_TYPE (t))
     {
     case G_TYPE_CHAR:
@@ -150,14 +149,13 @@ type_already_imported_p (GType t)
       //case G_TYPE_GTYPE:
 	return (1);
     }
-#endif
   if (NILP (Vgtk_types))
     {
       Vgtk_types = call2 (intern ("make-hashtable"), 
                                      make_int (163), Qequal);
       return (0);
     }
-
+  Lisp_Object key = make_int (G_VALUE_TYPE (t));
   if (!NILP (Fgethash (make_int (G_VALUE_TYPE (t)), Vgtk_types, Qnil)))
       return (1);
   return (0);
@@ -312,7 +310,7 @@ import_gtk_type (GType t)
     import_gtk_enumeration_internal (t);
   else if (G_TYPE_IS_FLAGS (t))
     import_gtk_flags_internal (t);
-  else if (G_IS_OBJECT (t)) 
+  else if (G_TYPE_IS_OBJECT (t)) 
     import_gtk_object_internal (t);
   else
     {
@@ -788,7 +786,6 @@ Call an external function.
       {
 	EXTERNAL_LIST_LOOP_2 (elt, value)
 	  {
-	    g_value_init (&the_args[n_args], XFFI (func)->arg_type[n_args]);
 	    if (lisp_to_g_value (elt, &the_args[n_args]))
 	      {
 		/* There was some sort of an error */
@@ -803,7 +800,6 @@ Call an external function.
      asked for one */
   if (XFFI (func)->return_type != G_TYPE_NONE)
     {
-      g_value_init (&the_args[n_args], XFFI (func)->return_type);
       n_args++;
     }
 
@@ -1250,8 +1246,8 @@ Lisp_Object build_gtk_boxed (void *obj, GType t)
 
 /* Type manipulation */
 DEFUN ("gtk-fundamental-type", Fgtk_fundamental_type, 1, 1, 0, /*
-Load a shared library DLL into XEmacs.  No initialization routines are required.
-This is for loading dependency DLLs into XEmacs.
+Return the fundamental GType of OBJECT.
+This is the base object type.
 */
        (type))
 {

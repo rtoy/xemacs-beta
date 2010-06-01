@@ -1,5 +1,12 @@
 2010-06-01  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (type_already_imported_p): Uncomment special treatment
+	of fundamental types.  Treat them as already imported.
+	(import_gtk_type): Use G_TYPE_IS_OBJECT, not G_IS_OBJECT on a type.
+	(Fgtk_call_function): Don't set the type of a GValue before using
+	it to hold a converted Lisp_Object, the type cannot be changed.
+	(Fgtk_fundamental_type): Fix documentation string.
+
 	* frame.h (EDGE_HORIZONTAL_P): It is already being using in
 	toolbar-gtk.c due to out of order commits.
 
