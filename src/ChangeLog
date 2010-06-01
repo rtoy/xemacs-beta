@@ -1,5 +1,11 @@
 2010-06-01  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fns.c (Fsubstring_no_properties):
+	Add this function, API taken from GNU, though ours drops all
+	extent data, not just properties.
+
+2010-06-01  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* glyphs.c (syms_of_glyphs):
 	Remove the definition of Q_data from this file, now it's in
 	general-slots.h. Problem picked up by a C++ build.
