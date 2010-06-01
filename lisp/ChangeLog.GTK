@@ -1,5 +1,9 @@
 2010-06-01  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-widgets.el (GType): Replace GtkType with GType everyone for
+	Gtk 2.x.  Comment out removed widgets and related functions for
+	GtkPacker type. 
+
 	* gtk-widget-accessors.el ("../src/emacs-widget-accessors.c"):
 	Comment out serveral GtkWidget fields I don't handle yet. Comment
 	out obsolete types that are no longer in 2.x. 
