@@ -82,7 +82,7 @@ Lisp_Object Qsubwindow_image_instance_p;
 Lisp_Object Qwidget_image_instance_p;
 Lisp_Object Qconst_glyph_variable;
 Lisp_Object Qmono_pixmap, Qcolor_pixmap, Qsubwindow;
-Lisp_Object Q_file, Q_data, Q_face, Q_pixel_width, Q_pixel_height;
+Lisp_Object Q_file, Q_face, Q_pixel_width, Q_pixel_height;
 Lisp_Object Qformatted_string;
 Lisp_Object Vcurrent_display_table;
 Lisp_Object Vtruncation_glyph, Vcontinuation_glyph, Voctal_escape_glyph;
@@ -5209,7 +5209,6 @@ syms_of_glyphs (void)
   DEFSUBR (Fconsole_type_image_conversion_list);
 
   DEFKEYWORD (Q_file);
-  DEFKEYWORD (Q_data);
   DEFKEYWORD (Q_face);
   DEFKEYWORD (Q_pixel_height);
   DEFKEYWORD (Q_pixel_width);
