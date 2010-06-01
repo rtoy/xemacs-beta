@@ -76,18 +76,19 @@ structure."
        "\t(obj))\n"
        "{\n"
        (format "\t%s *the_obj = NULL;\n" gtk-class)
-       "\tGtkArg arg;\n"
+       "\tGValue arg;\n"
        "\n"
        "\tCHECK_GTK_OBJECT (obj);\n"
        "\n"
-       (format "\tif (!G_IS_%s (XGTK_OBJECT (obj)->object))\n" wrapper)
+       (format "\tif (!GTK_IS_%s (XGTK_OBJECT (obj)->object))\n" wrapper)
        "\t{\n"
        (format "\t\twtaerror (\"Object is not a %s\", obj);\n" gtk-class)
        "\t};\n"
        "\n"
        (format "\tthe_obj = G_%s (XGTK_OBJECT (obj)->object);\n" wrapper)
 
-       (format "\targ.type = gtk_type_from_name (\"%s\");\n" (symbol-name (car arg))))
+       ;;(format "\targ.type = g_type_from_name (\"%s\");\n" (symbol-name (car arg)))
+       )
 ;       (format "\targ.type = GTK_TYPE_%s;\n" (or
 ;					       (nth (gtk-fundamental-type (car arg))
 ;						    gtk-value-accessor-names)
@@ -99,12 +100,12 @@ structure."
 
       (setq base-arg-type (gtk-fundamental-type (car arg)))
       (cond
-       ((= base-arg-type GTK_TYPE_OBJECT)
+       ((= base-arg-type G_TYPE_OBJECT)
 	(insert
 	 (format "\tG_VALUE_OBJECT (arg) = G_OBJECT (the_obj->%s);"
 		 (cdr arg))))
-       ((or (= base-arg-type GTK_TYPE_POINTER)
-	    (= base-arg-type GTK_TYPE_BOXED))
+       ((or (= base-arg-type G_TYPE_POINTER)
+	    (= base-arg-type G_TYPE_BOXED))
 	(insert
 	 (format "\tG_VALUE_%s (arg) = (void *)the_obj->%s;"
 		 (nth (gtk-fundamental-type (car arg)) gtk-value-accessor-names)
@@ -116,7 +117,7 @@ structure."
 		 (cdr arg)))))
       (insert
        "\n"
-       "\treturn (gtk_type_to_lisp (&arg));\n"
+       "\treturn (g_type_to_lisp (&arg));\n"
        "}\n\n")
       (push c-func-name func-names))
     func-names))
@@ -163,10 +164,10 @@ structure."
    (gfloat . page_size))
 
  'GtkWidget "WIDGET" "widget"
- '((GtkStyle     . style)
-   (GdkWindow    . window)
-   (GtkStateType . state)
-   (GtkString    . name)
+ '(;(GtkStyle     . style)
+   ;;(GdkWindow    . window)
+   (gpointer	. window)      
+   (gchararray    . name)
    (GtkWidget    . parent))
 
  'GtkButton "BUTTON" "button"
@@ -249,24 +250,24 @@ structure."
    (gboolean  . child1_shrink)
    (gboolean  . child2_shrink))
 
- 'GtkCList "CLIST" "clist"
- '((gint . rows)
-   (gint . columns)
-   (GtkAdjustment . hadjustment)
-   (GtkAdjustment . vadjustment)
-   (GtkSortType   . sort_type)
-   (gint . focus_row)
-   (gint . sort_column))
+;;  'GtkCList "CLIST" "clist"
+;;  '((gint . rows)
+;;    (gint . columns)
+;;    (GtkAdjustment . hadjustment)
+;;    (GtkAdjustment . vadjustment)
+;;    (GtkSortType   . sort_type)
+;;    (gint . focus_row)
+;;    (gint . sort_column))
 
- 'GtkList "LIST" "list"
- '((GtkListOfObject . children)
-   (GtkListOfObject . selection))
+;;  'GtkList "LIST" "list"
+;;  '((GtkListOfObject . children)
+;;    (GtkListOfObject . selection))
 
- 'GtkTree "TREE" "tree"
- '((GtkListOfObject . children)
-   (GtkTree         . root_tree)
-   (GtkWidget       . tree_owner)
-   (GtkListOfObject . selection))
+;;  'GtkTree "TREE" "tree"
+;;  '((GtkListOfObject . children)
+;;    (GtkTree         . root_tree)
+;;    (GtkWidget       . tree_owner)
+;;    (GtkListOfObject . selection))
 
  'GtkTreeItem "TREE_ITEM" "tree-item"
  '((GtkWidget       . subtree))
