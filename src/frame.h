@@ -170,6 +170,9 @@ enum edge_pos
   NUM_EDGES
 };
 
+#define EDGE_HORIZONTAL_P(pos) ((pos == TOP_EDGE) || (pos == BOTTOM_EDGE))
+#define EDGE_VERTICAL_P(pos) ((pos == LEFT_EDGE || pos == RIGHT_EDGE))
+
 /* Iterate over all possible edge positions */
 #define EDGE_POS_LOOP(var)				\
   for (var = (enum edge_pos) 0; var < NUM_EDGES;	\
