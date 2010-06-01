@@ -1,5 +1,9 @@
 2010-06-01  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-widget-accessors.el ("../src/emacs-widget-accessors.c"):
+	Comment out serveral GtkWidget fields I don't handle yet. Comment
+	out obsolete types that are no longer in 2.x. 
+
 	* gtk-ffi.el (gtk-type-aliases): Define GtkString as gchararray
 	and GdkWindow as a pointer.
 
