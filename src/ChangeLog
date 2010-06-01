@@ -1,3 +1,9 @@
+2010-06-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs.c (syms_of_glyphs):
+	Remove the definition of Q_data from this file, now it's in
+	general-slots.h. Problem picked up by a C++ build.
+
 2010-05-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* rangetab.c (print_range_table, rangetab_instantiate)
