@@ -1,3 +1,12 @@
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (complement):
+	* cl-extra.el (complement):
+	Add an implementation and a compiler macro for #'complement, as
+	specified by CL. For discussion; the compiler macro may be a
+	little too aggressive about taking the compile time argument lists
+	of the functions it is inverting.
+
 2010-05-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.el (current-display-table):
