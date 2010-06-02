@@ -3712,6 +3712,45 @@ the byte optimizer in those cases."
 (define-compiler-macro pairlis (a b &optional c)
   `(nconc (mapcar* #'cons ,a ,b) ,c))
 
+(define-compiler-macro complement (&whole form fn)
+  (if (or (eq (car-safe fn) 'function) (eq (car-safe fn) 'quote))
+      (cond
+       ((and (symbolp (second fn)) (get (second fn) 'byte-compile-negated-op))
+        (list 'function (get (second fn) 'byte-compile-negated-op)))
+       ((and (symbolp (second fn)) (fboundp (second fn))
+             (compiled-function-p (indirect-function (second fn))))
+        (let* ((cf (indirect-function (second fn)))
+               (cfa (compiled-function-arglist cf))
+               (do-apply (memq '&rest cfa)))
+          `#'(lambda ,cfa
+               (not (,@(if do-apply `(apply ',(second fn)) (list (second fn)))
+                       ,@(remq '&optional
+                               (remq '&rest cfa)))))))
+       (t
+        `#'(lambda (&rest arguments)
+             (not (apply ,fn arguments)))))
+    ;; Determine the function to call at runtime.
+    (destructuring-bind
+        (arglist instructions constants stack-depth)
+        (let ((compiled-lambda
+               (byte-compile-sexp
+                #'(lambda (&rest arguments)
+                    (not (apply 'placeholder arguments))))))
+          (list
+           (compiled-function-arglist compiled-lambda)
+           (compiled-function-instructions compiled-lambda)
+           (append (compiled-function-constants compiled-lambda) nil)
+           (compiled-function-stack-depth compiled-lambda)))
+      `(make-byte-code
+        ',arglist ,instructions (vector
+                                 ,@(nsublis
+                                    (list (cons (quote-maybe
+                                                 'placeholder)
+                                                fn))
+                                    (mapcar #'quote-maybe constants)
+                                    :test #'equal))
+        ,stack-depth))))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)

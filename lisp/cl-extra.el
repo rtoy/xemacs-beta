@@ -100,6 +100,14 @@ TYPE is a Common Lisp type specifier."
 ;; XEmacs; #'map, #'mapc, #'mapl, #'maplist, #'mapcon, #'some and #'every
 ;; are now in C, together with #'map-into, which was never in this file.
 
+;; The compiler macro for this in cl-macs.el means if #'complement is handed
+;; a constant expression, byte-compiled code will see a byte-compiled
+;; function.
+(defun complement (function &optional documentation)
+  "Return a function which gives the logical inverse of what FUNCTION would."
+  `(lambda (&rest arguments) ,@(if documentation (list documentation))
+     (not (apply ',function arguments))))
+
 (defun notany (cl-pred cl-seq &rest cl-rest)
   "Return true if PREDICATE is false of every element of SEQ or SEQs."
   (not (apply 'some cl-pred cl-seq cl-rest)))
