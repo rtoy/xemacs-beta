@@ -200,7 +200,6 @@ void syms_of_ui_gtk (void);
 void syms_of_undo (void);
 void syms_of_unicode (void);
 void syms_of_widget (void);
-void syms_of_widget_accessors (void);
 void syms_of_win32 (void);
 void syms_of_window (void);
 

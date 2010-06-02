@@ -2857,9 +2857,9 @@ if test "$with_gtk" != "no";then
    AC_MSG_CHECKING(for GTK configuration script)
    for possible in gtk+-2.0
    do
-      possible_version=`$GNOME_CONFIG {possible} --version 2> /dev/null`
+      possible_version=`pkg-config ${possible} --version 2> /dev/null`
       if test "x${possible_version}" != "x"; then
-              GTK_CONFIG="$GNOME_CONFIG ${possible}"
+              GTK_CONFIG="pkg-config ${possible}"
 	      case "${possible_version}" in
         	1.0.*) AC_MSG_WARN([GTK 1.2 is required, please upgrade your version of GTK.]); with_gtk=no;;
 	        1.3.*) AC_MSG_WARN([GTK 1.3 is not supported right now]); with_gtk=no;;

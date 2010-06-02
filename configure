@@ -11935,9 +11935,9 @@ if test "$with_gtk" != "no";then
 $as_echo_n "checking for GTK configuration script... " >&6; }
    for possible in gtk+-2.0
    do
-      possible_version=`$GNOME_CONFIG {possible} --version 2> /dev/null`
+      possible_version=`pkg-config ${possible} --version 2> /dev/null`
       if test "x${possible_version}" != "x"; then
-              GTK_CONFIG="$GNOME_CONFIG ${possible}"
+              GTK_CONFIG="pkg-config ${possible}"
 	      case "${possible_version}" in
         	1.0.*) { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GTK 1.2 is required, please upgrade your version of GTK." >&5
 $as_echo "$as_me: WARNING: GTK 1.2 is required, please upgrade your version of GTK." >&2;}; with_gtk=no;;
