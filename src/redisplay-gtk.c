@@ -103,8 +103,8 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
   int screen = GDK_SCREEN_XNUMBER (gdk_drawable_get_screen (drawable));
 
   /* Xft render */
-  //context = pango_xft_get_context (display, screen);
-  //layout = pango_layout_new (context);
+  /* context = pango_xft_get_context (display, screen); */
+  /* layout = pango_layout_new (context); */
   /* Gtk render */
   context = gtk_widget_get_pango_context (widget);
   layout = pango_layout_new (context);
@@ -116,7 +116,7 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
     gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
 
   /* xft draw */
-  //pango_xft_layout_render (xft_draw, xft_color, layout, x, y);
+  /* pango_xft_layout_render (xft_draw, xft_color, layout, x, y); */
   /* Gtk draw */
   gdk_draw_layout (drawable, gc, x, y, layout);
   //g_object_unref (layout);
@@ -124,8 +124,8 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
   height = font->ascent + font->descent;
   width  = gdk_text_width (font, text, len);
   if (bgc != 0)
-    /* The rectangle and text areas don't quite fit, so I have to the
-       te height a little --jsparkes */
+    /* The rectangle and text areas don't quite fit, so I have to extend
+       the height a little --jsparkes */
     gdk_draw_rectangle (drawable, bgc, TRUE, x, y-height+3, width, height);
   gdk_draw_text (drawable, font, gc, x, y, text, len);
 #endif
