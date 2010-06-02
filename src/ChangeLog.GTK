@@ -1,3 +1,8 @@
+2010-06-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_bevel_area): style and stype variable
+	names are hard to distinguish.
+
 2010-06-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (type_already_imported_p): Uncomment special treatment
