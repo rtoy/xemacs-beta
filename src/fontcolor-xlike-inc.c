@@ -239,7 +239,7 @@ xlistfonts_checking_charset (Lisp_Object device, const Ibyte *xlfd,
 		xlfd, stage == STAGE_INITIAL ? "initial" : "final");
   DEBUG_FONTS_LISP1 (" charset %s\n", charset);
   fontext = ITEXT_TO_EXTERNAL (xlfd, Qx_font_name_encoding); 
-  names = XListFonts (GET_XLIKE_DISPLAY (XDEVICE (device)),
+  names = XListFonts (GET_XLIKE_X_DISPLAY (XDEVICE (device)),
 		      fontext, MAX_FONT_COUNT, &count);
 
   for (i = 0; i < count; ++i)

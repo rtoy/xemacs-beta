@@ -46,7 +46,7 @@ Boston, MA 02111-1307, USA.  */
 #define MAX_FONT_COUNT INT_MAX
 
 #ifdef DEBUG_XEMACS 
-Fixnum debug_x_objects;
+Fixnum debug_x_fonts;
 #endif /* DEBUG_XEMACS */
 
 
@@ -395,10 +395,10 @@ void
 vars_of_fontcolor_gtk (void)
 {
 #ifdef DEBUG_XEMACS
-  DEFVAR_INT ("debug-x-objects", &debug_x_objects /*
-If non-zero, display debug information about X objects
+  DEFVAR_INT ("debug-x-fonts", &debug_x_fonts /*
+If non-zero, display debug information about X fonts.
 */ );
-  debug_x_objects = 0;
+  debug_x_fonts = 0;
 #endif
 }
 

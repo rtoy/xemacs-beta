@@ -995,7 +995,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   /* General variables */
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   Lisp_Object window = wrap_window (w);
 
@@ -1659,7 +1659,7 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 			   XLIKE_GC override_gc)
 {
   struct device *d = XDEVICE (f->device);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc;
   XLIKE_GCVALUES gcv;
@@ -1749,7 +1749,7 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
 
   /* Output the pixmap. */
@@ -1808,7 +1808,7 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
 
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   Lisp_Object tmp_pixel;
   XLIKE_GCVALUES gcv;
@@ -1889,7 +1889,7 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
 
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc;
   struct face_cachel *cursor_cachel =
@@ -2001,7 +2001,7 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
 
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc;
 
@@ -2063,7 +2063,7 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct device* d,
 		    Lisp_Object background_pixmap,
 		    Lisp_Object background_placement)
 {
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc = NULL;
 
@@ -2093,7 +2093,7 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
   struct device *d = XDEVICE (f->device);
   Lisp_Object window;
 
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc = NULL;
   face_index elt = get_builtin_face_cache_index (w, Vtext_cursor_face);
@@ -2186,7 +2186,7 @@ XLIKE_clear_frame_windows (Lisp_Object window)
 static void
 XLIKE_clear_frame (struct frame *f)
 {
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (XDEVICE (f->device));
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (XDEVICE (f->device));
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   int x, y, width, height;
   Lisp_Object frame;
@@ -2228,7 +2228,7 @@ static int
 XLIKE_flash (struct device *d)
 {
   struct frame *f = device_selected_frame (d);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc = NULL;
   XLIKE_GCVALUES gcv;

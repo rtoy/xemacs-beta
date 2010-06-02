@@ -2578,7 +2578,7 @@ gtk_add_tab_item(Lisp_Object image_instance,
 /* Signal handler for the switch-page signal. */
 static void gtk_tab_control_callback(GtkNotebook *notebook,
 				     GtkNotebookPage *page,
-				     gint UNUSED (page_num),
+				     gint page_num,
 				     gpointer UNUSED (user_data))
 {
   /*

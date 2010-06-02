@@ -1477,9 +1477,6 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fgtk_describe_type);
   DEFSUBR (Fg_type_from_name);
   DEFSUBR (Fg_object_class_list_properties);
-#ifdef HAVE_WIDGETS
-  syms_of_widget_accessors ();
-#endif
   syms_of_ui_byhand ();
 #ifdef JSPARKES
   syms_of_glade ();
