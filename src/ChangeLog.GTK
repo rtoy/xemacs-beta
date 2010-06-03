@@ -1,3 +1,7 @@
+2010-06-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_to_marshaller_type): Had omitted G_OBJECT_TYPE.
+
 2010-06-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_bevel_area): style and stype variable
