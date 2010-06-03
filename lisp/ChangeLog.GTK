@@ -1,3 +1,7 @@
+2010-06-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-marshal.el (find-file): Add "pointer string" marshaller.
+
 2010-06-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-widgets.el (GType): Replace GtkType with GType everyone for
