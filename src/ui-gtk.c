@@ -518,12 +518,14 @@ static Lisp_Object type_to_marshaller_type (GType t)
     case G_TYPE_STRING:
       return (build_ascstring ("STRING"));
     case G_TYPE_BOXED:
+    case G_TYPE_OBJECT:
     case G_TYPE_POINTER:
       return (build_ascstring ("POINTER"));
     default:
-      stderr_out ("type_to_marshaller type %s\n", g_type_name(t));
+      stderr_out ("type_to_marshaller type %s, fundamental %s\n", g_type_name(t),
+                  g_type_name (GTK_FUNDAMENTAL_TYPE (t)));
       
-      ABORT();
+      /* ABORT(); */
       /* I can't put this in the main switch statement because it is a
          new fundamental type that is not fixed at compile time.
          *sigh*
