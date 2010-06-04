@@ -336,7 +336,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
   arg.printcharfun = printcharfun;
   arg.first = 1;
 
-  write_fmt_string_lisp (printcharfun, "#s(char-table type %s data (",
+  write_fmt_string_lisp (printcharfun, "#s(char-table :type %s :data (",
 			 1, char_table_type_to_symbol (ct->type));
   map_char_table (obj, &range, print_table_entry, &arg);
   write_ascstring (printcharfun, "))");
@@ -1544,35 +1544,67 @@ chartab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 }
 
 static Lisp_Object
-chartab_instantiate (Lisp_Object data)
+chartab_instantiate (Lisp_Object plist)
 {
   Lisp_Object chartab;
   Lisp_Object type = Qgeneric;
   Lisp_Object dataval = Qnil;
 
-  while (!NILP (data))
+  if (KEYWORDP (Fcar (plist)))
     {
-      Lisp_Object keyw = Fcar (data);
-      Lisp_Object valw;
-
-      data = Fcdr (data);
-      valw = Fcar (data);
-      data = Fcdr (data);
-      if (EQ (keyw, Qtype))
-	type = valw;
-      else if (EQ (keyw, Qdata))
-	dataval = valw;
+      PROPERTY_LIST_LOOP_3 (key, value, plist)
+	{
+	  if (EQ (key, Q_data))
+	    {
+	      dataval = value;
+	    }
+	  else if (EQ (key, Q_type))
+	    {
+	      type = value;
+	    }
+	  else if (!KEYWORDP (key))
+	    {
+	      signal_error
+		(Qinvalid_read_syntax, 
+		 "can't mix keyword and non-keyword structure syntax",
+		 key);
+	    }
+	  else 
+	    ABORT ();
+	}
     }
+#ifdef NEED_TO_HANDLE_21_4_CODE
+  else
+    {
+      PROPERTY_LIST_LOOP_3 (key, value, plist)
+	{
+	  if (EQ (key, Qdata))
+	    {
+	      dataval = value;
+	    }
+	  else if (EQ (key, Qtype))
+	    {
+	      type = value;
+	    }
+	  else if (KEYWORDP (key))
+            signal_error
+	      (Qinvalid_read_syntax, 
+	       "can't mix keyword and non-keyword structure syntax",
+	       key);
+	  else 
+	    ABORT ();
+	}
+    }
+#endif /* NEED_TO_HANDLE_21_4_CODE */
 
   chartab = Fmake_char_table (type);
 
-  data = dataval;
-  while (!NILP (data))
+  while (!NILP (dataval))
     {
-      Lisp_Object range = Fcar (data);
-      Lisp_Object val = Fcar (Fcdr (data));
+      Lisp_Object range = Fcar (dataval);
+      Lisp_Object val = Fcar (Fcdr (dataval));
 
-      data = Fcdr (Fcdr (data));
+      dataval = Fcdr (Fcdr (dataval));
       if (CONSP (range))
         {
 	  if (CHAR_OR_CHAR_INTP (XCAR (range)))
@@ -1887,8 +1919,13 @@ structure_type_create_chartab (void)
 
   st = define_structure_type (Qchar_table, 0, chartab_instantiate);
 
+#ifdef NEED_TO_HANDLE_21_4_CODE
   define_structure_type_keyword (st, Qtype, chartab_type_validate);
   define_structure_type_keyword (st, Qdata, chartab_data_validate);
+#endif /* NEED_TO_HANDLE_21_4_CODE */
+
+  define_structure_type_keyword (st, Q_type, chartab_type_validate);
+  define_structure_type_keyword (st, Q_data, chartab_data_validate);
 }
 
 void

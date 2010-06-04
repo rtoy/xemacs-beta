@@ -1794,4 +1794,23 @@ See also `special-operator-p', `subr-min-args', `subr-max-args',
   "Return t if (cdr A) is numerically less than (cdr B)."
   (< (cdr a) (cdr b)))
 
+;; XEmacs; this is in editfns.c in GNU.
+(defun float-time (&optional specified-time)
+  "Convert time value SPECIFIED-TIME to a floating point number.
+
+See `current-time'.  Since the result is a floating-point number, this may
+not have the same accuracy as does the result of `current-time'.
+
+If not supplied, SPECIFIED-TIME defaults to the result of `current-time'."
+  (or specified-time (setq specified-time (current-time)))
+  (+ (* (pop specified-time) (+ #x10000 0.0))
+     (if (consp specified-time)
+	 (pop specified-time)
+       (prog1
+	   specified-time
+	 (setq specified-time nil)))
+     (or (and specified-time
+	      (/ (car specified-time) 1000000.0))
+	 0.0)))
+
 ;;; subr.el ends here

@@ -300,7 +300,7 @@ int
 main (int argc, char *argv[])
 {
   int starting_line = 0;	/* line to start editing at */
-  char command[QXE_PATH_MAX+50];/* emacs command buffer */
+  char command[QXE_PATH_MAX + 512];/* emacs command buffer */
   char fullpath[QXE_PATH_MAX+1];/* full pathname to file */
   char *eval_form = NULL;	/* form to evaluate with `-eval' */
   char *eval_function = NULL;	/* function to evaluate with `-f' */
@@ -645,7 +645,11 @@ main (int argc, char *argv[])
 #endif
 #ifdef HAVE_GTK
 	  else if (display)
-	    strcpy (command, "(gnuserv-edit-files '(gtk nil) '(");
+	    sprintf (command, 
+                     /* #### We should probably do this sort of thing for
+                        other window systems. */
+                     "(gnuserv-edit-files (assoc* t '((gtk nil) (x %s)) "
+                     ":key #'valid-device-type-p) '(", clean_string (display));
 #endif
 #ifdef HAVE_MS_WINDOWS
 	  else

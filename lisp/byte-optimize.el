@@ -877,6 +877,7 @@
 (put 'eq  'byte-optimizer 'byte-optimize-binary-predicate)
 (put 'eql 'byte-optimizer 'byte-optimize-binary-predicate)
 (put 'equal   'byte-optimizer 'byte-optimize-binary-predicate)
+(put 'equalp  'byte-optimizer 'byte-optimize-binary-predicate)
 (put 'string= 'byte-optimizer 'byte-optimize-binary-predicate)
 (put 'string-equal 'byte-optimizer 'byte-optimize-binary-predicate)
 

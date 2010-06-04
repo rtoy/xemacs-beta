@@ -1,3 +1,10 @@
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gnuclient.c (main):
+	If gnuclient was built with GTK support, and is asking a gnuserv
+	without GTK support to open a frame, fall back to X11, don't
+	throw an error on the server side, invisible to the client.
+
 2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* make-docfile.c (scan_lisp_file):
