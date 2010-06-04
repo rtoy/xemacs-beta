@@ -1207,18 +1207,15 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
   }
 }
 
-#ifdef STUPID_X_SPECIFIC_GTK_STUFF
-/* There is NO equivalent to XWarpPointer under Gtk */
 static void
 gtk_set_mouse_position (struct window *w, int x, int y)
 {
   struct frame *f = XFRAME (w->frame);
-  Display *display = GDK_DISPLAY ();
-  XWarpPointer (display, None,
-		GDK_WINDOW_XWINDOW (GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f))),
-                0, 0, 0, 0, w->pixel_left + x, w->pixel_top + y);
+  GdkDisplay *display = gtk_widget_get_display (FRAME_GTK_TEXT_WIDGET (f));
+  GdkScreen *screen = gtk_widget_get_screen (FRAME_GTK_TEXT_WIDGET (f));
+  gdk_display_warp_pointer (display, screen, 
+                            w->pixel_left + x, w->pixel_top + y);
 }
-#endif /* STUPID_X_SPECIFIC_GTK_STUFF */
 
 static int
 gtk_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
