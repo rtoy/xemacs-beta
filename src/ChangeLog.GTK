@@ -1,6 +1,12 @@
 2010-06-04  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_any_window_to_device): Fix indentation.
+	(gtk_set_frame_properties): Replace deprecated
+	gdk_window_get_deskrelative_origin with gdk_window_get_origin.
+	(gtk_frame_property): Ditto.
+	(gtk_frame_properties): Ditto
+	(gtk_set_mouse_position): Gdk now has a function to warp the
+	cursor position.
 
 2010-06-03  Jeff Sparkes  <jsparkes@gmail.com>
 
