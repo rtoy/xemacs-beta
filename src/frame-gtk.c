@@ -197,17 +197,17 @@ gtk_any_widget_or_parent_to_frame (struct device *d, GtkWidget *widget)
 struct device *
 gtk_any_window_to_device (GdkWindow *w)
 {
-	struct device *d = NULL;
-	Lisp_Object devcons, concons;
+  struct device *d = NULL;
+  Lisp_Object devcons, concons;
 
-	DEVICE_LOOP_NO_BREAK (devcons, concons)
-		{
-			d = XDEVICE (XCAR (devcons));
-			if (!DEVICE_GTK_P (d)) continue;
-			if (gtk_any_window_to_frame (d, w))
-				return (d);
-		}
-	return (NULL);
+  DEVICE_LOOP_NO_BREAK (devcons, concons)
+    {
+      d = XDEVICE (XCAR (devcons));
+      if (!DEVICE_GTK_P (d)) continue;
+      if (gtk_any_window_to_frame (d, w))
+        return (d);
+    }
+  return (NULL);
 }
 
 struct frame *
@@ -247,7 +247,7 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
       gint x, y;
       if (!GET_GTK_WIDGET_WINDOW(shell))
 	return Qzero;
-      gdk_window_get_deskrelative_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
+      gdk_window_get_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
       if (EQ (Qleft, property)) return make_int (x);
       if (EQ (Qtop,  property)) return make_int (y);
     }
@@ -301,7 +301,7 @@ gtk_frame_properties (struct frame *f)
   if (!GET_GTK_WIDGET_WINDOW (shell))
     x = y = 0;
   else
-    gdk_window_get_deskrelative_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
+    gdk_window_get_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
 
   props = cons3 (Qtop,  make_int (y), props);
   props = cons3 (Qleft, make_int (x), props);
@@ -478,9 +478,9 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
       {
 	gint dummy;
 	GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
-	gdk_window_get_deskrelative_origin (GET_GTK_WIDGET_WINDOW (shell),
-					    (x_position_specified_p ? &dummy : &x),
-					    (y_position_specified_p ? &dummy : &y));
+	gdk_window_get_origin (GET_GTK_WIDGET_WINDOW (shell),
+                               (x_position_specified_p ? &dummy : &x),
+                               (y_position_specified_p ? &dummy : &y));
       }
 
     if (!f->init_finished)
