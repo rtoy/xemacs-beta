@@ -992,6 +992,9 @@ If START or END is negative, it counts from the end.
 The returned subsequence is always of the same type as SEQUENCE.
 If SEQUENCE is a string, relevant parts of the string-extent-data
 are copied to the new string.
+
+See also `substring-no-properties', which only operates on strings, and does
+not copy extent data.
 */
        (sequence, start, end))
 {
@@ -1078,6 +1081,28 @@ are copied to the new string.
                    error */
       return Qnil;
     }
+}
+
+DEFUN ("substring-no-properties", Fsubstring_no_properties, 1, 3, 0, /* 
+Return a substring of STRING, without copying the extents.
+END may be nil or omitted; then the substring runs to the end of STRING.
+If START or END is negative, it counts from the end.
+
+With one argument, copy STRING without its properties.
+*/
+       (string, start, end))
+{
+  Charcount ccstart, ccend;
+  Bytecount bstart, blen;
+  Lisp_Object val;
+
+  get_string_range_char (string, start, end, &ccstart, &ccend,
+                         GB_HISTORICAL_STRING_BEHAVIOR);
+  bstart = string_index_char_to_byte (string, ccstart);
+  blen = string_offset_char_to_byte_len (string, bstart, ccend - ccstart);
+  val = make_string (XSTRING_DATA (string) + bstart, blen);
+
+  return val;
 }
 
 /* Split STRING into a list of substrings.  The substrings are the
@@ -5609,6 +5634,7 @@ syms_of_fns (void)
   DEFSUBR (Fbase64_decode_region);
   DEFSUBR (Fbase64_decode_string);
 
+  DEFSUBR (Fsubstring_no_properties);
   DEFSUBR (Fsplit_string_by_char);
   DEFSUBR (Fsplit_path);	/* #### */
 }

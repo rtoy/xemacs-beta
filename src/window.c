@@ -5230,9 +5230,9 @@ compute_window_usage (struct window *w, struct window_stats *stats,
   stats->line_start =
     compute_line_start_cache_dynarr_usage (w->line_start_cache, ustats);
   stats->face = compute_face_cachel_usage (w->face_cachels,
-					   IF_OLD_GC (ustats));
+					   ustats);
   stats->glyph = compute_glyph_cachel_usage (w->glyph_cachels,
-					     IF_OLD_GC (ustats));
+					     ustats);
   {
     struct window_mirror *wm;
 

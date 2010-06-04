@@ -1010,7 +1010,7 @@ DECLARE_LISP_OBJECT (glyph, Lisp_Glyph);
 #define MARK_GLYPH_CHANGED(g) (GLYPH_DIRTYP (g) = 1);
 
 extern Lisp_Object Qxpm, Qxface, Qetched_in, Qetched_out, Qbevel_in, Qbevel_out;
-extern Lisp_Object Q_data, Q_file, Q_color_symbols, Qconst_glyph_variable;
+extern Lisp_Object Q_file, Q_color_symbols, Qconst_glyph_variable;
 extern Lisp_Object Qxbm, Qedit_field, Qgroup, Qlabel, Qcombo_box, Qscrollbar;
 extern Lisp_Object Qtree_view, Qtab_control, Qprogress_gauge;
 extern Lisp_Object Q_mask_file, Q_mask_data, Q_hotspot_x, Q_hotspot_y;

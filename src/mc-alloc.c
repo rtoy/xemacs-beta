@@ -297,6 +297,9 @@ typedef struct mc_allocator_globals_type {
      to guarantee fast allocation on partially filled pages. */
   page_list_header     *used_heap_pages;
 
+  /* Holds all allocated pages that contain array elements. */
+  page_list_header     array_heap_pages;
+
   /* Holds all free pages in the heap. N multiples of PAGE_SIZE are
      kept on the Nth free list. Contiguos pages are coalesced. */
   page_list_header     free_heap_pages[N_FREE_PAGE_LISTS];
@@ -323,6 +326,9 @@ mc_allocator_globals_type mc_allocator_globals;
 
 #define USED_HEAP_PAGES(i) \
   ((page_list_header*) &mc_allocator_globals.used_heap_pages[i])
+
+#define ARRAY_HEAP_PAGES \
+  ((page_list_header*) &mc_allocator_globals.array_heap_pages)
 
 #define FREE_HEAP_PAGES(i) \
   ((page_list_header*) &mc_allocator_globals.free_heap_pages[i])
@@ -437,6 +443,19 @@ visit_all_used_page_headers (EMACS_INT (*f) (page_header *ph))
           }
         number_of_pages_processed += f (ph);
       }
+
+  if (PLH_FIRST (ARRAY_HEAP_PAGES))
+    {
+      page_header *ph = PLH_FIRST (ARRAY_HEAP_PAGES);
+      while (PH_NEXT (ph))
+	{
+	  page_header *next = PH_NEXT (ph); /* in case f removes the page */
+	  number_of_pages_processed += f (ph);
+	  ph = next;
+	}
+      number_of_pages_processed += f (ph);
+    }
+  
   return number_of_pages_processed;
 }
 
@@ -1172,7 +1191,7 @@ expand_heap (EMACS_INT needed_pages)
 /*--- used heap functions ----------------------------------------------*/
 /* Installs initial free list. */
 static void
-install_cell_free_list (page_header *ph, EMACS_INT elemcount)
+install_cell_free_list (page_header *ph)
 {
   Rawbyte *p;
   EMACS_INT i;
@@ -1185,7 +1204,7 @@ install_cell_free_list (page_header *ph, EMACS_INT elemcount)
       assert (!LRECORD_FREE_P (p));
       MARK_LRECORD_AS_FREE (p);
 #endif
-      if (elemcount == 1)
+      if (!PH_ARRAY_BIT (ph))
 	NEXT_FREE (p) = FREE_LIST (p + cell_size);
       set_lookup_table (p, ph);
       p += cell_size;
@@ -1227,7 +1246,10 @@ install_page_in_used_list (page_header *ph, page_list_header *plh,
   else
     PH_CELL_SIZE (ph) = size;
   if (elemcount == 1)
-    PH_CELLS_ON_PAGE (ph) = (PAGE_SIZE * PH_N_PAGES (ph)) / PH_CELL_SIZE (ph);
+    {
+      PH_CELLS_ON_PAGE (ph) = (PAGE_SIZE * PH_N_PAGES (ph)) / PH_CELL_SIZE (ph);
+      PH_ARRAY_BIT (ph) = 0;
+    }
   else
     {
       PH_CELLS_ON_PAGE (ph) = elemcount;
@@ -1240,7 +1262,7 @@ install_page_in_used_list (page_header *ph, page_list_header *plh,
   /* install mark bits and initialize cell free list */
   install_mark_bits (ph);
 
-  install_cell_free_list (ph, elemcount);
+  install_cell_free_list (ph);
 
 #ifdef MEMORY_USAGE_STATS
   PLH_TOTAL_CELLS (plh) += PH_CELLS_ON_PAGE (ph);
@@ -1379,13 +1401,21 @@ mc_alloc_1 (size_t size, EMACS_INT elemcount)
   page_header *ph = 0;
   void *result = 0;
 
-  plh = USED_HEAP_PAGES (get_used_list_index (size));
-
   if (size == 0)
     return 0;
-  if ((elemcount == 1) && (size < (size_t) PAGE_SIZE_DIV_2))
-    /* first check any free cells */
-    ph = allocate_cell (plh);
+
+  if (elemcount == 1) 
+    {
+      plh = USED_HEAP_PAGES (get_used_list_index (size));
+      if (size < (size_t) USED_LIST_UPPER_THRESHOLD)
+	/* first check any free cells */
+	ph = allocate_cell (plh);
+    } 
+  else 
+    {
+      plh = ARRAY_HEAP_PAGES;
+    }
+
   if (!ph)
     /* allocate a new page */
     ph = allocate_new_page (plh, size, elemcount);
@@ -1670,6 +1700,22 @@ init_mc_allocator (void)
 #endif
     }
 
+  {
+    page_list_header *plh = ARRAY_HEAP_PAGES;
+    PLH_LIST_TYPE (plh) = USED_LIST;
+    PLH_SIZE (plh) = 0;
+    PLH_FIRST (plh) = 0;
+    PLH_LAST (plh) = 0;
+    PLH_MARK_BIT_FREE_LIST (plh) = 0;
+#ifdef MEMORY_USAGE_STATS
+    PLH_PAGE_COUNT (plh) = 0;
+    PLH_USED_CELLS (plh) = 0;
+    PLH_USED_SPACE (plh) = 0;
+    PLH_TOTAL_CELLS (plh) = 0;
+    PLH_TOTAL_SPACE (plh) = 0;
+#endif
+  }
+
   for (i = 0; i < N_FREE_PAGE_LISTS; i++)
     {
       page_list_header *plh = FREE_HEAP_PAGES (i);
@@ -1735,6 +1781,15 @@ Returns stats about the mc-alloc memory usage. See diagnose.el.
 		      make_int (PLH_TOTAL_SPACE (USED_HEAP_PAGES(i)))),
 	       used_plhs);
 
+  used_plhs =
+    acons (make_int (0),
+	   list5 (make_int (PLH_PAGE_COUNT(ARRAY_HEAP_PAGES)),
+		  make_int (PLH_USED_CELLS (ARRAY_HEAP_PAGES)),
+		  make_int (PLH_USED_SPACE (ARRAY_HEAP_PAGES)),
+		  make_int (PLH_TOTAL_CELLS (ARRAY_HEAP_PAGES)),
+		  make_int (PLH_TOTAL_SPACE (ARRAY_HEAP_PAGES))),
+	   used_plhs);
+  
   for (i = 0; i < N_HEAP_SECTIONS; i++) {
     used_size += HEAP_SECTION(i).n_pages * PAGE_SIZE;
     real_size += 
