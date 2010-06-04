@@ -53,8 +53,8 @@ Boston, MA 02111-1307, USA.  */
 #include <libgnomeui/libgnomeui.h>
 #endif
 
-#define BORDER_WIDTH 0
-#define INTERNAL_BORDER_WIDTH 0
+#define BORDER_WIDTH 2
+#define INTERNAL_BORDER_WIDTH 2
 
 #define TRANSIENT_DATA_IDENTIFIER "xemacs::transient_for"
 #define UNMAPPED_DATA_IDENTIFIER "xemacs::initially_unmapped"
