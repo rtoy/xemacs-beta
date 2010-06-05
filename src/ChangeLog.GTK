@@ -1,3 +1,8 @@
+2010-06-05  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* emacs-marshals.c (emacs_gtk_marshal_NONE__POINTER_BOOL): Newly
+	added marshaller.
+
 2010-06-04  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_any_window_to_device): Fix indentation.
