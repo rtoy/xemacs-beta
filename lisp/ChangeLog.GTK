@@ -1,3 +1,8 @@
+2010-06-05  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-marshal.el (find-file): Add a marshaller that takes a
+	pointer and a bool that returns no value.
+
 2010-06-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-marshal.el (find-file): Add "pointer string" marshaller.
