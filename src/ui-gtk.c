@@ -126,6 +126,7 @@ type_already_imported_p (GType t)
   /* These are cases that we don't need to import */
   switch (GTK_FUNDAMENTAL_TYPE (t))
     {
+    case G_TYPE_NONE:
     case G_TYPE_CHAR:
     case G_TYPE_UCHAR:
     case G_TYPE_BOOLEAN:
@@ -155,8 +156,8 @@ type_already_imported_p (GType t)
                                      make_int (163), Qequal);
       return (0);
     }
-  Lisp_Object key = make_int (G_VALUE_TYPE (t));
-  if (!NILP (Fgethash (make_int (G_VALUE_TYPE (t)), Vgtk_types, Qnil)))
+  Lisp_Object key = make_int (t);
+  if (!NILP (Fgethash (make_int (t), Vgtk_types, Qnil)))
       return (1);
   return (0);
 }
@@ -170,7 +171,7 @@ mark_type_as_imported (GType t)
   if (type_already_imported_p (t))
     return;
 
-  Fputhash (make_int (G_VALUE_TYPE (t)), value, (Vgtk_types));
+  Fputhash (make_int (t), value, (Vgtk_types));
 }
 
 static void import_gtk_type (GType t);
@@ -300,9 +301,7 @@ static void
 import_gtk_type (GType t)
 {
   if (type_already_imported_p (t))
-    {
-      return;
-    }
+    return;
 
   stderr_out ("import_gtk_type %d %s\n", (unsigned int)t, g_type_name(t));
 
@@ -1677,14 +1676,16 @@ Lisp_Object g_type_to_lisp (GValue *arg)
   return (Qnil);
 }
 
-int lisp_to_g_value (Lisp_Object obj, GValue *arg)
+int
+lisp_to_g_value (Lisp_Object obj, GValue *arg)
 {
   switch (G_VALUE_TYPE (arg))
     {
-      /* flag types */
+    case G_TYPE_INVALID:
+      break;
     case G_TYPE_NONE:
       g_value_init (arg, G_TYPE_NONE);
-      return (0);
+      break;
     case G_TYPE_CHAR:
       {
 	Ichar c;

@@ -1,5 +1,10 @@
 2010-06-05  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (type_already_imported_p): Mark G_TYPE_NONE as
+	imported.  Was mistakenly using G_VALUE_TYPE where just the type
+	was required.
+	(lisp_to_g_value): Ignore G_TYPE_INVALID.
+
 	* emacs-marshals.c (emacs_gtk_marshal_NONE__POINTER_BOOL): Newly
 	added marshaller.
 
