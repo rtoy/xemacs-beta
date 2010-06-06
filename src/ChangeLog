@@ -1,3 +1,12 @@
+2010-06-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Freduce):
+	Move this here from cl-seq.el, avoiding the need to cons.  This
+	has been tested using Paul Dietz' test suite, and everything
+	applicable passes, with the exception that the
+	ALLOW-OTHER-KEYS-NIL Common Lisp issue (functions with &key must
+	*always* accept :allow-other-keys nil) hasn't been implemented.
+
 2010-06-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Fsubstring_no_properties):

@@ -56,7 +56,7 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Qstring_lessp, Qsort, Qmerge, Qfill;
 Lisp_Object Qidentity;
-Lisp_Object Qvector, Qarray, Qbit_vector, QsortX;
+Lisp_Object Qvector, Qarray, Qbit_vector, QsortX, Qreduce, Q_from_end, Q_initial_value;
 
 Lisp_Object Qbase64_conversion_error;
 
@@ -2432,22 +2432,17 @@ list_array_merge_into_array (Lisp_Object *output, Elemcount output_len,
 
 /* This macro might eventually find a better home than here. */
 
-#define CHECK_KEY_ARGUMENT(key, c_predicate)				\
+#define CHECK_KEY_ARGUMENT(key)                                         \
     do {								\
       if (NILP (key))							\
 	{								\
 	  key = Qidentity;						\
 	}								\
-									\
-      if (EQ (key, Qidentity))						\
-	{								\
-	  c_predicate = c_merge_predicate_nokey;			\
-	}								\
-      else								\
-	{								\
-	  key = indirect_function (key, 1);				\
-	  c_predicate = c_merge_predicate_key;				\
-	}								\
+                                                                        \
+      if (!EQ (key, Qidentity))                                         \
+        {                                                               \
+          key = indirect_function (key, 1);                             \
+        }                                                               \
     } while (0)
 
 DEFUN ("merge", Fmerge, 4, MANY, 0, /*
@@ -2473,7 +2468,10 @@ arguments: (TYPE SEQUENCE-ONE SEQUENCE-TWO PREDICATE &key (KEY #'IDENTITY))
   CHECK_SEQUENCE (sequence_one);
   CHECK_SEQUENCE (sequence_two);
 
-  CHECK_KEY_ARGUMENT (key, c_predicate);
+  CHECK_KEY_ARGUMENT (key);
+
+  c_predicate = EQ (key, Qidentity) ?
+    c_merge_predicate_nokey : c_merge_predicate_key;
 
   if (EQ (type, Qlist) && (LISTP (sequence_one) || LISTP (sequence_two)))
     {
@@ -2721,7 +2719,10 @@ arguments: (SEQUENCE PREDICATE &key (KEY #'IDENTITY))
 
   CHECK_SEQUENCE (sequence);
 
-  CHECK_KEY_ARGUMENT (key, c_predicate);
+  CHECK_KEY_ARGUMENT (key);
+
+  c_predicate = EQ (key, Qidentity) ?
+    c_merge_predicate_nokey : c_merge_predicate_key;
 
   if (LISTP (sequence))
     {
@@ -4844,6 +4845,353 @@ arguments: (FUNCTION LIST &rest LISTS)
 
 /* Extra random functions */
 
+DEFUN ("reduce", Freduce, 2, MANY, 0, /*
+Combine the elements of sequence using FUNCTION, a binary operation.
+
+For example, `(reduce #'+ SEQUENCE)' returns the sum of all elements in
+SEQUENCE, and `(reduce #'union SEQUENCE)' returns the union of all elements
+in SEQUENCE.
+
+Keywords supported:  :start :end :from-end :initial-value :key
+See `remove*' for the meaning of :start, :end, :from-end and :key.
+
+:initial-value specifies an element (typically an identity element, such as
+0) that is conceptually prepended to the sequence (or appended, when
+:from-end is given).
+
+If the sequence has one element, that element is returned directly.
+If the sequence has no elements, :initial-value is returned if given;
+otherwise, FUNCTION is called with no arguments, and its result returned.
+
+arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END INITIAL-VALUE (KEY #'identity))
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object function = args[0], sequence = args[1], accum = Qunbound;
+  Elemcount starting, ending = EMACS_INT_MAX, ii = 0;
+
+  PARSE_KEYWORDS (Qreduce, nargs, args, 2, 5,
+                  (start, end, from_end, initial_value, key),
+                  (start = Qzero, initial_value = Qunbound), 0);
+
+  CHECK_SEQUENCE (sequence);
+  CHECK_NATNUM (start);
+
+  CHECK_KEY_ARGUMENT (key);
+
+#define KEY(key, item) (EQ (key, Qidentity) ? item : call1 (key, item))
+
+  starting = XINT (start);
+  if (!NILP (end))
+    {
+      CHECK_NATNUM (end);
+      ending = XINT (end);
+    }
+
+  if (VECTORP (sequence))
+    {
+      Lisp_Vector *vv = XVECTOR (sequence);
+      ending = min (ending, vv->size);
+
+      if (!UNBOUNDP (initial_value))
+        {
+          accum = initial_value;
+        }
+      else if (ending - starting && starting < ending)
+        {
+          if (NILP (from_end))
+            {
+              accum = KEY (key, vv->contents[starting]);
+              starting++;
+            }
+          else
+            {
+              accum = KEY (key, vv->contents[ending - 1]);
+              ending--;
+            }
+        }
+
+      if (NILP (from_end))
+        {
+          for (ii = starting; ii < ending; ++ii)
+            {
+              accum = call2 (function, accum, KEY (key, vv->contents[ii]));
+            }
+        }
+      else
+        {
+          for (ii = ending - 1; ii >= starting; --ii)
+            {
+              accum = call2 (function, KEY (key, vv->contents[ii]), accum);
+            }
+        }
+    }
+  else if (BIT_VECTORP (sequence))
+    {
+      Lisp_Bit_Vector *bv = XBIT_VECTOR (sequence);
+
+      ending = min (ending, bv->size);
+
+      if (!UNBOUNDP (initial_value))
+        {
+          accum = initial_value;
+        }
+      else if (ending - starting && starting < ending)
+        {
+          if (NILP (from_end))
+            {
+              accum = KEY (key, make_int (bit_vector_bit (bv, starting)));
+              starting++;
+            }
+          else
+            {
+              accum = KEY (key, make_int (bit_vector_bit (bv, ending - 1)));
+              ending--;
+            }
+        }
+
+      if (NILP (from_end))
+        {
+          for (ii = starting; ii < ending; ++ii)
+            {
+              accum = call2 (function, accum,
+                             KEY (key, make_int (bit_vector_bit (bv, ii))));
+            }
+        }
+      else
+        {
+          for (ii = ending - 1; ii >= starting; --ii)
+            {
+              accum = call2 (function, KEY (key,
+                                            make_int (bit_vector_bit (bv,
+                                                                      ii))),
+                             accum);
+            }
+        }
+
+    }
+  else if (STRINGP (sequence))
+    {
+      if (NILP (from_end))
+        {
+          Bytecount byte_len = XSTRING_LENGTH (sequence);
+          Bytecount cursor_offset = 0;
+          const Ibyte *startp = XSTRING_DATA (sequence);
+          const Ibyte *cursor = startp;
+
+          for (ii = 0; ii != starting && cursor_offset < byte_len; ++ii)
+            {
+              INC_IBYTEPTR (cursor);
+              cursor_offset = cursor - startp;
+            }
+
+          if (!UNBOUNDP (initial_value))
+            {
+              accum = initial_value;
+            }
+          else if (ending - starting && starting < ending)
+            {
+              accum = KEY (key, make_char (itext_ichar (cursor)));
+              starting++;
+              startp = XSTRING_DATA (sequence);
+              cursor = startp + cursor_offset;
+              INC_IBYTEPTR (cursor);
+              cursor_offset = cursor - startp;
+            }
+
+          while (cursor_offset < byte_len && starting < ending)
+            {
+              if (cursor_offset > XSTRING_LENGTH (sequence))
+                {
+                  invalid_state ("sequence modified during reduce", sequence);
+                }
+
+              startp = XSTRING_DATA (sequence);
+              cursor = startp + cursor_offset;
+              accum = call2 (function, accum,
+                             KEY (key, make_char (itext_ichar (cursor))));
+              INC_IBYTEPTR (cursor);
+              cursor_offset = cursor - startp;
+              ++starting;
+            }
+        }
+      else
+        {
+          Elemcount len = string_char_length (sequence);
+          Bytecount cursor_offset;
+          const Ibyte *cursor;
+
+          ending = min (ending, len);
+          cursor = string_char_addr (sequence, ending - 1);
+          cursor_offset = cursor - XSTRING_DATA (sequence);
+
+          if (!UNBOUNDP (initial_value))
+            {
+              accum = initial_value;
+            }
+          else if (ending - starting && starting < ending)
+            {
+              accum = KEY (key, make_char (itext_ichar (cursor)));
+              ending--;
+              if (ending > 0)
+                {
+                  DEC_IBYTEPTR (cursor);
+                  cursor_offset = cursor - XSTRING_DATA (sequence);
+                }
+            }
+
+          for (ii = ending - 1; ii >= starting; --ii)
+            {
+              if (cursor_offset > XSTRING_LENGTH (sequence))
+                {
+                  invalid_state ("sequence modified during reduce", sequence);
+                }
+
+              cursor = XSTRING_DATA (sequence) + cursor_offset;
+              accum = call2 (function, KEY (key,
+                                            make_char (itext_ichar (cursor))),
+                             accum);
+              if (ii > 1)
+                {
+                  cursor = XSTRING_DATA (sequence) + cursor_offset;
+                  DEC_IBYTEPTR (cursor);
+                  cursor_offset = cursor - XSTRING_DATA (sequence);
+                }
+            }
+        }
+    }
+  else if (LISTP (sequence))
+    {
+      if (NILP (from_end))
+        {
+          if (!UNBOUNDP (initial_value))
+            {
+              accum = initial_value;
+            }
+          else if (ending - starting && starting < ending)
+            {
+              Elemcount counting = 0;
+              EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
+                {
+                  if (counting == starting)
+                    {
+                      accum = KEY (key, elt);
+                      starting++;
+                      break;
+                    }
+                  ++counting;
+                }
+            }
+
+          if (ending - starting && starting < ending)
+            {
+              Elemcount counting = 0;
+
+              EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
+                {
+                  if (counting >= starting)
+                    {
+                      if (counting < ending)
+                        {
+                          accum = call2 (function, accum, KEY (key, elt));
+                        }
+                      else if (counting == ending)
+                        {
+                          break;
+                        }
+                    }
+                  ++counting;
+                }
+            }
+        }
+      else
+        {
+          Boolint need_accum = 0;
+          Lisp_Object *subsequence = NULL;
+          Elemcount counting = 0, len = 0;
+	  struct gcpro gcpro1;
+
+          if (ending - starting && starting < ending && EMACS_INT_MAX == ending)
+            {
+              ending = XINT (Flength (sequence));
+            }
+
+          /* :from-end with a list; make an alloca copy of the relevant list
+             data, attempting to go backwards isn't worth the trouble. */
+          if (!UNBOUNDP (initial_value))
+            {
+              accum = initial_value;
+              if (ending - starting && starting < ending)
+                {
+                  subsequence = alloca_array (Lisp_Object, ending - starting);
+                }
+            }
+          else if (ending - starting && starting < ending)
+            {
+              subsequence = alloca_array (Lisp_Object, ending - starting);
+              need_accum = 1;
+            }
+
+          if (ending - starting && starting < ending)
+            {
+              EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
+                {
+                  if (counting >= starting)
+                    {
+                      if (counting < ending)
+                        {
+                          subsequence[ii++] = elt;
+                        }
+                      else if (counting == ending)
+                        {
+                          break;
+                        }
+                    }
+		  ++counting;
+                }
+            }
+
+	  if (subsequence != NULL)
+	    {
+	      len = ending - starting;
+	      /* If we could be sure that neither FUNCTION nor KEY modify
+		 SEQUENCE, this wouldn't be necessary, since all the
+		 elements of SUBSEQUENCE would definitely always be
+		 reachable via SEQUENCE.  */
+	      GCPRO1 (subsequence[0]);
+	      gcpro1.nvars = len;
+	    }
+
+          if (need_accum)
+            {
+              accum = KEY (key, subsequence[len - 1]);
+              --len;
+            }
+
+          for (ii = len; ii != 0;)
+            {
+              --ii;
+              accum = call2 (function, KEY (key, subsequence[ii]), accum);
+            }
+
+	  if (subsequence != NULL)
+	    {
+	      UNGCPRO;
+	    }
+        }
+    }
+
+  /* At this point, if ACCUM is unbound, SEQUENCE has no elements; we
+     need to return the result of calling FUNCTION with zero
+     arguments. */
+  if (UNBOUNDP (accum))
+    {
+      accum = call0 (function);
+    }
+
+  return accum;
+}
+
 DEFUN ("replace-list", Freplace_list, 2, 2, 0, /*
 Destructively replace the list OLD with NEW.
 This is like (copy-sequence NEW) except that it reuses the
@@ -5528,6 +5876,10 @@ syms_of_fns (void)
   DEFSYMBOL (Qlist);
   DEFSYMBOL (Qbit_vector);
   defsymbol (&QsortX, "sort*");
+  DEFSYMBOL (Qreduce);
+
+  DEFKEYWORD (Q_from_end);
+  DEFKEYWORD (Q_initial_value);
 
   DEFSYMBOL (Qyes_or_no_p);
 
@@ -5624,6 +5976,7 @@ syms_of_fns (void)
   DEFSUBR (Fmapl);
   DEFSUBR (Fmapcon);
 
+  DEFSUBR (Freduce);
   DEFSUBR (Freplace_list);
   DEFSUBR (Fload_average);
   DEFSUBR (Ffeaturep);
