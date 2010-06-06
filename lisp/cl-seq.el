@@ -142,36 +142,6 @@ keyword :allow-other-keys (which defaults to t)."
 (defvar cl-if) (defvar cl-if-not)
 (defvar cl-key)
 
-
-(defun reduce (cl-func cl-seq &rest cl-keys)
-  "Combine the elements of sequence using FUNCTION, a binary operation.
-For example, `(reduce #'+ SEQUENCE)' returns the sum of all elements in
-SEQUENCE, and `(reduce #'union SEQUENCE)' returns the union of all elements
-in SEQUENCE.
-Keywords supported:  :start :end :from-end :initial-value :key
-See `remove*' for the meaning of :start, :end, :from-end and :key.
-:initial-value specifies an element (typically an identity element, such as 0)
-that is conceptually prepended to the sequence (or appended, when :from-end
-is given).
-If the sequence has one element, that element is returned directly.
-If the sequence has no elements, :initial-value is returned if given;
-otherwise, FUNCTION is called with no arguments, and its result returned."
-  (cl-parsing-keywords (:from-end (:start 0) :end :initial-value :key) ()
-    (or (listp cl-seq) (setq cl-seq (append cl-seq nil)))
-    (setq cl-seq (subseq cl-seq cl-start cl-end))
-    (if cl-from-end (setq cl-seq (nreverse cl-seq)))
-    (let ((cl-accum (cond ((memq :initial-value cl-keys) cl-initial-value)
-			  (cl-seq (cl-check-key (pop cl-seq)))
-			  (t (funcall cl-func)))))
-      (if cl-from-end
-	  (while cl-seq
-	    (setq cl-accum (funcall cl-func (cl-check-key (pop cl-seq))
-				    cl-accum)))
-	(while cl-seq
-	  (setq cl-accum (funcall cl-func cl-accum
-				  (cl-check-key (pop cl-seq))))))
-      cl-accum)))
-
 (defun replace (cl-seq1 cl-seq2 &rest cl-keys)
   "Replace the elements of SEQ1 with the elements of SEQ2.
 SEQ1 is destructively modified, then returned.
