@@ -148,10 +148,10 @@ in dumped-lisp.el and is not itself listed.")
        ;; should just be able to assume that, if (featurep 'menubar),
        ;; the menubar should work and if items are added, they can be
        ;; seen clearly and usefully.
-       (when (featurep '(and (not infodock) menubar)) "menubar-items")
-       (when (featurep '(and gutter)) "gutter-items")
-       (when (featurep '(and (not infodock) toolbar)) "toolbar-items")
-       (when (featurep '(and (not infodock) dialog)) "dialog-items")
+       (when (featurep 'menubar) "menubar-items")
+       (when (featurep 'gutter) "gutter-items")
+       (when (featurep 'toolbar) "toolbar-items")
+       (when (featurep 'dialog) "dialog-items")
 
 	;;;;;;;;;;;;;;;;;; Coding-system support
        "coding"
@@ -234,12 +234,6 @@ in dumped-lisp.el and is not itself listed.")
 
 ;;; mule-load.el ends here
 
-;; preload InfoDock stuff.  should almost certainly not be here if
-;; id-menus is not here.  infodock needs to figure out a clever way to
-;; advise this stuff or we need to export a clean way for infodock or
-;; others to control this programmatically.
-       (when (featurep '(and infodock (or x mswindows gtk) menubar))
-	 "id-menus")
 ;; preload the X code.
        (when (featurep '(and x scrollbar)) "x-scrollbar")
        (when (featurep 'x)

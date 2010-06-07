@@ -264,12 +264,7 @@ with the exception of `loadup.el'.")
 	load-always-display-messages nil
 	debug-on-error nil)
   (dump-emacs
-   (cond
-    ((featurep 'infodock) "infodock")
-    ;; #### BILL!!!
-    ;; If we want to dump under a name other than `xemacs', do that here!
-    ;; ((featurep 'gtk) "xemacs-gtk")
-    (t "xemacs"))
+   "xemacs"
    "temacs")
   (kill-emacs))
 
