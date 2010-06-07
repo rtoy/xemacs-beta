@@ -977,9 +977,6 @@ XE_MERGED_ARG([workshop],
 XE_MERGED_ARG([sparcworks],
 	AS_HELP_STRING([--with-sparcworks],[Alias for --with-workshop]),
 	[], [])
-XE_MERGED_ARG([infodock],
-	AS_HELP_STRING([--with-infodock],[Support the Infodock version of XEmacs.  Infodock is a SourceForge project).]),
-	[], [])
 dnl
 XE_HELP_SUBSECTION([Debugging options])
 XE_MERGED_ARG([debug],
@@ -1228,27 +1225,8 @@ if test "$xemacs_release_date" != ""; then
 fi
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
 
-if test "$with_infodock" = "yes"; then
-  if test ! -f ../../ID-INSTALL; then
-    echo "Cannot build InfoDock without InfoDock sources"
-    with_infodock=no
-  fi
-fi
-
-if test "$with_infodock" = "yes"; then
-  dnl InfoDock version numbers.  XEmacs will use the same style of numbering
-  dnl after the release of XEmacs 21.0.
-  AC_DEFINE_UNQUOTED(INFODOCK_MAJOR_VERSION, $infodock_major_version)
-  AC_DEFINE_UNQUOTED(INFODOCK_MINOR_VERSION, $infodock_minor_version)
-  AC_DEFINE_UNQUOTED(INFODOCK_BUILD_VERSION, $infodock_build_version)
-  version=${infodock_major_version}.${infodock_minor_version}.${infodock_build_version}
-  PROGNAME=infodock
-  SHEBANG_PROGNAME=infodock-script
-  CPPFLAGS="$CPPFLAGS -DINFODOCK"
-else
-  PROGNAME=xemacs
-  SHEBANG_PROGNAME=xemacs-script
-fi
+PROGNAME=xemacs
+SHEBANG_PROGNAME=xemacs-script
 
 AC_SUBST(SHEBANG_PROGNAME)
 

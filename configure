@@ -1005,8 +1005,6 @@ enable_workshop
 with_workshop
 enable_sparcworks
 with_sparcworks
-enable_infodock
-with_infodock
 enable_debug
 with_debug
 enable_error_checking
@@ -1952,8 +1950,6 @@ Platform Specific options
   --with-workshop         Support the Sun WorkShop (formerly Sparcworks)
                           development environment.
   --with-sparcworks       Alias for --with-workshop
-  --with-infodock         Support the Infodock version of XEmacs. Infodock is
-                          a SourceForge project).
 
 Debugging options
 -----------------
@@ -5190,22 +5186,6 @@ if test "${with_sparcworks+set}" = set; then
   withval="$with_sparcworks"
 
 fi;
-# If --with-infodock or --without-infodock were given then copy the value to the
-# equivalent enable_infodock variable.
-if test "${with_infodock+set}" = set; then
-  enable_infodock="$with_infodock"
-fi;
-# If -enable-infodock or --disable-infodock were given then copy the value to the
-# equivalent with_infodock variable.
-if test "${enable_infodock+set}" = set; then
-  with_infodock="$enable_infodock"
-fi;
-# Check whether --with-infodock or --without-infodock was given.
-if test "${with_infodock+set}" = set; then
-  enableval="$with_infodock"
-  withval="$with_infodock"
-
-fi;
 
 # If --with-debug or --without-debug were given then copy the value to the
 # equivalent enable_debug variable.
@@ -5716,34 +5696,8 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-if test "$with_infodock" = "yes"; then
-  if test ! -f ../../ID-INSTALL; then
-    echo "Cannot build InfoDock without InfoDock sources"
-    with_infodock=no
-  fi
-fi
-
-if test "$with_infodock" = "yes"; then
-      cat >>confdefs.h <<_ACEOF
-#define INFODOCK_MAJOR_VERSION $infodock_major_version
-_ACEOF
-
-  cat >>confdefs.h <<_ACEOF
-#define INFODOCK_MINOR_VERSION $infodock_minor_version
-_ACEOF
-
-  cat >>confdefs.h <<_ACEOF
-#define INFODOCK_BUILD_VERSION $infodock_build_version
-_ACEOF
-
-  version=${infodock_major_version}.${infodock_minor_version}.${infodock_build_version}
-  PROGNAME=infodock
-  SHEBANG_PROGNAME=infodock-script
-  CPPFLAGS="$CPPFLAGS -DINFODOCK"
-else
-  PROGNAME=xemacs
-  SHEBANG_PROGNAME=xemacs-script
-fi
+PROGNAME=xemacs
+SHEBANG_PROGNAME=xemacs-script
 
 
 

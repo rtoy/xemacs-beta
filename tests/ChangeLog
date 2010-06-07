@@ -1,3 +1,8 @@
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gtk/gtk-test.el (gtk-test):
+	Remove a conditional for InfoDock.
+
 2010-04-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/hash-table-tests.el:

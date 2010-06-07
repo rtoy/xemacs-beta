@@ -1,3 +1,9 @@
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* version.sh.in: 
+	* configure.ac (XE_COMPLEX_ARG, XE_EXPAND_VARIABLE):
+	Remove conditionals and information for InfoDock.
+
 2010-04-09  Ben Wing  <ben@xemacs.org>
 
 	* CHANGES-beta:

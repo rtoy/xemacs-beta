@@ -3460,9 +3460,6 @@ character escape syntaxes or just read them incorrectly.
 #ifdef FEATUREP_SYNTAX
   DEFSYMBOL (Qfeaturep);
   Fprovide (intern ("xemacs"));
-#ifdef INFODOCK
-  Fprovide (intern ("infodock"));
-#endif /* INFODOCK */
 #endif /* FEATUREP_SYNTAX */
 
 #ifdef LISP_BACKQUOTES

@@ -107,7 +107,6 @@
 These are the valid immediate directory names of package
 directories, directories with higher priority first"
   (delq nil `("site-packages"
-              ,(when (featurep 'infodock) "infodock-packages")
               ,(when (featurep 'mule) "mule-packages")
               "xemacs-packages")))
 

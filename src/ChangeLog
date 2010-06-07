@@ -7,6 +7,17 @@
 	ALLOW-OTHER-KEYS-NIL Common Lisp issue (functions with &key must
 	*always* accept :allow-other-keys nil) hasn't been implemented.
 
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (vars_of_lread):
+	* emacs.c:
+	(shut_down_emacs, vars_of_emacs, complex_vars_of_emacs):
+	* device-x.c (get_device_from_display)
+	(have_xemacs_resources_in_xrdb):
+	* device-gtk.c (Fgtk_init):
+	* config.h.in:
+	Remove all checks for InfoDock.
+
 2010-06-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Fsubstring_no_properties):

@@ -12,6 +12,17 @@
 	little too aggressive about taking the compile time argument lists
 	of the functions it is inverting.
 
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* version.el: 
+	(emacs-version): 
+	* startup.el (command-line): 
+	* simple.el (display-warning, emacs-name): 
+	* packages.el (packages-package-hierarchy-directory-names): 
+	* loadup.el (Dumping): 
+	* dumped-lisp.el (preloaded-file-list):
+	Remove all InfoDock-specific code.
+
 2010-05-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.el (current-display-table):
