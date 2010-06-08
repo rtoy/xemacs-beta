@@ -425,6 +425,8 @@ because its `find-charset-string' ignores ASCII charset."
 ;; Keywords already do The Right Thing in XEmacs
 (make-compatible 'define-widget-keywords "Just use them")
 
+(define-function 'purecopy 'identity)
+(make-obsolete 'purecopy "purespace is not available in XEmacs.")
 
 (provide 'obsolete)
 ;;; obsolete.el ends here

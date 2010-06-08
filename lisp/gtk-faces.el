@@ -131,36 +131,33 @@
       (encoding	"[^-]+")		; false!
       )
   (setq gtk-font-regexp
-	(purecopy
-	 (concat "\\`\\*?[-?*]"
-		 foundry - family - weight\? - slant\? - swidth - adstyle -
-		 pixelsize - pointsize - resx - resy - spacing - avgwidth -
-		 registry - encoding "\\'"
-		 )))
+	(concat "\\`\\*?[-?*]"
+		foundry - family - weight\? - slant\? - swidth - adstyle -
+		pixelsize - pointsize - resx - resy - spacing - avgwidth -
+		registry - encoding "\\'"
+		))
   (setq gtk-font-regexp-head
-	(purecopy
-          (concat "\\`[-?*]" foundry - family - weight\? - slant\?
-		  "\\([-*?]\\|\\'\\)")))
+	(concat "\\`[-?*]" foundry - family - weight\? - slant\?
+		"\\([-*?]\\|\\'\\)"))
   (setq gtk-font-regexp-head-2
-	(purecopy
-          (concat "\\`[-?*]" foundry - family - weight\? - slant\?
-		  - swidth - adstyle - pixelsize - pointsize
-		  "\\([-*?]\\|\\'\\)")))
-  (setq gtk-font-regexp-slant (purecopy (concat - slant -)))
-  (setq gtk-font-regexp-weight (purecopy (concat - weight -)))
+	(concat "\\`[-?*]" foundry - family - weight\? - slant\?
+		- swidth - adstyle - pixelsize - pointsize
+		"\\([-*?]\\|\\'\\)"))
+  (setq gtk-font-regexp-slant (concat - slant -))
+  (setq gtk-font-regexp-weight (concat - weight -))
   ;; if we can't match any of the more specific regexps (unfortunate) then
   ;; look for digits; assume 2+ digits is 10ths of points, and 1-2 digits
   ;; is pixels.  Bogus as hell.
-  (setq gtk-font-regexp-pixel (purecopy "[-?*]\\([0-9][0-9]?\\)[-?*]"))
-  (setq gtk-font-regexp-point (purecopy "[-?*]\\([0-9][0-9]+\\)[-?*]"))
+  (setq gtk-font-regexp-pixel "[-?*]\\([0-9][0-9]?\\)[-?*]")
+  (setq gtk-font-regexp-point "[-?*]\\([0-9][0-9]+\\)[-?*]")
   ;; the following two are used by x-font-menu.el.
   (setq gtk-font-regexp-foundry-and-family
-	(purecopy (concat "\\`[-?*]" foundry - "\\(" family "\\)" -)))
+	(concat "\\`[-?*]" foundry - "\\(" family "\\)" -))
   (setq gtk-font-regexp-registry-and-encoding
-	(purecopy (concat - "\\(" registry "\\)" - "\\(" encoding "\\)\\'")))
+	(concat - "\\(" registry "\\)" - "\\(" encoding "\\)\\'"))
   (setq gtk-font-regexp-spacing
-	(purecopy (concat - "\\(" spacing "\\)" - avgwidth
-			  - registry - encoding "\\'")))
+	(concat - "\\(" spacing "\\)" - avgwidth
+		- registry - encoding "\\'"))
   )
 
 (defvaralias 'x-font-regexp 'gtk-font-regexp)

@@ -3345,19 +3345,6 @@ old_free_lcrecord (Lisp_Object rec)
 #endif /* not NEW_GC */
 
 
-DEFUN ("purecopy", Fpurecopy, 1, 1, 0, /*
-Kept for compatibility, returns its argument.
-Old:
-Make a copy of OBJECT in pure storage.
-Recursively copies contents of vectors and cons cells.
-Does not copy symbols.
-*/
-       (object))
-{
-  return object;
-}
-
-
 /************************************************************************/
 /*                           Staticpro, MCpro                           */
 /************************************************************************/
@@ -5722,7 +5709,6 @@ syms_of_alloc (void)
   DEFSUBR (Fstring);
   DEFSUBR (Fmake_symbol);
   DEFSUBR (Fmake_marker);
-  DEFSUBR (Fpurecopy);
 #ifdef ALLOC_TYPE_STATS
   DEFSUBR (Fobject_memory_usage_stats);
   DEFSUBR (Ftotal_object_memory_usage);

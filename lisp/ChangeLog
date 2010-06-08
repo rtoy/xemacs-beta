@@ -1,3 +1,12 @@
+2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* paragraphs.el (sentence-end):
+	* gtk-faces.el:
+	* custom.el (custom-declare-variable):
+	Remove all core code calls to #'purecopy.
+	* obsolete.el (purecopy):
+	Make the function itself an obsolete alias to #'identity.
+
 2010-06-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-seq.el (reduce):
