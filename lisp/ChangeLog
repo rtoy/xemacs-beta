@@ -1,5 +1,10 @@
 2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* diagnose.el (show-gc-stats):
+	Fix a misspelling in a heading in this function.
+
+2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* paragraphs.el (sentence-end):
 	* gtk-faces.el:
 	* custom.el (custom-declare-variable):
