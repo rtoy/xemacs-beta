@@ -45,17 +45,11 @@ Boston, MA 02111-1307, USA.  */
 #define SUBMENU_TYPE	1
 #define POPUP_TYPE	2
 
-static GQuark XEMACS_MENU_DESCR_TAG =
-  g_quark_from_string ("xemacs::menu::description");
-static GQuark XEMACS_MENU_FILTER_TAG =
-  g_quark_from_string ("xemacs::menu::filter");
-static GQuark XEMACS_MENU_GUIID_TAG =
-  g_quark_from_string ("xemacs::menu::gui_id");
-static GQuark XEMACS_MENU_FIRSTTIME_TAG =
-  g_quark_from_string ("xemacs::menu::first_time");
-static GQuark XEMACS_MENU_FRAME_TAG =
-  g_quark_from_string ("xemacs::menu::frame");
-
+#define XEMACS_MENU_DESCR_TAG g_quark_from_string ("xemacs::menu::description")
+#define XEMACS_MENU_FILTER_TAG g_quark_from_string ("xemacs::menu::filter")
+#define XEMACS_MENU_GUIID_TAG g_quark_from_string ("xemacs::menu::gui_id")
+#define XEMACS_MENU_FIRSTTIME_TAG g_quark_from_string ("xemacs::menu::first_time")
+#define XEMACS_MENU_FRAME_TAG g_quark_from_string ("xemacs::menu::frame")
 
 static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group);
 
