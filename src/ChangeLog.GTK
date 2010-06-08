@@ -1,5 +1,8 @@
 2010-06-08  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (XEMACS_MENU_DESCR_TAG): Convert GQuark defintions
+	back into #define constants.
+
 	* sysgtk.h: Include libgnomeui if we HAVE_GNOME.
 
 	* menubar-gtk.c: Remove include libgnomeui.
