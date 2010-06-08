@@ -145,18 +145,17 @@ without a period."
   :group 'fill)
 
 (defcustom sentence-end
-  (purecopy
-   ;; This is a bit stupid since it's not auto-updated when the
-   ;; other variables are changed, but it's still useful info.
-   (concat (if sentence-end-without-period "\\w  \\|")
-	   "[.?!"
-	   (if (featurep 'mule)
-	       (decode-coding-string "\033$B!#!%!)!*\033$A!##.#?#!\033$(0!$!%!)!*\033$(G!$!%!)!*\033(B" 'iso-2022-7bit)
-	     "")
-	   "][]\"')}]*"
-	   (if sentence-end-double-space
-	       "\\($\\| $\\|\t\\|  \\)" "\\($\\|[\t ]\\)")
-	   "[ \t\n]*"))
+  ;; This is a bit stupid since it's not auto-updated when the
+  ;; other variables are changed, but it's still useful info.
+  (concat (if sentence-end-without-period "\\w  \\|")
+	  "[.?!"
+	  (if (featurep 'mule)
+	      (decode-coding-string "\033$B!#!%!)!*\033$A!##.#?#!\033$(0!$!%!)!*\033$(G!$!%!)!*\033(B" 'iso-2022-7bit)
+	    "")
+	  "][]\"')}]*"
+	  (if sentence-end-double-space
+	      "\\($\\| $\\|\t\\|  \\)" "\\($\\|[\t ]\\)")
+	  "[ \t\n]*")
   "*Regexp describing the end of a sentence.
 The value includes the whitespace following the sentence.
 All paragraph boundaries also end sentences, regardless.

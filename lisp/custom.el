@@ -183,7 +183,7 @@ keyword in your own programs.  "
 		((eq keyword :require)
 		 (push value requests))
 		((eq keyword :type)
-		 (put symbol 'custom-type (purecopy value)))
+		 (put symbol 'custom-type value))
 		((eq keyword :options)
 		 (if (get symbol 'custom-options)
 		     ;; Slow safe code to avoid duplicates.
