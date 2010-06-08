@@ -152,16 +152,19 @@ gtk_xemacs_menubar_size_request	(GtkWidget *widget, GtkRequisition *requisition)
   gtk_widget_size_request (FRAME_GTK_TEXT_WIDGET (x->frame), &frame_size);
 
   requisition->width = frame_size.width;
+  debug_out ("menubar size request %d %d\n", requisition->width,
+             requisition->height);
 }
 
 GtkWidget *
 gtk_xemacs_menubar_new (struct frame *f)
 {
-#if 0
+#if 1
   GtkXEmacsMenubar *menubar = (GtkXEmacsMenubar*) gtk_type_new (gtk_xemacs_menubar_get_type ());
   menubar->frame = f;
-#endif
+#else
   GtkWidget *menubar = gtk_menu_bar_new ();
+#endif
   /* I don't think this is used.  --jsparkes */
   g_object_set_qdata (G_OBJECT (menubar), XEMACS_MENU_FRAME_TAG, f);
   return (GTK_WIDGET (menubar));
@@ -1199,10 +1202,6 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 
 
 /* Deal with getting/setting the menubar */
-#ifndef GNOME_IS_APP
-#define GNOME_IS_APP(x) 0
-#define gnome_app_set_menus(x,y)
-#endif
 
 static gboolean
 run_menubar_hook (GtkWidget *widget, GdkEventButton *UNUSED (event),
@@ -1222,11 +1221,14 @@ create_menubar_widget (struct frame *f)
   GtkWidget *handlebox = NULL;
   GtkWidget *menubar = gtk_xemacs_menubar_new (f);
 
+#ifdef HAVE_GNOME
   if (GNOME_IS_APP (FRAME_GTK_SHELL_WIDGET (f)))
     {
       gnome_app_set_menus (GNOME_APP (FRAME_GTK_SHELL_WIDGET (f)), GTK_MENU_BAR (menubar));
     }
-  else if (dockable_menubar)
+  else
+#endif
+    if (dockable_menubar)
     {
       handlebox = gtk_handle_box_new ();
       gtk_handle_box_set_handle_position (GTK_HANDLE_BOX (handlebox), GTK_POS_LEFT);
