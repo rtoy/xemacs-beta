@@ -41,10 +41,6 @@ Boston, MA 02111-1307, USA.  */
 #include "ui-gtk.h"
 #include "menubar.h"
 
-#ifdef HAVE_GNOME
-#include <libgnomeui/libgnomeui.h>
-#endif
-
 #define MENUBAR_TYPE	0
 #define SUBMENU_TYPE	1
 #define POPUP_TYPE	2

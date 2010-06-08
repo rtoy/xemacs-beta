@@ -48,10 +48,6 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"
 
-#ifdef HAVE_GNOME
-#include <libgnomeui/libgnomeui.h>
-#endif
-
 #ifdef HAVE_BONOBO
 #include <bonobo.h>
 #endif

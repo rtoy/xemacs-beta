@@ -1,3 +1,13 @@
+2010-06-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* sysgtk.h: Include libgnomeui if we HAVE_GNOME.
+
+	* menubar-gtk.c: Remove include libgnomeui.
+
+	* frame-gtk.c: Remove include libgnomeui.
+
+	* device-gtk.c: Remove include libgnomeui.
+
 2010-06-05  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (type_already_imported_p): Mark G_TYPE_NONE as
