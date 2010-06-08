@@ -2,6 +2,8 @@
 
 	* menubar-gtk.c (XEMACS_MENU_DESCR_TAG): Convert GQuark defintions
 	back into #define constants.
+	(create_menubar_widget): Use cleaner logic when setting the
+	gnome app menubar.
 
 	* sysgtk.h: Include libgnomeui if we HAVE_GNOME.
 
