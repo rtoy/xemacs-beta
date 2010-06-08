@@ -36,9 +36,14 @@ Boston, MA 02111-1307, USA.  */
 #include <gdk/gdkx.h>
 #include <gdk/gdkkeysyms.h>
 #include <glib.h>
+
 #ifdef USE_PANGO
 #include <pango/pango.h>
 #include <pango/pangoxft.h>
+#endif
+
+#ifdef HAVE_GNOME
+#include <libgnomeui/libgnomeui.h>
 #endif
 
 #endif /* INCLUDED_sysgtk_h_ */

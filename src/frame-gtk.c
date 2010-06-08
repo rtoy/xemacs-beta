@@ -49,10 +49,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "gtk-xemacs.h"
 
-#ifdef HAVE_GNOME
-#include <libgnomeui/libgnomeui.h>
-#endif
-
 #define BORDER_WIDTH 2
 #define INTERNAL_BORDER_WIDTH 2
 
