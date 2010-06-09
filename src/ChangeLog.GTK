@@ -1,3 +1,11 @@
+2010-06-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): If HAVE_GNOME, put the
+	TOP_EDGE toolbar into the GnomeApp toolbar slot.  Create captioned
+	buttons if specified.  Create the button using the toolbar
+	glyphs in the specifier and set the tooltip.  Connect the click
+	callback action.
+
 2010-06-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (XEMACS_MENU_DESCR_TAG): Convert GQuark defintions
