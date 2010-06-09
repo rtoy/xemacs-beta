@@ -157,10 +157,10 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
     gtk_toolbar_set_show_arrow ((GtkToolbar *)toolbar, TRUE);
   }
 
-  if (NILP (w->toolbar_buttons_captioned_p))
-    gtk_toolbar_set_style (toolbar, GTK_TOOLBAR_ICONS);
-  else
-    gtk_toolbar_set_style (toolbar, GTK_TOOLBAR_BOTH);
+  /* if (NILP (w->toolbar_buttons_captioned_p)) */
+  gtk_toolbar_set_style (toolbar, GTK_TOOLBAR_ICONS);
+  /*  else
+      gtk_toolbar_set_style (toolbar, GTK_TOOLBAR_BOTH); */
 
   FRAME_GTK_TOOLBAR_CHECKSUM(f, pos) = checksum;
   button = FRAME_TOOLBAR_BUTTONS (f, pos);
@@ -176,10 +176,10 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 	}
       else
 	{
-	  /* It actually has a glyph associated with it!  What WILL
-             they think of next?
-	  */
-	  glyph = tb->up_glyph;
+          if (!NILP (w->toolbar_buttons_captioned_p))
+            glyph = tb->cap_up_glyph;
+          else
+            glyph = tb->up_glyph;
 
 	  /* #### It is currently possible for users to trash us by directly
 	     changing the toolbar glyphs.  Avoid crashing in that case. */
@@ -200,23 +200,20 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 	      if (STRINGP (tb->help_string))
 		tooltip = XSTRING_DATA (tb->help_string);
 
-/*               item = gtk_tool_button_new (GTK_WIDGET (GTK_TOOLBAR (toolbar)), */
-/*                                           (char*)XSTRING_DATA (tb->help_string)); */
-              item = gtk_tool_button_new_from_stock (GTK_STOCK_OPEN);
-
               pixmap = XIMAGE_INSTANCE_GTK_PIXMAP(instance);
 	      mask = XIMAGE_INSTANCE_GTK_MASK(instance);
 	      pixmapwid = gtk_pixmap_new (pixmap, mask);
 
-	      /* gtk_widget_set_size_request (pixmapwid, tb->width, tb->height); */
-	      
+              item = gtk_tool_button_new (pixmapwid, "");
+
+              /* item = gtk_tool_button_new_from_stock (GTK_STOCK_OPEN); */
+
 	      gtk_toolbar_insert (GTK_TOOLBAR(toolbar), item, -1);
-              /*
-                                       gtk_toolbar_callback, (gpointer) tb);
-              */
-              /* gtk_tool_button_set_icon_widget ((GtkToolButton *)item,
-                 pixmapwid); */
-              gtk_tool_item_set_tooltip_text (item, (gchar *)tooltip);
+              gtk_tool_item_set_tooltip_text (item,
+                                              LISP_STRING_TO_EXTERNAL (tb->help_string, Qctext));
+              g_signal_connect (G_OBJECT (item), "clicked",
+                                G_CALLBACK (gtk_toolbar_callback),
+                                (gpointer) tb);
 	    }
 	}
       /* Who's idea was it to use a linked list for toolbar buttons? */
@@ -229,11 +226,16 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
   x -= vert ? 3 : 2;
   y -= vert ? 2 : 3;
 
-  gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
-                 GTK_WIDGET (FRAME_GTK_TOOLBAR_WIDGET (f)[pos]), x, y);
+#ifdef HAVE_GNOME
+  if (pos == TOP_EDGE && GNOME_IS_APP (FRAME_GTK_SHELL_WIDGET (f)))
+    gnome_app_set_toolbar (GNOME_APP (FRAME_GTK_SHELL_WIDGET (f)),
+                           GTK_TOOLBAR (FRAME_GTK_TOOLBAR_WIDGET (f)[pos]));
+  else
+#endif
+    gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
+                   GTK_WIDGET (FRAME_GTK_TOOLBAR_WIDGET (f)[pos]), x, y);
 
   gtk_widget_show_all (GTK_WIDGET (FRAME_GTK_TOOLBAR_WIDGET (f)[pos]));
-  gtk_widget_show_all (GTK_WIDGET (toolbar));
 }
 
 void
