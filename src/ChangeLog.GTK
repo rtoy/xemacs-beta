@@ -1,5 +1,9 @@
 2010-06-09  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* toolbar-gtk.c (gtk_clear_toolbar): Uncomment.
+	(gtk_output_toolbar): Name toolbar.  Clean up formatting.
+	(console_type_create_toolbar_gtk): Re-enable gtk_clear_toolbar.
+
 	* toolbar-gtk.c (gtk_output_toolbar): If HAVE_GNOME, put the
 	TOP_EDGE toolbar into the GnomeApp toolbar slot.  Create captioned
 	buttons if specified.  Create the button using the toolbar
