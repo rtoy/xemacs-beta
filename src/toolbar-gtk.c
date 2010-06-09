@@ -74,16 +74,15 @@ gtk_toolbar_callback (GtkWidget *UNUSED (w), gpointer user_data)
 void
 gtk_clear_toolbar (struct frame *f, enum edge_pos pos)
 {
-/*   FRAME_GTK_TOOLBAR_CHECKSUM (f, pos) = 0; */
-/*   SET_TOOLBAR_WAS_VISIBLE_FLAG (f, pos, 0); */
-/*   if (FRAME_GTK_TOOLBAR_WIDGET(f)[pos]) */
-/*     gtk_widget_destroy ((GtkWidget *)FRAME_GTK_TOOLBAR_WIDGET(f)[pos]); */
+  FRAME_GTK_TOOLBAR_CHECKSUM (f, pos) = 0;
+  SET_TOOLBAR_WAS_VISIBLE_FLAG (f, pos, 0);
+  if (FRAME_GTK_TOOLBAR_WIDGET(f)[pos])
+    gtk_widget_destroy ((GtkWidget *)FRAME_GTK_TOOLBAR_WIDGET(f)[pos]);
 }
 
 void
 gtk_clear_frame_toolbars (struct frame *f)
 {
-  stderr_out ("gtk_clear_frame_toolbars\n");
   enum edge_pos pos;
 
   EDGE_POS_LOOP (pos)
@@ -139,21 +138,17 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 
   {
     /* gtk_clear_toolbar (f, pos); */
-    FRAME_GTK_TOOLBAR_WIDGET (f)[pos] = toolbar = (GtkToolbar *)gtk_toolbar_new ();
+    FRAME_GTK_TOOLBAR_WIDGET (f)[pos] = toolbar
+      = (GtkToolbar *)gtk_toolbar_new ();
     gtk_widget_show (GTK_WIDGET (toolbar));
-    /* gtk_widget_set_name (toolbar, "toolbar"); */
+    gtk_widget_set_name (GTK_WIDGET (toolbar), "toolbar");
+    
     if (EDGE_HORIZONTAL_P (pos))
-      {
         gtk_orientable_set_orientation ((GtkOrientable *)toolbar,
                                         GTK_ORIENTATION_HORIZONTAL);
-        /* gtk_widget_set_height (toolbar, bar_height); */
-      }
     else
-      {
         gtk_orientable_set_orientation ((GtkOrientable *)toolbar,
                                         GTK_ORIENTATION_VERTICAL);
-        /* gtk_widget_set_width (toolbar, bar_width); */
-      }
     gtk_toolbar_set_show_arrow ((GtkToolbar *)toolbar, TRUE);
   }
 
@@ -194,14 +189,14 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
               GtkToolItem *item;
 	      GtkWidget *pixmapwid;
 	      GdkPixmap *pixmap;
-	      GdkBitmap *mask;
+              GdkBitmap *mask;
 	      Ibyte *tooltip = NULL;
 
 	      if (STRINGP (tb->help_string))
 		tooltip = XSTRING_DATA (tb->help_string);
 
-              pixmap = XIMAGE_INSTANCE_GTK_PIXMAP(instance);
-	      mask = XIMAGE_INSTANCE_GTK_MASK(instance);
+              pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
+              mask = XIMAGE_INSTANCE_GTK_MASK (instance);
 	      pixmapwid = gtk_pixmap_new (pixmap, mask);
 
               item = gtk_tool_button_new (pixmapwid, "");
@@ -260,7 +255,7 @@ void
 console_type_create_toolbar_gtk (void)
 {
   CONSOLE_HAS_METHOD (gtk, output_frame_toolbars);
-  /* CONSOLE_HAS_METHOD (gtk, clear_frame_toolbars); */
+  CONSOLE_HAS_METHOD (gtk, clear_frame_toolbars);
   CONSOLE_HAS_METHOD (gtk, initialize_frame_toolbars);
   CONSOLE_HAS_METHOD (gtk, free_frame_toolbars);
   /* CONSOLE_HAS_METHOD (gtk, output_toolbar_button); */
