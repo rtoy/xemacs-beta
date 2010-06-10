@@ -1,8 +1,15 @@
+2010-06-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-impl.h (FONT_INSTANCE_PROPORTIONAL): Define accessor.
+	(XFONT_INSTANCE_PROPORTIONAL): Define accessor.
+
 2010-06-09  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* toolbar-gtk.c (gtk_clear_toolbar): Uncomment.
 	(gtk_output_toolbar): Name toolbar.  Clean up formatting.
 	(console_type_create_toolbar_gtk): Re-enable gtk_clear_toolbar.
+	(gtk_output_toolbar): Set toolbar name based on pattern used in
+	frame-gtk.c.
 
 	* toolbar-gtk.c (gtk_output_toolbar): If HAVE_GNOME, put the
 	TOP_EDGE toolbar into the GnomeApp toolbar slot.  Create captioned
