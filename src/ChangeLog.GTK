@@ -1,5 +1,8 @@
 2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance): Set the widget to
+	zero.  Set the scrollbar_data to zero.
+
 	* lisp.h (XFREE): A macro to frees a pointer and then sets it to
 	zero.
 
