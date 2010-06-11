@@ -1,5 +1,11 @@
 2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_tab_control_instantiate): Validate
+	g_signal_connect(). 
+	(gtk_tab_control_redisplay): Use gtk_notebook_set_current_page()
+	instead of deprecated gtk_notebook_set_page().
+	(gtk_tab_control_redisplay): Remove notebook pages from end.
+
 	* frame-gtk.c (gtk_create_widgets): Assert return value of
 	g_signal_connect to validate.
 

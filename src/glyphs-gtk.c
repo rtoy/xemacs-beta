@@ -2684,8 +2684,8 @@ gtk_tab_control_instantiate (Lisp_Object image_instance,
   gtk_notebook_set_page(nb, selected);
 
   /* Call per-tab lisp callback when a tab is pressed. */
-  g_signal_connect (G_OBJECT (nb), "switch-page",
-                    GTK_SIGNAL_FUNC (gtk_tab_control_callback), NULL);
+  assert (g_signal_connect (G_OBJECT (nb), "switch-page",
+                            GTK_SIGNAL_FUNC (gtk_tab_control_callback), NULL));
 }
 
 /* Set the properties of a tab control */
@@ -2727,8 +2727,9 @@ gtk_tab_control_redisplay (Lisp_Object image_instance)
 		  IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii) = 0;
 		  IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii) = Qnil;
 
-		  gtk_notebook_set_page(GTK_NOTEBOOK (IMAGE_INSTANCE_GTK_CLIPWIDGET (ii)),
-					i);
+		  gtk_notebook_set_current_page
+                    (GTK_NOTEBOOK (IMAGE_INSTANCE_GTK_CLIPWIDGET (ii)),
+                     i);
 		  break;
 		}
 
@@ -2748,7 +2749,7 @@ gtk_tab_control_redisplay (Lisp_Object image_instance)
 	    {
 	      for (i = num_pages; i >= 0; --i)
 		{
-		  gtk_notebook_remove_page (nb, i);
+		  gtk_notebook_remove_page (nb, -1);
 		}
 	    }
 
