@@ -1,3 +1,8 @@
+2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* lisp.h (XFREE): A macro to frees a pointer and then sets it to
+	zero.
+
 2010-06-10  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-impl.h (FONT_INSTANCE_PROPORTIONAL): Define accessor.
