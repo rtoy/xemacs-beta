@@ -1013,43 +1013,87 @@
 
 (gtk-import-function GType gtk_notebook_get_type)
 (gtk-import-function GtkWidget gtk_notebook_new)
-(gtk-import-function nil gtk_notebook_append_page GtkNotebook GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_append_page_menu GtkNotebook GtkWidget GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_prepend_page GtkNotebook GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_prepend_page_menu GtkNotebook GtkWidget GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_insert_page GtkNotebook GtkWidget GtkWidget gint)
-(gtk-import-function nil gtk_notebook_insert_page_menu GtkNotebook GtkWidget GtkWidget GtkWidget gint)
+(gtk-import-function nil gtk_notebook_append_page
+                     GtkNotebook GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_append_page_menu
+                     GtkNotebook GtkWidget GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_prepend_page
+                     GtkNotebook GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_prepend_page_menu
+                     GtkNotebook GtkWidget GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_insert_page
+                     GtkNotebook GtkWidget GtkWidget gint)
+(gtk-import-function nil gtk_notebook_insert_page_menu
+                     GtkNotebook GtkWidget GtkWidget GtkWidget gint)
 (gtk-import-function nil gtk_notebook_remove_page GtkNotebook gint)
 
-;;query, set current NoteebookPage
+;;query, set current NotebookPage
 (gtk-import-function gint gtk_notebook_get_current_page GtkNotebook)
-(gtk-import-function GtkWidget gtk_notebook_get_nth_page GtkNotebook gint)
 (gtk-import-function gint gtk_notebook_page_num GtkNotebook GtkWidget)
-(gtk-import-function nil gtk_notebook_set_page GtkNotebook gint)
+;; deprecated (gtk-import-function nil gtk_notebook_set_page GtkNotebook gint)
 (gtk-import-function nil gtk_notebook_next_page GtkNotebook)
 (gtk-import-function nil gtk_notebook_prev_page GtkNotebook)
+(gtk-import-function nil gtk_notebook_reorder_child GtkNotebook GtkWidget gint)
 
 ;; set Notebook, NotebookTab style
-(gtk-import-function nil gtk_notebook_set_show_border GtkNotebook gboolean)
-(gtk-import-function nil gtk_notebook_set_show_tabs GtkNotebook gboolean)
 (gtk-import-function nil gtk_notebook_set_tab_pos GtkNotebook GtkPositionType)
-(gtk-import-function nil gtk_notebook_set_homogeneous_tabs GtkNotebook gboolean)
-(gtk-import-function nil gtk_notebook_set_tab_border GtkNotebook guint)
-(gtk-import-function nil gtk_notebook_set_tab_hborder GtkNotebook guint)
-(gtk-import-function nil gtk_notebook_set_tab_vborder GtkNotebook guint)
+(gtk-import-function nil gtk_notebook_set_show_tabs GtkNotebook gboolean)
+(gtk-import-function nil gtk_notebook_set_show_border GtkNotebook gboolean)
 (gtk-import-function nil gtk_notebook_set_scrollable GtkNotebook gboolean)
+(gtk-import-function nil gtk_notebook_set_tab_border GtkNotebook guint)
 
 ;; enable/disable PopupMenu
 (gtk-import-function nil gtk_notebook_popup_enable GtkNotebook)
 (gtk-import-function nil gtk_notebook_popup_disable GtkNotebook)
 
+(gtk-import-function GtkWidget gtk_notebook_get_nth_page GtkNotebook gint)
+(gtk-import-function GtkWidget gtk_notebook_get_menu_label
+                     GtkNotebook GtkWidget)
+(gtk-import-function gint gtk_notebook_get_n_pages GtkNotebook gint)
+(gtk-import-function GtkWidget gtk_notebook_get_tab_label
+                     GtkNotebook GtkWidget)
+(gtk-import-function GtkWidget gtk_notebook_query_tab_label_packing
+                     GtkNotebook GtkWidget gboolean gboolean GtkPackType)
+(gtk-import-function nil gtk_notebook_set_homogeneous_tabs GtkNotebook gboolean)
+
 ;; query/set NotebookPage Properties
-(gtk-import-function GtkWidget gtk_notebook_get_tab_label GtkNotebook GtkWidget)
-(gtk-import-function nil gtk_notebook_set_tab_label GtkNotebook GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_set_tab_label_text GtkNotebook GtkWidget GtkString)
-(gtk-import-function GtkWidget gtk_notebook_get_menu_label GtkNotebook GtkWidget)
-(gtk-import-function nil gtk_notebook_set_menu_label GtkNotebook GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_set_menu_label_text GtkNotebook GtkWidget GtkString)
+(gtk-import-function nil gtk_notebook_set_menu_label
+                     GtkNotebook GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_set_menu_label_text
+                     GtkNotebook GtkWidget GtkString)
+(gtk-import-function nil gtk_notebook_set_tab_hborder GtkNotebook guint)
+(gtk-import-function nil gtk_notebook_set_tab_label
+                     GtkNotebook GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_set_tab_label_packing
+                     GtkNotebook GtkWidget gboolean gboolean GtkPackType)
+(gtk-import-function nil gtk_notebook_set_tab_label_text
+                     GtkNotebook GtkWidget GtkString)
+(gtk-import-function nil gtk_notebook_set_tab_vborder GtkNotebook guint)
+(gtk-import-function nil gtk_notebook_set_tab_reorderable
+                     GtkNotebook GtkWidget gboolean)
+(gtk-import-function nil gtk_notebook_set_tab_detachable
+                     GtkNotebook GtkWidget gboolean)
+(gtk-import-function gchararray gtk_notebook_get_menu_label_text
+                     GtkNotebook GtkWidget)
+(gtk-import-function gboolean gtk_notebook_get_scrollable GtkNotebook)
+(gtk-import-function gboolean gtk_notebook_get_show_border GtkNotebook)
+(gtk-import-function gboolean gtk_notebook_get_show_tabs GtkNotebook)
+(gtk-import-function gchararray gtk_notebook_get_tab_label_text
+                     GtkNotebook GtkWidget)
+(gtk-import-function GtkPositionType gtk_notebook_get_tab_pos GtkNotebook)
+(gtk-import-function gboolean gtk_notebook_get_tab_detachable
+                     GtkNotebook GtkWidget)
+(gtk-import-function nil gtk_notebook_set_current_page GtkNotebook gint)
+(gtk-import-function nil gtk_notebook_set_group_id GtkNotebook gint)
+(gtk-import-function gint gtk_notebook_get_group_id GtkNotebook)
+(gtk-import-function nil gtk_notebook_set_group GtkNotebook gpointer)
+(gtk-import-function gpointer gtk_notebook_get_group GtkNotebook)
+(gtk-import-function void gtk_notebook_set_action_widget
+                     GtkNotebook GtkWidget GtkPackType)
+(gtk-import-function GtkWidget gtk_notebook_get_action_widget
+                     GtkNotebook GtkPackType)
+;;(gtk-import-function gtk_notebook_set_window_creation_hook
+;;                     GtkNoteBookWindowCreationFunc gpointer GDestroyNotify)
 
 ;;;Handcoded in ui-byhand.c... #### FIXME
 ;;;void gtk_notebook_query_tab_label_packing (GtkNotebook *notebook,
@@ -1057,9 +1101,9 @@
 ;;;					   gboolean    *expand,
 ;;;					   gboolean    *fill,
 ;;;					   GtkPackType *pack_type);
-(gtk-import-function nil gtk_notebook_set_tab_label_packing GtkNotebook GtkWidget gboolean gboolean GtkPackType)
+;;(gtk-import-function nil gtk_notebook_set_tab_label_packing GtkNotebook GtkWidget gboolean gboolean GtkPackType)
 
-(gtk-import-function nil gtk_notebook_reorder_child GtkNotebook GtkWidget gint)
+
 
 
 (gtk-import-function GType gtk_object_get_type)
