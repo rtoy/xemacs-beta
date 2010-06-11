@@ -1,5 +1,9 @@
 2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* frame-gtk.c (size_allocate_cb): Rename from resize_event_cb.
+	(gtk_create_widgets): Pass new name to signal callback.  Validate
+	g_signal_connect().
+
 	* glyphs-gtk.c (gtk_tab_control_instantiate): Validate
 	g_signal_connect(). 
 	(gtk_tab_control_redisplay): Use gtk_notebook_set_current_page()
