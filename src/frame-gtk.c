@@ -642,26 +642,60 @@ gtk_initialize_frame_size (struct frame *f)
 }
 
 static gboolean
-resize_event_cb (GtkWidget *UNUSED (w), GtkAllocation *allocation,
+resize_event_cb (GtkWidget *w, GtkAllocation *allocation,
 		 gpointer user_data)
 {
   struct frame *f = (struct frame *) user_data;
 
+  if (!GTK_IS_FIXED (w))
+    return TRUE;
+
   f->pixwidth = allocation->width;
   f->pixheight = allocation->height;
 
-  if (FRAME_GTK_TEXT_WIDGET (f)->window)
-    {
-      Lisp_Object frame = wrap_frame (f);
+  debug_out ("frame size allocation  %d %d\n", allocation->width,
+             allocation->height);
 
-      Fredraw_frame (frame, Qt);
-    }
+/*   if (FRAME_GTK_TEXT_WIDGET (f)->window) */
+/*     { */
+/*       Lisp_Object frame = wrap_frame (f); */
+
+/*       Fredraw_frame (frame, Qt); */
+/*     } */
 
   return (FALSE);
 }
 
 static gboolean
-delete_event_cb (GtkWidget *UNUSED (w), GdkEvent *UNUSED (ev),
+size_request_cb (GtkWidget *w, GtkRequisition *req,
+		 gpointer user_data)
+{
+  struct frame *f = (struct frame *) user_data;
+
+  if (!GTK_IS_FIXED (w))
+    return TRUE;
+
+  debug_out ("frame size request  %d %d\n", req->width, req->height);
+
+  //f->pixwidth = allocation->width;
+  //f->pixheight = allocation->height;
+  req->width  = f->pixwidth;
+  req->height = f->pixheight;
+
+  debug_out ("frame size request  %d %d\n", req->width, req->height);
+
+  /*   if (FRAME_GTK_TEXT_WIDGET (f)->window) */
+  /*     { */
+  /*       Lisp_Object frame = wrap_frame (f); */
+
+  /*       Fredraw_frame (frame, Qt); */
+  /*     } */
+
+  return (FALSE);
+}
+
+static gboolean
+delete_event_cb (GtkWidget *w, GdkEvent *UNUSED (ev),
 		 gpointer user_data)
 {
     struct frame *f = (struct frame *) user_data;
@@ -863,12 +897,12 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   gtk_drag_dest_set (text, GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT,
 		     dnd_target_table, dnd_n_targets,
 		     GDK_ACTION_COPY | GDK_ACTION_LINK | GDK_ACTION_ASK);
-  g_signal_connect (G_OBJECT (text), "drag_drop",
-                    G_SIGNAL_FUNC (dragndrop_dropped), text);
-  g_signal_connect (GTK_OBJECT (text), "drag_data_received",
-                    G_SIGNAL_FUNC (dragndrop_data_received), text);
-  g_signal_connect (G_OBJECT (text), "drag_data_get",
-                    GTK_SIGNAL_FUNC (dragndrop_get_drag), NULL);
+  assert (g_signal_connect (G_OBJECT (text), "drag_drop",
+                            G_SIGNAL_FUNC (dragndrop_dropped), text));
+  assert (g_signal_connect (GTK_OBJECT (text), "drag_data_received",
+                            G_SIGNAL_FUNC (dragndrop_data_received), text));
+  assert (g_signal_connect (G_OBJECT (text), "drag_data_get",
+                            GTK_SIGNAL_FUNC (dragndrop_get_drag), NULL));
 #endif
 
 #ifdef HAVE_MENUBARS
@@ -890,7 +924,8 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
     gtk_box_pack_end (GTK_BOX (container), text, TRUE, TRUE, 0);
 
   /* Connect main event handler */
-  g_signal_connect (G_OBJECT (shell), "delete-event", GTK_SIGNAL_FUNC (delete_event_cb), f);
+  assert (g_signal_connect (G_OBJECT (shell), "delete-event",
+                            GTK_SIGNAL_FUNC (delete_event_cb), f));
 
   {
     static const gchar *events_to_frob[] = { "focus-in-event",
@@ -911,12 +946,15 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
     for (i = 0; events_to_frob[i]; i++)
       {
-	g_signal_connect (G_OBJECT (shell), events_to_frob[i],
-                          GTK_SIGNAL_FUNC (emacs_shell_event_handler), f);
+	assert (g_signal_connect (G_OBJECT (shell), events_to_frob[i],
+                                  GTK_SIGNAL_FUNC (emacs_shell_event_handler), f));
       }
   }
 
-  g_signal_connect (G_OBJECT (shell), "size-allocate", GTK_SIGNAL_FUNC (resize_event_cb), f);
+  assert (g_signal_connect (G_OBJECT (shell), "size-allocate",
+                            GTK_SIGNAL_FUNC (resize_event_cb), f));
+  assert (g_signal_connect (G_OBJECT (shell), "size-request",
+                            GTK_SIGNAL_FUNC (size_request_cb), f));
 
   /* This might be safe to call now... */
   /* gtk_signal_connect (GTK_OBJECT (shell), "event", GTK_SIGNAL_FUNC (emacs_shell_event_handler), f); */
