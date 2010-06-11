@@ -1,3 +1,7 @@
+2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el: import new GtkNotebook functions.
+
 2010-06-05  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-marshal.el (find-file): Add a marshaller that takes a
