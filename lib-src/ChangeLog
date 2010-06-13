@@ -1,3 +1,7 @@
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ad2c: Correct FSF address in permission notice.
+
 2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gnuclient.c (main):
