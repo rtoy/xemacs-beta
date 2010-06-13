@@ -14,7 +14,7 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+Boston, MA 02110-1301, USA.  */
 
 GtkType GTK_TYPE_ARRAY = 0;
 GtkType GTK_TYPE_STRING_ARRAY = 0;
