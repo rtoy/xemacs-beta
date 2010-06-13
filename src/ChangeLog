@@ -1,3 +1,7 @@
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* number.h: Another permission consistency fix.
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* elhash.c:

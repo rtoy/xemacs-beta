@@ -1,3 +1,7 @@
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* compface.mak: More permission consistency.
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* tiff.mak:
