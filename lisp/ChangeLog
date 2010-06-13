@@ -1,3 +1,16 @@
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gnome.el:
+	* gtk-compose.el:
+	* gtk-marshal.el:
+	* gtk-package.el:
+	* gtk-widget-accessors.el:
+	* gtk.el:
+	* hyper-apropos.el:
+	* multicast.el:
+	* view-less.el:
+	Correct FSF address in permission notice.
+
 2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* diagnose.el (show-gc-stats):

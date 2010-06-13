@@ -1,3 +1,7 @@
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-internal.h: Correct FSF address in permission notice.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* lwlib-colors.h:

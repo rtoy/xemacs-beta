@@ -1,3 +1,14 @@
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gtk/event-stream-tests.el:
+	* gtk/gnome-test.el:
+	* gtk/gtk-embedded-test.el:
+	* gtk/gtk-extra-test.el:
+	* gtk/statusbar-test.el:
+	* gtk/toolbar-test.el:
+	* gtk/xemacs-toolbar.el:
+	Correct FSF address in permission notice.
+
 2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gtk/gtk-test.el (gtk-test):

@@ -1,3 +1,10 @@
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* tiff.mak:
+	* xemacs.rc:
+	* xpm.mak:
+	Correct FSF address in permission notice.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.dsp:

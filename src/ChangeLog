@@ -1,3 +1,27 @@
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* elhash.c:
+	* emacs.c:
+	* glade.c:
+	* gtk-glue.c:
+	* gtk-xemacs.c:
+	* gtk-xemacs.h:
+	* m/alpha.h:
+	* number-gmp.c:
+	* number-gmp.h:
+	* number-mp.c:
+	* number-mp.h:
+	* number.c:
+	* number.h:
+	* s/hpux11-shr.h:
+	* s/mach-bsd4-3.h:
+	* s/sco7.h:
+	* symsinit.h:
+	* ui-byhand.c:
+	* ui-gtk.c:
+	* ui-gtk.h:
+	Correct FSF address in permission notice.
+	
 2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alloc.c (Fpurecopy):
