@@ -1,3 +1,18 @@
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gtk/xemacs-toolbar.el:
+	* gtk/toolbar-test.el:
+	* gtk/statusbar-test.el:
+	* gtk/gtk-extra-test.el:
+	* gtk/gtk-embedded-test.el:
+	* gtk/gnome-test.el:
+	* gtk/event-stream-tests.el:
+	Add copyright notice based on internal evidence.
+	
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-crashes.el: Amend "this file" to "XEmacs is free...".
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gtk/event-stream-tests.el:
