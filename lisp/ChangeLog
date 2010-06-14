@@ -1,5 +1,14 @@
 2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* mule/canna-leim.el:
+	* alist.el:
+	Refer to XEmacs, not APEL/this program, in permissions.
+
+	* mule/canna-leim.el:
+	Remove my copyright, I've assigned it to the FSF.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* gtk.el:
 	* gtk-widget-accessors.el:
 	* gtk-package.el:
