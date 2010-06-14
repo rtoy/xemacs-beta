@@ -9,6 +9,8 @@
 ;; Keywords: extensions, dumped
 ;; Version: 1.26
 
+;; This file is part of XEmacs.
+
 ;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)

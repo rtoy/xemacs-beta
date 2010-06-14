@@ -1,3 +1,17 @@
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ad2c:
+	Add copyright notices based on internal evidence.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cvtmail.c:
+	* fakemail.c:
+	* make-path.c:
+	* profile.c:
+	* tcp.c:
+	Fix typo (doubled phrase) in permission notice.
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* ad2c: Correct FSF address in permission notice.

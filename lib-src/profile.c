@@ -18,8 +18,8 @@
 
  You should have received a copy of the GNU General Public License
  along with XEmacs; see the file COPYING.  If not, write to
- the Free the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.28. */
 /* #### Not sure if this is needed for XEmacs. */
