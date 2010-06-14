@@ -1,5 +1,10 @@
 2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* gnuserv.c:
+	* gnuserv.h:
+	* gnuslib.c:
+	Add standard permission boilerplate.
+
 	* ad2c:
 	Add copyright notices based on internal evidence.
 

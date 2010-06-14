@@ -1,5 +1,8 @@
 2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* site-load.el:
+	Add permission boilerplate.
+
 	* mule/canna-leim.el:
 	* alist.el:
 	Refer to XEmacs, not APEL/this program, in permissions.

@@ -1,5 +1,10 @@
 2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* automated/lisp-reader-tests.el:
+	Change references to SXEmacs to XEmacs.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* gtk/xemacs-toolbar.el:
 	* gtk/toolbar-test.el:
 	* gtk/statusbar-test.el:
