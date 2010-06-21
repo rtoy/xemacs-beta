@@ -392,6 +392,8 @@ gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
     case GDK_Escape:	return QKescape;
     case GDK_space:	return QKspace;
     case GDK_Delete:	return QKdelete;
+    case GDK_Prior:     return KEYSYM("prior");
+    case GDK_Next:      return KEYSYM("next");
     case 0:		return Qnil;
     default:
       if (simple_p) return Qnil;
