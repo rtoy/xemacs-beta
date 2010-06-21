@@ -1,3 +1,8 @@
+2010-06-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (gtk_keysym_to_emacs_keysym):
+	Add GDK_Prior and GDK_Next.
+
 2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_tab_control_instantiate): Validate
