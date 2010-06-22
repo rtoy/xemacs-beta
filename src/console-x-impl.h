@@ -65,6 +65,18 @@ struct x_device
   int depth;
   Colormap device_cmap;
 
+#ifdef HAVE_XFT
+  /* The Xft Drawable wrapper for this device.
+     #### Should this be per-device, or per-frame? */
+  /* This is persistent to take advantage of the ability of Xft's glyph
+     cache in the server, and avoid rendering the font again and again... 
+
+     This is created the first time through redisplay, and destroyed when our 
+     connection to the X display is destroyed. */
+  XftDraw *xftDraw;
+#endif
+
+
   /* Used by x_bevel_modeline in redisplay-x.c */
   Pixmap gray_pixmap;
 
@@ -198,6 +210,9 @@ DECLARE_LISP_OBJECT (x_device, Lisp_X_Device);
 #define DEVICE_X_XIM_STYLES(d) (DEVICE_X_DATA (d)->xim_styles)
 #define DEVICE_X_FONTSET(d)    (DEVICE_X_DATA (d)->fontset)
 #endif /* HAVE_XIM */
+#ifdef HAVE_XFT
+#define DEVICE_X_XFTDRAW(f)   (DEVICE_X_DATA (f)->xftDraw)
+#endif
 
 /* allocated in Xatoms_of_device_x */
 #define DEVICE_XATOM_WM_PROTOCOLS(d)	 (DEVICE_X_DATA (d)->Xatom_WM_PROTOCOLS)
@@ -319,17 +334,6 @@ struct x_frame
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
 
-#ifdef HAVE_XFT
-  /* The Xft Drawable wrapper for this device.
-     #### Should this be per-device, or per-frame? */
-  /* This is persistent to take advantage of the ability of Xft's glyph
-     cache in the server, and avoid rendering the font again and again... 
-
-     This is created the first time through redisplay, and destroyed when our 
-     connection to the X display is destroyed. */
-  XftDraw *xftDraw;
-#endif
-
   /* 1 if the frame is completely visible on the display, 0 otherwise.
      if 0 the frame may have been iconified or may be totally
      or partially hidden by another X window */
@@ -390,10 +394,6 @@ DECLARE_LISP_OBJECT (x_frame, Lisp_X_Frame);
 #endif /* HAVE_TOOLBARS */
 
 #define FRAME_X_GEOM_FREE_ME_PLEASE(f) (FRAME_X_DATA (f)->geom_free_me_please)
-
-#ifdef HAVE_XFT
-#define FRAME_X_XFTDRAW(f)   (FRAME_X_DATA (f)->xftDraw)
-#endif
 
 #define FRAME_X_TOTALLY_VISIBLE_P(f) (FRAME_X_DATA (f)->totally_visible_p)
 #define FRAME_X_TOP_LEVEL_FRAME_P(f) (FRAME_X_DATA (f)->top_level_frame_p)
