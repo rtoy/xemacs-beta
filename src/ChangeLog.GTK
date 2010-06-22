@@ -1,3 +1,17 @@
+2010-06-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-x-impl.h (struct x_device): Move XftDraw from here.
+	(struct x_device): To here.
+	Rename FRAME_X_XFTDRAW to DEVICE_X_XFTDRAW.
+	(DEVICE_X_XFTDRAW): Move it to here.
+
+	* device-x.c (x_delete_device): Free device XftDraw here.
+
+	* frame-x.c (x_delete_frame): Move freeing of XftDraw from here.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Allocate
+	DEVICE_X_XFTDRAW  instead of obsolete FRAME_X_XFTDRAW.
+
 2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (size_allocate_cb): Rename from resize_event_cb.
