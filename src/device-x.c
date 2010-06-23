@@ -946,6 +946,18 @@ x_delete_device (struct device *d)
   int checking_free;
 #endif
 
+#ifdef HAVE_XFT
+  /* If we have an XftDraw structure, we need to free it here.
+     We can't ever have an XftDraw without a Display, so we are safe
+     to free it in here, and we avoid too much playing around with the 
+     malloc checking hooks this way. */
+  if (DEVICE_X_XFTDRAW (d)) 
+    {
+      XftDrawDestroy (DEVICE_X_XFTDRAW (d));
+      DEVICE_X_XFTDRAW (d) = NULL;
+    }
+#endif
+
   display = DEVICE_X_DISPLAY (d);
 
   if (display)

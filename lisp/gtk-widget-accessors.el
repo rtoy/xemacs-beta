@@ -20,28 +20,28 @@
 
 (require 'gtk-ffi)
 
-(defconst GTK_TYPE_INVALID 0)
-(defconst GTK_TYPE_NONE 1)
-(defconst GTK_TYPE_CHAR 2)
-(defconst GTK_TYPE_UCHAR 3)
-(defconst GTK_TYPE_BOOL 4)
-(defconst GTK_TYPE_INT 5)
-(defconst GTK_TYPE_UINT 6)
-(defconst GTK_TYPE_LONG 7)
-(defconst GTK_TYPE_ULONG 8)
-(defconst GTK_TYPE_FLOAT 9)
-(defconst GTK_TYPE_DOUBLE 10)
-(defconst GTK_TYPE_STRING 11)
-(defconst GTK_TYPE_ENUM 12)
-(defconst GTK_TYPE_FLAGS 13)
-(defconst GTK_TYPE_BOXED 14)
-(defconst GTK_TYPE_POINTER 15)
-(defconst GTK_TYPE_SIGNAL 16)
-(defconst GTK_TYPE_ARGS 17)
-(defconst GTK_TYPE_CALLBACK 18)
-(defconst GTK_TYPE_C_CALLBACK 19)
-(defconst GTK_TYPE_FOREIGN 20)
-(defconst GTK_TYPE_OBJECT 21)
+(defconst G_TYPE_INVALID 0)
+(defconst G_TYPE_NONE 1)
+(defconst G_TYPE_CHAR 2)
+(defconst G_TYPE_UCHAR 3)
+(defconst G_TYPE_BOOL 4)
+(defconst G_TYPE_INT 5)
+(defconst G_TYPE_UINT 6)
+(defconst G_TYPE_LONG 7)
+(defconst G_TYPE_ULONG 8)
+(defconst G_TYPE_FLOAT 9)
+(defconst G_TYPE_DOUBLE 10)
+(defconst G_TYPE_STRING 11)
+(defconst G_TYPE_ENUM 12)
+(defconst G_TYPE_FLAGS 13)
+(defconst G_TYPE_BOXED 14)
+(defconst G_TYPE_POINTER 15)
+(defconst G_TYPE_SIGNAL 16)
+(defconst G_TYPE_ARGS 17)
+(defconst G_TYPE_CALLBACK 18)
+(defconst G_TYPE_C_CALLBACK 19)
+(defconst G_TYPE_FOREIGN 20)
+(defconst G_TYPE_OBJECT 21)
 
 (defconst gtk-value-accessor-names
   '("INVALID" "NONE" "CHAR" "UCHAR" "BOOL" "INT" "UINT" "LONG" "ULONG" "FLOAT" "DOUBLE"
@@ -88,8 +88,8 @@ structure."
        "\n"
        (format "\tthe_obj = GTK_%s (XGTK_OBJECT (obj)->object);\n" wrapper)
 
-       (format "\targ.type = gtk_type_from_name (\"%s\");\n" (symbol-name (car arg))))
-;       (format "\targ.type = GTK_TYPE_%s;\n" (or
+       (format "\targ.type = g_type_from_name (\"%s\");\n" (symbol-name (car arg))))
+;       (format "\targ.type = G_TYPE_%s;\n" (or
 ;					       (nth (gtk-fundamental-type (car arg))
 ;						    gtk-value-accessor-names)
 ;					       (case (car arg)
@@ -100,12 +100,12 @@ structure."
 
       (setq base-arg-type (gtk-fundamental-type (car arg)))
       (cond
-       ((= base-arg-type GTK_TYPE_OBJECT)
+       ((= base-arg-type G_TYPE_OBJECT)
 	(insert
 	 (format "\tGTK_VALUE_OBJECT (arg) = GTK_OBJECT (the_obj->%s);"
 		 (cdr arg))))
-       ((or (= base-arg-type GTK_TYPE_POINTER)
-	    (= base-arg-type GTK_TYPE_BOXED))
+       ((or (= base-arg-type G_TYPE_POINTER)
+	    (= base-arg-type G_TYPE_BOXED))
 	(insert
 	 (format "\tGTK_VALUE_%s (arg) = (void *)the_obj->%s;"
 		 (nth (gtk-fundamental-type (car arg)) gtk-value-accessor-names)
@@ -117,7 +117,7 @@ structure."
 		 (cdr arg)))))
       (insert
        "\n"
-       "\treturn (gtk_type_to_lisp (&arg));\n"
+       "\treturn (g_type_to_lisp (&arg));\n"
        "}\n\n")
       (push c-func-name func-names))
     func-names))
