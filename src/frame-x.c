@@ -2614,19 +2614,6 @@ x_delete_frame (struct frame *f)
   DtDndDropUnregister (FRAME_X_TEXT_WIDGET (f));
 #endif /* HAVE_CDE */
 
-#ifdef HAVE_XFT
-  /* If we have an XftDraw structure, we need to free it here.
-     We can't ever have an XftDraw without a Display, so we are safe
-     to free it in here, and we avoid too much playing around with the 
-     malloc checking hooks this way. */
-  if (FRAME_X_XFTDRAW (f)) 
-    {
-      XftDrawDestroy (FRAME_X_XFTDRAW (f));
-      FRAME_X_XFTDRAW (f) = NULL;
-    }
-#endif
-
-
   assert (FRAME_X_SHELL_WIDGET (f) != 0);
   dpy = XtDisplay (FRAME_X_SHELL_WIDGET (f));
 
