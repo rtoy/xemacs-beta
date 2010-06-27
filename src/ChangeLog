@@ -1,3 +1,18 @@
+2010-06-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-x-impl.h (DEVICE_X_XFTDRAW): Define, instead of
+	FRAME_X_FTDRAW.
+	(struct x_device): Add XftDraw field.
+	(struct x_frame): Remove XftDraw field.
+
+	* device-x.c (x_delete_device): Free XftDraw here.
+
+	* frame-x.c (x_delete_frame): Remove freeing of XftDraw.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Use
+	DEVICE_X_XFTDRAW instead of FRAME_X_XFTDRAW when lazily creating
+	XftDraw structure.
+
 2010-06-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Fsubstring_no_properties):
