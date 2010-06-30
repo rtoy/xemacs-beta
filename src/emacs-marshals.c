@@ -1261,6 +1261,16 @@ emacs_gtk_marshal_OBJECT__NONE (ffi_actual_function func, GtkArg *args)
 }
 
 static void
+emacs_gtk_marshal_POINTER__BOOL_INT (ffi_actual_function func, GtkArg *args)
+{
+  __POINTER_fn rfunc = (__POINTER_fn) func;
+  void * *return_val;
+
+  return_val = GTK_RETLOC_POINTER (args[2]);
+  *return_val = (*rfunc) (GTK_VALUE_BOOL (args[0]), GTK_VALUE_INT (args[1]));
+}
+
+static void
 emacs_gtk_marshal_POINTER__INT_INT (ffi_actual_function func, GtkArg *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
@@ -1378,6 +1388,16 @@ emacs_gtk_marshal_POINTER__NONE (ffi_actual_function func, GtkArg *args)
 
   return_val = GTK_RETLOC_POINTER (args[0]);
   *return_val = (*rfunc) ();
+}
+
+static void
+emacs_gtk_marshal_POINTER__POINTER_POINTER (ffi_actual_function func, GtkArg *args)
+{
+  __POINTER_fn rfunc = (__POINTER_fn) func;
+  void * *return_val;
+
+  return_val = GTK_RETLOC_POINTER (args[2]);
+  *return_val = (*rfunc) (GTK_VALUE_POINTER (args[0]), GTK_VALUE_POINTER (args[1]));
 }
 
 static void
@@ -1641,6 +1661,7 @@ static void initialize_marshaller_storage (void)
 		puthash ("emacs_gtk_marshal_OBJECT__STRING_STRING", (void *) emacs_gtk_marshal_OBJECT__STRING_STRING, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_OBJECT__STRING", (void *) emacs_gtk_marshal_OBJECT__STRING, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_OBJECT__NONE", (void *) emacs_gtk_marshal_OBJECT__NONE, marshaller_hashtable);
+		puthash ("emacs_gtk_marshal_POINTER__BOOL_INT", (void *) emacs_gtk_marshal_POINTER__BOOL_INT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_POINTER__INT_INT", (void *) emacs_gtk_marshal_POINTER__INT_INT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_POINTER__INT", (void *) emacs_gtk_marshal_POINTER__INT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_POINTER__OBJECT_INT_INT", (void *) emacs_gtk_marshal_POINTER__OBJECT_INT_INT, marshaller_hashtable);
@@ -1653,6 +1674,7 @@ static void initialize_marshaller_storage (void)
 		puthash ("emacs_gtk_marshal_POINTER__STRING", (void *) emacs_gtk_marshal_POINTER__STRING, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_POINTER__STRING_INT", (void *) emacs_gtk_marshal_POINTER__STRING_INT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_POINTER__NONE", (void *) emacs_gtk_marshal_POINTER__NONE, marshaller_hashtable);
+		puthash ("emacs_gtk_marshal_POINTER__POINTER_POINTER", (void *) emacs_gtk_marshal_POINTER__POINTER_POINTER, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_STRING__INT_INT_INT", (void *) emacs_gtk_marshal_STRING__INT_INT_INT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_STRING__INT", (void *) emacs_gtk_marshal_STRING__INT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_STRING__OBJECT_BOOL", (void *) emacs_gtk_marshal_STRING__OBJECT_BOOL, marshaller_hashtable);
