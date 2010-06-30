@@ -1,5 +1,8 @@
 2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* frame-gtk.c (gtk_create_widgets): Ensure that the container is a
+	box before trying to pack it.  This may not be true when using GnomeApp.
+
 	* emacs-marshals.c (emacs_gtk_marshal_POINTER__BOOL_INT): New
 	marshaller.	
 	(emacs_gtk_marshal_POINTER__POINTER_POINTER): New marshaller.
