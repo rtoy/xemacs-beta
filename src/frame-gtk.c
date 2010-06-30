@@ -921,7 +921,8 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
     /* Now comes the drawing area, which should fill the rest of the
     ** frame completely.
     */
-    gtk_box_pack_end (GTK_BOX (container), text, TRUE, TRUE, 0);
+    if (GTK_IS_BOX (container)) 
+      gtk_box_pack_end (GTK_BOX (container), text, TRUE, TRUE, 0);
 
   /* Connect main event handler */
   assert (g_signal_connect (G_OBJECT (shell), "delete-event",
