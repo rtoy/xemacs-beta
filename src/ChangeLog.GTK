@@ -1,5 +1,17 @@
 2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (import_gtk_flags_internal): Added debug output for gtk
+	flag import.
+	(import_gtk_enumeration_internal): Added debug output for gtk enum
+	import.
+	(Fgtk_import_function_internal): Added debug message on function
+	import success.
+	(Fgtk_import_function_internal): Added debug message about
+	marshaller being used.
+	(Fgtk_call_function): Convert internal arguments to gtk types correctly.
+	(lisp_to_g_value): Convert lisp value to the base fundamental type
+	of requested arguments.  Rename arg to val for better looking code.
+
 	* gtk-xemacs.c (gtk_xemacs_new): Make the xemacs widget require a
 	GdkWindow.  This fixes the shrinking window problem for both menus
 	and toolbars.
