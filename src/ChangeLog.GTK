@@ -1,5 +1,7 @@
 2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (gtk_xemacs_menubar_size_request): Remove debug message.
+
 	* frame-gtk.c (gtk_create_widgets): Ensure that the container is a
 	box before trying to pack it.  This may not be true when using GnomeApp.
 
