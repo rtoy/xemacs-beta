@@ -113,6 +113,7 @@ gtk_xemacs_new (struct frame *f)
   GtkXEmacs *xemacs;
 
   xemacs = (GtkXEmacs*) gtk_type_new (gtk_xemacs_get_type ());
+  gtk_widget_set_has_window (GTK_WIDGET (xemacs), TRUE);
   xemacs->f = f;
 
   return GTK_WIDGET (xemacs);

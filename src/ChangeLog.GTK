@@ -1,8 +1,15 @@
+2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_new): Make the xemacs widget require a
+	GdkWindow.  This fixes the shrinking window problem for both menus
+	and toolbars.
+
 2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (size_allocate_cb): Rename from resize_event_cb.
 	(gtk_create_widgets): Pass new name to signal callback.  Validate
 	g_signal_connect().
+	(size_allocate_cb): Use FRAME_PIXWIDTH and FRAME_PIXHEIGHT.
 
 	* glyphs-gtk.c (gtk_tab_control_instantiate): Validate
 	g_signal_connect(). 
@@ -16,7 +23,7 @@
 	* scrollbar-gtk.c (gtk_free_scrollbar_instance): Set the widget to
 	zero.  Set the scrollbar_data to zero.
 
-	* lisp.h (XFREE): A macro to frees a pointer and then sets it to
+	* lisp.h (XFREE): A macro that frees a pointer and then sets it to
 	zero.
 
 2010-06-10  Jeff Sparkes  <jsparkes@gmail.com>
