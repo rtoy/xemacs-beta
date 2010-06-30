@@ -642,7 +642,7 @@ gtk_initialize_frame_size (struct frame *f)
 }
 
 static gboolean
-resize_event_cb (GtkWidget *w, GtkAllocation *allocation,
+size_allocate_cb (GtkWidget *w, GtkAllocation *allocation,
 		 gpointer user_data)
 {
   struct frame *f = (struct frame *) user_data;
@@ -677,10 +677,10 @@ size_request_cb (GtkWidget *w, GtkRequisition *req,
 
   debug_out ("frame size request  %d %d\n", req->width, req->height);
 
-  //f->pixwidth = allocation->width;
-  //f->pixheight = allocation->height;
-  req->width  = f->pixwidth;
-  req->height = f->pixheight;
+  // FRAME_PIXWIDTH (f)  = allocation->width;
+  // FRAME_PIXHEIGHT (f)  = allocation->height;
+  req->width  = FRAME_PIXWIDTH (f);
+  req->height = FRAME_PIXHEIGHT (f);
 
   debug_out ("frame size request  %d %d\n", req->width, req->height);
 
@@ -952,7 +952,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   }
 
   assert (g_signal_connect (G_OBJECT (shell), "size-allocate",
-                            GTK_SIGNAL_FUNC (resize_event_cb), f));
+                            GTK_SIGNAL_FUNC (size_allocate_cb), f));
   assert (g_signal_connect (G_OBJECT (shell), "size-request",
                             GTK_SIGNAL_FUNC (size_request_cb), f));
 

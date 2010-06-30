@@ -1,14 +1,31 @@
 2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* gtk-xemacs.c (gtk_xemacs_new): Force gtk-xemacs widget to create
-	a window.  This fixes the shrinking window problem.
+	* emacs-marshals.c (emacs_gtk_marshal_POINTER__BOOL_INT): New
+	marshaller.	
+	(emacs_gtk_marshal_POINTER__POINTER_POINTER): New marshaller.
 
-2010-06-21  Jeff Sparkes  <jsparkes@gmail.com>
+	* ui-gtk.c (import_gtk_flags_internal): Added debug output for gtk
+	flag import.
+	(import_gtk_enumeration_internal): Added debug output for gtk enum
+	import.
+	(Fgtk_import_function_internal): Added debug message on function
+	import success.
+	(Fgtk_import_function_internal): Added debug message about
+	marshaller being used.
+	(Fgtk_call_function): Convert internal arguments to gtk types correctly.
+	(lisp_to_g_value): Convert lisp value to the base fundamental type
+	of requested arguments.  Rename arg to val for better looking code.
 
-	* event-gtk.c (gtk_keysym_to_emacs_keysym):
-	Add GDK_Prior and GDK_Next.
+	* gtk-xemacs.c (gtk_xemacs_new): Make the xemacs widget require a
+	GdkWindow.  This fixes the shrinking window problem for both menus
+	and toolbars.
 
 2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (size_allocate_cb): Rename from resize_event_cb.
+	(gtk_create_widgets): Pass new name to signal callback.  Validate
+	g_signal_connect().
+	(size_allocate_cb): Use FRAME_PIXWIDTH and FRAME_PIXHEIGHT.
 
 	* glyphs-gtk.c (gtk_tab_control_instantiate): Validate
 	g_signal_connect(). 
@@ -22,7 +39,7 @@
 	* scrollbar-gtk.c (gtk_free_scrollbar_instance): Set the widget to
 	zero.  Set the scrollbar_data to zero.
 
-	* lisp.h (XFREE): A macro to frees a pointer and then sets it to
+	* lisp.h (XFREE): A macro that frees a pointer and then sets it to
 	zero.
 
 2010-06-10  Jeff Sparkes  <jsparkes@gmail.com>
