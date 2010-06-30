@@ -1,5 +1,9 @@
 2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* emacs-marshals.c (emacs_gtk_marshal_POINTER__BOOL_INT): New
+	marshaller.	
+	(emacs_gtk_marshal_POINTER__POINTER_POINTER): New marshaller.
+
 	* ui-gtk.c (import_gtk_flags_internal): Added debug output for gtk
 	flag import.
 	(import_gtk_enumeration_internal): Added debug output for gtk enum
