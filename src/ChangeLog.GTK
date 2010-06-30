@@ -1,3 +1,8 @@
+2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_new): Force gtk-xemacs widget to create
+	a window.  This fixes the shrinking window problem.
+
 2010-06-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-gtk.c (gtk_keysym_to_emacs_keysym):
