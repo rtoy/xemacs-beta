@@ -1,5 +1,9 @@
 2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* toolbar-gtk.c (gtk_output_toolbar): Hardwire first four toolbar
+	icons to be the correct gtk stock icons.  This is for demo
+	purposes; this should be done in lisp.
+
 	* menubar-gtk.c (__activate_menu): Use NULL accelerator until I
 	figure out Gtk 2.0 accelerators.  Refactor loop code to avoid continue.
 	(menu_descriptor_to_widget_1): Actually set the label on
