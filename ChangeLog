@@ -1,3 +1,8 @@
+2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac: Make check for pango separate from libgnomeui
+	check.  Define HAVE_PANGO.
+
 2010-04-09  Ben Wing  <ben@xemacs.org>
 
 	* CHANGES-beta:
