@@ -1,3 +1,8 @@
+2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (__activate_menu): Use NULL accelerator until I
+	figure out Gtk 2.0 accelerators.  Refactor loop code to avoid continue.
+
 2010-07-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (menu_convert): Check g_signal_connect with assert.
