@@ -890,6 +890,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 
 	  temp_label = convert_underscores (label_buffer);
 	  main_label = gtk_xemacs_accel_label_new (NULL);
+          gtk_label_set_label (GTK_LABEL (main_label), temp_label);
 	  /* accel_key = */
           gtk_label_set_use_underline (GTK_LABEL (main_label), TRUE);
 	  free (temp_label);
