@@ -432,21 +432,15 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
 	}
       else
 	{
-#ifdef JSPARKES
-	  next = menu_descriptor_to_widget_1 (child,
-					      gtk_menu_ensure_uline_accel_group (GTK_MENU (item->submenu)));
-#else
-          
-#endif
+	  next = menu_descriptor_to_widget_1 (child, NULL);
+          // gtk_menu_ensure_uline_accel_group (GTK_MENU (item->submenu)));
 	}
 
-      if (!next)
-	{
-	  continue;
-	}
-
-      gtk_widget_show_all (next);
-      gtk_menu_append (GTK_MENU (item->submenu), next);
+      if (next)
+        {
+          gtk_widget_show_all (next);
+          gtk_menu_append (GTK_MENU (item->submenu), next);
+        }
     }
 }
 
