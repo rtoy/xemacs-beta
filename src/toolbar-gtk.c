@@ -186,7 +186,7 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 	  
 	  if (IMAGE_INSTANCEP(instance))
 	    {
-              GtkToolItem *item;
+              GtkToolItem *item  = NULL;
 	      GtkWidget *pixmapwid;
 	      GdkPixmap *pixmap;
               GdkBitmap *mask;
@@ -194,16 +194,24 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 
 	      if (STRINGP (tb->help_string))
 		tooltip = XSTRING_DATA (tb->help_string);
-
-              pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
-              mask = XIMAGE_INSTANCE_GTK_MASK (instance);
-	      pixmapwid = gtk_pixmap_new (pixmap, mask);
-
-              item = gtk_tool_button_new (pixmapwid, "");
-
-              /* item = gtk_tool_button_new_from_stock (GTK_STOCK_OPEN); */
-
-	      gtk_toolbar_insert (GTK_TOOLBAR(toolbar), item, -1);
+              
+              if (EQ (tb->callback, intern ("toolbar-open"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_OPEN);
+              else if (EQ (tb->callback, intern ("toolbar-dired"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_DIRECTORY);
+              else if (EQ (tb->callback, intern ("toolbar-save"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_SAVE);
+              else if (EQ (tb->callback, intern ("toolbar-print"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_PRINT);
+              if (item == NULL)
+                {
+                  pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
+                  mask = XIMAGE_INSTANCE_GTK_MASK (instance);
+                  pixmapwid = gtk_pixmap_new (pixmap, mask);
+                  item = gtk_tool_button_new (pixmapwid, ""); 
+                }
+              
+              gtk_toolbar_insert (GTK_TOOLBAR(toolbar), item, -1);
               gtk_tool_item_set_tooltip_text (item,
                                               LISP_STRING_TO_EXTERNAL (tb->help_string, Qctext));
               g_signal_connect (G_OBJECT (item), "clicked",
