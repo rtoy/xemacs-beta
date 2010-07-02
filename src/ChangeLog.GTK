@@ -4,6 +4,7 @@
 	figure out Gtk 2.0 accelerators.  Refactor loop code to avoid continue.
 	(menu_descriptor_to_widget_1): Actually set the label on
 	individual menu items.
+	(menu_descriptor_to_widget_1): Use an explicit separator where required.
 
 2010-07-01  Jeff Sparkes  <jsparkes@gmail.com>
 
