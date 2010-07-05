@@ -1,3 +1,9 @@
+2010-06-05  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* gc.c:
+	* mc-alloc.c:
+	Document the new allocator and the new garbage collector.
+
 2010-06-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console-x-impl.h (DEVICE_X_XFTDRAW): Define, instead of
