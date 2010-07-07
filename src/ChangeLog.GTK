@@ -1,3 +1,10 @@
+2010-07-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-impl.h: If HAVE_GNOME, the top toolbar is outside the text
+	widget.  All measurements of the top toolbar size are returned as
+	zero.   (Now there is an extra line at the bottom of the modeline
+	instead of the top of the text pane.)
+
 2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* toolbar-gtk.c (gtk_output_toolbar): Hardwire first four toolbar
