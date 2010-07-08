@@ -1,5 +1,13 @@
 2010-07-08  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* toolbar-gtk.c (init_gtk_toolbar_stock_icons): Build a hash table
+	of toolbar function to gtk stock icon name.
+	(gtk_output_toolbar): Look in the hash table for the stock icon
+	name, and try to load it. If loading fails, fall back to default
+	toolbar icon.
+	(vars_of_toolbar_gtk): Declare and initialize stock icon hash map
+	variable. 
+
 	* emacs.c (main_1): Call vars_of_toolbar_gtk when appropriate.
 
 	* toolbar-gtk.c (gtk_output_toolbar): Add gtk stock icons for
