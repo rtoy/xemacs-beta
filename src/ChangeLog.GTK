@@ -1,3 +1,8 @@
+2010-07-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Add gtk stock icons for
+	those toolbar buttons that match clearly.
+
 2010-07-07  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-impl.h: If HAVE_GNOME, the top toolbar is outside the text

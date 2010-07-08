@@ -194,7 +194,8 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 
 	      if (STRINGP (tb->help_string))
 		tooltip = XSTRING_DATA (tb->help_string);
-              
+              /* Map toolbar actions to Gtk stock icons.  This mapping should be
+                 done in lisp.   Perhaps using a hashtable. */
               if (EQ (tb->callback, intern ("toolbar-open"))) 
                 item = gtk_tool_button_new_from_stock (GTK_STOCK_OPEN);
               else if (EQ (tb->callback, intern ("toolbar-dired"))) 
@@ -203,6 +204,25 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
                 item = gtk_tool_button_new_from_stock (GTK_STOCK_SAVE);
               else if (EQ (tb->callback, intern ("toolbar-print"))) 
                 item = gtk_tool_button_new_from_stock (GTK_STOCK_PRINT);
+              else if (EQ (tb->callback, intern ("toolbar-cut"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_CUT);
+              else if (EQ (tb->callback, intern ("toolbar-cutt"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_CUT);
+              else if (EQ (tb->callback, intern ("toolbar-copy"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_COPY);
+              else if (EQ (tb->callback, intern ("toolbar-paste"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_PASTE);
+              else if (EQ (tb->callback, intern ("toolbar-ispell"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_SPELL_CHECK);
+              else if (EQ (tb->callback, intern ("toolbar-info"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_DIALOG_QUESTION);
+              else if (EQ (tb->callback, intern ("toolbar-replace"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_FIND_AND_REPLACE);
+              else if (EQ (tb->callback, intern ("toolbar-compile"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_EXECUTE);
+              else if (EQ (tb->callback, intern ("toolbar-undo"))) 
+                item = gtk_tool_button_new_from_stock (GTK_STOCK_UNDO);
+
               if (item == NULL)
                 {
                   pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
