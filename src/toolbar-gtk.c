@@ -26,6 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "elhash.h"
 #include "frame.h"
 #include "frame-impl.h"
 #include "glyphs.h"
@@ -48,7 +49,8 @@ Boston, MA 02111-1307, USA.  */
 #define gtk_redraw_frame_toolbars xlike_redraw_frame_toolbars
 /* #define gtk_clear_frame_toolbars xlike_clear_frame_toolbars */
 
-
+Lisp_Object Vgtk_toolbar_stock_icons;
+
 static void
 gtk_initialize_frame_toolbars (struct frame *UNUSED (f))
 {
@@ -95,7 +97,7 @@ static void
 gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 {
   GtkToolbar *toolbar;
-  Lisp_Object button, window, glyph, instance;
+  Lisp_Object button, window, glyph, instance, stock_icon;
   unsigned int checksum = 0;
   struct window *w;
   int x, y, bar_width, bar_height, vert;
@@ -186,7 +188,7 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 	  
 	  if (IMAGE_INSTANCEP(instance))
 	    {
-              GtkToolItem *item;
+              GtkToolItem *item  = NULL;
 	      GtkWidget *pixmapwid;
 	      GdkPixmap *pixmap;
               GdkBitmap *mask;
@@ -194,16 +196,24 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 
 	      if (STRINGP (tb->help_string))
 		tooltip = XSTRING_DATA (tb->help_string);
-
-              pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
-              mask = XIMAGE_INSTANCE_GTK_MASK (instance);
-	      pixmapwid = gtk_pixmap_new (pixmap, mask);
-
-              item = gtk_tool_button_new (pixmapwid, "");
-
-              /* item = gtk_tool_button_new_from_stock (GTK_STOCK_OPEN); */
-
-	      gtk_toolbar_insert (GTK_TOOLBAR(toolbar), item, -1);
+              /* Map toolbar actions to Gtk stock icons.  This mapping should be
+                 done in lisp.   Perhaps using a hashtable. */
+              stock_icon = Fgethash (tb->callback, Vgtk_toolbar_stock_icons, Qnil);
+              if (!NILP (stock_icon))
+                {
+                  CHECK_STRING (stock_icon);
+                  item = gtk_tool_button_new_from_stock (LISP_STRING_TO_EXTERNAL (stock_icon,
+                                                                                  Qfile_name));
+                }
+              if (item == NULL)
+                {
+                  pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
+                  mask = XIMAGE_INSTANCE_GTK_MASK (instance);
+                  pixmapwid = gtk_pixmap_new (pixmap, mask);
+                  item = gtk_tool_button_new (pixmapwid, ""); 
+                }
+              
+              gtk_toolbar_insert (GTK_TOOLBAR(toolbar), item, -1);
               gtk_tool_item_set_tooltip_text (item,
                                               LISP_STRING_TO_EXTERNAL (tb->help_string, Qctext));
               g_signal_connect (G_OBJECT (item), "clicked",
@@ -245,6 +255,27 @@ gtk_output_frame_toolbars (struct frame *f)
     }
 }
 
+void
+init_gtk_toolbar_stock_icons()
+{
+  Lisp_Object tbl;
+  Vgtk_toolbar_stock_icons = call0 (intern ("make-hash-table"));
+  tbl = Vgtk_toolbar_stock_icons;
+
+  Fputhash (intern ("toolbar-open"), build_ascstring (GTK_STOCK_OPEN),  tbl);
+  Fputhash (intern ("toolbar-dired"), build_ascstring (GTK_STOCK_DIRECTORY),  tbl);
+  Fputhash (intern ("toolbar-save"), build_ascstring (GTK_STOCK_SAVE),  tbl);
+  Fputhash (intern ("toolbar-print"), build_ascstring (GTK_STOCK_PRINT),  tbl);
+  Fputhash (intern ("toolbar-cut"), build_ascstring (GTK_STOCK_CUT),  tbl);
+  Fputhash (intern ("toolbar-copy"), build_ascstring (GTK_STOCK_COPY),  tbl);
+  Fputhash (intern ("toolbar-paste"), build_ascstring (GTK_STOCK_PASTE),  tbl);
+  Fputhash (intern ("toolbar-ispell"), build_ascstring (GTK_STOCK_SPELL_CHECK),  tbl);
+  Fputhash (intern ("toolbar-info"), build_ascstring (GTK_STOCK_DIALOG_QUESTION),  tbl);
+  Fputhash (intern ("toolbar-replace"), build_ascstring (GTK_STOCK_FIND_AND_REPLACE),  tbl);
+  Fputhash (intern ("toolbar-compile"), build_ascstring (GTK_STOCK_EXECUTE),  tbl);
+  Fputhash (intern ("toolbar-undo"), build_ascstring (GTK_STOCK_UNDO),  tbl);
+
+}
 
 
 /************************************************************************/
@@ -266,5 +297,10 @@ console_type_create_toolbar_gtk (void)
 void
 vars_of_toolbar_gtk (void)
 {
+  DEFVAR_LISP ("gtk-toolbar-stock-icons", &Vgtk_toolbar_stock_icons /*
+Map from toolbar function name to Gtk stock icon name for toolbar icons.
+*/);
+  init_gtk_toolbar_stock_icons();
+  
   Fprovide (intern ("toolbar-gtk"));
 }

@@ -1,7 +1,36 @@
+2010-07-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (init_gtk_toolbar_stock_icons): Build a hash table
+	of toolbar function to gtk stock icon name.
+	(gtk_output_toolbar): Look in the hash table for the stock icon
+	name, and try to load it. If loading fails, fall back to default
+	toolbar icon.
+	(vars_of_toolbar_gtk): Declare and initialize stock icon hash map
+	variable. 
+
+	* emacs.c (main_1): Call vars_of_toolbar_gtk when appropriate.
+
+	* toolbar-gtk.c (gtk_output_toolbar): Add gtk stock icons for
+	those toolbar buttons that match clearly.
+
+2010-07-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-impl.h: If HAVE_GNOME, the top toolbar is outside the text
+	widget.  All measurements of the top toolbar size are returned as
+	zero.   (Now there is an extra line at the bottom of the modeline
+	instead of the top of the text pane.)
+
 2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Hardwire first four toolbar
+	icons to be the correct gtk stock icons.  This is for demo
+	purposes; this should be done in lisp.
 
 	* menubar-gtk.c (__activate_menu): Use NULL accelerator until I
 	figure out Gtk 2.0 accelerators.  Refactor loop code to avoid continue.
+	(menu_descriptor_to_widget_1): Actually set the label on
+	individual menu items.
+	(menu_descriptor_to_widget_1): Use an explicit separator where required.
 
 2010-07-01  Jeff Sparkes  <jsparkes@gmail.com>
 
