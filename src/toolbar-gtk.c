@@ -54,7 +54,6 @@ Lisp_Object Vgtk_toolbar_stock_icons;
 static void
 gtk_initialize_frame_toolbars (struct frame *UNUSED (f))
 {
-  stderr_out ("gtk_initialize_frame_toolbars\n");
 }
 
 /* This only calls one function but we go ahead and create this in
@@ -62,7 +61,6 @@ gtk_initialize_frame_toolbars (struct frame *UNUSED (f))
 static void
 gtk_free_frame_toolbars (struct frame *UNUSED (f))
 {
-  stderr_out ("gtk_free_frame_toolbars\n");
 }
 
 static void
