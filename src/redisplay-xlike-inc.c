@@ -1028,10 +1028,10 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   XftDraw *xftDraw;
 
   /* Lazily initialize frame's xftDraw member. */
-  if (!DEVICE_X_XFTDRAW (d)) {
-    DEVICE_X_XFTDRAW (d) = XftDrawCreate (dpy, x_win, visual, cmap);
+  if (!FRAME_X_XFTDRAW (f)) {
+    FRAME_X_XFTDRAW (f) = XftDrawCreate (dpy, x_win, visual, cmap);
   }
-  xftDraw = DEVICE_X_XFTDRAW (d);
+  xftDraw = FRAME_X_XFTDRAW (f);
 
   /* #### This will probably cause asserts when passed a Lisp integer for a
      color.  See ca. line 759 this file.
