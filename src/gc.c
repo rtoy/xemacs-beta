@@ -21,6 +21,318 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* 
+   Garbage Collectors in XEmacs
+
+   Currently, XEmacs comes with two garbage collectors:
+
+   - The "old garbage collector": a simple mark and sweep collector,
+     its implementation is mainly spread out over gc.c and alloc.c.
+     It is used by the default configuration or if you configure
+     `--with-newgc=no'.
+
+   - The "new garbage collector": an incremental mark and sweep collector,
+     its implementation is in gc.c.  It is used if you configure
+     `--with-newgc'.  It comes with a new allocator, see mc-alloc.c, and
+     with the KKCC mark algorith, see below.
+
+   Additionally, the old garbage collectors comes with two mark algorithms:
+
+   - The "recursive mark algorithm" marks live objects by recursively
+     calling mark_* functions on live objects.  It is the default mark 
+     algorithm of the old garbage collector.
+
+   - The "KKCC mark algorithm" uses an explicit stack that to keep
+     track of the current progress of traversal and uses memory layout
+     descriptions (that are also used by the portable dumper) instead
+     of the mark_* functions.  The old garbage collector uses it if
+     you configure `--with-kkcc'.  It is the default and only mark
+     algorithm of the new garbage collector.
+
+
+   The New Incremental Garbage Collector
+
+   An incremental garbage collector keeps garbage collection pause
+   times short by interleaving small amounts of collection work with
+   program execution, it does that by instrumenting write barrier
+   algorithms that essentially allow interrupting the mark phase.
+
+
+   Write Barrier
+
+   A write barrier is the most important prerequisite for fancy
+   garbage collection techniques.  We implement a "Virtual Dirty Bit
+   (short: vdb) Write Barrier" that makes uses of the operating
+   system's memory-protection mechanisms: The write barrier
+   write-protects memory pages containing heap objects.  If the
+   mutator tries to modify these objects by writing into the
+   write-protected page, the operating system generates a fault.  The
+   write barrier catches this fault, reads out the error-causing
+   address and can thus identify the updated object and page.
+
+   Not all environments and operating systems provide the mechanism to
+   write-protect memory, catch resulting write faults, and read out
+   the faulting address.  But luckily, most of today's operating
+   systems provide the features needed for the write-barrier
+   implementation.  Currently, XEmacs includes write-barrier
+   implementations for the following platforms:
+
+   - POSIX-compliant platforms like up-to-date UNIX, Linux, Solaris,
+     etc. use the system call `mprotect' for memory protection,
+     `sigaction' for signal handling and get the faulting address from
+     `struct siginfo'.  See file vdb-posix.c.
+
+  - Mach-based systems like Mac OS X use "Mach Exception Handlers".
+    See file vdb-mach.c.
+
+  - Windows systems like native Windows and Cygwin use Microsoft's
+    so-called "Structured Exception Handling".  See file vdb-win32.c.
+ 
+  The configure script determines which write barrier implementation
+  to use for a system.  If no write barrier implementation is working
+  on that system, a fall-back "fake" implementation is used: This
+  implementation simply turns of the incremental write barrier at
+  runtime and does not allow any incremental collection (see
+  vdb-fake.c).  The garbage collector then acts like a traditional
+  mark-and-sweep garbage collector.  Generally, the incremental
+  garbage collector can be turned of at runtime by the user or by
+  applications, see below.
+   
+   
+  Memory Protection and Object Layout
+
+  Implementations of a memory-protection mechanism may restrict the
+  size and the alignment of the memory region to be on page-size
+  boundaries.  All objects subject to be covered by the write barrier
+  have to be allocated on logical memory pages, so that they meet the
+  requirement to be write-protected.  The new allocator mc-alloc is
+  aware of a system page size---it allocates all Lisp objects on
+  logical memory pages and is therefore defaulted to on when the new
+  garbage collector is enabled.
+
+  Unfortunately, the Lisp object layout that works with the old
+  collector leads to holes in the write barrier: Not all data
+  structures containing pointers to Lisp objects are allocated on the
+  Lisp heap.  Some Lisp objects do not carry all their information in
+  the object itself.  External parts are kept in separately allocated
+  memory blocks that are not managed by the new Lisp allocator.
+  Examples for these objects are hash tables and dynamic arrays, two
+  objects that can dynamically grow and shrink.  The separate memory
+  blocks are not guaranteed to reside on page boundaries, and thus
+  cannot be watched by the write barrier.
+
+  Moreover, the separate parts can contain live pointers to other Lisp
+  objects.  These pointers are not covered by the write barrier and
+  modifications by the client during garbage collection do escape.  In
+  this case, the client changes the connectivity of the reachability
+  graph behind the collector's back, which eventually leads to
+  erroneous collection of live objects.  To solve this problem, I
+  transformed the separately allocated parts to fully qualified Lisp
+  objects that are managed by the allocator and thus are covered by
+  the write barrier.  This also removes a lot of special allocation
+  and removal code for the out-sourced parts.  Generally, allocating
+  all data structures that contain pointers to Lisp objects on one
+  heap makes the whole memory layout more consistent.
+
+
+  Debugging
+
+  The virtual-dirty-bit write barrier provokes signals on purpose,
+  namely SIGSEGV and SIGBUS.  When debugging XEmacs with this write
+  barrier running, the debugger always breaks whenever a signal
+  occurs.  This behavior is generally desired: A debugger has to break
+  on signals, to allow the user to examine the cause of the
+  signal---especially for illegal memory access, which is a common
+  programming error.  But the debugger should not break for signals
+  caused by the write barrier.  Therefore, most debuggers provide the
+  ability to turn of their fault handling for specific signals.  The
+  configure script generates the debugger's settings .gdbinit and
+  .dbxrc, adding code to turn of signal handling for SIGSEGV and
+  SIGBUS, if the new garbage collector is used.
+
+  But what happens if a bug in XEmacs causes an illegal memory access?
+  To maintain basic debugging abilities, we use another signal: First,
+  the write-barrier signal handler has to determine if the current
+  error situation is caused by the write-barrier memory protection or
+  not.  Therefore, the signal handler checks if the faulting address
+  has been write-protected before.  If it has not, the fault is caused
+  by a bug; the debugger has to break in this situation.  To achieve
+  this, the signal handler raises SIGABRT to abort the program.  Since
+  SIGABRT is not masked out by the debugger, XEmacs aborts and allows
+  the user to examine the problem.
+
+
+  Incremental Garbage Collection
+
+  The new garbage collector is still a mark-and-sweep collector, but
+  now the mark phase no longer runs in one atomic action, it is
+  interleaved with program execution.  The incremental garbage
+  collector needs an explicit mark stack to store the state of the
+  incremental traversal: the KKCC mark algorithm is a prerequisite and
+  is enabled by default when the new garbage collector is on.
+
+  Garbage collection is invoked as before: After `gc-cons-threshold'
+  bytes have been allocated since the last garbage collection (or
+  after `gc-cons-percentage' percentage of the total amount of memory
+  used for Lisp data has been allocated since the last garbage
+  collection) a collection starts.  After some initialization, the
+  marking begins.
+
+  The variable `gc-incremental-traversal-threshold' contains how many
+  steps of incremental work have to be executed in one incremental
+  traversal cycle.  After that many steps have been made, the mark
+  phase is interrupted and the client resumes.  Now, the Lisp memory
+  is write-protected and the write barrier records modified objects.
+  Incremental traversal is resumed after
+  `gc-cons-incremental-threshold' bytes have been allocated since the
+  interruption of garbage collection.  Then, the objects recorded by
+  the write-barrier have to be re-examined by the traversal, i.e. they
+  are re-pushed onto the mark stack and processed again.  Once the
+  mark stack is empty, the traversal is done.
+
+  A full incremental collection is slightly slower than a full garbage
+  collection before: There is an overhead for storing pointers into
+  objects when the write barrier is running, and an overhead for
+  repeated traversal of modified objects.  However, the new
+  incremental garbage collector reduces client pause times to
+  one-third, so even when a garbage collection is running, XEmacs
+  stays reactive.
+
+
+  Tricolor Marking: White, Black, and Grey Mark Bits
+
+  Garbage collection traverses the graph of reachable objects and
+  colors them. The objects subject to garbage collection are white at
+  the beginning. By the end of the collection, those that will be
+  retained are colored black. When there are no reachable objects left
+  to blacken, the traversal of live data structures is finished. In
+  traditional mark-and-sweep collectors, this black and white coloring
+  is sufficient.
+
+  In an incremental collector, the intermediate state of the traversal
+  is im- portant because of ongoing mutator activity: the mutator
+  cannot be allowed to change things in such way that the collector
+  will fail to find all reachable objects. To understand and prevent
+  such interactions between the mutator and the collector, it is
+  useful to introduce a third color, grey.
+
+  Grey objects have been reached by the traversal, but its descendants
+  may not have been. White objects are changed to grey when they are
+  reached by the traversal. Grey objects mark the current state of the
+  traversal: traversal pro- ceeds by processing the grey objects. The
+  KKCC mark stack holds all the currently grey-colored objects.
+  Processing a grey object means following its outgoing pointers, and
+  coloring it black afterwards.
+
+  Intuitively, the traversal proceeds in a wavefront of grey objects
+  that separates the unreached objects, which are colored white, from
+  the already processed black objects.
+
+  The allocator takes care of storing the mark bits: The mark bits are
+  kept in a tree like structure, for details see mc-alloc.c.
+
+
+  Internal States of the Incremental Garbage Collector
+
+  To keep track of its current state, the collector holds it's current
+  phase in the global `gc_state' variable.  A collector phase is one
+  of the following:
+
+  NONE  No incremental or full collection is currently running.
+
+  INIT_GC  The collector prepares for a new collection, e.g. sets some
+    global variables.
+
+  PUSH_ROOT_SET  The collector pushes the root set on the mark stack 
+    to start the traversal of live objects.
+
+  MARK   The traversal of live objects colors the reachable objects
+    white, grey, or black, according to their lifeness.  The mark
+    phase can be interrupted by the incremental collection algorithm:
+    Before the client (i.e. the non collector part of XEmacs) resumes,
+    the write barrier has to be installed so that the collector knows
+    what objects get modified during the collector's pause.
+    Installing a write barrier means protecting pages that only
+    contain black objects and recording write access to these objects.
+    Pages with white or grey objects do not need to be protected,
+    since these pages are due to marking anyways when the collector
+    resumes.  Once the collector resumes, it has to re-scan all
+    objects that have been modified during the collector pause and
+    have been caught by the write barrier.  The mark phase is done when
+    there are no more grey objects on the heap, i.e. the KKCC mark stack
+    is empty.
+
+  REPUSH_ROOT_SET  After the mark phase is done, the collector has to 
+    traverse the root set pointers again, since modifications to the
+    objects in the root set can not all be covered by the write barrier
+    (e.g. root set objects that are on the call stack).  Therefore, the
+    collector has to traverse the root set again without interruption.
+
+  FINISH_MARK  After the mark phase is finished, some objects with
+    special liveness semantics have to be treated separately, e.g.
+    ephemerons and the various flavors of weak objects.
+
+  FINALIZE  The collector registers all objects that have finalizers
+    for finalization.  Finalizations happens asynchronously sometimes
+    after the collection has finished.
+
+  SWEEP  The allocator scans the entire heap and frees all white marked
+    objects. The freed memory is recycled and can be re-used for future
+    allocations. The sweep phase is carried out atomically.
+
+  FINISH_GC  The collector cleans up after the garbage collection by
+    resetting some global variables.
+
+
+  Lisp Interface
+
+  The new garbage collector can be accessed directly from Emacs Lisp.
+  Basically, two functions invoke the garbage collector:
+
+  (gc-full) starts a full garbage collection.  If an incremental
+    garbage collection is already running, it is finished without
+    further interruption.  This function guarantees that unused
+    objects have been freed when it returns.
+
+  (gc-incremental) starts an incremental garbage collection.  If an
+    incremental garbage collection is already running, the next cycle
+    of incremental traversal is started.  The garbage collection is
+    finished if the traversal completes.  Note that this function does
+    not necessarily free any memory.  It only guarantees that the
+    traversal of the heap makes progress.
+
+  The old garbage collector uses the function (garbage-collect) to
+  invoke a garbage collection.  This function is still in use by some
+  applications that explicitly want to invoke a garbage collection.
+  Since these applications may expect that unused memory has really
+  been freed when (garbage-collect) returns, it maps to (gc-full).
+
+  The new garbage collector is highly customizable during runtime; it
+  can even be switched back to the traditional mark-and-sweep garbage
+  collector: The variable allow-incremental-gc controls whether
+  garbage collections may be interrupted or if they have to be carried
+  out in one atomic action.  Setting allow-incremental-gc to nil
+  prevents incremental garbage collection, and the garbage collector
+  then only does full collects, even if (gc-incremental) is called.
+  Non-nil allows incremental garbage collection.
+
+  This way applications can freely decide what garbage collection
+  algorithm is best for the upcoming memory usage.  How frequently a
+  garbage collection occurs and how much traversal work is done in one
+  incremental cycle can also be modified during runtime.  See
+
+    M-x customize RET alloc RET
+
+  for an overview of all settings.
+
+
+  More Information
+
+  More details can be found in
+  http://crestani.de/xemacs/pdf/thesis-newgc.pdf .
+
+*/
+
 #include <config.h>
 #include "lisp.h"
 
@@ -50,8 +362,14 @@ Boston, MA 02111-1307, USA.  */
 #include "vdb.h"
 
 
+/* Number of bytes of consing since gc before a full gc should happen. */
 #define GC_CONS_THRESHOLD                  2000000
+
+/* Number of bytes of consing since gc before another cycle of the gc
+   should happen in incremental mode. */
 #define GC_CONS_INCREMENTAL_THRESHOLD       200000
+
+/* Number of elements marked in one cycle of incremental GC. */
 #define GC_INCREMENTAL_TRAVERSAL_THRESHOLD  100000
 
 /* Number of bytes of consing done since the last GC. */
