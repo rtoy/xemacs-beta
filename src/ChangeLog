@@ -1,3 +1,9 @@
+2010-06-05  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* gc.c:
+	* mc-alloc.c:
+	Document the new allocator and the new garbage collector.
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* elhash.c:
