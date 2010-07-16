@@ -1,3 +1,7 @@
+2010-07-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_create_widgets): Fix warnings.
+
 2010-06-22  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console-x-impl.h (struct x_device): Move XftDraw from here.

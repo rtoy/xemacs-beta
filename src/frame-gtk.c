@@ -695,7 +695,7 @@ size_request_cb (GtkWidget *w, GtkRequisition *req,
 }
 
 static gboolean
-delete_event_cb (GtkWidget *w, GdkEvent *UNUSED (ev),
+delete_event_cb (GtkWidget *UNUSED (w), GdkEvent *UNUSED (ev),
 		 gpointer user_data)
 {
     struct frame *f = (struct frame *) user_data;
@@ -915,9 +915,11 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
     }
 #endif /* HAVE_MENUBARS */
 
+#ifdef HAVE_GNOME
   if (GNOME_IS_APP (shell))
     gnome_app_set_contents (GNOME_APP (shell), text);
   else
+#endif
     /* Now comes the drawing area, which should fill the rest of the
     ** frame completely.
     */
