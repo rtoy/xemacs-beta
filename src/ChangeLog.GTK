@@ -1,3 +1,9 @@
+2010-07-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Use activate signal
+	instead of activate-item when add an accelerator or else Gtk gives
+	a warning.
+
 2010-07-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* toolbar-gtk.c (init_gtk_toolbar_stock_icons): Build a hash table
