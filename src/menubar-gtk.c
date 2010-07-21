@@ -1029,7 +1029,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
           
 	  if (accel_group)
 	    gtk_widget_add_accelerator (widget,
-					(gchar *)"activate_item",
+					(gchar *)"activate",
 					accel_group,
 					accel_key,
                                         (GdkModifierType)0,
