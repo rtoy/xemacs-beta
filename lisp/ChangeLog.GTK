@@ -1,5 +1,14 @@
 2010-07-22  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-password-dialog.el (gtk-password-dialog-new): Update to Gtk
+	2.0 dialog functions.
+
+	* gtk-file-dialog.el (gtk-file-dialog-new): Update to Gtk 2.0
+	dialog functions.
+
+	* dialog-gtk.el (popup-builtin-question-dialog): Update to Gtk 2.0
+	dialog functions.
+
 	* gtk-widgets.el: Import gtk-dialog functions.
 
 2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
