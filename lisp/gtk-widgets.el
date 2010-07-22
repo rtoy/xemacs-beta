@@ -596,8 +596,33 @@
 
 (gtk-import-function GType gtk_dialog_get_type)
 (gtk-import-function GtkWidget gtk_dialog_new)
-
-
+(gtk-import-function gint gtk_dialog_run
+                     GtkDialog)
+(gtk-import-function nil gtk_dialog_response
+                     GtkDialog gint)
+(gtk-import-function nil gtk_dialog_add_button
+                     GtkDialog gchararray gint)
+(gtk-import-function nil gtk_dialog_add_action_widget
+                     GtkDialog GtkWidget gint)
+(gtk-import-function gboolean gtk_dialog_get_has_separator
+                     GtkDialog)
+(gtk-import-function nil gtk_dialog_set_default_response
+                     GtkDialog gint)
+(gtk-import-function nil gtk_dialog_set_has_separator
+                     GtkDialog gboolean)
+(gtk-import-function nil gtk_dialog_set_response_sensitive
+                     GtkDialog gint gboolean)
+(gtk-import-function GtkWidget gtk_dialog_get_response_for_widget
+                     GtkDialog GtkWidget)
+(gtk-import-function GtkWidget gtk_dialog_get_widget_for_response
+                     GtkDialog gint)
+(gtk-import-function GtkWidget gtk_dialog_get_action_area
+                     GtkDialog)
+(gtk-import-function GtkWidget gtk_dialog_get_content_area
+                     GtkDialog)
+;;;(gtk-import-function gboolean gtk_alternative_dialog_button_order
+;;;                     GdkScreen)
+                     
 (gtk-import-function GType gtk_drawing_area_get_type)
 (gtk-import-function GtkWidget gtk_drawing_area_new)
 (gtk-import-function nil gtk_drawing_area_size GtkDrawingArea gint gint)

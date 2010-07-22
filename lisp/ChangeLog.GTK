@@ -1,7 +1,10 @@
+2010-07-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el: Import gtk-dialog functions.
+
 2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-marshal.el (find-file): Add two more sets of args for marshalling.
-
 2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-widgets.el: import new GtkNotebook functions.
