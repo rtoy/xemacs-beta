@@ -1,3 +1,9 @@
+2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test a couple of things #'reduce was just made more careful
+	about.
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gtk/event-stream-tests.el:

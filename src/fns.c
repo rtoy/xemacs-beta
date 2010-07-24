@@ -65,6 +65,12 @@ Lisp_Object Vpath_separator;
 static int internal_old_equal (Lisp_Object, Lisp_Object, int);
 Lisp_Object safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth);
 
+static DOESNT_RETURN
+mapping_interaction_error (Lisp_Object func, Lisp_Object object)
+{
+  invalid_state_2 ("object modified while traversing it", func, object);
+}
+
 static Lisp_Object
 mark_bit_vector (Lisp_Object UNUSED (obj))
 {
@@ -4995,21 +5001,31 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
               starting++;
               startp = XSTRING_DATA (sequence);
               cursor = startp + cursor_offset;
+
+              if (byte_len != XSTRING_LENGTH (sequence)
+                  || !valid_ibyteptr_p (cursor))
+                {
+                  mapping_interaction_error (Qreduce, sequence);
+                }
+
               INC_IBYTEPTR (cursor);
               cursor_offset = cursor - startp;
             }
 
           while (cursor_offset < byte_len && starting < ending)
             {
-              if (cursor_offset > XSTRING_LENGTH (sequence))
+              accum = call2 (function, accum, 
+                             KEY (key, make_char (itext_ichar (cursor))));
+
+	      startp = XSTRING_DATA (sequence);
+	      cursor = startp + cursor_offset;
+
+              if (byte_len != XSTRING_LENGTH (sequence)
+                  || !valid_ibyteptr_p (cursor))
                 {
-                  invalid_state ("sequence modified during reduce", sequence);
+                  mapping_interaction_error (Qreduce, sequence);
                 }
 
-              startp = XSTRING_DATA (sequence);
-              cursor = startp + cursor_offset;
-              accum = call2 (function, accum,
-                             KEY (key, make_char (itext_ichar (cursor))));
               INC_IBYTEPTR (cursor);
               cursor_offset = cursor - startp;
               ++starting;
@@ -5018,7 +5034,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
       else
         {
           Elemcount len = string_char_length (sequence);
-          Bytecount cursor_offset;
+          Bytecount cursor_offset, byte_len = XSTRING_LENGTH (sequence);
           const Ibyte *cursor;
 
           ending = min (ending, len);
@@ -5035,6 +5051,13 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
               ending--;
               if (ending > 0)
                 {
+		  cursor = XSTRING_DATA (sequence) + cursor_offset;
+
+                  if (!valid_ibyteptr_p (cursor))
+                    {
+                      mapping_interaction_error (Qreduce, sequence);
+                    }
+
                   DEC_IBYTEPTR (cursor);
                   cursor_offset = cursor - XSTRING_DATA (sequence);
                 }
@@ -5042,18 +5065,19 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 
           for (ii = ending - 1; ii >= starting; --ii)
             {
-              if (cursor_offset > XSTRING_LENGTH (sequence))
-                {
-                  invalid_state ("sequence modified during reduce", sequence);
-                }
-
-              cursor = XSTRING_DATA (sequence) + cursor_offset;
               accum = call2 (function, KEY (key,
                                             make_char (itext_ichar (cursor))),
                              accum);
-              if (ii > 1)
+              if (ii > 0)
                 {
                   cursor = XSTRING_DATA (sequence) + cursor_offset;
+
+                  if (byte_len != XSTRING_LENGTH (sequence)
+                      || !valid_ibyteptr_p (cursor))
+                    {
+                      mapping_interaction_error (Qreduce, sequence);
+                    }
+
                   DEC_IBYTEPTR (cursor);
                   cursor_offset = cursor - XSTRING_DATA (sequence);
                 }
@@ -5064,6 +5088,11 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
     {
       if (NILP (from_end))
         {
+	  struct gcpro gcpro1;
+	  Lisp_Object tailed = Qnil;
+
+	  GCPRO1 (tailed);
+
           if (!UNBOUNDP (initial_value))
             {
               accum = initial_value;
@@ -5073,6 +5102,9 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
               Elemcount counting = 0;
               EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
                 {
+		  /* KEY may amputate the list behind us; make sure what
+		     remains to be processed is still reachable.  */
+		  tailed = tail;
                   if (counting == starting)
                     {
                       accum = KEY (key, elt);
@@ -5089,6 +5121,10 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 
               EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
                 {
+		  /* KEY or FUNCTION may amputate the list behind us; make
+		     sure what remains to be processed is still
+		     reachable.  */
+		  tailed = tail;
                   if (counting >= starting)
                     {
                       if (counting < ending)
@@ -5103,6 +5139,8 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
                   ++counting;
                 }
             }
+
+	  UNGCPRO;
         }
       else
         {

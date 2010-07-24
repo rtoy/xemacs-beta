@@ -2341,4 +2341,37 @@ via the hepatic alpha-tocopherol transfer protein")))
 	       (gethash hashed-bignum hashing))
 	      "checking hashing works correctly with #'eql tests and bignums"))))
 
+;; 
+(when (decode-char 'ucs #x0192)
+  (Check-Error
+   invalid-state
+   (let ((str "aaaaaaaaaaaaa")
+	 (called 0)
+	 modified)
+     (reduce #'+ str
+	     :key #'(lambda (object)
+		      (prog1
+			  object
+			(incf called) 
+			(or modified
+			    (and (> called 5)
+				 (setq modified
+				       (fill str (read #r"?\u0192")))))))))))
+
+(Assert
+ (eql 55
+      (let ((sequence '(1 2 3 4 5 6 7 8 9 10))
+	    (called 0)
+	    modified)
+	(reduce #'+
+		sequence
+		:key
+		#'(lambda (object) (prog1
+				       object
+				     (incf called)
+				     (and (eql called 5)
+					  (setcdr (nthcdr 3 sequence) nil))
+				     (garbage-collect))))))
+ "checking we can amputate lists without crashing #'reduce")
+
 ;;; end of lisp-tests.el

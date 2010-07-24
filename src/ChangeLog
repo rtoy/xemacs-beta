@@ -1,3 +1,21 @@
+2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS):
+	Always accept a nil :allow-other-keys keyword argument, as
+	described in the ALLOW-OTHER-KEYS-NIL Common Lisp issue writeup,
+	and as necessary for Paul Dietz' tests for #'reduce.
+
+	* fns.c (mapping_interaction_error): New.
+	(Freduce): Call mapping_interaction_error when KEY or FUNCTION
+	have modified a string SEQUENCE such that the byte length of the
+	string has changed, or such that the current cursor pointer
+	doesn't point to the beginning of a character.
+	Cf. the MAPPING-DESTRUCTIVE-INTERACTION Common Lisp issue
+	writeup.
+	When traversing a list, GCPRO the part of it we still have to
+	traverse, to avoid any crashes if FUNCTION or KEY amputate it
+	behind us and force a garbage collection.
+
 2010-06-05  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* gc.c:
