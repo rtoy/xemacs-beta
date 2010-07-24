@@ -392,6 +392,7 @@ If STATE is t, return a new state object seeded from the time of day."
     (vector (apply 'vconcat seqs))
     (string (apply 'concat seqs))
     (list   (apply 'append (append seqs '(nil))))
+    (bit-vector (apply 'bvconcat seqs))
     (t (error 'invalid-argument "Not a sequence type name" type))))
 
 ;;; List functions.
