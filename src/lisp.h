@@ -3577,9 +3577,18 @@ extern MODULE_API int specpdl_depth_counter;
             {                                                           \
               continue;                                                 \
             }                                                           \
-          else if (!(pk_allow_other_keys                                \
-                     = non_nil_allow_other_keys_p (keywords_offset,     \
-                                                   nargs, args)))       \
+          else if ((pk_allow_other_keys                                 \
+                    = non_nil_allow_other_keys_p (keywords_offset,      \
+                                                  nargs, args)))        \
+            {                                                           \
+              continue;                                                 \
+            }                                                           \
+          else if (EQ (pk_key, Q_allow_other_keys) &&                   \
+                   NILP (pk_value))                                     \
+            {                                                           \
+              continue;                                                 \
+            }                                                           \
+          else                                                          \
             {                                                           \
               invalid_keyword_argument (function, pk_key);              \
             }                                                           \
