@@ -1,3 +1,12 @@
+2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (concatenate):
+	* cl-seq.el (remove*, cl-delete-duplicates):
+	Bit vectors are also sequences; enforce this in these functions.
+	* cl-macs.el (concatenate):
+	If TYPE is constant, don't inline #'concatenate, replace it by a
+	call to the appropriate C functions.
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gnome.el:

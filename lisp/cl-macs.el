@@ -3751,6 +3751,16 @@ the byte optimizer in those cases."
                                     :test #'equal))
         ,stack-depth))))
 
+(define-compiler-macro concatenate (&whole form type &rest seqs)
+  (if (and (cl-const-expr-p type) (memq (cl-const-expr-val type)
+                                        '(vector bit-vector list string)))
+      (case (cl-const-expr-val type)
+        (list (append (list 'append) (cddr form) '(nil)))
+        (vector (cons 'vconcat (cddr form)))
+        (bit-vector (cons 'bvconcat (cddr form)))
+        (string (cons 'concat (cddr form))))
+    form))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)

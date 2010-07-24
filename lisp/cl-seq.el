@@ -215,8 +215,11 @@ instead of the beginning; in this case, this matters only if :count is given."
 						 (list :end (1+ cl-i))
 					       (list :start cl-i))
 					     cl-keys))))
-		  (if (listp cl-seq) cl-res
-		    (if (stringp cl-seq) (concat cl-res) (vconcat cl-res))))
+                  (typecase cl-seq
+                    (list cl-res)
+                    (string (concat cl-res))
+                    (vector (vconcat cl-res))
+                    (bit-vector (bvconcat cl-res))))
 	      cl-seq))
 	(setq cl-end (- (or cl-end 8000000) cl-start))
 	(if (= cl-start 0)
@@ -382,7 +385,10 @@ See `remove*' for the meaning of the keywords."
 	      (setq cl-end (1- cl-end) cl-start (1+ cl-start)))
 	    cl-seq)))
     (let ((cl-res (cl-delete-duplicates (append cl-seq nil) cl-keys nil)))
-      (if (stringp cl-seq) (concat cl-res) (vconcat cl-res)))))
+      (typecase cl-seq
+        (string (concat cl-res))
+        (vector (vconcat cl-res))
+        (bit-vector (bvconcat cl-res))))))
 
 (defun substitute (cl-new cl-old cl-seq &rest cl-keys)
   "Substitute NEW for OLD in SEQ.
