@@ -47,7 +47,19 @@ typedef struct {
 
 DECLARE_LISP_OBJECT (emacs_ffi, emacs_ffi_data);
 
+#define FFI_RETURN_TYPE(d) ((d)->return_type)
+#define FFI_ARG_TYPE(d, n) ((d)->arg_type[(n)])
+#define FFI_N_ARGS(d) ((d)->n_args)
+#define FFI_FUNCTION_NAME(d) ((d)->function_name)
+#define FFI_FUNCTION_PTR(d) ((d)->function_ptr)
+#define FFI_MARSHAL(d) ((d)->marshal)
 #define XFFI(x) XRECORD (x, emacs_ffi, emacs_ffi_data)
+#define XFFI_RETURN_TYPE(x) (XFFI (x)->return_type)
+#define XFFI_ARG_TYPE(x, n) (XFFI (x)->arg_type[(n)])
+#define XFFI_N_ARGS(x) (XFFI (x)->n_args)
+#define XFFI_FUNCTION_NAME(x) (XFFI (x)->function_name)
+#define XFFI_FUNCTION_PTR(x) (XFFI(x)->function_ptr)
+#define XFFI_MARSHAL(x) (XFFI(x)->marshal)
 #define wrap_emacs_ffi(p) wrap_record (p, emacs_ffi)
 #define FFIP(x) RECORDP (x, emacs_ffi)
 #define CHECK_FFI(x) CHECK_RECORD (x, emacs_ffi)
