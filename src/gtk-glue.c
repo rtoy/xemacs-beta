@@ -88,7 +88,7 @@ xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
   {
     SAFE_LIST_LOOP_2 (elt, obj)
       {
-        GValue tmp, *copy;
+        GValue tmp, *copy = NULL;
         lisp_to_g_value (elt, &tmp);
         g_value_copy (&tmp, copy);/* leak XXX */
         g_value_array_append (array, copy);
@@ -175,7 +175,7 @@ __make_string_mapper (gpointer data, gpointer user_data)
 }
 
 static Lisp_Object
-xemacs_gtklist_to_list (GType *arg)
+xemacs_gtklist_to_list (GType *UNUSED(arg))
 {
   Lisp_Object rval = Qnil;
 #if 0
