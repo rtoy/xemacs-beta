@@ -1,5 +1,9 @@
 2010-07-27  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.h (FFI_RETURN_TYPE): Define accessor macros for FFI types.
+
+	* ui-gtk.c (Fgtk_signal_connect): Use new accesor macros.
+
 	* gtk-glue.c (xemacs_list_to_gtklist): Initialize variable to
 	fix warning.
 
