@@ -1,7 +1,7 @@
 2010-07-27  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-glue.c (xemacs_list_to_gtklist): Initialize variable to
-	avoid warning.
+	fix warning.
 
 2010-07-21  Jeff Sparkes  <jsparkes@gmail.com>
 
