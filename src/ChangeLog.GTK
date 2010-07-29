@@ -1,3 +1,14 @@
+2010-07-29  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c: Remove dockable_menubar and tear_off_menus
+	variables. Remove TEAR_OFF_MENUS ifdefed code.
+	(__maybe_destroy): Remove tear off menus check.
+	(__activate_menu): Remove tear off menu initialization.  Remove
+	dockable menu initialization.
+	(reinit_vars_of_menubar_gtk): No variables to initialize.
+	(vars_of_menubar_gtk):  Remove DEFVAR of
+	menubar-dockable-p and menubar-tearable-p.
+
 2010-07-28  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Remove
