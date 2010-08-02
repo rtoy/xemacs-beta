@@ -151,7 +151,9 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
     else
         gtk_orientable_set_orientation ((GtkOrientable *)toolbar,
                                         GTK_ORIENTATION_VERTICAL);
+    gtk_toolbar_set_icon_size (GTK_TOOLBAR (toolbar), GTK_ICON_SIZE_SMALL_TOOLBAR);
     gtk_toolbar_set_show_arrow ((GtkToolbar *)toolbar, TRUE);
+    /* gtk_container_set_resize_mode (GTK_CONTAINER (toolbar), GTK_RESIZE_IMMEDIATE); */
   }
 
   /* if (NILP (w->toolbar_buttons_captioned_p)) */

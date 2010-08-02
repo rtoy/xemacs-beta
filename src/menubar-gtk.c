@@ -279,14 +279,6 @@ gtk_xemacs_set_accel_keys(GtkXEmacsAccelLabel* l, Lisp_Object keys)
 
 /* We now return you to your regularly scheduled menus... */
 
-int dockable_menubar;
-
-/* #define TEAR_OFF_MENUS */
-
-#ifdef TEAR_OFF_MENUS
-int tear_off_menus;
-#endif
-
 
 /* Converting from XEmacs to GTK representation */
 static Lisp_Object
@@ -310,42 +302,13 @@ menu_name_to_accelerator (Ibyte *name)
 
 static void __activate_menu(GtkMenuItem *, gpointer);
 
-#ifdef TEAR_OFF_MENUS
-static void
-__torn_off_sir(GtkMenuItem *UNUSED (item), gpointer user_data)
-{
-  GtkWidget *menu_item = GTK_WIDGET (user_data);
-
-  if (GTK_TEAROFF_MENU_ITEM (item)->torn_off)
-    {
-      /* Menu was just torn off */
-      GUI_ID id = new_gui_id ();
-      Lisp_Object menu_desc = Qnil;
-      GtkWidget *old_submenu = GTK_MENU_ITEM (menu_item)->submenu;
-
-      menu_desc = GET_LISP_FROM_VOID (g_object_get_qdata (G_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG));
-
-      /* GCPRO all of our very own */
-      gcpro_popup_callbacks (id, menu_desc);
-
-      /* Hide the now detached menu from the attentions of
-         __activate_menu destroying the old submenu */
-#if 0
-      gtk_widget_ref (old_submenu);
-      gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_item), gtk_menu_new ());
-      gtk_widget_show_all (old_submenu);
-#endif
-    }
-}
-#endif
-
 /* This is called when a menu is about to be shown... this is what
    does the delayed creation of the menu items.  We populate the
    submenu and away we go. */
 static void
 __maybe_destroy (GtkWidget *child, GtkWidget *UNUSED (precious))
 {
-  if (GTK_IS_MENU_ITEM (child) && !GTK_IS_TEAROFF_MENU_ITEM (child))
+  if (GTK_IS_MENU_ITEM (child))
     {
       if (GTK_WIDGET_VISIBLE (child))
 	{
@@ -389,17 +352,6 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
     }
 
   desc = GET_LISP_FROM_VOID (g_object_get_qdata (G_OBJECT (item), XEMACS_MENU_DESCR_TAG));
-
-#ifdef TEAR_OFF_MENUS
-  /* Lets stick in a detacher just for giggles */
-  if (tear_off_menus && !gtk_container_children (GTK_CONTAINER (item->submenu)))
-  {
-    GtkWidget *w = gtk_tearoff_menu_item_new ();
-    gtk_widget_show (w);
-    gtk_menu_append (GTK_MENU (item->submenu), w);
-    g_signal_connect (G_OBJECT (w), "activate", GTK_SIGNAL_FUNC (__torn_off_sir), item);
-  }
-#endif
 
   if (user_data)
     {
@@ -1221,17 +1173,7 @@ create_menubar_widget (struct frame *f)
     }
   else
 #endif
-    if (dockable_menubar)
-    {
-      handlebox = gtk_handle_box_new ();
-      gtk_handle_box_set_handle_position (GTK_HANDLE_BOX (handlebox), GTK_POS_LEFT);
-      gtk_container_add (GTK_CONTAINER (handlebox), menubar);
-      gtk_box_pack_start (GTK_BOX (FRAME_GTK_CONTAINER_WIDGET (f)), handlebox, FALSE, FALSE, 0);
-    }
-  else
-    {
-      gtk_box_pack_start (GTK_BOX (FRAME_GTK_CONTAINER_WIDGET (f)), menubar, FALSE, FALSE, 0);
-    }
+    gtk_box_pack_start (GTK_BOX (FRAME_GTK_CONTAINER_WIDGET (f)), menubar, FALSE, FALSE, 0);
 
   assert (g_signal_connect (G_OBJECT (menubar), "button-press-event",
                             GTK_SIGNAL_FUNC (run_menubar_hook), NULL));
@@ -1481,24 +1423,12 @@ console_type_create_menubar_gtk (void)
 void
 reinit_vars_of_menubar_gtk (void)
 {
-  dockable_menubar = 1;
-#ifdef TEAR_OFF_MENUS
-  tear_off_menus = 1;
-#endif
 }
 
 void
 vars_of_menubar_gtk (void)
 {
   Fprovide (intern ("gtk-menubars"));
-  DEFVAR_BOOL ("menubar-dockable-p", &dockable_menubar /*
-If non-nil, the frame menubar can be detached into its own top-level window.
-*/ );
-#ifdef TEAR_OFF_MENUS
-  DEFVAR_BOOL ("menubar-tearable-p", &tear_off_menus /*
-If non-nil, menus can be torn off into their own top-level windows.
-*/ );
-#endif
 }
 
 /*---------------------------------------------------------------------------*/
