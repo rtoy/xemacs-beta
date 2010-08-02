@@ -366,7 +366,7 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string_lisp (printcharfun, "#<ffi %S", 1, XFFI_FUNCTION_NAME (obj));
   if (XFFI_N_ARGS (obj))
     write_fmt_string (printcharfun, " %d arguments", XFFI_N_ARGS (obj));
-  write_fmt_string (printcharfun, " %0x>", (void *)XFFI_FUNCTION_PTR (obj));
+  write_fmt_string (printcharfun, " 0x%0x>", (void *)XFFI_FUNCTION_PTR (obj));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("ffi", emacs_ffi,

@@ -1,5 +1,7 @@
 2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (ffi_object_printer): Add 0x prefix to FFI pointer print.
+
 	* emacs-marshals.c: Generate with new GType variable instead of
 	using deprecated GtkArg.
 
