@@ -3,7 +3,32 @@
 	* emacs-marshals.c: Generate with new GType variable instead of
 	using deprecated GtkArg.
 
+2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Use small toolbar icons.
+
+2010-07-29  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c: Remove dockable_menubar and tear_off_menus
+	variables. Remove TEAR_OFF_MENUS ifdefed code.
+	(__maybe_destroy): Remove tear off menus check.
+	(__activate_menu): Remove tear off menu initialization.  Remove
+	dockable menu initialization.
+	(reinit_vars_of_menubar_gtk): No variables to initialize.
+	(vars_of_menubar_gtk):  Remove DEFVAR of
+	menubar-dockable-p and menubar-tearable-p.
+
+2010-07-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Remove
+	workaround for setting scrollbar size. Gtk 2.21.2 actively warns
+	when resizing to current size.
+
 2010-07-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.h (FFI_RETURN_TYPE): Define accessor macros for FFI types.
+
+	* ui-gtk.c (Fgtk_signal_connect): Use new accesor macros.
 
 	* gtk-glue.c (xemacs_list_to_gtklist): Initialize variable to
 	fix warning.

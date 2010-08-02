@@ -333,11 +333,11 @@ allocate_ffi_data (void)
   Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (emacs_ffi);
   emacs_ffi_data *data = XFFI (obj);
 
-  data->return_type = G_TYPE_NONE;
-  data->n_args = 0;
-  data->function_name = Qnil;
-  data->function_ptr = 0;
-  data->marshal = 0;
+  FFI_RETURN_TYPE (data) = G_TYPE_NONE;
+  FFI_N_ARGS (data) = 0;
+  FFI_FUNCTION_NAME (data) = Qnil;
+  FFI_FUNCTION_PTR (data) = 0;
+  FFI_MARSHAL (data) = 0;
 
   return (data);
 }
@@ -350,9 +350,9 @@ static const struct memory_description ffi_data_description [] = {
 static Lisp_Object
 mark_ffi_data (Lisp_Object obj)
 {
-  emacs_ffi_data *data = (emacs_ffi_data *) XFFI (obj);
+  /* emacs_ffi_data *data = (emacs_ffi_data *) XFFI (obj); */
 
-  mark_object (data->function_name);
+  mark_object (XFFI_FUNCTION_NAME (obj));
   return (Qnil);
 }
 
@@ -363,10 +363,10 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string_lisp (printcharfun, "#<ffi %S", 1, XFFI (obj)->function_name);
-  if (XFFI (obj)->n_args)
-    write_fmt_string (printcharfun, " %d arguments", XFFI (obj)->n_args);
-  write_fmt_string (printcharfun, " %p>", (void *)XFFI (obj)->function_ptr);
+  write_fmt_string_lisp (printcharfun, "#<ffi %S", 1, XFFI_FUNCTION_NAME (obj));
+  if (XFFI_N_ARGS (obj))
+    write_fmt_string (printcharfun, " %d arguments", XFFI_N_ARGS (obj));
+  write_fmt_string (printcharfun, " %0x>", (void *)XFFI_FUNCTION_PTR (obj));
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("ffi", emacs_ffi,
@@ -693,10 +693,10 @@ Import a function into the XEmacs namespace.
 
 	  /* All things must be reduced to their basest form... */
 	  import_gtk_type (the_type);
-	  data->arg_type[n_args] = the_type;
+	  FFI_ARG_TYPE (data, n_args) = the_type;
 
 	  /* Now lets build up another chunk of our marshaller function name */
-	  marshaller_type = type_to_marshaller_type (data->arg_type[n_args]);
+	  marshaller_type = type_to_marshaller_type (FFI_ARG_TYPE (data, n_args));
 
 	  if (NILP (marshaller_type))
 	    {
@@ -712,16 +712,17 @@ Import a function into the XEmacs namespace.
     }
 
   rettype = Fsymbol_name (rettype);
-  data->return_type = g_type_from_name ((char *) XSTRING_DATA (rettype));
+  FFI_RETURN_TYPE (data) = g_type_from_name ((char *) XSTRING_DATA (rettype));
 
-  if (data->return_type == G_TYPE_INVALID)
+  if (FFI_RETURN_TYPE (data) == G_TYPE_INVALID)
     {
       invalid_argument ("Unknown return type", rettype);
     }
 
-  import_gtk_type (data->return_type);
+  import_gtk_type (FFI_RETURN_TYPE (data));
 
-  marshaller = concat3 (type_to_marshaller_type (data->return_type), build_ascstring ("_"), marshaller);
+  marshaller = concat3 (type_to_marshaller_type (FFI_RETURN_TYPE (data)),
+                        build_ascstring ("_"), marshaller);
   marshaller = concat2 (build_ascstring ("emacs_gtk_marshal_"), marshaller);
 
   marshaller_func = (ffi_marshalling_function) find_marshaller ((char *) XSTRING_DATA (marshaller));
@@ -736,10 +737,10 @@ Import a function into the XEmacs namespace.
       stderr_out("Using marshaller %s\n", XSTRING_DATA(marshaller));
     }
 #endif
-  data->n_args = n_args;
-  data->function_name = name;
-  data->function_ptr = (dll_func) name_func;
-  data->marshal = marshaller_func;
+  FFI_N_ARGS (data) = n_args;
+  FFI_FUNCTION_NAME (data) = name;
+  FFI_FUNCTION_PTR (data) = (dll_func) name_func;
+  FFI_MARSHAL (data) = marshaller_func;
 
   rval = wrap_emacs_ffi (data);
   return (rval);
@@ -765,12 +766,12 @@ Call an external function.
   ** #### slip by, and not be very easy to find.
   ** #### Bill Perry July 9, 2000
   */
-  if (n_args != XFFI(func)->n_args)
+  if (n_args != XFFI_N_ARGS (func))
     {
       Lisp_Object for_append[3];
 
       /* Signal an error if they pass in too many arguments */
-      if (n_args > XFFI(func)->n_args)
+      if (n_args > XFFI_N_ARGS (func))
 	{
 	  return Fsignal (Qwrong_number_of_arguments,
 			  list2 (func, make_int (n_args)));
@@ -780,12 +781,12 @@ Call an external function.
       ** they wanted `nil' in there.
       */
       for_append[0] = args;
-      for_append[1] = Fmake_list (make_int (XFFI(func)->n_args - n_args), Qnil);
+      for_append[1] = Fmake_list (make_int (XFFI_N_ARGS (func) - n_args), Qnil);
 
       args = Fappend (2, for_append);
     }
 #else
-  if (n_args != XFFI(func)->n_args)
+  if (n_args != XFFI_N_ARGS (func))
     {
       /* Signal an error if they do not pass in the correct # of arguments */
       return Fsignal (Qwrong_number_of_arguments,
@@ -805,7 +806,7 @@ Call an external function.
       {
         EXTERNAL_LIST_LOOP_2 (elt, value)
           {
-            g_value_init (&the_args[n_args], XFFI(func)->arg_type[n_args]);
+            g_value_init (&the_args[n_args], XFFI_ARG_TYPE (func, n_args));
             if (lisp_to_g_value (elt, &the_args[n_args]))
               {
                 /* There was some sort of an error */
@@ -818,14 +819,14 @@ Call an external function.
 
   /* Now we need to tack on space for a return value, if they have
      asked for one */
-  if (XFFI (func)->return_type != G_TYPE_NONE)
+  if (XFFI_RETURN_TYPE (func) != G_TYPE_NONE)
     {
       n_args++;
     }
 
-  //XFFI (func)->marshal ((ffi_actual_function) (XFFI (func)->function_ptr), the_args);
+  //XFFI_MARSHAL (func) ((ffi_actual_function) (XFFI_FUNCTION_PTR  (func), the_args));
 
-  if (XFFI (func)->return_type != G_TYPE_NONE)
+  if (XFFI_RETURN_TYPE (func) != G_TYPE_NONE)
     {
       //CONVERT_RETVAL (the_args[n_args - 1], 1);
       //retval = g_type_to_lisp (&the_args[n_args - 1]);
