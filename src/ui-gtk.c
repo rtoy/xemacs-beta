@@ -581,7 +581,6 @@ Import a variable into the XEmacs namespace.
 
   initialize_dll_cache ();
   xemacs_init_gtk_classes ();
-  g_type_init();
 
   arg.value_type = g_type_from_name ((char *) XSTRING_DATA (type));
 
@@ -622,12 +621,6 @@ Import a function into the XEmacs namespace.
   Lisp_Object marshaller = Qnil;
   emacs_ffi_data *data = NULL;
   gint n_args = 0;
-  static int initialized = 0;
-
-  if (initialized == 0) {
-    g_type_init();
-    initialized = 1;
-  }
 #if 0
   dll_handle h = NULL;
 #endif
