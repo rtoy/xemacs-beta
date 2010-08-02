@@ -1,3 +1,9 @@
+2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-marshal.el (name-to-return-type): return fundamental C types
+	for mapping.
+	(define-marshaller): Use GType instead of deprecated GtkArg.
+
 2010-07-22  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-password-dialog.el (gtk-password-dialog-new): Update to Gtk

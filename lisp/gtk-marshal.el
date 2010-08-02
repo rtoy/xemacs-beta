@@ -18,15 +18,16 @@
 ;; To regenerate ../src/emacs-marshals.c just load this file.
 ;;
 (defconst name-to-return-type
-  '(("INT" . "gint")
-    ("CALLBACK" . "GtkCallback")
-    ("OBJECT" . "GtkObject *")
-    ("POINTER" . "void *")
-    ("STRING" . "gchar *")
-    ("BOOL" . "gboolean")
-    ("DOUBLE" . "gdouble")
-    ("FLOAT" . "gfloat")
-    ("LIST"  . "void *")
+  '(("INT" . "int")
+    ("CALLBACK" . "pointer")
+    ("OBJECT" . "object")
+    ("POINTER" . "pointer")
+    ("STRING" . "string")
+    ("BOOL" . "boolean")
+    ("DOUBLE" . "double")
+    ("FLOAT" . "float")
+    ("LIST"  . "pointer")
+    ("ARRAY" . "pointer")
     ("NONE" . nil)))
 
 (defvar defined-marshallers nil)
@@ -50,24 +51,25 @@
     (set-buffer (get-buffer-create "emacs-marshals.c"))
     (goto-char (point-max))
 
-    (if (or (member "FLOAT" args) (member "DOUBLE" args))
-	;; We need to special case anything with FLOAT in the argument
-	;; list or the parameters get screwed up royally.
-	(progn
-	  (setq func-proto (concat (format "__%s__" rval)
-				   (mapconcat 'identity args "_")
-				   "_fn"))
-	  (insert "typedef "
-		  (or (cdr internal-rval) "void")
-		  " (*"
-		  func-proto ")("
-		  (mapconcat (lambda (x)
-			       (cdr (assoc x name-to-return-type))) args ", ")
-		  ");\n")))
+    (and nil
+         (if (or (member "FLOAT" args) (member "DOUBLE" args))
+             ;; We need to special case anything with FLOAT in the argument
+             ;; list or the parameters get screwed up royally.
+             (progn
+               (setq func-proto (concat (format "__%s__" rval)
+                                        (mapconcat 'identity args "_")
+                                        "_fn"))
+               (insert "typedef "
+                       (or (cdr internal-rval) "void")
+                       " (*"
+                       func-proto ")("
+                       (mapconcat (lambda (x)
+                                    (cdr (assoc x name-to-return-type))) args ", ")
+                       ");\n"))))
 
     (insert "\n"
 	    "static void\n"
-	    name " (ffi_actual_function func, GtkArg *args)\n"
+	    name " (ffi_actual_function func, GValue *args)\n"
 	    "{\n"
 	    (format "  %s rfunc = (%s) func;\n" func-proto func-proto))
 
@@ -75,17 +77,25 @@
 
     (if (cdr internal-rval)
 	;; It has a return type to worry about
-	(insert "  " (cdr internal-rval) " *return_val;\n\n"
-		(format "  return_val = GTK_RETLOC_%s (args[%d]);\n" rval (length args))
-		"  *return_val = ")
+	(insert
+         ;;; "  " (cdr internal-rval) " *return_val;\n\n"
+         ;;; (format "  return_val = GTK_RETLOC_%s (args[%d]);\n"
+         ;;;        rval (length args))
+         (format "  g_value_set_%s (&args[%d], "
+                 (cdr internal-rval)
+                 (length args)))
       (insert "  "))
-    (insert "(*rfunc) (")
+    (insert "\n    (*rfunc) (")
     (while args
       (if (/= ctr 0)
-	  (insert ", "))
-      (insert (format "GTK_VALUE_%s (args[%d])" (car args) ctr))
+	  (insert ",\n      "))
+      (insert (format "g_value_get_%s (&args[%d])"
+                      (cdr (assoc (car args) name-to-return-type))
+                      ctr))
       (setq args (cdr args)
 	    ctr (1+ ctr)))
+    (when (cdr internal-rval)
+      (insert "\n    )"))                     ; close g_value_set
     (insert ");\n")
     (insert "}\n")))
 
@@ -262,8 +272,8 @@
 		("POINTER" "POINTER")
        		("POINTER" "STRING")
 		("POINTER" "STRING" "INT")
-                		("POINTER")
-                		("POINTER" "POINTER" "POINTER")
+                ("POINTER")
+                ("POINTER" "POINTER" "POINTER")
 		("STRING" "INT" "INT" "INT")
 		("STRING" "INT")
 		("STRING" "OBJECT" "BOOL")
@@ -288,7 +298,7 @@ static void initialize_marshaller_storage (void)
 {
 	if (!marshaller_hashtable)
 	{
-		marshaller_hashtable = make_string_hash_table (100);
+		marshaller_hashtable = make_string_hash_table (200);
 ")
     
     (mapc (lambda (x)
