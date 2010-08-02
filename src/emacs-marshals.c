@@ -9,346 +9,377 @@ static void
 emacs_gtk_marshal_BOOL__OBJECT_INT (ffi_actual_function func, GValue *args)
 {
   __BOOL_fn rfunc = (__BOOL_fn) func;
-  g_value_set_boolean (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_BOOLEAN);
+  g_value_set_boolean (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_BOOL__OBJECT_OBJECT_OBJECT (ffi_actual_function func, GValue *args)
 {
   __BOOL_fn rfunc = (__BOOL_fn) func;
-  g_value_set_boolean (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_BOOLEAN);
+  g_value_set_boolean (&args[3],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
-      g_value_get_object (&args[2])
-    ));
+      g_value_get_object (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_BOOL__OBJECT_OBJECT (ffi_actual_function func, GValue *args)
 {
   __BOOL_fn rfunc = (__BOOL_fn) func;
-  g_value_set_boolean (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_BOOLEAN);
+  g_value_set_boolean (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_object (&args[1])
-    ));
+      g_value_get_object (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_BOOL__OBJECT_POINTER (ffi_actual_function func, GValue *args)
 {
   __BOOL_fn rfunc = (__BOOL_fn) func;
-  g_value_set_boolean (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_BOOLEAN);
+  g_value_set_boolean (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_pointer (&args[1])
-    ));
+      g_value_get_pointer (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_BOOL__OBJECT_STRING (ffi_actual_function func, GValue *args)
 {
   __BOOL_fn rfunc = (__BOOL_fn) func;
-  g_value_set_boolean (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_BOOLEAN);
+  g_value_set_boolean (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_string (&args[1])
-    ));
+      g_value_get_string (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_BOOL__OBJECT (ffi_actual_function func, GValue *args)
 {
   __BOOL_fn rfunc = (__BOOL_fn) func;
-  g_value_set_boolean (&args[1], 
-    (*rfunc) (g_value_get_object (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_BOOLEAN);
+  g_value_set_boolean (&args[1],
+    (*rfunc) (g_value_get_object (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_BOOL__POINTER_BOOL (ffi_actual_function func, GValue *args)
 {
   __BOOL_fn rfunc = (__BOOL_fn) func;
-  g_value_set_boolean (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_BOOLEAN);
+  g_value_set_boolean (&args[2],
     (*rfunc) (g_value_get_pointer (&args[0]),
-      g_value_get_boolean (&args[1])
-    ));
+      g_value_get_boolean (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_BOOL__POINTER (ffi_actual_function func, GValue *args)
 {
   __BOOL_fn rfunc = (__BOOL_fn) func;
-  g_value_set_boolean (&args[1], 
-    (*rfunc) (g_value_get_pointer (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_BOOLEAN);
+  g_value_set_boolean (&args[1],
+    (*rfunc) (g_value_get_pointer (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_BOOL__NONE (ffi_actual_function func, GValue *args)
 {
   __BOOL_fn rfunc = (__BOOL_fn) func;
-  g_value_set_boolean (&args[0], 
-    (*rfunc) (
-    ));
+
+  g_value_init (&args[0], G_TYPE_BOOLEAN);
+  g_value_set_boolean (&args[0],
+    (*rfunc) ());
 }
 
 static void
 emacs_gtk_marshal_FLOAT__OBJECT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __FLOAT_fn rfunc = (__FLOAT_fn) func;
-  g_value_set_float (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_FLOAT);
+  g_value_set_float (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_float (&args[1])
-    ));
+      g_value_get_float (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_FLOAT__OBJECT (ffi_actual_function func, GValue *args)
 {
   __FLOAT_fn rfunc = (__FLOAT_fn) func;
-  g_value_set_float (&args[1], 
-    (*rfunc) (g_value_get_object (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_FLOAT);
+  g_value_set_float (&args[1],
+    (*rfunc) (g_value_get_object (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_INT__BOOL (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[1], 
-    (*rfunc) (g_value_get_boolean (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_INT);
+  g_value_set_int (&args[1],
+    (*rfunc) (g_value_get_boolean (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_ARRAY (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_INT);
+  g_value_set_int (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_pointer (&args[1])
-    ));
+      g_value_get_pointer (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_INT_ARRAY (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_INT);
+  g_value_set_int (&args[3],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
-      g_value_get_pointer (&args[2])
-    ));
+      g_value_get_pointer (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_INT);
+  g_value_set_int (&args[3],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
-      g_value_get_int (&args[2])
-    ));
+      g_value_get_int (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_INT_STRING (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_INT);
+  g_value_set_int (&args[3],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
-      g_value_get_string (&args[2])
-    ));
+      g_value_get_string (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_INT (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_INT);
+  g_value_set_int (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_OBJECT (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_INT);
+  g_value_set_int (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_object (&args[1])
-    ));
+      g_value_get_object (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_POINTER_INT_INT (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[4], 
+
+  g_value_init (&args[4], G_TYPE_INT);
+  g_value_set_int (&args[4],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
-      g_value_get_int (&args[3])
-    ));
+      g_value_get_int (&args[3])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_POINTER_INT (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_INT);
+  g_value_set_int (&args[3],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
-      g_value_get_int (&args[2])
-    ));
+      g_value_get_int (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_POINTER (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_INT);
+  g_value_set_int (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_pointer (&args[1])
-    ));
+      g_value_get_pointer (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT_STRING (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_INT);
+  g_value_set_int (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_string (&args[1])
-    ));
+      g_value_get_string (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_INT__OBJECT (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[1], 
-    (*rfunc) (g_value_get_object (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_INT);
+  g_value_set_int (&args[1],
+    (*rfunc) (g_value_get_object (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_INT__POINTER_INT (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_INT);
+  g_value_set_int (&args[2],
     (*rfunc) (g_value_get_pointer (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_INT__POINTER_STRING_INT (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_INT);
+  g_value_set_int (&args[3],
     (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_string (&args[1]),
-      g_value_get_int (&args[2])
-    ));
+      g_value_get_int (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_INT__POINTER_STRING_STRING (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_INT);
+  g_value_set_int (&args[3],
     (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_string (&args[1]),
-      g_value_get_string (&args[2])
-    ));
+      g_value_get_string (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_INT__POINTER_STRING (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_INT);
+  g_value_set_int (&args[2],
     (*rfunc) (g_value_get_pointer (&args[0]),
-      g_value_get_string (&args[1])
-    ));
+      g_value_get_string (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_INT__POINTER (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[1], 
-    (*rfunc) (g_value_get_pointer (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_INT);
+  g_value_set_int (&args[1],
+    (*rfunc) (g_value_get_pointer (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_INT__STRING_STRING_INT_ARRAY (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[4], 
+
+  g_value_init (&args[4], G_TYPE_INT);
+  g_value_set_int (&args[4],
     (*rfunc) (g_value_get_string (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_int (&args[2]),
-      g_value_get_pointer (&args[3])
-    ));
+      g_value_get_pointer (&args[3])));
 }
 
 static void
 emacs_gtk_marshal_INT__STRING (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[1], 
-    (*rfunc) (g_value_get_string (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_INT);
+  g_value_set_int (&args[1],
+    (*rfunc) (g_value_get_string (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_INT__NONE (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  g_value_set_int (&args[0], 
-    (*rfunc) (
-    ));
+
+  g_value_init (&args[0], G_TYPE_INT);
+  g_value_set_int (&args[0],
+    (*rfunc) ());
 }
 
 static void
 emacs_gtk_marshal_LIST__OBJECT (ffi_actual_function func, GValue *args)
 {
   __LIST_fn rfunc = (__LIST_fn) func;
-  g_value_set_pointer (&args[1], 
-    (*rfunc) (g_value_get_object (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_POINTER);
+  g_value_set_pointer (&args[1],
+    (*rfunc) (g_value_get_object (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_LIST__NONE (ffi_actual_function func, GValue *args)
 {
   __LIST_fn rfunc = (__LIST_fn) func;
-  g_value_set_pointer (&args[0], 
-    (*rfunc) (
-    ));
+
+  g_value_init (&args[0], G_TYPE_POINTER);
+  g_value_set_pointer (&args[0],
+    (*rfunc) ());
 }
 
 static void
 emacs_gtk_marshal_NONE__BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_boolean (&args[0]));
+   (*rfunc) (g_value_get_boolean (&args[0]));
 }
 
 static void
 emacs_gtk_marshal_NONE__INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_int (&args[0]),
+   (*rfunc) (g_value_get_int (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]));
@@ -358,8 +389,7 @@ static void
 emacs_gtk_marshal_NONE__INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_int (&args[0]),
+   (*rfunc) (g_value_get_int (&args[0]),
       g_value_get_int (&args[1]));
 }
 
@@ -367,16 +397,14 @@ static void
 emacs_gtk_marshal_NONE__INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_int (&args[0]));
+   (*rfunc) (g_value_get_int (&args[0]));
 }
 
 static void
 emacs_gtk_marshal_NONE__OBJECT_BOOL_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_boolean (&args[1]),
       g_value_get_int (&args[2]));
 }
@@ -385,8 +413,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_boolean (&args[1]));
 }
 
@@ -394,8 +421,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_FLOAT_FLOAT_FLOAT_BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_float (&args[1]),
       g_value_get_float (&args[2]),
       g_value_get_float (&args[3]),
@@ -406,8 +432,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_FLOAT_FLOAT_FLOAT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_float (&args[1]),
       g_value_get_float (&args[2]),
       g_value_get_float (&args[3]),
@@ -418,8 +443,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_FLOAT_FLOAT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_float (&args[1]),
       g_value_get_float (&args[2]),
       g_value_get_float (&args[3]));
@@ -429,8 +453,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_FLOAT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_float (&args[1]),
       g_value_get_float (&args[2]));
 }
@@ -439,8 +462,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_float (&args[1]));
 }
 
@@ -448,8 +470,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_boolean (&args[2]));
 }
@@ -458,8 +479,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_FLOAT_BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_float (&args[2]),
       g_value_get_boolean (&args[3]));
@@ -469,8 +489,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_float (&args[2]));
 }
@@ -479,8 +498,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_ARRAY_ARRAY_ARRAY_ARRAY_ARRAY_ARRAY (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_pointer (&args[3]),
@@ -495,8 +513,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_ARRAY (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_pointer (&args[3]));
@@ -506,8 +523,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_FLOAT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_float (&args[3]),
@@ -518,8 +534,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]),
@@ -530,8 +545,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]));
@@ -541,8 +555,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_pointer (&args[3]),
@@ -553,8 +566,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_pointer (&args[3]));
@@ -564,8 +576,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_STRING_INT_POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_string (&args[3]),
@@ -578,8 +589,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_string (&args[3]));
@@ -589,8 +599,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]));
 }
@@ -599,8 +608,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_OBJECT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_object (&args[2]));
 }
@@ -609,8 +617,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_pointer (&args[2]));
 }
@@ -619,8 +626,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_string (&args[2]));
 }
@@ -629,8 +635,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]));
 }
 
@@ -638,8 +643,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_LIST_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]));
 }
@@ -648,8 +652,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_LIST (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]));
 }
 
@@ -657,8 +660,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_BOOL_BOOL_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_boolean (&args[2]),
       g_value_get_boolean (&args[3]),
@@ -670,8 +672,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_BOOL_BOOL_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_boolean (&args[2]),
       g_value_get_boolean (&args[3]),
@@ -682,8 +683,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_BOOL_BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_boolean (&args[2]),
       g_value_get_boolean (&args[3]));
@@ -693,8 +693,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_FLOAT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_float (&args[2]),
       g_value_get_int (&args[3]));
@@ -704,8 +703,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_INT_INT_INT_INT_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]),
@@ -721,8 +719,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]),
@@ -734,8 +731,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]),
@@ -746,8 +742,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]));
@@ -757,8 +752,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_int (&args[2]));
 }
@@ -767,8 +761,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_OBJECT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_object (&args[2]),
       g_value_get_int (&args[3]));
@@ -778,8 +771,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_OBJECT_OBJECT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_object (&args[2]),
       g_value_get_object (&args[3]),
@@ -790,8 +782,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_OBJECT_OBJECT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_object (&args[2]),
       g_value_get_object (&args[3]));
@@ -801,8 +792,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_OBJECT_POINTER_POINTER_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_object (&args[2]),
       g_value_get_pointer (&args[3]),
@@ -815,8 +805,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_OBJECT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_object (&args[2]));
 }
@@ -825,8 +814,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_pointer (&args[2]));
 }
@@ -835,8 +823,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_STRING_INT_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_string (&args[2]),
       g_value_get_int (&args[3]),
@@ -850,8 +837,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_STRING_STRING_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_string (&args[2]),
       g_value_get_string (&args[3]),
@@ -862,8 +848,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_STRING_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_string (&args[2]),
       g_value_get_string (&args[3]));
@@ -873,8 +858,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]),
       g_value_get_string (&args[2]));
 }
@@ -883,8 +867,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_object (&args[1]));
 }
 
@@ -892,8 +875,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_boolean (&args[2]));
 }
@@ -902,8 +884,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_INT_FLOAT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_float (&args[3]),
@@ -914,8 +895,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]),
@@ -926,8 +906,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]));
@@ -937,8 +916,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_INT_POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_pointer (&args[3]),
@@ -949,8 +927,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_INT_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_pointer (&args[3]));
@@ -960,8 +937,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_INT_STRING_INT_POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_string (&args[3]),
@@ -974,8 +950,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_INT_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_string (&args[3]));
@@ -985,8 +960,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]));
 }
@@ -995,8 +969,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_POINTER_INT_INT_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_pointer (&args[2]),
       g_value_get_int (&args[3]),
@@ -1011,8 +984,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_POINTER_POINTER_STRING_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_pointer (&args[2]),
       g_value_get_pointer (&args[3]),
@@ -1024,8 +996,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_pointer (&args[2]),
       g_value_get_pointer (&args[3]));
@@ -1035,8 +1006,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_pointer (&args[2]));
 }
@@ -1045,8 +1015,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_STRING_INT_POINTER_POINTER_POINTER_POINTER_BOOL_BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_string (&args[2]),
       g_value_get_int (&args[3]),
@@ -1062,8 +1031,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]));
 }
 
@@ -1071,8 +1039,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_STRING_BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_boolean (&args[2]));
 }
@@ -1081,8 +1048,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_STRING_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]),
@@ -1093,8 +1059,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_STRING_POINTER_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_pointer (&args[2]),
       g_value_get_int (&args[3]),
@@ -1106,8 +1071,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_STRING_POINTER_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_pointer (&args[2]),
       g_value_get_int (&args[3]),
@@ -1118,8 +1082,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_STRING_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_string (&args[2]));
 }
@@ -1128,8 +1091,7 @@ static void
 emacs_gtk_marshal_NONE__OBJECT_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]),
+   (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_string (&args[1]));
 }
 
@@ -1137,16 +1099,14 @@ static void
 emacs_gtk_marshal_NONE__OBJECT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_object (&args[0]));
+   (*rfunc) (g_value_get_object (&args[0]));
 }
 
 static void
 emacs_gtk_marshal_NONE__POINTER_BOOL (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_boolean (&args[1]));
 }
 
@@ -1154,8 +1114,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_int (&args[2]));
 }
@@ -1164,8 +1123,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_int (&args[1]));
 }
 
@@ -1173,8 +1131,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_POINTER_BOOL_INT_INT_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_boolean (&args[2]),
       g_value_get_int (&args[3]),
@@ -1189,8 +1146,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_POINTER_BOOL_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_boolean (&args[2]),
       g_value_get_int (&args[3]),
@@ -1203,8 +1159,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_POINTER_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]),
@@ -1216,8 +1171,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_POINTER_INT_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]));
@@ -1227,8 +1181,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_POINTER_POINTER_INT_INT_STRING_INT (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_pointer (&args[2]),
       g_value_get_int (&args[3]),
@@ -1241,8 +1194,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_POINTER_POINTER_INT_INT_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_pointer (&args[2]),
       g_value_get_int (&args[3]),
@@ -1254,8 +1206,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_POINTER_POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_pointer (&args[2]),
       g_value_get_pointer (&args[3]));
@@ -1265,8 +1216,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_pointer (&args[1]));
 }
 
@@ -1274,8 +1224,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_STRING_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_string (&args[2]));
 }
@@ -1284,8 +1233,7 @@ static void
 emacs_gtk_marshal_NONE__POINTER_STRING (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]),
+   (*rfunc) (g_value_get_pointer (&args[0]),
       g_value_get_string (&args[1]));
 }
 
@@ -1293,414 +1241,450 @@ static void
 emacs_gtk_marshal_NONE__POINTER (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) (g_value_get_pointer (&args[0]));
+   (*rfunc) (g_value_get_pointer (&args[0]));
 }
 
 static void
 emacs_gtk_marshal_NONE__NONE (ffi_actual_function func, GValue *args)
 {
   __NONE_fn rfunc = (__NONE_fn) func;
-  
-    (*rfunc) ();
+   (*rfunc) ();
 }
 
 static void
 emacs_gtk_marshal_OBJECT__BOOL_BOOL_INT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_OBJECT);
+  g_value_set_object (&args[3],
     (*rfunc) (g_value_get_boolean (&args[0]),
       g_value_get_boolean (&args[1]),
-      g_value_get_int (&args[2])
-    ));
+      g_value_get_int (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__BOOL_INT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_boolean (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__FLOAT_FLOAT_FLOAT_FLOAT_FLOAT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[6], 
+
+  g_value_init (&args[6], G_TYPE_OBJECT);
+  g_value_set_object (&args[6],
     (*rfunc) (g_value_get_float (&args[0]),
       g_value_get_float (&args[1]),
       g_value_get_float (&args[2]),
       g_value_get_float (&args[3]),
       g_value_get_float (&args[4]),
-      g_value_get_float (&args[5])
-    ));
+      g_value_get_float (&args[5])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__FLOAT_FLOAT_FLOAT_FLOAT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[5], 
+
+  g_value_init (&args[5], G_TYPE_OBJECT);
+  g_value_set_object (&args[5],
     (*rfunc) (g_value_get_float (&args[0]),
       g_value_get_float (&args[1]),
       g_value_get_float (&args[2]),
       g_value_get_float (&args[3]),
-      g_value_get_float (&args[4])
-    ));
+      g_value_get_float (&args[4])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__FLOAT_FLOAT_FLOAT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[4], 
+
+  g_value_init (&args[4], G_TYPE_OBJECT);
+  g_value_set_object (&args[4],
     (*rfunc) (g_value_get_float (&args[0]),
       g_value_get_float (&args[1]),
       g_value_get_float (&args[2]),
-      g_value_get_float (&args[3])
-    ));
+      g_value_get_float (&args[3])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__INT_ARRAY (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_int (&args[0]),
-      g_value_get_pointer (&args[1])
-    ));
+      g_value_get_pointer (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__INT_BOOL_BOOL (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_OBJECT);
+  g_value_set_object (&args[3],
     (*rfunc) (g_value_get_int (&args[0]),
       g_value_get_boolean (&args[1]),
-      g_value_get_boolean (&args[2])
-    ));
+      g_value_get_boolean (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__INT_INT_ARRAY (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_OBJECT);
+  g_value_set_object (&args[3],
     (*rfunc) (g_value_get_int (&args[0]),
       g_value_get_int (&args[1]),
-      g_value_get_pointer (&args[2])
-    ));
+      g_value_get_pointer (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__INT_INT_BOOL (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_OBJECT);
+  g_value_set_object (&args[3],
     (*rfunc) (g_value_get_int (&args[0]),
       g_value_get_int (&args[1]),
-      g_value_get_boolean (&args[2])
-    ));
+      g_value_get_boolean (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__INT_INT_STRING (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_OBJECT);
+  g_value_set_object (&args[3],
     (*rfunc) (g_value_get_int (&args[0]),
       g_value_get_int (&args[1]),
-      g_value_get_string (&args[2])
-    ));
+      g_value_get_string (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__INT_INT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_int (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__INT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[1], 
-    (*rfunc) (g_value_get_int (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_OBJECT);
+  g_value_set_object (&args[1],
+    (*rfunc) (g_value_get_int (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__OBJECT_FLOAT_INT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_OBJECT);
+  g_value_set_object (&args[3],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_float (&args[1]),
-      g_value_get_int (&args[2])
-    ));
+      g_value_get_int (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__OBJECT_INT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__OBJECT_OBJECT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_object (&args[1])
-    ));
+      g_value_get_object (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__OBJECT_STRING_INT_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[7], 
+
+  g_value_init (&args[7], G_TYPE_OBJECT);
+  g_value_set_object (&args[7],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]),
       g_value_get_int (&args[4]),
       g_value_get_int (&args[5]),
-      g_value_get_int (&args[6])
-    ));
+      g_value_get_int (&args[6])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__OBJECT_STRING_INT_INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[6], 
+
+  g_value_init (&args[6], G_TYPE_OBJECT);
+  g_value_set_object (&args[6],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_int (&args[2]),
       g_value_get_int (&args[3]),
       g_value_get_int (&args[4]),
-      g_value_get_int (&args[5])
-    ));
+      g_value_get_int (&args[5])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__OBJECT_STRING_INT_INT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[4], 
+
+  g_value_init (&args[4], G_TYPE_OBJECT);
+  g_value_set_object (&args[4],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_int (&args[2]),
-      g_value_get_int (&args[3])
-    ));
+      g_value_get_int (&args[3])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__OBJECT_STRING (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_string (&args[1])
-    ));
+      g_value_get_string (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__OBJECT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[1], 
-    (*rfunc) (g_value_get_object (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_OBJECT);
+  g_value_set_object (&args[1],
+    (*rfunc) (g_value_get_object (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_pointer (&args[0]),
-      g_value_get_pointer (&args[1])
-    ));
+      g_value_get_pointer (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__POINTER_STRING (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_pointer (&args[0]),
-      g_value_get_string (&args[1])
-    ));
+      g_value_get_string (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__POINTER (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[1], 
-    (*rfunc) (g_value_get_pointer (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_OBJECT);
+  g_value_set_object (&args[1],
+    (*rfunc) (g_value_get_pointer (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__STRING_FLOAT_FLOAT_FLOAT_BOOL (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[5], 
+
+  g_value_init (&args[5], G_TYPE_OBJECT);
+  g_value_set_object (&args[5],
     (*rfunc) (g_value_get_string (&args[0]),
       g_value_get_float (&args[1]),
       g_value_get_float (&args[2]),
       g_value_get_float (&args[3]),
-      g_value_get_boolean (&args[4])
-    ));
+      g_value_get_boolean (&args[4])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__STRING_INT_STRING_STRING (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[4], 
+
+  g_value_init (&args[4], G_TYPE_OBJECT);
+  g_value_set_object (&args[4],
     (*rfunc) (g_value_get_string (&args[0]),
       g_value_get_int (&args[1]),
       g_value_get_string (&args[2]),
-      g_value_get_string (&args[3])
-    ));
+      g_value_get_string (&args[3])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__STRING_OBJECT (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_string (&args[0]),
-      g_value_get_object (&args[1])
-    ));
+      g_value_get_object (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__STRING_STRING_STRING_ARRAY_STRING_STRING (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[6], 
+
+  g_value_init (&args[6], G_TYPE_OBJECT);
+  g_value_set_object (&args[6],
     (*rfunc) (g_value_get_string (&args[0]),
       g_value_get_string (&args[1]),
       g_value_get_string (&args[2]),
       g_value_get_pointer (&args[3]),
       g_value_get_string (&args[4]),
-      g_value_get_string (&args[5])
-    ));
+      g_value_get_string (&args[5])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__STRING_STRING (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_OBJECT);
+  g_value_set_object (&args[2],
     (*rfunc) (g_value_get_string (&args[0]),
-      g_value_get_string (&args[1])
-    ));
+      g_value_get_string (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__STRING (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[1], 
-    (*rfunc) (g_value_get_string (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_OBJECT);
+  g_value_set_object (&args[1],
+    (*rfunc) (g_value_get_string (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_OBJECT__NONE (ffi_actual_function func, GValue *args)
 {
   __OBJECT_fn rfunc = (__OBJECT_fn) func;
-  g_value_set_object (&args[0], 
-    (*rfunc) (
-    ));
+
+  g_value_init (&args[0], G_TYPE_OBJECT);
+  g_value_set_object (&args[0],
+    (*rfunc) ());
 }
 
 static void
 emacs_gtk_marshal_POINTER__BOOL_INT (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_POINTER);
+  g_value_set_pointer (&args[2],
     (*rfunc) (g_value_get_boolean (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__INT_INT (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_POINTER);
+  g_value_set_pointer (&args[2],
     (*rfunc) (g_value_get_int (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__INT (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[1], 
-    (*rfunc) (g_value_get_int (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_POINTER);
+  g_value_set_pointer (&args[1],
+    (*rfunc) (g_value_get_int (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__OBJECT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_POINTER);
+  g_value_set_pointer (&args[3],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
-      g_value_get_int (&args[2])
-    ));
+      g_value_get_int (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__OBJECT_INT (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_POINTER);
+  g_value_set_pointer (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__OBJECT_POINTER_INT (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_POINTER);
+  g_value_set_pointer (&args[3],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
-      g_value_get_int (&args[2])
-    ));
+      g_value_get_int (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__OBJECT_POINTER_POINTER_ARRAY_INT_POINTER_POINTER_POINTER_POINTER_BOOL_BOOL (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[11], 
+
+  g_value_init (&args[11], G_TYPE_POINTER);
+  g_value_set_pointer (&args[11],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_pointer (&args[1]),
       g_value_get_pointer (&args[2]),
@@ -1711,172 +1695,188 @@ emacs_gtk_marshal_POINTER__OBJECT_POINTER_POINTER_ARRAY_INT_POINTER_POINTER_POIN
       g_value_get_pointer (&args[7]),
       g_value_get_pointer (&args[8]),
       g_value_get_boolean (&args[9]),
-      g_value_get_boolean (&args[10])
-    ));
+      g_value_get_boolean (&args[10])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__OBJECT_POINTER (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_POINTER);
+  g_value_set_pointer (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_pointer (&args[1])
-    ));
+      g_value_get_pointer (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__OBJECT (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[1], 
-    (*rfunc) (g_value_get_object (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_POINTER);
+  g_value_set_pointer (&args[1],
+    (*rfunc) (g_value_get_object (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__POINTER (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[1], 
-    (*rfunc) (g_value_get_pointer (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_POINTER);
+  g_value_set_pointer (&args[1],
+    (*rfunc) (g_value_get_pointer (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__STRING (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[1], 
-    (*rfunc) (g_value_get_string (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_POINTER);
+  g_value_set_pointer (&args[1],
+    (*rfunc) (g_value_get_string (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__STRING_INT (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_POINTER);
+  g_value_set_pointer (&args[2],
     (*rfunc) (g_value_get_string (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_POINTER__NONE (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[0], 
-    (*rfunc) (
-    ));
+
+  g_value_init (&args[0], G_TYPE_POINTER);
+  g_value_set_pointer (&args[0],
+    (*rfunc) ());
 }
 
 static void
 emacs_gtk_marshal_POINTER__POINTER_POINTER (ffi_actual_function func, GValue *args)
 {
   __POINTER_fn rfunc = (__POINTER_fn) func;
-  g_value_set_pointer (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_POINTER);
+  g_value_set_pointer (&args[2],
     (*rfunc) (g_value_get_pointer (&args[0]),
-      g_value_get_pointer (&args[1])
-    ));
+      g_value_get_pointer (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_STRING__INT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_STRING);
+  g_value_set_string (&args[3],
     (*rfunc) (g_value_get_int (&args[0]),
       g_value_get_int (&args[1]),
-      g_value_get_int (&args[2])
-    ));
+      g_value_get_int (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_STRING__INT (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[1], 
-    (*rfunc) (g_value_get_int (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_STRING);
+  g_value_set_string (&args[1],
+    (*rfunc) (g_value_get_int (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_STRING__OBJECT_BOOL (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_STRING);
+  g_value_set_string (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_boolean (&args[1])
-    ));
+      g_value_get_boolean (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_STRING__OBJECT_FLOAT (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_STRING);
+  g_value_set_string (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_float (&args[1])
-    ));
+      g_value_get_float (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_STRING__OBJECT_INT_INT (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[3], 
+
+  g_value_init (&args[3], G_TYPE_STRING);
+  g_value_set_string (&args[3],
     (*rfunc) (g_value_get_object (&args[0]),
       g_value_get_int (&args[1]),
-      g_value_get_int (&args[2])
-    ));
+      g_value_get_int (&args[2])));
 }
 
 static void
 emacs_gtk_marshal_STRING__OBJECT_INT (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_STRING);
+  g_value_set_string (&args[2],
     (*rfunc) (g_value_get_object (&args[0]),
-      g_value_get_int (&args[1])
-    ));
+      g_value_get_int (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_STRING__OBJECT (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[1], 
-    (*rfunc) (g_value_get_object (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_STRING);
+  g_value_set_string (&args[1],
+    (*rfunc) (g_value_get_object (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_STRING__POINTER_STRING (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[2], 
+
+  g_value_init (&args[2], G_TYPE_STRING);
+  g_value_set_string (&args[2],
     (*rfunc) (g_value_get_pointer (&args[0]),
-      g_value_get_string (&args[1])
-    ));
+      g_value_get_string (&args[1])));
 }
 
 static void
 emacs_gtk_marshal_STRING__POINTER (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[1], 
-    (*rfunc) (g_value_get_pointer (&args[0])
-    ));
+
+  g_value_init (&args[1], G_TYPE_STRING);
+  g_value_set_string (&args[1],
+    (*rfunc) (g_value_get_pointer (&args[0])));
 }
 
 static void
 emacs_gtk_marshal_STRING__NONE (ffi_actual_function func, GValue *args)
 {
   __STRING_fn rfunc = (__STRING_fn) func;
-  g_value_set_string (&args[0], 
-    (*rfunc) (
-    ));
+
+  g_value_init (&args[0], G_TYPE_STRING);
+  g_value_set_string (&args[0],
+    (*rfunc) ());
 }
 
 

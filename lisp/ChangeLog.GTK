@@ -3,6 +3,8 @@
 	* gtk-marshal.el (name-to-return-type): return fundamental C types
 	for mapping.
 	(define-marshaller): Use GType instead of deprecated GtkArg.
+	(define-marshaller): Intialize retval GType with type before
+	setting the value.
 
 2010-07-22  Jeff Sparkes  <jsparkes@gmail.com>
 
