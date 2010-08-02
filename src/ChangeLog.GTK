@@ -1,5 +1,8 @@
 2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* emacs-marshals.c (emacs_gtk_marshal_BOOL__OBJECT_INT):
+	Regenerate with return type initialization.
+
 	* ui-gtk.c (ffi_object_printer): Add 0x prefix to FFI pointer print.
 	(Fgtk_import_variable_internal): Remove extraneous call to g_type_init().
 	(Fgtk_import_function_internal): Ditto.

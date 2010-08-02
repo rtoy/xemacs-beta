@@ -75,19 +75,19 @@
 
     (if (string= "LIST" rval) (setq rval "POINTER"))
 
-    (if (cdr internal-rval)
-	;; It has a return type to worry about
-	(insert
-         ;;; "  " (cdr internal-rval) " *return_val;\n\n"
-         ;;; (format "  return_val = GTK_RETLOC_%s (args[%d]);\n"
-         ;;;        rval (length args))
-         (format "  g_value_set_%s (&args[%d], "
-                 (cdr internal-rval)
-                 (length args)))
-      (insert "  "))
-    (insert "\n    (*rfunc) (")
+    (when (cdr internal-rval)
+      ;; It has a return type to worry about
+      (insert
+       (format "\n  g_value_init (&args[%d], G_TYPE_%s);\n"
+               (length args)
+               (upcase (cdr internal-rval)))
+       (format "  g_value_set_%s (&args[%d],\n"
+               (cdr internal-rval)
+               (length args))
+       " "))
+    (insert "   (*rfunc) (")
     (while args
-      (if (/= ctr 0)
+      (when (/= ctr 0)
 	  (insert ",\n      "))
       (insert (format "g_value_get_%s (&args[%d])"
                       (cdr (assoc (car args) name-to-return-type))
@@ -95,7 +95,7 @@
       (setq args (cdr args)
 	    ctr (1+ ctr)))
     (when (cdr internal-rval)
-      (insert "\n    )"))                     ; close g_value_set
+      (insert ")"))                     ; close g_value_set
     (insert ");\n")
     (insert "}\n")))
 
