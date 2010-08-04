@@ -1422,10 +1422,15 @@ The type is returned as a string, so this is a type validator.
 */
        (type_name))
 {
+  gchar *name = NULL;
+  guint type = G_TYPE_NONE;
+  
   CHECK_STRING (type_name);
-  gchar *name = (gchar *)XSTRING_DATA (type_name);
-  guint t = g_type_from_name (name);
-  return (build_ascstring (g_type_name (g_type_from_name (name))));
+  name = (gchar *)XSTRING_DATA (type_name);
+  type = g_type_from_name (name);
+  if (type == G_TYPE_INVALID || type == G_TYPE_NONE)
+    return Qnil;
+  return (build_ascstring (g_type_name (type)));
 }
 
 DEFUN ("g-object-class-list-properties", Fg_object_class_list_properties, 1, 1, 0, /*
