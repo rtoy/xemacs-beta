@@ -156,7 +156,6 @@ type_already_imported_p (GType t)
                                      make_int (163), Qequal);
       return (0);
     }
-  Lisp_Object key = make_int (t);
   if (!NILP (Fgethash (make_int (t), Vgtk_types, Qnil)))
       return (1);
   return (0);

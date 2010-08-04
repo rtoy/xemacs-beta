@@ -1,3 +1,8 @@
+2010-08-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_already_imported_p): Remove unused temp debug
+	variable "key".
+
 2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* emacs-marshals.c (emacs_gtk_marshal_BOOL__OBJECT_INT):
