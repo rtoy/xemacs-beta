@@ -2,6 +2,7 @@
 
 	* ui-gtk.c (type_already_imported_p): Remove unused temp debug
 	variable "key".
+	(Fg_type_from_name): Return nil for invalid types.
 
 2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
 
