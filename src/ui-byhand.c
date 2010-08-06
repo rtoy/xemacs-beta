@@ -64,89 +64,6 @@ Return value is a list of (EXPAND FILL PADDING PACK_TYPE).
   return (result);
 }
 
-/* void gtk_button_box_get_child_size_default (gint *min_width, gint *min_height); */
-DEFUN ("gtk-button-box-get-child-size-default",
-       Fgtk_button_box_get_child_size_default, 0, 0, 0, /*
-Return a cons cell (WIDTH . HEIGHT) of the default button box child size.
-*/
-       ())
-{
-  gint width, height;
-
-#ifdef JSPARKES
-  /* Doesn't seem to exist in Gtk-2.0 */
-  gtk_button_box_get_child_size_default (&width, &height);
-#else
-  width = 24;
-  height = 24;
-#endif
-
-  return (Fcons (make_int (width), make_int (height)));
-}
-
-/* void gtk_button_box_get_child_ipadding_default (gint *ipad_x, gint *ipad_y);  */
-DEFUN ("gtk-button-box-get-child-ipadding-default",
-       Fgtk_button_box_get_child_ipadding_default, 0, 0, 0, /*
-Return a cons cell (X . Y) of the default button box ipadding.
-*/
-       ())
-{
-  gint x, y;
-
-  /* Need a widget here */
-#ifdef JSPARKES
-  gtk_box_get_spacing (&x, &y);
-#else
-  x = 2; y = 2;
-#endif
-
-  return (Fcons (make_int (x), make_int (y)));
-}
-
-/* void gtk_button_box_get_child_size (GtkButtonBox *widget,
-   gint *min_width, gint *min_height); */
-DEFUN ("gtk-button-box-get-child-size", Fgtk_button_box_get_child_size, 1, 1, 0, /*
-Get the current size of a child in the buttonbox BOX.
-*/
-       (box))
-{
-  gint width, height;
-
-  CHECK_GTK_OBJECT (box);
-
-  if (!GTK_IS_BUTTON_BOX (XGTK_OBJECT (box)->object))
-    {
-      wtaerror ("Not a GtkBox object", box);
-    }
-
-  gtk_button_box_get_child_size (GTK_BUTTON_BOX (XGTK_OBJECT (box)->object),
-				 &width, &height);
-
-  return (Fcons (make_int (width), make_int (height)));
-}
-
-/* void gtk_button_box_get_child_ipadding (GtkButtonBox *widget, gint *ipad_x, gint *ipad_y); */
-DEFUN ("gtk-button-box-get-child-ipadding",
-       Fgtk_button_box_get_child_ipadding, 1, 1, 0, /*
-Return a cons cell (X . Y) of the current buttonbox BOX ipadding.
-*/
-       (box))
-{
-  gint x, y;
-
-  CHECK_GTK_OBJECT (box);
-
-  if (!GTK_IS_BUTTON_BOX (XGTK_OBJECT (box)->object))
-    {
-      wtaerror ("Not a GtkBox object", box);
-    }
-
-  gtk_button_box_get_child_ipadding (GTK_BUTTON_BOX (XGTK_OBJECT (box)->object),
-				     &x, &y);
-
-  return (Fcons (make_int (x), make_int (y)));
-}
-
 /*void	   gtk_calendar_get_date	(GtkCalendar *calendar, 
 					 guint	     *year,
 					 guint	     *month,
@@ -702,10 +619,6 @@ void syms_of_ui_byhand (void)
   DEFSUBR (Fgtk_toolbar_insert_item);
   DEFSUBR (Fgtk_toolbar_prepend_item);
   DEFSUBR (Fgtk_box_query_child_packing);
-  DEFSUBR (Fgtk_button_box_get_child_size_default);
-  DEFSUBR (Fgtk_button_box_get_child_ipadding_default);
-  DEFSUBR (Fgtk_button_box_get_child_size);
-  DEFSUBR (Fgtk_button_box_get_child_ipadding);
   DEFSUBR (Fgtk_calendar_get_date);
   DEFSUBR (Fgtk_clist_get_text);
   DEFSUBR (Fgtk_clist_get_selection);
