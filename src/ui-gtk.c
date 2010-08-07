@@ -521,8 +521,9 @@ static Lisp_Object type_to_marshaller_type (GType t)
       return (build_ascstring ("FLOAT"));
     case G_TYPE_STRING:
       return (build_ascstring ("STRING"));
-    case G_TYPE_BOXED:
     case G_TYPE_OBJECT:
+      return (build_ascstring ("OBJECT"));
+    case G_TYPE_BOXED:
     case G_TYPE_POINTER:
       return (build_ascstring ("POINTER"));
     default:
