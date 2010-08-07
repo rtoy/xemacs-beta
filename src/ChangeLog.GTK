@@ -3,6 +3,9 @@
 	* ui-gtk.c (type_to_marshaller_type): Marshal OBJECT separate from
 	POINTER.
 	(g_type_to_lisp): Use the fundamental GType when converting to lisp.
+	(Fgtk_call_function): Initialize argument array to NULLs.
+	(Fgtk_call_function): Actually call the marshalling function.
+	Convert the return value to lisp.q
 
 2010-08-04  Jeff Sparkes  <jsparkes@gmail.com>
 
@@ -13,7 +16,7 @@
 2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* emacs-marshals.c (emacs_gtk_marshal_BOOL__OBJECT_INT):
-	Regenerate with return type initialization.
+	Regenerate wqith return type initialization.
 
 	* ui-gtk.c (ffi_object_printer): Add 0x prefix to FFI pointer print.
 	(Fgtk_import_variable_internal): Remove extraneous call to g_type_init().
