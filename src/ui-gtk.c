@@ -752,6 +752,7 @@ Call an external function.
   CHECK_LIST (args);
 
   n_args = XINT (Flength (args));
+  memset (the_args, 0, sizeof (GValue) * MAX_GTK_ARGS);
 
 #ifdef XEMACS_IS_SMARTER_THAN_THE_PROGRAMMER
   /* #### I think this is too dangerous to enable by default.
@@ -793,7 +794,6 @@ Call an external function.
       
       CHECK_LIST (args);
       n_args = 0;
-      memset (the_args, '\0', sizeof (GValue) * MAX_GTK_ARGS);
 
       /* First we convert all of the arguments from Lisp to GValues */
       {
@@ -813,18 +813,13 @@ Call an external function.
   /* Now we need to tack on space for a return value, if they have
      asked for one */
   if (XFFI_RETURN_TYPE (func) != G_TYPE_NONE)
-    {
-      n_args++;
-    }
+    n_args++;
 
-  //XFFI_MARSHAL (func) ((ffi_actual_function) (XFFI_FUNCTION_PTR  (func), the_args));
+  XFFI_MARSHAL (func) (((ffi_actual_function) XFFI_FUNCTION_PTR  (func)), the_args);
 
   if (XFFI_RETURN_TYPE (func) != G_TYPE_NONE)
-    {
-      //CONVERT_RETVAL (the_args[n_args - 1], 1);
-      //retval = g_type_to_lisp (&the_args[n_args - 1]);
-    }
-
+    retval = g_type_to_lisp (&the_args[n_args - 1]);
+  
   /* Need to free any array or list pointers */
   {
     int i;
