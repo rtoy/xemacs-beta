@@ -1,3 +1,8 @@
+2010-08-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_to_marshaller_type): Marshal OBJECT separate from
+	POINTER.
+
 2010-08-04  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (type_already_imported_p): Remove unused temp debug
