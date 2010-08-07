@@ -2,6 +2,7 @@
 
 	* ui-gtk.c (type_to_marshaller_type): Marshal OBJECT separate from
 	POINTER.
+	(g_type_to_lisp): Use the fundamental GType when converting to lisp.
 
 2010-08-04  Jeff Sparkes  <jsparkes@gmail.com>
 
