@@ -1,7 +1,12 @@
 2010-08-08  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs.c (print_image_instance): write_fmt_string doesn't have a %p
+	format, use %0x instead.
+
 	* ui-gtk.c (Fg_type_from_name): Accept a symbol as an argument in
 	addition to a string.
+	(emacs_gtk_boxed_printer): Use %0x instead of %p.
+
 
 2010-08-07  Jeff Sparkes  <jsparkes@gmail.com>
 
