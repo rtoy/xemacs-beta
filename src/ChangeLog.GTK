@@ -1,3 +1,8 @@
+2010-08-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_from_name): Accept a symbol as an argument in
+	addition to a string.
+
 2010-08-07  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (type_to_marshaller_type): Marshal OBJECT separate from

@@ -1420,6 +1420,9 @@ The type is returned as a string, so this is a type validator.
 {
   gchar *name = NULL;
   guint type = G_TYPE_NONE;
+
+  if (SYMBOLP (type_name))
+    type_name = Fsymbol_name (type_name);
   
   CHECK_STRING (type_name);
   name = (gchar *)XSTRING_DATA (type_name);
