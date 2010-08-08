@@ -929,10 +929,11 @@ emacs_gtk_object_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 {
   Lisp_Object prop_name = Qnil;
   char *name = NULL;
-  GValue arg;
+  GValue arg; /* = {0, 0};  Is this the right idiom for initializing? */
 
   prop_name = Fsymbol_name (prop);
   name = (char *) XSTRING_DATA (prop_name);  /* the cast is probably wrong */
+  memset (&arg, 0, sizeof (GValue));
   g_value_init (&arg, G_TYPE_STRING);
   g_assert (G_VALUE_HOLDS_STRING (&arg));
 
@@ -1168,7 +1169,7 @@ emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun,
 
   write_ascstring (printcharfun, "#<GtkBoxed (");
   write_cistring (printcharfun, g_type_name (XGTK_BOXED (obj)->object_type));
-  write_fmt_string (printcharfun, ") %p>", (void *) XGTK_BOXED (obj)->object);
+  write_fmt_string (printcharfun, ") 0x%0xx>", (void *) XGTK_BOXED (obj)->object);
 }
 
 static int
@@ -1457,6 +1458,7 @@ Return a list of all properties for CLASS name.
   for (i = 0; i < n_props; i++) 
     {
       GValue v;
+      memset (&v, 0, sizeof (GValue));
       g_value_init (&v, props[i]->value_type);
       prop_list = Fcons (g_type_to_lisp (&v), prop_list);
     }

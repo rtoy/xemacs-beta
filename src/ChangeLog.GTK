@@ -1,5 +1,9 @@
 2010-08-08  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (emacs_gtk_object_putprop)
+	(Fg_object_class_list_properties): Initialize GValue with memset.
+	Using only g_value_init causes an error. 
+
 	* glyphs.c (print_image_instance): write_fmt_string doesn't have a %p
 	format, use %0x instead.
 
