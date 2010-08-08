@@ -1098,7 +1098,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 			  DEVICE_TYPE_NAME (XDEVICE (FRAME_DEVICE (f))));
       }
       write_ascstring (printcharfun, "-frame>");
-      write_fmt_string (printcharfun, " 0x%p",
+      write_fmt_string (printcharfun, " 0x%0x",
 			IMAGE_INSTANCE_SUBWINDOW_ID (ii));
 
       break;

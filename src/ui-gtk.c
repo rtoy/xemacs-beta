@@ -857,7 +857,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
     write_cistring (printcharfun, g_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
   else
     write_ascstring (printcharfun, "dead");
-  write_fmt_string (printcharfun, ") %p>", (void *) XGTK_OBJECT (obj)->object);
+  write_fmt_string (printcharfun, ") 0x%0x>", (void *) XGTK_OBJECT (obj)->object);
 }
 
 static Lisp_Object
