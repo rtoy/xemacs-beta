@@ -816,12 +816,11 @@ Call an external function.
       n_args++;
     }
 
-  //XFFI_MARSHAL (func) ((ffi_actual_function) (XFFI_FUNCTION_PTR  (func), the_args));
+  XFFI_MARSHAL (func) (XFFI_FUNCTION_PTR  (func),  the_args);
 
   if (XFFI_RETURN_TYPE (func) != G_TYPE_NONE)
     {
-      //CONVERT_RETVAL (the_args[n_args - 1], 1);
-      //retval = g_type_to_lisp (&the_args[n_args - 1]);
+      retval = g_type_to_lisp (&the_args[n_args - 1]);
     }
 
   /* Need to free any array or list pointers */
@@ -1603,92 +1602,90 @@ void describe_gtk_arg (GtkParamSpec *arg)
 
 Lisp_Object g_type_to_lisp (GValue *arg)
 {
-  if (G_TYPE_IS_FUNDAMENTAL (G_VALUE_TYPE (arg)))
+  GType type = G_VALUE_TYPE (arg);
+  while (!G_TYPE_IS_FUNDAMENTAL (type))
+    type = g_type_parent (type);
+
+  assert (type != G_TYPE_NONE);
+     
+  switch (type)
     {
-      switch (G_TYPE_FUNDAMENTAL (G_VALUE_TYPE (arg)))
+    case G_TYPE_NONE:
+      return (Qnil);
+    case G_TYPE_CHAR:
+      return (make_char (g_value_get_char (arg)));
+    case G_TYPE_UCHAR:
+      return (make_char (g_value_get_uchar (arg)));
+    case G_TYPE_BOOLEAN:
+      return (g_value_get_boolean (arg) ? Qt : Qnil);
+    case G_TYPE_INT:
+      return (make_int (g_value_get_int (arg)));
+    case G_TYPE_UINT:
+      return (make_int (g_value_get_uint (arg)));
+    case G_TYPE_LONG:		/* I think these are wrong! */
+      return (make_int (g_value_get_long (arg)));
+    case G_TYPE_ULONG:          /* I think these are wrong! */
+      return (make_int (g_value_get_ulong (arg)));
+    case G_TYPE_INT64:          /* bignum? */
+      return (make_int (g_value_get_int64 (arg)));
+    case G_TYPE_UINT64:         /* bignum? */
+      return (make_int (g_value_get_uint64 (arg)));
+    case G_TYPE_ENUM:
+      return (enum_to_symbol (arg));
+    case G_TYPE_FLAGS:
+      return (flags_to_list (arg));
+    case G_TYPE_FLOAT:
+      return (make_float (g_value_get_float (arg)));
+    case G_TYPE_DOUBLE:
+      return (make_float (g_value_get_double (arg)));
+    case G_TYPE_STRING:
+      return (build_cistring (g_value_get_string (arg)));
+    case G_TYPE_BOXED:
+      ABORT ();
+#ifdef JSPARKES
+      if (G_VALUE_TYPE (arg) == xx)
+        if (arg->type == G_TYPE_GDK_EVENT)
+          {
+            return (gdk_event_to_emacs_event((GdkEvent *) GTK_VALUE_BOXED (*arg)));
+          }
+      if (GTK_VALUE_BOXED (*arg))
+        return (build_gtk_boxed (GTK_VALUE_BOXED (*arg), arg->type));
+      else
+#endif
+        return (Qnil);
+    case G_TYPE_POINTER:
+      if (g_value_get_pointer (arg))
         {
-        case G_TYPE_NONE:
-          return (Qnil);
-        case G_TYPE_CHAR:
-          return (make_char (g_value_get_char (arg)));
-        case G_TYPE_UCHAR:
-          return (make_char (g_value_get_uchar (arg)));
-        case G_TYPE_BOOLEAN:
-          return (g_value_get_boolean (arg) ? Qt : Qnil);
-        case G_TYPE_INT:
-          return (make_int (g_value_get_int (arg)));
-        case G_TYPE_UINT:
-          return (make_int (g_value_get_uint (arg)));
-        case G_TYPE_LONG:		/* I think these are wrong! */
-          return (make_int (g_value_get_long (arg)));
-        case G_TYPE_ULONG:	/* I think these are wrong! */
-          return (make_int (g_value_get_ulong (arg)));
-        case G_TYPE_INT64:	/* bignum? */
-          return (make_int (g_value_get_int64 (arg)));
-        case G_TYPE_UINT64:	/* bignum? */
-          return (make_int (g_value_get_uint64 (arg)));
-        case G_TYPE_ENUM:
-          return (enum_to_symbol (arg));
-        case G_TYPE_FLAGS:
-          return (flags_to_list (arg));
-        case G_TYPE_FLOAT:
-          return (make_float (g_value_get_float (arg)));
-        case G_TYPE_DOUBLE:
-          return (make_float (g_value_get_double (arg)));
-        case G_TYPE_STRING:
-          return (build_cistring (g_value_get_string (arg)));
-        case G_TYPE_BOXED:
-          ABORT ();
-#ifdef JSPARKES
-          if (G_VALUE_TYPE (arg) == xx)
-          if (arg->type == G_TYPE_GDK_EVENT)
-            {
-              return (gdk_event_to_emacs_event((GdkEvent *) GTK_VALUE_BOXED (*arg)));
-            }
-          if (GTK_VALUE_BOXED (*arg))
-            return (build_gtk_boxed (GTK_VALUE_BOXED (*arg), arg->type));
-          else
-#endif
-            return (Qnil);
-        case G_TYPE_POINTER:
-          if (g_value_get_pointer (arg))
-            {
-              Lisp_Object rval;
-              
-              rval = GET_LISP_FROM_VOID (g_value_get_pointer (arg));
-              return (rval);
-            }
-          else
-            return (Qnil);
-        case G_TYPE_OBJECT:
-          //if (G_IS_VALUE_OBJECT (arg))
-          return (build_gtk_object (G_OBJECT (g_value_get_object (arg))));
-            //else
-            //return (Qnil);
-          //case G_TYPE_GTYPE
-        default:
-#ifdef JSPARKES
-          if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, G_TYPE_LISTOF))
-            {
-              if (!GTK_VALUE_POINTER (*arg))
-                return (Qnil);
-              else
-                {
-                  return (xemacs_gtklist_to_list (arg));
-                }
-            }
-#endif
-          stderr_out ("Do not know how to convert `%s' to lisp!\n",
-                      g_type_name (G_VALUE_TYPE (arg)));
-          ABORT ();
+          Lisp_Object rval;
+
+          rval = GET_LISP_FROM_VOID (g_value_get_pointer (arg));
+          return (rval);
         }
-    }
-  else
-    {
+      else
+        return (Qnil);
+    case G_TYPE_OBJECT:
+      //if (G_IS_VALUE_OBJECT (arg))
+      return (build_gtk_object (G_OBJECT (g_value_get_object (arg))));
+      //else
+      //return (Qnil);
+      //case G_TYPE_GTYPE
+    default:
+#ifdef JSPARKES
+      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, G_TYPE_LISTOF))
+        {
+          if (!GTK_VALUE_POINTER (*arg))
+            return (Qnil);
+          else
+            {
+              return (xemacs_gtklist_to_list (arg));
+            }
+        }
+#endif
       stderr_out ("Do not know how to convert `%s' to lisp!\n",
                   g_type_name (G_VALUE_TYPE (arg)));
       ABORT ();
     }
+
   /* This is chuck reminding GCC to... SHUT UP! */
   return (Qnil);
 }
