@@ -66,6 +66,8 @@
 	toolbar icon.
 	(vars_of_toolbar_gtk): Declare and initialize stock icon hash map
 	variable. 
+	(gtk_initialize_frame_toolbars): Remove trace message.
+	(gtk_free_frame_toolbars): Remove trace message.
 
 	* emacs.c (main_1): Call vars_of_toolbar_gtk when appropriate.
 
@@ -101,10 +103,12 @@
 
 2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* menubar-gtk.c (gtk_xemacs_menubar_size_request): Remove debug message.
+	* menubar-gtk.c (gtk_xemacs_menubar_size_request):
+	Remove debug message.
 
-	* frame-gtk.c (gtk_create_widgets): Ensure that the container is a
-	box before trying to pack it.  This may not be true when using GnomeApp.
+	* frame-gtk.c (gtk_create_widgets):
+	Ensure that the container is a box before trying to pack it.
+	This may not be true when using GnomeApp.
 
 	* emacs-marshals.c (emacs_gtk_marshal_POINTER__BOOL_INT): New
 	marshaller.	
