@@ -1,3 +1,15 @@
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (print_symbol):
+	Escape any symbols that look like ratios, in the same way we do
+	symbols that look like floats or integers. Prevents confusion in
+	the Lisp reader.
+	* lread.c (isratio_string): Make this available even on builds
+	without HAVE_RATIO, so we can print symbols that look like ratios
+	with the appropriate escapes.
+	* lisp.h:
+	Make isratio_string available even if HAVE_RATIO is not defined.
+
 2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (PARSE_KEYWORDS):

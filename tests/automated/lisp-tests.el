@@ -2374,4 +2374,10 @@ via the hepatic alpha-tocopherol transfer protein")))
 				     (garbage-collect))))))
  "checking we can amputate lists without crashing #'reduce")
 
+(when (featurep 'ratio)
+  (Assert (not (eql '1/2 (read (prin1-to-string (intern "1/2")))))
+	  "checking symbols with ratio-like names are printed distinctly")
+  (Assert (not (eql '1/5 (read (prin1-to-string (intern "2/10")))))
+	  "checking symbol named \"2/10\" not eql to ratio 1/5 on read"))
+
 ;;; end of lisp-tests.el
