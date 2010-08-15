@@ -105,20 +105,23 @@ otherwise return t."
 	   ;; this will signal an appropriate error.
 	   (check-valid-instantiator inst-pair specifier-type)))
 
-	((and (valid-specifier-tag-p (car inst-pair))
-	      (valid-instantiator-p (cdr inst-pair) specifier-type))
+	((not (valid-instantiator-p (cdr inst-pair) specifier-type))
+	 (if noerror
+	     t
+	   (check-valid-instantiator (cdr inst-pair) specifier-type)))
+
+	((valid-specifier-tag-p (car inst-pair))
 	 ;; case (b)
 	 (cons (list (car inst-pair)) (cdr inst-pair)))
 
-	((and (valid-specifier-tag-set-p (car inst-pair))
-	      (valid-instantiator-p (cdr inst-pair) specifier-type))
+	((valid-specifier-tag-set-p (car inst-pair))
 	 ;; case (c)
 	 inst-pair)
 	 
 	(t
 	 (if noerror t
-	   (signal 'error (list "Invalid specifier tag set"
-				(car inst-pair)))))))
+	   (error 'invalid-argument "Invalid specifier tag set"
+		  (car inst-pair))))))
 
 (defun canonicalize-inst-list (inst-list specifier-type &optional noerror)
   "Canonicalize the given INST-LIST (a list of inst-pairs).
@@ -199,9 +202,14 @@ otherwise return t."
 
 	(if (not (valid-specifier-locale-p (car spec)))
 	    ;; invalid locale.
-	    (if noerror t
-	      (signal 'error (list "Invalid specifier locale" (car spec))))
-
+	    (if noerror
+		t
+	      (if (consp (car spec))
+		  ;; If it's a cons, they're probably not passing a locale
+		  (error 'invalid-argument
+			 "Not a valid instantiator list" spec)
+		(error 'invalid-argument
+		       "Invalid specifier locale" (car spec))))
 	  ;; case (b)
 	  (let ((result (canonicalize-inst-list (cdr spec) specifier-type
 						noerror)))

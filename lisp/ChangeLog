@@ -1,3 +1,12 @@
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.el (canonicalize-inst-pair, canonicalize-spec):
+	If a specifier tag set is correct, but an instantiator is not in
+	an accepted format, don't error with the message "Invalid
+	specifier tag set".
+	Also, when we error, use error-symbols, for better structured
+	error handling and more ease when testing.
+
 2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (concatenate):
