@@ -1,3 +1,9 @@
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test that symbols with names that look like ratios are printed
+	distinctly from the equivalent ratios.
+
 2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

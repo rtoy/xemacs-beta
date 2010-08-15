@@ -2876,7 +2876,6 @@ isfloat_string (const char *cp)
 	      || state == (DOT_CHAR|TRAIL_INT|E_CHAR|EXP_INT)));
 }
 
-#ifdef HAVE_RATIO
 int
 isratio_string (const char *cp)
 {
@@ -2907,7 +2906,7 @@ isratio_string (const char *cp)
   return *cp == '\0' || *cp == ' ' || *cp =='\t' || *cp == '\n' ||
     *cp == '\r' || *cp == '\f';
 }
-#endif
+
 
 static void *
 sequence_reader (Lisp_Object readcharfun,

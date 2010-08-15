@@ -5355,9 +5355,7 @@ void close_load_descs (void);
 int locate_file (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object *, int);
 EXFUN (Flocate_file_clear_hashing, 1);
 int isfloat_string (const char *);
-#ifdef HAVE_RATIO
 int isratio_string (const char *);
-#endif
 
 /* Well, I've decided to enable this. -- ben */
 /* And I've decided to make it work right.  -- sb */
