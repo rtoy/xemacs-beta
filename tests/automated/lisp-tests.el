@@ -2374,6 +2374,35 @@ via the hepatic alpha-tocopherol transfer protein")))
 				     (garbage-collect))))))
  "checking we can amputate lists without crashing #'reduce")
 
+(Assert (not (eq t (canonicalize-inst-list
+		    `(((mswindows) . [string :data ,(make-string 20 0)])
+		      ((tty) . [string :data " "])) 'image t)))
+	"checking mswindows is always available as a specifier tag")
+
+(Assert (not (eq t (canonicalize-inst-list
+		    `(((mswindows) . [nothing])
+		      ((tty) . [string :data " "]))
+		    'image t)))
+	"checking the correct syntax for a nothing image specifier works")
+
+(Check-Error-Message invalid-argument "^Invalid specifier tag set"
+		     (canonicalize-inst-list
+		      `(((,(gensym)) . [nothing])
+			((tty) . [string :data " "]))
+		      'image))
+
+(Check-Error-Message invalid-argument "^Unrecognized keyword"
+		     (canonicalize-inst-list
+		      `(((mswindows) . [nothing :data "hi there"])
+			((tty) . [string :data " "])) 'image))
+
+;; If we combine both the specifier inst list problems, we get the
+;; unrecognized keyword error first, not the invalid specifier tag set
+;; error. This is a little unintuitive; the specifier tag set thing is
+;; processed first, and would seem to be more important. But anyone writing
+;; code needs to solve both problems, it's reasonable to ask them to do it
+;; in series rather than in parallel.
+
 (when (featurep 'ratio)
   (Assert (not (eql '1/2 (read (prin1-to-string (intern "1/2")))))
 	  "checking symbols with ratio-like names are printed distinctly")

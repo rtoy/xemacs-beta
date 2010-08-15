@@ -1,6 +1,13 @@
 2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
+	(not, not, invalid-argument, invalid-argument):
+	Check that error messages from the image specifier instantiator
+	code are clearer than they used to be.
+
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
 	Test that symbols with names that look like ratios are printed
 	distinctly from the equivalent ratios.
 
