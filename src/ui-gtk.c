@@ -751,6 +751,7 @@ Call an external function.
   CHECK_FFI (func);
   CHECK_LIST (args);
 
+  memset (the_args, '\0', sizeof (GValue) * MAX_GTK_ARGS);
   n_args = XINT (Flength (args));
 
 #ifdef XEMACS_IS_SMARTER_THAN_THE_PROGRAMMER
@@ -793,7 +794,6 @@ Call an external function.
       
       CHECK_LIST (args);
       n_args = 0;
-      memset (the_args, '\0', sizeof (GValue) * MAX_GTK_ARGS);
 
       /* First we convert all of the arguments from Lisp to GValues */
       {
