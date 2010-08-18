@@ -1,3 +1,9 @@
+2010-08-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar.c (update_frame_toolbars_geometry):  Use
+	FRAME_CURRENT_TOOLBAR_SIZE accessor macro.
+	(init_frame_toolbars): Ditto.
+
 2010-08-16  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (Fgtk_call_function): Initialize arg array to NULLs
