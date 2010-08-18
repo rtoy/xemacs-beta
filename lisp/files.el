@@ -3060,6 +3060,83 @@ always returns non-nil."
 	(basic-save-buffer-1))
     'continue-save-buffer))
 
+(defun diff-buffer-with-file (&optional buffer)
+  "View the differences between BUFFER and its associated file.
+This requires the external program `diff' to be in your `exec-path'."
+  (interactive "bBuffer: ")
+  (with-current-buffer (get-buffer (or buffer (current-buffer)))
+    (if (and buffer-file-name
+	     (file-exists-p buffer-file-name))
+	(let ((tempfile (make-temp-file "buffer-content-")))
+	  (unwind-protect
+	      (save-restriction
+		(widen)
+		(write-region (point-min) (point-max) tempfile nil 'nomessage)
+		(diff-files-for-recover "File" 
+					buffer-file-name tempfile buffer-file-name tempfile
+					buffer-file-coding-system)
+		(sit-for 0))
+	    (when (file-exists-p tempfile)
+	      (delete-file tempfile))))
+      (message "Buffer %s has no associated file on disc" (buffer-name))
+      ;; Display that message for 1 second so that user can read it
+      ;; in the minibuffer.
+      (sit-for 1)))
+  ;; return always nil, so that save-buffers-kill-emacs will not move
+  ;; over to the next unsaved buffer when calling `d'.
+  nil)
+
+(defun diff-files-for-recover (purpose file-1 file-2
+			       failed-file-1 failed-file-2
+			       coding-system)
+  "Diff two files for recovering or comparing against the last saved version.
+PURPOSE is an informational string used for naming the resulting buffer.
+FILE-1 and FILE-2 are the two files to compare.
+FAILED-FILE-1 and FAILED-FILE-2 are the names of files for which we should 
+generate directory listings on failure.
+CODING-SYSTEM is the coding system of the resulting buffer."
+  (with-output-to-temp-buffer (concat "*" purpose " Diff*")
+    (buffer-disable-undo standard-output)
+    (let ((coding-system-for-read coding-system))
+	(condition-case ferr
+	     (progn
+	      (apply #'call-process
+		     recover-file-diff-program
+		     nil standard-output nil
+		     (append
+		      recover-file-diff-arguments
+		      (list file-1 file-2)))
+	      (if (fboundp 'diff-mode)
+		  (save-excursion
+		    (set-buffer standard-output)
+		    (declare-fboundp (diff-mode)))))
+	(io-error
+	 (save-excursion
+	   (let ((switches
+		  (declare-boundp
+		   dired-listing-switches)))
+	     (if (file-symlink-p failed-file-2)
+		 (setq switches (concat switches "L")))
+	     (set-buffer standard-output)
+	     ;; XEmacs had the following line, not in FSF.
+	     (setq default-directory (file-name-directory failed-file-2))
+	     ;; Use insert-directory-safely,
+	     ;; not insert-directory, because
+	     ;; these files might not exist.
+	     ;; In particular, FAILED-FILE-2 might not
+	     ;; exist if the auto-save file
+	     ;; was for a buffer that didn't
+	     ;; visit a file, such as
+	     ;; "*mail*".  The code in v20.x
+	     ;; called `ls' directly, so we
+	     ;; need to emulate what `ls' did
+	     ;; in that case.
+	     (insert-directory-safely failed-file-1 switches)
+	     (insert-directory-safely failed-file-2 switches))
+	   (terpri)
+	   (princ "Error during diff: ")
+	   (display-error ferr standard-output)))))))
+
 (defcustom save-some-buffers-query-display-buffer t
   "*Non-nil makes `\\[save-some-buffers]' switch to the buffer offered for saving."
   :type 'boolean
@@ -3689,44 +3766,7 @@ Return nil if identical, and the new buffer if different."
 					 'escape-quoted))
 				    (write-region (point-min) (point-max)
 						  temp nil 'silent)))
-				(with-output-to-temp-buffer "*Autosave Diff*"
-				  (buffer-disable-undo standard-output)
-				  (let ((coding-system-for-read
-					 'escape-quoted))
-				    (condition-case ferr
-					(apply #'call-process
-					       recover-file-diff-program
-					       nil standard-output nil
-					       (append
-						recover-file-diff-arguments
-						(list temp file-name)))
-				      (io-error
-				       (save-excursion
-					 (let ((switches
-						(declare-boundp
-						 dired-listing-switches)))
-					   (if (file-symlink-p file)
-					       (setq switches (concat switches "L")))
-					   (set-buffer standard-output)
-					   ;; XEmacs had the following line, not in FSF.
-					   (setq default-directory (file-name-directory file))
-					   ;; Use insert-directory-safely,
-					   ;; not insert-directory, because
-					   ;; these files might not exist.
-					   ;; In particular, FILE might not
-					   ;; exist if the auto-save file
-					   ;; was for a buffer that didn't
-					   ;; visit a file, such as
-					   ;; "*mail*".  The code in v20.x
-					   ;; called `ls' directly, so we
-					   ;; need to emulate what `ls' did
-					   ;; in that case.
-					   (insert-directory-safely file switches)
-					   (insert-directory-safely file-name switches))
-					 (terpri)
-					 (princ "Error during diff: ")
-					 (display-error ferr
-							standard-output)))))))
+				(diff-files-for-recover "Autosave" temp file-name file file-name 'escape-quoted))
 			    (ignore-errors (kill-buffer buffer))
 			    (ignore-file-errors
 			     (delete-file temp)))))))))))))))
