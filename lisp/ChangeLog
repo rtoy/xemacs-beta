@@ -1,3 +1,8 @@
+2010-08-20  Mike Sperber  <mike@xemacs.org>
+
+	* files.el (save-some-buffers-action-alist): Add.
+	(save-some-buffers-1): Use (synching with (GPLv2) FSF Emacs.
+
 2010-08-18  Mike Sperber  <mike@xemacs.org>
 
 	* files.el (diff-files-for-recover): Abstract this out out
