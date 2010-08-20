@@ -1,24 +1,19 @@
-<<<<<<< local
-2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
-=======
 2010-08-18  Mike Sperber  <mike@xemacs.org>
->>>>>>> other
 
-<<<<<<< local
+	* files.el (diff-files-for-recover): Abstract this out out
+	`recover-file'.
+	(diff-buffer-with-file): Add from (GPLv2) FSF Emacs.
+	(recover-file): Use `diff-files-for-recover'.
+
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* specifier.el (canonicalize-inst-pair, canonicalize-spec):
 	If a specifier tag set is correct, but an instantiator is not in
 	an accepted format, don't error with the message "Invalid
 	specifier tag set".
 	Also, when we error, use error-symbols, for better structured
 	error handling and more ease when testing.
-=======
-	* files.el (diff-files-for-recover): Abstract this out out
-	`recover-file'.
-	(diff-buffer-with-file): Add from (GPLv2) FSF Emacs.
-	(recover-file): Use `diff-files-for-recover'.
->>>>>>> other
 
-<<<<<<< local
 2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (concatenate):
@@ -28,8 +23,6 @@
 	If TYPE is constant, don't inline #'concatenate, replace it by a
 	call to the appropriate C functions.
 
-=======
->>>>>>> other
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gnome.el:
