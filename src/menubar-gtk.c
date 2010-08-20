@@ -143,12 +143,6 @@ gtk_xemacs_menubar_size_request	(GtkWidget *widget, GtkRequisition *requisition)
 
   menubar_parent_class->size_request (widget, requisition);
 
-  /* #### BILL!
-  ** We should really only do this if the menu has not been detached!
-  **
-  ** WMP 9/9/2000
-  */
-
   gtk_widget_size_request (FRAME_GTK_TEXT_WIDGET (x->frame), &frame_size);
 
   requisition->width = frame_size.width;
