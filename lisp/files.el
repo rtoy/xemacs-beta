@@ -3086,6 +3086,45 @@ This requires the external program `diff' to be in your `exec-path'."
   ;; over to the next unsaved buffer when calling `d'.
   nil)
 
+(defvar save-some-buffers-action-alist
+  ;;instead of this we just say "yes all", "no all", etc.
+  ;;"save all the rest"
+  ;;"save only this buffer" "save no more buffers")
+  ;; this is rather bogus. --ben
+  ;; (it makes the dialog box too big, and you get an error
+  ;; "wrong type argument: framep, nil" when you hit q after
+  ;; choosing the option from the dialog box)
+
+  ;; We should fix the dialog box rather than disabling
+  ;; this!  --hniksic
+  (list (list ?\C-r (lambda (buf)
+		      ;; #### FSF has an EXIT-ACTION argument
+		      ;; to `view-buffer'.
+		      (view-buffer buf
+;				   (function
+;				    (lambda (ignore)
+;				      (exit-recursive-edit))))
+				   )
+		      (with-boundp 'view-exit-action
+			(setq view-exit-action
+			      (lambda (ignore)
+				(exit-recursive-edit))))
+		      (recursive-edit)
+		      ;; Return nil to ask about BUF again.
+		      nil)
+	      "%_Display Buffer") 
+	(list ?d (lambda (buf)
+		   (save-window-excursion (diff-buffer-with-file buf))
+		   (view-buffer (get-buffer-create "*File Diff*") t)
+		   (with-boundp 'view-exit-action
+		     (setq view-exit-action 
+			   (lambda (ignore)
+			     (exit-recursive-edit))))
+		   (recursive-edit)
+		   ;; Return nil to ask about BUF again.
+		   nil)
+	      "View %_Changes in Buffer")))
+
 (defun diff-files-for-recover (purpose file-1 file-2
 			       failed-file-1 failed-file-2
 			       coding-system)
@@ -3215,32 +3254,7 @@ to consider it or not when called with that buffer current."
 	       (error nil)))
 	   (buffer-list)
 	   '("buffer" "buffers" "save")
-	   ;;instead of this we just say "yes all", "no all", etc.
-	   ;;"save all the rest"
-	   ;;"save only this buffer" "save no more buffers")
-	   ;; this is rather bogus. --ben
-	   ;; (it makes the dialog box too big, and you get an error
-	   ;; "wrong type argument: framep, nil" when you hit q after
-	   ;; choosing the option from the dialog box)
-
-	   ;; We should fix the dialog box rather than disabling
-	   ;; this!  --hniksic
-	   (list (list ?\C-r (lambda (buf)
-			       ;; #### FSF has an EXIT-ACTION argument
-			       ;; to `view-buffer'.
-			       (view-buffer buf
-; 					    (function
-; 					     (lambda (ignore)
-; 					       (exit-recursive-edit))))
-			       )
-			       (with-boundp 'view-exit-action
-				 (setq view-exit-action
-				       (lambda (ignore)
-					 (exit-recursive-edit))))
-			       (recursive-edit)
-			       ;; Return nil to ask about BUF again.
-			       nil)
-		       "%_Display Buffer"))))
+	   save-some-buffers-action-alist))
 	 (abbrevs-done
 	  (and save-abbrevs abbrevs-changed
 	       (progn
