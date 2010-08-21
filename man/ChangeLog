@@ -1,3 +1,11 @@
+2010-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Character Type):
+	Go into more detail here on the specific type of error provoked on
+	overlong hex character escapes and non-Latin-1 octal character
+	escapes; give details of why the latter may be encountered, and
+	what to do with such code.
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* external-widget.texi: Correct FSF address in permission notice.
