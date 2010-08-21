@@ -1,3 +1,10 @@
+2010-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read_escape):
+	Make error messages better reflect the text that was encountered,
+	when overlong hex character escapes or non-Latin-1 octal character
+	escapes are encountered.
+
 2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (print_symbol):

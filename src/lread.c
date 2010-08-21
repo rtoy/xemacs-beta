@@ -1818,8 +1818,12 @@ read_escape (Lisp_Object readcharfun)
 	      }
 	  }
 	if (i >= 0400)
-	  syntax_error ("Non-ISO-8859-1 character specified with octal escape",
-			make_int (i));
+	  {
+	    read_syntax_error ((Ascbyte *) emacs_sprintf_malloc
+			       (NULL,
+				"Non-ISO-8859-1 octal character escape, "
+				"?\\%.3o", i));
+	  }
 	return i;
       }
 
@@ -1827,13 +1831,23 @@ read_escape (Lisp_Object readcharfun)
       /* A hex escape, as in ANSI C, except that we only allow latin-1
 	 characters to be read this way.  What is "\x4e03" supposed to
 	 mean, anyways, if the internal representation is hidden?
-         This is also consistent with the treatment of octal escapes. */
+         This is also consistent with the treatment of octal escapes.
+
+         Note that we don't accept ?\XAB as specifying the character with
+         numeric value 171; it must be ?\xAB. */
       {
+#define OVERLONG_INFO "Overlong hex character escape, ?\\x"
+
 	REGISTER Ichar i = 0;
 	REGISTER int count = 0;
+	Ascbyte seen[] = OVERLONG_INFO "\0\0\0\0\0";
+	REGISTER Ascbyte *seenp = seen + sizeof (OVERLONG_INFO) - 1;
+
+#undef OVERLONG_INFO
+
 	while (++count <= 2)
 	  {
-	    c = readchar (readcharfun);
+	    c = readchar (readcharfun), *seenp = c, ++seenp;
 	    /* Remember, can't use isdigit(), isalpha() etc. on Ichars */
 	    if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
 	    else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
@@ -1847,21 +1861,12 @@ read_escape (Lisp_Object readcharfun)
 
         if (count == 3)
           {
-            c = readchar (readcharfun);
+            c = readchar (readcharfun), *seenp = c, ++seenp;
             if ((c >= '0' && c <= '9') ||
                 (c >= 'a' && c <= 'f') ||
                 (c >= 'A' && c <= 'F'))
               {
-                Lisp_Object args[2];
-
-                if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
-                else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
-                else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
-
-                args[0] = build_ascstring ("?\\x%x");
-                args[1] = make_int (i);
-                syntax_error ("Overlong hex character escape",
-                              Fformat (2, args));
+		read_syntax_error (seen);
               }
             unreadchar (readcharfun, c);
           }
