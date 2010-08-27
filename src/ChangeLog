@@ -1,3 +1,9 @@
+2010-08-26  Adam Sjøgren <asjo@koldfront.dk>
+
+	* glyphs-eimage.c (gif_instantiate): Try harder to find an
+	appropriate GIF colormap and then flag an error if one can't be
+	found.
+
 2010-08-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (read_escape):
