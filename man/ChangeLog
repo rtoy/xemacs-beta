@@ -1,3 +1,22 @@
+2010-08-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/eval.texi (Evaluation, Multiple values):
+	Document our implementation of multiple values; point the reader
+	to the CLTL or the Hyperspec for details of exactly when values
+	are discarded.
+
+	* lispref/numbers.texi (Numeric Conversions): Document the
+	optional DIVISOR arguments to the rounding functions, and
+	document that they all return multiple values.
+	(Rounding Operations): Ditto.
+
+	* cl.texi (Multiple Values):
+	Document that we've moved the multiple values implementation to
+	core code, and cross-reference to the Lispref.
+	(Numerical Functions): The various rounding functions are now
+	identical to the built-in rounding functions, with the exception
+	that they return lists, not multiple values; document this.
+
 2010-08-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/objects.texi (Character Type):
