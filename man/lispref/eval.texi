@@ -24,6 +24,7 @@ function @code{eval}.
 * Eval::        How to invoke the Lisp interpreter explicitly.
 * Forms::       How various sorts of objects are evaluated.
 * Quoting::     Avoiding evaluation (to put constants in the program).
+* Multiple values:: Functions may return more than one result.
 @end menu
 
 @node Intro Eval
@@ -708,3 +709,102 @@ Here are some examples of expressions that use @code{quote}:
 Functions}), which causes an anonymous lambda expression written in Lisp
 to be compiled, and @samp{`} (@pxref{Backquote}), which is used to quote
 only part of a list, while computing and substituting other parts.
+
+@node Multiple values
+@section Multiple values
+@cindex multiple values
+
+@noindent
+Under XEmacs, expressions can return zero or more results, using the
+@code{values} and @code{values-list} functions. Results other than the
+first are typically discarded, but special operators are provided to
+access them.
+
+@defun values arguments@dots{}
+This function returns @var{arguments} as multiple values. Callers will
+always receive the first element of @var{arguments}, but must use
+various special operators, described below, to access other elements of
+@var{arguments}. 
+
+The idiom @code{(values (function-call argument))}, with one
+argument, is the normal mechanism to avoid passing multiple values to
+the calling form where that is not desired.
+
+XEmacs implements the Common Lisp specification when it comes to the
+exact details of when to discard and when to preserve multiple values;
+see Common Lisp the Language or the Common Lisp hyperspec for more
+details.  The most important thing to keep in mind is when multiple
+values are passed as an argument to a function, all but the first are
+discarded.
+@end defun
+
+@defun values-list argument
+This function returns the elements of the lst @var{argument} as multiple
+values.
+@end defun
+
+@defspec multiple-value-bind (var@dots{}) values-form forms@dots{}
+This special operator evaluates @var{values-form}, which may return
+multiple values.  It then binds the @var{var}s to these respective values,
+as if by @code{let}, and then executes the body @var{forms}.
+If there are more @var{var}s than values, the extra @var{var}s
+are bound to @code{nil}.  If there are fewer @var{var}s than
+values, the excess values are ignored.
+@end defspec
+
+@defspec multiple-value-setq (var@dots{}) form
+This special operator evaluates @var{form}, which may return multiple
+values. It then sets the @var{var}s to these respective values, as if by
+@code{setq}.  Extra @var{var}s or values are treated the same as
+in @code{multiple-value-bind}.
+@end defspec
+
+@defspec multiple-value-call function forms@dots{}
+This special operator evaluates function, discarding any multiple
+values.  It then evaluates @var{forms}, preserving any multiple values,
+and calls @var{function} as a function with the results.  Conceptually, this
+function is a version of @code{apply'}that by-passes the multiple values
+infrastructure, treating multiple values as intercalated lists.
+@end defspec
+
+@defspec multiple-value-list form
+This special operator evaluates @var{form} and returns a list of the
+multiple values given by it.
+@end defspec
+
+@defspec multiple-value-prog1 first body@dots{}
+This special operator evaluates the form @var{first}, then the
+forms @var{body}.  It returns the value given by @var{first}, preserving
+any multiple values.  This is identical to @code{prog1}, except that
+@code{prog1} always discards multiple values.
+@end defspec
+
+@defspec nth-value n form
+This special operator evaluates @var{form} and returns the @var{n}th
+value it gave.  @var{n} must be an integer of value zero or more.
+If @var{form} gave insufficient multiple values, @code{nth-value}
+returns @code{nil}.
+@end defspec
+
+@defvar multiple-values-limit
+This constant describes the exclusive upper bound on the number of
+multiple values that @code{values} accepts and that
+@code{multiple-value-bind}, etc. will consume.
+@end defvar
+
+To take full advantage of multiple values, Emacs Lisp code must have
+been compiled by XEmacs 21.5 or later, which is not yet true of the
+XEmacs packages.  Matched @code{values} and @code{multiple-value-bind}
+calls will work in code included in the XEmacs packages when run on
+21.5, though the following incantation may be necessary at the start of
+your file, until appropriate code is included in XEmacs 21.4:
+
+@example
+(eval-when-compile (when (eq 'list (symbol-function 'values))
+                     (define-compiler-macro values (&rest args)
+                       (cons 'list args))
+                     (define-compiler-macro values-list (list) list)))
+@end example
+
+Such code cannot, unfortunately, rely on XEmacs to discard multiple
+values where that is appropriate.

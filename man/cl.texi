@@ -2987,44 +2987,8 @@ buffers are Emacs-specific extensions.
 @node Multiple Values, , Loop Facility, Control Structure
 @section Multiple Values
 
-@noindent
-Common Lisp functions can return zero or more results.  Emacs Lisp
-functions, by contrast, always return exactly one result.  This
-package makes no attempt to emulate Common Lisp multiple return
-values; Emacs versions of Common Lisp functions that return more
-than one value either return just the first value (as in
-@code{compiler-macroexpand}) or return a list of values (as in
-@code{get-setf-method}).  This package @emph{does} define placeholders
-for the Common Lisp functions that work with multiple values, but
-in Emacs Lisp these functions simply operate on lists instead.
-The @code{values} form, for example, is a synonym for @code{list}
-in Emacs.
-
-@defspec multiple-value-bind (var@dots{}) values-form forms@dots{}
-This form evaluates @var{values-form}, which must return a list of
-values.  It then binds the @var{var}s to these respective values,
-as if by @code{let}, and then executes the body @var{forms}.
-If there are more @var{var}s than values, the extra @var{var}s
-are bound to @code{nil}.  If there are fewer @var{var}s than
-values, the excess values are ignored.
-@end defspec
-
-@defspec multiple-value-setq (var@dots{}) form
-This form evaluates @var{form}, which must return a list of values.
-It then sets the @var{var}s to these respective values, as if by
-@code{setq}.  Extra @var{var}s or values are treated the same as
-in @code{multiple-value-bind}.
-@end defspec
-
-The older Quiroz package attempted a more faithful (but still
-imperfect) emulation of Common Lisp multiple values.  The old
-method ``usually'' simulated true multiple values quite well,
-but under certain circumstances would leave spurious return
-values in memory where a later, unrelated @code{multiple-value-bind}
-form would see them.
-
-Since a perfect emulation is not feasible in Emacs Lisp, this
-package opts to keep it as simple and predictable as possible.
+This functionality has been moved to core XEmacs, and is documented in
+the XEmacs Lisp reference, @pxref{(lispref.info)Multiple values}.
 
 @node Macros, Declarations, Control Structure, Top
 @chapter Macros
@@ -3506,58 +3470,6 @@ argument, i.e., the greatest integer less than or equal to the true
 square root of the argument.
 @end defun
 
-@defun floor* number &optional divisor
-This function implements the Common Lisp @code{floor} function.
-It is called @code{floor*} to avoid name conflicts with the
-simpler @code{floor} function built-in to Emacs 19.
-
-With one argument, @code{floor*} returns a list of two numbers:
-The argument rounded down (toward minus infinity) to an integer,
-and the ``remainder'' which would have to be added back to the
-first return value to yield the argument again.  If the argument
-is an integer @var{x}, the result is always the list @code{(@var{x} 0)}.
-If the argument is an Emacs 19 floating-point number, the first
-result is a Lisp integer and the second is a Lisp float between
-0 (inclusive) and 1 (exclusive).
-
-With two arguments, @code{floor*} divides @var{number} by
-@var{divisor}, and returns the floor of the quotient and the
-corresponding remainder as a list of two numbers.  If
-@code{(floor* @var{x} @var{y})} returns @code{(@var{q} @var{r})},
-then @code{@var{q}*@var{y} + @var{r} = @var{x}}, with @var{r}
-between 0 (inclusive) and @var{r} (exclusive).  Also, note
-that @code{(floor* @var{x})} is exactly equivalent to
-@code{(floor* @var{x} 1)}.
-
-This function is entirely compatible with Common Lisp's @code{floor}
-function, except that it returns the two results in a list since
-Emacs Lisp does not support multiple-valued functions.
-@end defun
-
-@defun ceiling* number &optional divisor
-This function implements the Common Lisp @code{ceiling} function,
-which is analogous to @code{floor} except that it rounds the
-argument or quotient of the arguments up toward plus infinity.
-The remainder will be between 0 and minus @var{r}.
-@end defun
-
-@defun truncate* number &optional divisor
-This function implements the Common Lisp @code{truncate} function,
-which is analogous to @code{floor} except that it rounds the
-argument or quotient of the arguments toward zero.  Thus it is
-equivalent to @code{floor*} if the argument or quotient is
-positive, or to @code{ceiling*} otherwise.  The remainder has
-the same sign as @var{number}.
-@end defun
-
-@defun round* number &optional divisor
-This function implements the Common Lisp @code{round} function,
-which is analogous to @code{floor} except that it rounds the
-argument or quotient of the arguments to the nearest integer.
-In the case of a tie (the argument or quotient is exactly
-halfway between two integers), it rounds to the even integer.
-@end defun
-
 @defun mod* number divisor
 This function returns the same value as the second return value
 of @code{floor}.
@@ -3568,7 +3480,24 @@ This function returns the same value as the second return value
 of @code{truncate}.
 @end defun
 
-These definitions are compatible with those in the Quiroz
+@noindent
+The following functions are identical to their built-in counterparts,
+without the trailing @code{*} in their names, but they return lists
+instead of multiple values. @pxref{(lispref.info)Rounding Operations}
+
+@defun floor* number &optional divisor
+@end defun
+
+@defun ceiling* number &optional divisor
+@end defun
+
+@defun truncate* number &optional divisor
+@end defun
+
+@defun round* number &optional divisor
+@end defun
+
+All the above definitions are compatible with those in the Quiroz
 @file{cl.el} package, except that this package appends @samp{*}
 to certain function names to avoid conflicts with existing
 Emacs 19 functions, and that the mechanism for returning

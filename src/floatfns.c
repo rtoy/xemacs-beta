@@ -1300,11 +1300,7 @@ ceiling_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
     }
   else
     {
-#ifdef HAVE_BIGNUM
       if (INTEGERP (number))
-#else
-      if (INTP (number))
-#endif
 	{
 	  return values2 (number, Qzero);
 	}
@@ -1566,11 +1562,7 @@ static Lisp_Object
 floor_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 		       int return_float)
 {
-#ifdef HAVE_BIGNUM
   if (INTEGERP (number))
-#else
-  if (INTP (number))
-#endif
     {
       if (return_float)
 	{
@@ -1971,11 +1963,7 @@ static Lisp_Object
 round_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 		       int return_float)
 {
-#ifdef HAVE_BIGNUM
   if (INTEGERP (number))
-#else
-  if (INTP (number))
-#endif
     {
       if (return_float)
 	{
@@ -2258,11 +2246,7 @@ static Lisp_Object
 truncate_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 			  int return_float)
 {
-#ifdef HAVE_BIGNUM
   if (INTEGERP (number))
-#else
-  if (INTP (number))
-#endif
     {
       if (return_float)
 	{
@@ -2301,7 +2285,7 @@ is omitted or one.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(ceiling, 0);
+  ROUNDING_CONVERT (ceiling, 0);
 }
 
 DEFUN ("floor", Ffloor, 1, 2, 0, /*
@@ -2316,7 +2300,7 @@ one.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(floor, 0);
+  ROUNDING_CONVERT (floor, 0);
 }
 
 DEFUN ("round", Fround, 1, 2, 0, /*
@@ -2333,7 +2317,7 @@ in the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(round, 0);
+  ROUNDING_CONVERT (round, 0);
 }
 
 DEFUN ("truncate", Ftruncate, 1, 2, 0, /*
@@ -2347,7 +2331,7 @@ This function returns multiple values; see `multiple-value-call' and
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(truncate, 0);
+  ROUNDING_CONVERT (truncate, 0);
 }
 
 /* Float-rounding functions. */
@@ -2364,7 +2348,7 @@ the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(ceiling, 1);
+  ROUNDING_CONVERT (ceiling, 1);
 }
 
 DEFUN ("ffloor", Fffloor, 1, 2, 0, /*
@@ -2379,7 +2363,7 @@ the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(floor, 1);
+  ROUNDING_CONVERT (floor, 1);
 }
 
 DEFUN ("fround", Ffround, 1, 2, 0, /*
@@ -2395,7 +2379,7 @@ the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(round, 1);
+  ROUNDING_CONVERT (round, 1);
 }
 
 DEFUN ("ftruncate", Fftruncate, 1, 2, 0, /*
@@ -2410,7 +2394,7 @@ the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(truncate, 1);
+  ROUNDING_CONVERT (truncate, 1);
 }
 
 #ifdef FLOAT_CATCH_SIGILL

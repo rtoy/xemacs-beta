@@ -1,3 +1,16 @@
+2010-08-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* floatfns.c (ceiling_one_mundane_arg, floor_one_mundane_arg)
+	(round_one_mundane_arg, truncate_one_mundane_arg):
+	INTEGERP is always available, no need to wrap calls to it with
+	#ifdef HAVE_BIGNUM.
+	(Fceiling, Ffloor, Fround, Ftruncate, Ffceiling, Fffloor)
+	(Ffround, Fftruncate):
+	Correct some code formatting here.
+	* doprnt.c (emacs_doprnt_1):
+	Remove some needless #ifdef WITH_NUMBER_TYPES, now number.h is
+	always #included. 
+
 2010-08-26  Adam Sjøgren <asjo@koldfront.dk>
 
 	* glyphs-eimage.c (gif_instantiate): Try harder to find an
