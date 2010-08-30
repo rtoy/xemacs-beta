@@ -1,4 +1,4 @@
-2010-08-26  Adam SjÃ¸gren <asjo@koldfront.dk>
+2010-08-26  Adam Sjøgren <asjo@koldfront.dk>
 
 	* glyphs-eimage.c (gif_instantiate): Try harder to find an
 	appropriate GIF colormap and then flag an error if one can't be
