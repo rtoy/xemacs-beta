@@ -56,7 +56,9 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Qstring_lessp, Qsort, Qmerge, Qfill;
 Lisp_Object Qidentity;
-Lisp_Object Qvector, Qarray, Qbit_vector, QsortX, Qreduce, Q_from_end, Q_initial_value;
+Lisp_Object Qvector, Qarray, Qbit_vector, QsortX, Q_from_end, Q_initial_value;
+Lisp_Object Qmapconcat, QmapcarX, Qmapvector, Qmapcan, Qmapc, Qmap, Qmap_into;
+Lisp_Object Qsome, Qevery, Qmaplist, Qmapl, Qmapcon, Qreduce;
 
 Lisp_Object Qbase64_conversion_error;
 
@@ -2063,13 +2065,16 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
   Lisp_Object tail;
   Lisp_Object tem;
   Lisp_Object l1, l2;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  Lisp_Object tortoises[2];
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   int looped = 0;
 
   l1 = org_l1;
   l2 = org_l2;
   tail = Qnil;
   value = Qnil;
+  tortoises[0] = org_l1;
+  tortoises[1] = org_l2; 
 
   if (NULL == c_predicate)
     {
@@ -2081,7 +2086,8 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
      When l1 and l2 are updated, we copy the new values
      back into the org_ vars.  */
 
-  GCPRO4 (org_l1, org_l2, predicate, value);
+  GCPRO5 (org_l1, org_l2, predicate, value, tortoises[0]);
+  gcpro5.nvars = 2;
 
   while (1)
     {
@@ -2120,19 +2126,24 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
 	Fsetcdr (tail, tem);
       tail = tem;
 
-      if (++looped % CIRCULAR_LIST_SUSPICION_LENGTH) continue;
+      if (++looped > CIRCULAR_LIST_SUSPICION_LENGTH)
+        {
+          if (looped & 1)
+            {
+              tortoises[0] = XCDR (tortoises[0]);
+              tortoises[1] = XCDR (tortoises[1]); 
+            }
 
-      /* Just check the lists aren't circular:*/
-      {
-        EXTERNAL_LIST_LOOP_1 (l1)
-          {
-          }
-      }
-      {
-        EXTERNAL_LIST_LOOP_1 (l2)
-          {
-          }
-      }
+          if (EQ (org_l1, tortoises[0]))
+            {
+              signal_circular_list_error (org_l1);
+            }
+
+          if (EQ (org_l2, tortoises[1]))
+            {
+              signal_circular_list_error (org_l2);
+            }
+        }
     }
 }
 
@@ -2230,12 +2241,12 @@ list_array_merge_into_list (Lisp_Object list,
                             Lisp_Object predicate, Lisp_Object key_func,
                             Boolint reverse_order)
 {
-  Lisp_Object tail = Qnil, value = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  Lisp_Object tail = Qnil, value = Qnil, tortoise = list;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Elemcount array_index = 0;
   int looped = 0;
 
-  GCPRO3 (list, tail, value);
+  GCPRO4 (list, tail, value, tortoise);
 
   while (1)
     {
@@ -2297,13 +2308,18 @@ list_array_merge_into_list (Lisp_Object list,
           ++array_index;
         }
 
-      if (++looped % CIRCULAR_LIST_SUSPICION_LENGTH) continue;
+      if (++looped > CIRCULAR_LIST_SUSPICION_LENGTH)
+        {
+          if (looped & 1)
+            {
+              tortoise = XCDR (tortoise);
+            }
 
-      {
-        EXTERNAL_LIST_LOOP_1 (list)
-          {
-          }
-      }
+          if (EQ (list, tortoise))
+            {
+              signal_circular_list_error (list);
+            }
+        }
     }
 }
 
@@ -2377,7 +2393,7 @@ list_array_merge_into_array (Lisp_Object *output, Elemcount output_len,
         {
           if (array_len - array_index != output_len - output_index)
             {
-              invalid_state ("List length modified during merge", Qunbound);
+	      mapping_interaction_error (Qmerge, list);
             }
 
           while (array_index < array_len)
@@ -4105,35 +4121,34 @@ arguments: (&rest ARGS)
    so FUNCTION cannot insert a non-cons into SEQUENCES[0] and throw off
    mapcarX.
 
-   Otherwise, mapcarX signals a wrong-type-error if it encounters a
-   non-cons, non-array when traversing SEQUENCES.  Common Lisp specifies in
+   Otherwise, mapcarX signals an invalid state error (see
+   mapping_interaction_error(), above) if it encounters a non-cons,
+   non-array when traversing SEQUENCES.  Common Lisp specifies in
    MAPPING-DESTRUCTIVE-INTERACTION that it is an error when FUNCTION
    destructively modifies SEQUENCES in a way that might affect the ongoing
    traversal operation.
 
-   If SOME_OR_EVERY is SOME_OR_EVERY_SOME, return the (possibly multiple)
-   values given by FUNCTION the first time it is non-nil, and abandon the
-   iterations.  LISP_VALS must be a cons, and the return value will be
-   stored in its car.  If SOME_OR_EVERY is SOME_OR_EVERY_EVERY, store Qnil
-   in the car of LISP_VALS if FUNCTION gives nil; otherwise leave it
-   alone. */
+   CALLER is a symbol describing the Lisp-visible function that was called,
+   and any errors thrown because SEQUENCES was modified will reflect it.
 
-#define SOME_OR_EVERY_NEITHER 0
-#define SOME_OR_EVERY_SOME    1
-#define SOME_OR_EVERY_EVERY   2
+   If CALLER is Qsome, return the (possibly multiple) values given by
+   FUNCTION the first time it is non-nil, and abandon the iterations.
+   LISP_VALS must be the result of calling STORE_VOID_IN_LISP on the address
+   of a Lisp object, and the return value will be stored at that address.
+   If CALLER is Qevery, LISP_VALS must also reflect a pointer to a Lisp
+   object, and Qnil will be stored at that address if FUNCTION gives nil;
+   otherwise it will be left alone. */
 
 static void
 mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 	 Lisp_Object function, int nsequences, Lisp_Object *sequences, 
-	 int some_or_every)
+	 Lisp_Object caller)
 {
   Lisp_Object called, *args;
   struct gcpro gcpro1, gcpro2;
   int i, j;
-  enum lrecord_type lisp_vals_type;
 
-  assert (LRECORDP (lisp_vals));
-  lisp_vals_type = (enum lrecord_type) XRECORD_LHEADER (lisp_vals)->type;
+  assert ((EQ (caller, Qsome) || EQ (caller, Qevery)) ? vals == NULL : 1);
 
   args = alloca_array (Lisp_Object, nsequences + 1);
   args[0] = function;
@@ -4177,11 +4192,20 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
     }
   else
     {
+      enum lrecord_type lisp_vals_type;
       Binbyte *sequence_types = alloca_array (Binbyte, nsequences);
       for (j = 0; j < nsequences; ++j)
 	{
 	  sequence_types[j] = XRECORD_LHEADER (sequences[j])->type;
 	}
+
+      if (!EQ (caller, Qsome) && !EQ (caller, Qevery))
+        {
+          assert (LRECORDP (lisp_vals));
+          lisp_vals_type
+            = (enum lrecord_type) XRECORD_LHEADER (lisp_vals)->type;
+          assert (NILP (lisp_vals) || lisp_vals_type != lrecord_type_symbol);
+        }
 
       for (i = 0; i < call_count; ++i)
 	{
@@ -4193,13 +4217,12 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 		  {
 		    if (!CONSP (sequences[j]))
 		      {
-			/* This means FUNCTION has probably messed
-			   around with a cons in one of the sequences,
-			   since we checked the type
-			   (CHECK_SEQUENCE()) and the length and
+			/* This means FUNCTION has messed around with a cons
+			   in one of the sequences, since we checked the
+			   type (CHECK_SEQUENCE()) and the length and
 			   structure (with Flength()) correctly in our
 			   callers. */
-			dead_wrong_type_argument (Qconsp, sequences[j]);
+                        mapping_interaction_error (caller, sequences[j]);
 		      }
 		    args[j + 1] = XCAR (sequences[j]);
 		    sequences[j] = XCDR (sequences[j]);
@@ -4232,91 +4255,82 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 	      vals[i] = IGNORE_MULTIPLE_VALUES (called);
 	      gcpro2.nvars += 1;
 	    }
-	  else
-	    {
-	      switch (lisp_vals_type)
-		{
-		case lrecord_type_symbol:
-		  break;
-		case lrecord_type_cons:
-		  {
-		    if (SOME_OR_EVERY_NEITHER == some_or_every)
-		      {
-			called = IGNORE_MULTIPLE_VALUES (called);
-			if (!CONSP (lisp_vals))
-			  {
-			    /* If FUNCTION has inserted a non-cons non-nil
-			       cdr into the list before we've processed the
-			       relevant part, error. */
-			    dead_wrong_type_argument (Qconsp, lisp_vals);
-			  }
-
-			XSETCAR (lisp_vals, called);
-			lisp_vals = XCDR (lisp_vals);
-			break;
-		      }
-
-		    if (SOME_OR_EVERY_SOME == some_or_every)
-		      {
-			if (!NILP (IGNORE_MULTIPLE_VALUES (called)))
-			  {
-			    XCAR (lisp_vals) = called;
-			    UNGCPRO;
-			    return;
-			  }
-			break;
-		      }
-
-		    if (SOME_OR_EVERY_EVERY == some_or_every)
-		      {
-			called = IGNORE_MULTIPLE_VALUES (called);
-			if (NILP (called))
-			  {
-			    XCAR (lisp_vals) = Qnil;
-			    UNGCPRO;
-			    return;
-			  }
-			break;
-		      }
-
-		    goto bad_some_or_every_flag;
-		  }
-		case lrecord_type_vector:
-		  {
-		    called = IGNORE_MULTIPLE_VALUES (called);
-		    i < XVECTOR_LENGTH (lisp_vals) ?
-		      (XVECTOR_DATA (lisp_vals)[i] = called) :
-		      /* Let #'aset error. */
-		      Faset (lisp_vals, make_int (i), called);
-		    break;
-		  }
-		case lrecord_type_string:
-		  {
-		    /* If this ever becomes a code hotspot, we can keep
-		       around pointers into the data of the string, checking
-		       each time that it hasn't been relocated. */
-		    called = IGNORE_MULTIPLE_VALUES (called);
-		    Faset (lisp_vals, make_int (i), called);
-		    break;
-		  }
-		case lrecord_type_bit_vector:
-		  {
-		    called = IGNORE_MULTIPLE_VALUES (called);
-		    (BITP (called) &&
-		     i < bit_vector_length (XBIT_VECTOR (lisp_vals))) ?
-		      set_bit_vector_bit (XBIT_VECTOR (lisp_vals), i,
-					  XINT (called)) :
-		      (void) Faset (lisp_vals, make_int (i), called);
-		    break;
-		  }
-		bad_some_or_every_flag:
-		default:
-		  {
-		    ABORT();
-		    break;
-		  }
-		}
-	    }
+          else if (EQ (Qsome, caller))
+            {
+              if (!NILP (IGNORE_MULTIPLE_VALUES (called)))
+                {
+                  Lisp_Object *result
+                    = (Lisp_Object *) GET_VOID_FROM_LISP (lisp_vals);
+                  *result = called;
+                  UNGCPRO;
+                  return;
+                }
+            }
+          else if (EQ (Qevery, caller))
+            {
+	      if (NILP (IGNORE_MULTIPLE_VALUES (called)))
+                {
+                  Lisp_Object *result
+                    = (Lisp_Object *) GET_VOID_FROM_LISP (lisp_vals);
+                  *result = Qnil;
+                  UNGCPRO;
+                  return;
+                }
+            }
+          else
+            {
+              called = IGNORE_MULTIPLE_VALUES (called);
+              switch (lisp_vals_type)
+                {
+                case lrecord_type_symbol:
+		  /* This is #'mapc; the result of the funcall is
+		     discarded. */
+                  break;
+                case lrecord_type_cons:
+                  {
+                    if (!CONSP (lisp_vals))
+                      {
+                        /* If FUNCTION has inserted a non-cons non-nil
+                           cdr into the list before we've processed the
+                           relevant part, error. */
+                        mapping_interaction_error (caller, lisp_vals);
+                      }
+                    XSETCAR (lisp_vals, called);
+                    lisp_vals = XCDR (lisp_vals);
+                    break;
+                  }
+                case lrecord_type_vector:
+                  {
+                    i < XVECTOR_LENGTH (lisp_vals) ?
+                      (XVECTOR_DATA (lisp_vals)[i] = called) :
+                      /* Let #'aset error. */
+                      Faset (lisp_vals, make_int (i), called);
+                    break;
+                  }
+                case lrecord_type_string:
+                  {
+                    /* If this ever becomes a code hotspot, we can keep
+                       around pointers into the data of the string, checking
+                       each time that it hasn't been relocated. */
+                    Faset (lisp_vals, make_int (i), called);
+                    break;
+                  }
+                case lrecord_type_bit_vector:
+                  {
+                    (BITP (called) &&
+                     i < bit_vector_length (XBIT_VECTOR (lisp_vals))) ?
+                      set_bit_vector_bit (XBIT_VECTOR (lisp_vals), i,
+                                          XINT (called)) :
+                      (void) Faset (lisp_vals, make_int (i), called);
+                    break;
+                  }
+                default:
+                  {
+                    ABORT();
+                    break;
+                  }
+                }
+            }
 	}
     }
   UNGCPRO;
@@ -4373,8 +4387,7 @@ arguments: (FUNCTION SEQUENCE SEPARATOR &rest SEQUENCES)
     }
   else
     {
-      mapcarX (len, args0, Qnil, function, nargs - 2, args + 2,
-	       SOME_OR_EVERY_NEITHER);
+      mapcarX (len, args0, Qnil, function, nargs - 2, args + 2, Qmapconcat);
     }
 
   for (i = len - 1; i >= 0; i--)
@@ -4412,8 +4425,7 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
     }
 
   args0 = alloca_array (Lisp_Object, len);
-  mapcarX (len, args0, Qnil, function, nargs - 1, args + 1,
-	   SOME_OR_EVERY_NEITHER);
+  mapcarX (len, args0, Qnil, function, nargs - 1, args + 1, QmapcarX);
 
   return Flist ((int) len, args0);
 }
@@ -4449,10 +4461,8 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
   /* Don't pass result as the lisp_object argument, we want mapcarX to protect 
      a single list argument's elements from being garbage-collected. */
   mapcarX (len, XVECTOR_DATA (result), Qnil, function, nargs - 1, args +1,
-	   SOME_OR_EVERY_NEITHER);
-  UNGCPRO;
-
-  return result;
+           Qmapvector);
+  RETURN_UNGCPRO (result);
 }
 
 DEFUN ("mapcan", Fmapcan, 2, MANY, 0, /*
@@ -4470,40 +4480,21 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object function = args[0], nconcing;
-  Elemcount len = EMACS_INT_MAX;
-  Lisp_Object *args0;
-  struct gcpro gcpro1;
+  Lisp_Object function = args[0], *result;
+  Elemcount result_len = EMACS_INT_MAX;
   int i;
 
   for (i = 1; i < nargs; ++i)
     {
       CHECK_SEQUENCE (args[i]);
-      len = min (len, XINT (Flength (args[i])));
+      result_len = min (result_len, XINT (Flength (args[i])));
     }
 
-  args0 = alloca_array (Lisp_Object, len + 1);
-  mapcarX (len, args0 + 1, Qnil, function, nargs - 1, args + 1,
-	   SOME_OR_EVERY_NEITHER);
+  result = alloca_array (Lisp_Object, result_len);
+  mapcarX (result_len, result, Qnil, function, nargs - 1, args + 1, Qmapcan);
 
-  if (len < 2)
-    {
-      return len ? args0[1] : Qnil;
-    }
-
-  /* bytecode_nconc2 can signal and return, we need to GCPRO the args, since
-     mapcarX is no longer doing this for us. */
-  args0[0] = Fcons (Qnil, Qnil);
-  GCPRO1 (args0[0]);
-  gcpro1.nvars = len + 1;
-
-  for (i = 0; i < len; ++i)
-    {
-      nconcing = bytecode_nconc2 (args0 + i);
-      args0[i + 1] = nconcing;
-    }
-
-  RETURN_UNGCPRO (XCDR (nconcing));
+  /* #'nconc GCPROs its args in case of signals and error. */
+  return Fnconc (result_len, result);
 }
 
 DEFUN ("mapc", Fmapc, 2, MANY, 0, /*
@@ -4539,8 +4530,7 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
      elements of the args array handed to it, and this may involve
      elements of sequence getting garbage collected. */
   GCPRO1 (sequence);
-  mapcarX (len, NULL, Qnil, args[0], nargs - 1, args + 1,
-	   SOME_OR_EVERY_NEITHER);
+  mapcarX (len, NULL, Qnil, args[0], nargs - 1, args + 1, Qmapc);
   RETURN_UNGCPRO (sequence);
 }
 
@@ -4580,8 +4570,7 @@ arguments: (TYPE FUNCTION SEQUENCE &rest SEQUENCES)
       args0 = alloca_array (Lisp_Object, len);
     }
 
-  mapcarX (len, args0, Qnil, function, nargs - 2, args + 2,
-	   SOME_OR_EVERY_NEITHER);
+  mapcarX (len, args0, Qnil, function, nargs - 2, args + 2, Qmap);
 
   if (EQ (type, Qnil))
     {
@@ -4646,7 +4635,7 @@ arguments: (RESULT-SEQUENCE FUNCTION &rest SEQUENCES)
     }
 
   mapcarX (len, NULL, result_sequence, function, nargs - 2, args + 2,
-	   SOME_OR_EVERY_NEITHER);
+           Qmap_into);
 
   return result_sequence;
 }
@@ -4663,12 +4652,10 @@ arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object result_box = Fcons (Qnil, Qnil);
-  struct gcpro gcpro1;
+  Lisp_Object result = Qnil,
+    result_ptr = STORE_VOID_IN_LISP ((void *) &result);
   Elemcount len = EMACS_INT_MAX;
   int i;
-
-  GCPRO1 (result_box);
 
   for (i = 1; i < nargs; ++i)
     {
@@ -4676,10 +4663,9 @@ arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
       len = min (len, XINT (Flength (args[i])));
     }
 
-  mapcarX (len, NULL, result_box, args[0], nargs - 1, args +1,
-	   SOME_OR_EVERY_SOME);
+  mapcarX (len, NULL, result_ptr, args[0], nargs - 1, args +1, Qsome);
 
-  RETURN_UNGCPRO (XCAR (result_box));
+  return result;
 }
 
 DEFUN ("every", Fevery, 2, MANY, 0, /* 
@@ -4694,12 +4680,9 @@ arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object result_box = Fcons (Qt, Qnil);
-  struct gcpro gcpro1;
+  Lisp_Object result = Qt, result_ptr = STORE_VOID_IN_LISP ((void *) &result);
   Elemcount len = EMACS_INT_MAX;
   int i;
-
-  GCPRO1 (result_box);
 
   for (i = 1; i < nargs; ++i)
     {
@@ -4707,30 +4690,32 @@ arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
       len = min (len, XINT (Flength (args[i])));
     }
 
-  mapcarX (len, NULL, result_box, args[0], nargs - 1, args +1,
-	   SOME_OR_EVERY_EVERY);
+  mapcarX (len, NULL, result_ptr, args[0], nargs - 1, args +1, Qevery);
 
-  RETURN_UNGCPRO (XCAR (result_box));
+  return result;
 }
 
 /* Call FUNCTION with NLISTS arguments repeatedly, each Nth argument
    corresponding to the result of calling (nthcdr ITERATION-COUNT LISTS[N]),
    until that #'nthcdr expression gives nil for some element of LISTS.
 
-   If MAPLP is zero, return LISTS[0]. Otherwise, return a list of the return
-   values from FUNCTION; if NCONCP is non-zero, nconc them together.
+   CALLER is a symbol reflecting the Lisp-visible function that was called,
+   and any errors thrown because SEQUENCES was modified will reflect it.
+
+   If CALLER is Qmapl, return LISTS[0]. Otherwise, return a list of the
+   return values from FUNCTION; if caller is Qmapcan, nconc them together.
 
    In contrast to mapcarX, we don't require our callers to check LISTS for
    well-formedness, we signal wrong-type-argument if it's not a list, or
    circular-list if it's circular. */
 
 static Lisp_Object
-maplist (Lisp_Object function, int nlists, Lisp_Object *lists, int maplp,
-	 int nconcp)
+maplist (Lisp_Object function, int nlists, Lisp_Object *lists,
+         Lisp_Object caller)
 {
-  Lisp_Object result = maplp ? lists[0] : Fcons (Qnil, Qnil), funcalled;
-  Lisp_Object nconcing[2], accum = result, *args;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  Lisp_Object nconcing[2], accum = Qnil, *args, *tortoises, funcalled;
+  Lisp_Object result = EQ (caller, Qmapl) ? lists[0] : Qnil;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   int i, j, continuing = (nlists > 0), called_count = 0;
 
   args = alloca_array (Lisp_Object, nlists + 1);
@@ -4740,18 +4725,23 @@ maplist (Lisp_Object function, int nlists, Lisp_Object *lists, int maplp,
       args[i] = Qnil;
     }
 
-  if (nconcp)
+  tortoises = alloca_array (Lisp_Object, nlists);
+  memcpy (tortoises, lists, nlists * sizeof (Lisp_Object));
+
+  if (EQ (caller, Qmapcon))
     {
-      nconcing[0] = result;
+      nconcing[0] = Qnil;
       nconcing[1] = Qnil;
-      GCPRO3 (args[0], nconcing[0], result);
+      GCPRO4 (args[0], nconcing[0], tortoises[0], result);
       gcpro1.nvars = 1;
       gcpro2.nvars = 2;
+      gcpro3.nvars = nlists;
     }
   else
     {
-      GCPRO2 (args[0], result);
+      GCPRO3 (args[0], tortoises[0], result);
       gcpro1.nvars = 1;
+      gcpro2.nvars = nlists;
     }
 
   while (continuing)
@@ -4770,45 +4760,64 @@ maplist (Lisp_Object function, int nlists, Lisp_Object *lists, int maplp,
 	    }
 	  else
 	    {
-	      dead_wrong_type_argument (Qlistp, lists[j]);
+	      lists[j] = wrong_type_argument (Qlistp, lists[j]);
 	    }
 	}
       if (!continuing) break;
       funcalled = IGNORE_MULTIPLE_VALUES (Ffuncall (nlists + 1, args));
-      if (!maplp)
+
+      if (EQ (caller, Qmapl))
 	{
-	  if (nconcp)
-	    {
-	      /* This order of calls means we check that each list is
-		 well-formed once and once only. The last result does
-		 not have to be a list. */
-	      nconcing[1] = funcalled;
-	      nconcing[0] = bytecode_nconc2 (nconcing);
-	    }
-	  else
-	    {
-	      /* Add to the end, avoiding the need to call nreverse
-		 once we're done: */
-	      XSETCDR (accum, Fcons (funcalled, Qnil));
-	      accum = XCDR (accum);
-	    }
+          DO_NOTHING;
+        }
+      else if (EQ (caller, Qmapcon))
+        {
+          nconcing[1] = funcalled;
+          accum = bytecode_nconc2 (nconcing);
+          if (NILP (result))
+            {
+              result = accum;
+            }
+          /* Only check a given stretch of result for well-formedness
+             once: */
+          nconcing[0] = funcalled;
+        }
+      else if (NILP (accum))
+        {
+          accum = result = Fcons (funcalled, Qnil);
+        }
+      else
+        {
+          /* Add to the end, avoiding the need to call nreverse
+             once we're done: */
+          XSETCDR (accum, Fcons (funcalled, Qnil));
+          accum = XCDR (accum);
 	}
 
-      if (++called_count % CIRCULAR_LIST_SUSPICION_LENGTH) continue;
-
-      for (j = 0; j < nlists; ++j)
-	{
-	  EXTERNAL_LIST_LOOP_1 (lists[j])
-	    {
-	      /* Just check the lists aren't circular, using the
-		 EXTERNAL_LIST_LOOP_1 macro. */
-	    }
-	}
-    }
-
-  if (!maplp)
-    {
-      result = XCDR (result);
+      if (++called_count > CIRCULAR_LIST_SUSPICION_LENGTH)
+        {
+          if (called_count & 1)
+            {
+              for (j = 0; j < nlists; ++j)
+                {
+                  tortoises[j] = XCDR (tortoises[j]);
+                  if (EQ (lists[j], tortoises[j]))
+                    {
+                      signal_circular_list_error (lists[j]);
+                    }
+                }
+            }
+          else
+            {
+              for (j = 0; j < nlists; ++j)
+                {
+                  if (EQ (lists[j], tortoises[j]))
+                    {
+                      signal_circular_list_error (lists[j]);
+                    }
+                }
+            }
+        }
     }
 
   RETURN_UNGCPRO (result);
@@ -4823,7 +4832,7 @@ arguments: (FUNCTION LIST &rest LISTS)
 */
        (int nargs, Lisp_Object *args))
 {
-  return maplist (args[0], nargs - 1, args + 1, 0, 0);
+  return maplist (args[0], nargs - 1, args + 1, Qmaplist);
 }
 
 DEFUN ("mapl", Fmapl, 2, MANY, 0, /*
@@ -4833,7 +4842,7 @@ arguments: (FUNCTION LIST &rest LISTS)
 */
        (int nargs, Lisp_Object *args))
 {
-  return maplist (args[0], nargs - 1, args + 1, 1, 0);
+  return maplist (args[0], nargs - 1, args + 1, Qmapl);
 }
 
 DEFUN ("mapcon", Fmapcon, 2, MANY, 0, /*
@@ -4846,7 +4855,7 @@ arguments: (FUNCTION LIST &rest LISTS)
 */
        (int nargs, Lisp_Object *args))
 {
-  return maplist (args[0], nargs - 1, args + 1, 0, 1);
+  return maplist (args[0], nargs - 1, args + 1, Qmapcon);
 }
 
 /* Extra random functions */
@@ -5149,7 +5158,8 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
           Elemcount counting = 0, len = 0;
 	  struct gcpro gcpro1;
 
-          if (ending - starting && starting < ending && EMACS_INT_MAX == ending)
+          if (ending - starting && starting < ending
+	      && EMACS_INT_MAX == ending)
             {
               ending = XINT (Flength (sequence));
             }
@@ -5915,6 +5925,19 @@ syms_of_fns (void)
   DEFSYMBOL (Qbit_vector);
   defsymbol (&QsortX, "sort*");
   DEFSYMBOL (Qreduce);
+
+  DEFSYMBOL (Qmapconcat);
+  defsymbol (&QmapcarX, "mapcar*");
+  DEFSYMBOL (Qmapvector);
+  DEFSYMBOL (Qmapcan);
+  DEFSYMBOL (Qmapc);
+  DEFSYMBOL (Qmap);
+  DEFSYMBOL (Qmap_into);
+  DEFSYMBOL (Qsome);
+  DEFSYMBOL (Qevery);
+  DEFSYMBOL (Qmaplist);
+  DEFSYMBOL (Qmapl);
+  DEFSYMBOL (Qmapcon);
 
   DEFKEYWORD (Q_from_end);
   DEFKEYWORD (Q_initial_value);
