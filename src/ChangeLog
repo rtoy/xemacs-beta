@@ -1,3 +1,31 @@
+2010-09-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (list_merge, list_array_merge_into_list)
+	(list_array_merge_into_array):
+	Avoid algorithmic complexity surprises when checking for
+	circularity in these functions.
+	(Freduce): Fix some formatting, in passing.
+
+	(mapcarX): Drop the SOME_OR_EVERY argument to this function;
+	instead, take CALLER, a symbol reflecting the Lisp-visible
+	function that called mapcarX(). Use CALLER with
+	mapping_interaction_error() when sequences are modified
+	illegally. Don't cons with #'some, #'every, not even a little.
+	(Fmapconcat, FmapcarX, Fmapvector, Fmapcan, Fmapc, Fmap)
+	(Fmap_into, Fsome, Fevery): Call mapcarX() with its new
+	arguments.
+	(Fmapcan): Don't unnecessarily complicate the nconc call.
+
+	(maplist): Take CALLER, a symbol reflecting the Lisp-visible
+	function that called maplist(), rather than having separate
+	arguments to indicate mapl vs. mapcon.
+	Avoid algorithmic complexity surprises when checking for
+	circularity. In #'mapcon, check a given stretch of
+	result for well-formedness once, which was not previously the
+	case, despite what the comments said.
+	(Fmaplist, Fmapl, Fmapcon):
+	Call maplist() with its new arguments.	
+
 2010-08-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* floatfns.c (ceiling_one_mundane_arg, floor_one_mundane_arg)
