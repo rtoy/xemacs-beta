@@ -1026,6 +1026,10 @@ This stands for the year without century (00-99).
 This stands for the year with century.
 @item %Z
 This stands for the time zone abbreviation.
+@item %\xe6 (the ISO-8859-1 lowercase ae character)
+This stands for the month as a lowercase Roman number (i-xii)
+@item %\xc6 (the ISO-8859-1 uppercase AE character)
+This stands for the month as an uppercase Roman number (I-XII)
 @end table
 @end defun
 

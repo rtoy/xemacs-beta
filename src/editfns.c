@@ -1044,11 +1044,10 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %Y is replaced by the year with century.
 %z is replaced by the time zone as a numeric offset (e.g +0530, -0800 etc.)
 %Z is replaced by the time zone abbreviation.
+%\xe6 is replaced by the month as a lowercase Roman number (i-xii)
+%\xc6 is replaced by the month as an uppercase Roman number (I-XII)
 
 The number of options reflects the `strftime' function.
-
-BUG: If the charset used by the current locale is not ISO 8859-1, the
-characters appearing in the day and month names may be incorrect.
 */
        (format_string, time_))
 {
