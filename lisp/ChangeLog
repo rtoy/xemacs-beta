@@ -1,3 +1,11 @@
+2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obsolete.el (process-get):
+	Make #'process-get, #'process-put, #'process-plist,
+	#'set-process-plist available as aliases to the more general
+	functions #'get, #'put, #'object-plist, #'object-setplist, for GNU
+	compatibility.
+
 2010-08-20  Mike Sperber  <mike@xemacs.org>
 
 	* files.el (save-some-buffers-action-alist): Add.
