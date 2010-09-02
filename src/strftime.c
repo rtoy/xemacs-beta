@@ -132,6 +132,16 @@ static char const * const months[] =
   "July", "August", "September", "October", "November", "December"
 };
 
+static char const * const roman_upper[] =
+{
+  "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"
+};
+
+static char const * const roman_lower[] =
+{
+  "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii"
+};
+
 /* Add character C to STRING and increment LENGTH,
    unless LENGTH would exceed MAX. */
 
@@ -600,6 +610,16 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
 	      length +=
 		add_num3 (&string[length],
 			  (1900 + tm->tm_year) % 1000, max - length, zero);
+	      break;
+	    case '\xe6':
+	      length +=
+		add_str (&string[length], roman_lower[tm->tm_mon],
+			 max - length);
+	      break;
+	    case '\xC6':
+	      length +=
+		add_str (&string[length], roman_upper[tm->tm_mon],
+			 max - length);
 	      break;
 	    }
 	}

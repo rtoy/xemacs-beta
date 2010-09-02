@@ -3095,7 +3095,7 @@ int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
 #endif
 #define Qunix_host_name_encoding Qnative
 #define Qunix_service_name_encoding Qnative
-#define Qtime_function_encoding Qnative
+#define Qtime_function_encoding Qbinary
 #define Qtime_zone_encoding Qtime_function_encoding
 #define Qmswindows_host_name_encoding Qmswindows_multibyte
 #define Qmswindows_service_name_encoding Qmswindows_multibyte

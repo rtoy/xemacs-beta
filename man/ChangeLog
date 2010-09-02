@@ -1,3 +1,9 @@
+2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/os.texi (Time Conversion):
+	Document the new #'format-time-string flags for Roman month
+	numbers.
+
 2010-08-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/eval.texi (Evaluation, Multiple values):

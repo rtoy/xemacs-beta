@@ -1,3 +1,16 @@
+2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* strftime.c (roman_upper, roman_lower, strftime):
+	Implement Roman month numbers, as used in central and eastern
+	Europe.
+	* editfns.c (Fformat_time_string):
+	Document two new escapes, to allow uppercase and lowercase Roman
+	month numbers. Remove documentation of a bug that we didn't
+	actually have.
+	* text.h (Qtime_function_encoding): We know the text encoding
+	coming from strftime(), because we always use the one in
+	strftime.c. Don't use Qnative.
+
 2010-09-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (list_merge, list_array_merge_into_list)
