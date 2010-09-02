@@ -428,5 +428,10 @@ because its `find-charset-string' ignores ASCII charset."
 (define-function 'purecopy 'identity)
 (make-obsolete 'purecopy "purespace is not available in XEmacs.")
 
+(define-compatible-function-alias 'process-get 'get)
+(define-compatible-function-alias 'process-put 'put)
+(define-compatible-function-alias 'process-plist 'object-plist)
+(define-compatible-function-alias 'set-process-plist 'object-setplist)
+
 (provide 'obsolete)
 ;;; obsolete.el ends here

@@ -3545,7 +3545,8 @@ Return the value of OBJECT's PROPERTY property.
 This is the last VALUE stored with `(put OBJECT PROPERTY VALUE)'.
 If there is no such property, return optional third arg DEFAULT
 \(which defaults to `nil').  OBJECT can be a symbol, string, extent,
-face, or glyph.  See also `put', `remprop', and `object-plist'.
+face, glyph, or process.  See also `put', `remprop', `object-plist', and
+`object-setplist'.
 */
        (object, property, default_))
 {
@@ -3589,9 +3590,10 @@ See also `get', `remprop', and `object-plist'.
 
 DEFUN ("remprop", Fremprop, 2, 2, 0, /*
 Remove, from OBJECT's property list, PROPERTY and its corresponding value.
-OBJECT can be a symbol, string, extent, face, or glyph.  Return non-nil
-if the property list was actually modified (i.e. if PROPERTY was present
-in the property list).  See also `get', `put', and `object-plist'.
+OBJECT can be a symbol, string, extent, face, glyph, or process.
+Return non-nil if the property list was actually modified (i.e. if PROPERTY
+was present in the property list).  See also `get', `put', `object-plist',
+and `object-setplist'.
 */
        (object, property))
 {
@@ -3627,6 +3629,26 @@ this may or may not have the desired effects.  Use `put' instead.
 
   return Qnil;
 }
+
+DEFUN ("object-setplist", Fobject_setplist, 2, 2, 0, /*
+Set OBJECT's property list to NEWPLIST, and return NEWPLIST.
+For a symbol, this is equivalent to `setplist'.
+
+OBJECT can be a symbol or a process, other objects with visible plists do
+not allow their modification with `object-setplist'.
+*/
+       (object, newplist))
+{
+  if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->setplist)
+    {
+      return XRECORD_LHEADER_IMPLEMENTATION (object)->setplist (object,
+								newplist);
+    }
+
+  invalid_operation ("Not possible to set object's plist", object);
+  return Qnil;
+}
+
 
 
 static Lisp_Object
@@ -6015,6 +6037,7 @@ syms_of_fns (void)
   DEFSUBR (Fput);
   DEFSUBR (Fremprop);
   DEFSUBR (Fobject_plist);
+  DEFSUBR (Fobject_setplist);
   DEFSUBR (Fequal);
   DEFSUBR (Fequalp);
   DEFSUBR (Fold_equal);

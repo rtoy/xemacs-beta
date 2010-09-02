@@ -1468,6 +1468,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_alloc_early ();
       reinit_gc_early ();
       reinit_symbols_early ();
+      reinit_process_early ();
 #ifndef NEW_GC
       reinit_opaque_early ();
 #endif /* not NEW_GC */

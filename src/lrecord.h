@@ -525,6 +525,7 @@ struct lrecord_implementation
   int (*putprop) (Lisp_Object obj, Lisp_Object prop, Lisp_Object val);
   int (*remprop) (Lisp_Object obj, Lisp_Object prop);
   Lisp_Object (*plist) (Lisp_Object obj);
+  Lisp_Object (*setplist) (Lisp_Object obj, Lisp_Object newplist);
 
   /* `disksave' is called at dump time.  It is used for objects that
      contain pointers or handles to objects created in external libraries,

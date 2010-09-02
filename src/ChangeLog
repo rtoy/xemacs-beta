@@ -39,6 +39,22 @@
 	(Fmaplist, Fmapl, Fmapcon):
 	Call maplist() with its new arguments.	
 
+2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.c (process_getprop, process_putprop, process_remprop)
+	(process_plist, process_setplist, reinit_process_early):
+	Add functions to modify a process's property list.
+	* process-slots.h (MARKED_SLOT): Add a plist slot.
+
+	* fns.c (Fobject_setplist): New function, analogous to #'setplist,
+	but more general.
+	Update the documentation in the other plist functions to reflect
+	that processes now have property lists.
+	* emacs.c (main_1): Call reinit_process_early(), now processes have
+	plist methods that need to be initialised.
+	* symbols.c (reinit_symbol_objects_early): Fsetplist is the named
+	setplist method for symbols.
+
 2010-08-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* floatfns.c (ceiling_one_mundane_arg, floor_one_mundane_arg)

@@ -3530,6 +3530,7 @@ reinit_symbol_objects_early (void)
   OBJECT_HAS_METHOD (symbol, putprop);
   OBJECT_HAS_METHOD (symbol, remprop);
   OBJECT_HAS_NAMED_METHOD (symbol, plist, Fsymbol_plist);
+  OBJECT_HAS_NAMED_METHOD (symbol, setplist, Fsetplist);
 }
 
 void
