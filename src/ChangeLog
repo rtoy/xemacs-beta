@@ -1,3 +1,11 @@
+2010-09-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symsinit.h: Declare reinit_process_early() here, fixing the C++
+	build; thank you for pointing this out, Adam Sjøgren!
+	* fontcolor-msw.c (mswindows_string_to_color):
+	Cast the result of bsearch() to a colormap_t pointer, fixing the
+	Visual Studio 2005 build.
+
 2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* strftime.c (roman_upper, roman_lower, strftime):
