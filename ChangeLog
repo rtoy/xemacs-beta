@@ -1,7 +1,7 @@
 2010-09-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac: libgnomeui will be removed in Gtk 3.0, and is
-	barely used anyway.
+	barely used anyway.  No longer define HAVE_GNOME.
 
 2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
 
