@@ -2852,6 +2852,13 @@ if test "${GNOME_CONFIG}" != "no"; then
       XE_APPEND(${PANGO_LIBS}, libs_gtk)
       XE_APPEND(${PANGO_CFLAGS}, c_switch_gtk)
 fi
+if test "${GNOME_CONFIG}" != "no"; then
+      GNOME_LIBS=`${GNOME_CONFIG} --libs libgnomeui-2.0`
+      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags libgnomeui-2.0`
+      AC_DEFINE(HAVE_GNOME)
+      XE_APPEND(${GNOME_LIBS}, libs_gtk)
+      XE_APPEND(${GNOME_CFLAGS}, c_switch_gtk)
+fi
 
 if test "$with_gtk" != "no";then
    AC_MSG_CHECKING(for GTK configuration script)
