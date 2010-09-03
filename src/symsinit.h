@@ -54,6 +54,7 @@ void init_elhash_once_early (void);
 void init_errors_once_early (void);
 void reinit_opaque_early (void);
 void init_opaque_once_early (void);
+void reinit_process_early (void);
 void reinit_symbols_early (void);
 void init_symbols_once_early (void);
 

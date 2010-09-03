@@ -1022,10 +1022,10 @@ mswindows_string_to_color (const Ibyte *name)
         }
       *c = '\0';
       
-      if ((res = bsearch (&key, mswindows_X_color_map,
-                          countof (mswindows_X_color_map),
-                          sizeof (mswindows_X_color_map[0]),
-                          colormap_t_compare)) != NULL)
+      if ((res = (colormap_t *) bsearch (&key, mswindows_X_color_map,
+                                         countof (mswindows_X_color_map),
+                                         sizeof (mswindows_X_color_map[0]),
+                                         colormap_t_compare)) != NULL)
         {
           return res->colorref;
         }
