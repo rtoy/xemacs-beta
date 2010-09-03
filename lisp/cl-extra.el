@@ -64,11 +64,11 @@ TYPE is a Common Lisp type specifier."
 	((and (eq type 'character) (symbolp x)) (coerce (symbol-name x) type))
 	;; XEmacs addition character <-> integer coercions
 	((and (eq type 'character) (char-int-p x)) (int-char x))
-	((and (eq type 'integer) (characterp x)) (char-int x))
+	((and (memq type '(integer fixnum)) (characterp x)) (char-int x))
 	((eq type 'float) (float x))
 	;; XEmacs addition: enhanced numeric type coercions
 	((and-fboundp 'coerce-number
-	   (memq type '(integer ratio bigfloat))
+	   (memq type '(integer ratio bigfloat fixnum))
 	   (coerce-number x type)))
 	;; XEmacs addition: bit-vector coercion
 	((or (eq type 'bit-vector)
