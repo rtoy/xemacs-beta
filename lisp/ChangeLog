@@ -1,3 +1,11 @@
+2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-compose.el (define-compose-map, compose-map)
+	(decide-on-bindings): Support the precomposed characters with
+	stroke here too, necessary for Polish and Danish, among others.
+	* x-init.el (x-initialize-compose): Add the appropriate map
+	autoloads and bindings here.
+
 2010-09-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (coerce):
