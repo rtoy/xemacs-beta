@@ -1,5 +1,15 @@
 2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* chartab.c (char_table_default_for_type,
+	chartab_default_validate): New. 
+	(print_char_table, Freset_char_table, chartab_default_validate)
+	(chartab_instantiate, structure_type_create_chartab):
+	Accept keyword :default in the read syntax for char tables, and
+	print the default when it is not what was expected for the
+	time. Makes it a little easier to debug things.
+
+2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* editfns.c (Fformat_time_string):
 	Use two backslashes so that there is at least one present in the
 	output of describe function, when describing the Roman month

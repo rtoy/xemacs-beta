@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include "chartab.h"
 #include "syntax.h"
 
-Lisp_Object Qchar_tablep, Qchar_table;
+Lisp_Object Qchar_tablep, Qchar_table, Q_default;
 
 Lisp_Object Vall_syntax_tables;
 
@@ -301,6 +301,30 @@ encode_char_table_range (struct chartab_range *range)
   return Qnil; /* not reached */
 }
 
+static Lisp_Object
+char_table_default_for_type (enum char_table_type type)
+{
+  switch (type)
+    {
+    case CHAR_TABLE_TYPE_CHAR:
+      return make_char (0);
+      break;
+    case CHAR_TABLE_TYPE_DISPLAY:
+    case CHAR_TABLE_TYPE_GENERIC:
+#ifdef MULE
+    case CHAR_TABLE_TYPE_CATEGORY:
+#endif /* MULE */
+      return Qnil;
+      break;
+
+    case CHAR_TABLE_TYPE_SYNTAX:
+      return make_integer (Sinherit);
+      break;
+    }
+  ABORT();
+  return Qzero;
+}
+
 struct ptemap
 {
   Lisp_Object printcharfun;
@@ -336,8 +360,15 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
   arg.printcharfun = printcharfun;
   arg.first = 1;
 
-  write_fmt_string_lisp (printcharfun, "#s(char-table :type %s :data (",
-			 1, char_table_type_to_symbol (ct->type));
+  write_fmt_string_lisp (printcharfun,
+			 "#s(char-table :type %s", 1,
+			 char_table_type_to_symbol (ct->type));
+  if (!(EQ (ct->default_, char_table_default_for_type (ct->type))))
+    {
+      write_fmt_string_lisp (printcharfun, " :default %S", 1, ct->default_);
+    }
+
+  write_ascstring (printcharfun, " :data (");
   map_char_table (obj, &range, print_table_entry, &arg);
   write_ascstring (printcharfun, "))");
 
@@ -492,37 +523,13 @@ Reset CHAR-TABLE to its default state.
        (char_table))
 {
   Lisp_Char_Table *ct;
-  Lisp_Object def;
 
   CHECK_CHAR_TABLE (char_table);
   ct = XCHAR_TABLE (char_table);
 
-  switch (ct->type)
-    {
-    case CHAR_TABLE_TYPE_CHAR:
-      def = make_char (0);
-      break;
-    case CHAR_TABLE_TYPE_DISPLAY:
-    case CHAR_TABLE_TYPE_GENERIC:
-#ifdef MULE
-    case CHAR_TABLE_TYPE_CATEGORY:
-#endif /* MULE */
-      def = Qnil;
-      break;
-
-    case CHAR_TABLE_TYPE_SYNTAX:
-      def = make_int (Sinherit);
-      break;
-
-    default:
-      ABORT ();
-      def = Qnil;
-      break;
-    }
-
   /* Avoid doubly updating the syntax table by setting the default ourselves,
      since set_char_table_default() also updates. */
-  ct->default_ = def;
+  ct->default_ = char_table_default_for_type (ct->type);
   fill_char_table (ct, Qunbound);
 
   return Qnil;
@@ -1543,12 +1550,22 @@ chartab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
   return 1;
 }
 
+static int
+chartab_default_validate (Lisp_Object UNUSED (keyword),
+			  Lisp_Object UNUSED (value),
+			  Error_Behavior UNUSED (errb))
+{
+  /* We can't yet validate this, since we don't know what the type of the
+     char table is. We do the validation below in chartab_instantiate(). */
+  return 1;
+}
+
 static Lisp_Object
 chartab_instantiate (Lisp_Object plist)
 {
   Lisp_Object chartab;
   Lisp_Object type = Qgeneric;
-  Lisp_Object dataval = Qnil;
+  Lisp_Object dataval = Qnil, default_ = Qunbound;
 
   if (KEYWORDP (Fcar (plist)))
     {
@@ -1561,6 +1578,10 @@ chartab_instantiate (Lisp_Object plist)
 	  else if (EQ (key, Q_type))
 	    {
 	      type = value;
+	    }
+	  else if (EQ (key, Q_default))
+	    {
+	      default_ = value;
 	    }
 	  else if (!KEYWORDP (key))
 	    {
@@ -1598,6 +1619,13 @@ chartab_instantiate (Lisp_Object plist)
 #endif /* NEED_TO_HANDLE_21_4_CODE */
 
   chartab = Fmake_char_table (type);
+  if (!UNBOUNDP (default_))
+    {
+      check_valid_char_table_value (default_, XCHAR_TABLE_TYPE (chartab),
+				    ERROR_ME);
+      set_char_table_default (chartab, default_);
+      set_char_table_default (XCHAR_TABLE (chartab)->mirror_table, default_);
+    }
 
   while (!NILP (dataval))
     {
@@ -1872,6 +1900,7 @@ syms_of_chartab (void)
 
   DEFSYMBOL (Qchar_table);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qchar_tablep);
+  DEFKEYWORD (Q_default);
 
   DEFSUBR (Fchar_table_p);
   DEFSUBR (Fchar_table_type_list);
@@ -1926,6 +1955,7 @@ structure_type_create_chartab (void)
 
   define_structure_type_keyword (st, Q_type, chartab_type_validate);
   define_structure_type_keyword (st, Q_data, chartab_data_validate);
+  define_structure_type_keyword (st, Q_default, chartab_default_validate);
 }
 
 void
