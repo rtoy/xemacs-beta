@@ -1,3 +1,11 @@
+2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c (Fformat_time_string):
+	Use two backslashes so that there is at least one present in the
+	output of describe function, when describing the Roman month
+	number syntax in this function's docstring. Thanks for provoking
+	me to look at this, Stephen Turnbull.
+
 2010-09-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symsinit.h: Declare reinit_process_early() here, fixing the C++
