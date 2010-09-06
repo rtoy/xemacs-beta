@@ -1,3 +1,18 @@
+2010-09-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move #'replace to C; add bounds checking to it and to #'fill.
+
+	* fns.c (Fsubseq, Ffill, mapcarX):
+	Don't #'nreverse in #'subseq, use fill_string_range and check
+	bounds in #'fill, use replace_string_range() in #'map-into
+	avoiding quadratic time when modfiying the string.
+
+	* fns.c (check_sequence_range, fill_string_range)
+	(replace_string_range, replace_string_range_1, Freplace):
+	New functions; check that arguments fit sequence dimensions, fill
+	a string range with a given character, replace a string range from
+	an Ibyte pointer.
+
 2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* chartab.c (char_table_default_for_type,

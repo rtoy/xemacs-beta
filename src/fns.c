@@ -54,11 +54,12 @@ Boston, MA 02111-1307, USA.  */
 /* NOTE: This symbol is also used in lread.c */
 #define FEATUREP_SYNTAX
 
-Lisp_Object Qstring_lessp, Qsort, Qmerge, Qfill;
+Lisp_Object Qstring_lessp, Qsort, Qmerge, Qfill, Qreplace;
 Lisp_Object Qidentity;
 Lisp_Object Qvector, Qarray, Qbit_vector, QsortX, Q_from_end, Q_initial_value;
 Lisp_Object Qmapconcat, QmapcarX, Qmapvector, Qmapcan, Qmapc, Qmap, Qmap_into;
 Lisp_Object Qsome, Qevery, Qmaplist, Qmapl, Qmapcon, Qreduce;
+Lisp_Object Q_start1, Q_start2, Q_end1, Q_end2;
 
 Lisp_Object Qbase64_conversion_error;
 
@@ -71,6 +72,20 @@ static DOESNT_RETURN
 mapping_interaction_error (Lisp_Object func, Lisp_Object object)
 {
   invalid_state_2 ("object modified while traversing it", func, object);
+}
+
+static void
+check_sequence_range (Lisp_Object sequence, Lisp_Object start,
+		      Lisp_Object end, Lisp_Object length)
+{
+  Elemcount starting = XINT (start), ending, len = XINT (length);
+
+  ending = NILP (end) ? XINT (length) : XINT (end);
+
+  if (!(0 <= starting && starting <= ending && ending <= len))
+    {
+      args_out_of_range_3 (sequence, start, make_int (ending));
+    }
 }
 
 static Lisp_Object
@@ -885,7 +900,7 @@ concat (int nargs, Lisp_Object *args,
 	    {
 	      CHECK_CHAR_COERCE_INT (elt);
 	      string_result_ptr += set_itext_ichar (string_result_ptr,
-						       XCHAR (elt));
+						    XCHAR (elt));
 	    }
 	}
       if (args_mse)
@@ -1044,8 +1059,8 @@ not copy extent data.
 	e = len + e;
     }
 
-  if (!(0 <= s && s <= e && e <= len))
-    args_out_of_range_3 (sequence, make_int (s), make_int (e));
+  check_sequence_range (sequence, make_int (s), make_int (e),
+			make_int (len));
 
   if (VECTORP (sequence))
     {
@@ -1060,18 +1075,24 @@ not copy extent data.
     }
   else if (LISTP (sequence))
     {
-      Lisp_Object result = Qnil;
+      Lisp_Object result = Qnil, result_tail;
       EMACS_INT i;
 
       sequence = Fnthcdr (make_int (s), sequence);
 
-      for (i = s; i < e; i++)
+      if (s < e)
 	{
-	  result = Fcons (Fcar (sequence), result);
+	  result = result_tail = Fcons (Fcar (sequence), Qnil);
 	  sequence = Fcdr (sequence);
+	  for (i = s + 1; i < e; i++)
+	    {
+	      XSETCDR (result_tail, Fcons (Fcar (sequence), Qnil));
+	      sequence = Fcdr (sequence);
+	      result_tail = XCDR (result_tail);
+	    }
 	}
 
-      return Fnreverse (result);
+      return result;
     }
   else if (BIT_VECTORP (sequence))
     {
@@ -3872,6 +3893,29 @@ Do not use it.
 }
 
 
+static Lisp_Object replace_string_range_1 (Lisp_Object dest,
+					   Lisp_Object start,
+					   Lisp_Object end,
+					   const Ibyte *source,
+					   const Ibyte *source_limit,
+					   Lisp_Object item);
+
+/* Fill the substring of DEST beginning at START and ending before END with
+   the character ITEM. If DEST does not have sufficient space for END -
+   START characters at START, write as many as is possible without changing
+   the character length of DEST.  Update the string modification flag and do
+   any sledgehammer checks we have turned on.
+
+   START must be a Lisp integer. END can be nil, indicating the length of the
+   string, or a Lisp integer.  The condition (<= 0 START END (length DEST))
+   must hold, or fill_string_range() will signal an error. */
+static Lisp_Object
+fill_string_range (Lisp_Object dest, Lisp_Object item, Lisp_Object start,
+		   Lisp_Object end)
+{
+  return replace_string_range_1 (dest, start, end, NULL, NULL, item);
+}
+
 DEFUN ("fill", Ffill, 2, MANY, 0, /*
 Destructively modify SEQUENCE by replacing each element with ITEM.
 SEQUENCE is a list, vector, bit vector, or string.
@@ -3881,21 +3925,20 @@ to be modified, and defaults to zero.  Optional keyword END is the
 exclusive upper bound on the elements of SEQUENCE to be modified, and
 defaults to the length of SEQUENCE.
 
-arguments: (SEQUENCE ITEM &key (START 0) END)
+arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
 */
        (int nargs, Lisp_Object *args))
 {
   Lisp_Object sequence = args[0];
   Lisp_Object item = args[1];
-  Elemcount starting = 0, ending = EMACS_INT_MAX, ii;
+  Elemcount starting = 0, ending = EMACS_INT_MAX, ii, len;
 
-  PARSE_KEYWORDS (Qfill, nargs, args, 2, 2, (start, end),
-                  (start = Qzero, end = Qunbound), 0);
+  PARSE_KEYWORDS (Qfill, nargs, args, 2, 2, (start, end), (start = Qzero), 0);
 
   CHECK_NATNUM (start);
   starting = XINT (start);
 
-  if (!UNBOUNDP (end))
+  if (!NILP (end))
     {
       CHECK_NATNUM (end);
       ending = XINT (end);
@@ -3904,49 +3947,21 @@ arguments: (SEQUENCE ITEM &key (START 0) END)
  retry:
   if (STRINGP (sequence))
     {
-      Bytecount prefix_bytecount, item_bytecount, delta;
-      Ibyte item_buf[MAX_ICHAR_LEN];
-      Ibyte *p, *pend;
-
       CHECK_CHAR_COERCE_INT (item);
-
       CHECK_LISP_WRITEABLE (sequence);
-      sledgehammer_check_ascii_begin (sequence);
-      item_bytecount = set_itext_ichar (item_buf, XCHAR (item));
 
-      p = XSTRING_DATA (sequence);
-      p = (Ibyte *) itext_n_addr (p, starting);
-      prefix_bytecount = p - XSTRING_DATA (sequence);
-
-      ending = min (ending, string_char_length (sequence));
-      pend = (Ibyte *) itext_n_addr (p, ending - starting); 
-      delta = ((ending - starting) * item_bytecount) - (pend - p);
-
-      /* Resize the string if the bytecount for the area being modified is
-	 different. */
-      if (delta)
-	{
-	  resize_string (sequence, prefix_bytecount, delta);
-	  /* No need to zero-terminate the string, resize_string has done
-	     that for us. */
-	  p = XSTRING_DATA (sequence) + prefix_bytecount;
-	  pend = p + ((ending - starting) * item_bytecount);
-	}
-
-      for (; p < pend; p += item_bytecount)
-	memcpy (p, item_buf, item_bytecount);
-
-
-      init_string_ascii_begin (sequence);
-      bump_string_modiff (sequence);
-      sledgehammer_check_ascii_begin (sequence);
+      fill_string_range (sequence, item, start, end);
     }
   else if (VECTORP (sequence))
     {
       Lisp_Object *p = XVECTOR_DATA (sequence);
-      CHECK_LISP_WRITEABLE (sequence);
 
-      ending = min (ending, XVECTOR_LENGTH (sequence));
+      CHECK_LISP_WRITEABLE (sequence);
+      len = XVECTOR_LENGTH (sequence);
+
+      check_sequence_range (sequence, start, end, make_int (len));
+      ending = min (ending, len);
+
       for (ii = starting; ii < ending; ++ii)
         {
           p[ii] = item;
@@ -3956,11 +3971,15 @@ arguments: (SEQUENCE ITEM &key (START 0) END)
     {
       Lisp_Bit_Vector *v = XBIT_VECTOR (sequence);
       int bit;
+
       CHECK_BIT (item);
       bit = XINT (item);
       CHECK_LISP_WRITEABLE (sequence);
+      len = bit_vector_length (v);
 
-      ending = min (ending, bit_vector_length (v));
+      check_sequence_range (sequence, start, end, make_int (len));
+      ending = min (ending, len);
+
       for (ii = starting; ii < ending; ++ii)
         {
           set_bit_vector_bit (v, ii, bit);
@@ -3985,6 +4004,11 @@ arguments: (SEQUENCE ITEM &key (START 0) END)
             }
           ++counting;
         }
+
+      if (counting != ending)
+	{
+	  check_sequence_range (sequence, start, end, Flength (sequence));
+	}
     }
   else
     {
@@ -4129,6 +4153,24 @@ arguments: (&rest ARGS)
 }
 
 
+/* Replace the substring of DEST beginning at START and ending before END
+   with the text at SOURCE, which is END - START characters long and
+   SOURCE_LIMIT - SOURCE octets long.  If DEST does not have sufficient
+   space for END - START characters at START, write as many as is possible
+   without changing the length of DEST.  Update the string modification flag
+   and do any sledgehammer checks we have turned on in this build.
+
+   START must be a Lisp integer. END can be nil, indicating the length of the
+   string, or a Lisp integer.  The condition (<= 0 START END (length DEST))
+   must hold, or replace_string_range() will signal an error. */
+static Lisp_Object
+replace_string_range (Lisp_Object dest, Lisp_Object start, Lisp_Object end,
+                      const Ibyte *source, const Ibyte *source_limit)
+{
+  return replace_string_range_1 (dest, start, end, source, source_limit,
+				 Qnil);
+}
+
 /* This is the guts of several mapping functions.
 
    Call FUNCTION CALL_COUNT times, with NSEQUENCES arguments each time,
@@ -4168,6 +4210,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 {
   Lisp_Object called, *args;
   struct gcpro gcpro1, gcpro2;
+  Ibyte *lisp_vals_staging, *cursor;
   int i, j;
 
   assert ((EQ (caller, Qsome) || EQ (caller, Qevery)) ? vals == NULL : 1);
@@ -4224,9 +4267,15 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
       if (!EQ (caller, Qsome) && !EQ (caller, Qevery))
         {
           assert (LRECORDP (lisp_vals));
+
           lisp_vals_type
             = (enum lrecord_type) XRECORD_LHEADER (lisp_vals)->type;
-          assert (NILP (lisp_vals) || lisp_vals_type != lrecord_type_symbol);
+
+	  if (lrecord_type_string == lisp_vals_type)
+	    {
+	      lisp_vals_staging = cursor
+		= alloca_ibytes (call_count * MAX_ICHAR_LEN);
+	    }
         }
 
       for (i = 0; i < call_count; ++i)
@@ -4305,8 +4354,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
               switch (lisp_vals_type)
                 {
                 case lrecord_type_symbol:
-		  /* This is #'mapc; the result of the funcall is
-		     discarded. */
+		  /* Discard the result of funcall. */
                   break;
                 case lrecord_type_cons:
                   {
@@ -4331,10 +4379,8 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
                   }
                 case lrecord_type_string:
                   {
-                    /* If this ever becomes a code hotspot, we can keep
-                       around pointers into the data of the string, checking
-                       each time that it hasn't been relocated. */
-                    Faset (lisp_vals, make_int (i), called);
+		    CHECK_CHAR_COERCE_INT (called);
+		    cursor += set_itext_ichar (cursor, XCHAR (called));
                     break;
                   }
                 case lrecord_type_bit_vector:
@@ -4354,7 +4400,15 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
                 }
             }
 	}
+
+      if (!EQ (caller, Qsome) && !EQ (caller, Qevery) &&
+	  lrecord_type_string == lisp_vals_type)
+	{
+	  replace_string_range (lisp_vals, Qzero, make_int (call_count),
+				lisp_vals_staging, cursor);
+	}
     }
+
   UNGCPRO;
 }
 
@@ -5302,6 +5356,590 @@ length, no consing will take place.
   return old;
 }
 
+/* This function is the implementation of fill_string_range() and
+   replace_string_range(); see the comments for those functions. */
+static Lisp_Object
+replace_string_range_1 (Lisp_Object dest, Lisp_Object start, Lisp_Object end,
+			const Ibyte *source, const Ibyte *source_limit,
+			Lisp_Object item)
+{
+  Ibyte *destp = XSTRING_DATA (dest), *p = destp,
+    *pend = p + XSTRING_LENGTH (dest), *pcursor, item_buf[MAX_ICHAR_LEN];
+  Bytecount prefix_bytecount, source_len = source_limit - source;
+  Charcount ii = 0, starting = XINT (start), ending, len;
+  Elemcount delta;
+
+  while (ii < starting && p < pend)
+    {
+      INC_IBYTEPTR (p);
+      ii++;
+    }
+
+  pcursor = p;
+
+  if (NILP (end))
+    {
+      while (pcursor < pend)
+	{
+	  INC_IBYTEPTR (pcursor);
+	  ii++;
+	}
+
+      ending = len = ii;
+    }
+  else
+    {
+      ending = XINT (end);
+      while (ii < ending && pcursor < pend)
+	{
+	  INC_IBYTEPTR (pcursor);
+	  ii++;
+	}
+    }
+
+  if (pcursor == pend)
+    {
+      /* We have the length, check it for our callers. */
+      check_sequence_range (dest, start, end, make_int (ii));
+    }
+
+  if (!(p == pend || p == pcursor))
+    {
+      prefix_bytecount = p - destp;
+
+      if (!NILP (item))
+	{
+	  assert (source == NULL && source_limit == NULL);
+	  source_len = set_itext_ichar (item_buf, XCHAR (item));
+	  delta = (source_len * (ending - starting)) - (pcursor - p);
+	}
+      else
+	{
+	  assert (source != NULL && source_limit != NULL);
+	  delta = source_len - (pcursor - p);
+	}
+
+      if (delta)
+        {
+          resize_string (dest, prefix_bytecount, delta);
+          destp = XSTRING_DATA (dest);
+          pcursor = destp + prefix_bytecount + (pcursor - p);
+          p = destp + prefix_bytecount;
+        }
+
+      if (CHARP (item))
+	{
+	  while (starting < ending)
+	    {
+	      memcpy (p, item_buf, source_len);
+	      p += source_len;
+	      starting++;
+	    }
+	}
+      else
+	{
+	  while (starting < ending && source < source_limit)
+	    {
+	      source_len = itext_copy_ichar (source, p);
+	      p += source_len, source += source_len;
+	    }
+	}
+
+      init_string_ascii_begin (dest);
+      bump_string_modiff (dest);
+      sledgehammer_check_ascii_begin (dest);
+    }
+
+  return dest;
+}
+
+DEFUN ("replace", Freplace, 2, MANY, 0, /*
+Replace the elements of SEQUENCE-ONE with the elements of SEQUENCE-TWO.
+
+SEQUENCE-ONE is destructively modified, and returned.  Its length is not
+changed.
+
+Keywords :start1 and :end1 specify a subsequence of SEQUENCE-ONE, and
+:start2 and :end2 a subsequence of SEQUENCE-TWO.  See `search' for more
+information.
+
+arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE)) (START2 0) (END2 (length SEQUENCE-TWO)))
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object sequence1 = args[0], sequence2 = args[1],
+    result = sequence1;
+  Elemcount starting1, ending1 = EMACS_INT_MAX, starting2;
+  Elemcount ending2 = EMACS_INT_MAX, counting, startcounting;
+  Boolint sequence1_listp, sequence2_listp,
+    overwriting = EQ (sequence1, sequence2);
+
+  PARSE_KEYWORDS (Qreplace, nargs, args, 2, 4, (start1, end1, start2, end2),
+                  (start1 = start2 = Qzero), 0);
+
+  CHECK_SEQUENCE (sequence1);
+  CHECK_LISP_WRITEABLE (sequence1);
+
+  CHECK_SEQUENCE (sequence2);
+
+  CHECK_NATNUM (start1);
+  starting1 = XINT (start1);
+  CHECK_NATNUM (start2);
+  starting2 = XINT (start2);
+
+  if (!NILP (end1))
+    {
+      CHECK_NATNUM (end1);
+      ending1 = XINT (end1);
+
+      if (!(starting1 <= ending1))
+        {
+          args_out_of_range_3 (sequence1, start1, end1);
+        }
+    }
+
+  if (!NILP (end2))
+    {
+      CHECK_NATNUM (end2);
+      ending2 = XINT (end2);
+
+      if (!(starting2 <= ending2))
+        {
+          args_out_of_range_3 (sequence1, start2, end2);
+        }
+    }
+
+  sequence1_listp = LISTP (sequence1);
+  sequence2_listp = LISTP (sequence2);
+
+  overwriting = overwriting && starting2 <= starting1;
+
+  if (sequence1_listp && !ZEROP (start1))
+    {
+      Lisp_Object nthcdrd = Fnthcdr (start1, sequence1);
+
+      if (NILP (nthcdrd))
+        {
+          check_sequence_range (sequence1, start1, end1, Flength (sequence1));
+          /* Give up early here. */
+          return result;
+        }
+
+      sequence1 = nthcdrd;
+      ending1 -= starting1;
+      starting1 = 0;
+    }
+
+  if (sequence2_listp && !ZEROP (start2))
+    {
+      Lisp_Object nthcdrd = Fnthcdr (start2, sequence2);
+
+      if (NILP (nthcdrd))
+        {
+          check_sequence_range (sequence1, start1, end1, Flength (sequence1));
+          /* Nothing available to replace sequence1's contents. */
+          return result;
+        }
+
+      sequence2 = nthcdrd;
+      ending2 -= starting2;
+      starting2 = 0;
+    }
+
+  if (overwriting)
+    {
+      if (EQ (start1, start2))
+        {
+          return result;
+        }
+
+      /* Our ranges may overlap. Save the data that might be overwritten. */
+
+      if (CONSP (sequence2))
+        {
+          Elemcount len = XINT (Flength (sequence2));
+          Lisp_Object *subsequence
+            = alloca_array (Lisp_Object, min (ending2, len));
+          Elemcount counting = 0, ii = 0;
+
+          LIST_LOOP_2 (elt, sequence2)
+            {
+              if (counting == ending2)
+                {
+                  break;
+                }
+
+              subsequence[ii++] = elt;
+              counting++;
+            }
+
+          check_sequence_range (sequence1, start1, end1,
+                                /* The XINT (start2) is intentional here; we
+                                   called #'length after doing (nthcdr
+                                   start2 sequence2). */
+                                make_int (XINT (start2) + len));
+          check_sequence_range (sequence2, start2, end2,
+                                make_int (XINT (start2) + len));
+
+          while (starting1 < ending1
+                 && starting2 < ending2 && !NILP (sequence1))
+            {
+              XSETCAR (sequence1, subsequence[starting2]);
+              sequence1 = XCDR (sequence1);
+              starting1++;
+              starting2++;
+            }
+        }
+      else if (STRINGP (sequence2))
+        {
+          Ibyte *p = XSTRING_DATA (sequence2),
+            *pend = p + XSTRING_LENGTH (sequence2), *pcursor,
+            *staging;
+          Bytecount ii = 0;
+
+          while (ii < starting2 && p < pend)
+            {
+              INC_IBYTEPTR (p);
+              ii++;
+            }
+
+          pcursor = p;
+
+          while (ii < ending2 && starting1 < ending1 && pcursor < pend)
+            {
+              INC_IBYTEPTR (pcursor);
+              starting1++;
+              ii++;
+            }
+
+          if (pcursor == pend)
+            {
+              check_sequence_range (sequence1, start1, end1, make_int (ii));
+              check_sequence_range (sequence2, start2, end2, make_int (ii));
+            }
+          else
+            {
+              assert ((pcursor - p) > 0);
+              staging = alloca_ibytes (pcursor - p);
+              memcpy (staging, p, pcursor - p);
+              replace_string_range (result, start1,
+                                    make_int (starting1),
+                                    staging, staging + (pcursor - p));
+            }
+        }
+      else 
+        {
+          Elemcount seq_len = XINT (Flength (sequence2)), ii = 0,
+            subseq_len = min (min (ending1 - starting1, seq_len - starting1),
+                              min (ending2 - starting2, seq_len - starting2));
+          Lisp_Object *subsequence = alloca_array (Lisp_Object, subseq_len);
+
+          check_sequence_range (sequence1, start1, end1, make_int (seq_len));
+          check_sequence_range (sequence2, start2, end2, make_int (seq_len));
+
+          while (starting2 < ending2 && ii < seq_len)
+            {
+              subsequence[ii] = Faref (sequence2, make_int (starting2));
+              ii++, starting2++;
+            }
+
+          ii = 0;
+
+          while (starting1 < ending1 && ii < seq_len)
+            {
+              Faset (sequence1, make_int (starting1), subsequence[ii]);
+              ii++, starting1++;
+            }
+        }
+    }
+  else if (sequence1_listp && sequence2_listp)
+    {
+      Lisp_Object sequence1_tortoise = sequence1,
+        sequence2_tortoise = sequence2;
+      Elemcount shortest_len = 0;
+
+      counting = startcounting = min (ending1, ending2);
+
+      while (counting-- > 0 && !NILP (sequence1) && !NILP (sequence2))
+        {
+          XSETCAR (sequence1,
+                   CONSP (sequence2) ? XCAR (sequence2)
+                   : Fcar (sequence2));
+          sequence1 = CONSP (sequence1) ? XCDR (sequence1)
+            : Fcdr (sequence1);
+          sequence2 = CONSP (sequence2) ? XCDR (sequence2)
+            : Fcdr (sequence2);
+
+          shortest_len++;
+
+          if (startcounting - counting > CIRCULAR_LIST_SUSPICION_LENGTH)
+            {
+              if (counting & 1)
+                {
+                  sequence1_tortoise = XCDR (sequence1_tortoise);
+                  sequence2_tortoise = XCDR (sequence2_tortoise);
+                }
+
+              if (EQ (sequence1, sequence1_tortoise))
+                {
+                  signal_circular_list_error (sequence1);
+                }
+
+              if (EQ (sequence2, sequence2_tortoise))
+                {
+                  signal_circular_list_error (sequence2);
+                }
+            }
+        }
+
+      if (NILP (sequence1))
+        {
+          check_sequence_range (sequence1, start1, end1,
+                                make_int (XINT (start1) + shortest_len));
+        }
+      else if (NILP (sequence2))
+        {
+          check_sequence_range (sequence2, start2, end2,
+                                make_int (XINT (start2) + shortest_len));
+        }
+    }
+  else if (sequence1_listp)
+    {
+      if (STRINGP (sequence2))
+        {
+          Ibyte *s2_data = XSTRING_DATA (sequence2),
+            *s2_end = s2_data + XSTRING_LENGTH (sequence2);
+          Elemcount char_count = 0;
+          Lisp_Object character;
+
+          while (char_count < starting2 && s2_data < s2_end)
+            {
+              INC_IBYTEPTR (s2_data);
+              char_count++;
+            }
+
+          while (starting1 < ending1 && starting2 < ending2
+                 && s2_data < s2_end && !NILP (sequence1))
+            {
+              character = make_char (itext_ichar (s2_data));
+              CONSP (sequence1) ?
+                XSETCAR (sequence1, character)
+                : Fsetcar (sequence1, character);
+              sequence1 = XCDR (sequence1);
+              starting1++;
+              starting2++;
+              char_count++;
+              INC_IBYTEPTR (s2_data);
+            }
+
+          if (NILP (sequence1))
+            {
+              check_sequence_range (sequence1, start1, end1,
+                                    make_int (XINT (start1) + starting1));
+            }
+
+          if (s2_data == s2_end)
+            {
+              check_sequence_range (sequence2, start2, end2,
+                                    make_int (char_count));
+            }
+        }
+      else
+        {
+          Elemcount len2 = XINT (Flength (sequence2));
+          check_sequence_range (sequence2, start2, end2, make_int (len2));
+
+          ending2 = min (ending2, len2);
+          while (starting2 < ending2
+                 && starting1 < ending1 && !NILP (sequence1))
+            {
+              CHECK_CONS (sequence1);
+              XSETCAR (sequence1, Faref (sequence2, make_int (starting2)));
+              sequence1 = XCDR (sequence1);
+              starting1++;
+              starting2++;
+            }
+
+          if (NILP (sequence1))
+            {
+              check_sequence_range (sequence1, start1, end1,
+                                    make_int (XINT (start1) + starting1));
+            }
+        }
+    }
+  else if (sequence2_listp)
+    {
+      if (STRINGP (sequence1))
+        {
+          Elemcount ii = 0, count, len = string_char_length (sequence1);
+          Ibyte *staging, *cursor;
+          Lisp_Object obj;
+
+          check_sequence_range (sequence1, start1, end1, make_int (len));
+          ending1 = min (ending1, len);
+          count = ending1 - starting1;
+          staging = cursor = alloca_ibytes (count * MAX_ICHAR_LEN);
+
+          while (ii < count && !NILP (sequence2))
+            {
+              obj = CONSP (sequence2) ? XCAR (sequence2)
+                : Fcar (sequence2);
+
+              CHECK_CHAR_COERCE_INT (obj);
+              cursor += set_itext_ichar (cursor, XCHAR (obj));
+              ii++;
+              sequence2 = XCDR (sequence2);
+            }
+
+          if (NILP (sequence2))
+            {
+              check_sequence_range (sequence2, start2, end2,
+                                    make_int (XINT (start2) + ii));
+            }
+
+          replace_string_range (result, start1, make_int (XINT (start1) + ii),
+                                staging, cursor);
+        }
+      else
+        {
+          Elemcount len = XINT (Flength (sequence1));
+
+          check_sequence_range (sequence1, start2, end1, make_int (len));
+          ending1 = min (ending2, min (ending1, len));
+
+          while (starting1 < ending1 && !NILP (sequence2))
+            {
+              Faset (sequence1, make_int (starting1),
+                     CONSP (sequence2) ? XCAR (sequence2)
+                     : Fcar (sequence2));
+              sequence2 = XCDR (sequence2);
+              starting1++;
+              starting2++;
+            }
+
+          if (NILP (sequence2))
+            {
+              check_sequence_range (sequence2, start2, end2,
+                                    make_int (XINT (start2) + starting2));
+            }
+        }
+    }
+  else
+    {
+      if (STRINGP (sequence1) && STRINGP (sequence2))
+        {
+          Ibyte *p2 = XSTRING_DATA (sequence2),
+            *p2end = p2 + XSTRING_LENGTH (sequence2), *p2cursor;
+          Charcount ii = 0, len1 = string_char_length (sequence1);
+
+          while (ii < starting2 && p2 < p2end)
+            {
+              INC_IBYTEPTR (p2);
+              ii++;
+            }
+
+          p2cursor = p2;
+          ending1 = min (ending1, len1);
+
+          while (ii < ending2 && starting1 < ending1 && p2cursor < p2end)
+            {
+              INC_IBYTEPTR (p2cursor);
+              ii++;
+              starting1++;
+            }
+
+          if (p2cursor == p2end)
+            {
+              check_sequence_range (sequence2, start2, end2, make_int (ii));
+            }
+
+          /* This isn't great; any error message won't necessarily reflect
+             the END1 that was supplied to #'replace. */
+          replace_string_range (result, start1, make_int (starting1),
+                                p2, p2cursor);
+        }
+      else if (STRINGP (sequence1))
+        {
+          Ibyte *staging, *cursor;
+          Elemcount count, len1 = string_char_length (sequence1);
+          Elemcount len2 = XINT (Flength (sequence2)), ii = 0;;
+          Lisp_Object obj;
+
+          check_sequence_range (sequence1, start1, end1, make_int (len1));
+          check_sequence_range (sequence2, start2, end2, make_int (len2));
+
+          ending1 = min (ending1, len1);
+          ending2 = min (ending2, len2);
+          count = min (ending1 - starting1, ending2 - starting2);
+          staging = cursor = alloca_ibytes (count * MAX_ICHAR_LEN);
+
+          ii = 0;
+          while (ii < count)
+            {
+              obj = Faref (sequence2, make_int (starting2));
+
+              CHECK_CHAR_COERCE_INT (obj);
+              cursor += set_itext_ichar (cursor, XCHAR (obj));
+              starting2++, ii++;
+            }
+
+          replace_string_range (result, start1,
+                                make_int (XINT (start1) + count),
+                                staging, cursor);
+        }
+      else if (STRINGP (sequence2))
+        {
+          Ibyte *p2 = XSTRING_DATA (sequence2),
+            *p2end = p2 + XSTRING_LENGTH (sequence2);
+          Elemcount len1 = XINT (Flength (sequence1)), ii = 0;
+
+          check_sequence_range (sequence1, start1, end1, make_int (len1));
+          ending1 = min (ending1, len1);
+
+          while (ii < starting2 && p2 < p2end)
+            {
+              INC_IBYTEPTR (p2);
+              ii++;
+            }
+
+          while (p2 < p2end && starting1 < ending1 && starting2 < ending2)
+            {
+              Faset (sequence1, make_int (starting1),
+                     make_char (itext_ichar (p2)));
+              INC_IBYTEPTR (p2);
+              starting1++;
+              starting2++;
+              ii++;
+            }
+
+          if (p2 == p2end)
+            {
+              check_sequence_range (sequence2, start2, end2, make_int (ii));
+            }
+        }
+      else
+        {
+          Elemcount len1 = XINT (Flength (sequence1)),
+            len2 = XINT (Flength (sequence2));
+
+          check_sequence_range (sequence1, start1, end1, make_int (len1));
+          check_sequence_range (sequence2, start2, end2, make_int (len2));
+
+          ending1 = min (ending1, len1);
+          ending2 = min (ending2, len2);
+          
+          while (starting1 < ending1 && starting2 < ending2)
+            {
+              Faset (sequence1, make_int (starting1),
+                     Faref (sequence2, make_int (starting2)));
+              starting1++;
+              starting2++;
+            }
+        }
+    }
+
+  return result;
+}
 
 Lisp_Object
 add_suffix_to_symbol (Lisp_Object symbol, const Ascbyte *ascii_string)
@@ -5947,6 +6585,7 @@ syms_of_fns (void)
   DEFSYMBOL (Qbit_vector);
   defsymbol (&QsortX, "sort*");
   DEFSYMBOL (Qreduce);
+  DEFSYMBOL (Qreplace);
 
   DEFSYMBOL (Qmapconcat);
   defsymbol (&QmapcarX, "mapcar*");
@@ -5963,6 +6602,10 @@ syms_of_fns (void)
 
   DEFKEYWORD (Q_from_end);
   DEFKEYWORD (Q_initial_value);
+  DEFKEYWORD (Q_start1);
+  DEFKEYWORD (Q_start2);
+  DEFKEYWORD (Q_end1);
+  DEFKEYWORD (Q_end2);
 
   DEFSYMBOL (Qyes_or_no_p);
 
@@ -6062,6 +6705,7 @@ syms_of_fns (void)
 
   DEFSUBR (Freduce);
   DEFSUBR (Freplace_list);
+  DEFSUBR (Freplace);
   DEFSUBR (Fload_average);
   DEFSUBR (Ffeaturep);
   DEFSUBR (Frequire);
