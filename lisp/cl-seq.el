@@ -142,48 +142,7 @@ keyword :allow-other-keys (which defaults to t)."
 (defvar cl-if) (defvar cl-if-not)
 (defvar cl-key)
 
-(defun replace (cl-seq1 cl-seq2 &rest cl-keys)
-  "Replace the elements of SEQ1 with the elements of SEQ2.
-SEQ1 is destructively modified, then returned.
-Keywords supported:  :start1 :end1 :start2 :end2
-:start1 and :end1 specify a subsequence of SEQ1, and :start2 and :end2 a
-subsequence of SEQ2; see `search' for more information."
-  (cl-parsing-keywords ((:start1 0) :end1 (:start2 0) :end2) ()
-    (if (and (eq cl-seq1 cl-seq2) (<= cl-start2 cl-start1))
-	(or (= cl-start1 cl-start2)
-	    (let* ((cl-len (length cl-seq1))
-		   (cl-n (min (- (or cl-end1 cl-len) cl-start1)
-			      (- (or cl-end2 cl-len) cl-start2))))
-	      (while (>= (setq cl-n (1- cl-n)) 0)
-		(cl-set-elt cl-seq1 (+ cl-start1 cl-n)
-			    (elt cl-seq2 (+ cl-start2 cl-n))))))
-      (if (listp cl-seq1)
-	  (let ((cl-p1 (nthcdr cl-start1 cl-seq1))
-		(cl-n1 (if cl-end1 (- cl-end1 cl-start1) 4000000)))
-	    (if (listp cl-seq2)
-		(let ((cl-p2 (nthcdr cl-start2 cl-seq2))
-		      (cl-n (min cl-n1
-				 (if cl-end2 (- cl-end2 cl-start2) 4000000))))
-		  (while (and cl-p1 cl-p2 (>= (setq cl-n (1- cl-n)) 0))
-		    (setcar cl-p1 (car cl-p2))
-		    (setq cl-p1 (cdr cl-p1) cl-p2 (cdr cl-p2))))
-	      (setq cl-end2 (min (or cl-end2 (length cl-seq2))
-				 (+ cl-start2 cl-n1)))
-	      (while (and cl-p1 (< cl-start2 cl-end2))
-		(setcar cl-p1 (aref cl-seq2 cl-start2))
-		(setq cl-p1 (cdr cl-p1) cl-start2 (1+ cl-start2)))))
-	(setq cl-end1 (min (or cl-end1 (length cl-seq1))
-			   (+ cl-start1 (- (or cl-end2 (length cl-seq2))
-					   cl-start2))))
-	(if (listp cl-seq2)
-	    (let ((cl-p2 (nthcdr cl-start2 cl-seq2)))
-	      (while (< cl-start1 cl-end1)
-		(aset cl-seq1 cl-start1 (car cl-p2))
-		(setq cl-p2 (cdr cl-p2) cl-start1 (1+ cl-start1))))
-	  (while (< cl-start1 cl-end1)
-	    (aset cl-seq1 cl-start1 (aref cl-seq2 cl-start2))
-	    (setq cl-start2 (1+ cl-start2) cl-start1 (1+ cl-start1))))))
-    cl-seq1))
+;; XEmacs; #'replace is in fns.c.
 
 (defun remove* (cl-item cl-seq &rest cl-keys)
   "Remove all occurrences of ITEM in SEQ.
