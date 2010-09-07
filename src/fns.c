@@ -5862,7 +5862,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
         {
           Ibyte *staging, *cursor;
           Elemcount count, len1 = string_char_length (sequence1);
-          Elemcount len2 = XINT (Flength (sequence2)), ii = 0;;
+          Elemcount len2 = XINT (Flength (sequence2)), ii = 0;
           Lisp_Object obj;
 
           check_sequence_range (sequence1, start1, end1, make_int (len1));
