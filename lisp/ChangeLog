@@ -1,5 +1,12 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	* cl-macs.el (the):
+	Rephrase the docstring, make its implementation when compiling
+	files a little nicer.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* descr-text.el (unidata-initialize-unicodedata-database)
 	(unidata-initialize-unihan-database, describe-char-unicode-data)
 	(describe-char-unicode-data):
