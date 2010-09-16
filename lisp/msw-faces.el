@@ -268,12 +268,11 @@ font. If it fails, it returns nil."
 	(concat (substring font 0 (match-beginning 3))
 		(substring font (match-end 3) (match-end 0))))
   (sort
-   (delq nil
-	 (mapcar #'(lambda (name)
-		     (and (string-match mswindows-font-regexp name)
-			  (string-to-int (substring name (match-beginning 3)
-						    (match-end 3)))))
-		 (font-list font device)))
+   (mapcan #'(lambda (name)
+               (and (string-match mswindows-font-regexp name)
+                    (list (string-to-int (substring name (match-beginning 3)
+						    (match-end 3))))))
+           (font-list font device))
    #'<))
 
 (defun mswindows-frob-font-size (font up-p device)
