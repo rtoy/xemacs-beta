@@ -1011,7 +1011,9 @@ safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth)
 DEFUN ("subseq", Fsubseq, 2, 3, 0, /*
 Return the subsequence of SEQUENCE starting at START and ending before END.
 END may be omitted; then the subsequence runs to the end of SEQUENCE.
-If START or END is negative, it counts from the end.
+
+If START or END is negative, it counts from the end, in contravention of
+Common Lisp.
 The returned subsequence is always of the same type as SEQUENCE.
 If SEQUENCE is a string, relevant parts of the string-extent-data
 are copied to the new string.
@@ -1021,95 +1023,139 @@ not copy extent data.
 */
        (sequence, start, end))
 {
-  EMACS_INT len, s, e;
+  Elemcount len, ss, ee = EMACS_INT_MAX, ii;
+  Lisp_Object result = Qnil;
+
+  CHECK_SEQUENCE (sequence);
+  CHECK_INT (start);
+  ss = XINT (start);
+
+  if (!NILP (end))
+    {
+      CHECK_INT (end);
+      ee = XINT (end);
+    }
 
   if (STRINGP (sequence))
     {
-      Charcount ccstart, ccend;
       Bytecount bstart, blen;
-      Lisp_Object val;
 
-      CHECK_INT (start);
-      get_string_range_char (sequence, start, end, &ccstart, &ccend,
+      get_string_range_char (sequence, start, end, &ss, &ee,
                              GB_HISTORICAL_STRING_BEHAVIOR);
-      bstart = string_index_char_to_byte (sequence, ccstart);
-      blen = string_offset_char_to_byte_len (sequence, bstart, ccend - ccstart);
-      val = make_string (XSTRING_DATA (sequence) + bstart, blen);
+      bstart = string_index_char_to_byte (sequence, ss);
+      blen = string_offset_char_to_byte_len (sequence, bstart, ee - ss);
+
+      result = make_string (XSTRING_DATA (sequence) + bstart, blen);
       /* Copy any applicable extent information into the new string. */
-      copy_string_extents (val, sequence, 0, bstart, blen);
-      return val;
+      copy_string_extents (result, sequence, 0, bstart, blen);
     }
-
-  CHECK_SEQUENCE (sequence);
-
-  len = XINT (Flength (sequence));
-
-  CHECK_INT (start);
-  s = XINT (start);
-  if (s < 0)
-    s = len + s;
-
-  if (NILP (end))
-    e = len;
-  else
+  else if (CONSP (sequence))
     {
-      CHECK_INT (end);
-      e = XINT (end);
-      if (e < 0)
-	e = len + e;
-    }
+      Lisp_Object result_tail, saved = sequence;
 
-  check_sequence_range (sequence, make_int (s), make_int (e),
-			make_int (len));
+      if (ss < 0 || ee < 0)
+        {
+          len = XINT (Flength (sequence));
+	  if (ss < 0)
+	    {
+	      ss = len + ss;
+	      start = make_integer (ss);
+	    }
 
-  if (VECTORP (sequence))
-    {
-      Lisp_Object result = make_vector (e - s, Qnil);
-      EMACS_INT i;
-      Lisp_Object *in_elts  = XVECTOR_DATA (sequence);
-      Lisp_Object *out_elts = XVECTOR_DATA (result);
+	  if (ee < 0)
+	    {
+	      ee  = len + ee;
+	      end = make_integer (ee);
+	    }
+	  else
+	    {
+	      ee = min (ee, len);
+	    }
+        }
 
-      for (i = s; i < e; i++)
-	out_elts[i - s] = in_elts[i];
-      return result;
-    }
-  else if (LISTP (sequence))
-    {
-      Lisp_Object result = Qnil, result_tail;
-      EMACS_INT i;
+      if (0 != ss)
+        {
+          sequence = Fnthcdr (make_int (ss), sequence);
+        }
 
-      sequence = Fnthcdr (make_int (s), sequence);
-
-      if (s < e)
-	{
+      if (ss < ee && !NILP (sequence))
+        {
 	  result = result_tail = Fcons (Fcar (sequence), Qnil);
 	  sequence = Fcdr (sequence);
-	  for (i = s + 1; i < e; i++)
-	    {
-	      XSETCDR (result_tail, Fcons (Fcar (sequence), Qnil));
-	      sequence = Fcdr (sequence);
-	      result_tail = XCDR (result_tail);
-	    }
-	}
+	  ii = ss + 1;
 
-      return result;
-    }
-  else if (BIT_VECTORP (sequence))
-    {
-      Lisp_Object result = make_bit_vector (e - s, Qzero);
-      EMACS_INT i;
+	  {
+	    EXTERNAL_LIST_LOOP_2 (elt, sequence)
+	      {
+		if (!(ii < ee))
+		  {
+		    break;
+		  }
 
-      for (i = s; i < e; i++)
-	set_bit_vector_bit (XBIT_VECTOR (result), i - s,
-			    bit_vector_bit (XBIT_VECTOR (sequence), i));
-      return result;
+		XSETCDR (result_tail, Fcons (elt, Qnil));
+		result_tail = XCDR (result_tail);
+		ii++;
+	      }
+	  }
+        }
+
+      if (NILP (result) || (ii < ee && !NILP (end)))
+        {
+          /* We were handed a cons, which definitely has elements. nil
+             result means either ss >= ee or SEQUENCE was nil after the
+             nthcdr; in both cases that means START and END were incorrectly
+             specified for this sequence. ii < ee with a non-nil end means
+             the user handed us a bogus end value. */
+          check_sequence_range (saved, start, end, Flength (saved));
+        }
     }
   else
     {
-      ABORT (); /* unreachable, since CHECK_SEQUENCE (sequence) did not
-                   error */
-      return Qnil;
+      len = XINT (Flength (sequence));
+      if (ss < 0)
+	{
+	  ss = len + ss;
+	  start = make_integer (ss);
+	}
+
+      if (ee < 0)
+	{
+	  ee = len + ee;
+	  end = make_integer (ee);
+	}
+      else
+	{
+	  ee = min (len, ee);
+	}
+
+      check_sequence_range (sequence, start, end, make_int (len));
+
+      if (VECTORP (sequence))
+        {
+          result = Fvector (ee - ss, XVECTOR_DATA (sequence) + ss);
+        }
+      else if (BIT_VECTORP (sequence))
+        {
+          result = make_bit_vector (ee - ss, Qzero);
+
+          for (ii = ss; ii < ee; ii++)
+            {
+              set_bit_vector_bit (XBIT_VECTOR (result), ii - ss,
+                                  bit_vector_bit (XBIT_VECTOR (sequence), ii));
+            }
+        }
+      else if (NILP (sequence))
+        {
+          DO_NOTHING;
+        }
+      else
+        {
+          /* Won't happen, since CHECK_SEQUENCE didn't error. */
+          ABORT ();
+        }
     }
+
+  return result;
 }
 
 DEFUN ("substring-no-properties", Fsubstring_no_properties, 1, 3, 0, /* 
@@ -4005,9 +4051,9 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
           ++counting;
         }
 
-      if (counting != ending)
+      if (counting < starting || (counting != ending && !NILP (end)))
 	{
-	  check_sequence_range (sequence, start, end, Flength (sequence));
+	  check_sequence_range (args[0], start, end, Flength (args[0]));
 	}
     }
   else
@@ -4970,7 +5016,10 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 
   CHECK_KEY_ARGUMENT (key);
 
-#define KEY(key, item) (EQ (key, Qidentity) ? item : call1 (key, item))
+#define KEY(key, item) (EQ (Qidentity, key) ? item :			\
+			IGNORE_MULTIPLE_VALUES (call1 (key, item)))
+#define CALL2(function, accum, item)				\
+  IGNORE_MULTIPLE_VALUES (call2 (function, accum, item))
 
   starting = XINT (start);
   if (!NILP (end))
@@ -4979,16 +5028,24 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
       ending = XINT (end);
     }
 
+  if (!(starting <= ending))
+    {
+      check_sequence_range (sequence, start, end, Flength (sequence));
+    }
+
   if (VECTORP (sequence))
     {
       Lisp_Vector *vv = XVECTOR (sequence);
+
+      check_sequence_range (sequence, start, end, make_int (vv->size));
+
       ending = min (ending, vv->size);
 
       if (!UNBOUNDP (initial_value))
         {
           accum = initial_value;
         }
-      else if (ending - starting && starting < ending)
+      else if (ending - starting)
         {
           if (NILP (from_end))
             {
@@ -5006,14 +5063,14 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
         {
           for (ii = starting; ii < ending; ++ii)
             {
-              accum = call2 (function, accum, KEY (key, vv->contents[ii]));
+              accum = CALL2 (function, accum, KEY (key, vv->contents[ii]));
             }
         }
       else
         {
           for (ii = ending - 1; ii >= starting; --ii)
             {
-              accum = call2 (function, KEY (key, vv->contents[ii]), accum);
+              accum = CALL2 (function, KEY (key, vv->contents[ii]), accum);
             }
         }
     }
@@ -5021,13 +5078,15 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
     {
       Lisp_Bit_Vector *bv = XBIT_VECTOR (sequence);
 
+      check_sequence_range (sequence, start, end, make_int (bv->size));
+
       ending = min (ending, bv->size);
 
       if (!UNBOUNDP (initial_value))
         {
           accum = initial_value;
         }
-      else if (ending - starting && starting < ending)
+      else if (ending - starting)
         {
           if (NILP (from_end))
             {
@@ -5045,7 +5104,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
         {
           for (ii = starting; ii < ending; ++ii)
             {
-              accum = call2 (function, accum,
+              accum = CALL2 (function, accum,
                              KEY (key, make_int (bit_vector_bit (bv, ii))));
             }
         }
@@ -5053,13 +5112,12 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
         {
           for (ii = ending - 1; ii >= starting; --ii)
             {
-              accum = call2 (function, KEY (key,
+              accum = CALL2 (function, KEY (key,
                                             make_int (bit_vector_bit (bv,
                                                                       ii))),
                              accum);
             }
         }
-
     }
   else if (STRINGP (sequence))
     {
@@ -5080,7 +5138,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
             {
               accum = initial_value;
             }
-          else if (ending - starting && starting < ending)
+          else if (ending - starting)
             {
               accum = KEY (key, make_char (itext_ichar (cursor)));
               starting++;
@@ -5097,9 +5155,9 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
               cursor_offset = cursor - startp;
             }
 
-          while (cursor_offset < byte_len && starting < ending)
+          while (cursor_offset < byte_len && ii < ending)
             {
-              accum = call2 (function, accum, 
+              accum = CALL2 (function, accum, 
                              KEY (key, make_char (itext_ichar (cursor))));
 
 	      startp = XSTRING_DATA (sequence);
@@ -5113,14 +5171,22 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 
               INC_IBYTEPTR (cursor);
               cursor_offset = cursor - startp;
-              ++starting;
+              ++ii;
             }
+
+	  if (ii < starting || (ii < ending && !NILP (end)))
+	    {
+	      check_sequence_range (sequence, start, end, Flength (sequence));
+	      ABORT ();
+	    }
         }
       else
         {
           Elemcount len = string_char_length (sequence);
           Bytecount cursor_offset, byte_len = XSTRING_LENGTH (sequence);
           const Ibyte *cursor;
+
+	  check_sequence_range (sequence, start, end, make_int (len));
 
           ending = min (ending, len);
           cursor = string_char_addr (sequence, ending - 1);
@@ -5130,7 +5196,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
             {
               accum = initial_value;
             }
-          else if (ending - starting && starting < ending)
+          else if (ending - starting)
             {
               accum = KEY (key, make_char (itext_ichar (cursor)));
               ending--;
@@ -5150,7 +5216,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 
           for (ii = ending - 1; ii >= starting; --ii)
             {
-              accum = call2 (function, KEY (key,
+              accum = CALL2 (function, KEY (key,
                                             make_char (itext_ichar (cursor))),
                              accum);
               if (ii > 0)
@@ -5182,27 +5248,27 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
             {
               accum = initial_value;
             }
-          else if (ending - starting && starting < ending)
+          else if (ending - starting)
             {
-              Elemcount counting = 0;
+              ii = 0;
               EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
                 {
 		  /* KEY may amputate the list behind us; make sure what
 		     remains to be processed is still reachable.  */
 		  tailed = tail;
-                  if (counting == starting)
+                  if (ii == starting)
                     {
                       accum = KEY (key, elt);
                       starting++;
                       break;
                     }
-                  ++counting;
+                  ++ii;
                 }
             }
 
-          if (ending - starting && starting < ending)
+          if (ending - starting)
             {
-              Elemcount counting = 0;
+              ii = 0;
 
               EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
                 {
@@ -5210,22 +5276,28 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 		     sure what remains to be processed is still
 		     reachable.  */
 		  tailed = tail;
-                  if (counting >= starting)
+                  if (ii >= starting)
                     {
-                      if (counting < ending)
+                      if (ii < ending)
                         {
-                          accum = call2 (function, accum, KEY (key, elt));
+                          accum = CALL2 (function, accum, KEY (key, elt));
                         }
-                      else if (counting == ending)
+                      else if (ii == ending)
                         {
                           break;
                         }
                     }
-                  ++counting;
+                  ++ii;
                 }
             }
 
 	  UNGCPRO;
+
+	  if (ii < starting || (ii < ending && !NILP (end)))
+	    {
+	      check_sequence_range (sequence, start, end, Flength (sequence));
+	      ABORT ();
+	    }
         }
       else
         {
@@ -5234,11 +5306,9 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
           Elemcount counting = 0, len = 0;
 	  struct gcpro gcpro1;
 
-          if (ending - starting && starting < ending
-	      && EMACS_INT_MAX == ending)
-            {
-              ending = XINT (Flength (sequence));
-            }
+	  len = XINT (Flength (sequence));
+	  check_sequence_range (sequence, start, end, make_int (len));
+	  ending = min (ending, len);
 
           /* :from-end with a list; make an alloca copy of the relevant list
              data, attempting to go backwards isn't worth the trouble. */
@@ -5295,7 +5365,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
           for (ii = len; ii != 0;)
             {
               --ii;
-              accum = call2 (function, KEY (key, subsequence[ii]), accum);
+              accum = CALL2 (function, KEY (key, subsequence[ii]), accum);
             }
 
 	  if (subsequence != NULL)
@@ -5310,7 +5380,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
      arguments. */
   if (UNBOUNDP (accum))
     {
-      accum = call0 (function);
+      accum = IGNORE_MULTIPLE_VALUES (call0 (function));
     }
 
   return accum;
@@ -5470,7 +5540,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
   Lisp_Object sequence1 = args[0], sequence2 = args[1],
     result = sequence1;
   Elemcount starting1, ending1 = EMACS_INT_MAX, starting2;
-  Elemcount ending2 = EMACS_INT_MAX, counting, startcounting;
+  Elemcount ending2 = EMACS_INT_MAX, counting = 0, startcounting;
   Boolint sequence1_listp, sequence2_listp,
     overwriting = EQ (sequence1, sequence2);
 
@@ -5516,32 +5586,30 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
   if (sequence1_listp && !ZEROP (start1))
     {
-      Lisp_Object nthcdrd = Fnthcdr (start1, sequence1);
+      sequence1 = Fnthcdr (start1, sequence1);
 
-      if (NILP (nthcdrd))
+      if (NILP (sequence1))
         {
-          check_sequence_range (sequence1, start1, end1, Flength (sequence1));
+          check_sequence_range (args[0], start1, end1, Flength (args[0]));
           /* Give up early here. */
           return result;
         }
 
-      sequence1 = nthcdrd;
       ending1 -= starting1;
       starting1 = 0;
     }
 
   if (sequence2_listp && !ZEROP (start2))
     {
-      Lisp_Object nthcdrd = Fnthcdr (start2, sequence2);
+      sequence2 = Fnthcdr (start2, sequence2);
 
-      if (NILP (nthcdrd))
+      if (NILP (sequence2))
         {
-          check_sequence_range (sequence1, start1, end1, Flength (sequence1));
+          check_sequence_range (args[1], start1, end1, Flength (args[1]));
           /* Nothing available to replace sequence1's contents. */
           return result;
         }
 
-      sequence2 = nthcdrd;
       ending2 -= starting2;
       starting2 = 0;
     }
@@ -5560,7 +5628,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
           Elemcount len = XINT (Flength (sequence2));
           Lisp_Object *subsequence
             = alloca_array (Lisp_Object, min (ending2, len));
-          Elemcount counting = 0, ii = 0;
+          Elemcount ii = 0;
 
           LIST_LOOP_2 (elt, sequence2)
             {
