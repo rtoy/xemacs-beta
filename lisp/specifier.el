@@ -521,10 +521,9 @@ Example:
 			       varlist)))
       ;; Bind the appropriate variables.
       `(let* (,@(mapcan #'(lambda (varel)
-			    (delq nil (mapcar
-				       #'(lambda (varcons)
-					   (and (cdr varcons) varcons))
-				       varel)))
+			    (mapcan #'(lambda (varcons)
+                                        (and (cdr varcons) (list varcons)))
+				       varel))
 			varlist)
 		,@oldvallist)
 	 (unwind-protect

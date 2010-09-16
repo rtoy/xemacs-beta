@@ -1,5 +1,16 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* x-faces.el (x-available-font-sizes): 
+	* specifier.el (let-specifier): 
+	* package-ui.el (pui-add-required-packages): 
+	* msw-faces.el (mswindows-available-font-sizes): 
+	* modeline.el (modeline-minor-mode-menu): 
+	* minibuf.el (minibuf-directory-files):
+	Replace the O2N (delq nil (mapcar (lambda (W) (and X Y)) Z)) with
+	the ON (mapcan (lambda (W) (and X (list Y))) Z) in these files.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (= < > <= >=):
 	When these functions are handed more than two arguments, and those
 	arguments have no side effects, transform to a series of two
