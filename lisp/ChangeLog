@@ -1,5 +1,15 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (= < > <= >=):
+	When these functions are handed more than two arguments, and those
+	arguments have no side effects, transform to a series of two
+	argument calls, avoiding funcall in the byte-compiled code.
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Take advantage of this change in a function called 256 times at
+	startup.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el (byte-compile-function-form, byte-compile-quote)
 	(byte-compile-quote-form):
 	Warn at compile time, and error at runtime, if a (quote ...) or a

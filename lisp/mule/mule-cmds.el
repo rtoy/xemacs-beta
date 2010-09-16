@@ -789,8 +789,7 @@ the language environment for the major languages of Western Europe."
 	     (setq string (format "%c" unicode-error-lookup)))
            ;; Treat control characters specially:
            (setq first-char (aref string 0))
-           (when (or (and (>= first-char #x00) (<= first-char #x1f))
-                     (and (>= first-char #x80) (<= first-char #x9f)))
+           (when (or (<= #x00 first-char #x1f) (<= #x80 first-char #x9f))
 	     (setq string (format "^%c" (+ ?@ (aref string 0))))))
          (setq glyph (make-glyph (vector 'string :data string)))
          (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)
