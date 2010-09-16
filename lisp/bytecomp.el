@@ -493,13 +493,21 @@ easily determined from the input file.")
 	  (fset (car elt) (cdr elt)))))))
 
 (defconst byte-compile-initial-macro-environment
-  '((byte-compiler-options . (lambda (&rest forms)
-			       (apply 'byte-compiler-options-handler forms)))
-    (eval-when-compile . (lambda (&rest body)
-			   (list 'quote (byte-compile-eval (cons 'progn body)))))
-    (eval-and-compile . (lambda (&rest body)
-			  (byte-compile-eval (cons 'progn body))
-			  (cons 'progn body))))
+  `((byte-compiler-options
+      . ,#'(lambda (&rest forms)
+	     (apply 'byte-compiler-options-handler forms)))
+    (eval-when-compile
+      . ,#'(lambda (&rest body)
+	     (list 'quote (byte-compile-eval (cons 'progn body)))))
+    (eval-and-compile
+      . ,#'(lambda (&rest body)
+	     (byte-compile-eval (cons 'progn body))
+	     (cons 'progn body)))
+    (the .
+      ,#'(lambda (&rest body)
+	   (if byte-compile-delete-errors
+	       (second body)
+	     (apply (cdr (symbol-function 'the)) body)))))
   "The default macro-environment passed to macroexpand by the compiler.
 Placing a macro here will cause a macro to have different semantics when
 expanded by the compiler as when expanded by the interpreter.")
