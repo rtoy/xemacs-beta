@@ -339,6 +339,29 @@ which is at least the number of distinct elements.
   return make_int (len);
 }
 
+/* This is almost the above, but is defined by Common Lisp. We need it in C
+   for shortest_length_among_sequences(), below, for the various sequence
+   functions that can usefully operate on circular lists. */
+
+DEFUN ("list-length", Flist_length, 1, 1, 0, /*
+Return the length of LIST.  Return nil if LIST is circular.
+*/
+       (list))
+{
+  Lisp_Object hare, tortoise;
+  Elemcount len;
+
+  for (hare = tortoise = list, len = 0;
+       CONSP (hare) && (! EQ (hare, tortoise) || len == 0);
+       hare = XCDR (hare), len++)
+    {
+      if (len & 1)
+	tortoise = XCDR (tortoise);
+    }
+
+  return EQ (hare, tortoise) && len != 0 ? Qnil : make_int (len);
+}
+
 /*** string functions. ***/
 
 DEFUN ("string-equal", Fstring_equal, 2, 2, 0, /*
@@ -4458,6 +4481,42 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
   UNGCPRO;
 }
 
+/* Given NSEQUENCES objects at the address pointed to by SEQUENCES, return
+   the length of the shortest sequence. Error if all are circular, or if any
+   one of them is not a sequence. */
+static Elemcount
+shortest_length_among_sequences (int nsequences, Lisp_Object *sequences)
+{
+  Elemcount len = EMACS_INT_MAX;
+  Lisp_Object length;
+  int i;
+
+  for (i = 0; i < nsequences; ++i)
+    {
+      if (CONSP (sequences[i]))
+        {
+          length = Flist_length (sequences[i]);
+          if (!NILP (length))
+            {
+              len = min (len, XINT (length));
+            }
+        }
+      else
+        {
+          CHECK_SEQUENCE (sequences[i]);
+          length = Flength (sequences[i]);
+          len = min (len, XINT (length));
+        }
+    }
+
+  if (NILP (length))
+    {
+      signal_circular_list_error (sequences[0]);
+    }
+
+  return len;
+}
+
 DEFUN ("mapconcat", Fmapconcat, 3, MANY, 0, /*
 Call FUNCTION on each element of SEQUENCE, and concat results to a string.
 Between each pair of results, insert SEPARATOR.
@@ -4485,11 +4544,7 @@ arguments: (FUNCTION SEQUENCE SEPARATOR &rest SEQUENCES)
   args[2] = sequence;
   args[1] = separator;
 
-  for (i = 2; i < nargs; ++i)
-    {
-      CHECK_SEQUENCE (args[i]);
-      len = min (len, XINT (Flength (args[i])));
-    }
+  len = shortest_length_among_sequences (nargs - 2, args + 2);
 
   if (len == 0) return build_ascstring ("");
 
@@ -4536,15 +4591,8 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
        (int nargs, Lisp_Object *args))
 {
   Lisp_Object function = args[0];
-  Elemcount len = EMACS_INT_MAX;
+  Elemcount len = shortest_length_among_sequences (nargs - 1, args + 1);
   Lisp_Object *args0;
-  int i;
-
-  for (i = 1; i < nargs; ++i)
-    {
-      CHECK_SEQUENCE (args[i]);
-      len = min (len, XINT (Flength (args[i])));
-    }
 
   args0 = alloca_array (Lisp_Object, len);
   mapcarX (len, args0, Qnil, function, nargs - 1, args + 1, QmapcarX);
@@ -4567,18 +4615,10 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
        (int nargs, Lisp_Object *args))
 {
   Lisp_Object function = args[0];
-  Elemcount len = EMACS_INT_MAX;
-  Lisp_Object result;
+  Elemcount len = shortest_length_among_sequences (nargs - 1, args + 1);
+  Lisp_Object result = make_vector (len, Qnil);
+
   struct gcpro gcpro1;
-  int i;
-
-  for (i = 1; i < nargs; ++i)
-    {
-      CHECK_SEQUENCE (args[i]);
-      len = min (len, XINT (Flength (args[i])));
-    }
-
-  result = make_vector (len, Qnil);
   GCPRO1 (result);
   /* Don't pass result as the lisp_object argument, we want mapcarX to protect 
      a single list argument's elements from being garbage-collected. */
@@ -4602,21 +4642,13 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object function = args[0], *result;
-  Elemcount result_len = EMACS_INT_MAX;
-  int i;
+  Elemcount len = shortest_length_among_sequences (nargs - 1, args + 1);
+  Lisp_Object function = args[0], *result = alloca_array (Lisp_Object, len);
 
-  for (i = 1; i < nargs; ++i)
-    {
-      CHECK_SEQUENCE (args[i]);
-      result_len = min (result_len, XINT (Flength (args[i])));
-    }
-
-  result = alloca_array (Lisp_Object, result_len);
-  mapcarX (result_len, result, Qnil, function, nargs - 1, args + 1, Qmapcan);
+  mapcarX (len, result, Qnil, function, nargs - 1, args + 1, Qmapcan);
 
   /* #'nconc GCPROs its args in case of signals and error. */
-  return Fnconc (result_len, result);
+  return Fnconc (len, result);
 }
 
 DEFUN ("mapc", Fmapc, 2, MANY, 0, /*
@@ -4637,17 +4669,9 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
 */
        (int nargs, Lisp_Object *args))
 {
-  Elemcount len = EMACS_INT_MAX;
+  Elemcount len = shortest_length_among_sequences (nargs - 1, args + 1);
   Lisp_Object sequence = args[1];
   struct gcpro gcpro1;
-  int i;
-
-  for (i = 1; i < nargs; ++i)
-    {
-      CHECK_SEQUENCE (args[i]);
-      len = min (len, XINT (Flength (args[i])));
-    }
-
   /* We need to GCPRO sequence, because mapcarX will modify the
      elements of the args array handed to it, and this may involve
      elements of sequence getting garbage collected. */
@@ -4677,15 +4701,8 @@ arguments: (TYPE FUNCTION SEQUENCE &rest SEQUENCES)
   Lisp_Object function = args[1];
   Lisp_Object result = Qnil;
   Lisp_Object *args0 = NULL;
-  Elemcount len = EMACS_INT_MAX;
-  int i;
+  Elemcount len = shortest_length_among_sequences (nargs - 2, args + 2);
   struct gcpro gcpro1;
-
-  for (i = 2; i < nargs; ++i)
-    {
-      CHECK_SEQUENCE (args[i]);
-      len = min (len, XINT (Flength (args[i])));
-    }
 
   if (!NILP (type))
     {
@@ -4742,19 +4759,14 @@ arguments: (RESULT-SEQUENCE FUNCTION &rest SEQUENCES)
 */
        (int nargs, Lisp_Object *args))
 {
-  Elemcount len = EMACS_INT_MAX;
+  Elemcount len;
   Lisp_Object result_sequence = args[0];
   Lisp_Object function = args[1];
-  int i;
 
   args[0] = function;
   args[1] = result_sequence;
 
-  for (i = 1; i < nargs; ++i)
-    {
-      CHECK_SEQUENCE (args[i]);
-      len = min (len, XINT (Flength (args[i])));
-    }
+  len = shortest_length_among_sequences (nargs - 1, args + 1);
 
   mapcarX (len, NULL, result_sequence, function, nargs - 2, args + 2,
            Qmap_into);
@@ -4776,14 +4788,7 @@ arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
 {
   Lisp_Object result = Qnil,
     result_ptr = STORE_VOID_IN_LISP ((void *) &result);
-  Elemcount len = EMACS_INT_MAX;
-  int i;
-
-  for (i = 1; i < nargs; ++i)
-    {
-      CHECK_SEQUENCE (args[i]);
-      len = min (len, XINT (Flength (args[i])));
-    }
+  Elemcount len = shortest_length_among_sequences (nargs - 1, args + 1);
 
   mapcarX (len, NULL, result_ptr, args[0], nargs - 1, args +1, Qsome);
 
@@ -4803,14 +4808,7 @@ arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
        (int nargs, Lisp_Object *args))
 {
   Lisp_Object result = Qt, result_ptr = STORE_VOID_IN_LISP ((void *) &result);
-  Elemcount len = EMACS_INT_MAX;
-  int i;
-
-  for (i = 1; i < nargs; ++i)
-    {
-      CHECK_SEQUENCE (args[i]);
-      len = min (len, XINT (Flength (args[i])));
-    }
+  Elemcount len = shortest_length_among_sequences (nargs - 1, args + 1);
 
   mapcarX (len, NULL, result_ptr, args[0], nargs - 1, args +1, Qevery);
 
@@ -6683,6 +6681,7 @@ syms_of_fns (void)
   DEFSUBR (Frandom);
   DEFSUBR (Flength);
   DEFSUBR (Fsafe_length);
+  DEFSUBR (Flist_length);
   DEFSUBR (Fstring_equal);
   DEFSUBR (Fcompare_strings);
   DEFSUBR (Fstring_lessp);

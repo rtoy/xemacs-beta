@@ -405,13 +405,6 @@ If STATE is t, return a new state object seeded from the time of day."
   "Equivalent to (nconc (nreverse X) Y)."
   (nconc (nreverse x) y))
 
-(defun list-length (list)
-  "Return the length of LIST.  Return nil if LIST is circular."
-  (if (listp list)
-      (condition-case nil (length list) (circular-list))
-    ;; Error on not-a-list:
-    (car list)))
-
 (defun tailp (sublist list)
   "Return true if SUBLIST is a tail of LIST."
   (while (and (consp list) (not (eq sublist list)))
