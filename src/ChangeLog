@@ -1,5 +1,28 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fns.c (Fsubseq):
+	Change the string code to better fit in with the rest of this
+	function (it still uses get_string_range_char(), though, which *may*
+	diverge algorithmically from what we're doing).
+
+	If dealing with a cons, only call #'length if we have reason to
+	believe that the START and END arguments are badly specified, and
+	check for circular lists ourselves when that's appropriate.
+
+	If dealing with a vector, call Fvector() on the appropriate subset
+	of the old vector's data directly, don't initialise the result
+	with nil and then copy.
+
+	(Ffill):
+	Only check the range arguments for a cons SEQUENCE if we have good
+	reason to think they were badly specified.
+	
+	(Freduce):
+	Handle multiple values properly. Add bounds checking to this
+	function, as specificied by ANSI Common Lisp.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* eval.c (Ffunction, Fquote):
 	Add argument information in the arguments: () format for these two
 	special operators.
