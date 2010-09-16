@@ -1963,13 +1963,13 @@ Returns the first of the multiple values given by FORM."
 (defmacro locally (&rest body) (cons 'progn body))
 ;;;###autoload
 (defmacro the (type form)
-  "Assert that FORM gives a result of type TYPE, and return FORM.
+  "Assert that FORM gives a result of type TYPE, and return that result.
 
 TYPE is a Common Lisp type specifier.
 
 If macro expansion of a `the' form happens during byte compilation, and the
 byte compiler customization variable `byte-compile-delete-errors' is
-non-nil, `the' just returns FORM, without making any type checks."
+non-nil, `the' is equivalent to FORM without any type checks."
   (if (cl-safe-expr-p form)
       `(prog1 ,form (assert ,(cl-make-type-test form type) t))
     (let ((saved (gensym)))

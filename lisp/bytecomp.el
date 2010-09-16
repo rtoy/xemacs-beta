@@ -504,10 +504,10 @@ easily determined from the input file.")
 	     (byte-compile-eval (cons 'progn body))
 	     (cons 'progn body)))
     (the .
-      ,#'(lambda (&rest body)
+      ,#'(lambda (type form)
 	   (if byte-compile-delete-errors
-	       (second body)
-	     (apply (cdr (symbol-function 'the)) body)))))
+	       form
+	     (funcall (cdr (symbol-function 'the)) type form)))))
   "The default macro-environment passed to macroexpand by the compiler.
 Placing a macro here will cause a macro to have different semantics when
 expanded by the compiler as when expanded by the interpreter.")
