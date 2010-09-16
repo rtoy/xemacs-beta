@@ -457,98 +457,100 @@ course of events UNIDATA-FILE-NAME is the value of
   (check-argument-type #'file-readable-p unidata-file-name)
   (unless unidata-database-format
     (error 'unimplemented "No (non-SQL) DB support available"))
-  (let* ((database-format unidata-database-format)
-         (size (eighth (file-attributes unidata-file-name)))
-         (database-file-name
-          (unidata-generate-database-file-name unidata-file-name
-                                               size database-format))
-         (database-handle (open-database database-file-name database-format 
-                                         nil "rw+" #o644 'no-conversion-unix))
-         (coding-system-for-read 'no-conversion-unix)
-         (buffer-size 32768)
-         (offset-start 0)
-         (offset-end buffer-size)
-         (range-information (make-range-table 'start-closed-end-closed))
-         (range-staging (make-hash-table :test 'equal))
-         (message "Initializing UnicodeData database cache: ")
-         (loop-count 1)
-         range-startinfo)
-    (with-temp-buffer
-      (progress-feedback-with-label 'describe-char-unicodedata-file
-                                    "%s" 0 message)
-      (while (progn
-               (delete-region (point-min) (point-max))
-               (insert-file-contents unidata-file-name nil
-                                     offset-start offset-end)
-               ;; If we've reached the end of the data, pass nil back to
-               ;; the while loop test.
-               (not (= (point-min) (point-max))))
+  (with-fboundp '(open-database put-database close-database)
+    (let* ((database-format unidata-database-format)
+	   (size (eighth (file-attributes unidata-file-name)))
+	   (database-file-name
+	    (unidata-generate-database-file-name unidata-file-name
+						 size database-format))
+	   (database-handle (open-database database-file-name database-format 
+					   nil "rw+" #o644
+					   'no-conversion-unix))
+	   (coding-system-for-read 'no-conversion-unix)
+	   (buffer-size 32768)
+	   (offset-start 0)
+	   (offset-end buffer-size)
+	   (range-information (make-range-table 'start-closed-end-closed))
+	   (range-staging (make-hash-table :test 'equal))
+	   (message "Initializing UnicodeData database cache: ")
+	   (loop-count 1)
+	   range-startinfo)
+      (with-temp-buffer
+	(progress-feedback-with-label 'describe-char-unicodedata-file
+				      "%s" 0 message)
+	(while (progn
+		 (delete-region (point-min) (point-max))
+		 (insert-file-contents unidata-file-name nil
+				       offset-start offset-end)
+		 ;; If we've reached the end of the data, pass nil back to
+		 ;; the while loop test.
+		 (not (= (point-min) (point-max))))
 
-        (when (= buffer-size (- (point-max) (point-min)))
-          ;; If we're in the body of the file, and there's a trailing
-          ;; incomplete end-line, delete it, and adjust offset-end
-          ;; appropriately.
-          (goto-char (point-max))
-          (search-backward "\n")
-          (forward-char)
-          (delete-region (point) (point-max))
-          (setq offset-end (+ offset-start (- (point) (point-min)))))
+	  (when (= buffer-size (- (point-max) (point-min)))
+	    ;; If we're in the body of the file, and there's a trailing
+	    ;; incomplete end-line, delete it, and adjust offset-end
+	    ;; appropriately.
+	    (goto-char (point-max))
+	    (search-backward "\n")
+	    (forward-char)
+	    (delete-region (point) (point-max))
+	    (setq offset-end (+ offset-start (- (point) (point-min)))))
 
-        (progress-feedback-with-label 'describe-char-unicodedata-file
-                                      "%s" (truncate 
-                                            (* (/ offset-start size) 100))
-                                      (concat message
-                                              (make-string
-                                               (mod loop-count 39) ?.)))
-        (incf loop-count)
-        (goto-char (point-min))
-        (while (re-search-forward 
-                #r"^\([0-9A-F]\{4,6\}\);\([^;]*\);.*$" nil t)
-          (cond
-           ((and (> (- (match-end 2) (match-beginning 2)) 7)
-                 (equal (substring (match-string 2) -7)
-                        " First>"))
-            ;; Start of a range. Save the start info in range-staging.
-            (puthash (substring (match-string 2) 0 -7)
-                     (list (string-to-int (match-string 1) 16)
-                           (+ offset-start (1- (match-beginning 0))))
-                     range-staging))
-           ((and (> (- (match-end 2) (match-beginning 2)) 7)
-                 (equal (substring (match-string 2) -6)
-                        " Last>"))
-            ;; End of a range. Combine with the start info, save it to the
-            ;; range-information range table. 
-            (setq range-startinfo
-                  (gethash (substring (match-string 2) 0 -6) range-staging))
-            (assert range-startinfo nil
-                    "Unexpected order for range information.")
-            (put-range-table 
-             (first range-startinfo)
-             (string-to-int (match-string 1) 16)
-             (list (second range-startinfo) 
+	  (progress-feedback-with-label 'describe-char-unicodedata-file
+					"%s" (truncate 
+					      (* (/ offset-start size) 100))
+					(concat message
+						(make-string
+						 (mod loop-count 39) ?.)))
+	  (incf loop-count)
+	  (goto-char (point-min))
+	  (while (re-search-forward 
+		  #r"^\([0-9A-F]\{4,6\}\);\([^;]*\);.*$" nil t)
+	    (cond
+	     ((and (> (- (match-end 2) (match-beginning 2)) 7)
+		   (equal (substring (match-string 2) -7)
+			  " First>"))
+	      ;; Start of a range. Save the start info in range-staging.
+	      (puthash (substring (match-string 2) 0 -7)
+		       (list (string-to-int (match-string 1) 16)
+			     (+ offset-start (1- (match-beginning 0))))
+		       range-staging))
+	     ((and (> (- (match-end 2) (match-beginning 2)) 7)
+		   (equal (substring (match-string 2) -6)
+			  " Last>"))
+	      ;; End of a range. Combine with the start info, save it to the
+	      ;; range-information range table. 
+	      (setq range-startinfo
+		    (gethash (substring (match-string 2) 0 -6) range-staging))
+	      (assert range-startinfo nil
+		      "Unexpected order for range information.")
+	      (put-range-table 
+	       (first range-startinfo)
+	       (string-to-int (match-string 1) 16)
+	       (list (second range-startinfo) 
                    (+ offset-start (1- (match-end 0))))
-             range-information)
-            (remhash (substring (match-string 2) 0 -6) range-staging))
-           (t
-            ;; Normal character. Save the associated information in the
-            ;; database directly.
-            (put-database (match-string 1)
-                          (format "(%d %d)"
-                                  (+ offset-start (1- (match-beginning 0)))
-                                  (+ offset-start (1- (match-end 0))))
-                          database-handle))))
-        (goto-char (point-min))
-        (setq offset-start offset-end
-              offset-end (+ buffer-size offset-end))))
-    ;; Save the range information as such in the database. 
-    (put-database "range-information"
-                  (let ((print-readably t))
-                    (prin1-to-string range-information))
-                  database-handle) 
-    (close-database database-handle)
-    (progress-feedback-with-label 'describe-char-unicodedata-file
-                                  "%s" 100 message)
-    database-file-name))
+	       range-information)
+	      (remhash (substring (match-string 2) 0 -6) range-staging))
+	     (t
+	      ;; Normal character. Save the associated information in the
+	      ;; database directly.
+	      (put-database (match-string 1)
+			    (format "(%d %d)"
+				    (+ offset-start (1- (match-beginning 0)))
+				    (+ offset-start (1- (match-end 0))))
+			    database-handle))))
+	  (goto-char (point-min))
+	  (setq offset-start offset-end
+		offset-end (+ buffer-size offset-end))))
+      ;; Save the range information as such in the database. 
+      (put-database "range-information"
+		    (let ((print-readably t))
+		      (prin1-to-string range-information))
+		    database-handle) 
+      (close-database database-handle)
+      (progress-feedback-with-label 'describe-char-unicodedata-file
+				    "%s" 100 message)
+      database-file-name)))
 
 (defun unidata-initialize-unihan-database (unihan-file-name)
   "Init the berkeley or gdbm lookup table for UNIHAN-FILE-NAME.
@@ -562,114 +564,115 @@ the output of \\[universal-argument] \\[what-cursor-position] .  "
   (check-argument-type #'file-readable-p unihan-file-name)
   (unless unidata-database-format
     (error 'unimplemented "No (non-SQL) DB support available"))
-  (let* ((database-format unidata-database-format)
-         (size (eighth (file-attributes unihan-file-name)))
-         (database-file-name
-          (unidata-generate-database-file-name unihan-file-name
-                                               size database-format))
-         (database-handle (open-database database-file-name database-format 
-                                         nil "rw+" #o644 'no-conversion-unix))
-         (coding-system-for-read 'no-conversion-unix)
-         (buffer-size 65536)
-         (offset-start 0)
-         (offset-end buffer-size)
-         (message "Initializing Unihan database cache: ")
-         (loop-count 1)
-         trailing-unicode leading-unicode character-start character-end)
-    (with-temp-buffer
+  (with-fboundp '(open-database put-database close-database)
+    (let* ((database-format unidata-database-format)
+	   (size (eighth (file-attributes unihan-file-name)))
+	   (database-file-name
+	    (unidata-generate-database-file-name unihan-file-name
+						 size database-format))
+	   (database-handle (open-database database-file-name database-format 
+					   nil "rw+" #o644
+					   'no-conversion-unix))
+	   (coding-system-for-read 'no-conversion-unix)
+	   (buffer-size 65536)
+	   (offset-start 0)
+	   (offset-end buffer-size)
+	   (message "Initializing Unihan database cache: ")
+	   (loop-count 1)
+	   trailing-unicode leading-unicode character-start character-end)
+      (with-temp-buffer
+	(progress-feedback-with-label 'describe-char-unihan-file
+				      "%s" 0 message)
+	(while (progn
+		 (delete-region (point-min) (point-max))
+		 (insert-file-contents unihan-file-name nil
+				       offset-start offset-end)
+		 ;; If we've reached the end of the data, return nil to the
+		 ;; while.
+		 (not (= (point-min) (point-max))))
+
+	  (incf loop-count)
+	  (progress-feedback-with-label 'describe-char-unihan-file
+					"%s" (truncate
+					      (* (/ offset-start size) 100))
+					(concat message
+						(make-string
+						 (mod loop-count 44) ?.)))
+	  (block 'dealing-with-chars
+	    (when (= buffer-size (- (point-max) (point-min)))
+	      ;; If we're in the body of the file, we need to delete the
+	      ;; character info for the last character, and set offset-end
+	      ;; appropriately. Otherwise, we may not be able to pick where
+	      ;; the actual description of a character ends and begins.
+	      ;;
+	      ;; This breaks if any single Unihan character description is
+	      ;; greater than the buffer size in length.
+	      (goto-char (point-max))
+	      (beginning-of-line)
+
+	      (when (< (- (point-max) (point)) (eval-when-compile
+						 (length "U+ABCDEF\t")))
+		;; If the character ID of the last line may have been cut off,
+		;; we need to delete all of that line here.
+		(delete-region (point) (point-max))
+		(forward-line -1))
+
+	      (when (looking-at "^\\(U\\+[0-9A-F]\\{4,6\\}\\)\t")
+		(setq trailing-unicode (match-string 1)
+		      trailing-unicode
+		      (format "^%s\t" (regexp-quote trailing-unicode)))
+
+		(end-of-line)
+
+		;; Go back until we hit a line that doesn't start with this
+		;; character info.
+		(while (re-search-backward trailing-unicode nil t))
+
+		;; The re-search-backward failed, so point is still at the end
+		;; of the last match. Move to its beginning.
+		(beginning-of-line)
+		(delete-region (point) (point-max))
+		(setq offset-end (+ offset-start (- (point) (point-min))))))
+	    (goto-char (point-min))
+	    (while t
+	      (when (= (point) (point-max))
+		;; We're at the end of this part of the file.
+		(return-from 'dealing-with-chars))
+
+	      (unless (re-search-forward "^\\(U\\+[0-9A-F]\\{4,6\\}\\)\t"
+					 nil t)
+		;; We're probably in the comments at the start of the
+		;; file. No need to look for character info.
+		(return-from 'dealing-with-chars))
+
+	      ;; Store where the character started. 
+	      (beginning-of-line)
+	      (setq character-start (point))
+
+	      (setq leading-unicode 
+		    (format "^%s\t" (regexp-quote (match-string 1))))
+
+	      ;; Loop until we get past this entry.
+	      (while (re-search-forward leading-unicode nil t))
+
+	      ;; Now, store the information.
+	      (setq leading-unicode
+		    (string-to-number (substring leading-unicode 3) 16)
+		    leading-unicode (format "%04X" leading-unicode)
+		    character-end (prog2 (end-of-line) (point)))
+	      (put-database leading-unicode
+			    (format "(%d %d)"
+				    (+ offset-start (1- character-start))
+				    (+ offset-start (1- character-end)))
+			    database-handle)
+	      (forward-line)))
+	  (setq offset-start offset-end
+		offset-end (+ buffer-size offset-end))))
+      (close-database database-handle)
       (progress-feedback-with-label 'describe-char-unihan-file
-                                    "%s" 0 message)
-      (while (progn
-               (delete-region (point-min) (point-max))
-               (insert-file-contents unihan-file-name nil
-                                     offset-start offset-end)
-               ;; If we've reached the end of the data, return nil to the
-               ;; while.
-               (not (= (point-min) (point-max))))
-
-        (incf loop-count)
-        (progress-feedback-with-label 'describe-char-unihan-file
-                                      "%s" (truncate
-                                            (* (/ offset-start size) 100))
-                                      (concat message
-                                              (make-string
-                                               (mod loop-count 44) ?.)))
-        (block 'dealing-with-chars
-          (when (= buffer-size (- (point-max) (point-min)))
-            ;; If we're in the body of the file, we need to delete the
-            ;; character info for the last character, and set offset-end
-            ;; appropriately. Otherwise, we may not be able to pick where
-            ;; the actual description of a character ends and
-            ;; begins. 
-            ;;
-            ;; This breaks if any single Unihan character description is
-            ;; greater than the buffer size in length.
-            (goto-char (point-max))
-            (beginning-of-line)
-
-            (when (< (- (point-max) (point)) (eval-when-compile
-                                               (length "U+ABCDEF\t")))
-              ;; If the character ID of the last line may have been cut off,
-              ;; we need to delete all of that line here.
-              (delete-region (point) (point-max))
-              (forward-line -1))
-
-            (when (looking-at "^\\(U\\+[0-9A-F]\\{4,6\\}\\)\t")
-              (setq trailing-unicode (match-string 1)
-                    trailing-unicode
-                    (format "^%s\t" (regexp-quote trailing-unicode)))
-
-              (end-of-line)
-
-              ;; Go back until we hit a line that doesn't start with this
-              ;; character info.
-              (while (re-search-backward trailing-unicode nil t))
-
-              ;; The re-search-backward failed, so point is still at the end
-              ;; of the last match. Move to its beginning.
-              (beginning-of-line)
-              (delete-region (point) (point-max))
-              (setq offset-end (+ offset-start (- (point) (point-min))))))
-          (goto-char (point-min))
-          (while t
-            (when (= (point) (point-max))
-              ;; We're at the end of this part of the file.
-              (return-from 'dealing-with-chars))
-
-            (unless (re-search-forward "^\\(U\\+[0-9A-F]\\{4,6\\}\\)\t"
-                                     nil t)
-              ;; We're probably in the comments at the start of the file. No
-              ;; need to look for character info.
-              (return-from 'dealing-with-chars))
-
-            ;; Store where the character started. 
-            (beginning-of-line)
-            (setq character-start (point))
-
-            (setq leading-unicode 
-                  (format "^%s\t" (regexp-quote (match-string 1))))
-
-            ;; Loop until we get past this entry.
-            (while (re-search-forward leading-unicode nil t))
-
-            ;; Now, store the information.
-            (setq leading-unicode
-                  (string-to-number (substring leading-unicode 3) 16)
-                  leading-unicode (format "%04X" leading-unicode)
-                  character-end (prog2 (end-of-line) (point)))
-            (put-database leading-unicode
-                          (format "(%d %d)"
-                                  (+ offset-start (1- character-start))
-                                  (+ offset-start (1- character-end)))
-                          database-handle)
-            (forward-line)))
-        (setq offset-start offset-end
-              offset-end (+ buffer-size offset-end))))
-    (close-database database-handle)
-    (progress-feedback-with-label 'describe-char-unihan-file
-                                  "%s" 100
-                                  message)
-    database-file-name))
+				    "%s" 100
+				    message)
+      database-file-name)))
 ;; End XEmacs additions.
 
 (defun describe-char-unicode-data (char)
@@ -688,52 +691,55 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
     (with-temp-buffer
       (let ((coding-system-for-read coding-system-for-read)
             database-handle key lookup)
-        (if (and describe-char-use-cache
-                 (prog1
-                     (setq database-handle
-                           (open-database
-                            (unidata-generate-database-file-name
-                             describe-char-unicodedata-file
-                             (eighth (file-attributes
-                                      describe-char-unicodedata-file))
-                             unidata-database-format)
-                            unidata-database-format
-                            nil "r"
-                            #o644 'no-conversion-unix))
-                   (unless database-handle
-                     (warn "Could not open %s as a %s database"
-                           (unidata-generate-database-file-name
-                            describe-char-unicodedata-file
-                            (eighth (file-attributes
-                                     describe-char-unicodedata-file))
-                            unidata-database-format)
-                           unidata-database-format))))
-            (progn
-              ;; Use the database info.
-              (setq coding-system-for-read 'no-conversion-unix
-                    key (format "%04X" char)
-                    lookup (get-database key database-handle))
-              (if lookup
-                  ;; Okay, we have information on that character in particular.
-                  (progn (setq lookup (read lookup))
-                         (insert-file-contents describe-char-unicodedata-file
-                                               nil (first lookup)
-                                               (second lookup)))
-                ;; No information on that character in particular. Do we
-                ;; have range information? If so, load and check for our
-                ;; desired character.
-                (setq lookup (get-database "range-information" database-handle)
-                      lookup (if lookup (read lookup))
-                      lookup (if lookup (get-range-table char lookup)))
-                (when lookup 
-                  (insert-file-contents describe-char-unicodedata-file nil
-                                        (first lookup) (second lookup))))
-              (close-database database-handle))
-          ;; Otherwise, insert the whole file (the FSF approach).
-          (set-buffer (get-buffer-create " *Unicode Data*"))
-          (when (zerop (buffer-size))
-            ;; Don't use -literally in case of DOS line endings.
-            (insert-file-contents describe-char-unicodedata-file))))
+        (with-fboundp '(open-database get-database close-database)
+          (if (and describe-char-use-cache
+                   (prog1
+                       (setq database-handle
+                             (open-database
+                              (unidata-generate-database-file-name
+                               describe-char-unicodedata-file
+                               (eighth (file-attributes
+                                        describe-char-unicodedata-file))
+                               unidata-database-format)
+                              unidata-database-format
+                              nil "r"
+                              #o644 'no-conversion-unix))
+                     (unless database-handle
+                       (warn "Could not open %s as a %s database"
+                             (unidata-generate-database-file-name
+                              describe-char-unicodedata-file
+                              (eighth (file-attributes
+                                       describe-char-unicodedata-file))
+                              unidata-database-format)
+                             unidata-database-format))))
+              (progn
+                ;; Use the database info.
+                (setq coding-system-for-read 'no-conversion-unix
+                      key (format "%04X" char)
+                      lookup (get-database key database-handle))
+                (if lookup
+                    ;; Okay, we have information on that character in
+                    ;; particular.
+                    (progn (setq lookup (read lookup))
+                           (insert-file-contents describe-char-unicodedata-file
+                                                 nil (first lookup)
+                                                 (second lookup)))
+                  ;; No information on that character in particular. Do we
+                  ;; have range information? If so, load and check for our
+                  ;; desired character.
+                  (setq lookup (get-database "range-information"
+                                             database-handle)
+                        lookup (if lookup (read lookup))
+                        lookup (if lookup (get-range-table char lookup)))
+                  (when lookup 
+                    (insert-file-contents describe-char-unicodedata-file nil
+                                          (first lookup) (second lookup))))
+                (close-database database-handle))
+            ;; Otherwise, insert the whole file (the FSF approach).
+            (set-buffer (get-buffer-create " *Unicode Data*"))
+            (when (zerop (buffer-size))
+              ;; Don't use -literally in case of DOS line endings.
+              (insert-file-contents describe-char-unicodedata-file)))))
       (goto-char (point-min))
       (let ((hex (format "%04X" char))
             found first last unihan-match unihan-info unihan-database-handle
@@ -755,14 +761,11 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
 		   last (<= char last))
 	      (setq found t)))
 	(if found
-	    (let ((fields (mapcar (lambda (elt)
-				    (if (> (length elt) 0)
-					elt))
-				  (cdr (split-string
-					(buffer-substring
-					 (line-beginning-position)
-					 (line-end-position))
-					";")))))
+	    (let ((fields (cdr (nsubst nil "" (split-string
+					       (buffer-substring
+						(line-beginning-position)
+						(line-end-position)) ";")
+				       :test 'equal))))
 	      ;; The length depends on whether the last field was empty.
 	      (unless (or (= 13 (length fields))
 			  (= 14 (length fields)))
@@ -919,45 +922,46 @@ character)")
                (if (and (> (length (nth 0 fields)) 13)
                         (equal "<CJK Ideograph"
                                (substring (nth 0 fields) 0 14)))
-                   (if (and describe-char-unihan-file
-                            (setq unihan-database-handle
-                                  (open-database
-                                   (unidata-generate-database-file-name
-                                    describe-char-unihan-file
-                                    (eighth (file-attributes
-                                             describe-char-unihan-file))
-                                    unidata-database-format)
-                                   unidata-database-format
-                                   nil "r" #o644 'no-conversion-unix))
-                            (setq unihan-match
-                                  (get-database (format "%04X" char)
-                                                unihan-database-handle)
-                                  unihan-match
-                                  (and unihan-match (read unihan-match))))
-                       (with-temp-buffer
-                         (insert-file-contents describe-char-unihan-file
-                                               nil (first unihan-match)
-                                               (second unihan-match))
-                         (goto-char (point-min))
-                         (while (re-search-forward
-                                 "^U\\+[0-9A-F]+\t\\(k[^\t]+\\)\t\\(.*\\)$"
-                                 nil t)
-                           (push
-                            (list
-                             (or (gethash
-                                  (match-string 1)
-                                  describe-char-unihan-field-descriptions)
-                                 (match-string 1))
-                             (decode-coding-string (match-string 2) 'utf-8))
-                            unihan-info))
-                         (close-database unihan-database-handle)
-                         unihan-info)
+                   (with-fboundp '(open-database get-database close-database)
+                     (if (and describe-char-unihan-file
+                              (setq unihan-database-handle
+                                    (open-database
+                                     (unidata-generate-database-file-name
+                                      describe-char-unihan-file
+                                      (eighth (file-attributes
+                                               describe-char-unihan-file))
+                                      unidata-database-format)
+                                     unidata-database-format
+                                     nil "r" #o644 'no-conversion-unix))
+                              (setq unihan-match
+                                    (get-database (format "%04X" char)
+                                                  unihan-database-handle)
+                                    unihan-match
+                                    (and unihan-match (read unihan-match))))
+                         (with-temp-buffer
+                           (insert-file-contents describe-char-unihan-file
+                                                 nil (first unihan-match)
+                                                 (second unihan-match))
+                           (goto-char (point-min))
+                           (while (re-search-forward
+                                   "^U\\+[0-9A-F]+\t\\(k[^\t]+\\)\t\\(.*\\)$"
+                                   nil t)
+                             (push
+                              (list
+                               (or (gethash
+                                    (match-string 1)
+                                    describe-char-unihan-field-descriptions)
+                                   (match-string 1))
+                               (decode-coding-string (match-string 2) 'utf-8))
+                              unihan-info))
+                           (close-database unihan-database-handle)
+                           unihan-info)
                      ;; It's a Han character, but Unihan.txt is not
                      ;; available. Tell the user.
                      (list
                       '("Unihan"
                         "No Unihan information available; is \
-`describe-char-unihan-file' set, and its cache initialized?")))))))))))
+`describe-char-unihan-file' set, and its cache initialized?"))))))))))))
 
 ;; Return information about how CHAR is displayed at the buffer
 ;; position POS.  If the selected frame is on a graphic display,
@@ -1030,8 +1034,7 @@ as well as widgets, buttons, overlays, and text properties."
           (specifier-instance current-display-table (selected-window)))
 	 (disp-table-entry (and display-table
                                 (get-display-table char display-table)))
-	 (extents (mapcar #'(lambda (o) (extent-properties o))
-			   (extents-at pos)))
+	 (extents (mapcar #'extent-properties (extents-at pos)))
 	 (char-description (single-key-description char))
 	 (text-props-desc
 	  (let ((tmp-buf (generate-new-buffer " *text-props*")))
@@ -1202,9 +1205,9 @@ as well as widgets, buttons, overlays, and text properties."
 				       (describe-char-unicode-data unicode)))
 		(if unicodedata
 		    (cons (list "Unicode data" " ") unicodedata)))))
-    (setq max-width (apply #'max (mapcar #'(lambda (x)
-					     (if (cadr x) (length (car x)) 0))
-					 item-list)))
+    (setq max-width
+          (reduce #'max (remove-if-not #'cadr item-list) :initial-value 0
+                  :key #'(lambda (object) (length (car object)))))
     (when (and unicodedata (> max-width max-unicode-description-width))
       (setq max-width max-unicode-description-width)
       (with-temp-buffer

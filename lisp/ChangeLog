@@ -1,5 +1,21 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* descr-text.el (unidata-initialize-unicodedata-database)
+	(unidata-initialize-unihan-database, describe-char-unicode-data)
+	(describe-char-unicode-data):
+	Wrap calls to the database functions with (with-fboundp ...),
+	avoiding byte compile warnings on builds without support for the
+	database functions.
+	(describe-char): (reduce #'max ...), not (apply #'max ...), no
+	need to cons needlessly.
+	(describe-char): Remove a redundant lambda wrapping
+	#'extent-properties. 
+	(describe-char-unicode-data): Call #'nsubst when replacing "" with
+	nil in the result of #'split-string, instead of consing inside
+	mapcar.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* x-faces.el (x-available-font-sizes): 
 	* specifier.el (let-specifier): 
 	* package-ui.el (pui-add-required-packages): 
