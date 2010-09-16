@@ -1,5 +1,16 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fns.c (Flist_length): New, moved here from cl-extra.el, needed
+	by the next function.
+	(shortest_length_among_sequences): New.
+	(Fmapconcat, FmapcarX, Fmapvector, Fmapcan, Fmapc, Fmap)
+	(Fmap_into, Fsome, Fevery):
+	Use shortest_length_among_sequences() when working out how many
+	iterations to do, only giving circular list errors if all
+	arguments are circular.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fns.c (Fsubseq):
 	Change the string code to better fit in with the rest of this
 	function (it still uses get_string_range_char(), though, which *may*
