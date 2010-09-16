@@ -349,15 +349,11 @@ Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
   (let ((result
 	 (completing-read
 	  prompt
-	  (let ((table (let (lis)
-			 (maphash #'(lambda (key val)
-				      (push (cons key val) lis))
-				  behavior-hash-table)
-			 (nreverse lis))))
-	    (mapc #'(lambda (aentry)
-		      (setcar aentry (symbol-name (car aentry))))
-		  table)
-	    table)
+	  (let (list)
+	    (maphash #'(lambda (key value)
+			 (push (cons (symbol-name key) value) list))
+		     behavior-hash-table)
+	    list)
 	  nil must-match initial-contents (or history 'behavior-history)
 	  default-value)))
     (if (and result (stringp result))

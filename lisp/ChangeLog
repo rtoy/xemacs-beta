@@ -1,5 +1,15 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* hash-table.el (hash-table-key-list, hash-table-value-list)
+	(hash-table-key-value-alist, hash-table-key-value-plist):
+	Remove some useless #'nreverse calls in these files; our hash
+	tables have no order, it's not helpful to pretend they do.
+	* behavior.el (read-behavior):
+	Do the same in this file, in some code evidently copied from
+	hash-table.el.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* info.el (Info-insert-dir):
 	* format.el (format-deannotate-region):
 	* files.el (cd, save-buffers-kill-emacs):
