@@ -502,7 +502,7 @@ is used in a loop."
 			       `(quote ,(car body))
 			     `(quote (progn ,@body)))))
 	  `(Skip-Test-Unless (fboundp 'defadvice) "can't defadvice"
-	    expected-message-regexp
+	    ,expected-message-regexp
 	    (let ((messages ""))
 	      (defadvice message (around collect activate)
 		(defvar messages)

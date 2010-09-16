@@ -1,5 +1,10 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* test-harness.el (Check-Message):
+	Add an omitted comma here, thank you the buildbot.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* hash-table.el (hash-table-key-list, hash-table-value-list)
 	(hash-table-key-value-alist, hash-table-key-value-plist):
 	Remove some useless #'nreverse calls in these files; our hash
