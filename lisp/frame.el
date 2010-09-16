@@ -861,7 +861,7 @@ The value returned is the value of the last form in BODY."
 (defun frame-list ()
   "Return a list of all frames on all devices/consoles."
   ;; Lists are copies, so nconc is safe here.
-  (apply 'nconc (mapcar 'device-frame-list (device-list))))
+  (mapcan #'device-frame-list (device-list)))
 
 (defun frame-type (&optional frame)
   "Return the type of the specified frame (e.g. `x' or `tty').

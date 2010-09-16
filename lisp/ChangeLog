@@ -1,5 +1,24 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* byte-optimize.el (byte-optimize-apply): Transform (apply 'nconc
+	(mapcar ...)) to (mapcan ...); warn about use of the first idiom.
+
+	* update-elc.el (do-autoload-commands): 
+	* packages.el (packages-find-package-library-path): 
+	* frame.el (frame-list): 
+	* extents.el (extent-descendants): 
+	* etags.el (buffer-tag-table-files): 
+	* dumped-lisp.el (preloaded-file-list): 
+	* device.el (device-list): 
+	* bytecomp-runtime.el (proclaim-inline, proclaim-notinline)
+	Use #'mapcan, not (apply #'nconc (mapcar ...) in all these files.
+
+	* bytecomp-runtime.el (eval-when-compile, eval-and-compile):
+	In passing, mention that these macros also evaluate the body when
+	interpreted. 
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (the): Add a docstring and an implementation for this
 	macro.
 	* bytecomp.el (byte-compile-initial-macro-environment): Add #'the

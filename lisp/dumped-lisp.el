@@ -300,7 +300,4 @@ in dumped-lisp.el and is not itself listed.")
 	))
 
 (setq preloaded-file-list
-      (apply #'nconc
-	     (mapcar #'(lambda (x)
-			 (if (listp x) x (list x)))
-		     preloaded-file-list)))
+      (mapcan #'(lambda (x) (if (listp x) x (list x))) preloaded-file-list))

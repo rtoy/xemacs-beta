@@ -53,30 +53,26 @@
   "Cause the named functions to be open-coded when called from compiled code.
 They will only be compiled open-coded when `byte-optimize' is true."
   (cons 'eval-and-compile
-	(apply
-	 'nconc
-	 (mapcar
-	  #'(lambda (x)
-	      `((or (memq (get ',x 'byte-optimizer)
-			  '(nil byte-compile-inline-expand))
-		    (error
-		     "%s already has a byte-optimizer, can't make it inline"
-		     ',x))
-		(put ',x 'byte-optimizer 'byte-compile-inline-expand)))
-	  fns))))
+        (mapcan
+         #'(lambda (x)
+             `((or (memq (get ',x 'byte-optimizer)
+                         '(nil byte-compile-inline-expand))
+                   (error
+                    "%s already has a byte-optimizer, can't make it inline"
+                    ',x))
+               (put ',x 'byte-optimizer 'byte-compile-inline-expand)))
+         fns)))
 
 
 (defmacro proclaim-notinline (&rest fns)
   "Cause the named functions to no longer be open-coded."
   (cons 'eval-and-compile
-	(apply
-	 'nconc
-	 (mapcar
-	  #'(lambda (x)
-	      `((if (eq (get ',x 'byte-optimizer)
-			'byte-compile-inline-expand)
-		    (put ',x 'byte-optimizer nil))))
-	  fns))))
+        (mapcan
+         #'(lambda (x)
+             `((if (eq (get ',x 'byte-optimizer)
+                       'byte-compile-inline-expand)
+                   (put ',x 'byte-optimizer nil))))
+         fns)))
 
 ;; This has a special byte-hunk-handler in bytecomp.el.
 (defmacro defsubst (name arglist &rest body)
@@ -163,7 +159,7 @@ If you think you need this, you're probably making a mistake somewhere."
 
 (put 'eval-when-compile 'lisp-indent-hook 0)
 (defmacro eval-when-compile (&rest body)
-  "Like `progn', but evaluates the body at compile time.
+  "Like `progn', but evaluates BODY at compile time, and when interpeted.
 The result of the body appears to the compiler as a quoted constant."
   ;; Not necessary because we have it in b-c-initial-macro-environment
   ;; (list 'quote (eval (cons 'progn body)))
@@ -171,7 +167,8 @@ The result of the body appears to the compiler as a quoted constant."
 
 (put 'eval-and-compile 'lisp-indent-hook 0)
 (defmacro eval-and-compile (&rest body)
-  "Like `progn', but evaluates the body at compile time and at load time."
+  "Like `progn', but evaluates the body at compile time and at load time,
+and when interpreted."
   ;; Remember, it's magic.
   (cons 'progn body))
 

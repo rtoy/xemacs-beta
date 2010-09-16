@@ -467,13 +467,11 @@ list of the last hierarchies."
 PACKAGE-HIERARCHIES is a list of package hierarchies.
 SUFFIXES is a list of names of hierarchy subdirectories to look for."
   (let ((directories
-	 (apply
-	  #'nconc
-	  (mapcar #'(lambda (hierarchy)
-		      (mapcar #'(lambda (suffix)
-				  (file-name-as-directory (concat hierarchy suffix)))
-			      suffixes))
-		  package-hierarchies))))
+         (mapcan #'(lambda (hierarchy)
+                     (mapcar #'(lambda (suffix)
+                                 (file-name-as-directory (concat hierarchy suffix)))
+                             suffixes))
+                 package-hierarchies)))
     (paths-directories-which-exist directories)))
 
 (defun packages-find-package-load-path (package-hierarchies)
