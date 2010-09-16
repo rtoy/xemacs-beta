@@ -606,15 +606,10 @@ colon-separated list of directories when resolving a relative directory name."
 	(setq cd-path (or (and trypath
 			       (mapcar #'file-name-as-directory trypath))
 			  (list (file-name-as-directory "")))))
-      (or (catch 'found
-	    (mapc #'(lambda (x)
-                      (let ((f (expand-file-name (concat x dir))))
-                        (if (file-directory-p f)
-                            (progn
-                              (cd-absolute f)
-                              (throw 'found t)))))
-                  cd-path)
-	    nil)
+      (or (some #'(lambda (x)
+                    (let ((f (expand-file-name (concat x dir))))
+                      (when (file-directory-p f) (cd-absolute f))))
+                cd-path)
 	  ;; jwz: give a better error message to those of us with the
 	  ;; good taste not to use a kludge like $CDPATH.
 	  (if (equal cd-path '("./"))
@@ -4454,9 +4449,10 @@ be a predicate function such as `yes-or-no-p'."
 With prefix arg, silently save all file-visiting buffers, then kill."
   (interactive "P")
   (save-some-buffers arg t)
-  (and (or (not (memq t (mapcar #'(lambda (buf) (and (buffer-file-name buf)
-						     (buffer-modified-p buf)))
-				(buffer-list))))
+  (and (or (not (some #'(lambda (buf)
+                          (and (buffer-file-name buf)
+			       (buffer-modified-p buf)))
+                      (buffer-list)))
 	   (yes-or-no-p "Modified buffers exist; exit anyway? "))
        (or (not (fboundp 'process-list))
 	   ;; process-list is not defined on VMS.

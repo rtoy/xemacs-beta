@@ -604,9 +604,8 @@ to write these unknown annotations back into the file."
 			  (if (member top-name ans)
 			      ;; This annotation is listed, but still have to
 			      ;; check if multiple annotations are satisfied
-			      (if (member nil (mapcar (lambda (r)
-							(assoc r open-ans))
-						      ans))
+			      (if (notevery (lambda (r) (assoc r open-ans))
+					    ans)
 				  nil	; multiple ans not satisfied
 				;; If there are multiple annotations going
 				;; into one text property, split up the other

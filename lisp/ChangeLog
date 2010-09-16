@@ -1,5 +1,14 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* info.el (Info-insert-dir):
+	* format.el (format-deannotate-region):
+	* files.el (cd, save-buffers-kill-emacs):
+	Use #'some, #'every and related functions for applying boolean
+	operations to lists, instead of rolling our own ones that cons and
+	don't short-circuit.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el (byte-compile-initial-macro-environment):
 	* cl-macs.el (the):
 	Rephrase the docstring, make its implementation when compiling
