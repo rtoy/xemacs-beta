@@ -1270,6 +1270,8 @@ There is an alternative, more readable, reader syntax for `quote':  a Lisp
 object preceded by `''. Thus, `'x' is equivalent to `(quote x)', in all
 contexts.  A print function may use either.  Internally the expression is
 represented as `(quote x)').
+
+arguments: (OBJECT)
 */
        (args))
 {
@@ -1350,6 +1352,8 @@ There is an alternative, more readable, reader syntax for `function':  a Lisp
 object preceded by `#''. Thus, #'x is equivalent to (function x), in all
 contexts.  A print function may use either.  Internally the expression is
 represented as `(function x)').
+
+arguments: (SYMBOL-OR-LAMBDA)
 */
        (args))
 {
