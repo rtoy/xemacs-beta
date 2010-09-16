@@ -1,5 +1,12 @@
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (byte-compile-function-form, byte-compile-quote)
+	(byte-compile-quote-form):
+	Warn at compile time, and error at runtime, if a (quote ...) or a
+	(function ...) form attempts to quote more than one object.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* byte-optimize.el (byte-optimize-apply): Transform (apply 'nconc
 	(mapcar ...)) to (mapcan ...); warn about use of the first idiom.
 

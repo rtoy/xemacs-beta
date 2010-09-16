@@ -3581,10 +3581,13 @@ forcing function quoting" ,en (car form))))
 ;; and (funcall (function foo)) will lose with autoloads.
 
 (defun byte-compile-function-form (form)
-  (byte-compile-constant
-   (cond ((symbolp (nth 1 form))
-	  (nth 1 form))
-	 ((byte-compile-lambda (nth 1 form))))))
+  (if (cddr form)
+      (byte-compile-normal-call
+       `(signal 'wrong-number-of-arguments '(function ,(length (cdr form)))))
+    (byte-compile-constant
+     (cond ((symbolp (nth 1 form))
+            (nth 1 form))
+           ((byte-compile-lambda (nth 1 form)))))))
 
 (defun byte-compile-insert (form)
   (cond ((null (cdr form))
@@ -3714,11 +3717,16 @@ forcing function quoting" ,en (car form))))
 
 
 (defun byte-compile-quote (form)
-  (byte-compile-constant (car (cdr form))))
+  (if (cddr form)
+      (byte-compile-normal-call
+       `(signal 'wrong-number-of-arguments '(quote ,(length (cdr form)))))
+    (byte-compile-constant (car (cdr form)))))
 
 (defun byte-compile-quote-form (form)
-  (byte-compile-constant (byte-compile-top-level (nth 1 form))))
-
+  (if (cddr form)
+      (byte-compile-normal-call
+       `(signal 'wrong-number-of-arguments '(quote ,(length (cdr form)))))
+    (byte-compile-constant (byte-compile-top-level (nth 1 form)))))
 
 ;;; control structures
 
