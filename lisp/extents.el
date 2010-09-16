@@ -109,7 +109,7 @@ This recursively applies `extent-children' to any children of
 EXTENT, until no more children can be found."
   (let ((children (extent-children extent)))
     (if children
-	(apply 'nconc (mapcar 'extent-descendants children))
+	(mapcan 'extent-descendants children)
       (list extent))))
 
 (defun set-extent-keymap (extent keymap)

@@ -367,21 +367,19 @@ If any of these files are changed, we need to redump.")
 	   ;; load-ignore-elc-files because byte-optimize gets autoloaded
 	   ;; from bytecomp.
 	   (let ((recompile-bc-bootstrap
-		  (apply #'nconc
-			 (mapcar
-			  #'(lambda (arg)
-			      (when (member arg update-elc-files-to-compile)
-				(append '("-f" "batch-byte-compile-one-file")
-					(list arg))))
-			  bc-bootstrap)))
+                  (mapcan
+                   #'(lambda (arg)
+                       (when (member arg update-elc-files-to-compile)
+                         (append '("-f" "batch-byte-compile-one-file")
+                                 (list arg))))
+                   bc-bootstrap))
 		 (recompile-bootstrap-other
-		  (apply #'nconc
-			 (mapcar
-			  #'(lambda (arg)
-			      (when (member arg update-elc-files-to-compile)
-				(append '("-f" "batch-byte-compile-one-file")
-					(list arg))))
-			  bootstrap-other))))
+                  (mapcan
+                   #'(lambda (arg)
+                       (when (member arg update-elc-files-to-compile)
+                         (append '("-f" "batch-byte-compile-one-file")
+                                 (list arg))))
+                   bootstrap-other)))
 	     (mapc
 	      #'(lambda (arg)
 		  (setq update-elc-files-to-compile

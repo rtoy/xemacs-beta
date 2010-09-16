@@ -439,8 +439,7 @@ File name returned is relative to tag table file's directory."
 (defun buffer-tag-table-files ()
   "Returns a list of all files referenced by all TAGS tables that 
 this buffer uses."
-  (apply #'append
-	 (mapcar #'tag-table-files (buffer-tag-table-list))))
+  (mapcan #'tag-table-files (buffer-tag-table-list)))
 
 
 ;; Building the completion table
