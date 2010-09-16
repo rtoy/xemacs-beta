@@ -3773,6 +3773,25 @@ the byte optimizer in those cases."
         (string (cons 'concat (cddr form))))
     form))
 
+(map nil
+     #'(lambda (function)
+         ;; There are byte codes for the two-argument versions of these
+         ;; functions; if the form has more arguments and those arguments
+         ;; have no side effects, transform to a series of two-argument
+         ;; calls.
+         (put function 'cl-compiler-macro
+              #'(lambda (form &rest arguments)
+                  (if (or (null (nthcdr 3 form))
+                          (notevery #'cl-safe-expr-p (cdr form)))
+                      form
+                    (cons 'and (mapcon
+                                #'(lambda (rest)
+                                    (and (cdr rest)
+                                         `((,(car form) ,(pop rest)
+                                            ,(car rest)))))
+                                (cdr form)))))))
+     '(= < > <= >=))
+
 (mapc
  #'(lambda (y)
      (put (car y) 'side-effect-free t)
