@@ -1,3 +1,13 @@
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (the): Add a docstring and an implementation for this
+	macro.
+	* bytecomp.el (byte-compile-initial-macro-environment): Add #'the
+	to this, checking byte-compile-delete-errors to decide whether to
+	make the type assertion. Change the initvalue to use backquote and
+	preceding commas for the lambda expressions, to allow the latter
+	to be compiled.
+
 2010-09-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-seq.el (replace):
