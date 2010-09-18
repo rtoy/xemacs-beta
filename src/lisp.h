@@ -3554,19 +3554,21 @@ extern MODULE_API int specpdl_depth_counter;
 				(intern_massaging_name (1 + #function))), \
 			  0);						\
 	assert (0 == strcmp (__func__, #function))
-#elsif defined (NEW_GC)
+#else /* defined (DEBUG_XEMACS) && ... */
+#ifdef NEW_GC
 #define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
 		       keyword_defaults)				\
 	PARSE_KEYWORDS_8 (intern (S##function->name), nargs, args,	\
 			  keyword_count, keywords,			\
 			  keyword_defaults, S##function->min_args, 0)
-#else
+#else /* NEW_GC */
 #define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
 		       keyword_defaults)				\
 	PARSE_KEYWORDS_8 (intern (S##function.name), nargs, args,	\
 			  keyword_count, keywords,			\
 			  keyword_defaults, S##function.min_args, 0)
-#endif
+#endif /* NEW_GC */
+#endif /* defined (DEBUG_XEMACS) && defined (__STDC_VERSION__) ... */
 
 /* PARSE_KEYWORDS_8 is a more fine-grained version of PARSE_KEYWORDS. The
    differences are as follows:
