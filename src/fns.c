@@ -5248,7 +5248,6 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
             }
           else if (ending - starting)
             {
-              ii = 0;
               EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
                 {
 		  /* KEY may amputate the list behind us; make sure what
@@ -5264,10 +5263,10 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
                 }
             }
 
+	  ii = 0;
+
           if (ending - starting)
             {
-              ii = 0;
-
               EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
                 {
 		  /* KEY or FUNCTION may amputate the list behind us; make

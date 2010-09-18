@@ -1,3 +1,10 @@
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Freduce):
+	Move statements outside of the braces surrounding the
+	EXTERNAL_LIST_LOOP_3 macro, fixing strict C89 builds. Thank you
+	for the report, Vin!
+
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Flist_length): New, moved here from cl-extra.el, needed
