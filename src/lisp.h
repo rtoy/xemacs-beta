@@ -3554,6 +3554,12 @@ extern MODULE_API int specpdl_depth_counter;
 				(intern_massaging_name (1 + #function))), \
 			  0);						\
 	assert (0 == strcmp (__func__, #function))
+#elsif defined (NEW_GC)
+#define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
+		       keyword_defaults)				\
+	PARSE_KEYWORDS_8 (intern (S##function->name), nargs, args,	\
+			  keyword_count, keywords,			\
+			  keyword_defaults, S##function->min_args, 0)
 #else
 #define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
 		       keyword_defaults)				\

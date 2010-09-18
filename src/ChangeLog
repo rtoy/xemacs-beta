@@ -1,5 +1,11 @@
 2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lisp.h (PARSE_KEYWORDS):
+	Correct the NEW_GC non-DEBUG_XEMACS version of this macro; under
+	such builds S##function is a pointer, not a Lisp_Subr structure.
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Simplify the API of PARSE_KEYWORDS for callers.
 
 	* lisp.h (PARSE_KEYWORDS): Simply the API, while making the
