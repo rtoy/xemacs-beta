@@ -1,6 +1,11 @@
 2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (PARSE_KEYWORDS):
+	Turns out #elsif is not valid preprocessor syntax, who knew!
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS):
 	Correct the NEW_GC non-DEBUG_XEMACS version of this macro; under
 	such builds S##function is a pointer, not a Lisp_Subr structure.
 
