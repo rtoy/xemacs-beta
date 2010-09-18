@@ -1,5 +1,28 @@
 2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Simplify the API of PARSE_KEYWORDS for callers.
+
+	* lisp.h (PARSE_KEYWORDS): Simply the API, while making the
+	implementation a little more complex; work out KEYWORDS_OFFSET
+	from the appropriate Lisp_Subr struct, take the function name as
+	the C name of the DEFUN rather than a symbol visible as a
+	Lisp_Object, on debug builds assert that we're actually in the
+	function so we choke on badly-done copy-and-pasting,
+
+	* lisp.h (PARSE_KEYWORDS_8): New. This is the old PARSE_KEYWORDS.
+
+	* fns.c (Fmerge, FsortX, Ffill, Freduce, Freplace):
+	Change to use the new PARSE_KEYWORDS syntax.
+	* elhash.c (Fmake_hash_table): Chance to the new PARSE_KEYWORDS
+	syntax, rename a define to correspond to what other files use.
+	
+	* symbols.c (intern_massaging_name):
+	* buffer.c (ADD_INT):
+	Rename intern_converting_underscores_to_dashes() to
+	intern_massaging_name(), now it does a little more.
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* termcap.c:
 	Add a couple of missing includes here, which should fix builds
 	that use this file. (I have no access to such builds, but Mats'

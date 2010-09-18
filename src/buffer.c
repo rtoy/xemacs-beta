@@ -1819,10 +1819,10 @@ The values returned are in the form of a plist of properties and values.
 
 #define ADD_INT(field) \
   plist = cons3 (make_int (b->text->field), \
-		 intern_converting_underscores_to_dashes (#field), plist)
+		 intern_massaging_name (#field), plist)
 #define ADD_BOOL(field) \
   plist = cons3 (b->text->field ? Qt : Qnil, \
-		 intern_converting_underscores_to_dashes (#field), plist)
+		 intern_massaging_name (#field), plist)
   ADD_INT (bufz);
   ADD_INT (z);
 #ifdef OLD_BYTE_CHAR
