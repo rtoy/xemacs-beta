@@ -25,7 +25,10 @@ Boston, MA 02111-1307, USA.  */
 #ifdef emacs
 #include <config.h>
 #include "lisp.h" /* For encapsulated open, close, read */
-#include "device.h" /* For DEVICE_BAUD_RATE */
+#include "device.h"
+#include "device-impl.h" /* For DEVICE_BAUD_RATE */
+#include "sysfile.h"
+#include "process.h"
 #else /* not emacs */
 
 #include <stdlib.h>

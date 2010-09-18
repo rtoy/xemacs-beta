@@ -1,5 +1,13 @@
 2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* termcap.c:
+	Add a couple of missing includes here, which should fix builds
+	that use this file. (I have no access to such builds, but Mats'
+	buildbot shows output that indicates they fail at link time since
+	DEVICE_BAUD_RATE and IS_DIRECTORY_SEP are available.)
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fns.c (Freduce):
 	Move statements outside of the braces surrounding the
 	EXTERNAL_LIST_LOOP_3 macro, fixing strict C89 builds. Thank you
