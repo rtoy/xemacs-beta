@@ -962,7 +962,7 @@ hash_table_instantiate (Lisp_Object plist)
           else if (EQ (key, Qrehash_threshold)) rehash_threshold = value;
           else if (EQ (key, Qweakness))	    weakness	     = value;
           else if (EQ (key, Qdata))		    data	     = value;
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
           else if (EQ (key, Qtype))/*obsolete*/ weakness	     = value;
 #endif
           else if (KEYWORDP (key))
@@ -1109,14 +1109,14 @@ arguments: (&key TEST SIZE REHASH-SIZE REHASH-THRESHOLD WEAKNESS)
 */
        (int nargs, Lisp_Object *args))
 {
-#ifdef NO_NEED_TO_HANDLE_21_4_CODE
-  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 5,
+#ifndef NEED_TO_HANDLE_21_4_CODE
+  PARSE_KEYWORDS (Fmake_hash_table, nargs, args, 5,
                   (test, size, rehash_size, rehash_threshold, weakness),
-                  NULL, 0);
+                  NULL);
 #else
-  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 6,
+  PARSE_KEYWORDS (Fmake_hash_table, nargs, args, 6,
                   (test, size, rehash_size, rehash_threshold, weakness,
-		   type), (type = Qunbound, weakness = Qunbound), 0);
+		   type), (type = Qunbound, weakness = Qunbound));
 
   if (EQ (weakness, Qunbound))
     {

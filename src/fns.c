@@ -2575,7 +2575,7 @@ arguments: (TYPE SEQUENCE-ONE SEQUENCE-TWO PREDICATE &key (KEY #'IDENTITY))
   Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object, Lisp_Object,
 			      Lisp_Object);
 
-  PARSE_KEYWORDS (Qmerge, nargs, args, 4, 1, (key), NULL, 0);
+  PARSE_KEYWORDS (Fmerge, nargs, args, 1, (key), NULL);
 
   CHECK_SEQUENCE (sequence_one);
   CHECK_SEQUENCE (sequence_two);
@@ -2827,7 +2827,7 @@ arguments: (SEQUENCE PREDICATE &key (KEY #'IDENTITY))
                               Lisp_Object);
   Elemcount sequence_len, i;
 
-  PARSE_KEYWORDS (QsortX, nargs, args, 2, 1, (key), NULL, 0);
+  PARSE_KEYWORDS (FsortX, nargs, args, 1, (key), NULL);
 
   CHECK_SEQUENCE (sequence);
 
@@ -4002,7 +4002,7 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
   Lisp_Object item = args[1];
   Elemcount starting = 0, ending = EMACS_INT_MAX, ii, len;
 
-  PARSE_KEYWORDS (Qfill, nargs, args, 2, 2, (start, end), (start = Qzero), 0);
+  PARSE_KEYWORDS (Ffill, nargs, args, 2, (start, end), (start = Qzero));
 
   CHECK_NATNUM (start);
   starting = XINT (start);
@@ -5005,9 +5005,9 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
   Lisp_Object function = args[0], sequence = args[1], accum = Qunbound;
   Elemcount starting, ending = EMACS_INT_MAX, ii = 0;
 
-  PARSE_KEYWORDS (Qreduce, nargs, args, 2, 5,
+  PARSE_KEYWORDS (Freduce, nargs, args, 5,
                   (start, end, from_end, initial_value, key),
-                  (start = Qzero, initial_value = Qunbound), 0);
+                  (start = Qzero, initial_value = Qunbound));
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
@@ -5541,8 +5541,8 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
   Boolint sequence1_listp, sequence2_listp,
     overwriting = EQ (sequence1, sequence2);
 
-  PARSE_KEYWORDS (Qreplace, nargs, args, 2, 4, (start1, end1, start2, end2),
-                  (start1 = start2 = Qzero), 0);
+  PARSE_KEYWORDS (Freplace, nargs, args, 4, (start1, end1, start2, end2),
+                  (start1 = start2 = Qzero));
 
   CHECK_SEQUENCE (sequence1);
   CHECK_LISP_WRITEABLE (sequence1);

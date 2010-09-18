@@ -3494,16 +3494,20 @@ extern MODULE_API int specpdl_depth_counter;
 /************************************************************************/
 
 /* The C subr must have been declared with MANY as its max args, and this
-   PARSE_KEYWORDS call must come before any statements.
+   PARSE_KEYWORDS call must come before any statements. Equivalently, it
+   can appear within braces.
 
-   FUNCTION is the name of the current function, as a symbol.
+   FUNCTION is the C name of the current DEFUN.  If there is no current
+   DEFUN, use the PARSE_KEYWORDS_8 macro, not PARSE_KEYWORDS.  If the
+   current DEFUN has optional arguments that are not keywords, you also need
+   to use the PARSE_KEYWORDS_8 macro.  This is also the case if there are
+   optional arguments that come before the keywords, as Common Lisp
+   specifies for #'parse-integer.
 
    NARGS is the count of arguments supplied to FUNCTION.
 
    ARGS is a pointer to the argument vector (not a Lisp vector) supplied to
    FUNCTION.
-
-   KEYWORDS_OFFSET is the offset into ARGS where the keyword arguments start.
 
    KEYWORD_COUNT is the number of keywords FUNCTION is normally prepared to
    handle.
@@ -3515,11 +3519,6 @@ extern MODULE_API int specpdl_depth_counter;
    initial_value) in this parameter, a collection of C statements surrounded
    by parentheses and separated by the comma operator. If you don't need
    this, supply NULL as KEYWORD_DEFAULTS.
-
-   ALLOW_OTHER_KEYS corresponds to the &allow-other-keys argument list
-   entry in defun*; it is 1 if other keys are normally allowed, 0
-   otherwise. This may be overridden in the caller by specifying
-   :allow-other-keys t in the argument list.
 
    For keywords which appear multiple times in the called argument list, the
    leftmost one overrides, as specified in section 7.1.1 of the CLHS.
@@ -3534,26 +3533,70 @@ extern MODULE_API int specpdl_depth_counter;
    and an unrelated name for the local variable, as is possible with the
    ((:keyword unrelated-var)) syntax in defun* and in Common Lisp. That
    shouldn't matter in practice. */
- 
-#define PARSE_KEYWORDS(function, nargs, args, keywords_offset,          \
-                       keyword_count, keywords, keyword_defaults,       \
-                       allow_other_keys)                                \
+#if defined (DEBUG_XEMACS) && defined (__STDC_VERSION__) &&	\
+  __STDC_VERSION__ >= 199901L
+
+/* This version has the advantage that DEFUN without DEFSUBR still provokes
+   a defined but not used warning, and it provokes an assertion failure at
+   runtime if someone has copied and pasted the PARSE_KEYWORDS macro from
+   another function without changing FUNCTION; that would lead to an
+   incorrect determination of KEYWORDS_OFFSET. */
+
+#define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
+		       keyword_defaults)				\
+	PARSE_KEYWORDS_8 (intern_massaging_name (1 + #function),	\
+			  nargs, args,					\
+			  keyword_count, keywords,			\
+			  keyword_defaults,				\
+			  /* Can't XSUBR (Fsymbol_function (...))->min_args, \
+			     the function may be advised. */		\
+			  XINT (Ffunction_min_args			\
+				(intern_massaging_name (1 + #function))), \
+			  0);						\
+	assert (0 == strcmp (__func__, #function))
+#else
+#define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
+		       keyword_defaults)				\
+	PARSE_KEYWORDS_8 (intern (S##function.name), nargs, args,	\
+			  keyword_count, keywords,			\
+			  keyword_defaults, S##function.min_args, 0)
+#endif
+
+/* PARSE_KEYWORDS_8 is a more fine-grained version of PARSE_KEYWORDS. The
+   differences are as follows:
+
+   FUNC_SYM is a symbol reflecting the name of the function for which
+   keywords are being parsed.  In PARSE_KEYWORDS, it is the Lisp-visible
+   name of C_FUNC, interned as a symbol in obarray.
+
+   KEYWORDS_OFFSET is the offset into ARGS where the keyword arguments
+   start.  In PARSE_KEYWORDS, this is the index of the first optional
+   argument, determined from the information known about C_FUNC.
+
+   ALLOW_OTHER_KEYS corresponds to the &allow-other-keys argument list entry
+   in defun*; it is 1 if other keys are normally allowed, 0 otherwise. This
+   may be overridden in the caller by specifying :allow-other-keys t in the
+   argument list. In PARSE_KEYWORDS, ALLOW_OTHER_KEYS is always 0. */
+
+#define PARSE_KEYWORDS_8(func_sym, nargs, args,				\
+			 keyword_count, keywords, keyword_defaults,	\
+			 keywords_offset, allow_other_keys)		\
   DECLARE_N_KEYWORDS_##keyword_count keywords;                          \
                                                                         \
   do                                                                    \
     {                                                                   \
       Lisp_Object pk_key, pk_value;                                     \
-      Elemcount pk_i = nargs - 1;                                       \
+      Elemcount pk_i = nargs - 1, pk_offset = keywords_offset;		\
       Boolint pk_allow_other_keys = allow_other_keys;                   \
                                                                         \
-      if ((nargs - keywords_offset) & 1)                                \
+      if ((nargs - pk_offset) & 1)					\
         {                                                               \
           if (!allow_other_keys                                         \
               && !(pk_allow_other_keys                                  \
-                   = non_nil_allow_other_keys_p (keywords_offset,       \
+                   = non_nil_allow_other_keys_p (pk_offset,		\
                                                  nargs, args)))         \
             {                                                           \
-              signal_wrong_number_of_arguments_error (function, nargs); \
+              signal_wrong_number_of_arguments_error (func_sym, nargs); \
             }                                                           \
           else                                                          \
             {                                                           \
@@ -3566,7 +3609,7 @@ extern MODULE_API int specpdl_depth_counter;
       (void)(keyword_defaults);                                         \
                                                                         \
       /* Start from the end, because the leftmost element overrides. */ \
-      while (pk_i > keywords_offset)                                    \
+      while (pk_i > pk_offset)						\
         {                                                               \
           pk_value = args[pk_i--];                                      \
           pk_key = args[pk_i--];                                        \
@@ -3578,7 +3621,7 @@ extern MODULE_API int specpdl_depth_counter;
               continue;                                                 \
             }                                                           \
           else if ((pk_allow_other_keys                                 \
-                    = non_nil_allow_other_keys_p (keywords_offset,      \
+                    = non_nil_allow_other_keys_p (pk_offset,		\
                                                   nargs, args)))        \
             {                                                           \
               continue;                                                 \
@@ -3590,7 +3633,7 @@ extern MODULE_API int specpdl_depth_counter;
             }                                                           \
           else                                                          \
             {                                                           \
-              invalid_keyword_argument (function, pk_key);              \
+              invalid_keyword_argument (func_sym, pk_key);              \
             }                                                           \
         }                                                               \
     } while (0)
@@ -5649,7 +5692,7 @@ EXFUN (Fsymbol_value, 1);
 unsigned int hash_string (const Ibyte *, Bytecount);
 Lisp_Object intern_istring (const Ibyte *str);
 MODULE_API Lisp_Object intern (const CIbyte *str);
-Lisp_Object intern_converting_underscores_to_dashes (const CIbyte *str);
+Lisp_Object intern_massaging_name (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);
 void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);
 Lisp_Object indirect_function (Lisp_Object, int);
