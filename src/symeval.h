@@ -294,6 +294,9 @@ MODULE_API void defsubr (Lisp_Subr *);
 
 #define DEFSUBR(Fname)				\
 do {						\
+  /* #### As far as I can see, this has no upside compared to the non-NEW_GC \
+     code. The MC_ALLOC_S##Fname structure is also in the dumped	\
+     XEmacs. Aidan Kehoe, Mon Sep 20 23:14:01 IST 2010 */		\
   DEFSUBR_MC_ALLOC (Fname);			\
   defsubr (S##Fname);				\
 } while (0)
