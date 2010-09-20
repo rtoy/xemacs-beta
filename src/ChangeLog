@@ -1,3 +1,15 @@
+2010-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (GET_DEFUN_LISP_OBJECT): Make the NEW_GC version of this
+	work, remove a needless and unhelpful semicolon.
+	(GET_DEFUN_LISP_OBJECT): Remove a needless semicolon from the
+	non-NEW_GC version of this.
+	(PARSE_KEYWORDS): Fix the indentation for the DEBUG_XEMACS
+	version of this macro.
+	(PARSE_KEYWORDS): Use GET_DEFUN_LISP_OBJECT() for both the NEW_GC
+	and non-NEW_GC versions of this macro, when working out the
+	function's min args. 
+
 2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (PARSE_KEYWORDS):

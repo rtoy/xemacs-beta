@@ -3404,7 +3404,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
   static struct Lisp_Subr *S##Fname;					  \
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 #define GET_DEFUN_LISP_OBJECT(Fname) \
-  wrap_subr (S##Fname);
+  wrap_subr (&MC_ALLOC_S##Fname)
 #else /* not NEW_GC */
 #define DEFUN(lname, Fname, min_args, max_args, prompt, arglist)	\
   Lisp_Object Fname (EXFUN_##max_args);					\
@@ -3444,7 +3444,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
   };									\
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 #define GET_DEFUN_LISP_OBJECT(Fname) \
-  wrap_subr (&S##Fname);
+  wrap_subr (&S##Fname)
 #endif /* not NEW_GC */
 
 /* Heavy ANSI C preprocessor hackery to get DEFUN to declare a
@@ -3544,30 +3544,23 @@ extern MODULE_API int specpdl_depth_counter;
 
 #define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
 		       keyword_defaults)				\
-	PARSE_KEYWORDS_8 (intern_massaging_name (1 + #function),	\
-			  nargs, args,					\
-			  keyword_count, keywords,			\
-			  keyword_defaults,				\
-			  /* Can't XSUBR (Fsymbol_function (...))->min_args, \
-			     the function may be advised. */		\
-			  XINT (Ffunction_min_args			\
-				(intern_massaging_name (1 + #function))), \
-			  0);						\
-	assert (0 == strcmp (__func__, #function))
+  PARSE_KEYWORDS_8 (intern_massaging_name (1 + #function), nargs, args, \
+                    keyword_count, keywords, keyword_defaults,          \
+                    /* Can't XSUBR (Fsymbol_function (...))->min_args,  \
+                       the function may be advised. */                  \
+                    XINT (Ffunction_min_args                            \
+                          (intern_massaging_name (1 + #function))),     \
+                    0);                                                 \
+  assert (0 == strcmp (__func__, #function))
 #else /* defined (DEBUG_XEMACS) && ... */
-#ifdef NEW_GC
 #define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
 		       keyword_defaults)				\
-	PARSE_KEYWORDS_8 (intern (S##function->name), nargs, args,	\
-			  keyword_count, keywords,			\
-			  keyword_defaults, S##function->min_args, 0)
-#else /* NEW_GC */
-#define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
-		       keyword_defaults)				\
-	PARSE_KEYWORDS_8 (intern (S##function.name), nargs, args,	\
-			  keyword_count, keywords,			\
-			  keyword_defaults, S##function.min_args, 0)
-#endif /* NEW_GC */
+  PARSE_KEYWORDS_8 (intern (subr_name (XSUBR                            \
+                                       (GET_DEFUN_LISP_OBJECT (function)))), \
+                    nargs, args, keyword_count, keywords,               \
+                    keyword_defaults,                                   \
+                    XSUBR (GET_DEFUN_LISP_OBJECT (function))->min_args, \
+                    0)
 #endif /* defined (DEBUG_XEMACS) && defined (__STDC_VERSION__) ... */
 
 /* PARSE_KEYWORDS_8 is a more fine-grained version of PARSE_KEYWORDS. The
