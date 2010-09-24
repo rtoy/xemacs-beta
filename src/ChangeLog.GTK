@@ -1,3 +1,8 @@
+2010-09-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_create_widgets): Use GTK_SIGNAL_CONNECT instead
+	of obsolete G_SIGNAL_CONNECT.
+
 2010-08-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (gtk_xemacs_menubar_size_request): Remove comment
