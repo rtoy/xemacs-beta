@@ -898,9 +898,9 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 		     dnd_target_table, dnd_n_targets,
 		     GDK_ACTION_COPY | GDK_ACTION_LINK | GDK_ACTION_ASK);
   assert (g_signal_connect (G_OBJECT (text), "drag_drop",
-                            G_SIGNAL_FUNC (dragndrop_dropped), text));
+                            GTK_SIGNAL_FUNC (dragndrop_dropped), text));
   assert (g_signal_connect (GTK_OBJECT (text), "drag_data_received",
-                            G_SIGNAL_FUNC (dragndrop_data_received), text));
+                            GTK_SIGNAL_FUNC (dragndrop_data_received), text));
   assert (g_signal_connect (G_OBJECT (text), "drag_data_get",
                             GTK_SIGNAL_FUNC (dragndrop_get_drag), NULL));
 #endif
