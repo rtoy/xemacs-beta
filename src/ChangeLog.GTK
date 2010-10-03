@@ -1,5 +1,10 @@
 2010-10-03  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (emacs_gtk_object_printer): Use %0x instead of %p to
+	print pointers.
+	(emacs_gtk_boxed_printer): Ditto.
+	(describe_gtk_arg): Ditto.
+
 	* menubar-gtk.c (menu_descriptor_to_widget_1): Add second label
 	containing the accelerator to the menu item.
 
