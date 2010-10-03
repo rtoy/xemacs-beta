@@ -861,7 +861,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
     write_cistring (printcharfun, g_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
   else
     write_ascstring (printcharfun, "dead");
-  write_fmt_string (printcharfun, ") %p>", (void *) XGTK_OBJECT (obj)->object);
+  write_fmt_string (printcharfun, ") 0x%0x>", (void *) XGTK_OBJECT (obj)->object);
 }
 
 static Lisp_Object
@@ -1172,7 +1172,7 @@ emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun,
 
   write_ascstring (printcharfun, "#<GtkBoxed (");
   write_cistring (printcharfun, g_type_name (XGTK_BOXED (obj)->object_type));
-  write_fmt_string (printcharfun, ") %p>", (void *) XGTK_BOXED (obj)->object);
+  write_fmt_string (printcharfun, ") 0x%0x>", (void *) XGTK_BOXED (obj)->object);
 }
 
 static int
@@ -1570,10 +1570,10 @@ void describe_gtk_arg (GtkParamSpec *arg)
       }
       break;
     case G_TYPE_BOXED:
-      stderr_out ("boxed: %p\n", GTK_VALUE_BOXED (a));
+      stderr_out ("boxed: 0x%0x\n", GTK_VALUE_BOXED (a));
       break;
     case G_TYPE_POINTER:
-      stderr_out ("pointer: %p\n", GTK_VALUE_BOXED (a));
+      stderr_out ("pointer: 0x%0x\n", GTK_VALUE_BOXED (a));
       break;
 
       /* structured types */
