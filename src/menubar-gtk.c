@@ -968,10 +968,23 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
       
       if (main_label)
         {
-	  gtk_container_add (GTK_CONTAINER (widget), main_label);
-
-	  gtk_misc_set_alignment (GTK_MISC (main_label), 0.0, 0.5);
+	  if (NILP (keys))
+	    {
+	      gtk_container_add (GTK_CONTAINER (widget), main_label);
+	    }
+	  else
+	    {
+	      /* Replace the label widget with a hbox containing label and
+		 key sequence. */
+	      GtkHBox *hbox = gtk_hbox_new (FALSE, 0);
+	      GtkLabel *acc = gtk_label_new (XSTRING_DATA (keys));
+	      gtk_misc_set_alignment (GTK_MISC (acc), 1.0, 0.5);
+	      gtk_container_add (GTK_CONTAINER (hbox), main_label);
+	      gtk_container_add (GTK_CONTAINER (hbox), acc);
+	      gtk_container_add (GTK_CONTAINER (widget), hbox);
+	    }
 	  gtk_xemacs_set_accel_keys(GTK_XEMACS_ACCEL_LABEL(main_label), keys);
+	  gtk_misc_set_alignment (GTK_MISC (main_label), 0.0, 0.5);
           
 	  if (accel_group)
 	    gtk_widget_add_accelerator (widget,
