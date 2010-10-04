@@ -986,7 +986,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	  gtk_xemacs_set_accel_keys(GTK_XEMACS_ACCEL_LABEL(main_label), keys);
 	  gtk_misc_set_alignment (GTK_MISC (main_label), 0.0, 0.5);
           
-	  if (accel_group)
+	  if (accel_group && accel_key > 0)
 	    gtk_widget_add_accelerator (widget,
 					(gchar *)"activate",
 					accel_group,
