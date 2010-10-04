@@ -161,117 +161,6 @@ gtk_xemacs_menubar_new (struct frame *f)
   g_object_set_qdata (G_OBJECT (menubar), XEMACS_MENU_FRAME_TAG, f);
   return (GTK_WIDGET (menubar));
 }
-
-/*
- * Label with XEmacs accelerator character support.
- *
- * The default interfaces to GtkAccelLabel does not understand XEmacs
- * keystroke printing conventions, nor is it convenient in the places where is
- * it needed.  This subclass provides an alternative interface more suited to
- * XEmacs needs but does not add new functionality.
- */
-#define GTK_TYPE_XEMACS_ACCEL_LABEL	       (gtk_xemacs_accel_label_get_type ())
-#define GTK_XEMACS_ACCEL_LABEL(obj)	       (GTK_CHECK_CAST ((obj), GTK_TYPE_ACCEL_LABEL, GtkXEmacsAccelLabel))
-#define GTK_XEMACS_ACCEL_LABEL_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), GTK_TYPE_ACCEL_LABEL, GtkXEmacsAccelLabelClass))
-#define GTK_IS_XEMACS_ACCEL_LABEL(obj)	       (GTK_CHECK_TYPE ((obj), GTK_TYPE_XEMACS_ACCEL_LABEL))
-#define GTK_IS_XEMACS_ACCEL_LABEL_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), GTK_TYPE_XEMACS_ACCEL_LABEL))
-
-typedef struct _GtkXEmacsAccelLabel	    GtkXEmacsAccelLabel;
-typedef struct _GtkXEmacsAccelLabelClass  GtkXEmacsAccelLabelClass;
-
-/* Instance structure. No additional fields required. */
-struct _GtkXEmacsAccelLabel
-{
-  GtkAccelLabel label;
-};
-
-/* Class structure. No additional fields required. */
-struct _GtkXEmacsAccelLabelClass
-{
-  GtkAccelLabelClass	 parent_class;
-};
-
-static GType	  gtk_xemacs_accel_label_get_type(void);
-static GtkWidget* gtk_xemacs_accel_label_new(const gchar *string);
-static void       gtk_xemacs_set_accel_keys(GtkXEmacsAccelLabel* l,
-				       Lisp_Object keys);
-static void       gtk_xemacs_accel_label_class_init(GtkXEmacsAccelLabelClass *klass);
-static void       gtk_xemacs_accel_label_init(GtkXEmacsAccelLabel *xemacs);
-
-static GType
-gtk_xemacs_accel_label_get_type(void)
-{
-  static GType xemacs_accel_label_type = 0;
-
-  if (!xemacs_accel_label_type)
-    {
-      static const GtkTypeInfo xemacs_accel_label_info =
-      {
-	(gchar *)"GtkXEmacsAccelLabel",
-	sizeof (GtkXEmacsAccelLabel),
-	sizeof (GtkXEmacsAccelLabelClass),
-	(GtkClassInitFunc) gtk_xemacs_accel_label_class_init,
-	(GtkObjectInitFunc) gtk_xemacs_accel_label_init,
-	/* reserved_1 */ NULL,
-        /* reserved_2 */ NULL,
-        (GtkClassInitFunc) NULL,
-      };
-
-      xemacs_accel_label_type = gtk_type_unique (gtk_accel_label_get_type(), &xemacs_accel_label_info);
-    }
-
-  return xemacs_accel_label_type;
-}
-
-static void
-gtk_xemacs_accel_label_class_init(GtkXEmacsAccelLabelClass *UNUSED (klass))
-{
-  /* Nothing to do. */
-}
-
-static void
-gtk_xemacs_accel_label_init(GtkXEmacsAccelLabel *UNUSED (xemacs))
-{
-  /* Nothing to do. */
-}
-
-static GtkWidget*
-gtk_xemacs_accel_label_new (const gchar *string)
-{
-  GtkXEmacsAccelLabel *xemacs_accel_label;
-  
-  xemacs_accel_label = (GtkXEmacsAccelLabel*) gtk_type_new (GTK_TYPE_XEMACS_ACCEL_LABEL);
-  
-  if (string && *string)
-    gtk_label_set_text (GTK_LABEL (xemacs_accel_label), string);
-  
-  return GTK_WIDGET (xemacs_accel_label);
-}
-
-/* Make the string <keys> the accelerator string for the label. */
-static void
-gtk_xemacs_set_accel_keys(GtkXEmacsAccelLabel* l, Lisp_Object keys)
-{
-  g_return_if_fail (l != NULL);
-  g_return_if_fail (GTK_IS_XEMACS_ACCEL_LABEL (l));
-
-  /* Disable the standard way of finding the accelerator string for the
-     label. */
-  gtk_accel_label_set_accel_widget (GTK_ACCEL_LABEL(l), NULL);
-
-  /* Set the string straight from the object. */
-  if (STRINGP (keys) && XSTRING_LENGTH (keys))
-    {
-      l->label.accel_string = ITEXT_TO_EXTERNAL_MALLOC (XSTRING_DATA (keys), Qctext);
-    }
-  else
-    {
-      /* l->label.accel_string = NULL;*/
-    }
-}
-
-
-/* We now return you to your regularly scheduled menus... */
 
 
 /* Converting from XEmacs to GTK representation */
@@ -515,7 +404,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       if (!reuse)
 	{
 	  char *temp_menu_name = convert_underscores (XSTRING_DATA (XCAR (desc)));
-	  GtkWidget* accel_label = gtk_xemacs_accel_label_new(NULL);
+	  GtkWidget* accel_label = gtk_label_new(NULL);
 	  guint accel_key;
 
 	  gtk_misc_set_alignment (GTK_MISC (accel_label), 0.0, 0.5);
@@ -835,7 +724,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	    }
 
 	  temp_label = convert_underscores (label_buffer);
-	  main_label = gtk_xemacs_accel_label_new (NULL);
+	  main_label = gtk_label_new (NULL);
           gtk_label_set_label (GTK_LABEL (main_label), temp_label);
 	  /* accel_key = */
           gtk_label_set_use_underline (GTK_LABEL (main_label), TRUE);
@@ -983,7 +872,6 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	      gtk_container_add (GTK_CONTAINER (hbox), acc);
 	      gtk_container_add (GTK_CONTAINER (widget), hbox);
 	    }
-	  gtk_xemacs_set_accel_keys(GTK_XEMACS_ACCEL_LABEL(main_label), keys);
 	  gtk_misc_set_alignment (GTK_MISC (main_label), 0.0, 0.5);
           
 	  if (accel_group && accel_key > 0)
