@@ -1,3 +1,8 @@
+2010-10-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Don't try use an
+	invalid accelerator key.
+
 2010-10-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (emacs_gtk_object_printer): Use %0x instead of %p to
