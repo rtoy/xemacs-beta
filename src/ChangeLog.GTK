@@ -1,7 +1,11 @@
 2010-10-04  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* menubar-gtk.c (menu_descriptor_to_widget_1): Don't try use an
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Don't try to use an
 	invalid accelerator key.
+
+	* menubar-gtk.c: Remove GtkXEmacsAccelLabel now that an easier
+	method to set the menu item accelerator labels is used.
+	(menu_convert): Use GtkLabel instead.
 
 2010-10-03  Jeff Sparkes  <jsparkes@gmail.com>
 
