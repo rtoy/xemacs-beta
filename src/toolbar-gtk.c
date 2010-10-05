@@ -78,6 +78,7 @@ gtk_clear_toolbar (struct frame *f, enum edge_pos pos)
   SET_TOOLBAR_WAS_VISIBLE_FLAG (f, pos, 0);
   if (FRAME_GTK_TOOLBAR_WIDGET(f)[pos])
     gtk_widget_destroy ((GtkWidget *)FRAME_GTK_TOOLBAR_WIDGET(f)[pos]);
+  FRAME_GTK_TOOLBAR_WIDGET(f)[pos] = NULL;
 }
 
 void
