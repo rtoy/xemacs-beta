@@ -510,6 +510,7 @@ void vars_of_tests (void);
 void vars_of_text (void);
 void reinit_vars_of_text (void);
 void vars_of_toolbar (void);
+void vars_of_toolbar_gtk (void);
 void vars_of_tooltalk (void);
 void vars_of_ui_gtk (void);
 void vars_of_undo (void);
