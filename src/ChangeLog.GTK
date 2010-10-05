@@ -1,5 +1,7 @@
 2010-10-05  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* symsinit.h: Add vars_of_toolbar_gtk () prototype.
+
 	* toolbar-gtk.c (gtk_clear_toolbar): Set cleared toolbar widget to
 	NULL.
 
