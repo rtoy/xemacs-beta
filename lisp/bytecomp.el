@@ -505,6 +505,10 @@ easily determined from the input file.")
 	     (cons 'progn body)))
     (the .
       ,#'(lambda (type form)
+	   (if (cl-const-expr-p form)
+	       (or (eval (cl-make-type-test form type))
+		   (byte-compile-warn
+		    "%s is not of type %s" form type)))
 	   (if byte-compile-delete-errors
 	       form
 	     (funcall (cdr (symbol-function 'the)) type form)))))
@@ -1391,7 +1395,7 @@ otherwise pop it")
 
 (defmacro byte-compile-constp (form)
   ;; Returns non-nil if FORM is a constant.
-  `(cond ((consp ,form) (eq (car ,form) 'quote))
+  `(cond ((consp ,form) (memq (car ,form) '(quote function)))
 	 ((symbolp ,form) (byte-compile-constant-symbol-p ,form))
 	 (t)))
 

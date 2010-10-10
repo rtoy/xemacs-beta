@@ -1,5 +1,12 @@
 2010-10-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (byte-compile-constp) Forms quoted with FUNCTION are
+	also constant.
+	(byte-compile-initial-macro-environment): In #'the, if FORM is
+	constant and does not match TYPE, warn at byte-compile time.
+
+2010-10-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* backquote.el (bq-vector-contents, bq-list*): Remove; the former
 	is equivalent to (append VECTOR nil), the latter to (list* ...).
 	(bq-process-2): Use (append VECTOR nil) instead of using
