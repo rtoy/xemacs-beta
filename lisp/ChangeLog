@@ -1,3 +1,14 @@
+2010-10-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* backquote.el (bq-vector-contents, bq-list*): Remove; the former
+	is equivalent to (append VECTOR nil), the latter to (list* ...).
+	(bq-process-2): Use (append VECTOR nil) instead of using
+	#'bq-vector-contents to convert to a list.
+	(bq-process-1): Now we use list* instead of bq-list
+	* subr.el (list*): Moved from cl.el, since it is now required to
+	be available the first time a backquoted form is encountered.
+	* cl.el (list*): Move to subr.el.
+
 2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* test-harness.el (Check-Message):

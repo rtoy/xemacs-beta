@@ -66,7 +66,20 @@ The return value of this function is not used."
 	   (message "Unknown declaration %s" d)))))
 
 (setq macro-declaration-function 'macro-declaration-function)
-
+
+;; XEmacs; this is here because we use it in backquote.el, so it needs to be
+;; available the first time a `(...) form is expanded.
+(defun list* (first &rest rest)   ; See compiler macro in cl-macs.el
+  "Return a new list with specified args as elements, cons'd to last arg.
+Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
+`(cons A (cons B (cons C D)))'."
+  (cond ((not rest) first)
+	((not (cdr rest)) (cons first (car rest)))
+	(t (let* ((n (length rest))
+		  (copy (copy-sequence rest))
+		  (last (nthcdr (- n 2) copy)))
+	     (setcdr last (car (cdr last)))
+	     (cons first copy)))))
 
 ;;;; Lisp language features.
 
