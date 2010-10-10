@@ -519,17 +519,7 @@ If ARG is not a string, it is ignored."
 
 ;;; `last' is implemented as a C primitive, as of 1998-11
 
-(defun list* (arg &rest rest)   ; See compiler macro in cl-macs.el
-  "Return a new list with specified args as elements, cons'd to last arg.
-Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
-`(cons A (cons B (cons C D)))'."
-  (cond ((not rest) arg)
-	((not (cdr rest)) (cons arg (car rest)))
-	(t (let* ((n (length rest))
-		  (copy (copy-sequence rest))
-		  (last (nthcdr (- n 2) copy)))
-	     (setcdr last (car (cdr last)))
-	     (cons arg copy)))))
+;;; XEmacs: `list*' is in subr.el.
 
 (defun ldiff (list sublist)
   "Return a copy of LIST with the tail SUBLIST removed."
