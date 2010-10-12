@@ -44,12 +44,10 @@
 (provide 'custom)
 
 (eval-when-compile
-  (load "cl-macs" nil t)
   ;; To elude warnings.
   (require 'cus-face))
 
 (autoload 'custom-declare-face "cus-face")
-(autoload 'defun* "cl-macs")
 
 (require 'widget)
 
@@ -1056,12 +1054,7 @@ This means reset VARIABLE to its value in TO-THEME."
 
 ;;; The End.
 
-;; Process the defcustoms for variables loaded before this file.
-;; `custom-declare-variable-list' is defvar'd in subr.el.  Utility programs
-;; run from temacs that do not load subr.el should defvar it themselves.
-;; (As of 21.5.11, make-docfile.el.)
-(while custom-declare-variable-list
-  (apply 'custom-declare-variable (car custom-declare-variable-list))
-  (setq custom-declare-variable-list (cdr custom-declare-variable-list)))
+;; XEmacs; we order preloaded-file-list such that there's no need for
+;; custom-declare-variable-list.
 
 ;; custom.el ends here

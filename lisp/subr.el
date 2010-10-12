@@ -39,18 +39,9 @@
 
 ;; BEGIN SYNCHED WITH FSF 21.2
 
-;;; Code:
-(defvar custom-declare-variable-list nil
-  "Record `defcustom' calls made before `custom.el' is loaded to handle them.
-Each element of this list holds the arguments to one call to `defcustom'.")
+;; XEmacs; no need for custom-declare-variable-list, preloaded-file-list is
+;; ordered to make it unnecessary.
 
-;; Use this, rather than defcustom, in subr.el and other files loaded
-;; before custom.el.  See dumped-lisp.el.
-(defun custom-declare-variable-early (&rest arguments)
-  (setq custom-declare-variable-list
-	(cons arguments custom-declare-variable-list)))
-
-
 (defun macro-declaration-function (macro decl)
   "Process a declaration found in a macro definition.
 This is set as the value of the variable `macro-declaration-function'.
@@ -1585,19 +1576,6 @@ properties to add to the result."
 
 (define-function 'eval-in-buffer 'with-current-buffer)
 (make-obsolete 'eval-in-buffer 'with-current-buffer)
-
-;;; The real defn is in abbrev.el but some early callers
-;;;  (eg lisp-mode-abbrev-table) want this before abbrev.el is loaded...
-
-(if (not (fboundp 'define-abbrev-table))
-    (progn
-      (setq abbrev-table-name-list '())
-      (fset 'define-abbrev-table
-	    (function (lambda (name defs)
-			;; These are fixed-up when abbrev.el loads.
-			(setq abbrev-table-name-list
-			      (cons (cons name defs)
-				    abbrev-table-name-list)))))))
 
 ;;; `functionp' has been moved into C.
 
