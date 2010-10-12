@@ -2157,7 +2157,7 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
   Lisp_Object l1, l2;
   Lisp_Object tortoises[2];
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-  int looped = 0;
+  int l1_count = 0, l2_count = 0;
 
   l1 = org_l1;
   l2 = org_l2;
@@ -2203,37 +2203,56 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
 	  tem = l1;
 	  l1 = Fcdr (l1);
 	  org_l1 = l1;
+
+	  if (l1_count++ > CIRCULAR_LIST_SUSPICION_LENGTH)
+	    {
+	      if (l1_count & 1)
+		{
+		  if (!CONSP (tortoises[0]))
+		    {
+		      mapping_interaction_error (Qmerge, tortoises[0]);
+		    }
+
+		  tortoises[0] = XCDR (tortoises[0]);
+		}
+
+	      if (EQ (org_l1, tortoises[0]))
+		{
+		  signal_circular_list_error (org_l1);
+		}
+	    }
 	}
       else
 	{
 	  tem = l2;
 	  l2 = Fcdr (l2);
 	  org_l2 = l2;
+
+	  if (l2_count++ > CIRCULAR_LIST_SUSPICION_LENGTH)
+	    {
+	      if (l2_count & 1)
+		{
+		  if (!CONSP (tortoises[1]))
+		    {
+		      mapping_interaction_error (Qmerge, tortoises[1]);
+		    }
+
+		  tortoises[1] = XCDR (tortoises[1]);
+		}
+
+	      if (EQ (org_l2, tortoises[1]))
+		{
+		  signal_circular_list_error (org_l2);
+		}
+	    }
 	}
+
       if (NILP (tail))
 	value = tem;
       else
 	Fsetcdr (tail, tem);
+
       tail = tem;
-
-      if (++looped > CIRCULAR_LIST_SUSPICION_LENGTH)
-        {
-          if (looped & 1)
-            {
-              tortoises[0] = XCDR (tortoises[0]);
-              tortoises[1] = XCDR (tortoises[1]); 
-            }
-
-          if (EQ (org_l1, tortoises[0]))
-            {
-              signal_circular_list_error (org_l1);
-            }
-
-          if (EQ (org_l2, tortoises[1]))
-            {
-              signal_circular_list_error (org_l2);
-            }
-        }
     }
 }
 
