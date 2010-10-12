@@ -1,3 +1,30 @@
+2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.el (fundamental-mode-abbrev-table, global-abbrev-table):
+	Create both these abbrev tables using the usual
+	#'define-abbrev-table calls, rather than attempting to
+	special-case them.
+	* cl-extra.el: Force cl-macs to be loaded here, if cl-extra.el is
+	being loaded interpreted.  Previously other, later files would
+	redundantly call (load "cl-macs") when interpreted, it's more
+	reasonable to do it here, once.
+	* cmdloop.el (read-quoted-char-radix): Use defcustom here, we
+	don't have any dump-order dependencies that would prevent that.
+	* custom.el (eval-when-compile): Don't load cl-macs when
+	interpreted or when byte-compiling, rely on cl-extra.el in the
+	former case and the appropriate entry in bytecomp-load-hook in the
+	latter.  Get rid of custom-declare-variable-list, we have no
+	dump-time dependencies that would require it.
+	* faces.el (eval-when-compile): Don't load cl-macs when
+	interpreted or when byte-compiling.
+	* packages.el: Remove some inaccurate comments. 
+	* post-gc.el (cleanup-simple-finalizers): Use #'delete-if-not
+	here, now the order of preloaded-file-list has been changed to
+	make it available.
+	* subr.el (custom-declare-variable-list): Remove. No need for it.
+	Also remove a stub define-abbrev-table from this file, given the
+	current order of preloaded-file-list there's no need for it.
+
 2010-10-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-constp) Forms quoted with FUNCTION are

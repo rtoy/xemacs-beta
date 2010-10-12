@@ -23,28 +23,19 @@ in dumped-lisp.el and is not itself listed.")
 
        "backquote" 		; needed for defsubst etc.
        "bytecomp-runtime"	; define defsubst
-       "find-paths"
-       "packages"		; Bootstrap run-time lisp environment
-       "setup-paths"
-
-       ;; use custom-declare-variable-early, not defcustom, in these files
-
        "subr" 			; load the most basic Lisp functions
-       "post-gc"
-       "replace" 		; match-string used in version.el.
-
-       "version"
-
        "cl"
-       "cl-extra"
+       "cl-extra"	; also loads cl-macs if we're running interpreted.
        "cl-seq"
-       "widget"
-       "custom"		; Before the world so everything can be
-			; customized
+       "post-gc"
+       "version"
+       "custom"		; Before the world so everything can be customized
        "cus-start"	; for customization of builtin variables
-
-       ;; OK, you can use defcustom from here on
-
+       "find-paths"
+       "packages"
+       "setup-paths"
+       "replace"
+       "widget"
        "cmdloop"
        "keymap"
        "syntax"

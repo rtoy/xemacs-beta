@@ -657,6 +657,11 @@ This also does some trivial optimizations to make the form prettier."
     (prog1 (cl-prettyprint form)
       (message ""))))
 
+;; XEmacs addition; force cl-macs to be available from here on when
+;; compiling files to be dumped.  This is more reasonable than forcing other
+;; files to do the same, multiple times.
+(eval-when-compile (or (cl-compiling-file) (load "cl-macs")))
+
 (run-hooks 'cl-extra-load-hook)
 
 ;; XEmacs addition
