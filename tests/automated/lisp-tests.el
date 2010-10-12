@@ -2409,4 +2409,10 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (not (eql '1/5 (read (prin1-to-string (intern "2/10")))))
 	  "checking symbol named \"2/10\" not eql to ratio 1/5 on read"))
 
+(let* ((count 0)
+       (list (map-into (make-list 2048 nil) #'(lambda () (decf count))))
+       (expected (append list '(1))))
+  (Assert (equal expected (merge 'list list '(1) #'<))
+	  "checking merge's circularity checks are sane"))
+
 ;;; end of lisp-tests.el

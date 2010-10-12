@@ -1,3 +1,10 @@
+2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (list_merge):
+	Circularity checking here needs to be done independently for each
+	list, they can't share a loop counter. Thank you for the bug
+	report, Robert Pluim!
+
 2010-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (GET_DEFUN_LISP_OBJECT): Make the NEW_GC version of this
