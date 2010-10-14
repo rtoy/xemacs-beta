@@ -1,3 +1,11 @@
+2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (x):
+	Test #'nbutlast, #'butlast with dotted lists.
+	Check that #'ldiff and #'tailp don't hang on circular lists; check
+	that #'tailp returns t with circular lists when that is
+	appropriate.  Test them both with dotted lists.
+
 2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

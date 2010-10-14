@@ -1570,72 +1570,99 @@ If N is greater than the length of LIST, then LIST itself is returned.
 
 DEFUN ("nbutlast", Fnbutlast, 1, 2, 0, /*
 Modify LIST to remove the last N (default 1) elements.
+
 If LIST has N or fewer elements, nil is returned and LIST is unmodified.
+Otherwise, LIST may be dotted, but not circular.
 */
        (list, n))
 {
-  EMACS_INT int_n;
+  Elemcount int_n = 1;
 
   CHECK_LIST (list);
 
-  if (NILP (n))
-    int_n = 1;
-  else
+  if (!NILP (n))
     {
       CHECK_NATNUM (n);
       int_n = XINT (n);
     }
 
-  {
-    Lisp_Object last_cons = list;
+  if (CONSP (list))
+    {
+      Lisp_Object last_cons = list;
 
-    EXTERNAL_LIST_LOOP_1 (list)
-      {
-	if (int_n-- < 0)
-	  last_cons = XCDR (last_cons);
-      }
+      EXTERNAL_LIST_LOOP_3 (elt, list, tail)
+	{
+	  if (int_n-- < 0)
+	    {
+	      last_cons = XCDR (last_cons);
+	    }
 
-    if (int_n >= 0)
-      return Qnil;
+	  if (!CONSP (XCDR (tail)))
+	    {
+	      break;
+	    }
+	}
 
-    XCDR (last_cons) = Qnil;
-    return list;
-  }
+      if (int_n >= 0)
+	{
+	  return Qnil;
+	}
+
+      XCDR (last_cons) = Qnil;
+    }
+
+  return list;
 }
 
 DEFUN ("butlast", Fbutlast, 1, 2, 0, /*
 Return a copy of LIST with the last N (default 1) elements removed.
+
 If LIST has N or fewer elements, nil is returned.
+Otherwise, LIST may be dotted, but not circular, and `(butlast LIST 0)'
+converts a dotted into a true list.
 */
        (list, n))
 {
-  EMACS_INT int_n;
+  Lisp_Object retval = Qnil, retval_tail = Qnil;
+  Elemcount int_n = 1;
 
   CHECK_LIST (list);
 
-  if (NILP (n))
-    int_n = 1;
-  else
+  if (!NILP (n))
     {
       CHECK_NATNUM (n);
       int_n = XINT (n);
     }
 
-  {
-    Lisp_Object retval = Qnil;
-    Lisp_Object tail = list;
+  if (CONSP (list))
+    {
+      Lisp_Object tail = list;
 
-    EXTERNAL_LIST_LOOP_1 (list)
-      {
-	if (--int_n < 0)
-	  {
-	    retval = Fcons (XCAR (tail), retval);
-	    tail = XCDR (tail);
-	  }
-      }
+      EXTERNAL_LIST_LOOP_3 (elt, list, list_tail)
+	{
+	  if (--int_n < 0)
+	    {
+	      if (NILP (retval_tail))
+		{
+		  retval = retval_tail = Fcons (XCAR (tail), Qnil);
+		}
+	      else
+		{
+		  XSETCDR (retval_tail, Fcons (XCAR (tail), Qnil));
+		  retval_tail = XCDR (retval_tail);
+		}
 
-    return Fnreverse (retval);
-  }
+	      tail = XCDR (tail);
+	    }
+
+	  if (!CONSP (XCDR (list_tail)))
+	    {
+	      break;
+	    }
+	}
+    }
+
+  return retval;
 }
 
 DEFUN ("member", Fmember, 2, 2, 0, /*

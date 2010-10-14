@@ -365,7 +365,13 @@ If ARG is not a string, it is ignored."
 
 (defalias 'first 'car)
 (defalias 'rest 'cdr)
-(defalias 'endp 'null)
+
+;; XEmacs change; this needs to error if handed a non-list.
+(defun endp (list)
+  "Return t if LIST is nil, or nil if LIST is a cons. Error otherwise."
+  (prog1
+      (null list)
+    (and list (atom list) (error 'wrong-type-argument #'listp list))))
 
 ;; XEmacs change: make it a real function
 (defun second (x)
@@ -521,12 +527,26 @@ If ARG is not a string, it is ignored."
 
 ;;; XEmacs: `list*' is in subr.el.
 
+;; XEmacs; handle dotted lists properly, error on circularity and if LIST is
+;; not a list.
 (defun ldiff (list sublist)
-  "Return a copy of LIST with the tail SUBLIST removed."
-  (let ((res nil))
-    (while (and (consp list) (not (eq list sublist)))
-      (push (pop list) res))
-    (nreverse res)))
+  "Return a copy of LIST with the tail SUBLIST removed.
+
+If SUBLIST is the same Lisp object as LIST, return nil.  If SUBLIST is
+not present in the list structure of LIST (that is, it is not the cdr
+of some cons making up LIST), this function is equivalent to
+`copy-list'.  LIST may be dotted."
+  (check-argument-type #'listp list)
+  (and list (not (eq list sublist))
+       (let ((before list) (evenp t) result)
+	 (prog1
+	     (setq result (list (car list)))
+	   (while (and (setq list (cdr-safe list)) (not (eql list sublist)))
+	     (setf (cdr result) (if (consp list) (list (car list)) list)
+		   result (cdr result)
+		   evenp (not evenp))
+	     (if evenp (setq before (cdr before)))
+	     (if (eq before list) (error 'circular-list list)))))))
 
 ;;; `copy-list' is implemented as a C primitive, as of 1998-11
 

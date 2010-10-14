@@ -1225,7 +1225,7 @@
 	 ;; coordinates-in-window-p not in XEmacs
 	 copy-marker cos count-lines
 	 default-boundp default-value denominator documentation downcase
-	 elt exp expt fboundp featurep
+	 elt endp exp expt fboundp featurep
 	 file-directory-p file-exists-p file-locked-p file-name-absolute-p
 	 file-newer-than-file-p file-readable-p file-symlink-p file-writable-p
 	 float floor format

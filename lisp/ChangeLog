@@ -1,3 +1,17 @@
+2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (side-effect-free-fns): 
+	* cl-macs.el (remf, getf): 
+	* cl-extra.el (tailp, cl-set-getf, cl-do-remf): 
+	* cl.el (ldiff, endp):
+	Tighten up Common Lisp compatibility for #'ldiff, #'endp, #'tailp;
+	add circularity checking for the first two.
+
+	#'cl-set-getf and #'cl-do-remf were Lisp implementations of
+	#'plist-put and #'plist-remprop; change the names to aliases,
+	changes the macros that use them to using #'plist-put and
+	#'plist-remprop directly.
+
 2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* abbrev.el (fundamental-mode-abbrev-table, global-abbrev-table):

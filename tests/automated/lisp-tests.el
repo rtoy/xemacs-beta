@@ -200,6 +200,14 @@
   (Assert (equal y '(0 1 2 3)))
   (Assert (equal z y)))
 
+(let* ((x (list* 0 1 2 3 4 5 6.0 ?7 ?8 (vector 'a 'b 'c)))
+       (y (butlast x 0))
+       (z (nbutlast x 0)))
+  (Assert (eq z x))
+  (Assert (not (eq y x)))
+  (Assert (equal y '(0 1 2 3 4 5 6.0 ?7 ?8)))
+  (Assert (equal z y)))
+
 (Assert (eq (butlast  '(x)) nil))
 (Assert (eq (nbutlast '(x)) nil))
 (Assert (eq (butlast  '()) nil))
@@ -217,6 +225,58 @@
 (dolist (x '((1) (1 2) (1 2 3) (1 2 . 3)))
   (let ((y (copy-list x)))
     (Assert (and (equal x y) (not (eq x y))))))
+
+;;-----------------------------------------------------
+;; Test `ldiff'
+;;-----------------------------------------------------
+(Check-Error wrong-type-argument (ldiff 'foo pi))
+(Check-Error wrong-number-of-arguments (ldiff))
+(Check-Error wrong-number-of-arguments (ldiff '(1 2)))
+(Check-Error circular-list (ldiff (make-circular-list 1) nil))
+(Check-Error circular-list (ldiff (make-circular-list 2000) nil))
+(Assert (eq '() (ldiff '() pi)))
+(dolist (x '((1) (1 2) (1 2 3) (1 2 . 3)))
+  (let ((y (ldiff x nil)))
+    (Assert (and (equal x y) (not (eq x y))))))
+
+(let* ((vector (vector 'foo))
+       (dotted `(1 2 3 ,pi 40 50 . ,vector))
+       (dotted-pi `(1 2 3 . ,pi))
+       without-vector without-pi)
+  (Assert (equal dotted (ldiff dotted nil))
+	  "checking ldiff handles dotted lists properly")
+  (Assert (equal (butlast dotted 0) (ldiff dotted vector))
+	  "checking ldiff discards dotted elements correctly")
+  (Assert (equal (butlast dotted-pi 0) (ldiff dotted-pi (* 4 (atan 1))))
+	  "checking ldiff handles float equivalence correctly"))
+
+;;-----------------------------------------------------
+;; Test `tailp'
+;;-----------------------------------------------------
+(Check-Error wrong-type-argument (tailp pi 'foo))
+(Check-Error wrong-number-of-arguments (tailp))
+(Check-Error wrong-number-of-arguments (tailp '(1 2)))
+(Check-Error circular-list (tailp nil (make-circular-list 1)))
+(Check-Error circular-list (tailp nil (make-circular-list 2000)))
+(Assert (null (tailp pi '()))
+	"checking pi is not a tail of the list nil")
+(Assert (tailp 3 '(1 2 . 3))
+	"checking #'tailp works with a dotted integer.")
+(Assert (tailp pi `(1 2 . ,(* 4 (atan 1))))
+	"checking tailp works with non-eq dotted floats.")
+(let ((list (make-list 2048 nil)))
+  (Assert (tailp (nthcdr 2000 list) (nconc list list))
+	  "checking #'tailp succeeds with circular LIST containing SUBLIST"))
+
+;;-----------------------------------------------------
+;; Test `endp'
+;;-----------------------------------------------------
+(Check-Error wrong-type-argument (endp 'foo))
+(Check-Error wrong-number-of-arguments (endp))
+(Check-Error wrong-number-of-arguments (endp '(1 2) 'foo))
+(Assert (endp nil) "checking nil is recognized as the end of a list")
+(Assert (not (endp (list 200 200 4 0 9)))
+	"checking a cons is not recognised as the end of a list")
 
 ;;-----------------------------------------------------
 ;; Arithmetic operations

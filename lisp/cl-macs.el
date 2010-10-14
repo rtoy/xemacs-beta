@@ -2407,7 +2407,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 	  (append (nth 1 method) (list tag def))
 	  (list store-temp)
 	  (list 'let (list (list (car (nth 2 method))
-				 (list 'cl-set-getf (nth 4 method)
+				 (list 'plist-put (nth 4 method)
 				       tag-temp store-temp)))
 		(nth 3 method) store-temp)
 	  (list 'getf (nth 4 method) tag-temp def-temp))))
@@ -2597,7 +2597,7 @@ The form returns true if TAG was found and removed, nil otherwise."
 		(list 'progn
 		      (cl-setf-do-store (nth 1 method) (list 'cddr tval))
 		      t)
-		(list 'cl-do-remf tval ttag)))))
+		(list 'plist-remprop tval ttag)))))
 
 ;;;###autoload
 (defmacro shiftf (place &rest args)
@@ -3805,7 +3805,7 @@ the byte optimizer in those cases."
  '((first 'car x) (second 'cadr x) (third 'caddr x) (fourth 'cadddr x)
    (fifth 'nth 4 x) (sixth 'nth 5 x) (seventh 'nth 6 x)
    (eighth 'nth 7 x) (ninth 'nth 8 x) (tenth 'nth 9 x)
-   (rest 'cdr x) (endp 'null x) (plusp '> x 0) (minusp '< x 0)
+   (rest 'cdr x) (plusp '> x 0) (minusp '< x 0)
    (oddp  'eq (list 'logand x 1) 1)
    (evenp 'eq (list 'logand x 1) 0)
    (caar car car) (cadr car cdr) (cdar cdr car) (cddr cdr cdr)
