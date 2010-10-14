@@ -1,3 +1,9 @@
+2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fnbutlast, Fbutlast):
+	Tighten up Common Lisp compatibility for these two functions; they
+	need to operate on dotted lists without erroring.
+
 2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (list_merge):
