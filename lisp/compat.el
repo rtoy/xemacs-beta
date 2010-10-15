@@ -726,3 +726,4 @@ However, the overlays you get are the real objects that the buffer uses."
 (fmakunbound 'compat-define-compat-functions)
 
 
+)
