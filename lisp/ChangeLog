@@ -1,5 +1,13 @@
 2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* term/vt100.el:
+	Refer to XEmacs, not GNU Emacs, in permissions.
+
+	* term/bg-mouse.el:
+	* term/sup-mouse.el:
+	Put copyright notice in canonical "Copyright DATE AUTHOR" form.
+	Refer to XEmacs, not GNU Emacs, in permissions.
+
 	* site-load.el:
 	Add permission boilerplate.
 
