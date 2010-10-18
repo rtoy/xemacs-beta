@@ -1,4 +1,8 @@
-/* I really wish this entire file could go away, but there is
+/* ui-byhand.c --- hand-coded GTK functions
+
+Copyright (C) 2000, 2001 William M. Perry
+
+   I really wish this entire file could go away, but there is
    currently no way to do the following in the Foreign Function
    Interface:
 

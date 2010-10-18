@@ -1,3 +1,7 @@
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* aclocal.m4: Add standard permission boilerplate.
+
 2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* version.sh.in: 

@@ -1,3 +1,13 @@
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ui-byhand.c:
+	* gtk-glue.c:
+	Add copyright notice based on internal evidence.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* number.h: Another permission consistency fix.
+
 2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Fnbutlast, Fbutlast):

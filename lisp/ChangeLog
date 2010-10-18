@@ -1,3 +1,50 @@
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* term/vt100.el:
+	Refer to XEmacs, not GNU Emacs, in permissions.
+
+	* term/bg-mouse.el:
+	* term/sup-mouse.el:
+	Put copyright notice in canonical "Copyright DATE AUTHOR" form.
+	Refer to XEmacs, not GNU Emacs, in permissions.
+
+	* site-load.el:
+	Add permission boilerplate.
+
+	* mule/canna-leim.el:
+	* alist.el:
+	Refer to XEmacs, not APEL/this program, in permissions.
+
+	* mule/canna-leim.el:
+	Remove my copyright, I've assigned it to the FSF.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gtk.el:
+	* gtk-widget-accessors.el:
+	* gtk-package.el:
+	* gtk-marshal.el:
+	* gtk-compose.el:
+	* gnome.el:
+	Add copyright notice based on internal evidence.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* easymenu.el: Add reference to COPYING to permission notice.
+
+	* gutter.el:
+	* gutter-items.el:
+	* menubar-items.el:
+	Fix typo "Xmacs" in permissions notice.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* auto-save.el:
+	* font.el:
+	* fontconfig.el:
+	* mule/kinsoku.el:
+	Add "part of XEmacs" text to permission notice.
+
 2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el (side-effect-free-fns): 
