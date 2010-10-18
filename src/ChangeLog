@@ -1,3 +1,12 @@
+2010-07-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* emodules.c (emodules_load):
+	Add one more dereference on f = dll_variable() in three places.
+	We then use EXTERNAL_TO_ITEXT on it, which returns an alloca'd
+	string, so I delete the unneeded alloca copy statements.
+	Fixes error reported by Anders Odberg, confirmed in
+	<rfawrpfhm3l.fsf@fangorn.uio.no>.
+
 2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* ui-byhand.c:
