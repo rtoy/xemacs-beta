@@ -1,3 +1,7 @@
+;; xemacs-toolbar.el --- test the XEmacs toolbar under GTK
+;;
+;; Copyright 2000, 2001 William Perry
+;;
 ;; This file is part of XEmacs.
 ;;
 ;; XEmacs is free software; you can redistribute it and/or modify it

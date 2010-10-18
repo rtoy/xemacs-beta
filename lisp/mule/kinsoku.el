@@ -4,6 +4,8 @@
 ;; This file is part of Mule (MULtilingual Enhancement of XEmacs).
 ;; This file contains Japanese and Chinese characters.
 
+;; This file is part of XEmacs.
+
 ;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
