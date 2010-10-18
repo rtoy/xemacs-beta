@@ -1,28 +1,48 @@
-/* Give this program DOCSTR.mm.nn as standard input
-   and it outputs to standard output
-   a file of texinfo input containing the doc strings.
-   
-   This version sorts the output by function name.
-   */
+/* Give this program DOC-mm.nn.oo as standard input and it outputs to
+   standard output a file of texinfo input containing the doc strings.
 
-/* Synched up with: FSF 19.28. */
+Copyright (C) 1989, 1992, 1994, 1996, 1999, 2000, 2001, 2002, 2003,
+              2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+XEmacs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.  */
+
+
+/* This version sorts the output by function name.  */
+
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h> /* for qsort() and malloc() */
+#include <stdlib.h>
 #include <string.h>
-static void *xmalloc (size_t);
+#include <ctype.h>
+#ifdef DOS_NT
+#include <fcntl.h>		/* for O_BINARY */
+#include <io.h>			/* for setmode */
+#endif
 
 #define NUL	'\0'
 #define MARKER '\037'
 
 #define DEBUG 0
 
-typedef struct LINE LINE;
+typedef struct line LINE;
 
-struct LINE
+struct line
 {
   LINE *next;			/* ptr to next or NULL */
   char *line;			/* text of the line */
@@ -38,10 +58,18 @@ struct docstr			/* Allocated thing for an entry. */
   char type;			/* 'F' for function, 'V' for variable */
 };
 
+void error (char *s1, char *s2);
+void fatal (char *s1, char *s2);
+char *xmalloc (int size);
+char *xstrdup (char *str);
+int cmpdoc (DOCSTR **a, DOCSTR **b);
+
+typedef int (*sort_function_t)(const void *, const void *);
+
 
 /* Print error message.  `s1' is printf control string, `s2' is arg for it. */
 
-static void
+void
 error (char *s1, char *s2)
 {
   fprintf (stderr, "sorted-doc: ");
@@ -51,35 +79,35 @@ error (char *s1, char *s2)
 
 /* Print error message and exit.  */
 
-static void
+void
 fatal (char *s1, char *s2)
 {
   error (s1, s2);
-  exit (1);
+  exit (EXIT_FAILURE);
 }
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static void *
-xmalloc (size_t size)
+char *
+xmalloc (int size)
 {
-  void *result = malloc (size);
+  char *result = malloc ((unsigned)size);
   if (result == NULL)
     fatal ("%s", "virtual memory exhausted");
   return result;
 }
 
-static char *
-strsav (char *str)
+char *
+xstrdup (char *str)
 {
-  char *buf = (char *) xmalloc (strlen (str) + 1);
-  strcpy (buf, str);
-  return buf;
+  char *buf = xmalloc (strlen (str) + 1);
+  (void) strcpy (buf, str);
+  return (buf);
 }
 
 /* Comparison function for qsort to call.  */
 
-static int
+int
 cmpdoc (DOCSTR **a, DOCSTR **b)
 {
   register int val = strcmp ((*a)->name, (*b)->name);
@@ -93,24 +121,31 @@ enum state
   WAITING, BEG_NAME, NAME_GET, BEG_DESC, DESC_GET
 };
 
-const char *states[] =
+char *states[] =
 {
   "WAITING", "BEG_NAME", "NAME_GET", "BEG_DESC", "DESC_GET"
 };
-    
+
 int
-main (int argc, char **argv)
+main (void)
 {
   register DOCSTR *dp = NULL;	/* allocated DOCSTR */
   register LINE *lp = NULL;	/* allocated line */
-  register char *bp = 0;	/* ptr inside line buffer */
-  /* int notfirst = 0;		/ * set after read something */
+  register char *bp;		/* ptr inside line buffer */
   register enum state state = WAITING; /* state at start */
   int cnt = 0;			/* number of DOCSTRs read */
 
-  DOCSTR *docs = 0;		/* chain of allocated DOCSTRS */
+  DOCSTR *docs = NULL;          /* chain of allocated DOCSTRS */
   char buf[512];		/* line buffer */
-    
+
+#ifdef DOS_NT
+  /* DOC is a binary file.  */
+  if (!isatty (fileno (stdin)))
+    setmode (fileno (stdin), O_BINARY);
+#endif
+
+  bp = buf;
+
   while (1)			/* process one char at a time */
     {
       /* this char from the DOCSTR file */
@@ -158,7 +193,7 @@ main (int argc, char **argv)
 	  bp = buf;
 	  state = DESC_GET;
 	}
-	
+
       /* process gets */
 
       if (state == NAME_GET || state == DESC_GET)
@@ -170,7 +205,7 @@ main (int argc, char **argv)
 	  else			/* saving and changing state */
 	    {
 	      *bp = NUL;
-	      bp = strsav (buf);
+	      bp = xstrdup (buf);
 
 	      if (state == NAME_GET)
 		dp->name = bp;
@@ -197,19 +232,19 @@ main (int argc, char **argv)
 
     /* sort the array by name; within each name, by type */
 
-    qsort ((char*)array, cnt, sizeof (DOCSTR*),
-	   (int (*)(const void *, const void *)) cmpdoc);
+    qsort ((char*)array, cnt, sizeof (DOCSTR*), (sort_function_t)cmpdoc);
 
     /* write the output header */
 
     printf ("\\input texinfo  @c -*-texinfo-*-\n");
     printf ("@setfilename ../info/summary\n");
     printf ("@settitle Command Summary for XEmacs\n");
+    printf ("@finalout\n");
     printf ("@unnumbered Command Summary for XEmacs\n");
     printf ("@table @asis\n");
     printf ("\n");
     printf ("@iftex\n");
-    printf ("@global@let@ITEM=@item\n");
+    printf ("@global@let@ITEM@item\n");
     printf ("@def@item{@filbreak@vskip5pt@ITEM}\n");
     printf ("@font@tensy cmsy10 scaled @magstephalf\n");
     printf ("@font@teni cmmi10 scaled @magstephalf\n");
@@ -246,12 +281,17 @@ main (int argc, char **argv)
 	    putchar ('\n');
 	  }
 	printf("@end display\n");
-	if ( i%200 == 0 && i != 0 ) printf("@end table\n\n@table @asis\n");
+	/* Try to avoid a save size overflow in the TeX output
+           routine.  */
+	if (i%100 == 0 && i > 0 && i != cnt)
+	  printf("\n@end table\n@table @asis\n");
       }
 
     printf ("@end table\n");
     printf ("@bye\n");
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
+
+/* sorted-doc.c ends here */
