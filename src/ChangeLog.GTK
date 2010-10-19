@@ -1,7 +1,10 @@
 2010-10-19  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gui.c (gui_item_value): Disable error check to avoid errors.
+	There is still a problem here to be fixed.
+
 	* gtk-glue.c (xemacs_list_to_gtklist): memset local GValue
-	variable to zero.
+	variable to zero to reset the type.
 	(xemacs_list_to_array): Ditto.
 
 	* ui-gtk.c: Ditto.  (Two DEFUNs)
