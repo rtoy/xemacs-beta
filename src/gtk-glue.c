@@ -89,6 +89,7 @@ xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
     SAFE_LIST_LOOP_2 (elt, obj)
       {
         GValue tmp, *copy = NULL;
+        memset (&tmp, '\0', sizeof (GValue));
         lisp_to_g_value (elt, &tmp);
         g_value_copy (&tmp, copy);/* leak XXX */
         g_value_array_append (array, copy);
@@ -216,7 +217,7 @@ xemacs_list_to_array (Lisp_Object obj, GValue *arg)
   {
     LIST_LOOP_3 (elt, obj, tail)
       {
-        g_value_reset (&val);
+        memset (&val, '\0', sizeof (GValue));
         lisp_to_g_value (elt, &val);
         g_value_array_append (array, &val);
       }
