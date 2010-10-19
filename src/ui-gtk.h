@@ -31,7 +31,7 @@
 #include "sysdll.h"
 
 typedef void (*ffi_actual_function) (void);
-typedef void (*ffi_marshalling_function) (ffi_actual_function, GtkArg *);
+typedef void (*ffi_marshalling_function) (ffi_actual_function, GValue *);
 
 #define MAX_GTK_ARGS 100
 
