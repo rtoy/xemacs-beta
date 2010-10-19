@@ -623,7 +623,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
       int plist_p;
       int selected_spec = 0, included_spec = 0;
       GtkWidget *widget = NULL;
-      guint accel_key;
+      guint accel_key = 0;
 
       if (length < 2)
 	sferror ("button descriptors must be at least 2 long", descr);
@@ -865,11 +865,11 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	    {
 	      /* Replace the label widget with a hbox containing label and
 		 key sequence. */
-	      GtkHBox *hbox = gtk_hbox_new (FALSE, 0);
-	      GtkLabel *acc = gtk_label_new (XSTRING_DATA (keys));
+	      GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
+	      GtkLabel *acc = gtk_label_new (LISP_STRING_TO_EXTERNAL (keys, Qctext));
 	      gtk_misc_set_alignment (GTK_MISC (acc), 1.0, 0.5);
 	      gtk_container_add (GTK_CONTAINER (hbox), main_label);
-	      gtk_container_add (GTK_CONTAINER (hbox), acc);
+	      gtk_container_add (GTK_CONTAINER (hbox), GTK_WIDGET (acc));
 	      gtk_container_add (GTK_CONTAINER (widget), hbox);
 	    }
 	  gtk_misc_set_alignment (GTK_MISC (main_label), 0.0, 0.5);
@@ -1058,7 +1058,6 @@ static void
 create_menubar_widget (struct frame *f)
 {
   GUI_ID id = new_gui_id ();
-  GtkWidget *handlebox = NULL;
   GtkWidget *menubar = gtk_xemacs_menubar_new (f);
 
 #ifdef HAVE_GNOME
