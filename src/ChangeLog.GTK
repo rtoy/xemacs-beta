@@ -1,5 +1,7 @@
 2010-10-19  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.h: Marshalling functions now use GValue, not GtkArg.
+
 	* gui.c (gui_item_value): Disable error check to avoid errors.
 	There is still a problem here to be fixed.
 
