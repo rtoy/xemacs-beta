@@ -1,5 +1,10 @@
 2010-10-19  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Initialize
+	gtk_accel variable.
+	(menu_descriptor_to_widget_1): Fix GTK type warnings.
+	(create_menubar_widget): Remove unused variable.
+
 	* ui-gtk.h: Marshalling functions now use GValue, not GtkArg.
 
 	* gui.c (gui_item_value): Disable error check to avoid errors.
