@@ -937,6 +937,7 @@ emacs_gtk_object_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 
   prop_name = Fsymbol_name (prop);
   name = (char *) XSTRING_DATA (prop_name);  /* the cast is probably wrong */
+  memset (&arg, '\0', sizeof (GValue));
   g_value_init (&arg, G_TYPE_STRING);
   g_assert (G_VALUE_HOLDS_STRING (&arg));
 
@@ -1458,6 +1459,7 @@ Return a list of all properties for CLASS name.
   for (i = 0; i < n_props; i++) 
     {
       GValue v;
+      memset (&v, '\0', sizeof (GValue));
       g_value_init (&v, props[i]->value_type);
       prop_list = Fcons (g_type_to_lisp (&v), prop_list);
     }
@@ -1772,6 +1774,7 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
     case G_TYPE_ENUM:
       {
         GValue enumValue;
+        memset (&enumValue, '\0', sizeof (GValue));
         gint v = symbol_to_gtk_enum (obj, &enumValue);
         g_value_set_enum (val, v);
       }

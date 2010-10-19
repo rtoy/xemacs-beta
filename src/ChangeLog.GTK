@@ -1,3 +1,11 @@
+2010-10-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-glue.c (xemacs_list_to_gtklist): memset local GValue
+	variable to zero.
+	(xemacs_list_to_array): Ditto.
+
+	* ui-gtk.c: Ditto.  (Two DEFUNs)
+
 2010-10-05  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* symsinit.h: Add vars_of_toolbar_gtk () prototype.
