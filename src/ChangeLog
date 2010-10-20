@@ -1,12 +1,3 @@
-2010-08-08  Jeff Sparkes  <jsparkes@gmail.com>
-
-	* ui-gtk.c (Fg_object_class_list_properties): Initialize GValue
-	with memset.  Using only g_value_init causes an error.
-
-2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
-
-	* config.h.in: Add HAVE_PANGO.
-
 2010-06-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console-x-impl.h (DEVICE_X_XFTDRAW): Define, instead of
