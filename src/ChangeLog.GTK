@@ -63,6 +63,11 @@
 	* ui-gtk.c (Fgtk_call_function): Initialize arg array to NULLs
 	before proceeding.
 
+2010-08-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_object_class_list_properties): Initialize GValue
+	with memset.  Using only g_value_init causes an error.
+
 2010-08-06  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-byhand.c: remove deprecated gtk-button-box functions that
@@ -148,6 +153,8 @@
 
 2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* config.h.in: Add HAVE_PANGO.
+	
 	* toolbar-gtk.c (gtk_output_toolbar): Hardwire first four toolbar
 	icons to be the correct gtk stock icons.  This is for demo
 	purposes; this should be done in lisp.
