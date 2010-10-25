@@ -1,3 +1,8 @@
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (ulong_to_bit_string): If printing zero, actually print
+	a zero, don't return the empty string.
+
 2010-07-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* emodules.c (emodules_load):
