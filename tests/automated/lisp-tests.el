@@ -1325,8 +1325,11 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;;-----------------------------------------------------
 (Assert (string= (format "%d" 10) "10"))
 (Assert (string= (format "%o" 8) "10"))
+(Assert (string= (format "%b" 2) "10"))
 (Assert (string= (format "%x" 31) "1f"))
 (Assert (string= (format "%X" 31) "1F"))
+(Assert (string= (format "%b" 0) "0"))
+(Assert (string= (format "%b" 3) "11"))
 ;; MS-Windows uses +002 in its floating-point numbers.  #### We should
 ;; perhaps fix this, but writing our own floating-point support in doprnt.c
 ;; is very hard.
