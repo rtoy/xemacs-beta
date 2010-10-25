@@ -1247,7 +1247,8 @@
 	 parse-colon-path plist-get previous-window
 	 radians-to-degrees rassq regexp-quote reverse round
 	 sin sqrt string< string= string-equal string-lessp string-to-char
-	 string-to-int string-to-number substring symbol-plist
+	 string-to-int string-to-number substring symbol-plist symbol-value
+	 symbol-name symbol-function symbol
 	 tan upcase user-variable-p vconcat
 	 ;; XEmacs change: window-edges -> window-pixel-edges
 	 window-buffer window-dedicated-p window-pixel-edges window-height
