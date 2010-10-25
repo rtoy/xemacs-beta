@@ -2826,7 +2826,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
       if (HAS_SPECMETH_P (sp, instantiate))
 	val = call_with_suspended_errors
 	  ((lisp_fn_t) RAW_SPECMETH (sp, instantiate),
-	   Qunbound, Qspecifier, errb, 5, specifier,
+	   Qunbound, Qspecifier, ERROR_ME_WARN, 5, specifier,
 	   matchspec, domain, val, depth, no_fallback);
 
       if (!UNBOUNDP (val))
