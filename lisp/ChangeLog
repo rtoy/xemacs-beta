@@ -1,3 +1,41 @@
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Add compiler macros and compilation sanity-checking for various
+	functions that take keywords.
+
+	* byte-optimize.el (side-effect-free-fns): #'symbol-value is
+	side-effect free and not error free.
+	* bytecomp.el (byte-compile-normal-call): Check keyword argument
+	lists for sanity; store information about the positions where
+	keyword arguments start using the new byte-compile-keyword-start
+	property.
+	* cl-macs.el (cl-const-expr-val): Take a new optional argument,
+	cl-not-constant, defaulting to nil, in this function; return it if
+	the expression is not constant.
+	(cl-non-fixnum-number-p): Make this into a separate function, we
+	want to pass it to #'every.
+	(eql): Use it.
+	(define-star-compiler-macros): Use the same code to generate the
+	member*, assoc* and rassoc* compiler macros; special-case some
+	code in #'add-to-list in subr.el.
+	(remove, remq): Add compiler macros for these two functions, in
+	preparation for #'remove being in C.
+	(define-foo-if-compiler-macros): Transform (remove-if-not ...) calls to
+	(remove ... :if-not) at compile time, which will be a real win
+	once the latter is in C.
+	(define-substitute-if-compiler-macros)
+	(define-subst-if-compiler-macros): Similarly for these functions.
+	(delete-duplicates): Change this compiler macro to use
+	#'plists-equal; if we don't have information about the type of
+	SEQUENCE at compile time, don't bother attempting to inline the
+	call, the function will be in C soon enough.
+	(equalp): Remove an old commented-out compiler macro for this, if
+	we want to see it it's in version control.
+	(subst-char-in-string): Transform this to a call to nsubstitute or
+	nsubstitute, if that is appropriate.
+	* cl.el (ldiff): Don't call setf here, this makes for a load-time
+	dependency problem in cl-macs.el
+
 2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* term/vt100.el:

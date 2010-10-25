@@ -542,8 +542,8 @@ of some cons making up LIST), this function is equivalent to
 	 (prog1
 	     (setq result (list (car list)))
 	   (while (and (setq list (cdr-safe list)) (not (eql list sublist)))
-	     (setf (cdr result) (if (consp list) (list (car list)) list)
-		   result (cdr result)
+	     (setcdr result (if (consp list) (list (car list)) list))
+	     (setq result (cdr result)
 		   evenp (not evenp))
 	     (if evenp (setq before (cdr before)))
 	     (if (eq before list) (error 'circular-list list)))))))
