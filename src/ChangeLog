@@ -1,5 +1,14 @@
 2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* specifier.c (specifier_instance_from_inst_list):
+	Call call_with_suspended_errors() with ERROR_ME_WARN, explicitly;
+	avoids the problem Giacomo Boffi describes in
+	http://mid.gmane.org/19617.52517.341117.388679@aiuole.stru.polimi.it
+	, but the specifier instantiation bug that makes XEmacs fail for
+	him is still visible.
+
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* print.c (ulong_to_bit_string): If printing zero, actually print
 	a zero, don't return the empty string.
 
