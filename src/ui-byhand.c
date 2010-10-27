@@ -369,7 +369,7 @@ Return a list of packing information (EXPAND FILL PACK_TYPE) for CHILD in NOTEBO
 
   if (!GTK_IS_NOTEBOOK (XGTK_OBJECT (notebook)->object))
     {
-      wtaerror ("Object is not a GtkLabel", notebook);
+      wtaerror ("Object is not a GtkNotebook", notebook);
     }
 
   if (!GTK_IS_WIDGET (XGTK_OBJECT (child)->object))

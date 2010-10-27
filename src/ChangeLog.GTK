@@ -1,3 +1,8 @@
+2010-10-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-byhand.c (Fgtk_notebook_query_tab_label_packing): Wrong type
+	in error message.
+
 2010-10-19  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (menu_descriptor_to_widget_1): Initialize
