@@ -184,19 +184,10 @@ This is an extremely rare thing to need to do in lisp."
 
 ;;; ----------------------------------------------------------------
 
-(defun bq-vector-contents (vec)
-  (let ((contents nil)
-	(n (length vec)))
-    (while (> n 0)
-      (setq n (1- n))
-      (setq contents (cons (aref vec n) contents)))
-    contents))
-
 ;;; This does the expansion from table 2.
 (defun bq-process-2 (code)
   (cond ((vectorp code)
-	 (let* ((dflag-d
-		 (bq-process-2 (bq-vector-contents code))))
+	 (let* ((dflag-d (bq-process-2 (append code nil))))
 	   (cons 'vector (bq-process-1 (car dflag-d) (cdr dflag-d)))))
 	((atom code)
 	 (cond ((null code) (cons nil nil))
@@ -278,26 +269,7 @@ This is an extremely rare thing to need to do in lisp."
 	 (list  'quote thing))
 	((eq flag 'vector)
 	 (list 'apply '(function vector) thing))
-	(t (cons (cdr
-		  (assq flag
-			'((cons . cons)
-			  (list* . bq-list*)
-			  (list . list)
-			  (append . append)
-			  (nconc . nconc))))
-		 thing))))
-
-;;; ----------------------------------------------------------------
-
-(defmacro bq-list* (&rest args)
-  "Return a list of its arguments with last cons a dotted pair."
-  (setq args (reverse args))
-  (let ((result (car args)))
-    (setq args (cdr args))
-    (while args
-      (setq result (list 'cons (car args) result))
-      (setq args (cdr args)))
-    result))
+	(t (cons flag thing))))
 
 (provide 'backquote)
 

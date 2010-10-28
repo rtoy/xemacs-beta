@@ -37,18 +37,9 @@
 
 ;; BEGIN SYNCHED WITH FSF 21.2
 
-;;; Code:
-(defvar custom-declare-variable-list nil
-  "Record `defcustom' calls made before `custom.el' is loaded to handle them.
-Each element of this list holds the arguments to one call to `defcustom'.")
+;; XEmacs; no need for custom-declare-variable-list, preloaded-file-list is
+;; ordered to make it unnecessary.
 
-;; Use this, rather than defcustom, in subr.el and other files loaded
-;; before custom.el.  See dumped-lisp.el.
-(defun custom-declare-variable-early (&rest arguments)
-  (setq custom-declare-variable-list
-	(cons arguments custom-declare-variable-list)))
-
-
 (defun macro-declaration-function (macro decl)
   "Process a declaration found in a macro definition.
 This is set as the value of the variable `macro-declaration-function'.
@@ -64,7 +55,20 @@ The return value of this function is not used."
 	   (message "Unknown declaration %s" d)))))
 
 (setq macro-declaration-function 'macro-declaration-function)
-
+
+;; XEmacs; this is here because we use it in backquote.el, so it needs to be
+;; available the first time a `(...) form is expanded.
+(defun list* (first &rest rest)   ; See compiler macro in cl-macs.el
+  "Return a new list with specified args as elements, cons'd to last arg.
+Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
+`(cons A (cons B (cons C D)))'."
+  (cond ((not rest) first)
+	((not (cdr rest)) (cons first (car rest)))
+	(t (let* ((n (length rest))
+		  (copy (copy-sequence rest))
+		  (last (nthcdr (- n 2) copy)))
+	     (setcdr last (car (cdr last)))
+	     (cons first copy)))))
 
 ;;;; Lisp language features.
 
@@ -1570,19 +1574,6 @@ properties to add to the result."
 
 (define-function 'eval-in-buffer 'with-current-buffer)
 (make-obsolete 'eval-in-buffer 'with-current-buffer)
-
-;;; The real defn is in abbrev.el but some early callers
-;;;  (eg lisp-mode-abbrev-table) want this before abbrev.el is loaded...
-
-(if (not (fboundp 'define-abbrev-table))
-    (progn
-      (setq abbrev-table-name-list '())
-      (fset 'define-abbrev-table
-	    (function (lambda (name defs)
-			;; These are fixed-up when abbrev.el loads.
-			(setq abbrev-table-name-list
-			      (cons (cons name defs)
-				    abbrev-table-name-list)))))))
 
 ;;; `functionp' has been moved into C.
 

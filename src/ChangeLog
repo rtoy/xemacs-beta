@@ -1,3 +1,49 @@
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c (specifier_instance_from_inst_list):
+	Call call_with_suspended_errors() with ERROR_ME_WARN, explicitly;
+	avoids the problem Giacomo Boffi describes in
+	http://mid.gmane.org/19617.52517.341117.388679@aiuole.stru.polimi.it
+	, but the specifier instantiation bug that makes XEmacs fail for
+	him is still visible.
+
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (ulong_to_bit_string): If printing zero, actually print
+	a zero, don't return the empty string.
+
+2010-07-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* emodules.c (emodules_load):
+	Add one more dereference on f = dll_variable() in three places.
+	We then use EXTERNAL_TO_ITEXT on it, which returns an alloca'd
+	string, so I delete the unneeded alloca copy statements.
+	Fixes error reported by Anders Odberg, confirmed in
+	<rfawrpfhm3l.fsf@fangorn.uio.no>.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ui-byhand.c:
+	* gtk-glue.c:
+	Add copyright notice based on internal evidence.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* number.h: Another permission consistency fix.
+
+2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fnbutlast, Fbutlast):
+	Tighten up Common Lisp compatibility for these two functions; they
+	need to operate on dotted lists without erroring.
+
+2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (list_merge):
+	Circularity checking here needs to be done independently for each
+	list, they can't share a loop counter. Thank you for the bug
+	report, Robert Pluim!
+
 2010-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (GET_DEFUN_LISP_OBJECT): Make the NEW_GC version of this

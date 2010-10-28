@@ -503,6 +503,10 @@ easily determined from the input file.")
 	     (cons 'progn body)))
     (the .
       ,#'(lambda (type form)
+	   (if (cl-const-expr-p form)
+	       (or (eval (cl-make-type-test form type))
+		   (byte-compile-warn
+		    "%s is not of type %s" form type)))
 	   (if byte-compile-delete-errors
 	       form
 	     (funcall (cdr (symbol-function 'the)) type form)))))
@@ -1389,7 +1393,7 @@ otherwise pop it")
 
 (defmacro byte-compile-constp (form)
   ;; Returns non-nil if FORM is a constant.
-  `(cond ((consp ,form) (eq (car ,form) 'quote))
+  `(cond ((consp ,form) (memq (car ,form) '(quote function)))
 	 ((symbolp ,form) (byte-compile-constant-symbol-p ,form))
 	 (t)))
 
@@ -2832,7 +2836,83 @@ If FORM is a lambda or a macro, byte-compile it as a function."
   (when for-effect
     (byte-compile-discard)))
 
+;; Generate the list of functions with keyword arguments like so:
+;; 
+;; (delete-duplicates
+;;  (sort*
+;;   (loop
+;;     for symbol being each symbol in obarray
+;;     with arglist = nil
+;;     if (and (fboundp symbol)
+;; 	    (ignore-errors (setq symbol (indirect-function symbol)))
+;; 	    (cond
+;; 	     ((and (subrp symbol) (setq symbol (intern (subr-name symbol)))))
+;; 	     ((and (compiled-function-p symbol)
+;; 		   (setq symbol (compiled-function-annotation symbol)))))
+;; 	    (setq arglist (function-arglist symbol))
+;; 	    (setq arglist (ignore-errors (read-from-string arglist)))
+;; 	    (setq arglist (car arglist))
+;; 	    (setq arglist (position '&key arglist)))
+;;     collect (cons symbol arglist))
+;;   #'string-lessp
+;;   :key #'car) :test #'eq :key #'car)
+;;
+;; That won't include those that take advantage of cl-seq.el's
+;; cl-parsing-keywords macro, but the below list does.
+
+(map nil
+     (function*
+      (lambda ((function . nargs))
+	;; Document that the car of OBJECT, a symbol, describes a function
+	;; taking keyword arguments from the argument index described by
+	;; the cdr of OBJECT.
+	(put function 'byte-compile-keyword-start nargs)))
+     '((adjoin . 3) (assoc* . 3) (assoc-if . 3) (assoc-if-not . 3)
+       (count . 3) (count-if . 3) (count-if-not . 3) (define-behavior . 3)
+       (define-behavior-group . 2) (delete* . 3) (delete-duplicates . 2)
+       (delete-if . 3) (delete-if-not . 3) (fill . 3) (find . 3) (find-if . 3)
+       (find-if-not . 3) (internal-make-translation-table . 1)
+       (make-Print-context . 1) (make-hash-table . 1) (make-saved-window . 1)
+       (make-window-configuration . 1) (member* . 3)
+       (member-if . 3) (member-if-not . 3) (merge . 5) (nsublis . 3)
+       (nsubst . 4) (nsubst-if . 4) (nsubst-if-not . 4) (nsubstitute . 4)
+       (nsubstitute-if . 4) (nsubstitute-if-not . 4) (override-behavior . 2)
+       (position . 3) (position-if . 3) (position-if-not . 3) (rassoc* . 3)
+       (rassoc-if . 3) (rassoc-if-not . 3) (reduce . 3) (remove* . 3)
+       (remove-duplicates . 2) (remove-if . 3) (remove-if-not . 3)
+       (replace . 3) (sort* . 3) (stable-sort . 3) (sublis . 3)
+       (subsetp . 3) (subst . 4) (subst-if . 4) (subst-if-not . 4)
+       (substitute . 4) (substitute-if . 4) (substitute-if-not . 4)
+       (tree-equal . 3)))
+
 (defun byte-compile-normal-call (form)
+  (and (get (car form) 'byte-compile-keyword-start)
+       (let ((plist (nthcdr (get (car form) 'byte-compile-keyword-start)
+			    form)))
+	 (symbol-macrolet
+	     ((not-present '#:not-present))
+	   (if (not (valid-plist-p plist))
+	       (byte-compile-warn
+		"#'%s: ill-formed keyword argument list: %S" (car form) plist)
+	     (and
+	      (memq 'callargs byte-compile-warnings)
+	      (map nil
+		   (function*
+		    (lambda ((function . nargs))
+		      (and (setq function (plist-get plist function
+						     not-present))
+			   (not (eq function not-present))
+			   (byte-compile-constp function)
+			   (byte-compile-callargs-warn
+			    (cons (eval function)
+				  (member*
+				   nargs
+				   ;; Dummy arguments. There's no need for
+				   ;; it to be longer than even 2, now, but
+				   ;; very little harm in it.
+				   '(9 8 7 6 5 4 3 2 1)))))))
+		   '((:key . 1) (:test . 2) (:test-not . 2)
+		     (:if . 1) (:if-not . 1))))))))
   (if byte-compile-generate-call-tree
       (byte-compile-annotate-call-tree form))
   (byte-compile-push-constant (car form))

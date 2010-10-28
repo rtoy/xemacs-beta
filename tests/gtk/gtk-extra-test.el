@@ -1,3 +1,7 @@
+;; gtk-extra-test.el --- test extra GTK widgets
+;;
+;; Copyright 2000, 2001 William Perry
+;;
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software: you can redistribute it and/or modify it

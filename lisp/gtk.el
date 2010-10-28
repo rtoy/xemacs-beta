@@ -1,3 +1,7 @@
+;; gtk.el --- provide information about GTK wrapping
+;;
+;; Copyright (C) 2000, 2001 William M. Perry
+;;
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software: you can redistribute it and/or modify it

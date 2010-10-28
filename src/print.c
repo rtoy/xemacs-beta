@@ -1337,6 +1337,12 @@ ulong_to_bit_string (char *p, unsigned long number)
             }
         }
     }
+
+  if (!seen_high_order)
+    {
+      *p++ = '0';
+    }
+
   *p = '\0';
 }
 

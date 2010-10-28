@@ -562,12 +562,7 @@ the wrong thing for you to be using: consider using the
 
 ;; BEGIN SYNCHED WITH FSF 21.2.
 
-(defvar read-quoted-char-radix 8
-  "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
-Legitimate radix values are 8, 10 and 16.")
-
-(custom-declare-variable-early
- 'read-quoted-char-radix 8 
+(defcustom read-quoted-char-radix 8 
  "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
 Legitimate radix values are 8, 10 and 16."
   :type '(choice (const 8) (const 10) (const 16))

@@ -13,6 +13,8 @@
 ;; Keywords: japanese, input method, LEIM
 ;; Last Modified: 1997/10/27 10:08:49
 
+;; This file is part of XEmacs.
+
 ;; XEmacs is free software: you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the
 ;; Free Software Foundation, either version 3 of the License, or (at your
