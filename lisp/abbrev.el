@@ -118,31 +118,12 @@ To undefine an abbrev, define it with an expansion of `nil'."
     (setplist sym (or count 0))
     name))
 
+(define-abbrev-table 'fundamental-mode-abbrev-table nil)
+(and (eq major-mode 'fundamental-mode)
+     (not local-abbrev-table)
+     (setq local-abbrev-table fundamental-mode-abbrev-table))
 
-;; Fixup stuff from bootstrap def of define-abbrev-table in subr.el
-(let ((l abbrev-table-name-list))
-  (while l
-    (let ((fixup (car l)))
-      (if (consp fixup)
-          (progn
-            (setq abbrev-table-name-list (delq fixup abbrev-table-name-list))
-            (define-abbrev-table (car fixup) (cdr fixup))))
-      (setq l (cdr l))))
-  ;; These are no longer initialized by C code
-  (if (not global-abbrev-table)
-      (progn
-        (setq global-abbrev-table (make-abbrev-table))
-        (setq abbrev-table-name-list (cons 'global-abbrev-table
-                                           abbrev-table-name-list))))
-  (if (not fundamental-mode-abbrev-table)
-      (progn
-        (setq fundamental-mode-abbrev-table (make-abbrev-table))
-        (setq abbrev-table-name-list (cons 'fundamental-mode-abbrev-table
-                                           abbrev-table-name-list))))
-  (and (eq major-mode 'fundamental-mode)
-       (not local-abbrev-table)
-       (setq local-abbrev-table fundamental-mode-abbrev-table)))
-
+(define-abbrev-table 'global-abbrev-table nil)
 
 (defun define-global-abbrev (name expansion)
   "Define ABBREV as a global abbreviation for EXPANSION."

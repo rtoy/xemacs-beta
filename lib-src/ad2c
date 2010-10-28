@@ -1,5 +1,9 @@
 #!/bin/sh
 #
+# Copyright (C) 1990, 1991 George Ferguson
+# Copyright (C) 1992 Charles Hannum
+# Copyright (C) 1992 Matthew Stier
+#
 #	ad2c : Convert app-defaults file to C strings decls.
 #
 #	George Ferguson, ferguson@cs.rcohester.edu, 12 Nov 1990.

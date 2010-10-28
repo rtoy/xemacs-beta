@@ -4,6 +4,8 @@ eval 'exec perl -w -S $0 ${1+"$@"}' # Portability kludge
 
 # config.values.sh --- create config.values.in from ../configure
 
+# Copyright (C) 1997, 1999 Martin Buchholz
+
 # Author:	Martin Buchholz
 # Maintainer:	Martin Buchholz
 # Keywords:	configure elisp report-xemacs-bugs

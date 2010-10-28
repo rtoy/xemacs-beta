@@ -1,3 +1,41 @@
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test format strings with %b, too.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/lisp-reader-tests.el:
+	Change references to SXEmacs to XEmacs.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gtk/xemacs-toolbar.el:
+	* gtk/toolbar-test.el:
+	* gtk/statusbar-test.el:
+	* gtk/gtk-extra-test.el:
+	* gtk/gtk-embedded-test.el:
+	* gtk/gnome-test.el:
+	* gtk/event-stream-tests.el:
+	Add copyright notice based on internal evidence.
+	
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-crashes.el: Amend "this file" to "XEmacs is free...".
+
+2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (x):
+	Test #'nbutlast, #'butlast with dotted lists.
+	Check that #'ldiff and #'tailp don't hang on circular lists; check
+	that #'tailp returns t with circular lists when that is
+	appropriate.  Test them both with dotted lists.
+
+2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Make sure circularity checking with #'merge is sane.
+
 2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
