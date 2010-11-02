@@ -1,3 +1,7 @@
+2010-11-02  Mats Lidell  <matsl@xemacs.org>
+
+	* netinstall: removed 
+
 2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* aclocal.m4: Add standard permission boilerplate.
