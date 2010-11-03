@@ -42,8 +42,4 @@ Boston, MA 02111-1307, USA.  */
 #include <pango/pangoxft.h>
 #endif
 
-#ifdef HAVE_GNOME
-#include <libgnomeui/libgnomeui.h>
-#endif
-
 #endif /* INCLUDED_sysgtk_h_ */
