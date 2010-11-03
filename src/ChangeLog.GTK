@@ -1,3 +1,8 @@
+2010-11-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BOUNDS): Remove HAVE_GNOME
+	code, which only worked for the top toolbar using GnomeApp.
+
 2010-11-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* config.h.in: libgnome and libgnomeui will be deprecated in GNOME
