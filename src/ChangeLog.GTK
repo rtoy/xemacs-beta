@@ -1,3 +1,18 @@
+2010-11-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* config.h.in: libgnome and libgnomeui will be deprecated in GNOME
+	3.0; remove HAVE_GNOME.
+
+	* toolbar-gtk.c (gtk_output_toolbar): Remove HAVE_GNOME code.
+
+	* sysgtk.h: Remove HAVE_GNOME code.
+
+	* menubar-gtk.c (create_menubar_widget): Remove HAVE_GNOME code.
+
+	* frame-gtk.c (gtk_create_widgets): Remove HAVE_GNOME code.
+
+	* device-gtk.c (Fgtk_init): Remove gnome_init().
+
 2010-10-27  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-byhand.c (Fgtk_notebook_query_tab_label_packing): Wrong type

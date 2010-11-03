@@ -238,7 +238,6 @@ things are arranged in config.h.in.  In particular:
 
 /* Defines for building Gtk applications */
 #undef HAVE_PANGO
-#undef HAVE_GNOME
 #undef HAVE_GTK
 #undef HAVE_GDK_IMLIB_INIT
 #undef HAVE_GLADE_GLADE_H

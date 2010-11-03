@@ -860,11 +860,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
     }
   else
     {
-#ifdef HAVE_GNOME
-      shell = GTK_WIDGET (gnome_app_new ("XEmacs", "XEmacs/GNOME"));
-#else
       shell = GTK_WIDGET (gtk_window_new (GTK_WINDOW_TOPLEVEL));
-#endif
     }
 
   if (!NILP (parent))

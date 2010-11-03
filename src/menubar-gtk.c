@@ -1060,14 +1060,7 @@ create_menubar_widget (struct frame *f)
   GUI_ID id = new_gui_id ();
   GtkWidget *menubar = gtk_xemacs_menubar_new (f);
 
-#ifdef HAVE_GNOME
-  if (GNOME_IS_APP (FRAME_GTK_SHELL_WIDGET (f)))
-    {
-      gnome_app_set_menus (GNOME_APP (FRAME_GTK_SHELL_WIDGET (f)), GTK_MENU_BAR (menubar));
-    }
-  else
-#endif
-    gtk_box_pack_start (GTK_BOX (FRAME_GTK_CONTAINER_WIDGET (f)), menubar, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (FRAME_GTK_CONTAINER_WIDGET (f)), menubar, FALSE, FALSE, 0);
 
   assert (g_signal_connect (G_OBJECT (menubar), "button-press-event",
                             GTK_SIGNAL_FUNC (run_menubar_hook), NULL));

@@ -232,14 +232,8 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
   x -= vert ? 3 : 2;
   y -= vert ? 2 : 3;
 
-#ifdef HAVE_GNOME
-  if (pos == TOP_EDGE && GNOME_IS_APP (FRAME_GTK_SHELL_WIDGET (f)))
-    gnome_app_set_toolbar (GNOME_APP (FRAME_GTK_SHELL_WIDGET (f)),
-                           GTK_TOOLBAR (FRAME_GTK_TOOLBAR_WIDGET (f)[pos]));
-  else
-#endif
-    gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
-                   GTK_WIDGET (FRAME_GTK_TOOLBAR_WIDGET (f)[pos]), x, y);
+  gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
+                 GTK_WIDGET (FRAME_GTK_TOOLBAR_WIDGET (f)[pos]), x, y);
 
   gtk_widget_show_all (GTK_WIDGET (FRAME_GTK_TOOLBAR_WIDGET (f)[pos]));
 }
