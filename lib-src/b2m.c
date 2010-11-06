@@ -1,12 +1,13 @@
 /*
  * b2m - a filter for Babyl -> Unix mail files
+ * The copyright on this file has been disclaimed.
  *
  * usage:	b2m < babyl > mailbox
  *
  * I find this useful whenever I have to use a
  * system which - shock horror! - doesn't run
- * Gnu emacs. At least now I can read all my
- * Gnumacs Babyl format mail files!
+ * GNU Emacs. At least now I can read all my
+ * GNU Emacs Babyl format mail files!
  *
  * it's not much but it's free!
  *
@@ -30,7 +31,8 @@
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
-#ifdef WIN32_NATIVE
+#include <getopt.h>
+#ifdef MSDOS
 #include <fcntl.h>
 #endif
 
@@ -39,19 +41,19 @@
 #undef FALSE
 #define FALSE	0
 
-/* Exit codes for success and failure.  */
-#ifdef VMS
-#define	GOOD	1
-#define BAD	0
-#else
-#define	GOOD	0
-#define	BAD	1
-#endif
-
 #define streq(s,t)	(strcmp (s, t) == 0)
 #define strneq(s,t,n)	(strncmp (s, t, n) == 0)
 
 typedef int logical;
+
+#define TM_YEAR_BASE 1900
+
+/* Nonzero if TM_YEAR is a struct tm's tm_year value that causes
+   asctime to have well-defined behavior.  */
+#ifndef TM_YEAR_IN_ASCTIME_RANGE
+# define TM_YEAR_IN_ASCTIME_RANGE(tm_year) \
+    (1000 - TM_YEAR_BASE <= (tm_year) && (tm_year) <= 9999 - TM_YEAR_BASE)
+#endif
 
 /*
  * A `struct linebuffer' is a structure which holds a line of text.
@@ -64,12 +66,10 @@ struct linebuffer
   char *buffer;
 };
 
-
-static long *xmalloc (unsigned int);
-static long *xrealloc (void *, unsigned int);
-static char *concat (char *s1, char *s2, char *s3);
-static long readline (struct linebuffer *, FILE *);
-static void fatal (char *);
+long *xmalloc (unsigned int), *xrealloc (char *, unsigned int);
+char *concat (char *, char *, char *);
+long readline (struct linebuffer *, register FILE *);
+void fatal (char *);
 
 /*
  * xnew -- allocate storage.  SYNOPSIS: Type *xnew (int n, Type);
@@ -80,31 +80,73 @@ static void fatal (char *);
 
 char *progname;
 
-int
-main (int argc, char *argv[])
+struct option longopts[] =
 {
-  logical labels_saved, printing, header;
+  { "help",			no_argument,	   NULL,     'h'   },
+  { "version",			no_argument,	   NULL,     'V'   },
+  { 0 }
+};
+
+extern int optind;
+
+int
+main (int argc, char **argv)
+{
+  logical labels_saved, printing, header, first, last_was_blank_line;
   time_t ltoday;
-  char *labels = NULL, *p, *today;
+  struct tm *tm;
+  char *labels, *p, *today;
   struct linebuffer data;
 
-#ifdef WIN32_NATIVE
+#ifdef MSDOS
   _fmode = O_BINARY;		/* all of files are treated as binary files */
+#if __DJGPP__ > 1
   if (!isatty (fileno (stdout)))
     setmode (fileno (stdout), O_BINARY);
   if (!isatty (fileno (stdin)))
     setmode (fileno (stdin), O_BINARY);
+#else /* not __DJGPP__ > 1 */
+  (stdout)->_flag &= ~_IOTEXT;
+  (stdin)->_flag &= ~_IOTEXT;
+#endif /* not __DJGPP__ > 1 */
 #endif
   progname = argv[0];
 
-  if (argc != 1)
+  while (1)
+    {
+      int opt = getopt_long (argc, argv, "hV", longopts, 0);
+      if (opt == EOF)
+	break;
+
+      switch (opt)
+	{
+	case 'V':
+	  printf ("%s (XEmacs %s)\n", "b2m", EMACS_VERSION);
+	  puts ("b2m is in the public domain.");
+	  exit (EXIT_SUCCESS);
+
+	case 'h':
+	  fprintf (stderr, "Usage: %s <babylmailbox >unixmailbox\n", progname);
+	  exit (EXIT_SUCCESS);
+	}
+    }
+
+  if (optind != argc)
     {
       fprintf (stderr, "Usage: %s <babylmailbox >unixmailbox\n", progname);
-      exit (GOOD);
+      exit (EXIT_SUCCESS);
     }
-  labels_saved = printing = header = FALSE;
+
+  labels_saved = printing = header = last_was_blank_line = FALSE;
+  first = TRUE;
   ltoday = time (0);
-  today = ctime (&ltoday);
+  /* Convert to a string, checking for out-of-range time stamps.
+     Don't use 'ctime', as that might dump core if the hardware clock
+     is set to a bizarre value.  */
+  tm = localtime (&ltoday);
+  if (! (tm && TM_YEAR_IN_ASCTIME_RANGE (tm->tm_year)
+	 && (today = asctime (tm))))
+    fatal ("current time is out of range");
   data.size = 200;
   data.buffer = xnew (200, char);
 
@@ -127,6 +169,10 @@ main (int argc, char *argv[])
 	    continue;
 	  else if (data.buffer[1] == '\f')
 	    {
+	      if (first)
+		first = FALSE;
+	      else if (! last_was_blank_line)
+		puts("");
 	      /* Save labels. */
 	      readline (&data, stdin);
 	      p = strtok (data.buffer, " ,\r\n\t");
@@ -152,9 +198,16 @@ main (int argc, char *argv[])
 	}
 
       if (printing)
-	puts (data.buffer);
+	{
+	  puts (data.buffer);
+	  if (data.buffer[0] == '\0')
+	    last_was_blank_line = TRUE;
+	  else
+	    last_was_blank_line = FALSE;
+	}
     }
-  return 0;
+
+  return EXIT_SUCCESS;
 }
 
 
@@ -163,7 +216,7 @@ main (int argc, char *argv[])
  * Return a newly-allocated string whose contents
  * concatenate those of s1, s2, s3.
  */
-static char *
+char *
 concat (char *s1, char *s2, char *s3)
 {
   int len1 = strlen (s1), len2 = strlen (s2), len3 = strlen (s3);
@@ -182,8 +235,9 @@ concat (char *s1, char *s2, char *s3)
  * Return the number of characters read from `stream',
  * which is the length of the line including the newline, if any.
  */
-static long
-readline (struct linebuffer *linebuffer, FILE *stream)
+long
+readline (struct linebuffer *linebuffer, register FILE *stream)
+
 {
   char *buffer = linebuffer->buffer;
   register char *p = linebuffer->buffer;
@@ -205,12 +259,13 @@ readline (struct linebuffer *linebuffer, FILE *stream)
 	}
       if (c == EOF)
 	{
+	  *p = '\0';
 	  chars_deleted = 0;
 	  break;
 	}
       if (c == '\n')
 	{
-	  if (p[-1] == '\r' && p > buffer)
+	  if (p > buffer && p[-1] == '\r')
 	    {
 	      *--p = '\0';
 	      chars_deleted = 2;
@@ -231,7 +286,7 @@ readline (struct linebuffer *linebuffer, FILE *stream)
 /*
  * Like malloc but get fatal error if memory is exhausted.
  */
-static long *
+long *
 xmalloc (unsigned int size)
 {
   long *result = (long *) malloc (size);
@@ -240,8 +295,8 @@ xmalloc (unsigned int size)
   return result;
 }
 
-static long *
-xrealloc (void *ptr, unsigned int size)
+long *
+xrealloc (char *ptr, unsigned int size)
 {
   long *result = (long *) realloc (ptr, size);
   if (result == NULL)
@@ -249,10 +304,11 @@ xrealloc (void *ptr, unsigned int size)
   return result;
 }
 
-static void
+void
 fatal (char *message)
 {
   fprintf (stderr, "%s: %s\n", progname, message);
-  exit (BAD);
+  exit (EXIT_FAILURE);
 }
 
+/* b2m.c ends here */
