@@ -1,3 +1,9 @@
+2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/lists.texi (Rearrangement, Building Lists):
+	Document that #'nreverse and #'reverse now accept sequences, not
+	just lists, in this file.
+
 2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/os.texi (Time Conversion):

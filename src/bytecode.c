@@ -251,21 +251,28 @@ bytecode_negate (Lisp_Object obj)
 }
 
 static Lisp_Object
-bytecode_nreverse (Lisp_Object list)
+bytecode_nreverse (Lisp_Object sequence)
 {
-  REGISTER Lisp_Object prev = Qnil;
-  REGISTER Lisp_Object tail = list;
-
-  while (!NILP (tail))
+  if (LISTP (sequence))
     {
-      REGISTER Lisp_Object next;
-      CHECK_CONS (tail);
-      next = XCDR (tail);
-      XCDR (tail) = prev;
-      prev = tail;
-      tail = next;
+      REGISTER Lisp_Object prev = Qnil;
+      REGISTER Lisp_Object tail = sequence;
+
+      while (!NILP (tail))
+	{
+	  REGISTER Lisp_Object next;
+	  CHECK_CONS (tail);
+	  next = XCDR (tail);
+	  XCDR (tail) = prev;
+	  prev = tail;
+	  tail = next;
+	}
+      return prev;
     }
-  return prev;
+  else
+    {
+      return Fnreverse (sequence);
+    }
 }
 
 

@@ -2092,43 +2092,161 @@ remrassq_no_quit (Lisp_Object value, Lisp_Object alist)
 }
 
 DEFUN ("nreverse", Fnreverse, 1, 1, 0, /*
-Reverse LIST by destructively modifying cdr pointers.
-Return the beginning of the reversed list.
-Also see: `reverse'.
-*/
-       (list))
-{
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object prev = Qnil;
-  Lisp_Object tail = list;
+Reverse SEQUENCE, destructively.
 
-  /* We gcpro our args; see `nconc' */
-  GCPRO2 (prev, tail);
-  while (!NILP (tail))
+Return the beginning of the reversed sequence, which will be a distinct Lisp
+object if SEQUENCE is a list with length greater than one.  See also
+`reverse', the non-destructive version of this function.
+*/
+       (sequence))
+{
+  CHECK_SEQUENCE (sequence);
+
+  if (CONSP (sequence))
     {
-      REGISTER Lisp_Object next;
-      CONCHECK_CONS (tail);
-      next = XCDR (tail);
-      XCDR (tail) = prev;
-      prev = tail;
-      tail = next;
+      struct gcpro gcpro1, gcpro2;
+      Lisp_Object prev = Qnil;
+      Lisp_Object tail = sequence;
+
+      /* We gcpro our args; see `nconc' */
+      GCPRO2 (prev, tail);
+      while (!NILP (tail))
+	{
+	  REGISTER Lisp_Object next;
+	  CONCHECK_CONS (tail);
+	  next = XCDR (tail);
+	  XCDR (tail) = prev;
+	  prev = tail;
+	  tail = next;
+	}
+      UNGCPRO;
+      return prev;
     }
-  UNGCPRO;
-  return prev;
+  else if (VECTORP (sequence))
+    {
+      Elemcount length = XVECTOR_LENGTH (sequence), ii = length;
+      Elemcount half = length / 2;
+      Lisp_Object swap = Qnil;
+
+      while (ii > half)
+	{
+	  swap = XVECTOR_DATA (sequence) [length - ii];
+	  XVECTOR_DATA (sequence) [length - ii]
+	    = XVECTOR_DATA (sequence) [ii - 1];
+	  XVECTOR_DATA (sequence) [ii - 1] = swap;
+	  --ii;
+	}
+    }
+  else if (STRINGP (sequence))
+    {
+      Elemcount length = XSTRING_LENGTH (sequence);
+      Ibyte *staging = alloca_ibytes (length), *staging_end = staging + length;
+      Ibyte *cursor = XSTRING_DATA (sequence), *endp = cursor + length;
+
+      while (cursor < endp)
+	{
+	  staging_end -= itext_ichar_len (cursor);
+	  itext_copy_ichar (cursor, staging_end);
+	  INC_IBYTEPTR (cursor);
+	}
+
+      assert (staging == staging_end);
+
+      memcpy (XSTRING_DATA (sequence), staging, length);
+      init_string_ascii_begin (sequence);
+      bump_string_modiff (sequence);
+      sledgehammer_check_ascii_begin (sequence);
+    }
+  else if (BIT_VECTORP (sequence))
+    {
+      Lisp_Bit_Vector *bv = XBIT_VECTOR (sequence);
+      Elemcount length = bit_vector_length (bv), ii = length;
+      Elemcount half = length / 2;
+      int swap = 0;
+
+      while (ii > half)
+	{
+	  swap = bit_vector_bit (bv, length - ii);
+	  set_bit_vector_bit (bv, length - ii, bit_vector_bit (bv, ii - 1));
+	  set_bit_vector_bit (bv, ii - 1, swap);
+	  --ii;
+	}
+    }
+  else 
+    {
+      assert (NILP (sequence));
+    }
+
+  return sequence;
 }
 
 DEFUN ("reverse", Freverse, 1, 1, 0, /*
-Reverse LIST, copying.  Return the beginning of the reversed list.
+Reverse SEQUENCE, copying.  Return the reversed sequence.
 See also the function `nreverse', which is used more often.
 */
-       (list))
+       (sequence))
 {
-  Lisp_Object reversed_list = Qnil;
-  EXTERNAL_LIST_LOOP_2 (elt, list)
+  Lisp_Object result = Qnil;
+
+  CHECK_SEQUENCE (sequence);
+
+  if (CONSP (sequence))
     {
-      reversed_list = Fcons (elt, reversed_list);
+      EXTERNAL_LIST_LOOP_2 (elt, sequence)
+	{
+	  result = Fcons (elt, result);
+	}
     }
-  return reversed_list;
+  else if (VECTORP (sequence))
+    {
+      Elemcount length = XVECTOR_LENGTH (sequence), ii = length;
+      Lisp_Object *staging = alloca_array (Lisp_Object, length);
+
+      while (ii > 0)
+	{
+	  staging[length - ii] = XVECTOR_DATA (sequence) [ii - 1];
+	  --ii;
+	}
+
+      result = Fvector (length, staging);
+    }
+  else if (STRINGP (sequence))
+    {
+      Elemcount length = XSTRING_LENGTH (sequence);
+      Ibyte *staging = alloca_ibytes (length), *staging_end = staging + length;
+      Ibyte *cursor = XSTRING_DATA (sequence), *endp = cursor + length;
+
+      while (cursor < endp)
+	{
+	  staging_end -= itext_ichar_len (cursor);
+	  itext_copy_ichar (cursor, staging_end);
+	  INC_IBYTEPTR (cursor);
+	}
+
+      assert (staging == staging_end);
+
+      result = make_string (staging, length);
+    }
+  else if (BIT_VECTORP (sequence))
+    {
+      Lisp_Bit_Vector *bv = XBIT_VECTOR (sequence), *res;
+      Elemcount length = bit_vector_length (bv), ii = length;
+
+      result = make_bit_vector (length, Qzero);
+      res = XBIT_VECTOR (result);
+
+      while (ii > 0)
+	{
+	  set_bit_vector_bit (res, length - ii, bit_vector_bit (bv, ii - 1));
+	  --ii;
+	}
+    }
+  else 
+    {
+      assert (NILP (sequence));
+    }
+
+  return result;
 }
 
 static Lisp_Object

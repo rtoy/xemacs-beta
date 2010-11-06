@@ -1,5 +1,12 @@
 2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecode.c (bytecode_nreverse): Call Fnreverse() if SEQUENCE is
+	not a cons in this function.
+	(Fnreverse, Freverse):
+	Accept sequences, not just lists, in these functions.
+
+2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fns.c (Flist_length): Error if LIST is dotted in this function;
 	document this behaviour.
 
