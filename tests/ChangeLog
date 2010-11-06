@@ -1,5 +1,11 @@
 2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/lisp-tests.el (list-nreverse):
+	Check that #'reverse and #'nreverse handle non-list sequences
+	properly.
+
+2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* automated/lisp-tests.el (malformed-list): Check that #'mapcar,
 	#'map and #'list-length throw this error when appropriate.
 

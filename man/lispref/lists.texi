@@ -655,9 +655,9 @@ proper way to convert an integer to a decimal number in this way is with
 (@pxref{String Conversion}).
 @end defun
 
-@defun reverse list
-This function creates a new list whose elements are the elements of
-@var{list}, but in reverse order.  The original argument @var{list} is
+@defun reverse sequence
+This function creates a new sequence whose elements are the elements of
+@var{sequence}, but in reverse order.  The original argument @var{sequence} is
 @emph{not} altered.
 
 @example
@@ -998,13 +998,14 @@ each time you run it!  Here is what happens:
 @end smallexample
 @end defun
 
-@defun nreverse list
+@defun nreverse sequence
 @cindex reversing a list
-  This function reverses the order of the elements of @var{list}.
-Unlike @code{reverse}, @code{nreverse} alters its argument by reversing
-the @sc{cdr}s in the cons cells forming the list.  The cons cell that
-used to be the last one in @var{list} becomes the first cell of the
-value.
+@cindex reversing a sequence
+  This function reverses the order of the elements of @var{sequence}.
+Unlike @code{reverse}, @code{nreverse} alters its argument.  If
+@var{sequence} is a list, it does this by reversing the @sc{cdr}s in the
+cons cells forming the sequence.  The cons cell that used to be the last
+one in @var{sequence} becomes the first cell of the value.
 
   For example:
 
@@ -1027,7 +1028,7 @@ x
 @end example
 
   To avoid confusion, we usually store the result of @code{nreverse}
-back in the same variable which held the original list:
+back in the same variable which held the original sequence:
 
 @example
 (setq x (nreverse x))
