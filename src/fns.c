@@ -345,6 +345,7 @@ which is at least the number of distinct elements.
 
 DEFUN ("list-length", Flist_length, 1, 1, 0, /*
 Return the length of LIST.  Return nil if LIST is circular.
+Error if LIST is dotted.
 */
        (list))
 {
@@ -357,6 +358,11 @@ Return the length of LIST.  Return nil if LIST is circular.
     {
       if (len & 1)
 	tortoise = XCDR (tortoise);
+    }
+
+  if (!LISTP (hare))
+    {
+      signal_malformed_list_error (list);
     }
 
   return EQ (hare, tortoise) && len != 0 ? Qnil : make_int (len);

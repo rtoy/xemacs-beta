@@ -1040,6 +1040,12 @@
  1)
  "checking multiple values are correctly discarded in mapcar")
 
+(let ((malformed-list '(1 2 3 4 hi there . tail)))
+  (Check-Error malformed-list (mapcar #'identity malformed-list))
+  (Check-Error malformed-list (map nil #'eq [1 2 3 4]
+				   malformed-list))
+  (Check-Error malformed-list (list-length malformed-list)))
+
 ;;-----------------------------------------------------
 ;; Test vector functions
 ;;-----------------------------------------------------
