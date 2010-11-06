@@ -1,3 +1,9 @@
+2010-10-30  Mats Lidell  <matsl@xemacs.org>
+
+	* unicode/COPYING: 
+	* unicode/ibm/COPYING:
+	New files.
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* unicode/other/lao.txt:
