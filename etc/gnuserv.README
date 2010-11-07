@@ -2,6 +2,8 @@
 This file was never meant to be proper documentation, and now is bitrotted.
 See the file gnuserv.1 and/or the sources for more information.
 
+Copyright (C) 1998 Andy Norman, Bob Weiner, Darrell Kindred, 
+                   Arup Mukherjee, Ben Wing and Hrvoje Niksic.
 
 This file is part of XEmacs.
 
