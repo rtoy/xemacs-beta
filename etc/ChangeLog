@@ -1,3 +1,9 @@
+2010-11-07  Mats Lidell  <matsl@xemacs.org>
+	
+	* gnuserv.1: 
+	* gnuserv.README: 
+	Added copyright dated 1998.
+
 2010-10-30  Mats Lidell  <matsl@xemacs.org>
 
 	* unicode/COPYING: 
