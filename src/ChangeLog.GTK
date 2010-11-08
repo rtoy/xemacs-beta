@@ -1,3 +1,9 @@
+2010-11-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status): Remove
+	old code to avoid flickering.  It actually causes flickering in
+	gtk 2.28.
+
 2010-10-19  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gui.c (gui_item_value): Disable error check to avoid errors.
