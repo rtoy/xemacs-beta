@@ -1,3 +1,9 @@
+2010-11-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status): Remove
+	old code to avoid flickering.  It actually causes flickering in
+	gtk 2.28.
+
 2010-11-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BOUNDS): Remove HAVE_GNOME

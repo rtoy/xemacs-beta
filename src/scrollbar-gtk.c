@@ -203,94 +203,34 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
   if (active && size)
     {
       if (instance->scrollbar_instance_changed)
-	{
-	  /* Need to set the height, width, and position of the widget */
-	  GtkAdjustment *adj = gtk_range_get_adjustment (GTK_RANGE (wid));
-	  scrollbar_values *pos_data = & SCROLLBAR_GTK_POS_DATA (instance);
-	  int modified_p = 0;
-          gboolean valued_changed = 0;
+        {
+          /* Need to set the height, width, and position of the widget */
+          GtkAdjustment *adj = gtk_range_get_adjustment (GTK_RANGE (wid));
+          scrollbar_values *pos_data = & SCROLLBAR_GTK_POS_DATA (instance);
 
-	  /* We do not want to update the size all the time if we can
-             help it.  This cuts down on annoying flicker.
-	  */
-	  if ((wid->allocation.width != pos_data->scrollbar_width) ||
-	      (wid->allocation.height != pos_data->scrollbar_height))
-	    {
-	      gtk_widget_set_size_request (wid,
-				    pos_data->scrollbar_width,
-				    pos_data->scrollbar_height);
+          gtk_widget_set_size_request (wid,
+                                       pos_data->scrollbar_width,
+                                       pos_data->scrollbar_height);
 
-	      /*
-		UGLY! UGLY! UGLY!  Changes to wid->allocation are queued and
-		not performed until the GTK event loop.  However, when the
-		fontlock progress bar is run, the vertical scrollbar's height
-		is change and then changed back before events are again
-		processed.  This means that the change back is not seen and
-		the scrollbar is left too short.  Fix this by making the
-		change manually so the test above sees the change.  This does
-		not seem to cause problems in other cases.
-	       */
-
-	      wid->allocation.width = pos_data->scrollbar_width;
-	      wid->allocation.height = pos_data->scrollbar_height;
-
-	      modified_p = 1;
-	    }
-
-	  /* Ditto for the x/y position. */
-	  if ((wid->allocation.x != pos_data->scrollbar_x) ||
-	      (wid->allocation.y != pos_data->scrollbar_y))
-	    {
-	      gtk_fixed_move (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
-			      wid,
-			      pos_data->scrollbar_x,
-			      pos_data->scrollbar_y);
-
-	      /*
-		UGLY! UGLY! UGLY!  Changes to wid->allocation are queued and
-		not performed until the GTK event loop.  However, when the
-		fontlock progress bar is run, the horizontal scrollbar's
-		position is change and then changed back before events are
-		again processed.  This means that the change back is not seen
-		and the scrollbar is left in the wrong position.  Fix this by
-		making the change manually so the test above sees the change.
-		This does not seem to cause problems in other cases.
-	       */
-
-	      wid->allocation.x = pos_data->scrollbar_x;
-	      wid->allocation.y = pos_data->scrollbar_y;
-
-	      modified_p = 1;
-	    }
-
-	  adj->lower = pos_data->minimum;
-	  adj->upper = pos_data->maximum;
-	  adj->page_increment = pos_data->slider_size + 1;
-	  adj->step_increment = w->max_line_len - 1;
-	  adj->page_size = pos_data->slider_size + 1;
+          gtk_fixed_move (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
+                          wid,
+                          pos_data->scrollbar_x,
+                          pos_data->scrollbar_y);
+      
+          adj->lower = pos_data->minimum;
+          adj->upper = pos_data->maximum;
+          adj->page_increment = pos_data->slider_size + 1;
+          adj->step_increment = w->max_line_len - 1;
+          adj->page_size = pos_data->slider_size + 1;
+          
           if (adj->value != pos_data->slider_position)
             {
               adj->value = pos_data->slider_position;
-              valued_changed = 1;
             }
 
-	  /* But, if we didn't resize or move the scrollbar, the
-             widget will not get redrawn correctly when the user
-             scrolls around in the XEmacs frame manually.  So we
-             update the slider manually here.
-	  */
-	  if (modified_p)
-            {
-              gtk_adjustment_changed (adj);
-            }
-          else 
-            {
-              gtk_range_set_adjustment (GTK_RANGE (wid), adj);
-              gtk_adjustment_value_changed (adj);
-            }
-          
-	  instance->scrollbar_instance_changed = 0;
-	}
+          gtk_adjustment_changed (adj);
+          instance->scrollbar_instance_changed = 0;
+        }
 
       if (!managed)
 	{
