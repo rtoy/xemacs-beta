@@ -3270,7 +3270,6 @@ surrounded by (block NAME ...)."
 (defun cl-non-fixnum-number-p (object)
   (and (numberp object) (not (fixnump object))))
 
-(put 'eql 'byte-compile nil)
 (define-compiler-macro eql (&whole form a b)
   (cond ((eq (cl-const-expr-p a) t)
 	 (let ((val (cl-const-expr-val a)))
@@ -3282,15 +3281,6 @@ surrounded by (block NAME ...)."
 	   (if (cl-non-fixnum-number-p val)
 	       (list 'equal a b)
 	     (list 'eq a b))))
-	((cl-simple-expr-p a 5)
-	 (list 'if (list 'numberp a)
-	       (list 'equal a b)
-	       (list 'eq a b)))
-	((and (cl-safe-expr-p a)
-	      (cl-simple-expr-p b 5))
-	 (list 'if (list 'numberp b)
-	       (list 'equal a b)
-	       (list 'eq a b)))
 	(t form)))
 
 (macrolet
