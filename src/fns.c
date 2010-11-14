@@ -214,9 +214,10 @@ Return the argument unchanged.
 DEFUN ("random", Frandom, 0, 1, 0, /*
 Return a pseudo-random number.
 All fixnums are equally likely.  On most systems, this is 31 bits' worth.
-With positive integer argument N, return random number in interval [0,N).
-N can be a bignum, in which case the range of possible values is extended.
-With argument t, set the random number seed from the current time and pid.
+With positive integer argument LIMIT, return random number in interval [0,
+LIMIT).  LIMIT can be a bignum, in which case the range of possible values
+is extended.  With argument t, set the random number seed from the current
+time and pid.
 */
        (limit))
 {

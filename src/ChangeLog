@@ -1,3 +1,8 @@
+2010-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Frandom): Correct the docstring here, the name of the
+	argument is LIMIT, not N.
+
 2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecode.c (bytecode_nreverse): Call Fnreverse() if SEQUENCE is
