@@ -1,3 +1,17 @@
+2010-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (eql): Don't remove the byte-compile property of this
+	symbol. That was necessary to override a bug in bytecomp.el where
+	#'eql was confused with #'eq, which bug we no longer have.
+	If neither expression is constant, don't attempt to handle the
+	expression in this compiler macro, leave it to byte-compile-eql,
+	which produces better code anyway.
+	* bytecomp.el (eq): #'eql is not the function associated with the
+	byte-eq byte code.
+	(byte-compile-eql): Add an explicit compile method for this
+	function, for cases where the cl-macs compiler macro hasn't
+	reduced it to #'eq or #'equal.
+
 2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Add compiler macros and compilation sanity-checking for various
