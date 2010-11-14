@@ -1108,11 +1108,12 @@ not copy extent data.
           sequence = Fnthcdr (make_int (ss), sequence);
         }
 
+      ii = ss + 1;
+
       if (ss < ee && !NILP (sequence))
         {
 	  result = result_tail = Fcons (Fcar (sequence), Qnil);
 	  sequence = Fcdr (sequence);
-	  ii = ss + 1;
 
 	  {
 	    EXTERNAL_LIST_LOOP_2 (elt, sequence)
@@ -2128,6 +2129,7 @@ object if SEQUENCE is a list with length greater than one.  See also
       Elemcount length = XVECTOR_LENGTH (sequence), ii = length;
       Elemcount half = length / 2;
       Lisp_Object swap = Qnil;
+      CHECK_LISP_WRITEABLE (sequence);
 
       while (ii > half)
 	{
@@ -2144,6 +2146,7 @@ object if SEQUENCE is a list with length greater than one.  See also
       Ibyte *staging = alloca_ibytes (length), *staging_end = staging + length;
       Ibyte *cursor = XSTRING_DATA (sequence), *endp = cursor + length;
 
+      CHECK_LISP_WRITEABLE (sequence);
       while (cursor < endp)
 	{
 	  staging_end -= itext_ichar_len (cursor);
@@ -2165,6 +2168,7 @@ object if SEQUENCE is a list with length greater than one.  See also
       Elemcount half = length / 2;
       int swap = 0;
 
+      CHECK_LISP_WRITEABLE (sequence);
       while (ii > half)
 	{
 	  swap = bit_vector_bit (bv, length - ii);
@@ -4450,7 +4454,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 {
   Lisp_Object called, *args;
   struct gcpro gcpro1, gcpro2;
-  Ibyte *lisp_vals_staging, *cursor;
+  Ibyte *lisp_vals_staging = NULL, *cursor = NULL;
   int i, j;
 
   assert ((EQ (caller, Qsome) || EQ (caller, Qevery)) ? vals == NULL : 1);
@@ -4497,7 +4501,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
     }
   else
     {
-      enum lrecord_type lisp_vals_type;
+      enum lrecord_type lisp_vals_type = lrecord_type_symbol;
       Binbyte *sequence_types = alloca_array (Binbyte, nsequences);
       for (j = 0; j < nsequences; ++j)
 	{
@@ -4516,6 +4520,10 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 	      lisp_vals_staging = cursor
 		= alloca_ibytes (call_count * MAX_ICHAR_LEN);
 	    }
+          else if (ARRAYP (lisp_vals))
+            {
+              CHECK_LISP_WRITEABLE (lisp_vals);
+            }
         }
 
       for (i = 0; i < call_count; ++i)
@@ -4641,9 +4649,9 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
             }
 	}
 
-      if (!EQ (caller, Qsome) && !EQ (caller, Qevery) &&
-	  lrecord_type_string == lisp_vals_type)
+      if (lisp_vals_staging != NULL)
 	{
+          CHECK_LISP_WRITEABLE (lisp_vals);
 	  replace_string_range (lisp_vals, Qzero, make_int (call_count),
 				lisp_vals_staging, cursor);
 	}
@@ -4659,7 +4667,7 @@ static Elemcount
 shortest_length_among_sequences (int nsequences, Lisp_Object *sequences)
 {
   Elemcount len = EMACS_INT_MAX;
-  Lisp_Object length;
+  Lisp_Object length = Qnil;
   int i;
 
   for (i = 0; i < nsequences; ++i)
@@ -4953,6 +4961,10 @@ If so, return the value (possibly multiple) given by PREDICATE.
 With optional SEQUENCES, call PREDICATE each time with as many arguments as
 there are SEQUENCES (plus one for the element from SEQUENCE).
 
+See also `find-if', which returns the corresponding element of SEQUENCE,
+rather than the value given by PREDICATE, and accepts bounding index
+keywords.
+
 arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
 */
        (int nargs, Lisp_Object *args))
@@ -5205,10 +5217,13 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
   if (VECTORP (sequence))
     {
       Lisp_Vector *vv = XVECTOR (sequence);
+      struct gcpro gcpro1;
 
       check_sequence_range (sequence, start, end, make_int (vv->size));
 
       ending = min (ending, vv->size);
+
+      GCPRO1 (accum);
 
       if (!UNBOUNDP (initial_value))
         {
@@ -5242,14 +5257,18 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
               accum = CALL2 (function, KEY (key, vv->contents[ii]), accum);
             }
         }
+
+      UNGCPRO;
     }
   else if (BIT_VECTORP (sequence))
     {
       Lisp_Bit_Vector *bv = XBIT_VECTOR (sequence);
+      struct gcpro gcpro1;
 
       check_sequence_range (sequence, start, end, make_int (bv->size));
-
       ending = min (ending, bv->size);
+
+      GCPRO1 (accum);
 
       if (!UNBOUNDP (initial_value))
         {
@@ -5287,9 +5306,16 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
                              accum);
             }
         }
+
+      UNGCPRO;
+
     }
   else if (STRINGP (sequence))
     {
+      struct gcpro gcpro1;
+
+      GCPRO1 (accum);
+
       if (NILP (from_end))
         {
           Bytecount byte_len = XSTRING_LENGTH (sequence);
@@ -5307,7 +5333,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
             {
               accum = initial_value;
             }
-          else if (ending - starting)
+          else if (ending - starting && cursor_offset < byte_len)
             {
               accum = KEY (key, make_char (itext_ichar (cursor)));
               starting++;
@@ -5322,6 +5348,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 
               INC_IBYTEPTR (cursor);
               cursor_offset = cursor - startp;
+	      ii++;
             }
 
           while (cursor_offset < byte_len && ii < ending)
@@ -5346,7 +5373,6 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 	  if (ii < starting || (ii < ending && !NILP (end)))
 	    {
 	      check_sequence_range (sequence, start, end, Flength (sequence));
-	      ABORT ();
 	    }
         }
       else
@@ -5356,7 +5382,6 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
           const Ibyte *cursor;
 
 	  check_sequence_range (sequence, start, end, make_int (len));
-
           ending = min (ending, len);
           cursor = string_char_addr (sequence, ending - 1);
           cursor_offset = cursor - XSTRING_DATA (sequence);
@@ -5403,15 +5428,17 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
                 }
             }
         }
+
+      UNGCPRO;
     }
   else if (LISTP (sequence))
     {
       if (NILP (from_end))
         {
-	  struct gcpro gcpro1;
+	  struct gcpro gcpro1, gcpro2;
 	  Lisp_Object tailed = Qnil;
 
-	  GCPRO1 (tailed);
+	  GCPRO2 (tailed, accum);
 
           if (!UNBOUNDP (initial_value))
             {
@@ -5464,7 +5491,6 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 	  if (ii < starting || (ii < ending && !NILP (end)))
 	    {
 	      check_sequence_range (sequence, start, end, Flength (sequence));
-	      ABORT ();
 	    }
         }
       else
@@ -5930,12 +5956,12 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
       if (NILP (sequence1))
         {
-          check_sequence_range (sequence1, start1, end1,
+          check_sequence_range (args[0], start1, end1,
                                 make_int (XINT (start1) + shortest_len));
         }
       else if (NILP (sequence2))
         {
-          check_sequence_range (sequence2, start2, end2,
+          check_sequence_range (args[1], start2, end2,
                                 make_int (XINT (start2) + shortest_len));
         }
     }
@@ -5998,7 +6024,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
           if (NILP (sequence1))
             {
-              check_sequence_range (sequence1, start1, end1,
+              check_sequence_range (args[0], start1, end1,
                                     make_int (XINT (start1) + starting1));
             }
         }
@@ -6055,7 +6081,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
           if (NILP (sequence2))
             {
-              check_sequence_range (sequence2, start2, end2,
+              check_sequence_range (args[1], start2, end2,
                                     make_int (XINT (start2) + starting2));
             }
         }
