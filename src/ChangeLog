@@ -1,3 +1,9 @@
+2010-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* .gdbinit.in: Remove lrecord_type_popup_data,
+	lrecord_type_window_configuration from this file, they're not
+	used, and their presence breaks pobj in GDB at runtime for me.
+
 2010-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Fnreverse):
