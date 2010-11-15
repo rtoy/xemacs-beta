@@ -409,9 +409,6 @@ define pobj
   if $lrecord_type == lrecord_type_opaque_ptr
     pptype Lisp_Opaque_Ptr
   else
-  if $lrecord_type == lrecord_type_popup_data
-    pptype popup_data
-  else
   if $lrecord_type == lrecord_type_process
     pptype Lisp_Process
   else
@@ -454,9 +451,6 @@ define pobj
   if $lrecord_type == lrecord_type_window
     pstructtype window
   else
-  if $lrecord_type == lrecord_type_window_configuration
-    pstructtype window_config
-  else
   if $lrecord_type == lrecord_type_fc_pattern
     pstructtype fc_pattern
   else
@@ -468,8 +462,6 @@ define pobj
   ## Barf, gag, retch
   end
   end 
-  end
-  end
   end
   end
   end
