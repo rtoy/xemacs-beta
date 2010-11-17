@@ -3116,6 +3116,8 @@ The type name can then be used in `typecase', `check-type', etc."
 			 (cdr type))))
 	  ((memq (car-safe type) '(member member*))
 	   (list 'and (list 'member* val (list 'quote (cdr type))) t))
+	  ((eq (car-safe type) 'eql)
+	   (list 'eql (cadr type) val))
 	  ((eq (car-safe type) 'satisfies) (list (cadr type) val))
 	  (t (error "Bad type spec: %s" type)))))
 

@@ -53,47 +53,67 @@
 
 ;;; Type coercion.
 
-(defun coerce (x type)
+(defun coerce (object type)
   "Coerce OBJECT to type TYPE.
 TYPE is a Common Lisp type specifier."
-  (cond ((eq type 'list) (if (listp x) x (append x nil)))
-	((eq type 'vector) (if (vectorp x) x (vconcat x)))
-	((eq type 'string) (if (stringp x) x (concat x)))
-	((eq type 'array) (if (arrayp x) x (vconcat x)))
-	((and (eq type 'character) (stringp x) (= (length x) 1)) (aref x 0))
-	((and (eq type 'character) (symbolp x)) (coerce (symbol-name x) type))
+  (cond ((eq type 'list) (if (listp object) object (append object nil)))
+	((eq type 'vector) (if (vectorp object) object (vconcat object)))
+	((eq type 'string) (if (stringp object) object (concat object)))
+	((eq type 'array) (if (arrayp object) object (vconcat object)))
+	((and (eq type 'character) (stringp object)
+	      (eql (length object) 1)) (aref object 0))
+	((and (eq type 'character) (symbolp object))
+	 (coerce (symbol-name object) type))
 	;; XEmacs addition character <-> integer coercions
-	((and (eq type 'character) (char-int-p x)) (int-char x))
-	((and (memq type '(integer fixnum)) (characterp x)) (char-int x))
-	((eq type 'float) (float x))
+	((and (eq type 'character) (char-int-p object)) (int-char object))
+	((and (memq type '(integer fixnum)) (characterp object))
+	 (char-int object))
+	((eq type 'float) (float object))
 	;; XEmacs addition: enhanced numeric type coercions
 	((and-fboundp 'coerce-number
 	   (memq type '(integer ratio bigfloat fixnum))
-	   (coerce-number x type)))
+	   (coerce-number object type)))
 	;; XEmacs addition: bit-vector coercion
 	((or (eq type 'bit-vector)
 	     (eq type 'simple-bit-vector))
-	 (if (bit-vector-p x) x (apply 'bit-vector (append x nil))))
+	 (if (bit-vector-p object)
+	     object
+	   (apply 'bit-vector (append object nil))))
 	;; XEmacs addition: weak-list coercion
 	((eq type 'weak-list)
-	 (if (weak-list-p x) x
+	 (if (weak-list-p object) object
 	   (let ((wl (make-weak-list)))
-	     (set-weak-list-list wl (if (listp x) x (append x nil)))
+	     (set-weak-list-list wl (if (listp object)
+					object
+				      (append object nil)))
 	     wl)))
 	((and
-	  (consp type)
-	  (or (eq (car type) 'vector)
-	      (eq (car type) 'simple-array)
-	      (eq (car type) 'simple-vector))
-	  (cond
-	   ((equal (cdr-safe type) '(*))
-	    (coerce x 'vector))
-	   ((equal (cdr-safe type) '(bit))
-	    (coerce x 'bit-vector))
-	   ((equal (cdr-safe type) '(character))
-	    (coerce x 'string)))))
-	((typep x type) x)
-	(t (error "Can't coerce %s to type %s" x type))))
+	  (memq (car-safe type) '(vector simple-array))
+	  (loop
+	    for (ignore elements length) = type
+	    initially (declare (special ignore))
+	    return (if (or (memq length '(* nil)) (eql length (length object)))
+		       (cond
+			((memq elements '(t * nil))
+			 (coerce object 'vector))
+			((memq elements '(string-char character))
+			 (coerce object 'string))
+			((eq elements 'bit)
+			 (coerce object 'bit-vector)))
+		     (error 
+		      'wrong-type-argument
+		      "Type specifier length must equal sequence length"
+		      type)))))
+	((eq (car-safe type) 'simple-vector)
+	 (coerce object (list* 'vector t (cdr type))))
+	((memq (car-safe type)
+	       '(string simple-string base-string simple-base-string))
+	 (coerce object (list* 'vector 'character (cdr type))))
+	((eq (car-safe type) 'bit-vector)
+	 (coerce object (list* 'vector 'bit (cdr type))))
+	((typep object type) object)
+	(t (error 'invalid-operation
+		  "Can't coerce object to type" object type))))
 
 ;; XEmacs; #'equalp is in C.
 
