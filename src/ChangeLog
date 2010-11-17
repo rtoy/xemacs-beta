@@ -1,3 +1,11 @@
+2010-11-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (bignum_butlast): New.
+	(Fnbutlast, Fbutlast): Use it.
+	In #'butlast and #'nbutlast, if N is a bignum, we should always
+	return nil. Bug revealed by Paul Dietz' test suite, thank you
+	Paul.
+
 2010-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* .gdbinit.in: Remove lrecord_type_popup_data,
