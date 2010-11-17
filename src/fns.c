@@ -1576,6 +1576,9 @@ If N is greater than the length of LIST, then LIST itself is returned.
   return retval;
 }
 
+static Lisp_Object bignum_butlast (Lisp_Object list, Lisp_Object number,
+                                   Boolint copy);
+
 DEFUN ("nbutlast", Fnbutlast, 1, 2, 0, /*
 Modify LIST to remove the last N (default 1) elements.
 
@@ -1590,6 +1593,11 @@ Otherwise, LIST may be dotted, but not circular.
 
   if (!NILP (n))
     {
+      if (BIGNUMP (n))
+        {
+          return bignum_butlast (list, n, 0);
+        }
+
       CHECK_NATNUM (n);
       int_n = XINT (n);
     }
@@ -1638,6 +1646,11 @@ converts a dotted into a true list.
 
   if (!NILP (n))
     {
+      if (BIGNUMP (n))
+        {
+          return bignum_butlast (list, n, 1);
+        }
+
       CHECK_NATNUM (n);
       int_n = XINT (n);
     }
@@ -1671,6 +1684,42 @@ converts a dotted into a true list.
     }
 
   return retval;
+}
+
+/* This is sufficient to implement #'butlast and #'nbutlast with bignum N
+   under XEmacs, because #'list-length and #'safe-length can never return a
+   bignum. This means that #'nbutlast never has to modify and #'butlast
+   never has to copy. */
+static Lisp_Object
+bignum_butlast (Lisp_Object list, Lisp_Object number, Boolint copy)
+{
+  Boolint malformed = EQ (Fsafe_length (list), Qzero);
+  Boolint circular = !malformed && EQ (Flist_length (list), Qnil);
+
+  assert (BIGNUMP (number));
+
+#ifdef HAVE_BIGNUM
+
+  if (bignum_sign (XBIGNUM_DATA (number)) < 0)
+    {
+      dead_wrong_type_argument (Qnatnump, number);
+    }
+
+  number = Fcanonicalize_number (number);
+
+  if (INTP (number))
+    {
+      return copy ? Fbutlast (list, number) : Fnbutlast (list, number);
+    }
+
+#endif
+
+  if (circular)
+    {
+      signal_circular_list_error (list);
+    }
+
+  return Qnil;
 }
 
 DEFUN ("member", Fmember, 2, 2, 0, /*
