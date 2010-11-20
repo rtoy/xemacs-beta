@@ -1093,8 +1093,15 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      maybe_error_if_job_active (f);
 	      if (!NILP (val))
 		{
-		  CHECK_NATNUM (val);
-		  FRAME_MSPRINTER_CHARWIDTH (f) = XINT (val);
+#ifdef HAVE_BIGNUM
+                  check_integer_range (val, Qzero, make_integer (INT_MAX));
+		  FRAME_MSPRINTER_CHARWIDTH (f) =
+                    BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                    XINT (val);
+#else
+                  CHECK_NATNUM (val);
+                  FRAME_MSPRINTER_CHARWIDTH (f) = XINT (val);
+#endif
 		}
 	    }
 	  if (EQ (prop, Qheight))
@@ -1102,33 +1109,68 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      maybe_error_if_job_active (f);
 	      if (!NILP (val))
 		{
+#ifdef HAVE_BIGNUM
+                  check_integer_range (val, Qzero, make_integer (INT_MAX));
+		  FRAME_MSPRINTER_CHARHEIGHT (f) =
+                    BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                    XINT (val);
+#else
 		  CHECK_NATNUM (val);
 		  FRAME_MSPRINTER_CHARHEIGHT (f) = XINT (val);
+#endif
 		}
 	    }
 	  else if (EQ (prop, Qleft_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_LEFT_MARGIN (f) =
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_LEFT_MARGIN (f) = XINT (val);
+#endif
 	    }
 	  else if (EQ (prop, Qtop_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_TOP_MARGIN (f) =
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_TOP_MARGIN (f) = XINT (val);
+#endif
 	    }
 	  else if (EQ (prop, Qright_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_RIGHT_MARGIN (f) =
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_RIGHT_MARGIN (f) = XINT (val);
+#endif
 	    }
 	  else if (EQ (prop, Qbottom_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = 
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = XINT (val);
+#endif
 	    }
 	}
     }

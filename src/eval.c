@@ -4923,17 +4923,19 @@ arguments: (FIRST-DESIRED-MULTIPLE-VALUE MULTIPLE-VALUE-UPPER-LIMIT FORM)
     }
 
   argv[0] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
-  CHECK_NATNUM (argv[0]);
-  first = XINT (argv[0]);
 
   GCPRO1 (argv[0]);
   gcpro1.nvars = 1;
 
   args = XCDR (args);
-
   argv[1] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
-  CHECK_NATNUM (argv[1]);
+
+  check_integer_range (argv[1], Qzero, make_int (EMACS_INT_MAX));
+  check_integer_range (argv[0], Qzero, argv[1]);
+
   upper = XINT (argv[1]);
+  first = XINT (argv[0]);
+
   gcpro1.nvars = 2;
 
   /* The unintuitive order of things here is for the sake of the bytecode;
@@ -7205,7 +7207,7 @@ If NFRAMES is more than the number of frames, the value is nil.
   REGISTER int i;
   Lisp_Object tem;
 
-  CHECK_NATNUM (nframes);
+  check_integer_range (nframes, Qzero, make_integer (EMACS_INT_MAX));
 
   /* Find the frame requested.  */
   for (i = XINT (nframes); backlist && (i-- > 0);)

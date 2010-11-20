@@ -1,3 +1,76 @@
+2010-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.c (Fexpand_abbrev):
+	* alloc.c:
+	* alloc.c (Fmake_list):
+	* alloc.c (Fmake_vector):
+	* alloc.c (Fmake_bit_vector):
+	* alloc.c (Fmake_byte_code):
+	* alloc.c (Fmake_string):
+	* alloc.c (vars_of_alloc):
+	* bytecode.c (UNUSED):
+	* bytecode.c (Fbyte_code):
+	* chartab.c (decode_char_table_range):
+	* cmds.c (Fself_insert_command):
+	* data.c (check_integer_range):
+	* data.c (Fnatnump):
+	* data.c (Fnonnegativep):
+	* data.c (Fstring_to_number):
+	* elhash.c (hash_table_size_validate):
+	* elhash.c (decode_hash_table_size):
+	* eval.c (Fbacktrace_frame):
+	* event-stream.c (lisp_number_to_milliseconds):
+	* event-stream.c (Faccept_process_output):
+	* event-stream.c (Frecent_keys):
+	* event-stream.c (Fdispatch_event):
+	* events.c (Fmake_event):
+	* events.c (Fevent_timestamp):
+	* events.c (Fevent_timestamp_lessp):
+	* events.h:
+	* events.h (struct command_builder):
+	* file-coding.c (gzip_putprop):
+	* fns.c:
+	* fns.c (check_sequence_range):
+	* fns.c (Frandom):
+	* fns.c (Fnthcdr):
+	* fns.c (Flast):
+	* fns.c (Fnbutlast):
+	* fns.c (Fbutlast):
+	* fns.c (Fmember):
+	* fns.c (Ffill):
+	* fns.c (Freduce):
+	* fns.c (replace_string_range_1):
+	* fns.c (Freplace):
+	* font-mgr.c (Ffc_pattern_get):
+	* frame-msw.c (msprinter_set_frame_properties):
+	* glyphs.c (check_valid_xbm_inline):
+	* indent.c (Fmove_to_column):
+	* intl-win32.c (mswindows_multibyte_to_unicode_putprop):
+	* lisp.h:
+	* lisp.h (ARRAY_DIMENSION_LIMIT):
+	* lread.c (decode_mode_1):
+	* mule-ccl.c (ccl_get_compiled_code):
+	* number.h:
+	* process-unix.c (unix_open_multicast_group):
+	* process.c (Fset_process_window_size):
+	* profile.c (Fstart_profiling):
+	* unicode.c (Funicode_to_char):
+	Change NATNUMP to return 1 for positive bignums; changes uses of
+	it and of CHECK_NATNUM appropriately, usually by checking for an
+	integer in an appropriate range.
+	Add array-dimension-limit and use it in #'make-vector,
+	#'make-string. Add array-total-size-limit, array-rank-limit while
+	we're at it, for the sake of any Common Lisp-oriented code that
+	uses these limits.
+	Rename check_int_range to check_integer_range, have it take
+	Lisp_Objects (and thus bignums) instead.
+	Remove bignum_butlast(), just set int_n to an appropriately large
+	integer if N is a bignum.
+	Accept bignums in check_sequence_range(), change the functions
+	that use check_sequence_range() appropriately.
+	Move the definition of NATNUMP() to number.h; document why it's a
+	reasonable name, contradicting an old comment.
+
 2010-11-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (bignum_butlast): New.

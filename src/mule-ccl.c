@@ -2123,7 +2123,7 @@ ccl_get_compiled_code (Lisp_Object ccl_prog)
 
   val = Fget (ccl_prog, Qccl_program_idx, Qnil);
   if (! NATNUMP (val)
-      || XINT (val) >= XVECTOR_LENGTH (Vccl_program_table))
+      || -1 != bytecode_arithcompare (val, Flength (Vccl_program_table)))
     return Qnil;
   slot = XVECTOR_DATA (Vccl_program_table)[XINT (val)];
   if (! VECTORP (slot)

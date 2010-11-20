@@ -78,13 +78,11 @@ static void
 check_sequence_range (Lisp_Object sequence, Lisp_Object start,
 		      Lisp_Object end, Lisp_Object length)
 {
-  Elemcount starting = XINT (start), ending, len = XINT (length);
+  Lisp_Object args[] = { Qzero, start, NILP (end) ? length : end, length };
 
-  ending = NILP (end) ? XINT (length) : XINT (end);
-
-  if (!(0 <= starting && starting <= ending && ending <= len))
+  if (NILP (Fleq (countof (args), args)))
     {
-      args_out_of_range_3 (sequence, start, make_int (ending));
+      args_out_of_range_3 (sequence, start, end);
     }
 }
 
@@ -228,6 +226,13 @@ time and pid.
     seed_random (qxe_getpid () + time (NULL));
   if (NATNUMP (limit) && !ZEROP (limit))
     {
+#ifdef HAVE_BIGNUM
+      if (BIGNUMP (limit))
+        {
+          bignum_random (scratch_bignum, XBIGNUM_DATA (limit));
+          return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+        }
+#endif
       /* Try to take our random number from the higher bits of VAL,
 	 not the lower, since (says Gentzel) the low bits of `random'
 	 are less random than the higher ones.  We do this by using the
@@ -240,13 +245,6 @@ time and pid.
 	val = get_random () / denominator;
       while (val >= XINT (limit));
     }
-#ifdef HAVE_BIGNUM
-  else if (BIGNUMP (limit))
-    {
-      bignum_random (scratch_bignum, XBIGNUM_DATA (limit));
-      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-    }
-#endif
   else
     val = get_random ();
 
@@ -1436,7 +1434,7 @@ Take cdr N times on LIST, and return the result.
   REGISTER EMACS_INT i;
   REGISTER Lisp_Object tail = list;
   CHECK_NATNUM (n);
-  for (i = XINT (n); i; i--)
+  for (i = BIGNUMP (n) ? 1 + EMACS_INT_MAX : XINT (n); i; i--)
     {
       if (CONSP (tail))
 	tail = XCDR (tail);
@@ -1556,7 +1554,7 @@ If N is greater than the length of LIST, then LIST itself is returned.
   else
     {
       CHECK_NATNUM (n);
-      int_n = XINT (n);
+      int_n = BIGNUMP (n) ? 1 + EMACS_INT_MAX : XINT (n);
     }
 
   for (retval = tortoise = hare = list, count = 0;
@@ -1576,9 +1574,6 @@ If N is greater than the length of LIST, then LIST itself is returned.
   return retval;
 }
 
-static Lisp_Object bignum_butlast (Lisp_Object list, Lisp_Object number,
-                                   Boolint copy);
-
 DEFUN ("nbutlast", Fnbutlast, 1, 2, 0, /*
 Modify LIST to remove the last N (default 1) elements.
 
@@ -1593,13 +1588,8 @@ Otherwise, LIST may be dotted, but not circular.
 
   if (!NILP (n))
     {
-      if (BIGNUMP (n))
-        {
-          return bignum_butlast (list, n, 0);
-        }
-
       CHECK_NATNUM (n);
-      int_n = XINT (n);
+      int_n = BIGNUMP (n) ? 1 + EMACS_INT_MAX : XINT (n);
     }
 
   if (CONSP (list))
@@ -1646,13 +1636,8 @@ converts a dotted into a true list.
 
   if (!NILP (n))
     {
-      if (BIGNUMP (n))
-        {
-          return bignum_butlast (list, n, 1);
-        }
-
       CHECK_NATNUM (n);
-      int_n = XINT (n);
+      int_n = BIGNUMP (n) ? 1 + EMACS_INT_MAX : XINT (n);
     }
 
   if (CONSP (list))
@@ -1684,42 +1669,6 @@ converts a dotted into a true list.
     }
 
   return retval;
-}
-
-/* This is sufficient to implement #'butlast and #'nbutlast with bignum N
-   under XEmacs, because #'list-length and #'safe-length can never return a
-   bignum. This means that #'nbutlast never has to modify and #'butlast
-   never has to copy. */
-static Lisp_Object
-bignum_butlast (Lisp_Object list, Lisp_Object number, Boolint copy)
-{
-  Boolint malformed = EQ (Fsafe_length (list), Qzero);
-  Boolint circular = !malformed && EQ (Flist_length (list), Qnil);
-
-  assert (BIGNUMP (number));
-
-#ifdef HAVE_BIGNUM
-
-  if (bignum_sign (XBIGNUM_DATA (number)) < 0)
-    {
-      dead_wrong_type_argument (Qnatnump, number);
-    }
-
-  number = Fcanonicalize_number (number);
-
-  if (INTP (number))
-    {
-      return copy ? Fbutlast (list, number) : Fnbutlast (list, number);
-    }
-
-#endif
-
-  if (circular)
-    {
-      signal_circular_list_error (list);
-    }
-
-  return Qnil;
 }
 
 DEFUN ("member", Fmember, 2, 2, 0, /*
@@ -4224,17 +4173,15 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
 {
   Lisp_Object sequence = args[0];
   Lisp_Object item = args[1];
-  Elemcount starting = 0, ending = EMACS_INT_MAX, ii, len;
+  Elemcount starting = 0, ending = EMACS_INT_MAX + 1, ii, len;
 
   PARSE_KEYWORDS (Ffill, nargs, args, 2, (start, end), (start = Qzero));
 
   CHECK_NATNUM (start);
-  starting = XINT (start);
-
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = XINT (end);
+      ending = BIGNUMP (end) ? EMACS_INT_MAX + 1 : XINT (end);
     }
 
  retry:
@@ -4254,6 +4201,7 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
 
       check_sequence_range (sequence, start, end, make_int (len));
       ending = min (ending, len);
+      starting = XINT (start);
 
       for (ii = starting; ii < ending; ++ii)
         {
@@ -4272,6 +4220,7 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
 
       check_sequence_range (sequence, start, end, make_int (len));
       ending = min (ending, len);
+      starting = XINT (start);
 
       for (ii = starting; ii < ending; ++ii)
         {
@@ -4281,6 +4230,7 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
   else if (LISTP (sequence))
     {
       Elemcount counting = 0;
+      starting = BIGNUMP (start) ? EMACS_INT_MAX + 1 : XINT (start);
 
       EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
         {
@@ -5235,7 +5185,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
        (int nargs, Lisp_Object *args))
 {
   Lisp_Object function = args[0], sequence = args[1], accum = Qunbound;
-  Elemcount starting, ending = EMACS_INT_MAX, ii = 0;
+  Elemcount starting, ending = EMACS_INT_MAX + 1, ii = 0;
 
   PARSE_KEYWORDS (Freduce, nargs, args, 5,
                   (start, end, from_end, initial_value, key),
@@ -5243,7 +5193,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
-
+  starting = BIGNUMP (start) ? EMACS_INT_MAX + 1 : XINT (start);
   CHECK_KEY_ARGUMENT (key);
 
 #define KEY(key, item) (EQ (Qidentity, key) ? item :			\
@@ -5251,16 +5201,10 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 #define CALL2(function, accum, item)				\
   IGNORE_MULTIPLE_VALUES (call2 (function, accum, item))
 
-  starting = XINT (start);
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = XINT (end);
-    }
-
-  if (!(starting <= ending))
-    {
-      check_sequence_range (sequence, start, end, Flength (sequence));
+      ending = BIGNUMP (end) ? EMACS_INT_MAX + 1 : XINT (end);
     }
 
   if (VECTORP (sequence))
@@ -5432,6 +5376,8 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 
 	  check_sequence_range (sequence, start, end, make_int (len));
           ending = min (ending, len);
+          starting = XINT (start);
+
           cursor = string_char_addr (sequence, ending - 1);
           cursor_offset = cursor - XSTRING_DATA (sequence);
 
@@ -5679,7 +5625,8 @@ replace_string_range_1 (Lisp_Object dest, Lisp_Object start, Lisp_Object end,
   Ibyte *destp = XSTRING_DATA (dest), *p = destp,
     *pend = p + XSTRING_LENGTH (dest), *pcursor, item_buf[MAX_ICHAR_LEN];
   Bytecount prefix_bytecount, source_len = source_limit - source;
-  Charcount ii = 0, starting = XINT (start), ending, len;
+  Charcount ii = 0, ending, len;
+  Charcount starting = BIGNUMP (start) ? EMACS_INT_MAX + 1 : XINT (start);
   Elemcount delta;
 
   while (ii < starting && p < pend)
@@ -5702,7 +5649,7 @@ replace_string_range_1 (Lisp_Object dest, Lisp_Object start, Lisp_Object end,
     }
   else
     {
-      ending = XINT (end);
+      ending = BIGNUMP (end) ? EMACS_INT_MAX + 1 : XINT (end);
       while (ii < ending && pcursor < pend)
 	{
 	  INC_IBYTEPTR (pcursor);
@@ -5782,8 +5729,8 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 {
   Lisp_Object sequence1 = args[0], sequence2 = args[1],
     result = sequence1;
-  Elemcount starting1, ending1 = EMACS_INT_MAX, starting2;
-  Elemcount ending2 = EMACS_INT_MAX, counting = 0, startcounting;
+  Elemcount starting1, ending1 = EMACS_INT_MAX + 1, starting2;
+  Elemcount ending2 = EMACS_INT_MAX + 1, counting = 0, startcounting;
   Boolint sequence1_listp, sequence2_listp,
     overwriting = EQ (sequence1, sequence2);
 
@@ -5796,30 +5743,20 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
   CHECK_SEQUENCE (sequence2);
 
   CHECK_NATNUM (start1);
-  starting1 = XINT (start1);
+  starting1 = BIGNUMP (start1) ? EMACS_INT_MAX + 1 : XINT (start1);
   CHECK_NATNUM (start2);
-  starting2 = XINT (start2);
+  starting2 = BIGNUMP (start2) ? EMACS_INT_MAX + 1 : XINT (start2);
 
   if (!NILP (end1))
     {
       CHECK_NATNUM (end1);
-      ending1 = XINT (end1);
-
-      if (!(starting1 <= ending1))
-        {
-          args_out_of_range_3 (sequence1, start1, end1);
-        }
+      ending1 = BIGNUMP (end1) ? EMACS_INT_MAX + 1 : XINT (end1);
     }
 
   if (!NILP (end2))
     {
       CHECK_NATNUM (end2);
-      ending2 = XINT (end2);
-
-      if (!(starting2 <= ending2))
-        {
-          args_out_of_range_3 (sequence1, start2, end2);
-        }
+      ending2 = BIGNUMP (end2) ? EMACS_INT_MAX + 1 : XINT (end2);
     }
 
   sequence1_listp = LISTP (sequence1);

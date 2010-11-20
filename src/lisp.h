@@ -1679,6 +1679,10 @@ enum Lisp_Type
 
 #define INT_VALBITS (BITS_PER_EMACS_INT - INT_GCBITS)
 #define VALBITS (BITS_PER_EMACS_INT - GCBITS)
+/* This is badly named; it's not the maximum value that an EMACS_INT can
+   have, it's the maximum value that a Lisp-visible fixnum can have (half
+   the maximum value an EMACS_INT can have) and as such would be better
+   called MOST_POSITIVE_FIXNUM. Similarly for MOST_NEGATIVE_FIXNUM. */
 #define EMACS_INT_MAX ((EMACS_INT) ((1UL << (INT_VALBITS - 1)) -1UL))
 #define EMACS_INT_MIN (-(EMACS_INT_MAX) - 1)
 /* WARNING: evaluates its arg twice. */
@@ -2921,22 +2925,6 @@ XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
 #define CONCHECK_INT(x) do {			\
   if (!INTP (x))				\
     x = wrong_type_argument (Qfixnump, x);	\
-} while (0)
-
-/* NOTE NOTE NOTE! This definition of "natural number" is mathematically
-   wrong.  Mathematically, a natural number is a positive integer; 0
-   isn't included.  This would be better called NONNEGINT(). */
-
-#define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
-
-#define CHECK_NATNUM(x) do {			\
-  if (!NATNUMP (x))				\
-    dead_wrong_type_argument (Qnatnump, x);	\
-} while (0)
-
-#define CONCHECK_NATNUM(x) do {			\
-  if (!NATNUMP (x))				\
-    x = wrong_type_argument (Qnatnump, x);	\
 } while (0)
 
 END_C_DECLS
@@ -4318,6 +4306,8 @@ DECLARE_DOESNT_RETURN (memory_full (void));
 void disksave_object_finalization (void);
 void finish_object_memory_usage_stats (void);
 extern int purify_flag;
+#define ARRAY_DIMENSION_LIMIT EMACS_INT_MAX
+extern Fixnum Varray_dimension_limit;
 #ifndef NEW_GC
 extern EMACS_INT gc_generation_number[1];
 #endif /* not NEW_GC */
@@ -4505,7 +4495,7 @@ DECLARE_DOESNT_RETURN (args_out_of_range_3 (Lisp_Object, Lisp_Object,
 MODULE_API Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
 MODULE_API
 DECLARE_DOESNT_RETURN (dead_wrong_type_argument (Lisp_Object, Lisp_Object));
-void check_int_range (EMACS_INT, EMACS_INT, EMACS_INT);
+void check_integer_range (Lisp_Object, Lisp_Object, Lisp_Object);
 
 EXFUN (Fint_to_char, 1);
 EXFUN (Fchar_to_int, 1);
@@ -4531,11 +4521,11 @@ extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
     Qnonnegativep, Qnumber_char_or_marker_p, Qnumberp, Qquote, Qtrue_list_p;
 extern MODULE_API Lisp_Object Qintegerp;
 
-extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
-    Qcircular_list, Qcircular_property_list, Qconversion_error,
-    Qcyclic_variable_indirection, Qdomain_error, Qediting_error,
-    Qend_of_buffer, Qend_of_file, Qerror, Qfile_error, Qinternal_error,
-    Qinvalid_change, Qinvalid_constant, Qinvalid_function, 
+extern Lisp_Object Qargs_out_of_range, Qarith_error, Qbeginning_of_buffer,
+    Qbuffer_read_only, Qcircular_list, Qcircular_property_list,
+    Qconversion_error, Qcyclic_variable_indirection, Qdomain_error,
+    Qediting_error, Qend_of_buffer, Qend_of_file, Qerror, Qfile_error,
+    Qinternal_error, Qinvalid_change, Qinvalid_constant, Qinvalid_function, 
     Qinvalid_keyword_argument, Qinvalid_operation,
     Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlist_formation_error,
     Qmalformed_list, Qmalformed_property_list, Qno_catch, Qout_of_memory,
@@ -4544,6 +4534,7 @@ extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
     Qstructure_formation_error, Qtext_conversion_error, Qunderflow_error,
     Qvoid_function, Qvoid_variable, Qwrong_number_of_arguments,
     Qwrong_type_argument;
+
 extern Lisp_Object Qcdr;
 extern Lisp_Object Qerror_lacks_explanatory_string;
 extern Lisp_Object Qfile_error;
@@ -5010,6 +5001,7 @@ void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API void warn_when_safe (Lisp_Object, Lisp_Object, const Ascbyte *,
 				...) PRINTF_ARGS (3, 4);
 extern int backtrace_with_internal_sections;
+extern Fixnum Vmultiple_values_limit;
 
 extern Lisp_Object Qand_optional;
 extern Lisp_Object Qand_rest;

@@ -411,6 +411,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
   Extbyte *fc_property;
   FcResult fc_result;
   FcValue fc_value;
+  int int_id = 0;
 
   /*
     process arguments
@@ -435,14 +436,21 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
       dead_wrong_type_argument (Qstringp, property);
     }
 
-  if (!NILP (id)) CHECK_NATNUM (id);
+  if (!NILP (id))
+    {
+#ifdef HAVE_BIGNUM
+      check_integer_range (id, Qzero, make_integer (INT_MAX));
+      int_id = BIGNUMP (id) ? bignum_to_int (id) : XINT (id);
+#else
+      check_integer_range (id, Qzero, make_integer (EMACS_INT_MAX));
+      int_id = XINT (id);      
+#endif
+    }
   if (!NILP (type)) CHECK_SYMBOL (type);
 
   /* get property */
   fc_result = FcPatternGet (XFC_PATTERN_PTR (pattern),
-			    fc_property,
-			    NILP (id) ? 0 : XINT (id),
-			    &fc_value);
+			    fc_property, int_id, &fc_value);
 
   switch (fc_result)
     {

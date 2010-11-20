@@ -2120,10 +2120,10 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 
   CHECK_STRING (dest);
 
-  CHECK_NATNUM (port);
+  check_integer_range (port, Qzero, make_integer (USHRT_MAX));
   theport = htons ((unsigned short) XINT (port));
 
-  CHECK_NATNUM (ttl);
+  check_integer_range (ttl, Qzero, make_integer (UCHAR_MAX));
   thettl = (unsigned char) XINT (ttl);
 
   if ((udp = getprotobyname ("udp")) == NULL)

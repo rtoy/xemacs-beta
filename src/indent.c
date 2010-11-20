@@ -412,7 +412,8 @@ Returns the actual column that it moved to.
 
   buffer = wrap_buffer (buf);
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
-  CHECK_NATNUM (column);
+
+  check_integer_range (column, Qzero, make_integer (EMACS_INT_MAX));
   goal = XINT (column);
 
  retry:

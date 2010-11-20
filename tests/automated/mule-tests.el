@@ -461,7 +461,7 @@ This is a naive implementation in Lisp.  "
 	(Assert (eq code (char-to-unicode scaron)))
 	(Assert (eq scaron (unicode-to-char code '(latin-iso8859-2)))))
       finally (set-unicode-conversion scaron initial-unicode))
-    (Check-Error wrong-type-argument (set-unicode-conversion scaron -10000)))
+    (Check-Error args-out-of-range (set-unicode-conversion scaron -10000)))
 
   (dolist (utf-8-char 
 	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK

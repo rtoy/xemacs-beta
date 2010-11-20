@@ -153,6 +153,40 @@ EXFUN (Fintegerp, 1);
 EXFUN (Fevenp, 1);
 EXFUN (Foddp, 1);
 
+/* There are varying mathematical definitions of what a natural number is,
+   differing about whether 0 is inside or outside the set. The Oxford
+   English Dictionary, second edition, does say that they are whole numbers,
+   not fractional, but it doesn't give a bound, and gives a quotation
+   talking about the natural numbers from 1 to 100. Since 100 is certainly
+   *not* the upper bound on natural numbers, we can't take 1 as the lower
+   bound from that example. The Real Academia Española's dictionary, not of
+   English but certainly sharing the western academic tradition, says of
+   "número natural":
+
+   1.  m. Mat. Cada uno de los elementos de la sucesión 0, 1, 2, 3...
+
+   that is, "each of the elements of the succession 0, 1, 2, 3 ...". The
+   various Wikipedia articles in languages I can read agree.  It's
+   reasonable to call this macro and the associated Lisp function
+   NATNUMP. */
+
+#ifdef HAVE_BIGNUM
+#define NATNUMP(x) ((INTP (x) && XINT (x) >= 0) || \
+                    (BIGNUMP (x) && bignum_sign (XBIGNUM_DATA (x)) >= 0))
+#else
+#define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
+#endif
+
+#define CHECK_NATNUM(x) do {			\
+  if (!NATNUMP (x))				\
+    dead_wrong_type_argument (Qnatnump, x);	\
+} while (0)
+
+#define CONCHECK_NATNUM(x) do {			\
+  if (!NATNUMP (x))				\
+    x = wrong_type_argument (Qnatnump, x);	\
+} while (0)
+
 
 /********************************** Ratios **********************************/
 #ifdef HAVE_RATIO

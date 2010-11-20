@@ -1792,9 +1792,14 @@ mswindows_multibyte_to_unicode_putprop (Lisp_Object codesys,
 	data->cp_type = MULTIBYTE_MAC;
       else
 	{
-	  CHECK_NATNUM (value);
 	  data->locale_type = MULTIBYTE_SPECIFIED_CODE_PAGE;
-	  data->cp = XINT (value);
+#ifdef HAVE_BIGNUM
+          check_integer_range (value, Qzero, make_integer (INT_MAX));
+	  data->cp = BIGNUMP (value) ? bignum_to_int (XBIGNUM_DATA (value)) : XINT (value);
+#else
+          CHECK_NATNUM (value);
+          data->cp = XINT (value);
+#endif
 	}
     }
   else if (EQ (key, Qlocale))

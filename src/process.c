@@ -977,8 +977,8 @@ Tell PROCESS that it has logical window size HEIGHT and WIDTH.
        (process, height, width))
 {
   CHECK_PROCESS (process);
-  CHECK_NATNUM (height);
-  CHECK_NATNUM (width);
+  check_integer_range (height, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (width, Qzero, make_integer (EMACS_INT_MAX));
   return
     MAYBE_INT_PROCMETH (set_window_size,
 			(XPROCESS (process), XINT (height), XINT (width))) <= 0

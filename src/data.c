@@ -158,10 +158,18 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 }
 
 void
-check_int_range (EMACS_INT val, EMACS_INT min, EMACS_INT max)
+check_integer_range (Lisp_Object val, Lisp_Object min, Lisp_Object max)
 {
-  if (val < min || val > max)
-    args_out_of_range_3 (make_int (val), make_int (min), make_int (max));
+  Lisp_Object args[] = { min, val, max };
+  int ii;
+
+  for (ii = 0; ii < countof (args); ii++)
+    {
+      CHECK_INTEGER (args[ii]);
+    }
+
+  if (NILP (Fleq (countof (args), args)))
+    args_out_of_range_3 (val, min, max);
 }
 
 
@@ -504,11 +512,7 @@ Return t if OBJECT is a nonnegative integer.
 */
        (object))
 {
-  return NATNUMP (object)
-#ifdef HAVE_BIGNUM
-    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
-#endif
-    ? Qt : Qnil;
+  return NATNUMP (object) ? Qt : Qnil;
 }
 
 DEFUN ("nonnegativep", Fnonnegativep, 1, 1, 0, /*
@@ -517,9 +521,6 @@ Return t if OBJECT is a nonnegative number.
        (object))
 {
   return NATNUMP (object)
-#ifdef HAVE_BIGNUM
-    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
-#endif
 #ifdef HAVE_RATIO
     || (RATIOP (object) && ratio_sign (XRATIO_DATA (object)) >= 0)
 #endif
@@ -1295,9 +1296,8 @@ Floating point numbers always use base 10.
     b = 10;
   else
     {
-      CHECK_INT (base);
+      check_integer_range (base, make_int (2), make_int (16));
       b = XINT (base);
-      check_int_range (b, 2, 16);
     }
 
   p = XSTRING_DATA (string);
