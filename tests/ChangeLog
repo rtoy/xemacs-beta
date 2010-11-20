@@ -1,3 +1,15 @@
+2010-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	* automated/lisp-tests.el (featurep):
+	* automated/lisp-tests.el (wrong-type-argument):
+	* automated/mule-tests.el (featurep):
+	Check for args-out-of-range errors instead of wrong-type-argument
+	errors in various places when code is handed a large bignum
+	instead of a fixnum.
+	Also check for the wrong-type-argument errors when giving the same
+	code a non-integer value.
+
 2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (list-nreverse):

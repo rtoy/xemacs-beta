@@ -844,9 +844,9 @@ decode_mode_1 (Lisp_Object mode)
     return W_OK;
   else if (EQ (mode, Qreadable))
     return R_OK;
-  else if (INTP (mode))
+  else if (INTEGERP (mode))
     {
-      check_int_range (XINT (mode), 0, 7);
+      check_integer_range (mode, Qzero, make_int (7));
       return XINT (mode);
     }
   else

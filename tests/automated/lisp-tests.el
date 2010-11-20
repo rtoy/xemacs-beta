@@ -213,6 +213,16 @@
 (Assert (eq (butlast  '()) nil))
 (Assert (eq (nbutlast '()) nil))
 
+(when (featurep 'bignum)
+  (let* ((x (list* 0 1 2 3 4 5 6.0 ?7 ?8 (vector 'a 'b 'c)))
+         (y (butlast x (* 2 most-positive-fixnum)))
+         (z (nbutlast x (* 3 most-positive-fixnum))))
+    (Assert (eq nil y) "checking butlast with a large bignum gives nil")
+    (Assert (eq nil z) "checking nbutlast with a large bignum gives nil")
+    (Check-Error wrong-type-argument
+		 (nbutlast x (1- most-negative-fixnum))
+                 "checking nbutlast with a negative bignum errors")))
+
 ;;-----------------------------------------------------
 ;; Test `copy-list'
 ;;-----------------------------------------------------
@@ -2510,5 +2520,153 @@ via the hepatic alpha-tocopherol transfer protein")))
     (Assert (not (equal bit-vector
 			(mapcar fourth-bit
 				(loop for i from 0 to 6000 collect i)))))))
+
+(Check-Error wrong-type-argument (self-insert-command 'self-insert-command))
+(Check-Error wrong-type-argument (make-list 'make-list 'make-list))
+(Check-Error wrong-type-argument (make-vector 'make-vector 'make-vector))
+(Check-Error wrong-type-argument (make-bit-vector 'make-bit-vector
+						  'make-bit-vector))
+(Check-Error wrong-type-argument (make-byte-code '(&rest ignore) "\xc0\x87" [4]
+						 'ignore))
+(Check-Error wrong-type-argument (make-string ?a ?a))
+(Check-Error wrong-type-argument (nth-value 'nth-value (truncate pi e)))
+(Check-Error wrong-type-argument (make-hash-table :test #'eql :size :size))
+(Check-Error wrong-type-argument
+	     (accept-process-output nil 'accept-process-output))
+(Check-Error wrong-type-argument
+	     (accept-process-output nil 2000 'accept-process-output))
+(Check-Error wrong-type-argument
+             (self-insert-command 'self-insert-command))
+(Check-Error wrong-type-argument (string-to-number "16" 'string-to-number))
+(Check-Error wrong-type-argument (move-to-column 'move-to-column))
+(stop-profiling)
+(Check-Error wrong-type-argument (start-profiling (float most-positive-fixnum)))
+(stop-profiling)
+(Check-Error wrong-type-argument
+             (fill '(1 2 3 4 5) 1 :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill [1 2 3 4 5] 1 :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill "1 2 3 4 5" ?1 :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill #*10101010 1 :start (float most-positive-fixnum))
+(Check-Error wrong-type-argument
+             (fill '(1 2 3 4 5) 1 :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill [1 2 3 4 5] 1 :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill "1 2 3 4 5" ?1 :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill #*10101010 1 :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons '(1 2 3 4 5) :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons [1 2 3 4 5] :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons "1 2 3 4 5" :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons #*10101010 :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons '(1 2 3 4 5) :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons [1 2 3 4 5] :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons "1 2 3 4 5" :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons #*10101010 :end (float most-positive-fixnum)))
+
+(when (featurep 'bignum)
+  (Check-Error args-out-of-range
+	       (self-insert-command (* 2 most-positive-fixnum)))
+  (Check-Error args-out-of-range
+	       (make-list (* 3 most-positive-fixnum) 'make-list))
+  (Check-Error args-out-of-range
+	       (make-vector (* 4 most-positive-fixnum) 'make-vector))
+  (Check-Error args-out-of-range
+	       (make-bit-vector (+ 2 most-positive-fixnum) 'make-bit-vector))
+  (Check-Error args-out-of-range
+	       (make-byte-code '(&rest ignore) "\xc0\x87" [4]
+			       (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+	       (make-byte-code '(&rest ignore) "\xc0\x87" [4]
+			       #x10000))
+  (Check-Error args-out-of-range
+	       (make-string (* 4 most-positive-fixnum) ?a))
+  (Check-Error args-out-of-range
+	       (nth-value most-positive-fixnum (truncate pi e)))
+  (Check-Error args-out-of-range
+	       (make-hash-table :test #'equalp :size (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+	       (accept-process-output nil 4294967))
+  (Check-Error args-out-of-range
+	       (accept-process-output nil 10 (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (self-insert-command (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (string-to-number "16" (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (recent-keys (1+ most-positive-fixnum)))
+  (when (featurep 'xbm)
+    (Check-Error-Message
+     invalid-argument
+     "^data is too short for width and height"
+     (set-face-background-pixmap
+      'left-margin
+      `[xbm :data (20 ,(* 2 most-positive-fixnum) "random-text")])))
+  (Check-Error args-out-of-range
+               (move-to-column (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (move-to-column (1- most-negative-fixnum)))
+  (stop-profiling)
+  (when (< most-positive-fixnum (lsh 1 32))
+    ;; We only support machines with integers of 32 bits or more. If
+    ;; most-positive-fixnum is less than 2^32, we're on a 32-bit machine,
+    ;; and it's appropriate to test start-profiling with a bignum.
+    (Assert (eq nil (start-profiling (* most-positive-fixnum 2)))))
+  (stop-profiling)
+  (Check-Error args-out-of-range
+               (fill '(1 2 3 4 5) 1 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill [1 2 3 4 5] 1 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill "1 2 3 4 5" ?1 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill #*10101010 1 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill '(1 2 3 4 5) 1 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill [1 2 3 4 5] 1 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill "1 2 3 4 5" ?1 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill #*10101010 1 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons '(1 2 3 4 5) :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons [1 2 3 4 5] :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons "1 2 3 4 5" :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons #*10101010 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons '(1 2 3 4 5) :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons [1 2 3 4 5] :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons "1 2 3 4 5" :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons #*10101010 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (replace '(1 2 3 4 5) [5 4 3 2 1]
+                        :start1 (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (replace '(1 2 3 4 5) [5 4 3 2 1]
+                        :start2 (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (replace '(1 2 3 4 5) [5 4 3 2 1]
+                        :end1 (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (replace '(1 2 3 4 5) [5 4 3 2 1]
+                        :end2 (1+ most-positive-fixnum))))
 
 ;;; end of lisp-tests.el

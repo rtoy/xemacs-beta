@@ -733,10 +733,27 @@ hash_table_size_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 			  Error_Behavior errb)
 {
   if (NATNUMP (value))
-    return 1;
+    {
+      if (BIGNUMP (value))
+        {
+          /* hash_table_size() can't handle excessively large sizes. */
+          maybe_signal_error_1 (Qargs_out_of_range,
+                                list3 (value, Qzero,
+                                       make_integer (EMACS_INT_MAX)),
+                                Qhash_table, errb);
+          return 0;
+        }
+      else
+        {
+          return 1;
+        }
+    }
+  else
+    {
+      maybe_signal_error_1 (Qwrong_type_argument, list2 (Qnatnump, value),
+                            Qhash_table, errb);
+    }
 
-  maybe_signal_error_1 (Qwrong_type_argument, list2 (Qnatnump, value),
-			Qhash_table, errb);
   return 0;
 }
 

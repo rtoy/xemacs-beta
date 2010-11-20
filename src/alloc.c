@@ -96,6 +96,8 @@ static Fixnum debug_allocation;
 static Fixnum debug_allocation_backtrace_length;
 #endif
 
+Fixnum Varray_dimension_limit, Varray_total_size_limit, Varray_rank_limit;
+
 int need_to_check_c_alloca;
 int need_to_signal_post_gc;
 int funcall_allocation_flag;
@@ -1500,16 +1502,17 @@ Return a new list of length LENGTH, with each element being OBJECT.
 */
        (length, object))
 {
-  CHECK_NATNUM (length);
+  Lisp_Object val = Qnil;
+  Elemcount size;
 
-  {
-    Lisp_Object val = Qnil;
-    EMACS_INT size = XINT (length);
+  check_integer_range (length, Qzero, make_integer (EMACS_INT_MAX));
 
-    while (size--)
-      val = Fcons (object, val);
-    return val;
-  }
+  size = XINT (length);
+
+  while (size--)
+    val = Fcons (object, val);
+
+  return val;
 }
 
 
@@ -1743,7 +1746,7 @@ See also the function `vector'.
 */
        (length, object))
 {
-  CONCHECK_NATNUM (length);
+  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
   return make_vector (XINT (length), object);
 }
 
@@ -1925,8 +1928,7 @@ BIT must be one of the integers 0 or 1.  See also the function `bit-vector'.
 */
        (length, bit))
 {
-  CONCHECK_NATNUM (length);
-
+  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
   return make_bit_vector (XINT (length), bit);
 }
 
@@ -2052,7 +2054,7 @@ arguments: (ARGLIST INSTRUCTIONS CONSTANTS STACK-DEPTH &optional DOC-STRING INTE
     CHECK_VECTOR (constants);
   f->constants = constants;
 
-  CHECK_NATNUM (stack_depth);
+  check_integer_range (stack_depth, Qzero, make_int (USHRT_MAX));
   f->stack_depth = (unsigned short) XINT (stack_depth);
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
@@ -2884,7 +2886,7 @@ LENGTH must be a non-negative integer.
 */
        (length, character))
 {
-  CHECK_NATNUM (length);
+  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
   CHECK_CHAR_COERCE_INT (character);
   {
     Ibyte init_str[MAX_ICHAR_LEN];
@@ -5739,6 +5741,34 @@ reinit_vars_of_alloc (void)
 void
 vars_of_alloc (void)
 {
+  DEFVAR_CONST_INT ("array-rank-limit", &Varray_rank_limit /*
+The exclusive upper bound on the number of dimensions an array may have.
+
+XEmacs does not support multidimensional arrays, meaning this constant is,
+for the moment, 2.
+*/);
+  Varray_rank_limit = 2;
+
+  DEFVAR_CONST_INT ("array-dimension-limit", &Varray_dimension_limit /*
+The exclusive upper bound of an array's dimension.
+Note that XEmacs may not have enough memory available to create an array
+with this dimension.
+*/);
+  Varray_dimension_limit = ARRAY_DIMENSION_LIMIT;
+
+  DEFVAR_CONST_INT ("array-total-size-limit", &Varray_total_size_limit /*
+The exclusive upper bound on the number of elements an array may contain.
+
+In Common Lisp, this is distinct from `array-dimension-limit', because
+arrays can have more than one dimension.  In XEmacs this is not the case,
+and multi-dimensional arrays need to be implemented by the user with arrays
+of arrays.
+
+Note that XEmacs may not have enough memory available to create an array
+with this dimension.
+*/);
+  Varray_total_size_limit = ARRAY_DIMENSION_LIMIT;
+
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-allocation", &debug_allocation /*
 If non-zero, print out information to stderr about all objects allocated.

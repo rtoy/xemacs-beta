@@ -334,7 +334,9 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
   Lisp_Object c;
   EMACS_INT n;
 
-  CHECK_NATNUM (count);
+  /* Can't insert more than most-positive-fixnum characters, the buffer
+     won't hold that many. */
+  check_integer_range (count, Qzero, make_int (EMACS_INT_MAX));
   n = XINT (count);
 
   if (CHAR_OR_CHAR_INTP (Vlast_command_char))

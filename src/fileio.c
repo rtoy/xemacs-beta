@@ -3294,7 +3294,7 @@ under Mule, is very difficult.)
 	  Lisp_Object insval = call1 (p, make_int (inserted));
 	  if (!NILP (insval))
 	    {
-	      CHECK_NATNUM (insval);
+              check_integer_range (insval, Qzero, make_int (EMACS_INT_MAX));
 	      inserted = XINT (insval);
 	    }
 	}

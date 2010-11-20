@@ -1731,8 +1731,9 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       {
         Lisp_Object upper = POP, first = TOP, speccount;
 
-        CHECK_NATNUM (upper);
-        CHECK_NATNUM (first);
+        check_integer_range (upper, Qzero,
+                             make_integer (Vmultiple_values_limit));
+        check_integer_range (first, Qzero, upper);
 
         speccount = make_int (bind_multiple_value_limits (XINT (first),
                                                           XINT (upper)));
@@ -2757,7 +2758,7 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 
   CHECK_STRING (instructions);
   CHECK_VECTOR (constants);
-  CHECK_NATNUM (stack_depth);
+  check_integer_range (stack_depth, Qzero, make_int (USHRT_MAX));
 
   /* Optimize the `instructions' string, just like when executing a
      regular compiled function, but don't save it for later since this is

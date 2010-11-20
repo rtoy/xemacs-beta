@@ -257,10 +257,12 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
 	  sferror ("Charset in row vector must be multi-byte",
 			       outrange->charset);
 	case CHARSET_TYPE_94X94:
-	  check_int_range (outrange->row, 33, 126);
+	  check_integer_range (make_int (outrange->row), make_int (33),
+                               make_int (126));
 	  break;
 	case CHARSET_TYPE_96X96:
-	  check_int_range (outrange->row, 32, 127);
+	  check_integer_range (make_int (outrange->row), make_int (32),
+                               make_int (127));
 	  break;
 	default:
 	  ABORT ();

@@ -365,8 +365,16 @@ will be properly accumulated. (To clear, use `clear-profiling-info'.)
     msecs = default_profiling_interval;
   else
     {
-      CHECK_NATNUM (microsecs);
+#ifdef HAVE_BIGNUM
+      check_integer_range (microsecs, make_int (1000), make_integer (INT_MAX));
+      msecs =
+        BIGNUMP (microsecs) ? bignum_to_int (XBIGNUM_DATA (microsecs)) :
+                                             XINT (microsecs);
+#else
+      check_integer_range (microsecs, make_int (1000),
+                           make_integer (EMACS_INT_MAX));
       msecs = XINT (microsecs);
+#endif
     }
   if (msecs <= 0)
     msecs = 1000;

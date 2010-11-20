@@ -4310,8 +4310,7 @@ gzip_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 	data->level = -1;
       else
 	{
-	  CHECK_INT (value);
-	  check_int_range (XINT (value), 0, 9);
+	  check_integer_range (value, Qzero, make_int (9));
 	  data->level = XINT (value);
 	}
     }

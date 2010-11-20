@@ -343,7 +343,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
     count = Qzero;
   else
     CHECK_NATNUM (count);
-  symbol_plist (abbrev_symbol) = make_int (1 + XINT (count));
+  symbol_plist (abbrev_symbol) = Fadd1 (count);
 
   /* Count the case in the original text. */
   abbrev_count_case (buf, abbrev_start, abbrev_length, &lccount, &uccount);
