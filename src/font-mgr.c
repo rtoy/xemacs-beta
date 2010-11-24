@@ -440,7 +440,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
     {
 #ifdef HAVE_BIGNUM
       check_integer_range (id, Qzero, make_integer (INT_MAX));
-      int_id = BIGNUMP (id) ? bignum_to_int (id) : XINT (id);
+      int_id = BIGNUMP (id) ? bignum_to_int (XBIGNUM_DATA (id)) : XINT (id);
 #else
       check_integer_range (id, Qzero, make_integer (EMACS_INT_MAX));
       int_id = XINT (id);      

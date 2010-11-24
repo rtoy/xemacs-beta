@@ -1,3 +1,9 @@
+2010-11-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* font-mgr.c (Ffc_pattern_get): Fix my last change when both
+	--with-union-type and --with-xft are specified, thank you Robert
+	Delius Royar!
+
 2010-11-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* abbrev.c (Fexpand_abbrev):
