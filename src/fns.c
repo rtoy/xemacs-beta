@@ -4173,11 +4173,13 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
 {
   Lisp_Object sequence = args[0];
   Lisp_Object item = args[1];
-  Elemcount starting = 0, ending = EMACS_INT_MAX + 1, ii, len;
+  Elemcount starting, ending = EMACS_INT_MAX + 1, ii, len;
 
   PARSE_KEYWORDS (Ffill, nargs, args, 2, (start, end), (start = Qzero));
 
   CHECK_NATNUM (start);
+  starting = BIGNUMP (start) ? EMACS_INT_MAX + 1 : XINT (start);
+
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
@@ -4201,7 +4203,6 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
 
       check_sequence_range (sequence, start, end, make_int (len));
       ending = min (ending, len);
-      starting = XINT (start);
 
       for (ii = starting; ii < ending; ++ii)
         {
@@ -4220,7 +4221,6 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
 
       check_sequence_range (sequence, start, end, make_int (len));
       ending = min (ending, len);
-      starting = XINT (start);
 
       for (ii = starting; ii < ending; ++ii)
         {
@@ -4230,7 +4230,6 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
   else if (LISTP (sequence))
     {
       Elemcount counting = 0;
-      starting = BIGNUMP (start) ? EMACS_INT_MAX + 1 : XINT (start);
 
       EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
         {
