@@ -1,3 +1,9 @@
+2010-11-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Ffill):
+	Move all declarations before statements, for the sake of the
+	Visual Studio build. Thank you Vin!
+
 2010-11-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* font-mgr.c (Ffc_pattern_get): Fix my last change when both
