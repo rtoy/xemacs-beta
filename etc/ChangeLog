@@ -2081,3 +2081,23 @@ Tue Dec 10 19:25:25 1996  Steven L Baur  <steve@altair.xemacs.org>
 Thu Dec  5 20:42:35 1996  Steven L Baur  <steve@altair.xemacs.org>
 
 	* edt-user.doc (File): New file from Emacs 19.34.
+
+
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
