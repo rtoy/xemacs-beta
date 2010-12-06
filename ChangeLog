@@ -6645,3 +6645,23 @@ Sat Dec  7 16:28:10 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
 Thu Dec  5 11:56:05 1996  Joseph J Nuspl <nuspl@nvwls.cc.purdue.edu>
 
 	* configure.in (LIBS): Fix typo in dialog box test.
+
+
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
