@@ -1,5 +1,10 @@
 2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (cl-safe-expr-p):
+	Forms that start with the symbol lambda are also safe.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (= < > <= >=):
 	For these functions' compiler macros, the optimisation is safe
 	even if the first and the last arguments have side effects, since

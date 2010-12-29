@@ -111,7 +111,8 @@
 
 ;;; Check if no side effects.
 (defun cl-safe-expr-p (x)
-  (or (not (and (consp x) (not (memq (car x) '(quote function function*)))))
+  (or (not (and (consp x) (not (memq (car x)
+                                     '(quote function function* lambda)))))
       (and (symbolp (car x))
 	   (or (memq (car x) cl-simple-funcs)
 	       (memq (car x) cl-safe-funcs)
