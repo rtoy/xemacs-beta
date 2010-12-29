@@ -3487,56 +3487,60 @@ non-standard :if and :if-not keywords at compile time."
 ;; XEmacs; inline delete-duplicates if it's called with one of the
 ;; common compile-time constant tests and an optional :from-end
 ;; argument, we want the speed in font-lock.el.
-(define-compiler-macro delete-duplicates (&whole form cl-seq &rest cl-keys)
-  (if (not (or (memq (car-safe cl-seq)
-		     ;; No need to check for a list at runtime with
-		     ;; these. We could expand the list, but these are all
-		     ;; the functions in the relevant context at the moment.
-		     '(nreverse append nconc mapcan mapcar string-to-list))
-	       (and (listp cl-seq) (equal (butlast cl-seq) '(the list)))))
-      form
-    (cond
-     ((or (plists-equal cl-keys '(:test 'eq) t)
-	  (plists-equal cl-keys '(:test #'eq) t))
-      `(let* ((begin ,cl-seq)
-	      cl-seq)
-	(while (memq (car begin) (cdr begin))
-	  (setq begin (cdr begin)))
-	(setq cl-seq begin)
-	(while (cddr cl-seq)
-	  (if (memq (cadr cl-seq) (cddr cl-seq))
-	      (setcdr (cdr cl-seq) (cddr cl-seq)))
-	  (setq cl-seq (cdr cl-seq)))
-	begin))
-     ((or (plists-equal cl-keys '(:test 'eq :from-end t) t)
-	  (plists-equal cl-keys '(:test #'eq :from-end t) t))
-      `(let* ((begin ,cl-seq)
-	      (cl-seq begin))
-	(while cl-seq
-	  (setq cl-seq (setcdr cl-seq
-			       (delq (car cl-seq) (cdr cl-seq)))))
-	begin))
-     ((or (plists-equal cl-keys '(:test 'equal) t)
-	  (plists-equal cl-keys '(:test #'equal) t))
-      `(let* ((begin ,cl-seq)
-	      cl-seq)
-	(while (member (car begin) (cdr begin))
-	  (setq begin (cdr begin)))
-	(setq cl-seq begin)
-	(while (cddr cl-seq)
-	  (if (member (cadr cl-seq) (cddr cl-seq))
-	      (setcdr (cdr cl-seq) (cddr cl-seq)))
-	  (setq cl-seq (cdr cl-seq)))
-	begin))
-     ((or (plists-equal cl-keys '(:test 'equal :from-end t) t)
-	  (plists-equal cl-keys '(:test #'equal :from-end t) t))
-      `(let* ((begin ,cl-seq)
-	      (cl-seq begin))
-	(while cl-seq
-	  (setq cl-seq (setcdr cl-seq (delete (car cl-seq)
-					      (cdr cl-seq)))))
-	begin))
-     (t form))))
+(define-compiler-macro delete-duplicates (&whole form &rest cl-keys)
+  (let ((cl-seq (if cl-keys (pop cl-keys))))
+    (if (or 
+	 (not (or (memq (car-safe cl-seq)
+			;; No need to check for a list at runtime with
+			;; these. We could expand the list, but these are all
+			;; the functions in the relevant context at the moment.
+			'(nreverse append nconc mapcan mapcar string-to-list))
+		 (and (listp cl-seq) (equal (butlast cl-seq) '(the list)))))
+	 ;; Wrong number of arguments.
+	 (not (cdr form)))
+	form
+      (cond
+       ((or (plists-equal cl-keys '(:test 'eq) t)
+	    (plists-equal cl-keys '(:test #'eq) t))
+	`(let* ((begin ,cl-seq)
+		cl-seq)
+	  (while (memq (car begin) (cdr begin))
+	    (setq begin (cdr begin)))
+	  (setq cl-seq begin)
+	  (while (cddr cl-seq)
+	    (if (memq (cadr cl-seq) (cddr cl-seq))
+		(setcdr (cdr cl-seq) (cddr cl-seq)))
+	    (setq cl-seq (cdr cl-seq)))
+	  begin))
+       ((or (plists-equal cl-keys '(:test 'eq :from-end t) t)
+	    (plists-equal cl-keys '(:test #'eq :from-end t) t))
+	`(let* ((begin ,cl-seq)
+		(cl-seq begin))
+	  (while cl-seq
+	    (setq cl-seq (setcdr cl-seq
+				 (delq (car cl-seq) (cdr cl-seq)))))
+	  begin))
+       ((or (plists-equal cl-keys '(:test 'equal) t)
+	    (plists-equal cl-keys '(:test #'equal) t))
+	`(let* ((begin ,cl-seq)
+		cl-seq)
+	  (while (member (car begin) (cdr begin))
+	    (setq begin (cdr begin)))
+	  (setq cl-seq begin)
+	  (while (cddr cl-seq)
+	    (if (member (cadr cl-seq) (cddr cl-seq))
+		(setcdr (cdr cl-seq) (cddr cl-seq)))
+	    (setq cl-seq (cdr cl-seq)))
+	  begin))
+       ((or (plists-equal cl-keys '(:test 'equal :from-end t) t)
+	    (plists-equal cl-keys '(:test #'equal :from-end t) t))
+	`(let* ((begin ,cl-seq)
+		(cl-seq begin))
+	  (while cl-seq
+	    (setq cl-seq (setcdr cl-seq (delete (car cl-seq)
+						(cdr cl-seq)))))
+	  begin))
+       (t form)))))
 
 ;; XEmacs; it's perfectly reasonable, and often much clearer to those
 ;; reading the code, to call regexp-quote on a constant string, which is

@@ -1,5 +1,11 @@
 2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (delete-duplicates):
+	If the form has an incorrect number of arguments, don't attempt a
+	compiler macroexpansion.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (cl-safe-expr-p):
 	Forms that start with the symbol lambda are also safe.
 
