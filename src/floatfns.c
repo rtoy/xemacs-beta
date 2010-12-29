@@ -789,6 +789,11 @@ Return the floating point number numerically equal to NUMBER.
   if (FLOATP (number))		/* give 'em the same float back */
     return number;
 
+  if (BIGFLOATP (number))
+    {
+      return number;
+    }
+
   return Ffloat (wrong_type_argument (Qnumberp, number));
 }
 

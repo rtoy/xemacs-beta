@@ -1,3 +1,8 @@
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* floatfns.c (Ffloat): If we've been handed a bigfloat here, it's
+	appropriate to give the same bigfloat back.
+
 2010-11-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Ffill):
