@@ -128,13 +128,23 @@ TYPE is a Common Lisp type specifier."
   `(lambda (&rest arguments) ,@(if documentation (list documentation))
      (not (apply ',function arguments))))
 
-(defun notany (cl-pred cl-seq &rest cl-rest)
-  "Return true if PREDICATE is false of every element of SEQ or SEQs."
-  (not (apply 'some cl-pred cl-seq cl-rest)))
+(defun notany (cl-predicate cl-seq &rest cl-rest)
+  "Return true if PREDICATE is false of every element of SEQUENCE.
 
-(defun notevery (cl-pred cl-seq &rest cl-rest)
-  "Return true if PREDICATE is false of some element of SEQ or SEQs."
-  (not (apply 'every cl-pred cl-seq cl-rest)))
+With optional SEQUENCES, call PREDICATE each time with as many arguments as
+there are SEQUENCES (plus one for the element from SEQUENCE).
+
+arguments: (PREDICATE SEQUENCES &rest SEQUENCES)"
+  (not (apply 'some cl-predicate cl-seq cl-rest)))
+
+(defun notevery (cl-predicate cl-seq &rest cl-rest)
+  "Return true if PREDICATE is false of some element of SEQUENCE.
+
+With optional SEQUENCES, call PREDICATE each time with as many arguments as
+there are SEQUENCES (plus one for the element from SEQUENCE).
+
+arguments: (PREDICATE SEQUENCES &rest SEQUENCES)"
+  (not (apply 'every cl-predicate cl-seq cl-rest)))
 
 ;;; Support for `loop'.
 (defalias 'cl-map-keymap 'map-keymap)
