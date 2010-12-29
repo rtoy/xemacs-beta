@@ -1245,7 +1245,7 @@
 	 marker-buffer max member memq min mod
 	 next-window nth nthcdr number-to-string numerator
 	 parse-colon-path plist-get previous-window
-	 radians-to-degrees rassq regexp-quote reverse round
+	 radians-to-degrees rassq rassoc remove remq regexp-quote reverse round
 	 sin sqrt string< string= string-equal string-lessp string-to-char
 	 string-to-int string-to-number substring symbol-plist symbol-value
 	 symbol-name symbol-function symbol
@@ -1271,7 +1271,7 @@
 	 current-buffer
 	 ;; XEmacs: extent functions, frame-live-p, various other stuff
 	 devicep device-live-p
-	 dot dot-marker eobp eolp eq eql equal eventp extentp
+	 eobp eolp eq eql equal eventp extentp
 	 extent-live-p fixnump floatingp floatp framep frame-live-p
 	 get-largest-window get-lru-window
 	 hash-table-p
