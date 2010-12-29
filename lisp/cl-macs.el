@@ -3762,22 +3762,28 @@ the byte optimizer in those cases."
                                 (cdr form)))))))
      '(= < > <= >=))
 
-(mapc
- #'(lambda (y)
-     (put (car y) 'side-effect-free t)
-     (put (car y) 'byte-compile 'cl-byte-compile-compiler-macro)
-     (put (car y) 'cl-compiler-macro
-	  (list 'lambda '(w x)
-		(if (symbolp (cadr y))
-		    (list 'list (list 'quote (cadr y))
-			  (list 'list (list 'quote (caddr y)) 'x))
-		  (cons 'list (cdr y))))))
- '((first 'car x) (second 'cadr x) (third 'caddr x) (fourth 'cadddr x)
+;; XEmacs; unroll this loop at macro-expansion time, so the compiler macros
+;; are byte-compiled.
+(macrolet
+    ((inline-side-effect-free-compiler-macros (&rest details)
+       (cons
+        'progn
+        (loop
+          for (function . details) in details
+          nconc `((put ',function 'side-effect-free t)
+                  (define-compiler-macro ,function (&whole form x)
+                    ,(if (symbolp (car details))
+                         (reduce #'(lambda (object1 object2)
+                                     `(list ',object1 ,object2))
+                                 details :from-end t :initial-value 'x)
+                       (cons 'list details))))))))
+  (inline-side-effect-free-compiler-macros
+   (first 'car x) (second 'cadr x) (third 'caddr x) (fourth 'cadddr x)
    (fifth 'nth 4 x) (sixth 'nth 5 x) (seventh 'nth 6 x)
    (eighth 'nth 7 x) (ninth 'nth 8 x) (tenth 'nth 9 x)
    (rest 'cdr x) (plusp '> x 0) (minusp '< x 0)
-   (oddp  'eq (list 'logand x 1) 1)
-   (evenp 'eq (list 'logand x 1) 0)
+   (oddp  'eql (list 'logand x 1) 1)
+   (evenp 'eql (list 'logand x 1) 0)
    (caar car car) (cadr car cdr) (cdar cdr car) (cddr cdr cdr)
    (caaar car caar) (caadr car cadr) (cadar car cdar)
    (caddr car cddr) (cdaar cdr caar) (cdadr cdr cadr)

@@ -1,5 +1,12 @@
 2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (inline-side-effect-free-compiler-macros):
+	Unroll a loop here at macro-expansion time, so these compiler
+	macros are compiled.  Use #'eql instead of #'eq in a couple of
+	places for better style.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-extra.el (notany, notevery): Avoid some dynamic scope
 	stupidity with local variable names in these functions, when they
 	weren't prefixed with cl-; go into some more detail in the doc
