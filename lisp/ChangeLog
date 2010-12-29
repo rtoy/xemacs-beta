@@ -1,5 +1,12 @@
 2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-extra.el (notany, notevery): Avoid some dynamic scope
+	stupidity with local variable names in these functions, when they
+	weren't prefixed with cl-; go into some more detail in the doc
+	strings.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* byte-optimize.el (side-effect-free-fns): #'remove, #'remq are
 	free of side-effects.
 	(side-effect-and-error-free-fns):
