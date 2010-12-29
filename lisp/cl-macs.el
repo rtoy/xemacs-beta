@@ -3752,7 +3752,7 @@ the byte optimizer in those cases."
          (put function 'cl-compiler-macro
               #'(lambda (form &rest arguments)
                   (if (or (null (nthcdr 3 form))
-                          (notevery #'cl-safe-expr-p (cdr form)))
+                          (notevery #'cl-safe-expr-p (butlast (cdr arguments))))
                       form
                     (cons 'and (mapcon
                                 #'(lambda (rest)
