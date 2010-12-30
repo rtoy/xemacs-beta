@@ -3641,6 +3641,10 @@ extern MODULE_API int specpdl_depth_counter;
   DECLARE_N_KEYWORDS_5(a,b,c,d,e), f = Qnil
 #define DECLARE_N_KEYWORDS_7(a,b,c,d,e,f,g)     \
   DECLARE_N_KEYWORDS_6(a,b,c,d,e,f), g = Qnil
+#define DECLARE_N_KEYWORDS_8(a,b,c,d,e,f,g,h)	\
+  DECLARE_N_KEYWORDS_7(a,b,c,d,e,f,g), h = Qnil
+#define DECLARE_N_KEYWORDS_9(a,b,c,d,e,f,g,h,i)	\
+  DECLARE_N_KEYWORDS_8(a,b,c,d,e,f,g,h), i = Qnil
 
 #define CHECK_N_KEYWORDS_1(a)                                           \
     else if (EQ (pk_key, Q_##a)) { a = pk_value; }
@@ -3656,6 +3660,12 @@ extern MODULE_API int specpdl_depth_counter;
     else if (EQ (pk_key, Q_##f)) { f = pk_value; }
 #define CHECK_N_KEYWORDS_7(a,b,c,d,e,f,g)   CHECK_N_KEYWORDS_6(a,b,c,d,e,f) \
     else if (EQ (pk_key, Q_##g)) { g = pk_value; }
+#define CHECK_N_KEYWORDS_8(a,b,c,d,e,f,g,h)		\
+  CHECK_N_KEYWORDS_7(a,b,c,d,e,f,g)			\
+  else if (EQ (pk_key, Q_##h)) { h = pk_value; }
+#define CHECK_N_KEYWORDS_9(a,b,c,d,e,f,g,h,i)		\
+  CHECK_N_KEYWORDS_8(a,b,c,d,e,f,g,h)			\
+  else if (EQ (pk_key, Q_##i)) { i = pk_value; }
 
 Boolint non_nil_allow_other_keys_p (Elemcount offset, int nargs,
                                     Lisp_Object *args);
