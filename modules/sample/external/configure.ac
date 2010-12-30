@@ -1,8 +1,8 @@
 # Process this file with autoconf to produce a configure script.
 # This sample autoconf input script is free; you can redistribute it and/or
 # modify it under the terms of the GNU General Public LIcense as published by
-# the Free Software Foundation; either version 2, or (at your option) any
-# later version.
+# the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
 AC_INIT([Sample module], [1.0], [xemacs-beta@xemacs.org])
 AC_PREREQ(2.53)
 AC_REVISION($Revision: 1.1 $)

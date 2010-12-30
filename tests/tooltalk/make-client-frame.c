@@ -1,4 +1,22 @@
-/* make-client-frame.c - create a new frame in XEmacs using ToolTalk */
+/* make-client-frame.c - create a new frame in XEmacs using ToolTalk
+   Copyright (C) 1995 Sun Microsystems, Inc
+
+   Author: Vladimir Ivanovic <vladimir@Eng.Sun.COM>
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* See `tooltalk-make-client-frame-handler' in the file
    lisp/tooltalk/tooltalk-init.el for the receiver side. */

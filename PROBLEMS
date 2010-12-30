@@ -1,5 +1,37 @@
                                                   -*- mode:outline -*-
 
+Copyright (C) 1997, 1998 Steven L Baur
+Copyright (C) 1997 Tor Arntsen
+Copyright (C) 1998, 1999 Gunnar Evermann
+Copyright (C) 1998 Karl M. Hegbloom
+Copyright (C) 1998, 2000 Marcus Thiessel
+Copyright (C) 1998, 2001 Martin Buchholz
+Copyright (C) 1998 Michael Sperber
+Copyright (C) 1999 Andy Piper
+Copyright (C) 2000 Darryl Okahata
+Copyright (C) 2000-2002, 2006, 2007, 2009 Stephen J. Turnbull
+Copyright (C) 2001, 2003, 2005, 2010 Ben Wing
+Copyright (C) 2001 Robert Pluim
+Copyright (C) 2003 Jerry James
+Copyright (C) 2003 Rodney Sparapani
+Copyright (C) 2005, 2006  Malcolm Purvis
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
+
 This file describes various problems that have been encountered
 in compiling, installing and running XEmacs.  It has been updated for
 XEmacs 21.5.  Note that the issues are by now mainly historic; XEmacs
