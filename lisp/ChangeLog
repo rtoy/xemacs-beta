@@ -1,3 +1,10 @@
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el:
+	Provde the Common Lisp program-error, type-error as error
+	symbols. This doesn't nearly go far enough for anyone using the
+	Common Lisp errors.
+
 2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (delete-duplicates):

@@ -603,6 +603,19 @@ If ALIST is non-nil, the new pairs are prepended to it."
 ;; XEmacs change
 (define-error 'cl-assertion-failed "Assertion failed")
 
+;; XEmacs; provide a milquetoast amount of compatibility in our error symbols.
+(define-error 'type-error "Wrong type" 'wrong-type-argument)
+(define-error 'program-error "Error in your program" 'invalid-argument)
+
+(map-plist
+ #'(lambda (key value)
+     (mapc #'(lambda (error)
+               (put error 'error-conditions
+                    (cons key (get error 'error-conditions))))
+           value))
+ '(program-error (wrong-number-of-arguments invalid-keyword-argument)
+   type-error (wrong-type-argument malformed-list circular-list)))
+
 ;; XEmacs change: omit the autoload rules; we handle those a different way
 
 ;;; Define data for indentation and edebug.
