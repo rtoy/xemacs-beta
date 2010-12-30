@@ -1,5 +1,11 @@
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lisp.h (DECLARE_N_KEYWORDS_8, DECLARE_N_KEYWORDS_9)
+	(CHECK_N_KEYWORDS_8, CHECK_N_KEYWORDS_9):
+	Support up to nine keywords in the PARSE_KEYWORDS() macro.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* elhash.c (syms_of_elhash): 
 	* chartab.c (syms_of_chartab):
 	* abbrev.c (syms_of_abbrev):
