@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include "chartab.h"
 #include "syntax.h"
 
-Lisp_Object Qchar_tablep, Qchar_table, Q_default;
+Lisp_Object Qchar_tablep, Qchar_table;
 
 Lisp_Object Vall_syntax_tables;
 
@@ -1581,7 +1581,7 @@ chartab_instantiate (Lisp_Object plist)
 	    {
 	      type = value;
 	    }
-	  else if (EQ (key, Q_default))
+	  else if (EQ (key, Q_default_))
 	    {
 	      default_ = value;
 	    }
@@ -1626,7 +1626,11 @@ chartab_instantiate (Lisp_Object plist)
       check_valid_char_table_value (default_, XCHAR_TABLE_TYPE (chartab),
 				    ERROR_ME);
       set_char_table_default (chartab, default_);
-      set_char_table_default (XCHAR_TABLE (chartab)->mirror_table, default_);
+      if (!NILP (XCHAR_TABLE (chartab)->mirror_table))
+        {
+          set_char_table_default (XCHAR_TABLE (chartab)->mirror_table,
+                                  default_);
+        }
     }
 
   while (!NILP (dataval))
@@ -1902,7 +1906,6 @@ syms_of_chartab (void)
 
   DEFSYMBOL (Qchar_table);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qchar_tablep);
-  DEFKEYWORD (Q_default);
 
   DEFSUBR (Fchar_table_p);
   DEFSUBR (Fchar_table_type_list);
@@ -1957,7 +1960,7 @@ structure_type_create_chartab (void)
 
   define_structure_type_keyword (st, Q_type, chartab_type_validate);
   define_structure_type_keyword (st, Q_data, chartab_data_validate);
-  define_structure_type_keyword (st, Q_default, chartab_default_validate);
+  define_structure_type_keyword (st, Q_default_, chartab_default_validate);
 }
 
 void
