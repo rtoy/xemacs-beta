@@ -102,6 +102,7 @@
 ;; .elc's.
 (defvar lisp-files-needed-for-byte-compilation
   '("bytecomp"
+    "cl-macs"
     "byte-optimize"))
 
 ;; Lisp files not in `lisp-files-needed-for-byte-compilation' that need
@@ -110,8 +111,7 @@
 (defvar lisp-files-needing-early-byte-compilation
   '("easy-mmode"
     "autoload"
-    "shadow"
-    "cl-macs"))
+    "shadow"))
 
 (defvar unbytecompiled-lisp-files
   '("paths.el"
