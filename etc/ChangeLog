@@ -1,3 +1,8 @@
+2010-12-31  Mats Lidell  <matsl@xemacs.org>
+
+	* emacskeys.sco: remove
+	* emacsstrs.sco: remove
+
 2010-11-07  Mats Lidell  <matsl@xemacs.org>
 	
 	* gnuserv.1: 
