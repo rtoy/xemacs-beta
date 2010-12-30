@@ -765,14 +765,8 @@ Modifies the match data when successful; use `save-match-data' if necessary."
 (defun subst-char-in-string (fromchar tochar string &optional inplace)
   "Replace FROMCHAR with TOCHAR in STRING each time it occurs.
 Unless optional argument INPLACE is non-nil, return a new string."
-  (let ((i (length string))
-	(newstr (if inplace string (copy-sequence string))))
-    (while (> i 0)
-      (setq i (1- i))
-      (if (eq (aref newstr i) fromchar)
-	  (aset newstr i tochar)))
-    newstr))
-
+  (funcall (if inplace #'nsubstitute #'substitute) tochar fromchar
+	   (the string string) :test #'eq))
 
 ;; XEmacs addition:
 (defun replace-in-string (str regexp newtext &optional literal)
@@ -961,23 +955,11 @@ With international (Mule) support, uses the charset-columns attribute of
 the characters in STRING, which may not accurately represent the actual
 display width when using a window system.  With no international support,
 simply returns the length of the string."
-  (if (featurep 'mule)
-      (let ((col 0)
-	    (len (length string))
-	    (i 0))
-	(with-fboundp '(charset-width char-charset)
-	  (while (< i len)
-	    (setq col (+ col (charset-width (char-charset (aref string i)))))
-	    (setq i (1+ i))))
-	col)
-    (length string)))
+  (reduce #'+ (the string string) :initial-value 0 :key #'char-width))
 
 (defun char-width (character)
   "Return number of columns a CHARACTER occupies when displayed."
-  (if (featurep 'mule)
-      (with-fboundp '(charset-width char-charset)
-	(charset-width (char-charset character)))
-    1))
+  (charset-width (char-charset character)))
 
 ;; The following several functions are useful in GNU Emacs 20 because
 ;; of the multibyte "characters" the internal representation of which
@@ -1003,18 +985,9 @@ TYPE should be `list' or `vector'."
 
 (defun store-substring (string idx obj)
   "Embed OBJ (string or character) at index IDX of STRING."
-  (let* ((str (cond ((stringp obj) obj)
-		    ((characterp obj) (char-to-string obj))
-		    (t (error
-			"Invalid argument (should be string or character): %s"
-			obj))))
-	 (string-len (length string))
-	 (len (length str))
-	 (i 0))
-    (while (and (< i len) (< idx string-len))
-      (aset string idx (aref str i))
-      (setq idx (1+ idx) i (1+ i)))
-    string))
+  (if (stringp obj)
+      (replace (the string string) obj :start1 idx)
+    (prog1 string (aset string idx obj))))
 
 ;; From FSF 21.1; ELLIPSES is XEmacs addition.
 

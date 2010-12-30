@@ -1,5 +1,21 @@
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* simple.el (assoc-ignore-case): Remove a duplicate definition of
+	this function (it's already in subr.el).
+	* iso8859-1.el (char-width):
+	On non-Mule, make this function equivalent to that produced by
+	(constantly 1), but preserve its docstring.
+	* subr.el (subst-char-in-string): Define this in terms of
+	#'substitute, #'nsubstitute.
+	(string-width): Define this using #'reduce and #'char-width.
+	(char-width): Give this a simpler definition, it makes far more
+	sense to check for mule at load time and redefine, as we do in
+	iso8859-1.el. 
+	(store-substring): Implement this in terms of #'replace, now
+	#'replace is cheap.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* update-elc.el (lisp-files-needed-for-byte-compilation)
 	(lisp-files-needing-early-byte-compilation):
 	cl-macs belongs in the former, not the latter, it is as

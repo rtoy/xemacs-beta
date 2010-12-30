@@ -3332,11 +3332,6 @@ when it is off screen."
 ;; keyboard-quit
 ;; buffer-quit-function
 ;; keyboard-escape-quit
-
-(defun assoc-ignore-case (key alist)
-  "Like `assoc', but assumes KEY is a string and ignores case when comparing."
-  (assoc* key alist :test #'equalp))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                          mail composition code                        ;;
