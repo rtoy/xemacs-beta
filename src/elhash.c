@@ -93,7 +93,7 @@ static Lisp_Object Qhashtable, Qhash_table, Qmake_hash_table;
 static Lisp_Object Qweakness, Qvalue, Qkey_or_value, Qkey_and_value;
 static Lisp_Object Vall_weak_hash_tables;
 static Lisp_Object Qrehash_size, Qrehash_threshold;
-static Lisp_Object Q_size, Q_test, Q_weakness, Q_rehash_size, Q_rehash_threshold;
+static Lisp_Object Q_size, Q_weakness, Q_rehash_size, Q_rehash_threshold;
 static Lisp_Object Vhash_table_test_eq, Vhash_table_test_eql;
 static Lisp_Object Vhash_table_test_weak_list;
 
@@ -2291,7 +2291,6 @@ syms_of_elhash (void)
   DEFSYMBOL (Qnon_weak);     /* obsolete */
 
   DEFKEYWORD (Q_data);
-  DEFKEYWORD (Q_test);
   DEFKEYWORD (Q_size);
   DEFKEYWORD (Q_rehash_size);
   DEFKEYWORD (Q_rehash_threshold);

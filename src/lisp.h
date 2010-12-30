@@ -5305,9 +5305,11 @@ EXFUN (Freally_free, 1);
 /* Defined in general.c */
 #define SYMBOL(fou) extern Lisp_Object fou
 #define SYMBOL_MODULE_API(fou) extern MODULE_API Lisp_Object fou
-#define SYMBOL_KEYWORD(la_cle_est_fou) extern Lisp_Object la_cle_est_fou
+#define SYMBOL_KEYWORD(la_cle_est_folle) extern Lisp_Object la_cle_est_folle
 #define SYMBOL_GENERAL(tout_le_monde, est_fou) \
   extern Lisp_Object tout_le_monde
+#define SYMBOL_KEYWORD_GENERAL(y_compris_ben, mais_que_peut_on_faire) \
+  extern Lisp_Object y_compris_ben
 
 #include "general-slots.h"
 
@@ -5315,6 +5317,7 @@ EXFUN (Freally_free, 1);
 #undef SYMBOL_MODULE_API
 #undef SYMBOL_KEYWORD
 #undef SYMBOL_GENERAL
+#undef SYMBOL_KEYWORD_GENERAL
 
 extern Lisp_Object Qeq;
 extern Lisp_Object Qeql;
