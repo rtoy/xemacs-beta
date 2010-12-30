@@ -1,3 +1,11 @@
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (wrong-type-argument): Add a missing
+	parenthesis here.
+	Make sure #'count #'position #'find #'delete* #'remove* #'reduce
+	#'delete-duplicates #'remove-duplicates #'replace #'mismatch
+	#'search sanity check their :start and :end keyword arguments.
+
 2010-11-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
