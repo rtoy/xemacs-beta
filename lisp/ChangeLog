@@ -1,5 +1,12 @@
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* x-misc.el (device-x-display):
+	Provide this function, documented in the Lispref for years, but
+	not existing previously.  Thank you Julian Bradfield, thank you
+	Jeff Mincy.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* simple.el (assoc-ignore-case): Remove a duplicate definition of
 	this function (it's already in subr.el).
 	* iso8859-1.el (char-width):
