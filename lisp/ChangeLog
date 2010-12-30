@@ -1,5 +1,12 @@
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* update-elc.el (lisp-files-needed-for-byte-compilation)
+	(lisp-files-needing-early-byte-compilation):
+	cl-macs belongs in the former, not the latter, it is as
+	fundamental as bytecomp.el.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl.el:
 	Provde the Common Lisp program-error, type-error as error
 	symbols. This doesn't nearly go far enough for anyone using the
