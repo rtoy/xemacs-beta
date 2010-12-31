@@ -1,5 +1,9 @@
 2010-12-31  Mats Lidell  <matsl@xemacs.org>
 
+	* xemacs.1: Added copyright and license.
+
+2010-12-31  Mats Lidell  <matsl@xemacs.org>
+
 	* emacskeys.sco: remove
 	* emacsstrs.sco: remove
 
