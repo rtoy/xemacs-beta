@@ -1,3 +1,11 @@
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (FdeleteX, FremoveX, Fnsubstitute, Fsubstitute, syms_of_fns): 
+	Don't repeat the declaration and DEFSYMBOL() for Qnintersection in
+	this file; don't assume that bignums are always available. Fixes
+	some of the build problems the buildbot is showing me at the
+	moment.
+
 2011-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (print_ephemeron, print_weak_list, print_weak_box):

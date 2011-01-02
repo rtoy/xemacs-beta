@@ -62,7 +62,7 @@ Lisp_Object Qsome, Qevery, Qmaplist, Qmapl, Qmapcon, Qreduce, Qsubstitute;
 Lisp_Object Q_start1, Q_start2, Q_end1, Q_end2, Q_if_, Q_if_not, Q_stable;
 Lisp_Object Q_test_not, Q_count, Qnsubstitute, Qdelete_duplicates, Qmismatch;
 
-Lisp_Object Qintersection, Qnintersection, Qset_difference, Qnset_difference;
+Lisp_Object Qintersection, Qset_difference, Qnset_difference;
 Lisp_Object Qnunion, Qnintersection, Qsubsetp, Qnset_difference;
 
 Lisp_Object Qbase64_conversion_error;
@@ -3280,15 +3280,17 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
       if (!NILP (count))
 	{
 	  CHECK_INTEGER (count);
-          if (BIGNUMP (count))
+          if (INTP (count))
+            {
+              counting = XINT (count);
+            }
+#ifdef HAVE_BIGNUM
+          else
             {
               counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
                 1 + EMACS_INT_MAX : EMACS_INT_MIN - 1;
             }
-          else
-            {
-              counting = XINT (count);
-            }
+#endif
 
 	  if (counting < 1)
 	    {
@@ -3625,15 +3627,17 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
   if (!NILP (count))
     {
       CHECK_INTEGER (count);
-      if (BIGNUMP (count))
+      if (INTP (count))
+        {
+          counting = XINT (count);
+        }
+#ifdef HAVE_BIGNUM
+      else
         {
           counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
             1 + EMACS_INT_MAX : -1 + EMACS_INT_MIN;
         }
-      else
-        {
-          counting = XINT (count);
-        }
+#endif
 
       if (counting <= 0)
 	{
@@ -8679,15 +8683,17 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
   if (!NILP (count))
     {
       CHECK_INTEGER (count);
-      if (BIGNUMP (count))
+      if (INTP (count))
+        {
+          counting = XINT (count);
+        }
+#ifdef HAVE_BIGNUM
+      else
         {
           counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
             1 + EMACS_INT_MAX : -1 + EMACS_INT_MIN;
         }
-      else
-        {
-          counting = XINT (count);
-        }
+#endif
 
       if (counting <= 0)
 	{
@@ -8944,15 +8950,17 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
       if (!NILP (count))
 	{
           CHECK_INTEGER (count);
-          if (BIGNUMP (count))
+          if (INTP (count))
+            {
+              counting = XINT (count);
+            }
+#ifdef HAVE_BIGNUM
+          else
             {
               counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
                 1 + EMACS_INT_MAX : -1 + EMACS_INT_MIN;
             }
-          else
-            {
-              counting = XINT (count);
-            }
+#endif
 
           if (counting <= 0)
             {
@@ -11722,7 +11730,6 @@ syms_of_fns (void)
   DEFSYMBOL (Qset_difference);
   DEFSYMBOL (Qnset_difference);
   DEFSYMBOL (Qnunion);
-  DEFSYMBOL (Qnintersection);
   DEFSYMBOL (Qset_difference);
   DEFSYMBOL (Qnset_difference);
 
