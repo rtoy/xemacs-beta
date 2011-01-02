@@ -1,3 +1,13 @@
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (define-star-compiler-macros):
+	Make sure the form has ITEM and LIST specified before attempting
+	to change to calls with explicit tests; necessary for some tests
+	in lisp-tests.el to compile correctly.
+	(stable-union, stable-intersection): Add compiler macros for these
+	functions, in the same way we do for most of the other functions
+	in cl-seq.el.
+
 2011-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (dolist, dotimes, do-symbols, macrolet)

@@ -3283,51 +3283,53 @@ surrounded by (block NAME ...)."
 	(mapcar
 	 (function*
 	  (lambda ((star-function eq-function equal-function))
-	    `(define-compiler-macro ,star-function (&whole form item list
-						    &rest keys)
-	      (condition-case nil
-		  (symbol-macrolet ((not-constant '#:not-constant))
-		    (let* ((test-expr (plist-get keys :test ''eql))
-			   (test (cl-const-expr-val test-expr not-constant))
-			   (item-val (cl-const-expr-val item not-constant))
-			   (list-val (cl-const-expr-val list not-constant)))
-		      (if (and keys
-			       (not (and (eq :test (car keys))
-					 (eql 2 (length keys)))))
-			  form
-			(cond ((eq test 'eq) `(,',eq-function ,item ,list))
-			      ((eq test 'equal)
-			       `(,',equal-function ,item ,list))
-			      ((and (eq test 'eql)
-				    (not (eq not-constant item-val)))
-			       (if (cl-non-fixnum-number-p item-val)
-				   `(,',equal-function ,item ,list)
-				 `(,',eq-function ,item ,list)))
-			      ((and (eq test 'eql) (not (eq not-constant
-							    list-val)))
-			       (if (some 'cl-non-fixnum-number-p list-val)
-				   `(,',equal-function ,item ,list)
-				 ;; This compiler macro used to limit calls
-				 ;; to ,,eq-function to lists where all
-				 ;; elements were either fixnums or
-				 ;; symbols. There's no
-				 ;; reason to do this.
-				 `(,',eq-function ,item ,list)))
-			      ;; This is a hilariously specific case; see
-			      ;; add-to-list in subr.el.
-			      ((and (eq test not-constant)
-				    (eq 'or (car-safe test-expr))
-				    (eql 3 (length test-expr))
-				    (every #'cl-safe-expr-p (cdr form))
-				    `(if ,(second test-expr)
-					 (,',star-function ,item ,list :test
-							   ,(second test-expr))
-				      (,',star-function
-				       ,item ,list :test ,(third test-expr)))))
-			      (t form)))))
-		;; No need to warn about a malformed property list,
-		;; #'byte-compile-normal-call will do that for us.
-		(malformed-property-list form)))))
+	    `(define-compiler-macro ,star-function (&whole form &rest keys)
+              (if (< (length form) 3)
+                  form
+                (condition-case nil
+                    (symbol-macrolet ((not-constant '#:not-constant))
+                      (let* ((item (pop keys))
+                             (list (pop keys))
+                             (test-expr (plist-get keys :test ''eql))
+                             (test (cl-const-expr-val test-expr not-constant))
+                             (item-val (cl-const-expr-val item not-constant))
+                             (list-val (cl-const-expr-val list not-constant)))
+                        (if (and keys (not (and (eq :test (car keys))
+                                                (eql 2 (length keys)))))
+                            form
+                          (cond ((eq test 'eq) `(,',eq-function ,item ,list))
+                                ((eq test 'equal)
+                                 `(,',equal-function ,item ,list))
+                                ((and (eq test 'eql)
+                                      (not (eq not-constant item-val)))
+                                 (if (cl-non-fixnum-number-p item-val)
+                                     `(,',equal-function ,item ,list)
+                                   `(,',eq-function ,item ,list)))
+                                ((and (eq test 'eql) (not (eq not-constant
+                                                              list-val)))
+                                 (if (some 'cl-non-fixnum-number-p list-val)
+                                     `(,',equal-function ,item ,list)
+                                   ;; This compiler macro used to limit
+                                   ;; calls to ,,eq-function to lists where
+                                   ;; all elements were either fixnums or
+                                   ;; symbols. There's no reason to do this.
+                                   `(,',eq-function ,item ,list)))
+                                ;; This is a hilariously specific case; see
+                                ;; add-to-list in subr.el.
+                                ((and (eq test not-constant)
+                                      (eq 'or (car-safe test-expr))
+                                      (eql 3 (length test-expr))
+                                      (every #'cl-safe-expr-p (cdr form))
+                                      `(if ,(second test-expr)
+                                        (,',star-function ,item ,list :test
+                                                          ,(second test-expr))
+                                        (,',star-function
+                                         ,item ,list :test
+                                         ,(third test-expr)))))
+                                (t form)))))
+                  ;; No need to warn about a malformed property list,
+                  ;; #'byte-compile-normal-call will do that for us.
+                  (malformed-property-list form))))))
 	 macros))))
   (define-star-compiler-macros
     (member* memq member)
@@ -3734,6 +3736,16 @@ the byte optimizer in those cases."
   (if (every #'cl-safe-expr-p (cdr form))
       `(funcall (if ,inplace #'nsubstitute #'substitute) ,tochar ,fromchar
 	(the string ,string) :test #'eq)
+    form))
+
+(define-compiler-macro stable-union (&whole form &rest cl-keys)
+  (if (> (length form) 2)
+      (list* 'union (pop cl-keys) (pop cl-keys) :stable t cl-keys)
+    form))
+
+(define-compiler-macro stable-intersection (&whole form &rest cl-keys)
+  (if (> (length form) 2)
+      (list* 'intersection (pop cl-keys) (pop cl-keys) :stable t cl-keys)
     form))
 
 (map nil
