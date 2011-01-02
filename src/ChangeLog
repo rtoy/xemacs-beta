@@ -1,3 +1,9 @@
+2011-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (print_ephemeron, print_weak_list, print_weak_box):
+	Be more helpful in printing these structures; show their contents,
+	print their UIDs so it's possible to distinguish between them.
+
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Move the heavy lifting from cl-seq.el to C, finally making those
