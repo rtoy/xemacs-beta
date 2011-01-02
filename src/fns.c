@@ -63,7 +63,7 @@ Lisp_Object Q_start1, Q_start2, Q_end1, Q_end2, Q_if_, Q_if_not, Q_stable;
 Lisp_Object Q_test_not, Q_count, Qnsubstitute, Qdelete_duplicates, Qmismatch;
 
 Lisp_Object Qintersection, Qset_difference, Qnset_difference;
-Lisp_Object Qnunion, Qnintersection, Qsubsetp, Qnset_difference;
+Lisp_Object Qnunion, Qnintersection, Qsubsetp;
 
 Lisp_Object Qbase64_conversion_error;
 
@@ -11730,8 +11730,6 @@ syms_of_fns (void)
   DEFSYMBOL (Qset_difference);
   DEFSYMBOL (Qnset_difference);
   DEFSYMBOL (Qnunion);
-  DEFSYMBOL (Qset_difference);
-  DEFSYMBOL (Qnset_difference);
 
   DEFKEYWORD (Q_from_end);
   DEFKEYWORD (Q_initial_value);
