@@ -121,7 +121,9 @@ minibuffer contents show."
       (apply 'message-box fmt args)
     (apply 'message fmt args)))
 
-(defun make-dialog-box (type &rest cl-keys)
+(defun* make-dialog-box (type &rest rest &key (title "XEmacs")
+                         (parent (selected-frame)) modal properties autosize
+                         spec &allow-other-keys)
   "Pop up a dialog box.
 TYPE is a symbol, the type of dialog box.  Remaining arguments are
 keyword-value pairs, specifying the particular characteristics of the
@@ -570,112 +572,100 @@ The keywords allowed are
 	       (signal 'quit nil)))))
     (case type
       (general
-	(cl-parsing-keywords
-	    ((:title "XEmacs")
-	     (:parent (selected-frame))
-	     :modal
-	     :properties
-	     :autosize
-	     :spec)
-	    ()
-	  (flet ((create-dialog-box-frame ()
-		   (let* ((ftop (frame-property cl-parent 'top))
-			  (fleft (frame-property cl-parent 'left))
-			  (fwidth (frame-pixel-width cl-parent))
-			  (fheight (frame-pixel-height cl-parent))
-			  (fonth (font-height (face-font 'default)))
-			  (fontw (font-width (face-font 'default)))
-			  (cl-properties (append cl-properties
-						 dialog-frame-plist))
-			  (dfheight (plist-get cl-properties 'height))
-			  (dfwidth (plist-get cl-properties 'width))
-			  (unmapped (plist-get cl-properties
-					       'initially-unmapped))
-			  (gutter-spec cl-spec)
-			  (name (or (plist-get cl-properties 'name) "XEmacs"))
-			  (frame nil))
-		     (plist-remprop cl-properties 'initially-unmapped)
-		     ;; allow the user to just provide a glyph
-		     (or (glyphp cl-spec) (setq cl-spec (make-glyph cl-spec)))
-		     (setq gutter-spec (copy-sequence "\n"))
-		     (set-extent-begin-glyph (make-extent 0 1 gutter-spec)
-					     cl-spec)
-		     ;; under FVWM at least, if I don't specify the
-		     ;; initial position, it ends up always at (0, 0).
-		     ;; xwininfo doesn't tell me that there are any
-		     ;; program-specified position hints, so it must be
-		     ;; an FVWM bug.  So just be smashing and position in
-		     ;; the center of the selected frame.
-		     (setq frame
-			   (make-frame
-			    (append cl-properties
-				    `(popup
-				      ,cl-parent initially-unmapped t
-				      menubar-visible-p nil
-				      has-modeline-p nil
-				      default-toolbar-visible-p nil
-				      top-gutter-visible-p t
-				      top-gutter-height ,(* dfheight fonth)
-				      top-gutter ,gutter-spec
-				      minibuffer none
-				      name ,name
-				      modeline-shadow-thickness 0
-				      vertical-scrollbar-visible-p nil
-				      horizontal-scrollbar-visible-p nil
-				      unsplittable t
-				      internal-border-width 8
-				      left ,(+ fleft (- (/ fwidth 2)
-							(/ (* dfwidth
-							      fontw)
-							   2)))
-				      top ,(+ ftop (- (/ fheight 2)
-						      (/ (* dfheight
-							    fonth)
-							 2)))))))
-		     (set-face-foreground 'modeline [default foreground] frame)
-		     (set-face-background 'modeline [default background] frame)
-		     ;; resize before mapping
-		     (when cl-autosize
-		       (set-frame-displayable-pixel-size 
-			frame
-			(image-instance-width 
-			 (glyph-image-instance cl-spec 
-					       (frame-selected-window frame)))
-			(image-instance-height 
-			 (glyph-image-instance cl-spec 
-					       (frame-selected-window frame)))))
-		     ;; somehow, even though the resizing is supposed
-		     ;; to be while the frame is not visible, a
-		     ;; visible resize is perceptible
-		     (unless unmapped (make-frame-visible frame))
-		     (let ((newbuf (generate-new-buffer " *dialog box*")))
-		       (set-buffer-dedicated-frame newbuf frame)
-		       (set-frame-property frame 'dialog-box-buffer newbuf)
-		       (set-window-buffer (frame-root-window frame) newbuf)
-		       (with-current-buffer newbuf
-			 (set (make-local-variable 'frame-title-format)
-			      cl-title)
-			 (add-local-hook 'delete-frame-hook
-					 #'(lambda (frame)
-					     (kill-buffer
-					      (frame-property
-					       frame
-					       'dialog-box-buffer))))))
-		     frame)))
-	    (if cl-modal
-		(dialog-box-modal-loop '(create-dialog-box-frame))
-	      (create-dialog-box-frame)))))
+       (flet ((create-dialog-box-frame ()
+                (let* ((ftop (frame-property parent 'top))
+                       (fleft (frame-property parent 'left))
+                       (fwidth (frame-pixel-width parent))
+                       (fheight (frame-pixel-height parent))
+                       (fonth (font-height (face-font 'default)))
+                       (fontw (font-width (face-font 'default)))
+                       (properties (append properties
+                                              dialog-frame-plist))
+                       (dfheight (plist-get properties 'height))
+                       (dfwidth (plist-get properties 'width))
+                       (unmapped (plist-get properties
+                                            'initially-unmapped))
+                       (gutter-spec spec)
+                       (name (or (plist-get properties 'name) "XEmacs"))
+                       (frame nil))
+                  (plist-remprop properties 'initially-unmapped)
+                  ;; allow the user to just provide a glyph
+                  (or (glyphp spec) (setq spec (make-glyph spec)))
+                  (setq gutter-spec (copy-sequence "\n"))
+                  (set-extent-begin-glyph (make-extent 0 1 gutter-spec)
+                                          spec)
+                  ;; under FVWM at least, if I don't specify the
+                  ;; initial position, it ends up always at (0, 0).
+                  ;; xwininfo doesn't tell me that there are any
+                  ;; program-specified position hints, so it must be
+                  ;; an FVWM bug.  So just be smashing and position in
+                  ;; the center of the selected frame.
+                  (setq frame
+                        (make-frame
+                         (append properties
+                                 `(popup
+                                   ,parent initially-unmapped t
+                                   menubar-visible-p nil
+                                   has-modeline-p nil
+                                   default-toolbar-visible-p nil
+                                   top-gutter-visible-p t
+                                   top-gutter-height ,(* dfheight fonth)
+                                   top-gutter ,gutter-spec
+                                   minibuffer none
+                                   name ,name
+                                   modeline-shadow-thickness 0
+                                   vertical-scrollbar-visible-p nil
+                                   horizontal-scrollbar-visible-p nil
+                                   unsplittable t
+                                   internal-border-width 8
+                                   left ,(+ fleft (- (/ fwidth 2)
+                                                     (/ (* dfwidth
+                                                           fontw)
+                                                        2)))
+                                   top ,(+ ftop (- (/ fheight 2)
+                                                   (/ (* dfheight
+                                                         fonth)
+                                                      2)))))))
+                  (set-face-foreground 'modeline [default foreground] frame)
+                  (set-face-background 'modeline [default background] frame)
+                  ;; resize before mapping
+                  (when autosize
+                    (set-frame-displayable-pixel-size 
+                     frame
+                     (image-instance-width 
+                      (glyph-image-instance spec 
+                                            (frame-selected-window frame)))
+                     (image-instance-height 
+                      (glyph-image-instance spec 
+                                            (frame-selected-window frame)))))
+                  ;; somehow, even though the resizing is supposed
+                  ;; to be while the frame is not visible, a
+                  ;; visible resize is perceptible
+                  (unless unmapped (make-frame-visible frame))
+                  (let ((newbuf (generate-new-buffer " *dialog box*")))
+                    (set-buffer-dedicated-frame newbuf frame)
+                    (set-frame-property frame 'dialog-box-buffer newbuf)
+                    (set-window-buffer (frame-root-window frame) newbuf)
+                    (with-current-buffer newbuf
+                      (set (make-local-variable 'frame-title-format)
+                           title)
+                      (add-local-hook 'delete-frame-hook
+                                      #'(lambda (frame)
+                                          (kill-buffer
+                                           (frame-property
+                                            frame
+                                            'dialog-box-buffer))))))
+                  frame)))
+        (if modal
+            (dialog-box-modal-loop '(create-dialog-box-frame))
+          (create-dialog-box-frame))))
       (question
-	(cl-parsing-keywords
-	    ((:modal nil))
-	    t
-	  (remf cl-keys :modal)
-	  (if cl-modal
-	      (dialog-box-modal-loop `(make-dialog-box-internal ',type
-								',cl-keys))
-	    (make-dialog-box-internal type cl-keys))))
-      (t
-	(make-dialog-box-internal type cl-keys)))))
+       (remf rest :modal)
+       (if modal
+           (dialog-box-modal-loop `(make-dialog-box-internal ',type ',rest))
+         (make-dialog-box-internal type rest))))
+    (t
+     (make-dialog-box-internal type rest))))
 
 (defun dialog-box-finish (result)
   "Exit a modal dialog box, returning RESULT.

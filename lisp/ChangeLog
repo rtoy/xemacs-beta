@@ -1,5 +1,13 @@
 2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* dialog.el (make-dialog-box):
+	* list-mode.el (display-completion-list):
+	These functions used to use cl-parsing-keywords; change them to
+	use defun* instead, fixing the build. (Not sure what led to me
+	not including this change in d1b17a33450b!)
+
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (define-star-compiler-macros):
 	Make sure the form has ITEM and LIST specified before attempting
 	to change to calls with explicit tests; necessary for some tests
