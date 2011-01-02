@@ -5,6 +5,7 @@
 	this file; don't assume that bignums are always available. Fixes
 	some of the build problems the buildbot is showing me at the
 	moment.
+	(syms_of_fns): Remove a couple more duplicate symbol declarations.
 
 2011-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 
