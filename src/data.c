@@ -2610,14 +2610,19 @@ mark_weak_list (Lisp_Object UNUSED (obj))
 
 static void
 print_weak_list (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED (escapeflag))
+		 int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
 
-  write_fmt_string_lisp (printcharfun, "#<weak-list %s %S>", 2,
-			 encode_weak_list_type (XWEAK_LIST (obj)->type),
-			 XWEAK_LIST (obj)->list);
+  write_ascstring (printcharfun, "#<weak-list :type ");
+  print_internal (encode_weak_list_type (XWEAK_LIST (obj)->type),
+                  printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :list ");
+  print_internal (XWEAK_LIST (obj)->list, printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3085,12 +3090,16 @@ mark_weak_box (Lisp_Object UNUSED (obj))
 }
 
 static void
-print_weak_box (Lisp_Object obj, Lisp_Object printcharfun,
-		int UNUSED (escapeflag))
+print_weak_box (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string (printcharfun, "#<weak-box>"); /* #### fix */
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
+
+  write_ascstring (printcharfun, "#<weak-box ");
+  print_internal (XWEAK_BOX (obj)->value, printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3307,12 +3316,20 @@ mark_ephemeron (Lisp_Object UNUSED (obj))
 }
 
 static void
-print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED (escapeflag))
+print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string (printcharfun, "#<ephemeron>"); /* #### fix */
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
+
+  write_ascstring (printcharfun, "#<ephemeron :key ");
+  print_internal (XEPHEMERON (obj)->key, printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :value ");
+  print_internal (XEPHEMERON (obj)->value, printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :finalizer ");
+  print_internal (XEPHEMERON_FINALIZER (obj), printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int

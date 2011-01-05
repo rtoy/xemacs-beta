@@ -224,6 +224,9 @@ ELT must be a string.  Upper-case and lower-case letters are treated as equal."
 
 ;; XEmacs; this is in Lisp, its bytecode now taken by subseq.
 (define-function 'substring 'subseq)
+
+(define-function 'sort 'sort*)
+(define-function 'fillarray 'fill)
   
 ;; XEmacs:
 (defun local-variable-if-set-p (sym buffer)
@@ -1102,13 +1105,13 @@ The original plist is not modified.  See also `destructive-plist-to-alist'."
       "Replace the variable names in MAP-PLIST-DEFINITION with uninterned
 symbols, avoiding the risk of interference with variables in other functions
 introduced by dynamic scope."
-      (if-fboundp 'nsublis 
-	  (nsublis
-	   '((mp-function . #:function)
-	     (plist . #:plist)
-	     (result . #:result))
-	   map-plist-definition)
-	map-plist-definition)))
+      (nsublis '((mp-function . #:function)
+		 (plist . #:plist)
+		 (result . #:result))
+	       ;; Need to specify #'eq as the test, otherwise we have a
+	       ;; bootstrap issue, since #'eql is in cl.el, loaded after
+	       ;; this file.
+	       map-plist-definition :test #'eq)))
  (defun map-plist (mp-function plist)
    "Map FUNCTION (a function of two args) over each key/value pair in PLIST.
 Return a list of the results."

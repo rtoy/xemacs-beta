@@ -1,3 +1,65 @@
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (FdeleteX, FremoveX, Fnsubstitute, Fsubstitute, syms_of_fns): 
+	Don't repeat the declaration and DEFSYMBOL() for Qnintersection in
+	this file; don't assume that bignums are always available. Fixes
+	some of the build problems the buildbot is showing me at the
+	moment.
+	(syms_of_fns): Remove a couple more duplicate symbol declarations.
+
+2011-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (print_ephemeron, print_weak_list, print_weak_box):
+	Be more helpful in printing these structures; show their contents,
+	print their UIDs so it's possible to distinguish between them.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move the heavy lifting from cl-seq.el to C, finally making those
+	functions first-class XEmacs citizens, with circularity checking,
+	built-in support for tests other than #'eql, and as much
+	compatibility with current Common Lisp as Paul Dietz' tests require.
+
+	* fns.c (check_eq_nokey, check_eq_key, check_eql_nokey)
+	(check_eql_key, check_equal_nokey, check_equal_key)
+	(check_equalp_nokey, check_equalp_key, check_string_match_nokey)
+	(check_string_match_key, check_other_nokey, check_other_key)
+	(check_if_nokey, check_if_key, check_match_eq_key)
+	(check_match_eql_key, check_match_equal_key)
+	(check_match_equalp_key, check_match_other_key): New. These are
+	basically to provide function pointers to be used by Lisp
+	functions that take TEST, TEST-NOT and KEY arguments.
+
+	(get_check_match_function_1, get_check_test_function)
+	(get_check_match_function): These functions work out which of the
+	previous list of functions to use, given the keywords supplied by
+	the user.
+
+	(count_with_tail): New. This is the bones of #'count.
+	(list_count_from_end, string_count_from_end): Utility functions
+	for #'count.
+	(Fcount): New, moved from cl-seq.el.
+	(list_position_cons_before): New. The implementation of #'member*,
+	and important in implementing various other functions.
+
+	(FmemberX, Fadjoin, FassocX, FrassocX, Fposition, Ffind)
+	(FdeleteX, FremoveX, Fdelete_duplicates, Fremove_duplicates)
+	(Fnsubstitute, Fsubstitute, Fsublis, Fnsublis, Fsubst, Fnsubst)
+	(Ftree_equal, Fmismatch, Fsearch, Fintersection, Fnintersection)
+	(Fsubsetp, Fset_difference, Fnset_difference, Fnunion, Funion)
+	(Fset_exclusive_or, Fnset_exclusive_or): New, moved here from
+	cl-seq.el.
+
+	(position): New. The implementation of #'find and #'position.
+	(list_delete_duplicates_from_end, subst, sublis, nsublis)
+	(tree_equal, mismatch_from_end, mismatch_list_list)
+	(mismatch_list_string, mismatch_list_array)
+	(mismatch_string_array, mismatch_string_string)
+	(mismatch_array_array, get_mismatch_func): Helper C functions for
+	the Lisp-visible functions.
+	(venn, nvenn): New. The implementation of the main Lisp functions that
+	treat lists as sets.
+
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (DECLARE_N_KEYWORDS_8, DECLARE_N_KEYWORDS_9)

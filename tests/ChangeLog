@@ -1,3 +1,8 @@
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (test-fun): Test member*, assoc*,
+	rassoc*, delete* here too.
+
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (wrong-type-argument): Add a missing

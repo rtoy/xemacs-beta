@@ -1677,51 +1677,42 @@ Format is: (do* ((VAR INIT [STEP])...) (END-TEST [RESULT...]) BODY...)"
 	       (or (cdr endtest) '(nil)))))
 
 ;;;###autoload
-(defmacro dolist (spec &rest body)
+(defmacro* dolist ((var list &optional result) &body body)
   "Loop over a list.
 Evaluate BODY with VAR bound to each `car' from LIST, in turn.
-Then evaluate RESULT to get return value, default nil.
-
-arguments: ((VAR LIST &optional RESULT) &body BODY)"
-  (let ((temp (gensym "--dolist-temp--")))
-    (list 'block nil
-	  (list* 'let (list (list temp (nth 1 spec)) (car spec))
-		 (list* 'while temp (list 'setq (car spec) (list 'car temp))
-			(append body (list (list 'setq temp
-						 (list 'cdr temp)))))
-		 (if (cdr (cdr spec))
-		     (cons (list 'setq (car spec) nil) (cdr (cdr spec)))
-		   '(nil))))))
+Then evaluate RESULT to get return value, default nil."
+  (let ((gensym (gensym)))
+    `(block nil
+      (let ((,gensym ,list) ,var)
+        (while ,gensym
+          (setq ,var (car ,gensym))
+          ,@body
+          (setq ,gensym (cdr ,gensym)))
+        ,@(if result `((setq ,var nil) ,result))))))
 
 ;;;###autoload
-(defmacro dotimes (spec &rest body)
+(defmacro* dotimes ((var count &optional result) &body body)
   "Loop a certain number of times.
 Evaluate BODY with VAR bound to successive integers from 0, inclusive,
 to COUNT, exclusive.  Then evaluate RESULT to get return value, default
-nil.
-
-arguments: ((VAR COUNT &optional RESULT) &body BODY)"
-  (let ((temp (gensym "--dotimes-temp--")))
-    (list 'block nil
-	  (list* 'let (list (list temp (nth 1 spec)) (list (car spec) 0))
-		 (list* 'while (list '< (car spec) temp)
-			(append body (list (list 'incf (car spec)))))
-		 (or (cdr (cdr spec)) '(nil))))))
+nil."
+  (let* ((limit (if (cl-const-expr-p count) count (gensym)))
+         (bind (if (cl-const-expr-p count) nil `((,limit ,count)))))
+    `(block nil
+      (let ((,var 0) ,@bind)
+        (while (< ,var ,limit)
+          ,@body
+          (setq ,var (1+ ,var)))
+        ,@(if result (list result))))))
 
 ;;;###autoload
-(defmacro do-symbols (spec &rest body)
-  "Loop over all symbols.
+(defmacro* do-symbols ((var &optional obarray result) &rest body)
+  "Loop over all interned symbols.
 Evaluate BODY with VAR bound to each interned symbol, or to each symbol
-from OBARRAY.
-
-arguments: ((VAR &optional OBARRAY RESULT) &body BODY)"
-  ;; Apparently this doesn't have an implicit block.
-  (list 'block nil
-	(list 'let (list (car spec))
-	      (list* 'mapatoms
-		     (list 'function (list* 'lambda (list (car spec)) body))
-		     (and (cadr spec) (list (cadr spec))))
-	      (caddr spec))))
+from OBARRAY."
+  `(block nil
+    (mapatoms #'(lambda (,var) ,@body) ,@(and obarray (list obarray)))
+    ,@(if result `((let (,var) ,result)))))
 
 ;;;###autoload
 (defmacro do-all-symbols (spec &rest body)
@@ -1804,37 +1795,34 @@ arguments: (((FUNC ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
 ;; The following ought to have a better definition for use with newer
 ;; byte compilers.
 ;;;###autoload
-(defmacro macrolet (bindings &rest body)
+(defmacro* macrolet (((name arglist &optional docstring &body body)
+                       &rest macros) &body form)
   "Make temporary macro definitions.
-This is like `flet', but for macros instead of functions.
-
-arguments: (((NAME ARGLIST &optional DOCSTRING &body body) &rest MACROS) &body FORM)"
-  (if (cdr bindings)
-      (list 'macrolet
-	    (list (car bindings)) (list* 'macrolet (cdr bindings) body))
-    (if (null bindings) (cons 'progn body)
-      (let* ((name (caar bindings))
-	     (res (cl-transform-lambda (cdar bindings) name)))
-	(eval (car res))
-	(cl-macroexpand-all (cons 'progn body)
-			    (cons (list* name 'lambda (cdr res))
-				  cl-macro-environment))))))
+This is like `flet', but for macros instead of functions."
+  (cl-macroexpand-all (cons 'progn form)
+                      (nconc
+                       (loop
+                         for (name . details)
+                         in (cons (list* name arglist docstring body) macros)
+                         collect
+                         (list* name 'lambda
+                                (prog1
+                                    (cdr (setq details (cl-transform-lambda
+                                                        details name)))
+                                  (eval (car details)))))
+                       cl-macro-environment)))
 
 ;;;###autoload
-(defmacro symbol-macrolet (bindings &rest body)
+(defmacro* symbol-macrolet (((name expansion) &rest symbol-macros) &body form)
   "Make symbol macro definitions.
 Within the body FORMs, references to the variable NAME will be replaced
-by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...).
-
-arguments: (((NAME EXPANSION) &rest SYMBOL-MACROS) &body FORM)"
-  (if (cdr bindings)
-      (list 'symbol-macrolet
-	    (list (car bindings)) (list* 'symbol-macrolet (cdr bindings) body))
-    (if (null bindings) (cons 'progn body)
-      (cl-macroexpand-all (cons 'progn body)
-			  (cons (list (symbol-name (caar bindings))
-				      (cadar bindings))
-				cl-macro-environment)))))
+by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...)."
+  (cl-macroexpand-all (cons 'progn form)
+                      (append (list (list (symbol-name name) expansion))
+                              (loop
+                                for (name expansion) in symbol-macros
+                                collect (list (symbol-name name) expansion))
+                              cl-macro-environment)))
 
 (defvar cl-closure-vars nil)
 ;;;###autoload
@@ -3293,51 +3281,53 @@ surrounded by (block NAME ...)."
 	(mapcar
 	 (function*
 	  (lambda ((star-function eq-function equal-function))
-	    `(define-compiler-macro ,star-function (&whole form item list
-						    &rest keys)
-	      (condition-case nil
-		  (symbol-macrolet ((not-constant '#:not-constant))
-		    (let* ((test-expr (plist-get keys :test ''eql))
-			   (test (cl-const-expr-val test-expr not-constant))
-			   (item-val (cl-const-expr-val item not-constant))
-			   (list-val (cl-const-expr-val list not-constant)))
-		      (if (and keys
-			       (not (and (eq :test (car keys))
-					 (eql 2 (length keys)))))
-			  form
-			(cond ((eq test 'eq) `(,',eq-function ,item ,list))
-			      ((eq test 'equal)
-			       `(,',equal-function ,item ,list))
-			      ((and (eq test 'eql)
-				    (not (eq not-constant item-val)))
-			       (if (cl-non-fixnum-number-p item-val)
-				   `(,',equal-function ,item ,list)
-				 `(,',eq-function ,item ,list)))
-			      ((and (eq test 'eql) (not (eq not-constant
-							    list-val)))
-			       (if (some 'cl-non-fixnum-number-p list-val)
-				   `(,',equal-function ,item ,list)
-				 ;; This compiler macro used to limit calls
-				 ;; to ,,eq-function to lists where all
-				 ;; elements were either fixnums or
-				 ;; symbols. There's no
-				 ;; reason to do this.
-				 `(,',eq-function ,item ,list)))
-			      ;; This is a hilariously specific case; see
-			      ;; add-to-list in subr.el.
-			      ((and (eq test not-constant)
-				    (eq 'or (car-safe test-expr))
-				    (eql 3 (length test-expr))
-				    (every #'cl-safe-expr-p (cdr form))
-				    `(if ,(second test-expr)
-					 (,',star-function ,item ,list :test
-							   ,(second test-expr))
-				      (,',star-function
-				       ,item ,list :test ,(third test-expr)))))
-			      (t form)))))
-		;; No need to warn about a malformed property list,
-		;; #'byte-compile-normal-call will do that for us.
-		(malformed-property-list form)))))
+	    `(define-compiler-macro ,star-function (&whole form &rest keys)
+              (if (< (length form) 3)
+                  form
+                (condition-case nil
+                    (symbol-macrolet ((not-constant '#:not-constant))
+                      (let* ((item (pop keys))
+                             (list (pop keys))
+                             (test-expr (plist-get keys :test ''eql))
+                             (test (cl-const-expr-val test-expr not-constant))
+                             (item-val (cl-const-expr-val item not-constant))
+                             (list-val (cl-const-expr-val list not-constant)))
+                        (if (and keys (not (and (eq :test (car keys))
+                                                (eql 2 (length keys)))))
+                            form
+                          (cond ((eq test 'eq) `(,',eq-function ,item ,list))
+                                ((eq test 'equal)
+                                 `(,',equal-function ,item ,list))
+                                ((and (eq test 'eql)
+                                      (not (eq not-constant item-val)))
+                                 (if (cl-non-fixnum-number-p item-val)
+                                     `(,',equal-function ,item ,list)
+                                   `(,',eq-function ,item ,list)))
+                                ((and (eq test 'eql) (not (eq not-constant
+                                                              list-val)))
+                                 (if (some 'cl-non-fixnum-number-p list-val)
+                                     `(,',equal-function ,item ,list)
+                                   ;; This compiler macro used to limit
+                                   ;; calls to ,,eq-function to lists where
+                                   ;; all elements were either fixnums or
+                                   ;; symbols. There's no reason to do this.
+                                   `(,',eq-function ,item ,list)))
+                                ;; This is a hilariously specific case; see
+                                ;; add-to-list in subr.el.
+                                ((and (eq test not-constant)
+                                      (eq 'or (car-safe test-expr))
+                                      (eql 3 (length test-expr))
+                                      (every #'cl-safe-expr-p (cdr form))
+                                      `(if ,(second test-expr)
+                                        (,',star-function ,item ,list :test
+                                                          ,(second test-expr))
+                                        (,',star-function
+                                         ,item ,list :test
+                                         ,(third test-expr)))))
+                                (t form)))))
+                  ;; No need to warn about a malformed property list,
+                  ;; #'byte-compile-normal-call will do that for us.
+                  (malformed-property-list form))))))
 	 macros))))
   (define-star-compiler-macros
     (member* memq member)
@@ -3744,6 +3734,16 @@ the byte optimizer in those cases."
   (if (every #'cl-safe-expr-p (cdr form))
       `(funcall (if ,inplace #'nsubstitute #'substitute) ,tochar ,fromchar
 	(the string ,string) :test #'eq)
+    form))
+
+(define-compiler-macro stable-union (&whole form &rest cl-keys)
+  (if (> (length form) 2)
+      (list* 'union (pop cl-keys) (pop cl-keys) :stable t cl-keys)
+    form))
+
+(define-compiler-macro stable-intersection (&whole form &rest cl-keys)
+  (if (> (length form) 2)
+      (list* 'intersection (pop cl-keys) (pop cl-keys) :stable t cl-keys)
     form))
 
 (map nil

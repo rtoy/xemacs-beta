@@ -242,6 +242,15 @@ we no longer encounter bytecode from 21.4."
 
 (define-compatible-function-alias 'cl-mapc 'mapc)
 
+;; XEmacs; old compiler macros meant that this was called directly
+;; from compiled code, and we need to provide a version of it for a
+;; couple of years at least because of that. Aidan Kehoe, Mon Oct 4
+;; 12:06:41 IST 2010
+(defun cl-delete-duplicates (cl-seq cl-keys cl-copy)
+  (apply (if cl-copy #'remove-duplicates #'delete-duplicates) cl-seq cl-keys))
+
+(make-obsolete 'cl-delete-duplicates 'delete-duplicates)
+
 ; old names
 (define-compatible-function-alias 'byte-code-function-p
   'compiled-function-p) ;FSFmacs
@@ -430,6 +439,9 @@ because its `find-charset-string' ignores ASCII charset."
 (define-compatible-function-alias 'process-put 'put)
 (define-compatible-function-alias 'process-plist 'object-plist)
 (define-compatible-function-alias 'set-process-plist 'object-setplist)
+
+(define-function 'memql 'member*)
+(make-compatible 'memql "use the more full-featured `member*' instead.")
 
 (provide 'obsolete)
 ;;; obsolete.el ends here
