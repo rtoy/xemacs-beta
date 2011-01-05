@@ -274,7 +274,11 @@ When run, the completion buffer is the current buffer.")
 This string is inserted at the beginning of the buffer.
 See `display-completion-list'.")
 
-(defun display-completion-list (completions &rest cl-keys)
+(defun* display-completion-list (completions &key user-data reference-buffer
+                                 (activate-callback 'default-choose-completion)
+                                 (help-string completion-default-help-string)
+                                 (completion-string "Possible completions are:")
+                                 window-width window-height)
   "Display the list of completions, COMPLETIONS, using `standard-output'.
 Each element may be just a symbol or string or may be a list of two
  strings to be printed as if concatenated.
@@ -308,158 +312,148 @@ At the end, run the normal hook `completion-setup-hook'.
 It can find the completion buffer in `standard-output'.
 If `completion-highlight-first-word-only' is non-nil, then only the start
  of the string is highlighted."
-   ;; #### I18N3 should set standard-output to be (temporarily)
-   ;; output-translating.
-  (cl-parsing-keywords
-      ((:activate-callback 'default-choose-completion)
-       :user-data
-       :reference-buffer
-       (:help-string completion-default-help-string)
-       (:completion-string "Possible completions are:")
-       :window-width
-       :window-height)
-      ()
-    (let ((old-buffer (current-buffer))
-	  (bufferp (bufferp standard-output)))
-      (if bufferp
-	  (set-buffer standard-output))
-      (if (null completions)
-	  (princ (gettext
-		  "There are no possible completions of what you have typed."))
-	(let ((win-width
-	       (or cl-window-width
-		   (if bufferp
-		       ;; We have to use last-nonminibuf-frame here
-		       ;; and not selected-frame because if a
-		       ;; minibuffer-only frame is being used it will
-		       ;; be the selected-frame at the point this is
-		       ;; run.  We keep the selected-frame call around
-		       ;; just in case.
-               (window-width (get-lru-window (last-nonminibuf-frame)))
-		     80))))
-	  (let ((count 0)
-		(max-width 0)
-		old-max-width)
-	    ;; Find longest completion
-	    (let ((tail completions))
-	      (while tail
-		(let* ((elt (car tail))
-		       (len (cond ((stringp elt)
-				   (length elt))
-				  ((and (consp elt)
-					(stringp (car elt))
-					(stringp (car (cdr elt))))
-				   (+ (length (car elt))
-				      (length (car (cdr elt)))))
-				  (t
-				   (signal 'wrong-type-argument
-					   (list 'stringp elt))))))
-		  (if (> len max-width)
-		      (setq max-width len))
-		  (setq count (1+ count)
-			tail (cdr tail)))))
+  ;; #### I18N3 should set standard-output to be (temporarily)
+  ;; output-translating.
+  (let ((old-buffer (current-buffer)) (bufferp (bufferp standard-output)))
+    (if bufferp
+        (set-buffer standard-output))
+    (if (null completions)
+        (princ (gettext
+                "There are no possible completions of what you have typed."))
+      (let ((win-width
+             (or window-width
+                 (if bufferp
+                     ;; We have to use last-nonminibuf-frame here
+                     ;; and not selected-frame because if a
+                     ;; minibuffer-only frame is being used it will
+                     ;; be the selected-frame at the point this is
+                     ;; run.  We keep the selected-frame call around
+                     ;; just in case.
+                     (window-width (get-lru-window (last-nonminibuf-frame)))
+                   80))))
+        (let ((count 0)
+              (max-width 0)
+              old-max-width)
+          ;; Find longest completion
+          (let ((tail completions))
+            (while tail
+              (let* ((elt (car tail))
+                     (len (cond ((stringp elt)
+                                 (length elt))
+                                ((and (consp elt)
+                                      (stringp (car elt))
+                                      (stringp (car (cdr elt))))
+                                 (+ (length (car elt))
+                                    (length (car (cdr elt)))))
+                                (t
+                                 (signal 'wrong-type-argument
+                                         (list 'stringp elt))))))
+                (if (> len max-width)
+                    (setq max-width len))
+                (setq count (1+ count)
+                      tail (cdr tail)))))
         
-	    (setq max-width (+ 2 max-width)) ; at least two chars between cols
-	    (setq old-max-width max-width)
-	    (let ((rows (let ((cols (min (/ win-width max-width) count)))
-			  (if (<= cols 1)
-			      count
-			    (progn
-			      ;; re-space the columns
-			      (setq max-width (/ win-width cols))
-			      (if (/= (% count cols) 0) ; want ceiling...
-				  (1+ (/ count cols))
-                                (/ count cols)))))))
-	      (when
-		  (and cl-window-height
-		       (> rows cl-window-height))
-		(setq max-width old-max-width)
-		(setq rows cl-window-height))
-	      (when (and (stringp cl-completion-string)
-			 (> (length cl-completion-string) 0))
-		(princ (gettext cl-completion-string))
-		(terpri))
-	      (let ((tail completions)
-		    (r 0)
-		    (regexp-string
-		     (if (eq t
-			     completion-highlight-first-word-only)
-			 "[ \t]"
-		       completion-highlight-first-word-only)))
-		(while (< r rows)
-		  (and (> r 0) (terpri))
-		  (let ((indent 0)
-			(column 0)
-			(tail2 tail))
-		    (while tail2
-		      (let ((elt (car tail2)))
-			(if (/= indent 0)
-			    (if bufferp
-				(indent-to indent 2)
-                              (while (progn (write-char ?\ )
-                                            (setq column (1+ column))
-                                            (< column indent)))))
-			(setq indent (+ indent max-width))
-			(let ((start (point))
-			      end)
-			  ;; Frob some mousable extents in there too!
-			  (if (consp elt)
-			      (progn
-				(princ (car elt))
-				(princ (car (cdr elt)))
-				(or bufferp
-				    (setq column
-					  (+ column
-					     (length (car elt))
-					     (length (car (cdr elt)))))))
-			    (progn
-			      (princ elt)
-			      (or bufferp
-				  (setq column (+ column (length
-							  elt))))))
-			  (add-list-mode-item
-			   start
-			   (progn
-			     (setq end (point))
-			     (or
-			      (and completion-highlight-first-word-only
-				   (goto-char start)
-				   (re-search-forward regexp-string end t)
-				   (match-beginning 0))
-			      end))
-			   nil cl-activate-callback cl-user-data)
-			  (goto-char end)))
-		      (setq tail2 (nthcdr rows tail2)))
-		    (setq tail (cdr tail)
-			  r (1+ r)))))))))
-      (if bufferp
-	  (set-buffer old-buffer)))
-    (save-excursion
-      (let ((mainbuf (or cl-reference-buffer (current-buffer))))
-	(set-buffer standard-output)
-	(completion-list-mode)
-	(make-local-variable 'completion-reference-buffer)
-	(setq completion-reference-buffer mainbuf)
+          (setq max-width (+ 2 max-width)) ; at least two chars between cols
+          (setq old-max-width max-width)
+          (let ((rows (let ((cols (min (/ win-width max-width) count)))
+                        (if (<= cols 1)
+                            count
+                          (progn
+                            ;; re-space the columns
+                            (setq max-width (/ win-width cols))
+                            (if (/= (% count cols) 0) ; want ceiling...
+                                (1+ (/ count cols))
+                              (/ count cols)))))))
+            (when
+                (and window-height
+                     (> rows window-height))
+              (setq max-width old-max-width)
+              (setq rows window-height))
+            (when (and (stringp completion-string)
+                       (> (length completion-string) 0))
+              (princ (gettext completion-string))
+              (terpri))
+            (let ((tail completions)
+                  (r 0)
+                  (regexp-string
+                   (if (eq t
+                           completion-highlight-first-word-only)
+                       "[ \t]"
+                     completion-highlight-first-word-only)))
+              (while (< r rows)
+                (and (> r 0) (terpri))
+                (let ((indent 0)
+                      (column 0)
+                      (tail2 tail))
+                  (while tail2
+                    (let ((elt (car tail2)))
+                      (if (/= indent 0)
+                          (if bufferp
+                              (indent-to indent 2)
+                            (while (progn (write-char ?\ )
+                                          (setq column (1+ column))
+                                          (< column indent)))))
+                      (setq indent (+ indent max-width))
+                      (let ((start (point))
+                            end)
+                        ;; Frob some mousable extents in there too!
+                        (if (consp elt)
+                            (progn
+                              (princ (car elt))
+                              (princ (car (cdr elt)))
+                              (or bufferp
+                                  (setq column
+                                        (+ column
+                                           (length (car elt))
+                                           (length (car (cdr elt)))))))
+                          (progn
+                            (princ elt)
+                            (or bufferp
+                                (setq column (+ column (length
+                                                        elt))))))
+                        (add-list-mode-item
+                         start
+                         (progn
+                           (setq end (point))
+                           (or
+                            (and completion-highlight-first-word-only
+                                 (goto-char start)
+                                 (re-search-forward regexp-string end t)
+                                 (match-beginning 0))
+                            end))
+                         nil activate-callback user-data)
+                        (goto-char end)))
+                    (setq tail2 (nthcdr rows tail2)))
+                  (setq tail (cdr tail)
+                        r (1+ r)))))))))
+    (if bufferp
+        (set-buffer old-buffer)))
+  (save-excursion
+    (let ((mainbuf (or reference-buffer (current-buffer))))
+      (set-buffer standard-output)
+      (completion-list-mode)
+      (make-local-variable 'completion-reference-buffer)
+      (setq completion-reference-buffer mainbuf)
 ;;; The value 0 is right in most cases, but not for file name completion.
 ;;; so this has to be turned off.
-;;;      (setq completion-base-size 0)
-	(goto-char (point-min))
-	(let ((buffer-read-only nil))
-	  (insert (eval cl-help-string)))
-	  ;; unnecessary FSFmacs crock
-	  ;;(forward-line 1)
-	  ;;(while (re-search-forward "[^ \t\n]+\\( [^ \t\n]+\\)*" nil t)
-	  ;;	  (let ((beg (match-beginning 0))
-	  ;;		(end (point)))
-	  ;;	    (if completion-fixup-function
-	  ;;		(funcall completion-fixup-function))
-	  ;;	    (put-text-property beg (point) 'mouse-face 'highlight)
-	  ;;	    (put-text-property beg (point) 'list-mode-item t)
-	  ;;	    (goto-char end)))))
-	))
-    (save-excursion
-      (set-buffer standard-output)
-      (run-hooks 'completion-setup-hook))))
+;;;   (setq completion-base-size 0)
+      (goto-char (point-min))
+      (let ((buffer-read-only nil))
+        (insert (eval help-string)))
+      ;; unnecessary FSFmacs crock
+      ;;(forward-line 1)
+      ;;(while (re-search-forward "[^ \t\n]+\\( [^ \t\n]+\\)*" nil t)
+      ;;	  (let ((beg (match-beginning 0))
+      ;;		(end (point)))
+      ;;	    (if completion-fixup-function
+      ;;		(funcall completion-fixup-function))
+      ;;	    (put-text-property beg (point) 'mouse-face 'highlight)
+      ;;	    (put-text-property beg (point) 'list-mode-item t)
+      ;;	    (goto-char end)))))
+      ))
+  (save-excursion
+    (set-buffer standard-output)
+    (run-hooks 'completion-setup-hook)))
 
 (defvar completion-display-completion-list-function 'display-completion-list
   "Function to set up the list of completions in the completion buffer.

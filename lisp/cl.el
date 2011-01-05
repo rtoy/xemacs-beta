@@ -555,36 +555,6 @@ of some cons making up LIST), this function is equivalent to
 (defalias 'cl-round 'round*)
 (defalias 'cl-mod 'mod*)
 
-(defun adjoin (cl-item cl-list &rest cl-keys)  ; See compiler macro in cl-macs
-  "Return ITEM consed onto the front of LIST only if it's not already there.
-Otherwise, return LIST unmodified.
-Keywords supported:  :test :test-not :key
-See `member*' for the meaning of :test, :test-not and :key."
-  (cond ((or (equal cl-keys '(:test eq))
-	     (and (null cl-keys) (not (numberp cl-item))))
-	 (if (memq cl-item cl-list) cl-list (cons cl-item cl-list)))
-	((or (equal cl-keys '(:test equal)) (null cl-keys))
-	 (if (member cl-item cl-list) cl-list (cons cl-item cl-list)))
-	(t (apply 'cl-adjoin cl-item cl-list cl-keys))))
-
-(defun subst (cl-new cl-old cl-tree &rest cl-keys)
-  "Substitute NEW for OLD everywhere in TREE (non-destructively).
-Return a copy of TREE with all elements `eql' to OLD replaced by NEW.
-Keywords supported:  :test :test-not :key
-See `member*' for the meaning of :test, :test-not and :key."
-  (if (or cl-keys (and (numberp cl-old) (not (fixnump cl-old))))
-      (apply 'sublis (list (cons cl-old cl-new)) cl-tree cl-keys)
-    (cl-do-subst cl-new cl-old cl-tree)))
-
-(defun cl-do-subst (cl-new cl-old cl-tree)
-  (cond ((eq cl-tree cl-old) cl-new)
-	((consp cl-tree)
-	 (let ((a (cl-do-subst cl-new cl-old (car cl-tree)))
-	       (d (cl-do-subst cl-new cl-old (cdr cl-tree))))
-	   (if (and (eq a (car cl-tree)) (eq d (cdr cl-tree)))
-	       cl-tree (cons a d))))
-	(t cl-tree)))
-
 (defun acons (key value alist)
   "Return a new alist created by adding (KEY . VALUE) to ALIST."
   (cons (cons key value) alist))

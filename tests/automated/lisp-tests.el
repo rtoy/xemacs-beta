@@ -796,12 +796,12 @@
 	     collect `(Check-Error circular-list (,fun 1 (make-circular-list ,n))))))
      (test-funs (&rest funs) `(progn ,@(loop for fun in funs collect `(test-fun ,fun)))))
 
-  (test-funs member old-member
+  (test-funs member* member old-member 
 	     memq   old-memq
-	     assoc  old-assoc
-	     rassoc old-rassoc
+	     assoc* assoc  old-assoc
+	     rassoc* rassoc old-rassoc
 	     rassq  old-rassq
-	     delete old-delete
+	     delete* delete old-delete
 	     delq   old-delq
 	     remassoc remassq remrassoc remrassq))
 

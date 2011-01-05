@@ -1,9 +1,51 @@
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dialog.el (make-dialog-box):
+	* list-mode.el (display-completion-list):
+	These functions used to use cl-parsing-keywords; change them to
+	use defun* instead, fixing the build. (Not sure what led to me
+	not including this change in d1b17a33450b!)
+
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (define-star-compiler-macros):
+	Make sure the form has ITEM and LIST specified before attempting
+	to change to calls with explicit tests; necessary for some tests
+	in lisp-tests.el to compile correctly.
+	(stable-union, stable-intersection): Add compiler macros for these
+	functions, in the same way we do for most of the other functions
+	in cl-seq.el.
+
+2011-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (dolist, dotimes, do-symbols, macrolet)
+	(symbol-macrolet):
+	Define these macros with defmacro* instead of parsing the argument
+	list by hand, for the sake of style and readability; use backquote
+	where appropriate, instead of calling #'list and and friends, for
+	the same reason.
+
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-misc.el (device-x-display):
 	Provide this function, documented in the Lispref for years, but
 	not existing previously.  Thank you Julian Bradfield, thank you
 	Jeff Mincy.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-seq.el:
+	Move the heavy lifting from this file to C. Dump the
+	cl-parsing-keywords macro, but don't use defun* for the functions
+	we define that do take keywords, dynamic scope lossage makes that
+	not practical.
+	* subr.el (sort, fillarray): Move these aliases here.
+	(map-plist): #'nsublis is now built-in, but at this point #'eql
+	isn't necessarily available as a test; use #'eq.
+	* obsolete.el (cl-delete-duplicates): Make this available for old
+	compiler macros and old code.
+	(memql): Document that this is equivalent to #'member*, and worse.
+	* cl.el (adjoin, subst): Removed. These are in C.
 
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
