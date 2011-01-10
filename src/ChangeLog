@@ -1,3 +1,8 @@
+2011-01-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mc-alloc.c (get_used_list_index):
+	Replace some C++ comments with C-style /* comments.
+
 2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (FdeleteX, FremoveX, Fnsubstitute, Fsubstitute, syms_of_fns): 
