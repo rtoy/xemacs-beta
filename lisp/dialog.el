@@ -663,9 +663,9 @@ The keywords allowed are
        (remf rest :modal)
        (if modal
            (dialog-box-modal-loop `(make-dialog-box-internal ',type ',rest))
-         (make-dialog-box-internal type rest))))
-    (t
-     (make-dialog-box-internal type rest))))
+         (make-dialog-box-internal type rest)))
+      (t
+       (make-dialog-box-internal type rest)))))
 
 (defun dialog-box-finish (result)
   "Exit a modal dialog box, returning RESULT.
