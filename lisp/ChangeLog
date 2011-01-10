@@ -1,3 +1,8 @@
+2011-01-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dialog.el (make-dialog-box): Correct a misplaced parenthesis
+	here, thank you Mats Lidell in 87zkr9gqrh.fsf@mail.contactor.se !
+
 2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* dialog.el (make-dialog-box):
