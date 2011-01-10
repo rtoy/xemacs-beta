@@ -1148,18 +1148,18 @@ get_used_list_index (size_t size)
 {
   if (size <= USED_LIST_MIN_OBJECT_SIZE)
     {
-      //      printf ("size %d -> index %d\n", size, 0);
+      /*      printf ("size %d -> index %d\n", size, 0); */
       return 0;
     }
   if (size <= (size_t) USED_LIST_UPPER_THRESHOLD)
     {
-      //      printf ("size %d -> index %d\n", size, 
-      //	      ((size - USED_LIST_MIN_OBJECT_SIZE - 1)
-      //	       / USED_LIST_LIN_STEP) + 1);
+      /*      printf ("size %d -> index %d\n", size, */
+      /*	      ((size - USED_LIST_MIN_OBJECT_SIZE - 1) */
+      /*	       / USED_LIST_LIN_STEP) + 1); */
       return ((size - USED_LIST_MIN_OBJECT_SIZE - 1)
 	      / USED_LIST_LIN_STEP) + 1;
     }
-  //  printf ("size %d -> index %d\n", size, N_USED_PAGE_LISTS - 1);
+  /*  printf ("size %d -> index %d\n", size, N_USED_PAGE_LISTS - 1); */
   return N_USED_PAGE_LISTS - 1;
 }
 
