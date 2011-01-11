@@ -1,3 +1,10 @@
+2011-01-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lwlib-fonts.c (xft_open_font_by_name):
+	Replace the POSIX index(3), not universally available even today,
+	with the C89 strchr(3), hopefully fixing a few of the buildbots'
+	problems.
+
 2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lwlib-internal.h: Correct FSF address in permission notice.
