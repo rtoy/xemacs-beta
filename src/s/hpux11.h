@@ -104,11 +104,11 @@
 
 /* This is how to get the device name of the tty end of a pty.  */
 #define PTY_TTY_NAME_SPRINTF \
-            sprintf (pty_name, "/dev/pty/tty%c%x", c, i);
+            qxesprintf (pty_name, "/dev/pty/tty%c%x", c, i);
 
 /* This is how to get the device name of the control end of a pty.  */
 #define PTY_NAME_SPRINTF \
-	sprintf (pty_name, "/dev/ptym/pty%c%x", c, i);
+	qxesprintf (pty_name, "/dev/ptym/pty%c%x", c, i);
 
 #ifdef HPUX_USE_SHLIBS
 #define LD_SWITCH_SYSTEM
