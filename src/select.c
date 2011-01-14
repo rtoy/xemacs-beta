@@ -183,19 +183,8 @@ It defaults to the selected device.
       if (!NILP (local_selection_data))
 	{
 	  owned_p = 1;
-	  /* Don't use Fdelq() as that may QUIT;. */
-	  if (EQ (local_selection_data, Fcar (Vselection_alist)))
-	    Vselection_alist = Fcdr (Vselection_alist);
-	  else
-	    {
-	      Lisp_Object rest;
-	      for (rest = Vselection_alist; !NILP (rest); rest = Fcdr (rest))
-		if (EQ (local_selection_data, Fcar (XCDR (rest))))
-		  {
-		    XCDR (rest) = Fcdr (XCDR (rest));
-		    break;
-		  }
-	    }
+	  Vselection_alist
+		  = delq_no_quit (local_selection_data, Vselection_alist);
 	}
     }
   else
@@ -412,21 +401,8 @@ handle_selection_clear (Lisp_Object selection_symbol)
   /* Well, we already believe that we don't own it, so that's just fine. */
   if (NILP (local_selection_data)) return;
 
-  /* Otherwise, we're really honest and truly being told to drop it.
-     Don't use Fdelq() as that may QUIT;.
-   */
-  if (EQ (local_selection_data, Fcar (Vselection_alist)))
-    Vselection_alist = Fcdr (Vselection_alist);
-  else
-    {
-      Lisp_Object rest;
-      for (rest = Vselection_alist; !NILP (rest); rest = Fcdr (rest))
-	if (EQ (local_selection_data, Fcar (XCDR (rest))))
-	  {
-	    XCDR (rest) = Fcdr (XCDR (rest));
-	    break;
-	  }
-    }
+  /* Otherwise, we're really honest and truly being told to drop it. */
+  Vselection_alist = delq_no_quit (local_selection_data, Vselection_alist);
 
   /* Let random lisp code notice that the selection has been stolen.
    */

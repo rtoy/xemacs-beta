@@ -148,6 +148,40 @@ Used for compatibility among different emacs variants."
      (define-function ,@args)))
 
 
+(defun delete (item sequence)
+  "Delete by side effect any occurrences of ITEM as a member of SEQUENCE.
+
+The modified SEQUENCE is returned.  Comparison is done with `equal'.
+
+If the first member of a list SEQUENCE is ITEM, there is no way to remove it
+by side effect; therefore, write `(setq foo (delete element foo))' to be
+sure of changing the value of `foo'.  Also see: `remove'."
+  (delete* item sequence :test #'equal))
+
+(defun delq (item sequence)
+  "Delete by side effect any occurrences of ITEM as a member of SEQUENCE.
+
+The modified SEQUENCE is returned.  Comparison is done with `eq'.  If
+SEQUENCE is a list and its first member is ITEM, there is no way to remove
+it by side effect; therefore, write `(setq foo (delq element foo))' to be
+sure of changing the value of `foo'."
+  (delete* item sequence :test #'eq))
+
+(defun remove (item sequence)
+  "Remove all occurrences of ITEM in SEQUENCE, testing with `equal'.
+
+This is a non-destructive function; it makes a copy of SEQUENCE if necessary
+to avoid corrupting the original SEQUENCE.
+Also see: `remove*', `delete', `delete*'"
+  (remove* item sequence :test #'equal))
+
+(defun remq (item sequence)
+  "Remove all occurrences of ITEM in SEQUENCE, comparing with `eq'.
+
+This is a non-destructive function; it makes a copy of SEQUENCE to avoid
+corrupting the original SEQUENCE.  See also the more general `remove*'."
+  (remove* item sequence :test #'eq))
+
 (defun assoc-default (key alist &optional test default)
   "Find object KEY in a pseudo-alist ALIST.
 ALIST is a list of conses or objects.  Each element (or the element's car,

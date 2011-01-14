@@ -10,6 +10,18 @@
 	* fns.c (Ffind): Use the correct subr information here, pass in
 	the DEFAULT keyword argument value correctly.
 
+2011-01-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-msw.c (Fmswindows_printer_list): Remove a Fdelete ()
+	call here, remove the necessity for it.
+	* fns.c (Fdelete, Fdelq): 
+	* lisp.h:
+	Move #'delete, #'delq to Lisp, implemented in terms of #'delete*
+	* select.c (Fown_selection_internal):
+	* select.c (handle_selection_clear):
+	Use delq_no_quit() in these functions, don't reimplement it or use
+	Fdelq(), which is now gone.
+
 2011-01-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mc-alloc.c (get_used_list_index):

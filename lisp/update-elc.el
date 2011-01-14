@@ -383,7 +383,10 @@ If any of these files are changed, we need to redump.")
 	     (mapc
 	      #'(lambda (arg)
 		  (setq update-elc-files-to-compile
-			(delete arg update-elc-files-to-compile)))
+			(delete* arg update-elc-files-to-compile
+				 :test (if default-file-system-ignore-case
+					   #'equalp
+					 #'equal))))
 	      (append bc-bootstrap bootstrap-other))
 	     (setq command-line-args
 		   (append
