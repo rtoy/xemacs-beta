@@ -3123,7 +3123,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
 
-  PARSE_KEYWORDS (Fposition, nargs, args, 9,
+  PARSE_KEYWORDS (Ffind, nargs, args, 9,
 		  (test, if_, test_not, if_not, key, start, end, from_end,
                    default_),
 		  (start = Qzero));
@@ -3132,7 +3132,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 					key, &test_not_unboundp);
 
   position (&object, item, sequence, check_test, test_not_unboundp,
-            test, key, start, end, from_end, Qnil, Qposition);
+            test, key, start, end, from_end, default_, Qposition);
 
   return object;
 }

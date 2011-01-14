@@ -2790,4 +2790,30 @@ via the hepatic alpha-tocopherol transfer protein")))
                             (copy-sequence string)
                             :end1 (* 2 string-length))))))
 
+(let* ((list (list 1 2 3 4 5 6 7 120 'hi-there '#:everyone))
+       (vector (map 'vector #'identity list))
+       (bit-vector (map 'bit-vector
+			#'(lambda (object) (if (fixnump object) 1 0)) list))
+       (string (map 'string 
+		    #'(lambda (object) (or (and (fixnump object)
+						(int-char object))
+					   (decode-char 'ucs #x20ac))) list))
+       (gensym (gensym)))
+  (Assert (null (find 'not-in-it list)))
+  (Assert (null (find 'not-in-it vector)))
+  (Assert (null (find 'not-in-it bit-vector)))
+  (Assert (null (find 'not-in-it string)))
+  (loop
+    for elt being each element in vector using (index position)
+    do
+    (Assert (eq elt (find elt list)))
+    (Assert (eq (elt list position) (find elt vector))))
+  (Assert (eq gensym (find 'not-in-it list :default gensym)))
+  (Assert (eq gensym (find 'not-in-it vector :default gensym)))
+  (Assert (eq gensym (find 'not-in-it bit-vector :default gensym)))
+  (Assert (eq gensym (find 'not-in-it string :default gensym)))
+  (Assert (eq 'hi-there (find 'hi-there list)))
+  ;; Different uninterned symbols with the same name.
+  (Assert (not (eq '#1=#:everyone (find '#1# list)))))
+
 ;;; end of lisp-tests.el

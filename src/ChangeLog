@@ -1,3 +1,8 @@
+2011-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Ffind): Use the correct subr information here, pass in
+	the DEFAULT keyword argument value correctly.
+
 2011-01-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mc-alloc.c (get_used_list_index):
