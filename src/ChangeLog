@@ -1,5 +1,12 @@
 2011-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* s/hpux11.h (PTY_TTY_NAME_SPRINTF, PTY_NAME_SPRINTF):
+	* s/usg5-4.h (PTY_TTY_NAME_SPRINTF, PTY_NAME_SPRINTF):
+	Replace sprintf() with qxesprintf(), strcpy with qxestrpy(),
+	hopefully fixing some platform-specific C++ builds.
+
+2011-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fns.c (Ffind): Use the correct subr information here, pass in
 	the DEFAULT keyword argument value correctly.
 
