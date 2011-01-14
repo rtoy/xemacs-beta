@@ -2546,7 +2546,8 @@ From now on the default value will apply in this buffer.
 	  = buffer_local_alist_element (current_buffer, variable, bfwd);
 
 	if (!NILP (alist_element))
-	  current_buffer->local_var_alist = Fdelq (alist_element, alist);
+	  current_buffer->local_var_alist = delq_no_quit (alist_element,
+							  alist);
 
 	/* Make sure symbol does not think it is set up for this buffer;
 	   force it to look once again for this buffer's value */

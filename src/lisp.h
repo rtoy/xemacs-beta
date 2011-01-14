@@ -5209,8 +5209,6 @@ EXFUN (Fcopy_alist, 1);
 EXFUN (Fcopy_list, 1);
 EXFUN (Fcopy_sequence, 1);
 EXFUN (Fcopy_tree, 2);
-EXFUN (Fdelete, 2);
-EXFUN (Fdelq, 2);
 EXFUN (Fdestructive_alist_to_plist, 1);
 EXFUN (Felt, 2);
 MODULE_API EXFUN (Fequal, 2);

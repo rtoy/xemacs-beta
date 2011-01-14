@@ -3137,21 +3137,6 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
   return object;
 }
 
-DEFUN ("delete", Fdelete, 2, 2, 0, /*
-Delete by side effect any occurrences of ELT as a member of LIST.
-The modified LIST is returned.  Comparison is done with `equal'.
-If the first member of LIST is ELT, there is no way to remove it by side
-effect; therefore, write `(setq foo (delete element foo))' to be sure
-of changing the value of `foo'.
-Also see: `remove'.
-*/
-       (elt, list))
-{
-  EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
-				(internal_equal (elt, list_elt, 0)));
-  return list;
-}
-
 DEFUN ("old-delete", Fold_delete, 2, 2, 0, /*
 Delete by side effect any occurrences of ELT as a member of LIST.
 The modified LIST is returned.  Comparison is done with `old-equal'.
@@ -3163,20 +3148,6 @@ of changing the value of `foo'.
 {
   EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
 				(internal_old_equal (elt, list_elt, 0)));
-  return list;
-}
-
-DEFUN ("delq", Fdelq, 2, 2, 0, /*
-Delete by side effect any occurrences of ELT as a member of LIST.
-The modified LIST is returned.  Comparison is done with `eq'.
-If the first member of LIST is ELT, there is no way to remove it by side
-effect; therefore, write `(setq foo (delq element foo))' to be sure of
-changing the value of `foo'.
-*/
-       (elt, list))
-{
-  EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
-				(EQ_WITH_EBOLA_NOTICE (elt, list_elt)));
   return list;
 }
 
@@ -11790,9 +11761,7 @@ syms_of_fns (void)
   DEFSUBR (Fposition);
   DEFSUBR (Ffind);
 
-  DEFSUBR (Fdelete);
   DEFSUBR (Fold_delete);
-  DEFSUBR (Fdelq);
   DEFSUBR (Fold_delq);
   DEFSUBR (FdeleteX);
   DEFSUBR (FremoveX);
