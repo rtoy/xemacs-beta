@@ -1,20 +1,42 @@
-/* Synched up with: FSF 19.28. */
+/* Convert files for Emacs Hexl mode.
+   Copyright (C) 1989, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+                 2009, 2010  Free Software Foundation, Inc.
 
+Author: Keith Gabryelski
+(according to authors.el)
+
+This file is not considered part of GNU Emacs.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include <stdio.h>
-#include <ctype.h>
-#ifdef WIN32_NATIVE
-#include <io.h>
-#include <fcntl.h>
-#endif
-
-#if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 #include <string.h>
+#include <ctype.h>
+#ifdef DOS_NT
+#include <fcntl.h>
+#if __DJGPP__ >= 2
+#include <io.h>
+#endif
+#endif
+#ifdef WINDOWSNT
+#include <io.h>
 #endif
 
 #define DEFAULT_GROUPING	0x01
@@ -29,7 +51,7 @@ int base = DEFAULT_BASE, un_flag = FALSE, iso_flag = FALSE, endian = 1;
 int group_by = DEFAULT_GROUPING;
 char *progname;
 
-void usage (void);
+void usage(void);
 
 int
 main (int argc, char *argv[])
@@ -37,25 +59,25 @@ main (int argc, char *argv[])
   register long address;
   char string[18];
   FILE *fp;
-  
+
   progname = *argv++; --argc;
-  
+
   /*
-  ** -hex		hex dump
-  ** -oct		Octal dump
-  ** -group-by-8-bits
-  ** -group-by-16-bits
-  ** -group-by-32-bits
-  ** -group-by-64-bits
-  ** -iso		iso character set.
-  ** -big-endian	Big Endian
-  ** -little-endian	Little Endian
-  ** -un || -de	from hexl format to binary.
-  ** --		End switch list.
-  ** <filename>	dump filename
-  ** -		(as filename == stdin)
-  */
-    
+   ** -hex		hex dump
+   ** -oct		Octal dump
+   ** -group-by-8-bits
+   ** -group-by-16-bits
+   ** -group-by-32-bits
+   ** -group-by-64-bits
+   ** -iso		iso character set.
+   ** -big-endian	Big Endian
+   ** -little-endian	Little Endian
+   ** -un || -de	from hexl format to binary.
+   ** --		End switch list.
+   ** <filename>	dump filename
+   ** -		(as filename == stdin)
+   */
+
   while (*argv && *argv[0] == '-' && (*argv)[1])
     {
       /* A switch! */
@@ -117,7 +139,7 @@ main (int argc, char *argv[])
 	}
       else
 	{
-	  (void) fprintf (stderr, "%s: invalid switch: \"%s\".\n", progname,
+	  fprintf (stderr, "%s: invalid switch: \"%s\".\n", progname,
 		   *argv);
 	  usage ();
 	}
@@ -144,8 +166,14 @@ main (int argc, char *argv[])
 	{
 	  char buf[18];
 
-#ifdef WIN32_NATIVE
-	  _setmode (_fileno (stdout), O_BINARY);
+#ifdef DOS_NT
+#if (__DJGPP__ >= 2) || (defined WINDOWSNT)
+          if (!isatty (fileno (stdout)))
+	    setmode (fileno (stdout), O_BINARY);
+#else
+	  (stdout)->_flag &= ~_IOTEXT; /* print binary */
+	  _setmode (fileno (stdout), O_BINARY);
+#endif
 #endif
 	  for (;;)
 	    {
@@ -187,8 +215,14 @@ main (int argc, char *argv[])
 	}
       else
 	{
-#ifdef WIN32_NATIVE
-	  _setmode (_fileno (fp), O_BINARY);
+#ifdef DOS_NT
+#if (__DJGPP__ >= 2) || (defined WINDOWSNT)
+          if (!isatty (fileno (fp)))
+	    setmode (fileno (fp), O_BINARY);
+#else
+	  (fp)->_flag &= ~_IOTEXT; /* read binary */
+	  _setmode (fileno (fp), O_BINARY);
+#endif
 #endif
 	  address = 0;
 	  string[0] = ' ';
@@ -210,7 +244,7 @@ main (int argc, char *argv[])
 		  else
 		    {
 		      if (!i)
-			(void) printf ("%08lx: ", address);
+			printf ("%08lx: ", address);
 
 		      if (iso_flag)
 			string[i+1] =
@@ -218,7 +252,7 @@ main (int argc, char *argv[])
 		      else
 			string[i+1] = (c < 0x20 || c >= 0x7F) ? '.' : c;
 
-		      (void) printf ("%02x", c);
+		      printf ("%02x", c);
 		    }
 
 		  if ((i&group_by) == group_by)
@@ -237,15 +271,17 @@ main (int argc, char *argv[])
 	}
 
       if (fp != stdin)
-	(void) fclose (fp);
+	fclose (fp);
 
     } while (*argv != NULL);
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 void
 usage (void)
 {
-  fprintf (stderr, "Usage: %s [-de] [-iso]\n", progname);
-  exit (1);
+  fprintf (stderr, "usage: %s [-de] [-iso]\n", progname);
+  exit (EXIT_FAILURE);
 }
+
+/* hexl.c ends here */
