@@ -3831,10 +3831,9 @@ the byte optimizer in those cases."
    (cdadar cdr cadar) (cdaddr cdr caddr) (cddaar cdr cdaar)
    (cddadr cdr cdadr) (cdddar cdr cddar) (cddddr cdr cdddr)))
 
-;;; Things that are inline.
-(proclaim '(inline acons map concatenate
-;; XEmacs omission: gethash is builtin
-		   cl-set-elt revappend nreconc))
+;;; Things that are inline. XEmacs; the functions that used to be here have
+;;; compiler macros or are built-in.
+(proclaim '(inline cl-set-elt))
 
 ;;; Things that are side-effect-free.  Moved to byte-optimize.el
 ;(mapcar (function (lambda (x) (put x 'side-effect-free t)))

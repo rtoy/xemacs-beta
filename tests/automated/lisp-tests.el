@@ -2814,6 +2814,20 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (eq gensym (find 'not-in-it string :default gensym)))
   (Assert (eq 'hi-there (find 'hi-there list)))
   ;; Different uninterned symbols with the same name.
-  (Assert (not (eq '#1=#:everyone (find '#1# list)))))
+  (Assert (not (eq '#1=#:everyone (find '#1# list))))
+
+  ;; Test concatenate.
+  (Assert (equal list (concatenate 'list vector)))
+  (Assert (equal list (concatenate 'list (subseq vector 0 4)
+				   (subseq list 4))))
+  (Assert (equal vector (concatenate 'vector list)))
+  (Assert (equal vector (concatenate `(vector * ,(length vector)) list)))
+  (Assert (equal string (concatenate `(vector character ,(length string))
+				     (append string nil))))
+  (Assert (equal bit-vector (concatenate 'bit-vector (subseq bit-vector 0 4)
+					 (append (subseq bit-vector 4) nil))))
+  (Assert (equal bit-vector (concatenate `(vector bit ,(length bit-vector))
+					 (subseq bit-vector 0 4)
+					 (append (subseq bit-vector 4) nil)))))
 
 ;;; end of lisp-tests.el
