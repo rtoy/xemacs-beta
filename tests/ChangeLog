@@ -1,3 +1,9 @@
+2011-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (list): Test #'concatenate, especially
+	with more complicated TYPEs, which were previously not accepted by
+	the function.
+
 2011-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (list): Test #'find, especially the

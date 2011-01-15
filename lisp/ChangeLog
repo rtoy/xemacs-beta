@@ -1,3 +1,11 @@
+2011-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (concatenate): Accept more complicated TYPEs in this
+	function, handing the sequences over to #'coerce if we don't
+	understand them here.
+	* cl-macs.el (inline): Don't proclaim #'concatenate as inline, its
+	compiler macro is more useful than doing that.
+
 2011-01-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (delete, delq, remove, remq): Move #'remove, #'remq
