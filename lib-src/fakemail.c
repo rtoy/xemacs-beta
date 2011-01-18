@@ -146,6 +146,10 @@ extern int fclose (), pclose ();
 extern char *malloc (), *realloc ();
 #endif
 
+#if defined(__FreeBSD__)
+#include <osreldate.h>
+#endif
+
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 400000 
 #define CURRENT_USER 
 #endif 
