@@ -1,3 +1,8 @@
+2011-01-15  Mike Sperber  <mike@xemacs.org>
+
+	* fakemail.c: #include <osreldate.h> on FreeBSD, since we no
+	longer have freebsd.h.
+
 2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gnuserv.c:
