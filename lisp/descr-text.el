@@ -598,7 +598,7 @@ the output of \\[universal-argument] \\[what-cursor-position] .  "
 					(concat message
 						(make-string
 						 (mod loop-count 44) ?.)))
-	  (block 'dealing-with-chars
+	  (block dealing-with-chars
 	    (when (= buffer-size (- (point-max) (point-min)))
 	      ;; If we're in the body of the file, we need to delete the
 	      ;; character info for the last character, and set offset-end
@@ -637,13 +637,13 @@ the output of \\[universal-argument] \\[what-cursor-position] .  "
 	    (while t
 	      (when (= (point) (point-max))
 		;; We're at the end of this part of the file.
-		(return-from 'dealing-with-chars))
+		(return-from dealing-with-chars))
 
 	      (unless (re-search-forward "^\\(U\\+[0-9A-F]\\{4,6\\}\\)\t"
 					 nil t)
 		;; We're probably in the comments at the start of the
 		;; file. No need to look for character info.
-		(return-from 'dealing-with-chars))
+		(return-from dealing-with-chars))
 
 	      ;; Store where the character started. 
 	      (beginning-of-line)

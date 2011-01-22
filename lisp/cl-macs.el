@@ -745,7 +745,8 @@ references may appear inside macro expansions, but not inside functions
 called from BODY."
   (if (cl-safe-expr-p (cons 'progn body)) (cons 'progn body)
     (list 'cl-block-wrapper
-	  (list* 'catch (list 'quote (intern (format "--cl-block-%s--" name)))
+	  (list* 'catch (list 'quote (intern (concat "--cl-block-"
+						     (symbol-name name) "--")))
 		 body))))
 
 (defvar cl-active-block-names nil)
@@ -788,7 +789,7 @@ This jumps out to the innermost enclosing `(block NAME ...)' form,
 returning RESULT from that form (or nil if RESULT is omitted).
 This is compatible with Common Lisp, but note that `defun' and
 `defmacro' do not create implicit blocks as they do in Common Lisp."
-  (let ((name2 (intern (format "--cl-block-%s--" name))))
+  (let ((name2 (intern (concat "--cl-block-" (symbol-name name) "--"))))
     (list 'cl-block-throw (list 'quote name2) result)))
 
 
