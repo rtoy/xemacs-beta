@@ -767,7 +767,7 @@ supports--and some data in that format, return a space, with a glyph
 corresponding to that data as an end-glyph extent property of that space. "
   (let* ((str (make-string 1 ?\ ))
 	 (extent (make-extent 0 1 str))
-	 (glyph (make-glyph (vector image-type ':data value))))
+	 (glyph (make-glyph (vector image-type :data value))))
     (when glyph
       (set-extent-property extent 'invisible t)
       (set-extent-property extent 'start-open t)

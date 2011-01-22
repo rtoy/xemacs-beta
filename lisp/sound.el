@@ -181,8 +181,8 @@ nVolume (0 for default): ")
     (setq sound-alist (cons
 		       (nconc (list sound-name)
 			      (if (and volume (not (eq 0 volume)))
-				  (list ':volume volume))
-			      (list ':sound data))
+				  (list :volume volume))
+			      (list :sound data))
 		       sound-alist)))
   sound-name)
 

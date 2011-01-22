@@ -1,5 +1,27 @@
 2011-01-22  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (byte-compile-setq, byte-compile-set):
+	Remove kludge allowing keywords' values to be set, all the code
+	that does that is gone.
+
+	* cl-compat.el (elt-satisfies-test-p):
+	* faces.el (set-face-parent):
+	* faces.el (face-doc-string):
+	* gtk-font-menu.el:
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* msw-font-menu.el:
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	* package-get.el (package-get-installedp):
+	* select.el (select-convert-from-image-data):
+	* sound.el:
+	* sound.el (load-sound-file):
+	* x-font-menu.el (x-reset-device-font-menus-core):
+	Don't quote keywords, they're self-quoting, and the
+	win from backward-compatibility is sufficiently small now that the
+	style problem overrides it.
+
+2011-01-22  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (block, return-from): Require that NAME be a symbol
 	in these macros, as always documented in the #'block docstring and
 	as required by Common Lisp.

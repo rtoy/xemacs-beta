@@ -418,7 +418,7 @@ This makes all properties of FACE inherit from PARENT."
                              how-to-add))
         (set-difference built-in-face-specifiers
                         '(display-table background-pixmap inherit)))
-  (set-face-background-pixmap face (vector 'inherit ':face parent)
+  (set-face-background-pixmap face (vector 'inherit :face parent)
 			      locale tag-set how-to-add)
   nil)
 

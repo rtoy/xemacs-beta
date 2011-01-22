@@ -1240,7 +1240,7 @@ some built in variables.  For now, use packages-package-list."
   ;; Use packages-package-list which contains name and version
   (equal (plist-get
 	  (package-get-info-find-package packages-package-list
-					 package) ':version)
+					 package) :version)
 	 (if (floatp version)
 	     version
 	   (string-to-number version))))
