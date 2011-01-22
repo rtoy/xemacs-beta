@@ -1,3 +1,12 @@
+2011-01-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (block, return-from): Require that NAME be a symbol
+	in these macros, as always documented in the #'block docstring and
+	as required by Common Lisp.
+	* descr-text.el (unidata-initialize-unihan-database):
+	Correct the use of non-symbols in #'block and #'return-from in
+	this function.
+
 2011-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (concatenate): Accept more complicated TYPEs in this
