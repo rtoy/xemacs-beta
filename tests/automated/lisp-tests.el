@@ -2682,115 +2682,154 @@ via the hepatic alpha-tocopherol transfer protein")))
         (string (make-string string-length
                              (or (decode-char 'ucs #x20ac) ?\xFF)))
         (item 'cons))
-    (dolist (function '(count position find delete* remove* reduce))
-      (Check-Error args-out-of-range
-                   (funcall function item list
-                            :start (1+ list-length) :end (1+ list-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function item list
-                            :start -1 :end list-length))
-      (Check-Error args-out-of-range
-                   (funcall function item list :end (* 2 list-length)))
-      (Check-Error args-out-of-range
-                   (funcall function item vector
-                            :start (1+ vector-length) :end (1+ vector-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function item vector :start -1))
-      (Check-Error args-out-of-range
-                   (funcall function item vector :end (* 2 vector-length)))
-      (Check-Error args-out-of-range
-                   (funcall function item bit-vector
-                            :start (1+ vector-length) :end (1+ vector-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function item bit-vector :start -1))
-      (Check-Error args-out-of-range
-                   (funcall function item bit-vector :end (* 2 vector-length)))
-      (Check-Error args-out-of-range
-                   (funcall function item string
-                            :start (1+ string-length) :end (1+ string-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function item string :start -1))
-      (Check-Error args-out-of-range
-                   (funcall function item string :end (* 2 string-length))))
-    (dolist (function '(delete-duplicates remove-duplicates))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence list)
-                            :start (1+ list-length) :end (1+ list-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function (copy-sequence list)
-                            :start -1 :end list-length))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence list)
-                            :end (* 2 list-length)))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence vector)
-                            :start (1+ vector-length) :end (1+ vector-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function (copy-sequence vector) :start -1))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence vector)
-                            :end (* 2 vector-length)))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence bit-vector)
-                            :start (1+ vector-length) :end (1+ vector-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function (copy-sequence bit-vector) :start -1))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence bit-vector)
-                            :end (* 2 vector-length)))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence string)
-                            :start (1+ string-length) :end (1+ string-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function (copy-sequence string) :start -1))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence string)
-                            :end (* 2 string-length))))
-    (dolist (function '(replace mismatch search))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence list) (copy-sequence list)
-                            :start1 (1+ list-length) :end1 (1+ list-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function (copy-sequence list) (copy-sequence list)
-                            :start1 -1 :end1 list-length))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence list) (copy-sequence list)
-                            :end1 (* 2 list-length)))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence vector)
-                            (copy-sequence vector) :start1 (1+ vector-length)
-                            :end1 (1+ vector-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function (copy-sequence vector)
-                            (copy-sequence vector) :start1 -1))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence vector)
-                            (copy-sequence vector)
-                            :end1 (* 2 vector-length)))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence bit-vector)
-                            (copy-sequence bit-vector)
-                            :start1 (1+ vector-length)
-                            :end1 (1+ vector-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function (copy-sequence bit-vector)
-                            (copy-sequence bit-vector) :start1 -1))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence bit-vector)
-                            (copy-sequence bit-vector)
-                            :end1 (* 2 vector-length)))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence string)
-                            (copy-sequence string)
-                            :start1 (1+ string-length)
-                            :end1 (1+ string-length)))
-      (Check-Error wrong-type-argument
-                   (funcall function (copy-sequence string)
-                            (copy-sequence string) :start1 -1))
-      (Check-Error args-out-of-range
-                   (funcall function (copy-sequence string)
-                            (copy-sequence string)
-                            :end1 (* 2 string-length))))))
+    (macrolet
+        ((construct-item-sequence-checks (&rest functions)
+           (cons
+            'progn
+            (mapcan
+             #'(lambda (function)
+                 `((Check-Error args-out-of-range
+                                (,function item list
+                                           :start (1+ list-length)
+                                           :end (1+ list-length)))
+                   (Check-Error wrong-type-argument
+                                (,function item list :start -1
+                                           :end list-length))
+                   (Check-Error args-out-of-range
+                                (,function item list :end (* 2 list-length)))
+                   (Check-Error args-out-of-range
+                                (,function item vector
+                                           :start (1+ vector-length)
+                                           :end (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function item vector :start -1))
+                   (Check-Error args-out-of-range
+                                (,function item vector
+                                           :end (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function item bit-vector
+                                           :start (1+ vector-length)
+                                           :end (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function item bit-vector :start -1))
+                   (Check-Error args-out-of-range
+                                (,function item bit-vector
+                                           :end (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function item string
+                                           :start (1+ string-length)
+                                           :end (1+ string-length)))
+                   (Check-Error wrong-type-argument
+                                (,function item string :start -1))
+                   (Check-Error args-out-of-range
+                                (,function item string
+                                           :end (* 2 string-length)))))
+             functions)))
+         (construct-one-sequence-checks (&rest functions)
+           (cons
+            'progn
+            (mapcan
+             #'(lambda (function)
+                 `((Check-Error args-out-of-range
+                                (,function (copy-sequence list)
+                                           :start (1+ list-length)
+                                           :end (1+ list-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence list)
+                                           :start -1 :end list-length))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence list)
+                                           :end (* 2 list-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence vector)
+                                           :start (1+ vector-length)
+                                           :end (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence vector) :start -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence vector)
+                                           :end (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence bit-vector)
+                                           :start (1+ vector-length)
+                                           :end (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence bit-vector)
+                                           :start -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence bit-vector)
+                                           :end (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence string)
+                                           :start (1+ string-length)
+                                           :end (1+ string-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence string) :start -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence string)
+                                           :end (* 2 string-length)))))
+             functions)))
+         (construct-two-sequence-checks (&rest functions)
+           (cons
+            'progn
+            (mapcan
+             #'(lambda (function)
+                 `((Check-Error args-out-of-range
+                                (,function (copy-sequence list)
+                                           (copy-sequence list)
+                                           :start1 (1+ list-length)
+                                           :end1 (1+ list-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence list)
+                                           (copy-sequence list)
+                                           :start1 -1 :end1 list-length))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence list)
+                                           (copy-sequence list)
+                                           :end1 (* 2 list-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence vector)
+                                           (copy-sequence vector)
+                                           :start1 (1+ vector-length)
+                                           :end1 (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function
+                                 (copy-sequence vector)
+                                 (copy-sequence vector) :start1 -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence vector)
+                                           (copy-sequence vector)
+                                           :end1 (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence bit-vector)
+                                           (copy-sequence bit-vector)
+                                           :start1 (1+ vector-length)
+                                           :end1 (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence bit-vector)
+                                           (copy-sequence bit-vector)
+                                           :start1 -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence bit-vector)
+                                           (copy-sequence bit-vector)
+                                           :end1 (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence string)
+                                           (copy-sequence string)
+                                           :start1 (1+ string-length)
+                                           :end1 (1+ string-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence string)
+                                           (copy-sequence string) :start1 -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence string)
+                                           (copy-sequence string)
+                                           :end1 (* 2 string-length)))))
+             functions))))
+      (construct-item-sequence-checks count position find delete* remove*
+                                      reduce)
+      (construct-one-sequence-checks delete-duplicates remove-duplicates)
+      (construct-two-sequence-checks replace mismatch search))))
 
 (let* ((list (list 1 2 3 4 5 6 7 120 'hi-there '#:everyone))
        (vector (map 'vector #'identity list))
