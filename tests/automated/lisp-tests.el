@@ -793,19 +793,21 @@
       `(progn
 	 (Check-Error wrong-number-of-arguments (,fun))
 	 (Check-Error wrong-number-of-arguments (,fun nil))
-	 (Check-Error malformed-list (,fun nil 1))
+	 (Check-Error (malformed-list wrong-type-argument) (,fun nil 1))
 	 ,@(loop for n in '(1 2 2000)
 	     collect `(Check-Error circular-list (,fun 1 (make-circular-list ,n))))))
      (test-funs (&rest funs) `(progn ,@(loop for fun in funs collect `(test-fun ,fun)))))
 
-  (test-funs member* member old-member 
-	     memq   old-memq
-	     assoc* assoc  old-assoc
-	     rassoc* rassoc old-rassoc
-	     rassq  old-rassq
-	     delete* delete old-delete
-	     delq   old-delq
-	     remassoc remassq remrassoc remrassq))
+  (test-funs member* member memq 
+             assoc* assoc assq 
+             rassoc* rassoc rassq 
+             delete* delete delq 
+             remove* remove remq 
+             old-member old-memq 
+             old-assoc old-assq 
+             old-rassoc old-rassq 
+             old-delete old-delq 
+             remassoc remassq remrassoc remrassq))
 
 (let ((x '((1 . 2) 3 (4 . 5))))
   (Assert (eq (assoc  1 x) (car x)))

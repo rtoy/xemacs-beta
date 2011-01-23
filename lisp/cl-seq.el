@@ -56,26 +56,6 @@
 ;; scope (e.g. a variable called start bound in this file and one in a
 ;; user-supplied test predicate may well interfere with each other).
 
-;; XEmacs change: these two are in subr.el in GNU Emacs.
-(defun remove (cl-item cl-seq)
-  "Remove all occurrences of ITEM in SEQUENCE, testing with `equal'.
-
-This is a non-destructive function; it makes a copy of SEQUENCE if necessary
-to avoid corrupting the original SEQUENCE.
-Also see: `remove*', `delete', `delete*'
-
-arguments: (ITEM SEQUENCE)"
-  (remove* cl-item cl-seq :test #'equal))
-
-(defun remq (cl-item cl-seq)
-  "Remove all occurrences of ITEM in SEQUENCE, comparing with `eq'.
-
-This is a non-destructive function; it makes a copy of SEQUENCE to avoid
-corrupting the original LIST.  See also the more general `remove*'.
-
-arguments: (ITEM SEQUENCE)"
-  (remove* cl-item cl-seq :test #'eq))
-
 (defun remove-if (cl-predicate cl-seq &rest cl-keys)
   "Remove all items satisfying PREDICATE in SEQUENCE.
 
