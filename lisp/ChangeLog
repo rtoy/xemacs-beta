@@ -1,3 +1,14 @@
+2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (delete):
+	* cl-macs.el (delq):
+	* cl-macs.el (remove):
+	* cl-macs.el (remq):
+	Don't use the compiler macro if these functions were given the
+	wrong number of arguments, as happens in lisp-tests.el.
+	* cl-seq.el (remove, remq): Removed.
+	I added these to subr.el, and forgot to remove them from here.
+
 2011-01-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-setq, byte-compile-set):
