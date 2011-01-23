@@ -3294,8 +3294,8 @@ complex_vars_of_unicode (void)
   Fmake_coding_system_internal
     (Qutf_8, Qunicode,
      build_defer_string ("UTF-8"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "UTF-8 Unicode encoding -- ASCII-compatible 8-bit variable-width encoding\n"
 "sharing the following principles with the Mule-internal encoding:\n"
 "\n"
@@ -3317,6 +3317,7 @@ complex_vars_of_unicode (void)
 "  -- Given only the leading byte, you know how many following bytes\n"
 "     are present.\n"
 ),
-		    Qmnemonic, build_ascstring ("UTF8")),
-	     list2 (Qunicode_type, Qutf_8)));
+            Qmnemonic, build_ascstring ("UTF8"),
+            Qunicode_type, Qutf_8,
+            Qunbound));
 }

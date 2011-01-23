@@ -2358,14 +2358,15 @@ complex_vars_of_intl_win32 (void)
   Fmake_coding_system_internal
     (Qmswindows_unicode, Qunicode,
      build_defer_string ("MS Windows Unicode"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "Converts to the Unicode encoding for Windows API calls.\n"
 "This encoding is equivalent to standard UTF16, little-endian."
 ),
-		    Qmnemonic, build_ascstring ("MSW-U")),
-	     list4 (Qunicode_type, Qutf_16,
-		    Qlittle_endian, Qt)));
+            Qmnemonic, build_ascstring ("MSW-U"),
+            Qunicode_type, Qutf_16,
+            Qlittle_endian, Qt,
+            Qunbound));
 
 #ifdef MULE
   /* Just temporarily.  This will get fixed in mule-msw-init.el. */
