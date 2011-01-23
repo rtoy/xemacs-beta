@@ -1,5 +1,12 @@
 2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/lisp-tests.el:
+	When sanity-checking :start and :end keyword arguments, loop at
+	macroexpansion time, not runtime, allowing us to pick up any
+	compiler macros and giving a clearer *Test-Log* buffer.
+
+2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* automated/lisp-tests.el (test-fun):
 	#'delete* and friends can now throw a wrong-type-argument if
 	handed a non-sequence; accept this too when checking for an error
