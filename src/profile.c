@@ -542,15 +542,16 @@ are recorded
       unbind_to (count);
     }
 
-  retv = nconc2 (list6 (Qtiming, closure.timing, Qtotal_timing,
-			copy_hash_table_or_blank (Vtotal_timing_profile_table),
-			Qcall_count,
-			copy_hash_table_or_blank (Vcall_count_profile_table)),
-		 list4 (Qgc_usage,
-			copy_hash_table_or_blank (Vgc_usage_profile_table),
-			Qtotal_gc_usage,
-			copy_hash_table_or_blank (Vtotal_gc_usage_profile_table
-						  )));
+  retv = listu (Qtiming, closure.timing,
+                Qtotal_timing,
+                copy_hash_table_or_blank (Vtotal_timing_profile_table),
+                Qcall_count,
+                copy_hash_table_or_blank (Vcall_count_profile_table),
+                Qgc_usage,
+                copy_hash_table_or_blank (Vgc_usage_profile_table),
+                Qtotal_gc_usage,
+                copy_hash_table_or_blank (Vtotal_gc_usage_profile_table),
+                Qunbound);
   unbind_to (depth);
   return retv;
 }

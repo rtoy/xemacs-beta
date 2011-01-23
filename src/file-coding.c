@@ -4817,142 +4817,143 @@ complex_vars_of_file_coding (void)
   Fmake_coding_system_internal
     (Qconvert_eol_cr, Qconvert_eol,
      build_defer_string ("Convert CR to LF"),
-     nconc2 (list6 (Qdocumentation,
-		    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "Converts CR (used to mark the end of a line on Macintosh systems) to LF\n"
 "(used internally and under Unix to mark the end of a line)."),
-		    Qmnemonic, build_ascstring ("CR->LF"),
-		    Qsubtype, Qcr),
-	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
-		subsidiaries -- it needs the coding systems we're creating
+            Qmnemonic, build_ascstring ("CR->LF"),
+            Qsubtype, Qcr,
+            /* VERY IMPORTANT!  Tell make-coding-system not to generate
+               subsidiaries -- it needs the coding systems we're creating
 		to do so! */
-	     list4 (Qeol_type, Qlf,
-                    Qsafe_charsets, Qt)));
-
+            Qeol_type, Qlf,
+            Qsafe_charsets, Qt,
+            Qunbound));
   Fmake_coding_system_internal
     (Qconvert_eol_lf, Qconvert_eol,
      build_defer_string ("Convert LF to LF (do nothing)"),
-     nconc2 (list6 (Qdocumentation,
-		    build_defer_string (
-"Do nothing."),
-		    Qmnemonic, build_ascstring ("LF->LF"),
-		    Qsubtype, Qlf),
-	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
+     listu (Qdocumentation,
+            build_defer_string ("Do nothing."),
+            Qmnemonic, build_ascstring ("LF->LF"),
+            Qsubtype, Qlf,
+            /* VERY IMPORTANT!  Tell make-coding-system not to generate
 		subsidiaries -- it needs the coding systems we're creating
 		to do so! */
-	     list4 (Qeol_type, Qlf,
-                    Qsafe_charsets, Qt)));
+	    Qeol_type, Qlf,
+            Qsafe_charsets, Qt,
+            Qunbound));
 
   Fmake_coding_system_internal
     (Qconvert_eol_crlf, Qconvert_eol,
      build_defer_string ("Convert CRLF to LF"),
-     nconc2 (list6 (Qdocumentation,
-		    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "Converts CR+LF (used to mark the end of a line on Macintosh systems) to LF\n"
 "(used internally and under Unix to mark the end of a line)."),
-		    Qmnemonic, build_ascstring ("CRLF->LF"),
-		    Qsubtype, Qcrlf),
-
-	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
-		subsidiaries -- it needs the coding systems we're creating
-		to do so! */
-	     list4 (Qeol_type, Qlf,
-                    Qsafe_charsets, Qt)));
+            Qmnemonic, build_ascstring ("CRLF->LF"),
+            Qsubtype, Qcrlf,
+            /* VERY IMPORTANT!  Tell make-coding-system not to generate
+               subsidiaries -- it needs the coding systems we're creating
+               to do so! */
+            Qeol_type, Qlf,
+            Qsafe_charsets, Qt,
+            Qunbound));
 
   Fmake_coding_system_internal
     (Qconvert_eol_autodetect, Qconvert_eol,
      build_defer_string ("Autodetect EOL type"),
-     nconc2 (list6 (Qdocumentation,
-		    build_defer_string (
-"Autodetect the end-of-line type."),
-		    Qmnemonic, build_ascstring ("Auto-EOL"),
-		    Qsubtype, Qnil),
-	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
-		subsidiaries -- it needs the coding systems we're creating
-		to do so! */
-	     list4 (Qeol_type, Qlf,
-                    Qsafe_charsets, Qt)));
+     listu (Qdocumentation,
+            build_defer_string ("Autodetect the end-of-line type."),
+            Qmnemonic, build_ascstring ("Auto-EOL"),
+            Qsubtype, Qnil,
+            /* VERY IMPORTANT!  Tell make-coding-system not to generate
+               subsidiaries -- it needs the coding systems we're creating
+               to do so! */
+            Qeol_type, Qlf,
+            Qsafe_charsets, Qt,
+            Qunbound));
 
   Fmake_coding_system_internal
     (Qundecided, Qundecided,
      build_defer_string ("Undecided (auto-detect)"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string
-		    ("Automatically detects the correct encoding."),
-		    Qmnemonic, build_ascstring ("Auto")),
-	     list6 (Qdo_eol, Qt, Qdo_coding, Qt,
-		    /* We do EOL detection ourselves so we don't need to be
-		       wrapped in an EOL detector. (It doesn't actually hurt,
-		       though, I don't think.) */
-		    Qeol_type, Qlf)));
+     listu (Qdocumentation,
+            build_defer_string ("Automatically detects the correct encoding."),
+            Qmnemonic, build_ascstring ("Auto"),
+            Qdo_eol, Qt, Qdo_coding, Qt,
+            /* We do EOL detection ourselves so we don't need to be
+               wrapped in an EOL detector. (It doesn't actually hurt,
+               though, I don't think.) */
+            Qeol_type, Qlf,
+            Qunbound));
 
   Fmake_coding_system_internal
     (intern ("undecided-dos"), Qundecided,
      build_defer_string ("Undecided (auto-detect) (CRLF)"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string
-		    ("Automatically detects the correct encoding; EOL type of CRLF forced."),
-		    Qmnemonic, build_ascstring ("Auto")),
-	     list4 (Qdo_coding, Qt,
-		    Qeol_type, Qcrlf)));
+     listu (Qdocumentation,
+            build_defer_string
+            ("Automatically detects the correct encoding; EOL type of CRLF forced."),
+            Qmnemonic, build_ascstring ("Auto"),
+            Qdo_coding, Qt,
+            Qeol_type, Qcrlf,
+            Qunbound));
 
   Fmake_coding_system_internal
     (intern ("undecided-unix"), Qundecided,
      build_defer_string ("Undecided (auto-detect) (LF)"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string
-		    ("Automatically detects the correct encoding; EOL type of LF forced."),
-		    Qmnemonic, build_ascstring ("Auto")),
-	     list4 (Qdo_coding, Qt,
-		    Qeol_type, Qlf)));
+     listu (Qdocumentation,
+            build_defer_string
+            ("Automatically detects the correct encoding; EOL type of LF forced."),
+            Qmnemonic, build_ascstring ("Auto"),
+            Qdo_coding, Qt,
+            Qeol_type, Qlf,
+            Qunbound));;
 
   Fmake_coding_system_internal
     (intern ("undecided-mac"), Qundecided,
      build_defer_string ("Undecided (auto-detect) (CR)"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string
-		    ("Automatically detects the correct encoding; EOL type of CR forced."),
-		    Qmnemonic, build_ascstring ("Auto")),
-	     list4 (Qdo_coding, Qt,
-		    Qeol_type, Qcr)));
+     listu (Qdocumentation,
+            build_defer_string
+            ("Automatically detects the correct encoding; EOL type of CR forced."),
+            Qmnemonic, build_ascstring ("Auto"),
+            Qdo_coding, Qt,
+            Qeol_type, Qcr,
+            Qunbound));
 
   /* Need to create this here or we're really screwed. */
   Fmake_coding_system_internal
     (Qraw_text, Qno_conversion,
      build_defer_string ("Raw Text"),
-     nconc2 (list4 (Qdocumentation,
-                    build_defer_string ("Raw text converts only line-break "
-                                      "codes, and acts otherwise like "
-                                      "`binary'."),
-                    Qmnemonic, build_ascstring ("Raw")),
+     listu (Qdocumentation,
+            build_defer_string ("Raw text converts only line-break "
+                                "codes, and acts otherwise like "
+                                "`binary'."),
+            Qmnemonic, build_ascstring ("Raw"),
 #ifdef MULE
-             list2 (Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
-                                           Vcharset_latin_iso8859_1))));
+            Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
+                                   Vcharset_latin_iso8859_1),
 
-#else
-             Qnil));
 #endif
+            Qunbound));
+
 
   Fmake_coding_system_internal
     (Qbinary, Qno_conversion,
      build_defer_string ("Binary"),
-     nconc2 (list6 (Qdocumentation,
-                    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "This coding system is as close as it comes to doing no conversion.\n"
 "On input, each byte is converted directly into the character\n"
 "with the corresponding code -- i.e. from the `ascii', `control-1',\n"
 "or `latin-1' character sets.  On output, these characters are\n"
 "converted back to the corresponding bytes, and other characters\n"
 "are converted to the default character, i.e. `~'."),
-                    Qeol_type, Qlf,
-                    Qmnemonic, build_ascstring ("Binary")),
+            Qeol_type, Qlf,
+            Qmnemonic, build_ascstring ("Binary"),
 #ifdef MULE
-             list2 (Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
-                                           Vcharset_latin_iso8859_1))));
-
-#else
-             Qnil));
+            Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
+                                   Vcharset_latin_iso8859_1),
 #endif
+            Qunbound));
 
   /* Formerly aliased to raw-text!  Completely bogus and not even the same
      as FSF Emacs. */
