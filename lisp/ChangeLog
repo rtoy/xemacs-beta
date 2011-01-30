@@ -1,3 +1,9 @@
+2011-01-30  Mike Sperber  <mike@xemacs.org>
+
+	* font-lock.el (font-lock-fontify-pending-extents): Don't fail if
+	`font-lock-mode' is unset, which can happen in the middle of
+	`revert-buffer'.
+
 2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (delete):
