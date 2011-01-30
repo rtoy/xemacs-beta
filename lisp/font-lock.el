@@ -1477,51 +1477,55 @@ buffer modifications are performed or a buffer is reverted.")
   (save-match-data
     (maphash
      #'(lambda (buffer dummy)
-	 ;; remove first, to avoid infinite reprocessing if error
-	 (remhash buffer font-lock-pending-buffer-table)
-	 (when (buffer-live-p buffer)
-	   (clear-range-table font-lock-range-table)
-	   (with-current-buffer buffer
-	     (save-excursion
-	       (save-restriction
-		 ;; if we don't widen, then the C code in
-		 ;; syntactically-sectionize will fail to realize that
-		 ;; we're inside a comment. #### We don't actually use
-		 ;; syntactically-sectionize any more.  Do we still
-		 ;; need the widen?
-		 (widen)
-		 (map-extents
-		  #'(lambda (ex dummy-maparg)
-		      ;; first expand the ranges to full lines,
-		      ;; because that is what will be fontified;
-		      ;; then use a range table to merge the
-		      ;; ranges. (we could also do this simply using
-		      ;; text properties.  the range table code was
-		      ;; here from a previous version of this code
-		      ;; and works just as well.)
-		      (let* ((beg (extent-start-position ex))
-			     (end (extent-end-position ex))
-			     (beg (progn (goto-char beg)
-					 (beginning-of-line)
-					 (point)))
-			     (end (progn (goto-char end)
-					 (forward-line 1)
-					 (point))))
-			(put-range-table beg end t
-					 font-lock-range-table)))
-		  nil nil nil nil nil 'font-lock-pending t)
-		 ;; clear all pending extents first in case of error below.
-		 (put-text-property (point-min) (point-max)
-				    'font-lock-pending nil)
-		 (map-range-table
-		  #'(lambda (beg end val)
+	 (catch 'exit
+	   ;; font-lock-mode may be temporarily unset during `revert-buffer'
+	   (if (not font-lock-mode)
+	       (throw 'exit nil))
+	   ;; remove first, to avoid infinite reprocessing if error
+	   (remhash buffer font-lock-pending-buffer-table)
+	   (when (buffer-live-p buffer)
+	     (clear-range-table font-lock-range-table)
+	     (with-current-buffer buffer
+	       (save-excursion
+		 (save-restriction
+		   ;; if we don't widen, then the C code in
+		   ;; syntactically-sectionize will fail to realize that
+		   ;; we're inside a comment. #### We don't actually use
+		   ;; syntactically-sectionize any more.  Do we still
+		   ;; need the widen?
+		   (widen)
+		   (map-extents
+		    #'(lambda (ex dummy-maparg)
+			;; first expand the ranges to full lines,
+			;; because that is what will be fontified;
+			;; then use a range table to merge the
+			;; ranges. (we could also do this simply using
+			;; text properties.  the range table code was
+			;; here from a previous version of this code
+			;; and works just as well.)
+			(let* ((beg (extent-start-position ex))
+			       (end (extent-end-position ex))
+			       (beg (progn (goto-char beg)
+					   (beginning-of-line)
+					   (point)))
+			       (end (progn (goto-char end)
+					   (forward-line 1)
+					   (point))))
+			  (put-range-table beg end t
+					   font-lock-range-table)))
+		    nil nil nil nil nil 'font-lock-pending t)
+		   ;; clear all pending extents first in case of error below.
+		   (put-text-property (point-min) (point-max)
+				      'font-lock-pending nil)
+		   (map-range-table
+		    #'(lambda (beg end val)
 			;; This creates some unnecessary progress gauges.
 ;;			(if (and (= beg (point-min))
 ;;				 (= end (point-max)))
 ;;			    (font-lock-fontify-buffer)
 ;;			  (font-lock-fontify-region beg end)))
-		      (font-lock-fontify-region beg end))
-		  font-lock-range-table))))))
+			(font-lock-fontify-region beg end))
+		    font-lock-range-table)))))))
      font-lock-pending-buffer-table)))
 
 ;; Syntactic fontification functions.
