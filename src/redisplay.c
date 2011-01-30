@@ -6688,12 +6688,25 @@ run_post_redisplay_actions (void)
   unbind_to (depth);
 }
 
+static int the_ritual_suicide_has_been_cancelled = 0;
+
+void
+redisplay_cancel_ritual_suicide(void)
+{
+  the_ritual_suicide_has_been_cancelled = 1;
+}
+
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
 
 static Lisp_Object
 commit_ritual_suicide (Lisp_Object UNUSED (ceci_nest_pas_une_pipe))
 {
-  assert (!in_display);
+  if (!the_ritual_suicide_has_been_cancelled)
+    {
+      assert (!in_display);
+    }
+  else
+    the_ritual_suicide_has_been_cancelled = 0;
   return Qnil;
 }
 

@@ -1802,22 +1802,13 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val, Lisp_Object tag)
   LONGJMP (c->jmp, 1);
 }
 
-DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object, Lisp_Object, int,
+DECLARE_DOESNT_RETURN (throw_or_bomb_out_unsafe (Lisp_Object, Lisp_Object, int,
 					  Lisp_Object, Lisp_Object));
 
 DOESNT_RETURN
-throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
-		   Lisp_Object sig, Lisp_Object data)
+throw_or_bomb_out_unsafe (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
+			  Lisp_Object sig, Lisp_Object data)
 {
-#ifdef DEFEND_AGAINST_THROW_RECURSION
-  /* die if we recurse more than is reasonable */
-  assert (++throw_level <= 20);
-#endif
-
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-  check_proper_critical_section_nonlocal_exit_protection ();
-#endif
-
   /* If bomb_out_p is t, this is being called from Fsignal as a
      "last resort" when there is no handler for this error and
       the debugger couldn't be invoked, so we are throwing to
@@ -1856,6 +1847,24 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
       else
         call1 (Qreally_early_error_handler, Fcons (sig, data));
     }
+}
+  
+DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object, Lisp_Object, int,
+					  Lisp_Object, Lisp_Object));
+
+DOESNT_RETURN
+throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
+		   Lisp_Object sig, Lisp_Object data)
+{
+#ifdef DEFEND_AGAINST_THROW_RECURSION
+  /* die if we recurse more than is reasonable */
+  assert (++throw_level <= 20);
+#endif
+
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  check_proper_critical_section_nonlocal_exit_protection ();
+#endif
+  throw_or_bomb_out_unsafe (tag, val, bomb_out_p, sig, data);
 }
 
 /* See above, where CATCHLIST is defined, for a description of how

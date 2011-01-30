@@ -1,3 +1,12 @@
+2011-01-30  Michael Sperber  <mike@xemacs.org>
+
+	* redisplay.h: 
+	* redisplay.c: 
+	(redisplay_cancel_ritual_suicide): 
+	* eval.c (throw_or_bomb_out_unsafe): 
+	* device-x.c (x_IO_error_handler): Don't commit suicide when an X
+	device dies.
+
 2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c (complex_vars_of_file_coding):

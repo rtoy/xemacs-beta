@@ -1255,7 +1255,8 @@ x_IO_error_handler (Display *disp)
       DEVICE_X_BEING_DELETED (d) = 1;
     }
 
-  throw_or_bomb_out (Qtop_level, Qnil, 0, Qnil, Qnil);
+  redisplay_cancel_ritual_suicide();
+  throw_or_bomb_out_unsafe (Qtop_level, Qnil, 0, Qnil, Qnil);
 
   RETURN_NOT_REACHED (0);
 }
