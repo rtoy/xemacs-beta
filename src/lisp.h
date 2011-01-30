@@ -4722,6 +4722,10 @@ MODULE_API DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object,
                                                      Lisp_Object, int,
                                                      Lisp_Object, Lisp_Object));
 
+MODULE_API DECLARE_DOESNT_RETURN (throw_or_bomb_out_unsafe (Lisp_Object,
+							    Lisp_Object, int,
+							    Lisp_Object, Lisp_Object));
+
 MODULE_API DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
 void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
 			   Error_Behavior);
