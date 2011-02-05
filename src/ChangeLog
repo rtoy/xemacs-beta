@@ -1,3 +1,43 @@
+2011-02-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c:
+	* fns.c (check_lss_key, check_lss_key_car): New.
+	* fns.c (check_string_lessp_key check_string_lessp_key_car): New.
+	* fns.c (get_merge_predicate): New.
+	* fns.c (list_merge):
+	* fns.c (array_merge):
+	* fns.c (list_array_merge_into_list):
+	* fns.c (list_list_merge_into_array):
+	* fns.c (list_array_merge_into_array):
+	* fns.c (Fmerge):
+	* fns.c (list_sort):
+	* fns.c (array_sort):
+	* fns.c (FsortX):
+	* fns.c (syms_of_fns):
+	* lisp.h:
+	Move #'sort, #'merge to using the same test approach as is used in
+	the functions that take TEST, TEST-NOT and KEY arguments.  This
+	allows us to avoid the Ffuncall() overhead when the most common
+	PREDICATE arguments are supplied, in particular #'< and
+	#'string-lessp.
+
+	* fontcolor-msw.c (sort_font_list_function):
+	* fontcolor-msw.c (mswindows_enumerate_fonts):
+	* dired.c:
+	* dired.c (Fdirectory_files):
+	* fileio.c:
+	* fileio.c (build_annotations):
+	* fileio.c (syms_of_fileio):
+	* keymap.c:
+	* keymap.c (keymap_submaps):
+	* keymap.c (map_keymap_sort_predicate):
+	* keymap.c (describe_map_sort_predicate):
+	* keymap.c (describe_map):
+	Change the various C predicates passed to list_sort () and
+	list_merge () to fit the new calling convention, returning
+	non-zero if the first argument is less than the second, zero
+	otherwise.
+
 2011-01-30  Michael Sperber  <mike@xemacs.org>
 
 	* redisplay.h: 

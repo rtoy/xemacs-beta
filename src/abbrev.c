@@ -524,7 +524,7 @@ READABLE is non-nil, they are listed.  */
   map_obarray (table, record_symbol, &symbols);
   /* map_obarray (table, record_symbol, &closure); */
   symbols = XCDR (symbols);
-  symbols = list_sort (symbols, NULL, Qstring_lessp, Qidentity);
+  symbols = list_sort (symbols, check_string_lessp_nokey, Qnil, Qnil);
 
   if (!NILP (readable))
     {

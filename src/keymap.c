@@ -737,10 +737,9 @@ keymap_submaps_mapper (Lisp_Object key, Lisp_Object value,
   return 0;
 }
 
-static Lisp_Object map_keymap_sort_predicate (Lisp_Object obj1,
-                                              Lisp_Object obj2,
-                                              Lisp_Object pred,
-                                              Lisp_Object key_func);
+static Boolint map_keymap_sort_predicate (Lisp_Object pred, Lisp_Object key,
+					  Lisp_Object obj1, Lisp_Object obj2);
+					  
 
 static Lisp_Object
 keymap_submaps (Lisp_Object keymap)
@@ -764,7 +763,7 @@ keymap_submaps (Lisp_Object keymap)
 		     &keymap_submaps_closure);
       /* keep it sorted so that the result of accessible-keymaps is ordered */
       k->sub_maps_cache = list_sort (result, map_keymap_sort_predicate,
-                                     Qnil, Qidentity);
+                                     Qnil, Qnil);
       UNGCPRO;
     }
   return k->sub_maps_cache;
@@ -2896,10 +2895,9 @@ map_keymap_sorted_mapper (Lisp_Object key, Lisp_Object value,
 /* used by map_keymap_sorted(), describe_map_sort_predicate(),
    and keymap_submaps().
  */
-static Lisp_Object
-map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
-                           Lisp_Object UNUSED (pred),
-                           Lisp_Object UNUSED (key_func))
+static Boolint
+map_keymap_sort_predicate (Lisp_Object UNUSED (pred), Lisp_Object UNUSED (key),
+			   Lisp_Object obj1, Lisp_Object obj2)
 {
   /* obj1 and obj2 are conses with keysyms in their cars.  Cdrs are ignored.
    */
@@ -2912,12 +2910,12 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   obj2 = XCAR (obj2);
 
   if (EQ (obj1, obj2))
-    return Qnil;
+    return 0;
   bit1 = MODIFIER_HASH_KEY_BITS (obj1);
   bit2 = MODIFIER_HASH_KEY_BITS (obj2);
 
-  /* If either is a symbol with a Qcharacter_of_keysym property, then sort it by
-     that code instead of alphabetically.
+  /* If either is a symbol with a Qcharacter_of_keysym property, then sort
+     it by that code instead of alphabetically.
      */
   if (! bit1 && SYMBOLP (obj1))
     {
@@ -2942,7 +2940,7 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
 
   /* all symbols (non-ASCIIs) come after characters (ASCIIs) */
   if (XTYPE (obj1) != XTYPE (obj2))
-    return SYMBOLP (obj2) ? Qt : Qnil;
+    return SYMBOLP (obj2);
 
   if (! bit1 && CHARP (obj1)) /* they're both ASCII */
     {
@@ -2950,24 +2948,24 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
       int o2 = XCHAR (obj2);
       if (o1 == o2 &&		/* If one started out as a symbol and the */
 	  sym1_p != sym2_p)	/* other didn't, the symbol comes last. */
-	return sym2_p ? Qt : Qnil;
+	return sym2_p;
 
-      return o1 < o2 ? Qt : Qnil;	/* else just compare them */
+      return o1 < o2;		/* else just compare them */
     }
 
   /* else they're both symbols.  If they're both buckys, then order them. */
   if (bit1 && bit2)
-    return bit1 < bit2 ? Qt : Qnil;
+    return bit1 < bit2;
 
   /* if only one is a bucky, then it comes later */
   if (bit1 || bit2)
-    return bit2 ? Qt : Qnil;
+    return bit2;
 
   /* otherwise, string-sort them. */
   {
     Ibyte *s1 = XSTRING_DATA (XSYMBOL (obj1)->name);
     Ibyte *s2 = XSTRING_DATA (XSYMBOL (obj2)->name);
-    return 0 > qxestrcmp (s1, s2) ? Qt : Qnil;
+    return 0 > qxestrcmp (s1, s2);
   }
 }
 
@@ -4087,10 +4085,10 @@ describe_map_mapper (const Lisp_Key_Data *key,
 			    *(closure->list));
 }
 
-
-static Lisp_Object
-describe_map_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
-			     Lisp_Object pred, Lisp_Object key_func)
+static Boolint
+describe_map_sort_predicate (Lisp_Object pred, Lisp_Object key_func,
+			     Lisp_Object obj1, Lisp_Object obj2)
+			     
 {
   /* obj1 and obj2 are conses of the form
      ( ( <keysym> . <modifiers> ) . <binding> )
@@ -4102,7 +4100,7 @@ describe_map_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   bit1 = XINT (XCDR (obj1));
   bit2 = XINT (XCDR (obj2));
   if (bit1 != bit2)
-    return bit1 < bit2 ? Qt : Qnil;
+    return bit1 < bit2;
   else
     return map_keymap_sort_predicate (obj1, obj2, pred, key_func);
 }
@@ -4212,7 +4210,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 
   if (!NILP (list))
     {
-      list = list_sort (list, describe_map_sort_predicate, Qnil, Qidentity);
+      list = list_sort (list, describe_map_sort_predicate, Qnil, Qnil);
       buffer_insert_ascstring (buf, "\n");
       while (!NILP (list))
 	{
