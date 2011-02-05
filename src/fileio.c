@@ -132,8 +132,6 @@ Lisp_Object Qauto_save_hook;
 Lisp_Object Qauto_save_error;
 Lisp_Object Qauto_saving;
 
-Lisp_Object Qcar_less_than_car;
-
 Lisp_Object Qcompute_buffer_file_truename;
 
 Lisp_Object QSin_expand_file_name;
@@ -3677,7 +3675,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);     /* Check basic validity of return value */
-      annotations = list_merge (annotations, res, NULL, Qlss, Qcar);
+      annotations = list_merge (annotations, res, check_lss_key_car, Qnil,
+				Qnil);
       p = Fcdr (p);
     }
 
@@ -3708,7 +3707,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);
-      annotations = list_merge (annotations, res, NULL, Qlss, Qcar);
+      annotations = list_merge (annotations, res, check_lss_key_car, Qnil,
+				Qnil);
       p = Fcdr (p);
     }
 
@@ -4381,7 +4381,6 @@ syms_of_fileio (void)
   DEFSYMBOL (Qwrite_region);
   DEFSYMBOL (Qverify_visited_file_modtime);
   DEFSYMBOL (Qset_visited_file_modtime);
-  DEFSYMBOL (Qcar_less_than_car); /* Vomitous! */
   DEFSYMBOL (Qexcl);
 
   DEFSYMBOL (Qauto_save_hook);

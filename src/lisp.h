@@ -5248,15 +5248,19 @@ EXFUN (Fstring_lessp, 2);
 EXFUN (Fsubseq, 3);
 EXFUN (Fvalid_plist_p, 1);
 
+extern Boolint check_lss_key_car (Lisp_Object, Lisp_Object, Lisp_Object,
+				  Lisp_Object);
+extern Boolint check_string_lessp_nokey (Lisp_Object, Lisp_Object,
+					 Lisp_Object, Lisp_Object);
+
+typedef Boolint (*check_test_func_t) (Lisp_Object test, Lisp_Object key,
+				      Lisp_Object item, Lisp_Object elt);
+
 Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
-                        Lisp_Object (*c_predicate) (Lisp_Object o1,
-                                                    Lisp_Object o2,
-                                                    Lisp_Object pred,
-                                                    Lisp_Object keyf),
+			check_test_func_t check_merge,
                         Lisp_Object predicate, Lisp_Object key_func);
 Lisp_Object list_sort (Lisp_Object list,
-                       Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object, 
-                                                   Lisp_Object, Lisp_Object),
+		       check_test_func_t check_merge,
                        Lisp_Object predicate, Lisp_Object key_func);
 
 void bump_string_modiff (Lisp_Object);

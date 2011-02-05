@@ -1198,10 +1198,9 @@ font_enum_callback_1 (ENUMLOGFONTEXW *lpelfe,
    "family::::charset" for TrueType fonts, "family::size::charset"
    otherwise. */
 
-static Lisp_Object
-sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
-			 Lisp_Object UNUSED (pred),
-                         Lisp_Object UNUSED (key_function))
+static Boolint
+sort_font_list_function (Lisp_Object UNUSED (pred), Lisp_Object UNUSED (key),
+			 Lisp_Object obj1, Lisp_Object obj2)
 {
   Ibyte *font1, *font2;
   Ibyte *c1, *c2;
@@ -1215,16 +1214,16 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
     5. Courier New over other families.
   */
 
-  /* The sort function should return non-nil if OBJ1 < OBJ2, nil otherwise.
-     NOTE: This is backwards from the way qsort() works. */
+  /* The sort function should return non-zero if OBJ1 < OBJ2, zero
+     otherwise. */
 
   t1 = !NILP (XCDR (obj1));
   t2 = !NILP (XCDR (obj2));
 
   if (t1 && !t2)
-    return Qt;
+    return 1;
   if (t2 && !t1)
-    return Qnil;
+    return 0;
 
   font1 = XSTRING_DATA (XCAR (obj1));
   font2 = XSTRING_DATA (XCAR (obj2));
@@ -1236,9 +1235,9 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
   t2 = !qxestrcasecmp_ascii (c2 + 1, "western");
 
   if (t1 && !t2)
-    return Qt;
+    return 1;
   if (t2 && !t1)
-    return Qnil;
+    return 0;
 
   c1 -= 2;
   c2 -= 2;
@@ -1246,9 +1245,9 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
   t2 = *c2 == ':';
 
   if (t1 && !t2)
-    return Qt;
+    return 1;
   if (t2 && !t1)
-    return Qnil;
+    return 0;
 
   if (!t1 && !t2)
     {
@@ -1261,25 +1260,25 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
       t2 = qxeatoi (c2 + 1) - 10;
 
       if (abs (t1) < abs (t2))
-	return Qt;
+	return 1;
       else if (abs (t2) < abs (t1))
-	return Qnil;
+	return 0;
       else if (t1 < t2)
 	/* Prefer a smaller font over a larger one just as far away
 	   because the smaller one won't upset the total line height if it's
 	   just a few chars. */
-	return Qt;
+	return 1;
     }
 
   t1 = !qxestrncasecmp_ascii (font1, "courier new:", 12);
   t2 = !qxestrncasecmp_ascii (font2, "courier new:", 12);
 
   if (t1 && !t2)
-    return Qt;
+    return 1;
   if (t2 && !t1)
-    return Qnil;
+    return 0;
 
-  return Qnil;
+  return 0;
 }
 
 /*
