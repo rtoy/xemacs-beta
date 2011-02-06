@@ -1,3 +1,10 @@
+2011-02-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fapropos_internal):
+	Supply check_string_lessp_nokey explicitly as the CHECK_MERGE
+	argument to list_sort(), NULL no longer works. Thank you Mats
+	Lidell in IRC!
+
 2011-02-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c:
