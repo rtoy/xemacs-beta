@@ -4102,7 +4102,7 @@ describe_map_sort_predicate (Lisp_Object pred, Lisp_Object key_func,
   if (bit1 != bit2)
     return bit1 < bit2;
   else
-    return map_keymap_sort_predicate (obj1, obj2, pred, key_func);
+    return map_keymap_sort_predicate (pred, key_func, obj1, obj2);
 }
 
 /* Elide 2 or more consecutive numeric keysyms bound to the same thing,
