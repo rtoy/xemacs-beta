@@ -1,3 +1,10 @@
+2011-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test lexical scope for `block', `return-from'; add a
+	Known-Bug-Expect-Failure for a contorted example that fails when
+	byte-compiled.
+
 2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

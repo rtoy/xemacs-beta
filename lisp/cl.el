@@ -205,19 +205,6 @@ See `member*' for the meaning of :test, :test-not and :key."
 
 (defalias 'cl-map-extents 'map-extents)
 
-;;; Blocks and exits.
-
-;; This used to be #'identity, but that didn't preserve multiple values in
-;; interpreted code. #'and isn't great either, there's no error on too many
-;; arguments passed to it when interpreted. Fortunately most of the places
-;; where cl-block-wrapper is called are generated from old, established
-;; macros, so too many arguments resulting from human error is unlikely; and
-;; the byte compile handler in cl-macs.el warns if more than one arg is
-;; passed to it.
-(defalias 'cl-block-wrapper 'and)
-
-(defalias 'cl-block-throw 'throw)
-
 ;;; XEmacs; multiple values are in eval.c and cl-macs.el. 
 
 ;;; We no longer support `multiple-value-apply', which was ill-conceived to

@@ -732,6 +732,7 @@ final clause, and matches if no other keys match."
 
 
 ;;; Blocks and exits.
+(defvar cl-active-block-names nil)
 
 ;;;###autoload
 (defmacro block (name &rest body)
@@ -741,46 +742,19 @@ to jump prematurely out of the block.  This differs from `catch' and `throw'
 in two respects:  First, the NAME is an unevaluated symbol rather than a
 quoted symbol or other form; and second, NAME is lexically rather than
 dynamically scoped:  Only references to it within BODY will work.  These
-references may appear inside macro expansions, but not inside functions
-called from BODY."
-  (if (cl-safe-expr-p (cons 'progn body)) (cons 'progn body)
-    (list 'cl-block-wrapper
-	  (list* 'catch (list 'quote (intern (concat "--cl-block-"
-						     (symbol-name name) "--")))
-		 body))))
-
-(defvar cl-active-block-names nil)
-
-(put 'cl-block-wrapper 'byte-compile
-     #'(lambda (cl-form)
-         (if (/= (length cl-form) 2)
-             (byte-compile-warn-wrong-args cl-form 1))
-
-         (if (fboundp 'byte-compile-form-do-effect)  ; Check for optimizing
-						     ; compiler
-             (progn
-               (let* ((cl-entry (cons (nth 1 (nth 1 (nth 1 cl-form))) nil))
-                      (cl-active-block-names (cons cl-entry
-                                                   cl-active-block-names))
-                      (cl-body (byte-compile-top-level
-                                (cons 'progn (cddr (nth 1 cl-form))))))
-                 (if (cdr cl-entry)
-                     (byte-compile-form (list 'catch (nth 1 (nth 1 cl-form))
-                                              cl-body))
-                   (byte-compile-form cl-body))))
-           (byte-compile-form (nth 1 cl-form)))))
-
-(put 'cl-block-throw 'byte-compile
-     #'(lambda (cl-form)
-         (let ((cl-found (assq (nth 1 (nth 1 cl-form)) cl-active-block-names)))
-           (if cl-found (setcdr cl-found t)))
-         (byte-compile-throw (cons 'throw (cdr cl-form)))))
+references may appear inside macro expansions and in lambda expressions, but
+not inside other functions called from BODY."
+  (let ((cl-active-block-names (acons name (copy-symbol name)
+				      cl-active-block-names))
+	(body (cons 'progn body)))
+    `(catch ',(cdar cl-active-block-names)
+      ,(cl-macroexpand-all body cl-macro-environment))))
 
 ;;;###autoload
 (defmacro return (&optional result)
   "Return from the block named nil.
 This is equivalent to `(return-from nil RESULT)'."
-  (list 'return-from nil result))
+  `(return-from nil ,result))
 
 ;;;###autoload
 (defmacro return-from (name &optional result)
@@ -789,9 +763,8 @@ This jumps out to the innermost enclosing `(block NAME ...)' form,
 returning RESULT from that form (or nil if RESULT is omitted).
 This is compatible with Common Lisp, but note that `defun' and
 `defmacro' do not create implicit blocks as they do in Common Lisp."
-  (let ((name2 (intern (concat "--cl-block-" (symbol-name name) "--"))))
-    (list 'cl-block-throw (list 'quote name2) result)))
-
+  `(throw ',(or (cdr (assq name cl-active-block-names)) (copy-symbol name))
+	  ,result))
 
 ;;; The "loop" macro.
 

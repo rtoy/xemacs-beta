@@ -658,8 +658,11 @@ This also does some trivial optimizations to make the form prettier."
 				     '((quote --cl-rest--)))))))
 		 (list (car form) (list* 'lambda (cadadr form) body))))
 	   (let ((found (assq (cadr form) env)))
-	     ;; XEmacs: cadr/caddr operate on nil without errors
-	     (if (eq (cadr (caddr found)) 'cl-labels-args)
+	     ;; XEmacs: cadr/caddr operate on nil without errors. But the
+	     ;; macro definition may be compiled, in which case there's
+	     ;; nothing for us to do.
+	     (if (and (listp (cdr found))
+		      (eq (cadr (caddr found)) 'cl-labels-args))
 		 (cl-macroexpand-all (cadr (caddr (cadddr found))) env)
 	       form))))
 	((memq (car form) '(defun defmacro))
