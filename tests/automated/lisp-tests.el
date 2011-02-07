@@ -2871,4 +2871,33 @@ via the hepatic alpha-tocopherol transfer protein")))
 					 (subseq bit-vector 0 4)
 					 (append (subseq bit-vector 4) nil)))))
 
+;;-----------------------------------------------------
+;; Test `block', `return-from'
+;;-----------------------------------------------------
+(Assert (eql 1 (block outer
+		 (flet ((outtahere (n) (return-from outer n)))
+		   (block outer (outtahere 1)))
+		 2))
+	"checking `block' and `return-from' are lexically scoped correctly")
+
+;; Other tests are available in Paul Dietz' test suite, and pass. The above,
+;; which we used to fail, is based on a test in the Hyperspec. We still
+;; behave incorrectly when compiled for the contorted-example function of
+;; CLTL2, whence the following test:
+
+(flet ((needs-lexical-context (first second third)
+	 (if (eql 0 first)
+	     (funcall second)
+	   (block awkward
+	     (+ 5 (needs-lexical-context
+		   (1- first)
+		   third
+		   #'(lambda () (return-from awkward 0)))
+		first)))))
+  (if (compiled-function-p (symbol-function 'needs-lexical-context))
+      (Known-Bug-Expect-Failure
+       (Assert (eql 0 (needs-lexical-context 2 nil nil))
+	"the function special operator doesn't create a lexical context."))
+    (Assert (eql 0 (needs-lexical-context 2 nil nil)))))
+
 ;;; end of lisp-tests.el
