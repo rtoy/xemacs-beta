@@ -1,7 +1,30 @@
-! This is a sample .Xresources file.  The resources below are the
-! actual resources used as defaults for XEmacs, although the
-! form of these resources in the XEmacs app-defaults file is
-! slightly different.
+! This is a sample .Xresources file.  
+
+! Copyright (C) 1997 Steven L Baur
+! Copyright (C) 1999 Alexandre Oliva
+! Copyright (C) 2002 Giacomo Boffi
+! Copyright (C) 2003 Stephen J. Turnbull
+! Copyright (C) 2005 Aidan Kehoe
+
+! This file is part of XEmacs.
+
+! XEmacs is free software: you can redistribute it and/or modify it
+! under the terms of the GNU General Public License as published by the
+! Free Software Foundation, either version 3 of the License, or (at your
+! option) any later version.
+
+! XEmacs is distributed in the hope that it will be useful, but WITHOUT
+! ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+! FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+
+! You should have received a copy of the GNU General Public License
+! along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
+
+! The resources below are the actual resources used as defaults for
+! XEmacs, although the form of these resources in the XEmacs
+! app-defaults file is slightly different.
 ! 
 ! You can use the examples below as a basis for your own customizations:
 ! copy and modify any of the resources below into your own ~/.Xresources file.
@@ -33,8 +56,8 @@
 ! The default face colors are the base for most of the other faces'
 ! colors.  The default background is gray80, and the default foreground
 ! is black.
-XEmacs.default.attributeBackground:	gray80
-XEmacs.default.attributeForeground:	black
+XEmacs.default.attributeBackground: gray80
+! XEmacs.default.attributeForeground: black
 
 ! Set the modeline colors.
 XEmacs.modeline*attributeForeground:	Black
