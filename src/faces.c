@@ -2266,22 +2266,22 @@ complex_vars_of_faces (void)
     Lisp_Object fg_fb = Qnil, bg_fb = Qnil;
 
 #ifdef HAVE_GTK
-    fg_fb = acons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qgtk), build_ascstring ("white"), bg_fb);
+    fg_fb = Facons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qgtk), build_ascstring ("white"), bg_fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-    fg_fb = acons (list1 (Qx), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qx), build_ascstring ("gray80"), bg_fb);
+    fg_fb = Facons (list1 (Qx), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qx), build_ascstring ("gray80"), bg_fb);
 #endif
 #ifdef HAVE_TTY
-    fg_fb = acons (list1 (Qtty), Fvector (0, 0), fg_fb);
-    bg_fb = acons (list1 (Qtty), Fvector (0, 0), bg_fb);
+    fg_fb = Facons (list1 (Qtty), Fvector (0, 0), fg_fb);
+    bg_fb = Facons (list1 (Qtty), Fvector (0, 0), bg_fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
-    fg_fb = acons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
-    fg_fb = acons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmswindows), build_ascstring ("white"), bg_fb);
+    fg_fb = Facons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
+    fg_fb = Facons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qmswindows), build_ascstring ("white"), bg_fb);
 #endif
     set_specifier_fallback (Fget (Vdefault_face, Qforeground, Qnil), fg_fb);
     set_specifier_fallback (Fget (Vdefault_face, Qbackground, Qnil), bg_fb);
@@ -2519,22 +2519,22 @@ complex_vars_of_faces (void)
     /* We need to put something in there, or error checking gets
        #%!@#ed up before the styles are set, which override the
        fallbacks. */
-    fg_fb = acons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qgtk), build_ascstring ("Gray80"), bg_fb);
+    fg_fb = Facons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qgtk), build_ascstring ("Gray80"), bg_fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-    fg_fb = acons (list1 (Qx), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qx), build_ascstring ("Gray80"), bg_fb);
+    fg_fb = Facons (list1 (Qx), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qx), build_ascstring ("Gray80"), bg_fb);
 #endif
 #ifdef HAVE_TTY
-    fg_fb = acons (list1 (Qtty), Fvector (0, 0), fg_fb);
-    bg_fb = acons (list1 (Qtty), Fvector (0, 0), bg_fb);
+    fg_fb = Facons (list1 (Qtty), Fvector (0, 0), fg_fb);
+    bg_fb = Facons (list1 (Qtty), Fvector (0, 0), bg_fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
-    fg_fb = acons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
-    fg_fb = acons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmswindows), build_ascstring ("Gray75"), bg_fb);
+    fg_fb = Facons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
+    fg_fb = Facons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qmswindows), build_ascstring ("Gray75"), bg_fb);
 #endif
     set_specifier_fallback (Fget (Vgui_element_face, Qforeground, Qnil), fg_fb);
     set_specifier_fallback (Fget (Vgui_element_face, Qbackground, Qnil), bg_fb);

@@ -4275,6 +4275,7 @@ MODULE_API EXFUN (Fexpand_abbrev, 0);
 /* Defined in alloc.c */
 MODULE_API EXFUN (Fcons, 2);
 MODULE_API EXFUN (Flist, MANY);
+MODULE_API EXFUN (Facons, 3);
 EXFUN (Fbit_vector, MANY);
 EXFUN (Fmake_byte_code, MANY);
 MODULE_API EXFUN (Fmake_list, 2);
@@ -4299,7 +4300,6 @@ Lisp_Object noseeum_make_marker (void);
 #ifndef NEW_GC
 void garbage_collect_1 (void);
 #endif /* not NEW_GC */
-MODULE_API Lisp_Object acons (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object cons3 (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object list1 (Lisp_Object);
 MODULE_API Lisp_Object list2 (Lisp_Object, Lisp_Object);

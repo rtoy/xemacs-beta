@@ -1,3 +1,8 @@
+2011-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (acons): Removed, make the implementation in alloc.c
+	visible to Lisp instead.
+
 2011-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el:
