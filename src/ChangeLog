@@ -1,3 +1,14 @@
+2011-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (Facons):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (syms_of_alloc):
+	* faces.c (complex_vars_of_faces):
+	* lisp.h:
+	* mc-alloc.c (Fmc_alloc_memory_usage):
+	Rename acons() to Facons(), make it visible to Lisp. Change uses
+	of the function in C accordingly.
+
 2011-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.c (describe_map_sort_predicate): Correct the order of

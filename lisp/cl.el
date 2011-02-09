@@ -544,9 +544,7 @@ of some cons making up LIST), this function is equivalent to
 (defalias 'cl-round 'round*)
 (defalias 'cl-mod 'mod*)
 
-(defun acons (key value alist)
-  "Return a new alist created by adding (KEY . VALUE) to ALIST."
-  (cons (cons key value) alist))
+;;; XEmacs; #'acons is in C.
 
 (defun pairlis (keys values &optional alist)
   "Make an alist from KEYS and VALUES.

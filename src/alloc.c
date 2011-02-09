@@ -1428,8 +1428,10 @@ cons3 (Lisp_Object obj0, Lisp_Object obj1, Lisp_Object obj2)
   return Fcons (obj0, Fcons (obj1, obj2));
 }
 
-Lisp_Object
-acons (Lisp_Object key, Lisp_Object value, Lisp_Object alist)
+DEFUN ("acons", Facons, 3, 3, 0, /*
+Return a new alist created by prepending (KEY . VALUE) to ALIST.
+*/
+       (key, value, alist))
 {
   return Fcons (Fcons (key, value), alist);
 }
@@ -4197,10 +4199,10 @@ itself.
   xzero (object_stats);
   lisp_object_storage_size (object, &object_stats);
 
-  val = acons (Qobject_actually_requested,
-	       make_int (object_stats.was_requested), val);
-  val = acons (Qobject_malloc_overhead,
-	       make_int (object_stats.malloc_overhead), val);
+  val = Facons (Qobject_actually_requested,
+		make_int (object_stats.was_requested), val);
+  val = Facons (Qobject_malloc_overhead,
+		make_int (object_stats.malloc_overhead), val);
   assert (!object_stats.dynarr_overhead);
   assert (!object_stats.gap_overhead);
 
@@ -4210,16 +4212,16 @@ itself.
       MAYBE_OBJECT_METH (object, memory_usage, (object, &gustats));
 
       val = Fcons (Qt, val);
-      val = acons (Qother_memory_actually_requested,
-		   make_int (gustats.u.was_requested), val);
-      val = acons (Qother_memory_malloc_overhead,
-		   make_int (gustats.u.malloc_overhead), val);
+      val = Facons (Qother_memory_actually_requested,
+		    make_int (gustats.u.was_requested), val);
+      val = Facons (Qother_memory_malloc_overhead,
+		    make_int (gustats.u.malloc_overhead), val);
       if (gustats.u.dynarr_overhead)
-	val = acons (Qother_memory_dynarr_overhead,
-		     make_int (gustats.u.dynarr_overhead), val);
+	val = Facons (Qother_memory_dynarr_overhead,
+		      make_int (gustats.u.dynarr_overhead), val);
       if (gustats.u.gap_overhead)
-	val = acons (Qother_memory_gap_overhead,
-		     make_int (gustats.u.gap_overhead), val);
+	val = Facons (Qother_memory_gap_overhead,
+		      make_int (gustats.u.gap_overhead), val);
       val = Fcons (Qnil, val);
 
       i = 0;
@@ -4230,7 +4232,7 @@ itself.
 	      val = Fcons (item, val);
 	    else
 	      {
-		val = acons (item, make_int (gustats.othervals[i]), val);
+		val = Facons (item, make_int (gustats.othervals[i]), val);
 		i++;
 	      }
 	  }
@@ -5701,6 +5703,7 @@ syms_of_alloc (void)
 
   DEFSUBR (Fcons);
   DEFSUBR (Flist);
+  DEFSUBR (Facons);
   DEFSUBR (Fvector);
   DEFSUBR (Fbit_vector);
   DEFSUBR (Fmake_byte_code);

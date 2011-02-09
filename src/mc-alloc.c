@@ -1987,29 +1987,29 @@ Returns stats about the mc-alloc memory usage. See diagnose.el.
   for (i = 0; i < N_FREE_PAGE_LISTS; i++) 
     if (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)) > 0)
       free_plhs = 
-	acons (make_int (PLH_SIZE (FREE_HEAP_PAGES(i))),
-	       list1 (make_int (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)))),
-	       free_plhs);
+	Facons (make_int (PLH_SIZE (FREE_HEAP_PAGES(i))),
+		list1 (make_int (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)))),
+		free_plhs);
 
   for (i = 0; i < N_USED_PAGE_LISTS; i++) 
     if (PLH_PAGE_COUNT (USED_HEAP_PAGES(i)) > 0)
       used_plhs = 
-	acons (make_int (PLH_SIZE (USED_HEAP_PAGES(i))),
-	       list5 (make_int (PLH_PAGE_COUNT (USED_HEAP_PAGES(i))),
-		      make_int (PLH_USED_CELLS (USED_HEAP_PAGES(i))),
-		      make_int (PLH_USED_SPACE (USED_HEAP_PAGES(i))),
-		      make_int (PLH_TOTAL_CELLS (USED_HEAP_PAGES(i))),
-		      make_int (PLH_TOTAL_SPACE (USED_HEAP_PAGES(i)))),
-	       used_plhs);
+	Facons (make_int (PLH_SIZE (USED_HEAP_PAGES(i))),
+		list5 (make_int (PLH_PAGE_COUNT (USED_HEAP_PAGES(i))),
+		       make_int (PLH_USED_CELLS (USED_HEAP_PAGES(i))),
+		       make_int (PLH_USED_SPACE (USED_HEAP_PAGES(i))),
+		       make_int (PLH_TOTAL_CELLS (USED_HEAP_PAGES(i))),
+		       make_int (PLH_TOTAL_SPACE (USED_HEAP_PAGES(i)))),
+		used_plhs);
 
   used_plhs =
-    acons (make_int (0),
-	   list5 (make_int (PLH_PAGE_COUNT(ARRAY_HEAP_PAGES)),
-		  make_int (PLH_USED_CELLS (ARRAY_HEAP_PAGES)),
-		  make_int (PLH_USED_SPACE (ARRAY_HEAP_PAGES)),
-		  make_int (PLH_TOTAL_CELLS (ARRAY_HEAP_PAGES)),
-		  make_int (PLH_TOTAL_SPACE (ARRAY_HEAP_PAGES))),
-	   used_plhs);
+    Facons (make_int (0),
+	    list5 (make_int (PLH_PAGE_COUNT(ARRAY_HEAP_PAGES)),
+		   make_int (PLH_USED_CELLS (ARRAY_HEAP_PAGES)),
+		   make_int (PLH_USED_SPACE (ARRAY_HEAP_PAGES)),
+		   make_int (PLH_TOTAL_CELLS (ARRAY_HEAP_PAGES)),
+		   make_int (PLH_TOTAL_SPACE (ARRAY_HEAP_PAGES))),
+	    used_plhs);
   
   for (i = 0; i < N_HEAP_SECTIONS; i++) {
     used_size += HEAP_SECTION(i).n_pages * PAGE_SIZE;
