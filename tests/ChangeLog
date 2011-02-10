@@ -1,3 +1,11 @@
+2011-02-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	* automated/lisp-tests.el (mapcar*):
+	If multiple SEQUENCE arguments are passed to #'mapcar*, and the
+	last one is circular while the others aren't, make sure that
+	#'mapcar* doesn't error.
+
 2011-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
