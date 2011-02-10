@@ -1,3 +1,9 @@
+2011-02-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (shortest_length_among_sequences):
+	This was buggy, it always errored if the last argument was
+	circular, even if other arguments were non-circular. Correct that.
+
 2011-02-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alloc.c (Facons):

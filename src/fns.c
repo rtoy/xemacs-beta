@@ -7145,7 +7145,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 static Elemcount
 shortest_length_among_sequences (int nsequences, Lisp_Object *sequences)
 {
-  Elemcount len = EMACS_INT_MAX;
+  Elemcount len = 1 + EMACS_INT_MAX;
   Lisp_Object length = Qnil;
   int i;
 
@@ -7167,7 +7167,7 @@ shortest_length_among_sequences (int nsequences, Lisp_Object *sequences)
         }
     }
 
-  if (NILP (length))
+  if (len == 1 + EMACS_INT_MAX)
     {
       signal_circular_list_error (sequences[0]);
     }

@@ -1046,6 +1046,12 @@
       (car y))
     x)))
 
+(Assert
+ (equal
+  (let ((list (list pi))) (mapcar* #'cons [1 2 3 4] (nconc list list)))
+  `((1 . ,pi) (2 . ,pi) (3 . ,pi) (4 . ,pi)))
+ "checking mapcar* behaves correctly when only one arg is circular")
+
 (Assert (eql
  (length (multiple-value-list
           (car (mapcar #'(lambda (argument) (floor argument)) (list pi e)))))
