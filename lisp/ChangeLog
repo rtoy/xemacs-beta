@@ -1,3 +1,25 @@
+2011-02-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	* bytecomp.el (unwind-protect):
+	* bytecomp.el (byte-compile-active-blocks):
+	* bytecomp.el (byte-compile-catch):
+	* bytecomp.el ('return-from-1): Removed.
+	* bytecomp.el ('block-1): Removed.
+	* bytecomp.el (byte-compile-block-1): Removed.
+	* bytecomp.el (byte-compile-return-from-1): Removed.
+	* bytecomp.el (byte-compile-throw):
+	* cl-macs.el (block):
+	* cl-macs.el (return-from):
+	In my last change, the elimination of `block's that were never
+	`return-from'd didn't work if `cl-macroexpand-all' was called
+	explicitly, something much code in cl-macs.el does.  Change the
+	implementation to something that doesn't require shadowing of the
+	macros in `byte-compile-initial-macro-environment', putting a
+	`cl-block-name' property on the gensym'd symbol argument to
+	`catch' instead.
+
 2011-02-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.el (acons): Removed, make the implementation in alloc.c
