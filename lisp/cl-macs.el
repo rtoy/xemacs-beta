@@ -747,6 +747,9 @@ not inside other functions called from BODY."
   (let ((cl-active-block-names (acons name (copy-symbol name)
 				      cl-active-block-names))
 	(body (cons 'progn body)))
+    ;; Tell the byte-compiler this is a block, not a normal catch call, and
+    ;; as such it can eliminate it if that's appropriate:
+    (put (cdar cl-active-block-names) 'cl-block-name name)
     `(catch ',(cdar cl-active-block-names)
       ,(cl-macroexpand-all body cl-macro-environment))))
 
@@ -763,8 +766,13 @@ This jumps out to the innermost enclosing `(block NAME ...)' form,
 returning RESULT from that form (or nil if RESULT is omitted).
 This is compatible with Common Lisp, but note that `defun' and
 `defmacro' do not create implicit blocks as they do in Common Lisp."
-  `(throw ',(or (cdr (assq name cl-active-block-names)) (copy-symbol name))
-	  ,result))
+  `(throw ',(or (cdr (assq name cl-active-block-names))
+		(prog1 (copy-symbol name)
+		  (and-fboundp 'byte-compile-warn (cl-compiling-file)
+			       (byte-compile-warn
+				"return-from: no enclosing block named `%s'"
+				name))))
+	 ,result))
 
 ;;; The "loop" macro.
 

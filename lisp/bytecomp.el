@@ -511,11 +511,7 @@ easily determined from the input file.")
 		    "%s is not of type %s" form type)))
 	   (if byte-compile-delete-errors
 	       form
-	     (funcall (cdr (symbol-function 'the)) type form))))
-    (return-from .
-      ,#'(lambda (name &optional result) `(return-from-1 ',name ,result)))
-    (block .
-      ,#'(lambda (name &rest body) `(block-1 ',name ,@body))))
+	     (funcall (cdr (symbol-function 'the)) type form)))))
   "The default macro-environment passed to macroexpand by the compiler.
 Placing a macro here will cause a macro to have different semantics when
 expanded by the compiler as when expanded by the interpreter.")
@@ -4186,8 +4182,6 @@ forcing function quoting" ,en (car form))))
 ;;; other tricky macro-like special-operators
 
 (byte-defop-compiler-1 catch)
-(byte-defop-compiler-1 block-1)
-(byte-defop-compiler-1 return-from-1)
 (byte-defop-compiler-1 unwind-protect)
 (byte-defop-compiler-1 condition-case)
 (byte-defop-compiler-1 save-excursion)
@@ -4196,44 +4190,33 @@ forcing function quoting" ,en (car form))))
 (byte-defop-compiler-1 with-output-to-temp-buffer)
 ;; no track-mouse.
 
-(defun byte-compile-catch (form)
-  (byte-compile-form (car (cdr form)))
-  (byte-compile-push-constant
-    (byte-compile-top-level (cons 'progn (cdr (cdr form))) for-effect))
-  (byte-compile-out 'byte-catch 0))
-
-;; `return-from' and `block' are different from `throw' and `catch' when it
-;; comes to scope and extent. These differences are implemented for
-;; interpreted code in cl-macs.el, in compiled code in bytecomp.el. There's
-;; a certain amount of bootstrapping needed for the latter, and until this
-;; is done return-from and block behave as throw and catch in their scope
-;; and extent. This is only relevant to people working on bytecomp.el.
-
-(defalias 'return-from-1 'throw)
-(defalias 'block-1 'catch)
-
 (defvar byte-compile-active-blocks nil)
 
-(defun byte-compile-block-1 (form)
-  (let* ((name (nth 1 (nth 1 form)))
-	 (elt (list name (copy-symbol name) nil))
-	 (byte-compile-active-blocks (cons elt byte-compile-active-blocks))
-	 (body (byte-compile-top-level (cons 'progn (cddr form)))))
-    (if (nth 2 elt)
-	(byte-compile-catch `(catch ',(nth 1 elt) ,body))
-      (byte-compile-form body))))
+(defun byte-compile-catch (form)
+  "Byte-compile and return a `catch' from.
 
-(defun byte-compile-return-from-1 (form)
-  (let* ((name (nth 1 (nth 1 form)))
-	 (assq (assq name byte-compile-active-blocks)))
-    (if assq
-	(setf (nth 2 assq) t)
-      (byte-compile-warn
-       "return-from: %S: no current lexical block with this name"
-       name))
-    (byte-compile-throw
-     `(throw ',(or (nth 1 assq) (copy-symbol name))
-             ,@(nthcdr 2 form)))))
+If FORM is the result of macroexpanding a `block' form (the TAG argument is
+a quoted symbol with a non-nil `cl-block-name' property) and there is no
+corresponding `return-from' within the block--or equivalently, it was
+optimized away--just byte compile and return the BODY."
+  (let* ((symbol (car-safe (cdr-safe (nth 1 form))))
+	 (block (and symbol (symbolp symbol) (get symbol 'cl-block-name)))
+	 (elt (and block (cons block nil)))
+	 (byte-compile-active-blocks
+	  (if block
+	      (cons elt byte-compile-active-blocks)
+	    byte-compile-active-blocks))
+	 (body
+	  (byte-compile-top-level (cons 'progn (cddr form))
+				  (if block nil for-effect))))
+    (if (and block (not (cdr elt)))
+	;; A lexical block without any contained return-from clauses:
+	(byte-compile-form body)
+      ;; A normal catch call, or a lexical block with a contained
+      ;; return-from clause.
+      (byte-compile-form (car (cdr form)))
+      (byte-compile-push-constant body)
+      (byte-compile-out 'byte-catch 0))))
 
 (defun byte-compile-unwind-protect (form)
   (byte-compile-push-constant
@@ -4383,6 +4366,12 @@ forcing function quoting" ,en (car form))))
         (byte-compile-normal-call
          `(signal 'wrong-number-of-arguments '(,(car form)
                                                ,(length (cdr form))))))
+    ;; If this form was macroexpanded from `return-from', mark the
+    ;; corresponding block as having been referenced.
+    (let* ((symbol (car-safe (cdr-safe (nth 1 form))))
+	   (block (and symbol (symbolp symbol) (get symbol 'cl-block-name)))
+	   (assq (and block (assq block byte-compile-active-blocks))))
+      (and assq (setcdr assq t)))
     (byte-compile-form (nth 1 form))  ;; Push the arguments
     (byte-compile-form (nth 2 form))
     (byte-compile-out (get (car form) 'byte-opcode) 0)
