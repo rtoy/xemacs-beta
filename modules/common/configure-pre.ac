@@ -1,3 +1,20 @@
+dnl Copyright (C) 2002 Ben Wing
+
+dnl This file is part of XEmacs.
+
+dnl XEmacs is free software: you can redistribute it and/or modify it
+dnl under the terms of the GNU General Public License as published by the
+dnl Free Software Foundation, either version 3 of the License, or (at your
+dnl option) any later version.
+
+dnl XEmacs is distributed in the hope that it will be useful, but WITHOUT
+dnl ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+dnl FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl for more details.
+
+dnl You should have received a copy of the GNU General Public License
+dnl along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_SUBST(CFLAGS)
