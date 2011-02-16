@@ -34,7 +34,6 @@ Boston, MA 02110-1301, USA. */
 NAME xemacs.exe
 EXPORTS
 /* Exported functions */
-acons
 #ifdef NEW_GC
 alloc_lrecord			/* ALLOC_LISP_OBJECT */
 alloc_sized_lrecord		/* ALLOC_SIZED_LISP_OBJECT */
@@ -249,6 +248,7 @@ Dynarr_free
 Dynarr_insert_many		/* Dynarr_add_{literal,lisp}_string */
 Dynarr_newf			/* Dynarr_new, Dynarr_new2 */
 Dynarr_resize			/* Dynarr_add */
+Facons
 Fappend
 Fapply
 Fbuffer_modified_p
