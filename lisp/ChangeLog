@@ -1,3 +1,11 @@
+2011-02-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-normal-call):
+	Check that the car of FORM is a symbol before examining its
+	properties; it can be a lambda form if byte-optimize.el hasn't
+	worked its magic and transformed such a lambda call into inline
+	code.
+
 2011-02-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el:

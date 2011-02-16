@@ -2888,7 +2888,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
        (tree-equal . 3)))
 
 (defun byte-compile-normal-call (form)
-  (and (get (car form) 'byte-compile-keyword-start)
+  (and (symbolp (car form)) (get (car form) 'byte-compile-keyword-start)
        (let ((plist (nthcdr (get (car form) 'byte-compile-keyword-start)
 			    form)))
 	 (symbol-macrolet
