@@ -1,3 +1,17 @@
+2011-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/lists.texi (Sets And Lists):
+	Document #'member*, #'remove*, #'delete* in this file. Document
+	#'memq, #'member, #'remq, #'remove, #'delq, #'delete in terms of
+	the former functions.
+	Document #'subsetp, #'union, #'intersection, #'set-difference,
+	#'set-exclusive-or and their destructive analogues in this file.
+	* lispref/lists.texi (Association Lists):
+	Document #'assoc*, #'rassoc* in this file. Document #'assq,
+	#'assoc, #'rassq, #'rassoc in terms of the first two functions.
+	* lispref/objects.texi (Equality Predicates):
+	Document #'eql here, don't leave it to cl.texi.
+
 2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/lists.texi (Rearrangement, Building Lists):

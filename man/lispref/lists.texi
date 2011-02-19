@@ -1146,59 +1146,97 @@ useful example of @code{sort*}.
 
   A list can represent an unordered mathematical set---simply consider a
 value an element of a set if it appears in the list, and ignore the
-order of the list.  To form the union of two sets, use @code{append} (as
-long as you don't mind having duplicate elements).  Other useful
-functions for sets include @code{memq} and @code{delq}, and their
-@code{equal} versions, @code{member} and @code{delete}.
+order of the list.  XEmacs provides set operations inherited from Common
+Lisp.
 
-@cindex CL note---lack @code{union}, @code{set}
-@quotation
-@b{Common Lisp note:} Common Lisp has functions @code{union} (which
-avoids duplicate elements) and @code{intersection} for set operations,
-but XEmacs Lisp does not have them.  You can write them in Lisp if
-you wish.
-@end quotation
+@defun member* item list @t{&key :test :test-not :key}
+This function tests to see whether @var{item} is a member of @var{list},
+comparing with @code{eql}.  If it is, @code{member*} returns the tail of
+@var{list} starting with the first occurrence of @var{item}.  Otherwise,
+it returns @code{nil}.
 
-@defun memq object list
-@cindex membership in a list
-This function tests to see whether @var{object} is a member of
-@var{list}.  If it is, @code{memq} returns a list starting with the
-first occurrence of @var{object}.  Otherwise, it returns @code{nil}.
-The letter @samp{q} in @code{memq} says that it uses @code{eq} to
-compare @var{object} against the elements of the list.  For example:
+This is equivalent to the Common Lisp @code{member} function, but that
+name was already taken in Emacs Lisp, whence the asterisk at the end of
+@code{member*}.
+
+The @code{:test} keyword argument allows you to specify the test used to
+decide whether @var{item} is equivalent to a given element of
+@var{list}.  The function should return non-@code{nil} if the items
+match, @code{nil} if they do not.  The @code{:test-not} keyword is
+similar, but the meaning of @code{nil} and non-@code{nil} results are
+reversed. The @code{:key} keyword allows you to examine a component of
+each object in @var{list}, rather than the object itself.
 
 @example
 @group
-(memq 'b '(a b c b a))
+(member* 'b '(a b c b a))
      @result{} (b c b a)
 @end group
 @group
-(memq '(2) '((1) (2)))    ; @r{@code{(2)} and @code{(2)} are not @code{eq}.}
+(member* '(2) '((1) (2))) ; @r{@code{(2)} and @code{(2)} are not @code{eql}.}
      @result{} nil
+@end group
+@group
+(member* '(2) '((1) (2)) :test #'equal) ; @r{but they are @code{equal}.}
+     @result{} ((2))
+@end group
+@group
+(member* 3 '((1) (2) (3) (4)) :key 'car) ; @r{key not applied to @var{item}}
+     @result{} ((3) (4))
 @end group
 @end example
 @end defun
 
-@defun delq object list
-@cindex deletion of elements
-This function destructively removes all elements @code{eq} to
-@var{object} from @var{list}.  The letter @samp{q} in @code{delq} says
-that it uses @code{eq} to compare @var{object} against the elements of
-the list, like @code{memq}.
+@defun memq item list
+This is equivalent to calling @code{(member* item list :test 'eq)}, but
+for historical reasons is more common in the XEmacs code base.  Both
+expressions compile to the same byte-code.
 @end defun
 
-When @code{delq} deletes elements from the front of the list, it does so
-simply by advancing down the list and returning a sublist that starts
-after those elements:
+@defun member item list
+This is equivalent to calling @code{(member* item list :test 'equal)}.
+@end defun
+
+@defun remove* item sequence @t{&key (test #'eql) (key #'identity) (start 0) (end (length sequence)) from-end count test-not}
+@cindex removal of elements
+
+This function removes all occurrences of @var{object} from
+@var{sequence}, which can be a list, vector, or bit-vector.
+
+The @code{:test} keyword argument allows you to specify the test used to
+decide whether @var{item} is equivalent to a given element of
+@var{sequence}.  The function should return non-@code{nil} if the items
+match, @code{nil} if they do not.  The @code{:test-not} keyword is
+similar, but the meaning of @code{nil} and non-@code{nil} results are
+reversed. The @code{:key} keyword allows you to examine a component of
+each object in @var{sequence}, rather than the object itself.
+
+The @code{:start} and @code{:end} keywords allow you to specify a
+zero-based subrange of @var{sequence} to operate on, @code{remove*} will
+call the test function on all items of @var{sequence} between the index
+specified by @code{:start}, inclusive, and @code{:end},
+exclusive. @code{:count} gives a maximum number of items to remove, and
+@code{:from-end}, most useful in combination with @code{:count},
+specifies that the removal should start from the end of @var{sequence}.
+
+As with @code{member*}, this function is equivalent to the Common Lisp
+function of almost the same name (the Common Lisp function has no
+asterisk.)
+
+When @code{remove*} removes elements from the front of a list
+@var{sequence}, it does so simply by advancing down the list and
+returning a sublist that starts after those elements:
 
 @example
 @group
-(delq 'a '(a b c)) @equiv{} (cdr '(a b c))
+(remove* 'a '(a b c)) @equiv{} (cdr '(a b c))
 @end group
 @end example
 
 When an element to be deleted appears in the middle of the list,
-removing it involves changing the @sc{cdr}s (@pxref{Setcdr}).
+removing it involves copying the list conses up to that point, and
+setting the tail of the copied list to the tail of the original list
+past that point.
 
 @example
 @group
@@ -1206,7 +1244,7 @@ removing it involves changing the @sc{cdr}s (@pxref{Setcdr}).
      @result{} (a b c (4))
 @end group
 @group
-(delq 'a sample-list)
+(remove* 'a sample-list)
      @result{} (b c (4))
 @end group
 @group
@@ -1214,7 +1252,55 @@ sample-list
      @result{} (a b c (4))
 @end group
 @group
-(delq 'c sample-list)
+(remove* 'c sample-list)
+     @result{} (a b (4))
+@end group
+@group
+sample-list
+     @result{} (a b c (4))
+@end group
+@end example
+
+Don't assume that a variable which formerly held the argument @var{list}
+now has fewer elements, or that it still holds the original list!
+Instead, save the result of @code{remove*} and use that.  Most often we
+store the result back into the variable that held the original list:
+
+@example
+(setq flowers (remove* 'rose flowers))
+@end example
+
+In the following example, the @code{(4)} that @code{remove*} attempts to match
+and the @code{(4)} in the @code{sample-list} are not @code{eq}:
+
+@example
+@group
+(remove* '(4) sample-list)
+     @result{} (a b c (4))
+@end group
+@end example
+@end defun
+
+@defun remq item sequence
+This is equivalent to calling @code{(remove* item sequence :test #'eq)}.
+@end defun
+
+@defun remove item sequence
+This is equivalent to calling @code{(remove* item sequence :test #'equal)}.
+@end defun
+
+@defun delete* item sequence @t{&key (test #'eql) (key #'identity) (start 0) (end (length sequence)) from-end count test-not}
+This is like @code{remove*}, but a list @var{sequence} is modified
+in-place (`destructively', in Lisp parlance). So some of the examples
+above change:
+
+@example
+@group
+(setq sample-list '(a b c (4)))
+     @result{} (a b c (4))
+@end group
+@group
+(delete* 'c sample-list)
      @result{} (a b (4))
 @end group
 @group
@@ -1222,78 +1308,80 @@ sample-list
      @result{} (a b (4))
 @end group
 @end example
-
-Note that @code{(delq 'c sample-list)} modifies @code{sample-list} to
-splice out the third element, but @code{(delq 'a sample-list)} does not
-splice anything---it just returns a shorter list.  Don't assume that a
-variable which formerly held the argument @var{list} now has fewer
-elements, or that it still holds the original list!  Instead, save the
-result of @code{delq} and use that.  Most often we store the result back
-into the variable that held the original list:
-
-@example
-(setq flowers (delq 'rose flowers))
-@end example
-
-In the following example, the @code{(4)} that @code{delq} attempts to match
-and the @code{(4)} in the @code{sample-list} are not @code{eq}:
-
-@example
-@group
-(delq '(4) sample-list)
-     @result{} (a c (4))
-@end group
-@end example
-
-The following two functions are like @code{memq} and @code{delq} but use
-@code{equal} rather than @code{eq} to compare elements.  They are new in
-Emacs 19.
-
-@defun member object list
-The function @code{member} tests to see whether @var{object} is a member
-of @var{list}, comparing members with @var{object} using @code{equal}.
-If @var{object} is a member, @code{member} returns a list starting with
-its first occurrence in @var{list}.  Otherwise, it returns @code{nil}.
-
-Compare this with @code{memq}:
-
-@example
-@group
-(member '(2) '((1) (2)))  ; @r{@code{(2)} and @code{(2)} are @code{equal}.}
-     @result{} ((2))
-@end group
-@group
-(memq '(2) '((1) (2)))    ; @r{@code{(2)} and @code{(2)} are not @code{eq}.}
-     @result{} nil
-@end group
-@group
-;; @r{Two strings with the same contents are @code{equal}.}
-(member "foo" '("foo" "bar"))
-     @result{} ("foo" "bar")
-@end group
-@end example
 @end defun
 
-@defun delete object list
-This function destructively removes all elements @code{equal} to
-@var{object} from @var{list}.  It is to @code{delq} as @code{member} is
-to @code{memq}: it uses @code{equal} to compare elements with
-@var{object}, like @code{member}; when it finds an element that matches,
-it removes the element just as @code{delq} would.  For example:
-
-@example
-@group
-(delete '(2) '((2) (1) (2)))
-     @result{} '((1))
-@end group
-@end example
+@defun delq item sequence
+This is equivalent to calling @code{(delete* item sequence :test #'eq)}.
 @end defun
 
-@quotation
-@b{Common Lisp note:} The functions @code{member} and @code{delete} in
-XEmacs Lisp are derived from Maclisp, not Common Lisp.  The Common
-Lisp versions do not use @code{equal} to compare elements.
-@end quotation
+@defun delete item list
+This is equivalent to calling @code{(delete* item sequence :test #'equal)}.
+@end defun
+
+@defun subsetp list1 list2 @t{&key :test :test-not :key}
+This function returns non-@code{nil} if every item in @var{list1} is
+present in @var{list2}.
+@end defun
+
+@defun union list1 list2 @t{&key :test :test-not :key :stable}
+This function calculates the union of two lists, returning a list
+containing all those items that appear in either list.  It doesn't
+guarantee that duplicates in @var{list1} or @var{list2} will be
+eliminated; see @code{remove-duplicates} if this is important to you.
+
+A non-nil value for the @code{:stable} keyword, not specified by Common
+Lisp, means return the items in the order they appear in @var{list1},
+followed by the remaining items in the order they appear in @var{list2}.
+The other keywords are as in @code{member*}.
+
+@code{union} does not modify @var{list1} or @var{list2}.
+@end defun
+
+@defun intersection list1 list2 @t{&key :test :test-not :key :stable}
+This function calculates the intersection of two lists, returning a list
+containing all those items that appear in both lists.  It doesn't
+guarantee that duplicates in @var{list1} or @var{list2} will be
+eliminated; see @code{remove-duplicates} if this is important to
+you. @code{intersection} does not modify either list.
+
+A non-nil value for the @code{:stable} keyword, not specified by Common
+Lisp, means return the items in the order they appear in @var{list1}.
+The other keywords are as in @code{member*}.
+@end defun
+
+@defun set-difference list1 list2 @t{&key :test :test-not :key :stable}
+This function returns those items that are in @var{list1} but not in
+@var{list2}.  It does not modify either list.
+
+A non-nil value for the @code{:stable} keyword, not specified by Common
+Lisp, means return the items in the order they appear in @var{list1}.
+The other keywords are as in @code{member*}.
+@end defun
+
+@defun set-exclusive-or list1 list2 @t{&key :test :test-not :key :stable}
+This function returns those items that are in @var{list1} but not in
+@var{list2}, together with those in @var{list2} but not in @var{list1}.
+It does not modify either list.
+
+A non-nil value for the @code{:stable} keyword, not specified by Common
+Lisp, means return the items in the order they appear in @var{list1},
+followed by the remaining items in the order they appear in @var{list2}.
+The other keywords are as in @code{member*}.
+@end defun
+
+The following functions are equivalent to the previous four functions,
+but with two important differences; they do not accept the
+@code{:stable} keyword, and they modify one or both list arguments in
+the same way @code{delete*} does.
+
+@defun nintersection list1 list2 @t{&key :test :test-not :key}
+@end defun
+@defun nset-difference list1 list2 @t{&key :test :test-not :key}
+@end defun
+@defun nset-exclusive-or list1 list2 @t{&key :test :test-not :key}
+@end defun
+@defun nunion list1 list2 @t{&key :test :test-not :key}
+@end defun
 
   See also the function @code{add-to-list}, in @ref{Setting Variables},
 for another way to add an element to a list stored in a variable.
@@ -1370,21 +1458,21 @@ respects.  A property list behaves like an association list in which
 each key can occur only once.  @xref{Property Lists}, for a comparison
 of property lists and association lists.
 
-@defun assoc key alist
+@defun assoc* key alist @t{&key :test :test-not :key}
 This function returns the first association for @var{key} in
 @var{alist}.  It compares @var{key} against the alist elements using
-@code{equal} (@pxref{Equality Predicates}).  It returns @code{nil} if no
-association in @var{alist} has a @sc{car} @code{equal} to @var{key}.
-For example:
+@code{eql} (@pxref{Equality Predicates}), or the test specified with the
+@code{:test} keyword. It returns @code{nil} if no association in
+@var{alist} has a @sc{car} @code{equal} to @var{key}.  For example:
 
 @smallexample
 (setq trees '((pine . cones) (oak . acorns) (maple . seeds)))
      @result{} ((pine . cones) (oak . acorns) (maple . seeds))
-(assoc 'oak trees)
+(assoc* 'oak trees)
      @result{} (oak . acorns)
-(cdr (assoc 'oak trees))
+(cdr (assoc* 'oak trees))
      @result{} acorns
-(assoc 'birch trees)
+(assoc* 'birch trees)
      @result{} nil
 @end smallexample
 
@@ -1396,31 +1484,36 @@ Here is another example, in which the keys and values are not symbols:
         (3 "Pitch Pine")
         (5 "White Pine")))
 
-(cdr (assoc 3 needles-per-cluster))
+(cdr (assoc* 3 needles-per-cluster))
      @result{} ("Pitch Pine")
-(cdr (assoc 2 needles-per-cluster))
+(cdr (assoc* 2 needles-per-cluster))
      @result{} ("Austrian Pine" "Red Pine")
 @end smallexample
+
+The @code{:test} keyword argument allows you to specify the test used to
+decide whether @var{key} is equivalent to a given element of
+@var{alist}.  The function should return non-@code{nil} if the items
+match, @code{nil} if they do not.  The @code{:test-not} keyword is
+similar, but the meaning of @code{nil} and non-@code{nil} results are
+reversed. The @code{:key} keyword allows you to examine a component of
+each @sc{car} in @var{alist}, rather than the @sc{car} itself.
 @end defun
 
-@defun rassoc value alist
+@defun rassoc* value alist @t{&key :test :test-not :key}
 This function returns the first association with value @var{value} in
 @var{alist}.  It returns @code{nil} if no association in @var{alist} has
-a @sc{cdr} @code{equal} to @var{value}.
+a @sc{cdr} @code{eql} to @var{value}.
 
-@code{rassoc} is like @code{assoc} except that it compares the @sc{cdr} of
+@code{rassoc*} is like @code{assoc*} except that it compares the @sc{cdr} of
 each @var{alist} association instead of the @sc{car}.  You can think of
-this as ``reverse @code{assoc}'', finding the key for a given value.
+this as ``reverse @code{assoc*}'', finding the key for a given value.
+
+The keywords work similarly to @code{assoc*}.
 @end defun
 
 @defun assq key alist
-This function is like @code{assoc} in that it returns the first
-association for @var{key} in @var{alist}, but it makes the comparison
-using @code{eq} instead of @code{equal}.  @code{assq} returns @code{nil}
-if no association in @var{alist} has a @sc{car} @code{eq} to @var{key}.
-This function is used more often than @code{assoc}, since @code{eq} is
-faster than @code{equal} and most alists use symbols as keys.
-@xref{Equality Predicates}.
+This is equivalent to calling @code{(assoc* key alist :test 'eq)}, and
+compiles to the same byte code.
 
 @smallexample
 (setq trees '((pine . cones) (oak . acorns) (maple . seeds)))
@@ -1429,8 +1522,8 @@ faster than @code{equal} and most alists use symbols as keys.
      @result{} (pine . cones)
 @end smallexample
 
-On the other hand, @code{assq} is not usually useful in alists where the
-keys may not be symbols:
+@code{assq} is not usually useful in alists where the keys may not be
+symbols:
 
 @smallexample
 (setq leaves
@@ -1445,15 +1538,8 @@ keys may not be symbols:
 @end defun
 
 @defun rassq value alist
-This function returns the first association with value @var{value} in
-@var{alist}.  It returns @code{nil} if no association in @var{alist} has
-a @sc{cdr} @code{eq} to @var{value}.
-
-@code{rassq} is like @code{assq} except that it compares the @sc{cdr} of
-each @var{alist} association instead of the @sc{car}.  You can think of
-this as ``reverse @code{assq}'', finding the key for a given value.
-
-For example:
+This is equivalent to calling @code{(rassoc* value alist :test 'eq)}, and
+compiles to the same byte code. For example:
 
 @smallexample
 (setq trees '((pine . cones) (oak . acorns) (maple . seeds)))

@@ -10876,7 +10876,7 @@ A non-nil value for the :stable keyword, not specified by Common Lisp, means
 return the items in the order they appear in LIST1, followed by the
 remaining items in the order they appear in LIST2.
 
-arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT)
+arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
 */
        (int nargs, Lisp_Object *args))
 {
