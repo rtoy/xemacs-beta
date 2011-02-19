@@ -2237,7 +2237,7 @@ This function returns a symbol naming the primitive type of
 @section Equality Predicates
 @cindex equality
 
-  Here we describe two functions that test for equality between any two
+  Here we describe functions that test for equality between any two
 objects.  Other functions test equality between objects of specific
 types, e.g., strings.  For these predicates, see the appropriate chapter
 describing the data type.
@@ -2339,6 +2339,31 @@ compiled under version 19 map to @code{old-eq} in XEmacs 20.
      @result{} t               ; @r{Eek, we've been infected.}
 (eq ?A 65)
      @result{} nil             ; @r{We are still healthy.}
+@end group
+@end example
+@end defun
+
+@defun eql object1 object2
+
+This function returns @code{t} if the two arguments are the same object,
+as with @code{eq}.  In addition, it returns @code{t} if @var{object1}
+and @var{object2} are numeric objects of the same type and with equal
+values.  Otherwise it returns @code{nil}.  @code{eql} is the default
+test for hash tables, and for many sequence-oriented functions inherited
+from Common Lisp.
+
+@example
+@group
+(eql 1 1)
+     @result{} t
+(eql 1 1.0)    ; different types
+     @result{} nil
+(eq (+ 0.0 pi) pi)
+     @result{} nil ; in some contexts can be t, but don't rely on this!
+(eql (+ 0.0 pi) pi)
+     @result{} t ; this is more reliable.
+(position (+ 0 pi) (list 0 1 2 pi 4))
+     @result{} 3 ; function's test defaults to eql
 @end group
 @end example
 @end defun

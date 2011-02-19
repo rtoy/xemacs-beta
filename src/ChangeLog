@@ -1,3 +1,9 @@
+2011-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fset_exclusive_or):
+	This function accepts the :stable keyword too, document this in
+	its arglist.
+
 2011-02-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs.def.in.in:
