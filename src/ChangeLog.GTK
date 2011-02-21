@@ -1,3 +1,9 @@
+2010-11-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gtk_fill_rectangle): New function to fill a
+	rectangle using cairo.
+	(gdk_draw_text_image): Use it here.
+
 2010-11-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status): Remove
