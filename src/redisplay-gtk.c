@@ -82,18 +82,35 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
 
 #include "sysgdkx.h"
 
+void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
+                         gint width, gint height)
+{
+  GdkRectangle area;
+  area.x = x; area.y = y;
+  area.width = width;
+  area.height = height;
+
+  /* Set new clip region and fill it. */
+  cairo_save (cr);
+  cairo_new_path (cr);
+  gdk_cairo_rectangle (cr, &area);
+  cairo_fill (cr);
+  cairo_new_path (cr);
+  gdk_cairo_rectangle (cr, &area);
+  cairo_restore (cr);
+}
+
 /*
  * Only this function can erase the text area because the text area
  * is calculated by pango.   The layout is currently not shared.  There
  * can only be one PangoLayout per line, I think. --jsparkes
  */
-
 static void
 gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
 		     GdkGC *bgc, gint x, gint y, gchar *text, gint len)
 {
-  int width = -1;
-  int height = -1;
+  gint width = 0;
+  gint height = 0;
 #ifdef USE_PANGO
   PangoLayout *layout;
 #endif
@@ -124,9 +141,16 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
   height = font->ascent + font->descent;
   width  = gdk_text_width (font, text, len);
   if (bgc != 0)
-    /* The rectangle and text areas don't quite fit, so I have to extend
-       the height a little --jsparkes */
-    gdk_draw_rectangle (drawable, bgc, TRUE, x, y-height+3, width, height);
+    {
+      GdkGCValues values;
+      cairo_t *cr = gdk_cairo_create (drawable);
+
+      gdk_gc_get_values (bgc, &values);
+      gdk_cairo_set_source_color (cr, &values.background);
+      /* The rectangle and text areas don't quite fit, so I have to extend
+         the height a little --jsparkes */
+      gtk_fill_rectangle (cr, x, y-height+3, width, height);
+    }
   gdk_draw_text (drawable, font, gc, x, y, text, len);
 #endif
 }
@@ -150,12 +174,11 @@ our_draw_bitmap (GdkDrawable *drawable,
 
   gdk_drawable_get_size (src, &src_width, &src_height);
 
-
   if (width == -1)
     width = src_width;
   if (height == -1)
     height = src_height;
 
-  gdk_draw_drawable(drawable, gc, src,  xsrc, ysrc, xdest, ydest,
+  gdk_draw_drawable(drawable, gc, src, xsrc, ysrc, xdest, ydest,
                     width, height);
 }
