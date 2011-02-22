@@ -1,0 +1,9 @@
+These files are *not* part of XEmacs.
+
+They are all available publicly from O'Reilly Associates or the
+Unicode Consortium, and are collected here *unchanged* for the
+convenience of the user/builder of XEmacs.  Redistribution is governed
+by their own licensing notices.
+
+See "ibm/COPYING", "mule-ucs/README" and "unicode-consortium/COPYING"
+for details.
