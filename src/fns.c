@@ -2095,6 +2095,7 @@ With one argument, copy STRING without its properties.
   Bytecount bstart, blen;
   Lisp_Object val;
 
+  CHECK_STRING (string);
   get_string_range_char (string, start, end, &ccstart, &ccend,
                          GB_HISTORICAL_STRING_BEHAVIOR);
   bstart = string_index_char_to_byte (string, ccstart);
