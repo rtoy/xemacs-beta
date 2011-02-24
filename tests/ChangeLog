@@ -1,3 +1,10 @@
+2011-02-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (substring-no-properties):
+	Make sure this function checks its arguments' types, the absence
+	of which was revealed by Raymond Toy's bug report of
+	http://mid.gmane.org/4D65D413.5050103@gmail.com .
+
 2011-02-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

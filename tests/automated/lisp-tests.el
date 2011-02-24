@@ -1339,6 +1339,10 @@ via the hepatic alpha-tocopherol transfer protein")))
 (Check-Error args-out-of-range (subseq [1 2 3] -42))
 (Check-Error args-out-of-range (subseq [1 2 3] 0 42))
 
+(Check-Error wrong-type-argument (substring-no-properties nil 4))
+(Check-Error wrong-type-argument (substring-no-properties "hi there" pi))
+(Check-Error wrong-type-argument (substring-no-properties "hi there" 0))
+
 ;;-----------------------------------------------------
 ;; Time-related tests
 ;;-----------------------------------------------------
