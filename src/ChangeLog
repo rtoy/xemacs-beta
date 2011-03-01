@@ -1,3 +1,10 @@
+2011-02-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsubstring_no_properties):
+	Sigh, get_string_range_char checks the type of its START and END
+	arguments, but doesn't check the type of its STRING
+	argument. Thank you Raymond Toy!
+
 2011-02-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Fset_exclusive_or):
