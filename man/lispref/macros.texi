@@ -212,7 +212,7 @@ This expands to:
 In practice, almost all Lisp macros have names, and they are usually
 defined with the special operator @code{defmacro}.
 
-@defspec defmacro name argument-list body-forms@dots{}
+@deffn {Special Operator} defmacro name argument-list body-forms@dots{}
 @code{defmacro} defines the symbol @var{name} as a macro that looks
 like this:
 
@@ -229,7 +229,7 @@ function, and the keywords @code{&rest} and @code{&optional} may be used
 (@pxref{Argument List}).  Macros may have a documentation string, but
 any @code{interactive} declaration is ignored since macros cannot be
 called interactively.
-@end defspec
+@end deffn
 
 @node Backquote
 @section Backquote

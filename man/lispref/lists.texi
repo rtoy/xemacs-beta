@@ -1271,7 +1271,7 @@ store the result back into the variable that held the original list:
 @end example
 
 In the following example, the @code{(4)} that @code{remove*} attempts to match
-and the @code{(4)} in the @code{sample-list} are not @code{eq}:
+and the @code{(4)} in the @code{sample-list} are not @code{eql}:
 
 @example
 @group
