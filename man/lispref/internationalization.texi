@@ -83,7 +83,7 @@ If @code{I18N3} was not enabled when XEmacs was compiled, this function does
 nothing.
 @end defun
 
-@defspec domain string
+@deffn {Special Operator} domain string
 This function specifies the text domain used for translating documentation
 strings and interactive prompts of a function.  For example, write:
 
@@ -94,7 +94,7 @@ strings and interactive prompts of a function.  For example, write:
 to specify @code{emacs-foo} as the text domain of the function @code{foo}.
 The ``call'' to @code{domain} is actually a declaration rather than a
 function; when actually called, @code{domain} just returns @code{nil}.
-@end defspec
+@end deffn
 
 @defun domain-of function
 This function returns the text domain of @var{function}; it returns
@@ -145,19 +145,19 @@ function body, before the @code{interactive} form.
 For variables and constants which have documentation strings, specify the
 domain after the documentation.
 
-@defspec defvar symbol [value [doc-string [domain]]]
+@deffn {Special Operator} defvar symbol [value [doc-string [domain]]]
 Example:
 @example
 (defvar weight 250 "Weight of gorilla, in pounds." "emacs-gorilla")
 @end example
-@end defspec
+@end deffn
 
-@defspec defconst symbol [value [doc-string [domain]]]
+@deffn {Special Operator} defconst symbol [value [doc-string [domain]]]
 Example:
 @example
 (defconst limbs 4 "Number of limbs" "emacs-gorilla")
 @end example
-@end defspec
+@end deffn
 
 @defun autoload function filename &optional docstring interactive type
 This function defines @var{function} to autoload from @var{filename}
