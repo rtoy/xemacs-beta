@@ -1,5 +1,17 @@
 2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* format.el (format-delq-cons): Removed.
+	* format.el (format-make-relatively-unique): Removed.
+	* format.el (format-common-tail): Removed.
+	* format.el (format-reorder): Removed.
+	* format.el (format-annotate-region):
+	* format.el (format-annotate-single-property-change):
+	* format.el (format-annotate-atomic-property-change):
+	Remove various functions from this file that re-implemented Common
+	Lisp functions that we have built-in.
+
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* select.el (selection-preferred-types):
 	* select.el (cut-copy-clear-internal):
 	* select.el (create-image-functions):
