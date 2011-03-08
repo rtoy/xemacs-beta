@@ -779,7 +779,7 @@ the language environment for the major languages of Western Europe."
      #'(lambda (key entry)
          (setq string (decode-coding-string (string entry)
                                             invalid-sequence-coding-system))
-         (when (= 1 (length string))
+         (when (eql 1 (length string))
 	   ;; Treat Unicode error sequence chars as the octets
 	   ;; corresponding to those on disk:
 	   (setq unicode-error-lookup

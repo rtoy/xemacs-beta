@@ -45,8 +45,8 @@
   (if (eq char ?~)
       char
     (setq char (encode-coding-string char 'viscii))
-    (if (and (= 1 (length char))
-	     (not (eq (aref char 0) ?~)))
+    (if (and (eql 1 (length char))
+	     (not (eql (aref char 0) ?~)))
 	(aref char 0))))
 
 ;; VIQR is a menmonic encoding specification for Vietnamese.

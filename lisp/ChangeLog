@@ -1,5 +1,110 @@
 2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* buff-menu.el (list-buffers-noselect):
+	* byte-optimize.el (byte-optimize-identity):
+	* byte-optimize.el (byte-optimize-if):
+	* byte-optimize.el (byte-optimize-nth):
+	* byte-optimize.el (byte-optimize-nthcdr):
+	* bytecomp.el (byte-compile-warn-wrong-args):
+	* bytecomp.el (byte-compile-two-args-19->20):
+	* bytecomp.el (byte-compile-list):
+	* bytecomp.el (byte-compile-beginning-of-line):
+	* bytecomp.el (byte-compile-set):
+	* bytecomp.el (byte-compile-set-default):
+	* bytecomp.el (byte-compile-values):
+	* bytecomp.el (byte-compile-values-list):
+	* bytecomp.el (byte-compile-integerp):
+	* bytecomp.el (byte-compile-multiple-value-list-internal):
+	* bytecomp.el (byte-compile-throw):
+	* cl-macs.el (cl-do-arglist):
+	* cl-macs.el (cl-parse-loop-clause):
+	* cl-macs.el (multiple-value-bind):
+	* cl-macs.el (multiple-value-setq):
+	* cl-macs.el (get-setf-method):
+	* cmdloop.el (command-error):
+	* cmdloop.el (y-or-n-p-minibuf):
+	* cmdloop.el (yes-or-no-p-minibuf):
+	* coding.el (unencodable-char-position):
+	* cus-edit.el (custom-face-prompt):
+	* cus-edit.el (custom-buffer-create-internal):
+	* cus-edit.el (widget-face-action):
+	* cus-edit.el (custom-group-value-create):
+	* descr-text.el (describe-char-unicode-data):
+	* dialog-gtk.el (popup-builtin-question-dialog):
+	* dragdrop.el (experimental-dragdrop-drop-log-function):
+	* dragdrop.el (experimental-dragdrop-drop-mime-default):
+	* easymenu.el (easy-menu-add):
+	* easymenu.el (easy-menu-remove):
+	* faces.el (read-face-name):
+	* faces.el (set-face-stipple):
+	* files.el (file-name-non-special):
+	* font.el (font-combine-fonts):
+	* font.el (font-set-face-font):
+	* font.el (font-parse-rgb-components):
+	* font.el (font-rgb-color-p):
+	* font.el (font-color-rgb-components):
+	* gnuserv.el (gnuserv-edit-files):
+	* help.el (key-or-menu-binding):
+	* help.el (function-documentation-1):
+	* help.el (function-documentation):
+	* info.el (info):
+	* isearch-mode.el (isearch-exit):
+	* isearch-mode.el (isearch-edit-string):
+	* isearch-mode.el (isearch-*-char):
+	* isearch-mode.el (isearch-complete1):
+	* ldap.el (ldap-encode-country-string):
+	* ldap.el (ldap-decode-string):
+	* minibuf.el (read-file-name-internal-1):
+	* minibuf.el (read-non-nil-coding-system):
+	* minibuf.el (get-user-response):
+	* mouse.el (drag-window-divider):
+	* mule/ccl.el:
+	* mule/ccl.el (ccl-compile-if):
+	* mule/ccl.el (ccl-compile-break):
+	* mule/ccl.el (ccl-compile-repeat):
+	* mule/ccl.el (ccl-compile-write-repeat):
+	* mule/ccl.el (ccl-compile-call):
+	* mule/ccl.el (ccl-compile-end):
+	* mule/ccl.el (ccl-compile-read-multibyte-character):
+	* mule/ccl.el (ccl-compile-write-multibyte-character):
+	* mule/ccl.el (ccl-compile-translate-character):
+	* mule/ccl.el (ccl-compile-mule-to-unicode):
+	* mule/ccl.el (ccl-compile-unicode-to-mule):
+	* mule/ccl.el (ccl-compile-lookup-integer):
+	* mule/ccl.el (ccl-compile-lookup-character):
+	* mule/ccl.el (ccl-compile-map-multiple):
+	* mule/ccl.el (ccl-compile-map-single):
+	* mule/devan-util.el (devanagari-compose-to-one-glyph):
+	* mule/devan-util.el (devanagari-composition-component):
+	* mule/mule-cmds.el (finish-set-language-environment):
+	* mule/viet-util.el:
+	* mule/viet-util.el (viet-encode-viscii-char):
+	* multicast.el (open-multicast-group):
+	* newcomment.el (comment-quote-nested):
+	* newcomment.el (comment-region):
+	* newcomment.el (comment-dwim):
+	* regexp-opt.el (regexp-opt-group):
+	* replace.el (map-query-replace-regexp):
+	* specifier.el (derive-device-type-from-tag-set):
+	* subr.el (skip-chars-quote):
+	* test-harness.el (test-harness-from-buffer):
+	* test-harness.el (batch-test-emacs):
+	* wid-edit.el (widget-choice-action):
+	* wid-edit.el (widget-symbol-prompt-internal):
+	* wid-edit.el (widget-color-action):
+	* window-xemacs.el (push-window-configuration):
+	* window-xemacs.el (pop-window-configuration):
+	* window.el (quit-window):
+	* x-compose.el (electric-diacritic):
+	It's better style, and cheaper (often one assembler instruction
+	vs. a C funcall in the byte code), to use `eql' instead of `='
+	when it's clear what numerical type a given result will be. Change
+	much of our code to do this, with the help of a byte-compiler
+	change (not comitted) that looked for calls to #'length (which
+	always returns an integer) in its args.
+
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* format.el (format-delq-cons): Removed.
 	* format.el (format-make-relatively-unique): Removed.
 	* format.el (format-common-tail): Removed.

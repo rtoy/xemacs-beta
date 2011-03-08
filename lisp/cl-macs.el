@@ -428,7 +428,7 @@ Supports Common Lisp lambda lists."
 	  (or (eq p args) (setq minarg (list 'cdr minarg)))
 	  (setq p (cdr p)))
 	(if (memq (car p) '(nil &aux))
-	    (setq minarg (list '= (list 'length restarg)
+	    (setq minarg (list 'eql (list 'length restarg)
 			       (length (ldiff args p)))
 		  exactarg (not (eq args p)))))
       (while (and args (not (memq (car args) lambda-list-keywords)))
@@ -1265,7 +1265,7 @@ either `being each foo' or `being the foos'.)
 		      (seq (cl-pop2 args))
 		      (temp-seq (gensym))
 		      (temp-idx (if (eq (car args) 'using)
-				    (if (and (= (length (cadr args)) 2)
+				    (if (and (eql (length (cadr args)) 2)
 					     (eq (caadr args) 'index))
 					(cadr (cl-pop2 args))
 				      (error "Bad `using' clause"))
@@ -1296,7 +1296,7 @@ either `being each foo' or `being the foos'.)
 		(or (memq (car args) '(in of)) (error "Expected `of'"))
 		(let* ((table (cl-pop2 args))
 		       (other (if (eq (car args) 'using)
-				  (if (and (= (length (cadr args)) 2)
+				  (if (and (eql (length (cadr args)) 2)
 					   (memq (caadr args) hash-types)
 					   (not (eq (caadr args) word)))
 				      (cadr (cl-pop2 args))
@@ -1352,7 +1352,7 @@ either `being each foo' or `being the foos'.)
 		(let* ((map (cl-pop2 args))
 		       other-word
 		       (other (if (eq (car args) 'using)
-				  (if (and (= (length (cadr args)) 2)
+				  (if (and (eql (length (cadr args)) 2)
 					   (memq (setq other-word (caadr args))
 						 key-types)
 					   (not (eq (caadr args) word)))
@@ -1880,7 +1880,7 @@ not return multiple values, it is treated as returning one multiple value.
 Returns the value given by the last element of BODY."
   (if (null syms)
       `(progn ,form ,@body)
-    (if (= 1 (length syms))
+    (if (eql 1 (length syms))
         ;; Code written to deal with other "implementations" of multiple
         ;; values may have a one-element SYMS.
         `(let ((,(car syms) ,form))
@@ -1907,7 +1907,7 @@ Returns the first of the multiple values given by FORM."
   (if (null syms)
       ;; Never return multiple values from multiple-value-setq:
       (and form `(values ,form))
-    (if (= 1 (length syms))
+    (if (eql 1 (length syms))
         `(setq ,(car syms) ,form)
       (let ((temp (gensym)))
         `(let* ((,temp (multiple-value-list-internal 0 ,(length syms) ,form)))
@@ -2434,7 +2434,7 @@ a macro like `setf' or `incf'."
 	       (or (and method
 			(let ((cl-macro-environment env))
 			  (setq method (apply method (cdr place))))
-			(if (and (consp method) (= (length method) 5))
+			(if (and (consp method) (eql (length method) 5))
 			    method
 			  (error "Setf-method for %s returns malformed method"
 				 func)))

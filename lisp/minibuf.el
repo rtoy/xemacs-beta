@@ -1821,10 +1821,10 @@ DIR defaults to current buffer's directory default."
 	     (completion-ignore-case (file-system-ignore-case-p
 				      (or dir default-directory)))
              (env (substring string
-                             (cond ((= start (length string))
+                             (cond ((eql start (length string))
                                     ;; "...$"
                                     start)
-                                   ((= (aref string start) ?{)
+                                   ((eql (aref string start) ?{)
                                     ;; "...${..."
                                     (1+ start))
                                    (t
@@ -2211,7 +2211,7 @@ DEFAULT-CODING-SYSTEM can be a string, symbol, or coding-system object."
   "Read a non-nil coding-system from the minibuffer.
 Prompt with string PROMPT."
   (let ((retval (intern "")))
-    (while (= 0 (length (symbol-name retval)))
+    (while (eql 0 (length (symbol-name retval)))
       (setq retval (intern (completing-read prompt obarray
 					    'find-coding-system
 					    t))))
@@ -2347,7 +2347,7 @@ in the minibuffer."
 				   (single-key-description event))
 			  (ding nil 'y-or-n-p)
 			  (discard-input)
-			  (if (= (length pre) 0)
+			  (if (eql (length pre) 0)
 			      (setq pre (format "Please answer %s.  "
 						;; 17 parens!  a record in
 						;; our lisp code.

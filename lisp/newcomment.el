@@ -284,7 +284,7 @@ If UNP is non-nil, unquote nested comment markers."
 	(goto-char (match-beginning 0))
 	(forward-char 1)
 	(if unp (delete-char 1) (insert "\\"))
-	(when (= (length ce) 1)
+	(when (eql (length ce) 1)
 	  ;; If the comment-end is a single char, adding a \ after that
 	  ;; "first" char won't deactivate it, so we turn such a CE
 	  ;; into !CS.  I.e. for pascal, we turn } into !{
@@ -922,7 +922,7 @@ The strings used as comment starts are built from
      ((consp arg) (uncomment-region beg end))
      ((< numarg 0) (uncomment-region beg end (- numarg)))
      (t
-      (setq numarg (if (and (null arg) (= (length comment-start) 1))
+      (setq numarg (if (and (null arg) (eql (length comment-start) 1))
 		       add (1- numarg)))
       (comment-region-internal
        beg end
@@ -979,7 +979,7 @@ Else, call `comment-indent'."
 	;; specified, calling comment-kill is not very clever.
 	(if arg (comment-kill (and (integerp arg) arg)) (comment-indent))
       (let ((add (if arg (prefix-numeric-value arg)
-		   (if (= (length comment-start) 1) comment-add 0))))
+		   (if (eql (length comment-start) 1) comment-add 0))))
 	;; Some modes insist on keeping column 0 comment in column 0
 	;; so we need to move away from it before inserting the comment.
 	(indent-according-to-mode)
