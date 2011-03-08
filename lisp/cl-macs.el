@@ -1066,7 +1066,7 @@ either `being each foo' or `being the foos'.)
     Specify the name for block surrounding the loop, in place of nil.
     (See `block'.)
 "
-  (if (not (memq t (mapcar 'symbolp (delq nil (delq t (copy-list clauses))))))
+  (if (notany #'symbolp (set-difference clauses '(nil t)))
       (list 'block nil (list* 'while t clauses))
     (let ((loop-name nil)	(loop-bindings nil)
 	  (loop-body nil)	(loop-steps nil)
@@ -1648,12 +1648,12 @@ Format is: (do* ((VAR INIT [STEP])...) (END-TEST [RESULT...]) BODY...)"
 		       steps)
 	       (list* 'while (list 'not (car endtest))
 		      (append body
-			      (let ((sets (mapcar
+			      (let ((sets (mapcan
 					   #'(lambda (c)
 					       (and (consp c) (cdr (cdr c))
-						    (list (car c) (nth 2 c))))
+						    (list
+						     (list (car c) (nth 2 c)))))
 					   steps)))
-				(setq sets (delq nil sets))
 				(and sets
 				     (list (cons (if (or star (not (cdr sets)))
 						     'setq 'psetq)
@@ -2579,7 +2579,7 @@ The form returns true if TAG was found and removed, nil otherwise."
 Example: (shiftf A B C) sets A to B, B to C, and returns the old A.
 Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
   ;; XEmacs change: use iteration instead of recursion
-  (if (not (memq nil (mapcar 'symbolp (butlast (cons place args)))))
+  (if (every #'symbolp (butlast (cons place args)))
       (list* 'prog1 place
 	     (let ((sets nil))
 	       (while args
@@ -2600,7 +2600,7 @@ Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
   "Rotate left among PLACES.
 Example: (rotatef A B C) sets A to B, B to C, and C to A.  It returns nil.
 Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
-  (if (not (memq nil (mapcar 'symbolp places)))
+  (if (every #'symbolp places)
       (and (cdr places)
 	   (let ((sets nil)
 		 (first (car places)))
@@ -3127,11 +3127,7 @@ They are not evaluated unless the assertion fails.  If STRING is
 omitted, a default message listing FORM itself is used."
   (and (or (not (cl-compiling-file))
 	   (< cl-optimize-speed 3) (= cl-optimize-safety 3))
-       (let ((sargs (and show-args (delq nil (mapcar
-					       #'(lambda (x)
-						   (and (not (cl-const-expr-p x))
-							x))
-					       (cdr form))))))
+       (let ((sargs (and show-args (remove-if #'cl-const-expr-p (cdr form)))))
 	 (list 'progn
 	       (list 'or form
 		     (if string
@@ -3226,13 +3222,12 @@ surrounded by (block NAME ...)."
 (defun cl-defsubst-expand (argns body simple whole unsafe &rest argvs)
   (if (and whole (not (cl-safe-expr-p (cons 'progn argvs)))) whole
     (if (cl-simple-exprs-p argvs) (setq simple t))
-    (let ((lets (delq nil
-		      (mapcar* #'(lambda (argn argv)
-				   (if (or simple (cl-const-expr-p argv))
-				       (progn (setq body (subst argv argn body))
-					      (and unsafe (list argn argv)))
-				     (list argn argv)))
-			       argns argvs))))
+    (let ((lets (mapcan #'(lambda (argn argv)
+			    (if (or simple (cl-const-expr-p argv))
+				(progn (setq body (subst argv argn body))
+				       (and unsafe (list (list argn argv))))
+			      (list (list argn argv))))
+			argns argvs)))
       (if lets (list 'let lets body) body))))
 
 
