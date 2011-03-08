@@ -1078,7 +1078,7 @@ Ligatures and special rules are processed."
     ;; Before applying compose-chars, convert glyphs to
     ;; 1-column width if possible.
     (setq cmp-glyph-list (devanagari-wide-to-narrow cmp-glyph-list))
-    (if (= (length cmp-glyph-list) 1) (char-to-string (car cmp-glyph-list))
+    (if (eql (length cmp-glyph-list) 1) (char-to-string (car cmp-glyph-list))
       (apply 'compose-chars cmp-glyph-list))))
 
 (defun devanagari-composition-component (string &optional start end)

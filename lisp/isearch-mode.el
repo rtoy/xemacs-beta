@@ -713,7 +713,7 @@ search and `search-nonincremental-instead' is non-nil, do a
 nonincremental search instead via `isearch-edit-string'."
   (interactive)
   (if (and (or search-nonincremental-instead executing-kbd-macro)
-	   (= 0 (length isearch-string)))
+	   (eql 0 (length isearch-string)))
       (let ((isearch-nonincremental t)
 	    ;; Highlighting only gets in the way of nonincremental
 	    ;; search.
@@ -827,7 +827,7 @@ If first char entered is \\[isearch-yank-word], then do word search instead."
 		  isearch-word isearch-new-word))
 
 	  ;; Empty isearch-string means use default.
-	  (if (= 0 (length isearch-string))
+	  (if (eql 0 (length isearch-string))
 	      (setq isearch-string (or (car (if isearch-regexp
 						regexp-search-ring
 					      search-ring))
@@ -1124,7 +1124,7 @@ backwards."
 	(while (and (> idx 0)
 		    (eq (aref isearch-string (1- idx)) ?\\))
 	  (setq idx (1- idx)))
-	(when (= (mod (- (length isearch-string) idx) 2) 0)
+	(when (eql (mod (- (length isearch-string) idx) 2) 0)
 	  (setq isearch-adjusted t)
 	  ;; Get the isearch-other-end from before the last search.
 	  ;; We want to start from there,
@@ -1316,7 +1316,7 @@ Obsolete."
       ;; isearch-string stays the same
       t)
      ((or completion ; not nil, must be a string
-	  (= 0 (length isearch-string))) ; shouldn't have to say this
+	  (eql 0 (length isearch-string))) ; shouldn't have to say this
       (if (equal completion isearch-string)  ;; no extension?
 	  (progn
 	    (if completion-auto-help

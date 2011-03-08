@@ -590,7 +590,7 @@ to read a file name from the minibuffer."
 	   (equal (nth 1 p) "info")
 	   (not Info-standalone)
 	   (setq Info-standalone t)
-	   (= (length p) 3)
+	   (eql (length p) 3)
 	   (not (string-match "^-" (nth 2 p)))
 	   (setq file (nth 2 p))
 	   (setq command-line-args-left nil))

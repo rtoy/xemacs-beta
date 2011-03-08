@@ -194,7 +194,7 @@ non-default value for `mode-popup-menu' that existed when
 ;  	   (default-value 'mode-popup-menu) easy-menu-all-popups)
   (when (featurep 'menubar)
     ;; Save the existing mode-popup-menu, if it's been changed.
-    (when (and (zerop (length easy-menu-all-popups))
+    (when (and (eql (length easy-menu-all-popups) 0)
 	       (not (equal (default-value 'mode-popup-menu) mode-popup-menu)))
       (push mode-popup-menu easy-menu-all-popups))
     ;; Add the menu to our list of all the popups for the buffer. 
@@ -202,7 +202,7 @@ non-default value for `mode-popup-menu' that existed when
     ;; If there are multiple popup menus available, make the popup menu
     ;; normally shown with button-3 a menu of them. If there is just one,
     ;; make that button show it, and no super-menu.
-    (setq mode-popup-menu (if (= 1 (length easy-menu-all-popups))
+    (setq mode-popup-menu (if (eql 1 (length easy-menu-all-popups))
 			      (car easy-menu-all-popups)
 			    (cons (easy-menu-title)
 				(reverse easy-menu-all-popups))))
@@ -229,13 +229,13 @@ non-default value for `mode-popup-menu' that existed when
      ;; If there are multiple popup menus available, make the popup menu
      ;; normally shown with button-3 a menu of them. If there is just one,
      ;; make that button show it, and no super-menu.
-     mode-popup-menu (if (= 1 (length easy-menu-all-popups))
+     mode-popup-menu (if (eql 1 (length easy-menu-all-popups))
 			 (car easy-menu-all-popups)
 		       (cons (easy-menu-title)
 			     (reverse easy-menu-all-popups))))
     ;; If we've just set mode-popup-menu to an empty menu, change that menu
     ;; to its default value (without intervention from easy-menu).
-    (if (zerop (length easy-menu-all-popups))
+    (if (eql (length easy-menu-all-popups) 0)
 	(setq mode-popup-menu (default-value 'mode-popup-menu)))
     (and current-menubar
 	 (assoc (car menu) current-menubar)

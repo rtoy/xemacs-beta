@@ -1772,7 +1772,8 @@ other mouse buttons."
 		 ;; left window side has slipped (right side cannot be
 		 ;; moved any further to the right, so enlarge-window
 		 ;; plays bad games with the left edge.
-		 (if (or (/= (count-windows) (length old-edges-all-windows))
+		 (if (or (not (eql (count-windows)
+				   (length old-edges-all-windows)))
 			 (/= old-left (car (window-pixel-edges window)))
 			 ;; This check is very hairy. We allow any number
 			 ;; of left edges to change, but only to the same

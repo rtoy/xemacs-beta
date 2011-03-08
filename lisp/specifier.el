@@ -894,7 +894,7 @@ DEVTYPE-SPEC flag; thus, it may return nil."
                                                current-device)))
                                      (and dev (device-type dev))))
                                   (t devtype-spec))))
-               (cond ((= 1 (length okdevs)) (car okdevs))
+               (cond ((eql 1 (length okdevs)) (car okdevs))
                      ((< try-stages 3) nil)
                      ((null okdevs) devtype)
                      ((memq devtype okdevs) devtype)

@@ -148,7 +148,7 @@ or go back to just one window (by deleting all but the selected window)."
     (message nil)
     (ding nil (cond ((eq etype 'undefined-keystroke-sequence)
 		     (if (and (vectorp (nth 1 error-object))
-			      (/= 0 (length (nth 1 error-object)))
+			      (not (eql 0 (length (nth 1 error-object))))
 			      (button-event-p (aref (nth 1 error-object) 0)))
 			 'undefined-click
 		       'undefined-key))
@@ -470,7 +470,7 @@ Also accepts Space to mean yes, or Delete to mean no."
                           (single-key-description event))
                  (ding nil 'y-or-n-p)
                  (discard-input)
-                 (if (= (length pre) 0)
+                 (if (eql (length pre) 0)
                      (setq pre (gettext "Please answer y or n.  ")))))))
       yn)))
 

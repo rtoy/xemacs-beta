@@ -4555,7 +4555,7 @@ absolute one."
 	  (and (car pair)
 	       (string-match "\\`/:" (car pair))
 	       (setcar pair
-		       (if (= (length (car pair)) 2)
+		       (if (eql (length (car pair)) 2)
 			   "/"
 			 (substring (car pair) 2)))))
 	(setq file-arg-indices (cdr file-arg-indices))))

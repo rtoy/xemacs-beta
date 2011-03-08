@@ -767,8 +767,8 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
 						(line-end-position)) ";")
 				       :test 'equal))))
 	      ;; The length depends on whether the last field was empty.
-	      (unless (or (= 13 (length fields))
-			  (= 14 (length fields)))
+	      (unless (or (eql 13 (length fields))
+			  (eql 14 (length fields)))
 		(error 'invalid-argument
                        (format "Invalid contents in %s"
                                describe-char-unicodedata-file)))
