@@ -1,3 +1,21 @@
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* package-ui.el (pui-add-required-packages):
+	* packages.el (packages-handle-package-dumped-lisps):
+	* bytecomp-runtime.el (byte-compile-with-fboundp):
+	* bytecomp-runtime.el (globally-declare-fboundp):
+	* bytecomp-runtime.el 
+	(byte-compile-with-byte-compiler-warnings-suppressed):
+	* mule/devan-util.el (devanagari-reorder-glyphs-for-composition):
+	* mule/devan-util.el (devanagari-compose-to-one-glyph):
+	* mule/japanese.el:
+	* mule/japanese.el ("Japanese"):
+	* mule/make-coding-system.el (fixed-width-generate-helper):
+	* mule/mule-category.el (defined-category-list):
+	* mule/mule-category.el (undefined-category-designator):
+	Style change: remove redundant lambdas, things like (mapcar
+	#'(lambda (pkg) (symbol-name pkg)) ...) => (mapcar #'symbol-name ...).
+
 2011-02-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-normal-call):

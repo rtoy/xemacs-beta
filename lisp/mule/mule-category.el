@@ -64,11 +64,7 @@ to the current buffer's category table, but this is not implemented.  "
 (defun defined-category-list ()
   "Return a list of the currently defined categories.
 Categories are given by their designators."
-  (let (list)
-    (maphash #'(lambda (key value)
-		 (setq list (cons key list)))
-	     defined-category-hashtable)
-    (nreverse list)))
+  (hash-table-key-list defined-category-hashtable))
 
 (defun undefined-category-designator ()
   "Return an undefined category designator, or nil if there are none."
