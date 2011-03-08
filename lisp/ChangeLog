@@ -1,5 +1,19 @@
 2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* select.el (selection-preferred-types):
+	* select.el (cut-copy-clear-internal):
+	* select.el (create-image-functions):
+	* select.el (select-convert-from-image/gif):
+	* select.el (select-convert-from-image/jpeg):
+	* select.el (select-convert-from-image/png):
+	* select.el (select-convert-from-image/tiff):
+	* select.el (select-convert-from-image/xpm):
+	* select.el (select-convert-from-image/xbm):
+	* select.el (selection-converter-in-alist):
+	Make my Lisp a little more sophisticated in this file.
+
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* package-ui.el (pui-add-required-packages):
 	* packages.el (packages-handle-package-dumped-lisps):
 	* bytecomp-runtime.el (byte-compile-with-fboundp):
