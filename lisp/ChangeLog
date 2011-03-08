@@ -1,5 +1,22 @@
 2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el:
+	* cl-macs.el (loop):
+	* cl-macs.el (cl-expand-do-loop):
+	* cl-macs.el (shiftf):
+	* cl-macs.el (rotatef):
+	* cl-macs.el (assert):
+	* cl-macs.el (cl-defsubst-expand):
+	* etags.el (buffer-tag-table-list):
+	* frame.el:
+	* frame.el (frame-notice-user-settings):
+	* frame.el (minibuffer-frame-list):
+	* frame.el (get-frame-for-buffer-noselect):
+	Use Common Lisp-derived builtins in a few more places, none of
+	them performance-critical, but the style is better.
+
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* buff-menu.el (list-buffers-noselect):
 	* byte-optimize.el (byte-optimize-identity):
 	* byte-optimize.el (byte-optimize-if):

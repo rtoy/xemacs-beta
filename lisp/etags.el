@@ -243,16 +243,15 @@ the current buffer."
 	      (push expression result)
 	    (error "Expression in tag-table-alist evaluated to non-string")))))
     (setq result
-	  (mapcar
+	  (mapcan
 	   (lambda (name)
 	     (when (file-directory-p name)
 	       (setq name (concat (file-name-as-directory name) "TAGS")))
 	     (and (file-readable-p name)
 		  ;; get-tag-table-buffer has side-effects
-		  (symbol-value-in-buffer 'buffer-file-name
-					  (get-tag-table-buffer name))))
-	   result))
-    (setq result (delq nil result))
+		  (list (symbol-value-in-buffer 'buffer-file-name
+						(get-tag-table-buffer name))))))
+	   result)
     ;; If no TAGS file has been found, ask the user explicitly.
     ;; #### tags-file-name is *evil*.
     (or result tags-file-name
