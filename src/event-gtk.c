@@ -90,18 +90,18 @@ static int last_quit_check_signal_tick_count;
  * Identify if the keysym is a modifier.  This implementation mirrors x.org's
  * IsModifierKey(), but for GDK keysyms.
  */
-#ifdef GDK_ISO_Lock
+#ifdef GDK_KEY_ISO_Lock
 #define IS_MODIFIER_KEY(keysym)  \
-  ((((keysym) >= GDK_Shift_L) && ((keysym) <= GDK_Hyper_R)) \
-   || (((keysym) >= GDK_ISO_Lock) && \
-       ((keysym) <= GDK_ISO_Last_Group_Lock)) \
-   || ((keysym) == GDK_Mode_switch) \
-   || ((keysym) == GDK_Num_Lock))
+  ((((keysym) >= GDK_KEY_Shift_L) && ((keysym) <= GDK_KEY_Hyper_R)) \
+   || (((keysym) >= GDK_KEY_ISO_Lock) && \
+       ((keysym) <= GDK_KEY_ISO_Last_Group_Lock)) \
+   || ((keysym) == GDK_KEY_Mode_switch) \
+   || ((keysym) == GDK_KEY_Num_Lock))
 #else
 #define IS_MODIFIER_KEY(keysym)  \
-  ((((keysym) >= GDK_Shift_L) && ((keysym) <= GDK_Hyper_R)) \
-   || ((keysym) == GDK_Mode_switch) \
-   || ((keysym) == GDK_Num_Lock))
+  ((((keysym) >= GDK_KEY_Shift_L) && ((keysym) <= GDK_KEY_Hyper_R)) \
+   || ((keysym) == GDK_KEY_Mode_switch) \
+   || ((keysym) == GDK_KEY_Num_Lock))
 #endif
 
 #define THIS_IS_GTK
@@ -335,16 +335,16 @@ keysym_obeys_caps_lock_p (guint sym, struct device *d)
      characters, where "alphabetic" means something more than simply A-Z.
      That is, if Caps_Lock is down, typing ESC doesn't produce Shift-ESC.
      But if shift-lock is down, then it does. */
-  if (gd->lock_interpretation == GDK_Shift_Lock)
+  if (gd->lock_interpretation == GDK_KEY_Shift_Lock)
     return 1;
 
   return
-    ((sym >= GDK_A)        && (sym <= GDK_Z))          ||
-    ((sym >= GDK_a)        && (sym <= GDK_z))          ||
-    ((sym >= GDK_Agrave)   && (sym <= GDK_Odiaeresis)) ||
-    ((sym >= GDK_agrave)   && (sym <= GDK_odiaeresis)) ||
-    ((sym >= GDK_Ooblique) && (sym <= GDK_Thorn))      ||
-    ((sym >= GDK_oslash)   && (sym <= GDK_thorn));
+    ((sym >= GDK_KEY_A)        && (sym <= GDK_KEY_Z))          ||
+    ((sym >= GDK_KEY_a)        && (sym <= GDK_KEY_z))          ||
+    ((sym >= GDK_KEY_Agrave)   && (sym <= GDK_KEY_Odiaeresis)) ||
+    ((sym >= GDK_KEY_agrave)   && (sym <= GDK_KEY_odiaeresis)) ||
+    ((sym >= GDK_KEY_Ooblique) && (sym <= GDK_KEY_Thorn))      ||
+    ((sym >= GDK_KEY_oslash)   && (sym <= GDK_KEY_thorn));
 }
 
 static void
@@ -375,7 +375,7 @@ static Lisp_Object
 gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
 {
   char *name;
-  if (keysym >= GDK_exclam && keysym <= GDK_asciitilde)
+  if (keysym >= GDK_KEY_exclam && keysym <= GDK_KEY_asciitilde)
     /* We must assume that the X keysym numbers for the ASCII graphic
        characters are the same as their ASCII codes.  */
     return make_char (keysym);
@@ -385,15 +385,15 @@ gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
       /* These would be handled correctly by the default case, but by
 	 special-casing them here we don't garbage a string or call
 	 intern().  */
-    case GDK_BackSpace:	return QKbackspace;
-    case GDK_Tab:	return QKtab;
-    case GDK_Linefeed:	return QKlinefeed;
-    case GDK_Return:	return QKreturn;
-    case GDK_Escape:	return QKescape;
-    case GDK_space:	return QKspace;
-    case GDK_Delete:	return QKdelete;
-    case GDK_Prior:     return KEYSYM("prior");
-    case GDK_Next:      return KEYSYM("next");
+    case GDK_KEY_BackSpace:	return QKbackspace;
+    case GDK_KEY_Tab:	return QKtab;
+    case GDK_KEY_Linefeed:	return QKlinefeed;
+    case GDK_KEY_Return:	return QKreturn;
+    case GDK_KEY_Escape:	return QKescape;
+    case GDK_KEY_space:	return QKspace;
+    case GDK_KEY_Delete:	return QKdelete;
+    case GDK_KEY_Prior:     return KEYSYM("prior");
+    case GDK_KEY_Next:      return KEYSYM("next");
     case 0:		return Qnil;
     default:
       if (simple_p) return Qnil;
