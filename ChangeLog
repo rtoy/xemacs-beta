@@ -1,3 +1,7 @@
+2011-03-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (HAVE_PANGO): Add HAVE_PANGOXFT.
+
 2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac: Make check for pango separate from libgnomeui

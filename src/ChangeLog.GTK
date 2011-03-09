@@ -1,5 +1,7 @@
 2011-03-09  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* config.h.in: Add HAVE_Pangoxft flag.
+
 	* event-gtk.c (IS_MODIFIER_KEY): Use GDK_KEY_XX instead of obsolete
 	GDK_XX style constants.
 	(keysym_obeys_caps_lock_p): ditto

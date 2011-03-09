@@ -2849,6 +2849,7 @@ if test "${GNOME_CONFIG}" != "no"; then
       PANGO_LIBS=`${GNOME_CONFIG} --libs pango pangoxft`
       PANGO_CFLAGS=`${GNOME_CONFIG} --cflags pango pangoxft`
       AC_DEFINE(HAVE_PANGO)
+      AC_DEFINE(HAVE_PANGOXFT)      
       XE_APPEND(${PANGO_LIBS}, libs_gtk)
       XE_APPEND(${PANGO_CFLAGS}, c_switch_gtk)
 fi
