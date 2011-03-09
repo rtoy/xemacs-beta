@@ -1,3 +1,13 @@
+2011-03-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (IS_MODIFIER_KEY): Use GDK_KEY_XX instead of obsolete
+	GDK_XX style constants.
+	(keysym_obeys_caps_lock_p): ditto
+	(gtk_keysym_to_emacs_keysym): ditto
+
+	* sysgtk.h: gtkfixed.h no longer needed in Gtk 2.0; will be removed
+	in Gtk 3.0
+
 2010-11-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status): Remove
