@@ -1,3 +1,8 @@
+2011-03-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* sysgtk.h: gtkfixed.h no longer needed in Gtk 2.0; will be removed
+	in Gtk 3.0
+
 2010-06-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console-x-impl.h (DEVICE_X_XFTDRAW): Define, instead of
