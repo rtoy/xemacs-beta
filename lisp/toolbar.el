@@ -117,7 +117,6 @@ or through the Options menu."
 ;; called from toolbar.c during device and frame initialization
 (defun init-toolbar-from-resources (locale)
   (if (and (featurep 'x)
-	   (not (featurep 'infodock))
 	   (or (eq locale 'global)
 	       (eq 'x (device-or-frame-type locale))))
       (declare-fboundp (x-init-toolbar-from-resources locale))))

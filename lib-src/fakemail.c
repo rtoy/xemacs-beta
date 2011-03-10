@@ -15,7 +15,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
-the Free the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.28. */
@@ -144,6 +144,10 @@ static boolean no_problems = true;
 extern FILE *popen ();
 extern int fclose (), pclose ();
 extern char *malloc (), *realloc ();
+#endif
+
+#if defined(__FreeBSD__)
+#include <osreldate.h>
 #endif
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 400000 

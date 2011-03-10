@@ -2219,9 +2219,9 @@ create_text_block (struct window *w, struct display_line *dl,
   else if (MINI_WINDOW_P (w) && !active_minibuffer)
     data.cursor_type = NO_CURSOR;
   else if (w == XWINDOW (FRAME_SELECTED_WINDOW (f)) &&
-	   EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-	   d == XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d))))&&
-	   f == XFRAME(DEVICE_SELECTED_FRAME(d)))
+	   EQ (DEVICE_CONSOLE (d), Vselected_console) &&
+	   d == XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d))))&&
+	   f == XFRAME (DEVICE_SELECTED_FRAME (d)))
     {
       data.byte_cursor_charpos = BYTE_BUF_PT (b);
       data.cursor_type = CURSOR_ON;
@@ -5515,10 +5515,10 @@ Info on reentrancy crashes, with backtraces given:
       Lisp_Object string;
       prop = Dynarr_new (prop_block);
 
-      string = concat2(Vminibuf_preprompt, Vminibuf_prompt);
+      string = concat2 (Vminibuf_preprompt, Vminibuf_prompt);
       pb.type = PROP_MINIBUF_PROMPT;
-      pb.data.p_string.str = XSTRING_DATA(string);
-      pb.data.p_string.len = XSTRING_LENGTH(string);
+      pb.data.p_string.str = XSTRING_DATA (string);
+      pb.data.p_string.len = XSTRING_LENGTH (string);
       Dynarr_add (prop, pb);
     }
   else
@@ -6257,9 +6257,9 @@ redisplay_window (Lisp_Object window, int skip_selected)
   selected_in_its_frame = (w == XWINDOW (FRAME_SELECTED_WINDOW (f)));
   selected_globally =
       selected_in_its_frame &&
-      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d &&
-      XFRAME(DEVICE_SELECTED_FRAME(d)) == f;
+      EQ (DEVICE_CONSOLE (d), Vselected_console) &&
+      XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d)))) == d &&
+      XFRAME (DEVICE_SELECTED_FRAME (d)) == f;
   if (skip_selected && selected_in_its_frame)
     return;
 
@@ -6684,12 +6684,25 @@ run_post_redisplay_actions (void)
   unbind_to (depth);
 }
 
+static int the_ritual_suicide_has_been_cancelled = 0;
+
+void
+redisplay_cancel_ritual_suicide(void)
+{
+  the_ritual_suicide_has_been_cancelled = 1;
+}
+
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
 
 static Lisp_Object
 commit_ritual_suicide (Lisp_Object UNUSED (ceci_nest_pas_une_pipe))
 {
-  assert (!in_display);
+  if (!the_ritual_suicide_has_been_cancelled)
+    {
+      assert (!in_display);
+    }
+  else
+    the_ritual_suicide_has_been_cancelled = 0;
   return Qnil;
 }
 
@@ -7065,7 +7078,7 @@ redisplay_device (struct device *d, int automatic)
 
   if (FRAME_REPAINT_P (f))
     {
-      if (CLASS_REDISPLAY_FLAGS_CHANGEDP(f))
+      if (CLASS_REDISPLAY_FLAGS_CHANGEDP (f))
 	{
 	  int preempted = redisplay_frame (f, 1);
 	  if (preempted)
@@ -7239,10 +7252,10 @@ window_line_number (struct window *w, int type)
      fail if DEVICE_SELECTED_FRAME == Qnil (since w->frame cannot be).
      This can occur when the frame title is computed really early */
   Charbpos pos =
-    ((EQ(DEVICE_SELECTED_FRAME(d), w->frame) &&
-       (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame(d)))) &&
-      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d )
+    ((EQ (DEVICE_SELECTED_FRAME (d), w->frame) &&
+       (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d)))) &&
+      EQ (DEVICE_CONSOLE (d), Vselected_console) &&
+      XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d)))) == d )
      ? BUF_PT (b)
      : marker_position (w->pointm[type]));
   EMACS_INT line;
@@ -7984,7 +7997,7 @@ point_would_be_visible (struct window *w, Charbpos startp, Charbpos point,
 			int partially)
 {
   struct buffer *b = XBUFFER (w->buffer);
-  int pixpos = -WINDOW_TEXT_TOP_CLIP(w);
+  int pixpos = -WINDOW_TEXT_TOP_CLIP (w);
   int bottom = WINDOW_TEXT_HEIGHT (w);
   int start_elt;
 
@@ -9705,7 +9718,7 @@ compute_display_line_dynarr_usage (display_line_dynarr *dyn,
   for (i = 0; i < Dynarr_largest (dyn); i++)
     {
       struct display_line *dl = &Dynarr_at (dyn, i);
-      total += compute_display_block_dynarr_usage(dl->display_blocks, ustats);
+      total += compute_display_block_dynarr_usage (dl->display_blocks, ustats);
       total += compute_glyph_block_dynarr_usage  (dl->left_glyphs,    ustats);
       total += compute_glyph_block_dynarr_usage  (dl->right_glyphs,   ustats);
     }

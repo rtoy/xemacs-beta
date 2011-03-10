@@ -68,4 +68,6 @@ Boston, MA 02111-1307, USA.  */
      all of the Lisp objects, including in process-type-specific data. */
   MARKED_SLOT (tty_name)
 
+  MARKED_SLOT (plist)
+
 #undef MARKED_SLOT

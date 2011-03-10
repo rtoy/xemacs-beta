@@ -251,21 +251,28 @@ bytecode_negate (Lisp_Object obj)
 }
 
 static Lisp_Object
-bytecode_nreverse (Lisp_Object list)
+bytecode_nreverse (Lisp_Object sequence)
 {
-  REGISTER Lisp_Object prev = Qnil;
-  REGISTER Lisp_Object tail = list;
-
-  while (!NILP (tail))
+  if (LISTP (sequence))
     {
-      REGISTER Lisp_Object next;
-      CHECK_CONS (tail);
-      next = XCDR (tail);
-      XCDR (tail) = prev;
-      prev = tail;
-      tail = next;
+      REGISTER Lisp_Object prev = Qnil;
+      REGISTER Lisp_Object tail = sequence;
+
+      while (!NILP (tail))
+	{
+	  REGISTER Lisp_Object next;
+	  CHECK_CONS (tail);
+	  next = XCDR (tail);
+	  XCDR (tail) = prev;
+	  prev = tail;
+	  tail = next;
+	}
+      return prev;
     }
-  return prev;
+  else
+    {
+      return Fnreverse (sequence);
+    }
 }
 
 
@@ -1724,8 +1731,9 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       {
         Lisp_Object upper = POP, first = TOP, speccount;
 
-        CHECK_NATNUM (upper);
-        CHECK_NATNUM (first);
+        check_integer_range (upper, Qzero,
+                             make_integer (Vmultiple_values_limit));
+        check_integer_range (first, Qzero, upper);
 
         speccount = make_int (bind_multiple_value_limits (XINT (first),
                                                           XINT (upper)));
@@ -2562,22 +2570,36 @@ compiled_function_annotation (Lisp_Compiled_Function *f)
 
 #endif
 
-/* used only by Snarf-documentation; there must be doc already. */
+/* used only by Snarf-documentation. */
 void
 set_compiled_function_documentation (Lisp_Compiled_Function *f,
 				     Lisp_Object new_doc)
 {
-  assert (f->flags.documentationp);
   assert (INTP (new_doc) || STRINGP (new_doc));
 
-  if (f->flags.interactivep && f->flags.domainp)
-    XCAR (f->doc_and_interactive) = new_doc;
-  else if (f->flags.interactivep)
-    XCAR (f->doc_and_interactive) = new_doc;
-  else if (f->flags.domainp)
-    XCAR (f->doc_and_interactive) = new_doc;
+  if (f->flags.documentationp)
+    {
+      if (f->flags.interactivep && f->flags.domainp)
+        XCAR (f->doc_and_interactive) = new_doc;
+      else if (f->flags.interactivep)
+        XCAR (f->doc_and_interactive) = new_doc;
+      else if (f->flags.domainp)
+        XCAR (f->doc_and_interactive) = new_doc;
+      else
+        f->doc_and_interactive = new_doc;
+    }
   else
-    f->doc_and_interactive = new_doc;
+    {
+      f->flags.documentationp = 1;
+      if (f->flags.interactivep || f->flags.domainp)
+        {
+          f->doc_and_interactive = Fcons (new_doc, f->doc_and_interactive);
+        }
+      else
+        {
+          f->doc_and_interactive = new_doc;
+        }
+    }
 }
 
 
@@ -2736,7 +2758,7 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 
   CHECK_STRING (instructions);
   CHECK_VECTOR (constants);
-  CHECK_NATNUM (stack_depth);
+  check_integer_range (stack_depth, Qzero, make_int (USHRT_MAX));
 
   /* Optimize the `instructions' string, just like when executing a
      regular compiled function, but don't save it for later since this is

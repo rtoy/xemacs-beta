@@ -722,9 +722,7 @@ If this is nil, no message will be displayed.")
 	(declare-fboundp (init-mule-at-startup)))
 
       (if (featurep 'toolbar)
-	  (if (featurep 'infodock)
-	      (require 'id-x-toolbar)
-	    (init-toolbar)))
+          (init-toolbar))
 
       ;; Create the initial device (which may be the already-created stdio
       ;; device, if we're noninteractive).

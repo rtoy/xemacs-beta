@@ -11,7 +11,7 @@ Free Software Foundation; either version 2, or (at your option) any
 later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCNTABILITY or
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
@@ -95,13 +95,13 @@ static Lisp_Object Qhashtable, Qhash_table, Qmake_hash_table;
 static Lisp_Object Qweakness, Qvalue, Qkey_or_value, Qkey_and_value;
 static Lisp_Object Vall_weak_hash_tables;
 static Lisp_Object Qrehash_size, Qrehash_threshold;
-static Lisp_Object Q_size, Q_test, Q_weakness, Q_rehash_size, Q_rehash_threshold;
+static Lisp_Object Q_size, Q_weakness, Q_rehash_size, Q_rehash_threshold;
 static Lisp_Object Vhash_table_test_eq, Vhash_table_test_eql;
 static Lisp_Object Vhash_table_test_weak_list;
 
 /* obsolete as of 19990901 in xemacs-21.2 */
 static Lisp_Object Qweak, Qkey_weak, Qvalue_weak, Qkey_or_value_weak;
-static Lisp_Object Qnon_weak, Q_type, Q_data;
+static Lisp_Object Qnon_weak;
 
 /* A hash table test, with its associated hash function. equal_function may
    call lisp_equal_function, and hash_function similarly may call
@@ -737,10 +737,27 @@ hash_table_size_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 			  Error_Behavior errb)
 {
   if (NATNUMP (value))
-    return 1;
+    {
+      if (BIGNUMP (value))
+        {
+          /* hash_table_size() can't handle excessively large sizes. */
+          maybe_signal_error_1 (Qargs_out_of_range,
+                                list3 (value, Qzero,
+                                       make_integer (EMACS_INT_MAX)),
+                                Qhash_table, errb);
+          return 0;
+        }
+      else
+        {
+          return 1;
+        }
+    }
+  else
+    {
+      maybe_signal_error_1 (Qwrong_type_argument, list2 (Qnatnump, value),
+                            Qhash_table, errb);
+    }
 
-  maybe_signal_error_1 (Qwrong_type_argument, list2 (Qnatnump, value),
-			Qhash_table, errb);
   return 0;
 }
 
@@ -761,7 +778,7 @@ hash_table_weakness_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
   if (EQ (value, Qkey_or_value))	return 1;
   if (EQ (value, Qvalue))		return 1;
 
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
   /* Following values are obsolete as of 19990901 in xemacs-21.2 */
   if (EQ (value, Qnon_weak))		return 1;
   if (EQ (value, Qweak))		return 1;
@@ -785,7 +802,7 @@ decode_hash_table_weakness (Lisp_Object obj)
   if (EQ (obj, Qkey_or_value))		return HASH_TABLE_KEY_VALUE_WEAK;
   if (EQ (obj, Qvalue))			return HASH_TABLE_VALUE_WEAK;
 
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
   /* Following values are obsolete as of 19990901 in xemacs-21.2 */
   if (EQ (obj, Qnon_weak))		return HASH_TABLE_NON_WEAK;
   if (EQ (obj, Qweak))			return HASH_TABLE_WEAK;
@@ -966,7 +983,7 @@ hash_table_instantiate (Lisp_Object plist)
           else if (EQ (key, Qrehash_threshold)) rehash_threshold = value;
           else if (EQ (key, Qweakness))	    weakness	     = value;
           else if (EQ (key, Qdata))		    data	     = value;
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
           else if (EQ (key, Qtype))/*obsolete*/ weakness	     = value;
 #endif
           else if (KEYWORDP (key))
@@ -1019,6 +1036,7 @@ structure_type_create_hash_table_structure_name (Lisp_Object structure_name)
   define_structure_type_keyword (st, Q_weakness, hash_table_weakness_validate);
   define_structure_type_keyword (st, Q_data, hash_table_data_validate);
 
+#ifdef NEED_TO_HANDLE_21_4_CODE
   /* Next the mutually exclusive, older, non-keyword syntax: */
   define_structure_type_keyword (st, Qtest, hash_table_test_validate);
   define_structure_type_keyword (st, Qsize, hash_table_size_validate);
@@ -1027,7 +1045,6 @@ structure_type_create_hash_table_structure_name (Lisp_Object structure_name)
   define_structure_type_keyword (st, Qweakness, hash_table_weakness_validate);
   define_structure_type_keyword (st, Qdata, hash_table_data_validate);
 
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
   /* obsolete as of 19990901 in xemacs-21.2 */
   define_structure_type_keyword (st, Qtype, hash_table_weakness_validate);
 #endif
@@ -1041,7 +1058,9 @@ void
 structure_type_create_hash_table (void)
 {
   structure_type_create_hash_table_structure_name (Qhash_table);
+#ifdef NEED_TO_HANDLE_21_4_CODE
   structure_type_create_hash_table_structure_name (Qhashtable); /* compat */
+#endif
 }
 
 
@@ -1111,14 +1130,14 @@ arguments: (&key TEST SIZE REHASH-SIZE REHASH-THRESHOLD WEAKNESS)
 */
        (int nargs, Lisp_Object *args))
 {
-#ifdef NO_NEED_TO_HANDLE_21_4_CODE
-  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 5,
+#ifndef NEED_TO_HANDLE_21_4_CODE
+  PARSE_KEYWORDS (Fmake_hash_table, nargs, args, 5,
                   (test, size, rehash_size, rehash_threshold, weakness),
-                  NULL, 0);
+                  NULL);
 #else
-  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 6,
+  PARSE_KEYWORDS (Fmake_hash_table, nargs, args, 6,
                   (test, size, rehash_size, rehash_threshold, weakness,
-		   type), (type = Qunbound, weakness = Qunbound), 0);
+		   type), (type = Qunbound, weakness = Qunbound));
 
   if (EQ (weakness, Qunbound))
     {
@@ -2276,12 +2295,10 @@ syms_of_elhash (void)
   DEFSYMBOL (Qnon_weak);     /* obsolete */
 
   DEFKEYWORD (Q_data);
-  DEFKEYWORD (Q_test);
   DEFKEYWORD (Q_size);
   DEFKEYWORD (Q_rehash_size);
   DEFKEYWORD (Q_rehash_threshold);
   DEFKEYWORD (Q_weakness);
-  DEFKEYWORD (Q_type); /* obsolete */
 }
 
 void

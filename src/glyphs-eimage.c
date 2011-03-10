@@ -694,7 +694,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* 3. Now create the EImage(s) */
   {
-    ColorMapObject *cmo = unwind.giffile->SColorMap;
+    ColorMapObject *cmo = (unwind.giffile->Image.ColorMap ? unwind.giffile->Image.ColorMap : unwind.giffile->SColorMap);
     int i, j, row, pass, interlace, slice;
     UINT_64_BIT pixels_sq;
     Binbyte *eip;
@@ -702,6 +702,9 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        0, 8, 16, ..., 4, 12, 20, ..., 2, 6, 10, ..., 1, 3, 5, ...  */
     static int InterlacedOffset[] = { 0, 4, 2, 1 };
     static int InterlacedJumps[] = { 8, 8, 4, 2 };
+
+    if (cmo == NULL)
+      signal_image_error ("GIF image has no color map", instantiator);
 
     height = unwind.giffile->SHeight;
     width = unwind.giffile->SWidth;

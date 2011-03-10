@@ -56,15 +56,8 @@
 
 (defun cleanup-simple-finalizers (alist)
   "Clean up `simple-finalizer-ephemerons'."
-  ;; We have to do this by hand because DELETE-IF isn't defined yet.
-  (let ((current simple-finalizer-ephemerons)
-	(prev nil))
-    (while (not (null current))
-      (if (not (ephemeron-ref (car current)))
-	  (if (null prev)
-	      (setq simple-finalizer-ephemerons (cdr current))
-	    (setcdr prev (cdr current)))
-	(setq prev current))
-      (setq current (cdr current)))))
+  (and simple-finalizer-ephemerons
+       (setq simple-finalizer-ephemerons
+	     (delete-if-not #'ephemeron-ref simple-finalizer-ephemerons))))
 
 (add-hook 'post-gc-hook 'cleanup-simple-finalizers)

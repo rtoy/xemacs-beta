@@ -1159,7 +1159,7 @@ struct command_builder
      boundary: up to 20 consecutive self-inserts can happen before an undo-
      boundary is pushed.  This variable is that counter.
      */
-  int self_insert_countdown;
+  Elemcount self_insert_countdown;
 };
 
 #endif /* INCLUDED_events_h_ */

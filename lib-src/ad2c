@@ -1,5 +1,9 @@
 #!/bin/sh
 #
+# Copyright (C) 1990, 1991 George Ferguson
+# Copyright (C) 1992 Charles Hannum
+# Copyright (C) 1992 Matthew Stier
+#
 #	ad2c : Convert app-defaults file to C strings decls.
 #
 #	George Ferguson, ferguson@cs.rcohester.edu, 12 Nov 1990.
@@ -27,7 +31,7 @@
 # You should have received a copy of the GNU General Public License
 # along with XEmacs; see the file COPYING.  If not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-# Boston, MA 02111-1301, USA.  */
+# Boston, MA 02110-1301, USA.  */
 #
 # Synched up with: Not in FSF.
 

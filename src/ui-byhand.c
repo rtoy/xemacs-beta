@@ -1,4 +1,8 @@
-/* I really wish this entire file could go away, but there is
+/* ui-byhand.c --- hand-coded GTK functions
+
+Copyright (C) 2000, 2001 William M. Perry
+
+   I really wish this entire file could go away, but there is
    currently no way to do the following in the Foreign Function
    Interface:
 
@@ -23,7 +27,7 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-Boston, MA 02111-1301, USA.
+Boston, MA 02110-1301, USA.
 */
 
 #include "gui.h"

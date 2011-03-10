@@ -86,4 +86,10 @@ a check is done for bogus resource specifications."
       (x-bogosity-check-resource name class type))
   (x-get-resource name class type locale nil 'warn))
 
+(defun device-x-display (&optional device)
+  "If DEVICE is an X11 device, return its DISPLAY.
+
+DEVICE defaults to the selected device."
+  (and (eq 'x (device-type device)) (device-connection device)))
+
 ;;; x-misc.el ends here

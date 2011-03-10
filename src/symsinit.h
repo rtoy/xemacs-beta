@@ -16,8 +16,8 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 /* Synched up with: Not in FSF. */
 
@@ -54,6 +54,7 @@ void init_elhash_once_early (void);
 void init_errors_once_early (void);
 void reinit_opaque_early (void);
 void init_opaque_once_early (void);
+void reinit_process_early (void);
 void reinit_symbols_early (void);
 void init_symbols_once_early (void);
 

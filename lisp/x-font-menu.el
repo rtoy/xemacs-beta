@@ -253,21 +253,21 @@ or if you change your font path, you can call this to re-initialize the menus."
      (vector
       cache
       (mapcar (lambda (x)
-		(vector x
+                (vector x
 			(list 'font-menu-set-font x nil nil)
-			':style 'radio ':active nil ':selected nil))
+			:style 'radio :active nil :selected nil))
 	      families)
       (mapcar (lambda (x)
 		(vector (if (/= 0 (% x 10))
 			    (number-to-string (/ x 10.0))
 			  (number-to-string (/ x 10)))
 			(list 'font-menu-set-font nil nil x)
-			':style 'radio ':active nil ':selected nil))
+			:style 'radio :active nil :selected nil))
 	      sizes)
       (mapcar (lambda (x)
 		(vector x
 			(list 'font-menu-set-font nil x nil)
-			':style 'radio ':active nil ':selected nil))
+			:style 'radio :active nil :selected nil))
 	      weights)))
     (cdr dev-cache)))
 

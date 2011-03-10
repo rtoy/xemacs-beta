@@ -699,7 +699,7 @@ of the start of the containing expression."
 (defvar lisp-function-and-type-regexp
   (concat "def\\("
 	  ;; def but not define-.
-	  "\\(un\\|advice\\|alias\\|macro\\*?\\|setf\\|subst\\*?\\|"
+	  "\\(un\\*?\\|advice\\|alias\\|macro\\*?\\|setf\\|subst\\*?\\|"
 	  "-edebug-spec\\|"
 	  ;; CLOS
 	  "method\\|generic\\|"

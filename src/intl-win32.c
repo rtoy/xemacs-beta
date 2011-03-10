@@ -1796,9 +1796,14 @@ mswindows_multibyte_to_unicode_putprop (Lisp_Object codesys,
 	data->cp_type = MULTIBYTE_MAC;
       else
 	{
-	  CHECK_NATNUM (value);
 	  data->locale_type = MULTIBYTE_SPECIFIED_CODE_PAGE;
-	  data->cp = XINT (value);
+#ifdef HAVE_BIGNUM
+          check_integer_range (value, Qzero, make_integer (INT_MAX));
+	  data->cp = BIGNUMP (value) ? bignum_to_int (XBIGNUM_DATA (value)) : XINT (value);
+#else
+          CHECK_NATNUM (value);
+          data->cp = XINT (value);
+#endif
 	}
     }
   else if (EQ (key, Qlocale))
@@ -2362,14 +2367,15 @@ complex_vars_of_intl_win32 (void)
   Fmake_coding_system
     (Qmswindows_unicode, Qunicode,
      build_defer_string ("MS Windows Unicode"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "Converts to the Unicode encoding for Windows API calls.\n"
 "This encoding is equivalent to standard UTF16, little-endian."
 ),
-		    Qmnemonic, build_ascstring ("MSW-U")),
-	     list4 (Qunicode_type, Qutf_16,
-		    Qlittle_endian, Qt)));
+            Qmnemonic, build_ascstring ("MSW-U"),
+            Qunicode_type, Qutf_16,
+            Qlittle_endian, Qt,
+            Qunbound));
 
 #ifdef MULE
   /* Just temporarily.  This will get fixed in mule-msw-init.el. */

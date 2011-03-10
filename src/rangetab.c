@@ -808,13 +808,38 @@ rangetab_instantiate (Lisp_Object plist)
 {
   Lisp_Object data = Qnil, type = Qnil, rangetab;
 
-  PROPERTY_LIST_LOOP_3 (key, value, plist)
+  if (KEYWORDP (Fcar (plist)))
     {
-      if (EQ (key, Qtype)) type = value;
-      else if (EQ (key, Qdata)) data = value;
-      else
-	ABORT ();
+      PROPERTY_LIST_LOOP_3 (key, value, plist)
+	{
+	  if (EQ (key, Q_type)) type = value;
+	  else if (EQ (key, Q_data)) data = value;
+	  else if (!KEYWORDP (key))
+            signal_error
+	      (Qinvalid_read_syntax, 
+	       "can't mix keyword and non-keyword structure syntax",
+	       key);
+	  else 
+	    ABORT ();
+	}
     }
+#ifdef NEED_TO_HANDLE_21_4_CODE
+  else
+    {
+      PROPERTY_LIST_LOOP_3 (key, value, plist)
+	{
+	  if (EQ (key, Qtype)) type = value;
+	  else if (EQ (key, Qdata)) data = value;
+	  else if (KEYWORDP (key))
+            signal_error
+	      (Qinvalid_read_syntax, 
+	       "can't mix keyword and non-keyword structure syntax",
+	       key);
+	  else 
+	    ABORT ();
+	}
+    }
+#endif /* NEED_TO_HANDLE_21_4_CODE */
 
   rangetab = Fmake_range_table (type);
 
@@ -1060,6 +1085,10 @@ structure_type_create_rangetab (void)
 
   st = define_structure_type (Qrange_table, 0, rangetab_instantiate);
 
+  define_structure_type_keyword (st, Q_data, rangetab_data_validate);
+  define_structure_type_keyword (st, Q_type, rangetab_type_validate);
+#ifdef NEED_TO_HANDLE_21_4_CODE
   define_structure_type_keyword (st, Qdata, rangetab_data_validate);
   define_structure_type_keyword (st, Qtype, rangetab_type_validate);
+#endif /* NEED_TO_HANDLE_21_4_CODE */
 }

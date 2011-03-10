@@ -1,3 +1,7 @@
+;; gnome.el --- GNOME integration for XEmacs/GTK
+;;
+;; Copyright (C) 2000, 2001 William M. Perry
+;;
 ;; This file is part of XEmacs.
 ;;
 ;; XEmacs is free software; you can redistribute it and/or modify it
@@ -13,7 +17,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to
 ;; the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-;; Boston, MA 02111-1301, USA.  */
+;; Boston, MA 02110-1301, USA.  */
 
 (globally-declare-fboundp
  '(gtk-type-from-name

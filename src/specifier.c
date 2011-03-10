@@ -257,9 +257,9 @@ prune_specifiers (void)
 	  Lisp_Specifier* sp = XSPECIFIER (rest);
 	  /* A bit of assertion that we're removing both parts of the
 	     magic one altogether */
-	  assert (!MAGIC_SPECIFIER_P(sp)
-		  || (BODILY_SPECIFIER_P(sp) && marked_p (sp->fallback))
-		  || (GHOST_SPECIFIER_P(sp) && marked_p (sp->magic_parent)));
+	  assert (!MAGIC_SPECIFIER_P (sp)
+		  || (BODILY_SPECIFIER_P (sp) && marked_p (sp->fallback))
+		  || (GHOST_SPECIFIER_P (sp) && marked_p (sp->magic_parent)));
 	  /* This specifier is garbage.  Remove it from the list. */
 	  if (NILP (prev))
 	    Vall_specifiers = sp->next_specifier;
@@ -310,7 +310,7 @@ static void
 finalize_specifier (Lisp_Object obj)
 {
   Lisp_Specifier *sp = XSPECIFIER (obj);
-  if (!GHOST_SPECIFIER_P(sp) && sp->caching)
+  if (!GHOST_SPECIFIER_P (sp) && sp->caching)
     {
       xfree (sp->caching);
       sp->caching = 0;
@@ -558,9 +558,9 @@ make_magic_specifier (Lisp_Object type)
   UNGCPRO;
 
   /* Connect guys together */
-  XSPECIFIER(bodily)->magic_parent = Qt;
-  XSPECIFIER(bodily)->fallback = ghost;
-  XSPECIFIER(ghost)->magic_parent = bodily;
+  XSPECIFIER (bodily)->magic_parent = Qt;
+  XSPECIFIER (bodily)->fallback = ghost;
+  XSPECIFIER (ghost)->magic_parent = bodily;
 
   return bodily;
 }
@@ -1008,7 +1008,7 @@ charset_matches_specifier_tag_set_p (Lisp_Object charset, Lisp_Object tag_set,
   Lisp_Object rest;
   int res = 0;
 
-  assert(stage < NUM_MATCHSPEC_STAGES);
+  assert (stage < NUM_MATCHSPEC_STAGES);
 
   LIST_LOOP (rest, tag_set)
     {
@@ -1280,7 +1280,7 @@ change.
 	}
     }
 
-  return define_specifier_tag(tag, device_predicate, charset_predicate);
+  return define_specifier_tag (tag, device_predicate, charset_predicate);
 }
 
 /* Called at device-creation time to initialize the user-defined
@@ -1303,11 +1303,11 @@ setup_device_initial_specifier_tags (struct device *d)
   for (rest = Vuser_defined_tags, rest2 = DEVICE_USER_DEFINED_TAGS (d);
        !NILP (rest); rest = XCDR (rest), rest2 = XCDR (rest2))
     {
-      GET_LIST_LENGTH(XCAR(rest), list_len);
+      GET_LIST_LENGTH (XCAR(rest), list_len);
 
-      assert(3 == list_len);
+      assert (3 == list_len);
 
-      device_predicate = XCADR(XCAR (rest));
+      device_predicate = XCADR (XCAR (rest));
 
       if (NILP (device_predicate))
 	{
@@ -1668,7 +1668,7 @@ static Lisp_Object
 bodily_specifier (Lisp_Object spec)
 {
   return (GHOST_SPECIFIER_P (XSPECIFIER (spec))
-	  ? XSPECIFIER(spec)->magic_parent : spec);
+	  ? XSPECIFIER (spec)->magic_parent : spec);
 }
 
 /* Signal error if (specifier SPEC is read-only.
@@ -2346,7 +2346,7 @@ add_spec_to_ghost_specifier (Lisp_Object specifier, Lisp_Object instantiator,
 			     Lisp_Object how_to_add)
 {
   int depth = unlock_ghost_specifiers_protected ();
-  Fadd_spec_to_specifier (XSPECIFIER(specifier)->fallback,
+  Fadd_spec_to_specifier (XSPECIFIER (specifier)->fallback,
 			  instantiator, locale, tag_set, how_to_add);
   unbind_to (depth);
 }
@@ -2544,7 +2544,7 @@ remove_ghost_specifier (Lisp_Object specifier, Lisp_Object locale,
 			Lisp_Object tag_set, Lisp_Object exact_p)
 {
   int depth = unlock_ghost_specifiers_protected ();
-  Fremove_specifier (XSPECIFIER(specifier)->fallback,
+  Fremove_specifier (XSPECIFIER (specifier)->fallback,
 		     locale, tag_set, exact_p);
   unbind_to (depth);
 }
@@ -2732,7 +2732,7 @@ set_specifier_fallback (Lisp_Object specifier, Lisp_Object fallback)
   if (SPECIFIERP (fallback))
     assert (EQ (Fspecifier_type (specifier), Fspecifier_type (fallback)));
   if (BODILY_SPECIFIER_P (sp))
-    GHOST_SPECIFIER(sp)->fallback = fallback;
+    GHOST_SPECIFIER (sp)->fallback = fallback;
   else
     sp->fallback = fallback;
   /* call the after-change method */
@@ -2822,14 +2822,14 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 
 	  FROB (initial, STAGE_INITIAL)
 	  else FROB (final, STAGE_FINAL)
-	  else assert(0);
+	  else assert (0);
 #undef FROB
 
 	}
     }
 #endif /* MULE */
 
-  LIST_LOOP(rest, inst_list)
+  LIST_LOOP (rest, inst_list)
     {
       Lisp_Object tagged_inst = XCAR (rest);
       Lisp_Object tag_set = XCAR (tagged_inst);
@@ -2843,7 +2843,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
       val = XCDR (tagged_inst);
       the_instantiator = val;
 
-      if (!NILP(charset) &&
+      if (!NILP (charset) &&
 	  !(charset_matches_specifier_tag_set_p (charset, tag_set, stage)))
 	{
 	  ++respected_charsets;
@@ -2853,7 +2853,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
       if (HAS_SPECMETH_P (sp, instantiate))
 	val = call_with_suspended_errors
 	  ((lisp_fn_t) RAW_SPECMETH (sp, instantiate),
-	   Qunbound, Qspecifier, errb, 5, specifier,
+	   Qunbound, Qspecifier, ERROR_ME_WARN, 5, specifier,
 	   matchspec, domain, val, depth, no_fallback);
 
       if (!UNBOUNDP (val))
@@ -3419,7 +3419,7 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
   sp->caching->always_recompute = always_recompute;
   Vcached_specifiers = Fcons (specifier, Vcached_specifiers);
   if (BODILY_SPECIFIER_P (sp))
-    GHOST_SPECIFIER(sp)->caching = sp->caching;
+    GHOST_SPECIFIER (sp)->caching = sp->caching;
   recompute_cached_specifier_everywhere (specifier);
 }
 
@@ -3764,12 +3764,19 @@ struct specifier_stats
 };
 
 static void
-specifier_memory_usage (Lisp_Object specifier,
-			struct generic_usage_stats *gustats)
+specifier_memory_usage (Lisp_Object UNUSED (specifier),
+			struct generic_usage_stats * UNUSED (gustats))
 {
+#if 0
   struct specifier_stats *stats = (struct specifier_stats *) gustats;
   Lisp_Specifier *spec = XSPECIFIER (specifier);
 
+  /* #### FIXME -- sometimes it appears that the specs, or at least global
+     specs, can have circularities in the tree structure.  This makes
+     everything much slower and in fact can result in a hang with 100% CPU.
+     Need to investigate properly and figure out what's going on here,
+     since the specs are copied when stored in and so supposedly, circular
+     structures shouldn't exist. */
   stats->global = tree_memory_usage (spec->global_specs, 1);
   stats->device = tree_memory_usage (spec->device_specs, 1);
   stats->frame = tree_memory_usage (spec->frame_specs, 1);
@@ -3778,6 +3785,7 @@ specifier_memory_usage (Lisp_Object specifier,
   stats->fallback = tree_memory_usage (spec->fallback, 1);
   if (SPECIFIERP (spec->magic_parent))
     stats->magic_parent = lisp_object_memory_usage (spec->magic_parent);
+#endif
 }
 
 #endif /* MEMORY_USAGE_STATS */

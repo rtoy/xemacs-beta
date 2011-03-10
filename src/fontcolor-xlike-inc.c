@@ -34,53 +34,64 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-xlike-inc.h"
 
-#define DEBUG_FONTS1(format, arg)		\
+#ifdef DEBUG_XEMACS
+# define DEBUG_FONTS1(format, arg)		\
 do {						\
   if (debug_x_fonts)				\
     debug_out (format, arg);			\
 } while (0)
 
-#define DEBUG_FONTS2(format, arg1, arg2)	\
+# define DEBUG_FONTS2(format, arg1, arg2)	\
 do {						\
   if (debug_x_fonts)				\
     debug_out (format, arg1, arg2);		\
 } while (0)
 
-#define DEBUG_FONTS3(format, arg1, arg2, arg3)	\
+# define DEBUG_FONTS3(format, arg1, arg2, arg3)	\
 do {						\
   if (debug_x_fonts)				\
     debug_out (format, arg1, arg2, arg3);	\
 } while (0)
 
-#define DEBUG_FONTS4(format, arg1, arg2, arg3, arg4)	\
+# define DEBUG_FONTS4(format, arg1, arg2, arg3, arg4)	\
 do {							\
   if (debug_x_fonts)					\
     debug_out (format, arg1, arg2, arg3, arg4);		\
 } while (0)
 
-#define DEBUG_FONTS_LISP1(format, arg)		\
+# define DEBUG_FONTS_LISP1(format, arg)		\
 do {						\
   if (debug_x_fonts)				\
     debug_out_lisp (format, 1, arg);		\
 } while (0)
 
-#define DEBUG_FONTS_LISP2(format, arg1, arg2)	\
+# define DEBUG_FONTS_LISP2(format, arg1, arg2)	\
 do {						\
   if (debug_x_fonts)				\
     debug_out_lisp (format, 2, arg1, arg2);	\
 } while (0)
 
-#define DEBUG_FONTS_LISP3(format, arg1, arg2, arg3)	\
+# define DEBUG_FONTS_LISP3(format, arg1, arg2, arg3)	\
 do {							\
   if (debug_x_fonts)					\
     debug_out_lisp (format, 3, arg1, arg2, arg3);	\
 } while (0)
 
-#define DEBUG_FONTS_LISP4(format, arg1, arg2, arg3, arg4)	\
+# define DEBUG_FONTS_LISP4(format, arg1, arg2, arg3, arg4)	\
 do {								\
   if (debug_x_fonts)						\
     debug_out_lisp (format, 4, arg1, arg2, arg3, arg4);		\
 } while (0)
+#else /* not DEBUG_XEMACS */
+# define DEBUG_FONTS1(format, arg)
+# define DEBUG_FONTS2(format, arg1, arg2)
+# define DEBUG_FONTS3(format, arg1, arg2, arg3)
+# define DEBUG_FONTS4(format, arg1, arg2, arg3, arg4)
+# define DEBUG_FONTS_LISP1(format, arg)
+# define DEBUG_FONTS_LISP2(format, arg1, arg2)
+# define DEBUG_FONTS_LISP3(format, arg1, arg2, arg3)
+# define DEBUG_FONTS_LISP4(format, arg1, arg2, arg3, arg4)
+#endif
 
 #ifdef MULE
 

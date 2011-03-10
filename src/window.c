@@ -3789,6 +3789,11 @@ global or per-frame buffer ordering.
 
       Fset_buffer (buffer);
     }
+  if (NILP (XBUFFER (buffer)->display_count))
+    XBUFFER (buffer)->display_count = make_int (1);
+  else
+    XBUFFER (buffer)->display_count = make_int (1 + XINT (XBUFFER (buffer)->display_count));
+  XBUFFER (buffer)->display_time = Fcurrent_time();
   return Qnil;
 }
 
@@ -5267,9 +5272,9 @@ compute_window_usage (struct window *w, struct window_stats *stats,
   stats->line_start =
     compute_line_start_cache_dynarr_usage (w->line_start_cache, ustats);
   stats->face = compute_face_cachel_usage (w->face_cachels,
-					   IF_OLD_GC (ustats));
+					   ustats);
   stats->glyph = compute_glyph_cachel_usage (w->glyph_cachels,
-					     IF_OLD_GC (ustats));
+					     ustats);
   {
     struct window_mirror *wm;
 

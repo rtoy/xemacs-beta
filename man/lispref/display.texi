@@ -720,7 +720,7 @@ given time.
 and then present it to the user for perusal rather than for editing.
 Many of the help commands use this feature.
 
-@defspec with-output-to-temp-buffer buffer-name forms@dots{}
+@deffn {Special Operator} with-output-to-temp-buffer buffer-name forms@dots{}
 This function executes @var{forms} while arranging to insert any
 output they print into the buffer named @var{buffer-name}.  The buffer
 is then shown in some window for viewing, displayed but not selected.
@@ -760,7 +760,7 @@ The value of the last form in @var{forms} is returned.
 ---------- Buffer: foo ----------
 @end group
 @end example
-@end defspec
+@end deffn
 
 @defvar temp-buffer-show-function
 If this variable is non-@code{nil}, @code{with-output-to-temp-buffer}

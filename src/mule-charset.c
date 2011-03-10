@@ -1629,10 +1629,12 @@ split_combined_codepoint (Lisp_Object charset, Lisp_Object codepoint,
       cp = XINT (codepoint);
       *c1 = cp >> 8;
       *c2 = cp & 255;
-      check_int_range (*c1, XCHARSET_MIN_CODE (charset, 0),
-		       XCHARSET_MAX_CODE (charset, 0));
-      check_int_range (*c2, XCHARSET_MIN_CODE (charset, 1),
-		       XCHARSET_MAX_CODE (charset, 1));
+      check_integer_range (make_int (*c1),
+                           make_int (XCHARSET_MIN_CODE (charset, 0)),
+                           make_int (XCHARSET_MAX_CODE (charset, 0)));
+      check_integer_range (make_int (*c2),
+                           make_int (XCHARSET_MIN_CODE (charset, 1)),
+                           make_int (XCHARSET_MAX_CODE (charset, 1)));
     }
 }
 

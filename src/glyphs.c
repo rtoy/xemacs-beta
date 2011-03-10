@@ -82,7 +82,7 @@ Lisp_Object Qsubwindow_image_instance_p;
 Lisp_Object Qwidget_image_instance_p;
 Lisp_Object Qconst_glyph_variable;
 Lisp_Object Qmono_pixmap, Qcolor_pixmap, Qsubwindow;
-Lisp_Object Q_file, Q_data, Q_face, Q_pixel_width, Q_pixel_height;
+Lisp_Object Q_file, Q_face, Q_pixel_width, Q_pixel_height;
 Lisp_Object Qformatted_string;
 Lisp_Object Vcurrent_display_table;
 Lisp_Object Vtruncation_glyph, Vcontinuation_glyph, Voctal_escape_glyph;
@@ -2607,7 +2607,7 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 static void
 check_valid_xbm_inline (Lisp_Object data)
 {
-  Lisp_Object width, height, bits;
+  Lisp_Object width, height, bits, args[2];
 
   if (!CONSP (data) ||
       !CONSP (XCDR (data)) ||
@@ -2627,7 +2627,16 @@ check_valid_xbm_inline (Lisp_Object data)
   if (!NATNUMP (height))
     invalid_argument ("Height must be a natural number", height);
 
-  if (((XINT (width) * XINT (height)) / 8) > string_char_length (bits))
+  args[0] = width;
+  args[1] = height;
+
+  args[0] = Ftimes (countof (args), args);
+  args[1] = make_integer (8);
+
+  args[0] = Fquo (countof (args), args);
+  args[1] = make_integer (string_char_length (bits));
+
+  if (!NILP (Fgtr (countof (args), args)))
     invalid_argument ("data is too short for width and height",
 			 vector3 (width, height, bits));
 }
@@ -5186,7 +5195,6 @@ syms_of_glyphs (void)
   DEFSUBR (Fconsole_type_image_conversion_list);
 
   DEFKEYWORD (Q_file);
-  DEFKEYWORD (Q_data);
   DEFKEYWORD (Q_face);
   DEFKEYWORD (Q_pixel_height);
   DEFKEYWORD (Q_pixel_width);

@@ -524,35 +524,31 @@ parentheses on the modeline."
      (cons
       "Minor Mode Toggles"
       (sort
-       (delq nil (mapcar
-		 #'(lambda (x)
-		     (let* ((toggle-sym (car x))
-			    (toggle-fun (or (get toggle-sym
-						 'modeline-toggle-function)
-					    (and (commandp toggle-sym)
-						 toggle-sym)))
-			    (menu-tag (symbol-name (if (symbolp toggle-fun)
-						       toggle-fun
-						     toggle-sym))
-				      ;; Here a function should
-				      ;; maybe be invoked to
-				      ;; beautify the symbol's
-				      ;; menu appearance.
-				      ))
-		       (and toggle-fun
-			    (vector menu-tag
-				    toggle-fun
-				    ;; The following two are wrong
-				    ;; because of possible name
-				    ;; clashes.
-				    ;:active (get toggle-sym :active t)
-				    ;:included (get toggle-sym :included t)
-				    :style 'toggle
-				    :selected (and (boundp toggle-sym)
-						   toggle-sym)))))
-		 minor-mode-alist))
-       (lambda (e1 e2)
-	 (string< (aref e1 0) (aref e2 0)))))
+       (mapcan
+        #'(lambda (x)
+            (let* ((toggle-sym (car x))
+                   (toggle-fun (or (get toggle-sym
+                                        'modeline-toggle-function)
+                                   (and (commandp toggle-sym)
+                                        toggle-sym)))
+                   (menu-tag (symbol-name (if (symbolp toggle-fun)
+                                              toggle-fun
+                                            toggle-sym))
+                             ;; Here a function should maybe be invoked to
+                             ;; beautify the symbol's menu appearance.
+                             ))
+              (and toggle-fun
+                   (list (vector menu-tag
+                                 toggle-fun
+                                 ;; The following two are wrong because of
+                                 ;; possible name clashes.
+                                 ;:active (get toggle-sym :active t)
+                                 ;:included (get toggle-sym :included t)
+                                 :style 'toggle
+                                 :selected (and (boundp toggle-sym)
+                                                toggle-sym))))))
+		 minor-mode-alist)
+       (lambda (e1 e2) (string< (aref e1 0) (aref e2 0)))))
      event)))
 
 (defvar modeline-minor-mode-map (make-sparse-keymap 'modeline-minor-mode-map)

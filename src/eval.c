@@ -1270,9 +1270,20 @@ There is an alternative, more readable, reader syntax for `quote':  a Lisp
 object preceded by `''. Thus, `'x' is equivalent to `(quote x)', in all
 contexts.  A print function may use either.  Internally the expression is
 represented as `(quote x)').
+
+arguments: (OBJECT)
 */
        (args))
 {
+  int nargs;
+
+  GET_LIST_LENGTH (args, nargs);
+  if (nargs != 1)
+    {
+      Fsignal (Qwrong_number_of_arguments,
+               list2 (Qquote, make_int (nargs)));
+    }
+
   return XCAR (args);
 }
 
@@ -1341,9 +1352,20 @@ There is an alternative, more readable, reader syntax for `function':  a Lisp
 object preceded by `#''. Thus, #'x is equivalent to (function x), in all
 contexts.  A print function may use either.  Internally the expression is
 represented as `(function x)').
+
+arguments: (SYMBOL-OR-LAMBDA)
 */
        (args))
 {
+  int nargs;
+
+  GET_LIST_LENGTH (args, nargs);
+  if (nargs != 1)
+    {
+      Fsignal (Qwrong_number_of_arguments,
+               list2 (Qfunction, make_int (nargs)));
+    }
+
   return XCAR (args);
 }
 
@@ -1780,22 +1802,13 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val, Lisp_Object tag)
   LONGJMP (c->jmp, 1);
 }
 
-DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object, Lisp_Object, int,
+DECLARE_DOESNT_RETURN (throw_or_bomb_out_unsafe (Lisp_Object, Lisp_Object, int,
 					  Lisp_Object, Lisp_Object));
 
 DOESNT_RETURN
-throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
-		   Lisp_Object sig, Lisp_Object data)
+throw_or_bomb_out_unsafe (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
+			  Lisp_Object sig, Lisp_Object data)
 {
-#ifdef DEFEND_AGAINST_THROW_RECURSION
-  /* die if we recurse more than is reasonable */
-  assert (++throw_level <= 20);
-#endif
-
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-  check_proper_critical_section_nonlocal_exit_protection ();
-#endif
-
   /* If bomb_out_p is t, this is being called from Fsignal as a
      "last resort" when there is no handler for this error and
       the debugger couldn't be invoked, so we are throwing to
@@ -1834,6 +1847,24 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
       else
         call1 (Qreally_early_error_handler, Fcons (sig, data));
     }
+}
+  
+DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object, Lisp_Object, int,
+					  Lisp_Object, Lisp_Object));
+
+DOESNT_RETURN
+throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
+		   Lisp_Object sig, Lisp_Object data)
+{
+#ifdef DEFEND_AGAINST_THROW_RECURSION
+  /* die if we recurse more than is reasonable */
+  assert (++throw_level <= 20);
+#endif
+
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  check_proper_critical_section_nonlocal_exit_protection ();
+#endif
+  throw_or_bomb_out_unsafe (tag, val, bomb_out_p, sig, data);
 }
 
 /* See above, where CATCHLIST is defined, for a description of how
@@ -4120,12 +4151,16 @@ arguments: (FUNCTION &rest ARGS)
 	}
       else if (max_args == UNEVALLED) /* Can't funcall a special operator */
 	{
+
+#ifdef NEED_TO_HANDLE_21_4_CODE
           /* Ugh, ugh, ugh. */
           if (EQ (fun, XSYMBOL_FUNCTION (Qthrow)))
             {
               args[0] = Qobsolete_throw;
               goto retry;
             }
+#endif /* NEED_TO_HANDLE_21_4_CODE */
+
 	  goto invalid_function;
 	}
       else
@@ -4918,17 +4953,19 @@ arguments: (FIRST-DESIRED-MULTIPLE-VALUE MULTIPLE-VALUE-UPPER-LIMIT FORM)
     }
 
   argv[0] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
-  CHECK_NATNUM (argv[0]);
-  first = XINT (argv[0]);
 
   GCPRO1 (argv[0]);
   gcpro1.nvars = 1;
 
   args = XCDR (args);
-
   argv[1] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
-  CHECK_NATNUM (argv[1]);
+
+  check_integer_range (argv[1], Qzero, make_int (EMACS_INT_MAX));
+  check_integer_range (argv[0], Qzero, argv[1]);
+
   upper = XINT (argv[1]);
+  first = XINT (argv[0]);
+
   gcpro1.nvars = 2;
 
   /* The unintuitive order of things here is for the sake of the bytecode;
@@ -7200,7 +7237,7 @@ If NFRAMES is more than the number of frames, the value is nil.
   REGISTER int i;
   Lisp_Object tem;
 
-  CHECK_NATNUM (nframes);
+  check_integer_range (nframes, Qzero, make_integer (EMACS_INT_MAX));
 
   /* Find the frame requested.  */
   for (i = XINT (nframes); backlist && (i-- > 0);)

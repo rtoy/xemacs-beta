@@ -184,11 +184,7 @@ mode.
 
   slow_down_interrupts ();
 #ifdef HAVE_GNOME
-#ifdef INFODOCK
-  gnome_init ("InfoDock", EMACS_VERSION, argc, argv);
-#else
   gnome_init ("XEmacs", EMACS_VERSION, argc, argv);
-#endif /* INFODOCK */
 #else
   gtk_init (&argc, &argv);
 #endif

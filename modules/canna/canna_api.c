@@ -2,7 +2,7 @@
 
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2005 Ben Wing.
+   Copyright (C) 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -661,7 +661,7 @@ Get current mode string.
 
 #define RKBUFSIZE 1024
 
-static unsigned char yomibuf[RKBUFSIZE];
+static UExtbyte yomibuf[RKBUFSIZE];
 static short kugiri[RKBUFSIZE / 2];
 
 static int
@@ -720,7 +720,7 @@ Clause separator is set.
   strncpy ((char *) yomibuf, ext, sizeof (yomibuf));
   yomibuf[sizeof (yomibuf) - 1] = '\0';
 
-  nbun = RkBgnBun (IRCP_context, yomibuf, strlen ((char *) yomibuf),
+  nbun = RkBgnBun (IRCP_context, (char *) yomibuf, strlen ((char *) yomibuf),
 		   (RK_XFER << RK_XFERBITS) | RK_KFER);
 
   return kanjiYomiList (IRCP_context, nbun);

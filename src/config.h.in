@@ -114,10 +114,6 @@ things are arranged in config.h.in.  In particular:
 #undef XEMACS_CODENAME
 #undef XEMACS_EXTRA_NAME
 #undef XEMACS_RELEASE_DATE
-/* InfoDock versions, not used with XEmacs */
-#undef INFODOCK_MAJOR_VERSION
-#undef INFODOCK_MINOR_VERSION
-#undef INFODOCK_BUILD_VERSION
 
 /* Make functions from IEEE Stds 1003.[123] available. */
 #undef _POSIX_C_SOURCE
@@ -339,6 +335,7 @@ things are arranged in config.h.in.  In particular:
 /* Darwin; realpath corrects for case: */
 #ifdef HAVE_DYLD
 #define REALPATH_CORRECTS_CASE 1
+#define DEFAULT_FILE_SYSTEM_IGNORE_CASE 1
 #endif
 
 #undef HAVE_LIBINTL
@@ -1215,5 +1212,8 @@ extern "C" {
 /* #if !defined (INLINE_HEADERS_ARE_STATIC) */
 #define XEMACS_DEFS_NEEDS_INLINE_DECLS
 #endif
+
+/* Do we need to be able to run code compiled by and written for 21.4? */
+#define NEED_TO_HANDLE_21_4_CODE 1
 
 #endif /* _SRC_CONFIG_H_ */

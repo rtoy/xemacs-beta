@@ -1,3 +1,13 @@
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* unicode/other/lao.txt:
+	* tests/external-widget/Makefile:
+	* tests/external-widget/test-ew-motif:
+	* tests/external-widget/test-ew-xlib:
+	* custom/example-themes/example-theme.el:
+	* custom/example-themes/europe-theme.el:
+	Correct FSF address in permission notice.
+
 2010-03-07  Ben Wing  <ben@xemacs.org>
 
 	* unicode/unicode-consortium/EASTASIA/OBSOLETE/JIS0208.TXT:

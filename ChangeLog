@@ -1,3 +1,23 @@
+2010-11-02  Mats Lidell  <matsl@xemacs.org>
+
+	* netinstall: removed 
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* aclocal.m4: Add standard permission boilerplate.
+
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* version.sh.in: 
+	* configure.ac (XE_COMPLEX_ARG, XE_EXPAND_VARIABLE):
+	Remove conditionals and information for InfoDock.
+
+2010-04-09  Ben Wing  <ben@xemacs.org>
+
+	* CHANGES-beta:
+	Update with my changes to the trunk since the release of 21.5.29
+	in 2009 up through April 9, 2010.
+
 2010-03-29  Ben Wing  <ben@xemacs.org>
 
 	* README.unicode-internal:

@@ -96,6 +96,8 @@ static Fixnum debug_allocation;
 static Fixnum debug_allocation_backtrace_length;
 #endif
 
+Fixnum Varray_dimension_limit, Varray_total_size_limit, Varray_rank_limit;
+
 int need_to_check_c_alloca;
 int need_to_signal_post_gc;
 int funcall_allocation_flag;
@@ -1414,8 +1416,10 @@ cons3 (Lisp_Object obj0, Lisp_Object obj1, Lisp_Object obj2)
   return Fcons (obj0, Fcons (obj1, obj2));
 }
 
-Lisp_Object
-acons (Lisp_Object key, Lisp_Object value, Lisp_Object alist)
+DEFUN ("acons", Facons, 3, 3, 0, /*
+Return a new alist created by prepending (KEY . VALUE) to ALIST.
+*/
+       (key, value, alist))
 {
   return Fcons (Fcons (key, value), alist);
 }
@@ -1488,16 +1492,17 @@ Return a new list of length LENGTH, with each element being OBJECT.
 */
        (length, object))
 {
-  CHECK_NATNUM (length);
+  Lisp_Object val = Qnil;
+  Elemcount size;
 
-  {
-    Lisp_Object val = Qnil;
-    EMACS_INT size = XINT (length);
+  check_integer_range (length, Qzero, make_integer (EMACS_INT_MAX));
 
-    while (size--)
-      val = Fcons (object, val);
-    return val;
-  }
+  size = XINT (length);
+
+  while (size--)
+    val = Fcons (object, val);
+
+  return val;
 }
 
 
@@ -1731,7 +1736,7 @@ See also the function `vector'.
 */
        (length, object))
 {
-  CONCHECK_NATNUM (length);
+  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
   return make_vector (XINT (length), object);
 }
 
@@ -1924,8 +1929,7 @@ BIT must be one of the integers 0 or 1.  See also the function `bit-vector'.
 */
        (length, bit))
 {
-  CONCHECK_NATNUM (length);
-
+  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
   return make_bit_vector (XINT (length), bit);
 }
 
@@ -2051,7 +2055,7 @@ arguments: (ARGLIST INSTRUCTIONS CONSTANTS STACK-DEPTH &optional DOC-STRING INTE
     CHECK_VECTOR (constants);
   f->constants = constants;
 
-  CHECK_NATNUM (stack_depth);
+  check_integer_range (stack_depth, Qzero, make_int (USHRT_MAX));
   f->stack_depth = (unsigned short) XINT (stack_depth);
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
@@ -2883,7 +2887,7 @@ LENGTH must be a non-negative integer.
 */
        (length, character))
 {
-  CHECK_NATNUM (length);
+  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
   CHECK_CHAR_COERCE_INT (character);
   {
     Ibyte init_str[MAX_ICHAR_LEN];
@@ -3344,19 +3348,6 @@ old_free_lcrecord (Lisp_Object rec)
   free_managed_lcrecord (all_lcrecord_lists[type], rec);
 }
 #endif /* not NEW_GC */
-
-
-DEFUN ("purecopy", Fpurecopy, 1, 1, 0, /*
-Kept for compatibility, returns its argument.
-Old:
-Make a copy of OBJECT in pure storage.
-Recursively copies contents of vectors and cons cells.
-Does not copy symbols.
-*/
-       (object))
-{
-  return object;
-}
 
 
 /************************************************************************/
@@ -4209,10 +4200,10 @@ itself.
   xzero (object_stats);
   lisp_object_storage_size (object, &object_stats);
 
-  val = acons (Qobject_actually_requested,
-	       make_int (object_stats.was_requested), val);
-  val = acons (Qobject_malloc_overhead,
-	       make_int (object_stats.malloc_overhead), val);
+  val = Facons (Qobject_actually_requested,
+		make_int (object_stats.was_requested), val);
+  val = Facons (Qobject_malloc_overhead,
+		make_int (object_stats.malloc_overhead), val);
   assert (!object_stats.dynarr_overhead);
   assert (!object_stats.gap_overhead);
 
@@ -4222,16 +4213,16 @@ itself.
       MAYBE_OBJECT_METH (object, memory_usage, (object, &gustats));
 
       val = Fcons (Qt, val);
-      val = acons (Qother_memory_actually_requested,
-		   make_int (gustats.u.was_requested), val);
-      val = acons (Qother_memory_malloc_overhead,
-		   make_int (gustats.u.malloc_overhead), val);
+      val = Facons (Qother_memory_actually_requested,
+		    make_int (gustats.u.was_requested), val);
+      val = Facons (Qother_memory_malloc_overhead,
+		    make_int (gustats.u.malloc_overhead), val);
       if (gustats.u.dynarr_overhead)
-	val = acons (Qother_memory_dynarr_overhead,
-		     make_int (gustats.u.dynarr_overhead), val);
+	val = Facons (Qother_memory_dynarr_overhead,
+		      make_int (gustats.u.dynarr_overhead), val);
       if (gustats.u.gap_overhead)
-	val = acons (Qother_memory_gap_overhead,
-		     make_int (gustats.u.gap_overhead), val);
+	val = Facons (Qother_memory_gap_overhead,
+		      make_int (gustats.u.gap_overhead), val);
       val = Fcons (Qnil, val);
 
       i = 0;
@@ -4242,7 +4233,7 @@ itself.
 	      val = Fcons (item, val);
 	    else
 	      {
-		val = acons (item, make_int (gustats.othervals[i]), val);
+		val = Facons (item, make_int (gustats.othervals[i]), val);
 		i++;
 	      }
 	  }
@@ -5719,6 +5710,7 @@ syms_of_alloc (void)
 
   DEFSUBR (Fcons);
   DEFSUBR (Flist);
+  DEFSUBR (Facons);
   DEFSUBR (Fvector);
   DEFSUBR (Fbit_vector);
   DEFSUBR (Fmake_byte_code);
@@ -5729,7 +5721,6 @@ syms_of_alloc (void)
   DEFSUBR (Fstring);
   DEFSUBR (Fmake_symbol);
   DEFSUBR (Fmake_marker);
-  DEFSUBR (Fpurecopy);
 #ifdef ALLOC_TYPE_STATS
   DEFSUBR (Fobject_memory_usage_stats);
   DEFSUBR (Ftotal_object_memory_usage);
@@ -5760,6 +5751,34 @@ reinit_vars_of_alloc (void)
 void
 vars_of_alloc (void)
 {
+  DEFVAR_CONST_INT ("array-rank-limit", &Varray_rank_limit /*
+The exclusive upper bound on the number of dimensions an array may have.
+
+XEmacs does not support multidimensional arrays, meaning this constant is,
+for the moment, 2.
+*/);
+  Varray_rank_limit = 2;
+
+  DEFVAR_CONST_INT ("array-dimension-limit", &Varray_dimension_limit /*
+The exclusive upper bound of an array's dimension.
+Note that XEmacs may not have enough memory available to create an array
+with this dimension.
+*/);
+  Varray_dimension_limit = ARRAY_DIMENSION_LIMIT;
+
+  DEFVAR_CONST_INT ("array-total-size-limit", &Varray_total_size_limit /*
+The exclusive upper bound on the number of elements an array may contain.
+
+In Common Lisp, this is distinct from `array-dimension-limit', because
+arrays can have more than one dimension.  In XEmacs this is not the case,
+and multi-dimensional arrays need to be implemented by the user with arrays
+of arrays.
+
+Note that XEmacs may not have enough memory available to create an array
+with this dimension.
+*/);
+  Varray_total_size_limit = ARRAY_DIMENSION_LIMIT;
+
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-allocation", &debug_allocation /*
 If non-zero, print out information to stderr about all objects allocated.

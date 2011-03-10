@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "syssignal.h"
 #include "sysfloat.h"
 
-Lisp_Object Qnil, Qt, Qquote, Qlambda, Qunbound;
+Lisp_Object Qnil, Qt, Qlambda, Qunbound;
 Lisp_Object Qerror_conditions, Qerror_message;
 Lisp_Object Qerror, Qquit, Qsyntax_error, Qinvalid_read_syntax;
 Lisp_Object Qlist_formation_error, Qstructure_formation_error;
@@ -158,10 +158,18 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 }
 
 void
-check_int_range (EMACS_INT val, EMACS_INT min, EMACS_INT max)
+check_integer_range (Lisp_Object val, Lisp_Object min, Lisp_Object max)
 {
-  if (val < min || val > max)
-    args_out_of_range_3 (make_int (val), make_int (min), make_int (max));
+  Lisp_Object args[] = { min, val, max };
+  int ii;
+
+  for (ii = 0; ii < countof (args); ii++)
+    {
+      CHECK_INTEGER (args[ii]);
+    }
+
+  if (NILP (Fleq (countof (args), args)))
+    args_out_of_range_3 (val, min, max);
 }
 
 
@@ -504,11 +512,7 @@ Return t if OBJECT is a nonnegative integer.
 */
        (object))
 {
-  return NATNUMP (object)
-#ifdef HAVE_BIGNUM
-    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
-#endif
-    ? Qt : Qnil;
+  return NATNUMP (object) ? Qt : Qnil;
 }
 
 DEFUN ("nonnegativep", Fnonnegativep, 1, 1, 0, /*
@@ -517,9 +521,6 @@ Return t if OBJECT is a nonnegative number.
        (object))
 {
   return NATNUMP (object)
-#ifdef HAVE_BIGNUM
-    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
-#endif
 #ifdef HAVE_RATIO
     || (RATIOP (object) && ratio_sign (XRATIO_DATA (object)) >= 0)
 #endif
@@ -1295,9 +1296,8 @@ Floating point numbers always use base 10.
     b = 10;
   else
     {
-      CHECK_INT (base);
+      check_integer_range (base, make_int (2), make_int (16));
       b = XINT (base);
-      check_int_range (b, 2, 16);
     }
 
   p = XSTRING_DATA (string);
@@ -2612,14 +2612,19 @@ mark_weak_list (Lisp_Object UNUSED (obj))
 
 static void
 print_weak_list (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED (escapeflag))
+		 int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
 
-  write_fmt_string_lisp (printcharfun, "#<weak-list %s %S>", 2,
-			 encode_weak_list_type (XWEAK_LIST (obj)->type),
-			 XWEAK_LIST (obj)->list);
+  write_ascstring (printcharfun, "#<weak-list :type ");
+  print_internal (encode_weak_list_type (XWEAK_LIST (obj)->type),
+                  printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :list ");
+  print_internal (XWEAK_LIST (obj)->list, printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3087,12 +3092,16 @@ mark_weak_box (Lisp_Object UNUSED (obj))
 }
 
 static void
-print_weak_box (Lisp_Object obj, Lisp_Object printcharfun,
-		int UNUSED (escapeflag))
+print_weak_box (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string (printcharfun, "#<weak-box>"); /* #### fix */
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
+
+  write_ascstring (printcharfun, "#<weak-box ");
+  print_internal (XWEAK_BOX (obj)->value, printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3309,12 +3318,20 @@ mark_ephemeron (Lisp_Object UNUSED (obj))
 }
 
 static void
-print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED (escapeflag))
+print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string (printcharfun, "#<ephemeron>"); /* #### fix */
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
+
+  write_ascstring (printcharfun, "#<ephemeron :key ");
+  print_internal (XEPHEMERON (obj)->key, printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :value ");
+  print_internal (XEPHEMERON (obj)->value, printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :finalizer ");
+  print_internal (XEPHEMERON_FINALIZER (obj), printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3518,7 +3535,6 @@ syms_of_data (void)
   INIT_LISP_OBJECT (ephemeron);
   INIT_LISP_OBJECT (weak_box);
 
-  DEFSYMBOL (Qquote);
   DEFSYMBOL (Qlambda);
   DEFSYMBOL (Qlistp);
   DEFSYMBOL (Qtrue_list_p);

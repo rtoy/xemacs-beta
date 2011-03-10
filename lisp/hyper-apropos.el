@@ -22,8 +22,9 @@
 ;; GNU General Public License for more details.
 ;; 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Synched up with: Not in FSF.
 
@@ -772,11 +773,14 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		     global (current-global-map)
 		     obsolete (get symbol 'byte-obsolete-info)
 		     doc (function-documentation symbol t)
-                     arglist (replace-in-string
-                              (function-arglist symbol)
-                              (format "^(%s "
-                                      (regexp-quote (symbol-name symbol)))
-                              "("))
+                     arglist (let ((farglist (function-arglist symbol)))
+			       (if farglist
+				   (replace-in-string
+				    farglist
+				    (format "^(%s "
+					(regexp-quote (symbol-name symbol)))
+				    "(")
+				 "[not available]")))
 	       (save-excursion
 		 (set-buffer hyper-apropos-help-buf)
 		 (goto-char (point-max))

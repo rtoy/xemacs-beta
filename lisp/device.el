@@ -45,7 +45,7 @@
 
 (defun device-list ()
   "Return a list of all devices."
-  (apply 'nconc (mapcar 'console-device-list (console-list))))
+  (mapcan 'console-device-list (console-list)))
 
 (defun device-type (&optional device)
   "Return the type of the specified device (e.g. `x' or `tty').

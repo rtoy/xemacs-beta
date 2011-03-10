@@ -102,6 +102,7 @@
 ;; .elc's.
 (defvar lisp-files-needed-for-byte-compilation
   '("bytecomp"
+    "cl-macs"
     "byte-optimize"))
 
 ;; Lisp files not in `lisp-files-needed-for-byte-compilation' that need
@@ -110,8 +111,7 @@
 (defvar lisp-files-needing-early-byte-compilation
   '("easy-mmode"
     "autoload"
-    "shadow"
-    "cl-macs"))
+    "shadow"))
 
 (defvar unbytecompiled-lisp-files
   '("paths.el"
@@ -389,25 +389,26 @@ differently depending on the presence of certain features, especially
 	   ;; load-ignore-elc-files because byte-optimize gets autoloaded
 	   ;; from bytecomp.
 	   (let ((recompile-bc-bootstrap
-		  (apply #'nconc
-			 (mapcar
-			  #'(lambda (arg)
-			      (when (member arg update-elc-files-to-compile)
-				(append '("-f" "batch-byte-compile-one-file")
-					(list arg))))
-			  bc-bootstrap)))
+                  (mapcan
+                   #'(lambda (arg)
+                       (when (member arg update-elc-files-to-compile)
+                         (append '("-f" "batch-byte-compile-one-file")
+                                 (list arg))))
+                   bc-bootstrap))
 		 (recompile-bootstrap-other
-		  (apply #'nconc
-			 (mapcar
-			  #'(lambda (arg)
-			      (when (member arg update-elc-files-to-compile)
-				(append '("-f" "batch-byte-compile-one-file")
-					(list arg))))
-			  bootstrap-other))))
+                  (mapcan
+                   #'(lambda (arg)
+                       (when (member arg update-elc-files-to-compile)
+                         (append '("-f" "batch-byte-compile-one-file")
+                                 (list arg))))
+                   bootstrap-other)))
 	     (mapc
 	      #'(lambda (arg)
 		  (setq update-elc-files-to-compile
-			(delete arg update-elc-files-to-compile)))
+			(delete* arg update-elc-files-to-compile
+				 :test (if default-file-system-ignore-case
+					   #'equalp
+					 #'equal))))
 	      (append bc-bootstrap bootstrap-other))
 	     (setq command-line-args
 		   (append
