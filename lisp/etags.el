@@ -243,16 +243,15 @@ the current buffer."
 	      (push expression result)
 	    (error "Expression in tag-table-alist evaluated to non-string")))))
     (setq result
-	  (mapcar
+	  (mapcan
 	   (lambda (name)
 	     (when (file-directory-p name)
 	       (setq name (concat (file-name-as-directory name) "TAGS")))
 	     (and (file-readable-p name)
 		  ;; get-tag-table-buffer has side-effects
-		  (symbol-value-in-buffer 'buffer-file-name
-					  (get-tag-table-buffer name))))
-	   result))
-    (setq result (delq nil result))
+		  (list (symbol-value-in-buffer 'buffer-file-name
+						(get-tag-table-buffer name))))))
+	   result)
     ;; If no TAGS file has been found, ask the user explicitly.
     ;; #### tags-file-name is *evil*.
     (or result tags-file-name
@@ -439,8 +438,7 @@ File name returned is relative to tag table file's directory."
 (defun buffer-tag-table-files ()
   "Returns a list of all files referenced by all TAGS tables that 
 this buffer uses."
-  (apply #'append
-	 (mapcar #'tag-table-files (buffer-tag-table-list))))
+  (mapcan #'tag-table-files (buffer-tag-table-list)))
 
 
 ;; Building the completion table

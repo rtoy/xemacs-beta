@@ -20,7 +20,7 @@
 ** You should have received a copy of the GNU General Public License
 ** along with XEmacs; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-** Boston, MA 02111-1301, USA.  */
+** Boston, MA 02110-1301, USA.  */
 
 #ifndef __UI_GTK_H__
 #define __UI_GTK_H__

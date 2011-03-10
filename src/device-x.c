@@ -149,13 +149,8 @@ get_device_from_display_1 (Display *dpy)
 struct device *
 get_device_from_display (Display *dpy)
 {
+#define FALLBACK_RESOURCE_NAME "xemacs"
   struct device *d = get_device_from_display_1 (dpy);
-
-#if !defined(INFODOCK)
-# define FALLBACK_RESOURCE_NAME "xemacs"
-# else
-# define FALLBACK_RESOURCE_NAME "infodock"
-#endif
 
   if (!d)
     {
@@ -344,11 +339,7 @@ have_xemacs_resources_in_xrdb (Display *dpy)
   const char *xdefs, *key;
   int len;
 
-#ifdef INFODOCK
-  key = "InfoDock";
-#else
   key = "XEmacs";
-#endif
   len = strlen (key);
 
   if (!dpy)
@@ -656,11 +647,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 	{
 	  app_class = (NILP (Vx_emacs_application_class)  &&
 		       have_xemacs_resources_in_xrdb (dpy))
-#ifdef INFODOCK
-	    ? "InfoDock"
-#else
 	    ? "XEmacs"
-#endif
 	    : "Emacs";
 	}
       else 
@@ -692,7 +679,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     Extbyte *path;
     const Extbyte *format;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
-    const Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
+    Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
     Extbyte *locale_end;
 
     if (STRINGP (Vx_app_defaults_directory) &&
@@ -723,28 +710,26 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     if (!access (path, R_OK))
       XrmCombineFileDatabase (path, &db, False);
 
-    if ((locale_end = strchr(locale, '.'))) {
-      *locale_end = '\0';
-      sprintf (path, format, data_dir, locale);
+    if ((locale_end = strchr (locale, '.')))
+      {
+	*locale_end = '\0';
+	sprintf (path, format, data_dir, locale);
 
-      if (!access (path, R_OK))
-	XrmCombineFileDatabase (path, &db, False);
-    }
+	if (!access (path, R_OK))
+	  XrmCombineFileDatabase (path, &db, False);
+      }
 
-    if ((locale_end = strchr(locale, '_'))) {
-      *locale_end = '\0';
-      sprintf (path, format, data_dir, locale);
+    if ((locale_end = strchr (locale, '_')))
+      {
+	*locale_end = '\0';
+	sprintf (path, format, data_dir, locale);
 
-      if (!access (path, R_OK))
-	XrmCombineFileDatabase (path, &db, False);
-    }
+	if (!access (path, R_OK))
+	  XrmCombineFileDatabase (path, &db, False);
+      }
 
   no_data_directory:
-    {
-      /* Cast off const for G++ 4.3. */
-      Extbyte *temp = (Extbyte *) locale;
-      xfree (temp);
-    }
+    xfree (locale);
  }
 #endif /* MULE */
 
@@ -1273,7 +1258,8 @@ x_IO_error_handler (Display *disp)
       DEVICE_X_BEING_DELETED (d) = 1;
     }
 
-  throw_or_bomb_out (Qtop_level, Qnil, 0, Qnil, Qnil);
+  redisplay_cancel_ritual_suicide();
+  throw_or_bomb_out_unsafe (Qtop_level, Qnil, 0, Qnil, Qnil);
 
   RETURN_NOT_REACHED (0);
 }

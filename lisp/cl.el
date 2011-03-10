@@ -99,16 +99,8 @@
 
 ;;; Code:
 
-(defvar cl-emacs-type (cond ((or (and (fboundp 'epoch::version)
-				      (symbol-value 'epoch::version))
-				 (string-lessp emacs-version "19")) 18)
-			    ((string-match "XEmacs" emacs-version)
-			     'lucid)
-			    (t 19)))
-
 (defvar cl-optimize-speed 1)
 (defvar cl-optimize-safety 1)
-
 
 (defvar custom-print-functions nil
   "This is a list of functions that format user objects for printing.
@@ -119,7 +111,6 @@ printer proceeds to the next function on the list.
 
 This variable is not used at present, but it is defined in hopes that
 a future Emacs interpreter will be able to use it.")
-
 
 ;;; Predicates.
 
@@ -206,7 +197,6 @@ See `member*' for the meaning of :test, :test-not and :key."
 	  val
 	  (and (< end (length str)) (substring str end))))
 
-
 ;;; Control structures.
 
 ;; The macros `when' and `unless' are so useful that we want them to
@@ -214,20 +204,6 @@ See `member*' for the meaning of :test, :test-not and :key."
 ;; Note: FSF Emacs moved them to subr.el in FSF 20.
 
 (defalias 'cl-map-extents 'map-extents)
-
-
-;;; Blocks and exits.
-
-;; This used to be #'identity, but that didn't preserve multiple values in
-;; interpreted code. #'and isn't great either, there's no error on too many
-;; arguments passed to it when interpreted. Fortunately most of the places
-;; where cl-block-wrapper is called are generated from old, established
-;; macros, so too many arguments resulting from human error is unlikely; and
-;; the byte compile handler in cl-macs.el warns if more than one arg is
-;; passed to it.
-(defalias 'cl-block-wrapper 'and)
-
-(defalias 'cl-block-throw 'throw)
 
 ;;; XEmacs; multiple values are in eval.c and cl-macs.el. 
 
@@ -260,7 +236,6 @@ definitions to shadow the loaded ones for use in file byte-compilation."
       (setq cl-macro (cadr (assq (symbol-name cl-macro) cl-env))))
     cl-macro))
 
-
 ;;; Declarations.
 
 (defvar cl-compiling-file nil)
@@ -288,7 +263,6 @@ definitions to shadow the loaded ones for use in file byte-compilation."
 		      specs)))
     (if (cl-compiling-file) (list* 'eval-when '(compile load eval) body)
       (cons 'progn body))))   ; avoid loading cl-macs.el for eval-when
-
 
 ;;; Symbols.
 
@@ -363,12 +337,13 @@ If ARG is not a string, it is ignored."
 (defconst float-epsilon nil)
 (defconst float-negative-epsilon nil)
 
-
 ;;; Sequence functions.
 
 (defalias 'copy-seq 'copy-sequence)
 
-(defalias 'svref 'aref)
+;; XEmacs; #'mapcar* is in C.
+
+(defalias 'svref 'aref) ;; Compiler macro in cl-macs.el
 
 ;;; List functions.
 
@@ -377,7 +352,13 @@ If ARG is not a string, it is ignored."
 
 (defalias 'first 'car)
 (defalias 'rest 'cdr)
-(defalias 'endp 'null)
+
+;; XEmacs change; this needs to error if handed a non-list.
+(defun endp (list)
+  "Return t if LIST is nil, or nil if LIST is a cons. Error otherwise."
+  (prog1
+      (null list)
+    (and list (atom list) (error 'wrong-type-argument #'listp list))))
 
 ;; XEmacs change: make it a real function
 (defun second (x)
@@ -530,50 +511,31 @@ If ARG is not a string, it is ignored."
   (cdr (cdr (cdr (cdr x)))))
 
 ;;; `last' is implemented as a C primitive, as of 1998-11
-;;(defun last* (x &optional n)
-;;  "Returns the last link in the list LIST.
-;;With optional argument N, returns Nth-to-last link (default 1)."
-;;  (if n
-;;      (let ((m 0) (p x))
-;;	(while (consp p) (incf m) (pop p))
-;;	(if (<= n 0) p
-;;	  (if (< n m) (nthcdr (- m n) x) x)))
-;;    (while (consp (cdr x)) (pop x))
-;;    x))
 
-(defun list* (arg &rest rest)   ; See compiler macro in cl-macs.el
-  "Return a new list with specified args as elements, cons'd to last arg.
-Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
-`(cons A (cons B (cons C D)))'."
-  (cond ((not rest) arg)
-	((not (cdr rest)) (cons arg (car rest)))
-	(t (let* ((n (length rest))
-		  (copy (copy-sequence rest))
-		  (last (nthcdr (- n 2) copy)))
-	     (setcdr last (car (cdr last)))
-	     (cons arg copy)))))
+;;; XEmacs: `list*' is in subr.el.
 
+;; XEmacs; handle dotted lists properly, error on circularity and if LIST is
+;; not a list.
 (defun ldiff (list sublist)
-  "Return a copy of LIST with the tail SUBLIST removed."
-  (let ((res nil))
-    (while (and (consp list) (not (eq list sublist)))
-      (push (pop list) res))
-    (nreverse res)))
+  "Return a copy of LIST with the tail SUBLIST removed.
+
+If SUBLIST is the same Lisp object as LIST, return nil.  If SUBLIST is
+not present in the list structure of LIST (that is, it is not the cdr
+of some cons making up LIST), this function is equivalent to
+`copy-list'.  LIST may be dotted."
+  (check-argument-type #'listp list)
+  (and list (not (eq list sublist))
+       (let ((before list) (evenp t) result)
+	 (prog1
+	     (setq result (list (car list)))
+	   (while (and (setq list (cdr-safe list)) (not (eql list sublist)))
+	     (setcdr result (if (consp list) (list (car list)) list))
+	     (setq result (cdr result)
+		   evenp (not evenp))
+	     (if evenp (setq before (cdr before)))
+	     (if (eq before list) (error 'circular-list list)))))))
 
 ;;; `copy-list' is implemented as a C primitive, as of 1998-11
-
-;(defun copy-list (list)
-;  "Return a copy of a list, which may be a dotted list.
-;The elements of the list are not copied, just the list structure itself."
-;  (if (consp list)
-;      (let ((res nil))
-;	(while (consp list) (push (pop list) res))
-;	(prog1 (nreverse res) (setcdr res list)))
-;    (car list)))
-
-(defun cl-maclisp-member (item list)
-  (while (and list (not (equal item (car list)))) (setq list (cdr list)))
-  list)
 
 (defalias 'cl-member 'memq)   ; for compatibility with old CL package
 (defalias 'cl-floor 'floor*)
@@ -582,47 +544,32 @@ Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
 (defalias 'cl-round 'round*)
 (defalias 'cl-mod 'mod*)
 
-(defun adjoin (cl-item cl-list &rest cl-keys)  ; See compiler macro in cl-macs
-  "Return ITEM consed onto the front of LIST only if it's not already there.
-Otherwise, return LIST unmodified.
-Keywords supported:  :test :test-not :key
-See `member*' for the meaning of :test, :test-not and :key."
-  (cond ((or (equal cl-keys '(:test eq))
-	     (and (null cl-keys) (not (numberp cl-item))))
-	 (if (memq cl-item cl-list) cl-list (cons cl-item cl-list)))
-	((or (equal cl-keys '(:test equal)) (null cl-keys))
-	 (if (member cl-item cl-list) cl-list (cons cl-item cl-list)))
-	(t (apply 'cl-adjoin cl-item cl-list cl-keys))))
+;;; XEmacs; #'acons is in C.
 
-(defun subst (cl-new cl-old cl-tree &rest cl-keys)
-  "Substitute NEW for OLD everywhere in TREE (non-destructively).
-Return a copy of TREE with all elements `eql' to OLD replaced by NEW.
-Keywords supported:  :test :test-not :key
-See `member*' for the meaning of :test, :test-not and :key."
-  (if (or cl-keys (and (numberp cl-old) (not (fixnump cl-old))))
-      (apply 'sublis (list (cons cl-old cl-new)) cl-tree cl-keys)
-    (cl-do-subst cl-new cl-old cl-tree)))
-
-(defun cl-do-subst (cl-new cl-old cl-tree)
-  (cond ((eq cl-tree cl-old) cl-new)
-	((consp cl-tree)
-	 (let ((a (cl-do-subst cl-new cl-old (car cl-tree)))
-	       (d (cl-do-subst cl-new cl-old (cdr cl-tree))))
-	   (if (and (eq a (car cl-tree)) (eq d (cdr cl-tree)))
-	       cl-tree (cons a d))))
-	(t cl-tree)))
-
-(defun acons (a b c)
-  "Return a new alist created by adding (KEY . VALUE) to ALIST."
-  (cons (cons a b) c))
-
-(defun pairlis (a b &optional c) (nconc (mapcar* 'cons a b) c))
-
+(defun pairlis (keys values &optional alist)
+  "Make an alist from KEYS and VALUES.
+Return a new alist composed by associating KEYS to corresponding VALUES;
+the process stops as soon as KEYS or VALUES run out.
+If ALIST is non-nil, the new pairs are prepended to it."
+  (nconc (mapcar* 'cons keys values) alist))
 
 ;;; Miscellaneous.
 
 ;; XEmacs change
 (define-error 'cl-assertion-failed "Assertion failed")
+
+;; XEmacs; provide a milquetoast amount of compatibility in our error symbols.
+(define-error 'type-error "Wrong type" 'wrong-type-argument)
+(define-error 'program-error "Error in your program" 'invalid-argument)
+
+(map-plist
+ #'(lambda (key value)
+     (mapc #'(lambda (error)
+               (put error 'error-conditions
+                    (cons key (get error 'error-conditions))))
+           value))
+ '(program-error (wrong-number-of-arguments invalid-keyword-argument)
+   type-error (wrong-type-argument malformed-list circular-list)))
 
 ;; XEmacs change: omit the autoload rules; we handle those a different way
 
@@ -667,10 +614,8 @@ See `member*' for the meaning of :test, :test-not and :key."
    ((loop) defun (&rest &or symbolp form))
    ((ignore-errors) 0 (&rest form))))
 
-
 ;;; This goes here so that cl-macs can find it if it loads right now.
-(provide 'cl-19)     ; usage: (require 'cl-19 "cl")
-
+(provide 'cl-19)
 
 ;;; Things to do after byte-compiler is loaded.
 ;;; As a side effect, we cause cl-macs to be loaded when compiling, so

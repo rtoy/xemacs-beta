@@ -350,7 +350,7 @@ MENU-FLAG is a symbol that should be set to t if KEY is a menu event,
     ;; If the key typed was really a menu selection, grab the form out
     ;; of the event object and intuit the function that would be called,
     ;; and describe that instead.
-    (if (and (vectorp key) (= 1 (length key))
+    (if (and (vectorp key) (eql 1 (length key))
 	     (or (misc-user-event-p (aref key 0))
 		 (eq (car-safe (aref key 0)) 'menu-selection)))
 	(let ((event (aref key 0)))
@@ -1230,7 +1230,7 @@ arguments in the standard Lisp style."
       (setq args (match-string 1 doc))
       (setq doc (substring doc 0 (match-beginning 0)))
       (and args (setq args (replace-in-string args "[ ]*\\\\\n[ \t]*" " " t)))
-      (and (zerop (length doc)) (setq doc (gettext "not documented"))))
+      (and (eql 0 (length doc)) (setq doc (gettext "not documented"))))
     (cons doc args)))
 
 (defun function-documentation (function &optional strip-arglist)

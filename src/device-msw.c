@@ -1329,9 +1329,12 @@ values.  Return value is nil if there are no printers installed.
 
   GCPRO2 (result, def_printer);
 
+  def_printer = msprinter_default_printer ();
+
   while (num_printers--)
     {
       Extbyte *printer_name;
+      Lisp_Object printer_name_lisp;
       if (have_nt)
 	{
 	  PRINTER_INFO_4 *info = (PRINTER_INFO_4 *) data_buf;
@@ -1343,12 +1346,15 @@ values.  Return value is nil if there are no printers installed.
 	  printer_name = (Extbyte *) info->pPrinterName;
 	}
       data_buf += enum_entry_size;
-
-      result = Fcons (build_tstr_string (printer_name), result);
+      
+      printer_name_lisp = build_tstr_string (printer_name);
+      if (0 != qxestrcasecmp (XSTRING_DATA (def_printer),
+			      XSTRING_DATA (printer_name_lisp)))
+	{
+	  result = Fcons (printer_name_lisp, result);
+	}
     }
 
-  def_printer = msprinter_default_printer ();
-  result = Fdelete (def_printer, result);
   result = Fcons (def_printer, result);
 
   RETURN_UNGCPRO (result);

@@ -76,7 +76,7 @@ Fixnum last_abbrev_location;
 /* Hook to run before expanding any abbrev.  */
 Lisp_Object Vpre_abbrev_expand_hook, Qpre_abbrev_expand_hook;
 
-Lisp_Object Qsystem_type, Qcount;
+Lisp_Object Qsystem_type;
 
 struct abbrev_match_mapper_closure
 {
@@ -344,7 +344,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
     count = Qzero;
   else
     CHECK_NATNUM (count);
-  symbol_plist (abbrev_symbol) = make_int (1 + XINT (count));
+  symbol_plist (abbrev_symbol) = Fadd1 (count);
 
   /* Count the case in the original text. */
   abbrev_count_case (buf, abbrev_start, abbrev_length, &lccount, &uccount);
@@ -524,7 +524,7 @@ READABLE is non-nil, they are listed.  */
   map_obarray (table, record_symbol, &symbols);
   /* map_obarray (table, record_symbol, &closure); */
   symbols = XCDR (symbols);
-  symbols = list_sort (symbols, NULL, Qstring_lessp, Qidentity);
+  symbols = list_sort (symbols, check_string_lessp_nokey, Qnil, Qnil);
 
   if (!NILP (readable))
     {
@@ -558,9 +558,6 @@ READABLE is non-nil, they are listed.  */
 void
 syms_of_abbrev (void)
 {
-  DEFSYMBOL(Qcount);
-  Qcount = intern ("count");
-  staticpro (&Qcount);
   DEFSYMBOL(Qsystem_type);
   Qsystem_type = intern ("system-type");
   DEFSYMBOL (Qpre_abbrev_expand_hook);

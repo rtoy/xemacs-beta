@@ -56,9 +56,6 @@ with `emacs-patch-level'.")
 	  " XEmacs Lucid")
   "Version numbers of this version of XEmacs.")
 
-(if (featurep 'infodock)
-    (require 'id-vers))
-
 ;; Moved to C code as of XEmacs 20.3
 ;(defconst emacs-major-version
 ;  (progn (or (string-match "^[0-9]+" emacs-version)
@@ -95,9 +92,7 @@ to the system configuration; look at `system-configuration' instead."
 	   (format
 	    "XEmacs %s %s(%s%s) of %s %s on %s"
 	    (substring emacs-version 0 (string-match " XEmacs" emacs-version))
-	    (if (not (featurep 'infodock))
-		"[Lucid] "
-	      "")
+            "[Lucid] "
 	    system-configuration
 	    (cond ((or (and (fboundp 'featurep)
 			    (featurep 'mule))

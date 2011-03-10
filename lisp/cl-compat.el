@@ -75,9 +75,9 @@
   (assq key klist))
 
 (defun elt-satisfies-test-p (item elt klist)
-  (let ((test-not (cdr (assq ':test-not klist)))
-	(test (cdr (assq ':test klist)))
-	(key (cdr (assq ':key klist))))
+  (let ((test-not (cdr (assq :test-not klist)))
+	(test (cdr (assq :test klist)))
+	(key (cdr (assq :key klist))))
     (if key (setq elt (funcall key elt)))
     (if test-not (not (funcall test-not item elt))
       (funcall (or test 'eql) item elt))))

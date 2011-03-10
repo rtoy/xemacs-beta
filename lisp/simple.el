@@ -3332,11 +3332,6 @@ when it is off screen."
 ;; keyboard-quit
 ;; buffer-quit-function
 ;; keyboard-escape-quit
-
-(defun assoc-ignore-case (key alist)
-  "Like `assoc', but assumes KEY is a string and ignores case when comparing."
-  (assoc* key alist :test #'equalp))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                          mail composition code                        ;;
@@ -4690,8 +4685,7 @@ long as they're not listed in that variable as well."
   (or level (setq level 'warning))
   (or (listp class) (setq class (list class)))
   (check-argument-type 'warning-level-p level)
-  (if (and (not (featurep 'infodock))
-	   (not init-file-loaded))
+  (if (not init-file-loaded)
       (push (list class message level) before-init-deferred-warnings)
     (catch 'ignored
       (let ((display-p t)
@@ -4781,8 +4775,7 @@ The C code calls this periodically, right before redisplay."
 
 (defun emacs-name ()
   "Return the printable name of this instance of Emacs."
-  (cond ((featurep 'infodock) "InfoDock")
-	((featurep 'xemacs) "XEmacs")
+  (cond ((featurep 'xemacs) "XEmacs")
 	(t "Emacs")))
 
 (defun debug-print-1 (&rest args)

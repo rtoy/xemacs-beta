@@ -1327,6 +1327,12 @@ ulong_to_bit_string (char *p, unsigned long number)
             }
         }
     }
+
+  if (!seen_high_order)
+    {
+      *p++ = '0';
+    }
+
   *p = '\0';
 }
 
@@ -2015,7 +2021,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
     for (; confusing < size; confusing++)
       {
-        if (!isdigit (data[confusing]))
+	if (!isdigit (data[confusing]) && '/' != data[confusing])
           {
             confusing = 0;
             break;
@@ -2027,7 +2033,8 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       /* #### Ugh, this is needlessly complex and slow for what we
          need here.  It might be a good idea to copy equivalent code
          from FSF.  --hniksic */
-      confusing = isfloat_string ((char *) data);
+      confusing = isfloat_string ((char *) data)
+	|| isratio_string ((char *) data);
     if (confusing)
       write_ascstring (printcharfun, "\\");
   }

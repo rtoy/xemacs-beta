@@ -183,7 +183,7 @@ separate_textual_runs_nomule (struct buffer * UNUSED (buf),
 			      unsigned char *text_storage,
 			      struct textual_run *run_storage,
 			      const Ichar *str, Charcount len,
-			      struct face_cachel *UNUSED(cachel))
+			      struct face_cachel *UNUSED (cachel))
 {
   if (!len)
     return 0;
@@ -371,10 +371,10 @@ separate_textual_runs_mule (struct buffer *buf,
 	     These flags are almost mutually exclusive, but we're sloppy
 	     about resetting "shadowed" flags.  So the flags must be checked
 	     in the proper order in computing byte1 and byte2, below. */
-
 	  offs = FACE_CACHEL_OFFSET_ENSURE (cachel, charset);
 
 	  translate_to_ucs_2 = Stynarr_at (cachel->font_final_stage, offs);
+
 	  if (translate_to_ucs_2)
 	    {
 	      dimension = 2;
@@ -412,6 +412,7 @@ separate_textual_runs_mule (struct buffer *buf,
       if (translate_to_ucs_2)
 	{
 	  int ucs = ichar_to_unicode (ch, CONVERR_SUBSTITUTE);
+
 	  /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
 	     REPLACMENT CHARACTER. */
 	  ucs = (ucs & ~0xFFFF) ? UNICODE_REPLACEMENT_CHAR : ucs;
@@ -1256,8 +1257,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 					clip_end - clip_start, height };
 
 		XUnionRectWithRegion (&clip_box, clip_reg, clip_reg); 
-		XftDrawSetClip(xftDraw, clip_reg);
-		XDestroyRegion(clip_reg);
+		XftDrawSetClip (xftDraw, clip_reg);
+		XDestroyRegion (clip_reg);
 	      }
 
 	    if (!bgc)
@@ -1279,19 +1280,19 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		struct textual_run *run = &runs[i];
 		int rect_width = x_text_width_single_run (f, cachel, run);
 #ifndef USE_XFTTEXTENTS_TO_AVOID_FONT_DROPPINGS
-		int rect_height = FONT_INSTANCE_ASCENT(fi)
-				  + FONT_INSTANCE_DESCENT(fi) + 1;
+		int rect_height = FONT_INSTANCE_ASCENT (fi)
+				  + FONT_INSTANCE_DESCENT (fi) + 1;
 #else
-		int rect_height = FONT_INSTANCE_ASCENT(fi)
-				  + FONT_INSTANCE_DESCENT(fi);
+		int rect_height = FONT_INSTANCE_ASCENT (fi)
+				  + FONT_INSTANCE_DESCENT (fi);
 		XGlyphInfo gi;
 		if (run->dimension == 2) {
 		  XftTextExtents16 (dpy,
-				    FONT_INSTANCE_X_XFTFONT(fi),
+				    FONT_INSTANCE_X_XFTFONT (fi),
 				    (XftChar16 *) run->ptr, run->len, &gi);
 		} else {
 		  XftTextExtents8 (dpy,
-				   FONT_INSTANCE_X_XFTFONT(fi),
+				   FONT_INSTANCE_X_XFTFONT (fi),
 				   run->ptr, run->len, &gi);
 		}
 		rect_height = rect_height > gi.height
@@ -1484,13 +1485,13 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 					cursor_width, height };
 	    
 		XUnionRectWithRegion (&clip_box, clip_reg, clip_reg); 
-		XftDrawSetClip(xftDraw, clip_reg);
-		XDestroyRegion(clip_reg);
+		XftDrawSetClip (xftDraw, clip_reg);
+		XDestroyRegion (clip_reg);
 	      }
 	      { /* draw background rectangle & draw text */
-		int rect_height = FONT_INSTANCE_ASCENT(fi)
-				  + FONT_INSTANCE_DESCENT(fi);
-		int rect_width = x_text_width_single_run(f, cachel, &runs[i]);
+		int rect_height = FONT_INSTANCE_ASCENT (fi)
+				  + FONT_INSTANCE_DESCENT (fi);
+		int rect_width = x_text_width_single_run (f, cachel, &runs[i]);
 		XftColor xft_color;
 
 		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
@@ -1506,7 +1507,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 				   (XftChar16 *) runs[i].ptr, runs[i].len);
 	      }
 
-	      XftDrawSetClip(xftDraw, 0);
+	      XftDrawSetClip (xftDraw, 0);
 	    }
 	  else			/* core font, not Xft */
 #endif /* USE_XFT */
@@ -1803,7 +1804,7 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
  Draw a vertical divider down the right side of the given window.
  ****************************************************************************/
 static void
-XLIKE_output_vertical_divider (struct window *w, int USED_IF_X(clear))
+XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);

@@ -871,9 +871,15 @@ it unchanged.
 
 There are four functions to convert floating point numbers to integers;
 they differ in how they round.  These functions accept integer arguments
-also, and return such arguments unchanged.
+also, and return such arguments unchanged.  They return multiple values,
+@pxref{(cl.info)Multiple values}.
 
-@defun truncate number
+All these functions take optional @var{divisor} arguments, and if this
+argument is specified, the @var{number} argument is divided by
+@var{divisor} before the calculation is made.  An @code{arith-error}
+results if @var{divisor} is 0.
+
+@defun truncate number &optional divisor
 This returns @var{number}, converted to an integer by rounding towards
 zero.
 @end defun
@@ -881,23 +887,21 @@ zero.
 @defun floor number &optional divisor
 This returns @var{number}, converted to an integer by rounding downward
 (towards negative infinity).
-
-If @var{divisor} is specified, @var{number} is divided by @var{divisor}
-before the floor is taken; this is the division operation that
-corresponds to @code{mod}.  An @code{arith-error} results if
-@var{divisor} is 0.
 @end defun
 
-@defun ceiling number
+@defun ceiling number &optional divisor
 This returns @var{number}, converted to an integer by rounding upward
 (towards positive infinity).
 @end defun
 
-@defun round number
+@defun round number &optional divisor
 This returns @var{number}, converted to an integer by rounding towards the
-nearest integer.  Rounding a value equidistant between two integers
-may choose the integer closer to zero, or it may prefer an even integer,
-depending on your machine.
+nearest integer.
+
+Rounding a value equidistant between two integers chooses the even
+integer.  GNU Emacs and older XEmacs did not guarantee this, and the
+direction of rounding depended on the underlying machine and the C
+implementation.
 @end defun
 
 @node Arithmetic Operations
@@ -1154,24 +1158,35 @@ nearest integer below; @code{fceiling}, the nearest integer above;
 @code{ftruncate}, the nearest integer in the direction towards zero;
 @code{fround}, the nearest integer.
 
-@defun ffloor number
+All these functions take optional @var{divisor} arguments, and if this
+argument is specified, the @var{number} argument is divided by
+@var{divisor} before the calculation is made.  An @code{arith-error}
+results if @var{divisor} is 0.  Also, they return multiple values,
+@pxref{(cl.info)Multiple values}; the second value is the remainder.
+
+@defun ffloor number &optional divisor
 This function rounds @var{number} to the next lower integral value, and
 returns that value as a floating point number.
 @end defun
 
-@defun fceiling number
+@defun fceiling number &optional divisor
 This function rounds @var{number} to the next higher integral value, and
 returns that value as a floating point number.
 @end defun
 
-@defun ftruncate number
+@defun ftruncate number &optional divisor
 This function rounds @var{number} towards zero to an integral value, and
 returns that value as a floating point number.
 @end defun
 
-@defun fround number
+@defun fround number &optional divisor
 This function rounds @var{number} to the nearest integral value,
 and returns that value as a floating point number.
+
+Rounding a value equidistant between two integral values chooses the
+even value.  While this is specified by Common Lisp, GNU Emacs and older
+XEmacs did not make this guarantee, and the direction of rounding
+depended on the underlying machine and the C implementation.
 @end defun
 
 @node Bitwise Operations

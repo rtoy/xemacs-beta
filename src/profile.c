@@ -365,8 +365,16 @@ will be properly accumulated. (To clear, use `clear-profiling-info'.)
     msecs = default_profiling_interval;
   else
     {
-      CHECK_NATNUM (microsecs);
+#ifdef HAVE_BIGNUM
+      check_integer_range (microsecs, make_int (1000), make_integer (INT_MAX));
+      msecs =
+        BIGNUMP (microsecs) ? bignum_to_int (XBIGNUM_DATA (microsecs)) :
+                                             XINT (microsecs);
+#else
+      check_integer_range (microsecs, make_int (1000),
+                           make_integer (EMACS_INT_MAX));
       msecs = XINT (microsecs);
+#endif
     }
   if (msecs <= 0)
     msecs = 1000;
@@ -534,15 +542,16 @@ are recorded
       unbind_to (count);
     }
 
-  retv = nconc2 (list6 (Qtiming, closure.timing, Qtotal_timing,
-			copy_hash_table_or_blank (Vtotal_timing_profile_table),
-			Qcall_count,
-			copy_hash_table_or_blank (Vcall_count_profile_table)),
-		 list4 (Qgc_usage,
-			copy_hash_table_or_blank (Vgc_usage_profile_table),
-			Qtotal_gc_usage,
-			copy_hash_table_or_blank (Vtotal_gc_usage_profile_table
-						  )));
+  retv = listu (Qtiming, closure.timing,
+                Qtotal_timing,
+                copy_hash_table_or_blank (Vtotal_timing_profile_table),
+                Qcall_count,
+                copy_hash_table_or_blank (Vcall_count_profile_table),
+                Qgc_usage,
+                copy_hash_table_or_blank (Vgc_usage_profile_table),
+                Qtotal_gc_usage,
+                copy_hash_table_or_blank (Vtotal_gc_usage_profile_table),
+                Qunbound);
   unbind_to (depth);
   return retv;
 }

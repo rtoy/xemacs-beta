@@ -198,15 +198,23 @@ intern (const CIbyte *str)
 }
 
 Lisp_Object
-intern_converting_underscores_to_dashes (const CIbyte *str)
+intern_massaging_name (const CIbyte *str)
 {
   Bytecount len = strlen (str);
   CIbyte *tmp = alloca_extbytes (len + 1);
   Bytecount i;
   strcpy (tmp, str);
   for (i = 0; i < len; i++)
-    if (tmp[i] == '_')
-      tmp[i] = '-';
+    {
+      if (tmp[i] == '_')
+	{
+	  tmp[i] = '-';
+	}
+      else if (tmp[i] == 'X')
+	{
+	  tmp[i] = '*';
+	}
+    }
   return intern_istring ((Ibyte *) tmp);
 }
 
@@ -500,8 +508,8 @@ If optional 2nd arg PREDICATE is non-nil, only symbols for which
   closure.accumulation = Qnil;
   GCPRO1 (closure.accumulation);
   map_obarray (Vobarray, apropos_mapper, &closure);
-  closure.accumulation = list_sort (closure.accumulation, NULL, Qstring_lessp,
-                                    Qidentity);
+  closure.accumulation = list_sort (closure.accumulation,
+				    check_string_lessp_nokey, Qnil, Qnil);
   UNGCPRO;
   return closure.accumulation;
 }
@@ -598,7 +606,7 @@ reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
 !(unloading_module && UNBOUNDP(newval)) &&
 #endif
       (symbol_is_constant (sym, val)
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
        || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym))
 #endif
       ))
@@ -2542,7 +2550,8 @@ From now on the default value will apply in this buffer.
 	  = buffer_local_alist_element (current_buffer, variable, bfwd);
 
 	if (!NILP (alist_element))
-	  current_buffer->local_var_alist = Fdelq (alist_element, alist);
+	  current_buffer->local_var_alist = delq_no_quit (alist_element,
+							  alist);
 
 	/* Make sure symbol does not think it is set up for this buffer;
 	   force it to look once again for this buffer's value */
@@ -3537,6 +3546,7 @@ reinit_symbol_objects_early (void)
   OBJECT_HAS_METHOD (symbol, putprop);
   OBJECT_HAS_METHOD (symbol, remprop);
   OBJECT_HAS_NAMED_METHOD (symbol, plist, Fsymbol_plist);
+  OBJECT_HAS_NAMED_METHOD (symbol, setplist, Fsetplist);
 }
 
 void

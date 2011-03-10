@@ -5389,7 +5389,7 @@ check_coerce_octet (Lisp_Object charset, Lisp_Object arg, int low, int high,
 	    retval += 128;
 	}
     }
-  check_int_range (retval, low, high);
+  check_integer_range (make_int (retval), make_int (low), make_int (high));
   return retval;
 }
 
@@ -5436,13 +5436,13 @@ get_external_charset_codepoint (Lisp_Object charset,
   *a1 = 0;
   *a2 = XINT (arg1);
   if (EQ (charset, Vcharset_ascii))
-    check_int_range (*a2, 0, 255);
+    check_integer_range (make_int (*a2), Qzero, make_int (255));
   else if (munge_codepoints)
     {
       /* If munge checkpoints, we are very free with what we allow, just
 	 to make sure we're backward-compatible with various versions of
 	 XEmacs and GNU Emacs, and coerce to the proper range. */
-      check_int_range (*a2, 0, 255);
+      check_integer_range (make_int (*a2), Qzero, make_int (255));
       if (EQ (charset, Vcharset_control_1))
 	*a2 = (*a2 & 0x1F) + 128;
       else
@@ -5451,9 +5451,9 @@ get_external_charset_codepoint (Lisp_Object charset,
   else
     {
       if (EQ (charset, Vcharset_control_1))
-	check_int_range (*a2, 128, 159);
+        check_integer_range (make_int (*a2), make_int (128), make_int (159));
       else
-	check_int_range (*a2, 160, 255);
+        check_integer_range (make_int (*a2), make_int (160), make_int (255));
     }
   return Vcharset_ascii;
 #endif /* (not) MULE */

@@ -15,7 +15,7 @@
 
 ## You should have received a copy of the GNU General Public License
 ## along with XEmacs; see the file COPYING.  If not, write to
-## the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
+## the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 ## Boston, MA 02110-1301, USA.
 
 CFLAGS += -Xc -g -DTOOLTALK

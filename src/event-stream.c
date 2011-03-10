@@ -1238,18 +1238,30 @@ event_stream_wakeup_pending_p (int id, int async_p)
 static unsigned long
 lisp_number_to_milliseconds (Lisp_Object secs, int allow_0)
 {
-  double fsecs;
-  CHECK_INT_OR_FLOAT (secs);
-  fsecs = XFLOATINT (secs);
-  if (fsecs < 0)
-    invalid_argument ("timeout is negative", secs);
-  if (!allow_0 && fsecs == 0)
-    invalid_argument ("timeout is non-positive", secs);
-  if (fsecs >= (((unsigned int) 0xFFFFFFFF) / 1000))
-    invalid_argument
-      ("timeout would exceed 32 bits when represented in milliseconds", secs);
+  Lisp_Object args[] = { allow_0 ? Qzero : make_int (1),
+                         secs,
+                         /* (((unsigned int) 0xFFFFFFFF) / 1000) - 1 */
+                         make_int (4294967 - 1) };
 
-  return (unsigned long) (1000 * fsecs);
+  if (!allow_0 && FLOATP (secs) && XFLOAT_DATA (secs) > 0)
+    {
+      args[0] = secs;
+    }
+
+  if (NILP (Fleq (countof (args), args)))
+    {
+      args_out_of_range_3 (secs, args[0], args[2]);
+    }
+  
+  args[0] = make_int (1000);
+  args[0] = Ftimes (2, args);
+
+  if (INTP (args[0]))
+    {
+      return XINT (args[0]);
+    }
+
+  return (unsigned long) extract_float (args[0]);
 }
 
 DEFUN ("add-timeout", Fadd_timeout, 3, 4, 0, /*
@@ -2615,7 +2627,8 @@ Return non-nil iff we received any output before the timeout expired.
 	msecs = lisp_number_to_milliseconds (timeout_secs, 1);
       if (!NILP (timeout_msecs))
 	{
-	  CHECK_NATNUM (timeout_msecs);
+          check_integer_range (timeout_msecs, Qzero,
+                               make_integer (EMACS_INT_MAX));
 	  msecs += XINT (timeout_msecs);
 	}
       if (msecs)
@@ -3704,7 +3717,8 @@ modify them.
     nwanted = recent_keys_ring_size;
   else
     {
-      CHECK_NATNUM (number);
+      check_integer_range (number, Qzero,
+                           make_integer (ARRAY_DIMENSION_LIMIT));
       nwanted = XINT (number);
     }
 
@@ -4519,7 +4533,7 @@ Magic events are handled as necessary.
 	else /* key sequence is bound to a command */
 	  {
 	    int magic_undo = 0;
-	    int magic_undo_count = 20;
+	    Elemcount magic_undo_count = 20;
 
 	    Vthis_command = leaf;
 
@@ -4539,7 +4553,21 @@ Magic events are handled as necessary.
 	      {
 		Lisp_Object prop = Fget (leaf, Qself_insert_defer_undo, Qnil);
 		if (NATNUMP (prop))
-		  magic_undo = 1, magic_undo_count = XINT (prop);
+                  {
+                    magic_undo = 1;
+                    if (INTP (prop))
+                      {
+                        magic_undo_count = XINT (prop);
+                      }
+#ifdef HAVE_BIGNUM
+                    else if (BIGNUMP (prop)
+                             && bignum_fits_emacs_int_p (XBIGNUM_DATA (prop)))
+                      {
+                        magic_undo_count
+                          = bignum_to_emacs_int (XBIGNUM_DATA (prop));
+                      }
+#endif
+                  }
 		else if (!NILP (prop))
 		  magic_undo = 1;
 		else if (EQ (leaf, Qself_insert_command))

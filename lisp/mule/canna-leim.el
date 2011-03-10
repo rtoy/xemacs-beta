@@ -1,5 +1,5 @@
 ;;; canna-leim.el --- Canna-related code for LEIM -*- coding: iso-2022-7bit; -*-
-;; Copyright (C) 1997  Stephen Turnbull <turnbull@sk.tsukuba.ac.jp>
+;;
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;;
 ;; Shamelessly ripped off from
@@ -13,12 +13,14 @@
 ;; Keywords: japanese, input method, LEIM
 ;; Last Modified: 1997/10/27 10:08:49
 
-;; This program is free software; you can redistribute it and/or modify
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either versions 2, or (at your option)
 ;; any later version.
 
-;; This program is distributed in the hope that it will be useful
+;; XEmacs is distributed in the hope that it will be useful
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.

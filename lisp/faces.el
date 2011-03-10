@@ -49,9 +49,7 @@
 
 ;; To elude the warnings for font functions. (Normally autoloaded when
 ;; font-create-object is called)
-(eval-when-compile
-  (require 'font)
-  (load "cl-macs"))
+(eval-when-compile (require 'font))
 
 (defgroup faces nil
   "Support for multiple text attributes (fonts, colors, ...)
@@ -61,7 +59,7 @@ Such a collection of attributes is called a \"face\"."
 
 (defun read-face-name (prompt)
   (let (face)
-    (while (= (length face) 0) ; nil or ""
+    (while (eql (length face) 0) ; nil or ""
       (setq face (completing-read prompt
 				  (mapcar (lambda (x) (list (symbol-name x)))
 					  (face-list))
@@ -420,7 +418,7 @@ This makes all properties of FACE inherit from PARENT."
                              how-to-add))
         (set-difference built-in-face-specifiers
                         '(display-table background-pixmap inherit)))
-  (set-face-background-pixmap face (vector 'inherit ':face parent)
+  (set-face-background-pixmap face (vector 'inherit :face parent)
 			      locale tag-set how-to-add)
   nil)
 
@@ -2041,14 +2039,14 @@ in that frame; otherwise change each frame."
 						 '(".xbm" "")))))
 			(and file
 			     `[xbm :file ,file])))
-		     ((and (listp pixmap) (= (length pixmap) 3))
+		     ((and (listp pixmap) (eql (length pixmap) 3))
 		      `[xbm :data ,pixmap])
 		     (t nil))))
       ;; We're signaling a continuable error; let's make sure the
       ;; function `stipple-pixmap-p' at least exists.
       (flet ((stipple-pixmap-p (pixmap)
 	       (or (stringp pixmap)
-		   (and (listp pixmap) (= (length pixmap) 3)))))
+		   (and (listp pixmap) (eql (length pixmap) 3)))))
 	(setq pixmap (signal 'wrong-type-argument
 			     (list 'stipple-pixmap-p pixmap)))))
     (check-type frame (or null frame))

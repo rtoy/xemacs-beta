@@ -84,6 +84,17 @@
 ;; by default.
 (setq-default ctl-arrow #xA0)
 
+(when (and (compiled-function-p (symbol-function 'char-width))
+	   (not (featurep 'mule)))
+  (defalias 'char-width
+    (let ((constantly (constantly 1)))
+     (make-byte-code (compiled-function-arglist constantly)
+		     (compiled-function-instructions constantly)
+		     (compiled-function-constants constantly)
+		     (compiled-function-stack-depth constantly)
+		     (compiled-function-doc-string
+		      (symbol-function 'char-width))))))
+
 ;; Shouldn't be necessary, but one file in the packages uses it:
 (provide 'iso8859-1) 
 

@@ -244,6 +244,15 @@ we no longer encounter bytecode from 21.4."
 
 (define-compatible-function-alias 'cl-mapc 'mapc)
 
+;; XEmacs; old compiler macros meant that this was called directly
+;; from compiled code, and we need to provide a version of it for a
+;; couple of years at least because of that. Aidan Kehoe, Mon Oct 4
+;; 12:06:41 IST 2010
+(defun cl-delete-duplicates (cl-seq cl-keys cl-copy)
+  (apply (if cl-copy #'remove-duplicates #'delete-duplicates) cl-seq cl-keys))
+
+(make-obsolete 'cl-delete-duplicates 'delete-duplicates)
+
 ; old names
 (define-compatible-function-alias 'byte-code-function-p
   'compiled-function-p) ;FSFmacs
@@ -272,6 +281,8 @@ Predefined tests are `eq', `eql', and `equal'.  Default is `eql'."
   (set-keymap-parents keymap (if parent (list parent) '()))
   parent)
 (make-compatible 'set-keymap-parent 'set-keymap-parents)
+
+(make-compatible-variable 'suggest-key-bindings 'teach-extended-commands-p)
 
 ;; too bad there's not a way to check for aref, assq, and nconc
 ;; being called on the values of functions known to return keymaps,
@@ -423,6 +434,16 @@ because its `find-charset-string' ignores ASCII charset."
 ;; Keywords already do The Right Thing in XEmacs
 (make-compatible 'define-widget-keywords "Just use them")
 
+(define-function 'purecopy 'identity)
+(make-obsolete 'purecopy "purespace is not available in XEmacs.")
+
+(define-compatible-function-alias 'process-get 'get)
+(define-compatible-function-alias 'process-put 'put)
+(define-compatible-function-alias 'process-plist 'object-plist)
+(define-compatible-function-alias 'set-process-plist 'object-setplist)
+
+(define-function 'memql 'member*)
+(make-compatible 'memql "use the more full-featured `member*' instead.")
 
 (provide 'obsolete)
 ;;; obsolete.el ends here

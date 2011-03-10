@@ -506,9 +506,6 @@ define pobj
   if $lrecord_type == lrecord_type_window
     pstructtype window
   else
-  if $lrecord_type == lrecord_type_window_configuration
-    pstructtype window_config
-  else
   if $lrecord_type == lrecord_type_window_mirror
     pstructtype window_mirror
   else
@@ -605,7 +602,6 @@ define pobj
     echo Unknown Lisp Object type\n
     print $arg0
   ## Barf, gag, retch
-  end
   end
   end
   end

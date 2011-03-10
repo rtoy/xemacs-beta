@@ -408,26 +408,25 @@ and whether or not it is up-to-date."
   (let ((tmpbuf "*Required-Packages*") do-select)
     (if pui-selected-packages
 	(let ((dependencies
-               (delq nil (mapcar
-                          (lambda (pkg)
-                            (let ((installed
-                                   (package-get-key pkg :version))
-                                  (current
-                                   (package-get-info-prop
-                                    (package-get-info-version
-                                     (package-get-info-find-package
-                                      package-get-base pkg) nil)
-                                    'version)))
-                              (if (or (null installed)
-                                     (< (if (stringp installed)
-                                         (string-to-number installed)
-                                       installed)
-                                     (if (stringp current)
-                                         (string-to-number current)
-                                       current)))
-                                  pkg
-                                nil)))
-                          (package-get-dependencies pui-selected-packages)))))
+               (mapcan
+                (lambda (pkg)
+                  (let ((installed
+                         (package-get-key pkg :version))
+                        (current
+                         (package-get-info-prop
+                          (package-get-info-version
+                           (package-get-info-find-package
+                            package-get-base pkg) nil)
+                          'version)))
+                    (if (or (null installed)
+                            (< (if (stringp installed)
+                                   (string-to-number installed)
+                                 installed)
+                               (if (stringp current)
+                                   (string-to-number current)
+                                 current)))
+                        (list pkg))))
+                (package-get-dependencies pui-selected-packages))))
 	  ;; Don't change window config when asking the user if he really
 	  ;; wants to add the packages.  We do this to avoid messing up
 	  ;; the window configuration if errors occur (we don't want to
@@ -436,9 +435,7 @@ and whether or not it is up-to-date."
 	  (save-window-excursion
 	    (with-output-to-temp-buffer tmpbuf
 	      (display-completion-list (sort
-					(mapcar #'(lambda (pkg)
-                                                    (symbol-name pkg))
-						dependencies)
+					(mapcar #'symbol-name dependencies)
 					'string<)
 				       :activate-callback nil
 				       :help-string "Required packages:\n"

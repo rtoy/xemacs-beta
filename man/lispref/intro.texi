@@ -787,7 +787,7 @@ optional and @samp{@var{repeated-args}@dots{}} stands for zero or more
 arguments.  Parentheses are used when several arguments are grouped into
 additional levels of list structure.  Here is an example:
 
-@defspec count-loop (@var{var} [@var{from} @var{to} [@var{inc}]]) @var{body}@dots{}
+@deffn {Special Operator} count-loop (@var{var} [@var{from} @var{to} [@var{inc}]]) @var{body}@dots{}
 This imaginary special operator implements a loop that executes the
 @var{body} forms and then increments the variable @var{var} on each
 iteration.  On the first iteration, the variable has the value
@@ -817,7 +817,7 @@ optional, but must both be present or both absent.  If they are present,
 @var{inc} may optionally be specified as well.  These arguments are
 grouped with the argument @var{var} into a list, to distinguish them
 from @var{body}, which includes all remaining elements of the form.
-@end defspec
+@end deffn
 
 @node A Sample Variable Description
 @subsubsection A Sample Variable Description

@@ -321,6 +321,7 @@ Lisp_Object	Vwnn_server_type;
 Lisp_Object	Vcwnn_zhuyin;
 Lisp_Object	Vwnnenv_sticky;
 Lisp_Object	Vwnn_uniq_level;
+Lisp_Object     Qchinese_sisheng;
 
 /* Lisp functions definition */
 
@@ -1929,6 +1930,8 @@ vars_of_mule_wnn (void)
   Vcwnn_zhuyin = Qnil;
   Vwnnenv_sticky = Qnil;
 
+  DEFSYMBOL (Qchinese_sisheng);
+
   Vwnn_uniq_level = Qwnn_uniq;
 
   Fprovide (intern ("wnn"));
@@ -1959,7 +1962,7 @@ w2m (w_char *wp, Ibyte *mp, Lisp_Object charset)
 		{
 		  if (pzy[i] & 0x80)
 		    mp += charset_codepoint_to_itext
-		      (Vcharset_chinese_sisheng, 0, pzy[i] & 0x7f, mp,
+		      (Fget_charset (Qchinese_sisheng), 0, pzy[i] & 0x7f, mp,
 		       CONVERR_USE_PRIVATE);
 		  else
 		    /* @@#### Correct? */
@@ -2028,7 +2031,7 @@ m2w (Ibyte *mp, w_char *wp)
 	ch = ((c1 | 0x80) << 8) + (c2 | 0x80);
       else if (EQ (charset, Vcharset_japanese_jisx0212))
 	ch = ((c1 | 0x80) << 8) + c2;
-      else if (EQ (charset, Vcharset_chinese_sisheng))
+      else if (EQ (charset, Fget_charset (Qchinese_sisheng)))
 	ch = 0x8e80 | c2;
       else /* Ignore character */
 	continue;
