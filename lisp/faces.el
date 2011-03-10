@@ -478,7 +478,7 @@ See `face-property-instance' for more information."
     (let (matchspec)
       ;; get-charset signals an error if its argument doesn't have an
       ;; associated charset.
-      (setq charset (if-fboundp #'get-charset
+      (setq charset (if-fboundp 'get-charset
                         (get-charset charset)
                       (error 'unimplemented "Charset support not available"))
 	    matchspec (cons charset nil))

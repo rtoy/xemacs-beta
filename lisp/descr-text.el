@@ -1120,7 +1120,7 @@ as well as widgets, buttons, overlays, and text properties."
 ; 		    (push (format "%s;" (pop props)) ps))
 ; 		  (list (cons "Properties" (nreverse ps)))))
 	    ("to input"
-	     ,@(let ((key-list (and-fboundp #'quail-find-key
+	     ,@(let ((key-list (and-fboundp 'quail-find-key
                                  current-input-method
                                  (quail-find-key char))))
 		 (if (consp key-list)

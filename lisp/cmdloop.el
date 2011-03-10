@@ -507,7 +507,7 @@ and can edit it until it as been confirmed."
       ;; and-fboundp is redundant, since yes-or-no-p-dialog-box is only
       ;; bound if (featurep 'dialog). But it eliminates a compile-time
       ;; warning.
-      (and-fboundp #'yes-or-no-p-dialog-box (yes-or-no-p-dialog-box prompt))
+      (and-fboundp 'yes-or-no-p-dialog-box (yes-or-no-p-dialog-box prompt))
     (yes-or-no-p-minibuf prompt)))
 
 (defun y-or-n-p (prompt)

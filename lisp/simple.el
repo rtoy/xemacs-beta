@@ -3981,7 +3981,7 @@ See the variable `zmacs-regions'.")
       (cond
        (zmacs-region-rectangular-p
 	(setq zmacs-region-extent (list zmacs-region-extent))
-        (when-fboundp #'default-mouse-track-next-move-rect
+        (when-fboundp 'default-mouse-track-next-move-rect
           (default-mouse-track-next-move-rect start end zmacs-region-extent))
 	))
 

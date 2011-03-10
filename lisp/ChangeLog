@@ -1,3 +1,34 @@
+2011-03-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmdloop.el (yes-or-no-p):
+	* cmdloop.el (y-or-n-p):
+	* descr-text.el (describe-char):
+	* diagnose.el (show-memory-usage):
+	* diagnose.el (show-object-memory-usage-stats):
+	* diagnose.el (show-mc-alloc-memory-usage):
+	* diagnose.el (show-gc-stats):
+	* faces.el (face-font-instance):
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* help.el (help-symbol-function-context-menu):
+	* help.el (help-symbol-variable-context-menu):
+	* help.el (help-symbol-function-and-variable-context-menu):
+	* help.el (help-find-source-or-scroll-up):
+	* help.el (help-mouse-find-source-or-track):
+	* help.el (temp-buffer-resize-mode):
+	* minibuf.el (mouse-read-file-name-1):
+	* obsolete.el (find-non-ascii-charset-string):
+	* obsolete.el (find-non-ascii-charset-region):
+	* occur.el (occur-engine):
+	* paragraphs.el (forward-paragraph):
+	* paragraphs.el (forward-sentence):
+	* select.el (activate-region-as-selection):
+	* select.el (select-make-extent-for-selection):
+	* simple.el (zmacs-make-extent-for-region):
+	Use quote, not function, for quoting symbols that may not be
+	fboundp at the point they are read (again, a style issue, since
+	Common Lisp throws an error on this, but we don't, and have no
+	plans to.)
+
 2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el:
