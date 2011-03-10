@@ -1781,22 +1781,24 @@ other mouse buttons."
 			 (let ((all-that-bad nil)
 			       (new-left-ok nil)
 			       (new-right-ok nil))
-			   (mapcar* (lambda (window old-edges)
-				      (let ((new (car (window-pixel-edges window))))
-					(if (/= new (car old-edges))
-					    (if (and new-left-ok
-						     (/= new-left-ok new))
-						(setq all-that-bad t)
-					      (setq new-left-ok new)))))
-				    (window-list) old-edges-all-windows)
-			   (mapcar* (lambda (window old-edges)
-				      (let ((new (caddr (window-pixel-edges window))))
-					(if (/= new (caddr old-edges))
-					    (if (and new-right-ok
-						     (/= new-right-ok new))
-						(setq all-that-bad t)
-					      (setq new-right-ok new)))))
-				    (window-list) old-edges-all-windows)
+			   (mapc (lambda (window old-edges)
+                                   (let ((new
+                                          (car (window-pixel-edges window))))
+                                     (if (/= new (car old-edges))
+                                         (if (and new-left-ok
+                                                  (/= new-left-ok new))
+                                             (setq all-that-bad t)
+                                           (setq new-left-ok new)))))
+                                 (window-list) old-edges-all-windows)
+			   (mapc (lambda (window old-edges)
+                                   (let ((new
+                                          (caddr (window-pixel-edges window))))
+                                     (if (/= new (caddr old-edges))
+                                         (if (and new-right-ok
+                                                  (/= new-right-ok new))
+                                             (setq all-that-bad t)
+                                           (setq new-right-ok new)))))
+                                 (window-list) old-edges-all-windows)
 			   all-that-bad))
 		     (set-window-configuration backup-conf)))))))))
 

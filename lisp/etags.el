@@ -250,8 +250,8 @@ the current buffer."
 	     (and (file-readable-p name)
 		  ;; get-tag-table-buffer has side-effects
 		  (list (symbol-value-in-buffer 'buffer-file-name
-						(get-tag-table-buffer name))))))
-	   result)
+						(get-tag-table-buffer name)))))
+	   result))
     ;; If no TAGS file has been found, ask the user explicitly.
     ;; #### tags-file-name is *evil*.
     (or result tags-file-name

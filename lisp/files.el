@@ -998,9 +998,9 @@ the coding system."
 			  (read-coding-system "Coding system: "))
 		     t))
   (let ((value (find-file filename codesys wildcards)))
-    (mapcar #'(lambda (buffer)
-		(set-symbol-value-in-buffer 'buffer-read-only t buffer))
-	    (if (listp value) value (list value)))
+    (mapc #'(lambda (buffer)
+              (set-symbol-value-in-buffer 'buffer-read-only t buffer))
+          (if (listp value) value (list value)))
     value))
 
 (defun find-file-read-only-other-window (filename &optional codesys wildcards)
