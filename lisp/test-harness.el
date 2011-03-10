@@ -128,7 +128,7 @@ TESTS is a non-negative integer, the number of tests run.")
 
 (defvar test-harness-current-file nil)
 
-(defvar emacs-lisp-file-regexp (purecopy "\\.el\\'")
+(defvar emacs-lisp-file-regexp "\\.el\\'"
   "*Regexp which matches Emacs Lisp source files.")
 
 (defconst test-harness-file-summary-template

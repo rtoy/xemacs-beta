@@ -1,5 +1,20 @@
 2011-03-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* etags.el (buffer-tag-table-list):
+	* files.el (find-file-read-only):
+	* files.el (find-file-read-only-other-window):
+	* info.el (Info-dir-outdated-p):
+	* info.el (Info-dump-dir-entries):
+	* info.el (Info-rebuild-dir):
+	* menubar-items.el (default-menubar):
+	* mouse.el (drag-window-divider):
+	* mouse.el (vertical-divider-map):
+	* test-harness.el (emacs-lisp-file-regexp):
+	Eliminate byte-compile warnings, again aside from those linked to
+	Stephen's various non-defined fontconfig functions.
+
+2011-03-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cmdloop.el (yes-or-no-p):
 	* cmdloop.el (y-or-n-p):
 	* descr-text.el (describe-char):
