@@ -469,7 +469,7 @@ See also `multi-occur'."
 		    (if (and keep-props
 			     (if-boundp 'jit-lock-mode jit-lock-mode)
 			     (text-property-not-all begpt endpt 'fontified t))
-			(if-fboundp #'jit-lock-fontify-now
+			(if-fboundp 'jit-lock-fontify-now
 			    (jit-lock-fontify-now begpt endpt)))
 		    (setq curstring (buffer-substring begpt endpt))
 		    ;; Depropertize the string, and maybe

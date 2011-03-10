@@ -277,7 +277,7 @@ primary selection."
 ;; application asserts the selection.  This is probably not a big deal.
 
 (defun activate-region-as-selection ()
-  (cond ((and-fboundp #'mouse-track-rectangle-p
+  (cond ((and-fboundp 'mouse-track-rectangle-p
            (mouse-track-rectangle-p
             (mouse-track-activate-rectangular-selection))))
 	((marker-buffer (mark-marker t))
@@ -349,7 +349,7 @@ primary selection."
 	(set-extent-property previous-extent 'end-open nil)
 
 	(cond
-	 ((and-fboundp #'mouse-track-rectangle-p 
+	 ((and-fboundp 'mouse-track-rectangle-p 
             (mouse-track-rectangle-p
              (setq previous-extent (list previous-extent))
              (default-mouse-track-next-move-rect start end previous-extent)
