@@ -45,7 +45,7 @@
 (check-byte-compiler-message "Attempt to set non-symbol" (setq 1 1))
 (check-byte-compiler-message "Attempt to set constant symbol" (setq t 1))
 (check-byte-compiler-message "Attempt to set constant symbol" (setq nil 1))
-(check-byte-compiler-message "^$" (defconst :foo 1))
+(check-byte-compiler-message "Attempt to set constant symbol" (defconst :foo 1))
 
 (check-byte-compiler-message "Attempt to let-bind non-symbol" (let ((1 'x)) 1))
 (check-byte-compiler-message "Attempt to let-bind constant symbol" (let ((t 'x)) (foo)))
@@ -60,12 +60,16 @@
 (check-byte-compiler-message "reference to free variable" (car free-variable))
 (check-byte-compiler-message "called with 2 args, but requires 1" (car 'x 'y))
 
-(check-byte-compiler-message "^$" (setq :foo 1))
 (let ((fun '(lambda () (setq :foo 1))))
   (fset 'test-byte-compiler-fun fun))
 (Check-Error setting-constant (test-byte-compiler-fun))
-(byte-compile 'test-byte-compiler-fun)
-(Check-Error setting-constant (test-byte-compiler-fun))
+(Check-Message "Attempt to set constant symbol"
+               (byte-compile 'test-byte-compiler-fun))
+
+;; Once NEED_TO_HANDLE_21_4_CODE is no longer defined in C, this will error
+;; correctly. It's disabled because the packages are compiled by 21.4.
+(Known-Bug-Expect-Failure
+ (Check-Error setting-constant (test-byte-compiler-fun)))
 
 (eval-when-compile (defvar setq-test-foo nil) (defvar setq-test-bar nil))
 (progn
