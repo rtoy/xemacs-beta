@@ -1,3 +1,8 @@
+2011-03-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image): GDK draws text relative to
+	the baseline, so offset by the descent.
+
 2011-03-09  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* config.h.in: Add HAVE_Pangoxft flag.
