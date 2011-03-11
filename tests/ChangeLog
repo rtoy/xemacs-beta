@@ -1,3 +1,18 @@
+2011-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/byte-compiler-tests.el:
+	(defconst :foo 1) now gives a warning when byte-compiled, check
+	for that.
+	(setq :foo 1) now errors with interpreted code, but succeeds with
+	byte-compiled code; check for the former, wrap a
+	Known-Bug-Expect-Failure around a check for the error in the
+	latter case, we can't yet remove this behaviour while we're using
+	packages compiled by 21.4.
+	* automated/lisp-tests.el (wrong-type-argument):
+	Integer zero is a valid argument to #'substring-no-properties, use
+	Assert not Check-Error for it. Check some other aspects of the
+	functionality of #'substring-no-properties in passing.
+
 2011-02-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (substring-no-properties):

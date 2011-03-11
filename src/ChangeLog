@@ -1,3 +1,10 @@
+2011-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (optimize_byte_code):
+	Only transform assignments to keywords to Bdiscard if
+	NEED_TO_HANDLE_21_4_CODE is turned on. Cf. similar code in
+	reject_constant_symbols().
+
 2011-02-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Fsubstring_no_properties):

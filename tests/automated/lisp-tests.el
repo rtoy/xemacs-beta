@@ -1339,9 +1339,17 @@ via the hepatic alpha-tocopherol transfer protein")))
 (Check-Error args-out-of-range (subseq [1 2 3] -42))
 (Check-Error args-out-of-range (subseq [1 2 3] 0 42))
 
-(Check-Error wrong-type-argument (substring-no-properties nil 4))
-(Check-Error wrong-type-argument (substring-no-properties "hi there" pi))
-(Check-Error wrong-type-argument (substring-no-properties "hi there" 0))
+(let ((string "hi there"))
+  (Assert (equal (substring-no-properties "123" 0) "123"))
+  (Assert (equal (substring-no-properties "1234" -3 -1) "23"))
+  (Assert (equal (substring-no-properties "hi there" 0) "hi there"))
+  (put-text-property 0 (length string) 'foo 'bar string)
+  (Assert (eq 'bar (get-text-property 0 'foo string)))
+  (Assert (not
+           (get-text-property 0 'foo (substring-no-properties "hi there" 0))))
+  (Check-Error wrong-type-argument (substring-no-properties nil 4))
+  (Check-Error wrong-type-argument (substring-no-properties "hi there" pi))
+  (Check-Error wrong-type-argument (substring-no-properties "hi there" 0.0)))
 
 ;;-----------------------------------------------------
 ;; Time-related tests

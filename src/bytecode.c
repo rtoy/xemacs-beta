@@ -1961,11 +1961,14 @@ optimize_byte_code (/* in */
 	    wtaerror ("attempt to set non-symbol", val);
 	  if (EQ (val, Qnil) || EQ (val, Qt))
 	    signal_error (Qsetting_constant, 0, val);
+#ifdef NEED_TO_HANDLE_21_4_CODE
 	  /* Ignore assignments to keywords by converting to Bdiscard.
-	     For backward compatibility only - we'd like to make this an error.  */
+	     For backward compatibility only - we'd like to make this an
+	     error.  */
 	  if (SYMBOL_IS_KEYWORD (val))
 	    REWRITE_OPCODE (Bdiscard);
 	  else
+#endif
 	    WRITE_NARGS (Bvarset);
 	  break;
 
