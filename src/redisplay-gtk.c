@@ -149,9 +149,9 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
       gdk_cairo_set_source_color (cr, &values.background);
       /* The rectangle and text areas don't quite fit, so I have to extend
          the height a little --jsparkes */
-      gtk_fill_rectangle (cr, x, y-height+3, width, height);
+      gtk_fill_rectangle (cr, x, y - height, width, height);
     }
-  gdk_draw_text (drawable, font, gc, x, y, text, len);
+  gdk_draw_text (drawable, font, gc, x, y - font->descent, text, len);
 #endif
 }
   
