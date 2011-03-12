@@ -1,3 +1,14 @@
+2011-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-stream.c (Fdispatch_event):
+	As documented, allow pre-command-hook to usefully modify
+	this-command even when this-command is nil (that is, we would
+	normally throw an undefined-keystroke-sequence error). Don't throw
+	that error if this-command was modified, instead try to execute
+	the new value.
+	Allow pre-command-hook to modify last-command-event in this
+	specific context. Don't document this, for the moment.
+
 2011-03-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecode.c (optimize_byte_code):

@@ -1,3 +1,16 @@
+2011-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* isearch-mode.el (isearch-mode-map):
+	Document why we bind the ASCII characters to isearch-printing-char
+	in more detail.
+	* isearch-mode.el (isearch-maybe-frob-keyboard-macros):
+	If `this-command' is nil and the keys typed would normally be
+	bound to `self-insert-command' in the global map, force
+	`isearch-printing-char' to be called with an appropriate value for
+	last-command-event. Addresses an issue where searching for
+	characters generated from x-compose.el and XIM threw errors for me
+	in dired.
+
 2011-03-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* etags.el (buffer-tag-table-list):
