@@ -1,3 +1,10 @@
+2011-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs-eimage.c (png_instantiate):
+	Update the PNG handling code to work with versions of the library
+	where the png_info structure is no longer visible. Thank you for
+	the report, Robert Delius Royar.
+
 2011-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-stream.c (Fdispatch_event):
