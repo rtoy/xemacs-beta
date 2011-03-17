@@ -4532,7 +4532,8 @@ extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
 extern MODULE_API Lisp_Object Qintegerp;
 
 extern Lisp_Object Qargs_out_of_range, Qarith_error, Qbeginning_of_buffer,
-    Qbuffer_read_only, Qcircular_list, Qcircular_property_list,
+    Qbuffer_read_only, Qextent_read_only,
+    Qcircular_list, Qcircular_property_list,
     Qconversion_error, Qcyclic_variable_indirection, Qdomain_error,
     Qediting_error, Qend_of_buffer, Qend_of_file, Qerror, Qfile_error,
     Qinternal_error, Qinvalid_change, Qinvalid_constant, Qinvalid_function, 
