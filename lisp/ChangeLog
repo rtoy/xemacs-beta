@@ -2,6 +2,13 @@
 
 	* bytecomp.el (byte-compile-catch):
 	* bytecomp.el (byte-compile-throw):
+	Correct some minor problems in my last change. Happy St. Patrick's
+	day, everyone!
+
+2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-catch):
+	* bytecomp.el (byte-compile-throw):
 	* cl-macs.el (return-from):
 	With `block' and `return-from', a nil NAME is perfectly
 	legitimate, and the corresponding `catch' statements need be
