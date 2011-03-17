@@ -1702,6 +1702,7 @@ If FRAME is nil or omitted, the selected frame is used."
 	   (type (plist-get props 'type))
 	   (class (plist-get props 'class))
 	   (background (plist-get props 'background))
+           (min-colors (plist-get props 'min-colors))
 	   (match t)
 	   (entries display)
 	   entry req options)
@@ -1714,6 +1715,8 @@ If FRAME is nil or omitted, the selected frame is used."
 		      (type       (memq type options))
 		      (class      (memq class options))
 		      (background (memq background options))
+		      (min-colors (>= (display-color-cells frame)
+				      (car options)))
 		      (t (warn "Unknown req `%S' with options `%S'"
 			       req options)
 			 nil))))

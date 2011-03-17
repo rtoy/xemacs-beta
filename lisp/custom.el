@@ -325,6 +325,9 @@ match one of the ITEM.  The following REQ are defined:
 `class' (the frame's color support)
   Should be one of `color', `grayscale', or `mono'.
 
+`min-colors' (the minimum number of colors the frame supports)
+  Should be in integer which is compared to `display-color-cells'
+
 `background' (what color is used for the background text)
   Should be one of `light' or `dark'.
 

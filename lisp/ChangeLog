@@ -1,3 +1,10 @@
+2011-03-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* custom.el (defface): Document `min-colors' specifier.
+
+	* faces.el (face-spec-set-match-display): Add `min-colors'
+	specifer for defface.
+
 2011-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* isearch-mode.el (isearch-mode-map):
