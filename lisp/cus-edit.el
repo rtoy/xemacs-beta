@@ -868,7 +868,7 @@ Show the buffer in another window, but don't select it."
 	;; under point:
 	(let ((choice (completing-read "Customize face: (default all) "
 				       obarray 'find-face)))
-	  (if (zerop (length choice))
+	  (if (eql (length choice) 0)
 	      nil
 	    (list (intern choice))))
       (cond ((symbolp faces)
@@ -882,7 +882,7 @@ Show the buffer in another window, but don't select it."
 				      (list (symbol-name face) face))
 				    faces)
 			    nil t)))
-	       (if (zerop (length choice))
+	       (if (eql (length choice) 0)
 		   (list faces)
 		 (list (intern choice)))))))))
 
@@ -1182,7 +1182,7 @@ Invoke ")
   (widget-insert "\n")
   (message "Creating customization items...")
   (setq custom-options
-	(if (= (length options) 1)
+	(if (eql (length options) 1)
 	    (mapcar (lambda (entry)
 		      (widget-create (nth 1 entry)
 				     :documentation-shown t
@@ -2983,7 +2983,7 @@ settings."
 					 (face-list))
 				 nil nil nil
 				 'face-history)))
-    (unless (zerop (length answer))
+    (unless (eql (length answer) 0)
       (widget-value-set widget (intern answer))
       (widget-apply widget :notify widget event)
       (widget-setup))))
@@ -3172,7 +3172,7 @@ If GROUPS-ONLY non-nil, return only those members that are groups."
 	   (insert " " tag "\n")
 	   (widget-put widget :buttons buttons))
 	  ((and (eq custom-buffer-style 'tree)
-		(zerop (length members)))
+		(eql (length members) 0))
 	   (custom-browse-insert-prefix prefix)
 	   (insert "[ ]-- ")
 	   ;; (widget-glyph-insert nil "[ ]" "empty")
@@ -3185,7 +3185,7 @@ If GROUPS-ONLY non-nil, return only those members that are groups."
 	  ((eq custom-buffer-style 'tree)
 	   (custom-browse-insert-prefix prefix)
 	   (custom-load-widget widget)
-	   (if (zerop (length members))
+	   (if (eql (length members) 0)
 	       (progn
 		 (custom-browse-insert-prefix prefix)
 		 (insert "[ ]-- ")

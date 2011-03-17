@@ -442,12 +442,12 @@ The return value is @var{window}.
 @end example
 @end defun
 
-@defspec save-selected-window forms@dots{}
+@deffn {Special Operator} save-selected-window forms@dots{}
 This macro records the selected window, executes @var{forms} in
 sequence, then restores the earlier selected window.  It does not save
 or restore anything about the sizes, arrangement or contents of windows;
 therefore, if the @var{forms} change them, the changes are permanent.
-@end defspec
+@end deffn
 
 @cindex finding windows
   The following functions choose one of the windows on the screen,
@@ -1969,7 +1969,7 @@ as @code{save-window-excursion}:
 @end example
 @end defun
 
-@defspec save-window-excursion forms@dots{}
+@deffn {Special Operator} save-window-excursion forms@dots{}
 This macro records the window configuration, executes @var{forms}
 in sequence, then restores the earlier window configuration.  The window
 configuration includes the value of point and the portion of the buffer
@@ -2005,7 +2005,7 @@ For example:
      ;; @r{The frame is now split again.}
 @end group
 @end example
-@end defspec
+@end deffn
 
 @defun window-configuration-p object
 This function returns @code{t} if @var{object} is a window configuration.

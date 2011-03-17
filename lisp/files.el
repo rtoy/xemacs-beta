@@ -996,9 +996,9 @@ the coding system."
 			  (read-coding-system "Coding system: "))
 		     t))
   (let ((value (find-file filename codesys wildcards)))
-    (mapcar #'(lambda (buffer)
-		(set-symbol-value-in-buffer 'buffer-read-only t buffer))
-	    (if (listp value) value (list value)))
+    (mapc #'(lambda (buffer)
+              (set-symbol-value-in-buffer 'buffer-read-only t buffer))
+          (if (listp value) value (list value)))
     value))
 
 (defun find-file-read-only-other-window (filename &optional codesys wildcards)
@@ -4553,7 +4553,7 @@ absolute one."
 	  (and (car pair)
 	       (string-match "\\`/:" (car pair))
 	       (setcar pair
-		       (if (= (length (car pair)) 2)
+		       (if (eql (length (car pair)) 2)
 			   "/"
 			 (substring (car pair) 2)))))
 	(setq file-arg-indices (cdr file-arg-indices))))

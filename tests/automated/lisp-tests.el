@@ -794,18 +794,18 @@
 	 (Check-Error (malformed-list wrong-type-argument) (,fun nil 1))
 	 ,@(loop for n in '(1 2 2000)
 	     collect `(Check-Error circular-list (,fun 1 (make-circular-list ,n))))))
-     (test-funs (&rest funs) `(progn ,@(loop for fun in funs collect `(test-fun ,fun)))))
-
+     (test-funs (&rest funs) `(progn ,@(loop for fun in funs collect `(test-fun ,fun))))
+     (test-old-funs (&rest funs)
+       `(when (and (fboundp 'old-eq) (subrp (symbol-function 'old-eq)))
+         ,@(loop for fun in funs collect `(test-fun ,fun)))))
   (test-funs member* member memq 
              assoc* assoc assq 
              rassoc* rassoc rassq 
              delete* delete delq 
              remove* remove remq 
-             old-member old-memq 
-             old-assoc old-assq 
-             old-rassoc old-rassq 
-             old-delete old-delq 
-             remassoc remassq remrassoc remrassq))
+             remassoc remassq remrassoc remrassq)
+  (test-old-funs old-member old-memq old-assoc old-assq old-rassoc old-rassq 
+                 old-delete old-delq))
 
 (let ((x '((1 . 2) 3 (4 . 5))))
   (Assert (eq (assoc  1 x) (car x)))
@@ -889,19 +889,15 @@
   (Assert (let* ((x (a)) (y (remassq   6 x))) (and (eq x y) (equal y (a)))))
   (Assert (let* ((x (a)) (y (remrassoc 6 x))) (and (eq x y) (equal y (a)))))
   (Assert (let* ((x (a)) (y (remrassq  6 x))) (and (eq x y) (equal y (a)))))
-
   (Assert (let* ((x (a)) (y (delete     3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
   (Assert (let* ((x (a)) (y (delq       3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
-  (Assert (let* ((x (a)) (y (old-delete 3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
-  (Assert (let* ((x (a)) (y (old-delq   3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
-
   (Assert (let* ((x (a)) (y (delete     '(1 . 2) x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
   (Assert (let* ((x (a)) (y (delq       '(1 . 2) x))) (and      (eq x y)  (equal y (a)))))
-  (Assert (let* ((x (a)) (y (old-delete '(1 . 2) x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
-  (Assert (let* ((x (a)) (y (old-delq   '(1 . 2) x))) (and      (eq x y)  (equal y (a)))))
-  )
-
-
+  (when (and (fboundp 'old-eq) (subrp (symbol-function 'old-eq)))
+    (Assert (let* ((x (a)) (y (old-delete '(1 . 2) x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
+    (Assert (let* ((x (a)) (y (old-delq   '(1 . 2) x))) (and      (eq x y)  (equal y (a)))))
+    (Assert (let* ((x (a)) (y (old-delete 3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
+    (Assert (let* ((x (a)) (y (old-delq   3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))))
 
 (flet ((a () (list '("1" . "2") "3" '("4" . "5"))))
   (Assert (let* ((x (a)) (y (remassoc  "1" x))) (and (not (eq x y)) (equal y '("3" ("4" . "5"))))))
@@ -1336,6 +1332,18 @@ via the hepatic alpha-tocopherol transfer protein")))
 (Check-Error wrong-type-argument (subseq 3 2))
 (Check-Error args-out-of-range (subseq [1 2 3] -42))
 (Check-Error args-out-of-range (subseq [1 2 3] 0 42))
+
+(let ((string "hi there"))
+  (Assert (equal (substring-no-properties "123" 0) "123"))
+  (Assert (equal (substring-no-properties "1234" -3 -1) "23"))
+  (Assert (equal (substring-no-properties "hi there" 0) "hi there"))
+  (put-text-property 0 (length string) 'foo 'bar string)
+  (Assert (eq 'bar (get-text-property 0 'foo string)))
+  (Assert (not
+           (get-text-property 0 'foo (substring-no-properties "hi there" 0))))
+  (Check-Error wrong-type-argument (substring-no-properties nil 4))
+  (Check-Error wrong-type-argument (substring-no-properties "hi there" pi))
+  (Check-Error wrong-type-argument (substring-no-properties "hi there" 0.0)))
 
 ;;-----------------------------------------------------
 ;; Time-related tests

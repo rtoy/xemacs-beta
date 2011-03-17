@@ -316,7 +316,7 @@ Returns the count of paragraphs left to move."
 	  (forward-char 1))
 	(if (< (point) (point-max))
 	    (goto-char start))))
-    (if-fboundp #'constrain-to-field
+    (if-fboundp 'constrain-to-field
         (constrain-to-field nil opoint t)
       (error
        'void-function
@@ -435,7 +435,7 @@ sentences.  A paragraph boundary also terminates a sentence."
 	   (skip-chars-backward " \t\n")
 	 (goto-char par-end)))
       (setq arg (1- arg)))
-    (if-fboundp #'constrain-to-field
+    (if-fboundp 'constrain-to-field
         (constrain-to-field nil opoint t)
       (error
        'void-function

@@ -875,7 +875,7 @@ those cases it's probably best to use @code{add-spec-to-specifier} or
 @code{add-spec-list-to-specifier}.
 @end defun
 
-@defspec let-specifier specifier-list &rest body
+@deffn {Special Operator} let-specifier specifier-list &rest body
 This macro temporarily adds specifications to specifiers,
 evaluates forms in @var{body} and restores the specifiers to their
 previous states.  The specifiers and their temporary specifications are
@@ -912,7 +912,7 @@ selected window for the duration of a second:
 (let-specifier ((modeline-shadow-thickness 0 (selected-window)))
   (sit-for 1))
 @end example
-@end defspec
+@end deffn
 
 @defun set-specifier specifier value &optional locale tag-set how-to-add
 This function adds some specifications to @var{specifier}.  @var{value}

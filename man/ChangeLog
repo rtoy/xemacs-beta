@@ -1,3 +1,81 @@
+2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Character Type):
+	* lispref/objects.texi (Equality Predicates):
+	No longer document `old-eq', `old-equal', they haven't been used
+	in years.
+
+2011-03-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* lispref/faces.texi (Faces): Mention `min-colors' as a
+	face specifier.
+
+2011-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/commands.texi (Using Interactive):
+	* lispref/compile.texi (Eval During Compile):
+	* lispref/compile.texi (Compiled-Function Objects):
+	* lispref/control.texi (Sequencing):
+	* lispref/control.texi (Conditionals):
+	* lispref/control.texi (Combining Conditions):
+	* lispref/control.texi (Iteration):
+	* lispref/control.texi (Catch and Throw):
+	* lispref/control.texi (Handling Errors):
+	* lispref/control.texi (Cleanups):
+	* lispref/display.texi (Temporary Displays):
+	* lispref/eval.texi (Quoting):
+	* lispref/eval.texi (Multiple values):
+	* lispref/frames.texi (Input Focus):
+	* lispref/functions.texi (Argument List):
+	* lispref/functions.texi (Defining Functions):
+	* lispref/functions.texi (Anonymous Functions):
+	* lispref/internationalization.texi (Level 3 Primitives):
+	* lispref/internationalization.texi (Domain Specification):
+	* lispref/intro.texi (A Sample Function Description):
+	* lispref/intro.texi (A Sample Variable Description):
+	* lispref/lists.texi (Sets And Lists):
+	* lispref/macros.texi (Defining Macros):
+	* lispref/macros.texi (Backquote):
+	* lispref/positions.texi (Excursions):
+	* lispref/positions.texi (Narrowing):
+	* lispref/searching.texi (Saving Match Data):
+	* lispref/sequences.texi (Sequence Functions):
+	* lispref/sequences.texi (Array Functions):
+	* lispref/specifiers.texi (Adding Specifications):
+	* lispref/variables.texi (Local Variables):
+	* lispref/variables.texi (Defining Variables):
+	* lispref/variables.texi (Setting Variables):
+	* lispref/variables.texi (Default Value):
+	* lispref/windows.texi (Selecting Windows):
+	* lispref/windows.texi (Window Configurations):
+	No longer use @defspec, since we no longer use the term "special
+	form"; instead use @deffn {Special Operator}. Unfortunately
+	there's no way in texinfo to redefine @defspec in one place.
+
+2011-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.texi (Argument Lists):
+	* cl.texi (Time of Evaluation):
+	* cl.texi (Type Predicates):
+	* cl.texi (Assignment):
+	* cl.texi (Basic Setf):
+	* cl.texi (Modify Macros):
+	* cl.texi (Customizing Setf):
+	* cl.texi (Dynamic Bindings):
+	* cl.texi (Lexical Bindings):
+	* cl.texi (Function Bindings):
+	* cl.texi (Macro Bindings):
+	* cl.texi (Conditionals):
+	* cl.texi (Blocks and Exits):
+	* cl.texi (Iteration):
+	* cl.texi (Loop Basics):
+	* cl.texi (Macros):
+	* cl.texi (Declarations):
+	* cl.texi (Property Lists):
+	* cl.texi (Structures):
+	* cl.texi (Assertions):
+	* cl.texi (Efficiency Concerns):
+
 2011-02-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/lists.texi (Sets And Lists):

@@ -260,7 +260,7 @@ Write your filter like this:
 		    (submenu-generate-accelerator-spec
 		     (mapcar #'(lambda (bmk)
 				 `[,bmk (bookmark-delete ',bmk)])
-			     (bookmark-all-names)))))
+			     (declare-fboundp (bookmark-all-names))))))
       ["%_Edit Bookmark List" bookmark-bmenu-list
        :active (and-boundp 'bookmark-alist bookmark-alist)]
       "---"

@@ -442,44 +442,38 @@ a similar structure:
 ;; little helps there.)
 (set-language-info "Japanese"
                    'native-coding-system
-                   (list
-                    ;; first, see if an explicit encoding was given.
-                    (lambda (locale)
-                      (let ((case-fold-search t))
-                        (cond
-                         ;; many unix versions
-                         ((string-match "\\.euc" locale) 'euc-jp)
-                         ((string-match "\\.sjis" locale) 'shift-jis)
+                   ;; first, see if an explicit encoding was given.
+                   (lambda (locale)
+                     (let ((case-fold-search t))
+                       (cond
+                        ;; many unix versions
+                        ((string-match "\\.euc" locale) 'euc-jp)
+                        ((string-match "\\.sjis" locale) 'shift-jis)
 
-                         ;; X11R6 (CJKV p. 471)
-                         ((string-match "\\.jis7" locale) 'jis7)
-                         ((string-match "\\.jis8" locale) 'jis8)
-                         ((string-match "\\.mscode" locale) 'shift-jis)
-                         ((string-match "\\.pjis" locale) 'iso-2022-jp)
-                         ((string-match "\\.ujis" locale) 'euc-jp)
+                        ;; X11R6 (CJKV p. 471)
+                        ((string-match "\\.jis7" locale) 'jis7)
+                        ((string-match "\\.jis8" locale) 'jis8)
+                        ((string-match "\\.mscode" locale) 'shift-jis)
+                        ((string-match "\\.pjis" locale) 'iso-2022-jp)
+                        ((string-match "\\.ujis" locale) 'euc-jp)
 
-                         ;; other names in X11R6 locale.alias
-                         ((string-match "\\.ajec" locale) 'euc-jp)
-                         ((string-match "-euc" locale) 'euc-jp)
-                         ((string-match "\\.iso-2022-jp" locale) 'iso-2022-jp)
-                         ((string-match "\\.jis" locale) 'jis7) ;; or just jis?
-                         )))
+                        ;; other names in X11R6 locale.alias
+                        ((string-match "\\.ajec" locale) 'euc-jp)
+                        ((string-match "-euc" locale) 'euc-jp)
+                        ((string-match "\\.iso-2022-jp" locale) 'iso-2022-jp)
+                        ((string-match "\\.jis" locale) 'jis7) ;; or just jis?
 
-                    ;; aix (CJKV p. 465)
-                    (lambda (locale)
-                      (when (eq system-type 'aix)
-                        (cond
-                         ((string-match "^Ja_JP" locale) 'shift-jis)
-                         ((string-match "^ja_JP" locale) 'euc-jp))))
+                        ;; aix (CJKV p. 465)
+                        ((and (eq system-type 'aix)
+                              (string-match "^Ja_JP" locale)) 'shift-jis)
+                        ((and (eq system-type 'aix)
+                              (string-match "^ja_JP" locale)) 'euc-jp)
 
-                    ;; other X11R6 locale.alias
-                    (lambda (locale)
-                      (cond
+                       ;; other X11R6 locale.alias
                        ((string-match "^Jp_JP" locale) 'euc-jp)
                        ((and (eq system-type 'hpux) (eq locale "japanese"))
-                        'shift-jis)))
-
-                    ;; fallback
-                    'euc-jp))
+                        'shift-jis)
+                       ;; fallback
+                       (t 'euc-jp)))))
 
 ;;; japanese.el ends here

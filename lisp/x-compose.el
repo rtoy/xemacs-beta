@@ -916,9 +916,9 @@ which it understands) are:
 	   (mod-char (and (>= (downcase base-char) ?a) ; only do alphabetics?
 			  (<= (downcase base-char) ?z)
 			  (lookup-key map (make-string 1 base-char)))))
-      (when (and (vectorp mod-char) (= (length mod-char) 1))
+      (when (and (vectorp mod-char) (eql (length mod-char) 1))
         (setq mod-char (aref mod-char 0))
-        (if (and (consp mod-char) (= (length mod-char) 1)
+        (if (and (consp mod-char) (eql (length mod-char) 1)
                  (characterp (car mod-char)))
             (setq mod-char (car mod-char))))
       (if (and mod-char (symbolp mod-char))

@@ -66,10 +66,7 @@ set in question.  If not, it returns nil."
                          (repeat)))) nil))
 		  (first-part compiled)
 		  (last-part
-		   (member-if-not (lambda (entr) (eq #xBFFE entr))
-				  (member-if
-                                   (lambda (entr) (eq #xBFFE entr))
-                                   first-part))))
+		   (member* #xBFFE (member* #xBFFE first-part) :test-not 'eql)))
 	     (while compiled
 	       (when (eq #xBFFE (cadr compiled))
 		 (assert (= vec-len (search '(#xBFFE) (cdr compiled)

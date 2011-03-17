@@ -1770,7 +1770,8 @@ other mouse buttons."
 		 ;; left window side has slipped (right side cannot be
 		 ;; moved any further to the right, so enlarge-window
 		 ;; plays bad games with the left edge.
-		 (if (or (/= (count-windows) (length old-edges-all-windows))
+		 (if (or (not (eql (count-windows)
+				   (length old-edges-all-windows)))
 			 (/= old-left (car (window-pixel-edges window)))
 			 ;; This check is very hairy. We allow any number
 			 ;; of left edges to change, but only to the same
@@ -1778,22 +1779,24 @@ other mouse buttons."
 			 (let ((all-that-bad nil)
 			       (new-left-ok nil)
 			       (new-right-ok nil))
-			   (mapcar* (lambda (window old-edges)
-				      (let ((new (car (window-pixel-edges window))))
-					(if (/= new (car old-edges))
-					    (if (and new-left-ok
-						     (/= new-left-ok new))
-						(setq all-that-bad t)
-					      (setq new-left-ok new)))))
-				    (window-list) old-edges-all-windows)
-			   (mapcar* (lambda (window old-edges)
-				      (let ((new (caddr (window-pixel-edges window))))
-					(if (/= new (caddr old-edges))
-					    (if (and new-right-ok
-						     (/= new-right-ok new))
-						(setq all-that-bad t)
-					      (setq new-right-ok new)))))
-				    (window-list) old-edges-all-windows)
+			   (mapc (lambda (window old-edges)
+                                   (let ((new
+                                          (car (window-pixel-edges window))))
+                                     (if (/= new (car old-edges))
+                                         (if (and new-left-ok
+                                                  (/= new-left-ok new))
+                                             (setq all-that-bad t)
+                                           (setq new-left-ok new)))))
+                                 (window-list) old-edges-all-windows)
+			   (mapc (lambda (window old-edges)
+                                   (let ((new
+                                          (caddr (window-pixel-edges window))))
+                                     (if (/= new (caddr old-edges))
+                                         (if (and new-right-ok
+                                                  (/= new-right-ok new))
+                                             (setq all-that-bad t)
+                                           (setq new-right-ok new)))))
+                                 (window-list) old-edges-all-windows)
 			   all-that-bad))
 		     (set-window-configuration backup-conf)))))))))
 

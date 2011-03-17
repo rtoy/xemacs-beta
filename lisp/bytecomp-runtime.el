@@ -308,7 +308,7 @@ functionality at some entry point to the package.  See
   (let ((symbols (eval (car (cdr form)))))
     (unless (consp symbols)
       (setq symbols (list symbols)))
-    (setq symbols (mapcar #'(lambda (sym) (cons sym nil)) symbols))
+    (setq symbols (mapcar #'list symbols))
     (setq byte-compile-unresolved-functions
 	  (set-difference byte-compile-unresolved-functions symbols
 			  :key #'car))
@@ -425,7 +425,7 @@ throughout the code would be a major annoyance."
     ;; have an autoload later in the file for any functions in FUNCTIONS.
     ;; This is not something that code should ever do, though.)
     (setq byte-compile-autoload-environment
-	  (append (mapcar #'(lambda (sym) (cons sym nil)) functions)
+	  (append (mapcar #'list functions)
 		  byte-compile-autoload-environment)))
   nil)
 

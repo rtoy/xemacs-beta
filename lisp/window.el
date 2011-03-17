@@ -583,7 +583,7 @@ and the buffer that is killed or buried is the one in that window."
 	 (delq frame (visible-frame-list))
 	 window-solitary
 	 (if (and (eq default-minibuffer-frame frame)
-		  (= 1 (length (minibuffer-frame-list))))
+		  (eql 1 (length (minibuffer-frame-list))))
 	     (setq window nil)
 	   (delete-frame frame)
 	   (setq window-handled t)))

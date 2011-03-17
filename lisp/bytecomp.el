@@ -3159,8 +3159,8 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler skip-chars-forward     1-2+1)
 (byte-defop-compiler skip-chars-backward    1-2+1)
 (byte-defop-compiler eq			2)
-(byte-defop-compiler20 old-eq 	 	2)
-(byte-defop-compiler20 old-memq		2)
+; (byte-defop-compiler20 old-eq 	 	2)
+; (byte-defop-compiler20 old-memq		2)
 (byte-defop-compiler cons		2)
 (byte-defop-compiler aref		2)
 (byte-defop-compiler get		2+1)
@@ -3177,7 +3177,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler string<		2)
 (byte-defop-compiler (string-equal byte-string=) 2)
 (byte-defop-compiler (string-lessp byte-string<) 2)
-(byte-defop-compiler20 old-equal	2)
+; (byte-defop-compiler20 old-equal	2)
 (byte-defop-compiler nthcdr		2)
 (byte-defop-compiler elt		2)
 (byte-defop-compiler20 old-member	2)
@@ -3218,7 +3218,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
   (when (memq 'subr-callargs byte-compile-warnings)
     (byte-compile-warn "%s called with %d arg%s, but requires %s"
 		       (car form) (length (cdr form))
-		       (if (= 1 (length (cdr form))) "" "s") n)))
+		       (if (eql 1 (length (cdr form))) "" "s") n)))
 
 (defun byte-compile-subr-wrong-args (form n)
   (byte-compile-warn-wrong-args form n)
@@ -3343,7 +3343,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 ;; XEmacs: used for functions that have a different opcode in v19 than v20.
 ;; this includes `eq', `equal', and other old-ified functions.
 (defun byte-compile-two-args-19->20 (form)
-  (if (not (= (length form) 3))
+  (if (not (eql (length form) 3))
       (byte-compile-subr-wrong-args form 2)
     (byte-compile-form (car (cdr form)))  ;; Push the arguments
     (byte-compile-form (nth 2 form))
@@ -3444,7 +3444,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
   (let* ((args (cdr form))
 	 (nargs (length args)))
     (cond
-     ((= nargs 0)
+     ((eql nargs 0)
       (byte-compile-constant nil))
      ((< nargs 5)
       (mapc 'byte-compile-form args)
@@ -3694,7 +3694,7 @@ forcing function quoting" ,en (car form))))
   (let ((len (length form)))
     (cond ((> len 3)
 	   (byte-compile-subr-wrong-args form "0-2"))
-	  ((or (= len 3) (not (byte-compile-constp (nth 1 form))))
+	  ((or (eql len 3) (not (byte-compile-constp (nth 1 form))))
 	   (byte-compile-normal-call form))
 	  (t
 	   (byte-compile-form
@@ -3764,8 +3764,7 @@ forcing function quoting" ,en (car form))))
   (let* ((args (cdr form))
 	 (nargs (length args))
 	 (var (car args)))
-    (when (and (= (safe-length var) 2)
-	       (eq (car var) 'quote))
+    (when (and (eql (safe-length var) 2) (eq (car var) 'quote))
       (let ((sym (nth 1 var)))
 	(cond
 	 ((not (symbolp sym))
@@ -3784,7 +3783,7 @@ forcing function quoting" ,en (car form))))
 	 (t
 	  (byte-compile-warn "assignment to free variable %s" sym)
 	  (push sym byte-compile-free-assignments)))))
-    (if (= nargs 2)
+    (if (eql nargs 2)
 	;; now emit a normal call to set-default
 	(byte-compile-normal-call form)
       (byte-compile-subr-wrong-args form 2))))
@@ -3921,7 +3920,7 @@ forcing function quoting" ,en (car form))))
   (byte-compile-body form t))
 
 (defun byte-compile-values (form)
-  (if (= 2 (length form))
+  (if (eql 2 (length form))
       (if (byte-compile-constp (second form))
 	  (byte-compile-form-do-effect (second form))
 	;; #'or compiles to bytecode, #'values doesn't:
@@ -3929,7 +3928,7 @@ forcing function quoting" ,en (car form))))
     (byte-compile-normal-call form)))
 
 (defun byte-compile-values-list (form)
-  (if (and (= 2 (length form))
+  (if (and (eql 2 (length form))
            (or (null (second form))
                (and (consp (second form))
                     (eq (car (second form))
@@ -4108,7 +4107,7 @@ forcing function quoting" ,en (car form))))
 ;; anyway).
 
 (defun byte-compile-integerp (form)
-  (if (/= 2 (length form))
+  (if (not (eql (length form) 2))
       (byte-compile-subr-wrong-args form 1)
     (let ((donetag (byte-compile-make-tag))
 	  (wintag (byte-compile-make-tag))
@@ -4336,7 +4335,7 @@ optimized away--just byte compile and return the BODY."
              :test #'equal)))
 
 (defun byte-compile-multiple-value-list-internal (form)
-  (if (/= 4 (length form))
+  (if (not (eql 4 (length form)))
       (progn
         (byte-compile-warn-wrong-args form 3)
         (byte-compile-normal-call
@@ -4358,7 +4357,7 @@ optimized away--just byte compile and return the BODY."
   ;; form, it provokes an invalid-function error instead (or at least it
   ;; should; there's a kludge around for the moment in eval.c that avoids
   ;; that, but this file should not assume that that will always be there).
-  (if (/= 2 (length (cdr form)))
+  (if (not (eql 2 (length (cdr form))))
       (progn
         (byte-compile-warn-wrong-args form 2)
         (byte-compile-normal-call

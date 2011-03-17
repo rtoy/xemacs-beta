@@ -212,7 +212,7 @@ The function always returns nil."
 		   ((eq (car object) 'dragdrop-MIME) "MIME")
 		   (t "UNKNOWN"))
 	     (length (cdr object))
-	     (if (= (length (cdr object)) 1) "element" "elements")))
+	     (if (eql (length (cdr object)) 1) "element" "elements")))
     (let ((i 1)
 	  (data (cdr object)))
       (while (not (eq data ()))
@@ -278,7 +278,7 @@ Returns nil if object does not contain MIME data."
 	   (while (not (eq ldata ()))
 	     (setq data (car ldata))
 	     (if (and (listp data)
-		      (= (length data) 3)
+		      (eql (length data) 3)
 		      (listp (car data))
 		      (stringp (caar data))
 		      (string= (caar data) "text/plain")
@@ -306,7 +306,7 @@ Returns nil if object does not contain MIME data."
 			(and (featurep 'tm-view)
 			     (declare-fboundp (mime/viewer-mode buf))))
 		       ((and (listp data)
-			     (= (length data) 3))
+			     (eql (length data) 3))
 			;; change the internal content-type representation to the
 			;; way tm does it ("content/type" (key . value)*)
 			;; but for now list will do the job

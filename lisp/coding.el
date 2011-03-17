@@ -376,7 +376,7 @@ in the string."
 					(< (length result) count))
 			      (push (if stringp (1- begin) begin) result)
 			      (incf begin))
-			    (when (= (length result) count)
+			    (when (eql (length result) count)
 			      (return-from worked-it-all-out result)))
 			ranges)
 		     (map-range-table

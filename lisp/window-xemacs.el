@@ -549,7 +549,7 @@ Each frame has its own window-config stack."
   (interactive)
   (let ((wc (or config (current-window-configuration)))
 	(stack (window-config-stack)))
-    (if (or (= 0 (undoable-stack-a-length stack))
+    (if (or (eql 0 (undoable-stack-a-length stack))
 	    (not (equal (undoable-stack-a-top stack) wc)))
 	(undoable-stack-push stack wc))))
 

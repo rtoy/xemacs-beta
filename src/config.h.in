@@ -1181,4 +1181,6 @@ extern "C" {
 /* Do we need to be able to run code compiled by and written for 21.4? */
 #define NEED_TO_HANDLE_21_4_CODE 1
 
+#define SUPPORT_CONFOUNDING_FUNCTIONS NEED_TO_HANDLE_21_4_CODE
+
 #endif /* _SRC_CONFIG_H_ */

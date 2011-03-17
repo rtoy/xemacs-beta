@@ -85,8 +85,8 @@ You can change the coding systems later on using
     ;; We check only the general form of the multicast address.
     ;; The rest will be handled by the internal function.
     (string-match "^\\([0-9\\.]+\\)/\\([0-9]+\\)/\\([0-9]+\\)$" address)
-    (and (not (and (= (match-beginning 0) 0)
-		   (= (match-end 0) (length address))))
+    (and (not (and (eql (match-beginning 0) 0)
+		   (eql (match-end 0) (length address))))
 	 (error "malformed multicast address: %s" address))
     (and (not (setq dest (match-string 1 address)))
 	 (error "invalid destination specification."))

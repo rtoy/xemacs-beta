@@ -57,7 +57,7 @@ Such a collection of attributes is called a \"face\"."
 
 (defun read-face-name (prompt)
   (let (face)
-    (while (= (length face) 0) ; nil or ""
+    (while (eql (length face) 0) ; nil or ""
       (setq face (completing-read prompt
 				  (mapcar (lambda (x) (list (symbol-name x)))
 					  (face-list))
@@ -476,7 +476,7 @@ See `face-property-instance' for more information."
     (let (matchspec)
       ;; get-charset signals an error if its argument doesn't have an
       ;; associated charset.
-      (setq charset (if-fboundp #'get-charset
+      (setq charset (if-fboundp 'get-charset
                         (get-charset charset)
                       (error 'unimplemented "Charset support not available"))
 	    matchspec (cons charset nil))
@@ -1700,6 +1700,7 @@ If FRAME is nil or omitted, the selected frame is used."
 	   (type (plist-get props 'type))
 	   (class (plist-get props 'class))
 	   (background (plist-get props 'background))
+           (min-colors (plist-get props 'min-colors))
 	   (match t)
 	   (entries display)
 	   entry req options)
@@ -1712,6 +1713,8 @@ If FRAME is nil or omitted, the selected frame is used."
 		      (type       (memq type options))
 		      (class      (memq class options))
 		      (background (memq background options))
+		      (min-colors (>= (display-color-cells frame)
+				      (car options)))
 		      (t (warn "Unknown req `%S' with options `%S'"
 			       req options)
 			 nil))))
@@ -2037,14 +2040,14 @@ in that frame; otherwise change each frame."
 						 '(".xbm" "")))))
 			(and file
 			     `[xbm :file ,file])))
-		     ((and (listp pixmap) (= (length pixmap) 3))
+		     ((and (listp pixmap) (eql (length pixmap) 3))
 		      `[xbm :data ,pixmap])
 		     (t nil))))
       ;; We're signaling a continuable error; let's make sure the
       ;; function `stipple-pixmap-p' at least exists.
       (flet ((stipple-pixmap-p (pixmap)
 	       (or (stringp pixmap)
-		   (and (listp pixmap) (= (length pixmap) 3)))))
+		   (and (listp pixmap) (eql (length pixmap) 3)))))
 	(setq pixmap (signal 'wrong-type-argument
 			     (list 'stipple-pixmap-p pixmap)))))
     (check-type frame (or null frame))

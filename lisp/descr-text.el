@@ -765,8 +765,8 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
 						(line-end-position)) ";")
 				       :test 'equal))))
 	      ;; The length depends on whether the last field was empty.
-	      (unless (or (= 13 (length fields))
-			  (= 14 (length fields)))
+	      (unless (or (eql 13 (length fields))
+			  (eql 14 (length fields)))
 		(error 'invalid-argument
                        (format "Invalid contents in %s"
                                describe-char-unicodedata-file)))
@@ -1118,7 +1118,7 @@ as well as widgets, buttons, overlays, and text properties."
 ; 		    (push (format "%s;" (pop props)) ps))
 ; 		  (list (cons "Properties" (nreverse ps)))))
 	    ("to input"
-	     ,@(let ((key-list (and-fboundp #'quail-find-key
+	     ,@(let ((key-list (and-fboundp 'quail-find-key
                                  current-input-method
                                  (quail-find-key char))))
 		 (if (consp key-list)

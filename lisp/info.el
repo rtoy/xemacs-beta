@@ -588,7 +588,7 @@ to read a file name from the minibuffer."
 	   (equal (nth 1 p) "info")
 	   (not Info-standalone)
 	   (setq Info-standalone t)
-	   (= (length p) 3)
+	   (eql (length p) 3)
 	   (not (string-match "^-" (nth 2 p)))
 	   (setq file (nth 2 p))
 	   (setq command-line-args-left nil))
@@ -1125,7 +1125,7 @@ directory has been modified more recently."
   (let ((dir-mod-time (nth 5 (file-attributes file)))
 	f-mod-time newer)
     (setq Info-dir-newer-info-files nil)
-    (mapcar
+    (mapc
      #'(lambda (f)
 	 (prog2
 	     (setq f-mod-time (nth 5 (file-attributes f)))
@@ -1189,23 +1189,23 @@ and `END-INFO-DIR-ENTRY'."
   (let ((tab-width 8)
 	(description-col 0)
 	len)
-    (mapcar #'(lambda (e)
-		(setq e (cdr e))	; Drop filename
-		(setq len (length (concat (car e)
-					  (car (cdr e)))))
-		(if (> len description-col)
-		    (setq description-col len)))
-	    entries)
+    (mapc #'(lambda (e)
+              (setq e (cdr e))	; Drop filename
+              (setq len (length (concat (car e)
+                                        (car (cdr e)))))
+              (if (> len description-col)
+                  (setq description-col len)))
+          entries)
     (setq description-col (+ 5 description-col))
-    (mapcar #'(lambda (e)
-		(setq e (cdr e))	; Drop filename
-		(insert "* " (car e) ":" (car (cdr e)))
-		(setq e (car (cdr (cdr e))))
-		(while e
-		  (indent-to-column description-col)
-		  (insert (car e) "\n")
-		  (setq e (cdr e))))
-	    entries)
+    (mapc #'(lambda (e)
+              (setq e (cdr e))	; Drop filename
+              (insert "* " (car e) ":" (car (cdr e)))
+              (setq e (car (cdr (cdr e))))
+              (while e
+                (indent-to-column description-col)
+                (insert (car e) "\n")
+                (setq e (cdr e))))
+          entries)
     (insert "\n")))
 
 
@@ -1297,7 +1297,7 @@ the value of `Info-save-auto-generated-dir'."
 	    (narrow-to-region mark next-section)
 	    (setq dir-section-contents (nreverse (Info-parse-dir-entries
 						  (point-min) (point-max))))
-	    (mapcar
+	    (mapc
 	     #'(lambda (file)
 		 (setq dir-entry (assoc (downcase
 					 (file-name-sans-extension

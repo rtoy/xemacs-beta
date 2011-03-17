@@ -1055,8 +1055,7 @@ Ligatures and special rules are processed."
 	(setq ordered-glyphs 
 	      (append ordered-glyphs
 		      (list (assq glyph devanagari-composition-rules))))))
-    (sort ordered-glyphs #'(lambda (x y) (< (car (cdr x)) (car (cdr y)))))))
-
+    (sort* ordered-glyphs '< :key 'cadr)))
 ;;(devanagari-compose-to-one-glyph "$(5"5!X![(B") => "4$(6!Xv#"5t%![0!X"5![1(B"
 
 (defun devanagari-compose-to-one-glyph (devanagari-string)
@@ -1077,7 +1076,7 @@ Ligatures and special rules are processed."
     ;; Before applying compose-chars, convert glyphs to
     ;; 1-column width if possible.
     (setq cmp-glyph-list (devanagari-wide-to-narrow cmp-glyph-list))
-    (if (= (length cmp-glyph-list) 1) (char-to-string (car cmp-glyph-list))
+    (if (eql (length cmp-glyph-list) 1) (char-to-string (car cmp-glyph-list))
       (apply 'compose-chars cmp-glyph-list))))
 
 (defun devanagari-composition-component (string &optional start end)

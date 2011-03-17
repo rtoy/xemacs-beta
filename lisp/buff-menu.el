@@ -641,8 +641,8 @@ The R column contains a % for buffers that are read-only."
 			   (if (memq files-only '(t nil))
 			       #'(lambda (b)
 				   (let ((n (buffer-name b)))
-				     (cond ((and (/= 0 (length n))
-						 (= (aref n 0) ?\ ))
+				     (cond ((and (not (eql 0 (length n)))
+						 (eql (aref n 0) ?\ ))
 					    ;;don't mention if starts with " "
 					    nil)
 					   (files-only

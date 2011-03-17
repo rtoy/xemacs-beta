@@ -4443,6 +4443,7 @@ Magic events are handled as necessary.
       {
 	Lisp_Object leaf = lookup_command_event (command_builder, event, 1);
 
+      lookedup:
 	if (KEYMAPP (leaf))
 	  /* Incomplete key sequence */
 	  break;
@@ -4522,6 +4523,22 @@ Magic events are handled as necessary.
 		GCPRO1 (keys);
 		pre_command_hook ();
 		UNGCPRO;
+
+                if (!NILP (Vthis_command))
+                  {
+                    /* Allow pre-command-hook to change the command to
+                       something more useful, and avoid barfing. */
+                    leaf = Vthis_command;
+                    if (!EQ (command_builder->most_current_event,
+                             Vlast_command_event))
+                      {
+                        reset_current_events (command_builder);
+                        command_builder_append_event (command_builder,
+                                                      Vlast_command_event);
+                      }
+                    goto lookedup;
+                  }
+
 		/* The post-command-hook doesn't run. */
 		Fsignal (Qundefined_keystroke_sequence, list1 (keys));
 	      }

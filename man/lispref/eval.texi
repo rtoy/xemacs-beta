@@ -663,9 +663,9 @@ and lists, which are not self-evaluating objects, in a program.  (It is
 not necessary to quote self-evaluating objects such as numbers, strings,
 and vectors.)
 
-@defspec quote object
+@deffn {Special Operator} quote object
 This special operator returns @var{object}, without evaluating it.
-@end defspec
+@end deffn
 
 @cindex @samp{'} for quoting
 @cindex quoting using apostrophe
@@ -743,48 +743,48 @@ This function returns the elements of the lst @var{argument} as multiple
 values.
 @end defun
 
-@defspec multiple-value-bind (var@dots{}) values-form forms@dots{}
+@deffn {Special Operator} multiple-value-bind (var@dots{}) values-form forms@dots{}
 This special operator evaluates @var{values-form}, which may return
 multiple values.  It then binds the @var{var}s to these respective values,
 as if by @code{let}, and then executes the body @var{forms}.
 If there are more @var{var}s than values, the extra @var{var}s
 are bound to @code{nil}.  If there are fewer @var{var}s than
 values, the excess values are ignored.
-@end defspec
+@end deffn
 
-@defspec multiple-value-setq (var@dots{}) form
+@deffn {Special Operator} multiple-value-setq (var@dots{}) form
 This special operator evaluates @var{form}, which may return multiple
 values. It then sets the @var{var}s to these respective values, as if by
 @code{setq}.  Extra @var{var}s or values are treated the same as
 in @code{multiple-value-bind}.
-@end defspec
+@end deffn
 
-@defspec multiple-value-call function forms@dots{}
+@deffn {Special Operator} multiple-value-call function forms@dots{}
 This special operator evaluates function, discarding any multiple
 values.  It then evaluates @var{forms}, preserving any multiple values,
 and calls @var{function} as a function with the results.  Conceptually, this
 function is a version of @code{apply'}that by-passes the multiple values
 infrastructure, treating multiple values as intercalated lists.
-@end defspec
+@end deffn
 
-@defspec multiple-value-list form
+@deffn {Special Operator} multiple-value-list form
 This special operator evaluates @var{form} and returns a list of the
 multiple values given by it.
-@end defspec
+@end deffn
 
-@defspec multiple-value-prog1 first body@dots{}
+@deffn {Special Operator} multiple-value-prog1 first body@dots{}
 This special operator evaluates the form @var{first}, then the
 forms @var{body}.  It returns the value given by @var{first}, preserving
 any multiple values.  This is identical to @code{prog1}, except that
 @code{prog1} always discards multiple values.
-@end defspec
+@end deffn
 
-@defspec nth-value n form
+@deffn {Special Operator} nth-value n form
 This special operator evaluates @var{form} and returns the @var{n}th
 value it gave.  @var{n} must be an integer of value zero or more.
 If @var{form} gave insufficient multiple values, @code{nth-value}
 returns @code{nil}.
-@end defspec
+@end deffn
 
 @defvar multiple-values-limit
 This constant describes the exclusive upper bound on the number of

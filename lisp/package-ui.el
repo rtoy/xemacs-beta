@@ -433,9 +433,7 @@ and whether or not it is up-to-date."
 	  (save-window-excursion
 	    (with-output-to-temp-buffer tmpbuf
 	      (display-completion-list (sort
-					(mapcar #'(lambda (pkg)
-                                                    (symbol-name pkg))
-						dependencies)
+					(mapcar #'symbol-name dependencies)
 					'string<)
 				       :activate-callback nil
 				       :help-string "Required packages:\n"

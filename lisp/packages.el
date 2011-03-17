@@ -515,9 +515,7 @@ Call HANDLE on each file off definitions of PACKAGE-LISP there."
 		    (load file-name)
 		    ;; dumped-lisp.el could have set this ...
 		    (if package-lisp
-			(mapcar #'(lambda (base)
-				  (funcall handle base))
-			      package-lisp))))))
+			(mapcar handle package-lisp))))))
 	package-load-path))
 
 (defun packages-load-package-dumped-lisps (package-load-path)

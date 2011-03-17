@@ -473,12 +473,13 @@ React to settings of `default-frame-plist', `initial-frame-plist' there."
 	      ;; onto a new frame.  The default-minibuffer-frame
 	      ;; variable must be handled similarly.
 	      (let ((users-of-initial
-		     (filtered-frame-list
+		     (remove-if-not
 		      #'(lambda (frame)
 				  (and (not (eq frame frame-initial-frame))
 				       (eq (window-frame
 					    (minibuffer-window frame))
-					   frame-initial-frame))))))
+					   frame-initial-frame)))
+                      (frame-list))))
 		(if (or users-of-initial
 			(eq default-minibuffer-frame frame-initial-frame))
 
@@ -486,10 +487,11 @@ React to settings of `default-frame-plist', `initial-frame-plist' there."
 		    ;; are only minibuffers.
 		    (let* ((new-surrogate
 			    (car
-			     (or (filtered-frame-list
+			     (or (remove-if-not
 				  #'(lambda (frame)
 				      (eq 'only
-					  (frame-property frame 'minibuffer))))
+					  (frame-property frame 'minibuffer)))
+                                  (frame-list))
 				 (minibuffer-frame-list))))
 			   (new-minibuffer (minibuffer-window new-surrogate)))
 
@@ -672,29 +674,22 @@ a new connection is opened."
 ;; XEmacs change: Emacs has make-frame here.  We have it in C, so no need for
 ;; frame-creation-function.
 
-;; XEmacs addition: support optional DEVICE argument.
+;; XEmacs addition: support optional DEVICE argument, use delete-if-not.
 (defun filtered-frame-list (predicate &optional device)
   "Return a list of all live frames which satisfy PREDICATE.
 If optional second arg DEVICE is non-nil, restrict the frames
  returned to that device."
-  (let ((frames (if device (device-frame-list device)
-		  (frame-list)))
-	good-frames)
-    (while (consp frames)
-      (if (funcall predicate (car frames))
-	  (setq good-frames (cons (car frames) good-frames)))
-      (setq frames (cdr frames)))
-    good-frames))
+  (delete-if-not predicate
+                 (if device (device-frame-list device) (frame-list))))
 
 ;; XEmacs addition: support optional DEVICE argument.
 (defun minibuffer-frame-list (&optional device)
   "Return a list of all frames with their own minibuffers.
 If optional second arg DEVICE is non-nil, restrict the frames
  returned to that device."
-  (filtered-frame-list
-   #'(lambda (frame)
-	       (eq frame (window-frame (minibuffer-window frame))))
-   device))
+  (delete-if-not 
+   #'(lambda (frame) (eq frame (window-frame (minibuffer-window frame))))
+   (if device (device-frame-list device) (frame-list))))
 
 ;; XEmacs omission: Emacs has frames-on-display-list here, but that is
 ;; essentially equivalent to supplying the optional DEVICE argument to
@@ -1743,9 +1738,10 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 	       (or (plist-get default-frame-plist 'name)
 		   default-frame-name))
 	     (frames
-	      (sort (filtered-frame-list #'(lambda (x)
-					     (or (frame-visible-p x)
-						 (frame-iconified-p x))))
+	      (sort (remove-if-not #'(lambda (x)
+                                       (or (frame-visible-p x)
+                                           (frame-iconified-p x)))
+                                   (frame-list))
 		    #'(lambda (s1 s2)
 			(cond ((and (frame-visible-p s1)
 				    (not (frame-visible-p s2))))

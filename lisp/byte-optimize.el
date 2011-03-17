@@ -821,7 +821,7 @@
       (nth 1 form)
     (byte-compile-warn "identity called with %d arg%s, but requires 1"
 		       (length (cdr form))
-		       (if (= 1 (length (cdr form))) "" "s"))
+		       (if (eql 1 (length (cdr form))) "" "s"))
     form))
 
 (defun byte-optimize-car (form)
@@ -1019,7 +1019,7 @@
 		 ;; Don't make a double negative;
 		 ;; instead, take away the one that is there.
 		 (if (and (consp clause) (memq (car clause) '(not null))
-			  (= (length clause) 2)) ; (not xxxx) or (not (xxxx))
+			  (eql (length clause) 2)) ; (not xxxx) or (not (xxxx))
 		     (nth 1 clause)
 		   (list 'not clause))
 		 (if (nthcdr 4 form)
@@ -1161,7 +1161,7 @@
 
 (put 'nth 'byte-optimizer 'byte-optimize-nth)
 (defun byte-optimize-nth (form)
-  (if (and (= (safe-length form) 3) (memq (nth 1 form) '(0 1)))
+  (if (and (eql (safe-length form) 3) (memq (nth 1 form) '(0 1)))
       (list 'car (if (zerop (nth 1 form))
 		     (nth 2 form)
 		   (list 'cdr (nth 2 form))))
@@ -1169,7 +1169,7 @@
 
 (put 'nthcdr 'byte-optimizer 'byte-optimize-nthcdr)
 (defun byte-optimize-nthcdr (form)
-  (if (and (= (safe-length form) 3) (not (memq (nth 1 form) '(0 1 2))))
+  (if (and (eql (safe-length form) 3) (not (memq (nth 1 form) '(0 1 2))))
       (byte-optimize-predicate form)
     (let ((count (nth 1 form)))
       (setq form (nth 2 form))

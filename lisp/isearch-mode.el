@@ -237,10 +237,18 @@ Set this to nil if you don't want a modeline indicator."
   (let ((map (make-keymap)))
     (set-keymap-name map 'isearch-mode-map)
 
-    ;; Bind all printing characters to `isearch-printing-char'.
-    ;; This isn't normally necessary, but if a printing character were
-    ;; bound to something other than self-insert-command in global-map,
-    ;; then it would terminate the search and be executed without this.
+    ;; Bind ASCII printing characters to `isearch-printing-char'.  This
+    ;; isn't normally necessary, but if a printing character were bound to
+    ;; something other than self-insert-command in global-map, then it would
+    ;; terminate the search and be executed without this.
+
+    ;; This is also relevant when other modes (notably dired and gnus) call
+    ;; `suppress-keymap' on their major mode maps; this means that
+    ;; `isearch-maybe-frob-keyboard-macros' won't pick up that the command
+    ;; that would normally be executed is `self-insert-command' and do its
+    ;; thing of transforming that to `isearch-printing-char'. This is less
+    ;; of an issue for the non-ASCII characters, because they rarely have
+    ;; specific bindings in major modes.
     (let ((i 32)
 	  (str (make-string 1 0)))
       (while (< i 127)
@@ -711,7 +719,7 @@ search and `search-nonincremental-instead' is non-nil, do a
 nonincremental search instead via `isearch-edit-string'."
   (interactive)
   (if (and (or search-nonincremental-instead executing-kbd-macro)
-	   (= 0 (length isearch-string)))
+	   (eql 0 (length isearch-string)))
       (let ((isearch-nonincremental t)
 	    ;; Highlighting only gets in the way of nonincremental
 	    ;; search.
@@ -825,7 +833,7 @@ If first char entered is \\[isearch-yank-word], then do word search instead."
 		  isearch-word isearch-new-word))
 
 	  ;; Empty isearch-string means use default.
-	  (if (= 0 (length isearch-string))
+	  (if (eql 0 (length isearch-string))
 	      (setq isearch-string (or (car (if isearch-regexp
 						regexp-search-ring
 					      search-ring))
@@ -1122,7 +1130,7 @@ backwards."
 	(while (and (> idx 0)
 		    (eq (aref isearch-string (1- idx)) ?\\))
 	  (setq idx (1- idx)))
-	(when (= (mod (- (length isearch-string) idx) 2) 0)
+	(when (eql (mod (- (length isearch-string) idx) 2) 0)
 	  (setq isearch-adjusted t)
 	  ;; Get the isearch-other-end from before the last search.
 	  ;; We want to start from there,
@@ -1314,7 +1322,7 @@ Obsolete."
       ;; isearch-string stays the same
       t)
      ((or completion ; not nil, must be a string
-	  (= 0 (length isearch-string))) ; shouldn't have to say this
+	  (eql 0 (length isearch-string))) ; shouldn't have to say this
       (if (equal completion isearch-string)  ;; no extension?
 	  (progn
 	    (if completion-auto-help
@@ -1607,8 +1615,27 @@ If there is no completion possible, say so and continue searching."
 	       last-command-char (and (stringp this-command)
 				      (aref this-command 0))
 	       this-command 'isearch-printing-char))
-	))
-
+	((and (null this-command)
+              (eq 'key-press (event-type last-command-event))
+              (current-local-map)
+              (let* ((this-command-keys (this-command-keys))
+                     (this-command-keys (or (lookup-key function-key-map
+                                                        this-command-keys)
+                                            this-command-keys))
+                     (lookup-key (lookup-key global-map this-command-keys)))
+                (and (eq 'self-insert-command lookup-key)
+                     ;; The feature here that a modification of
+                     ;; last-command-event is respected is undocumented, and
+                     ;; only applies when this-command is nil. The design
+                     ;; isn't reat, and I welcome suggestions for a better
+                     ;; one.
+                     (setq last-command-event
+                           (find-if 'key-press-event-p this-command-keys
+                                    :from-end t)
+                           last-command-char
+                           (event-to-character last-command-event)
+                           this-command 'isearch-printing-char)))))))
+                           
 
 ;;;========================================================
 ;;; Highlighting
