@@ -1,0 +1,73 @@
+: #-*- Perl -*-
+
+# Generate dependency info in a form acceptable to nmake
+#
+# Copyright (C) 2000, 2002 Jonathan Harris.
+#
+# This file is part of XEmacs.
+#
+# XEmacs is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any
+# later version.
+#
+# XEmacs is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with XEmacs; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
+#
+# Author: Jonathan Harris <jonathan@xemacs.org>
+#
+# Synched up with: Not in FSF.
+
+use Getopt::Long;
+
+my $optsok = GetOptions ('src=s' => \$src,
+			 'config=s' => \$config,
+			 'obj=s' => \$obj);
+
+die "Generates nmake dependencies for the XEmacs src directory.
+
+Usage: $0 --src SRCDIR --config CONFIGDIR --obj OBJDIR
+
+  SRCDIR        Location of XEmacs sources
+  CONFIGDIR     Location of config.inc
+  OBJDIR	Location for compiler-generated object files
+
+Expects output from src/make-src-depend on stdin.
+The dependencies are written to stdout.
+" if (@ARGV || !$optsok
+      || !defined ($src) || !defined ($config) || !defined ($obj));
+
+while (<>)
+  {
+    # must hack away CRLF junk.  wouldn't it be nice if perl handled this
+    # right??  really can't be that hard!!!
+    s/\r\n/\n/g;
+
+    # rewrite references to generating script
+    s/make-src-depend/make-nt-depend/;
+
+    # rewrite '#if defined(...)' into nmake syntax
+    s/^#if defined(.+)/!if defined$1/;
+
+    # rewrite '#else' and '#endif' into nmake syntax
+    s/^#e/!e/;
+
+    # add src path to source filenames
+    # allow for source filename being used in variable assignment
+    s/([\s=])([\w\d\.\-]+\.[ch])/$1$src\\$2/g;
+
+    # add obj path to object filenames
+    # rewrite .o to .obj
+    s/^(.+)\.o:(.+)/$obj\\$1.obj:$2/;
+
+    # add dependency on config.inc wherever config.h is.
+    s/\\config.h/\\config.h $config\\config.inc/;
+   print;
+  }
