@@ -4450,7 +4450,7 @@ verify_extent_mapper (EXTENT extent, void *arg)
 #endif
 
   while (1)
-    Fsignal (Qbuffer_read_only, (list1 (closure->object)));
+    Fsignal (Qextent_read_only, (list1 (wrap_extent (extent))));
 
   RETURN_NOT_REACHED(0);
 }

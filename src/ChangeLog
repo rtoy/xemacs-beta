@@ -1,3 +1,10 @@
+2011-03-17  Didier Verna  <didier@xemacs.org>
+
+	* data.c (init_errors_once_early): Define Qextent_read_only error.
+	* lisp.h: Declare it.
+	* extents.c (verify_extent_mapper): Signal an extent-read-only
+	error instead of a buffer-read-only one.
+
 2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in (SUPPORT_CONFOUNDING_FUNCTIONS): New #define,
