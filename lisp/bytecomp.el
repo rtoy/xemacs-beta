@@ -4209,7 +4209,7 @@ optimized away--just byte compile and return the BODY."
 	    byte-compile-active-blocks))
 	 (body
 	  (byte-compile-top-level (cons 'progn (cddr form))
-				  (and elt for-effect))))
+                                  (and (not elt) for-effect))))
     (if (and elt (not (cdr elt)))
 	;; A lexical block without any contained return-from clauses:
 	(byte-compile-form body)
@@ -4371,16 +4371,17 @@ optimized away--just byte compile and return the BODY."
     ;; corresponding block as having been referenced.
     (let* ((symbol (car-safe (cdr-safe (nth 1 form))))
            (not-present '#:not-present)
-	   (block (and symbol (symbolp symbol)
-                       (get symbol 'cl-block-name not-present)))
+	   (block (if (and symbol (symbolp symbol))
+		      (get symbol 'cl-block-name not-present)
+		    not-present))
 	   (assq (and (not (eq block not-present))
                       (assq block byte-compile-active-blocks))))
-      (when assq
-        (setcdr assq t))
-       (when (not (eq block not-present))
-         ;; No corresponding enclosing block.
-         (byte-compile-warn "return-from: no enclosing block named `%s'"
-                            block)))
+      (if assq
+	  (setcdr assq t)
+	(if (not (eq block not-present))
+	    ;; No corresponding enclosing block.
+	    (byte-compile-warn "return-from: no enclosing block named `%s'"
+			       block))))
     (mapc 'byte-compile-form (cdr form))  ;; Push the arguments
     (byte-compile-out (get (car form) 'byte-opcode) 0)
     (pushnew '(null (function-max-args 'throw)) byte-compile-checks-on-load
