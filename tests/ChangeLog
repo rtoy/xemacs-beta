@@ -1,3 +1,9 @@
+2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Only test the various old-* function if old-eq is bound and a
+	subr.
+
 2011-03-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/byte-compiler-tests.el:

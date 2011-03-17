@@ -1692,6 +1692,8 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	break;
       }
 
+#ifdef SUPPORT_CONFOUNDING_FUNCTIONS
+
     case Bold_eq:
       {
 	Lisp_Object arg = POP;
@@ -1726,6 +1728,8 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	TOP_LVALUE = Fold_assq (TOP, arg);
 	break;
       }
+
+#endif
 
     case Bbind_multiple_value_limits:
       {
