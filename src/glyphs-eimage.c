@@ -980,8 +980,8 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     int y, padding;
     Binbyte **row_pointers;
     UINT_64_BIT pixels_sq;
-    height = info_ptr->height;
-    width = info_ptr->width;
+    height = png_get_image_height (png_ptr, info_ptr);
+    width = png_get_image_width (png_ptr, info_ptr);
     pixels_sq = (UINT_64_BIT) width * (UINT_64_BIT) height;
     if (pixels_sq > ((size_t) -1) / 3)
       signal_image_error ("PNG image too large to instantiate", instantiator);
@@ -1042,30 +1042,37 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     /* Now that we're using EImage, ask for 8bit RGB triples for any type
        of image*/
-    /* convert palette images to RGB */
-    if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
-      png_set_palette_to_rgb (png_ptr);
-    /* convert grayscale images to RGB */
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY ||
-        info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-      png_set_gray_to_rgb (png_ptr);
-    /* pad images with depth < 8 bits */
-    else if (info_ptr->bit_depth < 8)
+    switch (png_get_color_type (png_ptr, info_ptr))
       {
-	if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY)
-	  png_set_expand (png_ptr);
-	else
-	  png_set_packing (png_ptr);
+      case PNG_COLOR_TYPE_PALETTE:
+        /* convert palette images to RGB */
+        png_set_palette_to_rgb (png_ptr);
+        break;
+
+      case PNG_COLOR_TYPE_GRAY:
+      case PNG_COLOR_TYPE_GRAY_ALPHA:
+        /* convert grayscale images to RGB */
+        png_set_gray_to_rgb (png_ptr);
+        break;
+
+      default:
+        /* pad images with depth < 8 bits */
+        if (png_get_bit_depth (png_ptr, info_ptr) < 8)
+          {
+            png_set_packing (png_ptr);
+          }
+        break;
       }
+
     /* strip 16-bit depth files down to 8 bits */
-    if (info_ptr->bit_depth == 16)
+    if (png_get_bit_depth (png_ptr, info_ptr) == 16)
       png_set_strip_16 (png_ptr);
     /* strip alpha channel
        #### shouldn't we handle this?
        first call png_read_update_info in case above transformations
        have generated an alpha channel */
     png_read_update_info(png_ptr, info_ptr);
-    if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA)
+    if (png_get_color_type (png_ptr, info_ptr) & PNG_COLOR_MASK_ALPHA)
       png_set_strip_alpha (png_ptr);
 
     png_read_image (png_ptr, row_pointers);
@@ -1075,23 +1082,25 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
      * into the glyph code, where you can get to it from lisp
      * anyway. - WMP */
     {
-      int i;
+      int ii, num_text = 0;
+      png_textp text_ptr = NULL;
       DECLARE_EISTRING (key);
       DECLARE_EISTRING (text);
 
-      for (i = 0 ; i < info_ptr->num_text ; i++)
-	{
-	  /* How paranoid do I have to be about no trailing NULLs, and
-	     using (int)info_ptr->text[i].text_length, and strncpy and a temp
-	     string somewhere? */
-          eireset(key);
-          eireset(text);
-          eicpy_ext(key, info_ptr->text[i].key, Qbinary);
-          eicpy_ext(text, info_ptr->text[i].text, Qbinary);
+      if (png_get_text (png_ptr, info_ptr, &text_ptr, &num_text) > 0)
+        {
+          for (ii = 0 ; ii < num_text; ii++)
+            {
+              eireset (key);
+              eireset (text);
 
-	  warn_when_safe (Qpng, Qinfo, "%s - %s",
-			  eidata(key), eidata(text));
-	}
+              eicpy_ext (key, text_ptr[ii].key, Qbinary);
+              eicpy_ext (text, text_ptr[ii].text, Qbinary);
+
+              warn_when_safe (Qpng, Qinfo, "%s - %s", eidata (key),
+                              eidata (text));
+            }
+        }
     }
 
     xfree (row_pointers);

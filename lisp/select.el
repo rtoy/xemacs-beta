@@ -36,10 +36,11 @@
 ;; Mozilla will happily give us broken COMPOUND_TEXT where a non-broken
 ;; UTF8_STRING is available. 
 (defvar selection-preferred-types
-  (let ((res '(UTF8_STRING COMPOUND_TEXT STRING image/png image/gif
-	       image/jpeg image/tiff image/xpm image/xbm)))
-    (unless (featurep 'mule) (delq 'COMPOUND_TEXT res))
-    res)
+  `(UTF8_STRING ,@(and (featurep 'mule) '(COMPOUND_TEXT)) STRING
+    ,@(mapcan #'(lambda (format)
+                  (and (featurep format)
+                       (list (intern (format "image/%s" format)))))
+              '(png gif jpeg tiff xpm xbm)))
   "An ordered list of X11 type atoms for selections we want to receive.
 We prefer UTF8_STRING over COMPOUND_TEXT, for compatibility with a certain
 widely-used browser suite, and COMPOUND_TEXT over STRING. (COMPOUND_TEXT
@@ -274,7 +275,7 @@ primary selection."
 ;; application asserts the selection.  This is probably not a big deal.
 
 (defun activate-region-as-selection ()
-  (cond ((and-fboundp #'mouse-track-rectangle-p
+  (cond ((and-fboundp 'mouse-track-rectangle-p
            (mouse-track-rectangle-p
             (mouse-track-activate-rectangular-selection))))
 	((marker-buffer (mark-marker t))
@@ -346,7 +347,7 @@ primary selection."
 	(set-extent-property previous-extent 'end-open nil)
 
 	(cond
-	 ((and-fboundp #'mouse-track-rectangle-p 
+	 ((and-fboundp 'mouse-track-rectangle-p 
             (mouse-track-rectangle-p
              (setq previous-extent (list previous-extent))
              (default-mouse-track-next-move-rect start end previous-extent)
@@ -377,7 +378,7 @@ any more, because just about anything could be a valid selection now."
 	   (buffer-live-p (marker-buffer (cdr data))))))
 
 (defun cut-copy-clear-internal (mode)
-  (or (memq mode '(cut copy clear)) (error "unkown mode %S" mode))
+  (or (memq mode '(cut copy clear)) (error "unknown mode %S" mode))
   (or (selection-owner-p)
       (error "XEmacs does not own the primary selection"))
   (setq last-command nil)
@@ -775,26 +776,19 @@ corresponding to that data as an end-glyph extent property of that space. "
       (set-extent-end-glyph extent glyph)
       str)))
 
-;; Could automate defining these functions these with a macro, but damned if
-;; I can get that to work. Anyway, this is more readable.
-
-(defun select-convert-from-image/gif (selection type value)
-  (if (featurep 'gif) (select-convert-from-image-data 'gif value)))
-
-(defun select-convert-from-image/jpeg (selection type value)
-  (if (featurep 'jpeg) (select-convert-from-image-data 'jpeg value)))
-
-(defun select-convert-from-image/png (selection type value)
-  (if (featurep 'png) (select-convert-from-image-data 'png value)))
-
-(defun select-convert-from-image/tiff (selection type value)
-  (if (featurep 'tiff) (select-convert-from-image-data 'tiff value)))
-
-(defun select-convert-from-image/xpm (selection type value)
-  (if (featurep 'xpm) (select-convert-from-image-data 'xpm value)))
-
-(defun select-convert-from-image/xbm (selection type value)
-  (if (featurep 'xbm) (select-convert-from-image-data 'xbm value)))
+(macrolet
+    ((create-image-functions (&rest formats)
+       (cons
+        'progn
+        (mapcar
+         #'(lambda (format)
+             `(if (featurep ',format)
+                  (defalias (intern (concat "select-convert-from-image/"
+                                            ,(symbol-name format)))
+                    #'(lambda (selection type value)
+                       (select-convert-from-image-data ',format
+                                                       value))))) formats))))
+  (create-image-functions gif jpeg png tiff xpm xbm))
 
 ;;; CF_xxx conversions
 (defun select-convert-from-cf-text (selection type value)
@@ -929,7 +923,7 @@ corresponding to that data as an end-glyph extent property of that space. "
 
 ;; Types listed here can be selections foreign to XEmacs
 (setq selection-converter-in-alist
-      '(; Specific types that get handled by generic converters
+      `(; Specific types that get handled by generic converters
 	(INTEGER . select-convert-from-integer)
  	(TIMESTAMP . select-convert-from-integer)
  	(LENGTH . select-convert-from-integer)
@@ -946,13 +940,12 @@ corresponding to that data as an end-glyph extent property of that space. "
  	(text/html . select-convert-from-utf-16-le-text)  ; Mozilla
  	(text/_moz_htmlcontext . select-convert-from-utf-16-le-text)
  	(text/_moz_htmlinfo . select-convert-from-utf-16-le-text)
-	(image/png . select-convert-from-image/png)
-	(image/gif . select-convert-from-image/gif)
-	(image/jpeg  . select-convert-from-image/jpeg )
-	(image/tiff  . select-convert-from-image/tiff )
-	(image/xpm . select-convert-from-image/xpm)
-	(image/xbm . select-convert-from-image/xbm)
-	))
+        ,@(loop
+            for format in '(gif jpeg png tiff xpm xbm)
+            nconc (if (featurep format)
+                      (list (cons (intern (format "image/%s" format))
+                                  (intern (format "select-convert-from-image/%s"
+                                                  format))))))))
 
 ;; Types listed here have special coercion functions that can munge
 ;; other types. This can also be used to add special features - e.g.

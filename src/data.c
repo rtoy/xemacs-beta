@@ -181,24 +181,6 @@ Return t if the two args are the same Lisp object.
   return EQ_WITH_EBOLA_NOTICE (object1, object2) ? Qt : Qnil;
 }
 
-DEFUN ("old-eq", Fold_eq, 2, 2, 0, /*
-Return t if the two args are (in most cases) the same Lisp object.
-
-Special kludge: A character is considered `old-eq' to its equivalent integer
-even though they are not the same object and are in fact of different
-types.  This is ABSOLUTELY AND UTTERLY HORRENDOUS but is necessary to
-preserve byte-code compatibility with v19.  This kludge is known as the
-\"char-int confoundance disease\" and appears in a number of other
-functions with `old-foo' equivalents.
-
-Do not use this function!
-*/
-       (object1, object2))
-{
-  /* #### blasphemy */
-  return HACKEQ_UNSAFE (object1, object2) ? Qt : Qnil;
-}
-
 DEFUN ("null", Fnull, 1, 1, 0, /*
 Return t if OBJECT is nil.
 */
@@ -3566,7 +3548,6 @@ syms_of_data (void)
   DEFSUBR (Fdiv);
 #endif
   DEFSUBR (Feq);
-  DEFSUBR (Fold_eq);
   DEFSUBR (Fnull);
   Ffset (intern ("not"), intern ("null"));
   DEFSUBR (Flistp);

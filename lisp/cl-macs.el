@@ -426,7 +426,7 @@ Supports Common Lisp lambda lists."
 	  (or (eq p args) (setq minarg (list 'cdr minarg)))
 	  (setq p (cdr p)))
 	(if (memq (car p) '(nil &aux))
-	    (setq minarg (list '= (list 'length restarg)
+	    (setq minarg (list 'eql (list 'length restarg)
 			       (length (ldiff args p)))
 		  exactarg (not (eq args p)))))
       (while (and args (not (memq (car args) lambda-list-keywords)))
@@ -1064,7 +1064,7 @@ either `being each foo' or `being the foos'.)
     Specify the name for block surrounding the loop, in place of nil.
     (See `block'.)
 "
-  (if (not (memq t (mapcar 'symbolp (delq nil (delq t (copy-list clauses))))))
+  (if (notany #'symbolp (set-difference clauses '(nil t)))
       (list 'block nil (list* 'while t clauses))
     (let ((loop-name nil)	(loop-bindings nil)
 	  (loop-body nil)	(loop-steps nil)
@@ -1263,7 +1263,7 @@ either `being each foo' or `being the foos'.)
 		      (seq (cl-pop2 args))
 		      (temp-seq (gensym))
 		      (temp-idx (if (eq (car args) 'using)
-				    (if (and (= (length (cadr args)) 2)
+				    (if (and (eql (length (cadr args)) 2)
 					     (eq (caadr args) 'index))
 					(cadr (cl-pop2 args))
 				      (error "Bad `using' clause"))
@@ -1294,7 +1294,7 @@ either `being each foo' or `being the foos'.)
 		(or (memq (car args) '(in of)) (error "Expected `of'"))
 		(let* ((table (cl-pop2 args))
 		       (other (if (eq (car args) 'using)
-				  (if (and (= (length (cadr args)) 2)
+				  (if (and (eql (length (cadr args)) 2)
 					   (memq (caadr args) hash-types)
 					   (not (eq (caadr args) word)))
 				      (cadr (cl-pop2 args))
@@ -1350,7 +1350,7 @@ either `being each foo' or `being the foos'.)
 		(let* ((map (cl-pop2 args))
 		       other-word
 		       (other (if (eq (car args) 'using)
-				  (if (and (= (length (cadr args)) 2)
+				  (if (and (eql (length (cadr args)) 2)
 					   (memq (setq other-word (caadr args))
 						 key-types)
 					   (not (eq (caadr args) word)))
@@ -1646,12 +1646,12 @@ Format is: (do* ((VAR INIT [STEP])...) (END-TEST [RESULT...]) BODY...)"
 		       steps)
 	       (list* 'while (list 'not (car endtest))
 		      (append body
-			      (let ((sets (mapcar
+			      (let ((sets (mapcan
 					   #'(lambda (c)
 					       (and (consp c) (cdr (cdr c))
-						    (list (car c) (nth 2 c))))
+						    (list
+						     (list (car c) (nth 2 c)))))
 					   steps)))
-				(setq sets (delq nil sets))
 				(and sets
 				     (list (cons (if (or star (not (cdr sets)))
 						     'setq 'psetq)
@@ -1878,7 +1878,7 @@ not return multiple values, it is treated as returning one multiple value.
 Returns the value given by the last element of BODY."
   (if (null syms)
       `(progn ,form ,@body)
-    (if (= 1 (length syms))
+    (if (eql 1 (length syms))
         ;; Code written to deal with other "implementations" of multiple
         ;; values may have a one-element SYMS.
         `(let ((,(car syms) ,form))
@@ -1905,7 +1905,7 @@ Returns the first of the multiple values given by FORM."
   (if (null syms)
       ;; Never return multiple values from multiple-value-setq:
       (and form `(values ,form))
-    (if (= 1 (length syms))
+    (if (eql 1 (length syms))
         `(setq ,(car syms) ,form)
       (let ((temp (gensym)))
         `(let* ((,temp (multiple-value-list-internal 0 ,(length syms) ,form)))
@@ -2432,7 +2432,7 @@ a macro like `setf' or `incf'."
 	       (or (and method
 			(let ((cl-macro-environment env))
 			  (setq method (apply method (cdr place))))
-			(if (and (consp method) (= (length method) 5))
+			(if (and (consp method) (eql (length method) 5))
 			    method
 			  (error "Setf-method for %s returns malformed method"
 				 func)))
@@ -2577,7 +2577,7 @@ The form returns true if TAG was found and removed, nil otherwise."
 Example: (shiftf A B C) sets A to B, B to C, and returns the old A.
 Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
   ;; XEmacs change: use iteration instead of recursion
-  (if (not (memq nil (mapcar 'symbolp (butlast (cons place args)))))
+  (if (every #'symbolp (butlast (cons place args)))
       (list* 'prog1 place
 	     (let ((sets nil))
 	       (while args
@@ -2598,7 +2598,7 @@ Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
   "Rotate left among PLACES.
 Example: (rotatef A B C) sets A to B, B to C, and C to A.  It returns nil.
 Each PLACE may be a symbol, or any generalized variable allowed by `setf'."
-  (if (not (memq nil (mapcar 'symbolp places)))
+  (if (every #'symbolp places)
       (and (cdr places)
 	   (let ((sets nil)
 		 (first (car places)))
@@ -3125,11 +3125,7 @@ They are not evaluated unless the assertion fails.  If STRING is
 omitted, a default message listing FORM itself is used."
   (and (or (not (cl-compiling-file))
 	   (< cl-optimize-speed 3) (= cl-optimize-safety 3))
-       (let ((sargs (and show-args (delq nil (mapcar
-					       #'(lambda (x)
-						   (and (not (cl-const-expr-p x))
-							x))
-					       (cdr form))))))
+       (let ((sargs (and show-args (remove-if #'cl-const-expr-p (cdr form)))))
 	 (list 'progn
 	       (list 'or form
 		     (if string
@@ -3224,13 +3220,12 @@ surrounded by (block NAME ...)."
 (defun cl-defsubst-expand (argns body simple whole unsafe &rest argvs)
   (if (and whole (not (cl-safe-expr-p (cons 'progn argvs)))) whole
     (if (cl-simple-exprs-p argvs) (setq simple t))
-    (let ((lets (delq nil
-		      (mapcar* #'(lambda (argn argv)
-				   (if (or simple (cl-const-expr-p argv))
-				       (progn (setq body (subst argv argn body))
-					      (and unsafe (list argn argv)))
-				     (list argn argv)))
-			       argns argvs))))
+    (let ((lets (mapcan #'(lambda (argn argv)
+			    (if (or simple (cl-const-expr-p argv))
+				(progn (setq body (subst argv argn body))
+				       (and unsafe (list (list argn argv))))
+			      (list (list argn argv))))
+			argns argvs)))
       (if lets (list 'let lets body) body))))
 
 

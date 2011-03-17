@@ -349,19 +349,6 @@ the modern convention is followed, and characters are their own
 primitive types. (This change was necessary in order for @sc{mule},
 i.e. Asian-language, support to be correctly implemented.)
 
-  Even in XEmacs version 20, remnants of the equivalence between
-characters and integers still exist; this is termed the @dfn{char-int
-confoundance disease}.  In particular, many functions such as @code{eq},
-@code{equal}, and @code{memq} have equivalent functions (@code{old-eq},
-@code{old-equal}, @code{old-memq}, etc.) that pretend like characters
-are integers are the same.  Byte code compiled under any version 19
-Emacs will have all such functions mapped to their @code{old-} equivalents
-when the byte code is read into XEmacs 20.  This is to preserve
-compatibility---Emacs 19 converts all constant characters to the equivalent
-integer during byte-compilation, and thus there is no other way to preserve
-byte-code compatibility even if the code has specifically been written
-with the distinction between characters and integers in mind.
-
   Every character has an equivalent integer, called the @dfn{character
 code}.  For example, the character @kbd{A} is represented as the
 @w{integer 65}, following the standard @sc{ascii} representation of
@@ -2315,32 +2302,6 @@ Byte code compiled under any Emacs 19 will automatically have calls to
 @end group
 @end example
 
-@end defun
-
-@defun old-eq object1 object2
-This function exists under XEmacs 20 and is exactly like @code{eq}
-except that it suffers from the char-int confoundance disease.
-In other words, it returns @code{t} if given a character and the
-equivalent integer, even though the objects are of different types!
-You should @emph{not} ever call this function explicitly in your
-code.  However, be aware that all calls to @code{eq} in byte code
-compiled under version 19 map to @code{old-eq} in XEmacs 20.
-(Likewise for @code{old-equal}, @code{old-memq}, @code{old-member},
-@code{old-assq} and  @code{old-assoc}.)
-
-@example
-@group
-;; @r{Remember, this does not apply under XEmacs 19.}
-?A
-     @result{} ?A
-(char-int ?A)
-     @result{} 65
-(old-eq ?A 65)
-     @result{} t               ; @r{Eek, we've been infected.}
-(eq ?A 65)
-     @result{} nil             ; @r{We are still healthy.}
-@end group
-@end example
 @end defun
 
 @defun eql object1 object2

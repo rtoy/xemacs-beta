@@ -70,7 +70,6 @@ Lisp_Object Vpath_separator;
 extern Fixnum max_lisp_eval_depth;
 extern int lisp_eval_depth;
 
-static int internal_old_equal (Lisp_Object, Lisp_Object, int);
 Lisp_Object safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth);
 
 static DOESNT_RETURN
@@ -2093,6 +2092,7 @@ With one argument, copy STRING without its properties.
   Bytecount bstart, blen;
   Lisp_Object val;
 
+  CHECK_STRING (string);
   get_string_range_char (string, start, end, &ccstart, &ccend,
                          GB_HISTORICAL_STRING_BEHAVIOR);
   bstart = string_index_char_to_byte (string, ccstart);
@@ -2578,22 +2578,6 @@ The value is actually the tail of LIST whose car is ELT.
   return Qnil;
 }
 
-DEFUN ("old-member", Fold_member, 2, 2, 0, /*
-Return non-nil if ELT is an element of LIST.  Comparison done with `old-equal'.
-The value is actually the tail of LIST whose car is ELT.
-This function is provided only for byte-code compatibility with v19.
-Do not use it.
-*/
-       (elt, list))
-{
-  EXTERNAL_LIST_LOOP_3 (list_elt, list, tail)
-    {
-      if (internal_old_equal (elt, list_elt, 0))
-        return tail;
-    }
-  return Qnil;
-}
-
 DEFUN ("memq", Fmemq, 2, 2, 0, /*
 Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
 The value is actually the tail of LIST whose car is ELT.
@@ -2603,22 +2587,6 @@ The value is actually the tail of LIST whose car is ELT.
   EXTERNAL_LIST_LOOP_3 (list_elt, list, tail)
     {
       if (EQ_WITH_EBOLA_NOTICE (elt, list_elt))
-        return tail;
-    }
-  return Qnil;
-}
-
-DEFUN ("old-memq", Fold_memq, 2, 2, 0, /*
-Return non-nil if ELT is an element of LIST.  Comparison done with `old-eq'.
-The value is actually the tail of LIST whose car is ELT.
-This function is provided only for byte-code compatibility with v19.
-Do not use it.
-*/
-       (elt, list))
-{
-  EXTERNAL_LIST_LOOP_3 (list_elt, list, tail)
-    {
-      if (HACKEQ_UNSAFE (elt, list_elt))
         return tail;
     }
   return Qnil;
@@ -2819,21 +2787,6 @@ The value is actually the element of ALIST whose car equals KEY.
   return Qnil;
 }
 
-DEFUN ("old-assoc", Fold_assoc, 2, 2, 0, /*
-Return non-nil if KEY is `old-equal' to the car of an element of ALIST.
-The value is actually the element of ALIST whose car equals KEY.
-*/
-       (key, alist))
-{
-  /* This function can GC. */
-  EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
-    {
-      if (internal_old_equal (key, elt_car, 0))
-	return elt;
-    }
-  return Qnil;
-}
-
 Lisp_Object
 assoc_no_quit (Lisp_Object key, Lisp_Object alist)
 {
@@ -2852,23 +2805,6 @@ Elements of ALIST that are not conses are ignored.
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
       if (EQ_WITH_EBOLA_NOTICE (key, elt_car))
-	return elt;
-    }
-  return Qnil;
-}
-
-DEFUN ("old-assq", Fold_assq, 2, 2, 0, /*
-Return non-nil if KEY is `old-eq' to the car of an element of ALIST.
-The value is actually the element of ALIST whose car is KEY.
-Elements of ALIST that are not conses are ignored.
-This function is provided only for byte-code compatibility with v19.
-Do not use it.
-*/
-       (key, alist))
-{
-  EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
-    {
-      if (HACKEQ_UNSAFE (key, elt_car))
 	return elt;
     }
   return Qnil;
@@ -2952,20 +2888,6 @@ The value is actually the element of ALIST whose cdr equals VALUE.
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
       if (internal_equal (value, elt_cdr, 0))
-	return elt;
-    }
-  return Qnil;
-}
-
-DEFUN ("old-rassoc", Fold_rassoc, 2, 2, 0, /*
-Return non-nil if VALUE is `old-equal' to the cdr of an element of ALIST.
-The value is actually the element of ALIST whose cdr equals VALUE.
-*/
-       (value, alist))
-{
-  EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
-    {
-      if (internal_old_equal (value, elt_cdr, 0))
 	return elt;
     }
   return Qnil;
@@ -3275,34 +3197,6 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
   return object;
 }
 
-DEFUN ("old-delete", Fold_delete, 2, 2, 0, /*
-Delete by side effect any occurrences of ELT as a member of LIST.
-The modified LIST is returned.  Comparison is done with `old-equal'.
-If the first member of LIST is ELT, there is no way to remove it by side
-effect; therefore, write `(setq foo (old-delete element foo))' to be sure
-of changing the value of `foo'.
-*/
-       (elt, list))
-{
-  EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
-				(internal_old_equal (elt, list_elt, 0)));
-  return list;
-}
-
-DEFUN ("old-delq", Fold_delq, 2, 2, 0, /*
-Delete by side effect any occurrences of ELT as a member of LIST.
-The modified LIST is returned.  Comparison is done with `old-eq'.
-If the first member of LIST is ELT, there is no way to remove it by side
-effect; therefore, write `(setq foo (old-delq element foo))' to be sure of
-changing the value of `foo'.
-*/
-       (elt, list))
-{
-  EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
-				(HACKEQ_UNSAFE (elt, list_elt)));
-  return list;
-}
-
 /* Like Fdelq, but caller must ensure that LIST is properly
    nil-terminated and ebola-free. */
 
@@ -6534,26 +6428,6 @@ internal_equal_0 (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
     return internal_equal (obj1, obj2, depth);
 }
 
-/* Note that we may be calling sub-objects that will use
-   internal_equal() (instead of internal_old_equal()).  Oh well.
-   We will get an Ebola note if there's any possibility of confusion,
-   but that seems unlikely. */
-
-static int
-internal_old_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
-{
-  if (depth + lisp_eval_depth > max_lisp_eval_depth)
-    stack_overflow ("Stack overflow in equal", Qunbound);
-  QUIT;
-  if (HACKEQ_UNSAFE (obj1, obj2))
-    return 1;
-  /* Note that (equal 20 20.0) should be nil */
-  if (XTYPE (obj1) != XTYPE (obj2))
-    return 0;
-
-  return internal_equal (obj1, obj2, depth);
-}
-
 DEFUN ("equal", Fequal, 2, 2, 0, /*
 Return t if two Lisp objects have similar structure and contents.
 They must have the same data type.
@@ -6597,6 +6471,134 @@ its value is `equalp' to the other hash table's value for that key.
   return internal_equalp (object1, object2, 0) ? Qt : Qnil;
 }
 
+#ifdef SUPPORT_CONFOUNDING_FUNCTIONS
+
+/* Note that we may be calling sub-objects that will use
+   internal_equal() (instead of internal_old_equal()).  Oh well.
+   We will get an Ebola note if there's any possibility of confusion,
+   but that seems unlikely. */
+
+static int
+internal_old_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  if (depth + lisp_eval_depth > max_lisp_eval_depth)
+    stack_overflow ("Stack overflow in equal", Qunbound);
+  QUIT;
+  if (HACKEQ_UNSAFE (obj1, obj2))
+    return 1;
+  /* Note that (equal 20 20.0) should be nil */
+  if (XTYPE (obj1) != XTYPE (obj2))
+    return 0;
+
+  return internal_equal (obj1, obj2, depth);
+}
+
+DEFUN ("old-member", Fold_member, 2, 2, 0, /*
+Return non-nil if ELT is an element of LIST.  Comparison done with `old-equal'.
+The value is actually the tail of LIST whose car is ELT.
+This function is provided only for byte-code compatibility with v19.
+Do not use it.
+*/
+       (elt, list))
+{
+  EXTERNAL_LIST_LOOP_3 (list_elt, list, tail)
+    {
+      if (internal_old_equal (elt, list_elt, 0))
+        return tail;
+    }
+  return Qnil;
+}
+
+DEFUN ("old-memq", Fold_memq, 2, 2, 0, /*
+Return non-nil if ELT is an element of LIST.  Comparison done with `old-eq'.
+The value is actually the tail of LIST whose car is ELT.
+This function is provided only for byte-code compatibility with v19.
+Do not use it.
+*/
+       (elt, list))
+{
+  EXTERNAL_LIST_LOOP_3 (list_elt, list, tail)
+    {
+      if (HACKEQ_UNSAFE (elt, list_elt))
+        return tail;
+    }
+  return Qnil;
+}
+
+DEFUN ("old-assoc", Fold_assoc, 2, 2, 0, /*
+Return non-nil if KEY is `old-equal' to the car of an element of ALIST.
+The value is actually the element of ALIST whose car equals KEY.
+*/
+       (key, alist))
+{
+  /* This function can GC. */
+  EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
+    {
+      if (internal_old_equal (key, elt_car, 0))
+	return elt;
+    }
+  return Qnil;
+}
+
+DEFUN ("old-assq", Fold_assq, 2, 2, 0, /*
+Return non-nil if KEY is `old-eq' to the car of an element of ALIST.
+The value is actually the element of ALIST whose car is KEY.
+Elements of ALIST that are not conses are ignored.
+This function is provided only for byte-code compatibility with v19.
+Do not use it.
+*/
+       (key, alist))
+{
+  EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
+    {
+      if (HACKEQ_UNSAFE (key, elt_car))
+	return elt;
+    }
+  return Qnil;
+}
+
+DEFUN ("old-rassoc", Fold_rassoc, 2, 2, 0, /*
+Return non-nil if VALUE is `old-equal' to the cdr of an element of ALIST.
+The value is actually the element of ALIST whose cdr equals VALUE.
+*/
+       (value, alist))
+{
+  EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
+    {
+      if (internal_old_equal (value, elt_cdr, 0))
+	return elt;
+    }
+  return Qnil;
+}
+
+DEFUN ("old-delete", Fold_delete, 2, 2, 0, /*
+Delete by side effect any occurrences of ELT as a member of LIST.
+The modified LIST is returned.  Comparison is done with `old-equal'.
+If the first member of LIST is ELT, there is no way to remove it by side
+effect; therefore, write `(setq foo (old-delete element foo))' to be sure
+of changing the value of `foo'.
+*/
+       (elt, list))
+{
+  EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
+				(internal_old_equal (elt, list_elt, 0)));
+  return list;
+}
+
+DEFUN ("old-delq", Fold_delq, 2, 2, 0, /*
+Delete by side effect any occurrences of ELT as a member of LIST.
+The modified LIST is returned.  Comparison is done with `old-eq'.
+If the first member of LIST is ELT, there is no way to remove it by side
+effect; therefore, write `(setq foo (old-delq element foo))' to be sure of
+changing the value of `foo'.
+*/
+       (elt, list))
+{
+  EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
+				(HACKEQ_UNSAFE (elt, list_elt)));
+  return list;
+}
+
 DEFUN ("old-equal", Fold_equal, 2, 2, 0, /*
 Return t if two Lisp objects have similar structure and contents.
 They must have the same data type.
@@ -6610,6 +6612,26 @@ Do not use it.
 {
   return internal_old_equal (object1, object2, 0) ? Qt : Qnil;
 }
+
+DEFUN ("old-eq", Fold_eq, 2, 2, 0, /*
+Return t if the two args are (in most cases) the same Lisp object.
+
+Special kludge: A character is considered `old-eq' to its equivalent integer
+even though they are not the same object and are in fact of different
+types.  This is ABSOLUTELY AND UTTERLY HORRENDOUS but is necessary to
+preserve byte-code compatibility with v19.  This kludge is known as the
+\"char-int confoundance disease\" and appears in a number of other
+functions with `old-foo' equivalents.
+
+Do not use this function!
+*/
+       (object1, object2))
+{
+  /* #### blasphemy */
+  return HACKEQ_UNSAFE (object1, object2) ? Qt : Qnil;
+}
+
+#endif
 
 
 static Lisp_Object replace_string_range_1 (Lisp_Object dest,
@@ -11795,25 +11817,17 @@ syms_of_fns (void)
   DEFSUBR (Fbutlast);
   DEFSUBR (Fnbutlast);
   DEFSUBR (Fmember);
-  DEFSUBR (Fold_member);
   DEFSUBR (Fmemq);
-  DEFSUBR (Fold_memq);
   DEFSUBR (FmemberX);
   DEFSUBR (Fadjoin);
   DEFSUBR (Fassoc);
-  DEFSUBR (Fold_assoc);
   DEFSUBR (Fassq);
-  DEFSUBR (Fold_assq);
   DEFSUBR (Frassoc);
-  DEFSUBR (Fold_rassoc);
   DEFSUBR (Frassq);
-  DEFSUBR (Fold_rassq);
 
   DEFSUBR (Fposition);
   DEFSUBR (Ffind);
 
-  DEFSUBR (Fold_delete);
-  DEFSUBR (Fold_delq);
   DEFSUBR (FdeleteX);
   DEFSUBR (FremoveX);
   DEFSUBR (Fremassoc);
@@ -11850,8 +11864,20 @@ syms_of_fns (void)
   DEFSUBR (Fobject_setplist);
   DEFSUBR (Fequal);
   DEFSUBR (Fequalp);
-  DEFSUBR (Fold_equal);
   DEFSUBR (Ffill);
+
+#ifdef SUPPORT_CONFOUNDING_FUNCTIONS
+  DEFSUBR (Fold_member);
+  DEFSUBR (Fold_memq);
+  DEFSUBR (Fold_assoc);
+  DEFSUBR (Fold_assq);
+  DEFSUBR (Fold_rassoc);
+  DEFSUBR (Fold_rassq);
+  DEFSUBR (Fold_delete);
+  DEFSUBR (Fold_delq);
+  DEFSUBR (Fold_equal);
+  DEFSUBR (Fold_eq);
+#endif
 
   DEFSUBR (FassocX);
   DEFSUBR (FrassocX);

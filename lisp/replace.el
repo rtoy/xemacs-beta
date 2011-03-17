@@ -151,7 +151,7 @@ before rotating to the next."
   (let (replacements)
     (if (listp to-strings)
 	(setq replacements to-strings)
-      (while (/= (length to-strings) 0)
+      (while (not (eql (length to-strings) 0))
 	(if (string-match " " to-strings)
 	    (setq replacements
 		  (append replacements

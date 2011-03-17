@@ -2485,12 +2485,12 @@ when he invoked the menu."
 	  (widget-put old :value internal)))
     ;; Find new choice.
     (setq current
-	  (cond ((= (length args) 0)
+	  (cond ((eql (length args) 0)
 		 nil)
-		((= (length args) 1)
+		((eql (length args) 1)
 		 (nth 0 args))
 		((and widget-choice-toggle
-		      (= (length args) 2)
+		      (eql (length args) 2)
 		      (memq old args))
 		 (if (eq old (nth 0 args))
 		     (nth 1 args)
@@ -3637,7 +3637,7 @@ It will read a directory name from the minibuffer when invoked."
 				 (widget-get widget :prompt-match)
 				 nil initial history)))
     (if (and (stringp answer)
-	     (not (zerop (length answer))))
+	     (not (eql (length answer) 0)))
 	answer
       (error "No value"))))
 
@@ -4029,7 +4029,7 @@ The parent of several `radio-button' widgets, one for each option."
   "Prompt for a color."
   (let* ((tag (widget-apply widget :menu-tag-get))
 	 (answer (read-color (concat tag ": "))))
-    (unless (zerop (length answer))
+    (unless (eql (length answer) 0)
       (widget-value-set widget answer)
       (widget-setup)
       (widget-apply widget :notify widget event))))

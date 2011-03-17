@@ -1,3 +1,57 @@
+2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in (SUPPORT_CONFOUNDING_FUNCTIONS): New #define,
+	equivalent NEED_TO_HANDLE_21_4_CODE by default, describing whether
+	this XEmacs should support the old-eq, old-equal and related
+	functions and byte codes.
+	* bytecode.c (UNUSED):
+	Only interpret old-eq, old-equal, old-memq if
+	SUPPORT_CONFOUNDING_FUNCTIONS is defined.
+	* data.c:
+	Move Fold_eq to fns.c with the rest of the Fold_* functions.
+	* fns.c:
+	* fns.c (Fmemq):
+	* fns.c (memq_no_quit):
+	* fns.c (assoc_no_quit):
+	* fns.c (Frassq):
+	* fns.c (Fequal):
+	* fns.c (Fold_equal):
+	* fns.c (syms_of_fns):
+	Group old-eq, old-equal, old-memq etc together, surround them with
+	#ifdef SUPPORT_CONFOUNDING_FUNCTIONS.
+
+2011-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs-eimage.c (png_instantiate):
+	Update the PNG handling code to work with versions of the library
+	where the png_info structure is no longer visible. Thank you for
+	the report, Robert Delius Royar.
+
+2011-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-stream.c (Fdispatch_event):
+	As documented, allow pre-command-hook to usefully modify
+	this-command even when this-command is nil (that is, we would
+	normally throw an undefined-keystroke-sequence error). Don't throw
+	that error if this-command was modified, instead try to execute
+	the new value.
+	Allow pre-command-hook to modify last-command-event in this
+	specific context. Don't document this, for the moment.
+
+2011-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (optimize_byte_code):
+	Only transform assignments to keywords to Bdiscard if
+	NEED_TO_HANDLE_21_4_CODE is turned on. Cf. similar code in
+	reject_constant_symbols().
+
+2011-02-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsubstring_no_properties):
+	Sigh, get_string_range_char checks the type of its START and END
+	arguments, but doesn't check the type of its STRING
+	argument. Thank you Raymond Toy!
+
 2011-02-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (Fset_exclusive_or):

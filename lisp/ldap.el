@@ -399,7 +399,7 @@ This table is built from RFC2252 Section 5 and RFC2256 Section 5")
 
 (defun ldap-encode-country-string (str)
   ;; We should do something useful here...
-  (if (not (= 2 (length str)))
+  (if (not (eql 2 (length str)))
       (error "Invalid country string: %s" str)))
 
 (defun ldap-decode-string (str)

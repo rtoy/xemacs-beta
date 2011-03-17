@@ -1748,8 +1748,9 @@ if passed to `skip-chars-forward' or `skip-chars-backward'.
 Ranges and carets are not treated specially.  This implementation is
 in Lisp; do not use it in performance-critical code."
   (let ((list (delete-duplicates (string-to-list string) :test #'=)))
-    (when (/= 1 (length list)) ;; No quoting needed in a string of length 1.
-      (when (eq ?^ (car list))
+    (when (not (eql 1 (length list))) ;; No quoting needed in a string of
+				      ;; length 1.
+      (when (eql ?^ (car list))
         (setq list (nconc (cdr list) '(?^))))
       (when (memq ?\\ list)
         (setq list (delq ?\\ list)
