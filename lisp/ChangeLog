@@ -1,3 +1,10 @@
+2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	Don't generate the old-eq, old-memq, old-equal bytecodes any more,
+	but keep the information about them around for the sake of the
+	disassembler.
+
 2011-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* isearch-mode.el (isearch-mode-map):

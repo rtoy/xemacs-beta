@@ -1,3 +1,10 @@
+2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Character Type):
+	* lispref/objects.texi (Equality Predicates):
+	No longer document `old-eq', `old-equal', they haven't been used
+	in years.
+
 2011-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/commands.texi (Using Interactive):

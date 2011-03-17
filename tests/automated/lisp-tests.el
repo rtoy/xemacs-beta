@@ -796,18 +796,18 @@
 	 (Check-Error (malformed-list wrong-type-argument) (,fun nil 1))
 	 ,@(loop for n in '(1 2 2000)
 	     collect `(Check-Error circular-list (,fun 1 (make-circular-list ,n))))))
-     (test-funs (&rest funs) `(progn ,@(loop for fun in funs collect `(test-fun ,fun)))))
-
+     (test-funs (&rest funs) `(progn ,@(loop for fun in funs collect `(test-fun ,fun))))
+     (test-old-funs (&rest funs)
+       `(when (and (fboundp 'old-eq) (subrp (symbol-function 'old-eq)))
+         ,@(loop for fun in funs collect `(test-fun ,fun)))))
   (test-funs member* member memq 
              assoc* assoc assq 
              rassoc* rassoc rassq 
              delete* delete delq 
              remove* remove remq 
-             old-member old-memq 
-             old-assoc old-assq 
-             old-rassoc old-rassq 
-             old-delete old-delq 
-             remassoc remassq remrassoc remrassq))
+             remassoc remassq remrassoc remrassq)
+  (test-old-funs old-member old-memq old-assoc old-assq old-rassoc old-rassq 
+                 old-delete old-delq))
 
 (let ((x '((1 . 2) 3 (4 . 5))))
   (Assert (eq (assoc  1 x) (car x)))
@@ -891,19 +891,15 @@
   (Assert (let* ((x (a)) (y (remassq   6 x))) (and (eq x y) (equal y (a)))))
   (Assert (let* ((x (a)) (y (remrassoc 6 x))) (and (eq x y) (equal y (a)))))
   (Assert (let* ((x (a)) (y (remrassq  6 x))) (and (eq x y) (equal y (a)))))
-
   (Assert (let* ((x (a)) (y (delete     3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
   (Assert (let* ((x (a)) (y (delq       3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
-  (Assert (let* ((x (a)) (y (old-delete 3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
-  (Assert (let* ((x (a)) (y (old-delq   3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
-
   (Assert (let* ((x (a)) (y (delete     '(1 . 2) x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
   (Assert (let* ((x (a)) (y (delq       '(1 . 2) x))) (and      (eq x y)  (equal y (a)))))
-  (Assert (let* ((x (a)) (y (old-delete '(1 . 2) x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
-  (Assert (let* ((x (a)) (y (old-delq   '(1 . 2) x))) (and      (eq x y)  (equal y (a)))))
-  )
-
-
+  (when (and (fboundp 'old-eq) (subrp (symbol-function 'old-eq)))
+    (Assert (let* ((x (a)) (y (old-delete '(1 . 2) x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
+    (Assert (let* ((x (a)) (y (old-delq   '(1 . 2) x))) (and      (eq x y)  (equal y (a)))))
+    (Assert (let* ((x (a)) (y (old-delete 3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
+    (Assert (let* ((x (a)) (y (old-delq   3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))))
 
 (flet ((a () (list '("1" . "2") "3" '("4" . "5"))))
   (Assert (let* ((x (a)) (y (remassoc  "1" x))) (and (not (eq x y)) (equal y '("3" ("4" . "5"))))))
