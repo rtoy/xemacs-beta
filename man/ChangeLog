@@ -5,6 +5,11 @@
 	No longer document `old-eq', `old-equal', they haven't been used
 	in years.
 
+2011-03-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* lispref/faces.texi (Faces): Mention `min-colors' as a
+	face specifier.
+
 2011-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/commands.texi (Using Interactive):
