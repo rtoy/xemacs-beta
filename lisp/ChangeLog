@@ -1,3 +1,13 @@
+2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-catch):
+	* bytecomp.el (byte-compile-throw):
+	* cl-macs.el (return-from):
+	With `block' and `return-from', a nil NAME is perfectly
+	legitimate, and the corresponding `catch' statements need be
+	removed by the byte-compiler. 5dd1ba5e0113 , my change of
+	2011-02-12, didn't do this; correct that now.
+
 2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el:

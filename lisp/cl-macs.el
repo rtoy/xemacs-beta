@@ -767,12 +767,12 @@ returning RESULT from that form (or nil if RESULT is omitted).
 This is compatible with Common Lisp, but note that `defun' and
 `defmacro' do not create implicit blocks as they do in Common Lisp."
   `(throw ',(or (cdr (assq name cl-active-block-names))
-		(prog1 (copy-symbol name)
-		  (and-fboundp 'byte-compile-warn (cl-compiling-file)
-			       (byte-compile-warn
-				"return-from: no enclosing block named `%s'"
-				name))))
-	 ,result))
+                ;; Tell the byte-compiler the original name of the block,
+                ;; leave any warning to it.
+                (let ((copy-symbol (copy-symbol name)))
+                  (put copy-symbol 'cl-block-name name)
+                  copy-symbol))
+           ,result))
 
 ;;; The "loop" macro.
 
