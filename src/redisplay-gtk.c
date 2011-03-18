@@ -106,31 +106,33 @@ void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
  * can only be one PangoLayout per line, I think. --jsparkes
  */
 static void
-gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
+gdk_draw_text_image (GtkWidget *widget, GdkFont *font, GdkGC *gc,
 		     GdkGC *bgc, gint x, gint y, gchar *text, gint len)
 {
   gint width = 0;
   gint height = 0;
-#ifdef USE_PANGO
-  PangoLayout *layout;
-#endif
+  const GdkDrawable *drawable = gtk_widget_get_window (widget);
 
-#ifdef USE_PANGO
-  Display *disp = GDK_DRAWABLE_XDISPLAY (drawable);
-  int screen = GDK_SCREEN_XNUMBER (gdk_drawable_get_screen (drawable));
+#if 0
+
+  /* Display *disp = GDK_DRAWABLE_XDISPLAY (drawable); */
+  /* int screen = GDK_SCREEN_XNUMBER (gdk_drawable_get_screen (drawable)); */
 
   /* Xft render */
   /* context = pango_xft_get_context (display, screen); */
   /* layout = pango_layout_new (context); */
   /* Gtk render */
-  context = gtk_widget_get_pango_context (widget);
-  layout = pango_layout_new (context);
-
-  pango_layout_set_text (layout, text, text_length);
+  PangoContext *context = gtk_widget_get_pango_context (widget);
+  PangoLayout *layout = pango_layout_new (context);
+  gboolean is = gtk_widget_is_drawable (widget);
+  
+  pango_layout_set_text (layout, text, len);
   pango_layout_get_pixel_size (layout, &width, &height);
 
-  if (bgc != 0)
-    gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height);
+  
+
+  /* if (bgc != 0) */
+  /*   gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height); */
 
   /* xft draw */
   /* pango_xft_layout_render (xft_draw, xft_color, layout, x, y); */
@@ -143,12 +145,10 @@ gdk_draw_text_image (GdkDrawable *drawable, GdkFont *font, GdkGC *gc,
   if (bgc != 0)
     {
       GdkGCValues values;
-      cairo_t *cr = gdk_cairo_create (drawable);
+      const cairo_t *cr = gdk_cairo_create (drawable);
 
       gdk_gc_get_values (bgc, &values);
       gdk_cairo_set_source_color (cr, &values.background);
-      /* The rectangle and text areas don't quite fit, so I have to extend
-         the height a little --jsparkes */
       gtk_fill_rectangle (cr, x, y - height, width, height);
     }
   gdk_draw_text (drawable, font, gc, x, y - font->descent, text, len);
