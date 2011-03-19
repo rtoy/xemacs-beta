@@ -1,3 +1,13 @@
+2011-03-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/customize.texi (Face Definitions): New node.
+	(Customization): Add entry to menu.
+	(Variable Definitions): Add cross-ref for `defface'.
+	(Customization Types): Fixup Previous link.
+
+	* lispref/faces.texi (Faces):
+	Clarify that built-in properties of faces are computed at runtime.
+
 2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/objects.texi (Character Type):

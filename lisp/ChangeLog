@@ -1,3 +1,9 @@
+2011-03-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* faces.el (face-spec-set-match-display):
+	Protect against `display-color-cells' returning nil.
+	Delete unreferenced let-binding of `min-colors'.
+
 2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-catch):
