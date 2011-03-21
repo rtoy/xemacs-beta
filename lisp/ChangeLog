@@ -1,3 +1,9 @@
+2011-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-non-fixnum-number-p):
+	This should return t under 64-bit builds for fixnums that would
+	be bignums on a 32-bit machine; make it so.
+
 2011-03-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* faces.el (face-spec-set-match-display):

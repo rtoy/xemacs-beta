@@ -3230,13 +3230,25 @@ surrounded by (block NAME ...)."
 			argns argvs)))
       (if lets (list 'let lets body) body))))
 
+;; When a 64-bit build is byte-compiling code, some of its native fixnums
+;; will not be represented as fixnums if the byte-compiled code is read by
+;; the Lisp reader in a 32-bit build. So in that case we need to check the
+;; range of fixnums as well as their types. XEmacs doesn't support machines
+;; with word size less than 32, so it's OK to have that as the minimum.
+(macrolet
+    ((most-negative-fixnum-on-32-bit-machines () (lognot (1- (lsh 1 30))))
+     (most-positive-fixnum-on-32-bit-machines () (lsh 1 30)))
+  (defun cl-non-fixnum-number-p (object)
+    "Return t if OBJECT is a number not guaranteed to be immediate."
+    (and (numberp object)
+	 (or (not (fixnump object))
+	     (not (<= (most-negative-fixnum-on-32-bit-machines)
+		      object
+		      (most-positive-fixnum-on-32-bit-machines)))))))
 
 ;;; Compile-time optimizations for some functions defined in this package.
 ;;; Note that cl.el arranges to force cl-macs to be loaded at compile-time,
 ;;; mainly to make sure these macros will be present.
-
-(defun cl-non-fixnum-number-p (object)
-  (and (numberp object) (not (fixnump object))))
 
 (define-compiler-macro eql (&whole form a b)
   (cond ((eq (cl-const-expr-p a) t)
