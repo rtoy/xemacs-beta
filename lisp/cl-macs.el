@@ -3710,6 +3710,12 @@ the byte optimizer in those cases."
 (define-compiler-macro pairlis (a b &optional c)
   `(nconc (mapcar* #'cons ,a ,b) ,c))
 
+(define-compiler-macro revappend (&whole form &rest args)
+  (if (eql 3 (length form)) `(nconc (reverse ,(pop args)) ,(pop args)) form))
+
+(define-compiler-macro nreconc (&whole form &rest args)
+  (if (eql 3 (length form)) `(nconc (nreverse ,(pop args)) ,(pop args)) form))
+
 (define-compiler-macro complement (&whole form fn)
   (if (or (eq (car-safe fn) 'function) (eq (car-safe fn) 'quote))
       (cond

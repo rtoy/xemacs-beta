@@ -1,5 +1,11 @@
 2011-03-21  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (revappend, nreconc):
+	Add compiler macros for these two functions. (They used to be
+	inline, but that involves needless binding of the arguments.)
+
+2011-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (cl-non-fixnum-number-p):
 	This should return t under 64-bit builds for fixnums that would
 	be bignums on a 32-bit machine; make it so.
