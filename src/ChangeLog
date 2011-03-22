@@ -1,3 +1,10 @@
+2011-03-20  Mats Lidell  <matsl@xemacs.org>
+
+	* alloca.c (find_stack_direction):
+	* alloca.c (xemacs_c_alloca):
+	Remove use of auto keyword. It is default and will be illegal in
+	C++0X.
+
 2011-03-17  Didier Verna  <didier@xemacs.org>
 
 	* data.c (init_errors_once_early): Define Qextent_read_only error.
