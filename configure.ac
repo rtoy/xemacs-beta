@@ -2845,22 +2845,6 @@ if test "$with_gnome" != "no"; then
    AC_MSG_RESULT([${GNOME_CONFIG}])
 fi
 
-if test "${GNOME_CONFIG}" != "no"; then
-      PANGO_LIBS=`${GNOME_CONFIG} --libs pango pangoxft`
-      PANGO_CFLAGS=`${GNOME_CONFIG} --cflags pango pangoxft`
-      AC_DEFINE(HAVE_PANGO)
-      AC_DEFINE(HAVE_PANGOXFT)      
-      XE_APPEND(${PANGO_LIBS}, libs_gtk)
-      XE_APPEND(${PANGO_CFLAGS}, c_switch_gtk)
-fi
-if test "${GNOME_CONFIG}" != "no"; then
-      GNOME_LIBS=`${GNOME_CONFIG} --libs libgnomeui-2.0`
-      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags libgnomeui-2.0`
-      AC_DEFINE(HAVE_GNOME)
-      XE_APPEND(${GNOME_LIBS}, libs_gtk)
-      XE_APPEND(${GNOME_CFLAGS}, c_switch_gtk)
-fi
-
 if test "$with_gtk" != "no";then
    AC_MSG_CHECKING(for GTK configuration script)
    for possible in gtk+-2.0
@@ -2876,6 +2860,10 @@ if test "$with_gtk" != "no";then
 			break
 			;;
                 0.22*)
+                        with_gtk=yes
+                        break
+                        ;;
+                0.25*)
                         with_gtk=yes
                         break
                         ;;
@@ -2910,6 +2898,8 @@ if test "${GTK_CONFIG}" != "no"; then
 
       AC_DEFINE(HAVE_XPM)
       AC_DEFINE(HAVE_GTK)
+      AC_DEFINE(HAVE_PANGO)
+
       AC_SUBST(GTK_CONFIG)
 
       window_system=gtk
@@ -2958,6 +2948,24 @@ if test "${GTK_CONFIG}" != "no"; then
       CFLAGS="${OLD_CFLAGS}"
       CPPFLAGS="${OLD_CPPFLAGS}"
       LDFLAGS="${OLD_LDFLAGS}"
+fi
+
+if test "${GTK_CONFIG}" != "no"; then
+   AC_MSG_CHECKING(for pangoxft configuration)
+   for possible in pangoxft
+   do
+      ${GNOME_CONFIG} --exists $possible
+      if test $?; then
+         PANGO_LIBS=`${GNOME_CONFIG} --libs pangoxft`
+         PANGO_CFLAGS=`${GNOME_CONFIG} --cflags pangoxft`
+         AC_DEFINE(HAVE_PANGOXFT)      
+         XE_APPEND(${PANGO_LIBS}, libs_gtk)
+         XE_APPEND(${PANGO_CFLAGS}, c_switch_gtk)
+         AC_MSG_RESULT([yes])
+      else
+         AC_MSG_RESULT([no])
+      fi
+   done
 fi
 
 dnl We may eventually prefer gtk/gdk over vanilla X11...
