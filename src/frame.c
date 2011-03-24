@@ -133,7 +133,7 @@ Boston, MA 02111-1307, USA.  */
    which in turn contains a menubar widget and an EmacsFrame widget, inside
    of which is the client area. (The division into EmacsShell and
    EmacsManager is due to the complex and screwy geometry-management system
-   in Xt [and X more generally].  The EmacsShell handles negotation with
+   in Xt [and X more generally].  The EmacsShell handles negotiation with
    the window manager; the place of the EmacsManager widget is normally
    assumed by a widget that manages the geometry of its child widgets, but
    the EmacsManager widget just lets the XEmacs redisplay mechanism do the

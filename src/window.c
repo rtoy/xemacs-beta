@@ -5170,10 +5170,10 @@ some_window_value_changed (Lisp_Object UNUSED (specifier),
 struct window_mirror_stats
 {
   struct usage_stats u;
-  /* Ancilliary non-lisp */
+  /* Ancillary non-lisp */
   Bytecount redisplay_structs;
 #ifdef HAVE_SCROLLBARS
-  /* Ancilliary Lisp */
+  /* Ancillary Lisp */
   Bytecount scrollbar;
 #endif
 };

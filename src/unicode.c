@@ -1253,7 +1253,7 @@ The highest precedence is given to the language-specific precedence list of
 charsets, defined by `set-language-unicode-precedence-list'.  These are
 followed by charsets in the default precedence list, defined by
 `set-default-unicode-precedence-list'.  Charsets occurring multiple times are
-given precedence according to their first occurrance in either list.  These
+given precedence according to their first occurrence in either list.  These
 are followed by the remaining charsets, in some arbitrary order.
 
 The language-specific precedence list is meant to be set as part of the

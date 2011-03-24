@@ -1501,7 +1501,7 @@ versions of NAME. Only the suffixes are tried."
 				nil t)
 	       (if exact
 		   nil
-		 ;; Then, try to match the name independantly of the
+		 ;; Then, try to match the name independently of the
 		 ;; characters case.
 		 (directory-files dir 'fullname
 				  (Info-all-case-regexp

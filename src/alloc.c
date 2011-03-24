@@ -3605,7 +3605,7 @@ malloced_storage_size (void * UNUSED (ptr), Bytecount claimed_size,
 # endif
   if (claimed_size < 4096)
     {
-      /* fxg: rename log->log2 to supress gcc3 shadow warning */
+      /* fxg: rename log->log2 to suppress gcc3 shadow warning */
       int log2 = 1;
 
       /* compute the log base two, more or less, then use it to compute

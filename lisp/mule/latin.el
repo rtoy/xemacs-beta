@@ -1482,7 +1482,7 @@ See also `iso-8859-2' and `window-1252' for Western Europe.  "
       (string (char-syntax (make-char 'latin-iso8859-1 i)))
       syntax-table))
 
-;; Case. The Turkish case idiosyncracy is handled with its language environment.  
+;; Case. The Turkish case idiosyncrasy is handled with its language environment.  
 (setup-case-pairs
  'latin-iso8859-9
  '((#xC0 #xE0) ;; A WITH GRAVE

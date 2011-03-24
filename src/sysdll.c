@@ -345,7 +345,7 @@ my_find_image (const char *name)
 }
 
 /*
- * dyld adds libraries by first adding the directly dependant libraries in
+ * dyld adds libraries by first adding the directly dependent libraries in
  * link order, and then adding the dependencies for those libraries, so we
  * should do the same... but we don't bother adding the extra dependencies, if
  * the symbols are neither in the loaded image nor any of it's direct

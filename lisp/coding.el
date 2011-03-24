@@ -248,7 +248,7 @@ if does not differ from the encoded string. "
     ((force-coding-system-equivalency (&rest details-list)
        "Certain coding-system aliases should correspond to certain variables.
 
-This macro implements that correspondence. This gives us compatiblity with
+This macro implements that correspondence. This gives us compatibility with
 other Mule implementations (which don't use the coding system aliases), and
 a certain amount of freedom of implementation for XEmacs; using a variable's
 value in C for every file operation or write to a terminal in C is probably

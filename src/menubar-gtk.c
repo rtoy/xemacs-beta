@@ -1299,7 +1299,7 @@ set_frame_menubar (struct frame *f, int first_time_p)
   return (menubar_visible);
 }
 
-/* Called from gtk_create_widgets() to create the inital menubar of a frame
+/* Called from gtk_create_widgets() to create the initial menubar of a frame
    before it is mapped, so that the window is mapped with the menubar already
    there instead of us tacking it on later and thrashing the window after it
    is visible. */

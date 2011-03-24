@@ -1962,7 +1962,7 @@ mswindows_map_subwindow (Lisp_Image_Instance *p, int x, int y,
       /* Doing this once does not seem to be enough, for instance when
 	 mapping the search dialog this gets called four times. If we
 	 only set on the first time through then the subwindow never
-	 gets focus as intended. However, doing this everytime doesn't
+	 gets focus as intended. However, doing this every time doesn't
 	 seem so bad, after all we only need to redo this after the
 	 focus changes - and if that happens resetting the initial
 	 focus doesn't seem so bad. */

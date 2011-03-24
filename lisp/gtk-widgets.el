@@ -228,8 +228,8 @@
 (gtk-import-function nil gtk_clist_set_button_actions GtkCList guint guint)
 
 ;; freeze all visual updates of the list, and then thaw the list after
-;; you have made a number of changes and the updates wil occure in a
-;; more efficent mannor than if you made them on a unfrozen list
+;; you have made a number of changes and the updates will occur in a
+;; more efficient manner than if you made them on an unfrozen list
 (gtk-import-function nil gtk_clist_freeze GtkCList)
 (gtk-import-function nil gtk_clist_thaw GtkCList)
 
@@ -345,8 +345,8 @@
 (gtk-import-function GtkStyle gtk_clist_get_row_style GtkCList gint)
 
 ;; this sets a horizontal and vertical shift for drawing
-;; the contents of a cell; it can be positive or negitive;
-;; this is particulary useful for indenting items in a column
+;; the contents of a cell; it can be positive or negative;
+;; this is particularly useful for indenting items in a column
 (gtk-import-function nil gtk_clist_set_shift GtkCList gint gint gint gint)
 
 ;; set/get selectable flag of a single row

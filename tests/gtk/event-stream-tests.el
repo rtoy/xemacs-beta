@@ -43,7 +43,7 @@
  (tst)^Jabc^G  ==>  ((quit) 97) with no signal, and "bc" inserted in buffer
 
 ; with sit-for only do the 2nd test.
-; Do all 3 tests with (accept-proccess-output nil 20)
+; Do all 3 tests with (accept-process-output nil 20)
 
 /*
 Additional test cases for accept-process-output, sleep-for, sit-for.

@@ -739,7 +739,7 @@ and was also the last version without international language support.
 @node Q1.0.3, Q1.0.4, Q1.0.2, Introduction
 @unnumberedsubsec Q1.0.3: How do you pronounce XEmacs?
 
-The most common pronounciation is @samp{Eks eemax}, @samp{Eks'im&ks} in
+The most common pronunciation is @samp{Eks eemax}, @samp{Eks'im&ks} in
 Kirshenbaum IPA. (See
 @uref{http://www.kirshenbaum.net/IPA/ascii-ipa.pdf} if you know the IPA
 already and want to know how to map from Kirshenbaum to it.)
@@ -2445,7 +2445,7 @@ Another interface over GNU patch.
 ERC is an Emacs InternetRelayChat client.
 
 @item escreen
-Multiple editing sessions withing a single frame (like screen).
+Multiple editing sessions within a single frame (like screen).
 
 @item eshell
 Command shell implemented entirely in Emacs Lisp.
@@ -4032,7 +4032,7 @@ Please see the @file{PROBLEMS} file that comes with XEmacs (it's in
 the top-level source directory) to read what it says about your
 platform.
 
-If you compiled XEmacs 21.4 or ealier using @samp{--use-union-type}, or
+If you compiled XEmacs 21.4 or earlier using @samp{--use-union-type}, or
 21.5 or later using @samp{--enable-union-type} (or in either case used
 the option @samp{USE_UNION_TYPE} in @file{config.inc} under Windows),
 try recompiling again without it.  The union type has been known to
@@ -9001,10 +9001,10 @@ reflect your work.
 
 This is usually due to using @code{hg diff} on a @dfn{merge commit}.
 That means the commit has multiple parents, and joins together two lines
-of development that occured concurrently.
+of development that occurred concurrently.
 
 You're diffing against the "wrong" one; try the other one.  You get the
-relevent revision number or ID from @code{hg log}.  In more detail:
+relevant revision number or ID from @code{hg log}.  In more detail:
 
 When there is a merge in Mercurial, it will often be the case that
 one of the parents is the immediate predecessor of the merge
@@ -9054,7 +9054,7 @@ Once upon a time, an XEmacs developer wrote:
 
  > GAAAAK!  What's the best way to restore ChangeLog and its history?
 
-He had just inadvertantly pushed a commit which deleted
+He had just inadvertently pushed a commit which deleted
 @file{src/ChangeLog}!  The history is still there, not to worry.  (In
 this case, another developer had restored src/ChangeLog already.)  The
 best way depends on a number of things.  First, let's look at the log

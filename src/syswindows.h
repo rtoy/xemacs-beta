@@ -74,7 +74,7 @@ Boston, MA 02111-1307, USA.  */
 		Corresponding s/ file: s/mingw32.h
 
    (none)	There's no flag to indicate that you are specifically
-		targetting native Windows and not doing this with MINGW.
+		targeting native Windows and not doing this with MINGW.
 		Presumably this means you're using Visual C++.
 
 		Corresponding s/ file: s/windowsnt.h

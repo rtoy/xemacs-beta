@@ -1,3 +1,44 @@
+2011-03-24  Jerry James  <james@xemacs.org>
+
+	* cl-macs.el (loop): "arbitary" -> "arbitrary".
+	* coding.el (force-coding-system-equivalency): "compatiblity" ->
+	"compatibility".
+	* cus-edit.el (custom-variable-pre-reset-standard): "explictly" ->
+	"explicitly" and fix grammar.
+	(custom-face-pre-reset-standard): "explictly" -> "explicitly".
+	* etags.el (pop-tag-mark): "seperate" -> "separate".
+	* files.el (make-temp-file): "analagous" -> "analogous".
+	* font-menu.el (font-menu-ignore-scaled-fonts): "noticably" ->
+	"noticeably".
+	* fontconfig.el (fc-pattern-get-or-compute-size): "unsucessful" ->
+	"unsuccessful".
+	* gnome-widgets.el: "writen" -> "written", "choosed" -> "chosen",
+	"existance" -> "existence".
+	* gtk-ffi.el (gtk-ffi-debug): "wiht" -> "with".
+	* gtk-widgets.el: "wil" -> "will", "occure" -> "occur", "efficent" ->
+	"efficient", "mannor" -> "manner", "negitive" -> "negative",
+	"particulary" -> "particularly".
+	* info.el (Info-suffixed-file): "independantly" -> "independently".
+	* minibuf.el (minibuffer): "Controling" -> "Controlling".
+	* mule/ccl.el (define-ccl-program): "correponding" -> "corresponding".
+	* mule/indian.el: "apperance" -> "appearance" and correct grammar.
+	* mule/kinsoku.el (kinsoku-process-extend): "permissable" ->
+	"permissible", "deliberatly" -> "deliberately", and correct grammar.
+	(kinsoku-process-shrink): "permissable" -> "permissible".
+	* mule/lao-util.el (lao-vowel-reordering-rule): "follwoing" ->
+	"following", "alwasy" -> "always".
+	(lao-transcribe-single-roman-syllable-to-lao): "beggining" ->
+	"beginning".
+	* mule/latin.el: "idiosyncracy" -> "idiosyncrasy".
+	* mule/thai-util.el: "repetion" -> "repetition".
+	* package-get.el (package-get-require-base): "explictly" ->
+	"explicitly".
+	* packages.el (packages-find-package-data-path): "hierachies" ->
+	"hierarchies".
+	* paragraphs.el (use-hard-newlines): "preceeding" -> "preceding".
+	* startup.el (command-line): "intial" -> "initial".
+	* toolbar-itmes.el (toolbar-news): "Unkown" -> "Unknown".
+
 2011-03-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* custom.el (custom-add-to-group):

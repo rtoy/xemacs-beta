@@ -217,7 +217,7 @@ dnl here. We want to try and use the C compiler as much as possible. Only
 dnl if the C compiler itself cannot create shared libraries do we try to
 dnl find the linker.
 dnl
-dnl The other advantage to my scheme is that it removes the dependancy
+dnl The other advantage to my scheme is that it removes the dependency
 dnl on a given compiler version remaining static with relation to the
 dnl version of XEmacs. With the libtool way, it picks up the linker that
 dnl gcc uses, which can be the internal collect2 that comes with gcc.

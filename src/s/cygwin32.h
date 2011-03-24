@@ -36,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
  * once you have done this, configure and make.
  *
  * windows '95 - I haven't tested this under '95, it will probably
- * build but I konw there are some limitations with cygwin under 95 so
+ * build but I know there are some limitations with cygwin under 95 so
  * YMMV. I build with NT4 SP3.
  *
  * Andy Piper <andy@xemacs.org> 8/1/98 
