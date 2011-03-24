@@ -1,3 +1,11 @@
+2011-03-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* custom.el (custom-add-to-group):
+	Warn if adding an option to the nil group; this is usually an
+	error on the part of the programmer.
+	* cmdloop.el (suggest-key-bindings):
+	Specify a group for this variable, it didn't previously have one.
+
 2011-03-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (revappend, nreconc):

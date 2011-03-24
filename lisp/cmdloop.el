@@ -313,7 +313,8 @@ specified by `teach-extended-commands-timeout'."
   :type '(choice
           (const :tag "off" nil)
           (integer :tag "time" 2)
-          (other :tag "on")))
+          (other :tag "on"))
+  :group 'keyboard)
 
 (dontusethis-set-symbol-value-handler
  'suggest-key-bindings

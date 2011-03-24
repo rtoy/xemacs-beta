@@ -409,6 +409,9 @@ information."
 (defun custom-add-to-group (group option widget)
   "To existing GROUP add a new OPTION of type WIDGET.
 If there already is an entry for OPTION and WIDGET, nothing is done."
+  (or group (display-warning 'custom
+              (format "custom: widget %s, option %s has no associated group"
+                      widget option)))
   (let ((members (get group 'custom-group))
        (entry (list option widget)))
     (unless (member entry members)
