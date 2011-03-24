@@ -771,7 +771,7 @@ If this is nil, no message will be displayed.")
       ;; various other places. We could make *scratch* honour the user's
       ;; choice of whether font-locking is in place by adding a call to
       ;; font-lock-set-defaults in `lisp-interaction-mode'; but that'll
-      ;; break if `intial-major-mode' is anything else. 
+      ;; break if `initial-major-mode' is anything else. 
       ;;
       ;; So, despite what `font-lock-set-defaults'' docstring says, this
       ;; *is* where we should call it to have the user's choice of font-lock

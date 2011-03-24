@@ -53,7 +53,7 @@
 	- Stack optimization (have one stack during runtime instead of 
 	  malloc/free it for every garbage collect)
 
-	There are a few Lisp_Objects, where there occured differences and
+	There are a few Lisp_Objects, where there occurred differences and
 	inexactness between the mark-method and the pdump description.  All
 	these Lisp_Objects get dumped (except image instances), so their
 	descriptions have been written, before we started our work:

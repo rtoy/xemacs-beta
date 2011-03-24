@@ -2094,7 +2094,7 @@ argument and returning an integer that is the hash code of the argument.
 Computation should use the whole value range of the underlying machine long
 type.  In XEmacs this will necessitate bignums for values above
 `most-positive-fixnum' but below (1+ (* most-positive-fixnum 2)) and
-analagous values below `most-negative-fixnum'.  Relatively poor hashing
+analogous values below `most-negative-fixnum'.  Relatively poor hashing
 performance is guaranteed in a build without bignums.
 
 This function returns t if successful, and errors if NAME

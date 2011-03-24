@@ -53,9 +53,9 @@
 
 ;;; Code:
 
-;;  Followings are what you see when you refer to the Emacs
+;;  Following are what you see when you refer to the Emacs
 ;;  representations of IS 13194 charcters.  However, this is merely
-;;  tentative apperance, and you must convert them by
+;;  tentative appearance, and you must convert them with the
 ;;  indian-to-xxxxxx(specific script) function to use them.
 ;;  Devanagari is not an exception of this rule.
 

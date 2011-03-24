@@ -611,7 +611,7 @@ In addition, this function makes an attempt to choose a name that
 does not specify an existing file.  To make this work, PREFIX should
 be an absolute file name.
 
-This function is analagous to mktemp(3) under POSIX, and as with it, there
+This function is analogous to mktemp(3) under POSIX, and as with it, there
 exists a race condition between the test for the existence of the new file
 and its creation.  See `make-temp-file' for a function which avoids this
 race condition by specifying the appropriate flags to `write-region'. 

@@ -4471,7 +4471,7 @@ else
   dnl We define our own getloadavg() using lower level functions.
   XE_ADD_OBJS(getloadavg.o)
 
-  dnl Used by getloadavg() - does not require root priveleges
+  dnl Used by getloadavg() - does not require root privileges
   AC_CHECK_LIB(kstat, kstat_open)
   AC_CHECK_HEADERS(kstat.h)
 

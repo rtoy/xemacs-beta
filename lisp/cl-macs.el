@@ -828,7 +828,7 @@ you give the loop a name with `named', you will need to use the macro
 `return-from'.)
 
 Another extremely useful feature of loops is called \"destructuring\".  If,
-in place of VAR, a list (possibly dotted, possibly a tree of arbitary
+in place of VAR, a list (possibly dotted, possibly a tree of arbitrary
 complexity) is given, the value to be assigned is assumed to have a similar
 structure to the list given, and variables in the list will be matched up
 with corresponding elements in the structure.  For example:

@@ -4411,7 +4411,7 @@ you should use `map-extents', which gives you more control.
 /* ------------------------------- */
 
 /* verify_extent_modification() is called when a buffer or string is
-   modified to check whether the modification is occuring inside a
+   modified to check whether the modification is occurring inside a
    read-only extent.
  */
 

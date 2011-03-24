@@ -5377,8 +5377,8 @@ with the read-key-sequence:
 ;(let ((inhibit-quit t)) (setq x (list (read-char) quit-flag)))^J^G
 ;for BOTH, x should get set to (7 t), but no result should be printed.
 ;; #### According to the doc of quit-flag, second test should return
-;; (?\^G nil).  Accidentaly XEmacs returns correct value.  However,
-;; XEmacs 21.1.12 and 21.2.36 both fails on first test.
+;; (?\^G nil).  XEmacs accidentally returns the correct value.  However,
+;; XEmacs 21.1.12 and 21.2.36 both fail on the first test.
 
 ;also do this: make two frames, one viewing "*scratch*", the other "foo".
 ;in *scratch*, type (sit-for 20)^J

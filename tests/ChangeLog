@@ -1,3 +1,8 @@
+2011-03-24  Jerry James  <james@xemacs.org>
+
+	* automated/query-coding-tests.el: "Compatiblity" -> "Compatibility".
+	* gtk/event-stream-tests.el: "proccess" -> "process".
+
 2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

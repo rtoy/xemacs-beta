@@ -43,7 +43,7 @@
 (require 'cl)
 
 (defgroup minibuffer nil
-  "Controling the behavior of the minibuffer."
+  "Controlling the behavior of the minibuffer."
   :group 'environment)
 
 

@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
    A few changes for buffer-local vars by Richard Mlynarik for
      19.8 or 19.9, c. 1993.
    Many changes by Ben Wing: changes and cleanups for Mule, esp. the
-     macros in buffer.h and the intial version of the coding-system
+     macros in buffer.h and the initial version of the coding-system
      conversion macros (in buffer.h) and associated fns. (in this file),
      19.12 (c. 1995); synch. to FSF 19.30 c. 1994; memory usage stats
      c. 1996; generated-modeline-string c. 1996 for mousable modeline in

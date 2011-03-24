@@ -131,7 +131,7 @@ __nuke_background_items (GtkWidget *widget)
      frame.
 
      Well, wait, we do... otherwise there sre weird 'seethru' areas
-     even when XEmacs does a full redisplay.  Most noticable in some
+     even when XEmacs does a full redisplay.  Most noticeable in some
      areas of the modeline, or in the right-hand-side of the window
      between the scrollbar ad n the edge of the window.
   */

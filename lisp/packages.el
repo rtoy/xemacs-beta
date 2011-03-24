@@ -481,7 +481,7 @@ PACKAGE-HIERARCHIES is a list of package directories."
 
 (defun packages-find-package-data-path (package-hierarchies)
   "Construct the data-path component for packages.
-PACKAGE-HIERARCHIES is a list of package hierachies."
+PACKAGE-HIERARCHIES is a list of package hierarchies."
   (paths-find-recursive-load-path
    (packages-find-package-library-path package-hierarchies
 				       '("etc"))

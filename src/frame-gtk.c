@@ -1063,7 +1063,7 @@ gtk_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
    *   will update the frame title anyway, so nothing is lost.
    * JV:
    *   It turns out it gives problems with FVWMs name based mapping.
-   *   We'll just  need to be carefull in the modeline specs.
+   *   We'll just need to be careful in the modeline specs.
    */
   update_frame_title (f); 
 }

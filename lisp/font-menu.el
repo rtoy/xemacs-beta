@@ -123,7 +123,7 @@
 (defcustom font-menu-ignore-scaled-fonts nil
   "*If non-nil, the font menu shows only bitmap fonts.
 
-Bitmap fonts at their design size are generally noticably higher quality than
+Bitmap fonts at their design size are generally noticeably higher quality than
 scaled fonts, unless the device is capable of interpreting antialiasing hints.
 In general, setting this option non-`nil' is useful mostly on older X servers.
 
