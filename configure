@@ -12255,16 +12255,19 @@ if test "${GTK_CONFIG}" != "no"; then
 $as_echo_n "checking for pangoxft configuration... " >&6; }
    for possible in pangoxft
    do
-      ${GNOME_CONFIG} --exists $possible
+      pkg-config --exists $possible
       if test $?; then
-         PANGO_LIBS=`${GNOME_CONFIG} --libs pangoxft`
-         PANGO_CFLAGS=`${GNOME_CONFIG} --cflags pangoxft`
+         PANGO_LIBS=`pkg-config --libs $possible`
+         PANGO_CFLAGS=`pkg-config --cflags $possible`
          $as_echo "#define HAVE_PANGOXFT 1" >>confdefs.h
 
          libs_gtk="$libs_gtk ${PANGO_LIBS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${PANGO_LIBS}\" to \$libs_gtk"; fi
          c_switch_gtk="$c_switch_gtk ${PANGO_CFLAGS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${PANGO_CFLAGS}\" to \$c_switch_gtk"; fi
          { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+      else
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
       fi
    done
 fi

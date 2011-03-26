@@ -2954,10 +2954,10 @@ if test "${GTK_CONFIG}" != "no"; then
    AC_MSG_CHECKING(for pangoxft configuration)
    for possible in pangoxft
    do
-      ${GNOME_CONFIG} --exists $possible
+      pkg-config --exists $possible
       if test $?; then
-         PANGO_LIBS=`${GNOME_CONFIG} --libs pangoxft`
-         PANGO_CFLAGS=`${GNOME_CONFIG} --cflags pangoxft`
+         PANGO_LIBS=`pkg-config --libs $possible`
+         PANGO_CFLAGS=`pkg-config --cflags $possible`
          AC_DEFINE(HAVE_PANGOXFT)      
          XE_APPEND(${PANGO_LIBS}, libs_gtk)
          XE_APPEND(${PANGO_CFLAGS}, c_switch_gtk)
