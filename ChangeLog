@@ -1,3 +1,8 @@
+2011-03-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (TAB): Fix the pangoxft check and add output
+	messages.
+
 2011-03-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac (TAB): gtk-config version 0.25 is the current 2.0
