@@ -1057,8 +1057,8 @@ to selected device if omitted, and must be live if specified.
   return DEVICE_PRINTER_P (decode_device (device)) ? Qt : Qnil;
 }
 
-DEFUN ("device-system-metric", Fdevice_system_metric, 1, 3, 0, /*
-Get a metric for DEVICE as provided by the system.
+DEFUN ("device-system-metric", Fdevice_system_metric, 2, 3, 0, /*
+Get DEVICE METRIC as provided by the system.
 
 METRIC must be a symbol specifying requested metric.  Note that the metrics
 returned are these provided by the system internally, not read from resources,
