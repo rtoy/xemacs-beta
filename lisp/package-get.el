@@ -416,7 +416,7 @@ If the optional FORCE-CURRENT argument or the value of
 from a location in `package-get-remote'. Otherwise a local copy is used
 if available and remote access is never done.
 
-Please use FORCE-CURRENT only when the user is explictly dealing with packages
+Please use FORCE-CURRENT only when the user is explicitly dealing with packages
 and remote access is likely in the near future."
   (setq force-current (or force-current package-get-always-update))
   (unless (and (boundp 'package-get-base)

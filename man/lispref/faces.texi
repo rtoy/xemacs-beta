@@ -26,10 +26,13 @@ such as @code{default} or @code{modeline}.
 
 Each built-in property of a face is controlled using a specifier,
 which allows it to have separate values in particular buffers, frames,
-windows, and devices and to further vary according to device type
-(X or TTY), device class (color, mono, or grayscale) and number of
-displayable colors (min-colors).
-@xref{Specifiers}, for more information.
+windows, and devices.  These properties are computed when the face is
+instantiated, allowing them to vary according to properties of the
+display device, such as type (X or TTY), visual class (color, mono, or
+grayscale), and number of colors displayable on the device.
+@xref{Specifiers}, for more information on specifiers.
+@xref{Face Definitions}, for defining faces whose properties vary
+according to their runtime environments.
 
 The face named @code{default} is used for ordinary text.  The face named
 @code{modeline} is used for displaying the modeline.  The face named

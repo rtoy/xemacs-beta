@@ -4193,20 +4193,22 @@ forcing function quoting" ,en (car form))))
   "Byte-compile and return a `catch' from.
 
 If FORM is the result of macroexpanding a `block' form (the TAG argument is
-a quoted symbol with a non-nil `cl-block-name' property) and there is no
+a quoted symbol with a `cl-block-name' property) and there is no
 corresponding `return-from' within the block--or equivalently, it was
 optimized away--just byte compile and return the BODY."
   (let* ((symbol (car-safe (cdr-safe (nth 1 form))))
-	 (block (and symbol (symbolp symbol) (get symbol 'cl-block-name)))
-	 (elt (and block (cons block nil)))
+	 (not-present '#:not-present)
+	 (block (and symbol (symbolp symbol)
+		     (get symbol 'cl-block-name not-present)))
+	 (elt (and (not (eq block not-present)) (list block)))
 	 (byte-compile-active-blocks
-	  (if block
+	  (if elt
 	      (cons elt byte-compile-active-blocks)
 	    byte-compile-active-blocks))
 	 (body
 	  (byte-compile-top-level (cons 'progn (cddr form))
-				  (if block nil for-effect))))
-    (if (and block (not (cdr elt)))
+                                  (and (not elt) for-effect))))
+    (if (and elt (not (cdr elt)))
 	;; A lexical block without any contained return-from clauses:
 	(byte-compile-form body)
       ;; A normal catch call, or a lexical block with a contained
@@ -4366,14 +4368,21 @@ optimized away--just byte compile and return the BODY."
     ;; If this form was macroexpanded from `return-from', mark the
     ;; corresponding block as having been referenced.
     (let* ((symbol (car-safe (cdr-safe (nth 1 form))))
-	   (block (and symbol (symbolp symbol) (get symbol 'cl-block-name)))
-	   (assq (and block (assq block byte-compile-active-blocks))))
-      (and assq (setcdr assq t)))
-    (byte-compile-form (nth 1 form))  ;; Push the arguments
-    (byte-compile-form (nth 2 form))
+           (not-present '#:not-present)
+	   (block (if (and symbol (symbolp symbol))
+		      (get symbol 'cl-block-name not-present)
+		    not-present))
+	   (assq (and (not (eq block not-present))
+                      (assq block byte-compile-active-blocks))))
+      (if assq
+	  (setcdr assq t)
+	(if (not (eq block not-present))
+	    ;; No corresponding enclosing block.
+	    (byte-compile-warn "return-from: no enclosing block named `%s'"
+			       block))))
+    (mapc 'byte-compile-form (cdr form))  ;; Push the arguments
     (byte-compile-out (get (car form) 'byte-opcode) 0)
-    (pushnew '(null (function-max-args 'throw))
-             byte-compile-checks-on-load
+    (pushnew '(null (function-max-args 'throw)) byte-compile-checks-on-load
              :test #'equal)))
 
 ;;; top-level forms elsewhere

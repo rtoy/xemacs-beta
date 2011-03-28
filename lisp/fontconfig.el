@@ -352,7 +352,7 @@ corresponding Xft font slant constant."
 
 (defun fc-pattern-get-or-compute-size (pattern id)
   "Get the size from `pattern' associated with `id' or try to compute it.
-Returns 'fc-result-no-match if unsucessful."
+Returns 'fc-result-no-match if unsuccessful."
   ;;  Many font patterns don't have a "size" property, but do have a
   ;;  "dpi" and a "pixelsize" property".
   (let ((maybe (fc-pattern-get-size pattern id)))

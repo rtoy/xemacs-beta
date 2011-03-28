@@ -1416,7 +1416,7 @@ update_face_cachel_data (struct face_cachel *cachel,
 	 - BARF !!!!!
 
 	 To sum up, this means that it is in general unsafe to instantiate
-	 images before face cache updating is complete (appart from image
+	 images before face cache updating is complete (apart from image
 	 related face attributes). The solution we use below is to actually
 	 detect whether we're building the window's face_cachels for the first
 	 time, and simply NOT frob the background pixmap in that case. If
@@ -1425,7 +1425,7 @@ update_face_cachel_data (struct face_cachel *cachel,
 
 	 One note:
 	 * See comment in `default_face_font_info' in face.c. Who wrote it ?
-	 Maybe we have the begining of an answer here ?
+	 Maybe we have the beginning of an answer here ?
 
 	 Footnotes:
 	 [1] See comment at the top of `allocate_window' in window.c.

@@ -1,3 +1,53 @@
+2011-03-24  Jerry James  <james@xemacs.org>
+
+	* README.kkcc: "occured" -> "occurred".
+	* alloc.c (malloced_storage_size): "supress" -> "suppress".
+	* buffer.c: "intial" -> "initial".
+	* elhash.c (Fdefine_hash_table_test): "analagous" -> "analogous".
+	* emacs.c: "targetting" -> "targeting".
+	(shut_down_emacs): "recurrance" -> "reoccurrence".
+	* event-stream.c: "accidentaly" -> "accidentally", and fix grammar.
+	* extents.c: "occuring" -> "occurring".
+	* faces.c (update_face_cachel_data): "appart" -> "apart", "begining"
+	-> "beginning".
+	* file-coding.c (Vkeyboard_coding_system): "interpet" -> "interpret".
+	* fileio.c (Fmake_temp_name): "analagous" -> "analogous".
+	* fontcolor-gtk.c: "sucess" -> "success".
+	* frame-gtk.c (gtk_init_frame_2): "carefull" -> "careful", fix
+	whitespace.
+	* frame.c: "negotation" -> "negotiation".
+	* glyphs-msw.c (mswindows_map_subwindow): "everytime" -> "every time".
+	* glyphs-widget.c: "accomodate" -> "accommodate".
+	(logical_unit_height): Ditto.
+	(Fwidget_logical_to_character_height): Ditto.
+	* gtk-xemacs.c (__nuke_background_items): "noticable" -> "noticeable".
+	* menubar-gtk.c: "inital" -> "initial".
+	* mule-ccl.c: "refered" -> "referred to".
+	* nt.c (mswindows_stat): "noticable" -> "noticeable".
+	* ntheap.c (recreate_heap): "commited" -> "committed".
+	* s/cygwin32.h: "konw" -> "know".
+	* sysdll.c: "dependant" -> "dependent".
+	* syswindows.h: "targetting" -> "targeting".
+	* text.c: "reversable" -> "reversible".
+	* unexcw.c (copy_executable_and_dump_data_section): "addres" ->
+	"address".
+	* unicode.c (Funicode_precedence_list): "occurrance" -> "occurrence".
+	* window.c (struct window_mirror_stats): "Ancilliary" -> "Ancillary".
+
+2011-03-20  Mats Lidell  <matsl@xemacs.org>
+
+	* alloca.c (find_stack_direction):
+	* alloca.c (xemacs_c_alloca):
+	Remove use of auto keyword. It is default and will be illegal in
+	C++0X.
+
+2011-03-17  Didier Verna  <didier@xemacs.org>
+
+	* data.c (init_errors_once_early): Define Qextent_read_only error.
+	* lisp.h: Declare it.
+	* extents.c (verify_extent_mapper): Signal an extent-read-only
+	error instead of a buffer-read-only one.
+
 2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in (SUPPORT_CONFOUNDING_FUNCTIONS): New #define,

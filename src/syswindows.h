@@ -72,7 +72,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 		Corresponding s/ file: s/mingw32.h
 
    (none)	There's no flag to indicate that you are specifically
-		targetting native Windows and not doing this with MINGW.
+		targeting native Windows and not doing this with MINGW.
 		Presumably this means you're using Visual C++.
 
 		Corresponding s/ file: s/windowsnt.h

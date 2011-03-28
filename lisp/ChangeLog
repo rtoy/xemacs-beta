@@ -1,3 +1,87 @@
+2011-03-24  Jerry James  <james@xemacs.org>
+
+	* cl-macs.el (loop): "arbitary" -> "arbitrary".
+	* coding.el (force-coding-system-equivalency): "compatiblity" ->
+	"compatibility".
+	* cus-edit.el (custom-variable-pre-reset-standard): "explictly" ->
+	"explicitly" and fix grammar.
+	(custom-face-pre-reset-standard): "explictly" -> "explicitly".
+	* etags.el (pop-tag-mark): "seperate" -> "separate".
+	* files.el (make-temp-file): "analagous" -> "analogous".
+	* font-menu.el (font-menu-ignore-scaled-fonts): "noticably" ->
+	"noticeably".
+	* fontconfig.el (fc-pattern-get-or-compute-size): "unsucessful" ->
+	"unsuccessful".
+	* gnome-widgets.el: "writen" -> "written", "choosed" -> "chosen",
+	"existance" -> "existence".
+	* gtk-ffi.el (gtk-ffi-debug): "wiht" -> "with".
+	* gtk-widgets.el: "wil" -> "will", "occure" -> "occur", "efficent" ->
+	"efficient", "mannor" -> "manner", "negitive" -> "negative",
+	"particulary" -> "particularly".
+	* info.el (Info-suffixed-file): "independantly" -> "independently".
+	* minibuf.el (minibuffer): "Controling" -> "Controlling".
+	* mule/ccl.el (define-ccl-program): "correponding" -> "corresponding".
+	* mule/indian.el: "apperance" -> "appearance" and correct grammar.
+	* mule/kinsoku.el (kinsoku-process-extend): "permissable" ->
+	"permissible", "deliberatly" -> "deliberately", and correct grammar.
+	(kinsoku-process-shrink): "permissable" -> "permissible".
+	* mule/lao-util.el (lao-vowel-reordering-rule): "follwoing" ->
+	"following", "alwasy" -> "always".
+	(lao-transcribe-single-roman-syllable-to-lao): "beggining" ->
+	"beginning".
+	* mule/latin.el: "idiosyncracy" -> "idiosyncrasy".
+	* mule/thai-util.el: "repetion" -> "repetition".
+	* package-get.el (package-get-require-base): "explictly" ->
+	"explicitly".
+	* packages.el (packages-find-package-data-path): "hierachies" ->
+	"hierarchies".
+	* paragraphs.el (use-hard-newlines): "preceeding" -> "preceding".
+	* startup.el (command-line): "intial" -> "initial".
+	* toolbar-itmes.el (toolbar-news): "Unkown" -> "Unknown".
+
+2011-03-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* custom.el (custom-add-to-group):
+	Warn if adding an option to the nil group; this is usually an
+	error on the part of the programmer.
+	* cmdloop.el (suggest-key-bindings):
+	Specify a group for this variable, it didn't previously have one.
+
+2011-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (revappend, nreconc):
+	Add compiler macros for these two functions. (They used to be
+	inline, but that involves needless binding of the arguments.)
+
+2011-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-non-fixnum-number-p):
+	This should return t under 64-bit builds for fixnums that would
+	be bignums on a 32-bit machine; make it so.
+
+2011-03-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* faces.el (face-spec-set-match-display):
+	Protect against `display-color-cells' returning nil.
+	Delete unreferenced let-binding of `min-colors'.
+
+2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-catch):
+	* bytecomp.el (byte-compile-throw):
+	Correct some minor problems in my last change. Happy St. Patrick's
+	day, everyone!
+
+2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-catch):
+	* bytecomp.el (byte-compile-throw):
+	* cl-macs.el (return-from):
+	With `block' and `return-from', a nil NAME is perfectly
+	legitimate, and the corresponding `catch' statements need be
+	removed by the byte-compiler. 5dd1ba5e0113 , my change of
+	2011-02-12, didn't do this; correct that now.
+
 2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el:
