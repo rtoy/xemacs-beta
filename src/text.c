@@ -548,7 +548,7 @@ April 11, 2000
 
 Well yes, this was the whole point of my "no lossage" proposal of being
 able to undo any coding-system transformation on a buffer.  The idea was
-to figure out which transformations were definitely reversable, and for
+to figure out which transformations were definitely reversible, and for
 all the others, cache the original text in a text property.  This way, you
 could probably still do a fairly good job at constructing a good reversal
 even after you've gone into the text and added, deleted, and rearranged
@@ -587,7 +587,7 @@ April 11, 2000
 
 Well yes, this was the whole point of my "no lossage" proposal of being
 able to undo any coding-system transformation on a buffer.  The idea was
-to figure out which transformations were definitely reversable, and for
+to figure out which transformations were definitely reversible, and for
 all the others, cache the original text in a text property.  This way, you
 could probably still do a fairly good job at constructing a good reversal
 even after you've gone into the text and added, deleted, and rearranged

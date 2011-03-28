@@ -3385,7 +3385,7 @@ and announce itself normally when it is run.
    go.  The two conditions sound somewhat redundant (maybe we could just
    use the second?) but they aren't completely: Theoretically (maybe with
    MinGW?) we could imagine compiling under native Windows as the OS
-   but e.g. targetting only X Windows as the window system. --ben */
+   but e.g. targeting only X Windows as the window system. --ben */
 
 #if defined (HAVE_MS_WINDOWS) && defined (WIN32_NATIVE)
 # define NEED_WINDOWS_MESSAGE_PAUSE
@@ -3680,7 +3680,7 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 "then type `where' at the debugger prompt.  No GDB on your system?  You may\n"
 "have DBX, or XDB, or SDB.  (Ask your system administrator if you need help.)\n"
 "If no core file was produced, enable them (often with `ulimit -c unlimited')\n"
-"in case of future recurrance of the crash.\n");
+"in case of future reoccurrence of the crash.\n");
 #endif /* _MSC_VER */
     }
 

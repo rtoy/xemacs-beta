@@ -251,13 +251,13 @@ pointが行末禁則に触れる場合は行を縮めて、禁則に触れない点を探す。
 	     (eol-kin (kinsoku-process-shrink))))))
 
 (defun kinsoku-process-extend ()
-  "Move point forward to a permissable for line-breaking.
+  "Move point forward to a point permissible for line-breaking.
 行を伸ばして禁則に触れない点へ移動する。"
   (let ((max-column (+ fill-column 
 		       (if (and (numberp kinsoku-extend-limit)
 				(>= kinsoku-extend-limit 0))
 			   kinsoku-extend-limit
-			 10000)))  ;;; 10000 is deliberatly unreasonably large
+			 10000)))  ;;; 10000 is deliberately unreasonably large
 	ch1 ch2)
     (while (and (setq ch1 (char-after))
 		(<= (+ (current-column)
@@ -278,7 +278,7 @@ pointが行末禁則に触れる場合は行を縮めて、禁則に触れない点を探す。
 	(kinsoku-process-shrink))))
 
 (defun kinsoku-process-shrink ()
-  "Move point backward to a point permissable for line-breaking.
+  "Move point backward to a point permissible for line-breaking.
 行を縮めて禁則に触れない点へ移動する。"
   (let (ch1 ch2)
     (while (and (not (bolp))

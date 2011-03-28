@@ -387,7 +387,7 @@ iso-latin-with-esc-unix-1"))
        (equal '(257) (unencodable-char-position (point-min) (point-max)
                                                 'iso-8859-1 1))
        "check #'unencodable-char-position doesn't think latin-1 encodes U+20AC")
-      ;; Compatiblity, sigh: 
+      ;; Compatibility, sigh: 
       (Assert
        (equal '(257) (unencodable-char-position (point-min) (point-max)
                                                 'iso-8859-1 0))

@@ -765,12 +765,12 @@ returning RESULT from that form (or nil if RESULT is omitted).
 This is compatible with Common Lisp, but note that `defun' and
 `defmacro' do not create implicit blocks as they do in Common Lisp."
   `(throw ',(or (cdr (assq name cl-active-block-names))
-		(prog1 (copy-symbol name)
-		  (and-fboundp 'byte-compile-warn (cl-compiling-file)
-			       (byte-compile-warn
-				"return-from: no enclosing block named `%s'"
-				name))))
-	 ,result))
+                ;; Tell the byte-compiler the original name of the block,
+                ;; leave any warning to it.
+                (let ((copy-symbol (copy-symbol name)))
+                  (put copy-symbol 'cl-block-name name)
+                  copy-symbol))
+           ,result))
 
 ;;; The "loop" macro.
 
@@ -826,7 +826,7 @@ you give the loop a name with `named', you will need to use the macro
 `return-from'.)
 
 Another extremely useful feature of loops is called \"destructuring\".  If,
-in place of VAR, a list (possibly dotted, possibly a tree of arbitary
+in place of VAR, a list (possibly dotted, possibly a tree of arbitrary
 complexity) is given, the value to be assigned is assumed to have a similar
 structure to the list given, and variables in the list will be matched up
 with corresponding elements in the structure.  For example:
@@ -3228,13 +3228,25 @@ surrounded by (block NAME ...)."
 			argns argvs)))
       (if lets (list 'let lets body) body))))
 
+;; When a 64-bit build is byte-compiling code, some of its native fixnums
+;; will not be represented as fixnums if the byte-compiled code is read by
+;; the Lisp reader in a 32-bit build. So in that case we need to check the
+;; range of fixnums as well as their types. XEmacs doesn't support machines
+;; with word size less than 32, so it's OK to have that as the minimum.
+(macrolet
+    ((most-negative-fixnum-on-32-bit-machines () (lognot (1- (lsh 1 30))))
+     (most-positive-fixnum-on-32-bit-machines () (lsh 1 30)))
+  (defun cl-non-fixnum-number-p (object)
+    "Return t if OBJECT is a number not guaranteed to be immediate."
+    (and (numberp object)
+	 (or (not (fixnump object))
+	     (not (<= (most-negative-fixnum-on-32-bit-machines)
+		      object
+		      (most-positive-fixnum-on-32-bit-machines)))))))
 
 ;;; Compile-time optimizations for some functions defined in this package.
 ;;; Note that cl.el arranges to force cl-macs to be loaded at compile-time,
 ;;; mainly to make sure these macros will be present.
-
-(defun cl-non-fixnum-number-p (object)
-  (and (numberp object) (not (fixnump object))))
 
 (define-compiler-macro eql (&whole form a b)
   (cond ((eq (cl-const-expr-p a) t)
@@ -3695,6 +3707,12 @@ the byte optimizer in those cases."
 
 (define-compiler-macro pairlis (a b &optional c)
   `(nconc (mapcar* #'cons ,a ,b) ,c))
+
+(define-compiler-macro revappend (&whole form &rest args)
+  (if (eql 3 (length form)) `(nconc (reverse ,(pop args)) ,(pop args)) form))
+
+(define-compiler-macro nreconc (&whole form &rest args)
+  (if (eql 3 (length form)) `(nconc (nreverse ,(pop args)) ,(pop args)) form))
 
 (define-compiler-macro complement (&whole form fn)
   (if (or (eq (car-safe fn) 'function) (eq (car-safe fn) 'quote))

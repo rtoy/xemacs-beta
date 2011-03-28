@@ -242,7 +242,7 @@ recreate_heap (Extbyte *executable_path)
   VirtualQuery (base, &info, sizeof (info));
   if (info.State != MEM_FREE)
     {
-      /* Oops, something has already reserved or commited it, nothing
+      /* Oops, something has already reserved or committed it, nothing
 	 we can do but exit */
       Extbyte buf[256];
       sprintf (buf,
@@ -251,7 +251,7 @@ recreate_heap (Extbyte *executable_path)
 	       "(BaseAddress = 0x%lx, AllocationBase = 0x%lx, "
 	       "Size = 0x%lx, State = %s, Type = %s)",
 	       info.BaseAddress, info.AllocationBase, info.RegionSize,
-	       info.State == MEM_COMMIT ? "COMMITED" : "RESERVED",
+	       info.State == MEM_COMMIT ? "COMMITTED" : "RESERVED",
 	       info.Type == MEM_IMAGE ? "IMAGE" :
 	       info.Type == MEM_MAPPED ? "MAPPED" : "PRIVATE");
       MessageBoxA (NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);

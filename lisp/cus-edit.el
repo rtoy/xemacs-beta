@@ -2443,7 +2443,7 @@ standard setting."
     (when (or (get symbol 'saved-value) (get symbol 'saved-variable-comment))
       (put symbol 'saved-value nil)
       (custom-push-theme 'theme-value symbol 'user 'reset 'standard)
-      ;; As a special optimizations we do not (explictly)
+      ;; As a special optimization we do not (explicitly)
       ;; save resets to standard when no theme sets the value.
       (if (null (cdr (get symbol 'theme-value)))
 	  (put symbol 'theme-value nil))
@@ -2908,7 +2908,7 @@ settings."
     (when (or (get symbol 'saved-face) (get symbol 'saved-face-comment))
       (put symbol 'saved-face nil)
       (custom-push-theme 'theme-face symbol 'user 'reset 'standard)
-      ;; Do not explictly save resets to standards without themes.
+      ;; Do not explicitly save resets to standards without themes.
       (if (null (cdr (get symbol 'theme-face)))
 	  (put symbol  'theme-face nil))
       (put symbol 'saved-face-comment nil)

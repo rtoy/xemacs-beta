@@ -4409,7 +4409,7 @@ you should use `map-extents', which gives you more control.
 /* ------------------------------- */
 
 /* verify_extent_modification() is called when a buffer or string is
-   modified to check whether the modification is occuring inside a
+   modified to check whether the modification is occurring inside a
    read-only extent.
  */
 
@@ -4448,7 +4448,7 @@ verify_extent_mapper (EXTENT extent, void *arg)
 #endif
 
   while (1)
-    Fsignal (Qbuffer_read_only, (list1 (closure->object)));
+    Fsignal (Qextent_read_only, (list1 (wrap_extent (extent))));
 
   RETURN_NOT_REACHED(0);
 }

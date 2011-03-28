@@ -114,7 +114,7 @@
 	   (?,Tc(B vowel-base "VOWEL SIGN SARA MAI MUAN")			; 0xE3
 	   (?,Td(B vowel-base "VOWEL SIGN SARA MAI MALAI")			; 0xE4
 	   (?,Te(B vowel-base "LAK KHANG YAO")				; 0xE5
-	   (?,Tf(B special "MAI YAMOK (repetion)")				; 0xE6
+	   (?,Tf(B special "MAI YAMOK (repetition)")			; 0xE6
 	   (?,Tg(B vowel-upper "VOWEL SIGN MAI TAI KHU N/S-T")		; 0xE7
 	   (?,Th(B tone "TONE MAI EK N/S-T")				; 0xE8
 	   (?,Ti(B tone "TONE MAI THO N/S-T")				; 0xE9

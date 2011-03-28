@@ -63,7 +63,7 @@ Fixnum debug_x_objects;
    worry about it.
 
    Return value is 1 for normal success, 2 for nearest color success,
-   3 for Non-deallocable sucess. */
+   3 for Non-deallocable success. */
 int
 allocate_nearest_color (GdkColormap *colormap, GdkVisual *UNUSED (visual),
 		        GdkColor *color_def)

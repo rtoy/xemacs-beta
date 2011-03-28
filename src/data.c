@@ -48,7 +48,8 @@ Lisp_Object Qvoid_function, Qcyclic_function_indirection;
 Lisp_Object Qinvalid_operation, Qinvalid_change, Qprinting_unreadable_object;
 Lisp_Object Qsetting_constant;
 Lisp_Object Qediting_error;
-Lisp_Object Qbeginning_of_buffer, Qend_of_buffer, Qbuffer_read_only;
+Lisp_Object Qbeginning_of_buffer, Qend_of_buffer;
+Lisp_Object Qbuffer_read_only, Qextent_read_only;
 Lisp_Object Qio_error, Qfile_error, Qconversion_error, Qend_of_file;
 Lisp_Object Qtext_conversion_error;
 Lisp_Object Qarith_error, Qrange_error, Qdomain_error;
@@ -3491,6 +3492,7 @@ init_errors_once_early (void)
   DEFERROR_STANDARD (Qbeginning_of_buffer, Qediting_error);
   DEFERROR_STANDARD (Qend_of_buffer, Qediting_error);
   DEFERROR (Qbuffer_read_only, "Buffer is read-only", Qediting_error);
+  DEFERROR (Qextent_read_only, "Extent is read-only", Qediting_error);
 
   DEFERROR (Qio_error, "IO Error", Qinvalid_operation);
   DEFERROR_STANDARD (Qfile_error, Qio_error);

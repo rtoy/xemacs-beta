@@ -724,7 +724,7 @@ If DIR-FLAG is non-nil, create a new empty directory instead of a file.
 
 If SUFFIX is non-nil, add that at the end of the file name.
 
-This function is analagous to mkstemp(3) under POSIX, avoiding the race
+This function is analogous to mkstemp(3) under POSIX, avoiding the race
 condition between testing for the existence of the generated filename (under
 POSIX with mktemp(3), under Emacs Lisp with `make-temp-name') and creating
 it."

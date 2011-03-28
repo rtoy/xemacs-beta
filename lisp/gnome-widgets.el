@@ -467,7 +467,7 @@
 		     (GnomeFontPickerMode . mode))
 
 ;; With  GNOME_FONT_PICKER_MODE_FONT_INFO
-;; If use_font_in_label is true, font name will be writen using font choosed by user and
+;; If use_font_in_label is true, font name will be written using font chosen by user and
 ;; using size passed to this function
 (gtk-import-function nil gnome_font_picker_fi_set_use_font_in_label
 		     (GnomeFontPicker . gfp)
@@ -724,7 +724,7 @@
 ;;;						    const char *subtype,
 ;;;                                                    GnomeStockPixmapEntry *entry);
 
-;; check for the existance of an entry. returns the entry if it
+;; check for the existence of an entry. returns the entry if it
 ;; exists, or NULL otherwise
 ;;;GnomeStockPixmapEntry *gnome_stock_pixmap_checkfor (const char *icon,
 ;;;						    const char *subtype);

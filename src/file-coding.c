@@ -4741,7 +4741,7 @@ vars_of_file_coding (void)
 
   DEFVAR_LISP ("keyboard-coding-system", &Vkeyboard_coding_system /*
 Default coding system used for TTY and X11 keyboard input.
-Under X11, used only to interpet the character for a key event when that
+Under X11, used only to interpret the character for a key event when that
 event has a KeySym of NoSymbol but does have an associated string keysym,
 something that's seen with input methods.
 
