@@ -1,5 +1,14 @@
 2011-03-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-extra.el (cl-finite-do, cl-float-limits):
+	Don't make these available as functions in the dumped image, since
+	they're only called at dump time.
+	* obsolete.el (cl-float-limits):
+	Make this an alias to #'identity (since it's called at dump time),
+	mark it as obsolete in 21.5.
+
+2011-03-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl.el:
 	* cl.el (least-positive-float):
 	* cl.el (least-positive-normalized-float):
