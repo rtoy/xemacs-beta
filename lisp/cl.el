@@ -312,11 +312,11 @@ If ARG is not a string, it is ignored."
 
 (defun oddp (integer)
   "Return t if INTEGER is odd."
-  (eq (logand integer 1) 1))
+  (eql (logand integer 1) 1))
 
 (defun evenp (integer)
   "Return t if INTEGER is even."
-  (eq (logand integer 1) 0))
+  (eql (logand integer 1) 0))
 
 ;; XEmacs addition
 (defalias 'cl-abs 'abs)
@@ -329,13 +329,35 @@ If ARG is not a string, it is ignored."
 (defconst most-negative-float nil
   "The float closest in value to negative infinity.")
 (defconst least-positive-float nil
-  "The positive float closest in value to 0.")
+  "The positive float closest in value to zero.")
 (defconst least-negative-float nil
-  "The negative float closest in value to 0.")
-(defconst least-positive-normalized-float nil)
-(defconst least-negative-normalized-float nil)
-(defconst float-epsilon nil)
-(defconst float-negative-epsilon nil)
+  "The negative float closest in value to zero.")
+(defconst least-positive-normalized-float nil
+  "The normalized positive float closest in value to zero.
+
+A float is normalized if the most significant bit of its mantissa is 1.
+Use of denormalized (equivalently, subnormal) floats in calculations will
+lead to gradual underflow, though they can be more accurate in representing
+individual small values.  Normal and subnormal floats are as described in
+IEEE 754.")
+
+(defconst least-negative-normalized-float nil
+  "The normalized negative float closest in value to zero.
+
+See `least-positive-normalized-float' for details of normal and denormalized
+numbers.")
+
+(defconst float-epsilon nil
+  "The smallest float guaranteed not `eql' to 1.0 when added to 1.0.
+
+That is, (eql 1.0 (+ 1.0 X)) will always give nil if (<= float-epsilon X) ,
+but it may give t for smaller values.")
+
+(defconst float-negative-epsilon nil
+  "The smallest float guaranteed not `eql' to 1.0 when subtracted from 1.0.
+
+That is, (eql 1.0 (- 1.0 X)) will always give nil if (<=
+float-negative-epsilon X) , but it may give t for smaller values.")
 
 ;;; Sequence functions.
 
