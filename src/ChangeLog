@@ -1,5 +1,15 @@
 2011-03-24  Jerry James  <james@xemacs.org>
 
+	* alloc.c (listu): Assemble the list in the right order so we don't
+	have to reverse it.
+	(listn): Ditto.
+	* dired.c (Ffile_attributes): Use listn instead of building an array
+	to pass to Flist.  GC protect the mode string.
+	* editfns.c (Fdecode_time): Use listn instead of Flist.
+	* faces.c (vars_of_faces): Use listu instead of Flist.
+
+2011-03-24  Jerry James  <james@xemacs.org>
+
 	* README.kkcc: "occured" -> "occurred".
 	* alloc.c (malloced_storage_size): "supress" -> "suppress".
 	* buffer.c: "intial" -> "initial".

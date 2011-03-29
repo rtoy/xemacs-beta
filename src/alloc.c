@@ -1465,18 +1465,23 @@ Lisp_Object
 listu (Lisp_Object first, ...)
 {
   Lisp_Object obj = Qnil;
-  Lisp_Object val;
-  va_list va;
 
-  va_start (va, first);
-  val = first;
-  while (!UNBOUNDP (val))
+  if (!UNBOUNDP (first))
     {
-      obj = Fcons (val, obj);
+      va_list va;
+      Lisp_Object last, val;
+
+      last = obj = Fcons (first, Qnil);
+      va_start (va, first);
       val = va_arg (va, Lisp_Object);
+      while (!UNBOUNDP (val))
+	{
+	  last = XCDR (last) = Fcons (val, Qnil);
+	  val = va_arg (va, Lisp_Object);
+	}
+      va_end (va);
     }
-  va_end (va);
-  return Fnreverse (obj);
+  return obj;
 }
 
 /* Return a list of arbitrary length, with length specified and remaining
@@ -1485,15 +1490,21 @@ listu (Lisp_Object first, ...)
 Lisp_Object
 listn (int num_args, ...)
 {
-  int i;
   Lisp_Object obj = Qnil;
-  va_list va;
 
-  va_start (va, num_args);
-  for (i = 0; i < num_args; i++)
-    obj = Fcons (va_arg (va, Lisp_Object), obj);
-  va_end (va);
-  return Fnreverse (obj);
+  if (num_args > 0)
+    {
+      va_list va;
+      Lisp_Object last;
+      int i;
+
+      va_start (va, num_args);
+      last = obj = Fcons (va_arg (va, Lisp_Object), Qnil);
+      for (i = 1; i < num_args; i++)
+	last = XCDR (last) = Fcons (va_arg (va, Lisp_Object), Qnil);
+      va_end (va);
+    }
+  return obj;
 }
 
 /* Return a list of arbitrary length, with length specified and an array
