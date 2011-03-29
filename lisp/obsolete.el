@@ -244,6 +244,12 @@ we no longer encounter bytecode from 21.4."
 
 (define-compatible-function-alias 'cl-mapc 'mapc)
 
+;; Various non-XEmacs code can call this, because it used not be
+;; called automatically at dump time.
+(define-function 'cl-float-limits 'ignore)
+(make-obsolete 'cl-float-limits "this is called at dump time in 21.5 and \
+later, no need to call it in user code.")
+
 ;; XEmacs; old compiler macros meant that this was called directly
 ;; from compiled code, and we need to provide a version of it for a
 ;; couple of years at least because of that. Aidan Kehoe, Mon Oct 4

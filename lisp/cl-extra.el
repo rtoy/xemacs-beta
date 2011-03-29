@@ -365,52 +365,6 @@ If STATE is t, return a new state object seeded from the time of day."
   (and (vectorp object) (= (length object) 4)
        (eq (aref object 0) 'cl-random-state-tag)))
 
-
-;; Implementation limits.
-
-(defun cl-finite-do (func a b)
-  (condition-case nil
-      (let ((res (funcall func a b)))   ; check for IEEE infinity
-	(and (numberp res) (/= res (/ res 2)) res))
-    (arith-error nil)))
-
-(defun cl-float-limits ()
-  (or most-positive-float (not (numberp '2e1))
-      (let ((x '2e0) y z)
-	;; Find maximum exponent (first two loops are optimizations)
-	(while (cl-finite-do '* x x) (setq x (* x x)))
-	(while (cl-finite-do '* x (/ x 2)) (setq x (* x (/ x 2))))
-	(while (cl-finite-do '+ x x) (setq x (+ x x)))
-	(setq z x y (/ x 2))
-	;; Now fill in 1's in the mantissa.
-	(while (and (cl-finite-do '+ x y) (/= (+ x y) x))
-	  (setq x (+ x y) y (/ y 2)))
-	(setq most-positive-float x
-	      most-negative-float (- x))
-	;; Divide down until mantissa starts rounding.
-	(setq x (/ x z) y (/ 16 z) x (* x y))
-	(while (condition-case nil (and (= x (* (/ x 2) 2)) (> (/ y 2) 0))
-		 (arith-error nil))
-	  (setq x (/ x 2) y (/ y 2)))
-	(setq least-positive-normalized-float y
-	      least-negative-normalized-float (- y))
-	;; Divide down until value underflows to zero.
-	(setq x (/ 1 z) y x)
-	(while (condition-case nil (> (/ x 2) 0) (arith-error nil))
-	  (setq x (/ x 2)))
-	(setq least-positive-float x
-	      least-negative-float (- x))
-	(setq x '1e0)
-	(while (/= (+ '1e0 x) '1e0) (setq x (/ x 2)))
-	(setq float-epsilon (* x 2))
-	(setq x '1e0)
-	(while (/= (- '1e0 x) '1e0) (setq x (/ x 2)))
-	(setq float-negative-epsilon (* x 2))))
-  nil)
-
-;; XEmacs; call cl-float-limits at dump time.
-(cl-float-limits)
-
 ;;; Sequence functions.
 
 ;; XEmacs; #'subseq is in C.
@@ -692,6 +646,49 @@ This also does some trivial optimizations to make the form prettier."
 ;; compiling files to be dumped.  This is more reasonable than forcing other
 ;; files to do the same, multiple times.
 (eval-when-compile (or (cl-compiling-file) (load "cl-macs")))
+
+;; Implementation limits.
+
+;; XEmacs; call cl-float-limits at dump time.
+(labels
+    ((cl-finite-do (func a b)
+       (condition-case nil
+	   (let ((res (funcall func a b)))   ; check for IEEE infinity
+	     (and (numberp res) (/= res (/ res 2)) res))
+	 (arith-error nil)))
+     (cl-float-limits ()
+       (unless most-positive-float 
+	 (let ((x 2e0) y z)
+	   ;; Find maximum exponent (first two loops are optimizations)
+	   (while (cl-finite-do '* x x) (setq x (* x x)))
+	   (while (cl-finite-do '* x (/ x 2)) (setq x (* x (/ x 2))))
+	   (while (cl-finite-do '+ x x) (setq x (+ x x)))
+	   (setq z x y (/ x 2))
+	   ;; Now fill in 1's in the mantissa.
+	   (while (and (cl-finite-do '+ x y) (/= (+ x y) x))
+	     (setq x (+ x y) y (/ y 2)))
+	   (setq most-positive-float x
+		 most-negative-float (- x))
+	   ;; Divide down until mantissa starts rounding.
+	   (setq x (/ x z) y (/ 16 z) x (* x y))
+	   (while (condition-case nil (and (= x (* (/ x 2) 2)) (> (/ y 2) 0))
+		    (arith-error nil))
+	     (setq x (/ x 2) y (/ y 2)))
+	   (setq least-positive-normalized-float y
+		 least-negative-normalized-float (- y))
+	   ;; Divide down until value underflows to zero.
+	   (setq x (/ 1 z) y x)
+	   (while (condition-case nil (> (/ x 2) 0) (arith-error nil))
+	     (setq x (/ x 2)))
+	   (setq least-positive-float x
+		 least-negative-float (- x))
+	   (setq x 1e0)
+	   (while (/= (+ 1e0 x) 1e0) (setq x (/ x 2)))
+	   (setq float-epsilon (* x 2))
+	   (setq x 1e0)
+	   (while (/= (- 1e0 x) 1e0) (setq x (/ x 2)))
+	   (setq float-negative-epsilon (* x 2))))))
+  (cl-float-limits))
 
 (run-hooks 'cl-extra-load-hook)
 
