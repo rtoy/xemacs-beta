@@ -1,3 +1,17 @@
+2011-03-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el:
+	* cl.el (least-positive-float):
+	* cl.el (least-positive-normalized-float):
+	* cl.el (least-negative-normalized-float):
+	* cl.el (float-epsilon):
+	* cl.el (float-negative-epsilon):
+	Document some previously-undocumented float constants here.
+	* cl.el (oddp):
+	* cl.el (evenp):
+	Change numeric comparison to use #'eql instead of #'eq in
+	passing.
+
 2011-03-24  Jerry James  <james@xemacs.org>
 
 	* cl-macs.el (loop): "arbitary" -> "arbitrary".
