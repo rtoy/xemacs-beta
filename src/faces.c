@@ -2227,26 +2227,11 @@ If non-zero, display debug information about X faces
   debug_x_faces = 0;
 #endif
 
-  {
-    Lisp_Object syms[20];
-    int n = 0;
-
-    syms[n++] = Qforeground;
-    syms[n++] = Qbackground;
-    syms[n++] = Qfont;
-    syms[n++] = Qdisplay_table;
-    syms[n++] = Qbackground_pixmap;
-    syms[n++] = Qbackground_placement;
-    syms[n++] = Qunderline;
-    syms[n++] = Qstrikethru;
-    syms[n++] = Qhighlight;
-    syms[n++] = Qdim;
-    syms[n++] = Qblinking;
-    syms[n++] = Qreverse;
-
-    Vbuilt_in_face_specifiers = Flist (n, syms);
-    staticpro (&Vbuilt_in_face_specifiers);
-  }
+  Vbuilt_in_face_specifiers =
+    listu (Qforeground, Qbackground, Qfont, Qdisplay_table, Qbackground_pixmap,
+	   Qbackground_placement, Qunderline, Qstrikethru, Qhighlight, Qdim,
+	   Qblinking, Qreverse, Qunbound);
+  staticpro (&Vbuilt_in_face_specifiers);
 }
 
 void

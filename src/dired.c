@@ -845,14 +845,13 @@ If file does not exist, returns nil.
        (filename))
 {
   /* This function can GC. GC checked 1997.06.04. */
-  Lisp_Object values[12];
   Lisp_Object directory = Qnil;
   struct stat s;
   char modes[10];
-  Lisp_Object handler;
-  struct gcpro gcpro1, gcpro2;
+  Lisp_Object handler, mode, modestring = Qnil, size, gid;
+  struct gcpro gcpro1, gcpro2, gcpro3;
 
-  GCPRO2 (filename, directory);
+  GCPRO3 (filename, directory, modestring);
   filename = Fexpand_file_name (filename, Qnil);
 
   /* If the file name has special constructs in it,
@@ -893,49 +892,54 @@ If file does not exist, returns nil.
   switch (s.st_mode & S_IFMT)
     {
     default:
-      values[0] = Qnil;
+      mode = Qnil;
       break;
     case S_IFDIR:
-      values[0] = Qt;
+      mode = Qt;
       break;
 #ifdef S_IFLNK
     case S_IFLNK:
-      values[0] = Ffile_symlink_p (filename);
+      mode = Ffile_symlink_p (filename);
       break;
 #endif
     }
-  values[1] = make_int (s.st_nlink);
-  values[2] = make_int (s.st_uid);
-  values[3] = make_int (s.st_gid);
-  values[4] = make_time (s.st_atime);
-  values[5] = make_time (s.st_mtime);
-  values[6] = make_time (s.st_ctime);
 
 #ifndef HAVE_BIGNUM
-  values[7] = make_integer (NUMBER_FITS_IN_AN_EMACS_INT (s.st_size) ? 
-                            (EMACS_INT)s.st_size : -1);
+  size = make_integer (NUMBER_FITS_IN_AN_EMACS_INT (s.st_size) ?
+		       (EMACS_INT)s.st_size : -1);
 #else
-  values[7] = make_integer (s.st_size);
-#endif 
+  size = make_integer (s.st_size);
+#endif
 
   filemodestring (&s, modes);
-  values[8] = make_string ((Ibyte *) modes, 10);
+  modestring = make_string ((Ibyte *) modes, 10),
+
 #if defined (BSD4_2) || defined (BSD4_3)	/* file gid will be dir gid */
   {
     struct stat sdir;
 
     if (!NILP (directory) && qxe_stat (XSTRING_DATA (directory), &sdir) == 0)
-      values[9] = (sdir.st_gid != s.st_gid) ? Qt : Qnil;
+      gid = (sdir.st_gid != s.st_gid) ? Qt : Qnil;
     else                        /* if we can't tell, assume worst */
-      values[9] = Qt;
+      gid = Qt;
   }
 #else                           /* file gid will be egid */
-  values[9] = (s.st_gid != getegid ()) ? Qt : Qnil;
+  gid = (s.st_gid != getegid ()) ? Qt : Qnil;
 #endif	/* BSD4_2 or BSD4_3 */
-  values[10] = make_int (s.st_ino);
-  values[11] = make_int (s.st_dev);
-  UNGCPRO;
-  return Flist (countof (values), values);
+
+  RETURN_UNGCPRO (listn (12,
+			 mode,
+			 make_int (s.st_nlink),
+			 make_int (s.st_uid),
+			 make_int (s.st_gid),
+			 make_time (s.st_atime),
+			 make_time (s.st_mtime),
+			 make_time (s.st_ctime),
+			 size,
+			 modestring,
+			 gid,
+			 make_int (s.st_ino),
+			 make_int (s.st_dev)));
 }
 
 

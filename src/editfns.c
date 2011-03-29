@@ -1102,29 +1102,28 @@ ZONE is an integer indicating the number of seconds east of Greenwich.
   time_t time_spec;
   struct tm save_tm;
   struct tm *decoded_time;
-  Lisp_Object list_args[9];
 
   if (! lisp_to_time (specified_time, &time_spec))
     invalid_argument ("Invalid time specification", Qunbound);
 
   decoded_time = localtime (&time_spec);
-  list_args[0] = make_int (decoded_time->tm_sec);
-  list_args[1] = make_int (decoded_time->tm_min);
-  list_args[2] = make_int (decoded_time->tm_hour);
-  list_args[3] = make_int (decoded_time->tm_mday);
-  list_args[4] = make_int (decoded_time->tm_mon + 1);
-  list_args[5] = make_int (decoded_time->tm_year + 1900);
-  list_args[6] = make_int (decoded_time->tm_wday);
-  list_args[7] = (decoded_time->tm_isdst)? Qt : Qnil;
 
   /* Make a copy, in case gmtime modifies the struct.  */
   save_tm = *decoded_time;
   decoded_time = gmtime (&time_spec);
-  if (decoded_time == 0)
-    list_args[8] = Qnil;
-  else
-    list_args[8] = make_int (difftm (&save_tm, decoded_time));
-  return Flist (9, list_args);
+
+  return listn(9,
+	       make_int (save_tm.tm_sec),
+	       make_int (save_tm.tm_min),
+	       make_int (save_tm.tm_hour),
+	       make_int (save_tm.tm_mday),
+	       make_int (save_tm.tm_mon + 1),
+	       make_int (save_tm.tm_year + 1900),
+	       make_int (save_tm.tm_wday),
+	       save_tm.tm_isdst ? Qt : Qnil,
+	       (decoded_time == NULL)
+	       ? Qnil
+	       : make_int (difftm (&save_tm, decoded_time)));
 }
 
 static void set_time_zone_rule (Extbyte *tzstring);
