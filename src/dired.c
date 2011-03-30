@@ -912,7 +912,7 @@ If file does not exist, returns nil.
 #endif
 
   filemodestring (&s, modes);
-  modestring = make_string ((Ibyte *) modes, 10),
+  modestring = make_string ((Ibyte *) modes, 10);
 
 #if defined (BSD4_2) || defined (BSD4_3)	/* file gid will be dir gid */
   {
