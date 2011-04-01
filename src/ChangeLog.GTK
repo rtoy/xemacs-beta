@@ -1,7 +1,49 @@
+2011-03-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-gtk-impl.h (struct gtk_device): Add PangoFontMap.
+	(DEVICE_GTK_FONT_MAP): Add accessor macro.
+
+	* device-gtk.c (gtk_init_device): Remove ifdef around pango setup.
+
+	* faces.c (complex_vars_of_faces): Define default faces for
+	Gtk/Pango. Monospace, unifont and a CJK one, based on Ubuntu
+        ttf fonts.
+
+	* fontcolor-gtk-impl.h (struct gtk_font_instance_data): No longer
+	ifdefed.
+
+	* fontcolor-gtk.c (gtk_initialize_font_instance): Initialize a
+	pango font, also looking up the font description and font metrics.
+	(gtk_print_font_instance): gdk_font_id isn't valid for a PangoFont.
+	(gtk_finalize_font_instance): free pango font resources.
+	(__get_gtk_font_truename): Return name from pango font
+	description. This may be insufficient.
+
+	* redisplay-gtk.c (gdk_draw_text_image): Draw the text using pango
+	layout. Take foreground and background color arguments for cairo
+	instead of a GdkGc.
+	(XLIKE_text_width_single_run): Implement pango based version.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Use pango font
+	metrics for underline and strikethrough positions.
+	(XLIKE_output_string): Pass foreground and background colors to
+	gdk instead of a background Gc.
+	(XLIKE_get_gc): No longer need to copy the font; now a PangoFont
+	is used instead.
+	(XLIKE_text_width_single_run): Don't use this one for Gtk, use the
+	one in redisplay-gtk.c.
+
+	* sysgtk.h (include): Always include pango.h and pangoxft.h
+
+2011-03-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Cursor offset must
+	include descent for Gtk.
+
 2011-03-18  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* redisplay-gtk.c (gdk_draw_text_image): Now takes a GtkWidget instead
-	of a GDKDrawable.
+        * redisplay-gtk.c (gdk_draw_text_image): Now takes a GtkWidget
+        instead of a GdkDrawable.
 	* redisplay-xlike-inc.c (XLIKE_output_string): Update callers.
 
 2011-03-10  Jeff Sparkes  <jsparkes@gmail.com>

@@ -52,24 +52,17 @@ struct gtk_color_instance_data
 
 struct gtk_font_instance_data
 {
-#ifdef USE_PANGO
-  /* Pango -specific information */
   PangoFont *font;
   PangoFontDescription *desc;
   PangoFontMetrics *metrics;
-#else
-  GdkFont *font;
-#endif
 };
 
 #define GTK_FONT_INSTANCE_DATA(f) ((struct gtk_font_instance_data *) (f)->data)
 #define FONT_INSTANCE_GTK_FONT(f) (GTK_FONT_INSTANCE_DATA (f)->font)
 #define XFONT_INSTANCE_GTK_FONT(c) FONT_INSTANCE_GTK_FONT (XFONT_INSTANCE (c))
-#ifdef USE_PANGO
 #define FONT_INSTANCE_GTK_FONT_DESC(f) (GTK_FONT_INSTANCE_DATA (f)->desc)
-#define FONT_INSTANCE_GTK_FONT_METRICS(f) (GTK_FONT_INSTANCE_DATA (f)->metrics)
 #define XFONT_INSTANCE_GTK_FONT_DESC(c) FONT_INSTANCE_GTK_FONT_DESC (XFONT_INSTANCE (c))
+#define FONT_INSTANCE_GTK_FONT_METRICS(f) (GTK_FONT_INSTANCE_DATA (f)->metrics)
 #define XFONT_INSTANCE_GTK_FONT_METRICS(c) FONT_INSTANCE_GTK_FONT_METRICS (XFONT_INSTANCE (c))
-#endif /* USE_PANGO */
 #endif /* HAVE_GTK */
 #endif /* _XEMACS_OBJECTS_GTK_IMPL_H_ */

@@ -467,7 +467,7 @@ separate_textual_runs (unsigned char *text_storage,
 /*                           Xlike output routines                          */
 /*                                                                          */
 /****************************************************************************/
-
+#ifndef THIS_IS_GTK
 static int
 XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
 			     struct face_cachel *cachel,
@@ -519,7 +519,13 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
     abort();
   return 0;			/* shut up GCC */
 }
+#else
+static int
+XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
+			     struct face_cachel *cachel,
+			     struct textual_run *run);
 
+#endif
 
 /*
    XLIKE_text_width
@@ -861,9 +867,11 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #endif
       )
     {
+#ifndef HAVE_GTK
       gcv.font =
 	XLIKE_FONT_NUM (FONT_INSTANCE_XLIKE_FONT (XFONT_INSTANCE (font)));
       mask |= XLIKE_GC_FONT;
+#endif
     }
 
   /* evil kludge! */
@@ -982,8 +990,9 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
  ****************************************************************************/
 #ifdef THIS_IS_GTK
 static void
-gdk_draw_text_image (GtkWidget *widget, GdkFont *font, GdkGC *gc,
-                     GdkGC *bgc, gint x, gint y, gchar *text, gint len);
+gdk_draw_text_image (GtkWidget *widget, Lisp_Font_Instance *fi, GdkGC *gc,
+                     GdkColor *fg, GdkColor *bg, gint x, gint y,
+		     gchar *text, gint len);
 
 #endif /* THIS_IS_GTK */
 void
@@ -1323,17 +1332,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       */
           {
 	    GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
-            GdkGC *localgc = bgc;
-            /* The cursor clip rectangle is completely wrong for
-               the pango layout code. */
-            
-            if (localgc == 0)
-              localgc = XLIKE_get_gc (f, font, cachel->background,
-                                      cachel->background, bg_pmap,
-                                      cachel->background_placement, Qnil);
 
-            gdk_draw_text_image (widget, FONT_INSTANCE_GTK_FONT (fi),
-				 gc, localgc, xpos, dl->ypos,
+            gdk_draw_text_image (widget, fi, gc,
+				 XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground),
+				 XCOLOR_INSTANCE_GTK_COLOR (cachel->background),
+				 xpos, dl->ypos,
 				 (gchar *) runs[i].ptr, runs[i].len);
           }
 #endif /* (not) THIS_IS_X */
@@ -1352,17 +1355,21 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  if (fs && XGetFontProperty (fs, XA_UNDERLINE_POSITION, &upos_ext))
 	    upos = (int) upos_ext;
 	  else
-#else /* THIS_IS_GTK */
-	  /* Cannot get at font properties in Gtk, so we resort to
-             guessing */
-#endif /* THIS_IS_GTK */
 	    upos = dl->descent / 2;
-#ifdef THIS_IS_X
 	  if (fs && XGetFontProperty (fs, XA_UNDERLINE_THICKNESS, &uthick_ext))
 	    uthick = (int) uthick_ext;
 	  else
-#endif /* THIS_IS_X */
 	    uthick = 1;
+#else /* THIS_IS_GTK */
+	    {
+	      PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
+	      upos = pango_font_metrics_get_underline_position (pfm);
+	      uthick = pango_font_metrics_get_underline_thickness (pfm);
+	    }
+#endif /* THIS_IS_GTK */
+#ifdef THIS_IS_X
+#endif /* THIS_IS_X */
+
 	  if (dl->ypos + upos < dl->ypos + dl->descent - dl->clip)
 	    {
 	      if (dl->ypos + upos + uthick > dl->ypos + dl->descent - dl->clip)
@@ -1389,7 +1396,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
 #else /* THIS_IS_GTK */
 	  gint ascent, descent, upos, uthick;
-	  GdkFont *gfont = FONT_INSTANCE_GTK_FONT (fi);
+	  PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
 #endif /* THIS_IS_GTK */
 	  
 #ifdef THIS_IS_X
@@ -1414,16 +1421,15 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      else
 		uthick = (int) uthick_ext;
 	    }
-#else /* THIS_IS_GTK */
-	/* Cannot get at font properties in Gtk, so we resort to
-           guessing */
-
-	  ascent = gfont->ascent;
-	  descent = gfont->descent;
-	  uthick = 2;
-#endif /* THIS_IS_GTK */
-
 	  upos = ascent - ((ascent + descent) / 2) + 1;
+
+#else /* THIS_IS_GTK */
+	  ascent = pango_font_metrics_get_ascent (pfm) / PANGO_SCALE;
+	  descent = pango_font_metrics_get_descent (pfm) / PANGO_SCALE;
+	  upos = pango_font_metrics_get_strikethrough_position (pfm) / PANGO_SCALE;
+	  uthick =
+	    pango_font_metrics_get_strikethrough_thickness (pfm) / PANGO_SCALE;
+#endif /* THIS_IS_GTK */
 
 	  /* Generally, upos will be positive (above the baseline),so
              subtract */
@@ -1527,20 +1533,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      */
               {
 		GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
-                GdkGC *localgc = bgc;
                 
-                if (localgc == 0)
-                  localgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
-                                          cursor_cachel->foreground,
-                                          Qnil, Qnil, Qnil);
-                XLIKE_SET_CLIP_RECTANGLE (dpy, localgc, cursor_start, dl->ypos,
-                                          &clip_box);
                 cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
                                         cursor_cachel->background,
                                         Qnil, Qnil, Qnil);
-                gdk_gc_set_function (gc, GDK_COPY);
-                gdk_draw_text_image (widget, FONT_INSTANCE_GTK_FONT (fi),
-				     cgc, localgc, xpos, dl->ypos,
+                gdk_draw_text_image (widget, fi, cgc,
+				     XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground),
+				     XCOLOR_INSTANCE_GTK_COLOR (cachel->background),
+				     xpos, dl->ypos,
 				     (gchar *)runs[i].ptr, runs[i].len);
               }
 #endif /* (not) THIS_IS_X */
@@ -1593,8 +1593,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background,
 			     Qnil, Qnil, Qnil, Qnil);
 	}
-
       tmp_y = dl->ypos - bogusly_obtained_ascent_value;
+
       tmp_height = cursor_height;
       if (tmp_y + tmp_height > (int) (ypos + height))
 	{
