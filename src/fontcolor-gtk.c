@@ -247,18 +247,18 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 
   /* Current code makes an XLFD, which never gives us a mono font. */
   if (strstr (extname, "--") != 0)
-    extname = "Monospace 12";
+    extname = "Monospace 10";
   else if (strstr (extname, "-*-") != 0)
-    extname = "Monospace 12";
+    extname = "Monospace 10";
   /* Just to get display looking good... */
-  extname = "Monospace 12";
+  //extname = "Monospace 10";
   
   pfd = pango_font_description_from_string (extname);
   /* We can get 0 size fonts here, which will screw up the metrics.
      So we force a size, for now. */
   mask = pango_font_description_get_set_fields (pfd);
   if ((mask & PANGO_FONT_MASK_SIZE) == 0)
-    pango_font_description_set_size(pfd, 11 * PANGO_SCALE);
+    pango_font_description_set_size(pfd, 10 * PANGO_SCALE);
   
   pf = pango_font_map_load_font (DEVICE_GTK_FONT_MAP (d),
 				 DEVICE_GTK_CONTEXT (d), pfd);
