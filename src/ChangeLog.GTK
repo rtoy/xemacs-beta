@@ -1,10 +1,16 @@
 2011-04-01  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c (XLIKE_output_string): Remove Gtk
+	implementation of strikethru and underline.  Now done with pango.
+
 	* redisplay-gtk.c (gdk_draw_text_image): Take a face_cachel as an
 	argument which eliminates the fg, bg and bgc arguments.  Also take
 	a textual_run to get access to charset information for the text.
 	Set text foreground and background at pango attributes.  No need
 	to fill background rectangle now.
+	(gdk_draw_text_image): Implement strikethrough and underline as
+	pango text attributes.
+
 	* redisplay-xlike-inc.c (XLIKE_output_string): Update callers.
 
 2011-03-28  Jeff Sparkes  <jsparkes@gmail.com>

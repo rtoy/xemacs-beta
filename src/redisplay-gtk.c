@@ -132,6 +132,12 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
                             pango_attr_background_new (bg->red,
                                                        bg->green,
                                                        bg->blue));
+  if (cachel->strikethru)
+    pango_attr_list_insert (attr_list,
+                            pango_attr_strikethrough_new (TRUE));
+  if (cachel->underline)
+    pango_attr_list_insert (attr_list,
+                            pango_attr_underline_new (TRUE));
   
   pango_layout_set_attributes (layout, attr_list);
   pango_layout_set_font_description (layout, pfd);
