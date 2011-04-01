@@ -100,33 +100,47 @@ void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
 
 /*
  * Only this function can erase the text area because the text area
- * is calculated by pango.  The layout is currently not shared.  There
- * can only be one PangoLayout per line, I think. --jsparkes
+ * is calculated by pango.
  */
 static void
-gdk_draw_text_image (GtkWidget *widget, Lisp_Font_Instance *fi, GdkGC *gc,
-		     GdkColor * UNUSED (fg), GdkColor *bg, gint x, gint y,
-		     gchar *text, gint len)
+gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
+		     gint x, gint y, struct textual_run *run)
 {
+  Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
+  Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
   gint width = 0;
   gint height = 0;
+  
   GdkDrawable *drawable = gtk_widget_get_window (widget);
   cairo_t *cr = gdk_cairo_create (drawable);
-
   PangoContext *context = gtk_widget_get_pango_context (widget);
   PangoLayout *layout = pango_layout_new (context);
   PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
   PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
-  /* gboolean is = gtk_widget_is_drawable (widget); */
+  PangoAttrList *attr_list = pango_attr_list_new ();
   gint ascent;
 
+  GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground);
+  GdkColor *bg = XCOLOR_INSTANCE_GTK_COLOR (cachel->background);
+
+  pango_attr_list_insert (attr_list,
+                          pango_attr_foreground_new (fg->red,
+                                                     fg->green,
+                                                     fg->blue));
+  if (bg)
+    pango_attr_list_insert (attr_list,
+                            pango_attr_background_new (bg->red,
+                                                       bg->green,
+                                                       bg->blue));
+  
+  pango_layout_set_attributes (layout, attr_list);
   pango_layout_set_font_description (layout, pfd);
-  pango_layout_set_text (layout, text, len);
+  pango_layout_set_text (layout, run->ptr, run->len);
   pango_layout_get_pixel_size (layout, &width, &height);
   ascent = pango_font_metrics_get_ascent (pfm) / PANGO_SCALE;
 
-  gdk_cairo_set_source_color (cr, bg);
-  gtk_fill_rectangle (cr, x, y - ascent, width, height);
+  /* gdk_cairo_set_source_color (cr, bg); */
+  /* gtk_fill_rectangle (cr, x, y - ascent, width, height); */
 
   /* xft draw */
   /* pango_xft_layout_render (xft_draw, xft_color, layout, x, y); */
@@ -135,6 +149,7 @@ gdk_draw_text_image (GtkWidget *widget, Lisp_Font_Instance *fi, GdkGC *gc,
   gdk_draw_layout (drawable, gc, x, y - ascent, layout);
   cairo_destroy (cr);
   g_object_unref (layout);
+  pango_attr_list_unref (attr_list);
 }
   
 static void

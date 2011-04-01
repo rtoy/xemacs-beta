@@ -990,9 +990,8 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
  ****************************************************************************/
 #ifdef THIS_IS_GTK
 static void
-gdk_draw_text_image (GtkWidget *widget, Lisp_Font_Instance *fi, GdkGC *gc,
-                     GdkColor *fg, GdkColor *bg, gint x, gint y,
-		     gchar *text, gint len);
+gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
+                     gint x, gint y, struct textual_run *run);
 
 #endif /* THIS_IS_GTK */
 void
@@ -1333,11 +1332,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
           {
 	    GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
 
-            gdk_draw_text_image (widget, fi, gc,
-				 XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground),
-				 XCOLOR_INSTANCE_GTK_COLOR (cachel->background),
-				 xpos, dl->ypos,
-				 (gchar *) runs[i].ptr, runs[i].len);
+            gdk_draw_text_image (widget, cachel, gc,
+				 xpos, dl->ypos, &runs[i]);
           }
 #endif /* (not) THIS_IS_X */
 	}
@@ -1534,14 +1530,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
               {
 		GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
                 
-                cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
-                                        cursor_cachel->background,
-                                        Qnil, Qnil, Qnil);
-                gdk_draw_text_image (widget, fi, cgc,
-				     XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground),
-				     XCOLOR_INSTANCE_GTK_COLOR (cachel->background),
-				     xpos, dl->ypos,
-				     (gchar *)runs[i].ptr, runs[i].len);
+                gdk_draw_text_image (widget, cursor_cachel, cgc,
+				     xpos, dl->ypos, &runs[i]);
               }
 #endif /* (not) THIS_IS_X */
 
