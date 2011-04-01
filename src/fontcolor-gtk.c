@@ -228,60 +228,65 @@ gtk_color_list (void)
 /*                           font instances                             */
 /************************************************************************/
 
+/* Synchronize font components when a font description is updated. */
+
 static int
 gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 			      Lisp_Object UNUSED (name),
-			      Lisp_Object UNUSED (device), Error_Behavior errb)
+			      Lisp_Object device, Error_Behavior errb)
 {
-  const char *extname;
-#ifdef USE_PANGO
-  PangoFontDescription *pango_desc;
-  //Display *disp = GDK_DRAWABLE_XDISPLAY (drawable);
-  //int screen = GDK_SCREEN_XNUMBER (gdk_drawable_get_screen (drawable));
-  PangoFont *gf;
-#else
-  GdkFont *gf;
-#endif
+  struct device *d = XDEVICE (device);
+  Extbyte *extname;
+  PangoFontDescription *pfd;
+  PangoFontMetrics *pfm;
+  PangoFontMask mask;
+  PangoFont *pf;
+  char *nm;
+
+  extname = LISP_STRING_TO_EXTERNAL (f->name, Qutf_8);
+
+  /* Current code makes an XLFD, which never gives us a mono font. */
+  if (strstr (extname, "--") != 0)
+    extname = "Monospace 12";
+  else if (strstr (extname, "-*-") != 0)
+    extname = "Monospace 12";
+  /* Just to get display looking good... */
+  extname = "Monospace 12";
   
-
-  extname = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
-
-#ifdef USE_PANGO
-  //context = pango_xft_get_context (display, screen);
-  pango_desc = pango_font_description_from_string ("monospace 12");
-  //pango_font_description_set_family (pango_desc, extname);
-  pango_font_description_set_size (pango_desc, 12);
-  gf = pango_load_font (pango_desc);
-  char *nm = pango_font_description_to_string (pango_desc);
-
-#else
-  /* Loading a fontset gives a lot of warning about missing charsets,
-     including iso-8859-1.  We probably require a font map as well. */
-  /* gf = gdk_fontset_load (extname); */
-  gf = gdk_font_load (extname);
+  pfd = pango_font_description_from_string (extname);
+  /* We can get 0 size fonts here, which will screw up the metrics.
+     So we force a size, for now. */
+  mask = pango_font_description_get_set_fields (pfd);
+  if ((mask & PANGO_FONT_MASK_SIZE) == 0)
+    pango_font_description_set_size(pfd, 11 * PANGO_SCALE);
   
-#endif
+  pf = pango_font_map_load_font (DEVICE_GTK_FONT_MAP (d),
+				 DEVICE_GTK_CONTEXT (d), pfd);
+  pfm = pango_font_get_metrics (pf, pango_language_from_string ("en"));
+  pfd = pango_font_describe (pf);
+  nm = pango_font_description_to_string (pfd);
 
-  if (!gf)
+  if (!pf)
     {
       maybe_signal_error (Qgui_error, "couldn't load font", f->name,
 			  Qfont, errb);
       return 0;
     }
-#ifdef USE_PANGO
-  debug_out ("loaded font %s\n", nm);
-#endif
+  debug_out ("font \"%s\" loaded \"%s\"\n", extname, nm);
+  g_free (nm);
+  
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   f->data = xnew (struct gtk_font_instance_data);
-  FONT_INSTANCE_GTK_FONT (f) = gf;
-  /* Kludge until we support Pango. --jsparkes */
-  f->ascent = gf->ascent;
-  f->descent = gf->descent;
-  f->height = gf->ascent + gf->descent;
-  f->width = gdk_text_width (gf, "n", 1); /* em or en? */
-  f->proportional_p = (gdk_text_width (gf, "|", 1) !=
-                       gdk_text_width (gf, "W", 1));
+  FONT_INSTANCE_GTK_FONT (f) = pf;
+  FONT_INSTANCE_GTK_FONT_DESC (f) = pfd;
+  FONT_INSTANCE_GTK_FONT_METRICS (f) = pfm;
+
+  f->ascent = pango_font_metrics_get_ascent (pfm) / PANGO_SCALE;
+  f->descent = pango_font_metrics_get_descent (pfm) / PANGO_SCALE;
+  f->height = f->ascent + f->descent;
+  f->width = pango_font_metrics_get_approximate_char_width (pfm) / PANGO_SCALE;
+  f->proportional_p = 0;
   return 1;
 }
 
@@ -291,7 +296,8 @@ gtk_print_font_instance (struct Lisp_Font_Instance *f,
 			 int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun, " 0x%lx",
-		    (unsigned long) gdk_font_id (FONT_INSTANCE_GTK_FONT (f)));
+		    (unsigned long) FONT_INSTANCE_GTK_FONT (f));
+  /* write_fmt_string (printcharfun, " %s", f->name); */
 }
 
 static void
@@ -301,7 +307,9 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
     {
       if (DEVICE_LIVE_P (XDEVICE (f->device)))
 	{
-	    gdk_font_unref (FONT_INSTANCE_GTK_FONT (f));
+	  pango_font_description_free (FONT_INSTANCE_GTK_FONT_DESC (f));
+	  pango_font_metrics_unref (FONT_INSTANCE_GTK_FONT_METRICS (f));
+	  g_object_unref (FONT_INSTANCE_GTK_FONT (f));
 	}
       xfree (f->data);
       f->data = 0;
@@ -309,7 +317,7 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
 }
 
 /* Forward declarations for X specific functions at the end of the file */
-Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
+Lisp_Object __get_gtk_font_truename (PangoFont *pf, int expandp);
 static Lisp_Object __gtk_font_list_internal (const char *pattern);
 
 static Lisp_Object
@@ -420,50 +428,19 @@ valid_font_name_p (Display *dpy, char *name)
 }
 
 Lisp_Object
-__get_gtk_font_truename (GdkFont *gdk_font, int expandp)
+__get_gtk_font_truename (PangoFont *pf, int UNUSED (expandp))
 {
-  //Display *dpy = GDK_FONT_XDISPLAY (gdk_font);
-  //GSList *names = ((GdkFontPrivate *) gdk_font)->names;
   Lisp_Object font_name = Qnil;
-  char *name = (char *) gdk_x11_font_get_name (gdk_font);
+  PangoFontDescription *pfd = pango_font_describe (pf);
 
-  //name = GDK_FONT_X_FONT (gdk_font);
+  /* This is insufficent. */
+  char *name = pango_font_description_to_string (pfd);
+  
   if (name != NULL)
     font_name = build_cistring (name);
 
-#if 0
-
-  while (names)
-    {
-      if (names->data)
-	{
-	  if (valid_font_name_p (dpy, (char*) names->data))
-	    {
-	      if (!expandp)
-		{
-		  /* They want the wildcarded version */
-		  font_name = build_cistring ((char*) names->data);
-		}
-	      else
-		{
-		  /* Need to expand out */
-		  int nnames = 0;
-		  char **x_font_names = 0;
-
-		  x_font_names = XListFonts (dpy, (char*) names->data, 1, &nnames);
-		  if (x_font_names)
-		    {
-		      font_name = build_cistring (x_font_names[0]);
-		      XFreeFontNames (x_font_names);
-		    }
-		}
-	      break;
-	    }
-	}
-      names = names->next;
-    }
-#endif
-  return (font_name);
+  g_free (name);
+  return font_name;
 }
 
 static Lisp_Object __gtk_font_list_internal (const char *pattern)

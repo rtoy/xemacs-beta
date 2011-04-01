@@ -26,6 +26,8 @@ Boston, MA 02111-1307, USA.  */
 #define THIS_IS_GTK
 #include "redisplay-xlike-inc.c"
 
+void gtk_fill_rectangle (cairo_t *cr, gint x, gint y, gint width, gint height);
+
 /*****************************************************************************
  Draw a shadow around the given area using the standard theme engine routines.
  ****************************************************************************/
@@ -76,10 +78,6 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
 }
 
 
-/* This makes me feel incredibly dirty... but there is no other way to
-   get this done right other than calling clear_area before every
-   single $#!%@ing piece of text, which I do NOT want to do. */
-
 #include "sysgdkx.h"
 
 void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
@@ -102,57 +100,41 @@ void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
 
 /*
  * Only this function can erase the text area because the text area
- * is calculated by pango.   The layout is currently not shared.  There
+ * is calculated by pango.  The layout is currently not shared.  There
  * can only be one PangoLayout per line, I think. --jsparkes
  */
 static void
-gdk_draw_text_image (GtkWidget *widget, GdkFont *font, GdkGC *gc,
-		     GdkGC *bgc, gint x, gint y, gchar *text, gint len)
+gdk_draw_text_image (GtkWidget *widget, Lisp_Font_Instance *fi, GdkGC *gc,
+		     GdkColor * UNUSED (fg), GdkColor *bg, gint x, gint y,
+		     gchar *text, gint len)
 {
   gint width = 0;
   gint height = 0;
-  const GdkDrawable *drawable = gtk_widget_get_window (widget);
+  GdkDrawable *drawable = gtk_widget_get_window (widget);
+  cairo_t *cr = gdk_cairo_create (drawable);
 
-#if 0
-
-  /* Display *disp = GDK_DRAWABLE_XDISPLAY (drawable); */
-  /* int screen = GDK_SCREEN_XNUMBER (gdk_drawable_get_screen (drawable)); */
-
-  /* Xft render */
-  /* context = pango_xft_get_context (display, screen); */
-  /* layout = pango_layout_new (context); */
-  /* Gtk render */
   PangoContext *context = gtk_widget_get_pango_context (widget);
   PangoLayout *layout = pango_layout_new (context);
-  gboolean is = gtk_widget_is_drawable (widget);
-  
+  PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
+  PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
+  /* gboolean is = gtk_widget_is_drawable (widget); */
+  gint ascent;
+
+  pango_layout_set_font_description (layout, pfd);
   pango_layout_set_text (layout, text, len);
   pango_layout_get_pixel_size (layout, &width, &height);
+  ascent = pango_font_metrics_get_ascent (pfm) / PANGO_SCALE;
 
-  
-
-  /* if (bgc != 0) */
-  /*   gdk_draw_rectangle (drawable, bgc, TRUE, x, y, width, height); */
+  gdk_cairo_set_source_color (cr, bg);
+  gtk_fill_rectangle (cr, x, y - ascent, width, height);
 
   /* xft draw */
   /* pango_xft_layout_render (xft_draw, xft_color, layout, x, y); */
-  /* Gtk draw */
-  gdk_draw_layout (drawable, gc, x, y, layout);
-  //g_object_unref (layout);
-#else
-  height = font->ascent + font->descent;
-  width  = gdk_text_width (font, text, len);
-  if (bgc != 0)
-    {
-      GdkGCValues values;
-      const cairo_t *cr = gdk_cairo_create (drawable);
 
-      gdk_gc_get_values (bgc, &values);
-      gdk_cairo_set_source_color (cr, &values.background);
-      gtk_fill_rectangle (cr, x, y - height, width, height);
-    }
-  gdk_draw_text (drawable, font, gc, x, y - font->descent, text, len);
-#endif
+  /* Gtk draw */
+  gdk_draw_layout (drawable, gc, x, y - ascent, layout);
+  cairo_destroy (cr);
+  g_object_unref (layout);
 }
   
 static void
@@ -181,4 +163,33 @@ our_draw_bitmap (GdkDrawable *drawable,
 
   gdk_draw_drawable(drawable, gc, src, xsrc, ysrc, xdest, ydest,
                     width, height);
+}
+
+static int
+XLIKE_text_width_single_run (struct frame *f,
+			     struct face_cachel *cachel,
+			     struct textual_run *run)
+{
+  Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
+  Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
+  struct device *d = XDEVICE (FRAME_DEVICE (f));
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  gint width, height;
+
+  if (!fi->proportional_p)
+    width = fi->width * run->len;
+  else
+    {
+      PangoContext *context = gtk_widget_get_pango_context (widget);
+      PangoLayout *layout = pango_layout_new (context);
+      PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
+      PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
+      Lisp_Object font = FACE_CACHEL_FONT (cachel, run->charset);
+      Lisp_Font_Instance *fi = XFONT_INSTANCE (font);
+
+      pango_layout_set_font_description (layout, pfd);
+      pango_layout_set_text (layout, (guchar)run->ptr, run->len);
+      pango_layout_get_pixel_size (layout, &width, &height);
+    }
+  return width;
 }

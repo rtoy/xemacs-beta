@@ -36,9 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include <gdk/gdkkeysyms.h>
 #include <glib.h>
 
-#ifdef USE_PANGO
 #include <pango/pango.h>
 #include <pango/pangoxft.h>
-#endif
 
 #endif /* INCLUDED_sysgtk_h_ */

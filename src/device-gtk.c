@@ -290,7 +290,6 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 
     gtk_widget_realize (w);
     {
-#ifdef USE_PANGO
       PangoContext *context = 0;
       PangoFontDescription *pango_desc = 0;
       PangoFontMap *font_map = 0;
@@ -304,9 +303,6 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
       font_map = pango_xft_get_font_map (disp, screen);
 
       DEVICE_GTK_FONT_MAP (d) = font_map;
-      /* pango_desc = pango_font_description_from_string ("monospace 12"); */
-      /* pango_font_description_set_size (pango_desc, 12); */
-#endif
     }
   }
 
