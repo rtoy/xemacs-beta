@@ -1,3 +1,12 @@
+2011-04-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image): Take a face_cachel as an
+	argument which eliminates the fg, bg and bgc arguments.  Also take
+	a textual_run to get access to charset information for the text.
+	Set text foreground and background at pango attributes.  No need
+	to fill background rectangle now.
+	* redisplay-xlike-inc.c (XLIKE_output_string): Update callers.
+
 2011-03-28  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console-gtk-impl.h (struct gtk_device): Add PangoFontMap.
