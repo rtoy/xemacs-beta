@@ -1335,14 +1335,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
             gdk_draw_text_image (widget, cachel, gc,
 				 xpos, dl->ypos, &runs[i]);
           }
-#endif /* (not) THIS_IS_X */
+#endif 
 	}
 
       /* We draw underlines in the same color as the text. */
       if (cachel->underline)
 	{
-	  int upos, uthick;
 #ifdef THIS_IS_X
+	  int upos, uthick;
 	  unsigned long upos_ext, uthick_ext;
 	  XFontStruct *fs =
 	    use_x_font ? FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)) : 0;
@@ -1356,15 +1356,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	    uthick = (int) uthick_ext;
 	  else
 	    uthick = 1;
-#else /* THIS_IS_GTK */
-	    {
-	      PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
-	      upos = pango_font_metrics_get_underline_position (pfm);
-	      uthick = pango_font_metrics_get_underline_thickness (pfm);
-	    }
-#endif /* THIS_IS_GTK */
-#ifdef THIS_IS_X
-#endif /* THIS_IS_X */
 
 	  if (dl->ypos + upos < dl->ypos + dl->descent - dl->clip)
 	    {
@@ -1382,6 +1373,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 					dl->ypos + upos, this_width, uthick);
 		}
 	    }
+#endif
 	}
 
       if (cachel->strikethru)
@@ -1390,12 +1382,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  int ascent, descent, upos, uthick;
 	  unsigned long ascent_ext, descent_ext, uthick_ext;
 	  XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
-#else /* THIS_IS_GTK */
-	  gint ascent, descent, upos, uthick;
-	  PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
-#endif /* THIS_IS_GTK */
-	  
-#ifdef THIS_IS_X
+
 	  if (!use_x_font)
 	    {
 	      ascent = dl->ascent;
@@ -1419,14 +1406,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	    }
 	  upos = ascent - ((ascent + descent) / 2) + 1;
 
-#else /* THIS_IS_GTK */
-	  ascent = pango_font_metrics_get_ascent (pfm) / PANGO_SCALE;
-	  descent = pango_font_metrics_get_descent (pfm) / PANGO_SCALE;
-	  upos = pango_font_metrics_get_strikethrough_position (pfm) / PANGO_SCALE;
-	  uthick =
-	    pango_font_metrics_get_strikethrough_thickness (pfm) / PANGO_SCALE;
-#endif /* THIS_IS_GTK */
-
 	  /* Generally, upos will be positive (above the baseline),so
              subtract */
 	  if (dl->ypos - upos < dl->ypos + dl->descent - dl->clip)
@@ -1441,8 +1420,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                 XLIKE_FILL_RECTANGLE (dpy, x_win, gc, xpos, dl->ypos + upos,
                                       this_width, uthick);
 	    }
+#endif
 	}
-
       /* Restore the GC */
       if (need_clipping)
 	{
