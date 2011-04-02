@@ -425,7 +425,7 @@ float-negative-epsilon X) , but it may give t for smaller values.")
   (car (car x)))
 
 (defun cadr (x)
-  "Return the `car' of the `cdr' of X."
+  "Return the `car' of the `cdr' of X. Equivalent to `(second X)'."
   (car (cdr x)))
 
 (defun cdar (x)
@@ -449,7 +449,8 @@ float-negative-epsilon X) , but it may give t for smaller values.")
   (car (cdr (car x))))
 
 (defun caddr (x)
-  "Return the `car' of the `cdr' of the `cdr' of X."
+  "Return the `car' of the `cdr' of the `cdr' of X.
+Equivalent to `(third X)'."
   (car (cdr (cdr x))))
 
 (defun cdaar (x)
@@ -497,7 +498,8 @@ float-negative-epsilon X) , but it may give t for smaller values.")
   (car (cdr (cdr (car x)))))
 
 (defun cadddr (x)
-  "Return the `car' of the `cdr' of the `cdr' of the `cdr' of X."
+  "Return the `car' of the `cdr' of the `cdr' of the `cdr' of X.
+Equivalent to `(fourth X)'."
   (car (cdr (cdr (cdr x)))))
 
 (defun cdaaar (x)
