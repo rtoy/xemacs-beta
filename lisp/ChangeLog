@@ -1,3 +1,20 @@
+2011-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-output-preface): New.
+	* bytecomp.el (byte-compile-output-file-form):
+	* bytecomp.el (byte-compile-output-docform):
+	* bytecomp.el (byte-compile-file-form):
+	* bytecomp.el (byte-compile-file-form-defmumble):
+	* bytecomp.el (symbol-value):
+	* bytecomp.el (byte-compile-symbol-value): New.
+	* cl-macs.el (load-time-value):
+	No longer implement load-time-value by very hackishly redefining
+	#'byte-compile-file-form-defmumble, instead make the appropriate
+	changes in #'byte-compile-file-form-defmumble and
+	#'byte-compile-file-form instead. We also add a specific byte-compile
+	method for #'symbol-value, using the add-properties-to-a-gensym
+	approach that worked for #'block and #'return-from.
+
 2011-03-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (cl-finite-do, cl-float-limits):

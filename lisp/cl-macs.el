@@ -621,25 +621,15 @@ arguments: ((&rest WHEN) &body BODY)"
 (defmacro load-time-value (form &optional read-only)
   "Like `progn', but evaluates the body at load time.
 The result of the body appears to the compiler as a quoted constant."
-  (if (cl-compiling-file)
-      (let* ((temp (gentemp "--cl-load-time--"))
-	     (set (list 'set (list 'quote temp) form)))
-	(if (and (fboundp 'byte-compile-file-form-defmumble)
-		 (boundp 'this-kind) (boundp 'that-one))
-	    (fset 'byte-compile-file-form
-		  (list 'lambda '(form)
-			(list 'fset '(quote byte-compile-file-form)
-			      (list 'quote
-				    (symbol-function 'byte-compile-file-form)))
-			(list 'byte-compile-file-form (list 'quote set))
-			'(byte-compile-file-form form)))
-	  ;; XEmacs change
-	  (print set (symbol-value ;;'outbuffer
-				   'byte-compile-output-buffer
-				   )))
-	(list 'symbol-value (list 'quote temp)))
-    (list 'quote (eval form))))
-
+  (let ((gensym (gensym)))
+    ;; The body of this macro really should be (cons 'progn form), with the
+    ;; hairier stuff in a shadowed version in
+    ;; byte-compile-initial-macro-environment. That doesn't work because
+    ;; cl-macs.el doesn't respect byte-compile-macro-environment, which is
+    ;; something we should change.
+    (put gensym 'cl-load-time-value-form form)
+    (set gensym (eval form))
+    `(symbol-value ',gensym)))
 
 ;;; Conditional control structures.
 
