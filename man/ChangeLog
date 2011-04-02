@@ -1,3 +1,12 @@
+2011-04-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q2.5.7):
+	New node on troubleshooting duplicate auto-autoloads.
+	(Top):
+	(Installation):
+	(Q2.5.6):
+	Update menus and node links for Q2.5.7.
+
 2011-03-24  Jerry James  <james@xemacs.org>
 
 	* internals/internals.texi (Creating a Window-System Type):
