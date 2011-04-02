@@ -327,6 +327,7 @@ library directory>/info/}. For example in
 * Q2.5.4::    Startup warnings about deducing proper fonts?
 * Q2.5.5::    Warnings from incorrect key modifiers.
 * Q2.5.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
+* Q2.5.7::    XEmacs issues messages about ``auto-autoloads already loaded.''
 
 3 Editing Functions
 
@@ -3149,6 +3150,7 @@ section is devoted to Installation, Maintenance and Troubleshooting.
 * Q2.5.4::    Startup warnings about deducing proper fonts?
 * Q2.5.5::    Warnings from incorrect key modifiers.
 * Q2.5.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
+* Q2.5.7::    XEmacs issues messages about ``auto-autoloads already loaded.''
 @end menu
 
 @unnumberedsec 2.0: Installation (General)
@@ -4567,7 +4569,7 @@ add mod2 = Mode_switch
 EOF
 @end example
 
-@node Q2.5.6,  , Q2.5.5, Installation
+@node Q2.5.6, Q2.5.7, Q2.5.5, Installation
 @unnumberedsubsec Q2.5.6: XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
 
 Yes.
@@ -4616,6 +4618,54 @@ with GUI programs and the standard command shell.  Currently, XEmacs
 just creates and immediately hides a console when necessary, and
 works around the "no useful stdio" problem by creating its own console
 window as necessary to display messages in.)
+
+@node Q2.5.7,  , Q2.5.6, Installation
+@unnumberedsubsec Q2.5.7: XEmacs issues messages about ``auto-autoloads already loaded.''
+
+On Sat, 05 Mar 2011 11:54:47 -0500, in Message-ID:
+<4D726AD7.7020303@@gmail.com> on xemacs-beta, Raymond Toy reported:
+
+@quotation
+[N]ow every time I start xemacs, I get 100+ error messages stating that
+the auto-autoload for every package has already been loaded.
+@end quotation
+ 
+This occurs if you have duplicate packages installed on your load-path.
+To detect exactly which paths are duplicated, use @kbd{M-x
+list-load-path-shadows}.  If you have a small number of duplicated
+libraries, it is probably one or more packages available both in the
+XEmacs distribution and in third-party distributions.  If you prefer the
+third-party version, use @kbd{M-x list-packages} to get the package
+management UI, and uninstall the particular packages.  Removal of third
+party packages must be done manually, if you wish to keep the version
+distributed by XEmacs.
+
+When you have many duplicate packages, a common cause is that XEmacs
+finds @emph{package root directories} that are duplicates of each other.
+This can occur in some automounter configurations, or when the roots
+share some subtrees via symlinks.  In this case, you will get a warning
+for @emph{all} of the packages you have installed.  Although this is
+basically a site configuration problem, please report these cases.
+XEmacs is already aware of many automounter artifacts, and automatically
+adjusts for them.  Code is being added to try to detect symlinks.  We
+may not be able to handle every case, but we'd like to know about them,
+and where possible incorporate workarounds.
+
+Package root directories are specified at configuration time via the
+@code{--prefix}, @code{--exec-prefix}, and the @samp{--with-*-packages}
+options; at runtime relative to the XEmacs binary (@file{../share} and
+@file{..} (for run-in-place)); and at runtime via the
+@samp{EMACS*PACKAGES} environment variables.  Unless you have special
+needs, it is best to install XEmacs and the packages (configuring with
+@code{--with-prefix=$prefix} for XEmacs and by untarring the SUMOs in
+@file{@code{$prefix}/share/xemacs/}.
+
+Note that older versions of XEmacs (21.1, 21.4, and early releases of
+21.5) by default expect the packages to be installed under
+@file{@code{$prefix}/lib} rather than @file{@code{$prefix}/share}.  See
+the documentation for @file{configure} for how to point XEmacs at
+@file{@code{$prefix}/share/xemacs/} if that is preferred, or older
+XEmacsen need to share packages with recent versions.
 
 @node Editing, Display, Installation, Top
 @unnumbered 3 Editing Functions
