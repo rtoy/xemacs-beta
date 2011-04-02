@@ -455,6 +455,9 @@ early in the file.")
   "Alist of variables bound in the context of the current form,
 that is, the current lexical environment.  This list lives partly
 on the specbind stack.  The cdr of each cell is an integer bitmask.")
+(defvar byte-compile-output-preface nil
+  "Form to output before current by `byte-compile-output-file-form'
+This is used for implementing `load-time-value'.")
 
 (defvar byte-compile-force-escape-quoted nil
   "If t, `byte-compile-maybe-reset-coding' always chooses `escape-quoted'
@@ -1977,8 +1980,12 @@ docstrings code.")
 				 (not byte-compile-emacs19-compatibility))
 			    '(t) nil))
           print-gensym-alist)
+      (when byte-compile-output-preface
+        (princ "\n(progn " byte-compile-outbuffer)
+        (prin1 byte-compile-output-preface byte-compile-outbuffer))
       (princ "\n" byte-compile-outbuffer)
       (prin1 form byte-compile-outbuffer)
+      (when byte-compile-output-preface (princ ")" byte-compile-outbuffer))
       nil)))
 
 (defun byte-compile-output-docform (preface name info form specindex quoted)
@@ -2016,12 +2023,6 @@ list that represents a doc string reference.
 			 (> (length (nth (nth 1 info) form)) 0)
 			 (char= (aref (nth (nth 1 info) form) 0) ?*))
 		    (setq position (- position)))))
-
-	 (if preface
-	     (progn
-	       (insert preface)
-	       (prin1 name byte-compile-outbuffer)))
-	 (insert (car info))
 	 (let ((print-escape-newlines t)
 	       (print-readably t)	; print #[] for bytecode, 'x for (quote x)
 	       ;; Use a cons cell to say that we want
@@ -2032,6 +2033,15 @@ list that represents a doc string reference.
 				 '(t) nil))
 	       print-gensym-alist
 	       (index 0))
+           (when byte-compile-output-preface
+             (princ "\n(progn " byte-compile-outbuffer)
+             (prin1 byte-compile-output-preface byte-compile-outbuffer))
+	   (byte-compile-flush-pending)
+	   (if preface
+	       (progn
+		 (insert preface)
+		 (prin1 name byte-compile-outbuffer)))
+	   (insert (car info))
 	   (prin1 (car form) byte-compile-outbuffer)
 	   (while (setq form (cdr form))
 	     (setq index (1+ index))
@@ -2058,7 +2068,9 @@ list that represents a doc string reference.
 			(goto-char (point-max)))))
 		   (t
 		    (prin1 (car form) byte-compile-outbuffer)))))
-	 (insert (nth 2 info))))))
+	 (insert (nth 2 info))
+	 (when byte-compile-output-preface
+	   (princ ")" byte-compile-outbuffer))))))
   nil)
 
 (defvar for-effect) ; ## Kludge!  This should be an arg, not a special.
@@ -2094,6 +2106,7 @@ list that represents a doc string reference.
 
 (defun byte-compile-file-form (form)
   (let ((byte-compile-current-form nil)	; close over this for warnings.
+        (byte-compile-output-preface nil)
 	handler)
     (cond
      ((not (consp form))
@@ -2329,11 +2342,11 @@ list that represents a doc string reference.
 	   (code (byte-compile-byte-code-maker new-one))
            (docform-info
             (cond ((atom code) ; compiled-function-p
-                   (if macrop '(" '(macro . #[" 4 "])") '(" #[" 4 "]")))
+                   (if macrop '(" '(macro . #[" 4 "]))") '(" #[" 4 "])")))
                   ((eq (car code) 'quote)
                    (setq code new-one)
-                   (if macrop '(" '(macro " 2 ")") '(" '(" 2 ")")))
-                  ((if macrop '(" (cons 'macro (" 5 "))") '(" (" 5 ")"))))))
+                   (if macrop '(" '(macro " 2 "))") '(" '(" 2 "))")))
+                  ((if macrop '(" (cons 'macro (" 5 ")))") '(" (" 5 "))"))))))
       (if this-one
 	  (setcdr this-one new-one)
 	(set this-kind
@@ -2360,18 +2373,16 @@ list that represents a doc string reference.
          ;; printed to the file.
          (if (consp code)
              code
-           (nconc (list
-                   (compiled-function-arglist code)
-                   (compiled-function-instructions code)
-                   (compiled-function-constants code)
-                   (compiled-function-stack-depth code)
-                   (compiled-function-doc-string code))
+           (list* (compiled-function-arglist code)
+                  (compiled-function-instructions code)
+                  (compiled-function-constants code)
+                  (compiled-function-stack-depth code)
+                  (compiled-function-doc-string code)
                   (if (commandp code)
                       (list (nth 1 (compiled-function-interactive code))))))
          (and (atom code) byte-compile-dynamic
               1)
 	   nil))
-	(princ ")" byte-compile-outbuffer)
 	nil)))
 
 ;; Print Lisp object EXP in the output file, inside a comment,
@@ -3143,7 +3154,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler car		1)
 (byte-defop-compiler cdr		1)
 (byte-defop-compiler length		1)
-(byte-defop-compiler symbol-value	1)
+(byte-defop-compiler symbol-value)
 (byte-defop-compiler symbol-function	1)
 (byte-defop-compiler (1+ byte-add1)	1)
 (byte-defop-compiler (1- byte-sub1)	1)
@@ -4314,6 +4325,29 @@ optimized away--just byte compile and return the BODY."
   (byte-compile-body (cdr (cdr form)))
   (byte-compile-out 'byte-temp-output-buffer-show 0))
 
+(defun byte-compile-symbol-value (form)
+  (symbol-macrolet ((not-present '#:not-present))
+    (let ((cl-load-time-value-form not-present)
+          (byte-compile-bound-variables byte-compile-bound-variables) gensym)
+      (and (consp (cadr form))
+           (eq 'quote (caadr form))
+           (setq gensym (cadadr form))
+           (symbolp gensym)
+           (setq cl-load-time-value-form
+                 (get gensym 'cl-load-time-value-form not-present)))
+      (unless (eq cl-load-time-value-form not-present)        
+        (setq byte-compile-bound-variables
+              (acons gensym byte-compile-global-bit
+                     byte-compile-bound-variables)
+              byte-compile-output-preface
+              (byte-compile-top-level
+               (if byte-compile-output-preface
+                   `(progn (setq ,gensym ,cl-load-time-value-form)
+                           ,byte-compile-output-preface)
+                 `(setq ,gensym ,cl-load-time-value-form))
+               t 'file)))
+      (byte-compile-one-arg form))))
+  
 (defun byte-compile-multiple-value-call (form)
   (if (< (length form) 2)
       (progn
