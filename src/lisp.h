@@ -2123,6 +2123,16 @@ EMACS_INT len_##elt;							\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len_##elt, tail,		\
 		      tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
 
+#define GC_EXTERNAL_LIST_LOOP_3(elt, list, tail)			\
+do {									\
+  XGCDECL3 (elt);							\
+  Lisp_Object elt, tail, tortoise_##elt;				\
+  EMACS_INT len_##elt;							\
+  XGCPRO3 (elt, elt, tail, tortoise_##elt);				\
+  PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len_##elt, tail,		\
+				tortoise_##elt,				\
+				CIRCULAR_LIST_SUSPICION_LENGTH)
+
 #define EXTERNAL_LIST_LOOP_4_NO_DECLARE(elt, list, tail, len)		\
 Lisp_Object tortoise_##elt;						\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
@@ -2133,6 +2143,15 @@ Lisp_Object elt, tail, tortoise_##elt;					\
 EMACS_INT len;								\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
 		      tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
+
+#define GC_EXTERNAL_LIST_LOOP_4(elt, list, tail, len)			\
+do {									\
+  XGCDECL3 (elt);							\
+  Lisp_Object elt, tail, tortoise_##elt;				\
+  XGCPRO3 (elt, elt, tail, tortoise_##elt);				\
+  PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
+				tortoise_##elt,				\
+				CIRCULAR_LIST_SUSPICION_LENGTH)
 
 #define PRIVATE_UNVERIFIED_LIST_LOOP_7(elt, list, len, hare,		\
 				       tortoise, suspicion_length,	\
