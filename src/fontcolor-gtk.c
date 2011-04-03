@@ -251,7 +251,7 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   else if (strstr (extname, "-*-") != 0)
     extname = "Monospace 12";
   /* Just to get display looking good... */
-  extname = "Monospace 12";
+  //extname = "Monospace 12";
   
   pfd = pango_font_description_from_string (extname);
   /* We can get 0 size fonts here, which will screw up the metrics.
@@ -363,6 +363,112 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
 #define THIS_IS_GTK
 #include "fontcolor-xlike-inc.c"
 
+DEFUN ("gtk-make-font-bold", Fgtk_make_font_bold, 1, 2, 0, /*
+Return a specifier for bold version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = pango_font_description_from_string (extname);
+
+  pango_font_description_set_weight (pfd, PANGO_WEIGHT_BOLD);
+  new_name = pango_font_description_to_string (pfd);
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+DEFUN ("gtk-make-font-unbold", Fgtk_make_font_unbold, 1, 2, 0, /*
+Return a specifier for normal, non-bold version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = pango_font_description_from_string (extname);
+
+  pango_font_description_set_weight (pfd, PANGO_WEIGHT_MEDIUM);
+  new_name = pango_font_description_to_string (pfd);
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+DEFUN ("gtk-make-font-italic", Fgtk_make_font_italic, 1, 2, 0, /*
+Return a specifier for italic version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = pango_font_description_from_string (extname);
+
+  pango_font_description_set_style (pfd, PANGO_STYLE_ITALIC);
+  new_name = pango_font_description_to_string (pfd);
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+DEFUN ("gtk-make-font-unitalic", Fgtk_make_font_unitalic, 1, 2, 0, /*
+Return a specifier for normal, non-italic version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = pango_font_description_from_string (extname);
+
+  pango_font_description_set_style (pfd, PANGO_STYLE_NORMAL);
+  new_name = pango_font_description_to_string (pfd);
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+DEFUN ("gtk-make-font-bold-italic", Fgtk_make_font_bold_italic, 1, 2, 0, /*
+Return a specifier for bold italic version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = pango_font_description_from_string (extname);
+
+  pango_font_description_set_weight (pfd, PANGO_WEIGHT_BOLD);
+  pango_font_description_set_style (pfd, PANGO_STYLE_ITALIC);
+  new_name = pango_font_description_to_string (pfd);
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -371,6 +477,11 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
 void
 syms_of_fontcolor_gtk (void)
 {
+  DEFSUBR (Fgtk_make_font_bold);
+  DEFSUBR (Fgtk_make_font_unbold);
+  DEFSUBR (Fgtk_make_font_italic);
+  DEFSUBR (Fgtk_make_font_unitalic);
+  DEFSUBR (Fgtk_make_font_bold_italic);
 }
 
 void
