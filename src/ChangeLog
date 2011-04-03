@@ -1,3 +1,19 @@
+2011-04-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (GC_EXTERNAL_LIST_LOOP_3, GC_EXTERNAL_LIST_LOOP_4): New.
+	* fns.c (count_with_tail, list_position_cons_before, FassocX):
+	* fns.c (FrassocX, position, FdeleteX, FremoveX):
+	* fns.c (list_delete_duplicates_from_end):
+	* fns.c (Fdelete_duplicates, Fremove_duplicates, Freduce):
+	* fns.c (Fnsubstitute, Fsubstitute, sublis, nsublis, Fnsublis):
+	* fns.c (venn, nvenn, Funion, Fset_exclusive_or, Fnset_exclusive_or):
+	Use GC_EXTERNAL_LIST_LOOP_* in the sequence functions in fns.c
+	where appropriate, there were some corner cases where my old
+	approach was unsafe (mainly if the circularity checking's tortoise
+	lost GCPRO protection.
+	Add GC_EXTERNAL_LIST_LOOP_{3,4}, analogous to
+	GC_EXTERNAL_LIST_LOOP_2.
+
 2011-03-24  Jerry James  <james@xemacs.org>
 
 	* alloc.c (listu): Assemble the list in the right order so we don't

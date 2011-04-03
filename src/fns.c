@@ -1009,9 +1009,6 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
 
   if (CONSP (sequence))
     {
-      Lisp_Object elt, tail = Qnil;
-      struct gcpro gcpro1;
-
       if (EQ (caller, Qcount) && !NILP (from_end)
           && (!EQ (key, Qnil) ||
               check_test == check_other_nokey || check_test == check_if_nokey))
@@ -1026,8 +1023,6 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
                                       start, end);
         }
 
-      GCPRO1 (tail);
-
       /* If COUNT is non-nil and FROM-END is t, we can give the tail
          containing the last match, since that's what #'remove* is
          interested in (a zero or negative COUNT won't ever reach
@@ -1039,7 +1034,7 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
         }
 
       {
-        EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, sequence, tail, len)
+	GC_EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
           {
             if (!(ii < ending))
               {
@@ -1060,9 +1055,8 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
 
             ii++;
           }
+	END_GC_EXTERNAL_LIST_LOOP (elt);
       }
-
-      UNGCPRO;
 
       if ((ii < starting || (ii < ending && !NILP (end))) &&
           encountered != counting)
@@ -2622,18 +2616,18 @@ list_position_cons_before (Lisp_Object *cons_out,
                            Boolint reverse_test_order,
                            Lisp_Object start, Lisp_Object end)
 {
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object elt = Qnil, tail = list, tail_before = Qnil;
-  Elemcount len, ii = 0, starting = XINT (start);
+  struct gcpro gcpro1;
+  Lisp_Object tail_before = Qnil;
+  Elemcount ii = 0, starting = XINT (start);
   Elemcount ending = NILP (end) ? EMACS_INT_MAX : XINT (end);
 
-  GCPRO2 (elt, tail);
+  GCPRO1 (tail_before);
 
   if (check_test == check_eq_nokey)
     {
       /* TEST is #'eq, no need to call any C functions, and the test order
          won't be visible. */
-      EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, list, tail, len)
+      EXTERNAL_LIST_LOOP_3 (elt, list, tail)
 	{
           if (starting <= ii && ii < ending &&
               EQ (item, elt) == test_not_unboundp)
@@ -2654,15 +2648,17 @@ list_position_cons_before (Lisp_Object *cons_out,
     }
   else
     {
-      EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, list, tail, len)
+      GC_EXTERNAL_LIST_LOOP_3 (elt, list, tail)
         {
           if (starting <= ii && ii < ending &&
               (reverse_test_order ? 
                check_test (test, key, elt, item) :
-               check_test (test, key, item, elt)) == test_not_unboundp) 
+               check_test (test, key, item, elt)) == test_not_unboundp)
             {
               *cons_out = tail_before;
-              RETURN_UNGCPRO (make_integer (ii));
+	      XUNGCPRO (elt);
+	      UNGCPRO;
+	      return make_integer (ii);
             }
           else
             {
@@ -2674,6 +2670,7 @@ list_position_cons_before (Lisp_Object *cons_out,
           ii++;
           tail_before = tail;
         }
+      END_GC_EXTERNAL_LIST_LOOP (elt);
     }
 
   RETURN_UNGCPRO (Qnil);
@@ -2860,22 +2857,16 @@ arguments: (ITEM ALIST &key (TEST #'eql) (KEY #'identity) TEST-NOT)
     }
   else
     {
-      Lisp_Object tailed = alist;
-      struct gcpro gcpro1;
-
-      GCPRO1 (tailed);
-      {
-        EXTERNAL_ALIST_LOOP_5 (elt, elt_car, elt_cdr, alist, tail)
-          {
-            tailed = tail;
-
-            if (check_test (test, key, item, elt_car) == test_not_unboundp)
+      GC_EXTERNAL_LIST_LOOP_2 (elt, alist)
+	{
+	  if (CONSP (elt) && 
+	      check_test (test, key, item, XCAR (elt)) == test_not_unboundp)
               {
-                RETURN_UNGCPRO (elt);
+		XUNGCPRO (elt);
+		return elt;
               }
-          }
-      }
-      UNGCPRO;
+	}
+      END_GC_EXTERNAL_LIST_LOOP (elt);
     }
 		  
   return Qnil;
@@ -2969,22 +2960,16 @@ arguments: (ITEM ALIST &key (TEST #'eql) (KEY #'identity) TEST-NOT)
     }
   else
     {
-      struct gcpro gcpro1;
-      Lisp_Object tailed = alist;
-
-      GCPRO1 (tailed);
-      {
-        EXTERNAL_ALIST_LOOP_5 (elt, elt_car, elt_cdr, alist, tail)
-          {
-            tailed = tail;
-
-            if (check_test (test, key, item, elt_cdr) == test_not_unboundp)
-              {
-                RETURN_UNGCPRO (elt);
-              }
-          }
-      }
-      UNGCPRO;
+      GC_EXTERNAL_LIST_LOOP_2 (elt, alist)
+	{
+	  if (CONSP (elt) &&
+	      check_test (test, key, item, XCDR (elt)) == test_not_unboundp)
+	    {
+	      XUNGCPRO (elt);
+	      return elt;
+	    }
+	}
+      END_GC_EXTERNAL_LIST_LOOP (elt);
     }
 		  
   return Qnil;
@@ -3014,9 +2999,6 @@ position (Lisp_Object *object_out, Lisp_Object item, Lisp_Object sequence,
 
   if (CONSP (sequence))
     {
-      Lisp_Object elt, tail = Qnil;
-      struct gcpro gcpro1;
-
       if (!(starting < ending))
 	{
 	  check_sequence_range (sequence, start, end, Flength (sequence));
@@ -3025,10 +3007,8 @@ position (Lisp_Object *object_out, Lisp_Object item, Lisp_Object sequence,
 	  return Qnil;
 	}
 
-      GCPRO1 (tail);
-
       {
-        EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, sequence, tail, len)
+	GC_EXTERNAL_LIST_LOOP_2 (elt, sequence)
           {
             if (starting <= ii && ii < ending
                 && check_test (test, key, item, elt) == test_not_unboundp)
@@ -3038,7 +3018,7 @@ position (Lisp_Object *object_out, Lisp_Object item, Lisp_Object sequence,
 
                 if (NILP (from_end))
                   {
-                    UNGCPRO;
+		    XUNGCPRO (elt);
                     return result;
                   }
               }
@@ -3049,9 +3029,8 @@ position (Lisp_Object *object_out, Lisp_Object item, Lisp_Object sequence,
             
             ii++;
           }
+	END_GC_EXTERNAL_LIST_LOOP (elt);
       }
-
-      UNGCPRO;
 
       if (ii < starting || (ii < ending && !NILP (end)))
 	{
@@ -3259,12 +3238,11 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object item = args[0], sequence = args[1], tail = sequence;
+  Lisp_Object item = args[0], sequence = args[1];
   Elemcount starting = 0, ending = EMACS_INT_MAX, counting = EMACS_INT_MAX;
   Elemcount len, ii = 0, encountered = 0, presenting = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
-  struct gcpro gcpro1;
 
   PARSE_KEYWORDS (FdeleteX, nargs, args, 9,
 		  (test, if_not, if_, test_not, key, start, end, from_end,
@@ -3309,14 +3287,15 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 
   if (CONSP (sequence))
     {
-      Lisp_Object prev_tail_list_elt = Qnil, list_elt = Qnil;
+      Lisp_Object prev_tail_list_elt = Qnil, ignore = Qnil;
       Elemcount list_len = 0, deleted = 0;
+      struct gcpro gcpro1;
 
       if (!NILP (count) && !NILP (from_end))
 	{
 	  /* Both COUNT and FROM-END were specified; we need to traverse the
 	     list twice. */
-	  Lisp_Object present = count_with_tail (&list_elt, nargs, args,
+	  Lisp_Object present = count_with_tail (&ignore, nargs, args,
 						 QdeleteX);
 
 	  if (ZEROP (present))
@@ -3334,11 +3313,11 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	  presenting = presenting <= counting ? 0 : presenting - counting;
 	}
 
-      GCPRO1 (tail);
+      GCPRO1 (prev_tail_list_elt);
       ii = -1;
 
       {
-        EXTERNAL_LIST_LOOP_4_NO_DECLARE (list_elt, sequence, tail, list_len)
+	GC_EXTERNAL_LIST_LOOP_4 (list_elt, sequence, tail, list_len)
           {
             ii++;
 
@@ -3369,6 +3348,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
                   }
               }
           }
+	END_GC_EXTERNAL_LIST_LOOP (list_elt);
       }
 
       UNGCPRO;
@@ -3606,10 +3586,9 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
   Lisp_Object item = args[0], sequence = args[1], matched_count = Qnil,
     tail = Qnil;
   Elemcount starting = 0, ending = EMACS_INT_MAX, counting = EMACS_INT_MAX;
-  Elemcount len, ii = 0, encountered = 0, presenting = 0;
+  Elemcount ii = 0, encountered = 0, presenting = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
-  struct gcpro gcpro1;
 
   PARSE_KEYWORDS (FremoveX, nargs, args, 9,
 		  (test, if_not, if_, test_not, key, start, end, from_end,
@@ -3657,8 +3636,8 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 
   if (!ZEROP (matched_count))
     {
-      Lisp_Object elt, tailing = Qnil, result = Qnil, result_tail = Qnil;
-      GCPRO1 (tailing);
+      Lisp_Object result = Qnil, result_tail = Qnil;
+      struct gcpro gcpro1, gcpro2;
 
       if (!NILP (count) && !NILP (from_end))
 	{
@@ -3672,18 +3651,21 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	  presenting = presenting <= counting ? 0 : presenting - counting;
 	}
 
+      GCPRO2 (result, tail);
       {
-        EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, sequence, tailing, len)
+	GC_EXTERNAL_LIST_LOOP_3 (elt, sequence, tailing)
           {
             if (EQ (tail, tailing))
               {
+		XUNGCPRO (elt);
+
                 if (NILP (result))
                   {
-                    RETURN_UNGCPRO (XCDR (tail));
+                    return XCDR (tail);
                   }
 
                 XSETCDR (result_tail, XCDR (tail));
-                RETURN_UNGCPRO (result);
+		return result;
               }
             else if (starting <= ii && ii < ending &&
                      (check_test (test, key, item, elt) == test_not_unboundp)
@@ -3709,8 +3691,8 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 
             ii++;
           }
+	END_GC_EXTERNAL_LIST_LOOP (elt); 
       }
-
       UNGCPRO;
 
       if (ii < starting || (ii < ending && !NILP (end)))
@@ -3829,12 +3811,12 @@ list_delete_duplicates_from_end (Lisp_Object list,
 				 Lisp_Object start,
 				 Lisp_Object end, Boolint copy)
 {
-  Lisp_Object checking = Qnil, elt, tail, result = list;
+  Lisp_Object checking = Qnil, result = list;
   Lisp_Object keyed, positioned, position_cons = Qnil, result_tail;
   Elemcount len = XINT (Flength (list)), pos, starting = XINT (start);
   Elemcount ending = (NILP (end) ? len : XINT (end)), greatest_pos_seen = -1;
   Elemcount ii = 0;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1;
 
   /* We can't delete (or remove) as we go, because that breaks START and
      END.  We could if END were nil, and that would change an ON(N + 2)
@@ -3854,10 +3836,10 @@ list_delete_duplicates_from_end (Lisp_Object list,
   memset (&(deleting->bits), 0,
 	  sizeof (long) * BIT_VECTOR_LONG_STORAGE (len));
 
-  GCPRO2 (tail, keyed);
+  GCPRO1 (keyed);
 
   {
-    EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, list, tail, len)
+    GC_EXTERNAL_LIST_LOOP_3 (elt, list, tail)
       {
         if (!(starting <= ii && ii <= ending) || bit_vector_bit (deleting, ii))
           {
@@ -3884,6 +3866,7 @@ list_delete_duplicates_from_end (Lisp_Object list,
           }
         ii++;
       }
+    END_GC_EXTERNAL_LIST_LOOP (elt); 
   }
 
   UNGCPRO;
@@ -3899,7 +3882,7 @@ list_delete_duplicates_from_end (Lisp_Object list,
 	  ii = 1;
 
 	  {
-            EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, list, tail, len)
+            EXTERNAL_LIST_LOOP_3 (elt, list, tail)
 	      {
 		if (ii == greatest_pos_seen)
 		  {
@@ -3917,7 +3900,7 @@ list_delete_duplicates_from_end (Lisp_Object list,
 	}
       else
 	{
-	  EXTERNAL_LIST_LOOP_DELETE_IF (elt0, list,
+	  EXTERNAL_LIST_LOOP_DELETE_IF (elt, list,
 					bit_vector_bit (deleting, ii++));
 	}
     }
@@ -3945,8 +3928,8 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object sequence = args[0], tail = sequence, keyed = Qnil, elt = Qnil;
-  Lisp_Object elt0 = Qnil, positioned = Qnil, ignore = Qnil;
+  Lisp_Object sequence = args[0], keyed = Qnil;
+  Lisp_Object positioned = Qnil, ignore = Qnil;
   Elemcount starting = 0, ending = EMACS_INT_MAX, len, ii = 0, jj = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
@@ -3978,10 +3961,10 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 	  Lisp_Object prev_tail = Qnil;
           Elemcount deleted = 0;
 
-	  GCPRO2 (tail, keyed);
+	  GCPRO2 (keyed, prev_tail);
 
           {
-            EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, sequence, tail, len)
+	    GC_EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
               {
                 if (starting <= ii && ii < ending)
                   {
@@ -4012,9 +3995,10 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 
                 ii++;
               }
+	    END_GC_EXTERNAL_LIST_LOOP (elt);
           }
           {
-            EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt0, sequence, tail, len)
+	    GC_EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
               {
                 if (!(starting <= ii && ii <= ending))
                   {
@@ -4023,7 +4007,7 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
                     continue;
                   }
 
-                keyed = KEY (key, elt0);
+                keyed = KEY (key, elt);
                 positioned
                   = list_position_cons_before (&ignore, keyed, XCDR (tail),
                                                check_test, test_not_unboundp,
@@ -4052,7 +4036,9 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 
                 ii++;
               }
+	    END_GC_EXTERNAL_LIST_LOOP (elt);
           }
+
 	  UNGCPRO;
 
 	  if ((ii < starting || (ii < ending && !NILP (end))))
@@ -4072,6 +4058,8 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
     }
   else if (STRINGP (sequence))
     {
+      Lisp_Object elt = Qnil;
+
       if (EQ (Qidentity, key))
 	{
 	  /* We know all the elements will be characters; set check_test to
@@ -4090,7 +4078,6 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 	  Ibyte *cursor = XSTRING_DATA (sequence), *startp = cursor;
 	  Elemcount deleted = 0;
 
-          elt = Qnil;
 	  GCPRO1 (elt);
 
 	  while (cursor_offset < byte_len)
@@ -4245,6 +4232,7 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
       Elemcount deleted = 0;
       Lisp_Object *content = XVECTOR_DATA (sequence);
       struct Lisp_Bit_Vector *deleting;
+      Lisp_Object elt = Qnil;
 
       len = XVECTOR_LENGTH (sequence);
       check_sequence_range (sequence, start, end, make_integer (len));
@@ -4328,6 +4316,7 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 	 and KEY arguments, which may be non-deterministic from our
 	 perspective, we need the same algorithm as for vectors. */
       struct Lisp_Bit_Vector *deleting;
+      Lisp_Object elt = Qnil;
 
       len = bit_vector_length (bv);
 
@@ -4429,13 +4418,13 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object sequence = args[0], tail = sequence, keyed, positioned = Qnil;
+  Lisp_Object sequence = args[0], keyed, positioned = Qnil;
   Lisp_Object result = sequence, result_tail = result, cursor = Qnil;
-  Lisp_Object cons_with_shared_tail = Qnil, elt, elt0;
-  Elemcount starting = 0, ending = EMACS_INT_MAX, len, ii = 0;
+  Lisp_Object cons_with_shared_tail = Qnil;
+  Elemcount starting = 0, ending = EMACS_INT_MAX, ii = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2;
 
   PARSE_KEYWORDS (Fremove_duplicates, nargs, args, 6,
 		  (test, key, test_not, start, end, from_end),
@@ -4469,10 +4458,10 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
     {
       Lisp_Object ignore = Qnil;
 
-      GCPRO3 (tail, keyed, result);
+      GCPRO2 (keyed, result);
 
       {
-        EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, sequence, tail, len)
+	GC_EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
           {
             if (starting <= ii && ii <= ending)
               {
@@ -4500,10 +4489,11 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 
             ii++;
           }
+	END_GC_EXTERNAL_LIST_LOOP (elt);
       }
 
       {
-        EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt0, sequence, tail, len)
+	GC_EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
           {
             if (!(starting <= ii && ii <= ending))
               {
@@ -4516,7 +4506,7 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
                removed cons to this one. Otherwise, the tail of the output list
                is shared with the input list, which is OK. */
 
-            keyed = KEY (key, elt0);
+            keyed = KEY (key, elt);
             positioned
               = list_position_cons_before (&ignore, keyed, XCDR (tail),
                                            check_test, test_not_unboundp,
@@ -4548,7 +4538,9 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 
             ii++;
           }
+	END_GC_EXTERNAL_LIST_LOOP (elt);
       }
+
       UNGCPRO;
 
       if ((ii < starting || (ii < ending && !NILP (end))))
@@ -7932,10 +7924,9 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
     {
       if (NILP (from_end))
         {
-	  struct gcpro gcpro1, gcpro2;
-	  Lisp_Object tailed = Qnil;
+	  struct gcpro gcpro1;
 
-	  GCPRO2 (tailed, accum);
+	  GCPRO1 (accum);
 
           if (!UNBOUNDP (initial_value))
             {
@@ -7943,11 +7934,8 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
             }
           else if (ending - starting)
             {
-              EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
+	      GC_EXTERNAL_LIST_LOOP_2 (elt, sequence)
                 {
-		  /* KEY may amputate the list behind us; make sure what
-		     remains to be processed is still reachable.  */
-		  tailed = tail;
                   if (ii == starting)
                     {
                       accum = KEY (key, elt);
@@ -7956,18 +7944,15 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
                     }
                   ++ii;
                 }
+	      END_GC_EXTERNAL_LIST_LOOP (elt);
             }
 
 	  ii = 0;
 
           if (ending - starting)
             {
-              EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
+	      GC_EXTERNAL_LIST_LOOP_2 (elt, sequence)
                 {
-		  /* KEY or FUNCTION may amputate the list behind us; make
-		     sure what remains to be processed is still
-		     reachable.  */
-		  tailed = tail;
                   if (ii >= starting)
                     {
                       if (ii < ending)
@@ -7981,6 +7966,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
                     }
                   ++ii;
                 }
+	      END_GC_EXTERNAL_LIST_LOOP (elt);
             }
 
 	  UNGCPRO;
@@ -8703,13 +8689,12 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object new_ = args[0], item = args[1], sequence = args[2], tail = Qnil;
+  Lisp_Object new_ = args[0], item = args[1], sequence = args[2];
   Lisp_Object object_, position0;
   Elemcount starting = 0, ending = EMACS_INT_MAX, encountered = 0;
   Elemcount len, ii = 0, counting = EMACS_INT_MAX, presenting = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
-  struct gcpro gcpro1;
 
   PARSE_KEYWORDS (Fnsubstitute, nargs, args, 9,
 		  (test, if_, if_not, test_not, key, start, end, count,
@@ -8751,11 +8736,9 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 
   if (CONSP (sequence))
     {
-      Lisp_Object elt;
-
       if (!NILP (count) && !NILP (from_end))
 	{
-	  Lisp_Object present = count_with_tail (&elt, nargs - 1, args + 1,
+	  Lisp_Object present = count_with_tail (&object_, nargs - 1, args + 1,
 						 Qnsubstitute);
 
 	  if (ZEROP (present))
@@ -8767,9 +8750,8 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	  presenting = presenting <= counting ? 0 : presenting - counting;
 	}
 
-      GCPRO1 (tail);
       {
-        EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, sequence, tail, len)
+	GC_EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
           {
             if (!(ii < ending))
               {
@@ -8791,8 +8773,8 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 
             ii++;
           }
+	END_GC_EXTERNAL_LIST_LOOP (elt);
       }
-      UNGCPRO;
 
       if ((ii < starting || (ii < ending && !NILP (end)))
 	  && encountered < counting)
@@ -8964,10 +8946,10 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
        (int nargs, Lisp_Object *args))
 {
   Lisp_Object new_ = args[0], item = args[1], sequence = args[2], tail = Qnil;
-  Lisp_Object elt, tailing = Qnil, result = Qnil, result_tail = Qnil;
+  Lisp_Object result = Qnil, result_tail = Qnil;
   Lisp_Object object, position0, matched_count;
   Elemcount starting = 0, ending = EMACS_INT_MAX, encountered = 0;
-  Elemcount len, ii = 0, counting = EMACS_INT_MAX, presenting = 0;
+  Elemcount ii = 0, counting = EMACS_INT_MAX, presenting = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
   struct gcpro gcpro1;
@@ -9044,19 +9026,22 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
       presenting = presenting <= counting ? 0 : presenting - counting;
     }
 
-  GCPRO1 (tailing);
+  GCPRO1 (result);
   {
-    EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, sequence, tailing, len)
+    GC_EXTERNAL_LIST_LOOP_3 (elt, sequence, tailing)
       {
         if (EQ (tail, tailing))
           {
+	    XUNGCPRO (elt);
+	    UNGCPRO;
+
             if (NILP (result))
               {
-                RETURN_UNGCPRO (XCDR (tail));
+                return XCDR (tail);
               }
 	  
             XSETCDR (result_tail, XCDR (tail));
-            RETURN_UNGCPRO (result);
+	    return result;
           }
         else if (starting <= ii && ii < ending &&
                  (check_test (test, key, item, elt) == test_not_unboundp)
@@ -9090,6 +9075,7 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 
         ii++;
       }
+    END_GC_EXTERNAL_LIST_LOOP (elt);
   }
   UNGCPRO;
 
@@ -9138,28 +9124,27 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 	check_test_func_t check_test, Boolint test_not_unboundp,
 	Lisp_Object test, Lisp_Object key, int depth)
 {
-  Lisp_Object keyed = KEY (key, tree), tailed = alist, aa, dd;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  Lisp_Object keyed = KEY (key, tree), aa, dd;
+  struct gcpro gcpro1;
 
   if (depth + lisp_eval_depth > max_lisp_eval_depth)
     {
       stack_overflow ("Stack overflow in sublis", tree); 
     }
 
-  GCPRO3 (tailed, alist, tree);
   {
-    EXTERNAL_ALIST_LOOP_5 (elt, elt_car, elt_cdr, alist, tail)
+    GC_EXTERNAL_LIST_LOOP_2 (elt, alist)
       {
-        tailed = tail;
-
-        if (check_test (test, key, elt_car, keyed) == test_not_unboundp)
+        if (CONSP (elt) &&
+	    check_test (test, key, XCAR (elt), keyed) == test_not_unboundp)
           {
-            /* Don't use elt_cdr, it is helpful to allow TEST or KEY to
-               modify the alist while it executes. */
-            RETURN_UNGCPRO (XCDR (elt));
+	    XUNGCPRO (elt);
+	    return XCDR (elt);
           }
       }
+    END_GC_EXTERNAL_LIST_LOOP (elt);
   }
+
   if (!CONSP (tree))
     {
       RETURN_UNGCPRO (tree);
@@ -9225,8 +9210,8 @@ nsublis (Lisp_Object alist, Lisp_Object tree,
 	 Boolint test_not_unboundp,
 	 Lisp_Object test, Lisp_Object key, int depth)
 {
-  Lisp_Object tree_saved = tree, tailed = alist, tortoise = tree, keyed = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  Lisp_Object tree_saved = tree, tortoise = tree, keyed = Qnil;
+  struct gcpro gcpro1, gcpro2;
   int count = 0;
 
   if (depth + lisp_eval_depth > max_lisp_eval_depth)
@@ -9234,7 +9219,7 @@ nsublis (Lisp_Object alist, Lisp_Object tree,
       stack_overflow ("Stack overflow in nsublis", tree); 
     }
 
-  GCPRO4 (tailed, alist, tree_saved, keyed);
+  GCPRO2 (tree_saved, keyed);
 
   while (CONSP (tree))
     {
@@ -9242,11 +9227,10 @@ nsublis (Lisp_Object alist, Lisp_Object tree,
       keyed = KEY (key, XCAR (tree));
 
       {
-	EXTERNAL_ALIST_LOOP_5 (elt, elt_car, elt_cdr, alist, tail)
+	GC_EXTERNAL_LIST_LOOP_2 (elt, alist)
 	  {
-	    tailed = tail;
-
-	    if (check_test (test, key, elt_car, keyed) == test_not_unboundp)
+	    if (CONSP (elt) &&
+		check_test (test, key, XCAR (elt), keyed) == test_not_unboundp)
 	      {
 		CHECK_LISP_WRITEABLE (tree);
 		/* See comment in sublis() on using elt_cdr. */
@@ -9255,6 +9239,7 @@ nsublis (Lisp_Object alist, Lisp_Object tree,
 		break;
 	      }
 	  }
+	END_GC_EXTERNAL_LIST_LOOP (elt);
       }
 
       if (!replaced)
@@ -9270,19 +9255,18 @@ nsublis (Lisp_Object alist, Lisp_Object tree,
       replaced = 0;
 
       {
-	EXTERNAL_ALIST_LOOP_5 (elt, elt_car, elt_cdr, alist, tail)
+	GC_EXTERNAL_LIST_LOOP_2 (elt, alist)
 	  {
-	    tailed = tail;
-
-	    if (check_test (test, key, elt_car, keyed) == test_not_unboundp)
+	    if (CONSP (elt) &&
+		check_test (test, key, XCAR (elt), keyed) == test_not_unboundp)
 	      {
 		CHECK_LISP_WRITEABLE (tree);
-		/* See comment in sublis() on using elt_cdr. */
 		XSETCDR (tree, XCDR (elt));
 		tree = Qnil;
 		break;
 	      }
 	  }
+	END_GC_EXTERNAL_LIST_LOOP (elt);
       }
 
       if (!NILP (tree))
@@ -9343,16 +9327,16 @@ arguments: (ALIST TREE &key (TEST #'eql) (KEY #'identity) TEST-NOT)
   {
     /* nsublis() won't attempt to replace a cons handed to it, do that
        ourselves. */
-    EXTERNAL_ALIST_LOOP_5 (elt, elt_car, elt_cdr, alist, tail)
+    GC_EXTERNAL_LIST_LOOP_2 (elt, alist)
       {
-        tailed = tail;
-
-        if (check_test (test, key, elt_car, keyed) == test_not_unboundp)
+        if (CONSP (elt) &&
+	    check_test (test, key, XCAR (elt), keyed) == test_not_unboundp)
           {
-            /* See comment in sublis() on using elt_cdr. */
-            RETURN_UNGCPRO (XCDR (elt));
+	    XUNGCPRO (elt);
+            return XCDR (elt);
           }
       }
+    END_GC_EXTERNAL_LIST_LOOP (elt);
   }
 
   UNGCPRO;
@@ -10523,13 +10507,12 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
 static Lisp_Object
 venn (Lisp_Object caller, int nargs, Lisp_Object *args, Boolint intersectionp)
 {
-  Lisp_Object liszt1 = args[0], liszt2 = args[1], elt = Qnil, tail = Qnil;
+  Lisp_Object liszt1 = args[0], liszt2 = args[1];
   Lisp_Object result = EQ (caller, Qsubsetp) ? Qt : Qnil, result_tail = Qnil;
   Lisp_Object keyed = Qnil, ignore = Qnil;
-  Elemcount len;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2;
 
   PARSE_KEYWORDS_8 (caller, nargs, args, 4, (test, key, test_not, stable),
                     NULL, 2, 0);
@@ -10552,10 +10535,10 @@ venn (Lisp_Object caller, int nargs, Lisp_Object *args, Boolint intersectionp)
   get_check_match_function (&test, test_not, Qnil, Qnil, key,
                             &test_not_unboundp, &check_test);
 
-  GCPRO3 (tail, keyed, result);
+  GCPRO2 (keyed, result);
 
   {
-    EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, liszt1, tail, len)
+    GC_EXTERNAL_LIST_LOOP_2 (elt, liszt1)
       {
         keyed = KEY (key, elt);
         if (NILP (list_position_cons_before (&ignore, keyed, liszt2,
@@ -10583,6 +10566,7 @@ venn (Lisp_Object caller, int nargs, Lisp_Object *args, Boolint intersectionp)
               }
           }
       }
+    END_GC_EXTERNAL_LIST_LOOP (elt);
   }
 
   UNGCPRO;
@@ -10598,7 +10582,7 @@ nvenn (Lisp_Object caller, int nargs, Lisp_Object *args, Boolint intersectionp)
   Elemcount count;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   PARSE_KEYWORDS_8 (caller, nargs, args, 3, (test, key, test_not),
                     NULL, 2, 0);
@@ -10621,9 +10605,9 @@ nvenn (Lisp_Object caller, int nargs, Lisp_Object *args, Boolint intersectionp)
   get_check_match_function (&test, test_not, Qnil, Qnil, key,
                             &test_not_unboundp, &check_test);
 
-  GCPRO3 (tail, keyed, liszt1);
+  tortoise_elt = tail = liszt1, count = 0;
 
-  tortoise_elt = tail = liszt1, count = 0; 
+  GCPRO4 (tail, keyed, liszt1, tortoise_elt);
 
   while (CONSP (tail) ? (elt = XCAR (tail), 1) : NILP (tail) ? 0 :
          (signal_malformed_list_error (liszt1), 0))
@@ -10795,11 +10779,10 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
        (int nargs, Lisp_Object *args))
 {
   Lisp_Object liszt1 = args[0], liszt2 = args[1], ignore = Qnil;
-  Lisp_Object elt = Qnil, tail = Qnil, keyed = Qnil, result, result_tail;
-  Elemcount len;
+  Lisp_Object keyed = Qnil, result, result_tail;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL, check_match = NULL;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2;
 
   PARSE_KEYWORDS (Funion, nargs, args, 4, (test, key, test_not, stable), NULL);
 
@@ -10821,13 +10804,13 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
   check_match = get_check_match_function (&test, test_not, Qnil, Qnil, key,
                                           &test_not_unboundp, &check_test);
 
-  GCPRO3 (tail, keyed, result);
+  GCPRO2 (keyed, result);
 
   if (NILP (stable))
     {
       result = liszt2;
       {
-        EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, liszt1, tail, len)
+	GC_EXTERNAL_LIST_LOOP_2 (elt, liszt1)
           {
             keyed = KEY (key, elt);
             if (NILP (list_position_cons_before (&ignore, keyed, liszt2,
@@ -10845,6 +10828,7 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
                 result = Fcons (elt, result);
               }
           }
+	END_GC_EXTERNAL_LIST_LOOP (elt);
       }
     }
   else
@@ -10858,7 +10842,7 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
          elements in any fashion; providing the functionality for a stable
          union is an XEmacs extension. */
       {
-        EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, liszt2, tail, len)
+	GC_EXTERNAL_LIST_LOOP_2 (elt, liszt2)
           {
             if (NILP (list_position_cons_before (&ignore, elt, liszt1,
                                                  check_match, test_not_unboundp,
@@ -10875,6 +10859,7 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
                   }
               }
           }
+	END_GC_EXTERNAL_LIST_LOOP (elt);
       }
 
       result = NILP (result) ? liszt1 : nconc2 (Fcopy_list (liszt1), result);
@@ -10902,12 +10887,11 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object liszt1 = args[0], liszt2 = args[1], elt = Qnil, tail = Qnil;
+  Lisp_Object liszt1 = args[0], liszt2 = args[1];
   Lisp_Object result = Qnil, result_tail = Qnil, keyed = Qnil, ignore = Qnil;
-  Elemcount len;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_match = NULL, check_test = NULL;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2;
 
   PARSE_KEYWORDS (Fset_exclusive_or, nargs, args, 4,
                   (test, key, test_not, stable), NULL);
@@ -10925,9 +10909,9 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
   check_match = get_check_match_function (&test, test_not, Qnil, Qnil, key,
                                           &test_not_unboundp, &check_test);
 
-  GCPRO3 (tail, keyed, result);
+  GCPRO2 (keyed, result);
   {
-    EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, liszt1, tail, len)
+    GC_EXTERNAL_LIST_LOOP_2 (elt, liszt1)
       {
         keyed = KEY (key, elt);
         if (NILP (list_position_cons_before (&ignore, keyed, liszt2,
@@ -10949,10 +10933,11 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
               }
           }
       }
+    END_GC_EXTERNAL_LIST_LOOP (elt);
   }
 
   {
-    EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, liszt2, tail, len)
+    GC_EXTERNAL_LIST_LOOP_2 (elt, liszt2)
       {
         if (NILP (list_position_cons_before (&ignore, elt, liszt1,
                                              check_match, test_not_unboundp,
@@ -10973,7 +10958,9 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT STABLE)
               }
           }
       }
+    END_GC_EXTERNAL_LIST_LOOP (elt);
   }
+
   UNGCPRO;
 
   return result;
@@ -10998,7 +10985,7 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT)
   Elemcount count;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_match = NULL, check_test = NULL;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   PARSE_KEYWORDS (Fnset_exclusive_or, nargs, args, 4,
                   (test, key, test_not, stable), NULL);
@@ -11016,9 +11003,9 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT)
   check_match = get_check_match_function (&test, test_not, Qnil, Qnil, key,
                                           &test_not_unboundp, &check_test);
 
-  GCPRO3 (tail, keyed, result);
-
   tortoise_elt = tail = liszt1, count = 0; 
+
+  GCPRO4 (tail, keyed, result, tortoise_elt);
 
   while (CONSP (tail) ? (elt = XCAR (tail), 1) : NILP (tail) ? 0 :
          (signal_malformed_list_error (liszt1), 0))
