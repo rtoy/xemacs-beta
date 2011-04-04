@@ -1,5 +1,17 @@
 2011-04-04  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fns.c (count_with_tail):
+	This can be legitimately called from #'delete* with a specified
+	COUNT keyword value, accept this in the assertion.
+	* fns.c (FdeleteX):
+	* fns.c (FremoveX):
+	If COUNT is specified and FROM-END is non-nil, set COUNT to nil in
+	the argument vector, so count_with_tail doesn't see it when
+	calculating the total number of times an item occurs.  Fixes
+	problems with the interaction of :count and :from-end.
+
+2011-04-04  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fns.c (FremoveX):
 	* fns.c (sublis):
 	Correct some nesting of GCPRO and UNGCPRO here, revealed by the

@@ -999,7 +999,7 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
       assert (counting >= 0);
       /* And we're not prepared to handle COUNT from any other caller at the
 	 moment. */
-      assert (EQ (caller, QremoveX));
+      assert (EQ (caller, QremoveX)|| EQ (caller, QdeleteX));
     }
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
@@ -3279,7 +3279,25 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	    {
 	      return sequence;
 	    }
-	}
+
+          if (!NILP (from_end))
+            {
+              /* Sigh, this is inelegant. Force count_with_tail () to ignore
+                 the count keyword, so we get the actual number of matching
+                 elements, and can start removing from the beginning for the
+                 from-end case.  */
+              for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (FdeleteX))->min_args;
+                   ii < nargs; ii += 2)
+                {
+                  if (EQ (args[ii], Q_count))
+                    {
+                      args[ii + 1] = Qnil;
+                      break;
+                    }
+                }
+              ii = 0;
+            }
+        }
     }
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
@@ -3627,6 +3645,24 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	{
 	  return sequence;
 	}
+
+      if (!NILP (from_end))
+        {
+	  /* Sigh, this is inelegant. Force count_with_tail () to ignore the
+	     count keyword, so we get the actual number of matching
+	     elements, and can start removing from the beginning for the
+	     from-end case.  */
+          for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (FremoveX))->min_args;
+               ii < nargs; ii += 2)
+            {
+              if (EQ (args[ii], Q_count))
+                {
+                  args[ii + 1] = Qnil;
+                  break;
+                }
+            }
+          ii = 0;
+        }
     }
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
