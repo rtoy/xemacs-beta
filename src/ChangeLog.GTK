@@ -1,3 +1,12 @@
+2011-04-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (Fgtk_make_font_bold): Define.
+	(Fgtk_make_font_unbold): Define.
+	(Fgtk_make_font_italic): Define.
+	(Fgtk_make_font_unitalic): Define.
+	(Fgtk_make_font_bold_italic): Define.
+	(syms_of_fontcolor_gtk): Add new functions.
+
 2011-04-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-xlike-inc.c (XLIKE_output_string): Remove Gtk

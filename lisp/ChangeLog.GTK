@@ -1,3 +1,8 @@
+2011-04-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-faces.el: Comment out bold and italic fonts functions
+	because they have been moved into src/fontcolor-gtk.c.
+
 2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-marshal.el (name-to-return-type): return fundamental C types
