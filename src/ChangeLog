@@ -1,5 +1,12 @@
 2011-04-04  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fns.c (FremoveX):
+	* fns.c (sublis):
+	Correct some nesting of GCPRO and UNGCPRO here, revealed by the
+	the C++ build compiling core Lisp. Thank you Mats' buildbot!
+
+2011-04-04  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* lisp.h (GC_EXTERNAL_LIST_LOOP_3, GC_EXTERNAL_LIST_LOOP_4): New.
 	* fns.c (count_with_tail, list_position_cons_before, FassocX):
 	* fns.c (FrassocX, position, FdeleteX, FremoveX):
