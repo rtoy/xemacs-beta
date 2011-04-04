@@ -3658,6 +3658,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
             if (EQ (tail, tailing))
               {
 		XUNGCPRO (elt);
+		UNGCPRO;
 
                 if (NILP (result))
                   {
@@ -9147,7 +9148,7 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 
   if (!CONSP (tree))
     {
-      RETURN_UNGCPRO (tree);
+      return tree;
     }
 
   aa = sublis (alist, XCAR (tree), check_test, test_not_unboundp, test, key,
@@ -9157,10 +9158,10 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 
   if (EQ (aa, XCAR (tree)) && EQ (dd, XCDR (tree)))
     {
-      RETURN_UNGCPRO (tree);
+      return tree;
     }
 
-  RETURN_UNGCPRO (Fcons (aa, dd));
+  return Fcons (aa, dd);
 }
 
 DEFUN ("sublis", Fsublis, 2, MANY, 0, /*
