@@ -1,3 +1,8 @@
+2011-04-05  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_init_device): Use recommend pango
+	initialization sequence.
+
 2011-04-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-gtk.c (Fgtk_make_font_bold): Define.
