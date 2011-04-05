@@ -291,18 +291,14 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
     gtk_widget_realize (w);
     {
       PangoContext *context = 0;
-      PangoFontDescription *pango_desc = 0;
       PangoFontMap *font_map = 0;
       Display *disp = GDK_DISPLAY_XDISPLAY (gtk_widget_get_display (w));
       int screen = GDK_SCREEN_XNUMBER (gtk_widget_get_screen (w));
 
-      context = pango_xft_get_context (disp, screen);
-      DEVICE_GTK_CONTEXT (d) = context;
-
-      pango_desc = pango_font_description_new ();
       font_map = pango_xft_get_font_map (disp, screen);
-
       DEVICE_GTK_FONT_MAP (d) = font_map;
+      context = pango_font_map_create_context (font_map);
+      DEVICE_GTK_CONTEXT (d) = context;
     }
   }
 
