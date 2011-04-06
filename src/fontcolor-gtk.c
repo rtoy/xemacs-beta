@@ -228,7 +228,37 @@ gtk_color_list (void)
 /*                           font instances                             */
 /************************************************************************/
 
-/* Synchronize font components when a font description is updated. */
+static PangoFontDescription *
+font_description_from_string (char *extname)
+{
+  PangoFontDescription *pfd;
+  char *p;
+  int count = 0;
+  int len = strlen (extname);
+
+  p = extname;
+  /* Current lisp code makes an XLFD, which we can't load. */
+  while (*p)
+    {
+      if (*p == '-')
+        count++;
+      ++p;
+    }
+  /* XLFD */
+  if (count >= 2)
+    extname = "Monospace 10";
+
+  if (strchr (extname, '*'))
+    extname = "Monospace 10";
+
+  /* FontConfig */
+  if (strcspn (extname, "-:=") != len)
+    extname = "Monospace 10";
+
+  pfd = pango_font_description_from_string (extname);
+
+  return pfd;
+}
 
 static int
 gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
@@ -242,18 +272,25 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   PangoFontMask mask;
   PangoFont *pf;
   char *nm;
-
+  int count = 0;
+  
   extname = LISP_STRING_TO_EXTERNAL (f->name, Qutf_8);
 
-  /* Current code makes an XLFD, which never gives us a mono font. */
-  if (strstr (extname, "--") != 0)
+  {
+    char *p = extname;
+
+    /* Current lisp code makes an XLFD, which we can't load. */
+    while (*p)
+      {
+        if (*p == '-')
+          count++;
+        ++p;
+      }
+  }
+  if (count >= 1)
     extname = "Monospace 10";
-  else if (strstr (extname, "-*-") != 0)
-    extname = "Monospace 10";
-  /* Just to get display looking good... */
-  //extname = "Monospace 10";
   
-  pfd = pango_font_description_from_string (extname);
+  pfd = font_description_from_string (extname);
   /* We can get 0 size fonts here, which will screw up the metrics.
      So we force a size, for now. */
   mask = pango_font_description_get_set_fields (pfd);
@@ -272,7 +309,10 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 			  Qfont, errb);
       return 0;
     }
-  debug_out ("font \"%s\" loaded \"%s\"\n", extname, nm);
+#ifdef DEBUG_XEMACS
+  if (debug_x_fonts)
+    debug_out ("font requested \"%s\" loaded \"%s\"\n", extname, nm);
+#endif
   g_free (nm);
   
   /* Don't allocate the data until we're sure that we will succeed,
@@ -374,10 +414,14 @@ Return a specifier for bold version of FONT on DEVICE.
   
   CHECK_STRING (font);
   extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
-  pfd = pango_font_description_from_string (extname);
+  pfd = font_description_from_string (extname);
 
   pango_font_description_set_weight (pfd, PANGO_WEIGHT_BOLD);
   new_name = pango_font_description_to_string (pfd);
+#ifdef DEBUG_XEMACS
+  if (debug_x_fonts)
+    debug_out ("%s -> %s\n", extname, new_name);
+#endif
   val = build_cistring (new_name);
   g_free (new_name);
   pango_font_description_free (pfd);
@@ -395,10 +439,14 @@ Return a specifier for normal, non-bold version of FONT on DEVICE.
   
   CHECK_STRING (font);
   extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
-  pfd = pango_font_description_from_string (extname);
+  pfd = font_description_from_string (extname);
 
   pango_font_description_set_weight (pfd, PANGO_WEIGHT_MEDIUM);
   new_name = pango_font_description_to_string (pfd);
+#ifdef DEBUG_XEMACS
+  if (debug_x_fonts)
+    debug_out ("%s -> %s\n", extname, new_name);
+#endif
   val = build_cistring (new_name);
   g_free (new_name);
   pango_font_description_free (pfd);
@@ -416,10 +464,14 @@ Return a specifier for italic version of FONT on DEVICE.
   
   CHECK_STRING (font);
   extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
-  pfd = pango_font_description_from_string (extname);
+  pfd = font_description_from_string (extname);
 
   pango_font_description_set_style (pfd, PANGO_STYLE_ITALIC);
   new_name = pango_font_description_to_string (pfd);
+#ifdef DEBUG_XEMACS
+  if (debug_x_fonts)
+    debug_out ("%s -> %s\n", extname, new_name);
+#endif
   val = build_cistring (new_name);
   g_free (new_name);
   pango_font_description_free (pfd);
@@ -437,7 +489,7 @@ Return a specifier for normal, non-italic version of FONT on DEVICE.
   
   CHECK_STRING (font);
   extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
-  pfd = pango_font_description_from_string (extname);
+  pfd = font_description_from_string (extname);
 
   pango_font_description_set_style (pfd, PANGO_STYLE_NORMAL);
   new_name = pango_font_description_to_string (pfd);
@@ -458,11 +510,15 @@ Return a specifier for bold italic version of FONT on DEVICE.
   
   CHECK_STRING (font);
   extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
-  pfd = pango_font_description_from_string (extname);
+  pfd = font_description_from_string (extname);
 
   pango_font_description_set_weight (pfd, PANGO_WEIGHT_BOLD);
   pango_font_description_set_style (pfd, PANGO_STYLE_ITALIC);
   new_name = pango_font_description_to_string (pfd);
+#ifdef DEBUG_XEMACS
+  if (debug_x_fonts)
+    debug_out ("%s -> %s\n", extname, new_name);
+#endif
   val = build_cistring (new_name);
   g_free (new_name);
   pango_font_description_free (pfd);
@@ -515,9 +571,9 @@ vars_of_fontcolor_gtk (void)
 {
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-x-fonts", &debug_x_fonts /*
-If non-zero, display debug information about X fonts.
+If non-zero, display debug information about X, Xft and Gtk fonts.
 */ );
-  debug_x_fonts = 0;
+  debug_x_fonts = 1;
 #endif
 }
 

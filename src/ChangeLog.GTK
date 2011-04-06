@@ -1,3 +1,15 @@
+2011-04-06  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (font_description_from_string): Define function
+	to Convert font name to pango font name.  Just substitute
+	"Monospace" for now; intended to handle fontconfig fonts.
+	(gtk_initialize_font_instance): Use.
+	(Fgtk_make_font_bold): Use.
+	(Fgtk_make_font_unbold): Use.
+	(Fgtk_make_font_italic): Use.
+	(Fgtk_make_font_unitalic): Use.
+	(Fgtk_make_font_bold_italic): Use.
+
 2011-04-05  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* device-gtk.c (gtk_init_device): Use recommend pango
