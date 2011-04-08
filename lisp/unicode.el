@@ -161,7 +161,7 @@ Setting this at run-time does nothing.")
 	indian-is13194 korean-ksc5601 chinese-cns11643-1 chinese-cns11643-2
 	chinese-isoir165 
 	composite ethiopic indian-1-column indian-2-column jit-ucs-charset-0
-	katakana-jisx0201 lao thai-tis620 thai-xtis tibetan tibetan-1-column
+	katakana-jisx0201 lao thai-tis620 tibetan tibetan-1-column
 	latin-jisx0201 chinese-cns11643-3 chinese-cns11643-4
 	chinese-cns11643-5 chinese-cns11643-6 chinese-cns11643-7)))))
 
