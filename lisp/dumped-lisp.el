@@ -205,10 +205,7 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/lao" ; sucks. 
 	   "mule/latin"
 	   "mule/misc-lang"
-	   ;; "thai" #### merge thai and thai-xtis!!!
-           ;; #### Even better; take out thai-xtis! It's not even a
-           ;; standard, and no-one uses it.
-	   "mule/thai-xtis"
+	   "mule/thai"
 	   "mule/tibetan"
 	   "mule/vietnamese"
 	   ))

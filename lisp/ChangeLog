@@ -1,3 +1,21 @@
+2011-04-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (load-unicode-tables):
+	No longer include thai-xtis in the default Unicode precedence list.
+	* mule/thai.el:
+	* mule/thai.el (tis-620):
+	* mule/thai.el (windows-874):
+	* mule/thai.el ("Thai"):
+	Move the Thai language environment and the TIS-620 coding system
+	to this file; add support for Microsoft's code page 874.
+	* mule/thai-util.el:
+	* mule/thai-xtis.el:
+	Remove these two files; XTIS was always non-standard and was never
+	widely implemented, and we've never supported the character
+	composition necessary for thai-util.el.
+	* dumped-lisp.el (preloaded-file-list):
+	Drop thai-xtis, dump thai.el instead.
+
 2011-04-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.el (cadr, caddr, cadddr):
