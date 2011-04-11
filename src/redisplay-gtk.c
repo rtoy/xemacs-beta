@@ -141,6 +141,8 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
   
   pango_layout_set_attributes (layout, attr_list);
   pango_layout_set_font_description (layout, pfd);
+  
+  assert (run->dimension == 1);  /* UTF-8 only. */
   pango_layout_set_text (layout, run->ptr, run->len);
   pango_layout_get_pixel_size (layout, &width, &height);
   ascent = pango_font_metrics_get_ascent (pfm) / PANGO_SCALE;
@@ -186,6 +188,7 @@ our_draw_bitmap (GdkDrawable *drawable,
                     width, height);
 }
 
+/* We always have to layout text to include combining marks etc. */
 static int
 XLIKE_text_width_single_run (struct frame *f,
 			     struct face_cachel *cachel,
@@ -193,24 +196,26 @@ XLIKE_text_width_single_run (struct frame *f,
 {
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
   Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
-  struct device *d = XDEVICE (FRAME_DEVICE (f));
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
   gint width, height;
+  PangoContext *context = gtk_widget_get_pango_context (widget);
+  PangoLayout *layout = pango_layout_new (context);
+  PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
+  Lisp_Object font = FACE_CACHEL_FONT (cachel, run->charset);
+  PangoAttrList *attr_list = pango_attr_list_new ();
 
-  if (!fi->proportional_p)
-    width = fi->width * run->len;
-  else
-    {
-      PangoContext *context = gtk_widget_get_pango_context (widget);
-      PangoLayout *layout = pango_layout_new (context);
-      PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
-      PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
-      Lisp_Object font = FACE_CACHEL_FONT (cachel, run->charset);
-      Lisp_Font_Instance *fi = XFONT_INSTANCE (font);
-
-      pango_layout_set_font_description (layout, pfd);
-      pango_layout_set_text (layout, (guchar)run->ptr, run->len);
-      pango_layout_get_pixel_size (layout, &width, &height);
-    }
+  if (cachel->strikethru)
+    pango_attr_list_insert (attr_list,
+                            pango_attr_strikethrough_new (TRUE));
+  if (cachel->underline)
+    pango_attr_list_insert (attr_list,
+                            pango_attr_underline_new (TRUE));
+  
+  pango_layout_set_attributes (layout, attr_list);
+  pango_layout_set_font_description (layout, pfd);
+  pango_layout_set_text (layout, run->ptr, run->len);
+  pango_layout_get_pixel_size (layout, &width, &height);
+  g_object_unref (layout);
+  pango_attr_list_unref (attr_list);
   return width;
 }
