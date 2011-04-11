@@ -698,6 +698,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 
 #endif /* USE_XFT */
 
+#if !defined (HAVE_GTK)
 /* find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
 static Lisp_Object
@@ -907,5 +908,6 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
 
   return result;
 }
+#endif /* HAVE_GTK */
 
 #endif /* MULE */

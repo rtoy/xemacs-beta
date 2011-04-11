@@ -1,3 +1,11 @@
+2011-04-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_find_charset_font): Define empty function
+	here. Enough to get display running.
+
+	* fontcolor-xlike-inc.c (XFUN): find_charset_font uses XLFD, so
+	it's not appropriate for Gtk.
+
 2011-04-06  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-gtk.c (font_description_from_string): Define function

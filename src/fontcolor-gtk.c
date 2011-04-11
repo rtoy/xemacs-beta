@@ -403,6 +403,17 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
 #define THIS_IS_GTK
 #include "fontcolor-xlike-inc.c"
 
+/* find a font spec that matches font spec FONT and also matches
+   (the registry of) CHARSET. */
+static Lisp_Object
+gtk_find_charset_font (Lisp_Object device, Lisp_Object font,
+			  Lisp_Object charset,
+			  enum font_specifier_matchspec_stages stage)
+{
+  /* Pango doesn't understand charset.  Maybe PangoCoverage? */
+  return font;
+}
+
 DEFUN ("gtk-make-font-bold", Fgtk_make_font_bold, 1, 2, 0, /*
 Return a specifier for bold version of FONT on DEVICE.
 */
