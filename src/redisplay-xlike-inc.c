@@ -46,6 +46,7 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
+#include "text.h"
 
 #ifdef MULE
 #include "mule-ccl.h"
@@ -438,12 +439,76 @@ separate_textual_runs_mule (unsigned char *text_storage,
 }
 #endif
 
+#if defined (HAVE_GTK)
+static int
+separate_textual_runs_utf8 (unsigned char *text_storage,
+                            struct textual_run *run_storage,
+                            const Ichar *str, Charcount len,
+                            struct face_cachel * UNUSED (cachel))
+{
+  int runs_so_far = 0;
+  int runbegin = 0;
+  int total_nchars = 0;
+  int i;
+  Lisp_Object prev_charset = Qunbound;
+  
+  if (len == 0)
+    return 0;
+  
+  prev_charset = ichar_charset (str[0]);
+  
+  for (i = 1; i <= len; i++)
+    {
+      if (i == len || !EQ (ichar_charset (str[i]), prev_charset))
+        {
+          int j;
+          /* Storage for UCS-2 characters. */
+          Ibyte *int_storage =
+            alloca_ibytes (MAX_ICHAR_LEN * (i - runbegin));
+          int int_storage_ptr = 0;
+          int nchars;
+          char *convert_buffer = 0;
+          
+          int_storage_ptr = 0;
+          /* Convert input to internal format in temp buffer.. */
+          for (j = runbegin; j < i; j++)
+            int_storage_ptr +=
+              set_itext_ichar (int_storage + int_storage_ptr, str[j]);
+          /* Convert internal format to utf-8 into an temp buffer. */
+          TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr),
+                              ALLOCA, (convert_buffer, nchars),
+                              Qutf_8);
+          nchars /= sizeof (UExtbyte); /* Tricky ... */
+          /* Copy temp buffer into given storage. */
+          memcpy (text_storage + total_nchars, convert_buffer,
+                  nchars * sizeof (UExtbyte));
+          /* Adjust run pointer to point into given storage space. */
+          run_storage[runs_so_far].ptr = text_storage + total_nchars;
+          run_storage[runs_so_far].charset = prev_charset;
+          run_storage[runs_so_far].len = nchars;
+          run_storage[runs_so_far].dimension = 1;
+          total_nchars += nchars;
+          runs_so_far++;
+          runbegin = i;
+          if (i < len)
+            prev_charset = ichar_charset (str[i]);
+        }
+    }
+  return runs_so_far;
+}
+#endif
+
 static int
 separate_textual_runs (unsigned char *text_storage,
 		       struct textual_run *run_storage,
 		       const Ichar *str, Charcount len,
 		       struct face_cachel *cachel)
 {
+#if defined (HAVE_GTK)
+  /* Should check for device type and allow both Gtk and Xft. */
+  return separate_textual_runs_utf8 (text_storage, run_storage,
+				     str, len, cachel);
+#else
 #if defined(USE_XFT) && defined(MULE)
   return separate_textual_runs_xft_mule (text_storage, run_storage,
 					 str, len, cachel);
@@ -459,6 +524,7 @@ separate_textual_runs (unsigned char *text_storage,
 #if !defined(USE_XFT) && !defined(MULE)
   return separate_textual_runs_nomule (text_storage, run_storage,
 				       str, len, cachel);
+#endif
 #endif
 }
 

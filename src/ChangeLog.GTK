@@ -1,3 +1,9 @@
+2011-04-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (separate_textual_runs_utf8): Define for
+	Gtk.
+	(separate_textual_runs): Use it here.
+
 2011-04-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-gtk.c (gtk_find_charset_font): Define empty function
