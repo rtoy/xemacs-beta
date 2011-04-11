@@ -2,6 +2,8 @@
 
 	* redisplay-gtk.c (gdk_draw_text_image): Assert the text input is
 	single byte.  UTF-8, not UTF-16.
+	(XLIKE_text_width_single_run): We always have to layout the text
+	to account for combining marks, etc.
 
 	* redisplay-xlike-inc.c (separate_textual_runs_utf8): Define for
 	Gtk.
