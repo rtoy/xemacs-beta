@@ -1,3 +1,9 @@
+2011-04-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-win32-init.el (windows-874):
+	No longer create this coding system, now it's provided by thai.el;
+	thanks for the report of the associated Win32 build problem, Mats!
+
 2011-04-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.el (load-unicode-tables):
