@@ -141,7 +141,7 @@ as returned by
        ("OEM"         865 no-conversion "MS-DOS Nordic")
        ; ("OEM"         866 no-conversion "MS-DOS Russian")
        ("OEM"         869 no-conversion "IBM Modern Greek")
-       ("Ansi/OEM"    874 no-conversion "Thai")
+       ; ("Ansi/OEM"    874 no-conversion "Thai")
        ("EBCDIC"      875 no-conversion "EBCDIC")
        ("Ansi/OEM"    932 shift_jis "Japanese")
        ("Ansi/OEM"    936 iso_8_2 "Chinese (PRC, Singapore)")
