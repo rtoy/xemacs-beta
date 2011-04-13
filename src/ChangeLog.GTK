@@ -1,3 +1,12 @@
+2011-04-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c: Define gtk-fallback-font-name and
+	gtk-fallback-font-size as "Monospace Normal 10" and 10.0 respectively.
+	(font_description_from_string): Use fallback font if given an XLFD
+	name or fontconfig (temporarily).
+	(gtk_initialize_font_instance): Use fallback size if size was unspecified.
+	(vars_of_fontcolor_gtk): DEFVAR fallback variables.
+
 2011-04-11  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (gdk_draw_text_image): Assert the text input is
