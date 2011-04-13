@@ -353,7 +353,6 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
 
 /* Forward declarations for X specific functions at the end of the file */
 Lisp_Object __get_gtk_font_truename (PangoFont *pf, int expandp);
-static Lisp_Object __gtk_font_list_internal (const char *pattern);
 
 static Lisp_Object
 gtk_font_instance_truename (struct Lisp_Font_Instance *f,
@@ -384,14 +383,29 @@ gtk_font_instance_properties (struct Lisp_Font_Instance *UNUSED (f))
 }
 
 static Lisp_Object
-gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
-		Lisp_Object UNUSED (maxnumber))
+gtk_font_list (Lisp_Object pattern, Lisp_Object device,
+               Lisp_Object UNUSED (maxnumber))
 {
+  struct device *d = XDEVICE (device);
+  Lisp_Object result = Qnil;
   const char *patternext;
+  PangoFontMap *font_map = DEVICE_GTK_FONT_MAP (d);
+  PangoFontFamily **families = NULL;
+  int n_families, i;
 
-  patternext = LISP_STRING_TO_EXTERNAL (pattern, Qbinary);
-
-  return (__gtk_font_list_internal (patternext));
+  patternext = LISP_STRING_TO_EXTERNAL (pattern, Qutf_8);
+  debug_out ("gtk_font_list pattern \"%s\"\n", patternext);
+  pango_font_map_list_families (font_map, &families, &n_families);
+  
+  /* What to do with the pattern? */
+  for (i = 0; i < n_families; i++)
+    {
+      const char *name;
+      name = pango_font_family_get_name (families[i]);
+      result = Fcons (build_extstring (name, Qutf_8), result);
+    }
+  g_free (families);
+  return result;
 }
 
 /* Include the charset support, shared, for the moment, with X11.  */
@@ -622,19 +636,4 @@ __get_gtk_font_truename (PangoFont *pf, int UNUSED (expandp))
 
   g_free (name);
   return font_name;
-}
-
-static Lisp_Object __gtk_font_list_internal (const char *pattern)
-{
-  char **names;
-  int count = 0;
-  Lisp_Object result = Qnil;
-
-  names = XListFonts (GDK_DISPLAY (), pattern, MAX_FONT_COUNT, &count);
-  while (count--)
-    result = Fcons (build_extstring (names [count], Qbinary), result);
-  if (names)
-    XFreeFontNames (names);
-
-  return result;
 }
