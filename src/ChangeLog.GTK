@@ -1,5 +1,8 @@
 2011-04-13  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c (XLIKE_output_string): Remove obsolete
+        comments about Gtk 8/16 bit text display.
+
 	* fontcolor-gtk.c: Define gtk-fallback-font-name and
 	gtk-fallback-font-size as "Monospace Normal 10" and 10.0
         respectively.          

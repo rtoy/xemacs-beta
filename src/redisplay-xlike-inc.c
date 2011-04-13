@@ -1386,15 +1386,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	       (XChar2b *) runs[i].ptr, runs[i].len);
 #else /* THIS_IS_GTK */
 
-      /* The X specific called different functions (XDraw*String
-         vs. XDraw*String16), but apparently gdk_draw_text takes care
-         of that for us.
-
-	 BUT, gdk_draw_text also does too much, by dividing the length
-	 by 2.  So we fake them out my multiplying the length by the
-	 dimension of the text.  This will do the right thing for
-	 single-dimension runs as well of course.
-      */
           {
 	    GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
 
@@ -1563,15 +1554,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		XDrawImageString16 (dpy, x_win, cgc, xpos, dl->ypos,
 				    (XChar2b *) runs[i].ptr, runs[i].len);
 #else
-	      /* The X specific called different functions (XDraw*String
-		 vs. XDraw*String16), but apparently gdk_draw_text takes care
-		 of that for us.
-
-		 BUT, gdk_draw_text also does too much, by dividing the
-		 length by 2.  So we fake them out my multiplying the
-		 length by the dimension of the text.  This will do the
-		 right thing for single-dimension runs as well of course.
-	      */
               {
 		GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
                 
