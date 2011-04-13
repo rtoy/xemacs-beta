@@ -1,5 +1,8 @@
 2011-04-13  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* faces.c (complex_vars_of_faces): Set default fonts for Gtk.
+	Avoid XLFD specifications.
+
 	* menubar-gtk.c (menu_descriptor_to_widget_1): Use GTK_LABEL.
 
 	* gtk-glue.c (face_to_style): Can't use a PangoFont to set a
