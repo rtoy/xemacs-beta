@@ -7,6 +7,7 @@
 	(gtk_initialize_font_instance): Use fallback size if size was unspecified.
 	(vars_of_fontcolor_gtk): DEFVAR fallback variables.
 	(gtk_font_list): Implement font list for pango fonts.
+	(vars_of_fontcolor_gtk): Make fallback font size same as defaults: 12.
 
 2011-04-11  Jeff Sparkes  <jsparkes@gmail.com>
 
