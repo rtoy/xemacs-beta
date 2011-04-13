@@ -48,6 +48,8 @@ Boston, MA 02111-1307, USA.  */
 #ifdef DEBUG_XEMACS 
 Fixnum debug_x_fonts;
 #endif /* DEBUG_XEMACS */
+static Lisp_Object Vgtk_fallback_font_name;
+static Lisp_Object Vgtk_fallback_font_size;
 
 
 /************************************************************************/
@@ -245,16 +247,18 @@ font_description_from_string (char *extname)
       ++p;
     }
   /* XLFD */
-  if (count >= 2)
-    extname = "Monospace 10";
-
-  if (strchr (extname, '*'))
-    extname = "Monospace 10";
+  if (count >= 2 || strchr (extname, '*'))
+    {
+      CHECK_STRING (Vgtk_fallback_font_name);
+      extname = LISP_STRING_TO_EXTERNAL (Vgtk_fallback_font_name, Qutf_8);
+    }
 
   /* FontConfig */
   if (strcspn (extname, "-:=") != len)
-    extname = "Monospace 10";
-
+    {
+      CHECK_STRING (Vgtk_fallback_font_name);
+      extname = LISP_STRING_TO_EXTERNAL (Vgtk_fallback_font_name, Qutf_8);
+    }
   pfd = pango_font_description_from_string (extname);
 
   return pfd;
@@ -276,26 +280,17 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   
   extname = LISP_STRING_TO_EXTERNAL (f->name, Qutf_8);
 
-  {
-    char *p = extname;
-
-    /* Current lisp code makes an XLFD, which we can't load. */
-    while (*p)
-      {
-        if (*p == '-')
-          count++;
-        ++p;
-      }
-  }
-  if (count >= 1)
-    extname = "Monospace 10";
-  
   pfd = font_description_from_string (extname);
   /* We can get 0 size fonts here, which will screw up the metrics.
-     So we force a size, for now. */
+     So we force a size. */
   mask = pango_font_description_get_set_fields (pfd);
   if ((mask & PANGO_FONT_MASK_SIZE) == 0)
-    pango_font_description_set_size(pfd, 10 * PANGO_SCALE);
+    {
+      float pt_size;
+      CHECK_INT_OR_FLOAT (Vgtk_fallback_font_size);
+      pt_size = extract_float (Vgtk_fallback_font_size);
+      pango_font_description_set_size(pfd, pt_size * PANGO_SCALE);
+    }
   
   pf = pango_font_map_load_font (DEVICE_GTK_FONT_MAP (d),
 				 DEVICE_GTK_CONTEXT (d), pfd);
@@ -586,6 +581,14 @@ If non-zero, display debug information about X, Xft and Gtk fonts.
 */ );
   debug_x_fonts = 1;
 #endif
+  DEFVAR_LISP ("gtk-fallback-font-name", &Vgtk_fallback_font_name/*
+Name of font to be loaded instead of a failed font.                
+*/);
+  Vgtk_fallback_font_name = build_cistring ("Monospace Normal 10");
+  DEFVAR_LISP ("gtk-fallback-font-size", &Vgtk_fallback_font_size/*
+Point size to use for fonts if not otherwise specified.
+*/);
+  Vgtk_fallback_font_size = make_float (10.0);
 }
 
 static int
