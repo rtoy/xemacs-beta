@@ -1,21 +1,29 @@
 2011-04-13  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Use GTK_LABEL.
+
+	* gtk-glue.c (face_to_style): Can't use a PangoFont to set a
+	style.  NB, this code will be obsolete in Gtk 3.0 anyway.
+
+	* redisplay-gtk.c (our_draw_bitmap): ifdef out.
+
 	* redisplay-xlike-inc.c (XLIKE_output_string): Remove obsolete
-        comments about Gtk 8/16 bit text display.
+	  comments about Gtk 8/16 bit text display.
 	(XLIKE_output_string): Move ifdef outside of if statements for
 	underline and strikthru handling.  Gtk does it differently.
+	(): Remove prototype for unimplemented XLIKE_output_cursor().
 
 	* fontcolor-gtk.c: Define gtk-fallback-font-name and
 	gtk-fallback-font-size as "Monospace Normal 10" and 10.0
-        respectively.          
+	respectively.
 	(font_description_from_string): Use fallback font if given an XLFD
 	name or fontconfig (temporarily).
 	(gtk_initialize_font_instance): Use fallback size if size was
-        unspecified.
+	unspecified.
 	(vars_of_fontcolor_gtk): DEFVAR fallback variables.
 	(gtk_font_list): Implement font list for pango fonts.
 	(vars_of_fontcolor_gtk): Make fallback font size same as
-        defaults: 12.
+	defaults: 12.
 
 2011-04-11  Jeff Sparkes  <jsparkes@gmail.com>
 

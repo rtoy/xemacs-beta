@@ -107,10 +107,6 @@ static void XLIKE_output_horizontal_line (struct window *w,
 static void XLIKE_output_eol_cursor (struct window *w,
 				     struct display_line *dl,
 				     int xpos, face_index findex);
-static void XLIKE_output_cursor (struct window *w,
-                                 struct display_line *dl,
-                                 int xpos, face_index findex, int width,
-                                 char c);
 static void XLIKE_clear_frame_windows (Lisp_Object window);
 static void XLIKE_bevel_area (struct window *w, face_index findex,
 			      int x, int y, int width, int height,
@@ -1651,20 +1647,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 #undef XFT_FROB_LISP_COLOR
 #endif
 }
-
-#ifdef THIS_IS_GTK
-static void
-our_draw_bitmap (GdkDrawable *drawable,
-		 GdkGC       *gc,
-		 GdkPixmap   *src,
-		 gint         xsrc,
-		 gint         ysrc,
-		 gint         xdest,
-		 gint         ydest,
-		 gint         width,
-		 gint         height);
-#endif /* THIS_IS_GTK */
-
 
 static void
 XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,

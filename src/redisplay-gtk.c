@@ -137,13 +137,13 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
                             pango_attr_strikethrough_new (TRUE));
   if (cachel->underline)
     pango_attr_list_insert (attr_list,
-                            pango_attr_underline_new (TRUE));
+                            pango_attr_underline_new (PANGO_UNDERLINE_SINGLE));
   
   pango_layout_set_attributes (layout, attr_list);
   pango_layout_set_font_description (layout, pfd);
   
   assert (run->dimension == 1);  /* UTF-8 only. */
-  pango_layout_set_text (layout, run->ptr, run->len);
+  pango_layout_set_text (layout, (const char *)run->ptr, run->len);
   pango_layout_get_pixel_size (layout, &width, &height);
   ascent = pango_font_metrics_get_ascent (pfm) / PANGO_SCALE;
 
@@ -159,7 +159,8 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
   g_object_unref (layout);
   pango_attr_list_unref (attr_list);
 }
-  
+
+#ifdef NOTUSED
 static void
 our_draw_bitmap (GdkDrawable *drawable,
 		 GdkGC       *gc,
@@ -188,6 +189,8 @@ our_draw_bitmap (GdkDrawable *drawable,
                     width, height);
 }
 
+#endif
+
 /* We always have to layout text to include combining marks etc. */
 static int
 XLIKE_text_width_single_run (struct frame *f,
@@ -209,11 +212,11 @@ XLIKE_text_width_single_run (struct frame *f,
                             pango_attr_strikethrough_new (TRUE));
   if (cachel->underline)
     pango_attr_list_insert (attr_list,
-                            pango_attr_underline_new (TRUE));
+                            pango_attr_underline_new (PANGO_UNDERLINE_SINGLE));
   
   pango_layout_set_attributes (layout, attr_list);
   pango_layout_set_font_description (layout, pfd);
-  pango_layout_set_text (layout, run->ptr, run->len);
+  pango_layout_set_text (layout, (const char *)run->ptr, run->len);
   pango_layout_get_pixel_size (layout, &width, &height);
   g_object_unref (layout);
   pango_attr_list_unref (attr_list);
