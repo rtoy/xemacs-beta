@@ -777,6 +777,17 @@ default_face_font_info (Lisp_Object domain, int *ascent, int *descent,
 
   if (UNBOUNDP (font_instance))
     {
+      //assert (!UNBOUNDP (font_instance));
+      if (ascent)
+        *ascent = 1;
+      if (descent)
+        *descent = 0;
+      if (height)
+        *height = 1;
+      if (width)
+        *width = 1;
+      if (proportional_p)
+        *proportional_p = 0;
       return;
     }
 
@@ -2298,7 +2309,7 @@ complex_vars_of_faces (void)
     Lisp_Object device_symbol = Qx;
 #endif
 
-#if defined (HAVE_XFT) || defined (MULE)
+#if defined (HAVE_XFT) || defined (HAVE_GTK) || defined (MULE)
     const Ascbyte **fontptr;
 
     const Ascbyte *fonts[] =
@@ -2316,10 +2327,11 @@ complex_vars_of_faces (void)
       /* Japanese #### add encoding info? */
 				/* Arphic for Chinese? */
 				/* Korean */
-#elif HAVE_GTK
-      "Monospace Normal 10",
-      "unifont",		/* ttf-unifont package on Ubuntu */
-      "WenQuanYi Micro Hei Mono",
+#elif defined (HAVE_GTK)
+      "Monospace Normal 12",
+      "Sazanami Mincho 12",
+      "WenQuanYi Micro Hei Mono 12",
+      "unifont 12",		/* ttf-unifont package on Ubuntu */
 #else
       /* The default Japanese fonts installed with XFree86 4.0 use this
 	 point size, and the -misc-fixed fonts (which look really bad with
@@ -2363,7 +2375,7 @@ complex_vars_of_faces (void)
 
 #endif /* MULE */
 
-#ifdef HAVE_XFT
+#if defined (HAVE_XFT) || defined (HAVE_GTK)
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
       inst_list = Fcons (Fcons (list1 (device_symbol),
 				build_cistring (*fontptr)),
@@ -2378,8 +2390,9 @@ complex_vars_of_faces (void)
 	   An unspecified XLFD won't pick up stuff like 10x20. */
 	build_ascstring ("*")),
        inst_list);
-#ifdef MULE
+#if defined (MULE)
 
+#if !defined (HAVE_GTK)
     /* For Han characters and Ethiopic, we want the misc-fixed font used to
        be distinct from that for alphabetic scripts, because the font
        specified below is distractingly ugly when used for Han characters
@@ -2406,6 +2419,8 @@ complex_vars_of_faces (void)
 	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")),
        inst_list);
 
+#endif
+    
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
       inst_list = Fcons (Fcons (list3 (device_symbol,
 				       Qtwo_dimensional, Qinitial),
@@ -2417,7 +2432,7 @@ complex_vars_of_faces (void)
        specification (see specifier-tag-two-dimensional-initial-stage-p
        above). They also use Markus Kuhn's ISO 10646-1 fixed fonts for
        redisplay. */
-
+#if !defined (HAVE_GTK)
     inst_list =
       Fcons
       (Fcons
@@ -2425,9 +2440,10 @@ complex_vars_of_faces (void)
 	build_ascstring
 	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")),
        inst_list);
-
+#endif
 #endif /* MULE */
 
+#if !defined (HAVE_GTK)
     /* Needed to make sure that charsets with non-specified fonts don't
        use bold and oblique first if medium and regular are available. */
     inst_list =
@@ -2449,7 +2465,7 @@ complex_vars_of_faces (void)
        (list1 (device_symbol),
 	build_ascstring ("-*-lucidatypewriter-medium-r-*-*-*-120-*-*-m-*-*-*")),
        inst_list);
-
+#endif /* HAVE_GTK */
 #endif /* !HAVE_XFT */
 
 #endif /* HAVE_X_WINDOWS || HAVE_GTK */
