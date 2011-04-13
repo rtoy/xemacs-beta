@@ -1395,10 +1395,10 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 #endif 
 	}
 
+#ifdef THIS_IS_X
       /* We draw underlines in the same color as the text. */
       if (cachel->underline)
 	{
-#ifdef THIS_IS_X
 	  int upos, uthick;
 	  unsigned long upos_ext, uthick_ext;
 	  XFontStruct *fs =
@@ -1430,12 +1430,10 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 					dl->ypos + upos, this_width, uthick);
 		}
 	    }
-#endif
 	}
 
       if (cachel->strikethru)
 	{
-#ifdef THIS_IS_X
 	  int ascent, descent, upos, uthick;
 	  unsigned long ascent_ext, descent_ext, uthick_ext;
 	  XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
@@ -1477,8 +1475,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                 XLIKE_FILL_RECTANGLE (dpy, x_win, gc, xpos, dl->ypos + upos,
                                       this_width, uthick);
 	    }
-#endif
 	}
+#endif
       /* Restore the GC */
       if (need_clipping)
 	{

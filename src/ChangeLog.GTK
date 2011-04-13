@@ -2,6 +2,8 @@
 
 	* redisplay-xlike-inc.c (XLIKE_output_string): Remove obsolete
         comments about Gtk 8/16 bit text display.
+	(XLIKE_output_string): Move ifdef outside of if statements for
+	underline and strikthru handling.  Gtk does it differently.
 
 	* fontcolor-gtk.c: Define gtk-fallback-font-name and
 	gtk-fallback-font-size as "Monospace Normal 10" and 10.0
