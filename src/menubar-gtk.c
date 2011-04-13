@@ -866,7 +866,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	      /* Replace the label widget with a hbox containing label and
 		 key sequence. */
 	      GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
-	      GtkLabel *acc = gtk_label_new (LISP_STRING_TO_EXTERNAL (keys, Qctext));
+	      GtkWidget *acc = gtk_label_new (LISP_STRING_TO_EXTERNAL (keys, Qctext));
 	      gtk_misc_set_alignment (GTK_MISC (acc), 1.0, 0.5);
 	      gtk_container_add (GTK_CONTAINER (hbox), main_label);
 	      gtk_container_add (GTK_CONTAINER (hbox), GTK_WIDGET (acc));

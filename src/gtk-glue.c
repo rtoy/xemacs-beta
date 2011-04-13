@@ -321,8 +321,9 @@ face_to_style (Lisp_Object face)
 	style->bg_pixmap[i] = XIMAGE_INSTANCE_GTK_PIXMAP (pm);
     }
 
+#if 0
   gtk_style_set_font (style, FONT_INSTANCE_GTK_FONT (XFONT_INSTANCE (font)));
-
+#endif
   return (style);
 }
 
