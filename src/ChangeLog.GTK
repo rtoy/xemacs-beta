@@ -1,3 +1,10 @@
+2011-04-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_font_list): Add a "Monospace" filter
+	pattern.
+	(font_description_from_string): Build a font description from a
+	fontconfig name.
+
 2011-04-13  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* faces.c (complex_vars_of_faces): Set default fonts for Gtk.
