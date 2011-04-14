@@ -256,10 +256,13 @@ font_description_from_string (char *extname)
   /* FontConfig */
   if (strcspn (extname, "-:=") != len)
     {
-      CHECK_STRING (Vgtk_fallback_font_name);
-      extname = LISP_STRING_TO_EXTERNAL (Vgtk_fallback_font_name, Qutf_8);
+      FcPattern *pattern = FcNameParse (extname);
+      pfd = pango_fc_font_description_from_pattern (pattern, TRUE);
     }
-  pfd = pango_font_description_from_string (extname);
+  else
+    {
+      pfd = pango_font_description_from_string (extname);
+    }
 
   return pfd;
 }
@@ -392,15 +395,27 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object device,
   PangoFontMap *font_map = DEVICE_GTK_FONT_MAP (d);
   PangoFontFamily **families = NULL;
   int n_families, i;
+  int monospace_only = 0;
 
   patternext = LISP_STRING_TO_EXTERNAL (pattern, Qutf_8);
-  debug_out ("gtk_font_list pattern \"%s\"\n", patternext);
+  /* What to do with the pattern?  Add a single case for now. */
+  if (qxestrcasecmp_ascii (patternext, "monospace") == 0)
+    monospace_only = 1;
+
+#ifdef DEBUG_XEMACS
+  if (debug_x_fonts)
+    debug_out ("gtk_font_list pattern \"%s\"\n", patternext);
+#endif
+  /* Should we restrict to monospace somehow?  That can be done with
+     fontconfig fonts. */
   pango_font_map_list_families (font_map, &families, &n_families);
   
-  /* What to do with the pattern? */
   for (i = 0; i < n_families; i++)
     {
       const char *name;
+
+      if (monospace_only && !pango_font_family_is_monospace (families[i]))
+        continue;
       name = pango_font_family_get_name (families[i]);
       result = Fcons (build_extstring (name, Qutf_8), result);
     }
