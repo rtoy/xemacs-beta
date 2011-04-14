@@ -1116,6 +1116,13 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
   if (CONSOLE_TTY_DATA (c)->width <= 0 || CONSOLE_TTY_DATA (c)->height <= 0)
     return TTY_SIZE_UNSPECIFIED;
 
+  CONSOLE_TTY_DATA (c)->colors = tgetnum("Co");
+  if (CONSOLE_TTY_DATA (c)->colors == 0)
+    CONSOLE_TTY_DATA (c)->colors = tgetnum("colors");
+  if (CONSOLE_TTY_DATA (c)->colors == 0)
+    /* There is always foreground and background. */
+    CONSOLE_TTY_DATA (c)->colors = 2;
+
   /*
    * Initialize cursor motion information.
    */
