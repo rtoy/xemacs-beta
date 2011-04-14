@@ -33,6 +33,16 @@
 	Add GC_EXTERNAL_LIST_LOOP_{3,4}, analogous to
 	GC_EXTERNAL_LIST_LOOP_2.
 
+2011-03-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-tty-impl.h (struct tty_console): Add field for number of
+	displayable colors.
+	* device-tty.c (tty_device_system_metrics): Return metrics for
+	num-color-cells and num-bit-planes.  Tracker issue 757.
+	* device.c: There are two required args for device-system-metric.
+	* redisplay-tty.c (init_tty_for_redisplay): Retrieve number of
+	colors from terminal description.  Default to 2 if none found.
+
 2011-03-24  Jerry James  <james@xemacs.org>
 
 	* alloc.c (listu): Assemble the list in the right order so we don't
@@ -79,6 +89,8 @@
 	* unicode.c (Funicode_precedence_list): "occurrance" -> "occurrence".
 	* window.c (struct window_mirror_stats): "Ancilliary" -> "Ancillary".
 
+=======
+>>>>>>> other
 2011-03-20  Mats Lidell  <matsl@xemacs.org>
 
 	* alloca.c (find_stack_direction):
