@@ -1,3 +1,11 @@
+2011-04-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_name): Return type name for an int or string
+	type name.
+	(Fg_object_class_list_properties): Use it here.  Return class
+	properties as a alist of propname and typename.
+	(lisp_to_g_value): Group declarations C style.
+
 2011-04-14  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-gtk.c (gtk_font_list): Add a "Monospace" filter
