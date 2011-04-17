@@ -1,3 +1,26 @@
+2011-04-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el:
+	* cl-extra.el ('char<): New.
+	* cl-extra.el ('char>=): New.
+	* cl-extra.el ('char>): New.
+	* cl-extra.el ('char<=): New.
+	* cl-extra.el (alpha-char-p): New.
+	* cl-extra.el (graphic-char-p): New.
+	* cl-extra.el (standard-char-p): New.
+	* cl-extra.el (char-name): New.
+	* cl-extra.el (name-char): New.
+	* cl-extra.el (upper-case-p): New.
+	* cl-extra.el (lower-case-p): New.
+	* cl-extra.el (both-case-p): New.
+	* cl-extra.el (char-upcase): New.
+	* cl-extra.el (char-downcase): New.
+	* cl-extra.el (integer-length): New.
+	Add various functions dealing (mainly) with characters, making
+	some Common Lisp code easier to port.
+	* descr-text.el (describe-char-unicode-data):
+	Add an autoload for this function, used by #'char-name.
+
 2011-04-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-win32-init.el (windows-874):

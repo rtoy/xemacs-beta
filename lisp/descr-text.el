@@ -675,6 +675,7 @@ the output of \\[universal-argument] \\[what-cursor-position] .  "
       database-file-name)))
 ;; End XEmacs additions.
 
+;;;###autoload
 (defun describe-char-unicode-data (char)
   "Return a list of Unicode data for unicode CHAR.
 Each element is a list of a property description and the property value.

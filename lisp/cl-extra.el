@@ -690,6 +690,138 @@ This also does some trivial optimizations to make the form prettier."
 	   (setq float-negative-epsilon (* x 2))))))
   (cl-float-limits))
 
+;; No type-checking here, we should add it.
+(defalias 'char< '<)
+(defalias 'char>= '>=)
+(defalias 'char> '>)
+(defalias 'char<= '<=)
+
+;;; Character functions.
+(defun* digit-char-p (character &optional (radix 10))
+  "Return non-nil if CHARACTER represents a digit in base RADIX.
+
+RADIX defaults to ten.  The actual non-nil value returned is the integer
+value of the character in base RADIX."
+  (check-type character character)
+  (check-type radix integer)
+  (if (<= radix 10)
+      (and (<= ?0 character (+ ?0 radix -1)) (- character ?0))
+    (or (and (<= ?0 character ?9) (- character ?0))
+	(and (<= ?a character (+ ?a (setq radix (- radix 11))))
+	     (+ character (- 10 ?a)))
+	(and (<= ?A character (+ ?A radix))
+	     (+ character (- 10 ?A))))))
+
+(defun* digit-char (weight &optional (radix 10))
+  "Return a character representing the integer WEIGHT in base RADIX.
+
+RADIX defaults to ten.  If no such character exists, return nil."
+  (check-type weight integer)
+  (check-type radix integer)
+  (and (natnump weight) (< weight radix)
+       (if (< weight 10)
+	   (int-char (+ ?0 weight))
+	 (int-char (+ ?A (- weight 10))))))
+
+(defun alpha-char-p (character)
+  "Return t if CHARACTER is alphabetic, in some alphabet.
+
+Han characters are regarded as alphabetic."
+  (check-type character character)
+  (and (eql ?w (char-syntax character (standard-syntax-table)))
+       (not (<= ?0 character ?9))))
+
+(defun graphic-char-p (character)
+  "Return t if CHARACTER is not a control character.
+
+Control characters are those in the range ?\\x00 to ?\\x15 and ?\\x7f to
+?\\x9f, inclusive."
+  (check-type character character)
+  (not (or (<= ?\x00 character ?\x1f) (<= ?\x7f character ?\x9f))))
+
+(defun standard-char-p (character)
+  "Return t if CHARACTER is one of Common Lisp's standard characters.
+
+These are the non-control ASCII characters, plus the newline character."
+  (check-type character character)
+  (or (<= ?\x20 character ?\x7e) (eql character ?\n)))
+
+(symbol-macrolet
+    ((names '((?\x08 . "Backspace") (?\x09 . "Tab") (?\x0a . "Newline")
+	      (?\x0C . "Page") (?\x0d . "Return") (?\x20 . "Space")
+	      (?\x7f . "Rubout"))))
+
+  (defun char-name (character)
+    "Return a string naming CHARACTER.
+
+For the limited number of characters where the character name has been
+specified by Common Lisp, this always returns the appropriate string
+name.  Otherwise, `char-name' requires that the Unicode database be
+available; see `describe-char-unicode-data'."
+    (check-type character character)
+    (or (cdr (assq character names))
+	(let ((unicode-data
+	       (assoc "Name" (describe-char-unicode-data character))))
+	  (and unicode-data
+	       (if (string-match "^<[^>]+>$" (cadr unicode-data))
+		   (format "U%04X" (char-to-unicode character))
+		 (replace-in-string (cadr unicode-data) " " "_" t))))))
+
+  (defun name-char (name)
+    "Return a character with name NAME, a string."
+    (or (car (rassoc* name names :test #'equalp))
+	(if (string-match "^[uU][0-9A-Fa-f]+$" name)
+	    (unicode-to-char (string-to-number (subseq name 1) 16))
+	  (with-current-buffer (get-buffer-create " *Unicode Data*")
+	    (require 'descr-text)
+	    (when (zerop (buffer-size))
+	      ;; Don't use -literally in case of DOS line endings.
+	      (insert-file-contents describe-char-unicodedata-file))
+	    (goto-char (point-min))
+	    (setq case-fold-search nil)
+	    (and (re-search-forward (format #r"^\([0-9A-F]\{4,6\}\);%s;"
+					    (upcase (replace-in-string
+						     name "_" " " t))) nil t)
+		 (unicode-to-char (string-to-number (match-string 1) 16))))))))
+
+(defun upper-case-p (character)
+  "Return t if CHARACTER is majuscule in the standard case table."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table)
+    (not (eq character (downcase character)))))
+
+(defun lower-case-p (character)
+  "Return t if CHARACTER is minuscule in the standard case table."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table)
+    (not (eq character (upcase character)))))
+
+(defun both-case-p (character)
+  "Return t if CHARACTER has case information in the standard case table."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table)
+    (or (not (eq character (upcase character)))
+	(not (eq character (downcase character))))))    
+
+(defun char-upcase (character)
+  "If CHARACTER is lowercase, return its corresponding uppercase character.
+Otherwise, return CHARACTER."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table) (upcase character)))
+
+(defun char-downcase (character)
+  "If CHARACTER is uppercase, return its corresponding lowercase character.
+Otherwise, return CHARACTER."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table) (downcase character)))
+
+(defun integer-length (integer)
+  "Return the number of bits need to represent INTEGER in two's complement."
+  (ecase (signum integer)
+    (0 0)
+    (-1 (1- (length (format "%b" (- integer)))))
+    (1 (length (format "%b" integer)))))
+
 (run-hooks 'cl-extra-load-hook)
 
 ;; XEmacs addition
