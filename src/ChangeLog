@@ -1,3 +1,8 @@
+2011-04-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-tty.c (tty_device_system_metrics): Fix compile issues for
+	C89 compilers.  Use log() instead of log2().
+
 2011-04-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (count_with_tail):
