@@ -1,3 +1,10 @@
+2011-04-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* faces.c (complex_vars_of_faces): Use 10 pt fonts for Gtk.
+
+	* fontcolor-gtk.c (vars_of_fontcolor_gtk): Set default font size
+	to 10 pt.  Xft 12 pt is much larger than Xft 12.
+
 2011-04-14  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-gtk.c (gtk_font_list): Add a "Monospace" filter

@@ -613,11 +613,11 @@ If non-zero, display debug information about X, Xft and Gtk fonts.
   DEFVAR_LISP ("gtk-fallback-font-name", &Vgtk_fallback_font_name/*
 Name of font to be loaded instead of a failed font.                
 */);
-  Vgtk_fallback_font_name = build_cistring ("Monospace Normal 12");
+  Vgtk_fallback_font_name = build_cistring ("Monospace");
   DEFVAR_LISP ("gtk-fallback-font-size", &Vgtk_fallback_font_size/*
 Point size to use for fonts if not otherwise specified.
 */);
-  Vgtk_fallback_font_size = make_float (12.0);
+  Vgtk_fallback_font_size = make_float (10.0);
 }
 
 static int
