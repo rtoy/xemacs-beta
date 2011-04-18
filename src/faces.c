@@ -2328,10 +2328,10 @@ complex_vars_of_faces (void)
 				/* Arphic for Chinese? */
 				/* Korean */
 #elif defined (HAVE_GTK)
-      "Monospace Normal 12",
-      "Sazanami Mincho 12",
-      "WenQuanYi Micro Hei Mono 12",
-      "unifont 12",		/* ttf-unifont package on Ubuntu */
+      "Monospace 10",
+      "Sazanami Mincho 10",
+      "WenQuanYi Micro Hei Mono 10",
+      "unifont 10",		/* ttf-unifont package on Ubuntu */
 #else
       /* The default Japanese fonts installed with XFree86 4.0 use this
 	 point size, and the -misc-fixed fonts (which look really bad with
