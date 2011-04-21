@@ -536,6 +536,8 @@ static Lisp_Object type_to_marshaller_type (GType t)
          *sigh*
 	 */
 #ifdef JSPARKES
+      /* Do these exist in Gtk 2.0, or any they just pointers?
+       */
       if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_ARRAY))
 	return (build_ascstring ("ARRAY"));
 
@@ -1417,7 +1419,7 @@ The cdr is a list of all the magic properties it has.
 }
 
 DEFUN ("g-type-from-name", Fg_type_from_name, 1, 1, 0, /*
-Return the GType of NAME.
+Return the type name of TYPENAME.
 The type is returned as a string, so this is a type validator.
 */
        (type_name))
@@ -1451,7 +1453,7 @@ Return the name of GTYPE, which is the name of a type..
     {
       CHECK_STRING (type);
       /* Seems redundant, but validates the type name. */
-      t = g_type_from_name (XSTRING_DATA (type));
+      t = g_type_from_name ((char *) XSTRING_DATA (type));
     }
   if (t == G_TYPE_INVALID)
     invalid_state ("type does not exist", type);
@@ -1462,6 +1464,48 @@ Return the name of GTYPE, which is the name of a type..
   return build_cistring (name);
 }
 
+DEFUN ("g-type-parent", Fg_type_parent, 1, 1, 0, /*
+Return the parent type of TYPENAME.
+Returns nil if no parent can be found.
+*/
+       (typename))
+{
+  GType gt = G_TYPE_INVALID;
+  GType parent = G_TYPE_INVALID;
+
+  CHECK_STRING (typename);
+  gt = g_type_from_name ((char *) XSTRING_DATA (typename));
+  if (gt == G_TYPE_INVALID)
+    invalid_state ("type does not exist", typename);
+  parent = g_type_parent (gt);
+  if (parent == G_TYPE_INVALID)
+    return Qnil;
+  return Fg_type_name (make_int (parent));
+}
+
+DEFUN ("g-type-children", Fg_type_children, 1, 1, 0, /*
+Return the child types of TYPENAME.
+*/
+       (typename))
+{
+  GType gt = G_TYPE_INVALID;
+  GType *children = G_TYPE_INVALID;
+  guint n_children, i;
+  Lisp_Object result = Qnil;
+
+  CHECK_STRING (typename);
+  gt = g_type_from_name ((char *) XSTRING_DATA (typename));
+  if (gt == G_TYPE_INVALID)
+    invalid_state ("type does not exist", typename);
+  children = g_type_children (gt, &n_children);
+
+  for (i = 0; i < n_children; i++)
+    result = Fcons (Fg_type_name (make_int (children[i])), result);
+  result = Freverse (result);
+  g_free (children);
+  return result;
+}
+  
 DEFUN ("g-object-class-list-properties", Fg_object_class_list_properties, 1, 1, 0, /*
 Return a list of all properties for CLASS name.
 */
@@ -1521,6 +1565,8 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fgtk_describe_type);
   DEFSUBR (Fg_type_name);
   DEFSUBR (Fg_type_from_name);
+  DEFSUBR (Fg_type_parent);
+  DEFSUBR (Fg_type_children);
   DEFSUBR (Fg_object_class_list_properties);
   syms_of_ui_byhand ();
 #ifdef JSPARKES
@@ -1814,8 +1860,6 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 	{
 	  g_value_set_boxed (val, NULL);
 	}
-#ifdef JSPARKES
-      
       else if (G_TYPE_BOXED (obj))
 	{
 	  g_value_set_boxed (val) = XGTK_BOXED (obj)->object;
@@ -1833,7 +1877,6 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 	  GTK_VALUE_OBJECT(*val) = face_to_gc (obj);
 	  g_value_set_instance (val, face_to_gc (obj));
 	}
-#endif
       else if (GDK_IS_DRAWABLE (val))
 	{
 	  if (GLYPHP (obj))
@@ -1964,7 +2007,7 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
       break;
 
     default:
-#ifdef JSPARKES      
+#ifdef JSPARKES
       if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(val->type, GTK_TYPE_ARRAY))
 	{
 	  if (NILP (obj))
@@ -1990,7 +2033,7 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
                       g_type_name (G_VALUE_TYPE (val)),
                       (int) G_VALUE_TYPE (val));
 	  ABORT();
-          //}
+          /* } */
       break;
     }
 

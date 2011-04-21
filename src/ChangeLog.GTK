@@ -1,3 +1,9 @@
+2011-04-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_from_name): Update doc string.
+	(Fg_type_parent): Define.
+	(Fg_type_children): Define.
+
 2011-04-18  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* faces.c (complex_vars_of_faces): Use 10 pt fonts for Gtk.
