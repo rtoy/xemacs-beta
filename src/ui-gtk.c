@@ -1416,7 +1416,6 @@ The cdr is a list of all the magic properties it has.
   return (rval);
 }
 
-
 DEFUN ("g-type-from-name", Fg_type_from_name, 1, 1, 0, /*
 Return the GType of NAME.
 The type is returned as a string, so this is a type validator.
@@ -1434,6 +1433,35 @@ The type is returned as a string, so this is a type validator.
   return (build_ascstring (g_type_name (type)));
 }
 
+DEFUN ("g-type-name", Fg_type_name, 1, 1, 0, /*
+Return the name of GTYPE, which is the name of a type..
+*/
+       (type))
+{
+  GType t = G_TYPE_INVALID;
+  gchar *name;
+
+  if (INTP (type))
+    {
+      /* This might fail due to lack of range! That's why we use the
+       type names generally. */
+      t = XINT (type);
+    }
+  else
+    {
+      CHECK_STRING (type);
+      /* Seems redundant, but validates the type name. */
+      t = g_type_from_name (XSTRING_DATA (type));
+    }
+  if (t == G_TYPE_INVALID)
+    invalid_state ("type does not exist", type);
+   
+  name = g_type_name (t);
+  if (name == 0)
+    invalid_state ("type does not exist", type);
+  return build_cistring (name);
+}
+
 DEFUN ("g-object-class-list-properties", Fg_object_class_list_properties, 1, 1, 0, /*
 Return a list of all properties for CLASS name.
 */
@@ -1441,7 +1469,6 @@ Return a list of all properties for CLASS name.
 {
   GType gt;
   GObjectClass *type_class = NULL;
-  GObject *obj = 0;
   Lisp_Object prop_list = Qnil;
   GParamSpec **props;
   guint n_props, i;
@@ -1452,19 +1479,16 @@ Return a list of all properties for CLASS name.
     invalid_state ("type does not exist", name);
 
   type_class = (GObjectClass *)g_type_class_peek (gt);
-  if (obj == NULL)
+  if (type_class == NULL)
     invalid_state("Unable to create GObject of class", name);
 
   props = g_object_class_list_properties (type_class, &n_props);
   for (i = 0; i < n_props; i++) 
-    {
-      GValue v;
-      memset (&v, '\0', sizeof (GValue));
-      g_value_init (&v, props[i]->value_type);
-      prop_list = Fcons (g_type_to_lisp (&v), prop_list);
-    }
+    prop_list = acons (build_cistring (props[i]->name),
+                       Fg_type_name (make_int (props[i]->value_type)),
+                       prop_list);
+  prop_list = Freverse (prop_list);
   g_free (props);
-  g_free (obj);
   return prop_list;
 }
 
@@ -1495,6 +1519,7 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fgtk_fundamental_type);
   DEFSUBR (Fgtk_object_type);
   DEFSUBR (Fgtk_describe_type);
+  DEFSUBR (Fg_type_name);
   DEFSUBR (Fg_type_from_name);
   DEFSUBR (Fg_object_class_list_properties);
   syms_of_ui_byhand ();
@@ -1774,8 +1799,9 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
     case G_TYPE_ENUM:
       {
         GValue enumValue;
+        gint v;
         memset (&enumValue, '\0', sizeof (GValue));
-        gint v = symbol_to_gtk_enum (obj, &enumValue);
+        v = symbol_to_gtk_enum (obj, &enumValue);
         g_value_set_enum (val, v);
       }
       break;
@@ -1961,7 +1987,8 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 	{
 #endif
 	  stderr_out ("Do not know how to convert `%s' %d from lisp!\n",
-                      g_type_name (G_VALUE_TYPE (val)),  G_VALUE_TYPE (val));
+                      g_type_name (G_VALUE_TYPE (val)),
+                      (int) G_VALUE_TYPE (val));
 	  ABORT();
           //}
       break;

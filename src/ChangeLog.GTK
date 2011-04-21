@@ -1,9 +1,16 @@
 2011-04-18  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* faces.c (complex_vars_of_faces): Use 10 pt fonts for Gtk.
-
 	* fontcolor-gtk.c (vars_of_fontcolor_gtk): Set default font size
 	to 10 pt.  Xft 12 pt is much larger than Xft 12.
+
+2011-04-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_name): Return type name for an int or string
+	type name.
+	(Fg_object_class_list_properties): Use it here.  Return class
+	properties as a alist of propname and typename.
+	(lisp_to_g_value): Group declarations C style.
 
 2011-04-14  Jeff Sparkes  <jsparkes@gmail.com>
 
