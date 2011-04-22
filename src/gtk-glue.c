@@ -301,8 +301,8 @@ face_to_style (Lisp_Object face)
   GtkStyle *style = gtk_style_new ();
   int i;
 
-  Lisp_Object font = Fspecifier_instance (Fget (face, Qfont, Qnil),
-					  device, Qnil, Qnil);
+/*   Lisp_Object font = Fspecifier_instance (Fget (face, Qfont, Qnil), */
+/* 					  device, Qnil, Qnil); */
   Lisp_Object fg = Fspecifier_instance (Fget (face, Qforeground, Qnil),
 					device, Qnil, Qnil);
   Lisp_Object bg = Fspecifier_instance (Fget (face, Qbackground, Qnil),

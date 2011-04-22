@@ -1,3 +1,7 @@
+2011-04-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-glue.c (face_to_style): Comment out unused variable.
+
 2011-04-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (Fg_type_from_name): Update doc string.
