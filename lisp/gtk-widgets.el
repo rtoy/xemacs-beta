@@ -35,6 +35,11 @@
  '(gtk-import-function-internal
    gtk-call-function gtk-import-variable-internal gtk-ctree-recurse))
 
+
+;; GtkWindow
+(gtk-import-function GtkWidget gtk_window_new GtkWindowType)
+
+
 (gtk-import-function GtkAccelGroup gtk_accel_group_new)
 
 
@@ -1405,7 +1410,7 @@
 
 
 (gtk-import-function GType gtk_toolbar_get_type)
-(gtk-import-function GtkWidget gtk_toolbar_new GtkOrientation GtkToolbarStyle)
+(gtk-import-function GtkWidget gtk_toolbar_new)
 
 ;; Simple button items
 ;;; Handcoded in ui-byhand.c... #### FIXME
