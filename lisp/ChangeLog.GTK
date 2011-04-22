@@ -1,3 +1,8 @@
+2011-04-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el (GtkWidget): Add gtk-window-new.
+	(GtkWidget): Update gtk-toolbar-new to 2.0 params.
+
 2011-04-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-faces.el: Comment out bold and italic fonts functions
