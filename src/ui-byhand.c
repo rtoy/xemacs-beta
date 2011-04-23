@@ -466,7 +466,7 @@ generic_toolbar_insert_item (Lisp_Object toolbar,
   id = new_gui_id ();
   gcpro_popup_callbacks (id, callback);
   g_object_weak_ref (XGTK_OBJECT (toolbar)->object, __remove_gcpro_by_id,
-		      (gpointer) id);
+		     GUINT_TO_POINTER (id));
 
   if (NILP (position))
     {
