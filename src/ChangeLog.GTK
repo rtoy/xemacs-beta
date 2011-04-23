@@ -1,5 +1,30 @@
 2011-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (resource_name_to_resource): Update for renamed
+	lisp_to_gtk_enum.
+
+	* ui-gtk.c: Enumerations and flags are now stored in an alist.
+	GType is represented as a symbol in lisp because an unsigned int
+	might be too large.
+	(type_as_symbol): Define.
+	(type_already_imported_p): Return imported type as symbol. Look up
+	type in alist. Enumeration and flags need to be imported.
+	(mark_type_as_imported): Add to Vgtk_types alist.  Return symbol.
+	(mark_type_as_imported): Handle type as symbol. Return symbol
+	(import_gtk_flags_internal): Use Vgtk_flags alist.
+	(import_gtk_enumeration_internal): Use Vgtk_enumerations alist.
+	(import_gtk_type): Handle type as symbol.
+	(Fgtk_import_function_internal): Invalid argument, not sf error.
+	(vars_of_ui_gtk): Add Vgtk_flags, rename to Vgtk_enumerations,
+	update doc of Vgtk_type for alist.
+	(g_type_to_lisp): Handle flags correctly.
+	(lisp_to_g_value): Handle enums and flags correctly.
+	(get_enumeration): Update for alist.
+	(lisp_to_gtk_flag): Update called function args.
+	(lisp_to_gtk_enum): Rename from symbol_to_gtk_enum. Update for
+	alist. Error if unknown enum.
+	(lisp_to_gtk_flag): Update for alist. Error if unknown flag.
+
 	* ui-byhand.c (__remove_gcpro_by_id): Mark argument unused.
 
 	* emacs-marshals.c: Regenerate for INT__INT.

@@ -50,7 +50,8 @@ Lisp_Object Qemacs_ffip;
 Lisp_Object Qemacs_gtk_objectp;
 Lisp_Object Qemacs_gtk_boxedp;
 Lisp_Object Qvoid;
-Lisp_Object Vgtk_enumeration_info;
+Lisp_Object Vgtk_enumerations;
+Lisp_Object Vgtk_flags;
 Lisp_Object Vgtk_types;
 
 static GHashTable *dll_cache;
@@ -60,9 +61,9 @@ static int lisp_to_g_value (Lisp_Object obj, GValue *v);
 #if 0
 void describe_gtk_arg (GType *arg);
 #endif
-gint symbol_to_gtk_enum (Lisp_Object obj, GValue *);
-static gint lisp_to_gtk_flag (Lisp_Object obj, GValue *arg);
-static Lisp_Object flags_to_list (const GValue *arg);
+gint lisp_to_gtk_enum (Lisp_Object obj);
+static gint lisp_to_gtk_flag (Lisp_Object obj);
+static Lisp_Object flag_to_symbol (const GValue *arg);
 static Lisp_Object enum_to_symbol (const GValue *arg);
 
 #define NIL_OR_VOID_P(x) (NILP (x) || EQ (x, Qvoid))
@@ -117,12 +118,20 @@ This is for loading dependency DLLs into XEmacs.
 }
 
 
+static Lisp_Object
+type_as_symbol (GType t)
+{
+  return intern (g_type_name (t));
+}
+
 /* Gtk object importing */
 EXFUN (Fgtk_import_type, 1);
 
-static int
+static Lisp_Object
 type_already_imported_p (GType t)
 {
+  Lisp_Object value;
+  
   /* These are cases that we don't need to import */
   switch (GTK_FUNDAMENTAL_TYPE (t))
     {
@@ -138,8 +147,6 @@ type_already_imported_p (GType t)
     case G_TYPE_INT64:	/* bignum? */
     case G_TYPE_UINT64:	/* bignum? */
 #endif
-    case G_TYPE_ENUM:
-    case G_TYPE_FLAGS:
     case G_TYPE_FLOAT:
     case G_TYPE_DOUBLE:
     case G_TYPE_STRING:
@@ -148,34 +155,26 @@ type_already_imported_p (GType t)
     case G_TYPE_PARAM:
     case G_TYPE_OBJECT:
       //case G_TYPE_GTYPE:
-	return (1);
+      return type_as_symbol (t);
     }
-  if (NILP (Vgtk_types))
-    {
-      Vgtk_types = call2 (intern ("make-hashtable"), 
-                                     make_int (163), Qequal);
-      return (0);
-    }
-  if (!NILP (Fgethash (make_int (t), Vgtk_types, Qnil)))
-      return (1);
-  return (0);
+  value = Fassq (type_as_symbol (t), Vgtk_types);
+  return value;
 }
 
-static void
+static Lisp_Object
 mark_type_as_imported (GType t)
 {
-  const gchar *name = g_type_name (t);
-  Lisp_Object value  = Fmake_symbol (make_string ((const Ibyte *)name, strlen (name)));
+  Lisp_Object value = type_as_symbol (t);
 
-  if (type_already_imported_p (t))
-    return;
+  if (NILP (type_already_imported_p (t)))
+    Vgtk_types = acons (value, make_int (t), Vgtk_types);
 
-  Fputhash (make_int (t), value, (Vgtk_types));
+  return value;
 }
 
-static void import_gtk_type (GType t);
+static Lisp_Object import_gtk_type (GType t);
 
-static void
+static Lisp_Object
 import_gtk_object_internal (GType the_type)
 {
   //GType original_type = the_type;
@@ -198,10 +197,8 @@ import_gtk_object_internal (GType the_type)
       /* Register the type before we do anything else with it... */
       if (!first_time)
 	{
-	  if (!type_already_imported_p (the_type))
-	    {
-	      import_gtk_type (the_type);
-	    }
+	  if (!NILP (type_already_imported_p (the_type)))
+            import_gtk_type (the_type);
 	}
       else
 	{
@@ -220,7 +217,7 @@ import_gtk_object_internal (GType the_type)
 
       for (i = 0; i < n_params; i++) 
 	{
-	  if (!type_already_imported_p (args[i].value_type)) 
+	  if (!NILP (type_already_imported_p (args[i].value_type)))
 	    {
 	      import_gtk_type (args[i].type);
 	    }
@@ -245,83 +242,87 @@ import_gtk_object_internal (GType the_type)
 
       the_type = g_type_parent(the_type);
     } while (the_type != G_TYPE_INVALID);
+  return mark_type_as_imported (the_type);
 }
 
-static void 
-check_enumeration_hashtable (void)
-{
-  if (NILP (Vgtk_enumeration_info))
-    Vgtk_enumeration_info = call2 (intern ("make-hashtable"), 
-				   make_int (101), Qequal);
-
-}
-
-static void
+static Lisp_Object
 import_gtk_flags_internal (GType the_type)
 {
-  GtkEnumValue *vals = gtk_type_enum_get_values (the_type);
-  Lisp_Object assoc = Qnil;
+  GtkFlagValue *vals = gtk_type_flags_get_values (the_type);
 
-  assert (G_TYPE_IS_FLAGS (the_type));
+  if (!G_TYPE_IS_FLAGS (the_type))
+    invalid_argument ("Gtk type is not a flag", type_as_symbol (the_type));
 
-  check_enumeration_hashtable ();
-  
   while (vals && vals->value_name)
     {
-      acons (intern (vals->value_nick), make_int (vals->value), assoc);
-      acons (intern (vals->value_name), make_int (vals->value), assoc);
+      /* The nickname is more likely to be used, but save both names. */
+      Vgtk_flags = acons (intern ((CIbyte *)vals->value_nick),
+                          make_int (vals->value),
+                          Vgtk_flags);
+      Vgtk_flags = acons (intern ((CIbyte *)vals->value_name),
+                          make_int (vals->value),
+                          Vgtk_flags);
 #if DEBUG_XEMACS
-      debug_out("flag %s %s => %d\n", vals->value_nick, vals->value_name, vals->value);
+      debug_out("flag %s %s => %d\n", vals->value_nick, vals->value_name,
+                vals->value);
 #endif
       vals++;
     }
-  /* Should we also index by name? I want to... --jsparkes */
-  Fputhash (make_int (the_type), assoc, Vgtk_enumeration_info);
+  return mark_type_as_imported (the_type);
 }
 
-static void
+static Lisp_Object
 import_gtk_enumeration_internal (GType the_type)
 {
   GtkEnumValue *vals = gtk_type_enum_get_values (the_type);
-  Lisp_Object assoc = Qnil;
   
-  assert (G_TYPE_IS_ENUM (the_type));
-
-  check_enumeration_hashtable ();
+  if (!G_TYPE_IS_ENUM (the_type))
+    invalid_argument ("Gtk type is not an enum",
+                      intern (g_type_name (the_type)));
 
   while (vals && vals->value_name)
     {
-      acons (intern (vals->value_nick), make_int (vals->value), assoc);
-      acons (intern (vals->value_name), make_int (vals->value), assoc);
+      Vgtk_enumerations = acons (intern (vals->value_nick),
+                                 make_int (vals->value),
+                                 Vgtk_enumerations);
+      Vgtk_enumerations = acons (intern (vals->value_name),
+                                 make_int (vals->value),
+                                 Vgtk_enumerations);
 #if DEBUG_XEMACS
       debug_out("enum %s %s => %d\n", vals->value_nick, vals->value_name, vals->value);
 #endif
       vals++;
     }
- 
-  Fputhash (make_int (the_type), assoc, Vgtk_enumeration_info);
+  return mark_type_as_imported (the_type);
 }
 
-static void
+static Lisp_Object
 import_gtk_type (GType t)
 {
-  if (type_already_imported_p (t))
-    return;
+  Lisp_Object value = type_already_imported_p (t);
+  
+  if (!NILP (value))
+    return value;
 
+#ifdef DEBUG_XEMACS
   stderr_out ("import_gtk_type %d %s\n", (unsigned int)t, g_type_name(t));
+#endif
+  value = Qnil;
 
   if (G_TYPE_IS_ENUM (t))
-    import_gtk_enumeration_internal (t);
+    value = import_gtk_enumeration_internal (t);
   else if (G_TYPE_IS_FLAGS (t))
-    import_gtk_flags_internal (t);
+    value = import_gtk_flags_internal (t);
   else if (G_TYPE_IS_OBJECT (t)) 
-    import_gtk_object_internal (t);
+    value = import_gtk_object_internal (t);
   else
     {
+      invalid_state ("Import gtk type not implemented", type_as_symbol (t));
+#ifdef DEBUG_XEMACS
       stderr_out ("import_gtk_type unknown %s\n", g_type_name(t));
+#endif
     }
-
-  mark_type_as_imported (t);
+  return value;
 }
 
 
@@ -576,7 +577,8 @@ Import a variable into the XEmacs namespace.
   void *var = NULL;
   GParamSpec arg;
 
-  if (SYMBOLP (type)) type = Fsymbol_name (type);
+  if (SYMBOLP (type))
+    type = Fsymbol_name (type);
 
   CHECK_STRING (type);
   CHECK_STRING (name);
@@ -588,7 +590,7 @@ Import a variable into the XEmacs namespace.
 
   if (arg.value_type == G_TYPE_INVALID)
     {
-      sferror ("Unknown type", type);
+      invalid_argument ("Unknown type", type);
     }
 
   /* Need to look thru the already-loaded dlls */
@@ -1050,6 +1052,7 @@ Lisp_Object build_gtk_object (GObject *obj)
       retval = wrap_emacs_gtk_object (data);
 
       id = new_gui_id ();
+      /* XXX convert from qdata to data. */
       g_object_set_qdata (obj, GTK_DATA_GUI_IDENTIFIER, (gpointer) id);
       gcpro_popup_callbacks (id, retval);
       g_object_ref (obj);
@@ -1441,7 +1444,7 @@ Return the name of GTYPE, which is the name of a type..
        (type))
 {
   GType t = G_TYPE_INVALID;
-  gchar *name;
+  const gchar *name;
 
   if (INTP (type))
     {
@@ -1578,13 +1581,18 @@ void
 vars_of_ui_gtk (void)
 {
   Fprovide (intern ("gtk-ui"));
-  DEFVAR_LISP ("gtk-enumeration-info", &Vgtk_enumeration_info /*
-A hashtable holding type information about GTK enumerations and flags.
+  DEFVAR_LISP ("gtk-enumerations", &Vgtk_enumerations /*
+An alist of GTK internal enumeration values.
 Do NOT modify unless you really understand ui-gtk.c.
 */);
-  Vgtk_enumeration_info = Qnil;
+  Vgtk_flags = Qnil;
+  DEFVAR_LISP ("gtk-flags", &Vgtk_flags /*
+An alist of GTK internal flag values.
+Do NOT modify unless you really understand ui-gtk.c.
+*/);
+  Vgtk_enumerations = Qnil;
   DEFVAR_LISP ("gtk-types", &Vgtk_types /*
-A hashtable holding type information about imported GTK types and name.
+An alist of imported GTK type values.
 Intended for read-only debugging.
 */);
   Vgtk_types = Qnil;
@@ -1707,7 +1715,7 @@ Lisp_Object g_type_to_lisp (GValue *arg)
     case G_TYPE_ENUM:
       return (enum_to_symbol (arg));
     case G_TYPE_FLAGS:
-      return (flags_to_list (arg));
+      return (flag_to_symbol (arg));
     case G_TYPE_FLOAT:
       return (make_float (g_value_get_float (arg)));
     case G_TYPE_DOUBLE:
@@ -1843,23 +1851,18 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 	}
       break;
     case G_TYPE_ENUM:
-      {
-        GValue enumValue;
-        gint v;
-        memset (&enumValue, '\0', sizeof (GValue));
-        v = symbol_to_gtk_enum (obj, &enumValue);
-        g_value_set_enum (val, v);
-      }
+      g_value_set_enum (val, lisp_to_gtk_enum (obj));
       break;
     case G_TYPE_FLAGS:
-      /* Convert a lisp symbol to a GTK enum */
-      g_value_set_flags (val, lisp_to_gtk_flag (obj, val));
+      /* Obj may be one flag or a list to or together. */
+      g_value_set_flags (val, lisp_to_gtk_flag (obj));
       break;
     case G_TYPE_BOXED:
       if (NILP (obj))
 	{
 	  g_value_set_boxed (val, NULL);
 	}
+#ifdef JSPARKES
       else if (G_TYPE_BOXED (obj))
 	{
 	  g_value_set_boxed (val) = XGTK_BOXED (obj)->object;
@@ -1975,12 +1978,13 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 	      invalid_argument ("Don't know how to convert to GdkColor", obj);
 	    }
 	}
+#endif
       else
 	{
 	  /* Unknown type to convert to boxed */
 	  stderr_out ("Don't know how to convert to boxed!\n");
 	  g_value_set_boxed (val, NULL);
-	}
+        }
       break;
 
     case G_TYPE_POINTER:
@@ -2033,120 +2037,89 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
                       g_type_name (G_VALUE_TYPE (val)),
                       (int) G_VALUE_TYPE (val));
 	  ABORT();
-          /* } */
+          }
       break;
     }
 
   return (0);
 }
  
-/* This is used in glyphs-gtk.c as well */
 static Lisp_Object
 get_enumeration (const GValue *arg)
 {
-  Lisp_Object alist;
-
-  check_enumeration_hashtable ();
-
-  alist = Fgethash (make_int (G_VALUE_TYPE (arg)),
-                              Vgtk_enumeration_info, Qnil);
-
-  if (NILP (alist))
-    {
-      import_gtk_enumeration_internal (G_VALUE_TYPE (arg));
-      alist = Fgethash (make_int (G_VALUE_TYPE (arg)),
-                        Vgtk_enumeration_info, Qnil);
-    }
-  return (alist);
+  return Frassq (make_int (G_VALUE_TYPE (arg)), Vgtk_enumerations);
 }
 
 gint
-symbol_to_gtk_enum (Lisp_Object obj, GValue *v)
+lisp_to_gtk_enum (Lisp_Object obj)
 {
-  Lisp_Object alist = get_enumeration (v);
-  Lisp_Object value = Qnil;
+  Lisp_Object value = Fassq (obj, Vgtk_enumerations);
 
-  if (NILP (alist))
-    {
-      invalid_argument ("Unknown enumeration",
-                        build_cistring (g_type_name (G_VALUE_TYPE (v))));
-    }
-
-  value = Fassq (obj, alist);
+  value = Fassq (obj, Vgtk_enumerations);
 
   if (NILP (value))
-    {
-      invalid_argument ("Unknown value", obj);
-    }
+    invalid_argument ("Unknown enumeration", obj);
 
-  CHECK_INT (XCDR (value));
+  CHECK_INT (value);
 
-  return (XINT (XCDR (value)));
+  return (XINT (value));
 }
 
 static gint
-lisp_to_gtk_flag (Lisp_Object obj, GValue *arg)
+lisp_to_gtk_flag (Lisp_Object obj)
 {
   gint val = 0;
   
   if (NILP (obj))
     {
-      /* Do nothing */
+      val = 0;
     }
   else if (SYMBOLP (obj))
     {
-      val = symbol_to_gtk_enum (obj, arg);
+      Lisp_Object value;
+      value = Fassq (obj, Vgtk_flags);
+      if (NILP (value))
+        invalid_argument ("Unknown flag", obj);
+      CHECK_INT (value);
+      return XINT (value);
     }
   else if (LISTP (obj))
     {
       while (!NILP (obj))
 	{
-	  val |= symbol_to_gtk_enum (XCAR (obj), arg);
+	  val |= lisp_to_gtk_enum (XCAR (obj));
 	  obj = XCDR (obj);
 	}
     }
   else
-    {
-      invalid_argument ("Unknown flag ",
-                        build_cistring (g_type_name (G_VALUE_TYPE (arg))));
-      /* ABORT ()? */
-    }
-  return (val);
+    invalid_argument ("Unknown flag ", obj);
+  return val;
 }
-
+ 
 static Lisp_Object
-flags_to_list (const GValue *arg)
+flag_to_symbol (const GValue *arg)
 {
-  Lisp_Object rval = Qnil;
-  Lisp_Object alist = get_enumeration (arg);
-  int value = 0;
+  gint flag = g_value_get_flag (arg);
   
-  while (!NILP (alist))
+  if (flag < 0)
     {
-      if (value & XINT (XCDR (XCAR (alist))))
-	{
-	  rval = Fcons (XCAR (XCAR (alist)), rval);
-	  value &= ~(XINT (XCDR (XCAR (alist))));
-	}
-      alist = XCDR (alist);
+      invalid_argument ("Unknown flag",
+                        build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
-  return (rval);
+  
+  return Frassq (make_int (value), Vgtk_flags);
 }
 
 static Lisp_Object
 enum_to_symbol (const GValue *arg)
 {
-  Lisp_Object alist = get_enumeration (arg);
-  Lisp_Object cell = Qnil;
-  gint value = g_value_get_enum (arg);
+  gint enumeration = g_value_get_enum (arg);
 
-  if (NILP (alist))
+  if (enumeration < 0)
     {
       invalid_argument ("Unknown enumeration",
                         build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
 
-  cell = Frassq (make_int (value), alist);
-
-  return (NILP (cell) ? Qnil : XCAR (cell));
+  return Frassq (make_int (value), alist);
 }
