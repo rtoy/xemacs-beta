@@ -1,5 +1,8 @@
 2011-04-22  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-marshal.el (): Add marshallers for INT__INT and
+	INT__INT_INT. Needed for gtk-window-new.
+
 	* gtk-widgets.el (GtkWidget): Add gtk-window-new.
 	(GtkWidget): Update gtk-toolbar-new to 2.0 params.
 
