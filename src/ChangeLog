@@ -1,3 +1,10 @@
+2011-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c:
+	* editfns.c (syms_of_editfns):
+	Implement #'char= in cl-extra.el, not here, accepting more than
+	two arguments as Common Lisp specifies.
+
 2011-04-17  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* device-tty.c (tty_device_system_metrics): Fix compile issues for

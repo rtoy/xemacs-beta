@@ -690,13 +690,59 @@ This also does some trivial optimizations to make the form prettier."
 	   (setq float-negative-epsilon (* x 2))))))
   (cl-float-limits))
 
-;; No type-checking here, we should add it.
-(defalias 'char< '<)
-(defalias 'char>= '>=)
-(defalias 'char> '>)
-(defalias 'char<= '<=)
 
 ;;; Character functions.
+(macrolet
+    ((define-char-comparisons (&rest alist)
+       "Provide Common Lisp's character-specific comparison predicates.
+
+These throw errors if any arguments are non-characters, conflicting with
+typical emacs behavior.  This is not the case if
+`byte-compile-delete-errors' is non-nil; see the documentation of that
+variable.
+
+This doesn't include the case-insensitive comparisons, and it probably
+should."
+       (let* ((functions (mapcar 'car alist))
+	      (map (mapcar #'(lambda (symbol)
+			       `(,symbol .
+				 ,(intern (substring (symbol-name symbol)
+						     (length "char")))))
+			   functions)))
+	 `(progn
+	   (mapc
+	    (function*
+	     (lambda ((function . cl-unsafe-comparison))
+	       (put function 'cl-unsafe-comparison cl-unsafe-comparison)
+	       (put function 'cl-compiler-macro
+		    #'(lambda (form &rest arguments)
+			(if byte-compile-delete-errors
+			    (cons (get (car form) 'cl-unsafe-comparison)
+				  (cdr form))
+			  form)))))
+	    ',map)
+	   ,@(mapcar
+	      (function*
+	       (lambda ((function . documentation))
+		 `(defun ,function (character &rest more-characters)
+		   ,documentation
+		   (check-type character character)
+		   (check-type more-characters
+			       (satisfies (lambda (list)
+					    (every 'characterp list))))
+		   (apply ',(cdr (assq function map))
+			  character more-characters))))
+	      alist)))))
+  (define-char-comparisons
+    (char= . "Return t if all character arguments are the same object.")
+    (char/= . "Return t if no two character arguments are the same object.")
+    (char< . "Return t if the character arguments monotonically increase.")
+    (char> . "Return t if the character arguments monotonically decrease.")
+    (char<= . "Return t if the character arguments are monotonically \
+nondecreasing.")
+    (char>= . "Return t if the character arguments are monotonically \
+nonincreasing.")))
+
 (defun* digit-char-p (character &optional (radix 10))
   "Return non-nil if CHARACTER represents a digit in base RADIX.
 
