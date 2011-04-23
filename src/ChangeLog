@@ -94,8 +94,6 @@
 	* unicode.c (Funicode_precedence_list): "occurrance" -> "occurrence".
 	* window.c (struct window_mirror_stats): "Ancilliary" -> "Ancillary".
 
-=======
->>>>>>> other
 2011-03-20  Mats Lidell  <matsl@xemacs.org>
 
 	* alloca.c (find_stack_direction):
