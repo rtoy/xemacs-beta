@@ -1036,7 +1036,8 @@ Lisp_Object build_gtk_object (GObject *obj)
   emacs_gtk_object_data *data = NULL;
   GUI_ID id = 0;
 
-  id = (GUI_ID) GPOINTER_TO_UINT (g_object_get_qdata (obj , GTK_DATA_GUI_IDENTIFIER));
+  id = (GUI_ID) GPOINTER_TO_UINT (g_object_get_qdata (obj,
+                                                     GTK_DATA_GUI_IDENTIFIER));
 
   if (id)
     {
@@ -1052,11 +1053,10 @@ Lisp_Object build_gtk_object (GObject *obj)
       retval = wrap_emacs_gtk_object (data);
 
       id = new_gui_id ();
-      /* XXX convert from qdata to data. */
-      g_object_set_qdata (obj, GTK_DATA_GUI_IDENTIFIER, (gpointer) id);
+      g_object_set_qdata (obj, GTK_DATA_GUI_IDENTIFIER, GUINT_TO_POINTER (id));
       gcpro_popup_callbacks (id, retval);
       g_object_ref (obj);
-      g_signal_connect (obj, "destroy", GTK_SIGNAL_FUNC (__notice_object_destruction), (gpointer)id);
+      g_signal_connect (obj, "destroy", GTK_SIGNAL_FUNC (__notice_object_destruction), GUINT_TO_POINTER (id));
     }
 
   return (retval);
@@ -2032,12 +2032,12 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 	}
       else
 	{
-#endif
 	  stderr_out ("Do not know how to convert `%s' %d from lisp!\n",
                       g_type_name (G_VALUE_TYPE (val)),
                       (int) G_VALUE_TYPE (val));
 	  ABORT();
-          }
+        }
+#endif
       break;
     }
 
@@ -2099,7 +2099,8 @@ lisp_to_gtk_flag (Lisp_Object obj)
 static Lisp_Object
 flag_to_symbol (const GValue *arg)
 {
-  gint flag = g_value_get_flag (arg);
+  /* Do we ever get more than a single flag this way? */
+  gint flag = g_value_get_flags (arg);
   
   if (flag < 0)
     {
@@ -2107,7 +2108,7 @@ flag_to_symbol (const GValue *arg)
                         build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
   
-  return Frassq (make_int (value), Vgtk_flags);
+  return Frassq (make_int (flag), Vgtk_flags);
 }
 
 static Lisp_Object
@@ -2121,5 +2122,5 @@ enum_to_symbol (const GValue *arg)
                         build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
 
-  return Frassq (make_int (value), alist);
+  return Frassq (make_int (enumeration), Vgtk_enumerations);
 }
