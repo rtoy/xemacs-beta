@@ -1348,7 +1348,8 @@
 (gtk-import-function nil gtk_scrolled_window_add_with_viewport GtkScrolledWindow GtkWidget)
 
 
-(gtk-import-function GType gtk_separator_get_type)
+(gtk-import-function GType gtk_separator_tool_item_get_type)
+(gtk-import-function GType gtk_separator_tool_item_new)
 
 
 (gtk-import-function GType gtk_socket_get_type)
@@ -1411,6 +1412,8 @@
 
 (gtk-import-function GType gtk_toolbar_get_type)
 (gtk-import-function GtkWidget gtk_toolbar_new)
+(gtk-import-function nil gtk_toolbar_insert GtkToolbar GtkToolItem gint)
+
 
 ;; Simple button items
 ;;; Handcoded in ui-byhand.c... #### FIXME
@@ -1494,6 +1497,19 @@
 (gtk-import-function nil gtk_toolbar_set_tooltips GtkToolbar gint)
 (gtk-import-function nil gtk_toolbar_set_button_relief GtkToolbar GtkReliefStyle)
 (gtk-import-function GtkReliefStyle gtk_toolbar_get_button_relief GtkToolbar)
+
+
+(gtk-import-function GtkToolItem gtk_tool_button_new)
+(gtk-import-function GtkToolItem gtk_tool_button_new_from_stock GtkString)
+(gtk-import-function nil gtk_tool_button_set_label GtkString)
+(gtk-import-function GtkString gtk_tool_button_get_label)
+
+
+(gtk-import-function GtkToolItem gtk_tool_item_new)
+(gtk-import-function nil gtk_tool_item_set_homogeneous GtkToolItem gboolean)
+(gtk-import-function gboolean gtk_tool_item_get_homogeneous GtkToolItem)
+(gtk-import-function nil gtk_tool_item_set_expand GtkToolItem gboolean)
+(gtk-import-function gboolean gtk_tool_item_get_expand GtkToolItem)
 
 
 (gtk-import-function GType gtk_tooltips_get_type)
