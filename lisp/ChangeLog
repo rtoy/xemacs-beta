@@ -1,3 +1,18 @@
+2011-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* font.el:
+	* font.el (font-warn): Removed.
+	* font.el (font-hex-string-to-number): Removed.
+	* font.el (internal-facep):
+	* font.el (font-lookup-rgb-components):
+	* font.el (font-parse-rgb-components):
+	Use #'string-to-number with the BASE argument instead of
+	#'font-hex-string-to-number, #'display-warning instead of
+	#'font-warn.
+	This entire file smells bitrotted, with lots of functions of very
+	little relevance to XEmacs, but addressing that is more work than
+	I can do today.
+
 2011-04-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el:
