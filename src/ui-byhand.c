@@ -407,7 +407,7 @@ Return the pointer position relative to WIDGET as a cons of (X . Y).
    that made sure callbacks and such were GCPRO-ed
 */
 static void
-__remove_gcpro_by_id (gpointer user_data, GObject *old_location)
+__remove_gcpro_by_id (gpointer user_data, GObject * UNUSED (old_location))
 {
   ungcpro_popup_callbacks ((GUI_ID) GPOINTER_TO_UINT (user_data));
 }
