@@ -1487,14 +1487,14 @@ gtk_resource_possible_dest_types (void)
   return IMAGE_POINTER_MASK | IMAGE_COLOR_PIXMAP_MASK;
 }
 
-extern gint symbol_to_gtk_enum (Lisp_Object, GType);
+extern gint lisp_to_gtk_enum (Lisp_Object);
 
 static guint resource_name_to_resource (Lisp_Object name,
 					enum image_instance_type type)
 {
   if (type == IMAGE_POINTER)
     {
-      // return (symbol_to_gtk_enum (name, G_TYPE_ENUM));
+      // return (lisp_to_gtk_enum (name));
       return 1;
     }
   else
