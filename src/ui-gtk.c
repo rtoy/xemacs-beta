@@ -158,6 +158,8 @@ type_already_imported_p (GType t)
       return type_as_symbol (t);
     }
   value = Fassq (type_as_symbol (t), Vgtk_types);
+  if (!NILP (value))
+    value = XCAR (value);
   return value;
 }
 
@@ -2047,7 +2049,11 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 static Lisp_Object
 get_enumeration (const GValue *arg)
 {
-  return Frassq (make_int (G_VALUE_TYPE (arg)), Vgtk_enumerations);
+  Lisp_Object value;
+  value = Frassq (make_int (G_VALUE_TYPE (arg)), Vgtk_enumerations);
+  if (!NILP (value))
+    value = XCAR (value);
+  return value;
 }
 
 gint
@@ -2060,9 +2066,8 @@ lisp_to_gtk_enum (Lisp_Object obj)
   if (NILP (value))
     invalid_argument ("Unknown enumeration", obj);
 
-  CHECK_INT (value);
-
-  return (XINT (value));
+  CHECK_INT (XCDR (value));
+  return (XINT (XCDR (value)));
 }
 
 static gint
@@ -2080,8 +2085,8 @@ lisp_to_gtk_flag (Lisp_Object obj)
       value = Fassq (obj, Vgtk_flags);
       if (NILP (value))
         invalid_argument ("Unknown flag", obj);
-      CHECK_INT (value);
-      return XINT (value);
+      CHECK_INT (XCDR (value));
+      return XINT (XCDR (value));
     }
   else if (LISTP (obj))
     {
@@ -2101,6 +2106,7 @@ flag_to_symbol (const GValue *arg)
 {
   /* Do we ever get more than a single flag this way? */
   gint flag = g_value_get_flags (arg);
+  Lisp_Object value;
   
   if (flag < 0)
     {
@@ -2108,13 +2114,17 @@ flag_to_symbol (const GValue *arg)
                         build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
   
-  return Frassq (make_int (flag), Vgtk_flags);
+  value = Frassq (make_int (flag), Vgtk_flags);
+  if (NILP (value))
+    invalid_argument ("Unknown flag", make_int (flag));
+  return XCAR (value);
 }
 
 static Lisp_Object
 enum_to_symbol (const GValue *arg)
 {
   gint enumeration = g_value_get_enum (arg);
+  Lisp_Object value;
 
   if (enumeration < 0)
     {
@@ -2122,5 +2132,8 @@ enum_to_symbol (const GValue *arg)
                         build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
 
-  return Frassq (make_int (enumeration), Vgtk_enumerations);
+  value = Frassq (make_int (enumeration), Vgtk_enumerations);
+  if (NILP (value))
+    invalid_argument ("Unknown enumeration", make_int (enumeration));
+  return XCAR (value);
 }
