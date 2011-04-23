@@ -1,5 +1,15 @@
 2011-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (build_gtk_object): Use regular data, not qdata.
+	(flag_to_symbol): Fix undeclared variable.
+	(enum_to_symbol): Fix undeclared variable.
+	(build_gtk_object): Use glib type conversion macros.
+	(lisp_to_g_value): Fix ifdef.
+	(flag_to_symbol): Get flags value correctly.
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use regular
+	data, not qdata to save id.
+
 	* glyphs-gtk.c (resource_name_to_resource): Update for renamed
 	lisp_to_gtk_enum.
 
