@@ -1,3 +1,9 @@
+2011-04-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-byhand.c (__remove_gcpro_by_id): Mark argument unused.
+
+	* emacs-marshals.c: Regenerate for INT__INT.
+
 2011-04-22  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-glue.c (face_to_style): Comment out unused variable.
