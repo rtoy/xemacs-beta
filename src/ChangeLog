@@ -58771,3 +58771,23 @@ Sat Dec  7 15:48:39 1996  Steven L Baur  <steve@altair.xemacs.org>
 Wed Dec  4 23:38:03 1996  Steven L Baur  <steve@altair.xemacs.org>
 
 	* redisplay.c: Allow column numbers in modeline to start from 1.
+
+
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
