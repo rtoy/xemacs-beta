@@ -104,7 +104,7 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   SCROLLBAR_GTK_LAST_VALUE (instance) = adj->value;
 
   g_object_set_qdata (G_OBJECT (G_OBJECT (adj)), GTK_DATA_GUI_IDENTIFIER,
-                      (void *) SCROLLBAR_GTK_ID (instance));
+                      GUINT_TO_POINTER (SCROLLBAR_GTK_ID (instance)));
   g_object_set_qdata (G_OBJECT (G_OBJECT (adj)), GTK_DATA_FRAME_IDENTIFIER,
                       f);
 
@@ -113,9 +113,11 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   gtk_range_set_update_policy (GTK_RANGE (sb), GTK_UPDATE_CONTINUOUS);
 
   assert(g_signal_connect (G_OBJECT (sb),"change-value",
-                           G_CALLBACK (scrollbar_cb), (gpointer) vertical));
+                           G_CALLBACK (scrollbar_cb),
+                           GINT_TO_POINTER (vertical)));
   assert(g_signal_connect (G_OBJECT (sb), "button-press-event",
-                             GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 1));
+                           GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb),
+                           GINT_TO_POINTER (1)));
   assert(g_signal_connect (G_OBJECT (sb), "button-release-event",
                              GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 0));
 
@@ -339,17 +341,18 @@ find_scrollbar_window_mirror (struct frame *f, GUI_ID id)
 }
 
 static gboolean
-scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
-              gpointer user_data)
+scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble UNUSED (value),
+              gpointer UNUSED (user_data))
 {
   /* This function can GC */
   GtkAdjustment *adj = gtk_range_get_adjustment (range);
+  GtkRange *r = 0;
   int vertical = gtk_orientable_get_orientation ((GtkOrientable *)range) ==
     GTK_ORIENTATION_VERTICAL;
   struct frame *f = 0;
   struct scrollbar_instance *instance;
   GUI_ID id;
-  gdouble position = gtk_adjustment_get_value (adj);
+  /* gdouble position = gtk_adjustment_get_value (adj); */
   Lisp_Object win, frame;
   struct window_mirror *mirror;
   Lisp_Object event_type = Qnil;
@@ -374,7 +377,7 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble value,
     return(FALSE);
   instance = vertical ? mirror->scrollbar_vertical_instance : mirror->scrollbar_horizontal_instance;
   frame = WINDOW_FRAME (XWINDOW (win));
-  GtkRange *r = GTK_RANGE (SCROLLBAR_GTK_WIDGET (instance));
+  r = GTK_RANGE (SCROLLBAR_GTK_WIDGET (instance));
   inhibit_slider_size_change = 0;
   switch (scroll)
     {

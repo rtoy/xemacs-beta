@@ -1,5 +1,9 @@
 2011-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use type
+	conversion macros for data.
+	(scrollbar_cb): Mark unused args. Fix several warnings.
+
 	* ui-byhand.c (generic_toolbar_insert_item): Use type conversion.
 
 	* ui-gtk.c (build_gtk_object): Use regular data, not qdata.
