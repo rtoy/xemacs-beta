@@ -2260,18 +2260,6 @@ If BUFFER is nil, the current buffer is assumed.
 	  : x1 == x2)
     ? Qt : Qnil;
 }
-
-DEFUN ("char=", Fchar_Equal, 2, 2, 0, /*
-Return t if two characters match, case is significant.
-Both arguments must be characters (i.e. NOT integers).
-*/
-       (character1, character2))
-{
-  CHECK_CHAR_COERCE_INT (character1);
-  CHECK_CHAR_COERCE_INT (character2);
-
-  return EQ (character1, character2) ? Qt : Qnil;
-}
 
 #if 0 /* Undebugged FSFmacs code */
 /* Transpose the markers in two regions of the current buffer, and
@@ -2397,7 +2385,6 @@ syms_of_editfns (void)
   DEFSYMBOL (Quser_files_and_directories);
 
   DEFSUBR (Fchar_equal);
-  DEFSUBR (Fchar_Equal);
   DEFSUBR (Fgoto_char);
   DEFSUBR (Fstring_to_char);
   DEFSUBR (Fchar_to_string);

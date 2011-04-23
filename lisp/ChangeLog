@@ -1,5 +1,13 @@
 2011-04-23  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-extra.el (define-char-comparisons):
+	Add type-checking when the various character-specific comparison
+	predicates are used; don't check types if
+	byte-compile-delete-errors is non-nil at compile-time, instead use
+	the corresponding built-in numeric byte codes.
+
+2011-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* font.el:
 	* font.el (font-warn): Removed.
 	* font.el (font-hex-string-to-number): Removed.
