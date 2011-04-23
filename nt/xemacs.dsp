@@ -1,5 +1,27 @@
 # Microsoft Developer Studio Project File - Name="xemacs" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
+
+# Copyright (C) 2000, 2002, 2003, 2010 Ben Wing
+# Copyright (C) 2000 Jonathan Harris
+# Copyright (C) 2004, 2009 Jerry James
+# Copyright (C) 2005 Marcus Crestani
+# Copyright (C) 2006 Adrian Aichner
+
+# This file is part of XEmacs.
+
+# XEmacs is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+
+# XEmacs is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) External Target" 0x0106
