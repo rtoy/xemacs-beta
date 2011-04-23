@@ -1,5 +1,12 @@
 2011-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (type_already_imported_p): Return car of assq result.
+	(get_enumeration): Type symbol is car of result.
+	(lisp_to_gtk_enum): Int value is cdr of result.
+	(lisp_to_gtk_flag): Ditto.
+	(flag_to_symbol): Symbol is car.
+	(enum_to_symbol): Ditto.
+
 	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use type
 	conversion macros for data.
 	(scrollbar_cb): Mark unused args. Fix several warnings.
