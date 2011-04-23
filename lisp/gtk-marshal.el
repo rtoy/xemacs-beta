@@ -122,6 +122,8 @@
 		("FLOAT" "OBJECT" "FLOAT")
 		("FLOAT" "OBJECT")
 		("INT" "BOOL")
+                ("INT" "INT")
+                ("INT" "INT" "INT")
 		("INT" "OBJECT" "ARRAY")
 		("INT" "OBJECT" "INT" "ARRAY")
 		("INT" "OBJECT" "INT" "INT")

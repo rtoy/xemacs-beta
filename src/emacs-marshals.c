@@ -134,6 +134,27 @@ emacs_gtk_marshal_INT__BOOL (ffi_actual_function func, GValue *args)
 }
 
 static void
+emacs_gtk_marshal_INT__INT (ffi_actual_function func, GValue *args)
+{
+  __INT_fn rfunc = (__INT_fn) func;
+
+  g_value_init (&args[1], G_TYPE_INT);
+  g_value_set_int (&args[1],
+    (*rfunc) (g_value_get_int (&args[0])));
+}
+
+static void
+emacs_gtk_marshal_INT__INT_INT (ffi_actual_function func, GValue *args)
+{
+  __INT_fn rfunc = (__INT_fn) func;
+
+  g_value_init (&args[2], G_TYPE_INT);
+  g_value_set_int (&args[2],
+    (*rfunc) (g_value_get_int (&args[0]),
+      g_value_get_int (&args[1])));
+}
+
+static void
 emacs_gtk_marshal_INT__OBJECT_ARRAY (ffi_actual_function func, GValue *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
@@ -1901,6 +1922,8 @@ static void initialize_marshaller_storage (void)
 		puthash ("emacs_gtk_marshal_FLOAT__OBJECT_FLOAT", (void *) emacs_gtk_marshal_FLOAT__OBJECT_FLOAT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_FLOAT__OBJECT", (void *) emacs_gtk_marshal_FLOAT__OBJECT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_INT__BOOL", (void *) emacs_gtk_marshal_INT__BOOL, marshaller_hashtable);
+		puthash ("emacs_gtk_marshal_INT__INT", (void *) emacs_gtk_marshal_INT__INT, marshaller_hashtable);
+		puthash ("emacs_gtk_marshal_INT__INT_INT", (void *) emacs_gtk_marshal_INT__INT_INT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_INT__OBJECT_ARRAY", (void *) emacs_gtk_marshal_INT__OBJECT_ARRAY, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_INT__OBJECT_INT_ARRAY", (void *) emacs_gtk_marshal_INT__OBJECT_INT_ARRAY, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_INT__OBJECT_INT_INT", (void *) emacs_gtk_marshal_INT__OBJECT_INT_INT, marshaller_hashtable);
