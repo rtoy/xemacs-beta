@@ -1791,12 +1791,14 @@ This is like `flet', but for macros instead of functions."
   "Make symbol macro definitions.
 Within the body FORMs, references to the variable NAME will be replaced
 by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...)."
+  (check-type name symbol)
   (cl-macroexpand-all (cons 'progn form)
-                      (append (list (list (symbol-name name) expansion))
-                              (loop
-                                for (name expansion) in symbol-macros
-                                collect (list (symbol-name name) expansion))
-                              cl-macro-environment)))
+                      (nconc (list (list (eq-hash name) expansion))
+			     (loop
+			       for (name expansion) in symbol-macros
+			       do (check-type name symbol)
+			       collect (list (eq-hash name) expansion))
+			     cl-macro-environment)))
 
 (defvar cl-closure-vars nil)
 ;;;###autoload
@@ -1807,8 +1809,9 @@ lexical closures as in Common Lisp."
   (let* ((cl-closure-vars cl-closure-vars)
 	 (vars (mapcar #'(lambda (x)
 			   (or (consp x) (setq x (list x)))
-			   (push (gensym (format "--%s--" (car x)))
-				    cl-closure-vars)
+			   (push (gensym (concat "--" (symbol-name (car x))
+						 "--" ))
+				 cl-closure-vars)
 			   (set (car cl-closure-vars) [bad-lexical-ref])
 			   (list (car x) (cadr x) (car cl-closure-vars)))
 		       bindings))
@@ -1816,7 +1819,7 @@ lexical closures as in Common Lisp."
 	  (cl-macroexpand-all
 	   (cons 'progn body)
 	   (nconc (mapcar #'(lambda (x)
-			      (list (symbol-name (car x))
+			      (list (eq-hash (car x))
 				    (list 'symbol-value (caddr x))
 				    t))
 			  vars)

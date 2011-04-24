@@ -1,3 +1,9 @@
+2011-04-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that distinct symbol macros with identical string names
+	expand to different things.
+
 2011-03-24  Jerry James  <james@xemacs.org>
 
 	* automated/query-coding-tests.el: "Compatiblity" -> "Compatibility".

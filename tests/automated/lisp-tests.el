@@ -2914,4 +2914,18 @@ via the hepatic alpha-tocopherol transfer protein")))
 	"the function special operator doesn't create a lexical context."))
     (Assert (eql 0 (needs-lexical-context 2 nil nil)))))
 
+;; Test symbol-macrolet with symbols with identical string names.
+
+(macrolet
+    ((test-symbol-macrolet ()
+       (let* ((symbol 'my-symbol)
+	      (copy-symbol (copy-symbol symbol))
+	      (third (copy-symbol copy-symbol)))
+	 `(symbol-macrolet ((,symbol [symbol expansion])
+			    (,copy-symbol [copy expansion])
+			    (,third [third expansion]))
+	   (list ,symbol ,copy-symbol ,third)))))
+  (Assert (equal '([symbol expansion] [copy expansion] [third expansion])
+		 (test-symbol-macrolet))))
+
 ;;; end of lisp-tests.el

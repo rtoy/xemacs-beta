@@ -1,3 +1,14 @@
+2011-04-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (symbol-macrolet):
+	* cl-macs.el (lexical-let):
+	* cl.el:
+	* cl.el (cl-macroexpand):
+	Distinct symbol macros with identical string names should
+	nonetheless expand to different things; implement this, storing
+	the symbol's eq-hash in the macro environment, rather than its
+	string name.
+
 2011-04-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (define-char-comparisons):
