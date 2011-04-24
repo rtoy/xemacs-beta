@@ -229,11 +229,17 @@ in place of FORM.  When a non-macro-call results, it is returned.
 
 The second optional arg ENVIRONMENT specifies an environment of macro
 definitions to shadow the loaded ones for use in file byte-compilation."
-  (let ((cl-macro-environment cl-env))
-    (while (progn (setq cl-macro (funcall cl-old-macroexpand cl-macro cl-env))
+  (let ((cl-macro-environment
+	 (if cl-macro-environment (append cl-env cl-macro-environment) cl-env))
+	eq-hash)
+    (while (progn (setq cl-macro
+			(macroexpand-internal cl-macro cl-macro-environment))
 		  (and (symbolp cl-macro)
-		       (cdr (assq (symbol-name cl-macro) cl-env))))
-      (setq cl-macro (cadr (assq (symbol-name cl-macro) cl-env))))
+		       (setq eq-hash (eq-hash cl-macro))
+		       (if (fixnump eq-hash)
+			   (assq eq-hash cl-macro-environment)
+			 (assoc eq-hash cl-macro-environment))))
+      (setq cl-macro (cadr (assoc* eq-hash cl-macro-environment))))
     cl-macro))
 
 ;;; Declarations.
