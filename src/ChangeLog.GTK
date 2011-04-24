@@ -1,3 +1,7 @@
+2011-04-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fgtk_describe_type): Use G_TYPE_IS_OBJECT.
+
 2011-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (type_already_imported_p): Return car of assq result.
