@@ -1320,30 +1320,22 @@ The cdr is a list of all the magic properties it has.
   props = signals = rval = Qnil;
 
   if (SYMBOLP (type))
-    {
-      type = Fsymbol_name (type);
-    }
+    type = Fsymbol_name (type);
 
   if (STRINGP (type))
     {
       t = g_type_from_name ((gchar*) XSTRING_DATA (type));
       if (t == G_TYPE_INVALID)
-	{
-	  invalid_argument ("Not a GTK type", type);
-	}
+        invalid_argument ("Not a GTK type", type);
     }
   else
     {
       CHECK_INT (type);
       t = XINT (type);
-      //const gchar *name = g_type_name (t);
-      // assert name is not "INVALID"
     }
 
-  if (G_IS_OBJECT (t) != TRUE)
-    {
-      invalid_argument ("Not a GtkObject", type);
-    }
+  if (G_TYPE_IS_OBJECT (t) != TRUE)
+    invalid_argument ("Not a GtkObject", type);
 
   /* Need to do stupid shit like this to get the args
   ** registered... damn GTK and its lazy loading
