@@ -1,3 +1,11 @@
+2011-04-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-faces.el (gtk-font-weights): Define.
+	(gtk-font-weights): Define.
+	(gtk-convert-font-from-xlfd): Define.
+	(gtk-convert-font-weight-from-xlfd): Define.
+	(gtk-convert-font-slant-from-xlfd): Define.
+
 2011-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-widgets.el: Add some toolbar and toolitem bindings.
