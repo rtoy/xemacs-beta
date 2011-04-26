@@ -1,3 +1,7 @@
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
 2011-01-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lwlib-fonts.c (xft_open_font_by_name):
