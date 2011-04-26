@@ -1,471 +1,418 @@
 # DO NOT PUT A VERSION MARKER HERE, AUTOMATICALLY ADDED AT RELEASE
 
-by Ben Wing:
+Major Features and Backward Incompatible Changes
 
-Debugging (Lisp level):
+-- remove: Last release under GPL v2; future releases will be GPL v3 or later. -- Mats Lidell, Jerry James, Stephen Turnbull, Aidan Kehoe, Ben Wing, Mike Sperber
+-- new: Functions may return multiple values as in Common Lisp (incompatible with cl.el implementation in some cases).
 
--- make objects consistently print a UID, with a separate number space per
-   object type
--- add variable `debug-soe' for debugging stack-of-extents code in extents.c
--- add variable debug-regexps for debugging regexp code, takes list of areas
-   to show info about
--- correctly note pdumped objects in memory-usage stats returned by
-   `garbage-collect' and `object-memory-usage-stats'.
--- make VDB debugging functions (e.g. `test-segfault', which causes an
-   immediate crash!) conditional on `--with-debug'
--- rename `debug-xemacs-searches' -> `debug-searches'
--- rename `xft-debug-level' -> `debug-xft'
--- rename `debug-x-objects' -> `debug-x-fonts'
--- Turn on "compiled-function annotation hack" so that compiled-function
-   objects print the function they are assigned to
--- Resurrect byte-metering code when --with-debug; enable with variables
-   `byte-code-meter', `byte-metering-on'
--- Add more checks for invalid byte code; when a byte-code-related crash
-   occurs, output the last 100 instructions processed
--- Improved memory-usage mechanism -- removal of `*-memory-usage' in favor
-   of generalized `object-memory-usage'; `show-memory-usage' and
-   `show-object-memory-usage-stats' show, in addition to regular object usage,
-   associated non-Lisp usage as well as ancillary Lisp object usage;
-   `garbage-collect' and `object-memory-usage-stats' return information on
-   storage overhead, associated non-Lisp usage and ancillary Lisp usage
+User-Visible Bug Fixes and Minor Improvements
 
-Lisp documentation:
+-- fix: Crash by registering all CCL programs. -- Aidan Kehoe
+-- fix: Crash in PNG handling (issue570). -- Stephen Turnbull
+-- fix: Crash in _wgetdcwd(...) when linking against msvcrt8 -- Adrian Aichner
+-- fix: Crash in printing if gc_in_progress and in_debug_print -- Ben Wing
+-- fix: Crash when printing window with Qt as its buffer. -- Ben Wing
+-- fix: Crash when reset_glyph_cachels() is called on the minibuffer window when creating a frame. -- Ben Wing
+-- fix: #'gnuserv-edit-files goes to line only if linenumber non-nil. -- It's me FKtPp ;)
+-- fix: Make winclient startup more reliable.  -- Vin Shelton
+-- fix: Remove dk.xemacs.org from list of package download sites. -- Adrian Aichner
+-- fix: issue 546, use #'next-single-char-property-change in list-mode.el -- Aidan Kehoe
+-- improve: Exclude the current buffer in switch-to-buffer completion. -- Didier Verna
+-- improve: Font locking of Common Lisp source. -- Didier Verna
+-- improve: GNU-compatible optional COLUMN in indent-region. -- Aidan Kehoe
+-- improve: Handling of coding systems for new or zero-length files. -- Aidan Kehoe
+-- improve: Support the precomposed characters with stroke. -- Aidan Kehoe
+-- improve: Fallback to whole file in describe-char-unicode-data if database is unreadable. -- Aidan Kehoe
+-- improve: Make iso-left-tab equivalent to shift-tab. -- Aidan Kehoe
+-- improve: Indentation handling in Lisp modes. -- Ben Wing
+-- improve: Name lock symlinks .#FN# for file FN to avoid confusing extensions. -- Ben Wing
+-- improve: Set debug-xft to 0. -- Stephen Turnbull
+-- improve: Recognize bitmaps/ directory as containing bitmap files. -- Didier Verna
+-- new:  Use `emacs-data-roots' instead of `emacs-roots' where appropriate. -- Mike Sperber
+-- new: The `absolute' property for background pixmaps. -- Ben Wing
+-- improve: Match X11 bgcolor fallback of default face to gui element face. -- Didier Verna
+-- new: The background-placement face property. -- Didier Verna
 
--- fix to `previous/next-single[-char]-property-change'
--- Document the keywords to the various sequence/list functions:
-     reduce, fill, replace, remove*, remove-if, remove-if-not, delete*,
-     delete-if, delete-if-not, remove-duplicates, delete-duplicates,
-     substitute, substitute-if, substitute-if-not, nsubstitute,
-     nsubstitute-if, nsubstitute-if-not, find, find-if, find-if-not,
-     position, position-if, position-if-not, count, count-if, count-if-not,
-     mismatch, search, sort*, stable-sort, merge, member*, member-if,
-     member-if-not, assoc*, assoc-if, assoc-if-not, rassoc*, rassoc-if,
-     rassoc-if-not, union, nunion, intersection, nintersection,
-     set-difference, nset-difference, set-exclusive-or, nset-exclusive-or,
-     subsetp, subst-if, subst-if-not, nsubst, nsubst-if, nsubst-if-not,
-     sublis, nsublis, tree-equal, cl-tree-equal-rec, pushnew, adjoin, subst
--- fix so that Common-Lisp argument lists get properly displayed in
-   function documentation
+Build Infrastructure and Source Tree
 
-Lisp API:
+-- fix: Cygwin and MinGW need -export-all-symbols. -- Ben Wing
+-- fix: Cygwin needs pdump -- Jerry James
+-- fix: Windows link if --with-msw=no in modules. -- Ben Wing
+-- improve: Use cygwin_conv_path() when available. -- Ben Wing
+-- improve: make-mswin-unicode.pl Cygwin header compatibility, overridden prototypes, `review' command. -- Ben Wing, Vin Shelton
+-- improve: Darwin needs system malloc, s&m moved into configure. -- Stephen Turnbull
+-- fix: Turn warnings (disabled by accident) back on. -- Ben Wing
+-- improve: C++/G++ detection and configuration. -- Ben Wing
+-- fix: XE_COMPLEX_ARG registration of options in _AC_USER_OPTS (fixes "unknown option" warnings). -- Stephen Turnbull
+-- improve: Clean more build and debug products. -- Stephen Turnbull
+-- improve: Don't install silly symlinks when $(prefix) != $(exec_prefix). -- Mike Sperber
+-- improve: Installation log refers to "Xft feature" for safer grepping. -- Ben Wing
+-- improve: Paths configuration. -- Mike Sperber
+-- improve: Use HAVE_CONFIG_H to find config.h and prototypes. -- Ben Wing
+-- improve: `--with-error-checking' means `--with-error-checking=all'. -- Ben Wing
+-- improve: make-src-depend. -- Ben Wing
+-- improve: ndbm configuration -- Karl Kleinpaste, Stephen Turnbull, Ben Wing
+-- refactor: New targets config-changed, fix-perms -- Ben Wing
+-- refactor: Rename all enable-FOO variables to with-FOO. -- Ben Wing
+-- remove: Support for InfoDock, NeXTstep, old Ultrix, SCO Unix, Bull DPX/2, Data General Unix, RTU, Unisoft Unix, OffiX DND, dynodump, idd, sparcworks,  NEC EWS. -- Jerry James
+-- remove: Wise installer subtree, netinstall subtree, many files: ppc.ldscript, make-msgfile.c, make-po.c, yow.c, rcs-checkin, gnudepend.pl, leditcfns.c, wakeup.c -- Jerry James, Mats Lidell
 
--- `set-frame-displayable-pixel-height' and friends had bugs in them, esp.
-   on MS Windows, where they didn't work; fixed
--- `frame-pixel-height', `set-frame-pixel-height' and friends will now
-   use updated values for frame size (as of next redisplay) when the frame
-   was previously resized but a redisplay has not yet happened
--- When `set-case-table' called with a length-256 vector, don't overwrite
-   existing case table; instead, populate a new table
--- Fix internal case comparisons to use the "canonical case mapping" so that
-   they always work even in the presence of complex case mappings (other
-   than just upper -> lower and lower -> upper)
--- In `scan-lists' and friends, when an error occurs, return a `scan-error'
-   along with two arguments specifying the range in which the error occurred,
-   for GNU compatibility
--- Functions for dealing with conditional compilation of code depending on
-   presence or absence of features:
-   -- error-unless-tests-match -- signal an error unless a test expression
-      matches when file is compiled and loaded
-   -- byte-compile-file-being-compiled -- return name of file being
-      byte-compiled
-   -- compiled-if, compiled-when -- like `if' or `when' but test is evaluated
-      at compile time
--- Functions for doing stable set operations
-   -- stable-union, stable-intersection
+Documentation
 
-Internals: Lisp objects
+-- fix: Comment, docstring, and string non-syntactic defects and formatting. -- Stephen Turnbull, Ben Wing, Aidan Kehoe, Didier Verna
+-- improve: --quick-build, --with-debug, and --with-error-checking option help. -- Ben Wing
+-- improve: Bignum and fixnum correctness in manual. -- Aidan Kehoe
+-- improve: Change "special form" to "special operator". -- Aidan Kehoe
+-- improve: Docstrings for #'cadr, #'caddr, #'cadddr, #'debug-on-error, #'eval-when-compile, #'eval-and-compile, #'interactive, #'lisp-indent-specform, #'range-table-type, defun movement, #'make-coding-system-internal, #'make-syntax-table, docstring/formal argument matching. -- Stephen Turnbull, Aidan Kehoe, Ben Wing
+-- improve: FAQ describes repositories and VCS usage. -- Stephen Turnbull
+-- improve: Internals nodes on magic symbols, hash tables, finalizer methods, the new allocator, the new garbage collector, old-style DFC conversion macros, the different types of character and their uses, frame handling, window-system support, allocation of Lisp objects, sequence/list functions and their keywords. -- Marcus Crestani, Ben Wing, Aidan Kehoe
+-- improve: PROBLEMS describes crash on recent Cygwin 1.7. -- Ben Wing
+-- improve: PROBLEMS describes duplicate symbol warnings on Mac OS X. -- Stephen Turnbull
+-- improve: Show the double-quotes in the sample output correctly for function-arglist. -- Aidan Kehoe
+-- improve: Startup paths, Lisp, Emacs.ad, xemacs.1 reflect the change from `lib' to `share' for the architecture-independent directories. -- Mike Sperber, Jerry James
+-- improve: Treatment of hex and octal character escapes. -- Aidan Kehoe
+-- refactor: Move term.texi to the eterm package. -- Jerry James
+-- refactor: Remove custom.texi. -- Jerry James
 
--- reduce lcrecord header size from 3 words to 2
--- major change to the way Lisp objects are defined and declared; introduce
-   a cleaner surface-layer API that eliminates references to "lrecords" and
-   "lcrecords", and uses "frob-block object" in place of "basic object"/
-   "simple object"/etc.:
-   
-   Renamed:
+Lisp API
 
-     ALLOC_LCRECORD_TYPE -> ALLOC_NORMAL_LISP_OBJECT (returns a Lisp object
-                                rather than a pointer)
-     ALLOCATE_FIXED_TYPE_AND_SET_IMPL -> ALLOC_FROB_BLOCK_LISP_OBJECT
-     BASIC_ALLOC_LCRECORD -> ALLOC_SIZED_LISP_OBJECT
-     DEFINE_LRECORD_IMPLEMENTATION -> DEFINE_*_LISP_OBJECT
-     DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION -> DEFINE_*SIZABLE_*LISP_OBJECT
-     DEFINE_LRECORD_*IMPLEMENTATION_WITH_PROPS -> DEFINE_*LISP_OBJECT, and
-        use OBJECT_HAS_METHOD() for the getprop, etc. methods
-     DEFINE_BASIC_LRECORD_IMPLEMENTATION -> DEFINE_*FROB_BLOCK_LISP_OBJECT
-     DEFINE_DUMPABLE_*/DEFINE_NODUMP_* instead of a 0 or 1 dumpable flag
-     DEFINE_*INTERNAL_* for "internal" Lisp objects (shouldn't escape
-                                                     to Lisp)
-     DEFINE_EXTERNAL_* -> DEFINE_MODULE_*
-     MAKE_LRECORD_IMPLEMENTATION -> MAKE_LISP_OBJECT
-     MAKE_EXTERNAL_LRECORD_IMPLEMENTATION -> MAKE_MODULE_LISP_OBJECT
-     DECLARE_LRECORD -> DECLARE_LISP_OBJECT
-     INIT_LRECORD_IMPLEMENTATION -> INIT_LISP_OBJECT
-     LCRECORD_HEADER -> NORMAL_LISP_OBJECT_HEADER
-     alloc_lrecord -> alloc_sized_lrecord (since it takes a size)
-     printing_unreadable_object -> printing_unreadable_object_fmt
-     printing_unreadable_lcrecord -> printing_unreadable_lisp_object
+-- fix: #'autoload-featurep-protect-autoloads always inserts a coding-system cookie. -- Ben Wing
+-- fix: #'compare-strings coerces bounds to be within strings -- Stephen Turnbull
+-- fix: #'insert-file-contents always sets the buffer coding system. -- Aidan Kehoe
+-- fix: #'letf checks whether arguments to #'values are bound, and make them unbound after evaluating BODY. -- Aidan Kehoe
+-- fix: #'next-list-mode-item, #'switch-to-completions pay attention to non-text-property extents. -- Aidan Kehoe
+-- fix: #'pre-display-buffer-function is not set to `get-frame-for-buffer'. -- Michael Sperber
+-- fix: Add argument information built-in special operators. -- Aidan Kehoe
+-- fix: Allow	deleting windows in `post-command-hook'. -- Michael Sperber
+-- fix: Argument annotations of For, Fand, Fif, Fwhen, Fcond, Fprogn, Fprog1, Fprog2, FletX, Flet, Fwhile, Fdefvar, Fdefconst, Frun_hooks, Frun_hooks_with_args, Frun_hooks_with_args_until_success, Frun_hooks_with_args_until_failure -- Aidan Kehoe
+-- fix: Argument handling in make-autoload. -- Mike Sperber
+-- fix: Canonicalize spaces in argument lists for function-documentation-1. -- Ben Wing
+-- fix: Correct error in specifier canonicalization -- Aidan Kehoe
+-- fix: Disable specifier memory-usage stats due to circularities. -- Ben Wing
+-- fix: Ffunctionp does not return t for special operators. -- Aidan Kehoe
+-- fix: Fnbutlast, Fbutlast accept dotted lists. -- Aidan Kehoe
+-- fix: Initialize ?\012 as whitespace -- Aidan Kehoe
+-- fix: Issue145: Allow default-network-coding-system and default-process-coding-system to be nil. -- Stephen Turnbull
+-- fix: Many bugs revealed by Paul Dietz's test suite. -- Aidan Kehoe
+-- fix: Search for Control-1 chars in boyer_moore() -- Ben Wing
+-- fix: Signal a read error upon encountering a ratio constant with a zero denominator. -- Jerry James
+-- improve: #'beginning-of-defun, #'end-of-defun behavior customizable via beginning-of-defun-function, end-of-defun-function. -- Andreas Roehler
+-- improve: #'cd use of cd-path and CDPATH. -- It's me FKtPp ;), Aidan Kehoe
+-- improve: #'ceiling, #'floor, #'round, #'truncate, #'fceiling, #'ffloor, #'fround, #'ftruncate: support Common Lisp, including optional DIVISOR arguments, returning multiple values, obey contamination rules, round towards the even number in ambiguous cases. -- Aidan Kehoe
+-- improve: #'coerce takes 'fixnum as a destination type.  -- Aidan Kehoe
+-- improve: #'list-length, #'remf, #'getf, #'tailp, #'cl-set-getf, #'cl-do-remf, #'ldiff, #'endp, #'subseq (new, Common Lisp compatible). -- Aidan Kehoe
+-- improve: #'char<, #'char>=, #'char>, #'char<=, #'alpha-char-p, #'graphic-char-p, #'standard-char-p, #'char-name, #'name-char, #'upper-case-p, #'lower-case-p, #'both-case-p, #'char-upcase, #'char-downcase, #'integer-length (new, Common Lisp compatible). -- Aidan Kehoe
+-- improve: #'mapvector, #'mapconcat, #'mapcar to support multiple SEQUENCES and error with circular lists -- Aidan Kehoe
+-- improve: #'nreverse, #'reverse accept any sequence. -- Aidan Kehoe
+-- improve: #'try-completion, #'suggest-key-bindings, #'float-time, #'substring-no-properties, #'turn-off-auto-fill, #'describe-char-unihan-field-descriptions (GNU compatibility). -- Aidan Kehoe, Malcolm Purvis, Mike Sperber
+-- improve: #remove*, #cl-delete-duplicates, #delete-duplicates, #'symbol-file, #'find-function. -- Aidan Kehoe
+-- improve: 'buffer-display-count, 'buffer-display-time (new, GNU-compatible) -- Jeff Sparkes, Aidan Kehoe
+-- improve: 'discarded-consing, 'quoted-lambda new warning types. -- Aidan Kehoe
+-- improve: Accept #B<binary>, #O<octal>, and #X<hex> like GNU Emacs. -- Mike Sperber
+-- improve: Accept keywords in the hash table read syntax. -- Aidan Kehoe
+-- improve: Handling of object plists, especially processes. -- Aidan Kehoe
+-- improve: Keyword arguments handling. -- Aidan Kehoe
+-- improve: Turn on load-ignore-out-of-date-elc-files by default -- Ben Wing
+-- improve: Type spec handling in coerce, cl-make-type-test -- Aidan Kehoe
+-- improve: Use keywords instead of ordinary symbols in some XEmacs-specific functions. -- Aidan Kehoe
+-- improve: read-buffer gets new optional argument EXCLUDE.
+-- new: #'bytecomp-load-hook. -- Aidan Kehoe
+-- new: #'canoncase; use it with chars in internal_equalp. -- Aidan Kehoe
+-- new: #'constantly from ANSI Common Lisp, with SBCL extension. -- Aidan Kehoe
+-- improve: #device-color-cells (tty_device_system_metrics()) returns metrics for num-color-cells and num-bit-planes (issue757) on TTYs. -- Jeff Sparkes
+-- new: #'error-unless-tests-match, #'byte-compile-file-being-compiled, #'compiled-if, #'compiled-when for supporting conditional compilation of different code depending on the presence or absence of features. -- Ben Wing
+-- new: #'format-time-string implements Roman month numbers. -- Aidan Kehoe
+-- new: #'get-properties. -- Didier Verna
+-- new: #'process-get, #'process-put, #'process-plist, #'set-process-plist for GNU compatibility -- Aidan Kehoe
+-- new: #'save-some-buffers-action-alist, #'diff-files-for-recover, #'diff-buffer-with-file, -- Mike Sperber
+-- new: #'set-window-configuration gets optional `set-frame-size-p' argument. -- Mike Sperber
+-- new: #'set-window-pixel-width, #'set-window-pixel-height. -- Mike Sperber
+-- new: #'stable-union, #'stable-intersection. -- Ben Wing
+-- new: 'debug-xemacs, 'debug-regexps, 'debug-soe, 'debug-xft (was 'xft-debug-level), 'debug-searches (was 'debug-xemacs-searches), 'byte-code-meter, 'byte-metering-on variables for debugging. -- Ben Wing
+-- new: Common-Lisp-compatible #'the, #'array-dimension-limit, #array-total-size-limit, #'array-rank-limit, #'equalp (especially in hash tables). -- Aidan Kehoe
+-- new: Errors 'invalid-keyword-argument, 'scan-error. -- Aidan Kehoe, Ben Wing
+-- new: Implement multiple values a la Common Lisp.  New bytecodes: Bbind_multiple_value_limits, Bmultiple_value_call, Bmultiple_value_list_internal, Bthrow.  Modified bytecodes: BRgotoifnilelsepop, BRgotoifnonnilelsepop. Bcall, Bdup, Bgotoifnilelsepop, Bgotoifnonnilelsepop, Breturn.  New macros: DISCARD_PRESERVING_MULTIPLE_VALUES, POP_WITH_MULTIPLE_VALUES, TOP_ADDRESS, TOP_LVALUE, TOP_WITH_MULTIPLE_VALUES.  Modified macros: DISCARD, POP, TOP.  New functions: Fand, Fcond, Fdefconst, Fdefvar, Feval, Ffuncall, Fif, Flet, FletX, Fmultiple_value_call, Fmultiple_value_list_internal, Fmultiple_value_prog1, For, Fprog2, Fsetq, Fsetq_default, Fsignal, Fthrow, Fvalues, Fvalues_list, Fwhile, Fwith_output_to_temp_buffer.  Modified functions: Fcall_interactively, bind_multiple_value_limits, button_item_to_widget_value, check_if_suppressed, connector, dde_eval_string, evaluate_xpm_color_symbols, execute_help_form, flagged_a_squirmer, glyph_instantiator_to_glyph, gui_item_display_flush_left, gui_item_value, make_multiple_value, mark_multiple_value, menu_convert, menu_descriptor_to_widget_1, multiple-values-limit, multiple_value_aref, multiple_value_aset, multiple_value_call, multiple_value_list_internal, pop_kbd_macro_event, populate_menu_add_item, print_multiple_value, size_multiple_value, syms_of_eval, values2. wv_set_evalable_slot, x_IO_error_handler.  Exported functions: throw_or_bomb_out. New variables: multiple-values-limit, multiple_value_current_limit.  Exported symbols: Qobsolete_throw, Qthrow.  New lrecord_type: multiple_value.  -- Aidan Kehoe
+-- new: macro -- Aidan Kehoe
+-- refactor:  #'bq-vector-contents, #'bq-list*, #'format-decode removed; #'purecopy aliased to #'identity and uses removed. -- Aidan Kehoe
+-- refactor: #'byte-compile-compiled-obj-to-list, #'custom-declare-variable-list removed. -- Aidan Kehoe
+-- refactor: #'car-less-than-car, #'cdr-less-than-cdr move to format.el, #'list* moved to subr.el. -- Aidan Kehoe
+-- refactor: #'ceiling*, #'floor*, #'round*, #'truncate* obsoleted. -- Aidan Kehoe
+-- refactor: #'cl-function-arglist takes exactly one arg. -- Ben Wing
+-- refactor: #'init-file-user, #'pui-add-install-directory, #'user-original-login-name, #'isearch-yank-x-selection, #'isearch-yank-x-clipboard removed. -- Ben Wing.
+-- refactor: #'paths-filter, #'paths-uniq-append removed.  -- Aidan Kehoe
+-- refactor: #'show-buffer, #'buffer-flush-undo, #'buffer-local-value, #'x-color-values, #'mswindows-color-list, #'Info-default-directory-list, #'line-beginning-position, #'line-end-position, #'obsolete-throw, #'cl-mapc, #'byte-code-function-p, #'interactive-form, #'assq-delete-all, #'makehash, #'display-column-mode obsoleted. -- Ben Wing
 
-   New:
+Internal API and Implementation
 
-     lisp_object_storage_size() -- storage used for Lisp object including
-                                   overhead
-     LISP_OBJECT_UID() -- UID of Lisp object
-     zero_sized_lisp_object() -- zero out a Lisp object of variable size
-     zero_nonsized_lisp_object() -- zero out a Lisp object of fixed size
-     free_normal_lisp_object() -- free a non-frob-block Lisp object
-     LISP_OBJECT_FROB_BLOCK_P() -- return whether a Lisp object is a
-                                  frob-block object
-     IF_OLD_GC, IF_NEW_GC -- simplify declaration of Lisp objects w.r.t. NEW-GC
-                             when a finalizer may exist in one but not the
-                             other
+-- fix: #'canna-henkan-begin. -- Ben Wing
+-- fix: #'condition-case gets correct syntax in #'progress-feedback-dispatch-non-command-events. -- Stephen Turnbull
+-- fix: #'custom-variable-prompt checks explicitly for nil before for symbol. -- Aidan Kehoe
+-- fix: #'delete-duplicates compiler macro and calls to it. -- Aidan Kehoe
+-- fix: #'eql Byte-compilation -- Aidan Kehoe
+-- fix: #'eql for extended number types and the hash implementation -- Aidan Kehoe
+-- fix: #'fc-name-unparse memory leak. -- Jerry James
+-- fix: #'fill is much more careful about resizing a string argument. -- Aidan Kehoe
+-- fix: #'finish-set-language-environment generation of display-table entries for error octet characters. -- Ben Wing
+-- fix: #'with-trapping-errors gets correct :operation arguments in #'font-lock-pre-idle-hook and #'find-tag-default. -- Stephen Turnbull
+-- fix: #83, #8C mapping in koi8-c, #A6 mapping in viscii. -- Ben Wing, Aidan Kehoe
+-- fix: Bignum initialization and finalization. -- Jerry James
+-- fix: Buffer overrun (issue630). -- Stephen Turnbull, Aidan Kehoe
+-- fix: Build failure, Apple's g++-4.0.1, Mac OS 10.4. -- Aidan Kehoe
+-- fix: Call MODE-mode for -*-MODE-*- only if it has a function binding. -- Aidan Kehoe
+-- fix: Call character_to_event() on characters received from XIM. -- Aidan Kehoe
+-- fix: Check for Xft before using it, fixing openSUSE bug #558764. -- Stephen Turnbull
+-- fix: Coding system initialization. -- Aidan Kehoe
+-- fix: Compile errors under C++ and/or Visual Studio 6 in syswindows.h. -- Ben Wing
+-- fix: Computation of fastmap in charset_mule_not() -- Ben Wing
+-- fix: Conditionalize COM support on HAVE_MS_WINDOWS -- Ben Wing
+-- fix: Don't use Boyer-Moore for case-insensitive search if the search pattern contains repeated Ibytes. -- Aidan Kehoe
+-- fix: Fall back from GTK to X11 in gnuclient. -- Aidan Kehoe
+-- fix: Frame geometry (especially pixelized) to make it a bit easier to understand and fix some bugs. -- Ben Wing
+-- fix: Function prototype/definition mismatches. -- Ben Wing
+-- fix: GCPROing. -- Ben Wing, Aidan Kehoe
+-- fix: GNU coding standards in modules/base64. -- Ben Wing
+-- fix: Handling of errors in bytecode.c and floatfns.c. -- Jerry James
+-- fix: Handling of escape characters when splitting strings. -- Aidan Kehoe
+-- fix: Handling of possible meta characters (?\x80-?\xFF) -- Aidan Kehoe
+-- fix: I18N encapsulation commands for Windows. -- Ben Wing
+-- fix: Initialize `result' before calling FcFontMatch in Ffc_font_match and xft_find_charset_font -- Jerry James
+-- fix: Integer canonicalization. -- Aidan Kehoe
+-- fix: Integer overflow when allocating image memory -- Jerry James
+-- fix: JPEG macro FAR conflict in eimage code. -- Vin Shelton
+-- fix: Match integer sizes in assignment in read_event_from_tty_or_stream_desc -- Ben Wing
+-- fix: Missing includes to termcap.c. -- Aidan Kehoe
+-- fix: Missing names and ISO 639 codes for Arabic, Russian, and Thai. -- Stephen Turnbull
+-- fix: Move CYGWIN_HEADERS to s/cygwin32.h and s/mingw32.h, fixing some compile problems. -- Ben Wing
+-- fix: Move HAVE_SCROLLBARS test so the code can compile under Visual Studio 6. -- Vin Shelton
+-- fix: Notices in aclocal.m4, ad2c, build-msw-release.sh, compface.mak, cvtmail.c, easymenu.el, elhash.c, emacs.c, emodules.texi, europe-theme.el, example-theme.el, external-widget.texi, fakemail.c, font.el, fontconfig.el, frame.el, glade.c, glyph-test.el, gnome.el, gnuserv.c, gnuserv.h, gnuslib.c, gtk test files, gtk-compose.el, gtk-glue.c, gtk-marshal.el, gtk-package.el, gtk-widget-accessors.el, gtk-xemacs.c, gtk-xemacs.h, gtk.el, gutter-items.el, gutter-test.el, gutter.el, hyper-apropos.el, insert-data-in-exec.c, installexe.sh, lao.txt, lwlib-internal.h, m/alpha.h, make-path.c, menu-items.el, modules/sample/external/Makefile.in.in, modules/sample/external/configure.ac, modules/sample/external/sample.c, modules/sample/internal/sample.c, mule/canna-leim.el alist.el, mule/kinsoku.el, multicast.el, number*.[ch], profile.c, regressiontest.pl, reproduce-crashes.el, s/hpux11-shr.h, s/mach-bsd4-3.h, s/sco7.h, s/sco7.h, sigpipe.c, site-load.el, symsinit.h, tcp.c, term/bg-mouse.el, term/sup-mouse.el, term/vt100.el, test-ew-motif.c, test-ew-xlib.c, tests/external-widget/Makefile, tiff.mak, ui-byhand.c, ui-gtk.c, ui-gtk.h, view-less.el, xemacs.rc, and xpm.mak. -- Jerry James, Stephen Turnbull
+-- fix: Parse UNUSED and USED_IF right in make-docfile.c -- Stephen Turnbull
+-- fix: Prune correct number of entries from load-history. -- Aidan Kehoe
+-- fix: Qlist, Qstring mistakenly declared twice. -- Ben Wing
+-- fix: Simplify assertion in event_pixel_translation for Visual C 6. -- Vin Shelton
+-- fix: Synchronization of window point with current point when switching buffers. -- Michael Sperber
+-- fix: Syntax errors in Ffc_config_app_font_add_file and Ffc_config_app_font_add_dir -- Jerry James
+-- fix: Type correctness in split_string_by_ichar_1. -- Aidan Kehoe
+-- fix: Type correctness of char and Ichar types. -- Ben Wing
+-- fix: UTF-8-ize mule-wnnfns.c. -- Ben Wing
+-- fix: Upper and lowercase mappings were reversed for some old-Cyrillic chars. -- Ben Wing
+-- fix: Use correct timestamp with XSetInputFocus. -- Mike Sperber
+-- fix: Use of REGISTER in certain functions. -- Aidan Kehoe
+-- fix: Use unencumbered texts in #'split-string-by-char -- Aidan Kehoe
+-- fix: Warning elimination. -- Aidan Kehoe, Ben Wing, Jerry James, Stephen Turnbull
+-- fix: `escape-quoted' handling of characters in the 0x80 - 0x9F range. -- Ben Wing
+-- fix: const handling in fileio.c. -- Ben Wing, Vin Shelton
+-- fix: count_with_tail(), FdeleteX(), FremoveX() handling of COUNT argument. -- Aidan Kehoe
+-- fix: fontmgr may not use Fsignal() in C, as it may return. -- Ben Wing
+-- fix: g++ 4.3 complaints about implicit conversions of const char * to char * -- Ben Wing
+-- fix: gif_instantiate() tries harder to find an appropriate GIF colormap. -- Adam Sjøgren
+-- fix: gnuserv found in `exec-directory'. -- Michael Sperber
+-- fix: gtk_xpm_instantiate() hotspot coordinates are Lisp integers -- Stephen Turnbull
+-- fix: integerp byte code gets fixnump semantics. -- Aidan Kehoe
+-- fix: lpRemoteName is an XELPTSTR. -- Vin Shelton
+-- fix: memmove() substituted for strcpy() in etags.c -- Sjoerd Mullender
+-- fix: modeline face avoids using fallbacks. -- Aidan Kehoe
+-- fix: module_load() gets one more dereference on f = dll_variable(. -- Stephen Turnbull
+-- fix: off-by-one bug in mswindows_link -- Ron Isaacson
+-- fix: query_string_font() uses proper domain for cachel updating. -- Didier Verna
+-- fix: query_string_geometry() lookup domain. -- Didier Verna
+-- fix: realpath() supplied by Darwin used to get the canonical case for filenames. -- Aidan Kehoe
+-- fix: resize_string() must not free dumped data. -- Aidan Kehoe
+-- fix: staticpro_names() stores actual names. -- Ben Wing
+-- fix: ulong_to_bit_string() prints a zero, not the empty string. -- Aidan Kehoe
+-- fix: undecided_canonicalize_after_coding() to retain CODESYS info -- Aidan Kehoe
+-- fix: unicode_convert() handles very short input strings correctly. -- Aidan Kehoe
+-- fix: unicode_query() initializes invalid_lower_limit. -- Ben Wing
+-- fix: unicode_query() missing return type. -- Stephen Turnbull
+-- fix: xface_normalize() to handle inline data properly. -- Didier Verna
+-- improve: #'byte-compile-initial-macro-environment uses #'the and compilable lambda expressions -- Aidan Kehoe
+-- improve: #'byte-compile-lambda issues warnings for interactive forms. -- Aidan Kehoe
+-- improve: #'cl-prettyprint handles (function ...) specially. -- Aidan Kehoe
+-- improve: #'documentation, #'function-documentation-1, #'describe-function-1, #'hyper-apropos-get-doc, #'describe-function, #'function-arglist, #'function-documentation. -- Aidan Kehoe, Didier Verna, Ben Wing
+-- improve: #'frame-pixel-height and friends reflect what will happen as of the next redisplay. -- Ben Wing
+-- improve: #'function now parallels #'quote. -- Aidan Kehoe
+-- improve: #'handle-pre-motion-command-current-command-is-motion. -- Aidan Kehoe
+-- improve: #'read-from-minibuffer uses buffer (format " *Minibuf-%d*" (minibuffer-depth)), regardless of depth. -- Aidan Kehoe
+-- improve: #'show-memory-usage, #'show-object-memory-usage-stats. -- Ben Wing, Marcus Crestani
+-- improve: #'some, #'every used in info.el, format.el, files.el -- Aidan Kehoe
+-- improve: #'the may warn at byte-compile time. -- Aidan Kehoe
+-- improve: Allocate lrecord arrays in own size class. -- Marcus Crestani
+-- improve: Case map handling. -- Ben Wing
+-- improve: Colormap handling on Windows. -- Aidan Kehoe
+-- improve: Context-specific handling of system coding systems where we used to just use Qnative. -- Ben Wing
+-- improve: Cygwin handling of pathname coding systems. -- Ben Wing
+-- improve: Dynarr code. -- Aidan Kehoe, Ben Wing
+-- improve: Error-checking in Fquote, Ffunction, -- Aidan Kehoe
+-- improve: Fontconfig API more complete. -- Stephen Turnbull
+-- improve: Hash table's rehash threshold default now based on size and test function. -- Aidan Kehoe
+-- improve: Keymap handling. -- Ben Wing	
+-- improve: Make error messages better reflect the text that was encountered in read_escape. -- Aidan Kehoe
+-- improve: Make sure distinct symbol macros with identical names expand distinctly. -- Aidan Kehoe
+-- improve: Mule-ize database.c partially, modules/postgresql, mule-wnnfns.c. -- Ben Wing
+-- improve: Optimizations: remove redundant lambdas and interning of symbols for temporary character sets, #'hash-table-key-list, #'hash-table-value-list, #'hash-table-key-value-alist, #'hash-table-key-value-plist, #'read-behavior, #'complement, #'regexp-quote, #'concatenate, #'mapc, #'do-autoload-commands, #'packages-find-package-library-path, #'frame-list, #'extent-descendants, #'buffer-tag-table-files, #'preloaded-file-list, #'device-list, #'proclaim-inline, #'proclaim-notinline, #'inx-available-font-sizes, #'let-specifier, #'pui-add-required-packages, #'mswindows-available-font-sizes, #'modeline-minor-mode-menu, #'minibuf-directory-files, #'handle-pre-motion-command-current-command-is-motion, #'finish-set-language-environment, #'mod*, #'rem*, #'xpm-color-symbols, #'=, #'<, #'>, #'<=, #'>= -- Aidan Kehoe
+-- improve: Print the device in a frame structure. -- Aidan Kehoe
+-- improve: Qunbound, not Qnil used as second arg to call to syntax_error() -- Ben Wing
+-- improve: Remove the TYPE argument from xfree(). -- Ben Wing
+-- improve: Replace "obscure" symbol names with uninterned symbols. -- Aidan Kehoe
+-- improve: Track type of range tables. -- Ben Wing
+-- improve: UTF-8-ize canna/canna_api.c, unicode.el. -- Ben Wing
+-- improve: Use external giflib instead of internal GIF support. -- Jerry James
+-- improve: Warn or error if (quote ...) or (function ...) quotes more than one object -- Aidan Kehoe
+-- improve: emacs_rint() always used for bignum consistency -- Aidan Kehoe
+-- improve: emodules_doc_sym() and emodules_doc_subr() take Ascbyte * pointers -- Ben Wing
+-- improve: extern Lisp_Object declarations moved -- Ben Wing
+-- improve: lrecord UID's get separate UID space for each type.  Display UID's consistently when appropriate. -- Ben Wing
+-- improve: print_symbol() escapes symbols that look like ratios. -- Aidan Kehoe
+-- improve: put_range_table() becomes O(log n) for adding a localized range. -- Ben Wing
+-- improve: specifier_instance_from_inst_list calls call_with_suspended_errors() with ERROR_ME_WARN. -- Aidan Kehoe
+-- improve: stat() failure ignored in file_name_completion -- Henrique Martins
+-- fix: Bignums handled correctly by NATNUMP, #'member*, #'eql, #'assoc*. -- Aidan Kehoe
+-- new: DEFAULT_DIRECTORY_FALLBACK is a directory that should "always" be available; avoid fatal error if the current directory doesn't exist, chdir to DEFAULT_DIRECTORY_FALLBACK instead. -- Aidan Kehoe
+-- new: ERROR_CHECK_DYNARR, dynarr_checking_assert(), ERROR_CHECK_ANY. -- Ben Wing
+-- new: Macros for getting the size/edges of various rectangles surrounding the paned area. -- Ben Wing
+-- new: Symbols for type checks in sequence functions. -- Aidan Kehoe
+-- new: Typedefs for PCVOID and PDWORD_PTR for non-Cygwin. -- Ben Wing
+-- new: USED_IF_SCROLLBARS, fix warnings. -- Ben Wing
+-- new: UTF-8 support in Cygwin. -- Ben Wing
+-- new: deadbeef_memory() exported. -- Ben Wing
+-- new: pluralize_word(), pluralize_and_append(). -- Ben Wing
+-- new: printing_unreadable_lcrecord(). -- Ben Wing
+-- refactor: #'byte-compile-file-form so that #'symbol-value and #'load-time-value can be implemented directly. -- Aidan Kehoe
+-- refactor: #'byte-compile-funarg-n (new) used to create the various byte-compile-funarg functions, which check for quoted lambdas in given positions. -- Aidan Kehoe
+-- refactor: #'capitalize-string-as-title uses #'with-string-as-buffer-contents. -- Ben Wing
+-- refactor: #'custom-quote is aliased to #'quote-maybe. -- Aidan Kehoe
+-- refactor: #'list-length, #'default-file-system-ignore-case, #'equalp, #'fill, #'sort*, #'merge, #'mapcar*, #'map, #'maplist, #'mapc, #'mapl, #'mapcan, #'mapcon, #'query-coding-region, #'make-coding-system, #'reduce, #'replace, #'some, #'every moved to C. -- Aidan Kehoe
+-- refactor: #'notany, #'notevery get compiler macros. -- Aidan Kehoe
+-- refactor: #'substring aliased to #'subseq. -- Aidan Kehoe
+-- refactor: #if 0 out some unused functions in malloc.c. -- Ben Wing
+-- refactor: 'Qcoerce moved to general-slots.h -- Aidan Kehoe
+-- refactor: 'default-file-system-ignore-case moved to fileio.c. -- Aidan Kehoe
+-- refactor: ARRAYP(), SEQUENCEP(), CHECK_ARRAY(), CHECK_SEQUENCE(), Fbit_vector, Fstring, FmapcarX in lisp.h -- Aidan Kehoe
+-- refactor: Always use platform Xmu. -- Jerry James
+-- refactor: Bignums get: New macros ROUNDING_CONVERT, CONVERT_WITH_NUMBER_TYPES, CONVERT_WITHOUT_NUMBER_TYPES, MAYBE_TWO_ARGS_BIGNUM, MAYBE_ONE_ARG_BIGNUM, MAYBE_TWO_ARGS_RATIO, MAYBE_ONE_ARG_RATIO, MAYBE_TWO_ARGS_BIGFLOAT, MAYBE_ONE_ARG_BIGFLOAT, MAYBE_EFF, MAYBE_CHAR_OR_MARKER.  New functions ceiling_two_fixnum, ceiling_two_bignum, ceiling_two_ratio, ceiling_two_bigfloat, ceiling_one_ratio, ceiling_one_bigfloat, ceiling_two_float, ceiling_one_float, ceiling_one_mundane_arg, floor_two_fixnum, floor_two_bignum, floor_two_ratio, floor_two_bigfloat, floor_one_ratio, floor_one_bigfloat, floor_two_float, floor_one_mundane_arg, round_two_fixnum, round_two_bignum_1, round_two_bignum, round_two_ratio, round_one_bigfloat_1, round_two_bigfloat, round_one_ratio, round_one_bigfloat, round_two_float, round_one_float, round_one_mundane_arg, truncate_two_fixnum, truncate_two_bignum, truncate_two_ratio, truncate_two_bigfloat, truncate_one_ratio, truncate_one_bigfloat, truncate_two_float, truncate_one_float, truncate_one_mundane_arg.  Modified functions: emacs_doprnt_1, internal_coerce_number, Ffloat, BIGFLOAT_ARITH_RETURN, BIGFLOAT_ARITH_RETURN.  New variable scratch_ratio2. -- Aidan Kehoe
+-- refactor: Byte code #o117 is #'subseq, not #'substring. -- Aidan Kehoe
+-- refactor: Call init_string_ascii_begin() in FsortX, Ffill. -- Aidan Kehoe
+-- refactor: Case sensitivity of file paths via new variables default-file-system-ignore-case, file-system-case-alist, function file-system-ignore-case-p. -- Aidan Kehoe
+-- refactor: Coding system initialization.  Rename default-process-coding-system-read -> process-read, default-process-coding-system-write -> process-write, buffer-file-coding-system-for-read -> bfcs-for-read, default-buffer-file-coding-system -> default-bfcs, no-conversion-coding-system-mapping	-> no-conv-cs, unix-no-mule-no-eol-detection -> no-mule-no-eol-detection, unix-no-mule-eol-detection -> no-mule-eol-detection, unix-mule -> mule. -- Ben Wing
+-- refactor: Dynarr code. -- Ben Wing
+-- refactor: Eliminate bogus special-casing of standard abbrev tables. -- Aidan Kehoe
+-- refactor: Fquote_maybe moved from callint.c to eval.c. -- Aidan Kehoe
+-- refactor: Fregexp_quote declared in lisp.h. -- Ben Wing
+-- refactor: Gutter geometry code. -- Ben Wing	
+-- refactor: Link image code only when HAVE_WINDOW_SYSTEM. -- Ben Wing
+-- refactor: Lisp objects allocation/declaration simplified; documented in lrecord.h. -- Ben Wing
+-- refactor: Lisp objects get advertised API.  Eliminate macros for copying, freeing, zeroing objects, getting their storage size. -- Ben Wing
+-- refactor: Move code and comments from lisp.h to text.h. -- Ben Wing
+-- refactor: Move creation of utf-8 coding system to unicode.c. -- Ben Wing
+-- refactor: Move gap array from extents.c to array.c.  Extract dynarr, gap array and stack-like malloc into new file array.h.  Rewrite range table code to use gap arrays. -- Ben Wing
+-- refactor: Move the Thai language environment and the TIS-620 coding system to mule/thai.el; add support for Microsoft's code page 874. -- Aidan Kehoe
+-- refactor: NEED_TO_HANDLE_21_4_CODE replacing the previous NO_NEED_TO_HANDLE_21_4_CODE. -- Aidan Kehoe
+-- refactor: Redo memory-usage mechanism. -- Ben Wing
+-- refactor: Reduce the number of words in an lcrecord from 3 to 2.  New macro NORMAL_LISP_OBJECT_UID() abstracts out the differences between NEWGC and old-GC in accessing the `uid' value from a "normal Lisp Object pointer". -- Ben Wing
+-- refactor: Rename EXTERNAL_TO_C_STRING -> EXTERNAL_TO_ITEXT, EXTERNAL_TO_C_STRING_MALLOC -> EXTERNAL_TO_ITEXT_MALLOC, SIZED_EXTERNAL_TO_C_STRING -> SIZED_EXTERNAL_TO_ITEXT, SIZED_EXTERNAL_TO_C_STRING_MALLOC -> SIZED_EXTERNAL_TO_ITEXT_MALLOC, C_STRING_TO_EXTERNAL -> ITEXT_TO_EXTERNAL, C_STRING_TO_EXTERNAL_MALLOC -> ITEXT_TO_EXTERNAL_MALLOC, LISP_STRING_TO_EXTERNAL, LISP_STRING_TO_EXTERNAL_MALLOC, LISP_STRING_TO_TSTR, C_STRING_TO_TSTR -> ITEXT_TO_TSTR, TSTR_TO_C_STRING -> TSTR_TO_ITEXT and change to return result directly rather than as a "return parameter."  Rename C_STRING_TO_SIZED_EXTERNAL -> ITEXT_TO_SIZED_EXTERNAL, LISP_STRING_TO_SIZED_EXTERNAL, C_STRING_TO_SIZED_EXTERNAL_MALLOC -> ITEXT_TO_SIZED_EXTERNAL_MALLOC, LISP_STRING_TO_SIZED_EXTERNAL_MALLOC.  Eliminate SIZED_C_STRING macros in favor of TO_*TERNAL_FORMAT. -- Ben Wing
+-- refactor: Rename pixel_to_char_size -> pixel_to_frame_unit_size, char_to_pixel_size -> frame_unit_to_pixel_size, pixel_to_real_char_size -> pixel_to_char_size, char_to_real_pixel_size -> char_to_pixel_size.  Reverse second and third arguments of change_frame_size().  Eliminate old round_size_to_char, and rename round_size_to_real_char -> round_size_to_char.  The set_frame_size() method is now passed sizes in "frame units". -- Ben Wing
+-- refactor: Rename src/objects* -> src/fontcolor*. -- Ben Wing
+-- refactor: Rename the specifier-font-matching stages -- Ben Wing
+-- refactor: Rename write_c_string -> write_cistring, build_intstring -> build_istring, build_string -> build_cistring, build_ext_string -> build_extstring, make_ext_string -> make_extstring, buffer_insert_c_string -> buffer_insert_ascstring, intern_int -> intern_istring -- Ben Wing
+-- refactor: Rename: LISP_TO_VOID -> STORE_LISP_IN_VOID, VOID_TO_LISP -> GET_LISP_FROM_VOID.  New functions STORE_VOID_IN_LISP and GET_VOID_FROM_LISP.  Eliminate the use of make_opaque_ptr() in unwind_protect code. -- Ben Wing
+-- refactor: Rename: default_face_height_and_width -> default_face_width_and_height and reverse width/height arguments. -- Ben Wing
+-- refactor: Separate out regular and disksave finalization, with a separate object method `disksaver'. -- Ben Wing
+-- refactor: TTY mapper for faces gets 2 args. -- Stephen Turnbull
+-- refactor: USE_XFT* -> HAVE_XFT*. -- Ben Wing
+-- refactor: Unused or easily implemented functions Fsave_window_excursion, save_window_excursion_unwind removed.  -- Aidan Kehoe
+-- refactor: Use #'string-to-number with the BASE argument instead of #'font-hex-string-to-number, #'display-warning instead of #'font-warn in font.el. -- Aidan Kehoe
+-- refactor: Use defcustom in cmdloop.el. -- Aidan Kehoe
+-- refactor: Use of syswindows.h. -- Ben Wing
+-- refactor: XLIKE contains code common to GTK and X -- Ben Wing
+-- refactor: XLIKE_get_gc takes a frame instead of a device as first argument. -- Didier Verna
+-- refactor: assert() improved to replace "if (...) ABORT()". -- Ben Wing
+-- refactor: bignum_butlast(). -- Aidan Kehoe
+-- refactor: change_frame_size_1().  Rename FRAME_BORDER_* to FRAME_INTERNAL_BORDER_*.  Add FRAME_INTERNAL_BORDER_SIZE().  Add FRAME_REAL_TOOLBAR_BOUNDS() and top/left/bottom/right versions.  Rewrite FRAME_*_BORDER_START and FRAME_*_BORDER_END. -- Ben Wing
+-- refactor: check_int_range() is now check_integer_range(), taking Lisp_Objects (and thus bignums). -- Aidan Kehoe
+-- refactor: cl-macs is loaded if cl-extra.el being loaded interpreted. -- Aidan Kehoe
+-- refactor: enum edge_pos (new) with TOP_EDGE, BOTTOM_EDGE, LEFT_EDGE, RIGHT_EDGE; subsume TOP_BORDER, TOP_GUTTER, enum toolbar_pos, enum gutter_pos, etc.  New macro EDGE_POS_LOOP.  New parameter NUM_EDGES. -- Ben Wing
+-- refactor: find-file-create-switch-thunk, new macro. -- Aidan Kehoe
+-- refactor: find/get_ccl_program() moved functionality out of several functions where it was duplicated. -- Aidan Kehoe
+-- refactor: iso-8859-2, windows-1250, iso-8859-3, iso-8859-4, iso-8859-14, iso-8859-15, iso-8859-16, iso-8859-9, macintosh, windows-1252, iso-8859-8, iso-8859-7, windows-1253, iso-8859-5, koi8-r, koi8-u, windows-1251, alternativnyj, koi8-ru, koi8-t, koi8-c, koi8-o, iso-8859-6, windows-1256 are of type fixed-width. -- Aidan Kehoe
+-- refactor: shortest_length_among_sequences, new function. -- Aidan Kehoe
+-- refactor: test-harness.el moved to lisp/. -- Ben Wing
+-- refactor: text_width() method takes a window instead of a frame. -- Ben Wing
+-- remove: #'cl-string-vector-equalp, #'cl-bit-vector-vector-equalp, #'cl-vector-array-equalp, #'cl-hash-table-contents-equalp, #'cl-mapcar-many. -- Ben Wing
+-- remove: Creation of windows-874 in mule/mule-win32-init.el. -- Aidan Kehoe
+-- remove: Deactivate obsolete code in X face initialization. -- Didier Verna
+-- remove: Dead code in cl.el. -- Aidan Kehoe
+-- remove: OffiX DND support -- Jerry James
+-- remove: PDWORD_PTR typedef (unused) from syswindows.h. -- Aidan Kehoe
+-- remove: Support for "old" GNU malloc. -- Jerry James
+-- remove: Support for emacs versions where keywords are not self-quoting. -- Aidan Kehoe
+-- remove: mule/thai-util.el, mule/thai-xtis.el. -- Aidan Kehoe
 
-   Eliminated:
+Testing and Debugging
 
-     free_lrecord()
-     FREE_LISP_OBJECT():
-       Use free_normal_lisp_object()
-
-     old_zero_lcrecord()
-     old_zero_sized_lcrecord()
-     ZERO_LISP_OBJECT()
-     zero_lrecord():
-       Use zero_sized_lisp_object(), zero_nonsized_lisp_object()
-
-     copy_lrecord()
-     copy_sized_lrecord()
-     old_copy_lcrecord()
-     old_copy_sized_lcrecord()
-     COPY_SIZED_LISP_OBJECT()
-     COPY_SIZED_LCRECORD()
-     COPY_LISP_OBJECT():
-       Use copy_lisp_object()
-
-     LISP_OBJECT_STORAGE_SIZE():
-       Use lisp_object_storage_size()
-
--- new disksave method for Lisp objects, separated out from the finalize method
--- new, non-static way of initializing Lisp object methods; used for disksave,
-   getprop, putprop, remprop, object_plist, various memory-usage methods:
-   OBJECT_HAS_METHOD(), OBJECT_HAS_PROPERTY(), etc.
--- Lisp objects now must specify a print method; use either
-   internal_object_printer() or external_object_printer() as a default
--- equal method for Lisp objects has new `foldcase' param, to implement
-   case-folding comparison ala `equalp'
--- Each type of Lisp object has separate UID space
--- Redo and generalize memory-usage mechanism, add memory-usage methods for
-   various objects; the following objects now have memory-usage methods:
-   buffers, case tables, hash tables, frames, charsets, scrollbar instances,
-   specifiers, windows, window mirrors
--- Rename LISP_TO_VOID -> STORE_LISP_IN_VOID,
-   VOID_TO_LISP -> GET_LISP_FROM_VOID; add STORE_VOID_IN_LISP,
-   GET_VOID_FROM_LISP
--- Other renames:
-   XD_LISP_OBJECT_BLOCK_PTR -> XD_INLINE_LISP_OBJECT_BLOCK_PTR
--- Other new functions and macros:
-   lisp_object_memory_usage() -- memory usage of Lisp object, including
-                                 associated non-Lisp usage and ancillary Lisp
-                                 usage
-   tree_memory_usage() -- memory usage of a tree of conses and/or vectors
-   SAFE_LIST_LOOP_* -- loop over a possibly invalid list without signalling
-                       an error
-   listn() -- variable-argument list creation, number of arguments specified
-   listu() -- variable-argument list creation, terminated with Qunbound
-
--- Make the first lrecord type have value 1 not 0 so that attempts to
-   interpret 0'd memory as a Lisp object will fail more obviously
-
-Internals: Arrays and Tables
-
--- Major rewrite, updated documentation to dynarr functions and macros
-
-   Rename:
-
-        Dynarr_add_lisp_string -> Dynarr_add_ext_lisp_string
-        Dynarr_set_length -> Dynarr_set_lengthr ("restricted")
-        Dynarr_increment -> Dynarr_incrementr
-        Dynarr_resize_if -> Dynarr_resize_to_add
-
-   New functions:
-
-        Dynarr_elsize = dy->elsize_
-        Dynarr_set_length(): Set length, resizing as necessary
-        Dynarr_set_length_and_zero(): Set length, resizing as necessary,
-          zeroing out new elements
-        Dynarr_increase_length(), Dynarr_increase_length_and_zero():
-          Optimization of Dynarr_set_length(), Dynarr_set_length_and_zero()
-          when size is known to increase
-        Dynarr_resize_to_fit(): Resize as necessary to fit a given length.
-        Dynarr_set(): Set element at a given position, increasing length
-          as necessary and setting any newly created positions to 0
-        ERROR_CHECK_DYNARR, dynarr_checking_assert()
-
--- Extracted and generalized gap array code from extents.c to array.c
--- Rewrite range tables to use gap arrays; redo put_range_table() so it's
-   O(log n) when adding a localized range
-
-Internals: Misc
-
--- Collect allocation-statistics code in one place
--- if (...) ABORT (); --> assert ();
--- various changes to frame-geometry macros in frame-impl.h, gutter.h, etc.,
-   and frame-sizing code in frame.c:
-   -- TOP_BORDER, BOTTOM_BORDER, etc. -> TOP_EDGE, BOTTOM_EDGE, etc.
-   -- GUTTER_POS_LOOP -> EDGE_POS_LOOP
-   -- hardcoded use of '4' -> NUM_EDGES
-   -- default_face_height_and_width -> default_face_width_and_height, with
-        arguments reversed
-   -- width/height arguments reversed in the following, to put width first:
-        -- default_face_font_info
-	-- default_face_height_and_width (see above)
-	-- check_frame_size
-	-- frame_size_valid_p (made into a static function)
-        -- change_frame_size and
-        -- change_frame_size_1
-   -- FRAME_BORDER_* -> FRAME_INTERNAL_BORDER_*
-   -- new FRAME_INTERNAL_BORDER_SIZE(), FRAME_REAL_TOOLBAR_BOUNDS()
-   -- pixel_to_char_size -> pixel_to_frame_unit_size
-   -- char_to_pixel_size -> frame_unit_to_pixel_size
-   -- pixel_to_real_char_size -> pixel_to_char_size
-   -- char_to_real_pixel_size -> char_to_pixel_size
-   -- Eliminate old round_size_to_char, because it didn't really
-      do anything differently from round_size_to_real_char()
-   -- round_size_to_real_char -> round_size_to_char; any places that
-      called the old round_size_to_char should just call the new one.
--- Major updates to internals manual and long comments in C files:
-   frame geometry, specifier authors, MS-Windows compilation flags, xlike
-   mechanism, magic symbols, lrecords, NEW-GC, dynarrs, ...
--- Major reworking of DFC macros e.g. EXTERNAL_TO_C_STRING renamed to
-   EXTERNAL_TO_ITEXT; make them return their values when possible rather
-   than storing into a named variable:
-
-	EXTERNAL_TO_C_STRING -> EXTERNAL_TO_ITEXT
-	EXTERNAL_TO_C_STRING_MALLOC -> EXTERNAL_TO_ITEXT_MALLOC
-	SIZED_EXTERNAL_TO_C_STRING -> SIZED_EXTERNAL_TO_ITEXT
-	SIZED_EXTERNAL_TO_C_STRING_MALLOC -> SIZED_EXTERNAL_TO_ITEXT_MALLOC
-	C_STRING_TO_EXTERNAL -> ITEXT_TO_EXTERNAL
-	C_STRING_TO_EXTERNAL_MALLOC -> ITEXT_TO_EXTERNAL_MALLOC
-	LISP_STRING_TO_EXTERNAL
-	LISP_STRING_TO_EXTERNAL_MALLOC
-	LISP_STRING_TO_TSTR
-	C_STRING_TO_TSTR -> ITEXT_TO_TSTR
-	TSTR_TO_C_STRING -> TSTR_TO_ITEXT
-
-	The following four still return their values through parameters,
-	since they have more than one value to return:
-	
-	C_STRING_TO_SIZED_EXTERNAL -> ITEXT_TO_SIZED_EXTERNAL
-	LISP_STRING_TO_SIZED_EXTERNAL
-	C_STRING_TO_SIZED_EXTERNAL_MALLOC -> ITEXT_TO_SIZED_EXTERNAL_MALLOC
-	LISP_STRING_TO_SIZED_EXTERNAL_MALLOC
-
--- Eliminate unused second argument to xfree()
--- Whenever xfree() a structure field, set the field to 0 afterwards, to
-   protect against double free or possible attempt to interpret the field
-   later on
--- Move `equalp' to C
--- Rename `enum font_specifier_matchspec_stages':
-   initial -> STAGE_INITIAL
-   final -> STAGE_FINAL
-   impossible -> NUM_MATCHSPEC_STAGES
--- Rename:
-   PROCESSING_X_CODE -> THIS_IS_X
-   PROCESSING_GTK_CODE -> THIS_IS_GTK
--- Rename:
-	write_c_string -> write_cistring
-	build_intstring -> build_istring
-	build_string -> build_cistring
-	build_ext_string -> build_extstring
-	make_ext_string -> make_extstring
-	buffer_insert_c_string -> buffer_insert_ascstring
-	intern_int -> intern_istring
--- Lots of cleanup of (not-yet-working) message translation code
--- Lots of Mule-izing:
-   -- change raw `char *' to some characterized type to indicate the
-      semantics properly
-   -- change all occurrences of Qnative to some more specific encoding
-   -- create new encodings:
-        -- Qtime_function_encoding
-           Qtime_zone_encoding
-           Quser_name_encoding
-           Qerror_message_encoding
-           Qjpeg_error_message_encoding
-           Qtooltalk_encoding
-           Qgtk_encoding
-           Qx_error_message_encoding
--- Major unification of X and GTK redisplay code into "xlike" code, creation
-   of "xlike" mechanism
--- Rename:
-   LOCAL_TO_WIN32_FILE_FORMAT -> LOCAL_FILE_FORMAT_TO_INTERNAL_MSWIN
-   WIN32_TO_LOCAL_FILE_FORMAT -> INTERNAL_MSWIN_TO_LOCAL_FILE_FORMAT
-   LOCAL_FILE_FORMAT_TO_TSTR -> LISP_LOCAL_FILE_FORMAT_TO_TSTR.
-   LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR -> LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR
-   Create new LOCAL_FILE_FORMAT_TO_TSTR
--- Redo the code in code-init.el that initializes coding-system defaults
--- separate HAVE_XFT into HAVE_XFT and USE_XFT, to facilitate compiling
-   simultaneously with X and GTK
-
-File Additions, Deletions, Renames, etc.
-
--- Convert various source files to UTF-8
--- File renames:
-   select-common.h -> select-xlike-inc.c
-   xgccache.{ch} -> gccache-x.{ch}
-   toolbar-common.{ch} -> toolbar-xlike.{ch}
-   objects*.{ch} -> fontcolor*.{ch}
-   dynarr.c -> array.c
--- New files:
-   bytecode-ops.h
-   sysgtk.h, sysgdkx.h
-   keymap-buttons.h, keymap-slots.h
--- Deleted files:
-   event-gtk.h
--- File moves:
-   moved test-harness.el to Lisp directory
-   moved etc/gdbinit.in to src/.gdbinit.in.in
-
-Internals: Debugging
-
--- New function debug_out_lisp() -- printf-like formatting for Lisp objects,
-   debug output
--- Expand the KKCC backtrace mechanism -- new functions:
-   kkcc_short_backtrace()
-   kkcc_short_backtrace_full()
-   kkcc_detailed_backtrace()
-   kkcc_detailed_backtrace_full()
--- Make print code even more careful about checking for bad memory,
-   bad object types, circular objects, etc.
--- When --with-debug, set `debug-on-error' so we get an abort to debugger
-   upon Lisp error
-
-Building:
-
--- Fix `--quick-build' so full rebuilds don't happen when changes are made
-   to files like lisp.h, config.h that are included by all C files
--- Fix C++ build on Cygwin when configured with --have-database
--- Always insert a coding-system cookie in autoload files, fixing problems
-   when default coding system is UTF-8, as under Cygwin
--- Redo compile warning system, turn on a number of warnings that had
-   mistakenly gotten turned off
--- Fix so that builds properly under gcc v4, g++ v4
--- Make `--with-error-checking' be the same as `--with-error-checking=all'
--- Expand documentation of `--with-debug'
--- Use -export-all-symbols instead of broken -export-dynamic on Cygwin/MinGW
--- Add fix-perms target to correct permissions on executable/non-exec files
--- rename all instances of --enable-FOO to --with-FOO.
--- Fix make-mswin-unicode.pl so that it can work with Cygwin w32api headers
-   as well as actual VC++ headers
--- make-msgfile.lex: Long documentation on what should be done if we ever want
-   message translation to work.
-
-User-Visible Bug Fixes:
-
--- `escape-quoted' was failing to add escape quoting to Control-1 characters;
-   many potential byte-code-related crashes may have resulted from the old
-   behavior
--- Fix a redisplay bug where args to default_face_height_and_width() were
-   in wrong order
--- "speedy insert" code (to make `revert-buffer' preserve extents, markers,
-   etc. in unmodified sections of a reverted file) was broken with binary
-   files
--- File-locking code now names lock files .#FN# instead of .#FN, to avoid
-   problems with programs that e.g. try to process all .c or .h files
--- Fix a crash in frame creation due to lack of call to reset_glyph_cachels()
--- Fix long-standing bug: searching for Control-1 chars didn't work
--- Turn on `load-ignore-out-of-date-elc-files' by default
--- Fix crash in event-TTY code when reading an event non-interactively
--- Use UTF-8 consistently as encoding default under Cygwin 1.7
--- Fix broken code in computing fastmap for [^...] regexps under Mule
--- Fix display-table entries for error-octet characters so they display
-   as originally intended
-
-by Aidan Kehoe:
-
-Documentation:
-
--- add argument information to remaining MANY or UNEVALLED C subrs.
--- add arglist info for autoloaded functions and macros.
--- correct the docstring for #'range-table-type.
--- change "special form" to "special operator" in our sources and manuals
--- use DOC for dumped file names; Xref to source-lisp if readable, symbol-file
--- update documentation for #'sort in the lispref
-
-Tests:
-
--- add tests for the regexp-ranges-treat-control-1-chars badly bug.
--- fix some test failures, mule-tests.el.
-
-Lisp API:
-
--- add `file-system-ignore-case-p', use it.
--- if STRING is constant, call regexp-quote at compile time.
--- make #'letf not error if handed a #'values form.
--- rationalise duplicated functionality, #'custom-quote, #'quote-maybe.
--- serialise non-default hash table rehash thresholds correctly; use this.
--- fix issue 546, use next-single-char-property-change in list-mode.el
--- make COLUMN optional in #'indent-region, as in GNU.
--- use keywords, not ordinary symbols, in the structure syntax for hash tables.
--- fix hash tables, #'member*, #'assoc*, #'eql compiler macros if bignums
--- move the various map* functions to C; add #'map-into.
--- make canoncase visible to Lisp; use it with chars in internal_equalp.
--- move #'some, #'every to C, implementing them with mapcarX.
--- remove a couple of XEmacs-specific duplicate functions, find-paths.el
--- add a new optional ESCAPE-CHAR argument to #'split-string-by-char.
--- add #'constantly, as specified by ANSI Common Lisp.
--- handle the :from-end argument correctly, #'delete-duplicates compiler macro.
--- make #'substring an alias of #'subseq; give the latter the byte code.
--- remove #'byte-compile-compiled-obj-to-list, bytecomp.el
--- handle (function ...) specially, cl-prettyprint.
--- move #'merge, #'sort*, #'fill to C. alias #'sort, #'fillarray to latter two.
-
-Lisp implementation:
-
--- don't cons with #'mapcar calls where the result is discarded
--- fix modeline-mousable, other faces that inherit from modeline, on startup.
--- be much more comprehensive in our use of byte-compile-funarg.
--- resolve the unregistered-CCL-programs-get-garbage-collected problem
-   correctly
--- remove attempted support for 1996-era emacs without self-quoting keywords.
--- use uninterned symbols instead of variable names with _
--- eliminate funcalls, #'handle-pre-motion-command-current-command-is-motion
--- make iso-left-tab equivalent to shift-tab, XFree86
--- behave better with no database support or no associated font, descr-text.el
--- use #'function-arglist, etc. from help.el, not reimplementing them,
-   hyper-apropos
-
-internal implementation:
-
--- remove Fsave_window_excursion from window.c, it's overridden by Lisp.
--- make readlink_or_correct_case function correctly on Darwin.
--- no need to fatal () on startup if $PWD doesn't exist; chdir to "/" instead.
--- don't attempt to free dumped data, alloc.c:resize_string()
--- call character_to_event on characters received from XIM, event-Xt.c
--- dump the arabic-iso8859-6 character set, again, for the sake of XKB input
--- always use our rint(), for rounding consistency with the bignum code.
--- be more careful about canonical integer forms when dealing with ratios.
--- don't use Boyer-Moore if repeated octets & case-insensitive search.
--- do not assume #'format-decode exists in fileio.c.
--- add a PARSE_KEYWORDS macro, use it in #'make-hash-table.
-
-by Didier Verna:
-
-Lisp API:
-
--- new `background-placement' property of faces; with a value of `absolute',
-   the background pixmap is drawn relative to the root window, allowing
-   seamless integration with the desktop background
-
-by Jerry James:
-
-Lisp API:
-
--- signal an error instead of crashing when encountering a ratio like 1/0
-
-Internals:
-
--- locate and add copyright notices to various files in preparation for
-   move to GPL v3
-
-
+-- refactor: Clean up KKCC code related to DEBUG_XEMACS.  New macros IF_OLD_GC(), IF_NEW_GC(). -- Ben Wing
+-- new: valgrind debugging of allocation gets support. -- Jerry James
+-- improve: debug_can_access_memory. -- Ben Wing
+-- improve: Print more variables upon --debug-paths. -- Mike Sperber
+-- improve: Debug facilities. -- Ben Wing
+-- improve: 'debug-xemacs allows exit-to-debugger/assertion failure upon Lisp error during loadup. -- Ben Wing
+-- fix: Type consistency between debug and non-debug builds. -- Ben Wing
+-- fix: Conditionalize DEBUG_FONTS* definitions on DEBUG_XEMACS, provide empty definitions otherwise. -- Didier Verna
+-- improve: .gdbinit.in.in gets file argument to check-xemacs and check-temacs -- Ben Wing
+-- fix: lrecord_type_popup_data, lrecord_type_window_configuration from .gdbinit. -- Aidan Kehoe
+-- fix: Type detection in gdb pobj and friends. -- Aidan Kehoe
+-- fix: @srcdir@ correctness in .gdbinit.in.in -- Ben Wing
+-- improve: Generation of src/.gdbinit. -- Ben Wing
+-- fix: #'Check-Message comma syntax error. -- Aidan Kehoe
+-- fix: .dbxrc looks for test-harness.el in lisp directory. -- Ben Wing
+-- fix: Bignum expected errors. -- Aidan Kehoe
+-- fix: Check for fixed-width coding systems. -- Aidan Kehoe
+-- fix: Correct line endings in tests. -- Ben Wing
+-- fix: Don't check the fixed-width coding systems with odd line endings for ASCII-transparency. -- Aidan Kehoe
+-- fix: List of character sets in HELLO. -- Aidan Kehoe, Ben Wing
+-- fix: Operation of c-tests. -- Ben Wing, Stephen Turnbull
+-- fix: Restore mapping for scaron after testing. -- Aidan Kehoe
+-- fix: Results must not be written into source file. -- Ben Wing
+-- fix: Revert to the original language environment in tests. -- Aidan Kehoe
+-- fix: SXEmacs -> XEmacs in lisp-reader-tests.el. -- Stephen Turnbull
+-- fix: Set buffer of new file to be non-modified here before killing it. -- Aidan Kehoe
+-- fix: Syntax of tests for signaled errors. -- Ben Wing
+-- fix: Use utf-8 as file-name-coding-system under Cygwin 1.7+. -- Ben Wing
+-- fix: letf test passes. -- Aidan Kehoe
+-- improve: #'Assert. -- Ben Wing, Stephen Turnbull, Aidan Kehoe
+-- improve: #'test-harness-from-buffer reverses order of "got" and "expected" values. -- Ben Wing
+-- improve: Case tests. -- Ben Wing
+-- improve: Docs. -- Ben Wing, Aidan Kehoe, Stephen Turnbull
+-- improve: Refactor search and regexp tests, file tests. -- Ben Wing
+-- improve: Replace asserts in test-format-data-conversion. -- Stephen Turnbull
+-- new: #'equalp hash table test, #'define-hash-table-test. -- Aidan Kehoe
+-- new: #'equalp. -- Aidan Kehoe
+-- new: #'functionp. -- Aidan Kehoe
+-- new: #'generate-rounding-output (useful for generating data). -- Aidan Kehoe
+-- new: #'mapcar, #'map and #'list-length throw malformed-list. -- Aidan Kehoe
+-- new: #'nbutlast, #'butlast with dotted lists, #'ldiff, #'tailp with circular lists, dotted lists. -- Aidan Kehoe
+-- new: #'reduce. -- Aidan Kehoe
+-- new: (equal "hi there" [hi there]) => nil, not ==> error. -- Aidan Kehoe
+-- new: Binding default-process-coding-system to nil. -- Stephen Turnbull
+-- new: CODESYS in #'find-file is respected for files without content. -- Aidan Kehoe
+-- new: Circularity checking with #'merge. -- Aidan Kehoe
+-- new: Clearer error messages from image instantiation. -- Aidan Kehoe
+-- new: Common Lisp-compatible multiple values. -- Aidan Kehoe
+-- new: Common Lisp-compatible rounding functions. -- Aidan Kehoe
+-- new: Control-1 search bug. -- Ben Wing, Aidan Kehoe
+-- new: Discard of multiple values in #'mapcar. -- Aidan Kehoe
+-- new: Format strings with %b. -- Aidan Kehoe
+-- new: More tests of equalp. -- Stephen Turnbull
+-- new: Printing symbols with names that look like ratios. -- Aidan Kehoe
+-- new: Some multidimensional characters should not use boyer_moore(). -- Aidan Kehoe
+-- new: Torture test for case mappings. -- Ben Wing
+-- new: Unicode detection with very short inputs. -- Aidan Kehoe
+-- new: Variables to control backtraces in tests. -- Ben Wing
+-- new: Zero-length files get sane coding system. -- Aidan Kehoe
+-- new: escape-quoted for the range U+0000 to U+00FF. -- Stephen Turnbull
+-- new: reproduce-crashes.el #12, #13. -- Adam Sjogren, Stephen Turnbull, Jerry James
+-- new: split-string-by-char. -- Aidan Kehoe
+-- remove: DLL/dltest.c. -- Jerry James
+-- remove: Unused binding. -- Ben Wing
+-- remove: auc-tex-test. -- Jerry James
 
 to XEmacs 21.5.29 "garbanzo"
 
