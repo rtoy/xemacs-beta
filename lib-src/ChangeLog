@@ -1,3 +1,7 @@
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
 2011-01-15  Mike Sperber  <mike@xemacs.org>
 
 	* fakemail.c: #include <osreldate.h> on FreeBSD, since we no

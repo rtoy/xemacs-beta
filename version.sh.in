@@ -2,8 +2,11 @@
 emacs_is_beta=t
 emacs_major_version=21
 emacs_minor_version=5
-emacs_beta_version=29
-xemacs_codename="garbanzo"
+emacs_beta_version=30
+xemacs_codename="garlic"
 emacs_kit_version=
-xemacs_release_date="2009-05-18"
+infodock_major_version=
+infodock_minor_version=
+infodock_build_version=
+xemacs_release_date="2011-04-27"
 xemacs_extra_name=

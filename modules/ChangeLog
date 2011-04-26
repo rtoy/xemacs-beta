@@ -1,3 +1,7 @@
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
 2010-04-12  Ben Wing  <ben@xemacs.org>
 
 	* canna/canna_api.c:
