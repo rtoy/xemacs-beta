@@ -58,106 +58,10 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup*
 #define XFRAME_GTK_MENUBAR_DATA_UPTODATE(f) XCDR (FRAME_GTK_MENUBAR_DATA (f))
 
 
-/* This is a bogus subclass of GtkMenuBar so that the menu never tries
-** to be bigger than the text widget.  This prevents weird resizing
-** when jumping around between buffers with radically different menu
-** sizes.
-**
-** Currently unused --jsparkes
-*/
-
-#define GTK_XEMACS_MENUBAR(obj)		GTK_CHECK_CAST (obj, gtk_xemacs_menubar_get_type (), GtkXEmacsMenubar)
-#define GTK_XEMACS_MENUBAR_CLASS(klass)	GTK_CHECK_CLASS_CAST (klass, gtk_xemacs_menubar_get_type (), GtkXEmacsMenubarClass)
-#define GTK_IS_XEMACS_MENUBAR(obj)	GTK_CHECK_TYPE (obj, gtk_xemacs_menubar_get_type ())
-#define GTK_XEMACS_MENUBAR_FRAME(obj)	GTK_XEMACS_MENUBAR (obj)->f
-
-typedef struct _GtkXEmacsMenubar GtkXEmacsMenubar;
-typedef struct _GtkXEmacsMenubarClass GtkXEmacsMenubarClass;
-
-struct _GtkXEmacsMenubar
-{
-  GtkMenuBar menu;
-  struct frame *frame;
-};
-
-struct _GtkXEmacsMenubarClass
-{
-  GtkMenuBarClass parent_class;
-};
-
-guint gtk_xemacs_menubar_get_type (void);
-GtkWidget *gtk_xemacs_menubar_new (struct frame *f);
-
-static void gtk_xemacs_menubar_class_init	(GtkXEmacsMenubarClass *klass);
-static void gtk_xemacs_menubar_init		(GtkXEmacsMenubar *xemacs);
-static void gtk_xemacs_menubar_size_request	(GtkWidget *widget, GtkRequisition *requisition);
-
-guint
-gtk_xemacs_menubar_get_type (void)
-{
-  static guint xemacs_menubar_type;
-
-  if (!xemacs_menubar_type)
-    {
-      static const GtkTypeInfo xemacs_menubar_info =
-      {
-	(gchar *)"GtkXEmacsMenubar",
-	sizeof (GtkXEmacsMenubar),
-	sizeof (GtkXEmacsMenubarClass),
-	(GtkClassInitFunc) gtk_xemacs_menubar_class_init,
-	(GtkObjectInitFunc) gtk_xemacs_menubar_init,
-	/* reserved_1 */ NULL,
-        /* reserved_2 */ NULL,
-        (GtkClassInitFunc) NULL,
-      };
-
-      xemacs_menubar_type = gtk_type_unique (gtk_menu_bar_get_type (), &xemacs_menubar_info);
-    }
-
-  return xemacs_menubar_type;
-}
-
-static GtkWidgetClass *menubar_parent_class;
-
-static void
-gtk_xemacs_menubar_class_init	(GtkXEmacsMenubarClass *klass)
-{
-  GtkWidgetClass *widget_class;
-
-  widget_class = (GtkWidgetClass*) klass;
-  menubar_parent_class = (GtkWidgetClass *) gtk_type_class (gtk_menu_bar_get_type ());
-
-  widget_class->size_request = gtk_xemacs_menubar_size_request;
-}
-
-static void
-gtk_xemacs_menubar_init		(GtkXEmacsMenubar *UNUSED (xemacs))
-{
-}
-
-static void
-gtk_xemacs_menubar_size_request	(GtkWidget *widget, GtkRequisition *requisition)
-{
-  GtkXEmacsMenubar *x = GTK_XEMACS_MENUBAR (widget);
-  GtkRequisition frame_size;
-
-  menubar_parent_class->size_request (widget, requisition);
-
-  gtk_widget_size_request (FRAME_GTK_TEXT_WIDGET (x->frame), &frame_size);
-
-  requisition->width = frame_size.width;
-}
-
 GtkWidget *
 gtk_xemacs_menubar_new (struct frame *f)
 {
-#if 1
-  GtkXEmacsMenubar *menubar = (GtkXEmacsMenubar*) gtk_type_new (gtk_xemacs_menubar_get_type ());
-  menubar->frame = f;
-#else
   GtkWidget *menubar = gtk_menu_bar_new ();
-#endif
-  /* I don't think this is used.  --jsparkes */
   g_object_set_qdata (G_OBJECT (menubar), XEMACS_MENU_FRAME_TAG, f);
   return (GTK_WIDGET (menubar));
 }
