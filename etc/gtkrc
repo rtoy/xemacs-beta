@@ -1,6 +1,11 @@
 # Force the window background to be the same as the default face background:
 # white.
 
+# Copyright 1999 Malcolm Purvis
+# This file is part of XEmacs, licensed to you under the GNU
+# General Public License, version 3 or later at your option.
+# There is NO WARRANTY, explicit or implied, on this file.
+
 style "default_background"
 {
 	bg[NORMAL] = { 1.0, 1.0, 1.0 }
