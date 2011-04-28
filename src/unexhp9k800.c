@@ -1,5 +1,6 @@
 /* Unexec for HP 9000 Series 800 machines.
-   Bob Desinger <hpsemc!bd@hplabs.hp.com>
+
+Copyright 1996 Bob Desinger <hpsemc!bd@hplabs.hp.com>
 
 This file is part of XEmacs.
 

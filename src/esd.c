@@ -1,5 +1,7 @@
 /* esd.c - play a sound over ESD
 
+Copyright 1999 Robert Bihlmeyer <robbe@orcus.priv.at>
+
 This file is part of XEmacs.
 
 XEmacs is free software: you can redistribute it and/or modify it
