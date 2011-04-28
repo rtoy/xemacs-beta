@@ -1,5 +1,7 @@
 # tests for the bundled packages feature
 
+# Copyright 2007 Free Software Foundation
+
 # This file is part of XEmacs.
 
 # XEmacs is free software: you can redistribute it and/or modify it
