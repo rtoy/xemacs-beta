@@ -1,5 +1,9 @@
 # DO NOT PUT A VERSION MARKER HERE, AUTOMATICALLY ADDED AT RELEASE
 
+Internal API and Implementation
+
+-- improve: Verify copyright status and restrict license to GPL version 3 or later. -- Mats Lidell, Mike Sperber, Jerry James, Ben Wing
+
 Major Features and Backward Incompatible Changes
 
 -- remove: Last release under GPL v2; future releases will be GPL v3 or later. -- Mats Lidell, Jerry James, Stephen Turnbull, Aidan Kehoe, Ben Wing, Mike Sperber
