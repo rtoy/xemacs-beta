@@ -1,3 +1,10 @@
+2011-04-30  Didier Verna  <didier@xemacs.org>
+
+	* special-mode.el: New file.
+	* special-mode.el (special-mode-map): New variable.
+	* special-mode.el (special-mode): New function.
+	* dumped-lisp.el (preloaded-file-list): Add special-mode.
+
 2011-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* faces.el (face-property-matching-instance):

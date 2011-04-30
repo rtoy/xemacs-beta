@@ -118,6 +118,7 @@ in dumped-lisp.el and is not itself listed.")
        "easy-mmode"		; Added for 21.5. Used by help.
        "help"
        "easymenu"		; Added for 20.3.
+       "special-mode"
        "lisp-mode"
        "text-mode"
        "fill"
