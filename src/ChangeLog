@@ -1,11 +1,11 @@
-2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* XEmacs 21.5.31 "ginger" is released.
-
 2011-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* specifier.c (Fspecifier_matching_instance):
 	Add comment about backward-incompatibility of MATCHSPEC.
+
+2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.31 "ginger" is released.
 
 2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
