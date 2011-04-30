@@ -1,5 +1,9 @@
 2011-04-30  Didier Verna  <didier@xemacs.org>
 
+	* subr.el (looking-back): New function.
+
+2011-04-30  Didier Verna  <didier@xemacs.org>
+
 	* special-mode.el: New file.
 	* special-mode.el (special-mode-map): New variable.
 	* special-mode.el (special-mode): New function.
