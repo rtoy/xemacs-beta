@@ -1,3 +1,10 @@
+2010-12-31  Mike Kupfer  <mike.kupfer@xemacs.org>
+
+	* redisplay.c (pixel_to_glyph_translation):
+	Handle redisplay edge case.
+	With motion events when entering a frame and the minibuffer is
+	active, row and column can be zero, and there aren't any runes.
+
 2011-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* specifier.c (Fspecifier_matching_instance):
