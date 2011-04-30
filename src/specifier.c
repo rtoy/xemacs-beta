@@ -3171,6 +3171,10 @@ See `specifier-instance' for more information about the instantiation process.
 				 no_fallback, 1);
 }
 
+/* MATCHSPEC is backward-incompatible with code written to 21.4's API.
+   So far such code has been seen only in x-symbol-mule.el, and that
+   was addressed by a change `face-property-matching-instance'.
+   See tracker issue752 for a more general patch against 21.5.29. */
 DEFUN ("specifier-matching-instance", Fspecifier_matching_instance, 2, 5, 0, /*
 Return an instance for SPECIFIER in DOMAIN that matches MATCHSPEC.
 If no instance can be generated for this domain, return DEFAULT.

@@ -238,16 +238,19 @@ Optional arguments DEFAULT and NO-FALLBACK are the same as in
 					&optional domain default
 					no-fallback)
   "Return the instance of FACE's PROPERTY matching MATCHSPEC in DOMAIN.
-Currently the only useful value for MATCHSPEC is a charset, when used
-in conjunction with the face's font; this allows you to retrieve a
-font that can be used to display a particular charset, rather than just
-any font.
+Currently MATCHSPEC is used only for the 'font property, when its value
+should be a cons \(CHARSET . STAGE) \(see `specifier-matching-instance'
+for a full description of the matching process).  This allows you to
+retrieve a font that can be used to display a particular charset, rather
+than just any font.  For backward compatibility, MATCHSPEC may be a
+charset, which is interpreted as \(CHARSET . final).
 
-Other than MATCHSPEC, this function is identical to `face-property-instance'.
-See also `specifier-matching-instance' for a fuller description of the
-matching process."
+See `face-property-instance' for usage of the other arguments."
 
   (setq face (get-face face))
+  ;; For compatibility with 21.4-oriented code, eg, x-symbol-mule.el.
+  (when (charsetp matchspec)
+    (setq matchspec (cons matchspec 'final)))
   (let ((value (get face property)))
     (when (specifierp value)
       (setq value (specifier-matching-instance value matchspec domain
