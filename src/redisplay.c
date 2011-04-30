@@ -9165,19 +9165,27 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 
 	  for (*col = 0; *col <= Dynarr_length (db->runes); (*col)++)
 	    {
-	      int past_end = (*col == Dynarr_length (db->runes));
-
-	      if (!past_end)
-		rb = Dynarr_atp (db->runes, *col);
-
-	      if (past_end ||
-		  (rb->xpos <= x_coord && x_coord < rb->xpos + rb->width))
+	      if (*col == Dynarr_length (db->runes))
 		{
-		  if (past_end)
-		    {
-		      (*col)--;
-		      rb = Dynarr_atp (db->runes, *col);
-		    }
+		  /* We've run out of runes to look at.  Treat the same as
+		     the case below where we failed to find a non-glyph
+		     character. */
+		  if (dl->modeline)
+		    *modeline_closest = dl->end_charpos + dl->offset;
+		  else
+		    *closest = dl->end_charpos + dl->offset;
+
+		  if (check_margin_glyphs)
+		    get_position_object (dl, obj1, obj2, x_coord,
+					 &low_x_coord, &high_x_coord);
+
+		  UPDATE_CACHE_RETURN;
+		}
+
+	      rb = Dynarr_atp (db->runes, *col);
+
+	      if (rb->xpos <= x_coord && x_coord < rb->xpos + rb->width)
+		{
 
 		  *charpos = rb->charpos + dl->offset;
 		  low_x_coord = rb->xpos;
@@ -9251,9 +9259,8 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 
 		      UPDATE_CACHE_RETURN;
 		    }
-		  else if (past_end
-			   || (rb->type == RUNE_CHAR
-			       && rb->object.chr.ch == '\n'))
+		  else if (rb->type == RUNE_CHAR
+			   && rb->object.chr.ch == '\n')
 		    {
 		      (*row)--;
 		      /* At this point we may have glyphs in the right
