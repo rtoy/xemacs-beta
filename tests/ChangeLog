@@ -1,3 +1,9 @@
+2011-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	If the bignum feature is available, check that a leading plus sign
+	is treated correctly when reading bignum integers.
+
 2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.31 "ginger" is released.
