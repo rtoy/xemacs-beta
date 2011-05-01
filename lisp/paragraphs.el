@@ -1,27 +1,28 @@
 ;;; paragraphs.el --- paragraph and sentence parsing
 
-;; Copyright (C) 1985, 86, 87, 91, 94, 95, 96, 1997, 1999, 2000, 2001
-;;    Free Software Foundation, Inc.
+;; Copyright (C) 1985-87, 1991, 1994-97, 1999-2010 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Maintainer: FSF
 ;; Keywords: wp, dumped
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software: you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by the
-;; Free Software Foundation, either version 3 of the License, or (at your
-;; option) any later version.
+;; XEmacs is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
-;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-;; for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Synched up with: FSF 21.3.
+;;; Synced up with: FSF 23.1.92.
+;;; Synced by: Ben Wing, 2-17-10.
 
 ;;; Commentary:
 
@@ -39,6 +40,7 @@
   "Paragraph and sentence parsing."
   :group 'editing)
 
+(put 'use-hard-newlines 'permanent-local t)
 (define-minor-mode use-hard-newlines
   "Minor mode to distinguish hard and soft newlines.
 When active, the functions `newline' and `open-line' add the
@@ -48,7 +50,7 @@ only considered as a candidate to match `paragraph-start' or
 
 Prefix argument says to turn mode on if positive, off if negative.
 When the mode is turned on, if there are newlines in the buffer but no hard
-newlines, ask the user whether to mark as hard any newlines preceding a
+newlines, ask the user whether to mark as hard any newlines preceeding a
 `paragraph-start' line.  From a program, second arg INSERT specifies whether
 to do this; it can be `never' to change nothing, t or `always' to force
 marking, `guess' to try to do the right thing with no questions, nil
@@ -102,6 +104,7 @@ If the variable `use-hard-newlines' is non-nil, then only lines following a
 hard newline are considered to match."
   :group 'paragraphs
   :type 'regexp)
+(put 'paragraph-start 'safe-local-variable 'stringp)
 
 ;; paragraph-start requires a hard newline, but paragraph-separate does not:
 ;; It is assumed that paragraph-separate is distinctive enough to be believed
@@ -121,6 +124,7 @@ ensures that the paragraph functions will work equally within a region of
 text indented by a margin setting."
   :group 'paragraphs
   :type 'regexp)
+(put 'paragraph-separate 'safe-local-variable 'stringp)
 
 (defcustom sentence-end-double-space t
   "*Non-nil means a single space does not end a sentence.
@@ -130,54 +134,94 @@ and `colon-double-space'.
 This variable applies only to filling, not motion commands.  To
 change the behavior of motion commands, see `sentence-end'.
 
-If you change this, you should also change `sentence-end'.  See Info
-node `Sentences'."
+This value is used by the function `sentence-end' to construct the
+regexp describing the end of a sentence, when the value of the variable
+`sentence-end' is nil.  See Info node `(lispref)Standard Regexps'."
   :type 'boolean
   :group 'fill)
+(put 'sentence-end-double-space 'safe-local-variable 'booleanp)
 
 (defcustom sentence-end-without-period nil
   "*Non-nil means a sentence will end without a period.
 For example, a sentence in Thai text ends with double space but
-without a period."
+without a period.
+
+This value is used by the function `sentence-end' to construct the
+regexp describing the end of a sentence, when the value of the variable
+`sentence-end' is nil.  See Info node `(lispref)Standard Regexps'."
   :type 'boolean
   :group 'fill)
+(put 'sentence-end-without-period 'safe-local-variable 'booleanp)
 
-(defcustom sentence-end
-  ;; This is a bit stupid since it's not auto-updated when the
-  ;; other variables are changed, but it's still useful info.
-  (concat (if sentence-end-without-period "\\w  \\|")
-	  "[.?!"
-	  (if (featurep 'mule)
-	      (decode-coding-string "\033$B!#!%!)!*\033$A!##.#?#!\033$(0!$!%!)!*\033$(G!$!%!)!*\033(B" 'iso-2022-7bit)
-	    "")
-	  "][]\"')}]*"
-	  (if sentence-end-double-space
-	      "\\($\\| $\\|\t\\|  \\)" "\\($\\|[\t ]\\)")
-	  "[ \t\n]*")
-  "*Regexp describing the end of a sentence.
+(defcustom sentence-end-without-space
+  (cond ((featurep 'unicode-internal)
+	 (decode-coding-string "\343\200\202\357\274\216\357\274\237\357\274\201" 'utf-8))
+	((featurep 'mule)
+	 (decode-coding-string "\033$B!#!%!)!*\033$A!##.#?#!\033$(0!$!%!)!*\033$(G!$!%!)!*\033(B" 'iso-2022-7bit))
+	(t ""))
+  "String of characters that end sentence without following spaces.
+
+This value is used by the function `sentence-end' to construct the
+regexp describing the end of a sentence, when the value of the variable
+`sentence-end' is nil.  See Info node `(lispref)Standard Regexps'."
+  :group 'paragraphs
+  :type 'string)
+(put 'sentence-end-without-space 'safe-local-variable 'stringp)
+
+(defcustom sentence-end nil
+  "Regexp describing the end of a sentence.
 The value includes the whitespace following the sentence.
 All paragraph boundaries also end sentences, regardless.
 
-The default value specifies that in order to be recognized as the end
-of a sentence, the ending period, question mark, or exclamation point
-must be followed by two spaces, unless it's inside some sort of quotes
-or parenthesis.
-
-See also the variable `sentence-end-double-space', the variable
-`sentence-end-without-period' and Info node `Sentences'."
+The value nil means to use the default value defined by the
+function `sentence-end'.  You should always use this function
+to obtain the value of this variable."
   :group 'paragraphs
-  :type 'regexp)
+  :type '(choice regexp (const :tag "Use default value" nil)))
+(put 'sentence-end 'safe-local-variable 'string-or-null-p)
+
+(defcustom sentence-end-base "[.?!][]\"'”)}]*"
+  "Regexp matching the basic end of a sentence, not including following space."
+  :group 'paragraphs
+  :type 'string
+  :version "22.1")
+(put 'sentence-end-base 'safe-local-variable 'stringp)
+
+(defun sentence-end ()
+  "Return the regexp describing the end of a sentence.
+
+This function returns either the value of the variable `sentence-end'
+if it is non-nil, or the default value constructed from the
+variables `sentence-end-base', `sentence-end-double-space',
+`sentence-end-without-period' and `sentence-end-without-space'.
+
+The default value specifies that in order to be recognized as the
+end of a sentence, the ending period, question mark, or exclamation point
+must be followed by two spaces, with perhaps some closing delimiters
+in between.  See Info node `(elisp)Standard Regexps'."
+  (or sentence-end
+      ;; We accept non-break space along with space.
+      (concat (if sentence-end-without-period "\\w[ \u00a0][ \u00a0]\\|")
+	      "\\("
+	      sentence-end-base
+              (if sentence-end-double-space
+                  "\\($\\|[ \u00a0]$\\|\t\\|[ \u00a0][ \u00a0]\\)" "\\($\\|[\t \u00a0]\\)")
+              "\\|[" sentence-end-without-space "]+"
+	      "\\)"
+              "[ \u00a0\t\n]*")))
 
 (defcustom page-delimiter "^\014"
   "*Regexp describing line-beginnings that separate pages."
   :group 'paragraphs
   :type 'regexp)
+(put 'page-delimiter 'safe-local-variable 'stringp)
 
 (defcustom paragraph-ignore-fill-prefix nil
   "*Non-nil means the paragraph commands are not affected by `fill-prefix'.
 This is desirable in modes where blank lines are the paragraph delimiters."
   :group 'paragraphs
   :type 'boolean)
+(put 'paragraph-ignore-fill-prefix 'safe-local-variable 'booleanp)
 
 (defun forward-paragraph (&optional arg)
   "Move forward to end of paragraph.
@@ -189,6 +233,7 @@ A line which `paragraph-start' matches either separates paragraphs
 A paragraph end is the beginning of a line which is not part of the paragraph
 to which the end of the previous line belongs, or the end of the buffer.
 Returns the count of paragraphs left to move."
+  ;; #### MERGE! FSF Has (interactive "^p")
   (interactive "_p") ; XEmacs
   (or arg (setq arg 1))
   (let* ((opoint (point))
@@ -264,6 +309,9 @@ Returns the count of paragraphs left to move."
 				   (not (looking-at parsep)))
 			    (not (and (looking-at parstart)
 				      (or (not use-hard-newlines)
+					  ;; #### XEmacs: We've reversed
+					  ;; the order of the following two --
+					  ;; does it matter?
 					  (get-text-property (1- start) 'hard)
 					  (bobp)))))
 		  (setq found-start nil)
@@ -330,17 +378,18 @@ With argument ARG, do it ARG times;
 a negative argument ARG = -N means move forward N paragraphs.
 
 A paragraph start is the beginning of a line which is a
-`first-line-of-paragraph' or which is ordinary text and follows a
-paragraph-separating line; except: if the first real line of a
+`paragraph-start' or which is ordinary text and follows a
+`paragraph-separate'ing line; except: if the first real line of a
 paragraph is preceded by a blank line, the paragraph starts at that
 blank line.
 
 See `forward-paragraph' for more information."
+  ;; #### MERGE! FSF Has (interactive "^p")
   (interactive "_p") ; XEmacs
   (or arg (setq arg 1))
   (forward-paragraph (- arg)))
 
-(defun mark-paragraph (&optional arg)
+(defun mark-paragraph (&optional arg allow-extend)
   "Put point at beginning of this paragraph, mark at end.
 The paragraph marked is the one that contains point or follows point.
 
@@ -352,11 +401,12 @@ at beginning of this or a previous paragraph.
 
 If this command is repeated, it marks the next ARG paragraphs after (or
 before, if arg is negative) the ones already marked."
-  (interactive "p")
+  (interactive "p\np")
   (unless arg (setq arg 1))
   (when (zerop arg)
     (error "Cannot mark zero paragraphs"))
-  (cond ((and (eq last-command this-command) (mark t))
+  (cond ((and allow-extend
+	      (eq last-command this-command) (mark t))
 	 (set-mark
 	  (save-excursion
 	    (goto-char (mark))
@@ -412,17 +462,22 @@ negative arg -N means kill forward to Nth end of paragraph."
 	      (end-of-paragraph-text))))))
 
 (defun forward-sentence (&optional arg)
-  "Move forward to next `sentence-end'.  With argument, repeat.
-With negative argument, move backward repeatedly to `sentence-beginning'.
+  "Move forward to next end of sentence.  With argument, repeat.
+With negative argument, move backward repeatedly to start of sentence.
 
 The variable `sentence-end' is a regular expression that matches ends of
-sentences.  A paragraph boundary also terminates a sentence."
+sentences.  Also, every paragraph boundary terminates sentences as well."
+  ;; #### MERGE! FSF Has (interactive "^p")
   (interactive "_p") ; XEmacs
   (or arg (setq arg 1))
-  (let ((opoint (point)))
+  (let ((opoint (point))
+        (sentence-end (sentence-end)))
     (while (< arg 0)
       (let ((pos (point))
-	    (par-beg (save-excursion (start-of-paragraph-text) (point))))
+	    ;; We used to use (start-of-paragraph-text), but this can
+	    ;; prevent sentence-end from matching if it is anchored at
+	    ;; BOL and the paragraph starts indented.
+	    (par-beg (save-excursion (backward-paragraph) (point))))
        (if (and (re-search-backward sentence-end par-beg t)
 		(or (< (match-end 0) pos)
 		    (re-search-backward sentence-end par-beg t)))
@@ -441,9 +496,18 @@ sentences.  A paragraph boundary also terminates a sentence."
        'void-function
        "constrain-to-field not available; is xemacs-base installed?"))))
 
+(defun repunctuate-sentences ()
+  "Put two spaces at the end of sentences from point to the end of buffer.
+It works using `query-replace-regexp'."
+  (interactive)
+  (query-replace-regexp "\\([]\"')]?\\)\\([.?!]\\)\\([]\"')]?\\) +"
+			"\\1\\2\\3  "))
+
+
 (defun backward-sentence (&optional arg)
   "Move backward to start of sentence.  With arg, do it arg times.
 See `forward-sentence' for more information."
+  ;; #### MERGE! FSF Has (interactive "^p")
   (interactive "_p") ; XEmacs
   (or arg (setq arg 1))
   (forward-sentence (- arg)))
@@ -485,8 +549,8 @@ ones already marked."
   (interactive "*p")
   (transpose-subr 'forward-sentence arg))
 
-;;; Local Variables:
-;;; coding: iso-2022-7bit
-;;; End:
+;; Local Variables:
+;; coding: utf-8
+;; End:
 
 ;;; paragraphs.el ends here

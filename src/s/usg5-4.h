@@ -16,7 +16,8 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
-/* Synched up with: FSF 19.31. */
+/* Synced up with: FSF 23.1.92. */
+/* Synced by: Ben Wing, 2-18-10. */
 
 /* This file written by James Van Artsdalen of Dell Computer Corporation.
  * james@bigtex.cactus.org.  Subsequently improved for Dell 2.2 by Eric
@@ -32,6 +33,11 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #define SYSTEM_TYPE "usg-unix-v"
 
+/* Delete HAVE_TERMIO, SYSV_SYSTEM_DIR, KERNEL_FILE, LDAV_SYMBOL,
+   sigsetmask, _setjmp, _longjmp, HAVE_INDEX, HAVE_RINDEX, TERMINFO,
+   HAVE_SYSV_SIGPAUSE, BSTRING, SIGTYPE -- not used in XEmacs or found by
+   configure */
+
 /* Letter to use in finding device name of first pty,
  * if system supports pty's.  'p' means it is /dev/ptyp0  */
 
@@ -43,15 +49,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
  * /usr/spool/mail/$USER.lock.  */
 
 /* #define MAIL_USE_FLOCK */
-
-/* The file containing the kernel's symbol table is called /unix.  */
-
-#define KERNEL_FILE "/unix"
-
-/* The symbol in the kernel where the load average is found
- * is named avenrun.  */
-
-#define LDAV_SYMBOL "avenrun"
 
 /* Special hacks needed to make Emacs run on this system.  */
 
@@ -73,10 +70,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #define LIBS_DEBUG
 
-/* Use terminfo instead of termcap.  */
-
-#define TERMINFO
-
 /* 5.3 apparently makes close() interruptible */
 
 #define INTERRUPTIBLE_CLOSE
@@ -95,7 +88,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* there are no -lg libraries on this system, and no libPW */
 
-#define LIBS_DEBUG
+/* XEmacs deleted LIBS_DEBUG, LIB_STANDARD */
 
 /* No <sioctl.h> */
 

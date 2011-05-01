@@ -1,5 +1,3 @@
-/* Synched up with: FSF 19.31. */
-
 /* s/ file for netbsd system.
    Copyright (C) 1997, 2000, 2001 Martin Buchholz
 
@@ -18,10 +16,114 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
+/* Synced up with: FSF 23.1.92. */
+/* Synced by: Ben Wing, 2-18-10. */
 
-/* Get most of the stuff from bsd4.3 */
-#include "bsd4-3.h"
+/* Get most of the stuff from bsd-common */
+#include "bsd-common.h"
 
+#if defined (__alpha__) && !defined (__ELF__)
+#define NO_SHARED_LIBS
+#endif
+
+/* Delete BSD4_2 -- unused in XEmacs */
+
+/* KERNEL_FILE, LDAV_SYMBOL HAVE_GETLOADAVG deleted */
+
+#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
+
+/* netbsd uses OXTABS instead of the expected TAB3.  */
+#define TABDLY OXTABS
+#define TAB3 OXTABS
+
+/* HAVE_TERMIOS, NO_TERMIO deleted */
+
+/* XEmacs deleted LIBS_DEBUG */
+/* -lutil is not needed for NetBSD >0.9.  */
+/* #define LIBS_SYSTEM -lutil */
+/* LIBS_TERMCAP deleted */
+
+#define NEED_ERRNO
+/* SYSV_SYSTEM_DIR deleted */
+
+/* BSD_PGRPS deleted */
+
+#if !defined (NO_SHARED_LIBS) && defined (__ELF__)
+#define UNEXEC "unexelf.o"
+#endif
+
+#if 0 /* Following mrb, this stuff is probably unneeded for XEmacs */
+#if !defined (NO_SHARED_LIBS) && defined (__ELF__)
+#define START_FILES pre-crt0.o /usr/lib/crt0.o START_FILES_1 /usr/lib/crtbegin.o
+#define LIB_STANDARD -lgcc -lc -lgcc /usr/lib/crtend.o END_FILES_1
+#undef LIB_GCC
+#define LIB_GCC
+#endif
+
+#ifdef HAVE_CRTIN
+#define START_FILES_1 /usr/lib/crti.o
+#define END_FILES_1 /usr/lib/crtn.o
+#else
+#define START_FILES_1
+#define END_FILES_1
+#endif
+#else /* not 0 */
+/* XEmacs: */
+#define HAVE_TEXT_START		/* No need to define `start_of_text'.  */
+#define ORDINARY_LINK
+#endif /* 0 */
+
+#define AMPERSAND_FULL_NAME
+
+#if 0  /* Following mrb, this stuff is probably unneeded for XEmacs */
+#ifdef __ELF__
+/* Here is how to find X Windows.  LD_SWITCH_X_SITE_AUX gives an -R option
+   says where to find X windows at run time.  We convert it to a -rpath option
+   which is what OSF1 uses.  */
+#define LD_SWITCH_SYSTEM_tmp `echo LD_SWITCH_X_SITE_AUX | sed -e 's/-R/-Wl,-rpath,/'`
+#define LD_SWITCH_SYSTEM LD_SWITCH_SYSTEM_tmp -Wl,-rpath,/usr/pkg/lib -L/usr/pkg/lib -Wl,-rpath,/usr/local/lib -L/usr/local/lib
+
+/* The following is needed to make `configure' find Xpm, Xaw3d and
+   image include and library files if using /usr/bin/gcc.  That
+   compiler seems to be modified to not find headers in
+   /usr/local/include or libs in /usr/local/lib by default.  */
+
+#define C_SWITCH_SYSTEM -I/usr/X11R6/include -I/usr/pkg/include -I/usr/local/include -L/usr/pkg/lib -L/usr/local/lib
+
+/* Link temacs with -z nocombreloc so that unexec works right, whether or
+   not -z combreloc is the default.  GNU ld ignores unknown -z KEYWORD
+   switches, so this also works with older versions that don't implement
+   -z combreloc.  */
+
+#define LD_SWITCH_SYSTEM_TEMACS -Wl,-z,nocombreloc
+#endif /* __ELF__ */
+
+/* On post 1.3 releases of NetBSD, gcc -nostdlib also clears
+   the library search parth, i.e. it won't search /usr/lib
+   for libc and friends. Using -nostartfiles instead avoids
+   this problem, and will also work on earlier NetBSD releases */
+
+#define LINKER "$(CC) -nostartfiles"
+
+#endif /* 0 */
+
+/* NARROWPROTO deleted */
+
+/* #define DEFAULT_SOUND_DEVICE "/dev/audio" -- unused in XEmacs */
+
+/* #include <signal.h> no need in XEmacs */
+
+/* DONT_REOPEN_PTY deleted -- unused in XEmacs */
+
+/* Delete GC_SETJMP_WORKS, GC_MARK_STACK -- unused in XEmacs */
+
+/* POSIX_SIGNALS deleted */
+
+/* arch-tag: e80f364a-04e9-4faf-93cb-f36a0fe95c81
+   (do not change this comment) */
+#endif /* 0 */
+
+/* Begin XEmacs additions */
 #undef BSD
 
 #ifndef NOT_C_CODE
@@ -29,63 +131,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <sys/exec.h>
 #endif /* C_CODE */
 
-/* For mem-limits.h.  */
-#define BSD4_2
-
-#undef KERNEL_FILE
-#undef LDAV_SYMBOL
-
-#define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
-
 #define A_TEXT_OFFSET(x) (sizeof (struct exec))
 #define A_TEXT_SEEK(hdr) (N_TXTOFF(hdr) + A_TEXT_OFFSET(hdr))
 
-#define LIBS_DEBUG
-/* -lutil is not needed for NetBSD >0.9.  */
-/* #define LIBS_SYSTEM -lutil */
-/* XEmacs change */
-#define LIBS_TERMCAP "-ltermcap"
-
-#define NEED_ERRNO
-
-#if 0 /* mrb */
-#ifndef NO_SHARED_LIBS
-/* These definitions should work for either dynamic or static linking,
-   whichever is the default for `cc -nostdlib'.  */
-/* but they probably don't, and life's too short - jrg@doc.ic.ac.uk
-   ask for no shared libs if you have 0.9 */
-/* mrb -- ORDINARY_LINK works just fine... */
-#define LD_SWITCH_SYSTEM "-e start"
-#define START_FILES "pre-crt0.o /usr/lib/crt0.o"
-#define RUN_TIME_REMAP
-#else
-#define START_FILES "crt0.o"
-
-#endif /* not NO_SHARED_LIBS */
-#endif /* 0 - mrb */
-
-#define HAVE_TEXT_START		/* No need to define `start_of_text'.  */
-#define ORDINARY_LINK
-
-/* As of this writing (Netbsd 1.5 was just released), Netbsd is
-   converting from a.out to elf - x86 and Sparc are using ELF.
-   But we're clever and let the compiler tell us which one to use.  */
-#ifdef __ELF__
-#define UNEXEC "unexelf.o"
-#else
-#define UNEXEC "unexfreebsd.o"  /* ironic, considering history of unexfreebsd */
-#endif
-
-#if 0
-/* Try to make this work for both 0.9 and >0.9.  */
-#define N_PAGSIZ(x) __LDPGSZ
-#define N_BSSADDR(x) (N_ALIGN(x, N_DATADDR(x)+x.a_data))
-/* #define N_TRELOFF(x) N_RELOFF(x) */
-/* the 1.0 way.. */
-#endif /* 0 */
-
-#define N_RELOFF(x) N_TRELOFF(x)
-
 #define NO_MATHERR
-
-#define AMPERSAND_FULL_NAME

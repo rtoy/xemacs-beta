@@ -23,20 +23,26 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 See also sorted-doc.c, which produces similar output
 but in texinfo format and sorted by function/variable name.  */
 
+/* Synced up with: GNU 23.1.92. */
+/* Synced by: Ben Wing, 2-17-10. */
+
+#ifdef emacs
+#include <config.h>
+#endif
 #include <stdio.h>
 
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
 #include <fcntl.h>		/* for O_BINARY */
 #include <io.h>			/* for setmode */
 #endif
 
 int
-main ()
+main (int argc, char **argv)
 {
   register int ch;
   register int notfirst = 0;
 
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
   /* DOC is a binary file.  */
   if (!isatty (fileno (stdin)))
     setmode (fileno (stdin), O_BINARY);
@@ -76,3 +82,6 @@ main ()
     }
   return 0;
 }
+
+/* arch-tag: 2ba2c9b0-4157-4eba-bd9f-967e3677e35f
+   (do not change this comment) */

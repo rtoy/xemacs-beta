@@ -1,11 +1,12 @@
 /* Convert files for Emacs Hexl mode.
    Copyright (C) 1989, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
                  2009, 2010  Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 Author: Keith Gabryelski
 (according to authors.el)
 
-This file is not considered part of GNU Emacs.
+This file is not considered part of XEmacs.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,23 +21,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* Synced up with: GNU 23.1.92. */
+/* Synced by: Ben Wing, 2-17-10. */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
+#include <io.h>
 #include <fcntl.h>
-#if __DJGPP__ >= 2
-#include <io.h>
 #endif
+
+#if __STDC__ || defined(STDC_HEADERS)
+#include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
-#ifdef WINDOWSNT
-#include <io.h>
+#include <string.h>
 #endif
 
 #define DEFAULT_GROUPING	0x01
@@ -51,7 +55,7 @@ int base = DEFAULT_BASE, un_flag = FALSE, iso_flag = FALSE, endian = 1;
 int group_by = DEFAULT_GROUPING;
 char *progname;
 
-void usage(void);
+void usage (void);
 
 int
 main (int argc, char *argv[])
@@ -166,14 +170,9 @@ main (int argc, char *argv[])
 	{
 	  char buf[18];
 
-#ifdef DOS_NT
-#if (__DJGPP__ >= 2) || (defined WINDOWSNT)
-          if (!isatty (fileno (stdout)))
-	    setmode (fileno (stdout), O_BINARY);
-#else
-	  (stdout)->_flag &= ~_IOTEXT; /* print binary */
-	  _setmode (fileno (stdout), O_BINARY);
-#endif
+#ifdef WIN32_NATIVE
+          if (!isatty (_fileno (stdout)))
+	    _setmode (_fileno (stdout), O_BINARY);
 #endif
 	  for (;;)
 	    {
@@ -215,14 +214,9 @@ main (int argc, char *argv[])
 	}
       else
 	{
-#ifdef DOS_NT
-#if (__DJGPP__ >= 2) || (defined WINDOWSNT)
-          if (!isatty (fileno (fp)))
-	    setmode (fileno (fp), O_BINARY);
-#else
-	  (fp)->_flag &= ~_IOTEXT; /* read binary */
-	  _setmode (fileno (fp), O_BINARY);
-#endif
+#ifdef WIN32_NATIVE
+          if (!isatty (_fileno (stdout)))
+	    _setmode (_fileno (stdout), O_BINARY);
 #endif
 	  address = 0;
 	  string[0] = ' ';
@@ -280,8 +274,11 @@ main (int argc, char *argv[])
 void
 usage (void)
 {
-  fprintf (stderr, "usage: %s [-de] [-iso]\n", progname);
+  fprintf (stderr, "Usage: %s [-de] [-iso]\n", progname);
   exit (EXIT_FAILURE);
 }
+
+/* arch-tag: 20e04fb7-926e-4e48-be86-64fe869ecdaa
+   (do not change this comment) */
 
 /* hexl.c ends here */

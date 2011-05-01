@@ -2158,37 +2158,18 @@ ERROR: XEmacs requires a working select().
 
 #ifdef HAVE_SIGPROCMASK
 
-/* #### Is there any reason this is static global rather than local? */
-static struct sigaction new_action, old_action;
-
 signal_handler_t
 qxe_reliable_signal (int signal_number, signal_handler_t action)
 {
-#if 0
-
-  /* XEmacs works better if system calls are *not* restarted.
+  static struct sigaction new_action, old_action;
+ 
+  /* XEmacs works better if system calls are not restarted.
      This allows C-g to interrupt reads and writes, on most systems.
 
      #### Another possibility is to just longjmp() out of the signal
      handler.  According to W.R. Stevens, this should be OK on all
      systems.  However, I don't want to deal with the potential
      evil ramifications of this at this point. */
-
-  sigemptyset (&new_action.sa_mask);
-  new_action.sa_handler = action;
-#if defined (SA_RESTART)
-  /* Emacs mostly works better with restartable system services. If this
-   * flag exists, we probably want to turn it on here.
-   */
-  new_action.sa_flags = SA_RESTART;
-#else
-  new_action.sa_flags = 0;
-#endif
-  sigaction (signal_number, &new_action, &old_action);
-  return (old_action.sa_handler);
-
-#else /* not 0 */
-
   sigemptyset (&new_action.sa_mask);
   new_action.sa_handler = action;
 #if defined (SA_INTERRUPT) /* don't restart system calls, under SunOS */
@@ -2198,8 +2179,6 @@ qxe_reliable_signal (int signal_number, signal_handler_t action)
 #endif
   sigaction (signal_number, &new_action, &old_action);
   return (signal_handler_t) (old_action.sa_handler);
-
-#endif /* not 0 */
 }
 
 #elif defined (HAVE_SIGBLOCK)
@@ -2233,7 +2212,7 @@ qxe_reliable_signal (int signal_number, signal_handler_t action)
 
 #ifndef HAVE_STRERROR
 
-#if !defined(__alpha) && !defined(MACH) && !defined(LINUX) && !defined(IRIX) && !defined(__NetBSD__)
+#if !defined(__alpha) && !defined(MACH) && !defined(LINUX) && !defined(IRIX6_5) && !defined(__NetBSD__)
 /* Linux added here by Raymond L. Toy <toy@alydar.crd.ge.com> for XEmacs. */
 /* Irix added here by gparker@sni-usa.com for XEmacs. */
 /* NetBSD added here by James R Grinter <jrg@doc.ic.ac.uk> for XEmacs */
@@ -2320,17 +2299,11 @@ underlying_open (const Extbyte *path, int oflag, int mode)
 static int
 retry_open_1 (const Extbyte *path, int oflag, int mode)
 {
-#ifdef INTERRUPTIBLE_OPEN
-  {
-    int rtnval;
-    while ((rtnval = underlying_open (path, oflag, mode)) == -1
-	   && (errno == EINTR))
-      DO_NOTHING;
-    return rtnval;
-  }
-#else
-  return underlying_open (path, oflag, mode);
-#endif
+  int rtnval;
+  while ((rtnval = underlying_open (path, oflag, mode)) == -1
+	 && (errno == EINTR))
+    DO_NOTHING;
+  return rtnval;
 }
 
 /* A version of open() that retries when interrupted.  Operates on
@@ -2424,7 +2397,6 @@ qxe_interruptible_open (const Ibyte *path, int oflag, int mode)
 int
 retry_close (int filedes)
 {
-#ifdef INTERRUPTIBLE_CLOSE
   int did_retry = 0;
   REGISTER int rtnval;
 
@@ -2439,9 +2411,6 @@ retry_close (int filedes)
     return 0;
 
   return rtnval;
-#else
-  return close (filedes);
-#endif
 }
 
 static ssize_t
@@ -2449,7 +2418,6 @@ retry_read_1 (int fildes, void *buf, size_t nbyte, int allow_quit)
 {
   ssize_t rtnval;
 
-  /* No harm in looping regardless of the INTERRUPTIBLE_IO setting. */
   while ((rtnval = read (fildes, buf, nbyte)) == -1
 	 && (errno == EINTR))
     {
@@ -2471,7 +2439,6 @@ retry_write_1 (int fildes, const void *buf, size_t nbyte, int allow_quit)
   ssize_t bytes_written = 0;
   const char *b = (const char *) buf;
 
-  /* No harm in looping regardless of the INTERRUPTIBLE_IO setting. */
   while (nbyte > 0)
     {
       ssize_t rtnval = write (fildes, b, nbyte);
@@ -2573,16 +2540,12 @@ retry_fopen (const Extbyte *path, const Ascbyte *mode)
     return NULL;
 
   return _fdopen (fd, mode_save);
-#elif defined (INTERRUPTIBLE_OPEN)
-  {
-    FILE *rtnval;
-    while (!(rtnval = fopen (path, mode)) && (errno == EINTR))
-      DO_NOTHING;
-    return rtnval;
-  }
 #else
-  return fopen (path, mode);
-#endif /* defined (INTERRUPTIBLE_OPEN) */
+  FILE *rtnval;
+  while (!(rtnval = fopen (path, mode)) && (errno == EINTR))
+    DO_NOTHING;
+  return rtnval;
+#endif /* (not) WIN32_NATIVE */
 }
 
 FILE *
@@ -2596,22 +2559,17 @@ qxe_fopen (const Ibyte *path, const Ascbyte *mode)
 int
 retry_fclose (FILE *stream)
 {
-#ifdef INTERRUPTIBLE_CLOSE
   int rtnval;
 
   while ((rtnval = fclose (stream)) == EOF
 	 && (errno == EINTR))
     ;
   return rtnval;
-#else
-  return fclose (stream);
-#endif
 }
 
 size_t
 retry_fread (void *ptr, size_t size, size_t nitem, FILE *stream)
 {
-#ifdef INTERRUPTIBLE_IO
   size_t rtnval;
   size_t items_read = 0;
   char *b = (char *) ptr;
@@ -2631,15 +2589,11 @@ retry_fread (void *ptr, size_t size, size_t nitem, FILE *stream)
       items_read += rtnval;
     }
   return (items_read);
-#else
-  return fread (ptr, size, nitem, stream);
-#endif
 }
 
 size_t
 retry_fwrite (const void *ptr, size_t size, size_t nitem, FILE *stream)
 {
-#ifdef INTERRUPTIBLE_IO
   size_t rtnval;
   size_t items_written = 0;
   const char *b = (const char *) ptr;
@@ -2659,9 +2613,6 @@ retry_fwrite (const void *ptr, size_t size, size_t nitem, FILE *stream)
       items_written += rtnval;
     }
   return (items_written);
-#else
-  return fwrite (ptr, size, nitem, stream);
-#endif
 }
 
 /********************* directory calls *******************/

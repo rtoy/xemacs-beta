@@ -19,6 +19,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* Synced up with: GNU 23.1.92. */
+/* Synced by: Ben Wing, 2-17-10. */
 
 /* This version sorts the output by function name.  */
 
@@ -27,10 +29,11 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
-#ifdef DOS_NT
+#include <stdlib.h> /* for qsort() and malloc() */
+#include <string.h>
+static void *xmalloc (size_t);
+#ifdef WIN32_NATIVE
 #include <fcntl.h>		/* for O_BINARY */
 #include <io.h>			/* for setmode */
 #endif
@@ -40,9 +43,9 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define DEBUG 0
 
-typedef struct line LINE;
+typedef struct LINE LINE;
 
-struct line
+struct LINE
 {
   LINE *next;			/* ptr to next or NULL */
   char *line;			/* text of the line */
@@ -58,18 +61,10 @@ struct docstr			/* Allocated thing for an entry. */
   char type;			/* 'F' for function, 'V' for variable */
 };
 
-void error (char *s1, char *s2);
-void fatal (char *s1, char *s2);
-char *xmalloc (int size);
-char *xstrdup (char *str);
-int cmpdoc (DOCSTR **a, DOCSTR **b);
-
-typedef int (*sort_function_t)(const void *, const void *);
-
 
 /* Print error message.  `s1' is printf control string, `s2' is arg for it. */
 
-void
+static void
 error (char *s1, char *s2)
 {
   fprintf (stderr, "sorted-doc: ");
@@ -79,7 +74,7 @@ error (char *s1, char *s2)
 
 /* Print error message and exit.  */
 
-void
+static void
 fatal (char *s1, char *s2)
 {
   error (s1, s2);
@@ -88,16 +83,16 @@ fatal (char *s1, char *s2)
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-char *
-xmalloc (int size)
+static void *
+xmalloc (size_t size)
 {
-  char *result = malloc ((unsigned)size);
+  void *result = malloc (size);
   if (result == NULL)
     fatal ("%s", "virtual memory exhausted");
   return result;
 }
 
-char *
+static char *
 xstrdup (char *str)
 {
   char *buf = xmalloc (strlen (str) + 1);
@@ -107,7 +102,7 @@ xstrdup (char *str)
 
 /* Comparison function for qsort to call.  */
 
-int
+static int
 cmpdoc (DOCSTR **a, DOCSTR **b)
 {
   register int val = strcmp ((*a)->name, (*b)->name);
@@ -121,17 +116,17 @@ enum state
   WAITING, BEG_NAME, NAME_GET, BEG_DESC, DESC_GET
 };
 
-char *states[] =
+const char *states[] =
 {
   "WAITING", "BEG_NAME", "NAME_GET", "BEG_DESC", "DESC_GET"
 };
-
+    
 int
-main (void)
+main (int argc, char **argv)
 {
   register DOCSTR *dp = NULL;	/* allocated DOCSTR */
   register LINE *lp = NULL;	/* allocated line */
-  register char *bp;		/* ptr inside line buffer */
+  register char *bp = 0;	/* ptr inside line buffer */
   register enum state state = WAITING; /* state at start */
   int cnt = 0;			/* number of DOCSTRs read */
 
@@ -232,7 +227,8 @@ main (void)
 
     /* sort the array by name; within each name, by type */
 
-    qsort ((char*)array, cnt, sizeof (DOCSTR*), (sort_function_t)cmpdoc);
+    qsort ((char*)array, cnt, sizeof (DOCSTR*),
+	   (int (*)(const void *, const void *)) cmpdoc);
 
     /* write the output header */
 
@@ -244,7 +240,9 @@ main (void)
     printf ("@table @asis\n");
     printf ("\n");
     printf ("@iftex\n");
-    printf ("@global@let@ITEM@item\n");
+    /* #### XEmacs note: FSF 23.1.92 is missing the = sign below.
+       Which is correct? */
+    printf ("@global@let@ITEM=@item\n");
     printf ("@def@item{@filbreak@vskip5pt@ITEM}\n");
     printf ("@font@tensy cmsy10 scaled @magstephalf\n");
     printf ("@font@teni cmmi10 scaled @magstephalf\n");
@@ -293,5 +291,8 @@ main (void)
 
   return EXIT_SUCCESS;
 }
+
+/* arch-tag: ce28f204-1e70-4b34-8210-3d54a5662071
+   (do not change this comment) */
 
 /* sorted-doc.c ends here */
