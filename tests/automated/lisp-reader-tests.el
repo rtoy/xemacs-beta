@@ -76,3 +76,14 @@
     (insert string)
     (Check-Error-Message invalid-read-syntax "unrecognized raw string"
                          (eval-buffer))))
+
+(when (featurep 'bignum)
+  ;; This failed, up to 20110501.
+  (Assert (eql (1+ most-positive-fixnum)
+	       (read (format "+%d" (1+ most-positive-fixnum))))
+	  "checking leading + is handled properly if reading a bignum")
+  ;; This never did.
+  (Assert (eql (1- most-positive-fixnum)
+	       (read (format "+%d" (1- most-positive-fixnum))))
+	  "checking leading + is handled properly if reading a fixnum"))
+

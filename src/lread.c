@@ -2028,6 +2028,9 @@ parse_integer (const Ibyte *buf, Bytecount len, int base)
   else if (*p == '+')
     {
       p++;
+      /* GMP deals with a leading plus sign, badly, make sure it doesn't see
+	 it. */
+      buf++;
     }
 
   if (p == lim)

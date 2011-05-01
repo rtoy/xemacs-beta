@@ -1,3 +1,9 @@
+2011-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (parse_integer):
+	GMP's mpz_set_string deals with a leading plus badly, make sure it
+	never sees one coming from this function.
+
 2010-12-31  Mike Kupfer  <mike.kupfer@xemacs.org>
 
 	* redisplay.c (pixel_to_glyph_translation):
