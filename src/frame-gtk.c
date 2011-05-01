@@ -1074,7 +1074,7 @@ gtk_init_frame_1 (struct frame *f, Lisp_Object props,
 
   if (!NILP (initially_unmapped))
     {
-      gtk_object_set_data (G_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
+      g_object_set_data (G_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
 			   UNMAPPED_DATA_IDENTIFIER, GUINT_TO_POINTER (1));
     }
 }
