@@ -354,6 +354,443 @@
 	* term.texi: Move to the eterm package.
 	* Makefile: Remove all rules relating to term.texi.
 
+2010-02-19  Ben Wing  <ben@xemacs.org>
+
+	* widget.texi:
+	* widget.texi (Top):
+	* widget.texi (Introduction):
+	* widget.texi (User Interface):
+	* widget.texi (Programming Example):
+	* widget.texi (Setting Up the Buffer):
+	* widget.texi (Basic Types):
+	* widget.texi (link):
+	* widget.texi (url-link):
+	* widget.texi (info-link):
+	* widget.texi (push-button):
+	* widget.texi (editable-field):
+	* widget.texi (text):
+	* widget.texi (menu-choice):
+	* widget.texi (radio-button-choice):
+	* widget.texi (item):
+	* widget.texi (choice-item):
+	* widget.texi (toggle):
+	* widget.texi (checkbox):
+	* widget.texi (checklist):
+	* widget.texi (editable-list):
+	* widget.texi (group):
+	* widget.texi (Sexp Types):
+	* widget.texi (constants):
+	* widget.texi (generic):
+	* widget.texi (atoms):
+	* widget.texi (composite):
+	* widget.texi (Widget Properties):
+	* widget.texi (Defining New Widgets):
+	* widget.texi (Widget Browser):
+	* widget.texi (Widget Minor Mode):
+	* widget.texi (Utilities):
+	* widget.texi (Widget Wishlist):
+	* widget.texi (Widget Internals):
+	* widget.texi (GNU Free Documentation License):
+	* widget.texi (Index):
+	Sync with FSF 23.1.92.
+
+2010-02-19  Ben Wing  <ben@xemacs.org>
+
+	* texinfo/fdl.texi: New file.
+	* texinfo/texinfo.texi:
+	* texinfo/texinfo.texi (Top):
+	* texinfo/texinfo.texi (Copying Conditions):
+	* texinfo/texinfo.texi (Overview):
+	* texinfo/texinfo.texi (Reporting Bugs):
+	* texinfo/texinfo.texi (Using Texinfo):
+	* texinfo/texinfo.texi (Output Formats):
+	* texinfo/texinfo.texi (Info Files):
+	* texinfo/texinfo.texi (Printed Books):
+	* texinfo/texinfo.texi (Formatting Commands):
+	* texinfo/texinfo.texi (Conventions):
+	* texinfo/texinfo.texi (Comments):
+	* texinfo/texinfo.texi (Minimum):
+	* texinfo/texinfo.texi (Six Parts):
+	* texinfo/texinfo.texi (Short Sample):
+	* texinfo/texinfo.texi (History):
+	* texinfo/texinfo.texi (Texinfo Mode):
+	* texinfo/texinfo.texi (Texinfo Mode Overview):
+	* texinfo/texinfo.texi (XEmacs Editing):
+	* texinfo/texinfo.texi (Inserting):
+	* texinfo/texinfo.texi (Showing the Structure):
+	* texinfo/texinfo.texi (Updating Nodes and Menus):
+	* texinfo/texinfo.texi (Updating Commands):
+	* texinfo/texinfo.texi (Updating Requirements):
+	* texinfo/texinfo.texi (Other Updating Commands):
+	* texinfo/texinfo.texi (Info Formatting):
+	* texinfo/texinfo.texi (Printing):
+	* texinfo/texinfo.texi (Texinfo Mode Summary):
+	* texinfo/texinfo.texi (Beginning a File):
+	* texinfo/texinfo.texi (Sample Beginning):
+	* texinfo/texinfo.texi (Texinfo File Header):
+	* texinfo/texinfo.texi (First Line):
+	* texinfo/texinfo.texi (Start of Header):
+	* texinfo/texinfo.texi (setfilename):
+	* texinfo/texinfo.texi (settitle):
+	* texinfo/texinfo.texi (End of Header):
+	* texinfo/texinfo.texi (Document Permissions):
+	* texinfo/texinfo.texi (copying):
+	* texinfo/texinfo.texi (insertcopying):
+	* texinfo/texinfo.texi (Titlepage & Copyright Page):
+	* texinfo/texinfo.texi (titlepage):
+	* texinfo/texinfo.texi (titlefont center sp):
+	* texinfo/texinfo.texi (title subtitle author):
+	* texinfo/texinfo.texi (Copyright):
+	* texinfo/texinfo.texi (end titlepage):
+	* texinfo/texinfo.texi (headings on off):
+	* texinfo/texinfo.texi (Contents):
+	* texinfo/texinfo.texi (The Top Node):
+	* texinfo/texinfo.texi (Top Node Example):
+	* texinfo/texinfo.texi (Master Menu Parts):
+	* texinfo/texinfo.texi (Global Document Commands):
+	* texinfo/texinfo.texi (documentdescription):
+	* texinfo/texinfo.texi (setchapternewpage):
+	* texinfo/texinfo.texi (paragraphindent):
+	* texinfo/texinfo.texi (firstparagraphindent):
+	* texinfo/texinfo.texi (exampleindent):
+	* texinfo/texinfo.texi (Software Copying Permissions):
+	* texinfo/texinfo.texi (Ending a File):
+	* texinfo/texinfo.texi (Printing Indices & Menus):
+	* texinfo/texinfo.texi (File End):
+	* texinfo/texinfo.texi (Structuring):
+	* texinfo/texinfo.texi (Tree Structuring):
+	* texinfo/texinfo.texi (Structuring Command Types):
+	* texinfo/texinfo.texi (makeinfo top):
+	* texinfo/texinfo.texi (chapter):
+	* texinfo/texinfo.texi (unnumbered & appendix):
+	* texinfo/texinfo.texi (majorheading & chapheading):
+	* texinfo/texinfo.texi (section):
+	* texinfo/texinfo.texi (unnumberedsec appendixsec heading):
+	* texinfo/texinfo.texi (subsection):
+	* texinfo/texinfo.texi (unnumberedsubsec appendixsubsec subheading):
+	* texinfo/texinfo.texi (subsubsection):
+	* texinfo/texinfo.texi (Raise/lower sections):
+	* texinfo/texinfo.texi (Nodes):
+	* texinfo/texinfo.texi (Two Paths):
+	* texinfo/texinfo.texi (Node Menu Illustration):
+	* texinfo/texinfo.texi (node):
+	* texinfo/texinfo.texi (Node Names):
+	* texinfo/texinfo.texi (Writing a Node):
+	* texinfo/texinfo.texi (Node Line Tips):
+	* texinfo/texinfo.texi (Node Line Requirements):
+	* texinfo/texinfo.texi (First Node):
+	* texinfo/texinfo.texi (makeinfo top command):
+	* texinfo/texinfo.texi (makeinfo Pointer Creation):
+	* texinfo/texinfo.texi (anchor):
+	* texinfo/texinfo.texi (Menus):
+	* texinfo/texinfo.texi (Menu Location):
+	* texinfo/texinfo.texi (Writing a Menu):
+	* texinfo/texinfo.texi (Menu Parts):
+	* texinfo/texinfo.texi (Less Cluttered Menu Entry):
+	* texinfo/texinfo.texi (Menu Example):
+	* texinfo/texinfo.texi (Other Info Files):
+	* texinfo/texinfo.texi (Cross References):
+	* texinfo/texinfo.texi (References):
+	* texinfo/texinfo.texi (Cross Reference Commands):
+	* texinfo/texinfo.texi (Cross Reference Parts):
+	* texinfo/texinfo.texi (xref):
+	* texinfo/texinfo.texi (Reference Syntax):
+	* texinfo/texinfo.texi (One Argument):
+	* texinfo/texinfo.texi (Two Arguments):
+	* texinfo/texinfo.texi (Three Arguments):
+	* texinfo/texinfo.texi (Four and Five Arguments):
+	* texinfo/texinfo.texi (Top Node Naming):
+	* texinfo/texinfo.texi (ref):
+	* texinfo/texinfo.texi (pxref):
+	* texinfo/texinfo.texi (inforef):
+	* texinfo/texinfo.texi (uref):
+	* texinfo/texinfo.texi (cite):
+	* texinfo/texinfo.texi (Marking Text):
+	* texinfo/texinfo.texi (Indicating):
+	* texinfo/texinfo.texi (Useful Highlighting):
+	* texinfo/texinfo.texi (code):
+	* texinfo/texinfo.texi (kbd):
+	* texinfo/texinfo.texi (key):
+	* texinfo/texinfo.texi (samp):
+	* texinfo/texinfo.texi (verb):
+	* texinfo/texinfo.texi (var):
+	* texinfo/texinfo.texi (env):
+	* texinfo/texinfo.texi (file):
+	* texinfo/texinfo.texi (command):
+	* texinfo/texinfo.texi (option):
+	* texinfo/texinfo.texi (dfn):
+	* texinfo/texinfo.texi (abbr):
+	* texinfo/texinfo.texi (acronym):
+	* texinfo/texinfo.texi (indicateurl):
+	* texinfo/texinfo.texi (email):
+	* texinfo/texinfo.texi (Emphasis):
+	* texinfo/texinfo.texi (emph & strong):
+	* texinfo/texinfo.texi (Smallcaps):
+	* texinfo/texinfo.texi (Fonts):
+	* texinfo/texinfo.texi (Quotations and Examples):
+	* texinfo/texinfo.texi (Block Enclosing Commands):
+	* texinfo/texinfo.texi (quotation):
+	* texinfo/texinfo.texi (example):
+	* texinfo/texinfo.texi (verbatim):
+	* texinfo/texinfo.texi (verbatiminclude):
+	* texinfo/texinfo.texi (lisp):
+	* texinfo/texinfo.texi (small):
+	* texinfo/texinfo.texi (display):
+	* texinfo/texinfo.texi (format):
+	* texinfo/texinfo.texi (exdent):
+	* texinfo/texinfo.texi (flushleft & flushright):
+	* texinfo/texinfo.texi (noindent):
+	* texinfo/texinfo.texi (indent):
+	* texinfo/texinfo.texi (cartouche):
+	* texinfo/texinfo.texi (Lists and Tables):
+	* texinfo/texinfo.texi (Introducing Lists):
+	* texinfo/texinfo.texi (itemize):
+	* texinfo/texinfo.texi (enumerate):
+	* texinfo/texinfo.texi (Two-column Tables):
+	* texinfo/texinfo.texi (table):
+	* texinfo/texinfo.texi (ftable vtable):
+	* texinfo/texinfo.texi (itemx):
+	* texinfo/texinfo.texi (Multi-column Tables):
+	* texinfo/texinfo.texi (Multitable Column Widths):
+	* texinfo/texinfo.texi (Multitable Rows):
+	* texinfo/texinfo.texi (Special Displays):
+	* texinfo/texinfo.texi (Floats):
+	* texinfo/texinfo.texi (float):
+	* texinfo/texinfo.texi (caption shortcaption):
+	* texinfo/texinfo.texi (listoffloats):
+	* texinfo/texinfo.texi (Images):
+	* texinfo/texinfo.texi (Image Syntax):
+	* texinfo/texinfo.texi (Image Scaling):
+	* texinfo/texinfo.texi (Footnotes):
+	* texinfo/texinfo.texi (Footnote Commands):
+	* texinfo/texinfo.texi (Footnote Styles):
+	* texinfo/texinfo.texi (Indices):
+	* texinfo/texinfo.texi (Index Entries):
+	* texinfo/texinfo.texi (Predefined Indices):
+	* texinfo/texinfo.texi (Indexing Commands):
+	* texinfo/texinfo.texi (Combining Indices):
+	* texinfo/texinfo.texi (syncodeindex):
+	* texinfo/texinfo.texi (synindex):
+	* texinfo/texinfo.texi (New Indices):
+	* texinfo/texinfo.texi (Insertions):
+	* texinfo/texinfo.texi (Atsign Braces Comma):
+	* texinfo/texinfo.texi (Inserting an Atsign):
+	* texinfo/texinfo.texi (Inserting Braces):
+	* texinfo/texinfo.texi (Inserting a Comma):
+	* texinfo/texinfo.texi (Inserting Quote Characters):
+	* texinfo/texinfo.texi (Inserting Space):
+	* texinfo/texinfo.texi (Not Ending a Sentence):
+	* texinfo/texinfo.texi (Ending a Sentence):
+	* texinfo/texinfo.texi (Multiple Spaces):
+	* texinfo/texinfo.texi (frenchspacing):
+	* texinfo/texinfo.texi (dmn):
+	* texinfo/texinfo.texi (Inserting Accents):
+	* texinfo/texinfo.texi (Inserting Quotation Marks):
+	* texinfo/texinfo.texi (Dots Bullets):
+	* texinfo/texinfo.texi (dots):
+	* texinfo/texinfo.texi (bullet):
+	* texinfo/texinfo.texi (TeX and copyright):
+	* texinfo/texinfo.texi (tex):
+	* texinfo/texinfo.texi (copyright symbol):
+	* texinfo/texinfo.texi (registered symbol):
+	* texinfo/texinfo.texi (euro):
+	* texinfo/texinfo.texi (pounds):
+	* texinfo/texinfo.texi (textdegree):
+	* texinfo/texinfo.texi (minus):
+	* texinfo/texinfo.texi (geq leq):
+	* texinfo/texinfo.texi (math):
+	* texinfo/texinfo.texi (Click Sequences):
+	* texinfo/texinfo.texi (Glyphs):
+	* texinfo/texinfo.texi (Glyphs Summary):
+	* texinfo/texinfo.texi (result):
+	* texinfo/texinfo.texi (expansion):
+	* texinfo/texinfo.texi (Print Glyph):
+	* texinfo/texinfo.texi (Error Glyph):
+	* texinfo/texinfo.texi (Equivalence):
+	* texinfo/texinfo.texi (Point Glyph):
+	* texinfo/texinfo.texi (Breaks):
+	* texinfo/texinfo.texi (Break Commands):
+	* texinfo/texinfo.texi (Line Breaks):
+	* texinfo/texinfo.texi (- and hyphenation):
+	* texinfo/texinfo.texi (allowcodebreaks):
+	* texinfo/texinfo.texi (w):
+	* texinfo/texinfo.texi (tie):
+	* texinfo/texinfo.texi (sp):
+	* texinfo/texinfo.texi (page):
+	* texinfo/texinfo.texi (group):
+	* texinfo/texinfo.texi (need):
+	* texinfo/texinfo.texi (Definition Commands):
+	* texinfo/texinfo.texi (Def Cmd Template):
+	* texinfo/texinfo.texi (Def Cmd Continuation Lines):
+	* texinfo/texinfo.texi (Optional Arguments):
+	* texinfo/texinfo.texi (deffnx):
+	* texinfo/texinfo.texi (Def Cmds in Detail):
+	* texinfo/texinfo.texi (Functions Commands):
+	* texinfo/texinfo.texi (Variables Commands):
+	* texinfo/texinfo.texi (Typed Functions):
+	* texinfo/texinfo.texi (Typed Variables):
+	* texinfo/texinfo.texi (Data Types):
+	* texinfo/texinfo.texi (Abstract Objects):
+	* texinfo/texinfo.texi (Object-Oriented Variables):
+	* texinfo/texinfo.texi (Object-Oriented Methods):
+	* texinfo/texinfo.texi (Defining Macros):
+	* texinfo/texinfo.texi (Invoking Macros):
+	* texinfo/texinfo.texi (Macro Details):
+	* texinfo/texinfo.texi (alias):
+	* texinfo/texinfo.texi (definfoenclose):
+	* texinfo/texinfo.texi (Hardcopy):
+	* texinfo/texinfo.texi (Use TeX):
+	* texinfo/texinfo.texi (Format with tex/texindex):
+	* texinfo/texinfo.texi (Format with texi2dvi):
+	* texinfo/texinfo.texi (Print with lpr):
+	* texinfo/texinfo.texi (Within XEmacs):
+	* texinfo/texinfo.texi (Texinfo Mode Printing):
+	* texinfo/texinfo.texi (Compile-Command):
+	* texinfo/texinfo.texi (Requirements Summary):
+	* texinfo/texinfo.texi (Preparing for TeX):
+	* texinfo/texinfo.texi (Overfull hboxes):
+	* texinfo/texinfo.texi (smallbook):
+	* texinfo/texinfo.texi (A4 Paper):
+	* texinfo/texinfo.texi (pagesizes):
+	* texinfo/texinfo.texi (Cropmarks and Magnification):
+	* texinfo/texinfo.texi (PDF Output):
+	* texinfo/texinfo.texi (Obtaining TeX):
+	* texinfo/texinfo.texi (Creating and Installing Info Files):
+	* texinfo/texinfo.texi (Creating an Info File):
+	* texinfo/texinfo.texi (makeinfo advantages):
+	* texinfo/texinfo.texi (Invoking makeinfo):
+	* texinfo/texinfo.texi (makeinfo options):
+	* texinfo/texinfo.texi (Pointer Validation):
+	* texinfo/texinfo.texi (makeinfo in XEmacs):
+	* texinfo/texinfo.texi (texinfo-format commands):
+	* texinfo/texinfo.texi (Batch Formatting):
+	* texinfo/texinfo.texi (Tag and Split Files):
+	* texinfo/texinfo.texi (Installing an Info File):
+	* texinfo/texinfo.texi (Directory File):
+	* texinfo/texinfo.texi (New Info File):
+	* texinfo/texinfo.texi (Other Info Directories):
+	* texinfo/texinfo.texi (Installing Dir Entries):
+	* texinfo/texinfo.texi (Invoking install-info):
+	* texinfo/texinfo.texi (Generating HTML):
+	* texinfo/texinfo.texi (HTML Translation):
+	* texinfo/texinfo.texi (HTML Splitting):
+	* texinfo/texinfo.texi (HTML CSS):
+	* texinfo/texinfo.texi (HTML Xref):
+	* texinfo/texinfo.texi (HTML Xref Link Basics):
+	* texinfo/texinfo.texi (HTML Xref Node Name Expansion):
+	* texinfo/texinfo.texi (HTML Xref Command Expansion):
+	* texinfo/texinfo.texi (HTML Xref 8-bit Character Expansion):
+	* texinfo/texinfo.texi (HTML Xref Mismatch):
+	* texinfo/texinfo.texi (Command List):
+	* texinfo/texinfo.texi (Command Syntax):
+	* texinfo/texinfo.texi (Tips):
+	* texinfo/texinfo.texi (Sample Texinfo Files):
+	* texinfo/texinfo.texi (Short Sample Texinfo File):
+	* texinfo/texinfo.texi (GNU Sample Texts):
+	* texinfo/texinfo.texi (Invoking sample):
+	* texinfo/texinfo.texi (GNU Free Documentation License):
+	* texinfo/texinfo.texi (Index):
+	* texinfo/texinfo.texi (Verbatim Copying License):
+	* texinfo/texinfo.texi (All-permissive Copying License):
+	* texinfo/texinfo.texi (Include Files):
+	* texinfo/texinfo.texi (Using Include Files):
+	* texinfo/texinfo.texi (texinfo-multiple-files-update):
+	* texinfo/texinfo.texi (Include Files Requirements):
+	* texinfo/texinfo.texi (Sample Include File):
+	* texinfo/texinfo.texi (Include Files Evolution):
+	* texinfo/texinfo.texi (Headings):
+	* texinfo/texinfo.texi (Headings Introduced):
+	* texinfo/texinfo.texi (Heading Format):
+	* texinfo/texinfo.texi (Heading Choice):
+	* texinfo/texinfo.texi (Custom Headings):
+	* texinfo/texinfo.texi (Catching Mistakes):
+	* texinfo/texinfo.texi (makeinfo Preferred):
+	* texinfo/texinfo.texi (Debugging with Info):
+	* texinfo/texinfo.texi (Debugging with TeX):
+	* texinfo/texinfo.texi (Using texinfo-show-structure):
+	* texinfo/texinfo.texi (Using occur):
+	* texinfo/texinfo.texi (Running Info-Validate):
+	* texinfo/texinfo.texi (Using Info-validate):
+	* texinfo/texinfo.texi (Unsplit):
+	* texinfo/texinfo.texi (Tagifying):
+	* texinfo/texinfo.texi (Splitting):
+	* texinfo/texinfo.texi (Refilling Paragraphs):
+	* texinfo/texinfo.texi (Command and Variable Index):
+	* texinfo/texinfo.texi (General Index):
+	* texinfo/version.texi: New file.
+	Sync with FSF 23.1.92.  Make new directory to hold the files needed
+	to generate texinfo.info, since there are three such files now.
+
+2010-02-19  Ben Wing  <ben@xemacs.org>
+
+	* Makefile:
+	* Makefile (src_files1):
+	* Makefile (DIR):
+	* Makefile (texinfo-srcs):
+	* Makefile ($(INFODIR)/widget.info):
+	* Makefile ($(INFODIR)/texinfo.info):
+	* Makefile (.PHONY):
+	* Makefile (texinfo.dvi):
+	* Makefile (texinfo.pdf):
+	* Makefile ($(HTMLDIR)/widget.html):
+	* Makefile ($(HTMLDIR)/texinfo.html):
+	Incorporate texinfo.texi moving to a subdirectory texinfo/.
+	Do some tricks to reduce the amount of duplication while still
+	maintaining compatible with non-GNU make (at least, with
+	Solaris make).
+		
+	* doclicense.texi: New file.
+	* info.texi:
+	* info.texi (Top):
+	* info.texi (Getting Started):
+	* info.texi (Help-Small-Screen):
+	* info.texi (Help):
+	* info.texi (Help-P):
+	* info.texi (Help-^L):
+	* info.texi (Help-Inv):
+	* info.texi (Help-]):
+	* info.texi (Help-M):
+	* info.texi (Help-FOO):
+	* info.texi (Help-Xref):
+	* info.texi (Help-Int):
+	* info.texi (Help-Q):
+	* info.texi (Advanced):
+	* info.texi (Search Text):
+	* info.texi (Search Index):
+	* info.texi (Go to node):
+	* info.texi (Choose menu subtopic):
+	* info.texi (Create Info buffer):
+	* info.texi (XEmacs Info Variables):
+	* info.texi (Expert Info):
+	* info.texi (Add):
+	* info.texi (Menus):
+	* info.texi (Cross-refs):
+	* info.texi (Help-Cross):
+	* info.texi (Tags):
+	* info.texi (Checking):
+	* info.texi (Index):
+	* texinfo.tex:
+	* texinfo.tex (paragraphindent{%):
+	* texinfo.tex (sectionheading will have):
+	* texinfo.tex (chapterzzz{#3}%):
+	* texinfo.tex (subsubsection = \numberedsubsubsec):
+	* texinfo.tex (subsubsection = \appendixsubsubsec):
+	* texinfo.tex (subsubsection = \unnumberedsubsubsec):
+	* texinfo.tex (sectionheading{#1}{sec}{Ynumbered}{\the\chapno.\the\secno}%):
+	* texinfo.tex (sectionheading{#1}{sec}{Yappendix}{\appendixletter.\the\secno}%):
+	* texinfo.tex (sectionheading{#1}{sec}{Ynothing}{\the\unnumberedno.\the\secno}%):
+	* texinfo.tex (sectionheading{#1}{subsec}{Ynumbered}{\the\chapno.\the\secno.\the\subsecno}%):
+	* texinfo.tex (sectionheading{#1}{subsec}{Yappendix}%):
+	* texinfo.tex (sectionheading{#1}{subsec}{Ynothing}%):
+	* texinfo.tex (sectionheading{#1}{subsubsec}{Ynumbered}%):
+	* texinfo.tex (sectionheading{#1}{subsubsec}{Yappendix}%):
+	* texinfo.tex (sectionheading{#1}{subsubsec}{Ynothing}%):
+	* texinfo.tex (sectionheading{#1}{subsubsec}{Yomitfromtoc}{}):
+	* texinfo.tex (sectionheading to do the printing.):
+	* texinfo.tex (sectionlevel}{#1}{#4}%):
+	* texinfo.tex (sectionheading, q.v.):
+	Sync with FSF 23.1.92.
+
 2010-02-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Top): Update menu.

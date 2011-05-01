@@ -1679,6 +1679,26 @@
 	compiled-function object almost every time, at compile time when
 	all arguments are constant, and at runtime when they vary.
 
+2010-02-19  Ben Wing  <ben@xemacs.org>
+
+	* paragraphs.el:
+	* paragraphs.el (use-hard-newlines):
+	* paragraphs.el (paragraph-start):
+	* paragraphs.el (paragraph-separate):
+	* paragraphs.el (sentence-end-double-space):
+	* paragraphs.el (sentence-end-without-period):
+	* paragraphs.el (sentence-end-without-space): New.
+	* paragraphs.el (sentence-end):
+	* paragraphs.el (sentence-end-base): New.
+	* paragraphs.el (page-delimiter):
+	* paragraphs.el (paragraph-ignore-fill-prefix):
+	* paragraphs.el (forward-paragraph):
+	* paragraphs.el (backward-paragraph):
+	* paragraphs.el (mark-paragraph):
+	* paragraphs.el (forward-sentence):
+	* paragraphs.el (repunctuate-sentences): New.
+	Sync with FSF 23.1.92.
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* help.el (describe-function-1):

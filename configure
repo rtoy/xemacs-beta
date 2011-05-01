@@ -5774,23 +5774,25 @@ machine='' opsys=''
 case "$ac_cv_build" in
   sparc-*-*        ) machine=sparc ;;
   alpha*-*-*       ) machine=alpha ;;
-  mips*-linux      ) machine=mips ;;
+  mips*-*          ) machine=mips ;;
   rs6000-ibm-aix*  ) machine=ibmrs6000 ;;
   powerpc-ibm-aix* ) machine=ibmrs6000 ;;
   powerpc*-*       ) machine=powerpc ;;
   hppa-*-*         ) machine=hp800 ;;
   arm*             ) machine=arm ;;
+  i[3-9]86-*-*   ) machine=intel386 ;;
 esac
 
 case "$ac_cv_build" in
+  *-*-linux*    ) opsys=linux ;;
   *-*-netbsd*   ) opsys=netbsd ;;
   *-*-openbsd*	) opsys=openbsd ;;
 
     *-*-aix[4-9]* ) opsys=aix4-2   ;;
 
     *-gnu* )			opsys=gnu    ;;
-  *-*-bsd4.3 )			opsys=bsd4-3 ;;
-  *-*-aos*   )			opsys=bsd4-3 ;;
+  *-*-bsd4.3 )			opsys=bsd-common ;;
+  *-*-aos*   )			opsys=bsd-common ;;
   *-*-sysv4.1* | *-*-sysvr4.1* )opsys=usg5-4 NON_GNU_CPP=/usr/lib/cpp ;;
   *-*-sysv4.[2-9]* | *-sysvr4.[2-9]* )
 	if test -z "$NON_GNU_CPP" ; then
@@ -5805,18 +5807,6 @@ esac
 
 case "$ac_cv_build" in
 
-    *-*-netbsd* )
-    case "${ac_cv_build}" in
-      i[3-9]86-*-netbsd*) machine=intel386 ;;
-    esac
-  ;;
-
-    *-*-openbsd* )
-    case "${ac_cv_build}" in
-      i386-*-openbsd*)		machine=intel386 ;;
-     esac
-   ;;
-
     *-*-darwin*)
     opsys=darwin
         $as_echo "#define USE_PARAM_H 1" >>confdefs.h
@@ -5829,16 +5819,12 @@ case "$ac_cv_build" in
     case "$ac_cv_build" in *-hp-hpux*shr* ) opsys="${opsys}-shr" ;; esac
   ;;
 
-        mips-mips-bsd* ) machine=mips opsys=bsd4-3 ;;
-  mips-mips-*    ) machine=mips opsys=usg5-4-2 ;;
+        mips-mips-bsd* ) opsys=bsd-common ;;
+  mips-mips-*    ) opsys=usg5-4-2 ;;
 
-      mips-sgi-irix6*     ) opsys=irix6-0 ;;
+      mips-sgi-irix6*     ) opsys=irix6-5 ;;
 
     *-*-solaris* | *-sun-mach* | *-sun-bsd* )
-        case "$ac_cv_build" in
-      i*86-*-* )	         machine=intel386 ;;
-    esac
-
         case "$ac_cv_build" in *-sunos5*)
       ac_cv_build=`echo $ac_cv_build | sed -e s/sunos5/solaris2/`;;
     esac
@@ -5864,17 +5850,16 @@ _ACEOF
  ;;
 
       *-mach*		  ) opsys=mach-bsd4-3	;;
-      *			  ) opsys=bsd4-3	;;
+      *			  ) opsys=bsd-common	;;
     esac
 
         test "$opsys $CC" = "sol2 /usr/ucb/cc" && CC=""
   ;;
 
     i[3-9]86-*-* )
-    machine=intel386
     case "$ac_cv_build" in
       *-mach* )			opsys=mach-bsd4-3 ;;
-      *-sysv5* )		opsys=sco7 ;;
+      *-sysv5* )		opsys=usg5-4-2 ;;
       *-freebsd* )		opsys=freebsd ;;
       *-pc-cygwin* )		opsys=cygwin32 ;;
       *-pc-mingw* )		opsys=mingw32 ;
@@ -9573,7 +9558,9 @@ if test "$cflags_optimization_specified" = "no"; then
             with_cflags_optimization="-O3 -qstrict -qnoansialias -qlibansi -qmaxmem=20000"
     elif test "$__ICC" = "yes"; then
       with_cflags_optimization="-O3 -Ob2"
-        else
+    elif test "$opsys" = "irix6-5"; then
+                                    with_cflags_optimization="-O -OPT:Olimit=3500"
+                    else
       with_cflags_optimization="-O" ;    fi
   elif test "$XEMACS_CC_GPP" = "yes" ; then
                 with_cflags_optimization="-fno-strict-aliasing"
@@ -9586,10 +9573,14 @@ $as_echo "${with_cflags_optimization}" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for preferred debugging flags" >&5
 $as_echo_n "checking for preferred debugging flags... " >&6; }
 if test "$cflags_debugging_specified" = "no"; then
+  if test "$GCC" = "no" -a "$opsys" = "irix6-5" -a "$with_optimization" = "yes" ; then
+        with_cflags_debugging="-g3"
+    else
     with_cflags_debugging="-g"
+  fi
 
   debugging_ok_with_optimization=no
-  if test "$GCC" = "yes" -o "$CC" = "xlc" -o "$__ICC" = "yes"; then
+  if test "$GCC" = "yes" -o "$CC" = "xlc" -o "$__ICC" = "yes" -o "$opsys" = "irix6-5"; then
     debugging_ok_with_optimization=yes
   fi
 

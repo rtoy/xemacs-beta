@@ -1,5 +1,6 @@
 /* machine description file for hp9000 series 800 machines.
    Copyright (C) 1987 Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -32,13 +33,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 
 #ifdef __hpux
-/* Now define a symbol for the cpu type, if your compiler
-   does not define it automatically:
-   Ones defined so far include vax, m68000, ns16000, pyramid,
-   orion, tahoe, APOLLO and many others */
-#ifndef hp9000s800
-#     define hp9000s800
-#endif
+
+#ifdef ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF
 
 /* Data type of load average, as read out of kmem.  */
 
@@ -47,6 +43,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 /* Convert that into an integer that is 100 for a load average of 1.0  */
 
 #define LOAD_AVE_CVT(x) ((int) (x * 100.0))
+
+#endif /* ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF */
 
 /* the data segment on this machine always starts at address 0x40000000. */
 
@@ -72,18 +70,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #define UNEXEC "unexhp9k800.o"
 
-#define LIBS_MACHINE
-#define LIBS_DEBUG
-
 
-/* The symbol in the kernel where the load average is found
-   is named _avenrun.  At this time there are two major flavors
-   of hp-ux (there is the s800 and s300 (s200) flavors).  The
-   differences are thusly moved to the corresponding machine description file.
-*/
-
-/* no underscore please */
-#define LDAV_SYMBOL "avenrun"
+/* Deleted LDAV_SYMBOL, handled in getloadavg.c */
 
 #if 0   /* Supposedly no longer true.  */
 /* In hpux, for unknown reasons, S_IFLNK is defined even though

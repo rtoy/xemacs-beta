@@ -1,5 +1,6 @@
 /* Definitions file for XEmacs running on HPUX release 11.0.
- *    Copyright (C) 1985, 1986 Free Software Foundation, Inc.
+ *       Copyright (C) 1985, 1986 Free Software Foundation, Inc.
+ *       Copyright (C) 2010 Ben Wing.
  *
  *    This file is part of XEmacs.
  *
@@ -27,7 +28,7 @@
 #ifdef NOT_C_CODE
 #define START_FILES
 #define LINKER "$(CC)"
-#endif /* THIS IS YMAKEFILE */
+#endif /* NOT_C_CODE */
 
 /* get call to brk() when rerunning XEmacs */
 /* #ifndef USE_GCC */
@@ -45,37 +46,14 @@
 
 #define SYSTEM_TYPE "hpux"
 
-/* `nomultiplejobs' should be defined if your system's shell
- *  does not have "job control" (the ability to stop a program,
- *  run some other program, then continue the first one).
- *
- *  On hpux this depends on the precise kind of machine in use,
- *  so the m- file defines this symbol if appropriate.  */
-
-/* Letter to use in finding device name of first pty,
- * if system supports pty's.  'p' means it is /dev/ptym/ptyp0  */
-
-#define FIRST_PTY_LETTER 'p'
+/* Delete FIRST_PTY_LETTER -- same as default in XEmacs */
 
 /* The symbol in the kernel where the load average is found
  * depends on the cpu type, so we let the m- files define LDAV_SYMBOL.  */
 
 /* Special hacks needed to make Emacs run on this system.  */
 
-/* On USG systems the system calls are interruptible by signals
- * that the user program has elected to catch.  Thus the system call
- * must be retried in these cases.  To handle this without massive
- * changes in the source code, we remap the standard system call names
- * to names for our own functions in sysdep.c that do the system call
- * with retries. */
-
-#define INTERRUPTIBLE_OPEN
-#define INTERRUPTIBLE_IO
-/* XEmacs change */
-#define INTERRUPTIBLE_CLOSE
-
-/* Use the system provided termcap(3) library */
-#define TERMINFO
+/* Delete TERMINFO -- autodetected in XEmacs */
 
 /* The 48-bit versions are more winning for Emacs;
  * the ordinary ones don't give even 32 bits.  */
