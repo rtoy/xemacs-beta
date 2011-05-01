@@ -58,7 +58,7 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup*
 #define XFRAME_GTK_MENUBAR_DATA_UPTODATE(f) XCDR (FRAME_GTK_MENUBAR_DATA (f))
 
 
-GtkWidget *
+static GtkWidget *
 gtk_xemacs_menubar_new (struct frame *f)
 {
   GtkWidget *menubar = gtk_menu_bar_new ();
@@ -121,19 +121,23 @@ static void
 __activate_menu(GtkMenuItem *item, gpointer user_data)
 {
   Lisp_Object desc;
-  gpointer force_clear = g_object_get_qdata (G_OBJECT (item), XEMACS_MENU_FIRSTTIME_TAG);
+  gpointer force_clear;
 
+  force_clear = g_object_get_qdata (G_OBJECT (item),
+                                    XEMACS_MENU_FIRSTTIME_TAG);
   g_object_set_qdata (G_OBJECT (item), XEMACS_MENU_FIRSTTIME_TAG, 0x00);
 
   /* Delete the old contents of the menu if we are the top level menubar */
   if (GTK_IS_MENU_BAR (GTK_WIDGET (item)->parent) || force_clear)
     {
-      GtkWidget *selected = gtk_menu_get_active (GTK_MENU (item->submenu));
+      GtkWidget *selected;
+      GtkMenu *sub = GTK_MENU (gtk_menu_item_get_submenu (item));
+      selected = gtk_menu_get_active (sub);
 
-     gtk_container_foreach (GTK_CONTAINER (item->submenu),
+      gtk_container_foreach (GTK_CONTAINER (sub),
                             (GtkCallback) __maybe_destroy, selected);
     }
-  else if (gtk_container_children (GTK_CONTAINER (item->submenu)))
+  else if (gtk_container_children (GTK_CONTAINER (gtk_menu_item_get_submenu (item))))
     {
       return;
     }
@@ -178,7 +182,8 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
       if (next)
         {
           gtk_widget_show_all (next);
-          gtk_menu_append (GTK_MENU (item->submenu), next);
+          gtk_menu_append (GTK_MENU (gtk_menu_item_get_submenu (item)),
+                           next);
         }
     }
 }
@@ -188,9 +193,17 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
    that made sure callbacks and such were GCPRO-ed
 */
 static void
-__remove_gcpro_by_id (gpointer user_data)
+__remove_gcpro_by_id (gpointer user_data, GObject *UNUSED (old))
 {
   ungcpro_popup_callbacks ((GUI_ID) GPOINTER_TO_UINT (user_data));
+}
+
+/* GWeakNotify callback to destroy a widget. */
+static void
+__destroy_notify (gpointer user_data, GObject *UNUSED (old))
+{
+  assert (user_data != NULL);
+  gtk_widget_destroy (GTK_WIDGET (user_data));
 }
 
 static void
@@ -342,9 +355,9 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       /* Without this sometimes a submenu gets left on the screen -
       ** urk
       */
-      if (GTK_MENU_ITEM (menu_item)->submenu)
+      if (GTK_MENU_ITEM (gtk_menu_item_get_submenu (GTK_MENU_ITEM (menu_item))))
 	{
-	  gtk_widget_destroy (GTK_MENU_ITEM (menu_item)->submenu);
+	  gtk_widget_destroy (GTK_WIDGET (gtk_menu_item_get_submenu (GTK_MENU_ITEM (menu_item))));
 	}
 
       gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_item), submenu);
@@ -431,7 +444,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       if (id)
 	{
 	  /* If the menu item had a GUI_ID that means it was a filter menu */
-	  __remove_gcpro_by_id (id);
+	  __remove_gcpro_by_id (id, NULL);
 	  gtk_signal_disconnect_by_func (GTK_OBJECT (reuse),
                                        GTK_SIGNAL_FUNC (__activate_menu),
                                        (gpointer) 0x01);
@@ -723,9 +736,8 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 
 	      /* We need to notice when the 'real' one gets destroyed
                  so we can clean up the dummy as well. */
-	      gtk_object_weakref (GTK_OBJECT (widget),
-				  (GtkDestroyNotify) gtk_widget_destroy,
-				  dummy_sibling);
+	      g_object_weak_ref (G_OBJECT (widget),
+                                 __destroy_notify, dummy_sibling);
 	    }
 	  else
 	    {
@@ -846,6 +858,8 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
   guint menu_position = 0;
   GtkAccelGroup *menubar_accel_group;
 
+  assert (menubar != NULL);
+
   /* Remove any existing protection for old menu items */
   ungcpro_popup_callbacks (id);
 
@@ -879,8 +893,11 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	      }
 
 	    gtk_widget_show_all (item);
-	    if (current_child) gtk_widget_destroy (GTK_WIDGET (current_child));
-	    gtk_menu_bar_insert (GTK_MENU_BAR (menubar), item, menu_position);
+	    if (current_child)
+              gtk_widget_destroy (GTK_WIDGET (current_child));
+            
+	    gtk_menu_shell_insert (GTK_MENU_SHELL (menubar),
+                                   item, menu_position);
 	  }
 	else if (LISTP (item_descr))
 	  {
@@ -899,8 +916,10 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	    else
 	      {
 		widget = menu_convert (item_descr, NULL, menubar_accel_group);
-		if (current_child) gtk_widget_destroy (GTK_WIDGET (current_child));
-		gtk_menu_bar_insert (GTK_MENU_BAR (menubar), widget, menu_position);
+		if (current_child)
+                  gtk_widget_destroy (GTK_WIDGET (current_child));
+		gtk_menu_shell_insert (GTK_MENU_SHELL (menubar),
+                                       widget, menu_position);
 	      }
 
 	    if (widget)
@@ -971,7 +990,7 @@ create_menubar_widget (struct frame *f)
 
   FRAME_GTK_MENUBAR_WIDGET (f) = menubar;
   g_object_set_qdata (G_OBJECT (menubar), XEMACS_MENU_GUIID_TAG, GUINT_TO_POINTER (id));
-  gtk_object_weakref (GTK_OBJECT (menubar), __remove_gcpro_by_id, GUINT_TO_POINTER (id));
+  g_object_weak_ref (G_OBJECT (menubar), __remove_gcpro_by_id, GUINT_TO_POINTER (id));
 }
 
 static int
