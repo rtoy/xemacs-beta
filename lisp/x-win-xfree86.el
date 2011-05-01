@@ -42,7 +42,6 @@
 (globally-declare-fboundp
  '(x-keysym-on-keyboard-p x-keysym-on-keyboard-sans-modifiers-p))
 
-;;;###autoload
 (defun x-win-init-xfree86 (device)
 
   ;; We know this keyboard is an XFree86 keyboard. As such, we can predict

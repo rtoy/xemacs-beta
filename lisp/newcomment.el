@@ -64,13 +64,9 @@
 
 ;;; Code:
 
-;;;###autoload
 (defalias 'indent-for-comment 'comment-indent)
-;;;###autoload
 (defalias 'set-comment-column 'comment-set-column)
-;;;###autoload
 (defalias 'kill-comment 'comment-kill)
-;;;###autoload
 (defalias 'indent-new-comment-line 'comment-indent-new-line)
 
 (defgroup comment nil
@@ -90,7 +86,6 @@ Major modes should set this variable.")
   "Column to use for `comment-indent'.  If nil, use `fill-column' instead."
   :type '(choice (const nil) integer))
 
-;;;###autoload
 (defcustom comment-column 32
   "*Column to indent right-margin comments to.
 Each mode establishes a different default value for this variable; you
@@ -100,26 +95,21 @@ not to go beyond `comment-fill-column'."
   :type 'integer)
 (make-variable-buffer-local 'comment-column)
 
-;;;###autoload
 (defvar comment-start nil
   "*String to insert to start a new comment, or nil if no comment syntax.")
 
-;;;###autoload
 (defvar comment-start-skip nil
   "*Regexp to match the start of a comment plus everything up to its body.
 If there are any \\(...\\) pairs, the comment delimiter text is held to begin
 at the place matched by the close of the first pair.")
 
-;;;###autoload
 (defvar comment-end-skip nil
   "Regexp to match the end of a comment plus everything up to its body.")
 
-;;;###autoload
 (defvar comment-end ""
   "*String to insert to end a new comment.
 Should be an empty string if comments are terminated by end-of-line.")
 
-;;;###autoload
 (defvar comment-indent-function 'comment-indent-default
   "Function to compute desired indentation for a comment.
 This function is called with no args with point at the beginning of
@@ -168,7 +158,6 @@ EXTRA specifies that an extra line should be used before and after the
 INDENT specifies that the `comment-start' markers should not be put at the
   left margin but at the current indentation of the region to comment.")
 
-;;;###autoload
 (defcustom comment-style 'plain
   "*Style to be used for `comment-region'.
 See `comment-styles' for a list of available styles."
@@ -176,7 +165,6 @@ See `comment-styles' for a list of available styles."
 	    `(choice ,@(mapcar (lambda (s) `(const ,(car s))) comment-styles))
 	  'symbol))
 
-;;;###autoload
 (defcustom comment-padding " "
   "Padding string that `comment-region' puts between comment chars and text.
 Can also be an integer which will be automatically turned into a string
@@ -186,7 +174,6 @@ Extra spacing between the comment characters and the comment text
 makes the comment easier to read.  Default is 1.  nil means 0."
   :type '(choice string integer (const nil)))
 
-;;;###autoload
 (defcustom comment-multi-line t ; XEmacs - this works well with adaptive fill
   "*Non-nil means \\[indent-new-comment-line] should continue same comment
 on new line, with no new terminator or starter.
@@ -208,7 +195,6 @@ This is obsolete because you might as well use \\[newline-and-indent]."
   "Return the mirror image of string S, without any trailing space."
   (comment-string-strip (concat (nreverse (string-to-list s))) nil t))
 
-;;;###autoload
 (defun comment-normalize-vars (&optional noerror)
   (if (not comment-start) (or noerror (error "No comment syntax is defined"))
     ;; comment-use-syntax
@@ -431,7 +417,6 @@ Point is assumed to be just at the end of a comment."
 ;;;; Commands
 ;;;;
 
-;;;###autoload
 
 ;; #### XEmacs had this: in place of just (current-column)
 ; (defconst comment-indent-function
@@ -460,7 +445,6 @@ Point is assumed to be just at the end of a comment."
 	      (and (> comment-add 0) (looking-at "\\s<\\S<")))
       comment-column)))
 
-;;;###autoload
 (defun comment-indent (&optional continue)
   "Indent this line's comment to comment column, or insert an empty comment.
 If CONTINUE is non-nil, use the `comment-continue' markers if any.
@@ -525,7 +509,6 @@ Comments starting in column 0 are not moved."
       (goto-char cpos)
       (set-marker cpos nil))))
 
-;;;###autoload
 (defun comment-set-column (arg)
   "Set the comment column based on point.
 With no ARG, set the comment column to the current column.
@@ -547,7 +530,6 @@ With any other arg, set comment column to indentation of the previous comment
    (t (setq comment-column (current-column))
       (lmessage 'command "Comment column set to %d" comment-column))))
 
-;;;###autoload
 (defun comment-kill (arg)
   "Kill the comment on this line, if any.
 With prefix ARG, kill comments on that many lines starting with this one."
@@ -639,7 +621,6 @@ If N is `re', a regexp is returned instead, that would match
 		(if multi (concat (regexp-quote (string c)) "*"))
 		(regexp-quote s))))))
 
-;;;###autoload
 (defun uncomment-region (beg end &optional arg)
   "Uncomment each line in the BEG .. END region.
 The numeric prefix ARG can specify a number of chars to remove from the
@@ -870,7 +851,6 @@ rather than at left margin."
 		(end-of-line)
 		(not (or (eobp) (progn (forward-line) nil))))))))))
 
-;;;###autoload
 (defun comment-region (beg end &optional arg)
   "Comment or uncomment each line in the region.
 With just \\[universal-argument] prefix arg, uncomment each line in region BEG .. END.
@@ -946,7 +926,6 @@ end- comment markers additionally to what `comment-add' already specifies."
     (comment-region beg end (+ comment-add arg))))
 
 
-;;;###autoload
 (defun comment-or-uncomment-region (beg end &optional arg)
   "Call `comment-region', unless the region only consists of comments,
 in which case call `uncomment-region'.  If a prefix arg is given, it
@@ -959,7 +938,6 @@ is passed on to the respective function."
 	       'uncomment-region 'comment-region)
 	   beg end arg))
 
-;;;###autoload
 (defun comment-dwim (arg)
   "Call the comment command you want (Do What I Mean).
 If the region is active and `transient-mark-mode' is on, call
@@ -1000,7 +978,6 @@ This has no effect in modes that do not define a comment syntax."
    (string-match (concat "\\`[ \t]*\\(?:" comment-start-skip "\\)")
 		 fill-prefix)))
 
-;;;###autoload
 (defun comment-indent-new-line (&optional soft)
   "Break line at point and indent, continuing comment if within one.
 This indents the body of the continued comment

@@ -65,7 +65,6 @@
 (globally-declare-fboundp
  '(x-keysym-on-keyboard-sans-modifiers-p))
 
-;;;###autoload
 (defun x-win-init-sun (device)
 
   ;; help is ok
