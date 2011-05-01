@@ -1,3 +1,47 @@
+2011-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* buff-menu.el (list-buffers-directory):
+	* buff-menu.el (default-list-buffers-identification):
+	* cus-file.el (custom-file-base):
+	* cus-file.el (custom-file):
+	* cus-file.el (make-custom-file-name):
+	* menubar.el (menu-split-long-menu):
+	* newcomment.el:
+	* newcomment.el (indent-for-comment):
+	* newcomment.el (comment-column):
+	* newcomment.el (comment-start):
+	* newcomment.el (comment-start-skip):
+	* newcomment.el (comment-end-skip):
+	* newcomment.el (comment-end):
+	* newcomment.el (comment-indent-function):
+	* newcomment.el (comment-style):
+	* newcomment.el (comment-padding):
+	* newcomment.el (comment-multi-line):
+	* newcomment.el (comment-normalize-vars):
+	* newcomment.el (comment-indent):
+	* newcomment.el (comment-set-column):
+	* newcomment.el (comment-kill):
+	* newcomment.el (uncomment-region):
+	* newcomment.el (comment-region):
+	* newcomment.el (comment-or-uncomment-region):
+	* newcomment.el (comment-dwim):
+	* newcomment.el (comment-indent-new-line):
+	* x-win-sun.el (x-win-init-sun):
+	* x-win-xfree86.el (x-win-init-xfree86):
+	* mule/mule-composite.el:
+	* mule/mule-composite.el (reference-point-alist):
+	* mule/mule-composite.el (compose-region):
+	* mule/mule-composite.el (decompose-region):
+	* mule/mule-composite.el (compose-string):
+	* mule/mule-composite.el (decompose-string):
+	* mule/mule-composite.el (compose-chars):
+	* mule/mule-composite.el (find-composition):
+	* mule/mule-composite.el (compose-chars-after):
+	* mule/mule-composite.el (compose-last-chars):
+	* mule/mule-composite.el (decompose-composite-char):
+	Remove all autoload cookies from dumped files, they're needless
+	and confusing.
+
 2011-04-30  Didier Verna  <didier@xemacs.org>
 
 	* subr.el (looking-back): New function.

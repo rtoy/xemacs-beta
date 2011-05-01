@@ -510,10 +510,7 @@ to generate such a string.  This variable is always buffer-local.")
 (make-variable-buffer-local 'list-buffers-identification)
 
 ;; XEmacs
-;;;###autoload
 (defvar list-buffers-directory nil)
-
-;;;###autoload
 (make-variable-buffer-local 'list-buffers-directory)
 
 ;; #### not synched

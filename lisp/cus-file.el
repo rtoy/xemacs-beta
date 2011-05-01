@@ -31,17 +31,14 @@
 ;;; Code:
 (provide 'cus-file)
 
-;;;###autoload
 (defconst custom-file-base "custom.el"
   "Base of file name for storing customization information.")
 
-;;;###autoload
 (defvar custom-file nil
   "File used for storing customization information.
 If you change this from the default you need to
 explicitly load that file for the settings to take effect.")
 
-;;;###autoload
 (defun make-custom-file-name (init-file &optional force-new)
   "Construct the default custom file name from the init file name.
 If FORCE-NEW is non-nil, force post-migration location."
