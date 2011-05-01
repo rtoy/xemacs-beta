@@ -142,7 +142,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
 
   if (user_data)
     {
-      GUI_ID id = (GUI_ID) GPOINTER_TO_INT (g_object_get_qdata (G_OBJECT (item), XEMACS_MENU_GUIID_TAG));
+      GUI_ID id = (GUI_ID) GPOINTER_TO_UINT (g_object_get_qdata (G_OBJECT (item), XEMACS_MENU_GUIID_TAG));
       Lisp_Object hook_fn;
       struct gcpro gcpro1, gcpro2;
 
@@ -190,7 +190,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
 static void
 __remove_gcpro_by_id (gpointer user_data)
 {
-  ungcpro_popup_callbacks ((GUI_ID) GPOINTER_TO_INT (user_data));
+  ungcpro_popup_callbacks ((GUI_ID) GPOINTER_TO_UINT (user_data));
 }
 
 static void
@@ -458,16 +458,16 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       GUI_ID id = new_gui_id ();
 
       g_object_set_qdata (G_OBJECT (menu_item), XEMACS_MENU_GUIID_TAG,
-                          GINT_TO_POINTER (id));
+                          GUINT_TO_POINTER (id));
 
       /* Make sure we gcpro the menu descriptions */
       gcpro_popup_callbacks (id, desc);
-      gtk_object_weakref (GTK_OBJECT (menu_item), __remove_gcpro_by_id,
-			  GINT_TO_POINTER (id));
+      g_object_weak_ref (G_OBJECT (menu_item), __remove_gcpro_by_id,
+			  GUINT_TO_POINTER (id));
 
       assert (g_signal_connect (G_OBJECT (menu_item), "activate",
                                 GTK_SIGNAL_FUNC (__activate_menu),
-                                GINT_TO_POINTER (0x01)));
+                                GUINT_TO_POINTER (0x01)));
     }
 
   return (menu_item);
@@ -842,7 +842,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
   gboolean right_justify = FALSE;
   Lisp_Object value = descr;
   GtkWidget *menubar = FRAME_GTK_MENUBAR_WIDGET (f);
-  GUI_ID id = (GUI_ID) GPOINTER_TO_INT (g_object_get_qdata (G_OBJECT (menubar), XEMACS_MENU_GUIID_TAG));
+  GUI_ID id = (GUI_ID) GPOINTER_TO_UINT (g_object_get_qdata (G_OBJECT (menubar), XEMACS_MENU_GUIID_TAG));
   guint menu_position = 0;
   GtkAccelGroup *menubar_accel_group;
 
@@ -970,8 +970,8 @@ create_menubar_widget (struct frame *f)
                             GTK_SIGNAL_FUNC (run_menubar_hook), NULL));
 
   FRAME_GTK_MENUBAR_WIDGET (f) = menubar;
-  g_object_set_qdata (G_OBJECT (menubar), XEMACS_MENU_GUIID_TAG, GINT_TO_POINTER (id));
-  gtk_object_weakref (GTK_OBJECT (menubar), __remove_gcpro_by_id, GINT_TO_POINTER (id));
+  g_object_set_qdata (G_OBJECT (menubar), XEMACS_MENU_GUIID_TAG, GUINT_TO_POINTER (id));
+  gtk_object_weakref (GTK_OBJECT (menubar), __remove_gcpro_by_id, GUINT_TO_POINTER (id));
 }
 
 static int
