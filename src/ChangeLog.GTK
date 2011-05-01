@@ -1,3 +1,16 @@
+2011-05-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_init_frame_1): Use GPOINTER_TO_GUINT
+	consistently for GUI_ID.
+
+	* scrollbar-gtk.c (scrollbar_drag_hack_cb): Ditto.
+	(gtk_create_scrollbar_instance): Ditto.
+
+	* menubar-gtk.c (__activate_menu): Ditto.
+	(__remove_gcpro_by_id): Ditto.
+	(menu_convert): Ditto.
+	(create_menubar_widget): Ditto.
+
 2011-04-26  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c: Remove custom menubar class.

@@ -83,8 +83,8 @@ static gboolean
 scrollbar_drag_hack_cb (GtkWidget *UNUSED (w), GdkEventButton *UNUSED (ev),
 			gpointer v)
 {
-  vertical_drag_in_progress = GPOINTER_TO_INT (v);
-  inhibit_slider_size_change = GPOINTER_TO_INT (v);
+  vertical_drag_in_progress = GPOINTER_TO_UINT (v);
+  inhibit_slider_size_change = GPOINTER_TO_UINT (v);
   return (FALSE);
 }
 
@@ -114,10 +114,10 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
 
   assert(g_signal_connect (G_OBJECT (sb),"change-value",
                            G_CALLBACK (scrollbar_cb),
-                           GINT_TO_POINTER (vertical)));
+                           GUINT_TO_POINTER (vertical)));
   assert(g_signal_connect (G_OBJECT (sb), "button-press-event",
                            GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb),
-                           GINT_TO_POINTER (1)));
+                           GUINT_TO_POINTER (1)));
   assert(g_signal_connect (G_OBJECT (sb), "button-release-event",
                              GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 0));
 
