@@ -2,14 +2,14 @@
    Copyright (C) 1985, 1986, 1991, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.30.  Diverges significantly. */
 
@@ -420,8 +418,7 @@ gap_right (struct buffer *buf, Charbpos cpos, Bytebpos bpos)
 static void
 move_gap (struct buffer *buf, Charbpos cpos, Bytebpos bpos)
 {
-  if (! BUF_BEG_ADDR (buf))
-    ABORT ();
+  assert (BUF_BEG_ADDR (buf));
   if (bpos < BYTE_BUF_GPT (buf))
     gap_left (buf, cpos, bpos);
   else if (bpos > BYTE_BUF_GPT (buf))
@@ -1839,8 +1836,10 @@ uninit_buffer_text (struct buffer *b)
     {
       BUFFER_FREE (b->text->beg);
       xfree (b->text->changes);
+      b->text->changes = 0;
     }
   xfree (b->changes);
+  b->changes = 0;
 
 #ifdef REGION_CACHE_NEEDS_WORK
   if (b->newline_cache)

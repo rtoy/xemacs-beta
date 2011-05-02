@@ -78,7 +78,7 @@ static void
 find_stack_direction (void)
 {
   static char *addr = NULL;	/* Address of first `dummy', once known.  */
-  auto char dummy;		/* To get stack address.  */
+  char dummy;			/* To get stack address.  */
 
   if (addr == NULL)
     {				/* Initial entry.  */
@@ -131,7 +131,7 @@ static header *last_alloca_header = NULL;	/* -> last alloca header.  */
 pointer
 xemacs_c_alloca (unsigned int size)
 {
-  auto char probe;		/* Probes stack depth: */
+  char probe;			/* Probes stack depth: */
   register char *depth = ADDRESS_FUNCTION (probe);
 
 #if STACK_DIRECTION == 0
@@ -338,8 +338,7 @@ i00afunc (long *address)
   /* There must be at least one stack segment.  Therefore it is
      a fatal error if "trailer" is null.  */
 
-  if (trailer == 0)
-    ABORT ();
+  assert (trailer != 0);
 
   /* Discard segments that do not contain our argument address.  */
 
@@ -366,8 +365,7 @@ i00afunc (long *address)
 
   do
     {
-      if (trailer->this_size <= 0)
-	ABORT ();
+      assert (trailer->this_size > 0);
       result += trailer->this_size;
       trailer = (struct stk_trailer *) trailer->link;
     }

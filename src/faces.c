@@ -3,13 +3,14 @@
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995, 1996, 2001, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -36,14 +35,14 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame-impl.h"
 #include "glyphs.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 #include "specifier.h"
 #include "window.h"
 
 Lisp_Object Qfacep;
 Lisp_Object Qforeground, Qbackground, Qdisplay_table;
-Lisp_Object Qbackground_pixmap, Qunderline, Qdim;
-Lisp_Object Qblinking, Qstrikethru;
+Lisp_Object Qbackground_pixmap, Qbackground_placement, Qunderline, Qdim;
+Lisp_Object Qblinking, Qstrikethru, Q_name;
 
 Lisp_Object Qinit_face_from_resources;
 Lisp_Object Qinit_frame_faces;
@@ -111,6 +110,7 @@ mark_face (Lisp_Object obj)
   mark_object (face->font);
   mark_object (face->display_table);
   mark_object (face->background_pixmap);
+  mark_object (face->background_placement);
   mark_object (face->underline);
   mark_object (face->strikethru);
   mark_object (face->highlight);
@@ -130,7 +130,7 @@ print_face (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 
   if (print_readably)
     {
-      write_fmt_string_lisp (printcharfun, "#s(face name %S)", 1, face->name);
+      write_fmt_string_lisp (printcharfun, "#s(face :name %S)", 1, face->name);
     }
   else
     {
@@ -162,6 +162,9 @@ face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
      internal_equal (f1->font,		     f2->font,		    depth) &&
      internal_equal (f1->display_table,	     f2->display_table,	    depth) &&
      internal_equal (f1->background_pixmap,  f2->background_pixmap, depth) &&
+     internal_equal (f1->background_placement, 
+		     f2->background_placement,
+		     depth)                                                &&
      internal_equal (f1->underline,	     f2->underline,	    depth) &&
      internal_equal (f1->strikethru,	     f2->strikethru,	    depth) &&
      internal_equal (f1->highlight,	     f2->highlight,	    depth) &&
@@ -173,7 +176,7 @@ face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-face_hash (Lisp_Object obj, int depth)
+face_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Face *f = XFACE (obj);
 
@@ -181,9 +184,9 @@ face_hash (Lisp_Object obj, int depth)
 
   /* No need to hash all of the elements; that would take too long.
      Just hash the most common ones. */
-  return HASH3 (internal_hash (f->foreground, depth),
-		internal_hash (f->background, depth),
-		internal_hash (f->font,       depth));
+  return HASH3 (internal_hash (f->foreground, depth, 0),
+		internal_hash (f->background, depth, 0),
+		internal_hash (f->font,       depth, 0));
 }
 
 static Lisp_Object
@@ -192,18 +195,19 @@ face_getprop (Lisp_Object obj, Lisp_Object prop)
   Lisp_Face *f = XFACE (obj);
 
   return
-    (EQ (prop, Qforeground)	   ? f->foreground	  :
-     EQ (prop, Qbackground)	   ? f->background	  :
-     EQ (prop, Qfont)		   ? f->font		  :
-     EQ (prop, Qdisplay_table)	   ? f->display_table	  :
-     EQ (prop, Qbackground_pixmap) ? f->background_pixmap :
-     EQ (prop, Qunderline)	   ? f->underline	  :
-     EQ (prop, Qstrikethru)	   ? f->strikethru	  :
-     EQ (prop, Qhighlight)	   ? f->highlight	  :
-     EQ (prop, Qdim)		   ? f->dim		  :
-     EQ (prop, Qblinking)	   ? f->blinking	  :
-     EQ (prop, Qreverse)	   ? f->reverse		  :
-     EQ (prop, Qdoc_string)	   ? f->doc_string	  :
+    (EQ (prop, Qforeground)	      ? f->foreground           :
+     EQ (prop, Qbackground)	      ? f->background           :
+     EQ (prop, Qfont)		      ? f->font                 :
+     EQ (prop, Qdisplay_table)	      ? f->display_table        :
+     EQ (prop, Qbackground_pixmap)    ? f->background_pixmap    :
+     EQ (prop, Qbackground_placement) ? f->background_placement :
+     EQ (prop, Qunderline)	      ? f->underline            :
+     EQ (prop, Qstrikethru)	      ? f->strikethru           :
+     EQ (prop, Qhighlight)	      ? f->highlight            :
+     EQ (prop, Qdim)		      ? f->dim                  :
+     EQ (prop, Qblinking)	      ? f->blinking             :
+     EQ (prop, Qreverse)	      ? f->reverse              :
+     EQ (prop, Qdoc_string)	      ? f->doc_string           :
      external_plist_get (&f->plist, prop, 0, ERROR_ME));
 }
 
@@ -212,16 +216,17 @@ face_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 {
   Lisp_Face *f = XFACE (obj);
 
-  if (EQ (prop, Qforeground)        ||
-      EQ (prop, Qbackground)        ||
-      EQ (prop, Qfont)              ||
-      EQ (prop, Qdisplay_table)     ||
-      EQ (prop, Qbackground_pixmap) ||
-      EQ (prop, Qunderline)         ||
-      EQ (prop, Qstrikethru)        ||
-      EQ (prop, Qhighlight)         ||
-      EQ (prop, Qdim)               ||
-      EQ (prop, Qblinking)          ||
+  if (EQ (prop, Qforeground)           ||
+      EQ (prop, Qbackground)           ||
+      EQ (prop, Qfont)                 ||
+      EQ (prop, Qdisplay_table)        ||
+      EQ (prop, Qbackground_pixmap)    ||
+      EQ (prop, Qbackground_placement) ||
+      EQ (prop, Qunderline)            ||
+      EQ (prop, Qstrikethru)           ||
+      EQ (prop, Qhighlight)            ||
+      EQ (prop, Qdim)                  ||
+      EQ (prop, Qblinking)             ||
       EQ (prop, Qreverse))
     return 0;
 
@@ -242,16 +247,17 @@ face_remprop (Lisp_Object obj, Lisp_Object prop)
 {
   Lisp_Face *f = XFACE (obj);
 
-  if (EQ (prop, Qforeground)        ||
-      EQ (prop, Qbackground)        ||
-      EQ (prop, Qfont)              ||
-      EQ (prop, Qdisplay_table)     ||
-      EQ (prop, Qbackground_pixmap) ||
-      EQ (prop, Qunderline)         ||
-      EQ (prop, Qstrikethru)        ||
-      EQ (prop, Qhighlight)         ||
-      EQ (prop, Qdim)               ||
-      EQ (prop, Qblinking)          ||
+  if (EQ (prop, Qforeground)           ||
+      EQ (prop, Qbackground)           ||
+      EQ (prop, Qfont)                 ||
+      EQ (prop, Qdisplay_table)        ||
+      EQ (prop, Qbackground_pixmap)    ||
+      EQ (prop, Qbackground_placement) ||
+      EQ (prop, Qunderline)            ||
+      EQ (prop, Qstrikethru)           ||
+      EQ (prop, Qhighlight)            ||
+      EQ (prop, Qdim)                  ||
+      EQ (prop, Qblinking)             ||
       EQ (prop, Qreverse))
     return -1;
 
@@ -270,17 +276,18 @@ face_plist (Lisp_Object obj)
   Lisp_Face *face = XFACE (obj);
   Lisp_Object result = face->plist;
 
-  result = cons3 (Qreverse,	      face->reverse,	       result);
-  result = cons3 (Qblinking,	      face->blinking,	       result);
-  result = cons3 (Qdim,		      face->dim,	       result);
-  result = cons3 (Qhighlight,	      face->highlight,	       result);
-  result = cons3 (Qstrikethru,	      face->strikethru,	       result);
-  result = cons3 (Qunderline,	      face->underline,	       result);
-  result = cons3 (Qbackground_pixmap, face->background_pixmap, result);
-  result = cons3 (Qdisplay_table,     face->display_table,     result);
-  result = cons3 (Qfont,	      face->font,	       result);
-  result = cons3 (Qbackground,	      face->background,	       result);
-  result = cons3 (Qforeground,	      face->foreground,	       result);
+  result = cons3 (Qreverse,	         face->reverse,	               result);
+  result = cons3 (Qblinking,	         face->blinking,               result);
+  result = cons3 (Qdim,		         face->dim,	               result);
+  result = cons3 (Qhighlight,	         face->highlight,              result);
+  result = cons3 (Qstrikethru,	         face->strikethru,             result);
+  result = cons3 (Qunderline,	         face->underline,              result);
+  result = cons3 (Qbackground_placement, face->background_placement,   result);
+  result = cons3 (Qbackground_pixmap,    face->background_pixmap,      result);
+  result = cons3 (Qdisplay_table,        face->display_table,          result);
+  result = cons3 (Qfont,	         face->font,                   result);
+  result = cons3 (Qbackground,	         face->background,             result);
+  result = cons3 (Qforeground,	         face->foreground,             result);
 
   return result;
 }
@@ -293,6 +300,7 @@ static const struct memory_description face_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Face, font) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, display_table) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, background_pixmap) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Face, background_placement) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, underline) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, strikethru) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, highlight) },
@@ -304,13 +312,10 @@ static const struct memory_description face_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("face", face,
-					  1, /*dumpable-flag*/
-					  mark_face, print_face, 0, face_equal,
-					  face_hash, face_description,
-					  face_getprop,
-					  face_putprop, face_remprop,
-					  face_plist, Lisp_Face);
+DEFINE_DUMPABLE_LISP_OBJECT ("face", face,
+			     mark_face, print_face, 0, face_equal,
+			     face_hash, face_description,
+			     Lisp_Face);
 
 /************************************************************************/
 /*                             face read syntax                         */
@@ -335,6 +340,8 @@ face_validate (Lisp_Object data, Error_Behavior errb)
   int name_seen = 0;
   Lisp_Object valw = Qnil;
 
+  /* #### This syntax is very limited, given all the face properties that
+     actually exist. At least implement those in reset_face()! */
   data = Fcdr (data); /* skip over Qface */
   while (!NILP (data))
     {
@@ -343,7 +350,7 @@ face_validate (Lisp_Object data, Error_Behavior errb)
       data = Fcdr (data);
       valw = Fcar (data);
       data = Fcdr (data);
-      if (EQ (keyw, Qname))
+      if (EQ (keyw, Qname) || EQ (keyw, Q_name))
 	name_seen = 1;
       else
 	ABORT ();
@@ -386,6 +393,7 @@ reset_face (Lisp_Face *f)
   f->font = Qnil;
   f->display_table = Qnil;
   f->background_pixmap = Qnil;
+  f->background_placement = Qnil;
   f->underline = Qnil;
   f->strikethru = Qnil;
   f->highlight = Qnil;
@@ -399,7 +407,8 @@ reset_face (Lisp_Face *f)
 static Lisp_Face *
 allocate_face (void)
 {
-  Lisp_Face *result = ALLOC_LCRECORD_TYPE (Lisp_Face, &lrecord_face);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (face);
+  Lisp_Face *result = XFACE (obj);
 
   reset_face (result);
   return result;
@@ -723,7 +732,7 @@ specifier properties from Lisp.
 
 void
 default_face_font_info (Lisp_Object domain, int *ascent, int *descent,
-			int *height, int *width, int *proportional_p)
+			int *width, int *height, int *proportional_p)
 {
   Lisp_Object font_instance;
   struct face_cachel *cachel;
@@ -782,25 +791,9 @@ default_face_font_info (Lisp_Object domain, int *ascent, int *descent,
 }
 
 void
-default_face_height_and_width (Lisp_Object domain,
-			       int *height, int *width)
+default_face_width_and_height (Lisp_Object domain, int *width, int *height)
 {
-  default_face_font_info (domain, 0, 0, height, width, 0);
-}
-
-void
-default_face_height_and_width_1 (Lisp_Object domain,
-				 int *height, int *width)
-{
-  if (window_system_pixelated_geometry (domain))
-    {
-      if (height)
-	*height = 1;
-      if (width)
-	*width = 1;
-    }
-  else
-    default_face_height_and_width (domain, height, width);
+  default_face_font_info (domain, 0, 0, width, height, 0);
 }
 
 DEFUN ("face-list", Fface_list, 0, 1, 0, /*
@@ -861,6 +854,8 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use.
   set_font_attached_to (f->font, face, Qfont);
   f->background_pixmap = Fmake_specifier (Qimage);
   set_image_attached_to (f->background_pixmap, face, Qbackground_pixmap);
+  f->background_placement = Fmake_specifier (Qface_background_placement);
+  set_face_background_placement_attached_to (f->background_placement, face);
   f->display_table = Fmake_specifier (Qdisplay_table);
   f->underline = Fmake_specifier (Qface_boolean);
   set_face_boolean_attached_to (f->underline, face, Qunderline);
@@ -889,6 +884,9 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use.
       set_specifier_fallback (f->background_pixmap,
 			     Fget (Vdefault_face, Qbackground_pixmap,
 				   Qunbound));
+      set_specifier_fallback (f->background_placement,
+			      Fget (Vdefault_face, Qbackground_placement,
+				    Qunbound));
       set_specifier_fallback (f->display_table,
 			     Fget (Vdefault_face, Qdisplay_table, Qunbound));
       set_specifier_fallback (f->underline,
@@ -1083,6 +1081,7 @@ mark_face_cachels (face_cachel_dynarr *elements)
       mark_object (cachel->background);
       mark_object (cachel->display_table);
       mark_object (cachel->background_pixmap);
+      mark_object (cachel->background_placement);
     }
 }
 
@@ -1417,7 +1416,7 @@ update_face_cachel_data (struct face_cachel *cachel,
 	 - BARF !!!!!
 
 	 To sum up, this means that it is in general unsafe to instantiate
-	 images before face cache updating is complete (appart from image
+	 images before face cache updating is complete (apart from image
 	 related face attributes). The solution we use below is to actually
 	 detect whether we're building the window's face_cachels for the first
 	 time, and simply NOT frob the background pixmap in that case. If
@@ -1426,7 +1425,7 @@ update_face_cachel_data (struct face_cachel *cachel,
 
 	 One note:
 	 * See comment in `default_face_font_info' in face.c. Who wrote it ?
-	 Maybe we have the begining of an answer here ?
+	 Maybe we have the beginning of an answer here ?
 
 	 Footnotes:
 	 [1] See comment at the top of `allocate_window' in window.c.
@@ -1439,6 +1438,9 @@ update_face_cachel_data (struct face_cachel *cachel,
 	  FROB (background_pixmap);
 	  MAYBE_UNFROB_BACKGROUND_PIXMAP;
 	}
+
+      FROB (background_placement);
+
 #undef FROB
 #undef MAYBE_UNFROB_BACKGROUND_PIXMAP
 
@@ -1502,6 +1504,7 @@ merge_face_cachel_data (struct window *w, face_index findex,
   FROB (background);
   FROB (display_table);
   FROB (background_pixmap);
+  FROB (background_placement);
   FROB (underline);
   FROB (strikethru);
   FROB (highlight);
@@ -1552,6 +1555,7 @@ reset_face_cachel (struct face_cachel *cachel)
   }
   cachel->display_table = Qunbound;
   cachel->background_pixmap = Qunbound;
+  cachel->background_placement = Qunbound;
   FACE_CACHEL_FONT_SPECIFIED (cachel)->size = sizeof(cachel->font_specified);
   FACE_CACHEL_FONT_UPDATED (cachel)->size = sizeof(cachel->font_updated);
 }
@@ -1645,7 +1649,7 @@ mark_face_cachels_as_not_updated (struct window *w)
 
 int
 compute_face_cachel_usage (face_cachel_dynarr *face_cachels,
-			   struct overhead_stats *ovstats)
+			   struct usage_stats *ustats)
 {
   int total = 0;
 
@@ -1653,12 +1657,12 @@ compute_face_cachel_usage (face_cachel_dynarr *face_cachels,
     {
       int i;
 
-      total += Dynarr_memory_usage (face_cachels, ovstats);
+      total += Dynarr_memory_usage (face_cachels, ustats);
       for (i = 0; i < Dynarr_length (face_cachels); i++)
 	{
 	  int_dynarr *merged = Dynarr_at (face_cachels, i).merged_faces;
 	  if (merged)
-	    total += Dynarr_memory_usage (merged, ovstats);
+	    total += Dynarr_memory_usage (merged, ustats);
 	}
     }
 
@@ -1917,8 +1921,8 @@ face_property_was_changed (Lisp_Object face, Lisp_Object property,
   /* If the locale could affect the frame value, then call
      update_EmacsFrames just in case. */
   if (default_face &&
-      (EQ (property, Qforeground) ||
-       EQ (property, Qbackground) ||
+      (EQ (property, Qforeground)           ||
+       EQ (property, Qbackground)           ||
        EQ (property, Qfont)))
     update_EmacsFrames (locale, property);
 
@@ -2012,6 +2016,7 @@ LOCALE, TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
   COPY_PROPERTY (font);
   COPY_PROPERTY (display_table);
   COPY_PROPERTY (background_pixmap);
+  COPY_PROPERTY (background_placement);
   COPY_PROPERTY (underline);
   COPY_PROPERTY (strikethru);
   COPY_PROPERTY (highlight);
@@ -2104,9 +2109,18 @@ shouldn't ever need to call this.
 
 
 void
+face_objects_create (void)
+{
+  OBJECT_HAS_METHOD (face, getprop);
+  OBJECT_HAS_METHOD (face, putprop);
+  OBJECT_HAS_METHOD (face, remprop);
+  OBJECT_HAS_METHOD (face, plist);
+}
+
+void
 syms_of_faces (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (face);
+  INIT_LISP_OBJECT (face);
 
   /* Qdefault, Qwidget, Qleft_margin, Qright_margin defined in general.c */
   DEFSYMBOL (Qmodeline);
@@ -2142,6 +2156,7 @@ syms_of_faces (void)
   /* Qfont defined in general.c */
   DEFSYMBOL (Qdisplay_table);
   DEFSYMBOL (Qbackground_pixmap);
+  DEFSYMBOL (Qbackground_placement);
   DEFSYMBOL (Qunderline);
   DEFSYMBOL (Qstrikethru);
   /* Qhighlight, Qreverse defined in general.c */
@@ -2155,6 +2170,8 @@ syms_of_faces (void)
   DEFSYMBOL (Qinit_global_faces);
   DEFSYMBOL (Qinit_device_faces);
   DEFSYMBOL (Qinit_frame_faces);
+
+  DEFKEYWORD (Q_name);
 }
 
 void
@@ -2163,8 +2180,10 @@ structure_type_create_faces (void)
   struct structure_type *st;
 
   st = define_structure_type (Qface, face_validate, face_instantiate);
-
+#ifdef NEED_TO_HANDLE_21_4_CODE
   define_structure_type_keyword (st, Qname, face_name_validate);
+#endif
+  define_structure_type_keyword (st, Q_name, face_name_validate);
 }
 
 void
@@ -2172,10 +2191,10 @@ vars_of_faces (void)
 {
   staticpro (&Vpermanent_faces_cache);
   Vpermanent_faces_cache =
-    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vtemporary_faces_cache);
   Vtemporary_faces_cache =
-    make_lisp_hash_table (0, HASH_TABLE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (0, HASH_TABLE_WEAK, Qeq);
 
   staticpro (&Vdefault_face);
   Vdefault_face = Qnil;
@@ -2206,25 +2225,11 @@ If non-zero, display debug information about X faces
   debug_x_faces = 0;
 #endif
 
-  {
-    Lisp_Object syms[20];
-    int n = 0;
-
-    syms[n++] = Qforeground;
-    syms[n++] = Qbackground;
-    syms[n++] = Qfont;
-    syms[n++] = Qdisplay_table;
-    syms[n++] = Qbackground_pixmap;
-    syms[n++] = Qunderline;
-    syms[n++] = Qstrikethru;
-    syms[n++] = Qhighlight;
-    syms[n++] = Qdim;
-    syms[n++] = Qblinking;
-    syms[n++] = Qreverse;
-
-    Vbuilt_in_face_specifiers = Flist (n, syms);
-    staticpro (&Vbuilt_in_face_specifiers);
-  }
+  Vbuilt_in_face_specifiers =
+    listu (Qforeground, Qbackground, Qfont, Qdisplay_table, Qbackground_pixmap,
+	   Qbackground_placement, Qunderline, Qstrikethru, Qhighlight, Qdim,
+	   Qblinking, Qreverse, Qunbound);
+  staticpro (&Vbuilt_in_face_specifiers);
 }
 
 void
@@ -2244,22 +2249,22 @@ complex_vars_of_faces (void)
     Lisp_Object fg_fb = Qnil, bg_fb = Qnil;
 
 #ifdef HAVE_GTK
-    fg_fb = acons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qgtk), build_ascstring ("white"), bg_fb);
+    fg_fb = Facons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qgtk), build_ascstring ("white"), bg_fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-    fg_fb = acons (list1 (Qx), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qx), build_ascstring ("gray80"), bg_fb);
+    fg_fb = Facons (list1 (Qx), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qx), build_ascstring ("gray80"), bg_fb);
 #endif
 #ifdef HAVE_TTY
-    fg_fb = acons (list1 (Qtty), Fvector (0, 0), fg_fb);
-    bg_fb = acons (list1 (Qtty), Fvector (0, 0), bg_fb);
+    fg_fb = Facons (list1 (Qtty), Fvector (0, 0), fg_fb);
+    bg_fb = Facons (list1 (Qtty), Fvector (0, 0), bg_fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
-    fg_fb = acons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
-    fg_fb = acons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmswindows), build_ascstring ("white"), bg_fb);
+    fg_fb = Facons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
+    fg_fb = Facons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qmswindows), build_ascstring ("white"), bg_fb);
 #endif
     set_specifier_fallback (Fget (Vdefault_face, Qforeground, Qnil), fg_fb);
     set_specifier_fallback (Fget (Vdefault_face, Qbackground, Qnil), bg_fb);
@@ -2497,22 +2502,22 @@ complex_vars_of_faces (void)
     /* We need to put something in there, or error checking gets
        #%!@#ed up before the styles are set, which override the
        fallbacks. */
-    fg_fb = acons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qgtk), build_ascstring ("Gray80"), bg_fb);
+    fg_fb = Facons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qgtk), build_ascstring ("Gray80"), bg_fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-    fg_fb = acons (list1 (Qx), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qx), build_ascstring ("Gray80"), bg_fb);
+    fg_fb = Facons (list1 (Qx), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qx), build_ascstring ("Gray80"), bg_fb);
 #endif
 #ifdef HAVE_TTY
-    fg_fb = acons (list1 (Qtty), Fvector (0, 0), fg_fb);
-    bg_fb = acons (list1 (Qtty), Fvector (0, 0), bg_fb);
+    fg_fb = Facons (list1 (Qtty), Fvector (0, 0), fg_fb);
+    bg_fb = Facons (list1 (Qtty), Fvector (0, 0), bg_fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
-    fg_fb = acons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
-    fg_fb = acons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
-    bg_fb = acons (list1 (Qmswindows), build_ascstring ("Gray75"), bg_fb);
+    fg_fb = Facons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
+    fg_fb = Facons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
+    bg_fb = Facons (list1 (Qmswindows), build_ascstring ("Gray75"), bg_fb);
 #endif
     set_specifier_fallback (Fget (Vgui_element_face, Qforeground, Qnil), fg_fb);
     set_specifier_fallback (Fget (Vgui_element_face, Qbackground, Qnil), bg_fb);
@@ -2533,6 +2538,9 @@ complex_vars_of_faces (void)
   set_specifier_fallback (Fget (Vmodeline_face, Qbackground_pixmap, Qnil),
 			  Fget (Vgui_element_face, Qbackground_pixmap,
 				Qunbound));
+  set_specifier_fallback (Fget (Vmodeline_face, Qbackground_placement, Qnil),
+			  Fget (Vgui_element_face, Qbackground_placement,
+				Qunbound));
 
   /* toolbar is another gui element */
   Vtoolbar_face = Fmake_face (Qtoolbar,
@@ -2544,6 +2552,9 @@ complex_vars_of_faces (void)
 			  Fget (Vgui_element_face, Qbackground, Qunbound));
   set_specifier_fallback (Fget (Vtoolbar_face, Qbackground_pixmap, Qnil),
 			  Fget (Vgui_element_face, Qbackground_pixmap,
+				Qunbound));
+  set_specifier_fallback (Fget (Vtoolbar_face, Qbackground_placement, Qnil),
+			  Fget (Vgui_element_face, Qbackground_placement,
 				Qunbound));
 
   /* vertical divider is another gui element */
@@ -2558,6 +2569,10 @@ complex_vars_of_faces (void)
   set_specifier_fallback (Fget (Vvertical_divider_face, Qbackground_pixmap,
 				Qunbound),
 			  Fget (Vgui_element_face, Qbackground_pixmap,
+				Qunbound));
+  set_specifier_fallback (Fget (Vvertical_divider_face, Qbackground_placement,
+				Qnil),
+			  Fget (Vgui_element_face, Qbackground_placement,
 				Qunbound));
 
   /* widget is another gui element */

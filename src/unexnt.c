@@ -1,13 +1,13 @@
 /* unexec for XEmacs on Windows NT.
    Copyright (C) 1994 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,10 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to the Free
-Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-02111-1307, USA.
-
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
    Geoff Voelker (voelker@cs.washington.edu) 8-12-94 */
 
 /* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
@@ -525,12 +522,11 @@ read_in_bss (Extbyte *filename)
 
   file = qxeCreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-  if (file == INVALID_HANDLE_VALUE)
-    ABORT ();
+  assert (file != INVALID_HANDLE_VALUE);
   
   /* Seek to where the .bss section is tucked away after the heap...  */
   index = heap_index_in_executable + get_committed_heap_size ();
-  if (SetFilePointer (file, index, NULL, FILE_BEGIN) == 0xFFFFFFFF) 
+  if (SetFilePointer (file, index, NULL, FILE_BEGIN) == 0xFFFFFFFF)
     ABORT ();
 
   /* Ok, read in the saved .bss section and initialize all 
@@ -553,14 +549,12 @@ map_in_heap (Extbyte *filename)
 
   file = qxeCreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-  if (file == INVALID_HANDLE_VALUE) 
-    ABORT ();
+  assert (file != INVALID_HANDLE_VALUE);
 
   size = GetFileSize (file, &upper_size);
   file_mapping = qxeCreateFileMapping (file, NULL, PAGE_WRITECOPY, 
 				       0, size, NULL);
-  if (!file_mapping) 
-    ABORT ();
+  assert (file_mapping);
 
   size = get_committed_heap_size ();
   file_base = MapViewOfFileEx (file_mapping, FILE_MAP_COPY, 0, 

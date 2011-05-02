@@ -2,13 +2,14 @@
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -50,7 +49,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 
 #include "console-x-impl.h"
-#include "objects-x.h"
+#include "fontcolor-x.h"
 #include "../lwlib/lwlib.h"
 #include "EmacsFrame.h"
 
@@ -132,8 +131,6 @@ void emacs_Xt_event_handler (Widget wid, XtPointer closure, XEvent *event,
 			     Boolean *continue_to_dispatch);
 
 static int last_quit_check_signal_tick_count;
-
-Lisp_Object Qsans_modifiers;
 
 #define THIS_IS_X
 #include "event-xlike-inc.c"
@@ -232,7 +229,7 @@ x_reset_key_mapping (struct device *d)
     Fclrhash (hash_table);
   else
     xd->x_keysym_map_hash_table = hash_table =
-      make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+      make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, Qequal);
 
   for (keysym = xd->x_keysym_map,
 	 keysyms_per_code = xd->x_keysym_map_keysyms_per_code,
@@ -1898,6 +1895,25 @@ emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
       break;
 
     case ConfigureNotify:
+      {
+	XEvent xev;
+	
+	/* Let's eat all events of that type to avoid useless
+	   reconfigurations. */
+	while (XCheckTypedWindowEvent
+	       (DEVICE_X_DISPLAY (XDEVICE (FRAME_DEVICE (f))),
+		XtWindow (FRAME_X_TEXT_WIDGET (f)),
+		ConfigureNotify,
+		&xev)
+	       == True);
+      }
+      /* #### NOTE: in fact, the frame faces didn't really change, but if some
+	 #### of them have their background-placement property set to
+	 #### absolute, we need a redraw. This is semantically equivalent to
+	 #### changing the background pixmap. -- dvl */
+      x_get_frame_text_position (f);
+      MARK_FRAME_FACES_CHANGED (f);
+
 #ifdef HAVE_XIM
       XIM_SetGeometry (f);
 #endif
@@ -3024,8 +3040,6 @@ emacs_Xt_event_add_widget_actions (XtAppContext ctx)
 void
 syms_of_event_Xt (void)
 {
-  DEFSYMBOL (Qsans_modifiers);
-  DEFSYMBOL (Qself_insert_command);
 }
 
 void

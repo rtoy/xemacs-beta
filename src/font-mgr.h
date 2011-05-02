@@ -12,10 +12,10 @@ Updated:	05 Mar 2005 by Stephen J. Turnbull
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,9 +23,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in GNU Emacs. */
 
@@ -54,38 +52,38 @@ extern Fixnum debug_xft;
 
 struct fc_pattern
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   FcPattern *fcpatPtr;
 };
 
 typedef struct fc_pattern fc_pattern;
 
-DECLARE_LRECORD(fc_pattern, struct fc_pattern);
-#define XFCPATTERN(x) XRECORD (x, fc_pattern, struct fc_pattern)
-#define wrap_fcpattern(p) wrap_record (p, fc_pattern)
-#define FCPATTERNP(x) RECORDP (x, fc_pattern)
-#define CHECK_FCPATTERN(x) CHECK_RECORD (x, fc_pattern)
-#define CONCHECK_FCPATTERN(x) CONCHECK_RECORD (x, fc_pattern)
-#define XFCPATTERN_PTR(x) (XFCPATTERN(x)->fcpatPtr)
+DECLARE_LISP_OBJECT(fc_pattern, struct fc_pattern);
+#define XFC_PATTERN(x) XRECORD (x, fc_pattern, struct fc_pattern)
+#define wrap_fc_pattern(p) wrap_record (p, fc_pattern)
+#define FC_PATTERNP(x) RECORDP (x, fc_pattern)
+#define CHECK_FC_PATTERN(x) CHECK_RECORD (x, fc_pattern)
+#define CONCHECK_FC_PATTERN(x) CONCHECK_RECORD (x, fc_pattern)
+#define XFC_PATTERN_PTR(x) (XFC_PATTERN(x)->fcpatPtr)
 
 #define FONTCONFIG_EXPOSE_CONFIG
 #ifdef FONTCONFIG_EXPOSE_CONFIG
 
 struct fc_config
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   FcConfig *fccfgPtr;
 };
 
 typedef struct fc_config fc_config;
 
-DECLARE_LRECORD(fc_config, struct fc_config);
-#define XFCCONFIG(x) XRECORD (x, fc_config, struct fc_config)
-#define wrap_fcconfig(p) wrap_record (p, fc_config)
-#define FCCONFIGP(x) RECORDP (x, fc_config)
-#define CHECK_FCCONFIG(x) CHECK_RECORD (x, fc_config)
-#define CONCHECK_FCCONFIG(x) CONCHECK_RECORD (x, fc_config)
-#define XFCCONFIG_PTR(x) (XFCCONFIG(x)->fccfgPtr)
+DECLARE_LISP_OBJECT(fc_config, struct fc_config);
+#define XFC_CONFIG(x) XRECORD (x, fc_config, struct fc_config)
+#define wrap_fc_config(p) wrap_record (p, fc_config)
+#define FC_CONFIGP(x) RECORDP (x, fc_config)
+#define CHECK_FC_CONFIG(x) CHECK_RECORD (x, fc_config)
+#define CONCHECK_FC_CONFIG(x) CONCHECK_RECORD (x, fc_config)
+#define XFC_CONFIG_PTR(x) (XFC_CONFIG(x)->fccfgPtr)
 
 #endif /* FONTCONFIG_EXPOSE_CONFIG */
 

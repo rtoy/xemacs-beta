@@ -2,34 +2,35 @@
 
 ;; Copyright (C) 1987, 1994, 1997, 2007 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2005 Ben Wing.
 
-;; Author: Howard Gayle
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: i18n, internal
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not synched with FSF.
 
 ;;; Commentary:
 
 ;; Rewritten for XEmacs July 1995, Ben Wing.
-
+;; November 1998?, display tables generalized to char/range tables, Hrvoje
+;; Niksic.
+;; July 2007, rewrite this file to handle generalized display tables,
+;; Aidan Kehoe.
 
 ;;; Code:
 
@@ -116,6 +117,9 @@ others described in the docstring of `make-glyph'. \n\n"))))
 
 ;; Let me say one more time how much dynamic scoping sucks.
 
+;; #### Need more thinking about basic primitives for modifying a specifier.
+;; cf `modify-specifier-instances'.
+
 ;;;###autoload
 (defun frob-display-table (fdt-function fdt-locale &optional tag-set)
   (or fdt-locale (setq fdt-locale 'global))
@@ -184,8 +188,8 @@ sets them to display as octal escapes.  "
 ;;;###autoload
 (defun standard-display-g1 (c sc &optional locale)
   "Display character C as character SC in the g1 character set.
-This function assumes that your terminal uses the SO/SI characters;
-it is meaningless for an X frame."
+This only has an effect on TTY devices and assumes that your terminal uses
+the SO/SI characters."
   (frob-display-table
    (lambda (x)
      (put-char-table c (concat "\016" (char-to-string sc) "\017") x))
@@ -194,8 +198,7 @@ it is meaningless for an X frame."
 ;;;###autoload
 (defun standard-display-graphic (c gc &optional locale)
   "Display character C as character GC in graphics character set.
-This function assumes VT100-compatible escapes; it is meaningless for an
-X frame."
+This only has an effect on TTY devices and assumes VT100-compatible escapes."
   (frob-display-table
    (lambda (x)
      (put-char-table c (concat "\e(0" (char-to-string gc) "\e(B") x))

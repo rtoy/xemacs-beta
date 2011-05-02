@@ -1,12 +1,13 @@
 /* Block-relocating memory allocator.
    Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,10 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.
-
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 Synched Up with:  FSF 20.2 (non-mmap portion only)
 */
 
@@ -257,8 +255,7 @@ obtain (POINTER address, size_t size)
 	break;
     }
 
-  if (! heap)
-    ABORT ();
+  assert (heap);
 
   /* If we can't fit SIZE bytes in that heap,
      try successive later heaps.  */
@@ -362,9 +359,8 @@ relinquish (void)
       if ((char *)last_heap->end - (char *)last_heap->bloc_start <= excess)
 	{
 	  /* This heap should have no blocs in it.  */
-	  if (last_heap->first_bloc != NIL_BLOC
-	      || last_heap->last_bloc != NIL_BLOC)
-	    ABORT ();
+	  assert (last_heap->first_bloc == NIL_BLOC &&
+		  last_heap->last_bloc == NIL_BLOC);
 
 	  /* Return the last heap, with its header, to the system.  */
 	  excess = (char *)last_heap->end - (char *)last_heap->start;
@@ -481,8 +477,7 @@ relocate_blocs (bloc_ptr bloc, heap_ptr heap, POINTER address)
   register bloc_ptr b = bloc;
 
   /* No need to ever call this if arena is frozen, bug somewhere!  */
-  if (r_alloc_freeze_level)
-    ABORT();
+  assert (!r_alloc_freeze_level);
 
   while (b)
     {
@@ -636,8 +631,7 @@ resize_bloc (bloc_ptr bloc, size_t size)
   size_t old_size;
 
   /* No need to ever call this if arena is frozen, bug somewhere!  */
-  if (r_alloc_freeze_level)
-    ABORT();
+  assert (!r_alloc_freeze_level);
 
   if (bloc == NIL_BLOC || size == bloc->size)
     return 1;
@@ -648,8 +642,7 @@ resize_bloc (bloc_ptr bloc, size_t size)
 	break;
     }
 
-  if (heap == NIL_HEAP)
-    ABORT ();
+  assert (heap != NIL_HEAP);
 
   old_size = bloc->size;
   bloc->size = size;
@@ -979,8 +972,7 @@ r_alloc_free (POINTER *ptr)
     init_ralloc ();
 
   dead_bloc = find_bloc (ptr);
-  if (dead_bloc == NIL_BLOC)
-    ABORT ();
+  assert (dead_bloc != NIL_BLOC);
 
   free_bloc (dead_bloc);
   *ptr = 0;
@@ -1026,8 +1018,7 @@ r_re_alloc (POINTER *ptr, size_t size)
     }
 
   bloc = find_bloc (ptr);
-  if (bloc == NIL_BLOC)
-    ABORT ();
+  assert (bloc != NIL_BLOC);
 
   if (size < bloc->size)
     {
@@ -1096,8 +1087,7 @@ r_alloc_thaw (void)
   if (! r_alloc_initialized)
     init_ralloc ();
 
-  if (--r_alloc_freeze_level < 0)
-    ABORT ();
+  assert (--r_alloc_freeze_level >= 0);
 
   /* This frees all unused blocs.  It is not too inefficient, as the resize
      and memmove is done only once.  Afterwards, all unreferenced blocs are
@@ -1140,8 +1130,7 @@ init_ralloc (void)
   first_heap->next = first_heap->prev = NIL_HEAP;
   first_heap->start = first_heap->bloc_start
     = virtual_break_value = break_value = (*real_morecore) (0);
-  if (break_value == NIL)
-    ABORT ();
+  assert (break_value != NIL);
 
   page_size = PAGE;
   extra_bytes = ROUNDUP (50000);
@@ -1817,13 +1806,13 @@ Free_Addr_Block (VM_ADDR addr, size_t sz)
     {
       if (p->addr == addr)
 	{
-	  if (p->sz != sz) ABORT(); /* ACK! Shouldn't happen at all. */
+	  assert (p->sz == sz); /* ACK! Shouldn't happen at all. */
 	  munmap( (VM_ADDR) p->addr, p->sz );
 	  p->flag = empty;
 	  break;
 	}
     }
-  if (!p) ABORT(); /* Can't happen... we've got a block to free which is not in
+  assert (p); /* Can't happen... we've got a block to free which is not in
 		      the address list. */
   Coalesce_Addr_Blocks();
 }

@@ -11,20 +11,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -102,6 +100,7 @@
 ;; .elc's.
 (defvar lisp-files-needed-for-byte-compilation
   '("bytecomp"
+    "cl-macs"
     "byte-optimize"))
 
 ;; Lisp files not in `lisp-files-needed-for-byte-compilation' that need
@@ -110,8 +109,7 @@
 (defvar lisp-files-needing-early-byte-compilation
   '("easy-mmode"
     "autoload"
-    "shadow"
-    "cl-macs"))
+    "shadow"))
 
 (defvar unbytecompiled-lisp-files
   '("paths.el"
@@ -137,7 +135,7 @@ If any of these files are changed, we need to redump.")
 
 (defun update-elc-chop-extension (file)
   (if (string-match "\\.elc?$" file)
-      (substring file 0 (match-beginning 0))
+      (subseq file 0 (match-beginning 0))
     file))
 
 ;; we used to call packages-list-autoloads here, but it's false generality.
@@ -367,25 +365,26 @@ If any of these files are changed, we need to redump.")
 	   ;; load-ignore-elc-files because byte-optimize gets autoloaded
 	   ;; from bytecomp.
 	   (let ((recompile-bc-bootstrap
-		  (apply #'nconc
-			 (mapcar
-			  #'(lambda (arg)
-			      (when (member arg update-elc-files-to-compile)
-				(append '("-f" "batch-byte-compile-one-file")
-					(list arg))))
-			  bc-bootstrap)))
+                  (mapcan
+                   #'(lambda (arg)
+                       (when (member arg update-elc-files-to-compile)
+                         (append '("-f" "batch-byte-compile-one-file")
+                                 (list arg))))
+                   bc-bootstrap))
 		 (recompile-bootstrap-other
-		  (apply #'nconc
-			 (mapcar
-			  #'(lambda (arg)
-			      (when (member arg update-elc-files-to-compile)
-				(append '("-f" "batch-byte-compile-one-file")
-					(list arg))))
-			  bootstrap-other))))
+                  (mapcan
+                   #'(lambda (arg)
+                       (when (member arg update-elc-files-to-compile)
+                         (append '("-f" "batch-byte-compile-one-file")
+                                 (list arg))))
+                   bootstrap-other)))
 	     (mapc
 	      #'(lambda (arg)
 		  (setq update-elc-files-to-compile
-			(delete arg update-elc-files-to-compile)))
+			(delete* arg update-elc-files-to-compile
+				 :test (if default-file-system-ignore-case
+					   #'equalp
+					 #'equal))))
 	      (append bc-bootstrap bootstrap-other))
 	     (setq command-line-args
 		   (append

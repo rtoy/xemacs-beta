@@ -3,26 +3,24 @@
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Keywords: mule, multilingual
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; Note: Some of the code here is now in code-cmds.el
 
@@ -779,7 +777,7 @@ the language environment for the major languages of Western Europe."
      #'(lambda (key entry)
          (setq string (decode-coding-string (string entry)
                                             invalid-sequence-coding-system))
-         (when (= 1 (length string))
+         (when (eql 1 (length string))
 	   ;; Treat Unicode error sequence chars as the octets
 	   ;; corresponding to those on disk:
 	   (setq unicode-error-lookup
@@ -789,8 +787,7 @@ the language environment for the major languages of Western Europe."
 	     (setq string (format "%c" unicode-error-lookup)))
            ;; Treat control characters specially:
            (setq first-char (aref string 0))
-           (when (or (and (>= #x00 first-char) (<= first-char #x1f))
-                     (and (>= #x80 first-char) (<= first-char #x9f)))
+           (when (or (<= #x00 first-char #x1f) (<= #x80 first-char #x9f))
 	     (setq string (format "^%c" (+ ?@ (aref string 0))))))
          (setq glyph (make-glyph (vector 'string :data string)))
          (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)

@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; if not, write to the Free Software
-;; Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not synched with FSF but coordinated with the FSF
 ;;;                  easymenu maintainer for compatibility with FSF 20.4.
@@ -194,7 +192,7 @@ non-default value for `mode-popup-menu' that existed when
 ;  	   (default-value 'mode-popup-menu) easy-menu-all-popups)
   (when (featurep 'menubar)
     ;; Save the existing mode-popup-menu, if it's been changed.
-    (when (and (zerop (length easy-menu-all-popups))
+    (when (and (eql (length easy-menu-all-popups) 0)
 	       (not (equal (default-value 'mode-popup-menu) mode-popup-menu)))
       (push mode-popup-menu easy-menu-all-popups))
     ;; Add the menu to our list of all the popups for the buffer. 
@@ -202,7 +200,7 @@ non-default value for `mode-popup-menu' that existed when
     ;; If there are multiple popup menus available, make the popup menu
     ;; normally shown with button-3 a menu of them. If there is just one,
     ;; make that button show it, and no super-menu.
-    (setq mode-popup-menu (if (= 1 (length easy-menu-all-popups))
+    (setq mode-popup-menu (if (eql 1 (length easy-menu-all-popups))
 			      (car easy-menu-all-popups)
 			    (cons (easy-menu-title)
 				(reverse easy-menu-all-popups))))
@@ -229,13 +227,13 @@ non-default value for `mode-popup-menu' that existed when
      ;; If there are multiple popup menus available, make the popup menu
      ;; normally shown with button-3 a menu of them. If there is just one,
      ;; make that button show it, and no super-menu.
-     mode-popup-menu (if (= 1 (length easy-menu-all-popups))
+     mode-popup-menu (if (eql 1 (length easy-menu-all-popups))
 			 (car easy-menu-all-popups)
 		       (cons (easy-menu-title)
 			     (reverse easy-menu-all-popups))))
     ;; If we've just set mode-popup-menu to an empty menu, change that menu
     ;; to its default value (without intervention from easy-menu).
-    (if (zerop (length easy-menu-all-popups))
+    (if (eql (length easy-menu-all-popups) 0)
 	(setq mode-popup-menu (default-value 'mode-popup-menu)))
     (and current-menubar
 	 (assoc (car menu) current-menubar)

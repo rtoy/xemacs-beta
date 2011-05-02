@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -54,6 +52,7 @@ void init_elhash_once_early (void);
 void init_errors_once_early (void);
 void reinit_opaque_early (void);
 void init_opaque_once_early (void);
+void reinit_process_early (void);
 void reinit_symbols_early (void);
 void init_symbols_once_early (void);
 
@@ -72,6 +71,7 @@ void init_eval_semi_early (void);
 
 void syms_of_abbrev (void);
 void syms_of_alloc (void);
+void syms_of_array (void);
 void syms_of_balloon_x (void);
 void syms_of_buffer (void);
 void syms_of_bytecode (void);
@@ -147,6 +147,7 @@ void syms_of_intl_win32 (void);
 void syms_of_intl_x (void);
 void syms_of_keymap (void);
 void syms_of_lread (void);
+void syms_of_lstream (void);
 void syms_of_macros (void);
 void syms_of_marker (void);
 void syms_of_mc_alloc (void);
@@ -163,11 +164,11 @@ void syms_of_mule_coding (void);
 void syms_of_mule_wnn (void);
 void syms_of_nt (void);
 void syms_of_number (void);
-void syms_of_objects (void);
-void syms_of_objects_gtk (void);
-void syms_of_objects_mswindows (void);
-void syms_of_objects_tty (void);
-void syms_of_objects_x (void);
+void syms_of_fontcolor (void);
+void syms_of_fontcolor_gtk (void);
+void syms_of_fontcolor_mswindows (void);
+void syms_of_fontcolor_tty (void);
+void syms_of_fontcolor_x (void);
 EXTERN_C void syms_of_postgresql (void);
 void syms_of_print (void);
 void syms_of_process (void);
@@ -202,6 +203,24 @@ void syms_of_widget_accessors (void);
 void syms_of_win32 (void);
 void syms_of_window (void);
 
+/* Initialize dynamic properties of objects (i.e. those properties not
+   initialized statically through a DEFINE_*_LISP_OBJECT declaration).
+   Dump time and post-pdump-load-time. */
+
+void buffer_objects_create (void);
+void casetab_objects_create (void);
+void extent_objects_create (void);
+void face_objects_create (void);
+void frame_objects_create (void);
+void glyph_objects_create (void);
+void hash_table_objects_create (void);
+void lstream_objects_create (void);
+void mule_charset_objects_create (void);
+void scrollbar_objects_create (void);
+void specifier_objects_create (void);
+void ui_gtk_objects_create (void);
+void window_objects_create (void);
+
 /* Initialize the console types (dump-time only for console_type_(),
    post-pdump-load-time only for reinit_). */
 
@@ -228,10 +247,10 @@ void console_type_create_menubar_mswindows (void);
 void console_type_create_menubar_x (void);
 void console_type_create_mswindows (void);
 void reinit_console_type_create_mswindows (void);
-void console_type_create_objects_gtk (void);
-void console_type_create_objects_mswindows (void);
-void console_type_create_objects_tty (void);
-void console_type_create_objects_x (void);
+void console_type_create_fontcolor_gtk (void);
+void console_type_create_fontcolor_mswindows (void);
+void console_type_create_fontcolor_tty (void);
+void console_type_create_fontcolor_x (void);
 void console_type_create_redisplay_gtk (void);
 void console_type_create_redisplay_mswindows (void);
 void console_type_create_redisplay_tty (void);
@@ -261,8 +280,8 @@ void specifier_type_create_gutter (void);
 void reinit_specifier_type_create_gutter (void);
 void specifier_type_create_image (void);
 void reinit_specifier_type_create_image (void);
-void specifier_type_create_objects (void);
-void reinit_specifier_type_create_objects (void);
+void specifier_type_create_fontcolor (void);
+void reinit_specifier_type_create_fontcolor (void);
 void specifier_type_create_toolbar (void);
 void reinit_specifier_type_create_toolbar (void);
 
@@ -329,6 +348,7 @@ void init_provide_once (void);
 
 void vars_of_abbrev (void);
 void vars_of_alloc (void);
+void reinit_vars_of_alloc (void);
 void vars_of_balloon_x (void);
 void vars_of_buffer (void);
 void reinit_vars_of_buffer (void);
@@ -336,6 +356,7 @@ void vars_of_bytecode (void);
 void reinit_vars_of_bytecode (void);
 void vars_of_callint (void);
 EXTERN_C void vars_of_canna_api (void);
+void vars_of_casetab (void);
 void vars_of_chartab (void);
 void vars_of_cmdloop (void);
 void vars_of_cmds (void);
@@ -366,6 +387,7 @@ void vars_of_doc (void);
 void vars_of_dragdrop (void);
 void vars_of_editfns (void);
 EXTERN_C void vars_of_eldap (void);
+void vars_of_elhash (void);
 void vars_of_emacs (void);
 void vars_of_eval (void);
 void reinit_vars_of_eval (void);
@@ -382,7 +404,6 @@ void reinit_vars_of_event_tty (void);
 void vars_of_events (void);
 void reinit_vars_of_events (void);
 void vars_of_extents (void);
-void reinit_vars_of_extents (void);
 void vars_of_faces (void);
 void vars_of_file_coding (void);
 void reinit_vars_of_file_coding (void);
@@ -450,13 +471,13 @@ void reinit_vars_of_mule_wnn (void);
 void vars_of_nt (void);
 void vars_of_number (void);
 void reinit_vars_of_number (void);
-void reinit_vars_of_object_mswindows (void);
-void vars_of_objects (void);
-void reinit_vars_of_objects (void);
-void vars_of_objects_gtk (void);
-void vars_of_objects_mswindows (void);
-void vars_of_objects_tty (void);
-void vars_of_objects_x (void);
+void reinit_vars_of_fontcolor_mswindows (void);
+void vars_of_fontcolor (void);
+void reinit_vars_of_fontcolor (void);
+void vars_of_fontcolor_gtk (void);
+void vars_of_fontcolor_mswindows (void);
+void vars_of_fontcolor_tty (void);
+void vars_of_fontcolor_x (void);
 EXTERN_C void vars_of_postgresql (void);
 void vars_of_print (void);
 void reinit_vars_of_print (void);

@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -40,7 +38,7 @@ DECLARE_CONSOLE_TYPE (tty);
 struct tty_console
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   int infd, outfd;
   Lisp_Object instream, outstream;
@@ -62,6 +60,8 @@ struct tty_console
 
   int height;
   int width;
+
+  int colors;
 
   /* The count of frame number. */
   int frame_count;
@@ -207,7 +207,7 @@ struct tty_console
 #ifdef NEW_GC
 typedef struct tty_console Lisp_Tty_Console;
 
-DECLARE_LRECORD (tty_console, Lisp_Tty_Console);
+DECLARE_LISP_OBJECT (tty_console, Lisp_Tty_Console);
 
 #define XTTY_CONSOLE(x) \
   XRECORD (x, tty_console, Lisp_Tty_Console)
@@ -256,7 +256,7 @@ DECLARE_LRECORD (tty_console, Lisp_Tty_Console);
 struct tty_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 #ifdef HAVE_TERMIOS
   speed_t ospeed;		/* Output speed (from sg_ospeed) */
@@ -268,7 +268,7 @@ struct tty_device
 #ifdef NEW_GC
 typedef struct tty_device Lisp_Tty_Device;
 
-DECLARE_LRECORD (tty_device, Lisp_Tty_Device);
+DECLARE_LISP_OBJECT (tty_device, Lisp_Tty_Device);
 
 #define XTTY_DEVICE(x) \
   XRECORD (x, tty_device, Lisp_Tty_Device)

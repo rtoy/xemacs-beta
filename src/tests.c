@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Author: Martin Buchholz
 
@@ -49,7 +47,7 @@ REASON is nil or a string describing the failure (not required).
        ())
 {
   void *ptr; Bytecount len;
-  Lisp_Object string, opaque, conversion_result = Qnil;
+  Lisp_Object string = Qnil, opaque = Qnil, conversion_result = Qnil;
 
   Ibyte int_foo[] = "\n\nfoo\nbar";
   Extbyte ext_unix[]= "\n\nfoo\nbar";
@@ -72,6 +70,20 @@ REASON is nil or a string describing the failure (not required).
   Lisp_Object string_latin1 = make_string (int_latin1, sizeof (int_latin1) - 1);
   int autodetect_eol_p =
     !NILP (Fsymbol_value (intern ("eol-detection-enabled-p")));
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  struct gcpro ngcpro1, ngcpro2, ngcpro3;
+#ifdef MULE
+  struct gcpro ngcpro4;
+#endif
+
+  /* DFC conversion inhibits GC, but we have a call2() below which calls
+     Lisp, which can trigger GC, so we need to GC-protect everything here. */
+  GCPRO5 (string, opaque, conversion_result, opaque_dos, string_foo);
+#ifdef MULE
+  NGCPRO4 (string_latin2, opaque_latin, opaque0_latin, string_latin1);
+#else
+  NGCPRO3 (opaque_latin, opaque0_latin, string_latin1);
+#endif
 
   /* Check for expected strings before and after conversion.
      Conversions depend on whether MULE is defined. */
@@ -541,6 +553,8 @@ REASON is nil or a string describing the failure (not required).
 		      Qbinary);
   DFC_CHECK_DATA (ptr, len, ext_dos, "DOS Lisp opaque, ALLOCA, binary");
 
+  NUNGCPRO;
+  UNGCPRO;
   return conversion_result;
 }
 
@@ -599,7 +613,7 @@ REASON is nil or a string describing the failure (not required).
 
   test_hash_tables_data data;
   data.hash_table = make_lisp_hash_table (50, HASH_TABLE_NON_WEAK,
-					  HASH_TABLE_EQUAL);
+					  Qequal);
 
   Fputhash (make_int (1), make_int (2), data.hash_table);
   Fputhash (make_int (3), make_int (4), data.hash_table);
@@ -682,7 +696,7 @@ while (0)
   FROB (0XFFFFFFFFFFFFFFFE);
 #endif /* INT_VALBITS >= 63 */
 
-  return list3 (build_ascstring ("STORE_VOID_IN_LISP"), Qt, Qnil);
+  return list1 (list3 (build_ascstring ("STORE_VOID_IN_LISP"), Qt, Qnil));
 }
 
 

@@ -1,14 +1,14 @@
 /* Generic stream implementation.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -64,42 +62,36 @@ print_lstream (Lisp_Object obj, Lisp_Object printcharfun,
   Lstream *lstr = XLSTREAM (obj);
 
   write_fmt_string (printcharfun,
-		    "#<INTERNAL OBJECT (XEmacs bug?) (%s lstream) 0x%lx>",
-		    lstr->imp->name, (long) lstr);
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s lstream) 0x%x>",
+		    lstr->imp->name, LISP_OBJECT_UID (obj));
 }
 
 static void
-finalize_lstream (void *header, int for_disksave)
+finalize_lstream (Lisp_Object obj)
 {
   /* WARNING WARNING WARNING.  This function (and all finalize functions)
-     may get called more than once on the same object, and may get called
-     (at dump time) on objects that are not being released. */
-  Lstream *lstr = (Lstream *) header;
+     may get called more than once on the same object. */
+  Lstream *lstr = XLSTREAM (obj);
+
+  if (lstr->flags & LSTREAM_FL_IS_OPEN)
+    Lstream_close (lstr);
+
+  if (lstr->imp->finalizer)
+    (lstr->imp->finalizer) (lstr);
+}
+
+static void
+disksave_lstream (Lisp_Object lstream)
+{
+  Lstream *lstr = XLSTREAM (lstream);
 
 #if 0 /* this may cause weird Broken Pipes? */
-  if (for_disksave)
-    {
-      Lstream_pseudo_close (lstr);
-      return;
-    }
+  Lstream_pseudo_close (lstr);
+  return;
 #endif
-  if (lstr->flags & LSTREAM_FL_IS_OPEN)
-    {
-      if (for_disksave)
-	{
-	  if (lstr->flags & LSTREAM_FL_CLOSE_AT_DISKSAVE)
-	    Lstream_close (lstr);
-	}
-      else
-	/* Just close. */
-	Lstream_close (lstr);
-    }
-
-  if (!for_disksave)
-    {
-      if (lstr->imp->finalizer)
-	(lstr->imp->finalizer) (lstr);
-    }
+  if ((lstr->flags & LSTREAM_FL_IS_OPEN) &&
+      (lstr->flags & LSTREAM_FL_CLOSE_AT_DISKSAVE))
+    Lstream_close (lstr);
 }
 
 inline static Bytecount
@@ -110,9 +102,9 @@ aligned_sizeof_lstream (Bytecount lstream_type_specific_size)
 }
 
 static Bytecount
-sizeof_lstream (const void *header)
+sizeof_lstream (Lisp_Object obj)
 {
-  return aligned_sizeof_lstream (((const Lstream *) header)->imp->size);
+  return aligned_sizeof_lstream (XLSTREAM (obj)->imp->size);
 }
 
 static const struct memory_description lstream_implementation_description_1[]
@@ -150,12 +142,12 @@ const struct sized_memory_description lstream_empty_extra_description = {
   0, lstream_empty_extra_description_1
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
-					0, /*dumpable-flag*/
-					mark_lstream, print_lstream,
-					finalize_lstream, 0, 0,
-					lstream_description,
-					sizeof_lstream, Lstream);
+DEFINE_NODUMP_SIZABLE_LISP_OBJECT ("stream", lstream,
+				   mark_lstream, print_lstream,
+				   finalize_lstream,
+				   0, 0, /* no equal or hash */
+				   lstream_description,
+				   sizeof_lstream, Lstream);
 
 
 /* Change the buffering of a stream.  See lstream.h.  By default the
@@ -197,9 +189,8 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
 {
   Lstream *p;
 #ifdef NEW_GC
-  p = XLSTREAM (wrap_pointer_1 
-		(alloc_lrecord (aligned_sizeof_lstream (imp->size),
-				&lrecord_lstream)));
+  p = XLSTREAM (ALLOC_SIZED_LISP_OBJECT (aligned_sizeof_lstream (imp->size),
+					 lstream));
 #else /* not NEW_GC */
   int i;
 
@@ -221,9 +212,10 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
 
   p = XLSTREAM (alloc_managed_lcrecord (Vlstream_free_list[i]));
 #endif /* not NEW_GC */
-  /* Zero it out, except the header. */
-  memset ((char *) p + sizeof (p->header), '\0',
-	  aligned_sizeof_lstream (imp->size) - sizeof (p->header));
+  /* Formerly, we zeroed out the object minus its header, but it's now
+     handled automatically.  ALLOC_SIZED_LISP_OBJECT() always zeroes out
+     the whole object other than its header, and alloc_managed_lcrecord()
+     does the same. */
   p->imp = imp;
   Lstream_set_buffering (p, LSTREAM_BLOCK_BUFFERED, 0);
   p->flags = LSTREAM_FL_IS_OPEN;
@@ -302,7 +294,7 @@ Lstream_delete (Lstream *lstr)
   Lisp_Object val = wrap_lstream (lstr);
 
 #ifdef NEW_GC
-  free_lrecord (val);
+  free_normal_lisp_object (val);
 #else /* not NEW_GC */
   for (i = 0; i < lstream_type_count; i++)
     {
@@ -1659,8 +1651,7 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
   int reading = !strcmp (mode, "r");
 
   /* Make sure the luser didn't pass "w" in. */
-  if (!strcmp (mode, "w"))
-    ABORT ();
+  assert (strcmp (mode, "w"));
 
   if (flags & LSTR_IGNORE_ACCESSIBLE)
     {
@@ -1827,6 +1818,18 @@ lisp_buffer_stream_startpos (Lstream *stream)
 /************************************************************************/
 
 void
+syms_of_lstream (void)
+{
+  INIT_LISP_OBJECT (lstream);
+}
+
+void
+lstream_objects_create (void)
+{
+  OBJECT_HAS_PREMETHOD (lstream, disksave);
+}
+
+void
 lstream_type_create (void)
 {
   LSTREAM_HAS_METHOD (stdio, reader);
@@ -1882,5 +1885,4 @@ reinit_vars_of_lstream (void)
 void
 vars_of_lstream (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (lstream);
 }

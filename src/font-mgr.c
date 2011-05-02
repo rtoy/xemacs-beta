@@ -3,6 +3,7 @@
 Copyright (C) 2003 Eric Knauel and Matthias Neubauer
 Copyright (C) 2005 Eric Knauel
 Copyright (C) 2004-2009 Free Software Foundation, Inc.
+Copyright (C) 2010 Ben Wing.
 
 Authors:	Eric Knauel <knauel@informatik.uni-tuebingen.de>
 		Matthias Neubauer <neubauer@informatik.uni-freiburg.de>
@@ -12,10 +13,10 @@ Updated:	18 November 2009 by Stephen J. Turnbull
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,9 +24,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in GNU Emacs. */
 
@@ -41,8 +40,8 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "device-impl.h"
 #include "console-x-impl.h"
-#include "objects-x.h"
-#include "objects-x-impl.h"
+#include "fontcolor-x.h"
+#include "fontcolor-x-impl.h"
 #include "hash.h"
 #include "font-mgr.h"
 
@@ -93,24 +92,14 @@ static Lisp_Object Vfc_config_weak_list;
 ****************************************************************/
 
 static void
-finalize_fc_pattern (void *header, int UNUSED (for_disksave))
+finalize_fc_pattern (Lisp_Object obj)
 {
-  struct fc_pattern *p = (struct fc_pattern *) header;
+  struct fc_pattern *p = XFC_PATTERN (obj);
   if (p->fcpatPtr)
     {
       FcPatternDestroy (p->fcpatPtr);
       p->fcpatPtr = 0;
     }
-}
-
-static void
-print_fc_pattern (Lisp_Object obj, Lisp_Object printcharfun,
-		  int UNUSED(escapeflag))
-{
-  struct fc_pattern *c = XFCPATTERN (obj);
-  if (print_readably)
-    printing_unreadable_object ("#<fc-pattern 0x%x>", c->header.uid);
-  write_fmt_string (printcharfun, "#<fc-pattern 0x%x>", c->header.uid);
 }
 
 /* #### We really need an equal method and a hash method (required if you
@@ -142,10 +131,10 @@ static const struct memory_description fcpattern_description [] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION("fc-pattern", fc_pattern, 0,
-			      0, print_fc_pattern, finalize_fc_pattern,
-			      0, 0, fcpattern_description,
-			      struct fc_pattern);
+DEFINE_NODUMP_LISP_OBJECT ("fc-pattern", fc_pattern,
+			   0, external_object_printer, finalize_fc_pattern,
+			   0, 0, fcpattern_description,
+			   struct fc_pattern);
 
 /*
  * Helper Functions
@@ -182,7 +171,8 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
    ourselves; hash.c hashtables do not interpret the value pointers.
 
    This array should be FcChar8**, but GCC 4.x bitches about signedness. */
-static const Extbyte *fc_standard_properties[] = {
+static const Extbyte *fc_standard_properties[] =
+{
   /* treated specially, ordered first */
   "family", "size",
   /* remaining are alphabetized by group */
@@ -221,70 +211,68 @@ fc_intern (Lisp_Object property)
   return prop;
 }
 
-DEFUN("fc-pattern-p", Ffc_pattern_p, 1, 1, 0, /*
+DEFUN ("fc-pattern-p", Ffc_pattern_p, 1, 1, 0, /*
 Returns t if OBJECT is of type fc-pattern, nil otherwise.
 */
       (object))
 {
-  return FCPATTERNP(object) ? Qt : Qnil;
+  return FC_PATTERNP (object) ? Qt : Qnil;
 }
 
-DEFUN("fc-pattern-create", Ffc_pattern_create, 0, 0, 0, /* 
+DEFUN ("fc-pattern-create", Ffc_pattern_create, 0, 0, 0, /* 
 Return a new, empty fc-pattern object.
 */
       ())
 {
-  fc_pattern *fcpat =
-    ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
+  fc_pattern *fcpat = XFC_PATTERN (ALLOC_NORMAL_LISP_OBJECT (fc_pattern));
 
-  fcpat->fcpatPtr = FcPatternCreate();
-  return wrap_fcpattern(fcpat);
+  fcpat->fcpatPtr = FcPatternCreate ();
+  return wrap_fc_pattern (fcpat);
 }
 
-DEFUN("fc-name-parse", Ffc_name_parse, 1, 1, 0, /*
+DEFUN ("fc-name-parse", Ffc_name_parse, 1, 1, 0, /*
 Parse an Fc font name and return its representation as a fc pattern object.
 */
       (name))
 {
-  struct fc_pattern *fcpat =
-    ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
+  fc_pattern *fcpat = XFC_PATTERN (ALLOC_NORMAL_LISP_OBJECT (fc_pattern));
 
-  CHECK_STRING(name);
+  CHECK_STRING (name);
 
   fcpat->fcpatPtr = FcNameParse ((FcChar8 *) extract_fcapi_string (name));
-  return wrap_fcpattern(fcpat);
+  return wrap_fc_pattern (fcpat);
 }
 
 /* #### Ga-a-ack!  Xft's similar function is actually a different API.
    We provide both. */
-DEFUN("fc-name-unparse", Ffc_name_unparse, 1, 1, 0, /*
+DEFUN ("fc-name-unparse", Ffc_name_unparse, 1, 1, 0, /*
 Unparse an fc pattern object to a string.
 */
       (pattern))
 {
   FcChar8 *name;
   Lisp_Object result;
-  CHECK_FCPATTERN(pattern);
-  name = FcNameUnparse (XFCPATTERN_PTR (pattern));
+  CHECK_FC_PATTERN (pattern);
+  name = FcNameUnparse (XFC_PATTERN_PTR (pattern));
   result = build_fcapi_string (name);
   xfree (name);
   return result;
 }
 
-DEFUN("fc-pattern-duplicate", Ffc_pattern_duplicate, 1, 1, 0, /* 
+DEFUN ("fc-pattern-duplicate", Ffc_pattern_duplicate, 1, 1, 0, /* 
 Make a copy of the fc pattern object PATTERN and return it.
 */
       (pattern))
 {
   struct fc_pattern *copy = NULL;
-  CHECK_FCPATTERN(pattern);
+  CHECK_FC_PATTERN (pattern);
 
-  copy = ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
-  copy->fcpatPtr = FcPatternDuplicate(XFCPATTERN_PTR(pattern));
-  return wrap_fcpattern(copy);
+  copy = XFC_PATTERN (ALLOC_NORMAL_LISP_OBJECT (fc_pattern));
+  copy->fcpatPtr = FcPatternDuplicate (XFC_PATTERN_PTR (pattern));
+  return wrap_fc_pattern (copy);
 }
 
-DEFUN("fc-pattern-add", Ffc_pattern_add, 3, 3, 0, /*
+DEFUN ("fc-pattern-add", Ffc_pattern_add, 3, 3, 0, /*
 Add attributes to the pattern object PATTERN.  PROPERTY is a string naming
 the attribute to add, VALUE the value for this attribute.
 
@@ -297,52 +285,52 @@ will be added as an FcChar8[], int, double, or FcBool respectively.
   const Extbyte *obj;
   FcPattern *fcpat;
 
-  CHECK_FCPATTERN(pattern);
-  CHECK_STRING(property);
+  CHECK_FC_PATTERN (pattern);
+  CHECK_STRING (property);
 
   obj = fc_intern (property);
-  fcpat = XFCPATTERN_PTR (pattern);
+  fcpat = XFC_PATTERN_PTR (pattern);
 
-  if (STRINGP(value)) 
+  if (STRINGP (value)) 
     {
       FcChar8 *str = (FcChar8 *) extract_fcapi_string (value);
       res = FcPatternAddString (fcpat, obj, str);
     }
-  else if (INTP(value)) 
+  else if (INTP (value)) 
     {
-      res = FcPatternAddInteger (fcpat, obj, XINT(value));
+      res = FcPatternAddInteger (fcpat, obj, XINT (value));
     }
-  else if (FLOATP(value)) 
+  else if (FLOATP (value)) 
     {
-      res = FcPatternAddDouble (fcpat, obj, (double) XFLOAT_DATA(value));
+      res = FcPatternAddDouble (fcpat, obj, (double) XFLOAT_DATA (value));
     }
-  else if (SYMBOLP(value)) 
+  else if (SYMBOLP (value)) 
     {
-      res = FcPatternAddBool (fcpat, obj, !NILP(value));
+      res = FcPatternAddBool (fcpat, obj, !NILP (value));
     }
   /* else ... maybe we should wta here? */
 
   return res ? Qt : Qnil;
 }
 
-DEFUN("fc-pattern-del", Ffc_pattern_del, 2, 2, 0, /*
+DEFUN ("fc-pattern-del", Ffc_pattern_del, 2, 2, 0, /*
 Remove attribute PROPERTY from fc pattern object OBJECT.
 */
       (pattern, property))
 {
   Bool res;
 
-  CHECK_FCPATTERN(pattern);
-  CHECK_STRING(property);
+  CHECK_FC_PATTERN (pattern);
+  CHECK_STRING (property);
 
-  res = FcPatternDel(XFCPATTERN_PTR(pattern), extract_fcapi_string (property));
+  res = FcPatternDel (XFC_PATTERN_PTR (pattern), extract_fcapi_string (property));
   return res ? Qt : Qnil;
 }
 
 /* Generic interface to FcPatternGet()
  * Don't support the losing symbol-for-property interface.
  */
-DEFUN("fc-pattern-get", Ffc_pattern_get, 2, 4, 0, /*
+DEFUN ("fc-pattern-get", Ffc_pattern_get, 2, 4, 0, /*
 From PATTERN, extract PROPERTY for the ID'th member, of type TYPE.
 
 PATTERN is an Xft (fontconfig) pattern object.
@@ -421,11 +409,12 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
   Extbyte *fc_property;
   FcResult fc_result;
   FcValue fc_value;
+  int int_id = 0;
 
   /*
     process arguments
   */
-  CHECK_FCPATTERN (pattern);
+  CHECK_FC_PATTERN (pattern);
 
 #if 0
   /* Don't support the losing symbol-for-property interface. */
@@ -445,14 +434,21 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
       dead_wrong_type_argument (Qstringp, property);
     }
 
-  if (!NILP (id)) CHECK_NATNUM (id);
+  if (!NILP (id))
+    {
+#ifdef HAVE_BIGNUM
+      check_integer_range (id, Qzero, make_integer (INT_MAX));
+      int_id = BIGNUMP (id) ? bignum_to_int (XBIGNUM_DATA (id)) : XINT (id);
+#else
+      check_integer_range (id, Qzero, make_integer (EMACS_INT_MAX));
+      int_id = XINT (id);      
+#endif
+    }
   if (!NILP (type)) CHECK_SYMBOL (type);
 
   /* get property */
-  fc_result = FcPatternGet (XFCPATTERN_PTR (pattern),
-			    fc_property,
-			    NILP (id) ? 0 : XINT(id),
-			    &fc_value);
+  fc_result = FcPatternGet (XFC_PATTERN_PTR (pattern),
+			    fc_property, int_id, &fc_value);
 
   switch (fc_result)
     {
@@ -509,7 +505,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
 enum DestroyFontsetP { DestroyNo = 0, DestroyYes = 1 };
 
 static Lisp_Object
-fc_config_create_using (FcConfig * (*create_function) ())
+fc_config_create_using (FcConfig * (*create_function) (void))
 {
   FcConfig *fc = (*create_function) ();
   Lisp_Object configs = XWEAK_LIST_LIST (Vfc_config_weak_list);
@@ -517,17 +513,16 @@ fc_config_create_using (FcConfig * (*create_function) ())
   /* Linear search: fc_configs are not going to multiply like conses. */
   {
     LIST_LOOP_2 (cfg, configs)
-      if (fc == XFCCONFIG_PTR (cfg))
+      if (fc == XFC_CONFIG_PTR (cfg))
 	return cfg;
   }
 
   {
-    fc_config *fccfg =
-      ALLOC_LCRECORD_TYPE (struct fc_config, &lrecord_fc_config);
+    fc_config *fccfg = XFC_CONFIG (ALLOC_NORMAL_LISP_OBJECT (fc_config));
     fccfg->fccfgPtr = fc;
-    configs = Fcons (wrap_fcconfig (fccfg), configs);
+    configs = Fcons (wrap_fc_config (fccfg), configs);
     XWEAK_LIST_LIST (Vfc_config_weak_list) = configs;
-    return wrap_fcconfig (fccfg);
+    return wrap_fc_config (fccfg);
   }
 }
 
@@ -539,8 +534,8 @@ fc_strlist_to_lisp_using (FcStrList * (*getter) (FcConfig *),
   Lisp_Object value = Qnil;
   FcStrList *thing_list;
   
-  CHECK_FCCONFIG (config);     
-  thing_list = (*getter) (XFCCONFIG_PTR(config));
+  CHECK_FC_CONFIG (config);     
+  thing_list = (*getter) (XFC_CONFIG_PTR (config));
   /* Yes, we need to do this check -- sheesh, Keith! */
   if (!thing_list)
     return Qnil;
@@ -562,25 +557,24 @@ fontset_to_list (FcFontSet *fontset, enum DestroyFontsetP destroyp)
     invalid_state ("failed to create FcFontSet", Qunbound);
   for (idx = 0; idx < fontset->nfont; ++idx)
     {
-      fcpat = 
-	ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
+      fcpat = XFC_PATTERN (ALLOC_NORMAL_LISP_OBJECT (fc_pattern));
       fcpat->fcpatPtr = FcPatternDuplicate (fontset->fonts[idx]);
-      fontlist = Fcons (wrap_fcpattern(fcpat), fontlist);
+      fontlist = Fcons (wrap_fc_pattern (fcpat), fontlist);
     }
   if (destroyp)
     FcFontSetDestroy (fontset);
   return fontlist;
 }
 
-DEFUN("fc-config-p", Ffc_config_p, 1, 1, 0, /*
+DEFUN ("fc-config-p", Ffc_config_p, 1, 1, 0, /*
 Returns t if OBJECT is of type fc-config, nil otherwise.
 */
       (object))
 {
-  return FCCONFIGP (object) ? Qt : Qnil;
+  return FC_CONFIGP (object) ? Qt : Qnil;
 }
 
-DEFUN("fc-config-create", Ffc_config_create, 0, 0, 0, /*
+DEFUN ("fc-config-create", Ffc_config_create, 0, 0, 0, /*
  -- Function: FcConfig *FcConfigCreate (void)
      Creates an empty configuration. */
       ())
@@ -591,7 +585,7 @@ DEFUN("fc-config-create", Ffc_config_create, 0, 0, 0, /*
 #if 0
 /* I'm sorry, but we just don't do this in Lisp, OK?
    Don't even think about implementing this. */
-DEFUN("fc-config-destroy", Ffc_config_destroy, 1, 1, 0, /*
+DEFUN ("fc-config-destroy", Ffc_config_destroy, 1, 1, 0, /*
  -- Function: void FcConfigDestroy (FcConfig *config)
      Destroys a configuration and any data associated with it.  Note
      that calling this function with the return value from
@@ -604,17 +598,17 @@ DEFUN("fc-config-destroy", Ffc_config_destroy, 1, 1, 0, /*
 }
 #endif
 
-DEFUN("fc-config-up-to-date", Ffc_config_up_to_date, 1, 1, 0, /*
+DEFUN ("fc-config-up-to-date", Ffc_config_up_to_date, 1, 1, 0, /*
  -- Function: FcBool FcConfigUptoDate (FcConfig *config)
      Checks all of the files related to 'config' and returns whether the
      in-memory version is in sync with the disk version. */
       (config))
 {
-  CHECK_FCCONFIG (config);
-  return FcConfigUptoDate (XFCCONFIG_PTR (config)) == FcFalse ? Qnil : Qt;
+  CHECK_FC_CONFIG (config);
+  return FcConfigUptoDate (XFC_CONFIG_PTR (config)) == FcFalse ? Qnil : Qt;
 }
 
-DEFUN("fc-config-build-fonts", Ffc_config_build_fonts, 1, 1, 0, /*
+DEFUN ("fc-config-build-fonts", Ffc_config_build_fonts, 1, 1, 0, /*
  -- Function: FcBool FcConfigBuildFonts (FcConfig *config)
      Builds the set of available fonts for the given configuration.
      Note that any changes to the configuration after this call have
@@ -623,13 +617,13 @@ DEFUN("fc-config-build-fonts", Ffc_config_build_fonts, 1, 1, 0, /*
 XEmacs: signal out-of-memory, or return nil on success. */
       (config))
 {
-  CHECK_FCCONFIG (config);
-  if (FcConfigBuildFonts (XFCCONFIG_PTR (config)) == FcFalse)
+  CHECK_FC_CONFIG (config);
+  if (FcConfigBuildFonts (XFC_CONFIG_PTR (config)) == FcFalse)
     out_of_memory ("FcConfigBuildFonts failed", config);
   return Qnil;
 }
 
-DEFUN("fc-config-get-config-dirs", Ffc_config_get_config_dirs, 1, 1, 0, /*
+DEFUN ("fc-config-get-config-dirs", Ffc_config_get_config_dirs, 1, 1, 0, /*
  -- Function: FcStrList *FcConfigGetConfigDirs (FcConfig *config)
      Returns the list of font directories specified in the
      configuration files for 'config'.  Does not include any
@@ -639,7 +633,7 @@ DEFUN("fc-config-get-config-dirs", Ffc_config_get_config_dirs, 1, 1, 0, /*
   return fc_strlist_to_lisp_using (&FcConfigGetConfigDirs, config);
 }
 
-DEFUN("fc-config-get-font-dirs", Ffc_config_get_font_dirs, 1, 1, 0, /*
+DEFUN ("fc-config-get-font-dirs", Ffc_config_get_font_dirs, 1, 1, 0, /*
  -- Function: FcStrList *FcConfigGetFontDirs (FcConfig *config)
      Returns the list of font directories in 'config'. This includes the
      configured font directories along with any directories below those
@@ -649,7 +643,7 @@ DEFUN("fc-config-get-font-dirs", Ffc_config_get_font_dirs, 1, 1, 0, /*
   return fc_strlist_to_lisp_using (&FcConfigGetFontDirs, config);
 }
 
-DEFUN("fc-config-get-config-files", Ffc_config_get_config_files, 1, 1, 0, /*
+DEFUN ("fc-config-get-config-files", Ffc_config_get_config_files, 1, 1, 0, /*
  -- Function: FcStrList *FcConfigGetConfigFiles (FcConfig *config)
      Returns the list of known configuration files used to generate
      'config'.  Note that this will not include any configuration done
@@ -659,18 +653,18 @@ DEFUN("fc-config-get-config-files", Ffc_config_get_config_files, 1, 1, 0, /*
  return fc_strlist_to_lisp_using (&FcConfigGetConfigFiles, config);
 }
 
-DEFUN("fc-config-get-cache", Ffc_config_get_cache, 1, 1, 0, /*
+DEFUN ("fc-config-get-cache", Ffc_config_get_cache, 1, 1, 0, /*
  -- Function: char *FcConfigGetCache (FcConfig *config)
      Returns the name of the file used to store per-user font
      information. */
       (config))
 {
-  CHECK_FCCONFIG (config);
+  CHECK_FC_CONFIG (config);
   /* Surely FcConfigGetCache just casts an FcChar8* to char*. */
-  return build_fcapi_string ((FcChar8 *) FcConfigGetCache (XFCCONFIG_PTR (config)));
+  return build_fcapi_string ((FcChar8 *) FcConfigGetCache (XFC_CONFIG_PTR (config)));
 }
 
-DEFUN("fc-config-get-fonts", Ffc_config_get_fonts, 2, 2, 0, /*
+DEFUN ("fc-config-get-fonts", Ffc_config_get_fonts, 2, 2, 0, /*
  -- Function: FcFontSet *FcConfigGetFonts (FcConfig *config, FcSetName set)
      Returns one of the two sets of fonts from the configuration as
      specified by 'set'.
@@ -684,7 +678,7 @@ DEFUN("fc-config-get-fonts", Ffc_config_get_fonts, 2, 2, 0, /*
   FcSetName name = FcSetSystem;
   FcFontSet *fs = NULL;
 
-  CHECK_FCCONFIG (config);
+  CHECK_FC_CONFIG (config);
   CHECK_SYMBOL (set);
 
   if (EQ (set, intern ("fc-set-system")))
@@ -694,11 +688,11 @@ DEFUN("fc-config-get-fonts", Ffc_config_get_fonts, 2, 2, 0, /*
   else
     wtaerror ("must be in (fc-set-system fc-set-application)", set);
 
-  fs = FcConfigGetFonts (XFCCONFIG_PTR (config), name);
+  fs = FcConfigGetFonts (XFC_CONFIG_PTR (config), name);
   return fs ? fontset_to_list (fs, DestroyNo) : Qnil;
 }
 
-DEFUN("fc-config-set-current", Ffc_config_set_current, 1, 1, 0, /*
+DEFUN ("fc-config-set-current", Ffc_config_set_current, 1, 1, 0, /*
  -- Function: FcBool FcConfigSetCurrent (FcConfig *config)
      Sets the current default configuration to 'config'.  Implicitly
      calls FcConfigBuildFonts if necessary, returning FcFalse if that
@@ -708,7 +702,7 @@ if the resulting FcConfig has no fonts (which would crash XEmacs if installed).
 */
       (config))
 {
-  CHECK_FCCONFIG (config);
+  CHECK_FC_CONFIG (config);
   /* *sigh* "Success" DOES NOT mean you have any fonts available.  It is
      easy to crash fontconfig, and XEmacs with it.  Without the following
      check, this will do it:
@@ -717,7 +711,7 @@ if the resulting FcConfig has no fonts (which would crash XEmacs if installed).
          (set-face-font 'default "serif-12"))
   */
   
-  if (FcConfigBuildFonts (XFCCONFIG_PTR (config)) == FcFalse)
+  if (FcConfigBuildFonts (XFC_CONFIG_PTR (config)) == FcFalse)
     out_of_memory ("FcConfigBuildFonts failed", config);
   /* #### We'd like to avoid this consing, and FcConfigGetFonts sometimes
      returns NULL, but it doesn't always.  This will do for now .... */
@@ -725,12 +719,12 @@ if the resulting FcConfig has no fonts (which would crash XEmacs if installed).
       && NILP (Ffc_config_get_fonts (config, intern ("fc-set-application"))))
     signal_error (intern ("args-out-of-range"), "no fonts found", config);
   /* Should never happen, but I don't trust Keith anymore .... */
-  if (FcConfigSetCurrent (XFCCONFIG_PTR (config)) == FcFalse)
+  if (FcConfigSetCurrent (XFC_CONFIG_PTR (config)) == FcFalse)
     out_of_memory ("FcConfigBuildFonts failed in set", config);
   return Qnil;
 }
 
-DEFUN("fc-config-get-blanks", Ffc_config_get_blanks, 1, 1, 0, /*
+DEFUN ("fc-config-get-blanks", Ffc_config_get_blanks, 1, 1, 0, /*
  -- Function: FcBlanks *FcConfigGetBlanks (FcConfig *config)
      Returns the FcBlanks object associated with the given
      configuration, if no blanks were present in the configuration,
@@ -739,12 +733,12 @@ XEmacs: should convert to a chartable.
 #### Unimplemented. */
       (config))
 {
-  CHECK_FCCONFIG (config);
+  CHECK_FC_CONFIG (config);
   signal_error (Qunimplemented, "no method to convert FcBlanks object",
 		intern ("fc-config-get-blanks"));
 }
 
-DEFUN("fc-config-get-rescan-interval", Ffc_config_get_rescan_interval, 1, 1, 0, /*
+DEFUN ("fc-config-get-rescan-interval", Ffc_config_get_rescan_interval, 1, 1, 0, /*
  -- Function: int FcConfigGetRescanInterval (FcConfig *config)
      Returns the interval between automatic checks of the configuration
      (in seconds) specified in 'config'.  The configuration is checked
@@ -752,20 +746,20 @@ DEFUN("fc-config-get-rescan-interval", Ffc_config_get_rescan_interval, 1, 1, 0, 
      the last check. */
       (config))
 {
-  CHECK_FCCONFIG (config);
-  return make_int (FcConfigGetRescanInterval (XFCCONFIG_PTR (config)));
+  CHECK_FC_CONFIG (config);
+  return make_int (FcConfigGetRescanInterval (XFC_CONFIG_PTR (config)));
 }
 
-DEFUN("fc-config-set-rescan-interval", Ffc_config_set_rescan_interval, 2, 2, 0, /*
+DEFUN ("fc-config-set-rescan-interval", Ffc_config_set_rescan_interval, 2, 2, 0, /*
  -- Function: FcBool FcConfigSetRescanInterval (FcConfig *config, int
           rescanInterval)
      Sets the rescan interval; returns FcFalse if an error occurred.
      XEmacs: signal such error, or return nil on success. */
       (config, rescan_interval))
 {
-  CHECK_FCCONFIG (config);
+  CHECK_FC_CONFIG (config);
   CHECK_INT (rescan_interval);
-  if (FcConfigSetRescanInterval (XFCCONFIG_PTR (config),
+  if (FcConfigSetRescanInterval (XFC_CONFIG_PTR (config),
 				 XINT (rescan_interval)) == FcFalse)
     signal_error (Qio_error, "FcConfigSetRescanInverval barfed",
 		  intern ("fc-config-set-rescan-interval"));
@@ -773,16 +767,16 @@ DEFUN("fc-config-set-rescan-interval", Ffc_config_set_rescan_interval, 2, 2, 0, 
 }
 
 /* #### This might usefully be made interactive. */
-DEFUN("fc-config-app-font-add-file", Ffc_config_app_font_add_file, 2, 2, 0, /*
+DEFUN ("fc-config-app-font-add-file", Ffc_config_app_font_add_file, 2, 2, 0, /*
  -- Function: FcBool FcConfigAppFontAddFile (FcConfig *config, const
           char *file)
      Adds an application-specific font to the configuration. */
       (config, file))
 {
-  CHECK_FCCONFIG (config);
+  CHECK_FC_CONFIG (config);
   CHECK_STRING (file);
   if (FcConfigAppFontAddFile
-      (XFCCONFIG_PTR (config),
+      (XFC_CONFIG_PTR (config),
        /* #### FIXME! is Qfile_name right? */
        (FcChar8 *) LISP_STRING_TO_EXTERNAL (file, Qfile_name)) == FcFalse)
     return Qnil;
@@ -791,17 +785,17 @@ DEFUN("fc-config-app-font-add-file", Ffc_config_app_font_add_file, 2, 2, 0, /*
 }
 
 /* #### This might usefully be made interactive. */
-DEFUN("fc-config-app-font-add-dir", Ffc_config_app_font_add_dir, 2, 2, 0, /*
+DEFUN ("fc-config-app-font-add-dir", Ffc_config_app_font_add_dir, 2, 2, 0, /*
  -- Function: FcBool FcConfigAppFontAddDir (FcConfig *config, const
           char *dir)
      Scans the specified directory for fonts, adding each one found to
      the application-specific set of fonts. */
       (config, dir))
 {
-  CHECK_FCCONFIG (config);
+  CHECK_FC_CONFIG (config);
   CHECK_STRING (dir);
   if (FcConfigAppFontAddDir
-      (XFCCONFIG_PTR (config),
+      (XFC_CONFIG_PTR (config),
        /* #### FIXME! is Qfile_name right? */
        (FcChar8 *) LISP_STRING_TO_EXTERNAL (dir, Qfile_name)) == FcFalse)
     return Qnil;
@@ -810,13 +804,13 @@ DEFUN("fc-config-app-font-add-dir", Ffc_config_app_font_add_dir, 2, 2, 0, /*
 }
 
 /* #### This might usefully be made interactive. */
-DEFUN("fc-config-app-font-clear", Ffc_config_app_font_clear, 1, 1, 0, /*
+DEFUN ("fc-config-app-font-clear", Ffc_config_app_font_clear, 1, 1, 0, /*
  -- Function: void FcConfigAppFontClear (FcConfig *config)
      Clears the set of application-specific fonts. */
       (config))
 {
-  CHECK_FCCONFIG (config);
-  FcConfigAppFontClear (XFCCONFIG_PTR (config));
+  CHECK_FC_CONFIG (config);
+  FcConfigAppFontClear (XFC_CONFIG_PTR (config));
   return Qnil;
 }
 
@@ -824,7 +818,7 @@ DEFUN("fc-config-app-font-clear", Ffc_config_app_font_clear, 1, 1, 0, /*
    configuration of the library is initialized.  (This configuration is
    normally implicitly initialized.) */
 
-DEFUN("fc-config-filename", Ffc_config_filename, 1, 1, 0, /*
+DEFUN ("fc-config-filename", Ffc_config_filename, 1, 1, 0, /*
  -- Function: char *FcConfigFilename (const char *name)
      Given the specified external entity name, return the associated
      filename.  This provides applications a way to convert various
@@ -851,7 +845,7 @@ DEFUN("fc-config-filename", Ffc_config_filename, 1, 1, 0, /*
   return (build_fcapi_string (FcConfigFilename ((FcChar8 *) fcname)));
 }
 
-DEFUN("fc-init-load-config", Ffc_init_load_config, 0, 0, 0, /*
+DEFUN ("fc-init-load-config", Ffc_init_load_config, 0, 0, 0, /*
  -- Function: FcConfig *FcInitLoadConfig (void)
      Loads the default configuration file and returns the resulting
      configuration.  Does not load any font information. */
@@ -860,7 +854,7 @@ DEFUN("fc-init-load-config", Ffc_init_load_config, 0, 0, 0, /*
   return fc_config_create_using (&FcInitLoadConfig);
 }
 
-DEFUN("fc-init-load-config-and-fonts", Ffc_init_load_config_and_fonts, 0, 0, 0, /*
+DEFUN ("fc-init-load-config-and-fonts", Ffc_init_load_config_and_fonts, 0, 0, 0, /*
  -- Function: FcConfig *FcInitLoadConfigAndFonts (void)
      Loads the default configuration file and builds information about
      the available fonts.  Returns the resulting configuration. */
@@ -869,7 +863,7 @@ DEFUN("fc-init-load-config-and-fonts", Ffc_init_load_config_and_fonts, 0, 0, 0, 
   return fc_config_create_using (&FcInitLoadConfigAndFonts);
 }
 
-DEFUN("fc-config-get-current", Ffc_config_get_current, 0, 0, 0, /*
+DEFUN ("fc-config-get-current", Ffc_config_get_current, 0, 0, 0, /*
  -- Function: FcConfig *FcConfigGetCurrent (void)
      Returns the current default configuration. */
       ())
@@ -879,7 +873,7 @@ DEFUN("fc-config-get-current", Ffc_config_get_current, 0, 0, 0, /*
 
 /* Pattern manipulation functions. */
 
-DEFUN("fc-default-substitute", Ffc_default_substitute, 1, 1, 0, /*
+DEFUN ("fc-default-substitute", Ffc_default_substitute, 1, 1, 0, /*
 Adds defaults for certain attributes if not specified in PATTERN.
 FcPattern PATTERN is modified in-place, and nil is returned.
 * Patterns without a specified style or weight are set to Medium
@@ -888,8 +882,8 @@ FcPattern PATTERN is modified in-place, and nil is returned.
   specified point size (default 12), dpi (default 75) and scale (default 1). */
       (pattern))
 {
-  CHECK_FCPATTERN (pattern);
-  FcDefaultSubstitute (XFCPATTERN_PTR (pattern));
+  CHECK_FC_PATTERN (pattern);
+  FcDefaultSubstitute (XFC_PATTERN_PTR (pattern));
   return Qnil;
 }
 
@@ -897,7 +891,7 @@ FcPattern PATTERN is modified in-place, and nil is returned.
           FcPattern *p, FcPattern *p_pat FcMatchKind kind)
      OMITTED: use optional arguments in `fc-config-substitute'. */
 
-DEFUN("fc-config-substitute", Ffc_config_substitute, 1, 4, 0, /*
+DEFUN ("fc-config-substitute", Ffc_config_substitute, 1, 4, 0, /*
 Modifies PATTERN according to KIND and TESTPAT using operations from CONFIG.
 PATTERN is modified in-place.  Returns an undocumented Boolean value.
 If optional KIND is `fc-match-pattern', then those tagged as pattern operations
@@ -923,14 +917,14 @@ the argument order is changed to take advantage of Lisp optional arguments. */
     wtaerror ("need `fc-match-pattern' or `fc-match-font'", kind);
 
   /* Typecheck arguments */
-  CHECK_FCPATTERN (pattern);
-  if (!NILP (testpat)) CHECK_FCPATTERN (testpat);
-  if (!NILP (config))  CHECK_FCCONFIG (config);
+  CHECK_FC_PATTERN (pattern);
+  if (!NILP (testpat)) CHECK_FC_PATTERN (testpat);
+  if (!NILP (config))  CHECK_FC_CONFIG (config);
 
   return (FcConfigSubstituteWithPat
-	  (NILP (config) ? FcConfigGetCurrent () : XFCCONFIG_PTR (config),
-	   XFCPATTERN_PTR (pattern),
-	   NILP (testpat) ? NULL : XFCPATTERN_PTR (testpat),
+	  (NILP (config) ? FcConfigGetCurrent () : XFC_CONFIG_PTR (config),
+	   XFC_PATTERN_PTR (pattern),
+	   NILP (testpat) ? NULL : XFC_PATTERN_PTR (testpat),
 	   knd) == FcTrue)
 	 ? Qt : Qnil;
 }
@@ -945,7 +939,7 @@ the argument order is changed to take advantage of Lisp optional arguments. */
    filtering out fonts that do not provide additional characters beyond
    those provided by preferred fonts. */
 
-DEFUN("fc-font-render-prepare", Ffc_font_render_prepare, 2, 3, 0, /*
+DEFUN ("fc-font-render-prepare", Ffc_font_render_prepare, 2, 3, 0, /*
 Return a new pattern blending PATTERN and FONT.
 Optional CONFIG is an FcConfig, defaulting to the current one.
 The returned pattern consists of elements of FONT not appearing in PATTERN,
@@ -957,17 +951,17 @@ FcConfigSubstitute with 'kind' FcMatchFont and then returned. */
   if (NILP (config)) {
     config = Ffc_config_get_current ();
   }
-  CHECK_FCPATTERN (pattern);
-  CHECK_FCPATTERN (font);
-  CHECK_FCCONFIG (config);
+  CHECK_FC_PATTERN (pattern);
+  CHECK_FC_PATTERN (font);
+  CHECK_FC_CONFIG (config);
 
   /* I don't think this can fail? */
-  return wrap_fcpattern (FcFontRenderPrepare (XFCCONFIG_PTR(config),
-					      XFCPATTERN_PTR(font),
-					      XFCPATTERN_PTR(pattern)));
+  return wrap_fc_pattern (FcFontRenderPrepare (XFC_CONFIG_PTR (config),
+					      XFC_PATTERN_PTR (font),
+					      XFC_PATTERN_PTR (pattern)));
 }
 
-DEFUN("fc-font-match", Ffc_font_match, 2, 3, 0, /*
+DEFUN ("fc-font-match", Ffc_font_match, 2, 3, 0, /*
 Return the font on DEVICE that most closely matches PATTERN.
 
 DEVICE is an X11 device.
@@ -985,18 +979,18 @@ being processed by FcFontMatch. */
   FcPattern *p;
   FcConfig *fcc;
 
-  CHECK_FCPATTERN(pattern);
-  if (NILP(device))
+  CHECK_FC_PATTERN (pattern);
+  if (NILP (device))
     return Qnil;
-  CHECK_X_DEVICE(device);
-  if (!DEVICE_LIVE_P(XDEVICE(device)))
+  CHECK_X_DEVICE (device);
+  if (!DEVICE_LIVE_P (XDEVICE (device)))
     return Qnil;
   if (!NILP (config))
-    CHECK_FCCONFIG (config);
+    CHECK_FC_CONFIG (config);
 
-  res_fcpat = ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
-  p = XFCPATTERN_PTR(pattern);
-  fcc = NILP (config) ? FcConfigGetCurrent () : XFCCONFIG_PTR (config);
+  res_fcpat = XFC_PATTERN (ALLOC_NORMAL_LISP_OBJECT (fc_pattern));
+  p = XFC_PATTERN_PTR (pattern);
+  fcc = NILP (config) ? FcConfigGetCurrent () : XFC_CONFIG_PTR (config);
 
   FcConfigSubstitute (fcc, p, FcMatchPattern);
   FcDefaultSubstitute (p);
@@ -1004,20 +998,21 @@ being processed by FcFontMatch. */
   res_fcpat->fcpatPtr = FcFontMatch (fcc, p, &res);
 
   if (res_fcpat->fcpatPtr == NULL)
-    switch (res) {
-    case FcResultNoMatch:
-      return Qfc_result_no_match;
-    case FcResultNoId:
-      return Qfc_result_no_id;
-    default:
-      return Qfc_internal_error;
-    }
+    switch (res)
+      {
+      case FcResultNoMatch:
+	return Qfc_result_no_match;
+      case FcResultNoId:
+	return Qfc_result_no_id;
+      default:
+	return Qfc_internal_error;
+      }
   else
-    return wrap_fcpattern(res_fcpat);
+    return wrap_fc_pattern (res_fcpat);
 }
 
 /* #### fix this name to correspond to Ben's new nomenclature */
-DEFUN("fc-list-fonts-pattern-objects", Ffc_list_fonts_pattern_objects,
+DEFUN ("fc-list-fonts-pattern-objects", Ffc_list_fonts_pattern_objects,
       3, 3, 0, /*
 Return a list of fonts on DEVICE that match PATTERN for PROPERTIES.
 Each font is represented by a fontconfig pattern object.
@@ -1033,13 +1028,13 @@ match other font-listing APIs. */
   FcObjectSet *os;
   FcFontSet *fontset;
 
-  CHECK_FCPATTERN (pattern);
+  CHECK_FC_PATTERN (pattern);
   CHECK_LIST (properties);
 
   os = FcObjectSetCreate ();
   string_list_to_fcobjectset (properties, os);
   /* #### why don't we need to do the "usual substitutions"? */
-  fontset = FcFontList (NULL, XFCPATTERN_PTR (pattern), os);
+  fontset = FcFontList (NULL, XFC_PATTERN_PTR (pattern), os);
   FcObjectSetDestroy (os);
 
   return fontset_to_list (fontset, DestroyYes);
@@ -1047,7 +1042,7 @@ match other font-listing APIs. */
 }
 
 /* #### maybe this can/should be folded into fc-list-fonts-pattern-objects? */
-DEFUN("fc-font-sort", Ffc_font_sort, 2, 4, 0, /*
+DEFUN ("fc-font-sort", Ffc_font_sort, 2, 4, 0, /*
 Return a list of all fonts sorted by proximity to PATTERN.
 Each font is represented by a fontconfig pattern object.
 
@@ -1065,18 +1060,18 @@ stable.
 match other font-listing APIs. */
       (UNUSED (device), pattern, trim, nosub))
 {
-  CHECK_FCPATTERN (pattern);
+  CHECK_FC_PATTERN (pattern);
 
   {
     FcConfig *fcc = FcConfigGetCurrent();
     FcFontSet *fontset;
-    FcPattern *p = XFCPATTERN_PTR (pattern);
+    FcPattern *p = XFC_PATTERN_PTR (pattern);
     FcResult fcresult;
 
-    if (NILP(nosub))		/* #### temporary debug hack */
+    if (NILP (nosub))		/* #### temporary debug hack */
       FcDefaultSubstitute (p);
     FcConfigSubstitute (fcc, p, FcMatchPattern);
-    fontset = FcFontSort (fcc, p, !NILP(trim), NULL, &fcresult);
+    fontset = FcFontSort (fcc, p, !NILP (trim), NULL, &fcresult);
 
     return fontset_to_list (fontset, DestroyYes);
   }
@@ -1096,9 +1091,9 @@ match other font-listing APIs. */
 */
 
 static void
-finalize_fc_config (void *header, int UNUSED (for_disksave))
+finalize_fc_config (Lisp_Object obj)
 {
-  struct fc_config *p = (struct fc_config *) header;
+  struct fc_config *p = XFC_CONFIG (obj);
   if (p->fccfgPtr && p->fccfgPtr != FcConfigGetCurrent())
     {
       /* If we get here, all of *our* references are garbage (see comment on
@@ -1109,27 +1104,17 @@ finalize_fc_config (void *header, int UNUSED (for_disksave))
   p->fccfgPtr = 0;
 }
 
-static void
-print_fc_config (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED(escapeflag))
-{
-  struct fc_config *c = XFCCONFIG (obj);
-  if (print_readably)
-    printing_unreadable_object ("#<fc-config 0x%x>", c->header.uid);
-  write_fmt_string (printcharfun, "#<fc-config 0x%x>", c->header.uid);
-}
-
 static const struct memory_description fcconfig_description [] = {
   /* #### nothing here, is this right?? */
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION("fc-config", fc_config, 0,
-			      0, print_fc_config, finalize_fc_config, 0, 0,
-			      fcconfig_description,
-			      struct fc_config);
+DEFINE_NODUMP_LISP_OBJECT ("fc-config", fc_config,
+			   0, external_object_printer, finalize_fc_config,
+			   0, 0, fcconfig_description,
+			   struct fc_config);
 
-DEFUN("fc-init", Ffc_init, 0, 0, 0, /*
+DEFUN ("fc-init", Ffc_init, 0, 0, 0, /*
  -- Function: FcBool FcInit (void)
      Loads the default configuration file and the fonts referenced
      therein and sets the default configuration to that result.
@@ -1141,7 +1126,7 @@ DEFUN("fc-init", Ffc_init, 0, 0, 0, /*
   return (FcInit () == FcTrue) ? Qt : Qnil;
 }
 
-DEFUN("fc-get-version", Ffc_get_version, 0, 0, 0, /*
+DEFUN ("fc-get-version", Ffc_get_version, 0, 0, 0, /*
  -- Function: int FcGetVersion (void)
      Returns the version number of the library.
 XEmacs:  No, this should NOT return a pretty string.
@@ -1155,7 +1140,7 @@ It's probably not a disaster if `(> (fc-get-version) fc-version)'. */
   return make_int (FcGetVersion ());
 }
 
-DEFUN("fc-init-reinitialize", Ffc_init_reinitialize, 0, 0, 0, /*
+DEFUN ("fc-init-reinitialize", Ffc_init_reinitialize, 0, 0, 0, /*
  -- Function: FcBool FcInitReinitialize (void)
      Forces the default configuration file to be reloaded and resets
      the default configuration. */
@@ -1164,7 +1149,7 @@ DEFUN("fc-init-reinitialize", Ffc_init_reinitialize, 0, 0, 0, /*
   return (FcInitReinitialize () == FcTrue) ? Qt : Qnil;
 }
 
-DEFUN("fc-init-bring-up-to-date", Ffc_init_bring_up_to_date, 0, 0, 0, /*
+DEFUN ("fc-init-bring-up-to-date", Ffc_init_bring_up_to_date, 0, 0, 0, /*
  -- Function: FcBool FcInitBringUptoDate (void)
      Checks the rescan interval in the default configuration, checking
      the configuration if the interval has passed and reloading the
@@ -1176,13 +1161,13 @@ DEFUN("fc-init-bring-up-to-date", Ffc_init_bring_up_to_date, 0, 0, 0, /*
 
 #endif /* FONTCONFIG_EXPOSE_CONFIG */
 
-DEFUN("xlfd-font-name-p", Fxlfd_font_name_p, 1, 1, 0, /*
+DEFUN ("xlfd-font-name-p", Fxlfd_font_name_p, 1, 1, 0, /*
 Check whether the string FONTNAME is a XLFD font name. */
       (fontname))
 {
-  CHECK_STRING(fontname);
+  CHECK_STRING (fontname);
   /* #### should bind `case-fold-search' here? */
-  return Fstring_match(Vxlfd_font_name_regexp, fontname, Qnil, Qnil);
+  return Fstring_match (Vxlfd_font_name_regexp, fontname, Qnil, Qnil);
 }
 
 /* FcPatternPrint: there is no point in having wrappers fc-pattern-print,
@@ -1263,10 +1248,10 @@ make_xlfd_font_regexp (void)
     };
   
   GCPRO1 (reg);  
-  for (i = 0; i < sizeof(re)/sizeof(Extbyte *); i++)
+  for (i = 0; i < sizeof (re)/sizeof (Extbyte *); i++)
     {
       /* #### Currently this is Host Portable Coding, not ISO 8859-1. */
-      reg = concat2(reg, build_extstring (re[i], Qx_font_name_encoding));
+      reg = concat2 (reg, build_extstring (re[i], Qx_font_name_encoding));
     }
 
   RETURN_UNGCPRO (reg);
@@ -1298,67 +1283,68 @@ string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os)
 }
 
 void
-syms_of_font_mgr (void) {
-  INIT_LRECORD_IMPLEMENTATION(fc_pattern);
+syms_of_font_mgr (void)
+{
+  INIT_LISP_OBJECT (fc_pattern);
 
-  DEFSYMBOL_MULTIWORD_PREDICATE(Qfc_patternp);
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qfc_patternp);
 
-  DEFSYMBOL(Qfc_result_type_mismatch);
-  DEFSYMBOL(Qfc_result_no_match);
-  DEFSYMBOL(Qfc_result_no_id);
-  DEFSYMBOL(Qfc_internal_error);
-  DEFSYMBOL(Qfc_match_pattern);
-  DEFSYMBOL(Qfc_match_font);
-  DEFSYMBOL(Qfont_mgr);
+  DEFSYMBOL (Qfc_result_type_mismatch);
+  DEFSYMBOL (Qfc_result_no_match);
+  DEFSYMBOL (Qfc_result_no_id);
+  DEFSYMBOL (Qfc_internal_error);
+  DEFSYMBOL (Qfc_match_pattern);
+  DEFSYMBOL (Qfc_match_font);
+  DEFSYMBOL (Qfont_mgr);
 
-  DEFSUBR(Ffc_pattern_p);
-  DEFSUBR(Ffc_pattern_create);
-  DEFSUBR(Ffc_name_parse);
-  DEFSUBR(Ffc_name_unparse);
-  DEFSUBR(Ffc_pattern_duplicate);
-  DEFSUBR(Ffc_pattern_add);
-  DEFSUBR(Ffc_pattern_del);
-  DEFSUBR(Ffc_pattern_get);
-  DEFSUBR(Ffc_list_fonts_pattern_objects);
-  DEFSUBR(Ffc_font_sort);
-  DEFSUBR(Ffc_font_match);
-  DEFSUBR(Ffc_default_substitute);
-  DEFSUBR(Ffc_config_substitute);
-  DEFSUBR(Ffc_font_render_prepare);
-  DEFSUBR(Fxlfd_font_name_p);
+  DEFSUBR (Ffc_pattern_p);
+  DEFSUBR (Ffc_pattern_create);
+  DEFSUBR (Ffc_name_parse);
+  DEFSUBR (Ffc_name_unparse);
+  DEFSUBR (Ffc_pattern_duplicate);
+  DEFSUBR (Ffc_pattern_add);
+  DEFSUBR (Ffc_pattern_del);
+  DEFSUBR (Ffc_pattern_get);
+  DEFSUBR (Ffc_list_fonts_pattern_objects);
+  DEFSUBR (Ffc_font_sort);
+  DEFSUBR (Ffc_font_match);
+  DEFSUBR (Ffc_default_substitute);
+  DEFSUBR (Ffc_config_substitute);
+  DEFSUBR (Ffc_font_render_prepare);
+  DEFSUBR (Fxlfd_font_name_p);
 
 #ifdef FONTCONFIG_EXPOSE_CONFIG
-  INIT_LRECORD_IMPLEMENTATION(fc_config);
+  INIT_LISP_OBJECT (fc_config);
 
-  DEFSYMBOL_MULTIWORD_PREDICATE(Qfc_configp);
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qfc_configp);
 
-  DEFSUBR(Ffc_config_p);
-  DEFSUBR(Ffc_config_create);
+  DEFSUBR (Ffc_config_p);
+  DEFSUBR (Ffc_config_create);
 #if 0
-  DEFSUBR(Ffc_config_destroy);
+  DEFSUBR (Ffc_config_destroy);
 #endif
-  DEFSUBR(Ffc_config_set_current);
-  DEFSUBR(Ffc_config_get_current);
-  DEFSUBR(Ffc_config_up_to_date);
-  DEFSUBR(Ffc_config_build_fonts);
-  DEFSUBR(Ffc_config_get_config_dirs);
-  DEFSUBR(Ffc_config_get_font_dirs);
-  DEFSUBR(Ffc_config_get_config_files);
-  DEFSUBR(Ffc_config_get_cache);
-  DEFSUBR(Ffc_config_get_fonts);
-  DEFSUBR(Ffc_config_get_blanks);
-  DEFSUBR(Ffc_config_get_rescan_interval);
-  DEFSUBR(Ffc_config_set_rescan_interval);
-  DEFSUBR(Ffc_config_app_font_add_file);
-  DEFSUBR(Ffc_config_app_font_add_dir);
-  DEFSUBR(Ffc_config_app_font_clear);
-  DEFSUBR(Ffc_config_filename);
-  DEFSUBR(Ffc_init_load_config);
-  DEFSUBR(Ffc_init_load_config_and_fonts);
-  DEFSUBR(Ffc_init);
-  DEFSUBR(Ffc_get_version);
-  DEFSUBR(Ffc_init_reinitialize);
-  DEFSUBR(Ffc_init_bring_up_to_date);
+  DEFSUBR (Ffc_config_set_current);
+  DEFSUBR (Ffc_config_get_current);
+  DEFSUBR (Ffc_config_up_to_date);
+  DEFSUBR (Ffc_config_build_fonts);
+  DEFSUBR (Ffc_config_get_config_dirs);
+  DEFSUBR (Ffc_config_get_font_dirs);
+  DEFSUBR (Ffc_config_get_config_files);
+  DEFSUBR (Ffc_config_get_cache);
+  DEFSUBR (Ffc_config_get_fonts);
+  DEFSUBR (Ffc_config_get_blanks);
+  DEFSUBR (Ffc_config_get_rescan_interval);
+  DEFSUBR (Ffc_config_set_rescan_interval);
+  DEFSUBR (Ffc_config_app_font_add_file);
+  DEFSUBR (Ffc_config_app_font_add_dir);
+  DEFSUBR (Ffc_config_app_font_clear);
+  DEFSUBR (Ffc_config_filename);
+  DEFSUBR (Ffc_init_load_config);
+  DEFSUBR (Ffc_init_load_config_and_fonts);
+  DEFSUBR (Ffc_init);
+  DEFSUBR (Ffc_get_version);
+  DEFSUBR (Ffc_init_reinitialize);
+  DEFSUBR (Ffc_init_bring_up_to_date);
 #endif /* FONTCONFIG_EXPOSE_CONFIG */
 }
 
@@ -1368,7 +1354,7 @@ vars_of_font_mgr (void)
   /* #### The next two DEFVARs belong somewhere else. */
 
   /* #### I know, but the right fix is use the generic debug facility. */
-  DEFVAR_INT ("xft-debug-level", &debug_xft /*
+  DEFVAR_INT ("debug-xft", &debug_xft /*
 Level of debugging messages to issue to stderr for Xft.
 A nonnegative integer.  Set to 0 to suppress all warnings.
 Default is 1 to ensure a minimum of debugging output at initialization.
@@ -1376,12 +1362,12 @@ Higher levels give even more information.
 */ );
   debug_xft = 0;
 
-  DEFVAR_CONST_INT("xft-version", &xft_version /*
+  DEFVAR_CONST_INT ("xft-version", &xft_version /*
 The major version number of the Xft library being used.
 */ );
   xft_version = XFT_VERSION;
 
-  DEFVAR_CONST_INT("fc-version", &fc_version /*
+  DEFVAR_CONST_INT ("fc-version", &fc_version /*
 The version number of fontconfig.h.  It can be checked against
 `(fc-get-version)', which is the version of the .so.
 It's probably not a disaster if `(> (fc-get-version) fc-version)'.
@@ -1399,7 +1385,7 @@ complex_vars_of_font_mgr (void)
   staticpro (&Vfc_config_weak_list);
 #endif
 
-  DEFVAR_LISP("xft-xlfd-font-regexp", &Vxlfd_font_name_regexp /*
+  DEFVAR_LISP ("xft-xlfd-font-regexp", &Vxlfd_font_name_regexp /*
 The regular expression used to match XLFD font names. */			       
 	      );
   Vxlfd_font_name_regexp = make_xlfd_font_regexp();

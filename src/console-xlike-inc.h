@@ -3,10 +3,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +14,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -90,7 +88,7 @@ Boston, MA 02111-1307, USA.  */
 #    include "glyphs-x.h"
 #  endif
 #  ifdef NEED_OBJECTS_IMPL_H
-#    include "objects-x-impl.h"
+#    include "fontcolor-x-impl.h"
 #  endif
 #else /* THIS_IS_GTK */
 #  include "console-gtk-impl.h"
@@ -101,7 +99,7 @@ Boston, MA 02111-1307, USA.  */
 #    include "glyphs-gtk.h"
 #  endif
 #  ifdef NEED_OBJECTS_IMPL_H
-#    include "objects-gtk-impl.h"
+#    include "fontcolor-gtk-impl.h"
 #  endif
 #endif /* THIS_IS_GTK */
 
@@ -169,6 +167,8 @@ typedef unsigned long XLIKE_PIXEL;
 #define XLIKE_GC_LINE_WIDTH GCLineWidth
 #define XLIKE_GC_STIPPLE GCStipple
 #define XLIKE_GC_TILE GCTile
+#define XLIKE_GC_TS_X_ORIGIN GCTileStipXOrigin
+#define XLIKE_GC_TS_Y_ORIGIN GCTileStipYOrigin
 
 #define XLIKE_GX_COPY GXcopy
 #define XLIKE_GX_XOR GXxor
@@ -258,6 +258,8 @@ typedef gulong   XLIKE_PIXEL;
 #define XLIKE_GC_LINE_WIDTH GDK_GC_LINE_WIDTH
 #define XLIKE_GC_STIPPLE GDK_GC_STIPPLE
 #define XLIKE_GC_TILE GDK_GC_TILE
+#define XLIKE_GC_TS_X_ORIGIN GDK_GC_TS_X_ORIGIN
+#define XLIKE_GC_TS_Y_ORIGIN GDK_GC_TS_Y_ORIGIN
 
 #define XLIKE_GX_COPY GDK_COPY
 #define XLIKE_GX_XOR GDK_XOR

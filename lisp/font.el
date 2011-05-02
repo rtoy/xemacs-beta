@@ -10,20 +10,20 @@
 ;; Keywords: faces
 ;; Version: 1.52
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; This file is part of XEmacs.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF
 
@@ -48,9 +48,6 @@
    get-fontset-info mswindows-define-rgb-color cancel-function-timers
    mswindows-font-regexp mswindows-canonicalize-font-name
    mswindows-parse-font-style mswindows-construct-font-style
-   ;; #### perhaps we should rewrite font-warn to avoid the warning
-   ;;   Eh, now I look at the code, we definitely should. 
-   font-warn
    fc-pattern-get-family fc-pattern-get-size fc-pattern-get-weight
    fc-font-weight-translate-from-constant make-fc-pattern
    fc-pattern-add-family fc-pattern-add-size))
@@ -426,7 +423,7 @@ The type may be the strings \"px\", \"pix\", or \"pixel\" (pixels), \"pt\" or
   (cond
    ((null args)
     (error "Wrong number of arguments to font-combine-fonts"))
-   ((= (length args) 1)
+   ((eql (length args) 1)
     (car args))
    (t
     (let ((retval (font-combine-fonts-internal (nth 0 args) (nth 1 args))))
@@ -988,7 +985,7 @@ for use in the 'weight' field of an mswindows font string.")
 ;;; ###autoload
 (defun font-set-face-font (&optional face font &rest args)
   (cond
-   ((and (vectorp font) (= (length font) 12))
+   ((and (vectorp font) (eql (length font) 12))
     (let ((font-name (font-create-name font)))
       (set-face-property face 'font-specification font)
       (cond
@@ -1070,24 +1067,6 @@ for use in the 'weight' field of an mswindows font string.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Various color related things
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(cond
- ((fboundp 'display-warning)
-  (fset 'font-warn 'display-warning))
- ((fboundp 'w3-warn)
-  (fset 'font-warn 'w3-warn))
- ((fboundp 'url-warn)
-  (fset 'font-warn 'url-warn))
- ((fboundp 'warn)
-  (defun font-warn (class message &optional level)
-    (warn "(%s/%s) %s" class (or level 'warning) message)))
- (t
-  (defun font-warn (class message &optional level)
-    (save-excursion
-      (set-buffer (get-buffer-create "*W3-WARNINGS*"))
-      (goto-char (point-max))
-      (save-excursion
-	(insert (format "(%s/%s) %s\n" class (or level 'warning) message)))
-      (display-buffer (current-buffer))))))
 
 (defun font-lookup-rgb-components (color)
   "Lookup COLOR (a color name) in rgb.txt and return a list of RGB values.
@@ -1142,31 +1121,11 @@ The list (R G B) is returned, or an error is signaled if the lookup fails."
 		  (setq r (* (read (current-buffer)) 256)
 			g (* (read (current-buffer)) 256)
 			b (* (read (current-buffer)) 256)))
-	      (font-warn 'color (format "No such color: %s" color))
+	      (display-warning 'color (format "No such color: %s" color))
 	      (setq r 0
 		    g 0
 		    b 0))
 	    (list r g b) ))))))
-
-(defun font-hex-string-to-number (string)
-  "Convert STRING to an integer by parsing it as a hexadecimal number."
-  (let ((conv-list '((?0 . 0) (?a . 10) (?A . 10)
-		     (?1 . 1) (?b . 11) (?B . 11)
-		     (?2 . 2) (?c . 12) (?C . 12)
-		     (?3 . 3) (?d . 13) (?D . 13)
-		     (?4 . 4) (?e . 14) (?E . 14)
-		     (?5 . 5) (?f . 15) (?F . 15)
-		     (?6 . 6)
-		     (?7 . 7)
-		     (?8 . 8)
-		     (?9 . 9)))
-	(n 0)
-	(i 0)
-	(lim (length string)))
-    (while (< i lim)
-      (setq n (+ (* n 16) (or (cdr (assq (aref string i) conv-list)) 0))
-	    i (1+ i)))
-    n ))
 
 (defun font-parse-rgb-components (color)
   "Parse RGB color specification and return a list of integers (R G B).
@@ -1175,34 +1134,34 @@ The list (R G B) is returned, or an error is signaled if the lookup fails."
 	r g b str)
   (cond ((string-match "^#[0-9a-f]+$" color)
 	 (cond
-	  ((= (length color) 4)
-	   (setq r (font-hex-string-to-number (substring color 1 2))
-		 g (font-hex-string-to-number (substring color 2 3))
-		 b (font-hex-string-to-number (substring color 3 4))
+	  ((eql (length color) 4)
+	   (setq r (string-to-number (substring color 1 2) 16)
+		 g (string-to-number (substring color 2 3) 16)
+		 b (string-to-number (substring color 3 4) 16)
 		 r (* r 4096)
 		 g (* g 4096)
 		 b (* b 4096)))
-	  ((= (length color) 7)
-	   (setq r (font-hex-string-to-number (substring color 1 3))
-		 g (font-hex-string-to-number (substring color 3 5))
-		 b (font-hex-string-to-number (substring color 5 7))
+	  ((eql (length color) 7)
+	   (setq r (string-to-number (substring color 1 3) 16)
+		 g (string-to-number (substring color 3 5) 16)
+		 b (string-to-number (substring color 5 7) 16)
 		 r (* r 256)
 		 g (* g 256)
 		 b (* b 256)))
-	  ((= (length color) 10)
-	   (setq r (font-hex-string-to-number (substring color 1 4))
-		 g (font-hex-string-to-number (substring color 4 7))
-		 b (font-hex-string-to-number (substring color 7 10))
+	  ((eql (length color) 10)
+	   (setq r (string-to-number (substring color 1 4) 16)
+		 g (string-to-number (substring color 4 7) 16)
+		 b (string-to-number (substring color 7 10) 16)
 		 r (* r 16)
 		 g (* g 16)
 		 b (* b 16)))
-	  ((= (length color) 13)
-	   (setq r (font-hex-string-to-number (substring color 1 5))
-		 g (font-hex-string-to-number (substring color 5 9))
-		 b (font-hex-string-to-number (substring color 9 13))))
+	  ((eql (length color) 13)
+	   (setq r (string-to-number (substring color 1 5) 16)
+		 g (string-to-number (substring color 5 9) 16)
+		 b (string-to-number (substring color 9 13) 16)))
 	  (t
-	   (font-warn 'color (format "Invalid RGB color specification: %s"
-				     color))
+	   (display-warning 'color
+	     (format "Invalid RGB color specification: %s" color))
 	   (setq r 0
 		 g 0
 		 b 0))))
@@ -1213,17 +1172,17 @@ The list (R G B) is returned, or an error is signaled if the lookup fails."
 		 (> (- (match-end 3) (match-beginning 3)) 4))
 	     (error "Invalid RGB color specification: %s" color)
 	   (setq str (match-string 1 color)
-		 r (* (font-hex-string-to-number str)
+		 r (* (string-to-number str 16)
 		      (expt 16 (- 4 (length str))))
 		 str (match-string 2 color)
-		 g (* (font-hex-string-to-number str)
+		 g (* (string-to-number str 16)
 		      (expt 16 (- 4 (length str))))
 		 str (match-string 3 color)
-		 b (* (font-hex-string-to-number str)
+		 b (* (string-to-number str 16)
 		      (expt 16 (- 4 (length str)))))))
 	(t
-	 (font-warn 'html (format "Invalid RGB color specification: %s"
-				color))
+	 (display-warning 'color (format "Invalid RGB color specification: %s"
+					color))
 	 (setq r 0
 	       g 0
 	       b 0)))
@@ -1231,7 +1190,7 @@ The list (R G B) is returned, or an error is signaled if the lookup fails."
 
 (defun font-rgb-color-p (obj)
   (or (and (vectorp obj)
-	   (= (length obj) 4)
+	   (eql (length obj) 4)
 	   (eq (aref obj 0) 'rgb))))
 
 (defun font-rgb-color-red (obj) (aref obj 1))
@@ -1255,11 +1214,11 @@ The variable x-library-search-path is use to locate the rgb.txt file."
       (list (font-rgb-color-red color)
 	    (font-rgb-color-green color)
 	    (font-rgb-color-blue color)))
-     ((and (vectorp color) (= 3 (length color)))
+     ((and (vectorp color) (eql 3 (length color)))
       (list (aref color 0) (aref color 1) (aref color 2)))
-     ((and (listp color) (= 3 (length color)) (floatp (car color)))
+     ((and (listp color) (eql 3 (length color)) (floatp (car color)))
       (mapcar #'(lambda (x) (* x 65535)) color))
-     ((and (listp color) (= 3 (length color)))
+     ((and (listp color) (eql 3 (length color)))
       color)
      ((or (string-match "^#" color)
 	  (string-match "^rgb:" color))
@@ -1288,7 +1247,7 @@ The variable x-library-search-path is use to locate the rgb.txt file."
 
 (defun font-tty-find-closest-color (r g b)
   ;; This is basically just a lisp copy of allocate_nearest_color
-  ;; from objects-x.c from Emacs 19
+  ;; from fontcolor-x.c from Emacs 19
   ;; We really should just check tty-color-list, but unfortunately
   ;; that does not include any RGB information at all.
   ;; So for now we just hardwire in the default list and call it

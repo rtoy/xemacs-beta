@@ -1,27 +1,25 @@
 ;; help.el --- help commands for XEmacs.
 
 ;; Copyright (C) 1985, 1986, 1992-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Maintainer: FSF
 ;; Keywords: help, internal, dumped
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 19.30.
 
@@ -350,7 +348,7 @@ MENU-FLAG is a symbol that should be set to t if KEY is a menu event,
     ;; If the key typed was really a menu selection, grab the form out
     ;; of the event object and intuit the function that would be called,
     ;; and describe that instead.
-    (if (and (vectorp key) (= 1 (length key))
+    (if (and (vectorp key) (eql 1 (length key))
 	     (or (misc-user-event-p (aref key 0))
 		 (eq (car-safe (aref key 0)) 'menu-selection)))
 	(let ((event (aref key 0)))
@@ -1182,27 +1180,21 @@ arguments in the standard Lisp style."
 	 (fndef (if (eq (car-safe fnc) 'macro)
 		    (cdr fnc)
 		  fnc))
+	 (args (cdr (function-documentation-1 function t)))
 	 (arglist
-	  (cond ((compiled-function-p fndef)
-		 (compiled-function-arglist fndef))
-		((eq (car-safe fndef) 'lambda)
-		 (nth 1 fndef))
-		((or (subrp fndef) (eq 'autoload (car-safe fndef)))
-		 (let* ((doc (documentation function))
-			(args (and doc
-				   (string-match
-				    "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'"
-				    doc)
-				   (match-string 1 doc)))
-                        (args (and args (replace-in-string args
-                                                           "[ ]*\\\\\n[ \t]*"
-                                                           " " t))))
-		   ;; If there are no arguments documented for the
-		   ;; subr, rather don't print anything.
-		   (cond ((null args) t)
-			 ((equal args "") nil)
-			 (args))))
-		(t t)))
+	  (or args
+	      (cond ((compiled-function-p fndef)
+		     (compiled-function-arglist fndef))
+		    ((eq (car-safe fndef) 'lambda)
+		     (nth 1 fndef))
+		    ((or (subrp fndef) (eq 'autoload (car-safe fndef)))
+		 
+		     ;; If there are no arguments documented for the
+		     ;; subr, rather don't print anything.
+		     (cond ((null args) t)
+			   ((equal args "") nil)
+			   (args)))
+		    (t t))))
          (print-gensym nil))
     (cond ((listp arglist)
 	   (prin1-to-string
@@ -1215,22 +1207,35 @@ arguments in the standard Lisp style."
 
 	    t))
 	  ((stringp arglist)
-	   (format "(%s %s)" function arglist)))))
+	   (if (> (length arglist) 0)
+	       (format "(%s %s)" function arglist)
+	     (format "(%s)" function))))))
 
-(defun function-documentation (function &optional strip-arglist)
-  "Return a string giving the documentation for FUNCTION, if any.
-If the optional argument STRIP-ARGLIST is non-nil, remove the arglist
-part of the documentation of internal subroutines."
+;; If STRIP-ARGLIST is true, return a cons (DOC . ARGS) of the documentation
+;; with any embedded arglist stripped out, and the arglist that was stripped
+;; out.  If STRIP-ARGLIST is false, the cons will be (FULL-DOC . nil),
+;; where FULL-DOC is the full documentation without the embedded arglist
+;; stripped out.
+(defun function-documentation-1 (function &optional strip-arglist)
   (let ((doc (condition-case nil
 		 (or (documentation function)
 		     (gettext "not documented"))
 	       (void-function "(alias for undefined function)")
-	       (error "(unexpected error from `documention')"))))
+	       (error "(unexpected error from `documentation')")))
+	args)
     (when (and strip-arglist
-               (string-match "[\n\t ]*\narguments: ?(\\([^)]*\\))\n?\\'" doc))
+               (string-match "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'" doc))
+      (setq args (match-string 1 doc))
       (setq doc (substring doc 0 (match-beginning 0)))
-      (and (zerop (length doc)) (setq doc (gettext "not documented"))))
-    doc))
+      (and args (setq args (replace-in-string args "[ ]*\\\\\n[ \t]*" " " t)))
+      (and (eql 0 (length doc)) (setq doc (gettext "not documented"))))
+    (cons doc args)))
+
+(defun function-documentation (function &optional strip-arglist)
+  "Return a string giving the documentation for FUNCTION, if any.
+If the optional argument STRIP-ARGLIST is non-nil, remove the arglist
+part of the documentation of internal subroutines, CL lambda forms, etc."
+  (car (function-documentation-1 function strip-arglist)))
 
 ;; replacement for `princ' that puts the text in the specified face,
 ;; if possible
@@ -1293,14 +1298,14 @@ part of the documentation of internal subroutines."
 (defvar help-symbol-function-context-menu
   '(["View %_Documentation" (help-symbol-run-function 'describe-function)]
     ["Find %_Function Source" (help-symbol-run-function 'find-function)
-     (fboundp #'find-function)]
+     (fboundp 'find-function)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
 (defvar help-symbol-variable-context-menu
   '(["View %_Documentation" (help-symbol-run-function 'describe-variable)]
     ["Find %_Variable Source" (help-symbol-run-function 'find-variable)
-     (fboundp #'find-variable)]
+     (fboundp 'find-variable)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
@@ -1310,9 +1315,9 @@ part of the documentation of internal subroutines."
     ["View Variable D%_ocumentation" (help-symbol-run-function
 				      'describe-variable)]
     ["Find %_Function Source" (help-symbol-run-function 'find-function)
-     (fboundp #'find-function)]
+     (fboundp 'find-function)]
     ["Find %_Variable Source" (help-symbol-run-function 'find-variable)
-     (fboundp #'find-variable)]
+     (fboundp 'find-variable)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
@@ -1724,9 +1729,8 @@ there is no variable around that point, nil is returned."
 The sorting is done by length (shortest bindings first), and the bindings
 are separated with SEPARATOR (\", \" by default)."
   (mapconcat 'key-description
-	     (sort keys #'(lambda (x y)
-			    (< (length x) (length y))))
-	     (or separator ", ")))
+             (sort* keys #'< :key #'length)
+             (or separator ", ")))
 
 (defun where-is (definition &optional insert)
   "Print message listing key sequences that invoke specified command.
@@ -1852,12 +1856,12 @@ after the listing is made.)"
   "Follow any cross reference to source code; if none, scroll up.  "
   (interactive "d")
   (let ((e (extent-at pos nil 'find-function-symbol)))
-    (if (and-fboundp #'find-function e)
-        (with-fboundp #'find-function
+    (if (and-fboundp 'find-function e)
+        (with-fboundp 'find-function
           (find-function (extent-property e 'find-function-symbol)))
       (setq e (extent-at pos nil 'find-variable-symbol))
-      (if (and-fboundp #'find-variable e)
-          (with-fboundp #'find-variable
+      (if (and-fboundp 'find-variable e)
+          (with-fboundp 'find-variable
             (find-variable (extent-property e 'find-variable-symbol)))
 	(scroll-up 1)))))
 
@@ -1867,12 +1871,12 @@ if none, call mouse-track.  "
   (interactive "e")
   (mouse-set-point event)
   (let ((e (extent-at (point) nil 'find-function-symbol)))
-    (if (and-fboundp #'find-function e)
-        (with-fboundp #'find-function
+    (if (and-fboundp 'find-function e)
+        (with-fboundp 'find-function
           (find-function (extent-property e 'find-function-symbol)))
       (setq e (extent-at (point) nil 'find-variable-symbol))
-      (if (and-fboundp #'find-variable e)
-          (with-fboundp #'find-variable
+      (if (and-fboundp 'find-variable e)
+          (with-fboundp 'find-variable
             (find-variable (extent-property e 'find-variable-symbol)))
 	(mouse-track event)))))
 

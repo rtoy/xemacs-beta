@@ -3,10 +3,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +14,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -74,7 +72,7 @@ Boston, MA 02111-1307, USA.  */
 		Corresponding s/ file: s/mingw32.h
 
    (none)	There's no flag to indicate that you are specifically
-		targetting native Windows and not doing this with MINGW.
+		targeting native Windows and not doing this with MINGW.
 		Presumably this means you're using Visual C++.
 
 		Corresponding s/ file: s/windowsnt.h
@@ -129,6 +127,30 @@ Boston, MA 02111-1307, USA.  */
     Note further that more than one of these can be defined at the same time.
     In fact, in general, it's possible to compile with support for all of
     these at the same time.
+
+
+
+   Here is a table mapping from GNU Emacs constants to XEmacs constants for
+   use in porting code.
+ 
+
+   Old Constant       New Constant
+   ---------------------------------------------------------------
+   `WINDOWSNT'        `WIN32_NATIVE'
+   `WIN32'            `WIN32_NATIVE'
+   `_WIN32'           `WIN32_NATIVE'
+   `HAVE_WIN32'       `WIN32_NATIVE'
+   `DOS_NT'           `WIN32_NATIVE'
+   `HAVE_NTGUI'       `WIN32_NATIVE', unless it ends up already bracketed
+                      by this
+   `HAVE_FACES'       always true
+   `MSDOS'            determine whether this code is really specific to
+                      MS-DOS (and not Windows - e.g. DJGPP code); if so,
+                      delete the code; otherwise, convert to `WIN32_NATIVE'
+                      (we do not support MS-DOS w/DOS Extender under XEmacs)
+   `__CYGWIN__'       `CYGWIN'
+   `__CYGWIN32__'     `CYGWIN'
+   `__MINGW32__'      `MINGW'
 
 */
 
@@ -572,7 +594,6 @@ typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
    and cause problems if we used Cygwin headers to generate
    intl-auto-encap-win32.[ch]. */
 typedef LPCVOID PCVOID;
-typedef LPDWORD *PDWORD_PTR;
 
 #endif /* CYGWIN_HEADERS */
 

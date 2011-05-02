@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30. */
 
@@ -141,15 +139,10 @@ symbol_remprop (Lisp_Object symbol, Lisp_Object property)
   return external_remprop (&XSYMBOL (symbol)->plist, property, 0, ERROR_ME);
 }
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("symbol", symbol,
-						1, /*dumpable-flag*/
-						mark_symbol, print_symbol,
-						0, 0, 0, symbol_description,
-						symbol_getprop,
-						symbol_putprop,
-						symbol_remprop,
-						Fsymbol_plist,
-						Lisp_Symbol);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("symbol", symbol,
+					mark_symbol, print_symbol,
+					0, 0, 0, symbol_description,
+					Lisp_Symbol);
 
 /**********************************************************************/
 /*                              Intern				      */
@@ -203,15 +196,23 @@ intern (const CIbyte *str)
 }
 
 Lisp_Object
-intern_converting_underscores_to_dashes (const CIbyte *str)
+intern_massaging_name (const CIbyte *str)
 {
   Bytecount len = strlen (str);
   CIbyte *tmp = alloca_extbytes (len + 1);
   Bytecount i;
   strcpy (tmp, str);
   for (i = 0; i < len; i++)
-    if (tmp[i] == '_')
-      tmp[i] = '-';
+    {
+      if (tmp[i] == '_')
+	{
+	  tmp[i] = '-';
+	}
+      else if (tmp[i] == 'X')
+	{
+	  tmp[i] = '*';
+	}
+    }
   return intern_istring ((Ibyte *) tmp);
 }
 
@@ -505,7 +506,8 @@ If optional 2nd arg PREDICATE is non-nil, only symbols for which
   closure.accumulation = Qnil;
   GCPRO1 (closure.accumulation);
   map_obarray (Vobarray, apropos_mapper, &closure);
-  closure.accumulation = Fsort (closure.accumulation, Qstring_lessp);
+  closure.accumulation = list_sort (closure.accumulation,
+				    check_string_lessp_nokey, Qnil, Qnil);
   UNGCPRO;
   return closure.accumulation;
 }
@@ -602,7 +604,7 @@ reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
 !(unloading_module && UNBOUNDP(newval)) &&
 #endif
       (symbol_is_constant (sym, val)
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
        || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym))
 #endif
       ))
@@ -1105,47 +1107,43 @@ print_symbol_value_magic (Lisp_Object obj, Lisp_Object printcharfun,
 			  int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun,
-		    "#<INTERNAL OBJECT (XEmacs bug?) (%s type %d) 0x%lx>",
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s type %d) 0x%x>",
 		    XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
 		    XSYMBOL_VALUE_MAGIC_TYPE (obj),
-		    (long) XPNTR (obj));
+		    LISP_OBJECT_UID (obj));
 }
 
 static const struct memory_description symbol_value_forward_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-forward",
-			       symbol_value_forward,
-			       1, /*dumpable-flag*/
-			       0,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_forward_description,
-			       struct symbol_value_forward);
+DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-forward",
+			     symbol_value_forward,
+			     0,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_forward_description,
+			     struct symbol_value_forward);
 
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-buffer-local",
-			       symbol_value_buffer_local,
-			       1, /*dumpable-flag*/
-			       mark_symbol_value_buffer_local,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_buffer_local_description,
-			       struct symbol_value_buffer_local);
+DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-buffer-local",
+			     symbol_value_buffer_local,
+			     mark_symbol_value_buffer_local,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_buffer_local_description,
+			     struct symbol_value_buffer_local);
 
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-lisp-magic",
-			       symbol_value_lisp_magic,
-			       1, /*dumpable-flag*/
-			       mark_symbol_value_lisp_magic,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_lisp_magic_description,
-			       struct symbol_value_lisp_magic);
+DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-lisp-magic",
+			     symbol_value_lisp_magic,
+			     mark_symbol_value_lisp_magic,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_lisp_magic_description,
+			     struct symbol_value_lisp_magic);
 
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-varalias",
-			       symbol_value_varalias,
-			       1, /*dumpable-flag*/
-			       mark_symbol_value_varalias,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_varalias_description,
-			       struct symbol_value_varalias);
+DEFINE_DUMPABLE_LISP_OBJECT ("symbol-value-varalias",
+			     symbol_value_varalias,
+			     mark_symbol_value_varalias,
+			     print_symbol_value_magic, 0, 0, 0,
+			     symbol_value_varalias_description,
+			     struct symbol_value_varalias);
 
 
 /* Getting and setting values of symbols */
@@ -2293,8 +2291,8 @@ sets it.
 
   {
     struct symbol_value_buffer_local *bfwd
-      = ALLOC_LCRECORD_TYPE (struct symbol_value_buffer_local,
-			     &lrecord_symbol_value_buffer_local);
+      = XSYMBOL_VALUE_BUFFER_LOCAL
+      (ALLOC_NORMAL_LISP_OBJECT (symbol_value_buffer_local));
     Lisp_Object foo;
     bfwd->magic.type = SYMVAL_BUFFER_LOCAL;
 
@@ -2401,8 +2399,8 @@ Use `make-local-hook' instead.
     }
 
   /* Make sure variable is set up to hold per-buffer values */
-  bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_buffer_local,
-			      &lrecord_symbol_value_buffer_local);
+  bfwd = XSYMBOL_VALUE_BUFFER_LOCAL
+    (ALLOC_NORMAL_LISP_OBJECT (symbol_value_buffer_local));
   bfwd->magic.type = SYMVAL_SOME_BUFFER_LOCAL;
 
   bfwd->current_buffer = Qnil;
@@ -2546,7 +2544,8 @@ From now on the default value will apply in this buffer.
 	  = buffer_local_alist_element (current_buffer, variable, bfwd);
 
 	if (!NILP (alist_element))
-	  current_buffer->local_var_alist = Fdelq (alist_element, alist);
+	  current_buffer->local_var_alist = delq_no_quit (alist_element,
+							  alist);
 
 	/* Make sure symbol does not think it is set up for this buffer;
 	   force it to look once again for this buffer's value */
@@ -3193,8 +3192,9 @@ pity, thereby invalidating your code.
   valcontents = XSYMBOL (variable)->value;
   if (!SYMBOL_VALUE_LISP_MAGIC_P (valcontents))
     {
-      bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_lisp_magic,
-				  &lrecord_symbol_value_lisp_magic);
+      bfwd =
+	XSYMBOL_VALUE_LISP_MAGIC
+	(ALLOC_NORMAL_LISP_OBJECT (symbol_value_lisp_magic));
       bfwd->magic.type = SYMVAL_LISP_MAGIC;
       for (i = 0; i < MAGIC_HANDLER_MAX; i++)
 	{
@@ -3411,8 +3411,8 @@ what you're doing.
     invalid_change ("Variable is magic and cannot be aliased", variable);
   reject_constant_symbols (variable, Qunbound, 0, Qt);
 
-  bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_varalias,
-			      &lrecord_symbol_value_varalias);
+  bfwd =
+    XSYMBOL_VALUE_VARALIAS (ALLOC_NORMAL_LISP_OBJECT (symbol_value_varalias));
   bfwd->magic.type = SYMVAL_VARALIAS;
   bfwd->aliasee = aliased;
   bfwd->shadowed = valcontents;
@@ -3524,30 +3524,38 @@ static const struct symbol_value_magic guts_of_unbound_marker =
       1, /* lisp_readonly bit */
     },
     0, /* next */
-    0, /* uid  */
-    0, /* free */
   },
   0, /* value */
   SYMVAL_UNBOUND_MARKER
 };
 #endif /* not NEW_GC */
 
+static void
+reinit_symbol_objects_early (void)
+{
+  OBJECT_HAS_METHOD (symbol, getprop);
+  OBJECT_HAS_METHOD (symbol, putprop);
+  OBJECT_HAS_METHOD (symbol, remprop);
+  OBJECT_HAS_NAMED_METHOD (symbol, plist, Fsymbol_plist);
+  OBJECT_HAS_NAMED_METHOD (symbol, setplist, Fsetplist);
+}
+
 void
 init_symbols_once_early (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (symbol);
-  INIT_LRECORD_IMPLEMENTATION (symbol_value_forward);
-  INIT_LRECORD_IMPLEMENTATION (symbol_value_buffer_local);
-  INIT_LRECORD_IMPLEMENTATION (symbol_value_lisp_magic);
-  INIT_LRECORD_IMPLEMENTATION (symbol_value_varalias);
+  INIT_LISP_OBJECT (symbol);
+  INIT_LISP_OBJECT (symbol_value_forward);
+  INIT_LISP_OBJECT (symbol_value_buffer_local);
+  INIT_LISP_OBJECT (symbol_value_lisp_magic);
+  INIT_LISP_OBJECT (symbol_value_varalias);
 
-  reinit_symbols_early ();
+  reinit_symbol_objects_early ();
 
   /* Bootstrapping problem: Qnil isn't set when make_string_nocopy is
      called the first time. */
   Qnil = Fmake_symbol (make_string_nocopy ((const Ibyte *) "nil", 3));
   XSTRING_PLIST (XSYMBOL (Qnil)->name) = Qnil;
-  XSYMBOL (Qnil)->value = Qnil; /* Nihil ex nihil */
+  XSYMBOL (Qnil)->value = Qnil; /* Nihil ex nihilo */
   XSYMBOL (Qnil)->plist = Qnil;
 
   Vobarray = make_vector (OBARRAY_SIZE, Qzero);
@@ -3596,6 +3604,7 @@ init_symbols_once_early (void)
 void
 reinit_symbols_early (void)
 {
+  reinit_symbol_objects_early ();
 }
 
 static void

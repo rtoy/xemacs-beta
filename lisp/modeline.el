@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -524,35 +522,31 @@ parentheses on the modeline."
      (cons
       "Minor Mode Toggles"
       (sort
-       (delq nil (mapcar
-		 #'(lambda (x)
-		     (let* ((toggle-sym (car x))
-			    (toggle-fun (or (get toggle-sym
-						 'modeline-toggle-function)
-					    (and (commandp toggle-sym)
-						 toggle-sym)))
-			    (menu-tag (symbol-name (if (symbolp toggle-fun)
-						       toggle-fun
-						     toggle-sym))
-				      ;; Here a function should
-				      ;; maybe be invoked to
-				      ;; beautify the symbol's
-				      ;; menu appearance.
-				      ))
-		       (and toggle-fun
-			    (vector menu-tag
-				    toggle-fun
-				    ;; The following two are wrong
-				    ;; because of possible name
-				    ;; clashes.
-				    ;:active (get toggle-sym :active t)
-				    ;:included (get toggle-sym :included t)
-				    :style 'toggle
-				    :selected (and (boundp toggle-sym)
-						   toggle-sym)))))
-		 minor-mode-alist))
-       (lambda (e1 e2)
-	 (string< (aref e1 0) (aref e2 0)))))
+       (mapcan
+        #'(lambda (x)
+            (let* ((toggle-sym (car x))
+                   (toggle-fun (or (get toggle-sym
+                                        'modeline-toggle-function)
+                                   (and (commandp toggle-sym)
+                                        toggle-sym)))
+                   (menu-tag (symbol-name (if (symbolp toggle-fun)
+                                              toggle-fun
+                                            toggle-sym))
+                             ;; Here a function should maybe be invoked to
+                             ;; beautify the symbol's menu appearance.
+                             ))
+              (and toggle-fun
+                   (list (vector menu-tag
+                                 toggle-fun
+                                 ;; The following two are wrong because of
+                                 ;; possible name clashes.
+                                 ;:active (get toggle-sym :active t)
+                                 ;:included (get toggle-sym :included t)
+                                 :style 'toggle
+                                 :selected (and (boundp toggle-sym)
+                                                toggle-sym))))))
+		 minor-mode-alist)
+       (lambda (e1 e2) (string< (aref e1 0) (aref e2 0)))))
      event)))
 
 (defvar modeline-minor-mode-map (make-sparse-keymap 'modeline-minor-mode-map)

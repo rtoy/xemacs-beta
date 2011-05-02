@@ -9,20 +9,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not synched.
 
@@ -434,17 +432,17 @@ X fonts can be specified (by the user) in either pixels or 10ths of points,
 	       (concat (substring font 0 (match-beginning 1)) "*"
 		       (substring font (match-end 1) (match-end 0))))))
   (sort
-   (delq nil
-	 (mapcar (function
-		  (lambda (name)
-		    (and (string-match x-font-regexp name)
-			 (list
-			  (string-to-int (substring name (match-beginning 5)
-						    (match-end 5)))
-			  (string-to-int (substring name (match-beginning 6)
-						    (match-end 6)))
-			  name))))
-		 (font-list font device)))
+   (mapcan (function
+            (lambda (name)
+              (and (string-match x-font-regexp name)
+                   (list
+                    (list
+                     (string-to-int (substring name (match-beginning 5)
+                                               (match-end 5)))
+                     (string-to-int (substring name (match-beginning 6)
+                                               (match-end 6)))
+                     name)))))
+           (font-list font device))
    (function (lambda (x y) (if (= (nth 1 x) (nth 1 y))
 			       (< (nth 0 x) (nth 0 y))
 			       (< (nth 1 x) (nth 1 y)))))))
@@ -611,7 +609,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;; -- sjt 2007-10-06
 
 ;; This function is probably also used by the GTK platform.  Cf.
-;; gtk_color_list in src/objects-gtk.c.
+;; gtk_color_list in src/fontcolor-gtk.c.
 (defun x-color-list-internal ()
   (if (boundp 'x-color-list-internal-cache)
       x-color-list-internal-cache

@@ -3,10 +3,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +14,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -71,12 +69,12 @@ Boston, MA 02111-1301, USA.  */
 
 struct Lisp_Bignum
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   bignum data;
 };
 typedef struct Lisp_Bignum Lisp_Bignum;
 
-DECLARE_LRECORD (bignum, Lisp_Bignum);
+DECLARE_LISP_OBJECT (bignum, Lisp_Bignum);
 #define XBIGNUM(x) XRECORD (x, bignum, Lisp_Bignum)
 #define wrap_bignum(p) wrap_record (p, bignum)
 #define BIGNUMP(x) RECORDP (x, bignum)
@@ -153,18 +151,52 @@ EXFUN (Fintegerp, 1);
 EXFUN (Fevenp, 1);
 EXFUN (Foddp, 1);
 
+/* There are varying mathematical definitions of what a natural number is,
+   differing about whether 0 is inside or outside the set. The Oxford
+   English Dictionary, second edition, does say that they are whole numbers,
+   not fractional, but it doesn't give a bound, and gives a quotation
+   talking about the natural numbers from 1 to 100. Since 100 is certainly
+   *not* the upper bound on natural numbers, we can't take 1 as the lower
+   bound from that example. The Real Academia Española's dictionary, not of
+   English but certainly sharing the western academic tradition, says of
+   "número natural":
+
+   1.  m. Mat. Cada uno de los elementos de la sucesión 0, 1, 2, 3...
+
+   that is, "each of the elements of the succession 0, 1, 2, 3 ...". The
+   various Wikipedia articles in languages I can read agree.  It's
+   reasonable to call this macro and the associated Lisp function
+   NATNUMP. */
+
+#ifdef HAVE_BIGNUM
+#define NATNUMP(x) ((INTP (x) && XINT (x) >= 0) || \
+                    (BIGNUMP (x) && bignum_sign (XBIGNUM_DATA (x)) >= 0))
+#else
+#define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
+#endif
+
+#define CHECK_NATNUM(x) do {			\
+  if (!NATNUMP (x))				\
+    dead_wrong_type_argument (Qnatnump, x);	\
+} while (0)
+
+#define CONCHECK_NATNUM(x) do {			\
+  if (!NATNUMP (x))				\
+    x = wrong_type_argument (Qnatnump, x);	\
+} while (0)
+
 
 /********************************** Ratios **********************************/
 #ifdef HAVE_RATIO
 
 struct Lisp_Ratio
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   ratio data;
 };
 typedef struct Lisp_Ratio Lisp_Ratio;
 
-DECLARE_LRECORD (ratio, Lisp_Ratio);
+DECLARE_LISP_OBJECT (ratio, Lisp_Ratio);
 #define XRATIO(x) XRECORD (x, ratio, Lisp_Ratio)
 #define wrap_ratio(p) wrap_record (p, ratio)
 #define RATIOP(x) RECORDP (x, ratio)
@@ -233,12 +265,12 @@ EXFUN (Fdenominator, 1);
 #ifdef HAVE_BIGFLOAT
 struct Lisp_Bigfloat
 {
-  struct lrecord_header lheader;
+  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
   bigfloat bf;
 };
 typedef struct Lisp_Bigfloat Lisp_Bigfloat;
 
-DECLARE_LRECORD (bigfloat, Lisp_Bigfloat);
+DECLARE_LISP_OBJECT (bigfloat, Lisp_Bigfloat);
 #define XBIGFLOAT(x) XRECORD (x, bigfloat, Lisp_Bigfloat)
 #define wrap_bigfloat(p) wrap_record (p, bigfloat)
 #define BIGFLOATP(x) RECORDP (x, bigfloat)

@@ -6,10 +6,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,10 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.
-
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
  Author: Andy Norman (ange@hplb.hpl.hp.com), based on
          'etc/emacsclient.c' from the GNU Emacs 18.52 distribution.
 
@@ -300,7 +297,7 @@ int
 main (int argc, char *argv[])
 {
   int starting_line = 0;	/* line to start editing at */
-  char command[QXE_PATH_MAX+50];/* emacs command buffer */
+  char command[QXE_PATH_MAX + 512];/* emacs command buffer */
   char fullpath[QXE_PATH_MAX+1];/* full pathname to file */
   char *eval_form = NULL;	/* form to evaluate with `-eval' */
   char *eval_function = NULL;	/* function to evaluate with `-f' */
@@ -645,7 +642,11 @@ main (int argc, char *argv[])
 #endif
 #ifdef HAVE_GTK
 	  else if (display)
-	    strcpy (command, "(gnuserv-edit-files '(gtk nil) '(");
+	    sprintf (command, 
+                     /* #### We should probably do this sort of thing for
+                        other window systems. */
+                     "(gnuserv-edit-files (assoc* t '((gtk nil) (x %s)) "
+                     ":key #'valid-device-type-p) '(", clean_string (display));
 #endif
 #ifdef HAVE_MS_WINDOWS
 	  else

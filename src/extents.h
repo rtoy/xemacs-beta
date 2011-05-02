@@ -1,12 +1,12 @@
 /* Copyright (c) 1994, 1995 Free Software Foundation.
-   Copyright (c) 1995, 1996, 2002 Ben Wing.
+   Copyright (c) 1995, 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,16 +14,14 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
 #ifndef INCLUDED_extents_h_
 #define INCLUDED_extents_h_
 
-DECLARE_LRECORD (extent, struct extent);
+DECLARE_LISP_OBJECT (extent, struct extent);
 #define XEXTENT(x) XRECORD (x, extent, struct extent)
 #define wrap_extent(p) wrap_record (p, extent)
 #define EXTENTP(x) RECORDP (x, extent)
@@ -32,7 +30,7 @@ DECLARE_LRECORD (extent, struct extent);
 
 struct extent_auxiliary;
 
-DECLARE_LRECORD (extent_auxiliary, struct extent_auxiliary);
+DECLARE_LISP_OBJECT (extent_auxiliary, struct extent_auxiliary);
 #define XEXTENT_AUXILIARY(x) \
   XRECORD (x, extent_auxiliary, struct extent_auxiliary)
 #define wrap_extent_auxiliary(p) wrap_record (p, extent_auxiliary)
@@ -42,7 +40,7 @@ DECLARE_LRECORD (extent_auxiliary, struct extent_auxiliary);
 
 struct extent_info;
 
-DECLARE_LRECORD (extent_info, struct extent_info);
+DECLARE_LISP_OBJECT (extent_info, struct extent_info);
 #define XEXTENT_INFO(x) XRECORD (x, extent_info, struct extent_info)
 #define wrap_extent_info(p) wrap_record (p, extent_info)
 #define EXTENT_INFOP(x) RECORDP (x, extent_info)
@@ -50,28 +48,9 @@ DECLARE_LRECORD (extent_info, struct extent_info);
 #define CONCHECK_EXTENT_INFO(x) CONCHECK_RECORD (x, extent_info)
 
 #ifdef NEW_GC
-struct gap_array_marker;
-
-DECLARE_LRECORD (gap_array_marker, struct gap_array_marker);
-#define XGAP_ARRAY_MARKER(x) \
-  XRECORD (x, gap_array_marker, struct gap_array_marker)
-#define wrap_gap_array_marker(p) wrap_record (p, gap_array_marker)
-#define GAP_ARRAY_MARKERP(x) RECORDP (x, gap_array_marker)
-#define CHECK_GAP_ARRAY_MARKER(x) CHECK_RECORD (x, gap_array_marker)
-#define CONCHECK_GAP_ARRAY_MARKER(x) CONCHECK_RECORD (x, gap_array_marker)
-
-struct gap_array;
-
-DECLARE_LRECORD (gap_array, struct gap_array);
-#define XGAP_ARRAY(x) XRECORD (x, gap_array, struct gap_array)
-#define wrap_gap_array(p) wrap_record (p, gap_array)
-#define GAP_ARRAYP(x) RECORDP (x, gap_array)
-#define CHECK_GAP_ARRAY(x) CHECK_RECORD (x, gap_array)
-#define CONCHECK_GAP_ARRAY(x) CONCHECK_RECORD (x, gap_array)
-
 struct extent_list_marker;
 
-DECLARE_LRECORD (extent_list_marker, struct extent_list_marker);
+DECLARE_LISP_OBJECT (extent_list_marker, struct extent_list_marker);
 #define XEXTENT_LIST_MARKER(x) \
   XRECORD (x, extent_list_marker, struct extent_list_marker)
 #define wrap_extent_list_marker(p) wrap_record (p, extent_list_marker)
@@ -81,7 +60,7 @@ DECLARE_LRECORD (extent_list_marker, struct extent_list_marker);
 
 struct extent_list;
 
-DECLARE_LRECORD (extent_list, struct extent_list);
+DECLARE_LISP_OBJECT (extent_list, struct extent_list);
 #define XEXTENT_LIST(x) XRECORD (x, extent_list, struct extent_list)
 #define wrap_extent_list(p) wrap_record (p, extent_list)
 #define EXTENT_LISTP(x) RECORDP (x, extent_list)
@@ -90,7 +69,7 @@ DECLARE_LRECORD (extent_list, struct extent_list);
 
 struct stack_of_extents;
 
-DECLARE_LRECORD (stack_of_extents, struct stack_of_extents);
+DECLARE_LISP_OBJECT (stack_of_extents, struct stack_of_extents);
 #define XSTACK_OF_EXTENTS(x) \
   XRECORD (x, stack_of_extents, struct stack_of_extents)
 #define wrap_stack_of_extents(p) wrap_record (p, stack_of_extents)
@@ -228,7 +207,7 @@ void extent_fragment_delete (struct extent_fragment *ef);
 /* from alloc.c */
 struct extent *allocate_extent (void);
 
-void allocate_extent_auxiliary (EXTENT ext);
+void attach_extent_auxiliary (EXTENT ext);
 void init_buffer_extents (struct buffer *b);
 void uninit_buffer_extents (struct buffer *b);
 
@@ -237,8 +216,7 @@ void sledgehammer_extent_check (Lisp_Object obj);
 #endif
 
 #ifdef MEMORY_USAGE_STATS
-int compute_buffer_extent_usage (struct buffer *b,
-				 struct overhead_stats *ovstats);
+Bytecount compute_buffer_extent_usage (struct buffer *b);
 #endif
 
 #endif /* INCLUDED_extents_h_ */

@@ -1,12 +1,28 @@
 ;;; cus-face.el -- Support for Custom faces.
 ;;
 ;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2010 Didier Verna
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Maintainer: Hrvoje Niksic <hniksic@xemacs.org>
 ;; Keywords: help, faces
 ;; Version: 1.9960-x
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched with: Not synched.
 
@@ -83,7 +99,12 @@ Name of font family to use (e.g. times).")
 					:help-echo "\
 Name of background pixmap file.")
 	      set-face-background-pixmap custom-face-background-pixmap)
-    (:dim (toggle :format "%[Dim%]: %v\n"
+    (:background-placement (choice :tag "Background placement" :value relative
+				   (const :tag "Relative" :value relative)
+				   (const :tag "Absolute" :value absolute))
+			   set-face-background-placement
+			   face-background-placement) 
+   (:dim (toggle :format "%[Dim%]: %v\n"
 		  :help-echo "Control whether the text should be dimmed.")
 	  set-face-dim-p face-dim-p)
     (:bold (toggle :format "%[Bold%]: %v\n"

@@ -1,14 +1,14 @@
 /* Portable data dumper for XEmacs.
    Copyright (C) 1999-2000,2004 Olivier Galibert
    Copyright (C) 2001 Martin Buchholz
-   Copyright (C) 2001, 2002, 2003, 2004, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -253,8 +251,20 @@ pdump_objects_unmark (void)
 	    for (i=0; i<rt->count; i++)
 	      {
 		struct lrecord_header *lh = * (struct lrecord_header **) p;
+#ifdef ALLOC_TYPE_STATS
+		if (C_READONLY_RECORD_HEADER_P (lh))
+		  tick_lrecord_stats (lh, ALLOC_IN_USE);
+
+		else
+		  {
+		    tick_lrecord_stats (lh, MARKED_RECORD_HEADER_P (lh) ?
+					ALLOC_IN_USE : ALLOC_ON_FREE_LIST);
+		    UNMARK_RECORD_HEADER (lh);
+		  }
+#else /* not ALLOC_TYPE_STATS */
 		if (! C_READONLY_RECORD_HEADER_P (lh))
 		  UNMARK_RECORD_HEADER (lh);
+#endif /* (not) ALLOC_TYPE_STATS */
 		p += sizeof (EMACS_INT);
 	      }
 	  } else
@@ -788,7 +798,7 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	    break;
 	  }
 #ifdef NEW_GC
-	case XD_LISP_OBJECT_BLOCK_PTR:
+	case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 	  {
 	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 						       data);
@@ -1061,7 +1071,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 		break;
 	      }
 #ifdef NEW_GC
-	    case XD_LISP_OBJECT_BLOCK_PTR:
+	    case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 #endif /* NEW_GC */
 	    case XD_OPAQUE_DATA_PTR:
 	    case XD_ASCII_STRING:
@@ -1302,7 +1312,7 @@ pdump_reloc_one_mc (void *data, const struct memory_description *desc)
 	case XD_LONG:
 	case XD_INT_RESET:
 	  break;
-	case XD_LISP_OBJECT_BLOCK_PTR:
+	case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 	case XD_OPAQUE_DATA_PTR:
 	case XD_ASCII_STRING:
 	case XD_BLOCK_PTR:

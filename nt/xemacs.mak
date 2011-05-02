@@ -7,21 +7,19 @@
 #   Copyright (C) 1998 Free Software Foundation, Inc.
 #
 # This file is part of XEmacs.
-#
-# XEmacs is free software; you can redistribute it and/or modify it
+# 
+# XEmacs is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any
-# later version.
-#
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+# 
 # XEmacs is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
-#
+# 
 # You should have received a copy of the GNU General Public License
-# along with XEmacs; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-# Boston, MA 02111-1307, USA.
+# along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Synched up with: Not in FSF.
 #
@@ -515,7 +513,7 @@ OPT_OBJS=$(OPT_OBJS) \
 	$(OUTDIR)\frame-msw.obj \
 	$(OUTDIR)\glyphs-msw.obj \
 	$(OUTDIR)\gui-msw.obj \
-	$(OUTDIR)\objects-msw.obj \
+	$(OUTDIR)\fontcolor-msw.obj \
 	$(OUTDIR)\redisplay-msw.obj \
 	$(OUTDIR)\select-msw.obj \
 	$(OUTDIR)\dired-msw.obj
@@ -840,6 +838,7 @@ TEMACS_COMMON_OBJS= \
 	$(OUTDIR)\abbrev.obj \
 	$(OUTDIR)\alloc.obj \
 	$(OUTDIR)\alloca.obj \
+	$(OUTDIR)\array.obj \
 	$(OUTDIR)\blocktype.obj \
 	$(OUTDIR)\buffer.obj \
 	$(OUTDIR)\bytecode.obj \
@@ -857,7 +856,6 @@ TEMACS_COMMON_OBJS= \
 	$(OUTDIR)\doc.obj \
 	$(OUTDIR)\doprnt.obj \
 	$(OUTDIR)\dragdrop.obj \
-	$(OUTDIR)\dynarr.obj \
 	$(OUTDIR)\editfns.obj \
 	$(OUTDIR)\elhash.obj \
 	$(OUTDIR)\emacs.obj \
@@ -903,7 +901,7 @@ TEMACS_COMMON_OBJS= \
 #	#### Leave the next one out when integrating my working ws
 	$(OUTDIR)\nt.obj \
 	$(OUTDIR)\ntplay.obj \
-	$(OUTDIR)\objects.obj \
+	$(OUTDIR)\fontcolor.obj \
 	$(OUTDIR)\opaque.obj \
 	$(OUTDIR)\print.obj \
 	$(OUTDIR)\process.obj \
@@ -1488,7 +1486,6 @@ INFODIR = $(SRCROOT)\info
 INFO_FILES= \
 	$(INFODIR)\beta.info \
 	$(INFODIR)\cl.info \
-	$(INFODIR)\custom.info \
 	$(INFODIR)\emodules.info \
 	$(INFODIR)\external-widget.info \
 	$(INFODIR)\info.info \
@@ -1496,7 +1493,6 @@ INFO_FILES= \
 	$(INFODIR)\lispref.info \
 	$(INFODIR)\new-users-guide.info \
 	$(INFODIR)\standards.info \
-	$(INFODIR)\term.info \
 	$(INFODIR)\termcap.info \
 	$(INFODIR)\texinfo.info \
 	$(INFODIR)\widget.info \
@@ -1660,7 +1656,7 @@ info:	makeinfo-test $(INFO_FILES)
 ########################### Automated tests
 
 testdir = ../tests/automated
-batch_test_emacs = $(BATCH_PACKAGES) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
+batch_test_emacs = $(BATCH_PACKAGES) -l test-harness -f batch-test-emacs $(testdir)
 
 check:
 	cd $(BLDSRC)

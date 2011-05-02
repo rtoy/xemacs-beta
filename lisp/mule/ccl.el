@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; Synched up with: FSF 21.0.90
 
@@ -473,7 +471,7 @@
 ;; If READ-FLAG is non-nil, this statement has the form
 ;; `(read-if (REG OPERATOR ARG) TRUE-PART FALSE-PART)'.
 (defun ccl-compile-if (cmd &optional read-flag)
-  (if (and (/= (length cmd) 3) (/= (length cmd) 4))
+  (if (and (not (<= 3 (length cmd) 4)))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((condition (nth 1 cmd))
 	(true-cmds (nth 2 cmd))
@@ -646,7 +644,7 @@
 
 ;; Compile BREAK statement.
 (defun ccl-compile-break (cmd)
-  (if (/= (length cmd) 1)
+  (if (not (eql (length cmd) 1))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (if (null ccl-loop-head)
       (error "CCL: No outer loop: %s" cmd))
@@ -656,7 +654,7 @@
 
 ;; Compile REPEAT statement.
 (defun ccl-compile-repeat (cmd)
-  (if (/= (length cmd) 1)
+  (if (not (eql (length cmd) 1))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (if (null ccl-loop-head)
       (error "CCL: No outer loop: %s" cmd))
@@ -665,7 +663,7 @@
 
 ;; Compile WRITE-REPEAT statement.
 (defun ccl-compile-write-repeat (cmd)
-  (if (/= (length cmd) 2)
+  (if (not (eql (length cmd) 2))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (if (null ccl-loop-head)
       (error "CCL: No outer loop: %s" cmd))
@@ -783,7 +781,7 @@
 
 ;; Compile CALL statement.
 (defun ccl-compile-call (cmd)
-  (if (/= (length cmd) 2)
+  (if (not (eql (length cmd) 2))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (if (not (symbolp (nth 1 cmd)))
       (error "CCL: Subroutine should be a symbol: %s" cmd))
@@ -793,14 +791,14 @@
 
 ;; Compile END statement.
 (defun ccl-compile-end (cmd)
-  (if (/= (length cmd) 1)
+  (if (not (eql (length cmd) 1))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (ccl-embed-code 'end 0 0)
   t)
 
 ;; Compile read-multibyte-character
 (defun ccl-compile-read-multibyte-character (cmd)
-  (if (/= (length cmd) 3)
+  (if (not (eql (length cmd) 3))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((RRR (nth 1 cmd))
 	(rrr (nth 2 cmd)))
@@ -811,7 +809,7 @@
 
 ;; Compile write-multibyte-character
 (defun ccl-compile-write-multibyte-character (cmd)
-  (if (/= (length cmd) 3)
+  (if (not (eql (length cmd) 3))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((RRR (nth 1 cmd))
 	(rrr (nth 2 cmd)))
@@ -822,7 +820,7 @@
 
 ;; Compile translate-character
 (defun ccl-compile-translate-character (cmd)
-  (if (/= (length cmd) 4)
+  (if (not (eql (length cmd) 4))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((Rrr (nth 1 cmd))
 	(RRR (nth 2 cmd))
@@ -840,7 +838,7 @@
 
 ;; Compile mule-to-unicode
 (defun ccl-compile-mule-to-unicode (cmd)
-  (if (/= (length cmd) 3)
+  (if (not (eql (length cmd) 3))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((RRR (nth 1 cmd))
 	(rrr (nth 2 cmd)))
@@ -852,7 +850,7 @@
 ;; Given a Unicode code point in register rrr, write the charset ID of the
 ;; corresponding character in RRR, and the Mule-CCL form of its code in rrr.
 (defun ccl-compile-unicode-to-mule (cmd)
-  (if (/= (length cmd) 3)
+  (if (not (eql (length cmd) 3))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((rrr (nth 1 cmd))
 	(RRR (nth 2 cmd)))
@@ -863,7 +861,7 @@
 
 ;; Compile lookup-integer
 (defun ccl-compile-lookup-integer (cmd)
-  (if (/= (length cmd) 4)
+  (if (not (eql (length cmd) 4))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((Rrr (nth 1 cmd))
 	(RRR (nth 2 cmd))
@@ -883,7 +881,7 @@
 
 ;; Compile lookup-character
 (defun ccl-compile-lookup-character (cmd)
-  (if (/= (length cmd) 4)
+  (if (not (eql (length cmd) 4))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((Rrr (nth 1 cmd))
 	(RRR (nth 2 cmd))
@@ -906,7 +904,7 @@
   nil)
 
 (defun ccl-compile-map-multiple (cmd)
-  (if (/= (length cmd) 4)
+  (if (not (eql (length cmd) 4))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let (func arg)
     (setq func
@@ -932,7 +930,7 @@
   nil)
 
 (defun ccl-compile-map-single (cmd)
-  (if (/= (length cmd) 4)
+  (if (not (eql (length cmd) 4))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((RRR (nth 1 cmd))
 	(rrr (nth 2 cmd))
@@ -1510,7 +1508,7 @@ OPERATOR :=
 	| de-sjis
 
 	;; If ARG_0 and ARG_1 are the first and second code point of
-	;; JISX0208 character CHAR, and SJIS is the correponding
+	;; JISX0208 character CHAR, and SJIS is the corresponding
 	;; Shift-JIS code,
 	;; (REG = ARG_0 en-sjis ARG_1) means:
 	;;	((REG = HIGH)

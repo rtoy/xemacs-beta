@@ -1,3 +1,59 @@
+2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.31 "ginger" is released.
+
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
+2010-04-12  Ben Wing  <ben@xemacs.org>
+
+	* canna/canna_api.c:
+	* canna/canna_api.c (Fcanna_henkan_begin):
+	Fixes for errors reported in smoketest build.
+
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* base64/base64.c:
+	* base64/base64.c (Fbase64_encode):
+	* base64/base64.c (Fbase64_decode):
+	* base64/base64.c (syms_of_base64):
+	Fix file to follow GNU coding standards for indentation, spacing
+	before parens.
+
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (print_pgconn):
+	* postgresql/postgresql.c (print_pgresult):
+	printing_unreadable_object -> printing_unreadable_object_fmt.
+
+2010-03-13  Ben Wing  <ben@xemacs.org>
+
+	* ldap/eldap.c (print_ldap):
+	printing_unreadable_object -> printing_unreadable_object_fmt.
+
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (finalize_pgconn):
+	* postgresql/postgresql.c (finalize_pgresult):
+	* ldap/eldap.c (finalize_ldap):
+	Fix the finalizers to go with the new calling sequence.  Done
+	previously but somehow got lost.
+
+2010-03-05  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/postgresql.c (allocate_pgconn):
+	* postgresql/postgresql.c (allocate_pgresult):
+	* postgresql/postgresql.h (struct Lisp_PGconn):
+	* postgresql/postgresql.h (struct Lisp_PGresult):
+	* ldap/eldap.c (allocate_ldap):
+	* ldap/eldap.h (struct Lisp_LDAP):
+	Same changes as in src/ dir.  See large log there in ChangeLog,
+	but basically:
+
+	ALLOC_LISP_OBJECT -> ALLOC_NORMAL_LISP_OBJECT
+	LISP_OBJECT_HEADER -> NORMAL_LISP_OBJECT_HEADER
+
 2010-02-06  Ben Wing  <ben@xemacs.org>
 
 	* canna/canna_api.c:
@@ -607,3 +663,21 @@
 	* base64/base64.c - update Bufpos => Charbpos
 
 
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.

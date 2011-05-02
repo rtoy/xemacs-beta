@@ -7,26 +7,24 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
 ;;; Code:
 
-(defvar fixed-width-private-use-start (decode-char 'ucs #xE000)
+(defvar fixed-width-private-use-start ?\uE000
   "Start of a 256 code private use area for fixed-width coding systems.
 
 This is used to ensure that distinct octets on disk for a given coding
@@ -68,10 +66,7 @@ set in question.  If not, it returns nil."
                          (repeat)))) nil))
 		  (first-part compiled)
 		  (last-part
-		   (member-if-not (lambda (entr) (eq #xBFFE entr))
-				  (member-if
-                                   (lambda (entr) (eq #xBFFE entr))
-                                   first-part))))
+		   (member* #xBFFE (member* #xBFFE first-part) :test-not 'eql)))
 	     (while compiled
 	       (when (eq #xBFFE (cadr compiled))
 		 (assert (= vec-len (search '(#xBFFE) (cdr compiled)

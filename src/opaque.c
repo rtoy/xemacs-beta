@@ -1,13 +1,13 @@
 /* Opaque Lisp objects.
    Copyright (C) 1993, 1994, 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -51,8 +49,8 @@ print_opaque (Lisp_Object obj, Lisp_Object printcharfun,
 
   write_fmt_string
     (printcharfun,
-     "#<INTERNAL OBJECT (XEmacs bug?) (opaque, size=%lu) 0x%lx>",
-     (long)(p->size), (unsigned long) p);
+     "#<INTERNAL OBJECT (XEmacs bug?) (opaque, size=%lu) 0x%x>",
+     (long)(p->size), LISP_OBJECT_UID (obj));
 }
 
 inline static Bytecount
@@ -62,9 +60,9 @@ aligned_sizeof_opaque (Bytecount opaque_size)
 }
 
 static Bytecount
-sizeof_opaque (const void *header)
+sizeof_opaque (Lisp_Object obj)
 {
-  return aligned_sizeof_opaque (((const Lisp_Opaque *) header)->size);
+  return aligned_sizeof_opaque (XOPAQUE (obj)->size);
 }
 
 /* Return an opaque object of size SIZE.
@@ -74,8 +72,9 @@ sizeof_opaque (const void *header)
 Lisp_Object
 make_opaque (const void *data, Bytecount size)
 {
-  Lisp_Opaque *p = (Lisp_Opaque *)
-    BASIC_ALLOC_LCRECORD (aligned_sizeof_opaque (size), &lrecord_opaque);
+  Lisp_Object obj =
+    ALLOC_SIZED_LISP_OBJECT (aligned_sizeof_opaque (size), opaque);
+  Lisp_Opaque *p = XOPAQUE (obj);
   p->size = size;
 
   if (data == OPAQUE_CLEAR)
@@ -85,9 +84,7 @@ make_opaque (const void *data, Bytecount size)
   else
     memcpy (p->data, data, size);
 
-  {
-    return wrap_opaque (p);
-  }
+  return obj;
 }
 
 /* This will not work correctly for opaques with subobjects! */
@@ -104,7 +101,7 @@ equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 /* This will not work correctly for opaques with subobjects! */
 
 static Hashcode
-hash_opaque (Lisp_Object obj, int UNUSED (depth))
+hash_opaque (Lisp_Object obj, int UNUSED (depth), int UNUSED (equalp))
 {
   if (XOPAQUE_SIZE (obj) == sizeof (unsigned long))
     return *((Hashcode *) XOPAQUE_DATA (obj));
@@ -116,12 +113,11 @@ static const struct memory_description opaque_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
-					1, /*dumpable-flag*/
-					0, print_opaque, 0,
-					equal_opaque, hash_opaque,
-					opaque_description,
-					sizeof_opaque, Lisp_Opaque);
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("opaque", opaque,
+				     0, print_opaque, 0,
+				     equal_opaque, hash_opaque,
+				     opaque_description,
+				     sizeof_opaque, Lisp_Opaque);
 
 /* stuff to handle opaque pointers */
 
@@ -134,8 +130,8 @@ print_opaque_ptr (Lisp_Object obj, Lisp_Object printcharfun,
 
   write_fmt_string
     (printcharfun,
-     "#<INTERNAL OBJECT (XEmacs bug?) (opaque-ptr, adr=0x%lx) 0x%lx>",
-     (long)(p->ptr), (unsigned long) p);
+     "#<INTERNAL OBJECT (XEmacs bug?) (opaque-ptr, adr=0x%lx) 0x%x>",
+     (long)(p->ptr), LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -146,7 +142,7 @@ equal_opaque_ptr (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-hash_opaque_ptr (Lisp_Object obj, int UNUSED (depth))
+hash_opaque_ptr (Lisp_Object obj, int UNUSED (depth), int UNUSED (equalp))
 {
   return (Hashcode) XOPAQUE_PTR (obj)->ptr;
 }
@@ -155,19 +151,16 @@ static const struct memory_description opaque_ptr_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("opaque-ptr", opaque_ptr,
-			       0, /*dumpable-flag*/
-			       0, print_opaque_ptr, 0,
-			       equal_opaque_ptr, hash_opaque_ptr,
-			       opaque_ptr_description, Lisp_Opaque_Ptr);
+DEFINE_NODUMP_LISP_OBJECT ("opaque-ptr", opaque_ptr,
+			   0, print_opaque_ptr, 0,
+			   equal_opaque_ptr, hash_opaque_ptr,
+			   opaque_ptr_description, Lisp_Opaque_Ptr);
 
 Lisp_Object
 make_opaque_ptr (void *val)
 {
 #ifdef NEW_GC
-  Lisp_Object res = 
-    wrap_pointer_1 (alloc_lrecord_type (Lisp_Opaque_Ptr,
-					 &lrecord_opaque_ptr));
+  Lisp_Object res = ALLOC_NORMAL_LISP_OBJECT (opaque_ptr);
 #else /* not NEW_GC */
   Lisp_Object res = alloc_managed_lcrecord (Vopaque_ptr_free_list);
 #endif /* not NEW_GC */
@@ -182,7 +175,7 @@ void
 free_opaque_ptr (Lisp_Object ptr)
 {
 #ifdef NEW_GC
-  free_lrecord (ptr);
+  free_normal_lisp_object (ptr);
 #else /* not NEW_GC */
   free_managed_lcrecord (Vopaque_ptr_free_list, ptr);
 #endif /* not NEW_GC */
@@ -201,8 +194,8 @@ reinit_opaque_early (void)
 void
 init_opaque_once_early (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (opaque);
-  INIT_LRECORD_IMPLEMENTATION (opaque_ptr);
+  INIT_LISP_OBJECT (opaque);
+  INIT_LISP_OBJECT (opaque_ptr);
 
 #ifndef NEW_GC
   reinit_opaque_early ();

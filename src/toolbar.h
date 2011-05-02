@@ -1,14 +1,14 @@
 /* Define general toolbar support.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -33,12 +31,17 @@ Boston, MA 02111-1307, USA.  */
   ((frame)->toolbar_buttons[pos])
 #define FRAME_CURRENT_TOOLBAR_SIZE(frame, pos)	\
   ((frame)->current_toolbar_size[pos])
+#define SET_TOOLBAR_WAS_VISIBLE_FLAG(frame, pos, flag)	\
+  do {							\
+    (frame)->toolbar_was_visible[pos] = flag;		\
+  } while (0)
+
 #define DEVICE_SUPPORTS_TOOLBARS_P(d)		\
   HAS_DEVMETH_P (d, output_frame_toolbars)
 
 struct toolbar_button
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object next;
   Lisp_Object frame;
@@ -69,14 +72,14 @@ struct toolbar_button
   int border_width;
 };
 
-DECLARE_LRECORD (toolbar_button, struct toolbar_button);
+DECLARE_LISP_OBJECT (toolbar_button, struct toolbar_button);
 #define XTOOLBAR_BUTTON(x) XRECORD (x, toolbar_button, struct toolbar_button)
 #define wrap_toolbar_button(p) wrap_record (p, toolbar_button)
 #define TOOLBAR_BUTTONP(x) RECORDP (x, toolbar_button)
 #define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
 #define CONCHECK_TOOLBAR_BUTTON(x) CONCHECK_RECORD (x, toolbar_button)
 
-void get_toolbar_coords (struct frame *f, enum toolbar_pos pos, int *x,
+void get_toolbar_coords (struct frame *f, enum edge_pos pos, int *x,
 			 int *y, int *width, int *height, int *vert,
 			 int for_layout);
 Lisp_Object toolbar_button_at_pixpos (struct frame *f, int x_coord,
@@ -106,7 +109,7 @@ void init_global_toolbars (struct device *d);
 void free_frame_toolbars (struct frame *f);
 Lisp_Object get_toolbar_button_glyph (struct window *w,
 				      struct toolbar_button *tb);
-void mark_frame_toolbar_buttons_dirty (struct frame *f, enum toolbar_pos pos);
+void mark_frame_toolbar_buttons_dirty (struct frame *f, enum edge_pos pos);
 
 #endif /* HAVE_TOOLBARS */
 

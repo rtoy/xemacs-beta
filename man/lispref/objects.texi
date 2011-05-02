@@ -349,19 +349,6 @@ the modern convention is followed, and characters are their own
 primitive types. (This change was necessary in order for @sc{mule},
 i.e. Asian-language, support to be correctly implemented.)
 
-  Even in XEmacs version 20, remnants of the equivalence between
-characters and integers still exist; this is termed the @dfn{char-int
-confoundance disease}.  In particular, many functions such as @code{eq},
-@code{equal}, and @code{memq} have equivalent functions (@code{old-eq},
-@code{old-equal}, @code{old-memq}, etc.) that pretend like characters
-are integers are the same.  Byte code compiled under any version 19
-Emacs will have all such functions mapped to their @code{old-} equivalents
-when the byte code is read into XEmacs 20.  This is to preserve
-compatibility---Emacs 19 converts all constant characters to the equivalent
-integer during byte-compilation, and thus there is no other way to preserve
-byte-code compatibility even if the code has specifically been written
-with the distinction between characters and integers in mind.
-
   Every character has an equivalent integer, called the @dfn{character
 code}.  For example, the character @kbd{A} is represented as the
 @w{integer 65}, following the standard @sc{ascii} representation of
@@ -623,6 +610,8 @@ bit values are 2**22 for alt, 2**23 for super and 2**24 for hyper.
 @cindex backslash in character constant
 @cindex octal character code
 @cindex hexadecimal character code
+@cindex Overlong hex character escape
+@cindex Non-ISO-8859-1 octal character escape
 
   Finally, there are two read syntaxes involving character codes.
 It is not possible to represent multibyte or wide characters in this
@@ -643,14 +632,21 @@ octal digits); thus, @samp{?\101} for the character @kbd{A},
 @samp{?\001} for the character @kbd{C-a}, and @code{?\002} for the
 character @kbd{C-b}.  The reader will finalize the character and start
 reading the next token when a non-octal-digit is encountered or three
-octal digits are read. 
+octal digits are read.  When a given character code is above
+@code{#o377}, the Lisp reader signals an @code{invalid-read-syntax}
+error.  Such errors are typically provoked by code written for older
+versions of GNU Emacs, where the absence of the #o octal syntax for
+integers made the character syntax convenient for non-character
+values.  Those older versions of GNU Emacs are long obsolete, so
+changing the code to use the #o integer escape is the best
+solution. @pxref{Numbers}.
 
   The second consists of a question mark followed by a backslash, the
 character @samp{x}, and the character code in hexadecimal (up to two
 hexadecimal digits); thus, @samp{?\x41} for the character @kbd{A},
 @samp{?\x1} for the character @kbd{C-a}, and @code{?\x2} for the
 character @kbd{C-b}.  If more than two hexadecimal codes are given, the
-reader signals an error.
+reader signals an @code{invalid-read-syntax} error.
 
 @example
 @group
@@ -2228,7 +2224,7 @@ This function returns a symbol naming the primitive type of
 @section Equality Predicates
 @cindex equality
 
-  Here we describe two functions that test for equality between any two
+  Here we describe functions that test for equality between any two
 objects.  Other functions test equality between objects of specific
 types, e.g., strings.  For these predicates, see the appropriate chapter
 describing the data type.
@@ -2308,28 +2304,27 @@ Byte code compiled under any Emacs 19 will automatically have calls to
 
 @end defun
 
-@defun old-eq object1 object2
-This function exists under XEmacs 20 and is exactly like @code{eq}
-except that it suffers from the char-int confoundance disease.
-In other words, it returns @code{t} if given a character and the
-equivalent integer, even though the objects are of different types!
-You should @emph{not} ever call this function explicitly in your
-code.  However, be aware that all calls to @code{eq} in byte code
-compiled under version 19 map to @code{old-eq} in XEmacs 20.
-(Likewise for @code{old-equal}, @code{old-memq}, @code{old-member},
-@code{old-assq} and  @code{old-assoc}.)
+@defun eql object1 object2
+
+This function returns @code{t} if the two arguments are the same object,
+as with @code{eq}.  In addition, it returns @code{t} if @var{object1}
+and @var{object2} are numeric objects of the same type and with equal
+values.  Otherwise it returns @code{nil}.  @code{eql} is the default
+test for hash tables, and for many sequence-oriented functions inherited
+from Common Lisp.
 
 @example
 @group
-;; @r{Remember, this does not apply under XEmacs 19.}
-?A
-     @result{} ?A
-(char-int ?A)
-     @result{} 65
-(old-eq ?A 65)
-     @result{} t               ; @r{Eek, we've been infected.}
-(eq ?A 65)
-     @result{} nil             ; @r{We are still healthy.}
+(eql 1 1)
+     @result{} t
+(eql 1 1.0)    ; different types
+     @result{} nil
+(eq (+ 0.0 pi) pi)
+     @result{} nil ; in some contexts can be t, but don't rely on this!
+(eql (+ 0.0 pi) pi)
+     @result{} t ; this is more reliable.
+(position (+ 0 pi) (list 0 1 2 pi 4))
+     @result{} 3 ; function's test defaults to eql
 @end group
 @end example
 @end defun

@@ -3,26 +3,25 @@
 ### make-src-depend --- update the Makefile dependency information for XEmacs
 
 # Copyright (C) 1998 Free Software Foundation, Inc.
+# Copyright (C) 2010 Ben Wing.
 
 ## Author: Martin Buchholz <martin@xemacs.org>
 ## Maintainer: XEmacs Development Team
 
 ## This file is part of XEmacs.
 
-## XEmacs is free software; you can redistribute it and/or modify it
-## under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 2, or (at your option)
-## any later version.
+## XEmacs is free software: you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by the
+## Free Software Foundation, either version 3 of the License, or (at your
+## option) any later version.
 
-## XEmacs is distributed in the hope that it will be useful, but
-## WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-## General Public License for more details.
+## XEmacs is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
 
 ## You should have received a copy of the GNU General Public License
-## along with XEmacs; see the file COPYING.  If not, write to the Free
-## Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-## 02111-1307, USA.
+## along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 eval 'exec perl -w -S $0 ${1+"$@"}'
   if 0;
@@ -114,15 +113,15 @@ LISP_H=@{[grep (!/lisp-(dis)?union\.h/, @LISP_H)]} \$(LISP_UNION_H)
 sub PrintDeps {
   my $file = shift;
   my $ofile = $file; $ofile =~ s/c$/o/; print "$ofile: ";
-  if (exists $uses{$file}{'lisp.h'}) {
-    delete $uses{$file}{@LISP_H};
-    $uses{$file}{'$(LISP_H)'} = 1;
-  }
-  # Note: If both config.h and lisp.h are dependencies, config.h got deleted
-  # by the last clause.
   if (exists $uses{$file}{'config.h'}) {
     delete $uses{$file}{'config.h'};
     $uses{$file}{'$(CONFIG_H)'} = 1;
+  }
+  if (exists $uses{$file}{'lisp.h'}) {
+    for my $x (@LISP_H) {
+      delete $uses{$file}{$x};
+    }
+    $uses{$file}{'$(LISP_H)'} = 1;
   }
   # Huge hack.  With QUICK_BUILD, general.c has no dependence on
   # general-slots.h but really should.

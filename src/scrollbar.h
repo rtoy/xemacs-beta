@@ -1,12 +1,13 @@
 /* Define scrollbar instance.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -27,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct scrollbar_instance
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Used by the frame caches. */
   struct scrollbar_instance *next;
@@ -47,7 +46,7 @@ struct scrollbar_instance
   void *scrollbar_data;
 };
 
-DECLARE_LRECORD (scrollbar_instance, struct scrollbar_instance);
+DECLARE_LISP_OBJECT (scrollbar_instance, struct scrollbar_instance);
 #define XSCROLLBAR_INSTANCE(x) XRECORD (x, scrollbar_instance, struct scrollbar_instance)
 #define wrap_scrollbar_instance(p) wrap_record (p, scrollbar_instance)
 #define SCROLLBAR_INSTANCEP(x) RECORDP (x, scrollbar_instance)
@@ -65,9 +64,8 @@ void update_window_scrollbars (struct window *w,
 			       struct window_mirror *mirror,
 			       int active, int horiz_only);
 #ifdef MEMORY_USAGE_STATS
-int compute_scrollbar_instance_usage (struct device *d,
-				      struct scrollbar_instance *inst,
-				      struct overhead_stats *ovstats);
+Bytecount compute_all_scrollbar_instance_usage (struct scrollbar_instance *
+						inst);
 #endif
 
 extern Lisp_Object Vscrollbar_width, Vscrollbar_height;

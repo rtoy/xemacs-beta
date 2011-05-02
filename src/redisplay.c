@@ -7,10 +7,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with:  Not in FSF. */
 
@@ -61,7 +59,7 @@ Boston, MA 02111-1307, USA.  */
 #include "gutter.h"
 #include "insdel.h"
 #include "menubar.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 #include "opaque.h"
 #include "process.h"
 #include "profile.h"
@@ -728,7 +726,7 @@ get_display_block_from_line (struct display_line *dl, enum display_type type)
 	  struct display_block *dbp = Dynarr_atp (dl->display_blocks, elt);
 
 	  /* "add" the block to the list */
-	  Dynarr_increment (dl->display_blocks);
+	  Dynarr_incrementr (dl->display_blocks);
 
 	  /* initialize and return */
 	  dbp->type = type;
@@ -924,8 +922,8 @@ calculate_baseline (pos_data *data)
       int scaled_default_font_ascent, scaled_default_font_descent;
 
       default_face_font_info (data->window, &default_font_ascent,
-			      &default_font_descent, &default_font_height,
-			      0, 0);
+			      &default_font_descent, 0, &default_font_height,
+			      0);
 
       scaled_default_font_ascent = data->max_pixmap_height *
 	default_font_ascent / default_font_height;
@@ -1221,7 +1219,7 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
   if (local)
     Dynarr_add (data->db->runes, *crb);
   else
-    Dynarr_increment (data->db->runes);
+    Dynarr_incrementr (data->db->runes);
 
   data->pixpos += width;
 
@@ -1686,7 +1684,10 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	  break;
 	case PROP_STRING:
 	  if (pb->data.p_string.str)
-	    xfree (pb->data.p_string.str);
+	    {
+	      xfree (pb->data.p_string.str);
+	      pb->data.p_string.str = 0;
+	    }
 	  /* #### bogus bogus -- this doesn't do anything!
 	     Should probably call add_ibyte_string_runes(),
 	     once that function is fixed. */
@@ -2220,9 +2221,9 @@ create_text_block (struct window *w, struct display_line *dl,
   else if (MINI_WINDOW_P (w) && !active_minibuffer)
     data.cursor_type = NO_CURSOR;
   else if (w == XWINDOW (FRAME_SELECTED_WINDOW (f)) &&
-	   EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-	   d == XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d))))&&
-	   f == XFRAME(DEVICE_SELECTED_FRAME(d)))
+	   EQ (DEVICE_CONSOLE (d), Vselected_console) &&
+	   d == XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d))))&&
+	   f == XFRAME (DEVICE_SELECTED_FRAME (d)))
     {
       data.byte_cursor_charpos = BYTE_BUF_PT (b);
       data.cursor_type = CURSOR_ON;
@@ -4532,7 +4533,7 @@ ensure_modeline_generated (struct window *w, int type)
       if (Dynarr_length (dla) == 0)
 	{
 	  if (Dynarr_largest (dla) > 0)
-	    Dynarr_increment (dla);
+	    Dynarr_incrementr (dla);
 	  else
 	    {
 	      struct display_line modeline;
@@ -5301,9 +5302,10 @@ generate_string_display_line (struct window *w, Lisp_Object disp_string,
 
 /*
 
-Info on Re-entrancy crashes, with backtraces given:
+Info on reentrancy crashes, with backtraces given:
 
-  (Info-goto-node "(internals)Nasty Bugs due to Reentrancy in Redisplay Structures handling QUIT")
+  (Info-goto-node "(internals)Critical Redisplay Sections")
+
 */
 
 
@@ -5405,7 +5407,7 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
       if (pos_of_dlp < 0)
 	Dynarr_add (dla, *dlp);
       else if (pos_of_dlp == Dynarr_length (dla))
-	Dynarr_increment (dla);
+	Dynarr_incrementr (dla);
       else
 	ABORT ();
 
@@ -5459,13 +5461,13 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point,
   if (!in_display)
     depth = enter_redisplay_critical_section ();
 
-  /* This is one spot where a re-entrancy crash will occur, due to a check
+  /* This is one spot where a reentrancy crash will occur, due to a check
      in the dynarr to make sure it isn't "locked" */
 /*
 
-Info on Re-entrancy crashes, with backtraces given:
+Info on reentrancy crashes, with backtraces given:
 
-  (Info-goto-node "(internals)Nasty Bugs due to Reentrancy in Redisplay Structures handling QUIT")
+  (Info-goto-node "(internals)Critical Redisplay Sections")
 */
 
   Dynarr_reset (dla);
@@ -5515,10 +5517,10 @@ Info on Re-entrancy crashes, with backtraces given:
       Lisp_Object string;
       prop = Dynarr_new (prop_block);
 
-      string = concat2(Vminibuf_preprompt, Vminibuf_prompt);
+      string = concat2 (Vminibuf_preprompt, Vminibuf_prompt);
       pb.type = PROP_MINIBUF_PROMPT;
-      pb.data.p_string.str = XSTRING_DATA(string);
-      pb.data.p_string.len = XSTRING_LENGTH(string);
+      pb.data.p_string.str = XSTRING_DATA (string);
+      pb.data.p_string.len = XSTRING_LENGTH (string);
       Dynarr_add (prop, pb);
     }
   else
@@ -5628,7 +5630,7 @@ Info on Re-entrancy crashes, with backtraces given:
       if (pos_of_dlp < 0)
 	Dynarr_add (dla, *dlp);
       else if (pos_of_dlp == Dynarr_length (dla))
-	Dynarr_increment (dla);
+	Dynarr_incrementr (dla);
       else
 	ABORT ();
 
@@ -6257,9 +6259,9 @@ redisplay_window (Lisp_Object window, int skip_selected)
   selected_in_its_frame = (w == XWINDOW (FRAME_SELECTED_WINDOW (f)));
   selected_globally =
       selected_in_its_frame &&
-      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d &&
-      XFRAME(DEVICE_SELECTED_FRAME(d)) == f;
+      EQ (DEVICE_CONSOLE (d), Vselected_console) &&
+      XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d)))) == d &&
+      XFRAME (DEVICE_SELECTED_FRAME (d)) == f;
   if (skip_selected && selected_in_its_frame)
     return;
 
@@ -6684,12 +6686,25 @@ run_post_redisplay_actions (void)
   unbind_to (depth);
 }
 
+static int the_ritual_suicide_has_been_cancelled = 0;
+
+void
+redisplay_cancel_ritual_suicide(void)
+{
+  the_ritual_suicide_has_been_cancelled = 1;
+}
+
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
 
 static Lisp_Object
 commit_ritual_suicide (Lisp_Object UNUSED (ceci_nest_pas_une_pipe))
 {
-  assert (!in_display);
+  if (!the_ritual_suicide_has_been_cancelled)
+    {
+      assert (!in_display);
+    }
+  else
+    the_ritual_suicide_has_been_cancelled = 0;
   return Qnil;
 }
 
@@ -6764,7 +6779,7 @@ end_hold_frame_size_changes (Lisp_Object UNUSED (obj))
 	{
 	  struct frame *f = XFRAME (XCAR (frmcons));
 	  if (f->size_change_pending)
-	    change_frame_size (f, f->new_height, f->new_width, 0);
+	    change_frame_size (f, f->new_width, f->new_height, 0);
 	}
     }
   return Qnil;
@@ -6901,7 +6916,7 @@ redisplay_frame (struct frame *f, int preemption_check)
   /* Before we put a hold on frame size changes, attempt to process
      any which are already pending. */
   if (f->size_change_pending)
-    change_frame_size (f, f->new_height, f->new_width, 0);
+    change_frame_size (f, f->new_width, f->new_height, 0);
 
   /* If frame size might need to be changed, due to changed size
      of toolbars, scrollbars etc, change it now */
@@ -7065,7 +7080,7 @@ redisplay_device (struct device *d, int automatic)
 
   if (FRAME_REPAINT_P (f))
     {
-      if (CLASS_REDISPLAY_FLAGS_CHANGEDP(f))
+      if (CLASS_REDISPLAY_FLAGS_CHANGEDP (f))
 	{
 	  int preempted = redisplay_frame (f, 1);
 	  if (preempted)
@@ -7239,10 +7254,10 @@ window_line_number (struct window *w, int type)
      fail if DEVICE_SELECTED_FRAME == Qnil (since w->frame cannot be).
      This can occur when the frame title is computed really early */
   Charbpos pos =
-    ((EQ(DEVICE_SELECTED_FRAME(d), w->frame) &&
-       (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame(d)))) &&
-      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d )
+    ((EQ (DEVICE_SELECTED_FRAME (d), w->frame) &&
+       (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d)))) &&
+      EQ (DEVICE_CONSOLE (d), Vselected_console) &&
+      XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d)))) == d )
      ? BUF_PT (b)
      : marker_position (w->pointm[type]));
   EMACS_INT line;
@@ -7984,7 +7999,7 @@ point_would_be_visible (struct window *w, Charbpos startp, Charbpos point,
 			int partially)
 {
   struct buffer *b = XBUFFER (w->buffer);
-  int pixpos = -WINDOW_TEXT_TOP_CLIP(w);
+  int pixpos = -WINDOW_TEXT_TOP_CLIP (w);
   int bottom = WINDOW_TEXT_HEIGHT (w);
   int start_elt;
 
@@ -8316,7 +8331,7 @@ start_with_point_on_display_line (struct window *w, Charbpos point, int line)
 	  int defheight;
 
 	  window = wrap_window (w);
-	  default_face_height_and_width (window, &defheight, 0);
+	  default_face_width_and_height (window, 0, &defheight);
 
 	  cur_elt = Dynarr_length (w->line_start_cache) - 1;
 
@@ -8469,7 +8484,7 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
 	      return;
 	    }
 
-	  Dynarr_insert_many_at_start (cache, Dynarr_begin (internal_cache),
+	  Dynarr_prepend_many (cache, Dynarr_begin (internal_cache),
 			      ic_elt + 1);
 	}
 
@@ -8621,7 +8636,7 @@ glyph_to_pixel_translation (struct window *w, int char_x, int char_y,
   int defheight, defwidth;
 
   window = wrap_window (w);
-  default_face_height_and_width (window, &defheight, &defwidth);
+  default_face_width_and_height (window, &defwidth, &defheight);
 
   /* If we get a bogus value indicating somewhere above or to the left of
      the window, use the first window line or character position
@@ -8767,7 +8782,7 @@ get_position_object (struct display_line *dl, Lisp_Object *obj1,
     d->pixel_to_glyph_cache.obj_x = *obj_x;				\
     d->pixel_to_glyph_cache.obj_y = *obj_y;				\
     d->pixel_to_glyph_cache.w = *w;					\
-    d->pixel_to_glyph_cache.charpos = *charpos;			\
+    d->pixel_to_glyph_cache.charpos = *charpos;				\
     d->pixel_to_glyph_cache.closest = *closest;				\
     d->pixel_to_glyph_cache.modeline_closest = *modeline_closest;	\
     d->pixel_to_glyph_cache.obj1 = *obj1;				\
@@ -8784,9 +8799,14 @@ get_position_object (struct display_line *dl, Lisp_Object *obj1,
      OVER_TOOLBAR:	over one of the 4 frame toolbars
      OVER_MODELINE:	over a modeline
      OVER_BORDER:	over an internal border
+     OVER_V_DIVIDER:    over a vertical divider between windows (used as a
+                        grab bar for resizing)
      OVER_NOTHING:	over the text area, but not over text
      OVER_OUTSIDE:	outside of the frame border
      OVER_TEXT:		over text in the text area
+
+   #### GEOM! We need to also have an OVER_GUTTER, OVER_SCROLLBAR and
+   OVER_DEAD_BOX.
 
    OBJ1 is one of
 
@@ -8880,25 +8900,28 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
   if (device_check_failed)
     return OVER_NOTHING;
 
-  frm_left = FRAME_LEFT_BORDER_END (f);
-  frm_right = FRAME_RIGHT_BORDER_START (f);
-  frm_top = FRAME_TOP_BORDER_END (f);
-  frm_bottom = FRAME_BOTTOM_BORDER_START (f);
+  /* #### GEOM! The gutter is just inside of this.  We should also have an
+     OVER_GUTTER return value to indicate that we're over a gutter.  See
+     above. */
+  frm_left = FRAME_LEFT_INTERNAL_BORDER_END (f);
+  frm_right = FRAME_RIGHT_INTERNAL_BORDER_START (f);
+  frm_top = FRAME_TOP_INTERNAL_BORDER_END (f);
+  frm_bottom = FRAME_BOTTOM_INTERNAL_BORDER_START (f);
 
   /* Check if the mouse is outside of the text area actually used by
      redisplay. */
   if (y_coord < frm_top)
     {
-      if (y_coord >= FRAME_TOP_BORDER_START (f))
+      if (y_coord >= FRAME_TOP_INTERNAL_BORDER_START (f))
 	{
-	  low_y_coord = FRAME_TOP_BORDER_START (f);
+	  low_y_coord = FRAME_TOP_INTERNAL_BORDER_START (f);
 	  high_y_coord = frm_top;
 	  position = OVER_BORDER;
 	}
       else if (y_coord >= 0)
 	{
 	  low_y_coord = 0;
-	  high_y_coord = FRAME_TOP_BORDER_START (f);
+	  high_y_coord = FRAME_TOP_INTERNAL_BORDER_START (f);
 	  position = OVER_TOOLBAR;
 	}
       else
@@ -8910,15 +8933,15 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
     }
   else if (y_coord >= frm_bottom)
     {
-      if (y_coord < FRAME_BOTTOM_BORDER_END (f))
+      if (y_coord < FRAME_BOTTOM_INTERNAL_BORDER_END (f))
 	{
 	  low_y_coord = frm_bottom;
-	  high_y_coord = FRAME_BOTTOM_BORDER_END (f);
+	  high_y_coord = FRAME_BOTTOM_INTERNAL_BORDER_END (f);
 	  position = OVER_BORDER;
 	}
       else if (y_coord < FRAME_PIXHEIGHT (f))
 	{
-	  low_y_coord = FRAME_BOTTOM_BORDER_END (f);
+	  low_y_coord = FRAME_BOTTOM_INTERNAL_BORDER_END (f);
 	  high_y_coord = FRAME_PIXHEIGHT (f);
 	  position = OVER_TOOLBAR;
 	}
@@ -8934,16 +8957,16 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
     {
       if (x_coord < frm_left)
 	{
-	  if (x_coord >= FRAME_LEFT_BORDER_START (f))
+	  if (x_coord >= FRAME_LEFT_INTERNAL_BORDER_START (f))
 	    {
-	      low_x_coord = FRAME_LEFT_BORDER_START (f);
+	      low_x_coord = FRAME_LEFT_INTERNAL_BORDER_START (f);
 	      high_x_coord = frm_left;
 	      position = OVER_BORDER;
 	    }
 	  else if (x_coord >= 0)
 	    {
 	      low_x_coord = 0;
-	      high_x_coord = FRAME_LEFT_BORDER_START (f);
+	      high_x_coord = FRAME_LEFT_INTERNAL_BORDER_START (f);
 	      position = OVER_TOOLBAR;
 	    }
 	  else
@@ -8955,15 +8978,15 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 	}
       else if (x_coord >= frm_right)
 	{
-	  if (x_coord < FRAME_RIGHT_BORDER_END (f))
+	  if (x_coord < FRAME_RIGHT_INTERNAL_BORDER_END (f))
 	    {
 	      low_x_coord = frm_right;
-	      high_x_coord = FRAME_RIGHT_BORDER_END (f);
+	      high_x_coord = FRAME_RIGHT_INTERNAL_BORDER_END (f);
 	      position = OVER_BORDER;
 	    }
 	  else if (x_coord < FRAME_PIXWIDTH (f))
 	    {
-	      low_x_coord = FRAME_RIGHT_BORDER_END (f);
+	      low_x_coord = FRAME_RIGHT_INTERNAL_BORDER_END (f);
 	      high_x_coord = FRAME_PIXWIDTH (f);
 	      position = OVER_TOOLBAR;
 	    }
@@ -9142,19 +9165,27 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 
 	  for (*col = 0; *col <= Dynarr_length (db->runes); (*col)++)
 	    {
-	      int past_end = (*col == Dynarr_length (db->runes));
-
-	      if (!past_end)
-		rb = Dynarr_atp (db->runes, *col);
-
-	      if (past_end ||
-		  (rb->xpos <= x_coord && x_coord < rb->xpos + rb->width))
+	      if (*col == Dynarr_length (db->runes))
 		{
-		  if (past_end)
-		    {
-		      (*col)--;
-		      rb = Dynarr_atp (db->runes, *col);
-		    }
+		  /* We've run out of runes to look at.  Treat the same as
+		     the case below where we failed to find a non-glyph
+		     character. */
+		  if (dl->modeline)
+		    *modeline_closest = dl->end_charpos + dl->offset;
+		  else
+		    *closest = dl->end_charpos + dl->offset;
+
+		  if (check_margin_glyphs)
+		    get_position_object (dl, obj1, obj2, x_coord,
+					 &low_x_coord, &high_x_coord);
+
+		  UPDATE_CACHE_RETURN;
+		}
+
+	      rb = Dynarr_atp (db->runes, *col);
+
+	      if (rb->xpos <= x_coord && x_coord < rb->xpos + rb->width)
+		{
 
 		  *charpos = rb->charpos + dl->offset;
 		  low_x_coord = rb->xpos;
@@ -9228,9 +9259,8 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 
 		      UPDATE_CACHE_RETURN;
 		    }
-		  else if (past_end
-			   || (rb->type == RUNE_CHAR
-			       && rb->object.chr.ch == '\n'))
+		  else if (rb->type == RUNE_CHAR
+			   && rb->object.chr.ch == '\n')
 		    {
 		      (*row)--;
 		      /* At this point we may have glyphs in the right
@@ -9290,7 +9320,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 	  int defheight;
 
 	  lwin = wrap_window (*w);
-	  default_face_height_and_width (lwin, 0, &defheight);
+	  default_face_width_and_height (lwin, 0, &defheight);
 
 	  *row += (adj_area / defheight);
 	}
@@ -9656,50 +9686,50 @@ mark_subwindows_state_changed (void)
 /***************************************************************************/
 
 static int
-compute_rune_dynarr_usage (rune_dynarr *dyn, struct overhead_stats *ovstats)
+compute_rune_dynarr_usage (rune_dynarr *dyn, struct usage_stats *ustats)
 {
-  return dyn ? Dynarr_memory_usage (dyn, ovstats) : 0;
+  return dyn ? Dynarr_memory_usage (dyn, ustats) : 0;
 }
 
 static int
 compute_display_block_dynarr_usage (display_block_dynarr *dyn,
-				    struct overhead_stats *ovstats)
+				    struct usage_stats *ustats)
 {
   int total, i;
 
   if (!dyn)
     return 0;
 
-  total = Dynarr_memory_usage (dyn, ovstats);
+  total = Dynarr_memory_usage (dyn, ustats);
   for (i = 0; i < Dynarr_largest (dyn); i++)
-    total += compute_rune_dynarr_usage (Dynarr_at (dyn, i).runes, ovstats);
+    total += compute_rune_dynarr_usage (Dynarr_at (dyn, i).runes, ustats);
 
   return total;
 }
 
 static int
 compute_glyph_block_dynarr_usage (glyph_block_dynarr *dyn,
-				  struct overhead_stats *ovstats)
+				  struct usage_stats *ustats)
 {
-  return dyn ? Dynarr_memory_usage (dyn, ovstats) : 0;
+  return dyn ? Dynarr_memory_usage (dyn, ustats) : 0;
 }
 
 int
 compute_display_line_dynarr_usage (display_line_dynarr *dyn,
-				   struct overhead_stats *ovstats)
+				   struct usage_stats *ustats)
 {
   int total, i;
 
   if (!dyn)
     return 0;
 
-  total = Dynarr_memory_usage (dyn, ovstats);
+  total = Dynarr_memory_usage (dyn, ustats);
   for (i = 0; i < Dynarr_largest (dyn); i++)
     {
       struct display_line *dl = &Dynarr_at (dyn, i);
-      total += compute_display_block_dynarr_usage(dl->display_blocks, ovstats);
-      total += compute_glyph_block_dynarr_usage  (dl->left_glyphs,    ovstats);
-      total += compute_glyph_block_dynarr_usage  (dl->right_glyphs,   ovstats);
+      total += compute_display_block_dynarr_usage (dl->display_blocks, ustats);
+      total += compute_glyph_block_dynarr_usage  (dl->left_glyphs,    ustats);
+      total += compute_glyph_block_dynarr_usage  (dl->right_glyphs,   ustats);
     }
 
   return total;
@@ -9707,9 +9737,9 @@ compute_display_line_dynarr_usage (display_line_dynarr *dyn,
 
 int
 compute_line_start_cache_dynarr_usage (line_start_cache_dynarr *dyn,
-				       struct overhead_stats *ovstats)
+				       struct usage_stats *ustats)
 {
-  return dyn ? Dynarr_memory_usage (dyn, ovstats) : 0;
+  return dyn ? Dynarr_memory_usage (dyn, ustats) : 0;
 }
 
 #endif /* MEMORY_USAGE_STATS */

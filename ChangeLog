@@ -1,3 +1,80 @@
+2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.31 "ginger" is released.
+
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
+2011-03-24  Jerry James  <james@xemacs.org>
+
+	* INSTALL: "youself" -> "yourself".
+	* aclocal.m4: "dependancy" -> "dependency".
+	* configure.ac: "priveleges" -> "privileges".
+	* configure: Regenerate.
+
+2010-11-02  Mats Lidell  <matsl@xemacs.org>
+
+	* netinstall: removed 
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* aclocal.m4: Add standard permission boilerplate.
+
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* version.sh.in: 
+	* configure.ac (XE_COMPLEX_ARG, XE_EXPAND_VARIABLE):
+	Remove conditionals and information for InfoDock.
+
+2010-04-09  Ben Wing  <ben@xemacs.org>
+
+	* CHANGES-beta:
+	Update with my changes to the trunk since the release of 21.5.29
+	in 2009 up through April 9, 2010.
+
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* CHANGES-beta:
+	Update with my changes to the trunk since 2009-09-20.
+
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* CHANGES-beta:
+	Partially updated with last couple of months worth of changes.
+
+2010-03-18  Mike Sperber  <mike@xemacs.org>
+
+	* INSTALL: Reflect change from `lib' to `share'; also, document
+	how to invoke configure to get the old setting.
+
+	* configure.ac: Set LATE_PACKAGE_DIRECTORIES_USER_DEFINED if
+	`datadir' was changed; set `with_late_packages' to something
+	sensible for this case.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* configure.ac (XE_COMPLEX_ARG):
+	Correct doc of --quick-build: It also doesn't check for Lisp shadows.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* configure:
+	* configure.ac (XE_EXPAND_VARIABLE):
+	* configure.ac (TAB):
+	irix6-0.h renamed to irix6-5.h; sco7.h deleted.
+	bsd4-3.h renamed to bsd-common.h.
+
+	Simplify setting machine= for intel386, mips.
+
+	Put back linux.h.
+
+	Incorporate some stuff about debug/optimization flags in irix6-5.h
+	into configure.ac.
+
+	Add a comment about LCC stuff with optimization flags that should be
+	fixed up.
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* configure:
@@ -6601,3 +6678,23 @@ Sat Dec  7 16:28:10 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
 Thu Dec  5 11:56:05 1996  Joseph J Nuspl <nuspl@nvwls.cc.purdue.edu>
 
 	* configure.in (LIBS): Fix typo in dialog box test.
+
+
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.

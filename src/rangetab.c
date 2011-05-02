@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -90,8 +88,8 @@ mark_range_table (Lisp_Object obj)
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
 
-  for (i = 0; i < Dynarr_length (rt->entries); i++)
-    mark_object (Dynarr_at (rt->entries, i).val);
+  for (i = 0; i < gap_array_length (rt->entries); i++)
+    mark_object (rangetab_gap_array_at (rt->entries, i).val);
   
   return Qnil;
 }
@@ -104,13 +102,13 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
   int i;
 
   if (print_readably)
-    write_fmt_string_lisp (printcharfun, "#s(range-table type %s data (",
+    write_fmt_string_lisp (printcharfun, "#s(range-table :type %s :data (",
 			   1, range_table_type_to_symbol (rt->type));
   else
     write_ascstring (printcharfun, "#<range-table ");
-  for (i = 0; i < Dynarr_length (rt->entries); i++)
+  for (i = 0; i < gap_array_length (rt->entries); i++)
     {
-      struct range_table_entry *rte = Dynarr_atp (rt->entries, i);
+      struct range_table_entry rte = rangetab_gap_array_at (rt->entries, i);
       int so, ec;
       if (i > 0)
 	write_ascstring (printcharfun, " ");
@@ -124,16 +122,16 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
 	}
       write_fmt_string (printcharfun, "%c%ld %ld%c ",
 			print_readably ? '(' : so ? '(' : '[',
-			(long) (rte->first - so),
-			(long) (rte->last - ec),
+			(long) (rte.first - so),
+			(long) (rte.last - ec),
 			print_readably ? ')' : ec ? ']' : ')'
 			);
-      print_internal (rte->val, printcharfun, 1);
+      print_internal (rte.val, printcharfun, 1);
     }
   if (print_readably)
     write_ascstring (printcharfun, "))");
   else
-    write_fmt_string (printcharfun, " 0x%x>", rt->header.uid);
+    write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -143,13 +141,15 @@ range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
   Lisp_Range_Table *rt2 = XRANGE_TABLE (obj2);
   int i;
 
-  if (Dynarr_length (rt1->entries) != Dynarr_length (rt2->entries))
+  if (gap_array_length (rt1->entries) != gap_array_length (rt2->entries))
     return 0;
 
-  for (i = 0; i < Dynarr_length (rt1->entries); i++)
+  for (i = 0; i < gap_array_length (rt1->entries); i++)
     {
-      struct range_table_entry *rte1 = Dynarr_atp (rt1->entries, i);
-      struct range_table_entry *rte2 = Dynarr_atp (rt2->entries, i);
+      struct range_table_entry *rte1 =
+	rangetab_gap_array_atp (rt1->entries, i);
+      struct range_table_entry *rte2 =
+	rangetab_gap_array_atp (rt2->entries, i);
 
       if (rte1->first != rte2->first
 	  || rte1->last != rte2->last
@@ -161,17 +161,19 @@ range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-range_table_entry_hash (struct range_table_entry *rte, int depth)
+range_table_entry_hash (struct range_table_entry *rte, int depth,
+                        Boolint equalp)
 {
-  return HASH3 (rte->first, rte->last, internal_hash (rte->val, depth + 1));
+  return HASH3 (rte->first, rte->last,
+                internal_hash (rte->val, depth + 1, equalp));
 }
 
 static Hashcode
-range_table_hash (Lisp_Object obj, int depth)
+range_table_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
-  int size = Dynarr_length (rt->entries);
+  int size = gap_array_length (rt->entries);
   Hashcode hash = size;
 
   /* approach based on internal_array_hash(). */
@@ -179,8 +181,8 @@ range_table_hash (Lisp_Object obj, int depth)
     {
       for (i = 0; i < size; i++)
 	hash = HASH2 (hash,
-		      range_table_entry_hash (Dynarr_atp (rt->entries, i),
-					      depth));
+		      range_table_entry_hash
+		      (rangetab_gap_array_atp (rt->entries, i), depth, equalp));
       return hash;
     }
 
@@ -188,11 +190,31 @@ range_table_hash (Lisp_Object obj, int depth)
      A slightly better approach would be to offset by some
      noise factor from the points chosen below. */
   for (i = 0; i < 5; i++)
-    hash = HASH2 (hash, range_table_entry_hash (Dynarr_atp (rt->entries,
-							    i*size/5),
-						depth));
+    hash = HASH2 (hash,
+		  range_table_entry_hash
+		  (rangetab_gap_array_atp (rt->entries, i*size/5),
+                   depth, equalp));
   return hash;
 }
+
+#ifndef NEW_GC
+
+/* #### This leaks memory under NEW_GC.  To fix this, convert to Lisp object
+   gap array. */
+
+static void
+finalize_range_table (Lisp_Object obj)
+{
+  Lisp_Range_Table *rt = XRANGE_TABLE (obj);
+  if (rt->entries)
+    {
+      if (!DUMPEDP (rt->entries))
+	free_gap_array (rt->entries);
+      rt->entries = 0;
+    }
+}
+
+#endif /* not NEW_GC */
 
 static const struct memory_description rte_description_1[] = {
   { XD_LISP_OBJECT, offsetof (range_table_entry, val) },
@@ -204,28 +226,27 @@ static const struct sized_memory_description rte_description = {
   rte_description_1
 };
 
-static const struct memory_description rted_description_1[] = {
-  XD_DYNARR_DESC (range_table_entry_dynarr, &rte_description),
+static const struct memory_description rtega_description_1[] = {
+  XD_GAP_ARRAY_DESC (&rte_description),
   { XD_END }
 };
 
-static const struct sized_memory_description rted_description = {
-  sizeof (range_table_entry_dynarr),
-  rted_description_1
+static const struct sized_memory_description rtega_description = {
+  0, rtega_description_1
 };
 
 static const struct memory_description range_table_description[] = {
   { XD_BLOCK_PTR,  offsetof (Lisp_Range_Table, entries),  1,
-    { &rted_description } },
+    { &rtega_description } },
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("range-table", range_table,
-			       1, /*dumpable-flag*/
-                               mark_range_table, print_range_table, 0,
-			       range_table_equal, range_table_hash,
-			       range_table_description,
-			       Lisp_Range_Table);
+DEFINE_DUMPABLE_LISP_OBJECT ("range-table", range_table,
+			     mark_range_table, print_range_table,
+			     IF_OLD_GC (finalize_range_table),
+			     range_table_equal, range_table_hash,
+			     range_table_description,
+			     Lisp_Range_Table);
 
 /************************************************************************/
 /*                        Range table operations                        */
@@ -238,12 +259,12 @@ verify_range_table (Lisp_Range_Table *rt)
 {
   int i;
 
-  for (i = 0; i < Dynarr_length (rt->entries); i++)
+  for (i = 0; i < gap_array_length (rt->entries); i++)
     {
-      struct range_table_entry *rte = Dynarr_atp (rt->entries, i);
+      struct range_table_entry *rte = rangetab_gap_array_atp (rt->entries, i);
       assert (rte->last >= rte->first);
       if (i > 0)
-	assert (Dynarr_at (rt->entries, i - 1).last <= rte->first);
+	assert (rangetab_gap_array_at (rt->entries, i - 1).last <= rte->first);
     }
 }
 
@@ -253,14 +274,18 @@ verify_range_table (Lisp_Range_Table *rt)
 
 #endif
 
-/* Look up in a range table without the Dynarr wrapper.
-   Used also by the unified range table format. */
+/* Locate the range table entry corresponding to the value POS, and return
+   it.  If found, FOUNDP is set to 1 and the return value specifies an entry
+   that encloses POS.  Otherwise, FOUNDP is set to 0 and the return value
+   specifies where an entry that encloses POS would be inserted. */
 
-static Lisp_Object
-get_range_table (EMACS_INT pos, int nentries, struct range_table_entry *tab,
-		 Lisp_Object default_)
+static Elemcount
+get_range_table_pos (Elemcount pos, Elemcount nentries,
+		     struct range_table_entry *tab,
+		     Elemcount gappos, Elemcount gapsize,
+		     int *foundp)
 {
-  int left = 0, right = nentries;
+  Elemcount left = 0, right = nentries;
 
   /* binary search for the entry.  Based on similar code in
      extent_list_locate(). */
@@ -268,14 +293,41 @@ get_range_table (EMACS_INT pos, int nentries, struct range_table_entry *tab,
     {
       /* RIGHT might not point to a valid entry (i.e. it's at the end
 	 of the list), so NEWPOS must round down. */
-      int newpos = (left + right) >> 1;
-      struct range_table_entry *entry = tab + newpos;
+      Elemcount newpos = (left + right) >> 1;
+      struct range_table_entry *entry =
+	tab + GAP_ARRAY_ARRAY_TO_MEMORY_POS_1 (newpos, gappos, gapsize);
       if (pos >= entry->last)
 	left = newpos + 1;
       else if (pos < entry->first)
 	right = newpos;
       else
-	return entry->val;
+	{
+	  *foundp = 1;
+	  return newpos;
+	}
+    }
+
+  *foundp = 0;
+  return left;
+}
+
+/* Look up in a range table without the gap array wrapper.
+   Used also by the unified range table format. */
+
+static Lisp_Object
+get_range_table (Elemcount pos, Elemcount nentries,
+		 struct range_table_entry *tab,
+		 Elemcount gappos, Elemcount gapsize,
+		 Lisp_Object default_)
+{
+  int foundp;
+  Elemcount entrypos = get_range_table_pos (pos, nentries, tab, gappos,
+					    gapsize, &foundp);
+  if (foundp)
+    {
+      struct range_table_entry *entry =
+	tab + GAP_ARRAY_ARRAY_TO_MEMORY_POS_1 (entrypos, gappos, gapsize);
+      return entry->val;
     }
 
   return default_;
@@ -332,11 +384,11 @@ Range tables allow you to efficiently set values for ranges of integers.
 */
        (type))
 {
-  Lisp_Range_Table *rt = ALLOC_LCRECORD_TYPE (Lisp_Range_Table,
-					      &lrecord_range_table);
-  rt->entries = Dynarr_new (range_table_entry);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (range_table);
+  Lisp_Range_Table *rt = XRANGE_TABLE (obj);
+  rt->entries = make_gap_array (sizeof (struct range_table_entry), 0);
   rt->type = range_table_symbol_to_type (type);
-  return wrap_range_table (rt);
+  return obj;
 }
 
 DEFUN ("copy-range-table", Fcopy_range_table, 1, 1, 0, /*
@@ -347,17 +399,22 @@ The values will not themselves be copied.
        (range_table))
 {
   Lisp_Range_Table *rt, *rtnew;
+  Lisp_Object obj;
+  Elemcount i;
 
   CHECK_RANGE_TABLE (range_table);
   rt = XRANGE_TABLE (range_table);
 
-  rtnew = ALLOC_LCRECORD_TYPE (Lisp_Range_Table, &lrecord_range_table);
-  rtnew->entries = Dynarr_new (range_table_entry);
+  obj = ALLOC_NORMAL_LISP_OBJECT (range_table);
+  rtnew = XRANGE_TABLE (obj);
+  rtnew->entries = make_gap_array (sizeof (struct range_table_entry), 0);
   rtnew->type = rt->type;
 
-  Dynarr_add_many (rtnew->entries, Dynarr_begin (rt->entries),
-		   Dynarr_length (rt->entries));
-  return wrap_range_table (rtnew);
+  for (i = 0; i < gap_array_length (rt->entries); i++)
+    rtnew->entries =
+      gap_array_insert_els (rtnew->entries, i,
+			    rangetab_gap_array_atp (rt->entries, i), 1);
+  return obj;
 }
 
 DEFUN ("get-range-table", Fget_range_table, 2, 3, 0, /*
@@ -373,8 +430,12 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
 
   CHECK_INT_COERCE_CHAR (pos);
 
-  return get_range_table (XINT (pos), Dynarr_length (rt->entries),
-			  Dynarr_begin (rt->entries), default_);
+  return get_range_table (XINT (pos), gap_array_length (rt->entries),
+			  gap_array_begin (rt->entries,
+					   struct range_table_entry),
+			  gap_array_gappos (rt->entries),
+			  gap_array_gapsize (rt->entries),
+			  default_);
 }
 
 static void
@@ -414,6 +475,7 @@ put_range_table (Lisp_Object table, EMACS_INT first,
   int i;
   int insert_me_here = -1;
   Lisp_Range_Table *rt = XRANGE_TABLE (table);
+  int foundp;
 
   external_to_internal_adjust_ends (rt->type, &first, &last);
   if (first == last)
@@ -423,15 +485,59 @@ put_range_table (Lisp_Object table, EMACS_INT first,
        open. #### Should we signal an error? */
     return;
 
+  if (DUMPEDP (rt->entries))
+    rt->entries = gap_array_clone (rt->entries);
+  
+  i = get_range_table_pos (first, gap_array_length (rt->entries),
+			   gap_array_begin (rt->entries,
+					    struct range_table_entry),
+			   gap_array_gappos (rt->entries),
+			   gap_array_gapsize (rt->entries), &foundp);
+
+#ifdef ERROR_CHECK_TYPES
+  if (foundp)
+    {
+      if (i < gap_array_length (rt->entries))
+	{
+	  struct range_table_entry *entry =
+	    rangetab_gap_array_atp (rt->entries, i);
+	  assert (first >= entry->first && first < entry->last);
+	}
+    }
+  else
+    {
+      if (i < gap_array_length (rt->entries))
+	{
+	  struct range_table_entry *entry =
+	    rangetab_gap_array_atp (rt->entries, i);
+	  assert (first < entry->first);
+	}
+      if (i > 0)
+	{
+	  struct range_table_entry *entry =
+	    rangetab_gap_array_atp (rt->entries, i - 1);
+	  assert (first >= entry->last);
+	}
+    }
+#endif /* ERROR_CHECK_TYPES */
+
+  /* If the beginning of the new range isn't within any existing range,
+     it might still be just grazing the end of an end-open range (remember,
+     internally all ranges are start-close end-open); so back up one
+     so we consider this range. */
+  if (!foundp && i > 0)
+    i--;
+  
   /* Now insert in the proper place.  This gets tricky because
      we may be overlapping one or more existing ranges and need
      to fix them up. */
 
   /* First delete all sections of any existing ranges that overlap
      the new range. */
-  for (i = 0; i < Dynarr_length (rt->entries); i++)
+  for (; i < gap_array_length (rt->entries); i++)
     {
-      struct range_table_entry *entry = Dynarr_atp (rt->entries, i);
+      struct range_table_entry *entry =
+	rangetab_gap_array_atp (rt->entries, i);
       /* We insert before the first range that begins at or after the
 	 new range. */
       if (entry->first >= first && insert_me_here < 0)
@@ -475,7 +581,8 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 	  insert_me_too.last = entry->last;
 	  insert_me_too.val = entry->val;
 	  entry->last = first;
-	  Dynarr_insert_many (rt->entries, &insert_me_too, 1, i + 1);
+	  rt->entries =
+	    gap_array_insert_els (rt->entries, i + 1, &insert_me_too, 1);
 	}
       else if (entry->last >= last)
 	{
@@ -496,7 +603,7 @@ put_range_table (Lisp_Object table, EMACS_INT first,
       else
 	{
 	  /* existing is entirely within new. */
-	  Dynarr_delete_many (rt->entries, i, 1);
+	  gap_array_delete_els (rt->entries, i, 1);
 	  i--; /* back up since everything shifted one to the left. */
 	}
     }
@@ -517,7 +624,8 @@ put_range_table (Lisp_Object table, EMACS_INT first,
     insert_me.last = last;
     insert_me.val = val;
 
-    Dynarr_insert_many (rt->entries, &insert_me, 1, insert_me_here);
+    rt->entries =
+      gap_array_insert_els (rt->entries, insert_me_here, &insert_me, 1);
   }
 
   /* Now see if we can combine this entry with adjacent ones just
@@ -525,12 +633,12 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 
   if (insert_me_here > 0)
     {
-      struct range_table_entry *entry = Dynarr_atp (rt->entries,
-						    insert_me_here - 1);
+      struct range_table_entry *entry =
+	rangetab_gap_array_atp (rt->entries, insert_me_here - 1);
       if (EQ (val, entry->val) && entry->last == first)
 	{
 	  entry->last = last;
-	  Dynarr_delete_many (rt->entries, insert_me_here, 1);
+	  gap_array_delete_els (rt->entries, insert_me_here, 1);
 	  insert_me_here--;
 	  /* We have morphed into a larger range.  Update our records
 	     in case we also combine with the one after. */
@@ -538,14 +646,14 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 	}
     }
 
-  if (insert_me_here < Dynarr_length (rt->entries) - 1)
+  if (insert_me_here < gap_array_length (rt->entries) - 1)
     {
-      struct range_table_entry *entry = Dynarr_atp (rt->entries,
-						    insert_me_here + 1);
+      struct range_table_entry *entry =
+	rangetab_gap_array_atp (rt->entries, insert_me_here + 1);
       if (EQ (val, entry->val) && entry->first == last)
 	{
 	  entry->first = first;
-	  Dynarr_delete_many (rt->entries, insert_me_here, 1);
+	  gap_array_delete_els (rt->entries, insert_me_here, 1);
 	}
     }
 }
@@ -584,7 +692,7 @@ Flush RANGE-TABLE.
        (range_table))
 {
   CHECK_RANGE_TABLE (range_table);
-  Dynarr_reset (XRANGE_TABLE (range_table)->entries);
+  gap_array_delete_all_els (XRANGE_TABLE (range_table)->entries);
   return Qnil;
 }
 
@@ -610,17 +718,18 @@ this guarantee doesn't hold.
 
   /* Do not "optimize" by pulling out the length computation below!
      FUNCTION may have changed the table. */
-  for (i = 0; i < Dynarr_length (rt->entries); i++)
+  for (i = 0; i < gap_array_length (rt->entries); i++)
     {
-      struct range_table_entry *entry = Dynarr_atp (rt->entries, i);
+      struct range_table_entry entry =
+	rangetab_gap_array_at (rt->entries, i);
       EMACS_INT first, last;
       Lisp_Object args[4];
       int oldlen;
 
     again:
-      first = entry->first;
-      last = entry->last;
-      oldlen = Dynarr_length (rt->entries);
+      first = entry.first;
+      last = entry.last;
+      oldlen = gap_array_length (rt->entries);
       args[0] = function;
       /* Fix up the numbers in accordance with the open/closedness of the
 	 table. */
@@ -630,12 +739,12 @@ this guarantee doesn't hold.
 	args[1] = make_int (premier);
 	args[2] = make_int (dernier);
       }
-      args[3] = entry->val;
+      args[3] = entry.val;
       Ffuncall (countof (args), args);
       /* Has FUNCTION removed the entry? */
-      if (oldlen > Dynarr_length (rt->entries)
-	  && i < Dynarr_length (rt->entries)
-	  && (first != entry->first || last != entry->last))
+      if (oldlen > gap_array_length (rt->entries)
+	  && i < gap_array_length (rt->entries)
+	  && (first != entry.first || last != entry.last))
 	goto again;
       }
 
@@ -679,13 +788,38 @@ rangetab_instantiate (Lisp_Object plist)
 {
   Lisp_Object data = Qnil, type = Qnil, rangetab;
 
-  PROPERTY_LIST_LOOP_3 (key, value, plist)
+  if (KEYWORDP (Fcar (plist)))
     {
-      if (EQ (key, Qtype)) type = value;
-      else if (EQ (key, Qdata)) data = value;
-      else
-	ABORT ();
+      PROPERTY_LIST_LOOP_3 (key, value, plist)
+	{
+	  if (EQ (key, Q_type)) type = value;
+	  else if (EQ (key, Q_data)) data = value;
+	  else if (!KEYWORDP (key))
+            signal_error
+	      (Qinvalid_read_syntax, 
+	       "can't mix keyword and non-keyword structure syntax",
+	       key);
+	  else 
+	    ABORT ();
+	}
     }
+#ifdef NEED_TO_HANDLE_21_4_CODE
+  else
+    {
+      PROPERTY_LIST_LOOP_3 (key, value, plist)
+	{
+	  if (EQ (key, Qtype)) type = value;
+	  else if (EQ (key, Qdata)) data = value;
+	  else if (KEYWORDP (key))
+            signal_error
+	      (Qinvalid_read_syntax, 
+	       "can't mix keyword and non-keyword structure syntax",
+	       key);
+	  else 
+	    ABORT ();
+	}
+    }
+#endif /* NEED_TO_HANDLE_21_4_CODE */
 
   rangetab = Fmake_range_table (type);
 
@@ -777,7 +911,7 @@ int
 unified_range_table_bytes_needed (Lisp_Object rangetab)
 {
   return (sizeof (struct range_table_entry) *
-	  (Dynarr_length (XRANGE_TABLE (rangetab)->entries) - 1) +
+	  (gap_array_length (XRANGE_TABLE (rangetab)->entries) - 1) +
 	  sizeof (struct unified_range_table) +
 	  /* ALIGNOF a struct may be too big. */
 	  /* We have four bytes for the size numbers, and an extra
@@ -797,9 +931,10 @@ unified_range_table_copy_data (Lisp_Object rangetab, void *dest)
      char * and adding sizeof(int), because that will lead to
      mis-aligned data on the Alpha machines. */
   struct unified_range_table *un;
-  range_table_entry_dynarr *rted = XRANGE_TABLE (rangetab)->entries;
+  Gap_Array *rtega = XRANGE_TABLE (rangetab)->entries;
   int total_needed = unified_range_table_bytes_needed (rangetab);
   void *new_dest = ALIGN_PTR ((char *) dest + 4, EMACS_INT);
+  Elemcount i;
 
   * (char *) dest = (char) ((char *) new_dest - (char *) dest);
   * ((unsigned char *) dest + 1) = total_needed & 0xFF;
@@ -808,10 +943,10 @@ unified_range_table_copy_data (Lisp_Object rangetab, void *dest)
   total_needed >>= 8;
   * ((unsigned char *) dest + 3) = total_needed & 0xFF;
   un = (struct unified_range_table *) new_dest;
-  un->nentries = Dynarr_length (rted);
+  un->nentries = gap_array_length (rtega);
   un->type = XRANGE_TABLE (rangetab)->type;
-  memcpy (&un->first, Dynarr_begin (rted),
-	  sizeof (struct range_table_entry) * Dynarr_length (rted));
+  for (i = 0; i < gap_array_length (rtega); i++)
+    (&un->first)[i] = rangetab_gap_array_at (rtega, i);
 }
 
 /* Return number of bytes actually used by a unified range table. */
@@ -854,7 +989,7 @@ unified_range_table_lookup (void *unrangetab, EMACS_INT pos,
   new_dest = (char *) unrangetab + * (char *) unrangetab;
   un = (struct unified_range_table *) new_dest;
 
-  return get_range_table (pos, un->nentries, &un->first, default_);
+  return get_range_table (pos, un->nentries, &un->first, 0, 0, default_);
 }
 
 /* Return number of entries in a unified range table. */
@@ -902,7 +1037,7 @@ unified_range_table_get_range (void *unrangetab, int offset,
 void
 syms_of_rangetab (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (range_table);
+  INIT_LISP_OBJECT (range_table);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qrange_tablep);
   DEFSYMBOL (Qrange_table);
@@ -930,6 +1065,10 @@ structure_type_create_rangetab (void)
 
   st = define_structure_type (Qrange_table, 0, rangetab_instantiate);
 
+  define_structure_type_keyword (st, Q_data, rangetab_data_validate);
+  define_structure_type_keyword (st, Q_type, rangetab_type_validate);
+#ifdef NEED_TO_HANDLE_21_4_CODE
   define_structure_type_keyword (st, Qdata, rangetab_data_validate);
   define_structure_type_keyword (st, Qtype, rangetab_type_validate);
+#endif /* NEED_TO_HANDLE_21_4_CODE */
 }

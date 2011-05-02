@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 /* More syncing: FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org>
@@ -108,6 +106,8 @@ int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Vdirectory_sep_char;
 
+int default_file_system_ignore_case;
+
 #ifdef HAVE_FSYNC
 /* Nonzero means skip the call to fsync in Fwrite-region.  */
 int write_region_inhibit_fsync;
@@ -129,8 +129,6 @@ Lisp_Object Qexcl;
 Lisp_Object Qauto_save_hook;
 Lisp_Object Qauto_save_error;
 Lisp_Object Qauto_saving;
-
-Lisp_Object Qcar_less_than_car;
 
 Lisp_Object Qcompute_buffer_file_truename;
 
@@ -611,7 +609,7 @@ In addition, this function makes an attempt to choose a name that
 does not specify an existing file.  To make this work, PREFIX should
 be an absolute file name.
 
-This function is analagous to mktemp(3) under POSIX, and as with it, there
+This function is analogous to mktemp(3) under POSIX, and as with it, there
 exists a race condition between the test for the existence of the new file
 and its creation.  See `make-temp-file' for a function which avoids this
 race condition by specifying the appropriate flags to `write-region'. 
@@ -2322,7 +2320,7 @@ check_writable (const Ibyte *filename)
   GENERIC_MAPPING genericMapping;
   DWORD accessMask;
   PRIVILEGE_SET PrivilegeSet;
-  DWORD dwPrivSetSize = sizeof( PRIVILEGE_SET );
+  DWORD dwPrivSetSize = sizeof ( PRIVILEGE_SET );
   BOOL fAccessGranted = FALSE;
   DWORD dwAccessAllowed;
   Extbyte *fnameext;
@@ -2330,48 +2328,57 @@ check_writable (const Ibyte *filename)
   LOCAL_FILE_FORMAT_TO_TSTR (filename, fnameext);
 
   // First check for a normal file with the old-style readonly bit
-  attributes = qxeGetFileAttributes(fnameext);
-  if (FILE_ATTRIBUTE_READONLY == (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
+  attributes = qxeGetFileAttributes (fnameext);
+  if (FILE_ATTRIBUTE_READONLY ==
+      (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
     return 0;
 
   /* Win32 prototype lacks const. */
-  error = qxeGetNamedSecurityInfo(fnameext, SE_FILE_OBJECT, 
-				  DACL_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
-				  &psidOwner, &psidGroup, &pDacl, &pSacl, &pDesc);
-  if(error != ERROR_SUCCESS) { // FAT?
-    attributes = qxeGetFileAttributes(fnameext);
-    return (attributes & FILE_ATTRIBUTE_DIRECTORY) || (0 == (attributes & FILE_ATTRIBUTE_READONLY));
-  }
+  error = qxeGetNamedSecurityInfo (fnameext, SE_FILE_OBJECT, 
+				   DACL_SECURITY_INFORMATION|
+				   GROUP_SECURITY_INFORMATION|
+				   OWNER_SECURITY_INFORMATION,
+				  &psidOwner, &psidGroup, &pDacl, &pSacl,
+				   &pDesc);
+  if (error != ERROR_SUCCESS)
+    { // FAT?
+      attributes = qxeGetFileAttributes (fnameext);
+      return (attributes & FILE_ATTRIBUTE_DIRECTORY) ||
+	(0 == (attributes & FILE_ATTRIBUTE_READONLY));
+    }
 
   genericMapping.GenericRead = FILE_GENERIC_READ;
   genericMapping.GenericWrite = FILE_GENERIC_WRITE;
   genericMapping.GenericExecute = FILE_GENERIC_EXECUTE;
   genericMapping.GenericAll = FILE_ALL_ACCESS;
 
-  if(!ImpersonateSelf(SecurityDelegation)) {
-    return 0;
-  }
-  if(!OpenThreadToken(GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE, &tokenHandle)) {
-    return 0;
-  }
+  if (!ImpersonateSelf (SecurityDelegation))
+    {
+      return 0;
+    }
+  if (!OpenThreadToken (GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE,
+		       &tokenHandle))
+    {
+      return 0;
+    }
 
   accessMask = GENERIC_WRITE;
-  MapGenericMask(&accessMask, &genericMapping);
+  MapGenericMask (&accessMask, &genericMapping);
 
-  if(!AccessCheck(pDesc, tokenHandle, accessMask, &genericMapping,
+  if (!AccessCheck(pDesc, tokenHandle, accessMask, &genericMapping,
 		  &PrivilegeSet,       // receives privileges used in check
 		  &dwPrivSetSize,      // size of PrivilegeSet buffer
 		  &dwAccessAllowed,    // receives mask of allowed access rights
 		  &fAccessGranted)) 
     {
-      CloseHandle(tokenHandle);
+      CloseHandle (tokenHandle);
       RevertToSelf();
-      LocalFree(pDesc);
+      LocalFree (pDesc);
       return 0;
     }
-  CloseHandle(tokenHandle);
+  CloseHandle (tokenHandle);
   RevertToSelf();
-  LocalFree(pDesc);
+  LocalFree (pDesc);
   return fAccessGranted == TRUE;
 #elif defined (HAVE_EACCESS)
   return (qxe_eaccess (filename, W_OK) >= 0);
@@ -2959,7 +2966,7 @@ under Mule, is very difficult.)
 
 	  RETURN_UNGCPRO
 	    (Fsignal (Qfile_error,
-		      list2 (build_msg_string("not a regular file"),
+		      list2 (build_msg_string ("not a regular file"),
 			     filename)));
 	}
     }
@@ -3283,7 +3290,7 @@ under Mule, is very difficult.)
 	  Lisp_Object insval = call1 (p, make_int (inserted));
 	  if (!NILP (insval))
 	    {
-	      CHECK_NATNUM (insval);
+              check_integer_range (insval, Qzero, make_int (EMACS_INT_MAX));
 	      inserted = XINT (insval);
 	    }
 	}
@@ -3666,7 +3673,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);     /* Check basic validity of return value */
-      annotations = merge (annotations, res, Qcar_less_than_car);
+      annotations = list_merge (annotations, res, check_lss_key_car, Qnil,
+				Qnil);
       p = Fcdr (p);
     }
 
@@ -3697,7 +3705,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);
-      annotations = merge (annotations, res, Qcar_less_than_car);
+      annotations = list_merge (annotations, res, check_lss_key_car, Qnil,
+				Qnil);
       p = Fcdr (p);
     }
 
@@ -4261,7 +4270,7 @@ Non-nil second argument means save only current buffer.
 	      auto_saved++;
 
 	      /* Handler killed their own buffer! */
-	      if (!BUFFER_LIVE_P(b))
+	      if (!BUFFER_LIVE_P (b))
 		continue;
 
 	      b->auto_save_modified = BUF_MODIFF (b);
@@ -4370,7 +4379,6 @@ syms_of_fileio (void)
   DEFSYMBOL (Qwrite_region);
   DEFSYMBOL (Qverify_visited_file_modtime);
   DEFSYMBOL (Qset_visited_file_modtime);
-  DEFSYMBOL (Qcar_less_than_car); /* Vomitous! */
   DEFSYMBOL (Qexcl);
 
   DEFSYMBOL (Qauto_save_hook);
@@ -4551,6 +4559,16 @@ on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.
 */ );
   Vdirectory_sep_char = make_char (DEFAULT_DIRECTORY_SEP);
+
+  DEFVAR_CONST_BOOL ("default-file-system-ignore-case", &default_file_system_ignore_case /*
+What `file-system-ignore-case-p' returns by default.
+This is in the case that nothing in `file-system-case-alist' matches.
+*/ );
+#ifdef DEFAULT_FILE_SYSTEM_IGNORE_CASE
+  default_file_system_ignore_case = DEFAULT_FILE_SYSTEM_IGNORE_CASE;
+#else
+  default_file_system_ignore_case = 0;
+#endif
 }
 
 void

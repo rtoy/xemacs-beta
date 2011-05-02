@@ -1,13 +1,13 @@
 /* Define frame-object for XEmacs.
    Copyright (C) 1988, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 2002 Ben Wing.
+   Copyright (C) 1995, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30. */
 
@@ -60,7 +58,7 @@ extern Lisp_Object Qunsplittable, Quse_backing_store, Qvisible, Qvisual_bell;
 extern Lisp_Object Vframe_icon_title_format, Vframe_title_format;
 extern Lisp_Object Vmouse_motion_handler;
 
-DECLARE_LRECORD (frame, struct frame);
+DECLARE_LISP_OBJECT (frame, struct frame);
 #define XFRAME(x) XRECORD (x, frame, struct frame)
 #define wrap_frame(p) wrap_record (p, frame)
 #define FRAMEP(x) RECORDP (x, frame)
@@ -120,22 +118,22 @@ Lisp_Object frame_device (struct frame *f);
 void update_frame_title (struct frame *f);
 Lisp_Object next_frame (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object previous_frame (Lisp_Object, Lisp_Object, Lisp_Object);
+void pixel_to_frame_unit_size (struct frame *f, int pixel_width, int pixel_height,
+			 int *char_width, int *char_height);
+void frame_unit_to_pixel_size (struct frame *f, int char_width, int char_height,
+			 int *pixel_width, int *pixel_height);
 void pixel_to_char_size (struct frame *f, int pixel_width, int pixel_height,
 			 int *char_width, int *char_height);
 void char_to_pixel_size (struct frame *f, int char_width, int char_height,
 			 int *pixel_width, int *pixel_height);
 void round_size_to_char (struct frame *f, int in_width, int in_height,
 			 int *out_width, int *out_height);
-void pixel_to_real_char_size (struct frame *f, int pixel_width, int pixel_height,
-			 int *char_width, int *char_height);
-void char_to_real_pixel_size (struct frame *f, int char_width, int char_height,
-			 int *pixel_width, int *pixel_height);
-void round_size_to_real_char (struct frame *f, int in_width, int in_height,
-			      int *out_width, int *out_height);
 void change_frame_size (struct frame *frame,
 			int newlength, int newwidth,
 			int delay);
 void adjust_frame_size (struct frame *frame);
+void internal_set_frame_size (struct frame *f, int cols, int rows,
+			      int pretend);
 void frame_size_slipped (Lisp_Object specifier, struct frame *f,
 			 Lisp_Object oldval);
 void select_frame_1 (Lisp_Object frame);
@@ -160,5 +158,19 @@ void update_frame_icon (struct frame *f);
 void invalidate_vertical_divider_cache_in_frame (struct frame *f);
 
 void init_frame (void);
+
+enum edge_pos
+{
+  TOP_EDGE,
+  BOTTOM_EDGE,
+  LEFT_EDGE,
+  RIGHT_EDGE,
+  NUM_EDGES
+};
+
+/* Iterate over all possible edge positions */
+#define EDGE_POS_LOOP(var)				\
+  for (var = (enum edge_pos) 0; var < NUM_EDGES;	\
+       var = (enum edge_pos) (var + 1))
 
 #endif /* INCLUDED_frame_h_ */

@@ -6,10 +6,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -160,9 +158,9 @@ hmenu_to_lisp_object (HMENU hmenu)
 static Lisp_Object
 allocate_menu_item_id (Lisp_Object path, Lisp_Object name, Lisp_Object suffix)
 {
-  UINT id = MENU_ITEM_ID_BITS (HASH3 (internal_hash (path, 0),
-				      internal_hash (name, 0),
-				      internal_hash (suffix, 0)));
+  UINT id = MENU_ITEM_ID_BITS (HASH3 (internal_hash (path, 0, 0),
+				      internal_hash (name, 0, 0),
+				      internal_hash (suffix, 0, 0)));
   do {
       id = MENU_ITEM_ID_BITS (id + 1);
   } while (GetMenuState (top_level_menu, id, MF_BYCOMMAND) != 0xFFFFFFFF);
@@ -202,18 +200,18 @@ checksum_menu_item (Lisp_Object item)
       if (separator_string_p (XSTRING_DATA (item)))
 	return 13;
       else
-	return internal_hash (item, 0) + 13;
+	return internal_hash (item, 0, 0) + 13;
     }
   else if (CONSP (item))
     {
       /* Submenu - hash by its string name + 0 */
-      return internal_hash (XCAR (item), 0);
+      return internal_hash (XCAR (item), 0, 0);
     }
   else if (VECTORP (item))
     {
       /* An ordinary item - hash its name and callback form. */
-      return HASH2 (internal_hash (XVECTOR_DATA(item)[0], 0),
-		    internal_hash (XVECTOR_DATA(item)[1], 0));
+      return HASH2 (internal_hash (XVECTOR_DATA(item)[0], 0, 0),
+		    internal_hash (XVECTOR_DATA(item)[1], 0, 0));
     }
 
   /* An error - will be caught later */
@@ -521,7 +519,7 @@ populate:
   /* Come with empty hash table */
   if (NILP (FRAME_MSWINDOWS_MENU_HASH_TABLE (f)))
     FRAME_MSWINDOWS_MENU_HASH_TABLE (f) =
-      make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+      make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qequal);
   else
     Fclrhash (FRAME_MSWINDOWS_MENU_HASH_TABLE (f));
 
@@ -832,7 +830,7 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
 
   current_menudesc = menu_desc;
   current_hash_table =
-    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, Qequal);
   menu = create_empty_popup_menu ();
   Fputhash (hmenu_to_lisp_object (menu), Qnil, current_hash_table);
   top_level_menu = menu;

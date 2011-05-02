@@ -3,13 +3,14 @@
    Copyright (C) 1994 Amdahl Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -75,7 +74,10 @@ x_free_scrollbar_instance (struct scrollbar_instance *instance)
   if (instance->scrollbar_data)
     {
       if (SCROLLBAR_X_NAME (instance))
-	xfree (SCROLLBAR_X_NAME (instance));
+	{
+	  xfree (SCROLLBAR_X_NAME (instance));
+	  SCROLLBAR_X_NAME (instance) = 0;
+	}
 
       if (SCROLLBAR_X_WIDGET (instance))
 	{
@@ -86,6 +88,7 @@ x_free_scrollbar_instance (struct scrollbar_instance *instance)
 	}
 
       xfree (instance->scrollbar_data);
+      instance->scrollbar_data = 0;
     }
 }
 
@@ -283,7 +286,7 @@ x_update_scrollbar_instance_status (struct window *w, int active, int size,
 	    }
 	}
 
-      if (!wv->scrollbar_data) ABORT ();
+      assert (wv->scrollbar_data);
       free_widget_value_tree (wv);
     }
   else if (managed)
@@ -693,23 +696,18 @@ x_update_frame_scrollbars (struct frame *f)
 
 #ifdef MEMORY_USAGE_STATS
 
-static int
+static Bytecount
 x_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 				    struct scrollbar_instance *inst,
-				    struct overhead_stats *ovstats)
+				    struct usage_stats *ustats)
 {
-  int total = 0;
+  Bytecount total = 0;
+  struct x_scrollbar_data *data =
+    (struct x_scrollbar_data *) inst->scrollbar_data;
 
-  while (inst)
-    {
-      struct x_scrollbar_data *data =
-	(struct x_scrollbar_data *) inst->scrollbar_data;
-
-      total += malloced_storage_size (data, sizeof (*data), ovstats);
-      total += malloced_storage_size (data->name, 1 + strlen (data->name),
-				      ovstats);
-      inst = inst->next;
-    }
+  total += malloced_storage_size (data, sizeof (*data), ustats);
+  total += malloced_storage_size (data->name, 1 + strlen (data->name),
+				  ustats);
 
   return total;
 }

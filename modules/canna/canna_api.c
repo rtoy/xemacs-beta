@@ -2,14 +2,14 @@
 
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2005 Ben Wing.
+   Copyright (C) 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.3.  Not in FSF. */
 
@@ -661,7 +659,7 @@ Get current mode string.
 
 #define RKBUFSIZE 1024
 
-static unsigned char yomibuf[RKBUFSIZE];
+static UExtbyte yomibuf[RKBUFSIZE];
 static short kugiri[RKBUFSIZE / 2];
 
 static int
@@ -720,7 +718,7 @@ Clause separator is set.
   strncpy ((char *) yomibuf, ext, sizeof (yomibuf));
   yomibuf[sizeof (yomibuf) - 1] = '\0';
 
-  nbun = RkBgnBun (IRCP_context, yomibuf, strlen ((char *) yomibuf),
+  nbun = RkBgnBun (IRCP_context, (char *) yomibuf, strlen ((char *) yomibuf),
 		   (RK_XFER << RK_XFERBITS) | RK_KFER);
 
   return kanjiYomiList (IRCP_context, nbun);

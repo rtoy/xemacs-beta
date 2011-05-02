@@ -3,22 +3,21 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
-XEmacs is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
-/* Synched up with: FSF 19.31. */
+/* Synced up with: FSF 23.1.92. */
+/* Synced by: Ben Wing, 2-18-10. */
 
 /* This file written by James Van Artsdalen of Dell Computer Corporation.
  * james@bigtex.cactus.org.  Subsequently improved for Dell 2.2 by Eric
@@ -34,6 +33,11 @@ Boston, MA 02111-1307, USA.  */
 
 #define SYSTEM_TYPE "usg-unix-v"
 
+/* Delete HAVE_TERMIO, SYSV_SYSTEM_DIR, KERNEL_FILE, LDAV_SYMBOL,
+   sigsetmask, _setjmp, _longjmp, HAVE_INDEX, HAVE_RINDEX, TERMINFO,
+   HAVE_SYSV_SIGPAUSE, BSTRING, SIGTYPE -- not used in XEmacs or found by
+   configure */
+
 /* Letter to use in finding device name of first pty,
  * if system supports pty's.  'p' means it is /dev/ptyp0  */
 
@@ -45,15 +49,6 @@ Boston, MA 02111-1307, USA.  */
  * /usr/spool/mail/$USER.lock.  */
 
 /* #define MAIL_USE_FLOCK */
-
-/* The file containing the kernel's symbol table is called /unix.  */
-
-#define KERNEL_FILE "/unix"
-
-/* The symbol in the kernel where the load average is found
- * is named avenrun.  */
-
-#define LDAV_SYMBOL "avenrun"
 
 /* Special hacks needed to make Emacs run on this system.  */
 
@@ -75,10 +70,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define LIBS_DEBUG
 
-/* Use terminfo instead of termcap.  */
-
-#define TERMINFO
-
 /* 5.3 apparently makes close() interruptible */
 
 #define INTERRUPTIBLE_CLOSE
@@ -97,7 +88,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* there are no -lg libraries on this system, and no libPW */
 
-#define LIBS_DEBUG
+/* XEmacs deleted LIBS_DEBUG, LIB_STANDARD */
 
 /* No <sioctl.h> */
 
@@ -124,7 +115,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* This sets the name of the master side of the PTY. */
 
-#define PTY_NAME_SPRINTF strcpy (pty_name, "/dev/ptmx");
+#define PTY_NAME_SPRINTF qxestrcpy_ascii (pty_name, "/dev/ptmx");
 
 /* This sets the name of the slave side of the PTY.  On SysVr4,
    grantpt(3) forks a subprocess, so keep sigchld_handler() from
@@ -150,7 +141,8 @@ char *ptsname ();
       { close (fd); return -1; }			\
     if (!(ptyname = ptsname (fd)))			\
       { close (fd); return -1; }			\
-    strncpy (pty_name, ptyname, sizeof (pty_name));	\
+    qxestrncpy_ascii (pty_name, ptyname,		\
+		      sizeof (pty_name));		\
     pty_name[sizeof (pty_name) - 1] = 0;		\
   }
 

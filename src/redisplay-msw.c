@@ -2,14 +2,14 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with:  Not in FSF. */
 
@@ -51,7 +49,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw-impl.h"
 #include "glyphs-msw.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #define MSWINDOWS_EOL_CURSOR_WIDTH	5
 
@@ -633,6 +631,17 @@ mswindows_output_dibitmap (struct frame *f, Lisp_Image_Instance *p,
   SelectObject (hcompdc, old);
 }
 
+/* Return x MOD y, but the result is guaranteed positive */
+
+static int
+posmod (int x, int y)
+{
+  int retval = x % y;
+  if (retval < 0)
+    retval += y;
+  return retval;
+}
+
 /* X gc's have this nice property that setting the bg pixmap will
  * output it offset relative to the window. Windows doesn't have this
  * feature so we have to emulate this by outputting multiple pixmaps.
@@ -642,13 +651,15 @@ static void
 mswindows_output_dibitmap_region (struct frame *f, 
 				  Lisp_Image_Instance *p,
 				  struct display_box *db,
-				  struct display_glyph_area *dga)
+				  struct display_glyph_area *dga,
+				  int absolute)
 {
   struct display_box xdb = { db->xpos, db->ypos, db->width, db->height };
   struct display_glyph_area xdga
     = { 0, 0, IMAGE_INSTANCE_PIXMAP_WIDTH (p),
 	IMAGE_INSTANCE_PIXMAP_HEIGHT (p) };
   int pxoffset = 0, pyoffset = 0;
+  int absolute_pxoffset = 0, absolute_pyoffset = 0;
 
   if (dga)
     {	
@@ -658,16 +669,30 @@ mswindows_output_dibitmap_region (struct frame *f,
   else if (!redisplay_normalize_glyph_area (&xdb, &xdga))
     return;
 
+  if (absolute)
+    {
+      POINT point;
+      point.x = 0;
+      point.y = 0;
+      if (ScreenToClient (FRAME_MSWINDOWS_HANDLE (f), &point))
+	{
+	  absolute_pxoffset = point.x;
+	  absolute_pyoffset = point.y;
+	}
+    }
+
   /* when doing a bg pixmap do a partial pixmap first so that we
      blt whole pixmaps thereafter */
   xdga.height = min (xdga.height, IMAGE_INSTANCE_PIXMAP_HEIGHT (p) -
-		      db->ypos % IMAGE_INSTANCE_PIXMAP_HEIGHT (p));
+		     posmod (db->ypos - absolute_pyoffset,
+			     IMAGE_INSTANCE_PIXMAP_HEIGHT (p)));
 
   while (xdga.height > 0)
     {
       xdga.width = min (min (db->width, IMAGE_INSTANCE_PIXMAP_WIDTH (p)),
 			IMAGE_INSTANCE_PIXMAP_WIDTH (p) -
-			db->xpos % IMAGE_INSTANCE_PIXMAP_WIDTH (p));
+			posmod (db->xpos - absolute_pxoffset,
+				IMAGE_INSTANCE_PIXMAP_WIDTH (p)));
       pxoffset = 0;
       while (xdga.width > 0)
 	{
@@ -675,9 +700,13 @@ mswindows_output_dibitmap_region (struct frame *f,
 	  xdb.ypos = db->ypos + pyoffset;
 	    /* do we need to offset the pixmap vertically? this is necessary
 	       for background pixmaps. */
-	  xdga.yoffset = xdb.ypos % IMAGE_INSTANCE_PIXMAP_HEIGHT (p);
-	  xdga.xoffset = xdb.xpos % IMAGE_INSTANCE_PIXMAP_WIDTH (p);
-	  /* the width is handled by mswindows_output_pixmap_region */
+	  xdga.xoffset = posmod (xdb.xpos - absolute_pxoffset,
+				 IMAGE_INSTANCE_PIXMAP_WIDTH (p));
+	  xdga.yoffset = posmod (xdb.ypos - absolute_pyoffset,
+				 IMAGE_INSTANCE_PIXMAP_HEIGHT (p));
+	  /* [[ the width is handled by mswindows_output_pixmap_region ]]
+	     #### -- What is the correct meaning of this comment?  There is
+	     no mswindows_output_pixmap_region(). --ben*/
 	  mswindows_output_dibitmap (f, p, &xdb, &xdga);
 	  pxoffset += xdga.width;
 	  xdga.width = min ((db->width - pxoffset),
@@ -711,7 +740,9 @@ mswindows_output_pixmap (struct window *w, Lisp_Object image_instance,
 		       WINDOW_FACE_CACHEL_BACKGROUND (w, findex), Qnil);
 
   if (bg_pixmap)
-    mswindows_output_dibitmap_region (f, p, db, dga);
+    mswindows_output_dibitmap_region
+      (f, p, db, dga,
+       EQ (WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT (w, findex), Qabsolute));
   else
     mswindows_output_dibitmap (f, p, db, dga);
 }
@@ -1208,16 +1239,13 @@ mswindows_text_width (struct window *w, struct face_cachel *cachel,
  given face.
  ****************************************************************************/
 static void
-mswindows_clear_region (
-#ifdef HAVE_SCROLLBARS
-			Lisp_Object locale,
-#else
-			Lisp_Object UNUSED (locale),
-#endif
+mswindows_clear_region (Lisp_Object USED_IF_SCROLLBARS (locale),
 			struct device *UNUSED (d), struct frame *f, 
 			face_index UNUSED (findex), int x, int y,
 			int width, int height, Lisp_Object fcolor,
-			Lisp_Object bcolor, Lisp_Object background_pixmap)
+			Lisp_Object bcolor,
+			Lisp_Object background_pixmap,
+			Lisp_Object background_placement)
 {
   RECT rect = { x, y, x+width, y+height };
   HDC hdc = get_frame_dc (f, 1);
@@ -1228,7 +1256,8 @@ mswindows_clear_region (
       mswindows_update_dc (hdc,
 			   fcolor, bcolor, background_pixmap);
       mswindows_output_dibitmap_region 
-	( f, XIMAGE_INSTANCE (background_pixmap), &db, 0);
+	(f, XIMAGE_INSTANCE (background_pixmap), &db, 0,
+	 EQ (background_placement, Qabsolute));
     }
   else
     {

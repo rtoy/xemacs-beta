@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -550,7 +548,7 @@ April 11, 2000
 
 Well yes, this was the whole point of my "no lossage" proposal of being
 able to undo any coding-system transformation on a buffer.  The idea was
-to figure out which transformations were definitely reversable, and for
+to figure out which transformations were definitely reversible, and for
 all the others, cache the original text in a text property.  This way, you
 could probably still do a fairly good job at constructing a good reversal
 even after you've gone into the text and added, deleted, and rearranged
@@ -589,7 +587,7 @@ April 11, 2000
 
 Well yes, this was the whole point of my "no lossage" proposal of being
 able to undo any coding-system transformation on a buffer.  The idea was
-to figure out which transformations were definitely reversable, and for
+to figure out which transformations were definitely reversible, and for
 all the others, cache the original text in a text property.  This way, you
 could probably still do a fairly good job at constructing a good reversal
 even after you've gone into the text and added, deleted, and rearranged
@@ -5170,9 +5168,9 @@ vars_of_text (void)
   composite_char_col_next = 32;
 
   Vcomposite_char_string2char_hash_table =
-    make_lisp_hash_table (500, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (500, HASH_TABLE_NON_WEAK, Qequal);
   Vcomposite_char_char2string_hash_table =
-    make_lisp_hash_table (500, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (500, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vcomposite_char_string2char_hash_table);
   staticpro (&Vcomposite_char_char2string_hash_table);
 #endif /* ENABLE_COMPOSITE_CHARS */

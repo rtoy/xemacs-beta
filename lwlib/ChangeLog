@@ -1,3 +1,27 @@
+2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.31 "ginger" is released.
+
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
+2011-01-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lwlib-fonts.c (xft_open_font_by_name):
+	Replace the POSIX index(3), not universally available even today,
+	with the C89 strchr(3), hopefully fixing a few of the buildbots'
+	problems.
+
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-internal.h: Correct FSF address in permission notice.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* lwlib-colors.h:
+	objects*.h -> fontcolor*.h.
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* xt-wrappers.h:
@@ -1431,3 +1455,23 @@
 
 	* lwlib/xlwmenu.c (massage_resource_name): Fix compiler warning
 	- Have to toupper ((int) (unsigned char) x) to be portable.
+
+
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.

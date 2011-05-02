@@ -4,20 +4,15 @@
 ;; This file is part of Mule (MULtilingual Enhancement of XEmacs).
 ;; This file contains Japanese and Chinese characters.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; Written by Jareth Hein (jhod@po.iijnet.or.jp) based off of
 ;; code by S.Tomura, Electrotechnical Lab. (tomura@etl.go.jp) from
@@ -256,13 +251,13 @@ pointが行末禁則に触れる場合は行を縮めて、禁則に触れない点を探す。
 	     (eol-kin (kinsoku-process-shrink))))))
 
 (defun kinsoku-process-extend ()
-  "Move point forward to a permissable for line-breaking.
+  "Move point forward to a point permissible for line-breaking.
 行を伸ばして禁則に触れない点へ移動する。"
   (let ((max-column (+ fill-column 
 		       (if (and (numberp kinsoku-extend-limit)
 				(>= kinsoku-extend-limit 0))
 			   kinsoku-extend-limit
-			 10000)))  ;;; 10000 is deliberatly unreasonably large
+			 10000)))  ;;; 10000 is deliberately unreasonably large
 	ch1 ch2)
     (while (and (setq ch1 (char-after))
 		(<= (+ (current-column)
@@ -283,7 +278,7 @@ pointが行末禁則に触れる場合は行を縮めて、禁則に触れない点を探す。
 	(kinsoku-process-shrink))))
 
 (defun kinsoku-process-shrink ()
-  "Move point backward to a point permissable for line-breaking.
+  "Move point backward to a point permissible for line-breaking.
 行を縮めて禁則に触れない点へ移動する。"
   (let (ch1 ch2)
     (while (and (not (bolp))

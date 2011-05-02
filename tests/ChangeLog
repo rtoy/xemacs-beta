@@ -1,3 +1,400 @@
+2011-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	If the bignum feature is available, check that a leading plus sign
+	is treated correctly when reading bignum integers.
+
+2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.31 "ginger" is released.
+
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
+2011-04-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that distinct symbol macros with identical string names
+	expand to different things.
+
+2011-03-24  Jerry James  <james@xemacs.org>
+
+	* automated/query-coding-tests.el: "Compatiblity" -> "Compatibility".
+	* gtk/event-stream-tests.el: "proccess" -> "process".
+
+2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Only test the various old-* function if old-eq is bound and a
+	subr.
+
+2011-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/byte-compiler-tests.el:
+	(defconst :foo 1) now gives a warning when byte-compiled, check
+	for that.
+	(setq :foo 1) now errors with interpreted code, but succeeds with
+	byte-compiled code; check for the former, wrap a
+	Known-Bug-Expect-Failure around a check for the error in the
+	latter case, we can't yet remove this behaviour while we're using
+	packages compiled by 21.4.
+	* automated/lisp-tests.el (wrong-type-argument):
+	Integer zero is a valid argument to #'substring-no-properties, use
+	Assert not Check-Error for it. Check some other aspects of the
+	functionality of #'substring-no-properties in passing.
+
+2011-02-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (substring-no-properties):
+	Make sure this function checks its arguments' types, the absence
+	of which was revealed by Raymond Toy's bug report of
+	http://mid.gmane.org/4D65D413.5050103@gmail.com .
+
+2011-02-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	* automated/lisp-tests.el (mapcar*):
+	If multiple SEQUENCE arguments are passed to #'mapcar*, and the
+	last one is circular while the others aren't, make sure that
+	#'mapcar* doesn't error.
+
+2011-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test lexical scope for `block', `return-from'; add a
+	Known-Bug-Expect-Failure for a contorted example that fails when
+	byte-compiled.
+
+2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	When sanity-checking :start and :end keyword arguments, loop at
+	macroexpansion time, not runtime, allowing us to pick up any
+	compiler macros and giving a clearer *Test-Log* buffer.
+
+2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (test-fun):
+	#'delete* and friends can now throw a wrong-type-argument if
+	handed a non-sequence; accept this too when checking for an error
+	when passing a fixnum as the SEQUENCE argument.
+	Check #'remove*, #'remove and #'remq too.
+
+2011-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (list): Test #'concatenate, especially
+	with more complicated TYPEs, which were previously not accepted by
+	the function.
+
+2011-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (list): Test #'find, especially the
+	:default keyword, not specified by Common Lisp.
+
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (test-fun): Test member*, assoc*,
+	rassoc*, delete* here too.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (wrong-type-argument): Add a missing
+	parenthesis here.
+	Make sure #'count #'position #'find #'delete* #'remove* #'reduce
+	#'delete-duplicates #'remove-duplicates #'replace #'mismatch
+	#'search sanity check their :start and :end keyword arguments.
+
+2010-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	* automated/lisp-tests.el (featurep):
+	* automated/lisp-tests.el (wrong-type-argument):
+	* automated/mule-tests.el (featurep):
+	Check for args-out-of-range errors instead of wrong-type-argument
+	errors in various places when code is handed a large bignum
+	instead of a fixnum.
+	Also check for the wrong-type-argument errors when giving the same
+	code a non-integer value.
+
+2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (list-nreverse):
+	Check that #'reverse and #'nreverse handle non-list sequences
+	properly.
+
+2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (malformed-list): Check that #'mapcar,
+	#'map and #'list-length throw this error when appropriate.
+
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test format strings with %b, too.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/lisp-reader-tests.el:
+	Change references to SXEmacs to XEmacs.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gtk/xemacs-toolbar.el:
+	* gtk/toolbar-test.el:
+	* gtk/statusbar-test.el:
+	* gtk/gtk-extra-test.el:
+	* gtk/gtk-embedded-test.el:
+	* gtk/gnome-test.el:
+	* gtk/event-stream-tests.el:
+	Add copyright notice based on internal evidence.
+	
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* reproduce-crashes.el: Amend "this file" to "XEmacs is free...".
+
+2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (x):
+	Test #'nbutlast, #'butlast with dotted lists.
+	Check that #'ldiff and #'tailp don't hang on circular lists; check
+	that #'tailp returns t with circular lists when that is
+	appropriate.  Test them both with dotted lists.
+
+2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Make sure circularity checking with #'merge is sane.
+
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	(not, not, invalid-argument, invalid-argument):
+	Check that error messages from the image specifier instantiator
+	code are clearer than they used to be.
+
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test that symbols with names that look like ratios are printed
+	distinctly from the equivalent ratios.
+
+2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test a couple of things #'reduce was just made more careful
+	about.
+
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gtk/event-stream-tests.el:
+	* gtk/gnome-test.el:
+	* gtk/gtk-embedded-test.el:
+	* gtk/gtk-extra-test.el:
+	* gtk/statusbar-test.el:
+	* gtk/toolbar-test.el:
+	* gtk/xemacs-toolbar.el:
+	Correct FSF address in permission notice.
+
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gtk/gtk-test.el (gtk-test):
+	Remove a conditional for InfoDock.
+
+2010-04-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/hash-table-tests.el:
+	Test the new built-in #'equalp hash table test. Test
+	#'define-hash-table-test.
+	* automated/lisp-tests.el:
+	When asserting that two objects are #'equalp, also assert that 
+	their #'equalp-hash is identical. 
+
+2010-04-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Correct the parentheses in the equalp tests, so they get run more
+	often.
+	Within them, only attempt to read a bignum if the bignum
+	feature is present; actually evaluate (/ 3/2 0.2), (/ 3/2 0.7) if
+	the ratio feature is present.
+	Construct the (Assert ...) calls at
+	macroexpansion time, so the output in the *Test-Log* buffer is
+	more informative.
+
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* automated/c-tests.el:
+	* automated/c-tests.el (when):
+	Use `with-temp-buffer' so results don't get written into source
+	file.
+
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* automated/base64-tests.el (bt-base64-encode-string):
+	* automated/base64-tests.el (bt-base64-decode-string):
+	* automated/base64-tests.el (for):
+	* automated/byte-compiler-tests.el:
+	* automated/byte-compiler-tests.el (before-and-after-compile-equal):
+	* automated/case-tests.el (downcase-string):
+	* automated/case-tests.el (uni-mappings):
+	* automated/ccl-tests.el (ccl-test-normal-expr):
+	* automated/ccl-tests.el (ccl-test-map-instructions):
+	* automated/ccl-tests.el (ccl-test-suites):
+	* automated/database-tests.el (delete-database-files):
+	* automated/extent-tests.el (let):
+	* automated/extent-tests.el (insert):
+	* automated/extent-tests.el (props):
+	* automated/file-tests.el:
+	* automated/file-tests.el (for):
+	* automated/hash-table-tests.el (test):
+	* automated/hash-table-tests.el (for):
+	* automated/hash-table-tests.el (ht):
+	* automated/hash-table-tests.el (iterations):
+	* automated/hash-table-tests.el (h1):
+	* automated/hash-table-tests.el (equal):
+	* automated/hash-table-tests.el (=):
+	* automated/lisp-tests.el:
+	* automated/lisp-tests.el (eq):
+	* automated/lisp-tests.el (test-setq):
+	* automated/lisp-tests.el (my-vector):
+	* automated/lisp-tests.el (x):
+	* automated/lisp-tests.el (equal):
+	* automated/lisp-tests.el (y):
+	* automated/lisp-tests.el (featurep):
+	* automated/lisp-tests.el (=):
+	* automated/lisp-tests.el (six):
+	* automated/lisp-tests.el (three):
+	* automated/lisp-tests.el (one):
+	* automated/lisp-tests.el (two):
+	* automated/lisp-tests.el (five):
+	* automated/lisp-tests.el (test1):
+	* automated/lisp-tests.el (division-test):
+	* automated/lisp-tests.el (for):
+	* automated/lisp-tests.el (check-function-argcounts):
+	* automated/lisp-tests.el (z):
+	* automated/lisp-tests.el (eql):
+	* automated/lisp-tests.el (test-harness-risk-infloops):
+	* automated/lisp-tests.el (erase-buffer):
+	* automated/lisp-tests.el (sym):
+	* automated/lisp-tests.el (new-char):
+	* automated/lisp-tests.el (new-load-file-name):
+	* automated/lisp-tests.el (cl-floor):
+	* automated/lisp-tests.el (foo):
+	* automated/md5-tests.el (lambda):
+	* automated/md5-tests.el (large-string):
+	* automated/md5-tests.el (mapcar):
+	* automated/md5-tests.el (insert):
+	* automated/mule-tests.el:
+	* automated/mule-tests.el (test-chars):
+	* automated/mule-tests.el (existing-file-name):
+	* automated/mule-tests.el (featurep):
+	* automated/query-coding-tests.el (featurep):
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (insert):
+	* automated/regexp-tests.el (Assert):
+	* automated/regexp-tests.el (=):
+	* automated/regexp-tests.el (featurep):
+	* automated/regexp-tests.el (text):
+	* automated/regexp-tests.el (text1):
+	* automated/regexp-tests.el ("aáa"):
+	* automated/regexp-tests.el (eql):
+	* automated/search-tests.el (insert):
+	* automated/search-tests.el (featurep):
+	* automated/search-tests.el (let):
+	* automated/search-tests.el (boundp):
+	* automated/symbol-tests.el:
+	* automated/symbol-tests.el (name):
+	* automated/symbol-tests.el (check-weak-list-unique):
+	* automated/symbol-tests.el (string):
+	* automated/symbol-tests.el (list):
+	* automated/symbol-tests.el (foo):
+	* automated/symbol-tests.el (eq):
+	* automated/symbol-tests.el (fresh-keyword-name):
+	* automated/symbol-tests.el (print-gensym):
+	* automated/symbol-tests.el (mysym):
+	* automated/syntax-tests.el (test-forward-word):
+	* automated/syntax-tests.el (test-backward-word):
+	* automated/syntax-tests.el (test-syntax-table):
+	* automated/syntax-tests.el (with-syntax-table):
+	* automated/syntax-tests.el (Skip-Test-Unless):
+	* automated/syntax-tests.el (with):
+	* automated/tag-tests.el (testfile):
+	* automated/weak-tests.el (w):
+	* automated/weak-tests.el (p):
+	* automated/weak-tests.el (a):
+	Undo change of e.g. (Assert (equalp ...)) to (Assert-equalp ...).
+	Get rid of `Assert-equalp' and friends, `Assert-test', and
+	`Assert-test-not'.  Instead, make `Assert' smart enough to do the
+	equivalent functionality when an expression like (Assert (equalp ...))
+	is seen.
+
+2010-03-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el (string character conversion):
+	Test escape-quoted for the range U+0000 to U+00FF.
+	Inspired by Ben's patch to fix quoting of specials from C1 controls.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* reproduce-crashes.el (8):
+	objects*.[ch] -> fontcolor*.[ch].
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* automated/syntax-tests.el:
+	Use Known-Bug-Expect-Error, not Known-Bug-Expect-Failure, when
+	error expected; else test suite will abort this file.
+	
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer):
+	Remove unused binding.
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* automated/search-tests.el (let):
+	* automated/search-tests.el (boundp):
+	debug-xemacs-searches renamed to debug-searches.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* automated/test-harness.el:
+	* automated/test-harness.el (test-harness-bug-expected): New.
+	* automated/test-harness.el (test-harness-unexpected-error-enter-debugger): New.
+	* automated/test-harness.el (test-harness-assertion-failure-enter-debugger): New.
+	* automated/test-harness.el (test-harness-unexpected-error-show-backtrace): New.
+	* automated/test-harness.el (test-harness-assertion-failure-show-backtrace): New.
+	* automated/test-harness.el (test-harness-assertion-failure-do-debug): New.
+	* automated/test-harness.el (test-harness-unexpected-error-do-debug): New.
+	* automated/test-harness.el (test-harness-unexpected-error-condition-handler): New.
+	* automated/test-harness.el (test-harness-error-wrap): New.
+	* automated/test-harness.el (test-harness-from-buffer):
+	New variables that allow a backtrace to be displayed and/or the
+	debugger to be entered when an assertion failure or unexpected error
+	occurs.  By default, debugging occurs when interactive and debug-on-error
+	is set, and backtrace-displaying occurs either
+	(a) when stack-trace-on-error is set, or (b) always, when an unexpected
+	error occurs. (However, no backtracing or debugging occurs when a bug
+	is expected.)
+
+2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Change the #'split-string-by-char text to use US federal
+	government information instead of a couple of sentences from the
+	OED; the latter would probably have qualified as non-infringement,
+	but with the former the question won't arise.
+	(The German text in the same tests is from a very public domain
+	19th-century work.)
+
+2010-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that multiple values are discarded correctly with #'mapcar
+	and one SEQUENCE.
+	(equal): 
+
 2010-02-05  Jerry James  <james@xemacs.org>
 
 	* DLL/dltest.c: Remove old test.  Building and using any module now
@@ -267,6 +664,11 @@
 
 	* automated/mule-tests.el (featurep):
 	Use utf-8 as file-name-coding-system under Cygwin 1.7+.
+
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (split-string-by-char):
+	Test this function, and its new ESCAPE-CHAR argument.
 
 2010-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -1673,3 +2075,22 @@
 
 	* ChangeLog: new file
 
+
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.

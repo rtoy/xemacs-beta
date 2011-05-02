@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -156,8 +154,8 @@ gc_cache_lookup (struct gc_cache *cache, GdkGCValues *gcv, unsigned long mask)
   struct gc_cache_cell *cell, *next, *prev;
   struct gcv_and_mask gcvm;
 
-  if ((!!cache->head) != (!!cache->tail)) ABORT ();
-  if (cache->head && (cache->head->prev || cache->tail->next)) ABORT ();
+  assert ((!!cache->head) == (!!cache->tail));
+  assert (!(cache->head && (cache->head->prev || cache->tail->next)));
 
   /* Gdk does not have the equivalent of 'None' for the clip_mask, so
      we need to check it carefully, or gdk_gc_new_with_values will
@@ -212,10 +210,10 @@ gc_cache_lookup (struct gc_cache *cache, GdkGCValues *gcv, unsigned long mask)
       cell->prev = cache->tail;
       cache->tail->next = cell;
       cache->tail = cell;
-      if (cache->head == cell) ABORT ();
-      if (cell->next) ABORT ();
-      if (cache->head->prev) ABORT ();
-      if (cache->tail->next) ABORT ();
+      assert (cache->head != cell);
+      assert (!cell->next);
+      assert (!cache->head->prev);
+      assert (!cache->tail->next);
       return cell->gc;
     }
 

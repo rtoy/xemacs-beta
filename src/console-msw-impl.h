@@ -1,14 +1,14 @@
 /* Define mswindows-specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -57,7 +55,7 @@ DECLARE_CONSOLE_TYPE (msprinter);
 
 struct Lisp_Devmode
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Pointer to the DEVMODE structure */
   DEVMODEW *devmode;
@@ -82,7 +80,7 @@ struct Lisp_Devmode
 struct mswindows_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   Lisp_Object fontlist;		/* List of (STRING . FIXED-P), device fonts */
   HDC hcdc;			/* Compatible DC */
@@ -94,7 +92,7 @@ struct mswindows_device
 #ifdef NEW_GC
 typedef struct mswindows_device Lisp_Mswindows_Device;
 
-DECLARE_LRECORD (mswindows_device, Lisp_Mswindows_Device);
+DECLARE_LISP_OBJECT (mswindows_device, Lisp_Mswindows_Device);
 
 #define XMSWINDOWS_DEVICE(x) \
   XRECORD (x, mswindows_device, Lisp_Mswindows_Device)
@@ -110,7 +108,7 @@ DECLARE_LRECORD (mswindows_device, Lisp_Mswindows_Device);
 struct msprinter_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   HDC hdc, hcdc;		/* Printer and the comp. DCs */
   HANDLE hprinter;
@@ -122,7 +120,7 @@ struct msprinter_device
 #ifdef NEW_GC
 typedef struct msprinter_device Lisp_Msprinter_Device;
 
-DECLARE_LRECORD (msprinter_device, Lisp_Msprinter_Device);
+DECLARE_LISP_OBJECT (msprinter_device, Lisp_Msprinter_Device);
 
 #define XMSPRINTER_DEVICE(x) \
   XRECORD (x, msprinter_device, Lisp_Msprinter_Device)
@@ -168,7 +166,7 @@ DECLARE_LRECORD (msprinter_device, Lisp_Msprinter_Device);
 struct mswindows_frame
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 
   /* win32 window handle */
@@ -206,10 +204,6 @@ struct mswindows_frame
   /* Frame title hash value. See frame-msw.c */
   unsigned int title_checksum;
 
-  /* Real character width and height of the frame.
-     FRAME_{HEIGHT,WIDTH} do not work for pixel geometry! */
-  int charheight, charwidth;
-
 #ifdef MULE
   int cursor_x;
   int cursor_y;
@@ -234,7 +228,7 @@ struct mswindows_frame
 #ifdef NEW_GC
 typedef struct mswindows_frame Lisp_Mswindows_Frame;
 
-DECLARE_LRECORD (mswindows_frame, Lisp_Mswindows_Frame);
+DECLARE_LISP_OBJECT (mswindows_frame, Lisp_Mswindows_Frame);
 
 #define XMSWINDOWS_FRAME(x) \
   XRECORD (x, mswindows_frame, Lisp_Mswindows_Frame)
@@ -259,8 +253,6 @@ DECLARE_LRECORD (mswindows_frame, Lisp_Mswindows_Frame);
  (FRAME_MSWINDOWS_DATA (f)->toolbar_checksum[pos])
 #define FRAME_MSWINDOWS_MENU_CHECKSUM(f)  (FRAME_MSWINDOWS_DATA (f)->menu_checksum)
 #define FRAME_MSWINDOWS_TITLE_CHECKSUM(f) (FRAME_MSWINDOWS_DATA (f)->title_checksum)
-#define FRAME_MSWINDOWS_CHARWIDTH(f)	  (FRAME_MSWINDOWS_DATA (f)->charwidth)
-#define FRAME_MSWINDOWS_CHARHEIGHT(f)	  (FRAME_MSWINDOWS_DATA (f)->charheight)
 #define FRAME_MSWINDOWS_TARGET_RECT(f)	  (FRAME_MSWINDOWS_DATA (f)->target_rect)
 
 #define FRAME_MSWINDOWS_POPUP(f)	  (FRAME_MSWINDOWS_DATA (f)->popup)
@@ -318,7 +310,7 @@ struct msprinter_frame
 
 struct mswindows_dialog_id
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object frame;
   Lisp_Object callbacks;

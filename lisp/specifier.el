@@ -10,20 +10,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -105,20 +103,23 @@ otherwise return t."
 	   ;; this will signal an appropriate error.
 	   (check-valid-instantiator inst-pair specifier-type)))
 
-	((and (valid-specifier-tag-p (car inst-pair))
-	      (valid-instantiator-p (cdr inst-pair) specifier-type))
+	((not (valid-instantiator-p (cdr inst-pair) specifier-type))
+	 (if noerror
+	     t
+	   (check-valid-instantiator (cdr inst-pair) specifier-type)))
+
+	((valid-specifier-tag-p (car inst-pair))
 	 ;; case (b)
 	 (cons (list (car inst-pair)) (cdr inst-pair)))
 
-	((and (valid-specifier-tag-set-p (car inst-pair))
-	      (valid-instantiator-p (cdr inst-pair) specifier-type))
+	((valid-specifier-tag-set-p (car inst-pair))
 	 ;; case (c)
 	 inst-pair)
 	 
 	(t
 	 (if noerror t
-	   (signal 'error (list "Invalid specifier tag set"
-				(car inst-pair)))))))
+	   (error 'invalid-argument "Invalid specifier tag set"
+		  (car inst-pair))))))
 
 (defun canonicalize-inst-list (inst-list specifier-type &optional noerror)
   "Canonicalize the given INST-LIST (a list of inst-pairs).
@@ -199,9 +200,14 @@ otherwise return t."
 
 	(if (not (valid-specifier-locale-p (car spec)))
 	    ;; invalid locale.
-	    (if noerror t
-	      (signal 'error (list "Invalid specifier locale" (car spec))))
-
+	    (if noerror
+		t
+	      (if (consp (car spec))
+		  ;; If it's a cons, they're probably not passing a locale
+		  (error 'invalid-argument
+			 "Not a valid instantiator list" spec)
+		(error 'invalid-argument
+		       "Invalid specifier locale" (car spec))))
 	  ;; case (b)
 	  (let ((result (canonicalize-inst-list (cdr spec) specifier-type
 						noerror)))
@@ -513,10 +519,9 @@ Example:
 			       varlist)))
       ;; Bind the appropriate variables.
       `(let* (,@(mapcan #'(lambda (varel)
-			    (delq nil (mapcar
-				       #'(lambda (varcons)
-					   (and (cdr varcons) varcons))
-				       varel)))
+			    (mapcan #'(lambda (varcons)
+                                        (and (cdr varcons) (list varcons)))
+				       varel))
 			varlist)
 		,@oldvallist)
 	 (unwind-protect
@@ -887,7 +892,7 @@ DEVTYPE-SPEC flag; thus, it may return nil."
                                                current-device)))
                                      (and dev (device-type dev))))
                                   (t devtype-spec))))
-               (cond ((= 1 (length okdevs)) (car okdevs))
+               (cond ((eql 1 (length okdevs)) (car okdevs))
                      ((< try-stages 3) nil)
                      ((null okdevs) devtype)
                      ((memq devtype okdevs) devtype)
@@ -999,7 +1004,7 @@ proceed as if LOCALE were a domain."
 ;; initialised; that's why this is here, and not in x-init.el, these days.
 
 (set-specifier current-display-table 
-               #s(char-table type generic data (?\xA0 ?\x20))
+               #s(char-table :type generic :data (?\xA0 ?\x20))
                'global)
 
 ;;; specifier.el ends here

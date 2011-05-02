@@ -4,14 +4,14 @@
    Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2005 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1998, 1999, 2000 Andy Piper
-   Copyright (C) 2007 Didier Verna
+   Copyright (C) 2007, 2010 Didier Verna
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -19,9 +19,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -57,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs.h"
 #include "gui.h"
 #include "insdel.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 #include "opaque.h"
 #include "rangetab.h"
 #include "redisplay.h"
@@ -82,7 +80,7 @@ Lisp_Object Qsubwindow_image_instance_p;
 Lisp_Object Qwidget_image_instance_p;
 Lisp_Object Qconst_glyph_variable;
 Lisp_Object Qmono_pixmap, Qcolor_pixmap, Qsubwindow;
-Lisp_Object Q_file, Q_data, Q_face, Q_pixel_width, Q_pixel_height;
+Lisp_Object Q_file, Q_face, Q_pixel_width, Q_pixel_height;
 Lisp_Object Qformatted_string;
 Lisp_Object Vcurrent_display_table;
 Lisp_Object Vtruncation_glyph, Vcontinuation_glyph, Voctal_escape_glyph;
@@ -94,6 +92,7 @@ Lisp_Object Vimage_instance_type_list;
 Lisp_Object Vglyph_type_list;
 
 int disable_animated_pixmaps;
+static Lisp_Object Vimage_instance_hash_table_test;
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (nothing);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (inherit);
@@ -992,7 +991,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_fmt_string_lisp (printcharfun, "#<image-instance (%s) ", 1,
 			 Fimage_instance_type (obj));
   if (!NILP (ii->name))
@@ -1108,20 +1107,19 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 
   MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain), print_image_instance,
 		 (ii, printcharfun, escapeflag));
-  write_fmt_string (printcharfun, " 0x%x>", ii->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static void
-finalize_image_instance (void *header, int for_disksave)
+finalize_image_instance (Lisp_Object obj)
 {
-  Lisp_Image_Instance *i = (Lisp_Image_Instance *) header;
+  Lisp_Image_Instance *i = XIMAGE_INSTANCE (obj);
 
   /* objects like this exist at dump time, so don't bomb out. */
   if (IMAGE_INSTANCE_TYPE (i) == IMAGE_NOTHING
       ||
       NILP (IMAGE_INSTANCE_DEVICE (i)))
     return;
-  if (for_disksave) finalose (i);
 
   /* We can't use the domain here, because it might have
      disappeared. */
@@ -1260,7 +1258,7 @@ image_instance_live_p (Lisp_Object instance)
 }
 
 static Hashcode
-image_instance_hash (Lisp_Object obj, int depth)
+image_instance_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Image_Instance *i = XIMAGE_INSTANCE (obj);
   Hashcode hash = HASH5 (LISP_HASH (IMAGE_INSTANCE_DOMAIN (i)),
@@ -1268,7 +1266,7 @@ image_instance_hash (Lisp_Object obj, int depth)
 			  IMAGE_INSTANCE_MARGIN_WIDTH (i),
 			  IMAGE_INSTANCE_HEIGHT (i),
 			  internal_hash (IMAGE_INSTANCE_INSTANTIATOR (i),
-					 depth + 1));
+					 depth + 1, 0));
 
   ERROR_CHECK_IMAGE_INSTANCE (obj);
 
@@ -1279,7 +1277,7 @@ image_instance_hash (Lisp_Object obj, int depth)
 
     case IMAGE_TEXT:
       hash = HASH2 (hash, internal_hash (IMAGE_INSTANCE_TEXT_STRING (i),
-					 depth + 1));
+					 depth + 1, 0));
       break;
 
     case IMAGE_MONO_PIXMAP:
@@ -1288,7 +1286,7 @@ image_instance_hash (Lisp_Object obj, int depth)
       hash = HASH4 (hash, IMAGE_INSTANCE_PIXMAP_DEPTH (i),
 		    IMAGE_INSTANCE_PIXMAP_SLICE (i),
 		    internal_hash (IMAGE_INSTANCE_PIXMAP_FILENAME (i),
-				   depth + 1));
+				   depth + 1, 0));
       break;
 
     case IMAGE_WIDGET:
@@ -1296,10 +1294,12 @@ image_instance_hash (Lisp_Object obj, int depth)
 	 displayed. */
       hash = HASH5 (hash,
 		    LISP_HASH (IMAGE_INSTANCE_WIDGET_TYPE (i)),
-		    internal_hash (IMAGE_INSTANCE_WIDGET_PROPS (i), depth + 1),
-		    internal_hash (IMAGE_INSTANCE_WIDGET_ITEMS (i), depth + 1),
+		    internal_hash (IMAGE_INSTANCE_WIDGET_PROPS (i),
+                                   depth + 1, 0),
+		    internal_hash (IMAGE_INSTANCE_WIDGET_ITEMS (i),
+                                   depth + 1, 0),
 		    internal_hash (IMAGE_INSTANCE_LAYOUT_CHILDREN (i),
-				   depth + 1));
+				   depth + 1, 0));
     case IMAGE_SUBWINDOW:
       hash = HASH2 (hash, (EMACS_INT) IMAGE_INSTANCE_SUBWINDOW_ID (i));
       break;
@@ -1314,21 +1314,19 @@ image_instance_hash (Lisp_Object obj, int depth)
 		 0));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("image-instance", image_instance,
-			       0, /*dumpable-flag*/
-			       mark_image_instance, print_image_instance,
-			       finalize_image_instance, image_instance_equal,
-			       image_instance_hash,
-			       image_instance_description,
-			       Lisp_Image_Instance);
+DEFINE_NODUMP_LISP_OBJECT ("image-instance", image_instance,
+			   mark_image_instance, print_image_instance,
+			   finalize_image_instance, image_instance_equal,
+			   image_instance_hash,
+			   image_instance_description,
+			   Lisp_Image_Instance);
 
 static Lisp_Object
 allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
 			 Lisp_Object instantiator)
 {
-  Lisp_Image_Instance *lp =
-    ALLOC_LCRECORD_TYPE (Lisp_Image_Instance, &lrecord_image_instance);
-  Lisp_Object val;
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (image_instance);
+  Lisp_Image_Instance *lp = XIMAGE_INSTANCE (obj);
 
   /* It's not possible to simply keep a record of the domain in which
      the instance was instantiated. This is because caching may mean
@@ -1351,10 +1349,9 @@ allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
   /* So that layouts get done. */
   lp->layout_changed = 1;
 
-  val = wrap_image_instance (lp);
   MARK_GLYPHS_CHANGED;
 
-  return val;
+  return obj;
 }
 
 static enum image_instance_type
@@ -1994,7 +1991,7 @@ instance is a mono pixmap; otherwise, the same image instance is returned.
      device-specific method to copy the window-system subobject. */
   new_ = allocate_image_instance (XIMAGE_INSTANCE_DOMAIN (image_instance),
 				 Qnil, Qnil);
-  COPY_LCRECORD (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
+  copy_lisp_object (new_, image_instance);
   /* note that if this method returns non-zero, this method MUST
      copy any window-system resources, so that when one image instance is
      freed, the other one is not hosed. */
@@ -2521,15 +2518,16 @@ formatted_string_instantiate (Lisp_Object image_instance,
 /*                        pixmap file functions                         */
 /************************************************************************/
 
-/* If INSTANTIATOR refers to inline data, return Qt.
-   If INSTANTIATOR refers to data in a file, return the full filename
-   if it exists, Qnil if there's no console method for locating the file, or
-   (filename) if there was an error locating the file.
+/* - If INSTANTIATOR refers to inline data, or there is no file keyword, we
+     have nothing to do, so return Qt.
+   - If INSTANTIATOR refers to data in a file, return the full filename
+     if it exists; otherwise, return '(filename), meaning "file not found".
+   - If there is no locate_pixmap_file method for this console, return Qnil.
 
    FILE_KEYWORD and DATA_KEYWORD are symbols specifying the
    keywords used to look up the file and inline data,
-   respectively, in the instantiator.  Normally these would
-   be Q_file and Q_data, but might be different for mask data. */
+   respectively, in the instantiator.  These would be Q_file and Q_data,
+   Q_mask_file or Q_mask_data. */
 
 Lisp_Object
 potential_pixmap_file_instantiator (Lisp_Object instantiator,
@@ -2630,7 +2628,7 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 static void
 check_valid_xbm_inline (Lisp_Object data)
 {
-  Lisp_Object width, height, bits;
+  Lisp_Object width, height, bits, args[2];
 
   if (!CONSP (data) ||
       !CONSP (XCDR (data)) ||
@@ -2650,7 +2648,16 @@ check_valid_xbm_inline (Lisp_Object data)
   if (!NATNUMP (height))
     invalid_argument ("Height must be a natural number", height);
 
-  if (((XINT (width) * XINT (height)) / 8) > string_char_length (bits))
+  args[0] = width;
+  args[1] = height;
+
+  args[0] = Ftimes (countof (args), args);
+  args[1] = make_integer (8);
+
+  args[0] = Fquo (countof (args), args);
+  args[1] = make_integer (string_char_length (bits));
+
+  if (!NILP (Fgtr (countof (args), args)))
     invalid_argument ("data is too short for width and height",
 			 vector3 (width, height, bits));
 }
@@ -2736,18 +2743,20 @@ bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
   return Qnil; /* not reached */
 }
 
+/* This function attempts to find implicit mask files by appending "Mask" or
+   "msk" to the original bitmap file name. This is more or less standard: a
+   number of bitmaps in /usr/include/X11/bitmaps use it. */
 Lisp_Object
 xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
 		       Lisp_Object mask_file, Lisp_Object console_type)
 {
-  /* This is unclean but it's fairly standard -- a number of the
-     bitmaps in /usr/include/X11/bitmaps use it -- so we support
-     it. */
-  if (EQ (mask_file, Qt)
-      /* don't override explicitly specified mask data. */
-      && NILP (assq_no_quit (Q_mask_data, alist))
-      && !EQ (file, Qt))
+  /* Let's try to find an implicit mask file if we have neither an explicit
+     mask file name, nor inline mask data. Note that no errors are reported in
+     case of failure because the mask file we're looking for might not
+     exist. */ 
+  if (EQ (mask_file, Qt) && NILP (assq_no_quit (Q_mask_data, alist)))
     {
+      assert (!EQ (file, Qt) && !EQ (file, Qnil));
       mask_file = MAYBE_LISP_CONTYPE_METH
 	(decode_console_type(console_type, ERROR_ME),
 	 locate_pixmap_file, (concat2 (file, build_ascstring ("Mask"))));
@@ -2757,10 +2766,14 @@ xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
 	   locate_pixmap_file, (concat2 (file, build_ascstring ("msk"))));
     }
 
+  /* We got a mask file, either explicitely or from the search above. */
   if (!NILP (mask_file))
     {
-      Lisp_Object mask_data =
-	bitmap_to_lisp_data (mask_file, 0, 0, 0);
+      Lisp_Object mask_data;
+
+      assert (!EQ (mask_file, Qt));
+
+      mask_data = bitmap_to_lisp_data (mask_file, 0, 0, 0);
       alist = remassq_no_quit (Q_mask_file, alist);
       /* there can't be a :mask-data at this point. */
       alist = Fcons (Fcons (Q_mask_file, mask_file),
@@ -2776,9 +2789,8 @@ static Lisp_Object
 xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
 	       Lisp_Object UNUSED (dest_mask))
 {
-  Lisp_Object file = Qnil, mask_file = Qnil;
+  Lisp_Object file = Qnil, mask_file = Qnil, alist = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
-  Lisp_Object alist = Qnil;
 
   GCPRO3 (file, mask_file, alist);
 
@@ -2796,13 +2808,20 @@ xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
   mask_file = potential_pixmap_file_instantiator (inst, Q_mask_file,
 						  Q_mask_data, console_type);
 
-  if (NILP (file)) /* normalization impossible for the console type */
+  /* No locate_pixmap_file method for this console type, so we can't get a
+     file (neither a mask file BTW). */
+  if (NILP (file))
     RETURN_UNGCPRO (Qnil);
 
   if (CONSP (file)) /* failure locating filename */
     signal_double_image_error ("Opening bitmap file",
 			       "no such file or directory",
 			       Fcar (file));
+
+  if (CONSP (mask_file)) /* failure locating filename */
+    signal_double_image_error ("Opening bitmap mask file",
+			       "no such file or directory",
+			       Fcar (mask_file));
 
   if (EQ (file, Qt) && EQ (mask_file, Qt)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
@@ -2863,10 +2882,8 @@ static Lisp_Object
 xface_normalize (Lisp_Object inst, Lisp_Object console_type,
 		 Lisp_Object UNUSED (dest_mask))
 {
-  /* This function can call lisp */
-  Lisp_Object file = Qnil, mask_file = Qnil;
+  Lisp_Object file = Qnil, mask_file = Qnil, alist = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
-  Lisp_Object alist = Qnil;
 
   GCPRO3 (file, mask_file, alist);
 
@@ -2884,28 +2901,34 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type,
   mask_file = potential_pixmap_file_instantiator (inst, Q_mask_file,
 						  Q_mask_data, console_type);
 
-  if (NILP (file)) /* normalization impossible for the console type */
+  /* No locate_pixmap_file method for this console type, so we can't get a
+     file (neither a mask file BTW). */
+  if (NILP (file))
     RETURN_UNGCPRO (Qnil);
 
   if (CONSP (file)) /* failure locating filename */
-    signal_double_image_error ("Opening bitmap file",
+    signal_double_image_error ("Opening face file",
 			       "no such file or directory",
 			       Fcar (file));
+
+  if (CONSP (mask_file)) /* failure locating filename */
+    signal_double_image_error ("Opening face mask file",
+			       "no such file or directory",
+			       Fcar (mask_file));
 
   if (EQ (file, Qt) && EQ (mask_file, Qt)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
 
   alist = tagged_vector_to_alist (inst);
 
-  {
-    /* #### FIXME: what if EQ (file, Qt) && !EQ (mask, Qt) ? Is that possible?
-       If so, we have a problem... -- dvl */
-    Lisp_Object data = make_string_from_file (file);
-    alist = remassq_no_quit (Q_file, alist);
-    /* there can't be a :data at this point. */
-    alist = Fcons (Fcons (Q_file, file),
-		   Fcons (Fcons (Q_data, data), alist));
-  }
+  if (!EQ (file, Qt))
+    {
+      Lisp_Object data = make_string_from_file (file);
+      alist = remassq_no_quit (Q_file, alist);
+      /* there can't be a :data at this point. */
+      alist = Fcons (Fcons (Q_file, file),
+		     Fcons (Fcons (Q_data, data), alist));
+    }
 
   alist = xbm_mask_file_munging (alist, file, mask_file, console_type);
 
@@ -3189,29 +3212,29 @@ image_mark (Lisp_Object obj)
 }
 
 static int
-instantiator_eq_equal (Lisp_Object obj1, Lisp_Object obj2)
+instantiator_eq_equal (const Hash_Table_Test *UNUSED (http),
+                       Lisp_Object obj1, Lisp_Object obj2)
 {
   if (EQ (obj1, obj2))
     return 1;
 
   else if (CONSP (obj1) && CONSP (obj2))
     {
-      return instantiator_eq_equal (XCAR (obj1), XCAR (obj2))
-	&&
-	instantiator_eq_equal (XCDR (obj1), XCDR (obj2));
+      return instantiator_eq_equal (NULL, XCAR (obj1), XCAR (obj2))
+	&& instantiator_eq_equal (NULL, XCDR (obj1), XCDR (obj2));
     }
   return 0;
 }
 
 static Hashcode
-instantiator_eq_hash (Lisp_Object obj)
+instantiator_eq_hash (const Hash_Table_Test *UNUSED (http), Lisp_Object obj)
 {
   if (CONSP (obj))
     {
       /* no point in worrying about tail recursion, since we're not
 	 going very deep */
-      return HASH2 (instantiator_eq_hash (XCAR (obj)),
-		    instantiator_eq_hash (XCDR (obj)));
+      return HASH2 (instantiator_eq_hash (NULL, XCAR (obj)),
+		    instantiator_eq_hash (NULL, XCDR (obj)));
     }
   return LISP_HASH (obj);
 }
@@ -3220,10 +3243,9 @@ instantiator_eq_hash (Lisp_Object obj)
 Lisp_Object
 make_image_instance_cache_hash_table (void)
 {
-  return make_general_lisp_hash_table
-    (instantiator_eq_hash, instantiator_eq_equal,
-     30, -1.0, -1.0,
-     HASH_TABLE_KEY_CAR_VALUE_WEAK);
+  return make_general_lisp_hash_table (Vimage_instance_hash_table_test, 30,
+                                       -1.0, -1.0,
+                                       HASH_TABLE_KEY_CAR_VALUE_WEAK);
 }
 
 static Lisp_Object
@@ -3694,11 +3716,11 @@ print_glyph (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Glyph *glyph = XGLYPH (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<glyph (%s", 1, Fglyph_type (obj));
   write_fmt_string_lisp (printcharfun, ") %S", 1, glyph->image);
-  write_fmt_string (printcharfun, "0x%x>", glyph->header.uid);
+  write_fmt_string (printcharfun, "0x%x>", LISP_OBJECT_UID (obj));
 }
 
 /* Glyphs are equal if all of their display attributes are equal.  We
@@ -3724,14 +3746,14 @@ glyph_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-glyph_hash (Lisp_Object obj, int depth)
+glyph_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   depth++;
 
   /* No need to hash all of the elements; that would take too long.
      Just hash the most common ones. */
-  return HASH2 (internal_hash (XGLYPH (obj)->image, depth),
-		internal_hash (XGLYPH (obj)->face,  depth));
+  return HASH2 (internal_hash (XGLYPH (obj)->image, depth, 0),
+		internal_hash (XGLYPH (obj)->face,  depth, 0));
 }
 
 static Lisp_Object
@@ -3805,14 +3827,11 @@ static const struct memory_description glyph_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("glyph", glyph,
-					  1, /*dumpable-flag*/
-					  mark_glyph, print_glyph, 0,
-					  glyph_equal, glyph_hash,
-					  glyph_description,
-					  glyph_getprop, glyph_putprop,
-					  glyph_remprop, glyph_plist,
-					  Lisp_Glyph);
+DEFINE_DUMPABLE_LISP_OBJECT ("glyph", glyph,
+			     mark_glyph, print_glyph, 0,
+			     glyph_equal, glyph_hash,
+			     glyph_description,
+			     Lisp_Glyph);
 
 Lisp_Object
 allocate_glyph (enum glyph_type type,
@@ -3820,8 +3839,8 @@ allocate_glyph (enum glyph_type type,
 				      Lisp_Object locale))
 {
   /* This function can GC */
-  Lisp_Object obj = Qnil;
-  Lisp_Glyph *g = ALLOC_LCRECORD_TYPE (Lisp_Glyph, &lrecord_glyph);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (glyph);
+  Lisp_Glyph *g = XGLYPH (obj);
 
   g->type = type;
   g->image = Fmake_specifier (Qimage); /* This function can GC */
@@ -3867,7 +3886,6 @@ allocate_glyph (enum glyph_type type,
     g->face = Qnil;
     g->plist = Qnil;
     g->after_change = after_change;
-    obj = wrap_glyph (g);
 
     set_image_attached_to (g->image, obj, Qimage);
     UNGCPRO;
@@ -4465,12 +4483,12 @@ mark_glyph_cachels_as_clean (struct window* w)
 
 int
 compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
-			    struct overhead_stats *ovstats)
+			    struct usage_stats *ustats)
 {
   int total = 0;
 
   if (glyph_cachels)
-    total += Dynarr_memory_usage (glyph_cachels, ovstats);
+    total += Dynarr_memory_usage (glyph_cachels, ustats);
 
   return total;
 }
@@ -4537,7 +4555,7 @@ unmap_subwindow_instance_cache_mapper (Lisp_Object UNUSED (key),
 	  XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f))
 	    = delq_no_quit (value,
 			    XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f)));
-	  finalize_image_instance (XIMAGE_INSTANCE (value), 0);
+	  finalize_image_instance (value);
 	}
     }
   return 0;
@@ -4640,7 +4658,7 @@ register_ignored_expose (struct frame* f, int x, int y, int width, int height)
       struct expose_ignore *ei;
 
 #ifdef NEW_GC
-      ei = alloc_lrecord_type (struct expose_ignore, &lrecord_expose_ignore);
+      ei = XEXPOSE_IGNORE (ALLOC_NORMAL_LISP_OBJECT (expose_ignore));
 #else /* not NEW_GC */
       ei = Blocktype_alloc (the_expose_ignore_blocktype);
 #endif /* not NEW_GC */
@@ -4750,7 +4768,8 @@ redisplay_subwindow (Lisp_Object subwindow)
      we might need. We can get better hashing by making the depth
      negative - currently it will recurse down 7 levels.*/
   IMAGE_INSTANCE_DISPLAY_HASH (ii) = internal_hash (subwindow,
-						    IMAGE_INSTANCE_HASH_DEPTH);
+						    IMAGE_INSTANCE_HASH_DEPTH,
+                                                    0);
 
   unbind_to (count);
 }
@@ -4769,7 +4788,7 @@ image_instance_changed (Lisp_Object subwindow)
 {
   Lisp_Image_Instance* ii = XIMAGE_INSTANCE (subwindow);
 
-  if (internal_hash (subwindow, IMAGE_INSTANCE_HASH_DEPTH) !=
+  if (internal_hash (subwindow, IMAGE_INSTANCE_HASH_DEPTH, 0) !=
       IMAGE_INSTANCE_DISPLAY_HASH (ii))
     return 1;
   /* #### I think there is probably a bug here. This gets called for
@@ -5175,10 +5194,19 @@ disable_glyph_animated_timeout (int i)
  *****************************************************************************/
 
 void
+glyph_objects_create (void)
+{
+  OBJECT_HAS_METHOD (glyph, getprop);
+  OBJECT_HAS_METHOD (glyph, putprop);
+  OBJECT_HAS_METHOD (glyph, remprop);
+  OBJECT_HAS_METHOD (glyph, plist);
+}
+
+void
 syms_of_glyphs (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (glyph);
-  INIT_LRECORD_IMPLEMENTATION (image_instance);
+  INIT_LISP_OBJECT (glyph);
+  INIT_LISP_OBJECT (image_instance);
 
   /* image instantiators */
 
@@ -5188,7 +5216,6 @@ syms_of_glyphs (void)
   DEFSUBR (Fconsole_type_image_conversion_list);
 
   DEFKEYWORD (Q_file);
-  DEFKEYWORD (Q_data);
   DEFKEYWORD (Q_face);
   DEFKEYWORD (Q_pixel_height);
   DEFKEYWORD (Q_pixel_width);
@@ -5505,6 +5532,12 @@ vars_of_glyphs (void)
 				     list6 (Qtext, Qmono_pixmap, Qcolor_pixmap,
 					    Qpointer, Qsubwindow, Qwidget));
   staticpro (&Vimage_instance_type_list);
+
+  /* The Qunbound name means this test is not available from Lisp. */
+  Vimage_instance_hash_table_test
+    = define_hash_table_test (Qunbound, instantiator_eq_equal,
+                              instantiator_eq_hash, Qunbound, Qunbound);
+  staticpro (&Vimage_instance_hash_table_test);
 
   /* glyphs */
 

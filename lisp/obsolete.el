@@ -3,27 +3,25 @@
 ;; Copyright (C) 1985-1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1994, 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 2002, 2004 Ben Wing.
+;; Copyright (C) 2002, 2004, 2010 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -72,6 +70,19 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
   (defvaralias oldvar newvar)
   (make-compatible-variable oldvar newvar))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; buffers
+
+(define-obsolete-function-alias 'show-buffer 'set-window-buffer)
+(define-obsolete-function-alias 'buffer-flush-undo 'buffer-disable-undo)
+(make-compatible 'eval-current-buffer 'eval-buffer)
+
+(defun buffer-local-value (variable buffer)
+  "Return the value of VARIABLE in BUFFER.
+If VARIABLE does not have a buffer-local binding in BUFFER, the value
+is the default binding of variable."
+  (symbol-value-in-buffer variable buffer))
+(make-compatible 'buffer-local-value 'symbol-value-in-buffer)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; device stuff
 
 (make-compatible-variable 'window-system "use (console-type)")
@@ -111,6 +122,7 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
   'lookup-syntax-properties)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; frames
+
 (defun frame-first-window (frame)
   "Return the topmost, leftmost window of FRAME.
 If omitted, FRAME defaults to the currently selected frame."
@@ -172,20 +184,21 @@ See `set-frame-properties' for built-in property names."
 (define-obsolete-function-alias 'list-faces-display 'edit-faces)
 (define-obsolete-function-alias 'list-faces 'face-list)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; paths
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; fonts and colors
 
-(defvar Info-default-directory-list nil
-  "This used to be the initial value of Info-directory-list.
-If you want to change the locations where XEmacs looks for info files,
-set Info-directory-list.")
-(make-obsolete-variable 'Info-default-directory-list 'Info-directory-list)
+(defun x-color-values  (color &optional frame)
+  "Return a description of the color named COLOR on frame FRAME.
+The value is a list of integer RGB values--(RED GREEN BLUE).
+These values appear to range from 0 to 65280 or 65535, depending
+on the system; white is (65280 65280 65280) or (65535 65535 65535).
+If FRAME is omitted or nil, use the selected frame."
+  (color-instance-rgb-components (make-color-instance color)))
+(make-compatible 'x-color-values 'color-instance-rgb-components)
 
-(defvar init-file-user nil
-  "This used to be the name of the user whose init file was read at startup.")
-(make-obsolete-variable 'init-file-user 'load-user-init-file-p)
+(make-obsolete 'mswindows-color-list 'color-list)
+(make-obsolete 'tty-color-list 'color-list)
+(make-compatible 'list-fonts 'font-list)
 
-(define-obsolete-function-alias 'pui-add-install-directory
-  'pui-set-local-package-get-directory) ; misleading name
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; hooks
 
 (make-compatible-variable 'lisp-indent-hook 'lisp-indent-function)
@@ -201,13 +214,66 @@ set Info-directory-list.")
 (make-obsolete-variable 'after-change-function
   "use after-change-functions; which is a list of functions rather than a single function.")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; insertion and deletion
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; insertion, deletion, movement
 
 (define-compatible-function-alias 'insert-and-inherit 'insert)
 (define-compatible-function-alias 'insert-before-markers-and-inherit
   'insert-before-markers)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; keymaps
+(define-compatible-function-alias 'line-beginning-position 'point-at-bol)
+(define-compatible-function-alias 'line-end-position 'point-at-eol)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; Lisp engine, basic Lisp stuff
+
+(make-obsolete 'function-called-at-point 'function-at-point)
+
+;; As of 21.5, #'throw is a special operator. This makes bytecode using it
+;; compiled for 21.4 fail; making this function available works around that.
+(defun obsolete-throw (tag value)
+  "Ugly compatibility hack.
+
+See the implementation of #'funcall in eval.c.  This should be removed once
+we no longer encounter bytecode from 21.4."
+  (throw tag value))
+
+(make-obsolete
+ 'obsolete-throw
+ "it says `obsolete' in the name, you know you shouldn't be using this.")
+
+(define-compatible-function-alias 'cl-mapc 'mapc)
+
+;; Various non-XEmacs code can call this, because it used not be
+;; called automatically at dump time.
+(define-function 'cl-float-limits 'ignore)
+(make-obsolete 'cl-float-limits "this is called at dump time in 21.5 and \
+later, no need to call it in user code.")
+
+;; XEmacs; old compiler macros meant that this was called directly
+;; from compiled code, and we need to provide a version of it for a
+;; couple of years at least because of that. Aidan Kehoe, Mon Oct 4
+;; 12:06:41 IST 2010
+(defun cl-delete-duplicates (cl-seq cl-keys cl-copy)
+  (apply (if cl-copy #'remove-duplicates #'delete-duplicates) cl-seq cl-keys))
+
+(make-obsolete 'cl-delete-duplicates 'delete-duplicates)
+
+; old names
+(define-compatible-function-alias 'byte-code-function-p
+  'compiled-function-p) ;FSFmacs
+
+(define-compatible-function-alias 'interactive-form 
+  'function-interactive) ;GNU 21.1
+(define-compatible-function-alias 'assq-delete-all
+  'remassq) ;GNU 21.1
+
+(defun makehash (&optional test)
+  "Create a new hash table.
+Optional first argument TEST specifies how to compare keys in the table.  
+Predefined tests are `eq', `eql', and `equal'.  Default is `eql'."
+  (make-hash-table :test test))
+(make-compatible 'makehash 'make-hash-table)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; keys, keymaps
 
 (defun keymap-parent (keymap)
   "Return the first parent of the given keymap."
@@ -219,6 +285,17 @@ set Info-directory-list.")
   (set-keymap-parents keymap (if parent (list parent) '()))
   parent)
 (make-compatible 'set-keymap-parent 'set-keymap-parents)
+
+(make-compatible-variable 'suggest-key-bindings 'teach-extended-commands-p)
+
+;; too bad there's not a way to check for aref, assq, and nconc
+;; being called on the values of functions known to return keymaps,
+;; or known to return vectors of events instead of strings...
+
+;;; Yes there is; make compiler macros for aref, assq, nconc, checking that
+;;; the car of the relevant argument is sane.
+
+(make-obsolete-variable 'executing-macro 'executing-kbd-macro)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; menu stuff
 
@@ -251,57 +328,6 @@ set Info-directory-list.")
   'read-expression) ; misleading name
 (define-compatible-function-alias 'read-input 'read-string)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; misc
-
-;; (defun user-original-login-name ()
-;;   "Return user's login name from original login.
-;; This tries to remain unaffected by `su', by looking in environment variables."
-;;   (or (getenv "LOGNAME") (getenv "USER") (user-login-name)))
-(define-obsolete-function-alias 'user-original-login-name 'user-login-name)
-
-; old names
-(define-obsolete-function-alias 'show-buffer 'set-window-buffer)
-(define-obsolete-function-alias 'buffer-flush-undo 'buffer-disable-undo)
-(make-compatible 'eval-current-buffer 'eval-buffer)
-(define-compatible-function-alias 'byte-code-function-p
-  'compiled-function-p) ;FSFmacs
-
-(define-obsolete-function-alias 'isearch-yank-x-selection
-  'isearch-yank-selection)
-(define-obsolete-function-alias 'isearch-yank-x-clipboard
-  'isearch-yank-clipboard)
-
-;; too bad there's not a way to check for aref, assq, and nconc
-;; being called on the values of functions known to return keymaps,
-;; or known to return vectors of events instead of strings...
-
-;;; Yes there is; make compiler macros for aref, assq, nconc, checking that
-;;; the car of the relevant argument is sane.
-
-(make-obsolete-variable 'executing-macro 'executing-kbd-macro)
-
-(define-compatible-function-alias 'interactive-form 
-  'function-interactive) ;GNU 21.1
-(define-compatible-function-alias 'assq-delete-all
-  'remassq) ;GNU 21.1
-
-(defun makehash (&optional test)
-  "Create a new hash table.
-Optional first argument TEST specifies how to compare keys in the table.  
-Predefined tests are `eq', `eql', and `equal'.  Default is `eql'."
-  (make-hash-table :test test))
-(make-compatible 'makehash 'make-hash-table)
-
-(defun buffer-local-value (variable buffer)
-  "Return the value of VARIABLE in BUFFER.
-If VARIABLE does not have a buffer-local binding in BUFFER, the value
-is the default binding of variable."
-  (symbol-value-in-buffer variable buffer))
-(make-compatible 'buffer-local-value 'symbol-value-in-buffer)
-
-(define-compatible-function-alias 'line-beginning-position 'point-at-bol)
-(define-compatible-function-alias 'line-end-position 'point-at-eol)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; modeline
 
 (define-compatible-function-alias 'redraw-mode-line 'redraw-modeline)
@@ -333,6 +359,21 @@ is the default binding of variable."
   (cdr (mouse-position (frame-device frame))))
 (make-obsolete 'read-mouse-position 'mouse-position)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; paths
+
+(defvar Info-default-directory-list nil
+  "This used to be the initial value of Info-directory-list.
+If you want to change the locations where XEmacs looks for info files,
+set Info-directory-list.")
+(make-obsolete-variable 'Info-default-directory-list 'Info-directory-list)
+
+(defvar init-file-user nil
+  "This used to be the name of the user whose init file was read at startup.")
+(make-obsolete-variable 'init-file-user 'load-user-init-file-p)
+
+(define-obsolete-function-alias 'pui-add-install-directory
+  'pui-set-local-package-get-directory) ; misleading name
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; redisplay
 
 (defun redraw-display (&optional device)
@@ -340,7 +381,18 @@ is the default binding of variable."
       (mapcar 'redisplay-device (device-list))
     (redisplay-device device)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; strings
+;; the functionality of column.el has been moved into C
+;; Function obsoleted for XEmacs 20.0/February 1997.
+(defalias 'display-column-mode 'column-number-mode)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; selections
+
+(define-obsolete-function-alias 'isearch-yank-x-selection
+  'isearch-yank-selection)
+(define-obsolete-function-alias 'isearch-yank-x-clipboard
+  'isearch-yank-clipboard)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; text and strings
 
 (define-obsolete-function-alias 'sref 'aref)
 
@@ -354,7 +406,7 @@ It always returns 1 in XEmacs, and in recent FSF Emacs versions."
   "Return a list of charsets in the STRING except ascii.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (and-fboundp #'charsets-in-string (charsets-in-string string))))
+  (delq 'ascii (and-fboundp 'charsets-in-string (charsets-in-string string))))
 (make-obsolete 'find-non-ascii-charset-string
 	       "use (delq 'ascii (charsets-in-string STRING)) instead.")
 
@@ -362,7 +414,7 @@ because its `find-charset-string' ignores ASCII charset."
   "Return a list of charsets except ascii in the region between START and END.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (and-fboundp #'charsets-in-region
+  (delq 'ascii (and-fboundp 'charsets-in-region
                  (charsets-in-region start end))))
 (make-obsolete 'find-non-ascii-charset-region
 	       "use (delq 'ascii (charsets-in-region START END)) instead.")
@@ -370,48 +422,32 @@ because its `find-charset-string' ignores ASCII charset."
 ;; < 21.5 compatibility, eg. https://bugzilla.redhat.com/201524#c2
 (define-obsolete-function-alias 'string-to-char-list 'string-to-list)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; window-system objects
-
-;; the functionality of column.el has been moved into C
-;; Function obsoleted for XEmacs 20.0/February 1997.
-(defalias 'display-column-mode 'column-number-mode)
-
-(defun x-color-values  (color &optional frame)
-  "Return a description of the color named COLOR on frame FRAME.
-The value is a list of integer RGB values--(RED GREEN BLUE).
-These values appear to range from 0 to 65280 or 65535, depending
-on the system; white is (65280 65280 65280) or (65535 65535 65535).
-If FRAME is omitted or nil, use the selected frame."
-  (color-instance-rgb-components (make-color-instance color)))
-(make-compatible 'x-color-values 'color-instance-rgb-components)
-
-(make-obsolete 'mswindows-color-list 'color-list)
-(make-obsolete 'tty-color-list 'color-list)
-(make-compatible 'list-fonts 'font-list)
-
 ;; Two loser functions which shouldn't be used.
 (make-obsolete 'following-char 'char-after)
 (make-obsolete 'preceding-char 'char-before)
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; misc
+
+;; (defun user-original-login-name ()
+;;   "Return user's login name from original login.
+;; This tries to remain unaffected by `su', by looking in environment variables."
+;;   (or (getenv "LOGNAME") (getenv "USER") (user-login-name)))
+(define-obsolete-function-alias 'user-original-login-name 'user-login-name)
+
 ;; Keywords already do The Right Thing in XEmacs
 (make-compatible 'define-widget-keywords "Just use them")
 
-(make-obsolete 'function-called-at-point 'function-at-point)
+(define-function 'purecopy 'identity)
+(make-obsolete 'purecopy "purespace is not available in XEmacs.")
 
-;; As of 21.5, #'throw is a special operator. This makes bytecode using it
-;; compiled for 21.4 fail; making this function available works around that.
-(defun obsolete-throw (tag value)
-  "Ugly compatibility hack.
+(define-compatible-function-alias 'process-get 'get)
+(define-compatible-function-alias 'process-put 'put)
+(define-compatible-function-alias 'process-plist 'object-plist)
+(define-compatible-function-alias 'set-process-plist 'object-setplist)
 
-See the implementation of #'funcall in eval.c.  This should be removed once
-we no longer encounter bytecode from 21.4."
-  (throw tag value))
-
-(make-obsolete
- 'obsolete-throw
- "it says `obsolete' in the name, you know you shouldn't be using this.")
-
-(define-compatible-function-alias 'cl-mapc 'mapc)
+(define-function 'memql 'member*)
+(make-compatible 'memql "use the more full-featured `member*' instead.")
 
 (provide 'obsolete)
 ;;; obsolete.el ends here

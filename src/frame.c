@@ -1,14 +1,14 @@
 /* Generic frame functions.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003, 2005, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,13 +16,351 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30. */
 
 /* This file has been Mule-ized. */
+
+/* About window and frame geometry [ben]:
+
+   Here is an ASCII diagram:
+
++------------------------------------------------------------------------|
+|                         window-manager decoration                      |
+| +--------------------------------------------------------------------+ |
+| |                               menubar                              | |
+| ###################################################################### |
+| #                               toolbar                              # |
+| #--------------------------------------------------------------------# |
+| #  |                        internal border                       |  # |
+| #  | +----------------------------------------------------------+ |  # |
+| #  | |                          gutter                          | |  # |
+| #  | |-********************************************************-| |  # |
+|w#  | | *@|        scrollbar        |v*                      |s* | |  #w|
+|i#  | | *-+-------------------------|e*                      |c* | |  #i|
+|n#  | | *s|                         |r*                      |r* | |  #n|
+|d#  | | *c|                         |t*                      |o* | |  #d|
+|o#  | | *r|                         |.*      text area       |l* | |  #o|
+|w#  |i| *o|                         | *                      |l* |i|  #w|
+|-#  |n| *l|        text area        |d*                      |b* |n|  #-|
+|m#  |t| *l|                         |i*                      |a* |t|  #m|
+|a#  |e| *b|                         |v*                      |r* |e|  #a|
+|n# t|r| *a|                         |i*----------------------+-* |r|t #n|
+|a# o|n|g*r|                         |d*      scrollbar       |@*g|n|o #a|
+|g# o|a|u*-+-------------------------|e*----------------------+-*u|a|o #g|
+|e# l|l|t*        modeline           |r*      modeline          *t|l|l #e|
+|r# b| |t********************************************************t| |b #r|
+| # a|b|e*   =..texttexttex....=   |s|v*                      |s*e|b|a # |
+|d# r|o|r*o m=..texttexttextt..=o m|c|e*                      |c*r|o|r #d|
+|e#  |r| *u a=.exttexttextte...=u a|r|r*                      |r* |r|  #e|
+|c#  |d| *t r=....texttexttex..=t r|o|t*                      |o* |d|  #c|
+|o#  |e| *s g=        etc.     =s g|l|.*      text area       |l* |e|  #o|
+|r#  |r| *i i=                 =i i|l| *                      |l* |r|  #r|
+|a#  | | *d n=                 =d n|b|d*                      |b* | |  #a|
+|t#  | | *e  = inner text area =e  |a|i*                      |a* | |  #t|
+|i#  | | *   =                 =   |r|v*                      |r* | |  #i|
+|o#  | | *---===================---+-|i*----------------------+-* | |  #o|
+|n#  | | *        scrollbar        |@|d*      scrollbar       |@* | |  #n|
+| #  | | *-------------------------+-|e*----------------------+-* | |  # |
+| #  | | *        modeline           |r*      modeline          * | |  # |
+| #  | |-********************************************************-| |  # |
+| #  | |                           gutter                         | |  # |
+| #  | |-********************************************************-| |  # |
+| #  | |@*                       minibuffer                     *@| |  # |
+| #  | +-********************************************************-+ |  # |
+| #  |                         internal border                      |  # |
+| #--------------------------------------------------------------------# |
+| #                                toolbar                             # |
+| ###################################################################### |
+|                          window manager decoration                     |
++------------------------------------------------------------------------+
+
+   # = boundary of client area; * = window boundaries, boundary of paned area
+   = = boundary of inner text area; . = inside margin area; @ = dead boxes
+
+   Note in particular what happens at the corners, where a "corner box"
+   occurs.  Top and bottom toolbars take precedence over left and right
+   toolbars, extending out horizontally into the corner boxes.  Gutters
+   work the same way.  The corner box where the scrollbars meet, however,
+   is assigned to neither scrollbar, and is known as the "dead box"; it is
+   an area that must be cleared specially.  There are similar dead boxes at
+   the bottom-right and bottom-left corners where the minibuffer and
+   left/right gutters meet, but there is currently a bug in that these dead
+   boxes are not explicitly cleared and may contain junk.
+
+   THE FRAME
+   ---------
+
+   The "top-level window area" is the entire area of a top-level window (or
+   "frame").  The "client area" (a term from MS Windows) is the area of a
+   top-level window that XEmacs draws into and manages with redisplay.
+   This includes the toolbar, scrollbars, gutters, dividers, text area,
+   modeline and minibuffer.  It does not include the menubar, title or
+   outer borders.  The "non-client area" is the area of a top-level window
+   outside of the client area and includes the menubar, title and outer
+   borders.  Internally, all frame coordinates are relative to the client
+   area.
+
+
+   THE NON-CLIENT AREA
+   -------------------
+
+   Under X, the non-client area is split into two parts:
+
+   (1) The outer layer is the window-manager decorations: The title and
+   borders.  These are controlled by the window manager, a separate process
+   that controls the desktop, the location of icons, etc.  When a process
+   tries to create a window, the window manager intercepts this action and
+   "reparents" the window, placing another window around it which contains
+   the window decorations, including the title bar, outer borders used for
+   resizing, etc.  The window manager also implements any actions involving
+   the decorations, such as the ability to resize a window by dragging its
+   borders, move a window by dragging its title bar, etc.  If there is no
+   window manager or you kill it, windows will have no decorations (and
+   will lose them if they previously had any) and you will not be able to
+   move or resize them.
+
+   (2) Inside of the window-manager decorations is the "shell", which is
+   managed by the toolkit and widget libraries your program is linked with.
+   The code in *-x.c uses the Xt toolkit and various possible widget
+   libraries built on top of Xt, such as Motif, Athena, the "Lucid"
+   widgets, etc.  Another possibility is GTK (*-gtk.c), which implements
+   both the toolkit and widgets.  Under Xt, the "shell" window is an
+   EmacsShell widget, containing an EmacsManager widget of the same size,
+   which in turn contains a menubar widget and an EmacsFrame widget, inside
+   of which is the client area. (The division into EmacsShell and
+   EmacsManager is due to the complex and screwy geometry-management system
+   in Xt [and X more generally].  The EmacsShell handles negotiation with
+   the window manager; the place of the EmacsManager widget is normally
+   assumed by a widget that manages the geometry of its child widgets, but
+   the EmacsManager widget just lets the XEmacs redisplay mechanism do the
+   positioning.)
+
+   Under Windows, the non-client area is managed by the window system.
+   There is no division such as under X.  Part of the window-system API
+   (USER.DLL) of Win32 includes functions to control the menubars, title,
+   etc. and implements the move and resize behavior.  There *is* an
+   equivalent of the window manager, called the "shell", but it manages
+   only the desktop, not the windows themselves.  The normal shell under
+   Windows is EXPLORER.EXE; if you kill this, you will lose the bar
+   containing the "Start" menu and tray and such, but the windows
+   themselves will not be affected or lose their decorations.
+
+
+   THE CLIENT AREA
+   ---------------
+
+   Inside of the client area is the toolbars, the gutters (where the buffer
+   tabs are displayed), the minibuffer, the internal border width, and one
+   or more non-overlapping "windows" (this is old Emacs terminology, from
+   before the time when frames existed at all; the standard terminology for
+   this would be "pane").  Each window can contain a modeline, horizontal
+   and/or vertical scrollbars, and (for non-rightmost windows) a vertical
+   divider, surrounding a text area.
+
+   The dimensions of the toolbars and gutters are determined by the formula
+   (THICKNESS + 2 * BORDER-THICKNESS), where "thickness" is a cover term
+   for height or width, as appropriate.  The height and width come from
+   `default-toolbar-height' and `default-toolbar-width' and the specific
+   versions of these (`top-toolbar-height', `left-toolbar-width', etc.).
+   The border thickness comes from `default-toolbar-border-height' and
+   `default-toolbar-border-width', and the specific versions of these.  The
+   gutter works exactly equivalently.
+
+   Note that for any particular toolbar or gutter, it will only be
+   displayed if [a] its visibility specifier (`default-toolbar-visible-p'
+   etc.) is non-nil; [b] its thickness (`default-toolbar-height' etc.)  is
+   greater than 0; [c] its contents (`default-toolbar' etc.) are non-nil.
+
+   The position-specific toolbars interact with the default specifications
+   as follows: If the value for a position-specific specifier is not
+   defined in a particular domain (usually a window), and the position of
+   that specifier is set as the default position (using
+   `default-toolbar-position'), then the value from the corresponding
+   default specifier in that domain will be used.  The gutters work the
+   same.
+
+
+   THE PANED AREA
+   --------------
+
+   The area occupied by the "windows" is called the paned area.  Unfortunately,
+   because of the presence of the gutter *between* the minibuffer and other
+   windows, the bottom of the paned area is not well-defined -- does it
+   include the minibuffer (in which case it also includes the bottom gutter,
+   but none others) or does it not include the minibuffer? (In which case
+   not all windows are included.) #### GEOM! It would be cleaner to put the
+   bottom gutter *below* the minibuffer instead of above it.
+
+   Each window can include a horizontal and/or vertical scrollbar, a
+   modeline and a vertical divider to its right, as well as the text area.
+   Only non-rightmost windows can include a vertical divider. (The
+   minibuffer normally does not include either modeline or scrollbars.)
+
+   Note that, because the toolbars and gutters are controlled by
+   specifiers, and specifiers can have window-specific and buffer-specific
+   values, the size of the paned area can change depending on which window
+   is selected: In other words, if the selected window or buffer changes,
+   the entire paned area for the frame may change.
+
+
+   TEXT AREAS, FRINGES, MARGINS
+   ----------------------------
+
+   The space occupied by a window can be divided into the text area and the
+   fringes.  The fringes include the modeline, scrollbars and vertical
+   divider on the right side (if any); inside of this is the text area,
+   where the text actually occurs.  Note that a window may or may not
+   contain any of the elements that are part of the fringe -- this is
+   controlled by specifiers, e.g. `has-modeline-p',
+   `horizontal-scrollbar-visible-p', `vertical-scrollbar-visible-p',
+   `vertical-divider-always-visible-p', etc.
+
+   In addition, it is possible to set margins in the text area using the
+   specifiers `left-margin-width' and `right-margin-width'.  When this is
+   done, only the "inner text area" (the area inside of the margins) will
+   be used for normal display of text; the margins will be used for glyphs
+   with a layout policy of `outside-margin' (as set on an extent containing
+   the glyph by `set-extent-begin-glyph-layout' or
+   `set-extent-end-glyph-layout').  However, the calculation of the text
+   area size (e.g. in the function `window-text-area-width') includes the
+   margins.  Which margin is used depends on whether a glyph has been set
+   as the begin-glyph or end-glyph of an extent (`set-extent-begin-glyph'
+   etc.), using the left and right margins, respectively.
+
+   Technically, the margins outside of the inner text area are known as the
+   "outside margins".  The "inside margins" are in the inner text area and
+   constitute the whitespace between the outside margins and the first or
+   last non-whitespace character in a line; their width can vary from line
+   to line.  Glyphs will be placed in the inside margin if their layout
+   policy is `inside-margin' or `whitespace', with `whitespace' glyphs on
+   the inside and `inside-margin' glyphs on the outside.  Inside-margin
+   glyphs can spill over into the outside margin if `use-left-overflow' or
+   `use-right-overflow', respectively, is non-nil.
+
+   See the Lisp Reference manual, under Annotations, for more details.
+
+
+   THE DISPLAYABLE AREA
+   --------------------
+
+   The "displayable area" is not so much an actual area as a convenient
+   fiction.  It is the area used to convert between pixel and character
+   dimensions for frames.  The character dimensions for a frame (e.g. as
+   returned by `frame-width' and `frame-height' and set by
+   `set-frame-width' and `set-frame-height') are determined from the
+   displayable area by dividing by the pixel size of the default font as
+   instantiated in the frame. (For proportional fonts, the "average" width
+   is used.  Under Windows, this is a built-in property of the fonts.
+   Under X, this is based on the width of the lowercase 'n', or if this is
+   zero then the width of the default character. [We prefer 'n' to the
+   specified default character because many X fonts have a default
+   character with a zero or otherwise non-representative width.])
+
+   The displayable area is essentially the "theoretical" gutter area of the
+   frame, excluding the rightmost and bottom-most scrollbars.  That is, it
+   starts from the client (or "total") area and then excludes the
+   "theoretical" toolbars and bottom-most/rightmost scrollbars, and the
+   internal border width.  In this context, "theoretical" means that all
+   calculations on based on frame-level values for toolbar and scrollbar
+   thicknesses.  Because these thicknesses are controlled by specifiers,
+   and specifiers can have window-specific and buffer-specific values,
+   these calculations may or may not reflect the actual size of the paned
+   area or of the scrollbars when any particular window is selected.  Note
+   also that the "displayable area" may not even be contiguous!  In
+   particular, the gutters are included, but the bottom-most and rightmost
+   scrollbars are excluded even though they are inside of the gutters.
+   Furthermore, if the frame-level value of the horizontal scrollbar height
+   is non-zero, then the displayable area includes the paned area above and
+   below the bottom horizontal scrollbar (i.e. the modeline and minibuffer)
+   but not the scrollbar itself.
+
+   As a further twist, the character-dimension calculations are adjusted so
+   that the truncation and continuation glyphs (see `truncation-glyph' and
+   `continuation-glyph') count as a single character even if they are wider
+   than the default font width. (Technically, the character width is
+   computed from the displayable-area width by subtracting the maximum of
+   the truncation-glyph width, continuation-glyph width and default-font
+   width before dividing by the default-font width, and then adding 1 to
+   the result.) (The ultimate motivation for this kludge as well as the
+   subtraction of the scrollbars, but not the minibuffer or bottom-most
+   modeline, is to maintain compatibility with TTY's.)
+
+   Despite all these concerns and kludges, however, the "displayable area"
+   concept works well in practice and mostly ensures that by default the
+   frame will actually fit 79 characters + continuation/truncation glyph.
+
+
+   WHICH FUNCTIONS USE WHICH?
+   --------------------------
+
+   [1] Top-level window area:
+
+   set-frame-position
+   `left' and `top' frame properties
+
+   [2] Client area:
+
+   frame-pixel-*, set-frame-pixel-*
+
+   [3] Paned area:
+
+   window-pixel-edges
+   event-x-pixel, event-y-pixel, event-properties, make-event
+
+   [4] Displayable area:
+
+   frame-width, frame-height and other all functions specifying frame size
+     in characters
+   frame-displayable-pixel-*
+
+   --ben
+
+*/
+
+/*
+   About different types of units:
+
+   (1) "Total pixels" measure the pixel size of the client area of the
+       frame (everything except the menubars and window-manager decorations;
+       see comment at top of file).
+
+   (2) "Displayable pixels" measure the pixel size of the "displayable area"
+       of the frame, a convenient fiction that specifies which portion of
+       the frame "counts" for the purposes of determining the size of the
+       frame in character cells.  Approximately speaking, the difference
+       between the client area and displayable area is that toolbars,
+       gutters, internal border width and bottom-most/right-most scrollbars
+       are inside the client area but outside the displayable area.  See
+       comment at top of file for more discussion.
+
+   (3) "Character-cell units" measure the frame size in "character cells",
+       which are fixed rectangles of a size meant to correspond with the
+       height and (average) width of the bounding box of a single character
+       in the default font.  The size of a frame in character cells is
+       determined by computing the size in "displayable pixels" and dividing
+       by the pixel size of the default font as instantiated in the frame.
+       See comment at top of file under "displayable area" for more info.
+
+   (4) In window-system "frame units" -- pixels on MS Windows, character
+       cells on X and GTK (on TTY's, pixels and character cells are the
+       same).  Note that on MS Windows the pixels measure the size of the
+       displayable area, not the entire client area.
+
+       This bogosity exists because MS Windows always reports frame sizes
+       in pixels, whereas X-Windows has a scheme whereby character-cell
+       sizes and extra sizes (e.g. for toolbars, menubars, etc.) can be
+       reported to the window manager, and the window manager displays
+       character-cell units when resizing, only allows resizing to integral
+       character-cell sizes, and reports back the size in character cells.
+       As a result, someone thought it was a good idea to make the
+       fundamental units for measuring frame size correspond to what the
+       window system "reports" and hence vary between pixels and character
+       cells, as described above.
+
+  --ben
+*/
 
 #include <config.h>
 #include "lisp.h"
@@ -120,24 +458,50 @@ Lisp_Object Qframe_being_created;
 
 static void store_minibuf_frame_prop (struct frame *f, Lisp_Object val);
 
-typedef enum  {
+typedef enum
+{
   DISPLAYABLE_PIXEL_TO_CHAR,
+  CHAR_TO_DISPLAYABLE_PIXEL,
   TOTAL_PIXEL_TO_CHAR,
   CHAR_TO_TOTAL_PIXEL,
-  CHAR_TO_DISPLAYABLE_PIXEL
-} pixel_to_char_mode_t;
+  TOTAL_PIXEL_TO_DISPLAYABLE_PIXEL,
+  DISPLAYABLE_PIXEL_TO_TOTAL_PIXEL,
+}
+pixel_to_char_mode_t;
+
+enum frame_size_type
+{
+  SIZE_TOTAL_PIXEL,
+  SIZE_DISPLAYABLE_PIXEL,
+  SIZE_CHAR_CELL,
+  SIZE_FRAME_UNIT,
+};
 
 static void frame_conversion_internal (struct frame *f,
-				       pixel_to_char_mode_t pixel_to_char,
-				       int *pixel_width, int *pixel_height,
-				       int *char_width, int *char_height,
-				       int real_face);
+				       enum frame_size_type source,
+				       int source_width, int source_height,
+				       enum frame_size_type dest,
+				       int *dest_width, int *dest_height);
+static void get_frame_char_size (struct frame *f, int *out_width,
+				 int *out_height);
+static void get_frame_new_displayable_pixel_size (struct frame *f,
+						  int *out_width,
+						  int *out_height);
+static void get_frame_new_total_pixel_size (struct frame *f,
+					    int *out_width,
+					    int *out_height);
+
 static struct display_line title_string_display_line;
 /* Used by generate_title_string. Global because they get used so much that
    the dynamic allocation time adds up. */
 static Ichar_dynarr *title_string_ichar_dynarr;
 
 
+/**************************************************************************/
+/*                                                                        */
+/*                              frame object                              */
+/*                                                                        */
+/**************************************************************************/
 
 #ifndef NEW_GC
 extern const struct sized_memory_description gtk_frame_data_description;
@@ -180,12 +544,9 @@ static const struct memory_description expose_ignore_description_1 [] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("expose-ignore",
-			       expose_ignore,
-			       1, /*dumpable-flag*/
-			       0, 0, 0, 0, 0,
-			       expose_ignore_description_1,
-			       struct expose_ignore);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("expose-ignore", expose_ignore,
+				      0, expose_ignore_description_1,
+				      struct expose_ignore);
 #else /* not NEW_GC */
 extern const struct sized_memory_description expose_ignore_description;
 
@@ -274,24 +635,31 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun,
   struct frame *frm = XFRAME (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, XSTRING_DATA (frm->name));
+    printing_unreadable_lisp_object (obj, XSTRING_DATA (frm->name));
 
   write_fmt_string (printcharfun, "#<%s-frame ", !FRAME_LIVE_P (frm) ? "dead" :
 		    FRAME_TYPE_NAME (frm));
   print_internal (frm->name, printcharfun, 1);
-  write_fmt_string (printcharfun, " 0x%x>", frm->header.uid);
+  write_ascstring (printcharfun, " on ");
+  print_internal (frm->device, printcharfun, 0);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
-			       0, /*dumpable-flag*/
-			       mark_frame, print_frame, 0, 0, 0,
-			       frame_description,
-			       struct frame);
+DEFINE_NODUMP_LISP_OBJECT ("frame", frame,
+			   mark_frame, print_frame, 0, 0, 0,
+			   frame_description,
+			   struct frame);
 
+/**************************************************************************/
+/*                                                                        */
+/*                             frame creation                             */
+/*                                                                        */
+/**************************************************************************/
+
 static void
 nuke_all_frame_slots (struct frame *f)
 {
-  ZERO_LCRECORD (f);
+  zero_nonsized_lisp_object (wrap_frame (f));
 
 #define MARKED_SLOT(x)	f->x = Qnil;
 #include "frameslots.h"
@@ -305,12 +673,11 @@ static struct frame *
 allocate_frame_core (Lisp_Object device)
 {
   /* This function can GC */
-  Lisp_Object frame;
   Lisp_Object root_window;
-  struct frame *f = ALLOC_LCRECORD_TYPE (struct frame, &lrecord_frame);
+  Lisp_Object frame = ALLOC_NORMAL_LISP_OBJECT (frame);
+  struct frame *f = XFRAME (frame);
 
   nuke_all_frame_slots (f);
-  frame = wrap_frame (f);
 
   f->device = device;
   f->framemeths = XDEVICE (device)->devmeths;
@@ -658,7 +1025,7 @@ See `set-frame-properties', `default-x-frame-plist', and
 	  reset_glyph_cachels (XWINDOW (f->minibuffer_window));
 	}
 
-      change_frame_size (f, f->height, f->width, 0);
+      change_frame_size (f, f->width, f->height, 0);
     }
 
   MAYBE_FRAMEMETH (f, init_frame_2, (f, props));
@@ -703,7 +1070,7 @@ See `set-frame-properties', `default-x-frame-plist', and
 	 earlier. */
       init_frame_gutters (f);
 
-      change_frame_size (f, f->height, f->width, 0);
+      change_frame_size (f, f->width, f->height, 0);
     }
 
   if (first_frame_on_device)
@@ -725,6 +1092,12 @@ See `set-frame-properties', `default-x-frame-plist', and
 }
 
 
+/**************************************************************************/
+/*                                                                        */
+/*                      validating a frame argument                       */
+/*                                                                        */
+/**************************************************************************/
+
 /* this function should be used in most cases when a Lisp function is passed
    a FRAME argument.  Use this unless you don't accept nil == current frame
    (in which case, do a CHECK_LIVE_FRAME() and then an XFRAME()) or you
@@ -757,93 +1130,12 @@ decode_frame_or_selected (Lisp_Object cdf)
   return decode_frame (cdf);
 }
 
-Lisp_Object
-frame_device (struct frame *f)
-{
-  return FRAME_DEVICE (f);
-}
-
 int
 frame_live_p (struct frame *f)
 {
   return FRAME_LIVE_P (f);
 }
 
-
-void
-invalidate_vertical_divider_cache_in_frame (struct frame *f)
-{
-  /* Invalidate cached value of needs_vertical_divider_p in
-     every and all windows */
-  map_windows (f, invalidate_vertical_divider_cache_in_window, 0);
-}
-
-/*
- * Frame size may change due to changes in scrollbars, toolbars,
- * default font etc. These changes are applied early in redisplay
- * frame.
- */
-void
-adjust_frame_size (struct frame *f)
-{
-  /* This can call Lisp. */
-  int keep_char_size = 0;
-  Lisp_Object frame = wrap_frame (f);
-
-  if (!f->size_slipped)
-    return;
-
-  /* Don't adjust tty frames. #### May break when TTY have menubars.
-     Then, write an Vadjust_frame_function which will return t for TTY
-     frames. Another solution is frame_size_fixed_p method for TTYs,
-     which always returned yes it's fixed.
-  */
-  if (!FRAME_WIN_P (f))
-    {
-      CLEAR_FRAME_SIZE_SLIPPED (f);
-      return;
-    }
-
-  /* frame_size_fixed_p tells that frame size cannot currently
-     be changed change due to external conditions */
-  if (!FRAMEMETH_OR_GIVEN (f, frame_size_fixed_p, (f), 0))
-    {
-      if (NILP (Vadjust_frame_function))
-	keep_char_size = 1;
-      else if (EQ (Vadjust_frame_function, Qt))
-	keep_char_size = 0;
-      else
-	keep_char_size =
-	  NILP (call1_trapping_problems ("Error in adjust-frame-function",
-					 Vadjust_frame_function, frame,
-					 0));
-
-      if (keep_char_size)
-	Fset_frame_size (frame, make_int (FRAME_CHARWIDTH(f)),
-			 make_int (FRAME_CHARHEIGHT(f)), Qnil);
-    }
-
-  if (!keep_char_size)
-    {
-      int height, width;
-      pixel_to_char_size (f, FRAME_PIXWIDTH(f), FRAME_PIXHEIGHT(f),
-			  &width, &height);
-      change_frame_size (f, height, width, 0);
-      CLEAR_FRAME_SIZE_SLIPPED (f);
-    }
-}
-
-/*
- * This is a "specifier changed in frame" handler for various specifiers
- * changing which causes frame size adjustment
- */
-void
-frame_size_slipped (Lisp_Object UNUSED (specifier), struct frame *f,
-		    Lisp_Object UNUSED (oldval))
-{
-  MARK_FRAME_SIZE_SLIPPED(f);
-}
-
 DEFUN ("framep", Fframep, 1, 1, 0, /*
 Return non-nil if OBJECT is a frame.
 Also see `frame-live-p'.
@@ -864,6 +1156,27 @@ Return non-nil if OBJECT is a frame which has not been deleted.
 }
 
 
+/**************************************************************************/
+/*                                                                        */
+/*                         frame focus/selection                          */
+/*                                                                        */
+/**************************************************************************/
+
+Lisp_Object
+frame_device (struct frame *f)
+{
+  return FRAME_DEVICE (f);
+}
+
+DEFUN ("frame-device", Fframe_device, 0, 1, 0, /*
+Return the device that FRAME is on.
+If omitted, FRAME defaults to the currently selected frame.
+*/
+       (frame))
+{
+  return FRAME_DEVICE (decode_frame (frame));
+}
+
 DEFUN ("focus-frame", Ffocus_frame, 1, 1, 0, /*
 Select FRAME and give it the window system focus.
 This function is not affected by the value of `focus-follows-mouse'.
@@ -962,6 +1275,9 @@ device_selected_frame (struct device *d)
 }
 
 #if 0 /* FSFmacs */
+
+/* Ben thinks there is no need for `redirect-frame-focus' or `frame-focus',
+   crockish FSFmacs functions.  See summary on focus in event-stream.c. */
 
 DEFUN ("handle-switch-frame", Fhandle_switch_frame, 1, 2, "e", /*
 Handle a switch-frame event EVENT.
@@ -1114,15 +1430,38 @@ If FRAME is the selected frame, this makes WINDOW the selected window.
   return window;
 }
 
-
-DEFUN ("frame-device", Fframe_device, 0, 1, 0, /*
-Return the device that FRAME is on.
-If omitted, FRAME defaults to the currently selected frame.
+DEFUN ("disable-frame", Fdisable_frame, 1, 1, 0, /*
+Disable frame FRAME, so that it cannot have the focus or receive user input.
+This is normally used during modal dialog boxes.
+WARNING: Be very careful not to wedge XEmacs!
+Use an `unwind-protect' that re-enables the frame to avoid this.
 */
        (frame))
 {
-  return FRAME_DEVICE (decode_frame (frame));
+  struct frame *f = decode_frame (frame);
+
+  f->disabled = 1;
+  MAYBE_FRAMEMETH (f, disable_frame, (f));
+  return Qnil;
 }
+
+DEFUN ("enable-frame", Fenable_frame, 1, 1, 0, /*
+Enable frame FRAME, so that it can have the focus and receive user input.
+Frames are normally enabled, unless explicitly disabled using `disable-frame'.
+*/
+       (frame))
+{
+  struct frame *f = decode_frame (frame);
+  f->disabled = 0;
+  MAYBE_FRAMEMETH (f, enable_frame, (f));
+  return Qnil;
+}
+
+/**************************************************************************/
+/*                                                                        */
+/*                     traversing the list of frames                      */
+/*                                                                        */
+/**************************************************************************/
 
 int
 is_surrogate_for_selected_frame (struct frame *f)
@@ -1416,6 +1755,11 @@ find_some_frame (int (*predicate) (Lisp_Object, void *),
 }
 
 
+/**************************************************************************/
+/*                                                                        */
+/*                             frame deletion                             */
+/*                                                                        */
+/**************************************************************************/
 
 /* extern void free_line_insertion_deletion_costs (struct frame *f); */
 
@@ -1806,8 +2150,7 @@ delete_frame_internal (struct frame *f, int force,
 	     point their minibuffer frames must have been deleted, but
 	     that is prohibited at the top; you can't delete surrogate
 	     minibuffer frames.  */
-	  if (NILP (frame_with_minibuf))
-	    ABORT ();
+	  assert (!NILP (frame_with_minibuf));
 
 	  con->default_minibuffer_frame = frame_with_minibuf;
 	}
@@ -1869,6 +2212,12 @@ will automatically call `save-buffers-kill-emacs'.)
 }
 
 
+/**************************************************************************/
+/*                                                                        */
+/*                        mouse position in frame                         */
+/*                                                                        */
+/**************************************************************************/
+
 /* Return mouse position in character cell units.  */
 
 static int
@@ -2056,6 +2405,12 @@ before calling this function on it, like this.
   return Qnil;
 }
 
+/**************************************************************************/
+/*                                                                        */
+/*                            frame visibility                            */
+/*                                                                        */
+/**************************************************************************/
+
 DEFUN ("make-frame-visible", Fmake_frame_visible, 0, 1, 0, /*
 Make the frame FRAME visible (assuming it is an X-window).
 If omitted, FRAME defaults to the currently selected frame.
@@ -2218,7 +2573,6 @@ necessarily really updated.
   return value;
 }
 
-
 DEFUN ("raise-frame", Fraise_frame, 0, 1, "", /*
 Bring FRAME to the front, so it occludes any frames it overlaps.
 If omitted, FRAME defaults to the currently selected frame.
@@ -2251,36 +2605,12 @@ doesn't support multiple overlapping frames, this function does nothing.
 }
 
 
-DEFUN ("disable-frame", Fdisable_frame, 1, 1, 0, /*
-Disable frame FRAME, so that it cannot have the focus or receive user input.
-This is normally used during modal dialog boxes.
-WARNING: Be very careful not to wedge XEmacs!
-Use an `unwind-protect' that re-enables the frame to avoid this.
-*/
-       (frame))
-{
-  struct frame *f = decode_frame (frame);
+/***************************************************************************/
+/*                                                                         */
+/*                           print-related functions                       */
+/*                                                                         */
+/***************************************************************************/
 
-  f->disabled = 1;
-  MAYBE_FRAMEMETH (f, disable_frame, (f));
-  return Qnil;
-}
-
-DEFUN ("enable-frame", Fenable_frame, 1, 1, 0, /*
-Enable frame FRAME, so that it can have the focus and receive user input.
-Frames are normally enabled, unless explicitly disabled using `disable-frame'.
-*/
-       (frame))
-{
-  struct frame *f = decode_frame (frame);
-  f->disabled = 0;
-  MAYBE_FRAMEMETH (f, enable_frame, (f));
-  return Qnil;
-}
-
-/* Ben thinks there is no need for `redirect-frame-focus' or `frame-focus',
-   crockish FSFmacs functions.  See summary on focus in event-stream.c. */
-
 DEFUN ("print-job-page-number", Fprint_job_page_number, 1, 1, 0, /*
 Return current page number for the print job FRAME.
 */
@@ -2308,11 +2638,33 @@ Eject page in the print job FRAME.
 
 
 /***************************************************************************/
+/*                                                                         */
 /*                           frame properties                              */
+/*                                                                         */
 /***************************************************************************/
 
-static void internal_set_frame_size (struct frame *f, int cols, int rows,
-				     int pretend);
+DEFUN ("frame-name", Fframe_name, 0, 1, 0, /*
+Return the name of FRAME (defaulting to the selected frame).
+This is not the same as the `title' of the frame.
+*/
+       (frame))
+{
+  return decode_frame (frame)->name;
+}
+
+DEFUN ("frame-modified-tick", Fframe_modified_tick, 0, 1, 0, /*
+Return FRAME's tick counter, incremented for each change to the frame.
+Each frame has a tick counter which is incremented each time the frame
+is resized, a window is resized, added, or deleted, a face is changed,
+`set-window-buffer' or `select-window' is called on a window in the
+frame, the window-start of a window in the frame has changed, or
+anything else interesting has happened.  It wraps around occasionally.
+No argument or nil as argument means use selected frame as FRAME.
+*/
+       (frame))
+{
+  return make_int (decode_frame (frame)->modiff);
+}
 
 static void
 store_minibuf_frame_prop (struct frame *f, Lisp_Object val)
@@ -2608,17 +2960,9 @@ See `set-frame-properties' for the built-in property names.
 
   if (EQ (Qheight, property) || EQ (Qwidth, property))
     {
-      if (window_system_pixelated_geometry (frame))
-	{
-	  int width, height;
-	  pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
-				   &width, &height);
-	  return make_int (EQ (Qheight, property) ? height: width);
-	}
-      else
-	return make_int (EQ (Qheight, property) ?
-			 FRAME_HEIGHT (f) :
-			 FRAME_WIDTH  (f));
+      int width, height;
+      get_frame_char_size (f, &width, &height);
+      return make_int (EQ (Qheight, property) ? height : width);
     }
 
   /* NOTE: FSF returns Qnil instead of Qt for FRAME_HAS_MINIBUF_P.
@@ -2710,17 +3054,7 @@ Do not modify this list; use `set-frame-property' instead.
 		  result);
   {
     int width, height;
-
-    if (window_system_pixelated_geometry (frame))
-      {
-	pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
-				 &width, &height);
-      }
-    else
-      {
-	height = FRAME_HEIGHT (f);
-	width = FRAME_WIDTH (f);
-      }
+    get_frame_char_size (f, &width, &height);
     result = cons3 (Qwidth , make_int (width),  result);
     result = cons3 (Qheight, make_int (height), result);
   }
@@ -2732,12 +3066,22 @@ Do not modify this list; use `set-frame-property' instead.
 }
 
 
+/**************************************************************************/
+/*                                                                        */
+/*                     frame sizing (user functions)                      */
+/*                                                                        */
+/**************************************************************************/
+
 DEFUN ("frame-pixel-height", Fframe_pixel_height, 0, 1, 0, /*
 Return the total height in pixels of FRAME.
 */
        (frame))
 {
-  return make_int (decode_frame (frame)->pixheight);
+  struct frame *f = decode_frame (frame);
+  int width, height;
+
+  get_frame_new_total_pixel_size (f, &width, &height);
+  return make_int (height);
 }
 
 DEFUN ("frame-displayable-pixel-height", Fframe_displayable_pixel_height, 0, 1, 0, /*
@@ -2746,20 +3090,10 @@ Return the height of the displayable area in pixels of FRAME.
        (frame))
 {
   struct frame *f = decode_frame (frame);
-  int height, pheight;
-  frame = wrap_frame (f);
+  int width, height;
 
-  if (!window_system_pixelated_geometry (frame))
-    {
-      height = FRAME_HEIGHT (f);
-
-      frame_conversion_internal (f, CHAR_TO_DISPLAYABLE_PIXEL,
-				 0, &pheight, 0, &height, 0);
-    }
-  else
-    pheight = FRAME_PIXHEIGHT (f);
-
-  return make_int (pheight);
+  get_frame_new_displayable_pixel_size (f, &width, &height);
+  return make_int (height);
 }
 
 DEFUN ("frame-pixel-width", Fframe_pixel_width, 0, 1, 0, /*
@@ -2767,7 +3101,11 @@ Return the total width in pixels of FRAME.
 */
        (frame))
 {
-  return make_int (decode_frame (frame)->pixwidth);
+  struct frame *f = decode_frame (frame);
+  int width, height;
+
+  get_frame_new_total_pixel_size (f, &width, &height);
+  return make_int (width);
 }
 
 DEFUN ("frame-displayable-pixel-width", Fframe_displayable_pixel_width, 0, 1, 0, /*
@@ -2776,56 +3114,10 @@ Return the width of the displayable area in pixels of FRAME.
        (frame))
 {
   struct frame *f = decode_frame (frame);
-  int width, pwidth;
-  frame = wrap_frame (f);
+  int width, height;
 
-  if (!window_system_pixelated_geometry (frame))
-    {
-      width = FRAME_WIDTH (f);
-
-      frame_conversion_internal (f, CHAR_TO_DISPLAYABLE_PIXEL,
-				 &pwidth, 0, &width, 0, 0);
-    }
-  else
-    pwidth = FRAME_PIXWIDTH (f);
-
-  return make_int (pwidth);
-}
-
-DEFUN ("frame-name", Fframe_name, 0, 1, 0, /*
-Return the name of FRAME (defaulting to the selected frame).
-This is not the same as the `title' of the frame.
-*/
-       (frame))
-{
-  return decode_frame (frame)->name;
-}
-
-DEFUN ("frame-modified-tick", Fframe_modified_tick, 0, 1, 0, /*
-Return FRAME's tick counter, incremented for each change to the frame.
-Each frame has a tick counter which is incremented each time the frame
-is resized, a window is resized, added, or deleted, a face is changed,
-`set-window-buffer' or `select-window' is called on a window in the
-frame, the window-start of a window in the frame has changed, or
-anything else interesting has happened.  It wraps around occasionally.
-No argument or nil as argument means use selected frame as FRAME.
-*/
-       (frame))
-{
-  return make_int (decode_frame (frame)->modiff);
-}
-
-static void
-internal_set_frame_size (struct frame *f, int cols, int rows, int pretend)
-{
-  /* This can call Lisp.  See mswindows_set_frame_size(). */
-  /* An explicit size change cancels any pending frame size adjustment */
-  CLEAR_FRAME_SIZE_SLIPPED (f);
-
-  if (pretend || !HAS_FRAMEMETH_P (f, set_frame_size))
-    change_frame_size (f, rows, cols, 0);
-  else
-    FRAMEMETH (f, set_frame_size, (f, cols, rows));
+  get_frame_new_displayable_pixel_size (f, &width, &height);
+  return make_int (width);
 }
 
 DEFUN ("set-frame-height", Fset_frame_height, 2, 3, 0, /*
@@ -2837,23 +3129,16 @@ but that the idea of the actual height of the frame should not be changed.
 {
   /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
-  int height, width;
-  frame = wrap_frame (f);
+  int cwidth, cheight;
+  int guwidth, guheight;
+
   CHECK_INT (lines);
-
-  if (window_system_pixelated_geometry (frame))
-    {
-      char_to_real_pixel_size (f, 0, XINT (lines), 0, &height);
-      width = FRAME_PIXWIDTH (f);
-    }
-  else
-    {
-      height = XINT (lines);
-      width = FRAME_WIDTH (f);
-    }
-
-  internal_set_frame_size (f, width, height, !NILP (pretend));
-  return frame;
+  get_frame_char_size (f, &cwidth, &cheight);
+  cheight = XINT (lines);
+  frame_conversion_internal (f, SIZE_CHAR_CELL, cwidth, cheight,
+			     SIZE_FRAME_UNIT, &guwidth, &guheight);
+  internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
+  return wrap_frame (f);
 }
 
 DEFUN ("set-frame-pixel-height", Fset_frame_pixel_height, 2, 3, 0, /*
@@ -2865,25 +3150,16 @@ but that the idea of the actual height of the frame should not be changed.
 {
   /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
-  int pheight, width;
-  frame = wrap_frame (f);
+  int pwidth, pheight;
+  int guwidth, guheight;
+
   CHECK_INT (height);
-
-  if (!window_system_pixelated_geometry (frame))
-    {
-      int h = XINT (height);
-      width = FRAME_WIDTH (f);
-
-      frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR, 0, &h, 0, &pheight, 0);
-    }
-  else
-    {
-      width = FRAME_PIXWIDTH (f);
-      pheight = XINT (height);
-    }
-
-  internal_set_frame_size (f, width, pheight, !NILP (pretend));
-  return frame;
+  get_frame_new_total_pixel_size (f, &pwidth, &pheight);
+  pheight = XINT (height);
+  frame_conversion_internal (f, SIZE_TOTAL_PIXEL, pwidth, pheight,
+			     SIZE_FRAME_UNIT, &guwidth, &guheight);
+  internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
+  return wrap_frame (f);
 }
 
 DEFUN ("set-frame-displayable-pixel-height", Fset_frame_displayable_pixel_height, 2, 3, 0, /*
@@ -2895,24 +3171,16 @@ but that the idea of the actual height of the frame should not be changed.
 {
   /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
-  int pheight, width;
-  frame = wrap_frame (f);
+  int pwidth, pheight;
+  int guwidth, guheight;
+
   CHECK_INT (height);
-
-  if (!window_system_pixelated_geometry (frame))
-    {
-      int h = XINT (height);
-      width = FRAME_WIDTH (f);
-      frame_conversion_internal (f, DISPLAYABLE_PIXEL_TO_CHAR, 0, &h, 0, &pheight, 0);
-    }
-  else
-    {
-      width = FRAME_PIXWIDTH (f);
-      pheight = XINT (height);
-    }
-
-  internal_set_frame_size (f, width, pheight, !NILP (pretend));
-  return frame;
+  get_frame_new_displayable_pixel_size (f, &pwidth, &pheight);
+  pheight = XINT (height);
+  frame_conversion_internal (f, SIZE_DISPLAYABLE_PIXEL, pwidth, pheight,
+			     SIZE_FRAME_UNIT, &guwidth, &guheight);
+  internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
+  return wrap_frame (f);
 }
 
 
@@ -2925,23 +3193,16 @@ but that the idea of the actual width of the frame should not be changed.
 {
   /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
-  int width, height;
-  frame = wrap_frame (f);
+  int cwidth, cheight;
+  int guwidth, guheight;
+
   CHECK_INT (cols);
-
-  if (window_system_pixelated_geometry (frame))
-    {
-      char_to_real_pixel_size (f, XINT (cols), 0, &width, 0);
-      height = FRAME_PIXHEIGHT (f);
-    }
-  else
-    {
-      width = XINT (cols);
-      height = FRAME_HEIGHT (f);
-    }
-
-  internal_set_frame_size (f, width, height, !NILP (pretend));
-  return frame;
+  get_frame_char_size (f, &cwidth, &cheight);
+  cwidth = XINT (cols);
+  frame_conversion_internal (f, SIZE_CHAR_CELL, cwidth, cheight,
+			     SIZE_FRAME_UNIT, &guwidth, &guheight);
+  internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
+  return wrap_frame (f);
 }
 
 DEFUN ("set-frame-pixel-width", Fset_frame_pixel_width, 2, 3, 0, /*
@@ -2953,24 +3214,16 @@ but that the idea of the actual height of the frame should not be changed.
 {
   /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
-  int height, pwidth;
-  frame = wrap_frame (f);
+  int pwidth, pheight;
+  int guwidth, guheight;
+
   CHECK_INT (width);
-
-  if (!window_system_pixelated_geometry (frame))
-    {
-      int w = XINT (width);
-      height = FRAME_HEIGHT (f);
-      frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR, &w, 0, &pwidth, 0, 0);
-    }
-  else
-    {
-      height = FRAME_PIXHEIGHT (f);
-      pwidth = XINT (width);
-    }
-
-  internal_set_frame_size (f, pwidth, height, !NILP (pretend));
-  return frame;
+  get_frame_new_total_pixel_size (f, &pwidth, &pheight);
+  pwidth = XINT (width);
+  frame_conversion_internal (f, SIZE_TOTAL_PIXEL, pwidth, pheight,
+			     SIZE_FRAME_UNIT, &guwidth, &guheight);
+  internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
+  return wrap_frame (f);
 }
 
 DEFUN ("set-frame-displayable-pixel-width", Fset_frame_displayable_pixel_width, 2, 3, 0, /*
@@ -2982,24 +3235,16 @@ but that the idea of the actual height of the frame should not be changed.
 {
   /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
-  int height, pwidth;
-  frame = wrap_frame (f);
+  int pwidth, pheight;
+  int guwidth, guheight;
+
   CHECK_INT (width);
-
-  if (!window_system_pixelated_geometry (frame))
-    {
-      int w = XINT (width);
-      height = FRAME_HEIGHT (f);
-      frame_conversion_internal (f, DISPLAYABLE_PIXEL_TO_CHAR, &w, 0, &pwidth, 0, 0);
-    }
-  else
-    {
-      height = FRAME_PIXHEIGHT (f);
-      pwidth = XINT (width);
-    }
-
-  internal_set_frame_size (f, pwidth, height, !NILP (pretend));
-  return frame;
+  get_frame_new_displayable_pixel_size (f, &pwidth, &pheight);
+  pwidth = XINT (width);
+  frame_conversion_internal (f, SIZE_DISPLAYABLE_PIXEL, pwidth, pheight,
+			     SIZE_FRAME_UNIT, &guwidth, &guheight);
+  internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
+  return wrap_frame (f);
 }
 
 DEFUN ("set-frame-size", Fset_frame_size, 3, 4, 0, /*
@@ -3011,21 +3256,14 @@ but that the idea of the actual size of the frame should not be changed.
 {
   /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
-  int height, width;
-  frame = wrap_frame (f);
+  int guwidth, guheight;
+
   CHECK_INT (cols);
   CHECK_INT (rows);
-
-  if (window_system_pixelated_geometry (frame))
-    char_to_real_pixel_size (f, XINT (cols), XINT (rows), &width, &height);
-  else
-    {
-      height = XINT (rows);
-      width = XINT (cols);
-    }
-
-  internal_set_frame_size (f, width, height, !NILP (pretend));
-  return frame;
+  frame_conversion_internal (f, SIZE_CHAR_CELL, XINT (cols), XINT (rows),
+			     SIZE_FRAME_UNIT, &guwidth, &guheight);
+  internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
+  return wrap_frame (f);
 }
 
 DEFUN ("set-frame-pixel-size", Fset_frame_pixel_size, 3, 4, 0, /*
@@ -3037,25 +3275,14 @@ but that the idea of the actual size of the frame should not be changed.
 {
   /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
-  int pheight, pwidth;
-  frame = wrap_frame (f);
+  int guwidth, guheight;
+
   CHECK_INT (width);
   CHECK_INT (height);
-
-  if (!window_system_pixelated_geometry (frame))
-    {
-      int w = XINT (width);
-      int h = XINT (height);
-      frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR, &w, &h, &pwidth, &pheight, 0);
-    }
-  else
-    {
-      pheight = XINT (height);
-      pwidth = XINT (width);
-    }
-
-  internal_set_frame_size (f, pwidth, pheight, !NILP (pretend));
-  return frame;
+  frame_conversion_internal (f, SIZE_TOTAL_PIXEL, XINT (width), XINT (height),
+			     SIZE_FRAME_UNIT, &guwidth, &guheight);
+  internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
+  return wrap_frame (f);
 }
 
 DEFUN ("set-frame-displayable-pixel-size", Fset_frame_displayable_pixel_size, 3, 4, 0, /*
@@ -3067,25 +3294,15 @@ but that the idea of the actual size of the frame should not be changed.
 {
   /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
-  int pheight, pwidth;
-  frame = wrap_frame (f);
+  int guwidth, guheight;
+
   CHECK_INT (width);
   CHECK_INT (height);
-
-  if (!window_system_pixelated_geometry (frame))
-    {
-      int w = XINT (width);
-      int h = XINT (height);
-      frame_conversion_internal (f, DISPLAYABLE_PIXEL_TO_CHAR, &w, &h, &pwidth, &pheight, 0);
-    }
-  else
-    {
-      pheight = XINT (height);
-      pwidth = XINT (width);
-    }
-
-  internal_set_frame_size (f, pwidth, pheight, !NILP (pretend));
-  return frame;
+  frame_conversion_internal (f, SIZE_DISPLAYABLE_PIXEL,
+			     XINT (width), XINT (height),
+			     SIZE_FRAME_UNIT, &guwidth, &guheight);
+  internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
+  return wrap_frame (f);
 }
 
 DEFUN ("set-frame-position", Fset_frame_position, 3, 3, 0, /*
@@ -3106,32 +3323,50 @@ the rightmost or bottommost possible position (that stays within the screen).
 }
 
 
+/**************************************************************************/
+/*                                                                        */
+/*                various ways of measuring the frame size                */
+/*                                                                        */
+/**************************************************************************/
 
 /* Frame size conversion functions moved here from EmacsFrame.c
    because they're generic and really don't belong in that file.
    Function get_default_char_pixel_size() removed because it's
-   exactly the same as default_face_height_and_width(). */
+   exactly the same as default_face_width_and_height().
+
+   Convert between total pixel size, displayable pixel size and
+   character-cell size.  Variables are either "in", "out" or unused,
+   depending on the value of PIXEL_TO_CHAR, which indicates which units the
+   source and destination values are measured in.
+
+   See frame_conversion_internal() for a discussion of the different
+   types of units. */
+
 static void
-frame_conversion_internal (struct frame *f,
-			   pixel_to_char_mode_t pixel_to_char,
-			   int *pixel_width, int *pixel_height,
-			   int *char_width, int *char_height,
-			   int real_face)
+frame_conversion_internal_1 (struct frame *f,
+			     pixel_to_char_mode_t pixel_to_char,
+			     int *total_pixel_width, int *total_pixel_height,
+			     int *disp_pixel_width, int *disp_pixel_height,
+			     int *char_width, int *char_height)
 {
-  int cpw;
-  int cph;
+  int cpw, cph;
   int egw;
   int obw, obh, bdr;
   Lisp_Object frame, window;
 
   frame = wrap_frame (f);
-  if (real_face)
-    default_face_height_and_width (frame, &cph, &cpw);
-  else
-    default_face_height_and_width_1 (frame, &cph, &cpw);
+  default_face_width_and_height (frame, &cpw, &cph);
 
   window = FRAME_SELECTED_WINDOW (f);
 
+  /* #### It really seems like we should also be subtracting out the
+     theoretical gutter width and height, just like we do for toolbars.
+     There is currently a bug where if you call `set-frame-pixel-width'
+     on MS Windows (at least, possibly also X) things get confused and
+     the top of the root window overlaps the top gutter instead of being
+     below it.  This gets fixed next time you resize the frame using the
+     mouse.  Possibly this is caused by not handling the gutter height
+     here? */
   egw = max (glyph_width (Vcontinuation_glyph, window),
 	     glyph_width (Vtruncation_glyph, window));
   egw = max (egw, cpw);
@@ -3154,34 +3389,118 @@ frame_conversion_internal (struct frame *f,
     {
     case DISPLAYABLE_PIXEL_TO_CHAR:
       if (char_width)
-	*char_width = ROUND_UP (*pixel_width, cpw) / cpw;
+	*char_width = ROUND_UP (*disp_pixel_width, cpw) / cpw;
       if (char_height)
-	*char_height = ROUND_UP (*pixel_height, cph) / cph;
+	*char_height = ROUND_UP (*disp_pixel_height, cph) / cph;
+      break;
+    case CHAR_TO_DISPLAYABLE_PIXEL:
+      if (disp_pixel_width)
+	*disp_pixel_width = *char_width * cpw;
+      if (disp_pixel_height)
+	*disp_pixel_height = *char_height * cph;
       break;
     case TOTAL_PIXEL_TO_CHAR:
       /* Convert to chars so that the total frame size is pixel_width x
 	 pixel_height. */
       if (char_width)
-	*char_width = 1 + ((*pixel_width - egw) - bdr - obw) / cpw;
+	*char_width = 1 + ((*total_pixel_width - egw) - bdr - obw) / cpw;
       if (char_height)
-	*char_height = (*pixel_height - bdr - obh) / cph;
+	*char_height = (*total_pixel_height - bdr - obh) / cph;
       break;
     case CHAR_TO_TOTAL_PIXEL:
-      if (pixel_width)
-	*pixel_width = (*char_width - 1) * cpw + egw + bdr + obw;
-      if (pixel_height)
-	*pixel_height = *char_height * cph + bdr + obh;
+      if (total_pixel_width)
+	*total_pixel_width = (*char_width - 1) * cpw + egw + bdr + obw;
+      if (total_pixel_height)
+	*total_pixel_height = *char_height * cph + bdr + obh;
       break;
-    case CHAR_TO_DISPLAYABLE_PIXEL:
-      if (pixel_width)
-	*pixel_width = *char_width * cpw;
-      if (pixel_height)
-	*pixel_height = *char_height * cph;
+    case TOTAL_PIXEL_TO_DISPLAYABLE_PIXEL:
+      /* Convert to chars so that the total frame size is pixel_width x
+	 pixel_height. */
+      if (disp_pixel_width)
+	*disp_pixel_width = cpw + (*total_pixel_width - egw) - bdr - obw;
+      if (disp_pixel_height)
+	*disp_pixel_height = *total_pixel_height - bdr - obh;
+      break;
+    case DISPLAYABLE_PIXEL_TO_TOTAL_PIXEL:
+      if (total_pixel_width)
+	*total_pixel_width = *disp_pixel_width - cpw + egw + bdr + obw;
+      if (total_pixel_height)
+	*total_pixel_height = *disp_pixel_height + bdr + obh;
       break;
     }
 }
 
-/* This takes the size in pixels of the text area, and returns the number
+
+static enum frame_size_type
+canonicalize_frame_size_type (enum frame_size_type type, int pixgeom)
+{
+  if (type == SIZE_FRAME_UNIT)
+    {
+      if (pixgeom)
+	type = SIZE_DISPLAYABLE_PIXEL;
+      else
+	type = SIZE_CHAR_CELL;
+    }
+  return type;
+}
+
+/* Basic frame conversion function.  Convert source size to destination
+   size, where either of them can be in total pixels, displayable pixels,
+   frame units or character-cell units.
+
+   See comment at top of file for discussion about different types of
+   units. */
+
+static void
+frame_conversion_internal (struct frame *f,
+			   enum frame_size_type source,
+			   int source_width, int source_height,
+			   enum frame_size_type dest,
+			   int *dest_width, int *dest_height)
+{
+  int pixgeom = window_system_pixelated_geometry (wrap_frame (f));
+  dest = canonicalize_frame_size_type (dest, pixgeom);
+  source = canonicalize_frame_size_type (source, pixgeom);
+  if (source == dest)
+    {
+      *dest_width = source_width;
+      *dest_height = source_height;
+    }
+  else if (source == SIZE_TOTAL_PIXEL && dest == SIZE_CHAR_CELL)
+    frame_conversion_internal_1 (f, TOTAL_PIXEL_TO_CHAR,
+				 &source_width, &source_height, 0, 0,
+				 dest_width, dest_height);
+  else if (source == SIZE_DISPLAYABLE_PIXEL && dest == SIZE_CHAR_CELL)
+    frame_conversion_internal_1 (f, DISPLAYABLE_PIXEL_TO_CHAR, 0, 0,
+				 &source_width, &source_height,
+				 dest_width, dest_height);
+  else if (source == SIZE_TOTAL_PIXEL && dest == SIZE_DISPLAYABLE_PIXEL)
+    frame_conversion_internal_1 (f, TOTAL_PIXEL_TO_DISPLAYABLE_PIXEL,
+				 &source_width, &source_height,
+				 dest_width, dest_height, 0, 0);
+  else if (dest == SIZE_TOTAL_PIXEL && source == SIZE_CHAR_CELL)
+    frame_conversion_internal_1 (f, CHAR_TO_TOTAL_PIXEL,
+				 dest_width, dest_height, 0, 0,
+				 &source_width, &source_height);
+  else if (dest == SIZE_DISPLAYABLE_PIXEL && source == SIZE_CHAR_CELL)
+    frame_conversion_internal_1 (f, CHAR_TO_DISPLAYABLE_PIXEL, 0, 0,
+				 dest_width, dest_height,
+				 &source_width, &source_height);
+  else if (dest == SIZE_TOTAL_PIXEL && source == SIZE_DISPLAYABLE_PIXEL)
+    frame_conversion_internal_1 (f, DISPLAYABLE_PIXEL_TO_TOTAL_PIXEL,
+				 dest_width, dest_height,
+				 &source_width, &source_height, 0, 0);
+  else
+    {
+      ABORT ();
+      if (dest_width)
+	*dest_width = 0;
+      if (dest_height)
+	*dest_height = 0;
+    }
+}
+
+/* This takes the size in pixels of the client area, and returns the number
    of characters that will fit there, taking into account the internal
    border width, and the pixel width of the line terminator glyphs (which
    always count as one "character" wide, even if they are not the same size
@@ -3192,35 +3511,56 @@ frame_conversion_internal (struct frame *f,
 
    Therefore the result is not necessarily a multiple of anything in
    particular.  */
+
 void
 pixel_to_char_size (struct frame *f, int pixel_width, int pixel_height,
 		    int *char_width, int *char_height)
 {
-  frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR,
-			     &pixel_width, &pixel_height, char_width,
-			     char_height, 0);
+  frame_conversion_internal (f, SIZE_TOTAL_PIXEL, pixel_width, pixel_height,
+			     SIZE_CHAR_CELL, char_width, char_height);
 }
 
-/* Given a character size, this returns the minimum number of pixels
-   necessary to display that many characters, taking into account the
-   internal border width, scrollbar height and width, toolbar heights and
-   widths and the size of the line terminator glyphs (assuming the line
-   terminators take up exactly one character position).
+/* Given a character size, this returns the minimum pixel size of the
+   client area necessary to display that many characters, taking into
+   account the internal border width, scrollbar height and width, toolbar
+   heights and widths and the size of the line terminator glyphs (assuming
+   the line terminators take up exactly one character position).
 
    Therefore the result is not necessarily a multiple of anything in
    particular.  */
+
 void
 char_to_pixel_size (struct frame *f, int char_width, int char_height,
 		    int *pixel_width, int *pixel_height)
 {
-  frame_conversion_internal (f, CHAR_TO_TOTAL_PIXEL,
-			     pixel_width, pixel_height, &char_width,
-			     &char_height, 0);
+  frame_conversion_internal (f, SIZE_CHAR_CELL, char_width, char_height,
+			     SIZE_TOTAL_PIXEL, pixel_width, pixel_height);
 }
 
-/* Given a pixel size, rounds DOWN to the smallest size in pixels necessary
-   to display the same number of characters as are displayable now.
- */
+/* Versions of the above that operate in "frame units" instead of
+   characters.  frame units are the same as characters except on
+   MS Windows and MS Printer frames, where they are displayable-area
+   pixels. */
+
+void
+pixel_to_frame_unit_size (struct frame *f, int pixel_width, int pixel_height,
+			 int *frame_unit_width, int *frame_unit_height)
+{
+  frame_conversion_internal (f, SIZE_TOTAL_PIXEL, pixel_width, pixel_height,
+			     SIZE_FRAME_UNIT, frame_unit_width,
+			     frame_unit_height);
+}
+
+void
+frame_unit_to_pixel_size (struct frame *f, int frame_unit_width,
+			 int frame_unit_height,
+			 int *pixel_width, int *pixel_height)
+{
+  frame_conversion_internal (f, SIZE_FRAME_UNIT, frame_unit_width,
+			     frame_unit_height,
+			     SIZE_TOTAL_PIXEL, pixel_width, pixel_height);
+}
+
 void
 round_size_to_char (struct frame *f, int in_width, int in_height,
 		    int *out_width, int *out_height)
@@ -3231,44 +3571,58 @@ round_size_to_char (struct frame *f, int in_width, int in_height,
   char_to_pixel_size (f, char_width, char_height, out_width, out_height);
 }
 
-/* Versions of the above which always account for real font metrics.
- */
-void
-pixel_to_real_char_size (struct frame *f, int pixel_width, int pixel_height,
-			 int *char_width, int *char_height)
-{
-  frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR,
-			     &pixel_width, &pixel_height, char_width,
-			     char_height, 1);
-}
-
-void
-char_to_real_pixel_size (struct frame *f, int char_width, int char_height,
-			 int *pixel_width, int *pixel_height)
-{
-  frame_conversion_internal (f, CHAR_TO_TOTAL_PIXEL,
-			     pixel_width, pixel_height, &char_width,
-			     &char_height, 1);
-}
-
-void
-round_size_to_real_char (struct frame *f, int in_width, int in_height,
-			 int *out_width, int *out_height)
-{
-  int char_width;
-  int char_height;
-  pixel_to_real_char_size (f, in_width, in_height, &char_width, &char_height);
-  char_to_real_pixel_size (f, char_width, char_height, out_width, out_height);
-}
-
-/* Change the frame height and/or width.  Values may be given as zero to
-   indicate no change is to take place. */
 static void
-change_frame_size_1 (struct frame *f, int newheight, int newwidth)
+get_frame_char_size (struct frame *f, int *out_width, int *out_height)
 {
-  Lisp_Object frame;
+  *out_width = FRAME_CHARWIDTH (f);
+  *out_height = FRAME_CHARHEIGHT (f);
+}
+
+/* Return the "new" frame size in displayable pixels, which will be
+   accurate as of next redisplay.  If we have changed the default font or
+   toolbar or scrollbar specifiers, the frame pixel size will change as of
+   next redisplay, but the frame character-cell size will remain the same.
+   So use those dimensions to compute the displayable-pixel size. */
+
+static void
+get_frame_new_displayable_pixel_size (struct frame *f, int *out_width,
+				      int *out_height)
+{
+  frame_conversion_internal (f, SIZE_CHAR_CELL, FRAME_CHARWIDTH (f),
+			     FRAME_CHARHEIGHT (f), SIZE_DISPLAYABLE_PIXEL,
+			     out_width, out_height);
+}
+
+/* Return the "new" frame size in total pixels, which will be
+   accurate as of next redisplay.  See get_frame_new_displayable_pixel_size().
+*/
+
+
+static void
+get_frame_new_total_pixel_size (struct frame *f, int *out_width,
+				int *out_height)
+{
+  frame_conversion_internal (f, SIZE_CHAR_CELL, FRAME_CHARWIDTH (f),
+			     FRAME_CHARHEIGHT (f), SIZE_TOTAL_PIXEL,
+			     out_width, out_height);
+}
+
+
+/**************************************************************************/
+/*                                                                        */
+/*                    frame resizing (implementation)                     */
+/*                                                                        */
+/**************************************************************************/
+
+/* Change the frame height and/or width.  Values passed in are in
+   frame units (character cells on X/GTK, displayable-area pixels
+   on MS Windows or generally on pixelated-geometry window systems). */
+static void
+change_frame_size_1 (struct frame *f, int newwidth, int newheight)
+{
   int new_pixheight, new_pixwidth;
-  int font_height, real_font_height, font_width;
+  int paned_pixheight, paned_pixwidth;
+  int real_font_height, real_font_width;
 
   /* #### Chuck -- shouldn't we be checking to see if the frame
      is being "changed" to its existing size, and do nothing if so? */
@@ -3276,155 +3630,105 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
      update code relies on this function to cause window `top' and
      `left' coordinates to be recomputed even though no frame size
      change occurs. --kyle */
-  if (in_display || hold_frame_size_changes)
-    ABORT ();
+  assert (!in_display && !hold_frame_size_changes);
 
-  frame = wrap_frame (f);
+  /* We no longer allow bogus values passed in. */
+  assert (newheight && newwidth);
 
-  default_face_height_and_width (frame, &real_font_height, 0);
-  default_face_height_and_width_1 (frame, &font_height, &font_width);
+  default_face_width_and_height (wrap_frame (f), &real_font_width,
+				 &real_font_height);
+
+  frame_conversion_internal (f, SIZE_FRAME_UNIT, newwidth, newheight,
+			     SIZE_TOTAL_PIXEL, &new_pixwidth,
+			     &new_pixheight);
 
   /* This size-change overrides any pending one for this frame.  */
   f->size_change_pending = 0;
   FRAME_NEW_HEIGHT (f) = 0;
   FRAME_NEW_WIDTH (f) = 0;
 
-  new_pixheight = newheight * font_height;
-  new_pixwidth = (newwidth - 1) * font_width;
+  /* We need to remove the boundaries of the paned area (see top of file)
+     from the total-area pixel size, which is what we have now.
+  */
+  paned_pixheight = new_pixheight -
+    (FRAME_NONPANED_SIZE (f, TOP_EDGE) + FRAME_NONPANED_SIZE (f, BOTTOM_EDGE));
+  paned_pixwidth = new_pixwidth -
+    (FRAME_NONPANED_SIZE (f, LEFT_EDGE) + FRAME_NONPANED_SIZE (f, RIGHT_EDGE));
 
-  /* #### dependency on FRAME_WIN_P should be removed. */
-  if (FRAME_WIN_P (f))
+  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top = FRAME_PANED_TOP_EDGE (f);
+
+  if (FRAME_HAS_MINIBUF_P (f)
+      && ! FRAME_MINIBUF_ONLY_P (f))
+    /* Frame has both root and minibuffer.  */
     {
-      new_pixheight += FRAME_SCROLLBAR_HEIGHT (f);
-      new_pixwidth += FRAME_SCROLLBAR_WIDTH (f);
+      /*
+       * Leave the minibuffer height the same if the frame has
+       * been initialized, and the minibuffer height is tall
+       * enough to display at least one line of text in the default
+       * font, and the old minibuffer height is a multiple of the
+       * default font height.  This should cause the minibuffer
+       * height to be recomputed on font changes but not for
+       * other frame size changes, which seems reasonable.
+       */
+      int old_minibuf_height =
+	XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_height;
+      int minibuf_height =
+	f->init_finished && (old_minibuf_height % real_font_height) == 0 ?
+	max (old_minibuf_height, real_font_height) :
+	real_font_height;
+      set_window_pixheight (FRAME_ROOT_WINDOW (f),
+			    /* - font_height for minibuffer */
+			    paned_pixheight - minibuf_height, 0);
+
+      XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
+	FRAME_PANED_TOP_EDGE (f) +
+	FRAME_BOTTOM_GUTTER_BOUNDS (f) +
+	paned_pixheight - minibuf_height;
+
+      set_window_pixheight (FRAME_MINIBUF_WINDOW (f), minibuf_height, 0);
+    }
+  else
+    /* Frame has just one top-level window.  */
+    set_window_pixheight (FRAME_ROOT_WINDOW (f), paned_pixheight, 0);
+
+  /* Set the value of FRAME_WIDTH/FRAME_HEIGHT and
+     FRAME_CHARWIDTH/FRAME_CHARHEIGHT.
+
+     Question: Where is FRAME_PIXWIDTH/FRAME_PIXHEIGHT set?
+     Answer: In the device-specific code, as a result of a callback from
+     the window system indicating that the frame has changed size.
+     This happens:
+
+     (1) in the WM_SIZE processing in event-msw.c
+     (2) in update_various_frame_slots() called from EmacsFrameResize()
+         (called from Xt when the frame is resized) in EmacsFrame.c for X
+     (3) in resize_event_cb() in frame-gtk.c
+     (4) For TTY's, there is no such callback, so we have to set it
+         ourselves.
+  */
+
+  FRAME_HEIGHT (f) = newheight;
+  if (FRAME_TTY_P (f))
+    f->pixheight = newheight;
+
+  XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = FRAME_PANED_LEFT_EDGE (f);
+  set_window_pixwidth (FRAME_ROOT_WINDOW (f), paned_pixwidth, 0);
+
+  if (FRAME_HAS_MINIBUF_P (f))
+    {
+      XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_left =
+	FRAME_PANED_LEFT_EDGE (f);
+      set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), paned_pixwidth, 0);
     }
 
-  /* when frame_conversion_internal() calculated the number of rows/cols
-     in the frame, the theoretical toolbar sizes were subtracted out.
-     The calculations below adjust for real toolbar height/width in
-     frame, which may be different from frame spec, taking the above
-     fact into account */
-  new_pixheight +=
-    + FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT (f)
-    + 2 * FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH (f)
-    - FRAME_REAL_TOP_TOOLBAR_HEIGHT (f)
-    - 2 * FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f);
+  FRAME_WIDTH (f) = newwidth;
+  if (FRAME_TTY_P (f))
+    f->pixwidth = newwidth;
 
-  new_pixheight +=
-    + FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT (f)
-    + 2 * FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f)
-    - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f)
-    - 2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f);
-
-  new_pixwidth +=
-    + FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH (f)
-    + 2 * FRAME_THEORETICAL_LEFT_TOOLBAR_BORDER_WIDTH (f)
-    - FRAME_REAL_LEFT_TOOLBAR_WIDTH (f)
-    - 2 * FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f);
-
-  new_pixwidth +=
-    + FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH (f)
-    + 2 * FRAME_THEORETICAL_RIGHT_TOOLBAR_BORDER_WIDTH (f)
-    - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f)
-    - 2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f);
-
-  /* Adjust the width for the end glyph which may be a different width
-     than the default character width. */
-  {
-    int adjustment, trunc_width, cont_width;
-
-    trunc_width = glyph_width (Vtruncation_glyph,
-			       FRAME_SELECTED_WINDOW (f));
-    cont_width = glyph_width (Vcontinuation_glyph,
-			      FRAME_SELECTED_WINDOW (f));
-    adjustment = max (trunc_width, cont_width);
-    adjustment = max (adjustment, font_width);
-
-    new_pixwidth += adjustment;
-  }
-
-  /* If we don't have valid values, exit. */
-  if (!new_pixheight && !new_pixwidth)
-    return;
-
-  if (new_pixheight)
-    {
-      /* Adjust for gutters here so that we always get set
-	 properly. */
-      new_pixheight -=
-	(FRAME_TOP_GUTTER_BOUNDS (f)
-	 + FRAME_BOTTOM_GUTTER_BOUNDS (f));
-
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top
-	= FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f);
-
-      if (FRAME_HAS_MINIBUF_P (f)
-	  && ! FRAME_MINIBUF_ONLY_P (f))
-	/* Frame has both root and minibuffer.  */
-	{
-	  /*
-	   * Leave the minibuffer height the same if the frame has
-	   * been initialized, and the minibuffer height is tall
-	   * enough to display at least one line of text in the default
-	   * font, and the old minibuffer height is a multiple of the
-	   * default font height.  This should cause the minibuffer
-	   * height to be recomputed on font changes but not for
-	   * other frame size changes, which seems reasonable.
-	   */
-	  int old_minibuf_height =
-	    XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
-	  int minibuf_height =
-	    f->init_finished && (old_minibuf_height % real_font_height) == 0 ?
-	    max(old_minibuf_height, real_font_height) :
-	    real_font_height;
-	  set_window_pixheight (FRAME_ROOT_WINDOW (f),
-				/* - font_height for minibuffer */
-				new_pixheight - minibuf_height, 0);
-
-	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
-	    FRAME_TOP_BORDER_END (f) +
-	    FRAME_TOP_GUTTER_BOUNDS (f) +
-	    FRAME_BOTTOM_GUTTER_BOUNDS (f) +
-	    new_pixheight - minibuf_height;
-
-	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f), minibuf_height, 0);
-	}
-      else
-	/* Frame has just one top-level window.  */
-	set_window_pixheight (FRAME_ROOT_WINDOW (f), new_pixheight, 0);
-
-      FRAME_HEIGHT (f) = newheight;
-      if (FRAME_TTY_P (f))
-	f->pixheight = newheight;
-    }
-
-  if (new_pixwidth)
-    {
-      /* Adjust for gutters here so that we always get set
-	 properly. */
-      new_pixwidth -=
-	(FRAME_LEFT_GUTTER_BOUNDS (f)
-	 + FRAME_RIGHT_GUTTER_BOUNDS (f));
-
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left =
-	FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
-      set_window_pixwidth (FRAME_ROOT_WINDOW (f), new_pixwidth, 0);
-
-      if (FRAME_HAS_MINIBUF_P (f))
-	{
-	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_left =
-	    FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
-	  set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), new_pixwidth, 0);
-	}
-
-      FRAME_WIDTH (f) = newwidth;
-      if (FRAME_TTY_P (f))
-	f->pixwidth = newwidth;
-    }
-
-  if (window_system_pixelated_geometry (frame))
-    pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
-			     &FRAME_CHARWIDTH (f), &FRAME_CHARHEIGHT (f));
+  /* Set the frame character-cell width appropriately. */
+  if (window_system_pixelated_geometry (wrap_frame (f)))
+    pixel_to_char_size (f, new_pixwidth, new_pixheight,
+			&FRAME_CHARWIDTH (f), &FRAME_CHARHEIGHT (f));
   else
     {
       FRAME_CHARWIDTH (f) = FRAME_WIDTH (f);
@@ -3437,13 +3741,30 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
   f->echo_area_garbaged = 1;
 }
 
+/* This function is called to change the redisplay structures of a frame
+   to correspond to a new width and height.  IT DOES NOT CHANGE THE ACTUAL
+   SIZE OF A FRAME.  It is meant to be called after the frame has been
+   resized, either as a result of user action or a call to a function
+   such as `set-frame-size'.  For example, under MS-Windows it is called
+   from mswindows_wnd_proc() when a WM_SIZE message is received, indicating
+   that the user resized the frame, and from mswindows_set_frame_size(),
+   which is the device method that is called (from internal_set_frame_size())
+   when `set-frame-size' or similar function is called.
+
+   Values passed in are in frame units (character cells on X/GTK,
+   displayable-area pixels on MS Windows or generally on pixelated-geometry
+   window systems).  See discussion at top of file.
+
+   See also internal_set_frame_size() and adjust_frame_size().
+*/
+
 void
-change_frame_size (struct frame *f, int newheight, int newwidth, int delay)
+change_frame_size (struct frame *f, int newwidth, int newheight, int delay)
 {
   /* sometimes we get passed a size that's too small (esp. when a
      client widget gets resized, since we have no control over this).
      So deal. */
-  check_frame_size (f, &newheight, &newwidth);
+  check_frame_size (f, &newwidth, &newheight);
 
   /* Unconditionally mark that the frame has changed size. This is
      because many things need to know after the
@@ -3470,13 +3791,153 @@ change_frame_size (struct frame *f, int newheight, int newwidth, int delay)
       Lisp_Object frmcons;
 
       DEVICE_FRAME_LOOP (frmcons, XDEVICE (FRAME_DEVICE (f)))
-	change_frame_size_1 (XFRAME (XCAR (frmcons)), newheight, newwidth);
+	change_frame_size_1 (XFRAME (XCAR (frmcons)), newwidth, newheight);
     }
   else
-    change_frame_size_1 (f, newheight, newwidth);
+    change_frame_size_1 (f, newwidth, newheight);
+}
+
+
+/* This function is called from `set-frame-size' or the like, to explicitly
+   change the size of a frame.  It calls the `set_frame_size' device
+   method, which makes the necessary window-system-specific call to change
+   the size of the frame and then calls change_frame_size() to change
+   the redisplay structures appropriately.
+
+   Values passed in are in frame units (character cells on X/GTK,
+   displayable-area pixels on MS Windows or generally on pixelated-geometry
+   window systems).  See discussion at top of file.
+ */
+
+void
+internal_set_frame_size (struct frame *f, int cols, int rows, int pretend)
+{
+  /* This can call Lisp.  See mswindows_set_frame_size(). */
+  /* An explicit size change cancels any pending frame size adjustment */
+  CLEAR_FRAME_SIZE_SLIPPED (f);
+
+  if (pretend || !HAS_FRAMEMETH_P (f, set_frame_size))
+    change_frame_size (f, cols, rows, 0);
+  else
+    FRAMEMETH (f, set_frame_size, (f, cols, rows));
+}
+
+/* This function is called from redisplay_frame() as a result of the
+   "frame_slipped" flag being set.  This flag is set when the default font
+   changes or when a change to scrollbar or toolbar visibility or size
+   is made (e.g. when a specifier such as `scrollbar-width' is changed).
+   Its purpose is to resize the frame so that its size in character-cell
+   units stays the same.
+
+   #### It should also be triggered by a change the gutter visibility or
+   size.
+
+   When a scrollbar or toolbar specifier is changed, the
+   frame_size_slipped() function is called (this happens because the
+   specifier's value_changed_in_frame() hook has been set to
+   frame_size_slipped() by a call to set_specifier_caching()).
+   All this does is call MARK_FRAME_SIZE_SLIPPED(), which sets the
+   frame_slipped flag, which gets noticed by redisplay_frame(), as just
+   discussed.
+
+   The way things get triggered when a change is made to the default font
+   is as follows:
+
+   (1) The specifier for the default font, which is attached to the
+       face named `default', has its "face" property set to the `default'
+       face.
+
+   (2) font_after_change() (the font specifier's after_changed() method)
+       is called for the font specifier.
+
+
+   (3) It in turn calls face_property_was_changed(), passing in the
+       default face.
+
+   (4) face_property_was_changed() notices that the default face is having
+       a property set and calls update_EmacsFrame().
+
+   (5) This in turn notices that the default face's font is being changed
+       and calls MARK_FRAME_SIZE_SLIPPED() -- see above.
+ */
+
+void
+adjust_frame_size (struct frame *f)
+{
+  /* This can call Lisp. */
+  int keep_char_size = 0;
+  Lisp_Object frame = wrap_frame (f);
+
+  if (!f->size_slipped)
+    return;
+
+  /* Don't adjust tty frames. #### May break when TTY have menubars.
+     Then, write an Vadjust_frame_function which will return t for TTY
+     frames. Another solution is frame_size_fixed_p method for TTYs,
+     which always returned yes it's fixed.
+  */
+  if (!FRAME_WIN_P (f))
+    {
+      CLEAR_FRAME_SIZE_SLIPPED (f);
+      return;
+    }
+
+  /* frame_size_fixed_p tells that frame size cannot currently
+     be changed change due to external conditions */
+  if (!FRAMEMETH_OR_GIVEN (f, frame_size_fixed_p, (f), 0))
+    {
+      if (NILP (Vadjust_frame_function))
+	keep_char_size = 1;
+      else if (EQ (Vadjust_frame_function, Qt))
+	keep_char_size = 0;
+      else
+	keep_char_size =
+	  NILP (call1_trapping_problems ("Error in adjust-frame-function",
+					 Vadjust_frame_function, frame,
+					 0));
+
+      if (keep_char_size)
+	Fset_frame_size (frame, make_int (FRAME_CHARWIDTH(f)),
+			 make_int (FRAME_CHARHEIGHT(f)), Qnil);
+    }
+
+  if (!keep_char_size)
+    {
+      int height, width;
+      pixel_to_frame_unit_size (f, FRAME_PIXWIDTH(f), FRAME_PIXHEIGHT(f),
+			  &width, &height);
+      change_frame_size (f, width, height, 0);
+      CLEAR_FRAME_SIZE_SLIPPED (f);
+    }
+}
+
+/* This is a "specifier changed in frame" handler for various specifiers
+   changing which causes frame size adjustment.  See the discussion in
+   adjust_frame_size().
+ */
+
+void
+frame_size_slipped (Lisp_Object UNUSED (specifier), struct frame *f,
+		    Lisp_Object UNUSED (oldval))
+{
+  MARK_FRAME_SIZE_SLIPPED (f);
+}
+
+void
+invalidate_vertical_divider_cache_in_frame (struct frame *f)
+{
+  /* Invalidate cached value of needs_vertical_divider_p in
+     every and all windows */
+  map_windows (f, invalidate_vertical_divider_cache_in_window, 0);
 }
 
 
+/**************************************************************************/
+/*                                                                        */
+/*                       frame title, icon, pointer                       */
+/*                                                                        */
+/**************************************************************************/
+
 /* The caller is responsible for freeing the returned string. */
 static Ibyte *
 generate_title_string (struct window *w, Lisp_Object format_str,
@@ -3603,11 +4064,66 @@ icon_glyph_changed (Lisp_Object UNUSED (glyph), Lisp_Object UNUSED (property),
 }
 
 
+#ifdef MEMORY_USAGE_STATS
+
+struct frame_stats
+{
+  struct usage_stats u;
+  Bytecount gutter;
+  Bytecount expose_ignore;
+  Bytecount other;
+};
+
+static void
+compute_frame_usage (struct frame *f, struct frame_stats *stats,
+		     struct usage_stats *ustats)
+{
+  enum edge_pos edge;
+  EDGE_POS_LOOP (edge)
+    {
+      stats->gutter +=
+	compute_display_line_dynarr_usage (f->current_display_lines[edge],
+					   ustats);
+      stats->gutter +=
+	compute_display_line_dynarr_usage (f->desired_display_lines[edge],
+					   ustats);
+    }
+  {
+    struct expose_ignore *e;
+
+    for (e = f->subwindow_exposures; e; e = e->next)
+      stats->expose_ignore += malloced_storage_size (e, sizeof (*e), ustats);
+  }
+
+#if 0
+  stats->other += FRAMEMETH (f, frame_memory_usage, (f, ustats));
+#endif
+}
+
+static void
+frame_memory_usage (Lisp_Object frame, struct generic_usage_stats *gustats)
+{
+  struct frame_stats *stats = (struct frame_stats *) gustats;
+
+  compute_frame_usage (XFRAME (frame), stats, &stats->u);
+}
+
+#endif /* MEMORY_USAGE_STATS */
+
+
 /***************************************************************************/
 /*									   */
 /*                              initialization                             */
 /*									   */
 /***************************************************************************/
+
+void
+frame_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (frame, memory_usage);
+#endif
+}
 
 void
 init_frame (void)
@@ -3624,9 +4140,9 @@ init_frame (void)
 void
 syms_of_frame (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (frame);
+  INIT_LISP_OBJECT (frame);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (expose_ignore);
+  INIT_LISP_OBJECT (expose_ignore);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qdelete_frame_hook);
@@ -3755,6 +4271,12 @@ syms_of_frame (void)
 void
 vars_of_frame (void)
 {
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY
+    (frame, memusage_stats_list, list3 (Qgutter, intern ("expose-ignore"),
+					Qother));
+#endif /* MEMORY_USAGE_STATS */
+
   /* */
   Vframe_being_created = Qnil;
   staticpro (&Vframe_being_created);

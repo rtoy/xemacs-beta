@@ -1,13 +1,13 @@
 /* Functions for the GTK toolkit.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not synched with FSF. */
 
@@ -42,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "console-gtk-impl.h"
 #include "glyphs-gtk.h"
-#include "objects-gtk-impl.h"
+#include "fontcolor-gtk-impl.h"
 #include "scrollbar-gtk.h"
 #include "ui-gtk.h"
 
@@ -103,11 +101,9 @@ static const struct memory_description gtk_frame_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("gtk-frame", gtk_frame,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       gtk_frame_data_description_1,
-			       Lisp_Gtk_Frame);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("gtk-frame", gtk_frame,
+				      0, gtk_frame_data_description_1,
+				      Lisp_Gtk_Frame);
 #else /* not NEW_GC */
 extern const struct sized_memory_description gtk_frame_data_description;
 
@@ -373,7 +369,7 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
     {
       GdkWindowHints geometry_mask = GDK_HINT_RESIZE_INC;
       /* Deal with the cell size */
-      default_face_height_and_width (wrap_frame (f), &geometry.height_inc, &geometry.width_inc);
+      default_face_width_and_height (wrap_frame (f), &geometry.width_inc, &geometry.height_inc);
 
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
 				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);
@@ -384,7 +380,7 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
   FRAME_HEIGHT (f) = h;
   FRAME_WIDTH (f) = w;
 
-  change_frame_size (f, h, w, 0);
+  change_frame_size (f, w, h, 0);
   {
     GtkRequisition req;
  
@@ -635,13 +631,13 @@ gtk_initialize_frame_size (struct frame *f)
   {
     struct window *win = XWINDOW (f->root_window);
 
-    WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f);
-    WINDOW_TOP (win) = FRAME_TOP_BORDER_END (f);
+    WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
+    WINDOW_TOP (win) = FRAME_PANED_TOP_EDGE (f);
 
     if (!NILP (f->minibuffer_window))
       {
 	win = XWINDOW (f->minibuffer_window);
-	WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f);
+	WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
       }
   }
 
@@ -974,7 +970,7 @@ allocate_gtk_frame_struct (struct frame *f)
 
   /* zero out all slots. */
 #ifdef NEW_GC
-  f->frame_data = alloc_lrecord_type (struct gtk_frame, &lrecord_gtk_frame);
+  f->frame_data = XGTK_FRAME (ALLOC_NORMAL_LISP_OBJECT (gtk_frame));
 #else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct gtk_frame);
 #endif /* not NEW_GC */
@@ -994,11 +990,11 @@ allocate_gtk_frame_struct (struct frame *f)
     now that we have internal_equal_trapping_problems(). --ben
 */
   FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   FRAME_GTK_WIDGET_CALLBACK_EX_HASH_TABLE (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
 }
 
 
@@ -1065,7 +1061,7 @@ gtk_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
    *   will update the frame title anyway, so nothing is lost.
    * JV:
    *   It turns out it gives problems with FVWMs name based mapping.
-   *   We'll just  need to be carefull in the modeline specs.
+   *   We'll just need to be careful in the modeline specs.
    */
   update_frame_title (f); 
 }
@@ -1191,13 +1187,14 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
       GdkWindowHints geometry_mask = GDK_HINT_RESIZE_INC;
 
       /* Update the cell size */
-      default_face_height_and_width (wrap_frame (f), &geometry.height_inc, &geometry.width_inc);
+      default_face_width_and_height (wrap_frame (f), &geometry.width_inc,
+				     &geometry.height_inc);
 
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
 				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);
     }
 
-  change_frame_size (f, rows, cols, 0);
+  change_frame_size (f, cols, rows, 0);
 
   {
     GtkRequisition req;
@@ -1372,7 +1369,7 @@ gtk_recompute_cell_sizes (struct frame *frm)
       gint width_inc = 10;
       gint height_inc = 10;
 
-      default_face_height_and_width (wrap_frame (frm), &height_inc, &width_inc);
+      default_face_width_and_height (wrap_frame (frm), &width_inc, &height_inc);
       geometry_mask = GDK_HINT_RESIZE_INC;
       geometry.width_inc = width_inc;
       geometry.height_inc = height_inc;
@@ -1474,7 +1471,7 @@ void
 syms_of_frame_gtk (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (gtk_frame);
+  INIT_LISP_OBJECT (gtk_frame);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qtext_widget);

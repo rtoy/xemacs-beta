@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -47,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw-impl.h"
 #include "glyphs-msw.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #define WIDGET_GLYPH_SLOT 0
 
@@ -1962,7 +1960,7 @@ mswindows_map_subwindow (Lisp_Image_Instance *p, int x, int y,
       /* Doing this once does not seem to be enough, for instance when
 	 mapping the search dialog this gets called four times. If we
 	 only set on the first time through then the subwindow never
-	 gets focus as intended. However, doing this everytime doesn't
+	 gets focus as intended. However, doing this every time doesn't
 	 seem so bad, after all we only need to redo this after the
 	 focus changes - and if that happens resetting the initial
 	 focus doesn't seem so bad. */
@@ -2780,7 +2778,7 @@ mswindows_combo_box_instantiate (Lisp_Object image_instance,
 		      pointer_bg, dest_mask, domain);
 
   /* We now have everything right apart from the height. */
-  default_face_font_info (domain, 0, 0, &height, 0, 0);
+  default_face_font_info (domain, 0, 0, 0, &height, 0);
   GET_LIST_LENGTH (items, len);
 
   height = (height + DEFAULT_WIDGET_BORDER_WIDTH * 2 ) * len;

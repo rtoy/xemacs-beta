@@ -3,26 +3,25 @@
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
 ;; Copyright (C) 1995, 1996, 2002, 2005 Ben Wing
+;; Copyright (C) 2010 Didier Verna
 
 ;; Author: Ben Wing <ben@xemacs.org>
 ;; Keywords: faces, internal, dumped
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not synched with FSF.  Almost completely divergent.
 
@@ -48,9 +47,7 @@
 
 ;; To elude the warnings for font functions. (Normally autoloaded when
 ;; font-create-object is called)
-(eval-when-compile
-  (require 'font)
-  (load "cl-macs"))
+(eval-when-compile (require 'font))
 
 (defgroup faces nil
   "Support for multiple text attributes (fonts, colors, ...)
@@ -60,7 +57,7 @@ Such a collection of attributes is called a \"face\"."
 
 (defun read-face-name (prompt)
   (let (face)
-    (while (= (length face) 0) ; nil or ""
+    (while (eql (length face) 0) ; nil or ""
       (setq face (completing-read prompt
 				  (mapcar (lambda (x) (list (symbol-name x)))
 					  (face-list))
@@ -87,6 +84,8 @@ Such a collection of attributes is called a \"face\"."
 			  (color-instance-name default))
 			 ((image-instance-p default)
 			  (image-instance-file-name default))
+			 ((face-background-placement-instance-p default)
+			  (symbol-name default))
 			 (t default))))))
     (list face (if (equal value "") nil value))))
 
@@ -239,16 +238,19 @@ Optional arguments DEFAULT and NO-FALLBACK are the same as in
 					&optional domain default
 					no-fallback)
   "Return the instance of FACE's PROPERTY matching MATCHSPEC in DOMAIN.
-Currently the only useful value for MATCHSPEC is a charset, when used
-in conjunction with the face's font; this allows you to retrieve a
-font that can be used to display a particular charset, rather than just
-any font.
+Currently MATCHSPEC is used only for the 'font property, when its value
+should be a cons \(CHARSET . STAGE) \(see `specifier-matching-instance'
+for a full description of the matching process).  This allows you to
+retrieve a font that can be used to display a particular charset, rather
+than just any font.  For backward compatibility, MATCHSPEC may be a
+charset, which is interpreted as \(CHARSET . final).
 
-Other than MATCHSPEC, this function is identical to `face-property-instance'.
-See also `specifier-matching-instance' for a fuller description of the
-matching process."
+See `face-property-instance' for usage of the other arguments."
 
   (setq face (get-face face))
+  ;; For compatibility with 21.4-oriented code, eg, x-symbol-mule.el.
+  (when (charsetp matchspec)
+    (setq matchspec (cons matchspec 'final)))
   (let ((value (get face property)))
     (when (specifierp value)
       (setq value (specifier-matching-instance value matchspec domain
@@ -333,6 +335,11 @@ The following symbols have predefined meanings:
                     Only used by faces on X and MS Windows devices.
                     For valid instantiators, see `make-image-specifier'.
 
+ background-placement  The placement of the face's background pixmap.
+                    Only used by faces on X devices.
+                    For valid instantiators,
+                    see `make-face-background-placement-specifier'.
+
  underline          Underline all text covered by this face.
                     For valid instantiators, see `make-face-boolean-specifier'.
 
@@ -412,7 +419,7 @@ This makes all properties of FACE inherit from PARENT."
                              how-to-add))
         (set-difference built-in-face-specifiers
                         '(display-table background-pixmap inherit)))
-  (set-face-background-pixmap face (vector 'inherit ':face parent)
+  (set-face-background-pixmap face (vector 'inherit :face parent)
 			      locale tag-set how-to-add)
   nil)
 
@@ -472,7 +479,7 @@ See `face-property-instance' for more information."
     (let (matchspec)
       ;; get-charset signals an error if its argument doesn't have an
       ;; associated charset.
-      (setq charset (if-fboundp #'get-charset
+      (setq charset (if-fboundp 'get-charset
                         (get-charset charset)
                       (error 'unimplemented "Charset support not available"))
 	    matchspec (cons charset nil))
@@ -716,6 +723,45 @@ designed for interactive use."
      (list face (if (equal file "") nil file))))
   (set-face-property face 'background-pixmap file))
 
+(defun face-background-placement (face &optional domain default no-fallback)
+  "Return FACE's background placement in DOMAIN.
+See `face-property-instance' for the semantics of the DOMAIN argument."
+  (face-property face 'background-placement domain default no-fallback))
+
+(defun set-face-background-placement (face placement &optional locale tag-set
+				      how-to-add)
+  "Change the background-placement property of FACE to PLACEMENT.
+PLACEMENT is normally a background-placement instantiator; see
+`make-face-background-placement-specifier'.
+See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
+HOW-TO-ADD arguments."
+  (interactive (face-interactive "background placement"))
+  ;; When called non-interactively (for example via custom), PLACEMENT is
+  ;; expected to be a symbol. -- dvl
+  (unless (symbolp placement)
+    (setq placement (intern placement)))
+  (set-face-property face 'background-placement placement locale tag-set
+		     how-to-add))
+
+(defun face-background-placement-instance (face &optional domain default
+					   no-fallback)
+  "Return FACE's background-placement instance in DOMAIN.
+Return value will be a background-placement instance object.
+
+FACE may be either a face object or a symbol representing a face.
+
+Normally DOMAIN will be a window or nil (meaning the selected window),
+and an instance object describing the background placement in that particular
+window and buffer will be returned.
+
+See `face-property-instance' for more information."
+  (face-property-instance face 'background-placement domain default
+			  no-fallback))
+
+(defun face-background-placement-instance-p (object)
+  "Return t if OBJECT is a face-background-placement instance."
+  (or (eq object 'absolute) (eq object 'relative)))
+
 (defun face-display-table (face &optional locale tag-set exact-p)
   "Return the display table spec of FACE in LOCALE, or nil if unspecified..
 
@@ -871,7 +917,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (let ((device (dfw-device domain))
 	(common-props '(foreground background font display-table underline
 				   dim inherit))
-	(win-props '(background-pixmap strikethru))
+	(win-props '(background-pixmap background-placement strikethru))
 	(tty-props '(highlight blinking reverse)))
 
     ;; First check the properties which are used in common between the
@@ -1669,6 +1715,10 @@ If FRAME is nil or omitted, the selected frame is used."
 		      (type       (memq type options))
 		      (class      (memq class options))
 		      (background (memq background options))
+		      ;; `display-color-cells' can return nil (eg, TTYs).
+		      ;; If so, assume monochrome.
+		      (min-colors (>= (or (display-color-cells frame) 2)
+				      (car options)))
 		      (t (warn "Unknown req `%S' with options `%S'"
 			       req options)
 			 nil))))
@@ -1943,7 +1993,8 @@ you want to add code to do stuff like this, use the create-device-hook."
   ;; element faces. So take the modeline face information from its
   ;; fallbacks, themselves ultimately set up in faces.c:
   (loop
-    for face-property in '(foreground background background-pixmap)
+    for face-property in '(foreground background 
+			   background-pixmap background-placement)
     do (when (and (setq face-property (face-property 'modeline face-property))
                   (null (specifier-instance face-property device nil t))
                   (specifier-instance face-property device))
@@ -1993,14 +2044,14 @@ in that frame; otherwise change each frame."
 						 '(".xbm" "")))))
 			(and file
 			     `[xbm :file ,file])))
-		     ((and (listp pixmap) (= (length pixmap) 3))
+		     ((and (listp pixmap) (eql (length pixmap) 3))
 		      `[xbm :data ,pixmap])
 		     (t nil))))
       ;; We're signaling a continuable error; let's make sure the
       ;; function `stipple-pixmap-p' at least exists.
       (flet ((stipple-pixmap-p (pixmap)
 	       (or (stringp pixmap)
-		   (and (listp pixmap) (= (length pixmap) 3)))))
+		   (and (listp pixmap) (eql (length pixmap) 3)))))
 	(setq pixmap (signal 'wrong-type-argument
 			     (list 'stipple-pixmap-p pixmap)))))
     (check-type frame (or null frame))

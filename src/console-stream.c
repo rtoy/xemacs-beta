@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -54,11 +52,9 @@ static const struct memory_description stream_console_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("stream-console", stream_console,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       stream_console_data_description_1,
-			       Lisp_Stream_Console);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("stream-console", stream_console,
+				      0, stream_console_data_description_1,
+				      Lisp_Stream_Console);
 #else /* not NEW_GC */
 const struct sized_memory_description stream_console_data_description = {
   sizeof (struct stream_console), stream_console_data_description_1
@@ -73,8 +69,8 @@ stream_init_console (struct console *con, Lisp_Object UNUSED (params))
 
 #ifdef NEW_GC
   if (CONSOLE_STREAM_DATA (con) == NULL)
-    CONSOLE_STREAM_DATA (con) = alloc_lrecord_type (struct stream_console,
-						    &lrecord_stream_console);
+    CONSOLE_STREAM_DATA (con) =
+      XSTREAM_CONSOLE (ALLOC_NORMAL_LISP_OBJECT (stream_console));
 #else /* not NEW_GC */
   if (CONSOLE_STREAM_DATA (con) == NULL)
     CONSOLE_STREAM_DATA (con) = xnew_and_zero (struct stream_console);
@@ -282,7 +278,8 @@ stream_clear_region (Lisp_Object UNUSED (window), struct device* UNUSED (d),
 		     int UNUSED (x), int UNUSED (y), int UNUSED (width),
 		     int UNUSED (height), Lisp_Object UNUSED (fcolor),
 		     Lisp_Object UNUSED (bcolor),
-		     Lisp_Object UNUSED (background_pixmap))
+		     Lisp_Object UNUSED (background_pixmap),
+		     Lisp_Object UNUSED (background_placement))
 {
   ABORT ();
 }

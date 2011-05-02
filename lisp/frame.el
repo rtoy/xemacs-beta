@@ -3,26 +3,25 @@
 ;; Copyright (C) 1993, 1994, 1996, 1997, 2000, 2001, 2003
 ;;   Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996 Ben Wing.
+;; Copyright (C) 2010 Didier Verna
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 21.3.
 
@@ -474,12 +473,13 @@ React to settings of `default-frame-plist', `initial-frame-plist' there."
 	      ;; onto a new frame.  The default-minibuffer-frame
 	      ;; variable must be handled similarly.
 	      (let ((users-of-initial
-		     (filtered-frame-list
+		     (remove-if-not
 		      #'(lambda (frame)
 				  (and (not (eq frame frame-initial-frame))
 				       (eq (window-frame
 					    (minibuffer-window frame))
-					   frame-initial-frame))))))
+					   frame-initial-frame)))
+                      (frame-list))))
 		(if (or users-of-initial
 			(eq default-minibuffer-frame frame-initial-frame))
 
@@ -487,10 +487,11 @@ React to settings of `default-frame-plist', `initial-frame-plist' there."
 		    ;; are only minibuffers.
 		    (let* ((new-surrogate
 			    (car
-			     (or (filtered-frame-list
+			     (or (remove-if-not
 				  #'(lambda (frame)
 				      (eq 'only
-					  (frame-property frame 'minibuffer))))
+					  (frame-property frame 'minibuffer)))
+                                  (frame-list))
 				 (minibuffer-frame-list))))
 			   (new-minibuffer (minibuffer-window new-surrogate)))
 
@@ -673,29 +674,22 @@ a new connection is opened."
 ;; XEmacs change: Emacs has make-frame here.  We have it in C, so no need for
 ;; frame-creation-function.
 
-;; XEmacs addition: support optional DEVICE argument.
+;; XEmacs addition: support optional DEVICE argument, use delete-if-not.
 (defun filtered-frame-list (predicate &optional device)
   "Return a list of all live frames which satisfy PREDICATE.
 If optional second arg DEVICE is non-nil, restrict the frames
  returned to that device."
-  (let ((frames (if device (device-frame-list device)
-		  (frame-list)))
-	good-frames)
-    (while (consp frames)
-      (if (funcall predicate (car frames))
-	  (setq good-frames (cons (car frames) good-frames)))
-      (setq frames (cdr frames)))
-    good-frames))
+  (delete-if-not predicate
+                 (if device (device-frame-list device) (frame-list))))
 
 ;; XEmacs addition: support optional DEVICE argument.
 (defun minibuffer-frame-list (&optional device)
   "Return a list of all frames with their own minibuffers.
 If optional second arg DEVICE is non-nil, restrict the frames
  returned to that device."
-  (filtered-frame-list
-   #'(lambda (frame)
-	       (eq frame (window-frame (minibuffer-window frame))))
-   device))
+  (delete-if-not 
+   #'(lambda (frame) (eq frame (window-frame (minibuffer-window frame))))
+   (if device (device-frame-list device) (frame-list))))
 
 ;; XEmacs omission: Emacs has frames-on-display-list here, but that is
 ;; essentially equivalent to supplying the optional DEVICE argument to
@@ -860,7 +854,7 @@ The value returned is the value of the last form in BODY."
 (defun frame-list ()
   "Return a list of all frames on all devices/consoles."
   ;; Lists are copies, so nconc is safe here.
-  (apply 'nconc (mapcar 'device-frame-list (device-list))))
+  (mapcan #'device-frame-list (device-list)))
 
 (defun frame-type (&optional frame)
   "Return the type of the specified frame (e.g. `x' or `tty').
@@ -1014,6 +1008,28 @@ pixels) is kept by adjusting the numbers of the lines and columns."
 (defun set-frame-property (frame prop val)
   "Set property PROP of FRAME to VAL.  See `set-frame-properties'."
   (set-frame-properties frame (list prop val)))
+
+(defun set-frame-background-placement (placement)
+  "Set the background placement of the selected frame to PLACEMENT.
+When called interactively, prompt for the placement to use."
+  (interactive (list (intern (completing-read "Placement: "
+					      '(("absolute" absolute)
+						("relative" relative))
+					      nil t))))
+  (set-face-background-placement 'default placement (selected-frame)))
+
+(defun frame-background-placement ()
+  "Retrieve the selected frame's background placement."
+  (interactive)
+  (face-background-placement 'default (selected-frame)))
+
+(defun frame-background-placement-instance ()
+  "Retrieve the selected frame's background placement instance."
+  (interactive)
+  (face-background-placement-instance 'default (selected-frame)))
+
+;; #### FIXME: misnomers ! The functions below should be called
+;; set-frame-<blabla> -- dvl.
 
 ;; XEmacs change: this function differs significantly from Emacs.
 (defun set-background-color (color-name)
@@ -1722,9 +1738,10 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 	       (or (plist-get default-frame-plist 'name)
 		   default-frame-name))
 	     (frames
-	      (sort (filtered-frame-list #'(lambda (x)
-					     (or (frame-visible-p x)
-						 (frame-iconified-p x))))
+	      (sort (remove-if-not #'(lambda (x)
+                                       (or (frame-visible-p x)
+                                           (frame-iconified-p x)))
+                                   (frame-list))
 		    #'(lambda (s1 s2)
 			(cond ((and (frame-visible-p s1)
 				    (not (frame-visible-p s2))))

@@ -76,7 +76,7 @@ As a result, @code{progn} is not used as often as it used to be.  It is
 needed now most often inside an @code{unwind-protect}, @code{and},
 @code{or}, or in the @var{then}-part of an @code{if}.
 
-@defspec progn forms@dots{}
+@deffn {Special Operator} progn forms@dots{}
 This special operator evaluates all of the @var{forms}, in textual
 order, returning the result of the final form.
 
@@ -91,12 +91,12 @@ order, returning the result of the final form.
 @result{} "The third form"
 @end group
 @end example
-@end defspec
+@end deffn
 
   Two other control constructs likewise evaluate a series of forms but return
 a different value:
 
-@defspec prog1 form1 forms@dots{}
+@deffn {Special Operator} prog1 form1 forms@dots{}
 This special operator evaluates @var{form1} and all of the @var{forms}, in
 textual order, returning the result of @var{form1}.
 
@@ -118,9 +118,9 @@ Here is a way to remove the first element from a list in the variable
 @example
 (prog1 (car x) (setq x (cdr x)))
 @end example
-@end defspec
+@end deffn
 
-@defspec prog2 form1 form2 forms@dots{}
+@deffn {Special Operator} prog2 form1 form2 forms@dots{}
 This special operator evaluates @var{form1}, @var{form2}, and all of the
 following @var{forms}, in textual order, returning the result of
 @var{form2}.
@@ -136,7 +136,7 @@ following @var{forms}, in textual order, returning the result of
 @result{} "The second form"
 @end group
 @end example
-@end defspec
+@end deffn
 
 @node Conditionals
 @section Conditionals
@@ -146,7 +146,7 @@ following @var{forms}, in textual order, returning the result of
 has two conditional forms: @code{if}, which is much the same as in other
 languages, and @code{cond}, which is a generalized case statement.
 
-@defspec if condition then-form else-forms@dots{}
+@deffn {Special Operator} if condition then-form else-forms@dots{}
 @code{if} chooses between the @var{then-form} and the @var{else-forms}
 based on the value of @var{condition}.  If the evaluated @var{condition} is
 non-@code{nil}, @var{then-form} is evaluated and the result returned.
@@ -169,9 +169,9 @@ never evaluated---it is ignored.  Thus, in the example below,
 @result{} very-false
 @end group
 @end example
-@end defspec
+@end deffn
 
-@defspec cond clause@dots{}
+@deffn {Special Operator} cond clause@dots{}
 @code{cond} chooses among an arbitrary number of alternatives.  Each
 @var{clause} in the @code{cond} must be a list.  The @sc{car} of this
 list is the @var{condition}; the remaining elements, if any, the
@@ -239,7 +239,7 @@ For example,
 @noindent
 This expression is a @code{cond} which returns @code{foo} if the value
 of @code{a} is 1, and returns the string @code{"default"} otherwise.
-@end defspec
+@end deffn
 
 Any conditional construct can be expressed with @code{cond} or with
 @code{if}.  Therefore, the choice between them is a matter of style.
@@ -268,7 +268,7 @@ The function @code{not} is identical to @code{null}, and we recommend
 using the name @code{null} if you are testing for an empty list.
 @end defun
 
-@defspec and conditions@dots{}
+@deffn {Special Operator} and conditions@dots{}
 The @code{and} special operator tests whether all the @var{conditions} are
 true.  It works by evaluating the @var{conditions} one by one in the
 order written.
@@ -320,9 +320,9 @@ For example:
 (cond (@var{arg1} (cond (@var{arg2} @var{arg3}))))
 @end group
 @end example
-@end defspec
+@end deffn
 
-@defspec or conditions@dots{}
+@deffn {Special Operator} or conditions@dots{}
 The @code{or} special operator tests whether at least one of the
 @var{conditions} is true.  It works by evaluating all the
 @var{conditions} one by one in the order written.
@@ -369,7 +369,7 @@ You could almost write @code{or} in terms of @code{if}, but not quite:
 This is not completely equivalent because it can evaluate @var{arg1} or
 @var{arg2} twice.  By contrast, @code{(or @var{arg1} @var{arg2}
 @var{arg3})} never evaluates any argument more than once.
-@end defspec
+@end deffn
 
 @node Iteration
 @section Iteration
@@ -381,7 +381,7 @@ example, you might want to repeat some computation once for each element
 of a list, or once for each integer from 0 to @var{n}.  You can do this
 in XEmacs Lisp with the special operator @code{while}:
 
-@defspec while condition forms@dots{}
+@deffn {Special Operator} while condition forms@dots{}
 @code{while} first evaluates @var{condition}.  If the result is
 non-@code{nil}, it evaluates @var{forms} in textual order.  Then it
 reevaluates @var{condition}, and if the result is non-@code{nil}, it
@@ -427,7 +427,7 @@ first argument of @code{while}, as shown here:
 This moves forward one line and continues moving by lines until it
 reaches an empty.  It is unusual in that the @code{while} has no body,
 just the end test (which also does the real work of moving point).
-@end defspec
+@end deffn
 
 @node Nonlocal Exits
 @section Nonlocal Exits
@@ -499,15 +499,7 @@ before exit from it, it has access to that @code{catch}.  This is why
 @code{throw} can be used in commands such as @code{exit-recursive-edit}
 that throw back to the editor command loop (@pxref{Recursive Editing}).
 
-@cindex CL note---only @code{throw} in Emacs
-@quotation
-@b{Common Lisp note:} Most other versions of Lisp, including Common Lisp,
-have several ways of transferring control nonsequentially: @code{return},
-@code{return-from}, and @code{go}, for example.  XEmacs Lisp has only
-@code{throw}.
-@end quotation
-
-@defspec catch tag body@dots{}
+@deffn {Special Operator} catch tag body@dots{}
 @cindex tag on run time stack
 @code{catch} establishes a return point for the @code{throw} function.  The
 return point is distinguished from other such return points by @var{tag},
@@ -522,7 +514,7 @@ the @code{catch}.
 If a @code{throw} is done within @var{body} specifying the same value
 @var{tag}, the @code{catch} exits immediately; the value it returns is
 whatever was specified as the second argument of @code{throw}.
-@end defspec
+@end deffn
 
 @defun throw tag value
 The purpose of @code{throw} is to return from a return point previously
@@ -1028,7 +1020,7 @@ cannot be caught by a @code{catch}, and a @code{throw} cannot be handled
 by an error handler (though using @code{throw} when there is no suitable
 @code{catch} signals an error that can be handled).
 
-@defspec condition-case var protected-form handlers@dots{}
+@deffn {Special Operator} condition-case var protected-form handlers@dots{}
 This special operator establishes the error handlers @var{handlers} around
 the execution of @var{protected-form}.  If @var{protected-form} executes
 without error, the value it returns becomes the value of the
@@ -1077,7 +1069,7 @@ the file name is the second element of @var{data}---the third element of
 
 If @var{var} is @code{nil}, that means no variable is bound.  Then the
 error symbol and associated data are not available to the handler.
-@end defspec
+@end deffn
 
 @cindex @code{arith-error} example
 Here is an example of using @code{condition-case} to handle the error
@@ -1252,7 +1244,7 @@ and their conditions.
 temporarily put a data structure in an inconsistent state; it permits
 you to ensure the data are consistent in the event of an error or throw.
 
-@defspec unwind-protect body cleanup-forms@dots{}
+@deffn {Special Operator} unwind-protect body cleanup-forms@dots{}
 @cindex cleanup forms
 @cindex protected forms
 @cindex error cleanup
@@ -1278,7 +1270,7 @@ with another @code{unwind-protect} around that form.
 The number of currently active @code{unwind-protect} forms counts,
 together with the number of local variable bindings, against the limit
 @code{max-specpdl-size} (@pxref{Local Variables}).
-@end defspec
+@end deffn
 
   For example, here we make an invisible buffer for temporary use, and
 make sure to kill it before finishing:

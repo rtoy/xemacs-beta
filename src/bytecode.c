@@ -1,14 +1,14 @@
 /* Execution of byte code produced by bytecomp.el.
    Implementation of compiled-function objects.
    Copyright (C) 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 1995, 2002 Ben Wing.
+   Copyright (C) 1995, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 
@@ -65,22 +63,21 @@ static Lisp_Object
 make_compiled_function_args (int totalargs)
 {
   Lisp_Compiled_Function_Args *args;
-  args = (Lisp_Compiled_Function_Args *) 
-    alloc_lrecord 
-    (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
-				   Lisp_Object, args, totalargs),
-     &lrecord_compiled_function_args);
+  args = XCOMPILED_FUNCTION_ARGS
+    (ALLOC_SIZED_LISP_OBJECT 
+     (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
+				    Lisp_Object, args, totalargs),
+      compiled_function_args));
   args->size = totalargs;
   return wrap_compiled_function_args (args);
 }
 
 static Bytecount
-size_compiled_function_args (const void *lheader)
+size_compiled_function_args (Lisp_Object obj)
 {
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
 				       Lisp_Object, args,
-				       ((Lisp_Compiled_Function_Args *) 
-					lheader)->size);
+				       XCOMPILED_FUNCTION_ARGS (obj)->size);
 }
 
 static const struct memory_description compiled_function_args_description[] = {
@@ -90,13 +87,12 @@ static const struct memory_description compiled_function_args_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("compiled-function-args",
-					compiled_function_args,
-					1, /*dumpable-flag*/
-					0, 0, 0, 0, 0,
-					compiled_function_args_description,
-					size_compiled_function_args,
-					Lisp_Compiled_Function_Args);
+DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT ("compiled-function-args",
+					      compiled_function_args,
+					      0,
+					      compiled_function_args_description,
+					      size_compiled_function_args,
+					      Lisp_Compiled_Function_Args);
 #endif /* NEW_GC */
 
 EXFUN (Ffetch_bytecode, 1);
@@ -253,21 +249,28 @@ bytecode_negate (Lisp_Object obj)
 }
 
 static Lisp_Object
-bytecode_nreverse (Lisp_Object list)
+bytecode_nreverse (Lisp_Object sequence)
 {
-  REGISTER Lisp_Object prev = Qnil;
-  REGISTER Lisp_Object tail = list;
-
-  while (!NILP (tail))
+  if (LISTP (sequence))
     {
-      REGISTER Lisp_Object next;
-      CHECK_CONS (tail);
-      next = XCDR (tail);
-      XCDR (tail) = prev;
-      prev = tail;
-      tail = next;
+      REGISTER Lisp_Object prev = Qnil;
+      REGISTER Lisp_Object tail = sequence;
+
+      while (!NILP (tail))
+	{
+	  REGISTER Lisp_Object next;
+	  CHECK_CONS (tail);
+	  next = XCDR (tail);
+	  XCDR (tail) = prev;
+	  prev = tail;
+	  tail = next;
+	}
+      return prev;
     }
-  return prev;
+  else
+    {
+      return Fnreverse (sequence);
+    }
 }
 
 
@@ -1573,11 +1576,11 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	break;
       }
 
-    case Bsubstring:
+    case Bsubseq:
       {
 	Lisp_Object arg2 = POP;
 	Lisp_Object arg1 = POP;
-	TOP_LVALUE = Fsubstring (TOP, arg1, arg2);
+	TOP_LVALUE = Fsubseq (TOP, arg1, arg2);
 	break;
       }
 
@@ -1687,6 +1690,8 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	break;
       }
 
+#ifdef SUPPORT_CONFOUNDING_FUNCTIONS
+
     case Bold_eq:
       {
 	Lisp_Object arg = POP;
@@ -1722,12 +1727,15 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	break;
       }
 
+#endif
+
     case Bbind_multiple_value_limits:
       {
         Lisp_Object upper = POP, first = TOP, speccount;
 
-        CHECK_NATNUM (upper);
-        CHECK_NATNUM (first);
+        check_integer_range (upper, Qzero,
+                             make_integer (Vmultiple_values_limit));
+        check_integer_range (first, Qzero, upper);
 
         speccount = make_int (bind_multiple_value_limits (XINT (first),
                                                           XINT (upper)));
@@ -1955,11 +1963,14 @@ optimize_byte_code (/* in */
 	    wtaerror ("attempt to set non-symbol", val);
 	  if (EQ (val, Qnil) || EQ (val, Qt))
 	    signal_error (Qsetting_constant, 0, val);
+#ifdef NEED_TO_HANDLE_21_4_CODE
 	  /* Ignore assignments to keywords by converting to Bdiscard.
-	     For backward compatibility only - we'd like to make this an error.  */
+	     For backward compatibility only - we'd like to make this an
+	     error.  */
 	  if (SYMBOL_IS_KEYWORD (val))
 	    REWRITE_OPCODE (Bdiscard);
 	  else
+#endif
 	    WRITE_NARGS (Bvarset);
 	  break;
 
@@ -2247,7 +2258,8 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
-  write_ascstring (printcharfun, print_readably ? "#[" : "#<compiled-function ");
+  write_ascstring (printcharfun, print_readably ? "#[" :
+		   "#<compiled-function ");
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   if (!print_readably)
     {
@@ -2300,7 +2312,10 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
     }
 
   UNGCPRO;
-  write_ascstring (printcharfun, print_readably ? "]" : ">");
+  if (print_readably)
+    write_ascstring (printcharfun, "]");
+  else
+    write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 
@@ -2346,14 +2361,14 @@ compiled_function_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-compiled_function_hash (Lisp_Object obj, int depth)
+compiled_function_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (obj);
   return HASH3 ((f->flags.documentationp << 2) +
 		(f->flags.interactivep << 1) +
 		f->flags.domainp,
-		internal_hash (f->instructions, depth + 1),
-		internal_hash (f->constants,    depth + 1));
+		internal_hash (f->instructions, depth + 1, 0),
+		internal_hash (f->constants,    depth + 1, 0));
 }
 
 static const struct memory_description compiled_function_description[] = {
@@ -2374,14 +2389,13 @@ static const struct memory_description compiled_function_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
-				     1, /*dumpable_flag*/
-				     mark_compiled_function,
-				     print_compiled_function, 0,
-				     compiled_function_equal,
-				     compiled_function_hash,
-				     compiled_function_description,
-				     Lisp_Compiled_Function);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("compiled-function", compiled_function,
+					mark_compiled_function,
+					print_compiled_function, 0,
+					compiled_function_equal,
+					compiled_function_hash,
+					compiled_function_description,
+					Lisp_Compiled_Function);
 
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
@@ -2561,22 +2575,36 @@ compiled_function_annotation (Lisp_Compiled_Function *f)
 
 #endif
 
-/* used only by Snarf-documentation; there must be doc already. */
+/* used only by Snarf-documentation. */
 void
 set_compiled_function_documentation (Lisp_Compiled_Function *f,
 				     Lisp_Object new_doc)
 {
-  assert (f->flags.documentationp);
   assert (INTP (new_doc) || STRINGP (new_doc));
 
-  if (f->flags.interactivep && f->flags.domainp)
-    XCAR (f->doc_and_interactive) = new_doc;
-  else if (f->flags.interactivep)
-    XCAR (f->doc_and_interactive) = new_doc;
-  else if (f->flags.domainp)
-    XCAR (f->doc_and_interactive) = new_doc;
+  if (f->flags.documentationp)
+    {
+      if (f->flags.interactivep && f->flags.domainp)
+        XCAR (f->doc_and_interactive) = new_doc;
+      else if (f->flags.interactivep)
+        XCAR (f->doc_and_interactive) = new_doc;
+      else if (f->flags.domainp)
+        XCAR (f->doc_and_interactive) = new_doc;
+      else
+        f->doc_and_interactive = new_doc;
+    }
   else
-    f->doc_and_interactive = new_doc;
+    {
+      f->flags.documentationp = 1;
+      if (f->flags.interactivep || f->flags.domainp)
+        {
+          f->doc_and_interactive = Fcons (new_doc, f->doc_and_interactive);
+        }
+      else
+        {
+          f->doc_and_interactive = new_doc;
+        }
+    }
 }
 
 
@@ -2735,7 +2763,7 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 
   CHECK_STRING (instructions);
   CHECK_VECTOR (constants);
-  CHECK_NATNUM (stack_depth);
+  check_integer_range (stack_depth, Qzero, make_int (USHRT_MAX));
 
   /* Optimize the `instructions' string, just like when executing a
      regular compiled function, but don't save it for later since this is
@@ -2756,9 +2784,9 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 void
 syms_of_bytecode (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (compiled_function);
+  INIT_LISP_OBJECT (compiled_function);
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (compiled_function_args);
+  INIT_LISP_OBJECT (compiled_function_args);
 #endif /* NEW_GC */
 
   DEFERROR_STANDARD (Qinvalid_byte_code, Qinvalid_state);
@@ -2823,14 +2851,14 @@ integer, it is incremented each time that symbol's function is called.
 static void
 init_opcode_table_multi_op (Opcode op)
 {
-  const Ascbyte *basename = opcode_name_table[op];
+  const Ascbyte *base = opcode_name_table[op];
   Ascbyte temp[300];
   int i;
 
   for (i = 1; i < 7; i++)
     {
       assert (!opcode_name_table[op + i]);
-      sprintf (temp, "%s+%d", basename, i);
+      sprintf (temp, "%s+%d", base, i);
       opcode_name_table[op + i] = xstrdup (temp);
     }
 }

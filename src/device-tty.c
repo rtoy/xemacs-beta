@@ -1,14 +1,14 @@
 /* TTY device functions.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -49,18 +47,16 @@ static const struct memory_description tty_device_data_description_1 [] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("tty-device", tty_device,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       tty_device_data_description_1,
-			       Lisp_Tty_Device);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("tty-device", tty_device,
+				      0, tty_device_data_description_1,
+				      Lisp_Tty_Device);
 #endif /* NEW_GC */
 
 static void
 allocate_tty_device_struct (struct device *d)
 {
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct tty_device, &lrecord_tty_device);
+  d->device_data = XTTY_DEVICE (ALLOC_NORMAL_LISP_OBJECT (tty_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct tty_device);
 #endif /* not NEW_GC */
@@ -118,7 +114,10 @@ static void
 free_tty_device_struct (struct device *d)
 {
   if (d->device_data)
-    xfree (d->device_data);
+    {
+      xfree (d->device_data);
+      d->device_data = 0;
+    }
 }
 
 static void
@@ -177,7 +176,7 @@ tty_asynch_device_change (void)
 
 	      /* We know the frame is tty because we made sure that the
 		 device is tty. */
-	      change_frame_size (f, height, width, 1);
+	      change_frame_size (f, width, height, 1);
 	    }
 	}
     }
@@ -195,6 +194,14 @@ tty_device_system_metrics (struct device *d,
     case DM_size_device:
       return Fcons (make_int (CONSOLE_TTY_DATA (con)->width),
 		    make_int (CONSOLE_TTY_DATA (con)->height));
+    case DM_num_bit_planes:
+      {
+        EMACS_INT l2 = (EMACS_INT)  (log (CONSOLE_TTY_DATA (con)->colors)
+                                     / log (2));
+        return make_int (l2);
+      }
+    case DM_num_color_cells:
+      return make_int (CONSOLE_TTY_DATA (con)->colors);
     default: /* No such device metric property for TTY devices */
       return Qunbound;
     }
@@ -208,7 +215,7 @@ void
 syms_of_device_tty (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (tty_device);
+  INIT_LISP_OBJECT (tty_device);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qmake_device_early_tty_entry_point);
