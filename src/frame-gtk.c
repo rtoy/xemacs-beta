@@ -373,7 +373,7 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
 				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);
       gdk_window_set_hints (GET_GTK_WIDGET_WINDOW (shell), x, y, 0, 0, 0, 0, GDK_HINT_POS);
-      gtk_window_set_policy (GTK_WINDOW (shell), TRUE, TRUE, FALSE);
+      gtk_window_set_resizable (GTK_WINDOW (shell), TRUE);
     }
 
   FRAME_HEIGHT (f) = h;
@@ -384,7 +384,6 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
     GtkRequisition req;
  
     gtk_widget_size_request (FRAME_GTK_SHELL_WIDGET (f), &req);
-    gtk_widget_set_usize (FRAME_GTK_SHELL_WIDGET (f), req.width, req.height);
   }
 }
 
@@ -1204,6 +1203,7 @@ a string.
 static void
 gtk_set_frame_position (struct frame *f, int xoff, int yoff)
 {
+  /* Deprecated, what is the replacement? */
     gtk_widget_set_uposition (FRAME_GTK_SHELL_WIDGET (f), xoff, yoff);
 }
 
