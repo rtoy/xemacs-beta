@@ -1,3 +1,8 @@
+2011-05-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (HAVE_MS_WINDOWS): On cygwin, use the w32api package
+	libraries in /usr/lib/w32api.  Fix for tracker issue745.
+
 2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.31 "ginger" is released.

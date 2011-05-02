@@ -3243,7 +3243,7 @@ if test "$with_msw" != "no"; then
     fi
 
     install_pp="$srcdir/lib-src/installexe.sh"
-    XE_APPEND(-limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr, libs_system)
+    XE_APPEND(-L/usr/lib/w32api -limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr, libs_system)
     if test "$with_dragndrop" != no; then
       XE_APPEND(msw, dragndrop_proto)
       with_dragndrop=yes
