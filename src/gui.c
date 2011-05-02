@@ -1,15 +1,15 @@
 /* Generic GUI code. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2010 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -197,14 +195,10 @@ gui_item_init (Lisp_Object gui_item)
 Lisp_Object
 allocate_gui_item (void)
 {
-  Lisp_Gui_Item *lp = ALLOC_LCRECORD_TYPE (Lisp_Gui_Item, &lrecord_gui_item);
-  Lisp_Object val;
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (gui_item);
 
-  val = wrap_gui_item (lp);
-
-  gui_item_init (val);
-
-  return val;
+  gui_item_init (obj);
+  return obj;
 }
 
 /*
@@ -600,28 +594,28 @@ mark_gui_item (Lisp_Object obj)
 }
 
 static Hashcode
-gui_item_hash (Lisp_Object obj, int depth)
+gui_item_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Gui_Item *p = XGUI_ITEM (obj);
 
-  return HASH2 (HASH6 (internal_hash (p->name, depth + 1),
-		       internal_hash (p->callback, depth + 1),
-		       internal_hash (p->callback_ex, depth + 1),
-		       internal_hash (p->suffix, depth + 1),
-		       internal_hash (p->active, depth + 1),
-		       internal_hash (p->included, depth + 1)),
-		HASH6 (internal_hash (p->config, depth + 1),
-		       internal_hash (p->filter, depth + 1),
-		       internal_hash (p->style, depth + 1),
-		       internal_hash (p->selected, depth + 1),
-		       internal_hash (p->keys, depth + 1),
-		       internal_hash (p->value, depth + 1)));
+  return HASH2 (HASH6 (internal_hash (p->name, depth + 1, 0),
+		       internal_hash (p->callback, depth + 1, 0),
+		       internal_hash (p->callback_ex, depth + 1, 0),
+		       internal_hash (p->suffix, depth + 1, 0),
+		       internal_hash (p->active, depth + 1, 0),
+		       internal_hash (p->included, depth + 1, 0)),
+		HASH6 (internal_hash (p->config, depth + 1, 0),
+		       internal_hash (p->filter, depth + 1, 0),
+		       internal_hash (p->style, depth + 1, 0),
+		       internal_hash (p->selected, depth + 1, 0),
+		       internal_hash (p->keys, depth + 1, 0),
+		       internal_hash (p->value, depth + 1, 0)));
 }
 
 int
 gui_item_id_hash (Lisp_Object hashtable, Lisp_Object gitem, int slot)
 {
-  int hashid = gui_item_hash (gitem, 0);
+  int hashid = gui_item_hash (gitem, 0, 0);
   int id = GUI_ITEM_ID_BITS (hashid, slot);
   while (!UNBOUNDP (Fgethash (make_int (id), hashtable, Qunbound)))
     {
@@ -688,18 +682,6 @@ gui_item_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 	EQ (p1->selected, p2->selected)))
     return 0;
   return 1;
-}
-
-static void
-print_gui_item (Lisp_Object obj, Lisp_Object printcharfun,
-		int UNUSED (escapeflag))
-{
-  Lisp_Gui_Item *g = XGUI_ITEM (obj);
-
-  if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
-
-  write_fmt_string (printcharfun, "#<gui-item 0x%x>", g->header.uid);
 }
 
 Lisp_Object
@@ -807,13 +789,12 @@ parse_gui_item_tree_list (Lisp_Object list)
   RETURN_UNGCPRO (ret);
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
-			       0, /*dumpable-flag*/
-			       mark_gui_item, print_gui_item,
-			       0, gui_item_equal,
-			       gui_item_hash,
-			       gui_item_description,
-			       Lisp_Gui_Item);
+DEFINE_NODUMP_LISP_OBJECT ("gui-item", gui_item,
+			   mark_gui_item, external_object_printer,
+			   0, gui_item_equal,
+			   gui_item_hash,
+			   gui_item_description,
+			   Lisp_Gui_Item);
 
 DOESNT_RETURN
 gui_error (const Ascbyte *reason, Lisp_Object frob)
@@ -830,7 +811,7 @@ gui_error_2 (const Ascbyte *reason, Lisp_Object frob0, Lisp_Object frob1)
 void
 syms_of_gui (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (gui_item);
+  INIT_LISP_OBJECT (gui_item);
 
   DEFSYMBOL (Qmenu_no_selection_hook);
 

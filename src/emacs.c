@@ -6,10 +6,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.28. */
 
@@ -512,11 +510,6 @@ Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 Lisp_Object Vxemacs_extra_name;
 Lisp_Object Vxemacs_release_date;
-#ifdef INFODOCK
-Lisp_Object Vinfodock_major_version;
-Lisp_Object Vinfodock_minor_version;
-Lisp_Object Vinfodock_build_version;
-#endif
 
 /* The path under which XEmacs was invoked. */
 Lisp_Object Vinvocation_path;
@@ -766,6 +759,7 @@ free_argc_argv (Wexttext **argv)
   while (argv[elt])
     {
       xfree (argv[elt]);
+      argv[elt] = 0;
       elt++;
     }
   xfree (argv);
@@ -1464,13 +1458,33 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
       /* Make sure that eistrings can be created. */
       init_eistring_once_early ();
+    }
+#ifdef PDUMP
+  else if (!restart)	      /* after successful pdump_load()
+				 (note, we are inside ifdef PDUMP) */
+    {
+      reinit_alloc_early ();
+      reinit_gc_early ();
+      reinit_symbols_early ();
+      reinit_process_early ();
+#ifndef NEW_GC
+      reinit_opaque_early ();
+#endif /* not NEW_GC */
+      reinit_eistring_early ();
+#ifdef WITH_NUMBER_TYPES
+      reinit_vars_of_number ();
+#endif
+    }
+#endif /* PDUMP */
 
+  if (!initialized)
+    {
       /* Now declare all the symbols and define all the Lisp primitives.
 
 	 The *only* thing that the syms_of_*() functions are allowed to do
 	 is call one of the following:
 
-	 INIT_LRECORD_IMPLEMENTATION()
+	 INIT_LISP_OBJECT()
 	 defsymbol(), DEFSYMBOL(), or DEFSYMBOL_MULTIWORD_PREDICATE()
 	 defsubr() (i.e. DEFSUBR)
 	 deferror(), DEFERROR(), or DEFERROR_STANDARD()
@@ -1489,6 +1503,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef NEW_GC
       syms_of_vdb ();
 #endif /* NEW_GC */
+      syms_of_array ();
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
@@ -1538,8 +1553,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_frame ();
       syms_of_general ();
       syms_of_glyphs ();
+#ifdef HAVE_WINDOW_SYSTEM
       syms_of_glyphs_eimage ();
       syms_of_glyphs_shared ();
+#endif
       syms_of_glyphs_widget ();
       syms_of_gui ();
       syms_of_gutter ();
@@ -1547,6 +1564,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_intl ();
       syms_of_keymap ();
       syms_of_lread ();
+      syms_of_lstream ();
       syms_of_macros ();
       syms_of_marker ();
       syms_of_md5 ();
@@ -1563,7 +1581,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef WITH_NUMBER_TYPES
       syms_of_number ();
 #endif
-      syms_of_objects ();
+      syms_of_fontcolor ();
       syms_of_print ();
       syms_of_process ();
 #ifdef HAVE_WIN32_PROCESSES
@@ -1597,14 +1615,14 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_console_tty ();
       syms_of_device_tty ();
       syms_of_frame_tty ();
-      syms_of_objects_tty ();
+      syms_of_fontcolor_tty ();
 #endif
 
 #ifdef HAVE_GTK
       syms_of_device_gtk ();
       syms_of_frame_gtk ();
       syms_of_glyphs_gtk ();
-      syms_of_objects_gtk ();
+      syms_of_fontcolor_gtk ();
       syms_of_ui_gtk ();
       syms_of_select_gtk ();
 #ifdef HAVE_DIALOGS
@@ -1630,7 +1648,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       syms_of_frame_x ();
       syms_of_glyphs_x ();
-      syms_of_objects_x ();
+      syms_of_fontcolor_x ();
 #ifdef HAVE_MENUBARS
       syms_of_menubar_x ();
 #endif
@@ -1659,7 +1677,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_dialog_mswindows ();
 #endif
       syms_of_frame_mswindows ();
-      syms_of_objects_mswindows ();
+      syms_of_fontcolor_mswindows ();
       syms_of_select_mswindows ();
       syms_of_glyphs_mswindows ();
 #ifdef HAVE_GUI_OBJECTS
@@ -1730,7 +1748,37 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #if defined (HAVE_POSTGRESQL) && !defined (HAVE_SHLIB)
       syms_of_postgresql ();
 #endif
+    }
 
+  if (!initialized
+#ifdef PDUMP
+      || !restart
+#endif
+      )
+    {
+      buffer_objects_create ();
+      casetab_objects_create ();
+      extent_objects_create ();
+      face_objects_create ();
+      frame_objects_create ();
+      glyph_objects_create ();
+      hash_table_objects_create ();
+      lstream_objects_create ();
+#ifdef MULE
+      mule_charset_objects_create ();
+#endif
+#ifdef HAVE_SCROLLBARS
+      scrollbar_objects_create ();
+#endif
+      specifier_objects_create ();
+#ifdef HAVE_GTK
+      ui_gtk_objects_create ();
+#endif
+      window_objects_create ();
+    }
+
+  if (!initialized)
+    {
       /* Now create the subtypes for the types that have them.
 	 We do this before the vars_*() because more symbols
 	 may get initialized here. */
@@ -1753,7 +1801,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       console_type_create_tty ();
       console_type_create_device_tty ();
       console_type_create_frame_tty ();
-      console_type_create_objects_tty ();
+      console_type_create_fontcolor_tty ();
       console_type_create_redisplay_tty ();
 #endif
 
@@ -1762,7 +1810,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       console_type_create_select_gtk ();
       console_type_create_device_gtk ();
       console_type_create_frame_gtk ();
-      console_type_create_objects_gtk ();
+      console_type_create_fontcolor_gtk ();
       console_type_create_glyphs_gtk ();
       console_type_create_redisplay_gtk ();
 #ifdef HAVE_MENUBARS
@@ -1788,7 +1836,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_MENUBARS
       console_type_create_menubar_x ();
 #endif
-      console_type_create_objects_x ();
+      console_type_create_fontcolor_x ();
       console_type_create_redisplay_x ();
 #ifdef HAVE_SCROLLBARS
       console_type_create_scrollbar_x ();
@@ -1805,7 +1853,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       console_type_create_mswindows ();
       console_type_create_device_mswindows ();
       console_type_create_frame_mswindows ();
-      console_type_create_objects_mswindows ();
+      console_type_create_fontcolor_mswindows ();
       console_type_create_redisplay_mswindows ();
       console_type_create_glyphs_mswindows ();
       console_type_create_select_mswindows ();
@@ -1837,7 +1885,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
       specifier_type_create_image ();
       specifier_type_create_gutter ();
-      specifier_type_create_objects ();
+      specifier_type_create_fontcolor ();
 #ifdef HAVE_TOOLBARS
       specifier_type_create_toolbar ();
 #endif
@@ -1873,7 +1921,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 called before the any calls to the other macros. */
 
       image_instantiator_format_create ();
+#ifdef HAVE_WINDOW_SYSTEM
       image_instantiator_format_create_glyphs_eimage ();
+#endif
       image_instantiator_format_create_glyphs_widget ();
 #ifdef HAVE_TTY
       image_instantiator_format_create_glyphs_tty ();
@@ -1892,17 +1942,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   else if (!restart)	      /* after successful pdump_load()
 				 (note, we are inside ifdef PDUMP) */
     {
-      reinit_alloc_early ();
-      reinit_gc_early ();
-      reinit_symbols_early ();
-#ifndef NEW_GC
-      reinit_opaque_early ();
-#endif /* not NEW_GC */
-      reinit_eistring_early ();
-#ifdef WITH_NUMBER_TYPES
-      reinit_vars_of_number ();
-#endif
-
       reinit_console_type_create_stream ();
 #ifdef HAVE_TTY
       reinit_console_type_create_tty ();
@@ -1921,7 +1960,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_specifier_type_create ();
       reinit_specifier_type_create_image ();
       reinit_specifier_type_create_gutter ();
-      reinit_specifier_type_create_objects ();
+      reinit_specifier_type_create_fontcolor ();
 #ifdef HAVE_TOOLBARS
       reinit_specifier_type_create_toolbar ();
 #endif
@@ -2021,8 +2060,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	    - make_int()
 	    - make_char()
 	    - make_extent()
-	    - BASIC_ALLOC_LCRECORD()
-	    - ALLOC_LCRECORD_TYPE()
+	    - ALLOC_NORMAL_LISP_OBJECT()
+	    - ALLOC_SIZED_LISP_OBJECT()
 	    - Fcons()
 	    - listN()
             - make_lcrecord_list()
@@ -2054,6 +2093,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_buffer ();
       vars_of_bytecode ();
       vars_of_callint ();
+      vars_of_casetab ();
       vars_of_chartab ();
       vars_of_cmdloop ();
       vars_of_cmds ();
@@ -2074,6 +2114,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_dragdrop ();
 #endif
       vars_of_editfns ();
+      vars_of_elhash ();
       vars_of_emacs ();
       vars_of_eval ();
 
@@ -2104,7 +2145,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_frame ();
       vars_of_gc ();
       vars_of_glyphs ();
+#ifdef HAVE_WINDOW_SYSTEM
       vars_of_glyphs_eimage ();
+#endif
       vars_of_glyphs_widget ();
       vars_of_gui ();
       vars_of_gutter ();
@@ -2141,7 +2184,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef WITH_NUMBER_TYPES
       vars_of_number ();
 #endif
-      vars_of_objects ();
+      vars_of_fontcolor ();
       vars_of_print ();
 
       vars_of_process ();
@@ -2180,7 +2223,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_TTY
       vars_of_console_tty ();
       vars_of_frame_tty ();
-      vars_of_objects_tty ();
+      vars_of_fontcolor_tty ();
 #endif
 
 #ifdef HAVE_GTK
@@ -2196,7 +2239,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_MENUBARS
       vars_of_menubar_gtk ();
 #endif
-      vars_of_objects_gtk ();
+      vars_of_fontcolor_gtk ();
       vars_of_select_gtk ();
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_gtk ();
@@ -2220,7 +2263,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_MENUBARS
       vars_of_menubar_x ();
 #endif
-      vars_of_objects_x ();
+      vars_of_fontcolor_x ();
       vars_of_select_x ();
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_x ();
@@ -2240,7 +2283,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_device_mswindows ();
       vars_of_console_mswindows ();
       vars_of_frame_mswindows ();
-      vars_of_objects_mswindows ();
+      vars_of_fontcolor_mswindows ();
       vars_of_select_mswindows ();
       vars_of_glyphs_mswindows ();
 #ifdef HAVE_SCROLLBARS
@@ -2299,6 +2342,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
     {
       /* Now do additional vars_of_*() initialization that happens both
 	 at dump time and after pdump load. */
+      reinit_vars_of_alloc ();
       reinit_vars_of_buffer ();
       reinit_vars_of_bytecode ();
       reinit_vars_of_console ();
@@ -2312,7 +2356,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       reinit_vars_of_event_stream ();
       reinit_vars_of_events ();
-      reinit_vars_of_extents ();
       reinit_vars_of_file_coding ();
       reinit_vars_of_fileio ();
 #ifdef USE_C_FONT_LOCK
@@ -2329,7 +2372,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_SHLIB
       reinit_vars_of_module ();
 #endif
-      reinit_vars_of_objects ();
+      reinit_vars_of_fontcolor ();
       reinit_vars_of_print ();
       reinit_vars_of_search ();
       reinit_vars_of_text ();
@@ -2339,7 +2382,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_MS_WINDOWS
       reinit_vars_of_event_mswindows ();
       reinit_vars_of_frame_mswindows ();
-      reinit_vars_of_object_mswindows ();
+      reinit_vars_of_fontcolor_mswindows ();
 #endif
 
 #ifdef HAVE_GTK
@@ -2908,8 +2951,7 @@ sort_args (int argc, Wexttext **argv)
 	    from += options[from];
 	}
 
-      if (best < 0)
-	ABORT ();
+      assert (best >= 0);
 
       /* Copy the highest priority remaining option, with its args, to
 	 NEW_ARGV.  */
@@ -3343,7 +3385,7 @@ and announce itself normally when it is run.
    go.  The two conditions sound somewhat redundant (maybe we could just
    use the second?) but they aren't completely: Theoretically (maybe with
    MinGW?) we could imagine compiling under native Windows as the OS
-   but e.g. targetting only X Windows as the window system. --ben */
+   but e.g. targeting only X Windows as the window system. --ben */
 
 #if defined (HAVE_MS_WINDOWS) && defined (WIN32_NATIVE)
 # define NEED_WINDOWS_MESSAGE_PAUSE
@@ -3588,15 +3630,9 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 "Your version of XEmacs was distributed with a PROBLEMS file that may describe\n"
 "your crash, and with luck a workaround.  Please check it first, but do report\n"
 "the crash anyway.\n\n"
-#ifdef INFODOCK
-"Please report this bug by selecting `Report-Bug' in the InfoDock menu, or\n"
-"(last resort) by emailing `xemacs-beta@xemacs.org' -- note that this is for\n"
-"XEmacs in general, not just Infodock."
-#else
 "Please report this bug by invoking M-x report-emacs-bug, or by selecting\n"
 "`Send Bug Report' from the Help menu.  If that won't work, send ordinary\n"
 "email to `xemacs-beta@xemacs.org'."
-#endif
 "  *MAKE SURE* to include this entire\n"
 "output from this crash, especially including the Lisp backtrace, as well as\n"
 "the XEmacs configuration from M-x describe-installation (or equivalently,\n"
@@ -3644,7 +3680,7 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 "then type `where' at the debugger prompt.  No GDB on your system?  You may\n"
 "have DBX, or XDB, or SDB.  (Ask your system administrator if you need help.)\n"
 "If no core file was produced, enable them (often with `ulimit -c unlimited')\n"
-"in case of future recurrance of the crash.\n");
+"in case of future reoccurrence of the crash.\n");
 #endif /* _MSC_VER */
     }
 
@@ -4057,6 +4093,20 @@ assert_failed (const Ascbyte *file, int line, const Ascbyte *expr)
   in_assert_failed--;
 }
 
+/* This is called when an assert() fails or when ABORT() is called -- both
+   of those are defined in the preprocessor to an expansion involving
+   assert_failed(). */
+void
+assert_equal_failed (const Ascbyte *file, int line, EMACS_INT x, EMACS_INT y,
+		     const Ascbyte *exprx, const Ascbyte *expry)
+{
+  Ascbyte bigstr[1000]; /* #### Could overflow, but avoids any need to do any
+			   allocation, even alloca(), hence safer */
+  sprintf (bigstr, "%s (%ld) should == %s (%ld) but doesn't",
+	   exprx, x, expry, y);
+  assert_failed (file, line, bigstr);
+}
+
 /* -------------------------------------- */
 /*        low-memory notification         */
 /* -------------------------------------- */
@@ -4281,22 +4331,6 @@ earlier than 20.3.
   Vemacs_beta_version = Qnil;
 #endif
 
-#ifdef INFODOCK
-  DEFVAR_LISP ("infodock-major-version", &Vinfodock_major_version /*
-Major version number of this InfoDock release.
-*/ );
-  Vinfodock_major_version = make_int (INFODOCK_MAJOR_VERSION);
-
-  DEFVAR_LISP ("infodock-minor-version", &Vinfodock_minor_version /*
-Minor version number of this InfoDock release.
-*/ );
-  Vinfodock_minor_version = make_int (INFODOCK_MINOR_VERSION);
-
-  DEFVAR_LISP ("infodock-build-version", &Vinfodock_build_version /*
-Build version of this InfoDock release.
-*/ );
-  Vinfodock_build_version = make_int (INFODOCK_BUILD_VERSION);
-#endif
 
   DEFVAR_LISP ("xemacs-codename", &Vxemacs_codename /*
 Codename of this version of Emacs (a string).
@@ -4495,7 +4529,6 @@ complex_vars_of_emacs (void)
 
   DEFVAR_LISP ("emacs-program-name", &Vemacs_program_name /*
 *Name of the Emacs variant.
-For example, this may be \"xemacs\" or \"infodock\".
 This is mainly meant for use in path searching.
 */ );
   Vemacs_program_name = build_extstring (PATH_PROGNAME, Qfile_name);

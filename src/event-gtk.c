@@ -1,15 +1,15 @@
 /* The event_stream interface for X11 with gtk, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
    Copyright (C) 2000 William Perry.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* This file is heavily based upon event-Xt.c */
 
@@ -45,7 +43,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 
 #include "console-gtk-impl.h"
-#include "objects-gtk.h"
+#include "fontcolor-gtk.h"
 
 #include "gtk-xemacs.h"
 
@@ -85,8 +83,6 @@ gboolean emacs_gtk_event_handler (GtkWidget *wid /* unused */,
 				  gpointer closure /* unused */);
 
 static int last_quit_check_signal_tick_count;
-
-Lisp_Object Qsans_modifiers;
 
 /*
  * Identify if the keysym is a modifier.  This implementation mirrors x.org's
@@ -1616,7 +1612,6 @@ emacs_gtk_force_event_pending (struct frame* UNUSED (f))
 void
 syms_of_event_gtk (void)
 {
-  DEFSYMBOL (Qsans_modifiers);
 }
 
 void
@@ -1762,7 +1757,7 @@ gtk_reset_key_mapping (struct device *d)
   else
     {
       xd->x_keysym_map_hashtable = hashtable =
-	make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+	make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, Qequal);
     }
 
   for (keysym = xd->x_keysym_map,

@@ -11,20 +11,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -150,11 +148,11 @@ ROOT-P is a function that tests whether a root is plausible."
             (and configure-prefix-directory
                  (list (file-name-as-directory
                         configure-prefix-directory))))
-           :test #'equal))
+           :test #'equal :from-end t))
 	 (installation-roots
 	  (remove-if-not root-p potential-installation-roots)))
     (delete-duplicates (nconc invocation-roots installation-roots)
-                       :test #'equal)))
+                       :test #'equal :from-end t)))
 
 (defun paths-find-site-lisp-directory (roots)
   "Find the site Lisp directory of the XEmacs hierarchy.
@@ -281,8 +279,8 @@ respectively."
             (nconc
              (paths-directories-which-exist configure-info-path)
              (paths-directories-which-exist paths-default-info-directories))
-           :test #'equal)))
-     :test #'equal)))
+           :test #'equal :from-end t)))
+     :test #'equal :from-end t)))
 
 (defun paths-find-doc-directory (roots)
   "Find the documentation directory.

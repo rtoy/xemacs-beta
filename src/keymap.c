@@ -2,15 +2,15 @@
    Copyright (C) 1985, 1991-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
    Totally redesigned by jwz in 1991.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0.  Not synched with FSF.  Substantially
    different from FSF. */
@@ -148,7 +146,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Keymap
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #define MARKED_SLOT(x) Lisp_Object x;
 #include "keymap-slots.h"
 };
@@ -253,7 +251,7 @@ keymap_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-keymap_hash (Lisp_Object obj, int depth)
+keymap_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Keymap *k = XKEYMAP (obj);
   Hashcode hash = 0xCAFEBABE; /* why not? */
@@ -261,7 +259,7 @@ keymap_hash (Lisp_Object obj, int depth)
   depth++;
 
 #define MARKED_SLOT(x) \
-  hash = HASH2 (hash, internal_hash (k->x, depth));
+  hash = HASH2 (hash, internal_hash (k->x, depth, 0));
 #define MARKED_SLOT_NOCOMPARE(x)
 #include "keymap-slots.h"
 
@@ -284,14 +282,15 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
   /* This function can GC */
   Lisp_Keymap *keymap = XKEYMAP (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
   write_ascstring (printcharfun, "#<keymap ");
   if (!NILP (keymap->name))
     {
       write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
     }
   write_fmt_string (printcharfun, "size %ld 0x%x>",
-		    (long) XINT (Fkeymap_fullness (obj)), keymap->header.uid);
+		    (long) XINT (Fkeymap_fullness (obj)),
+		    LISP_OBJECT_UID (obj));
 }
 
 static const struct memory_description keymap_description[] = {
@@ -300,12 +299,11 @@ static const struct memory_description keymap_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("keymap", keymap,
-			       1, /*dumpable-flag*/
-                               mark_keymap, print_keymap, 0,
-			       keymap_equal, keymap_hash,
-			       keymap_description,
-			       Lisp_Keymap);
+DEFINE_DUMPABLE_LISP_OBJECT ("keymap", keymap,
+			     mark_keymap, print_keymap, 0,
+			     keymap_equal, keymap_hash,
+			     keymap_description,
+			     Lisp_Keymap);
 
 /************************************************************************/
 /*                Traversing keymaps and their parents                  */
@@ -490,10 +488,10 @@ keymap_lookup_directly (Lisp_Object keymap,
 #define FROB(num) XEMACS_MOD_BUTTON##num |
 #include "keymap-buttons.h"
                  0);
-  if ((modifiers & ~(XEMACS_MOD_CONTROL | XEMACS_MOD_META | XEMACS_MOD_SUPER
-		     | XEMACS_MOD_HYPER | XEMACS_MOD_ALT | XEMACS_MOD_SHIFT))
-      != 0)
-    ABORT ();
+  assert ((modifiers & ~(XEMACS_MOD_CONTROL | XEMACS_MOD_META |
+			 XEMACS_MOD_SUPER | XEMACS_MOD_HYPER |
+			 XEMACS_MOD_ALT | XEMACS_MOD_SHIFT))
+	  == 0);
 
   k = XKEYMAP (keymap);
 
@@ -567,8 +565,7 @@ keymap_delete_inverse_internal (Lisp_Object inverse_table,
   Lisp_Object tail;
   Lisp_Object *prev;
 
-  if (UNBOUNDP (keys))
-    ABORT ();
+  assert (!UNBOUNDP (keys));
 
   for (prev = &new_keys, tail = new_keys;
        ;
@@ -738,8 +735,9 @@ keymap_submaps_mapper (Lisp_Object key, Lisp_Object value,
   return 0;
 }
 
-static int map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
-                                      Lisp_Object pred);
+static Boolint map_keymap_sort_predicate (Lisp_Object pred, Lisp_Object key,
+					  Lisp_Object obj1, Lisp_Object obj2);
+					  
 
 static Lisp_Object
 keymap_submaps (Lisp_Object keymap)
@@ -762,9 +760,8 @@ keymap_submaps (Lisp_Object keymap)
       elisp_maphash (keymap_submaps_mapper, k->table,
 		     &keymap_submaps_closure);
       /* keep it sorted so that the result of accessible-keymaps is ordered */
-      k->sub_maps_cache = list_sort (result,
-				     Qnil,
-				     map_keymap_sort_predicate);
+      k->sub_maps_cache = list_sort (result, map_keymap_sort_predicate,
+                                     Qnil, Qnil);
       UNGCPRO;
     }
   return k->sub_maps_cache;
@@ -778,10 +775,8 @@ keymap_submaps (Lisp_Object keymap)
 static Lisp_Object
 make_keymap (Elemcount size)
 {
-  Lisp_Object result;
-  Lisp_Keymap *keymap = ALLOC_LCRECORD_TYPE (Lisp_Keymap, &lrecord_keymap);
-
-  result = wrap_keymap (keymap);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (keymap);
+  Lisp_Keymap *keymap = XKEYMAP (obj);
 
 #define MARKED_SLOT(x) keymap->x = Qnil;
 #include "keymap-slots.h"
@@ -789,14 +784,14 @@ make_keymap (Elemcount size)
   if (size != 0) /* hack for copy-keymap */
     {
       keymap->table =
-	make_lisp_hash_table (size, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+	make_lisp_hash_table (size, HASH_TABLE_NON_WEAK, Qeq);
       /* Inverse table is often less dense because of duplicate key-bindings.
          If not, it will grow anyway. */
       keymap->inverse_table =
 	make_lisp_hash_table (size * 3 / 4, HASH_TABLE_NON_WEAK,
-			      HASH_TABLE_EQ);
+			      Qeq);
     }
-  return result;
+  return obj;
 }
 
 DEFUN ("make-keymap", Fmake_keymap, 0, 1, 0, /*
@@ -1530,7 +1525,13 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
 
   define_key_parser (list, &raw_key);
 
-  if (
+  /* The first zero is needed for Apple's i686-apple-darwin8-g++-4.0.1,
+     otherwise the build fails with:
+
+     In function ‘void key_desc_list_to_event(Lisp_Object, Lisp_Object, int)’:
+     cc1plus: error: expected primary-expression
+     cc1plus: error: expected `)'  */
+  if (0 ||
 #define INCLUDE_BUTTON_ZERO
 #define FROB(num)				\
       EQ (raw_key.keysym, Qbutton##num) ||	\
@@ -1732,7 +1733,7 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   if (indx == 0)
     new_keys = keys;
   else if (STRINGP (keys))
-    new_keys = Fsubstring (keys, Qzero, make_int (indx));
+    new_keys = Fsubseq (keys, Qzero, make_int (indx));
   else if (VECTORP (keys))
     {
       new_keys = make_vector (indx, Qnil);
@@ -2892,9 +2893,9 @@ map_keymap_sorted_mapper (Lisp_Object key, Lisp_Object value,
 /* used by map_keymap_sorted(), describe_map_sort_predicate(),
    and keymap_submaps().
  */
-static int
-map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
-                           Lisp_Object UNUSED (pred))
+static Boolint
+map_keymap_sort_predicate (Lisp_Object UNUSED (pred), Lisp_Object UNUSED (key),
+			   Lisp_Object obj1, Lisp_Object obj2)
 {
   /* obj1 and obj2 are conses with keysyms in their cars.  Cdrs are ignored.
    */
@@ -2907,12 +2908,12 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   obj2 = XCAR (obj2);
 
   if (EQ (obj1, obj2))
-    return -1;
+    return 0;
   bit1 = MODIFIER_HASH_KEY_BITS (obj1);
   bit2 = MODIFIER_HASH_KEY_BITS (obj2);
 
-  /* If either is a symbol with a Qcharacter_of_keysym property, then sort it by
-     that code instead of alphabetically.
+  /* If either is a symbol with a Qcharacter_of_keysym property, then sort
+     it by that code instead of alphabetically.
      */
   if (! bit1 && SYMBOLP (obj1))
     {
@@ -2937,7 +2938,7 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
 
   /* all symbols (non-ASCIIs) come after characters (ASCIIs) */
   if (XTYPE (obj1) != XTYPE (obj2))
-    return SYMBOLP (obj2) ? 1 : -1;
+    return SYMBOLP (obj2);
 
   if (! bit1 && CHARP (obj1)) /* they're both ASCII */
     {
@@ -2945,24 +2946,24 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
       int o2 = XCHAR (obj2);
       if (o1 == o2 &&		/* If one started out as a symbol and the */
 	  sym1_p != sym2_p)	/* other didn't, the symbol comes last. */
-	return sym2_p ? 1 : -1;
+	return sym2_p;
 
-      return o1 < o2 ? 1 : -1;	/* else just compare them */
+      return o1 < o2;		/* else just compare them */
     }
 
   /* else they're both symbols.  If they're both buckys, then order them. */
   if (bit1 && bit2)
-    return bit1 < bit2 ? 1 : -1;
+    return bit1 < bit2;
 
   /* if only one is a bucky, then it comes later */
   if (bit1 || bit2)
-    return bit2 ? 1 : -1;
+    return bit2;
 
   /* otherwise, string-sort them. */
   {
     Ibyte *s1 = XSTRING_DATA (XSYMBOL (obj1)->name);
     Ibyte *s2 = XSTRING_DATA (XSYMBOL (obj2)->name);
-    return 0 > qxestrcmp (s1, s2) ? 1 : -1;
+    return 0 > qxestrcmp (s1, s2);
   }
 }
 
@@ -2990,7 +2991,7 @@ map_keymap_sorted (Lisp_Object keymap_table,
     c1.result_locative = &contents;
     elisp_maphash (map_keymap_sorted_mapper, keymap_table, &c1);
   }
-  contents = list_sort (contents, Qnil, map_keymap_sort_predicate);
+  contents = list_sort (contents, map_keymap_sort_predicate, Qnil, Qidentity);
   for (; !NILP (contents); contents = XCDR (contents))
     {
       Lisp_Object keysym = XCAR (XCAR (contents));
@@ -3132,11 +3133,9 @@ accessible_keymaps_mapper_1 (Lisp_Object keysym, Lisp_Object contents,
       key.keysym = keysym;
       key.modifiers = modifiers;
 
-      if (NILP (cmd))
-	ABORT ();
+      assert (!NILP (cmd));
       cmd = get_keymap (cmd, 0, 1);
-      if (!KEYMAPP (cmd))
-	ABORT ();
+      assert (KEYMAPP (cmd));
 
       vec = make_vector (XVECTOR_LENGTH (thisseq) + 1, Qnil);
       len = XVECTOR_LENGTH (thisseq);
@@ -3665,7 +3664,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	  /* OK, the key is for real */
 	  if (target_buffer)
 	    {
-	      if (!firstonly) ABORT ();
+	      assert (firstonly);
 	      format_raw_keys (so_far, keys_count + 1, target_buffer);
 	      return make_int (1);
 	    }
@@ -4084,10 +4083,10 @@ describe_map_mapper (const Lisp_Key_Data *key,
 			    *(closure->list));
 }
 
-
-static int
-describe_map_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
-			     Lisp_Object pred)
+static Boolint
+describe_map_sort_predicate (Lisp_Object pred, Lisp_Object key_func,
+			     Lisp_Object obj1, Lisp_Object obj2)
+			     
 {
   /* obj1 and obj2 are conses of the form
      ( ( <keysym> . <modifiers> ) . <binding> )
@@ -4099,9 +4098,9 @@ describe_map_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   bit1 = XINT (XCDR (obj1));
   bit2 = XINT (XCDR (obj2));
   if (bit1 != bit2)
-    return bit1 < bit2 ? 1 : -1;
+    return bit1 < bit2;
   else
-    return map_keymap_sort_predicate (obj1, obj2, pred);
+    return map_keymap_sort_predicate (pred, key_func, obj1, obj2);
 }
 
 /* Elide 2 or more consecutive numeric keysyms bound to the same thing,
@@ -4209,7 +4208,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 
   if (!NILP (list))
     {
-      list = list_sort (list, Qnil, describe_map_sort_predicate);
+      list = list_sort (list, describe_map_sort_predicate, Qnil, Qnil);
       buffer_insert_ascstring (buf, "\n");
       while (!NILP (list))
 	{
@@ -4298,7 +4297,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 void
 syms_of_keymap (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (keymap);
+  INIT_LISP_OBJECT (keymap);
 
   DEFSYMBOL (Qminor_mode_map_alist);
 

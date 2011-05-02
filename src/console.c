@@ -1,13 +1,13 @@
 /* The console object.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2002 Ben Wing.
+   Copyright (C) 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -41,12 +39,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-stream-impl.h"
 #ifdef HAVE_TTY
 #include "console-tty-impl.h"
-#endif
-
-#ifdef HAVE_TTY
-#define USED_IF_TTY(decl) decl
-#else
-#define USED_IF_TTY(decl) UNUSED (decl)
 #endif
 
 Lisp_Object Vconsole_list, Vselected_console;
@@ -169,21 +161,20 @@ print_console (Lisp_Object obj, Lisp_Object printcharfun,
   struct console *con = XCONSOLE (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, XSTRING_DATA (con->name));
+    printing_unreadable_lisp_object (obj, XSTRING_DATA (con->name));
 
   write_fmt_string (printcharfun, "#<%s-console",
 		    !CONSOLE_LIVE_P (con) ? "dead" : CONSOLE_TYPE_NAME (con));
   if (CONSOLE_LIVE_P (con) && !NILP (CONSOLE_CONNECTION (con)))
     write_fmt_string_lisp (printcharfun, " on %S", 1,
 			   CONSOLE_CONNECTION (con));
-  write_fmt_string (printcharfun, " 0x%x>", con->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("console", console,
-			       0, /*dumpable-flag*/
-			       mark_console, print_console, 0, 0, 0, 
-			       console_description,
-			       struct console);
+DEFINE_NODUMP_LISP_OBJECT ("console", console, mark_console,
+			   print_console, 0, 0, 0, 
+			   console_description,
+			   struct console);
 
 
 static void
@@ -200,13 +191,12 @@ set_quit_events (struct console *con, Lisp_Object key)
 static struct console *
 allocate_console (Lisp_Object type)
 {
-  Lisp_Object console;
-  struct console *con = ALLOC_LCRECORD_TYPE (struct console, &lrecord_console);
+  Lisp_Object console = ALLOC_NORMAL_LISP_OBJECT (console);
+  struct console *con = XCONSOLE (console);
   struct gcpro gcpro1;
 
-  COPY_LCRECORD (con, XCONSOLE (Vconsole_defaults));
+  copy_lisp_object (console, Vconsole_defaults);
 
-  console = wrap_console (con);
   GCPRO1 (console);
 
   con->conmeths = decode_console_type (type, ERROR_ME);
@@ -669,7 +659,7 @@ find_nonminibuffer_frame_not_on_console (Lisp_Object console)
 static void
 nuke_all_console_slots (struct console *con, Lisp_Object zap)
 {
-  ZERO_LCRECORD (con);
+  zero_nonsized_lisp_object (wrap_console (con));
 
 #define MARKED_SLOT(x)	con->x = zap;
 #include "conslots.h"
@@ -1193,12 +1183,12 @@ The elements of this list correspond to the arguments of
 void
 syms_of_console (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (console);
+  INIT_LISP_OBJECT (console);
 #ifdef NEW_GC
 #ifdef HAVE_TTY
-  INIT_LRECORD_IMPLEMENTATION (tty_console);
+  INIT_LISP_OBJECT (tty_console);
 #endif
-  INIT_LRECORD_IMPLEMENTATION (stream_console);
+  INIT_LISP_OBJECT (stream_console);
 #endif /* NEW_GC */
 
   DEFSUBR (Fvalid_console_type_p);
@@ -1326,9 +1316,8 @@ One argument, the to-be-deleted console.
 #define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magic_fun) \
 do {									   \
   struct symbol_value_forward *I_hate_C =				   \
-    alloc_lrecord_type (struct symbol_value_forward,			   \
-			&lrecord_symbol_value_forward);			   \
-  /*mcpro ((Lisp_Object) I_hate_C);*/					\
+    XSYMBOL_VALUE_FORWARD (ALLOC_NORMAL_LISP_OBJECT (symbol_value_forward));	   \
+  /*mcpro ((Lisp_Object) I_hate_C);*/					   \
 									   \
   I_hate_C->magic.value = &(console_local_flags.field_name);		   \
   I_hate_C->magic.type = forward_type;					   \
@@ -1360,8 +1349,6 @@ do {									    \
 	  1  /* lisp_readonly bit */					    \
 	},								    \
 	0, /* next */							    \
-	0, /* uid  */							    \
-	0  /* free */							    \
       },								    \
       &(console_local_flags.field_name),				    \
       forward_type							    \
@@ -1404,13 +1391,15 @@ common_init_complex_vars_of_console (void)
   /* Make sure all markable slots in console_defaults
      are initialized reasonably, so mark_console won't choke.
    */
-  struct console *defs = ALLOC_LCRECORD_TYPE (struct console, &lrecord_console);
-  struct console *syms = ALLOC_LCRECORD_TYPE (struct console, &lrecord_console);
+  Lisp_Object defobj = ALLOC_NORMAL_LISP_OBJECT (console);
+  struct console *defs = XCONSOLE (defobj);
+  Lisp_Object symobj = ALLOC_NORMAL_LISP_OBJECT (console);
+  struct console *syms = XCONSOLE (symobj);
 
   staticpro_nodump (&Vconsole_defaults);
   staticpro_nodump (&Vconsole_local_symbols);
-  Vconsole_defaults = wrap_console (defs);
-  Vconsole_local_symbols = wrap_console (syms);
+  Vconsole_defaults = defobj;
+  Vconsole_local_symbols = symobj;
 
   nuke_all_console_slots (syms, Qnil);
   nuke_all_console_slots (defs, Qnil);
@@ -1448,6 +1437,8 @@ common_init_complex_vars_of_console (void)
        The local flag bits are in the local_var_flags slot of the
        console.  */
 
+    set_lheader_implementation ((struct lrecord_header *)
+				&console_local_flags, &lrecord_console);
     nuke_all_console_slots (&console_local_flags, make_int (-2));
     console_local_flags.defining_kbd_macro = always_local_resettable;
     console_local_flags.last_kbd_macro = always_local_resettable;
@@ -1598,10 +1589,9 @@ buffer's local map, and the minor mode keymaps and text property keymaps.
   /* Check for DEFVAR_CONSOLE_LOCAL without initializing the corresponding
      slot of console_local_flags and vice-versa.  Must be done after all
      DEFVAR_CONSOLE_LOCAL() calls. */
-#define MARKED_SLOT(slot)					\
-  if ((XINT (console_local_flags.slot) != -2 &&			\
-         XINT (console_local_flags.slot) != -3)			\
-      != !(NILP (XCONSOLE (Vconsole_local_symbols)->slot)))	\
-  ABORT ();
+#define MARKED_SLOT(slot)						\
+  assert ((XINT (console_local_flags.slot) != -2 &&			\
+           XINT (console_local_flags.slot) != -3)			\
+	  == !(NILP (XCONSOLE (Vconsole_local_symbols)->slot)));
 #include "conslots.h"
 }

@@ -3,10 +3,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +14,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 20.3.  Not in FSF. */
 
@@ -542,7 +540,7 @@ free_charset_unicode_tables (Lisp_Object charset)
 
 static Bytecount
 compute_from_unicode_table_size_1 (void *table, int level,
-				   struct overhead_stats *stats)
+				   struct usage_stats *stats)
 {
   int i;
   Bytecount size = 0;
@@ -590,7 +588,7 @@ compute_from_unicode_table_size_1 (void *table, int level,
 
 static Bytecount
 compute_to_unicode_table_size_1 (void *table, int level,
-				 struct overhead_stats *stats)
+				 struct usage_stats *stats)
 {
   Bytecount size = 0;
 
@@ -615,7 +613,7 @@ compute_to_unicode_table_size_1 (void *table, int level,
 
 Bytecount
 compute_from_unicode_table_size (Lisp_Object charset,
-				 struct overhead_stats *stats)
+				 struct usage_stats *stats)
 {
   return (compute_from_unicode_table_size_1
 	  (XCHARSET_FROM_UNICODE_TABLE (charset),
@@ -625,7 +623,7 @@ compute_from_unicode_table_size (Lisp_Object charset,
 
 Bytecount
 compute_to_unicode_table_size (Lisp_Object charset,
-			       struct overhead_stats *stats)
+			       struct usage_stats *stats)
 {
   return (compute_to_unicode_table_size_1
 	  (XCHARSET_TO_UNICODE_TABLE (charset),
@@ -1253,7 +1251,7 @@ The highest precedence is given to the language-specific precedence list of
 charsets, defined by `set-language-unicode-precedence-list'.  These are
 followed by charsets in the default precedence list, defined by
 `set-default-unicode-precedence-list'.  Charsets occurring multiple times are
-given precedence according to their first occurrance in either list.  These
+given precedence according to their first occurrence in either list.  These
 are followed by the remaining charsets, in some arbitrary order.
 
 The language-specific precedence list is meant to be set as part of the
@@ -1371,7 +1369,8 @@ CHARACTER is one of the following:
   int ichar, unicode;
 
   CHECK_CHAR (character);
-  CHECK_NATNUM (code);
+
+  check_integer_range (code, Qzero, make_integer (EMACS_INT_MAX));
 
   unicode = XINT (code);
   ichar = XCHAR (character);
@@ -1447,7 +1446,7 @@ internal encoding.
   int lbs[NUM_LEADING_BYTES];
   int c;
 
-  CHECK_NATNUM (code);
+  check_integer_range (code, Qzero, make_integer (EMACS_INT_MAX));
   c = XINT (code);
   {
     EXTERNAL_LIST_LOOP_2 (elt, charsets)
@@ -1473,7 +1472,7 @@ internal encoding.
     return make_char (ret);
   }
 #else
-  CHECK_NATNUM (code);
+  check_integer_range (code, Qzero, make_integer (EMACS_INT_MAX));
   return Fint_to_char (code);
 #endif /* MULE */
 }
@@ -3293,8 +3292,8 @@ complex_vars_of_unicode (void)
   Fmake_coding_system_internal
     (Qutf_8, Qunicode,
      build_defer_string ("UTF-8"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "UTF-8 Unicode encoding -- ASCII-compatible 8-bit variable-width encoding\n"
 "sharing the following principles with the Mule-internal encoding:\n"
 "\n"
@@ -3316,6 +3315,7 @@ complex_vars_of_unicode (void)
 "  -- Given only the leading byte, you know how many following bytes\n"
 "     are present.\n"
 ),
-		    Qmnemonic, build_ascstring ("UTF8")),
-	     list2 (Qunicode_type, Qutf_8)));
+            Qmnemonic, build_ascstring ("UTF8"),
+            Qunicode_type, Qutf_8,
+            Qunbound));
 }

@@ -1,12 +1,13 @@
 /* Repository for inline functions
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -35,8 +34,8 @@ Boston, MA 02111-1307, USA.  */
    */
 
 /* Note to maintainers: This file contains a list of all header files
-   that use the INLINE macro, either directly, or by using DECLARE_LRECORD.
-   i.e. the output of ``grep -l -w 'DECLARE_LRECORD|INLINE_HEADER' *.h'' */
+   that use the INLINE macro, either directly, or by using DECLARE_LISP_OBJECT.
+   i.e. the output of ``grep -l -w 'DECLARE_LISP_OBJECT|INLINE_HEADER' *.h'' */
 
 #define DONT_EXTERN_INLINE_HEADER_FUNCTIONS
 
@@ -59,7 +58,7 @@ Boston, MA 02111-1307, USA.  */
 #include "gui.h"
 #include "keymap.h"
 #include "lstream.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 #include "opaque.h"
 #include "process.h"
 #include "rangetab.h"
@@ -99,19 +98,26 @@ Boston, MA 02111-1307, USA.  */
 #include "database.h"
 #endif
 
+#include "console-stream-impl.h"
+
 #ifdef HAVE_X_WINDOWS
-#include "glyphs-x.h"
+#include "console-x-impl.h"
 #ifdef HAVE_XFT
 #include "font-mgr.h"
 #endif
 #endif
 
 #ifdef HAVE_MS_WINDOWS
-#include "console-msw.h"
+#include "console-msw-impl.h"
+#endif
+
+#ifdef HAVE_TTY
+#include "console-tty-impl.h"
+#include "fontcolor-tty-impl.h"
 #endif
 
 #ifdef HAVE_GTK
-#include "console-gtk.h"
+#include "console-gtk-impl.h"
 #include "ui-gtk.h"
 #endif
 

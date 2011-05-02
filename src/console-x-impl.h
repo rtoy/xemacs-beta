@@ -2,13 +2,14 @@
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -45,7 +44,7 @@ extern int wedge_metacity;
 struct x_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   /* The X connection of this device. */
   Display *display;
@@ -88,7 +87,7 @@ struct x_device
   Atom Xatom_ATOM_PAIR;
   Atom Xatom_COMPOUND_TEXT;
 
-  /* allocated in Xatoms_of_objects_x */
+  /* allocated in Xatoms_of_fontcolor_x */
   Atom Xatom_FOUNDRY;
   Atom Xatom_FAMILY_NAME;
   Atom Xatom_WEIGHT_NAME;
@@ -167,7 +166,7 @@ struct x_device
 #ifdef NEW_GC
 typedef struct x_device Lisp_X_Device;
 
-DECLARE_LRECORD (x_device, Lisp_X_Device);
+DECLARE_LISP_OBJECT (x_device, Lisp_X_Device);
 
 #define XX_DEVICE(x) \
   XRECORD (x, x_device, Lisp_X_Device)
@@ -218,7 +217,7 @@ DECLARE_LRECORD (x_device, Lisp_X_Device);
 #define DEVICE_XATOM_ATOM_PAIR(d) 	(DEVICE_X_DATA (d)->Xatom_ATOM_PAIR)
 #define DEVICE_XATOM_COMPOUND_TEXT(d) 	(DEVICE_X_DATA (d)->Xatom_COMPOUND_TEXT)
 
-/* allocated in Xatoms_of_objects_x */
+/* allocated in Xatoms_of_fontcolor_x */
 #define DEVICE_XATOM_FOUNDRY(d)		(DEVICE_X_DATA (d)->Xatom_FOUNDRY)
 #define DEVICE_XATOM_FAMILY_NAME(d)	(DEVICE_X_DATA (d)->Xatom_FAMILY_NAME)
 #define DEVICE_XATOM_WEIGHT_NAME(d)	(DEVICE_X_DATA (d)->Xatom_WEIGHT_NAME)
@@ -243,7 +242,7 @@ DECLARE_LRECORD (x_device, Lisp_X_Device);
 struct x_frame
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 
   /* The widget of this frame.
@@ -265,6 +264,8 @@ struct x_frame
   /* The widget of the edit portion of this frame; this is an EmacsFrame,
      and the window of this widget is what the redisplay code draws on. */
   Widget edit_widget;
+  /* Position of the edit widget above, for absolute background placement. */
+  int x, y;
 
   /* Lists the widgets above the text area, in the proper order.
      Used by the EmacsManager. */
@@ -351,7 +352,7 @@ struct x_frame
 #ifdef NEW_GC
 typedef struct x_frame Lisp_X_Frame;
 
-DECLARE_LRECORD (x_frame, Lisp_X_Frame);
+DECLARE_LISP_OBJECT (x_frame, Lisp_X_Frame);
 
 #define XX_FRAME(x) \
   XRECORD (x, x_frame, Lisp_X_Frame)
@@ -360,6 +361,8 @@ DECLARE_LRECORD (x_frame, Lisp_X_Frame);
 #endif /* NEW_GC */
 #define FRAME_X_DATA(f) FRAME_TYPE_DATA (f, x)
 
+#define FRAME_X_X(f) (FRAME_X_DATA (f)->x)
+#define FRAME_X_Y(f) (FRAME_X_DATA (f)->y)
 #define FRAME_X_SHELL_WIDGET(f)	    (FRAME_X_DATA (f)->widget)
 #define FRAME_X_CONTAINER_WIDGET(f) (FRAME_X_DATA (f)->container)
 #define FRAME_X_MENUBAR_WIDGET(f)   (FRAME_X_DATA (f)->menubar_widget)
@@ -406,6 +409,8 @@ DECLARE_LRECORD (x_frame, Lisp_X_Frame);
 #endif /* HAVE_XIM */
 
 extern struct console_type *x_console_type;
+
+void x_get_frame_text_position (struct frame *);
 
 #endif /* HAVE_X_WINDOWS */
 

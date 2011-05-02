@@ -7,10 +7,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.3.  Not synched with FSF.
 
@@ -128,11 +126,11 @@ char_table_entry_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-char_table_entry_hash (Lisp_Object obj, int depth)
+char_table_entry_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
 
-  return internal_array_hash (cte->level2, 96, depth + 1);
+  return internal_array_hash (cte->level2, 96, depth + 1, equalp);
 }
 
 static const struct memory_description char_table_entry_description[] = {
@@ -140,13 +138,12 @@ static const struct memory_description char_table_entry_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
-			       1, /* dumpable flag */
-                               mark_char_table_entry, internal_object_printer,
-			       0, char_table_entry_equal,
-			       char_table_entry_hash,
-			       char_table_entry_description,
-			       Lisp_Char_Table_Entry);
+DEFINE_DUMPABLE_LISP_OBJECT ("char-table-entry", char_table_entry,
+			     mark_char_table_entry, internal_object_printer,
+			     0, char_table_entry_equal,
+			     char_table_entry_hash,
+			     char_table_entry_description,
+			     Lisp_Char_Table_Entry);
 
 #endif /* MULE */
 
@@ -258,10 +255,12 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
 	  sferror ("Charset in row vector must be multi-byte",
 			       outrange->charset);
 	case CHARSET_TYPE_94X94:
-	  check_int_range (outrange->row, 33, 126);
+	  check_integer_range (make_int (outrange->row), make_int (33),
+                               make_int (126));
 	  break;
 	case CHARSET_TYPE_96X96:
-	  check_int_range (outrange->row, 32, 127);
+	  check_integer_range (make_int (outrange->row), make_int (32),
+                               make_int (127));
 	  break;
 	default:
 	  ABORT ();
@@ -302,6 +301,30 @@ encode_char_table_range (struct chartab_range *range)
   return Qnil; /* not reached */
 }
 
+static Lisp_Object
+char_table_default_for_type (enum char_table_type type)
+{
+  switch (type)
+    {
+    case CHAR_TABLE_TYPE_CHAR:
+      return make_char (0);
+      break;
+    case CHAR_TABLE_TYPE_DISPLAY:
+    case CHAR_TABLE_TYPE_GENERIC:
+#ifdef MULE
+    case CHAR_TABLE_TYPE_CATEGORY:
+#endif /* MULE */
+      return Qnil;
+      break;
+
+    case CHAR_TABLE_TYPE_SYNTAX:
+      return make_integer (Sinherit);
+      break;
+    }
+  ABORT();
+  return Qzero;
+}
+
 struct ptemap
 {
   Lisp_Object printcharfun;
@@ -337,8 +360,15 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
   arg.printcharfun = printcharfun;
   arg.first = 1;
 
-  write_fmt_string_lisp (printcharfun, "#s(char-table type %s data (",
-			 1, char_table_type_to_symbol (ct->type));
+  write_fmt_string_lisp (printcharfun,
+			 "#s(char-table :type %s", 1,
+			 char_table_type_to_symbol (ct->type));
+  if (!(EQ (ct->default_, char_table_default_for_type (ct->type))))
+    {
+      write_fmt_string_lisp (printcharfun, " :default %S", 1, ct->default_);
+    }
+
+  write_ascstring (printcharfun, " :data (");
   map_char_table (obj, &range, print_table_entry, &arg);
   write_ascstring (printcharfun, "))");
 
@@ -370,17 +400,17 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-char_table_hash (Lisp_Object obj, int depth)
+char_table_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
   Hashcode hashval = internal_array_hash (ct->ascii, NUM_ASCII_CHARS,
-					   depth + 1);
+                                          depth + 1, equalp);
 #ifdef MULE
   hashval = HASH2 (hashval,
 		   internal_array_hash (ct->level1, NUM_LEADING_BYTES,
-					depth + 1));
+					depth + 1, equalp));
 #endif /* MULE */
-  return HASH2 (hashval, internal_hash (ct->default_, depth + 1));
+  return HASH2 (hashval, internal_hash (ct->default_, depth + 1, equalp));
 }
 
 static const struct memory_description char_table_description[] = {
@@ -395,12 +425,11 @@ static const struct memory_description char_table_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
-			       1, /*dumpable-flag*/
-                               mark_char_table, print_char_table, 0,
-			       char_table_equal, char_table_hash,
-			       char_table_description,
-			       Lisp_Char_Table);
+DEFINE_DUMPABLE_LISP_OBJECT ("char-table", char_table,
+			     mark_char_table, print_char_table, 0,
+			     char_table_equal, char_table_hash,
+			     char_table_description,
+			     Lisp_Char_Table);
 
 DEFUN ("char-table-p", Fchar_table_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a char table.
@@ -479,7 +508,7 @@ fill_char_table (Lisp_Char_Table *ct, Lisp_Object value)
       if (!EQ (ct->level1[i], Qnull_pointer) &&
 	  CHAR_TABLE_ENTRYP (ct->level1[i]) &&
 	  !OBJECT_DUMPED_P (ct->level1[1]))
-	FREE_LCRECORD (ct->level1[i]);
+	free_normal_lisp_object (ct->level1[i]);
       ct->level1[i] = value;
     }
 #endif /* MULE */
@@ -494,37 +523,13 @@ Reset CHAR-TABLE to its default state.
        (char_table))
 {
   Lisp_Char_Table *ct;
-  Lisp_Object def;
 
   CHECK_CHAR_TABLE (char_table);
   ct = XCHAR_TABLE (char_table);
 
-  switch (ct->type)
-    {
-    case CHAR_TABLE_TYPE_CHAR:
-      def = make_char (0);
-      break;
-    case CHAR_TABLE_TYPE_DISPLAY:
-    case CHAR_TABLE_TYPE_GENERIC:
-#ifdef MULE
-    case CHAR_TABLE_TYPE_CATEGORY:
-#endif /* MULE */
-      def = Qnil;
-      break;
-
-    case CHAR_TABLE_TYPE_SYNTAX:
-      def = make_int (Sinherit);
-      break;
-
-    default:
-      ABORT ();
-      def = Qnil;
-      break;
-    }
-
   /* Avoid doubly updating the syntax table by setting the default ourselves,
      since set_char_table_default() also updates. */
-  ct->default_ = def;
+  ct->default_ = char_table_default_for_type (ct->type);
   fill_char_table (ct, Qunbound);
 
   return Qnil;
@@ -598,13 +603,11 @@ sorts of values.  The different char table types are
 */
        (type))
 {
-  Lisp_Char_Table *ct;
-  Lisp_Object obj;
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (char_table);
+  Lisp_Char_Table *ct = XCHAR_TABLE (obj);
   enum char_table_type ty = symbol_to_char_table_type (type);
 
-  ct = ALLOC_LCRECORD_TYPE (Lisp_Char_Table, &lrecord_char_table);
   ct->type = ty;
-  obj = wrap_char_table (ct);
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
       /* Qgeneric not Qsyntax because a syntax table has a mirror table
@@ -634,13 +637,13 @@ static Lisp_Object
 make_char_table_entry (Lisp_Object initval)
 {
   int i;
-  Lisp_Char_Table_Entry *cte =
-    ALLOC_LCRECORD_TYPE (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (char_table_entry);
+  Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
 
   for (i = 0; i < 96; i++)
     cte->level2[i] = initval;
 
-  return wrap_char_table_entry (cte);
+  return obj;
 }
 
 static Lisp_Object
@@ -648,8 +651,8 @@ copy_char_table_entry (Lisp_Object entry)
 {
   Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (entry);
   int i;
-  Lisp_Char_Table_Entry *ctenew =
-    ALLOC_LCRECORD_TYPE (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (char_table_entry);
+  Lisp_Char_Table_Entry *ctenew = XCHAR_TABLE_ENTRY (obj);
 
   for (i = 0; i < 96; i++)
     {
@@ -660,7 +663,7 @@ copy_char_table_entry (Lisp_Object entry)
 	ctenew->level2[i] = new_;
     }
 
-  return wrap_char_table_entry (ctenew);
+  return obj;
 }
 
 #endif /* MULE */
@@ -679,12 +682,12 @@ as CHAR-TABLE.  The values will not themselves be copied.
   CHECK_CHAR_TABLE (char_table);
   ct = XCHAR_TABLE (char_table);
   assert(!ct->mirror_table_p);
-  ctnew = ALLOC_LCRECORD_TYPE (Lisp_Char_Table, &lrecord_char_table);
+  obj = ALLOC_NORMAL_LISP_OBJECT (char_table);
+  ctnew = XCHAR_TABLE (obj);
   ctnew->type = ct->type;
   ctnew->parent = ct->parent;
   ctnew->default_ = ct->default_;
   ctnew->mirror_table_p = 0;
-  obj = wrap_char_table (ctnew);
 
   for (i = 0; i < NUM_ASCII_CHARS; i++)
     {
@@ -1075,7 +1078,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 	  int lb = XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE;
 	  if (CHAR_TABLE_ENTRYP (ct->level1[lb]) &&
 	      !OBJECT_DUMPED_P (ct->level1[lb]))
-	    FREE_LCRECORD (ct->level1[lb]);
+	    free_normal_lisp_object (ct->level1[lb]);
 	  ct->level1[lb] = val;
 	}
       break;
@@ -1547,36 +1550,93 @@ chartab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
   return 1;
 }
 
+static int
+chartab_default_validate (Lisp_Object UNUSED (keyword),
+			  Lisp_Object UNUSED (value),
+			  Error_Behavior UNUSED (errb))
+{
+  /* We can't yet validate this, since we don't know what the type of the
+     char table is. We do the validation below in chartab_instantiate(). */
+  return 1;
+}
+
 static Lisp_Object
-chartab_instantiate (Lisp_Object data)
+chartab_instantiate (Lisp_Object plist)
 {
   Lisp_Object chartab;
   Lisp_Object type = Qgeneric;
-  Lisp_Object dataval = Qnil;
+  Lisp_Object dataval = Qnil, default_ = Qunbound;
 
-  while (!NILP (data))
+  if (KEYWORDP (Fcar (plist)))
     {
-      Lisp_Object keyw = Fcar (data);
-      Lisp_Object valw;
-
-      data = Fcdr (data);
-      valw = Fcar (data);
-      data = Fcdr (data);
-      if (EQ (keyw, Qtype))
-	type = valw;
-      else if (EQ (keyw, Qdata))
-	dataval = valw;
+      PROPERTY_LIST_LOOP_3 (key, value, plist)
+	{
+	  if (EQ (key, Q_data))
+	    {
+	      dataval = value;
+	    }
+	  else if (EQ (key, Q_type))
+	    {
+	      type = value;
+	    }
+	  else if (EQ (key, Q_default_))
+	    {
+	      default_ = value;
+	    }
+	  else if (!KEYWORDP (key))
+	    {
+	      signal_error
+		(Qinvalid_read_syntax, 
+		 "can't mix keyword and non-keyword structure syntax",
+		 key);
+	    }
+	  else 
+	    ABORT ();
+	}
     }
+#ifdef NEED_TO_HANDLE_21_4_CODE
+  else
+    {
+      PROPERTY_LIST_LOOP_3 (key, value, plist)
+	{
+	  if (EQ (key, Qdata))
+	    {
+	      dataval = value;
+	    }
+	  else if (EQ (key, Qtype))
+	    {
+	      type = value;
+	    }
+	  else if (KEYWORDP (key))
+            signal_error
+	      (Qinvalid_read_syntax, 
+	       "can't mix keyword and non-keyword structure syntax",
+	       key);
+	  else 
+	    ABORT ();
+	}
+    }
+#endif /* NEED_TO_HANDLE_21_4_CODE */
 
   chartab = Fmake_char_table (type);
-
-  data = dataval;
-  while (!NILP (data))
+  if (!UNBOUNDP (default_))
     {
-      Lisp_Object range = Fcar (data);
-      Lisp_Object val = Fcar (Fcdr (data));
+      check_valid_char_table_value (default_, XCHAR_TABLE_TYPE (chartab),
+				    ERROR_ME);
+      set_char_table_default (chartab, default_);
+      if (!NILP (XCHAR_TABLE (chartab)->mirror_table))
+        {
+          set_char_table_default (XCHAR_TABLE (chartab)->mirror_table,
+                                  default_);
+        }
+    }
 
-      data = Fcdr (Fcdr (data));
+  while (!NILP (dataval))
+    {
+      Lisp_Object range = Fcar (dataval);
+      Lisp_Object val = Fcar (Fcdr (dataval));
+
+      dataval = Fcdr (Fcdr (dataval));
       if (CONSP (range))
         {
 	  if (CHAR_OR_CHAR_INTP (XCAR (range)))
@@ -1832,10 +1892,10 @@ word_boundary_p (Ichar c1, Ichar c2)
 void
 syms_of_chartab (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (char_table);
+  INIT_LISP_OBJECT (char_table);
 
 #ifdef MULE
-  INIT_LRECORD_IMPLEMENTATION (char_table_entry);
+  INIT_LISP_OBJECT (char_table_entry);
 
   DEFSYMBOL (Qcategory_table_p);
   DEFSYMBOL (Qcategory_designator_p);
@@ -1891,8 +1951,14 @@ structure_type_create_chartab (void)
 
   st = define_structure_type (Qchar_table, 0, chartab_instantiate);
 
+#ifdef NEED_TO_HANDLE_21_4_CODE
   define_structure_type_keyword (st, Qtype, chartab_type_validate);
   define_structure_type_keyword (st, Qdata, chartab_data_validate);
+#endif /* NEED_TO_HANDLE_21_4_CODE */
+
+  define_structure_type_keyword (st, Q_type, chartab_type_validate);
+  define_structure_type_keyword (st, Q_data, chartab_data_validate);
+  define_structure_type_keyword (st, Q_default_, chartab_default_validate);
 }
 
 void

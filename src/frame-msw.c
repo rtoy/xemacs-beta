@@ -1,13 +1,13 @@
 /* Functions for the mswindows window system.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not synched with FSF. */
 
@@ -93,11 +91,9 @@ static const struct memory_description mswindows_frame_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("mswindows-frame", mswindows_frame,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       mswindows_frame_data_description_1,
-			       Lisp_Mswindows_Frame);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("mswindows-frame", mswindows_frame,
+				      0, mswindows_frame_data_description_1,
+				      Lisp_Mswindows_Frame);
 #else /* not NEW_GC */
 extern const struct sized_memory_description mswindows_frame_data_description;
 
@@ -174,8 +170,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
     CHECK_INT (height);
 
 #ifdef NEW_GC
-  f->frame_data = alloc_lrecord_type (struct mswindows_frame,
-				      &lrecord_mswindows_frame);
+  f->frame_data = XMSWINDOWS_FRAME (ALLOC_NORMAL_LISP_OBJECT (mswindows_frame));
 #else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct mswindows_frame);
 #endif /* not NEW_GC */
@@ -193,7 +188,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
 #ifdef HAVE_TOOLBARS
   /* EQ not EQUAL or we will get QUIT crashes, see below. */
   FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f) = 
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
 #endif
   /* hashtable of instantiated glyphs on the frame. [[ Make them EQ because
      we only use ints as keys.  Otherwise we run into stickiness in
@@ -201,11 +196,11 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
      enter_redisplay_critical_section(). ]] -- probably not true any more,
     now that we have internal_equal_trapping_problems(). --ben */
   FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   /* Will initialize these in WM_SIZE handler. We cannot do it now,
      because we do not know what is CW_USEDEFAULT height and width */
   FRAME_WIDTH (f) = 0;
@@ -238,7 +233,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
       GetWindowRect (hwnd_parent, &rect);
       rect_default.left = rect.left + POPUP_OFFSET;
       rect_default.top = rect.top + POPUP_OFFSET;
-      char_to_real_pixel_size (f, POPUP_WIDTH, POPUP_HEIGHT,
+      char_to_pixel_size (f, POPUP_WIDTH, POPUP_HEIGHT,
 			       &rect_default.width, &rect_default.height);
       FRAME_MSWINDOWS_POPUP (f) = 1;
     }
@@ -375,14 +370,14 @@ static void
 mswindows_set_frame_size (struct frame *f, int width, int height)
 {
   RECT rect;
-  int columns, rows;
+  int pwidth, pheight;
+
+  change_frame_size (f, width, height, 0);
+  frame_unit_to_pixel_size (f, width, height, &pwidth, &pheight);
 
   rect.left = rect.top = 0;
-  rect.right = width;
-  rect.bottom = height;
-
-  pixel_to_char_size (f, rect.right, rect.bottom, &columns, &rows);
-  change_frame_size (f, rows, columns, 0);
+  rect.right = pwidth;
+  rect.bottom = pheight;
 
   /* This can call Lisp, because it runs the window procedure, which can
      call redisplay() */
@@ -741,7 +736,7 @@ mswindows_size_frame_internal (struct frame *f, XEMACS_RECT_WH *dest)
   int pixel_width, pixel_height;
   int size_p = (dest->width >=0 || dest->height >=0);
   int move_p = (dest->top >=0 || dest->left >=0);
-  char_to_real_pixel_size (f, dest->width, dest->height, &pixel_width,
+  char_to_pixel_size (f, dest->width, dest->height, &pixel_width,
 			   &pixel_height);
 
   if (dest->width < 0)
@@ -940,7 +935,7 @@ msprinter_init_frame_3 (struct frame *f)
 
   if (FRAME_MSPRINTER_CHARWIDTH (f) > 0)
     {
-      char_to_real_pixel_size (f, FRAME_MSPRINTER_CHARWIDTH (f), 0,
+      char_to_pixel_size (f, FRAME_MSPRINTER_CHARWIDTH (f), 0,
 			       &frame_width, NULL);
       FRAME_MSPRINTER_RIGHT_MARGIN(f) =
 	MulDiv (physicalwidth - (frame_left + frame_width), 1440,
@@ -956,7 +951,7 @@ msprinter_init_frame_3 (struct frame *f)
 
   if (FRAME_MSPRINTER_CHARHEIGHT (f) > 0)
     {
-      char_to_real_pixel_size (f, 0, FRAME_MSPRINTER_CHARHEIGHT (f),
+      char_to_pixel_size (f, 0, FRAME_MSPRINTER_CHARHEIGHT (f),
 			       NULL, &frame_height);
 
       FRAME_MSPRINTER_BOTTOM_MARGIN(f) =
@@ -986,8 +981,8 @@ msprinter_init_frame_3 (struct frame *f)
     int rows, columns;
     FRAME_PIXWIDTH (f) = frame_width;
     FRAME_PIXHEIGHT (f) = frame_height;
-    pixel_to_char_size (f, frame_width, frame_height, &columns, &rows);
-    change_frame_size (f, rows, columns, 0);
+    pixel_to_frame_unit_size (f, frame_width, frame_height, &columns, &rows);
+    change_frame_size (f, columns, rows, 0);
   }
 
   FRAME_MSPRINTER_PIXLEFT(f) = frame_left;
@@ -1096,8 +1091,15 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      maybe_error_if_job_active (f);
 	      if (!NILP (val))
 		{
-		  CHECK_NATNUM (val);
-		  FRAME_MSPRINTER_CHARWIDTH (f) = XINT (val);
+#ifdef HAVE_BIGNUM
+                  check_integer_range (val, Qzero, make_integer (INT_MAX));
+		  FRAME_MSPRINTER_CHARWIDTH (f) =
+                    BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                    XINT (val);
+#else
+                  CHECK_NATNUM (val);
+                  FRAME_MSPRINTER_CHARWIDTH (f) = XINT (val);
+#endif
 		}
 	    }
 	  if (EQ (prop, Qheight))
@@ -1105,33 +1107,68 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      maybe_error_if_job_active (f);
 	      if (!NILP (val))
 		{
+#ifdef HAVE_BIGNUM
+                  check_integer_range (val, Qzero, make_integer (INT_MAX));
+		  FRAME_MSPRINTER_CHARHEIGHT (f) =
+                    BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                    XINT (val);
+#else
 		  CHECK_NATNUM (val);
 		  FRAME_MSPRINTER_CHARHEIGHT (f) = XINT (val);
+#endif
 		}
 	    }
 	  else if (EQ (prop, Qleft_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_LEFT_MARGIN (f) =
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_LEFT_MARGIN (f) = XINT (val);
+#endif
 	    }
 	  else if (EQ (prop, Qtop_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_TOP_MARGIN (f) =
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_TOP_MARGIN (f) = XINT (val);
+#endif
 	    }
 	  else if (EQ (prop, Qright_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_RIGHT_MARGIN (f) =
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_RIGHT_MARGIN (f) = XINT (val);
+#endif
 	    }
 	  else if (EQ (prop, Qbottom_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = 
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = XINT (val);
+#endif
 	    }
 	}
     }
@@ -1212,7 +1249,7 @@ void
 syms_of_frame_mswindows (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (mswindows_frame);
+  INIT_LISP_OBJECT (mswindows_frame);
 #endif /* NEW_GC */
 }
 

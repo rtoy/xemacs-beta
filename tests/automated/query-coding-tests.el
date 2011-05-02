@@ -7,20 +7,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -70,7 +68,7 @@
                 :test #'eq))
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-region (point-min) (point-max) coding-system)
-          (Assert-eq t query-coding-succeeded
+          (Assert (eq t query-coding-succeeded)
                   (format "checking query-coding-region ASCII-transparency, %s"
                           coding-system))
           (Assert (null query-coding-table)
@@ -78,7 +76,7 @@
                           coding-system)))
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-string ascii-chars-string coding-system)
-          (Assert-eq t query-coding-succeeded
+          (Assert (eq t query-coding-succeeded)
                   (format "checking query-coding-string ASCII-transparency, %s"
                           coding-system))
           (Assert (null query-coding-table)
@@ -89,19 +87,20 @@
       (insert latin-1-chars-string)
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max) 'iso-8859-1-unix)
-        (Assert-eq t query-coding-succeeded
+        (Assert (eq t query-coding-succeeded)
                 "checking query-coding-region iso-8859-1-transparency")
         (Assert (null query-coding-table)
                 "checking query-coding-region iso-8859-1-transparency"))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-string (buffer-string) 'iso-8859-1-unix)
-        (Assert-eq t query-coding-succeeded
+        (Assert (eq t query-coding-succeeded)
                 "checking query-coding-string iso-8859-1-transparency")
         (Assert (null query-coding-table)
                 "checking query-coding-string iso-8859-1-transparency"))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-string (buffer-string) 'iso-latin-1-with-esc-unix)
-        (Assert-eq t query-coding-succeeded
+        (Assert
+         (eq t query-coding-succeeded)
          "checking query-coding-region iso-latin-1-with-esc-transparency")
         (Assert
          (null query-coding-table)
@@ -113,9 +112,10 @@
         (Assert
          (null query-coding-succeeded)
          "checking that query-coding-region fails, U+20AC, iso-8859-1")
-        (Assert-equal query-coding-table
+        (Assert
+         (equal query-coding-table
                 #s(range-table type start-closed-end-open data
-                               ((257 258) unencodable))
+                               ((257 258) unencodable)))
          "checking query-coding-region fails correctly, U+20AC, iso-8859-1"))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max)
@@ -159,17 +159,19 @@ iso-latin-with-esc-unix-1"))
         (Assert
          (null query-coding-succeeded)
          "check query-coding-region fails, windows-1252, invalid-sequences")
-        (Assert-equal query-coding-table
+        (Assert
+         (equal query-coding-table
                 #s(range-table type start-closed-end-open
                                data ((130 131) invalid-sequence
                                      (142 143) invalid-sequence
                                      (144 146) invalid-sequence
-                                     (158 159) invalid-sequence))
+                                     (158 159) invalid-sequence)))
          "check query-coding-region fails, windows-1252, invalid-sequences"))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max) 'windows-1252-unix
 			       (current-buffer) t)
-        (Assert-eq t query-coding-succeeded
+        (Assert
+         (eq t query-coding-succeeded)
          "checking that query-coding-region succeeds, U+20AC, windows-1252")
         (Assert
          (null query-coding-table)
@@ -181,22 +183,24 @@ iso-latin-with-esc-unix-1"))
         (Assert
          (null query-coding-succeeded)
          "checking that query-coding-region fails, U+0080, windows-1252")
-        (Assert-equal query-coding-table
+        (Assert
+         (equal query-coding-table
                 #s(range-table type start-closed-end-open data
-                               ((257 258) unencodable))
+                               ((257 258) unencodable)))
          "checking that query-coding-region fails, U+0080, windows-1252"))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max) 'windows-1252-unix)
         (Assert
          (null query-coding-succeeded)
          "check query-coding-region fails, U+0080, invalid-sequence, cp1252")
-        (Assert-equal query-coding-table
+        (Assert
+         (equal query-coding-table
                 #s(range-table type start-closed-end-open
                                data ((130 131) invalid-sequence
                                      (142 143) invalid-sequence
                                      (144 146) invalid-sequence
                                      (158 159) invalid-sequence
-                                     (257 258) unencodable))
+                                     (257 258) unencodable)))
          "check query-coding-region fails, U+0080, invalid-sequence, cp1252"))
       ;; Try a similar approach with koi8-o, the koi8 variant with
       ;; support for Old Church Slavonic.
@@ -213,7 +217,7 @@ iso-latin-with-esc-unix-1"))
          "checking that query-coding-region succeeds, koi8-o-unix"))
       (multiple-value-bind (query-coding-succeeded query-coding-table)
           (query-coding-region (point-min) (point-max) 'escape-quoted)
-        (Assert-eq t query-coding-succeeded
+        (Assert (eq t query-coding-succeeded)
          "checking that query-coding-region succeeds, escape-quoted")
         (Assert (null query-coding-table)
          "checking that query-coding-region succeeds, escape-quoted"))
@@ -277,15 +281,15 @@ iso-latin-with-esc-unix-1"))
             (query-coding-region (point-min) (point-max) coding-system)
           (Assert (null query-coding-succeeded)
                   "checking unicode coding systems fail with unmapped chars")
-          (Assert-equal query-coding-table
+          (Assert (equal query-coding-table
                          #s(range-table type start-closed-end-open data
                                         ((173 174) unencodable
                                          (209 210) unencodable
-                                         (254 255) unencodable))
+                                         (254 255) unencodable)))
                   "checking unicode coding systems fail with unmapped chars"))
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-region (point-min) 173 coding-system)
-          (Assert-eq t query-coding-succeeded
+          (Assert (eq t query-coding-succeeded)
                   "checking unicode coding systems succeed sans unmapped chars")
           (Assert
            (null query-coding-table)
@@ -300,7 +304,7 @@ iso-latin-with-esc-unix-1"))
            "checking unicode coding systems succeed sans unmapped chars again"))
         (multiple-value-bind (query-coding-succeeded query-coding-table)
             (query-coding-region 210 254 coding-system)
-          (Assert-eq t query-coding-succeeded)
+          (Assert (eq t query-coding-succeeded))
           (Assert (null query-coding-table)))
         ;; Check that it errors correctly. 
         (setq text-conversion-error-signalled nil)
@@ -336,11 +340,11 @@ iso-latin-with-esc-unix-1"))
                   (format 
                    "checking %s fails with unmapped chars and invalid seqs"
                    coding-system))
-          (Assert-equal query-coding-table
+          (Assert (equal query-coding-table
                          #s(range-table type start-closed-end-open
                                         data ((1 5) unencodable
                                               (5 9) invalid-sequence
-                                              (9 13) unencodable))
+                                              (9 13) unencodable)))
                   (format 
                    "checking %s fails with unmapped chars and invalid seqs"
                    coding-system)))
@@ -383,30 +387,30 @@ iso-latin-with-esc-unix-1"))
        (equal '(257) (unencodable-char-position (point-min) (point-max)
                                                 'iso-8859-1 1))
        "check #'unencodable-char-position doesn't think latin-1 encodes U+20AC")
-      ;; Compatiblity, sigh: 
+      ;; Compatibility, sigh: 
       (Assert
        (equal '(257) (unencodable-char-position (point-min) (point-max)
                                                 'iso-8859-1 0))
        "check #'unencodable-char-position has some borked GNU semantics")
       (dotimes (i 6) (insert (decode-char 'ucs #x20ac)))
       ;; Check if it stops at one:
-      (Assert-equal '(257) (unencodable-char-position (point-min) (point-max)
-                                                       'iso-8859-1 1)
+      (Assert (equal '(257) (unencodable-char-position (point-min) (point-max)
+                                                       'iso-8859-1 1))
               "check #'unencodable-char-position stops at 1 when asked to")
       ;; Check if it stops at four:
-      (Assert-equal '(260 259 258 257)
+      (Assert (equal '(260 259 258 257)
                      (unencodable-char-position (point-min) (point-max)
-                                                       'iso-8859-1 4)
+                                                       'iso-8859-1 4))
               "check #'unencodable-char-position stops at 4 when asked to")
       ;; Check whether it stops at seven: 
-      (Assert-equal '(263 262 261 260 259 258 257)
+      (Assert (equal '(263 262 261 260 259 258 257)
                      (unencodable-char-position (point-min) (point-max)
-                                                       'iso-8859-1 7)
+                                                       'iso-8859-1 7))
               "check #'unencodable-char-position stops at 7 when asked to")
       ;; Check that it still stops at seven:
-      (Assert-equal '(263 262 261 260 259 258 257)
+      (Assert (equal '(263 262 261 260 259 258 257)
                      (unencodable-char-position (point-min) (point-max)
-                                                       'iso-8859-1 2000)
+                                                       'iso-8859-1 2000))
               "check #'unencodable-char-position stops at 7 if 2000 asked for")
       ;; Now, #'check-coding-systems-region. 
       ;; UTF-8 should certainly be able to encode these characters:

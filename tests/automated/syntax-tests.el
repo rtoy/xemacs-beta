@@ -7,20 +7,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -49,7 +47,7 @@
     (insert string)
     (goto-char point)
     (forward-word 1)
-    (Assert-eq (point) (+ point stop))))
+    (Assert (eq (point) (+ point stop)))))
 
 (with-temp-buffer
   ;; -!- W NW
@@ -77,7 +75,7 @@
   (insert string)
   (let ((point (point)))
     (backward-word 1)
-    (Assert-eq (point) (- point stop))))
+    (Assert (eq (point) (- point stop)))))
 
 (with-temp-buffer
   ;; NW W -!-
@@ -120,7 +118,7 @@
 			 'syntax-table apply-syntax)
       (goto-char point)
       (forward-word 1)
-      (Assert-eq (point) (+ point stop)))))
+      (Assert (eq (point) (+ point stop))))))
 
 ;; test syntax-table extents
 (with-temp-buffer
@@ -143,7 +141,7 @@
   (with-syntax-table (make-syntax-table)
     (insert "foo bar")
     (backward-sexp 1)
-    (Assert-eql (point) 5)))
+    (Assert (eql (point) 5))))
 
 ;; Test forward-comment at buffer boundaries
 ;; #### The second Assert fails (once interpreted, once compiled) on 21.4.9
@@ -156,13 +154,13 @@
     
     (insert "// comment\n")
     (forward-comment -2)
-    (Assert-eq (point) (point-min))
+    (Assert (eq (point) (point-min)))
 
     (let ((point (point)))
       (insert "/* comment */")
       (goto-char point)
       (forward-comment 2)
-      (Assert-eq (point) (point-max))
+      (Assert (eq (point) (point-max)))
 
       ;; this last used to crash
       (parse-partial-sexp point (point-max)))))
@@ -192,8 +190,9 @@
     (Assert (backward-up-list-moves-point-from-to 20 3))
     (Known-Bug-Expect-Failure
      (Assert (backward-up-list-moves-point-from-to 22 3)))
-    (Known-Bug-Expect-Failure
-     (Assert (backward-up-list-moves-point-from-to 23 3)))
+    (Known-Bug-Expect-Error scan-error
+     (Assert (backward-up-list-moves-point-from-to 23 3))
+     )
     (Assert (backward-up-list-moves-point-from-to 24 3))
     ;; This is maybe a little tricky, since we don't expect the position
     ;; check to happen -- so use an illegal expected position
@@ -203,7 +202,7 @@
 			 "Unbalanced parentheses"
 			 (backward-up-list-moves-point-from-to 25 nil))
     ;; special-case check that point didn't move
-    (Assert= (point) 25)))
+    (Assert (= (point) 25))))
 
 (loop
   with envvar-not-existing = (symbol-name (gensym "whatever"))

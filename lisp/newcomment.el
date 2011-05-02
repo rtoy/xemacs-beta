@@ -6,22 +6,20 @@
 ;; Maintainer: Stefan Monnier <monnier@cs.yale.edu>
 ;; Keywords: comment uncomment
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 21.3.
 
@@ -66,13 +64,9 @@
 
 ;;; Code:
 
-;;;###autoload
 (defalias 'indent-for-comment 'comment-indent)
-;;;###autoload
 (defalias 'set-comment-column 'comment-set-column)
-;;;###autoload
 (defalias 'kill-comment 'comment-kill)
-;;;###autoload
 (defalias 'indent-new-comment-line 'comment-indent-new-line)
 
 (defgroup comment nil
@@ -92,7 +86,6 @@ Major modes should set this variable.")
   "Column to use for `comment-indent'.  If nil, use `fill-column' instead."
   :type '(choice (const nil) integer))
 
-;;;###autoload
 (defcustom comment-column 32
   "*Column to indent right-margin comments to.
 Each mode establishes a different default value for this variable; you
@@ -102,26 +95,21 @@ not to go beyond `comment-fill-column'."
   :type 'integer)
 (make-variable-buffer-local 'comment-column)
 
-;;;###autoload
 (defvar comment-start nil
   "*String to insert to start a new comment, or nil if no comment syntax.")
 
-;;;###autoload
 (defvar comment-start-skip nil
   "*Regexp to match the start of a comment plus everything up to its body.
 If there are any \\(...\\) pairs, the comment delimiter text is held to begin
 at the place matched by the close of the first pair.")
 
-;;;###autoload
 (defvar comment-end-skip nil
   "Regexp to match the end of a comment plus everything up to its body.")
 
-;;;###autoload
 (defvar comment-end ""
   "*String to insert to end a new comment.
 Should be an empty string if comments are terminated by end-of-line.")
 
-;;;###autoload
 (defvar comment-indent-function 'comment-indent-default
   "Function to compute desired indentation for a comment.
 This function is called with no args with point at the beginning of
@@ -170,7 +158,6 @@ EXTRA specifies that an extra line should be used before and after the
 INDENT specifies that the `comment-start' markers should not be put at the
   left margin but at the current indentation of the region to comment.")
 
-;;;###autoload
 (defcustom comment-style 'plain
   "*Style to be used for `comment-region'.
 See `comment-styles' for a list of available styles."
@@ -178,7 +165,6 @@ See `comment-styles' for a list of available styles."
 	    `(choice ,@(mapcar (lambda (s) `(const ,(car s))) comment-styles))
 	  'symbol))
 
-;;;###autoload
 (defcustom comment-padding " "
   "Padding string that `comment-region' puts between comment chars and text.
 Can also be an integer which will be automatically turned into a string
@@ -188,7 +174,6 @@ Extra spacing between the comment characters and the comment text
 makes the comment easier to read.  Default is 1.  nil means 0."
   :type '(choice string integer (const nil)))
 
-;;;###autoload
 (defcustom comment-multi-line t ; XEmacs - this works well with adaptive fill
   "*Non-nil means \\[indent-new-comment-line] should continue same comment
 on new line, with no new terminator or starter.
@@ -210,7 +195,6 @@ This is obsolete because you might as well use \\[newline-and-indent]."
   "Return the mirror image of string S, without any trailing space."
   (comment-string-strip (concat (nreverse (string-to-list s))) nil t))
 
-;;;###autoload
 (defun comment-normalize-vars (&optional noerror)
   (if (not comment-start) (or noerror (error "No comment syntax is defined"))
     ;; comment-use-syntax
@@ -284,7 +268,7 @@ If UNP is non-nil, unquote nested comment markers."
 	(goto-char (match-beginning 0))
 	(forward-char 1)
 	(if unp (delete-char 1) (insert "\\"))
-	(when (= (length ce) 1)
+	(when (eql (length ce) 1)
 	  ;; If the comment-end is a single char, adding a \ after that
 	  ;; "first" char won't deactivate it, so we turn such a CE
 	  ;; into !CS.  I.e. for pascal, we turn } into !{
@@ -433,7 +417,6 @@ Point is assumed to be just at the end of a comment."
 ;;;; Commands
 ;;;;
 
-;;;###autoload
 
 ;; #### XEmacs had this: in place of just (current-column)
 ; (defconst comment-indent-function
@@ -462,7 +445,6 @@ Point is assumed to be just at the end of a comment."
 	      (and (> comment-add 0) (looking-at "\\s<\\S<")))
       comment-column)))
 
-;;;###autoload
 (defun comment-indent (&optional continue)
   "Indent this line's comment to comment column, or insert an empty comment.
 If CONTINUE is non-nil, use the `comment-continue' markers if any.
@@ -527,7 +509,6 @@ Comments starting in column 0 are not moved."
       (goto-char cpos)
       (set-marker cpos nil))))
 
-;;;###autoload
 (defun comment-set-column (arg)
   "Set the comment column based on point.
 With no ARG, set the comment column to the current column.
@@ -549,7 +530,6 @@ With any other arg, set comment column to indentation of the previous comment
    (t (setq comment-column (current-column))
       (lmessage 'command "Comment column set to %d" comment-column))))
 
-;;;###autoload
 (defun comment-kill (arg)
   "Kill the comment on this line, if any.
 With prefix ARG, kill comments on that many lines starting with this one."
@@ -641,7 +621,6 @@ If N is `re', a regexp is returned instead, that would match
 		(if multi (concat (regexp-quote (string c)) "*"))
 		(regexp-quote s))))))
 
-;;;###autoload
 (defun uncomment-region (beg end &optional arg)
   "Uncomment each line in the BEG .. END region.
 The numeric prefix ARG can specify a number of chars to remove from the
@@ -872,7 +851,6 @@ rather than at left margin."
 		(end-of-line)
 		(not (or (eobp) (progn (forward-line) nil))))))))))
 
-;;;###autoload
 (defun comment-region (beg end &optional arg)
   "Comment or uncomment each line in the region.
 With just \\[universal-argument] prefix arg, uncomment each line in region BEG .. END.
@@ -922,7 +900,7 @@ The strings used as comment starts are built from
      ((consp arg) (uncomment-region beg end))
      ((< numarg 0) (uncomment-region beg end (- numarg)))
      (t
-      (setq numarg (if (and (null arg) (= (length comment-start) 1))
+      (setq numarg (if (and (null arg) (eql (length comment-start) 1))
 		       add (1- numarg)))
       (comment-region-internal
        beg end
@@ -948,7 +926,6 @@ end- comment markers additionally to what `comment-add' already specifies."
     (comment-region beg end (+ comment-add arg))))
 
 
-;;;###autoload
 (defun comment-or-uncomment-region (beg end &optional arg)
   "Call `comment-region', unless the region only consists of comments,
 in which case call `uncomment-region'.  If a prefix arg is given, it
@@ -961,7 +938,6 @@ is passed on to the respective function."
 	       'uncomment-region 'comment-region)
 	   beg end arg))
 
-;;;###autoload
 (defun comment-dwim (arg)
   "Call the comment command you want (Do What I Mean).
 If the region is active and `transient-mark-mode' is on, call
@@ -979,7 +955,7 @@ Else, call `comment-indent'."
 	;; specified, calling comment-kill is not very clever.
 	(if arg (comment-kill (and (integerp arg) arg)) (comment-indent))
       (let ((add (if arg (prefix-numeric-value arg)
-		   (if (= (length comment-start) 1) comment-add 0))))
+		   (if (eql (length comment-start) 1) comment-add 0))))
 	;; Some modes insist on keeping column 0 comment in column 0
 	;; so we need to move away from it before inserting the comment.
 	(indent-according-to-mode)
@@ -1002,7 +978,6 @@ This has no effect in modes that do not define a comment syntax."
    (string-match (concat "\\`[ \t]*\\(?:" comment-start-skip "\\)")
 		 fill-prefix)))
 
-;;;###autoload
 (defun comment-indent-new-line (&optional soft)
   "Break line at point and indent, continuing comment if within one.
 This indents the body of the continued comment

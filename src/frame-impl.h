@@ -1,13 +1,13 @@
 /* Define frame-object for XEmacs.
    Copyright (C) 1988, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30. */
 
@@ -41,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct frame
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Methods for this frame's console.  This can also be retrieved
      through frame->device->console, but it's faster this way. */
@@ -100,17 +98,23 @@ struct frame
   /* Size of toolbars as seen by redisplay. This is used to determine
      whether to re-layout windows by a call to change_frame_size early
      in redisplay_frame. */
-  int current_toolbar_size[4];
+  int current_toolbar_size[NUM_EDGES];
 #endif
 
   /* Size of gutters as seen by redisplay. This is used to determine
      whether to re-layout windows by a call to change_frame_size early
      in redisplay_frame. */
-  int current_gutter_bounds[4];
+  int current_gutter_bounds[NUM_EDGES];
+
+  /* Toolbar visibility */
+  int toolbar_was_visible[NUM_EDGES];
+
+  /* gutter visibility */
+  int gutter_was_visible[NUM_EDGES];
 
   /* Dynamic arrays of display lines for gutters */
-  display_line_dynarr *current_display_lines[4];
-  display_line_dynarr *desired_display_lines[4];
+  display_line_dynarr *current_display_lines[NUM_EDGES];
+  display_line_dynarr *desired_display_lines[NUM_EDGES];
 
   /* A structure of auxiliary data specific to the device type.  For
      example, struct x_frame is for X window frames; defined in
@@ -159,16 +163,6 @@ Value : Emacs meaning                           :f-v-p : X meaning
 
   /* True if frame's root window can't be split.  */
   unsigned int no_split :1;
-
-  unsigned int top_toolbar_was_visible :1;
-  unsigned int bottom_toolbar_was_visible :1;
-  unsigned int left_toolbar_was_visible :1;
-  unsigned int right_toolbar_was_visible :1;
-  /* gutter visibility */
-  unsigned int top_gutter_was_visible :1;
-  unsigned int bottom_gutter_was_visible :1;
-  unsigned int left_gutter_was_visible :1;
-  unsigned int right_gutter_was_visible :1;
 
   /* redisplay flags */
   unsigned int buffers_changed :1;
@@ -543,8 +537,16 @@ extern int frame_changed;
 
 #endif /* FSFmacs */
 
-#define FRAME_BORDER_WIDTH(f) ((f)->internal_border_width)
-#define FRAME_BORDER_HEIGHT(f) ((f)->internal_border_width)
+#define FRAME_INTERNAL_BORDER_WIDTH(f) ((f)->internal_border_width)
+#define FRAME_INTERNAL_BORDER_HEIGHT(f) ((f)->internal_border_width)
+#define FRAME_INTERNAL_BORDER_SIZE(f, pos) ((f)->internal_border_width)
+
+/************************************************************************/
+/*	                        toolbars      				*/
+/************************************************************************/
+
+/*---------------- Theoretical and real toolbar values ----------------*/
+
 
 /* This returns the frame-local value; that tells you what you should
    use when computing the frame size.  It is *not* the actual toolbar
@@ -573,13 +575,13 @@ extern int frame_changed;
    : 0)
 
 #define FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT(f) \
-  FRAME_THEORETICAL_TOOLBAR_SIZE (f, TOP_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_SIZE (f, TOP_EDGE)
 #define FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT(f) \
-  FRAME_THEORETICAL_TOOLBAR_SIZE (f, BOTTOM_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_SIZE (f, BOTTOM_EDGE)
 #define FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_SIZE (f, LEFT_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_SIZE (f, LEFT_EDGE)
 #define FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_SIZE (f, RIGHT_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_SIZE (f, RIGHT_EDGE)
 
 #define FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos)		\
   (FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE (f, pos)		\
@@ -587,13 +589,13 @@ extern int frame_changed;
    : 0)
 
 #define FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, TOP_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, TOP_EDGE)
 #define FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_EDGE)
 #define FRAME_THEORETICAL_LEFT_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, LEFT_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, LEFT_EDGE)
 #define FRAME_THEORETICAL_RIGHT_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_TOOLBAR)
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_EDGE)
 
 /* This returns the window-local value rather than the frame-local value;
    that tells you about what's actually visible rather than what should
@@ -657,59 +659,127 @@ extern int frame_changed;
    ? FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH (f, pos)	\
    : 0)
 
+#define FRAME_REAL_TOOLBAR_BOUNDS(f, pos)		\
+  (FRAME_REAL_TOOLBAR_SIZE (f, pos) +			\
+   2 * FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, pos))
+
 #define FRAME_REAL_TOP_TOOLBAR_HEIGHT(f) \
-  FRAME_REAL_TOOLBAR_SIZE (f, TOP_TOOLBAR)
+  FRAME_REAL_TOOLBAR_SIZE (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT(f) \
-  FRAME_REAL_TOOLBAR_SIZE (f, BOTTOM_TOOLBAR)
+  FRAME_REAL_TOOLBAR_SIZE (f, BOTTOM_EDGE)
 #define FRAME_REAL_LEFT_TOOLBAR_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_SIZE (f, LEFT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_SIZE (f, LEFT_EDGE)
 #define FRAME_REAL_RIGHT_TOOLBAR_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_SIZE (f, RIGHT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_SIZE (f, RIGHT_EDGE)
 
 #define FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, TOP_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_EDGE)
 #define FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, LEFT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, LEFT_EDGE)
 #define FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH(f) \
-  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_EDGE)
 
 #define FRAME_REAL_TOP_TOOLBAR_VISIBLE(f) \
-  FRAME_REAL_TOOLBAR_VISIBLE (f, TOP_TOOLBAR)
+  FRAME_REAL_TOOLBAR_VISIBLE (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_VISIBLE(f) \
-  FRAME_REAL_TOOLBAR_VISIBLE (f, BOTTOM_TOOLBAR)
+  FRAME_REAL_TOOLBAR_VISIBLE (f, BOTTOM_EDGE)
 #define FRAME_REAL_LEFT_TOOLBAR_VISIBLE(f) \
-  FRAME_REAL_TOOLBAR_VISIBLE (f, LEFT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_VISIBLE (f, LEFT_EDGE)
 #define FRAME_REAL_RIGHT_TOOLBAR_VISIBLE(f) \
-  FRAME_REAL_TOOLBAR_VISIBLE (f, RIGHT_TOOLBAR)
+  FRAME_REAL_TOOLBAR_VISIBLE (f, RIGHT_EDGE)
 
-#define FRAME_TOP_BORDER_START(f)				\
-  (FRAME_REAL_TOP_TOOLBAR_HEIGHT (f) +				\
-   2 * FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f))
-#define FRAME_TOP_BORDER_END(f)					\
-  (FRAME_TOP_BORDER_START (f) + FRAME_BORDER_HEIGHT (f))
+#define FRAME_REAL_TOP_TOOLBAR_BOUNDS(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, TOP_EDGE)
+#define FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, BOTTOM_EDGE)
+#define FRAME_REAL_LEFT_TOOLBAR_BOUNDS(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, LEFT_EDGE)
+#define FRAME_REAL_RIGHT_TOOLBAR_BOUNDS(f) \
+  FRAME_REAL_TOOLBAR_BOUNDS (f, RIGHT_EDGE)
 
-#define FRAME_BOTTOM_BORDER_START(f)				\
-  (FRAME_PIXHEIGHT (f) - FRAME_BORDER_HEIGHT (f) -		\
-   FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -			\
-   2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f))
-#define FRAME_BOTTOM_BORDER_END(f)				\
-  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -	\
-   2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f))
+/************************************************************************/
+/*         frame dimensions defined using toolbars and gutters          */
+/************************************************************************/
 
-#define FRAME_LEFT_BORDER_START(f)				\
-  (FRAME_REAL_LEFT_TOOLBAR_WIDTH (f) +				\
-   2 * FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f))
-#define FRAME_LEFT_BORDER_END(f)				\
-  (FRAME_LEFT_BORDER_START (f) + FRAME_BORDER_WIDTH (f))
+/* Bounds of the area framed by the toolbars is the client area --
+   (0, 0) - (FRAME_PIXWIDTH, FRAME_PIXHEIGHT). */
 
-#define FRAME_RIGHT_BORDER_START(f)				\
-  (FRAME_PIXWIDTH (f) - FRAME_BORDER_WIDTH (f) -		\
-   FRAME_REAL_RIGHT_TOOLBAR_WIDTH(f) -                          \
-   2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f))
-#define FRAME_RIGHT_BORDER_END(f)				\
-  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f) -	\
-   2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH(f))
+/* Bounds of the area framed by the internal border width -- inside of the
+   toolbars, outside of everything else. */
+
+#define FRAME_TOP_INTERNAL_BORDER_START(f)				\
+  FRAME_REAL_TOP_TOOLBAR_BOUNDS (f)
+#define FRAME_TOP_INTERNAL_BORDER_END(f)				\
+  (FRAME_TOP_INTERNAL_BORDER_START (f) + FRAME_INTERNAL_BORDER_HEIGHT (f))
+
+#define FRAME_BOTTOM_INTERNAL_BORDER_START(f)				\
+  (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - FRAME_INTERNAL_BORDER_HEIGHT (f))
+#define FRAME_BOTTOM_INTERNAL_BORDER_END(f)				\
+  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS (f))
+
+#define FRAME_LEFT_INTERNAL_BORDER_START(f)				\
+  FRAME_REAL_LEFT_TOOLBAR_BOUNDS (f)
+#define FRAME_LEFT_INTERNAL_BORDER_END(f)				\
+  (FRAME_LEFT_INTERNAL_BORDER_START (f) + FRAME_INTERNAL_BORDER_WIDTH (f))
+
+#define FRAME_RIGHT_INTERNAL_BORDER_START(f)				\
+  (FRAME_RIGHT_INTERNAL_BORDER_END (f) - FRAME_INTERNAL_BORDER_WIDTH (f))
+#define FRAME_RIGHT_INTERNAL_BORDER_END(f)				\
+  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_BOUNDS (f))
+
+/* Bounds of the area framed by the gutter -- inside of the
+   toolbars and internal border width. */
+
+#define FRAME_TOP_GUTTER_START(f)					\
+  FRAME_TOP_INTERNAL_BORDER_END (f)
+#define FRAME_TOP_GUTTER_END(f)						\
+  (FRAME_TOP_GUTTER_START (f) + FRAME_TOP_GUTTER_BOUNDS (f))
+
+#ifdef BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER
+#define FRAME_BOTTOM_GUTTER_START(f)					\
+  (FRAME_BOTTOM_GUTTER_END (f) - FRAME_BOTTOM_GUTTER_BOUNDS (f))
+#define FRAME_BOTTOM_GUTTER_END(f)					\
+  FRAME_BOTTOM_INTERNAL_BORDER_START (f)
+#endif /* BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER */
+
+#define FRAME_LEFT_GUTTER_START(f)					\
+  FRAME_LEFT_INTERNAL_BORDER_END (f)
+#define FRAME_LEFT_GUTTER_END(f)					\
+  (FRAME_LEFT_GUTTER_START (f) + FRAME_LEFT_GUTTER_BOUNDS (f))
+
+#define FRAME_RIGHT_GUTTER_START(f)					\
+  (FRAME_RIGHT_GUTTER_END (f) - FRAME_RIGHT_GUTTER_BOUNDS (f))
+#define FRAME_RIGHT_GUTTER_END(f)					\
+  FRAME_RIGHT_INTERNAL_BORDER_START (f)
+
+/* These are the bounds of the paned area -- inside of the toolbars,
+   gutters, and internal border width.  The paned area is the same as the
+   area occupied by windows, including the minibuffer.  See long comment in
+   frame.c. */
+
+#define FRAME_PANED_TOP_EDGE(f) FRAME_TOP_GUTTER_END (f)
+#ifdef BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER
+#define FRAME_PANED_BOTTOM_EDGE(f) FRAME_BOTTOM_GUTTER_START (f)
+#endif /* BOTTOM_GUTTER_IS_OUTSIDE_MINIBUFFER */
+#define FRAME_PANED_LEFT_EDGE(f) FRAME_LEFT_GUTTER_END (f)
+#define FRAME_PANED_RIGHT_EDGE(f) FRAME_RIGHT_GUTTER_START (f)
+
+/* Thickness of non-paned area at edge of frame;
+   
+   FRAME_PANED_TOP_EDGE (f) == FRAME_NONPANED_SIZE (f, TOP_EDGE)
+   FRAME_PANED_LEFT_EDGE (f) == FRAME_NONPANED_SIZE (f, LEFT_EDGE)
+   FRAME_PANED_BOTTOM_EDGE (f) ==
+     FRAME_PIXHEIGHT (f) - FRAME_NONPANED_SIZE (f, BOTTOM_EDGE)
+   FRAME_PANED_RIGHT_EDGE (f) ==
+     FRAME_PIXWIDTH (f) - FRAME_NONPANED_SIZE (f, RIGHT_EDGE)
+   
+*/
+#define FRAME_NONPANED_SIZE(f, pos)					\
+  (FRAME_REAL_TOOLBAR_BOUNDS (f, pos) + FRAME_INTERNAL_BORDER_SIZE (f, pos) + \
+   FRAME_GUTTER_BOUNDS (f, pos))
+
+
 
 #endif /* INCLUDED_frame_impl_h_ */

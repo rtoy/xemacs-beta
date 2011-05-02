@@ -1,14 +1,14 @@
 /* Minibuffer input and completion.
    Copyright (C) 1985, 1986, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.28.  Mule-ized except as noted.
    Substantially different from FSF. */
@@ -513,7 +511,7 @@ or the symbol from the obarray.
     return Qt;
 
   /* Else extract the part in which all completions agree */
-  return Fsubstring (bestmatch, Qzero, make_int (bestmatchsize));
+  return Fsubseq (bestmatch, Qzero, make_int (bestmatchsize));
 }
 
 
@@ -991,8 +989,10 @@ reinit_complex_vars_of_minibuf (void)
 #endif
   Vminibuffer_zero
     = Fget_buffer_create (build_ascstring (" *Minibuf-0*"));
+  staticpro_nodump (&Vminibuffer_zero);
   Vecho_area_buffer
     = Fget_buffer_create (build_ascstring (" *Echo Area*"));
+  staticpro_nodump (&Vecho_area_buffer);
 }
 
 void

@@ -2,14 +2,14 @@
    #### rename me to coding-system.c or coding.c
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -297,7 +295,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Coding_System *c = XCODING_SYSTEM (obj);
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<coding-system %s ", 1, c->name);
   print_coding_system_properties (obj, printcharfun);
@@ -318,21 +316,19 @@ print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 
 #ifndef NEW_GC
 static void
-finalize_coding_system (void *header, int for_disksave)
+finalize_coding_system (Lisp_Object obj)
 {
-  Lisp_Object cs = wrap_coding_system ((Lisp_Coding_System *) header);
   /* Since coding systems never go away, this function is not
      necessary.  But it would be necessary if we changed things
      so that coding systems could go away. */
-  if (!for_disksave) /* see comment in lstream.c */
-    MAYBE_XCODESYSMETH (cs, finalize, (cs));
+  MAYBE_XCODESYSMETH (obj, finalize, (obj));
 }
 #endif /* not NEW_GC */
 
 static Bytecount
-sizeof_coding_system (const void *header)
+sizeof_coding_system (Lisp_Object obj)
 {
-  const Lisp_Coding_System *p = (const Lisp_Coding_System *) header;
+  const Lisp_Coding_System *p = XCODING_SYSTEM (obj);
   return offsetof (Lisp_Coding_System, data) + p->methods->extra_data_size;
 }
 
@@ -379,24 +375,13 @@ const struct sized_memory_description coding_system_empty_extra_description = {
   0, coding_system_empty_extra_description_1
 };
 
-#ifdef NEW_GC
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
-					1, /*dumpable-flag*/
-					mark_coding_system,
-					print_coding_system,
-					0, 0, 0, coding_system_description,
-					sizeof_coding_system,
-					Lisp_Coding_System);
-#else /* not NEW_GC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
-					1, /*dumpable-flag*/
-					mark_coding_system,
-					print_coding_system,
-					finalize_coding_system,
-					0, 0, coding_system_description,
-					sizeof_coding_system,
-					Lisp_Coding_System);
-#endif /* not NEW_GC */
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("coding-system", coding_system,
+				     mark_coding_system,
+				     print_coding_system,
+				     IF_OLD_GC (finalize_coding_system),
+				     0, 0, coding_system_description,
+				     sizeof_coding_system,
+				     Lisp_Coding_System);
 
 /************************************************************************/
 /*                       Creating coding systems                        */
@@ -1005,9 +990,8 @@ allocate_coding_system (struct coding_system_methods *codesys_meths,
 			Lisp_Object name)
 {
   Bytecount total_size = offsetof (Lisp_Coding_System, data) + data_size;
-  Lisp_Coding_System *codesys =
-    (Lisp_Coding_System *) BASIC_ALLOC_LCRECORD (total_size,
-						 &lrecord_coding_system);
+  Lisp_Object obj = ALLOC_SIZED_LISP_OBJECT (total_size, coding_system);
+  Lisp_Coding_System *codesys = XCODING_SYSTEM (obj);
 
   codesys->methods = codesys_meths;
 #define MARKED_SLOT(x) codesys->x = Qnil;
@@ -1407,13 +1391,15 @@ make_internal_coding_system (Lisp_Object existing, const Ascbyte *prefix,
 }
 
 DEFUN ("make-coding-system-internal", Fmake_coding_system_internal, 2, 4, 0, /*
-See `make-coding-system'.  This does much of the work of that function.
+Create a new coding system object, and register NAME as its name.
 
+With Mule support, this does much of the work of `make-coding-system'.
 Without Mule support, it does all the work of that function, and an alias
-exists, mapping `make-coding-system' to
-`make-coding-system-internal'. You'll need a non-Mule XEmacs to read the
-complete docstring. Or you can just read it in make-coding-system.el;
-something like the following should work:
+exists, mapping `make-coding-system' to `make-coding-system-internal'.
+
+You'll need a Mule XEmacs to read the complete docstring. Or you can
+just read it in make-coding-system.el; something like the following
+should work:
 
  \\[find-function-other-window] find-file RET \\[find-file] mule/make-coding-system.el RET
 
@@ -1452,12 +1438,8 @@ Use `define-coding-system-alias' instead.
     invalid_operation_2 ("Coding systems not same type",
 			 old_coding_system, new_coding_system);
 
-  {
-    Lisp_Coding_System *to = XCODING_SYSTEM (new_coding_system);
-    Lisp_Coding_System *from = XCODING_SYSTEM (old_coding_system);
-    COPY_SIZED_LCRECORD (to, from, sizeof_coding_system (from));
-    to->name = new_name;
-  }
+  copy_lisp_object (new_coding_system, old_coding_system);
+  XCODING_SYSTEM (new_coding_system)->name = new_name;
   return new_coding_system;
 }
 
@@ -1864,7 +1846,7 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
 				  Dynarr_atp (str->convert_from, rejected),
 				  readmore);
 	/* Trim size down to how much we actually got */
-	Dynarr_set_length (str->convert_from, rejected + max (0, read_size));
+	Dynarr_set_lengthr (str->convert_from, rejected + max (0, read_size));
       }
 
       if (read_size < 0) /* LSTREAM_ERROR */
@@ -1898,7 +1880,7 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
 	  memmove (Dynarr_begin (str->convert_from),
 		   Dynarr_atp (str->convert_from, processed),
 		   to_process - processed);
-	Dynarr_set_length (str->convert_from, to_process - processed);
+	Dynarr_set_lengthr (str->convert_from, to_process - processed);
       }
     }
 
@@ -2720,6 +2702,7 @@ chain_finalize_coding_stream_1 (struct chain_coding_stream *data)
 	    Lstream_delete (XLSTREAM ((data->lstreams)[i]));
 	}
       xfree (data->lstreams);
+      data->lstreams = 0;
     }
 }
 
@@ -4325,8 +4308,7 @@ gzip_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 	data->level = -1;
       else
 	{
-	  CHECK_INT (value);
-	  check_int_range (XINT (value), 0, 9);
+	  check_integer_range (value, Qzero, make_int (9));
 	  data->level = XINT (value);
 	}
     }
@@ -4423,7 +4405,7 @@ gzip_convert (struct coding_stream *str,
 	  data->stream.avail_out = reserved;
 	  zerr = inflate (&data->stream, Z_NO_FLUSH);
 	  /* Lop off the unused portion */
-	  Dynarr_set_length (dst, Dynarr_length (dst) - data->stream.avail_out);
+	  Dynarr_set_lengthr (dst, Dynarr_length (dst) - data->stream.avail_out);
 	  if (zerr != Z_OK)
 	    break;
 	}
@@ -4483,7 +4465,7 @@ gzip_convert (struct coding_stream *str,
 	    deflate (&data->stream,
 		     str->eof ? Z_FINISH : Z_NO_FLUSH);
 	  /* Lop off the unused portion */
-	  Dynarr_set_length (dst, Dynarr_length (dst) - data->stream.avail_out);
+	  Dynarr_set_lengthr (dst, Dynarr_length (dst) - data->stream.avail_out);
 	  if (zerr != Z_OK)
 	    break;
 	}
@@ -4508,7 +4490,7 @@ gzip_convert (struct coding_stream *str,
 void
 syms_of_file_coding (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (coding_system);
+  INIT_LISP_OBJECT (coding_system);
 
   DEFSUBR (Fvalid_coding_system_type_p);
   DEFSUBR (Fcoding_system_type_list);
@@ -4620,7 +4602,7 @@ coding_system_type_create (void)
 
   staticpro (&Vcoding_system_hash_table);
   Vcoding_system_hash_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
 
   the_coding_system_type_entry_dynarr = Dynarr_new (coding_system_type_entry);
   dump_add_root_block_ptr (&the_coding_system_type_entry_dynarr,
@@ -4759,7 +4741,7 @@ vars_of_file_coding (void)
 
   DEFVAR_LISP ("keyboard-coding-system", &Vkeyboard_coding_system /*
 Default coding system used for TTY and X11 keyboard input.
-Under X11, used only to interpet the character for a key event when that
+Under X11, used only to interpret the character for a key event when that
 event has a KeySym of NoSymbol but does have an associated string keysym,
 something that's seen with input methods.
 
@@ -4807,7 +4789,7 @@ Setting this has no effect.  It is purely for FSF compatibility.
   enable_multibyte_characters = 1;
 
   Vchain_canonicalize_hash_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qequal);
   staticpro (&Vchain_canonicalize_hash_table);
 
 #ifdef DEBUG_XEMACS
@@ -4820,7 +4802,7 @@ Information is displayed on stderr.
 
 #ifdef MULE
   Vdefault_query_coding_region_chartab_cache
-    = make_lisp_hash_table (25, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    = make_lisp_hash_table (25, HASH_TABLE_NON_WEAK, Qequal);
   staticpro (&Vdefault_query_coding_region_chartab_cache);
 #endif
 }
@@ -4833,142 +4815,143 @@ complex_vars_of_file_coding (void)
   Fmake_coding_system_internal
     (Qconvert_eol_cr, Qconvert_eol,
      build_defer_string ("Convert CR to LF"),
-     nconc2 (list6 (Qdocumentation,
-		    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "Converts CR (used to mark the end of a line on Macintosh systems) to LF\n"
 "(used internally and under Unix to mark the end of a line)."),
-		    Qmnemonic, build_ascstring ("CR->LF"),
-		    Qsubtype, Qcr),
-	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
-		subsidiaries -- it needs the coding systems we're creating
+            Qmnemonic, build_ascstring ("CR->LF"),
+            Qsubtype, Qcr,
+            /* VERY IMPORTANT!  Tell make-coding-system not to generate
+               subsidiaries -- it needs the coding systems we're creating
 		to do so! */
-	     list4 (Qeol_type, Qlf,
-                    Qsafe_charsets, Qt)));
-
+            Qeol_type, Qlf,
+            Qsafe_charsets, Qt,
+            Qunbound));
   Fmake_coding_system_internal
     (Qconvert_eol_lf, Qconvert_eol,
      build_defer_string ("Convert LF to LF (do nothing)"),
-     nconc2 (list6 (Qdocumentation,
-		    build_defer_string (
-"Do nothing."),
-		    Qmnemonic, build_ascstring ("LF->LF"),
-		    Qsubtype, Qlf),
-	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
+     listu (Qdocumentation,
+            build_defer_string ("Do nothing."),
+            Qmnemonic, build_ascstring ("LF->LF"),
+            Qsubtype, Qlf,
+            /* VERY IMPORTANT!  Tell make-coding-system not to generate
 		subsidiaries -- it needs the coding systems we're creating
 		to do so! */
-	     list4 (Qeol_type, Qlf,
-                    Qsafe_charsets, Qt)));
+	    Qeol_type, Qlf,
+            Qsafe_charsets, Qt,
+            Qunbound));
 
   Fmake_coding_system_internal
     (Qconvert_eol_crlf, Qconvert_eol,
      build_defer_string ("Convert CRLF to LF"),
-     nconc2 (list6 (Qdocumentation,
-		    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "Converts CR+LF (used to mark the end of a line on Macintosh systems) to LF\n"
 "(used internally and under Unix to mark the end of a line)."),
-		    Qmnemonic, build_ascstring ("CRLF->LF"),
-		    Qsubtype, Qcrlf),
-
-	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
-		subsidiaries -- it needs the coding systems we're creating
-		to do so! */
-	     list4 (Qeol_type, Qlf,
-                    Qsafe_charsets, Qt)));
+            Qmnemonic, build_ascstring ("CRLF->LF"),
+            Qsubtype, Qcrlf,
+            /* VERY IMPORTANT!  Tell make-coding-system not to generate
+               subsidiaries -- it needs the coding systems we're creating
+               to do so! */
+            Qeol_type, Qlf,
+            Qsafe_charsets, Qt,
+            Qunbound));
 
   Fmake_coding_system_internal
     (Qconvert_eol_autodetect, Qconvert_eol,
      build_defer_string ("Autodetect EOL type"),
-     nconc2 (list6 (Qdocumentation,
-		    build_defer_string (
-"Autodetect the end-of-line type."),
-		    Qmnemonic, build_ascstring ("Auto-EOL"),
-		    Qsubtype, Qnil),
-	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
-		subsidiaries -- it needs the coding systems we're creating
-		to do so! */
-	     list4 (Qeol_type, Qlf,
-                    Qsafe_charsets, Qt)));
+     listu (Qdocumentation,
+            build_defer_string ("Autodetect the end-of-line type."),
+            Qmnemonic, build_ascstring ("Auto-EOL"),
+            Qsubtype, Qnil,
+            /* VERY IMPORTANT!  Tell make-coding-system not to generate
+               subsidiaries -- it needs the coding systems we're creating
+               to do so! */
+            Qeol_type, Qlf,
+            Qsafe_charsets, Qt,
+            Qunbound));
 
   Fmake_coding_system_internal
     (Qundecided, Qundecided,
      build_defer_string ("Undecided (auto-detect)"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string
-		    ("Automatically detects the correct encoding."),
-		    Qmnemonic, build_ascstring ("Auto")),
-	     list6 (Qdo_eol, Qt, Qdo_coding, Qt,
-		    /* We do EOL detection ourselves so we don't need to be
-		       wrapped in an EOL detector. (It doesn't actually hurt,
-		       though, I don't think.) */
-		    Qeol_type, Qlf)));
+     listu (Qdocumentation,
+            build_defer_string ("Automatically detects the correct encoding."),
+            Qmnemonic, build_ascstring ("Auto"),
+            Qdo_eol, Qt, Qdo_coding, Qt,
+            /* We do EOL detection ourselves so we don't need to be
+               wrapped in an EOL detector. (It doesn't actually hurt,
+               though, I don't think.) */
+            Qeol_type, Qlf,
+            Qunbound));
 
   Fmake_coding_system_internal
     (intern ("undecided-dos"), Qundecided,
      build_defer_string ("Undecided (auto-detect) (CRLF)"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string
-		    ("Automatically detects the correct encoding; EOL type of CRLF forced."),
-		    Qmnemonic, build_ascstring ("Auto")),
-	     list4 (Qdo_coding, Qt,
-		    Qeol_type, Qcrlf)));
+     listu (Qdocumentation,
+            build_defer_string
+            ("Automatically detects the correct encoding; EOL type of CRLF forced."),
+            Qmnemonic, build_ascstring ("Auto"),
+            Qdo_coding, Qt,
+            Qeol_type, Qcrlf,
+            Qunbound));
 
   Fmake_coding_system_internal
     (intern ("undecided-unix"), Qundecided,
      build_defer_string ("Undecided (auto-detect) (LF)"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string
-		    ("Automatically detects the correct encoding; EOL type of LF forced."),
-		    Qmnemonic, build_ascstring ("Auto")),
-	     list4 (Qdo_coding, Qt,
-		    Qeol_type, Qlf)));
+     listu (Qdocumentation,
+            build_defer_string
+            ("Automatically detects the correct encoding; EOL type of LF forced."),
+            Qmnemonic, build_ascstring ("Auto"),
+            Qdo_coding, Qt,
+            Qeol_type, Qlf,
+            Qunbound));;
 
   Fmake_coding_system_internal
     (intern ("undecided-mac"), Qundecided,
      build_defer_string ("Undecided (auto-detect) (CR)"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string
-		    ("Automatically detects the correct encoding; EOL type of CR forced."),
-		    Qmnemonic, build_ascstring ("Auto")),
-	     list4 (Qdo_coding, Qt,
-		    Qeol_type, Qcr)));
+     listu (Qdocumentation,
+            build_defer_string
+            ("Automatically detects the correct encoding; EOL type of CR forced."),
+            Qmnemonic, build_ascstring ("Auto"),
+            Qdo_coding, Qt,
+            Qeol_type, Qcr,
+            Qunbound));
 
   /* Need to create this here or we're really screwed. */
   Fmake_coding_system_internal
     (Qraw_text, Qno_conversion,
      build_defer_string ("Raw Text"),
-     nconc2 (list4 (Qdocumentation,
-                    build_defer_string ("Raw text converts only line-break "
-                                      "codes, and acts otherwise like "
-                                      "`binary'."),
-                    Qmnemonic, build_ascstring ("Raw")),
+     listu (Qdocumentation,
+            build_defer_string ("Raw text converts only line-break "
+                                "codes, and acts otherwise like "
+                                "`binary'."),
+            Qmnemonic, build_ascstring ("Raw"),
 #ifdef MULE
-             list2 (Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
-                                           Vcharset_latin_iso8859_1))));
+            Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
+                                   Vcharset_latin_iso8859_1),
 
-#else
-             Qnil));
 #endif
+            Qunbound));
+
 
   Fmake_coding_system_internal
     (Qbinary, Qno_conversion,
      build_defer_string ("Binary"),
-     nconc2 (list6 (Qdocumentation,
-                    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "This coding system is as close as it comes to doing no conversion.\n"
 "On input, each byte is converted directly into the character\n"
 "with the corresponding code -- i.e. from the `ascii', `control-1',\n"
 "or `latin-1' character sets.  On output, these characters are\n"
 "converted back to the corresponding bytes, and other characters\n"
 "are converted to the default character, i.e. `~'."),
-                    Qeol_type, Qlf,
-                    Qmnemonic, build_ascstring ("Binary")),
+            Qeol_type, Qlf,
+            Qmnemonic, build_ascstring ("Binary"),
 #ifdef MULE
-             list2 (Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
-                                           Vcharset_latin_iso8859_1))));
-
-#else
-             Qnil));
+            Qsafe_charsets, list3 (Vcharset_ascii, Vcharset_control_1,
+                                   Vcharset_latin_iso8859_1),
 #endif
+            Qunbound));
 
   /* Formerly aliased to raw-text!  Completely bogus and not even the same
      as FSF Emacs. */

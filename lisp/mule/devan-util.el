@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Emacs 21.1 (language/devan-util.el).
 
@@ -1057,8 +1055,7 @@ Ligatures and special rules are processed."
 	(setq ordered-glyphs 
 	      (append ordered-glyphs
 		      (list (assq glyph devanagari-composition-rules))))))
-    (sort ordered-glyphs #'(lambda (x y) (< (car (cdr x)) (car (cdr y)))))))
-
+    (sort* ordered-glyphs '< :key 'cadr)))
 ;;(devanagari-compose-to-one-glyph "$(5"5!X![(B") => "4$(6!Xv#"5t%![0!X"5![1(B"
 
 (defun devanagari-compose-to-one-glyph (devanagari-string)
@@ -1079,7 +1076,7 @@ Ligatures and special rules are processed."
     ;; Before applying compose-chars, convert glyphs to
     ;; 1-column width if possible.
     (setq cmp-glyph-list (devanagari-wide-to-narrow cmp-glyph-list))
-    (if (= (length cmp-glyph-list) 1) (char-to-string (car cmp-glyph-list))
+    (if (eql (length cmp-glyph-list) 1) (char-to-string (car cmp-glyph-list))
       (apply 'compose-chars cmp-glyph-list))))
 
 (defun devanagari-composition-component (string &optional start end)

@@ -11,20 +11,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: all the minibuffer history stuff is synched with
 ;;; 19.30.  Not sure about the rest.
@@ -43,7 +41,7 @@
 (require 'cl)
 
 (defgroup minibuffer nil
-  "Controling the behavior of the minibuffer."
+  "Controlling the behavior of the minibuffer."
   :group 'environment)
 
 
@@ -1569,12 +1567,13 @@ If DEFAULT-VALUE is non-nil, return that if user enters an empty
 (defun minibuf-directory-files (dir &optional match-regexp files-only)
   (let ((want-file (or (eq files-only nil) (eq files-only t)))
         (want-dirs (or (eq files-only nil) (not (eq files-only t)))))
-    (delete nil
-            (mapcar (function (lambda (f)
-                                (if (file-directory-p (expand-file-name f dir))
-                                    (and want-dirs (file-name-as-directory f))
-                                  (and want-file f))))
-                    (delete "." (directory-files dir nil match-regexp))))))
+    (mapcan
+     #'(lambda (f)
+         (and (not (equal "." f))
+              (if (file-directory-p (expand-file-name f dir))
+                  (and want-dirs (list (file-name-as-directory f)))
+                (and want-file (list f)))))
+     (directory-files dir nil match-regexp))))
 
 
 (defun read-file-name-2 (history prompt dir default
@@ -1820,10 +1819,10 @@ DIR defaults to current buffer's directory default."
 	     (completion-ignore-case (file-system-ignore-case-p
 				      (or dir default-directory)))
              (env (substring string
-                             (cond ((= start (length string))
+                             (cond ((eql start (length string))
                                     ;; "...$"
                                     start)
-                                   ((= (aref string start) ?{)
+                                   ((eql (aref string start) ?{)
                                     ;; "...${..."
                                     (1+ start))
                                    (t
@@ -2094,7 +2093,7 @@ whether it is a file(/result) or a directory (/result/)."
 		 ;; any more. --ben
 		 (lambda ()
 		   (mouse-rfn-setup-vars prompt)
-		   (when-boundp #'scrollbar-width
+		   (when-boundp 'scrollbar-width
 		     (set-specifier scrollbar-width 0 (current-buffer)))
 		   (setq truncate-lines t))))
 	    
@@ -2210,7 +2209,7 @@ DEFAULT-CODING-SYSTEM can be a string, symbol, or coding-system object."
   "Read a non-nil coding-system from the minibuffer.
 Prompt with string PROMPT."
   (let ((retval (intern "")))
-    (while (= 0 (length (symbol-name retval)))
+    (while (eql 0 (length (symbol-name retval)))
       (setq retval (intern (completing-read prompt obarray
 					    'find-coding-system
 					    t))))
@@ -2346,7 +2345,7 @@ in the minibuffer."
 				   (single-key-description event))
 			  (ding nil 'y-or-n-p)
 			  (discard-input)
-			  (if (= (length pre) 0)
+			  (if (eql (length pre) 0)
 			      (setq pre (format "Please answer %s.  "
 						;; 17 parens!  a record in
 						;; our lisp code.

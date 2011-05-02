@@ -2,23 +2,22 @@
    expression library, version 0.12.
 
    Copyright (C) 1985, 89, 90, 91, 92, 93, 95 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
+   This file is part of XEmacs.
+   
+   XEmacs is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by the
+   Free Software Foundation, either version 3 of the License, or (at your
+   option) any later version.
+   
+   XEmacs is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+   for more details.
+   
    You should have received a copy of the GNU General Public License
-   along with this program; see the file COPYING.  If not, write to
-   the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
-
+   along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 /* Synched up with: FSF 19.29. */
 
 #ifndef INCLUDED_regex_h_
@@ -41,6 +40,18 @@
 #define Elemcount ssize_t
 #define Bytecount ssize_t
 #endif /* emacs */
+
+#ifndef emacs
+# ifdef __cplusplus
+#  define BEGIN_C_DECLS extern "C" {
+#  define END_C_DECLS }
+# else
+#  define BEGIN_C_DECLS
+#  define END_C_DECLS
+# endif
+#endif /* emacs */
+
+BEGIN_C_DECLS
 
 /* POSIX says that <sys/types.h> must be included (by the caller) before
    <regex.h>.  */
@@ -525,5 +536,16 @@ int regexec (const regex_t *preg, const char *string, size_t nmatch,
 size_t regerror (int errcode, const regex_t *preg, char *errbuf,
 		 size_t errbuf_size);
 void regfree (regex_t *preg);
+
+enum regex_debug
+  {
+    RE_DEBUG_COMPILATION = 1 << 0,
+    RE_DEBUG_FAILURE_POINT = 1 << 1,
+    RE_DEBUG_MATCHING = 1 << 2,
+  };
+
+extern int debug_regexps;
+
+END_C_DECLS
 
 #endif /* INCLUDED_regex_h_ */

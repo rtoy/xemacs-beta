@@ -1,14 +1,14 @@
 /* Generic device functions.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -38,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame-impl.h"
 #include "keymap.h"
-#include "objects.h"
+#include "fontcolor.h"
 #include "redisplay.h"
 #include "specifier.h"
 #include "sysdep.h"
@@ -160,20 +158,19 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun,
   struct device *d = XDEVICE (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, XSTRING_DATA (d->name));
+    printing_unreadable_lisp_object (obj, XSTRING_DATA (d->name));
 
   write_fmt_string (printcharfun, "#<%s-device", !DEVICE_LIVE_P (d) ? "dead" :
 		    DEVICE_TYPE_NAME (d));
   if (DEVICE_LIVE_P (d) && !NILP (DEVICE_CONNECTION (d)))
     write_fmt_string_lisp (printcharfun, " on %S", 1, DEVICE_CONNECTION (d));
-  write_fmt_string (printcharfun, " 0x%x>", d->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("device", device,
-			       0, /*dumpable-flag*/
-			       mark_device, print_device, 0, 0, 0, 
-			       device_description,
-			       struct device);
+DEFINE_NODUMP_LISP_OBJECT ("device", device,
+			   mark_device, print_device, 0, 0, 0, 
+			   device_description,
+			   struct device);
 
 int
 valid_device_class_p (Lisp_Object class_)
@@ -201,7 +198,7 @@ Return a list of valid device classes.
 static void
 nuke_all_device_slots (struct device *d, Lisp_Object zap)
 {
-  ZERO_LCRECORD (d);
+  zero_nonsized_lisp_object (wrap_device (d));
 
 #define MARKED_SLOT(x)	d->x = zap;
 #include "devslots.h"
@@ -210,12 +207,11 @@ nuke_all_device_slots (struct device *d, Lisp_Object zap)
 static struct device *
 allocate_device (Lisp_Object console)
 {
-  Lisp_Object device;
-  struct device *d = ALLOC_LCRECORD_TYPE (struct device, &lrecord_device);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (device);
+  struct device *d = XDEVICE (obj);
   struct gcpro gcpro1;
 
-  device = wrap_device (d);
-  GCPRO1 (device);
+  GCPRO1 (obj);
 
   nuke_all_device_slots (d, Qnil);
 
@@ -224,9 +220,9 @@ allocate_device (Lisp_Object console)
 
   /* #### is 20 reasonable? */
   d->color_instance_cache =
-    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, Qequal);
   d->font_instance_cache =
-    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, Qequal);
 #ifdef MULE
   initialize_charset_font_caches (d);
 #endif
@@ -236,7 +232,7 @@ allocate_device (Lisp_Object console)
      time there aren't very many different masks that will be used.
      */
   d->image_instance_cache =
-    make_lisp_hash_table (5, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (5, HASH_TABLE_NON_WEAK, Qeq);
 
   UNGCPRO;
   return d;
@@ -1059,8 +1055,8 @@ to selected device if omitted, and must be live if specified.
   return DEVICE_PRINTER_P (decode_device (device)) ? Qt : Qnil;
 }
 
-DEFUN ("device-system-metric", Fdevice_system_metric, 1, 3, 0, /*
-Get a metric for DEVICE as provided by the system.
+DEFUN ("device-system-metric", Fdevice_system_metric, 2, 3, 0, /*
+Get DEVICE METRIC as provided by the system.
 
 METRIC must be a symbol specifying requested metric.  Note that the metrics
 returned are these provided by the system internally, not read from resources,
@@ -1398,7 +1394,7 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
 void
 syms_of_device (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (device);
+  INIT_LISP_OBJECT (device);
 
   DEFSUBR (Fvalid_device_class_p);
   DEFSUBR (Fdevice_class_list);

@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1991-1994, 1997, 2003 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-;; Copyright (C) 1996, 2000, 2002, 2003, 2004 Ben Wing.
+;; Copyright (C) 1996, 2000, 2002, 2003, 2004, 2010 Ben Wing.
 
 ;; Original Author: Roland McGrath <roland@gnu.ai.mit.edu>
 ;; Heavily Modified: XEmacs Maintainers
@@ -10,20 +10,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 21.2 by Ben Wing.
 ;;; Note that update-file-autoloads is seriously modified and not really
@@ -286,14 +284,11 @@ or macro definition or a defcustom)."
 	     (body (nthcdr (get car 'doc-string-elt) form))
 	     (doc (if (stringp (car body)) (pop body))))
 	(if (memq car '(defmacro defmacro* defun defun*))
-	    (let ((arglist (nth 2 form))
-		  (placeholder (eval-when-compile (gensym))))
+	    (let ((arglist (nth 2 form)))
 	      (setq doc (concat (or doc "")
 				"\n\narguments: "
-				(replace-in-string
-				 (cl-function-arglist placeholder arglist)
-				 (format "^(%s ?" placeholder)
-				 "(") "\n"))))
+				(cl-function-arglist arglist)
+				"\n"))))
 	;; `define-generic-mode' quotes the name, so take care of that
 	(list 'autoload (if (listp name) name (list 'quote name)) file doc
 	      (or (and (memq car '(define-skeleton define-derived-mode
@@ -1091,11 +1086,13 @@ Works just like `update-file-autoloads'."
 	   ;; recognized only one of the two magic-cookie styles (the -*- kind)
 	   ;; in find-file, but both of them in load.  We go ahead and put both
 	   ;; in, just to be safe.
+	   (insert (format " -*- coding: %s -*-\n" buffer-file-coding-system))
 	   (when (eq buffer-file-coding-system 'escape-quoted)
-	     (insert " -*- coding: escape-quoted; -*-
-\(or (featurep 'mule) (error \"Loading this file requires Mule support\"))
-;;;###coding system: escape-quoted"))
-	   (insert "\n(if (featurep '" sym ")")
+	     (insert "(or (featurep 'mule) ")
+	     (insert "(error \"Loading this file requires Mule support\"))\n"))
+	   (insert (format ";;;###coding system: %s\n"
+			   buffer-file-coding-system))
+	   (insert "(if (featurep '" sym ")")
 	   (insert " (error \"Feature " sym " already loaded\"))\n")
 	   (goto-char (point-max))
 	   (save-excursion

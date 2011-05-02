@@ -4,23 +4,22 @@
 **
 ** Created by: William M. Perry
 ** Copyright (c) 2000 William M. Perry <wmperry@gnu.org>
+** Copyright (C) 2010 Ben Wing.
 **
 ** This file is part of XEmacs.
 **
-** XEmacs is free software; you can redistribute it and/or modify it
+** XEmacs is free software: you can redistribute it and/or modify it
 ** under the terms of the GNU General Public License as published by the
-** Free Software Foundation; either version 2, or (at your option) any
-** later version.
-**
+** Free Software Foundation, either version 3 of the License, or (at your
+** option) any later version.
+** 
 ** XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 ** FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 ** for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with XEmacs; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-** Boston, MA 02111-1301, USA.  */
+** along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <config.h>
 
@@ -35,7 +34,7 @@
 #include "console-gtk-impl.h"
 #include "device-impl.h"
 #include "gtk-xemacs.h"
-#include "objects-gtk.h"
+#include "fontcolor-gtk.h"
 
 extern Lisp_Object Vmodeline_face;
 extern Lisp_Object Vscrollbar_on_left_p;
@@ -130,7 +129,7 @@ __nuke_background_items (GtkWidget *widget)
      frame.
 
      Well, wait, we do... otherwise there sre weird 'seethru' areas
-     even when XEmacs does a full redisplay.  Most noticable in some
+     even when XEmacs does a full redisplay.  Most noticeable in some
      areas of the modeline, or in the right-hand-side of the window
      between the scrollbar ad n the edge of the window.
   */
@@ -147,7 +146,7 @@ __nuke_background_items (GtkWidget *widget)
 
 extern Lisp_Object xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w);
 
-/* From objects-gtk.c */
+/* From fontcolor-gtk.c */
 extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
 
 #define convert_font(f) __get_gtk_font_truename (f, 0)
@@ -275,7 +274,7 @@ gtk_xemacs_size_request (GtkWidget *widget, GtkRequisition *requisition)
 
     if (f)
       {
-	char_to_pixel_size (f, FRAME_WIDTH (f), FRAME_HEIGHT (f),
+	frame_unit_to_pixel_size (f, FRAME_WIDTH (f), FRAME_HEIGHT (f),
 			    &width, &height);
 	requisition->width = width;
 	requisition->height = height;
@@ -344,11 +343,11 @@ gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
 	f->pixwidth = allocation->width;
 	f->pixheight = allocation->height;
 
-	pixel_to_char_size (f,
+	pixel_to_frame_unit_size (f,
 			    allocation->width,
 			    allocation->height, &columns, &rows);
 
-	change_frame_size (f, rows, columns, 1);
+	change_frame_size (f, columns, rows, 1);
       }
 }
 

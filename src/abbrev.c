@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30.  Note that there are many more functions in
    FSF's abbrev.c.  These have been moved into Lisp in XEmacs. */
@@ -75,7 +73,7 @@ Fixnum last_abbrev_location;
 /* Hook to run before expanding any abbrev.  */
 Lisp_Object Vpre_abbrev_expand_hook, Qpre_abbrev_expand_hook;
 
-Lisp_Object Qsystem_type, Qcount;
+Lisp_Object Qsystem_type;
 
 struct abbrev_match_mapper_closure
 {
@@ -343,7 +341,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
     count = Qzero;
   else
     CHECK_NATNUM (count);
-  symbol_plist (abbrev_symbol) = make_int (1 + XINT (count));
+  symbol_plist (abbrev_symbol) = Fadd1 (count);
 
   /* Count the case in the original text. */
   abbrev_count_case (buf, abbrev_start, abbrev_length, &lccount, &uccount);
@@ -524,7 +522,7 @@ READABLE is non-nil, they are listed.  */
   map_obarray (table, record_symbol, &symbols);
   /* map_obarray (table, record_symbol, &closure); */
   symbols = XCDR (symbols);
-  symbols = Fsort (symbols, Qstring_lessp);
+  symbols = list_sort (symbols, check_string_lessp_nokey, Qnil, Qnil);
 
   if (!NILP (readable))
     {
@@ -558,9 +556,6 @@ READABLE is non-nil, they are listed.  */
 void
 syms_of_abbrev (void)
 {
-  DEFSYMBOL(Qcount);
-  Qcount = intern ("count");
-  staticpro (&Qcount);
   DEFSYMBOL(Qsystem_type);
   Qsystem_type = intern ("system-type");
   DEFSYMBOL (Qpre_abbrev_expand_hook);

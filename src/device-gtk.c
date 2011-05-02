@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -42,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-gtk-impl.h"
 #include "gccache-gtk.h"
 #include "glyphs-gtk.h"
-#include "objects-gtk.h"
+#include "fontcolor-gtk.h"
 #include "gtk-xemacs.h"
 
 #include "sysfile.h"
@@ -76,11 +74,9 @@ static const struct memory_description gtk_device_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("gtk-device", gtk_device,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       gtk_device_data_description_1,
-			       Lisp_Gtk_Device);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("gtk-device", gtk_device,
+				      0, gtk_device_data_description_1,
+				      Lisp_Gtk_Device);
 #else /* not NEW_GC */
 extern const struct sized_memory_description gtk_device_data_description;
 
@@ -117,7 +113,7 @@ static void
 allocate_gtk_device_struct (struct device *d)
 {
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct gtk_device, &lrecord_gtk_device);
+  d->device_data = XGTK_DEVICE (ALLOC_NORMAL_LISP_OBJECT (gtk_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct gtk_device);
 #endif /* not NEW_GC */
@@ -186,11 +182,7 @@ mode.
 
   slow_down_interrupts ();
 #ifdef HAVE_GNOME
-#ifdef INFODOCK
-  gnome_init ("InfoDock", EMACS_VERSION, argc, argv);
-#else
   gnome_init ("XEmacs", EMACS_VERSION, argc, argv);
-#endif /* INFODOCK */
 #else
   gtk_init (&argc, &argv);
 #endif
@@ -689,7 +681,7 @@ void
 syms_of_device_gtk (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (gtk_device);
+  INIT_LISP_OBJECT (gtk_device);
 #endif /* NEW_GC */
 
   DEFSUBR (Fgtk_keysym_on_keyboard_p);

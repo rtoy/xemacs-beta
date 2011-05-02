@@ -2,14 +2,14 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* This file has been Mule-ized. */
 
@@ -150,7 +148,7 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lisp_Process *process = XPROCESS (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, XSTRING_DATA (process->name));
+    printing_unreadable_lisp_object (obj, XSTRING_DATA (process->name));
 
   if (!escapeflag)
     {
@@ -170,36 +168,68 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_ascstring (printcharfun, ">");
     }
 }
+/* Process plists are directly accessible, so we need to protect against
+   invalid property list structure */
+
+static Lisp_Object
+process_getprop (Lisp_Object process, Lisp_Object property)
+{
+  return external_plist_get (&XPROCESS (process)->plist, property, 0,
+                             ERROR_ME);
+}
+
+static int
+process_putprop (Lisp_Object process, Lisp_Object property, Lisp_Object value)
+{
+  external_plist_put (&XPROCESS (process)->plist, property, value, 0,
+                      ERROR_ME);
+  return 1;
+}
+
+static int
+process_remprop (Lisp_Object process, Lisp_Object property)
+{
+  return external_remprop (&XPROCESS (process)->plist, property, 0, ERROR_ME);
+}
+
+static Lisp_Object
+process_plist (Lisp_Object process)
+{
+  return XPROCESS (process)->plist;
+}
+
+static Lisp_Object
+process_setplist (Lisp_Object process, Lisp_Object newplist)
+{
+  XPROCESS (process)->plist = newplist;
+  return newplist;
+}
 
 #ifdef HAVE_WINDOW_SYSTEM
 extern void debug_process_finalization (Lisp_Process *p);
 #endif /* HAVE_WINDOW_SYSTEM */
 
 static void
-finalize_process (void *header, int for_disksave)
+finalize_process (Lisp_Object obj)
 {
   /* #### this probably needs to be tied into the tty event loop */
   /* #### when there is one */
-  Lisp_Process *p = (Lisp_Process *) header;
+  Lisp_Process *p = XPROCESS (obj);
 #ifdef HAVE_WINDOW_SYSTEM
-  if (!for_disksave)
-    {
-      debug_process_finalization (p);
-    }
+  debug_process_finalization (p);
 #endif /* HAVE_WINDOW_SYSTEM */
 
   if (p->process_data)
     {
-      MAYBE_PROCMETH (finalize_process_data, (p, for_disksave));
-      if (!for_disksave)
-	xfree (p->process_data);
+      MAYBE_PROCMETH (finalize_process_data, (p));
+      xfree (p->process_data);
+      p->process_data = 0;
     }
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("process", process,
-			       0, /*dumpable-flag*/
-                               mark_process, print_process, finalize_process,
-                               0, 0, process_description, Lisp_Process);
+DEFINE_NODUMP_LISP_OBJECT ("process", process,
+			   mark_process, print_process, finalize_process,
+			   0, 0, process_description, Lisp_Process);
 
 /************************************************************************/
 /*                       basic process accessors                        */
@@ -468,9 +498,10 @@ report_network_error (const Ascbyte *reason, Lisp_Object data)
 Lisp_Object
 make_process_internal (Lisp_Object name)
 {
-  Lisp_Object val, name1;
+  Lisp_Object name1;
   int i;
-  Lisp_Process *p = ALLOC_LCRECORD_TYPE (Lisp_Process, &lrecord_process);
+  Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (process);
+  Lisp_Process *p = XPROCESS (obj);
 
 #define MARKED_SLOT(x)	p->x = Qnil;
 #include "process-slots.h"
@@ -495,10 +526,8 @@ make_process_internal (Lisp_Object name)
 
   MAYBE_PROCMETH (alloc_process_data, (p));
 
-  val = wrap_process (p);
-
-  Vprocess_list = Fcons (val, Vprocess_list);
-  return val;
+  Vprocess_list = Fcons (obj, Vprocess_list);
+  return obj;
 }
 
 void
@@ -946,8 +975,8 @@ Tell PROCESS that it has logical window size HEIGHT and WIDTH.
        (process, height, width))
 {
   CHECK_PROCESS (process);
-  CHECK_NATNUM (height);
-  CHECK_NATNUM (width);
+  check_integer_range (height, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (width, Qzero, make_integer (EMACS_INT_MAX));
   return
     MAYBE_INT_PROCMETH (set_window_size,
 			(XPROCESS (process), XINT (height), XINT (width))) <= 0
@@ -2410,6 +2439,16 @@ eputenv (const CIbyte *var, const CIbyte *value)
 }
 
 
+void
+reinit_process_early (void)
+{
+  OBJECT_HAS_METHOD (process, getprop);
+  OBJECT_HAS_METHOD (process, putprop);
+  OBJECT_HAS_METHOD (process, remprop);
+  OBJECT_HAS_METHOD (process, plist);
+  OBJECT_HAS_METHOD (process, setplist);
+}
+
 /* This is not named init_process in order to avoid a conflict with NS 3.3 */
 void
 init_xemacs_process (void)
@@ -2486,12 +2525,14 @@ init_xemacs_process (void)
 
     Vshell_file_name = build_istring (shell);
   }
+
+  reinit_process_early ();
 }
 
 void
 syms_of_process (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (process);
+  INIT_LISP_OBJECT (process);
 
   DEFSYMBOL (Qprocessp);
   DEFSYMBOL (Qprocess_live_p);

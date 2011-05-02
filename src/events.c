@@ -1,14 +1,14 @@
 /* Events: printing them, converting them to and from characters.
    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -41,18 +39,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-tty-impl.h" /* for stuff in character_to_event */
 
-#ifdef HAVE_TTY
-#define USED_IF_TTY(decl) decl
-#else
-#define USED_IF_TTY(decl) UNUSED (decl)
-#endif
-
-#ifdef HAVE_TOOLBARS
-#define USED_IF_TOOLBARS(decl) decl
-#else
-#define USED_IF_TOOLBARS(decl) UNUSED (decl)
-#endif
-
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed
    eventually.
@@ -74,7 +60,7 @@ Lisp_Object Qcharacter_of_keysym, Qascii_character;
 /*                       definition of event object                     */
 /************************************************************************/
 
-/* #### Ad-hoc hack.  Should be part of define_lrecord_implementation */
+/* #### Ad-hoc hack.  Should be an object method. */
 void
 clear_event_resource (void)
 {
@@ -86,14 +72,10 @@ static void
 deinitialize_event (Lisp_Object ev)
 {
   Lisp_Event *event = XEVENT (ev);
-  int i;
-  /* Preserve the old UID for this event, for tracking it */
-  unsigned int old_uid = event->lheader.uid;
 
-  for (i = 0; i < (int) (sizeof (Lisp_Event) / sizeof (int)); i++)
-    ((int *) event) [i] = 0xdeadbeef; /* -559038737 base 10 */
-  set_lheader_implementation (&event->lheader, &lrecord_event);
-  event->lheader.uid = old_uid;
+  deadbeef_memory ((Rawbyte *) event + sizeof (event->lheader),
+		   sizeof (*event) - sizeof (event->lheader));
+
   set_event_type (event, dead_event);
   SET_EVENT_CHANNEL (event, Qnil);
   XSET_EVENT_NEXT (ev, Qnil);
@@ -103,12 +85,7 @@ deinitialize_event (Lisp_Object ev)
 void
 zero_event (Lisp_Event *e)
 {
-  /* Preserve the old UID for this event, for tracking it */
-  unsigned int old_uid = e->lheader.uid;
-
-  xzero (*e);
-  set_lheader_implementation (&e->lheader, &lrecord_event);
-  e->lheader.uid = old_uid;
+  zero_nonsized_lisp_object (wrap_event (e));
   set_event_type (e, empty_event);
   SET_EVENT_CHANNEL (e, Qnil);
   SET_EVENT_NEXT (e, Qnil);
@@ -224,59 +201,50 @@ static const struct memory_description event_description [] = {
 
 #ifdef EVENT_DATA_AS_OBJECTS
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("key-data", key_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     key_data_description, 
-				     Lisp_Key_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("key-data", key_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      key_data_description, 
+				      Lisp_Key_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("button-data", button_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     button_data_description, 
-				     Lisp_Button_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("button-data", button_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      button_data_description, 
+				      Lisp_Button_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("motion-data", motion_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     motion_data_description,
-				     Lisp_Motion_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("motion-data", motion_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      motion_data_description,
+				      Lisp_Motion_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("process-data", process_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     process_data_description,
-				     Lisp_Process_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("process-data", process_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      process_data_description,
+				      Lisp_Process_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("timeout-data", timeout_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     timeout_data_description,
-				     Lisp_Timeout_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("timeout-data", timeout_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      timeout_data_description,
+				      Lisp_Timeout_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("eval-data", eval_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     eval_data_description,
-				     Lisp_Eval_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("eval-data", eval_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      eval_data_description,
+				      Lisp_Eval_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("misc-user-data", misc_user_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     misc_user_data_description, 
-				     Lisp_Misc_User_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("misc-user-data", misc_user_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      misc_user_data_description, 
+				      Lisp_Misc_User_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("magic-eval-data", magic_eval_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     magic_eval_data_description, 
-				     Lisp_Magic_Eval_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("magic-eval-data", magic_eval_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      magic_eval_data_description, 
+				      Lisp_Magic_Eval_Data);
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("magic-data", magic_data,
-				     0, /*dumpable-flag*/
-				     0, 0, 0, 0, 0,
-				     magic_data_description,
-				     Lisp_Magic_Data);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("magic-data", magic_data,
+				      0, internal_object_printer, 0, 0, 0,
+				      magic_data_description,
+				      Lisp_Magic_Data);
 
 #endif /* EVENT_DATA_AS_OBJECTS */
 
@@ -334,7 +302,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
 	     int UNUSED (escapeflag))
 {
   if (print_readably)
-    printing_unreadable_object ("#<event>");
+    printing_unreadable_object_fmt ("#<event 0x%x>", LISP_OBJECT_UID (obj));
 
   switch (XEVENT (obj)->event_type)
     {
@@ -392,7 +360,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
 	write_ascstring (printcharfun, "#<UNKNOWN-EVENT-TYPE");
 	break;
       }
-  write_ascstring (printcharfun, ">");
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -463,7 +431,7 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-event_hash (Lisp_Object obj, int depth)
+event_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Event *e = XEVENT (obj);
   Hashcode hash;
@@ -476,8 +444,8 @@ event_hash (Lisp_Object obj, int depth)
 
     case timeout_event:
       return HASH3 (hash,
-		    internal_hash (EVENT_TIMEOUT_FUNCTION (e), depth + 1),
-		    internal_hash (EVENT_TIMEOUT_OBJECT (e), depth + 1));
+		    internal_hash (EVENT_TIMEOUT_FUNCTION (e), depth + 1, 0),
+		    internal_hash (EVENT_TIMEOUT_OBJECT (e), depth + 1, 0));
 
     case key_press_event:
       return HASH3 (hash, LISP_HASH (EVENT_KEY_KEYSYM (e)),
@@ -492,18 +460,18 @@ event_hash (Lisp_Object obj, int depth)
 
     case misc_user_event:
       return HASH5 (hash,
-		    internal_hash (EVENT_MISC_USER_FUNCTION (e), depth + 1),
-		    internal_hash (EVENT_MISC_USER_OBJECT (e), depth + 1),
+		    internal_hash (EVENT_MISC_USER_FUNCTION (e), depth + 1, 0),
+		    internal_hash (EVENT_MISC_USER_OBJECT (e), depth + 1, 0),
 		    EVENT_MISC_USER_BUTTON (e), EVENT_MISC_USER_MODIFIERS (e));
 
     case eval_event:
-      return HASH3 (hash, internal_hash (EVENT_EVAL_FUNCTION (e), depth + 1),
-		    internal_hash (EVENT_EVAL_OBJECT (e), depth + 1));
+      return HASH3 (hash, internal_hash (EVENT_EVAL_FUNCTION (e), depth + 1, 0),
+		    internal_hash (EVENT_EVAL_OBJECT (e), depth + 1, 0));
 
     case magic_eval_event:
       return HASH3 (hash,
 		    (Hashcode) EVENT_MAGIC_EVAL_INTERNAL_FUNCTION (e),
-		    internal_hash (EVENT_MAGIC_EVAL_OBJECT (e), depth + 1));
+		    internal_hash (EVENT_MAGIC_EVAL_OBJECT (e), depth + 1, 0));
 
     case magic_event:
       return HASH2 (hash, event_stream_hash_magic_event (e));
@@ -519,11 +487,11 @@ event_hash (Lisp_Object obj, int depth)
   return 0; /* unreached */
 }
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("event", event,
-				     0, /*dumpable-flag*/
-				     mark_event, print_event, 0, event_equal,
-				     event_hash, event_description,
-				     Lisp_Event);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("event", event,
+				      mark_event, print_event, 0,
+				      event_equal, event_hash,
+				      event_description,
+				      Lisp_Event);
 
 DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
 Return a new event of type TYPE, with properties described by PLIST.
@@ -671,8 +639,7 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qbutton))
 	  {
-	    CHECK_NATNUM (value);
-	    check_int_range (XINT (value), 0, 7);
+	    check_integer_range (value, Qzero, make_int (26));
 
 	    switch (EVENT_TYPE (e))
 	      {
@@ -767,8 +734,23 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qtimestamp))
 	  {
-	    CHECK_NATNUM (value);
-	    SET_EVENT_TIMESTAMP (e, XINT (value));
+#ifdef HAVE_BIGNUM
+            check_integer_range (value, Qzero, make_integer (UINT_MAX));
+            if (BIGNUMP (value))
+              {
+                SET_EVENT_TIMESTAMP (e, bignum_to_uint (XBIGNUM_DATA (value)));
+              }
+#else
+            check_integer_range (value, Qzero, make_integer (EMACS_INT_MAX));
+#endif
+            if (INTP (value))
+              {
+                SET_EVENT_TIMESTAMP (e, XINT (value));
+              }
+            else
+              {
+                ABORT ();
+              }
 	  }
 	else if (EQ (keyword, Qfunction))
 	  {
@@ -889,21 +871,18 @@ that it is safe to do so.
   {
     int i, len;
 
-    if (EQ (event, Vlast_command_event) ||
-	EQ (event, Vlast_input_event)   ||
-	EQ (event, Vunread_command_event))
-      ABORT ();
+    assert (!(EQ (event, Vlast_command_event) ||
+	      EQ (event, Vlast_input_event)   ||
+	      EQ (event, Vunread_command_event)));
 
     len = XVECTOR_LENGTH (Vthis_command_keys);
     for (i = 0; i < len; i++)
-      if (EQ (event, XVECTOR_DATA (Vthis_command_keys) [i]))
-	ABORT ();
+      assert (!EQ (event, XVECTOR_DATA (Vthis_command_keys) [i]));
     if (!NILP (Vrecent_keys_ring))
       {
 	int recent_ring_len = XVECTOR_LENGTH (Vrecent_keys_ring);
 	for (i = 0; i < recent_ring_len; i++)
-	  if (EQ (event, XVECTOR_DATA (Vrecent_keys_ring) [i]))
-	    ABORT ();
+	  assert (!EQ (event, XVECTOR_DATA (Vrecent_keys_ring) [i]));
       }
   }
 #endif /* 0 */
@@ -1780,7 +1759,9 @@ See also `current-event-timestamp'.
 {
   CHECK_LIVE_EVENT (event);
   /* This junk is so that timestamps don't get to be negative, but contain
-     as many bits as this particular emacs will allow.
+     as many bits as this particular emacs will allow. We could return
+     bignums on builds that support them, but that involves consing and
+     doesn't work on builds that don't support bignums.
    */
   return make_int (EMACS_INT_MAX & XEVENT_TIMESTAMP (event));
 }
@@ -1796,8 +1777,9 @@ See also `event-timestamp' and `current-event-timestamp'.
 {
   EMACS_INT t1, t2;
 
-  CHECK_NATNUM (time1);
-  CHECK_NATNUM (time2);
+  check_integer_range (time1, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (time2, Qzero, make_integer (EMACS_INT_MAX));
+
   t1 = XINT (time1);
   t2 = XINT (time2);
 
@@ -2149,14 +2131,13 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
      pointer points to random memory, often filled with 0, sometimes not.
    */
   /* #### Chuck, do we still need this crap? */
-  if (!NILP (ret_obj1) && !(GLYPHP (ret_obj1)
 #ifdef HAVE_TOOLBARS
-			    || TOOLBAR_BUTTONP (ret_obj1)
+  assert (NILP (ret_obj1) || GLYPHP (ret_obj1)
+	  || TOOLBAR_BUTTONP (ret_obj1));
+#else
+  assert (NILP (ret_obj1) || GLYPHP (ret_obj1));
 #endif
-     ))
-    ABORT ();
-  if (!NILP (ret_obj2) && !(EXTENTP (ret_obj2) || CONSP (ret_obj2)))
-    ABORT ();
+  assert (NILP (ret_obj2) || EXTENTP (ret_obj2) || CONSP (ret_obj2));
 
   if (char_x)
     *char_x = ret_x;
@@ -2572,17 +2553,17 @@ This is in the form of a property list (alternating keyword/value pairs).
 void
 syms_of_events (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (event);
+  INIT_LISP_OBJECT (event);
 #ifdef EVENT_DATA_AS_OBJECTS
-  INIT_LRECORD_IMPLEMENTATION (key_data);
-  INIT_LRECORD_IMPLEMENTATION (button_data);
-  INIT_LRECORD_IMPLEMENTATION (motion_data);
-  INIT_LRECORD_IMPLEMENTATION (process_data);
-  INIT_LRECORD_IMPLEMENTATION (timeout_data);
-  INIT_LRECORD_IMPLEMENTATION (eval_data);
-  INIT_LRECORD_IMPLEMENTATION (misc_user_data);
-  INIT_LRECORD_IMPLEMENTATION (magic_eval_data);
-  INIT_LRECORD_IMPLEMENTATION (magic_data);
+  INIT_LISP_OBJECT (key_data);
+  INIT_LISP_OBJECT (button_data);
+  INIT_LISP_OBJECT (motion_data);
+  INIT_LISP_OBJECT (process_data);
+  INIT_LISP_OBJECT (timeout_data);
+  INIT_LISP_OBJECT (eval_data);
+  INIT_LISP_OBJECT (misc_user_data);
+  INIT_LISP_OBJECT (magic_eval_data);
+  INIT_LISP_OBJECT (magic_data);
 #endif /* EVENT_DATA_AS_OBJECTS */  
 
   DEFSUBR (Fcharacter_to_event);
@@ -2655,7 +2636,7 @@ reinit_vars_of_events (void)
 {
   Vevent_resource = Qnil;
 #ifdef NEW_GC
-  staticpro (&Vevent_resource);
+  staticpro_nodump (&Vevent_resource);
 #endif /* NEW_GC */
 }
 

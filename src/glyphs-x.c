@@ -2,25 +2,24 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005, 2010 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1999, 2000, 2002 Andy Piper
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
+
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -69,7 +68,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x-impl.h"
+#include "fontcolor-x-impl.h"
 
 #include "sysfile.h"
 #include "sysproc.h" /* for qxe_getpid() */
@@ -1335,8 +1334,7 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
       color = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (XCDR (cons)));
       /* Duplicate the pixel value so that we still have a lock on it if
 	 the pixel we were passed is later freed. */
-      if (! XAllocColor (dpy, cmap, &color))
-	ABORT ();  /* it must be allocable since we're just duplicating it */
+      assert (XAllocColor (dpy, cmap, &color));  /* it must be allocable since we're just duplicating it */
 
       
       symbols[i].name = LISP_STRING_TO_EXTERNAL_MALLOC (XCAR (cons), Qctext);

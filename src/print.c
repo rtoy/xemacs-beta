@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not synched with FSF. */
 
@@ -1339,6 +1337,12 @@ ulong_to_bit_string (char *p, unsigned long number)
             }
         }
     }
+
+  if (!seen_high_order)
+    {
+      *p++ = '0';
+    }
+
   *p = '\0';
 }
 
@@ -1415,7 +1419,7 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	if (EQ (obj, tortoise) && len > 0)
 	  {
 	    if (print_readably)
-	      printing_unreadable_object ("circular list");
+	      printing_unreadable_object_fmt ("circular list");
 	    else
 	      write_ascstring (printcharfun, "... <circular list>");
 	    break;
@@ -1523,7 +1527,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 DOESNT_RETURN
-printing_unreadable_object (const Ascbyte *fmt, ...)
+printing_unreadable_object_fmt (const Ascbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -1537,70 +1541,48 @@ printing_unreadable_object (const Ascbyte *fmt, ...)
 }
 
 DOESNT_RETURN
-printing_unreadable_lcrecord (Lisp_Object obj, const Ibyte *name)
+printing_unreadable_lisp_object (Lisp_Object obj, const Ibyte *name)
 {
-  struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
-
-#ifndef NEW_GC
-  /* This must be a real lcrecord */
-  assert (!LHEADER_IMPLEMENTATION (&header->lheader)->basic_p);
-#endif
+  struct lrecord_header *header = (struct lrecord_header *) XPNTR (obj);
+  const struct lrecord_implementation *imp =
+    XRECORD_LHEADER_IMPLEMENTATION (obj);
 
   if (name)
-    printing_unreadable_object
-      ("#<%s %s 0x%x>",
-#ifdef NEW_GC
-       LHEADER_IMPLEMENTATION (header)->name,
-#else /* not NEW_GC */
-       LHEADER_IMPLEMENTATION (&header->lheader)->name,
-#endif /* not NEW_GC */
-       name,
-       header->uid);
+    printing_unreadable_object_fmt ("#<%s %s 0x%x>", imp->name, name, header->uid);
   else
-    printing_unreadable_object
-      ("#<%s 0x%x>",
-#ifdef NEW_GC
-       LHEADER_IMPLEMENTATION (header)->name,
-#else /* not NEW_GC */
-       LHEADER_IMPLEMENTATION (&header->lheader)->name,
-#endif /* not NEW_GC */
-       header->uid);
+    printing_unreadable_object_fmt ("#<%s 0x%x>", imp->name, header->uid);
 }
 
 void
-default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
-			int UNUSED (escapeflag))
+external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			 int UNUSED (escapeflag))
 {
-  struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
-
-#ifndef NEW_GC
-  /* This must be a real lcrecord */
-  assert (!LHEADER_IMPLEMENTATION (&header->lheader)->basic_p);
-#endif
+  struct lrecord_header *header = (struct lrecord_header *) XPNTR (obj);
+  const struct lrecord_implementation *imp =
+    XRECORD_LHEADER_IMPLEMENTATION (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord (obj, 0);
+    printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string (printcharfun, "#<%s 0x%x>",
-#ifdef NEW_GC
-		    LHEADER_IMPLEMENTATION (header)->name,
-#else /* not NEW_GC */
-		    LHEADER_IMPLEMENTATION (&header->lheader)->name,
-#endif /* not NEW_GC */
-		    header->uid);
+  write_fmt_string (printcharfun, "#<%s 0x%x>", imp->name, header->uid);
 }
 
 void
 internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int UNUSED (escapeflag))
 {
+  if (print_readably)
+    printing_unreadable_object_fmt
+      ("#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%x>",
+       XRECORD_LHEADER_IMPLEMENTATION (obj)->name, LISP_OBJECT_UID (obj));
+
   /* Internal objects shouldn't normally escape to the Lisp level;
      that's why we say "XEmacs bug?".  This can happen, however, when
      printing backtraces. */
   write_fmt_string (printcharfun,
-		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%x>",
 		    XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
-		    (unsigned long) XPNTR (obj));
+		    LISP_OBJECT_UID (obj));
 }
 
 enum printing_badness
@@ -1894,7 +1876,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		  }
 #else /* not NEW_GC */
 		Lisp_String *l = (Lisp_String *) lheader;
-		if (!debug_can_access_memory (l->data_, l->size_))
+		if (l->size_ && !debug_can_access_memory (l->data_, l->size_))
 		  {
 		    printing_major_badness (printcharfun,
 		       "BAD STRING DATA", (int) (lheader->type),
@@ -1935,11 +1917,13 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	      }
 	  }
 
-	if (LHEADER_IMPLEMENTATION (lheader)->printer)
-	  ((LHEADER_IMPLEMENTATION (lheader)->printer)
-	   (obj, printcharfun, escapeflag));
-	else
-	  internal_object_printer (obj, printcharfun, escapeflag);
+	/* Either use a custom-written printer, or use
+	   internal_object_printer or external_object_printer, depending on
+	   whether the object is internal (not visible at Lisp level) or
+	   external. */
+	assert (LHEADER_IMPLEMENTATION (lheader)->printer);
+	((LHEADER_IMPLEMENTATION (lheader)->printer)
+	 (obj, printcharfun, escapeflag));
 	break;
       }
 
@@ -2047,7 +2031,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
     for (; confusing < size; confusing++)
       {
-        if (!isdigit (data[confusing]))
+	if (!isdigit (data[confusing]) && '/' != data[confusing])
           {
             confusing = 0;
             break;
@@ -2059,7 +2043,8 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       /* #### Ugh, this is needlessly complex and slow for what we
          need here.  It might be a good idea to copy equivalent code
          from FSF.  --hniksic */
-      confusing = isfloat_string ((char *) data);
+      confusing = isfloat_string ((char *) data)
+	|| isratio_string ((char *) data);
     if (confusing)
       write_ascstring (printcharfun, "\\");
   }
@@ -2437,19 +2422,10 @@ debug_p4 (Lisp_Object obj)
 	debug_out ("<< bad object type=%d 0x%lx>>", header->type,
 		   (EMACS_INT) header);
       else
-#ifdef NEW_GC
 	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
 		   LHEADER_IMPLEMENTATION (header)->name,
 		   (EMACS_INT) header,
 		   (EMACS_INT) ((struct lrecord_header *) header)->uid);
-#else /* not NEW_GC */
-	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
-		   LHEADER_IMPLEMENTATION (header)->name,
-		   (EMACS_INT) header,
-		   (EMACS_INT) (LHEADER_IMPLEMENTATION (header)->basic_p ?
-				((struct lrecord_header *) header)->uid :
-				((struct old_lcrecord_header *) header)->uid));
-#endif /* not NEW_GC */
     }
 }
 
@@ -2492,6 +2468,33 @@ void
 debug_print (Lisp_Object debug_print_obj)
 {
   external_debug_print (debug_print_obj, EXT_PRINT_ALL);
+}
+
+/* Printf-style output when the objects being printed are Lisp objects.
+   Calling style is e.g.
+
+   debug_out_lisp ("Called foo(%s %s)\n", 2, arg0, arg1)
+*/
+
+void
+debug_out_lisp (const CIbyte *format, int nargs, ...)
+{
+  /* This function cannot GC, since GC is forbidden */
+  struct debug_bindings bindings;
+  int specdepth = debug_print_enter (&bindings);
+  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
+  va_list va;
+  int i;
+  Ibyte *msgout;
+
+  va_start (va, nargs);
+  for (i = 0; i < nargs; i++)
+    args[i] = va_arg (va, Lisp_Object);
+  va_end (va);
+  msgout = emacs_vsprintf_malloc_lisp (format, Qnil, nargs, args, NULL);
+  debug_out ("%s", msgout);
+  xfree (msgout);
+  unbind_to (specdepth);
 }
 
 /* Getting tired of typing debug_print() ... */

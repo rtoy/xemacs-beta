@@ -46,7 +46,6 @@ PHOTODIR = ../etc/photos
 info_files = \
 	$(INFODIR)/beta.info \
 	$(INFODIR)/cl.info \
-	$(INFODIR)/custom.info \
 	$(INFODIR)/emodules.info \
 	$(INFODIR)/external-widget.info \
 	$(INFODIR)/info.info \
@@ -54,7 +53,6 @@ info_files = \
 	$(INFODIR)/lispref.info \
 	$(INFODIR)/new-users-guide.info \
 	$(INFODIR)/standards.info \
-	$(INFODIR)/term.info \
 	$(INFODIR)/termcap.info \
 	$(INFODIR)/texinfo.info \
 	$(INFODIR)/widget.info \
@@ -64,7 +62,6 @@ info_files = \
 html_files = \
 	$(HTMLDIR)/beta.html \
 	$(HTMLDIR)/cl.html \
-	$(HTMLDIR)/custom.html \
 	$(HTMLDIR)/emodules.html \
 	$(HTMLDIR)/external-widget.html \
 	$(HTMLDIR)/info.html \
@@ -72,7 +69,6 @@ html_files = \
 	$(HTMLDIR)/internals.html \
 	$(HTMLDIR)/new-users-guide.html \
 	$(HTMLDIR)/standards.html \
-	$(HTMLDIR)/term.html \
 	$(HTMLDIR)/termcap.html \
 	$(HTMLDIR)/texinfo.html \
 	$(HTMLDIR)/widget.html \
@@ -82,7 +78,6 @@ html_files = \
 dvi_files = \
 	beta.dvi \
 	cl.dvi \
-	custom.dvi \
 	emodules.dvi \
 	external-widget.dvi \
 	info.dvi \
@@ -90,7 +85,6 @@ dvi_files = \
 	internals.dvi \
 	new-users-guide.dvi \
 	standards.dvi \
-	term.dvi \
 	termcap.dvi \
 	texinfo.dvi \
 	widget.dvi \
@@ -100,7 +94,6 @@ dvi_files = \
 pdf_files = \
        beta.pdf \
        cl.pdf \
-       custom.pdf \
        emodules.pdf \
        external-widget.pdf \
        info.pdf \
@@ -108,7 +101,6 @@ pdf_files = \
        internals.pdf \
        new-users-guide.pdf \
        standards.pdf \
-       term.pdf \
        termcap.pdf \
        texinfo.pdf \
        widget.pdf \
@@ -249,9 +241,6 @@ $(INFODIR)/beta.info : beta.texi
 $(INFODIR)/cl.info : cl.texi
 	$(MAKEINFO) -o $(INFODIR)/cl.info cl.texi
 
-$(INFODIR)/custom.info : custom.texi
-	$(MAKEINFO) -o $(INFODIR)/custom.info custom.texi
-
 $(INFODIR)/emodules.info : emodules.texi
 	$(MAKEINFO) -o $(INFODIR)/emodules.info emodules.texi
 
@@ -263,9 +252,6 @@ $(INFODIR)/info.info : info.texi
 
 $(INFODIR)/standards.info : standards.texi
 	$(MAKEINFO) -o $(INFODIR)/standards.info standards.texi
-
-$(INFODIR)/term.info : term.texi
-	$(MAKEINFO) -o $(INFODIR)/term.info term.texi
 
 $(INFODIR)/termcap.info : termcap.texi
 	$(MAKEINFO) -o $(INFODIR)/termcap.info termcap.texi
@@ -360,9 +346,6 @@ $(HTMLDIR)/beta.html : beta.texi
 $(HTMLDIR)/cl.html : cl.texi
 	$(TEXI2HTML_SPLIT) cl.texi
 
-$(HTMLDIR)/custom.html : custom.texi
-	$(TEXI2HTML_SPLIT) custom.texi
-
 $(HTMLDIR)/emodules.html : emodules.texi
 	$(TEXI2HTML_SPLIT) emodules.texi
 
@@ -374,9 +357,6 @@ $(HTMLDIR)/info.html : info.texi
 
 $(HTMLDIR)/standards.html : standards.texi
 	$(TEXI2HTML_SPLIT) standards.texi
-
-$(HTMLDIR)/term.html : term.texi
-	$(TEXI2HTML_SPLIT) term.texi
 
 $(HTMLDIR)/termcap.html : termcap.texi
 	$(TEXI2HTML_SPLIT) termcap.texi

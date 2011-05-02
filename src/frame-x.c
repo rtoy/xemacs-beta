@@ -1,13 +1,14 @@
 /* Functions for the X window system.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2010 Ben Wing.
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not synched with FSF. */
 
@@ -39,7 +38,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x-impl.h"
+#include "fontcolor-x-impl.h"
 #include "scrollbar-x.h"
 
 #include "xintrinsicp.h"	/* CoreP.h needs this */
@@ -74,11 +73,9 @@ static const struct memory_description x_frame_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("x-frame", x_frame,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       x_frame_data_description_1,
-			       Lisp_X_Frame);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("x-frame", x_frame,
+				      0, x_frame_data_description_1,
+				      Lisp_X_Frame);
 #else /* not NEW_GC */
 extern const struct sized_memory_description x_frame_data_description;
 
@@ -226,14 +223,14 @@ decode_x_frame (Lisp_Object frame)
 void
 x_wm_mark_shell_size_user_specified (Widget wmshell)
 {
-  if (! XtIsWMShell (wmshell)) ABORT ();
+  assert (XtIsWMShell (wmshell));
   EmacsShellSetSizeUserSpecified (wmshell);
 }
 
 void
 x_wm_mark_shell_position_user_specified (Widget wmshell)
 {
-  if (! XtIsWMShell (wmshell)) ABORT ();
+  assert (XtIsWMShell (wmshell));
   EmacsShellSetPositionUserSpecified (wmshell);
 }
 
@@ -242,7 +239,7 @@ x_wm_mark_shell_position_user_specified (Widget wmshell)
 void
 x_wm_set_shell_iconic_p (Widget shell, int iconic_p)
 {
-  if (! XtIsWMShell (shell)) ABORT ();
+  assert (XtIsWMShell (shell));
 
   /* Because of questionable logic in Shell.c, this sequence can't work:
 
@@ -271,10 +268,8 @@ x_wm_set_cell_size (Widget wmshell, int cw, int ch)
 {
   Arg al [2];
 
-  if (!XtIsWMShell (wmshell))
-    ABORT ();
-  if (cw <= 0 || ch <= 0)
-    ABORT ();
+  assert (XtIsWMShell (wmshell));
+  assert (cw > 0 && ch > 0);
 
   Xt_SET_ARG (al[0], XtNwidthInc,  cw);
   Xt_SET_ARG (al[1], XtNheightInc, ch);
@@ -286,8 +281,7 @@ x_wm_set_variable_size (Widget wmshell, int width, int height)
 {
   Arg al [2];
 
-  if (!XtIsWMShell (wmshell))
-    ABORT ();
+  assert (XtIsWMShell (wmshell));
 #ifdef DEBUG_GEOMETRY_MANAGEMENT
   /* See comment in EmacsShell.c */
   printf ("x_wm_set_variable_size: %d %d\n", width, height);
@@ -355,8 +349,7 @@ x_wm_store_class_hints (Widget shell, Extbyte *frame_name)
   Extbyte *app_name, *app_class;
   XClassHint classhint;
 
-  if (!XtIsWMShell (shell))
-    ABORT ();
+  assert (XtIsWMShell (shell));
 
   XtGetApplicationNameAndClass (dpy, &app_name, &app_class);
   classhint.res_name = frame_name;
@@ -372,8 +365,7 @@ x_wm_maybe_store_wm_command (struct frame *f)
   Widget w = FRAME_X_SHELL_WIDGET (f);
   struct device *d = XDEVICE (FRAME_DEVICE (f));
 
-  if (!XtIsWMShell (w))
-    ABORT ();
+  assert (XtIsWMShell (w));
 
   if (NILP (DEVICE_X_WM_COMMAND_FRAME (d)))
     {
@@ -540,6 +532,23 @@ x_get_top_level_position (Display *d, Window w, Position *x, Position *y)
   XGetWindowAttributes (d, w, &xwa);
   *x = xwa.x;
   *y = xwa.y;
+}
+
+void x_get_frame_text_position (struct frame *f)
+{
+  Display *dpy = DEVICE_X_DISPLAY (XDEVICE (FRAME_DEVICE (f)));
+  Window window = XtWindow (FRAME_X_TEXT_WIDGET (f));
+  Window root, child;
+  int x, y;
+  unsigned int width, height, border_width;
+  unsigned int depth;
+
+  XGetGeometry (dpy, window, &root, &x, &y, &width, &height, &border_width,
+		&depth);
+  XTranslateCoordinates (dpy, window, root, 0, 0, &x, &y, &child);
+
+  FRAME_X_X (f) = x;
+  FRAME_X_Y (f) = y;
 }
 
 #if 0
@@ -1439,16 +1448,13 @@ x_initialize_frame_size (struct frame *f)
   {
     struct window *win = XWINDOW (f->root_window);
 
-    WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f)
-      + FRAME_LEFT_GUTTER_BOUNDS (f);
-    WINDOW_TOP (win) = FRAME_TOP_BORDER_END (f)
-      + FRAME_TOP_GUTTER_BOUNDS (f);
+    WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
+    WINDOW_TOP (win) = FRAME_PANED_TOP_EDGE (f);
 
     if (!NILP (f->minibuffer_window))
       {
 	win = XWINDOW (f->minibuffer_window);
-	WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f)
-	  + FRAME_LEFT_GUTTER_BOUNDS (f);
+	WINDOW_LEFT (win) = FRAME_PANED_LEFT_EDGE (f);
       }
   }
 
@@ -1526,8 +1532,7 @@ x_initialize_frame_size (struct frame *f)
 
   /* OK, we're a top-level shell. */
 
-  if (!XtIsWMShell (wmshell))
-    ABORT ();
+  assert (XtIsWMShell (wmshell));
 
   /* If the EmacsFrame doesn't have a geometry but the shell does,
      treat that as the geometry of the frame.
@@ -2041,7 +2046,7 @@ allocate_x_frame_struct (struct frame *f)
 {
   /* zero out all slots. */
 #ifdef NEW_GC
-  f->frame_data = alloc_lrecord_type (struct x_frame, &lrecord_x_frame);
+  f->frame_data = XX_FRAME (ALLOC_NORMAL_LISP_OBJECT (x_frame));
 #else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct x_frame);
 #endif /* not NEW_GC */
@@ -2125,9 +2130,13 @@ x_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
 static void
 x_init_frame_3 (struct frame *f)
 {
-  /* Pop up the frame. */
-
+  /* #### NOTE: This whole business of splitting frame initialization into
+     #### different functions is somewhat messy. The latest one seems a good
+     #### place to initialize the edit widget's position because we're sure
+     #### that the frame is now relalized. -- dvl */
+  
   x_popup_frame (f);
+  x_get_frame_text_position (f);
 }
 
 static void
@@ -2754,7 +2763,7 @@ void
 syms_of_frame_x (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (x_frame);
+  INIT_LISP_OBJECT (x_frame);
 #endif /* NEW_GC */
 
   DEFSYMBOL (Qoverride_redirect);

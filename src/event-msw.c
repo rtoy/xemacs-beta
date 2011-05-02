@@ -1,15 +1,15 @@
 /* The mswindows event_stream interface.
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 1996, 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
    Copyright (C) 1997 Jonathan Harris.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -83,7 +81,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-stream-impl.h"
 #include "console-msw-impl.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #ifdef HAVE_SCROLLBARS
 # include "scrollbar-msw.h"
@@ -3386,13 +3384,9 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	      FRAME_PIXWIDTH (frame) = rect.right;
 	      FRAME_PIXHEIGHT (frame) = rect.bottom;
 
-	      pixel_to_real_char_size (frame, rect.right, rect.bottom,
-				       &FRAME_MSWINDOWS_CHARWIDTH (frame),
-				       &FRAME_MSWINDOWS_CHARHEIGHT (frame));
-
-	      pixel_to_char_size (frame, rect.right, rect.bottom, &columns,
+	      pixel_to_frame_unit_size (frame, rect.right, rect.bottom, &columns,
 				  &rows);
-	      change_frame_size (frame, rows, columns, 1);
+	      change_frame_size (frame, columns, rows, 1);
 
 	      /* If we are inside frame creation, we have to apply geometric
 		 properties now. */
@@ -3477,7 +3471,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				GetMenu(hwnd) != NULL,
 				qxeGetWindowLong (hwnd, GWL_EXSTYLE));
 
-	    round_size_to_real_char (XFRAME (mswindows_find_frame (hwnd)),
+	    round_size_to_char (XFRAME (mswindows_find_frame (hwnd)),
 				     wp->cx - (ncsize.right - ncsize.left),
 				     wp->cy - (ncsize.bottom - ncsize.top),
 				     &pixwidth, &pixheight);

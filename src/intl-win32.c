@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -42,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "window-impl.h"
 
 #include "console-msw-impl.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #ifndef CYGWIN_HEADERS
 # include <mbctype.h>
@@ -1792,9 +1790,14 @@ mswindows_multibyte_to_unicode_putprop (Lisp_Object codesys,
 	data->cp_type = MULTIBYTE_MAC;
       else
 	{
-	  CHECK_NATNUM (value);
 	  data->locale_type = MULTIBYTE_SPECIFIED_CODE_PAGE;
-	  data->cp = XINT (value);
+#ifdef HAVE_BIGNUM
+          check_integer_range (value, Qzero, make_integer (INT_MAX));
+	  data->cp = BIGNUMP (value) ? bignum_to_int (XBIGNUM_DATA (value)) : XINT (value);
+#else
+          CHECK_NATNUM (value);
+          data->cp = XINT (value);
+#endif
 	}
     }
   else if (EQ (key, Qlocale))
@@ -2329,10 +2332,10 @@ vars_of_intl_win32 (void)
 {
 #ifdef MULE
   Vmswindows_charset_code_page_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vmswindows_charset_code_page_table);
   Vmswindows_charset_registry_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vmswindows_charset_registry_table);
 #endif /* MULE */
 }
@@ -2353,14 +2356,15 @@ complex_vars_of_intl_win32 (void)
   Fmake_coding_system_internal
     (Qmswindows_unicode, Qunicode,
      build_defer_string ("MS Windows Unicode"),
-     nconc2 (list4 (Qdocumentation,
-		    build_defer_string (
+     listu (Qdocumentation,
+            build_defer_string (
 "Converts to the Unicode encoding for Windows API calls.\n"
 "This encoding is equivalent to standard UTF16, little-endian."
 ),
-		    Qmnemonic, build_ascstring ("MSW-U")),
-	     list4 (Qunicode_type, Qutf_16,
-		    Qlittle_endian, Qt)));
+            Qmnemonic, build_ascstring ("MSW-U"),
+            Qunicode_type, Qutf_16,
+            Qlittle_endian, Qt,
+            Qunbound));
 
 #ifdef MULE
   /* Just temporarily.  This will get fixed in mule-msw-init.el. */

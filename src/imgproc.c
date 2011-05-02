@@ -1,12 +1,12 @@
 /* Image processing functions
    Copyright (C) 1998 Jareth Hein
 
-This file is a part of XEmacs
+This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +14,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -27,6 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
    Copyright (c) 1988-1997 Sam Leffler
    Copyright (c) 1991-1997 Silicon Graphics, Inc.
+   Copyright (C) 2010 Ben Wing.
    
    Permission to use, copy, modify, distribute, and sell this software and 
    its documentation for any purpose is hereby granted without fee, provided
@@ -551,8 +550,12 @@ build_EImage_quantable(Binbyte *eimage, int width, int height, int num_colors)
   /* 5c: done with ColorCells */
   for (i = 0; i < C_LEN*C_LEN*C_LEN; i++)
     if (qt->ColorCells[i])
-      xfree (qt->ColorCells[i]);
+      {
+	xfree (qt->ColorCells[i]);
+	qt->ColorCells[i] = 0;
+      }
   xfree (qt->ColorCells);
+  qt->ColorCells = 0;
   
   if (res)
     {

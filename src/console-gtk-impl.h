@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -50,7 +48,7 @@ DECLARE_CONSOLE_TYPE (gtk);
 struct gtk_device
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   /* Gtk application info. */
   GtkWidget *gtk_app_shell;
@@ -115,7 +113,7 @@ struct gtk_device
 #ifdef NEW_GC
 typedef struct gtk_device Lisp_Gtk_Device;
 
-DECLARE_LRECORD (gtk_device, Lisp_Gtk_Device);
+DECLARE_LISP_OBJECT (gtk_device, Lisp_Gtk_Device);
 
 #define XGTK_DEVICE(x) \
   XRECORD (x, gtk_device, Lisp_Gtk_Device)
@@ -144,7 +142,7 @@ DECLARE_LRECORD (gtk_device, Lisp_Gtk_Device);
 struct gtk_frame
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
 
   /* The widget of this frame. */
@@ -159,6 +157,11 @@ struct gtk_frame
   /* The widget of the edit portion of this frame; this is a GtkDrawingArea,
      and the window of this widget is what the redisplay code draws on. */
   GtkWidget *edit_widget;
+  /* #### WARNING: this does not currently work. -- dvl
+     Position of the edit widget above, for absolute background placement.
+     
+     int x, y;
+  */
 
   /* Lists the widgets above the text area, in the proper order. */
   GtkWidget *top_widgets[MAX_CONCURRENT_TOP_WIDGETS];
@@ -203,7 +206,7 @@ struct gtk_frame
 #ifdef NEW_GC
 typedef struct gtk_frame Lisp_Gtk_Frame;
 
-DECLARE_LRECORD (gtk_frame, Lisp_Gtk_Frame);
+DECLARE_LISP_OBJECT (gtk_frame, Lisp_Gtk_Frame);
 
 #define XGTK_FRAME(x) \
   XRECORD (x, gtk_frame, Lisp_Gtk_Frame)
@@ -213,6 +216,10 @@ DECLARE_LRECORD (gtk_frame, Lisp_Gtk_Frame);
 
 #define FRAME_GTK_DATA(f) FRAME_TYPE_DATA (f, gtk)
 
+/* #### WARNING: this does not currently work. -- dvl
+   #define FRAME_GTK_X(f) (FRAME_GTK_DATA (f)->x)
+   #define FRAME_GTK_Y(f) (FRAME_GTK_DATA (f)->y)
+*/
 #define FRAME_GTK_SHELL_WIDGET(f)	    (FRAME_GTK_DATA (f)->widget)
 #define FRAME_GTK_CONTAINER_WIDGET(f) (FRAME_GTK_DATA (f)->container)
 #define FRAME_GTK_MENUBAR_WIDGET(f)   (FRAME_GTK_DATA (f)->menubar_widget)

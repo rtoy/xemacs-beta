@@ -6,10 +6,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to the Free
-Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* This file has been Mule-ized, Ben Wing, 1-26-10. */
 
@@ -345,7 +343,7 @@ my_find_image (const char *name)
 }
 
 /*
- * dyld adds libraries by first adding the directly dependant libraries in
+ * dyld adds libraries by first adding the directly dependent libraries in
  * link order, and then adding the dependencies for those libraries, so we
  * should do the same... but we don't bother adding the extra dependencies, if
  * the symbols are neither in the loaded image nor any of it's direct
@@ -368,9 +366,9 @@ search_linked_libs (const struct mach_header * mh, const Ibyte *symbol)
 	  struct mach_header *wh;
 
 	  if ((wh = (struct mach_header *)
-	       my_find_image((Rawbyte *)
+	       my_find_image((const Chbyte *)
 			     (((struct dylib_command *) lc)->
-			      dylib.name.offset + (Rawbyte *) lc))))
+			      dylib.name.offset + (const Chbyte *) lc))))
 	    {
 	      Extbyte *symext =
 		ITEXT_TO_EXTERNAL (symbol, Qdll_symbol_encoding);
@@ -442,7 +440,7 @@ dll_variable (dll_handle h, const Ibyte *n)
   MAYBE_PREPEND_UNDERSCORE (n);
   next = ITEXT_TO_EXTERNAL (n, Qdll_variable_name_encoding);
 
-  sym = NSLookupSymbolInModule ((NSModule) h, n);
+  sym = NSLookupSymbolInModule ((NSModule) h, (const Chbyte *)n);
   if (sym == 0) return 0;
   return (dll_var) NSAddressOfSymbol (sym);
 }

@@ -11,20 +11,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -2487,12 +2485,12 @@ when he invoked the menu."
 	  (widget-put old :value internal)))
     ;; Find new choice.
     (setq current
-	  (cond ((= (length args) 0)
+	  (cond ((eql (length args) 0)
 		 nil)
-		((= (length args) 1)
+		((eql (length args) 1)
 		 (nth 0 args))
 		((and widget-choice-toggle
-		      (= (length args) 2)
+		      (eql (length args) 2)
 		      (memq old args))
 		 (if (eq old (nth 0 args))
 		     (nth 1 args)
@@ -3639,7 +3637,7 @@ It will read a directory name from the minibuffer when invoked."
 				 (widget-get widget :prompt-match)
 				 nil initial history)))
     (if (and (stringp answer)
-	     (not (zerop (length answer))))
+	     (not (eql (length answer) 0)))
 	answer
       (error "No value"))))
 
@@ -4031,7 +4029,7 @@ The parent of several `radio-button' widgets, one for each option."
   "Prompt for a color."
   (let* ((tag (widget-apply widget :menu-tag-get))
 	 (answer (read-color (concat tag ": "))))
-    (unless (zerop (length answer))
+    (unless (eql (length answer) 0)
       (widget-value-set widget answer)
       (widget-setup)
       (widget-apply widget :notify widget event))))

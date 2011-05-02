@@ -1,14 +1,14 @@
 /* Conversion functions for I18N encodings, but not Unicode (in separate file).
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.3.   Not in FSF. */
 
@@ -2545,7 +2543,7 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	  if (EQ (charset, Vcharset_control_1))
 	    {
 	      if (XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)
-		  && fit_to_be_escape_quoted (c))
+		  && fit_to_be_escape_quoted (c - 0x20))
 		Dynarr_add (dst, ISO_CODE_ESC);
 	      /* you asked for it ... */
 	      Dynarr_add (dst, c - 0x20);
@@ -2839,14 +2837,15 @@ iso2022_putprop (Lisp_Object codesys,
   return 1;
 }
 
-static void
-iso2022_finalize_coding_stream (
 #ifdef ENABLE_COMPOSITE_CHARS
-				struct coding_stream *str
+#define USED_IF_COMPOSITE_CHARS(x) x
 #else
-				struct coding_stream *UNUSED (str)
+#define USED_IF_COMPOSITE_CHARS(x) UNUSED (x)
 #endif
-				)
+
+static void
+iso2022_finalize_coding_stream (struct coding_stream *
+				USED_IF_COMPOSITE_CHARS (str))
 {
 #ifdef ENABLE_COMPOSITE_CHARS
   struct iso2022_coding_stream *data =
@@ -3247,7 +3246,10 @@ iso2022_finalize_detection_state (struct detection_state *st)
 {
   struct iso2022_detector *data = DETECTION_STATE_DATA (st, iso2022);
   if (data->iso)
-    xfree (data->iso);
+    {
+      xfree (data->iso);
+      data->iso = 0;
+    }
 }
 
 
@@ -3966,9 +3968,9 @@ reinit_vars_of_mule_coding (void)
 void
 vars_of_mule_coding (void)
 {
-  /* This needs to be HASH_TABLE_EQ, there's a corner case where
-     HASH_TABLE_EQUAL won't work. */
+  /* This needs to be Qeq, there's a corner case where
+     Qequal won't work. */
   Vfixed_width_query_ranges_cache
-   = make_lisp_hash_table (32, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
+   = make_lisp_hash_table (32, HASH_TABLE_KEY_WEAK, Qeq);
   staticpro (&Vfixed_width_query_ranges_cache);
 }

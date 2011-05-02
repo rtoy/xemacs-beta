@@ -1,14 +1,14 @@
 /* LDAP client interface for XEmacs.
    Copyright (C) 1998 Free Software Foundation, Inc.
-   Copyright (C) 2004 Ben Wing.
+   Copyright (C) 2004, 2005, 2010 Ben Wing.
    
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -130,7 +128,7 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
   Lisp_LDAP *ldap = XLDAP (obj);
 
   if (print_readably)
-    printing_unreadable_object ("#<ldap %s>", XSTRING_DATA (ldap->host));
+    printing_unreadable_object_fmt ("#<ldap %s>", XSTRING_DATA (ldap->host));
 
   write_fmt_string_lisp (printcharfun, "#<ldap %S", 1, ldap->host);
   if (!ldap->ld)
@@ -141,7 +139,7 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 static Lisp_LDAP *
 allocate_ldap (void)
 {
-  Lisp_LDAP *ldap = ALLOC_LCRECORD_TYPE (Lisp_LDAP, &lrecord_ldap);
+  Lisp_LDAP *ldap = XLDAP (ALLOC_NORMAL_LISP_OBJECT (ldap));
 
   ldap->ld = NULL;
   ldap->host = Qnil;
@@ -149,23 +147,19 @@ allocate_ldap (void)
 }
 
 static void
-finalize_ldap (void *header, int for_disksave)
+finalize_ldap (Lisp_Object obj)
 {
-  Lisp_LDAP *ldap = (Lisp_LDAP *) header;
-
-  if (for_disksave)
-    invalid_operation ("Can't dump an emacs containing LDAP objects",
-			 make_ldap (ldap));
+  Lisp_LDAP *ldap = XLDAP (obj);
 
   if (ldap->ld)
     ldap_unbind (ldap->ld);
   ldap->ld = NULL;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("ldap", ldap, 0,
-                               mark_ldap, print_ldap, finalize_ldap,
-                               NULL, NULL, ldap_description, Lisp_LDAP);
-
+DEFINE_NODUMP_LISP_OBJECT ("ldap", ldap, mark_ldap,
+			   print_ldap, finalize_ldap,
+			   NULL, NULL, ldap_description,
+			   Lisp_LDAP);
 
 /************************************************************************/
 /*                        Basic ldap accessors                          */
@@ -616,7 +610,6 @@ containing attribute/value string pairs.
   int rc;
   int i, j;
   Elemcount len;
-
   Lisp_Object values  = Qnil;
   struct gcpro gcpro1;
 
@@ -715,7 +708,6 @@ or `replace'. ATTR is the LDAP attribute type to modify.
   int i, j, rc;
   Lisp_Object mod_op;
   Elemcount len;
-
   Lisp_Object values  = Qnil;
   struct gcpro gcpro1;
 
@@ -816,7 +808,7 @@ DN is the distinguished name of the entry to delete.
 void
 syms_of_eldap (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (ldap);
+  INIT_LISP_OBJECT (ldap);
 
   DEFSYMBOL (Qeldap);
   DEFSYMBOL (Qldapp);
@@ -878,7 +870,7 @@ void
 unload_eldap (void)
 {
   /* Remove defined types */
-  UNDEF_LRECORD_IMPLEMENTATION (ldap);
+  UNDEF_LISP_OBJECT (ldap);
 
   /* Remove staticpro'ing of symbols */
   unstaticpro_nodump (&Qeldap);

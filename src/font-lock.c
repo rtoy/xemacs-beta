@@ -1,14 +1,14 @@
 /* Routines to compute the current syntactic context, for font-lock mode.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003 Ben Wing.
+   Copyright (C) 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -529,7 +527,7 @@ find_context (struct buffer *buf, Charbpos pt)
 	      context_cache.context = context_comment;
 	      context_cache.ccontext = ccontext_none;
 	      context_cache.style = SINGLE_SYNTAX_STYLE (syncode);
-	      if (context_cache.style == comment_style_none) ABORT ();
+	      assert (context_cache.style != comment_style_none);
 	    }
 	  break;
 
@@ -621,7 +619,7 @@ find_context (struct buffer *buf, Charbpos pt)
 	{
 	  context_cache.ccontext = ccontext_start2;
 	  context_cache.style = SYNTAX_START_STYLE (prev_syncode, syncode);
-	  if (context_cache.style == comment_style_none) ABORT ();
+	  assert (context_cache.style != comment_style_none);
 	}
       else if ((SYNTAX_CODE_COMMENT_BITS (syncode) &
 		SYNTAX_FIRST_CHAR_START) &&
@@ -659,18 +657,18 @@ find_context (struct buffer *buf, Charbpos pt)
 	   of a comment-end sequence. ie, '/xxx foo xxx/' or
 	   '/xxx foo x/', where 'x' = '*' -- mct */
 	{
-	  if (context_cache.style == comment_style_none) ABORT ();
+	  assert (context_cache.style != comment_style_none);
 	  context_cache.ccontext = ccontext_end1;
 	}
 
       else if (context_cache.ccontext == ccontext_start1)
 	{
-	  if (context_cache.context != context_none) ABORT ();
+	  assert (context_cache.context == context_none);
 	  context_cache.ccontext = ccontext_none;
 	}
       else if (context_cache.ccontext == ccontext_end1)
 	{
-	  if (context_cache.context != context_block_comment) ABORT ();
+	  assert (context_cache.context == context_block_comment);
 	  context_cache.context = context_none;
 	  context_cache.ccontext = ccontext_start2;
 	}
@@ -679,7 +677,7 @@ find_context (struct buffer *buf, Charbpos pt)
 	  context_cache.context == context_none)
 	{
 	  context_cache.context = context_block_comment;
-	  if (context_cache.style == comment_style_none) ABORT ();
+	  assert (context_cache.style != comment_style_none);
 	}
       else if (context_cache.ccontext == ccontext_none &&
 	       context_cache.context == context_block_comment)

@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.3.  Not synched with FSF.
 
@@ -42,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Char_Table_Entry
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* In the interests of simplicity, we just use a fixed 96-entry
      table.  If we felt like being smarter, we could make this
@@ -51,7 +49,7 @@ struct Lisp_Char_Table_Entry
 };
 typedef struct Lisp_Char_Table_Entry Lisp_Char_Table_Entry;
 
-DECLARE_LRECORD (char_table_entry, Lisp_Char_Table_Entry);
+DECLARE_LISP_OBJECT (char_table_entry, Lisp_Char_Table_Entry);
 #define XCHAR_TABLE_ENTRY(x) \
   XRECORD (x, char_table_entry, Lisp_Char_Table_Entry)
 #define wrap_char_table_entry(p) wrap_record (p, char_table_entry)
@@ -80,7 +78,7 @@ enum char_table_type
 
 struct Lisp_Char_Table
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object ascii[NUM_ASCII_CHARS];
   Lisp_Object default_;
@@ -128,7 +126,7 @@ struct Lisp_Char_Table
 };
 typedef struct Lisp_Char_Table Lisp_Char_Table;
 
-DECLARE_LRECORD (char_table, Lisp_Char_Table);
+DECLARE_LISP_OBJECT (char_table, Lisp_Char_Table);
 #define XCHAR_TABLE(x) XRECORD (x, char_table, Lisp_Char_Table)
 #define wrap_char_table(p) wrap_record (p, char_table)
 #define CHAR_TABLEP(x) RECORDP (x, char_table)

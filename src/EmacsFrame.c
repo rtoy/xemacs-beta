@@ -1,14 +1,14 @@
 /* The emacs frame widget.
    Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1995 Sun Microsystems, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -37,7 +35,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x.h"
+#include "fontcolor-x.h"
 
 #include <X11/Shell.h>
 #include <X11/Xmu/CharSet.h>
@@ -324,8 +322,8 @@ EmacsFrameResize (Widget widget)
 
   update_various_frame_slots (ew);
 
-  pixel_to_char_size (f, ew->core.width, ew->core.height, &columns, &rows);
-  change_frame_size (f, rows, columns, 0);
+  pixel_to_frame_unit_size (f, ew->core.width, ew->core.height, &columns, &rows);
+  change_frame_size (f, columns, rows, 0);
 
   /* The code below is just plain wrong.  If the EmacsShell or EmacsManager
      needs to know, they should just ask.  If needed information is being
@@ -411,49 +409,49 @@ EmacsFrameSetValues (Widget cur_widget, Widget UNUSED (req_widget),
       if (cur->emacs_frame.top_toolbar_height !=
 	  new_->emacs_frame.top_toolbar_height)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_size[TOP_TOOLBAR],
+	  (Vtoolbar_size[TOP_EDGE],
 	   make_int (new_->emacs_frame.top_toolbar_height),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.bottom_toolbar_height !=
 	  new_->emacs_frame.bottom_toolbar_height)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_size[BOTTOM_TOOLBAR],
+	  (Vtoolbar_size[BOTTOM_EDGE],
 	   make_int (new_->emacs_frame.bottom_toolbar_height),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.left_toolbar_width !=
 	  new_->emacs_frame.left_toolbar_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_size[LEFT_TOOLBAR],
+	  (Vtoolbar_size[LEFT_EDGE],
 	   make_int (new_->emacs_frame.left_toolbar_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.right_toolbar_width !=
 	  new_->emacs_frame.right_toolbar_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_size[RIGHT_TOOLBAR],
+	  (Vtoolbar_size[RIGHT_EDGE],
 	   make_int (new_->emacs_frame.right_toolbar_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.top_toolbar_border_width !=
 	  new_->emacs_frame.top_toolbar_border_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_border_width[TOP_TOOLBAR],
+	  (Vtoolbar_border_width[TOP_EDGE],
 	   make_int (new_->emacs_frame.top_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.bottom_toolbar_border_width !=
 	  new_->emacs_frame.bottom_toolbar_border_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_border_width[BOTTOM_TOOLBAR],
+	  (Vtoolbar_border_width[BOTTOM_EDGE],
 	   make_int (new_->emacs_frame.bottom_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.left_toolbar_border_width !=
 	  new_->emacs_frame.left_toolbar_border_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_border_width[LEFT_TOOLBAR],
+	  (Vtoolbar_border_width[LEFT_EDGE],
 	   make_int (new_->emacs_frame.left_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.right_toolbar_border_width !=
 	  new_->emacs_frame.right_toolbar_border_width)
 	Fadd_spec_to_specifier
-	  (Vtoolbar_border_width[RIGHT_TOOLBAR],
+	  (Vtoolbar_border_width[RIGHT_EDGE],
 	   make_int (new_->emacs_frame.right_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
 #endif /* HAVE_TOOLBARS */
@@ -589,10 +587,9 @@ EmacsFrameRecomputeCellSize (Widget w)
   int cw, ch;
   struct frame *f = ew->emacs_frame.frame;
 
-  if (! XtIsSubclass (w, emacsFrameClass))
-    ABORT ();
+  assert (XtIsSubclass (w, emacsFrameClass));
 
-  default_face_height_and_width (wrap_frame (f), &ch, &cw);
+  default_face_width_and_height (wrap_frame (f), &cw, &ch);
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_set_cell_size (FRAME_X_SHELL_WIDGET (f), cw, ch);
 }

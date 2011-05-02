@@ -3,24 +3,22 @@
    Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1998, 1999 J. Kean Johnston.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
-XEmacs is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 21.3. */
 
@@ -651,11 +649,11 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
 	}
 
       /* Print the C argument list as it would appear in lisp:
-	 print underscores as hyphens, and print commas and newlines
+	 print underscores as hyphens, and print commas, tabs and newlines
 	 as spaces.  Collapse adjacent spaces into one.  */
       if (c == '_')
 	c = '-';
-      else if (c == ',' /* || c == '\n' */)
+      else if (c == ',' || c == '\n' || c == '\t')
 	c = ' ';
       /* XEmacs change: handle \n below for readability */
 
@@ -682,18 +680,28 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
 	  in_ident = 0;
 	  just_spaced = 0;
 	}
-      /* XEmacs change: if the character is carriage return or linefeed,
-	 escape it for the compiler */
+#if 0
+      /* [[ XEmacs change: if the character is carriage return or linefeed,
+	 escape it for the compiler ]] I doubt the clause with '\r' ever
+	 worked right, and outputting newlines now screws up the regexp
+	 in function-documentation-1, so don't do this; instead, we treat
+	 newlines like spaces. --ben */
       else if (c == '\n')
 	{
 	  putc('\\', out);
 	  putc('\n', out);
+	  c = ' ';
 	}
       else if (c == '\r')
 	{
 	  putc('\\', out);
 	  putc('\r', out);
 	}
+#else
+      else if (c == '\r') /* Just eat it, since we expect a newline to
+			     follow */
+	;
+#endif /* (not) 0 */
       else if (c != ' ' || !just_spaced)
 	{
 	  if (c >= 'a' && c <= 'z')
@@ -1074,6 +1082,7 @@ scan_lisp_file (const char *filename, const char *mode)
     {
       char buffer[BUFSIZ];
       char type;
+      int no_docstring = 0;
 
       /* If not at end of line, skip till we get to one.  */
       if (c != '\n')
@@ -1177,7 +1186,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	      fprintf (stderr, "## non-docstring in %s (%s)\n",
 		       buffer, filename);
 #endif
-	      continue;
+	      no_docstring = 1;
 	    }
 	}
 
@@ -1207,7 +1216,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  fprintf (stderr, "## non-docstring in %s (%s)\n",
 			   buffer, filename);
 #endif
-		  continue;
+                  no_docstring = 1;
 		}
 	    }
 	}
@@ -1266,7 +1275,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  fprintf (stderr, "## non-docstring in %s (%s)\n",
 			   buffer, filename);
 #endif
-		  continue;
+		  no_docstring = 1;
 		}
 	    }
 	}
@@ -1323,7 +1332,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  fprintf (stderr, "## non-docstring in %s (%s)\n",
 			   buffer, filename);
 #endif
-		  continue;
+                  no_docstring = 1;
 		}
 	    }
 	}
@@ -1381,7 +1390,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  fprintf (stderr, "## non-docstring in %s (%s)\n",
 			   buffer, filename);
 #endif
-		  continue;
+                  no_docstring = 1;
 		}
 	    }
 	}
@@ -1412,15 +1421,18 @@ scan_lisp_file (const char *filename, const char *mode)
       putc (037, outfile);
       putc (type, outfile);
       fprintf (outfile, "%s\n", buffer);
-      if (saved_string)
-	{
-	  fputs (saved_string, outfile);
-	  /* Don't use one dynamic doc string twice.  */
-	  free (saved_string);
-	  saved_string = 0;
-	}
-      else
-	read_c_string (infile, 1, 0);
+      if (!no_docstring)
+        {
+          if (saved_string)
+            {
+              fputs (saved_string, outfile);
+              /* Don't use one dynamic doc string twice.  */
+              free (saved_string);
+              saved_string = 0;
+            }
+          else
+            read_c_string (infile, 1, 0);
+        }
     }
   fclose (infile);
   return 0;

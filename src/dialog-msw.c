@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -183,12 +181,11 @@ mark_mswindows_dialog_id (Lisp_Object obj)
   return data->callbacks;
 }
 
-DEFINE_LRECORD_IMPLEMENTATION ("mswindows-dialog-id", mswindows_dialog_id,
-			       0, /* dump-able flag */
-			       mark_mswindows_dialog_id,
-			       internal_object_printer, 0, 0, 0, 
-			       mswindows_dialog_id_description,
-			       struct mswindows_dialog_id);
+DEFINE_NODUMP_INTERNAL_LISP_OBJECT ("mswindows-dialog-id",
+				    mswindows_dialog_id,
+				    mark_mswindows_dialog_id,
+				    mswindows_dialog_id_description,
+				    struct mswindows_dialog_id);
 
 /* Dialog procedure */
 static BOOL CALLBACK 
@@ -442,6 +439,7 @@ handle_directory_dialog_box (struct frame *f, Lisp_Object keys)
 	{
 	  ret = tstr_to_local_file_format (pd.unknown_fname);
 	  xfree (pd.unknown_fname);
+	  pd.unknown_fname = 0;
 	}
       else while (1)
 	signal_quit ();
@@ -748,13 +746,9 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
      GC-protected and thus it is put into a statically protected
      list. */
   {
-    Lisp_Object dialog_data;
     int i;
-    struct mswindows_dialog_id *did =
-      ALLOC_LCRECORD_TYPE (struct mswindows_dialog_id,
-			   &lrecord_mswindows_dialog_id);
-    
-    dialog_data = wrap_mswindows_dialog_id (did);
+    Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (mswindows_dialog_id);
+    struct mswindows_dialog_id *did = XMSWINDOWS_DIALOG_ID (obj);
     
     did->frame = wrap_frame (f);
     did->callbacks = make_vector (Dynarr_length (dialog_items), Qunbound);
@@ -767,16 +761,16 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
       qxeCreateDialogIndirectParam (NULL,
 				    (LPDLGTEMPLATE) Dynarr_begin (template_),
 				    FRAME_MSWINDOWS_HANDLE (f), dialog_proc,
-				    (LPARAM) STORE_LISP_IN_VOID (dialog_data));
+				    (LPARAM) STORE_LISP_IN_VOID (obj));
     if (!did->hwnd)
       /* Something went wrong creating the dialog */
       signal_error (Qdialog_box_error, "Creating dialog", keys);
     
-    Vdialog_data_list = Fcons (dialog_data, Vdialog_data_list);
+    Vdialog_data_list = Fcons (obj, Vdialog_data_list);
     
     /* Cease protection and free dynarrays */
     unbind_to (unbind_count);
-    return dialog_data;
+    return obj;
   }
 }
 
@@ -814,7 +808,7 @@ console_type_create_dialog_mswindows (void)
 void
 syms_of_dialog_mswindows (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (mswindows_dialog_id);
+  INIT_LISP_OBJECT (mswindows_dialog_id);
   
   DEFKEYWORD (Q_initial_directory);
   DEFKEYWORD (Q_initial_filename);

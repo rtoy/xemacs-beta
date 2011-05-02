@@ -3,14 +3,14 @@
    Copyright (C) 1994 Amdahl Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -102,6 +100,7 @@ mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
       assert (!NILP (ptr));
       DestroyWindow (SCROLLBAR_MSW_HANDLE (sb));
       xfree (sb->scrollbar_data);
+      sb->scrollbar_data = 0;
     }
 }
 
@@ -423,23 +422,15 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
 
 #ifdef MEMORY_USAGE_STATS
 
-static int
+static Bytecount
 mswindows_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 					    struct scrollbar_instance *inst,
-					    struct overhead_stats *ovstats)
+					    struct usage_stats *ustats)
 {
-  int total = 0;
+  struct mswindows_scrollbar_data *data =
+    (struct mswindows_scrollbar_data *) inst->scrollbar_data;
 
-  while (inst)
-    {
-      struct mswindows_scrollbar_data *data =
-	(struct mswindows_scrollbar_data *) inst->scrollbar_data;
-
-      total += malloced_storage_size (data, sizeof (*data), ovstats);
-      inst = inst->next;
-    }
-
-  return total;
+  return malloced_storage_size (data, sizeof (*data), ustats);
 }
 
 #endif /* MEMORY_USAGE_STATS */
@@ -497,5 +488,5 @@ vars_of_scrollbar_mswindows (void)
 
   staticpro (&Vmswindows_scrollbar_instance_table);
   Vmswindows_scrollbar_instance_table =
-    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, Qeq);
 }

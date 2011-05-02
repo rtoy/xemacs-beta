@@ -1,14 +1,14 @@
 /* Functions to handle multilingual characters.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2004, 2005 Ben Wing.
+   Copyright (C) 2001, 2002, 2004, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 20.3.  Not in FSF. */
 
@@ -34,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "lstream.h"
 #include "mule-ccl.h"
-#include "objects.h"
+#include "fontcolor.h"
 #include "specifier.h"
 
 /* The various pre-defined charsets. */
@@ -141,7 +139,7 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Charset *cs = XCHARSET (obj);
 
   if (print_readably)
-    printing_unreadable_lcrecord
+    printing_unreadable_lisp_object
       (obj, XSTRING_DATA (XSYMBOL (XCHARSET_NAME (obj))->name));
 
   write_fmt_string_lisp (printcharfun, "#<charset %s %S %S %S", 4,
@@ -158,7 +156,7 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
 		    CHARSET_GRAPHIC (cs),
 		    CHARSET_FINAL (cs));
   print_internal (CHARSET_REGISTRIES (cs), printcharfun, 0);
-  write_fmt_string (printcharfun, " 0x%x>", cs->header.uid);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static const struct memory_description charset_description[] = {
@@ -178,10 +176,9 @@ static const struct memory_description charset_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
-			       1, /* dumpable flag */
-                               mark_charset, print_charset, 0,
-			       0, 0, charset_description, Lisp_Charset);
+DEFINE_DUMPABLE_LISP_OBJECT ("charset", charset,
+			     mark_charset, print_charset, 0,
+			     0, 0, charset_description, Lisp_Charset);
 /* Make a new charset. */
 /* #### SJT Should generic properties be allowed? */
 static Lisp_Object
@@ -196,8 +193,8 @@ make_charset (int id, Lisp_Object name, int rep_bytes,
 
   if (!overwrite)
     {
-      cs = ALLOC_LCRECORD_TYPE (Lisp_Charset, &lrecord_charset);
-      obj = wrap_charset (cs);
+      obj = ALLOC_NORMAL_LISP_OBJECT (charset);
+      cs = XCHARSET (obj);
 
       if (final)
 	{
@@ -991,58 +988,25 @@ BUFFER defaults to the current buffer if omitted.
 
 struct charset_stats
 {
-  int from_unicode;
-  int to_unicode;
-  int other;
+  struct usage_stats u;
+  Bytecount from_unicode;
+  Bytecount to_unicode;
 };
 
 static void
 compute_charset_usage (Lisp_Object charset, struct charset_stats *stats,
-		      struct overhead_stats *ovstats)
+		      struct usage_stats *ustats)
 {
-  struct Lisp_Charset *c = XCHARSET (charset);
-  xzero (*stats);
-  stats->other   += LISPOBJ_STORAGE_SIZE (c, sizeof (*c), ovstats);
-  stats->from_unicode += compute_from_unicode_table_size (charset, ovstats);
-  stats->to_unicode += compute_to_unicode_table_size (charset, ovstats);
+  stats->from_unicode += compute_from_unicode_table_size (charset, ustats);
+  stats->to_unicode += compute_to_unicode_table_size (charset, ustats);
 }
 
-DEFUN ("charset-memory-usage", Fcharset_memory_usage, 1, 1, 0, /*
-Return stats about the memory usage of charset CHARSET.
-The values returned are in the form of an alist of usage types and
-byte counts.  The byte counts attempt to encompass all the memory used
-by the charset (separate from the memory logically associated with a
-charset or frame), including internal structures and any malloc()
-overhead associated with them.  In practice, the byte counts are
-underestimated for various reasons, e.g. because certain memory usage
-is very hard to determine \(e.g. the amount of memory used inside the
-Xt library or inside the X server).
-
-Multiple slices of the total memory usage may be returned, separated
-by a nil.  Each slice represents a particular view of the memory, a
-particular way of partitioning it into groups.  Within a slice, there
-is no overlap between the groups of memory, and each slice collectively
-represents all the memory concerned.
-*/
-       (charset))
+static void
+charset_memory_usage (Lisp_Object charset, struct generic_usage_stats *gustats)
 {
-  struct charset_stats stats;
-  struct overhead_stats ovstats;
-  Lisp_Object val = Qnil;
+  struct charset_stats *stats = (struct charset_stats *) gustats;
 
-  charset = Fget_charset (charset);
-  xzero (ovstats);
-  compute_charset_usage (charset, &stats, &ovstats);
-
-  val = acons (Qfrom_unicode,       make_int (stats.from_unicode),      val);
-  val = acons (Qto_unicode,         make_int (stats.to_unicode),        val);
-  val = Fcons (Qnil, val);
-  val = acons (Qactually_requested, make_int (ovstats.was_requested),   val);
-  val = acons (Qmalloc_overhead,    make_int (ovstats.malloc_overhead), val);
-  val = acons (Qgap_overhead,       make_int (ovstats.gap_overhead),    val);
-  val = acons (Qdynarr_overhead,    make_int (ovstats.dynarr_overhead), val);
-
-  return Fnreverse (val);
+  compute_charset_usage (charset, stats, &stats->u);
 }
 
 #endif /* MEMORY_USAGE_STATS */
@@ -1053,9 +1017,17 @@ represents all the memory concerned.
 /************************************************************************/
 
 void
+mule_charset_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (charset, memory_usage);
+#endif
+}
+
+void
 syms_of_mule_charset (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (charset);
+  INIT_LISP_OBJECT (charset);
 
   DEFSUBR (Fcharsetp);
   DEFSUBR (Ffind_charset);
@@ -1075,10 +1047,6 @@ syms_of_mule_charset (void)
   DEFSUBR (Fset_charset_ccl_program);
   DEFSUBR (Fset_charset_registries);
   DEFSUBR (Fcharsets_in_region);
-
-#ifdef MEMORY_USAGE_STATS
-  DEFSUBR (Fcharset_memory_usage);
-#endif
 
   DEFSYMBOL (Qcharsetp);
   DEFSYMBOL (Qregistries);
@@ -1128,6 +1096,11 @@ vars_of_mule_charset (void)
 {
   int i, j, k;
 
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY
+    (charset, memusage_stats_list, list2 (Qfrom_unicode, Qto_unicode));
+#endif /* MEMORY_USAGE_STATS */
+
   chlook = xnew_and_zero (struct charset_lookup); /* zero for Purify. */
   dump_add_root_block_ptr (&chlook, &charset_lookup_description);
 
@@ -1146,7 +1119,7 @@ vars_of_mule_charset (void)
 
   staticpro (&Vcharset_hash_table);
   Vcharset_hash_table =
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
 }
 
 void

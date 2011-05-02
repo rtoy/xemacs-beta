@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -57,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
 typedef struct Lisp_Devmode Lisp_Devmode;
 
 
-DECLARE_LRECORD (devmode, Lisp_Devmode);
+DECLARE_LISP_OBJECT (devmode, Lisp_Devmode);
 #define XDEVMODE(x) XRECORD (x, devmode, Lisp_Devmode)
 #define wrap_devmode(p) wrap_record (p, devmode)
 #define DEVMODEP(x) RECORDP (x, devmode)
@@ -210,7 +208,7 @@ EXFUN (Fmswindows_set_charset_code_page, 2);
 
 struct mswindows_dialog_id;
 
-DECLARE_LRECORD (mswindows_dialog_id, struct mswindows_dialog_id);
+DECLARE_LISP_OBJECT (mswindows_dialog_id, struct mswindows_dialog_id);
 #define XMSWINDOWS_DIALOG_ID(x) XRECORD (x, mswindows_dialog_id, struct mswindows_dialog_id)
 #define wrap_mswindows_dialog_id(p) wrap_record (p, mswindows_dialog_id)
 #define MSWINDOWS_DIALOG_IDP(x) RECORDP (x, mswindows_dialog_id)

@@ -12,20 +12,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -870,7 +868,7 @@ Show the buffer in another window, but don't select it."
 	;; under point:
 	(let ((choice (completing-read "Customize face: (default all) "
 				       obarray 'find-face)))
-	  (if (zerop (length choice))
+	  (if (eql (length choice) 0)
 	      nil
 	    (list (intern choice))))
       (cond ((symbolp faces)
@@ -884,7 +882,7 @@ Show the buffer in another window, but don't select it."
 				      (list (symbol-name face) face))
 				    faces)
 			    nil t)))
-	       (if (zerop (length choice))
+	       (if (eql (length choice) 0)
 		   (list faces)
 		 (list (intern choice)))))))))
 
@@ -1184,7 +1182,7 @@ Invoke ")
   (widget-insert "\n")
   (message "Creating customization items...")
   (setq custom-options
-	(if (= (length options) 1)
+	(if (eql (length options) 1)
 	    (mapcar (lambda (entry)
 		      (widget-create (nth 1 entry)
 				     :documentation-shown t
@@ -2445,7 +2443,7 @@ standard setting."
     (when (or (get symbol 'saved-value) (get symbol 'saved-variable-comment))
       (put symbol 'saved-value nil)
       (custom-push-theme 'theme-value symbol 'user 'reset 'standard)
-      ;; As a special optimizations we do not (explictly)
+      ;; As a special optimization we do not (explicitly)
       ;; save resets to standard when no theme sets the value.
       (if (null (cdr (get symbol 'theme-value)))
 	  (put symbol 'theme-value nil))
@@ -2910,7 +2908,7 @@ settings."
     (when (or (get symbol 'saved-face) (get symbol 'saved-face-comment))
       (put symbol 'saved-face nil)
       (custom-push-theme 'theme-face symbol 'user 'reset 'standard)
-      ;; Do not explictly save resets to standards without themes.
+      ;; Do not explicitly save resets to standards without themes.
       (if (null (cdr (get symbol 'theme-face)))
 	  (put symbol  'theme-face nil))
       (put symbol 'saved-face-comment nil)
@@ -2985,7 +2983,7 @@ settings."
 					 (face-list))
 				 nil nil nil
 				 'face-history)))
-    (unless (zerop (length answer))
+    (unless (eql (length answer) 0)
       (widget-value-set widget (intern answer))
       (widget-apply widget :notify widget event)
       (widget-setup))))
@@ -3174,7 +3172,7 @@ If GROUPS-ONLY non-nil, return only those members that are groups."
 	   (insert " " tag "\n")
 	   (widget-put widget :buttons buttons))
 	  ((and (eq custom-buffer-style 'tree)
-		(zerop (length members)))
+		(eql (length members) 0))
 	   (custom-browse-insert-prefix prefix)
 	   (insert "[ ]-- ")
 	   ;; (widget-glyph-insert nil "[ ]" "empty")
@@ -3187,7 +3185,7 @@ If GROUPS-ONLY non-nil, return only those members that are groups."
 	  ((eq custom-buffer-style 'tree)
 	   (custom-browse-insert-prefix prefix)
 	   (custom-load-widget widget)
-	   (if (zerop (length members))
+	   (if (eql (length members) 0)
 	       (progn
 		 (custom-browse-insert-prefix prefix)
 		 (insert "[ ]-- ")

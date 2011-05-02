@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -115,7 +113,7 @@ struct specifier_methods
 
      If this function is not present, hashing behaves as if it
      returned zero. */
-  Hashcode (*hash_method) (Lisp_Object specifier, int depth);
+  Hashcode (*hash_method) (Lisp_Object specifier, int depth, Boolint equalp);
 
   /* Validate method: Given an instantiator, verify that it's
      valid for this specifier type.  If not, signal an error.
@@ -220,7 +218,7 @@ struct specifier_methods
 
 struct Lisp_Specifier
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
   struct specifier_methods *methods;
 
   /* we keep a chained list of all current specifiers, for GC cleanup
@@ -259,7 +257,7 @@ struct Lisp_Specifier
 };
 typedef struct Lisp_Specifier Lisp_Specifier;
 
-DECLARE_LRECORD (specifier, Lisp_Specifier);
+DECLARE_LISP_OBJECT (specifier, Lisp_Specifier);
 #define XSPECIFIER(x) XRECORD (x, specifier, Lisp_Specifier)
 #define wrap_specifier(p) wrap_record (p, specifier)
 #define SPECIFIERP(x) RECORDP (x, specifier)
@@ -428,7 +426,7 @@ enum spec_add_meth
 struct specifier_caching
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   int offset_into_struct_window;
   void (*value_changed_in_window) (Lisp_Object specifier, struct window *w,
@@ -440,7 +438,7 @@ struct specifier_caching
 };
 
 #ifdef NEW_GC
-DECLARE_LRECORD (specifier_caching, struct specifier_caching);
+DECLARE_LISP_OBJECT (specifier_caching, struct specifier_caching);
 #define XSPECIFIER_CACHING(x) \
   XRECORD (x, specifier_caching, struct specifier_caching)
 #define wrap_specifier_caching(p) \

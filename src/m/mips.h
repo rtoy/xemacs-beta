@@ -1,22 +1,20 @@
 /* m- file for Mips machines.
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.
 
-This file is part of GNU Emacs.
+This file is part of XEmacs.
 
-GNU Emacs is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
-GNU Emacs is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.31. */
 
@@ -37,6 +35,8 @@ NOTE-END  */
 #	define mips
 #endif
 
+#ifdef ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF
+
 /* Data type of load average, as read out of kmem.  */
 
 #define LOAD_AVE_TYPE long
@@ -45,11 +45,18 @@ NOTE-END  */
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / 256.0)
 
+#endif /* ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF */
+
 #ifndef linux
 /* CDC EP/IX 1.4.3 uses /unix */
 
+#ifdef ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF
+
 #undef KERNEL_FILE
 #define KERNEL_FILE "/unix"
+
+#endif /* ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF */
+
 #endif /* ! linux */
 
 /* Define NO_REMAP if memory segmentation makes it not work well
@@ -94,10 +101,10 @@ NOTE-END  */
 #define LD_SWITCH_MACHINE "-D 800000 -g3"
 #define START_FILES "pre-crt0.o /usr/lib/crt1.o"
 #define LIB_STANDARD "-lbsd -lc /usr/lib/crtn.o"
-#define LIBS_TERMCAP "-lcurses"
+/* LIBS_TERMCAP deleted */
 
 #define C_SWITCH_MACHINE "-I/usr/include/bsd"
-#define C_DEBUG_SWITCH "-O -g3"
+/* XEmacs deleted C_DEBUG_SWITCH */
 
 #endif /* not BSD */
 #endif /* !linux */

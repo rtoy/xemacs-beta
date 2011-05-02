@@ -1,14 +1,14 @@
 /* Compiler-specific definitions for XEmacs.
    Copyright (C) 1998-1999, 2003 Free Software Foundation, Inc.
    Copyright (C) 1994 Richard Mlynarik.
-   Copyright (C) 1995, 1996, 2000-2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2000-2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: not in FSF. */
 
@@ -233,22 +231,43 @@ Boston, MA 02111-1307, USA.  */
 #  define ATTRIBUTE_UNUSED
 # endif
 # define UNUSED(decl) UNUSED_ARG (decl) ATTRIBUTE_UNUSED
-# ifdef MULE
-#  define USED_IF_MULE(decl) decl
-# else
-#  define USED_IF_MULE(decl) UNUSED (decl)
-# endif
-# ifdef HAVE_XFT
-#  define USED_IF_XFT(decl) decl
-# else
-#  define USED_IF_XFT(decl) UNUSED (decl)
-# endif
-# ifdef HAVE_SCROLLBARS
-#  define USED_IF_SCROLLBARS(decl) decl
-# else
-#  define USED_IF_SCROLLBARS(decl) UNUSED (decl)
-# endif
 #endif /* UNUSED */
+
+/* Various macros for params/variables used or unused depending on
+   config flags. */
+
+#ifdef MULE
+# define USED_IF_MULE(decl) decl
+#else
+# define USED_IF_MULE(decl) UNUSED (decl)
+#endif
+#ifdef HAVE_XFT
+# define USED_IF_XFT(decl) decl
+#else
+# define USED_IF_XFT(decl) UNUSED (decl)
+#endif
+#ifdef HAVE_SCROLLBARS
+# define USED_IF_SCROLLBARS(decl) decl
+#else
+# define USED_IF_SCROLLBARS(decl) UNUSED (decl)
+#endif
+#ifdef NEW_GC
+# define USED_IF_NEW_GC(decl) decl
+# define UNUSED_IF_NEW_GC(decl) UNUSED (decl)
+#else
+# define USED_IF_NEW_GC(decl) UNUSED (decl)
+# define UNUSED_IF_NEW_GC(decl) decl
+#endif
+#ifdef HAVE_TTY
+#define USED_IF_TTY(decl) decl
+#else
+#define USED_IF_TTY(decl) UNUSED (decl)
+#endif
+#ifdef HAVE_TOOLBARS
+#define USED_IF_TOOLBARS(decl) decl
+#else
+#define USED_IF_TOOLBARS(decl) UNUSED (decl)
+#endif
 
 /* Declaration that variable or expression X is "used" to defeat
    "unused variable" warnings.  DON'T DO THIS FOR PARAMETERS IF IT ALL

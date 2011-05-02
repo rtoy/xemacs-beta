@@ -1,12 +1,12 @@
 /* Define console object for XEmacs.
-   Copyright (C) 1996, 2002, 2003, 2005 Ben Wing
+   Copyright (C) 1996, 2002, 2003, 2005, 2010 Ben Wing
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +14,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -153,9 +151,10 @@ struct console_methods
   int (*eol_cursor_width_method) (void);
   void (*output_vertical_divider_method) (struct window *, int);
   void (*clear_to_window_end_method) (struct window *, int, int);
-  void (*clear_region_method) (Lisp_Object, struct device*, struct frame*, face_index,
-			       int, int, int, int,
-			       Lisp_Object, Lisp_Object, Lisp_Object);
+  void (*clear_region_method) (Lisp_Object, struct device*, struct frame*,
+			       face_index, int, int, int, int,
+			       Lisp_Object, Lisp_Object,
+			       Lisp_Object, Lisp_Object);
   void (*clear_frame_method) (struct frame *);
   void (*window_output_begin_method) (struct window *);
   void (*frame_output_begin_method) (struct frame *);
@@ -192,7 +191,7 @@ struct console_methods
 				      Lisp_Color_Instance *,
 				      int depth);
   Hashcode (*color_instance_hash_method) (Lisp_Color_Instance *,
-					   int depth);
+                                          int depth);
   Lisp_Object (*color_instance_rgb_components_method) (Lisp_Color_Instance *);
   int (*valid_color_name_p_method) (struct device *, Lisp_Object color);
   Lisp_Object (*color_list_method) (void);
@@ -289,9 +288,10 @@ struct console_methods
 						   scrollbar_instance *);
   void (*scrollbar_pointer_changed_in_window_method) (struct window *w);
 #ifdef MEMORY_USAGE_STATS
-  int (*compute_scrollbar_instance_usage_method) (struct device *,
-						  struct scrollbar_instance *,
-						  struct overhead_stats *);
+  Bytecount (*compute_scrollbar_instance_usage_method)
+    (struct device *,
+     struct scrollbar_instance *,
+     struct usage_stats *);
 #endif
   /* Paint the window's deadbox, a rectangle between window
      borders and two short edges of both scrollbars. */
@@ -409,7 +409,7 @@ struct console_methods * type##_console_methods
 
 struct console
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   /* Description of this console's methods.  */
   struct console_methods *conmeths;
@@ -453,7 +453,11 @@ struct console
 /* Redefine basic properties more efficiently */
 
 #undef CONSOLE_LIVE_P
-#define CONSOLE_LIVE_P(con) (!EQ (CONSOLE_TYPE (con), Qdead))
+/* The following is the old way, but it can lead to crashes in certain
+   weird circumstances, where you might want to be printing a console via
+   debug_print() */
+/* #define CONSOLE_LIVE_P(con) (!EQ (CONSOLE_TYPE (con), Qdead)) */
+#define CONSOLE_LIVE_P(con) ((con)->contype != dead_console)
 #undef CONSOLE_DEVICE_LIST
 #define CONSOLE_DEVICE_LIST(con) ((con)->device_list)
 

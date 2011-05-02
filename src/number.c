@@ -1,12 +1,13 @@
 /* Numeric types for XEmacs.
    Copyright (C) 2004 Jerry James.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -60,17 +59,15 @@ bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef NEW_GC
 static void
-bignum_finalize (void *header, int for_disksave)
+bignum_finalize (Lisp_Object obj)
 {
-  if (!for_disksave)
-    {
-      struct Lisp_Bignum *num = (struct Lisp_Bignum *) header;
-      bignum_fini (num->data);
-    }
+  struct Lisp_Bignum *num = XBIGNUM (obj);
+  /* #### WARNING: It would be better to put some sort of check to make
+     sure this doesn't happen more than once, just in case ---
+     e.g. checking if it's zero before finalizing and then setting it to
+     zero after finalizing. */
+  bignum_fini (num->data);
 }
-#define BIGNUM_FINALIZE bignum_finalize
-#else
-#define BIGNUM_FINALIZE 0
 #endif
 
 static int
@@ -81,9 +78,16 @@ bignum_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-bignum_hash (Lisp_Object obj, int UNUSED (depth))
+bignum_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
 {
-  return bignum_hashcode (XBIGNUM_DATA (obj));
+  if (equalp)
+    {
+      return FLOAT_HASHCODE_FROM_DOUBLE (bignum_to_double (XBIGNUM_DATA (obj)));
+    }
+  else
+    {
+      return bignum_hashcode (XBIGNUM_DATA (obj));
+    }
 }
 
 static void
@@ -122,11 +126,10 @@ static const struct memory_description bignum_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bignum", bignum, 1, 0, bignum_print,
-				     BIGNUM_FINALIZE, bignum_equal,
-				     bignum_hash, bignum_description,
-				     Lisp_Bignum);
-
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bignum", bignum, 0, bignum_print,
+					IF_NEW_GC (bignum_finalize),
+					bignum_equal, bignum_hash,
+					bignum_description, Lisp_Bignum); 
 #endif /* HAVE_BIGNUM */
 
 Lisp_Object Qbignump;
@@ -153,18 +156,16 @@ ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef NEW_GC
 static void
-ratio_finalize (void *header, int for_disksave)
+ratio_finalize (Lisp_Object obj)
 {
-  if (!for_disksave)
-    {
-      struct Lisp_Ratio *num = (struct Lisp_Ratio *) header;
-      ratio_fini (num->data);
-    }
+  struct Lisp_Ratio *num = XRATIO (obj);
+  /* #### WARNING: It would be better to put some sort of check to make
+     sure this doesn't happen more than once, just in case ---
+     e.g. checking if it's zero before finalizing and then setting it to
+     zero after finalizing. */
+  ratio_fini (num->data);
 }
-#define RATIO_FINALIZE ratio_finalize
-#else
-#define RATIO_FINALIZE 0
-#endif
+#endif /* not NEW_GC */
 
 static int
 ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
@@ -174,9 +175,16 @@ ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-ratio_hash (Lisp_Object obj, int UNUSED (depth))
+ratio_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
 {
-  return ratio_hashcode (XRATIO_DATA (obj));
+  if (equalp)
+    {
+      return FLOAT_HASHCODE_FROM_DOUBLE (ratio_to_double (XRATIO_DATA (obj)));
+    }
+  else
+    {
+      return ratio_hashcode (XRATIO_DATA (obj));
+    }
 }
 
 static const struct memory_description ratio_description[] = {
@@ -184,9 +192,10 @@ static const struct memory_description ratio_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("ratio", ratio, 0, 0, ratio_print,
-				     RATIO_FINALIZE, ratio_equal, ratio_hash,
-				     ratio_description, Lisp_Ratio);
+DEFINE_NODUMP_FROB_BLOCK_LISP_OBJECT ("ratio", ratio, 0, ratio_print,
+				      IF_NEW_GC (ratio_finalize),
+				      ratio_equal, ratio_hash,
+				      ratio_description, Lisp_Ratio);
 
 #endif /* HAVE_RATIO */
 
@@ -258,18 +267,16 @@ bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef NEW_GC
 static void
-bigfloat_finalize (void *header, int for_disksave)
+bigfloat_finalize (Lisp_Object obj)
 {
-  if (!for_disksave)
-    {
-      struct Lisp_Bigfloat *num = (struct Lisp_Bigfloat *) header;
-      bigfloat_fini (num->bf);
-    }
+  struct Lisp_Bigfloat *num = XBIGFLOAT (obj);
+  /* #### WARNING: It would be better to put some sort of check to make
+     sure this doesn't happen more than once, just in case ---
+     e.g. checking if it's zero before finalizing and then setting it to
+     zero after finalizing. */
+  bigfloat_fini (num->bf);
 }
-#define BIGFLOAT_FINALIZE bigfloat_finalize
-#else
-#define BIGFLOAT_FINALIZE 0
-#endif
+#endif /* not NEW_GC */
 
 static int
 bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
@@ -279,9 +286,17 @@ bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-bigfloat_hash (Lisp_Object obj, int UNUSED (depth))
+bigfloat_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
 {
-  return bigfloat_hashcode (XBIGFLOAT_DATA (obj));
+  if (equalp)
+    {
+      return
+        FLOAT_HASHCODE_FROM_DOUBLE (bigfloat_to_double (XBIGFLOAT_DATA (obj)));
+    }
+  else
+    {
+      return bigfloat_hashcode (XBIGFLOAT_DATA (obj));
+    }
 }
 
 static const struct memory_description bigfloat_description[] = {
@@ -289,10 +304,11 @@ static const struct memory_description bigfloat_description[] = {
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bigfloat", bigfloat, 1, 0,
-				     bigfloat_print, BIGFLOAT_FINALIZE,
-				     bigfloat_equal, bigfloat_hash,
-				     bigfloat_description, Lisp_Bigfloat);
+DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bigfloat", bigfloat, 0,
+					bigfloat_print,
+					IF_NEW_GC (bigfloat_finalize),
+					bigfloat_equal, bigfloat_hash,
+					bigfloat_description, Lisp_Bigfloat);
 
 #endif /* HAVE_BIGFLOAT */
 
@@ -762,13 +778,13 @@ void
 syms_of_number (void)
 {
 #ifdef HAVE_BIGNUM
-  INIT_LRECORD_IMPLEMENTATION (bignum);
+  INIT_LISP_OBJECT (bignum);
 #endif
 #ifdef HAVE_RATIO
-  INIT_LRECORD_IMPLEMENTATION (ratio);
+  INIT_LISP_OBJECT (ratio);
 #endif
 #ifdef HAVE_BIGFLOAT
-  INIT_LRECORD_IMPLEMENTATION (bigfloat);
+  INIT_LISP_OBJECT (bigfloat);
 #endif
 
   /* Type predicates */

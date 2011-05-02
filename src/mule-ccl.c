@@ -5,20 +5,18 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
-XEmacs is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with : FSF Emacs 21.0.90 except TranslateCharacter */
 
@@ -566,7 +564,7 @@ Lisp_Object Vtranslation_hash_table_vector;
    If VALn is lambda, move to the next map set like reaching to the
    end of the current map set.
 
-   If VALn is a symbol, call the CCL program refered by it.
+   If VALn is a symbol, call the CCL program referred to by it.
    Then, use reg[rrr] as a mapped value except for -1, -2 and -3.
    Such special values are regarded as nil, t, and lambda respectively.
 
@@ -953,7 +951,7 @@ ccl_driver (struct ccl_program *ccl,
   register Lisp_Object *ccl_prog = ccl->prog;
   const unsigned char *src = source, *src_end = src + src_bytes;
   int jump_address;
-  int i, j, op;
+  int i = 0, j, op;
   int stack_idx = ccl->stack_idx;
   /* Instruction counter of the current CCL code. */
   int this_ic = 0;
@@ -2123,7 +2121,7 @@ ccl_get_compiled_code (Lisp_Object ccl_prog)
 
   val = Fget (ccl_prog, Qccl_program_idx, Qnil);
   if (! NATNUMP (val)
-      || XINT (val) >= XVECTOR_LENGTH (Vccl_program_table))
+      || -1 != bytecode_arithcompare (val, Flength (Vccl_program_table)))
     return Qnil;
   slot = XVECTOR_DATA (Vccl_program_table)[XINT (val)];
   if (! VECTORP (slot)

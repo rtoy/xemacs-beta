@@ -1,13 +1,14 @@
 /* Face data structures.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 2002 Ben Wing
+   Copyright (C) 1995, 2002, 2010 Ben Wing
+   Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -34,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Face
 {
-  struct LCRECORD_HEADER header;
+  NORMAL_LISP_OBJECT_HEADER header;
 
   Lisp_Object name;
   Lisp_Object doc_string;
@@ -47,6 +46,7 @@ struct Lisp_Face
 
   Lisp_Object display_table;
   Lisp_Object background_pixmap;
+  Lisp_Object background_placement;
 
   Lisp_Object underline;
   Lisp_Object strikethru;
@@ -119,7 +119,7 @@ typedef struct face_cachel face_cachel;
 struct face_cachel
 {
 #ifdef NEW_GC
-  struct lrecord_header header;
+  NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
   /* There are two kinds of cachels; those created from a single face
      and those created by merging more than one face.  In the former
@@ -172,6 +172,7 @@ struct face_cachel
 
   Lisp_Object display_table;
   Lisp_Object background_pixmap;
+  Lisp_Object background_placement;
 
   unsigned int underline :1;
   unsigned int strikethru :1;
@@ -188,6 +189,7 @@ struct face_cachel
   unsigned int background_specified :1;
   unsigned int display_table_specified :1;
   unsigned int background_pixmap_specified :1;
+  unsigned int background_placement_specified :1;
 
   unsigned int strikethru_specified :1;
   unsigned int underline_specified :1;
@@ -236,7 +238,7 @@ struct face_cachel
 #ifdef NEW_GC
 typedef struct face_cachel Lisp_Face_Cachel;
 
-DECLARE_LRECORD (face_cachel, Lisp_Face_Cachel);
+DECLARE_LISP_OBJECT (face_cachel, Lisp_Face_Cachel);
 
 #define XFACE_CACHEL(x) \
   XRECORD (x, face_cachel, Lisp_Face_Cachel)
@@ -246,7 +248,7 @@ DECLARE_LRECORD (face_cachel, Lisp_Face_Cachel);
 #define CONCHECK_FACE_CACHEL(x) CONCHECK_RECORD (x, face_cachel)
 #endif /* NEW_GC */
 
-DECLARE_LRECORD (face, Lisp_Face);
+DECLARE_LISP_OBJECT (face, Lisp_Face);
 #define XFACE(x) XRECORD (x, face, Lisp_Face)
 #define wrap_face(p) wrap_record (p, face)
 #define FACEP(x) RECORDP (x, face)
@@ -277,7 +279,7 @@ face_index merge_face_list_to_cache_index (struct window *w,
 
 #ifdef MEMORY_USAGE_STATS
 int compute_face_cachel_usage (face_cachel_dynarr *face_cachels,
-			       struct overhead_stats *ovstats);
+			       struct usage_stats *ustats);
 #endif /* MEMORY_USAGE_STATS */
 
 EXFUN (Fface_name, 1);
@@ -299,12 +301,10 @@ void update_frame_face_values (struct frame *f);
 void face_property_was_changed (Lisp_Object face, Lisp_Object property,
 				Lisp_Object locale);
 void default_face_font_info (Lisp_Object domain, int *ascent,
-			     int *descent, int *height, int *width,
+			     int *descent, int *width, int *height,
 			     int *proportional_p);
-void default_face_height_and_width (Lisp_Object domain,
-				    int *height, int *width);
-void default_face_height_and_width_1 (Lisp_Object domain,
-				      int *height, int *width);
+void default_face_width_and_height (Lisp_Object domain, int *width,
+				    int *height);
 
 #define FACE_CACHEL_FONT(cachel, charset) \
   (cachel->font[XCHARSET_LEADING_BYTE (charset) - MIN_LEADING_BYTE])
@@ -342,6 +342,8 @@ void default_face_height_and_width_1 (Lisp_Object domain,
   (WINDOW_FACE_CACHEL (window, index)->display_table)
 #define WINDOW_FACE_CACHEL_BACKGROUND_PIXMAP(window, index)		\
   (WINDOW_FACE_CACHEL (window, index)->background_pixmap)
+#define WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT(window, index)		\
+  (WINDOW_FACE_CACHEL (window, index)->background_placement)
 #define WINDOW_FACE_CACHEL_DIRTY(window, index)				\
   (WINDOW_FACE_CACHEL (window, index)->dirty)
 #define WINDOW_FACE_CACHEL_UNDERLINE_P(window, index)			\
@@ -398,6 +400,11 @@ Lisp_Object face_property_matching_instance
   FACE_PROPERTY_INSTANCE (face, Qdisplay_table, domain, 0, Qzero)
 #define FACE_BACKGROUND_PIXMAP(face, domain)				\
   FACE_PROPERTY_INSTANCE (face, Qbackground_pixmap, domain, 0, Qzero)
+
+extern Lisp_Object Qbackground_placement;
+#define FACE_BACKGROUND_PLACEMENT(face, domain)				\
+  FACE_PROPERTY_INSTANCE (face, Qbackground_placement, domain, 0, Qzero)
+
 #define FACE_UNDERLINE_P(face, domain)					\
   (!NILP (FACE_PROPERTY_INSTANCE (face, Qunderline, domain, 0, Qzero)))
 #define FACE_STRIKETHRU_P(face, domain)					\

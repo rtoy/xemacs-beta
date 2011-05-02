@@ -7,20 +7,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF
 
@@ -408,26 +406,25 @@ and whether or not it is up-to-date."
   (let ((tmpbuf "*Required-Packages*") do-select)
     (if pui-selected-packages
 	(let ((dependencies
-               (delq nil (mapcar
-                          (lambda (pkg)
-                            (let ((installed
-                                   (package-get-key pkg :version))
-                                  (current
-                                   (package-get-info-prop
-                                    (package-get-info-version
-                                     (package-get-info-find-package
-                                      package-get-base pkg) nil)
-                                    'version)))
-                              (if (or (null installed)
-                                     (< (if (stringp installed)
-                                         (string-to-number installed)
-                                       installed)
-                                     (if (stringp current)
-                                         (string-to-number current)
-                                       current)))
-                                  pkg
-                                nil)))
-                          (package-get-dependencies pui-selected-packages)))))
+               (mapcan
+                (lambda (pkg)
+                  (let ((installed
+                         (package-get-key pkg :version))
+                        (current
+                         (package-get-info-prop
+                          (package-get-info-version
+                           (package-get-info-find-package
+                            package-get-base pkg) nil)
+                          'version)))
+                    (if (or (null installed)
+                            (< (if (stringp installed)
+                                   (string-to-number installed)
+                                 installed)
+                               (if (stringp current)
+                                   (string-to-number current)
+                                 current)))
+                        (list pkg))))
+                (package-get-dependencies pui-selected-packages))))
 	  ;; Don't change window config when asking the user if he really
 	  ;; wants to add the packages.  We do this to avoid messing up
 	  ;; the window configuration if errors occur (we don't want to
@@ -436,9 +433,7 @@ and whether or not it is up-to-date."
 	  (save-window-excursion
 	    (with-output-to-temp-buffer tmpbuf
 	      (display-completion-list (sort
-					(mapcar #'(lambda (pkg)
-                                                    (symbol-name pkg))
-						dependencies)
+					(mapcar #'symbol-name dependencies)
 					'string<)
 				       :activate-callback nil
 				       :help-string "Required packages:\n"
@@ -664,10 +659,7 @@ Warning: No download sites specified.  Package index may be out of date.
 	   (set-extent-property extent 'pui-info info)
 	   (set-extent-property extent 'help-echo 'pui-help-echo)
 	   (set-extent-property extent 'keymap pui-package-keymap)))
-     (sort (copy-sequence package-get-base)
-	   #'(lambda (a b)
-	       (string< (symbol-name (car a))
-			(symbol-name (car b))))))
+     (sort* (copy-sequence package-get-base) #'string< :key #'car))
     (insert sep-string)
     (insert (documentation 'list-packages-mode))
     (set-buffer-modified-p nil)

@@ -1,14 +1,14 @@
 /* Device functions for X windows.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -44,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x.h"
+#include "fontcolor-x.h"
 
 #include "sysfile.h"
 #include "systime.h"
@@ -111,11 +109,9 @@ static const struct memory_description x_device_data_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("x-device", x_device,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       x_device_data_description_1,
-			       Lisp_X_Device);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("x-device", x_device,
+				      0, x_device_data_description_1,
+				      Lisp_X_Device);
 #else /* not NEW_GC */
 extern const struct sized_memory_description x_device_data_description;
 
@@ -151,13 +147,8 @@ get_device_from_display_1 (Display *dpy)
 struct device *
 get_device_from_display (Display *dpy)
 {
+#define FALLBACK_RESOURCE_NAME "xemacs"
   struct device *d = get_device_from_display_1 (dpy);
-
-#if !defined(INFODOCK)
-# define FALLBACK_RESOURCE_NAME "xemacs"
-# else
-# define FALLBACK_RESOURCE_NAME "infodock"
-#endif
 
   if (!d)
     {
@@ -230,7 +221,7 @@ static void
 allocate_x_device_struct (struct device *d)
 {
 #ifdef NEW_GC
-  d->device_data = alloc_lrecord_type (struct x_device, &lrecord_x_device);
+  d->device_data = XX_DEVICE (ALLOC_NORMAL_LISP_OBJECT (x_device));
 #else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct x_device);
 #endif /* not NEW_GC */
@@ -346,11 +337,7 @@ have_xemacs_resources_in_xrdb (Display *dpy)
   const char *xdefs, *key;
   int len;
 
-#ifdef INFODOCK
-  key = "InfoDock";
-#else
   key = "XEmacs";
-#endif
   len = strlen (key);
 
   if (!dpy)
@@ -488,7 +475,7 @@ x_get_visual_depth (Display *dpy, Visual *visual)
   vi_in.visualid = XVisualIDFromVisual (visual);
   vi_out = XGetVisualInfo (dpy, /*VisualScreenMask|*/VisualIDMask,
 			   &vi_in, &out_count);
-  if (! vi_out) ABORT ();
+  assert (vi_out);
   d = vi_out [0].depth;
   XFree ((char *) vi_out);
   return d;
@@ -655,11 +642,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 	{
 	  app_class = (NILP (Vx_emacs_application_class)  &&
 		       have_xemacs_resources_in_xrdb (dpy))
-#ifdef INFODOCK
-	    ? "InfoDock"
-#else
 	    ? "XEmacs"
-#endif
 	    : "Emacs";
 	}
       else 
@@ -691,7 +674,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     Extbyte *path;
     const Extbyte *format;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
-    const Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
+    Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
     Extbyte *locale_end;
 
     if (STRINGP (Vx_app_defaults_directory) &&
@@ -722,28 +705,26 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     if (!access (path, R_OK))
       XrmCombineFileDatabase (path, &db, False);
 
-    if ((locale_end = strchr(locale, '.'))) {
-      *locale_end = '\0';
-      sprintf (path, format, data_dir, locale);
+    if ((locale_end = strchr (locale, '.')))
+      {
+	*locale_end = '\0';
+	sprintf (path, format, data_dir, locale);
 
-      if (!access (path, R_OK))
-	XrmCombineFileDatabase (path, &db, False);
-    }
+	if (!access (path, R_OK))
+	  XrmCombineFileDatabase (path, &db, False);
+      }
 
-    if ((locale_end = strchr(locale, '_'))) {
-      *locale_end = '\0';
-      sprintf (path, format, data_dir, locale);
+    if ((locale_end = strchr (locale, '_')))
+      {
+	*locale_end = '\0';
+	sprintf (path, format, data_dir, locale);
 
-      if (!access (path, R_OK))
-	XrmCombineFileDatabase (path, &db, False);
-    }
+	if (!access (path, R_OK))
+	  XrmCombineFileDatabase (path, &db, False);
+      }
 
   no_data_directory:
-    {
-      /* Cast off const for G++ 4.3. */
-      Extbyte *temp = (Extbyte *) locale;
-      xfree (temp);
-    }
+    xfree (locale);
  }
 #endif /* MULE */
 
@@ -924,7 +905,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
   DEVICE_X_GRAY_PIXMAP (d) = None;
   Xatoms_of_device_x (d);
   Xatoms_of_select_x (d);
-  Xatoms_of_objects_x (d);
+  Xatoms_of_fontcolor_x (d);
   x_init_device_class (d);
 }
 
@@ -1272,7 +1253,8 @@ x_IO_error_handler (Display *disp)
       DEVICE_X_BEING_DELETED (d) = 1;
     }
 
-  throw_or_bomb_out (Qtop_level, Qnil, 0, Qnil, Qnil);
+  redisplay_cancel_ritual_suicide();
+  throw_or_bomb_out_unsafe (Qtop_level, Qnil, 0, Qnil, Qnil);
 
   RETURN_NOT_REACHED (0);
 }
@@ -1564,9 +1546,9 @@ mean ``unspecified''.
   db = XtDatabase (display);
   codesys = coding_system_of_xrm_database (db);
   Dynarr_add (name_Extbyte_dynarr, '.');
-  Dynarr_add_lisp_string (name_Extbyte_dynarr, name, Qbinary);
+  Dynarr_add_ext_lisp_string (name_Extbyte_dynarr, name, Qbinary);
   Dynarr_add (class_Extbyte_dynarr, '.');
-  Dynarr_add_lisp_string (class_Extbyte_dynarr, class_, Qbinary);
+  Dynarr_add_ext_lisp_string (class_Extbyte_dynarr, class_, Qbinary);
   Dynarr_add (name_Extbyte_dynarr,  '\0');
   Dynarr_add (class_Extbyte_dynarr, '\0');
 
@@ -2108,7 +2090,7 @@ void
 syms_of_device_x (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (x_device);
+  INIT_LISP_OBJECT (x_device);
 #endif /* NEW_GC */
 
   DEFSUBR (Fx_debug_mode);

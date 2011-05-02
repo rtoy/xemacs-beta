@@ -1,14 +1,14 @@
 /* XEmacs routines to deal with syntax tables; also word and list parsing.
    Copyright (C) 1985-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.28. */
 
@@ -30,12 +28,6 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "syntax.h"
 #include "extents.h"
-
-#ifdef NEW_GC
-# define UNUSED_IF_NEW_GC(decl) UNUSED (decl)
-#else
-# define UNUSED_IF_NEW_GC(decl) decl
-#endif
 
 #define ST_COMMENT_STYLE 0x101
 #define ST_STRING_STYLE  0x102
@@ -265,11 +257,9 @@ static const struct memory_description syntax_cache_description_1 [] = {
 };
 
 #ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("syntax-cache", syntax_cache,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       syntax_cache_description_1,
-			       Lisp_Syntax_Cache);
+DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("syntax-cache", syntax_cache,
+				      0, syntax_cache_description_1,
+				      Lisp_Syntax_Cache);
 #else /* not NEW_GC */
 
 const struct sized_memory_description syntax_cache_description = {
@@ -529,8 +519,7 @@ init_buffer_syntax_cache (struct buffer *buf)
 {
   struct syntax_cache *cache;
 #ifdef NEW_GC
-  buf->syntax_cache = alloc_lrecord_type (struct syntax_cache,
-					  &lrecord_syntax_cache);
+  buf->syntax_cache = XSYNTAX_CACHE (ALLOC_NORMAL_LISP_OBJECT (syntax_cache));
 #else /* not NEW_GC */
   buf->syntax_cache = xnew_and_zero (struct syntax_cache);
 #endif /* not NEW_GC */
@@ -551,8 +540,11 @@ void
 uninit_buffer_syntax_cache (struct buffer *UNUSED_IF_NEW_GC (buf))
 {
 #ifndef NEW_GC
-  xfree (buf->syntax_cache);
-  buf->syntax_cache = 0;
+  if (buf->syntax_cache)
+    {
+      xfree (buf->syntax_cache);
+      buf->syntax_cache = 0;
+    }
 #endif /* not NEW_GC */
 }
 
@@ -2399,7 +2391,7 @@ void
 syms_of_syntax (void)
 {
 #ifdef NEW_GC
-  INIT_LRECORD_IMPLEMENTATION (syntax_cache);
+  INIT_LISP_OBJECT (syntax_cache);
 #endif /* NEW_GC */
   DEFSYMBOL (Qsyntax_table_p);
   DEFSYMBOL (Qsyntax_table);

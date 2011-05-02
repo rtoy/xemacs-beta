@@ -6,20 +6,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -161,7 +159,7 @@ Setting this at run-time does nothing.")
 	indian-is13194 korean-ksc5601 chinese-cns11643-1 chinese-cns11643-2
 	chinese-isoir165 
 	composite ethiopic indian-1-column indian-2-column jit-ucs-charset-0
-	katakana-jisx0201 lao thai-tis620 thai-xtis tibetan tibetan-1-column
+	katakana-jisx0201 lao thai-tis620 tibetan tibetan-1-column
 	latin-jisx0201 chinese-cns11643-3 chinese-cns11643-4
 	chinese-cns11643-5 chinese-cns11643-6 chinese-cns11643-7)))))
 

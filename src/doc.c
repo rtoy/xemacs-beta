@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30. */
 
@@ -613,7 +611,15 @@ string is passed through `substitute-command-keys'.
       if (STRINGP (tem))
 	doc = tem;
       else if (NATNUMP (tem) || CONSP (tem))
-	doc = get_doc_string (tem);
+        {
+          doc = get_doc_string (tem);
+          /* We may have zero length strings in the docfile for file
+             information. */
+          if (STRINGP (doc) && 0 == XSTRING_LENGTH (doc))
+            {
+              return Qnil;
+            }
+        }
       else
         return Qnil;
     }
@@ -903,33 +909,24 @@ when doc strings are referred to in the dumped Emacs.
                          slots for it.  */
                       Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (fun);
 
-		      /* This compiled-function object must have a
-			 slot for the docstring, since we've found a
-			 docstring for it.  Unless there were multiple
-			 definitions of it, and the latter one didn't
-			 have any doc, which is a legal if slightly
-			 bogus situation, so don't blow up. */
+		      /* If there were multiple definitions for this function,
+                         and the latter one didn't
+			 have any doc, warn and don't blow up. */
+                      Lisp_Object old =
+                        compiled_function_documentation (f);
+                      if (!ZEROP (old) && !NILP (old))
+                        {
+                          weird_doc (sym, "duplicate", "bytecode", pos);
+                          /* In the case of duplicate doc file entries,
+                             always take the later one.  But if the doc is
+                             not an int (a string, say) leave it alone. */
+                          if (!INTP (old))
+                            goto weird;
+                        }
 
-                      if (! (f->flags.documentationp))
-			{
-			  weird_doc (sym, "no doc slot", "bytecode", pos);
-			  goto weird;
-			}
-		      else
-			{
-			  Lisp_Object old =
-			    compiled_function_documentation (f);
-			  if (!ZEROP (old))
-			    {
-			      weird_doc (sym, "duplicate", "bytecode", pos);
-			      /* In the case of duplicate doc file entries,
-				 always take the later one.  But if the doc is
-				 not an int (a string, say) leave it alone. */
-			      if (!INTP (old))
-				goto weird;
-			    }
-			  set_compiled_function_documentation (f, offset);
-			}
+                      /* This may be a function or variable where we want
+                         to make the file name available. */
+                      set_compiled_function_documentation (f, offset);
                     }
                   else
                     {

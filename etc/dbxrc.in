@@ -4,13 +4,14 @@
 ## The generated file depends on src/config.h (currently only in one place).
 
 ## Copyright (C) 1998 Free Software Foundation, Inc.
+## Copyright (C) 2010 Ben Wing.
 
 ## This file is part of XEmacs.
 
-## XEmacs is free software; you can redistribute it and/or modify it
+## XEmacs is free software: you can redistribute it and/or modify it
 ## under the terms of the GNU General Public License as published by the
-## Free Software Foundation; either version 2, or (at your option) any
-## later version.
+## Free Software Foundation, either version 3 of the License, or (at your
+## option) any later version.
 
 ## XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +19,7 @@
 ## for more details.
 
 ## You should have received a copy of the GNU General Public License
-## along with XEmacs; see the file COPYING.  If not, write to
-## the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-## Boston, MA  02110-1301  USA
+## along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ## Author: Martin Buchholz
 
@@ -194,7 +193,7 @@ Run the test suite.  Equivalent to 'make check'.
 end
 
 function check-xemacs {
-  run -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+  run -batch -l test-harness -f batch-test-emacs ../tests/automated
 }
 
 document check-temacs << 'end'
@@ -205,7 +204,7 @@ or when temacs builds successfully, but xemacs does not.
 end
 
 function check-temacs {
-  run-temacs -q -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+  run-temacs -q -batch -l test-harness -f batch-test-emacs ../tests/automated
 }
 
 document update-elc << 'end'
@@ -277,7 +276,7 @@ function pobj {
   elif test $lrecord_type = lrecord_type_coding_system; then
     pstruct file-coding.c Lisp_Coding_System
   elif test $lrecord_type = lrecord_type_color_instance; then
-    pstruct objects.c Lisp_Color_Instance
+    pstruct fontcolor.c Lisp_Color_Instance
   elif test $lrecord_type = lrecord_type_command_builder; then
     pstruct event-stream.c command_builder
   elif test $lrecord_type = lrecord_type_compiled_function; then
@@ -301,7 +300,7 @@ function pobj {
   elif test $lrecord_type = lrecord_type_float; then
     pstruct floatfns.c Lisp_Float
   elif test $lrecord_type = lrecord_type_font_instance; then
-    pstruct objects.c Lisp_Font_Instance
+    pstruct fontcolor.c Lisp_Font_Instance
   elif test $lrecord_type = lrecord_type_frame; then
     pstruct frame.c frame
   elif test $lrecord_type = lrecord_type_glyph; then

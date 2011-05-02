@@ -9,20 +9,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF
 
@@ -92,7 +90,7 @@
 	  ;; no generate-new-buffer so use its implementation.
 	  (let ((buf (get-buffer-create (generate-new-buffer-name "foo"))))
 	    (set-buffer buf)
-	    (insert-file-contents-internal (substring arg 1))
+	    (insert-file-contents-internal (subseq arg 1))
 	    ;; now majorly grind up the response file.
 	    ;; backslashes get doubled, quotes around strings,
 	    ;; get rid of pesky CR's and NL's, and put parens around
@@ -123,8 +121,7 @@
 		       (concat 
 			(file-name-nondirectory
 			 ;; no match-string so use its implementation.
-			 (substring arg (match-beginning 1)
-				    (match-end 1)))
+			 (subseq arg (match-beginning 1) (match-end 1)))
 			".c")
 		       source-src)))
 	  (if (and (null docfile-out-of-date)

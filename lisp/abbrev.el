@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 19.34 (With some additions)
 
@@ -120,31 +118,12 @@ To undefine an abbrev, define it with an expansion of `nil'."
     (setplist sym (or count 0))
     name))
 
+(define-abbrev-table 'fundamental-mode-abbrev-table nil)
+(and (eq major-mode 'fundamental-mode)
+     (not local-abbrev-table)
+     (setq local-abbrev-table fundamental-mode-abbrev-table))
 
-;; Fixup stuff from bootstrap def of define-abbrev-table in subr.el
-(let ((l abbrev-table-name-list))
-  (while l
-    (let ((fixup (car l)))
-      (if (consp fixup)
-          (progn
-            (setq abbrev-table-name-list (delq fixup abbrev-table-name-list))
-            (define-abbrev-table (car fixup) (cdr fixup))))
-      (setq l (cdr l))))
-  ;; These are no longer initialized by C code
-  (if (not global-abbrev-table)
-      (progn
-        (setq global-abbrev-table (make-abbrev-table))
-        (setq abbrev-table-name-list (cons 'global-abbrev-table
-                                           abbrev-table-name-list))))
-  (if (not fundamental-mode-abbrev-table)
-      (progn
-        (setq fundamental-mode-abbrev-table (make-abbrev-table))
-        (setq abbrev-table-name-list (cons 'fundamental-mode-abbrev-table
-                                           abbrev-table-name-list))))
-  (and (eq major-mode 'fundamental-mode)
-       (not local-abbrev-table)
-       (setq local-abbrev-table fundamental-mode-abbrev-table)))
-
+(define-abbrev-table 'global-abbrev-table nil)
 
 (defun define-global-abbrev (name expansion)
   "Define ABBREV as a global abbreviation for EXPANSION."

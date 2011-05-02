@@ -2,15 +2,15 @@
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30. */
 
@@ -34,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct window;
 
-DECLARE_LRECORD (window, struct window);
+DECLARE_LISP_OBJECT (window, struct window);
 #define XWINDOW(x) XRECORD (x, window, struct window)
 #define wrap_window(p) wrap_record (p, window)
 #define WINDOWP(x) RECORDP (x, window)
@@ -81,14 +79,12 @@ Lisp_Object window_buffer (struct window *w);
 
 struct window_mirror;
 
-DECLARE_LRECORD (window_mirror, struct window_mirror);
+DECLARE_LISP_OBJECT (window_mirror, struct window_mirror);
 #define XWINDOW_MIRROR(x) XRECORD (x, window_mirror, struct window_mirror)
 #define wrap_window_mirror(p) wrap_record (p, window_mirror)
 #define WINDOW_MIRRORP(x) RECORDP (x, window_mirror)
 #define CHECK_WINDOW_MIRROR(x) CHECK_RECORD (x, window_mirror)
 #define CONCHECK_WINDOW_MIRROR(x) CONCHECK_RECORD (x, window_mirror)
-
-DECLARE_LRECORD (window_configuration, struct window_config);
 
 EXFUN (Fget_buffer_window, 3);
 EXFUN (Fmove_to_window_line, 2);
@@ -148,9 +144,8 @@ void window_scroll (Lisp_Object window, Lisp_Object n, int direction,
 		    Error_Behavior errb);
 int buffer_window_count (struct buffer *b, struct frame *f);
 int buffer_window_mru (struct window *w);
-void check_frame_size (struct frame *frame, int *rows, int *cols);
+void check_frame_size (struct frame *frame, int *cols, int *rows);
 int frame_pixsize_valid_p (struct frame *frame, int width, int height);
-int frame_size_valid_p (struct frame *frame, int rows, int cols);
 struct window *decode_window (Lisp_Object window);
 struct window *find_window_by_pixel_pos (int pix_x, int pix_y, Lisp_Object win);
 

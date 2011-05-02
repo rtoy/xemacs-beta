@@ -10,10 +10,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,9 +21,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Rewritten by Ben Wing.  Not in FSF. */
 
@@ -591,11 +589,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      Lisp_Object obj = largs[spec->argnum - 1];
 	      if (CHARP (obj))
 		obj = make_int (XCHAR (obj));
-#ifdef WITH_NUMBER_TYPES
 	      if (!NUMBERP (obj))
-#else
-	      if (!INT_OR_FLOATP (obj))
-#endif
 		{
 		  /* WARNING!  This MUST be big enough for the sprintf below */
 		  CIbyte msg[48];
@@ -606,9 +600,10 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		}
 	      else if (strchr (double_converters, ch))
 		{
-#ifdef WITH_NUMBER_TYPES
-		  if (INTP (obj) || FLOATP (obj))
-		    arg.d = XFLOATINT (obj);
+		  if (INTP (obj))
+		    arg.d = XINT (obj);
+		  else if (FLOATP (obj))
+		    arg.d = XFLOAT_DATA (obj);
 #ifdef HAVE_BIGNUM
 		  else if (BIGNUMP (obj))
 		    arg.d = bignum_to_double (XBIGNUM_DATA (obj));
@@ -631,9 +626,6 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 			}
 		    }
 #endif
-#else /* !WITH_NUMBER_TYPES */
-		  arg.d = XFLOATINT (obj);
-#endif /* WITH_NUMBER_TYPES */
 		}
 	      else
 		{

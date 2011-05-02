@@ -1,12 +1,13 @@
 /* New allocator for XEmacs.
    Copyright (C) 2005 Marcus Crestani.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -122,12 +121,10 @@ EMACS_INT mc_finalize_for_disksave (void);
 
 /* Functions and macros related with allocation statistics: */
 
-#ifdef MEMORY_USAGE_STATS
 /* Returns the real size, including overhead, which is actually alloced
    for an object with given claimed_size. */
 Bytecount mc_alloced_storage_size (Bytecount claimed_size,
-				   struct overhead_stats *stats);
-#endif /* MEMORY_USAGE_STATS */
+				   struct usage_stats *stats);
 
 
 /* Incremental Garbage Collector / Write Barrier Support: */

@@ -442,12 +442,12 @@ The return value is @var{window}.
 @end example
 @end defun
 
-@defspec save-selected-window forms@dots{}
+@deffn {Special Operator} save-selected-window forms@dots{}
 This macro records the selected window, executes @var{forms} in
 sequence, then restores the earlier selected window.  It does not save
 or restore anything about the sizes, arrangement or contents of windows;
 therefore, if the @var{forms} change them, the changes are permanent.
-@end defspec
+@end deffn
 
 @cindex finding windows
   The following functions choose one of the windows on the screen,
@@ -705,6 +705,11 @@ This function returns @code{nil}.
 @end example
 @end defun
 
+@defvar buffer-display-count
+This variable, local to a given buffer, reflects the number of times
+XEmacs has displayed the buffer in a window.
+@end defvar
+
 @defun window-buffer &optional window
 This function returns the buffer that @var{window} is displaying.  If
 @var{window} is omitted, this function returns the buffer for the
@@ -728,6 +733,16 @@ cyclic ordering of windows, starting from the selected window.
 The remaining arguments control which windows to consider.  They have
 the same meaning as for @code{next-window}.
 @end defun
+
+
+@defvar buffer-display-time
+This variable records the time at which a buffer was last made visible
+in a window.  It is always local in each buffer; each time
+@code{set-window-buffer} is called, it sets this variable to
+@code{(current-time)} in the specified buffer (@pxref{Time of Day}).
+When a buffer is first created, @code{buffer-display-time} starts out
+with the value @code{nil}.
+@end defvar
 
 @node Displaying Buffers
 @section Displaying Buffers in Windows
@@ -1954,7 +1969,7 @@ as @code{save-window-excursion}:
 @end example
 @end defun
 
-@defspec save-window-excursion forms@dots{}
+@deffn {Special Operator} save-window-excursion forms@dots{}
 This macro records the window configuration, executes @var{forms}
 in sequence, then restores the earlier window configuration.  The window
 configuration includes the value of point and the portion of the buffer
@@ -1990,7 +2005,7 @@ For example:
      ;; @r{The frame is now split again.}
 @end group
 @end example
-@end defspec
+@end deffn
 
 @defun window-configuration-p object
 This function returns @code{t} if @var{object} is a window configuration.

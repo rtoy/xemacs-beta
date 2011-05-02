@@ -15,6 +15,7 @@ definitions---as well as face definitions.
 * Common Keywords::
 * Group Definitions::
 * Variable Definitions::
+* Face Definitions::
 * Customization Types::
 * Enabling Behavior::
 @end menu
@@ -163,6 +164,7 @@ One group can have any number of prefixes.
 @section Defining Customization Variables
 
   Use @code{defcustom} to declare user-editable variables.
+For face declarations, use @code{defface} instead.  @xref{Face Definitions}.
 
 @tindex defcustom
 @defmac defcustom option default doc [keyword value]...
@@ -288,7 +290,67 @@ and @code{saved-value} to record the value saved by the user with the
 customization buffer.  The @code{saved-value} property is actually a
 list whose car is an expression which evaluates to the value.
 
-@node Customization Types, Enabling Behavior, Variable Definitions, Customization
+@node Face Definitions, Customization Types, Variable Definitions, Customization
+@section Face Definitions
+
+Use @code{defface} to declare a new face.  Conventions used in
+specifying properties are similar to those for general customizable
+variables.  @xref{Variable Definitions}.
+
+@defun defface face spec doc &rest args
+
+Declare @var{face} as a customizable face that defaults to @var{spec}.
+@var{face} does not need to be quoted.
+
+Third argument @var{doc} is the face documentation.
+
+If @var{face} has been set with `custom-set-face', set the face attributes
+as specified by that function, otherwise set the face attributes
+according to @var{spec}.
+
+The remaining arguments @var{args} are a property list, which has the
+form
+
+   @var{keyword} @var{value}...
+
+The following @var{keyword}s are defined:
+
+@table @code
+@item :group
+@var{value} is a customization group.  Add @var{face} to that group.
+@end table
+
+@var{spec} is an alist of the form ((@var{display} @var{atts})...).
+
+@var{atts} is a list of face attributes and their values.  The possible
+attributes are defined in the variable `custom-face-attributes'.
+
+The @var{atts} of the first entry in @var{spec} where the
+@var{display} matches the frame take effect in that frame.
+@var{display} can either be the symbol t, which will match all frames,
+or an alist of the form \((@var{req} @var{item}...)...)
+
+For @var{display} to match a frame, the @var{req} property of the
+frame must match one of the @var{item}.  The following @var{req} are
+defined:
+
+@table @code
+@item @code{type} (the value of @code{window-system})
+  Should be one of @code{x}, @code{mswindows}, or @code{tty}.
+
+@code{class} (the frame's color support)
+  Should be one of @code{color}, @code{grayscale}, or @code{mono}.
+
+@code{min-colors} (the minimum number of colors the frame supports)
+  Should be in integer which is compared to @code{display-color-cells}
+
+@code{background} (what color is used for the background text)
+  Should be one of @code{light} or @code{dark}.
+@end table
+@end defun
+
+
+@node Customization Types, Enabling Behavior, Face Definitions, Customization
 @section Customization Types
 
   When you define a user option with @code{defcustom}, you must specify

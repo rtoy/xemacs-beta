@@ -10,20 +10,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 19.34.
 
@@ -722,9 +720,7 @@ If this is nil, no message will be displayed.")
 	(declare-fboundp (init-mule-at-startup)))
 
       (if (featurep 'toolbar)
-	  (if (featurep 'infodock)
-	      (require 'id-x-toolbar)
-	    (init-toolbar)))
+          (init-toolbar))
 
       ;; Create the initial device (which may be the already-created stdio
       ;; device, if we're noninteractive).
@@ -773,7 +769,7 @@ If this is nil, no message will be displayed.")
       ;; various other places. We could make *scratch* honour the user's
       ;; choice of whether font-locking is in place by adding a call to
       ;; font-lock-set-defaults in `lisp-interaction-mode'; but that'll
-      ;; break if `intial-major-mode' is anything else. 
+      ;; break if `initial-major-mode' is anything else. 
       ;;
       ;; So, despite what `font-lock-set-defaults'' docstring says, this
       ;; *is* where we should call it to have the user's choice of font-lock
