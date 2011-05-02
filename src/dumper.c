@@ -2593,8 +2593,9 @@ pdump_ram_try (void)
 
 #endif /* !WIN32_NATIVE */
 
-
-static int
+/* This used to be static, but there seems to be a bug in the GCC 4.1.2
+   optimizer that clobbers exe_path. */
+int
 pdump_file_try (Wexttext *exe_path)
 {
   Wexttext *w = exe_path + wext_strlen (exe_path);
