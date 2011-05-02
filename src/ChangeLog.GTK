@@ -5,6 +5,8 @@
 	(gtk_create_widgets): Use G_OBJECT.
 	(gtk_popup_frame): Remove GTK_OBJECT cast.
 	(gtk_get_frame_parent): Ditto.
+	(gtk_set_initial_frame_size): Replace/delete several deprecated
+	functions.
 
 2011-05-01  Jeff Sparkes  <jsparkes@gmail.com>
 
