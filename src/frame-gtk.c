@@ -719,7 +719,7 @@ extern Lisp_Object build_gtk_object (GObject *obj);
 #endif
 
 static void
-cleanup_deleted_frame (gpointer data)
+cleanup_deleted_frame (gpointer data, GObject *UNUSED(old))
 {
   struct frame *f = (struct frame *) data;
   Lisp_Object frame = wrap_frame (f);
@@ -855,7 +855,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
       shell = gtk_vbox_new (FALSE, 0);
 
-      gtk_object_weakref (GTK_OBJECT (shell), cleanup_deleted_frame, f);
+      g_object_weak_ref (G_OBJECT (shell), cleanup_deleted_frame, f);
       gtk_container_add (GTK_CONTAINER (XGTK_OBJECT (lisp_window_id)->object), shell);
     }
   else
@@ -895,7 +895,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 		     GDK_ACTION_COPY | GDK_ACTION_LINK | GDK_ACTION_ASK);
   assert (g_signal_connect (G_OBJECT (text), "drag_drop",
                             GTK_SIGNAL_FUNC (dragndrop_dropped), text));
-  assert (g_signal_connect (GTK_OBJECT (text), "drag_data_received",
+  assert (g_signal_connect (G_OBJECT (text), "drag_data_received",
                             GTK_SIGNAL_FUNC (dragndrop_data_received), text));
   assert (g_signal_connect (G_OBJECT (text), "drag_data_get",
                             GTK_SIGNAL_FUNC (dragndrop_get_drag), NULL));
@@ -980,9 +980,8 @@ static void
 gtk_popup_frame (struct frame *f)
 {
   /* */
-
-  if (g_object_get_data (G_OBJECT (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f))),
-                          UNMAPPED_DATA_IDENTIFIER))
+  if (g_object_get_data (G_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
+                         UNMAPPED_DATA_IDENTIFIER))
     {
       FRAME_GTK_TOTALLY_VISIBLE_P (f) = 0;
       f->visible = 0;
@@ -1162,7 +1161,7 @@ static Lisp_Object
 gtk_get_frame_parent (struct frame *f)
 {
   GtkWidget *parentwid = (GtkWidget*)
-    g_object_get_data (G_OBJECT (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f))),
+    g_object_get_data (G_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
                        TRANSIENT_DATA_IDENTIFIER);
 
     /* find the frame whose wid is parentwid */

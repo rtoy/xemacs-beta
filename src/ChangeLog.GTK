@@ -1,3 +1,11 @@
+2011-05-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (cleanup_deleted_frame): Match GWeakNotify.
+	(gtk_create_widgets): Use g_object_weak_ref.
+	(gtk_create_widgets): Use G_OBJECT.
+	(gtk_popup_frame): Remove GTK_OBJECT cast.
+	(gtk_get_frame_parent): Ditto.
+
 2011-05-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (menu_convert): Use gtk_menu_item_get_submenu.
@@ -8,6 +16,8 @@
 	(menu_convert): Use gtk_menu_item_get_submenu.
 	(menu_create_menubar): Use 2.0 gtk_menu_shell_insert.
 	(create_menubar_widget): Use preferred g_object_weak_ref.
+	(__maybe_destroy): Match GtkCallback signature.
+	(__activate_menu): Avoid cast.
 
 	* frame-gtk.c (gtk_create_widgets): Use g_object_weak_ref.
 
