@@ -1,3 +1,7 @@
+2011-05-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (build_gtk_object): Handle NULL argument.
+
 2011-05-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (menu_convert): Use gtk_menu_item_get_submenu.
