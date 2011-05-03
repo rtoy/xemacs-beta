@@ -234,6 +234,26 @@ gtk_frame_iconified_p (struct frame *f)
 /************************************************************************/
 
 static Lisp_Object
+gtk_toolbar_alist (struct frame *f)
+{
+  Lisp_Object alist = Qnil;
+
+  alist = acons (Qright,
+                 build_gtk_object (FRAME_GTK_TOOLBAR_WIDGET (f)[RIGHT_EDGE]),
+                 alist);
+  alist = acons (Qleft,
+                 build_gtk_object (FRAME_GTK_TOOLBAR_WIDGET (f)[LEFT_EDGE]),
+                 alist);
+  alist = acons (Qbottom,
+                 build_gtk_object (FRAME_GTK_TOOLBAR_WIDGET (f)[BOTTOM_EDGE]),
+                 alist);
+  alist = acons (Qtop,
+                 build_gtk_object (FRAME_GTK_TOOLBAR_WIDGET (f)[TOP_EDGE]),
+                 alist);
+  return alist;
+}
+
+static Lisp_Object
 gtk_frame_property (struct frame *f, Lisp_Object property)
 {
   GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
@@ -259,6 +279,14 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
     {
       return (FRAME_GTK_LISP_WIDGETS (f)[2]);
     }
+  if (EQ (Qmenubar, property))
+    {
+      return build_gtk_object (G_OBJECT (FRAME_GTK_MENUBAR_WIDGET (f)));
+    }
+  if (EQ (Qtoolbar, property))
+    {
+      return gtk_toolbar_alist (f);
+    }
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
   if (EQ (Qwindow_id, property))
     return Fgtk_window_id (wrap_frame (f));
@@ -276,6 +304,8 @@ gtk_internal_frame_property_p (struct frame *UNUSED(f), Lisp_Object property)
     || EQ (Qcontainer_widget, property)
     || EQ (Qtext_widget, property)
     || EQ (property, Qwindow_id)
+    || EQ (property, Qtoolbar)
+    || EQ (property, Qmenubar)
     || STRINGP (property);
 }
 
@@ -285,10 +315,13 @@ gtk_frame_properties (struct frame *f)
   Lisp_Object props = Qnil;
   GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
   gint x, y;
+  GValue val;
 
   props = cons3 (Qshell_widget, FRAME_GTK_LISP_WIDGETS (f)[0], props);
   props = cons3 (Qcontainer_widget, FRAME_GTK_LISP_WIDGETS (f)[1], props);
   props = cons3 (Qtext_widget, FRAME_GTK_LISP_WIDGETS (f)[2], props);
+  props = cons3 (Qmenubar, build_gtk_object (G_OBJECT (FRAME_GTK_MENUBAR_WIDGET (f))), props);
+  props = cons3 (Qtoolbar, gtk_toolbar_alist (f), props);
 
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
   props = cons3 (Qwindow_id, Fgtk_window_id (wrap_frame (f)), props);
