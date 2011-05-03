@@ -1038,6 +1038,9 @@ Lisp_Object build_gtk_object (GObject *obj)
   emacs_gtk_object_data *data = NULL;
   GUI_ID id = 0;
 
+  if (obj == NULL)
+    return Qnil;
+
   id = (GUI_ID) GPOINTER_TO_UINT (g_object_get_qdata (obj,
                                                      GTK_DATA_GUI_IDENTIFIER));
 
