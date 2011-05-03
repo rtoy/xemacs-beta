@@ -1,3 +1,12 @@
+2011-05-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_toolbar_alist): Define.
+	(gtk_frame_property): Define menubar and toolbar properties.
+	(gtk_internal_frame_property_p): Ditto.
+	(gtk_frame_properties): Ditto.
+
+	* ui-gtk.c (build_gtk_object): Handle NULL argument.
+	
 2011-05-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (cleanup_deleted_frame): Match GWeakNotify.
