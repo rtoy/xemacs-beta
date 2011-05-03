@@ -36,6 +36,21 @@
    gtk-call-function gtk-import-variable-internal gtk-ctree-recurse))
 
 
+;; GtkWidget, general functions
+(gtk-import-function nil gtk_widget_show GtkWidget)
+(gtk-import-function nil gtk_widget_show_all GtkWidget)
+(gtk-import-function nil gtk_widget_hide GtkWidget)
+(gtk-import-function nil gtk_widget_hide_all GtkWidget)
+(gtk-import-function nil gtk_widget_map GtkWidget)
+(gtk-import-function nil gtk_widget_unmap GtkWidget)
+(gtk-import-function nil gtk_widget_realize GtkWidget)
+(gtk-import-function nil gtk_widget_unrealize GtkWidget)
+(gtk-import-function gboolean gtk_widget_get_visible GtkWidget)
+(gtk-import-function nil gtk_widget_set_visible GtkWidget gboolean)
+(gtk-import-function GtkString gtk_widget_get_name GtkWidget)
+(gtk-import-function nil gtk_widget_set_name GtkWidget GtkString))
+
+
 ;; GtkWindow
 (gtk-import-function GtkWidget gtk_window_new GtkWindowType)
 
