@@ -3227,8 +3227,9 @@ surrounded by (block NAME ...)."
 ;; range of fixnums as well as their types. XEmacs doesn't support machines
 ;; with word size less than 32, so it's OK to have that as the minimum.
 (macrolet
-    ((most-negative-fixnum-on-32-bit-machines () (lognot (1- (lsh 1 30))))
-     (most-positive-fixnum-on-32-bit-machines () (lsh 1 30)))
+    ((most-positive-fixnum-on-32-bit-machines () (1- (lsh 1 30)))
+     (most-negative-fixnum-on-32-bit-machines ()
+       (lognot (most-positive-fixnum-on-32-bit-machines))))
   (defun cl-non-fixnum-number-p (object)
     "Return t if OBJECT is a number not guaranteed to be immediate."
     (and (numberp object)
