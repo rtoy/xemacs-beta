@@ -2260,8 +2260,9 @@ split_env_path (const CIbyte *evarname, const Ibyte *default_)
   return split_string_by_ichar_1 (path, qxestrlen (path), SEPCHAR, 0, 0);
 }
 
-/* Ben thinks this function should not exist or be exported to Lisp.
-   We use it to define split-path-string in subr.el (not!).  */
+/* Ben thinks [or thought in 1998] this function should not exist or be
+   exported to Lisp. It's used to define #'split-path in subr.el, and for
+   parsing Carbon font names under that window system. */
 
 DEFUN ("split-string-by-char", Fsplit_string_by_char, 2, 3, 0, /*
 Split STRING into a list of substrings originally separated by SEPCHAR.
@@ -2286,31 +2287,6 @@ will be necessary for a single ESCAPE-CHAR to appear in the output string.
                                   XCHAR (sepchar),
                                   !NILP (escape_char), escape_ichar);
 }
-
-/* #### This was supposed to be in subr.el, but is used VERY early in
-   the bootstrap process, so it goes here.  Damn.  */
-
-DEFUN ("split-path", Fsplit_path, 1, 1, 0, /*
-Explode a search path into a list of strings.
-The path components are separated with the characters specified
-with `path-separator'.
-*/
-       (path))
-{
-  CHECK_STRING (path);
-
-  while (!STRINGP (Vpath_separator)
-	 || (string_char_length (Vpath_separator) != 1))
-    Vpath_separator = signal_continuable_error
-      (Qinvalid_state,
-       "`path-separator' should be set to a single-character string",
-       Vpath_separator);
-
-  return (split_string_by_ichar_1
-	  (XSTRING_DATA (path), XSTRING_LENGTH (path),
-	   itext_ichar (XSTRING_DATA (Vpath_separator)), 0, 0));
-}
-
 
 DEFUN ("nthcdr", Fnthcdr, 2, 2, 0, /*
 Take cdr N times on LIST, and return the result.
@@ -11955,7 +11931,6 @@ syms_of_fns (void)
 
   DEFSUBR (Fsubstring_no_properties);
   DEFSUBR (Fsplit_string_by_char);
-  DEFSUBR (Fsplit_path);	/* #### */
 }
 
 void
