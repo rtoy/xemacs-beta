@@ -1,5 +1,37 @@
 2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-two-args-19->20): Removed.
+	* bytecomp.el (byte-compile-emacs19-compatibility): Removed.
+	* bytecomp.el (byte-defop-compiler20): Removed.
+	* bytecomp.el (byte-defop-compiler-rmsfun): Removed.
+	* bytecomp.el (emacs-lisp-file-regexp):
+	* bytecomp.el (byte-compile-print-gensym):
+	* bytecomp.el (byte-compiler-legal-options):
+	* bytecomp.el (byte-compiler-obsolete-options):
+	* bytecomp.el (byte-compile-close-variables):
+	* bytecomp.el (byte-compile-insert-header):
+	* bytecomp.el (byte-compile-output-file-form):
+	* bytecomp.el (byte-compile-output-docform):
+	* bytecomp.el (byte-compile-out-toplevel):
+	* bytecomp.el (byte-compile-form):
+	* bytecomp.el (byte-defop-compiler-1):
+	* bytecomp.el (eq):
+	* bytecomp.el (equal):
+	* bytecomp.el (member):
+	* bytecomp.el (byte-compile-noop):
+	* bytecomp.el (byte-compile-save-current-buffer):
+	Remove support for generating code appropriate to Emacs 19.
+
+	* bytecomp.el (byte-compile-eval):
+	Avoid erroring here if the car of some entry in the macro
+	environment is not a symbol, as is the case for symbol macros.
+	* bytecomp.el (or):
+	Use slightly better style when compiling the most important
+	functions if bytecomp.el has just been loaded interpreted.
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* byte-optimize.el:
 	* byte-optimize.el (byte-optimize-form-code-walker):
 	Call #'byte-optimize-side-effect-free-p on the form, rather than
