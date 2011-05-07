@@ -1,5 +1,12 @@
 2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* subr.el:
+	* subr.el (split-path): New.
+	Moved here from fns.c. There's no need to have this in C, it's no
+	longer used that early at startup.
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el:
 	* bytecomp.el (byte-compile-two-args-19->20): Removed.
 	* bytecomp.el (byte-compile-emacs19-compatibility): Removed.

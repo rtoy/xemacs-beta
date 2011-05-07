@@ -1,3 +1,9 @@
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsplit_path): Removed.
+	* fns.c (syms_of_fns):
+	Move #'split-path to subr.el, as was always the intention.
+
 2011-05-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* dumper.c (pdump_file_try): Remove static qualifier.

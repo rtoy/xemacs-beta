@@ -505,18 +505,20 @@ NOTE: At some point, this will be moved into C and will be very fast."
 
 ;; BEGIN SYNCHED WITH FSF 21.2
 
-;; #### #### #### AAaargh!  Must be in C, because it is used insanely
-;; early in the bootstrap process.
-;(defun split-path (path)
+(defun split-path (path)
+  "Explode a search path into a list of strings.
+The path components are separated with the characters specified
+with `path-separator'."
+  (while (or (not (stringp path-separator))
+             (/= (length path-separator) 1))
+    (setq path-separator (signal 'error (list "\
+`path-separator' should be set to a single-character string"
+					      path-separator))))
+  (split-string-by-char path (aref path-separator 0)))
+
 ;  "Explode a search path into a list of strings.
 ;The path components are separated with the characters specified
 ;with `path-separator'."
-;  (while (or (not stringp path-separator)
-;	     (/= (length path-separator) 1))
-;    (setq path-separator (signal 'error (list "\
-;`path-separator' should be set to a single-character string"
-;					      path-separator))))
-;  (split-string-by-char path (aref separator 0)))
 
 (defmacro with-current-buffer (buffer &rest body)
   "Temporarily make BUFFER the current buffer and execute the forms in BODY.
