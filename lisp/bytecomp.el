@@ -121,9 +121,6 @@
 ;;;                                             as data, not as a function,
 ;;;                                             and using it in a function
 ;;;                                             context )
-;;; byte-compile-emacs19-compatibility	Whether the compiler should
-;;;				generate .elc files which can be loaded into
-;;;				generic emacs 19.
 ;;; emacs-lisp-file-regexp	Regexp for the extension of source-files;
 ;;;				see also the function `byte-compile-dest-file'.
 ;;; byte-compile-overwrite-file	If nil, delete old .elc files before saving.
@@ -218,21 +215,6 @@
     ;; This really ought to be loaded already!
     (load-library "bytecomp-runtime"))
 
-(eval-when-compile
-  (defvar byte-compile-single-version t
-    "If this is true, the choice of emacs version (v19 or v20) byte-codes will
-be hard-coded into bytecomp when it compiles itself.  If the compiler itself
-is compiled with optimization, this causes a speedup.")
-
-  (cond
-   (byte-compile-single-version
-    (defmacro byte-compile-single-version () t)
-    (defmacro byte-compile-version-cond (cond) (list 'quote (eval cond))))
-   (t
-    (defmacro byte-compile-single-version () nil)
-    (defmacro byte-compile-version-cond (cond) cond)))
-  )
-
 (defvar emacs-lisp-file-regexp "\\.el$"
   "*Regexp which matches Emacs Lisp source files.
 You may want to redefine `byte-compile-dest-file' if you change this.")
@@ -277,20 +259,13 @@ You may want to redefine `byte-compile-dest-file' if you change this.")
   (and (not noninteractive) (> (device-baud-rate) search-slow-speed))
   "*Non-nil means print messages describing progress of byte-compiler.")
 
-(defvar byte-compile-emacs19-compatibility
-  (not (emacs-version>= 20))
-  "*Non-nil means generate output that can run in Emacs 19.")
-
 (defvar byte-compile-print-gensym t
   "*Non-nil means generate code that creates unique symbols at run-time.
 This is achieved by printing uninterned symbols using the `#:SYMBOL'
 notation, so that they will be read uninterned when run.
 
 With this feature, code that uses uninterned symbols in macros will
-not be runnable under pre-21.0 XEmacsen.
-
-When `byte-compile-emacs19-compatibility' is non-nil, this variable is
-ignored and considered to be nil.")
+not be runnable under pre-21.0 XEmacsen.")
 
 (defvar byte-optimize t
   "*Enables optimization in the byte compiler.
@@ -482,11 +457,15 @@ easily determined from the input file.")
 (defun byte-compile-eval (form)
   (let ((save-macro-environment nil))
     (unwind-protect
-	(loop for (sym . def) in byte-compile-macro-environment do
-	  (push
-	   (if (fboundp sym) (cons sym (symbol-function sym)) sym)
-	   save-macro-environment)
-	  (fset sym (cons 'macro def))
+	(loop
+	  for (sym . def) in byte-compile-macro-environment
+	  do (when (symbolp sym)
+	       (push
+		(if (fboundp sym)
+		    (cons sym (symbol-function sym))
+		  sym)
+		save-macro-environment)
+	       (fset sym (cons 'macro def)))
 	  finally return (eval form))
       (dolist (elt save-macro-environment)
 	(if (symbolp elt)
@@ -1093,7 +1072,7 @@ otherwise pop it")
 
 (defconst byte-compiler-legal-options
   '((optimize byte-optimize (t nil source byte) val)
-    (file-format byte-compile-emacs19-compatibility (emacs19 emacs20)
+    (file-format byte-compile-emacs19-compatibility (emacs20)
 		 (eq val 'emacs19))
     (delete-errors byte-compile-delete-errors (t nil) val)
     (verbose byte-compile-verbose (t nil) val)
@@ -1105,19 +1084,7 @@ otherwise pop it")
 
 ;; XEmacs addition
 (defconst byte-compiler-obsolete-options
-  '((new-bytecodes t)))
-
-;; Inhibit v19/v20 selectors if the version is hardcoded.
-;; #### This should print a warning if the user tries to change something
-;; than can't be changed because the running compiler doesn't support it.
-(cond
- ((byte-compile-single-version)
-  (setcar (cdr (cdr (assq 'file-format byte-compiler-legal-options)))
-	  (if (byte-compile-version-cond byte-compile-emacs19-compatibility)
-	      '(emacs19) '(emacs20)))))
-
-;; now we can copy it.
-(setq byte-compiler-legal-options byte-compiler-legal-options)
+  '((new-bytecodes t) (byte-compile-emacs19-compatibility nil)))
 
 (defun byte-compiler-options-handler (&rest args)
   (let (key val desc choices)
@@ -1422,8 +1389,6 @@ otherwise pop it")
 	;;
 	(byte-compile-verbose byte-compile-verbose)
 	(byte-optimize byte-optimize)
-	(byte-compile-emacs19-compatibility
-	 byte-compile-emacs19-compatibility)
 	(byte-compile-checks-on-load
 	 byte-compile-checks-on-load)
 	(byte-compile-dynamic byte-compile-dynamic)
@@ -1860,7 +1825,7 @@ docstrings code.")
     ;;
     (insert
      ";ELC"
-     (if (byte-compile-version-cond byte-compile-emacs19-compatibility) 19 20)
+     20
      "\000\000\000\n")
     (when (not (eq (find-coding-system 'raw-text-unix)
 		   (find-coding-system buffer-file-coding-system)))
@@ -1974,9 +1939,7 @@ docstrings code.")
 	  (print-length nil)
 	  (print-level nil)
 	  (print-readably t)	; print #[] for bytecode, 'x for (quote x)
-	  (print-gensym (if (and byte-compile-print-gensym
-				 (not byte-compile-emacs19-compatibility))
-			    '(t) nil))
+	  (print-gensym (if byte-compile-print-gensym '(t) nil))
           print-gensym-alist)
       (when byte-compile-output-preface
         (princ "\n(progn " byte-compile-outbuffer)
@@ -2026,9 +1989,7 @@ list that represents a doc string reference.
 	       ;; Use a cons cell to say that we want
 	       ;; print-gensym-alist not to be cleared between calls
 	       ;; to print functions.
-	       (print-gensym (if (and byte-compile-print-gensym
-				      (not byte-compile-emacs19-compatibility))
-				 '(t) nil))
+	       (print-gensym (if byte-compile-print-gensym '(t) nil))
 	       print-gensym-alist
 	       (index 0))
            (when byte-compile-output-preface
@@ -2763,15 +2724,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		    ((and maycall
 			  ;; Allow a funcall if at most one atom follows it.
 			  (null (nthcdr 3 rest))
-			  (setq tmp
-				;; XEmacs change for rms funs
-				(or (and
-				     (byte-compile-version-cond
-				      byte-compile-emacs19-compatibility)
-				     (get (car (car rest))
-					  'byte-opcode19-invert))
-				    (get (car (car rest))
-					 'byte-opcode-invert)))
+			  (setq tmp (get (car (car rest)) 'byte-opcode-invert))
 			  (or (null (cdr rest))
 			      (and (memq output-type '(file progn t))
 				   (cdr (cdr rest))
@@ -2828,10 +2781,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		(handler (get fn 'byte-compile)))
 	   (if (memq fn '(t nil))
 	       (byte-compile-warn "%s called as a function" fn))
-	   (if (and handler
-		    (or (not (byte-compile-version-cond
-			      byte-compile-emacs19-compatibility))
-			(not (get (get fn 'byte-opcode) 'emacs20-opcode))))
+	   (if handler
 	       (funcall handler form)
 	     (if (memq 'callargs byte-compile-warnings)
 		 (byte-compile-callargs-warn form))
@@ -3057,49 +3007,6 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		      ''byte-opcode-invert (list 'quote function)))
 	fnform))))
 
-(defmacro byte-defop-compiler20 (function &optional compile-handler)
-  ;; Just like byte-defop-compiler, but defines an opcode that will only
-  ;; be used when byte-compile-emacs19-compatibility is false.
-  (if (and (byte-compile-single-version)
-	   byte-compile-emacs19-compatibility)
-      ;; #### instead of doing nothing, this should do some remprops,
-      ;; #### to protect against the case where a single-version compiler
-      ;; #### is loaded into a world that has contained a multi-version one.
-      nil
-    (list 'progn
-      (list 'put
-	(list 'quote
-	  (or (car (cdr-safe function))
-	      (intern (concat "byte-"
-		        (symbol-name (or (car-safe function) function))))))
-	''emacs20-opcode t)
-      (list 'byte-defop-compiler function compile-handler))))
-
-;; XEmacs addition:
-(defmacro byte-defop-compiler-rmsfun (function &optional compile-handler)
-  ;; for functions like `eq' that compile into different opcodes depending
-  ;; on the Emacs version: byte-old-eq for v19, byte-eq for v20.
-  (let ((opcode (intern (concat "byte-" (symbol-name function))))
-	(opcode19 (intern (concat "byte-old-" (symbol-name function))))
-	(fnform
-	 (list 'put (list 'quote function) ''byte-compile
-	       (list 'quote
-		     (or (cdr (assq compile-handler
-				    '((2 . byte-compile-two-args-19->20)
-				      )))
-			 compile-handler
-			 (intern (concat "byte-compile-"
-					 (symbol-name function))))))))
-    (list 'progn fnform
-	  (list 'put (list 'quote function)
-		''byte-opcode (list 'quote opcode))
-	  (list 'put (list 'quote function)
-		''byte-opcode19 (list 'quote opcode19))
-	  (list 'put (list 'quote opcode)
-		''byte-opcode-invert (list 'quote function))
-	  (list 'put (list 'quote opcode19)
-		''byte-opcode19-invert (list 'quote function)))))
-
 (defmacro byte-defop-compiler-1 (function &optional compile-handler)
   (list 'byte-defop-compiler (list function nil) compile-handler))
 
@@ -3121,7 +3028,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 ;(byte-defop-compiler (dot-max byte-point-max)	0+1)
 ;(byte-defop-compiler (dot-min byte-point-min)	0+1)
 (byte-defop-compiler point		0+1)
-(byte-defop-compiler-rmsfun eq		2)
+(byte-defop-compiler eq		2)
 (byte-defop-compiler point-max		0+1)
 (byte-defop-compiler point-min		0+1)
 (byte-defop-compiler following-char	0+1)
@@ -3130,14 +3037,14 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 ;; FSF has special function here; generalized here by the 1+2 stuff.
 (byte-defop-compiler (indent-to-column byte-indent-to) 1+2)
 (byte-defop-compiler indent-to		1+2)
-(byte-defop-compiler-rmsfun equal	2)
+(byte-defop-compiler equal	2)
 (byte-defop-compiler eolp		0+1)
 (byte-defop-compiler eobp		0+1)
 (byte-defop-compiler bolp		0+1)
 (byte-defop-compiler bobp		0+1)
 (byte-defop-compiler current-buffer	0)
 ;;(byte-defop-compiler read-char	0) ;; obsolete
-(byte-defop-compiler-rmsfun memq	2)
+(byte-defop-compiler memq	2)
 (byte-defop-compiler interactive-p	0)
 (byte-defop-compiler widen		0+1)
 (byte-defop-compiler end-of-line	0-1+1)
@@ -3170,8 +3077,8 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler skip-chars-forward     1-2+1)
 (byte-defop-compiler skip-chars-backward    1-2+1)
 (byte-defop-compiler eq			2)
-; (byte-defop-compiler20 old-eq 	 	2)
-; (byte-defop-compiler20 old-memq		2)
+; (byte-defop-compiler old-eq 	 	2)
+; (byte-defop-compiler old-memq		2)
 (byte-defop-compiler cons		2)
 (byte-defop-compiler aref		2)
 (byte-defop-compiler get		2+1)
@@ -3188,11 +3095,11 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler string<		2)
 (byte-defop-compiler (string-equal byte-string=) 2)
 (byte-defop-compiler (string-lessp byte-string<) 2)
-; (byte-defop-compiler20 old-equal	2)
+; (byte-defop-compiler old-equal	2)
 (byte-defop-compiler nthcdr		2)
 (byte-defop-compiler elt		2)
-(byte-defop-compiler20 old-member	2)
-(byte-defop-compiler20 old-assq		2)
+(byte-defop-compiler old-member	2)
+(byte-defop-compiler old-assq		2)
 (byte-defop-compiler (rplaca byte-setcar) 2)
 (byte-defop-compiler (rplacd byte-setcdr) 2)
 (byte-defop-compiler setcar		2)
@@ -3207,8 +3114,8 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler-1 multiple-value-call)
 (byte-defop-compiler throw)
 
-(byte-defop-compiler-rmsfun member	2)
-(byte-defop-compiler-rmsfun assq	2)
+(byte-defop-compiler member	2)
+(byte-defop-compiler assq	2)
 
 ;;####(byte-defop-compiler move-to-column	1)
 (byte-defop-compiler-1 interactive byte-compile-noop)
@@ -3350,17 +3257,6 @@ If FORM is a lambda or a macro, byte-compile it as a function."
     (1     (byte-compile-one-arg form))
     ((2 3) (byte-compile-normal-call form))
     (t     (byte-compile-subr-wrong-args form "1-3"))))
-
-;; XEmacs: used for functions that have a different opcode in v19 than v20.
-;; this includes `eq', `equal', and other old-ified functions.
-(defun byte-compile-two-args-19->20 (form)
-  (if (not (eql (length form) 3))
-      (byte-compile-subr-wrong-args form 2)
-    (byte-compile-form (car (cdr form)))  ;; Push the arguments
-    (byte-compile-form (nth 2 form))
-    (if (byte-compile-version-cond byte-compile-emacs19-compatibility)
-	(byte-compile-out (get (car form) 'byte-opcode19) 0)
-      (byte-compile-out (get (car form) 'byte-opcode) 0))))
 
 (defun byte-compile-noop (form)
   (byte-compile-constant nil))
@@ -4305,17 +4201,9 @@ optimized away--just byte compile and return the BODY."
   (byte-compile-out 'byte-unbind 1))
 
 (defun byte-compile-save-current-buffer (form)
-  (if (byte-compile-version-cond byte-compile-emacs19-compatibility)
-      ;; `save-current-buffer' special operator is not available in XEmacs 19.
-      (byte-compile-form
-       `(let ((_byte_compiler_save_buffer_emulation_closure_ (current-buffer)))
-	  (unwind-protect
-	      (progn ,@(cdr form))
-	    (and (buffer-live-p _byte_compiler_save_buffer_emulation_closure_)
-		 (set-buffer _byte_compiler_save_buffer_emulation_closure_)))))
-    (byte-compile-out 'byte-save-current-buffer 0)
-    (byte-compile-body-do-effect (cdr form))
-    (byte-compile-out 'byte-unbind 1)))
+  (byte-compile-out 'byte-save-current-buffer 0)
+  (byte-compile-body-do-effect (cdr form))
+  (byte-compile-out 'byte-unbind 1))
 
 (defun byte-compile-with-output-to-temp-buffer (form)
   (byte-compile-form (car (cdr form)))
@@ -4877,22 +4765,23 @@ For example, invoke `xemacs -batch -f batch-byte-recompile-directory .'."
 ;;
 (eval-when-compile
  (or (compiled-function-p (symbol-function 'byte-compile-form))
-     (assq 'byte-code (symbol-function 'byte-compile-form))
      (let ((byte-optimize nil) ; do it fast
 	   (byte-compile-warnings nil))
-       (mapcar #'(lambda (x)
-		   (or noninteractive (message "compiling %s..." x))
-		   (byte-compile x)
-		   (or noninteractive (message "compiling %s...done" x)))
-	       '(byte-compile-normal-call
-		 byte-compile-form
-		 byte-compile-body
-		 ;; Inserted some more than necessary, to speed it up.
-		 byte-compile-top-level
-		 byte-compile-out-toplevel
-		 byte-compile-constant
-		 byte-compile-variable-ref))))
- nil)
+       (map nil (if noninteractive
+		    #'byte-compile
+		  #'(lambda (x)
+		      (message "compiling %s..." x)
+		      (byte-compile x)
+		      (message "compiling %s...done" x)))
+	    '(byte-compile-normal-call
+	      byte-compile-form
+	      byte-compile-body
+	      ;; Inserted some more than necessary, to speed it up.
+	      byte-compile-top-level
+	      byte-compile-out-toplevel
+	      byte-compile-constant
+	      byte-compile-variable-ref)))))
+
 
 (run-hooks 'bytecomp-load-hook)
 
