@@ -524,21 +524,17 @@
 					    byte-compile-macro-environment))))
 	   (byte-optimize-form form for-effect))
 
-	  ;; Support compiler macros as in cl.el.
-	  ((and (fboundp 'compiler-macroexpand)
-		(symbolp (car-safe form))
-		(get (car-safe form) 'cl-compiler-macro)
-	        (not (eq form
-		         (setq form (compiler-macroexpand form)))))
-	   (byte-optimize-form form for-effect))
-
 	  ((not (symbolp fn))
-	   (or (eq 'mocklisp (car-safe fn)) ; ha!
-	       (byte-compile-warn "%s is a malformed function"
-				  (prin1-to-string fn)))
+	   (byte-compile-warn "%s is a malformed function" (prin1-to-string fn))
 	   form)
 
-	  ((and for-effect (setq tmp (get fn 'side-effect-free))
+	  ;; Support compiler macros as in cl.el.
+	  ((and (get fn 'cl-compiler-macro)
+	        (not (eq form (setq form (compiler-macroexpand form)))))
+	   (byte-optimize-form form for-effect))
+
+	  ((and for-effect
+		(setq tmp (byte-optimize-side-effect-free-p form))
 		(or byte-compile-delete-errors
 		    (eq tmp 'error-free)
 		    (progn
@@ -1260,42 +1256,62 @@
 	 list-length getf
 	 ))
       (side-effect-and-error-free-fns
-       '(arrayp atom
+       '(acons arrayp atom
 	 bigfloatp bignump bobp bolp buffer-end buffer-list buffer-size
 	 buffer-string bufferp
 	 car-safe case-table-p cdr-safe char-or-string-p char-table-p
 	 characterp commandp cons
-	 consolep console-live-p consp
+	 consolep console-live-p consp copy-tree
 	 current-buffer
 	 ;; XEmacs: extent functions, frame-live-p, various other stuff
 	 devicep device-live-p
-	 eobp eolp eq eql equal eventp extentp
+	 eobp eolp eq eql equal equalp eventp extentp
 	 extent-live-p fixnump floatingp floatp framep frame-live-p
 	 get-largest-window get-lru-window
 	 hash-table-p
 	 identity ignore integerp integer-or-marker-p interactive-p
 	 invocation-directory invocation-name
-	 keymapp list listp
+	 keymapp list list* listp
 	 make-marker mark mark-marker markerp memory-limit minibuffer-window
 	 ;; mouse-movement-p not in XEmacs
 	 natnump nlistp not null number-or-marker-p numberp
 	 one-window-p ;; overlayp not in XEmacs
 	 point point-marker point-min point-max processp
-	 rationalp ratiop range-table-p realp
+	 random-state-p rationalp ratiop range-table-p realp
 	 selected-window sequencep stringp subrp symbolp syntax-table-p
 	 user-full-name user-login-name user-original-login-name
 	 user-real-login-name user-real-uid user-uid
 	 vector vectorp
-	 window-configuration-p window-live-p windowp
-	 ;; Functions defined by cl
-	 eql list* subst acons equalp random-state-p
-	 copy-tree sublis
-	 )))
+	 window-configuration-p window-live-p windowp)))
   (dolist (fn side-effect-free-fns)
     (put fn 'side-effect-free t))
   (dolist (fn side-effect-and-error-free-fns)
     (put fn 'side-effect-free 'error-free)))
 
+(dolist (function 
+	 '(adjoin assoc* count find intersection member* mismatch position
+	   rassoc* remove* remove-duplicates search set-difference
+	   set-exclusive-or stable-intersection stable-sort stable-union
+	   sublis subsetp subst substitute tree-equal union))
+  ;; These all throw errors, there's no point implementing an error-free
+  ;; version of the list.
+  (put function 'side-effect-free-if-keywords-are t))
+
+(defun byte-optimize-side-effect-free-p (form)
+  (or (get (car-safe form) 'side-effect-free)
+      (and (get (car-safe form) 'side-effect-free-if-keywords-are)
+	   (loop
+	     for (key value)
+	     on (nthcdr (get (car form) 'byte-compile-keyword-start) form)
+	     by #'cddr
+	     never (or (and (member* key
+				     '(:test :test-not :key :if :if-not))
+			    (or (not (byte-compile-constp value))
+				(not (and (consp value)
+                                          (symbolp (cadr value))
+					  (get (cadr value)
+                                               'side-effect-free)))))
+		       (not (keywordp key)))))))
 
 (defun byte-compile-splice-in-already-compiled-code (form)
   ;; form is (byte-code "..." [...] n)

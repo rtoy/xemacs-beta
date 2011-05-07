@@ -1,3 +1,17 @@
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el:
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	Call #'byte-optimize-side-effect-free-p on the form, rather than
+	just checking the plist of the form's car.
+	* byte-optimize.el (side-effect-free-fns):
+	Move the CL functions into their alphabetical place in the list.
+	* byte-optimize.el (function):
+	* byte-optimize.el (byte-optimize-side-effect-free-p): New.
+	Function returning non-nil if a funcall has no side-effects, which
+	handles things like (remove* item list :key 'car) and
+	(remove-if-not #'integerp list).
+
 2011-05-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (most-positive-fixnum-on-32-bit-machines):
