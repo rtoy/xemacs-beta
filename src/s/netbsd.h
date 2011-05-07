@@ -121,7 +121,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* arch-tag: e80f364a-04e9-4faf-93cb-f36a0fe95c81
    (do not change this comment) */
-#endif /* 0 */
 
 /* Begin XEmacs additions */
 #undef BSD

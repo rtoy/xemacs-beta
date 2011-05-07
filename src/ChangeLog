@@ -1,5 +1,11 @@
 2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* s/netbsd.h:
+	Remove an extraneous #endif, hopefully fixing the NetBSD and
+	OpenBSD builds; thank you Adam Sjøgren!
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fns.c (Fsplit_path): Removed.
 	* fns.c (syms_of_fns):
 	Move #'split-path to subr.el, as was always the intention.
