@@ -38,6 +38,43 @@
 
 ;;; Code:
 
+;; We define macro-declaration-function here because it is needed to
+;; handle declarations in macro definitions and this is the first file
+;; loaded by loadup.el that uses declarations in macros.
+(defun macro-declaration-function (macro decl)
+  "Process a declaration found in a macro definition.
+This is set as the value of the variable `macro-declaration-function'.
+MACRO is the name of the macro being defined.
+DECL is a list `(declare ...)' containing the declarations.
+The return value of this function is not used.
+
+XEmacs; any forms handed to the function described by the variable
+`macro-declaration-function' will also (eventually) be handled by the
+`declare' macro; see its documentation for further details of this."
+  ;; We can't use `dolist' or `cadr' yet for bootstrapping reasons.
+  (let (d)
+    ;; Ignore the first element of `decl' (it's always `declare').
+    (while (setq decl (cdr decl))
+      (setq d (car decl))
+      (if (and (consp d)
+	       (listp (cdr d))
+	       (null (cdr (cdr d))))
+	  (cond ((eq (car d) 'indent)
+		 (put macro 'lisp-indent-function (car (cdr d))))
+		((eq (car d) 'debug)
+		 (put macro 'edebug-form-spec (car (cdr d))))
+		((eq (car d) 'doc-string)
+                 ;;; #### XEmacs; not sure that this does anything sensible.
+		 (put macro 'doc-string-elt (car (cdr d))))
+                ;; XEmacs; don't warn about the known XEmacs declarations.
+                ((memq (car d) '(special inline notinline optimize warn)))
+		(t
+		 (message "Unknown declaration %s" d)))
+	(message "Invalid declaration %s" d)))))
+
+(setq macro-declaration-function 'macro-declaration-function)
+
+
 ;; Redefined in byte-optimize.el.
 ;; This is not documented--it's not clear that we should promote it.
 (fset 'inline 'progn)

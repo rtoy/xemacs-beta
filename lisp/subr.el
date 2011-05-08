@@ -39,22 +39,6 @@
 
 ;; XEmacs; no need for custom-declare-variable-list, preloaded-file-list is
 ;; ordered to make it unnecessary.
-
-(defun macro-declaration-function (macro decl)
-  "Process a declaration found in a macro definition.
-This is set as the value of the variable `macro-declaration-function'.
-MACRO is the name of the macro being defined.
-DECL is a list `(declare ...)' containing the declarations.
-The return value of this function is not used."
-  (dolist (d (cdr decl))
-    (cond ((and (consp d) (eq (car d) 'indent))
-	   (put macro 'lisp-indent-function (cadr d)))
-	  ((and (consp d) (eq (car d) 'debug))
-	   (put macro 'edebug-form-spec (cadr d)))
-	  (t
-	   (message "Unknown declaration %s" d)))))
-
-(setq macro-declaration-function 'macro-declaration-function)
 
 ;; XEmacs; this is here because we use it in backquote.el, so it needs to be
 ;; available the first time a `(...) form is expanded.

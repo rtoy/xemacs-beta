@@ -5247,6 +5247,7 @@ EXFUN (Fmemq, 2);
 EXFUN (Fnconc, MANY);
 MODULE_API EXFUN (Fnreverse, 1);
 EXFUN (Fnthcdr, 2);
+EXFUN (Fnth, 2);
 EXFUN (Fold_assq, 2);
 EXFUN (Fold_equal, 2);
 EXFUN (Fold_member, 2);

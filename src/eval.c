@@ -224,7 +224,7 @@ struct catchtag *catchlist;
    every attempt to throw past this level. */
 Lisp_Object Vcatch_everything_tag;
 
-Lisp_Object Qautoload, Qmacro, Qexit;
+Lisp_Object Qautoload, Qmacro, Qexit, Qdeclare;
 Lisp_Object Qinteractive, Qcommandp, Qdefun, Qprogn, Qvalues;
 Lisp_Object Vquit_flag, Vinhibit_quit;
 Lisp_Object Qand_rest, Qand_optional;
@@ -272,6 +272,8 @@ Lisp_Object Vlog_warning_minimum_level;
    They are recorded by being consed onto the front of Vautoload_queue:
    (FUN . ODEF) for a defun, (OFEATURES . nil) for a provide.  */
 Lisp_Object Vautoload_queue;
+
+Lisp_Object Vmacro_declaration_function;
 
 /* Current number of specbindings allocated in specpdl.  */
 int specpdl_size;
@@ -1406,6 +1408,33 @@ arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
        (args))
 {
   /* This function can GC */
+  if (!NILP (Vmacro_declaration_function))
+    {
+      Lisp_Object declare = Fnth (make_int (2), args);
+
+      /* Sigh. This GNU interface is incompatible with the CL declare macro,
+         and the latter is much older.
+
+         GNU describe this syntax in their docstrings. It's sufficiently
+         ugly in the XEmacs context (and in general, but ...) that I'm not
+         rushing to document it.
+
+         The GNU interface accepts multiple (declare ...) sexps at the
+         beginning of a macro. Nothing uses this, and the XEmacs byte
+         compiler (will) warn(s) if it encounters code that attempts to use
+         it. */
+
+      if (STRINGP (declare))
+        {
+          declare = Fnth (make_int (3), args);
+        }
+
+      if (CONSP (declare) && EQ (Qdeclare, XCAR (declare)))
+        {
+          call2 (Vmacro_declaration_function, XCAR (args), declare);
+        }
+    }
+
   return define_function (XCAR (args),
 			  Fcons (Qmacro, Fcons (Qlambda, XCDR (args))));
 }
@@ -7315,6 +7344,7 @@ syms_of_eval (void)
   defsymbol (&Qand_optional, "&optional");
   /* Note that the process code also uses Qexit */
   DEFSYMBOL (Qexit);
+  DEFSYMBOL (Qdeclare);
   DEFSYMBOL (Qsetq);
   DEFSYMBOL (Qinteractive);
   DEFSYMBOL (Qcommandp);
@@ -7571,6 +7601,15 @@ This applies to `values', `values-list', `multiple-value-bind' and related
 macros and special operators.
 */);
   Vmultiple_values_limit = EMACS_INT_MAX > INT_MAX ? INT_MAX : EMACS_INT_MAX;
+
+  DEFVAR_LISP ("macro-declaration-function", &Vmacro_declaration_function /*
+Function to process declarations in a macro definition.
+The function will be called with two args MACRO and DECL.
+MACRO is the name of the macro being defined.
+DECL is a list `(declare ...)' containing the declarations.
+The value the function returns is not used.
+*/);
+  Vmacro_declaration_function = Qnil;
 
   staticpro (&Vcatch_everything_tag);
   Vcatch_everything_tag = make_opaque (OPAQUE_CLEAR, 0);

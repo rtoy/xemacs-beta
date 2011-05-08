@@ -1,5 +1,16 @@
 2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp-runtime.el:
+	* bytecomp.el (byte-compile-file-form-defmumble):
+	* bytecomp-runtime.el (macro-declaration-function): New.
+	* subr.el:
+	* subr.el (macro-declaration-function): Removed.
+	Add support for macro-declaration-function, which is a GNU
+	mechanism for indicating indentation and edebug information in
+	macros (and only in macros).
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* subr.el:
 	* subr.el (split-path): New.
 	Moved here from fns.c. There's no need to have this in C, it's no
