@@ -2297,6 +2297,26 @@ list that represents a doc string reference.
 	       (stringp (car-safe (cdr-safe (cdr-safe body)))))
 	  (byte-compile-warn "Probable `\"' without `\\' in doc string of %s"
 			     (nth 1 form))))
+
+    ;; Generate code for declarations in macro definitions.
+    ;; Remove declarations from the body of the macro definition.
+    (when macrop
+      (let ((byte-compile-defmacro-body (nthcdr 3 form)))
+        (if (stringp (car byte-compile-defmacro-body))
+            (setq byte-compile-defmacro-body (nthcdr 4 form)))
+        (when (and (consp byte-compile-defmacro-body)
+                   (eq 'declare (car-safe (car byte-compile-defmacro-body))))
+          (if (eq 'declare (car-safe (car-safe
+                                      (cdr byte-compile-defmacro-body))))
+              (byte-compile-warn "Multiple macro-specific `declare' calls \
+not supported by XEmacs."))
+          (setq byte-compile-output-preface
+                (byte-compile-top-level
+                 `(progn (and macro-declaration-function
+                              (funcall macro-declaration-function
+                                       ',name
+                                       ',(car byte-compile-defmacro-body)))
+                         ,byte-compile-output-preface) t 'file)))))
     (let* ((new-one (byte-compile-lambda (cons 'lambda (nthcdr 2 form))))
 	   (code (byte-compile-byte-code-maker new-one))
            (docform-info

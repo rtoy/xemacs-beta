@@ -1,5 +1,15 @@
 2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* eval.c:
+	* eval.c (Fdefmacro):
+	* eval.c (syms_of_eval):
+	Support macro-declaration-function in defmacro, incompletely and
+	without documentation.
+	* lisp.h:
+	Declare Fnth here, necessary for the previous changes.
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* s/netbsd.h:
 	Remove an extraneous #endif, hopefully fixing the NetBSD and
 	OpenBSD builds; thank you Adam Sjøgren!
