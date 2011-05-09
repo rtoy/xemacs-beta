@@ -234,23 +234,23 @@ gtk_frame_iconified_p (struct frame *f)
 /************************************************************************/
 
 static Lisp_Object
-gtk_toolbar_alist (struct frame *f)
+gtk_toolbar_plist (struct frame *f)
 {
-  Lisp_Object alist = Qnil;
+  Lisp_Object plist = Qnil;
 
-  alist = acons (Qright,
+  plist = cons3 (Qright,
                  build_gtk_object (FRAME_GTK_TOOLBAR_WIDGET (f)[RIGHT_EDGE]),
-                 alist);
-  alist = acons (Qleft,
+                 plist);
+  plist = cons3 (Qleft,
                  build_gtk_object (FRAME_GTK_TOOLBAR_WIDGET (f)[LEFT_EDGE]),
-                 alist);
-  alist = acons (Qbottom,
+                 plist);
+  plist = cons3 (Qbottom,
                  build_gtk_object (FRAME_GTK_TOOLBAR_WIDGET (f)[BOTTOM_EDGE]),
-                 alist);
-  alist = acons (Qtop,
+                 plist);
+  plist = cons3 (Qtop,
                  build_gtk_object (FRAME_GTK_TOOLBAR_WIDGET (f)[TOP_EDGE]),
-                 alist);
-  return alist;
+                 plist);
+  return plist;
 }
 
 static Lisp_Object
@@ -285,7 +285,7 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
     }
   if (EQ (Qtoolbar, property))
     {
-      return gtk_toolbar_alist (f);
+      return gtk_toolbar_plist (f);
     }
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
   if (EQ (Qwindow_id, property))
@@ -321,7 +321,7 @@ gtk_frame_properties (struct frame *f)
   props = cons3 (Qcontainer_widget, FRAME_GTK_LISP_WIDGETS (f)[1], props);
   props = cons3 (Qtext_widget, FRAME_GTK_LISP_WIDGETS (f)[2], props);
   props = cons3 (Qmenubar, build_gtk_object (G_OBJECT (FRAME_GTK_MENUBAR_WIDGET (f))), props);
-  props = cons3 (Qtoolbar, gtk_toolbar_alist (f), props);
+  props = cons3 (Qtoolbar, gtk_toolbar_plist (f), props);
 
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
   props = cons3 (Qwindow_id, Fgtk_window_id (wrap_frame (f)), props);

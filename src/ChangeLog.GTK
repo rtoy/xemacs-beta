@@ -1,3 +1,10 @@
+2011-05-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_toolbar_plist): Rename, return a plist, not
+	an alist. 
+	(gtk_frame_property): Call gtk_toolbar_plist.
+	(gtk_frame_properties): Ditto.
+
 2011-05-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_toolbar_alist): Define.
