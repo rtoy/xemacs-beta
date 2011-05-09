@@ -1,5 +1,8 @@
 2011-05-09  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-byhand.c (Fgtk_widget_size_request): Define.
+	(syms_of_ui_byhand): Add above function.
+
 	* frame-gtk.c (gtk_toolbar_plist): Rename, return a plist, not
 	an alist. 
 	(gtk_frame_property): Call gtk_toolbar_plist.

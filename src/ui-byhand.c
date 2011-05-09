@@ -511,6 +511,22 @@ Adds a new button to the beginning (left or top edges) of the given toolbar.
   return (generic_toolbar_insert_item (toolbar,text,tooltip_text,tooltip_private_text,icon,callback,data,Qt,Qnil));
 }
 
+DEFUN ("gtk-widget-size-request", Fgtk_widget_size_request, 1, 1, 0, /*
+Sets WIDGET size request to WIDTH by HEIGHT.
+*/
+       (widget))
+{
+  GtkRequisition req;
+  
+  CHECK_GTK_OBJECT (widget);
+
+  if (!GTK_IS_WIDGET (XGTK_OBJECT (widget)->object))
+    wtaerror ("Object is not a GtkWidget", widget);
+
+  gtk_widget_size_request (XGTK_OBJECT (widget)->object, &req);
+  return cons3 (make_int (req.width), make_int (req.height), Qnil);
+}
+
 DEFUN ("gtk-toolbar-insert-item", Fgtk_toolbar_insert_item, 7, 8, 0, /*
 Adds a new button to the beginning (left or top edges) of the given toolbar.
 */
@@ -632,6 +648,7 @@ void syms_of_ui_byhand (void)
   DEFSUBR (Fgtk_label_get);
   DEFSUBR (Fgtk_notebook_query_tab_label_packing);
   DEFSUBR (Fgtk_widget_get_pointer);
+  DEFSUBR (Fgtk_widget_size_request);
 #ifdef JSPARKES
   DEFSUBR (Fgtk_ctree_recurse);
 #endif
