@@ -1,5 +1,12 @@
 2011-05-09  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (Fg_type_parent): Accept type as symbol, return type as
+	symbol.
+	(Fg_type_children): Ditto.
+	(Fg_object_class_list_properties): Ditto.
+	(Fg_type_interfaces): Define.
+	(syms_of_ui_gtk): Add g-type-interfaces.
+
 	* ui-byhand.c (Fgtk_widget_size_request): Define.
 	(syms_of_ui_byhand): Add above function.
 

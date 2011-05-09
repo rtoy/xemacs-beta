@@ -1465,51 +1465,80 @@ Return the name of GTYPE, which is the name of a type..
 }
 
 DEFUN ("g-type-parent", Fg_type_parent, 1, 1, 0, /*
-Return the parent type of TYPENAME.
+Return the parent type of TYPE symbol.
 Returns nil if no parent can be found.
 */
-       (typename))
+       (type))
 {
   GType gt = G_TYPE_INVALID;
   GType parent = G_TYPE_INVALID;
 
-  CHECK_STRING (typename);
-  gt = g_type_from_name ((char *) XSTRING_DATA (typename));
+  if (SYMBOLP (type))
+    type = Fsymbol_name (type);
+  CHECK_STRING (type);
+  gt = g_type_from_name ((char *) XSTRING_DATA (type));
   if (gt == G_TYPE_INVALID)
-    invalid_state ("type does not exist", typename);
+    invalid_state ("type does not exist", type);
   parent = g_type_parent (gt);
   if (parent == G_TYPE_INVALID)
     return Qnil;
-  return Fg_type_name (make_int (parent));
+  return type_as_symbol (parent);
 }
 
 DEFUN ("g-type-children", Fg_type_children, 1, 1, 0, /*
-Return the child types of TYPENAME.
+Return the child types of TYPE.
 */
-       (typename))
+       (type))
 {
   GType gt = G_TYPE_INVALID;
   GType *children = G_TYPE_INVALID;
   guint n_children, i;
   Lisp_Object result = Qnil;
 
-  CHECK_STRING (typename);
-  gt = g_type_from_name ((char *) XSTRING_DATA (typename));
+  if (SYMBOLP (type))
+    type = Fsymbol_name (type);
+  CHECK_STRING (type);
+  gt = g_type_from_name ((char *) XSTRING_DATA (type));
   if (gt == G_TYPE_INVALID)
-    invalid_state ("type does not exist", typename);
+    invalid_state ("type does not exist", type);
   children = g_type_children (gt, &n_children);
 
   for (i = 0; i < n_children; i++)
-    result = Fcons (Fg_type_name (make_int (children[i])), result);
+    result = Fcons (type_as_symbol (children[i]), result);
   result = Freverse (result);
   g_free (children);
   return result;
 }
   
-DEFUN ("g-object-class-list-properties", Fg_object_class_list_properties, 1, 1, 0, /*
-Return a list of all properties for CLASS name.
+DEFUN ("g-type-interfaces", Fg_type_interfaces, 1, 1, 0, /*
+Return the interface types of TYPE.
 */
-       (name))
+       (type))
+{
+  GType gt = G_TYPE_INVALID;
+  GType *interfaces = G_TYPE_INVALID;
+  guint n_interfaces, i;
+  Lisp_Object result = Qnil;
+
+  if (SYMBOLP (type))
+    type = Fsymbol_name (type);
+  CHECK_STRING (type);
+  gt = g_type_from_name ((char *) XSTRING_DATA (type));
+  if (gt == G_TYPE_INVALID)
+    invalid_state ("type does not exist", type);
+  interfaces = g_type_interfaces (gt, &n_interfaces);
+
+  for (i = 0; i < n_interfaces; i++)
+    result = Fcons (type_as_symbol (interfaces[i]), result);
+  result = Freverse (result);
+  g_free (interfaces);
+  return result;
+}
+
+DEFUN ("g-object-class-list-properties", Fg_object_class_list_properties, 1, 1, 0, /*
+Return a list of all properties for class TYPE.
+*/
+       (type))
 {
   GType gt;
   GObjectClass *type_class = NULL;
@@ -1517,19 +1546,21 @@ Return a list of all properties for CLASS name.
   GParamSpec **props;
   guint n_props, i;
   
-  CHECK_STRING (name);
-  gt = g_type_from_name ((gchar *)XSTRING_DATA (name));
+  if (SYMBOLP (type))
+    type = Fsymbol_name (type);
+  CHECK_STRING (type);
+  gt = g_type_from_name ((gchar *)XSTRING_DATA (type));
   if (gt == G_TYPE_INVALID)
-    invalid_state ("type does not exist", name);
+    invalid_state ("type does not exist", type);
 
   type_class = (GObjectClass *)g_type_class_peek (gt);
   if (type_class == NULL)
-    invalid_state("Unable to create GObject of class", name);
+    invalid_state("Unable to create GObject of class", type);
 
   props = g_object_class_list_properties (type_class, &n_props);
   for (i = 0; i < n_props; i++) 
     prop_list = acons (build_cistring (props[i]->name),
-                       Fg_type_name (make_int (props[i]->value_type)),
+                       type_as_symbol (props[i]->value_type),
                        prop_list);
   prop_list = Freverse (prop_list);
   g_free (props);
@@ -1567,6 +1598,7 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fg_type_from_name);
   DEFSUBR (Fg_type_parent);
   DEFSUBR (Fg_type_children);
+  DEFSUBR (Fg_type_interfaces);
   DEFSUBR (Fg_object_class_list_properties);
   syms_of_ui_byhand ();
 #ifdef JSPARKES
