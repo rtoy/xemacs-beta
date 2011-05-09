@@ -1,7 +1,7 @@
 #  Makefile for man subdirectory in XEmacs
 #   Copyright (C) 1995 Board of Trustees, University of Illinois
 #   Copyright (C) 1994, 1995 Sun Microsystems.
-#   Copyright (C) 2005 Ben Wing.
+#   Copyright (C) 2005, 2010 Ben Wing.
 
 # This file is part of XEmacs.
 
@@ -43,69 +43,35 @@ INFODIR = ../info
 HTMLDIR = ../html
 PHOTODIR = ../etc/photos
 
-info_files = \
-	$(INFODIR)/beta.info \
-	$(INFODIR)/cl.info \
-	$(INFODIR)/emodules.info \
-	$(INFODIR)/external-widget.info \
-	$(INFODIR)/info.info \
-	$(INFODIR)/internals.info \
-	$(INFODIR)/lispref.info \
-	$(INFODIR)/new-users-guide.info \
-	$(INFODIR)/standards.info \
-	$(INFODIR)/termcap.info \
-	$(INFODIR)/texinfo.info \
-	$(INFODIR)/widget.info \
-	$(INFODIR)/xemacs-faq.info \
-	$(INFODIR)/xemacs.info
+src_files1 = \
+	$(DIR)beta.texi \
+	$(DIR)cl.texi \
+	$(DIR)emodules.texi \
+	$(DIR)external-widget.texi \
+	$(DIR)info.texi \
+	$(DIR)internals.texi \
+	$(DIR)lispref.texi \
+	$(DIR)new-users-guide.texi \
+	$(DIR)standards.texi \
+	$(DIR)termcap.texi \
+	$(DIR)texinfo.texi \
+	$(DIR)widget.texi \
+	$(DIR)xemacs.texi \
+	$(DIR)xemacs-faq.texi
 
-html_files = \
-	$(HTMLDIR)/beta.html \
-	$(HTMLDIR)/cl.html \
-	$(HTMLDIR)/emodules.html \
-	$(HTMLDIR)/external-widget.html \
-	$(HTMLDIR)/info.html \
-	$(HTMLDIR)/lispref.html \
-	$(HTMLDIR)/internals.html \
-	$(HTMLDIR)/new-users-guide.html \
-	$(HTMLDIR)/standards.html \
-	$(HTMLDIR)/termcap.html \
-	$(HTMLDIR)/texinfo.html \
-	$(HTMLDIR)/widget.html \
-	$(HTMLDIR)/xemacs.html \
-	$(HTMLDIR)/xemacs-faq.html
+DIR:= 
+src_files := $(src_files1)
 
-dvi_files = \
-	beta.dvi \
-	cl.dvi \
-	emodules.dvi \
-	external-widget.dvi \
-	info.dvi \
-	lispref.dvi \
-	internals.dvi \
-	new-users-guide.dvi \
-	standards.dvi \
-	termcap.dvi \
-	texinfo.dvi \
-	widget.dvi \
-	xemacs.dvi \
-	xemacs-faq.dvi
+DIR := $(INFODIR)/
+info_files := $(src_files1:.texi=.info)
 
-pdf_files = \
-       beta.pdf \
-       cl.pdf \
-       emodules.pdf \
-       external-widget.pdf \
-       info.pdf \
-       lispref.pdf \
-       internals.pdf \
-       new-users-guide.pdf \
-       standards.pdf \
-       termcap.pdf \
-       texinfo.pdf \
-       widget.pdf \
-       xemacs.pdf \
-       xemacs-faq.pdf
+DIR := $(HTMLDIR)/
+html_files := $(src_files1:.texi=.html)
+
+dvi_files := $(src_files:.texi=.dvi)
+
+pdf_files := $(src_files:.texi=.pdf)
+
 
 xemacs-srcs = \
 	xemacs/abbrevs.texi \
@@ -235,11 +201,19 @@ new-users-guide-srcs = \
 	new-users-guide/search.texi \
 	new-users-guide/xmenu.texi
 
+texinfo-srcs = \
+	texinfo/fdl.texi \
+	texinfo/texinfo.texi \
+	texinfo/version.texi
+
 $(INFODIR)/beta.info : beta.texi
 	$(MAKEINFO) -o $(INFODIR)/beta.info beta.texi
 
 $(INFODIR)/cl.info : cl.texi
 	$(MAKEINFO) -o $(INFODIR)/cl.info cl.texi
+
+$(INFODIR)/custom.info : custom.texi
+	$(MAKEINFO) -o $(INFODIR)/custom.info custom.texi
 
 $(INFODIR)/emodules.info : emodules.texi
 	$(MAKEINFO) -o $(INFODIR)/emodules.info emodules.texi
@@ -253,13 +227,13 @@ $(INFODIR)/info.info : info.texi
 $(INFODIR)/standards.info : standards.texi
 	$(MAKEINFO) -o $(INFODIR)/standards.info standards.texi
 
+$(INFODIR)/term.info : term.texi
+	$(MAKEINFO) -o $(INFODIR)/term.info term.texi
+
 $(INFODIR)/termcap.info : termcap.texi
 	$(MAKEINFO) -o $(INFODIR)/termcap.info termcap.texi
 
-$(INFODIR)/texinfo.info : texinfo.texi
-	$(MAKEINFO) -o $(INFODIR)/texinfo.info texinfo.texi
-
-$(INFODIR)/widget.info : widget.texi
+$(INFODIR)/widget.info : widget.texi doclicense.texi
 	$(MAKEINFO) -o $(INFODIR)/widget.info widget.texi
 
 $(INFODIR)/xemacs-faq.info : xemacs-faq.texi
@@ -278,12 +252,16 @@ $(INFODIR)/internals.info : $(internals-srcs)
 $(INFODIR)/new-users-guide.info : $(new-users-guide-srcs)
 	$(MAKEINFO) -P new-users-guide -o $(INFODIR)/new-users-guide.info new-users-guide/new-users-guide.texi
 
+$(INFODIR)/texinfo.info : $(texinfo-srcs)
+	$(MAKEINFO) -P texinfo -o $(INFODIR)/texinfo.info texinfo/texinfo.texi
+
 xemacs : $(INFODIR)/xemacs.info
 lispref : $(INFODIR)/lispref.info
 internals : $(INFODIR)/internals.info
 new-users-guide.info : $(INFODIR)/new-users-guide.info
+texinfo : $(INFODIR)/texinfo.info
 
-.PHONY : xemacs lispref internals new-users-guide info dvi pdf
+.PHONY : xemacs lispref internals new-users-guide texinfo info dvi pdf
 
 info : $(info_files)
 html : $(html_files)
@@ -306,6 +284,9 @@ internals.dvi : $(internals-srcs)
 new-users-guide.dvi : $(new-users-guide-srcs)
 	$(TEXI2DVI) -I new-users-guide new-users-guide/new-users-guide.texi
 
+texinfo.dvi : $(texinfo-srcs)
+	$(TEXI2DVI) -I texinfo texinfo/texinfo.texi
+
 dvi : $(dvi_files)
 
 xemacs.pdf: $(xemacs-srcs)
@@ -319,6 +300,9 @@ internals.pdf: $(internals-srcs)
 
 new-users-guide.pdf: $(new-users-guide-srcs)
 	$(TEXI2DVI) --pdf -I new-users-guide new-users-guide/new-users-guide.texi
+
+texinfo.pdf: $(texinfo-srcs)
+	$(TEXI2DVI) --pdf -I texinfo texinfo/texinfo.texi
 
 pdf: $(pdf_files)
 
@@ -346,6 +330,9 @@ $(HTMLDIR)/beta.html : beta.texi
 $(HTMLDIR)/cl.html : cl.texi
 	$(TEXI2HTML_SPLIT) cl.texi
 
+$(HTMLDIR)/custom.html : custom.texi
+	$(TEXI2HTML_SPLIT) custom.texi
+
 $(HTMLDIR)/emodules.html : emodules.texi
 	$(TEXI2HTML_SPLIT) emodules.texi
 
@@ -358,11 +345,11 @@ $(HTMLDIR)/info.html : info.texi
 $(HTMLDIR)/standards.html : standards.texi
 	$(TEXI2HTML_SPLIT) standards.texi
 
+$(HTMLDIR)/term.html : term.texi
+	$(TEXI2HTML_SPLIT) term.texi
+
 $(HTMLDIR)/termcap.html : termcap.texi
 	$(TEXI2HTML_SPLIT) termcap.texi
-
-$(HTMLDIR)/texinfo.html : texinfo.texi
-	$(TEXI2HTML_SPLIT) texinfo.texi
 
 $(HTMLDIR)/widget.html : widget.texi
 	$(TEXI2HTML_SPLIT) widget.texi
@@ -392,9 +379,13 @@ $(HTMLDIR)/internals.html : $(internals-srcs)
 $(HTMLDIR)/new-users-guide.html : $(new-users-guide-srcs)
 	$(TEXI2HTML_SPLIT) new-users-guide/new-users-guide.texi
 
+$(HTMLDIR)/texinfo.html : $(texinfo-srcs)
+	$(TEXI2HTML_SPLIT) texinfo/texinfo.texi
+
 xemacs : $(HTMLDIR)/xemacs.html
 lispref : $(HTMLDIR)/lispref.html
 internals : $(HTMLDIR)/internals.html
 new-users-guide.html : $(HTMLDIR)/new-users-guide.html
+texinfo : $(HTMLDIR)/texinfo.html
 
 html : $(html_files)
