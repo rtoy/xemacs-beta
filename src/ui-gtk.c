@@ -1598,6 +1598,7 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fg_type_from_name);
   DEFSUBR (Fg_type_parent);
   DEFSUBR (Fg_type_children);
+  DEFSUBR (Fg_object_type);
   DEFSUBR (Fg_type_interfaces);
   DEFSUBR (Fg_object_class_list_properties);
   syms_of_ui_byhand ();

@@ -1,3 +1,7 @@
+2011-05-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (syms_of_ui_gtk): Register g-object-type.
+
 2011-05-09  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (Fg_type_parent): Accept type as symbol, return type as
