@@ -600,25 +600,124 @@ locate_pixmap_file (Lisp_Object name)
 /************************************************************************/
 
 #ifdef HAVE_GTK
+static void
+register_cursor_name (char *real_name, int value)
+{
+  char *name = alloca (strlen (real_name));
+  int len = strlen (real_name);
+  int i;
+
+  /* real_name is an ASCII string. */
+  /* strlen ("GDK_") == 4 */
+  for (i = 4; i < len; i++)
+    {
+      if (real_name[i] == 0)
+        break;
+      if (real_name[i] == '_')
+        name[i - 4] = '-';
+      else
+        name[i - 4] = tolower (real_name[i]);
+    }
+  name[i-4] = 0;
+  
+  Vgtk_cursor_names = acons (intern (name), make_int (value),
+                             Vgtk_cursor_names);
+}
+
 /*
- * Cursor names are stored a list, since they are retrieved by name.
- * The first one is default. We initialize a few useful ones here,
- * the rest are done in lisp.
+ * Cursor names are stored as an alist, symbol->internal enum value.
+ * The first one is default.
  */
 static void 
-check_cursor_names (void)
+register_cursor_names (void)
 {
   if (NILP (Vgtk_cursor_names))
     {
-      Lisp_Object names = Qnil;
-      Vgtk_cursor_names = call2 (intern ("make-hashtable"), 
-                                 make_int (101), Qequal);
-      names = Fcons (build_ascstring ("x-cursor"), names);
-      names = Fcons (build_ascstring ("arrow"), names);
-      names = Fcons (build_ascstring ("dot"), names);
-      names = Fcons (build_ascstring ("xterm"), names);
+      /* Generated from GtkCursorType declaration. */
+#define FROB_CURSOR_NAME(name, value) \
+      register_cursor_name (#name , value)
 
-      Vgtk_cursor_names = Fnreverse (names);
+      FROB_CURSOR_NAME (GDK_X_CURSOR, 0);
+      FROB_CURSOR_NAME (GDK_ARROW, 2);
+      FROB_CURSOR_NAME (GDK_BASED_ARROW_DOWN, 4);
+      FROB_CURSOR_NAME (GDK_BASED_ARROW_UP, 6);
+      FROB_CURSOR_NAME (GDK_BOAT, 8);
+      FROB_CURSOR_NAME (GDK_BOGOSITY, 10);
+      FROB_CURSOR_NAME (GDK_BOTTOM_LEFT_CORNER, 12);
+      FROB_CURSOR_NAME (GDK_BOTTOM_RIGHT_CORNER, 14);
+      FROB_CURSOR_NAME (GDK_BOTTOM_SIDE, 16);
+      FROB_CURSOR_NAME (GDK_BOTTOM_TEE, 18);
+      FROB_CURSOR_NAME (GDK_BOX_SPIRAL, 20);
+      FROB_CURSOR_NAME (GDK_CENTER_PTR, 22);
+      FROB_CURSOR_NAME (GDK_CIRCLE, 24);
+      FROB_CURSOR_NAME (GDK_CLOCK, 26);
+      FROB_CURSOR_NAME (GDK_COFFEE_MUG, 28);
+      FROB_CURSOR_NAME (GDK_CROSS, 30);
+      FROB_CURSOR_NAME (GDK_CROSS_REVERSE, 32);
+      FROB_CURSOR_NAME (GDK_CROSSHAIR, 34);
+      FROB_CURSOR_NAME (GDK_DIAMOND_CROSS, 36);
+      FROB_CURSOR_NAME (GDK_DOT, 38);
+      FROB_CURSOR_NAME (GDK_DOTBOX, 40);
+      FROB_CURSOR_NAME (GDK_DOUBLE_ARROW, 42);
+      FROB_CURSOR_NAME (GDK_DRAFT_LARGE, 44);
+      FROB_CURSOR_NAME (GDK_DRAFT_SMALL, 46);
+      FROB_CURSOR_NAME (GDK_DRAPED_BOX, 48);
+      FROB_CURSOR_NAME (GDK_EXCHANGE, 50);
+      FROB_CURSOR_NAME (GDK_FLEUR, 52);
+      FROB_CURSOR_NAME (GDK_GOBBLER, 54);
+      FROB_CURSOR_NAME (GDK_GUMBY, 56);
+      FROB_CURSOR_NAME (GDK_HAND1, 58);
+      FROB_CURSOR_NAME (GDK_HAND2, 60);
+      FROB_CURSOR_NAME (GDK_HEART, 62);
+      FROB_CURSOR_NAME (GDK_ICON, 64);
+      FROB_CURSOR_NAME (GDK_IRON_CROSS, 66);
+      FROB_CURSOR_NAME (GDK_LEFT_PTR, 68);
+      FROB_CURSOR_NAME (GDK_LEFT_SIDE, 70);
+      FROB_CURSOR_NAME (GDK_LEFT_TEE, 72);
+      FROB_CURSOR_NAME (GDK_LEFTBUTTON, 74);
+      FROB_CURSOR_NAME (GDK_LL_ANGLE, 76);
+      FROB_CURSOR_NAME (GDK_LR_ANGLE, 78);
+      FROB_CURSOR_NAME (GDK_MAN, 80);
+      FROB_CURSOR_NAME (GDK_MIDDLEBUTTON, 82);
+      FROB_CURSOR_NAME (GDK_MOUSE, 84);
+      FROB_CURSOR_NAME (GDK_PENCIL, 86);
+      FROB_CURSOR_NAME (GDK_PIRATE, 88);
+      FROB_CURSOR_NAME (GDK_PLUS, 90);
+      FROB_CURSOR_NAME (GDK_QUESTION_ARROW, 92);
+      FROB_CURSOR_NAME (GDK_RIGHT_PTR, 94);
+      FROB_CURSOR_NAME (GDK_RIGHT_SIDE, 96);
+      FROB_CURSOR_NAME (GDK_RIGHT_TEE, 98);
+      FROB_CURSOR_NAME (GDK_RIGHTBUTTON, 100);
+      FROB_CURSOR_NAME (GDK_RTL_LOGO, 102);
+      FROB_CURSOR_NAME (GDK_SAILBOAT, 104);
+      FROB_CURSOR_NAME (GDK_SB_DOWN_ARROW, 106);
+      FROB_CURSOR_NAME (GDK_SB_H_DOUBLE_ARROW, 108);
+      FROB_CURSOR_NAME (GDK_SB_LEFT_ARROW, 110);
+      FROB_CURSOR_NAME (GDK_SB_RIGHT_ARROW, 112);
+      FROB_CURSOR_NAME (GDK_SB_UP_ARROW, 114);
+      FROB_CURSOR_NAME (GDK_SB_V_DOUBLE_ARROW, 116);
+      FROB_CURSOR_NAME (GDK_SHUTTLE, 118);
+      FROB_CURSOR_NAME (GDK_SIZING, 120);
+      FROB_CURSOR_NAME (GDK_SPIDER, 122);
+      FROB_CURSOR_NAME (GDK_SPRAYCAN, 124);
+      FROB_CURSOR_NAME (GDK_STAR, 126);
+      FROB_CURSOR_NAME (GDK_TARGET, 128);
+      FROB_CURSOR_NAME (GDK_TCROSS, 130);
+      FROB_CURSOR_NAME (GDK_TOP_LEFT_ARROW, 132);
+      FROB_CURSOR_NAME (GDK_TOP_LEFT_CORNER, 134);
+      FROB_CURSOR_NAME (GDK_TOP_RIGHT_CORNER, 136);
+      FROB_CURSOR_NAME (GDK_TOP_SIDE, 138);
+      FROB_CURSOR_NAME (GDK_TOP_TEE, 140);
+      FROB_CURSOR_NAME (GDK_TREK, 142);
+      FROB_CURSOR_NAME (GDK_UL_ANGLE, 144);
+      FROB_CURSOR_NAME (GDK_UMBRELLA, 146);
+      FROB_CURSOR_NAME (GDK_UR_ANGLE, 148);
+      FROB_CURSOR_NAME (GDK_WATCH, 150);
+      FROB_CURSOR_NAME (GDK_XTERM, 152);
+
+#undef FROB_CURSOR_NAME
+
+      Vgtk_cursor_names = Fnreverse (Vgtk_cursor_names);
     }
 }
 #endif
@@ -1870,70 +1969,23 @@ static char *__downcase (const char *name)
 static GdkCursorType
 cursor_name_to_index (const char *name)
 {
-  static char *the_gdk_cursors[GDK_LAST_CURSOR];
-  guint i;
+  Lisp_Object sym;
+  Lisp_Object val;
+  
+  if (name == 0 || name[0] == 0)
+    /* wtaerror? */
+    return (GdkCursorType) -1;
 
-  if (!the_gdk_cursors[GDK_BASED_ARROW_UP])
-    {
-      /* Need to initialize the array */
-      /* Supposedly since this array is static it should be
-         initialized to NULLs for us, but I'm very paranoid. */
-      for (i = 0; i < GDK_LAST_CURSOR; i++)
-	{
-          the_gdk_cursors[i] = NULL;
-	}
+  sym = intern (name);
 
-#define FROB_CURSOR(x) the_gdk_cursors[GDK_##x] = __downcase(#x)
-      FROB_CURSOR(ARROW);		FROB_CURSOR(BASED_ARROW_DOWN);
-      FROB_CURSOR(BASED_ARROW_UP);	FROB_CURSOR(BOAT);
-      FROB_CURSOR(BOGOSITY);		FROB_CURSOR(BOTTOM_LEFT_CORNER);
-      FROB_CURSOR(BOTTOM_RIGHT_CORNER);	FROB_CURSOR(BOTTOM_SIDE);
-      FROB_CURSOR(BOTTOM_TEE);		FROB_CURSOR(BOX_SPIRAL);
-      FROB_CURSOR(CENTER_PTR);		FROB_CURSOR(CIRCLE);
-      FROB_CURSOR(CLOCK);		FROB_CURSOR(COFFEE_MUG);
-      FROB_CURSOR(CROSS);		FROB_CURSOR(CROSS_REVERSE);
-      FROB_CURSOR(CROSSHAIR);		FROB_CURSOR(DIAMOND_CROSS);
-      FROB_CURSOR(DOT);			FROB_CURSOR(DOTBOX);
-      FROB_CURSOR(DOUBLE_ARROW);	FROB_CURSOR(DRAFT_LARGE);
-      FROB_CURSOR(DRAFT_SMALL);		FROB_CURSOR(DRAPED_BOX);
-      FROB_CURSOR(EXCHANGE);		FROB_CURSOR(FLEUR);
-      FROB_CURSOR(GOBBLER);		FROB_CURSOR(GUMBY);
-      FROB_CURSOR(HAND1);		FROB_CURSOR(HAND2);
-      FROB_CURSOR(HEART);		FROB_CURSOR(ICON);
-      FROB_CURSOR(IRON_CROSS);		FROB_CURSOR(LEFT_PTR);
-      FROB_CURSOR(LEFT_SIDE);		FROB_CURSOR(LEFT_TEE);
-      FROB_CURSOR(LEFTBUTTON);		FROB_CURSOR(LL_ANGLE);
-      FROB_CURSOR(LR_ANGLE);		FROB_CURSOR(MAN);
-      FROB_CURSOR(MIDDLEBUTTON);	FROB_CURSOR(MOUSE);
-      FROB_CURSOR(PENCIL);		FROB_CURSOR(PIRATE);
-      FROB_CURSOR(PLUS);		FROB_CURSOR(QUESTION_ARROW);
-      FROB_CURSOR(RIGHT_PTR);		FROB_CURSOR(RIGHT_SIDE);
-      FROB_CURSOR(RIGHT_TEE);		FROB_CURSOR(RIGHTBUTTON);
-      FROB_CURSOR(RTL_LOGO);		FROB_CURSOR(SAILBOAT);
-      FROB_CURSOR(SB_DOWN_ARROW);	FROB_CURSOR(SB_H_DOUBLE_ARROW);
-      FROB_CURSOR(SB_LEFT_ARROW);	FROB_CURSOR(SB_RIGHT_ARROW);
-      FROB_CURSOR(SB_UP_ARROW);		FROB_CURSOR(SB_V_DOUBLE_ARROW);
-      FROB_CURSOR(SHUTTLE);		FROB_CURSOR(SIZING);
-      FROB_CURSOR(SPIDER);		FROB_CURSOR(SPRAYCAN);
-      FROB_CURSOR(STAR);		FROB_CURSOR(TARGET);
-      FROB_CURSOR(TCROSS);		FROB_CURSOR(TOP_LEFT_ARROW);
-      FROB_CURSOR(TOP_LEFT_CORNER);	FROB_CURSOR(TOP_RIGHT_CORNER);
-      FROB_CURSOR(TOP_SIDE);		FROB_CURSOR(TOP_TEE);
-      FROB_CURSOR(TREK);		FROB_CURSOR(UL_ANGLE);
-      FROB_CURSOR(UMBRELLA);		FROB_CURSOR(UR_ANGLE);
-      FROB_CURSOR(WATCH);		FROB_CURSOR(XTERM);
-      FROB_CURSOR(X_CURSOR);
-#undef FROB_CURSOR
-    }
+  if (NILP (Vgtk_cursor_names))
+    invalid_state ("Gtk cursor names not registered", build_ascstring (name));
 
-  for (i = 0; i < GDK_LAST_CURSOR; i++)
-    {
-      if (!the_gdk_cursors[i]) continue;
-      if (!strcmp (the_gdk_cursors[i], name))
-	{
-	  return (GdkCursorType) i;
-	}
-    }
+  val = Fassoc (Vgtk_cursor_names, sym);
+
+  if (!NILP (val))
+    return (GdkCursorType) XINT (Fcdr (val));
+
   return (GdkCursorType) -1;
 }
 
@@ -2958,7 +3010,7 @@ the environment variable XBMLANGPATH is set, it is consulted first).
 
 #ifdef HAVE_GTK
   DEFVAR_LISP ("gtk-cursor-names", &Vgtk_cursor_names /*
-A list of Gtk cursor names and internal integer values.
+An alist of Gtk cursor names and internal integer values.
 */);
   Vgtk_cursor_names = Qnil;
 #endif
@@ -2984,6 +3036,7 @@ complex_vars_of_glyphs_gtk (void)
   BUILD_GLYPH_INST (Vhscroll_glyph, hscroll);
 
 #undef BUILD_GLYPH_INST
+  register_cursor_names ();
 }
 
 /* X specific crap */
