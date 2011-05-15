@@ -1,3 +1,11 @@
+2011-05-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (register_cursor_name): Define.
+	(register_cursor_names): Renamed from check_cursor_names.
+	(cursor_name_to_index): Updated to use alist.
+	(vars_of_glyphs_gtk): Update gtk-cursor-names doc.
+	(complex_vars_of_glyphs_gtk): Register cursor names here.
+
 2011-05-14  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-byhand.c (syms_of_ui_byhand): Remove toolbar item insertion
