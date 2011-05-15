@@ -426,90 +426,6 @@ __generic_toolbar_callback (GtkWidget *UNUSED (item), gpointer user_data)
   signal_special_gtk_user_event (Qnil, callback, lisp_user_data);
 }
 
-static Lisp_Object
-generic_toolbar_insert_item (Lisp_Object toolbar,
-			     Lisp_Object text,
-			     Lisp_Object tooltip_text,
-			     Lisp_Object tooltip_private_text,
-			     Lisp_Object icon,
-			     Lisp_Object callback,
-			     Lisp_Object data,
-			     Lisp_Object prepend_p,
-			     Lisp_Object position)
-{
-  GUI_ID id;
-  GtkWidget *w = NULL;
-
-  CHECK_GTK_OBJECT (toolbar);
-  CHECK_GTK_OBJECT (icon);
-  CHECK_STRING (text);
-  CHECK_STRING (tooltip_text);
-  CHECK_STRING (tooltip_private_text);
-
-  if (!SYMBOLP (callback) && !LISTP (callback))
-    {
-      wtaerror ("Callback must be symbol or eval-able form", callback);
-    }
-
-  if (!GTK_IS_TOOLBAR (XGTK_OBJECT (toolbar)->object))
-    {
-      wtaerror ("Object is not a GtkToolbar", toolbar);
-    }
-
-  if (!GTK_IS_WIDGET (XGTK_OBJECT (icon)->object))
-    {
-      wtaerror ("Object is not a GtkWidget", icon);
-    }
-
-  callback = Fcons (data, callback);
-
-  id = new_gui_id ();
-  gcpro_popup_callbacks (id, callback);
-  g_object_weak_ref (XGTK_OBJECT (toolbar)->object, __remove_gcpro_by_id,
-		     GUINT_TO_POINTER (id));
-
-  if (NILP (position))
-    {
-      w = (NILP (prepend_p) ? gtk_toolbar_append_item : gtk_toolbar_prepend_item)
-	(GTK_TOOLBAR (XGTK_OBJECT (toolbar)->object),
-	 (char*) XSTRING_DATA (text),
-	 (char*) XSTRING_DATA (tooltip_text),
-	 (char*) XSTRING_DATA (tooltip_private_text),
-	 GTK_WIDGET (XGTK_OBJECT (icon)->object),
-	 GTK_SIGNAL_FUNC (__generic_toolbar_callback),
-	 STORE_LISP_IN_VOID (callback));
-    }
-  else
-    {
-      w = gtk_toolbar_insert_item (GTK_TOOLBAR (XGTK_OBJECT (toolbar)->object),
-				   (char*) XSTRING_DATA (text),
-				   (char*) XSTRING_DATA (tooltip_text),
-				   (char*) XSTRING_DATA (tooltip_private_text),
-				   GTK_WIDGET (XGTK_OBJECT (icon)->object),
-				   GTK_SIGNAL_FUNC (__generic_toolbar_callback),
-				   STORE_LISP_IN_VOID (callback),
-				   XINT (position));
-    }
-
-
-  return (w ? build_gtk_object (G_OBJECT (w)) : Qnil);
-}
-
-DEFUN ("gtk-toolbar-append-item", Fgtk_toolbar_append_item, 6, 7, 0, /*
-Appends a new button to the given toolbar.
-*/
-	   (toolbar, text, tooltip_text, tooltip_private_text, icon, callback, data))
-{
-  return (generic_toolbar_insert_item (toolbar,text,tooltip_text,tooltip_private_text,icon,callback,data,Qnil,Qnil));
-}
-
-DEFUN ("gtk-toolbar-prepend-item", Fgtk_toolbar_prepend_item, 6, 7, 0, /*
-Adds a new button to the beginning (left or top edges) of the given toolbar.
-*/
-	   (toolbar, text, tooltip_text, tooltip_private_text, icon, callback, data))
-{
-  return (generic_toolbar_insert_item (toolbar,text,tooltip_text,tooltip_private_text,icon,callback,data,Qt,Qnil));
-}
 
 DEFUN ("gtk-widget-size-request", Fgtk_widget_size_request, 1, 1, 0, /*
 Sets WIDGET size request to WIDTH by HEIGHT.
@@ -525,16 +441,6 @@ Sets WIDGET size request to WIDTH by HEIGHT.
 
   gtk_widget_size_request (XGTK_OBJECT (widget)->object, &req);
   return cons3 (make_int (req.width), make_int (req.height), Qnil);
-}
-
-DEFUN ("gtk-toolbar-insert-item", Fgtk_toolbar_insert_item, 7, 8, 0, /*
-Adds a new button to the beginning (left or top edges) of the given toolbar.
-*/
-	   (toolbar, text, tooltip_text, tooltip_private_text, icon, callback, position, data))
-{
-  CHECK_INT (position);
-
-  return (generic_toolbar_insert_item (toolbar,text,tooltip_text,tooltip_private_text,icon,callback,data,Qnil,position));
 }
 
 #ifdef JSPARKES
@@ -631,9 +537,6 @@ void gtk_ctree_pre_recursive_to_depth            (GtkCTree     *ctree,
 #endif
 void syms_of_ui_byhand (void)
 {
-  DEFSUBR (Fgtk_toolbar_append_item);
-  DEFSUBR (Fgtk_toolbar_insert_item);
-  DEFSUBR (Fgtk_toolbar_prepend_item);
   DEFSUBR (Fgtk_box_query_child_packing);
   DEFSUBR (Fgtk_calendar_get_date);
   DEFSUBR (Fgtk_clist_get_text);

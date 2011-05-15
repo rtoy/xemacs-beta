@@ -1,5 +1,8 @@
 2011-05-14  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-byhand.c (syms_of_ui_byhand): Remove toolbar item insertion
+	functions.
+
 	* ui-gtk.c (syms_of_ui_gtk): Register g-object-type.
 
 2011-05-09  Jeff Sparkes  <jsparkes@gmail.com>
