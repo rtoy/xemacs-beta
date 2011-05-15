@@ -1,3 +1,7 @@
+2011-05-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el (GtkWidget): Remove gtk-toolbar-* functions.
+
 2011-05-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-widgets.el (gboolean): Define some gtk-widget-* functions

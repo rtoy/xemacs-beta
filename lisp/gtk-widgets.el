@@ -48,7 +48,7 @@
 (gtk-import-function gboolean gtk_widget_get_visible GtkWidget)
 (gtk-import-function nil gtk_widget_set_visible GtkWidget gboolean)
 (gtk-import-function GtkString gtk_widget_get_name GtkWidget)
-(gtk-import-function nil gtk_widget_set_name GtkWidget GtkString))
+(gtk-import-function nil gtk_widget_set_name GtkWidget GtkString)
 
 
 ;; GtkWindow
@@ -1423,95 +1423,6 @@
 (gtk-import-function nil gtk_toggle_button_set_active GtkToggleButton gboolean)
 (gtk-import-function gboolean gtk_toggle_button_get_active GtkToggleButton)
 (gtk-import-function nil gtk_toggle_button_toggled GtkToggleButton)
-
-
-(gtk-import-function GType gtk_toolbar_get_type)
-(gtk-import-function GtkWidget gtk_toolbar_new)
-(gtk-import-function nil gtk_toolbar_insert GtkToolbar GtkToolItem gint)
-
-
-;; Simple button items
-;;; Handcoded in ui-byhand.c... #### FIXME
-;;;GtkWidget* gtk_toolbar_append_item     (GtkToolbar      *toolbar,
-;;;					const char      *text,
-;;;					const char      *tooltip_text,
-;;;					const char      *tooltip_private_text,
-;;;					GtkWidget       *icon,
-;;;					GtkSignalFunc    callback,
-;;;					gpointer         user_data);
-;;;GtkWidget* gtk_toolbar_prepend_item    (GtkToolbar      *toolbar,
-;;;					const char      *text,
-;;;					const char      *tooltip_text,
-;;;					const char      *tooltip_private_text,
-;;;					GtkWidget       *icon,
-;;;					GtkSignalFunc    callback,
-;;;					gpointer         user_data);
-;;;GtkWidget* gtk_toolbar_insert_item     (GtkToolbar      *toolbar,
-;;;					const char      *text,
-;;;					const char      *tooltip_text,
-;;;					const char      *tooltip_private_text,
-;;;					GtkWidget       *icon,
-;;;					GtkSignalFunc    callback,
-;;;					gpointer         user_data,
-;;;					gint             position);
-
-;; Space Items
-(gtk-import-function nil gtk_toolbar_append_space GtkToolbar)
-(gtk-import-function nil gtk_toolbar_prepend_space GtkToolbar)
-(gtk-import-function nil gtk_toolbar_insert_space GtkToolbar gint)
-
-;; Any element type
-;; Cannot currently do this!  Need to have something similar to
-;; GtkCallback in order to deal with this.
-;; Of what possible use are these functions?  I don't see the
-;; difference between them and the _item functions.
-;;
-;; From looking at the code in gtktoolbar.c, the GtkWidget argument
-;; here is ignored!!!
-'(gtk-import-function GtkWidget gtk_toolbar_append_element GtkToolbar
-		      GtkToolbarChildType
-		      GtkWidget
-		      GtkString
-		      GtkString
-		      GtkString
-		      GtkWidget
-		      GtkSignal
-		      gpointer)
-
-'(gtk-import-function GtkWidget gtk_toolbar_prepend_element GtkToolbar
-		      GtkToolbarChildType
-		      GtkWidget
-		      GtkString
-		      GtkString
-		      GtkString
-		      GtkWidget
-		      GtkSignal
-		      gpointer)
-
-'(gtk-import-function GtkWidget gtk_toolbar_insert_element GtkToolbar
-		      GtkToolbarChildType
-		      GtkWidget
-		      GtkString
-		      GtkString
-		      GtkString
-		      GtkWidget
-		      GtkSignal
-		      gpointer
-		      gint)
-
-;; Generic Widgets
-(gtk-import-function nil gtk_toolbar_append_widget GtkToolbar GtkWidget GtkString GtkString)
-(gtk-import-function nil gtk_toolbar_prepend_widget GtkToolbar GtkWidget GtkString GtkString)
-(gtk-import-function nil gtk_toolbar_insert_widget GtkToolbar GtkWidget GtkString GtkString gint)
-
-;; Style functions
-(gtk-import-function nil gtk_toolbar_set_orientation GtkToolbar GtkOrientation)
-(gtk-import-function nil gtk_toolbar_set_style GtkToolbar GtkToolbarStyle)
-(gtk-import-function nil gtk_toolbar_set_space_size GtkToolbar gint)
-(gtk-import-function nil gtk_toolbar_set_space_style GtkToolbar GtkToolbarSpaceStyle)
-(gtk-import-function nil gtk_toolbar_set_tooltips GtkToolbar gint)
-(gtk-import-function nil gtk_toolbar_set_button_relief GtkToolbar GtkReliefStyle)
-(gtk-import-function GtkReliefStyle gtk_toolbar_get_button_relief GtkToolbar)
 
 
 (gtk-import-function GtkToolItem gtk_tool_button_new)
