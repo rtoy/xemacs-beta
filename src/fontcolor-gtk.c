@@ -438,6 +438,35 @@ gtk_find_charset_font (Lisp_Object device, Lisp_Object font,
   return font;
 }
 
+DEFUN ("gtk-set-font-weight", Fgtk_set_font_weight, 2, 3, 0, /*
+Return a specificer for FONT with WEIGHT numeric value on DEVICE.
+*/
+       (font, weight, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  int w;
+  Lisp_Object val;
+
+  CHECK_STRING (font);
+  CHECK_INT (weight);
+
+  w = XINT (weight);
+
+  /* Not sure if range should be 200-900 --jsparkes */
+  if (w < 0 || w > 1000)
+    args_out_of_range_3 (weight, make_int (0), make_int (1000));
+
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = font_description_from_string (extname);
+  pango_font_description_set_weight (pfd, w);
+  new_name = pango_font_description_to_string (pfd);
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
 DEFUN ("gtk-make-font-bold", Fgtk_make_font_bold, 1, 2, 0, /*
 Return a specifier for bold version of FONT on DEVICE.
 */
@@ -568,6 +597,7 @@ Return a specifier for bold italic version of FONT on DEVICE.
 void
 syms_of_fontcolor_gtk (void)
 {
+  DEFSUBR (Fgtk_set_font_weight);
   DEFSUBR (Fgtk_make_font_bold);
   DEFSUBR (Fgtk_make_font_unbold);
   DEFSUBR (Fgtk_make_font_italic);

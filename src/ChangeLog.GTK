@@ -1,5 +1,8 @@
 2011-05-15  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* fontcolor-gtk.c (Fgtk_set_font_weight): Define.
+	(syms_of_fontcolor_gtk): Register.
+
 	* glyphs-gtk.c (register_cursor_name): Define.
 	(register_cursor_names): Renamed from check_cursor_names.
 	(cursor_name_to_index): Updated to use alist.
