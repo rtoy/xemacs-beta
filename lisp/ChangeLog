@@ -1,3 +1,21 @@
+2011-05-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (bind-inits)): Removed.
+	* cl-macs.el (defun*):
+	* cl-macs.el (defmacro*):
+	* cl-macs.el (function*):
+	* cl-macs.el (macrolet):
+	* cl-macs.el (cl-transform-function-property):
+	* cl-macs.el (destructuring-bind):
+	Remove `bind-inits' from this file, and only ever return nil as
+	the first element of cl-transform-lambda's result list; bind-inits
+	hasn't been used since the support for non-self-quoting keywords
+	was removed, and its absence (and the guarantee that the first
+	element of the result of cl-transform-lambda is nil) make the
+	implementations of various other macros easier and clearer.
+	* cl-macs.el (cl-transform-lambda):
+	Give this function a docstring.
+
 2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp-runtime.el:

@@ -222,9 +222,8 @@ and BODY is implicitly surrounded by (block NAME ...).
    The format of each binding is VAR || (VAR [INITFORM]) -- exactly like the
    format of `let'/`let*' bindings.
 "
-  (let* ((res (cl-transform-lambda (list* arglist docstring body) name))
-	 (form (list* 'defun name (cdr res))))
-    (if (car res) (list 'progn (car res) form) form)))
+  (list* 'defun name (cdr (cl-transform-lambda (list* arglist docstring body)
+                                               name))))
 
 ;;;###autoload
 (defmacro defmacro* (name arglist &optional docstring &rest body)
@@ -278,33 +277,29 @@ and BODY is implicitly surrounded by (block NAME ...).
        are ignored, not enough arguments cause the remaining parameters to
        receive a value of nil, etc.
 "
-  (let* ((res (cl-transform-lambda (list* arglist docstring body) name))
-	 (form (list* 'defmacro name (cdr res))))
-    (if (car res) (list 'progn (car res) form) form)))
+  (list* 'defmacro name (cdr (cl-transform-lambda (list* arglist docstring body)
+                                                  name))))
 
 ;;;###autoload
 (defmacro function* (symbol-or-lambda)
   "Introduce a function.
 Like normal `function', except that if argument is a lambda form, its
 ARGLIST allows full Common Lisp conventions."
-  (if (eq (car-safe symbol-or-lambda) 'lambda)
-      (let* ((res (cl-transform-lambda (cdr symbol-or-lambda) 'cl-none))
-	     (form (list 'function (cons 'lambda (cdr res)))))
-	(if (car res) (list 'progn (car res) form) form))
-    (list 'function symbol-or-lambda)))
+  `(function
+    ,(if (eq (car-safe symbol-or-lambda) 'lambda)
+         (cons 'lambda (cdr (cl-transform-lambda (cdr symbol-or-lambda)
+                                                 'cl-none)))
+       symbol-or-lambda)))
 
 (defun cl-transform-function-property (func prop form)
-  (let ((res (cl-transform-lambda form func)))
-    (append '(progn) (cdr (cdr (car res)))
-	    (list (list 'put (list 'quote func) (list 'quote prop)
-			(list 'function (cons 'lambda (cdr res))))))))
+  `(put ',func ',prop #'(lambda ,@(cdr (cl-transform-lambda form func)))))
 
 (defconst lambda-list-keywords
   '(&optional &rest &key &allow-other-keys &aux &whole &body &environment))
 
 (defvar cl-macro-environment nil)
 (defvar bind-block) (defvar bind-defs) (defvar bind-enquote)
-(defvar bind-inits) (defvar bind-lets) (defvar bind-forms)
+(defvar bind-lets) (defvar bind-forms)
 
 ;; npak@ispras.ru
 (defun cl-upcase-arg (arg)
@@ -346,9 +341,20 @@ Supports Common Lisp lambda lists."
 	(t "Not available")))))
 
 (defun cl-transform-lambda (form bind-block)
+  "Transform a lambda expression to support Common Lisp conventions.
+
+FORM is the cdr of the lambda expression.  BIND-BLOCK is the implicit block
+name that's added, typically the name of the associated function. It can be
+the symbol `cl-none', to indicate no implicit block is needed.
+
+The Common Lisp conventions described are those detailed in the `defun*' and
+`defmacro*' docstrings.  This function returns a list with the first element
+nil, to be ignored. The rest of the list represents a transformed lambda
+expression, with any argument list parsing code necessary, and a surrounding
+block."
   (let* ((args (car form)) (body (cdr form))
 	 (bind-defs nil) (bind-enquote nil)
-	 (bind-inits nil) (bind-lets nil) (bind-forms nil)
+         (bind-lets nil) (bind-forms nil)
 	 (header nil) (simple-args nil)
          (complex-arglist (cl-function-arglist args))
          (doc ""))
@@ -389,10 +395,10 @@ Supports Common Lisp lambda lists."
       (cl-do-arglist args nil (- (length simple-args)
 				 (if (memq '&optional simple-args) 1 0)))
       (setq bind-lets (nreverse bind-lets))
-      (list* (and bind-inits (list* 'eval-when '(compile load eval)
-				    (nreverse bind-inits)))
-	     (nconc simple-args
-		    (list '&rest (car (pop bind-lets))))
+      ;; This code originally needed to create the keywords itself, that
+      ;; wasn't done by the Lisp reader; the first element of the result
+      ;; list comprised code to do this. It's not used any more.
+      (list* nil (nconc simple-args (list '&rest (car (pop bind-lets))))
 	     ;; XEmacs change: we add usage information using Nickolay's
 	     ;; approach above
 	     (nconc header
@@ -571,13 +577,9 @@ You can rewrite a call to (destructuring-bind ARGS EXPR &rest BODY) using
 I say \"approximately\" because the destructuring works in a somewhat
 different fashion, although for most reasonably simple constructs the
 results will be the same."
-  (let* ((bind-lets nil) (bind-forms nil) (bind-inits nil)
-	 (bind-defs nil) (bind-block 'cl-none))
+  (let ((bind-block 'cl-none) bind-lets bind-forms bind-defs)
     (cl-do-arglist (or args '(&aux)) expr)
-    (append '(progn) bind-inits
-	    (list (nconc (list 'let* (nreverse bind-lets))
-			 (nreverse bind-forms) body)))))
-
+    (nconc (list 'let* (nreverse bind-lets)) (nreverse bind-forms) body)))
 
 ;;; The `eval-when' form.
 
@@ -1777,11 +1779,8 @@ This is like `flet', but for macros instead of functions."
                          for (name . details)
                          in (cons (list* name arglist docstring body) macros)
                          collect
-                         (list* name 'lambda
-                                (prog1
-                                    (cdr (setq details (cl-transform-lambda
-                                                        details name)))
-                                  (eval (car details)))))
+                         (list* name 'lambda (cdr (cl-transform-lambda details
+                                                                       name))))
                        cl-macro-environment)))
 
 ;;;###autoload
