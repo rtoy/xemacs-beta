@@ -947,12 +947,6 @@ extern "C" {
 }
 #endif
 
-/* This will be removed in 19.15. */
-/* Hah!  Try 20.3 ... */
-/* Hah!  Try never ... */
-/* If at first you don't succeed, try, try again. */
-/* #define LOSING_BYTECODE */
-
 /* USER_FULL_NAME returns a string that is the user's full name.
    It can assume that the variable `pw' points to the password file
    entry for this user.
