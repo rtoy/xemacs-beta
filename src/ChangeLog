@@ -1,3 +1,14 @@
+2011-05-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in:
+	* data.c (Faref):
+	* fns.c (check_losing_bytecode):
+	* fns.c (concat):
+	* fns.c (Felt):
+	Remove the LOSING_BYTECODE compile-time option entirely. It
+	allowed access to the elements of a compiled function using
+	#'aref, and has been turned off since 1997.
+
 2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c:

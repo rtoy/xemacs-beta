@@ -836,31 +836,6 @@ time and pid.
 
 /* Random data-structure functions */
 
-#ifdef LOSING_BYTECODE
-
-/* #### Delete this shit */
-
-/* Charcount is a misnomer here as we might be dealing with the
-   length of a vector or list, but emphasizes that we're not dealing
-   with Bytecounts in strings */
-static Charcount
-length_with_bytecode_hack (Lisp_Object seq)
-{
-  if (!COMPILED_FUNCTIONP (seq))
-    return XINT (Flength (seq));
-  else
-    {
-      Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (seq);
-
-      return (f->flags.interactivep ? COMPILED_INTERACTIVE :
-	      f->flags.domainp      ? COMPILED_DOMAIN :
-	      COMPILED_DOC_STRING)
-	+ 1;
-    }
-}
-
-#endif /* LOSING_BYTECODE */
-
 void
 check_losing_bytecode (const Ascbyte *function, Lisp_Object seq)
 {
@@ -1653,11 +1628,6 @@ concat (int nargs, Lisp_Object *args,
         ;
       else if (VECTORP (seq) || STRINGP (seq) || BIT_VECTORP (seq))
         ;
-#ifdef LOSING_BYTECODE
-      else if (COMPILED_FUNCTIONP (seq))
-        /* Urk!  We allow this, for "compatibility"... */
-        ;
-#endif
 #if 0				/* removed for XEmacs 21 */
       else if (INTP (seq))
         /* This is too revolting to think about but maintains
@@ -1687,11 +1657,7 @@ concat (int nargs, Lisp_Object *args,
 
     for (argnum = 0, total_length = 0; argnum < nargs; argnum++)
       {
-#ifdef LOSING_BYTECODE
-        Charcount thislen = length_with_bytecode_hack (args[argnum]);
-#else
         Charcount thislen = XINT (Flength (args[argnum]));
-#endif
         total_length += thislen;
       }
 
@@ -1752,11 +1718,7 @@ concat (int nargs, Lisp_Object *args,
 
       if (!CONSP (seq))
 	{
-#ifdef LOSING_BYTECODE
-	  thisleni = length_with_bytecode_hack (seq);
-#else
 	  thisleni = XINT (Flength (seq));
-#endif
 	}
       if (STRINGP (seq))
 	string_source_ptr = XSTRING_DATA (seq);
@@ -2352,44 +2314,6 @@ Return element of SEQUENCE at index N.
            VECTORP     (sequence) ||
            BIT_VECTORP (sequence))
     return Faref (sequence, n);
-#ifdef LOSING_BYTECODE
-  else if (COMPILED_FUNCTIONP (sequence))
-    {
-      EMACS_INT idx = XINT (n);
-      if (idx < 0)
-        {
-        lose:
-          args_out_of_range (sequence, n);
-        }
-      /* Utter perversity */
-      {
-	Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (sequence);
-        switch (idx)
-          {
-          case COMPILED_ARGLIST:
-            return compiled_function_arglist (f);
-          case COMPILED_INSTRUCTIONS:
-            return compiled_function_instructions (f);
-          case COMPILED_CONSTANTS:
-            return compiled_function_constants (f);
-          case COMPILED_STACK_DEPTH:
-            return compiled_function_stack_depth (f);
-          case COMPILED_DOC_STRING:
-	    return compiled_function_documentation (f);
-          case COMPILED_DOMAIN:
-	    return compiled_function_domain (f);
-          case COMPILED_INTERACTIVE:
-	    if (f->flags.interactivep)
-	      return compiled_function_interactive (f);
-	    /* if we return nil, can't tell interactive with no args
-	       from noninteractive. */
-	    goto lose;
-          default:
-            goto lose;
-          }
-      }
-    }
-#endif /* LOSING_BYTECODE */
   else
     {
       check_losing_bytecode ("elt", sequence);

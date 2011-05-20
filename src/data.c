@@ -753,13 +753,6 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
       if (idx >= string_char_length (array)) goto range_error;
       return make_char (string_ichar (array, idx));
     }
-#ifdef LOSING_BYTECODE
-  else if (COMPILED_FUNCTIONP (array))
-    {
-      /* Weird, gross compatibility kludge */
-      return Felt (array, index_);
-    }
-#endif
   else
     {
       check_losing_bytecode ("aref", array);
