@@ -59,6 +59,8 @@ RECURSIVE_MAKE_ARGS=
 RECURSIVE_MAKE_ARGS=@RECURSIVE_MAKE_ARGS@
 #endif
 
+DESTDIR=
+
 SHELL = /bin/sh
 LANG = C
 LC_ALL = C
@@ -398,43 +400,43 @@ install-arch-dep: mkdir
 	(cd ./$${subdir} && $(MAKE) $(RECURSIVE_MAKE_ARGS) install prefix=${prefix} \
 	    exec_prefix=${exec_prefix} bindir=${bindir} libdir=${libdir} \
 	    archlibdir=${archlibdir}) ; done
-	if test "`(cd ${archlibdir} && $(pwd))`" != \
+	if test "`(cd $(DESTDIR)${archlibdir} && $(pwd))`" != \
 		"`(cd ./lib-src && $(pwd))`"; then \
 	   if test -f ../Installation; then \
-		${INSTALL_DATA} ../Installation ${archlibdir}/Installation; \
+		${INSTALL_DATA} ../Installation $(DESTDIR)${archlibdir}/Installation; \
 	   fi; \
-	   ${INSTALL_DATA} lib-src/config.values ${docdir}/config.values; \
-	   ${INSTALL_DATA} lib-src/DOC ${docdir}/DOC; \
+	   ${INSTALL_DATA} lib-src/config.values $(DESTDIR)${docdir}/config.values; \
+	   ${INSTALL_DATA} lib-src/DOC $(DESTDIR)${docdir}/DOC; \
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; \
 	     do (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; done ; \
 	else true; fi
 #if (defined(PDUMP) && !defined (DUMP_IN_EXEC)) || (defined (PDUMP) && defined(WIN32_NATIVE))
-	${INSTALL_DATA} src/${PROGNAME}.dmp ${bindir}/${PROGNAME}-${version}-`src/${PROGNAME} -sd`.dmp
+	${INSTALL_DATA} src/${PROGNAME}.dmp $(DESTDIR)${bindir}/${PROGNAME}-${version}-`src/${PROGNAME} -sd`.dmp
 #endif
 #ifdef WIN32_NATIVE
-	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}
-	-chmod 0755 ${bindir}/${PROGNAME}
+	${INSTALL_PROGRAM} src/${PROGNAME} $(DESTDIR)${bindir}/${PROGNAME}
+	-chmod 0755 $(DESTDIR)${bindir}/${PROGNAME}
 #else
 # ifdef CYGWIN
-	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}.exe
-	-chmod 0755 ${bindir}/${PROGNAME}-${version}.exe
-	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version}.exe ./${PROGNAME}
-	cd ${bindir} && $(RM) ./${SHEBANG_PROGNAME} && ${LN_S} ${PROGNAME}-${version}.exe ./${SHEBANG_PROGNAME}
+	${INSTALL_PROGRAM} src/${PROGNAME} $(DESTDIR)${bindir}/${PROGNAME}-${version}.exe
+	-chmod 0755 $(DESTDIR)${bindir}/${PROGNAME}-${version}.exe
+	cd $(DESTDIR)${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version}.exe ./${PROGNAME}
+	cd $(DESTDIR)${bindir} && $(RM) ./${SHEBANG_PROGNAME} && ${LN_S} ${PROGNAME}-${version}.exe ./${SHEBANG_PROGNAME}
 # else
-	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}
-	-chmod 0755 ${bindir}/${PROGNAME}-${version}
-	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${PROGNAME}
-	cd ${bindir} && $(RM) ./${SHEBANG_PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${SHEBANG_PROGNAME}
+	${INSTALL_PROGRAM} src/${PROGNAME} $(DESTDIR)${bindir}/${PROGNAME}-${version}
+	-chmod 0755 $(DESTDIR)${bindir}/${PROGNAME}-${version}
+	cd $(DESTDIR)${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${PROGNAME}
+	cd $(DESTDIR)${bindir} && $(RM) ./${SHEBANG_PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${SHEBANG_PROGNAME}
 # endif /* CYGWIN */
 #endif /* WIN32_NATIVE */
 #ifdef HAVE_SHLIB
-	$(INSTALL_DATA) $(srcdir)/modules/auto-autoloads.* $(moduledir)
+	$(INSTALL_DATA) $(srcdir)/modules/auto-autoloads.* $(DESTDIR)$(moduledir)
 #endif
 
 install-arch-indep: mkdir info
 	-@set ${COPYDESTS} ; \
 	 for dir in ${COPYDIR} ; do \
-	   if test "`(cd $$1 && $(pwd))`" != \
+	   if test "`(cd $(DESTDIR)$$1 && $(pwd))`" != \
 		   "`(cd $${dir} && $(pwd))`"; then \
 	     : do nothing - echo "rm -rf $$1" ; \
 	   fi ; \
@@ -442,35 +444,35 @@ install-arch-indep: mkdir info
 	 done
 	-set ${COPYDESTS} ; \
 	 for dir in ${COPYDESTS} ; do \
-	   if test ! -d $${dir} ; then mkdir $${dir} ; fi ; \
+	   if test ! -d $${dir} ; then mkdir $(DESTDIR)$${dir} ; fi ; \
 	 done ; \
 	 for dir in ${COPYDIR} ; do \
 	   dest=$$1 ; shift ; \
 	   test -d $${dir} \
 	     -a "`(cd $${dir} && $(pwd))`" != \
-		"`(cd $${dest} && $(pwd))`" \
+		"`(cd $(DESTDIR)$${dest} && $(pwd))`" \
 	   && (echo "Copying $${dir}..." ; \
 	       (cd $${dir} && $(TAR) -cf - . ) | \
-		(cd $${dest} && umask 022 && $(TAR) -xf - );\
-	       chmod 0755 $${dest}; \
-	       for subdir in `find $${dest} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; do \
+		(cd $(DESTDIR)$${dest} && umask 022 && $(TAR) -xf - );\
+	       chmod 0755 $(DESTDIR)$${dest}; \
+	       for subdir in `find $(DESTDIR)$${dest} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; do \
 		 (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; \
 	       done) ; \
 	 done
 	if test "`(cd ${srcdir}/info && $(pwd))`" != \
-		"`(cd ${infodir} && $(pwd))`" && cd ${srcdir}/info; then \
-	  if test ! -f ${infodir}/dir -a -f dir ; then \
-	    ${INSTALL_DATA} ${srcdir}/info/dir ${infodir}/dir ; \
+		"`(cd $(DESTDIR)${infodir} && $(pwd))`" && cd ${srcdir}/info; then \
+	  if test ! -f $(DESTDIR)${infodir}/dir -a -f dir ; then \
+	    ${INSTALL_DATA} ${srcdir}/info/dir $(DESTDIR)${infodir}/dir ; \
 	  fi ; \
 	  for file in *.info* ; do \
-	    ${INSTALL_DATA} $${file} ${infodir}/$${file} ; \
-	    chmod 0644 ${infodir}/$${file}; \
+	    ${INSTALL_DATA} $${file} $(DESTDIR)${infodir}/$${file} ; \
+	    chmod 0644 $(DESTDIR)${infodir}/$${file}; \
 	  done ; \
 	fi
 	cd ${srcdir}/etc && \
 	  for page in xemacs etags ctags gnuserv gnuclient gnuattach gnudoit; do \
-	    ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 ${mandir}/$${page}${manext} ; \
-	    chmod 0644 ${mandir}/$${page}${manext} ; \
+	    ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 $(DESTDIR)${mandir}/$${page}${manext} ; \
+	    chmod 0644 $(DESTDIR)${mandir}/$${page}${manext} ; \
 	  done
 	@echo "If you would like to save approximately 4M of disk space, do"
 	@echo "make gzip-el"
@@ -480,19 +482,23 @@ install-arch-indep: mkdir info
 	@echo "${lispdir}"
 
 gzip-el:
-	$(SHELL) ${srcdir}/lib-src/gzip-el.sh ${lispdir}
+	$(SHELL) ${srcdir}/lib-src/gzip-el.sh $(DESTDIR)${lispdir}
 
 ## Build all the directories to install XEmacs in.
 ## Since we may be creating several layers of directories,
 ## (e.g. /usr/local/lib/${PROGNAME}-20.5/sparc-sun-solaris2.6), we use
 ## make-path instead of mkdir.  Not all mkdirs have the `-p' flag.
 mkdir: FRC.mkdir
-	${MAKEPATH} ${COPYDESTS} ${docdir} ${infodir} ${archlibdir} \
-	  ${mandir} ${bindir} ${datadir} ${libdir} \
+	for dir in \
+	    ${COPYDESTS} ${docdir} ${infodir} ${archlibdir} \
+	    ${mandir} ${bindir} ${datadir} ${libdir} \
 #ifdef HAVE_SHLIB
-	  ${moduledir} ${sitemoduledir} \
+	    ${moduledir} ${sitemoduledir} \
 #endif
-	  ${sitelispdir}
+	    ${sitelispdir} ; \
+	do \
+	    ${MAKEPATH} $(DESTDIR)$${dir} ; \
+	done ;
 
 ## Install bundled packages, if present.
 

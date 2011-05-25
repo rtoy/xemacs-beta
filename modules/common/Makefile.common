@@ -29,6 +29,8 @@
 #define NOT_C_CODE
 #include "../../src/config.h"
 
+DESTDIR=
+
 SHELL=/bin/sh
 RM=rm -f
 PROGNAME=@PROGNAME@
@@ -96,7 +98,7 @@ extraclean: realclean
 	-$(RM) *~ \#*
 
 install: $(OBJECT_TO_BUILD)
-	$(INSTALL_PROGRAM) $< $(INSTALLPATH)
+	$(INSTALL_PROGRAM) $< $(DESTDIR)$(INSTALLPATH)
 
 ##
 ## Local Variables:

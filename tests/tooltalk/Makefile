@@ -27,6 +27,8 @@
 
 ### Code:
 
+DESTDIR=
+
 CC       = cc -Xc
 CPPFLAGS = -I/usr/openwin/include
 CFLAGS   = -g -v -DNeedFunctionPrototypes

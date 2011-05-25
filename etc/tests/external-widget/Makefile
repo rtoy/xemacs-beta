@@ -16,6 +16,8 @@
 ## You should have received a copy of the GNU General Public License
 ## along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
+DESTDIR=
+
 CFLAGS += -Xc -g -DTOOLTALK
 EMACSHOME = ../../..
 EMACSLIBDIR = $(EMACSHOME)/editor/src

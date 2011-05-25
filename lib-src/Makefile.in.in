@@ -22,6 +22,8 @@
 ## above a certain point in this file are in shell format instead of
 ## in C format.  How the hell is this supposed to work? */
 
+DESTDIR=
+
 ## For performance and consistency, no built-in rules
 .SUFFIXES:
 .SUFFIXES: .c .h .o
@@ -242,26 +244,26 @@ do-blessmail: $(blessmail)
 ## just run them directly from lib-src.
 ${archlibdir}: all
 	@echo; echo "Installing utilities run internally by XEmacs."
-	./make-path ${archlibdir}
+	./make-path $(DESTDIR)${archlibdir}
 	if test "`(cd ${archlibdir} && $(pwd))`" != "`$(pwd)`"; then \
 	  for f in ${PRIVATE_INSTALLABLE_EXES}; do \
-	    (cd .. && $(INSTALL_PROGRAM) lib-src/$$f ${archlibdir}/$$f) ; \
+	    (cd .. && $(INSTALL_PROGRAM) lib-src/$$f $(DESTDIR)${archlibdir}/$$f) ; \
 	  done ; \
 	fi
 	if test "`(cd ${archlibdir} && $(pwd))`" \
 	     != "`(cd ${srcdir}     && $(pwd))`"; then \
 	  for f in ${PRIVATE_INSTALLABLE_SCRIPTS}; do \
-	    (cd .. && $(INSTALL_PROGRAM) ${srcdir}/$$f ${archlibdir}/$$f); \
+	    (cd .. && $(INSTALL_PROGRAM) ${srcdir}/$$f $(DESTDIR)${archlibdir}/$$f); \
 	  done ; \
 	fi
 
 install: ${archlibdir}
 	@echo; echo "Installing utilities for users to run."
 	for file in ${PUBLIC_INSTALLABLE_EXES} ; do \
-	  (cd .. && $(INSTALL_PROGRAM) lib-src/$${file} ${bindir}/$${file}) ; \
+	  (cd .. && $(INSTALL_PROGRAM) lib-src/$${file} $(DESTDIR)${bindir}/$${file}) ; \
 	done
 	for file in ${PUBLIC_INSTALLABLE_SCRIPTS} ; do \
-	  (cd .. && $(INSTALL_PROGRAM) ${srcdir}/$${file} ${bindir}/$${file}) ; \
+	  (cd .. && $(INSTALL_PROGRAM) ${srcdir}/$${file} $(DESTDIR)${bindir}/$${file}) ; \
 	done
 
 uninstall:

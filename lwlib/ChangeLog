@@ -1,3 +1,8 @@
+2011-05-20  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in (DESTDIR): New variable for all Makefiles, unused in
+	this one.
+
 2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.31 "ginger" is released.

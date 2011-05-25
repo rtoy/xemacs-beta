@@ -21,6 +21,8 @@
 ## along with the Lucid Widget Library.  If not, see
 ## <http://www.gnu.org/licenses/>.
 
+DESTDIR=
+
 ## For performance and consistency, no built-in rules
 .SUFFIXES:
 .SUFFIXES: .c .h .o .i .s

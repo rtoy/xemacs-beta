@@ -15,6 +15,7 @@ MODTITLE="Sample module for XEmacs"
 SRCS=sample.c
 
 ### You should not need to modify anything below this line
+DESTDIR=
 SHELL=/bin/sh
 RM=rm -f
 CFLAGS=@CFLAGS@
@@ -54,4 +55,4 @@ distclean: clean
 	$(RM) Makefile config.* configure
 
 install: $(MODNAME).ell
-	$(INSTALL_PROGRAM) $< $(INSTALLPATH)
+	$(INSTALL_PROGRAM) $< $(DESTDIR)$(INSTALLPATH)

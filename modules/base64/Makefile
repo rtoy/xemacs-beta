@@ -25,6 +25,8 @@
 # 'installed'.
 #
 
+DESTDIR=
+
 SHELL=/bin/sh
 RM=rm -f
 CC=../../lib-src/ellcc
