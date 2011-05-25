@@ -1769,29 +1769,27 @@ arguments: (((FUNC ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
 ;; The following ought to have a better definition for use with newer
 ;; byte compilers.
 ;;;###autoload
-(defmacro* macrolet (((name arglist &optional docstring &body body)
-                       &rest macros) &body form)
+(defmacro* macrolet ((&rest macros) &body form)
   "Make temporary macro definitions.
 This is like `flet', but for macros instead of functions."
   (cl-macroexpand-all (cons 'progn form)
                       (nconc
                        (loop
                          for (name . details)
-                         in (cons (list* name arglist docstring body) macros)
+                         in macros
                          collect
                          (list* name 'lambda (cdr (cl-transform-lambda details
                                                                        name))))
                        cl-macro-environment)))
 
 ;;;###autoload
-(defmacro* symbol-macrolet (((name expansion) &rest symbol-macros) &body form)
-  "Make symbol macro definitions.
-Within the body FORMs, references to the variable NAME will be replaced
-by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...)."
-  (check-type name symbol)
+(defmacro* symbol-macrolet ((&rest symbol-macros) &body form)
+  "Make temporary symbol macro definitions.
+Elements in SYMBOL-MACROS look like (NAME EXPANSION).
+Within the body FORMs, a reference to NAME is replaced with its EXPANSION,
+and (setq NAME ...) acts like (setf EXPANSION ...)."
   (cl-macroexpand-all (cons 'progn form)
-                      (nconc (list (list (eq-hash name) expansion))
-			     (loop
+                      (nconc (loop
 			       for (name expansion) in symbol-macros
 			       do (check-type name symbol)
 			       collect (list (eq-hash name) expansion))

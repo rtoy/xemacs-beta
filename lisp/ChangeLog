@@ -1,3 +1,10 @@
+2011-05-25  Didier Verna  <didier@xemacs.org>
+
+	* cl-macs.el (macrolet):
+	* cl-macs.el (symbol-macrolet): Don't require one mandatory
+	[symbol-]macro definition in the first argument. The Common Lisp
+	standard allows the list of definitions to be empty.
+
 2011-05-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (bind-inits)): Removed.
