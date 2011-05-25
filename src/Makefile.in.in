@@ -37,6 +37,8 @@ RECURSIVE_MAKE_ARGS=
 RECURSIVE_MAKE_ARGS=@RECURSIVE_MAKE_ARGS@
 #endif
 
+DESTDIR=
+
 PROGNAME=@PROGNAME@
 prefix=@prefix@
 SRC=@srcdir@
@@ -1019,7 +1021,7 @@ relock:
 #ifdef HAVE_SHLIB
 MAKEPATH=../lib-src/make-path
 install: $(PROGNAME)
-	$(MAKEPATH) $(archlibdir)/include $(archlibdir)/include/m $(archlibdir)/include/s
+	$(MAKEPATH) $(DESTDIR)$(archlibdir)/include $(DESTDIR)$(archlibdir)/include/m $(DESTDIR)$(archlibdir)/include/s
 	-@echo "Copying include files for ellcc..."
 	-@hdir=`pwd`; \
 	cd $(SRC); hdrdir2=`pwd`; cd $$hdir; \
@@ -1033,12 +1035,12 @@ install: $(PROGNAME)
 		test -d s && hdrtars="$$hdrtars s/*"; \
 		test -d m && hdrtars="$$hdrtars m/*"; \
 		test -n "$$hdrtars" && (tar cf - $$hdrtars) | \
-			(cd $(archlibdir)/include && umask 022 && tar xf -); \
-		chmod 755 $(archlibdir)/include; \
-		test -d $(archlibdir)/include/s && \
-		  chmod 755 $(archlibdir)/include/s; \
-		test -d $(archlibdir)/include/m && \
-		  chmod 755 $(archlibdir)/include/s;) \
+			(cd $(DESTDIR)$(archlibdir)/include && umask 022 && tar xf -); \
+		chmod 755 $(DESTDIR)$(archlibdir)/include; \
+		test -d $(DESTDIR)$(archlibdir)/include/s && \
+		  chmod 755 $(DESTDIR)$(archlibdir)/include/s; \
+		test -d $(DESTDIR)$(archlibdir)/include/m && \
+		  chmod 755 $(DESTDIR)$(archlibdir)/include/s;) \
 	done)
 #endif
 
