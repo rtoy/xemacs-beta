@@ -1,3 +1,13 @@
+2011-05-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* modeline.el (make-modeline-command-wrapper):
+	Be more reasonable about the implementation of this wrapper, don't
+	require that the value of COMMAND be available at macro-expansion
+	time. (Basically, implement a closure.)
+	* modeline.el (add-minor-mode):
+	Remove a workaround and misguided comment that are no longer
+	necessary or exact.
+
 2011-05-25  Didier Verna  <didier@xemacs.org>
 
 	* cl-macs.el (macrolet):

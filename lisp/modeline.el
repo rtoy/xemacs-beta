@@ -332,11 +332,43 @@ the buffer of the window whose modeline was clicked upon.")
   (set-face-font 'modeline-mousable [bold] nil '(default grayscale win)))
 
 (defmacro make-modeline-command-wrapper (command)
-  `#'(lambda (event)
-       (interactive "e")
-       (save-selected-window
-	 (select-window (event-window event))
-	 (call-interactively ',(eval command)))))
+  "Return a function object wrapping COMMAND, for use with the modeline.
+
+The function (itself a command, with \"e\" as its interactive spec) calls
+COMMAND with the appropriate window selected, and is suitable as a binding
+in the keymaps associated with the modeline."
+  (cond
+   ((and-fboundp 'cl-const-expr-p (cl-const-expr-p command))
+    `#'(lambda (event)
+         (interactive "e")
+         (save-selected-window
+           (select-window (event-window event))
+           (call-interactively ,command))))
+   ((eval-when-compile (cl-compiling-file))
+    (let ((compiled
+           (eval-when-compile
+             (byte-compile-sexp
+              #'(lambda (event)
+                  (interactive "e")
+                  (save-selected-window
+                    (select-window (event-window event))
+                    (call-interactively 'placeholder)))))))
+      `(make-byte-code ',(compiled-function-arglist compiled)
+        ,(compiled-function-instructions compiled)
+        (vector ,@(subst command ''placeholder
+                         (mapcar 'quote-maybe 
+                                 (compiled-function-constants compiled))
+                         :test 'equal))
+        ,(compiled-function-stack-depth compiled)
+        ,(compiled-function-doc-string compiled)
+        ,(quote-maybe (second (compiled-function-interactive compiled))))))
+   (t
+    `(lexical-let ((command ,command))
+      #'(lambda (event)
+          (interactive "e")
+          (save-selected-window
+            (select-window (event-window event))
+            (call-interactively command)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                            Minor modes                              ;;;
@@ -427,9 +459,7 @@ Example: (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 					   (symbol-name toggle)
 					   "-map"))))
       (define-key toggle-keymap 'button2
-	;; defeat the DUMB-ASS byte-compiler, which tries to
-	;; expand the macro at compile time and fucks up.
-	(eval '(make-modeline-command-wrapper toggle-fun)))
+        (make-modeline-command-wrapper toggle-fun))
       (put toggle 'modeline-toggle-function toggle-fun))
     (when name
       (let ((hacked-name
