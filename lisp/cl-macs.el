@@ -380,15 +380,6 @@ block."
 	(setq body (list (list* 'block bind-block body))))
     (setq simple-args (nreverse simple-args)
           header (nreverse header))
-    ;; Add CL lambda list to documentation, if the CL lambda list differs
-    ;; from the non-CL lambda list. npak@ispras.ru
-    (unless (equal complex-arglist
-                   (cl-function-arglist simple-args))
-      (and (stringp (car header)) (setq doc (pop header)))
-      ;; Stick the arguments onto the end of the doc string in a way that
-      ;; will be recognized specially by `function-arglist'.
-      (push (concat doc "\n\narguments: " complex-arglist "\n")
-	    header))
     (if (null args)
 	(list* nil simple-args (nconc header body))
       (if (memq '&optional simple-args) (push '&optional args))
@@ -398,7 +389,21 @@ block."
       ;; This code originally needed to create the keywords itself, that
       ;; wasn't done by the Lisp reader; the first element of the result
       ;; list comprised code to do this. It's not used any more.
-      (list* nil (nconc simple-args (list '&rest (car (pop bind-lets))))
+      (list* nil (prog1
+                     (setq simple-args
+                           (nconc simple-args
+                                  (list '&rest (car (pop bind-lets)))))
+                   ;; Add CL lambda list to documentation, if the CL lambda
+                   ;; list differs from the non-CL lambda
+                   ;; list. npak@ispras.ru
+                   (unless (equal complex-arglist
+                                  (cl-function-arglist simple-args))
+                     (and (stringp (car header)) (setq doc (pop header)))
+                     ;; Stick the arguments onto the end of the doc string
+                     ;; in a way that will be recognized specially by
+                     ;; `function-arglist'.
+                     (push (concat doc "\n\narguments: " complex-arglist "\n")
+                           header)))
 	     ;; XEmacs change: we add usage information using Nickolay's
 	     ;; approach above
 	     (nconc header
