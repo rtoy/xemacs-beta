@@ -422,9 +422,9 @@ tty_output_vertical_divider (struct window *w, int UNUSED (clear))
  Clear the area in the box defined by the given parameters.
  ****************************************************************************/
 static void
-tty_clear_region (Lisp_Object window, struct device* UNUSED (d),
-		  struct frame * f, face_index findex, int x, int y,
-		  int width, int height, Lisp_Object UNUSED (fcolor),
+tty_clear_region (Lisp_Object window, struct frame *f, face_index findex,
+		  int x, int y, int width, int height,
+		  Lisp_Object UNUSED (fcolor),
 		  Lisp_Object UNUSED (bcolor),
 		  Lisp_Object UNUSED (background_pixmap),
 		  Lisp_Object UNUSED (background_placement))

@@ -2021,14 +2021,14 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
  given face.
  ****************************************************************************/
 static void
-XLIKE_clear_region (Lisp_Object UNUSED (locale), struct device* d,
-		    struct frame* f, face_index UNUSED (findex), int x, int y,
-		    int width, int height,
+XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
+		    face_index UNUSED (findex),
+		    int x, int y, int width, int height,
 		    Lisp_Object fcolor, Lisp_Object bcolor,
 		    Lisp_Object background_pixmap,
 		    Lisp_Object background_placement)
 {
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy =  GET_XLIKE_DISPLAY (XDEVICE (f->device));
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc = NULL;
 
