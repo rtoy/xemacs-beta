@@ -151,7 +151,7 @@ struct console_methods
   int (*eol_cursor_width_method) (void);
   void (*output_vertical_divider_method) (struct window *, int);
   void (*clear_to_window_end_method) (struct window *, int, int);
-  void (*clear_region_method) (Lisp_Object, struct device*, struct frame*,
+  void (*clear_region_method) (Lisp_Object, struct frame*,
 			       face_index, int, int, int, int,
 			       Lisp_Object, Lisp_Object,
 			       Lisp_Object, Lisp_Object);

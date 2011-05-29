@@ -1240,7 +1240,7 @@ mswindows_text_width (struct window *w, struct face_cachel *cachel,
  ****************************************************************************/
 static void
 mswindows_clear_region (Lisp_Object USED_IF_SCROLLBARS (locale),
-			struct device *UNUSED (d), struct frame *f, 
+			struct frame *f, 
 			face_index UNUSED (findex), int x, int y,
 			int width, int height, Lisp_Object fcolor,
 			Lisp_Object bcolor,
