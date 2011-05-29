@@ -1,3 +1,10 @@
+2011-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-transform-lambda):
+	Move the code to decide whether to add argument information to the
+	docstring a little later, so the information about what the
+	function's docstring ends up being is a little more exact.
+
 2011-05-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* modeline.el (make-modeline-command-wrapper):
