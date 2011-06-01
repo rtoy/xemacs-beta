@@ -6213,6 +6213,36 @@ not allow their modification with `object-setplist'.
 }
 
 
+DEFUN ("object-address", Fobject_address, 1, 1, 0, /*
+Return OBJECT's memory address as an integer.
+This may be useful for customized printing of unreadable Lisp objects.
+As this only makes sense for record type objects, this function returns nil
+for chars and integers.
+*/
+       (object))
+{
+  switch (XTYPE (object))
+    {
+    case Lisp_Type_Int_Even:
+    case Lisp_Type_Int_Odd:
+    case Lisp_Type_Char:
+      {
+	return Qnil;
+      }
+    case Lisp_Type_Record:
+      {
+	return make_integer ((EMACS_INT) GET_VOID_FROM_LISP (object));
+      }
+    default:
+      {
+	signal_error (Qinternal_error,
+		      "Internal error: illegal lisp object tag type",
+		      object);
+      }
+    }
+}
+
+
 
 static Lisp_Object
 tweaked_internal_equal (Lisp_Object obj1, Lisp_Object obj2,
@@ -11786,6 +11816,7 @@ syms_of_fns (void)
   DEFSUBR (Fremprop);
   DEFSUBR (Fobject_plist);
   DEFSUBR (Fobject_setplist);
+  DEFSUBR (Fobject_address);
   DEFSUBR (Fequal);
   DEFSUBR (Fequalp);
   DEFSUBR (Ffill);
