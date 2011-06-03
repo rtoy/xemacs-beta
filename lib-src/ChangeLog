@@ -1,3 +1,12 @@
+2011-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gnuslib.c (connect_to_unix_server):
+	Retry with /tmp as a directory in which to search for Unix sockets
+	if an attempt to connect with some other directory failed (which
+	may be because gnuclient and gnuserv don't share an environment
+	value for TMPDIR, or because gnuserv was compiled with USE_TMPDIR
+	turned off).
+
 2011-05-20  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Default DESTDIR to the empty string, and use it in
