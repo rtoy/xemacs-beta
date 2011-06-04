@@ -454,26 +454,20 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
 (defun toolbar-add-item-data (icon-list &optional icon-dir)
   (if (eq icon-dir nil)
       (setq icon-dir toolbar-icon-directory))
-  (mapcar
-   (lambda (cons)
-     (let ((prefix (expand-file-name (cdr cons) icon-dir)))
-       ;; #### This should use a better mechanism for finding the
-       ;; glyphs, allowing for formats other than x[pb]m.  Look at
-       ;; `widget-glyph-find' for an example how it might be done.
-       (set (car cons)
-	    (if (featurep 'xpm)
-		(toolbar-make-button-list
-		 (concat prefix "-up.xpm")
-		 nil
-		 (concat prefix "-xx.xpm")
-		 (concat prefix "-cap-up.xpm")
-		 nil
-		 (concat prefix "-cap-xx.xpm"))
-	      (toolbar-make-button-list
-	       (concat prefix "-up.xbm")
-	       (concat prefix "-dn.xbm")
-	       (concat prefix "-xx.xbm"))))))
-   icon-list))
+  (dolist (cons icon-list)
+    (let ((prefix (expand-file-name (cdr cons) icon-dir)))
+      ;; #### This should use a better mechanism for finding the
+      ;; glyphs, allowing for formats other than x[pb]m.  Look at
+      ;; `widget-glyph-find' for an example how it might be done.
+      (set (car cons)
+	   (if (load-time-value (featurep 'xpm))
+	       (toolbar-make-button-list (concat prefix "-up.xpm") nil
+					 (concat prefix "-xx.xpm")
+					 (concat prefix "-cap-up.xpm")
+					 nil (concat prefix "-cap-xx.xpm"))
+	     (toolbar-make-button-list (concat prefix "-up.xbm")
+				       (concat prefix "-dn.xbm")
+				       (concat prefix "-xx.xbm")))))))
 
 (defvar toolbar-vector-open 
   [toolbar-file-icon            toolbar-open	t       "Open a file"]
