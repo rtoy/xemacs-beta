@@ -1,3 +1,11 @@
+2011-06-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gutter-items.el (add-tab-to-gutter):
+	* toolbar-items.el (toolbar-add-item-data):
+	Switch to #'dolist instead of #'mapcar in a couple of places where
+	the result isn't used. (Committed now mostly to trigger a commit
+	mail so Mats' buildbot gets woken up.)
+
 2011-05-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (cl-transform-lambda):

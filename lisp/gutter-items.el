@@ -314,28 +314,26 @@ redefining the function `format-buffers-menu-line'."
     (remove-gutter-element left-gutter 'buffers-tab)
     (remove-gutter-element right-gutter 'buffers-tab)
     ;; Put tabs into all devices that will be able to display them
-    (mapcar
-     #'(lambda (x)
-	 (when (valid-image-instantiator-format-p 'tab-control x)
-	   (cond ((eq gutter-buffers-tab-orientation 'top)
-		  ;; This looks better than a 3d border
-		  (set-specifier top-gutter-border-width 0 'global x)
-		  (set-gutter-element top-gutter 'buffers-tab 
-				      gutter-string 'global x))
-		 ((eq gutter-buffers-tab-orientation 'bottom)
-		  (set-specifier bottom-gutter-border-width 0 'global x)
-		  (set-gutter-element bottom-gutter 'buffers-tab
-				      gutter-string 'global x))
-		 ((eq gutter-buffers-tab-orientation 'left)
-		  (set-specifier left-gutter-border-width 0 'global x)
-		  (set-gutter-element left-gutter 'buffers-tab
-				      gutter-string 'global x))
-		 ((eq gutter-buffers-tab-orientation 'right)
-		  (set-specifier right-gutter-border-width 0 'global x)
-		  (set-gutter-element right-gutter 'buffers-tab
-				      gutter-string 'global x))
-		 )))
-     (console-type-list))))
+    (dolist (x (console-type-list))
+      (when (valid-image-instantiator-format-p 'tab-control x)
+	(case gutter-buffers-tab-orientation
+	  (top
+	   ;; This looks better than a 3d border
+	   (set-specifier top-gutter-border-width 0 'global x)
+	   (set-gutter-element top-gutter 'buffers-tab 
+			       gutter-string 'global x))
+	  (bottom
+	   (set-specifier bottom-gutter-border-width 0 'global x)
+	   (set-gutter-element bottom-gutter 'buffers-tab
+			       gutter-string 'global x))
+	  (left
+	   (set-specifier left-gutter-border-width 0 'global x)
+	   (set-gutter-element left-gutter 'buffers-tab
+			       gutter-string 'global x))
+	  (right
+	   (set-specifier right-gutter-border-width 0 'global x)
+	   (set-gutter-element right-gutter 'buffers-tab gutter-string 'global
+			       x)))))))
 
 (defun update-tab-in-gutter (frame &optional force-selection)
   "Update the tab control in the gutter area."
