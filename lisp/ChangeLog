@@ -1,3 +1,21 @@
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (assoc-ignore-case, assoc-ignore-representation):
+	* cl-macs.el (member-ignore-case): New compiler macros.
+	* subr.el (assoc-ignore-case):
+	* subr.el (assoc-ignore-representation):
+	* subr.el (member-ignore-case):
+	* subr.el (split-path):
+	* subr.el (delete-dups):
+	Reimplement a few GNU functions in terms of their CL counterparts,
+	for the sake of circularity checking and some speed; add type
+	checking (used in interpreted code and with low speed and safety
+	checking) for the sake of revealing incompatibilities when
+	developing.
+	* subr.el (remove-hook):
+	There's no need for flet here, an explicit lambda is enough.
+
 2011-06-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gutter-items.el (add-tab-to-gutter):

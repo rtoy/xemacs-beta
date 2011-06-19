@@ -3766,6 +3766,35 @@ the byte optimizer in those cases."
 	(the string ,string) :test #'eq)
     form))
 
+(define-compiler-macro assoc-ignore-case (&whole form &rest args)
+  (if (eql 2 (length args))
+      `(assoc* (the string ,(pop args))
+               (the (and list (satisfies
+                               (lambda (list)
+                                 (not (find-if-not 'stringp list :key 'car)))))
+                    ,(pop args))
+               :test 'equalp)
+    form))
+
+(define-compiler-macro assoc-ignore-representation (&whole form &rest args)
+  (if (eql 2 (length args))
+      `(assoc* (the string ,(pop args))
+               (the (and list (satisfies
+                               (lambda (list)
+                                 (not (find-if-not 'stringp list :key 'car)))))
+                    ,(pop args))
+               :test 'equalp)
+    form))
+
+(define-compiler-macro member-ignore-case (&whole form &rest args)
+  (if (eql 2 (length args))
+      `(member* (the string ,(pop args))
+                (the (and list (satisfies
+                                (lambda (list) (every 'stringp list))))
+                     ,(pop args))
+                :test 'equalp)
+    form))
+
 (define-compiler-macro stable-union (&whole form &rest cl-keys)
   (if (> (length form) 2)
       (list* 'union (pop cl-keys) (pop cl-keys) :stable t cl-keys)
