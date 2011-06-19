@@ -718,7 +718,7 @@ get_check_match_function (Lisp_Object *test_inout, Lisp_Object test_not,
 }
 
 /* Given PREDICATE and KEY, return a C function pointer appropriate for use
-   in deciding whether one given elements of a sequence is less than
+   in deciding whether one given element of a sequence is less than
    another. */
 
 static check_test_func_t
@@ -2058,8 +2058,8 @@ With one argument, copy STRING without its properties.
   return val;
 }
 
-/* Split STRING into a list of substrings.  The substrings are the
-   parts of original STRING separated by SEPCHAR.
+/* Split STRING into a list of substrings.  The substrings are the parts of
+   original STRING separated by SEPCHAR.
 
    If UNESCAPE is non-zero, ESCAPECHAR specifies a character that will quote
    SEPCHAR, and cause it not to split STRING. A double ESCAPECHAR is
@@ -3755,10 +3755,8 @@ list_delete_duplicates_from_end (Lisp_Object list,
 
   /* We can't delete (or remove) as we go, because that breaks START and
      END.  We could if END were nil, and that would change an ON(N + 2)
-     algorithm to an ON^2 algorithm; list_position_cons_before() would need to
-     be modified to return the cons *before* the one containing the item for
-     that.  Here and now it doesn't matter, though, #'delete-duplicates is
-     relatively expensive no matter what. */
+     algorithm to an ON^2 algorithm. Here and now it doesn't matter, though,
+     #'delete-duplicates is relatively expensive no matter what. */
   struct Lisp_Bit_Vector *deleting
     = (Lisp_Bit_Vector *) ALLOCA (sizeof (struct Lisp_Bit_Vector)
 				  + (sizeof (long)
@@ -9060,7 +9058,6 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 	Lisp_Object test, Lisp_Object key, int depth)
 {
   Lisp_Object keyed = KEY (key, tree), aa, dd;
-  struct gcpro gcpro1;
 
   if (depth + lisp_eval_depth > max_lisp_eval_depth)
     {
