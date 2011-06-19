@@ -372,10 +372,9 @@ Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
     (let ((require (getf plist :require))
 	  (enable (getf plist :enable)))
       (cond ((listp require)
-	     (mapc #'(lambda (sym) (require sym)) require))
+	     (mapc 'require require))
 	    ((symbolp require)
 	     (require require))
-	    ((null require))
 	    (t (error 'invalid-argument "Invalid :require spec" require)))
       (message "Enabling behavior %s..." behavior)
       (if enable (funcall enable))
@@ -395,10 +394,9 @@ Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
     (let ((require (getf plist :require))
 	  (disable (getf plist :disable)))
       (cond ((listp require)
-	     (mapc #'(lambda (sym) (require sym)) require))
+	     (mapc 'require require))
 	    ((symbolp require)
 	     (require require))
-	    ((null require))
 	    (t (error 'invalid-argument "Invalid :require spec" require)))
       (message "Disabling behavior %s..." behavior)
       (if disable (funcall disable))
@@ -476,9 +474,9 @@ This takes into account the override information specified."
        ("%_Set Download Site"
 	("%_Official Releases"
 	 :filter ,#'(lambda (&rest junk)
-                    (menu-split-long-menu
-                     (submenu-generate-accelerator-spec
-                      (package-ui-download-menu)))))
+                      (menu-split-long-menu
+                       (submenu-generate-accelerator-spec
+                        (package-ui-download-menu)))))
 	("%_Pre-Releases"
 	 :filter ,#'(lambda (&rest junk)
                       (menu-split-long-menu
