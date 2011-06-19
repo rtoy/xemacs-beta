@@ -2008,6 +2008,10 @@ internal_hash (Lisp_Object obj, int depth, Boolint equalp)
 
 DEFUN ("eq-hash", Feq_hash, 1, 1, 0, /*
 Return a hash value for OBJECT appropriate for use with `eq.'
+
+If OBJECT is not immediate (it is not a fixnum or character) this hash value
+will be unique among currently-reachable objects, and is appropriate for
+implementing the Common Lisp PRINT-OBJECT protocol.
 */
        (object))
 {
