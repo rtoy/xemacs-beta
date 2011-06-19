@@ -1,5 +1,13 @@
 2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (cl-defsubst-expand):
+	It is occasionally the case that the symbol naming the argument
+	co-incides with the value that it is replacing; in that case,
+	using the symbol macro is counterproductive and hangs XEmacs (as
+	does analogous code in SBCL), so don't.
+
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* behavior.el (enable-behavior):
 	* behavior.el (disable-behavior):
 	Remove a couple of redundant lambdas here, and remove a cond
