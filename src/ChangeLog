@@ -1,5 +1,13 @@
 2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fns.c:
+	* fns.c (list_delete_duplicates_from_end):
+	Correct a couple of comments in this file.
+	* fns.c (sublis):
+	Remove a superfluous gcpro1.
+
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* elhash.c (Feq_hash):
 	Document that this returns, for non-immediate objects, a value
 	that is unique among currently-reachable objects.
