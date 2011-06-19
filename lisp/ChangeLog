@@ -1,5 +1,17 @@
 2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (defsubst*):
+	* cl-macs.el (cl-defsubst-expand):
+	If defaults refer to earlier args, or if there's a &rest arg, use
+	#'proclaim-inline.
+	Use #'symbol-macrolet instead of #'subst when replacing argument
+	names with their values in the inline expansion; this avoids
+	(most) instances where the symbol's function slot is used.
+	Document a bug that occurs if the symbol is being shadowed in a
+	lexically-contained scope.
+
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el:
 	* cl-macs.el (assoc-ignore-case, assoc-ignore-representation):
 	* cl-macs.el (member-ignore-case): New compiler macros.
