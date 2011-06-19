@@ -3201,7 +3201,10 @@ surrounded by (block NAME ...)."
 	 (unsafe (not (cl-safe-expr-p pbody))))
     (while (and p (eq (cl-expr-contains arglist (car p)) 1)) (pop p))
     (list 'progn
-	  (if p nil   ; give up if defaults refer to earlier args
+	  (if (or p (memq '&rest arglist))
+              ; Defaults refer to earlier args, or we would have to cons up
+              ; something for &rest:
+              (list 'proclaim-inline name) 
 	    (list 'define-compiler-macro name
 		  (if (memq '&key arglist)
 		      (list* '&whole 'cl-whole '&cl-quote arglist)
@@ -3213,15 +3216,27 @@ surrounded by (block NAME ...)."
 	  (list* 'defun* name arglist docstring body))))
 
 (defun cl-defsubst-expand (argns body simple whole unsafe &rest argvs)
-  (if (and whole (not (cl-safe-expr-p (cons 'progn argvs)))) whole
-    (if (cl-simple-exprs-p argvs) (setq simple t))
-    (let ((lets (mapcan #'(lambda (argn argv)
-			    (if (or simple (cl-const-expr-p argv))
-				(progn (setq body (subst argv argn body))
-				       (and unsafe (list (list argn argv))))
-			      (list (list argn argv))))
-			argns argvs)))
-      (if lets (list 'let lets body) body))))
+  (if (and whole (not (cl-safe-expr-p (cons 'progn argvs))))
+      whole
+    (if (cl-simple-exprs-p argvs)
+        (setq simple t))
+    (let* ((symbol-macros nil)
+           (lets (mapcan #'(lambda (argn argv)
+                             (if (or simple (cl-const-expr-p argv))
+                                 (progn (push (list argn argv) symbol-macros)
+                                        (and unsafe (list (list argn argv))))
+                               (list (list argn argv))))
+                         argns argvs)))
+      `(let ,lets
+         (symbol-macrolet
+             ;; #### Bug; this will happily substitute in places where the
+             ;; symbol is being shadowed in a different scope (e.g. inside
+             ;; let bindings or lambda expressions where it has been
+             ;; bound). We don't have GNU's issue where the replacement will
+             ;; be done when the symbol is used in a function context,
+             ;; because we're using #'symbol-macrolet instead of #'subst.
+             ,symbol-macros
+           ,body)))))
 
 ;; When a 64-bit build is byte-compiling code, some of its native fixnums
 ;; will not be represented as fixnums if the byte-compiled code is read by
