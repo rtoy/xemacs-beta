@@ -111,10 +111,6 @@ quote lambda expressions appropriately."
 ;(defun butlast (x &optional n)
 ;(defun nbutlast (x &optional n)
 
-;; In cl-seq.el.
-;(defun remove (elt seq)
-;(defun remq (elt list)
-
 (defmacro defun-when-void (&rest args)
   "Define a function, just like `defun', unless it's already defined.
 Used for compatibility among different emacs variants."
@@ -185,30 +181,28 @@ If TEST is omitted or nil, `equal' is used."
 (defun assoc-ignore-case (key alist)
   "Like `assoc', but ignores differences in case and text representation.
 KEY must be a string.  Upper-case and lower-case letters are treated as equal."
-  (let (element)
-    (while (and alist (not element))
-      (if (eq t (compare-strings key 0 nil (car (car alist)) 0 nil t))
-	  (setq element (car alist)))
-      (setq alist (cdr alist)))
-    element))
+  (assoc* (the string key) 
+          (the (and list (satisfies (lambda (list)
+                                      (not (find-if-not 'stringp list
+                                                        :key 'car))))) alist)
+          :test 'equalp))
 
 (defun assoc-ignore-representation (key alist)
   "Like `assoc', but ignores differences in text representation.
 KEY must be a string."
-  (let (element)
-    (while (and alist (not element))
-      (if (eq t (compare-strings key 0 nil (car (car alist)) 0 nil))
-	  (setq element (car alist)))
-      (setq alist (cdr alist)))
-    element))
+  (assoc* (the string key)
+          (the (and list (satisfies (lambda (list)
+                                      (not (find-if-not 'stringp list
+                                                        :key 'car))))) alist)
+          :test 'equalp))
 
 (defun member-ignore-case (elt list)
   "Like `member', but ignores differences in case and text representation.
 ELT must be a string.  Upper-case and lower-case letters are treated as equal."
-  (while (and list (not (eq t (compare-strings elt 0 nil (car list) 0 nil t))))
-    (setq list (cdr list)))
-  list)
-
+  (member* (the string elt)
+           (the (and list (satisfies (lambda (list) (every 'stringp list))))
+                list)
+           :test 'equalp))
 
 ;;;; Keymap support.
 ;; XEmacs: removed to keymap.el
@@ -351,23 +345,17 @@ To make a hook variable buffer-local, always use
       (setq local t)))
   (let ((hook-value (if local (symbol-value hook) (default-value hook))))
     ;; Remove the function, for both the list and the non-list cases.
-    ;; XEmacs: add hook-test, for handling one-shot hooks.
-    (flet ((hook-test
-	     (fn hel)
-	     (or (equal fn hel)
-		 (and (symbolp hel)
-		      (equal fn
-			     (get hel 'one-shot-hook-fun))))))
-      (if (or (not (listp hook-value)) (eq (car hook-value) 'lambda))
-	  (if (equal hook-value function) (setq hook-value nil))
-	(setq hook-value (delete* function (copy-sequence hook-value)
-				  :test 'hook-test)))
-      ;; If the function is on the global hook, we need to shadow it locally
-      ;;(when (and local (member* function (default-value hook)
-      ;;                          :test 'hook-test)
-      ;;	       (not (member* (cons 'not function) hook-value
-      ;;                             :test 'hook-test)))
-      ;;  (push (cons 'not function) hook-value))
+    ;; XEmacs: call #'remove-if, rather than delete, since we check for
+    ;; one-shot hooks too.
+    (if (or (not (listp hook-value)) (eq (car hook-value) 'lambda))
+        (if (equal hook-value function) (setq hook-value nil))
+      (setq hook-value
+            (remove-if #'(lambda (elt)
+                           (or (equal function elt)
+                               (and (symbolp elt)
+                                    (equal function
+                                           (get elt 'one-shot-hook-fun)))))
+                       hook-value))
       ;; Set the actual variable
       (if local (set hook hook-value) (set-default hook hook-value)))))
 
@@ -493,8 +481,7 @@ NOTE: At some point, this will be moved into C and will be very fast."
   "Explode a search path into a list of strings.
 The path components are separated with the characters specified
 with `path-separator'."
-  (while (or (not (stringp path-separator))
-             (/= (length path-separator) 1))
+  (while (not (and (stringp path-separator) (eql (length path-separator) 1)))
     (setq path-separator (signal 'error (list "\
 `path-separator' should be set to a single-character string"
 					      path-separator))))
@@ -1722,11 +1709,7 @@ FILE should be the name of a library, with no directory name."
 Store the result in LIST and return it.  LIST must be a proper list.
 Of several `equal' occurrences of an element in LIST, the first
 one is kept."
-  (let ((tail list))
-    (while tail
-      (setcdr tail (delete (car tail) (cdr tail)))
-      (setq tail (cdr tail))))
-  list)
+  (delete-duplicates (the list list) :test 'equal :from-end t))
 
 ;; END SYNC WITH FSF 22.0.50.1 (CVS)
 
