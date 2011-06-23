@@ -1,3 +1,9 @@
+2011-06-23  Didier Verna  <didier@xemacs.org>
+
+	From smitchel <smitchel@bnin.net>
+	* frame.el (get-other-frame): Add missing first argument THIS to
+	the call to NEXT-FRAME.
+
 2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (cl-defsubst-expand):
