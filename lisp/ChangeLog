@@ -1,3 +1,9 @@
+2011-06-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* view-less.el (view):
+	Add a custom group to this file, so view-mode-line-string has an
+	associated custom group automatically.
+
 2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (cl-defsubst-expand):
