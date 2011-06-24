@@ -38,6 +38,11 @@
 
 ;;; Code:
 
+(defgroup view nil
+ "Peruse file or buffer without editing."
+ :link '(function-link view-mode)
+ :group 'wp)
+
 (defvar view-search-string ""
   "Last string searched for with view-search functions.")
 
