@@ -602,7 +602,7 @@ is not considered (see `next-frame')."
 	 (next (next-frame this 'visible-nomini)))
     ;; then search iconified frames
     (if (eq this next)
-	(setq next (next-frame 'visible-iconic-nomini)))
+	(setq next (next-frame this 'visible-iconic-nomini)))
     (if (eq this next)
 	;; otherwise, make a new frame
 	(make-frame)
