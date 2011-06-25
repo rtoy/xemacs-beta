@@ -45,6 +45,8 @@ Lisp_Object Vconsole_list, Vselected_console;
 
 Lisp_Object Vcreate_console_hook, Vdelete_console_hook;
 
+Lisp_Object Vfunction_key_map_parent;
+
 Lisp_Object Qconsolep, Qconsole_live_p;
 Lisp_Object Qcreate_console_hook;
 Lisp_Object Qdelete_console_hook;
@@ -203,6 +205,7 @@ allocate_console (Lisp_Object type)
   con->contype = get_console_variant (type);
   con->command_builder = allocate_command_builder (console, 1);
   con->function_key_map = Fmake_sparse_keymap (Qnil);
+  Fset_keymap_parents (con->function_key_map, Vfunction_key_map_parent);
   set_quit_events (con, make_char (7)); /* C-g */
 
   UNGCPRO;
@@ -1306,6 +1309,15 @@ One argument, the to-be-deleted console.
 */ );
   Vdelete_console_hook = Qnil;
 
+  DEFVAR_LISP ("function-key-map-parent", &Vfunction_key_map_parent /*
+Parent keymap for `function-key-map'.
+
+This keymap is appropriate for bindings that are not console-specific, but
+yet should take advantage of the substitution made by `read-key-sequence'
+for bindings in `function-key-map'.
+*/ );
+  Vfunction_key_map_parent = Fmake_sparse_keymap (Qnil);
+
 #ifdef HAVE_WINDOW_SYSTEM
   Fprovide (intern ("window-system"));
 #endif
@@ -1530,6 +1542,11 @@ Typing `ESC O P' to `read-key-sequence' would return
 \[#<keypress-event control-X> #<keypress-event f1>].  If [f1]
 were a prefix key, typing `ESC O P x' would return
 \[#<keypress-event f1> #<keypress-event x>].
+
+The parent keymap of `function-key-map' when created is
+`function-key-map-parent', which is not a console-local variable.  Bindings
+appropriate for `function-key-map' but which are likely to be relevant to
+every created console should be created in `function-key-map-parent'.
 */ );
 
 #ifdef HAVE_TTY

@@ -1,3 +1,14 @@
+2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* console.c:
+	* console.c (allocate_console):
+	* console.c (vars_of_console):
+	* console.c (complex_vars_of_console):
+	* lisp.h:
+	Add a new keymap variable, function-key-map-parent; use it as the
+	parent of each console-specific function-key-map.  This is
+	appropriate for things like x-compose processing.
+
 2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c:
