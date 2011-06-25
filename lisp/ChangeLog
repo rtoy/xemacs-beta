@@ -1,3 +1,19 @@
+2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gtk-init.el:
+	* gtk-init.el (make-device-late-gtk-entry-point):
+	* gtk-init.el (gtk-initialize-compose): Removed.
+	* keymap.el:
+	* keymap.el (function-key-map-parent):
+	* x-init.el (x-initialize-compose): Removed.
+	* x-init.el (make-device-late-x-entry-point):
+	Make the bindings for dead-acute and friends in
+	function-key-map-parent, rather than function-key-map; do this in
+	keymap.el rather than in window-system-specific code, since the
+	compose processing is generally useful and not X11-specific.
+	It's probably reasonable to rename x-compose.el to compose.el at
+	this point, but I haven't done that.
+
 2011-06-23  Didier Verna  <didier@xemacs.org>
 
 	From smitchel <smitchel@bnin.net>

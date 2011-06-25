@@ -5418,6 +5418,7 @@ EXFUN (Fdefine_key, 3);
 EXFUN (Fkey_description, 1);
 EXFUN (Flookup_key, 3);
 EXFUN (Fmake_sparse_keymap, 1);
+EXFUN (Fset_keymap_parents, 2);
 
 void where_is_to_char (Lisp_Object, Eistring *);
 

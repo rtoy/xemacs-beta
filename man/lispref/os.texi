@@ -1301,10 +1301,10 @@ or enlarges the translate table if necessary.  Multiple
 @end ignore
 
 @defvar function-key-map
-This variable holds a keymap that describes the character sequences
-sent by function keys on an ordinary character terminal.  This keymap
-uses the same data structure as other keymaps, but is used differently: it
-specifies translations to make while reading events.
+This console-local variable holds a keymap that describes the character
+sequences sent by function keys on an ordinary character terminal.  This
+keymap uses the same data structure as other keymaps, but is used
+differently: it specifies translations to make while reading events.
 
 If @code{function-key-map} ``binds'' a key sequence @var{k} to a vector
 @var{v}, then when @var{k} appears as a subsequence @emph{anywhere} in a
@@ -1335,6 +1335,14 @@ deduced from Termcap and Terminfo.  @xref{Terminal-Specific}.
 
 Emacs versions 18 and earlier used totally different means of detecting
 the character sequences that represent function keys.
+@end defvar
+
+@defvar function-key-map-parent
+The parent keymap of @code{function-key-map} is a non-console-local keymap,
+@code{function-key-map-parent}, and any additions to
+@code{function-key-map} that are not specific to a given console should
+normally go into @code{function-key-map-parent} rather than
+@code{function-key-map}. 
 @end defvar
 
 @defvar key-translation-map

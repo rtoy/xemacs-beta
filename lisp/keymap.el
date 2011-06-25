@@ -510,18 +510,141 @@ The characters must be from the [-_a-zA-Z0-9].  Reading is terminated
 	     (error "Event has no character equivalent: %s" event))))
     (vector (intern (concat "" (nreverse list))))))
 
-;; This looks dirty.  The following code should maybe go to another
-;; file, and `create-console-hook' should maybe default to nil.
-(add-hook
- 'create-console-hook
- #'(lambda (console)
-   (letf (((selected-console) console))
-     (define-key function-key-map [?\C-x ?@ ?h] 'event-apply-hyper-modifier)
-     (define-key function-key-map [?\C-x ?@ ?s] 'event-apply-super-modifier)
-     (define-key function-key-map [?\C-x ?@ ?m] 'event-apply-meta-modifier)
-     (define-key function-key-map [?\C-x ?@ ?S] 'event-apply-shift-modifier)
-     (define-key function-key-map [?\C-x ?@ ?c] 'event-apply-control-modifier)
-     (define-key function-key-map [?\C-x ?@ ?a] 'event-apply-alt-modifier)
-     (define-key function-key-map [?\C-x ?@ ?k] 'synthesize-keysym))))
+(define-key function-key-map-parent [?\C-x ?@ ?h] 'event-apply-hyper-modifier)
+(define-key function-key-map-parent [?\C-x ?@ ?s] 'event-apply-super-modifier)
+(define-key function-key-map-parent [?\C-x ?@ ?m] 'event-apply-meta-modifier)
+(define-key function-key-map-parent [?\C-x ?@ ?S] 'event-apply-shift-modifier)
+(define-key function-key-map-parent [?\C-x ?@ ?c] 'event-apply-control-modifier)
+(define-key function-key-map-parent [?\C-x ?@ ?a] 'event-apply-alt-modifier)
+(define-key function-key-map-parent [?\C-x ?@ ?k] 'synthesize-keysym)
+
+;; The autoloads for the compose map, and their bindings in
+;; function-key-map-parent are used by GTK as well as X11. And Julian
+;; Bradfield, at least, uses x-compose on the TTY, it's reasonable to make
+;; them generally available.
+
+(loop for map in '(compose-acute-map compose-breve-map compose-caron-map
+                   compose-cedilla-map compose-circumflex-map
+                   compose-diaeresis-map compose-dot-map
+                   compose-doubleacute-map compose-grave-map
+                   compose-hook-map compose-horn-map compose-macron-map
+                   compose-map compose-ogonek-map compose-ring-map
+                   compose-stroke-map compose-tilde-map)
+  do (autoload map "x-compose" nil t 'keymap))
+
+(loop 
+  for (key map)
+  ;; The dead keys might really be called just about anything, depending
+  ;; on the vendor.  MIT thinks that the prefixes are "SunFA_", "D", and
+  ;; "hpmute_" for Sun, DEC, and HP respectively.  However, OpenWindows 3
+  ;; thinks that the prefixes are "SunXK_FA_", "DXK_", and "hpXK_mute_".
+  ;; And HP (who don't mention Sun and DEC at all) use "XK_mute_".  Go
+  ;; figure.
+
+  ;; Presumably if someone is running OpenWindows, they won't be using the
+  ;; DEC or HP keysyms, but if they are defined then that is possible, so
+  ;; in that case we accept them all.
+
+  ;; If things seem not to be working, you might want to check your
+  ;; /usr/lib/X11/XKeysymDB file to see if your vendor has an equally
+  ;; mixed up view of what these keys should be called.
+
+  ;; Canonical names:
+  in '((acute                   compose-acute-map)
+       (grave                   compose-grave-map)
+       (cedilla                 compose-cedilla-map)
+       (diaeresis               compose-diaeresis-map)
+       (circumflex              compose-circumflex-map)
+       (tilde                   compose-tilde-map)
+       (degree                  compose-ring-map)
+       (multi-key               compose-map)
+
+       ;; Sun according to MIT:
+       (SunFA_Acute             compose-acute-map)
+       (SunFA_Grave             compose-grave-map)
+       (SunFA_Cedilla           compose-cedilla-map)
+       (SunFA_Diaeresis compose-diaeresis-map)
+       (SunFA_Circum            compose-circumflex-map)
+       (SunFA_Tilde             compose-tilde-map)
+
+       ;; Sun according to OpenWindows 2:
+       (Dead_Grave              compose-grave-map)
+       (Dead_Circum             compose-circumflex-map)
+       (Dead_Tilde              compose-tilde-map)
+
+       ;; Sun according to OpenWindows 3:
+       (SunXK_FA_Acute          compose-acute-map)
+       (SunXK_FA_Grave          compose-grave-map)
+       (SunXK_FA_Cedilla        compose-cedilla-map)
+       (SunXK_FA_Diaeresis      compose-diaeresis-map)
+       (SunXK_FA_Circum         compose-circumflex-map)
+       (SunXK_FA_Tilde          compose-tilde-map)
+
+       ;; DEC according to MIT:
+       (Dacute_accent           compose-acute-map)
+       (Dgrave_accent           compose-grave-map)
+       (Dcedilla_accent         compose-cedilla-map)
+       (Dcircumflex_accent      compose-circumflex-map)
+       (Dtilde                  compose-tilde-map)
+       (Dring_accent            compose-ring-map)
+
+       ;; DEC according to OpenWindows 3:
+       (DXK_acute_accent        compose-acute-map)
+       (DXK_grave_accent        compose-grave-map)
+       (DXK_cedilla_accent      compose-cedilla-map)
+       (DXK_circumflex_accent   compose-circumflex-map)
+       (DXK_tilde               compose-tilde-map)
+       (DXK_ring_accent         compose-ring-map)
+
+       ;; HP according to MIT:
+       (hpmute_acute            compose-acute-map)
+       (hpmute_grave            compose-grave-map)
+       (hpmute_diaeresis        compose-diaeresis-map)
+       (hpmute_asciicircum      compose-circumflex-map)
+       (hpmute_asciitilde       compose-tilde-map)
+
+       ;; Empirically discovered on Linux XFree86 MetroX:
+       (usldead_acute           compose-acute-map)
+       (usldead_grave           compose-grave-map)
+       (usldead_diaeresis       compose-diaeresis-map)
+       (usldead_asciicircum     compose-circumflex-map)
+       (usldead_asciitilde      compose-tilde-map)
+
+       ;; HP according to OpenWindows 3:
+       (hpXK_mute_acute         compose-acute-map)
+       (hpXK_mute_grave         compose-grave-map)
+       (hpXK_mute_diaeresis     compose-diaeresis-map)
+       (hpXK_mute_asciicircum   compose-circumflex-map)
+       (hpXK_mute_asciitilde    compose-tilde-map)
+
+       ;; HP according to HP-UX 8.0:
+       (XK_mute_acute           compose-acute-map)
+       (XK_mute_grave           compose-grave-map)
+       (XK_mute_diaeresis       compose-diaeresis-map)
+       (XK_mute_asciicircum     compose-circumflex-map)
+       (XK_mute_asciitilde      compose-tilde-map)
+
+       ;; XFree86 uses lower case and an underscore. XEmacs converts the
+       ;; underscore to a hyphen in x_keysym_to_emacs_keysym because the
+       ;; keysym is in the "Keyboard" character set, which seems a very
+       ;; arbitrary approach.
+       (dead-acute              compose-acute-map)
+       (dead-grave              compose-grave-map)
+       (dead-cedilla            compose-cedilla-map)
+       (dead-diaeresis          compose-diaeresis-map)
+       (dead-circum             compose-circumflex-map)
+       (dead-circumflex         compose-circumflex-map)
+       (dead-tilde              compose-tilde-map)
+       (dead-abovering          compose-ring-map)
+       (dead-caron              compose-caron-map)
+       (dead-macron             compose-macron-map)
+       (dead-breve              compose-breve-map)
+       (dead-abovedot           compose-dot-map)
+       (dead-doubleacute        compose-doubleacute-map)
+       (dead-ogonek             compose-ogonek-map)
+       (dead-hook               compose-hook-map)
+       (dead-horn               compose-horn-map)
+       (dead-stroke             compose-stroke-map))
+  do (define-key function-key-map-parent (vector key) map))
 
 ;;; keymap.el ends here
