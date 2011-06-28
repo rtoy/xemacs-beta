@@ -1,3 +1,9 @@
+2011-06-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Update the charsets-in-region test to reflect the GPLv3 HELLO
+	file.
+
 2011-05-20  Jerry James  <james@xemacs.org>
 
 	* tooltalk/Makefile (DESTDIR): New variable for all Makefiles, unused
