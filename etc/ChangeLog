@@ -1,3 +1,9 @@
+2011-06-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* HELLO:
+	No longer encode various Unicode characters in GNU's specific
+	ad-hoc character sets, use ISO-IR-196 sequences instead.
+
 2011-05-20  Jerry James  <james@xemacs.org>
 
 	* tests/external-widget/Makefile (DESTDIR): New variable for all

@@ -572,22 +572,28 @@ This is a naive implementation in Lisp.  "
   ;; Test charset-in-* functions
   ;;---------------------------------------------------------------
   (with-temp-buffer
-    (insert-file-contents (locate-data-file "HELLO"))
     (let ((sorted-charsets-in-HELLO
-	   '(arabic-iso8859-6 ascii chinese-big5-1 chinese-gb2312
-	     cyrillic-iso8859-5 ethiopic greek-iso8859-7
-	     hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
-	     katakana-jisx0201 korean-ksc5601 latin-iso8859-1
-	     latin-iso8859-2 vietnamese-viscii-lower)))
+           '(arabic-iso8859-6 ascii chinese-big5-1 chinese-gb2312
+             cyrillic-iso8859-5 ethiopic greek-iso8859-7 hebrew-iso8859-8
+             indian-is13194 ipa japanese-jisx0208 japanese-jisx0212
+             katakana-jisx0201 korean-ksc5601 lao latin-iso8859-1
+             latin-iso8859-2 latin-iso8859-3 latin-iso8859-4 thai-tis620
+             tibetan vietnamese-viscii-lower))
+	  (coding-system-for-read 'iso-2022-7))
+      (insert-file-contents (locate-data-file "HELLO"))
       (Assert (equal 
        ;; The sort is to make the algorithm of charsets-in-region
        ;; irrelevant.
-       (sort (charsets-in-region (point-min) (point-max))
+       (sort (remove* "^jit-ucs-charset-" (charsets-in-region (point-min)
+                                                              (point-max))
+                      :test 'string-match :key 'symbol-name)
 	     #'string<)
        sorted-charsets-in-HELLO))
       (Assert (equal 
-       (sort (charsets-in-string (buffer-substring (point-min)
-						   (point-max)))
+       (sort (remove* "^jit-ucs-charset-" (charsets-in-string
+                                           (buffer-substring (point-min)
+                                                             (point-max)))
+                      :test 'string-match :key 'symbol-name)
 	     #'string<)
        sorted-charsets-in-HELLO))))
 
