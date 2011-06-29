@@ -10,20 +10,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 19.30. (Some of the stuff below is in FSF's subr.el.)
 ;;; Some parts synched with FSF 21.2.
@@ -148,7 +146,7 @@ or go back to just one window (by deleting all but the selected window)."
     (message nil)
     (ding nil (cond ((eq etype 'undefined-keystroke-sequence)
 		     (if (and (vectorp (nth 1 error-object))
-			      (/= 0 (length (nth 1 error-object)))
+			      (not (eql 0 (length (nth 1 error-object))))
 			      (button-event-p (aref (nth 1 error-object) 0)))
 			 'undefined-click
 		       'undefined-key))
@@ -313,7 +311,8 @@ specified by `teach-extended-commands-timeout'."
   :type '(choice
           (const :tag "off" nil)
           (integer :tag "time" 2)
-          (other :tag "on")))
+          (other :tag "on"))
+  :group 'keyboard)
 
 (dontusethis-set-symbol-value-handler
  'suggest-key-bindings
@@ -470,7 +469,7 @@ Also accepts Space to mean yes, or Delete to mean no."
                           (single-key-description event))
                  (ding nil 'y-or-n-p)
                  (discard-input)
-                 (if (= (length pre) 0)
+                 (if (eql (length pre) 0)
                      (setq pre (gettext "Please answer y or n.  ")))))))
       yn)))
 
@@ -507,7 +506,7 @@ and can edit it until it as been confirmed."
       ;; and-fboundp is redundant, since yes-or-no-p-dialog-box is only
       ;; bound if (featurep 'dialog). But it eliminates a compile-time
       ;; warning.
-      (and-fboundp #'yes-or-no-p-dialog-box (yes-or-no-p-dialog-box prompt))
+      (and-fboundp 'yes-or-no-p-dialog-box (yes-or-no-p-dialog-box prompt))
     (yes-or-no-p-minibuf prompt)))
 
 (defun y-or-n-p (prompt)
@@ -564,12 +563,7 @@ the wrong thing for you to be using: consider using the
 
 ;; BEGIN SYNCHED WITH FSF 21.2.
 
-(defvar read-quoted-char-radix 8
-  "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
-Legitimate radix values are 8, 10 and 16.")
-
-(custom-declare-variable-early
- 'read-quoted-char-radix 8 
+(defcustom read-quoted-char-radix 8 
  "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
 Legitimate radix values are 8, 10 and 16."
   :type '(choice (const 8) (const 10) (const 16))

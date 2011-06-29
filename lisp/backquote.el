@@ -7,20 +7,20 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; This file is part of XEmacs.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
-;; General Public License for more details.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not synched with FSF.
 
@@ -184,19 +184,10 @@ This is an extremely rare thing to need to do in lisp."
 
 ;;; ----------------------------------------------------------------
 
-(defun bq-vector-contents (vec)
-  (let ((contents nil)
-	(n (length vec)))
-    (while (> n 0)
-      (setq n (1- n))
-      (setq contents (cons (aref vec n) contents)))
-    contents))
-
 ;;; This does the expansion from table 2.
 (defun bq-process-2 (code)
   (cond ((vectorp code)
-	 (let* ((dflag-d
-		 (bq-process-2 (bq-vector-contents code))))
+	 (let* ((dflag-d (bq-process-2 (append code nil))))
 	   (cons 'vector (bq-process-1 (car dflag-d) (cdr dflag-d)))))
 	((atom code)
 	 (cond ((null code) (cons nil nil))
@@ -278,26 +269,7 @@ This is an extremely rare thing to need to do in lisp."
 	 (list  'quote thing))
 	((eq flag 'vector)
 	 (list 'apply '(function vector) thing))
-	(t (cons (cdr
-		  (assq flag
-			'((cons . cons)
-			  (list* . bq-list*)
-			  (list . list)
-			  (append . append)
-			  (nconc . nconc))))
-		 thing))))
-
-;;; ----------------------------------------------------------------
-
-(defmacro bq-list* (&rest args)
-  "Return a list of its arguments with last cons a dotted pair."
-  (setq args (reverse args))
-  (let ((result (car args)))
-    (setq args (cdr args))
-    (while args
-      (setq result (list 'cons (car args) result))
-      (setq args (cdr args)))
-    result))
+	(t (cons flag thing))))
 
 (provide 'backquote)
 

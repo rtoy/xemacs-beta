@@ -481,7 +481,7 @@ MAIL LOCKING
 
 For most platforms, configure or the src/s file have the preferred
 method for locking mail spool files preconfigured.  Otherwise you must
-find out for youself.  Do not choose a locking protocol "on the
+find out for yourself.  Do not choose a locking protocol "on the
 objective merits."  XEmacs must use the same method as other mail
 utilities on your system, or you WILL lose mail.
 

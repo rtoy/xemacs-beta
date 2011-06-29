@@ -7,10 +7,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with:  Not in FSF. */
 
@@ -6688,12 +6686,25 @@ run_post_redisplay_actions (void)
   unbind_to (depth);
 }
 
+static int the_ritual_suicide_has_been_cancelled = 0;
+
+void
+redisplay_cancel_ritual_suicide(void)
+{
+  the_ritual_suicide_has_been_cancelled = 1;
+}
+
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
 
 static Lisp_Object
 commit_ritual_suicide (Lisp_Object UNUSED (ceci_nest_pas_une_pipe))
 {
-  assert (!in_display);
+  if (!the_ritual_suicide_has_been_cancelled)
+    {
+      assert (!in_display);
+    }
+  else
+    the_ritual_suicide_has_been_cancelled = 0;
   return Qnil;
 }
 
@@ -9154,19 +9165,27 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 
 	  for (*col = 0; *col <= Dynarr_length (db->runes); (*col)++)
 	    {
-	      int past_end = (*col == Dynarr_length (db->runes));
-
-	      if (!past_end)
-		rb = Dynarr_atp (db->runes, *col);
-
-	      if (past_end ||
-		  (rb->xpos <= x_coord && x_coord < rb->xpos + rb->width))
+	      if (*col == Dynarr_length (db->runes))
 		{
-		  if (past_end)
-		    {
-		      (*col)--;
-		      rb = Dynarr_atp (db->runes, *col);
-		    }
+		  /* We've run out of runes to look at.  Treat the same as
+		     the case below where we failed to find a non-glyph
+		     character. */
+		  if (dl->modeline)
+		    *modeline_closest = dl->end_charpos + dl->offset;
+		  else
+		    *closest = dl->end_charpos + dl->offset;
+
+		  if (check_margin_glyphs)
+		    get_position_object (dl, obj1, obj2, x_coord,
+					 &low_x_coord, &high_x_coord);
+
+		  UPDATE_CACHE_RETURN;
+		}
+
+	      rb = Dynarr_atp (db->runes, *col);
+
+	      if (rb->xpos <= x_coord && x_coord < rb->xpos + rb->width)
+		{
 
 		  *charpos = rb->charpos + dl->offset;
 		  low_x_coord = rb->xpos;
@@ -9240,9 +9259,8 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 
 		      UPDATE_CACHE_RETURN;
 		    }
-		  else if (past_end
-			   || (rb->type == RUNE_CHAR
-			       && rb->object.chr.ch == '\n'))
+		  else if (rb->type == RUNE_CHAR
+			   && rb->object.chr.ch == '\n')
 		    {
 		      (*row)--;
 		      /* At this point we may have glyphs in the right

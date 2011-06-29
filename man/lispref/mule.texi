@@ -3118,7 +3118,7 @@ Unification works around the problem by converting as many characters as
 possible to use a single Latin coded character set before saving the
 buffer.
 
-Because the problem is rarely noticable in editing a buffer, but tends
+Because the problem is rarely noticeable in editing a buffer, but tends
 to manifest when that buffer is exported to a file or process, the
 Unification package uses the strategy of examining the buffer prior to
 export.  If use of multiple Latin coded character sets is detected,

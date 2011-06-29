@@ -12,20 +12,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -156,7 +154,7 @@
     compose-cedilla-map compose-diaeresis-map compose-circumflex-map
     compose-tilde-map compose-ring-map compose-caron-map compose-macron-map
     compose-breve-map compose-dot-map compose-doubleacute-map
-    compose-ogonek-map compose-hook-map compose-horn-map))
+    compose-ogonek-map compose-hook-map compose-horn-map compose-stroke-map))
 
 (define-key compose-map 'acute	    compose-acute-map)
 (define-key compose-map 'grave	    compose-grave-map)
@@ -171,6 +169,7 @@
 (define-key compose-map 'ogonek     compose-ogonek-map)
 (define-key compose-map 'breve      compose-breve-map)
 (define-key compose-map 'abovedot   compose-dot-map)
+(define-key compose-map 'stroke     compose-stroke-map)
 
 ;;(define-key function-key-map [multi-key] compose-map)
 
@@ -195,6 +194,7 @@
 (define-key compose-map [~]		compose-tilde-map)
 (define-key compose-map [degree]	compose-ring-map)
 (define-key compose-map [?*]		compose-ring-map)
+(define-key compose-map [stroke]		compose-stroke-map)
 
 (loop
   for (keysym character-code map)
@@ -564,7 +564,42 @@ value of characters under non-Mule. "
    (compose-horn-map [?O] #x01A0) ;; CAPITAL O WITH HORN
    (compose-horn-map [?U] #x01AF) ;; CAPITAL U WITH HORN
    (compose-horn-map [?o] #x01A1) ;; SMALL O WITH HORN
-   (compose-horn-map [?u] #x01B0))) ;; SMALL U WITH HORN
+   (compose-horn-map [?u] #x01B0) ;; SMALL U WITH HORN
+   (compose-stroke-map [?A] #x023a) ;; CAPITAL A WITH STROKE
+   (compose-stroke-map [?a] #x2c65) ;; SMALL A WITH STROKE
+   (compose-stroke-map [?B] #x0243) ;; CAPITAL B WITH STROKE
+   (compose-stroke-map [?b] #x0180) ;; SMALL B WITH STROKE
+   (compose-stroke-map [?C] #x023b) ;; CAPITAL C WITH STROKE
+   (compose-stroke-map [?c] #x023c) ;; SMALL C WITH STROKE
+   (compose-stroke-map [?D] #x0110) ;; CAPITAL D WITH STROKE
+   (compose-stroke-map [?d] #x0111) ;; SMALL D WITH STROKE
+   (compose-stroke-map [?E] #x0246) ;; CAPITAL E WITH STROKE
+   (compose-stroke-map [?e] #x0247) ;; SMALL E WITH STROKE
+   (compose-stroke-map [?G] #x01e4) ;; CAPITAL G WITH STROKE
+   (compose-stroke-map [?g] #x01e5) ;; SMALL G WITH STROKE
+   (compose-stroke-map [?H] #x0126) ;; CAPITAL H WITH STROKE
+   (compose-stroke-map [?h] #x0127) ;; SMALL H WITH STROKE
+   (compose-stroke-map [?I] #x0197) ;; CAPITAL I WITH STROKE
+   (compose-stroke-map [?i] #x0268) ;; SMALL I WITH STROKE
+   (compose-stroke-map [?J] #x0248) ;; CAPITAL J WITH STROKE
+   (compose-stroke-map [?j] #x0249) ;; SMALL J WITH STROKE
+   (compose-stroke-map [?K] #xa740) ;; CAPITAL K WITH STROKE
+   (compose-stroke-map [?k] #xa741) ;; SMALL K WITH STROKE
+   (compose-stroke-map [?L] #x0141) ;; CAPITAL L WITH STROKE
+   (compose-stroke-map [?l] #x0142) ;; SMALL L WITH STROKE
+   (compose-stroke-map [?O] #x00d8) ;; CAPITAL O WITH STROKE
+   (compose-stroke-map [?o] #x00f8) ;; SMALL O WITH STROKE
+   (compose-stroke-map [?P] #x2c63) ;; CAPITAL P WITH STROKE
+   (compose-stroke-map [?p] #x1d7d) ;; SMALL P WITH STROKE
+   (compose-stroke-map [?R] #x024c) ;; CAPITAL R WITH STROKE
+   (compose-stroke-map [?r] #x024d) ;; SMALL R WITH STROKE
+   (compose-stroke-map [?T] #x0166) ;; CAPITAL T WITH STROKE
+   (compose-stroke-map [?t] #x0167) ;; SMALL T WITH STROKE
+   (compose-stroke-map [?Y] #x024e) ;; CAPITAL Y WITH STROKE
+   (compose-stroke-map [?y] #x024f) ;; SMALL Y WITH STROKE
+   (compose-stroke-map [?Z] #x01b5) ;; CAPITAL Z WITH STROKE
+   (compose-stroke-map [?z] #x01b6) ;; SMALL Z WITH STROKE
+))
 
 
 ;;; The rest of the compose-map.  These are the composed characters
@@ -881,9 +916,9 @@ which it understands) are:
 	   (mod-char (and (>= (downcase base-char) ?a) ; only do alphabetics?
 			  (<= (downcase base-char) ?z)
 			  (lookup-key map (make-string 1 base-char)))))
-      (when (and (vectorp mod-char) (= (length mod-char) 1))
+      (when (and (vectorp mod-char) (eql (length mod-char) 1))
         (setq mod-char (aref mod-char 0))
-        (if (and (consp mod-char) (= (length mod-char) 1)
+        (if (and (consp mod-char) (eql (length mod-char) 1)
                  (characterp (car mod-char)))
             (setq mod-char (car mod-char))))
       (if (and mod-char (symbolp mod-char))

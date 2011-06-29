@@ -219,6 +219,44 @@ This function generalizes @code{aref} (@pxref{Array Functions}) and
 @code{nth} (@pxref{List Elements}).
 @end defun
 
+@defun fill sequence object @t{&key :start :end}
+This function fills the sequence @var{sequence} with @var{object}, so
+that each element of @var{sequence} between the indices specified by
+@code{:start} (inclusive) and @code{:end} (exclusive), is @var{object}.
+It returns @var{sequence}.
+
+@example
+@group
+(setq a [a b c d e f g])
+     @result{} [a b c d e f g]
+(fill a 0 :end 2)
+     @result{} [0 0 c d e f g]
+(fill a 0)
+     @result{} [0 0 0 0 0 0 0]
+a
+     @result{} [0 0 0 0 0 0 0]
+@end group
+
+@group
+(setq s "When in the course")
+     @result{} "When in the course"
+(fill s ?-)
+     @result{} "------------------"
+@end group
+
+@group
+(setq bv #*1101)
+     @result{} #*1101
+(fill bv 0)
+     @result{} #*0000
+@end group
+@end example
+
+If @var{sequence} is of a type that cannot hold @var{object} (
+bit-vector can only hold the integers one or zero, strings can only hold
+characters) a @code{wrong-type-argument} error results.
+@end defun
+
 @node Arrays
 @section Arrays
 @cindex array
@@ -380,39 +418,6 @@ x
      @result{} 0
 bv
      @result{} #*1101
-@end group
-@end example
-
-If @var{array} is a string and @var{object} is not a character, a
-@code{wrong-type-argument} error results.
-@end defun
-
-@defun fillarray array object
-This function fills the array @var{array} with @var{object}, so that
-each element of @var{array} is @var{object}.  It returns @var{array}.
-
-@example
-@group
-(setq a [a b c d e f g])
-     @result{} [a b c d e f g]
-(fillarray a 0)
-     @result{} [0 0 0 0 0 0 0]
-a
-     @result{} [0 0 0 0 0 0 0]
-@end group
-
-@group
-(setq s "When in the course")
-     @result{} "When in the course"
-(fillarray s ?-)
-     @result{} "------------------"
-@end group
-
-@group
-(setq bv #*1101)
-     @result{} #*1101
-(fillarray bv 0)
-     @result{} #*0000
 @end group
 @end example
 

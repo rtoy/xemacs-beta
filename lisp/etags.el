@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not synched with FSF.
 
@@ -243,16 +241,15 @@ the current buffer."
 	      (push expression result)
 	    (error "Expression in tag-table-alist evaluated to non-string")))))
     (setq result
-	  (mapcar
+	  (mapcan
 	   (lambda (name)
 	     (when (file-directory-p name)
 	       (setq name (concat (file-name-as-directory name) "TAGS")))
 	     (and (file-readable-p name)
 		  ;; get-tag-table-buffer has side-effects
-		  (symbol-value-in-buffer 'buffer-file-name
-					  (get-tag-table-buffer name))))
+		  (list (symbol-value-in-buffer 'buffer-file-name
+						(get-tag-table-buffer name)))))
 	   result))
-    (setq result (delq nil result))
     ;; If no TAGS file has been found, ask the user explicitly.
     ;; #### tags-file-name is *evil*.
     (or result tags-file-name
@@ -439,8 +436,7 @@ File name returned is relative to tag table file's directory."
 (defun buffer-tag-table-files ()
   "Returns a list of all files referenced by all TAGS tables that 
 this buffer uses."
-  (apply #'append
-	 (mapcar #'tag-table-files (buffer-tag-table-list))))
+  (mapcan #'tag-table-files (buffer-tag-table-list)))
 
 
 ;; Building the completion table
@@ -1348,7 +1344,7 @@ and `\\[pop-tag-mark]'."
 ;;;###autoload
 (defun pop-tag-mark (arg)
   "Go to last tag position.
-`find-tag' maintains a mark-stack seperate from the \\[set-mark-command] mark-stack.
+`find-tag' maintains a mark-stack separate from the \\[set-mark-command] mark-stack.
 This function pops (and moves to) the tag at the top of this stack."
   (interactive "P")
   (if (not arg)

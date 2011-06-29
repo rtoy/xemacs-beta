@@ -3,20 +3,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 (make-coding-system
  'mswindows-multibyte 'mswindows-multibyte
@@ -141,7 +139,7 @@ as returned by
        ("OEM"         865 no-conversion "MS-DOS Nordic")
        ; ("OEM"         866 no-conversion "MS-DOS Russian")
        ("OEM"         869 no-conversion "IBM Modern Greek")
-       ("Ansi/OEM"    874 no-conversion "Thai")
+       ; ("Ansi/OEM"    874 no-conversion "Thai")
        ("EBCDIC"      875 no-conversion "EBCDIC")
        ("Ansi/OEM"    932 shift_jis "Japanese")
        ("Ansi/OEM"    936 iso_8_2 "Chinese (PRC, Singapore)")

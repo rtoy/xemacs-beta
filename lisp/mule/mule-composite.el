@@ -5,22 +5,20 @@
 
 ;; Keywords: mule, multilingual, character composition
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Emacs 21.1 (lisp/composite.el).
 
@@ -28,7 +26,6 @@
 
 ;;; Code:
 
-;;;###autoload
 (defconst reference-point-alist
   '((tl . 0) (tc . 1) (tr . 2)
     (Bl . 3) (Bc . 4) (Br . 5)
@@ -157,7 +154,6 @@ follows (the point `*' corresponds to both reference points):
       (setq i (+ i 2))))
   components)
 
-;;;###autoload
 (defun compose-region (start end &optional components modification-func)
   "UNIMPLEMENTED.
 Compose characters in the current region.
@@ -195,7 +191,6 @@ text in the composition."
     (compose-region-internal start end components modification-func)
     (set-buffer-modified-p modified-p)))
 
-;;;###autoload
 (defun decompose-region (start end)
   "UNIMPLEMENTED.
 Decompose text in the current region.
@@ -208,7 +203,6 @@ positions (integers or markers) specifying the region."
     (remove-text-properties start end '(composition nil))
     (set-buffer-modified-p modified-p)))
 
-;;;###autoload
 (defun compose-string (string &optional start end components modification-func)
   "UNIMPLEMENTED.
 Compose characters in string STRING.
@@ -234,14 +228,12 @@ text in the composition."
   (compose-string-internal string start end components modification-func)
   string)
 
-;;;###autoload
 (defun decompose-string (string)
   "UNIMPLEMENTED.
 Return STRING where `composition' property is removed."
   (remove-text-properties 0 (length string) '(composition nil) string)
   string)
 
-;;;###autoload
 (defun compose-chars (&rest args)
   "UNIMPLEMENTED.
 Return a string from arguments in which all characters are composed.
@@ -266,7 +258,6 @@ A composition rule is a cons of glyph reference points of the form
       (setq str (concat args)))
     (compose-string-internal str 0 (length str) components)))
 
-;;;###autoload
 (defun find-composition (pos &optional limit string detail-p)
   "UNIMPLEMENTED.
 Return information about a composition at or nearest to buffer position POS.
@@ -307,7 +298,6 @@ WIDTH is a number of columns the composition occupies on the screen."
     result))
 
 
-;;;###autoload
 (defun compose-chars-after (pos &optional limit object)
   "UNIMPLEMENTED.
 Compose characters in current buffer after position POS.
@@ -349,7 +339,6 @@ This function is the default value of `compose-chars-after-function'."
 	      (setq func nil tail (cdr tail)))))))
       result))
 
-;;;###autoload
 (defun compose-last-chars (args)
   "UNIMPLEMENTED.
 Compose last characters.
@@ -371,13 +360,12 @@ after a sequence character events."
 	    (compose-region (- (point) chars) (point) (nth 2 args))
 	  (compose-chars-after (- (point) chars) (point))))))
 
-;;;###autoload(global-set-key [compose-last-chars] 'compose-last-chars)
+;;;don't ###autoload(global-set-key [compose-last-chars] 'compose-last-chars)
 
 
 ;;; The following codes are only for backward compatibility with Emacs
 ;;; 20.4 and the earlier.
 
-;;;###autoload
 (defun decompose-composite-char (char &optional type with-composition-rule)
   "UNIMPLEMENTED.
 Convert CHAR to string.

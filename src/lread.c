@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 
@@ -844,9 +842,9 @@ decode_mode_1 (Lisp_Object mode)
     return W_OK;
   else if (EQ (mode, Qreadable))
     return R_OK;
-  else if (INTP (mode))
+  else if (INTEGERP (mode))
     {
-      check_int_range (XINT (mode), 0, 7);
+      check_integer_range (mode, Qzero, make_int (7));
       return XINT (mode);
     }
   else
@@ -1818,8 +1816,12 @@ read_escape (Lisp_Object readcharfun)
 	      }
 	  }
 	if (i >= 0400)
-	  syntax_error ("Non-ISO-8859-1 character specified with octal escape",
-			make_int (i));
+	  {
+	    read_syntax_error ((Ascbyte *) emacs_sprintf_malloc
+			       (NULL,
+				"Non-ISO-8859-1 octal character escape, "
+				"?\\%.3o", i));
+	  }
 	return i;
       }
 
@@ -1827,13 +1829,23 @@ read_escape (Lisp_Object readcharfun)
       /* A hex escape, as in ANSI C, except that we only allow latin-1
 	 characters to be read this way.  What is "\x4e03" supposed to
 	 mean, anyways, if the internal representation is hidden?
-         This is also consistent with the treatment of octal escapes. */
+         This is also consistent with the treatment of octal escapes.
+
+         Note that we don't accept ?\XAB as specifying the character with
+         numeric value 171; it must be ?\xAB. */
       {
+#define OVERLONG_INFO "Overlong hex character escape, ?\\x"
+
 	REGISTER Ichar i = 0;
 	REGISTER int count = 0;
+	Ascbyte seen[] = OVERLONG_INFO "\0\0\0\0\0";
+	REGISTER Ascbyte *seenp = seen + sizeof (OVERLONG_INFO) - 1;
+
+#undef OVERLONG_INFO
+
 	while (++count <= 2)
 	  {
-	    c = readchar (readcharfun);
+	    c = readchar (readcharfun), *seenp = c, ++seenp;
 	    /* Remember, can't use isdigit(), isalpha() etc. on Ichars */
 	    if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
 	    else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
@@ -1847,21 +1859,12 @@ read_escape (Lisp_Object readcharfun)
 
         if (count == 3)
           {
-            c = readchar (readcharfun);
+            c = readchar (readcharfun), *seenp = c, ++seenp;
             if ((c >= '0' && c <= '9') ||
                 (c >= 'a' && c <= 'f') ||
                 (c >= 'A' && c <= 'F'))
               {
-                Lisp_Object args[2];
-
-                if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
-                else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
-                else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
-
-                args[0] = build_ascstring ("?\\x%x");
-                args[1] = make_int (i);
-                syntax_error ("Overlong hex character escape",
-                              Fformat (2, args));
+		read_syntax_error (seen);
               }
             unreadchar (readcharfun, c);
           }
@@ -2025,6 +2028,9 @@ parse_integer (const Ibyte *buf, Bytecount len, int base)
   else if (*p == '+')
     {
       p++;
+      /* GMP deals with a leading plus sign, badly, make sure it doesn't see
+	 it. */
+      buf++;
     }
 
   if (p == lim)
@@ -2876,7 +2882,6 @@ isfloat_string (const char *cp)
 	      || state == (DOT_CHAR|TRAIL_INT|E_CHAR|EXP_INT)));
 }
 
-#ifdef HAVE_RATIO
 int
 isratio_string (const char *cp)
 {
@@ -2907,7 +2912,7 @@ isratio_string (const char *cp)
   return *cp == '\0' || *cp == ' ' || *cp =='\t' || *cp == '\n' ||
     *cp == '\r' || *cp == '\f';
 }
-#endif
+
 
 static void *
 sequence_reader (Lisp_Object readcharfun,
@@ -3460,9 +3465,6 @@ character escape syntaxes or just read them incorrectly.
 #ifdef FEATUREP_SYNTAX
   DEFSYMBOL (Qfeaturep);
   Fprovide (intern ("xemacs"));
-#ifdef INFODOCK
-  Fprovide (intern ("infodock"));
-#endif /* INFODOCK */
 #endif /* FEATUREP_SYNTAX */
 
 #ifdef LISP_BACKQUOTES

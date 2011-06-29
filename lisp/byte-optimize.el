@@ -9,20 +9,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 20.7 except where marked.
 ;;; [[ Synched up with: FSF 20.7. ]]
@@ -526,21 +524,17 @@
 					    byte-compile-macro-environment))))
 	   (byte-optimize-form form for-effect))
 
-	  ;; Support compiler macros as in cl.el.
-	  ((and (fboundp 'compiler-macroexpand)
-		(symbolp (car-safe form))
-		(get (car-safe form) 'cl-compiler-macro)
-	        (not (eq form
-		         (setq form (compiler-macroexpand form)))))
-	   (byte-optimize-form form for-effect))
-
 	  ((not (symbolp fn))
-	   (or (eq 'mocklisp (car-safe fn)) ; ha!
-	       (byte-compile-warn "%s is a malformed function"
-				  (prin1-to-string fn)))
+	   (byte-compile-warn "%s is a malformed function" (prin1-to-string fn))
 	   form)
 
-	  ((and for-effect (setq tmp (get fn 'side-effect-free))
+	  ;; Support compiler macros as in cl.el.
+	  ((and (get fn 'cl-compiler-macro)
+	        (not (eq form (setq form (compiler-macroexpand form)))))
+	   (byte-optimize-form form for-effect))
+
+	  ((and for-effect
+		(setq tmp (byte-optimize-side-effect-free-p form))
 		(or byte-compile-delete-errors
 		    (eq tmp 'error-free)
 		    (progn
@@ -823,7 +817,7 @@
       (nth 1 form)
     (byte-compile-warn "identity called with %d arg%s, but requires 1"
 		       (length (cdr form))
-		       (if (= 1 (length (cdr form))) "" "s"))
+		       (if (eql 1 (length (cdr form))) "" "s"))
     form))
 
 (defun byte-optimize-car (form)
@@ -1021,7 +1015,7 @@
 		 ;; Don't make a double negative;
 		 ;; instead, take away the one that is there.
 		 (if (and (consp clause) (memq (car clause) '(not null))
-			  (= (length clause) 2)) ; (not xxxx) or (not (xxxx))
+			  (eql (length clause) 2)) ; (not xxxx) or (not (xxxx))
 		     (nth 1 clause)
 		   (list 'not clause))
 		 (if (nthcdr 4 form)
@@ -1119,17 +1113,26 @@
   ;; The funcall optimizer can then transform (funcall 'foo ...) -> (foo ...).
   (let ((fn (nth 1 form))
 	(last (nth (1- (length form)) form))) ; I think this really is fastest
-    (or (if (or (null last)
-		(eq (car-safe last) 'quote))
-	    (if (listp (nth 1 last))
-		(let ((butlast (nreverse (cdr (reverse (cdr (cdr form)))))))
-		  (nconc (list 'funcall fn) butlast
-			 (mapcar #'(lambda (x) (list 'quote x)) (nth 1 last))))
-	      (byte-compile-warn
-	       "last arg to apply can't be a literal atom: %s"
-	       (prin1-to-string last))
-	      nil))
-	form)))
+    (if (and (eq last (third form))
+             (consp last)
+             (eq 'mapcar (car last))
+             (equal fn ''nconc))
+        (progn
+          (byte-compile-warn
+           "(apply 'nconc (mapcar ..)), use #'mapcan instead: %s" last)
+          (cons 'mapcan (cdr last)))
+      (or (if (or (null last)
+                  (eq (car-safe last) 'quote))
+              (if (listp (nth 1 last))
+                  (let ((butlast (nreverse (cdr (reverse (cdr (cdr form)))))))
+                    (nconc (list 'funcall fn) butlast
+                           (mapcar #'(lambda (x) (list 'quote x))
+                                   (nth 1 last))))
+                (byte-compile-warn
+                 "last arg to apply can't be a literal atom: %s"
+                 (prin1-to-string last))
+                nil))
+          form))))
 
 (put 'funcall 'byte-optimizer 'byte-optimize-funcall)
 (put 'apply   'byte-optimizer 'byte-optimize-apply)
@@ -1154,7 +1157,7 @@
 
 (put 'nth 'byte-optimizer 'byte-optimize-nth)
 (defun byte-optimize-nth (form)
-  (if (and (= (safe-length form) 3) (memq (nth 1 form) '(0 1)))
+  (if (and (eql (safe-length form) 3) (memq (nth 1 form) '(0 1)))
       (list 'car (if (zerop (nth 1 form))
 		     (nth 2 form)
 		   (list 'cdr (nth 2 form))))
@@ -1162,7 +1165,7 @@
 
 (put 'nthcdr 'byte-optimizer 'byte-optimize-nthcdr)
 (defun byte-optimize-nthcdr (form)
-  (if (and (= (safe-length form) 3) (not (memq (nth 1 form) '(0 1 2))))
+  (if (and (eql (safe-length form) 3) (not (memq (nth 1 form) '(0 1 2))))
       (byte-optimize-predicate form)
     (let ((count (nth 1 form)))
       (setq form (nth 2 form))
@@ -1216,7 +1219,7 @@
 	 ;; coordinates-in-window-p not in XEmacs
 	 copy-marker cos count-lines
 	 default-boundp default-value denominator documentation downcase
-	 elt exp expt fboundp featurep
+	 elt endp exp expt fboundp featurep
 	 file-directory-p file-exists-p file-locked-p file-name-absolute-p
 	 file-newer-than-file-p file-readable-p file-symlink-p file-writable-p
 	 float floor format
@@ -1236,9 +1239,10 @@
 	 marker-buffer max member memq min mod
 	 next-window nth nthcdr number-to-string numerator
 	 parse-colon-path plist-get previous-window
-	 radians-to-degrees rassq regexp-quote reverse round
+	 radians-to-degrees rassq rassoc remove remq regexp-quote reverse round
 	 sin sqrt string< string= string-equal string-lessp string-to-char
-	 string-to-int string-to-number substring symbol-plist
+	 string-to-int string-to-number substring symbol-plist symbol-value
+	 symbol-name symbol-function symbol
 	 tan upcase user-variable-p vconcat
 	 ;; XEmacs change: window-edges -> window-pixel-edges
 	 window-buffer window-dedicated-p window-pixel-edges window-height
@@ -1252,42 +1256,62 @@
 	 list-length getf
 	 ))
       (side-effect-and-error-free-fns
-       '(arrayp atom
+       '(acons arrayp atom
 	 bigfloatp bignump bobp bolp buffer-end buffer-list buffer-size
 	 buffer-string bufferp
 	 car-safe case-table-p cdr-safe char-or-string-p char-table-p
 	 characterp commandp cons
-	 consolep console-live-p consp
+	 consolep console-live-p consp copy-tree
 	 current-buffer
 	 ;; XEmacs: extent functions, frame-live-p, various other stuff
 	 devicep device-live-p
-	 dot dot-marker eobp eolp eq eql equal eventp extentp
+	 eobp eolp eq eql equal equalp eventp extentp
 	 extent-live-p fixnump floatingp floatp framep frame-live-p
 	 get-largest-window get-lru-window
 	 hash-table-p
 	 identity ignore integerp integer-or-marker-p interactive-p
 	 invocation-directory invocation-name
-	 keymapp list listp
+	 keymapp list list* listp
 	 make-marker mark mark-marker markerp memory-limit minibuffer-window
 	 ;; mouse-movement-p not in XEmacs
 	 natnump nlistp not null number-or-marker-p numberp
 	 one-window-p ;; overlayp not in XEmacs
 	 point point-marker point-min point-max processp
-	 rationalp ratiop range-table-p realp
+	 random-state-p rationalp ratiop range-table-p realp
 	 selected-window sequencep stringp subrp symbolp syntax-table-p
 	 user-full-name user-login-name user-original-login-name
 	 user-real-login-name user-real-uid user-uid
 	 vector vectorp
-	 window-configuration-p window-live-p windowp
-	 ;; Functions defined by cl
-	 eql list* subst acons equalp random-state-p
-	 copy-tree sublis
-	 )))
+	 window-configuration-p window-live-p windowp)))
   (dolist (fn side-effect-free-fns)
     (put fn 'side-effect-free t))
   (dolist (fn side-effect-and-error-free-fns)
     (put fn 'side-effect-free 'error-free)))
 
+(dolist (function 
+	 '(adjoin assoc* count find intersection member* mismatch position
+	   rassoc* remove* remove-duplicates search set-difference
+	   set-exclusive-or stable-intersection stable-sort stable-union
+	   sublis subsetp subst substitute tree-equal union))
+  ;; These all throw errors, there's no point implementing an error-free
+  ;; version of the list.
+  (put function 'side-effect-free-if-keywords-are t))
+
+(defun byte-optimize-side-effect-free-p (form)
+  (or (get (car-safe form) 'side-effect-free)
+      (and (get (car-safe form) 'side-effect-free-if-keywords-are)
+	   (loop
+	     for (key value)
+	     on (nthcdr (get (car form) 'byte-compile-keyword-start) form)
+	     by #'cddr
+	     never (or (and (member* key
+				     '(:test :test-not :key :if :if-not))
+			    (or (not (byte-compile-constp value))
+				(not (and (consp value)
+                                          (symbolp (cadr value))
+					  (get (cadr value)
+                                               'side-effect-free)))))
+		       (not (keywordp key)))))))
 
 (defun byte-compile-splice-in-already-compiled-code (form)
   ;; form is (byte-code "..." [...] n)

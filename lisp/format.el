@@ -7,20 +7,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Emacs 20.2.
 
@@ -437,68 +435,6 @@ Optional args BEGIN and END specify a region of the buffer to operate on."
 						 (match-beginning 0)))))
 	  (setq alist (cdr alist)))))))
 
-;;; Some list-manipulation functions that we need.
-
-(defun format-delq-cons (cons list)
-  "Remove the given CONS from LIST by side effect,
-and return the new LIST.  Since CONS could be the first element
-of LIST, write `\(setq foo \(format-delq-cons element foo))' to be sure of
-changing the value of `foo'."
-  (if (eq cons list)
-      (cdr list)
-    (let ((p list))
-      (while (not (eq (cdr p) cons))
-	(if (null p) (error "format-delq-cons: not an element."))
-	(setq p (cdr p)))
-      ;; Now (cdr p) is the cons to delete
-      (setcdr p (cdr cons))
-      list)))
-
-;; XEmacs: this is #'nset-exclusive-or with a :test of #'equal, though we
-;; probably don't want to replace it right now.
-(defun format-make-relatively-unique (a b)
-  "Delete common elements of lists A and B, return as pair.
-Compares using `equal'."
-  (let* ((acopy (copy-sequence a))
-	 (bcopy (copy-sequence b))
-	 (tail acopy))
-    (while tail
-      (let ((dup (member (car tail) bcopy))
-	    (next (cdr tail)))
-	(if dup (setq acopy (format-delq-cons tail acopy)
-		      bcopy (format-delq-cons dup  bcopy)))
-	(setq tail next)))
-    (cons acopy bcopy)))
-
-(defun format-common-tail (a b)
-  "Given two lists that have a common tail, return it.
-Compares with `equal', and returns the part of A that is equal to the
-equivalent part of B.  If even the last items of the two are not equal,
-returns nil."
-  (let ((la (length a))
-	(lb (length b)))
-    ;; Make sure they are the same length
-    (if (> la lb)
-	(setq a (nthcdr (- la lb) a))
-      (setq b (nthcdr (- lb la) b))))
-  (while (not (equal a b))
-    (setq a (cdr a)
-	  b (cdr b)))
-  a)
-
-(defun format-reorder (items order)
-  "Arrange ITEMS to following partial ORDER.
-Elements of ITEMS equal to elements of ORDER will be rearranged to follow the
-ORDER.  Unmatched items will go last."
-  (if order
-      (let ((item (member (car order) items)))
-	(if item
-	    (cons (car item)
-		  (format-reorder (format-delq-cons item items)
-			   (cdr order)))
-	  (format-reorder items (cdr order))))
-    items))
-
 (put 'face 'format-list-valued t)	; These text-properties take values
 (put 'unknown 'format-list-valued t)	; that are lists, the elements of which
 					; should be considered separately.
@@ -604,9 +540,8 @@ to write these unknown annotations back into the file."
 			  (if (member top-name ans)
 			      ;; This annotation is listed, but still have to
 			      ;; check if multiple annotations are satisfied
-			      (if (member nil (mapcar (lambda (r)
-							(assoc r open-ans))
-						      ans))
+			      (if (notevery (lambda (r) (assoc r open-ans))
+					    ans)
 				  nil	; multiple ans not satisfied
 				;; If there are multiple annotations going
 				;; into one text property, split up the other
@@ -821,7 +756,11 @@ lists of annotations like `format-annotate-location' does.
 		    (< loc to)))
       (or loc (setq loc from))
       (let* ((ans (format-annotate-location loc (= loc from) ignore trans))
-	     (neg-ans (format-reorder (aref ans 0) open-ans))
+	     (neg-ans (sort* (aref ans 0) '<
+                             :key #'(lambda (object)
+                                      (or
+                                       (position object open-ans :test 'equal)
+                                       most-positive-fixnum))))
 	     (pos-ans (aref ans 1))
 	     (ignored (aref ans 2)))
 	(setq not-found (append ignored not-found)
@@ -930,7 +869,6 @@ Annotations to open and to close are returned as a dotted pair."
       (if (or (consp old) (consp new))
 	  (let* ((old (if (listp old) old (list old)))
 		 (new (if (listp new) new (list new)))
-		 ;; (tail (format-common-tail old new))
 		 close open)
 	    (while old
 	      (setq close
@@ -944,7 +882,9 @@ Annotations to open and to close are returned as a dotted pair."
 				  prop-alist nil (car new)))
 			    open)
 		    new (cdr new)))
-	    (format-make-relatively-unique close open))
+            (cons
+             (set-difference close open :stable t)
+             (set-difference open close :stable t)))
 	(format-annotate-atomic-property-change prop-alist old new)))))
 
 (defun format-annotate-atomic-property-change (prop-alist old new)
@@ -981,7 +921,9 @@ OLD and NEW are the values."
       (let ((close (and old (cdr (assoc old prop-alist))))
 	    (open  (and new (cdr (assoc new prop-alist)))))
 	(if (or close open)
-	    (format-make-relatively-unique close open)
+            (cons
+             (set-difference close open :stable t)
+             (set-difference open close :stable t))
 	  ;; Call "Default" function, if any
 	  (let ((default (assq nil prop-alist)))
 	    (if default

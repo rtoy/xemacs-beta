@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not synched with FSF. */
 
@@ -2613,6 +2611,19 @@ x_delete_frame (struct frame *f)
 #ifdef HAVE_CDE
   DtDndDropUnregister (FRAME_X_TEXT_WIDGET (f));
 #endif /* HAVE_CDE */
+
+#ifdef HAVE_XFT
+  /* If we have an XftDraw structure, we need to free it here.
+     We can't ever have an XftDraw without a Display, so we are safe
+     to free it in here, and we avoid too much playing around with the 
+     malloc checking hooks this way. */
+  if (FRAME_X_XFTDRAW (f)) 
+    {
+      XftDrawDestroy (FRAME_X_XFTDRAW (f));
+      FRAME_X_XFTDRAW (f) = NULL;
+    }
+#endif
+
 
   assert (FRAME_X_SHELL_WIDGET (f) != 0);
   dpy = XtDisplay (FRAME_X_SHELL_WIDGET (f));

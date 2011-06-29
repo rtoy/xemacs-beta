@@ -1,3 +1,53 @@
+2011-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gnuslib.c (connect_to_unix_server):
+	Retry with /tmp as a directory in which to search for Unix sockets
+	if an attempt to connect with some other directory failed (which
+	may be because gnuclient and gnuserv don't share an environment
+	value for TMPDIR, or because gnuserv was compiled with USE_TMPDIR
+	turned off).
+
+2011-05-20  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Default DESTDIR to the empty string, and use it in
+	install targets.
+
+2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.31 "ginger" is released.
+
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
+2011-01-15  Mike Sperber  <mike@xemacs.org>
+
+	* fakemail.c: #include <osreldate.h> on FreeBSD, since we no
+	longer have freebsd.h.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gnuserv.c:
+	* gnuserv.h:
+	* gnuslib.c:
+	Add standard permission boilerplate.
+
+	* ad2c:
+	Add copyright notices based on internal evidence.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cvtmail.c:
+	* fakemail.c:
+	* make-path.c:
+	* profile.c:
+	* tcp.c:
+	Fix typo (doubled phrase) in permission notice.
+
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ad2c: Correct FSF address in permission notice.
+
 2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gnuclient.c (main):
@@ -27,6 +77,22 @@
 	* make-docfile.c (write_c_args):
 	Convert newlines to spaces so that argument lists are always on one
 	line, because that's what function-documentation-1 expects.
+
+2010-02-19  Ben Wing  <ben@xemacs.org>
+
+	* digest-doc.c:
+	* digest-doc.c (main):
+	* emacs.csh:
+	* hexl.c:
+	* hexl.c (Gabryelski):
+	* hexl.c (main):
+	* hexl.c (usage):
+	* sorted-doc.c:
+	* sorted-doc.c (fatal):
+	* sorted-doc.c (xstrdup):
+	* sorted-doc.c (main):
+	* vcdiff:
+	Merge up to FSF 23.1.92.
 
 2010-02-11  Vin Shelton  <acs@xemacs.org>
  
@@ -2172,3 +2238,22 @@ Thu Dec  5 15:41:53 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
 
 	* update-elc.sh: Corrections to protect against too smart /bin/sh'es.
 
+
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.

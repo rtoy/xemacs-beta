@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,11 +15,230 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
+
+/* 
+   The New Allocator
+
+   The ideas and algorithms are based on the allocator of the
+   Boehm-Demers-Weiser conservative garbage collector. See
+   http://www.hpl.hp.com/personal/Hans_ Boehm/gc/index.html.
+
+   The new allocator is enabled when the new garbage collector
+   is enabled (with `--with-newgc').  The implementation of
+   the new garbage collector is in gc.c.
+
+   The new allocator takes care of:
+   - allocating objects in a write-barrier-friendly way
+   - manage object's mark bits 
+
+   Three-Level Allocation
+
+   The new allocator efficiently manages the allocation of Lisp
+   objects by minimizing the number of times malloc() and free() are
+   called. The allocation process has three layers of abstraction:
+
+   1. It allocates memory in very large chunks called heap sections. 
+   
+   2. The heap sections are subdivided into pages. The page size is
+      determined by the constant PAGE_SIZE. It holds the size of a page
+      in bytes.
+
+   3. One page consists of one or more cells. Each cell represents
+      a memory location for an object. The cells on one page all have
+      the same size, thus every page only contains equal-sized
+      objects.
+
+   If an object is bigger than page size, it is allocated on a
+   multi-page. Then there is only one cell on a multi-page (the cell
+   covers the full multi-page). Is an object smaller than 1/2 PAGE_SIZE,
+   a page contains several objects and several cells. There
+   is only one cell on a page for object sizes from 1/2 PAGE_SIZE to
+   PAGE_SIZE (whereas multi-pages always contain 2 only one
+   cell). Only in layer one malloc() and free() are called.
+
+
+   Size Classes and Page Lists
+
+   Meta-information about every page and multi-page is kept in a page
+   header. The page header contains some bookkeeping information like
+   number of used and free cells, and pointers to other page
+   headers. The page headers are linked in a page list.
+
+   Every page list builds a size class. A size class contains all
+   pages (linked via page headers) for objects of the same size. The
+   new allocator does not group objects based on their type, it groups
+   objects based on their sizes.
+
+   Here is an example: A cons contains a lrecord_header, a car and cdr
+   field. Altogether it uses 12 bytes of memory (on 32 bits
+   machines). All conses are allocated on pages with a cell size of 12
+   bytes. All theses pages are kept together in a page list, which
+   represents the size class for 12 bytes objects. But this size class
+   is not exclusively for conses only. Other objects, which are also
+   12 bytes big (e.g. weak-boxes), are allocated in the same size
+   class and on the same pages.
+
+   The number of size classes is customizable, so is the size step
+   between successive size classes.
+
+
+   Used and Unused Heap
+
+   The memory which is managed by the allocator can be divided in two
+   logical parts:
+
+   The used heap contains pages, on which objects are allocated. These
+   pages are com- pletely or partially occupied. In the used heap, it
+   is important to quickly find a free spot for a new
+   object. Therefore the size classes of the used heap are defined by
+   the size of the cells on the pages. The size classes should match
+   common object sizes, to avoid wasting memory.
+
+   The unused heap only contains completely empty pages. They have
+   never been used or have been freed completely again. In the unused
+   heap, the size of consecutive memory tips the scales. A page is the
+   smallest entity which is asked for. Therefore, the size classes of
+   the unused heap are defined by the number of consecutive pages.
+
+   The parameters for the different size classes can be adjusted
+   independently, see `configurable values' below.
+
+
+   The Allocator's Data Structures
+
+   The struct `mc_allocator_globals holds' all the data structures
+   that the new allocator uses (lists of used and unused pages, mark
+   bits, etc.).
+
+
+   Mapping of Heap Pointers to Page Headers
+
+   For caching benefits, the page headers and mark bits are stored
+   separately from their associated page. During garbage collection
+   (i.e. for marking and freeing objects) it is important to identify
+   the page header which is responsible for a given Lisp object.
+
+   To do this task quickly, I added a two level search tree: the upper
+   10 bits of the heap pointer are the index of the first level. This
+   entry of the first level links to the second level, where the next
+   10 bits of the heap pointer are used to identify the page
+   header. The remaining bits point to the object relative to the
+   page.
+
+   On architectures with more than 32 bits pointers, a hash value of
+   the upper bits is used to index into the first level.
+
+   
+   Mark Bits
+
+   For caching purposes, the mark bits are no longer kept within the
+   objects, they are kept in a separate bit field.
+
+   Every page header has a field for the mark bits of the objects on
+   the page. If there are less cells on the page than there fit bits
+   in the integral data type EMACS_INT, the mark bits are stored
+   directly in this EMACS_INT.
+
+   Otherwise, the mark bits are written in a separate space, with the
+   page header pointing to this space. This happens to pages with
+   rather small objects: many cells fit on a page, thus many mark bits
+   are needed.
+
+
+   Allocate Memory
+
+   Use
+      void *mc_alloc (size_t size) 
+   to request memory from the allocator.  This returns a pointer to a
+   newly allocated block of memory of given size.
+
+   This is how the new allocator allocates memory: 
+   1. Determine the size class of the object. 
+   2. Is there already a page in this size class and is there a free
+      cell on this page?
+      * YES 
+        3. Unlink free cell from free list, return address of free cell. 
+        DONE.
+      * NO 
+        3. Is there a page in the unused heap?
+	* YES 
+          4. Move unused page to used heap. 
+          5. Initialize page header, free list, and mark bits. 
+          6. Unlink first cell from free list, return address of cell. 
+          DONE.
+	* NO 
+          4. Expand the heap, add new memory to unused heap 
+             [go back to 3. and proceed with the YES case].
+
+  The allocator puts partially filled pages to the front of the page
+  list, completely filled ones to the end. That guarantees a fast
+  terminating search for free cells. Are there two successive full
+  pages at the front of the page list, the complete size class is
+  full, a new page has to be added.
+
+
+  Expand Heap
+
+  To expand the heap, a big chunk of contiguous memory is allocated
+  using malloc(). These pieces are called heap sections. How big a new
+  heap section is (and thus the growth of the heap) is adjustable:  See
+  MIN_HEAP_INCREASE, MAX_HEAP_INCREASE, and HEAP_GROWTH_DIVISOR below.
+
+
+  Free Memory
+
+  One optimization in XEmacs is that locally used Lisp objects are
+  freed manually (the memory is not wasted till the next garbage
+  collection). Therefore the new allocator provides this function:
+    void mc_free (void *ptr) 
+  That frees the object pointed to by ptr.
+
+  This function is also used internally during sweep phase of the
+  garbage collection.  This is how it works in detail:
+
+  1. Use pointer to identify page header 
+     (use lookup mechanism described above).
+  2. Mark cell as free and hook it into free list. 
+  3. Is the page completely empty?
+     * YES 
+       4. Unlink page from page list. 
+       5. Remove page header, free list, and mark bits. 
+       6. Move page to unused heap.
+     * NO 
+       4. Move page to front of size class (to speed up allocation 
+          of objects).
+
+  If the last object of a page is freed, the empty page is returned to
+  the unused heap. The allocator tries to coalesce adjacent pages, to
+  gain a big piece of contiguous memory. The resulting chunk is hooked
+  into the according size class of the unused heap. If this created a
+  complete heap section, the heap section is returned to the operating
+  system by using free().
+
+
+  Allocator and Garbage Collector
+
+  The new allocator simplifies the interface to the Garbage Collector:
+  * mark live objects: MARK_[WHITE|GREY|BLACK] (ptr)
+  * sweep heap: EMACS_INT mc_sweep (void)
+  * run finalizers: EMACS_INT mc_finalize (void)
+
+
+  Allocator and Dumper
+
+  The new allocator provides special finalization for the portable
+  dumper (to save disk space): EMACS_INT mc_finalize_for_disksave (void)
+
+
+  More Information
+
+  More details can be found in
+  http://crestani.de/xemacs/pdf/mc-alloc.pdf .
+  
+*/
 
 #include <config.h>
 
@@ -927,18 +1146,18 @@ get_used_list_index (size_t size)
 {
   if (size <= USED_LIST_MIN_OBJECT_SIZE)
     {
-      //      printf ("size %d -> index %d\n", size, 0);
+      /*      printf ("size %d -> index %d\n", size, 0); */
       return 0;
     }
   if (size <= (size_t) USED_LIST_UPPER_THRESHOLD)
     {
-      //      printf ("size %d -> index %d\n", size, 
-      //	      ((size - USED_LIST_MIN_OBJECT_SIZE - 1)
-      //	       / USED_LIST_LIN_STEP) + 1);
+      /*      printf ("size %d -> index %d\n", size, */
+      /*	      ((size - USED_LIST_MIN_OBJECT_SIZE - 1) */
+      /*	       / USED_LIST_LIN_STEP) + 1); */
       return ((size - USED_LIST_MIN_OBJECT_SIZE - 1)
 	      / USED_LIST_LIN_STEP) + 1;
     }
-  //  printf ("size %d -> index %d\n", size, N_USED_PAGE_LISTS - 1);
+  /*  printf ("size %d -> index %d\n", size, N_USED_PAGE_LISTS - 1); */
   return N_USED_PAGE_LISTS - 1;
 }
 
@@ -1766,29 +1985,29 @@ Returns stats about the mc-alloc memory usage. See diagnose.el.
   for (i = 0; i < N_FREE_PAGE_LISTS; i++) 
     if (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)) > 0)
       free_plhs = 
-	acons (make_int (PLH_SIZE (FREE_HEAP_PAGES(i))),
-	       list1 (make_int (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)))),
-	       free_plhs);
+	Facons (make_int (PLH_SIZE (FREE_HEAP_PAGES(i))),
+		list1 (make_int (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)))),
+		free_plhs);
 
   for (i = 0; i < N_USED_PAGE_LISTS; i++) 
     if (PLH_PAGE_COUNT (USED_HEAP_PAGES(i)) > 0)
       used_plhs = 
-	acons (make_int (PLH_SIZE (USED_HEAP_PAGES(i))),
-	       list5 (make_int (PLH_PAGE_COUNT (USED_HEAP_PAGES(i))),
-		      make_int (PLH_USED_CELLS (USED_HEAP_PAGES(i))),
-		      make_int (PLH_USED_SPACE (USED_HEAP_PAGES(i))),
-		      make_int (PLH_TOTAL_CELLS (USED_HEAP_PAGES(i))),
-		      make_int (PLH_TOTAL_SPACE (USED_HEAP_PAGES(i)))),
-	       used_plhs);
+	Facons (make_int (PLH_SIZE (USED_HEAP_PAGES(i))),
+		list5 (make_int (PLH_PAGE_COUNT (USED_HEAP_PAGES(i))),
+		       make_int (PLH_USED_CELLS (USED_HEAP_PAGES(i))),
+		       make_int (PLH_USED_SPACE (USED_HEAP_PAGES(i))),
+		       make_int (PLH_TOTAL_CELLS (USED_HEAP_PAGES(i))),
+		       make_int (PLH_TOTAL_SPACE (USED_HEAP_PAGES(i)))),
+		used_plhs);
 
   used_plhs =
-    acons (make_int (0),
-	   list5 (make_int (PLH_PAGE_COUNT(ARRAY_HEAP_PAGES)),
-		  make_int (PLH_USED_CELLS (ARRAY_HEAP_PAGES)),
-		  make_int (PLH_USED_SPACE (ARRAY_HEAP_PAGES)),
-		  make_int (PLH_TOTAL_CELLS (ARRAY_HEAP_PAGES)),
-		  make_int (PLH_TOTAL_SPACE (ARRAY_HEAP_PAGES))),
-	   used_plhs);
+    Facons (make_int (0),
+	    list5 (make_int (PLH_PAGE_COUNT(ARRAY_HEAP_PAGES)),
+		   make_int (PLH_USED_CELLS (ARRAY_HEAP_PAGES)),
+		   make_int (PLH_USED_SPACE (ARRAY_HEAP_PAGES)),
+		   make_int (PLH_TOTAL_CELLS (ARRAY_HEAP_PAGES)),
+		   make_int (PLH_TOTAL_SPACE (ARRAY_HEAP_PAGES))),
+	    used_plhs);
   
   for (i = 0; i < N_HEAP_SECTIONS; i++) {
     used_size += HEAP_SECTION(i).n_pages * PAGE_SIZE;

@@ -272,7 +272,7 @@ in @ref{Building Lists}.
 @end defun
 
 The function @code{split-string}, in @ref{Regexp Search}, generates a
-list of strings by splitting a string on occurances of a regular
+list of strings by splitting a string on occurrences of a regular
 expression.
 
 @node Predicates for Characters

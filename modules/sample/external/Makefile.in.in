@@ -3,8 +3,8 @@
 ##
 ##   This sample Makefile is free; you can redistribute it and/or modify it
 ##   under the terms of the GNU General Public License as published by the
-##   Free Software Foundation; either version 2, or (at your option) any
-##   later version.
+##   Free Software Foundation, either version 3 of the License, or (at your
+##   option) any later version.
 
 ## This file is not part of XEmacs.
 
@@ -15,6 +15,7 @@ MODTITLE="Sample module for XEmacs"
 SRCS=sample.c
 
 ### You should not need to modify anything below this line
+DESTDIR=
 SHELL=/bin/sh
 RM=rm -f
 CFLAGS=@CFLAGS@
@@ -54,4 +55,4 @@ distclean: clean
 	$(RM) Makefile config.* configure
 
 install: $(MODNAME).ell
-	$(INSTALL_PROGRAM) $< $(INSTALLPATH)
+	$(INSTALL_PROGRAM) $< $(DESTDIR)$(INSTALLPATH)

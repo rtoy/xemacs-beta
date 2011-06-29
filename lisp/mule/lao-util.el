@@ -7,20 +7,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Emacs 21.1 (language/lao-util.el).
 
@@ -371,8 +369,8 @@ consonant.  It is a list vowel characters or 0.  The element 0
 indicate the place to embed a consonant.
 
 Optional WITH-MAA-SAKOD-RULE is a rule to re-order and modify VOWEL
-follwoing a consonant and preceding a maa-sakod character.  If it is
-nil, NO-MAA-SAKOD-RULE is used.  The maa-sakod character is alwasy
+following a consonant and preceding a maa-sakod character.  If it is
+nil, NO-MAA-SAKOD-RULE is used.  The maa-sakod character is always
 appended at the tail.
 
 For instance, rule `(\"(1`WM(B\" (?(1`(B t ?(1W(B ?(1M(B))' tells that this vowel
@@ -386,7 +384,7 @@ character MAA-SAKOD-n.")
   "Transcribe a Romanized Lao syllable in the region FROM and TO to Lao string.
 Only the first syllable is transcribed.
 The value has the form: (START END LAO-STRING), where
-START and END are the beggining and end positions of the Roman Lao syllable,
+START and END are the beginning and end positions of the Roman Lao syllable,
 LAO-STRING is the Lao character transcription of it.
 
 Optional 3rd arg STR, if non-nil, is a string to search for Roman Lao

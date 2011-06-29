@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 /* More syncing: FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org>
@@ -131,8 +129,6 @@ Lisp_Object Qexcl;
 Lisp_Object Qauto_save_hook;
 Lisp_Object Qauto_save_error;
 Lisp_Object Qauto_saving;
-
-Lisp_Object Qcar_less_than_car;
 
 Lisp_Object Qcompute_buffer_file_truename;
 
@@ -613,7 +609,7 @@ In addition, this function makes an attempt to choose a name that
 does not specify an existing file.  To make this work, PREFIX should
 be an absolute file name.
 
-This function is analagous to mktemp(3) under POSIX, and as with it, there
+This function is analogous to mktemp(3) under POSIX, and as with it, there
 exists a race condition between the test for the existence of the new file
 and its creation.  See `make-temp-file' for a function which avoids this
 race condition by specifying the appropriate flags to `write-region'. 
@@ -3294,7 +3290,7 @@ under Mule, is very difficult.)
 	  Lisp_Object insval = call1 (p, make_int (inserted));
 	  if (!NILP (insval))
 	    {
-	      CHECK_NATNUM (insval);
+              check_integer_range (insval, Qzero, make_int (EMACS_INT_MAX));
 	      inserted = XINT (insval);
 	    }
 	}
@@ -3677,7 +3673,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);     /* Check basic validity of return value */
-      annotations = list_merge (annotations, res, NULL, Qlss, Qcar);
+      annotations = list_merge (annotations, res, check_lss_key_car, Qnil,
+				Qnil);
       p = Fcdr (p);
     }
 
@@ -3708,7 +3705,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);
-      annotations = list_merge (annotations, res, NULL, Qlss, Qcar);
+      annotations = list_merge (annotations, res, check_lss_key_car, Qnil,
+				Qnil);
       p = Fcdr (p);
     }
 
@@ -4381,7 +4379,6 @@ syms_of_fileio (void)
   DEFSYMBOL (Qwrite_region);
   DEFSYMBOL (Qverify_visited_file_modtime);
   DEFSYMBOL (Qset_visited_file_modtime);
-  DEFSYMBOL (Qcar_less_than_car); /* Vomitous! */
   DEFSYMBOL (Qexcl);
 
   DEFSYMBOL (Qauto_save_hook);

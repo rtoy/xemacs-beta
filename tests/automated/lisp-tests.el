@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -200,10 +198,28 @@
   (Assert (equal y '(0 1 2 3)))
   (Assert (equal z y)))
 
+(let* ((x (list* 0 1 2 3 4 5 6.0 ?7 ?8 (vector 'a 'b 'c)))
+       (y (butlast x 0))
+       (z (nbutlast x 0)))
+  (Assert (eq z x))
+  (Assert (not (eq y x)))
+  (Assert (equal y '(0 1 2 3 4 5 6.0 ?7 ?8)))
+  (Assert (equal z y)))
+
 (Assert (eq (butlast  '(x)) nil))
 (Assert (eq (nbutlast '(x)) nil))
 (Assert (eq (butlast  '()) nil))
 (Assert (eq (nbutlast '()) nil))
+
+(when (featurep 'bignum)
+  (let* ((x (list* 0 1 2 3 4 5 6.0 ?7 ?8 (vector 'a 'b 'c)))
+         (y (butlast x (* 2 most-positive-fixnum)))
+         (z (nbutlast x (* 3 most-positive-fixnum))))
+    (Assert (eq nil y) "checking butlast with a large bignum gives nil")
+    (Assert (eq nil z) "checking nbutlast with a large bignum gives nil")
+    (Check-Error wrong-type-argument
+		 (nbutlast x (1- most-negative-fixnum))
+                 "checking nbutlast with a negative bignum errors")))
 
 ;;-----------------------------------------------------
 ;; Test `copy-list'
@@ -217,6 +233,58 @@
 (dolist (x '((1) (1 2) (1 2 3) (1 2 . 3)))
   (let ((y (copy-list x)))
     (Assert (and (equal x y) (not (eq x y))))))
+
+;;-----------------------------------------------------
+;; Test `ldiff'
+;;-----------------------------------------------------
+(Check-Error wrong-type-argument (ldiff 'foo pi))
+(Check-Error wrong-number-of-arguments (ldiff))
+(Check-Error wrong-number-of-arguments (ldiff '(1 2)))
+(Check-Error circular-list (ldiff (make-circular-list 1) nil))
+(Check-Error circular-list (ldiff (make-circular-list 2000) nil))
+(Assert (eq '() (ldiff '() pi)))
+(dolist (x '((1) (1 2) (1 2 3) (1 2 . 3)))
+  (let ((y (ldiff x nil)))
+    (Assert (and (equal x y) (not (eq x y))))))
+
+(let* ((vector (vector 'foo))
+       (dotted `(1 2 3 ,pi 40 50 . ,vector))
+       (dotted-pi `(1 2 3 . ,pi))
+       without-vector without-pi)
+  (Assert (equal dotted (ldiff dotted nil))
+	  "checking ldiff handles dotted lists properly")
+  (Assert (equal (butlast dotted 0) (ldiff dotted vector))
+	  "checking ldiff discards dotted elements correctly")
+  (Assert (equal (butlast dotted-pi 0) (ldiff dotted-pi (* 4 (atan 1))))
+	  "checking ldiff handles float equivalence correctly"))
+
+;;-----------------------------------------------------
+;; Test `tailp'
+;;-----------------------------------------------------
+(Check-Error wrong-type-argument (tailp pi 'foo))
+(Check-Error wrong-number-of-arguments (tailp))
+(Check-Error wrong-number-of-arguments (tailp '(1 2)))
+(Check-Error circular-list (tailp nil (make-circular-list 1)))
+(Check-Error circular-list (tailp nil (make-circular-list 2000)))
+(Assert (null (tailp pi '()))
+	"checking pi is not a tail of the list nil")
+(Assert (tailp 3 '(1 2 . 3))
+	"checking #'tailp works with a dotted integer.")
+(Assert (tailp pi `(1 2 . ,(* 4 (atan 1))))
+	"checking tailp works with non-eq dotted floats.")
+(let ((list (make-list 2048 nil)))
+  (Assert (tailp (nthcdr 2000 list) (nconc list list))
+	  "checking #'tailp succeeds with circular LIST containing SUBLIST"))
+
+;;-----------------------------------------------------
+;; Test `endp'
+;;-----------------------------------------------------
+(Check-Error wrong-type-argument (endp 'foo))
+(Check-Error wrong-number-of-arguments (endp))
+(Check-Error wrong-number-of-arguments (endp '(1 2) 'foo))
+(Assert (endp nil) "checking nil is recognized as the end of a list")
+(Assert (not (endp (list 200 200 4 0 9)))
+	"checking a cons is not recognised as the end of a list")
 
 ;;-----------------------------------------------------
 ;; Arithmetic operations
@@ -723,19 +791,21 @@
       `(progn
 	 (Check-Error wrong-number-of-arguments (,fun))
 	 (Check-Error wrong-number-of-arguments (,fun nil))
-	 (Check-Error malformed-list (,fun nil 1))
+	 (Check-Error (malformed-list wrong-type-argument) (,fun nil 1))
 	 ,@(loop for n in '(1 2 2000)
 	     collect `(Check-Error circular-list (,fun 1 (make-circular-list ,n))))))
-     (test-funs (&rest funs) `(progn ,@(loop for fun in funs collect `(test-fun ,fun)))))
-
-  (test-funs member old-member
-	     memq   old-memq
-	     assoc  old-assoc
-	     rassoc old-rassoc
-	     rassq  old-rassq
-	     delete old-delete
-	     delq   old-delq
-	     remassoc remassq remrassoc remrassq))
+     (test-funs (&rest funs) `(progn ,@(loop for fun in funs collect `(test-fun ,fun))))
+     (test-old-funs (&rest funs)
+       `(when (and (fboundp 'old-eq) (subrp (symbol-function 'old-eq)))
+         ,@(loop for fun in funs collect `(test-fun ,fun)))))
+  (test-funs member* member memq 
+             assoc* assoc assq 
+             rassoc* rassoc rassq 
+             delete* delete delq 
+             remove* remove remq 
+             remassoc remassq remrassoc remrassq)
+  (test-old-funs old-member old-memq old-assoc old-assq old-rassoc old-rassq 
+                 old-delete old-delq))
 
 (let ((x '((1 . 2) 3 (4 . 5))))
   (Assert (eq (assoc  1 x) (car x)))
@@ -819,19 +889,15 @@
   (Assert (let* ((x (a)) (y (remassq   6 x))) (and (eq x y) (equal y (a)))))
   (Assert (let* ((x (a)) (y (remrassoc 6 x))) (and (eq x y) (equal y (a)))))
   (Assert (let* ((x (a)) (y (remrassq  6 x))) (and (eq x y) (equal y (a)))))
-
   (Assert (let* ((x (a)) (y (delete     3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
   (Assert (let* ((x (a)) (y (delq       3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
-  (Assert (let* ((x (a)) (y (old-delete 3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
-  (Assert (let* ((x (a)) (y (old-delq   3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
-
   (Assert (let* ((x (a)) (y (delete     '(1 . 2) x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
   (Assert (let* ((x (a)) (y (delq       '(1 . 2) x))) (and      (eq x y)  (equal y (a)))))
-  (Assert (let* ((x (a)) (y (old-delete '(1 . 2) x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
-  (Assert (let* ((x (a)) (y (old-delq   '(1 . 2) x))) (and      (eq x y)  (equal y (a)))))
-  )
-
-
+  (when (and (fboundp 'old-eq) (subrp (symbol-function 'old-eq)))
+    (Assert (let* ((x (a)) (y (old-delete '(1 . 2) x))) (and (not (eq x y)) (equal y '(3 (4 . 5))))))
+    (Assert (let* ((x (a)) (y (old-delq   '(1 . 2) x))) (and      (eq x y)  (equal y (a)))))
+    (Assert (let* ((x (a)) (y (old-delete 3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))
+    (Assert (let* ((x (a)) (y (old-delq   3 x))) (and (eq x y) (equal y '((1 . 2) (4 . 5))))))))
 
 (flet ((a () (list '("1" . "2") "3" '("4" . "5"))))
   (Assert (let* ((x (a)) (y (remassoc  "1" x))) (and (not (eq x y)) (equal y '("3" ("4" . "5"))))))
@@ -974,11 +1040,23 @@
       (car y))
     x)))
 
+(Assert
+ (equal
+  (let ((list (list pi))) (mapcar* #'cons [1 2 3 4] (nconc list list)))
+  `((1 . ,pi) (2 . ,pi) (3 . ,pi) (4 . ,pi)))
+ "checking mapcar* behaves correctly when only one arg is circular")
+
 (Assert (eql
  (length (multiple-value-list
           (car (mapcar #'(lambda (argument) (floor argument)) (list pi e)))))
  1)
  "checking multiple values are correctly discarded in mapcar")
+
+(let ((malformed-list '(1 2 3 4 hi there . tail)))
+  (Check-Error malformed-list (mapcar #'identity malformed-list))
+  (Check-Error malformed-list (map nil #'eq [1 2 3 4]
+				   malformed-list))
+  (Check-Error malformed-list (list-length malformed-list)))
 
 ;;-----------------------------------------------------
 ;; Test vector functions
@@ -1255,6 +1333,18 @@ via the hepatic alpha-tocopherol transfer protein")))
 (Check-Error args-out-of-range (subseq [1 2 3] -42))
 (Check-Error args-out-of-range (subseq [1 2 3] 0 42))
 
+(let ((string "hi there"))
+  (Assert (equal (substring-no-properties "123" 0) "123"))
+  (Assert (equal (substring-no-properties "1234" -3 -1) "23"))
+  (Assert (equal (substring-no-properties "hi there" 0) "hi there"))
+  (put-text-property 0 (length string) 'foo 'bar string)
+  (Assert (eq 'bar (get-text-property 0 'foo string)))
+  (Assert (not
+           (get-text-property 0 'foo (substring-no-properties "hi there" 0))))
+  (Check-Error wrong-type-argument (substring-no-properties nil 4))
+  (Check-Error wrong-type-argument (substring-no-properties "hi there" pi))
+  (Check-Error wrong-type-argument (substring-no-properties "hi there" 0.0)))
+
 ;;-----------------------------------------------------
 ;; Time-related tests
 ;;-----------------------------------------------------
@@ -1265,8 +1355,11 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;;-----------------------------------------------------
 (Assert (string= (format "%d" 10) "10"))
 (Assert (string= (format "%o" 8) "10"))
+(Assert (string= (format "%b" 2) "10"))
 (Assert (string= (format "%x" 31) "1f"))
 (Assert (string= (format "%X" 31) "1F"))
+(Assert (string= (format "%b" 0) "0"))
+(Assert (string= (format "%b" 3) "11"))
 ;; MS-Windows uses +002 in its floating-point numbers.  #### We should
 ;; perhaps fix this, but writing our own floating-point support in doprnt.c
 ;; is very hard.
@@ -2340,5 +2433,497 @@ via the hepatic alpha-tocopherol transfer protein")))
 	       (gethash (* 2 most-positive-fixnum) hashing)
 	       (gethash hashed-bignum hashing))
 	      "checking hashing works correctly with #'eql tests and bignums"))))
+
+;; 
+(when (decode-char 'ucs #x0192)
+  (Check-Error
+   invalid-state
+   (let ((str "aaaaaaaaaaaaa")
+	 (called 0)
+	 modified)
+     (reduce #'+ str
+	     :key #'(lambda (object)
+		      (prog1
+			  object
+			(incf called) 
+			(or modified
+			    (and (> called 5)
+				 (setq modified
+				       (fill str (read #r"?\u0192")))))))))))
+
+(Assert
+ (eql 55
+      (let ((sequence '(1 2 3 4 5 6 7 8 9 10))
+	    (called 0)
+	    modified)
+	(reduce #'+
+		sequence
+		:key
+		#'(lambda (object) (prog1
+				       object
+				     (incf called)
+				     (and (eql called 5)
+					  (setcdr (nthcdr 3 sequence) nil))
+				     (garbage-collect))))))
+ "checking we can amputate lists without crashing #'reduce")
+
+(Assert (not (eq t (canonicalize-inst-list
+		    `(((mswindows) . [string :data ,(make-string 20 0)])
+		      ((tty) . [string :data " "])) 'image t)))
+	"checking mswindows is always available as a specifier tag")
+
+(Assert (not (eq t (canonicalize-inst-list
+		    `(((mswindows) . [nothing])
+		      ((tty) . [string :data " "]))
+		    'image t)))
+	"checking the correct syntax for a nothing image specifier works")
+
+(Check-Error-Message invalid-argument "^Invalid specifier tag set"
+		     (canonicalize-inst-list
+		      `(((,(gensym)) . [nothing])
+			((tty) . [string :data " "]))
+		      'image))
+
+(Check-Error-Message invalid-argument "^Unrecognized keyword"
+		     (canonicalize-inst-list
+		      `(((mswindows) . [nothing :data "hi there"])
+			((tty) . [string :data " "])) 'image))
+
+;; If we combine both the specifier inst list problems, we get the
+;; unrecognized keyword error first, not the invalid specifier tag set
+;; error. This is a little unintuitive; the specifier tag set thing is
+;; processed first, and would seem to be more important. But anyone writing
+;; code needs to solve both problems, it's reasonable to ask them to do it
+;; in series rather than in parallel.
+
+(when (featurep 'ratio)
+  (Assert (not (eql '1/2 (read (prin1-to-string (intern "1/2")))))
+	  "checking symbols with ratio-like names are printed distinctly")
+  (Assert (not (eql '1/5 (read (prin1-to-string (intern "2/10")))))
+	  "checking symbol named \"2/10\" not eql to ratio 1/5 on read"))
+
+(let* ((count 0)
+       (list (map-into (make-list 2048 nil) #'(lambda () (decf count))))
+       (expected (append list '(1))))
+  (Assert (equal expected (merge 'list list '(1) #'<))
+	  "checking merge's circularity checks are sane"))
+
+(flet ((list-nreverse (list)
+	 (do ((list1 list (cdr list1))
+	      (list2 nil (prog1 list1 (setcdr list1 list2))))
+	     ((atom list1) list2))))
+  (let* ((integers (loop for i from 0 to 6000 collect i))
+	 (characters (mapcan #'(lambda (integer)
+				 (if (char-int-p integer)
+				     (list (int-char integer)))) integers))
+	 (fourth-bit #'(lambda (integer) (ash (logand #x10 integer) -4)))
+	 (bits (mapcar fourth-bit integers))
+	 (vector (vconcat integers))
+	 (string (concat characters))
+	 (bit-vector (bvconcat bits)))
+    (Assert (equal (reverse vector)
+	     (vconcat (list-nreverse (copy-list integers)))))
+    (Assert (eq vector (nreverse vector)))
+    (Assert (equal vector (vconcat (list-nreverse (copy-list integers)))))
+    (Assert (equal (reverse string)
+	     (concat (list-nreverse (copy-list characters)))))
+    (Assert (eq string (nreverse string)))
+    (Assert (equal string (concat (list-nreverse (copy-list characters)))))
+    (Assert (eq bit-vector (nreverse bit-vector)))
+    (Assert (equal (bvconcat (list-nreverse (copy-list bits))) bit-vector))
+    (Assert (not (equal bit-vector
+			(mapcar fourth-bit
+				(loop for i from 0 to 6000 collect i)))))))
+
+(Check-Error wrong-type-argument (self-insert-command 'self-insert-command))
+(Check-Error wrong-type-argument (make-list 'make-list 'make-list))
+(Check-Error wrong-type-argument (make-vector 'make-vector 'make-vector))
+(Check-Error wrong-type-argument (make-bit-vector 'make-bit-vector
+						  'make-bit-vector))
+(Check-Error wrong-type-argument (make-byte-code '(&rest ignore) "\xc0\x87" [4]
+						 'ignore))
+(Check-Error wrong-type-argument (make-string ?a ?a))
+(Check-Error wrong-type-argument (nth-value 'nth-value (truncate pi e)))
+(Check-Error wrong-type-argument (make-hash-table :test #'eql :size :size))
+(Check-Error wrong-type-argument
+	     (accept-process-output nil 'accept-process-output))
+(Check-Error wrong-type-argument
+	     (accept-process-output nil 2000 'accept-process-output))
+(Check-Error wrong-type-argument
+             (self-insert-command 'self-insert-command))
+(Check-Error wrong-type-argument (string-to-number "16" 'string-to-number))
+(Check-Error wrong-type-argument (move-to-column 'move-to-column))
+(stop-profiling)
+(Check-Error wrong-type-argument (start-profiling (float most-positive-fixnum)))
+(stop-profiling)
+(Check-Error wrong-type-argument
+             (fill '(1 2 3 4 5) 1 :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill [1 2 3 4 5] 1 :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill "1 2 3 4 5" ?1 :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill #*10101010 1 :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill '(1 2 3 4 5) 1 :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill [1 2 3 4 5] 1 :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill "1 2 3 4 5" ?1 :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (fill #*10101010 1 :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons '(1 2 3 4 5) :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons [1 2 3 4 5] :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons "1 2 3 4 5" :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons #*10101010 :start (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons '(1 2 3 4 5) :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons [1 2 3 4 5] :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons "1 2 3 4 5" :end (float most-positive-fixnum)))
+(Check-Error wrong-type-argument
+             (reduce #'cons #*10101010 :end (float most-positive-fixnum)))
+
+(when (featurep 'bignum)
+  (Check-Error args-out-of-range
+	       (self-insert-command (* 2 most-positive-fixnum)))
+  (Check-Error args-out-of-range
+	       (make-list (* 3 most-positive-fixnum) 'make-list))
+  (Check-Error args-out-of-range
+	       (make-vector (* 4 most-positive-fixnum) 'make-vector))
+  (Check-Error args-out-of-range
+	       (make-bit-vector (+ 2 most-positive-fixnum) 'make-bit-vector))
+  (Check-Error args-out-of-range
+	       (make-byte-code '(&rest ignore) "\xc0\x87" [4]
+			       (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+	       (make-byte-code '(&rest ignore) "\xc0\x87" [4]
+			       #x10000))
+  (Check-Error args-out-of-range
+	       (make-string (* 4 most-positive-fixnum) ?a))
+  (Check-Error args-out-of-range
+	       (nth-value most-positive-fixnum (truncate pi e)))
+  (Check-Error args-out-of-range
+	       (make-hash-table :test #'equalp :size (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+	       (accept-process-output nil 4294967))
+  (Check-Error args-out-of-range
+	       (accept-process-output nil 10 (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (self-insert-command (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (string-to-number "16" (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (recent-keys (1+ most-positive-fixnum)))
+  (when (featurep 'xbm)
+    (Check-Error-Message
+     invalid-argument
+     "^data is too short for width and height"
+     (set-face-background-pixmap
+      'left-margin
+      `[xbm :data (20 ,(* 2 most-positive-fixnum) "random-text")])))
+  (Check-Error args-out-of-range
+               (move-to-column (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (move-to-column (1- most-negative-fixnum)))
+  (stop-profiling)
+  (when (< most-positive-fixnum (lsh 1 32))
+    ;; We only support machines with integers of 32 bits or more. If
+    ;; most-positive-fixnum is less than 2^32, we're on a 32-bit machine,
+    ;; and it's appropriate to test start-profiling with a bignum.
+    (Assert (eq nil (start-profiling (* most-positive-fixnum 2)))))
+  (stop-profiling)
+  (Check-Error args-out-of-range
+               (fill '(1 2 3 4 5) 1 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill [1 2 3 4 5] 1 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill "1 2 3 4 5" ?1 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill #*10101010 1 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill '(1 2 3 4 5) 1 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill [1 2 3 4 5] 1 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill "1 2 3 4 5" ?1 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (fill #*10101010 1 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons '(1 2 3 4 5) :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons [1 2 3 4 5] :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons "1 2 3 4 5" :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons #*10101010 :start (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons '(1 2 3 4 5) :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons [1 2 3 4 5] :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons "1 2 3 4 5" :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (reduce #'cons #*10101010 :end (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (replace '(1 2 3 4 5) [5 4 3 2 1]
+                        :start1 (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (replace '(1 2 3 4 5) [5 4 3 2 1]
+                        :start2 (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (replace '(1 2 3 4 5) [5 4 3 2 1]
+                        :end1 (1+ most-positive-fixnum)))
+  (Check-Error args-out-of-range
+               (replace '(1 2 3 4 5) [5 4 3 2 1]
+                        :end2 (1+ most-positive-fixnum))))
+
+(symbol-macrolet
+    ((list-length 2048) (vector-length 512) (string-length (* 8192 2)))
+  (let ((list
+         ;; CIRCULAR_LIST_SUSPICION_LENGTH is 1024, it's helpful if this list
+         ;; is longer than that.
+         (make-list list-length 'make-list)) 
+        (vector (make-vector vector-length 'make-vector))
+        (bit-vector (make-bit-vector vector-length 1))
+        (string (make-string string-length
+                             (or (decode-char 'ucs #x20ac) ?\xFF)))
+        (item 'cons))
+    (macrolet
+        ((construct-item-sequence-checks (&rest functions)
+           (cons
+            'progn
+            (mapcan
+             #'(lambda (function)
+                 `((Check-Error args-out-of-range
+                                (,function item list
+                                           :start (1+ list-length)
+                                           :end (1+ list-length)))
+                   (Check-Error wrong-type-argument
+                                (,function item list :start -1
+                                           :end list-length))
+                   (Check-Error args-out-of-range
+                                (,function item list :end (* 2 list-length)))
+                   (Check-Error args-out-of-range
+                                (,function item vector
+                                           :start (1+ vector-length)
+                                           :end (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function item vector :start -1))
+                   (Check-Error args-out-of-range
+                                (,function item vector
+                                           :end (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function item bit-vector
+                                           :start (1+ vector-length)
+                                           :end (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function item bit-vector :start -1))
+                   (Check-Error args-out-of-range
+                                (,function item bit-vector
+                                           :end (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function item string
+                                           :start (1+ string-length)
+                                           :end (1+ string-length)))
+                   (Check-Error wrong-type-argument
+                                (,function item string :start -1))
+                   (Check-Error args-out-of-range
+                                (,function item string
+                                           :end (* 2 string-length)))))
+             functions)))
+         (construct-one-sequence-checks (&rest functions)
+           (cons
+            'progn
+            (mapcan
+             #'(lambda (function)
+                 `((Check-Error args-out-of-range
+                                (,function (copy-sequence list)
+                                           :start (1+ list-length)
+                                           :end (1+ list-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence list)
+                                           :start -1 :end list-length))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence list)
+                                           :end (* 2 list-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence vector)
+                                           :start (1+ vector-length)
+                                           :end (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence vector) :start -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence vector)
+                                           :end (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence bit-vector)
+                                           :start (1+ vector-length)
+                                           :end (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence bit-vector)
+                                           :start -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence bit-vector)
+                                           :end (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence string)
+                                           :start (1+ string-length)
+                                           :end (1+ string-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence string) :start -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence string)
+                                           :end (* 2 string-length)))))
+             functions)))
+         (construct-two-sequence-checks (&rest functions)
+           (cons
+            'progn
+            (mapcan
+             #'(lambda (function)
+                 `((Check-Error args-out-of-range
+                                (,function (copy-sequence list)
+                                           (copy-sequence list)
+                                           :start1 (1+ list-length)
+                                           :end1 (1+ list-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence list)
+                                           (copy-sequence list)
+                                           :start1 -1 :end1 list-length))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence list)
+                                           (copy-sequence list)
+                                           :end1 (* 2 list-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence vector)
+                                           (copy-sequence vector)
+                                           :start1 (1+ vector-length)
+                                           :end1 (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function
+                                 (copy-sequence vector)
+                                 (copy-sequence vector) :start1 -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence vector)
+                                           (copy-sequence vector)
+                                           :end1 (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence bit-vector)
+                                           (copy-sequence bit-vector)
+                                           :start1 (1+ vector-length)
+                                           :end1 (1+ vector-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence bit-vector)
+                                           (copy-sequence bit-vector)
+                                           :start1 -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence bit-vector)
+                                           (copy-sequence bit-vector)
+                                           :end1 (* 2 vector-length)))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence string)
+                                           (copy-sequence string)
+                                           :start1 (1+ string-length)
+                                           :end1 (1+ string-length)))
+                   (Check-Error wrong-type-argument
+                                (,function (copy-sequence string)
+                                           (copy-sequence string) :start1 -1))
+                   (Check-Error args-out-of-range
+                                (,function (copy-sequence string)
+                                           (copy-sequence string)
+                                           :end1 (* 2 string-length)))))
+             functions))))
+      (construct-item-sequence-checks count position find delete* remove*
+                                      reduce)
+      (construct-one-sequence-checks delete-duplicates remove-duplicates)
+      (construct-two-sequence-checks replace mismatch search))))
+
+(let* ((list (list 1 2 3 4 5 6 7 120 'hi-there '#:everyone))
+       (vector (map 'vector #'identity list))
+       (bit-vector (map 'bit-vector
+			#'(lambda (object) (if (fixnump object) 1 0)) list))
+       (string (map 'string 
+		    #'(lambda (object) (or (and (fixnump object)
+						(int-char object))
+					   (decode-char 'ucs #x20ac))) list))
+       (gensym (gensym)))
+  (Assert (null (find 'not-in-it list)))
+  (Assert (null (find 'not-in-it vector)))
+  (Assert (null (find 'not-in-it bit-vector)))
+  (Assert (null (find 'not-in-it string)))
+  (loop
+    for elt being each element in vector using (index position)
+    do
+    (Assert (eq elt (find elt list)))
+    (Assert (eq (elt list position) (find elt vector))))
+  (Assert (eq gensym (find 'not-in-it list :default gensym)))
+  (Assert (eq gensym (find 'not-in-it vector :default gensym)))
+  (Assert (eq gensym (find 'not-in-it bit-vector :default gensym)))
+  (Assert (eq gensym (find 'not-in-it string :default gensym)))
+  (Assert (eq 'hi-there (find 'hi-there list)))
+  ;; Different uninterned symbols with the same name.
+  (Assert (not (eq '#1=#:everyone (find '#1# list))))
+
+  ;; Test concatenate.
+  (Assert (equal list (concatenate 'list vector)))
+  (Assert (equal list (concatenate 'list (subseq vector 0 4)
+				   (subseq list 4))))
+  (Assert (equal vector (concatenate 'vector list)))
+  (Assert (equal vector (concatenate `(vector * ,(length vector)) list)))
+  (Assert (equal string (concatenate `(vector character ,(length string))
+				     (append string nil))))
+  (Assert (equal bit-vector (concatenate 'bit-vector (subseq bit-vector 0 4)
+					 (append (subseq bit-vector 4) nil))))
+  (Assert (equal bit-vector (concatenate `(vector bit ,(length bit-vector))
+					 (subseq bit-vector 0 4)
+					 (append (subseq bit-vector 4) nil)))))
+
+;;-----------------------------------------------------
+;; Test `block', `return-from'
+;;-----------------------------------------------------
+(Assert (eql 1 (block outer
+		 (flet ((outtahere (n) (return-from outer n)))
+		   (block outer (outtahere 1)))
+		 2))
+	"checking `block' and `return-from' are lexically scoped correctly")
+
+;; Other tests are available in Paul Dietz' test suite, and pass. The above,
+;; which we used to fail, is based on a test in the Hyperspec. We still
+;; behave incorrectly when compiled for the contorted-example function of
+;; CLTL2, whence the following test:
+
+(flet ((needs-lexical-context (first second third)
+	 (if (eql 0 first)
+	     (funcall second)
+	   (block awkward
+	     (+ 5 (needs-lexical-context
+		   (1- first)
+		   third
+		   #'(lambda () (return-from awkward 0)))
+		first)))))
+  (if (compiled-function-p (symbol-function 'needs-lexical-context))
+      (Known-Bug-Expect-Failure
+       (Assert (eql 0 (needs-lexical-context 2 nil nil))
+	"the function special operator doesn't create a lexical context."))
+    (Assert (eql 0 (needs-lexical-context 2 nil nil)))))
+
+;; Test symbol-macrolet with symbols with identical string names.
+
+(macrolet
+    ((test-symbol-macrolet ()
+       (let* ((symbol 'my-symbol)
+	      (copy-symbol (copy-symbol symbol))
+	      (third (copy-symbol copy-symbol)))
+	 `(symbol-macrolet ((,symbol [symbol expansion])
+			    (,copy-symbol [copy expansion])
+			    (,third [third expansion]))
+	   (list ,symbol ,copy-symbol ,third)))))
+  (Assert (equal '([symbol expansion] [copy expansion] [third expansion])
+		 (test-symbol-macrolet))))
 
 ;;; end of lisp-tests.el

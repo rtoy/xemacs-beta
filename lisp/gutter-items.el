@@ -7,20 +7,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with Xmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Gutter-specific buffers tab code
 
@@ -316,28 +314,26 @@ redefining the function `format-buffers-menu-line'."
     (remove-gutter-element left-gutter 'buffers-tab)
     (remove-gutter-element right-gutter 'buffers-tab)
     ;; Put tabs into all devices that will be able to display them
-    (mapcar
-     #'(lambda (x)
-	 (when (valid-image-instantiator-format-p 'tab-control x)
-	   (cond ((eq gutter-buffers-tab-orientation 'top)
-		  ;; This looks better than a 3d border
-		  (set-specifier top-gutter-border-width 0 'global x)
-		  (set-gutter-element top-gutter 'buffers-tab 
-				      gutter-string 'global x))
-		 ((eq gutter-buffers-tab-orientation 'bottom)
-		  (set-specifier bottom-gutter-border-width 0 'global x)
-		  (set-gutter-element bottom-gutter 'buffers-tab
-				      gutter-string 'global x))
-		 ((eq gutter-buffers-tab-orientation 'left)
-		  (set-specifier left-gutter-border-width 0 'global x)
-		  (set-gutter-element left-gutter 'buffers-tab
-				      gutter-string 'global x))
-		 ((eq gutter-buffers-tab-orientation 'right)
-		  (set-specifier right-gutter-border-width 0 'global x)
-		  (set-gutter-element right-gutter 'buffers-tab
-				      gutter-string 'global x))
-		 )))
-     (console-type-list))))
+    (dolist (x (console-type-list))
+      (when (valid-image-instantiator-format-p 'tab-control x)
+	(case gutter-buffers-tab-orientation
+	  (top
+	   ;; This looks better than a 3d border
+	   (set-specifier top-gutter-border-width 0 'global x)
+	   (set-gutter-element top-gutter 'buffers-tab 
+			       gutter-string 'global x))
+	  (bottom
+	   (set-specifier bottom-gutter-border-width 0 'global x)
+	   (set-gutter-element bottom-gutter 'buffers-tab
+			       gutter-string 'global x))
+	  (left
+	   (set-specifier left-gutter-border-width 0 'global x)
+	   (set-gutter-element left-gutter 'buffers-tab
+			       gutter-string 'global x))
+	  (right
+	   (set-specifier right-gutter-border-width 0 'global x)
+	   (set-gutter-element right-gutter 'buffers-tab gutter-string 'global
+			       x)))))))
 
 (defun update-tab-in-gutter (frame &optional force-selection)
   "Update the tab control in the gutter area."

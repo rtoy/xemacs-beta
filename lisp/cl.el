@@ -10,20 +10,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 21.3.
 
@@ -205,19 +203,6 @@ See `member*' for the meaning of :test, :test-not and :key."
 
 (defalias 'cl-map-extents 'map-extents)
 
-;;; Blocks and exits.
-
-;; This used to be #'identity, but that didn't preserve multiple values in
-;; interpreted code. #'and isn't great either, there's no error on too many
-;; arguments passed to it when interpreted. Fortunately most of the places
-;; where cl-block-wrapper is called are generated from old, established
-;; macros, so too many arguments resulting from human error is unlikely; and
-;; the byte compile handler in cl-macs.el warns if more than one arg is
-;; passed to it.
-(defalias 'cl-block-wrapper 'and)
-
-(defalias 'cl-block-throw 'throw)
-
 ;;; XEmacs; multiple values are in eval.c and cl-macs.el. 
 
 ;;; We no longer support `multiple-value-apply', which was ill-conceived to
@@ -242,11 +227,17 @@ in place of FORM.  When a non-macro-call results, it is returned.
 
 The second optional arg ENVIRONMENT specifies an environment of macro
 definitions to shadow the loaded ones for use in file byte-compilation."
-  (let ((cl-macro-environment cl-env))
-    (while (progn (setq cl-macro (funcall cl-old-macroexpand cl-macro cl-env))
+  (let ((cl-macro-environment
+	 (if cl-macro-environment (append cl-env cl-macro-environment) cl-env))
+	eq-hash)
+    (while (progn (setq cl-macro
+			(macroexpand-internal cl-macro cl-macro-environment))
 		  (and (symbolp cl-macro)
-		       (cdr (assq (symbol-name cl-macro) cl-env))))
-      (setq cl-macro (cadr (assq (symbol-name cl-macro) cl-env))))
+		       (setq eq-hash (eq-hash cl-macro))
+		       (if (fixnump eq-hash)
+			   (assq eq-hash cl-macro-environment)
+			 (assoc eq-hash cl-macro-environment))))
+      (setq cl-macro (cadr (assoc* eq-hash cl-macro-environment))))
     cl-macro))
 
 ;;; Declarations.
@@ -325,11 +316,11 @@ If ARG is not a string, it is ignored."
 
 (defun oddp (integer)
   "Return t if INTEGER is odd."
-  (eq (logand integer 1) 1))
+  (eql (logand integer 1) 1))
 
 (defun evenp (integer)
   "Return t if INTEGER is even."
-  (eq (logand integer 1) 0))
+  (eql (logand integer 1) 0))
 
 ;; XEmacs addition
 (defalias 'cl-abs 'abs)
@@ -342,13 +333,35 @@ If ARG is not a string, it is ignored."
 (defconst most-negative-float nil
   "The float closest in value to negative infinity.")
 (defconst least-positive-float nil
-  "The positive float closest in value to 0.")
+  "The positive float closest in value to zero.")
 (defconst least-negative-float nil
-  "The negative float closest in value to 0.")
-(defconst least-positive-normalized-float nil)
-(defconst least-negative-normalized-float nil)
-(defconst float-epsilon nil)
-(defconst float-negative-epsilon nil)
+  "The negative float closest in value to zero.")
+(defconst least-positive-normalized-float nil
+  "The normalized positive float closest in value to zero.
+
+A float is normalized if the most significant bit of its mantissa is 1.
+Use of denormalized (equivalently, subnormal) floats in calculations will
+lead to gradual underflow, though they can be more accurate in representing
+individual small values.  Normal and subnormal floats are as described in
+IEEE 754.")
+
+(defconst least-negative-normalized-float nil
+  "The normalized negative float closest in value to zero.
+
+See `least-positive-normalized-float' for details of normal and denormalized
+numbers.")
+
+(defconst float-epsilon nil
+  "The smallest float guaranteed not `eql' to 1.0 when added to 1.0.
+
+That is, (eql 1.0 (+ 1.0 X)) will always give nil if (<= float-epsilon X) ,
+but it may give t for smaller values.")
+
+(defconst float-negative-epsilon nil
+  "The smallest float guaranteed not `eql' to 1.0 when subtracted from 1.0.
+
+That is, (eql 1.0 (- 1.0 X)) will always give nil if (<=
+float-negative-epsilon X) , but it may give t for smaller values.")
 
 ;;; Sequence functions.
 
@@ -365,7 +378,13 @@ If ARG is not a string, it is ignored."
 
 (defalias 'first 'car)
 (defalias 'rest 'cdr)
-(defalias 'endp 'null)
+
+;; XEmacs change; this needs to error if handed a non-list.
+(defun endp (list)
+  "Return t if LIST is nil, or nil if LIST is a cons. Error otherwise."
+  (prog1
+      (null list)
+    (and list (atom list) (error 'wrong-type-argument #'listp list))))
 
 ;; XEmacs change: make it a real function
 (defun second (x)
@@ -410,7 +429,7 @@ If ARG is not a string, it is ignored."
   (car (car x)))
 
 (defun cadr (x)
-  "Return the `car' of the `cdr' of X."
+  "Return the `car' of the `cdr' of X. Equivalent to `(second X)'."
   (car (cdr x)))
 
 (defun cdar (x)
@@ -434,7 +453,8 @@ If ARG is not a string, it is ignored."
   (car (cdr (car x))))
 
 (defun caddr (x)
-  "Return the `car' of the `cdr' of the `cdr' of X."
+  "Return the `car' of the `cdr' of the `cdr' of X.
+Equivalent to `(third X)'."
   (car (cdr (cdr x))))
 
 (defun cdaar (x)
@@ -482,7 +502,8 @@ If ARG is not a string, it is ignored."
   (car (cdr (cdr (car x)))))
 
 (defun cadddr (x)
-  "Return the `car' of the `cdr' of the `cdr' of the `cdr' of X."
+  "Return the `car' of the `cdr' of the `cdr' of the `cdr' of X.
+Equivalent to `(fourth X)'."
   (car (cdr (cdr (cdr x)))))
 
 (defun cdaaar (x)
@@ -519,24 +540,28 @@ If ARG is not a string, it is ignored."
 
 ;;; `last' is implemented as a C primitive, as of 1998-11
 
-(defun list* (arg &rest rest)   ; See compiler macro in cl-macs.el
-  "Return a new list with specified args as elements, cons'd to last arg.
-Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
-`(cons A (cons B (cons C D)))'."
-  (cond ((not rest) arg)
-	((not (cdr rest)) (cons arg (car rest)))
-	(t (let* ((n (length rest))
-		  (copy (copy-sequence rest))
-		  (last (nthcdr (- n 2) copy)))
-	     (setcdr last (car (cdr last)))
-	     (cons arg copy)))))
+;;; XEmacs: `list*' is in subr.el.
 
+;; XEmacs; handle dotted lists properly, error on circularity and if LIST is
+;; not a list.
 (defun ldiff (list sublist)
-  "Return a copy of LIST with the tail SUBLIST removed."
-  (let ((res nil))
-    (while (and (consp list) (not (eq list sublist)))
-      (push (pop list) res))
-    (nreverse res)))
+  "Return a copy of LIST with the tail SUBLIST removed.
+
+If SUBLIST is the same Lisp object as LIST, return nil.  If SUBLIST is
+not present in the list structure of LIST (that is, it is not the cdr
+of some cons making up LIST), this function is equivalent to
+`copy-list'.  LIST may be dotted."
+  (check-argument-type #'listp list)
+  (and list (not (eq list sublist))
+       (let ((before list) (evenp t) result)
+	 (prog1
+	     (setq result (list (car list)))
+	   (while (and (setq list (cdr-safe list)) (not (eql list sublist)))
+	     (setcdr result (if (consp list) (list (car list)) list))
+	     (setq result (cdr result)
+		   evenp (not evenp))
+	     (if evenp (setq before (cdr before)))
+	     (if (eq before list) (error 'circular-list list)))))))
 
 ;;; `copy-list' is implemented as a C primitive, as of 1998-11
 
@@ -547,39 +572,7 @@ Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
 (defalias 'cl-round 'round*)
 (defalias 'cl-mod 'mod*)
 
-(defun adjoin (cl-item cl-list &rest cl-keys)  ; See compiler macro in cl-macs
-  "Return ITEM consed onto the front of LIST only if it's not already there.
-Otherwise, return LIST unmodified.
-Keywords supported:  :test :test-not :key
-See `member*' for the meaning of :test, :test-not and :key."
-  (cond ((or (equal cl-keys '(:test eq))
-	     (and (null cl-keys) (not (numberp cl-item))))
-	 (if (memq cl-item cl-list) cl-list (cons cl-item cl-list)))
-	((or (equal cl-keys '(:test equal)) (null cl-keys))
-	 (if (member cl-item cl-list) cl-list (cons cl-item cl-list)))
-	(t (apply 'cl-adjoin cl-item cl-list cl-keys))))
-
-(defun subst (cl-new cl-old cl-tree &rest cl-keys)
-  "Substitute NEW for OLD everywhere in TREE (non-destructively).
-Return a copy of TREE with all elements `eql' to OLD replaced by NEW.
-Keywords supported:  :test :test-not :key
-See `member*' for the meaning of :test, :test-not and :key."
-  (if (or cl-keys (and (numberp cl-old) (not (fixnump cl-old))))
-      (apply 'sublis (list (cons cl-old cl-new)) cl-tree cl-keys)
-    (cl-do-subst cl-new cl-old cl-tree)))
-
-(defun cl-do-subst (cl-new cl-old cl-tree)
-  (cond ((eq cl-tree cl-old) cl-new)
-	((consp cl-tree)
-	 (let ((a (cl-do-subst cl-new cl-old (car cl-tree)))
-	       (d (cl-do-subst cl-new cl-old (cdr cl-tree))))
-	   (if (and (eq a (car cl-tree)) (eq d (cdr cl-tree)))
-	       cl-tree (cons a d))))
-	(t cl-tree)))
-
-(defun acons (key value alist)
-  "Return a new alist created by adding (KEY . VALUE) to ALIST."
-  (cons (cons key value) alist))
+;;; XEmacs; #'acons is in C.
 
 (defun pairlis (keys values &optional alist)
   "Make an alist from KEYS and VALUES.
@@ -592,6 +585,19 @@ If ALIST is non-nil, the new pairs are prepended to it."
 
 ;; XEmacs change
 (define-error 'cl-assertion-failed "Assertion failed")
+
+;; XEmacs; provide a milquetoast amount of compatibility in our error symbols.
+(define-error 'type-error "Wrong type" 'wrong-type-argument)
+(define-error 'program-error "Error in your program" 'invalid-argument)
+
+(map-plist
+ #'(lambda (key value)
+     (mapc #'(lambda (error)
+               (put error 'error-conditions
+                    (cons key (get error 'error-conditions))))
+           value))
+ '(program-error (wrong-number-of-arguments invalid-keyword-argument)
+   type-error (wrong-type-argument malformed-list circular-list)))
 
 ;; XEmacs change: omit the autoload rules; we handle those a different way
 

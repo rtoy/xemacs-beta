@@ -7,10 +7,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -694,7 +692,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* 3. Now create the EImage(s) */
   {
-    ColorMapObject *cmo = unwind.giffile->SColorMap;
+    ColorMapObject *cmo = (unwind.giffile->Image.ColorMap ? unwind.giffile->Image.ColorMap : unwind.giffile->SColorMap);
     int i, j, row, pass, interlace, slice;
     UINT_64_BIT pixels_sq;
     Binbyte *eip;
@@ -702,6 +700,9 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        0, 8, 16, ..., 4, 12, 20, ..., 2, 6, 10, ..., 1, 3, 5, ...  */
     static int InterlacedOffset[] = { 0, 4, 2, 1 };
     static int InterlacedJumps[] = { 8, 8, 4, 2 };
+
+    if (cmo == NULL)
+      signal_image_error ("GIF image has no color map", instantiator);
 
     height = unwind.giffile->SHeight;
     width = unwind.giffile->SWidth;
@@ -979,8 +980,8 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     int y, padding;
     Binbyte **row_pointers;
     UINT_64_BIT pixels_sq;
-    height = info_ptr->height;
-    width = info_ptr->width;
+    height = png_get_image_height (png_ptr, info_ptr);
+    width = png_get_image_width (png_ptr, info_ptr);
     pixels_sq = (UINT_64_BIT) width * (UINT_64_BIT) height;
     if (pixels_sq > ((size_t) -1) / 3)
       signal_image_error ("PNG image too large to instantiate", instantiator);
@@ -1041,30 +1042,37 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     /* Now that we're using EImage, ask for 8bit RGB triples for any type
        of image*/
-    /* convert palette images to RGB */
-    if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
-      png_set_palette_to_rgb (png_ptr);
-    /* convert grayscale images to RGB */
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY ||
-        info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-      png_set_gray_to_rgb (png_ptr);
-    /* pad images with depth < 8 bits */
-    else if (info_ptr->bit_depth < 8)
+    switch (png_get_color_type (png_ptr, info_ptr))
       {
-	if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY)
-	  png_set_expand (png_ptr);
-	else
-	  png_set_packing (png_ptr);
+      case PNG_COLOR_TYPE_PALETTE:
+        /* convert palette images to RGB */
+        png_set_palette_to_rgb (png_ptr);
+        break;
+
+      case PNG_COLOR_TYPE_GRAY:
+      case PNG_COLOR_TYPE_GRAY_ALPHA:
+        /* convert grayscale images to RGB */
+        png_set_gray_to_rgb (png_ptr);
+        break;
+
+      default:
+        /* pad images with depth < 8 bits */
+        if (png_get_bit_depth (png_ptr, info_ptr) < 8)
+          {
+            png_set_packing (png_ptr);
+          }
+        break;
       }
+
     /* strip 16-bit depth files down to 8 bits */
-    if (info_ptr->bit_depth == 16)
+    if (png_get_bit_depth (png_ptr, info_ptr) == 16)
       png_set_strip_16 (png_ptr);
     /* strip alpha channel
        #### shouldn't we handle this?
        first call png_read_update_info in case above transformations
        have generated an alpha channel */
     png_read_update_info(png_ptr, info_ptr);
-    if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA)
+    if (png_get_color_type (png_ptr, info_ptr) & PNG_COLOR_MASK_ALPHA)
       png_set_strip_alpha (png_ptr);
 
     png_read_image (png_ptr, row_pointers);
@@ -1074,23 +1082,25 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
      * into the glyph code, where you can get to it from lisp
      * anyway. - WMP */
     {
-      int i;
+      int ii, num_text = 0;
+      png_textp text_ptr = NULL;
       DECLARE_EISTRING (key);
       DECLARE_EISTRING (text);
 
-      for (i = 0 ; i < info_ptr->num_text ; i++)
-	{
-	  /* How paranoid do I have to be about no trailing NULLs, and
-	     using (int)info_ptr->text[i].text_length, and strncpy and a temp
-	     string somewhere? */
-          eireset(key);
-          eireset(text);
-          eicpy_ext(key, info_ptr->text[i].key, Qbinary);
-          eicpy_ext(text, info_ptr->text[i].text, Qbinary);
+      if (png_get_text (png_ptr, info_ptr, &text_ptr, &num_text) > 0)
+        {
+          for (ii = 0 ; ii < num_text; ii++)
+            {
+              eireset (key);
+              eireset (text);
 
-	  warn_when_safe (Qpng, Qinfo, "%s - %s",
-			  eidata(key), eidata(text));
-	}
+              eicpy_ext (key, text_ptr[ii].key, Qbinary);
+              eicpy_ext (text, text_ptr[ii].text, Qbinary);
+
+              warn_when_safe (Qpng, Qinfo, "%s - %s", eidata (key),
+                              eidata (text));
+            }
+        }
     }
 
     xfree (row_pointers);

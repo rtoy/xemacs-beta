@@ -6,10 +6,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* This file has been Mule-ized. */
 
@@ -169,6 +167,42 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       MAYBE_PROCMETH (print_process_data, (process, printcharfun));
       write_ascstring (printcharfun, ">");
     }
+}
+/* Process plists are directly accessible, so we need to protect against
+   invalid property list structure */
+
+static Lisp_Object
+process_getprop (Lisp_Object process, Lisp_Object property)
+{
+  return external_plist_get (&XPROCESS (process)->plist, property, 0,
+                             ERROR_ME);
+}
+
+static int
+process_putprop (Lisp_Object process, Lisp_Object property, Lisp_Object value)
+{
+  external_plist_put (&XPROCESS (process)->plist, property, value, 0,
+                      ERROR_ME);
+  return 1;
+}
+
+static int
+process_remprop (Lisp_Object process, Lisp_Object property)
+{
+  return external_remprop (&XPROCESS (process)->plist, property, 0, ERROR_ME);
+}
+
+static Lisp_Object
+process_plist (Lisp_Object process)
+{
+  return XPROCESS (process)->plist;
+}
+
+static Lisp_Object
+process_setplist (Lisp_Object process, Lisp_Object newplist)
+{
+  XPROCESS (process)->plist = newplist;
+  return newplist;
 }
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -941,8 +975,8 @@ Tell PROCESS that it has logical window size HEIGHT and WIDTH.
        (process, height, width))
 {
   CHECK_PROCESS (process);
-  CHECK_NATNUM (height);
-  CHECK_NATNUM (width);
+  check_integer_range (height, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (width, Qzero, make_integer (EMACS_INT_MAX));
   return
     MAYBE_INT_PROCMETH (set_window_size,
 			(XPROCESS (process), XINT (height), XINT (width))) <= 0
@@ -2405,6 +2439,16 @@ eputenv (const CIbyte *var, const CIbyte *value)
 }
 
 
+void
+reinit_process_early (void)
+{
+  OBJECT_HAS_METHOD (process, getprop);
+  OBJECT_HAS_METHOD (process, putprop);
+  OBJECT_HAS_METHOD (process, remprop);
+  OBJECT_HAS_METHOD (process, plist);
+  OBJECT_HAS_METHOD (process, setplist);
+}
+
 /* This is not named init_process in order to avoid a conflict with NS 3.3 */
 void
 init_xemacs_process (void)
@@ -2481,6 +2525,8 @@ init_xemacs_process (void)
 
     Vshell_file_name = build_istring (shell);
   }
+
+  reinit_process_early ();
 }
 
 void

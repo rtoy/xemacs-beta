@@ -1,21 +1,20 @@
 /* strftime - custom formatting of date and/or time
    Copyright (C) 1989, 1991, 1992 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
+   This file is part of XEmacs.
+   
+   XEmacs is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by the
+   Free Software Foundation, either version 3 of the License, or (at your
+   option) any later version.
+   
+   XEmacs is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+   for more details.
+   
    You should have received a copy of the GNU General Public License
-   along with this program; see the file COPYING.  If not, write to
-   the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
-
+   along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 /* Synched up with: FSF 19.30. */
 
 /* This file has been ... uhhhhh ... Mule-ized.  Yeah.
@@ -130,6 +129,16 @@ static char const * const months[] =
 {
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
+};
+
+static char const * const roman_upper[] =
+{
+  "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"
+};
+
+static char const * const roman_lower[] =
+{
+  "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii"
 };
 
 /* Add character C to STRING and increment LENGTH,
@@ -600,6 +609,16 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
 	      length +=
 		add_num3 (&string[length],
 			  (1900 + tm->tm_year) % 1000, max - length, zero);
+	      break;
+	    case '\xe6':
+	      length +=
+		add_str (&string[length], roman_lower[tm->tm_mon],
+			 max - length);
+	      break;
+	    case '\xC6':
+	      length +=
+		add_str (&string[length], roman_upper[tm->tm_mon],
+			 max - length);
 	      break;
 	    }
 	}

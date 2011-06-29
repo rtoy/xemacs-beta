@@ -13,10 +13,10 @@ Updated:	18 November 2009 by Stephen J. Turnbull
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -24,9 +24,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in GNU Emacs. */
 
@@ -411,6 +409,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
   Extbyte *fc_property;
   FcResult fc_result;
   FcValue fc_value;
+  int int_id = 0;
 
   /*
     process arguments
@@ -435,14 +434,21 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
       dead_wrong_type_argument (Qstringp, property);
     }
 
-  if (!NILP (id)) CHECK_NATNUM (id);
+  if (!NILP (id))
+    {
+#ifdef HAVE_BIGNUM
+      check_integer_range (id, Qzero, make_integer (INT_MAX));
+      int_id = BIGNUMP (id) ? bignum_to_int (XBIGNUM_DATA (id)) : XINT (id);
+#else
+      check_integer_range (id, Qzero, make_integer (EMACS_INT_MAX));
+      int_id = XINT (id);      
+#endif
+    }
   if (!NILP (type)) CHECK_SYMBOL (type);
 
   /* get property */
   fc_result = FcPatternGet (XFC_PATTERN_PTR (pattern),
-			    fc_property,
-			    NILP (id) ? 0 : XINT (id),
-			    &fc_value);
+			    fc_property, int_id, &fc_value);
 
   switch (fc_result)
     {

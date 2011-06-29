@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.30.  Some of FSF's data.c is in
    XEmacs' symbols.c. */
@@ -50,7 +48,8 @@ Lisp_Object Qvoid_function, Qcyclic_function_indirection;
 Lisp_Object Qinvalid_operation, Qinvalid_change, Qprinting_unreadable_object;
 Lisp_Object Qsetting_constant;
 Lisp_Object Qediting_error;
-Lisp_Object Qbeginning_of_buffer, Qend_of_buffer, Qbuffer_read_only;
+Lisp_Object Qbeginning_of_buffer, Qend_of_buffer;
+Lisp_Object Qbuffer_read_only, Qextent_read_only;
 Lisp_Object Qio_error, Qfile_error, Qconversion_error, Qend_of_file;
 Lisp_Object Qtext_conversion_error;
 Lisp_Object Qarith_error, Qrange_error, Qdomain_error;
@@ -158,10 +157,18 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 }
 
 void
-check_int_range (EMACS_INT val, EMACS_INT min, EMACS_INT max)
+check_integer_range (Lisp_Object val, Lisp_Object min, Lisp_Object max)
 {
-  if (val < min || val > max)
-    args_out_of_range_3 (make_int (val), make_int (min), make_int (max));
+  Lisp_Object args[] = { min, val, max };
+  int ii;
+
+  for (ii = 0; ii < countof (args); ii++)
+    {
+      CHECK_INTEGER (args[ii]);
+    }
+
+  if (NILP (Fleq (countof (args), args)))
+    args_out_of_range_3 (val, min, max);
 }
 
 
@@ -173,24 +180,6 @@ Return t if the two args are the same Lisp object.
        (object1, object2))
 {
   return EQ_WITH_EBOLA_NOTICE (object1, object2) ? Qt : Qnil;
-}
-
-DEFUN ("old-eq", Fold_eq, 2, 2, 0, /*
-Return t if the two args are (in most cases) the same Lisp object.
-
-Special kludge: A character is considered `old-eq' to its equivalent integer
-even though they are not the same object and are in fact of different
-types.  This is ABSOLUTELY AND UTTERLY HORRENDOUS but is necessary to
-preserve byte-code compatibility with v19.  This kludge is known as the
-\"char-int confoundance disease\" and appears in a number of other
-functions with `old-foo' equivalents.
-
-Do not use this function!
-*/
-       (object1, object2))
-{
-  /* #### blasphemy */
-  return HACKEQ_UNSAFE (object1, object2) ? Qt : Qnil;
 }
 
 DEFUN ("null", Fnull, 1, 1, 0, /*
@@ -504,11 +493,7 @@ Return t if OBJECT is a nonnegative integer.
 */
        (object))
 {
-  return NATNUMP (object)
-#ifdef HAVE_BIGNUM
-    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
-#endif
-    ? Qt : Qnil;
+  return NATNUMP (object) ? Qt : Qnil;
 }
 
 DEFUN ("nonnegativep", Fnonnegativep, 1, 1, 0, /*
@@ -517,9 +502,6 @@ Return t if OBJECT is a nonnegative number.
        (object))
 {
   return NATNUMP (object)
-#ifdef HAVE_BIGNUM
-    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
-#endif
 #ifdef HAVE_RATIO
     || (RATIOP (object) && ratio_sign (XRATIO_DATA (object)) >= 0)
 #endif
@@ -771,13 +753,6 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
       if (idx >= string_char_length (array)) goto range_error;
       return make_char (string_ichar (array, idx));
     }
-#ifdef LOSING_BYTECODE
-  else if (COMPILED_FUNCTIONP (array))
-    {
-      /* Weird, gross compatibility kludge */
-      return Felt (array, index_);
-    }
-#endif
   else
     {
       check_losing_bytecode ("aref", array);
@@ -1295,9 +1270,8 @@ Floating point numbers always use base 10.
     b = 10;
   else
     {
-      CHECK_INT (base);
+      check_integer_range (base, make_int (2), make_int (16));
       b = XINT (base);
-      check_int_range (b, 2, 16);
     }
 
   p = XSTRING_DATA (string);
@@ -2612,14 +2586,19 @@ mark_weak_list (Lisp_Object UNUSED (obj))
 
 static void
 print_weak_list (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED (escapeflag))
+		 int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
 
-  write_fmt_string_lisp (printcharfun, "#<weak-list %s %S>", 2,
-			 encode_weak_list_type (XWEAK_LIST (obj)->type),
-			 XWEAK_LIST (obj)->list);
+  write_ascstring (printcharfun, "#<weak-list :type ");
+  print_internal (encode_weak_list_type (XWEAK_LIST (obj)->type),
+                  printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :list ");
+  print_internal (XWEAK_LIST (obj)->list, printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3087,12 +3066,16 @@ mark_weak_box (Lisp_Object UNUSED (obj))
 }
 
 static void
-print_weak_box (Lisp_Object obj, Lisp_Object printcharfun,
-		int UNUSED (escapeflag))
+print_weak_box (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string (printcharfun, "#<weak-box>"); /* #### fix */
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
+
+  write_ascstring (printcharfun, "#<weak-box ");
+  print_internal (XWEAK_BOX (obj)->value, printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3309,12 +3292,20 @@ mark_ephemeron (Lisp_Object UNUSED (obj))
 }
 
 static void
-print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED (escapeflag))
+print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string (printcharfun, "#<ephemeron>"); /* #### fix */
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
+
+  write_ascstring (printcharfun, "#<ephemeron :key ");
+  print_internal (XEPHEMERON (obj)->key, printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :value ");
+  print_internal (XEPHEMERON (obj)->value, printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :finalizer ");
+  print_internal (XEPHEMERON_FINALIZER (obj), printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3494,6 +3485,7 @@ init_errors_once_early (void)
   DEFERROR_STANDARD (Qbeginning_of_buffer, Qediting_error);
   DEFERROR_STANDARD (Qend_of_buffer, Qediting_error);
   DEFERROR (Qbuffer_read_only, "Buffer is read-only", Qediting_error);
+  DEFERROR (Qextent_read_only, "Extent is read-only", Qediting_error);
 
   DEFERROR (Qio_error, "IO Error", Qinvalid_operation);
   DEFERROR_STANDARD (Qfile_error, Qio_error);
@@ -3551,7 +3543,6 @@ syms_of_data (void)
   DEFSUBR (Fdiv);
 #endif
   DEFSUBR (Feq);
-  DEFSUBR (Fold_eq);
   DEFSUBR (Fnull);
   Ffset (intern ("not"), intern ("null"));
   DEFSUBR (Flistp);

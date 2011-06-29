@@ -10,20 +10,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not synched with FSF.  Almost completely divergent.
 
@@ -49,9 +47,7 @@
 
 ;; To elude the warnings for font functions. (Normally autoloaded when
 ;; font-create-object is called)
-(eval-when-compile
-  (require 'font)
-  (load "cl-macs"))
+(eval-when-compile (require 'font))
 
 (defgroup faces nil
   "Support for multiple text attributes (fonts, colors, ...)
@@ -61,7 +57,7 @@ Such a collection of attributes is called a \"face\"."
 
 (defun read-face-name (prompt)
   (let (face)
-    (while (= (length face) 0) ; nil or ""
+    (while (eql (length face) 0) ; nil or ""
       (setq face (completing-read prompt
 				  (mapcar (lambda (x) (list (symbol-name x)))
 					  (face-list))
@@ -242,16 +238,19 @@ Optional arguments DEFAULT and NO-FALLBACK are the same as in
 					&optional domain default
 					no-fallback)
   "Return the instance of FACE's PROPERTY matching MATCHSPEC in DOMAIN.
-Currently the only useful value for MATCHSPEC is a charset, when used
-in conjunction with the face's font; this allows you to retrieve a
-font that can be used to display a particular charset, rather than just
-any font.
+Currently MATCHSPEC is used only for the 'font property, when its value
+should be a cons \(CHARSET . STAGE) \(see `specifier-matching-instance'
+for a full description of the matching process).  This allows you to
+retrieve a font that can be used to display a particular charset, rather
+than just any font.  For backward compatibility, MATCHSPEC may be a
+charset, which is interpreted as \(CHARSET . final).
 
-Other than MATCHSPEC, this function is identical to `face-property-instance'.
-See also `specifier-matching-instance' for a fuller description of the
-matching process."
+See `face-property-instance' for usage of the other arguments."
 
   (setq face (get-face face))
+  ;; For compatibility with 21.4-oriented code, eg, x-symbol-mule.el.
+  (when (charsetp matchspec)
+    (setq matchspec (cons matchspec 'final)))
   (let ((value (get face property)))
     (when (specifierp value)
       (setq value (specifier-matching-instance value matchspec domain
@@ -420,7 +419,7 @@ This makes all properties of FACE inherit from PARENT."
                              how-to-add))
         (set-difference built-in-face-specifiers
                         '(display-table background-pixmap inherit)))
-  (set-face-background-pixmap face (vector 'inherit ':face parent)
+  (set-face-background-pixmap face (vector 'inherit :face parent)
 			      locale tag-set how-to-add)
   nil)
 
@@ -480,7 +479,7 @@ See `face-property-instance' for more information."
     (let (matchspec)
       ;; get-charset signals an error if its argument doesn't have an
       ;; associated charset.
-      (setq charset (if-fboundp #'get-charset
+      (setq charset (if-fboundp 'get-charset
                         (get-charset charset)
                       (error 'unimplemented "Charset support not available"))
 	    matchspec (cons charset nil))
@@ -1716,6 +1715,10 @@ If FRAME is nil or omitted, the selected frame is used."
 		      (type       (memq type options))
 		      (class      (memq class options))
 		      (background (memq background options))
+		      ;; `display-color-cells' can return nil (eg, TTYs).
+		      ;; If so, assume monochrome.
+		      (min-colors (>= (or (display-color-cells frame) 2)
+				      (car options)))
 		      (t (warn "Unknown req `%S' with options `%S'"
 			       req options)
 			 nil))))
@@ -2041,14 +2044,14 @@ in that frame; otherwise change each frame."
 						 '(".xbm" "")))))
 			(and file
 			     `[xbm :file ,file])))
-		     ((and (listp pixmap) (= (length pixmap) 3))
+		     ((and (listp pixmap) (eql (length pixmap) 3))
 		      `[xbm :data ,pixmap])
 		     (t nil))))
       ;; We're signaling a continuable error; let's make sure the
       ;; function `stipple-pixmap-p' at least exists.
       (flet ((stipple-pixmap-p (pixmap)
 	       (or (stringp pixmap)
-		   (and (listp pixmap) (= (length pixmap) 3)))))
+		   (and (listp pixmap) (eql (length pixmap) 3)))))
 	(setq pixmap (signal 'wrong-type-argument
 			     (list 'stipple-pixmap-p pixmap)))))
     (check-type frame (or null frame))

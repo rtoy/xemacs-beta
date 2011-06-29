@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: GNU Emacs 21.3 + paren-in-char-set fix from CVS
 ;;;                  revision 1.25.  Some implementation differences in
@@ -175,23 +173,23 @@ so we can use character sets rather than grouping parenthesis."
     (cond
      ;;
      ;; If there are no strings, just return the empty string.
-     ((= (length strings) 0)
+     ((eql (length strings) 0)
       "")
      ;;
      ;; If there is only one string, just return it.
-     ((= (length strings) 1)
-      (if (= (length (car strings)) 1)
+     ((eql (length strings) 1)
+      (if (eql (length (car strings)) 1)
 	  (concat open-charset (regexp-quote (car strings)) close-charset)
 	(concat open-group (regexp-quote (car strings)) close-group)))
      ;;
      ;; If there is an empty string, remove it and recurse on the rest.
-     ((= (length (car strings)) 0)
+     ((eql (length (car strings)) 0)
       (concat open-charset
 	      (regexp-opt-group (cdr strings) t t) "?"
 	      close-charset))
      ;;
      ;; If all are one-character strings, just return a character set.
-     ((= (length strings) (apply '+ (mapcar 'length strings)))
+     ((eql (length strings) (apply '+ (mapcar 'length strings)))
       (concat open-charset
 	      (regexp-opt-charset strings)
 	      close-charset))

@@ -9,20 +9,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -128,7 +126,7 @@ TESTS is a non-negative integer, the number of tests run.")
 
 (defvar test-harness-current-file nil)
 
-(defvar emacs-lisp-file-regexp (purecopy "\\.el\\'")
+(defvar emacs-lisp-file-regexp "\\.el\\'"
   "*Regexp which matches Emacs Lisp source files.")
 
 (defconst test-harness-file-summary-template
@@ -334,7 +332,7 @@ and on success indicating that this is unexpected."
 	"Wrap a BODY that consists of tests that are known to trigger an error.
 This causes messages to be printed on failure indicating that this is expected,
 and on success indicating that this is unexpected."
-	(let ((quoted-body (if (= 1 (length body))
+	(let ((quoted-body (if (eql 1 (length body))
 			       `(quote ,(car body)) `(quote (progn ,@body)))))
           `(let ((test-harness-bug-expected t)
 		 (test-harness-failure-tag "KNOWN BUG")
@@ -401,12 +399,12 @@ is used in a loop."
 	(let ((test-assertion assertion)
 	      (negated nil))
 	  (when (and (listp test-assertion)
-		     (= 2 (length test-assertion))
+		     (eql 2 (length test-assertion))
 		     (memq (car test-assertion) '(not null)))
 	    (setq test-assertion (cadr test-assertion))
 	    (setq negated t))
 	  (when (and (listp test-assertion)
-		     (= 3 (length test-assertion))
+		     (eql 3 (length test-assertion))
 		     (member (car test-assertion)
 			     '(eq eql equal equalp = string= < <= > >=)))
 	    (let* ((test (car test-assertion))
@@ -449,7 +447,7 @@ is used in a loop."
 	    (cl-assertion-failed nil))))
 
       (defmacro Check-Error (expected-error &rest body)
-	(let ((quoted-body (if (= 1 (length body))
+	(let ((quoted-body (if (eql 1 (length body))
 			       `(quote ,(car body)) `(quote (progn ,@body)))))
 	  `(condition-case error-info
 	       (progn
@@ -469,7 +467,7 @@ is used in a loop."
 
       (defmacro Check-Error-Message (expected-error expected-error-regexp
 						    &rest body)
-	(let ((quoted-body (if (= 1 (length body))
+	(let ((quoted-body (if (eql 1 (length body))
 			       `(quote ,(car body)) `(quote (progn ,@body)))))
 	  `(condition-case error-info
 	       (progn
@@ -498,11 +496,11 @@ is used in a loop."
 
       ;; Do not use this with Silence-Message.
       (defmacro Check-Message (expected-message-regexp &rest body)
-	(let ((quoted-body (if (= 1 (length body))
+	(let ((quoted-body (if (eql 1 (length body))
 			       `(quote ,(car body))
 			     `(quote (progn ,@body)))))
 	  `(Skip-Test-Unless (fboundp 'defadvice) "can't defadvice"
-	    expected-message-regexp
+	    ,expected-message-regexp
 	    (let ((messages ""))
 	      (defadvice message (around collect activate)
 		(defvar messages)
@@ -756,7 +754,7 @@ For example, invoke \"xemacs -batch -f batch-test-emacs tests\""
 		 (if (= unexpected-test-suite-failures 1) "was" "were")
 		 unexpected-test-suite-failures
 		 (if (= unexpected-test-suite-failures 1) "failure" "failures")
-		 (if (= (length unexpected-test-suite-failure-files) 1)
+		 (if (eql (length unexpected-test-suite-failure-files) 1)
 		     "file"
 		   "files"))
 	(while unexpected-test-suite-failure-files

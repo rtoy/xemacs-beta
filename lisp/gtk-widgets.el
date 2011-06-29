@@ -7,20 +7,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF
 
@@ -248,8 +246,8 @@
 (gtk-import-function nil gtk_clist_set_button_actions GtkCList guint guint)
 
 ;; freeze all visual updates of the list, and then thaw the list after
-;; you have made a number of changes and the updates wil occure in a
-;; more efficent mannor than if you made them on a unfrozen list
+;; you have made a number of changes and the updates will occur in a
+;; more efficient manner than if you made them on an unfrozen list
 (gtk-import-function nil gtk_clist_freeze GtkCList)
 (gtk-import-function nil gtk_clist_thaw GtkCList)
 
@@ -365,8 +363,8 @@
 (gtk-import-function GtkStyle gtk_clist_get_row_style GtkCList gint)
 
 ;; this sets a horizontal and vertical shift for drawing
-;; the contents of a cell; it can be positive or negitive;
-;; this is particulary useful for indenting items in a column
+;; the contents of a cell; it can be positive or negative;
+;; this is particularly useful for indenting items in a column
 (gtk-import-function nil gtk_clist_set_shift GtkCList gint gint gint gint)
 
 ;; set/get selectable flag of a single row

@@ -5,20 +5,18 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCNTABILITY or
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -93,7 +91,7 @@ static Lisp_Object Qhashtable, Qhash_table, Qmake_hash_table;
 static Lisp_Object Qweakness, Qvalue, Qkey_or_value, Qkey_and_value;
 static Lisp_Object Vall_weak_hash_tables;
 static Lisp_Object Qrehash_size, Qrehash_threshold;
-static Lisp_Object Q_size, Q_test, Q_weakness, Q_rehash_size, Q_rehash_threshold;
+static Lisp_Object Q_size, Q_weakness, Q_rehash_size, Q_rehash_threshold;
 static Lisp_Object Vhash_table_test_eq, Vhash_table_test_eql;
 static Lisp_Object Vhash_table_test_weak_list;
 
@@ -733,10 +731,27 @@ hash_table_size_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 			  Error_Behavior errb)
 {
   if (NATNUMP (value))
-    return 1;
+    {
+      if (BIGNUMP (value))
+        {
+          /* hash_table_size() can't handle excessively large sizes. */
+          maybe_signal_error_1 (Qargs_out_of_range,
+                                list3 (value, Qzero,
+                                       make_integer (EMACS_INT_MAX)),
+                                Qhash_table, errb);
+          return 0;
+        }
+      else
+        {
+          return 1;
+        }
+    }
+  else
+    {
+      maybe_signal_error_1 (Qwrong_type_argument, list2 (Qnatnump, value),
+                            Qhash_table, errb);
+    }
 
-  maybe_signal_error_1 (Qwrong_type_argument, list2 (Qnatnump, value),
-			Qhash_table, errb);
   return 0;
 }
 
@@ -962,7 +977,7 @@ hash_table_instantiate (Lisp_Object plist)
           else if (EQ (key, Qrehash_threshold)) rehash_threshold = value;
           else if (EQ (key, Qweakness))	    weakness	     = value;
           else if (EQ (key, Qdata))		    data	     = value;
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
           else if (EQ (key, Qtype))/*obsolete*/ weakness	     = value;
 #endif
           else if (KEYWORDP (key))
@@ -1109,14 +1124,14 @@ arguments: (&key TEST SIZE REHASH-SIZE REHASH-THRESHOLD WEAKNESS)
 */
        (int nargs, Lisp_Object *args))
 {
-#ifdef NO_NEED_TO_HANDLE_21_4_CODE
-  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 5,
+#ifndef NEED_TO_HANDLE_21_4_CODE
+  PARSE_KEYWORDS (Fmake_hash_table, nargs, args, 5,
                   (test, size, rehash_size, rehash_threshold, weakness),
-                  NULL, 0);
+                  NULL);
 #else
-  PARSE_KEYWORDS (Qmake_hash_table, nargs, args, 0, 6,
+  PARSE_KEYWORDS (Fmake_hash_table, nargs, args, 6,
                   (test, size, rehash_size, rehash_threshold, weakness,
-		   type), (type = Qunbound, weakness = Qunbound), 0);
+		   type), (type = Qunbound, weakness = Qunbound));
 
   if (EQ (weakness, Qunbound))
     {
@@ -1993,6 +2008,10 @@ internal_hash (Lisp_Object obj, int depth, Boolint equalp)
 
 DEFUN ("eq-hash", Feq_hash, 1, 1, 0, /*
 Return a hash value for OBJECT appropriate for use with `eq.'
+
+If OBJECT is not immediate (it is not a fixnum or character) this hash value
+will be unique among currently-reachable objects, and is appropriate for
+implementing the Common Lisp PRINT-OBJECT protocol.
 */
        (object))
 {
@@ -2077,7 +2096,7 @@ argument and returning an integer that is the hash code of the argument.
 Computation should use the whole value range of the underlying machine long
 type.  In XEmacs this will necessitate bignums for values above
 `most-positive-fixnum' but below (1+ (* most-positive-fixnum 2)) and
-analagous values below `most-negative-fixnum'.  Relatively poor hashing
+analogous values below `most-negative-fixnum'.  Relatively poor hashing
 performance is guaranteed in a build without bignums.
 
 This function returns t if successful, and errors if NAME
@@ -2274,7 +2293,6 @@ syms_of_elhash (void)
   DEFSYMBOL (Qnon_weak);     /* obsolete */
 
   DEFKEYWORD (Q_data);
-  DEFKEYWORD (Q_test);
   DEFKEYWORD (Q_size);
   DEFKEYWORD (Q_rehash_size);
   DEFKEYWORD (Q_rehash_threshold);

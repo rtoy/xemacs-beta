@@ -8,20 +8,20 @@
 **
 ** This file is part of XEmacs.
 **
-** XEmacs is free software; you can redistribute it and/or modify it
-** under the terms of the GNU General Public License as published by the
-** Free Software Foundation; either version 2, or (at your option) any
-** later version.
+** This file is part of XEmacs.
 **
+** XEmacs is free software: you can redistribute it and/or modify it
+** under the terms of the GNU General Public License as published by the
+** Free Software Foundation, either version 3 of the License, or (at your
+** option) any later version.
+** 
 ** XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 ** FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 ** for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with XEmacs; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-** Boston, MA 02111-1301, USA.  */
+** along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <config.h>
 #include "lisp.h"
@@ -169,7 +169,7 @@ mark_type_as_imported (GType t)
   Lisp_Object value = type_as_symbol (t);
 
   if (NILP (type_already_imported_p (t)))
-    Vgtk_types = acons (value, make_int (t), Vgtk_types);
+    Vgtk_types = Facons (value, make_int (t), Vgtk_types);
 
   return value;
 }
@@ -258,12 +258,12 @@ import_gtk_flags_internal (GType the_type)
   while (vals && vals->value_name)
     {
       /* The nickname is more likely to be used, but save both names. */
-      Vgtk_flags = acons (intern ((CIbyte *)vals->value_nick),
-                          make_int (vals->value),
-                          Vgtk_flags);
-      Vgtk_flags = acons (intern ((CIbyte *)vals->value_name),
-                          make_int (vals->value),
-                          Vgtk_flags);
+      Vgtk_flags = Facons (intern ((CIbyte *)vals->value_nick),
+                           make_int (vals->value),
+                           Vgtk_flags);
+      Vgtk_flags = Facons (intern ((CIbyte *)vals->value_name),
+                           make_int (vals->value),
+                           Vgtk_flags);
 #if DEBUG_XEMACS
       debug_out("flag %s %s => %d\n", vals->value_nick, vals->value_name,
                 vals->value);
@@ -284,12 +284,12 @@ import_gtk_enumeration_internal (GType the_type)
 
   while (vals && vals->value_name)
     {
-      Vgtk_enumerations = acons (intern (vals->value_nick),
-                                 make_int (vals->value),
-                                 Vgtk_enumerations);
-      Vgtk_enumerations = acons (intern (vals->value_name),
-                                 make_int (vals->value),
-                                 Vgtk_enumerations);
+      Vgtk_enumerations = Facons (intern (vals->value_nick),
+                                  make_int (vals->value),
+                                  Vgtk_enumerations);
+      Vgtk_enumerations = Facons (intern (vals->value_name),
+                                  make_int (vals->value),
+                                  Vgtk_enumerations);
 #if DEBUG_XEMACS
       debug_out("enum %s %s => %d\n", vals->value_nick, vals->value_name, vals->value);
 #endif
@@ -823,7 +823,8 @@ Call an external function.
       n_args++;
     }
 
-  XFFI_MARSHAL (func) (XFFI_FUNCTION_PTR  (func),  the_args);
+  XFFI_MARSHAL (func) ((ffi_actual_function )XFFI_FUNCTION_PTR  (func),
+                       the_args);
 
   if (XFFI_RETURN_TYPE (func) != G_TYPE_NONE)
     {
@@ -1559,9 +1560,9 @@ Return a list of all properties for class TYPE.
 
   props = g_object_class_list_properties (type_class, &n_props);
   for (i = 0; i < n_props; i++) 
-    prop_list = acons (build_cistring (props[i]->name),
-                       type_as_symbol (props[i]->value_type),
-                       prop_list);
+    prop_list = Facons (build_cistring (props[i]->name),
+                        type_as_symbol (props[i]->value_type),
+                        prop_list);
   prop_list = Freverse (prop_list);
   g_free (props);
   return prop_list;

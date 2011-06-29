@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Significantly divergent from FSF. */
 
@@ -114,10 +112,6 @@ things are arranged in config.h.in.  In particular:
 #undef XEMACS_CODENAME
 #undef XEMACS_EXTRA_NAME
 #undef XEMACS_RELEASE_DATE
-/* InfoDock versions, not used with XEmacs */
-#undef INFODOCK_MAJOR_VERSION
-#undef INFODOCK_MINOR_VERSION
-#undef INFODOCK_BUILD_VERSION
 
 /* Make functions from IEEE Stds 1003.[123] available. */
 #undef _POSIX_C_SOURCE
@@ -954,12 +948,6 @@ extern "C" {
 }
 #endif
 
-/* This will be removed in 19.15. */
-/* Hah!  Try 20.3 ... */
-/* Hah!  Try never ... */
-/* If at first you don't succeed, try, try again. */
-/* #define LOSING_BYTECODE */
-
 /* USER_FULL_NAME returns a string that is the user's full name.
    It can assume that the variable `pw' points to the password file
    entry for this user.
@@ -1187,5 +1175,7 @@ extern "C" {
 
 /* Do we need to be able to run code compiled by and written for 21.4? */
 #define NEED_TO_HANDLE_21_4_CODE 1
+
+#define SUPPORT_CONFOUNDING_FUNCTIONS NEED_TO_HANDLE_21_4_CODE
 
 #endif /* _SRC_CONFIG_H_ */

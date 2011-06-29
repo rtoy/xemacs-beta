@@ -10,20 +10,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up:  Not in FSF
 
@@ -403,7 +401,7 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
   (let ((command (cdr-safe
 		  (assq toolbar-news-reader toolbar-news-commands-alist))))
     (or command
-	(error "Unkown news reader %s" toolbar-news-reader))
+	(error "Unknown news reader %s" toolbar-news-reader))
     (if (symbolp command)
 	(call-interactively command)
       (eval command))))
@@ -456,26 +454,20 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
 (defun toolbar-add-item-data (icon-list &optional icon-dir)
   (if (eq icon-dir nil)
       (setq icon-dir toolbar-icon-directory))
-  (mapcar
-   (lambda (cons)
-     (let ((prefix (expand-file-name (cdr cons) icon-dir)))
-       ;; #### This should use a better mechanism for finding the
-       ;; glyphs, allowing for formats other than x[pb]m.  Look at
-       ;; `widget-glyph-find' for an example how it might be done.
-       (set (car cons)
-	    (if (featurep 'xpm)
-		(toolbar-make-button-list
-		 (concat prefix "-up.xpm")
-		 nil
-		 (concat prefix "-xx.xpm")
-		 (concat prefix "-cap-up.xpm")
-		 nil
-		 (concat prefix "-cap-xx.xpm"))
-	      (toolbar-make-button-list
-	       (concat prefix "-up.xbm")
-	       (concat prefix "-dn.xbm")
-	       (concat prefix "-xx.xbm"))))))
-   icon-list))
+  (dolist (cons icon-list)
+    (let ((prefix (expand-file-name (cdr cons) icon-dir)))
+      ;; #### This should use a better mechanism for finding the
+      ;; glyphs, allowing for formats other than x[pb]m.  Look at
+      ;; `widget-glyph-find' for an example how it might be done.
+      (set (car cons)
+	   (if (load-time-value (featurep 'xpm))
+	       (toolbar-make-button-list (concat prefix "-up.xpm") nil
+					 (concat prefix "-xx.xpm")
+					 (concat prefix "-cap-up.xpm")
+					 nil (concat prefix "-cap-xx.xpm"))
+	     (toolbar-make-button-list (concat prefix "-up.xbm")
+				       (concat prefix "-dn.xbm")
+				       (concat prefix "-xx.xbm")))))))
 
 (defvar toolbar-vector-open 
   [toolbar-file-icon            toolbar-open	t       "Open a file"]

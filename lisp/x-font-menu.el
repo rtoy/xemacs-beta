@@ -11,20 +11,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 ;;; Code:
 
 ;; #### - implement these...
@@ -253,21 +251,21 @@ or if you change your font path, you can call this to re-initialize the menus."
      (vector
       cache
       (mapcar (lambda (x)
-		(vector x
+                (vector x
 			(list 'font-menu-set-font x nil nil)
-			':style 'radio ':active nil ':selected nil))
+			:style 'radio :active nil :selected nil))
 	      families)
       (mapcar (lambda (x)
 		(vector (if (/= 0 (% x 10))
 			    (number-to-string (/ x 10.0))
 			  (number-to-string (/ x 10)))
 			(list 'font-menu-set-font nil nil x)
-			':style 'radio ':active nil ':selected nil))
+			:style 'radio :active nil :selected nil))
 	      sizes)
       (mapcar (lambda (x)
 		(vector x
 			(list 'font-menu-set-font nil x nil)
-			':style 'radio ':active nil ':selected nil))
+			:style 'radio :active nil :selected nil))
 	      weights)))
     (cdr dev-cache)))
 
