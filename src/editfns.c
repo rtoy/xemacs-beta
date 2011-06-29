@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 
@@ -1044,11 +1042,10 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %Y is replaced by the year with century.
 %z is replaced by the time zone as a numeric offset (e.g +0530, -0800 etc.)
 %Z is replaced by the time zone abbreviation.
+%\\xe6 is replaced by the month as a lowercase Roman number (i-xii)
+%\\xc6 is replaced by the month as an uppercase Roman number (I-XII)
 
 The number of options reflects the `strftime' function.
-
-BUG: If the charset used by the current locale is not ISO 8859-1, the
-characters appearing in the day and month names may be incorrect.
 */
        (format_string, time_))
 {
@@ -1103,29 +1100,28 @@ ZONE is an integer indicating the number of seconds east of Greenwich.
   time_t time_spec;
   struct tm save_tm;
   struct tm *decoded_time;
-  Lisp_Object list_args[9];
 
   if (! lisp_to_time (specified_time, &time_spec))
     invalid_argument ("Invalid time specification", Qunbound);
 
   decoded_time = localtime (&time_spec);
-  list_args[0] = make_int (decoded_time->tm_sec);
-  list_args[1] = make_int (decoded_time->tm_min);
-  list_args[2] = make_int (decoded_time->tm_hour);
-  list_args[3] = make_int (decoded_time->tm_mday);
-  list_args[4] = make_int (decoded_time->tm_mon + 1);
-  list_args[5] = make_int (decoded_time->tm_year + 1900);
-  list_args[6] = make_int (decoded_time->tm_wday);
-  list_args[7] = (decoded_time->tm_isdst)? Qt : Qnil;
 
   /* Make a copy, in case gmtime modifies the struct.  */
   save_tm = *decoded_time;
   decoded_time = gmtime (&time_spec);
-  if (decoded_time == 0)
-    list_args[8] = Qnil;
-  else
-    list_args[8] = make_int (difftm (&save_tm, decoded_time));
-  return Flist (9, list_args);
+
+  return listn(9,
+	       make_int (save_tm.tm_sec),
+	       make_int (save_tm.tm_min),
+	       make_int (save_tm.tm_hour),
+	       make_int (save_tm.tm_mday),
+	       make_int (save_tm.tm_mon + 1),
+	       make_int (save_tm.tm_year + 1900),
+	       make_int (save_tm.tm_wday),
+	       save_tm.tm_isdst ? Qt : Qnil,
+	       (decoded_time == NULL)
+	       ? Qnil
+	       : make_int (difftm (&save_tm, decoded_time)));
 }
 
 static void set_time_zone_rule (Extbyte *tzstring);
@@ -2262,18 +2258,6 @@ If BUFFER is nil, the current buffer is assumed.
 	  : x1 == x2)
     ? Qt : Qnil;
 }
-
-DEFUN ("char=", Fchar_Equal, 2, 2, 0, /*
-Return t if two characters match, case is significant.
-Both arguments must be characters (i.e. NOT integers).
-*/
-       (character1, character2))
-{
-  CHECK_CHAR_COERCE_INT (character1);
-  CHECK_CHAR_COERCE_INT (character2);
-
-  return EQ (character1, character2) ? Qt : Qnil;
-}
 
 #if 0 /* Undebugged FSFmacs code */
 /* Transpose the markers in two regions of the current buffer, and
@@ -2399,7 +2383,6 @@ syms_of_editfns (void)
   DEFSYMBOL (Quser_files_and_directories);
 
   DEFSUBR (Fchar_equal);
-  DEFSUBR (Fchar_Equal);
   DEFSUBR (Fgoto_char);
   DEFSUBR (Fstring_to_char);
   DEFSUBR (Fchar_to_string);

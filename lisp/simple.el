@@ -9,20 +9,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 19.34 [But not very closely].
 ;;; Occasional synching to FSF 21.2 and FSF 22.0, as marked.  Comment stuff
@@ -3332,11 +3330,6 @@ when it is off screen."
 ;; keyboard-quit
 ;; buffer-quit-function
 ;; keyboard-escape-quit
-
-(defun assoc-ignore-case (key alist)
-  "Like `assoc', but assumes KEY is a string and ignores case when comparing."
-  (assoc* key alist :test #'equalp))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                          mail composition code                        ;;
@@ -3986,7 +3979,7 @@ See the variable `zmacs-regions'.")
       (cond
        (zmacs-region-rectangular-p
 	(setq zmacs-region-extent (list zmacs-region-extent))
-        (when-fboundp #'default-mouse-track-next-move-rect
+        (when-fboundp 'default-mouse-track-next-move-rect
           (default-mouse-track-next-move-rect start end zmacs-region-extent))
 	))
 
@@ -4681,8 +4674,7 @@ long as they're not listed in that variable as well."
   (or level (setq level 'warning))
   (or (listp class) (setq class (list class)))
   (check-argument-type 'warning-level-p level)
-  (if (and (not (featurep 'infodock))
-	   (not init-file-loaded))
+  (if (not init-file-loaded)
       (push (list class message level) before-init-deferred-warnings)
     (catch 'ignored
       (let ((display-p t)
@@ -4772,8 +4764,7 @@ The C code calls this periodically, right before redisplay."
 
 (defun emacs-name ()
   "Return the printable name of this instance of Emacs."
-  (cond ((featurep 'infodock) "InfoDock")
-	((featurep 'xemacs) "XEmacs")
+  (cond ((featurep 'xemacs) "XEmacs")
 	(t "Emacs")))
 
 (defun debug-print-1 (&rest args)

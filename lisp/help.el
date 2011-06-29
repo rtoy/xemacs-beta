@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 19.30.
 
@@ -350,7 +348,7 @@ MENU-FLAG is a symbol that should be set to t if KEY is a menu event,
     ;; If the key typed was really a menu selection, grab the form out
     ;; of the event object and intuit the function that would be called,
     ;; and describe that instead.
-    (if (and (vectorp key) (= 1 (length key))
+    (if (and (vectorp key) (eql 1 (length key))
 	     (or (misc-user-event-p (aref key 0))
 		 (eq (car-safe (aref key 0)) 'menu-selection)))
 	(let ((event (aref key 0)))
@@ -1230,7 +1228,7 @@ arguments in the standard Lisp style."
       (setq args (match-string 1 doc))
       (setq doc (substring doc 0 (match-beginning 0)))
       (and args (setq args (replace-in-string args "[ ]*\\\\\n[ \t]*" " " t)))
-      (and (zerop (length doc)) (setq doc (gettext "not documented"))))
+      (and (eql 0 (length doc)) (setq doc (gettext "not documented"))))
     (cons doc args)))
 
 (defun function-documentation (function &optional strip-arglist)
@@ -1300,14 +1298,14 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 (defvar help-symbol-function-context-menu
   '(["View %_Documentation" (help-symbol-run-function 'describe-function)]
     ["Find %_Function Source" (help-symbol-run-function 'find-function)
-     (fboundp #'find-function)]
+     (fboundp 'find-function)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
 (defvar help-symbol-variable-context-menu
   '(["View %_Documentation" (help-symbol-run-function 'describe-variable)]
     ["Find %_Variable Source" (help-symbol-run-function 'find-variable)
-     (fboundp #'find-variable)]
+     (fboundp 'find-variable)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
@@ -1317,9 +1315,9 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
     ["View Variable D%_ocumentation" (help-symbol-run-function
 				      'describe-variable)]
     ["Find %_Function Source" (help-symbol-run-function 'find-function)
-     (fboundp #'find-function)]
+     (fboundp 'find-function)]
     ["Find %_Variable Source" (help-symbol-run-function 'find-variable)
-     (fboundp #'find-variable)]
+     (fboundp 'find-variable)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
@@ -1858,12 +1856,12 @@ after the listing is made.)"
   "Follow any cross reference to source code; if none, scroll up.  "
   (interactive "d")
   (let ((e (extent-at pos nil 'find-function-symbol)))
-    (if (and-fboundp #'find-function e)
-        (with-fboundp #'find-function
+    (if (and-fboundp 'find-function e)
+        (with-fboundp 'find-function
           (find-function (extent-property e 'find-function-symbol)))
       (setq e (extent-at pos nil 'find-variable-symbol))
-      (if (and-fboundp #'find-variable e)
-          (with-fboundp #'find-variable
+      (if (and-fboundp 'find-variable e)
+          (with-fboundp 'find-variable
             (find-variable (extent-property e 'find-variable-symbol)))
 	(scroll-up 1)))))
 
@@ -1873,12 +1871,12 @@ if none, call mouse-track.  "
   (interactive "e")
   (mouse-set-point event)
   (let ((e (extent-at (point) nil 'find-function-symbol)))
-    (if (and-fboundp #'find-function e)
-        (with-fboundp #'find-function
+    (if (and-fboundp 'find-function e)
+        (with-fboundp 'find-function
           (find-function (extent-property e 'find-function-symbol)))
       (setq e (extent-at (point) nil 'find-variable-symbol))
-      (if (and-fboundp #'find-variable e)
-          (with-fboundp #'find-variable
+      (if (and-fboundp 'find-variable e)
+          (with-fboundp 'find-variable
             (find-variable (extent-property e 'find-variable-symbol)))
 	(mouse-track event)))))
 

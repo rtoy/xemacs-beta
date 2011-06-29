@@ -1,3 +1,18 @@
+;; This file is part of XEmacs.
+
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
 (defvar packages-hardcoded-lisp
   '(
     ;; Nothing at this time
@@ -23,28 +38,19 @@ in dumped-lisp.el and is not itself listed.")
 
        "backquote" 		; needed for defsubst etc.
        "bytecomp-runtime"	; define defsubst
-       "find-paths"
-       "packages"		; Bootstrap run-time lisp environment
-       "setup-paths"
-
-       ;; use custom-declare-variable-early, not defcustom, in these files
-
        "subr" 			; load the most basic Lisp functions
-       "post-gc"
-       "replace" 		; match-string used in version.el.
-
-       "version"
-
        "cl"
-       "cl-extra"
+       "cl-extra"	; also loads cl-macs if we're running interpreted.
        "cl-seq"
-       "widget"
-       "custom"		; Before the world so everything can be
-			; customized
+       "post-gc"
+       "version"
+       "custom"		; Before the world so everything can be customized
        "cus-start"	; for customization of builtin variables
-
-       ;; OK, you can use defcustom from here on
-
+       "find-paths"
+       "packages"
+       "setup-paths"
+       "replace"
+       "widget"
        "cmdloop"
        "keymap"
        "syntax"
@@ -112,6 +118,7 @@ in dumped-lisp.el and is not itself listed.")
        "easy-mmode"		; Added for 21.5. Used by help.
        "help"
        "easymenu"		; Added for 20.3.
+       "special-mode"
        "lisp-mode"
        "text-mode"
        "fill"
@@ -148,10 +155,10 @@ in dumped-lisp.el and is not itself listed.")
        ;; should just be able to assume that, if (featurep 'menubar),
        ;; the menubar should work and if items are added, they can be
        ;; seen clearly and usefully.
-       (when (featurep '(and (not infodock) menubar)) "menubar-items")
-       (when (featurep '(and gutter)) "gutter-items")
-       (when (featurep '(and (not infodock) toolbar)) "toolbar-items")
-       (when (featurep '(and (not infodock) dialog)) "dialog-items")
+       (when (featurep 'menubar) "menubar-items")
+       (when (featurep 'gutter) "gutter-items")
+       (when (featurep 'toolbar) "toolbar-items")
+       (when (featurep 'dialog) "dialog-items")
 
 	;;;;;;;;;;;;;;;;;; Coding-system support
        "coding"
@@ -214,10 +221,7 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/lao" ; sucks. 
 	   "mule/latin"
 	   "mule/misc-lang"
-	   ;; "thai" #### merge thai and thai-xtis!!!
-           ;; #### Even better; take out thai-xtis! It's not even a
-           ;; standard, and no-one uses it.
-	   "mule/thai-xtis"
+	   "mule/thai"
 	   "mule/tibetan"
 	   "mule/vietnamese"
 	   ))
@@ -234,12 +238,6 @@ in dumped-lisp.el and is not itself listed.")
 
 ;;; mule-load.el ends here
 
-;; preload InfoDock stuff.  should almost certainly not be here if
-;; id-menus is not here.  infodock needs to figure out a clever way to
-;; advise this stuff or we need to export a clean way for infodock or
-;; others to control this programmatically.
-       (when (featurep '(and infodock (or x mswindows gtk) menubar))
-	 "id-menus")
 ;; preload the X code.
        (when (featurep '(and x scrollbar)) "x-scrollbar")
        (when (featurep 'x)
@@ -306,7 +304,4 @@ in dumped-lisp.el and is not itself listed.")
 	))
 
 (setq preloaded-file-list
-      (apply #'nconc
-	     (mapcar #'(lambda (x)
-			 (if (listp x) x (list x)))
-		     preloaded-file-list)))
+      (mapcan #'(lambda (x) (if (listp x) x (list x))) preloaded-file-list))

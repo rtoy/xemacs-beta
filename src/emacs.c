@@ -6,10 +6,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.28. */
 
@@ -512,11 +510,6 @@ Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 Lisp_Object Vxemacs_extra_name;
 Lisp_Object Vxemacs_release_date;
-#ifdef INFODOCK
-Lisp_Object Vinfodock_major_version;
-Lisp_Object Vinfodock_minor_version;
-Lisp_Object Vinfodock_build_version;
-#endif
 
 /* The path under which XEmacs was invoked. */
 Lisp_Object Vinvocation_path;
@@ -1473,6 +1466,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_alloc_early ();
       reinit_gc_early ();
       reinit_symbols_early ();
+      reinit_process_early ();
 #ifndef NEW_GC
       reinit_opaque_early ();
 #endif /* not NEW_GC */
@@ -3396,7 +3390,7 @@ and announce itself normally when it is run.
    go.  The two conditions sound somewhat redundant (maybe we could just
    use the second?) but they aren't completely: Theoretically (maybe with
    MinGW?) we could imagine compiling under native Windows as the OS
-   but e.g. targetting only X Windows as the window system. --ben */
+   but e.g. targeting only X Windows as the window system. --ben */
 
 #if defined (HAVE_MS_WINDOWS) && defined (WIN32_NATIVE)
 # define NEED_WINDOWS_MESSAGE_PAUSE
@@ -3641,15 +3635,9 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 "Your version of XEmacs was distributed with a PROBLEMS file that may describe\n"
 "your crash, and with luck a workaround.  Please check it first, but do report\n"
 "the crash anyway.\n\n"
-#ifdef INFODOCK
-"Please report this bug by selecting `Report-Bug' in the InfoDock menu, or\n"
-"(last resort) by emailing `xemacs-beta@xemacs.org' -- note that this is for\n"
-"XEmacs in general, not just Infodock."
-#else
 "Please report this bug by invoking M-x report-emacs-bug, or by selecting\n"
 "`Send Bug Report' from the Help menu.  If that won't work, send ordinary\n"
 "email to `xemacs-beta@xemacs.org'."
-#endif
 "  *MAKE SURE* to include this entire\n"
 "output from this crash, especially including the Lisp backtrace, as well as\n"
 "the XEmacs configuration from M-x describe-installation (or equivalently,\n"
@@ -3697,7 +3685,7 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 "then type `where' at the debugger prompt.  No GDB on your system?  You may\n"
 "have DBX, or XDB, or SDB.  (Ask your system administrator if you need help.)\n"
 "If no core file was produced, enable them (often with `ulimit -c unlimited')\n"
-"in case of future recurrance of the crash.\n");
+"in case of future reoccurrence of the crash.\n");
 #endif /* _MSC_VER */
     }
 
@@ -4348,22 +4336,6 @@ earlier than 20.3.
   Vemacs_beta_version = Qnil;
 #endif
 
-#ifdef INFODOCK
-  DEFVAR_LISP ("infodock-major-version", &Vinfodock_major_version /*
-Major version number of this InfoDock release.
-*/ );
-  Vinfodock_major_version = make_int (INFODOCK_MAJOR_VERSION);
-
-  DEFVAR_LISP ("infodock-minor-version", &Vinfodock_minor_version /*
-Minor version number of this InfoDock release.
-*/ );
-  Vinfodock_minor_version = make_int (INFODOCK_MINOR_VERSION);
-
-  DEFVAR_LISP ("infodock-build-version", &Vinfodock_build_version /*
-Build version of this InfoDock release.
-*/ );
-  Vinfodock_build_version = make_int (INFODOCK_BUILD_VERSION);
-#endif
 
   DEFVAR_LISP ("xemacs-codename", &Vxemacs_codename /*
 Codename of this version of Emacs (a string).
@@ -4562,7 +4534,6 @@ complex_vars_of_emacs (void)
 
   DEFVAR_LISP ("emacs-program-name", &Vemacs_program_name /*
 *Name of the Emacs variant.
-For example, this may be \"xemacs\" or \"infodock\".
 This is mainly meant for use in path searching.
 */ );
   Vemacs_program_name = build_extstring (PATH_PROGNAME, Qfile_name);

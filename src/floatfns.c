@@ -3,10 +3,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -14,9 +14,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30. */
 
@@ -789,6 +787,11 @@ Return the floating point number numerically equal to NUMBER.
   if (FLOATP (number))		/* give 'em the same float back */
     return number;
 
+  if (BIGFLOATP (number))
+    {
+      return number;
+    }
+
   return Ffloat (wrong_type_argument (Qnumberp, number));
 }
 
@@ -1300,11 +1303,7 @@ ceiling_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
     }
   else
     {
-#ifdef HAVE_BIGNUM
       if (INTEGERP (number))
-#else
-      if (INTP (number))
-#endif
 	{
 	  return values2 (number, Qzero);
 	}
@@ -1566,11 +1565,7 @@ static Lisp_Object
 floor_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 		       int return_float)
 {
-#ifdef HAVE_BIGNUM
   if (INTEGERP (number))
-#else
-  if (INTP (number))
-#endif
     {
       if (return_float)
 	{
@@ -1971,11 +1966,7 @@ static Lisp_Object
 round_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 		       int return_float)
 {
-#ifdef HAVE_BIGNUM
   if (INTEGERP (number))
-#else
-  if (INTP (number))
-#endif
     {
       if (return_float)
 	{
@@ -2258,11 +2249,7 @@ static Lisp_Object
 truncate_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 			  int return_float)
 {
-#ifdef HAVE_BIGNUM
   if (INTEGERP (number))
-#else
-  if (INTP (number))
-#endif
     {
       if (return_float)
 	{
@@ -2301,7 +2288,7 @@ is omitted or one.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(ceiling, 0);
+  ROUNDING_CONVERT (ceiling, 0);
 }
 
 DEFUN ("floor", Ffloor, 1, 2, 0, /*
@@ -2316,7 +2303,7 @@ one.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(floor, 0);
+  ROUNDING_CONVERT (floor, 0);
 }
 
 DEFUN ("round", Fround, 1, 2, 0, /*
@@ -2333,7 +2320,7 @@ in the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(round, 0);
+  ROUNDING_CONVERT (round, 0);
 }
 
 DEFUN ("truncate", Ftruncate, 1, 2, 0, /*
@@ -2347,7 +2334,7 @@ This function returns multiple values; see `multiple-value-call' and
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(truncate, 0);
+  ROUNDING_CONVERT (truncate, 0);
 }
 
 /* Float-rounding functions. */
@@ -2364,7 +2351,7 @@ the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(ceiling, 1);
+  ROUNDING_CONVERT (ceiling, 1);
 }
 
 DEFUN ("ffloor", Fffloor, 1, 2, 0, /*
@@ -2379,7 +2366,7 @@ the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(floor, 1);
+  ROUNDING_CONVERT (floor, 1);
 }
 
 DEFUN ("fround", Ffround, 1, 2, 0, /*
@@ -2395,7 +2382,7 @@ the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(round, 1);
+  ROUNDING_CONVERT (round, 1);
 }
 
 DEFUN ("ftruncate", Fftruncate, 1, 2, 0, /*
@@ -2410,7 +2397,7 @@ the calculation.
 */
        (number, divisor))
 {
-  ROUNDING_CONVERT(truncate, 1);
+  ROUNDING_CONVERT (truncate, 1);
 }
 
 #ifdef FLOAT_CATCH_SIGILL

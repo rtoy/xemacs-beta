@@ -6,10 +6,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -17,9 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -67,17 +65,6 @@ struct x_device
 
   /* Used by x_bevel_modeline in redisplay-x.c */
   Pixmap gray_pixmap;
-
-#ifdef HAVE_XFT
-  /* The Xft Drawable wrapper for this device. */
-  /* This is persistent to take advantage of the ability of Xft's glyph
-     cache in the server, and avoid rendering the font again and again... 
-
-     This is created the first time through redisplay, and destroyed when our 
-     connection to the X display is destroyed. */
-  XftDraw *xftDraw;
-#endif
-  
 
   /* Atoms associated with this device. */
   /* allocated in Xatoms_of_device_x */
@@ -198,7 +185,6 @@ DECLARE_LISP_OBJECT (x_device, Lisp_X_Device);
 #define DEVICE_XT_APP_SHELL(d) 	(DEVICE_X_DATA (d)->Xt_app_shell)
 #define DEVICE_X_GC_CACHE(d) 	(DEVICE_X_DATA (d)->gc_cache)
 #define DEVICE_X_GRAY_PIXMAP(d) (DEVICE_X_DATA (d)->gray_pixmap)
-#define DEVICE_X_XFTDRAW(d) 	(DEVICE_X_DATA (d)->xftDraw)
 #define DEVICE_X_WM_COMMAND_FRAME(d) (DEVICE_X_DATA (d)->WM_COMMAND_frame)
 #define DEVICE_X_MOUSE_TIMESTAMP(d)  (DEVICE_X_DATA (d)->mouse_timestamp)
 #define DEVICE_X_GLOBAL_MOUSE_TIMESTAMP(d) (DEVICE_X_DATA (d)->global_mouse_timestamp)
@@ -331,6 +317,17 @@ struct x_frame
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
 
+#ifdef HAVE_XFT
+  /* The Xft Drawable wrapper for this device.
+     #### Should this be per-device, or per-frame? */
+  /* This is persistent to take advantage of the ability of Xft's glyph
+     cache in the server, and avoid rendering the font again and again... 
+
+     This is created the first time through redisplay, and destroyed when our 
+     connection to the X display is destroyed. */
+  XftDraw *xftDraw;
+#endif
+
   /* 1 if the frame is completely visible on the display, 0 otherwise.
      if 0 the frame may have been iconified or may be totally
      or partially hidden by another X window */
@@ -391,6 +388,10 @@ DECLARE_LISP_OBJECT (x_frame, Lisp_X_Frame);
 #endif /* HAVE_TOOLBARS */
 
 #define FRAME_X_GEOM_FREE_ME_PLEASE(f) (FRAME_X_DATA (f)->geom_free_me_please)
+
+#ifdef HAVE_XFT
+#define FRAME_X_XFTDRAW(f)   (FRAME_X_DATA (f)->xftDraw)
+#endif
 
 #define FRAME_X_TOTALLY_VISIBLE_P(f) (FRAME_X_DATA (f)->totally_visible_p)
 #define FRAME_X_TOP_LEVEL_FRAME_P(f) (FRAME_X_DATA (f)->top_level_frame_p)

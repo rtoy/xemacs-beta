@@ -1,3 +1,1009 @@
+2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* console.c:
+	* console.c (allocate_console):
+	* console.c (vars_of_console):
+	* console.c (complex_vars_of_console):
+	* lisp.h:
+	Add a new keymap variable, function-key-map-parent; use it as the
+	parent of each console-specific function-key-map.  This is
+	appropriate for things like x-compose processing.
+
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c:
+	* fns.c (list_delete_duplicates_from_end):
+	Correct a couple of comments in this file.
+	* fns.c (sublis):
+	Remove a superfluous gcpro1.
+
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (Feq_hash):
+	Document that this returns, for non-immediate objects, a value
+	that is unique among currently-reachable objects.
+
+2011-05-29  Didier Verna  <didier@xemacs.org>
+
+	* console-impl.h (struct console_methods): Remove device parameter
+	from the clear_region method prototype.
+	* redisplay-output.c (redisplay_clear_region): Remove the device
+	parameter from the clear_region method call.
+	* console-stream.c (stream_clear_region):
+	* redisplay-msw.c (mswindows_clear_region):
+	* redisplay-tty.c (tty_clear_region): Update accordingly.
+	* redisplay-xlike-inc.c (XLIKE_clear_region): Ditto. Get the
+	device from the frame structure instead.
+
+2011-05-20  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Default DESTDIR to the empty string, and use it in
+	install targets.
+
+2011-05-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in:
+	* data.c (Faref):
+	* fns.c (check_losing_bytecode):
+	* fns.c (concat):
+	* fns.c (Felt):
+	Remove the LOSING_BYTECODE compile-time option entirely. It
+	allowed access to the elements of a compiled function using
+	#'aref, and has been turned off since 1997.
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c:
+	* eval.c (Fdefmacro):
+	* eval.c (syms_of_eval):
+	Support macro-declaration-function in defmacro, incompletely and
+	without documentation.
+	* lisp.h:
+	Declare Fnth here, necessary for the previous changes.
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* s/netbsd.h:
+	Remove an extraneous #endif, hopefully fixing the NetBSD and
+	OpenBSD builds; thank you Adam Sjøgren!
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsplit_path): Removed.
+	* fns.c (syms_of_fns):
+	Move #'split-path to subr.el, as was always the intention.
+
+2011-05-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* dumper.c (pdump_file_try): Remove static qualifier.
+	Thanks to Hans de Graaff of Gentoo and Marcus Crestani.
+
+2011-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (parse_integer):
+	GMP's mpz_set_string deals with a leading plus badly, make sure it
+	never sees one coming from this function.
+
+2010-12-31  Mike Kupfer  <mike.kupfer@xemacs.org>
+
+	* redisplay.c (pixel_to_glyph_translation):
+	Handle redisplay edge case.
+	With motion events when entering a frame and the minibuffer is
+	active, row and column can be zero, and there aren't any runes.
+
+2011-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* specifier.c (Fspecifier_matching_instance):
+	Add comment about backward-incompatibility of MATCHSPEC.
+
+2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.31 "ginger" is released.
+
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
+2011-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c:
+	* editfns.c (syms_of_editfns):
+	Implement #'char= in cl-extra.el, not here, accepting more than
+	two arguments as Common Lisp specifies.
+
+2011-04-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-tty.c (tty_device_system_metrics): Fix compile issues for
+	C89 compilers.  Use log() instead of log2().
+
+2011-04-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (count_with_tail):
+	This can be legitimately called from #'delete* with a specified
+	COUNT keyword value, accept this in the assertion.
+	* fns.c (FdeleteX):
+	* fns.c (FremoveX):
+	If COUNT is specified and FROM-END is non-nil, set COUNT to nil in
+	the argument vector, so count_with_tail doesn't see it when
+	calculating the total number of times an item occurs.  Fixes
+	problems with the interaction of :count and :from-end.
+
+2011-04-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (FremoveX):
+	* fns.c (sublis):
+	Correct some nesting of GCPRO and UNGCPRO here, revealed by the
+	the C++ build compiling core Lisp. Thank you Mats' buildbot!
+
+2011-04-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (GC_EXTERNAL_LIST_LOOP_3, GC_EXTERNAL_LIST_LOOP_4): New.
+	* fns.c (count_with_tail, list_position_cons_before, FassocX):
+	* fns.c (FrassocX, position, FdeleteX, FremoveX):
+	* fns.c (list_delete_duplicates_from_end):
+	* fns.c (Fdelete_duplicates, Fremove_duplicates, Freduce):
+	* fns.c (Fnsubstitute, Fsubstitute, sublis, nsublis, Fnsublis):
+	* fns.c (venn, nvenn, Funion, Fset_exclusive_or, Fnset_exclusive_or):
+	Use GC_EXTERNAL_LIST_LOOP_* in the sequence functions in fns.c
+	where appropriate, there were some corner cases where my old
+	approach was unsafe (mainly if the circularity checking's tortoise
+	lost GCPRO protection.
+	Add GC_EXTERNAL_LIST_LOOP_{3,4}, analogous to
+	GC_EXTERNAL_LIST_LOOP_2.
+
+2011-03-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-tty-impl.h (struct tty_console): Add field for number of
+	displayable colors.
+	* device-tty.c (tty_device_system_metrics): Return metrics for
+	num-color-cells and num-bit-planes.  Tracker issue 757.
+	* device.c: There are two required args for device-system-metric.
+	* redisplay-tty.c (init_tty_for_redisplay): Retrieve number of
+	colors from terminal description.  Default to 2 if none found.
+
+2011-03-24  Jerry James  <james@xemacs.org>
+
+	* alloc.c (listu): Assemble the list in the right order so we don't
+	have to reverse it.
+	(listn): Ditto.
+	* dired.c (Ffile_attributes): Use listn instead of building an array
+	to pass to Flist.  GC protect the mode string.
+	* editfns.c (Fdecode_time): Use listn instead of Flist.
+	* faces.c (vars_of_faces): Use listu instead of Flist.
+
+2011-03-24  Jerry James  <james@xemacs.org>
+
+	* README.kkcc: "occured" -> "occurred".
+	* alloc.c (malloced_storage_size): "supress" -> "suppress".
+	* buffer.c: "intial" -> "initial".
+	* elhash.c (Fdefine_hash_table_test): "analagous" -> "analogous".
+	* emacs.c: "targetting" -> "targeting".
+	(shut_down_emacs): "recurrance" -> "reoccurrence".
+	* event-stream.c: "accidentaly" -> "accidentally", and fix grammar.
+	* extents.c: "occuring" -> "occurring".
+	* faces.c (update_face_cachel_data): "appart" -> "apart", "begining"
+	-> "beginning".
+	* file-coding.c (Vkeyboard_coding_system): "interpet" -> "interpret".
+	* fileio.c (Fmake_temp_name): "analagous" -> "analogous".
+	* fontcolor-gtk.c: "sucess" -> "success".
+	* frame-gtk.c (gtk_init_frame_2): "carefull" -> "careful", fix
+	whitespace.
+	* frame.c: "negotation" -> "negotiation".
+	* glyphs-msw.c (mswindows_map_subwindow): "everytime" -> "every time".
+	* glyphs-widget.c: "accomodate" -> "accommodate".
+	(logical_unit_height): Ditto.
+	(Fwidget_logical_to_character_height): Ditto.
+	* gtk-xemacs.c (__nuke_background_items): "noticable" -> "noticeable".
+	* menubar-gtk.c: "inital" -> "initial".
+	* mule-ccl.c: "refered" -> "referred to".
+	* nt.c (mswindows_stat): "noticable" -> "noticeable".
+	* ntheap.c (recreate_heap): "commited" -> "committed".
+	* s/cygwin32.h: "konw" -> "know".
+	* sysdll.c: "dependant" -> "dependent".
+	* syswindows.h: "targetting" -> "targeting".
+	* text.c: "reversable" -> "reversible".
+	* unexcw.c (copy_executable_and_dump_data_section): "addres" ->
+	"address".
+	* unicode.c (Funicode_precedence_list): "occurrance" -> "occurrence".
+	* window.c (struct window_mirror_stats): "Ancilliary" -> "Ancillary".
+
+2011-03-20  Mats Lidell  <matsl@xemacs.org>
+
+	* alloca.c (find_stack_direction):
+	* alloca.c (xemacs_c_alloca):
+	Remove use of auto keyword. It is default and will be illegal in
+	C++0X.
+
+2011-03-17  Didier Verna  <didier@xemacs.org>
+
+	* data.c (init_errors_once_early): Define Qextent_read_only error.
+	* lisp.h: Declare it.
+	* extents.c (verify_extent_mapper): Signal an extent-read-only
+	error instead of a buffer-read-only one.
+
+2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in (SUPPORT_CONFOUNDING_FUNCTIONS): New #define,
+	equivalent NEED_TO_HANDLE_21_4_CODE by default, describing whether
+	this XEmacs should support the old-eq, old-equal and related
+	functions and byte codes.
+	* bytecode.c (UNUSED):
+	Only interpret old-eq, old-equal, old-memq if
+	SUPPORT_CONFOUNDING_FUNCTIONS is defined.
+	* data.c:
+	Move Fold_eq to fns.c with the rest of the Fold_* functions.
+	* fns.c:
+	* fns.c (Fmemq):
+	* fns.c (memq_no_quit):
+	* fns.c (assoc_no_quit):
+	* fns.c (Frassq):
+	* fns.c (Fequal):
+	* fns.c (Fold_equal):
+	* fns.c (syms_of_fns):
+	Group old-eq, old-equal, old-memq etc together, surround them with
+	#ifdef SUPPORT_CONFOUNDING_FUNCTIONS.
+
+2011-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs-eimage.c (png_instantiate):
+	Update the PNG handling code to work with versions of the library
+	where the png_info structure is no longer visible. Thank you for
+	the report, Robert Delius Royar.
+
+2011-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-stream.c (Fdispatch_event):
+	As documented, allow pre-command-hook to usefully modify
+	this-command even when this-command is nil (that is, we would
+	normally throw an undefined-keystroke-sequence error). Don't throw
+	that error if this-command was modified, instead try to execute
+	the new value.
+	Allow pre-command-hook to modify last-command-event in this
+	specific context. Don't document this, for the moment.
+
+2011-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (optimize_byte_code):
+	Only transform assignments to keywords to Bdiscard if
+	NEED_TO_HANDLE_21_4_CODE is turned on. Cf. similar code in
+	reject_constant_symbols().
+
+2011-02-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsubstring_no_properties):
+	Sigh, get_string_range_char checks the type of its START and END
+	arguments, but doesn't check the type of its STRING
+	argument. Thank you Raymond Toy!
+
+2011-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fset_exclusive_or):
+	This function accepts the :stable keyword too, document this in
+	its arglist.
+
+2011-02-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs.def.in.in:
+	No longer export acons(), export Facons() instead, thank you Mats,
+	Jerry and Jeff Sparkes.
+
+2011-02-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (shortest_length_among_sequences):
+	This was buggy, it always errored if the last argument was
+	circular, even if other arguments were non-circular. Correct that.
+
+2011-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (Facons):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (syms_of_alloc):
+	* faces.c (complex_vars_of_faces):
+	* lisp.h:
+	* mc-alloc.c (Fmc_alloc_memory_usage):
+	Rename acons() to Facons(), make it visible to Lisp. Change uses
+	of the function in C accordingly.
+
+2011-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (describe_map_sort_predicate): Correct the order of
+	arguments to map_keymap_sort_predicate() here. Thanks again, Mats.
+
+2011-02-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fapropos_internal):
+	Supply check_string_lessp_nokey explicitly as the CHECK_MERGE
+	argument to list_sort(), NULL no longer works. Thank you Mats
+	Lidell in IRC!
+
+2011-02-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c:
+	* fns.c (check_lss_key, check_lss_key_car): New.
+	* fns.c (check_string_lessp_key check_string_lessp_key_car): New.
+	* fns.c (get_merge_predicate): New.
+	* fns.c (list_merge):
+	* fns.c (array_merge):
+	* fns.c (list_array_merge_into_list):
+	* fns.c (list_list_merge_into_array):
+	* fns.c (list_array_merge_into_array):
+	* fns.c (Fmerge):
+	* fns.c (list_sort):
+	* fns.c (array_sort):
+	* fns.c (FsortX):
+	* fns.c (syms_of_fns):
+	* lisp.h:
+	Move #'sort, #'merge to using the same test approach as is used in
+	the functions that take TEST, TEST-NOT and KEY arguments.  This
+	allows us to avoid the Ffuncall() overhead when the most common
+	PREDICATE arguments are supplied, in particular #'< and
+	#'string-lessp.
+
+	* fontcolor-msw.c (sort_font_list_function):
+	* fontcolor-msw.c (mswindows_enumerate_fonts):
+	* dired.c:
+	* dired.c (Fdirectory_files):
+	* fileio.c:
+	* fileio.c (build_annotations):
+	* fileio.c (syms_of_fileio):
+	* keymap.c:
+	* keymap.c (keymap_submaps):
+	* keymap.c (map_keymap_sort_predicate):
+	* keymap.c (describe_map_sort_predicate):
+	* keymap.c (describe_map):
+	Change the various C predicates passed to list_sort () and
+	list_merge () to fit the new calling convention, returning
+	non-zero if the first argument is less than the second, zero
+	otherwise.
+
+2011-01-30  Michael Sperber  <mike@xemacs.org>
+
+	* redisplay.h: 
+	* redisplay.c: 
+	(redisplay_cancel_ritual_suicide): 
+	* eval.c (throw_or_bomb_out_unsafe): 
+	* device-x.c (x_IO_error_handler): Don't commit suicide when an X
+	device dies.
+
+2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (complex_vars_of_file_coding):
+	* intl-win32.c (complex_vars_of_intl_win32):
+	* profile.c (Fget_profiling_info):
+	* unicode.c (complex_vars_of_unicode):
+	Replace various awkward calls to nconc2 () with list6 () with
+	analogous calls to Ben's relatively-recently introduced listu (),
+	constructing a list from an arbitrary number of C arguments.
+
+2011-01-18  Mike Sperber  <mike@xemacs.org>
+
+	* s/freebsd.h: Zap. Not really needed anymore, and it has unclear
+	license status.
+
+2011-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* s/usg5-4.h (PTY_NAME_SPRINTF, PTY_TTY_NAME_SPRINTF):
+	That didn't work; attempt with qxestrcpy_ascii(),
+	qxestrncpy_ascii().
+
+2011-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* s/hpux11.h (PTY_TTY_NAME_SPRINTF, PTY_NAME_SPRINTF):
+	* s/usg5-4.h (PTY_TTY_NAME_SPRINTF, PTY_NAME_SPRINTF):
+	Replace sprintf() with qxesprintf(), strcpy with qxestrpy(),
+	hopefully fixing some platform-specific C++ builds.
+
+2011-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Ffind): Use the correct subr information here, pass in
+	the DEFAULT keyword argument value correctly.
+
+2011-01-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-msw.c (Fmswindows_printer_list): Remove a Fdelete ()
+	call here, remove the necessity for it.
+	* fns.c (Fdelete, Fdelq): 
+	* lisp.h:
+	Move #'delete, #'delq to Lisp, implemented in terms of #'delete*
+	* select.c (Fown_selection_internal):
+	* select.c (handle_selection_clear):
+	Use delq_no_quit() in these functions, don't reimplement it or use
+	Fdelq(), which is now gone.
+
+2011-01-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mc-alloc.c (get_used_list_index):
+	Replace some C++ comments with C-style /* comments.
+
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (FdeleteX, FremoveX, Fnsubstitute, Fsubstitute, syms_of_fns): 
+	Don't repeat the declaration and DEFSYMBOL() for Qnintersection in
+	this file; don't assume that bignums are always available. Fixes
+	some of the build problems the buildbot is showing me at the
+	moment.
+	(syms_of_fns): Remove a couple more duplicate symbol declarations.
+
+2011-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (print_ephemeron, print_weak_list, print_weak_box):
+	Be more helpful in printing these structures; show their contents,
+	print their UIDs so it's possible to distinguish between them.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move the heavy lifting from cl-seq.el to C, finally making those
+	functions first-class XEmacs citizens, with circularity checking,
+	built-in support for tests other than #'eql, and as much
+	compatibility with current Common Lisp as Paul Dietz' tests require.
+
+	* fns.c (check_eq_nokey, check_eq_key, check_eql_nokey)
+	(check_eql_key, check_equal_nokey, check_equal_key)
+	(check_equalp_nokey, check_equalp_key, check_string_match_nokey)
+	(check_string_match_key, check_other_nokey, check_other_key)
+	(check_if_nokey, check_if_key, check_match_eq_key)
+	(check_match_eql_key, check_match_equal_key)
+	(check_match_equalp_key, check_match_other_key): New. These are
+	basically to provide function pointers to be used by Lisp
+	functions that take TEST, TEST-NOT and KEY arguments.
+
+	(get_check_match_function_1, get_check_test_function)
+	(get_check_match_function): These functions work out which of the
+	previous list of functions to use, given the keywords supplied by
+	the user.
+
+	(count_with_tail): New. This is the bones of #'count.
+	(list_count_from_end, string_count_from_end): Utility functions
+	for #'count.
+	(Fcount): New, moved from cl-seq.el.
+	(list_position_cons_before): New. The implementation of #'member*,
+	and important in implementing various other functions.
+
+	(FmemberX, Fadjoin, FassocX, FrassocX, Fposition, Ffind)
+	(FdeleteX, FremoveX, Fdelete_duplicates, Fremove_duplicates)
+	(Fnsubstitute, Fsubstitute, Fsublis, Fnsublis, Fsubst, Fnsubst)
+	(Ftree_equal, Fmismatch, Fsearch, Fintersection, Fnintersection)
+	(Fsubsetp, Fset_difference, Fnset_difference, Fnunion, Funion)
+	(Fset_exclusive_or, Fnset_exclusive_or): New, moved here from
+	cl-seq.el.
+
+	(position): New. The implementation of #'find and #'position.
+	(list_delete_duplicates_from_end, subst, sublis, nsublis)
+	(tree_equal, mismatch_from_end, mismatch_list_list)
+	(mismatch_list_string, mismatch_list_array)
+	(mismatch_string_array, mismatch_string_string)
+	(mismatch_array_array, get_mismatch_func): Helper C functions for
+	the Lisp-visible functions.
+	(venn, nvenn): New. The implementation of the main Lisp functions that
+	treat lists as sets.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (DECLARE_N_KEYWORDS_8, DECLARE_N_KEYWORDS_9)
+	(CHECK_N_KEYWORDS_8, CHECK_N_KEYWORDS_9):
+	Support up to nine keywords in the PARSE_KEYWORDS() macro.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (syms_of_elhash): 
+	* chartab.c (syms_of_chartab):
+	* abbrev.c (syms_of_abbrev):
+	* general-slots.h:
+	Move Qcount, Q_default, Q_test to general-slots.h, they're about
+	to be used by other files. Rename Q_default to Q_default_, for the
+	sake of the PARSE_KEYWORDS macro (given that default is a reserved
+	identifier in C). Add SYMBOL_KEYWORD_GENERAL(), analogous to
+	SYMBOL_GENERAL() to make this easier.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* floatfns.c (Ffloat): If we've been handed a bigfloat here, it's
+	appropriate to give the same bigfloat back.
+
+2010-11-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Ffill):
+	Move all declarations before statements, for the sake of the
+	Visual Studio build. Thank you Vin!
+
+2010-11-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* font-mgr.c (Ffc_pattern_get): Fix my last change when both
+	--with-union-type and --with-xft are specified, thank you Robert
+	Delius Royar!
+
+2010-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.c (Fexpand_abbrev):
+	* alloc.c:
+	* alloc.c (Fmake_list):
+	* alloc.c (Fmake_vector):
+	* alloc.c (Fmake_bit_vector):
+	* alloc.c (Fmake_byte_code):
+	* alloc.c (Fmake_string):
+	* alloc.c (vars_of_alloc):
+	* bytecode.c (UNUSED):
+	* bytecode.c (Fbyte_code):
+	* chartab.c (decode_char_table_range):
+	* cmds.c (Fself_insert_command):
+	* data.c (check_integer_range):
+	* data.c (Fnatnump):
+	* data.c (Fnonnegativep):
+	* data.c (Fstring_to_number):
+	* elhash.c (hash_table_size_validate):
+	* elhash.c (decode_hash_table_size):
+	* eval.c (Fbacktrace_frame):
+	* event-stream.c (lisp_number_to_milliseconds):
+	* event-stream.c (Faccept_process_output):
+	* event-stream.c (Frecent_keys):
+	* event-stream.c (Fdispatch_event):
+	* events.c (Fmake_event):
+	* events.c (Fevent_timestamp):
+	* events.c (Fevent_timestamp_lessp):
+	* events.h:
+	* events.h (struct command_builder):
+	* file-coding.c (gzip_putprop):
+	* fns.c:
+	* fns.c (check_sequence_range):
+	* fns.c (Frandom):
+	* fns.c (Fnthcdr):
+	* fns.c (Flast):
+	* fns.c (Fnbutlast):
+	* fns.c (Fbutlast):
+	* fns.c (Fmember):
+	* fns.c (Ffill):
+	* fns.c (Freduce):
+	* fns.c (replace_string_range_1):
+	* fns.c (Freplace):
+	* font-mgr.c (Ffc_pattern_get):
+	* frame-msw.c (msprinter_set_frame_properties):
+	* glyphs.c (check_valid_xbm_inline):
+	* indent.c (Fmove_to_column):
+	* intl-win32.c (mswindows_multibyte_to_unicode_putprop):
+	* lisp.h:
+	* lisp.h (ARRAY_DIMENSION_LIMIT):
+	* lread.c (decode_mode_1):
+	* mule-ccl.c (ccl_get_compiled_code):
+	* number.h:
+	* process-unix.c (unix_open_multicast_group):
+	* process.c (Fset_process_window_size):
+	* profile.c (Fstart_profiling):
+	* unicode.c (Funicode_to_char):
+	Change NATNUMP to return 1 for positive bignums; changes uses of
+	it and of CHECK_NATNUM appropriately, usually by checking for an
+	integer in an appropriate range.
+	Add array-dimension-limit and use it in #'make-vector,
+	#'make-string. Add array-total-size-limit, array-rank-limit while
+	we're at it, for the sake of any Common Lisp-oriented code that
+	uses these limits.
+	Rename check_int_range to check_integer_range, have it take
+	Lisp_Objects (and thus bignums) instead.
+	Remove bignum_butlast(), just set int_n to an appropriately large
+	integer if N is a bignum.
+	Accept bignums in check_sequence_range(), change the functions
+	that use check_sequence_range() appropriately.
+	Move the definition of NATNUMP() to number.h; document why it's a
+	reasonable name, contradicting an old comment.
+
+2010-11-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (bignum_butlast): New.
+	(Fnbutlast, Fbutlast): Use it.
+	In #'butlast and #'nbutlast, if N is a bignum, we should always
+	return nil. Bug revealed by Paul Dietz' test suite, thank you
+	Paul.
+
+2010-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* .gdbinit.in: Remove lrecord_type_popup_data,
+	lrecord_type_window_configuration from this file, they're not
+	used, and their presence breaks pobj in GDB at runtime for me.
+
+2010-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fnreverse):
+	Check that non-list sequences are writable from Lisp before
+	modifying them. (There's an argument that we should do this for
+	list sequences too, but for the moment other code (e.g. #'setcar)
+	doesn't.)
+	(mapcarX): Initialise lisp_vals_staging, lisp_vals_type
+	explicitly, for the sake of compile warnings. Check if
+	lisp_vals_staging is non-NULL when deciding whether to replace a
+	string's range.
+	(Fsome): Cross-reference to #'find-if in the doc string for this
+	function.
+	(Freduce): GCPRO accum in this function, when a key argument is
+	specicified it can be silently garbage-collected.  When deciding
+	whether to iterate across a string, check whether the cursor
+	exceeds the byte len; while iterating, increment an integer
+	counter.  Don't ABORT() if check_sequence_range() returns when
+	handed a suspicious sequence; it is legal to supply the length of
+	SEQUENCE as the :end keyword value, and this will provoke our
+	suspicions, legitimately enough. (Problems with this function
+	revealed by Paul Dietz' ANSI test suite, thank you Paul Dietz.)
+	(Freplace): Check list sequence lengths using the arguments, not
+	the conses we're currently looking at, thank you Paul Dietz.
+
+2010-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Frandom): Correct the docstring here, the name of the
+	argument is LIMIT, not N.
+
+2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (bytecode_nreverse): Call Fnreverse() if SEQUENCE is
+	not a cons in this function.
+	(Fnreverse, Freverse):
+	Accept sequences, not just lists, in these functions.
+
+2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Flist_length): Error if LIST is dotted in this function;
+	document this behaviour.
+
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c (specifier_instance_from_inst_list):
+	Call call_with_suspended_errors() with ERROR_ME_WARN, explicitly;
+	avoids the problem Giacomo Boffi describes in
+	http://mid.gmane.org/19617.52517.341117.388679@aiuole.stru.polimi.it
+	, but the specifier instantiation bug that makes XEmacs fail for
+	him is still visible.
+
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (ulong_to_bit_string): If printing zero, actually print
+	a zero, don't return the empty string.
+
+2010-07-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* emodules.c (emodules_load):
+	Add one more dereference on f = dll_variable() in three places.
+	We then use EXTERNAL_TO_ITEXT on it, which returns an alloca'd
+	string, so I delete the unneeded alloca copy statements.
+	Fixes error reported by Anders Odberg, confirmed in
+	<rfawrpfhm3l.fsf@fangorn.uio.no>.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ui-byhand.c:
+	* gtk-glue.c:
+	Add copyright notice based on internal evidence.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* number.h: Another permission consistency fix.
+
+2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fnbutlast, Fbutlast):
+	Tighten up Common Lisp compatibility for these two functions; they
+	need to operate on dotted lists without erroring.
+
+2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (list_merge):
+	Circularity checking here needs to be done independently for each
+	list, they can't share a loop counter. Thank you for the bug
+	report, Robert Pluim!
+
+2010-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (GET_DEFUN_LISP_OBJECT): Make the NEW_GC version of this
+	work, remove a needless and unhelpful semicolon.
+	(GET_DEFUN_LISP_OBJECT): Remove a needless semicolon from the
+	non-NEW_GC version of this.
+	(PARSE_KEYWORDS): Fix the indentation for the DEBUG_XEMACS
+	version of this macro.
+	(PARSE_KEYWORDS): Use GET_DEFUN_LISP_OBJECT() for both the NEW_GC
+	and non-NEW_GC versions of this macro, when working out the
+	function's min args. 
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS):
+	Turns out #elsif is not valid preprocessor syntax, who knew!
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS):
+	Correct the NEW_GC non-DEBUG_XEMACS version of this macro; under
+	such builds S##function is a pointer, not a Lisp_Subr structure.
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Simplify the API of PARSE_KEYWORDS for callers.
+
+	* lisp.h (PARSE_KEYWORDS): Simply the API, while making the
+	implementation a little more complex; work out KEYWORDS_OFFSET
+	from the appropriate Lisp_Subr struct, take the function name as
+	the C name of the DEFUN rather than a symbol visible as a
+	Lisp_Object, on debug builds assert that we're actually in the
+	function so we choke on badly-done copy-and-pasting,
+
+	* lisp.h (PARSE_KEYWORDS_8): New. This is the old PARSE_KEYWORDS.
+
+	* fns.c (Fmerge, FsortX, Ffill, Freduce, Freplace):
+	Change to use the new PARSE_KEYWORDS syntax.
+	* elhash.c (Fmake_hash_table): Chance to the new PARSE_KEYWORDS
+	syntax, rename a define to correspond to what other files use.
+	
+	* symbols.c (intern_massaging_name):
+	* buffer.c (ADD_INT):
+	Rename intern_converting_underscores_to_dashes() to
+	intern_massaging_name(), now it does a little more.
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* termcap.c:
+	Add a couple of missing includes here, which should fix builds
+	that use this file. (I have no access to such builds, but Mats'
+	buildbot shows output that indicates they fail at link time since
+	DEVICE_BAUD_RATE and IS_DIRECTORY_SEP are available.)
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Freduce):
+	Move statements outside of the braces surrounding the
+	EXTERNAL_LIST_LOOP_3 macro, fixing strict C89 builds. Thank you
+	for the report, Vin!
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Flist_length): New, moved here from cl-extra.el, needed
+	by the next function.
+	(shortest_length_among_sequences): New.
+	(Fmapconcat, FmapcarX, Fmapvector, Fmapcan, Fmapc, Fmap)
+	(Fmap_into, Fsome, Fevery):
+	Use shortest_length_among_sequences() when working out how many
+	iterations to do, only giving circular list errors if all
+	arguments are circular.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsubseq):
+	Change the string code to better fit in with the rest of this
+	function (it still uses get_string_range_char(), though, which *may*
+	diverge algorithmically from what we're doing).
+
+	If dealing with a cons, only call #'length if we have reason to
+	believe that the START and END arguments are badly specified, and
+	check for circular lists ourselves when that's appropriate.
+
+	If dealing with a vector, call Fvector() on the appropriate subset
+	of the old vector's data directly, don't initialise the result
+	with nil and then copy.
+
+	(Ffill):
+	Only check the range arguments for a cons SEQUENCE if we have good
+	reason to think they were badly specified.
+	
+	(Freduce):
+	Handle multiple values properly. Add bounds checking to this
+	function, as specificied by ANSI Common Lisp.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Ffunction, Fquote):
+	Add argument information in the arguments: () format for these two
+	special operators.
+
+2010-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Freplace): 
+	Replace an accidental double semi-colon with a single semi-colon,
+	hopefully fixing Vin's Visual Studio 6 build. (Visual Studio 2005
+	had no problem with it, oddly.)
+
+2010-09-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move #'replace to C; add bounds checking to it and to #'fill.
+
+	* fns.c (Fsubseq, Ffill, mapcarX):
+	Don't #'nreverse in #'subseq, use fill_string_range and check
+	bounds in #'fill, use replace_string_range() in #'map-into
+	avoiding quadratic time when modfiying the string.
+
+	* fns.c (check_sequence_range, fill_string_range)
+	(replace_string_range, replace_string_range_1, Freplace):
+	New functions; check that arguments fit sequence dimensions, fill
+	a string range with a given character, replace a string range from
+	an Ibyte pointer.
+
+2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (char_table_default_for_type,
+	chartab_default_validate): New. 
+	(print_char_table, Freset_char_table, chartab_default_validate)
+	(chartab_instantiate, structure_type_create_chartab):
+	Accept keyword :default in the read syntax for char tables, and
+	print the default when it is not what was expected for the
+	time. Makes it a little easier to debug things.
+
+2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c (Fformat_time_string):
+	Use two backslashes so that there is at least one present in the
+	output of describe function, when describing the Roman month
+	number syntax in this function's docstring. Thanks for provoking
+	me to look at this, Stephen Turnbull.
+
+2010-09-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symsinit.h: Declare reinit_process_early() here, fixing the C++
+	build; thank you for pointing this out, Adam Sjøgren!
+	* fontcolor-msw.c (mswindows_string_to_color):
+	Cast the result of bsearch() to a colormap_t pointer, fixing the
+	Visual Studio 2005 build.
+
+2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* strftime.c (roman_upper, roman_lower, strftime):
+	Implement Roman month numbers, as used in central and eastern
+	Europe.
+	* editfns.c (Fformat_time_string):
+	Document two new escapes, to allow uppercase and lowercase Roman
+	month numbers. Remove documentation of a bug that we didn't
+	actually have.
+	* text.h (Qtime_function_encoding): We know the text encoding
+	coming from strftime(), because we always use the one in
+	strftime.c. Don't use Qnative.
+
+2010-09-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (list_merge, list_array_merge_into_list)
+	(list_array_merge_into_array):
+	Avoid algorithmic complexity surprises when checking for
+	circularity in these functions.
+	(Freduce): Fix some formatting, in passing.
+
+	(mapcarX): Drop the SOME_OR_EVERY argument to this function;
+	instead, take CALLER, a symbol reflecting the Lisp-visible
+	function that called mapcarX(). Use CALLER with
+	mapping_interaction_error() when sequences are modified
+	illegally. Don't cons with #'some, #'every, not even a little.
+	(Fmapconcat, FmapcarX, Fmapvector, Fmapcan, Fmapc, Fmap)
+	(Fmap_into, Fsome, Fevery): Call mapcarX() with its new
+	arguments.
+	(Fmapcan): Don't unnecessarily complicate the nconc call.
+
+	(maplist): Take CALLER, a symbol reflecting the Lisp-visible
+	function that called maplist(), rather than having separate
+	arguments to indicate mapl vs. mapcon.
+	Avoid algorithmic complexity surprises when checking for
+	circularity. In #'mapcon, check a given stretch of
+	result for well-formedness once, which was not previously the
+	case, despite what the comments said.
+	(Fmaplist, Fmapl, Fmapcon):
+	Call maplist() with its new arguments.	
+
+2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.c (process_getprop, process_putprop, process_remprop)
+	(process_plist, process_setplist, reinit_process_early):
+	Add functions to modify a process's property list.
+	* process-slots.h (MARKED_SLOT): Add a plist slot.
+
+	* fns.c (Fobject_setplist): New function, analogous to #'setplist,
+	but more general.
+	Update the documentation in the other plist functions to reflect
+	that processes now have property lists.
+	* emacs.c (main_1): Call reinit_process_early(), now processes have
+	plist methods that need to be initialised.
+	* symbols.c (reinit_symbol_objects_early): Fsetplist is the named
+	setplist method for symbols.
+
+2010-08-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* floatfns.c (ceiling_one_mundane_arg, floor_one_mundane_arg)
+	(round_one_mundane_arg, truncate_one_mundane_arg):
+	INTEGERP is always available, no need to wrap calls to it with
+	#ifdef HAVE_BIGNUM.
+	(Fceiling, Ffloor, Fround, Ftruncate, Ffceiling, Fffloor)
+	(Ffround, Fftruncate):
+	Correct some code formatting here.
+	* doprnt.c (emacs_doprnt_1):
+	Remove some needless #ifdef WITH_NUMBER_TYPES, now number.h is
+	always #included. 
+
+2010-08-26  Adam Sjøgren <asjo@koldfront.dk>
+
+	* glyphs-eimage.c (gif_instantiate): Try harder to find an
+	appropriate GIF colormap and then flag an error if one can't be
+	found.
+
+2010-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read_escape):
+	Make error messages better reflect the text that was encountered,
+	when overlong hex character escapes or non-Latin-1 octal character
+	escapes are encountered.
+
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (print_symbol):
+	Escape any symbols that look like ratios, in the same way we do
+	symbols that look like floats or integers. Prevents confusion in
+	the Lisp reader.
+	* lread.c (isratio_string): Make this available even on builds
+	without HAVE_RATIO, so we can print symbols that look like ratios
+	with the appropriate escapes.
+	* lisp.h:
+	Make isratio_string available even if HAVE_RATIO is not defined.
+
+2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS):
+	Always accept a nil :allow-other-keys keyword argument, as
+	described in the ALLOW-OTHER-KEYS-NIL Common Lisp issue writeup,
+	and as necessary for Paul Dietz' tests for #'reduce.
+
+	* fns.c (mapping_interaction_error): New.
+	(Freduce): Call mapping_interaction_error when KEY or FUNCTION
+	have modified a string SEQUENCE such that the byte length of the
+	string has changed, or such that the current cursor pointer
+	doesn't point to the beginning of a character.
+	Cf. the MAPPING-DESTRUCTIVE-INTERACTION Common Lisp issue
+	writeup.
+	When traversing a list, GCPRO the part of it we still have to
+	traverse, to avoid any crashes if FUNCTION or KEY amputate it
+	behind us and force a garbage collection.
+
+2010-06-05  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* gc.c:
+	* mc-alloc.c:
+	Document the new allocator and the new garbage collector.
+
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* elhash.c:
+	* emacs.c:
+	* glade.c:
+	* gtk-glue.c:
+	* gtk-xemacs.c:
+	* gtk-xemacs.h:
+	* m/alpha.h:
+	* number-gmp.c:
+	* number-gmp.h:
+	* number-mp.c:
+	* number-mp.h:
+	* number.c:
+	* number.h:
+	* s/hpux11-shr.h:
+	* s/mach-bsd4-3.h:
+	* s/sco7.h:
+	* symsinit.h:
+	* ui-byhand.c:
+	* ui-gtk.c:
+	* ui-gtk.h:
+	Correct FSF address in permission notice.
+	
+2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (Fpurecopy):
+	Moved to obsolete.el as an alias for #'identity, marked obsolete.
+
+2010-06-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Freduce):
+	Move this here from cl-seq.el, avoiding the need to cons.  This
+	has been tested using Paul Dietz' test suite, and everything
+	applicable passes, with the exception that the
+	ALLOW-OTHER-KEYS-NIL Common Lisp issue (functions with &key must
+	*always* accept :allow-other-keys nil) hasn't been implemented.
+
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (vars_of_lread):
+	* emacs.c:
+	(shut_down_emacs, vars_of_emacs, complex_vars_of_emacs):
+	* device-x.c (get_device_from_display)
+	(have_xemacs_resources_in_xrdb):
+	* device-gtk.c (Fgtk_init):
+	* config.h.in:
+	Remove all checks for InfoDock.
+
 2010-06-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console-x-impl.h (DEVICE_X_XFTDRAW): Define, instead of
@@ -246,7 +1252,7 @@
 	* elhash.c (internal_hash):
 	* elhash.c (Feql_hash):
 	Fix spacing before parens.
-
+	
 	* general-slots.h:
 	* xemacs.def.in.in:
 	Export Qfixnump to fix eldap.c link error.
@@ -3173,6 +4179,110 @@
 	Remove the PDWORD_PTR typedef; it's not used in
 	intl-auto-encap-win32.h , and it breaks the build with Visual C++
 	2005 Express Edition and a 2005 copy of the SDK.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* sysdep.c:
+	* sysdep.c (qxe_reliable_signal):
+	* sysdep.c (retry_open_1):
+	* sysdep.c (retry_close):
+	* sysdep.c (retry_read_1):
+	* sysdep.c (retry_write_1):
+	* sysdep.c (retry_fopen):
+	* sysdep.c (retry_fclose):
+	* sysdep.c (retry_fread):
+	* sysdep.c (retry_fwrite):
+	Remove conditionalization on INTERRUPTIBLE_IO, INTERRUPTIBLE_OPEN,
+	INTERRUPTIBLE_CLOSE -- always check for EINTR as there's no harm
+	in it.
+
+	Remove old #if 0'ed out SA_RESTART code.
+
+	Use manifest constant IRIX6_5 instead of IRIX.
+
+	* Makefile.in.in:
+	* dired.c:
+	* dired.c (Ffile_attributes):
+	Use manifest constant IRIX6_5 instead of IRIX.
+	Eliminate constant BSD4_2, use BSD4_3 instead.
+	
+	* getloadavg.c:
+	* getloadavg.c (getloadavg):
+	* getloadavg.c (LDAV_PRIVILEGED):
+	* getloadavg.c (LDAV_DONE):
+	Sync with GNU 23.1.92.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* s/README:
+	* s/aix4-2.h:
+	* s/aix4-2.h (MAIL_USE_LOCKF):
+	* s/bsd-common.h:
+	* s/freebsd.h:
+	* s/freebsd.h (Carey):
+	* s/freebsd.h (or):
+	* s/gnu.h:
+	* s/gnu.h (DATA_START):
+	* s/hpux11-shr.h:
+	* s/hpux11.h:
+	* s/hpux11.h (random):
+	* s/irix6-5.h:
+	* s/linux.h:
+	* s/mach-bsd4-3.h:
+	* s/netbsd.h:
+	* s/netbsd.h (or):
+	* s/netbsd.h (A_TEXT_OFFSET):
+	* s/netbsd.h (NO_MATHERR):
+	* s/openbsd.h:
+	* s/sol2.h:
+	* s/usg5-4-2.h:
+	* s/usg5-4.h:
+	* s/usg5-4.h (or):
+	* s/usg5-4.h (ORDINARY_LINK):
+	Sync with GNU 23.1.92.
+
+	Put back linux.h.
+
+	Rename: bsd4-3.h -> bsd-common.h; irix6-0.h -> irix6-5.h.
+	Delete: template.h (useless).
+
+	Delete a whole bunch of obsolete stuff in sol2.h, linux.h,
+	freebsd.h -- assume anything over 10 years old is sufficiently
+	obsolete to be deleted.
+
+	Remove LIBS_DEBUG, C_DEBUG_SWITCH, C_OPTIMIZE_SWITCH, KERNEL_FILE,
+	LDAV_SYMBOL, most remaining PTY stuff, remaining TERMINFO/TERMCAP
+	stuff.  Update README appropriately.
+
+	Remove stuff in hpux11-shr.h duplicated in hpux11.h.
+
+	Remove sco7.h, identical with usg5-4-2.h.
+
+	Remove unused POSIX flag, BROKEN_TIOC*, NO_SIOCTL_H.
+	
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* m/arm.h:
+	* m/hp800.h:
+	* m/intel386.h:
+	* m/mips.h:
+	* m/powerpc.h:
+	* m/sparc.h:
+	* m/template.h:
+	Temporarily ifdef out all defines involving load-average stuff --
+	using define ENABLE_SM_FILE_DECLS_OF_LOADAVG_STUFF, which is not
+	defined.
+
+	I'm pretty sure getloadavg.c will take care of defining stuff
+	properly on all systems without the need to duplicate the info
+	in m/*. --ben
+
+	Delete LIBS_TERMCAP; configure auto-handles this.
+
+	Delete extra stuff in hp800.h.
+
+	Delete C_DEBUG_SWITCH, C_OPTIMIZE_SWITCH, LDAV_SYMBOL; incorporate
+	some stuff into configure.ac.
 
 2010-02-10  Ben Wing  <ben@xemacs.org>
 
@@ -7835,7 +8945,7 @@
 
 	* XEmacs 21.5.29 "garbanzo" is released.
 
-2009-03-08  Ville Skytt  <scop@xemacs.org>
+2009-03-08  Ville Skyttä  <scop@xemacs.org>
 
 	* glyphs-gtk.c (init_image_instance_from_gdk_pixmap): Apply the
 	2008-03-05 change from Dominique Quatravaux here as well even
@@ -9052,7 +10162,7 @@
 	constant on 64-bit platforms when making sure pointers haven't
 	been freed twice.
 
-2007-05-22  Ville Skytt  <scop@xemacs.org>
+2007-05-22  Ville Skyttä  <scop@xemacs.org>
 
 	* Makefile.in.in ($(LISP)/finder-inf.el): Set lisp-directory
 	to $(LISP) to ensure we're working with the correct finder*.
@@ -14059,7 +15169,7 @@
 
 	* event-gtk.c: Recognise AltGr as a valid modifier.
 
-2005-01-12  Ville Skytt  <scop@xemacs.org>
+2005-01-12  Ville Skyttä  <scop@xemacs.org>
 
 	* console-x.h: #include X11/keysym.h before xintrinsic.h.
 
@@ -17291,7 +18401,7 @@
 	* lrecord.h (DECLARE_MODULE_API_LRECORD): Also define when not
 	ERROR_CHECK_TYPES.
 
-2003-08-19  Ren Kyllingstad <listmailxemacs@kyllingstad.com>
+2003-08-19  René Kyllingstad <listmailxemacs@kyllingstad.com>
 
 	* alloc.c (kkcc_gc_stack_init):
 	(kkcc_gc_stack_realloc): Missing casts for the return value of
@@ -17342,7 +18452,7 @@
 	adjust the GCPRO record via GCPRO_STACK just before a GC may
 	occur.
 
-2003-07-31  Ren Kyllingstad  <listmailxemacs@kyllingstad.com>
+2003-07-31  René Kyllingstad  <listmailxemacs@kyllingstad.com>
 
 	* event-msw.c (mswindows_enqueue_mouse_button_event):
 	* event-msw.c (mswindows_wnd_proc):
@@ -21009,8 +22119,8 @@
 
 	* data.c (prune_weak_boxes): Rewrite for better readability.
 
-2002-06-23  Martin Kbele  <martin@mkoebele.de>
-	    Jens Mller <jmueller@informatik.uni-tuebingen.de>
+2002-06-23  Martin Köbele  <martin@mkoebele.de>
+	    Jens Müller <jmueller@informatik.uni-tuebingen.de>
 	    Mike Sperber <mike@xemacs.org>
 
 	* lrecord.h (lrecord_type): add lrecord_type_ephemeron
@@ -22537,7 +23647,7 @@
 	* process.c (syms_of_process):
 	Add process-has-separate-stderr-p, used by call-process-internal.
 
-2002-05-28  Martin Kbele <mkoebele@mkoebele.de>, Jens Mller <jmueller@informatik.uni-tuebingen.de>
+2002-05-28  Martin Köbele <mkoebele@mkoebele.de>, Jens Müller <jmueller@informatik.uni-tuebingen.de>
 
 	* lrecord.h (lrecord_type): Add lrecord_type_weak_box to
 	lrecord_type enumeration.
@@ -57893,3 +59003,23 @@ Sat Dec  7 15:48:39 1996  Steven L Baur  <steve@altair.xemacs.org>
 Wed Dec  4 23:38:03 1996  Steven L Baur  <steve@altair.xemacs.org>
 
 	* redisplay.c: Allow column numbers in modeline to start from 1.
+
+
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.

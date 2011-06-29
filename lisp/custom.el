@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched with: FSF 21.3.
 
@@ -44,12 +42,10 @@
 (provide 'custom)
 
 (eval-when-compile
-  (load "cl-macs" nil t)
   ;; To elude warnings.
   (require 'cus-face))
 
 (autoload 'custom-declare-face "cus-face")
-(autoload 'defun* "cl-macs")
 
 (require 'widget)
 
@@ -327,6 +323,9 @@ match one of the ITEM.  The following REQ are defined:
 `class' (the frame's color support)
   Should be one of `color', `grayscale', or `mono'.
 
+`min-colors' (the minimum number of colors the frame supports)
+  Should be in integer which is compared to `display-color-cells'
+
 `background' (what color is used for the background text)
   Should be one of `light' or `dark'.
 
@@ -408,6 +407,9 @@ information."
 (defun custom-add-to-group (group option widget)
   "To existing GROUP add a new OPTION of type WIDGET.
 If there already is an entry for OPTION and WIDGET, nothing is done."
+  (or group (display-warning 'custom
+              (format "custom: widget %s, option %s has no associated group"
+                      widget option)))
   (let ((members (get group 'custom-group))
        (entry (list option widget)))
     (unless (member entry members)
@@ -1056,12 +1058,7 @@ This means reset VARIABLE to its value in TO-THEME."
 
 ;;; The End.
 
-;; Process the defcustoms for variables loaded before this file.
-;; `custom-declare-variable-list' is defvar'd in subr.el.  Utility programs
-;; run from temacs that do not load subr.el should defvar it themselves.
-;; (As of 21.5.11, make-docfile.el.)
-(while custom-declare-variable-list
-  (apply 'custom-declare-variable (car custom-declare-variable-list))
-  (setq custom-declare-variable-list (cdr custom-declare-variable-list)))
+;; XEmacs; we order preloaded-file-list such that there's no need for
+;; custom-declare-variable-list.
 
 ;; custom.el ends here

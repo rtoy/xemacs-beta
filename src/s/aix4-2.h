@@ -1,22 +1,21 @@
 /* Definitions file for XEmacs running on IBM AIX version 4.2
  *    Copyright (C) 1985, 1986, 1990 Free Software Foundation, Inc.
+ *    Copyright (C) 2010 Ben Wing.
  *
  *    This file is part of XEmacs.
  *
- *    XEmacs is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2, or (at your option)
- *    any later version.
- *
- *    XEmacs is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
+ *    XEmacs is free software: you can redistribute it and/or modify it
+ *    under the terms of the GNU General Public License as published by the
+ *    Free Software Foundation, either version 3 of the License, or (at your
+ *    option) any later version.
+ *    
+ *    XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ *    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ *    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ *    for more details.
+ *    
  *    You should have received a copy of the GNU General Public License
- *    along with XEmacs; see the file COPYING.  If not, write to
- *    the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- *    Boston, MA 02111-1307, USA.  */
+ *    along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.31. */
 
@@ -46,42 +45,17 @@
 
 #define SYSTEM_TYPE "aix"
 
-/* The file containing the kernel's symbol table is called /unix.  */
-
-#define KERNEL_FILE "/unix"
-
-/* The symbol in the kernel where the load average is found
- *    is named avenrun.  */
-
-#define LDAV_SYMBOL "avenrun"
-
 /* Special itemss needed to make Emacs run on this system.  */
-
-/* On USG systems the system calls are interruptible by signals
- *  that the user program has elected to catch.  Thus the system call
- *   must be retried in these cases.  To handle this without massive
- *    changes in the source code, we remap the standard system call names
- *     to names for our own functions in sysdep.c that do the system call
- *      with retries. */
-
-#define INTERRUPTIBLE_OPEN
-#define INTERRUPTIBLE_IO
 
 #ifndef __GNUC__
 #define LINKER "cc"
 #endif
 
-/* Prevent -lg from being used for debugging.  Not needed.  */
-
-#define LIBS_DEBUG
+/* Deleted LIBS_DEBUG */
 
 /* No need to specify -lc when linking.  */
 
 #define LIB_STANDARD
-
-/* Use terminfo instead of termcap.  */
-
-#define TERMINFO
 
 /* AIX doesn't define this.  */
 #define unix 1
@@ -100,16 +74,6 @@
  * the internationalization code causes the modifier keys C, M and Shift
  * to beep after a mouse click.  */
 #define X11R5_INHIBIT_I18N
-
-/* For AIX, it turns out compiling emacs under AIX 3.2.4 REQUIRES "cc -g"
- *    because "cc -O" crashes. Under AIX 3.2.5, "cc -O" is required because
- *       "cc -g" crashes. Go figure.  --floppy@merlin.mit.edu */
-#ifndef __GNUC__
-#undef C_DEBUG_SWITCH
-#undef C_OPTIMIZE_SWITCH
-#define C_DEBUG_SWITCH
-#define C_OPTIMIZE_SWITCH "-O"
-#endif
 
 #define MAIL_USE_LOCKF
 
@@ -158,15 +122,4 @@ struct sockaddr_dl;
 #undef _NO_PROTO
 #endif
 
-/* For AIX, it turns out compiling emacs under AIX 3.2.4 REQUIRES "cc -g"
- *    because "cc -O" crashes.  Under AIX 3.2.5, "cc -O" is required because
- *       "cc -g" crashes. Go figure.  --floppy@merlin.mit.edu.
- *          4.1 seems to need -g again. -- larry@vaquita.mitra.com.  */
-/* David Edelsohn <dje@watson.ibm.com> says that this actually depends
- *    on the version of XLC, which can't be predicted from the system version.
- *       What a mess!  */
-#ifndef __GNUC__
-#undef C_DEBUG_SWITCH
-#undef C_OPTIMIZE_SWITCH
-#define C_DEBUG_SWITCH "-g"
-#endif
+/* XEmacs: C_DEBUG_SWITCH, C_OPTIMIZE_SWITCH no longer used */

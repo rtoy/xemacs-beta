@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 
@@ -30,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
    A few changes for buffer-local vars by Richard Mlynarik for
      19.8 or 19.9, c. 1993.
    Many changes by Ben Wing: changes and cleanups for Mule, esp. the
-     macros in buffer.h and the intial version of the coding-system
+     macros in buffer.h and the initial version of the coding-system
      conversion macros (in buffer.h) and associated fns. (in this file),
      19.12 (c. 1995); synch. to FSF 19.30 c. 1994; memory usage stats
      c. 1996; generated-modeline-string c. 1996 for mousable modeline in
@@ -1819,10 +1817,10 @@ The values returned are in the form of a plist of properties and values.
 
 #define ADD_INT(field) \
   plist = cons3 (make_int (b->text->field), \
-		 intern_converting_underscores_to_dashes (#field), plist)
+		 intern_massaging_name (#field), plist)
 #define ADD_BOOL(field) \
   plist = cons3 (b->text->field ? Qt : Qnil, \
-		 intern_converting_underscores_to_dashes (#field), plist)
+		 intern_massaging_name (#field), plist)
   ADD_INT (bufz);
   ADD_INT (z);
 #ifdef OLD_BYTE_CHAR

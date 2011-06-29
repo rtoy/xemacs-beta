@@ -12,20 +12,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2 of the License, or
-;; (at your option) any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -87,8 +85,8 @@ You can change the coding systems later on using
     ;; We check only the general form of the multicast address.
     ;; The rest will be handled by the internal function.
     (string-match "^\\([0-9\\.]+\\)/\\([0-9]+\\)/\\([0-9]+\\)$" address)
-    (and (not (and (= (match-beginning 0) 0)
-		   (= (match-end 0) (length address))))
+    (and (not (and (eql (match-beginning 0) 0)
+		   (eql (match-end 0) (length address))))
 	 (error "malformed multicast address: %s" address))
     (and (not (setq dest (match-string 1 address)))
 	 (error "invalid destination specification."))

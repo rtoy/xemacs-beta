@@ -8,10 +8,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -19,9 +19,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -2630,7 +2628,7 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 static void
 check_valid_xbm_inline (Lisp_Object data)
 {
-  Lisp_Object width, height, bits;
+  Lisp_Object width, height, bits, args[2];
 
   if (!CONSP (data) ||
       !CONSP (XCDR (data)) ||
@@ -2650,7 +2648,16 @@ check_valid_xbm_inline (Lisp_Object data)
   if (!NATNUMP (height))
     invalid_argument ("Height must be a natural number", height);
 
-  if (((XINT (width) * XINT (height)) / 8) > string_char_length (bits))
+  args[0] = width;
+  args[1] = height;
+
+  args[0] = Ftimes (countof (args), args);
+  args[1] = make_integer (8);
+
+  args[0] = Fquo (countof (args), args);
+  args[1] = make_integer (string_char_length (bits));
+
+  if (!NILP (Fgtr (countof (args), args)))
     invalid_argument ("data is too short for width and height",
 			 vector3 (width, height, bits));
 }

@@ -7,10 +7,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -67,7 +65,7 @@ static Lisp_Object Vgtk_fallback_font_size;
    worry about it.
 
    Return value is 1 for normal success, 2 for nearest color success,
-   3 for Non-deallocable sucess. */
+   3 for Non-deallocable success. */
 int
 allocate_nearest_color (GdkColormap *colormap, GdkVisual *UNUSED (visual),
 		        GdkColor *color_def)
@@ -256,7 +254,7 @@ font_description_from_string (char *extname)
   /* FontConfig */
   if (strcspn (extname, "-:=") != len)
     {
-      FcPattern *pattern = FcNameParse (extname);
+      FcPattern *pattern = FcNameParse ((const FcChar8 *)extname);
       pfd = pango_fc_font_description_from_pattern (pattern, TRUE);
     }
   else
@@ -391,16 +389,17 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object device,
 {
   struct device *d = XDEVICE (device);
   Lisp_Object result = Qnil;
-  const char *patternext;
+  const Extbyte *patternext;
   PangoFontMap *font_map = DEVICE_GTK_FONT_MAP (d);
   PangoFontFamily **families = NULL;
   int n_families, i;
   int monospace_only = 0;
 
-  patternext = LISP_STRING_TO_EXTERNAL (pattern, Qutf_8);
   /* What to do with the pattern?  Add a single case for now. */
-  if (qxestrcasecmp_ascii (patternext, "monospace") == 0)
+  if (qxestrcasecmp_ascii (XSTRING_DATA (pattern), "monospace") == 0)
     monospace_only = 1;
+
+  patternext = LISP_STRING_TO_EXTERNAL (pattern, Qutf_8);
 
 #ifdef DEBUG_XEMACS
   if (debug_x_fonts)
@@ -445,18 +444,14 @@ Return a specificer for FONT with WEIGHT numeric value on DEVICE.
 {
   PangoFontDescription *pfd;
   char *extname, *new_name;
-  int w;
+  PangoWeight w;
   Lisp_Object val;
 
   CHECK_STRING (font);
-  CHECK_INT (weight);
-
-  w = XINT (weight);
-
   /* Not sure if range should be 200-900 --jsparkes */
-  if (w < 0 || w > 1000)
-    args_out_of_range_3 (weight, make_int (0), make_int (1000));
+  check_integer_range (weight, Qzero, make_integer (1000));
 
+  w = (PangoWeight) (XINT (weight));
   extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
   pfd = font_description_from_string (extname);
   pango_font_description_set_weight (pfd, w);

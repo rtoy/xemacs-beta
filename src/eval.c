@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30 (except for Fsignal), Mule 2.0. */
 
@@ -226,7 +224,7 @@ struct catchtag *catchlist;
    every attempt to throw past this level. */
 Lisp_Object Vcatch_everything_tag;
 
-Lisp_Object Qautoload, Qmacro, Qexit;
+Lisp_Object Qautoload, Qmacro, Qexit, Qdeclare;
 Lisp_Object Qinteractive, Qcommandp, Qdefun, Qprogn, Qvalues;
 Lisp_Object Vquit_flag, Vinhibit_quit;
 Lisp_Object Qand_rest, Qand_optional;
@@ -274,6 +272,8 @@ Lisp_Object Vlog_warning_minimum_level;
    They are recorded by being consed onto the front of Vautoload_queue:
    (FUN . ODEF) for a defun, (OFEATURES . nil) for a provide.  */
 Lisp_Object Vautoload_queue;
+
+Lisp_Object Vmacro_declaration_function;
 
 /* Current number of specbindings allocated in specpdl.  */
 int specpdl_size;
@@ -1270,6 +1270,8 @@ There is an alternative, more readable, reader syntax for `quote':  a Lisp
 object preceded by `''. Thus, `'x' is equivalent to `(quote x)', in all
 contexts.  A print function may use either.  Internally the expression is
 represented as `(quote x)').
+
+arguments: (OBJECT)
 */
        (args))
 {
@@ -1350,6 +1352,8 @@ There is an alternative, more readable, reader syntax for `function':  a Lisp
 object preceded by `#''. Thus, #'x is equivalent to (function x), in all
 contexts.  A print function may use either.  Internally the expression is
 represented as `(function x)').
+
+arguments: (SYMBOL-OR-LAMBDA)
 */
        (args))
 {
@@ -1404,6 +1408,33 @@ arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
        (args))
 {
   /* This function can GC */
+  if (!NILP (Vmacro_declaration_function))
+    {
+      Lisp_Object declare = Fnth (make_int (2), args);
+
+      /* Sigh. This GNU interface is incompatible with the CL declare macro,
+         and the latter is much older.
+
+         GNU describe this syntax in their docstrings. It's sufficiently
+         ugly in the XEmacs context (and in general, but ...) that I'm not
+         rushing to document it.
+
+         The GNU interface accepts multiple (declare ...) sexps at the
+         beginning of a macro. Nothing uses this, and the XEmacs byte
+         compiler (will) warn(s) if it encounters code that attempts to use
+         it. */
+
+      if (STRINGP (declare))
+        {
+          declare = Fnth (make_int (3), args);
+        }
+
+      if (CONSP (declare) && EQ (Qdeclare, XCAR (declare)))
+        {
+          call2 (Vmacro_declaration_function, XCAR (args), declare);
+        }
+    }
+
   return define_function (XCAR (args),
 			  Fcons (Qmacro, Fcons (Qlambda, XCDR (args))));
 }
@@ -1798,22 +1829,13 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val, Lisp_Object tag)
   LONGJMP (c->jmp, 1);
 }
 
-DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object, Lisp_Object, int,
+DECLARE_DOESNT_RETURN (throw_or_bomb_out_unsafe (Lisp_Object, Lisp_Object, int,
 					  Lisp_Object, Lisp_Object));
 
 DOESNT_RETURN
-throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
-		   Lisp_Object sig, Lisp_Object data)
+throw_or_bomb_out_unsafe (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
+			  Lisp_Object sig, Lisp_Object data)
 {
-#ifdef DEFEND_AGAINST_THROW_RECURSION
-  /* die if we recurse more than is reasonable */
-  assert (++throw_level <= 20);
-#endif
-
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-  check_proper_critical_section_nonlocal_exit_protection ();
-#endif
-
   /* If bomb_out_p is t, this is being called from Fsignal as a
      "last resort" when there is no handler for this error and
       the debugger couldn't be invoked, so we are throwing to
@@ -1852,6 +1874,24 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
       else
         call1 (Qreally_early_error_handler, Fcons (sig, data));
     }
+}
+  
+DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object, Lisp_Object, int,
+					  Lisp_Object, Lisp_Object));
+
+DOESNT_RETURN
+throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
+		   Lisp_Object sig, Lisp_Object data)
+{
+#ifdef DEFEND_AGAINST_THROW_RECURSION
+  /* die if we recurse more than is reasonable */
+  assert (++throw_level <= 20);
+#endif
+
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  check_proper_critical_section_nonlocal_exit_protection ();
+#endif
+  throw_or_bomb_out_unsafe (tag, val, bomb_out_p, sig, data);
 }
 
 /* See above, where CATCHLIST is defined, for a description of how
@@ -4919,17 +4959,19 @@ arguments: (FIRST-DESIRED-MULTIPLE-VALUE MULTIPLE-VALUE-UPPER-LIMIT FORM)
     }
 
   argv[0] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
-  CHECK_NATNUM (argv[0]);
-  first = XINT (argv[0]);
 
   GCPRO1 (argv[0]);
   gcpro1.nvars = 1;
 
   args = XCDR (args);
-
   argv[1] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
-  CHECK_NATNUM (argv[1]);
+
+  check_integer_range (argv[1], Qzero, make_int (EMACS_INT_MAX));
+  check_integer_range (argv[0], Qzero, argv[1]);
+
   upper = XINT (argv[1]);
+  first = XINT (argv[0]);
+
   gcpro1.nvars = 2;
 
   /* The unintuitive order of things here is for the sake of the bytecode;
@@ -7201,7 +7243,7 @@ If NFRAMES is more than the number of frames, the value is nil.
   REGISTER int i;
   Lisp_Object tem;
 
-  CHECK_NATNUM (nframes);
+  check_integer_range (nframes, Qzero, make_integer (EMACS_INT_MAX));
 
   /* Find the frame requested.  */
   for (i = XINT (nframes); backlist && (i-- > 0);)
@@ -7302,6 +7344,7 @@ syms_of_eval (void)
   defsymbol (&Qand_optional, "&optional");
   /* Note that the process code also uses Qexit */
   DEFSYMBOL (Qexit);
+  DEFSYMBOL (Qdeclare);
   DEFSYMBOL (Qsetq);
   DEFSYMBOL (Qinteractive);
   DEFSYMBOL (Qcommandp);
@@ -7558,6 +7601,15 @@ This applies to `values', `values-list', `multiple-value-bind' and related
 macros and special operators.
 */);
   Vmultiple_values_limit = EMACS_INT_MAX > INT_MAX ? INT_MAX : EMACS_INT_MAX;
+
+  DEFVAR_LISP ("macro-declaration-function", &Vmacro_declaration_function /*
+Function to process declarations in a macro definition.
+The function will be called with two args MACRO and DECL.
+MACRO is the name of the macro being defined.
+DECL is a list `(declare ...)' containing the declarations.
+The value the function returns is not used.
+*/);
+  Vmacro_declaration_function = Qnil;
 
   staticpro (&Vcatch_everything_tag);
   Vcatch_everything_tag = make_opaque (OPAQUE_CLEAR, 0);

@@ -7,10 +7,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with:  Not in FSF. */
 
@@ -2053,14 +2051,14 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
  given face.
  ****************************************************************************/
 static void
-XLIKE_clear_region (Lisp_Object UNUSED (locale), struct device* d,
-		    struct frame* f, face_index UNUSED (findex), int x, int y,
-		    int width, int height,
+XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
+		    face_index UNUSED (findex),
+		    int x, int y, int width, int height,
 		    Lisp_Object fcolor, Lisp_Object bcolor,
 		    Lisp_Object background_pixmap,
 		    Lisp_Object background_placement)
 {
-  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_DISPLAY dpy =  GET_XLIKE_DISPLAY (XDEVICE (f->device));
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc = NULL;
 

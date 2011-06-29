@@ -8,20 +8,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -334,11 +332,43 @@ the buffer of the window whose modeline was clicked upon.")
   (set-face-font 'modeline-mousable [bold] nil '(default grayscale win)))
 
 (defmacro make-modeline-command-wrapper (command)
-  `#'(lambda (event)
-       (interactive "e")
-       (save-selected-window
-	 (select-window (event-window event))
-	 (call-interactively ',(eval command)))))
+  "Return a function object wrapping COMMAND, for use with the modeline.
+
+The function (itself a command, with \"e\" as its interactive spec) calls
+COMMAND with the appropriate window selected, and is suitable as a binding
+in the keymaps associated with the modeline."
+  (cond
+   ((and-fboundp 'cl-const-expr-p (cl-const-expr-p command))
+    `#'(lambda (event)
+         (interactive "e")
+         (save-selected-window
+           (select-window (event-window event))
+           (call-interactively ,command))))
+   ((eval-when-compile (cl-compiling-file))
+    (let ((compiled
+           (eval-when-compile
+             (byte-compile-sexp
+              #'(lambda (event)
+                  (interactive "e")
+                  (save-selected-window
+                    (select-window (event-window event))
+                    (call-interactively 'placeholder)))))))
+      `(make-byte-code ',(compiled-function-arglist compiled)
+        ,(compiled-function-instructions compiled)
+        (vector ,@(subst command ''placeholder
+                         (mapcar 'quote-maybe 
+                                 (compiled-function-constants compiled))
+                         :test 'equal))
+        ,(compiled-function-stack-depth compiled)
+        ,(compiled-function-doc-string compiled)
+        ,(quote-maybe (second (compiled-function-interactive compiled))))))
+   (t
+    `(lexical-let ((command ,command))
+      #'(lambda (event)
+          (interactive "e")
+          (save-selected-window
+            (select-window (event-window event))
+            (call-interactively command)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                            Minor modes                              ;;;
@@ -429,9 +459,7 @@ Example: (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 					   (symbol-name toggle)
 					   "-map"))))
       (define-key toggle-keymap 'button2
-	;; defeat the DUMB-ASS byte-compiler, which tries to
-	;; expand the macro at compile time and fucks up.
-	(eval '(make-modeline-command-wrapper toggle-fun)))
+        (make-modeline-command-wrapper toggle-fun))
       (put toggle 'modeline-toggle-function toggle-fun))
     (when name
       (let ((hacked-name
@@ -524,35 +552,31 @@ parentheses on the modeline."
      (cons
       "Minor Mode Toggles"
       (sort
-       (delq nil (mapcar
-		 #'(lambda (x)
-		     (let* ((toggle-sym (car x))
-			    (toggle-fun (or (get toggle-sym
-						 'modeline-toggle-function)
-					    (and (commandp toggle-sym)
-						 toggle-sym)))
-			    (menu-tag (symbol-name (if (symbolp toggle-fun)
-						       toggle-fun
-						     toggle-sym))
-				      ;; Here a function should
-				      ;; maybe be invoked to
-				      ;; beautify the symbol's
-				      ;; menu appearance.
-				      ))
-		       (and toggle-fun
-			    (vector menu-tag
-				    toggle-fun
-				    ;; The following two are wrong
-				    ;; because of possible name
-				    ;; clashes.
-				    ;:active (get toggle-sym :active t)
-				    ;:included (get toggle-sym :included t)
-				    :style 'toggle
-				    :selected (and (boundp toggle-sym)
-						   toggle-sym)))))
-		 minor-mode-alist))
-       (lambda (e1 e2)
-	 (string< (aref e1 0) (aref e2 0)))))
+       (mapcan
+        #'(lambda (x)
+            (let* ((toggle-sym (car x))
+                   (toggle-fun (or (get toggle-sym
+                                        'modeline-toggle-function)
+                                   (and (commandp toggle-sym)
+                                        toggle-sym)))
+                   (menu-tag (symbol-name (if (symbolp toggle-fun)
+                                              toggle-fun
+                                            toggle-sym))
+                             ;; Here a function should maybe be invoked to
+                             ;; beautify the symbol's menu appearance.
+                             ))
+              (and toggle-fun
+                   (list (vector menu-tag
+                                 toggle-fun
+                                 ;; The following two are wrong because of
+                                 ;; possible name clashes.
+                                 ;:active (get toggle-sym :active t)
+                                 ;:included (get toggle-sym :included t)
+                                 :style 'toggle
+                                 :selected (and (boundp toggle-sym)
+                                                toggle-sym))))))
+		 minor-mode-alist)
+       (lambda (e1 e2) (string< (aref e1 0) (aref e2 0)))))
      event)))
 
 (defvar modeline-minor-mode-map (make-sparse-keymap 'modeline-minor-mode-map)

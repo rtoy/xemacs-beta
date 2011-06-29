@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30. */
 
@@ -1686,6 +1684,10 @@ enum Lisp_Type
 
 #define INT_VALBITS (BITS_PER_EMACS_INT - INT_GCBITS)
 #define VALBITS (BITS_PER_EMACS_INT - GCBITS)
+/* This is badly named; it's not the maximum value that an EMACS_INT can
+   have, it's the maximum value that a Lisp-visible fixnum can have (half
+   the maximum value an EMACS_INT can have) and as such would be better
+   called MOST_POSITIVE_FIXNUM. Similarly for MOST_NEGATIVE_FIXNUM. */
 #define EMACS_INT_MAX ((EMACS_INT) ((1UL << (INT_VALBITS - 1)) -1UL))
 #define EMACS_INT_MIN (-(EMACS_INT_MAX) - 1)
 /* WARNING: evaluates its arg twice. */
@@ -2126,6 +2128,16 @@ EMACS_INT len_##elt;							\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len_##elt, tail,		\
 		      tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
 
+#define GC_EXTERNAL_LIST_LOOP_3(elt, list, tail)			\
+do {									\
+  XGCDECL3 (elt);							\
+  Lisp_Object elt, tail, tortoise_##elt;				\
+  EMACS_INT len_##elt;							\
+  XGCPRO3 (elt, elt, tail, tortoise_##elt);				\
+  PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len_##elt, tail,		\
+				tortoise_##elt,				\
+				CIRCULAR_LIST_SUSPICION_LENGTH)
+
 #define EXTERNAL_LIST_LOOP_4_NO_DECLARE(elt, list, tail, len)		\
 Lisp_Object tortoise_##elt;						\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
@@ -2136,6 +2148,15 @@ Lisp_Object elt, tail, tortoise_##elt;					\
 EMACS_INT len;								\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
 		      tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
+
+#define GC_EXTERNAL_LIST_LOOP_4(elt, list, tail, len)			\
+do {									\
+  XGCDECL3 (elt);							\
+  Lisp_Object elt, tail, tortoise_##elt;				\
+  XGCPRO3 (elt, elt, tail, tortoise_##elt);				\
+  PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
+				tortoise_##elt,				\
+				CIRCULAR_LIST_SUSPICION_LENGTH)
 
 #define PRIVATE_UNVERIFIED_LIST_LOOP_7(elt, list, len, hare,		\
 				       tortoise, suspicion_length,	\
@@ -2930,22 +2951,6 @@ XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
     x = wrong_type_argument (Qfixnump, x);	\
 } while (0)
 
-/* NOTE NOTE NOTE! This definition of "natural number" is mathematically
-   wrong.  Mathematically, a natural number is a positive integer; 0
-   isn't included.  This would be better called NONNEGINT(). */
-
-#define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
-
-#define CHECK_NATNUM(x) do {			\
-  if (!NATNUMP (x))				\
-    dead_wrong_type_argument (Qnatnump, x);	\
-} while (0)
-
-#define CONCHECK_NATNUM(x) do {			\
-  if (!NATNUMP (x))				\
-    x = wrong_type_argument (Qnatnump, x);	\
-} while (0)
-
 END_C_DECLS
 
 /* -------------- properties of internally-formatted text ------------- */
@@ -3411,7 +3416,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
   static struct Lisp_Subr *S##Fname;					  \
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 #define GET_DEFUN_LISP_OBJECT(Fname) \
-  wrap_subr (S##Fname);
+  wrap_subr (&MC_ALLOC_S##Fname)
 #else /* not NEW_GC */
 #define DEFUN(lname, Fname, min_args, max_args, prompt, arglist)	\
   Lisp_Object Fname (EXFUN_##max_args);					\
@@ -3451,7 +3456,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
   };									\
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 #define GET_DEFUN_LISP_OBJECT(Fname) \
-  wrap_subr (&S##Fname);
+  wrap_subr (&S##Fname)
 #endif /* not NEW_GC */
 
 /* Heavy ANSI C preprocessor hackery to get DEFUN to declare a
@@ -3501,16 +3506,20 @@ extern MODULE_API int specpdl_depth_counter;
 /************************************************************************/
 
 /* The C subr must have been declared with MANY as its max args, and this
-   PARSE_KEYWORDS call must come before any statements.
+   PARSE_KEYWORDS call must come before any statements. Equivalently, it
+   can appear within braces.
 
-   FUNCTION is the name of the current function, as a symbol.
+   FUNCTION is the C name of the current DEFUN.  If there is no current
+   DEFUN, use the PARSE_KEYWORDS_8 macro, not PARSE_KEYWORDS.  If the
+   current DEFUN has optional arguments that are not keywords, you also need
+   to use the PARSE_KEYWORDS_8 macro.  This is also the case if there are
+   optional arguments that come before the keywords, as Common Lisp
+   specifies for #'parse-integer.
 
    NARGS is the count of arguments supplied to FUNCTION.
 
    ARGS is a pointer to the argument vector (not a Lisp vector) supplied to
    FUNCTION.
-
-   KEYWORDS_OFFSET is the offset into ARGS where the keyword arguments start.
 
    KEYWORD_COUNT is the number of keywords FUNCTION is normally prepared to
    handle.
@@ -3522,11 +3531,6 @@ extern MODULE_API int specpdl_depth_counter;
    initial_value) in this parameter, a collection of C statements surrounded
    by parentheses and separated by the comma operator. If you don't need
    this, supply NULL as KEYWORD_DEFAULTS.
-
-   ALLOW_OTHER_KEYS corresponds to the &allow-other-keys argument list
-   entry in defun*; it is 1 if other keys are normally allowed, 0
-   otherwise. This may be overridden in the caller by specifying
-   :allow-other-keys t in the argument list.
 
    For keywords which appear multiple times in the called argument list, the
    leftmost one overrides, as specified in section 7.1.1 of the CLHS.
@@ -3541,26 +3545,71 @@ extern MODULE_API int specpdl_depth_counter;
    and an unrelated name for the local variable, as is possible with the
    ((:keyword unrelated-var)) syntax in defun* and in Common Lisp. That
    shouldn't matter in practice. */
- 
-#define PARSE_KEYWORDS(function, nargs, args, keywords_offset,          \
-                       keyword_count, keywords, keyword_defaults,       \
-                       allow_other_keys)                                \
+#if defined (DEBUG_XEMACS) && defined (__STDC_VERSION__) &&	\
+  __STDC_VERSION__ >= 199901L
+
+/* This version has the advantage that DEFUN without DEFSUBR still provokes
+   a defined but not used warning, and it provokes an assertion failure at
+   runtime if someone has copied and pasted the PARSE_KEYWORDS macro from
+   another function without changing FUNCTION; that would lead to an
+   incorrect determination of KEYWORDS_OFFSET. */
+
+#define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
+		       keyword_defaults)				\
+  PARSE_KEYWORDS_8 (intern_massaging_name (1 + #function), nargs, args, \
+                    keyword_count, keywords, keyword_defaults,          \
+                    /* Can't XSUBR (Fsymbol_function (...))->min_args,  \
+                       the function may be advised. */                  \
+                    XINT (Ffunction_min_args                            \
+                          (intern_massaging_name (1 + #function))),     \
+                    0);                                                 \
+  assert (0 == strcmp (__func__, #function))
+#else /* defined (DEBUG_XEMACS) && ... */
+#define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
+		       keyword_defaults)				\
+  PARSE_KEYWORDS_8 (intern (subr_name (XSUBR                            \
+                                       (GET_DEFUN_LISP_OBJECT (function)))), \
+                    nargs, args, keyword_count, keywords,               \
+                    keyword_defaults,                                   \
+                    XSUBR (GET_DEFUN_LISP_OBJECT (function))->min_args, \
+                    0)
+#endif /* defined (DEBUG_XEMACS) && defined (__STDC_VERSION__) ... */
+
+/* PARSE_KEYWORDS_8 is a more fine-grained version of PARSE_KEYWORDS. The
+   differences are as follows:
+
+   FUNC_SYM is a symbol reflecting the name of the function for which
+   keywords are being parsed.  In PARSE_KEYWORDS, it is the Lisp-visible
+   name of C_FUNC, interned as a symbol in obarray.
+
+   KEYWORDS_OFFSET is the offset into ARGS where the keyword arguments
+   start.  In PARSE_KEYWORDS, this is the index of the first optional
+   argument, determined from the information known about C_FUNC.
+
+   ALLOW_OTHER_KEYS corresponds to the &allow-other-keys argument list entry
+   in defun*; it is 1 if other keys are normally allowed, 0 otherwise. This
+   may be overridden in the caller by specifying :allow-other-keys t in the
+   argument list. In PARSE_KEYWORDS, ALLOW_OTHER_KEYS is always 0. */
+
+#define PARSE_KEYWORDS_8(func_sym, nargs, args,				\
+			 keyword_count, keywords, keyword_defaults,	\
+			 keywords_offset, allow_other_keys)		\
   DECLARE_N_KEYWORDS_##keyword_count keywords;                          \
                                                                         \
   do                                                                    \
     {                                                                   \
       Lisp_Object pk_key, pk_value;                                     \
-      Elemcount pk_i = nargs - 1;                                       \
+      Elemcount pk_i = nargs - 1, pk_offset = keywords_offset;		\
       Boolint pk_allow_other_keys = allow_other_keys;                   \
                                                                         \
-      if ((nargs - keywords_offset) & 1)                                \
+      if ((nargs - pk_offset) & 1)					\
         {                                                               \
           if (!allow_other_keys                                         \
               && !(pk_allow_other_keys                                  \
-                   = non_nil_allow_other_keys_p (keywords_offset,       \
+                   = non_nil_allow_other_keys_p (pk_offset,		\
                                                  nargs, args)))         \
             {                                                           \
-              signal_wrong_number_of_arguments_error (function, nargs); \
+              signal_wrong_number_of_arguments_error (func_sym, nargs); \
             }                                                           \
           else                                                          \
             {                                                           \
@@ -3573,7 +3622,7 @@ extern MODULE_API int specpdl_depth_counter;
       (void)(keyword_defaults);                                         \
                                                                         \
       /* Start from the end, because the leftmost element overrides. */ \
-      while (pk_i > keywords_offset)                                    \
+      while (pk_i > pk_offset)						\
         {                                                               \
           pk_value = args[pk_i--];                                      \
           pk_key = args[pk_i--];                                        \
@@ -3584,11 +3633,20 @@ extern MODULE_API int specpdl_depth_counter;
             {                                                           \
               continue;                                                 \
             }                                                           \
-          else if (!(pk_allow_other_keys                                \
-                     = non_nil_allow_other_keys_p (keywords_offset,     \
-                                                   nargs, args)))       \
+          else if ((pk_allow_other_keys                                 \
+                    = non_nil_allow_other_keys_p (pk_offset,		\
+                                                  nargs, args)))        \
             {                                                           \
-              invalid_keyword_argument (function, pk_key);              \
+              continue;                                                 \
+            }                                                           \
+          else if (EQ (pk_key, Q_allow_other_keys) &&                   \
+                   NILP (pk_value))                                     \
+            {                                                           \
+              continue;                                                 \
+            }                                                           \
+          else                                                          \
+            {                                                           \
+              invalid_keyword_argument (func_sym, pk_key);              \
             }                                                           \
         }                                                               \
     } while (0)
@@ -3607,6 +3665,10 @@ extern MODULE_API int specpdl_depth_counter;
   DECLARE_N_KEYWORDS_5(a,b,c,d,e), f = Qnil
 #define DECLARE_N_KEYWORDS_7(a,b,c,d,e,f,g)     \
   DECLARE_N_KEYWORDS_6(a,b,c,d,e,f), g = Qnil
+#define DECLARE_N_KEYWORDS_8(a,b,c,d,e,f,g,h)	\
+  DECLARE_N_KEYWORDS_7(a,b,c,d,e,f,g), h = Qnil
+#define DECLARE_N_KEYWORDS_9(a,b,c,d,e,f,g,h,i)	\
+  DECLARE_N_KEYWORDS_8(a,b,c,d,e,f,g,h), i = Qnil
 
 #define CHECK_N_KEYWORDS_1(a)                                           \
     else if (EQ (pk_key, Q_##a)) { a = pk_value; }
@@ -3622,6 +3684,12 @@ extern MODULE_API int specpdl_depth_counter;
     else if (EQ (pk_key, Q_##f)) { f = pk_value; }
 #define CHECK_N_KEYWORDS_7(a,b,c,d,e,f,g)   CHECK_N_KEYWORDS_6(a,b,c,d,e,f) \
     else if (EQ (pk_key, Q_##g)) { g = pk_value; }
+#define CHECK_N_KEYWORDS_8(a,b,c,d,e,f,g,h)		\
+  CHECK_N_KEYWORDS_7(a,b,c,d,e,f,g)			\
+  else if (EQ (pk_key, Q_##h)) { h = pk_value; }
+#define CHECK_N_KEYWORDS_9(a,b,c,d,e,f,g,h,i)		\
+  CHECK_N_KEYWORDS_8(a,b,c,d,e,f,g,h)			\
+  else if (EQ (pk_key, Q_##i)) { i = pk_value; }
 
 Boolint non_nil_allow_other_keys_p (Elemcount offset, int nargs,
                                     Lisp_Object *args);
@@ -4231,6 +4299,7 @@ MODULE_API EXFUN (Fexpand_abbrev, 0);
 /* Defined in alloc.c */
 MODULE_API EXFUN (Fcons, 2);
 MODULE_API EXFUN (Flist, MANY);
+MODULE_API EXFUN (Facons, 3);
 EXFUN (Fbit_vector, MANY);
 EXFUN (Fmake_byte_code, MANY);
 MODULE_API EXFUN (Fmake_list, 2);
@@ -4255,7 +4324,6 @@ Lisp_Object noseeum_make_marker (void);
 #ifndef NEW_GC
 void garbage_collect_1 (void);
 #endif /* not NEW_GC */
-MODULE_API Lisp_Object acons (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object cons3 (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object list1 (Lisp_Object);
 MODULE_API Lisp_Object list2 (Lisp_Object, Lisp_Object);
@@ -4272,6 +4340,8 @@ DECLARE_DOESNT_RETURN (memory_full (void));
 void disksave_object_finalization (void);
 void finish_object_memory_usage_stats (void);
 extern int purify_flag;
+#define ARRAY_DIMENSION_LIMIT EMACS_INT_MAX
+extern Fixnum Varray_dimension_limit;
 #ifndef NEW_GC
 extern EMACS_INT gc_generation_number[1];
 #endif /* not NEW_GC */
@@ -4459,7 +4529,7 @@ DECLARE_DOESNT_RETURN (args_out_of_range_3 (Lisp_Object, Lisp_Object,
 MODULE_API Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
 MODULE_API
 DECLARE_DOESNT_RETURN (dead_wrong_type_argument (Lisp_Object, Lisp_Object));
-void check_int_range (EMACS_INT, EMACS_INT, EMACS_INT);
+void check_integer_range (Lisp_Object, Lisp_Object, Lisp_Object);
 
 EXFUN (Fint_to_char, 1);
 EXFUN (Fchar_to_int, 1);
@@ -4485,11 +4555,12 @@ extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
     Qnonnegativep, Qnumber_char_or_marker_p, Qnumberp, Qquote, Qtrue_list_p;
 extern MODULE_API Lisp_Object Qintegerp;
 
-extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
-    Qcircular_list, Qcircular_property_list, Qconversion_error,
-    Qcyclic_variable_indirection, Qdomain_error, Qediting_error,
-    Qend_of_buffer, Qend_of_file, Qerror, Qfile_error, Qinternal_error,
-    Qinvalid_change, Qinvalid_constant, Qinvalid_function, 
+extern Lisp_Object Qargs_out_of_range, Qarith_error, Qbeginning_of_buffer,
+    Qbuffer_read_only, Qextent_read_only,
+    Qcircular_list, Qcircular_property_list,
+    Qconversion_error, Qcyclic_variable_indirection, Qdomain_error,
+    Qediting_error, Qend_of_buffer, Qend_of_file, Qerror, Qfile_error,
+    Qinternal_error, Qinvalid_change, Qinvalid_constant, Qinvalid_function, 
     Qinvalid_keyword_argument, Qinvalid_operation,
     Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlist_formation_error,
     Qmalformed_list, Qmalformed_property_list, Qno_catch, Qout_of_memory,
@@ -4498,6 +4569,7 @@ extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
     Qstructure_formation_error, Qtext_conversion_error, Qunderflow_error,
     Qvoid_function, Qvoid_variable, Qwrong_number_of_arguments,
     Qwrong_type_argument;
+
 extern Lisp_Object Qcdr;
 extern Lisp_Object Qerror_lacks_explanatory_string;
 extern Lisp_Object Qfile_error;
@@ -4674,6 +4746,10 @@ EXFUN (Ffunction_min_args, 1);
 MODULE_API DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object,
                                                      Lisp_Object, int,
                                                      Lisp_Object, Lisp_Object));
+
+MODULE_API DECLARE_DOESNT_RETURN (throw_or_bomb_out_unsafe (Lisp_Object,
+							    Lisp_Object, int,
+							    Lisp_Object, Lisp_Object));
 
 MODULE_API DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
 void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
@@ -4964,6 +5040,7 @@ void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API void warn_when_safe (Lisp_Object, Lisp_Object, const Ascbyte *,
 				...) PRINTF_ARGS (3, 4);
 extern int backtrace_with_internal_sections;
+extern Fixnum Vmultiple_values_limit;
 
 extern Lisp_Object Qand_optional;
 extern Lisp_Object Qand_rest;
@@ -5161,8 +5238,6 @@ EXFUN (Fcopy_alist, 1);
 EXFUN (Fcopy_list, 1);
 EXFUN (Fcopy_sequence, 1);
 EXFUN (Fcopy_tree, 2);
-EXFUN (Fdelete, 2);
-EXFUN (Fdelq, 2);
 EXFUN (Fdestructive_alist_to_plist, 1);
 EXFUN (Felt, 2);
 MODULE_API EXFUN (Fequal, 2);
@@ -5179,6 +5254,7 @@ EXFUN (Fmemq, 2);
 EXFUN (Fnconc, MANY);
 MODULE_API EXFUN (Fnreverse, 1);
 EXFUN (Fnthcdr, 2);
+EXFUN (Fnth, 2);
 EXFUN (Fold_assq, 2);
 EXFUN (Fold_equal, 2);
 EXFUN (Fold_member, 2);
@@ -5198,15 +5274,19 @@ EXFUN (Fstring_lessp, 2);
 EXFUN (Fsubseq, 3);
 EXFUN (Fvalid_plist_p, 1);
 
+extern Boolint check_lss_key_car (Lisp_Object, Lisp_Object, Lisp_Object,
+				  Lisp_Object);
+extern Boolint check_string_lessp_nokey (Lisp_Object, Lisp_Object,
+					 Lisp_Object, Lisp_Object);
+
+typedef Boolint (*check_test_func_t) (Lisp_Object test, Lisp_Object key,
+				      Lisp_Object item, Lisp_Object elt);
+
 Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
-                        Lisp_Object (*c_predicate) (Lisp_Object o1,
-                                                    Lisp_Object o2,
-                                                    Lisp_Object pred,
-                                                    Lisp_Object keyf),
+			check_test_func_t check_merge,
                         Lisp_Object predicate, Lisp_Object key_func);
 Lisp_Object list_sort (Lisp_Object list,
-                       Lisp_Object (*c_predicate) (Lisp_Object, Lisp_Object, 
-                                                   Lisp_Object, Lisp_Object),
+		       check_test_func_t check_merge,
                        Lisp_Object predicate, Lisp_Object key_func);
 
 void bump_string_modiff (Lisp_Object);
@@ -5267,9 +5347,11 @@ EXFUN (Freally_free, 1);
 /* Defined in general.c */
 #define SYMBOL(fou) extern Lisp_Object fou
 #define SYMBOL_MODULE_API(fou) extern MODULE_API Lisp_Object fou
-#define SYMBOL_KEYWORD(la_cle_est_fou) extern Lisp_Object la_cle_est_fou
+#define SYMBOL_KEYWORD(la_cle_est_folle) extern Lisp_Object la_cle_est_folle
 #define SYMBOL_GENERAL(tout_le_monde, est_fou) \
   extern Lisp_Object tout_le_monde
+#define SYMBOL_KEYWORD_GENERAL(y_compris_ben, mais_que_peut_on_faire) \
+  extern Lisp_Object y_compris_ben
 
 #include "general-slots.h"
 
@@ -5277,6 +5359,7 @@ EXFUN (Freally_free, 1);
 #undef SYMBOL_MODULE_API
 #undef SYMBOL_KEYWORD
 #undef SYMBOL_GENERAL
+#undef SYMBOL_KEYWORD_GENERAL
 
 extern Lisp_Object Qeq;
 extern Lisp_Object Qeql;
@@ -5342,6 +5425,7 @@ EXFUN (Fdefine_key, 3);
 EXFUN (Fkey_description, 1);
 EXFUN (Flookup_key, 3);
 EXFUN (Fmake_sparse_keymap, 1);
+EXFUN (Fset_keymap_parents, 2);
 
 void where_is_to_char (Lisp_Object, Eistring *);
 
@@ -5353,9 +5437,7 @@ void close_load_descs (void);
 int locate_file (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object *, int);
 EXFUN (Flocate_file_clear_hashing, 1);
 int isfloat_string (const char *);
-#ifdef HAVE_RATIO
 int isratio_string (const char *);
-#endif
 
 /* Well, I've decided to enable this. -- ben */
 /* And I've decided to make it work right.  -- sb */
@@ -5649,7 +5731,7 @@ EXFUN (Fsymbol_value, 1);
 unsigned int hash_string (const Ibyte *, Bytecount);
 Lisp_Object intern_istring (const Ibyte *str);
 MODULE_API Lisp_Object intern (const CIbyte *str);
-Lisp_Object intern_converting_underscores_to_dashes (const CIbyte *str);
+Lisp_Object intern_massaging_name (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);
 void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);
 Lisp_Object indirect_function (Lisp_Object, int);

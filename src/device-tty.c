@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -196,6 +194,14 @@ tty_device_system_metrics (struct device *d,
     case DM_size_device:
       return Fcons (make_int (CONSOLE_TTY_DATA (con)->width),
 		    make_int (CONSOLE_TTY_DATA (con)->height));
+    case DM_num_bit_planes:
+      {
+        EMACS_INT l2 = (EMACS_INT)  (log (CONSOLE_TTY_DATA (con)->colors)
+                                     / log (2));
+        return make_int (l2);
+      }
+    case DM_num_color_cells:
+      return make_int (CONSOLE_TTY_DATA (con)->colors);
     default: /* No such device metric property for TTY devices */
       return Qunbound;
     }

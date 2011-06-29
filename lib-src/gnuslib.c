@@ -1,10 +1,22 @@
 /* -*-C-*-
  Common library code for the XEmacs server and client.
 
+
+
  This file is part of XEmacs.
 
- Copying is permitted under those conditions described by the GNU
- General Public License.
+  XEmacs is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the
+  Free Software Foundation, either version 3 of the License, or (at your
+  option) any later version.
+
+  XEmacs is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+  for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
  Copyright (C) 1989 Free Software Foundation, Inc.
 
@@ -254,26 +266,52 @@ connect_to_unix_server (void)
 {
   int s;			/* connected socket descriptor */
   struct sockaddr_un server; 	/* for unix connections */
+  char *ctus_tmpdir = tmpdir;
 
-  if ((s = socket(AF_UNIX,SOCK_STREAM,0)) < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to create socket\n",progname);
-    exit(1);
-  }; /* if */
+  do
+    {
+      if ((s = socket(AF_UNIX,SOCK_STREAM,0)) < 0) {
+        perror(progname);
+        fprintf(stderr,"%s: unable to create socket\n",progname);
+        exit(1);
+      }; /* if */
   
-  server.sun_family = AF_UNIX;
-#ifdef HIDE_UNIX_SOCKET
-  sprintf(server.sun_path,"%s/gsrvdir%d/gsrv",tmpdir,(int)geteuid());
-#else  /* HIDE_UNIX_SOCKET */
-  sprintf(server.sun_path,"%s/gsrv%d",tmpdir,(int)geteuid());
-#endif /* HIDE_UNIX_SOCKET */
-  if (connect(s,(struct sockaddr *)&server,strlen(server.sun_path)+2) < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to connect to local\n",progname);
-    exit(1);
-  }; /* if */
+      server.sun_family = AF_UNIX;
 
-  return(s);
+#ifdef HIDE_UNIX_SOCKET
+      sprintf(server.sun_path,"%s/gsrvdir%d/gsrv", ctus_tmpdir,
+              (int)geteuid());
+#else  /* HIDE_UNIX_SOCKET */
+      sprintf(server.sun_path,"%s/gsrv%d", ctus_tmpdir,
+              (int)geteuid());
+#endif /* HIDE_UNIX_SOCKET */
+      if (connect(s,(struct sockaddr *)&server,strlen(server.sun_path)+2) < 0) {
+#ifndef WIN32_NATIVE
+#ifdef USE_TMPDIR
+        if (0 != strcmp (ctus_tmpdir, "/tmp"))
+          {
+            /* Try again; the server may have no environment value for
+               TMPDIR, or it may have been compiled without USE_TMPDIR, and
+               in both those cases it's useful to retry with /tmp.
+
+               In the case where the server was compiled with USE_TMPDIR and
+               it has a value for TMPDIR distinct from ours, we have no way of
+               working out what that value is, so it's appropriate to give
+               up. */
+            close (s);
+            ctus_tmpdir = "/tmp";
+            continue;
+          }
+#endif /* USE_TMPDIR */
+#endif /* !WIN32_NATIVE */
+        perror(progname);
+        fprintf(stderr,"%s: %s: unable to connect to local\n", progname,
+		server.sun_path);
+        exit(1);
+      }; /* if */
+
+      return(s);
+    } while (1);
 
 } /* connect_to_unix_server */
 #endif /* UNIX_DOMAIN_SOCKETS */

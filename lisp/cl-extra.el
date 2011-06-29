@@ -10,20 +10,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: FSF 21.3.
 
@@ -53,47 +51,67 @@
 
 ;;; Type coercion.
 
-(defun coerce (x type)
+(defun coerce (object type)
   "Coerce OBJECT to type TYPE.
 TYPE is a Common Lisp type specifier."
-  (cond ((eq type 'list) (if (listp x) x (append x nil)))
-	((eq type 'vector) (if (vectorp x) x (vconcat x)))
-	((eq type 'string) (if (stringp x) x (concat x)))
-	((eq type 'array) (if (arrayp x) x (vconcat x)))
-	((and (eq type 'character) (stringp x) (= (length x) 1)) (aref x 0))
-	((and (eq type 'character) (symbolp x)) (coerce (symbol-name x) type))
+  (cond ((eq type 'list) (if (listp object) object (append object nil)))
+	((eq type 'vector) (if (vectorp object) object (vconcat object)))
+	((eq type 'string) (if (stringp object) object (concat object)))
+	((eq type 'array) (if (arrayp object) object (vconcat object)))
+	((and (eq type 'character) (stringp object)
+	      (eql (length object) 1)) (aref object 0))
+	((and (eq type 'character) (symbolp object))
+	 (coerce (symbol-name object) type))
 	;; XEmacs addition character <-> integer coercions
-	((and (eq type 'character) (char-int-p x)) (int-char x))
-	((and (eq type 'integer) (characterp x)) (char-int x))
-	((eq type 'float) (float x))
+	((and (eq type 'character) (char-int-p object)) (int-char object))
+	((and (memq type '(integer fixnum)) (characterp object))
+	 (char-int object))
+	((eq type 'float) (float object))
 	;; XEmacs addition: enhanced numeric type coercions
 	((and-fboundp 'coerce-number
-	   (memq type '(integer ratio bigfloat))
-	   (coerce-number x type)))
+	   (memq type '(integer ratio bigfloat fixnum))
+	   (coerce-number object type)))
 	;; XEmacs addition: bit-vector coercion
 	((or (eq type 'bit-vector)
 	     (eq type 'simple-bit-vector))
-	 (if (bit-vector-p x) x (apply 'bit-vector (append x nil))))
+	 (if (bit-vector-p object)
+	     object
+	   (apply 'bit-vector (append object nil))))
 	;; XEmacs addition: weak-list coercion
 	((eq type 'weak-list)
-	 (if (weak-list-p x) x
+	 (if (weak-list-p object) object
 	   (let ((wl (make-weak-list)))
-	     (set-weak-list-list wl (if (listp x) x (append x nil)))
+	     (set-weak-list-list wl (if (listp object)
+					object
+				      (append object nil)))
 	     wl)))
 	((and
-	  (consp type)
-	  (or (eq (car type) 'vector)
-	      (eq (car type) 'simple-array)
-	      (eq (car type) 'simple-vector))
-	  (cond
-	   ((equal (cdr-safe type) '(*))
-	    (coerce x 'vector))
-	   ((equal (cdr-safe type) '(bit))
-	    (coerce x 'bit-vector))
-	   ((equal (cdr-safe type) '(character))
-	    (coerce x 'string)))))
-	((typep x type) x)
-	(t (error "Can't coerce %s to type %s" x type))))
+	  (memq (car-safe type) '(vector simple-array))
+	  (loop
+	    for (ignore elements length) = type
+	    initially (declare (special ignore))
+	    return (if (or (memq length '(* nil)) (eql length (length object)))
+		       (cond
+			((memq elements '(t * nil))
+			 (coerce object 'vector))
+			((memq elements '(string-char character))
+			 (coerce object 'string))
+			((eq elements 'bit)
+			 (coerce object 'bit-vector)))
+		     (error 
+		      'wrong-type-argument
+		      "Type specifier length must equal sequence length"
+		      type)))))
+	((eq (car-safe type) 'simple-vector)
+	 (coerce object (list* 'vector t (cdr type))))
+	((memq (car-safe type)
+	       '(string simple-string base-string simple-base-string))
+	 (coerce object (list* 'vector 'character (cdr type))))
+	((eq (car-safe type) 'bit-vector)
+	 (coerce object (list* 'vector 'bit (cdr type))))
+	((typep object type) object)
+	(t (error 'invalid-operation
+		  "Can't coerce object to type" object type))))
 
 ;; XEmacs; #'equalp is in C.
 
@@ -108,13 +126,23 @@ TYPE is a Common Lisp type specifier."
   `(lambda (&rest arguments) ,@(if documentation (list documentation))
      (not (apply ',function arguments))))
 
-(defun notany (cl-pred cl-seq &rest cl-rest)
-  "Return true if PREDICATE is false of every element of SEQ or SEQs."
-  (not (apply 'some cl-pred cl-seq cl-rest)))
+(defun notany (cl-predicate cl-seq &rest cl-rest)
+  "Return true if PREDICATE is false of every element of SEQUENCE.
 
-(defun notevery (cl-pred cl-seq &rest cl-rest)
-  "Return true if PREDICATE is false of some element of SEQ or SEQs."
-  (not (apply 'every cl-pred cl-seq cl-rest)))
+With optional SEQUENCES, call PREDICATE each time with as many arguments as
+there are SEQUENCES (plus one for the element from SEQUENCE).
+
+arguments: (PREDICATE SEQUENCES &rest SEQUENCES)"
+  (not (apply 'some cl-predicate cl-seq cl-rest)))
+
+(defun notevery (cl-predicate cl-seq &rest cl-rest)
+  "Return true if PREDICATE is false of some element of SEQUENCE.
+
+With optional SEQUENCES, call PREDICATE each time with as many arguments as
+there are SEQUENCES (plus one for the element from SEQUENCE).
+
+arguments: (PREDICATE SEQUENCES &rest SEQUENCES)"
+  (not (apply 'every cl-predicate cl-seq cl-rest)))
 
 ;;; Support for `loop'.
 (defalias 'cl-map-keymap 'map-keymap)
@@ -335,52 +363,6 @@ If STATE is t, return a new state object seeded from the time of day."
   (and (vectorp object) (= (length object) 4)
        (eq (aref object 0) 'cl-random-state-tag)))
 
-
-;; Implementation limits.
-
-(defun cl-finite-do (func a b)
-  (condition-case nil
-      (let ((res (funcall func a b)))   ; check for IEEE infinity
-	(and (numberp res) (/= res (/ res 2)) res))
-    (arith-error nil)))
-
-(defun cl-float-limits ()
-  (or most-positive-float (not (numberp '2e1))
-      (let ((x '2e0) y z)
-	;; Find maximum exponent (first two loops are optimizations)
-	(while (cl-finite-do '* x x) (setq x (* x x)))
-	(while (cl-finite-do '* x (/ x 2)) (setq x (* x (/ x 2))))
-	(while (cl-finite-do '+ x x) (setq x (+ x x)))
-	(setq z x y (/ x 2))
-	;; Now fill in 1's in the mantissa.
-	(while (and (cl-finite-do '+ x y) (/= (+ x y) x))
-	  (setq x (+ x y) y (/ y 2)))
-	(setq most-positive-float x
-	      most-negative-float (- x))
-	;; Divide down until mantissa starts rounding.
-	(setq x (/ x z) y (/ 16 z) x (* x y))
-	(while (condition-case nil (and (= x (* (/ x 2) 2)) (> (/ y 2) 0))
-		 (arith-error nil))
-	  (setq x (/ x 2) y (/ y 2)))
-	(setq least-positive-normalized-float y
-	      least-negative-normalized-float (- y))
-	;; Divide down until value underflows to zero.
-	(setq x (/ 1 z) y x)
-	(while (condition-case nil (> (/ x 2) 0) (arith-error nil))
-	  (setq x (/ x 2)))
-	(setq least-positive-float x
-	      least-negative-float (- x))
-	(setq x '1e0)
-	(while (/= (+ '1e0 x) '1e0) (setq x (/ x 2)))
-	(setq float-epsilon (* x 2))
-	(setq x '1e0)
-	(while (/= (- '1e0 x) '1e0) (setq x (/ x 2)))
-	(setq float-negative-epsilon (* x 2))))
-  nil)
-
-;; XEmacs; call cl-float-limits at dump time.
-(cl-float-limits)
-
 ;;; Sequence functions.
 
 ;; XEmacs; #'subseq is in C.
@@ -391,8 +373,9 @@ If STATE is t, return a new state object seeded from the time of day."
   (case type
     (vector (apply 'vconcat seqs))
     (string (apply 'concat seqs))
-    (list   (apply 'append (append seqs '(nil))))
-    (t (error 'invalid-argument "Not a sequence type name" type))))
+    (list   (reduce 'append seqs :from-end t :initial-value nil))
+    (bit-vector (apply 'bvconcat seqs))
+    (t (coerce (reduce 'append seqs :from-end t :initial-value nil) type))))
 
 ;;; List functions.
 
@@ -404,18 +387,17 @@ If STATE is t, return a new state object seeded from the time of day."
   "Equivalent to (nconc (nreverse X) Y)."
   (nconc (nreverse x) y))
 
-(defun list-length (list)
-  "Return the length of LIST.  Return nil if LIST is circular."
-  (if (listp list)
-      (condition-case nil (length list) (circular-list))
-    ;; Error on not-a-list:
-    (car list)))
-
+;; XEmacs; check LIST for type and circularity.
 (defun tailp (sublist list)
   "Return true if SUBLIST is a tail of LIST."
-  (while (and (consp list) (not (eq sublist list)))
-    (setq list (cdr list)))
-  (if (numberp sublist) (equal sublist list) (eq sublist list)))
+  (check-argument-type #'listp list)
+  (let ((before list) (evenp t))
+    (while (and (consp list) (not (eq sublist list)))
+      (setq list (cdr list)
+	    evenp (not evenp))
+      (if evenp (setq before (cdr before)))
+      (if (eq before list) (error 'circular-list list)))
+    (eql sublist list)))
 
 (defalias 'cl-copy-tree 'copy-tree)
 
@@ -425,17 +407,9 @@ If STATE is t, return a new state object seeded from the time of day."
 (defalias 'get* 'get)
 (defalias 'getf 'plist-get)
 
-(defun cl-set-getf (plist tag val)
-  (let ((p plist))
-    (while (and p (not (eq (car p) tag))) (setq p (cdr (cdr p))))
-    (if p (progn (setcar (cdr p) val) plist) (list* tag val plist))))
-
-(defun cl-do-remf (plist tag)
-  (let ((p (cdr plist)))
-    (while (and (cdr p) (not (eq (car (cdr p)) tag))) (setq p (cdr (cdr p))))
-    (and (cdr p) (progn (setcdr p (cdr (cdr (cdr p)))) t))))
-
-;; XEmacs change: we have a builtin remprop
+;; XEmacs; these are built-in.
+(defalias 'cl-set-getf 'plist-put)
+(defalias 'cl-do-remf 'plist-remprop)
 (defalias 'cl-remprop 'remprop)
 
 (defun get-properties (plist indicator-list)
@@ -636,8 +610,11 @@ This also does some trivial optimizations to make the form prettier."
 				     '((quote --cl-rest--)))))))
 		 (list (car form) (list* 'lambda (cadadr form) body))))
 	   (let ((found (assq (cadr form) env)))
-	     ;; XEmacs: cadr/caddr operate on nil without errors
-	     (if (eq (cadr (caddr found)) 'cl-labels-args)
+	     ;; XEmacs: cadr/caddr operate on nil without errors. But the
+	     ;; macro definition may be compiled, in which case there's
+	     ;; nothing for us to do.
+	     (if (and (listp (cdr found))
+		      (eq (cadr (caddr found)) 'cl-labels-args))
 		 (cl-macroexpand-all (cadr (caddr (cadddr found))) env)
 	       form))))
 	((memq (car form) '(defun defmacro))
@@ -662,6 +639,232 @@ This also does some trivial optimizations to make the form prettier."
     (message "Formatting...")
     (prog1 (cl-prettyprint form)
       (message ""))))
+
+;; XEmacs addition; force cl-macs to be available from here on when
+;; compiling files to be dumped.  This is more reasonable than forcing other
+;; files to do the same, multiple times.
+(eval-when-compile (or (cl-compiling-file) (load "cl-macs")))
+
+;; Implementation limits.
+
+;; XEmacs; call cl-float-limits at dump time.
+(labels
+    ((cl-finite-do (func a b)
+       (condition-case nil
+	   (let ((res (funcall func a b)))   ; check for IEEE infinity
+	     (and (numberp res) (/= res (/ res 2)) res))
+	 (arith-error nil)))
+     (cl-float-limits ()
+       (unless most-positive-float 
+	 (let ((x 2e0) y z)
+	   ;; Find maximum exponent (first two loops are optimizations)
+	   (while (cl-finite-do '* x x) (setq x (* x x)))
+	   (while (cl-finite-do '* x (/ x 2)) (setq x (* x (/ x 2))))
+	   (while (cl-finite-do '+ x x) (setq x (+ x x)))
+	   (setq z x y (/ x 2))
+	   ;; Now fill in 1's in the mantissa.
+	   (while (and (cl-finite-do '+ x y) (/= (+ x y) x))
+	     (setq x (+ x y) y (/ y 2)))
+	   (setq most-positive-float x
+		 most-negative-float (- x))
+	   ;; Divide down until mantissa starts rounding.
+	   (setq x (/ x z) y (/ 16 z) x (* x y))
+	   (while (condition-case nil (and (= x (* (/ x 2) 2)) (> (/ y 2) 0))
+		    (arith-error nil))
+	     (setq x (/ x 2) y (/ y 2)))
+	   (setq least-positive-normalized-float y
+		 least-negative-normalized-float (- y))
+	   ;; Divide down until value underflows to zero.
+	   (setq x (/ 1 z) y x)
+	   (while (condition-case nil (> (/ x 2) 0) (arith-error nil))
+	     (setq x (/ x 2)))
+	   (setq least-positive-float x
+		 least-negative-float (- x))
+	   (setq x 1e0)
+	   (while (/= (+ 1e0 x) 1e0) (setq x (/ x 2)))
+	   (setq float-epsilon (* x 2))
+	   (setq x 1e0)
+	   (while (/= (- 1e0 x) 1e0) (setq x (/ x 2)))
+	   (setq float-negative-epsilon (* x 2))))))
+  (cl-float-limits))
+
+
+;;; Character functions.
+(macrolet
+    ((define-char-comparisons (&rest alist)
+       "Provide Common Lisp's character-specific comparison predicates.
+
+These throw errors if any arguments are non-characters, conflicting with
+typical emacs behavior.  This is not the case if
+`byte-compile-delete-errors' is non-nil; see the documentation of that
+variable.
+
+This doesn't include the case-insensitive comparisons, and it probably
+should."
+       (let* ((functions (mapcar 'car alist))
+	      (map (mapcar #'(lambda (symbol)
+			       `(,symbol .
+				 ,(intern (substring (symbol-name symbol)
+						     (length "char")))))
+			   functions)))
+	 `(progn
+	   (mapc
+	    (function*
+	     (lambda ((function . cl-unsafe-comparison))
+	       (put function 'cl-unsafe-comparison cl-unsafe-comparison)
+	       (put function 'cl-compiler-macro
+		    #'(lambda (form &rest arguments)
+			(if byte-compile-delete-errors
+			    (cons (get (car form) 'cl-unsafe-comparison)
+				  (cdr form))
+			  form)))))
+	    ',map)
+	   ,@(mapcar
+	      (function*
+	       (lambda ((function . documentation))
+		 `(defun ,function (character &rest more-characters)
+		   ,documentation
+		   (check-type character character)
+		   (check-type more-characters
+			       (satisfies (lambda (list)
+					    (every 'characterp list))))
+		   (apply ',(cdr (assq function map))
+			  character more-characters))))
+	      alist)))))
+  (define-char-comparisons
+    (char= . "Return t if all character arguments are the same object.")
+    (char/= . "Return t if no two character arguments are the same object.")
+    (char< . "Return t if the character arguments monotonically increase.")
+    (char> . "Return t if the character arguments monotonically decrease.")
+    (char<= . "Return t if the character arguments are monotonically \
+nondecreasing.")
+    (char>= . "Return t if the character arguments are monotonically \
+nonincreasing.")))
+
+(defun* digit-char-p (character &optional (radix 10))
+  "Return non-nil if CHARACTER represents a digit in base RADIX.
+
+RADIX defaults to ten.  The actual non-nil value returned is the integer
+value of the character in base RADIX."
+  (check-type character character)
+  (check-type radix integer)
+  (if (<= radix 10)
+      (and (<= ?0 character (+ ?0 radix -1)) (- character ?0))
+    (or (and (<= ?0 character ?9) (- character ?0))
+	(and (<= ?a character (+ ?a (setq radix (- radix 11))))
+	     (+ character (- 10 ?a)))
+	(and (<= ?A character (+ ?A radix))
+	     (+ character (- 10 ?A))))))
+
+(defun* digit-char (weight &optional (radix 10))
+  "Return a character representing the integer WEIGHT in base RADIX.
+
+RADIX defaults to ten.  If no such character exists, return nil."
+  (check-type weight integer)
+  (check-type radix integer)
+  (and (natnump weight) (< weight radix)
+       (if (< weight 10)
+	   (int-char (+ ?0 weight))
+	 (int-char (+ ?A (- weight 10))))))
+
+(defun alpha-char-p (character)
+  "Return t if CHARACTER is alphabetic, in some alphabet.
+
+Han characters are regarded as alphabetic."
+  (check-type character character)
+  (and (eql ?w (char-syntax character (standard-syntax-table)))
+       (not (<= ?0 character ?9))))
+
+(defun graphic-char-p (character)
+  "Return t if CHARACTER is not a control character.
+
+Control characters are those in the range ?\\x00 to ?\\x15 and ?\\x7f to
+?\\x9f, inclusive."
+  (check-type character character)
+  (not (or (<= ?\x00 character ?\x1f) (<= ?\x7f character ?\x9f))))
+
+(defun standard-char-p (character)
+  "Return t if CHARACTER is one of Common Lisp's standard characters.
+
+These are the non-control ASCII characters, plus the newline character."
+  (check-type character character)
+  (or (<= ?\x20 character ?\x7e) (eql character ?\n)))
+
+(symbol-macrolet
+    ((names '((?\x08 . "Backspace") (?\x09 . "Tab") (?\x0a . "Newline")
+	      (?\x0C . "Page") (?\x0d . "Return") (?\x20 . "Space")
+	      (?\x7f . "Rubout"))))
+
+  (defun char-name (character)
+    "Return a string naming CHARACTER.
+
+For the limited number of characters where the character name has been
+specified by Common Lisp, this always returns the appropriate string
+name.  Otherwise, `char-name' requires that the Unicode database be
+available; see `describe-char-unicode-data'."
+    (check-type character character)
+    (or (cdr (assq character names))
+	(let ((unicode-data
+	       (assoc "Name" (describe-char-unicode-data character))))
+	  (and unicode-data
+	       (if (string-match "^<[^>]+>$" (cadr unicode-data))
+		   (format "U%04X" (char-to-unicode character))
+		 (replace-in-string (cadr unicode-data) " " "_" t))))))
+
+  (defun name-char (name)
+    "Return a character with name NAME, a string."
+    (or (car (rassoc* name names :test #'equalp))
+	(if (string-match "^[uU][0-9A-Fa-f]+$" name)
+	    (unicode-to-char (string-to-number (subseq name 1) 16))
+	  (with-current-buffer (get-buffer-create " *Unicode Data*")
+	    (require 'descr-text)
+	    (when (zerop (buffer-size))
+	      ;; Don't use -literally in case of DOS line endings.
+	      (insert-file-contents describe-char-unicodedata-file))
+	    (goto-char (point-min))
+	    (setq case-fold-search nil)
+	    (and (re-search-forward (format #r"^\([0-9A-F]\{4,6\}\);%s;"
+					    (upcase (replace-in-string
+						     name "_" " " t))) nil t)
+		 (unicode-to-char (string-to-number (match-string 1) 16))))))))
+
+(defun upper-case-p (character)
+  "Return t if CHARACTER is majuscule in the standard case table."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table)
+    (not (eq character (downcase character)))))
+
+(defun lower-case-p (character)
+  "Return t if CHARACTER is minuscule in the standard case table."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table)
+    (not (eq character (upcase character)))))
+
+(defun both-case-p (character)
+  "Return t if CHARACTER has case information in the standard case table."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table)
+    (or (not (eq character (upcase character)))
+	(not (eq character (downcase character))))))    
+
+(defun char-upcase (character)
+  "If CHARACTER is lowercase, return its corresponding uppercase character.
+Otherwise, return CHARACTER."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table) (upcase character)))
+
+(defun char-downcase (character)
+  "If CHARACTER is uppercase, return its corresponding lowercase character.
+Otherwise, return CHARACTER."
+  (and (stringp character) (check-type character character))
+  (with-case-table (standard-case-table) (downcase character)))
+
+(defun integer-length (integer)
+  "Return the number of bits need to represent INTEGER in two's complement."
+  (ecase (signum integer)
+    (0 0)
+    (-1 (1- (length (format "%b" (- integer)))))
+    (1 (length (format "%b" integer)))))
 
 (run-hooks 'cl-extra-load-hook)
 

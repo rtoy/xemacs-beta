@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -641,8 +639,7 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qbutton))
 	  {
-	    CHECK_NATNUM (value);
-	    check_int_range (XINT (value), 0, 7);
+	    check_integer_range (value, Qzero, make_int (26));
 
 	    switch (EVENT_TYPE (e))
 	      {
@@ -737,8 +734,23 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qtimestamp))
 	  {
-	    CHECK_NATNUM (value);
-	    SET_EVENT_TIMESTAMP (e, XINT (value));
+#ifdef HAVE_BIGNUM
+            check_integer_range (value, Qzero, make_integer (UINT_MAX));
+            if (BIGNUMP (value))
+              {
+                SET_EVENT_TIMESTAMP (e, bignum_to_uint (XBIGNUM_DATA (value)));
+              }
+#else
+            check_integer_range (value, Qzero, make_integer (EMACS_INT_MAX));
+#endif
+            if (INTP (value))
+              {
+                SET_EVENT_TIMESTAMP (e, XINT (value));
+              }
+            else
+              {
+                ABORT ();
+              }
 	  }
 	else if (EQ (keyword, Qfunction))
 	  {
@@ -1747,7 +1759,9 @@ See also `current-event-timestamp'.
 {
   CHECK_LIVE_EVENT (event);
   /* This junk is so that timestamps don't get to be negative, but contain
-     as many bits as this particular emacs will allow.
+     as many bits as this particular emacs will allow. We could return
+     bignums on builds that support them, but that involves consing and
+     doesn't work on builds that don't support bignums.
    */
   return make_int (EMACS_INT_MAX & XEVENT_TIMESTAMP (event));
 }
@@ -1763,8 +1777,9 @@ See also `event-timestamp' and `current-event-timestamp'.
 {
   EMACS_INT t1, t2;
 
-  CHECK_NATNUM (time1);
-  CHECK_NATNUM (time2);
+  check_integer_range (time1, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (time2, Qzero, make_integer (EMACS_INT_MAX));
+
   t1 = XINT (time1);
   t2 = XINT (time2);
 

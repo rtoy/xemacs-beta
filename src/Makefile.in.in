@@ -7,10 +7,10 @@
 
 ## This file is part of XEmacs.
 
-## XEmacs is free software; you can redistribute it and/or modify it
+## XEmacs is free software: you can redistribute it and/or modify it
 ## under the terms of the GNU General Public License as published by the
-## Free Software Foundation; either version 2, or (at your option) any
-## later version.
+## Free Software Foundation, either version 3 of the License, or (at your
+## option) any later version.
 
 ## XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,7 @@
 ## for more details.
 
 ## You should have received a copy of the GNU General Public License
-## along with XEmacs; see the file COPYING.  If not, write to
-## the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-## Boston, MA 02111-1307, USA.
+## along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ## Synched up with: Not synched with FSF.
 
@@ -38,6 +36,8 @@ RECURSIVE_MAKE_ARGS=
 @SET_MAKE@
 RECURSIVE_MAKE_ARGS=@RECURSIVE_MAKE_ARGS@
 #endif
+
+DESTDIR=
 
 PROGNAME=@PROGNAME@
 prefix=@prefix@
@@ -686,7 +686,7 @@ TransientEmacsShell.c.rtl : TopLevelEmacsShell.c.rtl
 ## Position-independent code for shared library creation
 #if USE_GCC
 pic_arg = -fpic
-#elif defined (IRIX)
+#elif defined (IRIX6_5)
 pic_arg = -KPIC
 # else
 pic_arg = -K pic
@@ -773,17 +773,17 @@ extw_link_mid = -o
 extw_link_end =
 #  endif
 # elif defined (USG5)
-#  if defined (IRIX)
+#  if defined (IRIX6_5)
 #   define EXTW_LINK(objs, output) $(LD) -shared -g -check_registry $(TOOLROOT)/usr/lib/so_locations objs -o output
 extw_link_beg = $(LD) -shared -g -check_registry $(TOOLROOT)/usr/lib/so_locations
 extw_link_mid =  -o
 extw_link_end =
-#  else /* not IRIX */
+#  else /* not IRIX6_5 */
 #   define EXTW_LINK(objs, output) $(CC) -G objs -z text -o output
 extw_link_beg = $(CC) -G
 extw_link_mid = -z text -o
 extw_link_end =
-#  endif /* not IRIX */
+#  endif /* not IRIX6_5 */
 # else /* not USG5 */
 #  define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
 extw_link_beg = $(LD) -dc
@@ -1021,7 +1021,7 @@ relock:
 #ifdef HAVE_SHLIB
 MAKEPATH=../lib-src/make-path
 install: $(PROGNAME)
-	$(MAKEPATH) $(archlibdir)/include $(archlibdir)/include/m $(archlibdir)/include/s
+	$(MAKEPATH) $(DESTDIR)$(archlibdir)/include $(DESTDIR)$(archlibdir)/include/m $(DESTDIR)$(archlibdir)/include/s
 	-@echo "Copying include files for ellcc..."
 	-@hdir=`pwd`; \
 	cd $(SRC); hdrdir2=`pwd`; cd $$hdir; \
@@ -1035,12 +1035,12 @@ install: $(PROGNAME)
 		test -d s && hdrtars="$$hdrtars s/*"; \
 		test -d m && hdrtars="$$hdrtars m/*"; \
 		test -n "$$hdrtars" && (tar cf - $$hdrtars) | \
-			(cd $(archlibdir)/include && umask 022 && tar xf -); \
-		chmod 755 $(archlibdir)/include; \
-		test -d $(archlibdir)/include/s && \
-		  chmod 755 $(archlibdir)/include/s; \
-		test -d $(archlibdir)/include/m && \
-		  chmod 755 $(archlibdir)/include/s;) \
+			(cd $(DESTDIR)$(archlibdir)/include && umask 022 && tar xf -); \
+		chmod 755 $(DESTDIR)$(archlibdir)/include; \
+		test -d $(DESTDIR)$(archlibdir)/include/s && \
+		  chmod 755 $(DESTDIR)$(archlibdir)/include/s; \
+		test -d $(DESTDIR)$(archlibdir)/include/m && \
+		  chmod 755 $(DESTDIR)$(archlibdir)/include/s;) \
 	done)
 #endif
 

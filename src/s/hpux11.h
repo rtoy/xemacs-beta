@@ -1,22 +1,21 @@
 /* Definitions file for XEmacs running on HPUX release 11.0.
  *       Copyright (C) 1985, 1986 Free Software Foundation, Inc.
+ *       Copyright (C) 2010 Ben Wing.
  *
- *       This file is part of XEmacs.
+ *    This file is part of XEmacs.
  *
- *       XEmacs is free software; you can redistribute it and/or modify
- *       it under the terms of the GNU General Public License as published by
- *       the Free Software Foundation; either version 2, or (at your option)
- *       any later version.
- *
- *       XEmacs is distributed in the hope that it will be useful,
- *       but WITHOUT ANY WARRANTY; without even the implied warranty of
- *       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *       GNU General Public License for more details.
- *
- *       You should have received a copy of the GNU General Public License
- *       along with XEmacs; see the file COPYING.  If not, write to
- *       the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- *       Boston, MA 02111-1307, USA.  */
+ *    XEmacs is free software: you can redistribute it and/or modify it
+ *    under the terms of the GNU General Public License as published by the
+ *    Free Software Foundation, either version 3 of the License, or (at your
+ *    option) any later version.
+ *    
+ *    XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ *    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ *    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ *    for more details.
+ *    
+ *    You should have received a copy of the GNU General Public License
+ *    along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.31. */
 
@@ -29,7 +28,7 @@
 #ifdef NOT_C_CODE
 #define START_FILES
 #define LINKER "$(CC)"
-#endif /* THIS IS YMAKEFILE */
+#endif /* NOT_C_CODE */
 
 /* get call to brk() when rerunning XEmacs */
 /* #ifndef USE_GCC */
@@ -47,37 +46,14 @@
 
 #define SYSTEM_TYPE "hpux"
 
-/* `nomultiplejobs' should be defined if your system's shell
- *  does not have "job control" (the ability to stop a program,
- *  run some other program, then continue the first one).
- *
- *  On hpux this depends on the precise kind of machine in use,
- *  so the m- file defines this symbol if appropriate.  */
-
-/* Letter to use in finding device name of first pty,
- * if system supports pty's.  'p' means it is /dev/ptym/ptyp0  */
-
-#define FIRST_PTY_LETTER 'p'
+/* Delete FIRST_PTY_LETTER -- same as default in XEmacs */
 
 /* The symbol in the kernel where the load average is found
  * depends on the cpu type, so we let the m- files define LDAV_SYMBOL.  */
 
 /* Special hacks needed to make Emacs run on this system.  */
 
-/* On USG systems the system calls are interruptible by signals
- * that the user program has elected to catch.  Thus the system call
- * must be retried in these cases.  To handle this without massive
- * changes in the source code, we remap the standard system call names
- * to names for our own functions in sysdep.c that do the system call
- * with retries. */
-
-#define INTERRUPTIBLE_OPEN
-#define INTERRUPTIBLE_IO
-/* XEmacs change */
-#define INTERRUPTIBLE_CLOSE
-
-/* Use the system provided termcap(3) library */
-#define TERMINFO
+/* Delete TERMINFO -- autodetected in XEmacs */
 
 /* The 48-bit versions are more winning for Emacs;
  * the ordinary ones don't give even 32 bits.  */
@@ -104,11 +80,11 @@
 
 /* This is how to get the device name of the tty end of a pty.  */
 #define PTY_TTY_NAME_SPRINTF \
-            sprintf (pty_name, "/dev/pty/tty%c%x", c, i);
+            qxesprintf (pty_name, "/dev/pty/tty%c%x", c, i);
 
 /* This is how to get the device name of the control end of a pty.  */
 #define PTY_NAME_SPRINTF \
-	sprintf (pty_name, "/dev/ptym/pty%c%x", c, i);
+	qxesprintf (pty_name, "/dev/ptym/pty%c%x", c, i);
 
 #ifdef HPUX_USE_SHLIBS
 #define LD_SWITCH_SYSTEM

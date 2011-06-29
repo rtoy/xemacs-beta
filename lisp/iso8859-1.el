@@ -9,20 +9,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with:  Not in FSF. 
 
@@ -83,6 +81,17 @@
 ;; Everything Latin-1 and above should be displayed as its character value
 ;; by default.
 (setq-default ctl-arrow #xA0)
+
+(when (and (compiled-function-p (symbol-function 'char-width))
+	   (not (featurep 'mule)))
+  (defalias 'char-width
+    (let ((constantly (constantly 1)))
+     (make-byte-code (compiled-function-arglist constantly)
+		     (compiled-function-instructions constantly)
+		     (compiled-function-constants constantly)
+		     (compiled-function-stack-depth constantly)
+		     (compiled-function-doc-string
+		      (symbol-function 'char-width))))))
 
 ;; Shouldn't be necessary, but one file in the packages uses it:
 (provide 'iso8859-1) 

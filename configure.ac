@@ -63,20 +63,18 @@ in the this directory.  You must have autoconf version 2.59.
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
 option) any later version.
 
-XEmacs is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to the Free
-Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA 02110-1301, USA.
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 For usage, run `./configure --help'
 For more detailed information on building and installing XEmacs,
@@ -977,9 +975,6 @@ XE_MERGED_ARG([workshop],
 XE_MERGED_ARG([sparcworks],
 	AS_HELP_STRING([--with-sparcworks],[Alias for --with-workshop]),
 	[], [])
-XE_MERGED_ARG([infodock],
-	AS_HELP_STRING([--with-infodock],[Support the Infodock version of XEmacs.  Infodock is a SourceForge project).]),
-	[], [])
 dnl
 XE_HELP_SUBSECTION([Debugging options])
 XE_MERGED_ARG([debug],
@@ -1228,27 +1223,8 @@ if test "$xemacs_release_date" != ""; then
 fi
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
 
-if test "$with_infodock" = "yes"; then
-  if test ! -f ../../ID-INSTALL; then
-    echo "Cannot build InfoDock without InfoDock sources"
-    with_infodock=no
-  fi
-fi
-
-if test "$with_infodock" = "yes"; then
-  dnl InfoDock version numbers.  XEmacs will use the same style of numbering
-  dnl after the release of XEmacs 21.0.
-  AC_DEFINE_UNQUOTED(INFODOCK_MAJOR_VERSION, $infodock_major_version)
-  AC_DEFINE_UNQUOTED(INFODOCK_MINOR_VERSION, $infodock_minor_version)
-  AC_DEFINE_UNQUOTED(INFODOCK_BUILD_VERSION, $infodock_build_version)
-  version=${infodock_major_version}.${infodock_minor_version}.${infodock_build_version}
-  PROGNAME=infodock
-  SHEBANG_PROGNAME=infodock-script
-  CPPFLAGS="$CPPFLAGS -DINFODOCK"
-else
-  PROGNAME=xemacs
-  SHEBANG_PROGNAME=xemacs-script
-fi
+PROGNAME=xemacs
+SHEBANG_PROGNAME=xemacs-script
 
 AC_SUBST(SHEBANG_PROGNAME)
 
@@ -1322,16 +1298,18 @@ dnl Straightforward machine determination
 case "$ac_cv_build" in
   sparc-*-*        ) machine=sparc ;;
   alpha*-*-*       ) machine=alpha ;;
-  mips*-linux      ) machine=mips ;;
+  mips*-*          ) machine=mips ;;
   rs6000-ibm-aix*  ) machine=ibmrs6000 ;;
   powerpc-ibm-aix* ) machine=ibmrs6000 ;;
   powerpc*-*       ) machine=powerpc ;;
   hppa-*-*         ) machine=hp800 ;;
   arm*             ) machine=arm ;;
+  i[[3-9]]86-*-*   ) machine=intel386 ;;
 esac
 
 dnl Straightforward OS determination
 case "$ac_cv_build" in
+  *-*-linux*    ) opsys=linux ;;
   *-*-netbsd*   ) opsys=netbsd ;;
   *-*-openbsd*	) opsys=openbsd ;;
 
@@ -1340,8 +1318,8 @@ case "$ac_cv_build" in
 
   dnl Other generic OSes
   *-gnu* )			opsys=gnu    ;;
-  *-*-bsd4.3 )			opsys=bsd4-3 ;;
-  *-*-aos*   )			opsys=bsd4-3 ;;
+  *-*-bsd4.3 )			opsys=bsd-common ;;
+  *-*-aos*   )			opsys=bsd-common ;;
   *-*-sysv4.1* | *-*-sysvr4.1* )opsys=usg5-4 NON_GNU_CPP=/usr/lib/cpp ;;
   *-*-sysv4.[[2-9]]* | *-sysvr4.[[2-9]]* )
 	if test -z "$NON_GNU_CPP" ; then
@@ -1355,20 +1333,6 @@ case "$ac_cv_build" in
 esac
 
 case "$ac_cv_build" in
-
-  dnl NetBSD ports
-  *-*-netbsd* )
-    case "${ac_cv_build}" in
-      i[[3-9]]86-*-netbsd*) machine=intel386 ;;
-    esac
-  ;;
-
-  dnl OpenBSD ports
-  *-*-openbsd* )
-    case "${ac_cv_build}" in
-      i386-*-openbsd*)		machine=intel386 ;;
-     esac
-   ;;
 
   dnl Darwin, a.k.a. MacOS X (based on Mach and Freebsd)
   *-*-darwin*)
@@ -1387,20 +1351,15 @@ case "$ac_cv_build" in
   dnl Workstations sold by MIPS
   dnl This is not necessarily all workstations using the MIPS processor -
   dnl Irises are produced by SGI, and DECstations by DEC.
-  mips-mips-bsd* ) machine=mips opsys=bsd4-3 ;;
-  mips-mips-*    ) machine=mips opsys=usg5-4-2 ;;
+  mips-mips-bsd* ) opsys=bsd-common ;;
+  mips-mips-*    ) opsys=usg5-4-2 ;;
 
   dnl Silicon Graphics machines
   dnl Iris 4D
-  mips-sgi-irix6*     ) opsys=irix6-0 ;;
+  mips-sgi-irix6*     ) opsys=irix6-5 ;;
 
   dnl Suns
   *-*-solaris* | *-sun-mach* | *-sun-bsd* )
-    dnl Hardware type
-    case "$ac_cv_build" in
-      i*86-*-* )	         machine=intel386 ;;
-    esac
-
     dnl Make $canonical even more so.
     case "$ac_cv_build" in *-sunos5*)
       ac_cv_build=`echo $ac_cv_build | sed -e s/sunos5/solaris2/`;;
@@ -1424,7 +1383,7 @@ case "$ac_cv_build" in
 	AC_DEFINE_UNQUOTED(OS_RELEASE, $os_release) ;;
 
       *-mach*		  ) opsys=mach-bsd4-3	;;
-      *			  ) opsys=bsd4-3	;;
+      *			  ) opsys=bsd-common	;;
     esac
 
     dnl Watch out for a compiler guaranteed not to work.
@@ -1433,10 +1392,9 @@ case "$ac_cv_build" in
 
   dnl Intel 386 machines where we do not care about the manufacturer
   i[[3-9]]86-*-* )
-    machine=intel386
     case "$ac_cv_build" in
       *-mach* )			opsys=mach-bsd4-3 ;;
-      *-sysv5* )		opsys=sco7 ;;
+      *-sysv5* )		opsys=usg5-4-2 ;;
       *-freebsd* )		opsys=freebsd ;;
       *-pc-cygwin* )		opsys=cygwin32 ;;
       *-pc-mingw* )		opsys=mingw32 ;
@@ -1992,6 +1950,16 @@ if test "$cflags_optimization_specified" = "no"; then
       with_cflags_optimization="-O3 -qstrict -qnoansialias -qlibansi -qmaxmem=20000"
     elif test "$__ICC" = "yes"; then
       with_cflags_optimization="-O3 -Ob2"
+    elif test "$opsys" = "irix6-5"; then
+      dnl Optimize, inaccurate debugging, increase limit on size of what's
+      dnl optimized.
+      dnl
+      dnl This should also be applicable other than on Irix 6.5, but I don't
+      dnl know for which compiler versions.  -- fx
+      with_cflags_optimization="-O -OPT:Olimit=3500"
+    dnl #### FIXME FOR LCC:
+    dnl elif test "USE_LCC" = "yes"; then
+    dnl   with_cflags_optimization="-O4 -Oi"
     dnl ### Add optimal cflags_optimization support for other compilers HERE!
     else
       with_cflags_optimization="-O" ;dnl The only POSIX-approved flag
@@ -2008,11 +1976,16 @@ AC_MSG_RESULT([${with_cflags_optimization}])
 
 AC_MSG_CHECKING([for preferred debugging flags])
 if test "$cflags_debugging_specified" = "no"; then
+  if test "$GCC" = "no" -a "$opsys" = "irix6-5" -a "$with_optimization" = "yes" ; then
+    dnl MIPSpro C special debugging stuff for use with optimization
+    with_cflags_debugging="-g3"
   dnl ### Add optimal debugging support for other compilers HERE!
-  with_cflags_debugging="-g"
+  else
+    with_cflags_debugging="-g"
+  fi
   
   debugging_ok_with_optimization=no
-  if test "$GCC" = "yes" -o "$CC" = "xlc" -o "$__ICC" = "yes"; then
+  if test "$GCC" = "yes" -o "$CC" = "xlc" -o "$__ICC" = "yes" -o "$opsys" = "irix6-5"; then
     debugging_ok_with_optimization=yes
   fi
   
@@ -3290,7 +3263,7 @@ if test "$with_msw" != "no"; then
     fi
 
     install_pp="$srcdir/lib-src/installexe.sh"
-    XE_APPEND(-limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr, libs_system)
+    XE_APPEND(-L/usr/lib/w32api -limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr, libs_system)
     if test "$with_dragndrop" != no; then
       XE_APPEND(msw, dragndrop_proto)
       with_dragndrop=yes
@@ -4501,6 +4474,7 @@ if test "$ac_cv_header_stropts_h" = "yes"; then
   AC_CHECK_HEADERS(strtio.h) dnl TIOCSIGNAL
 fi
 
+dnl There is also AC_FUNC_GETLOADAVG; why don't we use it?
 dnl Check whether the system provides getloadavg().
 AC_CHECK_FUNCS(getloadavg)
 
@@ -4513,7 +4487,7 @@ else
   dnl We define our own getloadavg() using lower level functions.
   XE_ADD_OBJS(getloadavg.o)
 
-  dnl Used by getloadavg() - does not require root priveleges
+  dnl Used by getloadavg() - does not require root privileges
   AC_CHECK_LIB(kstat, kstat_open)
   AC_CHECK_HEADERS(kstat.h)
 

@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -2826,7 +2824,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
       if (HAS_SPECMETH_P (sp, instantiate))
 	val = call_with_suspended_errors
 	  ((lisp_fn_t) RAW_SPECMETH (sp, instantiate),
-	   Qunbound, Qspecifier, errb, 5, specifier,
+	   Qunbound, Qspecifier, ERROR_ME_WARN, 5, specifier,
 	   matchspec, domain, val, depth, no_fallback);
 
       if (!UNBOUNDP (val))
@@ -3173,6 +3171,10 @@ See `specifier-instance' for more information about the instantiation process.
 				 no_fallback, 1);
 }
 
+/* MATCHSPEC is backward-incompatible with code written to 21.4's API.
+   So far such code has been seen only in x-symbol-mule.el, and that
+   was addressed by a change `face-property-matching-instance'.
+   See tracker issue752 for a more general patch against 21.5.29. */
 DEFUN ("specifier-matching-instance", Fspecifier_matching_instance, 2, 5, 0, /*
 Return an instance for SPECIFIER in DOMAIN that matches MATCHSPEC.
 If no instance can be generated for this domain, return DEFAULT.

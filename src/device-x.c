@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -149,13 +147,8 @@ get_device_from_display_1 (Display *dpy)
 struct device *
 get_device_from_display (Display *dpy)
 {
+#define FALLBACK_RESOURCE_NAME "xemacs"
   struct device *d = get_device_from_display_1 (dpy);
-
-#if !defined(INFODOCK)
-# define FALLBACK_RESOURCE_NAME "xemacs"
-# else
-# define FALLBACK_RESOURCE_NAME "infodock"
-#endif
 
   if (!d)
     {
@@ -344,11 +337,7 @@ have_xemacs_resources_in_xrdb (Display *dpy)
   const char *xdefs, *key;
   int len;
 
-#ifdef INFODOCK
-  key = "InfoDock";
-#else
   key = "XEmacs";
-#endif
   len = strlen (key);
 
   if (!dpy)
@@ -653,11 +642,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 	{
 	  app_class = (NILP (Vx_emacs_application_class)  &&
 		       have_xemacs_resources_in_xrdb (dpy))
-#ifdef INFODOCK
-	    ? "InfoDock"
-#else
 	    ? "XEmacs"
-#endif
 	    : "Emacs";
 	}
       else 
@@ -1280,7 +1265,8 @@ x_IO_error_handler (Display *disp)
       DEVICE_X_BEING_DELETED (d) = 1;
     }
 
-  throw_or_bomb_out (Qtop_level, Qnil, 0, Qnil, Qnil);
+  redisplay_cancel_ritual_suicide();
+  throw_or_bomb_out_unsafe (Qtop_level, Qnil, 0, Qnil, Qnil);
 
   RETURN_NOT_REACHED (0);
 }

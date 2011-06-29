@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* This file has been Mule-ized, Ben Wing, 1-26-10. */
 
@@ -390,11 +388,7 @@ emodules_load (const Ibyte *module, const Ibyte *modname,
 				       (const Ibyte *) "emodule_name");
   if (f == NULL || *f == NULL)
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_name'", Qunbound);
-
-  mname = EXTERNAL_TO_ITEXT (f, Qemodule_string_encoding);
-  /* #### Not obvious we have to force an alloca copy here, but the old
-     code did so */
-  IBYTE_STRING_TO_ALLOCA (mname, mname);
+  mname = EXTERNAL_TO_ITEXT (*f, Qemodule_string_encoding);
 
   if (mname[0] == '\0')
     signal_error (Qdll_error, "Invalid dynamic module: Empty value for `emodule_name'", Qunbound);
@@ -403,21 +397,13 @@ emodules_load (const Ibyte *module, const Ibyte *modname,
 				       (const Ibyte *) "emodule_version");
   if (f == NULL || *f == NULL)
     signal_error (Qdll_error, "Missing symbol `emodule_version': Invalid dynamic module", Qunbound);
-
-  mver = EXTERNAL_TO_ITEXT (f, Qemodule_string_encoding);
-  /* #### Not obvious we have to force an alloca copy here, but the old
-     code did so */
-  IBYTE_STRING_TO_ALLOCA (mver, mver);
+  mver = EXTERNAL_TO_ITEXT (*f, Qemodule_string_encoding);
 
   f = (const Extbyte **) dll_variable (dlhandle,
 				       (const Ibyte *) "emodule_title");
   if (f == NULL || *f == NULL)
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_title'", Qunbound);
-
-  mtitle = EXTERNAL_TO_ITEXT (f, Qemodule_string_encoding);
-  /* #### Not obvious we have to force an alloca copy here, but the old
-     code did so */
-  IBYTE_STRING_TO_ALLOCA (mtitle, mtitle);
+  mtitle = EXTERNAL_TO_ITEXT (*f, Qemodule_string_encoding);
 
   symname = alloca_ibytes (qxestrlen (mname) + 15);
 

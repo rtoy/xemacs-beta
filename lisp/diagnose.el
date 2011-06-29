@@ -7,20 +7,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -147,7 +145,7 @@
 					    (window-list fr t))
 					(frame-list))
 				16))
-          (when-fboundp #'sort-numeric-fields
+          (when-fboundp 'sort-numeric-fields
             (sort-numeric-fields -1
                                  (save-excursion
                                    (goto-char begin)
@@ -181,7 +179,7 @@
 	    (princ "\n")
 	    (princ (format fmt "total" total))
 	    (incf grandtotal total))
-          (when-fboundp #'sort-numeric-fields
+          (when-fboundp 'sort-numeric-fields
             (sort-numeric-fields -1
                                  (save-excursion
                                    (goto-char begin)
@@ -289,7 +287,7 @@
 			 total-non-lisp-use ""))
 	  (incf grandtotal total-use-with-overhead)
 	  (incf grandtotal total-non-lisp-use)
-          (when-fboundp #'sort-numeric-fields
+          (when-fboundp 'sort-numeric-fields
             (sort-numeric-fields -4
                                  (save-excursion
                                    (goto-char begin)
@@ -312,7 +310,7 @@
   "Show statistics about memory usage of the new allocator."
   (interactive)
   (garbage-collect)
-  (if-fboundp #'mc-alloc-memory-usage
+  (if-fboundp 'mc-alloc-memory-usage
       (let* ((stats (mc-alloc-memory-usage))
              (page-size (first stats))
              (heap-sects (second stats))
@@ -465,7 +463,7 @@
 (defun show-gc-stats ()
   "Show statistics about garbage collection cycles."
   (interactive)
-  (if-fboundp #'gc-stats
+  (if-fboundp 'gc-stats
       (let ((buffer "*garbage collection statistics*")
             (plist (gc-stats))
             (fmt "%-9s %16s %12s %12s %12s %12s\n"))

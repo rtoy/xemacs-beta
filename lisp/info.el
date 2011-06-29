@@ -12,20 +12,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not synched with FSF.  Highly divergent, and with
 ;;; many new features added for XEmacs.
@@ -590,7 +588,7 @@ to read a file name from the minibuffer."
 	   (equal (nth 1 p) "info")
 	   (not Info-standalone)
 	   (setq Info-standalone t)
-	   (= (length p) 3)
+	   (eql (length p) 3)
 	   (not (string-match "^-" (nth 2 p)))
 	   (setq file (nth 2 p))
 	   (setq command-line-args-left nil))
@@ -864,14 +862,13 @@ actually get any text from."
   (if (and Info-dir-contents Info-dir-file-attributes
 	   ;; Verify that none of the files we used has changed
 	   ;; since we used it.
-	   (eval (cons 'and
-		       (mapcar #'(lambda (elt)
-				   (let ((curr (file-attributes (car elt))))
-				     ;; Don't compare the access time.
-				     (if curr (setcar (nthcdr 4 curr) 0))
-				     (setcar (nthcdr 4 (cdr elt)) 0)
-				     (equal (cdr elt) curr)))
-			       Info-dir-file-attributes))))
+	   (every #'(lambda (elt)
+                      (let ((curr (file-attributes (car elt))))
+                        ;; Don't compare the access time.
+                        (if curr (setcar (nthcdr 4 curr) 0))
+                        (setcar (nthcdr 4 (cdr elt)) 0)
+                        (equal (cdr elt) curr)))
+                  Info-dir-file-attributes))
       (insert Info-dir-contents)
     (let ((dirs (reverse Info-directory-list))
 	  buffers lbuffers buffer others nodes dirs-done)
@@ -1128,7 +1125,7 @@ directory has been modified more recently."
   (let ((dir-mod-time (nth 5 (file-attributes file)))
 	f-mod-time newer)
     (setq Info-dir-newer-info-files nil)
-    (mapcar
+    (mapc
      #'(lambda (f)
 	 (prog2
 	     (setq f-mod-time (nth 5 (file-attributes f)))
@@ -1192,23 +1189,23 @@ and `END-INFO-DIR-ENTRY'."
   (let ((tab-width 8)
 	(description-col 0)
 	len)
-    (mapcar #'(lambda (e)
-		(setq e (cdr e))	; Drop filename
-		(setq len (length (concat (car e)
-					  (car (cdr e)))))
-		(if (> len description-col)
-		    (setq description-col len)))
-	    entries)
+    (mapc #'(lambda (e)
+              (setq e (cdr e))	; Drop filename
+              (setq len (length (concat (car e)
+                                        (car (cdr e)))))
+              (if (> len description-col)
+                  (setq description-col len)))
+          entries)
     (setq description-col (+ 5 description-col))
-    (mapcar #'(lambda (e)
-		(setq e (cdr e))	; Drop filename
-		(insert "* " (car e) ":" (car (cdr e)))
-		(setq e (car (cdr (cdr e))))
-		(while e
-		  (indent-to-column description-col)
-		  (insert (car e) "\n")
-		  (setq e (cdr e))))
-	    entries)
+    (mapc #'(lambda (e)
+              (setq e (cdr e))	; Drop filename
+              (insert "* " (car e) ":" (car (cdr e)))
+              (setq e (car (cdr (cdr e))))
+              (while e
+                (indent-to-column description-col)
+                (insert (car e) "\n")
+                (setq e (cdr e))))
+          entries)
     (insert "\n")))
 
 
@@ -1300,7 +1297,7 @@ the value of `Info-save-auto-generated-dir'."
 	    (narrow-to-region mark next-section)
 	    (setq dir-section-contents (nreverse (Info-parse-dir-entries
 						  (point-min) (point-max))))
-	    (mapcar
+	    (mapc
 	     #'(lambda (file)
 		 (setq dir-entry (assoc (downcase
 					 (file-name-sans-extension
@@ -1502,7 +1499,7 @@ versions of NAME. Only the suffixes are tried."
 				nil t)
 	       (if exact
 		   nil
-		 ;; Then, try to match the name independantly of the
+		 ;; Then, try to match the name independently of the
 		 ;; characters case.
 		 (directory-files dir 'fullname
 				  (Info-all-case-regexp

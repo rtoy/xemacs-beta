@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -32,6 +30,8 @@ Boston, MA 02111-1307, USA.  */
    SYMBOL_KEYWORD (Q_foo); declares a keyword symbol ":foo"
    SYMBOL_GENERAL (Qfoo, "bar"); declares a symbol named "bar" but stored in
      the variable Qfoo
+   SYMBOL_KEYWORD_GENERAL (Q_foo_, ":bar"); declares a keyword named ":bar"
+      but stored in the variable Q_foo_. 
 
 To sort the crap in this file, use the following:
 
@@ -92,6 +92,7 @@ SYMBOL_KEYWORD (Q_config);
 SYMBOL (Qconsole);
 SYMBOL (Qcontrol_1);
 SYMBOL (Qcopies);
+SYMBOL (Qcount);
 SYMBOL_MODULE_API (Qcritical);
 SYMBOL (Qctext);
 SYMBOL (Qcurrent);
@@ -102,6 +103,9 @@ SYMBOL (Qdde);
 SYMBOL (Qdead);
 SYMBOL (Qdebug);
 SYMBOL (Qdefault);
+/* We name the C variable corresponding to the keyword Q_default_, not
+   Q_default, to allow it to be useful with PARSE_KEYWORDS (). */
+SYMBOL_KEYWORD_GENERAL (Q_default_, ":default");
 SYMBOL_MODULE_API (Qdelete);
 SYMBOL (Qdelq);
 SYMBOL (Qdescription);
@@ -270,6 +274,7 @@ SYMBOL (Qstandard);
 SYMBOL_KEYWORD (Q_start);
 SYMBOL (Qstream);
 SYMBOL (Qstring);
+SYMBOL (Qstring_match);
 SYMBOL_KEYWORD (Q_style);
 SYMBOL_KEYWORD (Q_suffix);
 SYMBOL (Qsubtype);
@@ -279,6 +284,7 @@ SYMBOL (Qsyntax);
 SYMBOL (Qsystem_default);
 SYMBOL (Qterminal);
 SYMBOL (Qtest);
+SYMBOL_KEYWORD (Q_test);
 SYMBOL (Qtext);
 SYMBOL_KEYWORD (Q_text);
 SYMBOL (Qthis_command);

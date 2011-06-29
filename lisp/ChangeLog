@@ -1,3 +1,1332 @@
+2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gtk-init.el:
+	* gtk-init.el (make-device-late-gtk-entry-point):
+	* gtk-init.el (gtk-initialize-compose): Removed.
+	* keymap.el:
+	* keymap.el (function-key-map-parent):
+	* x-init.el (x-initialize-compose): Removed.
+	* x-init.el (make-device-late-x-entry-point):
+	Make the bindings for dead-acute and friends in
+	function-key-map-parent, rather than function-key-map; do this in
+	keymap.el rather than in window-system-specific code, since the
+	compose processing is generally useful and not X11-specific.
+	It's probably reasonable to rename x-compose.el to compose.el at
+	this point, but I haven't done that.
+
+2011-06-23  Didier Verna  <didier@xemacs.org>
+
+	From smitchel <smitchel@bnin.net>
+	* frame.el (get-other-frame): Add missing first argument THIS to
+	the call to NEXT-FRAME.
+
+2011-06-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* view-less.el (view):
+	Add a custom group to this file, so view-mode-line-string has an
+	associated custom group automatically.
+
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-defsubst-expand):
+	It is occasionally the case that the symbol naming the argument
+	co-incides with the value that it is replacing; in that case,
+	using the symbol macro is counterproductive and hangs XEmacs (as
+	does analogous code in SBCL), so don't.
+
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* behavior.el (enable-behavior):
+	* behavior.el (disable-behavior):
+	Remove a couple of redundant lambdas here, and remove a cond
+	clause that was never tripped (because nil is a list.)
+	* behavior.el (behavior-menu-filter):
+	Correct some indentation here.
+
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (defsubst*):
+	* cl-macs.el (cl-defsubst-expand):
+	If defaults refer to earlier args, or if there's a &rest arg, use
+	#'proclaim-inline.
+	Use #'symbol-macrolet instead of #'subst when replacing argument
+	names with their values in the inline expansion; this avoids
+	(most) instances where the symbol's function slot is used.
+	Document a bug that occurs if the symbol is being shadowed in a
+	lexically-contained scope.
+
+2011-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (assoc-ignore-case, assoc-ignore-representation):
+	* cl-macs.el (member-ignore-case): New compiler macros.
+	* subr.el (assoc-ignore-case):
+	* subr.el (assoc-ignore-representation):
+	* subr.el (member-ignore-case):
+	* subr.el (split-path):
+	* subr.el (delete-dups):
+	Reimplement a few GNU functions in terms of their CL counterparts,
+	for the sake of circularity checking and some speed; add type
+	checking (used in interpreted code and with low speed and safety
+	checking) for the sake of revealing incompatibilities when
+	developing.
+	* subr.el (remove-hook):
+	There's no need for flet here, an explicit lambda is enough.
+
+2011-06-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gutter-items.el (add-tab-to-gutter):
+	* toolbar-items.el (toolbar-add-item-data):
+	Switch to #'dolist instead of #'mapcar in a couple of places where
+	the result isn't used. (Committed now mostly to trigger a commit
+	mail so Mats' buildbot gets woken up.)
+
+2011-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-transform-lambda):
+	Move the code to decide whether to add argument information to the
+	docstring a little later, so the information about what the
+	function's docstring ends up being is a little more exact.
+
+2011-05-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* modeline.el (make-modeline-command-wrapper):
+	Be more reasonable about the implementation of this wrapper, don't
+	require that the value of COMMAND be available at macro-expansion
+	time. (Basically, implement a closure.)
+	* modeline.el (add-minor-mode):
+	Remove a workaround and misguided comment that are no longer
+	necessary or exact.
+
+2011-05-25  Didier Verna  <didier@xemacs.org>
+
+	* cl-macs.el (macrolet):
+	* cl-macs.el (symbol-macrolet): Don't require one mandatory
+	[symbol-]macro definition in the first argument. The Common Lisp
+	standard allows the list of definitions to be empty.
+
+2011-05-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (bind-inits)): Removed.
+	* cl-macs.el (defun*):
+	* cl-macs.el (defmacro*):
+	* cl-macs.el (function*):
+	* cl-macs.el (macrolet):
+	* cl-macs.el (cl-transform-function-property):
+	* cl-macs.el (destructuring-bind):
+	Remove `bind-inits' from this file, and only ever return nil as
+	the first element of cl-transform-lambda's result list; bind-inits
+	hasn't been used since the support for non-self-quoting keywords
+	was removed, and its absence (and the guarantee that the first
+	element of the result of cl-transform-lambda is nil) make the
+	implementations of various other macros easier and clearer.
+	* cl-macs.el (cl-transform-lambda):
+	Give this function a docstring.
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp-runtime.el:
+	* bytecomp.el (byte-compile-file-form-defmumble):
+	* bytecomp-runtime.el (macro-declaration-function): New.
+	* subr.el:
+	* subr.el (macro-declaration-function): Removed.
+	Add support for macro-declaration-function, which is a GNU
+	mechanism for indicating indentation and edebug information in
+	macros (and only in macros).
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el:
+	* subr.el (split-path): New.
+	Moved here from fns.c. There's no need to have this in C, it's no
+	longer used that early at startup.
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-two-args-19->20): Removed.
+	* bytecomp.el (byte-compile-emacs19-compatibility): Removed.
+	* bytecomp.el (byte-defop-compiler20): Removed.
+	* bytecomp.el (byte-defop-compiler-rmsfun): Removed.
+	* bytecomp.el (emacs-lisp-file-regexp):
+	* bytecomp.el (byte-compile-print-gensym):
+	* bytecomp.el (byte-compiler-legal-options):
+	* bytecomp.el (byte-compiler-obsolete-options):
+	* bytecomp.el (byte-compile-close-variables):
+	* bytecomp.el (byte-compile-insert-header):
+	* bytecomp.el (byte-compile-output-file-form):
+	* bytecomp.el (byte-compile-output-docform):
+	* bytecomp.el (byte-compile-out-toplevel):
+	* bytecomp.el (byte-compile-form):
+	* bytecomp.el (byte-defop-compiler-1):
+	* bytecomp.el (eq):
+	* bytecomp.el (equal):
+	* bytecomp.el (member):
+	* bytecomp.el (byte-compile-noop):
+	* bytecomp.el (byte-compile-save-current-buffer):
+	Remove support for generating code appropriate to Emacs 19.
+
+	* bytecomp.el (byte-compile-eval):
+	Avoid erroring here if the car of some entry in the macro
+	environment is not a symbol, as is the case for symbol macros.
+	* bytecomp.el (or):
+	Use slightly better style when compiling the most important
+	functions if bytecomp.el has just been loaded interpreted.
+
+2011-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el:
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	Call #'byte-optimize-side-effect-free-p on the form, rather than
+	just checking the plist of the form's car.
+	* byte-optimize.el (side-effect-free-fns):
+	Move the CL functions into their alphabetical place in the list.
+	* byte-optimize.el (function):
+	* byte-optimize.el (byte-optimize-side-effect-free-p): New.
+	Function returning non-nil if a funcall has no side-effects, which
+	handles things like (remove* item list :key 'car) and
+	(remove-if-not #'integerp list).
+
+2011-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (most-positive-fixnum-on-32-bit-machines):
+	Correct this, I had an off-by-one error (because I was developing
+	on a 64-bit machine). Thanks for the report, Raymond Toy!
+
+2011-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* buff-menu.el (list-buffers-directory):
+	* buff-menu.el (default-list-buffers-identification):
+	* cus-file.el (custom-file-base):
+	* cus-file.el (custom-file):
+	* cus-file.el (make-custom-file-name):
+	* menubar.el (menu-split-long-menu):
+	* newcomment.el:
+	* newcomment.el (indent-for-comment):
+	* newcomment.el (comment-column):
+	* newcomment.el (comment-start):
+	* newcomment.el (comment-start-skip):
+	* newcomment.el (comment-end-skip):
+	* newcomment.el (comment-end):
+	* newcomment.el (comment-indent-function):
+	* newcomment.el (comment-style):
+	* newcomment.el (comment-padding):
+	* newcomment.el (comment-multi-line):
+	* newcomment.el (comment-normalize-vars):
+	* newcomment.el (comment-indent):
+	* newcomment.el (comment-set-column):
+	* newcomment.el (comment-kill):
+	* newcomment.el (uncomment-region):
+	* newcomment.el (comment-region):
+	* newcomment.el (comment-or-uncomment-region):
+	* newcomment.el (comment-dwim):
+	* newcomment.el (comment-indent-new-line):
+	* x-win-sun.el (x-win-init-sun):
+	* x-win-xfree86.el (x-win-init-xfree86):
+	* mule/mule-composite.el:
+	* mule/mule-composite.el (reference-point-alist):
+	* mule/mule-composite.el (compose-region):
+	* mule/mule-composite.el (decompose-region):
+	* mule/mule-composite.el (compose-string):
+	* mule/mule-composite.el (decompose-string):
+	* mule/mule-composite.el (compose-chars):
+	* mule/mule-composite.el (find-composition):
+	* mule/mule-composite.el (compose-chars-after):
+	* mule/mule-composite.el (compose-last-chars):
+	* mule/mule-composite.el (decompose-composite-char):
+	Remove all autoload cookies from dumped files, they're needless
+	and confusing.
+
+2011-04-30  Didier Verna  <didier@xemacs.org>
+
+	* subr.el (looking-back): New function.
+
+2011-04-30  Didier Verna  <didier@xemacs.org>
+
+	* special-mode.el: New file.
+	* special-mode.el (special-mode-map): New variable.
+	* special-mode.el (special-mode): New function.
+	* dumped-lisp.el (preloaded-file-list): Add special-mode.
+
+2011-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* faces.el (face-property-matching-instance):
+	Allow backward compatibility to the 21.4 API.  Update docstring.
+
+2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.31 "ginger" is released.
+
+2011-04-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.30 "garlic" is released.
+
+2011-04-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (symbol-macrolet):
+	* cl-macs.el (lexical-let):
+	* cl.el:
+	* cl.el (cl-macroexpand):
+	Distinct symbol macros with identical string names should
+	nonetheless expand to different things; implement this, storing
+	the symbol's eq-hash in the macro environment, rather than its
+	string name.
+
+2011-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (define-char-comparisons):
+	Add type-checking when the various character-specific comparison
+	predicates are used; don't check types if
+	byte-compile-delete-errors is non-nil at compile-time, instead use
+	the corresponding built-in numeric byte codes.
+
+2011-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* font.el:
+	* font.el (font-warn): Removed.
+	* font.el (font-hex-string-to-number): Removed.
+	* font.el (internal-facep):
+	* font.el (font-lookup-rgb-components):
+	* font.el (font-parse-rgb-components):
+	Use #'string-to-number with the BASE argument instead of
+	#'font-hex-string-to-number, #'display-warning instead of
+	#'font-warn.
+	This entire file smells bitrotted, with lots of functions of very
+	little relevance to XEmacs, but addressing that is more work than
+	I can do today.
+
+2011-04-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el:
+	* cl-extra.el ('char<): New.
+	* cl-extra.el ('char>=): New.
+	* cl-extra.el ('char>): New.
+	* cl-extra.el ('char<=): New.
+	* cl-extra.el (alpha-char-p): New.
+	* cl-extra.el (graphic-char-p): New.
+	* cl-extra.el (standard-char-p): New.
+	* cl-extra.el (char-name): New.
+	* cl-extra.el (name-char): New.
+	* cl-extra.el (upper-case-p): New.
+	* cl-extra.el (lower-case-p): New.
+	* cl-extra.el (both-case-p): New.
+	* cl-extra.el (char-upcase): New.
+	* cl-extra.el (char-downcase): New.
+	* cl-extra.el (integer-length): New.
+	Add various functions dealing (mainly) with characters, making
+	some Common Lisp code easier to port.
+	* descr-text.el (describe-char-unicode-data):
+	Add an autoload for this function, used by #'char-name.
+
+2011-04-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-win32-init.el (windows-874):
+	No longer create this coding system, now it's provided by thai.el;
+	thanks for the report of the associated Win32 build problem, Mats!
+
+2011-04-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (load-unicode-tables):
+	No longer include thai-xtis in the default Unicode precedence list.
+	* mule/thai.el:
+	* mule/thai.el (tis-620):
+	* mule/thai.el (windows-874):
+	* mule/thai.el ("Thai"):
+	Move the Thai language environment and the TIS-620 coding system
+	to this file; add support for Microsoft's code page 874.
+	* mule/thai-util.el:
+	* mule/thai-xtis.el:
+	Remove these two files; XTIS was always non-standard and was never
+	widely implemented, and we've never supported the character
+	composition necessary for thai-util.el.
+	* dumped-lisp.el (preloaded-file-list):
+	Drop thai-xtis, dump thai.el instead.
+
+2011-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (cadr, caddr, cadddr):
+	Document some equivalences for these functions.
+
+2011-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-output-preface): New.
+	* bytecomp.el (byte-compile-output-file-form):
+	* bytecomp.el (byte-compile-output-docform):
+	* bytecomp.el (byte-compile-file-form):
+	* bytecomp.el (byte-compile-file-form-defmumble):
+	* bytecomp.el (symbol-value):
+	* bytecomp.el (byte-compile-symbol-value): New.
+	* cl-macs.el (load-time-value):
+	No longer implement load-time-value by very hackishly redefining
+	#'byte-compile-file-form-defmumble, instead make the appropriate
+	changes in #'byte-compile-file-form-defmumble and
+	#'byte-compile-file-form instead. We also add a specific byte-compile
+	method for #'symbol-value, using the add-properties-to-a-gensym
+	approach that worked for #'block and #'return-from.
+
+2011-03-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (cl-finite-do, cl-float-limits):
+	Don't make these available as functions in the dumped image, since
+	they're only called at dump time.
+	* obsolete.el (cl-float-limits):
+	Make this an alias to #'identity (since it's called at dump time),
+	mark it as obsolete in 21.5.
+
+2011-03-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el:
+	* cl.el (least-positive-float):
+	* cl.el (least-positive-normalized-float):
+	* cl.el (least-negative-normalized-float):
+	* cl.el (float-epsilon):
+	* cl.el (float-negative-epsilon):
+	Document some previously-undocumented float constants here.
+	* cl.el (oddp):
+	* cl.el (evenp):
+	Change numeric comparison to use #'eql instead of #'eq in
+	passing.
+
+2011-03-24  Jerry James  <james@xemacs.org>
+
+	* cl-macs.el (loop): "arbitary" -> "arbitrary".
+	* coding.el (force-coding-system-equivalency): "compatiblity" ->
+	"compatibility".
+	* cus-edit.el (custom-variable-pre-reset-standard): "explictly" ->
+	"explicitly" and fix grammar.
+	(custom-face-pre-reset-standard): "explictly" -> "explicitly".
+	* etags.el (pop-tag-mark): "seperate" -> "separate".
+	* files.el (make-temp-file): "analagous" -> "analogous".
+	* font-menu.el (font-menu-ignore-scaled-fonts): "noticably" ->
+	"noticeably".
+	* fontconfig.el (fc-pattern-get-or-compute-size): "unsucessful" ->
+	"unsuccessful".
+	* gnome-widgets.el: "writen" -> "written", "choosed" -> "chosen",
+	"existance" -> "existence".
+	* gtk-ffi.el (gtk-ffi-debug): "wiht" -> "with".
+	* gtk-widgets.el: "wil" -> "will", "occure" -> "occur", "efficent" ->
+	"efficient", "mannor" -> "manner", "negitive" -> "negative",
+	"particulary" -> "particularly".
+	* info.el (Info-suffixed-file): "independantly" -> "independently".
+	* minibuf.el (minibuffer): "Controling" -> "Controlling".
+	* mule/ccl.el (define-ccl-program): "correponding" -> "corresponding".
+	* mule/indian.el: "apperance" -> "appearance" and correct grammar.
+	* mule/kinsoku.el (kinsoku-process-extend): "permissable" ->
+	"permissible", "deliberatly" -> "deliberately", and correct grammar.
+	(kinsoku-process-shrink): "permissable" -> "permissible".
+	* mule/lao-util.el (lao-vowel-reordering-rule): "follwoing" ->
+	"following", "alwasy" -> "always".
+	(lao-transcribe-single-roman-syllable-to-lao): "beggining" ->
+	"beginning".
+	* mule/latin.el: "idiosyncracy" -> "idiosyncrasy".
+	* mule/thai-util.el: "repetion" -> "repetition".
+	* package-get.el (package-get-require-base): "explictly" ->
+	"explicitly".
+	* packages.el (packages-find-package-data-path): "hierachies" ->
+	"hierarchies".
+	* paragraphs.el (use-hard-newlines): "preceeding" -> "preceding".
+	* startup.el (command-line): "intial" -> "initial".
+	* toolbar-itmes.el (toolbar-news): "Unkown" -> "Unknown".
+
+2011-03-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* custom.el (custom-add-to-group):
+	Warn if adding an option to the nil group; this is usually an
+	error on the part of the programmer.
+	* cmdloop.el (suggest-key-bindings):
+	Specify a group for this variable, it didn't previously have one.
+
+2011-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (revappend, nreconc):
+	Add compiler macros for these two functions. (They used to be
+	inline, but that involves needless binding of the arguments.)
+
+2011-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-non-fixnum-number-p):
+	This should return t under 64-bit builds for fixnums that would
+	be bignums on a 32-bit machine; make it so.
+
+2011-03-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* faces.el (face-spec-set-match-display):
+	Protect against `display-color-cells' returning nil.
+	Delete unreferenced let-binding of `min-colors'.
+
+2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-catch):
+	* bytecomp.el (byte-compile-throw):
+	Correct some minor problems in my last change. Happy St. Patrick's
+	day, everyone!
+
+2011-03-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-catch):
+	* bytecomp.el (byte-compile-throw):
+	* cl-macs.el (return-from):
+	With `block' and `return-from', a nil NAME is perfectly
+	legitimate, and the corresponding `catch' statements need be
+	removed by the byte-compiler. 5dd1ba5e0113 , my change of
+	2011-02-12, didn't do this; correct that now.
+
+2011-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	Don't generate the old-eq, old-memq, old-equal bytecodes any more,
+	but keep the information about them around for the sake of the
+	disassembler.
+
+2011-03-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* custom.el (defface): Document `min-colors' specifier.
+
+	* faces.el (face-spec-set-match-display): Add `min-colors'
+	specifer for defface.
+
+2011-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* isearch-mode.el (isearch-mode-map):
+	Document why we bind the ASCII characters to isearch-printing-char
+	in more detail.
+	* isearch-mode.el (isearch-maybe-frob-keyboard-macros):
+	If `this-command' is nil and the keys typed would normally be
+	bound to `self-insert-command' in the global map, force
+	`isearch-printing-char' to be called with an appropriate value for
+	last-command-event. Addresses an issue where searching for
+	characters generated from x-compose.el and XIM threw errors for me
+	in dired.
+
+2011-03-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* etags.el (buffer-tag-table-list):
+	* files.el (find-file-read-only):
+	* files.el (find-file-read-only-other-window):
+	* info.el (Info-dir-outdated-p):
+	* info.el (Info-dump-dir-entries):
+	* info.el (Info-rebuild-dir):
+	* menubar-items.el (default-menubar):
+	* mouse.el (drag-window-divider):
+	* mouse.el (vertical-divider-map):
+	* test-harness.el (emacs-lisp-file-regexp):
+	Eliminate byte-compile warnings, again aside from those linked to
+	Stephen's various non-defined fontconfig functions.
+
+2011-03-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmdloop.el (yes-or-no-p):
+	* cmdloop.el (y-or-n-p):
+	* descr-text.el (describe-char):
+	* diagnose.el (show-memory-usage):
+	* diagnose.el (show-object-memory-usage-stats):
+	* diagnose.el (show-mc-alloc-memory-usage):
+	* diagnose.el (show-gc-stats):
+	* faces.el (face-font-instance):
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* help.el (help-symbol-function-context-menu):
+	* help.el (help-symbol-variable-context-menu):
+	* help.el (help-symbol-function-and-variable-context-menu):
+	* help.el (help-find-source-or-scroll-up):
+	* help.el (help-mouse-find-source-or-track):
+	* help.el (temp-buffer-resize-mode):
+	* minibuf.el (mouse-read-file-name-1):
+	* obsolete.el (find-non-ascii-charset-string):
+	* obsolete.el (find-non-ascii-charset-region):
+	* occur.el (occur-engine):
+	* paragraphs.el (forward-paragraph):
+	* paragraphs.el (forward-sentence):
+	* select.el (activate-region-as-selection):
+	* select.el (select-make-extent-for-selection):
+	* simple.el (zmacs-make-extent-for-region):
+	Use quote, not function, for quoting symbols that may not be
+	fboundp at the point they are read (again, a style issue, since
+	Common Lisp throws an error on this, but we don't, and have no
+	plans to.)
+
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (loop):
+	* cl-macs.el (cl-expand-do-loop):
+	* cl-macs.el (shiftf):
+	* cl-macs.el (rotatef):
+	* cl-macs.el (assert):
+	* cl-macs.el (cl-defsubst-expand):
+	* etags.el (buffer-tag-table-list):
+	* frame.el:
+	* frame.el (frame-notice-user-settings):
+	* frame.el (minibuffer-frame-list):
+	* frame.el (get-frame-for-buffer-noselect):
+	Use Common Lisp-derived builtins in a few more places, none of
+	them performance-critical, but the style is better.
+
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* buff-menu.el (list-buffers-noselect):
+	* byte-optimize.el (byte-optimize-identity):
+	* byte-optimize.el (byte-optimize-if):
+	* byte-optimize.el (byte-optimize-nth):
+	* byte-optimize.el (byte-optimize-nthcdr):
+	* bytecomp.el (byte-compile-warn-wrong-args):
+	* bytecomp.el (byte-compile-two-args-19->20):
+	* bytecomp.el (byte-compile-list):
+	* bytecomp.el (byte-compile-beginning-of-line):
+	* bytecomp.el (byte-compile-set):
+	* bytecomp.el (byte-compile-set-default):
+	* bytecomp.el (byte-compile-values):
+	* bytecomp.el (byte-compile-values-list):
+	* bytecomp.el (byte-compile-integerp):
+	* bytecomp.el (byte-compile-multiple-value-list-internal):
+	* bytecomp.el (byte-compile-throw):
+	* cl-macs.el (cl-do-arglist):
+	* cl-macs.el (cl-parse-loop-clause):
+	* cl-macs.el (multiple-value-bind):
+	* cl-macs.el (multiple-value-setq):
+	* cl-macs.el (get-setf-method):
+	* cmdloop.el (command-error):
+	* cmdloop.el (y-or-n-p-minibuf):
+	* cmdloop.el (yes-or-no-p-minibuf):
+	* coding.el (unencodable-char-position):
+	* cus-edit.el (custom-face-prompt):
+	* cus-edit.el (custom-buffer-create-internal):
+	* cus-edit.el (widget-face-action):
+	* cus-edit.el (custom-group-value-create):
+	* descr-text.el (describe-char-unicode-data):
+	* dialog-gtk.el (popup-builtin-question-dialog):
+	* dragdrop.el (experimental-dragdrop-drop-log-function):
+	* dragdrop.el (experimental-dragdrop-drop-mime-default):
+	* easymenu.el (easy-menu-add):
+	* easymenu.el (easy-menu-remove):
+	* faces.el (read-face-name):
+	* faces.el (set-face-stipple):
+	* files.el (file-name-non-special):
+	* font.el (font-combine-fonts):
+	* font.el (font-set-face-font):
+	* font.el (font-parse-rgb-components):
+	* font.el (font-rgb-color-p):
+	* font.el (font-color-rgb-components):
+	* gnuserv.el (gnuserv-edit-files):
+	* help.el (key-or-menu-binding):
+	* help.el (function-documentation-1):
+	* help.el (function-documentation):
+	* info.el (info):
+	* isearch-mode.el (isearch-exit):
+	* isearch-mode.el (isearch-edit-string):
+	* isearch-mode.el (isearch-*-char):
+	* isearch-mode.el (isearch-complete1):
+	* ldap.el (ldap-encode-country-string):
+	* ldap.el (ldap-decode-string):
+	* minibuf.el (read-file-name-internal-1):
+	* minibuf.el (read-non-nil-coding-system):
+	* minibuf.el (get-user-response):
+	* mouse.el (drag-window-divider):
+	* mule/ccl.el:
+	* mule/ccl.el (ccl-compile-if):
+	* mule/ccl.el (ccl-compile-break):
+	* mule/ccl.el (ccl-compile-repeat):
+	* mule/ccl.el (ccl-compile-write-repeat):
+	* mule/ccl.el (ccl-compile-call):
+	* mule/ccl.el (ccl-compile-end):
+	* mule/ccl.el (ccl-compile-read-multibyte-character):
+	* mule/ccl.el (ccl-compile-write-multibyte-character):
+	* mule/ccl.el (ccl-compile-translate-character):
+	* mule/ccl.el (ccl-compile-mule-to-unicode):
+	* mule/ccl.el (ccl-compile-unicode-to-mule):
+	* mule/ccl.el (ccl-compile-lookup-integer):
+	* mule/ccl.el (ccl-compile-lookup-character):
+	* mule/ccl.el (ccl-compile-map-multiple):
+	* mule/ccl.el (ccl-compile-map-single):
+	* mule/devan-util.el (devanagari-compose-to-one-glyph):
+	* mule/devan-util.el (devanagari-composition-component):
+	* mule/mule-cmds.el (finish-set-language-environment):
+	* mule/viet-util.el:
+	* mule/viet-util.el (viet-encode-viscii-char):
+	* multicast.el (open-multicast-group):
+	* newcomment.el (comment-quote-nested):
+	* newcomment.el (comment-region):
+	* newcomment.el (comment-dwim):
+	* regexp-opt.el (regexp-opt-group):
+	* replace.el (map-query-replace-regexp):
+	* specifier.el (derive-device-type-from-tag-set):
+	* subr.el (skip-chars-quote):
+	* test-harness.el (test-harness-from-buffer):
+	* test-harness.el (batch-test-emacs):
+	* wid-edit.el (widget-choice-action):
+	* wid-edit.el (widget-symbol-prompt-internal):
+	* wid-edit.el (widget-color-action):
+	* window-xemacs.el (push-window-configuration):
+	* window-xemacs.el (pop-window-configuration):
+	* window.el (quit-window):
+	* x-compose.el (electric-diacritic):
+	It's better style, and cheaper (often one assembler instruction
+	vs. a C funcall in the byte code), to use `eql' instead of `='
+	when it's clear what numerical type a given result will be. Change
+	much of our code to do this, with the help of a byte-compiler
+	change (not comitted) that looked for calls to #'length (which
+	always returns an integer) in its args.
+
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* format.el (format-delq-cons): Removed.
+	* format.el (format-make-relatively-unique): Removed.
+	* format.el (format-common-tail): Removed.
+	* format.el (format-reorder): Removed.
+	* format.el (format-annotate-region):
+	* format.el (format-annotate-single-property-change):
+	* format.el (format-annotate-atomic-property-change):
+	Remove various functions from this file that re-implemented Common
+	Lisp functions that we have built-in.
+
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el (selection-preferred-types):
+	* select.el (cut-copy-clear-internal):
+	* select.el (create-image-functions):
+	* select.el (select-convert-from-image/gif):
+	* select.el (select-convert-from-image/jpeg):
+	* select.el (select-convert-from-image/png):
+	* select.el (select-convert-from-image/tiff):
+	* select.el (select-convert-from-image/xpm):
+	* select.el (select-convert-from-image/xbm):
+	* select.el (selection-converter-in-alist):
+	Make my Lisp a little more sophisticated in this file.
+
+2011-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* package-ui.el (pui-add-required-packages):
+	* packages.el (packages-handle-package-dumped-lisps):
+	* bytecomp-runtime.el (byte-compile-with-fboundp):
+	* bytecomp-runtime.el (globally-declare-fboundp):
+	* bytecomp-runtime.el 
+	(byte-compile-with-byte-compiler-warnings-suppressed):
+	* mule/devan-util.el (devanagari-reorder-glyphs-for-composition):
+	* mule/devan-util.el (devanagari-compose-to-one-glyph):
+	* mule/japanese.el:
+	* mule/japanese.el ("Japanese"):
+	* mule/make-coding-system.el (fixed-width-generate-helper):
+	* mule/mule-category.el (defined-category-list):
+	* mule/mule-category.el (undefined-category-designator):
+	Style change: remove redundant lambdas, things like (mapcar
+	#'(lambda (pkg) (symbol-name pkg)) ...) => (mapcar #'symbol-name ...).
+
+2011-02-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-normal-call):
+	Check that the car of FORM is a symbol before examining its
+	properties; it can be a lambda form if byte-optimize.el hasn't
+	worked its magic and transformed such a lambda call into inline
+	code.
+
+2011-02-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	* bytecomp.el (unwind-protect):
+	* bytecomp.el (byte-compile-active-blocks):
+	* bytecomp.el (byte-compile-catch):
+	* bytecomp.el ('return-from-1): Removed.
+	* bytecomp.el ('block-1): Removed.
+	* bytecomp.el (byte-compile-block-1): Removed.
+	* bytecomp.el (byte-compile-return-from-1): Removed.
+	* bytecomp.el (byte-compile-throw):
+	* cl-macs.el (block):
+	* cl-macs.el (return-from):
+	In my last change, the elimination of `block's that were never
+	`return-from'd didn't work if `cl-macroexpand-all' was called
+	explicitly, something much code in cl-macs.el does.  Change the
+	implementation to something that doesn't require shadowing of the
+	macros in `byte-compile-initial-macro-environment', putting a
+	`cl-block-name' property on the gensym'd symbol argument to
+	`catch' instead.
+
+2011-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (acons): Removed, make the implementation in alloc.c
+	visible to Lisp instead.
+
+2011-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	Shadow `block', `return-from' here, we implement them differently
+	when byte-compiling.
+
+	* bytecomp.el (byte-compile-active-blocks): New.
+	* bytecomp.el (byte-compile-block-1): New.
+	* bytecomp.el (byte-compile-return-from-1): New.
+	* bytecomp.el (return-from-1): New.
+	* bytecomp.el (block-1): New.
+	These are two aliases that exist to have their own associated
+	byte-compile functions, which functions implement `block' and
+	`return-from'.
+
+	* cl-extra.el (cl-macroexpand-all):
+	Fix a bug here when macros in the environment have been compiled.
+
+	* cl-macs.el (block):
+	* cl-macs.el (return):
+	* cl-macs.el (return-from):
+	Be more careful about lexical scope in these macros.
+
+	* cl.el:
+	* cl.el ('cl-block-wrapper): Removed.
+	* cl.el ('cl-block-throw): Removed.
+	These aren't needed in code generated by this XEmacs. They
+	shouldn't be needed in code generated by XEmacs 21.4, but if it
+	turns out the packages do need them, we can put them back.
+
+2011-01-30  Mike Sperber  <mike@xemacs.org>
+
+	* font-lock.el (font-lock-fontify-pending-extents): Don't fail if
+	`font-lock-mode' is unset, which can happen in the middle of
+	`revert-buffer'.
+
+2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (delete):
+	* cl-macs.el (delq):
+	* cl-macs.el (remove):
+	* cl-macs.el (remq):
+	Don't use the compiler macro if these functions were given the
+	wrong number of arguments, as happens in lisp-tests.el.
+	* cl-seq.el (remove, remq): Removed.
+	I added these to subr.el, and forgot to remove them from here.
+
+2011-01-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-setq, byte-compile-set):
+	Remove kludge allowing keywords' values to be set, all the code
+	that does that is gone.
+
+	* cl-compat.el (elt-satisfies-test-p):
+	* faces.el (set-face-parent):
+	* faces.el (face-doc-string):
+	* gtk-font-menu.el:
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* msw-font-menu.el:
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	* package-get.el (package-get-installedp):
+	* select.el (select-convert-from-image-data):
+	* sound.el:
+	* sound.el (load-sound-file):
+	* x-font-menu.el (x-reset-device-font-menus-core):
+	Don't quote keywords, they're self-quoting, and the
+	win from backward-compatibility is sufficiently small now that the
+	style problem overrides it.
+
+2011-01-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (block, return-from): Require that NAME be a symbol
+	in these macros, as always documented in the #'block docstring and
+	as required by Common Lisp.
+	* descr-text.el (unidata-initialize-unihan-database):
+	Correct the use of non-symbols in #'block and #'return-from in
+	this function.
+
+2011-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (concatenate): Accept more complicated TYPEs in this
+	function, handing the sequences over to #'coerce if we don't
+	understand them here.
+	* cl-macs.el (inline): Don't proclaim #'concatenate as inline, its
+	compiler macro is more useful than doing that.
+
+2011-01-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (delete, delq, remove, remq): Move #'remove, #'remq
+	here, they don't belong in cl-seq.el; move #'delete, #'delq here
+	from fns.c, implement them in terms of #'delete*, allowing support
+	for sequences generally.
+	* update-elc.el (do-autoload-commands): Use #'delete*, not #'delq
+	here, now the latter's no longer dumped.
+	* cl-macs.el (delete, delq): Add compiler macros transforming
+	#'delete and #'delq to #'delete* calls.
+
+2011-01-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dialog.el (make-dialog-box): Correct a misplaced parenthesis
+	here, thank you Mats Lidell in 87zkr9gqrh.fsf@mail.contactor.se !
+
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dialog.el (make-dialog-box):
+	* list-mode.el (display-completion-list):
+	These functions used to use cl-parsing-keywords; change them to
+	use defun* instead, fixing the build. (Not sure what led to me
+	not including this change in d1b17a33450b!)
+
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (define-star-compiler-macros):
+	Make sure the form has ITEM and LIST specified before attempting
+	to change to calls with explicit tests; necessary for some tests
+	in lisp-tests.el to compile correctly.
+	(stable-union, stable-intersection): Add compiler macros for these
+	functions, in the same way we do for most of the other functions
+	in cl-seq.el.
+
+2011-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (dolist, dotimes, do-symbols, macrolet)
+	(symbol-macrolet):
+	Define these macros with defmacro* instead of parsing the argument
+	list by hand, for the sake of style and readability; use backquote
+	where appropriate, instead of calling #'list and and friends, for
+	the same reason.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-misc.el (device-x-display):
+	Provide this function, documented in the Lispref for years, but
+	not existing previously.  Thank you Julian Bradfield, thank you
+	Jeff Mincy.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-seq.el:
+	Move the heavy lifting from this file to C. Dump the
+	cl-parsing-keywords macro, but don't use defun* for the functions
+	we define that do take keywords, dynamic scope lossage makes that
+	not practical.
+	* subr.el (sort, fillarray): Move these aliases here.
+	(map-plist): #'nsublis is now built-in, but at this point #'eql
+	isn't necessarily available as a test; use #'eq.
+	* obsolete.el (cl-delete-duplicates): Make this available for old
+	compiler macros and old code.
+	(memql): Document that this is equivalent to #'member*, and worse.
+	* cl.el (adjoin, subst): Removed. These are in C.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (assoc-ignore-case): Remove a duplicate definition of
+	this function (it's already in subr.el).
+	* iso8859-1.el (char-width):
+	On non-Mule, make this function equivalent to that produced by
+	(constantly 1), but preserve its docstring.
+	* subr.el (subst-char-in-string): Define this in terms of
+	#'substitute, #'nsubstitute.
+	(string-width): Define this using #'reduce and #'char-width.
+	(char-width): Give this a simpler definition, it makes far more
+	sense to check for mule at load time and redefine, as we do in
+	iso8859-1.el. 
+	(store-substring): Implement this in terms of #'replace, now
+	#'replace is cheap.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* update-elc.el (lisp-files-needed-for-byte-compilation)
+	(lisp-files-needing-early-byte-compilation):
+	cl-macs belongs in the former, not the latter, it is as
+	fundamental as bytecomp.el.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el:
+	Provde the Common Lisp program-error, type-error as error
+	symbols. This doesn't nearly go far enough for anyone using the
+	Common Lisp errors.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (delete-duplicates):
+	If the form has an incorrect number of arguments, don't attempt a
+	compiler macroexpansion.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-safe-expr-p):
+	Forms that start with the symbol lambda are also safe.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (= < > <= >=):
+	For these functions' compiler macros, the optimisation is safe
+	even if the first and the last arguments have side effects, since
+	they're only used the once.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (inline-side-effect-free-compiler-macros):
+	Unroll a loop here at macro-expansion time, so these compiler
+	macros are compiled.  Use #'eql instead of #'eq in a couple of
+	places for better style.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (notany, notevery): Avoid some dynamic scope
+	stupidity with local variable names in these functions, when they
+	weren't prefixed with cl-; go into some more detail in the doc
+	strings.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (side-effect-free-fns): #'remove, #'remq are
+	free of side-effects.
+	(side-effect-and-error-free-fns):
+	Drop dot, dot-marker from the list.
+
+2010-11-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (coerce):
+	In the argument list, name the first argument OBJECT, not X; the
+	former name was always used in the doc string and is clearer.
+	Handle vector type specifications which include the length of the
+	target sequence, error if there's a mismatch.
+	* cl-macs.el (cl-make-type-test): Handle type specifications
+	starting with the symbol 'eql.
+
+2010-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (eql): Don't remove the byte-compile property of this
+	symbol. That was necessary to override a bug in bytecomp.el where
+	#'eql was confused with #'eq, which bug we no longer have.
+	If neither expression is constant, don't attempt to handle the
+	expression in this compiler macro, leave it to byte-compile-eql,
+	which produces better code anyway.
+	* bytecomp.el (eq): #'eql is not the function associated with the
+	byte-eq byte code.
+	(byte-compile-eql): Add an explicit compile method for this
+	function, for cases where the cl-macs compiler macro hasn't
+	reduced it to #'eq or #'equal.
+
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Add compiler macros and compilation sanity-checking for various
+	functions that take keywords.
+
+	* byte-optimize.el (side-effect-free-fns): #'symbol-value is
+	side-effect free and not error free.
+	* bytecomp.el (byte-compile-normal-call): Check keyword argument
+	lists for sanity; store information about the positions where
+	keyword arguments start using the new byte-compile-keyword-start
+	property.
+	* cl-macs.el (cl-const-expr-val): Take a new optional argument,
+	cl-not-constant, defaulting to nil, in this function; return it if
+	the expression is not constant.
+	(cl-non-fixnum-number-p): Make this into a separate function, we
+	want to pass it to #'every.
+	(eql): Use it.
+	(define-star-compiler-macros): Use the same code to generate the
+	member*, assoc* and rassoc* compiler macros; special-case some
+	code in #'add-to-list in subr.el.
+	(remove, remq): Add compiler macros for these two functions, in
+	preparation for #'remove being in C.
+	(define-foo-if-compiler-macros): Transform (remove-if-not ...) calls to
+	(remove ... :if-not) at compile time, which will be a real win
+	once the latter is in C.
+	(define-substitute-if-compiler-macros)
+	(define-subst-if-compiler-macros): Similarly for these functions.
+	(delete-duplicates): Change this compiler macro to use
+	#'plists-equal; if we don't have information about the type of
+	SEQUENCE at compile time, don't bother attempting to inline the
+	call, the function will be in C soon enough.
+	(equalp): Remove an old commented-out compiler macro for this, if
+	we want to see it it's in version control.
+	(subst-char-in-string): Transform this to a call to nsubstitute or
+	nsubstitute, if that is appropriate.
+	* cl.el (ldiff): Don't call setf here, this makes for a load-time
+	dependency problem in cl-macs.el
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* term/vt100.el:
+	Refer to XEmacs, not GNU Emacs, in permissions.
+
+	* term/bg-mouse.el:
+	* term/sup-mouse.el:
+	Put copyright notice in canonical "Copyright DATE AUTHOR" form.
+	Refer to XEmacs, not GNU Emacs, in permissions.
+
+	* site-load.el:
+	Add permission boilerplate.
+
+	* mule/canna-leim.el:
+	* alist.el:
+	Refer to XEmacs, not APEL/this program, in permissions.
+
+	* mule/canna-leim.el:
+	Remove my copyright, I've assigned it to the FSF.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gtk.el:
+	* gtk-widget-accessors.el:
+	* gtk-package.el:
+	* gtk-marshal.el:
+	* gtk-compose.el:
+	* gnome.el:
+	Add copyright notice based on internal evidence.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* easymenu.el: Add reference to COPYING to permission notice.
+
+	* gutter.el:
+	* gutter-items.el:
+	* menubar-items.el:
+	Fix typo "Xmacs" in permissions notice.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* auto-save.el:
+	* font.el:
+	* fontconfig.el:
+	* mule/kinsoku.el:
+	Add "part of XEmacs" text to permission notice.
+
+2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (side-effect-free-fns): 
+	* cl-macs.el (remf, getf): 
+	* cl-extra.el (tailp, cl-set-getf, cl-do-remf): 
+	* cl.el (ldiff, endp):
+	Tighten up Common Lisp compatibility for #'ldiff, #'endp, #'tailp;
+	add circularity checking for the first two.
+
+	#'cl-set-getf and #'cl-do-remf were Lisp implementations of
+	#'plist-put and #'plist-remprop; change the names to aliases,
+	changes the macros that use them to using #'plist-put and
+	#'plist-remprop directly.
+
+2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.el (fundamental-mode-abbrev-table, global-abbrev-table):
+	Create both these abbrev tables using the usual
+	#'define-abbrev-table calls, rather than attempting to
+	special-case them.
+	* cl-extra.el: Force cl-macs to be loaded here, if cl-extra.el is
+	being loaded interpreted.  Previously other, later files would
+	redundantly call (load "cl-macs") when interpreted, it's more
+	reasonable to do it here, once.
+	* cmdloop.el (read-quoted-char-radix): Use defcustom here, we
+	don't have any dump-order dependencies that would prevent that.
+	* custom.el (eval-when-compile): Don't load cl-macs when
+	interpreted or when byte-compiling, rely on cl-extra.el in the
+	former case and the appropriate entry in bytecomp-load-hook in the
+	latter.  Get rid of custom-declare-variable-list, we have no
+	dump-time dependencies that would require it.
+	* faces.el (eval-when-compile): Don't load cl-macs when
+	interpreted or when byte-compiling.
+	* packages.el: Remove some inaccurate comments. 
+	* post-gc.el (cleanup-simple-finalizers): Use #'delete-if-not
+	here, now the order of preloaded-file-list has been changed to
+	make it available.
+	* subr.el (custom-declare-variable-list): Remove. No need for it.
+	Also remove a stub define-abbrev-table from this file, given the
+	current order of preloaded-file-list there's no need for it.
+
+2010-10-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-constp) Forms quoted with FUNCTION are
+	also constant.
+	(byte-compile-initial-macro-environment): In #'the, if FORM is
+	constant and does not match TYPE, warn at byte-compile time.
+
+2010-10-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* backquote.el (bq-vector-contents, bq-list*): Remove; the former
+	is equivalent to (append VECTOR nil), the latter to (list* ...).
+	(bq-process-2): Use (append VECTOR nil) instead of using
+	#'bq-vector-contents to convert to a list.
+	(bq-process-1): Now we use list* instead of bq-list
+	* subr.el (list*): Moved from cl.el, since it is now required to
+	be available the first time a backquoted form is encountered.
+	* cl.el (list*): Move to subr.el.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* test-harness.el (Check-Message):
+	Add an omitted comma here, thank you the buildbot.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* hash-table.el (hash-table-key-list, hash-table-value-list)
+	(hash-table-key-value-alist, hash-table-key-value-plist):
+	Remove some useless #'nreverse calls in these files; our hash
+	tables have no order, it's not helpful to pretend they do.
+	* behavior.el (read-behavior):
+	Do the same in this file, in some code evidently copied from
+	hash-table.el.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* info.el (Info-insert-dir):
+	* format.el (format-deannotate-region):
+	* files.el (cd, save-buffers-kill-emacs):
+	Use #'some, #'every and related functions for applying boolean
+	operations to lists, instead of rolling our own ones that cons and
+	don't short-circuit.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	* cl-macs.el (the):
+	Rephrase the docstring, make its implementation when compiling
+	files a little nicer.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* descr-text.el (unidata-initialize-unicodedata-database)
+	(unidata-initialize-unihan-database, describe-char-unicode-data)
+	(describe-char-unicode-data):
+	Wrap calls to the database functions with (with-fboundp ...),
+	avoiding byte compile warnings on builds without support for the
+	database functions.
+	(describe-char): (reduce #'max ...), not (apply #'max ...), no
+	need to cons needlessly.
+	(describe-char): Remove a redundant lambda wrapping
+	#'extent-properties. 
+	(describe-char-unicode-data): Call #'nsubst when replacing "" with
+	nil in the result of #'split-string, instead of consing inside
+	mapcar.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-faces.el (x-available-font-sizes): 
+	* specifier.el (let-specifier): 
+	* package-ui.el (pui-add-required-packages): 
+	* msw-faces.el (mswindows-available-font-sizes): 
+	* modeline.el (modeline-minor-mode-menu): 
+	* minibuf.el (minibuf-directory-files):
+	Replace the O2N (delq nil (mapcar (lambda (W) (and X Y)) Z)) with
+	the ON (mapcan (lambda (W) (and X (list Y))) Z) in these files.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (= < > <= >=):
+	When these functions are handed more than two arguments, and those
+	arguments have no side effects, transform to a series of two
+	argument calls, avoiding funcall in the byte-compiled code.
+	* mule/mule-cmds.el (finish-set-language-environment):
+	Take advantage of this change in a function called 256 times at
+	startup.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-function-form, byte-compile-quote)
+	(byte-compile-quote-form):
+	Warn at compile time, and error at runtime, if a (quote ...) or a
+	(function ...) form attempts to quote more than one object.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (byte-optimize-apply): Transform (apply 'nconc
+	(mapcar ...)) to (mapcan ...); warn about use of the first idiom.
+
+	* update-elc.el (do-autoload-commands): 
+	* packages.el (packages-find-package-library-path): 
+	* frame.el (frame-list): 
+	* extents.el (extent-descendants): 
+	* etags.el (buffer-tag-table-files): 
+	* dumped-lisp.el (preloaded-file-list): 
+	* device.el (device-list): 
+	* bytecomp-runtime.el (proclaim-inline, proclaim-notinline)
+	Use #'mapcan, not (apply #'nconc (mapcar ...) in all these files.
+
+	* bytecomp-runtime.el (eval-when-compile, eval-and-compile):
+	In passing, mention that these macros also evaluate the body when
+	interpreted. 
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (the): Add a docstring and an implementation for this
+	macro.
+	* bytecomp.el (byte-compile-initial-macro-environment): Add #'the
+	to this, checking byte-compile-delete-errors to decide whether to
+	make the type assertion. Change the initvalue to use backquote and
+	preceding commas for the lambda expressions, to allow the latter
+	to be compiled.
+
+2010-09-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-seq.el (replace):
+	Move this function, with added bounds-checking per ANSI Common
+	Lisp, to fns.c.
+
+2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-compose.el (define-compose-map, compose-map)
+	(decide-on-bindings): Support the precomposed characters with
+	stroke here too, necessary for Polish and Danish, among others.
+	* x-init.el (x-initialize-compose): Add the appropriate map
+	autoloads and bindings here.
+
+2010-09-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (coerce):
+	Add fixnum as an accepted destination type.
+
+2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obsolete.el (process-get):
+	Make #'process-get, #'process-put, #'process-plist,
+	#'set-process-plist available as aliases to the more general
+	functions #'get, #'put, #'object-plist, #'object-setplist, for GNU
+	compatibility.
+
+2010-08-20  Mike Sperber  <mike@xemacs.org>
+
+	* files.el (save-some-buffers-action-alist): Add.
+	(save-some-buffers-1): Use (synching with (GPLv2) FSF Emacs.
+
+2010-08-18  Mike Sperber  <mike@xemacs.org>
+
+	* files.el (diff-files-for-recover): Abstract this out out
+	`recover-file'.
+	(diff-buffer-with-file): Add from (GPLv2) FSF Emacs.
+	(recover-file): Use `diff-files-for-recover'.
+
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.el (canonicalize-inst-pair, canonicalize-spec):
+	If a specifier tag set is correct, but an instantiator is not in
+	an accepted format, don't error with the message "Invalid
+	specifier tag set".
+	Also, when we error, use error-symbols, for better structured
+	error handling and more ease when testing.
+
+2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (concatenate):
+	* cl-seq.el (remove*, cl-delete-duplicates):
+	Bit vectors are also sequences; enforce this in these functions.
+	* cl-macs.el (concatenate):
+	If TYPE is constant, don't inline #'concatenate, replace it by a
+	call to the appropriate C functions.
+
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gnome.el:
+	* gtk-compose.el:
+	* gtk-marshal.el:
+	* gtk-package.el:
+	* gtk-widget-accessors.el:
+	* gtk.el:
+	* hyper-apropos.el:
+	* multicast.el:
+	* view-less.el:
+	Correct FSF address in permission notice.
+
+2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* diagnose.el (show-gc-stats):
+	Fix a misspelling in a heading in this function.
+
+2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* paragraphs.el (sentence-end):
+	* gtk-faces.el:
+	* custom.el (custom-declare-variable):
+	Remove all core code calls to #'purecopy.
+	* obsolete.el (purecopy):
+	Make the function itself an obsolete alias to #'identity.
+
+2010-06-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-seq.el (reduce):
+	Move this to fns.c.
+
 2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (complement):
@@ -6,6 +1335,17 @@
 	specified by CL. For discussion; the compiler macro may be a
 	little too aggressive about taking the compile time argument lists
 	of the functions it is inverting.
+
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* version.el: 
+	(emacs-version): 
+	* startup.el (command-line): 
+	* simple.el (display-warning, emacs-name): 
+	* packages.el (packages-package-hierarchy-directory-names): 
+	* loadup.el (Dumping): 
+	* dumped-lisp.el (preloaded-file-list):
+	Remove all InfoDock-specific code.
 
 2010-05-31  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -533,6 +1873,26 @@
 	In the compiler macro for #'constantly, construct a
 	compiled-function object almost every time, at compile time when
 	all arguments are constant, and at runtime when they vary.
+
+2010-02-19  Ben Wing  <ben@xemacs.org>
+
+	* paragraphs.el:
+	* paragraphs.el (use-hard-newlines):
+	* paragraphs.el (paragraph-start):
+	* paragraphs.el (paragraph-separate):
+	* paragraphs.el (sentence-end-double-space):
+	* paragraphs.el (sentence-end-without-period):
+	* paragraphs.el (sentence-end-without-space): New.
+	* paragraphs.el (sentence-end):
+	* paragraphs.el (sentence-end-base): New.
+	* paragraphs.el (page-delimiter):
+	* paragraphs.el (paragraph-ignore-fill-prefix):
+	* paragraphs.el (forward-paragraph):
+	* paragraphs.el (backward-paragraph):
+	* paragraphs.el (mark-paragraph):
+	* paragraphs.el (forward-sentence):
+	* paragraphs.el (repunctuate-sentences): New.
+	Sync with FSF 23.1.92.
 
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
@@ -29358,3 +30718,23 @@ Wed Dec  4 22:00:49 1996  Steven L Baur  <steve@altair.xemacs.org>
 	standard font-lock faces).
 
 	* version.el: Bumped up to b31.
+
+
+ChangeLog entries synched from GNU Emacs are the property of the FSF.
+Other ChangeLog entries are usually the property of the author of the
+change.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.

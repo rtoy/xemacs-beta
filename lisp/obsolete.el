@@ -10,20 +10,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -244,6 +242,21 @@ we no longer encounter bytecode from 21.4."
 
 (define-compatible-function-alias 'cl-mapc 'mapc)
 
+;; Various non-XEmacs code can call this, because it used not be
+;; called automatically at dump time.
+(define-function 'cl-float-limits 'ignore)
+(make-obsolete 'cl-float-limits "this is called at dump time in 21.5 and \
+later, no need to call it in user code.")
+
+;; XEmacs; old compiler macros meant that this was called directly
+;; from compiled code, and we need to provide a version of it for a
+;; couple of years at least because of that. Aidan Kehoe, Mon Oct 4
+;; 12:06:41 IST 2010
+(defun cl-delete-duplicates (cl-seq cl-keys cl-copy)
+  (apply (if cl-copy #'remove-duplicates #'delete-duplicates) cl-seq cl-keys))
+
+(make-obsolete 'cl-delete-duplicates 'delete-duplicates)
+
 ; old names
 (define-compatible-function-alias 'byte-code-function-p
   'compiled-function-p) ;FSFmacs
@@ -393,7 +406,7 @@ It always returns 1 in XEmacs, and in recent FSF Emacs versions."
   "Return a list of charsets in the STRING except ascii.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (and-fboundp #'charsets-in-string (charsets-in-string string))))
+  (delq 'ascii (and-fboundp 'charsets-in-string (charsets-in-string string))))
 (make-obsolete 'find-non-ascii-charset-string
 	       "use (delq 'ascii (charsets-in-string STRING)) instead.")
 
@@ -401,7 +414,7 @@ because its `find-charset-string' ignores ASCII charset."
   "Return a list of charsets except ascii in the region between START and END.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (and-fboundp #'charsets-in-region
+  (delq 'ascii (and-fboundp 'charsets-in-region
                  (charsets-in-region start end))))
 (make-obsolete 'find-non-ascii-charset-region
 	       "use (delq 'ascii (charsets-in-region START END)) instead.")
@@ -425,6 +438,16 @@ because its `find-charset-string' ignores ASCII charset."
 ;; Keywords already do The Right Thing in XEmacs
 (make-compatible 'define-widget-keywords "Just use them")
 
+(define-function 'purecopy 'identity)
+(make-obsolete 'purecopy "purespace is not available in XEmacs.")
+
+(define-compatible-function-alias 'process-get 'get)
+(define-compatible-function-alias 'process-put 'put)
+(define-compatible-function-alias 'process-plist 'object-plist)
+(define-compatible-function-alias 'set-process-plist 'object-setplist)
+
+(define-function 'memql 'member*)
+(make-compatible 'memql "use the more full-featured `member*' instead.")
 
 (provide 'obsolete)
 ;;; obsolete.el ends here

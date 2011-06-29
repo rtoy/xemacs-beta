@@ -9,20 +9,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -461,7 +459,7 @@ This is a naive implementation in Lisp.  "
 	(Assert (eq code (char-to-unicode scaron)))
 	(Assert (eq scaron (unicode-to-char code '(latin-iso8859-2)))))
       finally (set-unicode-conversion scaron initial-unicode))
-    (Check-Error wrong-type-argument (set-unicode-conversion scaron -10000)))
+    (Check-Error args-out-of-range (set-unicode-conversion scaron -10000)))
 
   (dolist (utf-8-char 
 	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK
@@ -574,22 +572,28 @@ This is a naive implementation in Lisp.  "
   ;; Test charset-in-* functions
   ;;---------------------------------------------------------------
   (with-temp-buffer
-    (insert-file-contents (locate-data-file "HELLO"))
     (let ((sorted-charsets-in-HELLO
-	   '(arabic-iso8859-6 ascii chinese-big5-1 chinese-gb2312
-	     cyrillic-iso8859-5 ethiopic greek-iso8859-7
-	     hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
-	     katakana-jisx0201 korean-ksc5601 latin-iso8859-1
-	     latin-iso8859-2 vietnamese-viscii-lower)))
+           '(arabic-iso8859-6 ascii chinese-big5-1 chinese-gb2312
+             cyrillic-iso8859-5 ethiopic greek-iso8859-7 hebrew-iso8859-8
+             indian-is13194 ipa japanese-jisx0208 japanese-jisx0212
+             katakana-jisx0201 korean-ksc5601 lao latin-iso8859-1
+             latin-iso8859-2 latin-iso8859-3 latin-iso8859-4 thai-tis620
+             tibetan vietnamese-viscii-lower))
+	  (coding-system-for-read 'iso-2022-7))
+      (insert-file-contents (locate-data-file "HELLO"))
       (Assert (equal 
        ;; The sort is to make the algorithm of charsets-in-region
        ;; irrelevant.
-       (sort (charsets-in-region (point-min) (point-max))
+       (sort (remove* "^jit-ucs-charset-" (charsets-in-region (point-min)
+                                                              (point-max))
+                      :test 'string-match :key 'symbol-name)
 	     #'string<)
        sorted-charsets-in-HELLO))
       (Assert (equal 
-       (sort (charsets-in-string (buffer-substring (point-min)
-						   (point-max)))
+       (sort (remove* "^jit-ucs-charset-" (charsets-in-string
+                                           (buffer-substring (point-min)
+                                                             (point-max)))
+                      :test 'string-match :key 'symbol-name)
 	     #'string<)
        sorted-charsets-in-HELLO))))
 

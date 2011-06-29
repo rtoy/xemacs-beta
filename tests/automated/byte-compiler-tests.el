@@ -7,20 +7,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not in FSF.
 
@@ -45,7 +43,7 @@
 (check-byte-compiler-message "Attempt to set non-symbol" (setq 1 1))
 (check-byte-compiler-message "Attempt to set constant symbol" (setq t 1))
 (check-byte-compiler-message "Attempt to set constant symbol" (setq nil 1))
-(check-byte-compiler-message "^$" (defconst :foo 1))
+(check-byte-compiler-message "Attempt to set constant symbol" (defconst :foo 1))
 
 (check-byte-compiler-message "Attempt to let-bind non-symbol" (let ((1 'x)) 1))
 (check-byte-compiler-message "Attempt to let-bind constant symbol" (let ((t 'x)) (foo)))
@@ -60,12 +58,16 @@
 (check-byte-compiler-message "reference to free variable" (car free-variable))
 (check-byte-compiler-message "called with 2 args, but requires 1" (car 'x 'y))
 
-(check-byte-compiler-message "^$" (setq :foo 1))
 (let ((fun '(lambda () (setq :foo 1))))
   (fset 'test-byte-compiler-fun fun))
 (Check-Error setting-constant (test-byte-compiler-fun))
-(byte-compile 'test-byte-compiler-fun)
-(Check-Error setting-constant (test-byte-compiler-fun))
+(Check-Message "Attempt to set constant symbol"
+               (byte-compile 'test-byte-compiler-fun))
+
+;; Once NEED_TO_HANDLE_21_4_CODE is no longer defined in C, this will error
+;; correctly. It's disabled because the packages are compiled by 21.4.
+(Known-Bug-Expect-Failure
+ (Check-Error setting-constant (test-byte-compiler-fun)))
 
 (eval-when-compile (defvar setq-test-foo nil) (defvar setq-test-bar nil))
 (progn

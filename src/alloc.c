@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.28, Mule 2.0.  Substantially different from
    FSF. */
@@ -95,6 +93,8 @@ EXFUN (Fgarbage_collect, 0);
 static Fixnum debug_allocation;
 static Fixnum debug_allocation_backtrace_length;
 #endif
+
+Fixnum Varray_dimension_limit, Varray_total_size_limit, Varray_rank_limit;
 
 int need_to_check_c_alloca;
 int need_to_signal_post_gc;
@@ -1426,8 +1426,10 @@ cons3 (Lisp_Object obj0, Lisp_Object obj1, Lisp_Object obj2)
   return Fcons (obj0, Fcons (obj1, obj2));
 }
 
-Lisp_Object
-acons (Lisp_Object key, Lisp_Object value, Lisp_Object alist)
+DEFUN ("acons", Facons, 3, 3, 0, /*
+Return a new alist created by prepending (KEY . VALUE) to ALIST.
+*/
+       (key, value, alist))
 {
   return Fcons (Fcons (key, value), alist);
 }
@@ -1461,18 +1463,23 @@ Lisp_Object
 listu (Lisp_Object first, ...)
 {
   Lisp_Object obj = Qnil;
-  Lisp_Object val;
-  va_list va;
 
-  va_start (va, first);
-  val = first;
-  while (!UNBOUNDP (val))
+  if (!UNBOUNDP (first))
     {
-      obj = Fcons (val, obj);
+      va_list va;
+      Lisp_Object last, val;
+
+      last = obj = Fcons (first, Qnil);
+      va_start (va, first);
       val = va_arg (va, Lisp_Object);
+      while (!UNBOUNDP (val))
+	{
+	  last = XCDR (last) = Fcons (val, Qnil);
+	  val = va_arg (va, Lisp_Object);
+	}
+      va_end (va);
     }
-  va_end (va);
-  return Fnreverse (obj);
+  return obj;
 }
 
 /* Return a list of arbitrary length, with length specified and remaining
@@ -1481,15 +1488,21 @@ listu (Lisp_Object first, ...)
 Lisp_Object
 listn (int num_args, ...)
 {
-  int i;
   Lisp_Object obj = Qnil;
-  va_list va;
 
-  va_start (va, num_args);
-  for (i = 0; i < num_args; i++)
-    obj = Fcons (va_arg (va, Lisp_Object), obj);
-  va_end (va);
-  return Fnreverse (obj);
+  if (num_args > 0)
+    {
+      va_list va;
+      Lisp_Object last;
+      int i;
+
+      va_start (va, num_args);
+      last = obj = Fcons (va_arg (va, Lisp_Object), Qnil);
+      for (i = 1; i < num_args; i++)
+	last = XCDR (last) = Fcons (va_arg (va, Lisp_Object), Qnil);
+      va_end (va);
+    }
+  return obj;
 }
 
 /* Return a list of arbitrary length, with length specified and an array
@@ -1500,16 +1513,17 @@ Return a new list of length LENGTH, with each element being OBJECT.
 */
        (length, object))
 {
-  CHECK_NATNUM (length);
+  Lisp_Object val = Qnil;
+  Elemcount size;
 
-  {
-    Lisp_Object val = Qnil;
-    EMACS_INT size = XINT (length);
+  check_integer_range (length, Qzero, make_integer (EMACS_INT_MAX));
 
-    while (size--)
-      val = Fcons (object, val);
-    return val;
-  }
+  size = XINT (length);
+
+  while (size--)
+    val = Fcons (object, val);
+
+  return val;
 }
 
 
@@ -1743,7 +1757,7 @@ See also the function `vector'.
 */
        (length, object))
 {
-  CONCHECK_NATNUM (length);
+  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
   return make_vector (XINT (length), object);
 }
 
@@ -1925,8 +1939,7 @@ BIT must be one of the integers 0 or 1.  See also the function `bit-vector'.
 */
        (length, bit))
 {
-  CONCHECK_NATNUM (length);
-
+  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
   return make_bit_vector (XINT (length), bit);
 }
 
@@ -2052,7 +2065,7 @@ arguments: (ARGLIST INSTRUCTIONS CONSTANTS STACK-DEPTH &optional DOC-STRING INTE
     CHECK_VECTOR (constants);
   f->constants = constants;
 
-  CHECK_NATNUM (stack_depth);
+  check_integer_range (stack_depth, Qzero, make_int (USHRT_MAX));
   f->stack_depth = (unsigned short) XINT (stack_depth);
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
@@ -2884,7 +2897,7 @@ LENGTH must be a non-negative integer.
 */
        (length, character))
 {
-  CHECK_NATNUM (length);
+  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
   CHECK_CHAR_COERCE_INT (character);
   {
     Ibyte init_str[MAX_ICHAR_LEN];
@@ -3345,19 +3358,6 @@ old_free_lcrecord (Lisp_Object rec)
 #endif /* not NEW_GC */
 
 
-DEFUN ("purecopy", Fpurecopy, 1, 1, 0, /*
-Kept for compatibility, returns its argument.
-Old:
-Make a copy of OBJECT in pure storage.
-Recursively copies contents of vectors and cons cells.
-Does not copy symbols.
-*/
-       (object))
-{
-  return object;
-}
-
-
 /************************************************************************/
 /*                           Staticpro, MCpro                           */
 /************************************************************************/
@@ -3614,7 +3614,7 @@ malloced_storage_size (void * UNUSED (ptr), Bytecount claimed_size,
 # endif
   if (claimed_size < 4096)
     {
-      /* fxg: rename log->log2 to supress gcc3 shadow warning */
+      /* fxg: rename log->log2 to suppress gcc3 shadow warning */
       int log2 = 1;
 
       /* compute the log base two, more or less, then use it to compute
@@ -4208,10 +4208,10 @@ itself.
   xzero (object_stats);
   lisp_object_storage_size (object, &object_stats);
 
-  val = acons (Qobject_actually_requested,
-	       make_int (object_stats.was_requested), val);
-  val = acons (Qobject_malloc_overhead,
-	       make_int (object_stats.malloc_overhead), val);
+  val = Facons (Qobject_actually_requested,
+		make_int (object_stats.was_requested), val);
+  val = Facons (Qobject_malloc_overhead,
+		make_int (object_stats.malloc_overhead), val);
   assert (!object_stats.dynarr_overhead);
   assert (!object_stats.gap_overhead);
 
@@ -4221,16 +4221,16 @@ itself.
       MAYBE_OBJECT_METH (object, memory_usage, (object, &gustats));
 
       val = Fcons (Qt, val);
-      val = acons (Qother_memory_actually_requested,
-		   make_int (gustats.u.was_requested), val);
-      val = acons (Qother_memory_malloc_overhead,
-		   make_int (gustats.u.malloc_overhead), val);
+      val = Facons (Qother_memory_actually_requested,
+		    make_int (gustats.u.was_requested), val);
+      val = Facons (Qother_memory_malloc_overhead,
+		    make_int (gustats.u.malloc_overhead), val);
       if (gustats.u.dynarr_overhead)
-	val = acons (Qother_memory_dynarr_overhead,
-		     make_int (gustats.u.dynarr_overhead), val);
+	val = Facons (Qother_memory_dynarr_overhead,
+		      make_int (gustats.u.dynarr_overhead), val);
       if (gustats.u.gap_overhead)
-	val = acons (Qother_memory_gap_overhead,
-		     make_int (gustats.u.gap_overhead), val);
+	val = Facons (Qother_memory_gap_overhead,
+		      make_int (gustats.u.gap_overhead), val);
       val = Fcons (Qnil, val);
 
       i = 0;
@@ -4241,7 +4241,7 @@ itself.
 	      val = Fcons (item, val);
 	    else
 	      {
-		val = acons (item, make_int (gustats.othervals[i]), val);
+		val = Facons (item, make_int (gustats.othervals[i]), val);
 		i++;
 	      }
 	  }
@@ -5712,6 +5712,7 @@ syms_of_alloc (void)
 
   DEFSUBR (Fcons);
   DEFSUBR (Flist);
+  DEFSUBR (Facons);
   DEFSUBR (Fvector);
   DEFSUBR (Fbit_vector);
   DEFSUBR (Fmake_byte_code);
@@ -5722,7 +5723,6 @@ syms_of_alloc (void)
   DEFSUBR (Fstring);
   DEFSUBR (Fmake_symbol);
   DEFSUBR (Fmake_marker);
-  DEFSUBR (Fpurecopy);
 #ifdef ALLOC_TYPE_STATS
   DEFSUBR (Fobject_memory_usage_stats);
   DEFSUBR (Ftotal_object_memory_usage);
@@ -5753,6 +5753,34 @@ reinit_vars_of_alloc (void)
 void
 vars_of_alloc (void)
 {
+  DEFVAR_CONST_INT ("array-rank-limit", &Varray_rank_limit /*
+The exclusive upper bound on the number of dimensions an array may have.
+
+XEmacs does not support multidimensional arrays, meaning this constant is,
+for the moment, 2.
+*/);
+  Varray_rank_limit = 2;
+
+  DEFVAR_CONST_INT ("array-dimension-limit", &Varray_dimension_limit /*
+The exclusive upper bound of an array's dimension.
+Note that XEmacs may not have enough memory available to create an array
+with this dimension.
+*/);
+  Varray_dimension_limit = ARRAY_DIMENSION_LIMIT;
+
+  DEFVAR_CONST_INT ("array-total-size-limit", &Varray_total_size_limit /*
+The exclusive upper bound on the number of elements an array may contain.
+
+In Common Lisp, this is distinct from `array-dimension-limit', because
+arrays can have more than one dimension.  In XEmacs this is not the case,
+and multi-dimensional arrays need to be implemented by the user with arrays
+of arrays.
+
+Note that XEmacs may not have enough memory available to create an array
+with this dimension.
+*/);
+  Varray_total_size_limit = ARRAY_DIMENSION_LIMIT;
+
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-allocation", &debug_allocation /*
 If non-zero, print out information to stderr about all objects allocated.

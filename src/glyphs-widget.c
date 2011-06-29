@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Not in FSF. */
 
@@ -281,7 +279,7 @@ logical_unit_height (Lisp_Object text, Lisp_Object face, Lisp_Object domain)
   widget_query_string_geometry (text, face, 
 				0, &charheight, domain);
   /* For the returned value to be useful it needs to be big enough to
-     accomodate the largest single-height widget.  This is currently
+     accommodate the largest single-height widget.  This is currently
      the edit-field. */
   return charheight + 2 * widget_spacing (domain)
     + 4 * widget_border_width (domain);
@@ -1303,7 +1301,7 @@ layout_post_instantiate (Lisp_Object UNUSED (image_instance),
    size of individual widgets will affect where they get placed. The
    same is true for several rows of widgets. To solve this problem we
    introduce the notion of `logical_unit_height'. This is a size
-   quantity that is designed to be big enough to accomodate the
+   quantity that is designed to be big enough to accommodate the
    largest `single height unit'. The function
    widget_logical_unit_height() determines the value of this in
    pixels. It is dependent on the widget face and some combination of
@@ -1673,7 +1671,7 @@ layout borders, so this adjustment is approximated.
 
 If the components of a widget layout are justified to the top or the
 bottom then they are aligned in terms of `logical units'. This is a
-size quantity that is designed to be big enough to accomodate the
+size quantity that is designed to be big enough to accommodate the
 largest `single height' widget. It is dependent on the widget face and
 some combination of spacing and border-width. Thus if you specify top
 or bottom justification in a vertical layout the subcontrols are laid

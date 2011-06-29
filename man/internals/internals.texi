@@ -17800,7 +17800,7 @@ without fixing the abstractions in the X (actually Xt), MS Windows,
 and tty consoles as well as doing a complete refactoring of the
 console, device, and frame code.)
 
-What is desireable is sharing console, device, and frame methods across
+What is desirable is sharing console, device, and frame methods across
 platforms in a more general way, reducing the amount of duplicated code
 by pulling it back into the redisplay engine proper or the Lisp modules
 as appropriate.  For example, we should be able to use
@@ -17853,7 +17853,7 @@ console method tables.  To create a variant of an existing console,
 there is a @samp{CONSOLE_INHERITS_METHOD} constructor, but this actually
 constructs the name of the parent's method pointer and stores in the
 derived console type's method table.  Of course this is time-efficient,
-and since there are few console types it is a neglible waste of space.
+and since there are few console types it is a negligible waste of space.
 However in practice this may have contributed to breaking the various
 abstractions, and the variant console must be coded in the same file as
 the parent (because the methods are static).  Another minor symptom of
@@ -18045,7 +18045,7 @@ EmacsShell widget, containing an EmacsManager widget of the same size,
 which in turn contains a menubar widget and an EmacsFrame widget, inside
 of which is the client area. (The division into EmacsShell and
 EmacsManager is due to the complex and screwy geometry-management system
-in Xt [and X more generally].  The EmacsShell handles negotation with
+in Xt [and X more generally].  The EmacsShell handles negotiation with
 the window manager; the place of the EmacsManager widget is normally
 assumed by a widget that manages the geometry of its child widgets, but
 the EmacsManager widget just lets the XEmacs redisplay mechanism do the
@@ -28464,7 +28464,7 @@ convention which is @emph{precise}, @emph{accurate}, and
 @emph{convenient}.  Precision means that all properties available in the
 programming API can be individually specified.  Accuracy means that the
 truename of the font is exactly the list of all properties specified by
-the font.  Thus, the anomolies that occur with XLFDs on many servers
+the font.  Thus, the anomalies that occur with XLFDs on many servers
 (including modern Linux distributions with XFree86 or X.org servers)
 cannot occur.  Convenience is subjective, of course.  However,
 @file{fontconfig} provides a configuration system which (1) explicitly
@@ -31300,7 +31300,7 @@ to distinguish here between static and dynamic objects, or static
 vs. local vs. heap, we could do so easily with bit flags in the object
 pointed to -- we have space for lots of them.
  
-code reliablity and maintainability would likely substantially
+code reliability and maintainability would likely substantially
 increase due to the ability to express most things in a natural C++
 way instead of lots of weird hackish hard-to-understand C stuff
 implementing stuff the language wasn't really designed for.

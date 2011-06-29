@@ -9,20 +9,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Synched up with: Not synched with FSF.  Almost completely divergent.
 
@@ -1772,7 +1770,8 @@ other mouse buttons."
 		 ;; left window side has slipped (right side cannot be
 		 ;; moved any further to the right, so enlarge-window
 		 ;; plays bad games with the left edge.
-		 (if (or (/= (count-windows) (length old-edges-all-windows))
+		 (if (or (not (eql (count-windows)
+				   (length old-edges-all-windows)))
 			 (/= old-left (car (window-pixel-edges window)))
 			 ;; This check is very hairy. We allow any number
 			 ;; of left edges to change, but only to the same
@@ -1780,22 +1779,24 @@ other mouse buttons."
 			 (let ((all-that-bad nil)
 			       (new-left-ok nil)
 			       (new-right-ok nil))
-			   (mapcar* (lambda (window old-edges)
-				      (let ((new (car (window-pixel-edges window))))
-					(if (/= new (car old-edges))
-					    (if (and new-left-ok
-						     (/= new-left-ok new))
-						(setq all-that-bad t)
-					      (setq new-left-ok new)))))
-				    (window-list) old-edges-all-windows)
-			   (mapcar* (lambda (window old-edges)
-				      (let ((new (caddr (window-pixel-edges window))))
-					(if (/= new (caddr old-edges))
-					    (if (and new-right-ok
-						     (/= new-right-ok new))
-						(setq all-that-bad t)
-					      (setq new-right-ok new)))))
-				    (window-list) old-edges-all-windows)
+			   (mapc (lambda (window old-edges)
+                                   (let ((new
+                                          (car (window-pixel-edges window))))
+                                     (if (/= new (car old-edges))
+                                         (if (and new-left-ok
+                                                  (/= new-left-ok new))
+                                             (setq all-that-bad t)
+                                           (setq new-left-ok new)))))
+                                 (window-list) old-edges-all-windows)
+			   (mapc (lambda (window old-edges)
+                                   (let ((new
+                                          (caddr (window-pixel-edges window))))
+                                     (if (/= new (caddr old-edges))
+                                         (if (and new-right-ok
+                                                  (/= new-right-ok new))
+                                             (setq all-that-bad t)
+                                           (setq new-right-ok new)))))
+                                 (window-list) old-edges-all-windows)
 			   all-that-bad))
 		     (set-window-configuration backup-conf)))))))))
 

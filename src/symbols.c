@@ -4,10 +4,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,9 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: FSF 19.30. */
 
@@ -198,15 +196,23 @@ intern (const CIbyte *str)
 }
 
 Lisp_Object
-intern_converting_underscores_to_dashes (const CIbyte *str)
+intern_massaging_name (const CIbyte *str)
 {
   Bytecount len = strlen (str);
   CIbyte *tmp = alloca_extbytes (len + 1);
   Bytecount i;
   strcpy (tmp, str);
   for (i = 0; i < len; i++)
-    if (tmp[i] == '_')
-      tmp[i] = '-';
+    {
+      if (tmp[i] == '_')
+	{
+	  tmp[i] = '-';
+	}
+      else if (tmp[i] == 'X')
+	{
+	  tmp[i] = '*';
+	}
+    }
   return intern_istring ((Ibyte *) tmp);
 }
 
@@ -500,8 +506,8 @@ If optional 2nd arg PREDICATE is non-nil, only symbols for which
   closure.accumulation = Qnil;
   GCPRO1 (closure.accumulation);
   map_obarray (Vobarray, apropos_mapper, &closure);
-  closure.accumulation = list_sort (closure.accumulation, NULL, Qstring_lessp,
-                                    Qidentity);
+  closure.accumulation = list_sort (closure.accumulation,
+				    check_string_lessp_nokey, Qnil, Qnil);
   UNGCPRO;
   return closure.accumulation;
 }
@@ -2538,7 +2544,8 @@ From now on the default value will apply in this buffer.
 	  = buffer_local_alist_element (current_buffer, variable, bfwd);
 
 	if (!NILP (alist_element))
-	  current_buffer->local_var_alist = Fdelq (alist_element, alist);
+	  current_buffer->local_var_alist = delq_no_quit (alist_element,
+							  alist);
 
 	/* Make sure symbol does not think it is set up for this buffer;
 	   force it to look once again for this buffer's value */
@@ -3530,6 +3537,7 @@ reinit_symbol_objects_early (void)
   OBJECT_HAS_METHOD (symbol, putprop);
   OBJECT_HAS_METHOD (symbol, remprop);
   OBJECT_HAS_NAMED_METHOD (symbol, plist, Fsymbol_plist);
+  OBJECT_HAS_NAMED_METHOD (symbol, setplist, Fsetplist);
 }
 
 void

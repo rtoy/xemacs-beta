@@ -5,10 +5,10 @@
 
 This file is part of XEmacs.
 
-XEmacs is free software; you can redistribute it and/or modify it
+XEmacs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
 XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,9 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 
@@ -251,21 +249,28 @@ bytecode_negate (Lisp_Object obj)
 }
 
 static Lisp_Object
-bytecode_nreverse (Lisp_Object list)
+bytecode_nreverse (Lisp_Object sequence)
 {
-  REGISTER Lisp_Object prev = Qnil;
-  REGISTER Lisp_Object tail = list;
-
-  while (!NILP (tail))
+  if (LISTP (sequence))
     {
-      REGISTER Lisp_Object next;
-      CHECK_CONS (tail);
-      next = XCDR (tail);
-      XCDR (tail) = prev;
-      prev = tail;
-      tail = next;
+      REGISTER Lisp_Object prev = Qnil;
+      REGISTER Lisp_Object tail = sequence;
+
+      while (!NILP (tail))
+	{
+	  REGISTER Lisp_Object next;
+	  CHECK_CONS (tail);
+	  next = XCDR (tail);
+	  XCDR (tail) = prev;
+	  prev = tail;
+	  tail = next;
+	}
+      return prev;
     }
-  return prev;
+  else
+    {
+      return Fnreverse (sequence);
+    }
 }
 
 
@@ -1685,6 +1690,8 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	break;
       }
 
+#ifdef SUPPORT_CONFOUNDING_FUNCTIONS
+
     case Bold_eq:
       {
 	Lisp_Object arg = POP;
@@ -1720,12 +1727,15 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	break;
       }
 
+#endif
+
     case Bbind_multiple_value_limits:
       {
         Lisp_Object upper = POP, first = TOP, speccount;
 
-        CHECK_NATNUM (upper);
-        CHECK_NATNUM (first);
+        check_integer_range (upper, Qzero,
+                             make_integer (Vmultiple_values_limit));
+        check_integer_range (first, Qzero, upper);
 
         speccount = make_int (bind_multiple_value_limits (XINT (first),
                                                           XINT (upper)));
@@ -1953,11 +1963,14 @@ optimize_byte_code (/* in */
 	    wtaerror ("attempt to set non-symbol", val);
 	  if (EQ (val, Qnil) || EQ (val, Qt))
 	    signal_error (Qsetting_constant, 0, val);
+#ifdef NEED_TO_HANDLE_21_4_CODE
 	  /* Ignore assignments to keywords by converting to Bdiscard.
-	     For backward compatibility only - we'd like to make this an error.  */
+	     For backward compatibility only - we'd like to make this an
+	     error.  */
 	  if (SYMBOL_IS_KEYWORD (val))
 	    REWRITE_OPCODE (Bdiscard);
 	  else
+#endif
 	    WRITE_NARGS (Bvarset);
 	  break;
 
@@ -2750,7 +2763,7 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 
   CHECK_STRING (instructions);
   CHECK_VECTOR (constants);
-  CHECK_NATNUM (stack_depth);
+  check_integer_range (stack_depth, Qzero, make_int (USHRT_MAX));
 
   /* Optimize the `instructions' string, just like when executing a
      regular compiled function, but don't save it for later since this is

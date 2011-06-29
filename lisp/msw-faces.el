@@ -11,20 +11,18 @@
 
 ;; This file is part of XEmacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; This file does the magic to parse mswindows font names, and make sure that
 ;; the default and modeline attributes of new frames are specified enough.
@@ -268,12 +266,11 @@ font. If it fails, it returns nil."
 	(concat (substring font 0 (match-beginning 3))
 		(substring font (match-end 3) (match-end 0))))
   (sort
-   (delq nil
-	 (mapcar #'(lambda (name)
-		     (and (string-match mswindows-font-regexp name)
-			  (string-to-int (substring name (match-beginning 3)
-						    (match-end 3)))))
-		 (font-list font device)))
+   (mapcan #'(lambda (name)
+               (and (string-match mswindows-font-regexp name)
+                    (list (string-to-int (substring name (match-beginning 3)
+						    (match-end 3))))))
+           (font-list font device))
    #'<))
 
 (defun mswindows-frob-font-size (font up-p device)
