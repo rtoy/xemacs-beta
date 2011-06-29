@@ -579,14 +579,9 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
     abort();
   return 0;			/* shut up GCC */
 }
-#else
-static int
-XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
-			     struct face_cachel *cachel,
-			     struct textual_run *run);
-
 #endif
 
+#ifndef THIS_IS_GTK
 /*
    XLIKE_text_width
 
@@ -614,6 +609,10 @@ XLIKE_text_width (struct window *w, struct face_cachel *cachel,
 
   return width_so_far;
 }
+#else
+static int XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+                             const Ichar *str, Charcount len);
+#endif
 
 /*****************************************************************************
  XLIKE_divider_height
@@ -1082,8 +1081,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
   int ypos = XLIKE_DISPLAY_LINE_YPOS (dl);
   int len = Dynarr_length (buf);
-  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
-  struct textual_run *runs = alloca_array (struct textual_run, len);
+  unsigned char *text_storage;
+  struct textual_run *runs;
   int nruns;
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
@@ -1174,8 +1173,35 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                            height);
     }
 
+#ifndef THIS_IS_GTK
+  runs = alloca_array (struct textual_run, len);
+  text_storage = (unsigned char *) ALLOCA (2 * len);
   nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
 				 Dynarr_length (buf), cachel);
+#else
+  runs = alloca_new (struct textual_run);
+  nruns = 1;
+  {
+    Elemcount ii, extbytes;
+    Ibyte *int_storage = alloca_ibytes (MAX_ICHAR_LEN * len);
+    Ibyte *int_storage_ptr = int_storage;
+
+    for (ii = 0; ii < len; ii++)
+      {
+        int_storage_ptr += set_itext_ichar (int_storage_ptr,
+                                            Dynarr_at (buf, ii));
+      }
+
+    TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr - int_storage),
+                        ALLOCA, (text_storage, extbytes),
+                        Qutf_8);
+
+    runs->ptr = text_storage;
+    runs->len = extbytes;
+    runs->dimension = 1;
+    runs->charset = Vcharset_ascii;
+  }
+#endif
 
 #ifdef THIS_IS_GTK
   /* XXX Horrible kludge to force display of the only block cursor
@@ -1193,7 +1219,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
+#ifdef THIS_IS_GTK
+      this_width = width;
+#else
       this_width = XLIKE_text_width_single_run (f, cachel, runs + i);
+#endif
+
       need_clipping = (dl->clip || clip_start > xpos ||
 		       clip_end < xpos + this_width);
 
