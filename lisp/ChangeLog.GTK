@@ -1,5 +1,15 @@
 2011-06-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+        No need to separate_textual_runs on GTK, it's reasonable and
+        appropriate to let Pango worry about font coverage once we've
+        converted the text to Unicode.
+
+2011-06-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* custom.el (custom-declare-variable):
         Remove purecopy here, missed in the merge.
 

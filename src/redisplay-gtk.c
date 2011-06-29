@@ -189,32 +189,54 @@ our_draw_bitmap (GdkDrawable *drawable,
 
 #endif
 
-/* We always have to layout text to include combining marks etc. */
+
+/* XLIKE_text_width
+
+   Given a string and a merged face, return the string's length in pixels
+   when displayed in the fonts associated with the face. */
+
 static int
-XLIKE_text_width_single_run (struct frame *f,
-			     struct face_cachel *cachel,
-			     struct textual_run *run)
+XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+		  const Ichar *str, Charcount len)
 {
-  Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
+  Ibyte *int_storage = alloca_ibytes (MAX_ICHAR_LEN * len);
+  Ibyte *int_storage_ptr = int_storage;
+  Extbyte *alloca_ext_storage;
+  Bytecount extbytes = 0;
+  Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
   Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
-  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (WINDOW_XFRAME (w));
   gint width, height;
   PangoContext *context = gtk_widget_get_pango_context (widget);
   PangoLayout *layout = pango_layout_new (context);
   PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
-  Lisp_Object font = FACE_CACHEL_FONT (cachel, run->charset);
   PangoAttrList *attr_list = pango_attr_list_new ();
+  int ii;
+
+  for (ii = 0; ii < len; ii++)
+    {
+      int_storage_ptr += set_itext_ichar (int_storage_ptr, str[ii]);
+    }
+
+  TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr - int_storage),
+                      ALLOCA, (alloca_ext_storage, extbytes),
+                      Qutf_8);
 
   if (cachel->strikethru)
-    pango_attr_list_insert (attr_list,
-                            pango_attr_strikethrough_new (TRUE));
+    {
+      pango_attr_list_insert (attr_list, pango_attr_strikethrough_new (TRUE));
+    }
+
   if (cachel->underline)
-    pango_attr_list_insert (attr_list,
-                            pango_attr_underline_new (PANGO_UNDERLINE_SINGLE));
+    {
+      pango_attr_list_insert (attr_list,
+                              pango_attr_underline_new
+                              (PANGO_UNDERLINE_SINGLE));
+    }
   
   pango_layout_set_attributes (layout, attr_list);
   pango_layout_set_font_description (layout, pfd);
-  pango_layout_set_text (layout, (const char *)run->ptr, run->len);
+  pango_layout_set_text (layout, (const char *) alloca_ext_storage, extbytes);
   pango_layout_get_pixel_size (layout, &width, &height);
   g_object_unref (layout);
   pango_attr_list_unref (attr_list);
