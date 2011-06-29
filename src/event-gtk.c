@@ -459,51 +459,14 @@ static Lisp_Object
 gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
      /* simple_p means don't try too hard (ASCII only) */
 {
-  if (event->length != 1)
+  if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_Mode_switch))
     {
-      /* Generate multiple emacs events */
-      Ichar ch;
-      Lisp_Object instream, fb_instream;
-      Lstream *istr;
-      struct gcpro gcpro1, gcpro2;
-
-      fb_instream =
-	make_fixed_buffer_input_stream ((unsigned char *) event->string, event->length);
-
-      /* #### Use get_coding_system_for_text_file
-         (Vcomposed_input_coding_system, 0) */
-      instream =
-	make_coding_input_stream (XLSTREAM (fb_instream),
-				  Qundecided, CODING_DECODE, 0);
-      
-      istr = XLSTREAM (instream);
-
-      GCPRO2 (instream, fb_instream);
-      while ((ch = Lstream_get_ichar (istr)) != EOF)
-	{
-	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
-	  Lisp_Event *ev          = XEVENT (emacs_event);
-	  ev->channel	            = DEVICE_CONSOLE (d);
-	  ev->timestamp	    = event->time;
-	  XSET_EVENT_TYPE (emacs_event, key_press_event);
-	  XSET_EVENT_KEY_MODIFIERS (emacs_event, 0);
-	  XSET_EVENT_KEY_KEYSYM (emacs_event, make_char (ch));
-	  enqueue_dispatch_event (emacs_event);
-	}
-      Lstream_close (istr);
-      UNGCPRO;
-      Lstream_delete (istr);
-      Lstream_delete (XLSTREAM (fb_instream));
-      if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_Mode_switch))
-	return (Qnil);
-      return (gtk_keysym_to_emacs_keysym (event->keyval, simple_p));
+      return Qnil;
     }
-  else
-    {
-      if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_Mode_switch))
-	return (Qnil);
-      return (gtk_keysym_to_emacs_keysym (event->keyval, simple_p));
-    }
+
+  /* This function used to attempt to handle input methods, but that's no
+     longer correct with GTK2.  */
+  return gtk_keysym_to_emacs_keysym (event->keyval, simple_p);
 }
 
 

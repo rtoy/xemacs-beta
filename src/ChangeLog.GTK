@@ -1,3 +1,10 @@
+2011-06-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-gtk.c (gtk_to_emacs_keysym):
+        Don't attempt to synthesise events appropriate for input methods,
+        that's wrong for GTK2 and leads to duplicated characters when AltGr
+        is used.
+
 2011-05-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-gtk.c (Fgtk_set_font_weight): Define.
