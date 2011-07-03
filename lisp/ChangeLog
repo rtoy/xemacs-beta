@@ -1,3 +1,9 @@
+2011-07-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (cl-macroexpand):
+	Allow code to disable a given symbol macro while expanding code by
+	prepending a cons with a nil cdr to the macro environment.
+
 2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gtk-init.el:

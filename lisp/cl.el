@@ -234,9 +234,9 @@ definitions to shadow the loaded ones for use in file byte-compilation."
 			(macroexpand-internal cl-macro cl-macro-environment))
 		  (and (symbolp cl-macro)
 		       (setq eq-hash (eq-hash cl-macro))
-		       (if (fixnump eq-hash)
-			   (assq eq-hash cl-macro-environment)
-			 (assoc eq-hash cl-macro-environment))))
+		       (cdr (if (fixnump eq-hash)
+                                (assq eq-hash cl-macro-environment)
+                              (assoc eq-hash cl-macro-environment)))))
       (setq cl-macro (cadr (assoc* eq-hash cl-macro-environment))))
     cl-macro))
 
