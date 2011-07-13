@@ -1,3 +1,11 @@
+2011-07-12  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (emacs_gtk_add_timeout): Use glib timeout instead of
+	deprecated gtk timeout.
+	(emacs_gtk_remove_timeout): Use glib method as well.
+
+	* menubar-gtk.c (__kill_stupid_gtk_timer): Use glib timeout cancel.
+
 2011-06-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-gtk.c (gtk_to_emacs_keysym):
