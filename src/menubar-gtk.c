@@ -211,7 +211,7 @@ __kill_stupid_gtk_timer (GtkObject *obj, gpointer UNUSED (user_data))
 
   if (mi->timer)
     {
-      gtk_timeout_remove (mi->timer);
+      g_source_remove (mi->timer);
       mi->timer = 0;
     }
 }

@@ -526,9 +526,9 @@ emacs_gtk_add_timeout (EMACS_TIME thyme)
     EMACS_USECS (thyme) / 1000;
   if (milliseconds < 1)
     milliseconds = 1;
-  timeout->timeout_id = gtk_timeout_add (milliseconds,
-					 gtk_timeout_callback,
-					 GINT_TO_POINTER(timeout));
+  timeout->timeout_id = g_timeout_add (milliseconds,
+                                       gtk_timeout_callback,
+                                       timeout);
   return timeout->id;
 }
 
@@ -559,7 +559,7 @@ emacs_gtk_remove_timeout (int id)
 	}
       /* if it was pending, we have removed it from the list */
       if (timeout)
-	  gtk_timeout_remove (timeout->timeout_id);
+        g_source_remove (timeout->timeout_id);
     }
 
   /* It could be that the call back was already called but we didn't convert
