@@ -54,6 +54,7 @@ in dumped-lisp.el and is not itself listed.")
        "cmdloop"
        "keymap"
        "syntax"
+       "syntax-ppss"
        "device"
        "console"
        "obsolete"

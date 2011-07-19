@@ -1,3 +1,7 @@
+2011-07-22  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/syntax-ppss-tests.el: Add tests for syntax-ppss.el.
+
 2011-06-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:
