@@ -1,5 +1,9 @@
-2011-07-22  Mats Lidell  <matsl@xemacs.or>
+2011-07-29  Mats Lidell  <matsl@xemacs.org>
+	* process.el (shell-command): 
+	* process.el (shell-command-on-region): API compatible/synced with
+	FSF 23.3.1.
 
+2011-07-22  Mats Lidell  <matsl@xemacs.or>
 	* syntax-ppss.el: Synced up with Emacs 23.3 (syntax.el)
 
 2011-07-03  Aidan Kehoe  <kehoea@parhasard.net>

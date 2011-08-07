@@ -1,6 +1,6 @@
 ;;; process.el --- commands for subprocesses; split out of simple.el
 
-;; Copyright (C) 1985-7, 1993,4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985-7, 1993,4, 1997, 2011 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 2000, 2001, 2002 Ben Wing.
 
 ;; Author: Ben Wing
@@ -24,6 +24,7 @@
 
 ;;; Synched up with: FSF 19.30, except for setenv/getenv (synched with FSF
 ;;; 21.2.1).
+;;; shell-command and shell-command-on-region synced with FSF 23.3.1.
 
 ;;; Authorship:
 
@@ -56,6 +57,12 @@
 
 (defvar shell-command-switch "-c"
   "Switch used to have the shell execute its command line argument.")
+
+(defvar shell-command-default-error-buffer nil
+  "*Buffer name for `shell-command' and `shell-command-on-region' error output.
+This buffer is used when `shell-command' or `shell-command-on-region'
+is run interactively.  A value of nil means that output to stderr and
+stdout will be intermixed in the output stream.")
 
 (defun start-process-shell-command (name buffer &rest args)
   "Start a program in a subprocess.  Return the process object for it.
@@ -316,12 +323,12 @@ Coding systems for the process are the same as for `start-process-internal'."
 	(error nil)))))
 
 
-(defun shell-command (command &optional output-buffer)
+(defun shell-command (command &optional output-buffer error-buffer)
   "Execute string COMMAND in inferior shell; display output, if any.
 
-If COMMAND ends in ampersand, execute it asynchronously.
-The output appears in the buffer `*Async Shell Command*'.
-That buffer is in shell mode.
+If COMMAND ends in ampersand, execute it asynchronously.  The command
+is executed using the background package. See `background' for
+details.
 
 Otherwise, COMMAND is executed synchronously.  The output appears in the
 buffer `*Shell Command Output*'.
@@ -336,9 +343,16 @@ says to put the output in some other buffer.
 If OUTPUT-BUFFER is a buffer or buffer name, put the output there.
 If OUTPUT-BUFFER is not a buffer and not nil,
 insert output in current buffer.  (This cannot be done asynchronously.)
-In either case, the output is inserted after point (leaving mark after it)."
+In either case, the output is inserted after point (leaving mark after it).
+
+If the optional third argument ERROR-BUFFER is non-nil, it is a buffer
+or buffer name to which to direct the command's standard error output.
+If it is nil, error output is mingled with regular output.  In an
+interactive call, the variable `shell-command-default-error-buffer'
+specifies the value of ERROR-BUFFER."
   (interactive (list (read-shell-command "Shell command: ")
-		     current-prefix-arg))
+		     current-prefix-arg
+		     shell-command-default-error-buffer))
   (if (and output-buffer
 	   (not (or (bufferp output-buffer)  (stringp output-buffer))))
       (progn (barf-if-buffer-read-only)
@@ -363,7 +377,7 @@ In either case, the output is inserted after point (leaving mark after it)."
 	       'unimplemented
 	       "backgrounding a shell command requires package `background'")))
 	    
-	(shell-command-on-region (point) (point) command output-buffer)))))
+	(shell-command-on-region (point) (point) command output-buffer nil error-buffer)))))
 
 ;; We have a sentinel to prevent insertion of a termination message
 ;; in the buffer itself.
@@ -374,7 +388,8 @@ In either case, the output is inserted after point (leaving mark after it)."
 	       (substring signal 0 -1))))
 
 (defun shell-command-on-region (start end command
-				      &optional output-buffer replace)
+				      &optional output-buffer replace
+				      error-buffer display-error-buffer)
   "Execute string COMMAND in inferior shell with region as input.
 Normally display output (if any) in temp buffer `*Shell Command Output*';
 Prefix arg means replace the region with it.
@@ -394,7 +409,15 @@ that says to put the output in some other buffer.
 If OUTPUT-BUFFER is a buffer or buffer name, put the output there.
 If OUTPUT-BUFFER is not a buffer and not nil,
 insert output in the current buffer.
-In either case, the output is inserted after point (leaving mark after it)."
+In either case, the output is inserted after point (leaving mark after it).
+
+If optional sixth argument ERROR-BUFFER is non-nil, it is a buffer
+or buffer name to which to direct the command's standard error output.
+If it is nil, error output is mingled with regular output.
+If DISPLAY-ERROR-BUFFER is non-nil, display the error buffer if there
+were any errors.  (This is always t, interactively.)
+In an interactive call, the variable `shell-command-default-error-buffer'
+specifies the value of ERROR-BUFFER."
   (interactive (let ((string
 		      ;; Do this before calling region-beginning
 		      ;; and region-end, in case subprocess output
@@ -405,79 +428,142 @@ In either case, the output is inserted after point (leaving mark after it)."
 		 (list (region-beginning) (region-end)
 		       string
 		       current-prefix-arg
-		       current-prefix-arg)))
-  (if (or replace
-	  (and output-buffer
-	       (not (or (bufferp output-buffer) (stringp output-buffer)))))
-      ;; Replace specified region with output from command.
-      (let ((swap (and replace (< start end))))
-	;; Don't muck with mark unless REPLACE says we should.
-	(goto-char start)
-	(and replace (push-mark))
-	(call-process-region start end shell-file-name t t nil
-			     shell-command-switch command)
-	(let ((shell-buffer (get-buffer "*Shell Command Output*")))
-	  (and shell-buffer (not (eq shell-buffer (current-buffer)))
-	       (kill-buffer shell-buffer)))
-	;; Don't muck with mark unless REPLACE says we should.
-	(and replace swap (exchange-point-and-mark t)))
+		       current-prefix-arg
+		       shell-command-default-error-buffer
+		       t)))
+  (let ((error-file
+	 (if error-buffer
+	     (make-temp-file
+	      (expand-file-name "scor"
+				(or small-temporary-file-directory
+				    (temp-directory))))
+	   nil))
+	(exit-status nil))
+    (if (or replace
+	    (and output-buffer
+		 (not (or (bufferp output-buffer) (stringp output-buffer)))))
+	;; Replace specified region with output from command.
+	(let ((swap (and replace (< start end))))
+	  ;; Don't muck with mark unless REPLACE says we should.
+	  (goto-char start)
+	  (and replace (push-mark))
+	  (setq exit-status (call-process-region start end shell-file-name t 
+						 (if error-file
+						     (list t error-file)
+						   t)
+						 nil shell-command-switch command))
+	  (let ((shell-buffer (get-buffer "*Shell Command Output*")))
+	    (and shell-buffer (nnot (eq shell-buffer (current-buffer)))
+		 (kill-buffer shell-buffer)))
+	  ;; Don't muck with mark unless REPLACE says we should.
+	  (and replace swap (exchange-point-and-mark t)))
       ;; No prefix argument: put the output in a temp buffer,
       ;; replacing its entire contents.
-    (let ((buffer (get-buffer-create
-		   (or output-buffer "*Shell Command Output*")))
-	  (success nil)
-	  (exit-status nil)
-	  (directory default-directory))
-      (unwind-protect
-	  (if (eq buffer (current-buffer))
-	      ;; If the input is the same buffer as the output,
-	      ;; delete everything but the specified region,
-	      ;; then replace that region with the output.
-	      (progn (setq buffer-read-only nil)
-		     (delete-region (max start end) (point-max))
-		     (delete-region (point-min) (min start end))
-		     (setq exit-status
-			   (call-process-region (point-min) (point-max)
-						shell-file-name t t nil
-						shell-command-switch command))
-		     (setq success t))
-	    ;; Clear the output buffer,
-	    ;; then run the command with output there.
-	    (save-excursion
-	      (set-buffer buffer)
-	      (setq buffer-read-only nil)
-	      ;; XEmacs change
-	      (setq default-directory directory)
-	      (erase-buffer))
-	    (setq exit-status
-		  (call-process-region start end shell-file-name
-				       nil buffer nil
-				       shell-command-switch command))
-	    (setq success t))
-	;; Report the amount of output.
-	(let ((lines (save-excursion
-		       (set-buffer buffer)
-		       (if (= (buffer-size) 0)
-			   0
-			 (count-lines (point-min) (point-max))))))
-	  (cond ((= lines 0)
-		 (if success
-		     (display-message
-		      'command
-		      (if (eql exit-status 0)
-			  "(Shell command succeeded with no output)"
-			"(Shell command failed with no output)")))
-		 (kill-buffer buffer))
-		((and success (= lines 1))
-		 (message "%s"
-			  (save-excursion
-			    (set-buffer buffer)
-			    (goto-char (point-min))
-			    (buffer-substring (point)
-					      (progn (end-of-line)
-						     (point))))))
-		(t
-		 (set-window-start (display-buffer buffer) 1))))))))
+      (let ((buffer (get-buffer-create
+		     (or output-buffer "*Shell Command Output*")))
+	    (directory default-directory))
+	(unwind-protect
+	    (if (eq buffer (current-buffer))
+		;; If the input is the same buffer as the output,
+		;; delete everything but the specified region,
+		;; then replace that region with the output.
+		(progn (setq buffer-read-only nil)
+		       (delete-region (max start end) (point-max))
+		       (delete-region (point-min) (min start end))
+		       (setq exit-status
+			     (call-process-region (point-min) (point-max)
+						  shell-file-name t 
+						  (if error-file
+						      (list t error-file)
+						    t)
+						  nil shell-command-switch 
+						  command)))
+	      ;; Clear the output buffer,
+	      ;; then run the command with output there.
+	      (save-excursion
+		(set-buffer buffer)
+		(setq buffer-read-only nil)
+		;; XEmacs change
+		(setq default-directory directory)
+		(erase-buffer))
+	      (setq exit-status
+		    (call-process-region start end shell-file-name
+					 nil 
+					 (if error-file
+					     (list buffer error-file)
+					   buffer)
+					 nil shell-command-switch command)))
+
+	  ;; Report the output.
+	  (with-current-buffer buffer
+	    (setq modeline-process
+		  (cond ((null exit-status)
+			 " - Error")
+			((stringp exit-status)
+			 (format " - Signal [%s]" exit-status))
+			((not (equal 0 exit-status))
+			 (format " - Exit [%d]" exit-status)))))
+	  (if (with-current-buffer buffer (> (point-max) (point-min)))
+	      ;; There's some output, display it
+	      (let ((lines (save-excursion
+			     (set-buffer buffer)
+			     (if (= (buffer-size) 0)
+				 0
+			       (count-lines (point-min) (point-max))))))
+		(cond ((= lines 0)
+		       (display-message
+			   'command
+			 (if (eql exit-status 0)
+			     "(Shell command succeeded with no output)"
+			   "(Shell command failed with no output)"))
+		       (kill-buffer buffer))
+		      ((= lines 1)
+		       (message "%s"
+				(save-excursion
+				  (set-buffer buffer)
+				  (goto-char (point-min))
+				  (buffer-substring (point)
+						    (progn (end-of-line)
+							   (point))))))
+		      (t
+		       (set-window-start (display-buffer buffer) 1))))
+	    ;; No output; error?
+	    (let ((output
+		   (if (and error-file
+			    (< 0 (nth 7 (file-attributes error-file))))
+		       "some error output"
+		     "no output")))
+	      (cond ((null exit-status)
+		     (message "(Shell command failed with error)"))
+		    ((equal 0 exit-status)
+		     (message "(Shell command succeeded with %s)"
+			      output))
+		    ((stringp exit-status)
+		     (message "(Shell command killed by signal %s)"
+			      exit-status))
+		    (t
+		     (message "(Shell command failed with code %d and %s)"
+			      exit-status output))))
+	    ;; Don't kill: there might be useful info in the undo-log.
+	    ;; (kill-buffer buffer)
+	    ))))
+
+    (when (and error-file (file-exists-p error-file))
+      (if (< 0 (nth 7 (file-attributes error-file)))
+	  (with-current-buffer (get-buffer-create error-buffer)
+	    (let ((pos-from-end (- (point-max) (point))))
+	      (or (bobp)
+		  (insert "\f\n"))
+	      ;; Do no formatting while reading error file,
+	      ;; because that can run a shell command, and we
+	      ;; don't want that to cause an infinite recursion.
+	      (format-insert-file error-file nil)
+	      ;; Put point after the inserted errors.
+	      (goto-char (- (point-max) pos-from-end)))
+	    (and display-error-buffer
+		 (display-buffer (current-buffer)))))
+      (delete-file error-file))
+    exit-status))
 
 (defun shell-quote-argument (argument)
   "Quote an argument for passing as argument to an inferior shell."
