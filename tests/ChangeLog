@@ -1,5 +1,7 @@
+2011-07-31  Mats Lidell  <matsl@xemacs.org>
+	* automated/process-tests.el: shell-command tests.
+	
 2011-07-22  Mats Lidell  <matsl@xemacs.org>
-
 	* automated/syntax-ppss-tests.el: Add tests for syntax-ppss.el.
 
 2011-06-28  Aidan Kehoe  <kehoea@parhasard.net>
