@@ -204,4 +204,8 @@
     ;; special-case check that point didn't move
     (Assert (= (point) 25))))
 
+;; #### Add the recipe in <yxzfymklb6p.fsf@gimli.holgi.priv> on xemacs-beta.
+;; You also need to do a DELETE or type SPC to get the crash in 21.5.24.
+;http://list-archive.xemacs.org/pipermail/xemacs-beta/2006-February/008430.html
+
 ;;; end of syntax-tests.el

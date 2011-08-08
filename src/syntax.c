@@ -284,56 +284,51 @@ syntax_cache_table_was_changed (struct buffer *buf)
 }
 
 static void
-reset_buffer_syntax_cache_range (struct syntax_cache *cache,
-				 Lisp_Object buffer, int infinite)
+reset_syntax_cache_range (struct syntax_cache *cache,  /* initialized cache */
+			  Lisp_Object object)	       /* string or buffer */
 {
-  Fset_marker (cache->start, make_int (1), buffer);
-  Fset_marker (cache->end, make_int (1), buffer);
-  Fset_marker_insertion_type (cache->start, Qt);
-  Fset_marker_insertion_type (cache->end, Qnil);
-  /* #### Should we "cache->no_syntax_table_prop = 1;" here? */
-  /* #### Cf comment on INFINITE in init_syntax_cache. -- sjt */
-  if (infinite)
+  /* reinitialize cache parameters */
+  if (BUFFERP (object))
     {
-      cache->prev_change = EMACS_INT_MIN;
-      cache->next_change = EMACS_INT_MAX;
+      /* make known region zero-length and reset insertion behavior */
+      Fset_marker (cache->start, make_int (1), object);
+      Fset_marker (cache->end, make_int (1), object);
+      Fset_marker_insertion_type (cache->start, Qt);
+      Fset_marker_insertion_type (cache->end, Qnil);
     }
   else
     {
+      /* invalidate the known region markers */
+      Fset_marker (cache->start, Qnil, Qnil);
+      Fset_marker (cache->end, Qnil, Qnil);
+    }
+  cache->no_syntax_table_prop = 1;
+  if (lookup_syntax_properties)
+    {
       cache->prev_change = -1;
       cache->next_change = -1;
+    }
+  else
+    {
+      cache->prev_change = EMACS_INT_MIN;
+      cache->next_change = EMACS_INT_MAX;
     }
 }
 
 static void
-init_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
-		    struct buffer *buffer, int infinite)
+init_syntax_cache (struct syntax_cache *cache,  /* cache must be zero'ed */
+		   Lisp_Object object,		/* string or buffer */
+		   struct buffer *buffer)	/* may not be NULL */
 {
-  xzero (*cache);
+  /* initialize cache resources */
   cache->object = object;
   cache->buffer = buffer;
-  cache->no_syntax_table_prop = 1;
   cache->syntax_table =
     BUFFER_SYNTAX_TABLE (cache->buffer);
   cache->mirror_table =
     BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
-  cache->start = Qnil;
-  cache->end = Qnil;
-  /* #### I'm not sure what INFINITE is for, but it's apparently needed by
-     setup_syntax_cache().  It looks like it's supposed to guarantee that
-     the test for POS outside of cache-valid range will never succeed, so
-     that update_syntax_cache won't get called, but it's hard to be sure.
-     Cf reset_buffer_syntax_cache_range. -- sjt */
-  if (infinite)
-    {
-      cache->prev_change = EMACS_INT_MIN;
-      cache->next_change = EMACS_INT_MAX;
-    }
-  else
-    {
-      cache->prev_change = -1;
-      cache->next_change = -1;
-    }
+  cache->start = Fmake_marker();
+  cache->end = Fmake_marker();
 }
 
 /* external syntax cache API */
@@ -347,32 +342,23 @@ setup_syntax_cache (struct syntax_cache *cache,	/* syntax cache, may be NULL
 						   is associated with */
 		    struct buffer *buffer,	/* the buffer to use as source
 						   of the syntax table */
-		    Charxpos from,		/* initial position of cache */
-		    int count)			/* direction? see code */
+		    Charxpos UNUSED (from),	/* initial position of cache */
+		    int UNUSED (count))		/* direction? see code */
 {
-  /* If OBJECT is a buffer, use its cache.  Initialize cache.  Make it valid
-     for the whole buffer if the syntax-table property is not being respected.
-     Else if OBJECT is not a buffer, initialize the cache passed in CACHE.
-     If the syntax-table property is being respected, update the cache. */
+  /* If OBJECT is a buffer, use its cache, otherwise use CACHE.
+     Initialize CACHE.  Invalidate the cache if the syntax-table property is
+     being respected, otherwise make it valid for the whole object. */
   if (BUFFERP (object))
     {
       cache = XBUFFER (object)->syntax_cache;
-      if (!lookup_syntax_properties)
-	reset_buffer_syntax_cache_range (cache, object, 1);
     }
   else
-    init_syntax_cache (cache, object, buffer, 0);
-  if (lookup_syntax_properties)
     {
-      if (count <= 0)
-	{
-	  from--;
-	  from = buffer_or_string_clip_to_accessible_char (cache->object,
-							   from);
-	}
-      if (!(from >= cache->prev_change && from < cache->next_change))
-	update_syntax_cache (cache, from, count);
+      xzero (*cache);
+      init_syntax_cache (cache, object, buffer);
     }
+  reset_syntax_cache_range (cache, object);
+
 #ifdef NOT_WORTH_THE_EFFORT
   update_mirror_syntax_if_dirty (cache->mirror_table);
 #endif /* NOT_WORTH_THE_EFFORT */
@@ -517,21 +503,14 @@ mark_buffer_syntax_cache (struct buffer *buf)
 void
 init_buffer_syntax_cache (struct buffer *buf)
 {
-  struct syntax_cache *cache;
 #ifdef NEW_GC
   buf->syntax_cache = XSYNTAX_CACHE (ALLOC_NORMAL_LISP_OBJECT (syntax_cache));
 #else /* not NEW_GC */
   buf->syntax_cache = xnew_and_zero (struct syntax_cache);
 #endif /* not NEW_GC */
-  cache = buf->syntax_cache;
-  cache->object = wrap_buffer (buf);
-  cache->buffer = buf;
-  cache->no_syntax_table_prop = 1;
-  cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
-  cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
-  cache->start = Fmake_marker ();
-  cache->end = Fmake_marker ();
-  reset_buffer_syntax_cache_range (cache, cache->object, 0);
+
+  init_syntax_cache (buf->syntax_cache, wrap_buffer(buf), buf);
+  reset_syntax_cache_range (buf->syntax_cache, wrap_buffer(buf));
 }
 
 /* finalize the syntax cache for BUF */
@@ -561,12 +540,6 @@ signal_syntax_cache_extent_changed (EXTENT extent)
   Lisp_Object buffer = Fextent_object (wrap_extent (extent));
   if (BUFFERP (buffer))
     {
-      /* This was getting called with the buffer's start and end null, eg in
-	 cperl mode, which triggers an assert in byte_marker_position.  Cf
-	 thread rooted at <yxz7j7xzk97.fsf@gimli.holgi.priv> on xemacs-beta.
-	 <yxzfymklb6p.fsf@gimli.holgi.priv> has a recipe, but you also need
-	 to delete or type SPC to get the crash.
-	 #### Delete this comment when setup_syntax_cache is made sane. */
       struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;
       /* #### would this be slower or less accurate in character terms? */
       Bytexpos start = extent_endpoint_byte (extent, 0);
@@ -576,7 +549,7 @@ signal_syntax_cache_extent_changed (EXTENT extent)
       /* If the extent is entirely before or entirely after the cache
 	 range, it doesn't overlap.  Otherwise, invalidate the range. */
       if (!(end < start2 || start > end2))
-	reset_buffer_syntax_cache_range (cache, buffer, 0);
+	reset_syntax_cache_range (cache, buffer);
     }
 }
 
