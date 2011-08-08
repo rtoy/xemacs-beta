@@ -1,5 +1,30 @@
 2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* syntax.c:
+	Remove some obsolete or unintelligible #### comments.
+	Improve many toplevel comments.
+
+	(Fsyntax_designator_chars):
+	(Fchar_syntax):
+	(Fmatching_paren):
+	(Fforward_word):
+	(Fforward_comment):
+	(Fscan_lists):
+	(Fscan_sexps):
+	(Fbackward_prefix_chars):
+	(parse-sexp-ignore-comments):
+	(lookup-syntax-properties):
+	(words-include-escapes):
+	Improve docstrings.
+
+	* syntax.h:
+	Document functions and restrictions struct syntax_cache members.
+	Improve many toplevel comments.
+	Delete syntax code parsing macros unused for a decade or so.
+	(#if 0'd out since May 2002.)
+
+2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* syntax.c (reset_buffer_syntax_cache_range):
 	Rename to reset_syntax_cache_range.
 
