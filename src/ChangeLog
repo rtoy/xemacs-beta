@@ -1,3 +1,7 @@
+2011-08-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* dumper.c (pdump_file_try): Add prototype to suppress GCC warning.
+
 2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* console.c:
