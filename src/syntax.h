@@ -262,7 +262,7 @@ WORD_SYNTAX_P (Lisp_Object table, Ichar c)
    that character signifies (as a char).
    For example, (enum syntaxcode) syntax_spec_code['w'] is Sword. */
 
-extern const unsigned char syntax_spec_code[0400];
+extern const unsigned char syntax_spec_code[0200];
 
 /* Indexed by syntax code, give the letter that describes it. */
 
