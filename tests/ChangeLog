@@ -1,3 +1,8 @@
+2011-08-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/syntax-tests.el:
+	Add test of syntax cache suggested by Alan Mackenzie.
+
 2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/syntax-tests.el: Suggest test from old syntax-cache bug.

@@ -204,6 +204,92 @@
     ;; special-case check that point didn't move
     (Assert (= (point) 25))))
 
+;; Test inspired by Alan Mackenzie in <20110806200042.GA3406@acm.acm>
+;; on xemacs-beta 2011-08-06.
+;; Known to fail in r5531 (#1b054bc2ac40) plus some additional patches to
+;; syntax code, and passes with Alan's suggested patch ca. r5545.
+;; #### The results of these tests are empirically determined, and will
+;; probably change as the syntax cache is documented and repaired.
+(with-temp-buffer
+  ;; buffer->syntax_cache in just-initialized state.
+  (let ((sci (syntax-cache-info)))
+    (Assert (= 1 (nth 0 sci)) nil "just initialized")
+    (Assert (= 1 (nth 1 sci)) nil "just initialized")
+    (Assert (= -1 (nth 2 sci)) nil "just initialized")
+    (Assert (= -1 (nth 3 sci)) nil "just initialized"))
+  ;; Alan's example uses ?/ not ?, but ?/ has Ssymbol syntax, which would
+  ;; mean it is treated the same as the letters by forward-sexp.
+  (insert ",regexp, {")
+  ;; Insertion updates markers, but not the cache boundaries.
+  (let ((sci (syntax-cache-info)))
+    (Assert (= 1 (nth 0 sci)) nil "after main insert")
+    (Assert (= 11 (nth 1 sci)) nil "after main insert")
+    (Assert (= -1 (nth 2 sci)) nil "after main insert")
+    (Assert (= -1 (nth 3 sci)) nil "after main insert"))
+  ;; #### Interactively inserting in fundamental mode swaps marker positions!
+  ;; Why?
+  (insert "}")
+  (let ((sci (syntax-cache-info)))
+    (Assert (= 1 (nth 0 sci)) nil "after brace insert")
+    (Assert (= 12 (nth 1 sci)) nil "after brace insert")
+    (Assert (= -1 (nth 2 sci)) nil "after brace insert")
+    (Assert (= -1 (nth 3 sci)) nil "after brace insert"))
+  ;; Motion that ignores the cache should not update the cache.
+  (goto-char (point-min))
+  (let ((sci (syntax-cache-info)))
+    (Assert (= 1 (nth 0 sci)) nil "after movement 0")
+    (Assert (= 12 (nth 1 sci)) nil "after movement 0")
+    (Assert (= -1 (nth 2 sci)) nil "after movement 0")
+    (Assert (= -1 (nth 3 sci)) nil "after movement 0"))
+  ;; Cache should be updated and global since no syntax-table property.
+  (forward-sexp 1)
+  (Assert (= (point) 8) nil "after 1st forward-sexp")
+  (let ((sci (syntax-cache-info)))
+    (Assert (= 1 (nth 0 sci)) nil "after 1st forward-sexp")
+    (Assert (= 12 (nth 1 sci)) nil "after 1st forward-sexp")
+    (Assert (= 1 (nth 2 sci)) nil "after 1st forward-sexp")
+    (Assert (= 12 (nth 3 sci)) nil "after 1st forward-sexp"))
+  ;; Adding the text property should invalidate the cache.
+  (put-text-property 1 2 'syntax-table '(7))
+  (let ((sci (syntax-cache-info)))
+    (Assert (= 1 (nth 0 sci)) nil "after putting property")
+    (Assert (= 1 (nth 1 sci)) nil "after putting property")
+    (Assert (= -1 (nth 2 sci)) nil "after putting property")
+    (Assert (= -1 (nth 3 sci)) nil "after putting property"))
+  (put-text-property 8 9 'syntax-table '(7))
+  (goto-char (point-min))
+  ;; Motion that is stopped by a syntax-table property should impose
+  ;; that property's region on the cache.
+  (forward-sexp 1)
+  (Assert (= (point) 9) nil "after 2d forward-sexp")
+  (let ((sci (syntax-cache-info)))
+    (Assert (= 8 (nth 0 sci)) nil "after 2d forward-sexp")
+    (Assert (= 9 (nth 1 sci)) nil "after 2d forward-sexp")
+    (Assert (= 8 (nth 2 sci)) nil "after 2d forward-sexp")
+    (Assert (= 9 (nth 3 sci)) nil "after 2d forward-sexp"))
+  ;; Narrowing warps point but does not affect the cache.
+  (narrow-to-region 10 12)
+  (Assert (= 10 (point)) nil "after narrowing")
+  (let ((sci (syntax-cache-info)))
+    (Assert (= 8 (nth 0 sci)) nil "after narrowing")
+    (Assert (= 9 (nth 1 sci)) nil "after narrowing")
+    (Assert (= 8 (nth 2 sci)) nil "after narrowing")
+    (Assert (= 9 (nth 3 sci)) nil "after narrowing"))
+  ;; Motion that is stopped by buffer's syntax table should capture
+  ;; the largest region known to not contain a change of syntax-table
+  ;; property.
+  (forward-sexp 1)
+  (let ((sci (syntax-cache-info)))
+    (Assert (= 10 (nth 0 sci)) nil "after 3d forward-sexp")
+    (Assert (= 12 (nth 1 sci)) nil "after 3d forward-sexp")
+    (Assert (= 10 (nth 2 sci)) nil "after 3d forward-sexp")
+    (Assert (= 12 (nth 3 sci)) nil "after 3d forward-sexp"))
+  (widen)
+  (goto-char (point-min))
+  ;; Check that we still respect the syntax table properties.
+  (forward-sexp 1)
+  (Assert (= 9 (point)) nil "after widening"))
+
 ;; #### Add the recipe in <yxzfymklb6p.fsf@gimli.holgi.priv> on xemacs-beta.
 ;; You also need to do a DELETE or type SPC to get the crash in 21.5.24.
 ;http://list-archive.xemacs.org/pipermail/xemacs-beta/2006-February/008430.html
