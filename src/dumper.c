@@ -2595,6 +2595,7 @@ pdump_ram_try (void)
 
 /* This used to be static, but there seems to be a bug in the GCC 4.1.2
    optimizer that clobbers exe_path. */
+int pdump_file_try (Wexttext*);
 int
 pdump_file_try (Wexttext *exe_path)
 {
