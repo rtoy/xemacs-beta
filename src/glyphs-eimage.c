@@ -59,6 +59,12 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 BEGIN_C_DECLS
 
 #define message message_ /* Yuck */
+#if !defined(_LARGEFILE64_SOURCE) /* Yuck**2 -- see <zconf.h>. */
+#define _LARGEFILE64_SOURCE 0
+#endif
+#if !defined(_FILE_OFFSET_BITS) /* Yuck**2 -- see <zlib.h>. */
+#define _FILE_OFFSET_BITS 0
+#endif
 #include <png.h>
 #undef message
 
