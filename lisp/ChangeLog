@@ -1,9 +1,23 @@
+2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* test-harness.el (test-harness-bug-expected):
+	Update docstring.
+	(Known-Bug-Expect-Failure, Known-Bug-Expect-Error):
+	Ask if bug was fixed in PASS message.
+	(Known-Bug-Expect-Error):
+	Simplify code to produce clearer output.
+	Make pass and failure correspond to Check-Error.
+	(Print-Pass):
+	Always print test result for known bugs.
+
 2011-07-29  Mats Lidell  <matsl@xemacs.org>
+
 	* process.el (shell-command): 
 	* process.el (shell-command-on-region): API compatible/synced with
 	FSF 23.3.1.
 
 2011-07-22  Mats Lidell  <matsl@xemacs.or>
+
 	* syntax-ppss.el: Synced up with Emacs 23.3 (syntax.el)
 
 2011-07-03  Aidan Kehoe  <kehoea@parhasard.net>
