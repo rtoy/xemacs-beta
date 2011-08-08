@@ -1,3 +1,14 @@
+2011-08-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	There are only (octal) 0200 ASCII characters, and only 128 values
+	supplied in the definition.
+
+	* syntax.h (syntax_spec_code):
+	* syntax.c (syntax_spec_code):
+	Declare array with correct dimension.
+	* search.c (skip_chars):
+	Correct bounds check on index of syntax_spec_code.
+
 2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* search.c (byte_scan_buffer):

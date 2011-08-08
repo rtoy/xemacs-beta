@@ -926,7 +926,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
       INC_IBYTEPTR (p);
       if (syntaxp)
 	{
-	  if (c < 0400 && syntax_spec_code[c] < (unsigned char) Smax)
+	  if (c < 0200 && syntax_spec_code[c] < (unsigned char) Smax)
 	    fastmap[c] = 1;
 	  else
 	    invalid_argument ("Invalid syntax designator", make_char (c));
