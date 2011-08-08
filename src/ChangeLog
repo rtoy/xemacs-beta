@@ -1,3 +1,11 @@
+2011-08-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* syntax.c (update_syntax_cache):
+	Use buffer_or_string_accessible_*, not buffer_or_string_absolute_*.
+	Patch and test suggested by Alan Mackenzie.
+	Fix initialization of insertion type for start and end in struct
+	syntax_cache.
+
 2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* syntax.c:

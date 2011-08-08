@@ -292,8 +292,8 @@ reset_syntax_cache_range (struct syntax_cache *cache,  /* initialized cache */
       /* make known region zero-length and reset insertion behavior */
       Fset_marker (cache->start, make_int (1), object);
       Fset_marker (cache->end, make_int (1), object);
-      Fset_marker_insertion_type (cache->start, Qt);
-      Fset_marker_insertion_type (cache->end, Qnil);
+      Fset_marker_insertion_type (cache->start, Qnil);
+      Fset_marker_insertion_type (cache->end, Qt);
     }
   else
     {
@@ -408,19 +408,19 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
 					      cache->object, -1, 1, 0);
   if (lim < 0)
     {
-      next = buffer_or_string_absolute_end_byte (cache->object);
+      next = buffer_or_string_accessible_end_byte (cache->object);
       at_begin = 1;
     }
   else
     next = lim;
 
-  if (pos < buffer_or_string_absolute_end_byte (cache->object))
+  if (pos < buffer_or_string_accessible_end_byte (cache->object))
     pos = next_bytexpos (cache->object, pos);
   lim = next_previous_single_property_change (pos, Qsyntax_table,
 					      cache->object, -1, 0, 0);
   if (lim < 0)
     {
-      prev = buffer_or_string_absolute_begin_byte (cache->object);
+      prev = buffer_or_string_accessible_begin_byte (cache->object);
       at_end = 1;
     }
   else
