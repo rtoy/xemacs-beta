@@ -1,5 +1,11 @@
 2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* search.c (byte_scan_buffer):
+	Rename local variables to suppress GCC "shadowed global" warnings.
+	The warnings are due to ANSI functions from <math.h> on Darwin.
+
+2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* mule-coding.c (shift_jis_convert):
 	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
 	Rename local variables to suppress GCC "shadowed global" warnings.
