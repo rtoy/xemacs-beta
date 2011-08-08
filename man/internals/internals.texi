@@ -349,6 +349,7 @@ Similar but generates a general subsection.
 * The Build Configuration System::  
 * Rules When Writing New C Code::  
 * Regression Testing XEmacs::   
+* Mercurial Techniques::              
 * CVS Techniques::              
 * XEmacs from the Inside::      
 * Basic Types::                 
@@ -441,6 +442,11 @@ Regression Testing XEmacs
 
 * How to Regression-Test::      
 * Modules for Regression Testing::  
+
+Mercurial Techniques
+
+* Mercurial Basics::
+* Preserving Existing Changes with Mercurial Queues::
 
 CVS Techniques
 
@@ -6356,7 +6362,7 @@ Before submitting a patch, please try compiling at least once with
 configure --with-mule --use-union-type --error-checking=all
 @end example
 
-@node Regression Testing XEmacs, CVS Techniques, Rules When Writing New C Code, Top
+@node Regression Testing XEmacs, Mercurial Techniques, Rules When Writing New C Code, Top
 @chapter Regression Testing XEmacs
 @cindex testing, regression
 
@@ -6621,9 +6627,245 @@ is broken in a way that we weren't trying to test!)
 @code{Check-Message}.  The other files are test files, testing various
 XEmacs facilities.  @xref{Regression Testing XEmacs}.
 
-@node CVS Techniques, XEmacs from the Inside, Regression Testing XEmacs, Top
+@node Mercurial Techniques, CVS Techniques, Regression Testing XEmacs, Top
+@chapter Mercurial Techniques
+@cindex Mercurial techniques
+
+@dfn{Mercurial} is the @emph{distributed version control system} used to
+manage the XEmacs core code.  We plan to migrate the packages as well in
+the near future.  The command used is @code{hg}; the entire system is
+implemented as subcommands of the @code{hg} command.
+
+@menu
+* Mercurial Basics::
+* Preserving Existing Changes with Mercurial Queues::
+@end menu
+
+@node Mercurial Basics, Preserving Existing Changes with Mercurial Queues, Mercurial Techniques, Mercurial Techniques
+
+@subheading Installing Mercurial
+
+Most people have some kind of package manager to help install free
+software.  Invariably a reasonably fresh version of Mercurial is
+available.  XEmacs doesn't do anything particularly tricky in its
+repositories, so unless you're one of those folks who likes to spend
+more time fiddling with your infrastructure than developing, the
+packaged Mercurial should be more than sufficient.  Somewhat fresher
+versions may be available in prepackaged form from
+@uref{http://mercurial.selenic.com, the Mercurial Project}, if you like
+to stay on the leading edge.
+
+@subheading Documentation
+
+The primary online command for getting help on Mercurial is @code{hg
+help}.
+
+@subheading What is the XEmacs repository URL?
+
+For up-to-date information about this, other information about accessing
+the repository @strong{including making your first clone of the
+repository}, and availability of branches, please refer to our website,
+@uref{http://www.xemacs.org/Develop/hgaccess.html}.
+
+@subheading What's so special about ``distributed'' version control systems?
+
+Very little, for occasional contributors.  So don't worry about it; the
+commands are you used to with CVS or Subversion will work pretty much as
+is.  There are two important differences:
+
+@table @strong
+@item update
+In version control, @dfn{update} means to refresh the versions of files
+in your workspace.  In a distributed system, however, there are two
+possible sources: the @dfn{project repository}, and your own @dfn{clone}
+(local repository) which is a more or less up-to-date copy of the
+project repository, including all the history information and historical
+revisions.
+
+@dfn{update} is taken to mean @emph{refresh from the clone}, and a new
+command @dfn{pull} is defined to mean @emph{copy history from the
+project repository to the clone}.  Thus, to get new work from other
+contributors applied to your repository, you need to pull, then update.
+Normally the source for pull defaults to the project repository you
+cloned from, and the version to update to defaults to the @dfn{tip}
+(latest version in the clone), so in principle you can abbreviate to
+
+@example
+hg pull
+hg update
+@end example
+
+@noindent
+In fact, Mercurial allows a further abbreviation, to @code{hg pull -u}.
+
+@item commit
+The other direction is similar.  The @dfn{commit} command refers to the
+@emph{clone}.  A new command, @dfn{push} is used to copy local history
+to the project repository.  Unlike the @code{pull} command, however,
+there is no very short way to say ``command @emph{and} push.''
+@end table
+
+@subheading Mercurial Extensions and .hgrc
+
+Third parties provide many extensions to Mercurial.  (In fact, the
+Mercurial Project often distributes new functionality as extensions,
+until the UI has stabilized.)  Extensions are just as easy to use as
+core commands, and well-written extensions provide their documentation
+via @code{hg help} just like the core.  The main difference is that core
+commands are always available, but extensions must be enabled.  This is
+done in the extensions section of @file{~/.hgrc}.  Here's one of mine:
+
+@example
+[ui]
+username = Stephen J. Turnbull <stephen@@xemacs.org>
+ignore = ~/.hgglobalignore
+
+[extensions]
+hgext.hgk =
+hgext.mq =
+hgext.rebase =
+@end example
+
+All of the extensions mentioned above are distributed with Mercurial
+itself, so enabing them is particularly simple.  A locally written or
+third-party extension would have a path-to-module after the equal sign.
+The first two extensions above are recommended for all contributors.
+Some contributors may like to use the rebase extension as well, and
+sometimes it's a good way to dig yourself out of a hole.  Others hate
+it; if you are thinking about using it, you should be careful, and you
+should never @code{push} a rebased branch without coordinating with the
+project.
+
+@table @code
+@item hgk
+A browser for the history graph, showing relationships among versions.
+Provides the @code{view} command.
+
+@item mq
+@emph{Mercurial queues} are a way of managing sequences of patches,
+similar to the ``quilt'' program made famous by some Linux maintainers.
+It allows you to distinguish between your local changes and ``official''
+ones.  Provides many commands beginning with the letter ``q''.
+
+@item rebase
+Rebasing is an alternative technique for managing sequences of patches.
+However, it uses branches rather than patches, and can produce a very
+confusing public history if used indiscriminately.  Provides the
+@code{rebase} command.
+@end table
+
+
+@node Preserving Existing Changes with Mercurial Queues, , Mercurial Basics, Mercurial Techniques
+@section Preserving Existing Changes with Mercurial Queues
+@cindex preserving existing changes with mercurial queues
+@cindex mercurial queues, preserving existing changes with
+
+When first working with a distributed VCS, you may find yourself
+creating a series of unrelated changes in the workspace.  Now you feel
+stuck: you worry that you if you commit now, you'll pull in unrelated
+changes.  But Mercurial won't let you merge until you have committed?
+Here's how to use Mercurial queues to push ``just this fix'' without
+also pushing unrelated, uncommited changes also present in the
+workspace.  This will also set you up for more effective workflow in the
+future.
+
+First, @emph{mq} is an extension, which must be enabled before use.  Edit
+@file{$HOME/.hgrc} and add these two lines:
+
+@example
+[extensions]
+    	hgext.mq =
+@end example
+
+@noindent
+If you already have an [extensions] section, omit the first line.
+
+Suppose the change that you are ready to push is a check for a valid
+drive letter on the Windows platform.  It affects @file{src/nt.c}, and
+of course @file{src/ChangeLog}.  Assume you have no other changes to these
+files.  It is important to do this step now, before handling other
+changes!  (In general, it's a good idea to create your @i{mq} patches in
+approximately the order you will submit them.  There are ways to
+override that order, using ``guards,'' but that's a little tedious.
+Recent versions of Mercurial queues have an option to reorder patches
+when applying them: @samp{hg qpush --move @var{patch-name}}.)
+
+Initialize an @emph{mq} patch for this change:
+
+@example
+hg qnew -f -m "Check first whether drive is valid." valid-drive \
+	src/ChangeLog src/nt.c
+@end example
+
+@noindent
+View @file{.hg/patches/valid-drive} and make sure it is the patch you
+want to push.
+
+Now make patches for other changes.  For a change to @file{foo.el},
+@file{foo-msw.el}, and @file{lisp/ChangeLog} it would look like
+
+@example
+hg qnew -f -m "Frob foo." frob-foo lisp/foo.el lisp/foo-msw.el \
+	lisp/ChangeLog
+@end example
+
+@noindent
+Do this until there are @emph{no} changes left (@kbd{hg status} reports
+no modified files).
+
+I strongly recommend that you do this @emph{now}.  This is probably the
+best way to organize your work when you make many small changes.
+However, if you have overlapping changes that you can't easily sort out,
+or just don't feel like doing that, you can just
+
+@example
+hg qnew -f -m "DON'T COMMIT ME!" big-ball-of-mud
+@end example
+
+@noindent
+instead.
+
+Now let's commit the patch you want to push.  If you feel paranoid, you
+can view all the patches in @file{.hg/patches} to make sure they look
+OK.
+
+@example
+hg qpop --all            # unapply --all patches
+hg status                # should report no modified files
+hg qpush                 # note, no argument needed
+hg qapplied              # will report "valid-drive" because that was
+                         # the first patch you created (it's a queue!!)
+hg qfinish --applied     # convert valid-drive from a patch to a commit
+# Make sure it's OK.
+hg log -r tip            # message you gave in 'qnew -m' is the
+                         # log message
+@end example
+
+@noindent
+Update and push.
+
+@example
+hg pull -u               # should work without complaint since you
+                         # don't say you have any commits
+hg push                  # Yay!
+@end example
+
+That looks like a lot of work, but it's actually not too inconvenient.
+
+After this, whenever you have something that could turn into a
+commitable change, do "@kbd{hg qnew ...}".  Make the @file{ChangeLog}
+right away (it can even just be a placeholder to fill in later).  That
+allows you to isolate this change from other changes, even if they touch
+the same files.
+
+
+@node CVS Techniques, XEmacs from the Inside, Mercurial Techniques, Top
 @chapter CVS Techniques
 @cindex CVS techniques
+
+This section is obsolete for core XEmacs; we now use Mercurial
+@ref{Mercurial Techniques}.  However these may be of some use for the
+packages, which are still in CVS for the moment.
 
 @menu
 * Creating a Branch::           

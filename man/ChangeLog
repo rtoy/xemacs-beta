@@ -1,3 +1,13 @@
+2011-08-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Mercurial Techniques): New.
+	(Mercurial Basics): New.
+	(Preserving Existing Changes with Mercurial Queues): New.
+	(Top): Update menus.
+	(Regression Testing XEmacs): Update node pointers.
+	(CVS Techniques): Update node pointers.  Note obsolescence of CVS.
+	Add @ref to Mercurial Techniques.
+
 2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/os.texi (Translating Input):
