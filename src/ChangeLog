@@ -1,3 +1,17 @@
+2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* syntax.c (reset_buffer_syntax_cache_range):
+	Rename to reset_syntax_cache_range.
+
+	(setup_syntax_cache):
+	(init_buffer_syntax_cache):
+	(init_syntax_cache):
+	(reset_syntax_cache_range):
+	Refactor and document.
+
+	(signal_syntax_cache_extent_changed):
+	Remove obsolete comment.
+
 2011-08-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	There are only (octal) 0200 ASCII characters, and only 128 values

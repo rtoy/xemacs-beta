@@ -1,5 +1,9 @@
 2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* automated/syntax-tests.el: Suggest test from old syntax-cache bug.
+
+2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* automated/os-tests.el:
 	* automated/syntax-tests.el:
 	Move tests of `substitute-in-file-name' from syntax to os.
