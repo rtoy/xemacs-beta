@@ -1,3 +1,8 @@
+2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* glyphs-eimage.c (png_instantiate): Rename a shadowing loop index
+	which shadows another local to quiet GCC.
+
 2011-08-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* glyphs-eimage.c (_LARGEFILE64_SOURCE, _FILE_OFFSET_BITS):

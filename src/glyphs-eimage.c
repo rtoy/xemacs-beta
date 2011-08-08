@@ -1088,20 +1088,20 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
      * into the glyph code, where you can get to it from lisp
      * anyway. - WMP */
     {
-      int ii, num_text = 0;
+      int i, num_text = 0;
       png_textp text_ptr = NULL;
       DECLARE_EISTRING (key);
       DECLARE_EISTRING (text);
 
       if (png_get_text (png_ptr, info_ptr, &text_ptr, &num_text) > 0)
         {
-          for (ii = 0 ; ii < num_text; ii++)
+          for (i = 0 ; i < num_text; i++)
             {
               eireset (key);
               eireset (text);
 
-              eicpy_ext (key, text_ptr[ii].key, Qbinary);
-              eicpy_ext (text, text_ptr[ii].text, Qbinary);
+              eicpy_ext (key, text_ptr[i].key, Qbinary);
+              eicpy_ext (text, text_ptr[i].text, Qbinary);
 
               warn_when_safe (Qpng, Qinfo, "%s - %s", eidata (key),
                               eidata (text));
