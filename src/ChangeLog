@@ -1,5 +1,12 @@
 2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* mule-coding.c (shift_jis_convert):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	Rename local variables to suppress GCC "shadowed global" warnings.
+	The warnings are due to non-ANSI functions from <math.h> on Darwin.
+
+2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* glyphs-eimage.c (png_instantiate): Rename a shadowing loop index
 	which shadows another local to quiet GCC.
 

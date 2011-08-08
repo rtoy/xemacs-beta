@@ -214,10 +214,10 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		ch = c;
 	      else
 		{
-		  UExtbyte j1, j2;
-		  ENCODE_SHIFT_JIS (ch, c, j1, j2);
-		  Dynarr_add (dst, j1);
-		  Dynarr_add (dst, j2);
+		  UExtbyte b1, b2;
+		  ENCODE_SHIFT_JIS (ch, c, b1, b2);
+		  Dynarr_add (dst, b1);
+		  Dynarr_add (dst, b2);
 		  ch = 0;
 		}
 	    }
