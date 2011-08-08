@@ -69,7 +69,8 @@ on the system, or a system error might occur while reading a data file.")
 (defvar unexpected-test-file-failures)
 
 (defvar test-harness-bug-expected nil
-  "Non-nil means a bug is expected; backtracing/debugging should not happen.")
+  "Non-nil means a bug is expected; backtracing/debugging should not happen.
+However, the individual test summary should be printed.")
 
 (defvar test-harness-test-compiled nil
   "Non-nil means the test code was compiled before execution.
@@ -325,34 +326,26 @@ This causes messages to be printed on failure indicating that this is expected,
 and on success indicating that this is unexpected."
 	`(let ((test-harness-bug-expected t)
 	       (test-harness-failure-tag "KNOWN BUG")
-	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
+	       (test-harness-success-tag "PASS (FAIL EXPECTED: was bug fixed?)"))
 	  ,@body))
 
       (defmacro Known-Bug-Expect-Error (expected-error &rest body)
-	"Wrap a BODY that consists of tests that are known to trigger an error.
-This causes messages to be printed on failure indicating that this is expected,
-and on success indicating that this is unexpected."
-	(let ((quoted-body (if (eql 1 (length body))
-			       `(quote ,(car body)) `(quote (progn ,@body)))))
-          `(let ((test-harness-bug-expected t)
-		 (test-harness-failure-tag "KNOWN BUG")
-                 (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
-            (condition-case error-info
-                (progn
-                  (setq trick-optimizer (progn ,@body))
-                  (Print-Pass 
-                   "%S executed successfully, but expected error %S"
-                   ,quoted-body
-                   ',expected-error)
-                  (incf passes))
-              (,expected-error
-               (Print-Failure "%S ==> error %S, as expected"
-                              ,quoted-body ',expected-error)
-               (incf no-error-failures))
-              (error
-               (Print-Failure "%S ==> expected error %S, got error %S instead"
-                              ,quoted-body ',expected-error error-info)
-               (incf wrong-error-failures))))))
+	"Wrap a BODY containing a test known to trigger an error it shouldn't.
+This causes messages to be printed on failure indicating that this is expected
+of the bug, and on success indicating that this is unexpected."
+	`(let ((test-harness-bug-expected t)
+	       (test-harness-failure-tag "KNOWN BUG")
+	       (test-harness-success-tag
+		(format "PASS (EXPECTED ERROR %S due to bug: fixed?)"
+			(quote ,expected-error))))
+	  (condition-case err
+	      (progn ,@body)
+	    (,expected-error)
+	    (error
+	     (let ((m (format "  Expected %S due to bug, got %S: mutated?\n"
+			      (quote ,expected-error) err)))
+	       (if (noninteractive) (message m))
+	       (princ m))))))
 
       (defmacro Implementation-Incomplete-Expect-Failure (&rest body)
 	"Wrap a BODY containing tests that are known to fail due to incomplete code.
@@ -361,7 +354,8 @@ implementation is incomplete (and hence the failure is expected); and on
 success indicating that this is unexpected."
 	`(let ((test-harness-bug-expected t)
 	       (test-harness-failure-tag "IMPLEMENTATION INCOMPLETE")
-	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
+	       (test-harness-success-tag
+		"PASS (FAILURE EXPECTED: feature implemented?)"))
 	  ,@body))
     
       (defun Print-Failure (fmt &rest args)
@@ -371,7 +365,9 @@ success indicating that this is unexpected."
 
       (defun Print-Pass (fmt &rest args)
 	(setq fmt (format "%s: %s" test-harness-success-tag fmt))
-	(and test-harness-verbose
+	(and (or test-harness-verbose test-harness-bug-expected)
+	     (if (and noninteractive test-harness-bug-expected)
+		 (apply #'message fmt args))
 	     (princ (concat (apply #'format fmt args) "\n"))))
 
       (defun Print-Skip (test reason &optional fmt &rest args)
@@ -432,18 +428,21 @@ is used in a loop."
 			     "Assertion failed: %S")
 			   ,description ,failing-case)
 			  (incf assertion-failures)
-			  (test-harness-assertion-failure-do-debug error-info))
+			  (test-harness-assertion-failure-do-debug error-info)
+			  nil)
 		      (Print-Failure
 		       (if ,failing-case
 			   "%S ==> error: %S; failing case =  %S"
 			 "%S ==> error: %S")
 		       ,description error-info ,failing-case)
 		      (incf other-failures)
-		      (test-harness-unexpected-error-do-debug error-info)))
+		      (test-harness-unexpected-error-do-debug error-info)
+		      nil))
 		#'(lambda ()
 		    (assert ,assertion)
 		    (Print-Pass "%S" ,description)
-		    (incf passes)))
+		    (incf passes)
+		    t))
 	    (cl-assertion-failed nil))))
 
       (defmacro Check-Error (expected-error &rest body)
