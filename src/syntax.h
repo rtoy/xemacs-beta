@@ -26,22 +26,24 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* A syntax table is a type of char table.
 
-The low 7 bits of the integer is a code, as follows. The 8th bit is
-used as the prefix bit flag (see below).
-
 The values in a syntax table are either integers or conses of
 integers and chars.  The lowest 7 bits of the integer are the syntax
 class.  If this is Sinherit, then the actual syntax value needs to
 be retrieved from the standard syntax table.
 
-Since the logic involved in finding the actual integer isn't very
-complex, you'd think the time required to retrieve it is not a
-factor.  If you thought that, however, you'd be wrong, due to the
-high number of times (many per character) that the syntax value is
-accessed in functions such as scan_lists().  To speed this up,
-we maintain a mirror syntax table that contains the actual
-integers.  We can do this successfully because syntax tables are
-now an abstract type, where we control all access.
+It turns out to be worth optimizing lookups of character syntax in two
+ways.  First, although the logic involved in finding the actual integer
+isn't complex, the syntax value is accessed in functions such as
+scan_lists() many times for each character scanned.  A "mirror syntax
+table" that contains the actual integers speeds this up.
+
+Second, due to the syntax-table text property, the table for looking up
+syntax may change from character to character.  Since looking up properties
+is expensive, a "syntax cache" which contains the current syntax table and
+the region where it is valid can speed up linear scans dramatically.
+
+The low 7 bits of the integer is a code, as follows. The 8th bit is
+used as the prefix bit flag (see below).
 */
 
 enum syntaxcode
@@ -120,21 +122,23 @@ WORD_SYNTAX_P (Lisp_Object table, Ichar c)
   return SYNTAX (table, c) == Sword;
 }
 
-/* OK, here's a graphic diagram of the format of the syntax values:
+/* OK, here's a graphic diagram of the format of the syntax values.
+   Here, the value has already been extracted from the Lisp integer,
+   so there are no tag bits to worry about.
 
    Bit number:
 
  [ 3 3 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 ]
  [ 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 ]
 
-   <-----> <-----> <-------------> <-------------> ^  <----------->
-    ELisp  unused  |comment bits |     unused      |   syntax code
-     tag           | | | | | | | |                 |
-    stuff          | | | | | | | |                 |
-                   | | | | | | | |                 |
-                   | | | | | | | |                 `--> prefix flag
-                   | | | | | | | |
-                   | | | | | | | `--> comment end style B, second char
+   | <-----------> <-------------> <-------------> ^ <----------->
+   |     unused    |comment bits |     unused      |  syntax code
+   v               | | | | | | | |                 |
+   unusable        | | | | | | | |                 |
+   due to          | | | | | | | |                 |
+   type tag        | | | | | | | |                 `--> prefix flag
+   in Lisp         | | | | | | | |
+   integer         | | | | | | | `--> comment end style B, second char
                    | | | | | | `----> comment end style A, second char
                    | | | | | `------> comment end style B, first char
                    | | | | `--------> comment end style A, first char
@@ -144,35 +148,35 @@ WORD_SYNTAX_P (Lisp_Object table, Ichar c)
                    `----------------> comment start style A, first char
 
   In a 64-bit integer, there would be 32 more unused bits between
-  the tag and the comment bits.
+  the unusable bit and the comment bits.
 
-  Clearly, such a scheme will not work for Mule, because the matching
-  paren could be any character and as such requires 21 bits, which
-  we don't got.
+  In older versions of XEmacs, bits 8-14 contained the matching
+  character for parentheses.  Such a scheme will not work for Mule,
+  because the matching parenthesis could be any character and
+  requires 21 bits, which we don't have on a 32-bit platform.
 
-  Remember that under Mule we use char tables instead of vectors.
-  So what we do is use another char table for the matching paren
+  What we do is use another char table for the matching parenthesis
   and store a pointer to it in the first char table. (This frees
   code from having to worry about passing two tables around.)
 */
 
 
-/* The prefix flag bit for backward-prefix-chars is now put into bit 7. */
+/* The prefix flag bit for backward-prefix-chars is in bit 7. */
 
 #define SYNTAX_PREFIX(table, c) \
   ((SYNTAX_CODE (table, c) >> 7) & 1)
 
 /* Bits 23-16 are used to implement up to two comment styles
    in a single buffer. They have the following meanings:
-
-  1. first of a one or two character comment-start sequence of style a.
-  2. first of a one or two character comment-start sequence of style b.
-  3. second of a two-character comment-start sequence of style a.
-  4. second of a two-character comment-start sequence of style b.
-  5. first of a one or two character comment-end sequence of style a.
-  6. first of a one or two character comment-end sequence of style b.
-  7. second of a two-character comment-end sequence of style a.
-  8. second of a two-character comment-end sequence of style b.
+  bit
+  23   first of a one or two character comment-start sequence of style a.
+  22   first of a one or two character comment-start sequence of style b.
+  21   second of a two-character comment-start sequence of style a.
+  20   second of a two-character comment-start sequence of style b.
+  19   first of a one or two character comment-end sequence of style a.
+  18   first of a one or two character comment-end sequence of style b.
+  17   second of a two-character comment-end sequence of style a.
+  16   second of a two-character comment-end sequence of style b.
  */
 
 #define SYNTAX_COMMENT_BITS(table, c) \
@@ -196,84 +200,20 @@ WORD_SYNTAX_P (Lisp_Object table, Ichar c)
 #define SYNTAX_SECOND_CHAR_END   0x03
 #define SYNTAX_SECOND_CHAR       0x33
 
-#if 0
-
-/* #### Entirely unused.  Should they be deleted? */
-
-/* #### These are now more or less equivalent to
-   SYNTAX_COMMENT_MATCH_START ...*/
-/* a and b must be first and second start chars for a common type */
-#define SYNTAX_START_P(table, a, b)                                     \
-  (((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_START) >> 2)    \
-   & (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_START))
-
-/* ... and  SYNTAX_COMMENT_MATCH_END */
-/* a and b must be first and second end chars for a common type */
-#define SYNTAX_END_P(table, a, b)                                       \
-  (((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_END) >> 2)      \
-   & (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_END))
-
-#define SYNTAX_STYLES_MATCH_START_P(table, a, b, mask)			    \
-  ((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_START & (mask))	    \
-   && (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_START & (mask)))
-
-#define SYNTAX_STYLES_MATCH_END_P(table, a, b, mask)			  \
-  ((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_END & (mask))	  \
-   && (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_END & (mask)))
-
-#define SYNTAX_STYLES_MATCH_1CHAR_P(table, a, mask)	\
-  ((SYNTAX_COMMENT_BITS (table, a) & (mask)))
-
-#define STYLE_FOUND_P(table, a, b, startp, style)	\
-  ((SYNTAX_COMMENT_BITS (table, a) &			\
-    ((startp) ? SYNTAX_FIRST_CHAR_START :		\
-     SYNTAX_FIRST_CHAR_END) & (style))			\
-   && (SYNTAX_COMMENT_BITS (table, b) &			\
-    ((startp) ? SYNTAX_SECOND_CHAR_START : 		\
-     SYNTAX_SECOND_CHAR_END) & (style)))
-
-#define SYNTAX_COMMENT_MASK_START(table, a, b)			\
-  ((STYLE_FOUND_P (table, a, b, 1, SYNTAX_COMMENT_STYLE_A)	\
-    ? SYNTAX_COMMENT_STYLE_A					\
-    : (STYLE_FOUND_P (table, a, b, 1, SYNTAX_COMMENT_STYLE_B)	\
-         ? SYNTAX_COMMENT_STYLE_B				\
-	 : 0)))
-
-#define SYNTAX_COMMENT_MASK_END(table, a, b)			\
-  ((STYLE_FOUND_P (table, a, b, 0, SYNTAX_COMMENT_STYLE_A)	\
-   ? SYNTAX_COMMENT_STYLE_A					\
-   : (STYLE_FOUND_P (table, a, b, 0, SYNTAX_COMMENT_STYLE_B)	\
-      ? SYNTAX_COMMENT_STYLE_B					\
-      : 0)))
-
-#define STYLE_FOUND_1CHAR_P(table, a, style)	\
-  ((SYNTAX_COMMENT_BITS (table, a) & (style)))
-
-#define SYNTAX_COMMENT_1CHAR_MASK(table, a)			\
-  ((STYLE_FOUND_1CHAR_P (table, a, SYNTAX_COMMENT_STYLE_A)	\
-   ? SYNTAX_COMMENT_STYLE_A					\
-   : (STYLE_FOUND_1CHAR_P (table, a, SYNTAX_COMMENT_STYLE_B)	\
-      ? SYNTAX_COMMENT_STYLE_B					\
-	 : 0)))
-
-#endif /* 0 */
-
-/* This array, indexed by a character, contains the syntax code which
-   that character signifies (as a char).
-   For example, (enum syntaxcode) syntax_spec_code['w'] is Sword. */
-
+/* Array of syntax codes, indexed by characters which designate them.
+   Designators must be ASCII characters (ie, in the range 0x00-0x7F).
+   Bounds checking is the responsibility of calling code. */
 extern const unsigned char syntax_spec_code[0200];
 
-/* Indexed by syntax code, give the letter that describes it. */
-
+/* Array of designators indexed by syntax code.
+   Indicies should be of type enum syntaxcode. */
 extern const unsigned char syntax_code_spec[];
 
 Lisp_Object scan_lists (struct buffer *buf, Charbpos from, int count,
 			int depth, int sexpflag, int no_error);
 int char_quoted (struct buffer *buf, Charbpos pos);
 
-/* NOTE: This does not refer to the mirror table, but to the
-   syntax table itself. */
+/* TABLE is a syntax table, not the mirror table. */
 Lisp_Object syntax_match (Lisp_Object table, Ichar ch);
 
 extern int no_quit_in_re_search;
@@ -283,55 +223,55 @@ extern int no_quit_in_re_search;
 
 extern int lookup_syntax_properties;
 
-/* Now that the `syntax-table' property exists, and can override the syntax
-   table or directly specify the syntax, we cache the last place we
-   retrieved the syntax-table property.  This is because, when moving
-   linearly through text (e.g. in the regex routines or the scanning
-   routines in syntax.c), we only need to recalculate at the next place the
-   syntax-table property changes (i.e. not every position), and when we do
-   need to recalculate, we can update the info from the previous info
-   faster than if we did the whole calculation from scratch. */
+/* The `syntax-table' property overrides the syntax table or directly
+   specifies the syntax.  Since looking up properties is expensive, we cache
+   the information about the syntax-table property.  When moving linearly
+   through text (e.g. in the regex routines or the scanning routines in
+   syntax.c), recalculation is needed only when the syntax-table property
+   changes (i.e. not every position).
+   When we do need to recalculate, we can update the info from the previous
+   info faster than if we did the whole calculation from scratch.
+   #### sjt sez: I'm not sure I believe that last claim.  That seems to
+   require that we use directional information, etc, but that is ignored in
+   the current implementation. */
 struct syntax_cache
 {
 #ifdef NEW_GC
   NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
-  int use_code;				/* Whether to use syntax_code or
-					   syntax_table.  This is set
-					   depending on whether the
-					   syntax-table property is a
-					   syntax table or a syntax
-					   code. */
-  int no_syntax_table_prop;		/* If non-zero, there was no
-					   `syntax-table' property on the
-					   current range, and so we're
-					   using the buffer's syntax table.
-					   This is important to note because
-					   sometimes the buffer's syntax
-					   table can be changed. */
-  Lisp_Object object;			/* The buffer or string the current
-					   syntax cache applies to, or
-					   Qnil for a string of text not
-					   coming from a buffer or string. */
-  struct buffer *buffer;		/* The buffer that supplies the
-					   syntax tables, or 0 for the
-					   standard syntax table.  If
-					   OBJECT is a buffer, this will
-					   always be the same buffer. */
-  int syntax_code;			/* Syntax code of current char. */
-  Lisp_Object syntax_table;		/* Syntax table for current pos. */
-  Lisp_Object mirror_table;		/* Mirror table for this table. */
-  Lisp_Object start, end;		/* Markers to keep track of the
-					   known region in a buffer.
-					   Formerly we used an internal
-					   extent, but it seems that having
-					   an extent over the entire buffer
-					   causes serious slowdowns in
-					   extent operations!  Yuck! */
-  Charxpos next_change;			/* Position of the next extent
-                                           change. */
-  Charxpos prev_change;			/* Position of the previous extent
-					   change. */
+  int use_code;			/* Non-zero if a syntax-table property
+				   specified a syntax code.  When zero, the
+				   syntax_code member is invalid.  Otherwise
+				   the syntax_table member is invalid. */
+  int no_syntax_table_prop;	/* If non-zero, there was no `syntax-table'
+				   property on the current range, and so we're
+				   using the buffer's syntax table.
+				   Then we must invalidate the cache if the
+				   buffer's syntax table is changed. */
+  Lisp_Object object;		/* The buffer or string the current syntax
+				   cache applies to, or Qnil for a string of
+				   text not coming from a buffer or string. */
+  struct buffer *buffer;	/* The buffer that supplies the syntax tables,
+				   or NULL for the standard syntax table.  If
+				   OBJECT is a buffer, this will always be
+				   the same buffer. */
+  int syntax_code;		/* Syntax code of current char. */
+  Lisp_Object syntax_table;	/* Syntax table for current pos. */
+  Lisp_Object mirror_table;	/* Mirror table for this table. */
+  Lisp_Object start, end;	/* Markers to keep track of the known region
+				   in a buffer.
+				   Normally these correspond to prev_change
+				   and next_change, respectively, except when
+				   insertions and deletions occur.  Then
+				   prev_change and next change will be
+				   refreshed from these markers.  See
+				   signal_syntax_cache_extent_adjust().
+				   We'd like to use an extent, but it seems
+				   that having an extent over the entire
+				   buffer causes serious slowdowns in extent
+				   operations!  Yuck! */
+  Charxpos next_change;		/* Position of the next extent change. */
+  Charxpos prev_change;		/* Position of the previous extent change. */
 };
 
 #ifdef NEW_GC
@@ -347,13 +287,10 @@ DECLARE_LISP_OBJECT (syntax_cache, Lisp_Syntax_Cache);
 #define CONCHECK_SYNTAX_CACHE(x) CONCHECK_RECORD (x, syntax_cache)
 #endif /* NEW_GC */
 
-
-
 extern const struct sized_memory_description syntax_cache_description;
 
-/* Note that the external interface to the syntax-cache uses charpos's, but
+/* Note that the external interface to the syntax cache uses charpos's, but
    internally we use bytepos's, for speed. */
-
 void update_syntax_cache (struct syntax_cache *cache, Charxpos pos, int count);
 struct syntax_cache *setup_syntax_cache (struct syntax_cache *cache,
 					 Lisp_Object object,
