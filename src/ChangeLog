@@ -1,5 +1,11 @@
 2011-08-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* glyphs-eimage.c (_LARGEFILE64_SOURCE, _FILE_OFFSET_BITS):
+	Define these macros to suppress GCC warnings caused by excessive
+	zlib magic.
+
+2011-08-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* dumper.c (pdump_file_try): Add prototype to suppress GCC warning.
 
 2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
