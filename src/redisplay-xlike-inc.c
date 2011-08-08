@@ -1782,7 +1782,7 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
   XLIKE_GC background_gc;
   enum edge_style style;
   unsigned long mask;
-  int x, y1, y2, width, shadow_thickness, spacing, line_width;
+  int x, ytop, ybottom, width, shadow_thickness, spacing, line_width;
   face_index div_face =
     get_builtin_face_cache_index (w, Vvertical_divider_face);
 
@@ -1791,8 +1791,8 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
   spacing = XINT (w->vertical_divider_spacing);
   line_width = XINT (w->vertical_divider_line_width);
   x = WINDOW_RIGHT (w) - width;
-  y1 = WINDOW_TOP (w);
-  y2 = WINDOW_BOTTOM (w);
+  ytop = WINDOW_TOP (w);
+  ybottom = WINDOW_BOTTOM (w);
 
   memset (&gcv, ~0, sizeof (gcv));
 
@@ -1810,20 +1810,20 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
      window split occurs. */
 #ifdef THIS_IS_X
   if (clear)
-    XClearArea (dpy, x_win, x, y1, width, y2 - y1, False);
+    XClearArea (dpy, x_win, x, ytop, width, ybottom - ytop, False);
 #else /* THIS_IS_GTK */
   USED (dpy);
   /* if (clear) */
   gdk_draw_rectangle (GDK_DRAWABLE (x_win), background_gc, TRUE,
-		      x, y1, width, y2 - y1);
+		      x, ytop, width, ybottom - ytop);
 #endif /* THIS_IS_GTK */
 
 #ifndef THIS_IS_GTK
    /* #### FIXME Why not? Formerly '#if 0' in the GDK code */
   /* Draw the divider line. */
   XLIKE_FILL_RECTANGLE (dpy, x_win, background_gc,
-			x + spacing + shadow_thickness, y1,
-			line_width, y2 - y1);
+			x + spacing + shadow_thickness, ytop,
+			line_width, ybottom - ytop);
 #endif /* not THIS_IS_GTK */
 
   if (shadow_thickness < 0)
@@ -1837,8 +1837,8 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
     }
 
   /* Draw the shadows around the divider line */
-  XLIKE_bevel_area (w, div_face, x + spacing, y1,
-		    width - 2 * spacing, y2 - y1,
+  XLIKE_bevel_area (w, div_face, x + spacing, ytop,
+		    width - 2 * spacing, ybottom - ytop,
 		    shadow_thickness, EDGE_ALL, style);
 }
 
