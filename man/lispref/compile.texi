@@ -691,7 +691,7 @@ its byte-compiled file, if it is not fully loaded already.  The argument
   These features permit you to write code to be evaluated during
 compilation of a program.
 
-@deffn {Special Operator} eval-and-compile body
+@defmac eval-and-compile body
 This form marks @var{body} to be evaluated both when you compile the
 containing code and when you run it (whether compiled or not).
 
@@ -699,9 +699,9 @@ You can get a similar result by putting @var{body} in a separate file
 and referring to that file with @code{require}.  Using @code{require} is
 preferable if there is a substantial amount of code to be executed in
 this way.
-@end deffn
+@end defmac
 
-@deffn {Special Operator} eval-when-compile body
+@defmac eval-when-compile body
 This form marks @var{body} to be evaluated at compile time and not when
 the compiled program is loaded.  The result of evaluation by the
 compiler becomes a constant which appears in the compiled program.  When
@@ -712,7 +712,7 @@ At top level, this is analogous to the Common Lisp idiom
 @code{(eval-when (compile eval) @dots{})}.  Elsewhere, the Common Lisp
 @samp{#.} reader macro (but not when interpreting) is closer to what
 @code{eval-when-compile} does.
-@end deffn
+@end defmac
 
 @node Compiled-Function Objects
 @section Compiled-Function Objects
