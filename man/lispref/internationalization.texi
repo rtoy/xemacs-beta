@@ -83,8 +83,8 @@ If @code{I18N3} was not enabled when XEmacs was compiled, this function does
 nothing.
 @end defun
 
-@deffn {Special Operator} domain string
-This function specifies the text domain used for translating documentation
+@defmac domain string
+This macro specifies the text domain used for translating documentation
 strings and interactive prompts of a function.  For example, write:
 
 @example
@@ -94,7 +94,7 @@ strings and interactive prompts of a function.  For example, write:
 to specify @code{emacs-foo} as the text domain of the function @code{foo}.
 The ``call'' to @code{domain} is actually a declaration rather than a
 function; when actually called, @code{domain} just returns @code{nil}.
-@end deffn
+@end defmac
 
 @defun domain-of function
 This function returns the text domain of @var{function}; it returns
