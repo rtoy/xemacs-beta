@@ -1,3 +1,9 @@
+2011-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-normal-call):
+	When a function takes :if, :if-not, :test, :test-not or :key
+	arguments, do the quoted-lambda check there too.
+
 2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* test-harness.el (test-harness-bug-expected):

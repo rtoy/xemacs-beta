@@ -2880,20 +2880,28 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	      (map nil
 		   (function*
 		    (lambda ((function . nargs))
-		      (and (setq function (plist-get plist function
-						     not-present))
-			   (not (eq function not-present))
-			   (byte-compile-constp function)
-			   (byte-compile-callargs-warn
-			    (cons (eval function)
-				  (member*
-				   nargs
-				   ;; Dummy arguments. There's no need for
-				   ;; it to be longer than even 2, now, but
-				   ;; very little harm in it.
-				   '(9 8 7 6 5 4 3 2 1)))))))
-		   '((:key . 1) (:test . 2) (:test-not . 2)
-		     (:if . 1) (:if-not . 1))))))))
+                      (let ((value (plist-get plist function not-present)))
+                        (when (and (not (eq value not-present))
+                                   (byte-compile-constp value))
+                          (byte-compile-callargs-warn
+                           (cons (eval value)
+                                 (member*
+                                  nargs
+                                  ;; Dummy arguments. There's no need for
+                                  ;; it to be longer than even 2, now, but
+                                  ;; very little harm in it.
+                                  '(9 8 7 6 5 4 3 2 1))))
+                          (when (and (eq (car-safe value) 'quote)
+                                     (eq (car-safe (nth 1 value)) 'lambda)
+                                     (or
+                                      (null (memq 'quoted-lambda
+                                                  byte-compile-warnings))
+                                      (byte-compile-warn
+                                       "Passing a quoted lambda to #'%s, \
+keyword %s, forcing function quoting" (car form) function)))
+                            (setcar value 'function))))))
+                   '((:key . 1) (:test . 2) (:test-not . 2) (:if . 1)
+                     (:if-not . 1))))))))
   (if byte-compile-generate-call-tree
       (byte-compile-annotate-call-tree form))
   (byte-compile-push-constant (car form))
