@@ -443,22 +443,22 @@ by comparing the respective outputs of this function using `equal'."
 ;;; to the following event.
 
 (defun event-apply-alt-modifier (ignore-prompt)
-  (event-apply-modifier 'alt))
+  (event-apply-modifiers '(alt)))
 (defun event-apply-super-modifier (ignore-prompt)
-  (event-apply-modifier 'super))
+  (event-apply-modifiers '(super)))
 (defun event-apply-hyper-modifier (ignore-prompt)
-  (event-apply-modifier 'hyper))
+  (event-apply-modifiers '(hyper)))
 (defun event-apply-shift-modifier (ignore-prompt)
-  (event-apply-modifier 'shift))
+  (event-apply-modifiers '(shift)))
 (defun event-apply-control-modifier (ignore-prompt)
-  (event-apply-modifier 'control))
+  (event-apply-modifiers '(control)))
 (defun event-apply-meta-modifier (ignore-prompt)
-  (event-apply-modifier 'meta))
+  (event-apply-modifiers '(meta)))
 
 ;;; #### `key-translate-map' is ignored for now.
-(defun event-apply-modifier (symbol)
-  "Return the next key event, with a modifier flag applied.
-SYMBOL is the name of this modifier, as a symbol.
+(defun event-apply-modifiers (list)
+  "Return the next key event, with a list of modifiers applied.
+LIST describes the names of these modifier, a list of symbols.
 `function-key-map' is scanned for prefix bindings."
   (let (events binding)
     ;; read keystrokes scanning `function-key-map'
@@ -479,11 +479,17 @@ SYMBOL is the name of this modifier, as a symbol.
 	  (setq unread-command-events
 		(mapcar 'character-to-event (cdr events))))
       (setq unread-command-events (cdr events)))
-    ;; add a modifier SYMBOL to the first keystroke or event
+    ;; add modifiers LIST to the first keystroke or event
     (vector
-     (append (list symbol)
-	     (delq symbol
-		   (aref (key-sequence-list-description (car events)) 0))))))
+     (append list
+             (set-difference (aref (key-sequence-list-description (car events))
+                                   0)
+                             list :stable t)))))
+
+(defun event-apply-modifier (symbol)
+  "Return the next key event, with a single modifier applied.
+See `event-apply-modifiers'."
+  (event-apply-modifiers (list symbol)))
 
 (defun synthesize-keysym (ignore-prompt)
   "Read a sequence of keys, and returned the corresponding key symbol.

@@ -1,5 +1,21 @@
 2011-08-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* keymap.el:
+	* keymap.el (event-apply-alt-modifier):
+	* keymap.el (event-apply-super-modifier):
+	* keymap.el (event-apply-hyper-modifier):
+	* keymap.el (event-apply-shift-modifier):
+	* keymap.el (event-apply-control-modifier):
+	* keymap.el (event-apply-meta-modifier):
+	* keymap.el (event-apply-modifiers): New.
+	* keymap.el (event-apply-modifier): Implement in terms of
+	#'event-apply-modifier.
+
+	Rework #'event-apply-modifier to take a list of modifiers, and
+	change its name appropriately. Keep the old name around, too.
+
+2011-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el (byte-compile-normal-call):
 	When a function takes :if, :if-not, :test, :test-not or :key
 	arguments, do the quoted-lambda check there too.
