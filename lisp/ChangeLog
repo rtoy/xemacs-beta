@@ -1,3 +1,14 @@
+2011-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (apply-partially): New compiler macro.
+	* subr.el:
+	* subr.el (apply-partially): New.
+	Sync this function's API and docstring from GNU. The
+	implementation is mine and trivial; the compiler macro in
+	cl-macs.el ensures that partially-applied functions in compiled
+	code are also compiled.
+
 2011-08-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.el:

@@ -85,6 +85,19 @@ normally suffice), but in general is it the programmer's responsibility to
 quote lambda expressions appropriately."
   `(function (lambda ,@cdr)))
 
+;; Partial application of functions (related to currying).  XEmacs; closures
+;; aren't yet available to us as a language type, but they're not necessary
+;; for this function (nor indeed is CL's #'lexical-let).  See also the
+;; compiler macro in cl-macs.el, which generates a call to #'make-byte-code
+;; at runtime, ensuring that partially applied functions are byte-compiled.
+(defun apply-partially (function &rest args)
+  "Return a function that is a partial application of FUNCTION to ARGS.
+ARGS is a list of the first N arguments to pass to FUNCTION.
+The result is a new function which does the same as FUNCTION, except that
+the first N arguments are fixed at the values with which this function
+was called."
+  `(lambda (&rest args) (apply ',function ,@(mapcar 'quote-maybe args) args)))
+
 ;; FSF 21.2 has various basic macros here.  We don't because they're either
 ;; in cl*.el (which we dump and hence is always available) or built-in.
 
