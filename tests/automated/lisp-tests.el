@@ -2926,4 +2926,13 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (equal '([symbol expansion] [copy expansion] [third expansion])
 		 (test-symbol-macrolet))))
 
+;; Basic tests of #'apply-partially.
+(let* ((four 4)
+       (times-four (apply-partially '* four))
+       (plus-twelve (apply-partially '+ 6 (* 3 2))))
+  (Assert (eql (funcall times-four 6) 24))
+  (Assert (eql (funcall times-four 4 4) 64))
+  (Assert (eql (funcall plus-twelve (funcall times-four 4) 4 4) 36))
+  (Check-Error wrong-number-of-arguments (apply-partially)))
+
 ;;; end of lisp-tests.el

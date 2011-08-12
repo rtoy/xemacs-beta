@@ -3510,6 +3510,24 @@ non-standard :if and :if-not keywords at compile time."
 	    (list 'let (list (list temp val)) (subst temp val res)))))
     form))
 
+(define-compiler-macro apply-partially (&whole form &rest args)
+  "Generate a #'make-byte-code call for #'apply-partially, if appropriate."
+  (if (< (length args) 1)
+      form
+    (if (cl-const-exprs-p args)
+        `#'(lambda (&rest args) (apply ,@args args))
+      (let* ((placeholders (mapcar 'quote-maybe (mapcar 'gensym args)))
+             (compiled (byte-compile-sexp
+                        `#'(lambda (&rest args) (apply ,@placeholders args)))))
+        `(make-byte-code
+          ',(compiled-function-arglist compiled)
+          ,(compiled-function-instructions compiled)
+          (vector ,@(sublis (pairlis placeholders args)
+                            (mapcar 'quote-maybe
+                                    (compiled-function-constants compiled))
+                            :test 'equal))
+          ,(compiled-function-stack-depth compiled))))))
+
 (define-compiler-macro delete-dups (list)
   `(delete-duplicates (the list ,list) :test #'equal :from-end t))
 
