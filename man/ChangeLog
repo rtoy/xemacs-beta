@@ -1,3 +1,9 @@
+2011-08-14  Mike Sperber  <mike@xemacs.org>
+
+	* xemacs-faq.texi:
+	* xemacs/packages.texi: Reflect change of location of packages
+	from lib/ to share/.
+
 2011-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.texi (Argument Lists):

@@ -311,8 +311,8 @@ For example if we are installing the @file{xemacs-base}
 package (version 1.48):
 
 @example
-   mkdir $prefix/lib/xemacs/xemacs-packages RET # if it does not exist yet
-   cd $prefix/lib/xemacs/xemacs-packages RET
+   mkdir $prefix/share/xemacs/xemacs-packages RET # if it does not exist yet
+   cd $prefix/share/xemacs/xemacs-packages RET
    gunzip -c /path/to/xemacs-base-1.48-pkg.tar.gz | tar xvf - RET
 
 Or if you have GNU tar, the last step can be:
@@ -324,8 +324,8 @@ For MULE related packages, it is best to untar into the mule-packages
 hierarchy, i.e. for the @file{mule-base} package, version 1.37:
 
 @example
-   mkdir $prefix/lib/xemacs/mule-packages RET # if it does not exist yet
-   cd $prefix/lib/xemacs/mule-packages RET
+   mkdir $prefix/share/xemacs/mule-packages RET # if it does not exist yet
+   cd $prefix/share/xemacs/mule-packages RET
    gunzip -c /path/to/mule-base-1.37-pkg.tar.gz | tar xvf - RET
 
 Or if you have GNU tar, the last step can be:
@@ -351,11 +351,11 @@ currently about 19MB and 4.5MB (gzipped) respectively.
 
 Install them by:
 
-@code{cd $prefix/lib/xemacs ; gunzip -c <tarballname> | tar xvf - RET}
+@code{cd $prefix/share/xemacs ; gunzip -c <tarballname> | tar xvf - RET}
 
 Or, if you have GNU tar:
 
-@code{cd $prefix/lib/xemacs ; tar zxvf /path/to/<tarballname> RET}
+@code{cd $prefix/share/xemacs ; tar zxvf /path/to/<tarballname> RET}
 
 As the Sumo tarballs are not regenerated as often as the individual
 packages, it is recommended that you use the automatic package tools
