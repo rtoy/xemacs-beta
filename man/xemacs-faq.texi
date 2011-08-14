@@ -168,7 +168,7 @@ The canonical version of the FAQ is the texinfo document
 If you do not have makeinfo installed, you may @uref{xemacs-faq.info,
 download the faq} in info format, and install it in @file{<XEmacs
 library directory>/info/}. For example in
-@file{/usr/local/lib/xemacs-21.4/info/}.
+@file{/usr/local/lib/xemacs-21.5/info/}.
 
 @end itemize
 
@@ -3285,14 +3285,14 @@ are currently about 19MB and 4.5MB (gzipped) respectively.
 
 Install them on Unix and Mac OS X using the shell/Terminal command
 
-@code{cd $prefix/lib/xemacs ; gunzip -c <tarballname> | tar xf -}
+@code{cd $prefix/share/xemacs ; gunzip -c <tarballname> | tar xf -}
 
 Where @samp{$prefix} is what you gave to the @samp{--prefix} flag to
 @file{configure}, and defaults to @file{/usr/local}.
 
 If you have GNU tar you can use:
 
-@code{cd $prefix/lib/xemacs ; tar zxvf <tarballname>}
+@code{cd $prefix/share/xemacs ; tar zxvf <tarballname>}
 
 If you have the packages somewhere nonstandard and don't want to bother
 with @samp{$prefix} (for example, you're a developer and are compiling
@@ -3347,8 +3347,8 @@ For example if we are installing the @samp{xemacs-base}
 package (version 1.48):
 
 @example
-   mkdir $prefix/lib/xemacs/xemacs-packages RET # if it does not exist yet
-   cd $prefix/lib/xemacs/xemacs-packages RET
+   mkdir $prefix/share/xemacs/xemacs-packages RET # if it does not exist yet
+   cd $prefix/share/xemacs/xemacs-packages RET
    gunzip -c /path/to/xemacs-base-1.48-pkg.tar.gz | tar xvf - RET
 @end example
 
@@ -3362,8 +3362,8 @@ For MULE related packages, it is best to untar into the @samp{mule-packages}
 hierarchy, i.e. for the @samp{mule-base} package, version 1.37:
 
 @example
-   mkdir $prefix/lib/xemacs/mule-packages RET # if it does not exist yet
-   cd $prefix/lib/xemacs/mule-packages RET
+   mkdir $prefix/share/xemacs/mule-packages RET # if it does not exist yet
+   cd $prefix/share/xemacs/mule-packages RET
    gunzip -c /path/to/mule-base-1.37-pkg.tar.gz | tar xvf - RET
 @end example
 
@@ -3509,18 +3509,18 @@ On startup XEmacs looks for packages in so-called package hierarchies.
 Normally, there are three system wide hierarchies, like this:
 
 @example
-$prefix/lib/xemacs/xemacs-packages/
+$prefix/sahre/xemacs/xemacs-packages/
      Normal packages go here.
 
-$prefix/lib/xemacs/mule-packages/
+$prefix/share/xemacs/mule-packages/
      Mule packages go here and are only searched by MULE-enabled XEmacsen.
 
-$prefix/lib/xemacs/site-packages/
+$prefix/share/xemacs/site-packages/
      Local and 3rd party packages go here.
 @end example
 
 This is what you get when you untar the SUMO tarballs under
-@file{$prefix/lib/xemacs}.
+@file{$prefix/share/xemacs}.
 
 @file{$prefix} is specified using the @samp{--prefix} parameter to
 @file{configure}, and defaults to @file{usr/local}.
@@ -3533,7 +3533,7 @@ XEmacs executable is located, then for a sister directory
 @file{lib/xemacs}.  The XEmacs executable (under Unix at least) is
 installed by default in @file{/usr/local/bin}; this explains why
 XEmacs in its default installation will find packages that you put
-under @file{/usr/local/lib/xemacs}.
+under @file{/usr/local/share/xemacs}.
 
 You can specify where exactly XEmacs looks for packages by using the
 @samp{--with-user-packages} (an alias for @samp{--with-early-packages})
@@ -3557,7 +3557,7 @@ packages there using the interactive tools, you need to set
 The site-packages hierarchy replaces the old @file{site-lisp}
 directory.  XEmacs no longer looks into a @file{site-lisp} directly by
 default.  A good place to put @file{site-start.el} would be in
-@file{$prefix/lib/xemacs/site-packages/lisp/}.
+@file{$prefix/share/xemacs/site-packages/lisp/}.
 
 @node Q2.1.7, Q2.2.1, Q2.1.6, Installation
 @unnumberedsubsec Q2.1.7: EFS fails with "500 AUTH not understood" (NEW)
@@ -6576,7 +6576,7 @@ document?
 The package @code{ps-print}, which is now included with XEmacs, provides
 the ability to do this.  The source code contains complete instructions
 on its use, in
-@file{$prefix/lib/xemacs/xemacs-packages/lisp/ps-print/ps-print.el},
+@file{$prefix/share/xemacs/xemacs-packages/lisp/ps-print/ps-print.el},
 being the default location of an installed ps-print package.
 
 @node Q5.2.3, Q5.2.4, Q5.2.2, External Subsystems
