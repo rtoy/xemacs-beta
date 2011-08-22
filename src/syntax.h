@@ -234,20 +234,21 @@ extern int lookup_syntax_properties;
    #### sjt sez: I'm not sure I believe that last claim.  That seems to
    require that we use directional information, etc, but that is ignored in
    the current implementation. */
+
+enum syntax_source { syntax_source_property_code = 0,
+		     syntax_source_property_table = 1,
+		     syntax_source_buffer_table = 2 };
+#define SOURCE_IS_TABLE(source) (source)
+
 struct syntax_cache
 {
 #ifdef NEW_GC
   NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
-  int use_code;			/* Non-zero if a syntax-table property
-				   specified a syntax code.  When zero, the
-				   syntax_code member is invalid.  Otherwise
-				   the syntax_table member is invalid. */
-  int no_syntax_table_prop;	/* If non-zero, there was no `syntax-table'
-				   property on the current range, and so we're
-				   using the buffer's syntax table.
-				   Then we must invalidate the cache if the
-				   buffer's syntax table is changed. */
+  enum syntax_source source;	/* Source of syntax information: the buffer's
+				   syntax table, a syntax table specified by
+				   a syntax-table property, or a syntax code
+				   specified by a syntax-table property. */
   Lisp_Object object;		/* The buffer or string the current syntax
 				   cache applies to, or Qnil for a string of
 				   text not coming from a buffer or string. */
@@ -260,6 +261,7 @@ struct syntax_cache
   Lisp_Object mirror_table;	/* Mirror table for this table. */
   Lisp_Object start, end;	/* Markers to keep track of the known region
 				   in a buffer.
+				   Both are Qnil if object is a string.
 				   Normally these correspond to prev_change
 				   and next_change, respectively, except when
 				   insertions and deletions occur.  Then
@@ -269,7 +271,8 @@ struct syntax_cache
 				   We'd like to use an extent, but it seems
 				   that having an extent over the entire
 				   buffer causes serious slowdowns in extent
-				   operations!  Yuck! */
+				   operations!  Yuck!
+				   #### May not be true any more. */
   Charxpos next_change;		/* Position of the next extent change. */
   Charxpos prev_change;		/* Position of the previous extent change. */
 };
@@ -341,9 +344,10 @@ UPDATE_SYNTAX_CACHE (struct syntax_cache *cache, Charxpos pos)
 #define SYNTAX_FROM_CACHE(cache, c)			\
    SYNTAX_FROM_CODE (SYNTAX_CODE_FROM_CACHE (cache, c))
 
-#define SYNTAX_CODE_FROM_CACHE(cache, c)				\
-  ((cache)->use_code ? (cache)->syntax_code				\
-   : SYNTAX_CODE ((cache)->mirror_table, c))
+#define SYNTAX_CODE_FROM_CACHE(cache, c)	\
+  (SOURCE_IS_TABLE ((cache)->source)		\
+   ? SYNTAX_CODE ((cache)->mirror_table, c)	\
+   : (cache)->syntax_code)
 
 #ifdef NOT_WORTH_THE_EFFORT
 /* If we really cared about the theoretical performance hit of the dirty
@@ -356,9 +360,10 @@ UPDATE_SYNTAX_CACHE (struct syntax_cache *cache, Charxpos pos)
    functions and could execute arbitrary Lisp very easily), etc.  The QUIT
    problem is the biggest one, probably, and one of the main reasons it's
    probably just not worth it. */
-#define SYNTAX_CODE_FROM_CACHE(cache, c)				\
-  ((cache)->use_code ? (cache)->syntax_code				\
-   : SYNTAX_CODE_1 ((cache)->mirror_table, c))
+#define SYNTAX_CODE_FROM_CACHE(cache, c)	\
+  (SOURCE_IS_TABLE ((cache)->source)		\
+   ? SYNTAX_CODE_1 ((cache)->mirror_table, c)	\
+   : (cache)->syntax_code)
 #endif
 
 

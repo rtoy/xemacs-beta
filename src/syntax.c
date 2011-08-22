@@ -273,7 +273,7 @@ static void
 syntax_cache_table_was_changed (struct buffer *buf)
 {
   struct syntax_cache *cache = buf->syntax_cache;
-  if (cache->no_syntax_table_prop)
+  if (cache->source == syntax_source_buffer_table)
     {
       cache->syntax_table =
 	BUFFER_SYNTAX_TABLE (buf);
@@ -284,58 +284,95 @@ syntax_cache_table_was_changed (struct buffer *buf)
 
 static void
 reset_syntax_cache_range (struct syntax_cache *cache,  /* initialized cache */
-			  Lisp_Object object)	       /* string or buffer */
+			  int valid_everywhere)	/* non-zero if we can assume
+						   syntax-table properties
+						   never need be respected
+						   in the life of the cache */
 {
-  /* reinitialize cache parameters */
-  if (BUFFERP (object))
+  if (BUFFERP (cache->object))
     {
       /* make known region zero-length and reset insertion behavior */
-      Fset_marker (cache->start, make_int (1), object);
-      Fset_marker (cache->end, make_int (1), object);
+      Fset_marker (cache->start, make_int (1), cache->object);
+      Fset_marker (cache->end, make_int (1), cache->object);
       Fset_marker_insertion_type (cache->start, Qnil);
       Fset_marker_insertion_type (cache->end, Qt);
     }
-  else
-    {
-      /* invalidate the known region markers */
-      Fset_marker (cache->start, Qnil, Qnil);
-      Fset_marker (cache->end, Qnil, Qnil);
-    }
-  cache->no_syntax_table_prop = 1;
-  if (lookup_syntax_properties)
-    {
-      cache->prev_change = -1;
-      cache->next_change = -1;
-    }
-  else
+  /* #### Should reset "cache->source" here?
+     If so, also reset tables. */
+  if (valid_everywhere)
     {
       cache->prev_change = EMACS_INT_MIN;
       cache->next_change = EMACS_INT_MAX;
     }
+  else /* valid nowhere */
+    {
+      cache->prev_change = -1;
+      cache->next_change = -1;
+    }
 }
 
-/* init_syntax_cache
-   Arguments:
-   cache:  pointer to a zero-ed struct syntax_cache
-   object: a Lisp string or buffer
-   buffer: NULL or the struct buffer of buffer */
 static void
-init_syntax_cache (struct syntax_cache *cache,  /* cache must be zero'ed */
+init_syntax_cache (struct syntax_cache *cache,  /* xzero'ed memory */
 		   Lisp_Object object,		/* string or buffer */
-		   struct buffer *buffer)	/* may not be NULL */
+		   struct buffer *buffer)	/* buffer; if OBJECT is a
+						   buffer, this is the same */
 {
-  /* initialize cache resources */
   cache->object = object;
   cache->buffer = buffer;
+
+  cache->source = syntax_source_buffer_table;
   cache->syntax_table =
     BUFFER_SYNTAX_TABLE (cache->buffer);
   cache->mirror_table =
     BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
-  cache->start = Fmake_marker();
-  cache->end = Fmake_marker();
+
+  /* Qnil avoids GC'ing markers, which are useless for strings. */
+  cache->start = BUFFERP (object) ? Fmake_marker () : Qnil;
+  cache->end = BUFFERP (object) ? Fmake_marker () : Qnil;
+
+  reset_syntax_cache_range (cache, 0);
 }
 
 /* external syntax cache API */
+
+/* At this time (hg rev 5551:dab422055bab) setup_syntax_cache() is called
+   directly once in setup_buffer_syntax_cache and twice in regex.c.  The
+   calls in regex.c are obfuscated, so it's hard to tell, but it looks like
+   they can be called with OBJECT being a buffer.
+
+   "You are in a confusing maze of initializations, all alike."
+
+   reset_syntax_cache_range (3 uses in setup_syntax_cache,
+   signal_syntax_cache_extent_changed, and init_buffer_syntax_cache)
+   reinitializes:
+   1. if BUFFERP(OBJECT), marker positions to 1 (giving a null range)
+   2. if BUFFERP(OBJECT), marker movement type
+   3. cache range per VALID_EVERYWHERE
+
+   init_syntax_cache (2 uses in init_buffer_syntax_cache and
+   setup_syntax_cache) initializes:
+   1. source to syntax_source_buffer_table
+   2. syntax_table and mirror_syntax table to BUFFER's tables
+   3. marker members to BUFFERP(OBJECT) ? markers w/o position : Qnil
+   4. cache range with VALID_EVERYWHERE==0
+   5. object and buffer to corresponding arguments.
+
+   init_buffer_syntax_cache (1 use in buffer.c) initializes:
+   0. allocation of buffer's cache memory (done by allocator)
+   1. cache memory to zero (done by allocator)
+   2. cache to buffer's cache
+   3. cache members by init_syntax_cache with object==buffer==BUF.
+
+   setup_buffer_syntax_cache (1 call in font-lock.c, 1 use in search.c,
+   and 7 uses in this file) initializes:
+   0. buffer's syntax cache by calling setup_syntax_cache.
+
+   setup_buffer_syntax_cache and setup_syntax_cache are called by functions
+   that analyze text using character syntax.  They are called repeatedly on
+   the same cache.  init_syntax_cache and init_buffer_syntax_cache are
+   conceptually called once for each cache.  reset_syntax_cache_range may
+   be called repeatedly on the same cache.  The last three are for internal
+   use by the syntax setup code and buffer initialization. */
 
 struct syntax_cache *		/* return CACHE or the cache of OBJECT */
 setup_syntax_cache (struct syntax_cache *cache,	/* may be NULL only if
@@ -344,22 +381,37 @@ setup_syntax_cache (struct syntax_cache *cache,	/* may be NULL only if
 						   is associated with */
 		    struct buffer *buffer,	/* the buffer to use as source
 						   of the syntax table */
-		    Charxpos UNUSED (from),	/* initial position of cache */
-		    int UNUSED (count))		/* direction? see code */
+		    Charxpos from,		/* initial position of cache */
+		    int count)			/* direction? see code */
 {
-  /* If OBJECT is a buffer, use its cache, otherwise use CACHE.
-     Initialize CACHE.  Invalidate the cache if the syntax-table property is
-     being respected, otherwise make it valid for the whole object. */
+  /* If OBJECT is a buffer, use its cache; else use CACHE and initialize it.
+     Invalidate the cache if the syntax-table property is being respected;
+     else make it valid for the whole object. */
   if (BUFFERP (object))
     {
       cache = XBUFFER (object)->syntax_cache;
+      if (!lookup_syntax_properties)
+	reset_syntax_cache_range (cache, 1);
     }
   else
     {
       xzero (*cache);
       init_syntax_cache (cache, object, buffer);
     }
-  reset_syntax_cache_range (cache, object);
+
+   if (lookup_syntax_properties)
+     {
+       if (count <= 0)
+	 {
+	   --from;
+	   from = buffer_or_string_clip_to_accessible_char (cache->object,
+							    from);
+	 }
+       /* If lookup_syntax_properties && BUFFERP (object), this
+	  optimization may matter. */
+       if (!(from >= cache->prev_change && from < cache->next_change))
+	 update_syntax_cache (cache, from, count);
+     }
 
 #ifdef NOT_WORTH_THE_EFFORT
   update_mirror_syntax_if_dirty (cache->mirror_table);
@@ -454,24 +506,21 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
   
   if (!NILP (Fsyntax_table_p (tmp_table)))
     {
-      cache->use_code = 0;
+      cache->source = syntax_source_property_table;
       cache->syntax_table = tmp_table;
       cache->mirror_table = XCHAR_TABLE (tmp_table)->mirror_table;
-      cache->no_syntax_table_prop = 0;
 #ifdef NOT_WORTH_THE_EFFORT
       update_mirror_syntax_if_dirty (cache->mirror_table);
 #endif /* NOT_WORTH_THE_EFFORT */
     } 
   else if (CONSP (tmp_table) && INTP (XCAR (tmp_table)))
     {
-      cache->use_code = 1;
+      cache->source = syntax_source_property_code;
       cache->syntax_code = XINT (XCAR (tmp_table));
-      cache->no_syntax_table_prop = 0;
     }
   else 
     {
-      cache->use_code = 0;
-      cache->no_syntax_table_prop = 1;
+      cache->source = syntax_source_buffer_table;
       cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
       cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
 #ifdef NOT_WORTH_THE_EFFORT
@@ -501,14 +550,15 @@ mark_buffer_syntax_cache (struct buffer *buf)
 void
 init_buffer_syntax_cache (struct buffer *buf)
 {
+  struct syntax_cache *cache;
 #ifdef NEW_GC
-  buf->syntax_cache = XSYNTAX_CACHE (ALLOC_NORMAL_LISP_OBJECT (syntax_cache));
+  cache = XSYNTAX_CACHE (ALLOC_NORMAL_LISP_OBJECT (syntax_cache));
 #else /* not NEW_GC */
-  buf->syntax_cache = xnew_and_zero (struct syntax_cache);
+  cache = xnew_and_zero (struct syntax_cache);
 #endif /* not NEW_GC */
 
-  init_syntax_cache (buf->syntax_cache, wrap_buffer(buf), buf);
-  reset_syntax_cache_range (buf->syntax_cache, wrap_buffer(buf));
+  init_syntax_cache (cache, wrap_buffer (buf), buf);
+  buf->syntax_cache = cache;
 }
 
 /* finalize the syntax cache for BUF */
@@ -535,18 +585,18 @@ uninit_buffer_syntax_cache (struct buffer *UNUSED_IF_NEW_GC (buf))
 void
 signal_syntax_cache_extent_changed (EXTENT extent)
 {
-  Lisp_Object buffer = Fextent_object (wrap_extent (extent));
-  if (BUFFERP (buffer))
+  Lisp_Object object = Fextent_object (wrap_extent (extent));
+  if (BUFFERP (object))
     {
-      struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;
-      Bytexpos start = extent_endpoint_byte (extent, 0);
-      Bytexpos end = extent_endpoint_byte (extent, 1);
-      Bytexpos start2 = byte_marker_position (cache->start);
-      Bytexpos end2 = byte_marker_position (cache->end);
+      struct syntax_cache *cache = XBUFFER (object)->syntax_cache;
+      Bytexpos extent_start = extent_endpoint_byte (extent, 0);
+      Bytexpos extent_end = extent_endpoint_byte (extent, 1);
+      Bytexpos cache_start = byte_marker_position (cache->start);
+      Bytexpos cache_end = byte_marker_position (cache->end);
       /* If the extent is entirely before or entirely after the cache
 	 range, it doesn't overlap.  Otherwise, invalidate the range. */
-      if (!(end < start2 || start > end2))
-	reset_syntax_cache_range (cache, buffer);
+      if (!(extent_end < cache_start || extent_start > cache_end))
+	reset_syntax_cache_range (cache, 0);
     }
 }
 
