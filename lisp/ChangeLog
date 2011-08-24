@@ -1,3 +1,11 @@
+2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (apply-partially):
+	Add an assertion to this compiler macro, requiring that the order
+	of the placeholders corresponding to the arguments in the
+	constants vector of the constructed compiled function be the same
+	as the order of the arguments to #'apply-partially.
+
 2011-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el:

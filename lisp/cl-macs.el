@@ -3519,6 +3519,13 @@ non-standard :if and :if-not keywords at compile time."
       (let* ((placeholders (mapcar 'quote-maybe (mapcar 'gensym args)))
              (compiled (byte-compile-sexp
                         `#'(lambda (&rest args) (apply ,@placeholders args)))))
+        (assert (equal (intersection
+                        (mapcar 'quote-maybe (compiled-function-constants
+                                              compiled))
+                        placeholders :test 'equal :stable t)
+                       placeholders)
+                t "This macro requires that the relative order is the same\
+in the constants vector and in the arguments")
         `(make-byte-code
           ',(compiled-function-arglist compiled)
           ,(compiled-function-instructions compiled)

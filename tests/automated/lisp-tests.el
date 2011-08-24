@@ -2929,10 +2929,13 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;; Basic tests of #'apply-partially.
 (let* ((four 4)
        (times-four (apply-partially '* four))
-       (plus-twelve (apply-partially '+ 6 (* 3 2))))
+       (plus-twelve (apply-partially '+ 6 (* 3 2)))
+       (construct-list (apply-partially 'list (incf four) (incf four)
+                                        (incf four))))
   (Assert (eql (funcall times-four 6) 24))
   (Assert (eql (funcall times-four 4 4) 64))
   (Assert (eql (funcall plus-twelve (funcall times-four 4) 4 4) 36))
-  (Check-Error wrong-number-of-arguments (apply-partially)))
+  (Check-Error wrong-number-of-arguments (apply-partially))
+  (Assert (equal (funcall construct-list) '(5 6 7))))
 
 ;;; end of lisp-tests.el
