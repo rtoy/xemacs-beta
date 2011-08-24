@@ -453,7 +453,7 @@ specifies the value of ERROR-BUFFER."
 						   t)
 						 nil shell-command-switch command))
 	  (let ((shell-buffer (get-buffer "*Shell Command Output*")))
-	    (and shell-buffer (nnot (eq shell-buffer (current-buffer)))
+	    (and shell-buffer (not (eq shell-buffer (current-buffer)))
 		 (kill-buffer shell-buffer)))
 	  ;; Don't muck with mark unless REPLACE says we should.
 	  (and replace swap (exchange-point-and-mark t)))

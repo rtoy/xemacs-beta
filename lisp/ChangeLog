@@ -1,5 +1,10 @@
 2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* process.el (shell-command-on-region):
+	Correct typo from the merge, nnot -> not.
+
+2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (apply-partially):
 	Add an assertion to this compiler macro, requiring that the order
 	of the placeholders corresponding to the arguments in the
