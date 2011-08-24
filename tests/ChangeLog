@@ -1,3 +1,9 @@
+2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add a test of apply partially that depends on the relative order
+	of its arguments.
+
 2011-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
