@@ -330,11 +330,8 @@ things are arranged in config.h.in.  In particular:
 #undef DLSYM_NEEDS_UNDERSCORE
 #undef HAVE_SHLIB
 
-/* Darwin; realpath corrects for case: */
-#ifdef HAVE_DYLD
-#define REALPATH_CORRECTS_CASE 1
-#define DEFAULT_FILE_SYSTEM_IGNORE_CASE 1
-#endif
+#undef REALPATH_CORRECTS_CASE
+#undef DEFAULT_FILE_SYSTEM_IGNORE_CASE
 
 #undef HAVE_LIBINTL
 #undef HAVE_LIBDNET

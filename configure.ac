@@ -1475,7 +1475,6 @@ fi
 if test "$with_dynamic" = "yes"; then
   case "$opsys" in
     hpux* ) opsys="${opsys}-shr" ;;
-    darwin ) AC_DEFINE(DLSYM_NEEDS_UNDERSCORE) ;;
   esac
 else dnl "$with_dynamic" = "no"
   case "$opsys" in
@@ -3375,6 +3374,13 @@ else
 fi
 AC_SUBST(LIBSTDCPP)
 
+dnl Tell the pathname handling code about a couple of Darwin-specific things
+dnl it needs to know:
+if test "$opsys" = "darwin"; then
+  AC_DEFINE(REALPATH_CORRECTS_CASE)
+  AC_DEFINE(DEFAULT_FILE_SYSTEM_IGNORE_CASE)
+fi
+
 dnl This must come before the detection code for anything that is in a module
 if test "$with_modules" != "no"; then
   AC_MSG_CHECKING([for module support])
@@ -3382,10 +3388,7 @@ if test "$with_modules" != "no"; then
 
   case "$opsys" in
     mingw* | cygwin* ) have_dl=yes ;;
-    darwin ) have_dl=yes
-      AC_DEFINE(HAVE_DYLD)
-      ;;
-    * )
+    *)
       dnl Check for the ELFish dlopen()
       AC_CHECK_HEADER(dlfcn.h, [
 	AC_MSG_CHECKING([for dlopen in -lc])
@@ -3406,38 +3409,45 @@ if test "$with_modules" != "no"; then
       if test "$have_dl" = "yes"; then
 	AC_DEFINE(HAVE_DLOPEN)
       else
-	dnl Check for HP/UX shl_load
-	AC_CHECK_HEADER(dl.h, [
-	  AC_MSG_CHECKING([for shl_load in -lc])
-	  AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dl.h>],
-	   [shl_load ("", 0, 0);])], [have_dl=yes; AC_MSG_RESULT($have_dl)], [
-	    AC_MSG_RESULT([no])
-	    AC_MSG_CHECKING([for shl_load in -ldl])
-	    ac_save_LIBS="$LIBS"
-	    LIBS="$LIBS -ldld"
-	    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dl.h>],
-	     [shl_load ("", 0, 0);])], [have_dl=yes],
-	     [LIBS="$ac_save_LIBS"; AC_MSG_RESULT([no])])])])
-	if test "$have_dl" = "yes"; then
-	  AC_DEFINE(HAVE_SHL_LOAD) 
-	else
-	  dnl Check for libtool's libltdl
-	  AC_CHECK_HEADER(ltdl.h, [
-	    AC_MSG_CHECKING([for lt_dlinit in -lltdl])
-	    ac_save_LIBS="$LIBS"
-	    LIBS="$LIBS -lltdl"
-	    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <ltdl.h>],
-	     [lt_dlinit ();])], [have_dl=yes], [LIBS="$ac_save_LIBS"])])
-	  AC_MSG_RESULT($have_dl)
-	  if test "$have_dl" = "yes"; then
-	    AC_DEFINE(HAVE_LTDL)
-	  fi
-	dnl end !HP/UX
-	fi
+        dnl On Darwin, the DYLD API is deprecated, so we prefer dlopen if
+        dnl available, above.
+        if test "$opsys" = "darwin"; then 
+          have_dl=yes
+          AC_DEFINE(HAVE_DYLD)
+          AC_DEFINE(DLSYM_NEEDS_UNDERSCORE)
+        else
+          dnl Check for HP/UX shl_load
+          AC_CHECK_HEADER(dl.h, [
+            AC_MSG_CHECKING([for shl_load in -lc])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dl.h>],
+             [shl_load ("", 0, 0);])], [have_dl=yes; AC_MSG_RESULT($have_dl)],[
+              AC_MSG_RESULT([no])
+              AC_MSG_CHECKING([for shl_load in -ldl])
+              ac_save_LIBS="$LIBS"
+              LIBS="$LIBS -ldld"
+              AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dl.h>],
+               [shl_load ("", 0, 0);])], [have_dl=yes],
+               [LIBS="$ac_save_LIBS"; AC_MSG_RESULT([no])])])])
+          if test "$have_dl" = "yes"; then
+            AC_DEFINE(HAVE_SHL_LOAD) 
+          else
+            dnl Check for libtool's libltdl
+            AC_CHECK_HEADER(ltdl.h, [
+              AC_MSG_CHECKING([for lt_dlinit in -lltdl])
+              ac_save_LIBS="$LIBS"
+              LIBS="$LIBS -lltdl"
+              AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <ltdl.h>],
+               [lt_dlinit ();])], [have_dl=yes], [LIBS="$ac_save_LIBS"])])
+            AC_MSG_RESULT($have_dl)
+            if test "$have_dl" = "yes"; then
+              AC_DEFINE(HAVE_LTDL)
+            fi
+          dnl end !HP/UX
+    	  fi
+       fi
       dnl end !dlopen
       fi
       ac_save_LIBS=
-  dnl end !darwin
   esac
 
   if test -n "$have_dl"; then

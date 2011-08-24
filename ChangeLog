@@ -1,3 +1,15 @@
+2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac:
+	On OS X, if dlopen() is available in dlfcn.h, use it in preference
+	to dyld; the latter API is deprecated.
+	Move DLSYM_NEEDS_UNDERSCORE together with HAVE_DLYD, it's not
+	needed if the dlsym() and dlopen() APIs are being used.
+	Define REALPATH_CORRECTS_CASE, DEFAULT_FILE_SYSTEM_IGNORE_CASE in
+	this file, don't define them in terms of HAVE_DYLD in
+	src/config.h.in.
+	* configure: Regenerate.
+
 2011-05-20  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Default DESTDIR to the empty string, and use it in

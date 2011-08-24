@@ -5939,8 +5939,6 @@ fi
 if test "$with_dynamic" = "yes"; then
   case "$opsys" in
     hpux* ) opsys="${opsys}-shr" ;;
-    darwin ) $as_echo "#define DLSYM_NEEDS_UNDERSCORE 1" >>confdefs.h
- ;;
   esac
 else   case "$opsys" in
     sol2 )
@@ -13765,7 +13763,7 @@ fi
     fi
 
     install_pp="$srcdir/lib-src/installexe.sh"
-    libs_system="$libs_system -limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr" &&  if test "$verbose" = "yes"; then echo "    Appending \"-limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr\" to \$libs_system"; fi
+    libs_system="$libs_system -L/usr/lib/w32api -limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr" &&  if test "$verbose" = "yes"; then echo "    Appending \"-L/usr/lib/w32api -limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr\" to \$libs_system"; fi
     if test "$with_dragndrop" != no; then
       dragndrop_proto="$dragndrop_proto msw" &&  if test "$verbose" = "yes"; then echo "    Appending \"msw\" to \$dragndrop_proto"; fi
       with_dragndrop=yes
@@ -13956,6 +13954,13 @@ else
 fi
 
 
+if test "$opsys" = "darwin"; then
+  $as_echo "#define REALPATH_CORRECTS_CASE 1" >>confdefs.h
+
+  $as_echo "#define DEFAULT_FILE_SYSTEM_IGNORE_CASE 1" >>confdefs.h
+
+fi
+
 if test "$with_modules" != "no"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for module support" >&5
 $as_echo_n "checking for module support... " >&6; }
@@ -13964,11 +13969,7 @@ $as_echo "" >&6; }
 
   case "$opsys" in
     mingw* | cygwin* ) have_dl=yes ;;
-    darwin ) have_dl=yes
-      $as_echo "#define HAVE_DYLD 1" >>confdefs.h
-
-      ;;
-    * )
+    *)
             ac_fn_c_check_header_mongrel "$LINENO" "dlfcn.h" "ac_cv_header_dlfcn_h" "$ac_includes_default"
 if test "x$ac_cv_header_dlfcn_h" = xyes; then :
 
@@ -14050,12 +14051,19 @@ fi
 	$as_echo "#define HAVE_DLOPEN 1" >>confdefs.h
 
       else
-		ac_fn_c_check_header_mongrel "$LINENO" "dl.h" "ac_cv_header_dl_h" "$ac_includes_default"
+                        if test "$opsys" = "darwin"; then
+          have_dl=yes
+          $as_echo "#define HAVE_DYLD 1" >>confdefs.h
+
+          $as_echo "#define DLSYM_NEEDS_UNDERSCORE 1" >>confdefs.h
+
+        else
+                    ac_fn_c_check_header_mongrel "$LINENO" "dl.h" "ac_cv_header_dl_h" "$ac_includes_default"
 if test "x$ac_cv_header_dl_h" = xyes; then :
 
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shl_load in -lc" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shl_load in -lc" >&5
 $as_echo_n "checking for shl_load in -lc... " >&6; }
-	  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <dl.h>
 int
@@ -14071,13 +14079,13 @@ if ac_fn_c_try_link "$LINENO"; then :
 $as_echo "$have_dl" >&6; }
 else
 
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+              { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shl_load in -ldl" >&5
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shl_load in -ldl" >&5
 $as_echo_n "checking for shl_load in -ldl... " >&6; }
-	    ac_save_LIBS="$LIBS"
-	    LIBS="$LIBS -ldld"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+              ac_save_LIBS="$LIBS"
+              LIBS="$LIBS -ldld"
+              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <dl.h>
 int
@@ -14102,18 +14110,18 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 
 
-	if test "$have_dl" = "yes"; then
-	  $as_echo "#define HAVE_SHL_LOAD 1" >>confdefs.h
+          if test "$have_dl" = "yes"; then
+            $as_echo "#define HAVE_SHL_LOAD 1" >>confdefs.h
 
-	else
-	  	  ac_fn_c_check_header_mongrel "$LINENO" "ltdl.h" "ac_cv_header_ltdl_h" "$ac_includes_default"
+          else
+                        ac_fn_c_check_header_mongrel "$LINENO" "ltdl.h" "ac_cv_header_ltdl_h" "$ac_includes_default"
 if test "x$ac_cv_header_ltdl_h" = xyes; then :
 
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for lt_dlinit in -lltdl" >&5
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for lt_dlinit in -lltdl" >&5
 $as_echo_n "checking for lt_dlinit in -lltdl... " >&6; }
-	    ac_save_LIBS="$LIBS"
-	    LIBS="$LIBS -lltdl"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+              ac_save_LIBS="$LIBS"
+              LIBS="$LIBS -lltdl"
+              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <ltdl.h>
 int
@@ -14134,16 +14142,17 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 
 
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_dl" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_dl" >&5
 $as_echo "$have_dl" >&6; }
-	  if test "$have_dl" = "yes"; then
-	    $as_echo "#define HAVE_LTDL 1" >>confdefs.h
+            if test "$have_dl" = "yes"; then
+              $as_echo "#define HAVE_LTDL 1" >>confdefs.h
 
-	  fi
-		fi
+            fi
+              	  fi
+       fi
             fi
       ac_save_LIBS=
-    esac
+  esac
 
   if test -n "$have_dl"; then
 

@@ -1,3 +1,10 @@
+2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in:
+	Move REALPATH_CORRECTS_CASE, DEFAULT_FILE_SYSTEM_IGNORE_CASE to
+	../configure.ac rather than implementing them in terms of
+	HAVE_DYLD here.
+
 2011-08-23  Stephen Turnbull  <stephen@xemacs.org>
 
 	Fix performance regression in refactored syntax cache setup.
