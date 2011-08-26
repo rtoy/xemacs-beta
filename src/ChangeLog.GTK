@@ -1,3 +1,14 @@
+2011-08-26  Aidan Kehoe	 <kehoea@parhasard.net>
+
+	* frame-gtk.c:
+	* frame-gtk.c (gtk_mark_frame):
+	For the sake of KKCC, add information on the various weak hash
+	tables in gtk_frame to the data description. Otherwise they get
+	garbage collected, which is less than optimal.
+	Reorder the mark_object calls in gtk_mark_frame() to reflect the
+	order of the Lisp_Objects in the structure, to make omitting things
+	a little harder to forget.
+
 2011-08-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* device-gtk.c:
