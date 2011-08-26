@@ -198,20 +198,26 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
 			 make_opaque_ptr (cl));
 
   {
-    Rawbyte *data;
-    Bytecount size;
-    int format;
+    Rawbyte *data; /* The selection data to transfer. */
+    Elemcount len; /* The number of *elements*, each of size FORMAT bits, in
+                      the array at address DATA. */
+    gint format, format_octets;
     GdkAtom type;
-    lisp_data_to_selection_data (d, converted_selection,
-				 &data, &type, &size, &format);
 
+    lisp_data_to_selection_data (d, converted_selection, &data, &type, &len,
+                                 &format);
+    format_octets = format / 8;
     gtk_selection_data_set (selection_data, type, format, data,
-			    /* #### is this right? */
-			    (unsigned int) size);
+                            format_octets * len);
     successful_p = Qt;
     /* Tell x_selection_request_lisp_error() it's cool. */
     cl->successful = TRUE;
-    xfree (data);
+    /* Data need not have been allocated; cf. select-convert-to-delete in
+       lisp/select.el . */
+    if (data)
+      {
+        xfree (data);
+      }
   }
 
   unbind_to (count);
@@ -224,18 +230,8 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
   UNGCPRO;
 
   /* Let random lisp code notice that the selection has been asked for. */
-  {
-    Lisp_Object val = Vgtk_sent_selection_hooks;
-    if (!UNBOUNDP (val) && !NILP (val))
-      {
-	Lisp_Object rest;
-	if (CONSP (val) && !EQ (XCAR (val), Qlambda))
-	  for (rest = val; !NILP (rest); rest = Fcdr (rest))
-	    call3 (Fcar (rest), selection_symbol, target_symbol, successful_p);
-	else
-	  call3 (val, selection_symbol, target_symbol, successful_p);
-      }
-  }
+  va_run_hook_with_args (Vgtk_sent_selection_hooks, 3, selection_symbol,
+                         target_symbol, successful_p);
 }
 
 

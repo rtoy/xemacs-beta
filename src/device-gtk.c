@@ -36,6 +36,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
+#include "select.h"
 
 #include "console-gtk-impl.h"
 #include "gccache-gtk.h"
@@ -58,8 +59,6 @@ Lisp_Object Vgtk_emacs_application_class;
 
 Lisp_Object Vgtk_initial_argv_list; /* #### ugh! */
 Lisp_Object Vgtk_initial_geometry;
-
-Lisp_Object Qgtk_seen_characters;
 
 static void gtk_device_init_x_specific_cruft (struct device *d);
 
@@ -306,12 +305,60 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
      purposes */
   gtk_widget_realize (GTK_WIDGET (app_shell));
 
-  /* Need to set up some selection handlers */
-  gtk_selection_add_target (GTK_WIDGET (app_shell), GDK_SELECTION_PRIMARY,
-			    GDK_SELECTION_TYPE_STRING, 0);
-  gtk_selection_add_target (GTK_WIDGET (app_shell),
-                            gdk_atom_intern("CLIPBOARD", FALSE),
-			    GDK_SELECTION_TYPE_STRING, 0);
+  /* Set up the selection handlers. I attempted just to register the handler
+     for TARGETS, and this works in that the requestor does see our offered
+     list of targets (GTK gets out of the way for this), but then further
+     attempts to transfer COMPOUND_TEXT and so on fail, because GTK
+     interposes itself, and ignores that we've demonstrated we know what
+     formats we can transfer by sending TARGETS.
+
+     Note that under X11 the cars of selection-converter-out-alist can
+     usefully be modified at runtime, making fewer or more selection types
+     available; this isn't the case under GTK, the set is examined once at
+     startup. */
+  {
+    guint target_count = XINT (Fsafe_length (Vselection_converter_out_alist));
+    GtkTargetEntry *targets = alloca_array (GtkTargetEntry, target_count);
+    Lisp_Object tail = Vselection_converter_out_alist;
+    DECLARE_EISTRING(ei_symname);
+    guint ii;
+
+    for (ii = 0; ii < target_count; ii++)
+      {
+        targets[ii].flags = 0;
+        /* We don't use info at the moment. */
+        targets[ii].info = ii;
+        if (CONSP (Fcar (tail)) && SYMBOLP (XCAR (XCAR (tail))))
+          {
+            eicpy_lstr (ei_symname, XSYMBOL_NAME (XCAR (XCAR (tail))));
+            /* GTK doesn't specify the encoding of their atom names. */
+            eito_external (ei_symname, Qbinary);
+            targets[ii].target = alloca_array (gchar, eiextlen (ei_symname)
+                                               + 1);
+            memcpy ((void *) (targets[ii].target),
+                    (void *) eiextdata (ei_symname), eiextlen (ei_symname) + 1);
+          }
+        else
+          {
+            if (ii > 0xFF)
+              {
+                /* It was corrupt long before ii > 0xff, of course. */
+                gui_error ("selection-converter-out-alist is corrupt",
+                           Vselection_converter_out_alist);
+              }
+            targets[ii].target = alloca_array (gchar, sizeof ("TARGETFF"));
+            sprintf (targets[ii].target, "TARGET%02X", ii);
+          }
+        tail = Fcdr (tail);
+      }
+
+    gtk_selection_add_targets (GTK_WIDGET (app_shell), GDK_SELECTION_PRIMARY,
+                               targets, target_count);
+    gtk_selection_add_targets (GTK_WIDGET (app_shell), GDK_SELECTION_SECONDARY,
+                               targets, target_count);
+    gtk_selection_add_targets (GTK_WIDGET (app_shell), GDK_SELECTION_CLIPBOARD,
+                               targets, target_count);
+  }
   
   g_signal_connect (G_OBJECT (app_shell), "selection_get",
 		      GTK_SIGNAL_FUNC (emacs_gtk_selection_handle), NULL);
@@ -754,8 +801,6 @@ This is used during startup to communicate the default geometry to GTK.
 
   Vgtk_initial_geometry = Qnil;
   Vgtk_initial_argv_list = Qnil;
-
-  Qgtk_seen_characters = Qnil;
 }
 
 #include "sysgdkx.h"

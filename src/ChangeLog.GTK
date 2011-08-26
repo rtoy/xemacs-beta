@@ -1,3 +1,23 @@
+2011-08-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-gtk.c:
+	* device-gtk.c (gtk_init_device):
+	* device-gtk.c (vars_of_device_gtk):
+	At startup, tell GTK that we're capable of and interested in
+	passing selections for all those selection types in
+	selection-converter-out-alist. This means that we now support
+	non-Latin-1 data when copying and pasting, which previously wasn't
+	the case on GTK.
+	Call va_run_hook_with_args, don't reimplement it ourselves.
+	Remove Qgtk_seen_characters in passing, nothing was using it.
+	* select-gtk.c (emacs_gtk_selection_handle):
+	Fix a bug in this function; because of X11, the fifth argument to
+	lisp_data_to_selection_data is not the number of octets at the
+	address DATA, rather the number of elements, each of size FORMAT
+	bits, in the array at that address. 
+	* select.h:
+	device-gtk.c now needs to see selection-converter-out-alist.
+
 2011-07-12  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-gtk.c (emacs_gtk_add_timeout): Use glib timeout instead of
