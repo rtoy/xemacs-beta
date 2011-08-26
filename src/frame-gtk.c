@@ -89,11 +89,15 @@ static guint dnd_n_targets = sizeof(dnd_target_table) / sizeof(dnd_target_table[
 #endif
 
 static const struct memory_description gtk_frame_data_description_1 [] = {
-  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap) },
-  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap_mask) },
   { XD_LISP_OBJECT_ARRAY, offsetof (struct gtk_frame, lisp_visible_widgets),
     3 },
   { XD_LISP_OBJECT, offsetof (struct gtk_frame, menubar_data) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap_mask) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, widget_instance_hash_table) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, widget_callback_hash_table) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame,
+                              widget_callback_ex_hash_table) },
   { XD_END }
 };
 
@@ -1142,12 +1146,12 @@ gtk_init_frame_3 (struct frame *f)
 static void
 gtk_mark_frame (struct frame *f)
 {
-  mark_object (FRAME_GTK_ICON_PIXMAP (f));
-  mark_object (FRAME_GTK_ICON_PIXMAP_MASK (f));
-  mark_object (FRAME_GTK_MENUBAR_DATA (f));
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[0]);
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[1]);
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[2]);
+  mark_object (FRAME_GTK_MENUBAR_DATA (f));
+  mark_object (FRAME_GTK_ICON_PIXMAP (f));
+  mark_object (FRAME_GTK_ICON_PIXMAP_MASK (f));
   mark_object (FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE (f));
   mark_object (FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE (f));
   mark_object (FRAME_GTK_WIDGET_CALLBACK_EX_HASH_TABLE (f));
