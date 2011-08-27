@@ -1,3 +1,12 @@
+2011-08-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-gtk.c:
+	* device-gtk.c (Fgtk_init):
+	Call setlocale (LC_NUMERIC, "C") after gtk_init(); the latter
+	stomps on LC_NUMERIC, taking the value from the environment, which
+	we explicitly don't want, because we use the C library functions
+	to parse Lisp floats and so on.
+
 2011-08-26  Aidan Kehoe	 <kehoea@parhasard.net>
 
 	* frame-gtk.c:
