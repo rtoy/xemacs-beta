@@ -3120,7 +3120,7 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
 
   AC_CHECK_FUNCS(XConvertCase XtRegisterDrawable)
 
-  AC_CHECK_HEADERS(X11/Xlocale.h X11/Xfuncproto.h)
+  AC_CHECK_HEADERS(X11/Xlocale.h X11/Xfuncproto.h X11/XF86keysym.h)
 
   dnl XFree86 has a non-standard prototype for this X11R6 function
   AC_CHECK_FUNCS(XRegisterIMInstantiateCallback)
