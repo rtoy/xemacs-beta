@@ -51,6 +51,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <bonobo.h>
 #endif
 
+#include <locale.h>
+
 Lisp_Object Qmake_device_early_gtk_entry_point,
    Qmake_device_late_gtk_entry_point;
 
@@ -183,6 +185,11 @@ mode.
 
   slow_down_interrupts ();
   gtk_init (&argc, &argv);
+
+  /* Sigh, gtk_init stomped on LC_NUMERIC, which we need to be C. Otherwise
+     the Lisp reader doesn't necessarily understand the radix character for
+     floats, which is a problem. */
+  setlocale (LC_NUMERIC, "C");
 
 #ifdef HAVE_BONOBO
   orb = oaf_init (argc, argv);
