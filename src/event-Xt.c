@@ -66,6 +66,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "xmotif.h"
 #endif
 
+#ifdef HAVE_X11_XF86KEYSYM_H
+#include <X11/XF86keysym.h>
+#endif
+
 #ifdef HAVE_DRAGNDROP
 #include "dragdrop.h"
 #endif
@@ -1230,6 +1234,21 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		int Mode_switch_p = *state & xd->ModeMask;
 		KeySym bot = XLookupKeysym (ev, Mode_switch_p ? 2 : 0);
 		KeySym top = XLookupKeysym (ev, Mode_switch_p ? 3 : 1);
+
+#ifdef HAVE_X11_XF86KEYSYM_H
+                /* XLookupKeysm() and XLookupString() differ for these
+                   keysyms under X.org. The latter treats them as not
+                   visible to X11 apps (so if the event has the shift
+                   modifer, the keysym of the unshifted key will be
+                   returned) while the former treats them as visible. We
+                   chose to follow XLookupString in x_to_emacs_keysym(), so
+                   we need to do that here, too. */
+
+                if (XF86XK_Switch_VT_1 <= top && top <= XF86XK_Prev_VMode)
+                  {
+                    top = NoSymbol; 
+                  }
+#endif
 		if (top && bot && top != bot)
 		  modifiers &= ~XEMACS_MOD_SHIFT;
 	      }

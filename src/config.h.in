@@ -284,6 +284,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_SYS_WAIT_H
 #undef HAVE_LIBINTL_H
 #undef HAVE_X11_XLOCALE_H
+#undef HAVE_X11_XF86KEYSYM_H
 
 /* About __STDC__: Different compilers differ wrt __STDC__.  Sunpro C
     defines it, but its value is 0 unless we disable non-ANSI extensions.
