@@ -1,3 +1,21 @@
+2011-08-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-Xt.c (x_to_emacs_keysym):
+	Take a new pointer argument, X_KEYSYM_OUT, where we store the X11
+	keysym that we actually used.
+	* event-Xt.c (x_event_to_emacs_event):
+	Call x_to_emacs_keysym with its new pointer argument, so we have
+	access to the X11 keysym used.
+	When checking whether a keysym obeys caps lock, use the X11 keysym
+	rather than the XEmacs keysym.
+	When checking whether a key has two distinct keysyms depending on
+	whether shift is pressed or not, use the X11 keysym passed back by
+	x_to_emacs_keysym rather than working it out again using
+	XLookupKeysym().
+	* event-Xt.c (keysym_obeys_caps_lock_p):
+	Use XConvertCase() in this function, now we're receiving the
+	actual X keysym used.
+
 2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in:
