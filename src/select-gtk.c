@@ -43,6 +43,8 @@ static Lisp_Object Vretrieved_selection;
 static gboolean waiting_for_selection;
 Lisp_Object Vgtk_sent_selection_hooks;
 
+Lisp_Object Qgtk_sent_selection_hooks;
+
 extern int lisp_to_time (Lisp_Object, time_t *);
 extern Lisp_Object time_to_lisp (time_t);
 
@@ -230,7 +232,7 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
   UNGCPRO;
 
   /* Let random lisp code notice that the selection has been asked for. */
-  va_run_hook_with_args (Vgtk_sent_selection_hooks, 3, selection_symbol,
+  va_run_hook_with_args (Qgtk_sent_selection_hooks, 3, selection_symbol,
                          target_symbol, successful_p);
 }
 
@@ -473,6 +475,7 @@ gtk_selection_exists_p (Lisp_Object selection,
 void
 syms_of_select_gtk (void)
 {
+  DEFSYMBOL (Qgtk_sent_selection_hooks);
 }
 
 void
