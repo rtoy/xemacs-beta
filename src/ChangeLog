@@ -1,14 +1,3 @@
-2011-08-27  Aidan Kehoe  <kehoea@parhasard.net>
-
-	* config.h.in: Make HAVE_X11_XF86KEYSYM_H available here.
-	* event-Xt.c: #include X11/XF86keysym.h if available.
-	* event-Xt.c (x_event_to_emacs_event):
-	If XLookupKeysym () returned one of the XFree86 "special action
-	keys" for the shifted keysym, treat that as NoSymbol, fixing a
-	long-standing bug with shifted function keys under X.org.
-	Details of why in:
-	http://mid.gmane.org/16960.15685.26911.644835@parhasard.net
-
 2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in:
