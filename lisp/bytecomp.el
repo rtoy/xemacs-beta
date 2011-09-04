@@ -491,15 +491,70 @@ easily determined from the input file.")
 		    "%s is not of type %s" form type)))
 	   (if byte-compile-delete-errors
 	       form
-	     (funcall (cdr (symbol-function 'the)) type form)))))
+	     (funcall (cdr (symbol-function 'the)) type form))))
+    (load-time-value
+     . ,#'(lambda (form &optional read-only)
+            (let* ((gensym (gensym))
+                   (byte-compile-bound-variables
+                    (acons gensym byte-compile-global-bit
+                           byte-compile-bound-variables)))
+              (setq byte-compile-output-preface
+                    (byte-compile-top-level
+                     `(progn (setq ,gensym ,form) ,byte-compile-output-preface)
+                     t 'file))
+              `(symbol-value ',gensym))))
+    (labels
+        . ,#'(lambda (bindings &rest body)
+               (let* ((bindings
+                       (mapcar (function*
+                                (lambda ((name . binding))
+                                  (list* name 'lambda
+                                         (cdr (cl-transform-lambda binding
+                                                                   name)))))
+                               bindings))
+                      ;; These placeholders are to ensure that the
+                      ;; lexically-scoped functions can be called from each
+                      ;; other.
+                      (placeholders
+                       (mapcar #'(lambda (binding)
+                                   (cons (car binding)
+                                         (make-byte-code (third binding)
+                                                         "\xc0\x87" [42] 1)))
+                               bindings))
+                      (byte-compile-macro-environment
+                       (nconc
+                        (mapcar
+                         (function*
+                          (lambda ((name . placeholder))
+                            (cons name `(lambda (&rest cl-labels-args)
+                                          (list* 'funcall ,placeholder
+                                                 cl-labels-args)))))
+                         placeholders)
+                        byte-compile-macro-environment))
+                      placeholder-map)
+                 (setq bindings
+                       (mapcar (function*
+                                (lambda ((name . lambda))
+                                  (cons name (byte-compile-lambda lambda))))
+                               bindings)
+                       placeholder-map
+                       (mapcar (function*
+                                (lambda ((name . compiled-function))
+                                  (cons (cdr (assq name placeholders))
+                                        compiled-function)))
+                               bindings))
+                 (loop
+                   for (placeholder . compiled-function)
+                   in placeholder-map
+                   do (nsubst compiled-function placeholder bindings
+                              :test 'eq :descend-structures t))
+                 (cl-macroexpand-all (cons 'progn body)
+                                     (sublis placeholder-map
+                                             byte-compile-macro-environment
+                                             :test 'eq))))))
   "The default macro-environment passed to macroexpand by the compiler.
 Placing a macro here will cause a macro to have different semantics when
 expanded by the compiler as when expanded by the interpreter.")
-
-(defvar byte-compile-macro-environment byte-compile-initial-macro-environment
-  "Alist of macros defined in the file being compiled.
-Each element looks like (MACRONAME . DEFINITION).  It is
-\(MACRONAME . nil) when a macro is redefined as a function.")
 
 (defvar byte-compile-function-environment nil
   "Alist of functions defined in the file being compiled.
@@ -3086,7 +3141,7 @@ keyword %s, forcing function quoting" (car form) function)))
 (byte-defop-compiler car		1)
 (byte-defop-compiler cdr		1)
 (byte-defop-compiler length		1)
-(byte-defop-compiler symbol-value)
+(byte-defop-compiler symbol-value       1)
 (byte-defop-compiler symbol-function	1)
 (byte-defop-compiler (1+ byte-add1)	1)
 (byte-defop-compiler (1- byte-sub1)	1)
@@ -4237,29 +4292,6 @@ optimized away--just byte compile and return the BODY."
   (byte-compile-out 'byte-temp-output-buffer-setup 0)
   (byte-compile-body (cdr (cdr form)))
   (byte-compile-out 'byte-temp-output-buffer-show 0))
-
-(defun byte-compile-symbol-value (form)
-  (symbol-macrolet ((not-present '#:not-present))
-    (let ((cl-load-time-value-form not-present)
-          (byte-compile-bound-variables byte-compile-bound-variables) gensym)
-      (and (consp (cadr form))
-           (eq 'quote (caadr form))
-           (setq gensym (cadadr form))
-           (symbolp gensym)
-           (setq cl-load-time-value-form
-                 (get gensym 'cl-load-time-value-form not-present)))
-      (unless (eq cl-load-time-value-form not-present)        
-        (setq byte-compile-bound-variables
-              (acons gensym byte-compile-global-bit
-                     byte-compile-bound-variables)
-              byte-compile-output-preface
-              (byte-compile-top-level
-               (if byte-compile-output-preface
-                   `(progn (setq ,gensym ,cl-load-time-value-form)
-                           ,byte-compile-output-preface)
-                 `(setq ,gensym ,cl-load-time-value-form))
-               t 'file)))
-      (byte-compile-one-arg form))))
   
 (defun byte-compile-multiple-value-call (form)
   (if (< (length form) 2)
