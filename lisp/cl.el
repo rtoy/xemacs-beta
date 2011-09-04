@@ -213,7 +213,6 @@ See `member*' for the meaning of :test, :test-not and :key."
 
 ;;; Macros.
 
-(defvar cl-macro-environment nil)
 ;; XEmacs: we renamed the internal function to macroexpand-internal
 ;; to avoid doc-file problems.
 (defvar cl-old-macroexpand (prog1 (symbol-function 'macroexpand-internal)
@@ -227,17 +226,19 @@ in place of FORM.  When a non-macro-call results, it is returned.
 
 The second optional arg ENVIRONMENT specifies an environment of macro
 definitions to shadow the loaded ones for use in file byte-compilation."
-  (let ((cl-macro-environment
-	 (if cl-macro-environment (append cl-env cl-macro-environment) cl-env))
+  (let ((byte-compile-macro-environment
+	 (if byte-compile-macro-environment
+             (append cl-env byte-compile-macro-environment) cl-env))
 	eq-hash)
     (while (progn (setq cl-macro
-			(macroexpand-internal cl-macro cl-macro-environment))
+			(macroexpand-internal cl-macro
+                                              byte-compile-macro-environment))
 		  (and (symbolp cl-macro)
 		       (setq eq-hash (eq-hash cl-macro))
 		       (cdr (if (fixnump eq-hash)
-                                (assq eq-hash cl-macro-environment)
-                              (assoc eq-hash cl-macro-environment)))))
-      (setq cl-macro (cadr (assoc* eq-hash cl-macro-environment))))
+                                (assq eq-hash byte-compile-macro-environment)
+                              (assoc eq-hash byte-compile-macro-environment)))))
+      (setq cl-macro (cadr (assoc* eq-hash byte-compile-macro-environment))))
     cl-macro))
 
 ;;; Declarations.

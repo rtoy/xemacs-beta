@@ -449,5 +449,8 @@ because its `find-charset-string' ignores ASCII charset."
 (define-function 'memql 'member*)
 (make-compatible 'memql "use the more full-featured `member*' instead.")
 
+(define-obsolete-variable-alias 'cl-macro-environment
+  'byte-compile-macro-environment)
+
 (provide 'obsolete)
 ;;; obsolete.el ends here
