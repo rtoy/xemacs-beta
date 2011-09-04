@@ -1935,12 +1935,13 @@ docstrings code.")
       (byte-compile-output-docform nil nil '("\n(" 3 ")") form nil
 				   (memq (car form)
 					 '(autoload custom-declare-variable)))
-    (let ((print-escape-newlines t)
-	  (print-length nil)
-	  (print-level nil)
-	  (print-readably t)	; print #[] for bytecode, 'x for (quote x)
-	  (print-gensym (if byte-compile-print-gensym '(t) nil))
-          print-gensym-alist)
+    (let* ((print-escape-newlines t)
+	   (print-length nil)
+	   (print-level nil)
+	   (print-readably t)	; print #[] for bytecode, 'x for (quote x)
+	   (print-gensym byte-compile-print-gensym)
+	   (print-continuous-numbering print-gensym)
+	   (print-circle t))
       (when byte-compile-output-preface
         (princ "\n(progn " byte-compile-outbuffer)
         (prin1 byte-compile-output-preface byte-compile-outbuffer))
@@ -1984,18 +1985,16 @@ list that represents a doc string reference.
 			 (> (length (nth (nth 1 info) form)) 0)
 			 (char= (aref (nth (nth 1 info) form) 0) ?*))
 		    (setq position (- position)))))
-	 (let ((print-escape-newlines t)
-	       (print-readably t)	; print #[] for bytecode, 'x for (quote x)
-	       ;; Use a cons cell to say that we want
-	       ;; print-gensym-alist not to be cleared between calls
-	       ;; to print functions.
-	       (print-gensym (if byte-compile-print-gensym '(t) nil))
-	       print-gensym-alist
-	       (index 0))
+         (byte-compile-flush-pending)
+	 (let* ((print-escape-newlines t)
+		(print-readably t)	; print #[] for bytecode, 'x for (quote x)
+		(print-gensym byte-compile-print-gensym)
+                (print-continuous-numbering print-gensym)
+                (print-circle t)
+		(index 0))
            (when byte-compile-output-preface
              (princ "\n(progn " byte-compile-outbuffer)
              (prin1 byte-compile-output-preface byte-compile-outbuffer))
-	   (byte-compile-flush-pending)
 	   (if preface
 	       (progn
 		 (insert preface)

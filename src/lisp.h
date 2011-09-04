@@ -2816,7 +2816,37 @@ set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value)
 typedef struct Lisp_Symbol Lisp_Symbol;
 struct Lisp_Symbol
 {
-  FROB_BLOCK_LISP_OBJECT_HEADER lheader;
+  union
+  {
+    FROB_BLOCK_LISP_OBJECT_HEADER lheader;
+    struct
+    {
+      /* Everything before package_count must agree exactly with struct
+         lrecord_header. */
+      unsigned int type :8;
+#ifdef NEW_GC
+      unsigned int lisp_readonly :1;
+      unsigned int free :1;
+      /* Number of packages this symbol is interned in, zero, one, or many.
+         Packages aren't yet implemented, but we have a design in Common
+         Lisp's. */
+      unsigned int package_count :2;
+      /* ID of the first package this symbol was interned in. Zero is
+         uninterned, one is obarray. */
+      unsigned int first_package_id :20;
+#else /* not NEW_GC */
+      unsigned int mark :1;
+      unsigned int c_readonly :1;
+      unsigned int lisp_readonly :1;
+      /* Number of packages this symbol is interned in, zero, one, or many. */
+      unsigned int package_count :2;
+      /* ID of the first package this symbol was interned in. Zero is
+         uninterned, one is obarray. */
+      unsigned int first_package_id :19;
+#endif /* not NEW_GC */
+    } v;
+  } u;
+
   /* next symbol in this obarray bucket */
   Lisp_Symbol *next;
   Lisp_Object name;
@@ -2825,11 +2855,12 @@ struct Lisp_Symbol
   Lisp_Object plist;
 };
 
-#define SYMBOL_IS_KEYWORD(sym)						\
-  ((string_byte (symbol_name (XSYMBOL (sym)), 0) == ':')		\
-   && EQ (sym, oblookup (Vobarray,					\
-			 XSTRING_DATA (symbol_name (XSYMBOL (sym))),	\
-			 XSTRING_LENGTH (symbol_name (XSYMBOL (sym))))))
+#define IN_OBARRAY(symbol) ((XSYMBOL (symbol)->u.v.first_package_id) == 1)
+
+#define SYMBOL_IS_KEYWORD(sym) (IN_OBARRAY (sym) &&                     \
+                                (string_byte (symbol_name (XSYMBOL (sym)), \
+                                              0) == ':'))
+
 #define KEYWORDP(obj) (SYMBOLP (obj) && SYMBOL_IS_KEYWORD (obj))
 
 DECLARE_MODULE_API_LISP_OBJECT (symbol, Lisp_Symbol);
@@ -2850,6 +2881,7 @@ DECLARE_MODULE_API_LISP_OBJECT (symbol, Lisp_Symbol);
 #define XSYMBOL_VALUE(s) (XSYMBOL (s)->value)
 #define XSYMBOL_FUNCTION(s) (XSYMBOL (s)->function)
 #define XSYMBOL_PLIST(s) (XSYMBOL (s)->plist)
+
 
 
 /*------------------------------- subr ---------------------------------*/
@@ -5267,6 +5299,8 @@ EXFUN (Fstring_lessp, 2);
 EXFUN (Fsubseq, 3);
 EXFUN (Fvalid_plist_p, 1);
 
+extern Boolint check_eq_nokey (Lisp_Object, Lisp_Object, Lisp_Object,
+                               Lisp_Object);
 extern Boolint check_lss_key_car (Lisp_Object, Lisp_Object, Lisp_Object,
 				  Lisp_Object);
 extern Boolint check_string_lessp_nokey (Lisp_Object, Lisp_Object,
@@ -5274,6 +5308,20 @@ extern Boolint check_string_lessp_nokey (Lisp_Object, Lisp_Object,
 
 typedef Boolint (*check_test_func_t) (Lisp_Object test, Lisp_Object key,
 				      Lisp_Object item, Lisp_Object elt);
+
+typedef struct
+{
+  Lisp_Object number_table;
+  Lisp_Object new_;
+  Lisp_Object old;
+  Lisp_Object current_object;
+  Boolint test_not_unboundp;
+} nsubst_structures_info_t;
+
+Lisp_Object nsubst_structures (Lisp_Object new_, Lisp_Object old,
+                               Lisp_Object tree, check_test_func_t check_test,
+                               Boolint test_not_unboundp,
+                               Lisp_Object test, Lisp_Object key);
 
 Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
 			check_test_func_t check_merge,
@@ -5616,6 +5664,31 @@ MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object_fmt (const CIbyte *
        PRINTF_ARGS (1, 2);
 DECLARE_DOESNT_RETURN (printing_unreadable_lisp_object (Lisp_Object obj,
 						     const Ibyte *name));
+
+#define PRINT_PREPROCESS(obj, print_number_table, seen_object_count)	\
+  do if (LRECORDP (obj)							\
+	 && XRECORD_LHEADER_IMPLEMENTATION (obj)->print_preprocess)	\
+    {									\
+      print_preprocess (obj, print_number_table, seen_object_count);	\
+    } while (0)
+
+typedef struct { Lisp_Object table; Elemcount *count; } preprocess_info_t;
+
+void print_preprocess (Lisp_Object obj, Lisp_Object print_number_table,
+                       Elemcount *seen_object_count);
+
+/* These is in print.c because they use the print_preprocess
+   infrastructure. */
+Lisp_Object nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
+                                       Lisp_Object object,
+                                       Lisp_Object number_table,
+                                       Boolint test_not_unboundp);
+
+Lisp_Object nsubst_structures (Lisp_Object new_, Lisp_Object old,
+                               Lisp_Object tree,
+                               check_test_func_t check_test,
+                               Boolint test_not_unboundp,
+                               Lisp_Object test, Lisp_Object key);
 
 extern Lisp_Object Qexternal_debugging_output;
 extern Lisp_Object Qprint_length;

@@ -87,3 +87,66 @@
 	       (read (format "+%d" (1- most-positive-fixnum))))
 	  "checking leading + is handled properly if reading a fixnum"))
 
+;; Test print-circle.
+(let ((cons '#1=(1 2 3 4 5 6 . #1#))
+      (vector #2=[1 2 3 4 5 6 #2#])
+      (compiled-function #3=#[(argument) "\xc2\x09\x08\"\x87"
+                              [pi argument #3#] 3])
+      (char-table #4=#s(char-table :type generic :data (?\u0080 #4#)))
+      (hash-table #5=#s(hash-table :test eql :data (a b c #5# e f)))
+      (range-table #6=#s(range-table :type start-closed-end-open
+                                     :data ((#x00 #xff) hello
+                                            (#x100 #x1ff) #6#
+                                            (#x200 #x2ff) everyone)))
+      (print-readably t)
+      (print-circle t)
+      deserialized-cons deserialized-vector deserialized-compiled-function
+      deserialized-char-table deserialized-hash-table deserialized-range-table)
+  (Assert (eq (nthcdr 6 cons) cons)
+          "checking basic recursive cons read properly")
+  (Assert (eq vector (aref vector (1- (length vector))))
+          "checking basic recursive vector read properly")
+  (Assert (eq compiled-function
+              (find-if #'compiled-function-p
+                       (compiled-function-constants compiled-function)))
+          "checking basic recursive compiled-function read properly")
+  (Check-Error wrong-number-of-arguments (funcall compiled-function 3))
+  (Assert (eq char-table (get-char-table ?\u0080 char-table))
+          "checking basic recursive char table read properly")
+  (Assert (eq hash-table (gethash 'c hash-table))
+          "checking basic recursive hash table read properly")
+  (Assert (eq range-table (get-range-table #x180 range-table))
+          "checking basic recursive range table read properly")
+  (setf (gethash 'g hash-table) cons
+        (car cons) hash-table
+        deserialized-hash-table (read (prin1-to-string hash-table)))
+  (Assert (not (eq deserialized-hash-table hash-table))
+          "checking printing and reading hash-table creates a new object")
+  (Assert (eq deserialized-hash-table (gethash 'c deserialized-hash-table))
+          "checking the lisp reader handles deserialized hash-table identity")
+  (Assert (eq deserialized-hash-table
+              (car (gethash 'g deserialized-hash-table)))
+          "checking the reader handles deserialization identity, hash-table")
+  (setf (get-char-table ?a char-table) cons
+        (car cons) char-table
+        deserialized-char-table (read (prin1-to-string char-table)))
+  (Assert (not (eq deserialized-char-table char-table))
+          "checking printing and reading creates a new object")
+  (Assert (eq deserialized-char-table
+              (get-char-table ?\u0080 deserialized-char-table))
+          "checking the lisp reader handles deserialization identity")
+  (Assert (eq deserialized-char-table
+              (car (get-char-table ?a deserialized-char-table)))
+          "checking the lisp reader handles deserialization identity, mixed")
+  (put-range-table #x1000 #x1010 cons range-table)
+  (setf (car cons) range-table
+        deserialized-range-table (read (prin1-to-string range-table)))
+  (Assert (not (eq deserialized-range-table range-table))
+          "checking printing and reading creates a new object")
+  (Assert (eq deserialized-range-table
+              (get-range-table #x101 deserialized-range-table))
+          "checking the lisp reader handles deserialization identity")
+  (Assert (eq deserialized-range-table
+              (car (get-range-table #x1001 deserialized-range-table)))
+          "checking the lisp reader handles deserialization identity, mixed"))
+
