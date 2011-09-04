@@ -1757,7 +1757,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       )
     {
       buffer_objects_create ();
+      bytecode_objects_create ();
       casetab_objects_create ();
+      chartab_objects_create ();
       extent_objects_create ();
       face_objects_create ();
       frame_objects_create ();
@@ -1767,6 +1769,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef MULE
       mule_charset_objects_create ();
 #endif
+      rangetab_objects_create ();
 #ifdef HAVE_SCROLLBARS
       scrollbar_objects_create ();
 #endif

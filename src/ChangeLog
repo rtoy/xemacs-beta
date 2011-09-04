@@ -1,3 +1,92 @@
+2011-09-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c:
+	* alloc.c (ALLOC_FROB_BLOCK_LISP_OBJECT_1):
+	* alloc.c (ALLOC_FROB_BLOCK_LISP_OBJECT):
+	* alloc.c (cons_print_preprocess):
+	* alloc.c (vector_print_preprocess):
+	* alloc.c (vector_nsubst_structures_descend):
+	* alloc.c (Fmake_symbol):
+	* alloc.c (UNMARK_symbol):
+	* alloc.c (sweep_symbols):
+	* alloc.c (reinit_alloc_objects_early):
+	* alloc.c (reinit_alloc_early):
+	* bytecode.c:
+	* bytecode.c (compiled_function_print_preprocess):
+	* bytecode.c (compiled_function_nsubst_structures_descend):
+	* bytecode.c (set_compiled_function_arglist):
+	* bytecode.c (set_compiled_function_interactive):
+	* bytecode.c (bytecode_objects_create):
+	* chartab.c:
+	* chartab.c (print_preprocess_mapper):
+	* chartab.c (nsubst_structures_mapper):
+	* chartab.c (char_table_nsubst_structures_descend):
+	* chartab.c (chartab_objects_create):
+	* elhash.c:
+	* elhash.c (nsubst_structures_map_hash_table):
+	* elhash.c (hash_table_nsubst_structures_descend):
+	* elhash.c (print_preprocess_mapper):
+	* elhash.c (hash_table_print_preprocess):
+	* elhash.c (inchash_eq):
+	* elhash.c (hash_table_objects_create):
+	* elhash.c (syms_of_elhash):
+	* elhash.h:
+	* emacs.c (main_1):
+	* fns.c:
+	* fns.c (check_eq_nokey):
+	* fns.c (Fnsubst):
+	* fns.c (syms_of_fns):
+	* lisp.h:
+	* lisp.h (struct Lisp_Symbol):
+	* lisp.h (IN_OBARRAY):
+	* lisp.h (struct):
+	* lisp.h (PRINT_PREPROCESS):
+	* lread.c (read1):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_LISP_OBJECT):
+	* print.c:
+	* print.c (PRINT_CIRCLE_LIMIT):
+	* print.c (print_continuous_numbering_changed):
+	* print.c (print_prepare):
+	* print.c (print_finish):
+	* print.c (Fprin1_to_string):
+	* print.c (print_cons):
+	* print.c (print_preprocess_inchash_eq):
+	* print.c (print_preprocess):
+	* print.c (print_sort_get_numbers):
+	* print.c (print_sort_compare_ordinals):
+	* print.c (print_gensym_or_circle):
+	* print.c (nsubst_structures_descend):
+	* print.c (nsubst_structures):
+	* print.c (print_internal):
+	* print.c (print_symbol):
+	* print.c (vars_of_print):
+	* rangetab.c:
+	* rangetab.c (range_table_print_preprocess):
+	* rangetab.c (range_table_nsubst_structures_descend):
+	* rangetab.c (rangetab_objects_create):
+	* rangetab.c (syms_of_rangetab):
+	* symbols.c:
+	* symbols.c (symbol_print_preprocess):
+	* symbols.c (Fintern):
+	* symbols.c (Funintern):
+	* symbols.c (reinit_symbol_objects_early):
+	* symbols.c (init_symbols_once_early):
+	* symsinit.h:
+	Implement print-circle, printing circular structures in a readable
+	fashion, and treating them appropriately on read. This is by means
+	of two new object methods, print_preprocess (detecting
+	circularities), and nsubst_structures_descend (replacing
+	placeholders with the read objects).
+	Expose the substitution to Lisp via #'nsubst and its new
+	:descend-structures keyword.
+	Store information as to whether symbols are interned in obarray or
+	not in their header, making checking for keywords and uninterned
+	symbols (and thus printing) cheaper.
+	Default print_gensym to t, as Common Lisp does, and as a
+	more-than-decade old comment suggests.
+
 2011-08-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-Xt.c (x_to_emacs_keysym):

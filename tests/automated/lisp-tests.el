@@ -1480,6 +1480,7 @@ via the hepatic alpha-tocopherol transfer protein")))
 		       #5=#:G32970 #6=#:G32972]))
        (print-readably t)
        (print-gensym t)
+       (print-continuous-numbering t)
        (printed-with-uninterned (prin1-to-string literal-with-uninterned))
        (awkward-regexp "#1=#")
        (first-match-start (string-match awkward-regexp

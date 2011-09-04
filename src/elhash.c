@@ -350,6 +350,89 @@ mark_hash_table (Lisp_Object obj)
   return Qnil;
 }
 
+static int
+nsubst_structures_map_hash_table (Lisp_Object key, Lisp_Object value,
+                                  void *extra_arg)
+{
+  Lisp_Object number_table
+    = ((nsubst_structures_info_t *) extra_arg)->number_table;
+  Lisp_Object new_ = ((nsubst_structures_info_t *) extra_arg)->new_;
+  Lisp_Object old = ((nsubst_structures_info_t *) extra_arg)->old;
+  Lisp_Object hash_table
+    = ((nsubst_structures_info_t *) extra_arg)->current_object;
+  Boolint test_not_unboundp
+    = ((nsubst_structures_info_t *) extra_arg)->test_not_unboundp;
+
+  if (EQ (old, key) == test_not_unboundp)
+    {
+      Fremhash (key, hash_table);
+      Fputhash (new_, value, hash_table);
+    }
+  else if (LRECORDP (key) &&
+           HAS_OBJECT_METH_P (key, nsubst_structures_descend))
+    {
+      nsubst_structures_descend (new_, old, key, number_table,
+                                 test_not_unboundp);
+    }
+
+  if (EQ (old, value) == test_not_unboundp)
+    {
+      Fputhash (key, new_, hash_table);
+    }
+  else if (LRECORDP (value) &&
+           HAS_OBJECT_METH_P (value, nsubst_structures_descend))
+    {
+      nsubst_structures_descend (new_, old, value, number_table,
+                                 test_not_unboundp);
+    }
+
+  return 0;
+}
+
+static void
+hash_table_nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
+				      Lisp_Object object,
+				      Lisp_Object number_table,
+				      Boolint test_not_unboundp)
+{
+  nsubst_structures_info_t nsubst_structures_info
+    = { number_table, new_, old, object, test_not_unboundp };
+
+  /* If we're happy with limiting nsubst_structures to use in the Lisp
+     reader, we don't have to worry about the hash table test here, because
+     the only point where NEW_ can be the test will be forms like so:
+     #%d=#:SOME-GENSYM, in which case OLD will most definitively not include
+     a hash table anywhere in its structure. */
+
+  elisp_maphash (nsubst_structures_map_hash_table, object,
+		 &nsubst_structures_info);
+}
+
+static int
+print_preprocess_mapper (Lisp_Object key, Lisp_Object value, void *extra_arg)
+{
+  Lisp_Object print_number_table = ((preprocess_info_t *) extra_arg)->table;
+  Elemcount *seen_number_count = ((preprocess_info_t *) extra_arg)->count;
+
+  PRINT_PREPROCESS (key, print_number_table, seen_number_count);
+  PRINT_PREPROCESS (value, print_number_table, seen_number_count);
+
+  return 0;
+}
+
+static void
+hash_table_print_preprocess (Lisp_Object obj, Lisp_Object number_table,
+                             Elemcount *seen_object_count)
+{
+  preprocess_info_t preprocess_info = { number_table,
+                                        seen_object_count };
+
+  print_preprocess (XHASH_TABLE_TEST (XHASH_TABLE (obj)->test)->name,
+                    number_table, seen_object_count);
+
+  elisp_maphash_unsafe (print_preprocess_mapper, obj, &preprocess_info);
+}
+
 /* Equality of hash tables.  Two hash tables are equal when they are of
    the same weakness and test function, they have the same number of
    elements, and for each key in the hash table, the values are `equal'.
@@ -1277,7 +1360,7 @@ find_htentry (Lisp_Object key, const Lisp_Hash_Table *ht)
    overhead -- profiling overhead was being recorded at up to 15% of the
    total time. */
 
-void
+htentry *
 inchash_eq (Lisp_Object key, Lisp_Object table, EMACS_INT offset)
 {
   Lisp_Hash_Table *ht = XHASH_TABLE (table);
@@ -1297,8 +1380,13 @@ inchash_eq (Lisp_Object key, Lisp_Object table, EMACS_INT offset)
       probe->value = make_int (offset);
 
       if (++ht->count >= ht->rehash_count)
-	enlarge_hash_table (ht);
+        {
+          enlarge_hash_table (ht);
+          return NULL;
+        }
     }
+
+  return probe;
 }
 
 DEFUN ("gethash", Fgethash, 2, 3, 0, /*
@@ -2241,6 +2329,8 @@ hash_table_objects_create (void)
 #ifdef MEMORY_USAGE_STATS
   OBJECT_HAS_METHOD (hash_table, memory_usage);
 #endif
+  OBJECT_HAS_METHOD (hash_table, print_preprocess);
+  OBJECT_HAS_METHOD (hash_table, nsubst_structures_descend);
 }
 
 void

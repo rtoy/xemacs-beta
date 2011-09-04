@@ -69,7 +69,8 @@ move backward across -COUNT balanced expressions."
     (let* ((diff (- (point) (point-min)))
 	   (subject (buffer-substring (- (point) (min diff 3))
 				      (1+ (point))))
-	   (matched (string-match "#s(\\|#r[uU]\\{0,1\\}\"" subject)))
+	   (matched (string-match "#[0-9]+=\\|#s(\\|#r[uU]\\{0,1\\}\""
+				  subject)))
       (if matched
 	(goto-char (1+ (- (point) (- (length subject) matched))))))))
 

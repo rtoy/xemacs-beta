@@ -1,3 +1,13 @@
+2011-09-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-output-file-form):
+	* bytecomp.el (byte-compile-output-docform):
+	Bind print-circle, print-continuous-numbering in these functions,
+	now those variables are available.
+	* lisp.el (forward-sexp):
+	* lisp.el (backward-sexp):
+	Recognise leading #N= as being part of an expression.
+
 2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* process.el (shell-command-on-region):

@@ -94,6 +94,122 @@ static int check_valid_char_table_value (Lisp_Object value,
 /*                         Char Table object                            */
 /************************************************************************/
 
+static int
+print_preprocess_mapper (struct chartab_range * UNUSED (range),
+                         Lisp_Object UNUSED (table), Lisp_Object val,
+                         void *extra_arg)
+{
+  print_preprocess (val, ((preprocess_info_t *) extra_arg)->table,
+                    ((preprocess_info_t *) extra_arg)->count);
+  return 0;
+}
+
+static void
+char_table_print_preprocess (Lisp_Object object, Lisp_Object print_number_table,
+                             Elemcount *seen_object_count)
+{
+  struct chartab_range ctr = { CHARTAB_RANGE_ALL, 0, Qnil, 0 };
+  preprocess_info_t preprocess_info = { print_number_table, seen_object_count };
+  map_char_table (object, &ctr, print_preprocess_mapper, &preprocess_info);
+}
+
+static void decode_char_table_range (Lisp_Object range,
+                                     struct chartab_range *outrange);
+
+static int
+nsubst_structures_mapper (struct chartab_range * range, Lisp_Object table,
+                          Lisp_Object value, void *extra_arg)
+{
+  Lisp_Object number_table
+    = ((nsubst_structures_info_t *) extra_arg)->number_table;
+  Lisp_Object new_ = ((nsubst_structures_info_t *) extra_arg)->new_;
+  Lisp_Object old = ((nsubst_structures_info_t *) extra_arg)->old;
+  Boolint test_not_unboundp
+    = ((nsubst_structures_info_t *) extra_arg)->test_not_unboundp;
+  struct chartab_range changed = { range->type, range->ch, range->charset,
+                                   range->row };
+
+  switch (range->type)
+    {
+    case CHARTAB_RANGE_ALL:
+      {
+        if (EQ (old, Qt) == test_not_unboundp)
+          {
+            decode_char_table_range (new_, &changed);
+
+            put_char_table (table, range, Qunbound);
+            put_char_table (table, &changed, value);
+          }
+        break;
+      }
+    case CHARTAB_RANGE_CHARSET:
+      {
+        if (EQ (old, range->charset) == test_not_unboundp)
+          {
+            CHECK_CHARSET (new_);
+            changed.charset = new_;
+
+            put_char_table (table, range, Qunbound);
+            put_char_table (table, &changed, value);
+          }
+        else assert (!HAS_OBJECT_METH_P (range->charset,
+                                         nsubst_structures_descend));
+        break;
+      }
+    case CHARTAB_RANGE_ROW:
+      {
+        if (EQ (old, make_int (range->row)) == test_not_unboundp)
+          {
+            CHECK_INT (new_);
+            changed.row = XINT (new_);
+
+            put_char_table (table, range, Qunbound);
+            put_char_table (table, &changed, value);
+          }
+        break;
+      }
+    case CHARTAB_RANGE_CHAR:
+      {
+        if (EQ (old, make_char (range->ch)) == test_not_unboundp)
+          {
+            CHECK_CHAR (new_);
+            changed.ch = XCHAR (new_);
+
+            put_char_table (table, range, Qunbound);
+            put_char_table (table, &changed, value);
+          }
+        break;
+      }
+    }
+
+  if (EQ (old, value) == test_not_unboundp)
+    {
+      put_char_table (table, &changed, new_);
+    }
+  else if (LRECORDP (value) &&
+           HAS_OBJECT_METH_P (value, nsubst_structures_descend))
+    {
+      nsubst_structures_descend (new_, old, value, number_table,
+                                 test_not_unboundp);
+    }
+
+  return 0;
+}
+
+static void
+char_table_nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
+                                      Lisp_Object object,
+                                      Lisp_Object number_table,
+                                      Boolint test_not_unboundp)
+{
+  struct chartab_range ctr = { CHARTAB_RANGE_ALL, 0, Qnil, 0 };
+  nsubst_structures_info_t nsubst_structures_info
+    = { number_table, new_, old, object, test_not_unboundp };
+
+  map_char_table (object, &ctr, nsubst_structures_mapper,
+                  &nsubst_structures_info);
+}
+
 #ifdef MULE
 
 static Lisp_Object
@@ -1889,6 +2005,13 @@ word_boundary_p (Ichar c1, Ichar c2)
 #endif /* MULE */
 
 
+void
+chartab_objects_create (void)
+{
+  OBJECT_HAS_METHOD (char_table, print_preprocess);
+  OBJECT_HAS_METHOD (char_table, nsubst_structures_descend);
+}
+
 void
 syms_of_chartab (void)
 {
