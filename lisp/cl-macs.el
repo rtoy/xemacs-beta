@@ -2215,6 +2215,9 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 ;(defsetf specifier-instance (spec &optional dom def nof) (val)
 ;  `(set-specifier ,spec ,val ,dom))
 
+(defsetf get-char-table (char table) (store)
+  `(put-char-table ,char ,store ,table))
+
 ;; Annotations
 (defsetf annotation-glyph set-annotation-glyph)
 (defsetf annotation-down-glyph set-annotation-down-glyph)
