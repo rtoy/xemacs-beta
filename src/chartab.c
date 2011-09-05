@@ -142,6 +142,7 @@ nsubst_structures_mapper (struct chartab_range * range, Lisp_Object table,
           }
         break;
       }
+#ifdef MULE
     case CHARTAB_RANGE_CHARSET:
       {
         if (EQ (old, range->charset) == test_not_unboundp)
@@ -168,6 +169,7 @@ nsubst_structures_mapper (struct chartab_range * range, Lisp_Object table,
           }
         break;
       }
+#endif
     case CHARTAB_RANGE_CHAR:
       {
         if (EQ (old, make_char (range->ch)) == test_not_unboundp)
