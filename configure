@@ -5907,7 +5907,7 @@ if test "$with_newgc" = "yes"; then
   if test "$with_vdb" = "auto"; then
     case "$opsys" in
       darwin )  case "$machine" in
-		  i[3-9]86 ) check_vdb_posix=yes ;;
+		  intel386 ) check_vdb_posix=yes ;;
 		  * ) $as_echo "#define VDB_MACH 1" >>confdefs.h
   have_vdb_mach=yes ;;
 		esac ;;

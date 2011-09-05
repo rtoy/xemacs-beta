@@ -1,3 +1,11 @@
+2011-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac: $machine is intel386, reflecting the file name
+	under src/m/, on i[3-9]86. Respect this when deciding on VDB_POSIX
+	over VDB_MACH with the new GC.
+	* configure:
+	Regenerate.
+
 2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac:
