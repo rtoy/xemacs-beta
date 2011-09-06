@@ -1,3 +1,14 @@
+2011-09-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay-tty.c (init_tty_for_redisplay):
+	Only set the console meta key flag to treat the eight bit as meta
+	if the native coding system doesn't need that.
+	* general-slots.h:
+	* mule-coding.c:
+	* mule-coding.c (syms_of_mule_coding):
+	Move Qiso2022, Qseven to general-slots.h, they're now used in
+	redisplay-tty.c.
+
 2011-09-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* chartab.c (nsubst_structures_mapper):
