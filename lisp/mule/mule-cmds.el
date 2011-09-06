@@ -1385,7 +1385,8 @@ of buffer-file-coding-system set by this function."
 
     ;; set the native coding system and the default process-output system.
     (let ((native (get-native-coding-system-from-language-environment
-		   language-name (current-locale))))
+		   language-name (current-locale)))
+          seven current-input-mode)
 
       (condition-case nil
 	  (define-coding-system-alias 'native
@@ -1405,15 +1406,20 @@ of buffer-file-coding-system set by this function."
             ;; native coding system of the language environment.
             keyboard-coding-system native
 	    terminal-coding-system native)
-
-      ;; And do the same for any TTYs. 
-      (dolist (con (console-list))
-	(when (eq 'tty (device-type (car (console-device-list con))))
-	  ;; Calling set-input-mode at the same time would be a sane thing
-	  ;; to do here. I would prefer to default to accepting eight bit
-	  ;; input and not using the top bit for Meta.
-	  (set-console-tty-coding-system con native)))
-
+      ;; Does this coding system use bit 8?
+      (setq seven (and (eq (coding-system-type native) 'iso2022)
+                       (coding-system-property native 'seven)))
+      ;; Set the coding system for TTY consoles.
+      (dolist (console
+               (delete* 'tty (console-list) :key #'console-type :test-not #'eq))
+        (set-console-tty-coding-system console native)
+        (unless seven 
+          ;; The native coding system uses bit 8, so we need to use that bit
+          ;; for character information, not for meta.
+          (setq current-input-mode (current-input-mode console))
+          (and (memq (second current-input-mode) '(nil t))
+               (set-input-mode nil (first current-input-mode) 'character
+                               (third current-input-mode) console))))
       ;; process output should not have EOL conversion.  under MS Windows
       ;; and Cygwin, this screws things up (`cmd' is fine with just LF and
       ;; `bash' chokes on CR-LF).
