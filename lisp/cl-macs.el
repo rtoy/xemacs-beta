@@ -1714,41 +1714,59 @@ a `let' form, except that the list of symbols can be computed at run-time."
 	      (list* 'progn (list 'cl-progv-before symbols values) body)
 	      '(cl-progv-after))))
 
-;;; This should really have some way to shadow 'byte-compile properties, etc.
 ;;;###autoload
-(defmacro flet (bindings &rest body)
+(defmacro flet (functions &rest form)
   "Make temporary function definitions.
+
 This is an analogue of `let' that operates on the function cell of FUNC
 rather than its value cell.  The FORMs are evaluated with the specified
-function definitions in place, then the definitions are undone (the FUNCs
-go back to their previous definitions, or lack thereof).
+function definitions in place, then the definitions are undone (the FUNCs go
+back to their previous definitions, or lack thereof).  This is in
+contravention of Common Lisp, where `flet' makes a lexical, not a dynamic,
+function binding.
 
-arguments: (((FUNC ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
-  (list* 'letf*
-	 (mapcar
-	  #'(lambda (x)
-	      (if (or (and (fboundp (car x))
-			   (eq (car-safe (symbol-function (car x))) 'macro))
-		      (cdr (assq (car x) byte-compile-macro-environment)))
-		  (error "Use `labels', not `flet', to rebind macro names"))
-	      (let ((func (list 'function*
-				(list 'lambda (cadr x)
-				      (list* 'block (car x) (cddr x))))))
-		(if (and (cl-compiling-file)
-			 (boundp 'byte-compile-function-environment))
-		    (push (cons (car x) (eval func))
-			     byte-compile-function-environment))
-		(list (list 'symbol-function (list 'quote (car x))) func)))
-	  bindings)
-	 body))
+Normally you should use `labels', not `flet'; `labels' does not have the
+problems caused by dynamic scope, is less expensive when byte-compiled, and
+allows lexical shadowing of functions with byte-codes and byte-compile
+methods, where `flet' will fail.  The byte-compiler will warn when this
+happens.
+
+If you need to shadow some existing function at run time, and that function
+has no associated byte code or compiler macro, then `flet' is appropriate.
+
+arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
+  ;; XEmacs; leave warnings, errors and modifications of
+  ;; byte-compile-function-environment to the byte compiler. See
+  ;; byte-compile-initial-macro-environment in bytecomp.el.
+  (list*
+   'letf*
+   (mapcar
+    (function*
+     (lambda ((function . definition))
+       `((symbol-function ',function) 
+         ,(cons 'lambda (cdr (cl-transform-lambda definition function))))))
+    functions) form))
 
 ;;;###autoload
 (defmacro labels (bindings &rest body)
-  "Make temporary func bindings.
-This is like `flet', except the bindings are lexical instead of dynamic.
-Unlike `flet', this macro is fully compliant with the Common Lisp standard.
+  "Make temporary function bindings.
 
-arguments: (((FUNC ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
+This is like `flet', except the bindings are lexical instead of dynamic.
+Unlike `flet', this macro is compliant with the Common Lisp standard with
+regard to the scope and extent of the function bindings.
+
+Each function may be called from within FORM, from within the BODY of the
+function itself (that is, recursively), and from any other function bodies
+in FUNCTIONS.
+
+Within FORM, to access the function definition of a bound function (for
+example, to pass it as a FUNCTION argument to `map'), quote its symbol name
+using `function'.
+
+arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
+  ;; XEmacs; the byte-compiler has a much better implementation of `labels'
+  ;; in `byte-compile-initial-macro-environment' that is used in compiled
+  ;; code.
   (let ((vars nil) (sets nil)
         (byte-compile-macro-environment byte-compile-macro-environment))
     (while bindings
@@ -1764,8 +1782,6 @@ arguments: (((FUNC ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
     (cl-macroexpand-all (list* 'lexical-let vars (cons (cons 'setq sets) body))
 			byte-compile-macro-environment)))
 
-;; The following ought to have a better definition for use with newer
-;; byte compilers.
 ;;;###autoload
 (defmacro* macrolet ((&rest macros) &body form)
   "Make temporary macro definitions.
