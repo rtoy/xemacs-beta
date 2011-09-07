@@ -214,7 +214,8 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
               
               gtk_toolbar_insert (GTK_TOOLBAR(toolbar), item, -1);
               gtk_tool_item_set_tooltip_text (item,
-                                              LISP_STRING_TO_EXTERNAL (tb->help_string, Qctext));
+                                              LISP_STRING_TO_EXTERNAL (tb->help_string,
+                                                                       Qutf_8));
               g_signal_connect (G_OBJECT (item), "clicked",
                                 G_CALLBACK (gtk_toolbar_callback),
                                 (gpointer) tb);

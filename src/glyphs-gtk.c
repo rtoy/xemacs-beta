@@ -2608,7 +2608,7 @@ gtk_add_tab_item(Lisp_Object image_instance,
       name = item;
     }
 
-  c_name = LISP_STRING_TO_EXTERNAL (name, Qctext);
+  c_name = LISP_STRING_TO_EXTERNAL (name, Qutf_8);
 
   /* Dummy widget that the notbook wants to display when a tab is selected. */
   box = gtk_vbox_new (FALSE, 3);
