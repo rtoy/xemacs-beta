@@ -1763,7 +1763,8 @@ Within FORM, to access the function definition of a bound function (for
 example, to pass it as a FUNCTION argument to `map'), quote its symbol name
 using `function'.
 
-arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
+arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)
+"
   ;; XEmacs; the byte-compiler has a much better implementation of `labels'
   ;; in `byte-compile-initial-macro-environment' that is used in compiled
   ;; code.

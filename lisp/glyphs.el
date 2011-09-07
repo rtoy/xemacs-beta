@@ -1135,108 +1135,105 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 (defalias 'subwindow-height 'image-instance-height)
 ;;;;;;;;;; initialization
 
-(defun init-glyphs ()
-  ;; initialize default image types
-  (if (featurep 'x)
-    (set-console-type-image-conversion-list 'x
-     `(,@(if (featurep 'xpm) '(("\\.xpm\\'" [xpm :file nil] 2)))
-       ("\\.xbm\\'" [xbm :file nil] 2)
-       ("/bitmaps/" [xbm :file nil] 2)
-       ,@(if (featurep 'xpm) '(("\\`/\\* XPM \\*/" [xpm :data nil] 2)))
-       ,@(if (featurep 'xface) '(("\\`X-Face:" [xface :data nil] 2)))
-       ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)
-			       ("\\`GIF8[79]" [gif :data nil] 2)))
-       ,@(if (featurep 'jpeg) '(("\\.jpe?g\\'" [jpeg :file nil] 2)))
-       ;; all of the JFIF-format JPEG's that I've seen begin with
-       ;; the following.  I have no idea if this is standard.
-       ,@(if (featurep 'jpeg) '(("\\`\377\330\377\340\000\020JFIF"
-				 [jpeg :data nil] 2)))
-       ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
-       ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))
-       ("" [string :data nil] 2)
-       ("" [nothing]))))
-  ;; #### this should really be formatted-string, not string but we
-  ;; don't have it implemented yet
-  (if (featurep 'tty)
-      (progn
-	(set-console-type-image-conversion-list
-	 'tty
-         '(("\\.xpm\\'" [string :data nil] 2)
-           ("\\.xbm\\'" [string :data nil] 2)
-	   ("/bitmaps/" [string :data nil] 2)
-           ;; #define could also mean a bitmap as well as a version 1 XPM. Who
-           ;; cares.
-           ("^#define" [string :data "[xpm]"])
-	   ("\\`/\\* XPM \\*/" [string :data "[xpm]"])
-           ("\\`X-Face:" [string :data "[xface]"])
-           ("\\.gif\\'" [string :data nil] 2)
-           ("\\`GIF8[79]" [string :data "[gif]"])
-           ("\\.jpe?g\\'" [string :data nil] 2)
-	   ("\\`\377\330\340\000\020JFIF" [string :data "[jpeg]"])
-           ;; all of the JFIF-format JPEG's that I've seen begin with
-           ;; the following.  I have no idea if this is standard.
-           ("\\`\377\330\377\340\000\020JFIF" [string :data "[jpeg]"])
-           ("\\.png\\'" [string :data nil] 2)
-           ("\\`\211PNG" [string :data "[png]"])
-           ("" [string :data nil] 2)
-	   ;; this last one is here for pointers and icons and such --
-	   ;; strings are not allowed so they will be ignored.
-	   ("" [nothing])))
+(labels
+    ((init-glyphs ()
+       "Initialize default image types at dump time."
+       (if (featurep 'x)
+           (set-console-type-image-conversion-list
+            'x `(,@(if (featurep 'xpm) '(("\\.xpm\\'" [xpm :file nil] 2)))
+                 ("\\.xbm\\'" [xbm :file nil] 2)
+                 ("/bitmaps/" [xbm :file nil] 2)
+                 ,@(if (featurep 'xpm)
+                       '(("\\`/\\* XPM \\*/" [xpm :data nil] 2)))
+                 ,@(if (featurep 'xface)
+                       '(("\\`X-Face:" [xface :data nil] 2)))
+                 ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)
+                                         ("\\`GIF8[79]" [gif :data nil] 2)))
+                 ,@(if (featurep 'jpeg) '(("\\.jpe?g\\'" [jpeg :file nil] 2)))
+                 ;; all of the JFIF-format JPEG's that I've seen begin with
+                 ;; the following.  I have no idea if this is standard.
+                 ,@(if (featurep 'jpeg) '(("\\`\377\330\377\340\000\020JFIF"
+                                           [jpeg :data nil] 2)))
+                 ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
+                 ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))
+                 ("" [string :data nil] 2)
+                 ("" [nothing]))))
+       ;; #### this should really be formatted-string, not string but we
+       ;; don't have it implemented yet
+       (if (featurep 'tty)
+           (progn
+             (set-console-type-image-conversion-list
+              'tty
+              '(("\\.xpm\\'" [string :data nil] 2)
+                ("\\.xbm\\'" [string :data nil] 2)
+                ("/bitmaps/" [string :data nil] 2)
+                ;; #define could also mean a bitmap as well as a version 1
+                ;; XPM. Who cares.
+                ("^#define" [string :data "[xpm]"])
+                ("\\`/\\* XPM \\*/" [string :data "[xpm]"])
+                ("\\`X-Face:" [string :data "[xface]"])
+                ("\\.gif\\'" [string :data nil] 2)
+                ("\\`GIF8[79]" [string :data "[gif]"])
+                ("\\.jpe?g\\'" [string :data nil] 2)
+                ("\\`\377\330\340\000\020JFIF" [string :data "[jpeg]"])
+                ;; all of the JFIF-format JPEG's that I've seen begin with
+                ;; the following.  I have no idea if this is standard.
+                ("\\`\377\330\377\340\000\020JFIF" [string :data "[jpeg]"])
+                ("\\.png\\'" [string :data nil] 2)
+                ("\\`\211PNG" [string :data "[png]"])
+                ("" [string :data nil] 2)
+                ;; this last one is here for pointers and icons and such --
+                ;; strings are not allowed so they will be ignored.
+                ("" [nothing])))
 
-	;; finish initializing truncation glyph -- created internally
-	;; because it has a built-in bitmap
-	(set-glyph-image truncation-glyph "$" 'global 'tty)
+             ;; finish initializing truncation glyph -- created internally
+             ;; because it has a built-in bitmap
+             (set-glyph-image truncation-glyph "$" 'global 'tty)
 
-	;; finish initializing continuation glyph -- created internally
-	;; because it has a built-in bitmap
-	(set-glyph-image continuation-glyph "\\" 'global 'tty)
+             ;; finish initializing continuation glyph -- created internally
+             ;; because it has a built-in bitmap
+             (set-glyph-image continuation-glyph "\\" 'global 'tty)
 
-	;; finish initializing hscroll glyph -- created internally
-	;; because it has a built-in bitmap
-	(set-glyph-image hscroll-glyph "$" 'global 'tty)))
+             ;; finish initializing hscroll glyph -- created internally
+             ;; because it has a built-in bitmap
+             (set-glyph-image hscroll-glyph "$" 'global 'tty)))
 
-  ;; For streams, we don't want images at all -- dvl
-  (set-console-type-image-conversion-list 'stream '(("" [nothing])))
+       ;; For streams, we don't want images at all -- dvl
+       (set-console-type-image-conversion-list 'stream '(("" [nothing])))
 
+       (set-glyph-image octal-escape-glyph "\\")
+       (set-glyph-image control-arrow-glyph "^")
+       (set-glyph-image invisible-text-glyph " ...")
+       ;; (set-glyph-image hscroll-glyph "$")
 
-  (set-glyph-image octal-escape-glyph "\\")
-  (set-glyph-image control-arrow-glyph "^")
-  (set-glyph-image invisible-text-glyph " ...")
-  ;; (set-glyph-image hscroll-glyph "$")
+       (let ((face (make-face 'border-glyph
+                              "Truncation and continuation glyphs face")))
+         (set-glyph-face continuation-glyph face)
+         (set-glyph-face truncation-glyph face)
+         (set-glyph-face hscroll-glyph face))
 
-  (let ((face (make-face 'border-glyph
-			 "Truncation and continuation glyphs face")))
-    (set-glyph-face continuation-glyph face)
-    (set-glyph-face truncation-glyph face)
-    (set-glyph-face hscroll-glyph face))
+       ;; finish initializing xemacs logo -- created internally because it
+       ;; has a built-in bitmap
+       (if (featurep 'xpm)
+           (set-glyph-image xemacs-logo
+                            (concat "../etc/"
+                                    (if emacs-beta-version
+                                        "xemacs-beta.xpm"
+                                      "xemacs.xpm"))
+                            'global 'x))
+       (cond ((featurep 'xpm)
+              (set-glyph-image frame-icon-glyph
+                               (concat "../etc/" "xemacs-icon.xpm")
+                               'global 'x))
+             ((featurep 'x)
+              (set-glyph-image frame-icon-glyph
+                               (concat "../etc/" "xemacs-icon2.xbm")
+                               'global 'x)))
 
-  ;; finish initializing xemacs logo -- created internally because it
-  ;; has a built-in bitmap
-  (if (featurep 'xpm)
-      (set-glyph-image xemacs-logo
-		       (concat "../etc/"
-			       (if emacs-beta-version
-				   "xemacs-beta.xpm"
-				 "xemacs.xpm"))
-		       'global 'x))
-  (cond ((featurep 'xpm)
-	 (set-glyph-image frame-icon-glyph
-			  (concat "../etc/" "xemacs-icon.xpm")
-			  'global 'x))
-	((featurep 'x)
-	 (set-glyph-image frame-icon-glyph
-			  (concat "../etc/" "xemacs-icon2.xbm")
-			  'global 'x)))
-
-  (if (featurep 'tty)
-      (set-glyph-image xemacs-logo
-		       "XEmacs <insert spiffy graphic logo here>"
-		       'global 'tty))
-)
-
-(init-glyphs)
-
-(unintern 'init-glyphs) ;; This was dump time thing, no need to keep the
-			;; function around.
+       (if (featurep 'tty)
+           (set-glyph-image xemacs-logo
+                            "XEmacs <insert spiffy graphic logo here>"
+                            'global 'tty))))
+  (init-glyphs))
 
 ;;; glyphs.el ends here.

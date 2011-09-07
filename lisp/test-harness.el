@@ -713,11 +713,11 @@ For example, invoke \"xemacs -batch -f batch-test-emacs tests\""
       ;; probably should just use (length "byte-compiler-tests.el")
       ;; and 5-place sizes -- this will also work for the file-by-file
       ;; printing when Adrian's kludge gets reverted
-      (flet ((print-width (i)
-	       (let ((x 10) (y 1))
-		 (while (>= i x)
-		   (setq x (* 10 x) y (1+ y)))
-		 y)))
+      (labels ((print-width (i)
+                 (let ((x 10) (y 1))
+                   (while (>= i x)
+                     (setq x (* 10 x) y (1+ y)))
+                   y)))
 	(while results
 	  (let* ((head (car results))
 		 (nn (length (file-name-nondirectory (first head))))

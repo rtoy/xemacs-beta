@@ -1,5 +1,39 @@
 2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* simple.el (transpose-subr):
+	* specifier.el (let-specifier):
+	* specifier.el (derive-device-type-from-tag-set):
+	* test-harness.el (batch-test-emacs):
+	* x-compose.el (alias-colon-to-doublequote):
+	* mule/chinese.el (make-chinese-cns11643-charset):
+	* mule/mule-cmds.el (set-locale-for-language-environment):
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	* mule/mule-x-init.el (x-use-halfwidth-roman-font):
+	* about.el (about-xemacs):
+	* about.el (about-hackers):
+	* diagnose.el (show-memory-usage):
+	* diagnose.el (show-object-memory-usage-stats):
+	* diagnose.el (show-mc-alloc-memory-usage):
+	* diagnose.el (show-gc-stats):
+	* dialog.el (make-dialog-box):
+	* faces.el:
+	* faces.el (Face-frob-property):
+	* faces.el (set-face-stipple):
+	* glyphs.el:
+	* glyphs.el (init-glyphs): Removed.
+	* help-macro.el (make-help-screen):
+	* info.el (Info-construct-menu):
+	* keymap.el (key-sequence-list-description):
+	* lisp-mode.el (construct-lisp-mode-menu):
+	* loadhist.el (unload-feature):
+	* minibuf.el (get-user-response):
+	* mouse.el (default-mouse-track-check-for-activation):
+	* mouse.el (mouse-track-insert-1):
+	Follow my own advice from the last commit and use #'labels instead
+	of #'flet in core code.
+
+2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el:
 	* bytecomp.el (for-effect): Move this earlier in the file, it's
 	referenced in byte-compile-initial-macro-environment.

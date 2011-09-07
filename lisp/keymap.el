@@ -417,8 +417,8 @@ by comparing the respective outputs of this function using `equal'."
 		(vconcat keys))
 	       (t
 		(vector keys)))))
-    (flet ((event-to-list (ev)
-	     (append (event-modifiers ev) (list (event-key ev)))))
+    (labels ((event-to-list (ev)
+               (append (event-modifiers ev) (list (event-key ev)))))
       (mapvector
        #'(lambda (key)
 	   (let* ((full-key
