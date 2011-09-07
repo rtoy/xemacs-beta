@@ -366,7 +366,7 @@ gtk_set_frame_text_value (struct frame *UNUSED (f), Ibyte *value,
     for (ptr = value; *ptr; ptr++)
       if (!byte_ascii_p (*ptr))
 	{
-	  char *tmp = ITEXT_TO_EXTERNAL (value, Qctext);
+	  char *tmp = ITEXT_TO_EXTERNAL (value, Qutf_8);
 	  the_text = tmp;
 	  break;
 	}
@@ -876,7 +876,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 #endif
 
   if (STRINGP (f->name))
-    name = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
+    name = LISP_STRING_TO_EXTERNAL (f->name, Qutf_8);
   else
     name = "emacs";
 

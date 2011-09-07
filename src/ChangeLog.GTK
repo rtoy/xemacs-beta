@@ -1,3 +1,15 @@
+2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame-gtk.c (gtk_set_frame_text_value):
+	* frame-gtk.c (gtk_create_widgets):
+	* glyphs-gtk.c (gtk_add_tab_item):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* toolbar-gtk.c (gtk_output_toolbar):
+	* ui-gtk.c (Fgtk_import_function_internal):
+        The various GTK widget functions now take their text encoded in
+        UTF-8, not CTEXT. Change our code to pass UTF-8, avoiding some
+        errors from Pango, especially with buffer names in the gutter.
+
 2011-08-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select-gtk.c:

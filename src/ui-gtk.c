@@ -658,7 +658,8 @@ Import a function into the XEmacs namespace.
 #if DEBUG_XEMACS
   else
     {
-      stderr_out ("Found function  %s\n",  LISP_STRING_TO_EXTERNAL (name, Qctext));
+      stderr_out ("Found function  %s\n",
+                  LISP_STRING_TO_EXTERNAL (name, Qnative));
     }
 #endif
   
