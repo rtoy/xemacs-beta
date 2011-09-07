@@ -1016,7 +1016,7 @@ multi-charset environments."
   ;;     clearly added after-the-fact, don't deserve to live.  DOCUMENT
   ;;     THIS SHIT!
 
-  (flet
+  (labels
       (
 
        ;; non-nil if either instantiator non-nil, or nil instantiators allowed.
@@ -1139,7 +1139,7 @@ multi-charset environments."
 			  (cons prop 'tty)
 			  tag-set exact-p)))
 
-       ;; end of flets
+       ;; end of labels
        )
 
     ;; the function itself
@@ -2049,11 +2049,11 @@ in that frame; otherwise change each frame."
 		     (t nil))))
       ;; We're signaling a continuable error; let's make sure the
       ;; function `stipple-pixmap-p' at least exists.
-      (flet ((stipple-pixmap-p (pixmap)
-	       (or (stringp pixmap)
-		   (and (listp pixmap) (eql (length pixmap) 3)))))
+      (labels ((stipple-pixmap-p (pixmap)
+                 (or (stringp pixmap)
+                     (and (listp pixmap) (eql (length pixmap) 3)))))
 	(setq pixmap (signal 'wrong-type-argument
-			     (list 'stipple-pixmap-p pixmap)))))
+			     (list #'stipple-pixmap-p pixmap)))))
     (check-type frame (or null frame))
     (set-face-background-pixmap face instantiator frame)))
 

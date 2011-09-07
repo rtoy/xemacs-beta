@@ -39,14 +39,14 @@ Traditionally, Asian characters have been displayed so that they
 occupy exactly twice the screen space of ASCII (`halfwidth')
 characters.  On many systems, e.g. Sun CDE systems, this can only be
 achieved by using a national variant roman font to display ASCII."
-  (flet ((charset-font-width (charset)
-	   (font-instance-width
-	    (face-font-instance 'default (selected-device) charset)))
+  (labels ((charset-font-width (charset)
+             (font-instance-width
+              (face-font-instance 'default (selected-device) charset)))
 	 
-	 (twice-as-wide (cs1 cs2)
-	   (let ((width1 (charset-font-width cs1))
-		 (width2 (charset-font-width cs2)))
-	     (and width1 width2 (eq (+ width1 width1) width2)))))
+           (twice-as-wide (cs1 cs2)
+             (let ((width1 (charset-font-width cs1))
+                   (width2 (charset-font-width cs2)))
+               (and width1 width2 (eq (+ width1 width1) width2)))))
 
     (when (eq 'x (device-type))
       (let ((original-registries (charset-registries 'ascii)))

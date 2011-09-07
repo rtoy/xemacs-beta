@@ -484,10 +484,10 @@ Example:
     (let-specifier ((modeline-shadow-thickness 0 (selected-window)))
       (sit-for 1))"
   (check-argument-type 'listp specifier-list)
-  (flet ((gensym-frob (x name)
-	   (if (or (atom x) (eq (car x) 'quote))
-	       (list x)
-	     (list (gensym name) x))))
+  (labels ((gensym-frob (x name)
+             (if (or (atom x) (eq (car x) 'quote))
+                 (list x)
+               (list (gensym name) x))))
     ;; VARLIST is a list of
     ;; ((SPECIFIERSYM SPECIFIER) (VALUE) (LOCALESYM LOCALE)
     ;;  (TAG-SET) (HOW-TO-ADD))
@@ -854,11 +854,9 @@ DEVTYPE-SPEC flag; thus, it may return nil."
   (or try-stages (setq try-stages 1))
   (if (eq try-stages t) (setq try-stages 3))
   (check-argument-range try-stages 1 3)
-  (flet ((delete-wrong-type (x)
-           (delete-if-not
-            #'(lambda (y)
-                (device-type-matches-spec y devtype-spec))
-            x)))
+  (labels ((delete-wrong-type (x)
+             (delete-if-not
+              #'(lambda (y) (device-type-matches-spec y devtype-spec)) x)))
     (let ((both (intersection 
                  (if current-device
                      (list (device-type current-device))

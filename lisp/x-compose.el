@@ -865,14 +865,14 @@ value of characters under non-Mule. "
 
 ;; Make colon equivalent to doublequote for diaeresis processing.  Some
 ;; Xlibs do this.
-(flet ((alias-colon-to-doublequote (keymap)
-         (map-keymap
-          #'(lambda (key value)
-              (when (keymapp value)
-                (alias-colon-to-doublequote value))
-              (when (eq key '\")
-                (define-key keymap ":" value)))
-          keymap)))
+(labels ((alias-colon-to-doublequote (keymap)
+           (map-keymap
+            #'(lambda (key value)
+                (when (keymapp value)
+                  (alias-colon-to-doublequote value))
+                (when (eq key '\")
+                  (define-key keymap ":" value)))
+            keymap)))
   (alias-colon-to-doublequote compose-map))
 
 ;;; Electric dead keys: making a' mean a-acute.

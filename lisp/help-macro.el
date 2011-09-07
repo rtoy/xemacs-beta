@@ -86,24 +86,25 @@ Lisp expressions in those arguments."
   `(defun ,fname ()
      ,(eval help-text)
      (interactive)
-     (flet ((help-read-key (prompt)
-	      ;; This is in `flet' to avoid problems with autoloading.
-	      ;; #### The function is ill-conceived -- there should be
-	      ;; a way to do it without all the hassle!
-	      (let (events)
-		(while (not (key-press-event-p
-			     (aref (setq events (read-key-sequence prompt)) 0)))
-		  ;; Mouse clicks are not part of the help feature, so
-		  ;; reexecute them in the standard environment.
-		  (mapc 'dispatch-event events))
-		(let ((key (nconc (event-modifiers (aref events 0))
-				  (list (event-key (aref events 0))))))
-		  ;; Make the HELP key translate to C-h.
-		  (when (lookup-key function-key-map key)
-		    (setq key (lookup-key function-key-map key)))
-		  (if (eq (length key) 1)
-		      (car key)
-		    key)))))
+     (labels
+         ((help-read-key (prompt)
+            ;; This is in `labels' to avoid problems with autoloading.
+            ;; #### The function is ill-conceived -- there should be
+            ;; a way to do it without all the hassle!
+            (let (events)
+              (while (not (key-press-event-p
+                           (aref (setq events (read-key-sequence prompt)) 0)))
+                ;; Mouse clicks are not part of the help feature, so
+                ;; reexecute them in the standard environment.
+                (mapc 'dispatch-event events))
+              (let ((key (nconc (event-modifiers (aref events 0))
+                                (list (event-key (aref events 0))))))
+                ;; Make the HELP key translate to C-h.
+                (when (lookup-key function-key-map key)
+                  (setq key (lookup-key function-key-map key)))
+                (if (eq (length key) 1)
+                    (car key)
+                  key)))))
        (let ((line-prompt
 	      (substitute-command-keys ,(eval help-line))))
 	 (when three-step-help

@@ -3232,14 +3232,14 @@ Used to construct the menubar submenu and popup menu."
 	up-p prev-p next-p menu xrefs subnodes in)
     (save-excursion
       ;; `one-space' fixes "Notes:" xrefs that are split across lines.
-      (flet
+      (labels
 	  ((one-space (text)
-		      (let (i)
-			(while (setq i (string-match "[ \n\t]+" text i))
-			  (setq text (concat (substring text 0 i) " "
-					     (substring text (match-end 0))))
-			  (setq i (1+ i)))
-			text)))
+             (let (i)
+               (while (setq i (string-match "[ \n\t]+" text i))
+                 (setq text (concat (substring text 0 i) " "
+                                    (substring text (match-end 0))))
+                 (setq i (1+ i)))
+               text)))
 	(goto-char (point-min))
 	(if (looking-at ".*\\bNext:") (setq next-p t))
 	(if (looking-at ".*\\bPrev:") (setq prev-p t))

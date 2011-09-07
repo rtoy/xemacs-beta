@@ -467,21 +467,21 @@ firewalls) in order to work correctly.
 XEmacs is the result of the time and effort of many people.  The
 developers responsible for this release are:\n\n")
 
-    (flet ((setup-person (who)
-	    (widget-insert "\t* ")
-	    (let* ((entry (assq who xemacs-hackers))
-		   (name (cadr entry))
-		   (address (caddr entry)))
-	      (widget-create 'link
-			     :help-echo (concat "Find out more about " name)
-			     :button-prefix ""
-			     :button-suffix ""
-			     :action 'about-maintainer
-			     :tag name
-			     :value who)
-	      (widget-insert (format "  <%s>\n" address)))))
+    (labels ((setup-person (who)
+               (widget-insert "\t* ")
+               (let* ((entry (assq who xemacs-hackers))
+                      (name (cadr entry))
+                      (address (caddr entry)))
+                 (widget-create 'link
+                                :help-echo (concat "Find out more about " name)
+                                :button-prefix ""
+                                :button-suffix ""
+                                :action 'about-maintainer
+                                :tag name
+                                :value who)
+                 (widget-insert (format "  <%s>\n" address)))))
       ;; Setup persons responsible for this release.
-      (mapc 'setup-person about-current-release-maintainers)
+      (mapc #'setup-person about-current-release-maintainers)
       (widget-insert "\n\t* ")
       (widget-create 'link :help-echo "A legion of XEmacs hackers"
 		     :action 'about-hackers
@@ -2009,14 +2009,12 @@ apologize!  You can see some of our faces under the links.\n\n"
 		      'about-headline-face)
      "\n\n")
     (mapc 'about-show-linked-info about-once-and-future-hackers)
-    (flet ((print-short (name addr &optional shortinfo)
-	     (widget-insert (concat (about-with-face name 'italic)
-				    (about-tabs name)
-				    "<"))
-	     (about-mailto-link addr)
-	     (widget-insert
-	      (concat ">\n"
-		      (if shortinfo (concat shortinfo "\n") "")))))
+    (labels ((print-short (name addr &optional shortinfo)
+               (widget-insert (concat (about-with-face name 'italic)
+                                      (about-tabs name) "<"))
+               (about-mailto-link addr)
+               (widget-insert
+                (concat ">\n" (if shortinfo (concat shortinfo "\n") "")))))
       (widget-insert
        "\n\
 In addition to those just mentioned, the following people have spent a

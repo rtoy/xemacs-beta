@@ -504,158 +504,159 @@ The keywords allowed are
   `cancel' value if either the ESC key is pressed or the Cancel button
   is selected.  If the message box has no Cancel button, pressing ESC has
   no effect."
-  (flet ((dialog-box-modal-loop (thunk)
-	   (let* ((frames (frame-list))
-		  (result
-		   ;; ok, this is extremely tricky.  normally a modal
-		   ;; dialog will pop itself down using (dialog-box-finish)
-		   ;; or (dialog-box-cancel), which throws back to this
-		   ;; catch.  but question dialog boxes pop down themselves
-		   ;; regardless, so a badly written question dialog box
-		   ;; that does not use (dialog-box-finish) could seriously
-		   ;; wedge us.  furthermore, we disable all other frames
-		   ;; in order to implement modality; we need to restore
-		   ;; them before the dialog box is destroyed, because
-		   ;; otherwise windows at least will notice that no top-
-		   ;; level window can have the focus and will shift the
-		   ;; focus to a different app, raising it and obscuring us.
-		   ;; so we create `delete-dialog-box-hook', which is
-		   ;; called right *before* the dialog box gets destroyed.
-		   ;; here, we put a hook on it, and when it's our dialog
-		   ;; box and not someone else's that's being destroyed,
-		   ;; we reenable all the frames and remove the hook.
-		   ;; BUT ...  we still have to deal with exiting the
-		   ;; modal loop in case it doesn't happen before us.
-		   ;; we can't do this until after the callbacks for this
-		   ;; dialog box get executed, and that doesn't happen until
-		   ;; after the dialog box is destroyed.  so to keep things
-		   ;; synchronous, we enqueue an eval event, which goes into
-		   ;; the same queue as the misc-user events encapsulating
-		   ;; the dialog callbacks and will go after it (because
-		   ;; destroying the dialog box happens after processing
-		   ;; its selection).  if the dialog boxes are written
-		   ;; properly, we don't see this eval event, because we've
-		   ;; already exited our modal loop. (Thus, we make sure the
-		   ;; function given in this eval event is actually defined
-		   ;; and does nothing.) If we do see it, though, we know
-		   ;; that we encountered a badly written dialog box and
-		   ;; need to exit now.  Currently we just return nil, but
-		   ;; maybe we should signal an error or issue a warning.
-		   (catch 'internal-dialog-box-finish
-		     (let ((id (eval thunk))
-			   (sym (gensym)))
-		       (fset sym
-			     `(lambda (did)
-				(when (eq ',id did)
-				  (mapc 'enable-frame ',frames)
-				  (enqueue-eval-event
-				   'internal-make-dialog-box-exit did)
-				  (remove-hook 'delete-dialog-box-hook
-					       ',sym))))
-		       (if (framep id)
-			   (add-hook 'delete-frame-hook sym)
-			 (add-hook 'delete-dialog-box-hook sym))
-		       (mapc 'disable-frame frames)
-		       (block nil
-			 (while t
-			   (let ((event (next-event)))
-			     (if (and (eval-event-p event)
-				      (eq (event-function event)
-					  'internal-make-dialog-box-exit)
-				      (eq (event-object event) id))
-				 (return '(nil))
-			       (dispatch-event event)))))))))
-	     (if (listp result)
-		 (car result)
-	       (signal 'quit nil)))))
+  (labels
+      ((dialog-box-modal-loop (thunk)
+         (let* ((frames (frame-list))
+                (result
+                 ;; ok, this is extremely tricky.  normally a modal dialog
+                 ;; will pop itself down using (dialog-box-finish) or
+                 ;; (dialog-box-cancel), which throws back to this catch.
+                 ;; but question dialog boxes pop down themselves
+                 ;; regardless, so a badly written question dialog box that
+                 ;; does not use (dialog-box-finish) could seriously wedge
+                 ;; us.  furthermore, we disable all other frames in order
+                 ;; to implement modality; we need to restore them before
+                 ;; the dialog box is destroyed, because otherwise windows
+                 ;; at least will notice that no top- level window can have
+                 ;; the focus and will shift the focus to a different app,
+                 ;; raising it and obscuring us.  so we create
+                 ;; `delete-dialog-box-hook', which is called right *before*
+                 ;; the dialog box gets destroyed.  here, we put a hook on
+                 ;; it, and when it's our dialog box and not someone else's
+                 ;; that's being destroyed, we reenable all the frames and
+                 ;; remove the hook.  BUT ...  we still have to deal with
+                 ;; exiting the modal loop in case it doesn't happen before
+                 ;; us.  we can't do this until after the callbacks for this
+                 ;; dialog box get executed, and that doesn't happen until
+                 ;; after the dialog box is destroyed.  so to keep things
+                 ;; synchronous, we enqueue an eval event, which goes into
+                 ;; the same queue as the misc-user events encapsulating the
+                 ;; dialog callbacks and will go after it (because
+                 ;; destroying the dialog box happens after processing its
+                 ;; selection).  if the dialog boxes are written properly,
+                 ;; we don't see this eval event, because we've already
+                 ;; exited our modal loop. (Thus, we make sure the function
+                 ;; given in this eval event is actually defined and does
+                 ;; nothing.) If we do see it, though, we know that we
+                 ;; encountered a badly written dialog box and need to exit
+                 ;; now.  Currently we just return nil, but maybe we should
+                 ;; signal an error or issue a warning.
+                 (catch 'internal-dialog-box-finish
+                   (let ((id (eval thunk))
+                         (sym (gensym)))
+                     (fset sym
+                           `(lambda (did)
+                              (when (eq ',id did)
+                                (mapc 'enable-frame ',frames)
+                                (enqueue-eval-event
+                                 'internal-make-dialog-box-exit did)
+                                (remove-hook 'delete-dialog-box-hook
+                                             ',sym))))
+                     (if (framep id)
+                         (add-hook 'delete-frame-hook sym)
+                       (add-hook 'delete-dialog-box-hook sym))
+                     (mapc 'disable-frame frames)
+                     (block nil
+                       (while t
+                         (let ((event (next-event)))
+                           (if (and (eval-event-p event)
+                                    (eq (event-function event)
+                                        'internal-make-dialog-box-exit)
+                                    (eq (event-object event) id))
+                               (return '(nil))
+                             (dispatch-event event)))))))))
+           (if (listp result)
+               (car result)
+             (signal 'quit nil)))))
     (case type
       (general
-       (flet ((create-dialog-box-frame ()
-                (let* ((ftop (frame-property parent 'top))
-                       (fleft (frame-property parent 'left))
-                       (fwidth (frame-pixel-width parent))
-                       (fheight (frame-pixel-height parent))
-                       (fonth (font-height (face-font 'default)))
-                       (fontw (font-width (face-font 'default)))
-                       (properties (append properties
-                                              dialog-frame-plist))
-                       (dfheight (plist-get properties 'height))
-                       (dfwidth (plist-get properties 'width))
-                       (unmapped (plist-get properties
-                                            'initially-unmapped))
-                       (gutter-spec spec)
-                       (name (or (plist-get properties 'name) "XEmacs"))
-                       (frame nil))
-                  (plist-remprop properties 'initially-unmapped)
-                  ;; allow the user to just provide a glyph
-                  (or (glyphp spec) (setq spec (make-glyph spec)))
-                  (setq gutter-spec (copy-sequence "\n"))
-                  (set-extent-begin-glyph (make-extent 0 1 gutter-spec)
-                                          spec)
-                  ;; under FVWM at least, if I don't specify the
-                  ;; initial position, it ends up always at (0, 0).
-                  ;; xwininfo doesn't tell me that there are any
-                  ;; program-specified position hints, so it must be
-                  ;; an FVWM bug.  So just be smashing and position in
-                  ;; the center of the selected frame.
-                  (setq frame
-                        (make-frame
-                         (append properties
-                                 `(popup
-                                   ,parent initially-unmapped t
-                                   menubar-visible-p nil
-                                   has-modeline-p nil
-                                   default-toolbar-visible-p nil
-                                   top-gutter-visible-p t
-                                   top-gutter-height ,(* dfheight fonth)
-                                   top-gutter ,gutter-spec
-                                   minibuffer none
-                                   name ,name
-                                   modeline-shadow-thickness 0
-                                   vertical-scrollbar-visible-p nil
-                                   horizontal-scrollbar-visible-p nil
-                                   unsplittable t
-                                   internal-border-width 8
-                                   left ,(+ fleft (- (/ fwidth 2)
-                                                     (/ (* dfwidth
-                                                           fontw)
-                                                        2)))
-                                   top ,(+ ftop (- (/ fheight 2)
-                                                   (/ (* dfheight
-                                                         fonth)
-                                                      2)))))))
-                  (set-face-foreground 'modeline [default foreground] frame)
-                  (set-face-background 'modeline [default background] frame)
-                  ;; resize before mapping
-                  (when autosize
-                    (set-frame-displayable-pixel-size 
-                     frame
-                     (image-instance-width 
-                      (glyph-image-instance spec 
-                                            (frame-selected-window frame)))
-                     (image-instance-height 
-                      (glyph-image-instance spec 
-                                            (frame-selected-window frame)))))
-                  ;; somehow, even though the resizing is supposed
-                  ;; to be while the frame is not visible, a
-                  ;; visible resize is perceptible
-                  (unless unmapped (make-frame-visible frame))
-                  (let ((newbuf (generate-new-buffer " *dialog box*")))
-                    (set-buffer-dedicated-frame newbuf frame)
-                    (set-frame-property frame 'dialog-box-buffer newbuf)
-                    (set-window-buffer (frame-root-window frame) newbuf)
-                    (with-current-buffer newbuf
-                      (set (make-local-variable 'frame-title-format)
-                           title)
-                      (add-local-hook 'delete-frame-hook
-                                      #'(lambda (frame)
-                                          (kill-buffer
-                                           (frame-property
-                                            frame
-                                            'dialog-box-buffer))))))
-                  frame)))
+       (labels
+        ((create-dialog-box-frame ()
+           (let* ((ftop (frame-property parent 'top))
+                  (fleft (frame-property parent 'left))
+                  (fwidth (frame-pixel-width parent))
+                  (fheight (frame-pixel-height parent))
+                  (fonth (font-height (face-font 'default)))
+                  (fontw (font-width (face-font 'default)))
+                  (properties (append properties
+                                      dialog-frame-plist))
+                  (dfheight (plist-get properties 'height))
+                  (dfwidth (plist-get properties 'width))
+                  (unmapped (plist-get properties
+                                       'initially-unmapped))
+                  (gutter-spec spec)
+                  (name (or (plist-get properties 'name) "XEmacs"))
+                  (frame nil))
+             (plist-remprop properties 'initially-unmapped)
+             ;; allow the user to just provide a glyph
+             (or (glyphp spec) (setq spec (make-glyph spec)))
+             (setq gutter-spec (copy-sequence "\n"))
+             (set-extent-begin-glyph (make-extent 0 1 gutter-spec)
+                                     spec)
+             ;; under FVWM at least, if I don't specify the
+             ;; initial position, it ends up always at (0, 0).
+             ;; xwininfo doesn't tell me that there are any
+             ;; program-specified position hints, so it must be
+             ;; an FVWM bug.  So just be smashing and position in
+             ;; the center of the selected frame.
+             (setq frame
+                   (make-frame
+                    (append properties
+                            `(popup
+                              ,parent initially-unmapped t
+                              menubar-visible-p nil
+                              has-modeline-p nil
+                              default-toolbar-visible-p nil
+                              top-gutter-visible-p t
+                              top-gutter-height ,(* dfheight fonth)
+                              top-gutter ,gutter-spec
+                              minibuffer none
+                              name ,name
+                              modeline-shadow-thickness 0
+                              vertical-scrollbar-visible-p nil
+                              horizontal-scrollbar-visible-p nil
+                              unsplittable t
+                              internal-border-width 8
+                              left ,(+ fleft (- (/ fwidth 2)
+                                                (/ (* dfwidth
+                                                      fontw)
+                                                   2)))
+                              top ,(+ ftop (- (/ fheight 2)
+                                              (/ (* dfheight
+                                                    fonth)
+                                                 2)))))))
+             (set-face-foreground 'modeline [default foreground] frame)
+             (set-face-background 'modeline [default background] frame)
+             ;; resize before mapping
+             (when autosize
+               (set-frame-displayable-pixel-size 
+                frame
+                (image-instance-width 
+                 (glyph-image-instance spec 
+                                       (frame-selected-window frame)))
+                (image-instance-height 
+                 (glyph-image-instance spec 
+                                       (frame-selected-window frame)))))
+             ;; somehow, even though the resizing is supposed
+             ;; to be while the frame is not visible, a
+             ;; visible resize is perceptible
+             (unless unmapped (make-frame-visible frame))
+             (let ((newbuf (generate-new-buffer " *dialog box*")))
+               (set-buffer-dedicated-frame newbuf frame)
+               (set-frame-property frame 'dialog-box-buffer newbuf)
+               (set-window-buffer (frame-root-window frame) newbuf)
+               (with-current-buffer newbuf
+                 (set (make-local-variable 'frame-title-format)
+                      title)
+                 (add-local-hook 'delete-frame-hook
+                                 #'(lambda (frame)
+                                     (kill-buffer
+                                      (frame-property
+                                       frame
+                                       'dialog-box-buffer))))))
+             frame)))
         (if modal
-            (dialog-box-modal-loop '(create-dialog-box-frame))
+            (dialog-box-modal-loop (list #'create-dialog-box-frame))
           (create-dialog-box-frame))))
       (question
        (remf rest :modal)
