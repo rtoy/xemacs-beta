@@ -472,6 +472,8 @@ easily determined from the input file.")
 	    (fmakunbound elt)
 	  (fset (car elt) (cdr elt)))))))
 
+(defvar for-effect) ; ## Kludge!  This should be an arg, not a special.
+
 (defconst byte-compile-initial-macro-environment
   `((byte-compiler-options
       . ,#'(lambda (&rest forms)
@@ -505,53 +507,99 @@ easily determined from the input file.")
               `(symbol-value ',gensym))))
     (labels
         . ,#'(lambda (bindings &rest body)
-               (let* ((bindings
-                       (mapcar (function*
-                                (lambda ((name . binding))
-                                  (list* name 'lambda
-                                         (cdr (cl-transform-lambda binding
-                                                                   name)))))
-                               bindings))
-                      ;; These placeholders are to ensure that the
-                      ;; lexically-scoped functions can be called from each
-                      ;; other.
+               (let* ((names (mapcar 'car bindings))
+                      (lambdas (mapcar
+                                (function*
+                                 (lambda ((name . definition))
+                                   (cons 'lambda (cdr (cl-transform-lambda
+                                                       definition name)))))
+                                bindings))
                       (placeholders
-                       (mapcar #'(lambda (binding)
-                                   (cons (car binding)
-                                         (make-byte-code (third binding)
-                                                         "\xc0\x87" [42] 1)))
-                               bindings))
+                       (mapcar #'(lambda (lambda)
+                                   (make-byte-code (second lambda) "\xc0\x87"
+                                                   [42] 1))
+                               lambdas))
                       (byte-compile-macro-environment
-                       (nconc
-                        (mapcar
-                         (function*
-                          (lambda ((name . placeholder))
-                            (cons name `(lambda (&rest cl-labels-args)
-                                          (list* 'funcall ,placeholder
-                                                 cl-labels-args)))))
-                         placeholders)
-                        byte-compile-macro-environment))
-                      placeholder-map)
-                 (setq bindings
-                       (mapcar (function*
-                                (lambda ((name . lambda))
-                                  (cons name (byte-compile-lambda lambda))))
-                               bindings)
-                       placeholder-map
-                       (mapcar (function*
-                                (lambda ((name . compiled-function))
-                                  (cons (cdr (assq name placeholders))
-                                        compiled-function)))
-                               bindings))
-                 (loop
-                   for (placeholder . compiled-function)
-                   in placeholder-map
-                   do (nsubst compiled-function placeholder bindings
-                              :test 'eq :descend-structures t))
-                 (cl-macroexpand-all (cons 'progn body)
-                                     (sublis placeholder-map
-                                             byte-compile-macro-environment
-                                             :test 'eq))))))
+                       (pairlis names (mapcar
+                                       #'(lambda (placeholder)
+                                           `(lambda (&rest cl-labels-args)
+                                              (list* 'funcall ,placeholder
+                                                     cl-labels-args)))
+                                       placeholders)
+                                byte-compile-macro-environment))
+                      (gensym (gensym)))
+                 (put gensym 'byte-compile-label-alist
+                      (pairlis placeholders
+                               (mapcar 'second (mapcar 'cl-macroexpand-all
+                                                       lambdas))))
+                 (put gensym 'byte-compile
+                      #'(lambda (form)
+                          (let* ((byte-compile-label-alist
+                                  (get (car form) 'byte-compile-label-alist)))
+                            (dolist (acons byte-compile-label-alist)
+                              (setf (cdr acons)
+                                    (byte-compile-lambda (cdr acons))))
+                            (byte-compile-body-do-effect
+                             (sublis byte-compile-label-alist (cdr form)
+                                     :test #'eq))
+                            (dolist (acons byte-compile-label-alist)
+                              (nsubst (cdr acons) (car acons)
+                                      byte-compile-label-alist :test #'eq
+                                      :descend-structures t)))))
+                 (cl-macroexpand-all (cons gensym body)
+                                     byte-compile-macro-environment))))
+    (flet .
+      ,#'(lambda (bindings &rest body)
+           (let* ((names (mapcar 'car bindings))
+                  (lambdas (mapcar
+                            (function*
+                             (lambda ((function . definition))
+                               (cons 'lambda (cdr (cl-transform-lambda
+                                                   definition function)))))
+                            bindings))
+                  (gensym (gensym)))
+             (put gensym 'byte-compile-flet-environment
+                  (pairlis names lambdas))
+             (put gensym 'byte-compile
+                  #'(lambda (form)
+                      (let* ((byte-compile-flet-environment
+                              (get (car form) 'byte-compile-flet-environment))
+                             (byte-compile-function-environment
+                              (append byte-compile-flet-environment
+                                      byte-compile-function-environment))
+                             name)
+                        (dolist (acons byte-compile-flet-environment)
+                          (setq name (car acons))
+                          (if (and (memq 'redefine byte-compile-warnings)
+                                   (or (cdr
+                                        (assq name
+                                              byte-compile-macro-environment))
+                                       (eq 'macro
+                                           (ignore-errors
+                                             (car (symbol-function name))))))
+                              ;; XEmacs change; this is a warning, not an
+                              ;; error. The only use case for #'flet instead
+                              ;; of #'labels is to shadow a dynamically
+                              ;; bound function at runtime, and it's
+                              ;; reasonable to do this even if that symbol
+                              ;; has a macro binding at compile time.
+                              (byte-compile-warn
+                               "flet: redefining macro %s as a function"
+                               name))
+                          (if (get name 'byte-opcode)
+                              (byte-compile-warn
+                               "flet: %s has a byte code, consider #'labels"
+                               name))
+                          (if (get name 'byte-compile) 
+                              (byte-compile-warn
+                               "flet: %s has a byte-compile method, 
+consider #'labels" name)))
+                        (byte-compile-form (second form)))))
+             `(,gensym (letf* ,(mapcar* #'(lambda (name lambda)
+                                            `((symbol-function ',name)
+                                              ,lambda)) names lambdas)
+                         ,@body))))))
+
   "The default macro-environment passed to macroexpand by the compiler.
 Placing a macro here will cause a macro to have different semantics when
 expanded by the compiler as when expanded by the interpreter.")
@@ -2085,8 +2133,6 @@ list that represents a doc string reference.
 	 (when byte-compile-output-preface
 	   (princ ")" byte-compile-outbuffer))))))
   nil)
-
-(defvar for-effect) ; ## Kludge!  This should be an arg, not a special.
 
 (defun byte-compile-keep-pending (form &optional handler)
   (if (memq byte-optimize '(t source))
@@ -4022,6 +4068,10 @@ forcing function quoting" ,en (car form))))
     (setq for-effect nil)))
 
 (defun byte-compile-funcall (form)
+  (if (and (memq 'callargs byte-compile-warnings)
+           (byte-compile-constp (second form)))
+      (byte-compile-callargs-warn (cons (cl-const-expr-val (second form))
+                                        (nthcdr 2 form))))
   (mapc 'byte-compile-form (cdr form))
   (byte-compile-out 'byte-call (length (cdr (cdr form)))))
 

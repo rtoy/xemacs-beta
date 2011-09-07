@@ -1,3 +1,37 @@
+2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (for-effect): Move this earlier in the file, it's
+	referenced in byte-compile-initial-macro-environment.
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	In the byte-compile-macro-environment definition for #'labels, put
+	off the compiling the lambda bodies until the point where the rest
+	of the form is being compiled, allowing the lambda bodies to
+	access appropriate values for byte-compile-bound-variables, and
+	reducing excessive warning about free variables.
+
+	Add a byte-compile-macro-environment definition for #'flet. This
+	modifies byte-compile-function-environment appropriately, and
+	warns about bindings of functions that have macro definitions in
+	the current environment, about functions that have byte codes, and
+	about functions that have byte-compile methods (which may not do
+	what the user wants at runtime).
+	* bytecomp.el (byte-compile-funcall):
+	If FUNCTION is constant, call #'byte-compile-callargs-warn if
+	that's appropriate, giving warnings about problems with calling
+	functions bound with #'labels.
+
+	* cl-macs.el:
+	* cl-macs.el (flet):
+	Mention the main difference from Common Lisp, that the bindings
+	are dynamic, not lexical. Counsel the use of #'labels, not #'flet,
+	for this and other reasons. Explain the limited single use case for
+	#'flet. Cross-reference to bytecomp.el in a comment.
+	* cl-macs.el (labels):
+	Go into detail on which functions may be called from
+	where. Explain how to access the function definition of a label
+	within FORM. Add a comment cross-referencing to bytecomp.el.
+
 2011-09-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el (set-language-environment-coding-systems):
