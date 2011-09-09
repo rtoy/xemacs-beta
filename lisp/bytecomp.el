@@ -1864,7 +1864,11 @@ With argument, insert value in current buffer after the form."
 			       (looking-at ";"))
 		   (forward-line 1))
 		 (not (eobp)))
-	  (byte-compile-file-form (read byte-compile-inbuffer)))
+	  (byte-compile-file-form (read byte-compile-inbuffer))
+          (or (eq byte-compile-inbuffer (current-buffer))
+              (error 'invalid-state 
+                     "byte compiling didn't save-excursion appropriately"
+                     (current-buffer))))
 
 	;; Compile pending forms at end of file.
 	(byte-compile-flush-pending)
