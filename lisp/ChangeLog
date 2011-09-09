@@ -1,3 +1,13 @@
+2011-09-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-from-buffer):
+	If compiling a form has changed the current buffer (that is, some
+	eval-when-compile form hasn't done save-excursion when
+	appropriate), error and exit; we can't guarantee we'll give useful
+	code in that context. See
+	http://mid.gmane.org/20110909110831.GD2875@acm.acm and related
+	discussion. 
+
 2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (transpose-subr):
