@@ -1,3 +1,13 @@
+2011-09-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-defsubst-expand):
+	Change set 2a6a8da4dd7c of
+	http://mid.gmane.org/19966.17522.332164.615228@parhasard.net
+	wasn't sufficiently comprehensive, symbol macros can be mutually
+	rather than simply recursive, and they can equally hang. Thanks
+	for the bug report, Michael Sperber, and for the test case,
+	Stephen Turnbull.
+
 2011-09-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-from-buffer):
