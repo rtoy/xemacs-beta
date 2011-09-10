@@ -3236,10 +3236,20 @@ surrounded by (block NAME ...)."
     (let* ((symbol-macros nil)
            (lets (mapcan #'(lambda (argn argv)
                              (if (or simple (cl-const-expr-p argv))
-                                 (progn (or (eq argn argv)
-					    (push (list argn argv)
-						  symbol-macros))
-                                        (and unsafe (list (list argn argv))))
+                                 (progn 
+				   ;; Avoid infinite loop on symbol macro
+				   ;; expansion, make sure none of the argvs
+				   ;; refer to the symbols in the argns.
+				   (or (block find
+                                         ;; Can't use cl-expr-contains, that
+                                         ;; doesn't descend lambdas:
+					 (subst nil argn argvs :test
+						#'(lambda (elt tree)
+						    (if (eq elt tree)
+							(return-from find t))))
+					 nil)
+				       (push (list argn argv) symbol-macros))
+				   (and unsafe (list (list argn argv))))
                                (list (list argn argv))))
                          argns argvs)))
       `(let ,lets
