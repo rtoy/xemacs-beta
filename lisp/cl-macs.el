@@ -3238,18 +3238,25 @@ surrounded by (block NAME ...)."
                              (if (or simple (cl-const-expr-p argv))
                                  (progn 
 				   ;; Avoid infinite loop on symbol macro
-				   ;; expansion, make sure none of the argvs
-				   ;; refer to the symbols in the argns.
+				   ;; expansion:
 				   (or (block find
-                                         ;; Can't use cl-expr-contains, that
-                                         ;; doesn't descend lambdas:
-					 (subst nil argn argvs :test
-						#'(lambda (elt tree)
+                                         (subst nil argn argvs :test
+                                                #'(lambda (elt tree)
+                                                    ;; Give nil if argn is
+                                                    ;; in argvs somewhere:
 						    (if (eq elt tree)
-							(return-from find t))))
-					 nil)
-				       (push (list argn argv) symbol-macros))
-				   (and unsafe (list (list argn argv))))
+							(return-from find)))))
+                                       (let ((copy-symbol (copy-symbol argn)))
+                                         ;; Rename ARGN within BODY so it
+                                         ;; doesn't conflict with its value
+                                         ;; in the including scope:
+                                         (setq body
+                                               (cl-macroexpand-all
+                                                body `((,(eq-hash argn)
+                                                        ,copy-symbol)))
+                                               argn copy-symbol)))
+                                   (push (list argn argv) symbol-macros)
+                                   (and unsafe (list (list argn argv))))
                                (list (list argn argv))))
                          argns argvs)))
       `(let ,lets
@@ -3260,6 +3267,13 @@ surrounded by (block NAME ...)."
              ;; bound). We don't have GNU's issue where the replacement will
              ;; be done when the symbol is used in a function context,
              ;; because we're using #'symbol-macrolet instead of #'subst.
+             ;;
+             ;; #'symbol-macrolet as specified by Common Lisp is shadowed by
+             ;; #'let, #'let* and lambda argument lists, and that would suit
+             ;; our purposes here perfectly; we could implement it in
+             ;; cl-macroexpand-all by shadowing any existing symbol macros
+             ;; when we descend let forms or arglist lambdas. Doing it
+             ;; unconditionally could well break #'loop, though.
              ,symbol-macros
            ,body)))))
 
