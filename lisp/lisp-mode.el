@@ -43,8 +43,8 @@
 (defvar lisp-mode-abbrev-table nil)
 
 (defun construct-lisp-mode-menu (popup-p emacs-lisp-p)
-  (flet ((popup-wrap (form)
-	   (if popup-p `(menu-call-at-event ',form) form)))
+  (labels ((popup-wrap (form)
+             (if popup-p `(menu-call-at-event ',form) form)))
     `(,@(if emacs-lisp-p
 	  `(["%_Byte-Compile This File" ,(popup-wrap
 					  'emacs-lisp-byte-compile)]

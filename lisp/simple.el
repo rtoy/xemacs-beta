@@ -2638,21 +2638,21 @@ of lines."
 
 (defun transpose-subr (mover arg &optional move-region)
   (let (start1 end1 start2 end2)
-    ;; XEmacs -- use flet instead of defining a separate function and
+    ;; XEmacs -- use labels instead of defining a separate function and
     ;; relying on dynamic scope; use (mark t) etc; add code to support
     ;; the new MOVE-REGION arg.
-    (flet ((transpose-subr-1 ()
-	     (if (> (min end1 end2) (max start1 start2))
-		 (error "Don't have two things to transpose"))
-	     (let ((word1 (buffer-substring start1 end1))
-		   (word2 (buffer-substring start2 end2)))
-	       (delete-region start2 end2)
-	       (goto-char start2)
-	       (insert word1)
-	       (goto-char (if (< start1 start2) start1
-			    (+ start1 (- (length word1) (length word2)))))
-	       (delete-char (length word1))
-	       (insert word2))))
+    (labels ((transpose-subr-1 ()
+               (if (> (min end1 end2) (max start1 start2))
+                   (error "Don't have two things to transpose"))
+               (let ((word1 (buffer-substring start1 end1))
+                     (word2 (buffer-substring start2 end2)))
+                 (delete-region start2 end2)
+                 (goto-char start2)
+                 (insert word1)
+                 (goto-char (if (< start1 start2) start1
+                              (+ start1 (- (length word1) (length word2)))))
+                 (delete-char (length word1))
+                 (insert word2))))
       (if (= arg 0)
 	  (progn
 	    (save-excursion

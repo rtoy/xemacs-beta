@@ -297,7 +297,6 @@ ARGLIST allows full Common Lisp conventions."
 (defconst lambda-list-keywords
   '(&optional &rest &key &allow-other-keys &aux &whole &body &environment))
 
-(defvar cl-macro-environment nil)
 (defvar bind-block) (defvar bind-defs) (defvar bind-enquote)
 (defvar bind-lets) (defvar bind-forms)
 
@@ -370,7 +369,7 @@ block."
     (if (memq '&whole args) (error "&whole not currently implemented"))
     (let* ((p (memq '&environment args)) (v (cadr p)))
       (if p (setq args (nconc (delq (car p) (delq v args))
-			      (list '&aux (list v 'cl-macro-environment))))))
+                              `(&aux (,v byte-compile-macro-environment))))))
     (while (and args (symbolp (car args))
 		(not (memq (car args) '(nil &rest &body &key &aux)))
 		(not (and (eq (car args) '&optional)
@@ -626,15 +625,7 @@ arguments: ((&rest WHEN) &body BODY)"
 (defmacro load-time-value (form &optional read-only)
   "Like `progn', but evaluates the body at load time.
 The result of the body appears to the compiler as a quoted constant."
-  (let ((gensym (gensym)))
-    ;; The body of this macro really should be (cons 'progn form), with the
-    ;; hairier stuff in a shadowed version in
-    ;; byte-compile-initial-macro-environment. That doesn't work because
-    ;; cl-macs.el doesn't respect byte-compile-macro-environment, which is
-    ;; something we should change.
-    (put gensym 'cl-load-time-value-form form)
-    (set gensym (eval form))
-    `(symbol-value ',gensym)))
+  (list 'progn form))
 
 ;;; Conditional control structures.
 
@@ -746,7 +737,7 @@ not inside other functions called from BODY."
     ;; as such it can eliminate it if that's appropriate:
     (put (cdar cl-active-block-names) 'cl-block-name name)
     `(catch ',(cdar cl-active-block-names)
-      ,(cl-macroexpand-all body cl-macro-environment))))
+      ,(cl-macroexpand-all body byte-compile-macro-environment))))
 
 ;;;###autoload
 (defmacro return (&optional result)
@@ -1723,56 +1714,75 @@ a `let' form, except that the list of symbols can be computed at run-time."
 	      (list* 'progn (list 'cl-progv-before symbols values) body)
 	      '(cl-progv-after))))
 
-;;; This should really have some way to shadow 'byte-compile properties, etc.
 ;;;###autoload
-(defmacro flet (bindings &rest body)
+(defmacro flet (functions &rest form)
   "Make temporary function definitions.
+
 This is an analogue of `let' that operates on the function cell of FUNC
 rather than its value cell.  The FORMs are evaluated with the specified
-function definitions in place, then the definitions are undone (the FUNCs
-go back to their previous definitions, or lack thereof).
+function definitions in place, then the definitions are undone (the FUNCs go
+back to their previous definitions, or lack thereof).  This is in
+contravention of Common Lisp, where `flet' makes a lexical, not a dynamic,
+function binding.
 
-arguments: (((FUNC ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
-  (list* 'letf*
-	 (mapcar
-	  #'(lambda (x)
-	      (if (or (and (fboundp (car x))
-			   (eq (car-safe (symbol-function (car x))) 'macro))
-		      (cdr (assq (car x) cl-macro-environment)))
-		  (error "Use `labels', not `flet', to rebind macro names"))
-	      (let ((func (list 'function*
-				(list 'lambda (cadr x)
-				      (list* 'block (car x) (cddr x))))))
-		(if (and (cl-compiling-file)
-			 (boundp 'byte-compile-function-environment))
-		    (push (cons (car x) (eval func))
-			     byte-compile-function-environment))
-		(list (list 'symbol-function (list 'quote (car x))) func)))
-	  bindings)
-	 body))
+Normally you should use `labels', not `flet'; `labels' does not have the
+problems caused by dynamic scope, is less expensive when byte-compiled, and
+allows lexical shadowing of functions with byte-codes and byte-compile
+methods, where `flet' will fail.  The byte-compiler will warn when this
+happens.
+
+If you need to shadow some existing function at run time, and that function
+has no associated byte code or compiler macro, then `flet' is appropriate.
+
+arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
+  ;; XEmacs; leave warnings, errors and modifications of
+  ;; byte-compile-function-environment to the byte compiler. See
+  ;; byte-compile-initial-macro-environment in bytecomp.el.
+  (list*
+   'letf*
+   (mapcar
+    (function*
+     (lambda ((function . definition))
+       `((symbol-function ',function) 
+         ,(cons 'lambda (cdr (cl-transform-lambda definition function))))))
+    functions) form))
 
 ;;;###autoload
 (defmacro labels (bindings &rest body)
-  "Make temporary func bindings.
-This is like `flet', except the bindings are lexical instead of dynamic.
-Unlike `flet', this macro is fully compliant with the Common Lisp standard.
+  "Make temporary function bindings.
 
-arguments: (((FUNC ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
-  (let ((vars nil) (sets nil) (cl-macro-environment cl-macro-environment))
+This is like `flet', except the bindings are lexical instead of dynamic.
+Unlike `flet', this macro is compliant with the Common Lisp standard with
+regard to the scope and extent of the function bindings.
+
+Each function may be called from within FORM, from within the BODY of the
+function itself (that is, recursively), and from any other function bodies
+in FUNCTIONS.
+
+Within FORM, to access the function definition of a bound function (for
+example, to pass it as a FUNCTION argument to `map'), quote its symbol name
+using `function'.
+
+arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)
+"
+  ;; XEmacs; the byte-compiler has a much better implementation of `labels'
+  ;; in `byte-compile-initial-macro-environment' that is used in compiled
+  ;; code.
+  (let ((vars nil) (sets nil)
+        (byte-compile-macro-environment byte-compile-macro-environment))
     (while bindings
       (let ((var (gensym)))
 	(push var vars)
-	(push (list 'function* (cons 'lambda (cdar bindings))) sets)
+	(push `#'(lambda ,@(cdr (cl-transform-lambda (cdar bindings)
+                                                     (caar bindings)))) sets)
 	(push var sets)
 	(push (list (car (pop bindings)) 'lambda '(&rest cl-labels-args)
 		       (list 'list* '(quote funcall) (list 'quote var)
 			     'cl-labels-args))
-		 cl-macro-environment)))
+		 byte-compile-macro-environment)))
     (cl-macroexpand-all (list* 'lexical-let vars (cons (cons 'setq sets) body))
-			cl-macro-environment)))
+			byte-compile-macro-environment)))
 
-;; The following ought to have a better definition for use with newer
-;; byte compilers.
 ;;;###autoload
 (defmacro* macrolet ((&rest macros) &body form)
   "Make temporary macro definitions.
@@ -1785,7 +1795,7 @@ This is like `flet', but for macros instead of functions."
                          collect
                          (list* name 'lambda (cdr (cl-transform-lambda details
                                                                        name))))
-                       cl-macro-environment)))
+                       byte-compile-macro-environment)))
 
 ;;;###autoload
 (defmacro* symbol-macrolet ((&rest symbol-macros) &body form)
@@ -1798,7 +1808,7 @@ and (setq NAME ...) acts like (setf EXPANSION ...)."
 			       for (name expansion) in symbol-macros
 			       do (check-type name symbol)
 			       collect (list (eq-hash name) expansion))
-			     cl-macro-environment)))
+			     byte-compile-macro-environment)))
 
 (defvar cl-closure-vars nil)
 ;;;###autoload
@@ -1824,7 +1834,7 @@ lexical closures as in Common Lisp."
 				    t))
 			  vars)
 		  (list '(defun . cl-defun-expander))
-		  cl-macro-environment))))
+		  byte-compile-macro-environment))))
     (if (not (get (car (last cl-closure-vars)) 'used))
 	(list 'let (mapcar #'(lambda (x) (list (caddr x) (cadr x))) vars)
 	      (sublis (mapcar #'(lambda (x)
@@ -2215,6 +2225,9 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 ;(defsetf specifier-instance (spec &optional dom def nof) (val)
 ;  `(set-specifier ,spec ,val ,dom))
 
+(defsetf get-char-table (char table) (store)
+  `(put-char-table ,char ,store ,table))
+
 ;; Annotations
 (defsetf annotation-glyph set-annotation-glyph)
 (defsetf annotation-down-glyph set-annotation-down-glyph)
@@ -2333,14 +2346,14 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 ;;; More complex setf-methods.
 ;;; These should take &environment arguments, but since full arglists aren't
 ;;; available while compiling cl-macs, we fake it by referring to the global
-;;; variable cl-macro-environment directly.
+;;; variable byte-compile-macro-environment directly.
 
 (define-setf-method apply (func arg1 &rest rest)
   (or (and (memq (car-safe func) '(quote function function*))
 	   (symbolp (car-safe (cdr-safe func))))
       (error "First arg to apply in setf is not (function SYM): %s" func))
   (let* ((form (cons (nth 1 func) (cons arg1 rest)))
-	 (method (get-setf-method form cl-macro-environment)))
+	 (method (get-setf-method form byte-compile-macro-environment)))
     (list (car method) (nth 1 method) (nth 2 method)
 	  (cl-setf-make-apply (nth 3 method) (cadr func) (car method))
 	  (cl-setf-make-apply (nth 4 method) (cadr func) (car method)))))
@@ -2353,7 +2366,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
     (list* 'apply (list 'quote (car form)) (cdr form))))
 
 (define-setf-method nthcdr (n place)
-  (let ((method (get-setf-method place cl-macro-environment))
+  (let ((method (get-setf-method place byte-compile-macro-environment))
 	(n-temp (gensym "--nthcdr-n--"))
 	(store-temp (gensym "--nthcdr-store--")))
     (list (cons n-temp (car method))
@@ -2366,7 +2379,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 	  (list 'nthcdr n-temp (nth 4 method)))))
 
 (define-setf-method getf (place tag &optional def)
-  (let ((method (get-setf-method place cl-macro-environment))
+  (let ((method (get-setf-method place byte-compile-macro-environment))
 	(tag-temp (gensym "--getf-tag--"))
 	(def-temp (gensym "--getf-def--"))
 	(store-temp (gensym "--getf-store--")))
@@ -2380,7 +2393,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 	  (list 'getf (nth 4 method) tag-temp def-temp))))
 
 (define-setf-method substring (place from &optional to)
-  (let ((method (get-setf-method place cl-macro-environment))
+  (let ((method (get-setf-method place byte-compile-macro-environment))
 	(from-temp (gensym "--substring-from--"))
 	(to-temp (gensym "--substring-to--"))
 	(store-temp (gensym "--substring-store--")))
@@ -2396,7 +2409,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 ;; XEmacs addition
 (define-setf-method values (&rest args)
   (let ((methods (mapcar #'(lambda (x)
-			     (get-setf-method x cl-macro-environment))
+			     (get-setf-method x byte-compile-macro-environment))
 			 args))
 	(store-temp (gensym "--values-store--")))
     (list (apply 'append (mapcar 'first methods))
@@ -2425,7 +2438,7 @@ a macro like `setf' or `incf'."
 		    (method (get func 'setf-method))
 		    (case-fold-search nil))
 	       (or (and method
-			(let ((cl-macro-environment env))
+			(let ((byte-compile-macro-environment env))
 			  (setq method (apply method (cdr place))))
 			(if (and (consp method) (eql (length method) 5))
 			    method
@@ -2446,7 +2459,7 @@ a macro like `setf' or `incf'."
 	  (get-setf-method place env)))))
 
 (defun cl-setf-do-modify (place opt-expr)
-  (let* ((method (get-setf-method place cl-macro-environment))
+  (let* ((method (get-setf-method place byte-compile-macro-environment))
 	 (temps (car method)) (values (nth 1 method))
 	 (lets nil) (subs nil)
 	 (optimize (and (not (eq opt-expr 'no-opt))
@@ -3223,10 +3236,27 @@ surrounded by (block NAME ...)."
     (let* ((symbol-macros nil)
            (lets (mapcan #'(lambda (argn argv)
                              (if (or simple (cl-const-expr-p argv))
-                                 (progn (or (eq argn argv)
-					    (push (list argn argv)
-						  symbol-macros))
-                                        (and unsafe (list (list argn argv))))
+                                 (progn 
+				   ;; Avoid infinite loop on symbol macro
+				   ;; expansion:
+				   (or (block find
+                                         (subst nil argn argvs :test
+                                                #'(lambda (elt tree)
+                                                    ;; Give nil if argn is
+                                                    ;; in argvs somewhere:
+						    (if (eq elt tree)
+							(return-from find)))))
+                                       (let ((copy-symbol (copy-symbol argn)))
+                                         ;; Rename ARGN within BODY so it
+                                         ;; doesn't conflict with its value
+                                         ;; in the including scope:
+                                         (setq body
+                                               (cl-macroexpand-all
+                                                body `((,(eq-hash argn)
+                                                        ,copy-symbol)))
+                                               argn copy-symbol)))
+                                   (push (list argn argv) symbol-macros)
+                                   (and unsafe (list (list argn argv))))
                                (list (list argn argv))))
                          argns argvs)))
       `(let ,lets
@@ -3237,6 +3267,13 @@ surrounded by (block NAME ...)."
              ;; bound). We don't have GNU's issue where the replacement will
              ;; be done when the symbol is used in a function context,
              ;; because we're using #'symbol-macrolet instead of #'subst.
+             ;;
+             ;; #'symbol-macrolet as specified by Common Lisp is shadowed by
+             ;; #'let, #'let* and lambda argument lists, and that would suit
+             ;; our purposes here perfectly; we could implement it in
+             ;; cl-macroexpand-all by shadowing any existing symbol macros
+             ;; when we descend let forms or arglist lambdas. Doing it
+             ;; unconditionally could well break #'loop, though.
              ,symbol-macros
            ,body)))))
 
@@ -3509,6 +3546,31 @@ non-standard :if and :if-not keywords at compile time."
 	  (let ((temp (gensym)))
 	    (list 'let (list (list temp val)) (subst temp val res)))))
     form))
+
+(define-compiler-macro apply-partially (&whole form &rest args)
+  "Generate a #'make-byte-code call for #'apply-partially, if appropriate."
+  (if (< (length args) 1)
+      form
+    (if (cl-const-exprs-p args)
+        `#'(lambda (&rest args) (apply ,@args args))
+      (let* ((placeholders (mapcar 'quote-maybe (mapcar 'gensym args)))
+             (compiled (byte-compile-sexp
+                        `#'(lambda (&rest args) (apply ,@placeholders args)))))
+        (assert (equal (intersection
+                        (mapcar 'quote-maybe (compiled-function-constants
+                                              compiled))
+                        placeholders :test 'equal :stable t)
+                       placeholders)
+                t "This macro requires that the relative order is the same\
+in the constants vector and in the arguments")
+        `(make-byte-code
+          ',(compiled-function-arglist compiled)
+          ,(compiled-function-instructions compiled)
+          (vector ,@(sublis (pairlis placeholders args)
+                            (mapcar 'quote-maybe
+                                    (compiled-function-constants compiled))
+                            :test 'equal))
+          ,(compiled-function-stack-depth compiled))))))
 
 (define-compiler-macro delete-dups (list)
   `(delete-duplicates (the list ,list) :test #'equal :from-end t))

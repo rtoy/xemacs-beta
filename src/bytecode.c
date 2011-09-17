@@ -95,6 +95,13 @@ DEFINE_DUMPABLE_SIZABLE_INTERNAL_LISP_OBJECT ("compiled-function-args",
 					      Lisp_Compiled_Function_Args);
 #endif /* NEW_GC */
 
+static void set_compiled_function_arglist (Lisp_Compiled_Function *,
+                                           Lisp_Object);
+static void set_compiled_function_constants (Lisp_Compiled_Function *,
+                                             Lisp_Object);
+static void set_compiled_function_interactive (Lisp_Compiled_Function *,
+                                               Lisp_Object);
+
 EXFUN (Ffetch_bytecode, 1);
 
 Lisp_Object Qbyte_code, Qcompiled_functionp, Qinvalid_byte_code;
@@ -2360,6 +2367,76 @@ compiled_function_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 		     f2->doc_and_interactive, depth + 1));
 }
 
+static void
+compiled_function_print_preprocess (Lisp_Object object,
+                                    Lisp_Object print_number_table,
+                                    Elemcount *seen_object_count)
+{
+  Lisp_Compiled_Function *cf = XCOMPILED_FUNCTION (object);
+
+  PRINT_PREPROCESS (compiled_function_arglist (cf), print_number_table,
+                    seen_object_count);
+
+  PRINT_PREPROCESS (compiled_function_constants (cf), print_number_table,
+                    seen_object_count);
+
+  if (cf->flags.interactivep)
+    {
+      PRINT_PREPROCESS (compiled_function_interactive (cf),
+                        print_number_table, seen_object_count);
+    }
+}
+
+static void
+compiled_function_nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
+                                             Lisp_Object object,
+                                             Lisp_Object number_table,
+                                             Boolint test_not_unboundp)
+{
+  Lisp_Compiled_Function *cf = XCOMPILED_FUNCTION (object);
+  Lisp_Object arglist = compiled_function_arglist (cf);
+  Lisp_Object constants = compiled_function_constants (cf);
+
+  if (EQ (arglist, old) == test_not_unboundp)
+    {
+      set_compiled_function_arglist (cf, new_);
+    }
+  else if (CONSP (arglist))
+    {
+      nsubst_structures_descend (new_, old, arglist, number_table,
+				 test_not_unboundp);
+    }
+
+  if (EQ (constants, old) == test_not_unboundp)
+    {
+      set_compiled_function_constants (cf, new_);
+    }
+  else
+    {
+      nsubst_structures_descend (new_, old, constants, number_table,
+				 test_not_unboundp);
+    }
+
+  /* We're not descending into the instructions here, because this function
+     is initially for use in the Lisp reader, where it only makes sense to
+     use the #%d= syntax for lrecords. */
+
+  if (cf->flags.interactivep)
+    {
+      Lisp_Object interactive = compiled_function_interactive (cf);
+      if (EQ (interactive, old) == test_not_unboundp)
+	{
+	  set_compiled_function_interactive (cf, new_);
+	}
+      else if (LRECORDP (interactive) &&
+               HAS_OBJECT_METH_P (interactive, nsubst_structures_descend))
+	{
+	  nsubst_structures_descend (new_, old, interactive, number_table,
+				     test_not_unboundp);
+	}
+    }
+}
+
 static Hashcode
 compiled_function_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
@@ -2607,6 +2684,47 @@ set_compiled_function_documentation (Lisp_Compiled_Function *f,
     }
 }
 
+static void
+set_compiled_function_arglist (Lisp_Compiled_Function *f, Lisp_Object new_)
+{
+  CHECK_LIST (new_);
+  f->arglist = new_;
+
+  /* Recalculate the optimized version of the function, since this depends
+     on the arglist. */
+  f->instructions = compiled_function_instructions (f);
+  optimize_compiled_function (wrap_compiled_function (f));
+}
+
+static void
+set_compiled_function_constants (Lisp_Compiled_Function *f, Lisp_Object new_)
+{
+  CHECK_VECTOR (new_);
+  f->constants = new_;
+}
+
+static void
+set_compiled_function_interactive (Lisp_Compiled_Function *f, Lisp_Object new_)
+{
+  assert (f->flags.interactivep);
+
+  if (f->flags.documentationp && f->flags.domainp)
+    {
+      XSETCAR (XCDR (f->doc_and_interactive), new_);
+    }
+  else if (f->flags.documentationp)
+    {
+      XSETCDR (f->doc_and_interactive, new_);
+    }
+  else if (f->flags.domainp)
+    {
+      XSETCAR (f->doc_and_interactive, new_);
+    }
+  else
+    {
+      f->doc_and_interactive = new_;
+    }
+}
 
 DEFUN ("compiled-function-arglist", Fcompiled_function_arglist, 1, 1, 0, /*
 Return the argument list of the compiled-function object FUNCTION.
@@ -2781,6 +2899,13 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 }
 
 
+void
+bytecode_objects_create (void)
+{
+  OBJECT_HAS_METHOD (compiled_function, print_preprocess);
+  OBJECT_HAS_METHOD (compiled_function, nsubst_structures_descend);
+}
+
 void
 syms_of_bytecode (void)
 {

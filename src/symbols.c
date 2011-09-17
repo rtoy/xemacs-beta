@@ -139,6 +139,16 @@ symbol_remprop (Lisp_Object symbol, Lisp_Object property)
   return external_remprop (&XSYMBOL (symbol)->plist, property, 0, ERROR_ME);
 }
 
+static void
+symbol_print_preprocess (Lisp_Object UNUSED (symbol),
+                         Lisp_Object UNUSED (print_number_table),
+                         Elemcount * UNUSED (seen_object_count))
+{
+  /* This method is empty; symbols are handled specially in
+     print_preprocess, because print_preprocess_inchash_eq() is conditional
+     for them, rather than a given. */
+}
+
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("symbol", symbol,
 					mark_symbol, print_symbol,
 					0, 0, 0, symbol_description,
@@ -250,6 +260,9 @@ it defaults to the value of the variable `obarray'.
     XSYMBOL_NEXT (symbol) = 0;
   *ptr = object;
 
+  XSYMBOL (object)->u.v.package_count = 1;
+  XSYMBOL (object)->u.v.first_package_id = (EQ (obarray, Vobarray)) ? 1 : 2;
+
   if (string_byte (XSYMBOL_NAME (symbol), 0) == ':' && EQ (obarray, Vobarray))
     {
       /* The LISP way is to put keywords in their own package, but we
@@ -329,10 +342,19 @@ OBARRAY defaults to the value of the variable `obarray'.
 
   if (EQ (XVECTOR_DATA (obarray)[hash], tem))
     {
+      unsigned int package_count = XSYMBOL (tem)->u.v.package_count;
       if (XSYMBOL (tem)->next)
 	XVECTOR_DATA (obarray)[hash] = wrap_symbol (XSYMBOL (tem)->next);
       else
 	XVECTOR_DATA (obarray)[hash] = Qzero;
+      if (package_count > 0)
+        {
+          if (1 == package_count)
+            {
+              XSYMBOL (tem)->u.v.first_package_id = 0;
+            }
+          XSYMBOL (tem)->u.v.package_count = package_count - 1;
+        }
     }
   else
     {
@@ -345,7 +367,17 @@ OBARRAY defaults to the value of the variable `obarray'.
 	  following = wrap_symbol (XSYMBOL (tail)->next);
 	  if (EQ (following, tem))
 	    {
+              unsigned int package_count = XSYMBOL (tem)->u.v.package_count;
 	      XSYMBOL (tail)->next = XSYMBOL (following)->next;
+
+              if (package_count > 0)
+                {
+                  if (1 == package_count)
+                    {
+                      XSYMBOL (tem)->u.v.first_package_id = 0;
+                    }
+                  XSYMBOL (tem)->u.v.package_count = package_count - 1;
+                }
 	      break;
 	    }
 	}
@@ -3536,6 +3568,7 @@ reinit_symbol_objects_early (void)
   OBJECT_HAS_METHOD (symbol, getprop);
   OBJECT_HAS_METHOD (symbol, putprop);
   OBJECT_HAS_METHOD (symbol, remprop);
+  OBJECT_HAS_METHOD (symbol, print_preprocess);
   OBJECT_HAS_NAMED_METHOD (symbol, plist, Fsymbol_plist);
   OBJECT_HAS_NAMED_METHOD (symbol, setplist, Fsetplist);
 }
@@ -3557,6 +3590,8 @@ init_symbols_once_early (void)
   XSTRING_PLIST (XSYMBOL (Qnil)->name) = Qnil;
   XSYMBOL (Qnil)->value = Qnil; /* Nihil ex nihilo */
   XSYMBOL (Qnil)->plist = Qnil;
+  XSYMBOL (Qnil)->u.v.package_count = 1;
+  XSYMBOL (Qnil)->u.v.first_package_id = 1;
 
   Vobarray = make_vector (OBARRAY_SIZE, Qzero);
   initial_obarray = Vobarray;

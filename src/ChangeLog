@@ -1,3 +1,257 @@
+2011-09-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay-tty.c (init_tty_for_redisplay):
+	Only set the console meta key flag to treat the eight bit as meta
+	if the native coding system doesn't need that.
+	* general-slots.h:
+	* mule-coding.c:
+	* mule-coding.c (syms_of_mule_coding):
+	Move Qiso2022, Qseven to general-slots.h, they're now used in
+	redisplay-tty.c.
+
+2011-09-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* chartab.c (nsubst_structures_mapper):
+	Don't use MULE-only cases in non-MULE.
+
+2011-09-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c:
+	* alloc.c (ALLOC_FROB_BLOCK_LISP_OBJECT_1):
+	* alloc.c (ALLOC_FROB_BLOCK_LISP_OBJECT):
+	* alloc.c (cons_print_preprocess):
+	* alloc.c (vector_print_preprocess):
+	* alloc.c (vector_nsubst_structures_descend):
+	* alloc.c (Fmake_symbol):
+	* alloc.c (UNMARK_symbol):
+	* alloc.c (sweep_symbols):
+	* alloc.c (reinit_alloc_objects_early):
+	* alloc.c (reinit_alloc_early):
+	* bytecode.c:
+	* bytecode.c (compiled_function_print_preprocess):
+	* bytecode.c (compiled_function_nsubst_structures_descend):
+	* bytecode.c (set_compiled_function_arglist):
+	* bytecode.c (set_compiled_function_interactive):
+	* bytecode.c (bytecode_objects_create):
+	* chartab.c:
+	* chartab.c (print_preprocess_mapper):
+	* chartab.c (nsubst_structures_mapper):
+	* chartab.c (char_table_nsubst_structures_descend):
+	* chartab.c (chartab_objects_create):
+	* elhash.c:
+	* elhash.c (nsubst_structures_map_hash_table):
+	* elhash.c (hash_table_nsubst_structures_descend):
+	* elhash.c (print_preprocess_mapper):
+	* elhash.c (hash_table_print_preprocess):
+	* elhash.c (inchash_eq):
+	* elhash.c (hash_table_objects_create):
+	* elhash.c (syms_of_elhash):
+	* elhash.h:
+	* emacs.c (main_1):
+	* fns.c:
+	* fns.c (check_eq_nokey):
+	* fns.c (Fnsubst):
+	* fns.c (syms_of_fns):
+	* lisp.h:
+	* lisp.h (struct Lisp_Symbol):
+	* lisp.h (IN_OBARRAY):
+	* lisp.h (struct):
+	* lisp.h (PRINT_PREPROCESS):
+	* lread.c (read1):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (DEFINE_DUMPABLE_MODULE_LISP_OBJECT):
+	* print.c:
+	* print.c (PRINT_CIRCLE_LIMIT):
+	* print.c (print_continuous_numbering_changed):
+	* print.c (print_prepare):
+	* print.c (print_finish):
+	* print.c (Fprin1_to_string):
+	* print.c (print_cons):
+	* print.c (print_preprocess_inchash_eq):
+	* print.c (print_preprocess):
+	* print.c (print_sort_get_numbers):
+	* print.c (print_sort_compare_ordinals):
+	* print.c (print_gensym_or_circle):
+	* print.c (nsubst_structures_descend):
+	* print.c (nsubst_structures):
+	* print.c (print_internal):
+	* print.c (print_symbol):
+	* print.c (vars_of_print):
+	* rangetab.c:
+	* rangetab.c (range_table_print_preprocess):
+	* rangetab.c (range_table_nsubst_structures_descend):
+	* rangetab.c (rangetab_objects_create):
+	* rangetab.c (syms_of_rangetab):
+	* symbols.c:
+	* symbols.c (symbol_print_preprocess):
+	* symbols.c (Fintern):
+	* symbols.c (Funintern):
+	* symbols.c (reinit_symbol_objects_early):
+	* symbols.c (init_symbols_once_early):
+	* symsinit.h:
+	Implement print-circle, printing circular structures in a readable
+	fashion, and treating them appropriately on read. This is by means
+	of two new object methods, print_preprocess (detecting
+	circularities), and nsubst_structures_descend (replacing
+	placeholders with the read objects).
+	Expose the substitution to Lisp via #'nsubst and its new
+	:descend-structures keyword.
+	Store information as to whether symbols are interned in obarray or
+	not in their header, making checking for keywords and uninterned
+	symbols (and thus printing) cheaper.
+	Default print_gensym to t, as Common Lisp does, and as a
+	more-than-decade old comment suggests.
+
+2011-08-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-Xt.c (x_to_emacs_keysym):
+	Take a new pointer argument, X_KEYSYM_OUT, where we store the X11
+	keysym that we actually used.
+	* event-Xt.c (x_event_to_emacs_event):
+	Call x_to_emacs_keysym with its new pointer argument, so we have
+	access to the X11 keysym used.
+	When checking whether a keysym obeys caps lock, use the X11 keysym
+	rather than the XEmacs keysym.
+	When checking whether a key has two distinct keysyms depending on
+	whether shift is pressed or not, use the X11 keysym passed back by
+	x_to_emacs_keysym rather than working it out again using
+	XLookupKeysym().
+	* event-Xt.c (keysym_obeys_caps_lock_p):
+	Use XConvertCase() in this function, now we're receiving the
+	actual X keysym used.
+
+2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in:
+	Move REALPATH_CORRECTS_CASE, DEFAULT_FILE_SYSTEM_IGNORE_CASE to
+	../configure.ac rather than implementing them in terms of
+	HAVE_DYLD here.
+
+2011-08-23  Stephen Turnbull  <stephen@xemacs.org>
+
+	Fix performance regression in refactored syntax cache setup.
+	More doc improvements.
+	
+	* syntax.h (enum syntax_source):
+	New.  Specify whether syntax is from property or buffer.
+	(struct syntax_cache):
+	Use enum syntax_source source, instead of no_syntax_table_prop
+	and use_code.
+	Improve comments.
+	(SOURCE_IS_TABLE):
+	New predicate.
+	(SYNTAX_CODE_FROM_CACHE):
+	Use it instead of use_code, and adjust logic.
+
+	* syntax.c (syntax_cache_table_was_changed):
+	Check cache->source (cache->no_syntax_table_prop is gone).
+	(reset_syntax_cache_range):
+	All information about OBJECT and BUFFER is in CACHE already.
+	Also reset markers in OBJECT if it is a buffer.
+	Rename INFINITE to VALID_EVERYWHERE.
+	(init_syntax_cache):
+	Initialize source (cache->no_syntax_table_prop is gone).
+	Maybe initialize start and end to null markers.
+	Initialize cache range with reset_syntax_cache_range.
+	(update_syntax_cache):
+	Use source instead of no_syntax_table_prop and use_code.
+	(setup_syntax_cache):
+	Add header comment.  Improve other comments.
+	Make calls to reset_syntax_cache_range and init_syntax_cache match
+	their prototypes.
+	(init_buffer_syntax_cache):
+	Use init_syntax_cache to do the work.
+	(signal_syntax_cache_extent_changed):
+	Make call to reset_syntax_cache_range match its prototype.
+	Improve local variable naming.
+
+2011-08-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* syntax.c (update_syntax_cache):
+	Use buffer_or_string_accessible_*, not buffer_or_string_absolute_*.
+	Patch and test suggested by Alan Mackenzie.
+	Fix initialization of insertion type for start and end in struct
+	syntax_cache.
+
+2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* syntax.c:
+	Remove some obsolete or unintelligible #### comments.
+	Improve many toplevel comments.
+
+	(Fsyntax_designator_chars):
+	(Fchar_syntax):
+	(Fmatching_paren):
+	(Fforward_word):
+	(Fforward_comment):
+	(Fscan_lists):
+	(Fscan_sexps):
+	(Fbackward_prefix_chars):
+	(parse-sexp-ignore-comments):
+	(lookup-syntax-properties):
+	(words-include-escapes):
+	Improve docstrings.
+
+	* syntax.h:
+	Document functions and restrictions struct syntax_cache members.
+	Improve many toplevel comments.
+	Delete syntax code parsing macros unused for a decade or so.
+	(#if 0'd out since May 2002.)
+
+2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* syntax.c (reset_buffer_syntax_cache_range):
+	Rename to reset_syntax_cache_range.
+
+	(setup_syntax_cache):
+	(init_buffer_syntax_cache):
+	(init_syntax_cache):
+	(reset_syntax_cache_range):
+	Refactor and document.
+
+	(signal_syntax_cache_extent_changed):
+	Remove obsolete comment.
+
+2011-08-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	There are only (octal) 0200 ASCII characters, and only 128 values
+	supplied in the definition.
+
+	* syntax.h (syntax_spec_code):
+	* syntax.c (syntax_spec_code):
+	Declare array with correct dimension.
+	* search.c (skip_chars):
+	Correct bounds check on index of syntax_spec_code.
+
+2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* search.c (byte_scan_buffer):
+	Rename local variables to suppress GCC "shadowed global" warnings.
+	The warnings are due to ANSI functions from <math.h> on Darwin.
+
+2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule-coding.c (shift_jis_convert):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	Rename local variables to suppress GCC "shadowed global" warnings.
+	The warnings are due to non-ANSI functions from <math.h> on Darwin.
+
+2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* glyphs-eimage.c (png_instantiate): Rename a shadowing loop index
+	which shadows another local to quiet GCC.
+
+2011-08-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* glyphs-eimage.c (_LARGEFILE64_SOURCE, _FILE_OFFSET_BITS):
+	Define these macros to suppress GCC warnings caused by excessive
+	zlib magic.
+
+2011-08-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* dumper.c (pdump_file_try): Add prototype to suppress GCC warning.
+
 2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* console.c:

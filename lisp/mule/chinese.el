@@ -41,7 +41,7 @@
 ;; that appear once in some ancient manuscript and whose meaning
 ;; is unknown.
 
-(flet
+(labels
     ((make-chinese-cns11643-charset
       (name plane final)
       (make-charset

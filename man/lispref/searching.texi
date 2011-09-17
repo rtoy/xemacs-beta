@@ -1458,10 +1458,10 @@ that shows the problem that arises if you fail to save the match data:
 
   You can save and restore the match data with @code{save-match-data}:
 
-@deffn {Special Operator} save-match-data body@dots{}
-This special operator executes @var{body}, saving and restoring the match
+@defmac save-match-data body@dots{}
+This macro executes @var{body}, saving and restoring the match
 data around it.
-@end deffn
+@end defmac
 
   Emacs automatically saves and restores the match data when it runs
 process filter functions (@pxref{Filter Functions}) and process

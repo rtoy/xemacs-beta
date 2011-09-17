@@ -50,6 +50,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #endif
 
 #include "sysfile.h"
+#include "elhash.h"
 
 #include <float.h>
 /* Define if not in float.h */
@@ -71,8 +72,8 @@ Lisp_Object Qmswindows_debugging_output;
 static int print_depth;
 
 /* Detect most circularities to print finite output.  */
-#define PRINT_CIRCLE 200
-static Lisp_Object being_printed[PRINT_CIRCLE];
+#define PRINT_CIRCLE_LIMIT 200
+static Lisp_Object being_printed[PRINT_CIRCLE_LIMIT];
 
 /* Maximum length of list or vector to print in full; noninteger means
    effectively infinity */
@@ -96,15 +97,48 @@ Lisp_Object Vprint_level;
 Lisp_Object Vprint_message_label;
 
 /* Nonzero means print newlines in strings as \n.  */
+Boolint print_escape_newlines;
 
-int print_escape_newlines;
-int print_readably;
+Boolint print_readably;
 
-/* Non-nil means print #: before uninterned symbols.
-   Neither t nor nil means so that and don't clear Vprint_gensym_alist
-   on entry to and exit from print functions.  */
-Lisp_Object Vprint_gensym;
-Lisp_Object Vprint_gensym_alist;
+/* Non-zero means print #: before uninterned symbols, and use the #n= and
+   #n# syntax for them.  */
+Boolint print_gensym;
+
+/* Non-zero means print recursive structures using #n= and #n# syntax.  */
+Boolint print_circle;
+
+/* Non-zero means keep continuous numbers for #n= and #n# syntax between
+   several print functions. Setting or binding the corresponding Lisp
+   variable to a non-nil value silently *clears* Vprint_number_table. */
+Boolint print_continuous_numbering;
+
+/* Vprint_number_table is a hash table mapping objects to their statuses for
+   this print operation. The statuses are represented by integers. */
+Lisp_Object Vprint_number_table;
+
+/* These describe the bit fields of the integers in Vprint_number_table. */
+enum PRINT_NUMBER_FIELDS {
+  /* Lowest four bits describe the number of times a given object has
+     been seen, allowing entries to be manipulated cheaply by
+     inchash_eq() when encountered. */
+  PRINT_NUMBER_SEEN_MASK = 0xF,
+
+  /* The next twenty-five bits give the sequence number for the object,
+     corresponding to the order in which print_preprocess encountered the
+     objects; as such, it's related to print_number_index. */
+  PRINT_NUMBER_ORDINAL_MASK = 0x1FFFFFF0,
+  PRINT_NUMBER_ORDINAL_SHIFT = 4,
+
+  /* And the next bit describes whether the object has already been printed
+     in this print operation (or in these print operations, if
+     print-continuous-numbering is relevant).  */
+  PRINT_NUMBER_PRINTED_MASK = 0x20000000,
+};
+
+/* Reflects the number of repeated or possibly-repeated objects encountered
+   by print_preprocess(); reset whenever Vprint_number_table is cleared. */
+Elemcount print_number_index;
 
 Lisp_Object Qdisplay_error;
 Lisp_Object Qprint_message_label;
@@ -540,11 +574,29 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
   UNGCPRO;
 }
 
-#define RESET_PRINT_GENSYM do {			\
-  if (!CONSP (Vprint_gensym))			\
-    Vprint_gensym_alist = Qnil;			\
-} while (0)
+static int
+print_continuous_numbering_changed (Lisp_Object UNUSED (sym),
+                                    Lisp_Object *val,
+                                    Lisp_Object UNUSED (in_object),
+                                    int UNUSED (flags))
+{
+  if (!NILP (*val) && !print_continuous_numbering)
+    {
+      Fclrhash (Vprint_number_table);
+      print_number_index = 0;
+    }
 
+  return 0;
+}
+
+#define RESET_PRINT_NUMBER_TABLE do {           \
+    if (!print_continuous_numbering)            \
+      {                                         \
+        Fclrhash (Vprint_number_table);         \
+        print_number_index = 0;                 \
+      }                                         \
+  } while (0)
+
 Lisp_Object
 canonicalize_printcharfun (Lisp_Object printcharfun)
 {
@@ -565,8 +617,8 @@ print_prepare (Lisp_Object printcharfun, Lisp_Object *frame_kludge)
   if (gc_in_progress)
     return Qnil;
 #endif
-  
-  RESET_PRINT_GENSYM;
+
+  RESET_PRINT_NUMBER_TABLE;
 
   printcharfun = canonicalize_printcharfun (printcharfun);
 
@@ -612,8 +664,8 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
   if (gc_in_progress)
     return;
 #endif
-  
-  RESET_PRINT_GENSYM;
+
+  RESET_PRINT_NUMBER_TABLE;
 
   /* See the comment in print_prepare().  */
   if (FRAMEP (frame_kludge))
@@ -935,9 +987,9 @@ second argument NOESCAPE is non-nil.
   /* This function can GC */
   Lisp_Object result = Qnil;
 
-  RESET_PRINT_GENSYM;
+  RESET_PRINT_NUMBER_TABLE;
   result = prin1_to_string (object, !(EQ(noescape, Qnil)));
-  RESET_PRINT_GENSYM;
+  RESET_PRINT_NUMBER_TABLE;
 
   return result;
 }
@@ -1415,30 +1467,56 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	 obj = XCDR (obj), len++)
       {
 	if (len > 0)
-	  write_ascstring (printcharfun, " ");
-	if (EQ (obj, tortoise) && len > 0)
-	  {
-	    if (print_readably)
-	      printing_unreadable_object_fmt ("circular list");
-	    else
-	      write_ascstring (printcharfun, "... <circular list>");
-	    break;
-	  }
-	if (len & 1)
-	  tortoise = XCDR (tortoise);
-	if (len > max)
-	  {
-	    write_ascstring (printcharfun, "...");
-	    break;
-	  }
+          {
+            write_ascstring (printcharfun, " ");
+
+            /* Note that print_cons is the only object method that does any
+               circularity checking itself, because a cons that is the cdr
+               of OBJ is not handed to print_internal in the ordinary course
+               of events. All the other possibly-repeated structures always
+               hand sub-objects to print_internal(). */
+            if (print_circle &&
+                INTP (Fgethash (obj, Vprint_number_table, Qnil)))
+              {
+                write_ascstring (printcharfun, ". ");
+                print_internal (obj, printcharfun, escapeflag);
+                /* We have printed the list's tail, print_cons() is done. */
+                break;
+              }
+
+            if (EQ (obj, tortoise))
+              {
+                if (print_readably)
+		  {
+		    printing_unreadable_object_fmt ("circular list");
+		  }
+
+		write_ascstring (printcharfun, "... <circular list>");
+                break;
+              }
+
+            if (len & 1)
+	      {
+		tortoise = XCDR (tortoise);
+	      }
+
+            if (len > max)
+              {
+                write_ascstring (printcharfun, "...");
+                break;
+              }
+          }
+
 	print_internal (XCAR (obj), printcharfun, escapeflag);
       }
   }
+
   if (!LISTP (obj))
     {
       write_ascstring (printcharfun, " . ");
       print_internal (obj, printcharfun, escapeflag);
     }
+
   UNGCPRO;
 
   write_ascstring (printcharfun, ")");
@@ -1638,13 +1716,323 @@ printing_major_badness (Lisp_Object printcharfun,
 		    "#<SERIOUS XEMACS BUG: %s Save your buffers immediately "
 		    "and please report this bug>", buf);
 }
+
+/* Not static only because of print_preprocess_cons. */
+Elemcount print_preprocess_inchash_eq (Lisp_Object, Lisp_Object, Elemcount *); 
 
+Elemcount
+print_preprocess_inchash_eq (Lisp_Object obj, Lisp_Object table,
+                             Elemcount *seen_object_count)
+{
+  htentry *hte = inchash_eq (obj, table, 1);
+  Elemcount extracted;
+
+  /* If the hash table had to be resized, hte is NULL. */
+  if (hte == NULL)
+    {
+      hte = find_htentry (obj, XHASH_TABLE (table));
+    }
+
+  extracted = XINT (hte->value);
+  if (1 == extracted)
+    {
+      *seen_object_count += 1;
+      hte->value
+        = make_int (1 | (*seen_object_count << PRINT_NUMBER_ORDINAL_SHIFT));
+    }
+  else if ((extracted & PRINT_NUMBER_SEEN_MASK) == PRINT_NUMBER_SEEN_MASK)
+    {
+      /* Avoid the number overflowing the bit field. */
+      extracted = (extracted & ~PRINT_NUMBER_SEEN_MASK) | 2;
+      hte->value = make_int (extracted);
+    }
+
+  return extracted & PRINT_NUMBER_SEEN_MASK;
+}
+
+/* Fill in Vprint_number_table according to the structure of OBJ. OBJ itself
+   and all its elements will be added to Vprint_number_table recursively if
+   its type has the print_preprocess method implemented. Objects with the
+   print_preprocess method implemented include cons, vector, compiled
+   function, hash table, char table, range table, and symbol. Symbol is an
+   exceptional type in that it is impossible to construct a recursive symbol
+   structure, but is here for the print-gensym feature. */
+
+void
+print_preprocess (Lisp_Object object, Lisp_Object print_number_table,
+                  Elemcount *seen_object_count)
+{
+  if (!LRECORDP (object) || !HAS_OBJECT_METH_P (object, print_preprocess))
+    {
+      return;
+    }
+
+  if (SYMBOLP (object) && IN_OBARRAY (object))
+    {
+      /* Handle symbols specially. We do this here rather than in symbols.c
+         because we don't want to have all the other print_preprocess methods 
+         worry about print_preprocess_inchash_eq. */
+      return;
+    }
+
+  if (print_preprocess_inchash_eq (object, print_number_table,
+                                   seen_object_count) > 1)
+    {
+      return;
+    }
+
+  OBJECT_METH (object, print_preprocess, (object, print_number_table,
+                                          seen_object_count));
+}
+
+typedef struct { Lisp_Object key; Elemcount count; } preprocess_sort_t;
+
+static int
+print_seen_once (Lisp_Object UNUSED (key), Lisp_Object value,
+                 void * UNUSED (extra_arg))
+{
+  return 1 == ((XINT (value) & PRINT_NUMBER_SEEN_MASK));
+}
+
+static int
+print_nonsymbol_seen_once (Lisp_Object key, Lisp_Object value,
+                           void * UNUSED (extra_arg))
+{
+  /* print_continuous_numbering is used for symbols, so we don't delete them
+     from the print info hash table. It's less useful for other objects at
+     the moment, though. */
+  return !SYMBOLP (key) && (1 == ((XINT (value) & PRINT_NUMBER_SEEN_MASK)));
+}
+
+static int
+print_sort_get_numbers (Lisp_Object key, Lisp_Object value, void *extra_arg)
+{
+  preprocess_sort_t **preprocess_sort_ptr = (preprocess_sort_t **) extra_arg;
+  preprocess_sort_t *preprocess_sort = *preprocess_sort_ptr;
+
+  *preprocess_sort_ptr += 1;
+  preprocess_sort->key = key;
+  preprocess_sort->count = XINT (value);
+
+  return 0;
+}
+
+static int
+print_sort_compare_ordinals (const void *object1, const void *object2)
+{
+  Elemcount a = ((preprocess_sort_t *) object1)->count
+    & PRINT_NUMBER_ORDINAL_MASK;
+  Elemcount b = ((preprocess_sort_t *) object2)->count
+    & PRINT_NUMBER_ORDINAL_MASK;
+
+  return a - b;
+}
+
+enum print_gensym_status
+  {
+    PRINT_GENSYM_DONE,
+    PRINT_GENSYM_PRINT,
+    PRINT_GENSYM_PRINT_AND_CLEANUP_TABLE,
+  };
+
+/* Check for any circular objects or repeated uninterned symbols.
+
+   If OBJ is a repeated structure (or symbol) and it has been printed
+   already, print it now in the #%d# format, and return 1, to indicate
+   print_internal is done.
+
+   If OBJ is a repeated structure and it has not yet been printed, print
+   #%d= before the object, mark it as printed, and return zero, to indicate
+   print_internal should continue as usual.
+
+   If OBJ is not a repeated structure, do nothing, and return zero, to
+   indicate print_internal should continue as usual. */
+static enum print_gensym_status
+print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
+{
+  Lisp_Object seen = Fgethash (obj, Vprint_number_table, Qnil);
+  if (NILP (seen))
+    {
+      Elemcount old_print_number_index = print_number_index;
+
+      print_preprocess (obj, Vprint_number_table, &print_number_index);
+
+      if (old_print_number_index != print_number_index)
+        {
+          Elemcount new_print_number_index, ii;
+
+          /* We support up to 25 bits' worth of repeated objects, which is
+             33 million or so, far more than we support in, say, a
+             compiled-function constants vector. */
+          assert (print_number_index <=
+                  (PRINT_NUMBER_ORDINAL_MASK >> PRINT_NUMBER_ORDINAL_SHIFT));
+
+          /* If any objects have been seen once and once only, remove them
+             from Vprint_number_table. This is a bit of an arbitrary
+             decision; we could keep them around for the sake of
+             print_continuous_numbering, but there's the reasonable worry
+             about Vprint_number_table getting awkwardly large. */
+          elisp_map_remhash (print_continuous_numbering ? 
+                             print_nonsymbol_seen_once : print_seen_once,
+                             Vprint_number_table, NULL);
+
+          new_print_number_index
+            = XINT (Fhash_table_count (Vprint_number_table));
+
+          if (new_print_number_index != print_number_index
+              && new_print_number_index != old_print_number_index)
+            {
+              preprocess_sort_t *preprocess_sort
+                = alloca_array (preprocess_sort_t, new_print_number_index);
+              preprocess_sort_t *preprocess_sort_ptr = preprocess_sort;
+
+              /* There are new objects in Vprint_number_table, but their
+                 ordinal values don't necessarily represent the order they
+                 were seen in, there will be gaps corresponding to the
+                 non-symbols that were seen only once.  Correct this. */
+              elisp_maphash_unsafe (print_sort_get_numbers, Vprint_number_table,
+                                    &preprocess_sort_ptr);
+
+              qsort (preprocess_sort, new_print_number_index,
+                     sizeof (preprocess_sort_t), print_sort_compare_ordinals);
+
+              for (ii = old_print_number_index;
+                   ii < new_print_number_index;
+                   ii++)
+                {
+                  Fputhash (preprocess_sort[ii].key, 
+                            make_int ((preprocess_sort[ii].count
+                                       & ~PRINT_NUMBER_ORDINAL_MASK)
+                                      | ((ii + 1)
+                                         << PRINT_NUMBER_ORDINAL_SHIFT)),
+                            Vprint_number_table);
+                }
+            }
+
+          print_number_index = new_print_number_index;
+
+          /* The new objects may include OBJ; update SEEN to reflect
+             this. */
+          seen = Fgethash (obj, Vprint_number_table, Qnil);
+          if (INTP (seen))
+            {
+              goto prefix_this;
+            }
+        }
+    }
+  else
+    {
+    prefix_this:
+      if ((XINT (seen) & PRINT_NUMBER_SEEN_MASK) == 1
+          && !(print_continuous_numbering && SYMBOLP (obj)))
+        {
+          return PRINT_GENSYM_PRINT_AND_CLEANUP_TABLE;
+        }
+      else if (XINT (seen) & PRINT_NUMBER_PRINTED_MASK)
+        {
+          write_fmt_string (printcharfun, "#%d#",
+                            (XINT (seen) & PRINT_NUMBER_ORDINAL_MASK)
+                            >> PRINT_NUMBER_ORDINAL_SHIFT);
+
+          /* We're finished printing this object. */
+          return PRINT_GENSYM_DONE;
+        }
+      else
+        {
+          write_fmt_string (printcharfun, "#%d=",
+                            (XINT (seen) & PRINT_NUMBER_ORDINAL_MASK)
+                            >> PRINT_NUMBER_ORDINAL_SHIFT);
+
+          /* We set PRINT_NUMBER_PRINTED_MASK immediately here, so the
+             object itself is written as #%d# when printing its contents. */
+          Fputhash (obj, make_int (XINT (seen) | PRINT_NUMBER_PRINTED_MASK),
+                    Vprint_number_table);
+
+          /* This is the first time the object has been seen while
+             printing the recursive object; we still have to go ahead
+             and do the actual print. */
+        }
+    }
+
+  return PRINT_GENSYM_PRINT;
+}
+
+Lisp_Object
+nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
+			   Lisp_Object tree,
+                           Lisp_Object number_table, Boolint test_not_unboundp)
+{
+  Lisp_Object seen;
+  
+  if (!LRECORDP (tree) || !HAS_OBJECT_METH_P (tree, nsubst_structures_descend))
+    {
+      return tree;
+    }
+
+  seen = Fgethash (tree, number_table, Qnil);
+
+  if (INTP (seen))
+    {
+      if (XINT (seen) & PRINT_NUMBER_PRINTED_MASK)
+        {
+          return tree;
+        }
+
+      Fputhash (tree, make_int (XINT (seen) | PRINT_NUMBER_PRINTED_MASK),
+                number_table);
+    }
+
+  OBJECT_METH (tree, nsubst_structures_descend,
+	       (new_, old, tree, number_table, test_not_unboundp));
+
+  return tree;
+}
+
+/* Descend TREE, replacing the Lisp object OLD each time it is encountered
+   with the Lisp object NEW_. TREE can be recursive or circular, and this is
+   handled correctly. */
+Lisp_Object
+nsubst_structures (Lisp_Object new_, Lisp_Object old, Lisp_Object tree,
+                   check_test_func_t check_test, Boolint test_not_unboundp,
+                   Lisp_Object UNUSED (test), Lisp_Object UNUSED (key))
+{
+  Lisp_Object number_table, result;
+  Elemcount ordinal = 0;
+  struct gcpro gcpro1;
+
+  if (check_test != check_eq_nokey || !LRECORDP (old))
+    {
+      signal_error (Qunimplemented,
+                    ":descend-structures not yet finished, nsubst",
+                    Qunbound);
+    }
+
+  if (!LRECORDP (tree) || !HAS_OBJECT_METH_P (tree, nsubst_structures_descend))
+    {
+      return tree;
+    }
+
+  number_table = make_lisp_hash_table (16, HASH_TABLE_NON_WEAK, Qeq);
+  GCPRO1 (number_table);
+
+  print_preprocess (tree, number_table, &ordinal);
+
+  /* This function can GC by means of the hash table test functions, when
+     replacing hash table entries. */
+  result = nsubst_structures_descend (new_, old, tree, number_table,
+                                      test_not_unboundp);
+  Fclrhash (number_table);
+
+  RETURN_UNGCPRO (result);
+}
+
 void
 print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
   int specdepth = 0;
   struct gcpro gcpro1, gcpro2;
+  Boolint cleanup_table = 0;
 
   QUIT;
 
@@ -1683,9 +2071,12 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     {
       specdepth = internal_bind_int (&print_depth, print_depth + 1);
 
-      if (print_depth > PRINT_CIRCLE)
-	signal_error (Qstack_overflow,
-		      "Apparently circular structure being printed", Qunbound);
+      if (print_depth > PRINT_CIRCLE_LIMIT)
+        {
+          signal_error (Qstack_overflow,
+                        "Apparently circular structure being printed",
+                        Qunbound);
+        }
     }
 
   switch (XTYPE (obj))
@@ -1888,10 +2279,25 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	      }
 	  }
 
-	/* Detect circularities and truncate them.
-	   No need to offer any alternative--this is better than an error.  */
-	if (CONSP (obj) || VECTORP (obj) || COMPILED_FUNCTIONP (obj))
-	  {
+        if (LRECORDP (obj) &&
+            ((print_circle && HAS_OBJECT_METH_P (obj, print_preprocess)) ||
+             (print_gensym && SYMBOLP (obj) && !IN_OBARRAY (obj))))
+          {
+            enum print_gensym_status status
+              = print_gensym_or_circle (obj, printcharfun);
+
+            cleanup_table = (PRINT_GENSYM_PRINT_AND_CLEANUP_TABLE == status);
+
+            if (PRINT_GENSYM_DONE == status)
+              {
+                break;
+              }
+          }
+        else if (!print_circle &&
+                 /* Could this structure be recursive? */
+                 LRECORDP (obj)
+                 && HAS_OBJECT_METH_P (obj, nsubst_structures_descend))
+          {
 	    int i;
 	    for (i = 0; i < print_depth - 1; i++)
 	      if (EQ (obj, being_printed[i]))
@@ -1937,6 +2343,19 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       }
     }
 
+  if (cleanup_table)
+    {
+      /* If any objects have been seen once and once only, remove them from
+         Vprint_number_table. This is a bit of an arbitrary decision; we
+         could keep them around for the sake of print_continuous_numbering,
+         but there's the reasonable worry about Vprint_number_table getting
+         awkwardly large. */
+      elisp_map_remhash (print_continuous_numbering ? 
+                         print_nonsymbol_seen_once : print_seen_once,
+                         Vprint_number_table, NULL);
+
+    }
+
   if (!inhibit_non_essential_conversion_operations)
     unbind_to (specdepth);
   UNGCPRO;
@@ -1968,49 +2387,15 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       output_string (printcharfun, 0, name, 0, size);
       return;
     }
+
   GCPRO2 (obj, printcharfun);
 
-  /* If we print an uninterned symbol as part of a complex object and
-     the flag print-gensym is non-nil, prefix it with #n= to read the
-     object back with the #n# reader syntax later if needed.  */
-  if (!NILP (Vprint_gensym)
-      /* #### Test whether this produces a noticeable slow-down for
-         printing when print-gensym is non-nil.  */
-      && !EQ (obj, oblookup (Vobarray,
-			     XSTRING_DATA (symbol_name (XSYMBOL (obj))),
-			     XSTRING_LENGTH (symbol_name (XSYMBOL (obj))))))
+  if (print_gensym)
     {
-      if (print_depth > 1)
-	{
-	  Lisp_Object tem = Fassq (obj, Vprint_gensym_alist);
-	  if (CONSP (tem))
-	    {
-	      write_ascstring (printcharfun, "#");
-	      print_internal (XCDR (tem), printcharfun, escapeflag);
-	      write_ascstring (printcharfun, "#");
-	      UNGCPRO;
-	      return;
-	    }
-	  else
-	    {
-	      if (CONSP (Vprint_gensym_alist))
-		{
-		  /* Vprint_gensym_alist is exposed to Lisp, so we
-                     have to be careful.  */
-		  CHECK_CONS (XCAR (Vprint_gensym_alist));
-		  CHECK_INT (XCDR (XCAR (Vprint_gensym_alist)));
-		  tem = make_int (XINT (XCDR (XCAR (Vprint_gensym_alist))) + 1);
-		}
-	      else
-		tem = make_int (1);
-	      Vprint_gensym_alist = Fcons (Fcons (obj, tem), Vprint_gensym_alist);
-
-	      write_ascstring (printcharfun, "#");
-	      print_internal (tem, printcharfun, escapeflag);
-	      write_ascstring (printcharfun, "=");
-	    }
-	}
-      write_ascstring (printcharfun, "#:");
+      if (!IN_OBARRAY (obj))
+        {
+          write_ascstring (printcharfun, "#:");
+        }
     }
 
   /* Does it look like an integer or a float? */
@@ -2688,9 +3073,7 @@ Do not SET this variable; bind it instead.
 */ );
   print_readably = 0;
 
-  /* #### I think this should default to t.  But we'd better wait
-     until we see that it works out.  */
-  DEFVAR_LISP ("print-gensym", &Vprint_gensym /*
+  DEFVAR_BOOL ("print-gensym", &print_gensym /*
 If non-nil, then uninterned symbols will be printed specially.
 Uninterned symbols are those which are not present in `obarray', that is,
 those which were made with `make-symbol' or by calling `intern' with a
@@ -2703,19 +3086,43 @@ symbol each time it is seen, so if you print an object which contains
 two pointers to the same uninterned symbol, `read' will not duplicate
 that structure.
 
-If the value of `print-gensym' is a cons cell, then in addition
-refrain from clearing `print-gensym-alist' on entry to and exit from
-printing functions, so that the use of #...# and #...= can carry over
-for several separately printed objects.
+If the value of `print-continuous-numbering' is non-nil, the table used by
+`print-gensym' and `print-circle' (which see) will not be reset on entry to
+and exit from printing functions, so that the use of #...# and #...= can
+carry over for several separately printed objects.
 */ );
-  Vprint_gensym = Qnil;
+  print_gensym = 1;
 
-  DEFVAR_LISP ("print-gensym-alist", &Vprint_gensym_alist /*
-Association list of elements (GENSYM . N) to guide use of #N# and #N=.
-In each element, GENSYM is an uninterned symbol that has been associated
-with #N= for the specified value of N.
-*/ );
-  Vprint_gensym_alist = Qnil;
+  DEFVAR_BOOL ("print-circle", &print_circle /*
+Non-nil means print recursive structures using #N= and #N# syntax.
+
+If nil, XEmacs detects recursive structures and truncates them in an
+unreadable fashion.
+
+If non-nil, shared substructures anywhere in the structure are printed
+with `#N=' before the first occurrence (in the order of the print
+representation) and `#N#' in place of each subsequent occurrence,
+where N is a positive decimal integer.
+
+If the value of `print-continuous-numbering' is non-nil, the table used by
+`print-gensym' (which see) and `print-circle' will not be reset on entry to
+and exit from printing functions, so that the use of #...# and #...= can
+carry over for several separately printed objects.
+*/);
+  print_circle = 0;
+
+  DEFVAR_BOOL_MAGIC ("print-continuous-numbering",
+                     &print_continuous_numbering /*
+Non-nil means number continuously across print calls, mostly for symbols.
+This affects the numbers printed for #N= labels and #M# references.
+See also `print-circle' and `print-gensym'.
+This variable should not be set with `setq'; bind it with a `let' instead.
+*/ ,
+                     print_continuous_numbering_changed);
+  print_continuous_numbering = 0;
+
+  staticpro (&Vprint_number_table);
+  Vprint_number_table = make_lisp_hash_table (16, HASH_TABLE_KEY_WEAK, Qeq);
 
   DEFVAR_LISP ("print-message-label", &Vprint_message_label /*
 Label for minibuffer messages created with `print'.  This should

@@ -128,7 +128,7 @@ void prune_weak_hash_tables (void);
 
 void pdump_reorganize_hash_table (Lisp_Object);
 
-void inchash_eq (Lisp_Object key, Lisp_Object table, EMACS_INT offset);
+htentry *inchash_eq (Lisp_Object key, Lisp_Object table, EMACS_INT offset);
 
 htentry *find_htentry (Lisp_Object key, const Lisp_Hash_Table *ht);
 

@@ -1237,9 +1237,17 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
   if (TTY_FLAGS (c).underline_width == -1)
     TTY_FLAGS (c).underline_width = 0;
 
-   TTY_FLAGS (c).meta_key =
-     eight_bit_tty (d) ? tgetflag ("km") || tgetflag ("MT") ? 1 : 2 : 0;
-
+  if (eight_bit_tty (d))
+    {
+      TTY_FLAGS (c).meta_key
+        = (EQ (Qiso2022, Fcoding_system_type (Qnative))
+           && EQ (Qt, Fcoding_system_property (Qnative, Qseven))
+           && (tgetflag ("km") || tgetflag ("MT"))) ? 1 : 2;
+    }
+  else
+    {
+      TTY_FLAGS (c).meta_key = 0;
+    }
 
   /*
    * Setup the costs tables for this tty console.

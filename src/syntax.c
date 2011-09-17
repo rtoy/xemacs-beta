@@ -41,17 +41,14 @@ int words_include_escapes;
 
 int parse_sexp_ignore_comments;
 
-/* The following two variables are provided to tell additional information
-   to the regex routines.  We do it this way rather than change the
-   arguments to re_search_2() in an attempt to maintain some call
-   compatibility with other versions of the regex code. */
-
-/* Tell the regex routines not to QUIT.  Normally there is a QUIT
-   each iteration in re_search_2(). */
+/* Tell the regex routines not to QUIT.  Normally there is a QUIT each
+   iteration in re_search_2().  We do it this way rather than change
+   the arguments to re_search_2() in an attempt to maintain some call
+   compatibility with other versions of the regex code.
+   #### Surely this is no longer a consideration.  Last sync was 19.28! */
 int no_quit_in_re_search;
 
-/* The standard syntax table is stored where it will automatically
-   be used in all new buffers.  */
+/* The standard syntax table is automatically used in all new buffers. */
 Lisp_Object Vstandard_syntax_table;
 
 Lisp_Object Vsyntax_designator_chars_string;
@@ -84,6 +81,7 @@ struct lisp_parse_state
   Lisp_Object levelstarts;/* Char numbers of starts-of-expression
 			     of levels (starting from outermost).  */
 };
+
 
 /* These variables are a cache for finding the start of a defun.
    find_start_pos    is the place for which the defun start was found.
@@ -165,9 +163,8 @@ check_syntax_table (Lisp_Object obj, Lisp_Object default_)
 }
 
 DEFUN ("syntax-table", Fsyntax_table, 0, 1, 0, /*
-Return the current syntax table.
-This is the one specified by the current buffer, or by BUFFER if it
-is non-nil.
+Return the current syntax table of BUFFER.
+BUFFER defaults to the current buffer.
 */
        (buffer))
 {
@@ -177,9 +174,8 @@ is non-nil.
 #ifdef DEBUG_XEMACS
 
 DEFUN ("mirror-syntax-table", Fmirror_syntax_table, 0, 1, 0, /*
-Return the current mirror syntax table, for debugging purposes.
-This is the one specified by the current buffer, or by BUFFER if it
-is non-nil.
+Return the current mirror syntax table of BUFFER.
+BUFFER defaults to the current buffer.  Only useful in debugging internals.
 */
        (buffer))
 {
@@ -187,8 +183,12 @@ is non-nil.
 }
 
 DEFUN ("syntax-cache-info", Fsyntax_cache_info, 0, 1, 0, /*
-Return info about the syntax cache in BUFFER.
-BUFFER defaults to the current buffer if nil.
+Return a list (START END PREV_CHANGE NEXT_CHANGE) for BUFFER's syntax cache.
+BUFFER defaults to the current buffer.
+
+The elements correspond to members of struct syntax_cache of the same names.
+START and END should be markers.  PREV_CHANGE and NEXT_CHANGE are integers.
+Only useful in debugging internals.
 */
        (buffer))
 {
@@ -201,8 +201,7 @@ BUFFER defaults to the current buffer if nil.
 #endif /* DEBUG_XEMACS */
 
 DEFUN ("standard-syntax-table", Fstandard_syntax_table, 0, 0, 0, /*
-Return the standard syntax table.
-This is the one used for new buffers.
+Return the standard syntax table, used for new buffers.
 */
        ())
 {
@@ -274,7 +273,7 @@ static void
 syntax_cache_table_was_changed (struct buffer *buf)
 {
   struct syntax_cache *cache = buf->syntax_cache;
-  if (cache->no_syntax_table_prop)
+  if (cache->source == syntax_source_buffer_table)
     {
       cache->syntax_table =
 	BUFFER_SYNTAX_TABLE (buf);
@@ -284,21 +283,28 @@ syntax_cache_table_was_changed (struct buffer *buf)
 }
 
 static void
-reset_buffer_syntax_cache_range (struct syntax_cache *cache,
-				 Lisp_Object buffer, int infinite)
+reset_syntax_cache_range (struct syntax_cache *cache,  /* initialized cache */
+			  int valid_everywhere)	/* non-zero if we can assume
+						   syntax-table properties
+						   never need be respected
+						   in the life of the cache */
 {
-  Fset_marker (cache->start, make_int (1), buffer);
-  Fset_marker (cache->end, make_int (1), buffer);
-  Fset_marker_insertion_type (cache->start, Qt);
-  Fset_marker_insertion_type (cache->end, Qnil);
-  /* #### Should we "cache->no_syntax_table_prop = 1;" here? */
-  /* #### Cf comment on INFINITE in init_syntax_cache. -- sjt */
-  if (infinite)
+  if (BUFFERP (cache->object))
+    {
+      /* make known region zero-length and reset insertion behavior */
+      Fset_marker (cache->start, make_int (1), cache->object);
+      Fset_marker (cache->end, make_int (1), cache->object);
+      Fset_marker_insertion_type (cache->start, Qnil);
+      Fset_marker_insertion_type (cache->end, Qt);
+    }
+  /* #### Should reset "cache->source" here?
+     If so, also reset tables. */
+  if (valid_everywhere)
     {
       cache->prev_change = EMACS_INT_MIN;
       cache->next_change = EMACS_INT_MAX;
     }
-  else
+  else /* valid nowhere */
     {
       cache->prev_change = -1;
       cache->next_change = -1;
@@ -306,43 +312,71 @@ reset_buffer_syntax_cache_range (struct syntax_cache *cache,
 }
 
 static void
-init_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
-		    struct buffer *buffer, int infinite)
+init_syntax_cache (struct syntax_cache *cache,  /* xzero'ed memory */
+		   Lisp_Object object,		/* string or buffer */
+		   struct buffer *buffer)	/* buffer; if OBJECT is a
+						   buffer, this is the same */
 {
-  xzero (*cache);
   cache->object = object;
   cache->buffer = buffer;
-  cache->no_syntax_table_prop = 1;
+
+  cache->source = syntax_source_buffer_table;
   cache->syntax_table =
     BUFFER_SYNTAX_TABLE (cache->buffer);
   cache->mirror_table =
     BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
-  cache->start = Qnil;
-  cache->end = Qnil;
-  /* #### I'm not sure what INFINITE is for, but it's apparently needed by
-     setup_syntax_cache().  It looks like it's supposed to guarantee that
-     the test for POS outside of cache-valid range will never succeed, so
-     that update_syntax_cache won't get called, but it's hard to be sure.
-     Cf reset_buffer_syntax_cache_range. -- sjt */
-  if (infinite)
-    {
-      cache->prev_change = EMACS_INT_MIN;
-      cache->next_change = EMACS_INT_MAX;
-    }
-  else
-    {
-      cache->prev_change = -1;
-      cache->next_change = -1;
-    }
+
+  /* Qnil avoids GC'ing markers, which are useless for strings. */
+  cache->start = BUFFERP (object) ? Fmake_marker () : Qnil;
+  cache->end = BUFFERP (object) ? Fmake_marker () : Qnil;
+
+  reset_syntax_cache_range (cache, 0);
 }
 
 /* external syntax cache API */
 
-/* #### This function and associated logic still needs work, and especially
-   documentation. */
+/* At this time (hg rev 5551:dab422055bab) setup_syntax_cache() is called
+   directly once in setup_buffer_syntax_cache and twice in regex.c.  The
+   calls in regex.c are obfuscated, so it's hard to tell, but it looks like
+   they can be called with OBJECT being a buffer.
+
+   "You are in a confusing maze of initializations, all alike."
+
+   reset_syntax_cache_range (3 uses in setup_syntax_cache,
+   signal_syntax_cache_extent_changed, and init_buffer_syntax_cache)
+   reinitializes:
+   1. if BUFFERP(OBJECT), marker positions to 1 (giving a null range)
+   2. if BUFFERP(OBJECT), marker movement type
+   3. cache range per VALID_EVERYWHERE
+
+   init_syntax_cache (2 uses in init_buffer_syntax_cache and
+   setup_syntax_cache) initializes:
+   1. source to syntax_source_buffer_table
+   2. syntax_table and mirror_syntax table to BUFFER's tables
+   3. marker members to BUFFERP(OBJECT) ? markers w/o position : Qnil
+   4. cache range with VALID_EVERYWHERE==0
+   5. object and buffer to corresponding arguments.
+
+   init_buffer_syntax_cache (1 use in buffer.c) initializes:
+   0. allocation of buffer's cache memory (done by allocator)
+   1. cache memory to zero (done by allocator)
+   2. cache to buffer's cache
+   3. cache members by init_syntax_cache with object==buffer==BUF.
+
+   setup_buffer_syntax_cache (1 call in font-lock.c, 1 use in search.c,
+   and 7 uses in this file) initializes:
+   0. buffer's syntax cache by calling setup_syntax_cache.
+
+   setup_buffer_syntax_cache and setup_syntax_cache are called by functions
+   that analyze text using character syntax.  They are called repeatedly on
+   the same cache.  init_syntax_cache and init_buffer_syntax_cache are
+   conceptually called once for each cache.  reset_syntax_cache_range may
+   be called repeatedly on the same cache.  The last three are for internal
+   use by the syntax setup code and buffer initialization. */
+
 struct syntax_cache *		/* return CACHE or the cache of OBJECT */
-setup_syntax_cache (struct syntax_cache *cache,	/* syntax cache, may be NULL
-						   if OBJECT is a buffer */
+setup_syntax_cache (struct syntax_cache *cache,	/* may be NULL only if
+						   OBJECT is a buffer */
 		    Lisp_Object object,	 	/* the object (if any) cache
 						   is associated with */
 		    struct buffer *buffer,	/* the buffer to use as source
@@ -350,29 +384,35 @@ setup_syntax_cache (struct syntax_cache *cache,	/* syntax cache, may be NULL
 		    Charxpos from,		/* initial position of cache */
 		    int count)			/* direction? see code */
 {
-  /* If OBJECT is a buffer, use its cache.  Initialize cache.  Make it valid
-     for the whole buffer if the syntax-table property is not being respected.
-     Else if OBJECT is not a buffer, initialize the cache passed in CACHE.
-     If the syntax-table property is being respected, update the cache. */
+  /* If OBJECT is a buffer, use its cache; else use CACHE and initialize it.
+     Invalidate the cache if the syntax-table property is being respected;
+     else make it valid for the whole object. */
   if (BUFFERP (object))
     {
       cache = XBUFFER (object)->syntax_cache;
       if (!lookup_syntax_properties)
-	reset_buffer_syntax_cache_range (cache, object, 1);
+	reset_syntax_cache_range (cache, 1);
     }
   else
-    init_syntax_cache (cache, object, buffer, 0);
-  if (lookup_syntax_properties)
     {
-      if (count <= 0)
-	{
-	  from--;
-	  from = buffer_or_string_clip_to_accessible_char (cache->object,
-							   from);
-	}
-      if (!(from >= cache->prev_change && from < cache->next_change))
-	update_syntax_cache (cache, from, count);
+      xzero (*cache);
+      init_syntax_cache (cache, object, buffer);
     }
+
+   if (lookup_syntax_properties)
+     {
+       if (count <= 0)
+	 {
+	   --from;
+	   from = buffer_or_string_clip_to_accessible_char (cache->object,
+							    from);
+	 }
+       /* If lookup_syntax_properties && BUFFERP (object), this
+	  optimization may matter. */
+       if (!(from >= cache->prev_change && from < cache->next_change))
+	 update_syntax_cache (cache, from, count);
+     }
+
 #ifdef NOT_WORTH_THE_EFFORT
   update_mirror_syntax_if_dirty (cache->mirror_table);
 #endif /* NOT_WORTH_THE_EFFORT */
@@ -386,21 +426,18 @@ setup_buffer_syntax_cache (struct buffer *buffer, Charxpos from, int count)
 }
 
 /* 
-   Update syntax_cache to an appropriate setting for position POS
+   Update syntax_cache CACHE to an appropriate setting for position CPOS.
 
-   The sign of COUNT gives the relative position of POS wrt the
+   The sign of COUNT gives the relative position of CPOS wrt the
    previously valid interval.  (not currently used)
 
-   `syntax_cache.*_change' are the next and previous positions at
-   which syntax_code and c_s_t will need to be recalculated.
+   `syntax_cache.*_change' are the next and previous positions at which
+   syntax_code and c_s_t will need to be recalculated.
 
-   #### Currently this code uses `get-char-property', which will
-   return the "last smallest" extent at a given position. In cases
-   where overlapping extents are defined, this code will simply use
-   whatever is returned by get-char-property.
-
-   It might be worth it at some point to merge provided syntax tables
-   outward to the current buffer (#### rewrite in English please?!). */
+   #### Currently this code uses `get-char-property', which will return
+   the "last smallest" extent at a given position. In cases where
+   overlapping extents are defined, this code will simply use whatever
+   is returned by get-char-property. */
 
 void
 update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
@@ -423,19 +460,19 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
 					      cache->object, -1, 1, 0);
   if (lim < 0)
     {
-      next = buffer_or_string_absolute_end_byte (cache->object);
+      next = buffer_or_string_accessible_end_byte (cache->object);
       at_begin = 1;
     }
   else
     next = lim;
 
-  if (pos < buffer_or_string_absolute_end_byte (cache->object))
+  if (pos < buffer_or_string_accessible_end_byte (cache->object))
     pos = next_bytexpos (cache->object, pos);
   lim = next_previous_single_property_change (pos, Qsyntax_table,
 					      cache->object, -1, 0, 0);
   if (lim < 0)
     {
-      prev = buffer_or_string_absolute_begin_byte (cache->object);
+      prev = buffer_or_string_accessible_begin_byte (cache->object);
       at_end = 1;
     }
   else
@@ -469,24 +506,21 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
   
   if (!NILP (Fsyntax_table_p (tmp_table)))
     {
-      cache->use_code = 0;
+      cache->source = syntax_source_property_table;
       cache->syntax_table = tmp_table;
       cache->mirror_table = XCHAR_TABLE (tmp_table)->mirror_table;
-      cache->no_syntax_table_prop = 0;
 #ifdef NOT_WORTH_THE_EFFORT
       update_mirror_syntax_if_dirty (cache->mirror_table);
 #endif /* NOT_WORTH_THE_EFFORT */
     } 
   else if (CONSP (tmp_table) && INTP (XCAR (tmp_table)))
     {
-      cache->use_code = 1;
+      cache->source = syntax_source_property_code;
       cache->syntax_code = XINT (XCAR (tmp_table));
-      cache->no_syntax_table_prop = 0;
     }
   else 
     {
-      cache->use_code = 0;
-      cache->no_syntax_table_prop = 1;
+      cache->source = syntax_source_buffer_table;
       cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
       cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
 #ifdef NOT_WORTH_THE_EFFORT
@@ -496,8 +530,7 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
 }
 
 /* buffer-specific APIs used in buffer.c
-   #### This is really unclean;
-   the syntax cache should just be a LISP object */
+   #### Really unclean; the syntax cache should just be a LISP object. */
 
 void
 mark_buffer_syntax_cache (struct buffer *buf)
@@ -519,19 +552,13 @@ init_buffer_syntax_cache (struct buffer *buf)
 {
   struct syntax_cache *cache;
 #ifdef NEW_GC
-  buf->syntax_cache = XSYNTAX_CACHE (ALLOC_NORMAL_LISP_OBJECT (syntax_cache));
+  cache = XSYNTAX_CACHE (ALLOC_NORMAL_LISP_OBJECT (syntax_cache));
 #else /* not NEW_GC */
-  buf->syntax_cache = xnew_and_zero (struct syntax_cache);
+  cache = xnew_and_zero (struct syntax_cache);
 #endif /* not NEW_GC */
-  cache = buf->syntax_cache;
-  cache->object = wrap_buffer (buf);
-  cache->buffer = buf;
-  cache->no_syntax_table_prop = 1;
-  cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
-  cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
-  cache->start = Fmake_marker ();
-  cache->end = Fmake_marker ();
-  reset_buffer_syntax_cache_range (cache, cache->object, 0);
+
+  init_syntax_cache (cache, wrap_buffer (buf), buf);
+  buf->syntax_cache = cache;
 }
 
 /* finalize the syntax cache for BUF */
@@ -558,25 +585,18 @@ uninit_buffer_syntax_cache (struct buffer *UNUSED_IF_NEW_GC (buf))
 void
 signal_syntax_cache_extent_changed (EXTENT extent)
 {
-  Lisp_Object buffer = Fextent_object (wrap_extent (extent));
-  if (BUFFERP (buffer))
+  Lisp_Object object = Fextent_object (wrap_extent (extent));
+  if (BUFFERP (object))
     {
-      /* This was getting called with the buffer's start and end null, eg in
-	 cperl mode, which triggers an assert in byte_marker_position.  Cf
-	 thread rooted at <yxz7j7xzk97.fsf@gimli.holgi.priv> on xemacs-beta.
-	 <yxzfymklb6p.fsf@gimli.holgi.priv> has a recipe, but you also need
-	 to delete or type SPC to get the crash.
-	 #### Delete this comment when setup_syntax_cache is made sane. */
-      struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;
-      /* #### would this be slower or less accurate in character terms? */
-      Bytexpos start = extent_endpoint_byte (extent, 0);
-      Bytexpos end = extent_endpoint_byte (extent, 1);
-      Bytexpos start2 = byte_marker_position (cache->start);
-      Bytexpos end2 = byte_marker_position (cache->end);
+      struct syntax_cache *cache = XBUFFER (object)->syntax_cache;
+      Bytexpos extent_start = extent_endpoint_byte (extent, 0);
+      Bytexpos extent_end = extent_endpoint_byte (extent, 1);
+      Bytexpos cache_start = byte_marker_position (cache->start);
+      Bytexpos cache_end = byte_marker_position (cache->end);
       /* If the extent is entirely before or entirely after the cache
 	 range, it doesn't overlap.  Otherwise, invalidate the range. */
-      if (!(end < start2 || start > end2))
-	reset_buffer_syntax_cache_range (cache, buffer, 0);
+      if (!(extent_end < cache_start || extent_start > cache_end))
+	reset_syntax_cache_range (cache, 0);
     }
 }
 
@@ -596,11 +616,15 @@ signal_syntax_cache_extent_adjust (struct buffer *buf)
 
 
 
-/* Convert a letter which signifies a syntax code
-   into the code it signifies.
-   This is used by modify-syntax-entry, and other things. */
+/* Convert an ASCII character which represents a syntax class
+   into the corresponding syntax code.
+   This is used by (search.c) skip_chars and (regex.c) regex_compile.
+   regex_compile indexes with `c' of type int, but promises that it
+   is positive.
+   #### skip_chars indexes with an Ichar, a signed type.  Presumably
+   this is guaranteed non-negative. */
 
-const unsigned char syntax_spec_code[0400] =
+const unsigned char syntax_spec_code[0200] =
 { 0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
   0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
   0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
@@ -622,12 +646,12 @@ const unsigned char syntax_spec_code[0400] =
   0377, 0377, 0377, 0377, (char) Sstring_fence, 0377, 0377, 0377
 };
 
+/* The inverse mapping for syntax_spec_code. */
 const unsigned char syntax_code_spec[] =  " .w_()'\"$\\/<>@!|";
 
 DEFUN ("syntax-designator-chars", Fsyntax_designator_chars, 0, 0, 0, /*
-Return a string of the recognized syntax designator chars.
-The chars are ordered by their internal syntax codes, which are
-numbered starting at 0.
+Return the string of the recognized syntax designator chars.
+The chars are indexed by their internal syntax codes, starting at 0.
 */
        ())
 {
@@ -635,13 +659,9 @@ numbered starting at 0.
 }
 
 DEFUN ("char-syntax", Fchar_syntax, 1, 2, 0, /*
-Return the syntax code of CHARACTER, described by a character.
-For example, if CHARACTER is a word constituent,
-the character `?w' is returned.
-The characters that correspond to various syntax codes
-are listed in the documentation of `modify-syntax-entry'.
-Optional second argument SYNTAX-TABLE defaults to the current buffer's
-syntax table.
+Return the syntax code of CHARACTER, designated by a character.
+Optional SYNTAX-TABLE defaults to the current buffer's syntax table.
+See `modify-syntax-entry' for the designators of the defined syntax codes.
 */
        (character, syntax_table))
 {
@@ -666,12 +686,15 @@ charset_syntax (struct buffer *UNUSED (buf), Lisp_Object UNUSED (charset),
 		int *multi_p_out)
 {
   *multi_p_out = 1;
-  /* !!#### get this right */
+  /* !!#### get this right
+     Maybe not worth it until we have Unicode inside. */
   return Sword;
 }
 
 #endif
 
+/* #### Outside of this file, only used once, in font-lock.c.  Make static?
+   If so, remove prototype from syntax.h. */
 Lisp_Object
 syntax_match (Lisp_Object syntax_table, Ichar ch)
 {
@@ -688,8 +711,7 @@ syntax_match (Lisp_Object syntax_table, Ichar ch)
 
 DEFUN ("matching-paren", Fmatching_paren, 1, 2, 0, /*
 Return the matching parenthesis of CHARACTER, or nil if none.
-Optional second argument SYNTAX-TABLE defaults to the current buffer's
-syntax table.
+Optional SYNTAX-TABLE defaults to the current buffer's syntax table.
 */
        (character, syntax_table))
 {
@@ -824,16 +846,16 @@ scan_words (struct buffer *buf, Charbpos from, int count)
 }
 
 DEFUN ("forward-word", Fforward_word, 0, 2, "_p", /*
-Move point forward COUNT words (backward if COUNT is negative).
-Normally t is returned, but if an edge of the buffer is reached,
-point is left there and nil is returned.
-
-The characters that are moved over may be added to the current selection
-\(i.e. active region) if the Shift key is held down, a motion key is used
-to invoke this command, and `shifted-motion-keys-select-region' is t; see
-the documentation for this variable for more details.
-
+Move point forward COUNT words in BUFFER (backward if COUNT is negative).
 COUNT defaults to 1, and BUFFER defaults to the current buffer.
+
+Return t if the motion successfully crosses COUNT words, otherwise nil (if
+the motion would cross the buffer boundary).
+
+The characters that are moved over are added to the region if the region
+is active, the Shift key is held down, a motion key is used to invoke this
+command, and `shifted-motion-keys-select-region' is non-nil; see
+the documentation for this variable for more details.
 */
        (count, buffer))
 {
@@ -1138,13 +1160,13 @@ find_end_of_comment (struct buffer *buf, Charbpos from, Charbpos stop,
    at those changes.  --ben */
 
 DEFUN ("forward-comment", Fforward_comment, 0, 2, 0, /*
-Move forward across up to COUNT comments, or backwards if COUNT is negative.
+Move forward across COUNT comments in BUFFER (backwards if COUNT is negative).
+COUNT defaults to 1, and BUFFER defaults to the current buffer.
+
 Stop scanning if we find something other than a comment or whitespace.
 Set point to where scanning stops.
-If COUNT comments are found as expected, with nothing except whitespace
-between them, return t; otherwise return nil.
-Point is set in either case.
-COUNT defaults to 1, and BUFFER defaults to the current buffer.
+Return t if the motion successfully crosses COUNT comments, otherwise nil (if
+the motion would cross the buffer boundary or encounters a noncomment token).
 */
        (count, buffer))
 {
@@ -1756,8 +1778,11 @@ char_quoted (struct buffer *buf, Charbpos pos)
 }
 
 DEFUN ("scan-lists", Fscan_lists, 3, 5, 0, /*
-Scan from character number FROM by COUNT lists.
-Returns the character number of the position thus found.
+Scan from position FROM across COUNT lists starting from nesting DEPTH.
+Returns the position thus found.
+Optional BUFFER defaults to the current buffer.
+If optional NOERROR is non-nil, scan-lists will return nil instead of
+signalling an error when attempting to cross a buffer boundary.
 
 If DEPTH is nonzero, paren depth begins counting from that value,
 only places where the depth in parentheses becomes zero
@@ -1770,11 +1795,6 @@ If the beginning or end of (the accessible part of) the buffer is reached
 and the depth is wrong, an error is signaled.
 If the depth is right but the count is not used up, nil is returned.
 
-If optional arg BUFFER is non-nil, scanning occurs in that buffer instead
-of in the current buffer.
-
-If optional arg NOERROR is non-nil, scan-lists will return nil instead of
-signalling an error.
 */
        (from, count, depth, buffer, noerror))
 {
@@ -1790,9 +1810,13 @@ signalling an error.
 }
 
 DEFUN ("scan-sexps", Fscan_sexps, 2, 4, 0, /*
-Scan from character number FROM by COUNT balanced expressions.
+Scan from position FROM by COUNT balanced expressions.
+Returns the position thus found.
+
 If COUNT is negative, scan backwards.
-Returns the character number of the position thus found.
+Optional BUFFER defaults to the current buffer.
+If optional NOERROR is non-nil, scan-sexps will return nil instead of
+signalling an error.
 
 Comments are ignored if `parse-sexp-ignore-comments' is non-nil.
 
@@ -1800,12 +1824,6 @@ If the beginning or end of (the accessible part of) the buffer is reached
 in the middle of a parenthetical grouping, an error is signaled.
 If the beginning or end is reached between groupings
 but before count is used up, nil is returned.
-
-If optional arg BUFFER is non-nil, scanning occurs in that buffer instead
-of in the current buffer.
-
-If optional arg NOERROR is non-nil, scan-sexps will return nil instead of
-signalling an error.
 */
        (from, count, buffer, noerror))
 {
@@ -1817,10 +1835,8 @@ signalling an error.
 }
 
 DEFUN ("backward-prefix-chars", Fbackward_prefix_chars, 0, 1, 0, /*
-Move point backward over any number of chars with prefix syntax.
-This includes chars with "quote" or "prefix" syntax (' or p).
-
-Optional arg BUFFER defaults to the current buffer.
+Move point backward over any number of chars with quote or prefix syntax.
+Optional BUFFER defaults to the current buffer.
 */
        (buffer))
 {
@@ -2362,8 +2378,7 @@ update_just_this_syntax_table (Lisp_Object table)
 
 /* Called from chartab.c when a change is made to a syntax table.
    If this is the standard syntax table, we need to recompute
-   *all* syntax tables (yuck).  Otherwise we just recompute this
-   one. */
+   *all* syntax tables.  Otherwise we just recompute this one. */
 
 void
 update_syntax_table (Lisp_Object table)
@@ -2426,12 +2441,12 @@ void
 vars_of_syntax (void)
 {
   DEFVAR_BOOL ("parse-sexp-ignore-comments", &parse_sexp_ignore_comments /*
-Non-nil means `forward-sexp', etc., should treat comments as whitespace.
+If non-nil, `forward-sexp' etc. treat comments as whitespace.
 */ );
   parse_sexp_ignore_comments = 0;
 
   DEFVAR_BOOL ("lookup-syntax-properties", &lookup_syntax_properties /*
-Non-nil means `forward-sexp', etc., respect the `syntax-table' property.
+If non-nil, `forward-sexp' etc. respect the `syntax-table' text property.
 This property can be placed on buffers or strings and can be used to explicitly
 specify the syntax table to be used for looking up the syntax of the chars
 having this property, or to directly specify the syntax of the chars.
@@ -2439,12 +2454,12 @@ having this property, or to directly specify the syntax of the chars.
 The value of this property should be either a syntax table, or a cons
 of the form (SYNTAXCODE . MATCHCHAR), SYNTAXCODE being the numeric
 syntax code, MATCHCHAR being nil or the character to match (which is
-relevant only when the syntax code is open/close-type).
+relevant only when the syntax code is of an open or close type).
 */ );
   lookup_syntax_properties = 1;
 
   DEFVAR_BOOL ("words-include-escapes", &words_include_escapes /*
-Non-nil means `forward-word', etc., should treat escape chars part of words.
+If non-nil, `forward-word' etc. treat escape characters as parts of words.
 */ );
   words_include_escapes = 0;
 

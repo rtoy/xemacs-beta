@@ -59,6 +59,7 @@ Lisp_Object Qmapconcat, QmapcarX, Qmapvector, Qmapcan, Qmapc, Qmap, Qmap_into;
 Lisp_Object Qsome, Qevery, Qmaplist, Qmapl, Qmapcon, Qreduce, Qsubstitute;
 Lisp_Object Q_start1, Q_start2, Q_end1, Q_end2, Q_if_, Q_if_not, Q_stable;
 Lisp_Object Q_test_not, Q_count, Qnsubstitute, Qdelete_duplicates, Qmismatch;
+Lisp_Object Q_descend_structures;
 
 Lisp_Object Qintersection, Qset_difference, Qnset_difference;
 Lisp_Object Qnunion, Qnintersection, Qsubsetp, Qcar_less_than_car;
@@ -207,7 +208,7 @@ DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("bit-vector", bit_vector,
 /* Various test functions for #'member*, #'assoc* and the other functions
    that take both TEST and KEY arguments.  */
 
-static Boolint
+Boolint
 check_eq_nokey (Lisp_Object UNUSED (test), Lisp_Object UNUSED (key),
 		Lisp_Object item, Lisp_Object elt)
 {
@@ -9303,14 +9304,32 @@ Substitute NEW for OLD everywhere in TREE (destructively).
 Any element of TREE which is `eql' to OLD is changed to NEW (via a call to
 `setcar').
 
-See `member*' for the meaning of the keywords.
+See `member*' for the meaning of the keywords.  The keyword
+:descend-structures, not specified by Common Lisp, allows callers to specify
+that non-cons objects (vectors and range tables, among others) should also
+undergo substitution.
 
-arguments: (NEW OLD TREE &key (TEST #'eql) (KEY #'identity) TEST-NOT)
+arguments: (NEW OLD TREE &key (TEST #'eql) (KEY #'identity) TEST-NOT DESCEND-STRUCTURES)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object result, alist = noseeum_cons (noseeum_cons (args[1], args[0]),
-                                            Qnil);
+  Lisp_Object new_ = args[0], old = args[1], tree = args[2], result, alist;
+  Boolint test_not_unboundp = 1;
+  check_test_func_t check_test = NULL;
+
+  PARSE_KEYWORDS (Fnsubst, nargs, args, 6, (test, if_, test_not, if_not, key,
+                                            descend_structures), NULL);
+  if (!NILP (descend_structures))
+    {
+      check_test = get_check_test_function (old, &test, test_not, if_, if_not,
+                                            key, &test_not_unboundp);
+
+      return nsubst_structures (new_, old, tree, check_test, test_not_unboundp,
+                                test, key);
+
+    }
+
+  alist = noseeum_cons (noseeum_cons (old, new_), Qnil);
   args[1] = alist;
   result = Fnsublis (nargs - 1, args + 1);
   free_cons (XCAR (alist));
@@ -11707,6 +11726,7 @@ syms_of_fns (void)
   DEFKEYWORD (Q_test_not);
   DEFKEYWORD (Q_count);
   DEFKEYWORD (Q_stable);
+  DEFKEYWORD (Q_descend_structures);
 
   DEFSYMBOL (Qyes_or_no_p);
 

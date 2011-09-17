@@ -1480,6 +1480,7 @@ via the hepatic alpha-tocopherol transfer protein")))
 		       #5=#:G32970 #6=#:G32972]))
        (print-readably t)
        (print-gensym t)
+       (print-continuous-numbering t)
        (printed-with-uninterned (prin1-to-string literal-with-uninterned))
        (awkward-regexp "#1=#")
        (first-match-start (string-match awkward-regexp
@@ -2925,5 +2926,17 @@ via the hepatic alpha-tocopherol transfer protein")))
 	   (list ,symbol ,copy-symbol ,third)))))
   (Assert (equal '([symbol expansion] [copy expansion] [third expansion])
 		 (test-symbol-macrolet))))
+
+;; Basic tests of #'apply-partially.
+(let* ((four 4)
+       (times-four (apply-partially '* four))
+       (plus-twelve (apply-partially '+ 6 (* 3 2)))
+       (construct-list (apply-partially 'list (incf four) (incf four)
+                                        (incf four))))
+  (Assert (eql (funcall times-four 6) 24))
+  (Assert (eql (funcall times-four 4 4) 64))
+  (Assert (eql (funcall plus-twelve (funcall times-four 4) 4 4) 36))
+  (Check-Error wrong-number-of-arguments (apply-partially))
+  (Assert (equal (funcall construct-list) '(5 6 7))))
 
 ;;; end of lisp-tests.el

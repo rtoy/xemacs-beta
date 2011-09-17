@@ -5907,7 +5907,7 @@ if test "$with_newgc" = "yes"; then
   if test "$with_vdb" = "auto"; then
     case "$opsys" in
       darwin )  case "$machine" in
-		  i[3-9]86 ) check_vdb_posix=yes ;;
+		  intel386 ) check_vdb_posix=yes ;;
 		  * ) $as_echo "#define VDB_MACH 1" >>confdefs.h
   have_vdb_mach=yes ;;
 		esac ;;
@@ -5939,8 +5939,6 @@ fi
 if test "$with_dynamic" = "yes"; then
   case "$opsys" in
     hpux* ) opsys="${opsys}-shr" ;;
-    darwin ) $as_echo "#define DLSYM_NEEDS_UNDERSCORE 1" >>confdefs.h
- ;;
   esac
 else   case "$opsys" in
     sol2 )
@@ -13980,6 +13978,13 @@ else
 fi
 
 
+if test "$opsys" = "darwin"; then
+  $as_echo "#define REALPATH_CORRECTS_CASE 1" >>confdefs.h
+
+  $as_echo "#define DEFAULT_FILE_SYSTEM_IGNORE_CASE 1" >>confdefs.h
+
+fi
+
 if test "$with_modules" != "no"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for module support" >&5
 $as_echo_n "checking for module support... " >&6; }
@@ -13988,11 +13993,7 @@ $as_echo "" >&6; }
 
   case "$opsys" in
     mingw* | cygwin* ) have_dl=yes ;;
-    darwin ) have_dl=yes
-      $as_echo "#define HAVE_DYLD 1" >>confdefs.h
-
-      ;;
-    * )
+    *)
             ac_fn_c_check_header_mongrel "$LINENO" "dlfcn.h" "ac_cv_header_dlfcn_h" "$ac_includes_default"
 if test "x$ac_cv_header_dlfcn_h" = xyes; then :
 
@@ -14074,12 +14075,19 @@ fi
 	$as_echo "#define HAVE_DLOPEN 1" >>confdefs.h
 
       else
-		ac_fn_c_check_header_mongrel "$LINENO" "dl.h" "ac_cv_header_dl_h" "$ac_includes_default"
+                        if test "$opsys" = "darwin"; then
+          have_dl=yes
+          $as_echo "#define HAVE_DYLD 1" >>confdefs.h
+
+          $as_echo "#define DLSYM_NEEDS_UNDERSCORE 1" >>confdefs.h
+
+        else
+                    ac_fn_c_check_header_mongrel "$LINENO" "dl.h" "ac_cv_header_dl_h" "$ac_includes_default"
 if test "x$ac_cv_header_dl_h" = xyes; then :
 
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shl_load in -lc" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shl_load in -lc" >&5
 $as_echo_n "checking for shl_load in -lc... " >&6; }
-	  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <dl.h>
 int
@@ -14095,13 +14103,13 @@ if ac_fn_c_try_link "$LINENO"; then :
 $as_echo "$have_dl" >&6; }
 else
 
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+              { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shl_load in -ldl" >&5
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for shl_load in -ldl" >&5
 $as_echo_n "checking for shl_load in -ldl... " >&6; }
-	    ac_save_LIBS="$LIBS"
-	    LIBS="$LIBS -ldld"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+              ac_save_LIBS="$LIBS"
+              LIBS="$LIBS -ldld"
+              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <dl.h>
 int
@@ -14126,18 +14134,18 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 
 
-	if test "$have_dl" = "yes"; then
-	  $as_echo "#define HAVE_SHL_LOAD 1" >>confdefs.h
+          if test "$have_dl" = "yes"; then
+            $as_echo "#define HAVE_SHL_LOAD 1" >>confdefs.h
 
-	else
-	  	  ac_fn_c_check_header_mongrel "$LINENO" "ltdl.h" "ac_cv_header_ltdl_h" "$ac_includes_default"
+          else
+                        ac_fn_c_check_header_mongrel "$LINENO" "ltdl.h" "ac_cv_header_ltdl_h" "$ac_includes_default"
 if test "x$ac_cv_header_ltdl_h" = xyes; then :
 
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for lt_dlinit in -lltdl" >&5
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for lt_dlinit in -lltdl" >&5
 $as_echo_n "checking for lt_dlinit in -lltdl... " >&6; }
-	    ac_save_LIBS="$LIBS"
-	    LIBS="$LIBS -lltdl"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+              ac_save_LIBS="$LIBS"
+              LIBS="$LIBS -lltdl"
+              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <ltdl.h>
 int
@@ -14158,16 +14166,17 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 
 
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_dl" >&5
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_dl" >&5
 $as_echo "$have_dl" >&6; }
-	  if test "$have_dl" = "yes"; then
-	    $as_echo "#define HAVE_LTDL 1" >>confdefs.h
+            if test "$have_dl" = "yes"; then
+              $as_echo "#define HAVE_LTDL 1" >>confdefs.h
 
-	  fi
-		fi
+            fi
+              	  fi
+       fi
             fi
       ac_save_LIBS=
-    esac
+  esac
 
   if test -n "$have_dl"; then
 

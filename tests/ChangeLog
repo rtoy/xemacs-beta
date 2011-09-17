@@ -1,3 +1,47 @@
+2011-09-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	* automated/lisp-tests.el (literal-with-uninterned):
+	* automated/symbol-tests.el (foo):
+	Test print-circle, for printing (mutually-)recursive and circular
+	structures.
+	Bind print-continuous-numbering where appropriate.
+
+2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add a test of apply partially that depends on the relative order
+	of its arguments.
+
+2011-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Trivial tests of #'apply-partially, just added to subr.el.
+
+2011-08-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/syntax-tests.el:
+	Add test of syntax cache suggested by Alan Mackenzie.
+
+2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/syntax-tests.el: Suggest test from old syntax-cache bug.
+
+2011-08-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/os-tests.el:
+	* automated/syntax-tests.el:
+	Move tests of `substitute-in-file-name' from syntax to os.
+
+	* automated/syntax-tests.el:
+	Add lisp-maint required file terminator.
+
+2011-07-31  Mats Lidell  <matsl@xemacs.org>
+	* automated/process-tests.el: shell-command tests.
+	
+2011-07-22  Mats Lidell  <matsl@xemacs.org>
+	* automated/syntax-ppss-tests.el: Add tests for syntax-ppss.el.
+
 2011-06-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:

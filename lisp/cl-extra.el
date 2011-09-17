@@ -609,13 +609,18 @@ This also does some trivial optimizations to make the form prettier."
 					     cl-closure-vars)
 				     '((quote --cl-rest--)))))))
 		 (list (car form) (list* 'lambda (cadadr form) body))))
-	   (let ((found (assq (cadr form) env)))
-	     ;; XEmacs: cadr/caddr operate on nil without errors. But the
-	     ;; macro definition may be compiled, in which case there's
-	     ;; nothing for us to do.
-	     (if (and (listp (cdr found))
-		      (eq (cadr (caddr found)) 'cl-labels-args))
-		 (cl-macroexpand-all (cadr (caddr (cadddr found))) env)
+           ;; This is a bit of a hack; special-case symbols with bindings as
+           ;; labels.
+	   (let ((found (cdr (assq (cadr form) env))))
+	     (if (and (consp found) (eq (nth 1 (nth 1 found)) 'cl-labels-args))
+                 (if (consp (nth 2 (nth 2 found)))
+                     ;; It's a cons; this is the implementation of
+                     ;; labels in cl-macs.el.
+                     (cl-macroexpand-all (nth 1 (nth 2 (nth 2 found))) env)
+                   ;; It's an atom, almost certainly a compiled function;
+                   ;; we're using the implementation of labels in
+                   ;; bytecomp.el.
+                  (nth 2 (nth 2 found)))
 	       form))))
 	((memq (car form) '(defun defmacro))
 	 (list* (car form) (nth 1 form) (cl-macroexpand-body (cddr form) env)))
