@@ -1,3 +1,248 @@
+2011-09-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-defsubst-expand):
+	Be more careful still here, make sure that any references to
+	variables in BODY don't access those values in the enclosing scope
+	when that would be inappropriate.
+	Add some documentation of a potential reasonable approach to
+	avoiding the problems with our (non-Common Lisp-conformant)
+	#'symbol-macrolet.
+
+2011-09-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-defsubst-expand):
+	Change set 2a6a8da4dd7c of
+	http://mid.gmane.org/19966.17522.332164.615228@parhasard.net
+	wasn't sufficiently comprehensive, symbol macros can be mutually
+	rather than simply recursive, and they can equally hang. Thanks
+	for the bug report, Michael Sperber, and for the test case,
+	Stephen Turnbull.
+
+2011-09-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-from-buffer):
+	If compiling a form has changed the current buffer (that is, some
+	eval-when-compile form hasn't done save-excursion when
+	appropriate), error and exit; we can't guarantee we'll give useful
+	code in that context. See
+	http://mid.gmane.org/20110909110831.GD2875@acm.acm and related
+	discussion. 
+
+2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (transpose-subr):
+	* specifier.el (let-specifier):
+	* specifier.el (derive-device-type-from-tag-set):
+	* test-harness.el (batch-test-emacs):
+	* x-compose.el (alias-colon-to-doublequote):
+	* mule/chinese.el (make-chinese-cns11643-charset):
+	* mule/mule-cmds.el (set-locale-for-language-environment):
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	* mule/mule-x-init.el (x-use-halfwidth-roman-font):
+	* about.el (about-xemacs):
+	* about.el (about-hackers):
+	* diagnose.el (show-memory-usage):
+	* diagnose.el (show-object-memory-usage-stats):
+	* diagnose.el (show-mc-alloc-memory-usage):
+	* diagnose.el (show-gc-stats):
+	* dialog.el (make-dialog-box):
+	* faces.el:
+	* faces.el (Face-frob-property):
+	* faces.el (set-face-stipple):
+	* glyphs.el:
+	* glyphs.el (init-glyphs): Removed.
+	* help-macro.el (make-help-screen):
+	* info.el (Info-construct-menu):
+	* keymap.el (key-sequence-list-description):
+	* lisp-mode.el (construct-lisp-mode-menu):
+	* loadhist.el (unload-feature):
+	* minibuf.el (get-user-response):
+	* mouse.el (default-mouse-track-check-for-activation):
+	* mouse.el (mouse-track-insert-1):
+	Follow my own advice from the last commit and use #'labels instead
+	of #'flet in core code.
+
+2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (for-effect): Move this earlier in the file, it's
+	referenced in byte-compile-initial-macro-environment.
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	In the byte-compile-macro-environment definition for #'labels, put
+	off the compiling the lambda bodies until the point where the rest
+	of the form is being compiled, allowing the lambda bodies to
+	access appropriate values for byte-compile-bound-variables, and
+	reducing excessive warning about free variables.
+
+	Add a byte-compile-macro-environment definition for #'flet. This
+	modifies byte-compile-function-environment appropriately, and
+	warns about bindings of functions that have macro definitions in
+	the current environment, about functions that have byte codes, and
+	about functions that have byte-compile methods (which may not do
+	what the user wants at runtime).
+	* bytecomp.el (byte-compile-funcall):
+	If FUNCTION is constant, call #'byte-compile-callargs-warn if
+	that's appropriate, giving warnings about problems with calling
+	functions bound with #'labels.
+
+	* cl-macs.el:
+	* cl-macs.el (flet):
+	Mention the main difference from Common Lisp, that the bindings
+	are dynamic, not lexical. Counsel the use of #'labels, not #'flet,
+	for this and other reasons. Explain the limited single use case for
+	#'flet. Cross-reference to bytecomp.el in a comment.
+	* cl-macs.el (labels):
+	Go into detail on which functions may be called from
+	where. Explain how to access the function definition of a label
+	within FORM. Add a comment cross-referencing to bytecomp.el.
+
+2011-09-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	Set the input mode for TTY consoles to use the eighth bit for
+	character information if the native coding system for the language
+	environment needs that.
+
+2011-09-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (byte-compile-macro-environment): Moved from
+	bytecomp.el.
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	Add implementations for #'load-time-value, #'labels here, now
+	cl-macs respects byte-compile-macro-environment.
+	* bytecomp.el (byte-compile-function-environment):
+	* bytecomp.el (byte-compile-macro-environment): Removed.
+	* bytecomp.el (symbol-value):
+	* bytecomp.el (byte-compile-symbol-value): Removed.
+	* cl-extra.el (cl-macroexpand-all):
+	* cl-macs.el:
+	* cl-macs.el (bind-block):
+	* cl-macs.el (cl-macro-environment): Removed.
+	* cl-macs.el (cl-transform-lambda):
+	* cl-macs.el (load-time-value):
+	* cl-macs.el (block):
+	* cl-macs.el (flet):
+	* cl-macs.el (labels):
+	* cl-macs.el (macrolet):
+	* cl-macs.el (symbol-macrolet):
+	* cl-macs.el (lexical-let):
+	* cl-macs.el (apply):
+	* cl-macs.el (nthcdr):
+	* cl-macs.el (getf):
+	* cl-macs.el (substring):
+	* cl-macs.el (values):
+	* cl-macs.el (get-setf-method):
+	* cl-macs.el (cl-setf-do-modify):
+	* cl.el:
+	* cl.el (cl-macro-environment): Removed.
+	* cl.el (cl-macroexpand):
+	* obsolete.el (cl-macro-environment): Moved here.
+
+	Drop cl-macro-environment, in favour of
+	byte-compile-macro-environment; make the latter available in
+	bytecomp-runtime.el. This makes byte-compile-macro-environment far
+	less useless, since previously code that used cl-macs would ignore
+	it when calling #'cl-macroexpand-all.
+
+	Add byte-compiler-specific implementations for #'load-time-value,
+	#'labels. The latter is very nice indeed; it avoids the run-time
+	consing of the current implementation, is fully lexical and avoids
+	the run-time shadowing of symbol function slots that flet uses. It
+	would now be reasonable to move most core uses of flet to use
+	labels instead. Non-core code can't rely on print-circle for
+	mutually recursive functions, though, so it's less of an evident
+	win.
+
+2011-09-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (get-char-table): Add a defsetf for this.
+
+2011-09-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-output-file-form):
+	* bytecomp.el (byte-compile-output-docform):
+	Bind print-circle, print-continuous-numbering in these functions,
+	now those variables are available.
+	* lisp.el (forward-sexp):
+	* lisp.el (backward-sexp):
+	Recognise leading #N= as being part of an expression.
+
+2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.el (shell-command-on-region):
+	Correct typo from the merge, nnot -> not.
+
+2011-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (apply-partially):
+	Add an assertion to this compiler macro, requiring that the order
+	of the placeholders corresponding to the arguments in the
+	constants vector of the constructed compiled function be the same
+	as the order of the arguments to #'apply-partially.
+
+2011-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (apply-partially): New compiler macro.
+	* subr.el:
+	* subr.el (apply-partially): New.
+	Sync this function's API and docstring from GNU. The
+	implementation is mine and trivial; the compiler macro in
+	cl-macs.el ensures that partially-applied functions in compiled
+	code are also compiled.
+
+2011-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.el:
+	* keymap.el (event-apply-alt-modifier):
+	* keymap.el (event-apply-super-modifier):
+	* keymap.el (event-apply-hyper-modifier):
+	* keymap.el (event-apply-shift-modifier):
+	* keymap.el (event-apply-control-modifier):
+	* keymap.el (event-apply-meta-modifier):
+	* keymap.el (event-apply-modifiers): New.
+	* keymap.el (event-apply-modifier): Implement in terms of
+	#'event-apply-modifier.
+
+	Rework #'event-apply-modifier to take a list of modifiers, and
+	change its name appropriately. Keep the old name around, too.
+
+2011-08-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-normal-call):
+	When a function takes :if, :if-not, :test, :test-not or :key
+	arguments, do the quoted-lambda check there too.
+
+2011-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* test-harness.el (test-harness-bug-expected):
+	Update docstring.
+	(Known-Bug-Expect-Failure, Known-Bug-Expect-Error):
+	Ask if bug was fixed in PASS message.
+	(Known-Bug-Expect-Error):
+	Simplify code to produce clearer output.
+	Make pass and failure correspond to Check-Error.
+	(Print-Pass):
+	Always print test result for known bugs.
+
+2011-07-29  Mats Lidell  <matsl@xemacs.org>
+
+	* process.el (shell-command): 
+	* process.el (shell-command-on-region): API compatible/synced with
+	FSF 23.3.1.
+
+2011-07-22  Mats Lidell  <matsl@xemacs.or>
+
+	* syntax-ppss.el: Synced up with Emacs 23.3 (syntax.el)
+
+2011-07-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (cl-macroexpand):
+	Allow code to disable a given symbol macro while expanding code by
+	prepending a cons with a nil cdr to the macro environment.
+
 2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gtk-init.el:

@@ -511,6 +511,19 @@ struct lrecord_implementation
   unsigned int frob_block_p :1;
 #endif /* not NEW_GC */
 
+  /* The next two methods are for objects that may be recursive;
+     print_preprocess descends OBJ, adding any encountered subobjects to
+     NUMBER_TABLE if it's not already there. This is used by #'print when
+     print-circle or relatedly print-gensym are non-nil. */
+  void (*print_preprocess) (Lisp_Object obj, Lisp_Object number_table,
+			    Elemcount *seen_object_count);
+
+  /* */
+  void (*nsubst_structures_descend) (Lisp_Object new_, Lisp_Object old,
+                                     Lisp_Object object,
+                                     Lisp_Object number_table,
+                                     Boolint test_not_unboundp);
+
   /**********************************************************************/
   /* Remaining stuff is not assignable statically using
      DEFINE_*_LISP_OBJECT, but must be assigned with OBJECT_HAS_METHOD,
@@ -1432,6 +1445,29 @@ struct lrecord_implementation lrecord_##c_name =			\
     size, sizer, lrecord_type_##c_name, frob_block_p }
 #endif /* not NEW_GC */
 
+#ifdef NEW_GC
+#define MAKE_RECURSIVE_LISP_OBJECT(name,c_name,dumpable,marker,printer, \
+                                   nuker,equal,hash,desc,size,sizer,    \
+                                   frob_block_p,structtype,             \
+                                   print_preprocess,                    \
+                                   nsubst_structures_descend)           \
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
+struct lrecord_implementation lrecord_##c_name =			\
+  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
+    size, sizer, lrecord_type_##c_name, print_preprocess,               \
+    nsubst_structures_descend }
+#else /* not NEW_GC */
+#define MAKE_RECURSIVE_LISP_OBJECT(name,c_name,dumpable,marker,printer, \
+                                   nuker,equal,hash,desc,size,sizer,    \
+                                   frob_block_p,structtype,             \
+                                   print_preprocess,                    \
+                                   nsubst_structures_descend)           \
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
+struct lrecord_implementation lrecord_##c_name =			\
+  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
+    size, sizer, lrecord_type_##c_name, frob_block_p, print_preprocess, \
+    nsubst_structures_descend }
+#endif /* not NEW_GC */
 
 /********* The module dumpable versions *********** */
 

@@ -695,6 +695,7 @@ static int
 keysym_obeys_caps_lock_p (KeySym sym, struct device *d)
 {
   struct x_device *xd = DEVICE_X_DATA (d);
+  KeySym upper, lower;
   /* Eeeeevil hack.  Don't apply Caps_Lock to things that aren't alphabetic
      characters, where "alphabetic" means something more than simply A-Z.
      That is, if Caps_Lock is down, typing ESC doesn't produce Shift-ESC.
@@ -702,13 +703,9 @@ keysym_obeys_caps_lock_p (KeySym sym, struct device *d)
   if (xd->lock_interpretation == XK_Shift_Lock)
     return 1;
 
-  return
-    ((sym >= XK_A)        && (sym <= XK_Z))          ||
-    ((sym >= XK_a)        && (sym <= XK_z))          ||
-    ((sym >= XK_Agrave)   && (sym <= XK_Odiaeresis)) ||
-    ((sym >= XK_agrave)   && (sym <= XK_odiaeresis)) ||
-    ((sym >= XK_Ooblique) && (sym <= XK_Thorn))      ||
-    ((sym >= XK_oslash)   && (sym <= XK_thorn));
+  XConvertCase (sym, &lower, &upper);
+
+  return !(sym == lower && sym == upper);
 }
 
 /* called from EmacsFrame.c (actually from Xt itself) when a
@@ -840,10 +837,10 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
 }
 
 static Lisp_Object
-x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
+x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p, KeySym *x_keysym_out)
      /* simple_p means don't try too hard (ASCII only) */
 {
-  KeySym keysym = 0;
+  KeySym keysym = NoSymbol;
 
 #ifdef HAVE_XIM
   int len = 0;
@@ -862,6 +859,8 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
 
+  *x_keysym_out = NoSymbol;
+
   /* We use XLookupString if we're not using XIM, or are using
      XIM_XLIB but input context creation failed. */
 #if ! (defined (HAVE_XIM) && defined (XIM_MOTIF))
@@ -873,6 +872,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
          than passing in 0) to avoid crashes on German IRIX */
       char dummy[256];
       XLookupString (event, dummy, 200, &keysym, 0);
+      *x_keysym_out = keysym;
       return (IsModifierKey (keysym) || keysym == XK_Mode_switch )
 	? Qnil : x_keysym_to_emacs_keysym (keysym, simple_p);
     }
@@ -933,6 +933,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
     {
     case XLookupKeySym:
     case XLookupBoth:
+      *x_keysym_out = keysym;
       return (IsModifierKey (keysym) || keysym == XK_Mode_switch )
 	? Qnil : x_keysym_to_emacs_keysym (keysym, simple_p);
 
@@ -1114,10 +1115,11 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	  {
 	    Lisp_Object keysym;
 	    XKeyEvent *ev = &x_event->xkey;
+            KeySym x_keysym = NoSymbol;
 	    /* This used to compute the frame from the given X window and
 	       store it here, but we really don't care about the frame. */
 	    SET_EVENT_CHANNEL (emacs_event, DEVICE_CONSOLE (d));
-	    keysym = x_to_emacs_keysym (&x_event->xkey, 0);
+	    keysym = x_to_emacs_keysym (&x_event->xkey, 0, &x_keysym);
 
 	    /* If the emacs keysym is nil, then that means that the X
 	       keysym was either a Modifier or NoSymbol, which
@@ -1192,26 +1194,8 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	       and if the caps lock key was down but the shift key
 	       wasn't, then turn off the shift modifier.  Gag barf */
 
-	    /* #### type lossage: assuming equivalence of emacs and
-	       X keysyms
-
-	       The right thing to do here is to have pass a third, pointer,
-	       argument to x_to_emacs_keysym, where it should store the
-	       intermediate KeySym it used to calculate the string XEmacs
-	       keysym. Then we can call keysym_obeys_caps_lock_p with
-	       exactly the right argument. */
-
-	    /* !!#### maybe fix for Mule
-
-	       Hard, in the absence of a full case infrastructure for
-	       Mule characters. When 
-			(downcase (make-char 'cyrillic-iso8859-5 73)) 
-	       works, we should revisit it.  */
-
 	    if (lock_p && !shift_p &&
-		! (CHAR_OR_CHAR_INTP (keysym)
-		   && keysym_obeys_caps_lock_p
-		   ((KeySym) XCHAR_OR_CHAR_INT (keysym), d)))
+		! (x_keysym && keysym_obeys_caps_lock_p (x_keysym, d)))
 	      modifiers &= (~XEMACS_MOD_SHIFT);
 
 	    /* If this key contains two distinct keysyms, that is,
@@ -1229,8 +1213,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	      {
 		int Mode_switch_p = *state & xd->ModeMask;
 		KeySym bot = XLookupKeysym (ev, Mode_switch_p ? 2 : 0);
-		KeySym top = XLookupKeysym (ev, Mode_switch_p ? 3 : 1);
-		if (top && bot && top != bot)
+		if (x_keysym && bot && x_keysym != bot)
 		  modifiers &= ~XEMACS_MOD_SHIFT;
 	      }
 	    set_event_type (emacs_event, key_press_event);

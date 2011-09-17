@@ -2284,9 +2284,9 @@ in the minibuffer."
       (let* ((answers (remove-if-not #'consp answers))
 	     (possible
 	      (gettext
-	       (flet ((car-to-string-if (x)
-			(setq x (car x))
-			(if (stringp x)  x (char-to-string x))))
+	       (labels ((car-to-string-if (x)
+                          (setq x (car x))
+                          (if (stringp x)  x (char-to-string x))))
 		 (concat (mapconcat #'car-to-string-if
 			   (butlast answers) ", ") " or "
 			   (car-to-string-if (car (last answers)))))))

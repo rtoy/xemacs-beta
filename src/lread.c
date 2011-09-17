@@ -2715,16 +2715,32 @@ retry:
 		{
 		  /* #n=object returns object, but associates it with
 		     n for #n#.  */
-		  Lisp_Object obj;
 		  if (CONSP (found))
-		    return Fsignal (Qinvalid_read_syntax,
-				    list2 (build_msg_string
-					   ("Multiply defined symbol label"),
-					   make_int (n)));
-		  obj = read0 (readcharfun);
-		  Vread_objects = Fcons (Fcons (make_int (n), obj),
-					 Vread_objects);
-		  return obj;
+                    {
+                      return Fsignal (Qinvalid_read_syntax,
+                                      list2 (build_msg_string
+                                             ("Multiply defined object label"),
+                                             make_int (n)));
+                    }
+                  else
+                    {
+                      Lisp_Object object;
+
+                      found = Fcons (make_int (n), Qnil);
+                      /* Make FOUND a placeholder for the object that will
+                         be read. (We've just consed it, and it's not
+                         visible from Lisp, so there's no possibility of
+                         confusing it with something else in the read
+                         structure.)  */
+                      XSETCDR (found, found);
+                      Vread_objects = Fcons (found, Vread_objects);
+                      object = read0 (readcharfun);
+                      XSETCDR (found, object);
+
+                      nsubst_structures (object, found, object, check_eq_nokey,
+                                         1, Qeq, Qnil);
+                      return object;
+                    }
 		}
 	      else if (c == '#')
 		{

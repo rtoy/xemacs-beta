@@ -39,14 +39,14 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "buffer.h"
 #include "extents.h"
 
-Lisp_Object Qshift_jis, Qiso2022, Qbig5, Qccl;
+Lisp_Object Qshift_jis, Qbig5, Qccl;
 
 Lisp_Object Qcharset_g0, Qcharset_g1, Qcharset_g2, Qcharset_g3;
 Lisp_Object Qforce_g0_on_output, Qforce_g1_on_output;
 Lisp_Object Qforce_g2_on_output, Qforce_g3_on_output;
 Lisp_Object Qno_iso6429;
 Lisp_Object Qinput_charset_conversion, Qoutput_charset_conversion;
-Lisp_Object Qshort, Qno_ascii_eol, Qno_ascii_cntl, Qseven, Qlock_shift;
+Lisp_Object Qshort, Qno_ascii_eol, Qno_ascii_cntl, Qlock_shift;
 
 Lisp_Object Qiso_7, Qiso_8_designate, Qiso_8_1, Qiso_8_2, Qiso_lock_shift;
 
@@ -214,10 +214,10 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 		ch = c;
 	      else
 		{
-		  UExtbyte j1, j2;
-		  ENCODE_SHIFT_JIS (ch, c, j1, j2);
-		  Dynarr_add (dst, j1);
-		  Dynarr_add (dst, j2);
+		  UExtbyte b1, b2;
+		  ENCODE_SHIFT_JIS (ch, c, b1, b2);
+		  Dynarr_add (dst, b1);
+		  Dynarr_add (dst, b2);
 		  ch = 0;
 		}
 	    }
@@ -3860,7 +3860,6 @@ syms_of_mule_coding (void)
   DEFSYMBOL (Qbig5);
   DEFSYMBOL (Qshift_jis);
   DEFSYMBOL (Qccl);
-  DEFSYMBOL (Qiso2022);
 
   DEFSYMBOL (Qcharset_g0);
   DEFSYMBOL (Qcharset_g1);
@@ -3877,7 +3876,6 @@ syms_of_mule_coding (void)
   DEFSYMBOL (Qshort);
   DEFSYMBOL (Qno_ascii_eol);
   DEFSYMBOL (Qno_ascii_cntl);
-  DEFSYMBOL (Qseven);
   DEFSYMBOL (Qlock_shift);
 
   DEFSYMBOL (Qiso_7);

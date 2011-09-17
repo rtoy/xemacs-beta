@@ -143,6 +143,7 @@
 	 (printed-list (prin1-to-string list)))
     (Assert (equal printed-list "(foo foo bar bar foo bar)")))
   (let* ((print-gensym t)
+	 (print-continuous-numbering t)
 	 (printed-list (prin1-to-string list)))
     (Assert (equal printed-list "(#1=#:foo #1# #2=#:bar #2# #1# #2#)"))))
 

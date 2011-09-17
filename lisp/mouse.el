@@ -1246,11 +1246,11 @@ also works, because the behavior is emulated."
 ;; `conservative-activate-function'.
 (defun default-mouse-track-check-for-activation (event click-count
 						 count-list button-list)
-  (flet ((do-activate (event property)
-	   (let ((ex (extent-at-event event property)))
-	     (when ex
-	       (funcall (extent-property ex property) event ex)
-	       t))))
+  (labels ((do-activate (event property)
+             (let ((ex (extent-at-event event property)))
+               (when ex
+                 (funcall (extent-property ex property) event ex)
+                 t))))
     (or
      (and (some #'(lambda (count button)
 		    (and (= click-count count)
@@ -1477,23 +1477,23 @@ If LINE-P, select by lines and insert before current line."
   (let ((default-mouse-track-type-list
 	  (if line-p '(line) default-mouse-track-type-list))
 	s selreg)
-    (flet ((Mouse-track-insert-drag-up-hook (event count)
-	     (setq selreg
-		   (default-mouse-track-return-dragged-selection event))
-	     t)
-	   (Mouse-track-insert-click-hook (event count)
-	     (default-mouse-track-drag-hook event count nil)
-	     (setq selreg
-		   (default-mouse-track-return-dragged-selection event))
-	     t))
+    (labels ((Mouse-track-insert-drag-up-hook (event count)
+               (setq selreg
+                     (default-mouse-track-return-dragged-selection event))
+               t)
+             (Mouse-track-insert-click-hook (event count)
+               (default-mouse-track-drag-hook event count nil)
+               (setq selreg
+                     (default-mouse-track-return-dragged-selection event))
+               t))
       (save-excursion
 	(save-window-excursion
 	  (mouse-track
 	   event
-	   '(mouse-track-drag-up-hook
-	     Mouse-track-insert-drag-up-hook
-	     mouse-track-click-hook
-	     Mouse-track-insert-click-hook))
+	   (list 'mouse-track-drag-up-hook
+                 #'Mouse-track-insert-drag-up-hook
+                 'mouse-track-click-hook
+                 #'Mouse-track-insert-click-hook))
 	  (if (consp selreg)
 	      (let ((pair selreg))
 		(setq s (prog1

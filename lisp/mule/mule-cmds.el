@@ -835,9 +835,9 @@ the language environment for the major languages of Western Europe."
   (if (symbolp language-name)
       (setq language-name (symbol-name language-name)))
   (let ((doc (get-language-info language-name 'documentation)))
-    (flet ((princ-list (&rest args)
-		       (while args (princ (car args)) (setq args (cdr args)))
-		       (princ "\n")))
+    (labels ((princ-list (&rest args)
+               (while args (princ (car args)) (setq args (cdr args)))
+               (princ "\n")))
       (with-output-to-temp-buffer "*Help*"
 	(princ-list language-name " language environment" "\n")
 	(if (stringp doc)
@@ -1228,38 +1228,39 @@ the 'locale (or maybe 'mswindows-locale) property of LANGENV, and then
 setting it using `set-current-locale' and maybe also
 `mswindows-set-current-locale'.  Also sets the LANG environment variable.
 Returns non-nil if successfully set the locale(s)."
-  (flet ((mswindows-get-and-set-locale-from-langenv (langenv)
-	   ;; find the mswindows locale for the langenv, make it current,
-	   ;; and return it.  first we check the langenv-to-locale table
-	   ;; ...
-	   (let ((ms-locale
-		  (gethash langenv mswindows-langenv-to-locale-table)))
-	     (if ms-locale (progn
-			  (declare-fboundp (mswindows-set-current-locale
-					    ms-locale))
-			  ms-locale)
-	       ;; ... if not, see if the langenv specifies any locale(s).
-	       ;; if not, construct one from the langenv name.
-	       (let* ((mslocs (get-language-info langenv 'mswindows-locale))
-		      (mslocs (or mslocs (cons (upcase langenv) "DEFAULT")))
-		      (mslocs (if (and (consp mslocs)
-					(listp (cdr mslocs)))
-				   mslocs (list mslocs))))
-		 (dolist (msloc mslocs)
-		   ;; Sometimes a language with DEFAULT is different from
-		   ;; with SYS_DEFAULT, and on my system
-		   ;; (set-current-locale "chinese") is NOT the same as
-		   ;; (set-current-locale "chinese-default")!  The latter
-		   ;; gives Taiwan (DEFAULT), the former PRC (SYS_DEFAULT).
-		   ;; In the interests of consistency, we always use DEFAULT.
-		   (or (consp msloc) (setq msloc (cons msloc "DEFAULT")))
-		   (when (condition-case nil
-			     (progn
-			       (declare-fboundp (mswindows-set-current-locale
-						 msloc))
-			       t)
-			   (error nil))
-		     (return msloc))))))))
+  (labels
+      ((mswindows-get-and-set-locale-from-langenv (langenv)
+         ;; find the mswindows locale for the langenv, make it current,
+         ;; and return it.  first we check the langenv-to-locale table
+         ;; ...
+         (let ((ms-locale
+                (gethash langenv mswindows-langenv-to-locale-table)))
+           (if ms-locale (progn
+                           (declare-fboundp (mswindows-set-current-locale
+                                             ms-locale))
+                           ms-locale)
+             ;; ... if not, see if the langenv specifies any locale(s).
+             ;; if not, construct one from the langenv name.
+             (let* ((mslocs (get-language-info langenv 'mswindows-locale))
+                    (mslocs (or mslocs (cons (upcase langenv) "DEFAULT")))
+                    (mslocs (if (and (consp mslocs)
+                                     (listp (cdr mslocs)))
+                                mslocs (list mslocs))))
+               (dolist (msloc mslocs)
+                 ;; Sometimes a language with DEFAULT is different from
+                 ;; with SYS_DEFAULT, and on my system
+                 ;; (set-current-locale "chinese") is NOT the same as
+                 ;; (set-current-locale "chinese-default")!  The latter
+                 ;; gives Taiwan (DEFAULT), the former PRC (SYS_DEFAULT).
+                 ;; In the interests of consistency, we always use DEFAULT.
+                 (or (consp msloc) (setq msloc (cons msloc "DEFAULT")))
+                 (when (condition-case nil
+                           (progn
+                             (declare-fboundp (mswindows-set-current-locale
+                                               msloc))
+                             t)
+                         (error nil))
+                   (return msloc))))))))
     (if (eq system-type 'windows-nt)
 	(let ((ms-locale (mswindows-get-and-set-locale-from-langenv langenv)))
 	  (when ms-locale
@@ -1339,13 +1340,13 @@ of buffer-file-coding-system set by this function."
 ; Russian, ISO-2022-JP will continue to be automatically recognized, since
 ; ISO-8859-5 and ISO-2022-JP are different coding categories.)"
 
-  (flet ((maybe-change-coding-system-with-eol (codesys eol-type)
-	   ;; if the EOL type specifies a specific type of ending,
-	   ;; then add that ending onto the given CODESYS; otherwise,
-	   ;; return CODESYS unchanged.
-	   (if (memq eol-type '(lf crlf cr unix dos mac))
-	       (coding-system-change-eol-conversion codesys eol-type)
-	     codesys)))
+  (labels ((maybe-change-coding-system-with-eol (codesys eol-type)
+             ;; if the EOL type specifies a specific type of ending,
+             ;; then add that ending onto the given CODESYS; otherwise,
+             ;; return CODESYS unchanged.
+             (if (memq eol-type '(lf crlf cr unix dos mac))
+                 (coding-system-change-eol-conversion codesys eol-type)
+               codesys)))
 
     ;; initialize category mappings and priority list.
     (let* ((priority (get-language-info language-name 'coding-priority))
@@ -1385,7 +1386,8 @@ of buffer-file-coding-system set by this function."
 
     ;; set the native coding system and the default process-output system.
     (let ((native (get-native-coding-system-from-language-environment
-		   language-name (current-locale))))
+		   language-name (current-locale)))
+          seven current-input-mode)
 
       (condition-case nil
 	  (define-coding-system-alias 'native
@@ -1405,15 +1407,20 @@ of buffer-file-coding-system set by this function."
             ;; native coding system of the language environment.
             keyboard-coding-system native
 	    terminal-coding-system native)
-
-      ;; And do the same for any TTYs. 
-      (dolist (con (console-list))
-	(when (eq 'tty (device-type (car (console-device-list con))))
-	  ;; Calling set-input-mode at the same time would be a sane thing
-	  ;; to do here. I would prefer to default to accepting eight bit
-	  ;; input and not using the top bit for Meta.
-	  (set-console-tty-coding-system con native)))
-
+      ;; Does this coding system use bit 8?
+      (setq seven (and (eq (coding-system-type native) 'iso2022)
+                       (coding-system-property native 'seven)))
+      ;; Set the coding system for TTY consoles.
+      (dolist (console
+               (delete* 'tty (console-list) :key #'console-type :test-not #'eq))
+        (set-console-tty-coding-system console native)
+        (unless seven 
+          ;; The native coding system uses bit 8, so we need to use that bit
+          ;; for character information, not for meta.
+          (setq current-input-mode (current-input-mode console))
+          (and (memq (second current-input-mode) '(nil t))
+               (set-input-mode nil (first current-input-mode) 'character
+                               (third current-input-mode) console))))
       ;; process output should not have EOL conversion.  under MS Windows
       ;; and Cygwin, this screws things up (`cmd' is fine with just LF and
       ;; `bash' chokes on CR-LF).

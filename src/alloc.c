@@ -1266,24 +1266,26 @@ do { FREE_FIXED_TYPE (type, structtype, ptr);				\
 #endif /* (not) NEW_GC */
 
 #ifdef NEW_GC
-#define ALLOC_FROB_BLOCK_LISP_OBJECT(type, lisp_type, var, lrec_ptr)\
+#define ALLOC_FROB_BLOCK_LISP_OBJECT_1(type, lisp_type, var, lrec_ptr,  \
+                                       lheader)                         \
 do {									\
-  (var) = (lisp_type *) XPNTR (ALLOC_NORMAL_LISP_OBJECT (type));               \
+  (var) = (lisp_type *) XPNTR (ALLOC_NORMAL_LISP_OBJECT (type));        \
 } while (0)
-#define NOSEEUM_ALLOC_FROB_BLOCK_LISP_OBJECT(type, lisp_type, var,	\
-                                                 lrec_ptr)		\
+#define NOSEEUM_ALLOC_FROB_BLOCK_LISP_OBJECT_1(type, lisp_type, var,	\
+                                               lrec_ptr, lheader)       \
 do {									\
   (var) = (lisp_type *) XPNTR (noseeum_alloc_lrecord (lrec_ptr));	\
 } while (0)
 #else /* not NEW_GC */
-#define ALLOC_FROB_BLOCK_LISP_OBJECT(type, lisp_type, var, lrec_ptr) \
+#define ALLOC_FROB_BLOCK_LISP_OBJECT_1(type, lisp_type, var, lrec_ptr,  \
+                                       lheader)                         \
 do									\
 {									\
   ALLOCATE_FIXED_TYPE (type, lisp_type, var);				\
   set_lheader_implementation (&(var)->lheader, lrec_ptr);		\
 } while (0)
-#define NOSEEUM_ALLOC_FROB_BLOCK_LISP_OBJECT(type, lisp_type, var,	\
-                                                 lrec_ptr)		\
+#define NOSEEUM_ALLOC_FROB_BLOCK_LISP_OBJECT_1(type, lisp_type, var,	\
+                                               lrec_ptr, lheader)       \
 do									\
 {									\
   NOSEEUM_ALLOCATE_FIXED_TYPE (type, lisp_type, var);			\
@@ -1291,7 +1293,12 @@ do									\
 } while (0)
 #endif /* not NEW_GC */
 
+#define ALLOC_FROB_BLOCK_LISP_OBJECT(type, lisp_type, var, lrec_ptr) \
+  ALLOC_FROB_BLOCK_LISP_OBJECT_1(type, lisp_type, var, lrec_ptr, lheader) 
 
+#define NOSEEUM_ALLOC_FROB_BLOCK_LISP_OBJECT(type, lisp_type, var, lrec_ptr) \
+  NOSEEUM_ALLOC_FROB_BLOCK_LISP_OBJECT_1(type, lisp_type, var, lrec_ptr, \
+                                         lheader) 
 
 /************************************************************************/
 /*			   Cons allocation				*/
@@ -1324,6 +1331,66 @@ cons_equal (Lisp_Object ob1, Lisp_Object ob2, int depth, int foldcase)
 	return internal_equal_0 (ob1, ob2, depth, foldcase);
     }
   return 0;
+}
+
+extern Elemcount
+print_preprocess_inchash_eq (Lisp_Object obj, Lisp_Object table,
+                             Elemcount *seen_object_count);
+
+static void
+cons_print_preprocess (Lisp_Object object, Lisp_Object print_number_table,
+                       Elemcount *seen_object_count)
+{
+  /* Special-case conses, don't recurse down the cdr if the cdr is a cons. */
+  for (;;)
+    {
+      PRINT_PREPROCESS (XCAR (object), print_number_table, seen_object_count);
+      object = XCDR (object);
+
+      if (!CONSP (object))
+        {
+          break;
+        }
+
+      if (print_preprocess_inchash_eq (object, print_number_table,
+                                       seen_object_count) > 1)
+        {
+          return;
+        }
+    }
+
+  PRINT_PREPROCESS (object, print_number_table, seen_object_count);
+}
+
+static void
+cons_nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
+                                Lisp_Object object,
+                                Lisp_Object number_table,
+                                Boolint test_not_unboundp)
+{
+  /* No need for a special case, nsubst_structures_descend is called much
+     less frequently than is print_preprocess. */
+  if (EQ (old, XCAR (object)) == test_not_unboundp)
+    {
+      XSETCAR (object, new_);
+    }
+  else if (LRECORDP (XCAR (object)) &&
+           HAS_OBJECT_METH_P (XCAR (object), nsubst_structures_descend))
+    {
+      nsubst_structures_descend (new_, old, XCAR (object), number_table,
+                                 test_not_unboundp);
+    }
+        
+  if (EQ (old, XCDR (object)) == test_not_unboundp)
+    {
+      XSETCDR (object, new_);
+    }
+  else if (LRECORDP (XCDR (object)) &&
+           HAS_OBJECT_METH_P (XCDR (object), nsubst_structures_descend))
+    {
+      nsubst_structures_descend (new_, old, XCDR (object), number_table,
+				 test_not_unboundp);
+    }
 }
 
 static const struct memory_description cons_description[] = {
@@ -1711,6 +1778,44 @@ vector_hash (Lisp_Object obj, int depth, Boolint equalp)
 		internal_array_hash (XVECTOR_DATA (obj),
 				     XVECTOR_LENGTH (obj),
 				     depth + 1, equalp));
+}
+
+static void
+vector_print_preprocess (Lisp_Object object, Lisp_Object print_number_table,
+                         Elemcount *seen_object_count)
+{
+  Elemcount ii, len;
+
+  for (ii = 0, len = XVECTOR_LENGTH (object); ii < len; ii++)
+    {
+      PRINT_PREPROCESS (XVECTOR_DATA (object)[ii], print_number_table,
+                        seen_object_count);
+    }
+}
+
+static void
+vector_nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
+                                  Lisp_Object object, Lisp_Object number_table,
+                                  Boolint test_not_unboundp)
+{
+  Elemcount ii = XVECTOR_LENGTH (object);
+  Lisp_Object *vdata = XVECTOR_DATA (object);
+
+  while (ii > 0)
+    {
+      --ii;
+
+      if (EQ (vdata[ii], old) == test_not_unboundp)
+	{
+	  vdata[ii] = new_;
+	}
+      else if (LRECORDP (vdata[ii]) &&
+               HAS_OBJECT_METH_P (vdata[ii], nsubst_structures_descend))
+	{
+	  nsubst_structures_descend (new_, old, vdata[ii], number_table,
+				     test_not_unboundp);
+	}
+    }
 }
 
 static const struct memory_description vector_description[] = {
@@ -2115,7 +2220,11 @@ Its value and function definition are void, and its property list is nil.
 
   CHECK_STRING (name);
 
-  ALLOC_FROB_BLOCK_LISP_OBJECT (symbol, Lisp_Symbol, p, &lrecord_symbol);
+  ALLOC_FROB_BLOCK_LISP_OBJECT_1 (symbol, Lisp_Symbol, p, &lrecord_symbol,
+                                  u.lheader);
+  p->u.v.package_count = 0;
+  p->u.v.first_package_id = 0;
+
   p->name     = name;
   p->plist    = Qnil;
   p->value    = Qunbound;
@@ -4789,10 +4898,10 @@ sweep_bigfloats (void)
 static void
 sweep_symbols (void)
 {
-#define UNMARK_symbol(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define UNMARK_symbol(ptr) UNMARK_RECORD_HEADER (&(((ptr)->u.lheader)))
 #define ADDITIONAL_FREE_symbol(ptr)
 
-  SWEEP_FIXED_TYPE_BLOCK (symbol, Lisp_Symbol);
+  SWEEP_FIXED_TYPE_BLOCK_1 (symbol, Lisp_Symbol, u.lheader);
 }
 
 static void
@@ -5631,6 +5740,11 @@ reinit_alloc_objects_early (void)
   OBJECT_HAS_METHOD (string, putprop);
   OBJECT_HAS_METHOD (string, remprop);
   OBJECT_HAS_METHOD (string, plist);
+
+  OBJECT_HAS_METHOD (cons, print_preprocess);
+  OBJECT_HAS_METHOD (cons, nsubst_structures_descend);
+  OBJECT_HAS_METHOD (vector, print_preprocess);
+  OBJECT_HAS_METHOD (vector, nsubst_structures_descend);
 }
 
 void

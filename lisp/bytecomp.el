@@ -472,6 +472,8 @@ easily determined from the input file.")
 	    (fmakunbound elt)
 	  (fset (car elt) (cdr elt)))))))
 
+(defvar for-effect) ; ## Kludge!  This should be an arg, not a special.
+
 (defconst byte-compile-initial-macro-environment
   `((byte-compiler-options
       . ,#'(lambda (&rest forms)
@@ -491,15 +493,116 @@ easily determined from the input file.")
 		    "%s is not of type %s" form type)))
 	   (if byte-compile-delete-errors
 	       form
-	     (funcall (cdr (symbol-function 'the)) type form)))))
+	     (funcall (cdr (symbol-function 'the)) type form))))
+    (load-time-value
+     . ,#'(lambda (form &optional read-only)
+            (let* ((gensym (gensym))
+                   (byte-compile-bound-variables
+                    (acons gensym byte-compile-global-bit
+                           byte-compile-bound-variables)))
+              (setq byte-compile-output-preface
+                    (byte-compile-top-level
+                     `(progn (setq ,gensym ,form) ,byte-compile-output-preface)
+                     t 'file))
+              `(symbol-value ',gensym))))
+    (labels
+        . ,#'(lambda (bindings &rest body)
+               (let* ((names (mapcar 'car bindings))
+                      (lambdas (mapcar
+                                (function*
+                                 (lambda ((name . definition))
+                                   (cons 'lambda (cdr (cl-transform-lambda
+                                                       definition name)))))
+                                bindings))
+                      (placeholders
+                       (mapcar #'(lambda (lambda)
+                                   (make-byte-code (second lambda) "\xc0\x87"
+                                                   [42] 1))
+                               lambdas))
+                      (byte-compile-macro-environment
+                       (pairlis names (mapcar
+                                       #'(lambda (placeholder)
+                                           `(lambda (&rest cl-labels-args)
+                                              (list* 'funcall ,placeholder
+                                                     cl-labels-args)))
+                                       placeholders)
+                                byte-compile-macro-environment))
+                      (gensym (gensym)))
+                 (put gensym 'byte-compile-label-alist
+                      (pairlis placeholders
+                               (mapcar 'second (mapcar 'cl-macroexpand-all
+                                                       lambdas))))
+                 (put gensym 'byte-compile
+                      #'(lambda (form)
+                          (let* ((byte-compile-label-alist
+                                  (get (car form) 'byte-compile-label-alist)))
+                            (dolist (acons byte-compile-label-alist)
+                              (setf (cdr acons)
+                                    (byte-compile-lambda (cdr acons))))
+                            (byte-compile-body-do-effect
+                             (sublis byte-compile-label-alist (cdr form)
+                                     :test #'eq))
+                            (dolist (acons byte-compile-label-alist)
+                              (nsubst (cdr acons) (car acons)
+                                      byte-compile-label-alist :test #'eq
+                                      :descend-structures t)))))
+                 (cl-macroexpand-all (cons gensym body)
+                                     byte-compile-macro-environment))))
+    (flet .
+      ,#'(lambda (bindings &rest body)
+           (let* ((names (mapcar 'car bindings))
+                  (lambdas (mapcar
+                            (function*
+                             (lambda ((function . definition))
+                               (cons 'lambda (cdr (cl-transform-lambda
+                                                   definition function)))))
+                            bindings))
+                  (gensym (gensym)))
+             (put gensym 'byte-compile-flet-environment
+                  (pairlis names lambdas))
+             (put gensym 'byte-compile
+                  #'(lambda (form)
+                      (let* ((byte-compile-flet-environment
+                              (get (car form) 'byte-compile-flet-environment))
+                             (byte-compile-function-environment
+                              (append byte-compile-flet-environment
+                                      byte-compile-function-environment))
+                             name)
+                        (dolist (acons byte-compile-flet-environment)
+                          (setq name (car acons))
+                          (if (and (memq 'redefine byte-compile-warnings)
+                                   (or (cdr
+                                        (assq name
+                                              byte-compile-macro-environment))
+                                       (eq 'macro
+                                           (ignore-errors
+                                             (car (symbol-function name))))))
+                              ;; XEmacs change; this is a warning, not an
+                              ;; error. The only use case for #'flet instead
+                              ;; of #'labels is to shadow a dynamically
+                              ;; bound function at runtime, and it's
+                              ;; reasonable to do this even if that symbol
+                              ;; has a macro binding at compile time.
+                              (byte-compile-warn
+                               "flet: redefining macro %s as a function"
+                               name))
+                          (if (get name 'byte-opcode)
+                              (byte-compile-warn
+                               "flet: %s has a byte code, consider #'labels"
+                               name))
+                          (if (get name 'byte-compile) 
+                              (byte-compile-warn
+                               "flet: %s has a byte-compile method, 
+consider #'labels" name)))
+                        (byte-compile-form (second form)))))
+             `(,gensym (letf* ,(mapcar* #'(lambda (name lambda)
+                                            `((symbol-function ',name)
+                                              ,lambda)) names lambdas)
+                         ,@body))))))
+
   "The default macro-environment passed to macroexpand by the compiler.
 Placing a macro here will cause a macro to have different semantics when
 expanded by the compiler as when expanded by the interpreter.")
-
-(defvar byte-compile-macro-environment byte-compile-initial-macro-environment
-  "Alist of macros defined in the file being compiled.
-Each element looks like (MACRONAME . DEFINITION).  It is
-\(MACRONAME . nil) when a macro is redefined as a function.")
 
 (defvar byte-compile-function-environment nil
   "Alist of functions defined in the file being compiled.
@@ -1761,7 +1864,11 @@ With argument, insert value in current buffer after the form."
 			       (looking-at ";"))
 		   (forward-line 1))
 		 (not (eobp)))
-	  (byte-compile-file-form (read byte-compile-inbuffer)))
+	  (byte-compile-file-form (read byte-compile-inbuffer))
+          (or (eq byte-compile-inbuffer (current-buffer))
+              (error 'invalid-state 
+                     "byte compiling didn't save-excursion appropriately"
+                     (current-buffer))))
 
 	;; Compile pending forms at end of file.
 	(byte-compile-flush-pending)
@@ -1935,12 +2042,13 @@ docstrings code.")
       (byte-compile-output-docform nil nil '("\n(" 3 ")") form nil
 				   (memq (car form)
 					 '(autoload custom-declare-variable)))
-    (let ((print-escape-newlines t)
-	  (print-length nil)
-	  (print-level nil)
-	  (print-readably t)	; print #[] for bytecode, 'x for (quote x)
-	  (print-gensym (if byte-compile-print-gensym '(t) nil))
-          print-gensym-alist)
+    (let* ((print-escape-newlines t)
+	   (print-length nil)
+	   (print-level nil)
+	   (print-readably t)	; print #[] for bytecode, 'x for (quote x)
+	   (print-gensym byte-compile-print-gensym)
+	   (print-continuous-numbering print-gensym)
+	   (print-circle t))
       (when byte-compile-output-preface
         (princ "\n(progn " byte-compile-outbuffer)
         (prin1 byte-compile-output-preface byte-compile-outbuffer))
@@ -1984,18 +2092,16 @@ list that represents a doc string reference.
 			 (> (length (nth (nth 1 info) form)) 0)
 			 (char= (aref (nth (nth 1 info) form) 0) ?*))
 		    (setq position (- position)))))
-	 (let ((print-escape-newlines t)
-	       (print-readably t)	; print #[] for bytecode, 'x for (quote x)
-	       ;; Use a cons cell to say that we want
-	       ;; print-gensym-alist not to be cleared between calls
-	       ;; to print functions.
-	       (print-gensym (if byte-compile-print-gensym '(t) nil))
-	       print-gensym-alist
-	       (index 0))
+         (byte-compile-flush-pending)
+	 (let* ((print-escape-newlines t)
+		(print-readably t)	; print #[] for bytecode, 'x for (quote x)
+		(print-gensym byte-compile-print-gensym)
+                (print-continuous-numbering print-gensym)
+                (print-circle t)
+		(index 0))
            (when byte-compile-output-preface
              (princ "\n(progn " byte-compile-outbuffer)
              (prin1 byte-compile-output-preface byte-compile-outbuffer))
-	   (byte-compile-flush-pending)
 	   (if preface
 	       (progn
 		 (insert preface)
@@ -2031,8 +2137,6 @@ list that represents a doc string reference.
 	 (when byte-compile-output-preface
 	   (princ ")" byte-compile-outbuffer))))))
   nil)
-
-(defvar for-effect) ; ## Kludge!  This should be an arg, not a special.
 
 (defun byte-compile-keep-pending (form &optional handler)
   (if (memq byte-optimize '(t source))
@@ -2880,20 +2984,28 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	      (map nil
 		   (function*
 		    (lambda ((function . nargs))
-		      (and (setq function (plist-get plist function
-						     not-present))
-			   (not (eq function not-present))
-			   (byte-compile-constp function)
-			   (byte-compile-callargs-warn
-			    (cons (eval function)
-				  (member*
-				   nargs
-				   ;; Dummy arguments. There's no need for
-				   ;; it to be longer than even 2, now, but
-				   ;; very little harm in it.
-				   '(9 8 7 6 5 4 3 2 1)))))))
-		   '((:key . 1) (:test . 2) (:test-not . 2)
-		     (:if . 1) (:if-not . 1))))))))
+                      (let ((value (plist-get plist function not-present)))
+                        (when (and (not (eq value not-present))
+                                   (byte-compile-constp value))
+                          (byte-compile-callargs-warn
+                           (cons (eval value)
+                                 (member*
+                                  nargs
+                                  ;; Dummy arguments. There's no need for
+                                  ;; it to be longer than even 2, now, but
+                                  ;; very little harm in it.
+                                  '(9 8 7 6 5 4 3 2 1))))
+                          (when (and (eq (car-safe value) 'quote)
+                                     (eq (car-safe (nth 1 value)) 'lambda)
+                                     (or
+                                      (null (memq 'quoted-lambda
+                                                  byte-compile-warnings))
+                                      (byte-compile-warn
+                                       "Passing a quoted lambda to #'%s, \
+keyword %s, forcing function quoting" (car form) function)))
+                            (setcar value 'function))))))
+                   '((:key . 1) (:test . 2) (:test-not . 2) (:if . 1)
+                     (:if-not . 1))))))))
   (if byte-compile-generate-call-tree
       (byte-compile-annotate-call-tree form))
   (byte-compile-push-constant (car form))
@@ -3079,7 +3191,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler car		1)
 (byte-defop-compiler cdr		1)
 (byte-defop-compiler length		1)
-(byte-defop-compiler symbol-value)
+(byte-defop-compiler symbol-value       1)
 (byte-defop-compiler symbol-function	1)
 (byte-defop-compiler (1+ byte-add1)	1)
 (byte-defop-compiler (1- byte-sub1)	1)
@@ -3960,6 +4072,10 @@ forcing function quoting" ,en (car form))))
     (setq for-effect nil)))
 
 (defun byte-compile-funcall (form)
+  (if (and (memq 'callargs byte-compile-warnings)
+           (byte-compile-constp (second form)))
+      (byte-compile-callargs-warn (cons (cl-const-expr-val (second form))
+                                        (nthcdr 2 form))))
   (mapc 'byte-compile-form (cdr form))
   (byte-compile-out 'byte-call (length (cdr (cdr form)))))
 
@@ -4230,29 +4346,6 @@ optimized away--just byte compile and return the BODY."
   (byte-compile-out 'byte-temp-output-buffer-setup 0)
   (byte-compile-body (cdr (cdr form)))
   (byte-compile-out 'byte-temp-output-buffer-show 0))
-
-(defun byte-compile-symbol-value (form)
-  (symbol-macrolet ((not-present '#:not-present))
-    (let ((cl-load-time-value-form not-present)
-          (byte-compile-bound-variables byte-compile-bound-variables) gensym)
-      (and (consp (cadr form))
-           (eq 'quote (caadr form))
-           (setq gensym (cadadr form))
-           (symbolp gensym)
-           (setq cl-load-time-value-form
-                 (get gensym 'cl-load-time-value-form not-present)))
-      (unless (eq cl-load-time-value-form not-present)        
-        (setq byte-compile-bound-variables
-              (acons gensym byte-compile-global-bit
-                     byte-compile-bound-variables)
-              byte-compile-output-preface
-              (byte-compile-top-level
-               (if byte-compile-output-preface
-                   `(progn (setq ,gensym ,cl-load-time-value-form)
-                           ,byte-compile-output-preface)
-                 `(setq ,gensym ,cl-load-time-value-form))
-               t 'file)))
-      (byte-compile-one-arg form))))
   
 (defun byte-compile-multiple-value-call (form)
   (if (< (length form) 2)

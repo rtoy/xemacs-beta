@@ -1,3 +1,63 @@
+2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.texi (Function Bindings):
+	Move #'labels first, describe it in more detail, explaining that
+	it is to be preferred over #'flet, and explaining why.
+	Explain that dynamic bindings with #'flet will also not work when
+	functions are accessed through their bytecodes.
+
+2011-08-14  Mike Sperber  <mike@xemacs.org>
+
+	* xemacs-faq.texi:
+	* xemacs/packages.texi: Reflect change of location of packages
+	from lib/ to share/.
+
+2011-08-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.texi (Argument Lists):
+	* cl.texi (Time of Evaluation):
+	* cl.texi (Type Predicates):
+	* cl.texi (Assignment):
+	* cl.texi (Basic Setf):
+	* cl.texi (Modify Macros):
+	* cl.texi (Customizing Setf):
+	* cl.texi (Dynamic Bindings):
+	* cl.texi (Lexical Bindings):
+	* cl.texi (Function Bindings):
+	* cl.texi (Macro Bindings):
+	* cl.texi (Conditionals):
+	* cl.texi (Blocks and Exits):
+	* cl.texi (Iteration):
+	* cl.texi (Loop Basics):
+	* cl.texi (Macros):
+	* cl.texi (Declarations):
+	* cl.texi (Property Lists):
+	* cl.texi (Structures):
+	* cl.texi (Assertions):
+	* cl.texi (Efficiency Concerns):
+	* lispref/compile.texi (Eval During Compile):
+	* lispref/compile.texi (Compiled-Function Objects):
+	* lispref/eval.texi (Multiple values):
+	* lispref/frames.texi (Input Focus):
+	* lispref/internationalization.texi (Level 3 Primitives):
+	* lispref/positions.texi (Excursions):
+	* lispref/positions.texi (Narrowing):
+	* lispref/searching.texi (Saving Match Data):
+	* lispref/specifiers.texi (Adding Specifications):
+	* lispref/windows.texi:
+	Correct the manuals to avoid using the term "special operator" when
+	#'special-operator-p would give nil.
+
+2011-08-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Mercurial Techniques): New.
+	(Mercurial Basics): New.
+	(Preserving Existing Changes with Mercurial Queues): New.
+	(Top): Update menus.
+	(Regression Testing XEmacs): Update node pointers.
+	(CVS Techniques): Update node pointers.  Note obsolescence of CVS.
+	Add @ref to Mercurial Techniques.
+
 2011-06-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/os.texi (Translating Input):

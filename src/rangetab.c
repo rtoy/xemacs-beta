@@ -134,6 +134,52 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
     write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
+static void
+range_table_print_preprocess (Lisp_Object object,
+                              Lisp_Object print_number_table,
+                              Elemcount *seen_object_count)
+{
+  Lisp_Range_Table *rt = XRANGE_TABLE (object);
+  Elemcount ii;
+
+  for (ii = 0; ii < gap_array_length (rt->entries); ii++)
+    {
+      struct range_table_entry *entry
+        = gap_array_atp (rt->entries, ii, struct range_table_entry);
+      PRINT_PREPROCESS (entry->val, print_number_table, seen_object_count);
+    }
+}
+
+static void
+range_table_nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
+                                       Lisp_Object object,
+                                       Lisp_Object number_table,
+                                       Boolint test_not_unboundp)
+{
+  Lisp_Range_Table *rt = XRANGE_TABLE (object);
+  Elemcount ii;
+
+  /* We don't have to worry about the range table START and END values if
+     we're limiting nsubst_descend to the Lisp reader; it's a similar case
+     to the hash table test. */
+  for (ii = 0; ii < gap_array_length (rt->entries); ii++)
+    {
+      struct range_table_entry *entry
+	= gap_array_atp (rt->entries, ii, struct range_table_entry);
+
+      if (EQ (old, entry->val) == test_not_unboundp)
+	{
+	  entry->val = new_;
+	}
+      else if (LRECORDP (entry->val) &&
+               HAS_OBJECT_METH_P (entry->val, nsubst_structures_descend))
+	{
+	  nsubst_structures_descend (new_, old, entry->val, number_table,
+				     test_not_unboundp);
+	}
+    }
+}
+
 static int
 range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
@@ -1033,6 +1079,12 @@ unified_range_table_get_range (void *unrangetab, int offset,
 /************************************************************************/
 /*                            Initialization                            */
 /************************************************************************/
+void
+rangetab_objects_create (void)
+{
+  OBJECT_HAS_METHOD (range_table, print_preprocess);
+  OBJECT_HAS_METHOD (range_table, nsubst_structures_descend);
+}
 
 void
 syms_of_rangetab (void)
