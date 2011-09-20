@@ -876,26 +876,22 @@ static Lisp_Object
 emacs_gtk_object_getprop (Lisp_Object obj, Lisp_Object prop)
 {
   Lisp_Object rval = Qnil;
-  Lisp_Object prop_name = Qnil;
   GValue value;
   gchar *name = NULL;
 
-  CHECK_SYMBOL (prop);		/* Shouldn't need to ever do this, but I'm paranoid */
-
-  prop_name = Fsymbol_name (prop);
-
-  name = (char *) XSTRING_DATA (prop_name);
+  CHECK_SYMBOL (prop);
+  name = LISP_STRING_TO_EXTERNAL (XSYMBOL_NAME (prop), Qutf_8);
 
   /* Check class and instance property? */
-
-  g_object_get_property (XGTK_OBJECT (obj)->object,
-		      name, &value);
-
-  if (G_VALUE_TYPE (&value) == G_TYPE_INVALID)
+  if (NULL == g_object_class_find_property (G_OBJECT_GET_CLASS (XGTK_OBJECT
+                                                                (obj)->object),
+                                            name))
     {
       /* Not a magic symbol, fall back to just looking in our real plist */
       return (Fplist_get (XGTK_OBJECT (obj)->plist, prop, Qunbound));
     }
+
+  g_object_get_property (XGTK_OBJECT (obj)->object, name, &value);
 
 #ifdef JSPARKES
   if (!(info->arg_flags & GTK_ARG_READABLE))
@@ -1426,12 +1422,10 @@ The type is returned as a string, so this is a type validator.
 */
        (type_name))
 {
-  gchar *name = NULL;
   guint type = G_TYPE_NONE;
   
   CHECK_STRING (type_name);
-  name = (gchar *)XSTRING_DATA (type_name);
-  type = g_type_from_name (name);
+  type = g_type_from_name (LISP_STRING_TO_EXTERNAL (type_name, Qutf_8));
   if (type == G_TYPE_INVALID || type == G_TYPE_NONE)
     return Qnil;
   return (build_ascstring (g_type_name (type)));
@@ -1455,15 +1449,15 @@ Return the name of GTYPE, which is the name of a type..
     {
       CHECK_STRING (type);
       /* Seems redundant, but validates the type name. */
-      t = g_type_from_name ((char *) XSTRING_DATA (type));
+      t = g_type_from_name (LISP_STRING_TO_EXTERNAL (type, Qutf_8));
     }
   if (t == G_TYPE_INVALID)
     invalid_state ("type does not exist", type);
    
   name = g_type_name (t);
-  if (name == 0)
+  if (name == NULL)
     invalid_state ("type does not exist", type);
-  return build_cistring (name);
+  return build_extstring (name, Qutf_8);
 }
 
 DEFUN ("g-type-parent", Fg_type_parent, 1, 1, 0, /*
@@ -1551,7 +1545,7 @@ Return a list of all properties for class TYPE.
   if (SYMBOLP (type))
     type = Fsymbol_name (type);
   CHECK_STRING (type);
-  gt = g_type_from_name ((gchar *)XSTRING_DATA (type));
+  gt = g_type_from_name (LISP_STRING_TO_EXTERNAL (type, Qutf_8));
   if (gt == G_TYPE_INVALID)
     invalid_state ("type does not exist", type);
 
@@ -1879,7 +1873,7 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
       if (!NILP (obj))
         {
 	  CHECK_STRING (obj);
-	  g_value_set_string (val, (gchar *)XSTRING_DATA (obj));
+	  g_value_set_string (val, LISP_STRING_TO_EXTERNAL (obj, Qutf_8));
 	}
       break;
     case G_TYPE_ENUM:

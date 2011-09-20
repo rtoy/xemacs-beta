@@ -1,3 +1,37 @@
+2011-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):
+	* fontcolor-gtk.c (gtk_parse_nearest_color):
+	* fontcolor-gtk.c (gtk_valid_color_name_p):
+	* fontcolor-gtk.c (gtk_font_list):
+	* frame-gtk.c (gtk_set_frame_text_value):
+	* frame-gtk.c (gtk_initialize_frame_size):
+	* frame-gtk.c (dragndrop_get_drag):
+	* frame-gtk.c (Fgtk_start_drag_internal):
+	* gtk-glue.c (xemacs_list_to_gtklist):
+	* menubar-gtk.c:
+	* menubar-gtk.c (convert_underscores):
+	* menubar-gtk.c (remove_underscores):
+	* menubar-gtk.c (menu_convert):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* menubar-gtk.c (menu_can_reuse_widget):
+	* select-gtk.c (symbol_to_gtk_atom):
+	* select-gtk.c (atom_to_symbol):
+	* ui-gtk.c (emacs_gtk_object_getprop):
+	* ui-gtk.c (Fg_type_from_name):
+	* ui-gtk.c (Fg_type_name):
+	* ui-gtk.c (Fg_object_class_list_properties):
+	* ui-gtk.c (lisp_to_g_value):
+        And it's everything, not just the widget functions that takes UTF-8
+        in GTK-2; e.g. they've gone and implemented a separate namespace for
+        server atoms, and that encoding is UTF-8, not CTEXT.
+        Implement this, in passing removing the code that worked around the
+        absence of gdk_keyval_from_name on GTK1, not assuming that
+        g_object_get_property has useful behaviour when a property doesn't
+        exist, and making the code that converts XEmacs menu item
+        specification to GTK menu item specifications less dependent on our
+        internal encoding.
+
 2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* frame-gtk.c (gtk_set_frame_text_value):

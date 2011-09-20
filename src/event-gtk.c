@@ -961,7 +961,7 @@ dragndrop_data_received (GtkWidget          *widget,
     {
       /* newline-separated list of URLs */
       int start, end;
-      const char *string_data = (char *) data->data;
+      const Extbyte *string_data = (Extbyte *) data->data;
 
       l_type = Qdragdrop_URL;
 
@@ -969,7 +969,8 @@ dragndrop_data_received (GtkWidget          *widget,
 	{
 	  if ((string_data[end] == '\r') && (string_data[end+1] == '\n'))
 	    {
-	      l_item = make_string (&string_data[start], end - start);
+	      l_item = make_extstring (&string_data[start], end - start,
+                                       Qutf_8);
 	      l_dndlist = Fcons (l_item, l_dndlist);
 	      ++end;
 	      start = ++end;

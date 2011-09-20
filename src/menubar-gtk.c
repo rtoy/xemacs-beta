@@ -34,6 +34,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "opaque.h"
 #include "window.h"
 #include "window-impl.h"
+#include "text.h"
 
 #include "console-gtk-impl.h"
 #include "ui-gtk.h"
@@ -216,38 +217,37 @@ __kill_stupid_gtk_timer (GtkObject *obj, gpointer UNUSED (user_data))
     }
 }
 
-/* Convert the XEmacs menu accelerator representation to Gtk mnemonic form. If
-  no accelerator has been provided, put one at the start of the string (this
-  mirrors the behaviour under X).  This algorithm is also found in
-  dialog-gtk.el:gtk-popup-convert-underscores.
-*/
-static char *
-convert_underscores(const Ibyte *name)
+/* Convert the XEmacs menu accelerator representation (already in UTF-8) to
+   Gtk mnemonic form. If no accelerator has been provided, put one at the
+   start of the string (this mirrors the behaviour under X).  This algorithm
+   is also found in dialog-gtk.el:gtk-popup-convert-underscores. */
+static Extbyte *
+convert_underscores (const Extbyte *name, Bytecount name_len,
+                     Extbyte **converted_out, Bytecount converted_len)
 {
-  char *rval;
+  Extbyte *rval = *converted_out;
   int i,j;
   int found_accel = FALSE;
   int underscores = 0;
 
-  for (i = 0; name[i]; ++i)
-    if (name[i] == '%' && name[i+1] == '_')
-      {
-	found_accel = TRUE;
-      }
-    else if (name[i] == '_')
-      {
-	underscores++;
-      }
-
-  /* Allocate space for the original string, plus zero byte plus extra space
-     for all quoted underscores plus possible additional leading accelerator. */
-  rval = (char*) xmalloc_and_zero (qxestrlen(name) + 1 + underscores
-				   + (found_accel ? 0 : 1));
+  for (i = 0; i < name_len; ++i)
+    {
+      if (name[i] == '%' && name[i+1] == '_')
+        {
+          found_accel = TRUE;
+        }
+      else if (name[i] == '_')
+        {
+          underscores++;
+        }
+    }
 
   if (!found_accel)
     rval[0] = '_';
 
-  for (i = 0, j = (found_accel ? 0 : 1); name[i]; i++)
+  for (i = 0, j = (found_accel ? 0 : 1);
+       i < name_len && j < converted_len;
+       i++)
     {
       if (name[i]=='%')
 	{
@@ -268,15 +268,25 @@ convert_underscores(const Ibyte *name)
       rval[j++] = name[i];
     }
 
+  if (j < converted_len)
+    {
+      rval[j] = '\0';
+    }
+  else
+    {
+      rval[converted_len - 1] = '\0';
+    }
+  
   return rval;
 }
 
-/* Remove the XEmacs menu accellerator representation from a string. */
-static char *
-remove_underscores(const Ibyte *name)
+/* Remove the XEmacs menu accelerator representation from a UTF-8 string. */
+static Extbyte *
+remove_underscores (const Extbyte *name, Extbyte **dest_out,
+                    Bytecount dest_len)
 {
-  char *rval = (char*) xmalloc_and_zero (qxestrlen(name) + 1);
   int i,j;
+  Extbyte *rval = *dest_out;
 
   for (i = 0, j = 0; name[i]; i++)
     {
@@ -292,6 +302,16 @@ remove_underscores(const Ibyte *name)
       }
       rval[j++] = name[i];
     }
+
+  if (j < temp_label_len)
+    {
+      rval[j] = '\0';
+    }
+  else
+    {
+      rval[dest_len - 1] = '\0';
+    }
+
   return rval;
 }
 
@@ -318,13 +338,20 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 
       if (!reuse)
 	{
-	  char *temp_menu_name = convert_underscores (XSTRING_DATA (XCAR (desc)));
-	  GtkWidget* accel_label = gtk_label_new(NULL);
+          Extbyte *desc_in_utf_8 = LISP_STRING_TO_EXTERNAL (XCAR (desc),
+                                                            Qutf_8);
+          Bytecount desc_len = strlen (desc_in_utf_8);
+          Extbyte *converted = alloca_extbytes (1 + (desc_len * 2));
+	  GtkWidget* accel_label = gtk_label_new (NULL);
 	  guint accel_key;
+          
+          convert_underscores (desc_in_utf_8, desc_len,
+                               &converted, 1 + (desc_len * 2));
 
 	  gtk_misc_set_alignment (GTK_MISC (accel_label), 0.0, 0.5);
           gtk_label_set_use_underline (GTK_LABEL (accel_label), TRUE);
-          accel_key = gtk_label_parse_uline (GTK_LABEL (accel_label), temp_menu_name);
+          accel_key = gtk_label_parse_uline (GTK_LABEL (accel_label),
+                                             converted);
 	  menu_item = gtk_menu_item_new ();
 	  gtk_container_add (GTK_CONTAINER (menu_item), accel_label);
 	  gtk_widget_show (accel_label);
@@ -335,7 +362,6 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 					menubar_accel_group,
 					accel_key, GDK_MOD1_MASK,
 					GTK_ACCEL_LOCKED);
-	  free (temp_menu_name);
 	}
       else
 	{
@@ -622,28 +648,32 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 
       if (!separator_string_p (XSTRING_DATA (name)))
 	{
-	  Ibyte *label_buffer = NULL;
-	  char *temp_label = NULL;
+          DECLARE_EISTRING (label);
+	  Extbyte *extlabel = NULL;
+          Bytecount extlabel_len;
 
 	  if (STRINGP (suffix) && XSTRING_LENGTH (suffix))
 	    {
-	      /* !!#### */
-	      label_buffer = alloca_ibytes (XSTRING_LENGTH (name) + 15 + XSTRING_LENGTH (suffix));
-	      qxesprintf (label_buffer, "%s %s ", XSTRING_DATA (name),
-			  XSTRING_DATA (suffix));
+              eicpy_lstr (label, name);
+              eicat_ch (label, ' ');
+              eicat_lstr (label, suffix);
+              eicat_ch (label, ' ');
 	    }
 	  else
 	    {
-	      label_buffer = alloca_ibytes (XSTRING_LENGTH (name) + 15);
-	      qxesprintf (label_buffer, "%s ", XSTRING_DATA (name));
+              eicpy_lstr (label, name);
+              eicat_ch (label, ' ');
 	    }
 
-	  temp_label = convert_underscores (label_buffer);
+          eito_external (label, Qutf_8);
+          extlabel_len = 1 + (2 * eiextlen (label));
+          extlabel = alloca_extbytes (extlabel_len);
+          convert_underscores (eiextdata (label), eiextlen (label), &extlabel,
+                               extlabel_len);
 	  main_label = gtk_label_new (NULL);
-          gtk_label_set_label (GTK_LABEL (main_label), temp_label);
+          gtk_label_set_label (GTK_LABEL (main_label), extlabel);
 	  /* accel_key = */
           gtk_label_set_use_underline (GTK_LABEL (main_label), TRUE);
-	  free (temp_label);
 	}
 
       /* Evaluate the selected and active items now */
@@ -833,12 +863,16 @@ menu_can_reuse_widget (GtkWidget *child, const Ibyte *label)
 
   if (possible_child && GTK_IS_LABEL (possible_child))
     {
-      char *temp_label = remove_underscores (label);
+      Extbyte *utf_8_label = ITEXT_TO_EXTERNAL (label, Qutf_8);
+      Bytecount temp_label_len = strlen (utf_8_label) + 1;
+      Extbyte *temp_label = alloca_extbytes (temp_label_len);
+
+      remove_underscores (utf_8_label, &temp_label, temp_label_len);
 
       if (!strcmp (GTK_LABEL (possible_child)->label, temp_label))
-	ret_val = TRUE;
-
-      free (temp_label);
+        {
+          ret_val = TRUE;
+        }
     }
 
   return ret_val;

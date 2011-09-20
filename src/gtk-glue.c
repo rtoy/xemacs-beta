@@ -128,7 +128,9 @@ xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
 
       while (!NILP (temp))
 	{
-	  strings = g_list_append (strings, XSTRING_DATA (XCAR (temp)));
+	  strings = g_list_append (strings,
+                                   LISP_STRING_TO_EXTERNAL (XCAR (temp),
+                                                            Qutf_8));
 	  temp = XCDR (temp);
 	}
 

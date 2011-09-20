@@ -96,7 +96,8 @@ gtk_parse_nearest_color (struct device *d, GdkColor *color, Ibyte *name,
     const Extbyte *extname;
     Bytecount extnamelen;
 
-    TO_EXTERNAL_FORMAT (DATA, (name, len), ALLOCA, (extname, extnamelen), Qbinary);
+    TO_EXTERNAL_FORMAT (DATA, (name, len), ALLOCA, (extname, extnamelen),
+                        Qutf_8);
 
     result = gdk_color_parse (extname, color);
   }
@@ -208,7 +209,7 @@ gtk_valid_color_name_p (struct device *UNUSED (d), Lisp_Object color)
   GdkColor c;
   const char *extname;
 
-  extname = LISP_STRING_TO_EXTERNAL (color, Qctext);
+  extname = LISP_STRING_TO_EXTERNAL (color, Qutf_8);
 
   if (gdk_color_parse (extname, &c) != TRUE)
       return(0);
@@ -395,11 +396,11 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object device,
   int n_families, i;
   int monospace_only = 0;
 
-  /* What to do with the pattern?  Add a single case for now. */
-  if (qxestrcasecmp_ascii (XSTRING_DATA (pattern), "monospace") == 0)
-    monospace_only = 1;
-
   patternext = LISP_STRING_TO_EXTERNAL (pattern, Qutf_8);
+
+  /* What to do with the pattern?  Add a single case for now. */
+  if (qxestrcasecmp_ascii (patternext, "monospace") == 0)
+    monospace_only = 1;
 
 #ifdef DEBUG_XEMACS
   if (debug_x_fonts)

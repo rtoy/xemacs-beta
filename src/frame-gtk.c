@@ -353,27 +353,10 @@ gtk_set_frame_text_value (struct frame *UNUSED (f), Ibyte *value,
 			  void (*func) (gpointer, gchar *),
 			  gpointer arg)
 {
-  gchar *the_text = (gchar *) value;
-
   /* Programmer fuckup or window is not realized yet. */
   if (!func || !arg) return;
 
-#ifdef MULE
-  {
-    Ibyte *ptr;
-    
-    /* Optimize for common ASCII case */
-    for (ptr = value; *ptr; ptr++)
-      if (!byte_ascii_p (*ptr))
-	{
-	  char *tmp = ITEXT_TO_EXTERNAL (value, Qutf_8);
-	  the_text = tmp;
-	  break;
-	}
-  }
-#endif /* MULE */
-
-  (*func) (arg, (gchar *) the_text);
+  (*func) (arg, ITEXT_TO_EXTERNAL (value, Qutf_8));
 }
 
 static void
@@ -653,7 +636,9 @@ gtk_initialize_frame_size (struct frame *f)
 
   if (STRINGP (Vgtk_initial_geometry))
     {
-      if (!gnome_parse_geometry ((char*) XSTRING_DATA (Vgtk_initial_geometry), &x,&y,&w,&h))
+      if (!gnome_parse_geometry (LISP_STRING_TO_EXTERNAL (Vgtk_initial_geometry,
+                                                          Qutf_8),
+                                 &x,&y,&w,&h))
 	{
 	  x = y = 10;
 	  w = 80;
@@ -795,23 +780,26 @@ dragndrop_get_drag (GtkWidget *UNUSED (widget),
 		    gpointer UNUSED (user_data))
 {
   gtk_selection_data_set (data, GDK_SELECTION_TYPE_STRING, 8,
-			  DRAG_SELECTION_DATA_ERROR,
-			  strlen (DRAG_SELECTION_DATA_ERROR));
+			  (guchar *) DRAG_SELECTION_DATA_ERROR,
+			  sizeof (DRAG_SELECTION_DATA_ERROR) - 1);
 
   switch (info)
     {
     case TARGET_TYPE_STRING:
       {
 	Lisp_Object string = Vcurrent_drag_object;
-	
+        guchar *extstring;
+
 	if (!STRINGP (Vcurrent_drag_object))
 	  {
 	    string = Fprin1_to_string (string, Qnil);
 	    /* Convert to a string */
 	  }
+
+        extstring = LISP_STRING_TO_EXTERNAL (string, Qutf_8);
 	
 	gtk_selection_data_set (data, GDK_SELECTION_TYPE_STRING,
-				8, XSTRING_DATA (string), XSTRING_LENGTH (string));
+				8, extstring, strlen (extstring));
       }
       break;
     case TARGET_TYPE_URI_LIST:
@@ -845,7 +833,8 @@ The type defaults to text/plain.
 
       /* get the desired type */
       if (!NILP (dtyp) && STRINGP (dtyp))
-	dnd_typ = gdk_atom_intern (XSTRING_DATA (dtyp), FALSE);
+	dnd_typ = gdk_atom_intern (LISP_STRING_TO_EXTERNAL (dtyp, Qutf_8),
+                                   FALSE);
 
       gtk_drag_begin (wid, tl, GDK_ACTION_COPY,
 		      EVENT_BUTTON_BUTTON (lisp_event), NULL);
