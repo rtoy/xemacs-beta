@@ -57,11 +57,11 @@ symbol_to_gtk_atom (struct device *UNUSED (d), Lisp_Object sym,
   if (EQ (sym, QPRIMARY))	return GDK_SELECTION_PRIMARY;
   if (EQ (sym, QSECONDARY))	return GDK_SELECTION_SECONDARY;
 
-  {
-    const Extbyte *nameext;
-    nameext = LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), Qctext);
-    return gdk_atom_intern (nameext, only_if_exists ? TRUE : FALSE);
-  }
+  /* GDK maintains its own atoms independent of X11, UTF-8 is appropriate
+     for the encoding. */
+  return gdk_atom_intern (LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym),
+                                                   Qutf_8),
+                          only_if_exists ? TRUE : FALSE);
 }
 
 static Lisp_Object
@@ -76,7 +76,7 @@ atom_to_symbol (struct device *UNUSED (d), GdkAtom atom)
 
     if (! str) return Qnil;
 
-    intstr = EXTERNAL_TO_ITEXT (str, Qctext);
+    intstr = EXTERNAL_TO_ITEXT (str, Qutf_8);
     g_free (str);
     return intern_istring (intstr);
   }
