@@ -1,3 +1,8 @@
+2011-09-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* menubar-gtk.c (remove_underscores):
+        Oops, got a variable name wrong here; correct it, fix the compile.
+
 2011-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):

@@ -303,7 +303,7 @@ remove_underscores (const Extbyte *name, Extbyte **dest_out,
       rval[j++] = name[i];
     }
 
-  if (j < temp_label_len)
+  if (j < dest_len)
     {
       rval[j] = '\0';
     }
