@@ -1,3 +1,14 @@
+2011-09-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el (select-convert-to-text):
+	* select.el (select-convert-to-utf-8-text):
+	Ignore extent information in these functions, other programs can't
+	do anything useful with it, and it actively interferes when
+	copying from an ERC buffer to external programs--
+	#'encode-coding-string complains that the string is read-only,
+	which is arguably in itself a separate problem, since it allocates
+	a new string there's no reason for it ever to throw that error.
+
 2011-09-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (cl-defsubst-expand):

@@ -456,14 +456,14 @@ nil if this is impossible, or a suitable representation otherwise."
 ;; append handlers and buffer-kill handlers.
 (defun select-convert-to-text (selection type value)
   (cond ((stringp value)
-	 value)
+	 (substring-no-properties value))
 	((extentp value)
 	 (save-excursion
 	   (set-buffer (extent-object value))
 	   (save-restriction
 	     (widen)
-	     (buffer-substring (extent-start-position value)
-			       (extent-end-position value)))))
+	     (buffer-substring-no-properties (extent-start-position value)
+                                             (extent-end-position value)))))
 	((and (consp value)
 	      (markerp (car value))
 	      (markerp (cdr value)))
@@ -476,7 +476,7 @@ nil if this is impossible, or a suitable representation otherwise."
 			   (error "selection is in a killed buffer")))
 	   (save-restriction
 	     (widen)
-	     (buffer-substring (car value) (cdr value)))))
+	     (buffer-substring-no-properties (car value) (cdr value)))))
 	(t nil)))
 
 (defun select-convert-to-timestamp (selection type value)
@@ -485,16 +485,18 @@ nil if this is impossible, or a suitable representation otherwise."
 
 (defun select-convert-to-utf-8-text (selection type value)
   (cond ((stringp value)
-	 (cons 'UTF8_STRING (encode-coding-string value 'utf-8)))
+	 (cons 'UTF8_STRING (encode-coding-string
+                             (substring-no-properties value) 'utf-8)))
 	((extentp value)
 	 (save-excursion
 	   (set-buffer (extent-object value))
 	   (save-restriction
 	     (widen)
 	     (cons 'UTF8_STRING 
-		   (encode-coding-string 
-		    (buffer-substring (extent-start-position value)
-				      (extent-end-position value)) 'utf-8)))))
+		   (encode-coding-string (buffer-substring-no-properties
+                                          (extent-start-position value)
+                                          (extent-end-position value))
+                                         'utf-8)))))
 	((and (consp value)
 	      (markerp (car value))
 	      (markerp (cdr value)))
@@ -508,8 +510,8 @@ nil if this is impossible, or a suitable representation otherwise."
 	   (save-restriction
 	     (widen)
 	     (cons 'UTF8_STRING (encode-coding-string 
-				 (buffer-substring (car value) (cdr value))
-				 'utf-8)))))
+				 (buffer-substring-no-properties
+                                  (car value) (cdr value)) 'utf-8)))))
 	(t nil)))
 
 (defun select-coerce-to-text (selection type value)
