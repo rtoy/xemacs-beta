@@ -1,5 +1,15 @@
 2011-09-21  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* files.el (binary-file-regexps):
+	Update this, adding everything that maps to no-conversion or
+	no-conversion-multibyte in GNU's auto-mode-alist.
+	In particular, add PDFs, important given gnus' problem with them
+	of http://mid.gmane.org/m3r637lpm5.fsf@mikesoffice.com and the
+	associated thread, and Uwe's recent re-reporting of the same
+	problem.
+
+2011-09-21  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* select.el (select-convert-to-text):
 	* select.el (select-convert-to-utf-8-text):
 	Ignore extent information in these functions, other programs can't
