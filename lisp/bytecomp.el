@@ -1934,10 +1934,8 @@ docstrings code.")
      ";ELC"
      20
      "\000\000\000\n")
-    (when (not (eq (find-coding-system 'raw-text-unix)
-		   (find-coding-system buffer-file-coding-system)))
-      (insert (format ";;;###coding system: %s\n"
-		      (coding-system-name buffer-file-coding-system))))
+    (insert (format ";;;###coding system: %s\n"
+                    (coding-system-name buffer-file-coding-system)))
     (insert (format
 	     "\n(or %s\n    (error \"Loading this file requires %s\"))\n"
              (let ((print-readably t))

@@ -1,3 +1,13 @@
+2011-09-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el (binary-file-regexps):
+	Remove ELC files from this, many of them are escape-quoted, and
+	when opening them for viewing XEmacs should look at the coding
+	cookie and respect that.
+	* bytecomp.el (byte-compile-insert-header):
+	Always insert a coding cookie, now ELC files are no longer in
+	binary-file-regexps.
+
 2011-09-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (binary-file-regexps):
