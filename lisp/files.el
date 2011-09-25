@@ -1672,7 +1672,7 @@ with the name of the interpreter specified in the first line.
 If it matches, mode MODE is selected.")
 
 (defvar binary-file-regexps
-  '("\\.\\(?:7[Zz]\\|ARC\\|E\\(?:AR\\|XE\\)\\|JAR\\|LZH\\|RAR\\|WAR\\|XPI\\|Z\\(?:IP\\|OO\\)\\|arc\\|bz2\\|e\\(?:ar\\|lc\\|xe\\)\\|g\\(?:if\\|z\\)\\|j\\(?:ar\\|p\\(?:e?g\\)\\)\\|l\\(?:ha\\|zh\\)\\|odt\\|p\\(?:bm\\|df\\|gm\\|n[gm]\\|pm\\)\\|sx[cdimw]\\|t\\(?:ar\\|gz\\|iff\\)\\|war\\|xpi\\|z\\(?:ip\\|oo\\)\\|[Zo]\\)\\'")
+  '("\\.\\(?:7[Zz]\\|ARC\\|E\\(?:AR\\|XE\\)\\|JAR\\|LZH\\|RAR\\|WAR\\|XPI\\|Z\\(?:IP\\|OO\\)\\|arc\\|bz2\\|e\\(?:ar\\|xe\\)\\|g\\(?:if\\|z\\)\\|j\\(?:ar\\|p\\(?:e?g\\)\\)\\|l\\(?:ha\\|zh\\)\\|odt\\|p\\(?:bm\\|df\\|gm\\|n[gm]\\|pm\\)\\|sx[cdimw]\\|t\\(?:ar\\|gz\\|iff\\)\\|war\\|xpi\\|z\\(?:ip\\|oo\\)\\|[Zo]\\)\\'")
   "List of regexps of filenames containing binary (non-text) data.")
 ;   (eval-when-compile
 ;     (require 'regexp-opt)
@@ -1680,7 +1680,7 @@ If it matches, mode MODE is selected.")
 ;      (format "\\.\\(?:%s\\)\\'"
 ;	      (regexp-opt
 ;               '("7Z" "7z" "ARC" "EAR" "EXE" "JAR" "LZH" "RAR" "WAR" "XPI" "Z"
-;                 "ZIP" "ZOO" "arc" "bz2" "ear" "elc" "exe" "gif" "gz" "jar"
+;                 "ZIP" "ZOO" "arc" "bz2" "ear" "exe" "gif" "gz" "jar"
 ;                 "jpeg" "jpg" "lha" "lzh" "o" "odt" "pbm" "pdf" "pgm" "png"
 ;                 "pnm" "ppm" "sxc" "sxd" "sxi" "sxm" "sxw" "tar" "tgz"
 ;                 "tiff" "war" "xpi" "zip" "zoo")))))
