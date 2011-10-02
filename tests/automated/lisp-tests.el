@@ -2939,4 +2939,50 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Check-Error wrong-number-of-arguments (apply-partially))
   (Assert (equal (funcall construct-list) '(5 6 7))))
 
+;; Test labels and inlining.
+(labels
+    ((+ (&rest arguments)
+       ;; Shades of Java, hah.
+       (mapconcat #'prin1-to-string arguments ", "))
+     (print-with-commas (stream one two three four five)
+       (princ (+ one two three four five) stream))
+     (bookend (open close &rest arguments)
+       (refer-to-bookend (concat open (apply #'+ arguments) close)))
+     (refer-to-bookend (string)
+       (bookend "[" "]" string "hello" "there")))
+  (declare (inline + print-with-commas bookend refer-to-bookend))
+  (macrolet
+      ((with-first-arguments (&optional form)
+        (append form (list 1 [hi there] 40 "this is a string" pi)))
+       (with-second-arguments (&optional form)
+         (append form (list pi e ''hello ''there [40 50 60])))
+       (with-both-arguments (&optional form)
+         (append form
+                 (macroexpand '(with-first-arguments))
+                 (macroexpand '(with-second-arguments)))))
+
+    (with-temp-buffer
+      (Assert
+       (equal
+        (mapconcat #'prin1-to-string (with-first-arguments (list)) ", ")
+        (with-first-arguments (print-with-commas (current-buffer))))
+     "checking print-with-commas gives the expected result")
+      (Assert
+       (or
+        (not (compiled-function-p (indirect-function #'print-with-commas)))
+        (notany #'compiled-function-p
+                (compiled-function-constants
+                 (indirect-function #'print-with-commas))))
+       "checking the label + was inlined correctly")
+      (insert ", ")
+      ;; This call to + will be inline in compiled code, but there's
+      ;; no easy way for us to check that:
+      (Assert (null (insert (with-second-arguments (+)))))
+      (Assert (equal
+               (mapconcat #'prin1-to-string (with-both-arguments (list)) ", ")
+               (buffer-string))
+              "checking the buffer contents are as expected at the end.")
+      (Assert (not (funcall (intern "eq") #'bookend #'refer-to-bookend))
+	      "checking two mutually recursive functions compiled OK"))))
+
 ;;; end of lisp-tests.el

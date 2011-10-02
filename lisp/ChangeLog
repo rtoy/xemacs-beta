@@ -1,3 +1,29 @@
+2011-10-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	Add #'declare to this, so it doesn't need to rely on
+	#'cl-compiling file to determine when we're byte-compiling.
+	Update #'labels to support declaring labels inline, as Common Lisp
+	requires.
+	* bytecomp.el (byte-compile-function-form):
+	Don't error if FUNCTION is quoting a non-lambda, non-symbol, just
+	return it.
+	* cl-extra.el (cl-macroexpand-all):
+	If a label name has been quoted, expand to the label placeholder
+	quoted with 'function. This allows the byte compiler to
+	distinguish between uses of the placeholder as data and uses in
+	contexts where it should be inlined.
+	* cl-macs.el:
+	* cl-macs.el (cl-do-proclaim):
+	When proclaming something as inline, if it is bound as a label,
+	don't modify the symbol's plist; instead, treat the first element
+	of its placeholder constant vector as a place to store compile
+	information.
+	* cl-macs.el (declare):
+	Leave processing declarations while compiling to the
+	implementation of #'declare in
+	byte-compile-initial-macro-environment.
+
 2011-09-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (binary-file-regexps):
