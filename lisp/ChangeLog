@@ -1,5 +1,24 @@
 2011-10-03  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	Implement #'keysyms-equal with #'labels + (declare (inline ...)),
+	instead of abusing macrolet to the same end.
+	* specifier.el (let-specifier):
+	* mule/mule-cmds.el (describe-language-environment):
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	* mule/mule-x-init.el (x-use-halfwidth-roman-font):
+	* faces.el (Face-frob-property):
+	* keymap.el (key-sequence-list-description):
+	* lisp-mode.el (construct-lisp-mode-menu):
+	* loadhist.el (unload-feature):
+	* mouse.el (default-mouse-track-check-for-activation):
+	Declare various labels inline in dumped files when that reduces
+	the size of the dumped image. Declaring labels inline is normally
+	only worthwhile for inner loops and so on, but it's reasonable
+	exercise of the related code to have these changes in core.
+
+2011-10-03  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el (byte-compile-funcall):
 	Sometimes the optimizer shirks its responsibility and doesn't
 	unfold a lambda when it should. Do this here, if optimization is

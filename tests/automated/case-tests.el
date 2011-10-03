@@ -1464,8 +1464,8 @@ For example, if CH is ?\\u00F1, the return value will be the string
 	    ;; finally, make the new mapping.
 	    (put-case-table-pair uc lc case-table))
 	  finally return case-table)))
-  (flet ((ismulti (uc lc)
-	   (or (gethash uc multi-hash) (gethash lc multi-hash))))
+  (labels ((ismulti (uc lc)
+             (or (gethash uc multi-hash) (gethash lc multi-hash))))
     (let (
 	  ;; All lowercase
 	  (lowermulti (with-output-to-string

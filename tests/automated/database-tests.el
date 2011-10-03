@@ -34,12 +34,12 @@
      (push (file-name-directory load-file-name) load-path)
      (require 'test-harness))))
 
-(flet ((delete-database-files (filename)
-	(dolist (fn (list filename
-			  (concat filename ".db")
-			  (concat filename ".pag")
-			  (concat filename ".dir")))
-	  (ignore-file-errors (delete-file fn))))
+(labels ((delete-database-files (filename)
+           (dolist (fn (list filename
+                             (concat filename ".db")
+                             (concat filename ".pag")
+                             (concat filename ".dir")))
+             (ignore-file-errors (delete-file fn))))
 
        (test-database (db)
 	(Assert (databasep db))

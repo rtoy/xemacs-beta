@@ -488,6 +488,7 @@ Example:
              (if (or (atom x) (eq (car x) 'quote))
                  (list x)
                (list (gensym name) x))))
+    (declare (inline gensym-frob))
     ;; VARLIST is a list of
     ;; ((SPECIFIERSYM SPECIFIER) (VALUE) (LOCALESYM LOCALE)
     ;;  (TAG-SET) (HOW-TO-ADD))

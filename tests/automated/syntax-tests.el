@@ -179,10 +179,10 @@
   (insert "a ( \"b (c\" (\"defg\") \")\") h\n")
 
   ;; #### This test should check *every* position.
-  (flet ((backward-up-list-moves-point-from-to (start expected-end)
-	   (goto-char start)
-	   (backward-up-list 1)
-	   (= (point) expected-end)))
+  (labels ((backward-up-list-moves-point-from-to (start expected-end)
+             (goto-char start)
+             (backward-up-list 1)
+             (= (point) expected-end)))
     (Known-Bug-Expect-Failure
      ;; Evgeny's case
      (Assert (backward-up-list-moves-point-from-to 16 12)))
