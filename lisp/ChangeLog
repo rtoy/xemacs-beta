@@ -1,3 +1,11 @@
+2011-10-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-funcall):
+	Sometimes the optimizer shirks its responsibility and doesn't
+	unfold a lambda when it should. Do this here, if optimization is
+	turned on; this makes inlining labels more consistent and
+	trustworthy.
+
 2011-10-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-initial-macro-environment):

@@ -4157,8 +4157,19 @@ forcing function quoting" ,en (car form))))
            (byte-compile-constp (second form)))
       (byte-compile-callargs-warn (cons (cl-const-expr-val (second form))
                                         (nthcdr 2 form))))
-  (mapc 'byte-compile-form (cdr form))
-  (byte-compile-out 'byte-call (length (cdr (cdr form)))))
+  (if (and byte-optimize
+           (eq 'function (car-safe (cadr form)))
+           (eq 'lambda (car-safe (cadadr form)))
+	    (or
+	     (not (eq (setq form (cons (cadadr form) (cddr form)))
+		      (setq form (byte-compile-unfold-lambda form))))
+	     (prog1 nil (setq form `(funcall #',(car form) ,@(cdr form))))))
+      ;; Sometimes the optimizer fails to unfold well-formed calls of the
+      ;; form (funcall #'(lambda ...)); since we need it to do this for
+      ;; (declare (inline ...)) to work properly with labels, force that here.
+      (byte-compile-form form)
+    (mapc 'byte-compile-form (cdr form))
+    (byte-compile-out 'byte-call (length (cdr (cdr form))))))
 
 
 (defun byte-compile-let (form)
