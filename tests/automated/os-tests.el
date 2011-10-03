@@ -62,13 +62,13 @@ tac process output."
       (while cases
         (setq case (car cases)
 	      cases (cdr cases))
-	(flet ((do-test (pos result)
-		 (erase-buffer)
-		 (insert original-string)
-		 (goto-char pos)
-		 (call-process-region 3 7 "tac" t t)
-		 (goto-char (point-min))
-		 (Assert (looking-at result))))
+	(labels ((do-test (pos result)
+                   (erase-buffer)
+                   (insert original-string)
+                   (goto-char pos)
+                   (call-process-region 3 7 "tac" t t)
+                   (goto-char (point-min))
+                   (Assert (looking-at result))))
 	  (do-test (car case) (cdr case)))))
     ;; if you're in that much of a hurry you can blow cat off
     ;; if you've done tac, but I'm not going to bother
@@ -80,13 +80,13 @@ cat process output."
       (while cases
         (setq case (car cases)
 	      cases (cdr cases))
-	(flet ((do-test (pos result)
-		 (erase-buffer)
-		 (insert original-string)
-		 (goto-char pos)
-		 (call-process-region 3 7 "cat" t t)
-		 (goto-char (point-min))
-		 (Assert (looking-at result))))
+	(labels ((do-test (pos result)
+                   (erase-buffer)
+                   (insert original-string)
+                   (goto-char pos)
+                   (call-process-region 3 7 "cat" t t)
+                   (goto-char (point-min))
+                   (Assert (looking-at result))))
 	  (do-test (car case) (cdr case)))))))
 
 (loop

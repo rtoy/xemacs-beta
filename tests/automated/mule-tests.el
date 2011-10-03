@@ -647,7 +647,7 @@ This is a naive implementation in Lisp.  "
     finally (set-language-environment original-language-environment))
 
   (with-temp-buffer
-    (flet
+    (labels
         ((Assert-elc-is-escape-quoted ()
            "Assert the current buffer has an escape-quoted cookie if compiled."
            (save-excursion

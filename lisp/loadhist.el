@@ -178,6 +178,7 @@ is nil, raise an error."
     (labels ((reset-aload (x)
                (let ((aload (get x 'autoload)))
                  (if aload (fset x (cons 'autoload aload))))))
+      (declare (inline reset-aload)) 
       (mapc
        #'(lambda (x)
            (cond ((stringp x) nil)

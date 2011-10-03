@@ -419,6 +419,7 @@ by comparing the respective outputs of this function using `equal'."
 		(vector keys)))))
     (labels ((event-to-list (ev)
                (append (event-modifiers ev) (list (event-key ev)))))
+      (declare (inline event-to-list))
       (mapvector
        #'(lambda (key)
 	   (let* ((full-key

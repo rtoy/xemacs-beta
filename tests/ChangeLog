@@ -1,3 +1,22 @@
+2011-10-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el (uni-mappings):
+	* automated/database-tests.el (delete-database-files):
+	* automated/hash-table-tests.el (iterations):
+	* automated/lisp-tests.el (test1):
+	* automated/lisp-tests.el (a):
+	* automated/lisp-tests.el (cl-floor):
+	* automated/lisp-tests.el (foo):
+	* automated/lisp-tests.el (list-nreverse):
+	* automated/lisp-tests.el (needs-lexical-context):
+	* automated/mule-tests.el (featurep):
+	* automated/os-tests.el (original-string):
+	* automated/os-tests.el (with):
+	* automated/symbol-tests.el (check-weak-list-unique):
+	Replace #'flet with #'labels where appropriate in these tests,
+	following my own advice on style in the docstrings of those
+	functions.
+
 2011-10-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
