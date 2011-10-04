@@ -1,5 +1,11 @@
 2011-10-04  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* autoload.el (make-autoload):
+	Don't add arglist info to the autoload form's docstring if the
+	arglist info is already there.
+
+2011-10-04  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el (byte-compile-funcall):
 	Correct a comment here, explaining why the optimizer doesn't
 	expand (funcall #'(lambda ...)) in some contexts with inline
