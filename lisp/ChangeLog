@@ -1,3 +1,10 @@
+2011-10-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-funcall):
+	Correct a comment here, explaining why the optimizer doesn't
+	expand (funcall #'(lambda ...)) in some contexts with inline
+	labels, and why it's reasonable to do it here.
+
 2011-10-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (handle-pre-motion-command-current-command-is-motion):

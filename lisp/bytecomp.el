@@ -4164,9 +4164,23 @@ forcing function quoting" ,en (car form))))
 	     (not (eq (setq form (cons (cadadr form) (cddr form)))
 		      (setq form (byte-compile-unfold-lambda form))))
 	     (prog1 nil (setq form `(funcall #',(car form) ,@(cdr form))))))
-      ;; Sometimes the optimizer fails to unfold well-formed calls of the
-      ;; form (funcall #'(lambda ...)); since we need it to do this for
-      ;; (declare (inline ...)) to work properly with labels, force that here.
+      ;; The byte-compile part of the #'labels implementation, above,
+      ;; happens after macroexpansion and after the source optimizer has
+      ;; done its thing. When labels are to be made inline we can have code
+      ;; that looks like (funcall #'(lambda ...) ...), when the code that
+      ;; the optimizer saw looked like (funcall #<compiled-function ...>
+      ;; ...).
+      ;;
+      ;; So, the optimizer doesn't have the opportunity to transform the
+      ;; former to (let (...) ...), and it's reasonable to do that here (since
+      ;; the labels implementation doesn't change other code that would need
+      ;; running through the optimizer; the lambda itself has already been
+      ;; through the optimizer).
+      ;;
+      ;; Equally reasonable, and conceptually a bit clearer, would be to do
+      ;; the transformation to (funcall #'(lambda ...) ...) in the
+      ;; byte-optimizer, breaking most of the #'sublis calls out of the
+      ;; byte-compile method.
       (byte-compile-form form)
     (mapc 'byte-compile-form (cdr form))
     (byte-compile-out 'byte-call (length (cdr (cdr form))))))
