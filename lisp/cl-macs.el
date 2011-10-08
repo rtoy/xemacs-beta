@@ -621,12 +621,6 @@ arguments: ((&rest WHEN) &body BODY)"
 	     form)))
 	(t (eval form) form)))
 
-;;;###autoload
-(defmacro load-time-value (form &optional read-only)
-  "Like `progn', but evaluates the body at load time.
-The result of the body appears to the compiler as a quoted constant."
-  (list 'progn form))
-
 ;;; Conditional control structures.
 
 ;;;###autoload
@@ -1715,75 +1709,6 @@ a `let' form, except that the list of symbols can be computed at run-time."
 	      '(cl-progv-after))))
 
 ;;;###autoload
-(defmacro flet (functions &rest form)
-  "Make temporary function definitions.
-
-This is an analogue of `let' that operates on the function cell of FUNC
-rather than its value cell.  The FORMs are evaluated with the specified
-function definitions in place, then the definitions are undone (the FUNCs go
-back to their previous definitions, or lack thereof).  This is in
-contravention of Common Lisp, where `flet' makes a lexical, not a dynamic,
-function binding.
-
-Normally you should use `labels', not `flet'; `labels' does not have the
-problems caused by dynamic scope, is less expensive when byte-compiled, and
-allows lexical shadowing of functions with byte-codes and byte-compile
-methods, where `flet' will fail.  The byte-compiler will warn when this
-happens.
-
-If you need to shadow some existing function at run time, and that function
-has no associated byte code or compiler macro, then `flet' is appropriate.
-
-arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
-  ;; XEmacs; leave warnings, errors and modifications of
-  ;; byte-compile-function-environment to the byte compiler. See
-  ;; byte-compile-initial-macro-environment in bytecomp.el.
-  (list*
-   'letf*
-   (mapcar
-    (function*
-     (lambda ((function . definition))
-       `((symbol-function ',function) 
-         ,(cons 'lambda (cdr (cl-transform-lambda definition function))))))
-    functions) form))
-
-;;;###autoload
-(defmacro labels (bindings &rest body)
-  "Make temporary function bindings.
-
-This is like `flet', except the bindings are lexical instead of dynamic.
-Unlike `flet', this macro is compliant with the Common Lisp standard with
-regard to the scope and extent of the function bindings.
-
-Each function may be called from within FORM, from within the BODY of the
-function itself (that is, recursively), and from any other function bodies
-in FUNCTIONS.
-
-Within FORM, to access the function definition of a bound function (for
-example, to pass it as a FUNCTION argument to `map'), quote its symbol name
-using `function'.
-
-arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)
-"
-  ;; XEmacs; the byte-compiler has a much better implementation of `labels'
-  ;; in `byte-compile-initial-macro-environment' that is used in compiled
-  ;; code.
-  (let ((vars nil) (sets nil)
-        (byte-compile-macro-environment byte-compile-macro-environment))
-    (while bindings
-      (let ((var (gensym)))
-	(push var vars)
-	(push `#'(lambda ,@(cdr (cl-transform-lambda (cdar bindings)
-                                                     (caar bindings)))) sets)
-	(push var sets)
-	(push (list (car (pop bindings)) 'lambda '(&rest cl-labels-args)
-		       (list 'list* '(quote funcall) (list 'quote var)
-			     'cl-labels-args))
-		 byte-compile-macro-environment)))
-    (cl-macroexpand-all (list* 'lexical-let vars (cons (cons 'setq sets) body))
-			byte-compile-macro-environment)))
-
-;;;###autoload
 (defmacro* macrolet ((&rest macros) &body form)
   "Make temporary macro definitions.
 This is like `flet', but for macros instead of functions."
@@ -1938,20 +1863,6 @@ Returns the first of the multiple values given by FORM."
 
 ;;;###autoload
 (defmacro locally (&rest body) (cons 'progn body))
-;;;###autoload
-(defmacro the (type form)
-  "Assert that FORM gives a result of type TYPE, and return that result.
-
-TYPE is a Common Lisp type specifier.
-
-If macro expansion of a `the' form happens during byte compilation, and the
-byte compiler customization variable `byte-compile-delete-errors' is
-non-nil, `the' is equivalent to FORM without any type checks."
-  (if (cl-safe-expr-p form)
-      `(prog1 ,form (assert ,(cl-make-type-test form type) t))
-    (let ((saved (gensym)))
-      `(let ((,saved ,form))
-        (prog1 ,saved (assert ,(cl-make-type-test saved type) t))))))
 
 (defvar cl-proclaim-history t)    ; for future compilers
 (defvar cl-declare-stack t)       ; for future compilers
@@ -2031,10 +1942,6 @@ non-nil, `the' is equivalent to FORM without any type checks."
 (let ((p (reverse cl-proclaims-deferred)))
   (while p (cl-do-proclaim (pop p) t))
   (setq cl-proclaims-deferred nil))
-
-;;;###autoload
-(defmacro declare (&rest specs)
-  nil)
 
 ;;; Generalized variables.
 
@@ -3954,16 +3861,108 @@ the byte optimizer in those cases."
 (proclaim '(inline cl-set-elt))
 
 ;;; Things that are side-effect-free.  Moved to byte-optimize.el
-;(mapcar (function (lambda (x) (put x 'side-effect-free t)))
-;	'(oddp evenp signum last butlast ldiff pairlis gcd lcm
-;	  isqrt floor* ceiling* truncate* round* mod* rem* subseq
-;	  list-length get* getf))
+;[...]
 
 ;;; Things that are side-effect-and-error-free.  Moved to byte-optimize.el
-;(mapcar (function (lambda (x) (put x 'side-effect-free 'error-free)))
-;	'(eql list* subst acons equalp random-state-p
-;	  copy-tree sublis))
+;[...]
 
+;; XEmacs; move the following macros to the end of this file, since the
+;; override the versions in byte-compile-initial-macro-environment for the
+;; duration of the file they're defined in.
+
+;;;###autoload
+(defmacro the (type form)
+  "Assert that FORM gives a result of type TYPE, and return that result.
+
+TYPE is a Common Lisp type specifier.
+
+If macro expansion of a `the' form happens during byte compilation, and the
+byte compiler customization variable `byte-compile-delete-errors' is
+non-nil, `the' is equivalent to FORM without any type checks."
+  (if (cl-safe-expr-p form)
+      `(prog1 ,form (assert ,(cl-make-type-test form type) t))
+    (let ((saved (gensym)))
+      `(let ((,saved ,form))
+        (prog1 ,saved (assert ,(cl-make-type-test saved type) t))))))
+
+;;;###autoload
+(defmacro declare (&rest specs)
+  nil)
+
+;;;###autoload
+(defmacro load-time-value (form &optional read-only)
+  "Like `progn', but evaluates the body at load time.
+The result of the body appears to the compiler as a quoted constant."
+  (list 'progn form))
+
+;;;###autoload
+(defmacro labels (bindings &rest body)
+  "Make temporary function bindings.
+
+This is like `flet', except the bindings are lexical instead of dynamic.
+Unlike `flet', this macro is compliant with the Common Lisp standard with
+regard to the scope and extent of the function bindings.
+
+Each function may be called from within FORM, from within the BODY of the
+function itself (that is, recursively), and from any other function bodies
+in FUNCTIONS.
+
+Within FORM, to access the function definition of a bound function (for
+example, to pass it as a FUNCTION argument to `map'), quote its symbol name
+using `function'.
+
+arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)
+"
+  ;; XEmacs; the byte-compiler has a much better implementation of `labels'
+  ;; in `byte-compile-initial-macro-environment' that is used in compiled
+  ;; code.
+  (let ((vars nil) (sets nil)
+        (byte-compile-macro-environment byte-compile-macro-environment))
+    (while bindings
+      (let ((var (gensym)))
+	(push var vars)
+	(push `#'(lambda ,@(cdr (cl-transform-lambda (cdar bindings)
+                                                     (caar bindings)))) sets)
+	(push var sets)
+	(push (list (car (pop bindings)) 'lambda '(&rest cl-labels-args)
+		       (list 'list* '(quote funcall) (list 'quote var)
+			     'cl-labels-args))
+		 byte-compile-macro-environment)))
+    (cl-macroexpand-all (list* 'lexical-let vars (cons (cons 'setq sets) body))
+			byte-compile-macro-environment)))
+
+;;;###autoload
+(defmacro flet (functions &rest form)
+  "Make temporary function definitions.
+
+This is an analogue of `let' that operates on the function cell of FUNC
+rather than its value cell.  The FORMs are evaluated with the specified
+function definitions in place, then the definitions are undone (the FUNCs go
+back to their previous definitions, or lack thereof).  This is in
+contravention of Common Lisp, where `flet' makes a lexical, not a dynamic,
+function binding.
+
+Normally you should use `labels', not `flet'; `labels' does not have the
+problems caused by dynamic scope, is less expensive when byte-compiled, and
+allows lexical shadowing of functions with byte-codes and byte-compile
+methods, where `flet' will fail.  The byte-compiler will warn when this
+happens.
+
+If you need to shadow some existing function at run time, and that function
+has no associated byte code or compiler macro, then `flet' is appropriate.
+
+arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)"
+  ;; XEmacs; leave warnings, errors and modifications of
+  ;; byte-compile-function-environment to the byte compiler. See
+  ;; byte-compile-initial-macro-environment in bytecomp.el.
+  (list*
+   'letf*
+   (mapcar
+    (function*
+     (lambda ((function . definition))
+       `((symbol-function ',function) 
+         ,(cons 'lambda (cdr (cl-transform-lambda definition function))))))
+    functions) form))
 
 (run-hooks 'cl-macs-load-hook)
 
