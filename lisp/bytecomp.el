@@ -500,16 +500,22 @@ easily determined from the input file.")
 	      (if (listp cl-declare-stack) (push (car specs) cl-declare-stack))
 	      (cl-do-proclaim (pop specs) nil))))
     (load-time-value
-     . ,#'(lambda (form &optional read-only)
-            (let* ((gensym (gensym))
-                   (byte-compile-bound-variables
-                    (acons gensym byte-compile-global-bit
-                           byte-compile-bound-variables)))
-              (setq byte-compile-output-preface
-                    (byte-compile-top-level
-                     `(progn (setq ,gensym ,form) ,byte-compile-output-preface)
-                     t 'file))
-              `(symbol-value ',gensym))))
+     . ,(symbol-macrolet ((wrapper '#:load-time-value))
+          (put wrapper 'byte-compile
+               #'(lambda (form)
+                   (let* ((gensym (gensym))
+                          (byte-compile-bound-variables
+                           (acons gensym byte-compile-global-bit
+                                  byte-compile-bound-variables)))
+                     (setq byte-compile-output-preface
+                           (byte-compile-top-level
+                            `(progn
+                              (setq ,gensym (progn ,(second form)))
+                              ,byte-compile-output-preface)
+                            t 'file))
+                     (byte-compile-form `(symbol-value ',gensym) nil))))
+          #'(lambda (form &optional read-only)
+              (list wrapper form))))
     (labels
         . ,#'(lambda (bindings &rest body)
                (let* ((names (mapcar 'car bindings))
