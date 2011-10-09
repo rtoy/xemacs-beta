@@ -93,8 +93,8 @@ undo_prelude (struct buffer *b, int hack_pending_boundary)
 	 saved again.  */
       b->undo_list
 	= Fcons (Fcons (Qt,
-			Fcons (make_int ((b->modtime >> 16) & 0xffff),
-			       make_int (b->modtime & 0xffff))),
+			Fcons (make_fixnum ((b->modtime >> 16) & 0xffff),
+			       make_fixnum (b->modtime & 0xffff))),
 		 b->undo_list);
     }
   return 1;
@@ -120,17 +120,17 @@ record_insert (struct buffer *b, Charbpos beg, Charcount length)
       Lisp_Object elt;
       elt = XCAR (b->undo_list);
       if (CONSP (elt)
-	  && INTP (XCAR (elt))
-	  && INTP (XCDR (elt))
-	  && XINT (XCDR (elt)) == beg)
+	  && FIXNUMP (XCAR (elt))
+	  && FIXNUMP (XCDR (elt))
+	  && XFIXNUM (XCDR (elt)) == beg)
 	{
-	  XCDR (elt) = make_int (beg + length);
+	  XCDR (elt) = make_fixnum (beg + length);
 	  return;
 	}
     }
 
-  b->undo_list = Fcons (Fcons (make_int (beg),
-                               make_int (beg + length)),
+  b->undo_list = Fcons (Fcons (make_fixnum (beg),
+                               make_fixnum (beg + length)),
                         b->undo_list);
 }
 
@@ -151,17 +151,17 @@ record_delete (struct buffer *b, Charbpos beg, Charcount length)
 		 && NILP (XCAR (b->undo_list)));
 
   if (BUF_PT (b) == beg + length)
-    sbeg = make_int (-beg);
+    sbeg = make_fixnum (-beg);
   else
-    sbeg = make_int (beg);
+    sbeg = make_fixnum (beg);
 
   /* If we are just after an undo boundary, and
      point wasn't at start of deleted range, record where it was.  */
   if (at_boundary
       && BUFFERP (last_point_position_buffer)
       && b == XBUFFER (last_point_position_buffer)
-      && last_point_position != XINT (sbeg))
-    b->undo_list = Fcons (make_int (last_point_position), b->undo_list);
+      && last_point_position != XFIXNUM (sbeg))
+    b->undo_list = Fcons (make_fixnum (last_point_position), b->undo_list);
 
   b->undo_list = Fcons (Fcons (make_string_from_buffer (b, beg,
 							length),
@@ -222,8 +222,8 @@ record_property_change (Charbpos beg, Charcount length,
   if (!undo_prelude (b, 1))
     return;
 
-  lbeg = make_int (beg);
-  lend = make_int (beg + length);
+  lbeg = make_fixnum (beg);
+  lend = make_fixnum (beg + length);
   entry = Fcons (Qnil, Fcons (prop, Fcons (value, Fcons (lbeg, lend))));
   b->undo_list = Fcons (entry, b->undo_list);
 }
@@ -370,8 +370,8 @@ Return what remains of the list.
     list = Fcdr (list);
 #endif
 
-  CHECK_INT (count);
-  arg = XINT (count);
+  CHECK_FIXNUM (count);
+  arg = XFIXNUM (count);
   next = Qnil;
   GCPRO2 (next, list);
 
@@ -393,10 +393,10 @@ Return what remains of the list.
 	  if (NILP (next))
 	    break;
 	  /* Handle an integer by setting point to that value.  */
-	  else if (INTP (next))
+	  else if (FIXNUMP (next))
 	    BUF_SET_PT (current_buffer,
 			charbpos_clip_to_bounds (BUF_BEGV (current_buffer),
-					       XINT (next),
+					       XFIXNUM (next),
 					       BUF_ZV (current_buffer)));
 	  else if (CONSP (next))
 	    {
@@ -411,8 +411,8 @@ Return what remains of the list.
 		  if (!CONSP (cdr)) goto rotten;
 		  high = XCAR (cdr);
 		  low = XCDR (cdr);
-		  if (!INTP (high) || !INTP (low)) goto rotten;
-		  mod_time = (XINT (high) << 16) + XINT (low);
+		  if (!FIXNUMP (high) || !FIXNUMP (low)) goto rotten;
+		  mod_time = (XFIXNUM (high) << 16) + XFIXNUM (low);
 		  /* If this records an obsolete save
 		     (not matching the actual disk file)
 		     then don't mark unmodified.  */
@@ -434,7 +434,7 @@ Return what remains of the list.
 		  start = Fcar (cdr);
 		  end = Fcar (Fcdr (cdr));
 
-		  if (!INTP (start) || !INTP (end))
+		  if (!FIXNUMP (start) || !FIXNUMP (end))
 		    goto rotten;
 		  Fset_extent_endpoints (extent_obj, start, end,
 					 Fcurrent_buffer ());
@@ -455,23 +455,23 @@ Return what remains of the list.
 		  Fput_text_property (beg, end, prop, val, Qnil);
 		}
 #endif /* FSFmacs */
-	      else if (INTP (car) && INTP (cdr))
+	      else if (FIXNUMP (car) && FIXNUMP (cdr))
 		{
 		  /* Element (BEG . END) means range was inserted.  */
 
-		  if (XINT (car) < BUF_BEGV (current_buffer)
-		      || XINT (cdr) > BUF_ZV (current_buffer))
+		  if (XFIXNUM (car) < BUF_BEGV (current_buffer)
+		      || XFIXNUM (cdr) > BUF_ZV (current_buffer))
 		    signal_error (Qinvalid_operation, "Changes to be undone are outside visible portion of buffer", Qunbound);
 		  /* Set point first thing, so that undoing this undo
 		     does not send point back to where it is now.  */
 		  Fgoto_char (car, Qnil);
 		  Fdelete_region (car, cdr, Qnil);
 		}
-	      else if (STRINGP (car) && INTP (cdr))
+	      else if (STRINGP (car) && FIXNUMP (cdr))
 		{
 		  /* Element (STRING . POS) means STRING was deleted.  */
 		  Lisp_Object membuf = car;
-		  int pos = XINT (cdr);
+		  int pos = XFIXNUM (cdr);
 
 		  if (pos < 0)
 		    {

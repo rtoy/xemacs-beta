@@ -7895,9 +7895,9 @@ the preprocessor constant @code{USE_UNION_TYPE} which is defined via
 the @code{--use-union-type} option to @code{configure}.
 
 Various macros are used to convert between Lisp_Objects and the
-corresponding C type.  Macros of the form @code{XINT()}, @code{XCHAR()},
+corresponding C type.  Macros of the form @code{XFIXNUM()}, @code{XCHAR()},
 @code{XSTRING()}, @code{XSYMBOL()}, do any required bit shifting and/or
-masking and cast it to the appropriate type.  @code{XINT()} needs to be
+masking and cast it to the appropriate type.  @code{XFIXNUM()} needs to be
 a bit tricky so that negative numbers are properly sign-extended.  Since
 integers are stored left-shifted, if the right-shift operator does an
 arithmetic shift (i.e. it leaves the most-significant bit as-is rather
@@ -7919,7 +7919,7 @@ object.  These macros are of the form @code{XSET@var{TYPE}
 than just used in an expression.  The reason for this is that standard C
 doesn't let you ``construct'' a structure (but GCC does).  Granted, this
 sometimes isn't too convenient; for the case of integers, at least, you
-can use the function @code{make_int()}, which constructs and
+can use the function @code{make_fixnum()}, which constructs and
 @emph{returns} an integer Lisp object.  Note that the
 @code{XSET@var{TYPE}()} macros are also affected by
 @code{ERROR_CHECK_TYPES} and make sure that the structure is of the
@@ -8736,7 +8736,7 @@ collector's output purposes is updated.
 @cindex characters, integers and
 
 Integer and character Lisp objects are created from integers using the
-functions @code{make_int()} and @code{make_char()}. (These are actually
+functions @code{make_fixnum()} and @code{make_char()}. (These are actually
 macros on most systems.)  These functions basically just do some moving
 of bits around, since the integral value of the object is stored
 directly in the @code{Lisp_Object}.

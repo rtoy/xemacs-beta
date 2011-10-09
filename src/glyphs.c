@@ -345,16 +345,16 @@ specifiers will not be affected.
 	  if (!NILP (XCDR (XCDR (mapping))))
 	    {
 	      pos = XCAR (XCDR (XCDR (mapping)));
-	      CHECK_INT (pos);
-	      if (XINT (pos) < 0 ||
-		  XINT (pos) >= XVECTOR_LENGTH (typevec))
+	      CHECK_FIXNUM (pos);
+	      if (XFIXNUM (pos) < 0 ||
+		  XFIXNUM (pos) >= XVECTOR_LENGTH (typevec))
 		args_out_of_range_3
-		  (pos, Qzero, make_int (XVECTOR_LENGTH (typevec) - 1));
+		  (pos, Qzero, make_fixnum (XVECTOR_LENGTH (typevec) - 1));
 	    }
 
 	  newvec = Fcopy_sequence (typevec);
-	  if (INTP (pos))
-	    XVECTOR_DATA (newvec)[XINT (pos)] = regexp;
+	  if (FIXNUMP (pos))
+	    XVECTOR_DATA (newvec)[XFIXNUM (pos)] = regexp;
 	  GCPRO1 (newvec);
 	  image_validate (newvec);
 	  UNGCPRO;
@@ -405,7 +405,7 @@ process_image_string_instantiator (Lisp_Object data,
 	{
 	  if (!NILP (XCDR (XCDR (mapping))))
 	    {
-	      int pos = XINT (XCAR (XCDR (XCDR (mapping))));
+	      int pos = XFIXNUM (XCAR (XCDR (XCDR (mapping))));
 	      Lisp_Object newvec = Fcopy_sequence (typevec);
 	      XVECTOR_DATA (newvec)[pos] = data;
 	      return newvec;
@@ -552,7 +552,7 @@ check_valid_face (Lisp_Object data)
 void
 check_valid_int (Lisp_Object data)
 {
-  CHECK_INT (data);
+  CHECK_FIXNUM (data);
 }
 
 void
@@ -631,7 +631,7 @@ tagged_vector_to_alist (Lisp_Object vector)
 Lisp_Object
 alist_to_tagged_vector (Lisp_Object tag, Lisp_Object alist)
 {
-  int len = 1 + 2 * XINT (Flength (alist));
+  int len = 1 + 2 * XFIXNUM (Flength (alist));
   Lisp_Object *elt = alloca_array (Lisp_Object, len);
   int i;
   Lisp_Object rest;
@@ -742,7 +742,7 @@ normalize_image_instantiator (Lisp_Object instantiator,
 
   if (STRINGP (instantiator))
     instantiator = process_image_string_instantiator (instantiator, contype,
-						      XINT (dest_mask));
+						      XFIXNUM (dest_mask));
   /* Subsequent validation will pick this up. */
   if (!VECTORP (instantiator))
     return instantiator;
@@ -1034,13 +1034,13 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	  write_ascstring (printcharfun, " @");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
 	    write_fmt_string (printcharfun, "%ld",
-			      XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)));
+			      XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)));
 	  else
 	    write_ascstring (printcharfun, "??");
 	  write_ascstring (printcharfun, ",");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
 	    write_fmt_string (printcharfun, "%ld",
-			      XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)));
+			      XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)));
 	  else
 	    write_ascstring (printcharfun, "??");
 	}
@@ -1533,7 +1533,7 @@ make_image_instance_1 (Lisp_Object data, Lisp_Object domain,
   dest_mask = decode_image_instance_type_list (dest_types);
   data = normalize_image_instantiator (data,
 				       DEVICE_TYPE (DOMAIN_XDEVICE (domain)),
-				       make_int (dest_mask));
+				       make_fixnum (dest_mask));
   GCPRO1 (data);
   /* After normalizing the data, it's always either an image instance (which
      we filtered out above) or a vector. */
@@ -1808,7 +1808,7 @@ This is 0 for a bitmap, or a positive integer for a pixmap.
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      return make_int (XIMAGE_INSTANCE_PIXMAP_DEPTH (image_instance));
+      return make_fixnum (XIMAGE_INSTANCE_PIXMAP_DEPTH (image_instance));
 
     default:
       return Qnil;
@@ -1830,7 +1830,7 @@ Return the height of the image instance, in pixels.
     case IMAGE_POINTER:
     case IMAGE_SUBWINDOW:
     case IMAGE_WIDGET:
-      return make_int (XIMAGE_INSTANCE_HEIGHT (image_instance));
+      return make_fixnum (XIMAGE_INSTANCE_HEIGHT (image_instance));
 
     default:
       return Qnil;
@@ -1852,7 +1852,7 @@ Return the width of the image instance, in pixels.
     case IMAGE_POINTER:
     case IMAGE_SUBWINDOW:
     case IMAGE_WIDGET:
-      return make_int (XIMAGE_INSTANCE_WIDTH (image_instance));
+      return make_fixnum (XIMAGE_INSTANCE_WIDTH (image_instance));
 
     default:
       return Qnil;
@@ -2703,7 +2703,7 @@ bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
       Lisp_Object retval;
       int len = (w + 7) / 8 * h;
 
-      retval = list3 (make_int (w), make_int (h),
+      retval = list3 (make_fixnum (w), make_fixnum (h),
 		      make_extstring ((Extbyte *) data, len, Qbinary));
       XFree (data);
       return retval;
@@ -2736,7 +2736,7 @@ bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
       {
 	signal_double_image_error_2 ("Reading bitmap file",
 				     "unknown error code",
-				     make_int (result), name);
+				     make_fixnum (result), name);
       }
     }
 
@@ -2838,10 +2838,10 @@ xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
 		     Fcons (Fcons (Q_data, data), alist));
 
       if (xhot != -1 && NILP (assq_no_quit (Q_hotspot_x, alist)))
-	alist = Fcons (Fcons (Q_hotspot_x, make_int (xhot)),
+	alist = Fcons (Fcons (Q_hotspot_x, make_fixnum (xhot)),
 		       alist);
       if (yhot != -1 && NILP (assq_no_quit (Q_hotspot_y, alist)))
-	alist = Fcons (Fcons (Q_hotspot_y, make_int (yhot)),
+	alist = Fcons (Fcons (Q_hotspot_y, make_fixnum (yhot)),
 		       alist);
     }
 
@@ -3041,7 +3041,7 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
       {
 	signal_double_image_error_2 ("Parsing pixmap file",
 				     "unknown error code",
-				     make_int (result), name);
+				     make_fixnum (result), name);
 	break;
       }
     }
@@ -3349,7 +3349,7 @@ image_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
       /* First look in the device cache. */
       if (DEVICEP (governing_domain))
 	{
-	  subtable = Fgethash (make_int (dest_mask),
+	  subtable = Fgethash (make_fixnum (dest_mask),
 			       XDEVICE (governing_domain)->
 			       image_instance_cache,
 			       Qunbound);
@@ -3373,7 +3373,7 @@ image_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 		 foreground and background of the pointer face.  */
 	      subtable = make_image_instance_cache_hash_table ();
 
-	      Fputhash (make_int (dest_mask), subtable,
+	      Fputhash (make_fixnum (dest_mask), subtable,
 			XDEVICE (governing_domain)->image_instance_cache);
 	      instance = Qunbound;
 	    }
@@ -3579,7 +3579,7 @@ image_going_to_add (Lisp_Object specifier, Lisp_Object UNUSED (locale),
 	possible_console_types = Fcons (contype, possible_console_types);
     }
 
-  if (XINT (Flength (possible_console_types)) > 1)
+  if (XFIXNUM (Flength (possible_console_types)) > 1)
     /* two conflicting console types specified */
     return Qnil;
 
@@ -3594,7 +3594,7 @@ image_going_to_add (Lisp_Object specifier, Lisp_Object UNUSED (locale),
       Lisp_Object newinst = call_with_suspended_errors
 	((lisp_fn_t) normalize_image_instantiator,
 	 Qnil, Qimage, ERROR_ME_DEBUG_WARN, 3, instantiator, contype,
-	 make_int (XIMAGE_SPECIFIER_ALLOWED (specifier)));
+	 make_fixnum (XIMAGE_SPECIFIER_ALLOWED (specifier)));
 
       if (!NILP (newinst))
 	{
@@ -4073,7 +4073,7 @@ that redisplay will.
   window = wrap_window (decode_window (window));
   CHECK_GLYPH (glyph);
 
-  return make_int (glyph_width (glyph, window));
+  return make_fixnum (glyph_width (glyph, window));
 }
 
 unsigned short
@@ -4145,7 +4145,7 @@ that redisplay will.
   window = wrap_window (decode_window (window));
   CHECK_GLYPH (glyph);
 
-  return make_int (glyph_ascent (glyph, window));
+  return make_fixnum (glyph_ascent (glyph, window));
 }
 
 DEFUN ("glyph-descent", Fglyph_descent, 1, 2, 0, /*
@@ -4158,7 +4158,7 @@ that redisplay will.
   window = wrap_window (decode_window (window));
   CHECK_GLYPH (glyph);
 
-  return make_int (glyph_descent (glyph, window));
+  return make_fixnum (glyph_descent (glyph, window));
 }
 
 /* This is redundant but I bet a lot of people expect it to exist. */
@@ -4172,7 +4172,7 @@ that redisplay will.
   window = wrap_window (decode_window (window));
   CHECK_GLYPH (glyph);
 
-  return make_int (glyph_height (glyph, window));
+  return make_fixnum (glyph_height (glyph, window));
 }
 
 static void
@@ -4226,14 +4226,14 @@ glyph_baseline (Lisp_Object glyph, Lisp_Object domain)
 				    /* #### look into error flag */
 				    Qunbound, domain, ERROR_ME_DEBUG_WARN,
 				    0, Qzero);
-      if (!NILP (retval) && !INTP (retval))
+      if (!NILP (retval) && !FIXNUMP (retval))
 	retval = Qnil;
-      else if (INTP (retval))
+      else if (FIXNUMP (retval))
 	{
-	  if (XINT (retval) < 0)
+	  if (XFIXNUM (retval) < 0)
 	    retval = Qzero;
-	  if (XINT (retval) > 100)
-	    retval = make_int (100);
+	  if (XFIXNUM (retval) > 100)
+	    retval = make_fixnum (100);
 	}
       return retval;
     }
@@ -4939,20 +4939,20 @@ subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   IMAGE_INSTANCE_SUBWINDOW_ID (ii) = 0;
   IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (ii) = 0;
 
-  if (INTP (width))
+  if (FIXNUMP (width))
     {
       int w = 1;
-      if (XINT (width) > 1)
-	w = XINT (width);
+      if (XFIXNUM (width) > 1)
+	w = XFIXNUM (width);
       IMAGE_INSTANCE_WIDTH (ii) = w;
       IMAGE_INSTANCE_SUBWINDOW_H_RESIZEP (ii) = 0;
     }
 
-  if (INTP (height))
+  if (FIXNUMP (height))
     {
       int h = 1;
-      if (XINT (height) > 1)
-	h = XINT (height);
+      if (XFIXNUM (height) > 1)
+	h = XFIXNUM (height);
       IMAGE_INSTANCE_HEIGHT (ii) = h;
       IMAGE_INSTANCE_SUBWINDOW_V_RESIZEP (ii) = 0;
     }
@@ -4985,7 +4985,7 @@ Return the window id of SUBWINDOW as a number.
        (subwindow))
 {
   CHECK_SUBWINDOW_IMAGE_INSTANCE (subwindow);
-  return make_int ((EMACS_INT) XIMAGE_INSTANCE_SUBWINDOW_ID (subwindow));
+  return make_fixnum ((EMACS_INT) XIMAGE_INSTANCE_SUBWINDOW_ID (subwindow));
 }
 
 DEFUN ("resize-subwindow", Fresize_subwindow, 1, 3, 0, /*
@@ -5003,12 +5003,12 @@ If a value is nil that parameter is not changed.
   if (NILP (width))
     neww = IMAGE_INSTANCE_WIDTH (ii);
   else
-    neww = XINT (width);
+    neww = XFIXNUM (width);
 
   if (NILP (height))
     newh = IMAGE_INSTANCE_HEIGHT (ii);
   else
-    newh = XINT (height);
+    newh = XFIXNUM (height);
 
   /* The actual resizing gets done asynchronously by
      update_subwindow. */
@@ -5185,7 +5185,7 @@ add_glyph_animated_timeout (EMACS_INT tickms, Lisp_Object image)
 void
 disable_glyph_animated_timeout (int i)
 {
-  Fdisable_timeout (make_int (i));
+  Fdisable_timeout (make_fixnum (i));
 }
 
 

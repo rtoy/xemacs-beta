@@ -377,7 +377,7 @@ so it should be taken as a minimal estimate of what is available.
 	  && (NILP (type) || EQ (type, QSTRING)
 	      || EQ (type, QTEXT) || EQ (type, QCOMPOUND_TEXT)))
 	types = Fcons (QTEXT, Fcons (QCOMPOUND_TEXT, Fcons (QSTRING, types)));
-      else if (INTP (value) && NILP (type))
+      else if (FIXNUMP (value) && NILP (type))
 	types = Fcons (QINTEGER, types);
       else if (SYMBOLP (value) && NILP (type))
 	types = Fcons (QATOM, types);

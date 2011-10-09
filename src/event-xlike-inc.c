@@ -172,7 +172,7 @@ emacs_Xt_event_pending_p (int how_many)
       && map[keysym - FIRST_KNOWN_##map ]) do				\
     {									\
       keysym -= FIRST_KNOWN_##map ;					\
-      return Funicode_to_char (make_int (map[keysym]), Qnil);		\
+      return Funicode_to_char (make_fixnum (map[keysym]), Qnil);		\
     } while (0)
 
 /* Maps to Unicode for X11 KeySyms, where we don't have a direct internal
@@ -603,7 +603,7 @@ gtk_keysym_to_character (guint keysym)
      #x01000000-#x01000100. */
 
   if (keysym >= 0x01000000 && keysym <= 0x0110FFFF)
-    return Funicode_to_char (make_int (keysym & 0xffffff), Qnil);
+    return Funicode_to_char (make_fixnum (keysym & 0xffffff), Qnil);
 
   if ((keysym & 0xff) < 0xa0)
     return Qnil;
@@ -697,7 +697,7 @@ gtk_keysym_to_character (guint keysym)
     case 32: /* Currency. The lower sixteen bits of these keysyms happily
 		correspond exactly to the Unicode code points of the
 		associated characters */
-      return Funicode_to_char (make_int (keysym & 0xffff), Qnil);
+      return Funicode_to_char (make_fixnum (keysym & 0xffff), Qnil);
       break;
     default:
       break;

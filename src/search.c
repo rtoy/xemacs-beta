@@ -438,8 +438,8 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
     {
       Charcount len = string_char_length (string);
 
-      CHECK_INT (start);
-      s = XINT (start);
+      CHECK_FIXNUM (start);
+      s = XFIXNUM (start);
       if (s < 0 && -s <= len)
 	s = len + s;
       else if (0 > s || s > len)
@@ -476,7 +476,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   if (val < 0) return Qnil;
   last_thing_searched = Qt;
   fixup_search_regs_for_string (string);
-  return make_int (string_index_byte_to_char (string, val));
+  return make_fixnum (string_index_byte_to_char (string, val));
 }
 
 DEFUN ("string-match", Fstring_match, 2, 4, 0, /*
@@ -895,8 +895,8 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
     limit = forwardp ? BUF_ZV (buf) : BUF_BEGV (buf);
   else
     {
-      CHECK_INT_COERCE_MARKER (lim);
-      limit = XINT (lim);
+      CHECK_FIXNUM_COERCE_MARKER (lim);
+      limit = XFIXNUM (lim);
 
       /* In any case, don't allow scan outside bounds of buffer.  */
       if (limit > BUF_ZV   (buf)) limit = BUF_ZV   (buf);
@@ -953,7 +953,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 		  c++;
 		}
 	      if (c <= cend)
-		Fput_range_table (make_int (c), make_int (cend), Qt,
+		Fput_range_table (make_fixnum (c), make_fixnum (cend), Qt,
 				  Vskip_chars_range_table);
 	      INC_IBYTEPTR (p);
 	    }
@@ -962,7 +962,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	      if (c < 0400)
 		fastmap[c] = 1;
 	      else
-		Fput_range_table (make_int (c), make_int (c), Qt,
+		Fput_range_table (make_fixnum (c), make_fixnum (c), Qt,
 				  Vskip_chars_range_table);
 	    }
 	}
@@ -1033,7 +1033,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	      {
 		Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
 		if ((ch < 0400) ? fastmap[ch] :
-		    (NILP (Fget_range_table (make_int (ch),
+		    (NILP (Fget_range_table (make_fixnum (ch),
 					     Vskip_chars_range_table,
 					     Qnil))
 		     == negate))
@@ -1055,7 +1055,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 		DEC_BYTEBPOS (buf, prev_pos_byte);
 		ch = BYTE_BUF_FETCH_CHAR (buf, prev_pos_byte);
 		if ((ch < 0400) ? fastmap[ch] :
-		    (NILP (Fget_range_table (make_int (ch),
+		    (NILP (Fget_range_table (make_fixnum (ch),
 					     Vskip_chars_range_table,
 					     Qnil))
 		     == negate))
@@ -1070,7 +1070,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
       }
     QUIT;
     BOTH_BUF_SET_PT (buf, pos, pos_byte);
-    return make_int (BUF_PT (buf) - start_point);
+    return make_fixnum (BUF_PT (buf) - start_point);
   }
 }
 
@@ -1145,8 +1145,8 @@ search_command (Lisp_Object string, Lisp_Object limit, Lisp_Object noerror,
 
   if (!NILP (count))
     {
-      CHECK_INT (count);
-      n *= XINT (count);
+      CHECK_FIXNUM (count);
+      n *= XFIXNUM (count);
     }
 
   buf = decode_buffer (buffer, 0);
@@ -1155,8 +1155,8 @@ search_command (Lisp_Object string, Lisp_Object limit, Lisp_Object noerror,
     lim = n > 0 ? BUF_ZV (buf) : BUF_BEGV (buf);
   else
     {
-      CHECK_INT_COERCE_MARKER (limit);
-      lim = XINT (limit);
+      CHECK_FIXNUM_COERCE_MARKER (limit);
+      lim = XFIXNUM (limit);
       if (n > 0 ? lim < BUF_PT (buf) : lim > BUF_PT (buf))
 	invalid_argument ("Invalid search limit (wrong side of point)",
 			  Qunbound);
@@ -1201,7 +1201,7 @@ search_command (Lisp_Object string, Lisp_Object limit, Lisp_Object noerror,
 
   BUF_SET_PT (buf, np);
 
-  return make_int (np);
+  return make_fixnum (np);
 }
 
 static int
@@ -2674,8 +2674,8 @@ rare.)
     }
   else if (!NILP (strbuffer))
     {
-      CHECK_INT (strbuffer);
-      sub = XINT (strbuffer);
+      CHECK_FIXNUM (strbuffer);
+      sub = XFIXNUM (strbuffer);
       if (sub < 0 || sub >= (int) search_regs.num_regs)
 	invalid_argument ("match data register invalid", strbuffer);
       if (search_regs.start[sub] < 0)
@@ -2715,16 +2715,16 @@ rare.)
       if (search_regs.start[sub] < BUF_BEGV (buf)
 	  || search_regs.start[sub] > search_regs.end[sub]
 	  || search_regs.end[sub] > BUF_ZV (buf))
-	args_out_of_range (make_int (search_regs.start[sub]),
-			   make_int (search_regs.end[sub]));
+	args_out_of_range (make_fixnum (search_regs.start[sub]),
+			   make_fixnum (search_regs.end[sub]));
     }
   else
     {
       if (search_regs.start[0] < 0
 	  || search_regs.start[0] > search_regs.end[0]
 	  || search_regs.end[0] > string_char_length (string))
-	args_out_of_range (make_int (search_regs.start[0]),
-			   make_int (search_regs.end[0]));
+	args_out_of_range (make_fixnum (search_regs.start[0]),
+			   make_fixnum (search_regs.end[0]));
     }
 
   if (NILP (fixedcase))
@@ -2799,8 +2799,8 @@ rare.)
       Lisp_Object before, after;
 
       speccount = specpdl_depth ();
-      before = Fsubseq (string, Qzero, make_int (search_regs.start[sub]));
-      after = Fsubseq (string, make_int (search_regs.end[sub]), Qnil);
+      before = Fsubseq (string, Qzero, make_fixnum (search_regs.start[sub]));
+      after = Fsubseq (string, make_fixnum (search_regs.end[sub]), Qnil);
 
       /* Do case substitution into REPLACEMENT if desired.  */
       if (NILP (literal))
@@ -2887,11 +2887,11 @@ rare.)
 		  Lisp_Object substring = Qnil;
 		  if (literal_end != literal_start)
 		    literal_text = Fsubseq (replacement,
-                                            make_int (literal_start),
-                                            make_int (literal_end));
+                                            make_fixnum (literal_start),
+                                            make_fixnum (literal_end));
 		  if (substart >= 0 && subend != substart)
-		    substring = Fsubseq (string, make_int (substart),
-                                         make_int (subend));
+		    substring = Fsubseq (string, make_fixnum (substart),
+                                         make_fixnum (subend));
 		  if (!NILP (literal_text) || !NILP (substring))
 		    accum = concat3 (accum, literal_text, substring);
 		  literal_start = strpos + 1;
@@ -2901,8 +2901,8 @@ rare.)
 	  if (strpos != literal_start)
 	    /* some literal text at end to be inserted */
 	    replacement = concat2 (accum, Fsubseq (replacement,
-                                                   make_int (literal_start),
-                                                   make_int (strpos)));
+                                                   make_fixnum (literal_start),
+                                                   make_fixnum (strpos)));
 	  else
 	    replacement = accum;
 	}
@@ -3000,8 +3000,8 @@ rare.)
 	      if (c == '&')
 		Finsert_buffer_substring
                   (buffer,
-                   make_int (search_regs.start[0] + offset),
-                   make_int (search_regs.end[0] + offset));
+                   make_fixnum (search_regs.start[0] + offset),
+                   make_fixnum (search_regs.end[0] + offset));
 	      /* #### This logic is totally broken,
 		 since we can have backrefs like "\99", right? */
 	      else if (c >= '1' && c <= '9' &&
@@ -3010,8 +3010,8 @@ rare.)
 		  if (search_regs.start[c - '0'] >= 1)
 		    Finsert_buffer_substring
                       (buffer,
-                       make_int (search_regs.start[c - '0'] + offset),
-                       make_int (search_regs.end[c - '0'] + offset));
+                       make_fixnum (search_regs.start[c - '0'] + offset),
+                       make_fixnum (search_regs.end[c - '0'] + offset));
 		}
 	      else if (c == 'U' || c == 'u' || c == 'L' || c == 'l' ||
 		       c == 'E')
@@ -3045,11 +3045,11 @@ rare.)
 		       search_regs.end[sub] +  inslen, 0);
 
   if (case_action == all_caps)
-    Fupcase_region (make_int (BUF_PT (buf) - inslen),
-		    make_int (BUF_PT (buf)),  buffer);
+    Fupcase_region (make_fixnum (BUF_PT (buf) - inslen),
+		    make_fixnum (BUF_PT (buf)),  buffer);
   else if (case_action == cap_initial)
-    Fupcase_initials_region (make_int (BUF_PT (buf) - inslen),
-			     make_int (BUF_PT (buf)), buffer);
+    Fupcase_initials_region (make_fixnum (BUF_PT (buf) - inslen),
+			     make_fixnum (BUF_PT (buf)), buffer);
 
   /* Now go through and make all the case changes that were requested
      in the replacement string. */
@@ -3101,14 +3101,14 @@ match_limit (Lisp_Object num, int beginningp)
 {
   int n;
 
-  CHECK_INT (num);
-  n = XINT (num);
+  CHECK_FIXNUM (num);
+  n = XFIXNUM (num);
   if (n < 0 || n >= search_regs.num_regs)
-    args_out_of_range (num, make_int (search_regs.num_regs));
+    args_out_of_range (num, make_fixnum (search_regs.num_regs));
   if (search_regs.num_regs == 0 ||
       search_regs.start[n] < 0)
     return Qnil;
-  return make_int (beginningp ? search_regs.start[n] : search_regs.end[n]);
+  return make_fixnum (beginningp ? search_regs.start[n] : search_regs.end[n]);
 }
 
 DEFUN ("match-beginning", Fmatch_beginning, 1, 1, 0, /*
@@ -3167,18 +3167,18 @@ to hold all the values, and if INTEGERS is non-nil, no consing is done.
 	  if (EQ (last_thing_searched, Qt)
 	      || !NILP (integers))
 	    {
-	      data[2 * i] = make_int (start);
-	      data[2 * i + 1] = make_int (search_regs.end[i]);
+	      data[2 * i] = make_fixnum (start);
+	      data[2 * i + 1] = make_fixnum (search_regs.end[i]);
 	    }
 	  else if (BUFFERP (last_thing_searched))
 	    {
 	      data[2 * i] = Fmake_marker ();
 	      Fset_marker (data[2 * i],
-			   make_int (start),
+			   make_fixnum (start),
 			   last_thing_searched);
 	      data[2 * i + 1] = Fmake_marker ();
 	      Fset_marker (data[2 * i + 1],
-			   make_int (search_regs.end[i]),
+			   make_fixnum (search_regs.end[i]),
 			   last_thing_searched);
 	    }
 	  else
@@ -3236,7 +3236,7 @@ or be nil, to clear the internal match data.
   last_thing_searched = Qt;
 
   /* Allocate registers if they don't already exist.  */
-  length = XINT (Flength (list)) / 2;
+  length = XFIXNUM (Flength (list)) / 2;
   num_regs = search_regs.num_regs;
 
   if (length > num_regs)
@@ -3273,16 +3273,16 @@ or be nil, to clear the internal match data.
 		last_thing_searched = wrap_buffer (XMARKER (marker)->buffer);
 	    }
 
-	  CHECK_INT_COERCE_MARKER (marker);
-	  search_regs.start[i] = XINT (marker);
+	  CHECK_FIXNUM_COERCE_MARKER (marker);
+	  search_regs.start[i] = XFIXNUM (marker);
 	  list = Fcdr (list);
 
 	  marker = Fcar (list);
 	  if (MARKERP (marker) && XMARKER (marker)->buffer == 0)
 	    marker = Qzero;
 
-	  CHECK_INT_COERCE_MARKER (marker);
-	  search_regs.end[i] = XINT (marker);
+	  CHECK_FIXNUM_COERCE_MARKER (marker);
+	  search_regs.end[i] = XFIXNUM (marker);
 	}
       list = Fcdr (list);
     }

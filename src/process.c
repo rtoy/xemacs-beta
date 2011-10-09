@@ -630,7 +630,7 @@ create_process (Lisp_Object process, Lisp_Object *argv, int nargv,
   pid = PROCMETH (create_process, (p, argv, nargv, program, cur_dir,
 				   separate_err));
 
-  p->pid = make_int (pid);
+  p->pid = make_fixnum (pid);
   if (PROCESS_READABLE_P (p))
     event_stream_select_process (p, 1, 1);
 }
@@ -797,10 +797,10 @@ arguments: (NAME BUFFER PROGRAM &rest PROGRAM-ARGS)
   /* Make the process marker point into the process buffer (if any).  */
   if (!NILP (buffer))
     Fset_marker (XPROCESS (process)->mark,
-		 make_int (BUF_ZV (XBUFFER (buffer))), buffer);
+		 make_fixnum (BUF_ZV (XBUFFER (buffer))), buffer);
   if (!NILP (stderr_buffer))
     Fset_marker (XPROCESS (process)->stderr_mark,
-		 make_int (BUF_ZV (XBUFFER (stderr_buffer))), stderr_buffer);
+		 make_fixnum (BUF_ZV (XBUFFER (stderr_buffer))), stderr_buffer);
 
   /* If an error occurs and we can't start the process, we want to
      remove it from the process list.  This means that each error
@@ -975,11 +975,11 @@ Tell PROCESS that it has logical window size HEIGHT and WIDTH.
        (process, height, width))
 {
   CHECK_PROCESS (process);
-  check_integer_range (height, Qzero, make_integer (EMACS_INT_MAX));
-  check_integer_range (width, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (height, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (width, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
   return
     MAYBE_INT_PROCMETH (set_window_size,
-			(XPROCESS (process), XINT (height), XINT (width))) <= 0
+			(XPROCESS (process), XFIXNUM (height), XFIXNUM (width))) <= 0
     ? Qnil : Qt;
 }
 
@@ -1081,8 +1081,8 @@ read_process_output (Lisp_Object process, int read_stderr)
 	 asynchronously (i.e. from within QUIT). */
       /* Don't catch errors here; we're not in any critical code. */
       filter_result = call2 (filter, process, Qnil);
-      CHECK_INT (filter_result);
-      return XINT (filter_result);
+      CHECK_FIXNUM (filter_result);
+      return XFIXNUM (filter_result);
     }
 
   nbytes = Lstream_read (read_stderr ? XLSTREAM (DATA_ERRSTREAM (p)) :
@@ -1130,7 +1130,7 @@ read_process_output (Lisp_Object process, int read_stderr)
       buffer_insert_raw_string (buf, chars, nbytes);
 #endif
 
-      Fset_marker (mark, make_int (BUF_PT (buf)), buffer);
+      Fset_marker (mark, make_fixnum (BUF_PT (buf)), buffer);
 
       MARK_MODELINE_CHANGED;
       unbind_to (spec);
@@ -1612,7 +1612,7 @@ status_message (Lisp_Process *p)
     {
       if (code == 0)
 	return build_msg_string ("finished\n");
-      string = Fnumber_to_string (make_int (code));
+      string = Fnumber_to_string (make_fixnum (code));
       if (coredump)
 	string2 = build_msg_string (" (core dumped)\n");
       else
@@ -1680,7 +1680,7 @@ status_notify (void)
       /* #### extra check for terminated processes, in case a SIGCHLD
 	 got missed (this seems to happen sometimes, I'm not sure why).
        */
-      if (INTP (p->pid))
+      if (FIXNUMP (p->pid))
 	MAYBE_PROCMETH (update_status_if_terminated, (p));
 
       this_process_tick = p->tick;
@@ -1729,7 +1729,7 @@ status_notify (void)
 	      Finsert (1, &p->name);
 	      buffer_insert_ascstring (current_buffer, " ");
 	      Finsert (1, &msg);
-	      Fset_marker (p->mark, make_int (BUF_PT (current_buffer)),
+	      Fset_marker (p->mark, make_fixnum (BUF_PT (current_buffer)),
 			   p->buffer);
 
 	      unbind_to (spec);
@@ -1792,7 +1792,7 @@ If PROCESS has not yet exited or died, return 0.
        (process))
 {
   CHECK_PROCESS (process);
-  return make_int (XPROCESS (process)->exit_code);
+  return make_fixnum (XPROCESS (process)->exit_code);
 }
 
 
@@ -1800,8 +1800,8 @@ If PROCESS has not yet exited or died, return 0.
 static int
 decode_signal (Lisp_Object signal_)
 {
-  if (INTP (signal_))
-    return XINT (signal_);
+  if (FIXNUMP (signal_))
+    return XFIXNUM (signal_);
   else
     {
       Ibyte *name;
@@ -2088,10 +2088,10 @@ SIGNAL may be an integer, or a symbol naming a signal, like `SIGSEGV'.
 */
        (pid, signal_))
 {
-  CHECK_INT (pid);
+  CHECK_FIXNUM (pid);
 
-  return make_int (PROCMETH_OR_GIVEN (kill_process_by_pid,
-				      (XINT (pid), decode_signal (signal_)),
+  return make_fixnum (PROCMETH_OR_GIVEN (kill_process_by_pid,
+				      (XFIXNUM (pid), decode_signal (signal_)),
 				      -1));
 }
 

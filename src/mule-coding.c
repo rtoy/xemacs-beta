@@ -239,10 +239,10 @@ Return the corresponding character.
   int c1, c2, s1, s2;
 
   CHECK_CONS (code);
-  CHECK_INT (XCAR (code));
-  CHECK_INT (XCDR (code));
-  s1 = XINT (XCAR (code));
-  s2 = XINT (XCDR (code));
+  CHECK_FIXNUM (XCAR (code));
+  CHECK_FIXNUM (XCDR (code));
+  s1 = XFIXNUM (XCAR (code));
+  s2 = XFIXNUM (XCDR (code));
   if (byte_shift_jis_two_byte_1_p (s1) &&
       byte_shift_jis_two_byte_2_p (s2))
     {
@@ -268,7 +268,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
   if (EQ (charset, Vcharset_japanese_jisx0208))
     {
       ENCODE_SHIFT_JIS (c1 | 0x80, c2 | 0x80, s1, s2);
-      return Fcons (make_int (s1), make_int (s2));
+      return Fcons (make_fixnum (s1), make_fixnum (s2));
     }
   else
     return Qnil;
@@ -596,9 +596,9 @@ decodes an external representation.
   Ichar ch;
 
   CHECK_CONS (code);
-  CHECK_INT (XCAR (code));
-  CHECK_INT (XCDR (code));
-  ch = decode_big5_char (XINT (XCAR (code)), XINT (XCDR (code)));
+  CHECK_FIXNUM (XCAR (code));
+  CHECK_FIXNUM (XCDR (code));
+  ch = decode_big5_char (XFIXNUM (XCAR (code)), XFIXNUM (XCDR (code)));
   if (ch == -1)
     return Qnil;
   else
@@ -623,7 +623,7 @@ term `encode' is used for this operation.
     {
       ENCODE_BIG5 (XCHARSET_LEADING_BYTE (charset), c1 | 0x80, c2 | 0x80,
 		   b1, b2);
-      return Fcons (make_int (b1), make_int (b2));
+      return Fcons (make_fixnum (b1), make_fixnum (b2));
     }
   else
     return Qnil;
@@ -1305,8 +1305,8 @@ charset_by_attributes_or_create_one (int type, Ibyte final, int dir)
 
       charset = Fmake_charset (Qunbound, Qnil,
 			       nconc2 (list6 (Qfinal, make_char (final),
-					      Qchars, make_int (chars),
-					      Qdimension, make_int (dim)),
+					      Qchars, make_fixnum (chars),
+					      Qdimension, make_fixnum (dim)),
 				       list2 (Qdirection, 
 					      dir == CHARSET_LEFT_TO_RIGHT ?
 					      Ql2r : Qr2l)));
@@ -1818,7 +1818,7 @@ decode_unicode_char (int ucs, unsigned_char_dynarr *dst)
   int len;
   Lisp_Object chr;
 
-  chr = Funicode_to_char(make_int(ucs), Qnil);
+  chr = Funicode_to_char(make_fixnum(ucs), Qnil);
   assert (!NILP(chr));
   len = set_itext_ichar (work, XCHAR(chr));
   Dynarr_add_many (dst, work, len);
@@ -3607,7 +3607,7 @@ fixed_width_skip_chars_data_given_strings (Lisp_Object string,
       assert (RANGE_TABLEP (result));
       for (i = 0; i < fastmap_len; ++i)
         {
-          ranged = Fget_range_table (make_int (i), result, Qnil);
+          ranged = Fget_range_table (make_fixnum (i), result, Qnil);
 
           if (EQ (ranged, Qsucceeded))
             {
@@ -3648,7 +3648,7 @@ fixed_width_skip_chars_data_given_strings (Lisp_Object string,
           if (p == pend) break;
           cend = itext_ichar (p);
 
-          Fput_range_table (make_int (c), make_int (cend), Qsucceeded,
+          Fput_range_table (make_fixnum (c), make_fixnum (cend), Qsucceeded,
                             result);
 
           while (c <= cend && c < fastmap_len)
@@ -3664,7 +3664,7 @@ fixed_width_skip_chars_data_given_strings (Lisp_Object string,
           if (c < fastmap_len)
             fastmap[c] = query_coding_succeeded;
 
-          Fput_range_table (make_int (c), make_int (c), Qsucceeded, result);
+          Fput_range_table (make_fixnum (c), make_fixnum (c), Qsucceeded, result);
         }
     }
 
@@ -3694,7 +3694,7 @@ fixed_width_skip_chars_data_given_strings (Lisp_Object string,
           if (p == pend) break;
           cend = itext_ichar (p);
 
-          Fput_range_table (make_int (c), make_int (cend), Qinvalid_sequence,
+          Fput_range_table (make_fixnum (c), make_fixnum (cend), Qinvalid_sequence,
                             result);
 
           while (c <= cend && c < fastmap_len)
@@ -3710,7 +3710,7 @@ fixed_width_skip_chars_data_given_strings (Lisp_Object string,
           if (c < fastmap_len)
             fastmap[c] = query_coding_invalid_sequence;
 
-          Fput_range_table (make_int (c), make_int (c), Qinvalid_sequence,
+          Fput_range_table (make_fixnum (c), make_fixnum (c), Qinvalid_sequence,
                             result);
         }
     }
@@ -3754,7 +3754,7 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
       /* It's okay to call Lisp here, the only non-stack object we may have
          allocated up to this point is skip_chars_range_table, and that's
          reachable from its entry in Vfixed_width_query_ranges_cache. */
-      call3 (Qquery_coding_clear_highlights, make_int (pos), make_int (end),
+      call3 (Qquery_coding_clear_highlights, make_fixnum (pos), make_fixnum (end),
              wrap_buffer (buf));
     }
 
@@ -3763,7 +3763,7 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
       Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
       if ((ch < (int) (sizeof(fastmap))) ?
           (fastmap[ch] == query_coding_succeeded) :
-          (EQ (Qsucceeded, Fget_range_table (make_int (ch),
+          (EQ (Qsucceeded, Fget_range_table (make_fixnum (ch),
                                              skip_chars_range_table, Qnil))))
         {
           pos++;
@@ -3775,7 +3775,7 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
           while ((pos < end) &&  
                  ((!(flags & QUERY_METHOD_IGNORE_INVALID_SEQUENCES) &&
                    EQ (Qinvalid_sequence, Fget_range_table
-                       (make_int (ch), skip_chars_range_table, Qnil))
+                       (make_fixnum (ch), skip_chars_range_table, Qnil))
                    && (failed_reason = query_coding_invalid_sequence))
                   || ((NILP ((checked_unicode = 
                               Fgethash (Fchar_to_unicode (make_char (ch)),
@@ -3818,8 +3818,8 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
 
               fail_range_end = pos;
 
-              Fput_range_table (make_int (fail_range_start), 
-                                make_int (fail_range_end),
+              Fput_range_table (make_fixnum (fail_range_start), 
+                                make_fixnum (fail_range_end),
                                 (previous_failed_reason
                                  == query_coding_unencodable ?
                                  Qunencodable : Qinvalid_sequence), 
@@ -3829,12 +3829,12 @@ fixed_width_query (Lisp_Object codesys, struct buffer *buf,
               if (flags & QUERY_METHOD_HIGHLIGHT) 
                 {
                   Lisp_Object extent
-                    = Fmake_extent (make_int (fail_range_start),
-                                    make_int (fail_range_end), 
+                    = Fmake_extent (make_fixnum (fail_range_start),
+                                    make_fixnum (fail_range_end), 
                                     wrap_buffer (buf));
                   
                   Fset_extent_priority
-                    (extent, make_int (2 + mouse_highlight_priority));
+                    (extent, make_fixnum (2 + mouse_highlight_priority));
                   Fset_extent_face (extent, Qquery_coding_warning_face);
                 }
             }

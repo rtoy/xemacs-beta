@@ -286,8 +286,8 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
   /* #### Not obvious this is useful, and overrides user settings; if we
      resurrect this, create variables like `print-specifier-length' so it
      can be controlled. */
-  specbind (Qprint_string_length, make_int (100));
-  specbind (Qprint_length, make_int (5));
+  specbind (Qprint_string_length, make_fixnum (100));
+  specbind (Qprint_length, make_fixnum (5));
 #endif
   the_specs = Fspecifier_specs (obj, Qglobal, Qnil, Qnil);
   if (NILP (the_specs))
@@ -885,7 +885,7 @@ decode_specifier_tag_set (Lisp_Object tag_set)
 static Lisp_Object
 canonicalize_tag_set (Lisp_Object tag_set)
 {
-  int len = XINT (Flength (tag_set));
+  int len = XFIXNUM (Flength (tag_set));
   Lisp_Object *tags, rest;
   int i, j;
 
@@ -1053,7 +1053,7 @@ call_charset_predicate (Lisp_Object charset_predicate, Lisp_Object charset)
 {
   struct gcpro gcpro1;
   Lisp_Object charpres = make_vector (NUM_MATCHSPEC_STAGES, Qnil);
-  int max_args = XINT (Ffunction_max_args (charset_predicate));
+  int max_args = XFIXNUM (Ffunction_max_args (charset_predicate));
   GCPRO1 (charpres);
     
 
@@ -1242,8 +1242,8 @@ change.
     {
       Lisp_Object min_args = Ffunction_min_args (charset_predicate);
       Lisp_Object max_args = Ffunction_max_args (charset_predicate);
-      if (!(INTP (min_args) && XINT (min_args) == 1 &&
-	    INTP (max_args) && XINT (max_args) == 1))
+      if (!(FIXNUMP (min_args) && XFIXNUM (min_args) == 1 &&
+	    FIXNUMP (max_args) && XFIXNUM (max_args) == 1))
 	{
 	  /* We only allow the stage argument to be specifed from C.  */
 	  invalid_change ("Charset predicate must take one argument",
@@ -2964,8 +2964,8 @@ specifier_instance_1 (Lisp_Object specifier, Lisp_Object matchspec,
   /* device had better be determined by now; abort if not. */
   (void) DEVICE_CLASS (XDEVICE (device));
 
-  depth = make_int (1 + XINT (depth));
-  if (XINT (depth) > 20)
+  depth = make_fixnum (1 + XFIXNUM (depth));
+  if (XFIXNUM (depth) > 20)
     {
       maybe_signal_error (Qstack_overflow,
 			  "Apparent loop in specifier inheritance",
@@ -3615,7 +3615,7 @@ DEFINE_SPECIFIER_TYPE (integer);
 static void
 integer_validate (Lisp_Object instantiator)
 {
-  CHECK_INT (instantiator);
+  CHECK_FIXNUM (instantiator);
 }
 
 DEFUN ("integer-specifier-p", Finteger_specifier_p, 1, 1, 0, /*

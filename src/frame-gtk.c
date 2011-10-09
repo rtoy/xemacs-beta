@@ -245,8 +245,8 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
       if (!GET_GTK_WIDGET_WINDOW(shell))
 	return Qzero;
       gdk_window_get_deskrelative_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
-      if (EQ (Qleft, property)) return make_int (x);
-      if (EQ (Qtop,  property)) return make_int (y);
+      if (EQ (Qleft, property)) return make_fixnum (x);
+      if (EQ (Qtop,  property)) return make_fixnum (y);
     }
   if (EQ (Qshell_widget, property))
     {
@@ -300,8 +300,8 @@ gtk_frame_properties (struct frame *f)
   else
     gdk_window_get_deskrelative_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
 
-  props = cons3 (Qtop,  make_int (y), props);
-  props = cons3 (Qleft, make_int (x), props);
+  props = cons3 (Qtop,  make_fixnum (y), props);
+  props = cons3 (Qleft, make_fixnum (x), props);
 
   return props;
 }
@@ -428,30 +428,30 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  }
 	  else if (EQ (prop, Qwidth))
 	  {
-	      CHECK_INT (val);
-	      width = XINT (val);
+	      CHECK_FIXNUM (val);
+	      width = XFIXNUM (val);
 	      width_specified_p = TRUE;
 	      continue;
 	  }
 	  else if (EQ (prop, Qheight))
 	  {
-	      CHECK_INT (val);
-	      height = XINT (val);
+	      CHECK_FIXNUM (val);
+	      height = XFIXNUM (val);
 	      height_specified_p = TRUE;
 	      continue;
 	  }
 	  /* Further kludge the x/y. */
 	  else if (EQ (prop, Qx))
 	  {
-	      CHECK_INT (val);
-	      x = (gint) XINT (val);
+	      CHECK_FIXNUM (val);
+	      x = (gint) XFIXNUM (val);
 	      x_position_specified_p = TRUE;
 	      continue;
 	  }
 	  else if (EQ (prop, Qy))
 	  {
-	      CHECK_INT (val);
-	      y = (gint) XINT (val);
+	      CHECK_FIXNUM (val);
+	      y = (gint) XFIXNUM (val);
 	      y_position_specified_p = TRUE;
 	      continue;
 	  }
@@ -491,13 +491,13 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  {
 	    Lisp_Object frame = wrap_frame (f);
 
-	    Fset_frame_size (frame, make_int (width), make_int (height), Qnil);
+	    Fset_frame_size (frame, make_fixnum (width), make_fixnum (height), Qnil);
 	  }
 	if (position_specified_p)
 	  {
 	    Lisp_Object frame = wrap_frame (f);
 
-	    Fset_frame_position (frame, make_int (x), make_int (y));
+	    Fset_frame_position (frame, make_fixnum (x), make_fixnum (y));
 	  }
       }
   }

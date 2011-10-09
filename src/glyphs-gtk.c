@@ -691,10 +691,10 @@ image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
   int xhot = 0, yhot = 0;
   int w, h;
 
-  if (INTP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
-    xhot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii));
-  if (INTP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
-    yhot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii));
+  if (FIXNUMP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
+    xhot = XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii));
+  if (FIXNUMP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
+    yhot = XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii));
   w = IMAGE_INSTANCE_PIXMAP_WIDTH (ii);
   h = IMAGE_INSTANCE_PIXMAP_HEIGHT (ii);
 
@@ -1061,9 +1061,9 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	IMAGE_INSTANCE_GTK_CURSOR (ii) =
 	    gdk_cursor_new_from_pixmap (source, mask, &fg_color, &bg_color,
 					!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) ?
-					XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) : 0,
+					XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) : 0,
 					!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) ?
-					XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) : 0);
+					XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) : 0);
       }
       break;
 
@@ -1092,8 +1092,8 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 				 Qfile_name);
       mask =
 	pixmap_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
-				XINT (XCAR (mask_data)),
-				XINT (XCAR (XCDR (mask_data))),
+				XFIXNUM (XCAR (mask_data)),
+				XFIXNUM (XCAR (XCDR (mask_data))),
 				gcc_may_you_rot_in_hell);
     }
 
@@ -1117,8 +1117,8 @@ gtk_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   gcc_go_home = LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (data))), Qbinary);
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
-		     pointer_bg, dest_mask, XINT (XCAR (data)),
-		     XINT (XCAR (XCDR (data))), gcc_go_home);
+		     pointer_bg, dest_mask, XFIXNUM (XCAR (data)),
+		     XFIXNUM (XCAR (XCDR (data))), gcc_go_home);
 }
 
 
@@ -1327,8 +1327,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     case IMAGE_POINTER:
       /* #### Gtk does not give us access to the hotspots of a pixmap */
 
-      IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int(1);
-      IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int(1);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_fixnum(1);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_fixnum(1);
 
 
       image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
@@ -1550,10 +1550,10 @@ check_valid_resource_id (Lisp_Object data)
 void
 check_valid_string_or_int (Lisp_Object data)
 {
-  if (!INTP (data))
+  if (!FIXNUMP (data))
     CHECK_STRING (data);
   else
-    CHECK_INT (data);
+    CHECK_FIXNUM (data);
 }
 #endif
 
@@ -1604,10 +1604,10 @@ autodetect_normalize (Lisp_Object instantiator,
 	  alist = Fcons (Fcons (Q_file, filename),
 			 Fcons (Fcons (Q_data, data), alist));
 	  if (xhot != -1)
-	    alist = Fcons (Fcons (Q_hotspot_x, make_int (xhot)),
+	    alist = Fcons (Fcons (Q_hotspot_x, make_fixnum (xhot)),
 			   alist);
 	  if (yhot != -1)
-	    alist = Fcons (Fcons (Q_hotspot_y, make_int (yhot)),
+	    alist = Fcons (Fcons (Q_hotspot_y, make_fixnum (yhot)),
 			   alist);
 
 	  alist = xbm_mask_file_munging (alist, filename, Qt, console_type);
@@ -2457,7 +2457,7 @@ gtk_progress_gauge_redisplay (Lisp_Object image_instance)
       Lisp_Object val;
 
       val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii))->value;
-      f = XFLOATINT (val);
+      f = XFLOATFIXNUM (val);
 
       gtk_progress_set_value (GTK_PROGRESS (IMAGE_INSTANCE_SUBWINDOW_ID (ii)),
 			      f);
@@ -2482,11 +2482,11 @@ gtk_register_gui_item (Lisp_Object image_instance, Lisp_Object gui,
   int id = gui_item_id_hash(FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE(f),
 			    gui, WIDGET_GLYPH_SLOT);
 
-  Fputhash(make_int(id), image_instance,
+  Fputhash(make_fixnum(id), image_instance,
 	   FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE (f));
-  Fputhash(make_int(id), XGUI_ITEM (gui)->callback,
+  Fputhash(make_fixnum(id), XGUI_ITEM (gui)->callback,
 	   FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE (f));
-  Fputhash(make_int(id), XGUI_ITEM (gui)->callback_ex,
+  Fputhash(make_fixnum(id), XGUI_ITEM (gui)->callback_ex,
 	   FRAME_GTK_WIDGET_CALLBACK_EX_HASH_TABLE (f));
   return id;
 }
@@ -2571,11 +2571,11 @@ static void gtk_tab_control_callback(GtkNotebook *notebook,
 
       id             = (int) gtk_object_get_data(GTK_OBJECT(page->child),
 						 GTK_DATA_TAB_HASHCODE_IDENTIFIER);
-      image_instance = Fgethash(make_int_verify(id),
+      image_instance = Fgethash(make_fixnum_verify(id),
 				FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE(f), Qnil);
-      callback       = Fgethash(make_int(id),
+      callback       = Fgethash(make_fixnum(id),
 				FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE(f), Qnil);
-      callback_ex    = Fgethash(make_int(id),
+      callback_ex    = Fgethash(make_fixnum(id),
 				FRAME_GTK_WIDGET_CALLBACK_EX_HASH_TABLE(f), Qnil);
       update_subwindows_p = 1;
 
@@ -2931,8 +2931,8 @@ complex_vars_of_glyphs_gtk (void)
   Fadd_spec_to_specifier					\
     (GLYPH_IMAGE (XGLYPH (variable)),				\
      vector3 (Qxbm, Q_data,					\
-	      list3 (make_int (name##_width),			\
-		     make_int (name##_height),			\
+	      list3 (make_fixnum (name##_width),			\
+		     make_fixnum (name##_height),			\
 		     make_extstring ((Extbyte*) name##_bits,	\
 				      sizeof (name##_bits),	\
 				      Qbinary))),		\

@@ -675,8 +675,8 @@ variable `database-coding-system'.
     }
   else
     {
-      CHECK_INT (mode);
-      modemask = XINT (mode);
+      CHECK_FIXNUM (mode);
+      modemask = XFIXNUM (mode);
     }
 
   if (NILP (codesys))

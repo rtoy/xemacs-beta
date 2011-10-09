@@ -106,8 +106,8 @@ print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun,
   Elemcount len = bit_vector_length (v);
   Elemcount last = len;
 
-  if (INTP (Vprint_length))
-    last = min (len, XINT (Vprint_length));
+  if (FIXNUMP (Vprint_length))
+    last = min (len, XFIXNUM (Vprint_length));
   write_ascstring (printcharfun, "#*");
   for (i = 0; i < last; i++)
     {
@@ -621,7 +621,7 @@ get_check_match_function_1 (Lisp_Object item,
     {
     force_eq_check:
       FROB (eq, 0);
-      else FROB (equal, (SYMBOLP (item) || INTP (item) || CHARP (item)));
+      else FROB (equal, (SYMBOLP (item) || FIXNUMP (item) || CHARP (item)));
       else FROB (equalp, (SYMBOLP (item)));
       else if (EQ (test, XSYMBOL_FUNCTION (Qstring_match)))
 	{
@@ -824,15 +824,15 @@ time and pid.
 	 it's possible to get a quotient larger than limit; discarding
 	 these values eliminates the bias that would otherwise appear
 	 when using a large limit.  */
-      denominator = ((unsigned long)1 << INT_VALBITS) / XINT (limit);
+      denominator = ((unsigned long)1 << FIXNUM_VALBITS) / XFIXNUM (limit);
       do
 	val = get_random () / denominator;
-      while (val >= XINT (limit));
+      while (val >= XFIXNUM (limit));
     }
   else
     val = get_random ();
 
-  return make_int (val);
+  return make_fixnum (val);
 }
 
 /* Random data-structure functions */
@@ -854,19 +854,19 @@ Return the length of vector, bit vector, list or string SEQUENCE.
 {
  retry:
   if (STRINGP (sequence))
-    return make_int (string_char_length (sequence));
+    return make_fixnum (string_char_length (sequence));
   else if (CONSP (sequence))
     {
       Elemcount len;
       GET_EXTERNAL_LIST_LENGTH (sequence, len);
-      return make_int (len);
+      return make_fixnum (len);
     }
   else if (VECTORP (sequence))
-    return make_int (XVECTOR_LENGTH (sequence));
+    return make_fixnum (XVECTOR_LENGTH (sequence));
   else if (NILP (sequence))
     return Qzero;
   else if (BIT_VECTORP (sequence))
-    return make_int (bit_vector_length (XBIT_VECTOR (sequence)));
+    return make_fixnum (bit_vector_length (XBIT_VECTOR (sequence)));
   else
     {
       check_losing_bytecode ("length", sequence);
@@ -894,7 +894,7 @@ which is at least the number of distinct elements.
 	tortoise = XCDR (tortoise);
     }
 
-  return make_int (len);
+  return make_fixnum (len);
 }
 
 /* This is almost the above, but is defined by Common Lisp. We need it in C
@@ -923,7 +923,7 @@ Error if LIST is dotted.
       signal_malformed_list_error (list);
     }
 
-  return EQ (hare, tortoise) && len != 0 ? Qnil : make_int (len);
+  return EQ (hare, tortoise) && len != 0 ? Qnil : make_fixnum (len);
 }
 
 static Lisp_Object string_count_from_end (Lisp_Object, Lisp_Object ,
@@ -945,8 +945,8 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
 		 Lisp_Object caller)
 {
   Lisp_Object item = args[0], sequence = args[1];
-  Elemcount starting = 0, ending = EMACS_INT_MAX, encountered = 0;
-  Elemcount len, ii = 0, counting = EMACS_INT_MAX;
+  Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, encountered = 0;
+  Elemcount len, ii = 0, counting = MOST_POSITIVE_FIXNUM;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
 
@@ -956,18 +956,18 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
-  starting = BIGNUMP (start) ? 1 + EMACS_INT_MAX : XINT (start);
+  starting = BIGNUMP (start) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (start);
 
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = BIGNUMP (end) ? 1 + EMACS_INT_MAX : XINT (end);
+      ending = BIGNUMP (end) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (end);
     }
 
   if (!NILP (count))
     {
       CHECK_INTEGER (count);
-      counting = BIGNUMP (count) ? EMACS_INT_MAX + 1 : XINT (count);
+      counting = BIGNUMP (count) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (count);
 
       /* Our callers should have filtered out non-positive COUNT. */
       assert (counting >= 0);
@@ -1004,7 +1004,7 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
          it). */
       if (!NILP (count) && !NILP (from_end))
         {
-          counting = EMACS_INT_MAX;
+          counting = MOST_POSITIVE_FIXNUM;
         }
 
       {
@@ -1089,8 +1089,8 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
     {
       Lisp_Object object = Qnil;
 
-      len = XINT (Flength (sequence));
-      check_sequence_range (sequence, start, end, make_int (len));
+      len = XFIXNUM (Flength (sequence));
+      check_sequence_range (sequence, start, end, make_fixnum (len));
 
       ending = min (ending, len);
       if (0 == len)
@@ -1103,7 +1103,7 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
 	{
 	  for (ii = starting; ii < ending && encountered < counting; ii++)
 	    {
-	      object = Faref (sequence, make_int (ii));
+	      object = Faref (sequence, make_fixnum (ii));
 	      if (check_test (test, key, item, object) == test_not_unboundp)
 		{
 		  encountered++;
@@ -1114,7 +1114,7 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
 	{
 	  for (ii = ending - 1; ii >= starting && encountered < counting; ii--)
 	    {
-	      object = Faref (sequence, make_int (ii));
+	      object = Faref (sequence, make_fixnum (ii));
 	      if (check_test (test, key, item, object) == test_not_unboundp)
 		{
 		  encountered++;
@@ -1132,8 +1132,8 @@ list_count_from_end (Lisp_Object item, Lisp_Object sequence,
                      Lisp_Object test, Lisp_Object key,
                      Lisp_Object start, Lisp_Object end)
 {
-  Elemcount length = XINT (Flength (sequence)), ii = 0, starting = XINT (start);
-  Elemcount ending = NILP (end) ? length : XINT (end), encountered = 0;
+  Elemcount length = XFIXNUM (Flength (sequence)), ii = 0, starting = XFIXNUM (start);
+  Elemcount ending = NILP (end) ? length : XFIXNUM (end), encountered = 0;
   Lisp_Object *storage;
   struct gcpro gcpro1;
 
@@ -1176,7 +1176,7 @@ string_count_from_end (Lisp_Object item, Lisp_Object sequence,
                        Lisp_Object start, Lisp_Object end)
 {
   Elemcount length = string_char_length (sequence), ii = 0;
-  Elemcount starting = XINT (start), ending = NILP (end) ? length : XINT (end);
+  Elemcount starting = XFIXNUM (start), ending = NILP (end) ? length : XFIXNUM (end);
   Elemcount encountered = 0;
   Ibyte *cursor = XSTRING_DATA (sequence);
   Ibyte *endp = cursor + XSTRING_LENGTH (sequence);
@@ -1308,9 +1308,9 @@ If string STR1 is greater, the value is a positive number N;
   if (!res)
     return Qt;
   else if (res > 0)
-    return make_int (1 + matching);
+    return make_fixnum (1 + matching);
   else
-    return make_int (-1 - matching);
+    return make_fixnum (-1 - matching);
 }
 
 DEFUN ("string-lessp", Fstring_lessp, 2, 2, 0, /*
@@ -1385,7 +1385,7 @@ of the string are changed (e.g. with `aset').  It wraps around occasionally.
        (string))
 {
   CHECK_STRING (string);
-  if (CONSP (XSTRING_PLIST (string)) && INTP (XCAR (XSTRING_PLIST (string))))
+  if (CONSP (XSTRING_PLIST (string)) && FIXNUMP (XCAR (XSTRING_PLIST (string))))
     return XCAR (XSTRING_PLIST (string));
   else
     return Qzero;
@@ -1403,10 +1403,10 @@ bump_string_modiff (Lisp_Object str)
   /* skip over extent info if it's there */
   if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
     ptr = &XCDR (*ptr);
-  if (CONSP (*ptr) && INTP (XCAR (*ptr)))
-    XCAR (*ptr) = make_int (1+XINT (XCAR (*ptr)));
+  if (CONSP (*ptr) && FIXNUMP (XCAR (*ptr)))
+    XCAR (*ptr) = make_fixnum (1+XFIXNUM (XCAR (*ptr)));
   else
-    *ptr = Fcons (make_int (1), *ptr);
+    *ptr = Fcons (make_fixnum (1), *ptr);
 }
 
 
@@ -1630,7 +1630,7 @@ concat (int nargs, Lisp_Object *args,
       else if (VECTORP (seq) || STRINGP (seq) || BIT_VECTORP (seq))
         ;
 #if 0				/* removed for XEmacs 21 */
-      else if (INTP (seq))
+      else if (FIXNUMP (seq))
         /* This is too revolting to think about but maintains
            compatibility with FSF (and lots and lots of old code). */
         args[argnum] = Fnumber_to_string (seq);
@@ -1658,7 +1658,7 @@ concat (int nargs, Lisp_Object *args,
 
     for (argnum = 0, total_length = 0; argnum < nargs; argnum++)
       {
-        Charcount thislen = XINT (Flength (args[argnum]));
+        Charcount thislen = XFIXNUM (Flength (args[argnum]));
         total_length += thislen;
       }
 
@@ -1671,7 +1671,7 @@ concat (int nargs, Lisp_Object *args,
 	    /* In append, if all but last arg are nil, return last arg */
 	    RETURN_UNGCPRO (last_tail);
 	  }
-        val = Fmake_list (make_int (total_length), Qnil);
+        val = Fmake_list (make_fixnum (total_length), Qnil);
         break;
       case c_vector:
         val = make_vector (total_length, Qnil);
@@ -1719,7 +1719,7 @@ concat (int nargs, Lisp_Object *args,
 
       if (!CONSP (seq))
 	{
-	  thisleni = XINT (Flength (seq));
+	  thisleni = XFIXNUM (Flength (seq));
 	}
       if (STRINGP (seq))
 	string_source_ptr = XSTRING_DATA (seq);
@@ -1751,10 +1751,10 @@ concat (int nargs, Lisp_Object *args,
 	      else if (VECTORP (seq))
                 elt = XVECTOR_DATA (seq)[thisindex];
 	      else if (BIT_VECTORP (seq))
-		elt = make_int (bit_vector_bit (XBIT_VECTOR (seq),
+		elt = make_fixnum (bit_vector_bit (XBIT_VECTOR (seq),
 						thisindex));
               else
-		elt = Felt (seq, make_int (thisindex));
+		elt = Felt (seq, make_fixnum (thisindex));
               thisindex++;
 	    }
 
@@ -1771,7 +1771,7 @@ concat (int nargs, Lisp_Object *args,
 	  else if (BIT_VECTORP (val))
 	    {
 	      CHECK_BIT (elt);
-	      set_bit_vector_bit (XBIT_VECTOR (val), toindex++, XINT (elt));
+	      set_bit_vector_bit (XBIT_VECTOR (val), toindex++, XFIXNUM (elt));
 	    }
 	  else
 	    {
@@ -1900,17 +1900,17 @@ not copy extent data.
 */
        (sequence, start, end))
 {
-  Elemcount len, ss, ee = EMACS_INT_MAX, ii;
+  Elemcount len, ss, ee = MOST_POSITIVE_FIXNUM, ii;
   Lisp_Object result = Qnil;
 
   CHECK_SEQUENCE (sequence);
-  CHECK_INT (start);
-  ss = XINT (start);
+  CHECK_FIXNUM (start);
+  ss = XFIXNUM (start);
 
   if (!NILP (end))
     {
-      CHECK_INT (end);
-      ee = XINT (end);
+      CHECK_FIXNUM (end);
+      ee = XFIXNUM (end);
     }
 
   if (STRINGP (sequence))
@@ -1932,7 +1932,7 @@ not copy extent data.
 
       if (ss < 0 || ee < 0)
         {
-          len = XINT (Flength (sequence));
+          len = XFIXNUM (Flength (sequence));
 	  if (ss < 0)
 	    {
 	      ss = len + ss;
@@ -1952,7 +1952,7 @@ not copy extent data.
 
       if (0 != ss)
         {
-          sequence = Fnthcdr (make_int (ss), sequence);
+          sequence = Fnthcdr (make_fixnum (ss), sequence);
         }
 
       ii = ss + 1;
@@ -1989,7 +1989,7 @@ not copy extent data.
     }
   else
     {
-      len = XINT (Flength (sequence));
+      len = XFIXNUM (Flength (sequence));
       if (ss < 0)
 	{
 	  ss = len + ss;
@@ -2006,7 +2006,7 @@ not copy extent data.
 	  ee = min (len, ee);
 	}
 
-      check_sequence_range (sequence, start, end, make_int (len));
+      check_sequence_range (sequence, start, end, make_fixnum (len));
 
       if (VECTORP (sequence))
         {
@@ -2260,7 +2260,7 @@ Take cdr N times on LIST, and return the result.
   REGISTER EMACS_INT i;
   REGISTER Lisp_Object tail = list;
   CHECK_NATNUM (n);
-  for (i = BIGNUMP (n) ? 1 + EMACS_INT_MAX : XINT (n); i; i--)
+  for (i = BIGNUMP (n) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (n); i; i--)
     {
       if (CONSP (tail))
 	tail = XCDR (tail);
@@ -2292,7 +2292,7 @@ Return element of SEQUENCE at index N.
 {
   /* This function can GC */
  retry:
-  CHECK_INT_COERCE_CHAR (n); /* yuck! */
+  CHECK_FIXNUM_COERCE_CHAR (n); /* yuck! */
   if (LISTP (sequence))
     {
       Lisp_Object tem = Fnthcdr (n, sequence);
@@ -2342,7 +2342,7 @@ If N is greater than the length of LIST, then LIST itself is returned.
   else
     {
       CHECK_NATNUM (n);
-      int_n = BIGNUMP (n) ? 1 + EMACS_INT_MAX : XINT (n);
+      int_n = BIGNUMP (n) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (n);
     }
 
   for (retval = tortoise = hare = list, count = 0;
@@ -2377,7 +2377,7 @@ Otherwise, LIST may be dotted, but not circular.
   if (!NILP (n))
     {
       CHECK_NATNUM (n);
-      int_n = BIGNUMP (n) ? 1 + EMACS_INT_MAX : XINT (n);
+      int_n = BIGNUMP (n) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (n);
     }
 
   if (CONSP (list))
@@ -2425,7 +2425,7 @@ converts a dotted into a true list.
   if (!NILP (n))
     {
       CHECK_NATNUM (n);
-      int_n = BIGNUMP (n) ? 1 + EMACS_INT_MAX : XINT (n);
+      int_n = BIGNUMP (n) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (n);
     }
 
   if (CONSP (list))
@@ -2517,8 +2517,8 @@ list_position_cons_before (Lisp_Object *cons_out,
 {
   struct gcpro gcpro1;
   Lisp_Object tail_before = Qnil;
-  Elemcount ii = 0, starting = XINT (start);
-  Elemcount ending = NILP (end) ? EMACS_INT_MAX : XINT (end);
+  Elemcount ii = 0, starting = XFIXNUM (start);
+  Elemcount ending = NILP (end) ? MOST_POSITIVE_FIXNUM : XFIXNUM (end);
 
   GCPRO1 (tail_before);
 
@@ -2882,16 +2882,16 @@ position (Lisp_Object *object_out, Lisp_Object item, Lisp_Object sequence,
           Lisp_Object from_end, Lisp_Object default_, Lisp_Object caller)
 {
   Lisp_Object result = Qnil;
-  Elemcount starting = 0, ending = EMACS_INT_MAX, len, ii = 0;
+  Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, len, ii = 0;
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
-  starting = INTP (start) ? XINT (start) : 1 + EMACS_INT_MAX;
+  starting = FIXNUMP (start) ? XFIXNUM (start) : 1 + MOST_POSITIVE_FIXNUM;
 
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = INTP (end) ? XINT (end) : 1 + EMACS_INT_MAX;
+      ending = FIXNUMP (end) ? XFIXNUM (end) : 1 + MOST_POSITIVE_FIXNUM;
     }
 
   *object_out = default_;
@@ -2981,8 +2981,8 @@ position (Lisp_Object *object_out, Lisp_Object item, Lisp_Object sequence,
   else
     {
       Lisp_Object object = Qnil;
-      len = XINT (Flength (sequence));
-      check_sequence_range (sequence, start, end, make_int (len));
+      len = XFIXNUM (Flength (sequence));
+      check_sequence_range (sequence, start, end, make_fixnum (len));
 
       ending = min (ending, len);
       if (0 == len)
@@ -2995,7 +2995,7 @@ position (Lisp_Object *object_out, Lisp_Object item, Lisp_Object sequence,
 	{
 	  for (ii = starting; ii < ending; ii++)
 	    {
-	      object = Faref (sequence, make_int (ii));
+	      object = Faref (sequence, make_fixnum (ii));
 	      if (check_test (test, key, item, object) == test_not_unboundp)
 		{
 		  result = make_integer (ii);
@@ -3008,7 +3008,7 @@ position (Lisp_Object *object_out, Lisp_Object item, Lisp_Object sequence,
 	{
 	  for (ii = ending - 1; ii >= starting; ii--)
 	    {
-	      object = Faref (sequence, make_int (ii));
+	      object = Faref (sequence, make_fixnum (ii));
 	      if (check_test (test, key, item, object) == test_not_unboundp)
 		{
 		  result = make_integer (ii);
@@ -3138,7 +3138,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
        (int nargs, Lisp_Object *args))
 {
   Lisp_Object item = args[0], sequence = args[1];
-  Elemcount starting = 0, ending = EMACS_INT_MAX, counting = EMACS_INT_MAX;
+  Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, counting = MOST_POSITIVE_FIXNUM;
   Elemcount len, ii = 0, encountered = 0, presenting = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
@@ -3149,12 +3149,12 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
-  starting = BIGNUMP (start) ? 1 + EMACS_INT_MAX : XINT (start);
+  starting = BIGNUMP (start) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (start);
 
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = BIGNUMP (end) ? 1 + EMACS_INT_MAX : XINT (end);
+      ending = BIGNUMP (end) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (end);
     }
 
   if (!UNBOUNDP (count))
@@ -3162,15 +3162,15 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
       if (!NILP (count))
 	{
 	  CHECK_INTEGER (count);
-          if (INTP (count))
+          if (FIXNUMP (count))
             {
-              counting = XINT (count);
+              counting = XFIXNUM (count);
             }
 #ifdef HAVE_BIGNUM
           else
             {
               counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
-                1 + EMACS_INT_MAX : EMACS_INT_MIN - 1;
+                1 + MOST_POSITIVE_FIXNUM : MOST_NEGATIVE_FIXNUM - 1;
             }
 #endif
 
@@ -3220,7 +3220,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	      return sequence;
 	    }
 
-	  presenting = XINT (present);
+	  presenting = XFIXNUM (present);
 
 	  /* If there are fewer items in the list than we have permission to
 	     delete, we don't need to differentiate between the :from-end
@@ -3274,7 +3274,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	  !(presenting ? encountered == presenting : encountered == counting)) 
 	{
 	  check_sequence_range (args[1], start, end,
-                                make_int (deleted + XINT (Flength (args[1]))));
+                                make_fixnum (deleted + XFIXNUM (Flength (args[1]))));
 	}
 
       return sequence;
@@ -3297,7 +3297,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	      return sequence;
 	    }
 
-	  presenting = XINT (present);
+	  presenting = XFIXNUM (present);
 
 	  /* If there are fewer items in the list than we have permission to
 	     delete, we don't need to differentiate between the :from-end
@@ -3366,9 +3366,9 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
       Lisp_Object *staging = NULL, *staging_cursor, *staging_limit;
       Elemcount positioning;
 
-      len = XINT (Flength (sequence));
+      len = XFIXNUM (Flength (sequence));
 
-      check_sequence_range (sequence, start, end, make_int (len));
+      check_sequence_range (sequence, start, end, make_fixnum (len));
 
       position0 = position (&object, item, sequence, check_test,
                             test_not_unboundp, test, key, start, end,
@@ -3379,7 +3379,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	}
 
       ending = min (ending, len);
-      positioning = XINT (position0);
+      positioning = XFIXNUM (position0);
       encountered = 1;
 
       if (NILP (from_end))
@@ -3390,14 +3390,14 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	  ii = 0;
 	  while (ii < positioning)
 	    {
-	      *staging_cursor++ = Faref (sequence, make_int (ii));
+	      *staging_cursor++ = Faref (sequence, make_fixnum (ii));
 	      ii++;
 	    }
 
 	  ii = positioning + 1;
 	  while (ii < ending)
 	    {
-	      object = Faref (sequence, make_int (ii));
+	      object = Faref (sequence, make_fixnum (ii));
 	      if (encountered < counting
 		  && (check_test (test, key, item, object)
 		      == test_not_unboundp))
@@ -3413,7 +3413,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 
 	  while (ii < len)
 	    {
-	      *staging_cursor++ = Faref (sequence, make_int (ii));
+	      *staging_cursor++ = Faref (sequence, make_fixnum (ii));
 	      ii++;
 	    }
 	}
@@ -3425,14 +3425,14 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 	  ii = len - 1;
 	  while (ii > positioning)
 	    {
-	      *--staging_cursor = Faref (sequence, make_int (ii));
+	      *--staging_cursor = Faref (sequence, make_fixnum (ii));
 	      ii--;
 	    }
 
 	  ii = positioning - 1;
 	  while (ii >= starting)
 	    {
-	      object = Faref (sequence, make_int (ii));
+	      object = Faref (sequence, make_fixnum (ii));
 	      if (encountered < counting
 		  && (check_test (test, key, item, object) ==
 		      test_not_unboundp))
@@ -3449,7 +3449,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 
 	  while (ii >= 0)
 	    {
-	      *--staging_cursor = Faref (sequence, make_int (ii));
+	      *--staging_cursor = Faref (sequence, make_fixnum (ii));
 	      ii--;
 	    }
 
@@ -3502,7 +3502,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 {
   Lisp_Object item = args[0], sequence = args[1], matched_count = Qnil,
     tail = Qnil;
-  Elemcount starting = 0, ending = EMACS_INT_MAX, counting = EMACS_INT_MAX;
+  Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, counting = MOST_POSITIVE_FIXNUM;
   Elemcount ii = 0, encountered = 0, presenting = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
@@ -3517,26 +3517,26 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
     }
 
   CHECK_NATNUM (start);
-  starting = BIGNUMP (start) ? 1 + EMACS_INT_MAX : XINT (start);
+  starting = BIGNUMP (start) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (start);
 
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = BIGNUMP (end) ? 1 + EMACS_INT_MAX : XINT (end);
+      ending = BIGNUMP (end) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (end);
     }
 
   if (!NILP (count))
     {
       CHECK_INTEGER (count);
-      if (INTP (count))
+      if (FIXNUMP (count))
         {
-          counting = XINT (count);
+          counting = XFIXNUM (count);
         }
 #ifdef HAVE_BIGNUM
       else
         {
           counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
-            1 + EMACS_INT_MAX : -1 + EMACS_INT_MIN;
+            1 + MOST_POSITIVE_FIXNUM : -1 + MOST_NEGATIVE_FIXNUM;
         }
 #endif
 
@@ -3576,7 +3576,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 
       if (!NILP (count) && !NILP (from_end))
 	{
-	  presenting = XINT (matched_count);
+	  presenting = XFIXNUM (matched_count);
 
 	  /* If there are fewer matching elements in the list than we have
 	     permission to delete, we don't need to differentiate between
@@ -3749,8 +3749,8 @@ list_delete_duplicates_from_end (Lisp_Object list,
 {
   Lisp_Object checking = Qnil, result = list;
   Lisp_Object keyed, positioned, position_cons = Qnil, result_tail;
-  Elemcount len = XINT (Flength (list)), pos, starting = XINT (start);
-  Elemcount ending = (NILP (end) ? len : XINT (end)), greatest_pos_seen = -1;
+  Elemcount len = XFIXNUM (Flength (list)), pos, starting = XFIXNUM (start);
+  Elemcount ending = (NILP (end) ? len : XFIXNUM (end)), greatest_pos_seen = -1;
   Elemcount ii = 0;
   struct gcpro gcpro1;
 
@@ -3788,10 +3788,10 @@ list_delete_duplicates_from_end (Lisp_Object list,
         while (!NILP ((positioned = list_position_cons_before
                        (&position_cons, keyed, checking, check_test,
                         test_not_unboundp, test, key, 0,
-                        make_int (max (starting - pos, 0)),
-                        make_int (ending - pos)))))
+                        make_fixnum (max (starting - pos, 0)),
+                        make_fixnum (ending - pos)))))
           {
-            pos = XINT (positioned) + pos;
+            pos = XFIXNUM (positioned) + pos;
             set_bit_vector_bit (deleting, pos, 1);
             greatest_pos_seen = max (greatest_pos_seen, pos);
             checking = NILP (position_cons) ?
@@ -3864,7 +3864,7 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 {
   Lisp_Object sequence = args[0], keyed = Qnil;
   Lisp_Object positioned = Qnil, ignore = Qnil;
-  Elemcount starting = 0, ending = EMACS_INT_MAX, len, ii = 0, jj = 0;
+  Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, len, ii = 0, jj = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
   struct gcpro gcpro1, gcpro2;
@@ -3875,12 +3875,12 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
-  starting = BIGNUMP (start) ? 1 + EMACS_INT_MAX : XINT (start);
+  starting = BIGNUMP (start) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (start);
 
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = BIGNUMP (end) ? 1 + EMACS_INT_MAX : XINT (end);
+      ending = BIGNUMP (end) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (end);
     }
 
   CHECK_KEY_ARGUMENT (key);
@@ -3907,10 +3907,10 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
                       = list_position_cons_before (&ignore, keyed,
                                                    XCDR (tail), check_test,
                                                    test_not_unboundp, test, key,
-                                                   0, make_int (max (starting
+                                                   0, make_fixnum (max (starting
                                                                      - (ii + 1),
                                                                      0)),
-                                                   make_int (ending
+                                                   make_fixnum (ending
                                                              - (ii + 1)));
                     if (!NILP (positioned))
                       {
@@ -3946,9 +3946,9 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
                   = list_position_cons_before (&ignore, keyed, XCDR (tail),
                                                check_test, test_not_unboundp,
                                                test, key, 0,
-                                               make_int (max (starting
+                                               make_fixnum (max (starting
                                                               - (ii + 1), 0)),
-                                               make_int (ending - (ii + 1)));
+                                               make_fixnum (ending - (ii + 1)));
                 if (!NILP (positioned))
                   {
                     /* We know this isn't the first iteration of the loop,
@@ -3978,8 +3978,8 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 	  if ((ii < starting || (ii < ending && !NILP (end))))
 	    {
 	      check_sequence_range (args[0], start, end,
-                                    make_int (deleted
-                                              + XINT (Flength (args[0]))));
+                                    make_fixnum (deleted
+                                              + XFIXNUM (Flength (args[0]))));
 	    }
 	}
       else
@@ -4282,12 +4282,12 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 	{
 	  for (ii = starting; ii < ending; ii++)
 	    {
-	      elt = KEY (key, make_int (bit_vector_bit (bv, ii)));
+	      elt = KEY (key, make_fixnum (bit_vector_bit (bv, ii)));
 
 	      for (jj = ii + 1; jj < ending; jj++)
 		{
 		  if (check_test (test, key, elt,
-				  make_int (bit_vector_bit (bv, jj)))
+				  make_fixnum (bit_vector_bit (bv, jj)))
 		      == test_not_unboundp)
 		    {
 		      set_bit_vector_bit (deleting, ii, 1);
@@ -4301,12 +4301,12 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
 	{
 	  for (ii = ending - 1; ii >= starting; ii--)
 	    {
-	      elt = KEY (key, make_int (bit_vector_bit (bv, ii)));
+	      elt = KEY (key, make_fixnum (bit_vector_bit (bv, ii)));
 
 	      for (jj = ii - 1; jj >= starting; jj--)
 		{
 		  if (check_test (test, key, elt,
-				  make_int (bit_vector_bit (bv, jj)))
+				  make_fixnum (bit_vector_bit (bv, jj)))
 		      == test_not_unboundp)
 		    {
 		      set_bit_vector_bit (deleting, ii, 1);
@@ -4355,7 +4355,7 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
   Lisp_Object sequence = args[0], keyed, positioned = Qnil;
   Lisp_Object result = sequence, result_tail = result, cursor = Qnil;
   Lisp_Object cons_with_shared_tail = Qnil;
-  Elemcount starting = 0, ending = EMACS_INT_MAX, ii = 0;
+  Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, ii = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
   struct gcpro gcpro1, gcpro2;
@@ -4372,12 +4372,12 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
     }
 
   CHECK_NATNUM (start);
-  starting = BIGNUMP (start) ? 1 + EMACS_INT_MAX : XINT (start);
+  starting = BIGNUMP (start) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (start);
 
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = BIGNUMP (end) ? 1 + EMACS_INT_MAX : XINT (end);
+      ending = BIGNUMP (end) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (end);
     }
 
   if (NILP (key))
@@ -4404,9 +4404,9 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
                   = list_position_cons_before (&ignore, keyed, XCDR (tail),
                                                check_test, test_not_unboundp,
                                                test, key, 0,
-                                               make_int (max (starting
+                                               make_fixnum (max (starting
                                                               - (ii + 1), 0)),
-                                               make_int (ending - (ii + 1)));
+                                               make_fixnum (ending - (ii + 1)));
                 if (!NILP (positioned))
                   {
                     sequence = result = result_tail = XCDR (tail);
@@ -4445,9 +4445,9 @@ arguments: (SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-END T
               = list_position_cons_before (&ignore, keyed, XCDR (tail),
                                            check_test, test_not_unboundp,
                                            test, key, 0,
-                                           make_int (max (starting - (ii + 1),
+                                           make_fixnum (max (starting - (ii + 1),
                                                           0)),
-                                           make_int (ending - (ii + 1)));
+                                           make_fixnum (ending - (ii + 1)));
             if (!NILP (positioned))
               {
                 if (EQ (result, sequence))
@@ -5044,7 +5044,7 @@ list_array_merge_into_array (Lisp_Object *output, Elemcount output_len,
     c_array = alloca_array (Lisp_Object, len);                          \
     for (counter = 0; counter < len; ++counter)                         \
       {                                                                 \
-        c_array[counter] = make_int (bit_vector_bit (v, counter));      \
+        c_array[counter] = make_fixnum (bit_vector_bit (v, counter));      \
       }                                                                 \
   } while (0)
 
@@ -5136,8 +5136,8 @@ arguments: (TYPE SEQUENCE-ONE SEQUENCE-TWO PREDICATE &key (KEY #'IDENTITY))
     }
   else
     {
-      Elemcount sequence_one_len = XINT (Flength (sequence_one)),
-        sequence_two_len = XINT (Flength (sequence_two)), i;
+      Elemcount sequence_one_len = XFIXNUM (Flength (sequence_one)),
+        sequence_two_len = XFIXNUM (Flength (sequence_two)), i;
       Elemcount output_len = 1 + sequence_one_len + sequence_two_len;
       Lisp_Object *output = alloca_array (Lisp_Object, output_len),
         *sequence_one_storage = NULL, *sequence_two_storage = NULL;
@@ -5243,10 +5243,10 @@ list_sort (Lisp_Object list, check_test_func_t check_merge,
   Lisp_Object front = list;
   Lisp_Object len = Flength (list);
 
-  if (XINT (len) < 2)
+  if (XFIXNUM (len) < 2)
     return list;
 
-  len = make_int (XINT (len) / 2 - 1);
+  len = make_fixnum (XFIXNUM (len) / 2 - 1);
   tem = Fnthcdr (len, list);
   back = Fcdr (tem);
   Fsetcdr (tem, Qnil);
@@ -5352,7 +5352,7 @@ arguments: (SEQUENCE PREDICATE &key (KEY #'IDENTITY))
 
       for (i = 0; i < sequence_len; ++i)
         {
-          set_bit_vector_bit (v, i, XINT (sequence_carray [i]));
+          set_bit_vector_bit (v, i, XFIXNUM (sequence_carray [i]));
         }
     }
 
@@ -5387,8 +5387,8 @@ plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
   Fcheck_valid_plist (a);
   Fcheck_valid_plist (b);
 
-  la = XINT (Flength (a));
-  lb = XINT (Flength (b));
+  la = XFIXNUM (Flength (a));
+  lb = XFIXNUM (Flength (b));
   m = (la > lb ? la : lb);
   fill = 0;
   keys  = alloca_array (Lisp_Object, m);
@@ -6217,7 +6217,7 @@ static Lisp_Object
 tweaked_internal_equal (Lisp_Object obj1, Lisp_Object obj2,
 			Lisp_Object depth)
 {
-  return make_int (internal_equal (obj1, obj2, XINT (depth)));
+  return make_fixnum (internal_equal (obj1, obj2, XFIXNUM (depth)));
 }
 
 int
@@ -6233,11 +6233,11 @@ internal_equal_trapping_problems (Lisp_Object warning_class,
     va_call_trapping_problems (warning_class, warning_string,
 			       flags, p,
 			       (lisp_fn_t) tweaked_internal_equal,
-			       3, obj1, obj2, make_int (depth));
+			       3, obj1, obj2, make_fixnum (depth));
   if (UNBOUNDP (glorp))
     return retval;
   else
-    return XINT (glorp);
+    return XFIXNUM (glorp);
 }
 
 int
@@ -6316,14 +6316,14 @@ internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth)
     if (artype1 != artype2 && artype1 && artype2)
       {
 	EMACS_INT i;
-	EMACS_INT l1 = XINT (Flength (obj1));
-	EMACS_INT l2 = XINT (Flength (obj2));
+	EMACS_INT l1 = XFIXNUM (Flength (obj1));
+	EMACS_INT l2 = XFIXNUM (Flength (obj2));
 	/* Both arrays, but of different lengths */
 	if (l1 != l2)
 	  return 0;
 	for (i = 0; i < l1; i++)
-	  if (!internal_equalp (Faref (obj1, make_int (i)),
-				Faref (obj2, make_int (i)), depth + 1))
+	  if (!internal_equalp (Faref (obj1, make_fixnum (i)),
+				Faref (obj2, make_fixnum (i)), depth + 1))
 	    return 0;
 	return 1;
       }
@@ -6600,17 +6600,17 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
 {
   Lisp_Object sequence = args[0];
   Lisp_Object item = args[1];
-  Elemcount starting, ending = EMACS_INT_MAX + 1, ii, len;
+  Elemcount starting, ending = MOST_POSITIVE_FIXNUM + 1, ii, len;
 
   PARSE_KEYWORDS (Ffill, nargs, args, 2, (start, end), (start = Qzero));
 
   CHECK_NATNUM (start);
-  starting = BIGNUMP (start) ? EMACS_INT_MAX + 1 : XINT (start);
+  starting = BIGNUMP (start) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (start);
 
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = BIGNUMP (end) ? EMACS_INT_MAX + 1 : XINT (end);
+      ending = BIGNUMP (end) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (end);
     }
 
  retry:
@@ -6628,7 +6628,7 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
       CHECK_LISP_WRITEABLE (sequence);
       len = XVECTOR_LENGTH (sequence);
 
-      check_sequence_range (sequence, start, end, make_int (len));
+      check_sequence_range (sequence, start, end, make_fixnum (len));
       ending = min (ending, len);
 
       for (ii = starting; ii < ending; ++ii)
@@ -6642,11 +6642,11 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
       int bit;
 
       CHECK_BIT (item);
-      bit = XINT (item);
+      bit = XFIXNUM (item);
       CHECK_LISP_WRITEABLE (sequence);
       len = bit_vector_length (v);
 
-      check_sequence_range (sequence, start, end, make_int (len));
+      check_sequence_range (sequence, start, end, make_fixnum (len));
       ending = min (ending, len);
 
       for (ii = starting; ii < ending; ++ii)
@@ -6987,7 +6987,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 		case lrecord_type_bit_vector:
 		  {
 		    args[j + 1]
-		      = make_int (bit_vector_bit (XBIT_VECTOR (sequences[j]),
+		      = make_fixnum (bit_vector_bit (XBIT_VECTOR (sequences[j]),
 						  i));
 		    break;
 		  }
@@ -7049,7 +7049,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
                     i < XVECTOR_LENGTH (lisp_vals) ?
                       (XVECTOR_DATA (lisp_vals)[i] = called) :
                       /* Let #'aset error. */
-                      Faset (lisp_vals, make_int (i), called);
+                      Faset (lisp_vals, make_fixnum (i), called);
                     break;
                   }
                 case lrecord_type_string:
@@ -7063,8 +7063,8 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
                     (BITP (called) &&
                      i < bit_vector_length (XBIT_VECTOR (lisp_vals))) ?
                       set_bit_vector_bit (XBIT_VECTOR (lisp_vals), i,
-                                          XINT (called)) :
-                      (void) Faset (lisp_vals, make_int (i), called);
+                                          XFIXNUM (called)) :
+                      (void) Faset (lisp_vals, make_fixnum (i), called);
                     break;
                   }
                 default:
@@ -7079,7 +7079,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
       if (lisp_vals_staging != NULL)
 	{
           CHECK_LISP_WRITEABLE (lisp_vals);
-	  replace_string_range (lisp_vals, Qzero, make_int (call_count),
+	  replace_string_range (lisp_vals, Qzero, make_fixnum (call_count),
 				lisp_vals_staging, cursor);
 	}
     }
@@ -7093,7 +7093,7 @@ mapcarX (Elemcount call_count, Lisp_Object *vals, Lisp_Object lisp_vals,
 static Elemcount
 shortest_length_among_sequences (int nsequences, Lisp_Object *sequences)
 {
-  Elemcount len = 1 + EMACS_INT_MAX;
+  Elemcount len = 1 + MOST_POSITIVE_FIXNUM;
   Lisp_Object length = Qnil;
   int i;
 
@@ -7104,18 +7104,18 @@ shortest_length_among_sequences (int nsequences, Lisp_Object *sequences)
           length = Flist_length (sequences[i]);
           if (!NILP (length))
             {
-              len = min (len, XINT (length));
+              len = min (len, XFIXNUM (length));
             }
         }
       else
         {
           CHECK_SEQUENCE (sequences[i]);
           length = Flength (sequences[i]);
-          len = min (len, XINT (length));
+          len = min (len, XFIXNUM (length));
         }
     }
 
-  if (len == 1 + EMACS_INT_MAX)
+  if (len == 1 + MOST_POSITIVE_FIXNUM)
     {
       signal_circular_list_error (sequences[0]);
     }
@@ -7143,7 +7143,7 @@ arguments: (FUNCTION SEQUENCE SEPARATOR &rest SEQUENCES)
   Lisp_Object function = args[0];
   Lisp_Object sequence = args[1];
   Lisp_Object separator = args[2];
-  Elemcount len = EMACS_INT_MAX;
+  Elemcount len = MOST_POSITIVE_FIXNUM;
   Lisp_Object *args0;
   EMACS_INT i, nargs0;
 
@@ -7613,7 +7613,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
        (int nargs, Lisp_Object *args))
 {
   Lisp_Object function = args[0], sequence = args[1], accum = Qunbound;
-  Elemcount starting, ending = EMACS_INT_MAX + 1, ii = 0;
+  Elemcount starting, ending = MOST_POSITIVE_FIXNUM + 1, ii = 0;
 
   PARSE_KEYWORDS (Freduce, nargs, args, 5,
                   (start, end, from_end, initial_value, key),
@@ -7621,7 +7621,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
-  starting = BIGNUMP (start) ? EMACS_INT_MAX + 1 : XINT (start);
+  starting = BIGNUMP (start) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (start);
   CHECK_KEY_ARGUMENT (key);
 
 #define KEY(key, item) (EQ (Qidentity, key) ? item :			\
@@ -7632,7 +7632,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = BIGNUMP (end) ? EMACS_INT_MAX + 1 : XINT (end);
+      ending = BIGNUMP (end) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (end);
     }
 
   if (VECTORP (sequence))
@@ -7640,7 +7640,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
       Lisp_Vector *vv = XVECTOR (sequence);
       struct gcpro gcpro1;
 
-      check_sequence_range (sequence, start, end, make_int (vv->size));
+      check_sequence_range (sequence, start, end, make_fixnum (vv->size));
 
       ending = min (ending, vv->size);
 
@@ -7686,7 +7686,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
       Lisp_Bit_Vector *bv = XBIT_VECTOR (sequence);
       struct gcpro gcpro1;
 
-      check_sequence_range (sequence, start, end, make_int (bv->size));
+      check_sequence_range (sequence, start, end, make_fixnum (bv->size));
       ending = min (ending, bv->size);
 
       GCPRO1 (accum);
@@ -7699,12 +7699,12 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
         {
           if (NILP (from_end))
             {
-              accum = KEY (key, make_int (bit_vector_bit (bv, starting)));
+              accum = KEY (key, make_fixnum (bit_vector_bit (bv, starting)));
               starting++;
             }
           else
             {
-              accum = KEY (key, make_int (bit_vector_bit (bv, ending - 1)));
+              accum = KEY (key, make_fixnum (bit_vector_bit (bv, ending - 1)));
               ending--;
             }
         }
@@ -7714,7 +7714,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
           for (ii = starting; ii < ending; ++ii)
             {
               accum = CALL2 (function, accum,
-                             KEY (key, make_int (bit_vector_bit (bv, ii))));
+                             KEY (key, make_fixnum (bit_vector_bit (bv, ii))));
             }
         }
       else
@@ -7722,7 +7722,7 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
           for (ii = ending - 1; ii >= starting; --ii)
             {
               accum = CALL2 (function, KEY (key,
-                                            make_int (bit_vector_bit (bv,
+                                            make_fixnum (bit_vector_bit (bv,
                                                                       ii))),
                              accum);
             }
@@ -7802,9 +7802,9 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
           Bytecount cursor_offset, byte_len = XSTRING_LENGTH (sequence);
           const Ibyte *cursor;
 
-	  check_sequence_range (sequence, start, end, make_int (len));
+	  check_sequence_range (sequence, start, end, make_fixnum (len));
           ending = min (ending, len);
-          starting = XINT (start);
+          starting = XFIXNUM (start);
 
           cursor = string_char_addr (sequence, ending - 1);
           cursor_offset = cursor - XSTRING_DATA (sequence);
@@ -7917,8 +7917,8 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
           Elemcount counting = 0, len = 0;
 	  struct gcpro gcpro1;
 
-	  len = XINT (Flength (sequence));
-	  check_sequence_range (sequence, start, end, make_int (len));
+	  len = XFIXNUM (Flength (sequence));
+	  check_sequence_range (sequence, start, end, make_fixnum (len));
 	  ending = min (ending, len);
 
           /* :from-end with a list; make an alloca copy of the relevant list
@@ -8048,7 +8048,7 @@ replace_string_range_1 (Lisp_Object dest, Lisp_Object start, Lisp_Object end,
     *pend = p + XSTRING_LENGTH (dest), *pcursor, item_buf[MAX_ICHAR_LEN];
   Bytecount prefix_bytecount, source_len = source_limit - source;
   Charcount ii = 0, ending, len;
-  Charcount starting = BIGNUMP (start) ? EMACS_INT_MAX + 1 : XINT (start);
+  Charcount starting = BIGNUMP (start) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (start);
   Elemcount delta;
 
   while (ii < starting && p < pend)
@@ -8071,7 +8071,7 @@ replace_string_range_1 (Lisp_Object dest, Lisp_Object start, Lisp_Object end,
     }
   else
     {
-      ending = BIGNUMP (end) ? EMACS_INT_MAX + 1 : XINT (end);
+      ending = BIGNUMP (end) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (end);
       while (ii < ending && pcursor < pend)
 	{
 	  INC_IBYTEPTR (pcursor);
@@ -8082,7 +8082,7 @@ replace_string_range_1 (Lisp_Object dest, Lisp_Object start, Lisp_Object end,
   if (pcursor == pend)
     {
       /* We have the length, check it for our callers. */
-      check_sequence_range (dest, start, end, make_int (ii));
+      check_sequence_range (dest, start, end, make_fixnum (ii));
     }
 
   if (!(p == pend || p == pcursor))
@@ -8151,8 +8151,8 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 {
   Lisp_Object sequence1 = args[0], sequence2 = args[1],
     result = sequence1;
-  Elemcount starting1, ending1 = EMACS_INT_MAX + 1, starting2;
-  Elemcount ending2 = EMACS_INT_MAX + 1, counting = 0, startcounting;
+  Elemcount starting1, ending1 = MOST_POSITIVE_FIXNUM + 1, starting2;
+  Elemcount ending2 = MOST_POSITIVE_FIXNUM + 1, counting = 0, startcounting;
   Boolint sequence1_listp, sequence2_listp,
     overwriting = EQ (sequence1, sequence2);
 
@@ -8165,20 +8165,20 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
   CHECK_SEQUENCE (sequence2);
 
   CHECK_NATNUM (start1);
-  starting1 = BIGNUMP (start1) ? EMACS_INT_MAX + 1 : XINT (start1);
+  starting1 = BIGNUMP (start1) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (start1);
   CHECK_NATNUM (start2);
-  starting2 = BIGNUMP (start2) ? EMACS_INT_MAX + 1 : XINT (start2);
+  starting2 = BIGNUMP (start2) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (start2);
 
   if (!NILP (end1))
     {
       CHECK_NATNUM (end1);
-      ending1 = BIGNUMP (end1) ? EMACS_INT_MAX + 1 : XINT (end1);
+      ending1 = BIGNUMP (end1) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (end1);
     }
 
   if (!NILP (end2))
     {
       CHECK_NATNUM (end2);
-      ending2 = BIGNUMP (end2) ? EMACS_INT_MAX + 1 : XINT (end2);
+      ending2 = BIGNUMP (end2) ? MOST_POSITIVE_FIXNUM + 1 : XFIXNUM (end2);
     }
 
   sequence1_listp = LISTP (sequence1);
@@ -8227,7 +8227,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
       if (CONSP (sequence2))
         {
-          Elemcount len = XINT (Flength (sequence2));
+          Elemcount len = XFIXNUM (Flength (sequence2));
           Lisp_Object *subsequence
             = alloca_array (Lisp_Object, min (ending2, len));
           Elemcount ii = 0;
@@ -8244,12 +8244,12 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
             }
 
           check_sequence_range (sequence1, start1, end1,
-                                /* The XINT (start2) is intentional here; we
+                                /* The XFIXNUM (start2) is intentional here; we
                                    called #'length after doing (nthcdr
                                    start2 sequence2). */
-                                make_int (XINT (start2) + len));
+                                make_fixnum (XFIXNUM (start2) + len));
           check_sequence_range (sequence2, start2, end2,
-                                make_int (XINT (start2) + len));
+                                make_fixnum (XFIXNUM (start2) + len));
 
           while (starting1 < ending1
                  && starting2 < ending2 && !NILP (sequence1))
@@ -8284,8 +8284,8 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
           if (pcursor == pend)
             {
-              check_sequence_range (sequence1, start1, end1, make_int (ii));
-              check_sequence_range (sequence2, start2, end2, make_int (ii));
+              check_sequence_range (sequence1, start1, end1, make_fixnum (ii));
+              check_sequence_range (sequence2, start2, end2, make_fixnum (ii));
             }
           else
             {
@@ -8293,23 +8293,23 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
               staging = alloca_ibytes (pcursor - p);
               memcpy (staging, p, pcursor - p);
               replace_string_range (result, start1,
-                                    make_int (starting1),
+                                    make_fixnum (starting1),
                                     staging, staging + (pcursor - p));
             }
         }
       else 
         {
-          Elemcount seq_len = XINT (Flength (sequence2)), ii = 0,
+          Elemcount seq_len = XFIXNUM (Flength (sequence2)), ii = 0,
             subseq_len = min (min (ending1 - starting1, seq_len - starting1),
                               min (ending2 - starting2, seq_len - starting2));
           Lisp_Object *subsequence = alloca_array (Lisp_Object, subseq_len);
 
-          check_sequence_range (sequence1, start1, end1, make_int (seq_len));
-          check_sequence_range (sequence2, start2, end2, make_int (seq_len));
+          check_sequence_range (sequence1, start1, end1, make_fixnum (seq_len));
+          check_sequence_range (sequence2, start2, end2, make_fixnum (seq_len));
 
           while (starting2 < ending2 && ii < seq_len)
             {
-              subsequence[ii] = Faref (sequence2, make_int (starting2));
+              subsequence[ii] = Faref (sequence2, make_fixnum (starting2));
               ii++, starting2++;
             }
 
@@ -8317,7 +8317,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
           while (starting1 < ending1 && ii < seq_len)
             {
-              Faset (sequence1, make_int (starting1), subsequence[ii]);
+              Faset (sequence1, make_fixnum (starting1), subsequence[ii]);
               ii++, starting1++;
             }
         }
@@ -8365,12 +8365,12 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
       if (NILP (sequence1))
         {
           check_sequence_range (args[0], start1, end1,
-                                make_int (XINT (start1) + shortest_len));
+                                make_fixnum (XFIXNUM (start1) + shortest_len));
         }
       else if (NILP (sequence2))
         {
           check_sequence_range (args[1], start2, end2,
-                                make_int (XINT (start2) + shortest_len));
+                                make_fixnum (XFIXNUM (start2) + shortest_len));
         }
     }
   else if (sequence1_listp)
@@ -8405,26 +8405,26 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
           if (NILP (sequence1))
             {
               check_sequence_range (sequence1, start1, end1,
-                                    make_int (XINT (start1) + starting1));
+                                    make_fixnum (XFIXNUM (start1) + starting1));
             }
 
           if (s2_data == s2_end)
             {
               check_sequence_range (sequence2, start2, end2,
-                                    make_int (char_count));
+                                    make_fixnum (char_count));
             }
         }
       else
         {
-          Elemcount len2 = XINT (Flength (sequence2));
-          check_sequence_range (sequence2, start2, end2, make_int (len2));
+          Elemcount len2 = XFIXNUM (Flength (sequence2));
+          check_sequence_range (sequence2, start2, end2, make_fixnum (len2));
 
           ending2 = min (ending2, len2);
           while (starting2 < ending2
                  && starting1 < ending1 && !NILP (sequence1))
             {
               CHECK_CONS (sequence1);
-              XSETCAR (sequence1, Faref (sequence2, make_int (starting2)));
+              XSETCAR (sequence1, Faref (sequence2, make_fixnum (starting2)));
               sequence1 = XCDR (sequence1);
               starting1++;
               starting2++;
@@ -8433,7 +8433,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
           if (NILP (sequence1))
             {
               check_sequence_range (args[0], start1, end1,
-                                    make_int (XINT (start1) + starting1));
+                                    make_fixnum (XFIXNUM (start1) + starting1));
             }
         }
     }
@@ -8445,7 +8445,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
           Ibyte *staging, *cursor;
           Lisp_Object obj;
 
-          check_sequence_range (sequence1, start1, end1, make_int (len));
+          check_sequence_range (sequence1, start1, end1, make_fixnum (len));
           ending1 = min (ending1, len);
           count = ending1 - starting1;
           staging = cursor = alloca_ibytes (count * MAX_ICHAR_LEN);
@@ -8464,22 +8464,22 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
           if (NILP (sequence2))
             {
               check_sequence_range (sequence2, start2, end2,
-                                    make_int (XINT (start2) + ii));
+                                    make_fixnum (XFIXNUM (start2) + ii));
             }
 
-          replace_string_range (result, start1, make_int (XINT (start1) + ii),
+          replace_string_range (result, start1, make_fixnum (XFIXNUM (start1) + ii),
                                 staging, cursor);
         }
       else
         {
-          Elemcount len = XINT (Flength (sequence1));
+          Elemcount len = XFIXNUM (Flength (sequence1));
 
-          check_sequence_range (sequence1, start2, end1, make_int (len));
+          check_sequence_range (sequence1, start2, end1, make_fixnum (len));
           ending1 = min (ending2, min (ending1, len));
 
           while (starting1 < ending1 && !NILP (sequence2))
             {
-              Faset (sequence1, make_int (starting1),
+              Faset (sequence1, make_fixnum (starting1),
                      CONSP (sequence2) ? XCAR (sequence2)
                      : Fcar (sequence2));
               sequence2 = XCDR (sequence2);
@@ -8490,7 +8490,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
           if (NILP (sequence2))
             {
               check_sequence_range (args[1], start2, end2,
-                                    make_int (XINT (start2) + starting2));
+                                    make_fixnum (XFIXNUM (start2) + starting2));
             }
         }
     }
@@ -8502,7 +8502,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
             *p2end = p2 + XSTRING_LENGTH (sequence2), *p2cursor;
           Charcount ii = 0, len1 = string_char_length (sequence1);
 
-          check_sequence_range (sequence1, start1, end1, make_int (len1));
+          check_sequence_range (sequence1, start1, end1, make_fixnum (len1));
 
           while (ii < starting2 && p2 < p2end)
             {
@@ -8522,23 +8522,23 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
           if (p2cursor == p2end)
             {
-              check_sequence_range (sequence2, start2, end2, make_int (ii));
+              check_sequence_range (sequence2, start2, end2, make_fixnum (ii));
             }
 
           /* This isn't great; any error message won't necessarily reflect
              the END1 that was supplied to #'replace. */
-          replace_string_range (result, start1, make_int (starting1),
+          replace_string_range (result, start1, make_fixnum (starting1),
                                 p2, p2cursor);
         }
       else if (STRINGP (sequence1))
         {
           Ibyte *staging, *cursor;
           Elemcount count, len1 = string_char_length (sequence1);
-          Elemcount len2 = XINT (Flength (sequence2)), ii = 0;
+          Elemcount len2 = XFIXNUM (Flength (sequence2)), ii = 0;
           Lisp_Object obj;
 
-          check_sequence_range (sequence1, start1, end1, make_int (len1));
-          check_sequence_range (sequence2, start2, end2, make_int (len2));
+          check_sequence_range (sequence1, start1, end1, make_fixnum (len1));
+          check_sequence_range (sequence2, start2, end2, make_fixnum (len2));
 
           ending1 = min (ending1, len1);
           ending2 = min (ending2, len2);
@@ -8548,7 +8548,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
           ii = 0;
           while (ii < count)
             {
-              obj = Faref (sequence2, make_int (starting2));
+              obj = Faref (sequence2, make_fixnum (starting2));
 
               CHECK_CHAR_COERCE_INT (obj);
               cursor += set_itext_ichar (cursor, XCHAR (obj));
@@ -8556,16 +8556,16 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
             }
 
           replace_string_range (result, start1,
-                                make_int (XINT (start1) + count),
+                                make_fixnum (XFIXNUM (start1) + count),
                                 staging, cursor);
         }
       else if (STRINGP (sequence2))
         {
           Ibyte *p2 = XSTRING_DATA (sequence2),
             *p2end = p2 + XSTRING_LENGTH (sequence2);
-          Elemcount len1 = XINT (Flength (sequence1)), ii = 0;
+          Elemcount len1 = XFIXNUM (Flength (sequence1)), ii = 0;
 
-          check_sequence_range (sequence1, start1, end1, make_int (len1));
+          check_sequence_range (sequence1, start1, end1, make_fixnum (len1));
           ending1 = min (ending1, len1);
 
           while (ii < starting2 && p2 < p2end)
@@ -8576,7 +8576,7 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
           while (p2 < p2end && starting1 < ending1 && starting2 < ending2)
             {
-              Faset (sequence1, make_int (starting1),
+              Faset (sequence1, make_fixnum (starting1),
                      make_char (itext_ichar (p2)));
               INC_IBYTEPTR (p2);
               starting1++;
@@ -8586,24 +8586,24 @@ arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE
 
           if (p2 == p2end)
             {
-              check_sequence_range (sequence2, start2, end2, make_int (ii));
+              check_sequence_range (sequence2, start2, end2, make_fixnum (ii));
             }
         }
       else
         {
-          Elemcount len1 = XINT (Flength (sequence1)),
-            len2 = XINT (Flength (sequence2));
+          Elemcount len1 = XFIXNUM (Flength (sequence1)),
+            len2 = XFIXNUM (Flength (sequence2));
 
-          check_sequence_range (sequence1, start1, end1, make_int (len1));
-          check_sequence_range (sequence2, start2, end2, make_int (len2));
+          check_sequence_range (sequence1, start1, end1, make_fixnum (len1));
+          check_sequence_range (sequence2, start2, end2, make_fixnum (len2));
 
           ending1 = min (ending1, len1);
           ending2 = min (ending2, len2);
           
           while (starting1 < ending1 && starting2 < ending2)
             {
-              Faset (sequence1, make_int (starting1),
-                     Faref (sequence2, make_int (starting2)));
+              Faset (sequence1, make_fixnum (starting1),
+                     Faref (sequence2, make_fixnum (starting2)));
               starting1++;
               starting2++;
             }
@@ -8625,8 +8625,8 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 {
   Lisp_Object new_ = args[0], item = args[1], sequence = args[2];
   Lisp_Object object_, position0;
-  Elemcount starting = 0, ending = EMACS_INT_MAX, encountered = 0;
-  Elemcount len, ii = 0, counting = EMACS_INT_MAX, presenting = 0;
+  Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, encountered = 0;
+  Elemcount len, ii = 0, counting = MOST_POSITIVE_FIXNUM, presenting = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
 
@@ -8636,26 +8636,26 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
-  starting = BIGNUMP (start) ? 1 + EMACS_INT_MAX : XINT (start);
+  starting = BIGNUMP (start) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (start);
 
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = BIGNUMP (end) ? 1 + EMACS_INT_MAX : XINT (end);
+      ending = BIGNUMP (end) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (end);
     }
 
   if (!NILP (count))
     {
       CHECK_INTEGER (count);
-      if (INTP (count))
+      if (FIXNUMP (count))
         {
-          counting = XINT (count);
+          counting = XFIXNUM (count);
         }
 #ifdef HAVE_BIGNUM
       else
         {
           counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
-            1 + EMACS_INT_MAX : -1 + EMACS_INT_MIN;
+            1 + MOST_POSITIVE_FIXNUM : -1 + MOST_NEGATIVE_FIXNUM;
         }
 #endif
 
@@ -8680,7 +8680,7 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	      return sequence;
 	    }
 
-	  presenting = XINT (present);
+	  presenting = XFIXNUM (present);
 	  presenting = presenting <= counting ? 0 : presenting - counting;
 	}
 
@@ -8743,7 +8743,7 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	      return sequence;
 	    }
 
-	  presenting = XINT (present);
+	  presenting = XFIXNUM (present);
 
 	  /* If there are fewer items in the string than we have
 	     permission to change, we don't need to differentiate
@@ -8801,7 +8801,7 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
       if (0 != encountered)
 	{
 	  CHECK_LISP_WRITEABLE (sequence);
-	  replace_string_range (sequence, Qzero, make_int (ii),
+	  replace_string_range (sequence, Qzero, make_fixnum (ii),
 				staging, staging_cursor);
 	}
     }
@@ -8810,8 +8810,8 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
       Elemcount positioning;
       Lisp_Object object = Qnil;
 
-      len = XINT (Flength (sequence));
-      check_sequence_range (sequence, start, end, make_int (len));
+      len = XFIXNUM (Flength (sequence));
+      check_sequence_range (sequence, start, end, make_fixnum (len));
 
       position0 = position (&object, item, sequence, check_test,
                             test_not_unboundp, test, key, start, end, from_end,
@@ -8822,7 +8822,7 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	  return sequence;
 	}
 
-      positioning = XINT (position0);
+      positioning = XFIXNUM (position0);
       ending = min (len, ending);
 
       Faset (sequence, position0, new_);
@@ -8832,12 +8832,12 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	{
 	  for (ii = positioning + 1; ii < ending; ii++)
 	    {
-	      object_ = Faref (sequence, make_int (ii));
+	      object_ = Faref (sequence, make_fixnum (ii));
 
 	      if (check_test (test, key, item, object_) == test_not_unboundp
 		  && encountered++ < counting)
 		{
-		  Faset (sequence, make_int (ii), new_);
+		  Faset (sequence, make_fixnum (ii), new_);
 		}
 	      else if (encountered == counting)
 		{
@@ -8849,12 +8849,12 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	{
 	  for (ii = positioning - 1; ii >= starting; ii--)
 	    {
-	      object_ = Faref (sequence, make_int (ii));
+	      object_ = Faref (sequence, make_fixnum (ii));
 
 	      if (check_test (test, key, item, object_) == test_not_unboundp
 		  && encountered++ < counting)
 		{
-		  Faset (sequence, make_int (ii), new_);
+		  Faset (sequence, make_fixnum (ii), new_);
 		}
 	      else if (encountered == counting)
 		{
@@ -8882,8 +8882,8 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
   Lisp_Object new_ = args[0], item = args[1], sequence = args[2], tail = Qnil;
   Lisp_Object result = Qnil, result_tail = Qnil;
   Lisp_Object object, position0, matched_count;
-  Elemcount starting = 0, ending = EMACS_INT_MAX, encountered = 0;
-  Elemcount ii = 0, counting = EMACS_INT_MAX, presenting = 0;
+  Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, encountered = 0;
+  Elemcount ii = 0, counting = MOST_POSITIVE_FIXNUM, presenting = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
   struct gcpro gcpro1;
@@ -8895,12 +8895,12 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
   CHECK_SEQUENCE (sequence);
 
   CHECK_NATNUM (start);
-  starting = BIGNUMP (start) ? 1 + EMACS_INT_MAX : XINT (start);
+  starting = BIGNUMP (start) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (start);
 
   if (!NILP (end))
     {
       CHECK_NATNUM (end);
-      ending = BIGNUMP (end) ? 1 + EMACS_INT_MAX : XINT (end);
+      ending = BIGNUMP (end) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (end);
     }
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
@@ -8911,15 +8911,15 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
       if (!NILP (count))
 	{
           CHECK_INTEGER (count);
-          if (INTP (count))
+          if (FIXNUMP (count))
             {
-              counting = XINT (count);
+              counting = XFIXNUM (count);
             }
 #ifdef HAVE_BIGNUM
           else
             {
               counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
-                1 + EMACS_INT_MAX : -1 + EMACS_INT_MIN;
+                1 + MOST_POSITIVE_FIXNUM : -1 + MOST_NEGATIVE_FIXNUM;
             }
 #endif
 
@@ -8956,7 +8956,7 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 
   if (!NILP (count) && !NILP (from_end))
     {
-      presenting = XINT (matched_count);
+      presenting = XFIXNUM (matched_count);
       presenting = presenting <= counting ? 0 : presenting - counting;
     }
 
@@ -9427,20 +9427,20 @@ mismatch_from_end (Lisp_Object sequence1, Lisp_Object start1, Lisp_Object end1,
                    Lisp_Object test, Lisp_Object key,
                    Boolint UNUSED (return_sequence1_index))
 {
-  Elemcount sequence1_len = XINT (Flength (sequence1));
-  Elemcount sequence2_len = XINT (Flength (sequence2)), ii = 0;
+  Elemcount sequence1_len = XFIXNUM (Flength (sequence1));
+  Elemcount sequence2_len = XFIXNUM (Flength (sequence2)), ii = 0;
   Elemcount starting1, ending1, starting2, ending2;
   Lisp_Object *sequence1_storage = NULL, *sequence2_storage = NULL;
   struct gcpro gcpro1, gcpro2;
 
-  check_sequence_range (sequence1, start1, end1, make_int (sequence1_len));
-  starting1 = XINT (start1);
-  ending1 = INTP (end1) ? XINT (end1) : 1 + EMACS_INT_MAX;
+  check_sequence_range (sequence1, start1, end1, make_fixnum (sequence1_len));
+  starting1 = XFIXNUM (start1);
+  ending1 = FIXNUMP (end1) ? XFIXNUM (end1) : 1 + MOST_POSITIVE_FIXNUM;
   ending1 = min (ending1, sequence1_len);
 
-  check_sequence_range (sequence2, start2, end2, make_int (sequence2_len));
-  starting2 = XINT (start2);
-  ending2 = INTP (end2) ? XINT (end2) : 1 + EMACS_INT_MAX;
+  check_sequence_range (sequence2, start2, end2, make_fixnum (sequence2_len));
+  starting2 = XFIXNUM (start2);
+  ending2 = FIXNUMP (end2) ? XFIXNUM (end2) : 1 + MOST_POSITIVE_FIXNUM;
   ending2 = min (ending2, sequence2_len);
 
   if (LISTP (sequence1))
@@ -9480,7 +9480,7 @@ mismatch_from_end (Lisp_Object sequence1, Lisp_Object start1, Lisp_Object end1,
       for (ii = starting1; ii < ending1; ++ii)
         {
           sequence1_storage[ii - starting1]
-            = make_int (bit_vector_bit (vv, ii));
+            = make_fixnum (bit_vector_bit (vv, ii));
         }
     }
   else
@@ -9527,7 +9527,7 @@ mismatch_from_end (Lisp_Object sequence1, Lisp_Object start1, Lisp_Object end1,
       for (ii = starting2; ii < ending2; ++ii)
         {
           sequence2_storage[ii - starting2]
-            = make_int (bit_vector_bit (vv, ii));
+            = make_fixnum (bit_vector_bit (vv, ii));
         }
     }
   else
@@ -9572,22 +9572,22 @@ mismatch_list_list (Lisp_Object sequence1, Lisp_Object start1, Lisp_Object end1,
 {
   Lisp_Object sequence1_tortoise = sequence1, sequence2_tortoise = sequence2;
   Lisp_Object orig_sequence1 = sequence1, orig_sequence2 = sequence2;
-  Elemcount ending1 = EMACS_INT_MAX, ending2 = EMACS_INT_MAX;
+  Elemcount ending1 = MOST_POSITIVE_FIXNUM, ending2 = MOST_POSITIVE_FIXNUM;
   Elemcount starting1, starting2, counting, startcounting;
   Elemcount shortest_len = 0;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
-  starting1 = INTP (start1) ? XINT (start1) : 1 + EMACS_INT_MAX;
-  starting2 = INTP (start2) ? XINT (start2) : 1 + EMACS_INT_MAX;
+  starting1 = FIXNUMP (start1) ? XFIXNUM (start1) : 1 + MOST_POSITIVE_FIXNUM;
+  starting2 = FIXNUMP (start2) ? XFIXNUM (start2) : 1 + MOST_POSITIVE_FIXNUM;
 
   if (!NILP (end1))
     {
-      ending1 = INTP (end1) ? XINT (end1) : 1 + EMACS_INT_MAX;
+      ending1 = FIXNUMP (end1) ? XFIXNUM (end1) : 1 + MOST_POSITIVE_FIXNUM;
     }
 
   if (!NILP (end2))
     {
-      ending2 = INTP (end2) ? XINT (end2) : 1 + EMACS_INT_MAX;
+      ending2 = FIXNUMP (end2) ? XFIXNUM (end2) : 1 + MOST_POSITIVE_FIXNUM;
     }
 
   if (!ZEROP (start1))
@@ -9636,7 +9636,7 @@ mismatch_list_list (Lisp_Object sequence1, Lisp_Object start1, Lisp_Object end1,
                        : Fcar (sequence2) ) != test_not_unboundp)
         {
           UNGCPRO;
-          return make_integer (XINT (start1) + shortest_len);
+          return make_integer (XFIXNUM (start1) + shortest_len);
         }
 
       sequence1 = CONSP (sequence1) ? XCDR (sequence1) : Fcdr (sequence1);
@@ -9668,14 +9668,14 @@ mismatch_list_list (Lisp_Object sequence1, Lisp_Object start1, Lisp_Object end1,
 
   if (NILP (sequence1))
     {
-      Lisp_Object args[] = { start1, make_int (shortest_len) };
+      Lisp_Object args[] = { start1, make_fixnum (shortest_len) };
       check_sequence_range (orig_sequence1, start1, end1,
                             Fplus (countof (args), args));
     }
 
   if (NILP (sequence2))
     {
-      Lisp_Object args[] = { start2, make_int (shortest_len) };
+      Lisp_Object args[] = { start2, make_fixnum (shortest_len) };
       check_sequence_range (orig_sequence2, start2, end2,
                             Fplus (countof (args), args));
     }
@@ -9683,12 +9683,12 @@ mismatch_list_list (Lisp_Object sequence1, Lisp_Object start1, Lisp_Object end1,
   if ((!NILP (end1) && shortest_len != ending1 - starting1) ||
       (!NILP (end2) && shortest_len != ending2 - starting2))
     {
-      return make_integer (XINT (start1) + shortest_len);
+      return make_integer (XFIXNUM (start1) + shortest_len);
     }
 
   if ((NILP (end1) && CONSP (sequence1)) || (NILP (end2) && CONSP (sequence2)))
     {
-      return make_integer (XINT (start1) + shortest_len); 
+      return make_integer (XFIXNUM (start1) + shortest_len); 
     }
 
   return Qnil;
@@ -9711,12 +9711,12 @@ mismatch_list_string (Lisp_Object list, Lisp_Object list_start,
   Lisp_Object character, orig_list = list;
   struct gcpro gcpro1;
 
-  list_ending = INTP (list_end) ? XINT (list_end) : 1 + EMACS_INT_MAX;
-  list_starting = INTP (list_start) ? XINT (list_start) : 1 + EMACS_INT_MAX;
+  list_ending = FIXNUMP (list_end) ? XFIXNUM (list_end) : 1 + MOST_POSITIVE_FIXNUM;
+  list_starting = FIXNUMP (list_start) ? XFIXNUM (list_start) : 1 + MOST_POSITIVE_FIXNUM;
 
-  string_ending = INTP (string_end) ? XINT (string_end) : 1 + EMACS_INT_MAX;
+  string_ending = FIXNUMP (string_end) ? XFIXNUM (string_end) : 1 + MOST_POSITIVE_FIXNUM;
   string_starting
-    = INTP (string_start) ? XINT (string_start) : 1 + EMACS_INT_MAX;
+    = FIXNUMP (string_start) ? XFIXNUM (string_start) : 1 + MOST_POSITIVE_FIXNUM;
 
   while (char_count < string_starting && string_offset < string_len)
     {
@@ -9753,7 +9753,7 @@ mismatch_list_string (Lisp_Object list, Lisp_Object list_start,
               != test_not_unboundp)
             {
               UNGCPRO;
-              return make_integer (XINT (list_start) + char_count);
+              return make_integer (XFIXNUM (list_start) + char_count);
             }
         }
       else
@@ -9788,7 +9788,7 @@ mismatch_list_string (Lisp_Object list, Lisp_Object list_start,
 
   if (NILP (list))
     {
-      Lisp_Object args[] = { list_start, make_int (char_count) };
+      Lisp_Object args[] = { list_start, make_fixnum (char_count) };
       check_sequence_range (orig_list, list_start, list_end,
                             Fplus (countof (args), args));
     }
@@ -9796,14 +9796,14 @@ mismatch_list_string (Lisp_Object list, Lisp_Object list_start,
   if (string_data == XSTRING_DATA (string) + XSTRING_LENGTH (string))
     {
       check_sequence_range (string, string_start, string_end,
-                            make_int (char_count));
+                            make_fixnum (char_count));
     }
 
   if ((NILP (string_end) ?
        string_offset < string_len : string_starting < string_ending) ||
       (NILP (list_end) ? !NILP (list) : list_starting < list_ending))
     {
-      return make_integer (return_list_index ? XINT (list_start) + char_count :
+      return make_integer (return_list_index ? XFIXNUM (list_start) + char_count :
                            char_count);
     }
   
@@ -9825,16 +9825,16 @@ mismatch_list_array (Lisp_Object list, Lisp_Object list_start,
   Lisp_Object orig_list = list;
   struct gcpro gcpro1;
 
-  list_ending = INTP (list_end) ? XINT (list_end) : 1 + EMACS_INT_MAX;
-  list_starting = INTP (list_start) ? XINT (list_start) : 1 + EMACS_INT_MAX;
+  list_ending = FIXNUMP (list_end) ? XFIXNUM (list_end) : 1 + MOST_POSITIVE_FIXNUM;
+  list_starting = FIXNUMP (list_start) ? XFIXNUM (list_start) : 1 + MOST_POSITIVE_FIXNUM;
 
-  array_ending = INTP (array_end) ? XINT (array_end) : 1 + EMACS_INT_MAX;
-  array_starting = INTP (array_start) ? XINT (array_start) : 1 + EMACS_INT_MAX;
-  array_len = XINT (Flength (array));
+  array_ending = FIXNUMP (array_end) ? XFIXNUM (array_end) : 1 + MOST_POSITIVE_FIXNUM;
+  array_starting = FIXNUMP (array_start) ? XFIXNUM (array_start) : 1 + MOST_POSITIVE_FIXNUM;
+  array_len = XFIXNUM (Flength (array));
 
   array_ending = min (array_ending, array_len);
 
-  check_sequence_range (array, array_start, array_end, make_int (array_len));
+  check_sequence_range (array, array_start, array_end, make_fixnum (array_len));
 
   if (!ZEROP (list_start))
     {
@@ -9858,16 +9858,16 @@ mismatch_list_array (Lisp_Object list, Lisp_Object list_start,
       if (return_list_index)
         {
           if (check_match (test, key, CONSP (list) ? XCAR (list) : Fcar (list),
-                           Faref (array, make_int (array_starting)))
+                           Faref (array, make_fixnum (array_starting)))
               != test_not_unboundp)
             {
               UNGCPRO;
-              return make_integer (XINT (list_start) + ii);
+              return make_integer (XFIXNUM (list_start) + ii);
             }
         }
       else
         {
-          if (check_match (test, key, Faref (array, make_int (array_starting)),
+          if (check_match (test, key, Faref (array, make_fixnum (array_starting)),
                            CONSP (list) ? XCAR (list) : Fcar (list))
               != test_not_unboundp)
             {
@@ -9886,7 +9886,7 @@ mismatch_list_array (Lisp_Object list, Lisp_Object list_start,
 
   if (NILP (list))
     {
-      Lisp_Object args[] = { list_start, make_int (ii) };
+      Lisp_Object args[] = { list_start, make_fixnum (ii) };
       check_sequence_range (orig_list, list_start, list_end,
                             Fplus (countof (args), args));
     }
@@ -9894,7 +9894,7 @@ mismatch_list_array (Lisp_Object list, Lisp_Object list_start,
   if (array_starting < array_ending ||
       (NILP (list_end) ? !NILP (list) : list_starting < list_ending))
     {
-      return make_integer (return_list_index ? XINT (list_start) + ii :
+      return make_integer (return_list_index ? XFIXNUM (list_start) + ii :
                            array_starting);
     }
 
@@ -9916,15 +9916,15 @@ mismatch_string_array (Lisp_Object string, Lisp_Object string_start,
   Elemcount string_starting, string_ending;
   Lisp_Object character;
 
-  array_starting = INTP (array_start) ? XINT (array_start) : 1 + EMACS_INT_MAX;
-  array_ending = INTP (array_end) ? XINT (array_end) : 1 + EMACS_INT_MAX;
-  array_length = XINT (Flength (array));
-  check_sequence_range (array, array_start, array_end, make_int (array_length));
+  array_starting = FIXNUMP (array_start) ? XFIXNUM (array_start) : 1 + MOST_POSITIVE_FIXNUM;
+  array_ending = FIXNUMP (array_end) ? XFIXNUM (array_end) : 1 + MOST_POSITIVE_FIXNUM;
+  array_length = XFIXNUM (Flength (array));
+  check_sequence_range (array, array_start, array_end, make_fixnum (array_length));
   array_ending = min (array_ending, array_length);
 
-  string_ending = INTP (string_end) ? XINT (string_end) : 1 + EMACS_INT_MAX;
+  string_ending = FIXNUMP (string_end) ? XFIXNUM (string_end) : 1 + MOST_POSITIVE_FIXNUM;
   string_starting
-    = INTP (string_start) ? XINT (string_start) : 1 + EMACS_INT_MAX;
+    = FIXNUMP (string_start) ? XFIXNUM (string_start) : 1 + MOST_POSITIVE_FIXNUM;
 
   while (char_count < string_starting && string_offset < string_len)
     {
@@ -9941,7 +9941,7 @@ mismatch_string_array (Lisp_Object string, Lisp_Object string_start,
       if (return_string_index)
         {
           if (check_match (test, key, character,
-                           Faref (array, make_int (array_starting)))
+                           Faref (array, make_fixnum (array_starting)))
               != test_not_unboundp)
             {
               return make_integer (char_count);
@@ -9950,11 +9950,11 @@ mismatch_string_array (Lisp_Object string, Lisp_Object string_start,
       else
         {
           if (check_match (test, key,
-                           Faref (array, make_int (array_starting)),
+                           Faref (array, make_fixnum (array_starting)),
                            character)
               != test_not_unboundp)
             {
-              return make_integer (XINT (array_start) + char_count);
+              return make_integer (XFIXNUM (array_start) + char_count);
             }
         }
 
@@ -9976,7 +9976,7 @@ mismatch_string_array (Lisp_Object string, Lisp_Object string_start,
   if (string_data == XSTRING_DATA (string) + XSTRING_LENGTH (string))
     {
       check_sequence_range (string, string_start, string_end,
-                            make_int (char_count));
+                            make_fixnum (char_count));
     }
 
   if ((NILP (string_end) ?
@@ -9984,7 +9984,7 @@ mismatch_string_array (Lisp_Object string, Lisp_Object string_start,
       (NILP (array_end) ? !NILP (array) : array_starting < array_ending))
     {
       return make_integer (return_string_index ? char_count :
-                           XINT (array_start) + char_count);
+                           XFIXNUM (array_start) + char_count);
     }
   
   return Qnil;
@@ -10008,13 +10008,13 @@ mismatch_string_string (Lisp_Object string1,
   Elemcount char_count2 = 0, string2_starting, string2_ending;
   Lisp_Object character1, character2;
 
-  string1_ending = INTP (string1_end) ? XINT (string1_end) : 1 + EMACS_INT_MAX;
+  string1_ending = FIXNUMP (string1_end) ? XFIXNUM (string1_end) : 1 + MOST_POSITIVE_FIXNUM;
   string1_starting
-    = INTP (string1_start) ? XINT (string1_start) : 1 + EMACS_INT_MAX;
+    = FIXNUMP (string1_start) ? XFIXNUM (string1_start) : 1 + MOST_POSITIVE_FIXNUM;
 
   string2_starting
-    = INTP (string2_start) ? XINT (string2_start) : 1 + EMACS_INT_MAX;
-  string2_ending = INTP (string2_end) ? XINT (string2_end) : 1 + EMACS_INT_MAX;
+    = FIXNUMP (string2_start) ? XFIXNUM (string2_start) : 1 + MOST_POSITIVE_FIXNUM;
+  string2_ending = FIXNUMP (string2_end) ? XFIXNUM (string2_end) : 1 + MOST_POSITIVE_FIXNUM;
 
   while (char_count1 < string1_starting && string1_offset < string1_len)
     {
@@ -10071,13 +10071,13 @@ mismatch_string_string (Lisp_Object string1,
   if (string1_data == XSTRING_DATA (string1) + XSTRING_LENGTH (string1))
     {
       check_sequence_range (string1, string1_start, string1_end,
-                            make_int (char_count1));
+                            make_fixnum (char_count1));
     }
 
   if (string2_data == XSTRING_DATA (string2) + XSTRING_LENGTH (string2))
     {
       check_sequence_range (string2, string2_start, string2_end,
-                            make_int (char_count2));
+                            make_fixnum (char_count2));
     }
 
   if ((!NILP (string1_end) && string1_starting < string1_ending) ||
@@ -10104,24 +10104,24 @@ mismatch_array_array (Lisp_Object array1, Lisp_Object start1, Lisp_Object end1,
                       Lisp_Object test, Lisp_Object key,
                       Boolint UNUSED (return_array1_index))
 {
-  Elemcount len1 = XINT (Flength (array1)), len2 = XINT (Flength (array2));
-  Elemcount ending1 = EMACS_INT_MAX, ending2 = EMACS_INT_MAX;
+  Elemcount len1 = XFIXNUM (Flength (array1)), len2 = XFIXNUM (Flength (array2));
+  Elemcount ending1 = MOST_POSITIVE_FIXNUM, ending2 = MOST_POSITIVE_FIXNUM;
   Elemcount starting1, starting2; 
 
-  check_sequence_range (array1, start1, end1, make_int (len1));
-  check_sequence_range (array2, start2, end2, make_int (len2));
+  check_sequence_range (array1, start1, end1, make_fixnum (len1));
+  check_sequence_range (array2, start2, end2, make_fixnum (len2));
 
-  starting1 = INTP (start1) ? XINT (start1) : 1 + EMACS_INT_MAX;
-  starting2 = INTP (start2) ? XINT (start2) : 1 + EMACS_INT_MAX;
+  starting1 = FIXNUMP (start1) ? XFIXNUM (start1) : 1 + MOST_POSITIVE_FIXNUM;
+  starting2 = FIXNUMP (start2) ? XFIXNUM (start2) : 1 + MOST_POSITIVE_FIXNUM;
 
   if (!NILP (end1))
     {
-      ending1 = INTP (end1) ? XINT (end1) : 1 + EMACS_INT_MAX;
+      ending1 = FIXNUMP (end1) ? XFIXNUM (end1) : 1 + MOST_POSITIVE_FIXNUM;
     }
 
   if (!NILP (end2))
     {
-      ending2 = INTP (end2) ? XINT (end2) : 1 + EMACS_INT_MAX;
+      ending2 = FIXNUMP (end2) ? XFIXNUM (end2) : 1 + MOST_POSITIVE_FIXNUM;
     }
 
   ending1 = min (ending1, len1);
@@ -10129,8 +10129,8 @@ mismatch_array_array (Lisp_Object array1, Lisp_Object start1, Lisp_Object end1,
           
   while (starting1 < ending1 && starting2 < ending2)
     {
-      if (check_match (test, key, Faref (array1, make_int (starting1)),
-                       Faref (array2, make_int (starting2)))
+      if (check_match (test, key, Faref (array1, make_fixnum (starting1)),
+                       Faref (array2, make_fixnum (starting2)))
           != test_not_unboundp)
         {
           return make_integer (starting1);
@@ -10296,8 +10296,8 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
   Boolint test_not_unboundp = 1, return_first = 0;
   check_test_func_t check_test = NULL, check_match = NULL;
   mismatch_func_t mismatch = NULL;
-  Elemcount starting1 = 0, ending1 = 1 + EMACS_INT_MAX, starting2 = 0;
-  Elemcount ending2 = 1 + EMACS_INT_MAX, ii = 0;
+  Elemcount starting1 = 0, ending1 = 1 + MOST_POSITIVE_FIXNUM, starting2 = 0;
+  Elemcount ending2 = 1 + MOST_POSITIVE_FIXNUM, ii = 0;
   Elemcount length1;
   Lisp_Object object = Qnil;
   struct gcpro gcpro1, gcpro2;
@@ -10311,9 +10311,9 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
   CHECK_KEY_ARGUMENT (key);
 
   CHECK_NATNUM (start1);
-  starting1 = INTP (start1) ? XINT (start1) : 1 + EMACS_INT_MAX;
+  starting1 = FIXNUMP (start1) ? XFIXNUM (start1) : 1 + MOST_POSITIVE_FIXNUM;
   CHECK_NATNUM (start2);
-  starting2 = INTP (start2) ? XINT (start2) : 1 + EMACS_INT_MAX;
+  starting2 = FIXNUMP (start2) ? XFIXNUM (start2) : 1 + MOST_POSITIVE_FIXNUM;
 
   if (!NILP (end1))
     {
@@ -10321,13 +10321,13 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
 
       CHECK_NATNUM (end1);
       check_sequence_range (sequence1, start1, end1, len1);
-      ending1 = min (XINT (end1), XINT (len1));
+      ending1 = min (XFIXNUM (end1), XFIXNUM (len1));
     }
   else
     {
       end1 = Flength (sequence1);
       check_sequence_range (sequence1, start1, end1, end1);
-      ending1 = XINT (end1);
+      ending1 = XFIXNUM (end1);
     }
 
   length1 = ending1 - starting1;
@@ -10338,13 +10338,13 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
 
       CHECK_NATNUM (end2);
       check_sequence_range (sequence2, start2, end2, len2);
-      ending2 = min (XINT (end2), XINT (len2));
+      ending2 = min (XFIXNUM (end2), XFIXNUM (len2));
     }
   else
     {
       end2 = Flength (sequence2);
       check_sequence_range (sequence2, start2, end2, end2);
-      ending2 = XINT (end2);
+      ending2 = XFIXNUM (end2);
     }
 
   check_match = get_check_match_function (&test, test_not, Qnil, Qnil, key,
@@ -10376,7 +10376,7 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
       while (ii < ending2)
         {
           position0 = position (&object, first, sequence2, check_test,
-                                test_not_unboundp, test, key, make_int (ii),
+                                test_not_unboundp, test, key, make_fixnum (ii),
                                 end2, Qnil, Qnil, Qsearch);
           if (NILP (position0))
             {
@@ -10384,16 +10384,16 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
               return Qnil;
             }
 
-          if (length1 + XINT (position0) <= ending2 &&
+          if (length1 + XFIXNUM (position0) <= ending2 &&
               (return_first ?
                NILP (mismatch (sequence1, mismatch_start1, end1,
                                sequence2,
-                               make_int (1 + XINT (position0)),
-                               make_int (length1 + XINT (position0)),
+                               make_fixnum (1 + XFIXNUM (position0)),
+                               make_fixnum (length1 + XFIXNUM (position0)),
                                check_match, test_not_unboundp, test, key, 1)) :
                NILP (mismatch (sequence2,
-                               make_int (1 + XINT (position0)),
-                               make_int (length1 + XINT (position0)),
+                               make_fixnum (1 + XFIXNUM (position0)),
+                               make_fixnum (length1 + XFIXNUM (position0)),
                                sequence1, mismatch_start1, end1,
                                check_match, test_not_unboundp, test, key, 0))))
 
@@ -10403,7 +10403,7 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
               return position0;
             }
 
-          ii = XINT (position0) + 1;
+          ii = XFIXNUM (position0) + 1;
         }
 
       UNGCPRO;
@@ -10419,7 +10419,7 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
         {
           position0 = position (&object, last, sequence2, check_test,
                                 test_not_unboundp, test, key, start2,
-                                make_int (ii), Qt, Qnil, Qsearch);
+                                make_fixnum (ii), Qt, Qnil, Qsearch);
 
           if (NILP (position0))
             {
@@ -10427,24 +10427,24 @@ arguments: (SEQUENCE1 SEQUENCE2 &key (TEST #'eql) (KEY #'identity) (START1 0) EN
               return Qnil;
             }
 
-          if (XINT (position0) - length1 + 1 >= starting2 &&
+          if (XFIXNUM (position0) - length1 + 1 >= starting2 &&
               (return_first ?
                NILP (mismatch (sequence1, start1, mismatch_end1,
                                sequence2,
-                               make_int (XINT (position0) - length1 + 1),
-                               make_int (XINT (position0)),
+                               make_fixnum (XFIXNUM (position0) - length1 + 1),
+                               make_fixnum (XFIXNUM (position0)),
                                check_match, test_not_unboundp, test, key, 1)) :
                NILP (mismatch (sequence2,
-                               make_int (XINT (position0) - length1 + 1),
-                               make_int (XINT (position0)),
+                               make_fixnum (XFIXNUM (position0) - length1 + 1),
+                               make_fixnum (XFIXNUM (position0)),
                                sequence1, start1, mismatch_end1,
                                check_match, test_not_unboundp, test, key, 0))))
             {
               UNGCPRO;
-              return make_int (XINT (position0) - length1 + 1);
+              return make_fixnum (XFIXNUM (position0) - length1 + 1);
             }
 
-          ii = XINT (position0);
+          ii = XFIXNUM (position0);
         }
 
       UNGCPRO;
@@ -11099,7 +11099,7 @@ in which case you can't use this.
   while (loads-- > 0)
     {
       Lisp_Object load = (NILP (use_floats) ?
-			  make_int ((int) (100.0 * load_ave[loads]))
+			  make_fixnum ((int) (100.0 * load_ave[loads]))
 			  : make_float (load_ave[loads]));
       ret = Fcons (load, ret);
     }
@@ -11161,14 +11161,14 @@ for supporting multiple Emacs variants, lobby Richard Stallman at
       /* Original definition */
       return NILP (Fmemq (fexp, Vfeatures)) ? Qnil : Qt;
     }
-  else if (INTP (fexp) || FLOATP (fexp))
+  else if (FIXNUMP (fexp) || FLOATP (fexp))
     {
       double d = extract_float (fexp);
 
       if (featurep_emacs_version == 0.0)
 	{
-	  featurep_emacs_version = XINT (Vemacs_major_version) +
-	    (XINT (Vemacs_minor_version) / 100.0);
+	  featurep_emacs_version = XFIXNUM (Vemacs_major_version) +
+	    (XFIXNUM (Vemacs_minor_version) / 100.0);
 	}
       return featurep_emacs_version >= d ? Qt : Qnil;
     }
@@ -11459,7 +11459,7 @@ base64_decode_1 (Lstream *istream, Ibyte *to, Charcount *ccptr)
 	break;
       if (ec == '=')
 	base64_conversion_error ("Illegal `=' character while decoding base64",
-		      make_int (streampos));
+		      make_fixnum (streampos));
       value = base64_char_to_value[ec] << 18;
 
       /* Process second byte of a quadruplet.  */
@@ -11469,7 +11469,7 @@ base64_decode_1 (Lstream *istream, Ibyte *to, Charcount *ccptr)
 				 Qunbound);
       if (ec == '=')
 	base64_conversion_error ("Illegal `=' character while decoding base64",
-		      make_int (streampos));
+		      make_fixnum (streampos));
       value |= base64_char_to_value[ec] << 12;
       STORE_BYTE (e, value >> 16, ccnt);
 
@@ -11488,7 +11488,7 @@ base64_decode_1 (Lstream *istream, Ibyte *to, Charcount *ccptr)
 	  if (ec != '=')
 	    base64_conversion_error
 	      ("Padding `=' expected but not found while decoding base64",
-	       make_int (streampos));
+	       make_fixnum (streampos));
 	  continue;
 	}
 
@@ -11561,7 +11561,7 @@ into shorter lines.
     BUF_SET_PT (buf, begv);
 
   /* We return the length of the encoded text. */
-  return make_int (encoded_length);
+  return make_fixnum (encoded_length);
 }
 
 DEFUN ("base64-encode-string", Fbase64_encode_string, 1, 2, 0, /*
@@ -11635,7 +11635,7 @@ Characters out of the base64 alphabet are ignored.
   if (old_pt >= begv && old_pt < zv)
     BUF_SET_PT (buf, begv);
 
-  return make_int (cc_decoded_length);
+  return make_fixnum (cc_decoded_length);
 }
 
 DEFUN ("base64-decode-string", Fbase64_decode_string, 1, 1, 0, /*

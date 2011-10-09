@@ -1425,9 +1425,9 @@ static Lisp_Object
 mswindows_color_instance_rgb_components (Lisp_Color_Instance *c)
 {
   COLORREF color = COLOR_INSTANCE_MSWINDOWS_COLOR (c);
-  return list3 (make_int (GetRValue (color) * 257),
-		make_int (GetGValue (color) * 257),
-		make_int (GetBValue (color) * 257));
+  return list3 (make_fixnum (GetRValue (color) * 257),
+		make_fixnum (GetGValue (color) * 257),
+		make_fixnum (GetBValue (color) * 257));
 }
 
 static int

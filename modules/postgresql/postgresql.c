@@ -530,7 +530,7 @@ Return a connection default structure.
 			  build_extstring (pcio[0].val, PG_OS_CODING)),
 		   list3 (build_extstring (pcio[0].label, PG_OS_CODING),
 			  build_extstring (pcio[0].dispchar, PG_OS_CODING),
-			  make_int (pcio[0].dispsize))));
+			  make_fixnum (pcio[0].dispsize))));
 
   for (i = 1; pcio[i].keyword; i++)
     {
@@ -541,7 +541,7 @@ Return a connection default structure.
 			      build_extstring (pcio[i].val, PG_OS_CODING)),
 		       list3 (build_extstring (pcio[i].label, PG_OS_CODING),
 			      build_extstring (pcio[i].dispchar, PG_OS_CODING),
-			      make_int (pcio[i].dispsize))));
+			      make_fixnum (pcio[i].dispsize))));
       {
 	Lisp_Object args[2];
 	args[0] = temp;
@@ -670,7 +670,7 @@ Return client coding system.
   P = (XPGCONN (conn))->pgconn;
   CHECK_LIVE_CONNECTION (P);
 
-  return make_int (PQclientEncoding (P));
+  return make_fixnum (PQclientEncoding (P));
 }
 
 DEFUN ("pq-set-client-encoding", Fpq_set_client_encoding, 2, 2, 0, /*
@@ -694,7 +694,7 @@ Set client coding system.
   if ((rc = PQsetClientEncoding (P, c_encoding)) < 0)
     signal_error (Qinvalid_argument, "bad encoding", Qunbound);
   else
-    return make_int (rc);
+    return make_fixnum (rc);
 }
 
 #endif
@@ -911,9 +911,9 @@ pq::backend-pid   Process ID of backend process
          char *PQport(PGconn *conn)
        */
       if ((p = PQport(P)))
-	return make_int(atoi(p));
+	return make_fixnum(atoi(p));
       else
-        return make_int(-1);
+        return make_fixnum(-1);
     }
   else if (EQ (field, Qpqtty))
     /* PQtty Returns the debug tty of the connection.
@@ -959,7 +959,7 @@ pq::backend-pid   Process ID of backend process
        this connection.
        int PQbackendPID(PGconn *conn);
      */
-    return make_int (PQbackendPID(P));
+    return make_fixnum (PQbackendPID(P));
   else
     signal_error (Qinvalid_argument, "bad PGconn accessor", Qunbound);
 }
@@ -1159,7 +1159,7 @@ Return the number of tuples (instances) in the query result.
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return make_int (PQntuples (R));
+  return make_fixnum (PQntuples (R));
 }
 
 DEFUN ("pq-nfields", Fpq_nfields, 1, 1, 0, /*
@@ -1173,7 +1173,7 @@ Return the number of fields (attributes) in each tuple of the query result.
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return make_int (PQnfields (R));
+  return make_fixnum (PQnfields (R));
 }
 
 DEFUN ("pq-binary-tuples", Fpq_binary_tuples, 1, 1, 0, /*
@@ -1199,11 +1199,11 @@ Field indices start at 0.
   PGresult *R;
 
   CHECK_PGRESULT (result);
-  CHECK_INT (field_index);
+  CHECK_FIXNUM (field_index);
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return build_extstring (PQfname (R, XINT (field_index)), PG_OS_CODING);
+  return build_extstring (PQfname (R, XFIXNUM (field_index)), PG_OS_CODING);
 }
 
 DEFUN ("pq-fnumber", Fpq_fnumber, 2, 2, 0, /*
@@ -1222,7 +1222,7 @@ Return the number of fields (attributes) in each tuple of the query result.
   TO_EXTERNAL_FORMAT (LISP_STRING, field_name,
 		      C_STRING_ALLOCA, c_field_name, Qnative);
 
-  return make_int (PQfnumber (R, c_field_name));
+  return make_fixnum (PQfnumber (R, c_field_name));
 }
 
 DEFUN ("pq-ftype", Fpq_ftype, 2, 2, 0, /*
@@ -1235,11 +1235,11 @@ start at 0.
   PGresult *R;
 
   CHECK_PGRESULT (result);
-  CHECK_INT (field_num);
+  CHECK_FIXNUM (field_num);
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return make_int (PQftype (R, XINT (field_num)));
+  return make_fixnum (PQftype (R, XFIXNUM (field_num)));
 }
 
 DEFUN ("pq-fsize", Fpq_fsize, 2, 2, 0, /*
@@ -1251,11 +1251,11 @@ Field indices start at 0.
   PGresult *R;
 
   CHECK_PGRESULT (result);
-  CHECK_INT (field_index);
+  CHECK_FIXNUM (field_index);
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return make_int (PQftype (R, XINT (field_index)));
+  return make_fixnum (PQftype (R, XFIXNUM (field_index)));
 }
 
 DEFUN ("pq-fmod", Fpq_fmod, 2, 2, 0, /*
@@ -1267,11 +1267,11 @@ Field indices start at 0.
   PGresult *R;
 
   CHECK_PGRESULT (result);
-  CHECK_INT (field_index);
+  CHECK_FIXNUM (field_index);
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return make_int (PQfmod (R, XINT (field_index)));
+  return make_fixnum (PQfmod (R, XFIXNUM (field_index)));
 }
 
 DEFUN ("pq-get-value", Fpq_get_value, 3, 3, 0, /*
@@ -1283,12 +1283,12 @@ Tuple and field indices start at 0.
   PGresult *R;
 
   CHECK_PGRESULT (result);
-  CHECK_INT (tup_num);
-  CHECK_INT (field_num);
+  CHECK_FIXNUM (tup_num);
+  CHECK_FIXNUM (field_num);
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return build_extstring (PQgetvalue (R, XINT (tup_num), XINT (field_num)),
+  return build_extstring (PQgetvalue (R, XFIXNUM (tup_num), XFIXNUM (field_num)),
 			   PG_OS_CODING);
 }
 
@@ -1303,12 +1303,12 @@ data returned by PQgetvalue doesn't either.)
   PGresult *R;
 
   CHECK_PGRESULT (result);
-  CHECK_INT (tup_num);
-  CHECK_INT (field_num);
+  CHECK_FIXNUM (tup_num);
+  CHECK_FIXNUM (field_num);
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return make_int (PQgetlength (R, XINT (tup_num), XINT (field_num)));
+  return make_fixnum (PQgetlength (R, XFIXNUM (tup_num), XFIXNUM (field_num)));
 }
 
 DEFUN ("pq-get-is-null", Fpq_get_is_null, 3, 3, 0, /*
@@ -1319,12 +1319,12 @@ Returns the null status of a field value.
   PGresult *R;
 
   CHECK_PGRESULT (result);
-  CHECK_INT (tup_num);
-  CHECK_INT (field_num);
+  CHECK_FIXNUM (tup_num);
+  CHECK_FIXNUM (field_num);
   R = (XPGRESULT (result))->pgresult;
   PUKE_IF_NULL (R);
 
-  return PQgetisnull (R, XINT (tup_num), XINT (field_num)) ? Qt : Qnil;
+  return PQgetisnull (R, XFIXNUM (tup_num), XFIXNUM (field_num)) ? Qt : Qnil;
 }
 
 DEFUN ("pq-cmd-status", Fpq_cmd_status, 1, 1, 0, /*
@@ -1367,10 +1367,10 @@ Returns the object id of the tuple inserted.
   PUKE_IF_NULL (R);
 
 #ifdef HAVE_POSTGRESQLV7
-  return make_int (PQoidValue (R));
+  return make_fixnum (PQoidValue (R));
 #else
   /* Use the old interface */
-  return make_int (atoi (PQoidStatus (R)));
+  return make_fixnum (atoi (PQoidStatus (R)));
 #endif
 }
 
@@ -1390,7 +1390,7 @@ Needs to be called only on a connected database connection.
   P = (XPGCONN (conn))->pgconn;
   CHECK_LIVE_CONNECTION (P);
 
-  return make_int (PQsetnonblocking (P, !NILP (arg)));
+  return make_fixnum (PQsetnonblocking (P, !NILP (arg)));
 }
 
 DEFUN ("pq-is-nonblocking", Fpq_is_nonblocking, 1, 1, 0, /*
@@ -1418,7 +1418,7 @@ Force the write buffer to be written (or at least try).
   P = (XPGCONN (conn))->pgconn;
   CHECK_LIVE_CONNECTION (P);
 
-  return make_int (PQflush (P));
+  return make_fixnum (PQflush (P));
 }
 #endif
 
@@ -1446,7 +1446,7 @@ aren't any notifications to process.
   {
     Lisp_Object temp;
 
-    temp = list2 (build_extstring (PGN->relname, PG_OS_CODING), make_int (PGN->be_pid));
+    temp = list2 (build_extstring (PGN->relname, PG_OS_CODING), make_fixnum (PGN->be_pid));
     free ((void *)PGN);
     return temp;
   }
@@ -1459,7 +1459,7 @@ Get encoding id from environment variable PGCLIENTENCODING.
 */
        ())
 {
-  return make_int (PQenv2encoding ());
+  return make_fixnum (PQenv2encoding ());
 }
 #endif /* MULE */
 
@@ -1478,7 +1478,7 @@ DEFUN ("pq-lo-import", Fpq_lo_import, 2, 2, 0, /*
 
   LISP_PATHNAME_CONVERT_OUT (filename, c_filename);
 
-  return make_int ((int)lo_import (P, c_filename));
+  return make_fixnum ((int)lo_import (P, c_filename));
 }
 
 DEFUN ("pq-lo-export", Fpq_lo_export, 3, 3, 0, /*
@@ -1489,7 +1489,7 @@ DEFUN ("pq-lo-export", Fpq_lo_export, 3, 3, 0, /*
   char *c_filename;
 
   CHECK_PGCONN (conn);
-  CHECK_INT (oid);
+  CHECK_FIXNUM (oid);
   CHECK_STRING (filename);
 
   P = (XPGCONN (conn))->pgconn;
@@ -1497,7 +1497,7 @@ DEFUN ("pq-lo-export", Fpq_lo_export, 3, 3, 0, /*
 
   LISP_PATHNAME_CONVERT_OUT (filename, c_filename);
 
-  return make_int ((int)lo_export (P, XINT (oid), c_filename));
+  return make_fixnum ((int)lo_export (P, XFIXNUM (oid), c_filename));
 }
 
 DEFUN ("pq-make-empty-pgresult", Fpq_make_empty_pgresult, 2, 2, 0, /*
@@ -1557,7 +1557,7 @@ returned.
 
   ret = PQgetline (P, buffer, sizeof (buffer));
 
-  return Fcons (make_int (ret), build_extstring (buffer, PG_OS_CODING));
+  return Fcons (make_fixnum (ret), build_extstring (buffer, PG_OS_CODING));
 }
 
 DEFUN ("pq-put-line", Fpq_put_line, 2, 2, 0, /*
@@ -1625,7 +1625,7 @@ The returned string is *not* null-terminated.
 
   if (ret == -1) return Qt; /* done! */
   else if (!ret) return Qnil; /* no data yet */
-  else return Fcons (make_int (ret),
+  else return Fcons (make_fixnum (ret),
 		     make_extstring ((Extbyte *) buffer, ret, PG_OS_CODING));
 }
 
@@ -1907,7 +1907,7 @@ init_postgresql_from_environment (void)
       FROB ("PGOPTIONS", VXPGOPTIONS);
 
       if ((p = egetenv ("PGPORT")))
-	VXPGPORT = make_int (atoi ((char *) p));
+	VXPGPORT = make_fixnum (atoi ((char *) p));
       else
 	VXPGPORT = Qnil;
 

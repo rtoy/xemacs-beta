@@ -66,7 +66,7 @@ extract_object_file_name (int fd, EMACS_INT doc_pos,
 	name_reloc = build_istring (name_nonreloc);
       return_me = list3 (build_msg_string
 			 ("Position out of range in doc string file"),
-			  name_reloc, make_int (position));
+			  name_reloc, make_fixnum (position));
       goto done;
     }
 
@@ -181,7 +181,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 	name_reloc = build_istring (name_nonreloc);
       return_me = list3 (build_msg_string
 			 ("Position out of range in doc string file"),
-			  name_reloc, make_int (position));
+			  name_reloc, make_fixnum (position));
       goto done;
     }
 
@@ -271,7 +271,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
             default:
               return_me = list2 (build_msg_string
 	("Invalid data in documentation file -- ^A followed by weird code"),
-                                 make_int (c));
+                                 make_fixnum (c));
               goto done;
             }
 	}
@@ -317,16 +317,16 @@ get_doc_string (Lisp_Object filepos)
   Lisp_Object name_reloc = Qnil;
   int standard_doc_file = 0;
 
-  if (INTP (filepos))
+  if (FIXNUMP (filepos))
     {
       file = Vinternal_doc_file_name;
       standard_doc_file = 1;
-      position = XINT (filepos);
+      position = XFIXNUM (filepos);
     }
-  else if (CONSP (filepos) && INTP (XCDR (filepos)))
+  else if (CONSP (filepos) && FIXNUMP (XCDR (filepos)))
     {
       file = XCAR (filepos);
-      position = XINT (XCDR (filepos));
+      position = XFIXNUM (XCDR (filepos));
       if (position < 0)
 	position = - position;
     }
@@ -414,16 +414,16 @@ get_object_file_name (Lisp_Object filepos)
   Lisp_Object name_reloc = Qnil;
   int standard_doc_file = 0;
 
-  if (INTP (filepos))
+  if (FIXNUMP (filepos))
     {
       file = Vinternal_doc_file_name;
       standard_doc_file = 1;
-      position = XINT (filepos);
+      position = XFIXNUM (filepos);
     }
-  else if (CONSP (filepos) && INTP (XCDR (filepos)))
+  else if (CONSP (filepos) && FIXNUMP (XCDR (filepos)))
     {
       file = XCAR (filepos);
-      position = XINT (XCDR (filepos));
+      position = XFIXNUM (XCDR (filepos));
       if (position < 0)
 	position = - position;
     }
@@ -532,7 +532,7 @@ If TYPE is `defvar', then variable definitions are acceptable.
 	  else
 	    {
 	      filename = get_object_file_name 
-		(make_int (- (EMACS_INT) XSUBR (fun)->doc));
+		(make_fixnum (- (EMACS_INT) XSUBR (fun)->doc));
 	      return filename;
 	    }
 	}
@@ -562,11 +562,11 @@ If TYPE is `defvar', then variable definitions are acceptable.
 
       if (!NILP(doc_offset)) 
 	{
-	  if (INTP(doc_offset))
+	  if (FIXNUMP(doc_offset))
 	    {
 	      filename = get_object_file_name 
-		(XINT (doc_offset) > 0 ? doc_offset
-		 : make_int (- XINT (doc_offset)));
+		(XFIXNUM (doc_offset) > 0 ? doc_offset
+		 : make_fixnum (- XFIXNUM (doc_offset)));
 	    }
 	  else if (CONSP(doc_offset))
 	    {
@@ -599,7 +599,7 @@ string is passed through `substitute-command-keys'.
       if ((EMACS_INT) XSUBR (fun)->doc >= 0)
 	doc = build_cistring (XSUBR (fun)->doc);
       else
-        doc = get_doc_string (make_int (- (EMACS_INT) XSUBR (fun)->doc));
+        doc = get_doc_string (make_fixnum (- (EMACS_INT) XSUBR (fun)->doc));
     }
   else if (COMPILED_FUNCTIONP (fun))
     {
@@ -699,8 +699,8 @@ translation.
   GCPRO1 (doc);
 
   doc = Fget (symbol, prop, Qnil);
-  if (INTP (doc))
-    doc = get_doc_string (XINT (doc) > 0 ? doc : make_int (- XINT (doc)));
+  if (FIXNUMP (doc))
+    doc = get_doc_string (XFIXNUM (doc) > 0 ? doc : make_fixnum (- XFIXNUM (doc)));
   else if (CONSP (doc))
     doc = get_doc_string (doc);
 #ifdef I18N3
@@ -786,7 +786,7 @@ when doc strings are referred to in the dumped Emacs.
 	  sym = oblookup (Vobarray, p + 2, end - p - 2);
 	  if (SYMBOLP (sym))
 	    {
-              Lisp_Object offset = make_int (pos + end + 1 - buf);
+              Lisp_Object offset = make_fixnum (pos + end + 1 - buf);
 	      /* Attach a docstring to a variable */
 	      if (p[1] == 'V')
 		{
@@ -801,12 +801,12 @@ when doc strings are referred to in the dumped Emacs.
 		      /* In the case of duplicate doc file entries, always
 			 take the later one.  But if the doc is not an int
 			 (a string, say) leave it alone. */
-		      if (!INTP (old))
+		      if (!FIXNUMP (old))
 			goto weird;
 		    }
 		  Fput (sym, Qvariable_documentation,
                         ((end[1] == '*')
-                         ? make_int (- XINT (offset))
+                         ? make_fixnum (- XFIXNUM (offset))
                          : offset));
 		}
 	      /* Attach a docstring to a function.
@@ -851,7 +851,7 @@ when doc strings are referred to in the dumped Emacs.
 				     "subr", pos);
 			  goto weird;
 			}
-		      XSUBR (fun)->doc = (char *) (- XINT (offset));
+		      XSUBR (fun)->doc = (char *) (- XFIXNUM (offset));
 		    }
 		  else if (CONSP (fun))
 		    {
@@ -861,7 +861,7 @@ when doc strings are referred to in the dumped Emacs.
 			{
 			  tem = Fcdr (Fcdr (fun));
 			  if (CONSP (tem) &&
-			      INTP (XCAR (tem)))
+			      FIXNUMP (XCAR (tem)))
 			    {
 			      Lisp_Object old = XCAR (tem);
 			      if (!ZEROP (old))
@@ -876,7 +876,7 @@ when doc strings are referred to in the dumped Emacs.
 				     always take the later one.  But if the doc
 				     is not an int (a string, say) leave it
 				     alone. */
-				  if (!INTP (old))
+				  if (!FIXNUMP (old))
 				    goto weird;
 				}
 			      XCAR (tem) = offset;
@@ -890,7 +890,7 @@ when doc strings are referred to in the dumped Emacs.
 			    {
 			      /* DOC string is a string not integer 0 */
 #if 0
-			      weird_doc (sym, "!INTP(XCAR(tem))",
+			      weird_doc (sym, "!FIXNUMP(XCAR(tem))",
 					 "function", pos);
 #endif
 			      goto cont;
@@ -920,7 +920,7 @@ when doc strings are referred to in the dumped Emacs.
                           /* In the case of duplicate doc file entries,
                              always take the later one.  But if the doc is
                              not an int (a string, say) leave it alone. */
-                          if (!INTP (old))
+                          if (!FIXNUMP (old))
                             goto weird;
                         }
 
@@ -940,7 +940,7 @@ when doc strings are referred to in the dumped Emacs.
                 {
                 /* lose: */
                   signal_error (Qfile_error, "DOC file invalid at position",
-				make_int (pos));
+				make_fixnum (pos));
                 weird:
                   /* goto lose */;
                 }
@@ -999,8 +999,8 @@ verify_doc_mapper (Lisp_Object sym, void *arg)
 	      doc = -1;
 	      tem = Fcdr (Fcdr (fun));
 	      if (CONSP (tem) &&
-		  INTP (XCAR (tem)))
-		doc = XINT (XCAR (tem));
+		  FIXNUMP (XCAR (tem)))
+		doc = XFIXNUM (XCAR (tem));
 	    }
 	}
       else if (COMPILED_FUNCTIONP (fun))
@@ -1011,8 +1011,8 @@ verify_doc_mapper (Lisp_Object sym, void *arg)
           else
             {
               Lisp_Object tem = compiled_function_documentation (f);
-              if (INTP (tem))
-                doc = XINT (tem);
+              if (FIXNUMP (tem))
+                doc = XFIXNUM (tem);
             }
 	}
 

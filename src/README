@@ -19,9 +19,9 @@ General changes for XEmacs:
       is incompatible with the union form of Lisp objects, and use as
       an rvalue is likely to lead to errors and doesn't really save much
       time.  Expressions of the form `XFASTINT (obj) = num;' get replaced
-      by `obj = make_int (num);' or `XSETINT (obj, num);' and
+      by `obj = make_fixnum (num);' or `XSETINT (obj, num);' and
       expressions of the form `num = XFASTINT (obj);' get replaced by
-      `num = XINT (obj);'.  Use Qzero in place of `make_int (0)'.
+      `num = XFIXNUM (obj);'.  Use Qzero in place of `make_fixnum (0)'.
 
    -- Use of XTYPE gets replaced by the appropriate predicate.  Using
       XTYPE only works for the small number of types that are not stored

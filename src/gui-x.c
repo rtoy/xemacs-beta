@@ -108,7 +108,7 @@ snarf_widget_values_for_gcpro (LWLIB_ID id)
 void
 gcpro_popup_callbacks (LWLIB_ID id)
 {
-  Lisp_Object lid = make_int (id);
+  Lisp_Object lid = make_fixnum (id);
   Lisp_Object this_callback = assq_no_quit (lid, Vpopup_callbacks);
 
   if (!NILP (this_callback))
@@ -127,7 +127,7 @@ gcpro_popup_callbacks (LWLIB_ID id)
 void
 ungcpro_popup_callbacks (LWLIB_ID id)
 {
-  Lisp_Object lid = make_int (id);
+  Lisp_Object lid = make_fixnum (id);
   Lisp_Object this_callback = assq_no_quit (lid, Vpopup_callbacks);
 
   assert (!NILP (this_callback));
@@ -138,7 +138,7 @@ ungcpro_popup_callbacks (LWLIB_ID id)
 int
 popup_handled_p (LWLIB_ID id)
 {
-  return NILP (assq_no_quit (make_int (id), Vpopup_callbacks));
+  return NILP (assq_no_quit (make_fixnum (id), Vpopup_callbacks));
 }
 
 /* menu_item_descriptor_to_widget_value() et al. mallocs a

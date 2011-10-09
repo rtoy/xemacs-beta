@@ -142,7 +142,7 @@ Return `nil' if marker doesn't point anywhere.
        (marker))
 {
   CHECK_MARKER (marker);
-  return XMARKER (marker)->buffer ? make_int (marker_position (marker)) : Qnil;
+  return XMARKER (marker)->buffer ? make_fixnum (marker_position (marker)) : Qnil;
 }
 
 #if 0 /* useful debugging function */
@@ -201,7 +201,7 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
       return marker;
     }
 
-  CHECK_INT_COERCE_MARKER (position);
+  CHECK_FIXNUM_COERCE_MARKER (position);
   if (NILP (buffer))
     b = current_buffer;
   else
@@ -220,7 +220,7 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
 	}
     }
 
-  charno = XINT (position);
+  charno = XFIXNUM (position);
   m = XMARKER (marker);
 
   if (restricted_p)
@@ -389,7 +389,7 @@ copy_marker_1 (Lisp_Object marker, Lisp_Object type, int noseeum)
 
   while (1)
     {
-      if (INTP (marker) || MARKERP (marker))
+      if (FIXNUMP (marker) || MARKERP (marker))
 	{
 	  if (noseeum)
 	    new_ = noseeum_make_marker ();
@@ -530,7 +530,7 @@ init_buffer_markers (struct buffer *b)
   b->point_marker = Fmake_marker ();
   Fset_marker (b->point_marker,
 	       /* For indirect buffers, point is already set.  */
-	       b->base_buffer ? make_int (BUF_PT (b)) : make_int (1),
+	       b->base_buffer ? make_fixnum (BUF_PT (b)) : make_fixnum (1),
 	       buf);
 }
 

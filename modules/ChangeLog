@@ -1,3 +1,44 @@
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* postgresql/postgresql.c (Fpq_conn_defaults):
+	* postgresql/postgresql.c (Fpq_client_encoding):
+	* postgresql/postgresql.c (Fpq_set_client_encoding):
+	* postgresql/postgresql.c (Fpq_pgconn):
+	* postgresql/postgresql.c (Fpq_ntuples):
+	* postgresql/postgresql.c (Fpq_nfields):
+	* postgresql/postgresql.c (Fpq_fname):
+	* postgresql/postgresql.c (Fpq_fnumber):
+	* postgresql/postgresql.c (Fpq_ftype):
+	* postgresql/postgresql.c (Fpq_fsize):
+	* postgresql/postgresql.c (Fpq_fmod):
+	* postgresql/postgresql.c (Fpq_get_value):
+	* postgresql/postgresql.c (Fpq_get_length):
+	* postgresql/postgresql.c (Fpq_get_is_null):
+	* postgresql/postgresql.c (Fpq_oid_value):
+	* postgresql/postgresql.c (Fpq_set_nonblocking):
+	* postgresql/postgresql.c (Fpq_flush):
+	* postgresql/postgresql.c (Fpq_notifies):
+	* postgresql/postgresql.c (Fpq_env_2_encoding):
+	* postgresql/postgresql.c (Fpq_lo_import):
+	* postgresql/postgresql.c (Fpq_lo_export):
+	* postgresql/postgresql.c (Fpq_get_line):
+	* postgresql/postgresql.c (Fpq_get_line_async):
+	* postgresql/postgresql.c (init_postgresql_from_environment):
+	* ldap/eldap.c (Fldap_open):
+	* ldap/eldap.c (Fldap_search_basic):
+	* ldap/eldap.c (Fldap_add):
+	* ldap/eldap.c (Fldap_modify):
+	* canna/canna_api.c (storeResults):
+	* canna/canna_api.c (Fcanna_initialize):
+	* canna/canna_api.c (Fcanna_set_width):
+	* canna/canna_api.c (Fcanna_change_mode):
+	* canna/canna_api.c (Fcanna_do_function):
+	* canna/canna_api.c (Fcanna_henkan_next):
+	* canna/canna_api.c (Fcanna_bunsetu_henkou):
+	* canna/canna_api.c (Fcanna_henkan_kakutei):
+	Mechanically change INT to FIXNUM, where the usage describes non-bignum
+	Lisp integers. See the src/ChangeLog entry for more details.
+
 2011-05-20  Jerry James  <james@xemacs.org>
 
 	* base64/Makefile: Default DESTDIR to the empty string, and use it in

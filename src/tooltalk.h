@@ -40,7 +40,7 @@ DECLARE_LISP_OBJECT (tooltalk_pattern, Lisp_Tooltalk_Pattern);
 #define TOOLTALK_PATTERN_KEY 101
 
 #define CHECK_TOOLTALK_CONSTANT(x) do {		\
-  if (!(INTP (x) || SYMBOLP (x)))		\
+  if (!(FIXNUMP (x) || SYMBOLP (x)))		\
     dead_wrong_type_argument (Qsymbolp, (x));	\
 } while (0)
 

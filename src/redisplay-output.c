@@ -988,7 +988,7 @@ redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
     {
       w->last_point_x[CURRENT_DISP] = x;
       w->last_point_y[CURRENT_DISP] = y;
-      Fset_marker (w->last_point[CURRENT_DISP], make_int (ADJ_CHARPOS),
+      Fset_marker (w->last_point[CURRENT_DISP], make_fixnum (ADJ_CHARPOS),
 		   w->buffer);
       dl->cursor_elt = x;
       return 1;
@@ -1099,7 +1099,7 @@ redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
 		  w->last_point_x[CURRENT_DISP] = cur_rb;
 		  w->last_point_y[CURRENT_DISP] = cur_dl;
 		  Fset_marker (w->last_point[CURRENT_DISP],
-			       make_int (ADJ_CHARPOS), w->buffer);
+			       make_fixnum (ADJ_CHARPOS), w->buffer);
 
 		  if (!no_output_end)
 		    {
@@ -1474,13 +1474,13 @@ redisplay_output_layout (Lisp_Object domain,
 	    style = EDGE_ETCHED_OUT;
 	  else if (EQ (IMAGE_INSTANCE_LAYOUT_BORDER (p), Qbevel_in))
 	    style = EDGE_BEVEL_IN;
-	  else if (INTP (IMAGE_INSTANCE_LAYOUT_BORDER (p)))
+	  else if (FIXNUMP (IMAGE_INSTANCE_LAYOUT_BORDER (p)))
 	    {
 	      style = EDGE_ETCHED_IN;
 	      if (edges & EDGE_TOP)
 		{
-		  ypos += XINT (IMAGE_INSTANCE_LAYOUT_BORDER (p));
-		  height -= XINT (IMAGE_INSTANCE_LAYOUT_BORDER (p));
+		  ypos += XFIXNUM (IMAGE_INSTANCE_LAYOUT_BORDER (p));
+		  height -= XFIXNUM (IMAGE_INSTANCE_LAYOUT_BORDER (p));
 		}
 	    }
 	  else
@@ -2498,10 +2498,10 @@ redisplay_output_window (struct window *w)
 
   w->window_end_pos[CURRENT_DISP] = w->window_end_pos[DESIRED_DISP];
   Fset_marker (w->start[CURRENT_DISP],
-	       make_int (marker_position (w->start[DESIRED_DISP])),
+	       make_fixnum (marker_position (w->start[DESIRED_DISP])),
 	       w->buffer);
   Fset_marker (w->pointm[CURRENT_DISP],
-	       make_int (marker_position (w->pointm[DESIRED_DISP])),
+	       make_fixnum (marker_position (w->pointm[DESIRED_DISP])),
 	       w->buffer);
   w->last_modified[CURRENT_DISP] = w->last_modified[DESIRED_DISP];
   w->last_facechange[CURRENT_DISP] = w->last_facechange[DESIRED_DISP];
@@ -2641,10 +2641,10 @@ redisplay_redraw_exposed_area_1 (Lisp_Object arg)
 {
   assert (!in_display);
   redisplay_redraw_exposed_area (XFRAME (X1ST (arg)),
-				 XINT (X2ND (arg)),
-				 XINT (X3RD (arg)),
-				 XINT (X4TH (arg)),
-				 XINT (X5TH (arg)));
+				 XFIXNUM (X2ND (arg)),
+				 XFIXNUM (X3RD (arg)),
+				 XFIXNUM (X4TH (arg)),
+				 XFIXNUM (X5TH (arg)));
   free_list (arg);
 }
 
@@ -2664,9 +2664,9 @@ redisplay_redraw_exposed_area (struct frame *f, int x, int y, int width,
     {
       /* Not safe to do it now, so delay it */
       register_post_redisplay_action (redisplay_redraw_exposed_area_1,
-				      list5 (wrap_frame (f), make_int (x),
-					     make_int (y), make_int (width),
-					     make_int (height)));
+				      list5 (wrap_frame (f), make_fixnum (x),
+					     make_fixnum (y), make_fixnum (width),
+					     make_fixnum (height)));
       return;
     }
 
@@ -2718,7 +2718,7 @@ bevel_modeline (struct window *w, struct display_line *dl)
   y = dl->ypos - dl->ascent - shadow_thickness;
   height = dl->ascent + dl->descent + 2 * shadow_thickness;
 
-  if (XINT (w->modeline_shadow_thickness) < 0)
+  if (XFIXNUM (w->modeline_shadow_thickness) < 0)
     {
       style = EDGE_BEVEL_IN;
     }

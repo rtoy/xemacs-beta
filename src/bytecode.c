@@ -223,9 +223,9 @@ meter_code (Opcode prev_opcode, Opcode this_opcode)
   if (byte_metering_on)
     {
       Lisp_Object *p = XVECTOR_DATA (XVECTOR_DATA (Vbyte_code_meter)[this_opcode]);
-      p[0] = INT_PLUS1 (p[0]);
+      p[0] = FIXNUM_PLUS1 (p[0]);
       if (prev_opcode)
-	p[prev_opcode] = INT_PLUS1 (p[prev_opcode]);
+	p[prev_opcode] = FIXNUM_PLUS1 (p[prev_opcode]);
     }
 }
 
@@ -237,7 +237,7 @@ bytecode_negate (Lisp_Object obj)
 {
  retry:
 
-  if (INTP    (obj)) return make_integer (- XINT (obj));
+  if (FIXNUMP    (obj)) return make_integer (- XFIXNUM (obj));
   if (FLOATP  (obj)) return make_float (- XFLOAT_DATA (obj));
   if (CHARP   (obj)) return make_integer (- ((int) XCHAR (obj)));
   if (MARKERP (obj)) return make_integer (- ((int) marker_position (obj)));
@@ -291,7 +291,7 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
     {
     case FIXNUM_T:
       {
-	EMACS_INT ival1 = XREALINT (obj1), ival2 = XREALINT (obj2);
+	EMACS_INT ival1 = XREALFIXNUM (obj1), ival2 = XREALFIXNUM (obj2);
 	return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
       }
 #ifdef HAVE_BIGNUM
@@ -318,12 +318,12 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
   {
     EMACS_INT ival1, ival2;
 
-    if      (INTP    (obj1)) ival1 = XINT  (obj1);
+    if      (FIXNUMP    (obj1)) ival1 = XFIXNUM  (obj1);
     else if (CHARP   (obj1)) ival1 = XCHAR (obj1);
     else if (MARKERP (obj1)) ival1 = marker_position (obj1);
     else goto arithcompare_float;
 
-    if      (INTP    (obj2)) ival2 = XINT  (obj2);
+    if      (FIXNUMP    (obj2)) ival2 = XFIXNUM  (obj2);
     else if (CHARP   (obj2)) ival2 = XCHAR (obj2);
     else if (MARKERP (obj2)) ival2 = marker_position (obj2);
     else goto arithcompare_float;
@@ -337,7 +337,7 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
     double dval1, dval2;
 
     if      (FLOATP  (obj1)) dval1 = XFLOAT_DATA (obj1);
-    else if (INTP    (obj1)) dval1 = (double) XINT  (obj1);
+    else if (FIXNUMP    (obj1)) dval1 = (double) XFIXNUM  (obj1);
     else if (CHARP   (obj1)) dval1 = (double) XCHAR (obj1);
     else if (MARKERP (obj1)) dval1 = (double) marker_position (obj1);
     else
@@ -347,7 +347,7 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
       }
 
     if      (FLOATP  (obj2)) dval2 = XFLOAT_DATA (obj2);
-    else if (INTP    (obj2)) dval2 = (double) XINT  (obj2);
+    else if (FIXNUMP    (obj2)) dval2 = (double) XFIXNUM  (obj2);
     else if (CHARP   (obj2)) dval2 = (double) XCHAR (obj2);
     else if (MARKERP (obj2)) dval2 = (double) marker_position (obj2);
     else
@@ -369,7 +369,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
     {
     case FIXNUM_T:
       {
-	EMACS_INT ival1 = XREALINT (obj1), ival2 = XREALINT (obj2);
+	EMACS_INT ival1 = XREALFIXNUM (obj1), ival2 = XREALFIXNUM (obj2);
 	switch (opcode)
 	  {
 	  case Bplus: ival1 += ival2; break;
@@ -512,7 +512,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 
   float_p = 0;
 
-  if      (INTP    (obj1)) ival1 = XINT  (obj1);
+  if      (FIXNUMP    (obj1)) ival1 = XFIXNUM  (obj1);
   else if (CHARP   (obj1)) ival1 = XCHAR (obj1);
   else if (MARKERP (obj1)) ival1 = marker_position (obj1);
   else if (FLOATP  (obj1)) ival1 = 0, float_p = 1;
@@ -522,7 +522,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
       goto retry;
     }
 
-  if      (INTP    (obj2)) ival2 = XINT  (obj2);
+  if      (FIXNUMP    (obj2)) ival2 = XFIXNUM  (obj2);
   else if (CHARP   (obj2)) ival2 = XCHAR (obj2);
   else if (MARKERP (obj2)) ival2 = marker_position (obj2);
   else if (FLOATP  (obj2)) ival2 = 0, float_p = 1;
@@ -547,7 +547,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	case Bmax:  if (ival1 < ival2) ival1 = ival2; break;
 	case Bmin:  if (ival1 > ival2) ival1 = ival2; break;
 	}
-      return make_int (ival1);
+      return make_fixnum (ival1);
     }
   else
     {
@@ -925,8 +925,8 @@ execute_optimized_program (const Opbyte *program,
 	  if (byte_metering_on && SYMBOLP (TOP))
 	    {
 	      Lisp_Object val = Fget (TOP, Qbyte_code_meter, Qnil);
-	      if (INTP (val))
-		Fput (TOP, Qbyte_code_meter, make_int (XINT (val) + 1));
+	      if (FIXNUMP (val))
+		Fput (TOP, Qbyte_code_meter, make_fixnum (XFIXNUM (val) + 1));
 	    }
 #endif
           TOP_LVALUE = TOP; /* Ignore multiple values. */
@@ -1103,12 +1103,12 @@ execute_optimized_program (const Opbyte *program,
 #ifdef WITH_NUMBER_TYPES
 	  TOP_LVALUE = NUMBERP (TOP) ? Qt : Qnil;
 #else
-	  TOP_LVALUE = INT_OR_FLOATP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = FIXNUM_OR_FLOATP (TOP) ? Qt : Qnil;
 #endif
 	  break;
 
 	case Bfixnump:
-	  TOP_LVALUE = INTP (TOP) ? Qt : Qnil;
+	  TOP_LVALUE = FIXNUMP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Beq:
@@ -1211,7 +1211,7 @@ execute_optimized_program (const Opbyte *program,
             TOP_LVALUE = Fsub1 (TOP);
 #else
             Lisp_Object arg = TOP;
-            TOP_LVALUE = INTP (arg) ? INT_MINUS1 (arg) : Fsub1 (arg);
+            TOP_LVALUE = FIXNUMP (arg) ? FIXNUM_MINUS1 (arg) : Fsub1 (arg);
 #endif
 	  break;
           }
@@ -1221,7 +1221,7 @@ execute_optimized_program (const Opbyte *program,
             TOP_LVALUE = Fadd1 (TOP);
 #else
             Lisp_Object arg = TOP;
-            TOP_LVALUE = INTP (arg) ? INT_PLUS1 (arg) : Fadd1 (arg);
+            TOP_LVALUE = FIXNUMP (arg) ? FIXNUM_PLUS1 (arg) : Fadd1 (arg);
 #endif
 	  break;
           }
@@ -1281,8 +1281,8 @@ execute_optimized_program (const Opbyte *program,
 #ifdef HAVE_BIGNUM
 	    TOP_LVALUE = bytecode_arithop (arg1, arg2, opcode);
 #else
-	    TOP_LVALUE = INTP (arg1) && INTP (arg2) ?
-	      INT_PLUS (arg1, arg2) :
+	    TOP_LVALUE = FIXNUMP (arg1) && FIXNUMP (arg2) ?
+	      FIXNUM_PLUS (arg1, arg2) :
 	      bytecode_arithop (arg1, arg2, opcode);
 #endif
 	    break;
@@ -1295,8 +1295,8 @@ execute_optimized_program (const Opbyte *program,
 #ifdef HAVE_BIGNUM
 	    TOP_LVALUE = bytecode_arithop (arg1, arg2, opcode);
 #else
-	    TOP_LVALUE = INTP (arg1) && INTP (arg2) ?
-	      INT_MINUS (arg1, arg2) :
+	    TOP_LVALUE = FIXNUMP (arg1) && FIXNUMP (arg2) ?
+	      FIXNUM_MINUS (arg1, arg2) :
 	      bytecode_arithop (arg1, arg2, opcode);
 #endif
 	    break;
@@ -1313,7 +1313,7 @@ execute_optimized_program (const Opbyte *program,
 	  }
 
 	case Bpoint:
-	  PUSH (make_int (BUF_PT (current_buffer)));
+	  PUSH (make_fixnum (BUF_PT (current_buffer)));
 	  break;
 
 	case Binsert:
@@ -1407,11 +1407,11 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case Bpoint_max:
-	  PUSH (make_int (BUF_ZV (current_buffer)));
+	  PUSH (make_fixnum (BUF_ZV (current_buffer)));
 	  break;
 
 	case Bpoint_min:
-	  PUSH (make_int (BUF_BEGV (current_buffer)));
+	  PUSH (make_fixnum (BUF_BEGV (current_buffer)));
 	  break;
 
 	case Bskip_chars_forward:
@@ -1592,7 +1592,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       }
 
     case Bcurrent_column:
-      PUSH (make_int (current_column (current_buffer)));
+      PUSH (make_fixnum (current_column (current_buffer)));
       break;
 
     case Bchar_after:
@@ -1744,8 +1744,8 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
                              make_integer (Vmultiple_values_limit));
         check_integer_range (first, Qzero, upper);
 
-        speccount = make_int (bind_multiple_value_limits (XINT (first),
-                                                          XINT (upper)));
+        speccount = make_fixnum (bind_multiple_value_limits (XFIXNUM (first),
+                                                          XFIXNUM (upper)));
         PUSH (upper);
         PUSH (speccount);
         break;
@@ -1753,7 +1753,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 
     case Bmultiple_value_call:
       {
-        n = XINT (POP);
+        n = XFIXNUM (POP);
         DISCARD_PRESERVING_MULTIPLE_VALUES_UNSAFE (n - 1);
         /* Discard multiple values for the first (function) argument: */
         TOP_LVALUE = TOP;
@@ -1803,7 +1803,7 @@ check_opcode (Opcode opcode)
       (opcode == 0251)   ||
       (opcode > Bassq && opcode < Bconstant))
     invalid_byte_code ("invalid opcode in instruction stream",
-		       make_int (opcode));
+		       make_fixnum (opcode));
 }
 
 /* Check that IDX is a valid offset into the `constants' vector */
@@ -2240,7 +2240,7 @@ optimize_compiled_function (Lisp_Object compiled_function)
       program = alloca_array (Opbyte, 1 + 2 * XSTRING_LENGTH (f->instructions));
       optimize_byte_code (f->instructions, f->constants,
 			  program, &program_length, &varbind_count);
-      f->specpdl_depth = (unsigned short) (XINT (Flength (f->arglist)) +
+      f->specpdl_depth = (unsigned short) (XFIXNUM (Flength (f->arglist)) +
                                            varbind_count);
       f->instructions =
 	make_opaque (program, program_length * sizeof (Opbyte));
@@ -2657,7 +2657,7 @@ void
 set_compiled_function_documentation (Lisp_Compiled_Function *f,
 				     Lisp_Object new_doc)
 {
-  assert (INTP (new_doc) || STRINGP (new_doc));
+  assert (FIXNUMP (new_doc) || STRINGP (new_doc));
 
   if (f->flags.documentationp)
     {
@@ -2759,7 +2759,7 @@ Return the maximum stack depth of the compiled-function object FUNCTION.
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-  return make_int (compiled_function_stack_depth (XCOMPILED_FUNCTION (function)));
+  return make_fixnum (compiled_function_stack_depth (XCOMPILED_FUNCTION (function)));
 }
 
 DEFUN ("compiled-function-doc-string", Fcompiled_function_doc_string, 1, 1, 0, /*
@@ -2881,7 +2881,7 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 
   CHECK_STRING (instructions);
   CHECK_VECTOR (constants);
-  check_integer_range (stack_depth, Qzero, make_int (USHRT_MAX));
+  check_integer_range (stack_depth, Qzero, make_fixnum (USHRT_MAX));
 
   /* Optimize the `instructions' string, just like when executing a
      regular compiled function, but don't save it for later since this is
@@ -2894,7 +2894,7 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 #ifdef ERROR_CHECK_BYTE_CODE
 				    program_length,
 #endif
-				    XINT (stack_depth),
+				    XFIXNUM (stack_depth),
 				    XVECTOR_DATA (constants));
 }
 

@@ -164,7 +164,7 @@ allocate_menu_item_id (Lisp_Object path, Lisp_Object name, Lisp_Object suffix)
   do {
       id = MENU_ITEM_ID_BITS (id + 1);
   } while (GetMenuState (top_level_menu, id, MF_BYCOMMAND) != 0xFFFFFFFF);
-  return make_int (id);
+  return make_fixnum (id);
 }
 
 static HMENU
@@ -338,7 +338,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 				  pgui_item->suffix);
       Fputhash (id, pgui_item->callback, hash_tab);
 
-      item_info.wID = (UINT) XINT (id);
+      item_info.wID = (UINT) XFIXNUM (id);
       item_info.fType |= MFT_STRING;
       item_info.dwTypeData = (XELPTSTR)
 	LISP_STRING_TO_TSTR (displayable_menu_item (gui_item, bar_p, &accel));
@@ -671,7 +671,7 @@ mswindows_handle_wm_command (struct frame *f, WORD id)
   if (NILP (current_hash_table))
     return Qnil;
 
-  data = Fgethash (make_int (id), current_hash_table, Qunbound);
+  data = Fgethash (make_fixnum (id), current_hash_table, Qunbound);
 
   if (UNBOUNDP (data))
     {

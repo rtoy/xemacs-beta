@@ -735,7 +735,7 @@ void
 make_argc_argv (Lisp_Object argv_list, int *argc, Wexttext ***argv)
 {
   Lisp_Object next;
-  int n = XINT (Flength (argv_list));
+  int n = XFIXNUM (Flength (argv_list));
   REGISTER int i;
   *argv = xnew_array (Wexttext *, n + 1);
 
@@ -2060,7 +2060,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	    - build_cistring()
 	    - build_ascstring()
 	    - make_vector()
-	    - make_int()
+	    - make_fixnum()
 	    - make_char()
 	    - make_extent()
 	    - ALLOC_NORMAL_LISP_OBJECT()
@@ -3788,7 +3788,7 @@ all of which are called before XEmacs is actually killed.
     voodoo_free_hook;
 #endif
 
-  exit (INTP (arg) ? XINT (arg) : 0);
+  exit (FIXNUMP (arg) ? XFIXNUM (arg) : 0);
   RETURN_NOT_REACHED (Qnil);
 }
 
@@ -4299,7 +4299,7 @@ Warning: this variable did not exist in Emacs versions earlier than:
   FSF Emacs:   19.23
   XEmacs:      19.10
 */ );
-  Vemacs_major_version = make_int (EMACS_MAJOR_VERSION);
+  Vemacs_major_version = make_fixnum (EMACS_MAJOR_VERSION);
 
   DEFVAR_LISP ("emacs-minor-version", &Vemacs_minor_version /*
 Minor version number of this version of Emacs, as an integer.
@@ -4307,7 +4307,7 @@ Warning: this variable did not exist in Emacs versions earlier than:
   FSF Emacs:   19.23
   XEmacs:      19.10
 */ );
-  Vemacs_minor_version = make_int (EMACS_MINOR_VERSION);
+  Vemacs_minor_version = make_fixnum (EMACS_MINOR_VERSION);
 
   DEFVAR_LISP ("emacs-patch-level", &Vemacs_patch_level /*
 The patch level of this version of Emacs, as an integer.
@@ -4317,7 +4317,7 @@ Warning: this variable does not exist in FSF Emacs or in XEmacs versions
 earlier than 21.1.1
 */ );
 #ifdef EMACS_PATCH_LEVEL
-  Vemacs_patch_level = make_int (EMACS_PATCH_LEVEL);
+  Vemacs_patch_level = make_fixnum (EMACS_PATCH_LEVEL);
 #else
   Vemacs_patch_level = Qnil;
 #endif
@@ -4329,7 +4329,7 @@ Warning: this variable does not exist in FSF Emacs or in XEmacs versions
 earlier than 20.3.
 */ );
 #ifdef EMACS_BETA_VERSION
-  Vemacs_beta_version = make_int (EMACS_BETA_VERSION);
+  Vemacs_beta_version = make_fixnum (EMACS_BETA_VERSION);
 #else
   Vemacs_beta_version = Qnil;
 #endif

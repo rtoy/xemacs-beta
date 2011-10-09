@@ -645,7 +645,7 @@ static int stack_idx_of_map_multiple;
     stack_idx++;						\
     ccl_prog = called_ccl.prog;					\
     ic = CCL_HEADER_MAIN;					\
-    eof_ic = XINT (ccl_prog[CCL_HEADER_EOF]);                   \
+    eof_ic = XFIXNUM (ccl_prog[CCL_HEADER_EOF]);                   \
     /* The "if (1)" prevents warning				\
        "end-of loop code not reached" */			\
     if (1) goto ccl_repeat;					\
@@ -797,7 +797,7 @@ static int stack_idx_of_map_multiple;
       {								\
 	for (i = 0; i < (len); i++)				\
 	  {							\
-	    ch = ((XCHAR_OR_INT (ccl_prog[ic + (i / 3)]))       \
+	    ch = ((XCHAR_OR_FIXNUM (ccl_prog[ic + (i / 3)]))       \
 		  >> ((2 - (i % 3)) * 8)) & 0xFF;		\
 	    if (ch == '\n')					\
 	      {							\
@@ -826,7 +826,7 @@ static int stack_idx_of_map_multiple;
       {								\
 	for (i = 0; i < (len); i++)				\
 	  {							\
-	    ch = ((XCHAR_OR_INT (ccl_prog[ic + (i / 3)]))       \
+	    ch = ((XCHAR_OR_FIXNUM (ccl_prog[ic + (i / 3)]))       \
 		  >> ((2 - (i % 3)) * 8)) & 0xFF;		\
 	    if (!ichar_multibyte_p(ch))				\
 	      {							\
@@ -993,7 +993,7 @@ ccl_driver (struct ccl_program *ccl,
 	}
 
       this_ic = ic;
-      code = XCHAR_OR_INT (ccl_prog[ic]); ic++;
+      code = XCHAR_OR_FIXNUM (ccl_prog[ic]); ic++;
       field1 = code >> 8;
       field2 = (code & 0xFF) >> 5;
 
@@ -1014,7 +1014,7 @@ ccl_driver (struct ccl_program *ccl,
 	  break;
 
 	case CCL_SetConst:	/* 00000000000000000000rrrXXXXX */
-	  reg[rrr] = XCHAR_OR_INT (ccl_prog[ic]);
+	  reg[rrr] = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  ic++;
 	  break;
 
@@ -1025,7 +1025,7 @@ ccl_driver (struct ccl_program *ccl,
 	     but the left one was already there so clearly the intention
 	     was an unsigned comparison. --ben */
 	  if ((unsigned int) i < (unsigned int) j)
-	    reg[rrr] = XCHAR_OR_INT (ccl_prog[ic + i]);
+	    reg[rrr] = XCHAR_OR_FIXNUM (ccl_prog[ic + i]);
 	  ic += j;
 	  break;
 
@@ -1053,13 +1053,13 @@ ccl_driver (struct ccl_program *ccl,
 	  break;
 
 	case CCL_WriteConstJump: /* A--D--D--R--E--S--S-000XXXXX */
-	  i = XCHAR_OR_INT (ccl_prog[ic]);
+	  i = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  CCL_WRITE_CHAR (i);
 	  ic += ADDR;
 	  break;
 
 	case CCL_WriteConstReadJump: /* A--D--D--R--E--S--S-rrrXXXXX */
-	  i = XCHAR_OR_INT (ccl_prog[ic]);
+	  i = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  CCL_WRITE_CHAR (i);
 	  ic++;
 	  CCL_READ_CHAR (reg[rrr]);
@@ -1067,7 +1067,7 @@ ccl_driver (struct ccl_program *ccl,
 	  break;
 
 	case CCL_WriteStringJump: /* A--D--D--R--E--S--S-000XXXXX */
-	  j = XCHAR_OR_INT (ccl_prog[ic]);
+	  j = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  ic++;
 	  CCL_WRITE_STRING (j);
 	  ic += ADDR - 1;
@@ -1075,11 +1075,11 @@ ccl_driver (struct ccl_program *ccl,
 
 	case CCL_WriteArrayReadJump: /* A--D--D--R--E--S--S-rrrXXXXX */
 	  i = reg[rrr];
-	  j = XCHAR_OR_INT (ccl_prog[ic]);
+	  j = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  /* #### see comment at CCL_SetArray */
 	  if ((unsigned int) i < (unsigned int) j)
 	    {
-	      i = XCHAR_OR_INT (ccl_prog[ic + 1 + i]);
+	      i = XCHAR_OR_FIXNUM (ccl_prog[ic + 1 + i]);
 	      CCL_WRITE_CHAR (i);
 	    }
 	  ic += j + 2;
@@ -1098,9 +1098,9 @@ ccl_driver (struct ccl_program *ccl,
 	case CCL_Branch:	/* CCCCCCCCCCCCCCCCCCCCrrrXXXXX */
 	  /* #### see comment at CCL_SetArray */
 	  if ((unsigned int) reg[rrr] < (unsigned int) field1)
-	    ic += XCHAR_OR_INT (ccl_prog[ic + reg[rrr]]);
+	    ic += XCHAR_OR_FIXNUM (ccl_prog[ic + reg[rrr]]);
 	  else
-	    ic += XCHAR_OR_INT (ccl_prog[ic + field1]);
+	    ic += XCHAR_OR_FIXNUM (ccl_prog[ic + field1]);
 	  break;
 
 	case CCL_ReadRegister:	/* CCCCCCCCCCCCCCCCCCCCrrXXXXX */
@@ -1108,7 +1108,7 @@ ccl_driver (struct ccl_program *ccl,
 	    {
 	      CCL_READ_CHAR (reg[rrr]);
 	      if (!field1) break;
-	      code = XCHAR_OR_INT (ccl_prog[ic]); ic++;
+	      code = XCHAR_OR_FIXNUM (ccl_prog[ic]); ic++;
 	      field1 = code >> 8;
 	      field2 = (code & 0xFF) >> 5;
 	    }
@@ -1117,7 +1117,7 @@ ccl_driver (struct ccl_program *ccl,
 	case CCL_WriteExprConst:  /* 1:00000OPERATION000RRR000XXXXX */
 	  rrr = 7;
 	  i = reg[RRR];
-	  j = XCHAR_OR_INT (ccl_prog[ic]);
+	  j = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  op = field1 >> 6;
 	  jump_address = ic + 1;
 	  goto ccl_set_expr;
@@ -1128,7 +1128,7 @@ ccl_driver (struct ccl_program *ccl,
 	      i = reg[rrr];
 	      CCL_WRITE_CHAR (i);
 	      if (!field1) break;
-	      code = XCHAR_OR_INT (ccl_prog[ic]); ic++;
+	      code = XCHAR_OR_FIXNUM (ccl_prog[ic]); ic++;
 	      field1 = code >> 8;
 	      field2 = (code & 0xFF) >> 5;
 	    }
@@ -1151,7 +1151,7 @@ ccl_driver (struct ccl_program *ccl,
                following code.  */
 	    if (rrr)
 	      {
-		prog_id = XCHAR_OR_INT (ccl_prog[ic]);
+		prog_id = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 		ic++;
 	      }
 	    else
@@ -1179,7 +1179,7 @@ ccl_driver (struct ccl_program *ccl,
 	    stack_idx++;
 	    ccl_prog = XVECTOR (XVECTOR (slot)->contents[1])->contents;
 	    ic = CCL_HEADER_MAIN;
-	    eof_ic = XINT (ccl_prog[CCL_HEADER_EOF]);
+	    eof_ic = XFIXNUM (ccl_prog[CCL_HEADER_EOF]);
 	  }
 	  break;
 
@@ -1198,7 +1198,7 @@ ccl_driver (struct ccl_program *ccl,
 	  /* #### see comment at CCL_SetArray */
 	  if ((unsigned int) i < (unsigned int) field1)
 	    {
-	      j = XCHAR_OR_INT (ccl_prog[ic + i]);
+	      j = XCHAR_OR_FIXNUM (ccl_prog[ic + i]);
 	      CCL_WRITE_CHAR (j);
 	    }
 	  ic += field1;
@@ -1223,7 +1223,7 @@ ccl_driver (struct ccl_program *ccl,
 	  CCL_SUCCESS;
 
 	case CCL_ExprSelfConst: /* 00000OPERATION000000rrrXXXXX */
-	  i = XCHAR_OR_INT (ccl_prog[ic]);
+	  i = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  ic++;
 	  op = field1 >> 6;
 	  goto ccl_expr_self;
@@ -1260,7 +1260,7 @@ ccl_driver (struct ccl_program *ccl,
 
 	case CCL_SetExprConst:	/* 00000OPERATION000RRRrrrXXXXX */
 	  i = reg[RRR];
-	  j = XCHAR_OR_INT (ccl_prog[ic]);
+	  j = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  op = field1 >> 6;
 	  jump_address = ++ic;
 	  goto ccl_set_expr;
@@ -1276,9 +1276,9 @@ ccl_driver (struct ccl_program *ccl,
 	  CCL_READ_CHAR (reg[rrr]);
 	case CCL_JumpCondExprConst: /* A--D--D--R--E--S--S-rrrXXXXX */
 	  i = reg[rrr];
-	  op = XCHAR_OR_INT (ccl_prog[ic]);
+	  op = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  jump_address = ic++ + ADDR;
-	  j = XCHAR_OR_INT (ccl_prog[ic]);
+	  j = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  ic++;
 	  rrr = 7;
 	  goto ccl_set_expr;
@@ -1287,9 +1287,9 @@ ccl_driver (struct ccl_program *ccl,
 	  CCL_READ_CHAR (reg[rrr]);
 	case CCL_JumpCondExprReg:
 	  i = reg[rrr];
-	  op = XCHAR_OR_INT (ccl_prog[ic]);
+	  op = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  jump_address = ic++ + ADDR;
-	  j = reg[XCHAR_OR_INT (ccl_prog[ic])];
+	  j = reg[XCHAR_OR_FIXNUM (ccl_prog[ic])];
 	  ic++;
 	  rrr = 7;
 
@@ -1493,7 +1493,7 @@ ccl_driver (struct ccl_program *ccl,
 #if 0
 	      /* XEmacs does not have translate_char or an equivalent.  We
                  do nothing on this operation. */
-	      op = XCHAR_OR_INT (ccl_prog[ic]); /* table */
+	      op = XCHAR_OR_FIXNUM (ccl_prog[ic]); /* table */
 	      ic++;
 	      CCL_MAKE_CHAR (reg[RRR], reg[rrr], i);
 	      op = translate_char (GET_TRANSLATION_TABLE (op), i, -1, 0, 0);
@@ -1521,7 +1521,7 @@ ccl_driver (struct ccl_program *ccl,
 		  }
 		else
 		  {
-		    reg[rrr] = XCHAR_OR_INT(ucs);
+		    reg[rrr] = XCHAR_OR_FIXNUM(ucs);
 		    if (-1 == reg[rrr])
 		      {
 			reg[rrr] = 0xFFFD; /* REPLACEMENT CHARACTER */
@@ -1534,7 +1534,7 @@ ccl_driver (struct ccl_program *ccl,
 	      {
 		Lisp_Object scratch;
 
-		scratch = Funicode_to_char(make_int(reg[rrr]), Qnil);
+		scratch = Funicode_to_char(make_fixnum(reg[rrr]), Qnil);
 
 		if (!NILP(scratch))
 		  {
@@ -1557,11 +1557,11 @@ ccl_driver (struct ccl_program *ccl,
 	      }
 
 	    case CCL_LookupIntConstTbl:
-	      op = XCHAR_OR_INT (ccl_prog[ic]); /* table */
+	      op = XCHAR_OR_FIXNUM (ccl_prog[ic]); /* table */
 	      ic++;
 	      {		
 		struct Lisp_Hash_Table *h = GET_HASH_TABLE (op);
-		htentry *e = find_htentry(make_int (reg[RRR]), h);
+		htentry *e = find_htentry(make_fixnum (reg[RRR]), h);
                 Lisp_Object scratch;
 
                 if (!HTENTRY_CLEAR_P(e))
@@ -1588,18 +1588,18 @@ ccl_driver (struct ccl_program *ccl,
 	      break;
 
 	    case CCL_LookupCharConstTbl:
-	      op = XCHAR_OR_INT (ccl_prog[ic]); /* table */
+	      op = XCHAR_OR_FIXNUM (ccl_prog[ic]); /* table */
 	      ic++;
 	      CCL_MAKE_CHAR (reg[RRR], reg[rrr], i);
 	      {		
 		struct Lisp_Hash_Table *h = GET_HASH_TABLE (op);
-                htentry *e = find_htentry(make_int(i), h);
+                htentry *e = find_htentry(make_fixnum(i), h);
 
 		if (!HTENTRY_CLEAR_P(e))
 		  {
-		    if (!INTP (e->value))
+		    if (!FIXNUMP (e->value))
 		      CCL_INVALID_CMD;
-		    reg[RRR] = XCHAR_OR_INT (e->value);
+		    reg[RRR] = XCHAR_OR_FIXNUM (e->value);
 		    reg[7] = 1; /* r7 true for success */
 		  }
 		else
@@ -1613,7 +1613,7 @@ ccl_driver (struct ccl_program *ccl,
 		Lisp_Object map, content, attrib, value;
 		int point, size, fin_ic;
 
-		j = XCHAR_OR_INT (ccl_prog[ic++]); /* number of maps. */
+		j = XCHAR_OR_FIXNUM (ccl_prog[ic++]); /* number of maps. */
 		fin_ic = ic + j;
 		op = reg[rrr];
 		if ((j > reg[RRR]) && (j >= 0))
@@ -1631,7 +1631,7 @@ ccl_driver (struct ccl_program *ccl,
 		for (;i < j;i++)
 		  {
 		    size = XVECTOR (Vcode_conversion_map_vector)->size;
-		    point = XCHAR_OR_INT (ccl_prog[ic++]);
+		    point = XCHAR_OR_FIXNUM (ccl_prog[ic++]);
 		    if (point >= size) continue;
 		    map =
 		      XVECTOR (Vcode_conversion_map_vector)->contents[point];
@@ -1648,7 +1648,7 @@ ccl_driver (struct ccl_program *ccl,
 		    /* check map type,
 		       [STARTPOINT VAL1 VAL2 ...] or
 		       [t ELEMENT STARTPOINT ENDPOINT]  */
-		    if (INTP (content))
+		    if (FIXNUMP (content))
 		      {
 			point = XUINT (content);
 			point = op - point + 1;
@@ -1674,10 +1674,10 @@ ccl_driver (struct ccl_program *ccl,
 
 		    if (NILP (content))
 		      continue;
-		    else if (INTP (content))
+		    else if (FIXNUMP (content))
 		      {
 			reg[RRR] = i;
-			reg[rrr] = XCHAR_OR_INT(content);
+			reg[rrr] = XCHAR_OR_FIXNUM(content);
 			break;
 		      }
 		    else if (EQ (content, Qt) || EQ (content, Qlambda))
@@ -1689,7 +1689,7 @@ ccl_driver (struct ccl_program *ccl,
 		      {
 			attrib = XCAR (content);
 			value = XCDR (content);
-			if (!INTP (attrib) || !INTP (value))
+			if (!FIXNUMP (attrib) || !FIXNUMP (value))
 			  continue;
 			reg[RRR] = i;
 			reg[rrr] = XUINT (value);
@@ -1728,7 +1728,7 @@ ccl_driver (struct ccl_program *ccl,
 		stack_idx_of_map_multiple = 0;
 
 		map_set_rest_length =
-		  XCHAR_OR_INT (ccl_prog[ic++]); /* number of maps and separators. */
+		  XCHAR_OR_FIXNUM (ccl_prog[ic++]); /* number of maps and separators. */
 		fin_ic = ic + map_set_rest_length;
 		op = reg[rrr];
 
@@ -1796,7 +1796,7 @@ ccl_driver (struct ccl_program *ccl,
 		do {
 		  for (;map_set_rest_length > 0;i++, ic++, map_set_rest_length--)
 		    {
-		      point = XCHAR_OR_INT(ccl_prog[ic]);
+		      point = XCHAR_OR_FIXNUM(ccl_prog[ic]);
 		      if (point < 0)
 			{
 			  /* +1 is for including separator. */
@@ -1827,7 +1827,7 @@ ccl_driver (struct ccl_program *ccl,
 		      /* check map type,
 			 [STARTPOINT VAL1 VAL2 ...] or
 			 [t ELEMENT STARTPOINT ENDPOINT]  */
-		      if (INTP (content))
+		      if (FIXNUMP (content))
 			{
 			  point = XUINT (content);
 			  point = op - point + 1;
@@ -1855,9 +1855,9 @@ ccl_driver (struct ccl_program *ccl,
 			continue;
 
 		      reg[RRR] = i;
-		      if (INTP (content))
+		      if (FIXNUMP (content))
 			{
-			  op = XCHAR_OR_INT (content);
+			  op = XCHAR_OR_FIXNUM (content);
 			  i += map_set_rest_length - 1;
 			  ic += map_set_rest_length - 1;
 			  POP_MAPPING_STACK (map_set_rest_length, reg[rrr]);
@@ -1867,7 +1867,7 @@ ccl_driver (struct ccl_program *ccl,
 			{
 			  attrib = XCAR (content);
 			  value = XCDR (content);
-			  if (!INTP (attrib) || !INTP (value))
+			  if (!FIXNUMP (attrib) || !FIXNUMP (value))
 			    continue;
 			  op = XUINT (value);
 			  i += map_set_rest_length - 1;
@@ -1915,7 +1915,7 @@ ccl_driver (struct ccl_program *ccl,
 	      {
 		Lisp_Object map, attrib, value, content;
 		int size, point;
-		j = XCHAR_OR_INT (ccl_prog[ic++]); /* map_id */
+		j = XCHAR_OR_FIXNUM (ccl_prog[ic++]); /* map_id */
 		op = reg[rrr];
 		if (j >= XVECTOR (Vcode_conversion_map_vector)->size)
 		  {
@@ -1947,14 +1947,14 @@ ccl_driver (struct ccl_program *ccl,
 		    content = XVECTOR (map)->contents[point];
 		    if (NILP (content))
 		      reg[RRR] = -1;
-		    else if (INTP (content))
-		      reg[rrr] = XCHAR_OR_INT (content);
+		    else if (FIXNUMP (content))
+		      reg[rrr] = XCHAR_OR_FIXNUM (content);
 		    else if (EQ (content, Qt));
 		    else if (CONSP (content))
 		      {
 			attrib = XCAR (content);
 			value = XCDR (content);
-			if (!INTP (attrib) || !INTP (value))
+			if (!FIXNUMP (attrib) || !FIXNUMP (value))
 			  continue;
 			reg[rrr] = XUINT(value);
 			break;
@@ -2053,7 +2053,7 @@ resolve_symbol_ccl_program (Lisp_Object ccl)
       contents = XVECTOR (result)->contents[i];
       /* XEmacs change; accept characters as well as integers, on the basis
          that most CCL code written doesn't make a distinction. */
-      if (INTP (contents) || CHARP(contents))
+      if (FIXNUMP (contents) || CHARP(contents))
 	continue;
       else if (CONSP (contents)
 	       && SYMBOLP (XCAR (contents))
@@ -2123,7 +2123,7 @@ ccl_get_compiled_code (Lisp_Object ccl_prog)
   if (! NATNUMP (val)
       || -1 != bytecode_arithcompare (val, Flength (Vccl_program_table)))
     return Qnil;
-  slot = XVECTOR_DATA (Vccl_program_table)[XINT (val)];
+  slot = XVECTOR_DATA (Vccl_program_table)[XFIXNUM (val)];
   if (! VECTORP (slot)
       || XVECTOR (slot)->size != 3
       || ! VECTORP (XVECTOR_DATA (slot)[1]))
@@ -2167,8 +2167,8 @@ setup_ccl_program (struct ccl_program *ccl, Lisp_Object ccl_prog)
 
       ccl->size = XVECTOR_LENGTH (ccl_prog);
       ccl->prog = XVECTOR_DATA (ccl_prog);
-      ccl->eof_ic = XINT (XVECTOR_DATA (ccl_prog)[CCL_HEADER_EOF]);
-      ccl->buf_magnification = XINT (XVECTOR_DATA (ccl_prog)[CCL_HEADER_BUF_MAG]);
+      ccl->eof_ic = XFIXNUM (XVECTOR_DATA (ccl_prog)[CCL_HEADER_EOF]);
+      ccl->buf_magnification = XFIXNUM (XVECTOR_DATA (ccl_prog)[CCL_HEADER_BUF_MAG]);
     }
   ccl->ic = CCL_HEADER_MAIN;
   ccl->eol_type = CCL_CODING_EOL_LF;
@@ -2275,8 +2275,8 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
     syntax_error ("Length of vector REGISTERS is not 8", Qunbound);
 
   for (i = 0; i < 8; i++)
-    ccl.reg[i] = (INTP (XVECTOR_DATA (reg)[i]) || CHARP (XVECTOR_DATA (reg)[i])
-		  ? XCHAR_OR_INT (XVECTOR_DATA (reg)[i])
+    ccl.reg[i] = (FIXNUMP (XVECTOR_DATA (reg)[i]) || CHARP (XVECTOR_DATA (reg)[i])
+		  ? XCHAR_OR_FIXNUM (XVECTOR_DATA (reg)[i])
 		  : 0);
 
   ccl_driver (&ccl, (const unsigned char *)0,
@@ -2284,10 +2284,10 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
 	      CCL_MODE_ENCODING);
   QUIT;
   if (ccl.status != CCL_STAT_SUCCESS)
-    signal_error (Qccl_error, "Error in CCL program at code numbered ...", make_int (ccl.ic));
+    signal_error (Qccl_error, "Error in CCL program at code numbered ...", make_fixnum (ccl.ic));
 
   for (i = 0; i < 8; i++)
-    XVECTOR (reg)->contents[i] = make_int (ccl.reg[i]);
+    XVECTOR (reg)->contents[i] = make_fixnum (ccl.reg[i]);
 
   RETURN_UNGCPRO (Qnil);
 }
@@ -2340,16 +2340,16 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
   for (i = 0; i < 8; i++)
     {
       if (NILP (XVECTOR_DATA (status)[i]))
-	XVECTOR_DATA (status)[i] = make_int (0);
-      if (INTP (XVECTOR_DATA (status)[i]))
-	ccl.reg[i] = XINT (XVECTOR_DATA (status)[i]);
+	XVECTOR_DATA (status)[i] = make_fixnum (0);
+      if (FIXNUMP (XVECTOR_DATA (status)[i]))
+	ccl.reg[i] = XFIXNUM (XVECTOR_DATA (status)[i]);
       if (CHARP (XVECTOR_DATA (status)[i]))
 	ccl.reg[i] = XCHAR (XVECTOR_DATA (status)[i]);
     }
-  if (INTP (XVECTOR (status)->contents[i]) ||
+  if (FIXNUMP (XVECTOR (status)->contents[i]) ||
       CHARP (XVECTOR (status)->contents[i]))
     {
-      i = XCHAR_OR_INT (XVECTOR_DATA (status)[8]);
+      i = XCHAR_OR_FIXNUM (XVECTOR_DATA (status)[8]);
       if (ccl.ic < i && i < ccl.size)
 	ccl.ic = i;
     }
@@ -2360,8 +2360,8 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
 			 (int *) 0,
 			 CCL_MODE_DECODING);
   for (i = 0; i < 8; i++)
-    XVECTOR_DATA (status)[i] = make_int (ccl.reg[i]);
-  XVECTOR_DATA (status)[8] = make_int (ccl.ic);
+    XVECTOR_DATA (status)[i] = make_fixnum (ccl.reg[i]);
+  XVECTOR_DATA (status)[8] = make_fixnum (ccl.ic);
   UNGCPRO;
 
   val = make_string (Dynarr_begin (outbuf), produced);
@@ -2371,7 +2371,7 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
     signal_error (Qccl_error, "Output buffer for the CCL programs overflow", Qunbound);
   if (ccl.status != CCL_STAT_SUCCESS
       && ccl.status != CCL_STAT_SUSPEND_BY_SRC)
-    signal_error (Qccl_error, "Error in CCL program at code numbered...", make_int (ccl.ic));
+    signal_error (Qccl_error, "Error in CCL program at code numbered...", make_fixnum (ccl.ic));
 
   return val;
 }
@@ -2416,7 +2416,7 @@ Return index number of the registered CCL program.
 	  /* Update this slot.  */
 	  XVECTOR_DATA (slot)[1] = ccl_prog;
 	  XVECTOR_DATA (slot)[2] = resolved;
-	  return make_int (idx);
+	  return make_fixnum (idx);
 	}
     }
 
@@ -2426,7 +2426,7 @@ Return index number of the registered CCL program.
       Lisp_Object new_table;
       int j;
 
-      new_table = Fmake_vector (make_int (len * 2), Qnil);
+      new_table = Fmake_vector (make_fixnum (len * 2), Qnil);
       for (j = 0; j < len; j++)
 	XVECTOR_DATA (new_table)[j]
 	  = XVECTOR_DATA (Vccl_program_table)[j];
@@ -2436,15 +2436,15 @@ Return index number of the registered CCL program.
   {
     Lisp_Object elt;
 
-    elt = Fmake_vector (make_int (3), Qnil);
+    elt = Fmake_vector (make_fixnum (3), Qnil);
     XVECTOR_DATA (elt)[0] = name;
     XVECTOR_DATA (elt)[1] = ccl_prog;
     XVECTOR_DATA (elt)[2] = resolved;
     XVECTOR_DATA (Vccl_program_table)[idx] = elt;
   }
 
-  Fput (name, Qccl_program_idx, make_int (idx));
-  return make_int (idx);
+  Fput (name, Qccl_program_idx, make_fixnum (idx));
+  return make_fixnum (idx);
 }
 
 /* Register code conversion map.
@@ -2479,7 +2479,7 @@ Return index number of the registered map.
 
       if (EQ (symbol, XCAR (slot)))
 	{
-	  idx = make_int (i);
+	  idx = make_fixnum (i);
 	  XCDR (slot) = map;
 	  Fput (symbol, Qcode_conversion_map, map);
 	  Fput (symbol, Qcode_conversion_map_id, idx);
@@ -2489,7 +2489,7 @@ Return index number of the registered map.
 
   if (i == len)
     {
-      Lisp_Object new_vector = Fmake_vector (make_int (len * 2), Qnil);
+      Lisp_Object new_vector = Fmake_vector (make_fixnum (len * 2), Qnil);
       int j;
 
       for (j = 0; j < len; j++)
@@ -2498,7 +2498,7 @@ Return index number of the registered map.
       Vcode_conversion_map_vector = new_vector;
     }
 
-  idx = make_int (i);
+  idx = make_fixnum (i);
   Fput (symbol, Qcode_conversion_map, map);
   Fput (symbol, Qcode_conversion_map_id, idx);
   XVECTOR_DATA (Vcode_conversion_map_vector)[i] = Fcons (symbol, map);
@@ -2523,7 +2523,7 @@ vars_of_mule_ccl (void)
 {
 
   staticpro (&Vccl_program_table);
-  Vccl_program_table = Fmake_vector (make_int (32), Qnil);
+  Vccl_program_table = Fmake_vector (make_fixnum (32), Qnil);
 
 #ifdef DEBUG_XEMACS
   DEFVAR_LISP ("ccl-program-table",
@@ -2539,7 +2539,7 @@ Vector containing all registered CCL programs.
   DEFVAR_LISP ("code-conversion-map-vector", &Vcode_conversion_map_vector /*
 Vector of code conversion maps.
 */ );
-  Vcode_conversion_map_vector = Fmake_vector (make_int (16), Qnil);
+  Vcode_conversion_map_vector = Fmake_vector (make_fixnum (16), Qnil);
 
   DEFVAR_LISP ("translation-hash-table-vector",
                &Vtranslation_hash_table_vector /*

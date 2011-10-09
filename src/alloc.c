@@ -1583,9 +1583,9 @@ Return a new list of length LENGTH, with each element being OBJECT.
   Lisp_Object val = Qnil;
   Elemcount size;
 
-  check_integer_range (length, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (length, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
 
-  size = XINT (length);
+  size = XFIXNUM (length);
 
   while (size--)
     val = Fcons (object, val);
@@ -1862,8 +1862,8 @@ See also the function `vector'.
 */
        (length, object))
 {
-  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
-  return make_vector (XINT (length), object);
+  check_integer_range (length, Qzero, make_fixnum (ARRAY_DIMENSION_LIMIT));
+  return make_vector (XFIXNUM (length), object);
 }
 
 DEFUN ("vector", Fvector, 0, MANY, 0, /*
@@ -2044,8 +2044,8 @@ BIT must be one of the integers 0 or 1.  See also the function `bit-vector'.
 */
        (length, bit))
 {
-  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
-  return make_bit_vector (XINT (length), bit);
+  check_integer_range (length, Qzero, make_fixnum (ARRAY_DIMENSION_LIMIT));
+  return make_bit_vector (XFIXNUM (length), bit);
 }
 
 DEFUN ("bit-vector", Fbit_vector, 0, MANY, 0, /*
@@ -2135,7 +2135,7 @@ arguments: (ARGLIST INSTRUCTIONS CONSTANTS STACK-DEPTH &optional DOC-STRING INTE
 
   if (nargs < 4 || nargs > 6)
     return Fsignal (Qwrong_number_of_arguments,
-		    list2 (intern ("make-byte-code"), make_int (nargs)));
+		    list2 (intern ("make-byte-code"), make_fixnum (nargs)));
 
   /* Check for valid formal parameter list now, to allow us to use
      SPECBIND_FAST_UNSAFE() later in funcall_compiled_function(). */
@@ -2158,7 +2158,7 @@ arguments: (ARGLIST INSTRUCTIONS CONSTANTS STACK-DEPTH &optional DOC-STRING INTE
   if (CONSP (instructions))
     {
       CHECK_STRING (XCAR (instructions));
-      CHECK_INT (XCDR (instructions));
+      CHECK_FIXNUM (XCDR (instructions));
     }
   else
     {
@@ -2170,8 +2170,8 @@ arguments: (ARGLIST INSTRUCTIONS CONSTANTS STACK-DEPTH &optional DOC-STRING INTE
     CHECK_VECTOR (constants);
   f->constants = constants;
 
-  check_integer_range (stack_depth, Qzero, make_int (USHRT_MAX));
-  f->stack_depth = (unsigned short) XINT (stack_depth);
+  check_integer_range (stack_depth, Qzero, make_fixnum (USHRT_MAX));
+  f->stack_depth = (unsigned short) XFIXNUM (stack_depth);
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   f->annotated = Vload_file_name_internal;
@@ -2534,7 +2534,7 @@ string_plist_ptr (Lisp_Object string)
 
   if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
     ptr = &XCDR (*ptr);
-  if (CONSP (*ptr) && INTP (XCAR (*ptr)))
+  if (CONSP (*ptr) && FIXNUMP (XCAR (*ptr)))
     ptr = &XCDR (*ptr);
   return ptr;
 }
@@ -3006,26 +3006,26 @@ LENGTH must be a non-negative integer.
 */
        (length, character))
 {
-  check_integer_range (length, Qzero, make_int (ARRAY_DIMENSION_LIMIT));
+  check_integer_range (length, Qzero, make_fixnum (ARRAY_DIMENSION_LIMIT));
   CHECK_CHAR_COERCE_INT (character);
   {
     Ibyte init_str[MAX_ICHAR_LEN];
     int len = set_itext_ichar (init_str, XCHAR (character));
-    Lisp_Object val = make_uninit_string (len * XINT (length));
+    Lisp_Object val = make_uninit_string (len * XFIXNUM (length));
 
     if (len == 1)
       {
 	/* Optimize the single-byte case */
 	memset (XSTRING_DATA (val), XCHAR (character), XSTRING_LENGTH (val));
 	XSET_STRING_ASCII_BEGIN (val, min (MAX_STRING_ASCII_BEGIN,
-					   len * XINT (length)));
+					   len * XFIXNUM (length)));
       }
     else
       {
 	EMACS_INT i;
 	Ibyte *ptr = XSTRING_DATA (val);
 
-	for (i = XINT (length); i; i--)
+	for (i = XFIXNUM (length); i; i--)
 	  {
 	    Ibyte *init_ptr = init_str;
 	    switch (len)
@@ -4046,7 +4046,7 @@ gc_plist_hack (const Ascbyte *name, EMACS_INT value, Lisp_Object tail)
   /* C doesn't have local functions (or closures, or GC, or readable syntax,
      or portable numeric datatypes, or bit-vectors, or characters, or
      arrays, or exceptions, or ...) */
-  return cons3 (intern (name), make_int (value), tail);
+  return cons3 (intern (name), make_fixnum (value), tail);
 }
 
 /* Pluralize a lowercase English word stored in BUF, assuming BUF has
@@ -4230,30 +4230,30 @@ garbage_collection_statistics (void)
 #ifdef NEW_GC
   return
     list6 
-    (Fcons (make_int (lrecord_stats[lrecord_type_cons].instances_in_use),
-	    make_int (lrecord_stats[lrecord_type_cons]
+    (Fcons (make_fixnum (lrecord_stats[lrecord_type_cons].instances_in_use),
+	    make_fixnum (lrecord_stats[lrecord_type_cons]
 		      .bytes_in_use_including_overhead)),
-     Fcons (make_int (lrecord_stats[lrecord_type_symbol].instances_in_use),
-	    make_int (lrecord_stats[lrecord_type_symbol]
+     Fcons (make_fixnum (lrecord_stats[lrecord_type_symbol].instances_in_use),
+	    make_fixnum (lrecord_stats[lrecord_type_symbol]
 		      .bytes_in_use_including_overhead)),
-     Fcons (make_int (lrecord_stats[lrecord_type_marker].instances_in_use),
-	    make_int (lrecord_stats[lrecord_type_marker]
+     Fcons (make_fixnum (lrecord_stats[lrecord_type_marker].instances_in_use),
+	    make_fixnum (lrecord_stats[lrecord_type_marker]
 		      .bytes_in_use_including_overhead)),
-     make_int (lrecord_stats[lrecord_type_string]
+     make_fixnum (lrecord_stats[lrecord_type_string]
 	       .bytes_in_use_including_overhead),
-     make_int (lrecord_stats[lrecord_type_vector]
+     make_fixnum (lrecord_stats[lrecord_type_vector]
 	       .bytes_in_use_including_overhead),
      object_memory_usage_stats (1));
 #else /* not NEW_GC */
   return
-    list6 (Fcons (make_int (gc_count_num_cons_in_use),
-		  make_int (gc_count_num_cons_freelist)),
-	   Fcons (make_int (gc_count_num_symbol_in_use),
-		  make_int (gc_count_num_symbol_freelist)),
-	   Fcons (make_int (gc_count_num_marker_in_use),
-		  make_int (gc_count_num_marker_freelist)),
-	   make_int (gc_count_string_total_size),
-	   make_int (lrecord_stats[lrecord_type_vector].bytes_in_use +
+    list6 (Fcons (make_fixnum (gc_count_num_cons_in_use),
+		  make_fixnum (gc_count_num_cons_freelist)),
+	   Fcons (make_fixnum (gc_count_num_symbol_in_use),
+		  make_fixnum (gc_count_num_symbol_freelist)),
+	   Fcons (make_fixnum (gc_count_num_marker_in_use),
+		  make_fixnum (gc_count_num_marker_freelist)),
+	   make_fixnum (gc_count_string_total_size),
+	   make_fixnum (lrecord_stats[lrecord_type_vector].bytes_in_use +
 		     lrecord_stats[lrecord_type_vector].bytes_freed +
 		     lrecord_stats[lrecord_type_vector].bytes_on_free_list),
 	   object_memory_usage_stats (1));
@@ -4318,9 +4318,9 @@ itself.
   lisp_object_storage_size (object, &object_stats);
 
   val = Facons (Qobject_actually_requested,
-		make_int (object_stats.was_requested), val);
+		make_fixnum (object_stats.was_requested), val);
   val = Facons (Qobject_malloc_overhead,
-		make_int (object_stats.malloc_overhead), val);
+		make_fixnum (object_stats.malloc_overhead), val);
   assert (!object_stats.dynarr_overhead);
   assert (!object_stats.gap_overhead);
 
@@ -4331,15 +4331,15 @@ itself.
 
       val = Fcons (Qt, val);
       val = Facons (Qother_memory_actually_requested,
-		    make_int (gustats.u.was_requested), val);
+		    make_fixnum (gustats.u.was_requested), val);
       val = Facons (Qother_memory_malloc_overhead,
-		    make_int (gustats.u.malloc_overhead), val);
+		    make_fixnum (gustats.u.malloc_overhead), val);
       if (gustats.u.dynarr_overhead)
 	val = Facons (Qother_memory_dynarr_overhead,
-		      make_int (gustats.u.dynarr_overhead), val);
+		      make_fixnum (gustats.u.dynarr_overhead), val);
       if (gustats.u.gap_overhead)
 	val = Facons (Qother_memory_gap_overhead,
-		      make_int (gustats.u.gap_overhead), val);
+		      make_fixnum (gustats.u.gap_overhead), val);
       val = Fcons (Qnil, val);
 
       i = 0;
@@ -4350,7 +4350,7 @@ itself.
 	      val = Fcons (item, val);
 	    else
 	      {
-		val = Facons (item, make_int (gustats.othervals[i]), val);
+		val = Facons (item, make_fixnum (gustats.othervals[i]), val);
 		i++;
 	      }
 	  }
@@ -4486,7 +4486,7 @@ See also `consing-since-gc' and `object-memory-usage-stats'.
 */
        ())
 {
-  return make_int (total_gc_usage + consing_since_gc);
+  return make_fixnum (total_gc_usage + consing_since_gc);
 }
 
 #endif /* ALLOC_TYPE_STATS */
@@ -5540,7 +5540,7 @@ If this value exceeds `gc-cons-threshold', a garbage collection happens.
 */
        ())
 {
-  return make_int (consing_since_gc);
+  return make_fixnum (consing_since_gc);
 }
 
 #if 0
@@ -5551,7 +5551,7 @@ The value is divided by 1024 to make sure it will fit in a lisp integer.
 */
        ())
 {
-  return make_int ((EMACS_INT) sbrk (0) / 1024);
+  return make_fixnum ((EMACS_INT) sbrk (0) / 1024);
 }
 #endif
 
@@ -5564,7 +5564,7 @@ returned number tends to be much greater than reality.
 */
        ())
 {
-  return make_int (total_data_usage ());
+  return make_fixnum (total_data_usage ());
 }
 
 #ifdef USE_VALGRIND
@@ -5600,7 +5600,7 @@ static void
 common_init_alloc_early (void)
 {
 #ifndef Qzero
-  Qzero = make_int (0);	/* Only used if Lisp_Object is a union type */
+  Qzero = make_fixnum (0);	/* Only used if Lisp_Object is a union type */
 #endif
 
 #ifndef Qnull_pointer

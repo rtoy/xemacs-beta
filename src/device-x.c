@@ -1617,10 +1617,10 @@ mean ``unspecified''.
       else if (EQ (type, Qnatnum) && i < 0)
 	return maybe_signal_continuable_error_2
 	  (Qinvalid_argument, "Invalid numerical value for resource",
-	   make_int (i), build_extstring (name_string, Qbinary),
+	   make_fixnum (i), build_extstring (name_string, Qbinary),
 	   Qresource, errb);
       else
-	return make_int (i);
+	return make_fixnum (i);
     }
   else
     {
@@ -1735,7 +1735,7 @@ Return the bitplane depth of the visual the X display DEVICE is using.
 */
        (device))
 {
-   return make_int (DEVICE_X_DEPTH (decode_x_device (device)));
+   return make_fixnum (DEVICE_X_DEPTH (decode_x_device (device)));
 }
 
 static Lisp_Object
@@ -1747,17 +1747,17 @@ x_device_system_metrics (struct device *d,
   switch (m)
     {
     case DM_size_device:
-      return Fcons (make_int (DisplayWidth (dpy, DefaultScreen (dpy))),
-		    make_int (DisplayHeight (dpy, DefaultScreen (dpy))));
+      return Fcons (make_fixnum (DisplayWidth (dpy, DefaultScreen (dpy))),
+		    make_fixnum (DisplayHeight (dpy, DefaultScreen (dpy))));
     case DM_size_device_mm:
-      return Fcons (make_int (DisplayWidthMM (dpy, DefaultScreen (dpy))),
-		    make_int (DisplayHeightMM (dpy, DefaultScreen (dpy))));
+      return Fcons (make_fixnum (DisplayWidthMM (dpy, DefaultScreen (dpy))),
+		    make_fixnum (DisplayHeightMM (dpy, DefaultScreen (dpy))));
     case DM_num_bit_planes:
-      return make_int (DisplayPlanes (dpy, DefaultScreen (dpy)));
+      return make_fixnum (DisplayPlanes (dpy, DefaultScreen (dpy)));
     case DM_num_color_cells:
-      return make_int (DisplayCells (dpy, DefaultScreen (dpy)));
+      return make_fixnum (DisplayCells (dpy, DefaultScreen (dpy)));
     case DM_num_screens:
-      return make_int (ScreenCount (dpy));
+      return make_fixnum (ScreenCount (dpy));
     case DM_backing_store:
       switch (DoesBackingStore (DefaultScreenOfDisplay (dpy)))
 	{
@@ -1798,9 +1798,9 @@ number.  See also `x-server-vendor'.
 {
   Display *dpy = get_x_display (device);
 
-  return list3 (make_int (ProtocolVersion  (dpy)),
-		make_int (ProtocolRevision (dpy)),
-		make_int (VendorRelease    (dpy)));
+  return list3 (make_fixnum (ProtocolVersion  (dpy)),
+		make_fixnum (ProtocolRevision (dpy)),
+		make_fixnum (VendorRelease    (dpy)));
 }
 
 DEFUN ("x-valid-keysym-name-p", Fx_valid_keysym_name_p, 1, 1, 0, /*
