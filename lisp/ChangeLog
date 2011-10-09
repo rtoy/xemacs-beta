@@ -1,3 +1,21 @@
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obsolete.el:
+	* obsolete.el (assq-delete-all):
+	* packages.el (package-provide):
+	* packages.el (package-suppress):
+	* mule/cyrillic.el ("Cyrillic-KOI8"):
+	* mule/cyrillic.el (koi8-u):
+	* mule/general-late.el (posix-charset-to-coding-system-hash):
+	* mule/latin.el:
+	* mule/latin.el (for):
+	* cl-extra.el:
+	* cl-extra.el (cl-extra):
+	* loadup.el (load-history):
+	Change any uses of #'remassq, #'remassoc and friends to calling
+	#'delete* with an appropriate key argument. Provide compatibility
+	implementations, mark them obsolete.
+
 2011-10-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el:

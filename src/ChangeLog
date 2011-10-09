@@ -1,5 +1,20 @@
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fns.c (remassoc_no_quit):
+	* fns.c (remrassq_no_quit):
+	* fns.c (syms_of_fns):
+	* fontcolor-tty.c (Fregister_tty_color):
+	* fontcolor-tty.c (Funregister_tty_color):
+	* fontcolor-tty.c (Ffind_tty_color):
+	* lisp.h:
+	Remove Fremassq, Fremrassq, Fremassoc, Fremrassoc, they're
+	XEmacs-specific functions and Lisp callers should use (delete*
+	... :key #'car) anyway. Keep the non-Lisp-visible _no_quit
+	versions, calling FdeleteX from C with the appropriate arguments
+	is ungainly.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Do a couple of non-mechanical things that would otherwise have
 	been included in the last change.
 	* data.c:

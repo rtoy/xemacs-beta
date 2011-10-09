@@ -3642,41 +3642,12 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
   return sequence;
 }
 
-DEFUN ("remassoc", Fremassoc, 2, 2, 0, /*
-Delete by side effect any elements of ALIST whose car is `equal' to KEY.
-The modified ALIST is returned.  If the first member of ALIST has a car
-that is `equal' to KEY, there is no way to remove it by side effect;
-therefore, write `(setq foo (remassoc key foo))' to be sure of changing
-the value of `foo'.
-*/
-       (key, alist))
-{
-  EXTERNAL_LIST_LOOP_DELETE_IF (elt, alist,
-				(CONSP (elt) &&
-				 internal_equal (key, XCAR (elt), 0)));
-  return alist;
-}
-
 Lisp_Object
 remassoc_no_quit (Lisp_Object key, Lisp_Object alist)
 {
-  int speccount = specpdl_depth ();
-  specbind (Qinhibit_quit, Qt);
-  return unbind_to_1 (speccount, Fremassoc (key, alist));
-}
-
-DEFUN ("remassq", Fremassq, 2, 2, 0, /*
-Delete by side effect any elements of ALIST whose car is `eq' to KEY.
-The modified ALIST is returned.  If the first member of ALIST has a car
-that is `eq' to KEY, there is no way to remove it by side effect;
-therefore, write `(setq foo (remassq key foo))' to be sure of changing
-the value of `foo'.
-*/
-       (key, alist))
-{
-  EXTERNAL_LIST_LOOP_DELETE_IF (elt, alist,
-				(CONSP (elt) &&
-				 EQ_WITH_EBOLA_NOTICE (key, XCAR (elt))));
+  LIST_LOOP_DELETE_IF (elt, alist,
+		       (CONSP (elt) &&
+                        internal_equal (key, XCAR (elt), 0)));
   return alist;
 }
 
@@ -3688,36 +3659,6 @@ remassq_no_quit (Lisp_Object key, Lisp_Object alist)
   LIST_LOOP_DELETE_IF (elt, alist,
 		       (CONSP (elt) &&
 			EQ_WITH_EBOLA_NOTICE (key, XCAR (elt))));
-  return alist;
-}
-
-DEFUN ("remrassoc", Fremrassoc, 2, 2, 0, /*
-Delete by side effect any elements of ALIST whose cdr is `equal' to VALUE.
-The modified ALIST is returned.  If the first member of ALIST has a car
-that is `equal' to VALUE, there is no way to remove it by side effect;
-therefore, write `(setq foo (remrassoc value foo))' to be sure of changing
-the value of `foo'.
-*/
-       (value, alist))
-{
-  EXTERNAL_LIST_LOOP_DELETE_IF (elt, alist,
-				(CONSP (elt) &&
-				 internal_equal (value, XCDR (elt), 0)));
-  return alist;
-}
-
-DEFUN ("remrassq", Fremrassq, 2, 2, 0, /*
-Delete by side effect any elements of ALIST whose cdr is `eq' to VALUE.
-The modified ALIST is returned.  If the first member of ALIST has a car
-that is `eq' to VALUE, there is no way to remove it by side effect;
-therefore, write `(setq foo (remrassq value foo))' to be sure of changing
-the value of `foo'.
-*/
-       (value, alist))
-{
-  EXTERNAL_LIST_LOOP_DELETE_IF (elt, alist,
-				(CONSP (elt) &&
-				 EQ_WITH_EBOLA_NOTICE (value, XCDR (elt))));
   return alist;
 }
 
@@ -11771,10 +11712,6 @@ syms_of_fns (void)
 
   DEFSUBR (FdeleteX);
   DEFSUBR (FremoveX);
-  DEFSUBR (Fremassoc);
-  DEFSUBR (Fremassq);
-  DEFSUBR (Fremrassoc);
-  DEFSUBR (Fremrassq);
   DEFSUBR (Fdelete_duplicates);
   DEFSUBR (Fremove_duplicates);
   DEFSUBR (Fnreverse);

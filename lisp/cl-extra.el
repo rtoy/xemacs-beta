@@ -874,6 +874,30 @@ Otherwise, return CHARACTER."
     (-1 (1- (length (format "%b" (- integer)))))
     (1 (length (format "%b" integer)))))
 
+;; These are here because labels and symbol-macrolet are not available in
+;; obsolete.el. They are, however, all marked as obsolete in that file.
+(symbol-macrolet ((not-nil '#:not-nil))
+  (labels ((car-or-not-nil (object)
+             (if (consp object) (car object) not-nil))
+           (cdr-or-not-nil (object)
+             (if (consp object) (cdr object) not-nil)))
+    (defalias 'remassoc
+      #'(lambda (key alist)
+         (delete* key alist :test #'equal
+                  :key (if key #'car-safe #'car-or-not-nil))))
+    (defalias 'remrassoc
+      #'(lambda (key alist)
+         (delete* key alist :test #'equal
+                  :key (if key #'cdr-safe #'cdr-or-not-nil))))
+    (defalias 'remrassq
+      #'(lambda (key alist)
+         (delete* key alist :test #'eq
+                  :key (if key #'cdr-safe #'cdr-or-not-nil))))
+    (defalias 'remassq
+      #'(lambda (key alist)
+         (delete* key alist :test #'eq
+                  :key (if key #'car-safe #'car-or-not-nil))))))
+
 (run-hooks 'cl-extra-load-hook)
 
 ;; XEmacs addition

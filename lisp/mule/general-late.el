@@ -46,13 +46,13 @@
       ;; fraction faster for those languages.
       language-info-alist
       (cons (assoc "Japanese" language-info-alist)
-	    (remassoc "Japanese" language-info-alist))
+	    (delete* "Japanese" language-info-alist :test #'equal :key #'car))
       language-info-alist 
       (cons (assoc "German" language-info-alist)
-	    (remassoc "German" language-info-alist))
+	    (delete* "German" language-info-alist :test #'equal :key #'car))
       language-info-alist
       (cons (assoc "English" language-info-alist)
-	    (remassoc "English" language-info-alist))
+	    (delete* "English" language-info-alist :test #'equal :key #'car))
 
       ;; Make Installation-string actually reflect the environment at
       ;; byte-compile time. (We can't necessarily decode it when version.el

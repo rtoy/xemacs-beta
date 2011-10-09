@@ -263,8 +263,8 @@ later, no need to call it in user code.")
 
 (define-compatible-function-alias 'interactive-form 
   'function-interactive) ;GNU 21.1
-(define-compatible-function-alias 'assq-delete-all
-  'remassq) ;GNU 21.1
+(define-function 'assq-delete-all 'remassq) ;GNU 21.1
+(make-compatible 'assq-delete-all "use (delete* ITEM SEQUENCE :key #'car)")
 
 (defun makehash (&optional test)
   "Create a new hash table.
@@ -451,6 +451,16 @@ because its `find-charset-string' ignores ASCII charset."
 
 (define-obsolete-variable-alias 'cl-macro-environment
   'byte-compile-macro-environment)
+
+;; Actual implementations of these functions are in cl-extra.el, after
+;; cl-macs is loaded, since those implementations use #'labels and
+;; #'symbol-macrolet. These APIs were always XEmacs-specific, were never
+;; widely used, and it was always more readable and more compatible to use
+;; the CL functions.
+(make-obsolete 'remassoc "use delete* with :test #'equal, :key #'car")
+(make-obsolete 'remassq "use delete* with :test #'eq, :key #'car")
+(make-obsolete 'remrassoc "use delete* with :test #'equal, :key #'cdr")
+(make-obsolete 'remrassq "use delete* with :test #'eq, :key #'cdr")
 
 (provide 'obsolete)
 ;;; obsolete.el ends here
