@@ -65,7 +65,7 @@ allocate_toolbar_item_id (struct frame *f, struct toolbar_button *button,
 {
   /* hmm what do we generate an id based on */
   int id = TOOLBAR_ITEM_ID_BITS (internal_hash (button->callback, 0, 0));
-  while (!NILP (Fgethash (make_int (id),
+  while (!NILP (Fgethash (make_fixnum (id),
 			  FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f), Qnil)))
     {
       id = TOOLBAR_ITEM_ID_BITS (id + 1);
@@ -90,7 +90,7 @@ mswindows_clear_toolbar (struct frame *f, enum edge_pos pos,
 	{
 	  qxeSendMessage (toolbarwnd, TB_GETBUTTON, (WPARAM) i,
 		       (LPARAM) &info);
-	  Fremhash (make_int (info.idCommand), 
+	  Fremhash (make_fixnum (info.idCommand), 
 		    FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f));
 	  qxeSendMessage (toolbarwnd, TB_DELETEBUTTON, (WPARAM) i, 0);
 	}
@@ -321,7 +321,7 @@ mswindows_output_toolbar (struct frame *f, enum edge_pos pos)
 		    }
 		}
 
-	      Fputhash (make_int (tbbutton->idCommand), 
+	      Fputhash (make_fixnum (tbbutton->idCommand), 
 			button, FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f));
 	    }
 
@@ -563,7 +563,7 @@ mswindows_free_frame_toolbars (struct frame *f)
 Lisp_Object 
 mswindows_get_toolbar_button_text (struct frame *f, int command_id)
 {
-  Lisp_Object button = Fgethash (make_int (command_id),
+  Lisp_Object button = Fgethash (make_fixnum (command_id),
 				 FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f), Qnil);
   
   if (!NILP (button))
@@ -587,7 +587,7 @@ mswindows_handle_toolbar_wm_command (struct frame *f, HWND UNUSED (ctrl),
   /* Try to map the command id through the proper hash table */
   Lisp_Object button, data, fn, arg, frame;
 
-  button = Fgethash (make_int (id), 
+  button = Fgethash (make_fixnum (id), 
 		     FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f), Qnil);
 
   if (NILP (button))

@@ -474,9 +474,9 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
   CHECK_RANGE_TABLE (range_table);
   rt = XRANGE_TABLE (range_table);
 
-  CHECK_INT_COERCE_CHAR (pos);
+  CHECK_FIXNUM_COERCE_CHAR (pos);
 
-  return get_range_table (XINT (pos), gap_array_length (rt->entries),
+  return get_range_table (XFIXNUM (pos), gap_array_length (rt->entries),
 			  gap_array_begin (rt->entries,
 					   struct range_table_entry),
 			  gap_array_gappos (rt->entries),
@@ -712,10 +712,10 @@ Set the value for range START .. END to be VALUE in RANGE-TABLE.
   EMACS_INT first, last;
 
   CHECK_RANGE_TABLE (range_table);
-  CHECK_INT_COERCE_CHAR (start);
-  first = XINT (start);
-  CHECK_INT_COERCE_CHAR (end);
-  last = XINT (end);
+  CHECK_FIXNUM_COERCE_CHAR (start);
+  first = XFIXNUM (start);
+  CHECK_FIXNUM_COERCE_CHAR (end);
+  last = XFIXNUM (end);
   if (first > last)
     invalid_argument_2 ("start must be <= end", start, end);
 
@@ -782,8 +782,8 @@ this guarantee doesn't hold.
       {
 	EMACS_INT premier = first, dernier = last;
 	internal_to_external_adjust_ends (rt->type, &premier, &dernier);
-	args[1] = make_int (premier);
-	args[2] = make_int (dernier);
+	args[1] = make_fixnum (premier);
+	args[2] = make_fixnum (dernier);
       }
       args[3] = entry.val;
       Ffuncall (countof (args), args);
@@ -818,11 +818,11 @@ rangetab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
   /* #### should deal with ERRB */
   EXTERNAL_PROPERTY_LIST_LOOP_3 (range, data, value)
     {
-      if (!INTP (range) && !CHARP (range)
+      if (!FIXNUMP (range) && !CHARP (range)
 	  && !(CONSP (range) && CONSP (XCDR (range))
 	       && NILP (XCDR (XCDR (range)))
-	       && (INTP (XCAR (range)) || CHARP (XCAR (range)))
-	       && (INTP (XCAR (XCDR (range))) || CHARP (XCAR (XCDR (range))))))
+	       && (FIXNUMP (XCAR (range)) || CHARP (XCAR (range)))
+	       && (FIXNUMP (XCAR (XCDR (range))) || CHARP (XCAR (XCDR (range))))))
 	sferror ("Invalid range format", range);
     }
 

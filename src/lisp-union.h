@@ -38,14 +38,14 @@ union Lisp_Object
 
   struct
   {
-    signed EMACS_INT val : INT_VALBITS;
-    unsigned int bits : INT_GCBITS;
+    signed EMACS_INT val : FIXNUM_VALBITS;
+    unsigned int bits : FIXNUM_GCBITS;
   } s;
 
   struct
   {
-    EMACS_UINT val : INT_VALBITS;
-    unsigned int bits : INT_GCBITS;
+    EMACS_UINT val : FIXNUM_VALBITS;
+    unsigned int bits : FIXNUM_GCBITS;
   } u;
 #else /* non-valbits are at higher addresses */
   struct
@@ -56,14 +56,14 @@ union Lisp_Object
 
   struct
   {
-    unsigned int bits : INT_GCBITS;
-    signed EMACS_INT val : INT_VALBITS;
+    unsigned int bits : FIXNUM_GCBITS;
+    signed EMACS_INT val : FIXNUM_VALBITS;
   } s;
 
   struct
   {
-    unsigned int bits : INT_GCBITS;
-    EMACS_UINT val : INT_VALBITS;
+    unsigned int bits : FIXNUM_GCBITS;
+    EMACS_UINT val : FIXNUM_VALBITS;
   } u;
 
 #endif /* non-valbits are at higher addresses */
@@ -81,26 +81,26 @@ Lisp_Object;
 #define XCHARVAL(x) ((EMACS_INT)(x).gu.val)
 #define XPNTRVAL(x) ((x).ui)
 
-#define XREALINT(x) ((EMACS_INT)(x).s.val)
+#define XREALFIXNUM(x) ((EMACS_INT)(x).s.val)
 #define XUINT(x) ((EMACS_UINT)(x).u.val)
 #define XTYPE(x) ((x).gu.type)
 #define EQ(x,y) ((x).v == (y).v)
 
 DECLARE_INLINE_HEADER (
 Lisp_Object
-make_int_verify (EMACS_INT val)
+make_fixnum_verify (EMACS_INT val)
 )
 {
   Lisp_Object obj;
   obj.s.bits = 1;
   obj.s.val = val;
-  type_checking_assert (XREALINT (obj) == val);
+  type_checking_assert (XREALFIXNUM (obj) == val);
   return obj;
 }
 
 DECLARE_INLINE_HEADER (
 Lisp_Object
-make_int (EMACS_INT val)
+make_fixnum (EMACS_INT val)
 )
 {
   Lisp_Object obj;
@@ -132,11 +132,11 @@ wrap_pointer_1 (const void *ptr)
 
 extern MODULE_API Lisp_Object Qnull_pointer, Qzero;
 
-#define INTP(x) ((x).s.bits)
-#define INT_PLUS(x,y)  make_int (XINT (x) + XINT (y))
-#define INT_MINUS(x,y) make_int (XINT (x) - XINT (y))
-#define INT_PLUS1(x)   make_int (XINT (x) + 1)
-#define INT_MINUS1(x)  make_int (XINT (x) - 1)
+#define FIXNUMP(x) ((x).s.bits)
+#define FIXNUM_PLUS(x,y)  make_fixnum (XFIXNUM (x) + XFIXNUM (y))
+#define FIXNUM_MINUS(x,y) make_fixnum (XFIXNUM (x) - XFIXNUM (y))
+#define FIXNUM_PLUS1(x)   make_fixnum (XFIXNUM (x) + 1)
+#define FIXNUM_MINUS1(x)  make_fixnum (XFIXNUM (x) - 1)
 
 /* WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

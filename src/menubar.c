@@ -352,10 +352,10 @@ Also treat %% as a single %.  Return < 0 if STRING1 is less than STRING2,
       else if (*q == '%' && *(q + 1) == '_')
 	q += 2;
       if (!*p || !*q)
-	return make_int (*p - *q);
+	return make_fixnum (*p - *q);
       val = DOWNCASE (0, itext_ichar (p)) - DOWNCASE (0, itext_ichar (q));
       if (val)
-	return make_int (val);
+	return make_fixnum (val);
       INC_IBYTEPTR (p);
       INC_IBYTEPTR (q);
     }

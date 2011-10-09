@@ -494,17 +494,28 @@ easily determined from the input file.")
 	   (if byte-compile-delete-errors
 	       form
 	     (funcall (cdr (symbol-function 'the)) type form))))
+    (declare
+     . ,#'(lambda (&rest specs)
+	    (while specs
+	      (if (listp cl-declare-stack) (push (car specs) cl-declare-stack))
+	      (cl-do-proclaim (pop specs) nil))))
     (load-time-value
-     . ,#'(lambda (form &optional read-only)
-            (let* ((gensym (gensym))
-                   (byte-compile-bound-variables
-                    (acons gensym byte-compile-global-bit
-                           byte-compile-bound-variables)))
-              (setq byte-compile-output-preface
-                    (byte-compile-top-level
-                     `(progn (setq ,gensym ,form) ,byte-compile-output-preface)
-                     t 'file))
-              `(symbol-value ',gensym))))
+     . ,(symbol-macrolet ((wrapper '#:load-time-value))
+          (put wrapper 'byte-compile
+               #'(lambda (form)
+                   (let* ((gensym (gensym))
+                          (byte-compile-bound-variables
+                           (acons gensym byte-compile-global-bit
+                                  byte-compile-bound-variables)))
+                     (setq byte-compile-output-preface
+                           (byte-compile-top-level
+                            `(progn
+                              (setq ,gensym (progn ,(second form)))
+                              ,byte-compile-output-preface)
+                            t 'file))
+                     (byte-compile-form `(symbol-value ',gensym) nil))))
+          #'(lambda (form &optional read-only)
+              (list wrapper form))))
     (labels
         . ,#'(lambda (bindings &rest body)
                (let* ((names (mapcar 'car bindings))
@@ -517,37 +528,116 @@ easily determined from the input file.")
                       (placeholders
                        (mapcar #'(lambda (lambda)
                                    (make-byte-code (second lambda) "\xc0\x87"
-                                                   [42] 1))
+                                                   ;; This list is used for
+                                                   ;; the byte-optimize
+                                                   ;; property, if the
+                                                   ;; function is to be
+                                                   ;; inlined. See
+                                                   ;; cl-do-proclaim.
+                                                   (vector nil) 1))
                                lambdas))
                       (byte-compile-macro-environment
                        (pairlis names (mapcar
                                        #'(lambda (placeholder)
                                            `(lambda (&rest cl-labels-args)
+                                              ;; Be careful not to quote
+                                              ;; PLACEHOLDER, otherwise
+                                              ;; byte-optimize-funcall inlines
+                                              ;; it.
                                               (list* 'funcall ,placeholder
                                                      cl-labels-args)))
                                        placeholders)
                                 byte-compile-macro-environment))
                       (gensym (gensym)))
-                 (put gensym 'byte-compile-label-alist
-                      (pairlis placeholders
-                               (mapcar 'second (mapcar 'cl-macroexpand-all
-                                                       lambdas))))
-                 (put gensym 'byte-compile
-                      #'(lambda (form)
-                          (let* ((byte-compile-label-alist
-                                  (get (car form) 'byte-compile-label-alist)))
-                            (dolist (acons byte-compile-label-alist)
-                              (setf (cdr acons)
-                                    (byte-compile-lambda (cdr acons))))
-                            (byte-compile-body-do-effect
-                             (sublis byte-compile-label-alist (cdr form)
-                                     :test #'eq))
-                            (dolist (acons byte-compile-label-alist)
-                              (nsubst (cdr acons) (car acons)
-                                      byte-compile-label-alist :test #'eq
-                                      :descend-structures t)))))
-                 (cl-macroexpand-all (cons gensym body)
-                                     byte-compile-macro-environment))))
+                 (labels
+                     ((byte-compile-transform-labels (form names lambdas
+                                                      placeholders)
+                        (let* ((inline
+                                 (mapcan
+                                  #'(lambda (name placeholder lambda)
+                                      (and
+                                       (eq
+                                        (getf (aref
+                                               (compiled-function-constants
+                                                placeholder) 0)
+                                              'byte-optimizer)
+                                        'byte-compile-inline-expand)
+                                       `(((function ,placeholder)
+                                          ,(byte-compile-lambda lambda)
+                                          (function ,lambda)))))
+                                  names placeholders lambdas))
+                               (compiled
+                                (mapcar #'byte-compile-lambda 
+                                        (if (not inline)
+                                            lambdas
+                                          ;; See further down for the
+                                          ;; rationale of the sublis calls.
+                                          (sublis (pairlis
+                                                   (mapcar #'cadar inline)
+                                                   (mapcar #'third inline))
+                                                  (sublis
+                                                   (pairlis
+                                                    (mapcar #'car inline)
+                                                    (mapcar #'second inline))
+                                                   lambdas :test #'equal)
+                                                  :test #'eq))))
+                               elt)
+                          (mapc #'(lambda (placeholder function)
+                                    (nsubst function placeholder compiled
+                                            :test #'eq
+                                            :descend-structures t))
+                                placeholders compiled)
+                          (when inline
+                            (dolist (triad inline)
+                              (nsubst (setq elt (elt compiled
+                                                     (position (cadar triad)
+                                                               placeholders)))
+                                      (second triad) compiled :test #'eq
+                                      :descend-structures t)
+                              (setf (second triad) elt))
+                            ;; For inlined labels: first, replace uses of
+                            ;; the placeholder in places where it's not an
+                            ;; evident, explicit funcall (that is, where
+                            ;; it is not to be inlined) with the compiled
+                            ;; function:
+                            (setq form (sublis
+                                        (pairlis (mapcar #'car inline)
+                                                 (mapcar #'second inline))
+                                        form :test #'equal)
+                                  ;; Now replace uses of the placeholder
+                                  ;; where it is an evident funcall with the
+                                  ;; lambda, quoted as a function, to allow
+                                  ;; byte-optimize-funcall to do its
+                                  ;; thing. Note that the lambdas still have
+                                  ;; the placeholders, so there's no risk
+                                  ;; of recursive inlining.
+                                  form (sublis (pairlis
+                                                (mapcar #'cadar inline)
+                                                (mapcar #'third inline))
+                                               form :test #'eq)))
+                          (sublis (pairlis placeholders compiled) form
+                                  :test #'eq))))
+                   (put gensym 'byte-compile
+                        #'(lambda (form)
+                            (let* ((names (cadr (cl-pop2 form)))
+                                   (lambdas (mapcar #'cadr (cdr (pop form))))
+                                   (placeholders (cadr (pop form))))
+                              (byte-compile-body-do-effect
+                               (byte-compile-transform-labels form names
+                                                              lambdas
+                                                              placeholders)))))
+                   (put gensym 'byte-hunk-handler
+                        #'(lambda (form)
+                            (let* ((names (cadr (cl-pop2 form)))
+                                   (lambdas (mapcar #'cadr (cdr (pop form))))
+                                   (placeholders (cadr (pop form))))
+                              (byte-compile-file-form
+                               (cons 'progn
+                                     (byte-compile-transform-labels
+                                      form names lambdas placeholders))))))
+                   (cl-macroexpand-all `(,gensym ',names (list ,@lambdas)
+                                         ',placeholders ,@body)
+                                       byte-compile-macro-environment)))))
     (flet .
       ,#'(lambda (bindings &rest body)
            (let* ((names (mapcar 'car bindings))
@@ -1934,10 +2024,8 @@ docstrings code.")
      ";ELC"
      20
      "\000\000\000\n")
-    (when (not (eq (find-coding-system 'raw-text-unix)
-		   (find-coding-system buffer-file-coding-system)))
-      (insert (format ";;;###coding system: %s\n"
-		      (coding-system-name buffer-file-coding-system))))
+    (insert (format ";;;###coding system: %s\n"
+                    (coding-system-name buffer-file-coding-system)))
     (insert (format
 	     "\n(or %s\n    (error \"Loading this file requires %s\"))\n"
              (let ((print-readably t))
@@ -3701,10 +3789,9 @@ forcing function quoting" ,en (car form))))
   (if (cddr form)
       (byte-compile-normal-call
        `(signal 'wrong-number-of-arguments '(function ,(length (cdr form)))))
-    (byte-compile-constant
-     (cond ((symbolp (nth 1 form))
-            (nth 1 form))
-           ((byte-compile-lambda (nth 1 form)))))))
+    (byte-compile-constant (if (eq 'lambda (car-safe (nth 1 form)))
+                               (byte-compile-lambda (nth 1 form))
+                             (nth 1 form)))))
 
 (defun byte-compile-insert (form)
   (cond ((null (cdr form))
@@ -4076,8 +4163,33 @@ forcing function quoting" ,en (car form))))
            (byte-compile-constp (second form)))
       (byte-compile-callargs-warn (cons (cl-const-expr-val (second form))
                                         (nthcdr 2 form))))
-  (mapc 'byte-compile-form (cdr form))
-  (byte-compile-out 'byte-call (length (cdr (cdr form)))))
+  (if (and byte-optimize
+           (eq 'function (car-safe (cadr form)))
+           (eq 'lambda (car-safe (cadadr form)))
+	    (or
+	     (not (eq (setq form (cons (cadadr form) (cddr form)))
+		      (setq form (byte-compile-unfold-lambda form))))
+	     (prog1 nil (setq form `(funcall #',(car form) ,@(cdr form))))))
+      ;; The byte-compile part of the #'labels implementation, above,
+      ;; happens after macroexpansion and after the source optimizer has
+      ;; done its thing. When labels are to be made inline we can have code
+      ;; that looks like (funcall #'(lambda ...) ...), when the code that
+      ;; the optimizer saw looked like (funcall #<compiled-function ...>
+      ;; ...).
+      ;;
+      ;; So, the optimizer doesn't have the opportunity to transform the
+      ;; former to (let (...) ...), and it's reasonable to do that here (since
+      ;; the labels implementation doesn't change other code that would need
+      ;; running through the optimizer; the lambda itself has already been
+      ;; through the optimizer).
+      ;;
+      ;; Equally reasonable, and conceptually a bit clearer, would be to do
+      ;; the transformation to (funcall #'(lambda ...) ...) in the
+      ;; byte-optimizer, breaking most of the #'sublis calls out of the
+      ;; byte-compile method.
+      (byte-compile-form form)
+    (mapc 'byte-compile-form (cdr form))
+    (byte-compile-out 'byte-call (length (cdr (cdr form))))))
 
 
 (defun byte-compile-let (form)

@@ -757,7 +757,7 @@ static int
 tab_char_width (struct window *w)
 {
   struct buffer *b = XBUFFER (w->buffer);
-  int char_tab_width = XINT (b->tab_width);
+  int char_tab_width = XFIXNUM (b->tab_width);
 
   if (char_tab_width <= 0 || char_tab_width > 1000) char_tab_width = 8;
 
@@ -1954,12 +1954,12 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
 
 	  /* A pixmap with an explicitly set baseline.  We determine the
 	     contribution here. */
-	  else if (INTP (baseline))
+	  else if (FIXNUMP (baseline))
 	    {
 	      int height = ascent + descent;
 	      int pix_ascent, pix_descent;
 
-	      pix_ascent = height * XINT (baseline) / 100;
+	      pix_ascent = height * XFIXNUM (baseline) / 100;
 	      pix_descent = height - pix_ascent;
 
 	      data->new_ascent = max (data->new_ascent, pix_ascent);
@@ -2147,8 +2147,8 @@ create_text_block (struct window *w, struct display_line *dl,
      only lines that start with less than selective_display columns of
      space will be displayed.  If selective_display is t then all text
      after a ^M is invisible. */
-  int selective = (INTP (b->selective_display)
-		   ? XINT (b->selective_display)
+  int selective = (FIXNUMP (b->selective_display)
+		   ? XFIXNUM (b->selective_display)
 		   : (!NILP (b->selective_display) ? -1 : 0));
 
   /* The variable ctl-arrow allows the user to specify what characters
@@ -2933,13 +2933,13 @@ done:
   dl->descent = data.new_descent;
 
   {
-    unsigned short ascent = (unsigned short) XINT (w->minimum_line_ascent);
+    unsigned short ascent = (unsigned short) XFIXNUM (w->minimum_line_ascent);
 
     if (dl->ascent < ascent)
       dl->ascent = ascent;
   }
   {
-    unsigned short descent = (unsigned short) XINT (w->minimum_line_descent);
+    unsigned short descent = (unsigned short) XFIXNUM (w->minimum_line_descent);
 
     if (dl->descent < descent)
       dl->descent = descent;
@@ -4348,9 +4348,9 @@ tail_recurse:
 	      goto tail_recurse;
 	    }
 	}
-      else if (INTP (car))
+      else if (FIXNUMP (car))
 	{
-	  Charcount lim = XINT (car);
+	  Charcount lim = XFIXNUM (car);
 
 	  elt = XCDR (elt);
 
@@ -5180,13 +5180,13 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   dl->descent = data.new_descent;
 
   {
-    unsigned short ascent = (unsigned short) XINT (w->minimum_line_ascent);
+    unsigned short ascent = (unsigned short) XFIXNUM (w->minimum_line_ascent);
 
     if (dl->ascent < ascent)
       dl->ascent = ascent;
   }
   {
-    unsigned short descent = (unsigned short) XINT (w->minimum_line_descent);
+    unsigned short descent = (unsigned short) XFIXNUM (w->minimum_line_descent);
 
     if (dl->descent < descent)
       dl->descent = descent;
@@ -5206,7 +5206,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   if (truncate_win)
     data.dl->num_chars =
       string_column_at_point (disp_string, dl->end_charpos,
-			      b ? XINT (b->tab_width) : 8);
+			      b ? XFIXNUM (b->tab_width) : 8);
   else
     /* This doesn't correctly take into account tabs and control
        characters but if the window isn't being truncated then this
@@ -5493,8 +5493,8 @@ Info on reentrancy crashes, with backtraces given:
     reset_glyph_cachels (w);
 #endif
 
-  Fset_marker (w->start[type], make_int (start_pos), w->buffer);
-  Fset_marker (w->pointm[type], make_int (point), w->buffer);
+  Fset_marker (w->start[type], make_fixnum (start_pos), w->buffer);
+  Fset_marker (w->pointm[type], make_fixnum (point), w->buffer);
   w->last_point_x[type] = -1;
   w->last_point_y[type] = -1;
 
@@ -5736,7 +5736,7 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
      under which this can happen, but I believe that it is probably a
      reasonable happening. */
   if (!point_visible (w, pointm, CURRENT_DISP)
-      || XINT (w->last_modified[CURRENT_DISP]) < BUF_MODIFF (b))
+      || XFIXNUM (w->last_modified[CURRENT_DISP]) < BUF_MODIFF (b))
     return 0;
 
   /* If the cursor is moved we attempt to update it.  If we succeed we
@@ -5817,10 +5817,10 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
      structs which could lead to an assertion failure.  However, if we
      fail the next thing that is going to happen is a full regen so we
      will actually end up being safe. */
-  w->last_modified[DESIRED_DISP] = make_int (BUF_MODIFF (b));
-  w->last_facechange[DESIRED_DISP] = make_int (BUF_FACECHANGE (b));
-  Fset_marker (w->last_start[DESIRED_DISP], make_int (startp), w->buffer);
-  Fset_marker (w->last_point[DESIRED_DISP], make_int (pointm), w->buffer);
+  w->last_modified[DESIRED_DISP] = make_fixnum (BUF_MODIFF (b));
+  w->last_facechange[DESIRED_DISP] = make_fixnum (BUF_FACECHANGE (b));
+  Fset_marker (w->last_start[DESIRED_DISP], make_fixnum (startp), w->buffer);
+  Fset_marker (w->last_point[DESIRED_DISP], make_fixnum (pointm), w->buffer);
 
   first_line = last_line = line;
   while (line <= dla_end)
@@ -6029,11 +6029,11 @@ regenerate_window_incrementally (struct window *w, Charbpos startp,
 	 business.  Update everything and return success. */
       if (end_unchanged >= ddl->charpos && end_unchanged <= ddl->end_charpos)
 	{
-	  w->last_modified[DESIRED_DISP] = make_int (BUF_MODIFF (b));
-	  w->last_facechange[DESIRED_DISP] = make_int (BUF_FACECHANGE (b));
-	  Fset_marker (w->last_start[DESIRED_DISP], make_int (startp),
+	  w->last_modified[DESIRED_DISP] = make_fixnum (BUF_MODIFF (b));
+	  w->last_facechange[DESIRED_DISP] = make_fixnum (BUF_FACECHANGE (b));
+	  Fset_marker (w->last_start[DESIRED_DISP], make_fixnum (startp),
 		       w->buffer);
-	  Fset_marker (w->last_point[DESIRED_DISP], make_int (pointm),
+	  Fset_marker (w->last_point[DESIRED_DISP], make_fixnum (pointm),
 		       w->buffer);
 
 	  if (ddl->cursor_elt != -1)
@@ -6101,7 +6101,7 @@ regenerate_window_point_center (struct window *w, Charbpos point, int type)
 
   startp = start_with_line_at_pixpos (w, point, window_half_pixpos (w));
   regenerate_window (w, startp, point, type);
-  Fset_marker (w->start[type], make_int (startp), w->buffer);
+  Fset_marker (w->start[type], make_fixnum (startp), w->buffer);
 
   return startp;
 }
@@ -6300,7 +6300,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	    pointm = BUF_ZV (b);
 	}
     }
-  Fset_marker (w->pointm[DESIRED_DISP], make_int (pointm), the_buffer);
+  Fset_marker (w->pointm[DESIRED_DISP], make_fixnum (pointm), the_buffer);
 
   /* Added 2-1-10 -- we should never have empty face or glyph cachels
      because we initialized them at startup and the only way to reduce
@@ -6360,7 +6360,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
       else if (startp > BUF_ZV (b))
 	startp = BUF_ZV (b);
     }
-  Fset_marker (w->start[DESIRED_DISP], make_int (startp), the_buffer);
+  Fset_marker (w->start[DESIRED_DISP], make_fixnum (startp), the_buffer);
 
   truncation_changed = (find_window_mirror (w)->truncate_win !=
 			(unsigned int) window_truncation_on (w));
@@ -6383,7 +6383,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	  if (selected_globally)
 	    BUF_SET_PT (b, pointm);
 
-	  Fset_marker (w->pointm[DESIRED_DISP], make_int (pointm),
+	  Fset_marker (w->pointm[DESIRED_DISP], make_fixnum (pointm),
 		       the_buffer);
 
 	  /* #### BUFU amounts of overkill just to get the cursor
@@ -6396,8 +6396,8 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   /* If nothing has changed since the last redisplay, then we just
      need to make sure that point is still visible. */
-  if (XINT (w->last_modified[CURRENT_DISP]) >= BUF_MODIFF (b)
-      && XINT (w->last_facechange[CURRENT_DISP]) >= BUF_FACECHANGE (b)
+  if (XFIXNUM (w->last_modified[CURRENT_DISP]) >= BUF_MODIFF (b)
+      && XFIXNUM (w->last_facechange[CURRENT_DISP]) >= BUF_FACECHANGE (b)
       && pointm >= startp
       /* This check is to make sure we restore the minibuffer after a
 	 temporary change to the echo area. */
@@ -6507,8 +6507,8 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	   && regenerate_window_incrementally (w, startp, pointm))
     {
       if (f->modeline_changed
-	  || XINT (w->last_modified[CURRENT_DISP]) < BUF_MODIFF (b)
-	  || XINT (w->last_facechange[CURRENT_DISP]) < BUF_FACECHANGE (b))
+	  || XFIXNUM (w->last_modified[CURRENT_DISP]) < BUF_MODIFF (b)
+	  || XFIXNUM (w->last_facechange[CURRENT_DISP]) < BUF_FACECHANGE (b))
 	regenerate_modeline (w);
 
       skip_output = 1;
@@ -6562,16 +6562,16 @@ regeneration_done:
   if (echo_active)
     {
       w->buffer = old_buffer;
-      Fset_marker (w->pointm[DESIRED_DISP], make_int (old_pointm), old_buffer);
-      Fset_marker (w->start[DESIRED_DISP], make_int (old_startp), old_buffer);
+      Fset_marker (w->pointm[DESIRED_DISP], make_fixnum (old_pointm), old_buffer);
+      Fset_marker (w->start[DESIRED_DISP], make_fixnum (old_startp), old_buffer);
     }
 
   /* These also have to be set before calling redisplay_output_window
      since it sets the CURRENT_DISP values based on them. */
-  w->last_modified[DESIRED_DISP] = make_int (BUF_MODIFF (b));
-  w->last_facechange[DESIRED_DISP] = make_int (BUF_FACECHANGE (b));
-  Fset_marker (w->last_start[DESIRED_DISP], make_int (startp), w->buffer);
-  Fset_marker (w->last_point[DESIRED_DISP], make_int (pointm), w->buffer);
+  w->last_modified[DESIRED_DISP] = make_fixnum (BUF_MODIFF (b));
+  w->last_facechange[DESIRED_DISP] = make_fixnum (BUF_FACECHANGE (b));
+  Fset_marker (w->last_start[DESIRED_DISP], make_fixnum (startp), w->buffer);
+  Fset_marker (w->last_point[DESIRED_DISP], make_fixnum (pointm), w->buffer);
 
   if (!skip_output)
     {
@@ -6589,7 +6589,7 @@ regeneration_done:
        * with the window now.
        */
       if (echo_active)
-	w->line_cache_last_updated = make_int (-1);
+	w->line_cache_last_updated = make_fixnum (-1);
     }
 
   /* #### This should be dependent on face changes and will need to be
@@ -7755,7 +7755,7 @@ validate_line_start_cache (struct window *w)
 	 does redisplay will catch it pretty quickly we no longer
 	 invalidate the cache if it is set.  This greatly speeds up
 	 dragging out regions with the mouse. */
-      if (XINT (w->line_cache_last_updated) < BUF_MODIFF (b)
+      if (XFIXNUM (w->line_cache_last_updated) < BUF_MODIFF (b)
 	  || f->faces_changed
 	  || f->clip_changed)
 	{
@@ -8413,7 +8413,7 @@ update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
       low_bound = high_bound = -1;
     }
 
-  w->line_cache_last_updated = make_int (BUF_MODIFF (b));
+  w->line_cache_last_updated = make_fixnum (BUF_MODIFF (b));
 
   /* This could be integrated into the next two sections, but it is easier
      to follow what's going on by having it separate. */

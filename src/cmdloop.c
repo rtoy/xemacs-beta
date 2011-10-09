@@ -164,7 +164,7 @@ You should almost certainly not be using this.
   Fmswindows_message_box (build_msg_string ("Initialization error"),
 			  Qnil, Qnil);
 #endif
-  Fkill_emacs (make_int (-1));
+  Fkill_emacs (make_fixnum (-1));
   RETURN_NOT_REACHED (Qnil);
 }
 
@@ -249,7 +249,7 @@ top_level_1 (Lisp_Object UNUSED (dummy))
     {
       message ("\ntemacs can only be run in -batch mode.");
       noninteractive = 1; /* prevent things under kill-emacs from blowing up */
-      Fkill_emacs (make_int (-1));
+      Fkill_emacs (make_fixnum (-1));
     }
 #else
   else if (purify_flag)
@@ -321,7 +321,7 @@ initial_command_loop (Lisp_Object load_me)
   if (!noninteractive &&
       (!CONSOLEP (Vselected_console) ||
        CONSOLE_STREAM_P (XCONSOLE (Vselected_console))))
-    Fkill_emacs (make_int (-1));
+    Fkill_emacs (make_fixnum (-1));
 
   /* End of -batch run causes exit here. */
   if (noninteractive)
@@ -481,7 +481,7 @@ initial_error_handler (Lisp_Object datum, Lisp_Object ignored)
 
   message ("Error in command-loop!!");
   Fset (intern ("last-error"), datum); /* #### Better/different name? */
-  Fsit_for (make_int (2), Qnil);
+  Fsit_for (make_fixnum (2), Qnil);
   cold_load_command_error (datum, Qnil);
   return (Qt);
 }
@@ -494,7 +494,7 @@ initial_command_loop (Lisp_Object load_me)
     {
       if (!NILP (condition_case_1 (Qt, load1, load_me,
                                    initial_error_handler, Qnil)))
-	Fkill_emacs (make_int (-1));
+	Fkill_emacs (make_fixnum (-1));
     }
 
   for (;;)
@@ -568,7 +568,7 @@ Don't call this unless you know what you're doing.
      compatibility with Emacs 18.  It's not even clear what the "right
      thing" is. */
   if (!((STRINGP (Vexecuting_macro) || VECTORP (Vexecuting_macro))
-	&& XINT (Flength (Vexecuting_macro)) == 1))
+	&& XFIXNUM (Flength (Vexecuting_macro)) == 1))
     Vlast_command = Qt;
 
 #ifndef LISP_COMMAND_LOOP
@@ -613,7 +613,7 @@ Don't call this unless you know what you're doing.
 	  if (!NILP (Vminibuffer_echo_wait_function))
 	    call0 (Vminibuffer_echo_wait_function);
 	  else
-	    Fsit_for (make_int (2), Qnil);
+	    Fsit_for (make_fixnum (2), Qnil);
 	  clear_echo_area (selected_frame (), Qnil, 0);
 	  Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
 	  unbind_to (count);

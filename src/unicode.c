@@ -1139,7 +1139,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	  (-1 == (i = get_free_codepoint(Vcurrent_jit_charset))))
 	{
 	  Ibyte setname[32]; 
-	  int number_of_jit_charsets = XINT (Vnumber_of_jit_charsets);
+	  int number_of_jit_charsets = XFIXNUM (Vnumber_of_jit_charsets);
 	  Ascbyte last_jit_charset_final = XCHAR (Vlast_jit_charset_final);
 
 	  /* This final byte shit is, umm, not that cool. */
@@ -1159,8 +1159,8 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 		sidesteps the fact that our internal character -> Unicode
 		mapping is not stable from one invocation to the next.  */
 	     nconc2 (list2(Qencode_as_utf_8, Qt),
-		     nconc2 (list6(Qcolumns, make_int(1), Qchars, make_int(96),
-				   Qdimension, make_int(2)),
+		     nconc2 (list6(Qcolumns, make_fixnum(1), Qchars, make_fixnum(96),
+				   Qdimension, make_fixnum(2)),
 			     list6(Qregistries, Qunicode_registries,
 				   Qfinal, make_char(last_jit_charset_final),
 				   /* This CCL program is initialised in
@@ -1169,7 +1169,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 
 	  /* Record for the Unicode infrastructure that we've created
 	     this character set.  */
-	  Vnumber_of_jit_charsets = make_int (number_of_jit_charsets + 1);
+	  Vnumber_of_jit_charsets = make_fixnum (number_of_jit_charsets + 1);
 	  Vlast_jit_charset_final = make_char (last_jit_charset_final + 1);
 
 	  i = get_free_codepoint(Vcurrent_jit_charset);
@@ -1370,9 +1370,9 @@ CHARACTER is one of the following:
 
   CHECK_CHAR (character);
 
-  check_integer_range (code, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (code, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
 
-  unicode = XINT (code);
+  unicode = XFIXNUM (code);
   ichar = XCHAR (character);
   charset = ichar_charset (ichar);
 
@@ -1408,7 +1408,7 @@ present), this function simply does `char-to-int'.
 {
   CHECK_CHAR (character);
 #ifdef MULE
-  return make_int (ichar_to_unicode (XCHAR (character)));
+  return make_fixnum (ichar_to_unicode (XCHAR (character)));
 #else
   return Fchar_to_int (character);
 #endif /* MULE */
@@ -1446,8 +1446,8 @@ internal encoding.
   int lbs[NUM_LEADING_BYTES];
   int c;
 
-  check_integer_range (code, Qzero, make_integer (EMACS_INT_MAX));
-  c = XINT (code);
+  check_integer_range (code, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  c = XFIXNUM (code);
   {
     EXTERNAL_LIST_LOOP_2 (elt, charsets)
       Fget_charset (elt);
@@ -1472,7 +1472,7 @@ internal encoding.
     return make_char (ret);
   }
 #else
-  check_integer_range (code, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (code, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
   return Fint_to_char (code);
 #endif /* MULE */
 }
@@ -1531,18 +1531,18 @@ Unicode tables or in the charset:
   charset = Fget_charset (charset);
   if (!NILP (start))
     {
-      CHECK_INT (start);
-      st = XINT (start);
+      CHECK_FIXNUM (start);
+      st = XFIXNUM (start);
     }
   if (!NILP (end))
     {
-      CHECK_INT (end);
-      en = XINT (end);
+      CHECK_FIXNUM (end);
+      en = XFIXNUM (end);
     }
   if (!NILP (offset))
     {
-      CHECK_INT (offset);
-      of = XINT (offset);
+      CHECK_FIXNUM (offset);
+      of = XFIXNUM (offset);
     }
 
   if (!LISTP (flags))
@@ -2892,14 +2892,14 @@ add_lisp_string_to_skip_chars_range (Lisp_Object string, Lisp_Object rtab,
           if (p == pend) break;
           cend = itext_ichar (p);
 
-          Fput_range_table (make_int (c), make_int (cend), value,
+          Fput_range_table (make_fixnum (c), make_fixnum (cend), value,
                             rtab);
 
           INC_IBYTEPTR (p);
         }
       else
         {
-          Fput_range_table (make_int (c), make_int (c), value, rtab);
+          Fput_range_table (make_fixnum (c), make_fixnum (c), value, rtab);
         }
     }
 }
@@ -2957,7 +2957,7 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
       /* It's okay to call Lisp here, the only non-stack object we may have
          allocated up to this point is skip_chars_range_table, and that's
          reachable from its entry in Vfixed_width_query_ranges_cache. */
-      call3 (Qquery_coding_clear_highlights, make_int (pos), make_int (end),
+      call3 (Qquery_coding_clear_highlights, make_fixnum (pos), make_fixnum (end),
              wrap_buffer (buf));
     }
 
@@ -3008,7 +3008,7 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
     {
       Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
       if ((ch < 0x100 ? 1 : 
-           (!EQ (Qnil, Fget_range_table (make_int (ch), skip_chars_range_table,
+           (!EQ (Qnil, Fget_range_table (make_fixnum (ch), skip_chars_range_table,
                                          Qnil)))))
         {
           pos++;
@@ -3062,8 +3062,8 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
 
               fail_range_end = pos;
 
-              Fput_range_table (make_int (fail_range_start), 
-                                make_int (fail_range_end),
+              Fput_range_table (make_fixnum (fail_range_start), 
+                                make_fixnum (fail_range_end),
                                 (previous_failed_reason
                                  == query_coding_unencodable ?
                                  Qunencodable : Qinvalid_sequence), 
@@ -3073,12 +3073,12 @@ unicode_query (Lisp_Object codesys, struct buffer *buf, Charbpos end,
               if (flags & QUERY_METHOD_HIGHLIGHT) 
                 {
                   Lisp_Object extent
-                    = Fmake_extent (make_int (fail_range_start),
-                                    make_int (fail_range_end), 
+                    = Fmake_extent (make_fixnum (fail_range_start),
+                                    make_fixnum (fail_range_end), 
                                     wrap_buffer (buf));
                   
                   Fset_extent_priority
-                    (extent, make_int (2 + mouse_highlight_priority));
+                    (extent, make_fixnum (2 + mouse_highlight_priority));
                   Fset_extent_face (extent, Qquery_coding_warning_face);
                 }
             }
@@ -3207,7 +3207,7 @@ vars_of_unicode (void)
 
 #ifdef MULE
   staticpro (&Vnumber_of_jit_charsets);
-  Vnumber_of_jit_charsets = make_int (0);
+  Vnumber_of_jit_charsets = make_fixnum (0);
   staticpro (&Vlast_jit_charset_final);
   Vlast_jit_charset_final = make_char (0x30);
   staticpro (&Vcharset_descr);

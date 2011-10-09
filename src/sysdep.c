@@ -2073,7 +2073,7 @@ init_system_name (void)
 #   ifdef TRY_AGAIN
 	    if (! (hp == 0 && h_errno == TRY_AGAIN))
 	      break;
-	    Fsleep_for (make_int (1));
+	    Fsleep_for (make_fixnum (1));
 	  }
 #   endif
 	if (hp)
@@ -3483,19 +3483,19 @@ long
 get_random (void)
 {
   long val = random ();
-#if INT_VALBITS > RAND_BITS
+#if FIXNUM_VALBITS > RAND_BITS
   val = (val << RAND_BITS) ^ random ();
-#if INT_VALBITS > 2*RAND_BITS
+#if FIXNUM_VALBITS > 2*RAND_BITS
   val = (val << RAND_BITS) ^ random ();
-#if INT_VALBITS > 3*RAND_BITS
+#if FIXNUM_VALBITS > 3*RAND_BITS
   val = (val << RAND_BITS) ^ random ();
-#if INT_VALBITS > 4*RAND_BITS
+#if FIXNUM_VALBITS > 4*RAND_BITS
   val = (val << RAND_BITS) ^ random ();
 #endif /* need at least 5 */
 #endif /* need at least 4 */
 #endif /* need at least 3 */
 #endif /* need at least 2 */
-  return val & (EMACS_INT) ((1UL << INT_VALBITS) - 1);
+  return val & (EMACS_INT) ((1UL << FIXNUM_VALBITS) - 1);
 }
 
 

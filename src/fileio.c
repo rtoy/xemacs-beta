@@ -173,13 +173,13 @@ close_file_unwind (Lisp_Object fd)
 {
   if (CONSP (fd))
     {
-      if (INTP (XCAR (fd)))
-	retry_close (XINT (XCAR (fd)));
+      if (FIXNUMP (XCAR (fd)))
+	retry_close (XFIXNUM (XCAR (fd)));
 
       free_cons (fd);
     }
   else
-    retry_close (XINT (fd));
+    retry_close (XFIXNUM (fd));
 
   return Qnil;
 }
@@ -1851,9 +1851,9 @@ A prefix arg makes KEEP-TIME non-nil.
     }
 
   if (NILP (ok_if_already_exists)
-      || INTP (ok_if_already_exists))
+      || FIXNUMP (ok_if_already_exists))
     barf_or_query_if_file_exists (newname, "copy to it",
-				  INTP (ok_if_already_exists), &out_st);
+				  FIXNUMP (ok_if_already_exists), &out_st);
   else if (qxe_stat (XSTRING_DATA (newname), &out_st) < 0)
     out_st.st_mode = 0;
 
@@ -1862,7 +1862,7 @@ A prefix arg makes KEEP-TIME non-nil.
   if (ifd < 0)
     report_file_error ("Opening input file", filename);
 
-  record_unwind_protect (close_file_unwind, make_int (ifd));
+  record_unwind_protect (close_file_unwind, make_fixnum (ifd));
 
   /* We can only copy regular files and symbolic links.  Other files are not
      copyable by us. */
@@ -1903,7 +1903,7 @@ A prefix arg makes KEEP-TIME non-nil.
     report_file_error ("Opening output file", newname);
 
   {
-    Lisp_Object ofd_locative = noseeum_cons (make_int (ofd), Qnil);
+    Lisp_Object ofd_locative = noseeum_cons (make_fixnum (ofd), Qnil);
 
     record_unwind_protect (close_file_unwind, ofd_locative);
 
@@ -2091,9 +2091,9 @@ This is what happens in interactive use with M-x.
     }
 
   if (NILP (ok_if_already_exists)
-      || INTP (ok_if_already_exists))
+      || FIXNUMP (ok_if_already_exists))
     barf_or_query_if_file_exists (newname, "rename to it",
-				  INTP (ok_if_already_exists), 0);
+				  FIXNUMP (ok_if_already_exists), 0);
 
   /* We have configure check for rename() and emulate using
      link()/unlink() if necessary. */
@@ -2152,9 +2152,9 @@ This is what happens in interactive use with M-x.
 			   newname, ok_if_already_exists));
 
   if (NILP (ok_if_already_exists)
-      || INTP (ok_if_already_exists))
+      || FIXNUMP (ok_if_already_exists))
     barf_or_query_if_file_exists (newname, "make it a new name",
-				  INTP (ok_if_already_exists), 0);
+				  FIXNUMP (ok_if_already_exists), 0);
   /* #### Emacs 20.6 contains an implementation of link() in w32.c.
      Need to port. */
 #ifndef HAVE_LINK
@@ -2217,9 +2217,9 @@ the symbolic link will not be created.
 
 #ifdef HAVE_SYMLINK
   if (NILP (ok_if_already_exists)
-      || INTP (ok_if_already_exists))
+      || FIXNUMP (ok_if_already_exists))
     barf_or_query_if_file_exists (linkname, "make it a link",
-				  INTP (ok_if_already_exists), 0);
+				  FIXNUMP (ok_if_already_exists), 0);
 
   qxe_unlink (XSTRING_DATA (linkname));
   if (0 > qxe_symlink (XSTRING_DATA (filename),
@@ -2746,7 +2746,7 @@ Return mode bits of file named FILENAME, as an integer.
 #endif /* WIN32_NATIVE */
 #endif /* 0 */
 
-  return make_int (st.st_mode & 07777);
+  return make_fixnum (st.st_mode & 07777);
 }
 
 DEFUN ("set-file-modes", Fset_file_modes, 2, 2, 0, /*
@@ -2764,7 +2764,7 @@ Only the 12 low bits of MODE are used.
   abspath = Fexpand_file_name (filename, current_buffer->directory);
   UNGCPRO;
 
-  CHECK_INT (mode);
+  CHECK_FIXNUM (mode);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2774,7 +2774,7 @@ Only the 12 low bits of MODE are used.
   if (!NILP (handler))
     return call3 (handler, Qset_file_modes, abspath, mode);
 
-  if (qxe_chmod (XSTRING_DATA (abspath), XINT (mode)) < 0)
+  if (qxe_chmod (XSTRING_DATA (abspath), XFIXNUM (mode)) < 0)
     report_file_error ("Doing chmod", abspath);
 
   return Qnil;
@@ -2789,9 +2789,9 @@ This setting is inherited by subprocesses.
 */
        (mode))
 {
-  CHECK_INT (mode);
+  CHECK_FIXNUM (mode);
 
-  umask ((~ XINT (mode)) & 0777);
+  umask ((~ XFIXNUM (mode)) & 0777);
 
   return Qnil;
 }
@@ -2809,7 +2809,7 @@ created files will not have that permission enabled.
   mode = umask (0);
   umask (mode);
 
-  return make_int ((~ mode) & 0777);
+  return make_fixnum ((~ mode) & 0777);
 }
 
 DEFUN ("unix-sync", Funix_sync, 0, 0, "", /*
@@ -2973,12 +2973,12 @@ under Mule, is very difficult.)
 #endif /* S_IFREG */
 
   if (!NILP (start))
-    CHECK_INT (start);
+    CHECK_FIXNUM (start);
   else
     start = Qzero;
 
   if (!NILP (end))
-    CHECK_INT (end);
+    CHECK_FIXNUM (end);
 
   if (fd < 0)
     {
@@ -2991,7 +2991,7 @@ under Mule, is very difficult.)
   if (!NILP (replace))
     record_unwind_protect (restore_point_unwind, Fpoint_marker (Qnil, Qnil));
 
-  record_unwind_protect (close_file_unwind, make_int (fd));
+  record_unwind_protect (close_file_unwind, make_fixnum (fd));
 
   /* Supposedly happens on VMS.  */
   if (st.st_size < 0)
@@ -3001,8 +3001,8 @@ under Mule, is very difficult.)
     {
       if (!not_regular)
 	{
-	  end = make_int (st.st_size);
-	  if (XINT (end) != st.st_size)
+	  end = make_fixnum (st.st_size);
+	  if (XFIXNUM (end) != st.st_size)
 	    out_of_memory ("Maximum buffer size exceeded", Qunbound);
 	}
     }
@@ -3142,8 +3142,8 @@ under Mule, is very difficult.)
 	    same_at_end += overlap;
 
 	  /* Arrange to read only the nonmatching middle part of the file.  */
-	  start = make_int (same_at_start - BUF_BEGV (buf));
-	  end = make_int (st.st_size - (BUF_ZV (buf) - same_at_end));
+	  start = make_fixnum (same_at_start - BUF_BEGV (buf));
+	  end = make_fixnum (st.st_size - (BUF_ZV (buf) - same_at_end));
 
 	  buffer_delete_range (buf, same_at_start, same_at_end,
 			       !NILP (visit) ? INSDEL_NO_LOCKING : 0);
@@ -3154,10 +3154,10 @@ under Mule, is very difficult.)
 
   if (!not_regular)
     {
-      total = XINT (end) - XINT (start);
+      total = XFIXNUM (end) - XFIXNUM (start);
 
       /* Make sure point-max won't overflow after this insertion.  */
-      if (total != XINT (make_int (total)))
+      if (total != XFIXNUM (make_fixnum (total)))
 	out_of_memory ("Maximum buffer size exceeded", Qunbound);
     }
   else
@@ -3165,13 +3165,13 @@ under Mule, is very difficult.)
        will make the stream functions read as much as possible.  */
     total = -1;
 
-  if (XINT (start) != 0
+  if (XFIXNUM (start) != 0
       /* why was this here? asked jwz.  The reason is that the replace-mode
 	 connivings above will normally put the file pointer other than
 	 where it should be. */
       || (!NILP (replace) && do_speedy_insert))
     {
-      if (lseek (fd, XINT (start), 0) < 0)
+      if (lseek (fd, XFIXNUM (start), 0) < 0)
 	report_file_error ("Setting file position", filename);
     }
 
@@ -3257,7 +3257,7 @@ under Mule, is very difficult.)
 	call1 (Qcompute_buffer_file_truename, wrap_buffer (buf));
       BUF_SAVE_MODIFF (buf) = BUF_MODIFF (buf);
       buf->auto_save_modified = BUF_MODIFF (buf);
-      buf->saved_size = make_int (BUF_SIZE (buf));
+      buf->saved_size = make_fixnum (BUF_SIZE (buf));
 #ifdef CLASH_DETECTION
       if (!NILP (buf->file_truename))
 	unlock_file (buf->file_truename);
@@ -3277,21 +3277,21 @@ under Mule, is very difficult.)
   /* Decode file format */
   if (inserted > 0 && !UNBOUNDP (XSYMBOL_FUNCTION (Qformat_decode)))
     {
-      Lisp_Object insval = call3 (Qformat_decode, Qnil, make_int (inserted),
+      Lisp_Object insval = call3 (Qformat_decode, Qnil, make_fixnum (inserted),
 				  visit);
-      CHECK_INT (insval);
-      inserted = XINT (insval);
+      CHECK_FIXNUM (insval);
+      inserted = XFIXNUM (insval);
     }
 
   if (inserted > 0)
     {
       GC_EXTERNAL_LIST_LOOP_2 (p, Vafter_insert_file_functions)
 	{
-	  Lisp_Object insval = call1 (p, make_int (inserted));
+	  Lisp_Object insval = call1 (p, make_fixnum (inserted));
 	  if (!NILP (insval))
 	    {
-              check_integer_range (insval, Qzero, make_int (EMACS_INT_MAX));
-	      inserted = XINT (insval);
+              check_integer_range (insval, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
+	      inserted = XFIXNUM (insval);
 	    }
 	}
       END_GC_EXTERNAL_LIST_LOOP (p);
@@ -3302,7 +3302,7 @@ under Mule, is very difficult.)
   if (!NILP (val))
     return (val);
   else
-    return (list2 (filename, make_int (inserted)));
+    return (list2 (filename, make_fixnum (inserted)));
 }
 
 
@@ -3423,7 +3423,7 @@ here because write-region handler writers need to be aware of it.
 	if (visiting)
 	  {
 	    BUF_SAVE_MODIFF (current_buffer) = BUF_MODIFF (current_buffer);
-	    current_buffer->saved_size = make_int (BUF_SIZE (current_buffer));
+	    current_buffer->saved_size = make_fixnum (BUF_SIZE (current_buffer));
 	    current_buffer->filename = visit_file;
 	    MARK_MODELINE_CHANGED;
 	  }
@@ -3481,7 +3481,7 @@ here because write-region handler writers need to be aware of it.
     }
 
   {
-    Lisp_Object desc_locative = Fcons (make_int (desc), Qnil);
+    Lisp_Object desc_locative = Fcons (make_fixnum (desc), Qnil);
     Lisp_Object instream = Qnil, outstream = Qnil;
     struct gcpro nngcpro1, nngcpro2;
     NNGCPRO2 (instream, outstream);
@@ -3600,7 +3600,7 @@ here because write-region handler writers need to be aware of it.
   if (visiting)
     {
       BUF_SAVE_MODIFF (current_buffer) = BUF_MODIFF (current_buffer);
-      current_buffer->saved_size = make_int (BUF_SIZE (current_buffer));
+      current_buffer->saved_size = make_fixnum (BUF_SIZE (current_buffer));
       current_buffer->filename = visit_file;
       MARK_MODELINE_CHANGED;
     }
@@ -3668,8 +3668,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	 been dealt with by this function.  */
       if (current_buffer != given_buffer)
 	{
-	  start = make_int (BUF_BEGV (current_buffer));
-	  end = make_int (BUF_ZV (current_buffer));
+	  start = make_fixnum (BUF_BEGV (current_buffer));
+	  end = make_fixnum (BUF_ZV (current_buffer));
 	  annotations = Qnil;
 	}
       Flength (res);     /* Check basic validity of return value */
@@ -3700,8 +3700,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 		   original_buffer);
       if (current_buffer != given_buffer)
 	{
-	  start = make_int (BUF_BEGV (current_buffer));
-	  end = make_int (BUF_ZV (current_buffer));
+	  start = make_fixnum (BUF_BEGV (current_buffer));
+	  end = make_fixnum (BUF_ZV (current_buffer));
 	  annotations = Qnil;
 	}
       Flength (res);
@@ -3742,8 +3742,8 @@ a_write (Lisp_Object outstream, Lisp_Object instream, int pos,
   while (LISTP (*annot))
     {
       tem = Fcar_safe (Fcar (*annot));
-      if (INTP (tem))
-	nextpos = XINT (tem);
+      if (FIXNUMP (tem))
+	nextpos = XFIXNUM (tem);
       else
 	nextpos = INT_MAX;
 #ifdef MULE
@@ -3985,11 +3985,11 @@ auto_save_error (Lisp_Object UNUSED (condition_object),
   clear_echo_area (selected_frame (), Qauto_saving, 1);
   Fding (Qt, Qauto_save_error, Qnil);
   message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
-  Fsleep_for (make_int (1));
+  Fsleep_for (make_fixnum (1));
   message ("Auto-saving...error!for %s", XSTRING_DATA (current_buffer->name));
-  Fsleep_for (make_int (1));
+  Fsleep_for (make_fixnum (1));
   message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
-  Fsleep_for (make_int (1));
+  Fsleep_for (make_fixnum (1));
   return Qnil;
 }
 
@@ -4055,7 +4055,7 @@ auto_save_expand_name (Lisp_Object name)
 static Lisp_Object
 do_auto_save_unwind (Lisp_Object fd)
 {
-  retry_close (XINT (fd));
+  retry_close (XFIXNUM (fd));
   return (fd);
 }
 
@@ -4147,7 +4147,7 @@ Non-nil second argument means save only current buffer.
 	      && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b)
 	      && b->auto_save_modified < BUF_MODIFF (b)
 	      /* -1 means we've turned off autosaving for a while--see below.  */
-	      && XINT (b->saved_size) >= 0
+	      && XFIXNUM (b->saved_size) >= 0
 	      && (do_handled_files
 		  || NILP (Ffind_file_name_handler (b->auto_save_file_name,
 						    Qwrite_region))))
@@ -4163,11 +4163,11 @@ Non-nil second argument means save only current buffer.
 		continue;
 
 	      if (!preparing_for_armageddon &&
-		  (XINT (b->saved_size) * 10
+		  (XFIXNUM (b->saved_size) * 10
 		   > (BUF_Z (b) - BUF_BEG (b)) * 13)
 		  /* A short file is likely to change a large fraction;
 		     spare the user annoying messages.  */
-		  && XINT (b->saved_size) > 5000
+		  && XFIXNUM (b->saved_size) > 5000
 		  /* These messages are frequent and annoying for `*mail*'.  */
 		  && !NILP (b->filename)
 		  && NILP (no_message)
@@ -4182,9 +4182,9 @@ Non-nil second argument means save only current buffer.
 		     XSTRING_DATA (b->name));
 		  /* Turn off auto-saving until there's a real save,
 		     and prevent any more warnings.  */
-		  b->saved_size = make_int (-1);
+		  b->saved_size = make_fixnum (-1);
 		  if (!gc_in_progress)
-		    Fsleep_for (make_int (1));
+		    Fsleep_for (make_fixnum (1));
 		  continue;
 		}
 	      set_buffer_internal (b);
@@ -4212,7 +4212,7 @@ Non-nil second argument means save only current buffer.
 		     an error. */
 		  if (listdesc >= 0)
 		    record_unwind_protect (do_auto_save_unwind,
-					   make_int (listdesc));
+					   make_fixnum (listdesc));
 		}
 
 	      /* Record all the buffers that we are auto-saving in
@@ -4274,7 +4274,7 @@ Non-nil second argument means save only current buffer.
 		continue;
 
 	      b->auto_save_modified = BUF_MODIFF (b);
-	      b->saved_size = make_int (BUF_SIZE (b));
+	      b->saved_size = make_fixnum (BUF_SIZE (b));
 	      EMACS_GET_TIME (after_time);
 	      /* If auto-save took more than 60 seconds,
 		 assume it was an NFS failure that got a timeout.  */
@@ -4316,7 +4316,7 @@ No auto-save file will be written until the buffer changes again.
        ())
 {
   current_buffer->auto_save_modified = BUF_MODIFF (current_buffer);
-  current_buffer->saved_size = make_int (BUF_SIZE (current_buffer));
+  current_buffer->saved_size = make_fixnum (BUF_SIZE (current_buffer));
   current_buffer->auto_save_failure_time = -1;
   return Qnil;
 }

@@ -187,7 +187,7 @@ static Lisp_Object
 tty_frame_property (struct frame *f, Lisp_Object property)
 {
   if (EQ (Qframe_number, property))
-    return make_int (f->order_count);
+    return make_fixnum (f->order_count);
 
   return Qunbound;
 }
@@ -203,7 +203,7 @@ tty_frame_properties (struct frame *f)
 {
   Lisp_Object props = Qnil;
 
-  props = cons3 (Qframe_number, make_int (f->order_count), props);
+  props = cons3 (Qframe_number, make_fixnum (f->order_count), props);
 
   return props;
 }

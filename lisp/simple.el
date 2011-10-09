@@ -2084,20 +2084,19 @@ either a character or a symbol, uppercase or lowercase."
 
 (defun handle-pre-motion-command-current-command-is-motion ()
   (and (key-press-event-p last-input-event)
-       (macrolet
-	   ((keysyms-equal (&rest args)
-	      `((lambda (a b)
-		  (when (and
-			 ;; As of now, none of the elements of
-			 ;; motion-keys-for-shifted-motion are non-symbols;
-			 ;; this redundant check saves a few hundred
-			 ;; funcalls on startup.
-			 (not (symbolp b)) 
-			 (characterp b))
-		    (setf (car char-list) b
-			  b (intern (concat char-list nil))))
-		  (eq a b))
-		,@args)))
+       (labels
+	   ((keysyms-equal (a b)
+              (when (and
+                     ;; As of now, none of the elements of
+                     ;; motion-keys-for-shifted-motion are non-symbols;
+                     ;; this redundant check saves a few hundred
+                     ;; funcalls on startup.
+                     (not (symbolp b)) 
+                     (characterp b))
+                (setf (car char-list) b
+                      b (intern (concat char-list nil))))
+              (eq a b)))
+         (declare (inline keysyms-equal) (special char-list))
          (loop
            for keysym in motion-keys-for-shifted-motion
            with key = (event-key last-input-event)

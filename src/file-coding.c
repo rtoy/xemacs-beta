@@ -467,7 +467,7 @@ default_query_method (Lisp_Object codesys, struct buffer *buf,
          allocated up to this point is safe_chars, and that's
          reachable from its entry in
          Vdefault_query_coding_region_chartab_cache */
-      call3 (Qquery_coding_clear_highlights, make_int (pos), make_int (end),
+      call3 (Qquery_coding_clear_highlights, make_fixnum (pos), make_fixnum (end),
              wrap_buffer (buf));
     }
 
@@ -521,8 +521,8 @@ default_query_method (Lisp_Object codesys, struct buffer *buf,
 
               fail_range_end = pos;
 
-              Fput_range_table (make_int (fail_range_start), 
-                                make_int (fail_range_end),
+              Fput_range_table (make_fixnum (fail_range_start), 
+                                make_fixnum (fail_range_end),
                                 Qunencodable,
                                 result);
               previous_failed_reason = query_coding_succeeded;
@@ -530,12 +530,12 @@ default_query_method (Lisp_Object codesys, struct buffer *buf,
               if (flags & QUERY_METHOD_HIGHLIGHT) 
                 {
                   Lisp_Object extent
-                    = Fmake_extent (make_int (fail_range_start),
-                                    make_int (fail_range_end), 
+                    = Fmake_extent (make_fixnum (fail_range_start),
+                                    make_fixnum (fail_range_end), 
                                     wrap_buffer (buf));
                   
                   Fset_extent_priority
-                    (extent, make_int (2 + mouse_highlight_priority));
+                    (extent, make_fixnum (2 + mouse_highlight_priority));
                   Fset_extent_face (extent, Qquery_coding_warning_face);
                 }
             }
@@ -2299,7 +2299,7 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
     if (!NILP (auto_outstream))
       Lstream_delete (XLSTREAM (auto_outstream));
     Lstream_delete (XLSTREAM (lb_outstream));
-    return make_int (retlen);
+    return make_fixnum (retlen);
   }
 }
 
@@ -4293,7 +4293,7 @@ gzip_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
   if (data->level == -1)
     write_ascstring (printcharfun, "default");
   else
-    print_internal (make_int (data->level), printcharfun, 0);
+    print_internal (make_fixnum (data->level), printcharfun, 0);
   write_ascstring (printcharfun, ")");
 }
 
@@ -4308,8 +4308,8 @@ gzip_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 	data->level = -1;
       else
 	{
-	  check_integer_range (value, Qzero, make_int (9));
-	  data->level = XINT (value);
+	  check_integer_range (value, Qzero, make_fixnum (9));
+	  data->level = XFIXNUM (value);
 	}
     }
   else
@@ -4327,7 +4327,7 @@ gzip_getprop (Lisp_Object coding_system, Lisp_Object prop)
     {
       if (data->level == -1)
 	return Qdefault;
-      return make_int (data->level);
+      return make_fixnum (data->level);
     }
 
   return Qunbound;

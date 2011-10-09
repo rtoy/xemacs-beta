@@ -307,7 +307,7 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int UNUSED (pos))
       mswindows_enqueue_misc_user_event
 	(frame,
 	 vert ? Qscrollbar_vertical_drag : Qscrollbar_horizontal_drag,
-	 Fcons (win, make_int (value)));
+	 Fcons (win, make_fixnum (value)));
       break;
 
     case SB_ENDSCROLL:
@@ -447,10 +447,10 @@ DEFUN ("mswindows-init-scrollbar-metrics", Fmswindows_init_scrollbar_metrics,
   if (DEVICEP (locale))
     {
       add_spec_to_ghost_specifier (Vscrollbar_width,
-				   make_int (GetSystemMetrics (SM_CXVSCROLL)),
+				   make_fixnum (GetSystemMetrics (SM_CXVSCROLL)),
 				   locale, Qmswindows, Qnil);
       add_spec_to_ghost_specifier (Vscrollbar_height,
-				   make_int (GetSystemMetrics (SM_CYHSCROLL)),
+				   make_fixnum (GetSystemMetrics (SM_CYHSCROLL)),
 				   locale, Qmswindows, Qnil);
     }
   return Qnil;

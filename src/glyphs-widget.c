@@ -165,7 +165,7 @@ check_valid_callback (Lisp_Object data)
 static void
 check_valid_int_or_function (Lisp_Object data)
 {
-  if (!INTP (data) && !CONSP (data) && !SYMBOLP (data))
+  if (!FIXNUMP (data) && !CONSP (data) && !SYMBOLP (data))
     invalid_argument ("must be an integer or expresssion", data);
 }
 
@@ -578,15 +578,15 @@ widget_query_geometry (Lisp_Object image_instance,
 	{
 	  dynamic_width =
 	    eval_within_redisplay (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
-	  if (INTP (dynamic_width))
-	    *width = XINT (dynamic_width);
+	  if (FIXNUMP (dynamic_width))
+	    *width = XFIXNUM (dynamic_width);
 	}
       if (height && !NILP (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii)))
 	{
 	  dynamic_height =
 	    eval_within_redisplay (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
-	  if (INTP (dynamic_height))
-	    *height = XINT (dynamic_height);
+	  if (FIXNUMP (dynamic_height))
+	    *height = XFIXNUM (dynamic_height);
 	}
     }
 }
@@ -770,33 +770,33 @@ widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
      geometry gets called. */
   if (!NILP (pixwidth))		/* pixwidth takes precendent */
     {
-      if (!INTP (pixwidth))
+      if (!FIXNUMP (pixwidth))
 	IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii) = pixwidth;
       else
 	{
-	  pw = XINT (pixwidth);
+	  pw = XFIXNUM (pixwidth);
 	  IMAGE_INSTANCE_SUBWINDOW_H_RESIZEP (ii) = 0;
 	}
     }
   else if (!NILP (width))
     {
-      tw = XINT (width);
+      tw = XFIXNUM (width);
       IMAGE_INSTANCE_SUBWINDOW_H_RESIZEP (ii) = 0;
     }
 
   if (!NILP (pixheight))
     {
-      if (!INTP (pixheight))
+      if (!FIXNUMP (pixheight))
 	IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii) = pixheight;
       else
 	{
-	  ph = XINT (pixheight);
+	  ph = XFIXNUM (pixheight);
 	  IMAGE_INSTANCE_SUBWINDOW_V_RESIZEP (ii) = 0;
 	}
     }
-  else if (!NILP (height) && XINT (height) > 1)
+  else if (!NILP (height) && XFIXNUM (height) > 1)
     {
-      th = XINT (height);
+      th = XFIXNUM (height);
       IMAGE_INSTANCE_SUBWINDOW_V_RESIZEP (ii) = 0;
     }
 
@@ -848,7 +848,7 @@ widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Pick up the margin width. */
   if (!NILP (mwidth))
-    IMAGE_INSTANCE_MARGIN_WIDTH (ii) = XINT (mwidth);
+    IMAGE_INSTANCE_MARGIN_WIDTH (ii) = XFIXNUM (mwidth);
 
   IMAGE_INSTANCE_WANTS_INITIAL_FOCUS (ii) = !NILP (ifocus);
 
@@ -1138,7 +1138,7 @@ layout_update (Lisp_Object image_instance, Lisp_Object instantiator)
      we have to deal with the border as well as the items. */
   GCPRO1 (border);
 
-  if (INTP (IMAGE_INSTANCE_LAYOUT_BORDER (ii)))
+  if (FIXNUMP (IMAGE_INSTANCE_LAYOUT_BORDER (ii)))
     {
       border = XCAR (children);
       children = XCDR (children);
@@ -1163,7 +1163,7 @@ layout_update (Lisp_Object image_instance, Lisp_Object instantiator)
 	      border = Fcons (call1 (Qmake_glyph, border_inst), Qnil);
 	      structure_changed = 1;
 	    }
-	  IMAGE_INSTANCE_LAYOUT_BORDER (ii) = make_int (0);
+	  IMAGE_INSTANCE_LAYOUT_BORDER (ii) = make_fixnum (0);
 	}
       else
 	{
@@ -1341,7 +1341,7 @@ layout_query_geometry (Lisp_Object image_instance, int* width,
   luh = widget_logical_unit_height (ii);
 
   /* Pick up the border text if we have one. */
-  if (INTP (IMAGE_INSTANCE_LAYOUT_BORDER (ii)))
+  if (FIXNUMP (IMAGE_INSTANCE_LAYOUT_BORDER (ii)))
     {
       glyph_query_geometry (XCAR (items), &gwidth, &gheight, disp,
 			    image_instance);
@@ -1379,8 +1379,8 @@ layout_query_geometry (Lisp_Object image_instance, int* width,
 	{
           Lisp_Object dynamic_width =
 	    eval_within_redisplay (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
-          if (INTP (dynamic_width))
-	    *width = XINT (dynamic_width);
+          if (FIXNUMP (dynamic_width))
+	    *width = XFIXNUM (dynamic_width);
 	}
       else if (IMAGE_INSTANCE_SUBWINDOW_ORIENT (ii) == LAYOUT_HORIZONTAL) 
 	{
@@ -1401,8 +1401,8 @@ layout_query_geometry (Lisp_Object image_instance, int* width,
 	{
           Lisp_Object dynamic_height =
 	    eval_within_redisplay (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
-          if (INTP (dynamic_height))
-	    *height = XINT (dynamic_height);
+          if (FIXNUMP (dynamic_height))
+	    *height = XFIXNUM (dynamic_height);
 	}
       else if (IMAGE_INSTANCE_SUBWINDOW_LOGICAL_LAYOUT (ii))
 	{
@@ -1452,7 +1452,7 @@ layout_layout (Lisp_Object image_instance,
      border that is drawn. The last is an offset and implies that the
      first item in the list of subcontrols is a text control that
      should be displayed on the border. */
-  if (INTP (IMAGE_INSTANCE_LAYOUT_BORDER (ii)))
+  if (FIXNUMP (IMAGE_INSTANCE_LAYOUT_BORDER (ii)))
     {
       Lisp_Object border = XCAR (items);
       items = XCDR (items);
@@ -1462,7 +1462,7 @@ layout_layout (Lisp_Object image_instance,
 	 of the border glyph. */
       ph_adjust = gheight;
       /* The offset for the border is half the glyph height. */
-      IMAGE_INSTANCE_LAYOUT_BORDER (ii) = make_int (gheight / 2);
+      IMAGE_INSTANCE_LAYOUT_BORDER (ii) = make_fixnum (gheight / 2);
 
       /* #### Really, what should this be? */
       glyph_do_layout (border, gwidth, gheight, BORDER_FIDDLE_FACTOR, 0,
@@ -1594,7 +1594,7 @@ layout_property (Lisp_Object image_instance, Lisp_Object prop)
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   if (EQ (prop, Q_items))
     {
-      if (INTP (IMAGE_INSTANCE_LAYOUT_BORDER (ii)) &&
+      if (FIXNUMP (IMAGE_INSTANCE_LAYOUT_BORDER (ii)) &&
 	  CONSP (IMAGE_INSTANCE_LAYOUT_CHILDREN (ii)))
 	return Fcopy_sequence (XCDR
 			       (IMAGE_INSTANCE_LAYOUT_CHILDREN (ii)));
@@ -1651,8 +1651,8 @@ layout borders, so this adjustment is approximated.
   if (NILP (domain))
     domain = Fselected_frame (Qnil);
 
-  CHECK_INT (width);
-  w = XINT (width);
+  CHECK_FIXNUM (width);
+  w = XFIXNUM (width);
   
   if (HAS_DEVMETH_P (DOMAIN_XDEVICE (domain), widget_border_width))
     border_width = DEVMETH (DOMAIN_XDEVICE (domain), widget_border_width, ());
@@ -1661,7 +1661,7 @@ layout borders, so this adjustment is approximated.
   neww = ROUND_UP (charwidth * w + 4 * border_width + 2 * widget_spacing (domain), 
 		charwidth) / charwidth;
   
-  return make_int (neww);
+  return make_fixnum (neww);
 }
 
 DEFUN ("widget-logical-to-character-height", Fwidget_logical_to_character_height, 1, 3, 0, /*
@@ -1685,18 +1685,18 @@ to do appropriate conversion between logical units and characters.
 {
   int h, newh, charheight;
   
-  CHECK_INT (height);
+  CHECK_FIXNUM (height);
   if (NILP (domain))
     domain = Fselected_frame (Qnil);
 
-  h = XINT (height);
+  h = XFIXNUM (height);
 
   default_face_font_info (domain, 0, 0, 0, &charheight, 0);
   newh = ROUND_UP (logical_unit_height (Fsymbol_name (Qwidget), 
 					Vwidget_face, domain) * h, charheight)
     / charheight;
 
-  return make_int (newh);
+  return make_fixnum (newh);
 }
 
 

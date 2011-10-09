@@ -507,7 +507,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
     return bestmatch;
   if (matchcount == 1 && bestmatchsize == file_name_length)
     return Qt;
-  return Fsubseq (bestmatch, Qzero, make_int (bestmatchsize));
+  return Fsubseq (bestmatch, Qzero, make_fixnum (bestmatchsize));
 }
 
 
@@ -669,7 +669,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 	      if (status_status_statui_statum_statu != NERR_Success &&
 		  status_status_statui_statum_statu != ERROR_MORE_DATA)
 		invalid_operation ("Error enumerating users",
-				   make_int (GetLastError ()));
+				   make_fixnum (GetLastError ()));
 	      for (i = 0; i < (int) entriesread; i++)
 		{
 		  DO_REALLOC (user_cache.user_names, user_cache.size,
@@ -771,7 +771,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
     return bestmatch;
   if (matchcount == 1 && bestmatchsize == user_name_length)
     return Qt;
-  return Fsubseq (bestmatch, Qzero, make_int (bestmatchsize));
+  return Fsubseq (bestmatch, Qzero, make_fixnum (bestmatchsize));
 }
 
 
@@ -903,7 +903,7 @@ If file does not exist, returns nil.
     }
 
 #ifndef HAVE_BIGNUM
-  size = make_integer (NUMBER_FITS_IN_AN_EMACS_INT (s.st_size) ?
+  size = make_integer (NUMBER_FITS_IN_A_FIXNUM (s.st_size) ?
 		       (EMACS_INT)s.st_size : -1);
 #else
   size = make_integer (s.st_size);
@@ -927,17 +927,17 @@ If file does not exist, returns nil.
 
   RETURN_UNGCPRO (listn (12,
 			 mode,
-			 make_int (s.st_nlink),
-			 make_int (s.st_uid),
-			 make_int (s.st_gid),
+			 make_fixnum (s.st_nlink),
+			 make_fixnum (s.st_uid),
+			 make_fixnum (s.st_gid),
 			 make_time (s.st_atime),
 			 make_time (s.st_mtime),
 			 make_time (s.st_ctime),
 			 size,
 			 modestring,
 			 gid,
-			 make_int (s.st_ino),
-			 make_int (s.st_dev)));
+			 make_fixnum (s.st_ino),
+			 make_fixnum (s.st_dev)));
 }
 
 

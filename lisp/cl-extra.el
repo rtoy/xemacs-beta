@@ -619,8 +619,11 @@ This also does some trivial optimizations to make the form prettier."
                      (cl-macroexpand-all (nth 1 (nth 2 (nth 2 found))) env)
                    ;; It's an atom, almost certainly a compiled function;
                    ;; we're using the implementation of labels in
-                   ;; bytecomp.el.
-                  (nth 2 (nth 2 found)))
+                   ;; bytecomp.el. Quote it with FUNCTION so that code can
+                   ;; tell uses as data apart from the uses with funcall,
+                   ;; where it's unquoted. #### We should warn if (car form)
+                   ;; above is quote, rather than function.
+                   (list 'function (nth 2 (nth 2 found))))
 	       form))))
 	((memq (car form) '(defun defmacro))
 	 (list* (car form) (nth 1 form) (cl-macroexpand-body (cddr form) env)))

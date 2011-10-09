@@ -275,7 +275,7 @@ xemacs_list_to_array (Lisp_Object obj, GValue *arg)
     }
   else if (*arg == GTK_TYPE_INT_ARRAY)
     {
-      //FROB (gint, CHECK_INT, XINT);
+      //FROB (gint, CHECK_FIXNUM, XFIXNUM);
     }
   else
     {

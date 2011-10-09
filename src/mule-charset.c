@@ -302,7 +302,7 @@ get_unallocated_leading_byte (int dimension)
 
   if (!lb)
     invalid_operation
-      ("No more character sets free for this dimension", make_int (dimension));
+      ("No more character sets free for this dimension", make_fixnum (dimension));
 
   return lb;
 }
@@ -507,32 +507,32 @@ character set.  Recognized properties are:
 
 	else if (EQ (keyword, Qdimension))
 	  {
-	    CHECK_INT (value);
-	    dimension = XINT (value);
+	    CHECK_FIXNUM (value);
+	    dimension = XFIXNUM (value);
 	    if (dimension < 1 || dimension > 2)
 	      invalid_constant ("Invalid value for `dimension'", value);
 	  }
 
 	else if (EQ (keyword, Qchars))
 	  {
-	    CHECK_INT (value);
-	    chars = XINT (value);
+	    CHECK_FIXNUM (value);
+	    chars = XFIXNUM (value);
 	    if (chars != 94 && chars != 96)
 	      invalid_constant ("Invalid value for `chars'", value);
 	  }
 
 	else if (EQ (keyword, Qcolumns))
 	  {
-	    CHECK_INT (value);
-	    columns = XINT (value);
+	    CHECK_FIXNUM (value);
+	    columns = XFIXNUM (value);
 	    if (columns != 1 && columns != 2)
 	      invalid_constant ("Invalid value for `columns'", value);
 	  }
 
 	else if (EQ (keyword, Qgraphic))
 	  {
-	    CHECK_INT (value);
-	    graphic = XINT (value);
+	    CHECK_FIXNUM (value);
+	    graphic = XFIXNUM (value);
 	    if (graphic < 0 || graphic > 1)
 	      invalid_constant ("Invalid value for `graphic'", value);
 	  }
@@ -734,13 +734,13 @@ will be returned if character sets exist for both directions).
   int type;
   Lisp_Object obj = Qnil;
 
-  CHECK_INT (dimension);
-  dm = XINT (dimension);
+  CHECK_FIXNUM (dimension);
+  dm = XFIXNUM (dimension);
   if (dm < 1 || dm > 2)
     invalid_constant ("Invalid value for DIMENSION", dimension);
 
-  CHECK_INT (chars);
-  ch = XINT (chars);
+  CHECK_FIXNUM (chars);
+  ch = XFIXNUM (chars);
   if (ch != 94 && ch != 96)
     invalid_constant ("Invalid value for CHARS", chars);
 
@@ -808,7 +808,7 @@ Return dimension of CHARSET.
 */
        (charset))
 {
-  return make_int (XCHARSET_DIMENSION (Fget_charset (charset)));
+  return make_fixnum (XCHARSET_DIMENSION (Fget_charset (charset)));
 }
 
 DEFUN ("charset-property", Fcharset_property, 2, 2, 0, /*
@@ -828,11 +828,11 @@ Recognized properties are those listed in `make-charset', as well as
   if (EQ (prop, Qshort_name))  return CHARSET_SHORT_NAME (cs);
   if (EQ (prop, Qlong_name))   return CHARSET_LONG_NAME (cs);
   if (EQ (prop, Qdoc_string))  return CHARSET_DOC_STRING (cs);
-  if (EQ (prop, Qdimension))   return make_int (CHARSET_DIMENSION (cs));
-  if (EQ (prop, Qcolumns))     return make_int (CHARSET_COLUMNS (cs));
-  if (EQ (prop, Qgraphic))     return make_int (CHARSET_GRAPHIC (cs));
+  if (EQ (prop, Qdimension))   return make_fixnum (CHARSET_DIMENSION (cs));
+  if (EQ (prop, Qcolumns))     return make_fixnum (CHARSET_COLUMNS (cs));
+  if (EQ (prop, Qgraphic))     return make_fixnum (CHARSET_GRAPHIC (cs));
   if (EQ (prop, Qfinal))       return make_char (CHARSET_FINAL (cs));
-  if (EQ (prop, Qchars))       return make_int (CHARSET_CHARS (cs));
+  if (EQ (prop, Qchars))       return make_fixnum (CHARSET_CHARS (cs));
   if (EQ (prop, Qregistries))    return CHARSET_REGISTRIES (cs);
   if (EQ (prop, Qencode_as_utf_8))
     return CHARSET_ENCODE_AS_UTF_8 (cs) ? Qt : Qnil;
@@ -854,7 +854,7 @@ Return charset identification number of CHARSET.
 */
 	(charset))
 {
-  return make_int (XCHARSET_LEADING_BYTE (Fget_charset (charset)));
+  return make_fixnum (XCHARSET_LEADING_BYTE (Fget_charset (charset)));
 }
 
 /* #### We need to figure out which properties we really want to

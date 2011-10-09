@@ -179,9 +179,9 @@ static Lisp_Object
 x_color_instance_rgb_components (Lisp_Color_Instance *c)
 {
   XColor color = COLOR_INSTANCE_X_COLOR (c);
-  return (list3 (make_int (color.red),
-		 make_int (color.green),
-		 make_int (color.blue)));
+  return (list3 (make_fixnum (color.red),
+		 make_fixnum (color.green),
+		 make_fixnum (color.blue)));
 }
 
 static int
@@ -862,7 +862,7 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 		   : Qnil);
 	}
       else
-	value = make_int (props [i].card32);
+	value = make_fixnum (props [i].card32);
       if (namestrext) XFree (namestrext);
       result = Fcons (Fcons (name, value), result);
     }
@@ -880,9 +880,9 @@ x_font_list (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
 
   patternext = LISP_STRING_TO_EXTERNAL (pattern, Qx_font_name_encoding);
 
-  if (!NILP(maxnumber) && INTP(maxnumber))
+  if (!NILP(maxnumber) && FIXNUMP(maxnumber))
     {
-      max_number = XINT(maxnumber);
+      max_number = XFIXNUM(maxnumber);
     }
 
   names = XListFonts (DEVICE_X_DISPLAY (XDEVICE (device)),

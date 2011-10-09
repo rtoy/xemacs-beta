@@ -171,10 +171,10 @@ connect_to_file_descriptor (Lisp_Object name, Lisp_Object buffer,
   EMACS_INT inch;
 
   CHECK_STRING (name);
-  CHECK_INT (infd);
-  CHECK_INT (outfd);
+  CHECK_FIXNUM (infd);
+  CHECK_FIXNUM (outfd);
 
-  inch = XINT (infd);
+  inch = XFIXNUM (infd);
   if (get_process_from_usid (FD_TO_USID (inch)))
     invalid_operation ("There is already a process connected to fd", infd);
   if (!NILP (buffer))
@@ -184,7 +184,7 @@ connect_to_file_descriptor (Lisp_Object name, Lisp_Object buffer,
   XPROCESS (proc)->pid = Fcons (infd, name);
   XPROCESS (proc)->buffer = buffer;
   init_process_io_handles (XPROCESS (proc), (void *) inch,
-			   (void *) XINT (outfd), (void *) -1, 0);
+			   (void *) XFIXNUM (outfd), (void *) -1, 0);
   UNIX_DATA (XPROCESS (proc))->connected_via_filedesc_p = 1;
 
   event_stream_select_process (XPROCESS (proc), 1, 1);
@@ -464,7 +464,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
       if (! (host_info_ptr == 0 && h_errno == TRY_AGAIN))
 #endif
 	break;
-      Fsleep_for (make_int (1));
+      Fsleep_for (make_fixnum (1));
     }
   if (host_info_ptr)
     {
@@ -528,7 +528,7 @@ set_socket_nonblocking_maybe (int fd,
 	  else
 	    continue;
 	}
-      else if (INTP (tail_port) && (htons ((unsigned short) XINT (tail_port)) == port))
+      else if (FIXNUMP (tail_port) && (htons ((unsigned short) XFIXNUM (tail_port)) == port))
 	break;
     }
 
@@ -927,7 +927,7 @@ child_setup (int in, int out, int err, Ibyte **new_argv,
 
   /* Set `env' to a vector of the strings in Vprocess_environment.  */
   /* + 2 to include PWD and terminating 0.  */
-  env = alloca_array (Ibyte *, XINT (Flength (Vprocess_environment)) + 2);
+  env = alloca_array (Ibyte *, XFIXNUM (Flength (Vprocess_environment)) + 2);
   {
     REGISTER Lisp_Object tail;
     Ibyte **new_env = env;
@@ -1348,7 +1348,7 @@ unix_update_status_if_terminated (Lisp_Process *p)
 #ifdef SIGCHLD
   EMACS_BLOCK_SIGNAL (SIGCHLD);
 #endif
-  if (waitpid (XINT (p->pid), &w, WNOHANG) == XINT (p->pid))
+  if (waitpid (XFIXNUM (p->pid), &w, WNOHANG) == XFIXNUM (p->pid))
     {
       p->tick++;
       update_status_from_wait_code (p, &w);
@@ -1396,7 +1396,7 @@ unix_reap_exited_processes (void)
 	  {
 	    Lisp_Object proc = XCAR (tail);
 	    p = XPROCESS (proc);
-	    if (INTP (p->pid) && XINT (p->pid) == pid)
+	    if (FIXNUMP (p->pid) && XFIXNUM (p->pid) == pid)
 	      break;
 	    p = 0;
 	  }
@@ -1527,7 +1527,7 @@ unix_send_process (Lisp_Object proc, struct lstream *lstream)
 		 uses geometrically increasing timeouts (up to 1s).  This
 		 might be a good idea here.
 	         N.B. timeout_secs = Qnil is faster than Qzero. */
-	      Faccept_process_output (Qnil, Qnil, make_int (10));
+	      Faccept_process_output (Qnil, Qnil, make_fixnum (10));
 	      /* It could have *really* finished, deleting the process */
 	      if (NILP(p->pipe_outstream))
 		return;
@@ -1761,7 +1761,7 @@ unix_kill_child_process (Lisp_Object proc, int signo,
        the shell's subprocess is killed, which is the desired effect.
        The process group of p->pid is always p->pid, since it was
        created as a process group leader. */
-    pgid = XINT (p->pid);
+    pgid = XFIXNUM (p->pid);
 
   /* Finally send the signal. */
   if (EMACS_KILLPG (pgid, signo) == -1)
@@ -1885,11 +1885,11 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
      * Caution: service can either be a string or int.
      * Convert to a C string for later use by getaddrinfo.
      */
-    if (INTP (service))
+    if (FIXNUMP (service))
       {
-	snprintf (portbuf, sizeof (portbuf), "%ld", (long) XINT (service));
+	snprintf (portbuf, sizeof (portbuf), "%ld", (long) XFIXNUM (service));
 	portstring = portbuf;
-	port = htons ((unsigned short) XINT (service));
+	port = htons ((unsigned short) XFIXNUM (service));
       }
     else
       {
@@ -1925,8 +1925,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     struct sockaddr_in address;
     volatile int i;
 
-    if (INTP (service))
-      port = htons ((unsigned short) XINT (service));
+    if (FIXNUMP (service))
+      port = htons ((unsigned short) XFIXNUM (service));
     else
       {
 	struct servent *svc_info;
@@ -2119,10 +2119,10 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   CHECK_STRING (dest);
 
   check_integer_range (port, Qzero, make_integer (USHRT_MAX));
-  theport = htons ((unsigned short) XINT (port));
+  theport = htons ((unsigned short) XFIXNUM (port));
 
   check_integer_range (ttl, Qzero, make_integer (UCHAR_MAX));
-  thettl = (unsigned char) XINT (ttl);
+  thettl = (unsigned char) XFIXNUM (ttl);
 
   if ((udp = getprotobyname ("udp")) == NULL)
     invalid_operation ("No info available for UDP protocol", Qunbound);

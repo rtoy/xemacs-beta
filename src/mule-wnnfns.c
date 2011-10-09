@@ -439,7 +439,7 @@ Specify password files of dictionary and frequency, PW1 and PW2, if needed.
   int	snum;
   CHECK_STRING (args[0]);
   CHECK_STRING (args[1]);
-  CHECK_INT (args[2]);
+  CHECK_FIXNUM (args[2]);
   if (! NILP (args[5])) CHECK_STRING (args[5]);
   if (! NILP (args[6])) CHECK_STRING (args[6]);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
@@ -450,7 +450,7 @@ Specify password files of dictionary and frequency, PW1 and PW2, if needed.
 		  LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
 		  LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
 		  wnnfns_norm ? WNN_DIC_ADD_NOR : WNN_DIC_ADD_REV,
-		  XINT (args[2]),
+		  XFIXNUM (args[2]),
 		  NILP (args[3]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
 		  NILP (args[4]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
 		  NILP (args[5]) ? 0 :
@@ -474,9 +474,9 @@ Remove dictionary specified by DIC-NUMBER from buffer.
 {
   int	no;
   int	snum;
-  CHECK_INT (dicno);
+  CHECK_FIXNUM (dicno);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  no = XINT (dicno);
+  no = XFIXNUM (dicno);
   if (!wnnfns_buf[snum]) return Qnil;
   if (jl_dic_delete (wnnfns_buf[snum], no) < 0) return Qnil;
   return Qt;
@@ -509,11 +509,11 @@ Return information of dictionaries.
       dicinfo--;
       w2m (dicinfo->comment, comment, charset);
       val =
-	Fcons (Fcons (make_int (dicinfo->dic_no),
+	Fcons (Fcons (make_fixnum (dicinfo->dic_no),
 		      list4 (build_extstring (dicinfo->fname, Qfile_name),
 			     build_istring (comment),
-			     make_int (dicinfo->gosuu),
-			     make_int (dicinfo->nice))), val);
+			     make_fixnum (dicinfo->gosuu),
+			     make_fixnum (dicinfo->nice))), val);
     }
   return val;
 }
@@ -526,12 +526,12 @@ Comment string COMMENT.
 {
   w_char wbuf[512];
   int snum;
-  CHECK_INT (dicno);
+  CHECK_FIXNUM (dicno);
   CHECK_STRING (comment);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   m2w (XSTRING_DATA (comment), wbuf);
-  if (jl_dic_comment_set (wnnfns_buf[snum], XINT (dicno), wbuf) < 0)
+  if (jl_dic_comment_set (wnnfns_buf[snum], XFIXNUM (dicno), wbuf) < 0)
     return Qnil;
   return Qt;
 }
@@ -581,7 +581,7 @@ Translate YOMI string to kanji. Retuen the number of bunsetsu.
   if ((cnt = jl_ren_conv (wnnfns_buf[snum], wbuf,	0, -1, WNN_USE_MAE)) < 0)
     return Qnil;
 #endif
-  return make_int (cnt);
+  return make_fixnum (cnt);
 }
 
 DEFUN ("wnn-server-zenkouho", Fwnn_zenkouho, 2, 2, 0, /*
@@ -593,10 +593,10 @@ if dai-bunsetsu, NIL if sho-bunsetsu. Return the current offset of zenkouho.
   int	no, offset;
   int	snum;
   int	uniq_level;
-  CHECK_INT (bunNo);
+  CHECK_FIXNUM (bunNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
-  no = XINT (bunNo);
+  no = XFIXNUM (bunNo);
   if (EQ(Vwnn_uniq_level, Qwnn_no_uniq)) uniq_level = WNN_NO_UNIQ;
   else if (EQ(Vwnn_uniq_level, Qwnn_uniq)) uniq_level = WNN_UNIQ;
   else uniq_level = WNN_UNIQ_KNJ;
@@ -612,7 +612,7 @@ if dai-bunsetsu, NIL if sho-bunsetsu. Return the current offset of zenkouho.
 				     WNN_USE_MAE, uniq_level)) < 0)
 	return Qnil;
     }
-  return make_int (offset);
+  return make_fixnum (offset);
 }
 
 
@@ -625,11 +625,11 @@ Get kanji string of KOUHO-NUMBER.
   w_char	wbuf[256];
   int	snum;
   Lisp_Object charset;
-  CHECK_INT (kouhoNo);
+  CHECK_FIXNUM (kouhoNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
-  jl_get_zenkouho_kanji (wnnfns_buf[snum], XINT (kouhoNo), wbuf);
+  jl_get_zenkouho_kanji (wnnfns_buf[snum], XFIXNUM (kouhoNo), wbuf);
   w2m (wbuf, kanji_buf, charset);
   return build_istring (kanji_buf);
 }
@@ -641,7 +641,7 @@ For Wnn.
 {
   int	snum;
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  return make_int (jl_zenkouho_bun (wnnfns_buf[snum]));
+  return make_fixnum (jl_zenkouho_bun (wnnfns_buf[snum]));
 }
 
 DEFUN ("wnn-server-zenkouho-suu", Fwnn_zenkouho_suu, 0, 0, 0, /*
@@ -651,7 +651,7 @@ Return the number of zen kouho.
 {
   int	snum;
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  return make_int (jl_zenkouho_suu (wnnfns_buf[snum]));
+  return make_fixnum (jl_zenkouho_suu (wnnfns_buf[snum]));
 }
 
 DEFUN ("wnn-server-dai-top", Fwnn_dai_top, 1, 1, 0, /*
@@ -660,10 +660,10 @@ Return t if bunsetsu BUN-NUMBER is dai-bunsetsu.
      (bunNo))
 {
   int	snum;
-  CHECK_INT (bunNo);
+  CHECK_FIXNUM (bunNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
-  if (jl_dai_top (wnnfns_buf[snum], XINT (bunNo)) == 1) return Qt;
+  if (jl_dai_top (wnnfns_buf[snum], XFIXNUM (bunNo)) == 1) return Qt;
   else return Qnil;
 }
 
@@ -673,10 +673,10 @@ Return the bunsetu number of the next dai-bunsetsu after BUN-NUMBER.
      (bunNo))
 {
   int	snum;
-  CHECK_INT (bunNo);
+  CHECK_FIXNUM (bunNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
-  return make_int (dai_end (XINT (bunNo), snum));
+  return make_fixnum (dai_end (XFIXNUM (bunNo), snum));
 }
 
 DEFUN ("wnn-server-henkan-kakutei", Fwnn_kakutei, 2, 2, 0, /*
@@ -685,16 +685,16 @@ Set candidate with OFFSET, DAI. DAI is T if dai-bunsetsu.
      (offset, dai))
 {
   int	snum;
-  CHECK_INT (offset);
+  CHECK_FIXNUM (offset);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   if (NILP (dai))
     {
-      if (jl_set_jikouho (wnnfns_buf[snum], XINT (offset)) < 0) return Qnil;
+      if (jl_set_jikouho (wnnfns_buf[snum], XFIXNUM (offset)) < 0) return Qnil;
     }
   else
     {
-      if (jl_set_jikouho_dai (wnnfns_buf[snum], XINT (offset)) < 0)
+      if (jl_set_jikouho_dai (wnnfns_buf[snum], XFIXNUM (offset)) < 0)
 	return Qnil;
     }
   return Qt;
@@ -707,21 +707,21 @@ Change length of BUN-NUMBER bunsetu to LEN. DAI is T if dai-bunsetsu.
 {
   int		cnt, no;
   int	snum;
-  CHECK_INT (bunNo);
-  CHECK_INT (len);
+  CHECK_FIXNUM (bunNo);
+  CHECK_FIXNUM (len);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
-  no = XINT (bunNo);
+  no = XFIXNUM (bunNo);
 #ifdef	WNN6
-  if ((cnt = jl_fi_nobi_conv (wnnfns_buf[snum], no, XINT(len), -1, WNN_USE_MAE,
+  if ((cnt = jl_fi_nobi_conv (wnnfns_buf[snum], no, XFIXNUM(len), -1, WNN_USE_MAE,
 			      NILP (dai) ? WNN_SHO : WNN_DAI)) < 0)
     return Qnil;
 #else
-  if ((cnt = jl_nobi_conv (wnnfns_buf[snum], no, XINT(len), -1, WNN_USE_MAE,
+  if ((cnt = jl_nobi_conv (wnnfns_buf[snum], no, XFIXNUM(len), -1, WNN_USE_MAE,
 			   NILP (dai) ? WNN_SHO : WNN_DAI)) < 0)
     return Qnil;
 #endif
-  return make_int (cnt);
+  return make_fixnum (cnt);
 }
 
 DEFUN ("wnn-server-inspect", Fwnn_inspect, 1, 1, 0, /*
@@ -735,20 +735,20 @@ Get bunsetsu information specified by BUN-NUMBER.
   int			bun_no, yomilen, jirilen, i;
   int	snum;
   Lisp_Object		charset;
-  CHECK_INT (bunNo);
+  CHECK_FIXNUM (bunNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
-  bun_no = XINT (bunNo);
+  bun_no = XFIXNUM (bunNo);
   val = Qnil;
-  val = Fcons (make_int (wnnfns_buf[snum]->bun[bun_no]->kangovect), val);
-  val = Fcons (make_int (wnnfns_buf[snum]->bun[bun_no]->daihyoka), val);
-  val = Fcons (make_int (wnnfns_buf[snum]->bun[bun_no]->hyoka), val);
-  val = Fcons (make_int (wnnfns_buf[snum]->bun[bun_no]->ima), val);
-  val = Fcons (make_int (wnnfns_buf[snum]->bun[bun_no]->hindo), val);
-  val = Fcons (make_int (wnnfns_buf[snum]->bun[bun_no]->hinsi), val);
-  val = Fcons (make_int (wnnfns_buf[snum]->bun[bun_no]->entry), val);
-  val = Fcons (make_int (wnnfns_buf[snum]->bun[bun_no]->dic_no), val);
+  val = Fcons (make_fixnum (wnnfns_buf[snum]->bun[bun_no]->kangovect), val);
+  val = Fcons (make_fixnum (wnnfns_buf[snum]->bun[bun_no]->daihyoka), val);
+  val = Fcons (make_fixnum (wnnfns_buf[snum]->bun[bun_no]->hyoka), val);
+  val = Fcons (make_fixnum (wnnfns_buf[snum]->bun[bun_no]->ima), val);
+  val = Fcons (make_fixnum (wnnfns_buf[snum]->bun[bun_no]->hindo), val);
+  val = Fcons (make_fixnum (wnnfns_buf[snum]->bun[bun_no]->hinsi), val);
+  val = Fcons (make_fixnum (wnnfns_buf[snum]->bun[bun_no]->entry), val);
+  val = Fcons (make_fixnum (wnnfns_buf[snum]->bun[bun_no]->dic_no), val);
   yomilen = jl_get_yomi (wnnfns_buf[snum], bun_no, bun_no + 1, wbuf);
   jirilen = wnnfns_buf[snum]->bun[bun_no]->jirilen;
   for (i = yomilen; i >= jirilen; i--) wbuf[i+1] = wbuf[i];
@@ -783,14 +783,14 @@ Get the pair of kanji and length of bunsetsu specified by BUN-NUMBER.
   int			kanji_len;
   int			snum;
   Lisp_Object		charset;
-  CHECK_INT (bunNo);
+  CHECK_FIXNUM (bunNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
-  no = XINT (bunNo);
+  no = XFIXNUM (bunNo);
   kanji_len = jl_get_kanji (wnnfns_buf[snum], no, no + 1, wbuf);
   w2m (wbuf, kanji_buf, charset);
-  return Fcons (build_istring (kanji_buf), make_int (kanji_len));
+  return Fcons (build_istring (kanji_buf), make_fixnum (kanji_len));
 }
 
 DEFUN ("wnn-server-bunsetu-yomi", Fwnn_bunsetu_yomi, 1, 1, 0, /*
@@ -804,14 +804,14 @@ Get the pair of yomi and length of bunsetsu specified by BUN-NUMBER.
   int			yomi_len;
   int			snum;
   Lisp_Object		charset;
-  CHECK_INT (bunNo);
+  CHECK_FIXNUM (bunNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
-  no = XINT (bunNo);
+  no = XFIXNUM (bunNo);
   yomi_len = jl_get_yomi (wnnfns_buf[snum], no, no + 1, wbuf);
   w2m (wbuf, yomi_buf, charset);
-  return Fcons (build_istring (yomi_buf), make_int (yomi_len));
+  return Fcons (build_istring (yomi_buf), make_fixnum (yomi_len));
 }
 
 DEFUN ("wnn-server-bunsetu-suu", Fwnn_bunsetu_suu, 0, 0, 0, /*
@@ -822,7 +822,7 @@ Get the number of bunsetsu.
   int	snum;
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
-  return make_int (jl_bun_suu (wnnfns_buf[snum]));
+  return make_fixnum (jl_bun_suu (wnnfns_buf[snum]));
 }
 
 DEFUN ("wnn-server-hindo-update", Fwnn_hindo_update, 0, 1, 0, /*
@@ -836,8 +836,8 @@ Update frequency of bunsetsu specified by NUM-NUMBER.
   if (NILP (bunNo)) no = -1;
   else
     {
-      CHECK_INT (bunNo);
-      no = XINT (bunNo);
+      CHECK_FIXNUM (bunNo);
+      no = XFIXNUM (bunNo);
     }
   if (!wnnfns_buf[snum]) return Qnil;
 #ifdef	WNN6
@@ -857,11 +857,11 @@ DIC-NUMBER, KANJI, YOMI, COMMENT, HINSI-NUMBER.
 {
   w_char		yomi_buf[256], kanji_buf[256], comment_buf[256];
   int	snum;
-  CHECK_INT (dicno);
+  CHECK_FIXNUM (dicno);
   CHECK_STRING (kanji);
   CHECK_STRING (yomi);
   CHECK_STRING (comment);
-  CHECK_INT (hinsi);
+  CHECK_FIXNUM (hinsi);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   m2w (XSTRING_DATA (yomi), yomi_buf);
@@ -869,8 +869,8 @@ DIC-NUMBER, KANJI, YOMI, COMMENT, HINSI-NUMBER.
     w2y (yomi_buf);
   m2w (XSTRING_DATA (kanji), kanji_buf);
   m2w (XSTRING_DATA (comment), comment_buf);
-  if (jl_word_add (wnnfns_buf[snum], XINT (dicno), yomi_buf, kanji_buf,
-		   comment_buf, XINT (hinsi), 0) < 0)
+  if (jl_word_add (wnnfns_buf[snum], XFIXNUM (dicno), yomi_buf, kanji_buf,
+		   comment_buf, XFIXNUM (hinsi), 0) < 0)
     return Qnil;
   else return Qt;
 }
@@ -882,11 +882,11 @@ Delete a word from dictionary, specified by DIC-NUMBER, SERIAL-NUMBER.
      (no, serial))
 {
   int	snum;
-  CHECK_INT (no);
-  CHECK_INT (serial);
+  CHECK_FIXNUM (no);
+  CHECK_FIXNUM (serial);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
-  if (jl_word_delete (wnnfns_buf[snum], XINT (no), XINT (serial)) < 0)
+  if (jl_word_delete (wnnfns_buf[snum], XFIXNUM (no), XFIXNUM (serial)) < 0)
     return Qnil;
   else return Qt;
 }
@@ -898,11 +898,11 @@ Toggle on/off word, specified by DIC-NUMBER and SERIAL-NUMBER.
      (no, serial))
 {
   int	snum;
-  CHECK_INT (no);
-  CHECK_INT (serial);
+  CHECK_FIXNUM (no);
+  CHECK_FIXNUM (serial);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
-  if (jl_word_use (wnnfns_buf[snum], XINT (no), XINT (serial)) < 0)
+  if (jl_word_use (wnnfns_buf[snum], XFIXNUM (no), XFIXNUM (serial)) < 0)
     return Qnil;
   else return Qt;
 }
@@ -917,21 +917,21 @@ Return list of yomi, kanji, comment, hindo, hinshi.
   Ibyte			cbuf[512];
   int			snum;
   Lisp_Object		charset;
-  CHECK_INT (no);
-  CHECK_INT (serial);
+  CHECK_FIXNUM (no);
+  CHECK_FIXNUM (serial);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   if ((info_buf =  jl_word_info (wnnfns_buf[snum],
-				 XINT (no), XINT (serial))) != NULL)
+				 XFIXNUM (no), XFIXNUM (serial))) != NULL)
     {
       return Qnil;
     }
   else
     {
       val = Qnil;
-      val = Fcons (make_int (info_buf->hinshi), val);
-      val = Fcons (make_int (info_buf->hindo), val);
+      val = Fcons (make_fixnum (info_buf->hinshi), val);
+      val = Fcons (make_fixnum (info_buf->hindo), val);
       w2m (info_buf->com, cbuf, charset);
       val = Fcons (build_istring (cbuf), val);
       w2m (info_buf->kanji, cbuf, charset);
@@ -949,16 +949,16 @@ SERIAL-NUMBER, FREQUENCY.
      (no, serial, hindo))
 {
   int	snum;
-  CHECK_INT (no);
-  CHECK_INT (serial);
-  CHECK_INT (hindo);
+  CHECK_FIXNUM (no);
+  CHECK_FIXNUM (serial);
+  CHECK_FIXNUM (hindo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   if (js_hindo_set (jl_env_get (wnnfns_buf[snum]),
-		    XINT (no),
-		    XINT (serial),
+		    XFIXNUM (no),
+		    XFIXNUM (serial),
 		    WNN_HINDO_NOP,
-		    XINT (hindo)) < 0)
+		    XFIXNUM (hindo)) < 0)
     return Qnil;
   else return Qt;
 }
@@ -993,10 +993,10 @@ Return list of (kanji hinshi freq dic_no serial).
       wordinfo--;
       w2m (wordinfo->kanji, kanji_buf, charset);
       val = Fcons (Fcons (build_istring (kanji_buf),
-			  list4 (make_int (wordinfo->hinshi),
-				 make_int (wordinfo->hindo),
-				 make_int (wordinfo->dic_no),
-				 make_int (wordinfo->serial))),
+			  list4 (make_fixnum (wordinfo->hinshi),
+				 make_fixnum (wordinfo->hindo),
+				 make_fixnum (wordinfo->dic_no),
+				 make_fixnum (wordinfo->serial))),
 		   val);
     }
   return val;
@@ -1025,23 +1025,23 @@ suuji kana eisuu kigou toji_kakko fuzokogo kaikakko)
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   if (jl_param_get (wnnfns_buf[snum], &param) < 0) return Qnil;
-  return Fcons (make_int (param.n),
-	 Fcons (make_int (param.nsho),
-	 Fcons (make_int (param.p1),
-	 Fcons (make_int (param.p2),
-	 Fcons (make_int (param.p3),
-	 Fcons (make_int (param.p4),
-	 Fcons (make_int (param.p5),
-	 Fcons (make_int (param.p6),
-	 Fcons (make_int (param.p7),
-	 Fcons (make_int (param.p8),
-	 Fcons (make_int (param.p9),
-	 Fcons (make_int (param.p10),
-	 Fcons (make_int (param.p11),
-	 Fcons (make_int (param.p12),
-	 Fcons (make_int (param.p13),
-	 Fcons (make_int (param.p14),
-	 Fcons (make_int (param.p15),Qnil)))))))))))))))));
+  return Fcons (make_fixnum (param.n),
+	 Fcons (make_fixnum (param.nsho),
+	 Fcons (make_fixnum (param.p1),
+	 Fcons (make_fixnum (param.p2),
+	 Fcons (make_fixnum (param.p3),
+	 Fcons (make_fixnum (param.p4),
+	 Fcons (make_fixnum (param.p5),
+	 Fcons (make_fixnum (param.p6),
+	 Fcons (make_fixnum (param.p7),
+	 Fcons (make_fixnum (param.p8),
+	 Fcons (make_fixnum (param.p9),
+	 Fcons (make_fixnum (param.p10),
+	 Fcons (make_fixnum (param.p11),
+	 Fcons (make_fixnum (param.p12),
+	 Fcons (make_fixnum (param.p13),
+	 Fcons (make_fixnum (param.p14),
+	 Fcons (make_fixnum (param.p15),Qnil)))))))))))))))));
 }
 
 DEFUN ("wnn-server-set-param", Fwnn_set_param, 1, 1, 0, /*
@@ -1066,8 +1066,8 @@ or wnn_kaikakko and the CDR contains the value.
     EXTERNAL_PROPERTY_LIST_LOOP_3 (key, val, Vsetvalues_alist)
       {
 	int setval;
-	CHECK_INT (val);
-	setval = XINT (val);
+	CHECK_FIXNUM (val);
+	setval = XFIXNUM (val);
 	if (EQ (key, Qwnn_n)) param.n = setval;
 	else if (EQ (key, Qwnn_nsho)) param.nsho = setval;
 	else if (EQ (key, Qwnn_hindo)) param.p1 = setval;
@@ -1128,7 +1128,7 @@ Get message string from wnn_perror.
   int		snum;
   Lisp_Object	charset;
   char		langname[32];
-/*  CHECK_INT (errno);*/
+/*  CHECK_FIXNUM (errno);*/
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   charset = charset_wnn_server_type[snum];
   switch (snum)
@@ -1149,7 +1149,7 @@ Get message string from wnn_perror.
       break;
     }
   if (!wnnfns_buf[snum]) return Qnil;
-/*  msgp = msg_get (wnn_msg_cat, XINT (errno), 0, 0);*/
+/*  msgp = msg_get (wnn_msg_cat, XFIXNUM (errno), 0, 0);*/
   msgp = wnn_perror_lang (langname);
   c2m ((UExtbyte *) msgp, mbuf, charset);
   return build_istring (mbuf);
@@ -1206,16 +1206,16 @@ For Wnn.
   int		cnt;
   Lisp_Object	val;
   int	snum;
-  CHECK_INT (hinsi);
+  CHECK_FIXNUM (hinsi);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
-  if ((cnt = jl_hinsi_dicts (wnnfns_buf[snum], XINT (hinsi), &area)) < 0)
+  if ((cnt = jl_hinsi_dicts (wnnfns_buf[snum], XFIXNUM (hinsi), &area)) < 0)
     return Qnil;
   val = Qnil;
   for (area += cnt; cnt > 0; cnt--)
     {
       area--;
-      val = Fcons (make_int (*area), val);
+      val = Fcons (make_fixnum (*area), val);
     }
   return val;
 }
@@ -1232,15 +1232,15 @@ For Wnn.
   Ibyte		cbuf[512];
   int		snum;
   Lisp_Object	charset;
-  CHECK_INT (dicno);
+  CHECK_FIXNUM (dicno);
   CHECK_STRING (name);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   m2w (XSTRING_DATA (name), wbuf);
-  if ((cnt = jl_hinsi_list (wnnfns_buf[snum], XINT (dicno), wbuf, &area)) < 0)
+  if ((cnt = jl_hinsi_list (wnnfns_buf[snum], XFIXNUM (dicno), wbuf, &area)) < 0)
     return Qnil;
-  if (cnt == 0) return make_int (0);
+  if (cnt == 0) return make_fixnum (0);
   val = Qnil;
   for (area += cnt; cnt > 0; cnt--)
     {
@@ -1260,11 +1260,11 @@ For Wnn.
   w_char	*wname;
   int		snum;
   Lisp_Object	charset;
-  CHECK_INT (no);
+  CHECK_FIXNUM (no);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
-  if ((wname = jl_hinsi_name (wnnfns_buf[snum], XINT (no))) == 0) return Qnil;
+  if ((wname = jl_hinsi_name (wnnfns_buf[snum], XFIXNUM (no))) == 0) return Qnil;
   w2m (wname, name, charset);
   return build_istring (name);
 }
@@ -1354,7 +1354,7 @@ Specify password files of dictionary and frequency PW1 if needed.
   unsigned long vmask = 0;
   struct wnn_henkan_env henv;
   CHECK_STRING (args[0]);
-  CHECK_INT (args[1]);
+  CHECK_FIXNUM (args[1]);
   if (! NILP (args[3])) CHECK_STRING (args[3]);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
   if(!wnnfns_buf[snum]) return Qnil;
@@ -1373,7 +1373,7 @@ Specify password files of dictionary and frequency PW1 if needed.
 				0,
 				wnnfns_norm ? WNN_DIC_ADD_NOR :
 				WNN_DIC_ADD_REV,
-				XINT (args[1]),
+				XFIXNUM (args[1]),
 				WNN_DIC_RW, WNN_DIC_RW,
 				NILP (args[3]) ? 0 :
 				LISP_STRING_TO_EXTERNAL (args[3],
@@ -1423,7 +1423,7 @@ Specify password files of dictionary and frequency PW1 if needed.
   unsigned long vmask = 0;
   struct wnn_henkan_env henv;
   CHECK_STRING (args[0]);
-  CHECK_INT (args[1]);
+  CHECK_FIXNUM (args[1]);
   if (! NILP (args[3])) CHECK_STRING (args[3]);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
   if(!wnnfns_buf[snum]) return Qnil;
@@ -1442,7 +1442,7 @@ Specify password files of dictionary and frequency PW1 if needed.
 				0,
 				wnnfns_norm ? WNN_DIC_ADD_NOR :
 				WNN_DIC_ADD_REV,
-				XINT(args[1]),
+				XFIXNUM(args[1]),
 				WNN_DIC_RW, WNN_DIC_RW,
 				NILP (args[3]) ? 0 :
 				LISP_STRING_TO_EXTERNAL (args[3],
@@ -1541,8 +1541,8 @@ For FI-Wnn.
   int   snum, mode;
   unsigned long vmask = 0;
   struct wnn_henkan_env henv;
-  CHECK_INT (lmode);
-  mode = XINT (lmode);
+  CHECK_FIXNUM (lmode);
+  mode = XFIXNUM (lmode);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
   if(!wnnfns_buf[snum]) return Qnil;
   if(mode != WNN_OKURI_REGULATION &&
@@ -1584,8 +1584,8 @@ For FI-Wnn.
   int   snum, mode;
   unsigned long vmask = 0;
   struct wnn_henkan_env henv;
-  CHECK_INT (lmode);
-  mode = XINT (lmode);
+  CHECK_FIXNUM (lmode);
+  mode = XFIXNUM (lmode);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
   if(!wnnfns_buf[snum]) return Qnil;
   if(mode != WNN_KANA_KOUHO && mode != WNN_KANJI_KOUHO)
@@ -1643,8 +1643,8 @@ For FI-Wnn.
   int   snum, mode;
   unsigned long vmask = 0;
   struct wnn_henkan_env henv;
-  CHECK_INT (lmode);
-  mode = XINT (lmode);
+  CHECK_FIXNUM (lmode);
+  mode = XFIXNUM (lmode);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
   if(!wnnfns_buf[snum]) return Qnil;
   if(mode != 0 && mode != 1 && mode != 2 && mode != 3 && mode != 4)
@@ -1666,8 +1666,8 @@ For FI-Wnn.
   int   snum, mode;
   unsigned long vmask = 0;
   struct wnn_henkan_env henv;
-  CHECK_INT (lmode);
-  mode = XINT (lmode);
+  CHECK_FIXNUM (lmode);
+  mode = XFIXNUM (lmode);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
   if(!wnnfns_buf[snum]) return Qnil;
   if(mode != WNN_NUM_KANSUUJI &&
@@ -1695,8 +1695,8 @@ For FI-Wnn.
   int   snum, mode;
   unsigned long vmask = 0;
   struct wnn_henkan_env henv;
-  CHECK_INT (lmode);
-  mode = XINT (lmode);
+  CHECK_FIXNUM (lmode);
+  mode = XFIXNUM (lmode);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
   if(!wnnfns_buf[snum]) return Qnil;
   if(mode != WNN_ALP_HAN && mode != WNN_ALP_ZEN)
@@ -1718,8 +1718,8 @@ For FI-Wnn.
   int   snum, mode;
   unsigned long vmask = 0;
   struct wnn_henkan_env henv;
-  CHECK_INT (lmode);
-  mode = XINT (lmode);
+  CHECK_FIXNUM (lmode);
+  mode = XFIXNUM (lmode);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
   if(!wnnfns_buf[snum]) return Qnil;
   if(mode != WNN_KIG_HAN && mode != WNN_KIG_JIS && mode != WNN_KIG_ASC)
@@ -1780,7 +1780,7 @@ Returns Wnn server version ID.
     else
       cur_env = wnnfns_env_rev[snum];
     if(js_version (cur_env->js_id,&serv,&libv) < 0) return Qnil;
-    return make_int (serv);
+    return make_fixnum (serv);
 }
 
 DEFUN ("wnn-server-hinsi-number", Fwnn_hinsi_number, 1, 1, 0, /*
@@ -1796,7 +1796,7 @@ For Wnn.
   if (!wnnfns_buf[snum]) return Qnil;
   m2w (XSTRING_DATA (name), w_buf);
   if ((no = jl_hinsi_number (wnnfns_buf[snum], w_buf)) < 0) return Qnil;
-  return make_int (no);
+  return make_fixnum (no);
 }
 
 void

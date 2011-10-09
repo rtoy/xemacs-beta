@@ -55,11 +55,11 @@ int display_boxes_in_gutter_p (struct frame *f, struct display_box* db,
 			       struct display_glyph_area* dga);
 
 #define WINDOW_GUTTER_BORDER_WIDTH(w, pos) \
-  (INTP ((w)->gutter_border_width[pos]) ? XINT ((w)->gutter_border_width[pos]) : 0)
+  (FIXNUMP ((w)->gutter_border_width[pos]) ? XFIXNUM ((w)->gutter_border_width[pos]) : 0)
 #define WINDOW_GUTTER_SIZE(w, pos) \
-  (INTP ((w)->gutter_size[pos]) ? XINT ((w)->gutter_size[pos]) : 0)
+  (FIXNUMP ((w)->gutter_size[pos]) ? XFIXNUM ((w)->gutter_size[pos]) : 0)
 #define WINDOW_GUTTER_SIZE_INTERNAL(w, pos) \
-  (INTP ((w)->real_gutter_size[pos]) ? XINT ((w)->real_gutter_size[pos]) : 0)
+  (FIXNUMP ((w)->real_gutter_size[pos]) ? XFIXNUM ((w)->real_gutter_size[pos]) : 0)
 #define WINDOW_GUTTER_VISIBLE(w, pos) \
   ((w)->gutter_visible_p[pos])
 #define WINDOW_GUTTER(w, pos) \

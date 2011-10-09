@@ -647,7 +647,7 @@ bytebpos_to_charbpos (struct buffer *buf, Bytebpos x)
 
 /* Given a Bytebpos, return the equivalent Charbpos as a Lisp Object. */
 
-#define make_charbpos(buf, ind) make_int (bytebpos_to_charbpos (buf, ind))
+#define make_charbpos(buf, ind) make_fixnum (bytebpos_to_charbpos (buf, ind))
 
 /*----------------------------------------------------------------------*/
 /*	    Converting between byte and memory positions		*/

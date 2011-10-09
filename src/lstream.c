@@ -1684,15 +1684,15 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
     Lisp_Object buffer = wrap_buffer (buf);
 
     marker = Fmake_marker ();
-    Fset_marker (marker, make_int (start), buffer);
+    Fset_marker (marker, make_fixnum (start), buffer);
     str->start = marker;
     marker = Fmake_marker ();
-    Fset_marker (marker, make_int (start), buffer);
+    Fset_marker (marker, make_fixnum (start), buffer);
     str->orig_start = marker;
     if (reading)
       {
         marker = Fmake_marker ();
-        Fset_marker (marker, make_int (end), buffer);
+        Fset_marker (marker, make_fixnum (end), buffer);
         str->end = marker;
       }
     else

@@ -169,7 +169,7 @@ mark_type_as_imported (GType t)
   Lisp_Object value = type_as_symbol (t);
 
   if (NILP (type_already_imported_p (t)))
-    Vgtk_types = Facons (value, make_int (t), Vgtk_types);
+    Vgtk_types = Facons (value, make_fixnum (t), Vgtk_types);
 
   return value;
 }
@@ -259,10 +259,10 @@ import_gtk_flags_internal (GType the_type)
     {
       /* The nickname is more likely to be used, but save both names. */
       Vgtk_flags = Facons (intern ((CIbyte *)vals->value_nick),
-                           make_int (vals->value),
+                           make_fixnum (vals->value),
                            Vgtk_flags);
       Vgtk_flags = Facons (intern ((CIbyte *)vals->value_name),
-                           make_int (vals->value),
+                           make_fixnum (vals->value),
                            Vgtk_flags);
 #if DEBUG_XEMACS
       debug_out("flag %s %s => %d\n", vals->value_nick, vals->value_name,
@@ -285,10 +285,10 @@ import_gtk_enumeration_internal (GType the_type)
   while (vals && vals->value_name)
     {
       Vgtk_enumerations = Facons (intern (vals->value_nick),
-                                  make_int (vals->value),
+                                  make_fixnum (vals->value),
                                   Vgtk_enumerations);
       Vgtk_enumerations = Facons (intern (vals->value_name),
-                                  make_int (vals->value),
+                                  make_fixnum (vals->value),
                                   Vgtk_enumerations);
 #if DEBUG_XEMACS
       debug_out("enum %s %s => %d\n", vals->value_nick, vals->value_name, vals->value);
@@ -759,7 +759,7 @@ Call an external function.
   CHECK_LIST (args);
 
   memset (the_args, '\0', sizeof (GValue) * MAX_GTK_ARGS);
-  n_args = XINT (Flength (args));
+  n_args = XFIXNUM (Flength (args));
 
 #ifdef XEMACS_IS_SMARTER_THAN_THE_PROGRAMMER
   /* #### I think this is too dangerous to enable by default.
@@ -775,14 +775,14 @@ Call an external function.
       if (n_args > XFFI_N_ARGS (func))
 	{
 	  return Fsignal (Qwrong_number_of_arguments,
-			  list2 (func, make_int (n_args)));
+			  list2 (func, make_fixnum (n_args)));
 	}
 
       /* If they did not provide enough arguments, be nice and assume
       ** they wanted `nil' in there.
       */
       for_append[0] = args;
-      for_append[1] = Fmake_list (make_int (XFFI_N_ARGS (func) - n_args), Qnil);
+      for_append[1] = Fmake_list (make_fixnum (XFFI_N_ARGS (func) - n_args), Qnil);
 
       args = Fappend (2, for_append);
     }
@@ -791,7 +791,7 @@ Call an external function.
     {
       /* Signal an error if they do not pass in the correct # of arguments */
       return Fsignal (Qwrong_number_of_arguments,
-		      list2 (func, make_int (n_args)));
+		      list2 (func, make_fixnum (n_args)));
     }
 #endif
 
@@ -1072,7 +1072,7 @@ __internal_callback_destroy (gpointer data)
 
   lisp_data = GET_LISP_FROM_VOID (data);
 
-  ungcpro_popup_callbacks (XINT (XCAR (lisp_data)));
+  ungcpro_popup_callbacks (XFIXNUM (XCAR (lisp_data)));
 }
 
 static void
@@ -1148,7 +1148,7 @@ DEFUN ("gtk-signal-connect", Fgtk_signal_connect, 3, 6, 0, /*
 
   id = new_gui_id ();
   func = Fcons (cb_data, func);
-  func = Fcons (make_int (id), func);
+  func = Fcons (make_fixnum (id), func);
 
   gcpro_popup_callbacks (id, func);
 
@@ -1286,7 +1286,7 @@ This is the base object type.
     {
       invalid_argument ("Not a GTK type", type);
     }
-  return (make_int (GTK_FUNDAMENTAL_TYPE (t)));
+  return (make_fixnum (GTK_FUNDAMENTAL_TYPE (t)));
 }
 
 DEFUN ("gtk-object-type", Fgtk_object_type, 1, 1, 0, /*
@@ -1295,7 +1295,7 @@ Return the GType of OBJECT.
        (object))
 {
   CHECK_GTK_OBJECT (object);
-  return (make_int (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
+  return (make_fixnum (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
 }
 
 DEFUN ("g-object-type", Fg_object_type, 1, 1, 0, /*
@@ -1304,7 +1304,7 @@ Return the GType of OBJECT.
        (object))
 {
   CHECK_GTK_OBJECT (object);
-  return (make_int (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
+  return (make_fixnum (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
 }
 
 DEFUN ("gtk-describe-type", Fgtk_describe_type, 1, 1, 0, /*
@@ -1331,8 +1331,8 @@ The cdr is a list of all the magic properties it has.
     }
   else
     {
-      CHECK_INT (type);
-      t = XINT (type);
+      CHECK_FIXNUM (type);
+      t = XFIXNUM (type);
     }
 
   if (G_TYPE_IS_OBJECT (t) != TRUE)
@@ -1439,11 +1439,11 @@ Return the name of GTYPE, which is the name of a type..
   GType t = G_TYPE_INVALID;
   const gchar *name;
 
-  if (INTP (type))
+  if (FIXNUMP (type))
     {
       /* This might fail due to lack of range! That's why we use the
        type names generally. */
-      t = XINT (type);
+      t = XFIXNUM (type);
     }
   else
     {
@@ -1727,17 +1727,17 @@ Lisp_Object g_type_to_lisp (GValue *arg)
     case G_TYPE_BOOLEAN:
       return (g_value_get_boolean (arg) ? Qt : Qnil);
     case G_TYPE_INT:
-      return (make_int (g_value_get_int (arg)));
+      return (make_fixnum (g_value_get_int (arg)));
     case G_TYPE_UINT:
-      return (make_int (g_value_get_uint (arg)));
+      return (make_fixnum (g_value_get_uint (arg)));
     case G_TYPE_LONG:		/* I think these are wrong! */
-      return (make_int (g_value_get_long (arg)));
+      return (make_fixnum (g_value_get_long (arg)));
     case G_TYPE_ULONG:          /* I think these are wrong! */
-      return (make_int (g_value_get_ulong (arg)));
+      return (make_fixnum (g_value_get_ulong (arg)));
     case G_TYPE_INT64:          /* bignum? */
-      return (make_int (g_value_get_int64 (arg)));
+      return (make_fixnum (g_value_get_int64 (arg)));
     case G_TYPE_UINT64:         /* bignum? */
-      return (make_int (g_value_get_uint64 (arg)));
+      return (make_fixnum (g_value_get_uint64 (arg)));
     case G_TYPE_ENUM:
       return (enum_to_symbol (arg));
     case G_TYPE_FLAGS:
@@ -1841,8 +1841,8 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 	}
       else
 	{
-	  CHECK_INT (obj);
-	  g_value_set_int (val, XINT (obj));
+	  CHECK_FIXNUM (obj);
+	  g_value_set_int (val, XFIXNUM (obj));
 	}
       break;
       
@@ -1853,19 +1853,19 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 	}
       else
 	{
-	  CHECK_INT (obj);
-	  g_value_set_uint (val, XINT (obj));
+	  CHECK_FIXNUM (obj);
+	  g_value_set_uint (val, XFIXNUM (obj));
 	}
       break;
     case G_TYPE_LONG:
     case G_TYPE_ULONG:
       ABORT();
     case G_TYPE_FLOAT:
-      CHECK_INT_OR_FLOAT (obj);
+      CHECK_FIXNUM_OR_FLOAT (obj);
       g_value_set_float (val, extract_float (obj));
       break;
     case G_TYPE_DOUBLE:
-      CHECK_INT_OR_FLOAT (obj);
+      CHECK_FIXNUM_OR_FLOAT (obj);
       g_value_set_double (val, extract_float (obj));
       break;
     case G_TYPE_STRING:
@@ -2074,7 +2074,7 @@ static Lisp_Object
 get_enumeration (const GValue *arg)
 {
   Lisp_Object value;
-  value = Frassq (make_int (G_VALUE_TYPE (arg)), Vgtk_enumerations);
+  value = Frassq (make_fixnum (G_VALUE_TYPE (arg)), Vgtk_enumerations);
   if (!NILP (value))
     value = XCAR (value);
   return value;
@@ -2090,8 +2090,8 @@ lisp_to_gtk_enum (Lisp_Object obj)
   if (NILP (value))
     invalid_argument ("Unknown enumeration", obj);
 
-  CHECK_INT (XCDR (value));
-  return (XINT (XCDR (value)));
+  CHECK_FIXNUM (XCDR (value));
+  return (XFIXNUM (XCDR (value)));
 }
 
 static gint
@@ -2109,8 +2109,8 @@ lisp_to_gtk_flag (Lisp_Object obj)
       value = Fassq (obj, Vgtk_flags);
       if (NILP (value))
         invalid_argument ("Unknown flag", obj);
-      CHECK_INT (XCDR (value));
-      return XINT (XCDR (value));
+      CHECK_FIXNUM (XCDR (value));
+      return XFIXNUM (XCDR (value));
     }
   else if (LISTP (obj))
     {
@@ -2138,9 +2138,9 @@ flag_to_symbol (const GValue *arg)
                         build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
   
-  value = Frassq (make_int (flag), Vgtk_flags);
+  value = Frassq (make_fixnum (flag), Vgtk_flags);
   if (NILP (value))
-    invalid_argument ("Unknown flag", make_int (flag));
+    invalid_argument ("Unknown flag", make_fixnum (flag));
   return XCAR (value);
 }
 
@@ -2156,8 +2156,8 @@ enum_to_symbol (const GValue *arg)
                         build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
 
-  value = Frassq (make_int (enumeration), Vgtk_enumerations);
+  value = Frassq (make_fixnum (enumeration), Vgtk_enumerations);
   if (NILP (value))
-    invalid_argument ("Unknown enumeration", make_int (enumeration));
+    invalid_argument ("Unknown enumeration", make_fixnum (enumeration));
   return XCAR (value);
 }

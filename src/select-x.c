@@ -978,7 +978,7 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
   /* add a timeout handler */
   if (x_selection_timeout > 0)
     {
-      Lisp_Object id = Fadd_timeout (make_int (x_selection_timeout),
+      Lisp_Object id = Fadd_timeout (make_fixnum (x_selection_timeout),
 				     Qx_selection_reply_timeout_internal,
 				     Qnil, Qnil);
       record_unwind_protect (Fdisable_timeout, id);
@@ -1362,7 +1362,7 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
   if (format != 8 || type != XA_STRING)
     invalid_state_2 ("Cut buffer doesn't contain 8-bit STRING data",
 		     x_atom_to_symbol (d, type),
-		     make_int (format));
+		     make_fixnum (format));
 
   /* We cheat - if the string contains an ESC character, that's
      technically not allowed in a STRING, so we assume it's
@@ -1467,8 +1467,8 @@ positive means move values forward, negative means backward.
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
   Atom props [8];
 
-  CHECK_INT (n);
-  if (XINT (n) == 0)
+  CHECK_FIXNUM (n);
+  if (XFIXNUM (n) == 0)
     return n;
   if (! cut_buffers_initialized)
     initialize_cut_buffers (display, window);
@@ -1480,7 +1480,7 @@ positive means move values forward, negative means backward.
   props[5] = XA_CUT_BUFFER5;
   props[6] = XA_CUT_BUFFER6;
   props[7] = XA_CUT_BUFFER7;
-  XRotateWindowProperties (display, window, props, 8, XINT (n));
+  XRotateWindowProperties (display, window, props, 8, XFIXNUM (n));
   return n;
 }
 

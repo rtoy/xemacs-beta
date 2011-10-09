@@ -1142,6 +1142,7 @@ multi-charset environments."
        ;; end of labels
        )
 
+    (declare (inline global-locale nil-instantiator-ok))
     ;; the function itself
 
     (let* ((ffpdev Face-frob-property-device-considered-current)
