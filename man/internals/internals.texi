@@ -467,7 +467,7 @@ Allocation of Objects in XEmacs Lisp
 * Garbage Collection::          
 * GCPROing::                    
 * Garbage Collection - Step by Step::  
-* Integers and Characters::     
+* Fixnums and Characters::     
 * Allocation from Frob Blocks::  
 * lrecords::                    
 * Low-level allocation::        
@@ -948,9 +948,9 @@ Primary XEmacs-specific subsystems and their authors:
 @item Objects
 @itemize @minus
 @item
-Conversion from 26-bit to 28-bit pointers and integers, lrecords, lcrecords: Richard Mlynarik, 1994
+Conversion from 26-bit to 28-bit pointers and fixnums, lrecords, lcrecords: Richard Mlynarik, 1994
 @item
-Conversion to 32-bit pointers and 31-bit integers: Kyle Jones, Martin Buchholz
+Conversion to 32-bit pointers and 31-bit fixnums: Kyle Jones, Martin Buchholz
 @item
 Portable dumper, object descriptions: Olivier Galibert
 @item
@@ -1154,7 +1154,7 @@ between XEmacs and GNU Emacs.
 
 @item Kyle Jones
 Author of the minimal tag bits support, which allows for 32-bit
-pointers and 31-bit integers.
+pointers and 31-bit fixnums.
 
 @item Olivier Galibert
 Author of the portable dumping mechanism.
@@ -1200,9 +1200,9 @@ September 1995, and Elsie record lists for 1914 around December 1995.
 Steve Baur did some work on the purification and dump time code, and
 added Doug Lea Malloc support from Emacs 20.2 circa 1998.  Kyle Jones
 continued to work done by Mlynarik, reducing the number of primitive
-Lisp types so that there are only three: integer character and pointer
+Lisp types so that there are only three: fixnum, character, and pointer
 type, which encompasses all other types.  This allows for 31-bit
-integers and 32-bit pointers, although there is potential slowdown in
+fixnums and 32-bit pointers, although there is potential slowdown in
 some extra in directions when determining the type of an object, and
 some memory increase for the objects that previously were considered to
 be the most primitive types.  Martin Buchholz has recently (February
@@ -4084,7 +4084,7 @@ and capitalizing strings or regions of buffers.
 @end example
 
 This module implements the @dfn{range table} Lisp object type, which
-provides for a mapping from ranges of integers to arbitrary Lisp
+provides for a mapping from ranges of fixnums to arbitrary Lisp
 objects.
 
 
@@ -4981,7 +4981,7 @@ Vselected_console) begin with a capital V.
 @item
 No C variables whose value is other than a Lisp_Object should begin
 with a capital V. (This includes C variables that forward into
-integer or boolean Lisp variables.)
+fixnums or boolean Lisp variables.)
 @item
 All global C variables whose value is a struct Lisp_Subr begin with a
 capital S. (This only occurs in connection with DEFUN ()).
@@ -5158,7 +5158,7 @@ obvious.
   All Lisp objects are handled indirectly.  The @code{Lisp_Object}
 type is usually a pointer to a structure, except for a very small number
 of types with immediate representations (currently characters and
-integers).  However, these types cannot be directly operated on in C
+fixnums).  However, these types cannot be directly operated on in C
 code, either, so they can also be considered indirect.  Types that do
 not have an immediate representation always have a C typedef
 @code{Lisp_@var{type}} for a corresponding structure.
@@ -5209,7 +5209,7 @@ XEmacs it also does some error-checking, which you normally want.)
   @strong{Convention}: Global variables whose names begin with @samp{V}
 are variables that contain Lisp objects.  The convention here is that
 all global variables of type @code{Lisp_Object} begin with @samp{V}, and
-no others do (not even integer and boolean variables that have Lisp
+no others do (not even fixnum and boolean variables that have Lisp
 equivalents). Most of the time, these variables have equivalents in
 Lisp, which are defined via the @samp{DEFVAR} family of macros, but some
 don't.  Since the variable's value is a @code{Lisp_Object}, it can be
@@ -5722,7 +5722,7 @@ convenient and less error-prone than doing it in your module.
   Global variables whose names begin with @samp{V} are variables that
 contain Lisp objects.  The convention here is that all global variables
 of type @code{Lisp_Object} begin with @samp{V}, and all others don't
-(including integer and boolean variables that have Lisp
+(including fixnum and boolean variables that have Lisp
 equivalents). Most of the time, these variables have equivalents in
 Lisp, but some don't.  Those that do are declared this way by a call to
 @code{DEFVAR_LISP()} in the @code{vars_of_*()} initializer for the
@@ -7502,8 +7502,8 @@ in its internal operations.)
   The basic Lisp objects are
 
 @table @code
-@item integer
-31 bits of precision, or 63 bits on 64-bit machines; the
+@item fixnum
+An integer with 31 bits of precision, or 63 bits on 64-bit machines; the
 reason for this is described below when the internal Lisp object
 representation is described.
 @item char
@@ -7516,22 +7516,16 @@ ISO-2022 encoding standard---rather than the numerical representation
 of the char; this way, if the mapping between chars and integers
 changes, which is quite possible for Kanji characters and other extended
 characters, the same character will still be created.  Note that some
-primitives confuse chars and integers.  The worst culprit is @code{eq},
-which makes a special exception and considers a char to be @code{eq} to
-its integer equivalent, even though in no other case are objects of two
-different types @code{eq}.  The reason for this monstrosity is
-compatibility with existing code; the separation of char from integer
-came fairly recently.)
+primitives confuse chars and fixnum.
 @item float
 Same precision as a double in C.
 @item bignum
 @itemx ratio
 @itemx bigfloat
 As build-time options, arbitrary-precision numbers are available.
-Bignums are integers, and when available they remove the restriction on
-buffer size.  Ratios are non-integral rational numbers.  Bigfloats are
-arbitrary-precision floating point numbers, with precision specified at
-runtime.
+Bignums are integers.  Ratios are non-integral rational numbers.
+Bigfloats are arbitrary-precision floating point numbers, with
+precision specified at runtime.
 @item symbol
 An object that contains Lisp objects and is referred to by name;
 symbols are used to implement variables and named functions
@@ -7642,7 +7636,7 @@ objects; internally char tables use a complex nested-vector
 representation that is optimized to the way characters are represented
 as integers.
 @item range-table
-An object that maps from ranges of integers to arbitrary Lisp objects.
+An object that maps from ranges of fixnums to arbitrary Lisp objects.
 @end table
 
   And some strange special-purpose objects:
@@ -7869,13 +7863,13 @@ pointer together with a tag, as follows:
  [ 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 ]
 
    <---------------------------------------------------------> <->
-            a pointer to a structure, or an integer            tag
+            a pointer to a structure, or a fixnum              tag
 @end example
 
 A tag of 00 is used for all pointer object types, a tag of 10 is used
 for characters, and the other two tags 01 and 11 are joined together to
-form the integer object type.  This representation gives us 31 bit
-integers and 30 bit characters, while pointers are represented directly
+form the fixnum object type.  This representation gives us 31 bit
+fixnums and 30 bit characters, while pointers are represented directly
 without any bit masking or shifting.  This representation, though,
 assumes that pointers to structs are always aligned to multiples of 4,
 so the lower 2 bits are always zero.
@@ -7899,7 +7893,7 @@ corresponding C type.  Macros of the form @code{XFIXNUM()}, @code{XCHAR()},
 @code{XSTRING()}, @code{XSYMBOL()}, do any required bit shifting and/or
 masking and cast it to the appropriate type.  @code{XFIXNUM()} needs to be
 a bit tricky so that negative numbers are properly sign-extended.  Since
-integers are stored left-shifted, if the right-shift operator does an
+fixnums are stored left-shifted, if the right-shift operator does an
 arithmetic shift (i.e. it leaves the most-significant bit as-is rather
 than shifting in a zero, so that it mimics a divide-by-two even for
 negative numbers) the shift to remove the tag bit is enough.  This is
@@ -7918,7 +7912,7 @@ object.  These macros are of the form @code{XSET@var{TYPE}
 (@var{lvalue}, @var{result})}, i.e. they have to be a statement rather
 than just used in an expression.  The reason for this is that standard C
 doesn't let you ``construct'' a structure (but GCC does).  Granted, this
-sometimes isn't too convenient; for the case of integers, at least, you
+sometimes isn't too convenient; for the case of fixnums, at least, you
 can use the function @code{make_fixnum()}, which constructs and
 @emph{returns} an integer Lisp object.  Note that the
 @code{XSET@var{TYPE}()} macros are also affected by
@@ -7950,7 +7944,7 @@ checking flag was specified.
 * Garbage Collection::          
 * GCPROing::                    
 * Garbage Collection - Step by Step::  
-* Integers and Characters::     
+* Fixnums and Characters::     
 * Allocation from Frob Blocks::  
 * lrecords::                    
 * Low-level allocation::        
@@ -7993,7 +7987,7 @@ into three broad categories:
 @itemize @bullet
 @item
 (a) Those for whom the value directly represents the contents of the
-Lisp object.  Only two types are in this category: integers and
+Lisp object.  Only two types are in this category: fixnums and
 characters.  No special allocation or garbage collection is necessary
 for such objects.  Lisp objects of these types do not need to be
 @code{GCPRO}ed.
@@ -8234,7 +8228,7 @@ will result in a few objects not getting collected when they should, but
 it obviates the need for @code{GCPRO}ing, and allows garbage collection
 to happen at any point at all, such as during object allocation.
 
-@node Garbage Collection - Step by Step, Integers and Characters, GCPROing, Allocation of Objects in XEmacs Lisp
+@node Garbage Collection - Step by Step, Fixnums and Characters, GCPROing, Allocation of Objects in XEmacs Lisp
 @section Garbage Collection - Step by Step
 @cindex garbage collection - step by step
 
@@ -8504,8 +8498,8 @@ and exit.
 @cindex @code{mark_object}
 
 The first thing that is checked while marking an object is whether the
-object is a real Lisp object @code{Lisp_Type_Record} or just an integer
-or a character. Integers and characters are the only two types that are
+object is a real Lisp object @code{Lisp_Type_Record} or just a fixnum
+or a character. Fixnums and characters are the only two types that are
 stored directly - without another level of indirection, and therefore they
 don't have to be marked and collected.
 @xref{How Lisp Objects Are Represented in C}.
@@ -8730,18 +8724,19 @@ them become unmarked.
 In addition, the bookkeeping information used for garbage
 collector's output purposes is updated.
 
-@node Integers and Characters, Allocation from Frob Blocks, Garbage Collection - Step by Step, Allocation of Objects in XEmacs Lisp
-@section Integers and Characters
+@node Fixnums and Characters, Allocation from Frob Blocks, Garbage Collection - Step by Step, Allocation of Objects in XEmacs Lisp
+@section Fixnums and Characters
 @cindex integers and characters
 @cindex characters, integers and
+@cindex fixnum and characters
 
-Integer and character Lisp objects are created from integers using the
+Fixnum and character Lisp objects are created from C integers using the
 functions @code{make_fixnum()} and @code{make_char()}. (These are actually
 macros on most systems.)  These functions basically just do some moving
 of bits around, since the integral value of the object is stored
 directly in the @code{Lisp_Object}.
 
-@node Allocation from Frob Blocks, lrecords, Integers and Characters, Allocation of Objects in XEmacs Lisp
+@node Allocation from Frob Blocks, lrecords, Fixnums and Characters, Allocation of Objects in XEmacs Lisp
 @section Allocation from Frob Blocks
 @cindex allocation from frob blocks
 @cindex frob blocks, allocation from
@@ -26219,10 +26214,10 @@ API is set-unicode-mapping:
      unicode vector or list of codes charset-offset
 @end example
 
-  Establishes a mapping between a unicode codepoint (an integer) and
+  Establishes a mapping between a unicode codepoint (a fixnum) and
   one or more chars in a charset.  The mapping is automatically
   established in both directions.  Chars in a charset can be specified
-  either with an actual character or a codepoint (i.e. an integer)
+  either with an actual character or a codepoint (i.e. an fixnum)
   and the charset it's within.  If a sequence of chars or charset
   points is given, multiple mappings are established for consecutive
   unicode codepoints starting with the given one.  Charset codepoints

@@ -564,7 +564,7 @@ Return a symbol representing the type of OBJECT.
 
     case Lisp_Type_Char: return Qcharacter;
 
-    default: return Qinteger;
+    default: return Qfixnum;
     }
 }
 

@@ -1,5 +1,25 @@
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* internals/internals.texi (Top):
+	* internals/internals.texi (Authorship of XEmacs):
+	* internals/internals.texi (Modules for Other Aspects of the Lisp Interpreter and Object System):
+	* internals/internals.texi (Introduction to Writing C Code):
+	* internals/internals.texi (Working with Lisp Objects):
+	* internals/internals.texi (Adding Global Lisp Variables):
+	* internals/internals.texi (The XEmacs Object System (Abstractly Speaking)):
+	* internals/internals.texi (How Lisp Objects Are Represented in C):
+	* internals/internals.texi (Allocation of Objects in XEmacs Lisp):
+	* internals/internals.texi (Introduction to Allocation):
+	* internals/internals.texi (GCPROing):
+	* internals/internals.texi (mark_object):
+	* internals/internals.texi (sweep_bit_vectors_1):
+	* internals/internals.texi (Fixnums and Characters):
+	* internals/internals.texi (Future Work -- Unicode):
+	Say fixnum rather than integer when specifically talking about
+	fixed-width Lisp integers.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* internals/internals.texi (How Lisp Objects Are Represented in C):
 	* internals/internals.texi (Integers and Characters):
 	Mechanically change INT to FIXNUM, where the usage describes non-bignum

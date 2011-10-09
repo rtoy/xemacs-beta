@@ -1,5 +1,15 @@
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Do a couple of non-mechanical things that would otherwise have
+	been included in the last change.
+	* data.c:
+	* data.c (Ftype_of):
+	Return Qfixnum for fixnums, not Qinteger.
+	* lisp.h (MOST_POSITIVE_FIXNUM):
+	Delete an obsolete comment here.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* EmacsFrame.c (EmacsFrameSetValues):
 	* README:
 	* abbrev.c (Fexpand_abbrev):
