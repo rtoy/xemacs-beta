@@ -47,7 +47,7 @@ achieved by using a national variant roman font to display ASCII."
              (let ((width1 (charset-font-width cs1))
                    (width2 (charset-font-width cs2)))
                (and width1 width2 (eq (+ width1 width1) width2)))))
-
+    (declare (inline charset-font-width))
     (when (eq 'x (device-type))
       (let ((original-registries (charset-registries 'ascii)))
         (condition-case nil

@@ -110,9 +110,9 @@ selection_data_to_lisp_data (struct device *d,
 	{
 	  Elemcount i;
 	  Elemcount len = size / sizeof (XE_ATOM_TYPE);
-	  Lisp_Object v = Fmake_vector (make_int (len), Qzero);
+	  Lisp_Object v = Fmake_vector (make_fixnum (len), Qzero);
 	  for (i = 0; i < len; i++)
-	    Faset (v, make_int (i), XE_ATOM_TO_SYMBOL (d, ((XE_ATOM_TYPE *) data) [i]));
+	    Faset (v, make_fixnum (i), XE_ATOM_TO_SYMBOL (d, ((XE_ATOM_TYPE *) data) [i]));
 	  return v;
 	}
     }
@@ -124,7 +124,7 @@ selection_data_to_lisp_data (struct device *d,
   else if (format == 32 && size == sizeof (long))
     return word_to_lisp (((unsigned long *) data) [0]);
   else if (format == 16 && size == sizeof (short))
-    return make_int ((int) (((unsigned short *) data) [0]));
+    return make_fixnum ((int) (((unsigned short *) data) [0]));
 
   /* Convert any other kind of data to a vector of numbers, represented
      as above (as an integer, or a cons of two 16 bit integers).
@@ -149,7 +149,7 @@ selection_data_to_lisp_data (struct device *d,
       for (i = 0; i < size / 4; i++)
 	{
 	  int j = (int) ((unsigned short *) data) [i];
-	  Faset (v, make_int (i), make_int (j));
+	  Faset (v, make_fixnum (i), make_fixnum (j));
 	}
       return v;
     }
@@ -160,7 +160,7 @@ selection_data_to_lisp_data (struct device *d,
       for (i = 0; i < size / 4; i++)
 	{
 	  unsigned long j = ((unsigned long *) data) [i];
-	  Faset (v, make_int (i), word_to_lisp (j));
+	  Faset (v, make_fixnum (i), word_to_lisp (j));
 	}
       return v;
     }
@@ -239,18 +239,18 @@ lisp_data_to_selection_data (struct device *d,
       (*(XE_ATOM_TYPE **) data_ret) [0] = XE_SYMBOL_TO_ATOM (d, obj, 0);
       if (NILP (type)) type = QATOM;
     }
-  else if (INTP (obj) &&
-	   XINT (obj) <= 0x7FFF &&
-	   XINT (obj) >= -0x8000)
+  else if (FIXNUMP (obj) &&
+	   XFIXNUM (obj) <= 0x7FFF &&
+	   XFIXNUM (obj) >= -0x8000)
     {
       *format_ret = 16;
       *size_ret = 1;
       *data_ret = xnew_rawbytes (sizeof (short) + 1);
       (*data_ret) [sizeof (short)] = 0;
-      (*(short **) data_ret) [0] = (short) XINT (obj);
+      (*(short **) data_ret) [0] = (short) XFIXNUM (obj);
       if (NILP (type)) type = QINTEGER;
     }
-  else if (INTP (obj) || CONSP (obj))
+  else if (FIXNUMP (obj) || CONSP (obj))
     {
       *format_ret = 32;
       *size_ret = 1;
@@ -318,7 +318,7 @@ lisp_data_to_selection_data (struct device *d,
 	  for (i = 0; i < *size_ret; i++)
 	    if (CONSP (XVECTOR_DATA (obj) [i]))
 	      *format_ret = 32;
-	    else if (!INTP (XVECTOR_DATA (obj) [i]))
+	    else if (!FIXNUMP (XVECTOR_DATA (obj) [i]))
 	      syntax_error
 		("all elements of the vector must be integers or conses of integers", obj);
 

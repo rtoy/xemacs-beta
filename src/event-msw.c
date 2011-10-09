@@ -1764,7 +1764,7 @@ dde_eval_string (Lisp_Object str)
    * If the read didn't get to the end of the string, we have a syntax
    * error in the string supplied by the user.
    */
-  if (XINT (XCDR (obj)) != XSTRING_LENGTH (str))
+  if (XFIXNUM (XCDR (obj)) != XSTRING_LENGTH (str))
     return Qnil;
 
   GCPRO1 (obj);

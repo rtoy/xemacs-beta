@@ -498,7 +498,7 @@ make_gap (struct buffer *buf, Bytecount increment)
 	 That won't work because so many places use `int'.  */
 
       if (BUF_Z (buf) - BUF_BEG (buf) + BUF_GAP_SIZE (buf) + increment
-	  > EMACS_INT_MAX)
+	  > MOST_POSITIVE_FIXNUM)
 	out_of_memory ("Maximum buffer size exceeded", Qunbound);
 
       result = BUFFER_REALLOC (buf->text->beg,
@@ -820,12 +820,12 @@ signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
 	      set_buffer_internal (buf);
 	      va_run_hook_with_args_trapping_problems
 		(Qchange, Qbefore_change_functions, 2,
-		 make_int (start), make_int (end),
+		 make_fixnum (start), make_fixnum (end),
 		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	      /* Obsolete, for compatibility */
 	      va_run_hook_with_args_trapping_problems
 		(Qchange, Qbefore_change_function, 2,
-		 make_int (start), make_int (end),
+		 make_fixnum (start), make_fixnum (end),
 		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	    }
 	}
@@ -909,14 +909,14 @@ signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
 		 different arguments than what we were passed. */
 	      va_run_hook_with_args_trapping_problems
 		(Qchange, Qafter_change_functions, 3,
-		 make_int (start), make_int (new_end),
-		 make_int (orig_end - start),
+		 make_fixnum (start), make_fixnum (new_end),
+		 make_fixnum (orig_end - start),
 		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	      /* Obsolete, for compatibility */
 	      va_run_hook_with_args_trapping_problems
 		(Qchange, Qafter_change_function, 3,
-		 make_int (start), make_int (new_end),
-		 make_int (orig_end - start),
+		 make_fixnum (start), make_fixnum (new_end),
+		 make_fixnum (orig_end - start),
 		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	    }
 	}
@@ -1092,7 +1092,7 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
 #endif
 
   /* Make sure that point-max won't exceed the size of an emacs int. */
-  if ((length + BUF_Z (buf)) > EMACS_INT_MAX)
+  if ((length + BUF_Z (buf)) > MOST_POSITIVE_FIXNUM)
     out_of_memory ("Maximum buffer size exceeded", Qunbound);
 
   /* theoretically not necessary -- caller should GCPRO.

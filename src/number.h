@@ -129,7 +129,7 @@ EXFUN (Fbignump, 1);
 
 /********************************* Integers *********************************/
 /* Qintegerp in lisp.h */
-#define INTEGERP(x) (INTP(x) || BIGNUMP(x))
+#define INTEGERP(x) (FIXNUMP(x) || BIGNUMP(x))
 #define CHECK_INTEGER(x) do {			\
  if (!INTEGERP (x))				\
    dead_wrong_type_argument (Qintegerp, x);	\
@@ -141,9 +141,9 @@ EXFUN (Fbignump, 1);
 
 #ifdef HAVE_BIGNUM
 #define make_integer(x) \
-  (NUMBER_FITS_IN_AN_EMACS_INT (x) ? make_int (x) : make_bignum (x))
+  (NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x) : make_bignum (x))
 #else
-#define make_integer(x) make_int (x)
+#define make_integer(x) make_fixnum (x)
 #endif
 
 extern Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
@@ -169,10 +169,10 @@ EXFUN (Foddp, 1);
    NATNUMP. */
 
 #ifdef HAVE_BIGNUM
-#define NATNUMP(x) ((INTP (x) && XINT (x) >= 0) || \
+#define NATNUMP(x) ((FIXNUMP (x) && XFIXNUM (x) >= 0) || \
                     (BIGNUMP (x) && bignum_sign (XBIGNUM_DATA (x)) >= 0))
 #else
-#define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
+#define NATNUMP(x) (FIXNUMP (x) && XFIXNUM (x) >= 0)
 #endif
 
 #define CHECK_NATNUM(x) do {			\

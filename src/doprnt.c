@@ -371,7 +371,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 	}
 
       if (j == Dynarr_length (specs))
-	syntax_error ("No conversion spec for argument", make_int (i));
+	syntax_error ("No conversion spec for argument", make_fixnum (i));
 
       ch = spec->converter;
 
@@ -453,7 +453,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
       if (nargs < get_args_needed (specs))
 	signal_error_1 (Qwrong_number_of_arguments,
 			list3 (Qformat,
-			       make_int (nargs),
+			       make_fixnum (nargs),
 			       !NILP (format_reloc) ? format_reloc :
 			       make_string (format_nonreloc, format_length)));
     }
@@ -494,17 +494,17 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	  struct printf_spec *nextspec = Dynarr_atp (specs, i + 1);
 	  Lisp_Object obj = largs[spec->argnum - 1];
 
-	  if (INTP (obj))
+	  if (FIXNUMP (obj))
 	    {
 	      if (spec->forwarding_precision)
 		{
-		  nextspec->precision = XINT (obj);
+		  nextspec->precision = XFIXNUM (obj);
 		  nextspec->minwidth = spec->minwidth;
 		}
 	      else
 		{
-		  nextspec->minwidth = XINT (obj);
-		  if (XINT (obj) < 0)
+		  nextspec->minwidth = XFIXNUM (obj);
+		  if (XFIXNUM (obj) < 0)
 		    {
 		      spec->minus_flag = 1;
 		      nextspec->minwidth = - nextspec->minwidth;
@@ -521,7 +521,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 
       if (largs && (spec->argnum < 1 || spec->argnum > nargs))
 	syntax_error ("Invalid repositioning argument",
-		      make_int (spec->argnum));
+		      make_fixnum (spec->argnum));
 
       else if (ch == 'S' || ch == 's')
 	{
@@ -588,7 +588,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	    {
 	      Lisp_Object obj = largs[spec->argnum - 1];
 	      if (CHARP (obj))
-		obj = make_int (XCHAR (obj));
+		obj = make_fixnum (XCHAR (obj));
 	      if (!NUMBERP (obj))
 		{
 		  /* WARNING!  This MUST be big enough for the sprintf below */
@@ -600,8 +600,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		}
 	      else if (strchr (double_converters, ch))
 		{
-		  if (INTP (obj))
-		    arg.d = XINT (obj);
+		  if (FIXNUMP (obj))
+		    arg.d = XFIXNUM (obj);
 		  else if (FLOATP (obj))
 		    arg.d = XFLOAT_DATA (obj);
 #ifdef HAVE_BIGNUM
@@ -643,7 +643,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		      obj =
 			Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else /* !HAVE_BIGNUM */
-		      obj = make_int (bigfloat_to_long (XBIGFLOAT_DATA (obj)));
+		      obj = make_fixnum (bigfloat_to_long (XBIGFLOAT_DATA (obj)));
 #endif /* HAVE_BIGNUM */
 		    }
 #endif /* HAVE_BIGFLOAT */
@@ -687,18 +687,18 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 			}
 		    }
 #endif
-		  if (INTP (obj))
+		  if (FIXNUMP (obj))
 		    {
 		      if (strchr (unsigned_int_converters, ch))
 			{
 #ifdef HAVE_BIGNUM
-			  if (XINT (obj) < 0)
+			  if (XFIXNUM (obj) < 0)
 			    dead_wrong_type_argument (Qnatnump, obj);
 #endif
 			  arg.ul = (unsigned long) XUINT (obj);
 			}
 		      else
-			arg.l = XINT (obj);
+			arg.l = XFIXNUM (obj);
 		    }
 		}
 	    }

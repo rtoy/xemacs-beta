@@ -1251,6 +1251,7 @@ also works, because the behavior is emulated."
                (when ex
                  (funcall (extent-property ex property) event ex)
                  t))))
+    (declare (inline do-activate))
     (or
      (and (some #'(lambda (count button)
 		    (and (= click-count count)

@@ -704,7 +704,7 @@ delete_console_internal (struct console *con, int force,
     {
       int down_we_go = 0;
 
-      if ((XINT (Flength (Vconsole_list)) == 1)
+      if ((XFIXNUM (Flength (Vconsole_list)) == 1)
 	  /* if we just created the console, it might not be listed,
 	     or something ... */
 	  && !NILP (memq_no_quit (console, Vconsole_list)))
@@ -724,7 +724,7 @@ delete_console_internal (struct console *con, int force,
 	      stderr_out ("  Autosaving and exiting...\n");
 	      Vwindow_system = Qnil; /* let it lie! */
 	      preparing_for_armageddon = 1;
-	      Fkill_emacs (make_int (70));
+	      Fkill_emacs (make_fixnum (70));
 	    }
 	  else
 	    {
@@ -1054,7 +1054,7 @@ On such systems, who knows what will happen.
 	}
       reset_one_console (con);
       event_stream_unselect_console (con);
-      sys_suspend_process (XINT (Fconsole_tty_controlling_process (console)));
+      sys_suspend_process (XFIXNUM (Fconsole_tty_controlling_process (console)));
     }
 #endif /* HAVE_TTY */
 
@@ -1436,11 +1436,11 @@ common_init_complex_vars_of_console (void)
      * #### We don't currently ever reset console variables, so there
      * is no current distinction between 0 and -1, and between -2 and -3.
      */
-    Lisp_Object always_local_resettable = make_int (-1);
+    Lisp_Object always_local_resettable = make_fixnum (-1);
 
 #if 0 /* not used */
-    Lisp_Object always_local_no_default = make_int (0);
-    Lisp_Object resettable = make_int (-3);
+    Lisp_Object always_local_no_default = make_fixnum (0);
+    Lisp_Object resettable = make_fixnum (-3);
 #endif
 
     /* Assign the local-flags to the slots that have default values.
@@ -1451,7 +1451,7 @@ common_init_complex_vars_of_console (void)
 
     set_lheader_implementation ((struct lrecord_header *)
 				&console_local_flags, &lrecord_console);
-    nuke_all_console_slots (&console_local_flags, make_int (-2));
+    nuke_all_console_slots (&console_local_flags, make_fixnum (-2));
     console_local_flags.defining_kbd_macro = always_local_resettable;
     console_local_flags.last_kbd_macro = always_local_resettable;
     console_local_flags.prefix_arg = always_local_resettable;
@@ -1462,10 +1462,10 @@ common_init_complex_vars_of_console (void)
     console_local_flags.tty_erase_char = always_local_resettable;
 #endif
 
-    console_local_flags.function_key_map = make_int (1);
+    console_local_flags.function_key_map = make_fixnum (1);
 
     /* #### Warning, 0x4000000 (that's six zeroes) is the largest number
-       currently allowable due to the XINT() handling of this value.
+       currently allowable due to the XFIXNUM() handling of this value.
        With some rearrangement you can get 4 more bits. */
   }
 }
@@ -1607,8 +1607,8 @@ buffer's local map, and the minor mode keymaps and text property keymaps.
      slot of console_local_flags and vice-versa.  Must be done after all
      DEFVAR_CONSOLE_LOCAL() calls. */
 #define MARKED_SLOT(slot)						\
-  assert ((XINT (console_local_flags.slot) != -2 &&			\
-           XINT (console_local_flags.slot) != -3)			\
+  assert ((XFIXNUM (console_local_flags.slot) != -2 &&			\
+           XFIXNUM (console_local_flags.slot) != -3)			\
 	  == !(NILP (XCONSOLE (Vconsole_local_symbols)->slot)));
 #include "conslots.h"
 }

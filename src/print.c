@@ -513,7 +513,7 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
       buffer_insert_string_1 (XMARKER (function)->buffer,
 			      spoint, nonreloc, reloc, offset, len,
 			      0);
-      Fset_marker (function, make_int (spoint + cclen),
+      Fset_marker (function, make_fixnum (spoint + cclen),
 		   Fmarker_buffer (function));
     }
   else if (FRAMEP (function))
@@ -1410,9 +1410,9 @@ print_vector_internal (const char *start, const char *end,
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
-  if (INTP (Vprint_length))
+  if (FIXNUMP (Vprint_length))
     {
-      int max = XINT (Vprint_length);
+      int max = XFIXNUM (Vprint_length);
       if (max < len) last = max;
     }
 
@@ -1458,7 +1458,7 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   {
     int len;
-    int max = INTP (Vprint_length) ? XINT (Vprint_length) : INT_MAX;
+    int max = FIXNUMP (Vprint_length) ? XFIXNUM (Vprint_length) : INT_MAX;
     Lisp_Object tortoise;
     /* Use tortoise/hare to make sure circular lists don't infloop */
 
@@ -1476,7 +1476,7 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
                of events. All the other possibly-repeated structures always
                hand sub-objects to print_internal(). */
             if (print_circle &&
-                INTP (Fgethash (obj, Vprint_number_table, Qnil)))
+                FIXNUMP (Fgethash (obj, Vprint_number_table, Qnil)))
               {
                 write_ascstring (printcharfun, ". ");
                 print_internal (obj, printcharfun, escapeflag);
@@ -1540,10 +1540,10 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
-  if (INTP (Vprint_string_length) &&
-      XINT (Vprint_string_length) < max)
+  if (FIXNUMP (Vprint_string_length) &&
+      XFIXNUM (Vprint_string_length) < max)
     {
-      max = XINT (Vprint_string_length);
+      max = XFIXNUM (Vprint_string_length);
       bcmax = string_index_char_to_byte (obj, max);
     }
   if (max < 0)
@@ -1733,18 +1733,18 @@ print_preprocess_inchash_eq (Lisp_Object obj, Lisp_Object table,
       hte = find_htentry (obj, XHASH_TABLE (table));
     }
 
-  extracted = XINT (hte->value);
+  extracted = XFIXNUM (hte->value);
   if (1 == extracted)
     {
       *seen_object_count += 1;
       hte->value
-        = make_int (1 | (*seen_object_count << PRINT_NUMBER_ORDINAL_SHIFT));
+        = make_fixnum (1 | (*seen_object_count << PRINT_NUMBER_ORDINAL_SHIFT));
     }
   else if ((extracted & PRINT_NUMBER_SEEN_MASK) == PRINT_NUMBER_SEEN_MASK)
     {
       /* Avoid the number overflowing the bit field. */
       extracted = (extracted & ~PRINT_NUMBER_SEEN_MASK) | 2;
-      hte->value = make_int (extracted);
+      hte->value = make_fixnum (extracted);
     }
 
   return extracted & PRINT_NUMBER_SEEN_MASK;
@@ -1791,7 +1791,7 @@ static int
 print_seen_once (Lisp_Object UNUSED (key), Lisp_Object value,
                  void * UNUSED (extra_arg))
 {
-  return 1 == ((XINT (value) & PRINT_NUMBER_SEEN_MASK));
+  return 1 == ((XFIXNUM (value) & PRINT_NUMBER_SEEN_MASK));
 }
 
 static int
@@ -1801,7 +1801,7 @@ print_nonsymbol_seen_once (Lisp_Object key, Lisp_Object value,
   /* print_continuous_numbering is used for symbols, so we don't delete them
      from the print info hash table. It's less useful for other objects at
      the moment, though. */
-  return !SYMBOLP (key) && (1 == ((XINT (value) & PRINT_NUMBER_SEEN_MASK)));
+  return !SYMBOLP (key) && (1 == ((XFIXNUM (value) & PRINT_NUMBER_SEEN_MASK)));
 }
 
 static int
@@ -1812,7 +1812,7 @@ print_sort_get_numbers (Lisp_Object key, Lisp_Object value, void *extra_arg)
 
   *preprocess_sort_ptr += 1;
   preprocess_sort->key = key;
-  preprocess_sort->count = XINT (value);
+  preprocess_sort->count = XFIXNUM (value);
 
   return 0;
 }
@@ -1877,7 +1877,7 @@ print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
                              Vprint_number_table, NULL);
 
           new_print_number_index
-            = XINT (Fhash_table_count (Vprint_number_table));
+            = XFIXNUM (Fhash_table_count (Vprint_number_table));
 
           if (new_print_number_index != print_number_index
               && new_print_number_index != old_print_number_index)
@@ -1901,7 +1901,7 @@ print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
                    ii++)
                 {
                   Fputhash (preprocess_sort[ii].key, 
-                            make_int ((preprocess_sort[ii].count
+                            make_fixnum ((preprocess_sort[ii].count
                                        & ~PRINT_NUMBER_ORDINAL_MASK)
                                       | ((ii + 1)
                                          << PRINT_NUMBER_ORDINAL_SHIFT)),
@@ -1914,7 +1914,7 @@ print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
           /* The new objects may include OBJ; update SEEN to reflect
              this. */
           seen = Fgethash (obj, Vprint_number_table, Qnil);
-          if (INTP (seen))
+          if (FIXNUMP (seen))
             {
               goto prefix_this;
             }
@@ -1923,15 +1923,15 @@ print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
   else
     {
     prefix_this:
-      if ((XINT (seen) & PRINT_NUMBER_SEEN_MASK) == 1
+      if ((XFIXNUM (seen) & PRINT_NUMBER_SEEN_MASK) == 1
           && !(print_continuous_numbering && SYMBOLP (obj)))
         {
           return PRINT_GENSYM_PRINT_AND_CLEANUP_TABLE;
         }
-      else if (XINT (seen) & PRINT_NUMBER_PRINTED_MASK)
+      else if (XFIXNUM (seen) & PRINT_NUMBER_PRINTED_MASK)
         {
           write_fmt_string (printcharfun, "#%d#",
-                            (XINT (seen) & PRINT_NUMBER_ORDINAL_MASK)
+                            (XFIXNUM (seen) & PRINT_NUMBER_ORDINAL_MASK)
                             >> PRINT_NUMBER_ORDINAL_SHIFT);
 
           /* We're finished printing this object. */
@@ -1940,12 +1940,12 @@ print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
       else
         {
           write_fmt_string (printcharfun, "#%d=",
-                            (XINT (seen) & PRINT_NUMBER_ORDINAL_MASK)
+                            (XFIXNUM (seen) & PRINT_NUMBER_ORDINAL_MASK)
                             >> PRINT_NUMBER_ORDINAL_SHIFT);
 
           /* We set PRINT_NUMBER_PRINTED_MASK immediately here, so the
              object itself is written as #%d# when printing its contents. */
-          Fputhash (obj, make_int (XINT (seen) | PRINT_NUMBER_PRINTED_MASK),
+          Fputhash (obj, make_fixnum (XFIXNUM (seen) | PRINT_NUMBER_PRINTED_MASK),
                     Vprint_number_table);
 
           /* This is the first time the object has been seen while
@@ -1971,14 +1971,14 @@ nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
 
   seen = Fgethash (tree, number_table, Qnil);
 
-  if (INTP (seen))
+  if (FIXNUMP (seen))
     {
-      if (XINT (seen) & PRINT_NUMBER_PRINTED_MASK)
+      if (XFIXNUM (seen) & PRINT_NUMBER_PRINTED_MASK)
         {
           return tree;
         }
 
-      Fputhash (tree, make_int (XINT (seen) | PRINT_NUMBER_PRINTED_MASK),
+      Fputhash (tree, make_fixnum (XFIXNUM (seen) | PRINT_NUMBER_PRINTED_MASK),
                 number_table);
     }
 
@@ -2081,11 +2081,11 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   switch (XTYPE (obj))
     {
-    case Lisp_Type_Int_Even:
-    case Lisp_Type_Int_Odd:
+    case Lisp_Type_Fixnum_Even:
+    case Lisp_Type_Fixnum_Odd:
       {
 	Ascbyte buf[DECIMAL_PRINT_SIZE (EMACS_INT)];
-	long_to_string (buf, XINT (obj));
+	long_to_string (buf, XFIXNUM (obj));
 	write_ascstring (printcharfun, buf);
 	break;
       }
@@ -2315,8 +2315,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	if (CONSP (obj) || VECTORP (obj))
 	  {
 	    /* If deeper than spec'd depth, print placeholder.  */
-	    if (INTP (Vprint_level)
-		&& print_depth > XINT (Vprint_level))
+	    if (FIXNUMP (Vprint_level)
+		&& print_depth > XFIXNUM (Vprint_level))
 	      {
 		write_ascstring (printcharfun, "...");
 		break;
@@ -2636,7 +2636,7 @@ FILENAME = nil means just close any termscript file currently open.
 static Lisp_Object
 restore_inhibit_non_essential_conversion_operations (Lisp_Object obj)
 {
-  inhibit_non_essential_conversion_operations = XINT (obj);
+  inhibit_non_essential_conversion_operations = XFIXNUM (obj);
   return Qnil;
 }
 
@@ -2648,7 +2648,7 @@ begin_inhibit_non_essential_conversion_operations (void)
   int depth =
     record_unwind_protect
     (restore_inhibit_non_essential_conversion_operations,
-     make_int (inhibit_non_essential_conversion_operations));
+     make_fixnum (inhibit_non_essential_conversion_operations));
   inhibit_non_essential_conversion_operations = 1;
   return depth;
 }
@@ -2711,9 +2711,9 @@ debug_print_enter (struct debug_bindings *bindings)
   in_debug_print = 1;
   gc_currently_forbidden = 1;
   if (debug_print_length > 0)
-    Vprint_length = make_int (debug_print_length);
+    Vprint_length = make_fixnum (debug_print_length);
   if (debug_print_level > 0)
-    Vprint_level = make_int (debug_print_level);
+    Vprint_level = make_fixnum (debug_print_level);
   Vinhibit_quit = Qt;
 
   return specdepth;
@@ -2790,9 +2790,9 @@ debug_p4 (Lisp_Object obj)
       else
 	debug_out ("%s", XSTRING_DATA (name));
     }
-  else if (INTP (obj))
+  else if (FIXNUMP (obj))
     {
-      debug_out ("%ld", XINT (obj));
+      debug_out ("%ld", XFIXNUM (obj));
     }
   else if (FLOATP (obj))
     {

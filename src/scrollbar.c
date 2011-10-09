@@ -693,8 +693,8 @@ scrollbar_reset_cursor (Lisp_Object win, Lisp_Object orig_pt)
      accurate.  We know this because either set-window-start or
      recenter was called immediately prior to it being called. */
   Lisp_Object buf;
-  Charbpos start_pos = XINT (Fwindow_start (win));
-  Charbpos ptint = XINT (orig_pt);
+  Charbpos start_pos = XFIXNUM (Fwindow_start (win));
+  Charbpos ptint = XFIXNUM (orig_pt);
   struct window *w = XWINDOW (win);
   int selected = ((w == XWINDOW (Fselected_window (XFRAME (w->frame)->device)))
 		  ? 1
@@ -704,16 +704,16 @@ scrollbar_reset_cursor (Lisp_Object win, Lisp_Object orig_pt)
   if (NILP (buf))
     return;	/* the window was deleted out from under us */
 
-  if (ptint < XINT (Fwindow_start (win)))
+  if (ptint < XFIXNUM (Fwindow_start (win)))
     {
       if (selected)
-	Fgoto_char (make_int (start_pos), buf);
+	Fgoto_char (make_fixnum (start_pos), buf);
       else
-	Fset_window_point (win, make_int (start_pos));
+	Fset_window_point (win, make_fixnum (start_pos));
     }
   else if (!point_would_be_visible (XWINDOW (win), start_pos, ptint, 0))
     {
-      Fmove_to_window_line (make_int (-1), win);
+      Fmove_to_window_line (make_fixnum (-1), win);
 
       if (selected)
 	Fbeginning_of_line (Qnil, buf);
@@ -725,7 +725,7 @@ scrollbar_reset_cursor (Lisp_Object win, Lisp_Object orig_pt)
 	  pos = find_next_newline (XBUFFER (buf),
 				   marker_position (w->pointm[CURRENT_DISP]),
 				   -1);
-	  Fset_window_point (win, make_int (pos));
+	  Fset_window_point (win, make_fixnum (pos));
 	}
     }
   else
@@ -746,7 +746,7 @@ behavior.
        (window))
 {
   CHECK_LIVE_WINDOW (window);
-  window_scroll (window, make_int (1), -1, ERROR_ME_NOT);
+  window_scroll (window, make_fixnum (1), -1, ERROR_ME_NOT);
   zmacs_region_stays = 1;
   return Qnil;
 }
@@ -760,7 +760,7 @@ behavior.
        (window))
 {
   CHECK_LIVE_WINDOW (window);
-  window_scroll (window, make_int (1), 1, ERROR_ME_NOT);
+  window_scroll (window, make_fixnum (1), 1, ERROR_ME_NOT);
   zmacs_region_stays = 1;
   return Qnil;
 }
@@ -790,15 +790,15 @@ behavior.
       Charbpos charbpos;
       Lisp_Object value = Fcdr (object);
 
-      CHECK_INT (value);
+      CHECK_FIXNUM (value);
       Fmove_to_window_line (Qzero, window);
       /* can't use Fvertical_motion() because it moves the buffer point
 	 rather than the window's point.
 
 	 #### It does?  Why does it take a window argument then? */
-      charbpos = vmotion (XWINDOW (window), XINT (Fwindow_point (window)),
-			XINT (value), 0);
-      Fset_window_point (window, make_int (charbpos));
+      charbpos = vmotion (XWINDOW (window), XFIXNUM (Fwindow_point (window)),
+			XFIXNUM (value), 0);
+      Fset_window_point (window, make_fixnum (charbpos));
       Fcenter_to_window_line (Qzero, window);
     }
 
@@ -829,7 +829,7 @@ behavior.
   else
     {
       Lisp_Object value = Fcdr (object);
-      CHECK_INT (value);
+      CHECK_FIXNUM (value);
       Fmove_to_window_line (value, window);
       Fcenter_to_window_line (Qzero, window);
     }
@@ -866,7 +866,7 @@ scrollbar behavior.
 {
   Lisp_Object orig_pt = Fwindow_point (window);
   Fset_window_point (window, Fpoint_max (Fwindow_buffer (window)));
-  Fcenter_to_window_line (make_int (-3), window);
+  Fcenter_to_window_line (make_fixnum (-3), window);
   scrollbar_reset_cursor (window, orig_pt);
   zmacs_region_stays = 1;
   return Qnil;
@@ -888,7 +888,7 @@ change the scrollbar behavior.
   orig_pt = Fwindow_point (window);
   Fset_marker (XWINDOW (window)->sb_point, value, Fwindow_buffer (window));
   start_pos = scrollbar_point (XWINDOW (window), 1);
-  Fset_window_start (window, make_int (start_pos), Qnil);
+  Fset_window_start (window, make_fixnum (start_pos), Qnil);
   scrollbar_reset_cursor (window, orig_pt);
   Fsit_for(Qzero, Qnil);
   zmacs_region_stays = 1;
@@ -906,7 +906,7 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
 
   CHECK_LIVE_WINDOW (window);
   if (!EQ (value, Qmax))
-    CHECK_INT (value);
+    CHECK_FIXNUM (value);
 
   w = XWINDOW (window);
   wcw = window_char_width (w, 0) - 1;
@@ -914,10 +914,10 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
      a visible truncation glyph.  This calculation for max is bogus.  */
   max_len = w->max_line_len + 2;
 
-  if (EQ (value, Qmax) || (XINT (value) > (max_len - wcw)))
+  if (EQ (value, Qmax) || (XFIXNUM (value) > (max_len - wcw)))
     hscroll = max_len - wcw;
   else
-    hscroll = XINT (value);
+    hscroll = XFIXNUM (value);
 
   /* Can't allow this out of set-window-hscroll's acceptable range. */
   /* #### What hell on the earth this code limits scroll size to the
@@ -928,7 +928,7 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
     hscroll = (1 << (SHORTBITS - 1)) - 1;
 
   if (hscroll != w->hscroll)
-    Fset_window_hscroll (window, make_int (hscroll));
+    Fset_window_hscroll (window, make_fixnum (hscroll));
 
   return Qnil;
 }
@@ -1011,10 +1011,10 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback
     (Vscrollbar_width,
 #ifdef HAVE_TTY
-     list2 (Fcons (list1 (Qtty), make_int (0)),
-	    Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_WIDTH)))
+     list2 (Fcons (list1 (Qtty), make_fixnum (0)),
+	    Fcons (Qnil, make_fixnum (DEFAULT_SCROLLBAR_WIDTH)))
 #else
-     list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_WIDTH)))
+     list1 (Fcons (Qnil, make_fixnum (DEFAULT_SCROLLBAR_WIDTH)))
 #endif
      );
   set_specifier_caching (Vscrollbar_width,
@@ -1031,10 +1031,10 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback
     (Vscrollbar_height,
 #ifdef HAVE_TTY
-     list2 (Fcons (list1 (Qtty), make_int (0)),
-	    Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_HEIGHT)))
+     list2 (Fcons (list1 (Qtty), make_fixnum (0)),
+	    Fcons (Qnil, make_fixnum (DEFAULT_SCROLLBAR_HEIGHT)))
 #else
-     list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_HEIGHT)))
+     list1 (Fcons (Qnil, make_fixnum (DEFAULT_SCROLLBAR_HEIGHT)))
 #endif
      );
   set_specifier_caching (Vscrollbar_height,

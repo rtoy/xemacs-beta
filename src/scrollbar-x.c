@@ -453,7 +453,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	if (line > -1.0)
 	  line = -1.0;
 	signal_special_Xt_user_event (frame, Qscrollbar_page_up,
-				      Fcons (win, make_int ((int) line)));
+				      Fcons (win, make_fixnum ((int) line)));
       }
 #else
       signal_special_Xt_user_event (frame, Qscrollbar_page_up,
@@ -477,7 +477,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	      line = 1.0;
 	    signal_special_Xt_user_event (frame, Qscrollbar_page_down,
 					  Fcons (win,
-						 make_int ((int) line)));
+						 make_fixnum ((int) line)));
 	  }
       }
 #else
@@ -501,7 +501,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
       vertical_drag_in_progress = 0;
       SCROLLBAR_X_VDRAG_ORIG_VALUE (instance) = data->slider_value;
       SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance) =
-	XINT (Fwindow_start (win));
+	XFIXNUM (Fwindow_start (win));
 #else
       stupid_vertical_scrollbar_drag_hack = 0;
 #endif
@@ -527,7 +527,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	  {
 	    SCROLLBAR_X_VDRAG_ORIG_VALUE (instance) = data->slider_value;
 	    SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance) =
-	      XINT (Fwindow_start (win));
+	      XFIXNUM (Fwindow_start (win));
 	  }
 
 	/* Could replace this piecewise linear scrolling with a
@@ -594,7 +594,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	  value = SCROLLBAR_X_POS_DATA (instance).minimum;
 
 	signal_special_Xt_user_event (frame, Qscrollbar_vertical_drag,
-				      Fcons (win, make_int (value)));
+				      Fcons (win, make_fixnum (value)));
       }
       break;
 
@@ -663,12 +663,12 @@ x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
 #if defined (LWLIB_SCROLLBARS_LUCID) || defined (LWLIB_SCROLLBARS_ATHENA3D)
       signal_special_Xt_user_event (frame, Qscrollbar_horizontal_drag,
 				    (Fcons
-				     (win, make_int (data->slider_value))));
+				     (win, make_fixnum (data->slider_value))));
 #else
       signal_special_Xt_user_event (frame, Qscrollbar_horizontal_drag,
 				    (Fcons
 				     (win,
-				      make_int (data->slider_value - 1))));
+				      make_fixnum (data->slider_value - 1))));
 #endif
       break;
     default:

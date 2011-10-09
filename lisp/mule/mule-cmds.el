@@ -838,6 +838,7 @@ the language environment for the major languages of Western Europe."
     (labels ((princ-list (&rest args)
                (while args (princ (car args)) (setq args (cdr args)))
                (princ "\n")))
+      (declare (inline princ-list))
       (with-output-to-temp-buffer "*Help*"
 	(princ-list language-name " language environment" "\n")
 	(if (stringp doc)
@@ -1347,7 +1348,7 @@ of buffer-file-coding-system set by this function."
              (if (memq eol-type '(lf crlf cr unix dos mac))
                  (coding-system-change-eol-conversion codesys eol-type)
                codesys)))
-
+    (declare (inline maybe-change-coding-system-with-eol))
     ;; initialize category mappings and priority list.
     (let* ((priority (get-language-info language-name 'coding-priority))
 	   (default-coding (car priority)))

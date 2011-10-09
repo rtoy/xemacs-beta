@@ -749,10 +749,10 @@ image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
   int xhot = 0, yhot = 0;
   int w, h;
 
-  if (INTP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
-    xhot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii));
-  if (INTP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
-    yhot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii));
+  if (FIXNUMP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
+    xhot = XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii));
+  if (FIXNUMP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
+    yhot = XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii));
   w = IMAGE_INSTANCE_PIXMAP_WIDTH (ii);
   h = IMAGE_INSTANCE_PIXMAP_HEIGHT (ii);
 
@@ -1201,9 +1201,9 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 	  XCreatePixmapCursor
 	    (dpy, source, mask, &fg_color, &bg_color,
 	     !NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) ?
-	     XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) : 0,
+	     XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) : 0,
 	     !NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) ?
-	     XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) : 0);
+	     XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) : 0);
       }
       break;
 
@@ -1230,8 +1230,8 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
       ext_data = LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (mask_data))), 
 					  Qbinary);
       mask = pixmap_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
-				     XINT (XCAR (mask_data)),
-				     XINT (XCAR (XCDR (mask_data))),
+				     XFIXNUM (XCAR (mask_data)),
+				     XFIXNUM (XCAR (XCDR (mask_data))),
 				     ext_data);
     }
 
@@ -1255,8 +1255,8 @@ x_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   ext_data = LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (data))), Qbinary);
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
-		     pointer_bg, dest_mask, XINT (XCAR (data)),
-		     XINT (XCAR (XCDR (data))), ext_data);
+		     pointer_bg, dest_mask, XFIXNUM (XCAR (data)),
+		     XFIXNUM (XCAR (XCDR (data))), ext_data);
 }
 
 
@@ -1516,7 +1516,7 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	xpm_free (&xpmattrs);
 	signal_error_2 (Qgui_error,
 			"Parsing pixmap data: unknown error code",
-			make_int (result), data);
+			make_fixnum (result), data);
       }
     }
 
@@ -1557,9 +1557,9 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     case IMAGE_POINTER:
       if (xpmattrs.valuemask & XpmHotspot)
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xpmattrs.x_hotspot);
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_fixnum (xpmattrs.x_hotspot);
       if (xpmattrs.valuemask & XpmHotspot)
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (xpmattrs.y_hotspot);
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_fixnum (xpmattrs.y_hotspot);
 
       image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
 					 pointer_bg);
@@ -1708,10 +1708,10 @@ autodetect_normalize (Lisp_Object instantiator,
 	  alist = Fcons (Fcons (Q_file, filename),
 			 Fcons (Fcons (Q_data, data), alist));
 	  if (xhot != -1)
-	    alist = Fcons (Fcons (Q_hotspot_x, make_int (xhot)),
+	    alist = Fcons (Fcons (Q_hotspot_x, make_fixnum (xhot)),
 			   alist);
 	  if (yhot != -1)
-	    alist = Fcons (Fcons (Q_hotspot_y, make_int (yhot)),
+	    alist = Fcons (Fcons (Q_hotspot_y, make_fixnum (yhot)),
 			   alist);
 
 	  alist = xbm_mask_file_munging (alist, filename, Qt, console_type);
@@ -2679,7 +2679,7 @@ x_progress_gauge_redisplay (Lisp_Object image_instance)
     {
       Lisp_Object val;
       val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (p))->value;
-      Xt_SET_VALUE (IMAGE_INSTANCE_X_WIDGET_ID (p), XtNvalue, XINT (val));
+      Xt_SET_VALUE (IMAGE_INSTANCE_X_WIDGET_ID (p), XtNvalue, XFIXNUM (val));
     }
 }
 
@@ -3005,8 +3005,8 @@ complex_vars_of_glyphs_x (void)
   Fadd_spec_to_specifier					\
     (GLYPH_IMAGE (XGLYPH (variable)),				\
      vector3 (Qxbm, Q_data,					\
-	      list3 (make_int (name##_width),			\
-		     make_int (name##_height),			\
+	      list3 (make_fixnum (name##_width),			\
+		     make_fixnum (name##_height),			\
 		     make_extstring ((Extbyte *) name##_bits,	\
 				      sizeof (name##_bits),	\
 				      Qbinary))),		\

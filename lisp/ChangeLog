@@ -1,3 +1,123 @@
+2011-10-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (load-time-value):
+	* cl-macs.el (flet):
+	* cl-macs.el (labels):
+	* cl-macs.el (the):
+	* cl-macs.el (declare):
+	Move all these macros to the end of the file, since they're in
+	byte-compile-initial-macro-environment, and we don't want their
+	definitions to override that for the rest of the file during
+	byte-compilation. Happens not to matter right now, but avoids
+	surprises for anyone using the macros elsewhere in cl-macs down
+	the line.
+
+2011-10-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	In the compiler implementation of load-time-value, don't
+	byte-compile at macroexpansion time, delay that until
+	byte-compilation time, giving, e.g. labels a chance to do its
+	thing.
+
+2011-10-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* autoload.el (make-autoload):
+	Don't add arglist info to the autoload form's docstring if the
+	arglist info is already there.
+
+2011-10-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-funcall):
+	Correct a comment here, explaining why the optimizer doesn't
+	expand (funcall #'(lambda ...)) in some contexts with inline
+	labels, and why it's reasonable to do it here.
+
+2011-10-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	Implement #'keysyms-equal with #'labels + (declare (inline ...)),
+	instead of abusing macrolet to the same end.
+	* specifier.el (let-specifier):
+	* mule/mule-cmds.el (describe-language-environment):
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	* mule/mule-x-init.el (x-use-halfwidth-roman-font):
+	* faces.el (Face-frob-property):
+	* keymap.el (key-sequence-list-description):
+	* lisp-mode.el (construct-lisp-mode-menu):
+	* loadhist.el (unload-feature):
+	* mouse.el (default-mouse-track-check-for-activation):
+	Declare various labels inline in dumped files when that reduces
+	the size of the dumped image. Declaring labels inline is normally
+	only worthwhile for inner loops and so on, but it's reasonable
+	exercise of the related code to have these changes in core.
+
+2011-10-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-funcall):
+	Sometimes the optimizer shirks its responsibility and doesn't
+	unfold a lambda when it should. Do this here, if optimization is
+	turned on; this makes inlining labels more consistent and
+	trustworthy.
+
+2011-10-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	Add #'declare to this, so it doesn't need to rely on
+	#'cl-compiling file to determine when we're byte-compiling.
+	Update #'labels to support declaring labels inline, as Common Lisp
+	requires.
+	* bytecomp.el (byte-compile-function-form):
+	Don't error if FUNCTION is quoting a non-lambda, non-symbol, just
+	return it.
+	* cl-extra.el (cl-macroexpand-all):
+	If a label name has been quoted, expand to the label placeholder
+	quoted with 'function. This allows the byte compiler to
+	distinguish between uses of the placeholder as data and uses in
+	contexts where it should be inlined.
+	* cl-macs.el:
+	* cl-macs.el (cl-do-proclaim):
+	When proclaming something as inline, if it is bound as a label,
+	don't modify the symbol's plist; instead, treat the first element
+	of its placeholder constant vector as a place to store compile
+	information.
+	* cl-macs.el (declare):
+	Leave processing declarations while compiling to the
+	implementation of #'declare in
+	byte-compile-initial-macro-environment.
+
+2011-09-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el (binary-file-regexps):
+	Remove ELC files from this, many of them are escape-quoted, and
+	when opening them for viewing XEmacs should look at the coding
+	cookie and respect that.
+	* bytecomp.el (byte-compile-insert-header):
+	Always insert a coding cookie, now ELC files are no longer in
+	binary-file-regexps.
+
+2011-09-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el (binary-file-regexps):
+	Update this, adding everything that maps to no-conversion or
+	no-conversion-multibyte in GNU's auto-mode-alist.
+	In particular, add PDFs, important given gnus' problem with them
+	of http://mid.gmane.org/m3r637lpm5.fsf@mikesoffice.com and the
+	associated thread, and Uwe's recent re-reporting of the same
+	problem.
+
+2011-09-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el (select-convert-to-text):
+	* select.el (select-convert-to-utf-8-text):
+	Ignore extent information in these functions, other programs can't
+	do anything useful with it, and it actively interferes when
+	copying from an ERC buffer to external programs--
+	#'encode-coding-string complains that the string is read-only,
+	which is arguably in itself a separate problem, since it allocates
+	a new string there's no reason for it ever to throw that error.
+
 2011-09-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (cl-defsubst-expand):

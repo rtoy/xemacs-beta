@@ -1159,10 +1159,10 @@ mswindows_output_vertical_divider (struct window *w, int UNUSED (clear_unused))
   struct frame *f = XFRAME (w->frame);
   HDC hdc = get_frame_dc (f, 1);
   RECT rect;
-  int spacing = XINT (w->vertical_divider_spacing);
-  int shadow = XINT (w->vertical_divider_shadow_thickness);
+  int spacing = XFIXNUM (w->vertical_divider_spacing);
+  int shadow = XFIXNUM (w->vertical_divider_shadow_thickness);
   int abs_shadow = abs (shadow);
-  int line_width = XINT (w->vertical_divider_line_width);
+  int line_width = XFIXNUM (w->vertical_divider_line_width);
   int div_left = WINDOW_RIGHT (w) - window_divider_width (w);
   int y1 = WINDOW_TOP (w);
   int y2 = WINDOW_BOTTOM (w);

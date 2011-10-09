@@ -130,15 +130,15 @@ build_syscolor_cons (int index1, int index2)
 static Lisp_Object
 build_sysmetrics_cons (int index1, int index2)
 {
-  return Fcons (index1 < 0 ? Qnil : make_int (GetSystemMetrics (index1)),
-		index2 < 0 ? Qnil : make_int (GetSystemMetrics (index2)));
+  return Fcons (index1 < 0 ? Qnil : make_fixnum (GetSystemMetrics (index1)),
+		index2 < 0 ? Qnil : make_fixnum (GetSystemMetrics (index2)));
 }
 
 static Lisp_Object
 build_devicecaps_cons (HDC hdc, int index1, int index2)
 {
-  return Fcons (index1 < 0 ? Qnil : make_int (GetDeviceCaps (hdc, index1)),
-		index2 < 0 ? Qnil : make_int (GetDeviceCaps (hdc, index2)));
+  return Fcons (index1 < 0 ? Qnil : make_fixnum (GetDeviceCaps (hdc, index1)),
+		index2 < 0 ? Qnil : make_fixnum (GetDeviceCaps (hdc, index2)));
 }
 
 
@@ -323,27 +323,27 @@ mswindows_device_system_metrics (struct device *d,
   switch (m)
     {
     case DM_size_device:
-      return Fcons (make_int (GetDeviceCaps (hdc, HORZRES)),
-		    make_int (GetDeviceCaps (hdc, VERTRES)));
+      return Fcons (make_fixnum (GetDeviceCaps (hdc, HORZRES)),
+		    make_fixnum (GetDeviceCaps (hdc, VERTRES)));
       break;
     case DM_device_dpi:
-      return Fcons (make_int (GetDeviceCaps (hdc, LOGPIXELSX)),
-		    make_int (GetDeviceCaps (hdc, LOGPIXELSY)));
+      return Fcons (make_fixnum (GetDeviceCaps (hdc, LOGPIXELSX)),
+		    make_fixnum (GetDeviceCaps (hdc, LOGPIXELSY)));
       break;
     case DM_size_device_mm:
-      return Fcons (make_int (GetDeviceCaps (hdc, HORZSIZE)),
-		    make_int (GetDeviceCaps (hdc, VERTSIZE)));
+      return Fcons (make_fixnum (GetDeviceCaps (hdc, HORZSIZE)),
+		    make_fixnum (GetDeviceCaps (hdc, VERTSIZE)));
       break;
     case DM_num_bit_planes:
       /* this is what X means by bitplanes therefore we ought to be
          consistent. num planes is always 1 under mswindows and
          therefore useless */
-      return make_int (GetDeviceCaps (hdc, BITSPIXEL));
+      return make_fixnum (GetDeviceCaps (hdc, BITSPIXEL));
       break;
     case DM_num_color_cells:
       /* #### SIZEPALETTE only valid if RC_PALETTE bit set in RASTERCAPS,
          what should we return for a non-palette-based device? */
-      return make_int (GetDeviceCaps (hdc, SIZEPALETTE));
+      return make_fixnum (GetDeviceCaps (hdc, SIZEPALETTE));
       break;
 
       /*** Colors ***/
@@ -383,15 +383,15 @@ mswindows_device_system_metrics (struct device *d,
       {
 	RECT rc;
 	mswindows_get_workspace_coords (&rc);
-	return Fcons (make_int (rc.right - rc.left),
-		      make_int (rc.bottom - rc.top));
+	return Fcons (make_fixnum (rc.right - rc.left),
+		      make_fixnum (rc.bottom - rc.top));
       }
 
     case DM_offset_workspace:
       {
 	RECT rc;
 	mswindows_get_workspace_coords (&rc);
-	return Fcons (make_int (rc.left), make_int (rc.top));
+	return Fcons (make_fixnum (rc.left), make_fixnum (rc.top));
       }
 
       /*
@@ -403,7 +403,7 @@ mswindows_device_system_metrics (struct device *d,
       /*** Features ***/
 #define FROB(met, index)			\
     case DM_##met:				\
-      return make_int (GetSystemMetrics (index));
+      return make_fixnum (GetSystemMetrics (index));
 
       FROB (mouse_buttons, SM_CMOUSEBUTTONS);
       FROB (swap_buttons, SM_SWAPBUTTON);
@@ -600,7 +600,7 @@ msprinter_device_system_metrics (struct device *d,
       /* this is what X means by bitplanes therefore we ought to be
          consistent. num planes is always 1 under mswindows and
          therefore useless */
-      return make_int (GetDeviceCaps (DEVICE_MSPRINTER_HDC (d), BITSPIXEL));
+      return make_fixnum (GetDeviceCaps (DEVICE_MSPRINTER_HDC (d), BITSPIXEL));
 
     case DM_num_color_cells:	/* Printers are non-palette devices */
     case DM_slow_device:	/* Animation would be a really bad idea */
@@ -794,13 +794,13 @@ print_dialog_worker (Lisp_Object dev, DWORD flags)
 
     /* Do consing in reverse order.
        Number of copies */
-    result = Fcons (Qcopies, Fcons (make_int (pd.nCopies), result));
+    result = Fcons (Qcopies, Fcons (make_fixnum (pd.nCopies), result));
 
     /* Page range */
     if (pd.Flags & PD_PAGENUMS)
       {
-	result = Fcons (Qto_page, Fcons (make_int (pd.nToPage), result));
-	result = Fcons (Qfrom_page, Fcons (make_int (pd.nFromPage), result));
+	result = Fcons (Qto_page, Fcons (make_fixnum (pd.nToPage), result));
+	result = Fcons (Qfrom_page, Fcons (make_fixnum (pd.nFromPage), result));
 	result = Fcons (Qselected_page_button, Fcons (Qpages, result));
       }
     else if (pd.Flags & PD_SELECTION)
@@ -883,17 +883,17 @@ static int
 plist_get_margin (Lisp_Object plist, Lisp_Object prop, int mm_p)
 {
   Lisp_Object val =
-    Fplist_get (plist, prop, make_int (mswindows_get_default_margin (prop)));
-  if (!INTP (val))
+    Fplist_get (plist, prop, make_fixnum (mswindows_get_default_margin (prop)));
+  if (!FIXNUMP (val))
     invalid_argument ("Margin value must be an integer", val);
 
-  return MulDiv (XINT (val), mm_p ? 254 : 100, 144);
+  return MulDiv (XFIXNUM (val), mm_p ? 254 : 100, 144);
 }
 
 static Lisp_Object
 plist_set_margin (Lisp_Object plist, Lisp_Object prop, int margin, int mm_p)
 {
-  Lisp_Object val = make_int (MulDiv (margin, 144, mm_p ? 254 : 100));
+  Lisp_Object val = make_fixnum (MulDiv (margin, 144, mm_p ? 254 : 100));
   return Fcons (prop, Fcons (val, plist));
 }
 
@@ -1279,7 +1279,7 @@ Return name of the default printer, as string, on nil if there is no default.
 static void
 signal_enum_printer_error (void)
 {
-  invalid_operation ("Error enumerating printers", make_int (GetLastError ()));
+  invalid_operation ("Error enumerating printers", make_fixnum (GetLastError ()));
 }
 
 DEFUN ("mswindows-printer-list", Fmswindows_printer_list, 0, 0, 0, /*

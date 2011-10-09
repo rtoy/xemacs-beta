@@ -1985,28 +1985,28 @@ Returns stats about the mc-alloc memory usage. See diagnose.el.
   for (i = 0; i < N_FREE_PAGE_LISTS; i++) 
     if (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)) > 0)
       free_plhs = 
-	Facons (make_int (PLH_SIZE (FREE_HEAP_PAGES(i))),
-		list1 (make_int (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)))),
+	Facons (make_fixnum (PLH_SIZE (FREE_HEAP_PAGES(i))),
+		list1 (make_fixnum (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)))),
 		free_plhs);
 
   for (i = 0; i < N_USED_PAGE_LISTS; i++) 
     if (PLH_PAGE_COUNT (USED_HEAP_PAGES(i)) > 0)
       used_plhs = 
-	Facons (make_int (PLH_SIZE (USED_HEAP_PAGES(i))),
-		list5 (make_int (PLH_PAGE_COUNT (USED_HEAP_PAGES(i))),
-		       make_int (PLH_USED_CELLS (USED_HEAP_PAGES(i))),
-		       make_int (PLH_USED_SPACE (USED_HEAP_PAGES(i))),
-		       make_int (PLH_TOTAL_CELLS (USED_HEAP_PAGES(i))),
-		       make_int (PLH_TOTAL_SPACE (USED_HEAP_PAGES(i)))),
+	Facons (make_fixnum (PLH_SIZE (USED_HEAP_PAGES(i))),
+		list5 (make_fixnum (PLH_PAGE_COUNT (USED_HEAP_PAGES(i))),
+		       make_fixnum (PLH_USED_CELLS (USED_HEAP_PAGES(i))),
+		       make_fixnum (PLH_USED_SPACE (USED_HEAP_PAGES(i))),
+		       make_fixnum (PLH_TOTAL_CELLS (USED_HEAP_PAGES(i))),
+		       make_fixnum (PLH_TOTAL_SPACE (USED_HEAP_PAGES(i)))),
 		used_plhs);
 
   used_plhs =
-    Facons (make_int (0),
-	    list5 (make_int (PLH_PAGE_COUNT(ARRAY_HEAP_PAGES)),
-		   make_int (PLH_USED_CELLS (ARRAY_HEAP_PAGES)),
-		   make_int (PLH_USED_SPACE (ARRAY_HEAP_PAGES)),
-		   make_int (PLH_TOTAL_CELLS (ARRAY_HEAP_PAGES)),
-		   make_int (PLH_TOTAL_SPACE (ARRAY_HEAP_PAGES))),
+    Facons (make_fixnum (0),
+	    list5 (make_fixnum (PLH_PAGE_COUNT(ARRAY_HEAP_PAGES)),
+		   make_fixnum (PLH_USED_CELLS (ARRAY_HEAP_PAGES)),
+		   make_fixnum (PLH_USED_SPACE (ARRAY_HEAP_PAGES)),
+		   make_fixnum (PLH_TOTAL_CELLS (ARRAY_HEAP_PAGES)),
+		   make_fixnum (PLH_TOTAL_SPACE (ARRAY_HEAP_PAGES))),
 	    used_plhs);
   
   for (i = 0; i < N_HEAP_SECTIONS; i++) {
@@ -2016,16 +2016,16 @@ Returns stats about the mc-alloc memory usage. See diagnose.el.
   }
 
   heap_sects =
-    list3 (make_int (N_HEAP_SECTIONS),
-	   make_int (used_size),
-	   make_int (real_size));
+    list3 (make_fixnum (N_HEAP_SECTIONS),
+	   make_fixnum (used_size),
+	   make_fixnum (real_size));
 
-  return Fcons (make_int (PAGE_SIZE), 
+  return Fcons (make_fixnum (PAGE_SIZE), 
 		list5 (heap_sects, 
 		       Fnreverse (used_plhs), 
 		       Fnreverse (free_plhs), 
-		       make_int (sizeof (mc_allocator_globals)), 
-		       make_int (MC_MALLOCED_BYTES)));
+		       make_fixnum (sizeof (mc_allocator_globals)), 
+		       make_fixnum (MC_MALLOCED_BYTES)));
 }
 #endif /* MEMORY_USAGE_STATS */
 

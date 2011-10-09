@@ -192,16 +192,16 @@ tty_device_system_metrics (struct device *d,
   switch (m)
     {
     case DM_size_device:
-      return Fcons (make_int (CONSOLE_TTY_DATA (con)->width),
-		    make_int (CONSOLE_TTY_DATA (con)->height));
+      return Fcons (make_fixnum (CONSOLE_TTY_DATA (con)->width),
+		    make_fixnum (CONSOLE_TTY_DATA (con)->height));
     case DM_num_bit_planes:
       {
         EMACS_INT l2 = (EMACS_INT)  (log (CONSOLE_TTY_DATA (con)->colors)
                                      / log (2));
-        return make_int (l2);
+        return make_fixnum (l2);
       }
     case DM_num_color_cells:
-      return make_int (CONSOLE_TTY_DATA (con)->colors);
+      return make_fixnum (CONSOLE_TTY_DATA (con)->colors);
     default: /* No such device metric property for TTY devices */
       return Qunbound;
     }

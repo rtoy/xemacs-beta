@@ -1052,7 +1052,7 @@ See `set-frame-properties', `default-x-frame-plist', and
 
   first_frame_on_console =
     (first_frame_on_device &&
-     XINT (Flength (CONSOLE_DEVICE_LIST (XCONSOLE (DEVICE_CONSOLE (d)))))
+     XFIXNUM (Flength (CONSOLE_DEVICE_LIST (XCONSOLE (DEVICE_CONSOLE (d)))))
      == 1);
 
   /* #### all this calling of frame methods at various odd times
@@ -1907,7 +1907,7 @@ delete_frame_internal (struct frame *f, int force,
   /* Call the delete-device-hook and delete-console-hook now if
      appropriate, before we do any dangerous things -- they too could
      signal an error. */
-  if (XINT (Flength (DEVICE_FRAME_LIST (d))) == 1)
+  if (XFIXNUM (Flength (DEVICE_FRAME_LIST (d))) == 1)
     {
       va_run_hook_with_args (Qdelete_device_hook, 1, device);
       if (!FRAME_LIVE_P (f)) /* Make sure the delete-device-hook didn't */
@@ -1916,7 +1916,7 @@ delete_frame_internal (struct frame *f, int force,
 	  return;
 	}
 
-      if (XINT (Flength (CONSOLE_DEVICE_LIST (con))) == 1)
+      if (XFIXNUM (Flength (CONSOLE_DEVICE_LIST (con))) == 1)
 	{
 	  va_run_hook_with_args (Qdelete_console_hook, 1, console);
 	  if (!FRAME_LIVE_P (f)) /* Make sure the delete-console-hook didn't */
@@ -2276,8 +2276,8 @@ the device's selected window for WINDOW and nil for X and Y.
 	  /* Adjust the position to be relative to the window. */
 	  intx -= w->pixel_left;
 	  inty -= w->pixel_top;
-	  x = make_int (intx);
-	  y = make_int (inty);
+	  x = make_fixnum (intx);
+	  y = make_fixnum (inty);
 	}
     }
   else if (FRAMEP (frame))
@@ -2317,8 +2317,8 @@ the device's selected window for WINDOW and nil for X and Y.
 					    &obj1, &obj2);
       if (res == OVER_TEXT)
 	{
-	  lisp_x = make_int (x);
-	  lisp_y = make_int (y);
+	  lisp_x = make_fixnum (x);
+	  lisp_y = make_fixnum (y);
 	  window = wrap_window (w);
 	}
     }
@@ -2371,12 +2371,12 @@ Note also: Warping the mouse is contrary to the ICCCM, so be very sure
   int pix_x, pix_y;
 
   CHECK_LIVE_WINDOW (window);
-  CHECK_INT (x);
-  CHECK_INT (y);
+  CHECK_FIXNUM (x);
+  CHECK_FIXNUM (y);
 
   /* Warping the mouse will cause EnterNotify and Focus events under X. */
   w = XWINDOW (window);
-  glyph_to_pixel_translation (w, XINT (x), XINT (y), &pix_x, &pix_y);
+  glyph_to_pixel_translation (w, XFIXNUM (x), XFIXNUM (y), &pix_x, &pix_y);
 
   MAYBE_FRAMEMETH (XFRAME (w->frame), set_mouse_position, (w, pix_x, pix_y));
 
@@ -2395,12 +2395,12 @@ before calling this function on it, like this.
   struct window *w;
 
   CHECK_LIVE_WINDOW (window);
-  CHECK_INT (x);
-  CHECK_INT (y);
+  CHECK_FIXNUM (x);
+  CHECK_FIXNUM (y);
 
   /* Warping the mouse will cause EnterNotify and Focus events under X. */
   w = XWINDOW (window);
-  FRAMEMETH (XFRAME (w->frame), set_mouse_position, (w, XINT (x), XINT (y)));
+  FRAMEMETH (XFRAME (w->frame), set_mouse_position, (w, XFIXNUM (x), XFIXNUM (y)));
 
   return Qnil;
 }
@@ -2617,7 +2617,7 @@ Return current page number for the print job FRAME.
        (frame))
 {
   CHECK_PRINTER_FRAME (frame);
-  return make_int (FRAME_PAGENUMBER (XFRAME (frame)));
+  return make_fixnum (FRAME_PAGENUMBER (XFRAME (frame)));
 }
 
 DEFUN ("print-job-eject-page", Fprint_job_eject_page, 1, 1, 0, /*
@@ -2663,7 +2663,7 @@ No argument or nil as argument means use selected frame as FRAME.
 */
        (frame))
 {
-  return make_int (decode_frame (frame)->modiff);
+  return make_fixnum (decode_frame (frame)->modiff);
 }
 
 static void
@@ -2962,7 +2962,7 @@ See `set-frame-properties' for the built-in property names.
     {
       int width, height;
       get_frame_char_size (f, &width, &height);
-      return make_int (EQ (Qheight, property) ? height : width);
+      return make_fixnum (EQ (Qheight, property) ? height : width);
     }
 
   /* NOTE: FSF returns Qnil instead of Qt for FRAME_HAS_MINIBUF_P.
@@ -3055,8 +3055,8 @@ Do not modify this list; use `set-frame-property' instead.
   {
     int width, height;
     get_frame_char_size (f, &width, &height);
-    result = cons3 (Qwidth , make_int (width),  result);
-    result = cons3 (Qheight, make_int (height), result);
+    result = cons3 (Qwidth , make_fixnum (width),  result);
+    result = cons3 (Qheight, make_fixnum (height), result);
   }
 
   result = cons3 (Qname, f->name, result);
@@ -3081,7 +3081,7 @@ Return the total height in pixels of FRAME.
   int width, height;
 
   get_frame_new_total_pixel_size (f, &width, &height);
-  return make_int (height);
+  return make_fixnum (height);
 }
 
 DEFUN ("frame-displayable-pixel-height", Fframe_displayable_pixel_height, 0, 1, 0, /*
@@ -3093,7 +3093,7 @@ Return the height of the displayable area in pixels of FRAME.
   int width, height;
 
   get_frame_new_displayable_pixel_size (f, &width, &height);
-  return make_int (height);
+  return make_fixnum (height);
 }
 
 DEFUN ("frame-pixel-width", Fframe_pixel_width, 0, 1, 0, /*
@@ -3105,7 +3105,7 @@ Return the total width in pixels of FRAME.
   int width, height;
 
   get_frame_new_total_pixel_size (f, &width, &height);
-  return make_int (width);
+  return make_fixnum (width);
 }
 
 DEFUN ("frame-displayable-pixel-width", Fframe_displayable_pixel_width, 0, 1, 0, /*
@@ -3117,7 +3117,7 @@ Return the width of the displayable area in pixels of FRAME.
   int width, height;
 
   get_frame_new_displayable_pixel_size (f, &width, &height);
-  return make_int (width);
+  return make_fixnum (width);
 }
 
 DEFUN ("set-frame-height", Fset_frame_height, 2, 3, 0, /*
@@ -3132,9 +3132,9 @@ but that the idea of the actual height of the frame should not be changed.
   int cwidth, cheight;
   int guwidth, guheight;
 
-  CHECK_INT (lines);
+  CHECK_FIXNUM (lines);
   get_frame_char_size (f, &cwidth, &cheight);
-  cheight = XINT (lines);
+  cheight = XFIXNUM (lines);
   frame_conversion_internal (f, SIZE_CHAR_CELL, cwidth, cheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
@@ -3153,9 +3153,9 @@ but that the idea of the actual height of the frame should not be changed.
   int pwidth, pheight;
   int guwidth, guheight;
 
-  CHECK_INT (height);
+  CHECK_FIXNUM (height);
   get_frame_new_total_pixel_size (f, &pwidth, &pheight);
-  pheight = XINT (height);
+  pheight = XFIXNUM (height);
   frame_conversion_internal (f, SIZE_TOTAL_PIXEL, pwidth, pheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
@@ -3174,9 +3174,9 @@ but that the idea of the actual height of the frame should not be changed.
   int pwidth, pheight;
   int guwidth, guheight;
 
-  CHECK_INT (height);
+  CHECK_FIXNUM (height);
   get_frame_new_displayable_pixel_size (f, &pwidth, &pheight);
-  pheight = XINT (height);
+  pheight = XFIXNUM (height);
   frame_conversion_internal (f, SIZE_DISPLAYABLE_PIXEL, pwidth, pheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
@@ -3196,9 +3196,9 @@ but that the idea of the actual width of the frame should not be changed.
   int cwidth, cheight;
   int guwidth, guheight;
 
-  CHECK_INT (cols);
+  CHECK_FIXNUM (cols);
   get_frame_char_size (f, &cwidth, &cheight);
-  cwidth = XINT (cols);
+  cwidth = XFIXNUM (cols);
   frame_conversion_internal (f, SIZE_CHAR_CELL, cwidth, cheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
@@ -3217,9 +3217,9 @@ but that the idea of the actual height of the frame should not be changed.
   int pwidth, pheight;
   int guwidth, guheight;
 
-  CHECK_INT (width);
+  CHECK_FIXNUM (width);
   get_frame_new_total_pixel_size (f, &pwidth, &pheight);
-  pwidth = XINT (width);
+  pwidth = XFIXNUM (width);
   frame_conversion_internal (f, SIZE_TOTAL_PIXEL, pwidth, pheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
@@ -3238,9 +3238,9 @@ but that the idea of the actual height of the frame should not be changed.
   int pwidth, pheight;
   int guwidth, guheight;
 
-  CHECK_INT (width);
+  CHECK_FIXNUM (width);
   get_frame_new_displayable_pixel_size (f, &pwidth, &pheight);
-  pwidth = XINT (width);
+  pwidth = XFIXNUM (width);
   frame_conversion_internal (f, SIZE_DISPLAYABLE_PIXEL, pwidth, pheight,
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
@@ -3258,9 +3258,9 @@ but that the idea of the actual size of the frame should not be changed.
   struct frame *f = decode_frame (frame);
   int guwidth, guheight;
 
-  CHECK_INT (cols);
-  CHECK_INT (rows);
-  frame_conversion_internal (f, SIZE_CHAR_CELL, XINT (cols), XINT (rows),
+  CHECK_FIXNUM (cols);
+  CHECK_FIXNUM (rows);
+  frame_conversion_internal (f, SIZE_CHAR_CELL, XFIXNUM (cols), XFIXNUM (rows),
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
   return wrap_frame (f);
@@ -3277,9 +3277,9 @@ but that the idea of the actual size of the frame should not be changed.
   struct frame *f = decode_frame (frame);
   int guwidth, guheight;
 
-  CHECK_INT (width);
-  CHECK_INT (height);
-  frame_conversion_internal (f, SIZE_TOTAL_PIXEL, XINT (width), XINT (height),
+  CHECK_FIXNUM (width);
+  CHECK_FIXNUM (height);
+  frame_conversion_internal (f, SIZE_TOTAL_PIXEL, XFIXNUM (width), XFIXNUM (height),
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
   return wrap_frame (f);
@@ -3296,10 +3296,10 @@ but that the idea of the actual size of the frame should not be changed.
   struct frame *f = decode_frame (frame);
   int guwidth, guheight;
 
-  CHECK_INT (width);
-  CHECK_INT (height);
+  CHECK_FIXNUM (width);
+  CHECK_FIXNUM (height);
   frame_conversion_internal (f, SIZE_DISPLAYABLE_PIXEL,
-			     XINT (width), XINT (height),
+			     XFIXNUM (width), XFIXNUM (height),
 			     SIZE_FRAME_UNIT, &guwidth, &guheight);
   internal_set_frame_size (f, guwidth, guheight, !NILP (pretend));
   return wrap_frame (f);
@@ -3314,10 +3314,10 @@ the rightmost or bottommost possible position (that stays within the screen).
        (frame, xoffset, yoffset))
 {
   struct frame *f = decode_frame (frame);
-  CHECK_INT (xoffset);
-  CHECK_INT (yoffset);
+  CHECK_FIXNUM (xoffset);
+  CHECK_FIXNUM (yoffset);
 
-  MAYBE_FRAMEMETH (f, set_frame_position, (f, XINT (xoffset), XINT (yoffset)));
+  MAYBE_FRAMEMETH (f, set_frame_position, (f, XFIXNUM (xoffset), XFIXNUM (yoffset)));
 
   return Qt;
 }
@@ -3897,8 +3897,8 @@ adjust_frame_size (struct frame *f)
 					 0));
 
       if (keep_char_size)
-	Fset_frame_size (frame, make_int (FRAME_CHARWIDTH(f)),
-			 make_int (FRAME_CHARHEIGHT(f)), Qnil);
+	Fset_frame_size (frame, make_fixnum (FRAME_CHARWIDTH(f)),
+			 make_fixnum (FRAME_CHARHEIGHT(f)), Qnil);
     }
 
   if (!keep_char_size)

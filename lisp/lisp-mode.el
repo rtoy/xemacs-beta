@@ -45,6 +45,7 @@
 (defun construct-lisp-mode-menu (popup-p emacs-lisp-p)
   (labels ((popup-wrap (form)
              (if popup-p `(menu-call-at-event ',form) form)))
+    (declare (inline popup-wrap))
     `(,@(if emacs-lisp-p
 	  `(["%_Byte-Compile This File" ,(popup-wrap
 					  'emacs-lisp-byte-compile)]

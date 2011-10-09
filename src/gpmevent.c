@@ -584,8 +584,8 @@ Toggle accepting of GPM mouse events.
       store_gpm_state (gpm_fd);
       gpm_process =
 	connect_to_file_descriptor (build_cistring (process_name), Qnil,
-				    make_int (gpm_fd),
-				    make_int (gpm_fd));
+				    make_fixnum (gpm_fd),
+				    make_fixnum (gpm_fd));
 
       if (!NILP (gpm_process))
 	{

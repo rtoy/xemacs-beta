@@ -151,8 +151,8 @@ struct Lisp_Keymap
 #include "keymap-slots.h"
 };
 
-#define MAKE_MODIFIER_HASH_KEY(modifier) make_int (modifier)
-#define MODIFIER_HASH_KEY_BITS(x) (INTP (x) ? XINT (x) : 0)
+#define MAKE_MODIFIER_HASH_KEY(modifier) make_fixnum (modifier)
+#define MODIFIER_HASH_KEY_BITS(x) (FIXNUMP (x) ? XFIXNUM (x) : 0)
 
 
 
@@ -289,7 +289,7 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
       write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
     }
   write_fmt_string (printcharfun, "size %ld 0x%x>",
-		    (long) XINT (Fkeymap_fullness (obj)),
+		    (long) XFIXNUM (Fkeymap_fullness (obj)),
 		    LISP_OBJECT_UID (obj));
 }
 
@@ -1081,15 +1081,15 @@ get_keyelt (Lisp_Object object, int accept_default)
 	}
       else if (CONSP (idx))
 	{
-	  if (!INTP (XCDR (idx)))
+	  if (!FIXNUMP (XCDR (idx)))
 	    return Qnil;
 	  indirection.keysym = XCAR (idx);
-	  indirection.modifiers = (unsigned char) XINT (XCDR (idx));
+	  indirection.modifiers = (unsigned char) XFIXNUM (XCDR (idx));
 	}
       else if (SYMBOLP (idx))
 	{
 	  indirection.keysym = idx;
-	  SET_KEY_DATA_MODIFIERS (&indirection, XINT (XCDR (idx)));
+	  SET_KEY_DATA_MODIFIERS (&indirection, XFIXNUM (XCDR (idx)));
 	}
       else
 	{
@@ -1237,7 +1237,7 @@ keymap_fullness (Lisp_Object keymap)
   struct gcpro gcpro1, gcpro2;
 
   keymap = get_keymap (keymap, 1, 1);
-  fullness = XINT (Fhash_table_count (XKEYMAP (keymap)->table));
+  fullness = XFIXNUM (Fhash_table_count (XKEYMAP (keymap)->table));
   GCPRO2 (keymap, sub_maps);
   for (sub_maps = keymap_submaps (keymap);
        !NILP (sub_maps);
@@ -1260,7 +1260,7 @@ Return the number of bindings in the keymap.
        (keymap))
 {
   /* This function can GC */
-  return make_int (keymap_fullness (get_keymap (keymap, 1, 1)));
+  return make_fixnum (keymap_fullness (get_keymap (keymap, 1, 1)));
 }
 
 
@@ -1556,7 +1556,7 @@ event_matches_key_specifier_p (Lisp_Object event, Lisp_Object key_specifier)
   struct gcpro gcpro1;
 
   if (XEVENT_TYPE (event) != key_press_event || NILP (key_specifier) ||
-      (INTP (key_specifier) && !CHAR_INTP (key_specifier)))
+      (FIXNUMP (key_specifier) && !CHAR_INTP (key_specifier)))
     return 0;
 
   /* if the specifier is an integer such as 27, then it should match
@@ -1722,7 +1722,7 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   Lisp_Object mpc_binding;
   Lisp_Key_Data meta_key;
   if (NILP (Vmeta_prefix_char) ||
-      (INTP (Vmeta_prefix_char) && !CHAR_INTP (Vmeta_prefix_char)))
+      (FIXNUMP (Vmeta_prefix_char) && !CHAR_INTP (Vmeta_prefix_char)))
     return;
 
   define_key_parser (Vmeta_prefix_char, &meta_key);
@@ -1733,7 +1733,7 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   if (indx == 0)
     new_keys = keys;
   else if (STRINGP (keys))
-    new_keys = Fsubseq (keys, Qzero, make_int (indx));
+    new_keys = Fsubseq (keys, Qzero, make_fixnum (indx));
   else if (VECTORP (keys))
     {
       new_keys = make_vector (indx, Qnil);
@@ -1909,7 +1909,7 @@ it is possible to redefine only one of those sequences like so:
   else
     {
       keys = wrong_type_argument (Qsequencep, keys);
-      len = XINT (Flength (keys));
+      len = XFIXNUM (Flength (keys));
     }
   if (len == 0)
     return Qnil;
@@ -2100,7 +2100,7 @@ raw_lookup_key_mapper (Lisp_Object k, void *arg)
 	/* Didn't find a keymap, and we have more keys.
 	 * Return a fixnum to indicate that keys were too long.
 	 */
-	cmd = make_int (keys_so_far + 1);
+	cmd = make_fixnum (keys_so_far + 1);
       else
 	cmd = raw_lookup_key (cmd, raw_keys + 1, remaining,
 			      keys_so_far + 1, accept_default);
@@ -2220,7 +2220,7 @@ lookup_events (Lisp_Object event_head, int nmaps, Lisp_Object keymaps[],
     {
       tem = raw_lookup_key (keymaps[iii], raw_keys, nkeys, 0,
 			    accept_default);
-      if (INTP (tem))
+      if (FIXNUMP (tem))
 	{
 	  /* Too long in some local map means don't look at global map */
 	  tem = Qnil;
@@ -2377,7 +2377,7 @@ get_relevant_keymaps (Lisp_Object keys,
          keymap. */
       if (EVENTP (terminal))
 	{
-	  get_relevant_extent_keymaps (make_int (BUF_PT (current_buffer)),
+	  get_relevant_extent_keymaps (make_fixnum (BUF_PT (current_buffer)),
 				       tem, Qnil, &closure);
 	}
       get_relevant_minor_maps (tem, &closure);
@@ -2670,7 +2670,7 @@ actually looked up in the keymaps.  In particular:
     {
       Lisp_Object tem = Flookup_key (maps[i], keys,
 				     accept_default);
-      if (INTP (tem))
+      if (FIXNUMP (tem))
 	{
 	  /* Too long in some local map means don't look at global map */
 	  return Qnil;
@@ -2981,7 +2981,7 @@ map_keymap_sorted (Lisp_Object keymap_table,
   struct gcpro gcpro1;
   Lisp_Object contents = Qnil;
 
-  if (XINT (Fhash_table_count (keymap_table)) == 0)
+  if (XFIXNUM (Fhash_table_count (keymap_table)) == 0)
     return;
 
   GCPRO1 (contents);
@@ -3193,7 +3193,7 @@ then the value includes only maps for prefixes that start with PREFIX.
     }
   else if (VECTORP (prefix) || STRINGP (prefix))
     {
-      int len = XINT (Flength (prefix));
+      int len = XFIXNUM (Flength (prefix));
       Lisp_Object def;
       Lisp_Object p;
       int iii;
@@ -3216,7 +3216,7 @@ then the value includes only maps for prefixes that start with PREFIX.
       for (iii = 0; iii < len; iii++)
 	{
 	  Lisp_Key_Data key;
-	  define_key_parser (Faref (prefix, make_int (iii)), &key);
+	  define_key_parser (Faref (prefix, make_fixnum (iii)), &key);
 	  XVECTOR_DATA (p)[iii] = make_key_description (&key, 1);
 	}
       NUNGCPRO;
@@ -3270,7 +3270,7 @@ spaces are put between sequence elements, etc...
     {
       Lisp_Object string = Qnil;
       /* Lisp_Object sep = Qnil; */
-      int size = XINT (Flength (keys));
+      int size = XFIXNUM (Flength (keys));
       int i;
 
       for (i = 0; i < size; i++)
@@ -3496,7 +3496,7 @@ argument to KEYMAPS).
       Lisp_Object rest;
       int i;
 
-      nmaps = XINT (Flength (keymaps));
+      nmaps = XFIXNUM (Flength (keymaps));
       if (nmaps > countof (maps))
 	{
 	  gubbish = alloca_array (Lisp_Object, nmaps);
@@ -3666,7 +3666,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	    {
 	      assert (firstonly);
 	      format_raw_keys (so_far, keys_count + 1, target_buffer);
-	      return make_int (1);
+	      return make_fixnum (1);
 	    }
 	  else if (firstonly)
 	    return raw_keys_to_keys (so_far, keys_count + 1);
@@ -3872,7 +3872,7 @@ describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
       Lisp_Object elt = Fcar (maps);
       Lisp_Object tail;
       int no_prefix = (VECTORP (Fcar (elt))
-                       && XINT (Flength (Fcar (elt))) == 0);
+                       && XFIXNUM (Flength (Fcar (elt))) == 0);
       struct gcpro ngcpro1, ngcpro2, ngcpro3;
       NGCPRO3 (sub_shadow, elt, tail);
 
@@ -3935,7 +3935,7 @@ describe_command (Lisp_Object definition, Lisp_Object buffer)
   struct gcpro gcpro1;
   GCPRO1 (definition);
 
-  Findent_to (make_int (16), make_int (3), buffer);
+  Findent_to (make_fixnum (16), make_fixnum (3), buffer);
   if (keymapp)
     buffer_insert_ascstring (XBUFFER (buffer), "<< ");
 
@@ -4078,7 +4078,7 @@ describe_map_mapper (const Lisp_Key_Data *key,
   }
 
   /* Otherwise add it to the list to be sorted. */
-  *(closure->list) = Fcons (Fcons (Fcons (keysym, make_int (modifiers)),
+  *(closure->list) = Fcons (Fcons (Fcons (keysym, make_fixnum (modifiers)),
                                    binding),
 			    *(closure->list));
 }
@@ -4095,8 +4095,8 @@ describe_map_sort_predicate (Lisp_Object pred, Lisp_Object key_func,
   int bit1, bit2;
   obj1 = XCAR (obj1);
   obj2 = XCAR (obj2);
-  bit1 = XINT (XCDR (obj1));
-  bit2 = XINT (XCDR (obj2));
+  bit1 = XFIXNUM (XCDR (obj1));
+  bit2 = XFIXNUM (XCDR (obj2));
   if (bit1 != bit2)
     return bit1 < bit2;
   else
@@ -4214,7 +4214,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	{
           Lisp_Object elt = XCAR (XCAR (list));
 	  Lisp_Object keysym = XCAR (elt);
-	  int modifiers = XINT (XCDR (elt));
+	  int modifiers = XFIXNUM (XCDR (elt));
 
 	  if (!NILP (elt_prefix))
 	    buffer_insert_lisp_string (buf, elt_prefix);

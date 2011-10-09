@@ -198,9 +198,9 @@ static Lisp_Object
 gtk_color_instance_rgb_components (struct Lisp_Color_Instance *c)
 {
   GdkColor *color = COLOR_INSTANCE_GTK_COLOR (c);
-  return (list3 (make_int (color->red),
-		 make_int (color->green),
-		 make_int (color->blue)));
+  return (list3 (make_fixnum (color->red),
+		 make_fixnum (color->green),
+		 make_fixnum (color->blue)));
 }
 
 static int
@@ -289,7 +289,7 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   if ((mask & PANGO_FONT_MASK_SIZE) == 0)
     {
       float pt_size;
-      CHECK_INT_OR_FLOAT (Vgtk_fallback_font_size);
+      CHECK_FIXNUM_OR_FLOAT (Vgtk_fallback_font_size);
       pt_size = extract_float (Vgtk_fallback_font_size);
       pango_font_description_set_size(pfd, pt_size * PANGO_SCALE);
     }
@@ -452,7 +452,7 @@ Return a specificer for FONT with WEIGHT numeric value on DEVICE.
   /* Not sure if range should be 200-900 --jsparkes */
   check_integer_range (weight, Qzero, make_integer (1000));
 
-  w = (PangoWeight) (XINT (weight));
+  w = (PangoWeight) (XFIXNUM (weight));
   extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
   pfd = font_description_from_string (extname);
   pango_font_description_set_weight (pfd, w);

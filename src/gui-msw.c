@@ -48,16 +48,16 @@ mswindows_handle_gui_wm_command (struct frame *f, HWND UNUSED (ctrl),
 
   frame = wrap_frame (f);
 
-  image_instance = Fgethash (make_int_verify (id), 
+  image_instance = Fgethash (make_fixnum_verify (id), 
 			     FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f), Qnil);
   /* It is possible for a widget action to cause it to get out of sync
      with its instantiator. Thus it is necessary to signal this
      possibility. */
   if (IMAGE_INSTANCEP (image_instance))
     XIMAGE_INSTANCE_WIDGET_ACTION_OCCURRED (image_instance) = 1;
-  callback = Fgethash (make_int (id), 
+  callback = Fgethash (make_fixnum (id), 
 		       FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f), Qnil);
-  callback_ex = Fgethash (make_int (id), 
+  callback_ex = Fgethash (make_fixnum (id), 
 			  FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f), Qnil);
 
   if (!NILP (callback_ex) && !UNBOUNDP (callback_ex))

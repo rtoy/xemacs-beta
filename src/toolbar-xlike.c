@@ -83,7 +83,7 @@ static void __prepare_button_area (struct frame *f,
   Lisp_Object  window = FRAME_LAST_NONMINIBUF_WINDOW (f);
   struct window *w = XWINDOW (window);
   int shadow_thickness;
-  int def_shadow_thickness = XINT (Fspecifier_instance (Vtoolbar_shadow_thickness, window, Qnil, Qnil));
+  int def_shadow_thickness = XFIXNUM (Fspecifier_instance (Vtoolbar_shadow_thickness, window, Qnil, Qnil));
   face_index toolbar_findex;
 
   if (tb->vertical)
@@ -335,7 +335,7 @@ xlike_get_button_size (struct frame *f, Lisp_Object window,
   if (tb->blank)
     {
       if (!NILP (tb->down_glyph))
-	size = XINT (tb->down_glyph);
+	size = XFIXNUM (tb->down_glyph);
       else
 	size = DEFAULT_TOOLBAR_BLANK_SIZE;
     }
@@ -348,7 +348,7 @@ xlike_get_button_size (struct frame *f, Lisp_Object window,
          change the glyph out from under us.  Use a blank placeholder
          in that case. */
       if (NILP (glyph))
-	return XINT (f->toolbar_size[pos]);
+	return XFIXNUM (f->toolbar_size[pos]);
 
       if (vert)
 	size = glyph_height (glyph, window);
@@ -360,7 +360,7 @@ xlike_get_button_size (struct frame *f, Lisp_Object window,
     {
       /* If the glyph doesn't have a size we'll insert a blank
          placeholder instead. */
-      return XINT (f->toolbar_size[pos]);
+      return XFIXNUM (f->toolbar_size[pos]);
     }
 
   size += shadow_thickness * 2;

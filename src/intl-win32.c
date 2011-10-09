@@ -1017,7 +1017,7 @@ If LOCALE is nil or omitted, the current locale is used.
        (locale))
 {
   LCID lcid = NILP (locale) ? current_locale : locale_to_lcid (locale);
-  return make_int (mswindows_locale_to_code_page (lcid));
+  return make_fixnum (mswindows_locale_to_code_page (lcid));
 }
 
 DEFUN ("mswindows-locale-oem-code-page", Fmswindows_locale_oem_code_page,
@@ -1028,7 +1028,7 @@ If LOCALE is nil or omitted, the current locale is used.
        (locale))
 {
   LCID lcid = NILP (locale) ? current_locale : locale_to_lcid (locale);
-  return make_int (mswindows_locale_to_oem_code_page (lcid));
+  return make_fixnum (mswindows_locale_to_oem_code_page (lcid));
 }
 
 static DWORD
@@ -1184,7 +1184,7 @@ Set the CODE-PAGE for the CHARSET.
        (charset, code_page))
 {
   charset = Fget_charset (charset);
-  CHECK_INT (code_page);
+  CHECK_FIXNUM (code_page);
   Fputhash (charset, code_page, Vmswindows_charset_code_page_table);
   return Qnil;
 }
@@ -1200,8 +1200,8 @@ mswindows_get_code_page_charset (int code_page)
       Lisp_Object charset_code_page;
 
       charset_code_page = Fmswindows_charset_code_page (XCAR (charset_tail));
-      if (INTP (charset_code_page) &&
-	  code_page == XINT (charset_code_page))
+      if (FIXNUMP (charset_code_page) &&
+	  code_page == XFIXNUM (charset_code_page))
 	{
 	  charset = Fget_charset (XCAR (charset_tail));
 	  break;
@@ -1289,14 +1289,14 @@ If LCID (a 16-bit number) is not a valid locale, the result is nil.
   Extbyte abbrev_name[32] = { 0 };
   Extbyte full_name[256] = { 0 };
 
-  CHECK_INT (lcid);
+  CHECK_FIXNUM (lcid);
 
-  if (!IsValidLocale (XINT (lcid), LCID_SUPPORTED))
+  if (!IsValidLocale (XFIXNUM (lcid), LCID_SUPPORTED))
     return Qnil;
 
   if (NILP (longform))
     {
-      got_abbrev = qxeGetLocaleInfo (XINT (lcid),
+      got_abbrev = qxeGetLocaleInfo (XFIXNUM (lcid),
 				     LOCALE_SABBREVLANGNAME |
 				     LOCALE_USE_CP_ACP,
 				     abbrev_name, sizeof (abbrev_name));
@@ -1305,7 +1305,7 @@ If LCID (a 16-bit number) is not a valid locale, the result is nil.
     }
   else if (EQ (longform, Qt))
     {
-      got_full = qxeGetLocaleInfo (XINT (lcid),
+      got_full = qxeGetLocaleInfo (XFIXNUM (lcid),
 				   LOCALE_SLANGUAGE | LOCALE_USE_CP_ACP,
 				   full_name, sizeof (full_name));
       if (got_full)
@@ -1313,8 +1313,8 @@ If LCID (a 16-bit number) is not a valid locale, the result is nil.
     }
   else if (NUMBERP (longform))
     {
-      got_full = qxeGetLocaleInfo (XINT (lcid),
-				   XINT (longform),
+      got_full = qxeGetLocaleInfo (XFIXNUM (lcid),
+				   XFIXNUM (longform),
 				   full_name, sizeof (full_name));
       if (got_full)
 	return build_tstr_string (full_name);
@@ -1330,7 +1330,7 @@ Lisp_Object Vmswindows_valid_code_pages;
 BOOL CALLBACK enum_code_page_fn (LPTSTR codepageNum)
 {
   DWORD id = atoi (codepageNum);
-  Vmswindows_valid_code_pages = Fcons (make_int (id), Vmswindows_valid_code_pages);
+  Vmswindows_valid_code_pages = Fcons (make_fixnum (id), Vmswindows_valid_code_pages);
   return TRUE;
 }
 
@@ -1352,7 +1352,7 @@ Return current Windows code page for console input.
 */
        ())
 {
-  return make_int (GetConsoleCP ());
+  return make_fixnum (GetConsoleCP ());
 }
 
 DEFUN ("mswindows-set-console-code-page", Fmswindows_set_console_code_page, 1, 1, 0, /*
@@ -1362,15 +1362,15 @@ If successful, the new CP is returned, otherwise nil.
 */
        (cp))
 {
-  CHECK_INT (cp);
+  CHECK_FIXNUM (cp);
 
-  if (!IsValidCodePage (XINT (cp)))
+  if (!IsValidCodePage (XFIXNUM (cp)))
     return Qnil;
 
-  if (!SetConsoleCP (XINT (cp)))
+  if (!SetConsoleCP (XFIXNUM (cp)))
     return Qnil;
 
-  return make_int (GetConsoleCP ());
+  return make_fixnum (GetConsoleCP ());
 }
 
 DEFUN ("mswindows-get-console-output-code-page", Fmswindows_get_console_output_code_page, 0, 0, 0, /*
@@ -1378,7 +1378,7 @@ Return current Windows code page for console output.
 */
        ())
 {
-  return make_int (GetConsoleOutputCP ());
+  return make_fixnum (GetConsoleOutputCP ());
 }
 
 DEFUN ("mswindows-set-console-output-code-page", Fmswindows_set_console_output_code_page, 1, 1, 0, /*
@@ -1388,15 +1388,15 @@ If successful, the new CP is returned, otherwise nil.
 */
        (cp))
 {
-  CHECK_INT (cp);
+  CHECK_FIXNUM (cp);
 
-  if (!IsValidCodePage (XINT (cp)))
+  if (!IsValidCodePage (XFIXNUM (cp)))
     return Qnil;
 
-  if (!SetConsoleOutputCP (XINT (cp)))
+  if (!SetConsoleOutputCP (XFIXNUM (cp)))
     return Qnil;
 
-  return make_int (GetConsoleOutputCP ());
+  return make_fixnum (GetConsoleOutputCP ());
 }
 
 DEFUN ("mswindows-get-code-page-charset", Fmswindows_get_code_page_charset, 1, 1, 0, /*
@@ -1407,13 +1407,13 @@ Returns nil if the code page is not valid.
 {
   CHARSETINFO info;
 
-  CHECK_INT (cp);
+  CHECK_FIXNUM (cp);
 
-  if (!IsValidCodePage (XINT (cp)))
+  if (!IsValidCodePage (XFIXNUM (cp)))
     return Qnil;
 
-  if (TranslateCharsetInfo ((DWORD *) XINT (cp), &info, TCI_SRCCODEPAGE))
-    return make_int (info.ciCharset);
+  if (TranslateCharsetInfo ((DWORD *) XFIXNUM (cp), &info, TCI_SRCCODEPAGE))
+    return make_fixnum (info.ciCharset);
 
   return Qnil;
 }
@@ -1434,8 +1434,8 @@ The return value is a list of pairs of language id and layout id.
 	{
 	  DWORD kl = (DWORD) layouts[num_layouts];
 
-	  obj = Fcons (Fcons (make_int (kl & 0xffff),
-			      make_int ((kl >> 16) & 0xffff)),
+	  obj = Fcons (Fcons (make_fixnum (kl & 0xffff),
+			      make_fixnum ((kl >> 16) & 0xffff)),
 		       obj);
 	}
     }
@@ -1451,8 +1451,8 @@ The return value is the cons of the language id and the layout id.
 {
   DWORD kl = (DWORD) GetKeyboardLayout (dwWindowsThreadId);
 
-  return Fcons (make_int (kl & 0xffff),
-		make_int ((kl >> 16) & 0xffff));
+  return Fcons (make_fixnum (kl & 0xffff),
+		make_fixnum ((kl >> 16) & 0xffff));
 }
 
 DEFUN ("mswindows-set-keyboard-layout", Fmswindows_set_keyboard_layout, 1, 1, 0, /*
@@ -1465,11 +1465,11 @@ If successful, the new layout id is returned, otherwise nil.
   DWORD kl;
 
   CHECK_CONS (layout);
-  CHECK_INT (XCAR (layout)));
-  CHECK_INT (XCDR (layout)));
+  CHECK_FIXNUM (XCAR (layout)));
+  CHECK_FIXNUM (XCDR (layout)));
 
-  kl = (XINT (XCAR (layout))) & 0xffff)
-    | (XINT (XCDR (layout))) << 16);
+  kl = (XFIXNUM (XCAR (layout))) & 0xffff)
+    | (XFIXNUM (XCDR (layout))) << 16);
 
   if (!ActivateKeyboardLayout ((HKL) kl, 0))
     return Qnil;
@@ -1793,10 +1793,10 @@ mswindows_multibyte_to_unicode_putprop (Lisp_Object codesys,
 	  data->locale_type = MULTIBYTE_SPECIFIED_CODE_PAGE;
 #ifdef HAVE_BIGNUM
           check_integer_range (value, Qzero, make_integer (INT_MAX));
-	  data->cp = BIGNUMP (value) ? bignum_to_int (XBIGNUM_DATA (value)) : XINT (value);
+	  data->cp = BIGNUMP (value) ? bignum_to_int (XBIGNUM_DATA (value)) : XFIXNUM (value);
 #else
           CHECK_NATNUM (value);
-          data->cp = XINT (value);
+          data->cp = XFIXNUM (value);
 #endif
 	}
     }
@@ -1833,7 +1833,7 @@ mswindows_multibyte_to_unicode_getprop (Lisp_Object coding_system,
   if (EQ (prop, Qcode_page))
     {
       if (data->locale_type == MULTIBYTE_SPECIFIED_CODE_PAGE)
-	return make_int (data->cp);
+	return make_fixnum (data->cp);
       else
 	switch (data->cp_type)
 	  {
@@ -1872,7 +1872,7 @@ mswindows_multibyte_to_unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
 
   write_ascstring (printcharfun, "(");
   if (data->locale_type == MULTIBYTE_SPECIFIED_CODE_PAGE)
-    print_internal (make_int (data->cp), printcharfun, 1);
+    print_internal (make_fixnum (data->cp), printcharfun, 1);
   else
     {
       write_fmt_string_lisp (printcharfun, "%s, ", 1, mswindows_multibyte_to_unicode_getprop (cs, Qlocale));

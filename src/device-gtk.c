@@ -324,7 +324,7 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
      available; this isn't the case under GTK, the set is examined once at
      startup. */
   {
-    guint target_count = XINT (Fsafe_length (Vselection_converter_out_alist));
+    guint target_count = XFIXNUM (Fsafe_length (Vselection_converter_out_alist));
     GtkTargetEntry *targets = alloca_array (GtkTargetEntry, target_count);
     Lisp_Object tail = Vselection_converter_out_alist;
     DECLARE_EISTRING(ei_symname);
@@ -500,7 +500,7 @@ Return the bitplane depth of the visual the GTK display DEVICE is using.
 */
        (device))
 {
-   return make_int (DEVICE_GTK_DEPTH (decode_gtk_device (device)));
+   return make_fixnum (DEVICE_GTK_DEPTH (decode_gtk_device (device)));
 }
 
 static Lisp_Object
@@ -516,15 +516,15 @@ gtk_device_system_metrics (struct device *d,
   switch (m)
     {
     case DM_size_device:
-      return Fcons (make_int (gdk_screen_width ()),
-		    make_int (gdk_screen_height ()));
+      return Fcons (make_fixnum (gdk_screen_width ()),
+		    make_fixnum (gdk_screen_height ()));
     case DM_size_device_mm:
-      return Fcons (make_int (gdk_screen_width_mm ()),
-		    make_int (gdk_screen_height_mm ()));
+      return Fcons (make_fixnum (gdk_screen_width_mm ()),
+		    make_fixnum (gdk_screen_height_mm ()));
     case DM_num_color_cells:
-      return make_int (gdk_colormap_get_system_size ());
+      return make_fixnum (gdk_colormap_get_system_size ());
     case DM_num_bit_planes:
-      return make_int (DEVICE_GTK_DEPTH (d));
+      return make_fixnum (DEVICE_GTK_DEPTH (d));
 
 #if 0
     case DM_color_default:

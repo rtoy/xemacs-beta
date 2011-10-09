@@ -67,7 +67,7 @@ last_visible_position (Charbpos pos, struct buffer *buf)
   Lisp_Object value;
 
   buffer = wrap_buffer (buf);
-  value = Fprevious_single_char_property_change (make_int (pos), Qinvisible,
+  value = Fprevious_single_char_property_change (make_fixnum (pos), Qinvisible,
 						 buffer, Qnil);
   if (NILP (value))
     return 0; /* no visible position found */
@@ -78,7 +78,7 @@ last_visible_position (Charbpos pos, struct buffer *buf)
        invisible extent.
 
        Not sure what the correct solution is here.  Rethink indent-to? */
-    return XINT (value);
+    return XFIXNUM (value);
 }
 
 #ifdef REGION_CACHE_NEEDS_WORK
@@ -125,7 +125,7 @@ column_at_point (struct buffer *buf, Charbpos init_pos, int cur_col)
 {
   int col;
   int tab_seen;
-  int tab_width = XINT (buf->tab_width);
+  int tab_width = XFIXNUM (buf->tab_width);
   int post_tab;
   Charbpos pos = init_pos;
   Ichar c;
@@ -263,7 +263,7 @@ If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
 {
-  return make_int (current_column (decode_buffer (buffer, 0)));
+  return make_fixnum (current_column (decode_buffer (buffer, 0)));
 }
 
 
@@ -279,27 +279,27 @@ If BUFFER is nil, the current buffer is assumed.
   int mincol;
   int fromcol;
   struct buffer *buf = decode_buffer (buffer, 0);
-  int tab_width = XINT (buf->tab_width);
+  int tab_width = XFIXNUM (buf->tab_width);
   Charbpos opoint = 0;
 
-  CHECK_INT (column);
+  CHECK_FIXNUM (column);
   if (NILP (minimum))
     minimum = Qzero;
   else
-    CHECK_INT (minimum);
+    CHECK_FIXNUM (minimum);
 
   buffer = wrap_buffer (buf);
 
   fromcol = current_column (buf);
-  mincol = fromcol + XINT (minimum);
-  if (mincol < XINT (column)) mincol = XINT (column);
+  mincol = fromcol + XFIXNUM (minimum);
+  if (mincol < XFIXNUM (column)) mincol = XFIXNUM (column);
 
   if (fromcol == mincol)
-    return make_int (mincol);
+    return make_fixnum (mincol);
 
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
 
-  if (!NILP (Fextent_at (make_int (BUF_PT (buf)), buffer, Qinvisible,
+  if (!NILP (Fextent_at (make_fixnum (BUF_PT (buf)), buffer, Qinvisible,
 			 Qnil, Qnil)))
     {
       Charbpos last_visible = last_visible_position (BUF_PT (buf), buf);
@@ -316,13 +316,13 @@ If BUFFER is nil, the current buffer is assumed.
       int n = mincol / tab_width - fromcol / tab_width;
       if (n != 0)
 	{
-	  Finsert_char (make_char ('\t'), make_int (n), Qnil, buffer);
+	  Finsert_char (make_char ('\t'), make_fixnum (n), Qnil, buffer);
 
 	  fromcol = (mincol / tab_width) * tab_width;
 	}
     }
 
-  Finsert_char (make_char (' '), make_int (mincol - fromcol), Qnil, buffer);
+  Finsert_char (make_char (' '), make_fixnum (mincol - fromcol), Qnil, buffer);
 
   last_known_column_buffer = buf;
   last_known_column = mincol;
@@ -333,7 +333,7 @@ If BUFFER is nil, the current buffer is assumed.
   if (opoint > 0)
     BUF_SET_PT (buf, opoint);
 
-  return make_int (mincol);
+  return make_fixnum (mincol);
 }
 
 int
@@ -342,7 +342,7 @@ byte_spaces_at_point (struct buffer *b, Bytebpos byte_pos)
   Bytebpos byte_end = BYTE_BUF_ZV (b);
   int col = 0;
   Ichar c;
-  int tab_width = XINT (b->tab_width);
+  int tab_width = XFIXNUM (b->tab_width);
 
   if (tab_width <= 0 || tab_width > 1000)
     tab_width = 8;
@@ -370,10 +370,10 @@ following any initial whitespace.
 
   buffer = wrap_buffer (buf);
 
-  if (!NILP (Fextent_at (make_int (pos), buffer, Qinvisible, Qnil, Qnil)))
+  if (!NILP (Fextent_at (make_fixnum (pos), buffer, Qinvisible, Qnil, Qnil)))
     return Qzero;
 
-  return make_int (byte_spaces_at_point (buf, charbpos_to_bytebpos (buf, pos)));
+  return make_fixnum (byte_spaces_at_point (buf, charbpos_to_bytebpos (buf, pos)));
 }
 
 
@@ -403,7 +403,7 @@ Returns the actual column that it moved to.
   int col = current_column (buf);
   int goal;
   Charbpos end;
-  int tab_width = XINT (buf->tab_width);
+  int tab_width = XFIXNUM (buf->tab_width);
 
   int prev_col = 0;
   Ichar c = 0;
@@ -411,8 +411,8 @@ Returns the actual column that it moved to.
   buffer = wrap_buffer (buf);
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
 
-  check_integer_range (column, Qzero, make_integer (EMACS_INT_MAX));
-  goal = XINT (column);
+  check_integer_range (column, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  goal = XFIXNUM (column);
 
  retry:
   pos = BUF_PT (buf);
@@ -471,7 +471,7 @@ Returns the actual column that it moved to.
   if (!NILP (force) && col > goal && c == '\t' && prev_col < goal)
     {
       buffer_delete_range (buf, BUF_PT (buf) - 1, BUF_PT (buf), 0);
-      Findent_to (make_int (col - 1), Qzero, buffer);
+      Findent_to (make_fixnum (col - 1), Qzero, buffer);
       buffer_insert_emacs_char (buf, ' ');
       goto retry;
     }
@@ -480,7 +480,7 @@ Returns the actual column that it moved to.
   if (col < goal && !NILP (force) && !EQ (force, Qcoerce))
     {
       col = goal;
-      Findent_to (make_int (col), Qzero, buffer);
+      Findent_to (make_fixnum (col), Qzero, buffer);
     }
 
   last_known_column_buffer = buf;
@@ -488,7 +488,7 @@ Returns the actual column that it moved to.
   last_known_column_point = BUF_PT (buf);
   last_known_column_modified = BUF_MODIFF (buf);
 
-  return make_int (col);
+  return make_fixnum (col);
 }
 
 #if 0 /* #### OK boys, this function needs to be present, I think.
@@ -541,36 +541,36 @@ visible section of the buffer, and pass LINE and COL as TOPOS.
   int hscroll, tab_offset;
   struct window *w = decode_window (window);
 
-  CHECK_INT_COERCE_MARKER (from);
+  CHECK_FIXNUM_COERCE_MARKER (from);
   CHECK_CONS (frompos);
-  CHECK_INT (XCAR (frompos));
-  CHECK_INT (XCDR (frompos));
-  CHECK_INT_COERCE_MARKER (to);
+  CHECK_FIXNUM (XCAR (frompos));
+  CHECK_FIXNUM (XCDR (frompos));
+  CHECK_FIXNUM_COERCE_MARKER (to);
   CHECK_CONS (topos);
-  CHECK_INT (XCAR (topos));
-  CHECK_INT (XCDR (topos));
-  CHECK_INT (width);
+  CHECK_FIXNUM (XCAR (topos));
+  CHECK_FIXNUM (XCDR (topos));
+  CHECK_FIXNUM (width);
   if (!NILP (offsets))
     {
       CHECK_CONS (offsets);
-      CHECK_INT (XCAR (offsets));
-      CHECK_INT (XCDR (offsets));
-      hscroll = XINT (XCAR (offsets));
-      tab_offset = XINT (XCDR (offsets));
+      CHECK_FIXNUM (XCAR (offsets));
+      CHECK_FIXNUM (XCDR (offsets));
+      hscroll = XFIXNUM (XCAR (offsets));
+      tab_offset = XFIXNUM (XCDR (offsets));
     }
   else
     hscroll = tab_offset = 0;
 
-  pos = compute_motion (XINT (from), XINT (XCDR (frompos)),
-			XINT (XCAR (frompos)),
-			XINT (to), XINT (XCDR (topos)),
-			XINT (XCAR (topos)),
-			XINT (width), hscroll, tab_offset, w);
+  pos = compute_motion (XFIXNUM (from), XFIXNUM (XCDR (frompos)),
+			XFIXNUM (XCAR (frompos)),
+			XFIXNUM (to), XFIXNUM (XCDR (topos)),
+			XFIXNUM (XCAR (topos)),
+			XFIXNUM (width), hscroll, tab_offset, w);
 
-  charbpos = make_int (pos->charbpos);
-  hpos = make_int (pos->hpos);
-  vpos = make_int (pos->vpos);
-  prevhpos = make_int (pos->prevhpos);
+  charbpos = make_fixnum (pos->charbpos);
+  hpos = make_fixnum (pos->hpos);
+  vpos = make_fixnum (pos->vpos);
+  prevhpos = make_fixnum (pos->prevhpos);
 
   return list5 (charbpos, hpos, vpos, prevhpos,
 		pos->contin ? Qt : Qnil);
@@ -715,7 +715,7 @@ Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
     window = Fselected_window (Qnil);
 
   CHECK_LIVE_WINDOW (window);
-  CHECK_INT (lines);
+  CHECK_FIXNUM (lines);
 
   selected = (EQ (window, Fselected_window (Qnil)));
 
@@ -727,17 +727,17 @@ Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
   vpos = pixels ? NULL   : &value;
   vpix = pixels ? &value : NULL;
 
-  charbpos = vmotion_1 (w, orig, XINT (lines), vpos, vpix);
+  charbpos = vmotion_1 (w, orig, XFIXNUM (lines), vpos, vpix);
 
   /* Note that the buffer's point is set, not the window's point. */
   if (selected)
     BUF_SET_PT (XBUFFER (w->buffer), charbpos);
   else
     set_marker_restricted (w->pointm[CURRENT_DISP],
-			   make_int(charbpos),
+			   make_fixnum(charbpos),
 			   w->buffer);
 
-  return make_int (value);
+  return make_fixnum (value);
 }
 
 DEFUN ("vertical-motion", Fvertical_motion, 1, 3, 0, /*
@@ -898,7 +898,7 @@ that the motion should be as close as possible to PIXELS.
     window = Fselected_window (Qnil);
 
   CHECK_LIVE_WINDOW (window);
-  CHECK_INT (pixels);
+  CHECK_FIXNUM (pixels);
 
   selected = (EQ (window, Fselected_window (Qnil)));
 
@@ -907,18 +907,18 @@ that the motion should be as close as possible to PIXELS.
   orig = selected ? BUF_PT (XBUFFER (w->buffer))
                   : marker_position (w->pointm[CURRENT_DISP]);
 
-  howto = INTP (how) ? XINT (how) : 0;
+  howto = FIXNUMP (how) ? XFIXNUM (how) : 0;
 
-  charbpos = vmotion_pixels (window, orig, XINT (pixels), howto, &motion);
+  charbpos = vmotion_pixels (window, orig, XFIXNUM (pixels), howto, &motion);
 
   if (selected)
     BUF_SET_PT (XBUFFER (w->buffer), charbpos);
   else
     set_marker_restricted (w->pointm[CURRENT_DISP],
-			   make_int(charbpos),
+			   make_fixnum(charbpos),
 			   w->buffer);
 
-  return make_int (motion);
+  return make_fixnum (motion);
 }
 
 

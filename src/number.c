@@ -250,7 +250,7 @@ If RATIONAL is an integer, 1 is returned.
 				   (XRATIO_DENOMINATOR (rational)));
     }
 #endif
-  return make_int (1);
+  return make_fixnum (1);
 }
 
 
@@ -332,7 +332,7 @@ Return the precision of bigfloat F as an integer.
   bignum_set_ulong (scratch_bignum, XBIGFLOAT_GET_PREC (f));
   return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-  return make_int ((int) XBIGFLOAT_GET_PREC (f));
+  return make_fixnum ((int) XBIGFLOAT_GET_PREC (f));
 #endif
 }
 
@@ -347,9 +347,9 @@ PRECISION bits of precision.
   unsigned long prec;
 
   CHECK_BIGFLOAT (f);
-  if (INTP (precision))
+  if (FIXNUMP (precision))
     {
-      prec = (XINT (precision) <= 0) ? 1UL : (unsigned long) XINT (precision);
+      prec = (XFIXNUM (precision) <= 0) ? 1UL : (unsigned long) XFIXNUM (precision);
     }
 #ifdef HAVE_BIGNUM
   else if (BIGNUMP (precision))
@@ -378,8 +378,8 @@ default_float_precision_changed (Lisp_Object UNUSED (sym), Lisp_Object *val,
 
   CONCHECK_INTEGER (*val);
 #ifdef HAVE_BIGFLOAT
-  if (INTP (*val))
-    prec = XINT (*val);
+  if (FIXNUMP (*val))
+    prec = XFIXNUM (*val);
   else
     {
       if (!bignum_fits_ulong_p (XBIGNUM_DATA (*val)))
@@ -446,8 +446,8 @@ Return the canonical form of NUMBER.
   if (BIGNUMP (number) && bignum_fits_emacs_int_p (XBIGNUM_DATA (number)))
     {
       EMACS_INT n = bignum_to_emacs_int (XBIGNUM_DATA (number));
-      if (NUMBER_FITS_IN_AN_EMACS_INT (n))
-	number = make_int (n);
+      if (NUMBER_FITS_IN_A_FIXNUM (n))
+	number = make_fixnum (n);
     }
 #endif
   return number;
@@ -456,7 +456,7 @@ Return the canonical form of NUMBER.
 enum number_type
 get_number_type (Lisp_Object arg)
 {
-  if (INTP (arg))
+  if (FIXNUMP (arg))
     return FIXNUM_T;
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (arg))
@@ -492,9 +492,9 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
   enum number_type current_type;
 
   if (CHARP (number))
-    number = make_int (XCHAR (number));
+    number = make_fixnum (XCHAR (number));
   else if (MARKERP (number))
-    number = make_int (marker_position (number));
+    number = make_fixnum (marker_position (number));
 
   /* Note that CHECK_NUMBER ensures that NUMBER is a supported type.  Hence,
      we ABORT() in the #else sections below, because it shouldn't be possible
@@ -510,21 +510,21 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  return number;
 	case BIGNUM_T:
 #ifdef HAVE_BIGNUM
-	  return make_bignum (XREALINT (number));
+	  return make_bignum (XREALFIXNUM (number));
 #else
 	  ABORT ();
 #endif /* HAVE_BIGNUM */
 	case RATIO_T:
 #ifdef HAVE_RATIO
-	  return make_ratio (XREALINT (number), 1UL);
+	  return make_ratio (XREALFIXNUM (number), 1UL);
 #else
 	  ABORT ();
 #endif /* HAVE_RATIO */
 	case FLOAT_T:
-	  return make_float (XREALINT (number));
+	  return make_float (XREALFIXNUM (number));
 	case BIGFLOAT_T:
 #ifdef HAVE_BIGFLOAT
-	  return make_bigfloat (XREALINT (number), precision);
+	  return make_bigfloat (XREALFIXNUM (number), precision);
 #else
 	  ABORT ();
 #endif /* HAVE_BIGFLOAT */
@@ -534,7 +534,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
       switch (type)
 	{
 	case FIXNUM_T:
-	  return make_int (bignum_to_long (XBIGNUM_DATA (number)));
+	  return make_fixnum (bignum_to_long (XBIGNUM_DATA (number)));
 	case BIGNUM_T:
 	  return number;
 	case RATIO_T:
@@ -568,7 +568,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	case FIXNUM_T:
 	  bignum_div (scratch_bignum, XRATIO_NUMERATOR (number),
 		      XRATIO_DENOMINATOR (number));
-	  return make_int (bignum_to_long (scratch_bignum));
+	  return make_fixnum (bignum_to_long (scratch_bignum));
 	case BIGNUM_T:
 	  bignum_div (scratch_bignum, XRATIO_NUMERATOR (number),
 		      XRATIO_DENOMINATOR (number));
@@ -627,7 +627,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
       switch (type)
 	{
 	case FIXNUM_T:
-	  return make_int (bigfloat_to_long (XBIGFLOAT_DATA (number)));
+	  return make_fixnum (bigfloat_to_long (XBIGFLOAT_DATA (number)));
 	case BIGNUM_T:
 #ifdef HAVE_BIGNUM
 	  bignum_set_bigfloat (scratch_bignum, XBIGFLOAT_DATA (number));
@@ -666,13 +666,13 @@ promote_args (Lisp_Object *arg1, Lisp_Object *arg2)
   enum number_type type1, type2;
 
   if (CHARP (*arg1))
-    *arg1 = make_int (XCHAR (*arg1));
+    *arg1 = make_fixnum (XCHAR (*arg1));
   else if (MARKERP (*arg1))
-    *arg1 = make_int (marker_position (*arg1));
+    *arg1 = make_fixnum (marker_position (*arg1));
   if (CHARP (*arg2))
-    *arg2 = make_int (XCHAR (*arg2));
+    *arg2 = make_fixnum (XCHAR (*arg2));
   else if (MARKERP (*arg2))
-    *arg2 = make_int (marker_position (*arg2));
+    *arg2 = make_fixnum (marker_position (*arg2));
 
   CHECK_NUMBER (*arg1);
   CHECK_NUMBER (*arg2);
@@ -752,9 +752,9 @@ cases; the information is silently lost.
 	{
 	  CHECK_INTEGER (precision);
 #ifdef HAVE_BIGNUM
-	  if (INTP (precision))
+	  if (FIXNUMP (precision))
 #endif /* HAVE_BIGNUM */
-	    prec = (unsigned long) XREALINT (precision);
+	    prec = (unsigned long) XREALFIXNUM (precision);
 #ifdef HAVE_BIGNUM
 	  else
 	    {
@@ -824,7 +824,7 @@ This should be 0 to create Lisp float types, or an unsigned integer no greater
 than `bigfloat-maximum-precision' to create Lisp bigfloat types with the
 indicated precision.
 */ default_float_precision_changed);
-  Vdefault_float_precision = make_int (0);
+  Vdefault_float_precision = make_fixnum (0);
 
   DEFVAR_CONST_LISP ("bigfloat-maximum-precision", &Vbigfloat_max_prec /*
 The maximum number of bits of precision a bigfloat can have.
@@ -834,9 +834,9 @@ This is determined by the underlying library used to implement bigfloats.
 #ifdef HAVE_BIGFLOAT
   /* Don't create a bignum here.  Otherwise, we lose with NEW_GC + pdump.
      See reinit_vars_of_number(). */
-  Vbigfloat_max_prec = make_int (EMACS_INT_MAX);
+  Vbigfloat_max_prec = make_fixnum (MOST_POSITIVE_FIXNUM);
 #else
-  Vbigfloat_max_prec = make_int (0);
+  Vbigfloat_max_prec = make_fixnum (0);
 #endif /* HAVE_BIGFLOAT */
 
   Fprovide (intern ("number-types"));

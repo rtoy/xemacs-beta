@@ -582,17 +582,17 @@ x_frame_property (struct frame *f, Lisp_Object property)
       if (!XtWindow(shell))
 	return Qzero;
       x_get_top_level_position (XtDisplay (shell), XtWindow (shell), &x, &y);
-      if (EQ (Qleft, property)) return make_int (x);
-      if (EQ (Qtop,  property)) return make_int (y);
+      if (EQ (Qleft, property)) return make_fixnum (x);
+      if (EQ (Qtop,  property)) return make_fixnum (y);
     }
   if (EQ (Qborder_width, property))
-    return make_int (w->core.border_width);
+    return make_fixnum (w->core.border_width);
   if (EQ (Qinternal_border_width, property))
-    return make_int (w->emacs_frame.internal_border_width);
+    return make_fixnum (w->emacs_frame.internal_border_width);
   if (EQ (Qborder_color, property))
     return color_to_string (gw, w->core.border_pixel);
   if (EQ (Qinter_line_space, property))
-    return make_int (w->emacs_frame.interline);
+    return make_fixnum (w->emacs_frame.interline);
   if (EQ (Qwindow_id, property))
     return Fx_window_id (wrap_frame (f));
 
@@ -622,21 +622,21 @@ x_frame_properties (struct frame *f)
   Position x, y;
 
   props = cons3 (Qwindow_id, Fx_window_id (wrap_frame (f)), props);
-  props = cons3 (Qinter_line_space, make_int (w->emacs_frame.interline), props);
+  props = cons3 (Qinter_line_space, make_fixnum (w->emacs_frame.interline), props);
 
   props = cons3 (Qborder_color,
 		 color_to_string (gw, w->core.border_pixel), props);
   props = cons3 (Qinternal_border_width,
-		 make_int (w->emacs_frame.internal_border_width), props);
-  props = cons3 (Qborder_width, make_int (w->core.border_width), props);
+		 make_fixnum (w->emacs_frame.internal_border_width), props);
+  props = cons3 (Qborder_width, make_fixnum (w->core.border_width), props);
 
   if (!XtWindow(shell))
     x = y = 0;
   else
     x_get_top_level_position (XtDisplay (shell), XtWindow (shell), &x, &y);
 
-  props = cons3 (Qtop,  make_int (y), props);
-  props = cons3 (Qleft, make_int (x), props);
+  props = cons3 (Qtop,  make_fixnum (y), props);
+  props = cons3 (Qleft, make_fixnum (x), props);
 
   return props;
 }
@@ -789,7 +789,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	    }
 	  else
 	    XtVaSetValues (w, XtVaTypedArg, extprop, XtRInt,
-			   XINT (val), sizeof (int),
+			   XFIXNUM (val), sizeof (int),
 			   NULL);
 	}
       else if (SYMBOLP (prop))
@@ -826,30 +826,30 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	     instead of pixels.  Yuck yuck yuck. */
 	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "width"))
 	    {
-	      CHECK_INT (val);
-	      width = XINT (val);
+	      CHECK_FIXNUM (val);
+	      width = XFIXNUM (val);
 	      width_specified_p = True;
 	      continue;
 	    }
 	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "height"))
 	    {
-	      CHECK_INT (val);
-	      height = XINT (val);
+	      CHECK_FIXNUM (val);
+	      height = XFIXNUM (val);
 	      height_specified_p = True;
 	      continue;
 	    }
 	  /* Further kludge the x/y. */
 	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "x"))
 	    {
-	      CHECK_INT (val);
-	      x = (Position) XINT (val);
+	      CHECK_FIXNUM (val);
+	      x = (Position) XFIXNUM (val);
 	      x_position_specified_p = True;
 	      continue;
 	    }
 	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "y"))
 	    {
-	      CHECK_INT (val);
-	      y = (Position) XINT (val);
+	      CHECK_FIXNUM (val);
+	      y = (Position) XFIXNUM (val);
 	      y_position_specified_p = True;
 	      continue;
 	    }
@@ -863,8 +863,8 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  strext = LISP_STRING_TO_EXTERNAL (str, Qxt_widget_arg_encoding);
 	  if (int_p)
 	    {
-	      CHECK_INT (val);
-	      Xt_SET_VALUE (w, strext, XINT (val));
+	      CHECK_FIXNUM (val);
+	      Xt_SET_VALUE (w, strext, XFIXNUM (val));
 	    }
 	  else if (EQ (val, Qt))
 	    {
@@ -945,14 +945,14 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  {
 	    Lisp_Object frame = wrap_frame (f);
 
-	    Fset_frame_size (frame, make_int (width),
-			      make_int (height), Qnil);
+	    Fset_frame_size (frame, make_fixnum (width),
+			      make_fixnum (height), Qnil);
 	  }
 	if (position_specified_p)
 	  {
 	    Lisp_Object frame = wrap_frame (f);
 
-	    Fset_frame_position (frame, make_int (x), make_int (y));
+	    Fset_frame_position (frame, make_fixnum (x), make_fixnum (y));
 	  }
       }
   }

@@ -203,9 +203,9 @@ inline static void
 profile_sow_backtrace (struct backtrace *bt)
 {
   bt->current_total_timing_val =
-    XINT (Fgethash (*bt->function, Vtotal_timing_profile_table, Qzero));
+    XFIXNUM (Fgethash (*bt->function, Vtotal_timing_profile_table, Qzero));
   bt->current_total_gc_usage_val =
-    XINT (Fgethash (*bt->function, Vtotal_gc_usage_profile_table, Qzero));
+    XFIXNUM (Fgethash (*bt->function, Vtotal_gc_usage_profile_table, Qzero));
   bt->function_being_called = 1;
   /* Need to think carefully about the exact order of operations here
     so that we don't end up with totals being less than function-only
@@ -255,11 +255,11 @@ profile_reap_backtrace (struct backtrace *bt)
   Fputhash (*bt->function,
 	    /* This works even when the total_ticks value has overwrapped.
 	       Same for total_consing below. */
-	    make_int ((EMACS_INT) (ticks - bt->total_ticks_at_start)
+	    make_fixnum ((EMACS_INT) (ticks - bt->total_ticks_at_start)
 		      + bt->current_total_timing_val),
 	    Vtotal_timing_profile_table);
   Fputhash (*bt->function,
-	    make_int ((EMACS_INT)
+	    make_fixnum ((EMACS_INT)
 		      (total_consing - bt->total_consing_at_start)
 		       + bt->current_total_gc_usage_val),
 	    Vtotal_gc_usage_profile_table);
@@ -364,14 +364,14 @@ will be properly accumulated. (To clear, use `clear-profiling-info'.)
   else
     {
 #ifdef HAVE_BIGNUM
-      check_integer_range (microsecs, make_int (1000), make_integer (INT_MAX));
+      check_integer_range (microsecs, make_fixnum (1000), make_integer (INT_MAX));
       msecs =
         BIGNUMP (microsecs) ? bignum_to_int (XBIGNUM_DATA (microsecs)) :
-                                             XINT (microsecs);
+                                             XFIXNUM (microsecs);
 #else
-      check_integer_range (microsecs, make_int (1000),
-                           make_integer (EMACS_INT_MAX));
-      msecs = XINT (microsecs);
+      check_integer_range (microsecs, make_fixnum (1000),
+                           make_integer (MOST_POSITIVE_FIXNUM));
+      msecs = XFIXNUM (microsecs);
 #endif
     }
   if (msecs <= 0)
@@ -473,7 +473,7 @@ get_profiling_info_timing_maphash (const void *void_key,
   key = GET_LISP_FROM_VOID (void_key);
   val = (EMACS_INT) void_val;
 
-  Fputhash (key, make_int (val), closure->timing);
+  Fputhash (key, make_fixnum (val), closure->timing);
   return 0;
 }
 
@@ -534,7 +534,7 @@ are recorded
       if (!gethash (STORE_LISP_IN_VOID (QSprofile_overhead), big_profile_table,
 		    &overhead))
 	overhead = 0;
-      Fputhash (QSprofile_overhead, make_int ((EMACS_INT) overhead),
+      Fputhash (QSprofile_overhead, make_fixnum ((EMACS_INT) overhead),
 		Vtotal_timing_profile_table);
 
       unbind_to (count);
@@ -560,12 +560,12 @@ set_profiling_info_timing_maphash (Lisp_Object key,
 				   void *UNUSED (void_closure))
 {
   /* This function does not GC */
-  if (!INTP (val))
+  if (!FIXNUMP (val))
     invalid_argument_2
       ("Function timing count is not an integer in given entry",
        key, val);
 
-  puthash (STORE_LISP_IN_VOID (key), (void *) XINT (val), big_profile_table);
+  puthash (STORE_LISP_IN_VOID (key), (void *) XFIXNUM (val), big_profile_table);
 
   return 0;
 }

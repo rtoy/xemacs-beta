@@ -309,13 +309,13 @@ casify_word (enum case_action flag, Lisp_Object arg, Lisp_Object buffer)
   Charbpos farend;
   struct buffer *buf = decode_buffer (buffer, 1);
 
-  CHECK_INT (arg);
+  CHECK_FIXNUM (arg);
 
-  farend = scan_words (buf, BUF_PT (buf), XINT (arg));
+  farend = scan_words (buf, BUF_PT (buf), XFIXNUM (arg));
   if (!farend)
-    farend = XINT (arg) > 0 ? BUF_ZV (buf) : BUF_BEGV (buf);
+    farend = XFIXNUM (arg) > 0 ? BUF_ZV (buf) : BUF_BEGV (buf);
 
-  casify_region_internal (flag, make_int (BUF_PT (buf)), make_int (farend), buf);
+  casify_region_internal (flag, make_fixnum (BUF_PT (buf)), make_fixnum (farend), buf);
   BUF_SET_PT (buf, max (BUF_PT (buf), farend));
   return Qnil;
 }

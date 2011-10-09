@@ -421,9 +421,9 @@ pas_de_holgazan_ici (int fd, Lisp_Object victim)
   Lisp_Object tem;
   EMACS_INT pos;
 
-  if (!INTP (XCDR (victim)))
+  if (!FIXNUMP (XCDR (victim)))
     invalid_byte_code ("Bogus doc string reference", victim);
-  pos = XINT (XCDR (victim));
+  pos = XFIXNUM (XCDR (victim));
   if (pos < 0)
     pos = -pos; /* kludge to mark a user variable */
   tem = unparesseuxify_doc_string (fd, pos, 0, Vload_file_name_internal, 0);
@@ -438,7 +438,7 @@ load_force_doc_string_unwind (Lisp_Object oldlist)
   struct gcpro gcpro1;
   Lisp_Object list = Vload_force_doc_string_list;
   Lisp_Object tail;
-  int fd = XINT (XCAR (Vload_descriptor_list));
+  int fd = XFIXNUM (XCAR (Vload_descriptor_list));
 
   GCPRO1 (list);
   /* restore the old value first just in case an error occurs. */
@@ -505,7 +505,7 @@ close_load_descs (void)
 {
   Lisp_Object tail;
   LIST_LOOP (tail, Vload_descriptor_list)
-    retry_close (XINT (XCAR (tail)));
+    retry_close (XFIXNUM (XCAR (tail)));
 }
 
 #ifdef I18N3
@@ -728,7 +728,7 @@ do {								\
     internal_bind_int (&load_in_progress, 1 + load_in_progress);
     record_unwind_protect (load_unwind, lispstream);
     internal_bind_lisp_object (&Vload_descriptor_list,
-			       Fcons (make_int (fd), Vload_descriptor_list));
+			       Fcons (make_fixnum (fd), Vload_descriptor_list));
     internal_bind_lisp_object (&Vload_file_name_internal, found);
     /* this is not a simple internal_bind. */
     record_unwind_protect (load_force_doc_string_unwind,
@@ -844,8 +844,8 @@ decode_mode_1 (Lisp_Object mode)
     return R_OK;
   else if (INTEGERP (mode))
     {
-      check_integer_range (mode, Qzero, make_int (7));
-      return XINT (mode);
+      check_integer_range (mode, Qzero, make_fixnum (7));
+      return XFIXNUM (mode);
     }
   else
     invalid_argument ("Invalid value", mode);
@@ -1582,7 +1582,7 @@ see some text temporarily disappear because of this.
 
   /* This both uses start and checks its type.  */
   Fgoto_char (start, cbuf);
-  Fnarrow_to_region (make_int (BUF_BEGV (current_buffer)), end, cbuf);
+  Fnarrow_to_region (make_fixnum (BUF_BEGV (current_buffer)), end, cbuf);
   readevalloop (cbuf, XBUFFER (cbuf)->filename, Feval,
 		!NILP (stream));
 
@@ -1648,7 +1648,7 @@ START and END optionally delimit a substring of STRING from which to read;
   /* Yeah, it's ugly.  Gonna make something of it?
      At least our reader is reentrant ... */
   tem =
-    (Fcons (tem, make_int
+    (Fcons (tem, make_fixnum
 	    (string_index_byte_to_char
 	     (string,
 	      startval + Lstream_byte_count (XLSTREAM (lispstream))))));
@@ -1702,10 +1702,10 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
 
   if (i >= 0x110000 || i < 0)
     {
-      syntax_error ("Not a Unicode code point", make_int(i));
+      syntax_error ("Not a Unicode code point", make_fixnum(i));
     }
 
-  lisp_char = Funicode_to_char(make_int(i), Qnil);
+  lisp_char = Funicode_to_char(make_fixnum(i), Qnil);
 
   if (EQ(Qnil, lisp_char))
     {
@@ -1716,7 +1716,7 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
 
          An undesirable aspect to this error is that the code point is shown
          as a decimal integer, which is mostly unreadable. */
-      syntax_error ("Unsupported Unicode code point", make_int(i));
+      syntax_error ("Unsupported Unicode code point", make_fixnum(i));
     }
 
   return XCHAR(lisp_char);
@@ -1970,7 +1970,7 @@ read_atom (Lisp_Object readcharfun,
 		  number = atol (read_buffer);
 		else
 		  ABORT ();
-		return make_int (number);
+		return make_fixnum (number);
 	      }
 #else
               return parse_integer ((Ibyte *) read_ptr, len, 10);
@@ -2061,10 +2061,10 @@ parse_integer (const Ibyte *buf, Bytecount len, int base)
 
   {
     EMACS_INT int_result = negativland ? - (EMACS_INT) num : (EMACS_INT) num;
-    Lisp_Object result = make_int (int_result);
-    if (num && ((XINT (result) < 0) != negativland))
+    Lisp_Object result = make_fixnum (int_result);
+    if (num && ((XFIXNUM (result) < 0) != negativland))
       goto overflow;
-    if (XINT (result) != int_result)
+    if (XFIXNUM (result) != int_result)
       goto overflow;
     return result;
   }
@@ -2079,14 +2079,14 @@ parse_integer (const Ibyte *buf, Bytecount len, int base)
                   list3 (build_msg_string
 			 ("Integer constant overflow in reader"),
                          make_string (buf, len),
-                         make_int (base)));
+                         make_fixnum (base)));
 #endif /* HAVE_BIGNUM */
  loser:
   return Fsignal (Qinvalid_read_syntax,
                   list3 (build_msg_string
 			 ("Invalid integer constant in reader"),
                          make_string (buf, len),
-                         make_int (base)));
+                         make_fixnum (base)));
 }
 
 
@@ -2200,7 +2200,7 @@ read_structure (Lisp_Object readcharfun)
   list = read_list (readcharfun, ')', 0, 0);
   orig_list = list;
   {
-    int len = XINT (Flength (list));
+    int len = XFIXNUM (Flength (list));
     if (len == 0)
       RETURN_UNGCPRO (continuable_read_syntax_error
 		      ("structure type not specified"));
@@ -2710,7 +2710,7 @@ retry:
 		  n += c - '0';
 		  c = readchar (readcharfun);
 		}
-	      found = assq_no_quit (make_int (n), Vread_objects);
+	      found = assq_no_quit (make_fixnum (n), Vread_objects);
 	      if (c == '=')
 		{
 		  /* #n=object returns object, but associates it with
@@ -2720,13 +2720,13 @@ retry:
                       return Fsignal (Qinvalid_read_syntax,
                                       list2 (build_msg_string
                                              ("Multiply defined object label"),
-                                             make_int (n)));
+                                             make_fixnum (n)));
                     }
                   else
                     {
                       Lisp_Object object;
 
-                      found = Fcons (make_int (n), Qnil);
+                      found = Fcons (make_fixnum (n), Qnil);
                       /* Make FOUND a placeholder for the object that will
                          be read. (We've just consed it, and it's not
                          visible from Lisp, so there's no possibility of
@@ -2751,7 +2751,7 @@ retry:
 		    return Fsignal (Qinvalid_read_syntax,
 				    list2 (build_msg_string
 					   ("Undefined symbol label"),
-					   make_int (n)));
+					   make_fixnum (n)));
 		}
 	      return Fsignal (Qinvalid_read_syntax,
 			      list1 (build_ascstring ("#")));
@@ -3159,7 +3159,7 @@ read_vector (Lisp_Object readcharfun,
 
   UNGCPRO;
   tem = s.head;
-  len = XINT (Flength (tem));
+  len = XFIXNUM (Flength (tem));
 
   s.head = make_vector (len, Qnil);
 
@@ -3192,7 +3192,7 @@ read_compiled_function (Lisp_Object readcharfun, Ichar terminator)
      because we need to handle the "doc reference" for the
      instructions and constants differently. */
   stuff = read_list (readcharfun, terminator, 0, 0);
-  len = XINT (Flength (stuff));
+  len = XFIXNUM (Flength (stuff));
   if (len < COMPILED_STACK_DEPTH + 1 || len > COMPILED_DOMAIN + 1)
     return
       continuable_read_syntax_error ("#[...] used with wrong number of elements");
