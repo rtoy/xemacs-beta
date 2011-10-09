@@ -323,11 +323,11 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
       {
 	Lisp_Object Vx, Vy;
 	Vx = Fevent_x_pixel (obj);
-	assert (INTP (Vx));
+	assert (FIXNUMP (Vx));
 	Vy = Fevent_y_pixel (obj);
-	assert (INTP (Vy));
+	assert (FIXNUMP (Vy));
 	write_fmt_string (printcharfun, "#<motion-event %ld, %ld",
-			  (long) XINT (Vx), (long) XINT (Vy));
+			  (long) XFIXNUM (Vx), (long) XFIXNUM (Vy));
 	break;
       }
     case process_event:
@@ -639,16 +639,16 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qbutton))
 	  {
-	    check_integer_range (value, Qzero, make_int (26));
+	    check_integer_range (value, Qzero, make_fixnum (26));
 
 	    switch (EVENT_TYPE (e))
 	      {
 	      case button_press_event:
 	      case button_release_event:
-		SET_EVENT_BUTTON_BUTTON (e, XINT (value));
+		SET_EVENT_BUTTON_BUTTON (e, XFIXNUM (value));
 		break;
 	      case misc_user_event:
-		SET_EVENT_MISC_USER_BUTTON (e, XINT (value));
+		SET_EVENT_MISC_USER_BUTTON (e, XFIXNUM (value));
 		break;
 	      default:
 		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
@@ -707,8 +707,8 @@ WARNING: the event object returned may be a reused one; see the function
 	      case misc_user_event:
 		/* Allow negative values, so we can specify toolbar
 		   positions.  */
-		CHECK_INT (value);
-		coord_x = XINT (value);
+		CHECK_FIXNUM (value);
+		coord_x = XFIXNUM (value);
 		break;
 	      default:
 		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
@@ -724,8 +724,8 @@ WARNING: the event object returned may be a reused one; see the function
 	      case button_release_event:
 	      case misc_user_event:
 		/* Allow negative values; see above. */
-		CHECK_INT (value);
-		coord_y = XINT (value);
+		CHECK_FIXNUM (value);
+		coord_y = XFIXNUM (value);
 		break;
 	      default:
 		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
@@ -741,11 +741,11 @@ WARNING: the event object returned may be a reused one; see the function
                 SET_EVENT_TIMESTAMP (e, bignum_to_uint (XBIGNUM_DATA (value)));
               }
 #else
-            check_integer_range (value, Qzero, make_integer (EMACS_INT_MAX));
+            check_integer_range (value, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
 #endif
-            if (INTP (value))
+            if (FIXNUMP (value))
               {
-                SET_EVENT_TIMESTAMP (e, XINT (value));
+                SET_EVENT_TIMESTAMP (e, XFIXNUM (value));
               }
             else
               {
@@ -1456,7 +1456,7 @@ void
 nth_of_key_sequence_as_event (Lisp_Object seq, int n, Lisp_Object event)
 {
   assert (STRINGP (seq) || VECTORP (seq));
-  assert (n < XINT (Flength (seq)));
+  assert (n < XFIXNUM (Flength (seq)));
 
   if (STRINGP (seq))
     {
@@ -1476,7 +1476,7 @@ nth_of_key_sequence_as_event (Lisp_Object seq, int n, Lisp_Object event)
 Lisp_Object
 key_sequence_to_event_chain (Lisp_Object seq)
 {
-  int len = XINT (Flength (seq));
+  int len = XFIXNUM (Flength (seq));
   int i;
   Lisp_Object head = Qnil, tail = Qnil;
 
@@ -1763,10 +1763,10 @@ See also `current-event-timestamp'.
      bignums on builds that support them, but that involves consing and
      doesn't work on builds that don't support bignums.
    */
-  return make_int (EMACS_INT_MAX & XEVENT_TIMESTAMP (event));
+  return make_fixnum (MOST_POSITIVE_FIXNUM & XEVENT_TIMESTAMP (event));
 }
 
-#define TIMESTAMP_HALFSPACE (1L << (INT_VALBITS - 2))
+#define TIMESTAMP_HALFSPACE (1L << (FIXNUM_VALBITS - 2))
 
 DEFUN ("event-timestamp<", Fevent_timestamp_lessp, 2, 2, 0, /*
 Return true if timestamp TIME1 is earlier than timestamp TIME2.
@@ -1777,11 +1777,11 @@ See also `event-timestamp' and `current-event-timestamp'.
 {
   EMACS_INT t1, t2;
 
-  check_integer_range (time1, Qzero, make_integer (EMACS_INT_MAX));
-  check_integer_range (time2, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (time1, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (time2, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
 
-  t1 = XINT (time1);
-  t2 = XINT (time2);
+  t1 = XFIXNUM (time1);
+  t2 = XFIXNUM (time2);
 
   if (t1 < t2)
     return t2 - t1 < TIMESTAMP_HALFSPACE ? Qt : Qnil;
@@ -1835,9 +1835,9 @@ Return the button-number of the button-press or button-release event EVENT.
 		     misc_user_event, Qbutton_event_p);
 #ifdef HAVE_WINDOW_SYSTEM
   if (XEVENT_TYPE (event) == misc_user_event)
-    return make_int (XEVENT_MISC_USER_BUTTON (event));
+    return make_fixnum (XEVENT_MISC_USER_BUTTON (event));
   else
-    return make_int (XEVENT_BUTTON_BUTTON (event));
+    return make_fixnum (XEVENT_BUTTON_BUTTON (event));
 #else /* !HAVE_WINDOW_SYSTEM */
   return Qzero;
 #endif /* !HAVE_WINDOW_SYSTEM */
@@ -1855,14 +1855,14 @@ See also the function `event-modifiers'.
   switch (XEVENT_TYPE (event))
     {
     case key_press_event:
-      return make_int (XEVENT_KEY_MODIFIERS (event));
+      return make_fixnum (XEVENT_KEY_MODIFIERS (event));
     case button_press_event:
     case button_release_event:
-      return make_int (XEVENT_BUTTON_MODIFIERS (event));
+      return make_fixnum (XEVENT_BUTTON_MODIFIERS (event));
     case pointer_motion_event:
-      return make_int (XEVENT_MOTION_MODIFIERS (event));
+      return make_fixnum (XEVENT_MOTION_MODIFIERS (event));
     case misc_user_event:
-      return make_int (XEVENT_MISC_USER_MODIFIERS (event));
+      return make_fixnum (XEVENT_MISC_USER_MODIFIERS (event));
     default:
       event = wrong_type_argument (intern ("key-or-mouse-event-p"), event);
       goto again;
@@ -1914,7 +1914,7 @@ clever things.
 */
        (event))
 {
-  int mod = XINT (Fevent_modifier_bits (event));
+  int mod = XFIXNUM (Fevent_modifier_bits (event));
   Lisp_Object result = Qnil;
   struct gcpro gcpro1;
 
@@ -1995,7 +1995,7 @@ See also `mouse-event-p' and `event-x-pixel'.
   if (!event_x_y_pixel_internal (event, &x, &y, 1))
     return wrong_type_argument (Qmouse_event_p, event);
   else
-    return make_int (x);
+    return make_fixnum (x);
 }
 
 DEFUN ("event-window-y-pixel", Fevent_window_y_pixel, 1, 1, 0, /*
@@ -2013,7 +2013,7 @@ See also `mouse-event-p' and `event-y-pixel'.
   if (!event_x_y_pixel_internal (event, &x, &y, 1))
     return wrong_type_argument (Qmouse_event_p, event);
   else
-    return make_int (y);
+    return make_fixnum (y);
 }
 
 DEFUN ("event-x-pixel", Fevent_x_pixel, 1, 1, 0, /*
@@ -2031,7 +2031,7 @@ See also `mouse-event-p' and `event-window-x-pixel'.
   if (!event_x_y_pixel_internal (event, &x, &y, 0))
     return wrong_type_argument (Qmouse_event_p, event);
   else
-    return make_int (x);
+    return make_fixnum (x);
 }
 
 DEFUN ("event-y-pixel", Fevent_y_pixel, 1, 1, 0, /*
@@ -2049,7 +2049,7 @@ See also `mouse-event-p' `event-window-y-pixel'.
   if (!event_x_y_pixel_internal (event, &x, &y, 0))
     return wrong_type_argument (Qmouse_event_p, event);
   else
-    return make_int (y);
+    return make_fixnum (y);
 }
 
 /* Given an event, return a value:
@@ -2269,7 +2269,7 @@ visible in the event's window.
 
   event_pixel_translation (event, 0, 0, 0, 0, &w, &bufp, 0, 0, 0, 0);
 
-  return w && bufp ? make_int (bufp) : Qnil;
+  return w && bufp ? make_fixnum (bufp) : Qnil;
 }
 
 DEFUN ("event-closest-point", Fevent_closest_point, 1, 1, 0, /*
@@ -2290,7 +2290,7 @@ return the value of (window-end).
 
   event_pixel_translation (event, 0, 0, 0, 0, 0, 0, &bufp, 0, 0, 0);
 
-  return bufp ? make_int (bufp) : Qnil;
+  return bufp ? make_fixnum (bufp) : Qnil;
 }
 
 DEFUN ("event-x", Fevent_x, 1, 1, 0, /*
@@ -2303,7 +2303,7 @@ This is relative to the window the event occurred over.
 
   event_pixel_translation (event, &char_x, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-  return make_int (char_x);
+  return make_fixnum (char_x);
 }
 
 DEFUN ("event-y", Fevent_y, 1, 1, 0, /*
@@ -2316,7 +2316,7 @@ This is relative to the window the event occurred over.
 
   event_pixel_translation (event, 0, &char_y, 0, 0, 0, 0, 0, 0, 0, 0);
 
-  return make_int (char_y);
+  return make_fixnum (char_y);
 }
 
 DEFUN ("event-modeline-position", Fevent_modeline_position, 1, 1, 0, /*
@@ -2335,7 +2335,7 @@ is buffer-local, and you must use EVENT's buffer when retrieving
 
   where = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, &mbufp, 0, 0);
 
-  return (mbufp < 0 || where != OVER_MODELINE) ? Qnil : make_int (mbufp);
+  return (mbufp < 0 || where != OVER_MODELINE) ? Qnil : make_fixnum (mbufp);
 }
 
 DEFUN ("event-glyph", Fevent_glyph, 1, 1, 0, /*
@@ -2378,7 +2378,7 @@ nil is returned.
 
   event_pixel_translation (event, 0, 0, &obj_x, 0, &w, 0, 0, 0, 0, &extent);
 
-  return w && EXTENTP (extent) ? make_int (obj_x) : Qnil;
+  return w && EXTENTP (extent) ? make_fixnum (obj_x) : Qnil;
 }
 
 DEFUN ("event-glyph-y-pixel", Fevent_glyph_y_pixel, 1, 1, 0, /*
@@ -2394,7 +2394,7 @@ nil is returned.
 
   event_pixel_translation (event, 0, 0, 0, &obj_y, &w, 0, 0, 0, 0, &extent);
 
-  return w && EXTENTP (extent) ? make_int (obj_y) : Qnil;
+  return w && EXTENTP (extent) ? make_fixnum (obj_y) : Qnil;
 }
 
 DEFUN ("event-toolbar-button", Fevent_toolbar_button, 1, 1, 0, /*
@@ -2494,7 +2494,7 @@ This is in the form of a property list (alternating keyword/value pairs).
     case timeout_event:
       props = cons3 (Qobject,	Fevent_object	(event), props);
       props = cons3 (Qfunction, Fevent_function (event), props);
-      props = cons3 (Qid, make_int (EVENT_TIMEOUT_ID_NUMBER (e)), props);
+      props = cons3 (Qid, make_fixnum (EVENT_TIMEOUT_ID_NUMBER (e)), props);
       break;
 
     case key_press_event:

@@ -569,10 +569,10 @@ x_handle_sticky_modifiers (XEvent *ev, struct device *d)
 	      && ((xd->last_downkey
 		   && ((keycode != xd->last_downkey
 			|| ev->xkey.time != xd->release_time)))
-		  || (INTP (Vmodifier_keys_sticky_time)
+		  || (FIXNUMP (Vmodifier_keys_sticky_time)
 		      && ev->xkey.time
 		      > (xd->modifier_release_time
-			 + XINT (Vmodifier_keys_sticky_time))))))
+			 + XFIXNUM (Vmodifier_keys_sticky_time))))))
 	{
 	  xd->need_to_add_mask = 0;
 	  xd->last_downkey = 0;
@@ -630,9 +630,9 @@ x_handle_sticky_modifiers (XEvent *ev, struct device *d)
 	}
 
       if (xd->modifier_release_time
-	  && INTP (Vmodifier_keys_sticky_time)
+	  && FIXNUMP (Vmodifier_keys_sticky_time)
 	  && (ev->xkey.time
-	      > xd->modifier_release_time + XINT (Vmodifier_keys_sticky_time)))
+	      > xd->modifier_release_time + XFIXNUM (Vmodifier_keys_sticky_time)))
 	{
 	  xd->need_to_add_mask = 0;
 	  xd->down_mask = 0;

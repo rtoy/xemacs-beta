@@ -3649,8 +3649,8 @@ get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
   Charbpos ind;
   Charbpos min_allowed, max_allowed;
 
-  CHECK_INT_COERCE_MARKER (pos);
-  ind = XINT (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
+  ind = XFIXNUM (pos);
   min_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_BEG (b) : BUF_BEGV (b);
   max_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_Z   (b) : BUF_ZV   (b);
 
@@ -3762,8 +3762,8 @@ get_string_pos_char_1 (Lisp_Object string, Lisp_Object pos, unsigned int flags,
 
   /* Computation of KNOWN_LENGTH is potentially expensive so we pass
      it in. */
-  CHECK_INT (pos);
-  ccpos = XINT (pos);
+  CHECK_FIXNUM (pos);
+  ccpos = XFIXNUM (pos);
   if (ccpos < 0 && flags & GB_NEGATIVE_FROM_END)
     ccpos += max_allowed;
 
@@ -4745,7 +4745,7 @@ non_ascii_valid_ichar_p (Ichar ch)
 #ifdef ENABLE_COMPOSITE_CHARS
       if (f1 + FIELD1_TO_OFFICIAL_LEADING_BYTE == LEADING_BYTE_COMPOSITE)
 	{
-	  if (UNBOUNDP (Fgethash (make_int (ch),
+	  if (UNBOUNDP (Fgethash (make_fixnum (ch),
 				  Vcomposite_char_char2string_hash_table,
 				  Qunbound)))
 	    return 0;
@@ -4918,14 +4918,14 @@ are allowed:
 
   get_charset_limits (charset, &lowlim, &highlim);
 
-  CHECK_INT (arg1);
+  CHECK_FIXNUM (arg1);
   /* It is useful (and safe, according to Olivier Galibert) to strip
      the 8th bit off ARG1 and ARG2 because it allows programmers to
      write (make-char 'latin-iso8859-2 CODE) where code is the actual
      Latin 2 code of the character.  */
-  a1 = XINT (arg1) & 0x7f;
+  a1 = XFIXNUM (arg1) & 0x7f;
   if (a1 < lowlim || a1 > highlim)
-    args_out_of_range_3 (arg1, make_int (lowlim), make_int (highlim));
+    args_out_of_range_3 (arg1, make_fixnum (lowlim), make_fixnum (highlim));
 
   if (CHARSET_DIMENSION (cs) == 1)
     {
@@ -4935,10 +4935,10 @@ are allowed:
       return make_char (make_ichar (charset, a1, 0));
     }
 
-  CHECK_INT (arg2);
-  a2 = XINT (arg2) & 0x7f;
+  CHECK_FIXNUM (arg2);
+  a2 = XFIXNUM (arg2) & 0x7f;
   if (a2 < lowlim || a2 > highlim)
-    args_out_of_range_3 (arg2, make_int (lowlim), make_int (highlim));
+    args_out_of_range_3 (arg2, make_fixnum (lowlim), make_fixnum (highlim));
 
   return make_char (make_ichar (charset, a1, a2));
 #else
@@ -4949,14 +4949,14 @@ are allowed:
   else if (EQ (charset, Qcontrol_1)) lowlim =  0, highlim =  31;
   else	                             lowlim =  0, highlim = 127;
 
-  CHECK_INT (arg1);
+  CHECK_FIXNUM (arg1);
   /* It is useful (and safe, according to Olivier Galibert) to strip
      the 8th bit off ARG1 and ARG2 because it allows programmers to
      write (make-char 'latin-iso8859-2 CODE) where code is the actual
      Latin 2 code of the character.  */
-  a1 = XINT (arg1) & 0x7f;
+  a1 = XFIXNUM (arg1) & 0x7f;
   if (a1 < lowlim || a1 > highlim)
-    args_out_of_range_3 (arg1, make_int (lowlim), make_int (highlim));
+    args_out_of_range_3 (arg1, make_fixnum (lowlim), make_fixnum (highlim));
 
   if (EQ (charset, Qascii))
     return make_char (a1);
@@ -4991,9 +4991,9 @@ N defaults to 0 if omitted.
   BREAKUP_ICHAR (XCHAR (ch), charset, octet0, octet1);
 
   if (NILP (n) || EQ (n, Qzero))
-    return make_int (octet0);
-  else if (EQ (n, make_int (1)))
-    return make_int (octet1);
+    return make_fixnum (octet0);
+  else if (EQ (n, make_fixnum (1)))
+    return make_fixnum (octet1);
   else
     invalid_constant ("Octet number must be 0 or 1", n);
 }
@@ -5018,11 +5018,11 @@ Return list of charset and one or two position-codes of CHAR.
 
   if (XCHARSET_DIMENSION (charset) == 2)
     {
-      rc = list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
+      rc = list3 (XCHARSET_NAME (charset), make_fixnum (c1), make_fixnum (c2));
     }
   else
     {
-      rc = list2 (XCHARSET_NAME (charset), make_int (c1));
+      rc = list2 (XCHARSET_NAME (charset), make_fixnum (c1));
     }
   UNGCPRO;
 

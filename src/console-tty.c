@@ -114,7 +114,7 @@ tty_init_console (struct console *con, Lisp_Object props)
 
   /* Determine the controlling process */
   if (!NILP (controlling_process))
-    CHECK_INT (controlling_process);
+    CHECK_FIXNUM (controlling_process);
 
   /* Open the specified console */
 

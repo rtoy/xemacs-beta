@@ -573,7 +573,7 @@ test_hash_tables_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
 			 void *extra_arg)
 {
   test_hash_tables_data *p = (test_hash_tables_data *) extra_arg;
-  p->sum += XINT (value);
+  p->sum += XFIXNUM (value);
   return 0;
 }
 
@@ -582,10 +582,10 @@ test_hash_tables_modifying_mapper (Lisp_Object key, Lisp_Object value,
 				   void *extra_arg)
 {
   test_hash_tables_data *p = (test_hash_tables_data *) extra_arg;
-  Fputhash (make_int (- XINT (key)),
-	    make_int (2 * XINT (value)),
+  Fputhash (make_fixnum (- XFIXNUM (key)),
+	    make_fixnum (2 * XFIXNUM (value)),
 	    p->hash_table);
-  p->sum += XINT (value);
+  p->sum += XFIXNUM (value);
   return 0;
 }
 
@@ -594,7 +594,7 @@ test_hash_tables_predicate (Lisp_Object key,
 			    Lisp_Object UNUSED (value),
 			    void *UNUSED (extra_arg))
 {
-  return XINT (key) < 0;
+  return XFIXNUM (key) < 0;
 }
 
 
@@ -615,8 +615,8 @@ REASON is nil or a string describing the failure (not required).
   data.hash_table = make_lisp_hash_table (50, HASH_TABLE_NON_WEAK,
 					  Qequal);
 
-  Fputhash (make_int (1), make_int (2), data.hash_table);
-  Fputhash (make_int (3), make_int (4), data.hash_table);
+  Fputhash (make_fixnum (1), make_fixnum (2), data.hash_table);
+  Fputhash (make_fixnum (3), make_fixnum (4), data.hash_table);
 
   data.sum = 0;
   elisp_maphash_unsafe (test_hash_tables_mapper,
@@ -674,7 +674,7 @@ do									\
   assert (GET_VOID_FROM_LISP (STORE_VOID_IN_LISP (pval)) == pval);	\
 }									\
 while (0)
-  assert (INT_VALBITS >= 31);
+  assert (FIXNUM_VALBITS >= 31);
   FROB (&baz);
   FROB (&baz.x);
   FROB (&baz.y);
@@ -689,12 +689,12 @@ while (0)
   FROB (0x80808080);
   FROB (0xCAFEBABE);
   FROB (0xFFFFFFFE);
-#if INT_VALBITS >= 63
+#if FIXNUM_VALBITS >= 63
   FROB (0x0000808080808080);
   FROB (0x8080808080808080);
   FROB (0XDEADBEEFCAFEBABE);
   FROB (0XFFFFFFFFFFFFFFFE);
-#endif /* INT_VALBITS >= 63 */
+#endif /* FIXNUM_VALBITS >= 63 */
 
   return list1 (list3 (build_ascstring ("STORE_VOID_IN_LISP"), Qt, Qnil));
 }

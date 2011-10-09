@@ -48,13 +48,13 @@ static Lisp_Object Vpopup_callbacks;
 void
 gcpro_popup_callbacks (GUI_ID id, Lisp_Object data)
 {
-  Vpopup_callbacks = Fcons (Fcons (make_int (id), data), Vpopup_callbacks);
+  Vpopup_callbacks = Fcons (Fcons (make_fixnum (id), data), Vpopup_callbacks);
 }
 
 void
 ungcpro_popup_callbacks (GUI_ID id)
 {
-  Lisp_Object lid = make_int (id);
+  Lisp_Object lid = make_fixnum (id);
   Lisp_Object this_callback = assq_no_quit (lid, Vpopup_callbacks);
   Vpopup_callbacks = delq_no_quit (this_callback, Vpopup_callbacks);
 }
@@ -62,7 +62,7 @@ ungcpro_popup_callbacks (GUI_ID id)
 Lisp_Object
 get_gcpro_popup_callbacks (GUI_ID id)
 {
-  Lisp_Object lid = make_int (id);
+  Lisp_Object lid = make_fixnum (id);
   Lisp_Object this_callback = assq_no_quit (lid, Vpopup_callbacks);
 
   if (!NILP (this_callback))

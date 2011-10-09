@@ -636,7 +636,7 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
   init_buffer_markers (b);
   init_buffer_syntax_cache (b);
 
-  b->generated_modeline_string = Fmake_string (make_int (84), make_int (' '));
+  b->generated_modeline_string = Fmake_string (make_fixnum (84), make_fixnum (' '));
   b->modeline_extent_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
                                                    Qeq);
 
@@ -739,7 +739,7 @@ reset_buffer_local_variables (struct buffer *b, int first_time)
   /* For each slot that has a default value,
      copy that into the slot.  */
 #define MARKED_SLOT(slot)						\
-  { int mask = XINT (buffer_local_flags.slot);				\
+  { int mask = XFIXNUM (buffer_local_flags.slot);				\
     if ((mask > 0 || mask == -1 || mask == -3)				\
 	&& (first_time							\
 	    || NILP (Fget (XBUFFER (Vbuffer_local_symbols)->slot,	\
@@ -889,7 +889,7 @@ No argument or nil as argument means use current buffer as BUFFER.
   {
     struct buffer *syms = XBUFFER (Vbuffer_local_symbols);
 #define MARKED_SLOT(slot)					\
-    { int mask = XINT (buffer_local_flags.slot);		\
+    { int mask = XFIXNUM (buffer_local_flags.slot);		\
       if (mask == 0 || mask == -1				\
 	  || ((mask > 0) && (buf->local_var_flags & mask)))	\
         result = Fcons (Fcons (syms->slot, buf->slot), result);	\
@@ -969,7 +969,7 @@ No argument or nil as argument means use current buffer as BUFFER.
 {
   struct buffer *buf = decode_buffer (buffer, 0);
 
-  return make_int (BUF_MODIFF (buf));
+  return make_fixnum (BUF_MODIFF (buf));
 }
 
 DEFUN ("rename-buffer", Frename_buffer, 1, 2,
@@ -1513,7 +1513,7 @@ set_buffer_internal (struct buffer *b)
       Lisp_Object current_window = Fselected_window (Qnil);
       if (!NILP (current_window)
 	  && EQ(Fwindow_buffer (current_window), wrap_buffer (old_buf)))
-	Fset_window_point (current_window, make_int (BUF_PT (old_buf)));
+	Fset_window_point (current_window, make_fixnum (BUF_PT (old_buf)));
 
       /* Put the undo list back in the base buffer, so that it appears
 	 that an indirect buffer shares the undo list of its base.  */
@@ -1816,7 +1816,7 @@ The values returned are in the form of a plist of properties and values.
   b = XBUFFER (buffer);
 
 #define ADD_INT(field) \
-  plist = cons3 (make_int (b->text->field), \
+  plist = cons3 (make_fixnum (b->text->field), \
 		 intern_massaging_name (#field), plist)
 #define ADD_BOOL(field) \
   plist = cons3 (b->text->field ? Qt : Qnil, \
@@ -1843,11 +1843,11 @@ The values returned are in the form of a plist of properties and values.
     Lisp_Object pos[NUM_CACHED_POSITIONS];
     int i;
     for (i = 0; i < b->text->next_cache_pos; i++)
-      pos[i] = make_int (b->text->mule_charbpos_cache[i]);
+      pos[i] = make_fixnum (b->text->mule_charbpos_cache[i]);
     plist = cons3 (Flist (b->text->next_cache_pos, pos),
 		   intern ("mule-charbpos-cache"), plist);
     for (i = 0; i < b->text->next_cache_pos; i++)
-      pos[i] = make_int (b->text->mule_bytebpos_cache[i]);
+      pos[i] = make_fixnum (b->text->mule_bytebpos_cache[i]);
     plist = cons3 (Flist (b->text->next_cache_pos, pos),
 		   intern ("mule-bytebpos-cache"), plist);
   }
@@ -1866,9 +1866,9 @@ The values returned are in the form of a plist of properties and values.
   Lisp_Object plist = Qnil;
   CHECK_STRING (string);
 
-  plist = cons3 (make_int (XSTRING_LENGTH (string)),
+  plist = cons3 (make_fixnum (XSTRING_LENGTH (string)),
 		 intern ("byte-length"), plist);
-  plist = cons3 (make_int (XSTRING_ASCII_BEGIN (string)),
+  plist = cons3 (make_fixnum (XSTRING_ASCII_BEGIN (string)),
 		 intern ("ascii-begin"), plist);
 
   return Fnreverse (plist);
@@ -2243,9 +2243,9 @@ common_init_complex_vars_of_buffer (void)
   defs->modeline_format = build_ascstring ("%-");  /* reset in loaddefs.el */
   defs->case_fold_search = Qt;
   defs->selective_display_ellipses = Qt;
-  defs->tab_width = make_int (8);
+  defs->tab_width = make_fixnum (8);
   defs->ctl_arrow = Qt;
-  defs->fill_column = make_int (70);
+  defs->fill_column = make_fixnum (70);
   defs->left_margin = Qzero;
   defs->saved_size = Qzero;	/* lisp code wants int-or-nil */
   defs->modtime = 0;
@@ -2267,9 +2267,9 @@ common_init_complex_vars_of_buffer (void)
      * >0 is mask.  Var is local if ((buffer->local_var_flags & mask) != 0)
      *              Otherwise default is used.
      */
-    Lisp_Object always_local_no_default = make_int (0);
-    Lisp_Object always_local_resettable = make_int (-1);
-    Lisp_Object resettable		= make_int (-3);
+    Lisp_Object always_local_no_default = make_fixnum (0);
+    Lisp_Object always_local_resettable = make_fixnum (-1);
+    Lisp_Object resettable		= make_fixnum (-3);
 
     /* Assign the local-flags to the slots that have default values.
        The local flag is a bit that is used in the buffer
@@ -2279,7 +2279,7 @@ common_init_complex_vars_of_buffer (void)
 
     set_lheader_implementation ((struct lrecord_header *)
 				&buffer_local_flags, &lrecord_buffer);
-    nuke_all_buffer_slots (&buffer_local_flags, make_int (-2));
+    nuke_all_buffer_slots (&buffer_local_flags, make_fixnum (-2));
     buffer_local_flags.filename		   = always_local_no_default;
     buffer_local_flags.directory	   = always_local_no_default;
     buffer_local_flags.backed_up	   = always_local_no_default;
@@ -2306,28 +2306,28 @@ common_init_complex_vars_of_buffer (void)
     buffer_local_flags.category_table	= resettable;
 #endif
     buffer_local_flags.display_time     = always_local_no_default;
-    buffer_local_flags.display_count    = make_int (0);
+    buffer_local_flags.display_count    = make_fixnum (0);
 
-    buffer_local_flags.modeline_format		  = make_int (1<<0);
-    buffer_local_flags.abbrev_mode		  = make_int (1<<1);
-    buffer_local_flags.overwrite_mode		  = make_int (1<<2);
-    buffer_local_flags.case_fold_search		  = make_int (1<<3);
-    buffer_local_flags.auto_fill_function	  = make_int (1<<4);
-    buffer_local_flags.selective_display	  = make_int (1<<5);
-    buffer_local_flags.selective_display_ellipses = make_int (1<<6);
-    buffer_local_flags.tab_width		  = make_int (1<<7);
-    buffer_local_flags.truncate_lines		  = make_int (1<<8);
-    buffer_local_flags.ctl_arrow		  = make_int (1<<9);
-    buffer_local_flags.fill_column		  = make_int (1<<10);
-    buffer_local_flags.left_margin		  = make_int (1<<11);
-    buffer_local_flags.abbrev_table		  = make_int (1<<12);
+    buffer_local_flags.modeline_format		  = make_fixnum (1<<0);
+    buffer_local_flags.abbrev_mode		  = make_fixnum (1<<1);
+    buffer_local_flags.overwrite_mode		  = make_fixnum (1<<2);
+    buffer_local_flags.case_fold_search		  = make_fixnum (1<<3);
+    buffer_local_flags.auto_fill_function	  = make_fixnum (1<<4);
+    buffer_local_flags.selective_display	  = make_fixnum (1<<5);
+    buffer_local_flags.selective_display_ellipses = make_fixnum (1<<6);
+    buffer_local_flags.tab_width		  = make_fixnum (1<<7);
+    buffer_local_flags.truncate_lines		  = make_fixnum (1<<8);
+    buffer_local_flags.ctl_arrow		  = make_fixnum (1<<9);
+    buffer_local_flags.fill_column		  = make_fixnum (1<<10);
+    buffer_local_flags.left_margin		  = make_fixnum (1<<11);
+    buffer_local_flags.abbrev_table		  = make_fixnum (1<<12);
 #ifdef REGION_CACHE_NEEDS_WORK
-    buffer_local_flags.cache_long_line_scans	  = make_int (1<<13);
+    buffer_local_flags.cache_long_line_scans	  = make_fixnum (1<<13);
 #endif
-    buffer_local_flags.buffer_file_coding_system  = make_int (1<<14);
+    buffer_local_flags.buffer_file_coding_system  = make_fixnum (1<<14);
 
     /* #### Warning: 1<<31 is the largest number currently allowable
-       due to the XINT() handling of this value.  With some
+       due to the XFIXNUM() handling of this value.  With some
        rearrangement you can get 3 more bits.
 
        #### 3 more?  34 bits???? -ben */
@@ -2867,8 +2867,8 @@ handled:
      slot of buffer_local_flags and vice-versa.  Must be done after all
      DEFVAR_BUFFER_LOCAL() calls. */
 #define MARKED_SLOT(slot)					\
-  assert ((XINT (buffer_local_flags.slot) != -2 &&		\
-           XINT (buffer_local_flags.slot) != -3)		\
+  assert ((XFIXNUM (buffer_local_flags.slot) != -2 &&		\
+           XFIXNUM (buffer_local_flags.slot) != -3)		\
 	  == !(NILP (XBUFFER (Vbuffer_local_symbols)->slot)));
 #include "bufslots.h"
 

@@ -143,7 +143,7 @@ gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
       char_to_associate 
 #ifdef __GDK_KEYS_H__ 
 	= Funicode_to_char
-	      (make_int(gdk_keyval_to_unicode
+	      (make_fixnum(gdk_keyval_to_unicode
 			(gdk_keyval_from_name(symbol_name))), Qnil);
 #else /* GTK 1.whatever doesn't. Use the X11 map. */
         = gtk_keysym_to_character(gdk_keyval_from_name(symbol_name));

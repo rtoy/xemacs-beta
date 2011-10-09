@@ -472,10 +472,10 @@ extern int frame_changed;
 #ifdef HAVE_SCROLLBARS
 #define FRAME_SCROLLBAR_WIDTH(f)		\
   (NILP ((f)->vertical_scrollbar_visible_p) ?	\
-    0 : XINT ((f)->scrollbar_width))
+    0 : XFIXNUM ((f)->scrollbar_width))
 #define FRAME_SCROLLBAR_HEIGHT(f)		\
   (NILP ((f)->horizontal_scrollbar_visible_p) ?	\
-    0 : XINT ((f)->scrollbar_height))
+    0 : XFIXNUM ((f)->scrollbar_height))
 #else
 #define FRAME_SCROLLBAR_WIDTH(f) 0
 #define FRAME_SCROLLBAR_HEIGHT(f) 0
@@ -558,11 +558,11 @@ extern int frame_changed;
 #define FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE(f, pos) \
   (!NILP((f)->toolbar_buttons[pos]) && !NILP ((f)->toolbar_visible_p[pos]))
 #define FRAME_RAW_THEORETICAL_TOOLBAR_SIZE(f, pos) \
-  (!NILP ((f)->toolbar_buttons[pos]) && INTP((f)->toolbar_size[pos]) ? \
-   (XINT ((f)->toolbar_size[pos])) : 0)
+  (!NILP ((f)->toolbar_buttons[pos]) && FIXNUMP((f)->toolbar_size[pos]) ? \
+   (XFIXNUM ((f)->toolbar_size[pos])) : 0)
 #define FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos) \
-  (!NILP ((f)->toolbar_buttons[pos]) && INTP((f)->toolbar_border_width[pos]) ? \
-   (XINT ((f)->toolbar_border_width[pos])) : 0)
+  (!NILP ((f)->toolbar_buttons[pos]) && FIXNUMP((f)->toolbar_border_width[pos]) ? \
+   (XFIXNUM ((f)->toolbar_border_width[pos])) : 0)
 #else
 #define FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE(f, pos) 0
 #define FRAME_RAW_THEORETICAL_TOOLBAR_SIZE(f, pos) 0
@@ -606,15 +606,15 @@ extern int frame_changed;
   (HAS_FRAMEMETH_P (f, initialize_frame_toolbars) \
    && !NILP (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_visible_p[pos]))
 #define FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH(f, pos) \
-     ((INTP (XWINDOW \
+     ((FIXNUMP (XWINDOW \
 	     (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_border_width[pos])) ? \
-      (XINT (XWINDOW \
+      (XFIXNUM (XWINDOW \
 	     (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_border_width[pos])) \
       : 0)
 #define FRAME_RAW_REAL_TOOLBAR_SIZE(f, pos) \
-     ((INTP (XWINDOW \
+     ((FIXNUMP (XWINDOW \
 	     (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_size[pos])) ? \
-      (XINT (XWINDOW \
+      (XFIXNUM (XWINDOW \
 	     (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_size[pos])) : 0)
 #define FRAME_REAL_TOOLBAR(f, pos) \
   (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar[pos])

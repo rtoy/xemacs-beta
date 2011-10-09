@@ -265,7 +265,7 @@ end_of_defun (struct buffer *buf, Charbpos pt)
   if (NILP (retval))
     return BUF_ZV (buf);
   else
-    return XINT (retval);
+    return XFIXNUM (retval);
 }
 
 /* Set up context_cache for attempting to determine the syntactic context
@@ -741,7 +741,7 @@ WARNING: this may alter match-data.
   /* This function can GC */
   struct buffer *buf = decode_buffer (buffer, 0);
   find_context (buf, BUF_PT (buf));
-  return make_int (context_cache.depth);
+  return make_fixnum (context_cache.depth);
 }
 
 
@@ -819,10 +819,10 @@ WARNING: this may alter match-data.
 	continue;
       /* Make sure not to pass in values that are outside the
 	 actual bounds of this function. */
-      call4_in_buffer (buf, function, make_int (max (s, estart)),
-		       make_int (eend == e ? e : eend - 1),
+      call4_in_buffer (buf, function, make_fixnum (max (s, estart)),
+		       make_fixnum (eend == e ? e : eend - 1),
 		       context_to_symbol (this_context),
-		       make_int (edepth));
+		       make_fixnum (edepth));
     }
  DONE_LABEL:
   UNGCPRO;

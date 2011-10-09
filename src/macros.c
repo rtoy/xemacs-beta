@@ -81,7 +81,7 @@ Non-nil arg (prefix arg) means append to last macro defined;
     {
       message ("Appending to kbd macro...");
       con->kbd_macro_ptr = con->kbd_macro_end;
-      Fexecute_kbd_macro (con->last_kbd_macro, make_int (1));
+      Fexecute_kbd_macro (con->last_kbd_macro, make_fixnum (1));
     }
   con->defining_kbd_macro = Qt;
 
@@ -111,7 +111,7 @@ An argument of zero means repeat until error.
   if (NILP (arg))
     repeat = -1;
   else
-    repeat = XINT (Fprefix_numeric_value (arg));
+    repeat = XFIXNUM (Fprefix_numeric_value (arg));
 
   if (!NILP (con->defining_kbd_macro))
     {
@@ -137,7 +137,7 @@ An argument of zero means repeat until error.
     return Fexecute_kbd_macro (con->last_kbd_macro, Qzero);
   else
     return Fexecute_kbd_macro (con->last_kbd_macro,
-			       make_int (repeat - 1));
+			       make_fixnum (repeat - 1));
 }
 
 /* #### Read the comment in modeline.el to see why this ugliness is
@@ -184,7 +184,7 @@ pop_kbd_macro_event (Lisp_Object event)
 
   if (STRINGP (Vexecuting_macro) || VECTORP (Vexecuting_macro))
     {
-      if (executing_macro_index < XINT (Flength (Vexecuting_macro)))
+      if (executing_macro_index < XFIXNUM (Flength (Vexecuting_macro)))
 	{
 	  nth_of_key_sequence_as_event (Vexecuting_macro,
 					executing_macro_index++,
@@ -260,7 +260,7 @@ COUNT is a repeat count, or nil for once, or 0 for infinite loop.
   if (!NILP (count))
     {
       count = Fprefix_numeric_value (count);
-      repeat = XINT (count);
+      repeat = XFIXNUM (count);
     }
 
   final = indirect_function (macro, 1);

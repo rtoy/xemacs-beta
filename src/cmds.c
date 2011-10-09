@@ -65,11 +65,11 @@ the documentation for this variable for more details.
     n = 1;
   else
     {
-      CHECK_INT (count);
-      n = XINT (count);
+      CHECK_FIXNUM (count);
+      n = XFIXNUM (count);
     }
 
-  /* This used to just set point to point + XINT (count), and then check
+  /* This used to just set point to point + XFIXNUM (count), and then check
      to see if it was within boundaries.  But now that SET_PT can
      potentially do a lot of stuff (calling entering and exiting
      hooks, etcetera), that's not a good approach.  So we validate the
@@ -109,11 +109,11 @@ the documentation for this variable for more details.
        (count, buffer))
 {
   if (NILP (count))
-    count = make_int (-1);
+    count = make_fixnum (-1);
   else
     {
-      CHECK_INT (count);
-      count = make_int (- XINT (count));
+      CHECK_FIXNUM (count);
+      count = make_fixnum (- XFIXNUM (count));
     }
   return Fforward_char (count, buffer);
 }
@@ -145,8 +145,8 @@ the documentation for this variable for more details.
     n = 1;
   else
     {
-      CHECK_INT (count);
-      n = XINT (count);
+      CHECK_FIXNUM (count);
+      n = XFIXNUM (count);
     }
 
   negp = n <= 0;
@@ -158,7 +158,7 @@ the documentation for this variable for more details.
 	      && BUF_FETCH_CHAR (buf, pos - 1) != '\n')))
     shortage--;
   BUF_SET_PT (buf, pos);
-  return make_int (negp ? - shortage : shortage);
+  return make_fixnum (negp ? - shortage : shortage);
 }
 
 DEFUN ("point-at-bol", Fpoint_at_bol, 0, 2, 0, /*
@@ -174,11 +174,11 @@ This function does not move point.
 
   buffer = wrap_buffer (b);
   if (NILP (count))
-    count = make_int (0);
+    count = make_fixnum (0);
   else
     {
-      CHECK_INT (count);
-      count = make_int (XINT (count) - 1);
+      CHECK_FIXNUM (count);
+      count = make_fixnum (XFIXNUM (count) - 1);
     }
 
   orig = BUF_PT (b);
@@ -186,7 +186,7 @@ This function does not move point.
   end = BUF_PT (b);
   BUF_SET_PT (b, orig);
 
-  return make_int (end);
+  return make_fixnum (end);
 }
 
 DEFUN ("beginning-of-line", Fbeginning_of_line, 0, 2, "_p", /*
@@ -204,7 +204,7 @@ the documentation for this variable for more details.
 {
   struct buffer *b = decode_buffer (buffer, 1);
 
-  BUF_SET_PT (b, XINT (Fpoint_at_bol (count, buffer)));
+  BUF_SET_PT (b, XFIXNUM (Fpoint_at_bol (count, buffer)));
   return Qnil;
 }
 
@@ -223,11 +223,11 @@ This function does not move point.
     n = 1;
   else
     {
-      CHECK_INT (count);
-      n = XINT (count);
+      CHECK_FIXNUM (count);
+      n = XFIXNUM (count);
     }
 
-  return make_int (find_before_next_newline (buf, BUF_PT (buf), 0,
+  return make_fixnum (find_before_next_newline (buf, BUF_PT (buf), 0,
 					     n - (n <= 0)));
 }
 
@@ -246,7 +246,7 @@ the documentation for this variable for more details.
 {
   struct buffer *b = decode_buffer (buffer, 1);
 
-  BUF_SET_PT (b, XINT (Fpoint_at_eol (count, buffer)));
+  BUF_SET_PT (b, XFIXNUM (Fpoint_at_eol (count, buffer)));
   return Qnil;
 }
 
@@ -267,8 +267,8 @@ COUNT was explicitly specified.
     n = 1;
   else
     {
-      CHECK_INT (count);
-      n = XINT (count);
+      CHECK_FIXNUM (count);
+      n = XFIXNUM (count);
     }
 
   pos = BUF_PT (buf) + n;
@@ -311,11 +311,11 @@ COUNT was explicitly specified.
     n = 1;
   else
     {
-      CHECK_INT (count);
-      n = XINT (count);
+      CHECK_FIXNUM (count);
+      n = XFIXNUM (count);
     }
 
-  return Fdelete_char (make_int (- n), killp);
+  return Fdelete_char (make_fixnum (- n), killp);
 }
 
 static void internal_self_insert (Ichar ch, int noautofill);
@@ -334,8 +334,8 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
 
   /* Can't insert more than most-positive-fixnum characters, the buffer
      won't hold that many. */
-  check_integer_range (count, Qzero, make_int (EMACS_INT_MAX));
-  n = XINT (count);
+  check_integer_range (count, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
+  n = XFIXNUM (count);
 
   if (CHAR_OR_CHAR_INTP (Vlast_command_char))
     c = Vlast_command_char;
@@ -396,7 +396,7 @@ internal_self_insert (Ichar c1, int noautofill)
 	  || (c1 != '\n' && BUF_FETCH_CHAR (buf, BUF_PT (buf)) != '\n'))
       && (EQ (overwrite, Qoverwrite_mode_binary)
           || BUF_FETCH_CHAR (buf, BUF_PT (buf)) != '\t'
-	  || ((tab_width = XINT (buf->tab_width), tab_width <= 0)
+	  || ((tab_width = XFIXNUM (buf->tab_width), tab_width <= 0)
 	  || tab_width > 20
 	  || !((current_column (buf) + 1) % tab_width))))
     {
@@ -467,8 +467,8 @@ internal_self_insert (Ichar c1, int noautofill)
   if (!NILP (Vself_insert_face)
       && EQ (Vlast_command, Vself_insert_face_command))
     {
-      Lisp_Object before = make_int (BUF_PT (buf) - 1);
-      Lisp_Object after  = make_int (BUF_PT (buf));
+      Lisp_Object before = make_fixnum (BUF_PT (buf) - 1);
+      Lisp_Object after  = make_fixnum (BUF_PT (buf));
       Fput_text_property (before, after, Qface, Vself_insert_face, Qnil);
       Fput_text_property (before, after, Qstart_open, Qt, Qnil);
       Fput_text_property (before, after, Qend_open, Qnil, Qnil);

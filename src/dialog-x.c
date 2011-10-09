@@ -94,7 +94,7 @@ dbox_selection_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   popup_selection_callback (widget, id, client_data);
   /* #### need to error-protect!  will do so when i merge in
      my working ws */
-  va_run_hook_with_args (Qdelete_dialog_box_hook, 1, make_int (id));
+  va_run_hook_with_args (Qdelete_dialog_box_hook, 1, make_fixnum (id));
   lw_destroy_all_widgets (id);
 
   /* The Motif dialog box sets the keyboard focus to itself.  When it
@@ -289,7 +289,7 @@ x_make_dialog_box_internal (struct frame* f, Lisp_Object type,
 
   /* #### this could (theoretically) cause problems if we are up for
      a REALLY REALLY long time -- too big to fit into lisp integer. */
-  return make_int (dbox_id);
+  return make_fixnum (dbox_id);
 }
 
 void

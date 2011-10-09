@@ -1242,7 +1242,7 @@ The return value of the `setq' form is the value of the last VAL.
   GET_LIST_LENGTH (args, nargs);
 
   if (nargs & 1)		/* Odd number of arguments? */
-    Fsignal (Qwrong_number_of_arguments, list2 (Qsetq, make_int (nargs)));
+    Fsignal (Qwrong_number_of_arguments, list2 (Qsetq, make_fixnum (nargs)));
 
   GC_PROPERTY_LIST_LOOP_3 (symbol, val, args)
     {
@@ -1281,7 +1281,7 @@ arguments: (OBJECT)
   if (nargs != 1)
     {
       Fsignal (Qwrong_number_of_arguments,
-               list2 (Qquote, make_int (nargs)));
+               list2 (Qquote, make_fixnum (nargs)));
     }
 
   return XCAR (args);
@@ -1363,7 +1363,7 @@ arguments: (SYMBOL-OR-LAMBDA)
   if (nargs != 1)
     {
       Fsignal (Qwrong_number_of_arguments,
-               list2 (Qfunction, make_int (nargs)));
+               list2 (Qfunction, make_fixnum (nargs)));
     }
 
   return XCAR (args);
@@ -1410,7 +1410,7 @@ arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
   /* This function can GC */
   if (!NILP (Vmacro_declaration_function))
     {
-      Lisp_Object declare = Fnth (make_int (2), args);
+      Lisp_Object declare = Fnth (make_fixnum (2), args);
 
       /* Sigh. This GNU interface is incompatible with the CL declare macro,
          and the latter is much older.
@@ -1426,7 +1426,7 @@ arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
 
       if (STRINGP (declare))
         {
-          declare = Fnth (make_int (3), args);
+          declare = Fnth (make_fixnum (3), args);
         }
 
       if (CONSP (declare) && EQ (Qdeclare, XCAR (declare)))
@@ -1601,7 +1601,7 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 	  if (EQ (XCAR (def), Qautoload))
 	    {
 	      /* Autoloading function: will it be a macro when loaded?  */
-	      tem = Felt (def, make_int (4));
+	      tem = Felt (def, make_fixnum (4));
 	      if (EQ (tem, Qt) || EQ (tem, Qmacro))
 		{
 		  /* Yes, load it and try again.  */
@@ -1929,7 +1929,7 @@ arguments: (TAG VALUE)
   GET_LIST_LENGTH (args, nargs);
   if (nargs != 2)
     {
-      Fsignal (Qwrong_number_of_arguments, list2 (Qthrow, make_int (nargs)));
+      Fsignal (Qwrong_number_of_arguments, list2 (Qthrow, make_fixnum (nargs)));
     }
 
   tag = IGNORE_MULTIPLE_VALUES (Feval (XCAR(args)));
@@ -2309,8 +2309,8 @@ arguments: (HANDLER FUNCTION &rest ARGS)
   Lisp_Object tem;
 
   tem = Ffunction_max_args (args[0]);
-  if (! (XINT (Ffunction_min_args (args[0])) <= 1
-	 && (NILP (tem) || 1 <= XINT (tem))))
+  if (! (XFIXNUM (Ffunction_min_args (args[0])) <= 1
+	 && (NILP (tem) || 1 <= XFIXNUM (tem))))
     invalid_argument ("Must be function of one argument", args[0]);
 
   /* (handler-fun . handler-args)  but currently there are no handler-args */
@@ -3042,7 +3042,7 @@ Lisp_Object
 signal_wrong_number_of_arguments_error (Lisp_Object function, int nargs)
 {
   return Fsignal (Qwrong_number_of_arguments,
-		  list2 (function, make_int (nargs)));
+		  list2 (function, make_fixnum (nargs)));
 }
 
 /* Used in list traversal macros for efficiency. */
@@ -3705,7 +3705,7 @@ funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
       if (EQ (fun, indirect_function (*backtrace_list->function, 0)))
 	fun = *backtrace_list->function;
       return Fsignal (Qwrong_number_of_arguments,
-		      list2 (fun, make_int (nargs)));
+		      list2 (fun, make_fixnum (nargs)));
     }
 
   {
@@ -4275,11 +4275,11 @@ function_argcount (Lisp_Object function, int function_min_args_p)
 	      optimize_compiled_function (function);
 
       if (function_min_args_p)
-	return make_int (f->min_args);
+	return make_fixnum (f->min_args);
       else if (f->max_args == MANY)
 	return Qnil;
       else
-	return make_int (f->max_args);
+	return make_fixnum (f->max_args);
     }
   else if (CONSP (function))
     {
@@ -4335,7 +4335,7 @@ function_argcount (Lisp_Object function, int function_min_args_p)
 	  }
       }
 
-    return make_int (argcount);
+    return make_fixnum (argcount);
   }
 }
 
@@ -4633,8 +4633,8 @@ multiple_value_aset (Lisp_Object obj, Elemcount index, Lisp_Object value)
   if (index != 0 &&
       (index < first_desired || index >= (first_desired + allocated_count)))
     {
-      args_out_of_range (make_int (first_desired),
-                         make_int (first_desired + allocated_count));
+      args_out_of_range (make_fixnum (first_desired),
+                         make_fixnum (first_desired + allocated_count));
     }
 
   mv->contents[index == 0 ? 0 : 1 + (index - first_desired)] = value;
@@ -4650,8 +4650,8 @@ multiple_value_aref (Lisp_Object obj, Elemcount index)
   if (index != 0 &&
       (index < first_desired || index >= (first_desired + allocated_count)))
     {
-      args_out_of_range (make_int (first_desired),
-                         make_int (first_desired + allocated_count));
+      args_out_of_range (make_fixnum (first_desired),
+                         make_fixnum (first_desired + allocated_count));
     }
 
   return mv->contents[index == 0 ? 0 : 1 + (index - first_desired)];
@@ -4758,7 +4758,7 @@ bind_multiple_value_limits (int first, int upper)
 
   if (upper > Vmultiple_values_limit)
     {
-      args_out_of_range (make_int (upper), make_int (Vmultiple_values_limit));
+      args_out_of_range (make_fixnum (upper), make_fixnum (Vmultiple_values_limit));
     }
 
   /* In the event that something back up the stack wants more multiple
@@ -4793,7 +4793,7 @@ Lisp_Object
 multiple_value_call (int nargs, Lisp_Object *args)
 {
   /* The argument order here is horrible: */
-  int i, speccount = XINT (args[3]);
+  int i, speccount = XFIXNUM (args[3]);
   Lisp_Object result = Qnil, head = Fcons (args[0], Qnil), list_offset; 
   struct gcpro gcpro1, gcpro2;
   Lisp_Object apply_args[2];
@@ -4866,13 +4866,13 @@ arguments: (FUNCTION &rest FORMS)
   gcpro1.nvars = ++i; 
 
   /* The argument order is horrible here. */
-  constructed_args[i] = make_int (0);
+  constructed_args[i] = make_fixnum (0);
   gcpro1.nvars = ++i;
-  constructed_args[i] = make_int (Vmultiple_values_limit);
+  constructed_args[i] = make_fixnum (Vmultiple_values_limit);
   gcpro1.nvars = ++i;
 
   speccount = bind_multiple_value_limits (0, Vmultiple_values_limit);
-  constructed_args[i] = make_int (speccount);
+  constructed_args[i] = make_fixnum (speccount);
   gcpro1.nvars = ++i;
 
   {
@@ -4889,8 +4889,8 @@ arguments: (FUNCTION &rest FORMS)
 Lisp_Object
 multiple_value_list_internal (int nargs, Lisp_Object *args)
 {
-  int first = XINT (args[0]), upper = XINT (args[1]),
-    speccount = XINT(args[2]);
+  int first = XFIXNUM (args[0]), upper = XFIXNUM (args[1]),
+    speccount = XFIXNUM(args[2]);
   Lisp_Object result = Qnil;
 
   assert (nargs == 4);
@@ -4955,7 +4955,7 @@ arguments: (FIRST-DESIRED-MULTIPLE-VALUE MULTIPLE-VALUE-UPPER-LIMIT FORM)
   if (nargs != 3)
     {
       Fsignal (Qwrong_number_of_arguments,
-               list2 (Qmultiple_value_list_internal, make_int (nargs)));
+               list2 (Qmultiple_value_list_internal, make_fixnum (nargs)));
     }
 
   argv[0] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
@@ -4966,11 +4966,11 @@ arguments: (FIRST-DESIRED-MULTIPLE-VALUE MULTIPLE-VALUE-UPPER-LIMIT FORM)
   args = XCDR (args);
   argv[1] = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
 
-  check_integer_range (argv[1], Qzero, make_int (EMACS_INT_MAX));
+  check_integer_range (argv[1], Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
   check_integer_range (argv[0], Qzero, argv[1]);
 
-  upper = XINT (argv[1]);
-  first = XINT (argv[0]);
+  upper = XFIXNUM (argv[1]);
+  first = XFIXNUM (argv[0]);
 
   gcpro1.nvars = 2;
 
@@ -4978,7 +4978,7 @@ arguments: (FIRST-DESIRED-MULTIPLE-VALUE MULTIPLE-VALUE-UPPER-LIMIT FORM)
      the alternative would be to encode the number of arguments in the
      bytecode stream, which complicates things if we have more than 255
      arguments. */
-  argv[2] = make_int (bind_multiple_value_limits (first, upper));
+  argv[2] = make_fixnum (bind_multiple_value_limits (first, upper));
   gcpro1.nvars = 3;
   args = XCDR (args);
 
@@ -7046,9 +7046,9 @@ The debugger is entered when that frame exits, if the flag is non-nil.
   REGISTER struct backtrace *backlist = backtrace_list;
   REGISTER int i;
 
-  CHECK_INT (level);
+  CHECK_FIXNUM (level);
 
-  for (i = 0; backlist && i < XINT (level); i++)
+  for (i = 0; backlist && i < XFIXNUM (level); i++)
     {
       backlist = backlist->next;
     }
@@ -7123,9 +7123,9 @@ unwind-protects, as well as function calls, were made.
   entering_debugger = 0;
 
   if (!NILP (detailed))
-    Vprint_level = make_int (50);
+    Vprint_level = make_fixnum (50);
   else
-    Vprint_level = make_int (3);
+    Vprint_level = make_fixnum (3);
   print_readably = 0;
   print_escape_newlines = 1;
 
@@ -7243,10 +7243,10 @@ If NFRAMES is more than the number of frames, the value is nil.
   REGISTER int i;
   Lisp_Object tem;
 
-  check_integer_range (nframes, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (nframes, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
 
   /* Find the frame requested.  */
-  for (i = XINT (nframes); backlist && (i-- > 0);)
+  for (i = XFIXNUM (nframes); backlist && (i-- > 0);)
     backlist = backlist->next;
 
   if (!backlist)
@@ -7600,7 +7600,7 @@ The exclusive upper bound on the number of multiple values.
 This applies to `values', `values-list', `multiple-value-bind' and related
 macros and special operators.
 */);
-  Vmultiple_values_limit = EMACS_INT_MAX > INT_MAX ? INT_MAX : EMACS_INT_MAX;
+  Vmultiple_values_limit = MOST_POSITIVE_FIXNUM > INT_MAX ? INT_MAX : MOST_POSITIVE_FIXNUM;
 
   DEFVAR_LISP ("macro-declaration-function", &Vmacro_declaration_function /*
 Function to process declarations in a macro definition.

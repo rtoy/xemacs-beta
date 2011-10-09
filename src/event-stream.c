@@ -715,7 +715,7 @@ maybe_echo_keys (struct command_builder *command_builder, int no_snooze)
   if (echo_area_active (f) && !EQ (Qcommand, echo_area_status (f)))
     goto done;
 
-  if (INTP (Vecho_keystrokes) || FLOATP (Vecho_keystrokes))
+  if (FIXNUMP (Vecho_keystrokes) || FLOATP (Vecho_keystrokes))
     echo_keystrokes = extract_float (Vecho_keystrokes);
   else
     echo_keystrokes = 0;
@@ -1236,10 +1236,10 @@ event_stream_wakeup_pending_p (int id, int async_p)
 static unsigned long
 lisp_number_to_milliseconds (Lisp_Object secs, int allow_0)
 {
-  Lisp_Object args[] = { allow_0 ? Qzero : make_int (1),
+  Lisp_Object args[] = { allow_0 ? Qzero : make_fixnum (1),
                          secs,
                          /* (((unsigned int) 0xFFFFFFFF) / 1000) - 1 */
-                         make_int (4294967 - 1) };
+                         make_fixnum (4294967 - 1) };
 
   if (!allow_0 && FLOATP (secs) && XFLOAT_DATA (secs) > 0)
     {
@@ -1251,12 +1251,12 @@ lisp_number_to_milliseconds (Lisp_Object secs, int allow_0)
       args_out_of_range_3 (secs, args[0], args[2]);
     }
   
-  args[0] = make_int (1000);
+  args[0] = make_fixnum (1000);
   args[0] = Ftimes (2, args);
 
-  if (INTP (args[0]))
+  if (FIXNUMP (args[0]))
     {
-      return XINT (args[0]);
+      return XFIXNUM (args[0]);
     }
 
   return (unsigned long) extract_float (args[0]);
@@ -1304,8 +1304,8 @@ is a race condition.  That's why the RESIGNAL argument exists.
   int id;
   Lisp_Object lid;
   id = event_stream_generate_wakeup (msecs, msecs2, function, object, 0);
-  lid = make_int (id);
-  assert (id == XINT (lid));
+  lid = make_fixnum (id);
+  assert (id == XFIXNUM (lid));
   return lid;
 }
 
@@ -1320,8 +1320,8 @@ It will not work to call this function on an id number returned by
 */
        (id))
 {
-  CHECK_INT (id);
-  event_stream_disable_wakeup (XINT (id), 0);
+  CHECK_FIXNUM (id);
+  event_stream_disable_wakeup (XFIXNUM (id), 0);
   return Qnil;
 }
 
@@ -1383,8 +1383,8 @@ is a race condition.  That's why the RESIGNAL argument exists.
   int id;
   Lisp_Object lid;
   id = event_stream_generate_wakeup (msecs, msecs2, function, object, 1);
-  lid = make_int (id);
-  assert (id == XINT (lid));
+  lid = make_fixnum (id);
+  assert (id == XFIXNUM (lid));
   return lid;
 }
 
@@ -1399,8 +1399,8 @@ It will not work to call this function on an id number returned by
 */
        (id))
 {
-  CHECK_INT (id);
-  event_stream_disable_wakeup (XINT (id), 1);
+  CHECK_FIXNUM (id);
+  event_stream_disable_wakeup (XFIXNUM (id), 1);
   return Qnil;
 }
 
@@ -1798,7 +1798,7 @@ detect_input_pending (int how_many)
   if (!NILP (Vunread_command_event))
     how_many--;
 
-  how_many -= XINT (Fsafe_length (Vunread_command_events));
+  how_many -= XFIXNUM (Fsafe_length (Vunread_command_events));
 
   if (how_many <= 0)
     return 1;
@@ -2348,16 +2348,16 @@ The returned event will be one of the following types:
     EMACS_GET_TIME (t);
     if (!CONSP (Vlast_input_time))
       Vlast_input_time = Fcons (Qnil, Qnil);
-    XCAR (Vlast_input_time) = make_int ((EMACS_SECS (t) >> 16) & 0xffff);
-    XCDR (Vlast_input_time) = make_int ((EMACS_SECS (t) >> 0)  & 0xffff);
+    XCAR (Vlast_input_time) = make_fixnum ((EMACS_SECS (t) >> 16) & 0xffff);
+    XCDR (Vlast_input_time) = make_fixnum ((EMACS_SECS (t) >> 0)  & 0xffff);
     if (!CONSP (Vlast_command_event_time))
       Vlast_command_event_time = list3 (Qnil, Qnil, Qnil);
     XCAR (Vlast_command_event_time) =
-      make_int ((EMACS_SECS (t) >> 16) & 0xffff);
+      make_fixnum ((EMACS_SECS (t) >> 16) & 0xffff);
     XCAR (XCDR (Vlast_command_event_time)) =
-      make_int ((EMACS_SECS (t) >> 0)  & 0xffff);
+      make_fixnum ((EMACS_SECS (t) >> 0)  & 0xffff);
     XCAR (XCDR (XCDR (Vlast_command_event_time)))
-      = make_int (EMACS_USECS (t));
+      = make_fixnum (EMACS_USECS (t));
   }
   /* If this key came from the keyboard or from a keyboard macro, then
      it goes into the recent-keys and this-command-keys vectors.
@@ -2626,8 +2626,8 @@ Return non-nil iff we received any output before the timeout expired.
       if (!NILP (timeout_msecs))
 	{
           check_integer_range (timeout_msecs, Qzero,
-                               make_integer (EMACS_INT_MAX));
-	  msecs += XINT (timeout_msecs);
+                               make_integer (MOST_POSITIVE_FIXNUM));
+	  msecs += XFIXNUM (timeout_msecs);
 	}
       if (msecs)
         {
@@ -2640,7 +2640,7 @@ Return non-nil iff we received any output before the timeout expired.
 
   count = specpdl_depth ();
   record_unwind_protect (sit_for_unwind,
-			 timeout_enabled ? make_int (timeout_id) : Qnil);
+			 timeout_enabled ? make_fixnum (timeout_id) : Qnil);
   recursive_sit_for = 1;
 
   while (!done &&
@@ -2704,7 +2704,7 @@ Return non-nil iff we received any output before the timeout expired.
 	}
     }
 
-  unbind_to_1 (count, timeout_enabled ? make_int (timeout_id) : Qnil);
+  unbind_to_1 (count, timeout_enabled ? make_fixnum (timeout_id) : Qnil);
 
   Fdeallocate_event (event);
 
@@ -2737,7 +2737,7 @@ filter function or timer event (either synchronous or asynchronous).
   event = Fmake_event (Qnil, Qnil);
 
   count = specpdl_depth ();
-  record_unwind_protect (sit_for_unwind, make_int (id));
+  record_unwind_protect (sit_for_unwind, make_fixnum (id));
   recursive_sit_for = 1;
 
   while (1)
@@ -2771,7 +2771,7 @@ filter function or timer event (either synchronous or asynchronous).
 	}
     }
  DONE_LABEL:
-  unbind_to_1 (count, make_int (id));
+  unbind_to_1 (count, make_fixnum (id));
   Fdeallocate_event (event);
   UNGCPRO;
   return Qnil;
@@ -2843,7 +2843,7 @@ If sit-for is called from within a process filter function or timer
   id = event_stream_generate_wakeup (msecs, 0, Qnil, Qnil, 0);
 
   count = specpdl_depth ();
-  record_unwind_protect (sit_for_unwind, make_int (id));
+  record_unwind_protect (sit_for_unwind, make_fixnum (id));
   recursive_sit_for = 1;
 
   while (1)
@@ -2892,7 +2892,7 @@ If sit-for is called from within a process filter function or timer
     }
 
  DONE_LABEL:
-  unbind_to_1 (count, make_int (id));
+  unbind_to_1 (count, make_fixnum (id));
 
   /* Put back the event (if any) that made Fsit_for() exit before the
      timeout.  Note that it is being added to the back of the queue, which
@@ -3717,7 +3717,7 @@ modify them.
     {
       check_integer_range (number, Qzero,
                            make_integer (ARRAY_DIMENSION_LIMIT));
-      nwanted = XINT (number);
+      nwanted = XFIXNUM (number);
     }
 
   /* Create the keys ring vector, if none present. */
@@ -3771,7 +3771,7 @@ The maximum number of events `recent-keys' can return.
 */
        ())
 {
-  return make_int (recent_keys_ring_size);
+  return make_fixnum (recent_keys_ring_size);
 }
 
 DEFUN ("set-recent-keys-ring-size", Fset_recent_keys_ring_size, 1, 1, 0, /*
@@ -3783,14 +3783,14 @@ Set the maximum number of events to be stored internally.
   int i, j, nkeys, start, min;
   struct gcpro gcpro1;
 
-  CHECK_INT (size);
-  if (XINT (size) <= 0)
+  CHECK_FIXNUM (size);
+  if (XFIXNUM (size) <= 0)
     invalid_argument ("Recent keys ring size must be positive", size);
-  if (XINT (size) == recent_keys_ring_size)
+  if (XFIXNUM (size) == recent_keys_ring_size)
     return size;
 
   GCPRO1 (new_vector);
-  new_vector = make_vector (XINT (size), Qnil);
+  new_vector = make_vector (XFIXNUM (size), Qnil);
 
   if (NILP (Vrecent_keys_ring))
     {
@@ -3810,10 +3810,10 @@ Set the maximum number of events to be stored internally.
       start = ((recent_keys_ring_index == nkeys) ? 0 : recent_keys_ring_index);
     }
 
-  if (XINT (size) > nkeys)
+  if (XFIXNUM (size) > nkeys)
     min = nkeys;
   else
-    min = XINT (size);
+    min = XFIXNUM (size);
 
   for (i = 0, j = start; i < min; i++)
     {
@@ -3821,7 +3821,7 @@ Set the maximum number of events to be stored internally.
       if (++j >= recent_keys_ring_size)
 	j = 0;
     }
-  recent_keys_ring_size = XINT (size);
+  recent_keys_ring_size = XFIXNUM (size);
   recent_keys_ring_index = (i < recent_keys_ring_size) ? i : 0;
 
   Vrecent_keys_ring = new_vector;
@@ -4570,9 +4570,9 @@ Magic events are handled as necessary.
 		if (NATNUMP (prop))
                   {
                     magic_undo = 1;
-                    if (INTP (prop))
+                    if (FIXNUMP (prop))
                       {
-                        magic_undo_count = XINT (prop);
+                        magic_undo_count = XFIXNUM (prop);
                       }
 #ifdef HAVE_BIGNUM
                     else if (BIGNUMP (prop)
@@ -4873,7 +4873,7 @@ CONSOLE defaults to the selected console if omitted.
   /* This junk is so that timestamps don't get to be negative, but contain
      as many bits as this particular emacs will allow.
    */
-  return make_int (EMACS_INT_MAX & tiempo);
+  return make_fixnum (MOST_POSITIVE_FIXNUM & tiempo);
 }
 
 
@@ -4989,7 +4989,7 @@ vars_of_event_stream (void)
   DEFVAR_LISP ("echo-keystrokes", &Vecho_keystrokes /*
 *Nonzero means echo unfinished commands after this many seconds of pause.
 */ );
-  Vecho_keystrokes = make_int (1);
+  Vecho_keystrokes = make_fixnum (1);
 
   DEFVAR_INT ("auto-save-interval", &auto_save_interval /*
 *Number of keyboard input characters between auto-saves.
@@ -5223,7 +5223,7 @@ non-integer value.
 This variable has no effect when `modifier-keys-are-sticky' is nil.
 Currently only implemented under X Window System.
 */ );
-  Vmodifier_keys_sticky_time = make_int (500);
+  Vmodifier_keys_sticky_time = make_fixnum (500);
 
   Vcontrolling_terminal = Qnil;
   staticpro (&Vcontrolling_terminal);

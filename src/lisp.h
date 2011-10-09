@@ -1658,9 +1658,9 @@ struct generic_usage_stats
 enum Lisp_Type
 {
   Lisp_Type_Record,
-  Lisp_Type_Int_Even,
+  Lisp_Type_Fixnum_Even,
   Lisp_Type_Char,
-  Lisp_Type_Int_Odd
+  Lisp_Type_Fixnum_Odd
 };
 
 #define POINTER_TYPE_P(type) ((type) == Lisp_Type_Record)
@@ -1673,19 +1673,19 @@ enum Lisp_Type
 #define GCMARKBITS  0
 #define GCTYPEBITS  2
 #define GCBITS      2
-#define INT_GCBITS  1
+#define FIXNUM_GCBITS  1
 
-#define INT_VALBITS (BITS_PER_EMACS_INT - INT_GCBITS)
+#define FIXNUM_VALBITS (BITS_PER_EMACS_INT - FIXNUM_GCBITS)
 #define VALBITS (BITS_PER_EMACS_INT - GCBITS)
 /* This is badly named; it's not the maximum value that an EMACS_INT can
    have, it's the maximum value that a Lisp-visible fixnum can have (half
    the maximum value an EMACS_INT can have) and as such would be better
    called MOST_POSITIVE_FIXNUM. Similarly for MOST_NEGATIVE_FIXNUM. */
-#define EMACS_INT_MAX ((EMACS_INT) ((1UL << (INT_VALBITS - 1)) -1UL))
-#define EMACS_INT_MIN (-(EMACS_INT_MAX) - 1)
+#define MOST_POSITIVE_FIXNUM ((EMACS_INT) ((1UL << (FIXNUM_VALBITS - 1)) -1UL))
+#define MOST_NEGATIVE_FIXNUM (-(MOST_POSITIVE_FIXNUM) - 1)
 /* WARNING: evaluates its arg twice. */
-#define NUMBER_FITS_IN_AN_EMACS_INT(num) \
-  ((num) <= EMACS_INT_MAX && (num) >= EMACS_INT_MIN)
+#define NUMBER_FITS_IN_A_FIXNUM(num) \
+  ((num) <= MOST_POSITIVE_FIXNUM && (num) >= MOST_NEGATIVE_FIXNUM)
 
 #ifdef USE_UNION_TYPE
 # include "lisp-union.h"
@@ -1700,7 +1700,7 @@ enum Lisp_Type
 #define HACKEQ_UNSAFE(obj1, obj2)				\
   (EQ (obj1, obj2) || (!POINTER_TYPE_P (XTYPE (obj1))		\
 		       && !POINTER_TYPE_P (XTYPE (obj2))	\
-		       && XCHAR_OR_INT (obj1) == XCHAR_OR_INT (obj2)))
+		       && XCHAR_OR_FIXNUM (obj1) == XCHAR_OR_FIXNUM (obj2)))
 
 #ifdef DEBUG_XEMACS
 extern MODULE_API int debug_issue_ebola_notices;
@@ -1744,7 +1744,7 @@ STORE_VOID_IN_LISP (void *ptr)
   EMACS_UINT p = (EMACS_UINT) ptr;
 
   type_checking_assert ((p & 1) == 0);
-  return make_int (p >> 1);
+  return make_fixnum (p >> 1);
 }
 
 DECLARE_INLINE_HEADER (
@@ -2740,7 +2740,7 @@ DECLARE_LISP_OBJECT (bit_vector, Lisp_Bit_Vector);
 #define CHECK_BIT_VECTOR(x) CHECK_RECORD (x, bit_vector)
 #define CONCHECK_BIT_VECTOR(x) CONCHECK_RECORD (x, bit_vector)
 
-#define BITP(x) (INTP (x) && (XINT (x) == 0 || XINT (x) == 1))
+#define BITP(x) (FIXNUMP (x) && (XFIXNUM (x) == 0 || XFIXNUM (x) == 1))
 
 #define CHECK_BIT(x) do {		\
   if (!BITP (x))			\
@@ -2938,7 +2938,7 @@ DECLARE_MODULE_API_LISP_OBJECT (marker, Lisp_Marker);
 #define CONCHECK_MARKER(x) CONCHECK_RECORD (x, marker)
 
 /* The second check was looking for GCed markers still in use */
-/* assert (!INTP (XMARKER (x)->lheader.next.v)); */
+/* assert (!FIXNUMP (XMARKER (x)->lheader.next.v)); */
 
 #define marker_next(m) ((m)->next)
 #define marker_prev(m) ((m)->prev)
@@ -2949,30 +2949,30 @@ DECLARE_MODULE_API_LISP_OBJECT (marker, Lisp_Marker);
 
 #ifdef ERROR_CHECK_TYPES
 
-#define XINT(x) XINT_1 (x, __FILE__, __LINE__) 
+#define XFIXNUM(x) XFIXNUM_1 (x, __FILE__, __LINE__) 
 
 DECLARE_INLINE_HEADER (
 EMACS_INT
-XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
+XFIXNUM_1 (Lisp_Object obj, const Ascbyte *file, int line)
 )
 {
-  assert_at_line (INTP (obj), file, line);
-  return XREALINT (obj);
+  assert_at_line (FIXNUMP (obj), file, line);
+  return XREALFIXNUM (obj);
 }
 
 #else /* not ERROR_CHECK_TYPES */
 
-#define XINT(obj) XREALINT (obj)
+#define XFIXNUM(obj) XREALFIXNUM (obj)
 
 #endif /* (not) ERROR_CHECK_TYPES */
 
-#define CHECK_INT(x) do {			\
-  if (!INTP (x))				\
+#define CHECK_FIXNUM(x) do {			\
+  if (!FIXNUMP (x))				\
     dead_wrong_type_argument (Qfixnump, x);	\
 } while (0)
 
-#define CONCHECK_INT(x) do {			\
-  if (!INTP (x))				\
+#define CONCHECK_FIXNUM(x) do {			\
+  if (!FIXNUMP (x))				\
     x = wrong_type_argument (Qfixnump, x);	\
 } while (0)
 
@@ -3054,15 +3054,15 @@ make_char (Ichar val)
 
 #ifdef ERROR_CHECK_TYPES
 
-#define XCHAR_OR_INT(x) XCHAR_OR_INT_1 (x, __FILE__, __LINE__) 
+#define XCHAR_OR_FIXNUM(x) XCHAR_OR_FIXNUM_1 (x, __FILE__, __LINE__) 
 
 DECLARE_INLINE_HEADER (
 EMACS_INT
-XCHAR_OR_INT_1 (Lisp_Object obj, const Ascbyte *file, int line)
+XCHAR_OR_FIXNUM_1 (Lisp_Object obj, const Ascbyte *file, int line)
 )
 {
-  assert_at_line (INTP (obj) || CHARP (obj), file, line);
-  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
+  assert_at_line (FIXNUMP (obj) || CHARP (obj), file, line);
+  return CHARP (obj) ? XCHAR (obj) : XFIXNUM (obj);
 }
 
 #else /* no error checking */
@@ -3071,10 +3071,10 @@ XCHAR_OR_INT_1 (Lisp_Object obj, const Ascbyte *file, int line)
    of a macro. */
 DECLARE_INLINE_HEADER (
 EMACS_INT
-XCHAR_OR_INT (Lisp_Object obj)
+XCHAR_OR_FIXNUM (Lisp_Object obj)
 )
 {
-  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
+  return CHARP (obj) ? XCHAR (obj) : XFIXNUM (obj);
 }
 
 #endif /* no error checking */
@@ -3082,7 +3082,7 @@ XCHAR_OR_INT (Lisp_Object obj)
 /* True of X is an integer whose value is the valid integral equivalent of a
    character. */
 
-#define CHAR_INTP(x) (INTP (x) && valid_ichar_p (XINT (x)))
+#define CHAR_INTP(x) (FIXNUMP (x) && valid_ichar_p (XFIXNUM (x)))
 
 /* True of X is a character or an integral value that can be converted into a
    character. */
@@ -3093,7 +3093,7 @@ Ichar
 XCHAR_OR_CHAR_INT (Lisp_Object obj)
 )
 {
-  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
+  return CHARP (obj) ? XCHAR (obj) : XFIXNUM (obj);
 }
 
 /* Signal an error if CH is not a valid character or integer Lisp_Object.
@@ -3105,37 +3105,37 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
   if (CHARP (x))				\
      ;						\
   else if (CHAR_INTP (x))			\
-    x = make_char (XINT (x));			\
+    x = make_char (XFIXNUM (x));			\
   else						\
     x = wrong_type_argument (Qcharacterp, x);	\
 } while (0)
 
 /* next three always continuable because they coerce their arguments. */
-#define CHECK_INT_COERCE_CHAR(x) do {			\
-  if (INTP (x))						\
+#define CHECK_FIXNUM_COERCE_CHAR(x) do {			\
+  if (FIXNUMP (x))						\
     ;							\
   else if (CHARP (x))					\
-    x = make_int (XCHAR (x));				\
+    x = make_fixnum (XCHAR (x));				\
   else							\
     x = wrong_type_argument (Qinteger_or_char_p, x);	\
 } while (0)
 
-#define CHECK_INT_COERCE_MARKER(x) do {			\
-  if (INTP (x))						\
+#define CHECK_FIXNUM_COERCE_MARKER(x) do {			\
+  if (FIXNUMP (x))						\
     ;							\
   else if (MARKERP (x))					\
-    x = make_int (marker_position (x));			\
+    x = make_fixnum (marker_position (x));			\
   else							\
     x = wrong_type_argument (Qinteger_or_marker_p, x);	\
 } while (0)
 
-#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do {			\
-  if (INTP (x))							\
+#define CHECK_FIXNUM_COERCE_CHAR_OR_MARKER(x) do {			\
+  if (FIXNUMP (x))							\
     ;								\
   else if (CHARP (x))						\
-    x = make_int (XCHAR (x));					\
+    x = make_fixnum (XCHAR (x));					\
   else if (MARKERP (x))						\
-    x = make_int (marker_position (x));				\
+    x = make_fixnum (marker_position (x));				\
   else								\
     x = wrong_type_argument (Qinteger_char_or_marker_p, x);	\
 } while (0)
@@ -3164,19 +3164,19 @@ DECLARE_LISP_OBJECT (float, Lisp_Float);
 #define float_data(f) ((f)->data.d)
 #define XFLOAT_DATA(x) float_data (XFLOAT (x))
 
-#define XFLOATINT(n) extract_float (n)
+#define XFLOATFIXNUM(n) extract_float (n)
 
-#define CHECK_INT_OR_FLOAT(x) do {		\
-  if (!INT_OR_FLOATP (x))			\
+#define CHECK_FIXNUM_OR_FLOAT(x) do {		\
+  if (!FIXNUM_OR_FLOATP (x))			\
     dead_wrong_type_argument (Qnumberp, x);	\
 } while (0)
 
-#define CONCHECK_INT_OR_FLOAT(x) do {		\
-  if (!INT_OR_FLOATP (x))			\
+#define CONCHECK_FIXNUM_OR_FLOAT(x) do {		\
+  if (!FIXNUM_OR_FLOATP (x))			\
     x = wrong_type_argument (Qnumberp, x);	\
 } while (0)
 
-# define INT_OR_FLOATP(x) (INTP (x) || FLOATP (x))
+# define FIXNUM_OR_FLOATP(x) (FIXNUMP (x) || FLOATP (x))
 
 /* #### change for 64-bit machines */
 #define FLOAT_HASHCODE_FROM_DOUBLE(dbl)         \
@@ -3585,7 +3585,7 @@ extern MODULE_API int specpdl_depth_counter;
                     keyword_count, keywords, keyword_defaults,          \
                     /* Can't XSUBR (Fsymbol_function (...))->min_args,  \
                        the function may be advised. */                  \
-                    XINT (Ffunction_min_args                            \
+                    XFIXNUM (Ffunction_min_args                            \
                           (intern_massaging_name (1 + #function))),     \
                     0);                                                 \
   assert (0 == strcmp (__func__, #function))
@@ -4365,7 +4365,7 @@ DECLARE_DOESNT_RETURN (memory_full (void));
 void disksave_object_finalization (void);
 void finish_object_memory_usage_stats (void);
 extern int purify_flag;
-#define ARRAY_DIMENSION_LIMIT EMACS_INT_MAX
+#define ARRAY_DIMENSION_LIMIT MOST_POSITIVE_FIXNUM
 extern Fixnum Varray_dimension_limit;
 #ifndef NEW_GC
 extern EMACS_INT gc_generation_number[1];

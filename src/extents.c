@@ -2851,8 +2851,8 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun,
     strcpy (bp, "detached");
   else
     sprintf (bp, "%ld, %ld",
-	     XINT (Fextent_start_position (obj)),
-	     XINT (Fextent_end_position (obj)));
+	     XFIXNUM (Fextent_start_position (obj)),
+	     XFIXNUM (Fextent_end_position (obj)));
   bp += strlen (bp);
   *bp++ = (extent_end_open_p (anc) ? ')': ']');
   if (!NILP (extent_end_glyph (anc))) *bp++ = '*';
@@ -3129,7 +3129,7 @@ extent_endpoint_external (Lisp_Object extent_obj, int endp)
   if (extent_detached_p (extent))
     return Qnil;
   else
-    return make_int (extent_endpoint_char (extent, endp));
+    return make_fixnum (extent_endpoint_char (extent, endp));
 }
 
 DEFUN ("extentp", Fextentp, 1, 1, 0, /*
@@ -3186,7 +3186,7 @@ Return length of EXTENT in characters.
        (extent))
 {
   EXTENT e = decode_extent (extent, DE_MUST_BE_ATTACHED);
-  return make_int (extent_endpoint_char (e, 1)
+  return make_fixnum (extent_endpoint_char (e, 1)
 		   - extent_endpoint_char (e, 0));
 }
 
@@ -3294,7 +3294,7 @@ If OBJECT is nil, the current buffer is assumed.
 
   xpos = get_buffer_or_string_pos_byte (obj, pos, GB_ALLOW_PAST_ACCESSIBLE);
   xpos = extent_find_end_of_run (obj, xpos, 1);
-  return make_int (buffer_or_string_bytexpos_to_charxpos (obj, xpos));
+  return make_fixnum (buffer_or_string_bytexpos_to_charxpos (obj, xpos));
 }
 
 DEFUN ("previous-extent-change", Fprevious_extent_change, 1, 2, 0, /*
@@ -3310,7 +3310,7 @@ If OBJECT is nil, the current buffer is assumed.
 
   xpos = get_buffer_or_string_pos_byte (obj, pos, GB_ALLOW_PAST_ACCESSIBLE);
   xpos = extent_find_beginning_of_run (obj, xpos, 1);
-  return make_int (buffer_or_string_bytexpos_to_charxpos (obj, xpos));
+  return make_fixnum (buffer_or_string_bytexpos_to_charxpos (obj, xpos));
 }
 
 
@@ -4658,8 +4658,8 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
     return 0;
 
   exobj = wrap_extent (extent);
-  startobj = make_int (closure->start);
-  endobj = make_int (closure->end);
+  startobj = make_fixnum (closure->start);
+  endobj = make_fixnum (closure->end);
 
   /* Now that we are sure to call elisp, set up an unwind-protect so
      inside_change_hook gets restored in case we throw.  Also record
@@ -4776,8 +4776,8 @@ memoize_extent_face_internal (Lisp_Object list)
         maliciously side-effects the returned lists.
      */
 
-  len = XINT (Flength (list));
-  thelen = XINT (Flength (Vextent_face_reusable_list));
+  len = XFIXNUM (Flength (list));
+  thelen = XFIXNUM (Flength (Vextent_face_reusable_list));
   oldtail = Qnil;
   tail = Qnil;
   GCPRO1 (oldtail);
@@ -4792,7 +4792,7 @@ memoize_extent_face_internal (Lisp_Object list)
       cons = Vextent_face_reusable_list;
       while (!NILP (XCDR (cons)))
 	cons = XCDR (cons);
-      XCDR (cons) = Fmake_list (make_int (len - thelen), Qnil);
+      XCDR (cons) = Fmake_list (make_fixnum (len - thelen), Qnil);
     }
   else if (thelen > len)
     {
@@ -5139,9 +5139,9 @@ Extents are created with priority 0; priorities may be negative.
 {
   EXTENT e = decode_extent (extent, 0);
 
-  CHECK_INT (priority);
+  CHECK_FIXNUM (priority);
   e = extent_ancestor (e);
-  set_extent_priority (e, XINT (priority));
+  set_extent_priority (e, XFIXNUM (priority));
   signal_extent_property_changed (e, Qpriority, 1);
   return priority;
 }
@@ -5152,7 +5152,7 @@ Return the display priority of EXTENT; see `set-extent-priority'.
        (extent))
 {
   EXTENT e = decode_extent (extent, 0);
-  return make_int (extent_priority (e));
+  return make_fixnum (extent_priority (e));
 }
 
 DEFUN ("set-extent-property", Fset_extent_property, 3, 3, 0, /*
@@ -5510,7 +5510,7 @@ See `set-extent-property' for the built-in property names.
   else if (EQ (property, Qend_closed))
     return extent_end_open_p (e) ? Qnil : Qt;
   else if (EQ (property, Qpriority))
-    return make_int (extent_priority (e));
+    return make_fixnum (extent_priority (e));
   else if (EQ (property, Qread_only))
     return extent_read_only (e);
   else if (EQ (property, Qinvisible))
@@ -5601,7 +5601,7 @@ do {						\
     ADD_PROP (Qbegin_glyph, extent_begin_glyph (anc));
 
   if (extent_priority (anc) != 0)
-    ADD_PROP (Qpriority, make_int (extent_priority (anc)));
+    ADD_PROP (Qpriority, make_fixnum (extent_priority (anc)));
 
   if (!NILP (extent_initial_redisplay_function (anc)))
     ADD_PROP (Qinitial_redisplay_function,
@@ -5754,9 +5754,9 @@ run_extent_copy_paste_internal (EXTENT e, Charxpos from, Charxpos to,
       GCPRO3 (extent, copy_fn, object);
       if (BUFFERP (object))
 	flag = call3_in_buffer (XBUFFER (object), copy_fn, extent,
-				make_int (from), make_int (to));
+				make_fixnum (from), make_fixnum (to));
       else
-	flag = call3 (copy_fn, extent, make_int (from), make_int (to));
+	flag = call3 (copy_fn, extent, make_fixnum (from), make_fixnum (to));
       UNGCPRO;
       if (NILP (flag) || !EXTENT_LIVE_P (XEXTENT (extent)))
 	return 0;
@@ -6887,7 +6887,7 @@ next_previous_single_property_change_fn (Lisp_Object pos, Lisp_Object prop,
   if (blim < 0)
     return Qnil;
   else
-    return make_int (buffer_or_string_bytexpos_to_charxpos (object, blim));
+    return make_fixnum (buffer_or_string_bytexpos_to_charxpos (object, blim));
 }
 
 DEFUN ("next-single-property-change", Fnext_single_property_change,

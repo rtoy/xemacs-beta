@@ -252,19 +252,19 @@ import_gtk_enumeration_internal (GtkType the_type)
 
   if (NILP (Venumeration_info))
     {
-      Venumeration_info = call2 (intern ("make-hashtable"), make_int (100), Qequal);
+      Venumeration_info = call2 (intern ("make-hashtable"), make_fixnum (100), Qequal);
     }
   
   while (vals && vals->value_name)
     {
-      assoc = Fcons (Fcons (intern (vals->value_nick), make_int (vals->value)), assoc);
-      assoc = Fcons (Fcons (intern (vals->value_name), make_int (vals->value)), assoc);
+      assoc = Fcons (Fcons (intern (vals->value_nick), make_fixnum (vals->value)), assoc);
+      assoc = Fcons (Fcons (intern (vals->value_name), make_fixnum (vals->value)), assoc);
       vals++;
     }
 
   assoc = Fnreverse (assoc);
 
-  Fputhash (make_int (the_type), assoc, Venumeration_info);
+  Fputhash (make_fixnum (the_type), assoc, Venumeration_info);
 }
 
 static void
@@ -693,7 +693,7 @@ Call an external function.
   CHECK_FFI (func);
   CHECK_LIST (args);
 
-  n_args = XINT (Flength (args));
+  n_args = XFIXNUM (Flength (args));
 
 #ifdef XEMACS_IS_SMARTER_THAN_THE_PROGRAMMER
   /* #### I think this is too dangerous to enable by default.
@@ -709,14 +709,14 @@ Call an external function.
       if (n_args > XFFI(func)->n_args)
 	{
 	  return Fsignal (Qwrong_number_of_arguments,
-			  list2 (func, make_int (n_args)));
+			  list2 (func, make_fixnum (n_args)));
 	}
 
       /* If they did not provide enough arguments, be nice and assume
       ** they wanted `nil' in there.
       */
       for_append[0] = args;
-      for_append[1] = Fmake_list (make_int (XFFI(func)->n_args - n_args), Qnil);
+      for_append[1] = Fmake_list (make_fixnum (XFFI(func)->n_args - n_args), Qnil);
 
       args = Fappend (2, for_append);
     }
@@ -725,7 +725,7 @@ Call an external function.
     {
       /* Signal an error if they do not pass in the correct # of arguments */
       return Fsignal (Qwrong_number_of_arguments,
-		      list2 (func, make_int (n_args)));
+		      list2 (func, make_fixnum (n_args)));
     }
 #endif
 
@@ -1003,7 +1003,7 @@ __internal_callback_destroy (gpointer data)
 
   lisp_data = GET_LISP_FROM_VOID (data);
 
-  ungcpro_popup_callbacks (XINT (XCAR (lisp_data)));
+  ungcpro_popup_callbacks (XFIXNUM (XCAR (lisp_data)));
 }
 
 static void
@@ -1078,7 +1078,7 @@ DEFUN ("gtk-signal-connect", Fgtk_signal_connect, 3, 6, 0, /*
 
   id = new_gui_id ();
   func = Fcons (cb_data, func);
-  func = Fcons (make_int (id), func);
+  func = Fcons (make_fixnum (id), func);
 
   gcpro_popup_callbacks (id, func);
 
@@ -1206,7 +1206,7 @@ This is for loading dependency DLLs into XEmacs.
     {
       invalid_argument ("Not a GTK type", type);
     }
-  return (make_int (GTK_FUNDAMENTAL_TYPE (t)));
+  return (make_fixnum (GTK_FUNDAMENTAL_TYPE (t)));
 }
 
 DEFUN ("gtk-object-type", Fgtk_object_type, 1, 1, 0, /*
@@ -1215,7 +1215,7 @@ Return the GtkType of OBJECT.
        (object))
 {
   CHECK_GTK_OBJECT (object);
-  return (make_int (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
+  return (make_fixnum (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
 }
 
 DEFUN ("gtk-describe-type", Fgtk_describe_type, 1, 1, 0, /*
@@ -1245,8 +1245,8 @@ The cdr is a list of all the magic properties it has.
     }
   else
     {
-      CHECK_INT (type);
-      t = XINT (type);
+      CHECK_FIXNUM (type);
+      t = XFIXNUM (type);
     }
 
   if (GTK_FUNDAMENTAL_TYPE (t) != GTK_TYPE_OBJECT)
@@ -1473,13 +1473,13 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
     case GTK_TYPE_BOOL:
       return (GTK_VALUE_BOOL (*arg) ? Qt : Qnil);
     case GTK_TYPE_INT:
-      return (make_int (GTK_VALUE_INT (*arg)));
+      return (make_fixnum (GTK_VALUE_INT (*arg)));
     case GTK_TYPE_UINT:
-      return (make_int (GTK_VALUE_INT (*arg)));
+      return (make_fixnum (GTK_VALUE_INT (*arg)));
     case GTK_TYPE_LONG:		/* I think these are wrong! */
-      return (make_int (GTK_VALUE_INT (*arg)));
+      return (make_fixnum (GTK_VALUE_INT (*arg)));
     case GTK_TYPE_ULONG:	/* I think these are wrong! */
-      return (make_int (GTK_VALUE_INT (*arg)));
+      return (make_fixnum (GTK_VALUE_INT (*arg)));
     case GTK_TYPE_FLOAT:
       return (make_float (GTK_VALUE_FLOAT (*arg)));
     case GTK_TYPE_DOUBLE:
@@ -1583,19 +1583,19 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	}
       else
 	{
-	  CHECK_INT (obj);
-	  GTK_VALUE_INT(*arg) = XINT (obj);
+	  CHECK_FIXNUM (obj);
+	  GTK_VALUE_INT(*arg) = XFIXNUM (obj);
 	}
       break;
     case GTK_TYPE_LONG:
     case GTK_TYPE_ULONG:
       ABORT();
     case GTK_TYPE_FLOAT:
-      CHECK_INT_OR_FLOAT (obj);
+      CHECK_FIXNUM_OR_FLOAT (obj);
       GTK_VALUE_FLOAT(*arg) = extract_float (obj);
       break;
     case GTK_TYPE_DOUBLE:
-      CHECK_INT_OR_FLOAT (obj);
+      CHECK_FIXNUM_OR_FLOAT (obj);
       GTK_VALUE_DOUBLE(*arg) = extract_float (obj);
       break;
     case GTK_TYPE_STRING:
@@ -1761,7 +1761,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 
 	id = new_gui_id ();
 	obj = Fcons (Qnil, obj); /* Empty data */
-	obj = Fcons (make_int (id), obj);
+	obj = Fcons (make_fixnum (id), obj);
 
 	gcpro_popup_callbacks (id, obj);
 
@@ -1863,19 +1863,19 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	}
       else
 	{
-	  CHECK_INT (obj);
-	  *(GTK_RETLOC_INT(*arg)) = XINT (obj);
+	  CHECK_FIXNUM (obj);
+	  *(GTK_RETLOC_INT(*arg)) = XFIXNUM (obj);
 	}
       break;
     case GTK_TYPE_LONG:
     case GTK_TYPE_ULONG:
       ABORT();
     case GTK_TYPE_FLOAT:
-      CHECK_INT_OR_FLOAT (obj);
+      CHECK_FIXNUM_OR_FLOAT (obj);
       *(GTK_RETLOC_FLOAT(*arg)) = extract_float (obj);
       break;
     case GTK_TYPE_DOUBLE:
-      CHECK_INT_OR_FLOAT (obj);
+      CHECK_FIXNUM_OR_FLOAT (obj);
       *(GTK_RETLOC_DOUBLE(*arg)) = extract_float (obj);
       break;
     case GTK_TYPE_STRING:
@@ -2041,7 +2041,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 
 	id = new_gui_id ();
 	obj = Fcons (Qnil, obj); /* Empty data */
-	obj = Fcons (make_int (id), obj);
+	obj = Fcons (make_fixnum (id), obj);
 
 	gcpro_popup_callbacks (id, obj);
 
@@ -2104,15 +2104,15 @@ get_enumeration (GtkType t)
 
   if (NILP (Venumeration_info))
     {
-      Venumeration_info = call2 (intern ("make-hashtable"), make_int (100), Qequal);
+      Venumeration_info = call2 (intern ("make-hashtable"), make_fixnum (100), Qequal);
     }
 
-  alist = Fgethash (make_int (t), Venumeration_info, Qnil);  
+  alist = Fgethash (make_fixnum (t), Venumeration_info, Qnil);  
 
   if (NILP (alist))
     {
       import_gtk_enumeration_internal (t);
-      alist = Fgethash (make_int (t), Venumeration_info, Qnil);
+      alist = Fgethash (make_fixnum (t), Venumeration_info, Qnil);
     }
   return (alist);
 }
@@ -2135,9 +2135,9 @@ symbol_to_enum (Lisp_Object obj, GtkType t)
       invalid_argument ("Unknown value", obj);
     }
 
-  CHECK_INT (XCDR (value));
+  CHECK_FIXNUM (XCDR (value));
 
-  return (XINT (XCDR (value)));
+  return (XFIXNUM (XCDR (value)));
 }
 
 static guint
@@ -2176,10 +2176,10 @@ flags_to_list (guint value, GtkType t)
 
   while (!NILP (alist))
     {
-      if (value & XINT (XCDR (XCAR (alist))))
+      if (value & XFIXNUM (XCDR (XCAR (alist))))
 	{
 	  rval = Fcons (XCAR (XCAR (alist)), rval);
-	  value &= ~(XINT (XCDR (XCAR (alist))));
+	  value &= ~(XFIXNUM (XCDR (XCAR (alist))));
 	}
       alist = XCDR (alist);
     }
@@ -2197,7 +2197,7 @@ enum_to_symbol (guint value, GtkType t)
       invalid_argument ("Unknown enumeration", build_cistring (gtk_type_name (t)));
     }
 
-  cell = Frassq (make_int (value), alist);
+  cell = Frassq (make_fixnum (value), alist);
 
   return (NILP (cell) ? Qnil : XCAR (cell));
 }

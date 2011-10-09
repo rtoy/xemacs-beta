@@ -788,7 +788,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       tid = add_glyph_animated_timeout (timeout > 10 ? timeout : 10, image_instance);
 
       if (!NILP (tid))
-	IMAGE_INSTANCE_PIXMAP_TIMEOUT (ii) = XINT (tid);
+	IMAGE_INSTANCE_PIXMAP_TIMEOUT (ii) = XFIXNUM (tid);
     }
 
   unbind_to (speccount);
@@ -1031,7 +1031,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	  Lisp_Object rgb = MAYBE_LISP_DEVMETH (XDEVICE (c->device),
 						color_instance_rgb_components,
 						(c));
-#define GETCOLOR(col) my_background.col = (unsigned short) XINT (XCAR (rgb))
+#define GETCOLOR(col) my_background.col = (unsigned short) XFIXNUM (XCAR (rgb))
 	  GETCOLOR(red); rgb = XCDR (rgb);
 	  GETCOLOR(green); rgb = XCDR (rgb);
 	  GETCOLOR(blue);

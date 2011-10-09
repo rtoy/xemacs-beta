@@ -115,7 +115,7 @@ the variable `load-modules-quietly' is non-NIL.
     mver = XSTRING_DATA (version);
 
   dlhandle = 0;
-  record_unwind_protect (module_load_unwind, make_int(modnum));
+  record_unwind_protect (module_load_unwind, make_fixnum(modnum));
   emodules_load (mod, mname, mver);
   unbind_to (speccount);
 
@@ -283,12 +283,12 @@ module_load_unwind (Lisp_Object upto)
 
   if (CONSP (upto))
     {
-      if (INTP (XCAR (upto)))
-        l = XINT (XCAR (upto));
+      if (FIXNUMP (XCAR (upto)))
+        l = XFIXNUM (XCAR (upto));
       free_cons (upto);
     }
   else
-    l = XINT (upto);
+    l = XFIXNUM (upto);
 
   /*
    * Here we need to go through and dlclose() (IN REVERSE ORDER!) any

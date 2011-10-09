@@ -275,7 +275,7 @@ Fsignal
 Fthrow
 Fvector
 #ifdef XEMACS_DEFS_NEEDS_ERROR_CHECK_TYPES_DECLS
-XINT_1
+XFIXNUM_1
 #endif
 
 /* Exported variables */
@@ -312,9 +312,9 @@ specpdl_depth_counter		/* specpdl_depth */
 Qconsp				/* CHECK_CONS */
 Qcritical			/* QUIT, QUITP */
 Qdelete
-Qfixnump			/* CHECK_INT */
+Qfixnump			/* CHECK_FIXNUM */
 Qfile_name			/* Qdll_filename_encoding */
-Qintegerp			/* CHECK_INT, CONCHECK_INT */
+Qintegerp			/* CHECK_FIXNUM, CONCHECK_FIXNUM */
 Qinvalid_argument
 Qnative
 Qnil

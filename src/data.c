@@ -78,7 +78,7 @@ int
 eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
 {
   if (debug_issue_ebola_notices
-      && ((CHARP (obj1) && INTP (obj2)) || (CHARP (obj2) && INTP (obj1))))
+      && ((CHARP (obj1) && FIXNUMP (obj2)) || (CHARP (obj2) && FIXNUMP (obj1))))
     {
       /* #### It would be really nice if this were a proper warning
          instead of brain-dead print to Qexternal_debugging_output.  */
@@ -321,7 +321,7 @@ Return minimum number of args built-in function SUBR may be called with.
        (subr))
 {
   CHECK_SUBR (subr);
-  return make_int (XSUBR (subr)->min_args);
+  return make_fixnum (XSUBR (subr)->min_args);
 }
 
 DEFUN ("subr-max-args", Fsubr_max_args, 1, 1, 0, /*
@@ -336,7 +336,7 @@ or nil if it takes an arbitrary number of arguments or is a special operator.
   if (nargs == MANY || nargs == UNEVALLED)
     return Qnil;
   else
-    return make_int (nargs);
+    return make_fixnum (nargs);
 }
 
 DEFUN ("subr-interactive", Fsubr_interactive, 1, 1, 0, /*
@@ -395,7 +395,7 @@ character sets were loaded, etc., and you should not depend on them.
        (character))
 {
   CHECK_CHAR (character);
-  return make_int (XCHAR (character));
+  return make_fixnum (XCHAR (character));
 }
 
 DEFUN ("int-to-char", Fint_to_char, 1, 1, 0, /*
@@ -408,7 +408,7 @@ nil is returned.
 {
   CHECK_INTEGER (integer);
   if (CHAR_INTP (integer))
-    return make_char (XINT (integer));
+    return make_char (XFIXNUM (integer));
   else
     return Qnil;
 }
@@ -452,7 +452,7 @@ available memory.
 */
        (object))
 {
-  return INTP (object) ? Qt : Qnil;
+  return FIXNUMP (object) ? Qt : Qnil;
 }
 DEFUN ("integerp", Fintegerp, 1, 1, 0, /*
 Return t if OBJECT is an integer, nil otherwise.
@@ -714,7 +714,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 
  retry:
 
-  if      (INTP  (index_)) idx = XINT  (index_);
+  if      (FIXNUMP  (index_)) idx = XFIXNUM  (index_);
   else if (CHARP (index_)) idx = XCHAR (index_); /* yuck! */
 #ifdef HAVE_BIGNUM
   else if (BIGNUMP (index_))
@@ -746,7 +746,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
     {
       if (idx >= (EMACS_INT) bit_vector_length (XBIT_VECTOR (array)))
 	goto range_error;
-      return make_int (bit_vector_bit (XBIT_VECTOR (array), idx));
+      return make_fixnum (bit_vector_bit (XBIT_VECTOR (array), idx));
     }
   else if (STRINGP (array))
     {
@@ -775,7 +775,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 
  retry:
 
-  if      (INTP  (index_)) idx = XINT (index_);
+  if      (FIXNUMP  (index_)) idx = XFIXNUM (index_);
   else if (CHARP (index_)) idx = XCHAR (index_); /* yuck! */
 #ifdef HAVE_BIGNUM
   else if (BIGNUMP (index_))
@@ -851,7 +851,7 @@ number_char_or_marker_to_int_or_double (Lisp_Object obj, int_or_double *p)
 {
  retry:
   p->int_p = 1;
-  if      (INTP    (obj)) p->c.ival = XINT  (obj);
+  if      (FIXNUMP    (obj)) p->c.ival = XFIXNUM  (obj);
   else if (CHARP   (obj)) p->c.ival = XCHAR (obj);
   else if (MARKERP (obj)) p->c.ival = marker_position (obj);
   else if (FLOATP  (obj)) p->c.dval = XFLOAT_DATA (obj), p->int_p = 0;
@@ -866,7 +866,7 @@ static double
 number_char_or_marker_to_double (Lisp_Object obj)
 {
  retry:
-  if      (INTP    (obj)) return (double) XINT  (obj);
+  if      (FIXNUMP    (obj)) return (double) XFIXNUM  (obj);
   else if (CHARP   (obj)) return (double) XCHAR (obj);
   else if (MARKERP (obj)) return (double) marker_position (obj);
   else if (FLOATP  (obj)) return XFLOAT_DATA (obj);
@@ -882,7 +882,7 @@ static EMACS_INT
 fixnum_char_or_marker_to_int (Lisp_Object obj)
 {
  retry:
-  if      (INTP    (obj)) return XINT  (obj);
+  if      (FIXNUMP    (obj)) return XFIXNUM  (obj);
   else if (CHARP   (obj)) return XCHAR (obj);
   else if (MARKERP (obj)) return marker_position (obj);
   else
@@ -939,7 +939,7 @@ fixnum_char_or_marker_to_int (Lisp_Object obj)
       switch (promote_args (&obj1, &obj2))			\
 	{							\
 	case FIXNUM_T:						\
-	  if (!(XREALINT (obj1) c_op XREALINT (obj2)))		\
+	  if (!(XREALFIXNUM (obj1) c_op XREALFIXNUM (obj2)))		\
 	    return Qnil;					\
 	  break;						\
 	BIGNUM_CASE (op)					\
@@ -1069,7 +1069,7 @@ arguments: (FIRST &rest ARGS)
 	  switch (promote_args (&obj1, &obj2))
 	    {
 	    case FIXNUM_T:
-	      if (XREALINT (obj1) == XREALINT (obj2))
+	      if (XREALFIXNUM (obj1) == XREALFIXNUM (obj2))
 		return Qnil;
 	      break;
 #ifdef HAVE_BIGNUM
@@ -1130,7 +1130,7 @@ Return t if NUMBER is zero.
        (number))
 {
  retry:
-  if (INTP (number))
+  if (FIXNUMP (number))
     return EQ (number, Qzero) ? Qt : Qnil;
 #ifdef HAVE_BIGNUM
   else if (BIGNUMP (number))
@@ -1163,21 +1163,21 @@ Return t if NUMBER is zero.
 Lisp_Object
 word_to_lisp (unsigned int item)
 {
-  return Fcons (make_int (item >> 16), make_int (item & 0xffff));
+  return Fcons (make_fixnum (item >> 16), make_fixnum (item & 0xffff));
 }
 
 unsigned int
 lisp_to_word (Lisp_Object item)
 {
-  if (INTP (item))
-    return XINT (item);
+  if (FIXNUMP (item))
+    return XFIXNUM (item);
   else
     {
       Lisp_Object top = Fcar (item);
       Lisp_Object bot = Fcdr (item);
-      CHECK_INT (top);
-      CHECK_INT (bot);
-      return (XINT (top) << 16) | (XINT (bot) & 0xffff);
+      CHECK_FIXNUM (top);
+      CHECK_FIXNUM (bot);
+      return (XFIXNUM (top) << 16) | (XFIXNUM (bot) & 0xffff);
     }
 }
 
@@ -1230,7 +1230,7 @@ If supported, it may also be a ratio.
   {
     Ascbyte buffer[DECIMAL_PRINT_SIZE (long)];
 
-    long_to_string (buffer, XINT (number));
+    long_to_string (buffer, XFIXNUM (number));
     return build_ascstring (buffer);
   }
 }
@@ -1270,8 +1270,8 @@ Floating point numbers always use base 10.
     b = 10;
   else
     {
-      check_integer_range (base, make_int (2), make_int (16));
-      b = XINT (base);
+      check_integer_range (base, make_fixnum (2), make_fixnum (16));
+      b = XFIXNUM (base);
     }
 
   p = XSTRING_DATA (string);
@@ -1379,7 +1379,7 @@ Floating point numbers always use base 10.
     save = *end;
     *end = '\0';
     if (*p == '\0')
-      retval = make_int (0);
+      retval = make_fixnum (0);
     else
       {
 	bignum_set_string (scratch_bignum, (const char *) p, b);
@@ -1393,11 +1393,11 @@ Floating point numbers always use base 10.
     {
       /* Use the system-provided functions for base 10. */
 #if   SIZEOF_EMACS_INT == SIZEOF_INT
-      return make_int (atoi ((char*) p));
+      return make_fixnum (atoi ((char*) p));
 #elif SIZEOF_EMACS_INT == SIZEOF_LONG
-      return make_int (atol ((char*) p));
+      return make_fixnum (atol ((char*) p));
 #elif SIZEOF_EMACS_INT == SIZEOF_LONG_LONG
-      return make_int (atoll ((char*) p));
+      return make_fixnum (atoll ((char*) p));
 #endif
     }
   else
@@ -1419,7 +1419,7 @@ Floating point numbers always use base 10.
 	    break;
 	  v = v * b + digit;
 	}
-      return make_int (negative * v);
+      return make_fixnum (negative * v);
     }
 #endif /* HAVE_BIGNUM */
 }
@@ -1435,7 +1435,7 @@ arguments: (&rest ARGS)
 {
 #ifdef WITH_NUMBER_TYPES
   REGISTER int i;
-  Lisp_Object accum = make_int (0), addend;
+  Lisp_Object accum = make_fixnum (0), addend;
 
   for (i = 0; i < nargs; i++)
     {
@@ -1443,7 +1443,7 @@ arguments: (&rest ARGS)
       switch (promote_args (&accum, &addend))
 	{
 	case FIXNUM_T:
-	  accum = make_integer (XREALINT (accum) + XREALINT (addend));
+	  accum = make_integer (XREALFIXNUM (accum) + XREALFIXNUM (addend));
 	  break;
 #ifdef HAVE_BIGNUM
 	case BIGNUM_T:
@@ -1494,7 +1494,7 @@ arguments: (&rest ARGS)
 	}
     }
 
-  return make_int (iaccum);
+  return make_fixnum (iaccum);
 #endif /* WITH_NUMBER_TYPES */
 }
 
@@ -1514,16 +1514,16 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       if (CHARP (accum))
-	accum = make_int (XCHAR (accum));
+	accum = make_fixnum (XCHAR (accum));
       else if (MARKERP (accum))
-	accum = make_int (marker_position (accum));
+	accum = make_fixnum (marker_position (accum));
 
       /* Invert the sign of accum */
       CHECK_NUMBER (accum);
       switch (get_number_type (accum))
 	{
 	case FIXNUM_T:
-	  return make_integer (-XREALINT (accum));
+	  return make_integer (-XREALFIXNUM (accum));
 #ifdef HAVE_BIGNUM
 	case BIGNUM_T:
 	  bignum_neg (scratch_bignum, XBIGNUM_DATA (accum));
@@ -1553,7 +1553,7 @@ arguments: (FIRST &rest ARGS)
 	  switch (promote_args (&accum, &subtrahend))
 	    {
 	    case FIXNUM_T:
-	      accum = make_integer (XREALINT (accum) - XREALINT (subtrahend));
+	      accum = make_integer (XREALFIXNUM (accum) - XREALFIXNUM (subtrahend));
 	      break;
 #ifdef HAVE_BIGNUM
 	    case BIGNUM_T:
@@ -1614,7 +1614,7 @@ arguments: (FIRST &rest ARGS)
 	}
     }
 
-  return make_int (iaccum);
+  return make_fixnum (iaccum);
 
  do_float:
   for (; args < args_end; args++)
@@ -1690,7 +1690,7 @@ arguments: (&rest ARGS)
 	}
     }
 
-  return make_int (iaccum);
+  return make_fixnum (iaccum);
 #endif /* WITH_NUMBER_TYPES */
 }
 
@@ -1711,7 +1711,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_int (1);
+      accum = make_fixnum (1);
     }
   else
     {
@@ -1724,9 +1724,9 @@ arguments: (FIRST &rest ARGS)
       switch (promote_args (&accum, &divisor))
 	{
 	case FIXNUM_T:
-	  if (XREALINT (divisor) == 0) goto divide_by_zero;
-	  bignum_set_long (scratch_bignum, XREALINT (accum));
-	  bignum_set_long (scratch_bignum2, XREALINT (divisor));
+	  if (XREALFIXNUM (divisor) == 0) goto divide_by_zero;
+	  bignum_set_long (scratch_bignum, XREALFIXNUM (accum));
+	  bignum_set_long (scratch_bignum2, XREALFIXNUM (divisor));
 	  accum = make_ratio_bg (scratch_bignum, scratch_bignum2);
 	  break;
 	case BIGNUM_T:
@@ -1781,7 +1781,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_int (1);
+      accum = make_fixnum (1);
     }
   else
     {
@@ -1794,8 +1794,8 @@ arguments: (FIRST &rest ARGS)
       switch (promote_args (&accum, &divisor))
 	{
 	case FIXNUM_T:
-	  if (XREALINT (divisor) == 0) goto divide_by_zero;
-	  accum = make_integer (XREALINT (accum) / XREALINT (divisor));
+	  if (XREALFIXNUM (divisor) == 0) goto divide_by_zero;
+	  accum = make_integer (XREALFIXNUM (accum) / XREALFIXNUM (divisor));
 	  break;
 #ifdef HAVE_BIGNUM
 	case BIGNUM_T:
@@ -1868,7 +1868,7 @@ arguments: (FIRST &rest ARGS)
 	}
     }
 
-  return make_int (iaccum);
+  return make_fixnum (iaccum);
 
  divide_floats:
   for (; args < args_end; args++)
@@ -1902,9 +1902,9 @@ arguments: (FIRST &rest ARGS)
   while (!(CHARP (args[0]) || MARKERP (args[0]) || REALP (args[0])))
     args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
   if (CHARP (args[0]))
-    args[0] = make_int (XCHAR (args[0]));
+    args[0] = make_fixnum (XCHAR (args[0]));
   else if (MARKERP (args[0]))
-    args[0] = make_int (marker_position (args[0]));
+    args[0] = make_fixnum (marker_position (args[0]));
   for (i = 1; i < nargs; i++)
     {
       comp1 = args[maxindex];
@@ -1912,7 +1912,7 @@ arguments: (FIRST &rest ARGS)
       switch (promote_args (&comp1, &comp2))
 	{
 	case FIXNUM_T:
-	  if (XREALINT (comp1) < XREALINT (comp2))
+	  if (XREALFIXNUM (comp1) < XREALFIXNUM (comp2))
 	    maxindex = i;
 	  break;
 #ifdef HAVE_BIGNUM
@@ -1970,7 +1970,7 @@ arguments: (FIRST &rest ARGS)
 	}
     }
 
-  return make_int (imax);
+  return make_fixnum (imax);
 
  max_floats:
   while (args < args_end)
@@ -1999,9 +1999,9 @@ arguments: (FIRST &rest ARGS)
   while (!(CHARP (args[0]) || MARKERP (args[0]) || REALP (args[0])))
     args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
   if (CHARP (args[0]))
-    args[0] = make_int (XCHAR (args[0]));
+    args[0] = make_fixnum (XCHAR (args[0]));
   else if (MARKERP (args[0]))
-    args[0] = make_int (marker_position (args[0]));
+    args[0] = make_fixnum (marker_position (args[0]));
   for (i = 1; i < nargs; i++)
     {
       comp1 = args[minindex];
@@ -2009,7 +2009,7 @@ arguments: (FIRST &rest ARGS)
       switch (promote_args (&comp1, &comp2))
 	{
 	case FIXNUM_T:
-	  if (XREALINT (comp1) > XREALINT (comp2))
+	  if (XREALFIXNUM (comp1) > XREALFIXNUM (comp2))
 	    minindex = i;
 	  break;
 #ifdef HAVE_BIGNUM
@@ -2067,7 +2067,7 @@ arguments: (FIRST &rest ARGS)
 	}
     }
 
-  return make_int (imin);
+  return make_fixnum (imin);
 
  min_floats:
   while (args < args_end)
@@ -2092,16 +2092,16 @@ arguments: (&rest ARGS)
   Lisp_Object result, other;
 
   if (nargs == 0)
-    return make_int (~0);
+    return make_fixnum (~0);
 
   while (!(CHARP (args[0]) || MARKERP (args[0]) || INTEGERP (args[0])))
     args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
 
   result = args[0];
   if (CHARP (result))
-    result = make_int (XCHAR (result));
+    result = make_fixnum (XCHAR (result));
   else if (MARKERP (result))
-    result = make_int (marker_position (result));
+    result = make_fixnum (marker_position (result));
   for (i = 1; i < nargs; i++)
     {
       while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
@@ -2110,7 +2110,7 @@ arguments: (&rest ARGS)
       switch (promote_args (&result, &other))
 	{
 	case FIXNUM_T:
-	  result = make_int (XREALINT (result) & XREALINT (other));
+	  result = make_fixnum (XREALFIXNUM (result) & XREALFIXNUM (other));
 	  break;
 	case BIGNUM_T:
 	  bignum_and (scratch_bignum, XBIGNUM_DATA (result),
@@ -2127,7 +2127,7 @@ arguments: (&rest ARGS)
   while (args < args_end)
     bits &= fixnum_char_or_marker_to_int (*args++);
 
-  return make_int (bits);
+  return make_fixnum (bits);
 #endif /* HAVE_BIGNUM */
 }
 
@@ -2144,16 +2144,16 @@ arguments: (&rest ARGS)
   Lisp_Object result, other;
 
   if (nargs == 0)
-    return make_int (0);
+    return make_fixnum (0);
 
   while (!(CHARP (args[0]) || MARKERP (args[0]) || INTEGERP (args[0])))
     args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
 
   result = args[0];
   if (CHARP (result))
-    result = make_int (XCHAR (result));
+    result = make_fixnum (XCHAR (result));
   else if (MARKERP (result))
-    result = make_int (marker_position (result));
+    result = make_fixnum (marker_position (result));
   for (i = 1; i < nargs; i++)
     {
       while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
@@ -2162,7 +2162,7 @@ arguments: (&rest ARGS)
       switch (promote_args (&result, &other))
 	{
 	case FIXNUM_T:
-	  result = make_int (XREALINT (result) | XREALINT (other));
+	  result = make_fixnum (XREALFIXNUM (result) | XREALFIXNUM (other));
 	  break;
 	case BIGNUM_T:
 	  bignum_ior (scratch_bignum, XBIGNUM_DATA (result),
@@ -2179,7 +2179,7 @@ arguments: (&rest ARGS)
   while (args < args_end)
     bits |= fixnum_char_or_marker_to_int (*args++);
 
-  return make_int (bits);
+  return make_fixnum (bits);
 #endif /* HAVE_BIGNUM */
 }
 
@@ -2196,16 +2196,16 @@ arguments: (&rest ARGS)
   Lisp_Object result, other;
 
   if (nargs == 0)
-    return make_int (0);
+    return make_fixnum (0);
 
   while (!(CHARP (args[0]) || MARKERP (args[0]) || INTEGERP (args[0])))
     args[0] = wrong_type_argument (Qinteger_char_or_marker_p, args[0]);
 
   result = args[0];
   if (CHARP (result))
-    result = make_int (XCHAR (result));
+    result = make_fixnum (XCHAR (result));
   else if (MARKERP (result))
-    result = make_int (marker_position (result));
+    result = make_fixnum (marker_position (result));
   for (i = 1; i < nargs; i++)
     {
       while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
@@ -2213,7 +2213,7 @@ arguments: (&rest ARGS)
       other = args[i];
       if (promote_args (&result, &other) == FIXNUM_T)
 	{
-	  result = make_int (XREALINT (result) ^ XREALINT (other));
+	  result = make_fixnum (XREALFIXNUM (result) ^ XREALFIXNUM (other));
 	}
       else
 	{
@@ -2230,7 +2230,7 @@ arguments: (&rest ARGS)
   while (args < args_end)
     bits ^= fixnum_char_or_marker_to_int (*args++);
 
-  return make_int (bits);
+  return make_fixnum (bits);
 #endif /* !HAVE_BIGNUM */
 }
 
@@ -2251,7 +2251,7 @@ NUMBER may be an integer, marker or character converted to integer.
     }
 #endif /* HAVE_BIGNUM */
 
-  return make_int (~ fixnum_char_or_marker_to_int (number));
+  return make_fixnum (~ fixnum_char_or_marker_to_int (number));
 }
 
 DEFUN ("%", Frem, 2, 2, 0, /*
@@ -2268,9 +2268,9 @@ Both must be integers, characters or markers.
 
   if (promote_args (&number1, &number2) == FIXNUM_T)
     {
-      if (XREALINT (number2) == 0)
+      if (XREALFIXNUM (number2) == 0)
 	Fsignal (Qarith_error, Qnil);
-      return make_int (XREALINT (number1) % XREALINT (number2));
+      return make_fixnum (XREALFIXNUM (number1) % XREALFIXNUM (number2));
     }
   else
     {
@@ -2287,7 +2287,7 @@ Both must be integers, characters or markers.
   if (ival2 == 0)
     Fsignal (Qarith_error, Qnil);
 
-  return make_int (ival1 % ival2);
+  return make_fixnum (ival1 % ival2);
 #endif /* HAVE_BIGNUM */
 }
 
@@ -2324,12 +2324,12 @@ If either argument is a float, a float will be returned.
     case FIXNUM_T:
       {
 	EMACS_INT ival;
-	if (XREALINT (y) == 0) goto divide_by_zero;
-	ival = XREALINT (x) % XREALINT (y);
+	if (XREALFIXNUM (y) == 0) goto divide_by_zero;
+	ival = XREALFIXNUM (x) % XREALFIXNUM (y);
 	/* If the "remainder" comes out with the wrong sign, fix it.  */
-	if (XREALINT (y) < 0 ? ival > 0 : ival < 0)
-	  ival += XREALINT (y);
-	return make_int (ival);
+	if (XREALFIXNUM (y) < 0 ? ival > 0 : ival < 0)
+	  ival += XREALFIXNUM (y);
+	return make_fixnum (ival);
       }
 #ifdef HAVE_BIGNUM
     case BIGNUM_T:
@@ -2398,7 +2398,7 @@ If either argument is a float, a float will be returned.
     if (iod2.c.ival < 0 ? ival > 0 : ival < 0)
       ival += iod2.c.ival;
 
-    return make_int (ival);
+    return make_fixnum (ival);
   }
 #endif /* WITH_NUMBER_TYPES */
 
@@ -2416,12 +2416,12 @@ to be duplicated.  Use `lsh' instead.
 */
        (value, count))
 {
-  CHECK_INT_COERCE_CHAR (value);
-  CONCHECK_INT (count);
+  CHECK_FIXNUM_COERCE_CHAR (value);
+  CONCHECK_FIXNUM (count);
 
-  return make_int (XINT (count) > 0 ?
-		   XINT (value) <<  XINT (count) :
-		   XINT (value) >> -XINT (count));
+  return make_fixnum (XFIXNUM (count) > 0 ?
+		   XFIXNUM (value) <<  XFIXNUM (count) :
+		   XFIXNUM (value) >> -XFIXNUM (count));
 }
 
 DEFUN ("lsh", Flsh, 2, 2, 0, /*
@@ -2438,11 +2438,11 @@ In this case, zeros are shifted in on the left.
 
   if (promote_args (&value, &count) == FIXNUM_T)
     {
-      if (XREALINT (count) <= 0)
-	return make_int (XREALINT (value) >> -XREALINT (count));
+      if (XREALFIXNUM (count) <= 0)
+	return make_fixnum (XREALFIXNUM (value) >> -XREALFIXNUM (count));
       /* Use bignums to avoid overflow */
-      bignum_set_long (scratch_bignum2, XREALINT (value));
-      bignum_lshift (scratch_bignum, scratch_bignum2, XREALINT (count));
+      bignum_set_long (scratch_bignum2, XREALFIXNUM (value));
+      bignum_lshift (scratch_bignum, scratch_bignum2, XREALFIXNUM (count));
       return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
     }
   else
@@ -2465,12 +2465,12 @@ In this case, zeros are shifted in on the left.
       return Fcanonicalize_number (make_bignum_bg (scratch_bignum2));
     }
 #else /* !HAVE_BIGNUM */
-  CHECK_INT_COERCE_CHAR (value);
-  CONCHECK_INT (count);
+  CHECK_FIXNUM_COERCE_CHAR (value);
+  CONCHECK_FIXNUM (count);
 
-  return make_int (XINT (count) > 0 ?
-		   XUINT (value) <<  XINT (count) :
-		   XUINT (value) >> -XINT (count));
+  return make_fixnum (XFIXNUM (count) > 0 ?
+		   XUINT (value) <<  XFIXNUM (count) :
+		   XUINT (value) >> -XFIXNUM (count));
 #endif /* HAVE_BIGNUM */
 }
 
@@ -2482,7 +2482,7 @@ Markers and characters are converted to integers.
 {
  retry:
 
-  if (INTP    (number)) return make_integer (XINT (number) + 1);
+  if (FIXNUMP    (number)) return make_integer (XFIXNUM (number) + 1);
   if (CHARP   (number)) return make_integer (XCHAR (number) + 1);
   if (MARKERP (number)) return make_integer (marker_position (number) + 1);
   if (FLOATP  (number)) return make_float (XFLOAT_DATA (number) + 1.0);
@@ -2526,7 +2526,7 @@ Markers and characters are converted to integers.
 {
  retry:
 
-  if (INTP    (number)) return make_integer (XINT (number) - 1);
+  if (FIXNUMP    (number)) return make_integer (XFIXNUM (number) - 1);
   if (CHARP   (number)) return make_integer (XCHAR (number) - 1);
   if (MARKERP (number)) return make_integer (marker_position (number) - 1);
   if (FLOATP  (number)) return make_float (XFLOAT_DATA (number) - 1.0);
@@ -3650,12 +3650,12 @@ vars_of_data (void)
   DEFVAR_CONST_INT ("most-negative-fixnum", &Vmost_negative_fixnum /*
 The fixnum closest in value to negative infinity.
 */);
-  Vmost_negative_fixnum = EMACS_INT_MIN;
+  Vmost_negative_fixnum = MOST_NEGATIVE_FIXNUM;
 
   DEFVAR_CONST_INT ("most-positive-fixnum", &Vmost_positive_fixnum /*
 The fixnum closest in value to positive infinity.
 */);
-  Vmost_positive_fixnum = EMACS_INT_MAX;
+  Vmost_positive_fixnum = MOST_POSITIVE_FIXNUM;
 
 #ifdef DEBUG_XEMACS
   DEFVAR_BOOL ("debug-issue-ebola-notices", &debug_issue_ebola_notices /*

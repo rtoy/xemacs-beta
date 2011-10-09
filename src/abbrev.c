@@ -370,13 +370,13 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
       if (!abbrev_all_caps
 	  && scan_words (buf, point, -1) > scan_words (buf, abbrev_start, 1))
 	{
-	  Fupcase_initials_region (make_int (abbrev_start), make_int (point),
+	  Fupcase_initials_region (make_fixnum (abbrev_start), make_fixnum (point),
 				   wrap_buffer (buf));
 	}
       else
 	{
 	  /* If expansion is one word, or if user says so, upcase it all. */
-	  Fupcase_region (make_int (abbrev_start), make_int (point),
+	  Fupcase_region (make_fixnum (abbrev_start), make_fixnum (point),
 			  wrap_buffer (buf));
 	}
     }
@@ -390,7 +390,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
 				BUF_FETCH_CHAR (buf, pos)))
 	pos++;
       /* Change just that.  */
-      Fupcase_initials_region (make_int (pos), make_int (pos + 1),
+      Fupcase_initials_region (make_fixnum (pos), make_fixnum (pos + 1),
 			       wrap_buffer (buf));
     }
 
@@ -408,7 +408,7 @@ write_abbrev (Lisp_Object sym, Lisp_Object stream)
   /* This function can GC */
   struct buffer *buf = current_buffer;
 
-  if (INTP (XSYMBOL (sym)->plist))
+  if (FIXNUMP (XSYMBOL (sym)->plist))
     {
       count = XSYMBOL (sym)->plist;
       system_flag = Qnil;
@@ -441,7 +441,7 @@ describe_abbrev (Lisp_Object sym, Lisp_Object stream)
   /* This function can GC */
   struct buffer *buf = current_buffer;
 
-  if (INTP (XSYMBOL (sym)->plist))
+  if (FIXNUMP (XSYMBOL (sym)->plist))
     {
       count = XSYMBOL (sym)->plist;
       system_flag = Qnil;
@@ -455,23 +455,23 @@ describe_abbrev (Lisp_Object sym, Lisp_Object stream)
   if (NILP (XSYMBOL_VALUE (sym)))
     return;
 
-  one = make_int (1);
+  one = make_fixnum (1);
   Fprin1 (Fsymbol_name (sym), stream);
 
   if (!NILP (system_flag))
     {
       buffer_insert_ascstring (buf, " (sys)");
-      Findent_to (make_int (20), one, Qnil);
+      Findent_to (make_fixnum (20), one, Qnil);
     }
   else
-    Findent_to (make_int (15), one, Qnil);
+    Findent_to (make_fixnum (15), one, Qnil);
 
   Fprin1 (count, stream);
-  Findent_to (make_int (20), one, Qnil);
+  Findent_to (make_fixnum (20), one, Qnil);
   Fprin1 (XSYMBOL_VALUE (sym), stream);
   if (!NILP (XSYMBOL (sym)->function))
     {
-      Findent_to (make_int (45), one, Qnil);
+      Findent_to (make_fixnum (45), one, Qnil);
       Fprin1 (XSYMBOL (sym)->function, stream);
     }
   buffer_insert_ascstring (buf, "\n");

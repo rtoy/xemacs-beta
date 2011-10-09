@@ -857,7 +857,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
     }
 
   /* evil kludge! */
-  if (!NILP (fg) && !COLOR_INSTANCEP (fg) && !INTP (fg))
+  if (!NILP (fg) && !COLOR_INSTANCEP (fg) && !FIXNUMP (fg))
     {
       /* #### I fixed one case where this was getting hit.  It was a
          bad macro expansion (compiler bug). */
@@ -871,7 +871,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
       if (COLOR_INSTANCEP (fg))
 	XLIKE_SET_GC_COLOR (gcv.foreground, XCOLOR_INSTANCE_XLIKE_COLOR (fg));
       else
-	XLIKE_SET_GC_PIXEL (gcv.foreground, XINT (fg));
+	XLIKE_SET_GC_PIXEL (gcv.foreground, XFIXNUM (fg));
       mask |= XLIKE_GC_FOREGROUND;
     }
 
@@ -880,7 +880,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
       if (COLOR_INSTANCEP (bg))
 	XLIKE_SET_GC_COLOR (gcv.background, XCOLOR_INSTANCE_XLIKE_COLOR (bg));
       else
-	XLIKE_SET_GC_PIXEL (gcv.background, XINT (bg));
+	XLIKE_SET_GC_PIXEL (gcv.background, XFIXNUM (bg));
       mask |= XLIKE_GC_BACKGROUND;
     }
 
@@ -927,7 +927,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 
   if (!NILP (lwidth))
     {
-      gcv.line_width = XINT (lwidth);
+      gcv.line_width = XFIXNUM (lwidth);
       mask |= XLIKE_GC_LINE_WIDTH;
     }
 
@@ -1554,7 +1554,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	{
 	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
 			     Qnil, Qnil,
-			     make_int (bar_width));
+			     make_fixnum (bar_width));
 	}
       else
 	{
@@ -1787,9 +1787,9 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
     get_builtin_face_cache_index (w, Vvertical_divider_face);
 
   width = window_divider_width (w);
-  shadow_thickness = XINT (w->vertical_divider_shadow_thickness);
-  spacing = XINT (w->vertical_divider_spacing);
-  line_width = XINT (w->vertical_divider_line_width);
+  shadow_thickness = XFIXNUM (w->vertical_divider_shadow_thickness);
+  spacing = XFIXNUM (w->vertical_divider_spacing);
+  line_width = XFIXNUM (w->vertical_divider_line_width);
   x = WINDOW_RIGHT (w) - width;
   ytop = WINDOW_TOP (w);
   ybottom = WINDOW_BOTTOM (w);
@@ -1940,7 +1940,7 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 
 	      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background,
 				 Qnil, Qnil, Qnil,
-				 make_int (bar_width));
+				 make_fixnum (bar_width));
 	      XLIKE_DRAW_LINE (dpy, x_win, gc, cursor_start + bar_width - 1,
 			       cursor_y, cursor_start + bar_width - 1,
 			       cursor_y + cursor_height - 1);
@@ -2108,7 +2108,7 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
 
 	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
 			     Qnil, Qnil,
-			     make_int (bar_width));
+			     make_fixnum (bar_width));
 	  XLIKE_DRAW_LINE (dpy, x_win, gc, x + bar_width - 1, cursor_y,
 			   x + bar_width - 1, cursor_y + cursor_height - 1);
 	}

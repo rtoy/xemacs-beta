@@ -296,9 +296,9 @@ will be added as an FcChar8[], int, double, or FcBool respectively.
       FcChar8 *str = (FcChar8 *) extract_fcapi_string (value);
       res = FcPatternAddString (fcpat, obj, str);
     }
-  else if (INTP (value)) 
+  else if (FIXNUMP (value)) 
     {
-      res = FcPatternAddInteger (fcpat, obj, XINT (value));
+      res = FcPatternAddInteger (fcpat, obj, XFIXNUM (value));
     }
   else if (FLOATP (value)) 
     {
@@ -438,10 +438,10 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
     {
 #ifdef HAVE_BIGNUM
       check_integer_range (id, Qzero, make_integer (INT_MAX));
-      int_id = BIGNUMP (id) ? bignum_to_int (XBIGNUM_DATA (id)) : XINT (id);
+      int_id = BIGNUMP (id) ? bignum_to_int (XBIGNUM_DATA (id)) : XFIXNUM (id);
 #else
-      check_integer_range (id, Qzero, make_integer (EMACS_INT_MAX));
-      int_id = XINT (id);      
+      check_integer_range (id, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+      int_id = XFIXNUM (id);      
 #endif
     }
   if (!NILP (type)) CHECK_SYMBOL (type);
@@ -458,7 +458,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
 	{
 	case FcTypeInteger:
 	  return ((!NILP (type) && !EQ (type, Qinteger))
-		  ? Qfc_result_type_mismatch : make_int (fc_value.u.i));
+		  ? Qfc_result_type_mismatch : make_fixnum (fc_value.u.i));
 	case FcTypeDouble:
 	  return ((!NILP (type) && !EQ (type, intern ("double"))
 		   && !EQ (type, Qfloat))
@@ -474,13 +474,13 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
 	  return Qfc_result_type_mismatch;
 	  /* #### unimplemented
 	  return ((!NILP (type) && !EQ (type, intern ("matrix")))
-		  ? Qfc_result_type_mismatch : make_int (fc_value.u.m));
+		  ? Qfc_result_type_mismatch : make_fixnum (fc_value.u.m));
 	  */
 	case FcTypeCharSet:
 	  return Qfc_result_type_mismatch;
 	  /* #### unimplemented
 	  return ((!NILP (type) && !EQ (type, intern ("charset")))
-		  ? Qfc_result_type_mismatch : make_int (fc_value.u.c));
+		  ? Qfc_result_type_mismatch : make_fixnum (fc_value.u.c));
 	  */
 	}
     case FcResultTypeMismatch:
@@ -747,7 +747,7 @@ DEFUN ("fc-config-get-rescan-interval", Ffc_config_get_rescan_interval, 1, 1, 0,
       (config))
 {
   CHECK_FC_CONFIG (config);
-  return make_int (FcConfigGetRescanInterval (XFC_CONFIG_PTR (config)));
+  return make_fixnum (FcConfigGetRescanInterval (XFC_CONFIG_PTR (config)));
 }
 
 DEFUN ("fc-config-set-rescan-interval", Ffc_config_set_rescan_interval, 2, 2, 0, /*
@@ -758,9 +758,9 @@ DEFUN ("fc-config-set-rescan-interval", Ffc_config_set_rescan_interval, 2, 2, 0,
       (config, rescan_interval))
 {
   CHECK_FC_CONFIG (config);
-  CHECK_INT (rescan_interval);
+  CHECK_FIXNUM (rescan_interval);
   if (FcConfigSetRescanInterval (XFC_CONFIG_PTR (config),
-				 XINT (rescan_interval)) == FcFalse)
+				 XFIXNUM (rescan_interval)) == FcFalse)
     signal_error (Qio_error, "FcConfigSetRescanInverval barfed",
 		  intern ("fc-config-set-rescan-interval"));
   return Qnil;
@@ -1137,7 +1137,7 @@ checked against `fc-version', which is the version of fontconfig.h.
 It's probably not a disaster if `(> (fc-get-version) fc-version)'. */
       ())
 {
-  return make_int (FcGetVersion ());
+  return make_fixnum (FcGetVersion ());
 }
 
 DEFUN ("fc-init-reinitialize", Ffc_init_reinitialize, 0, 0, 0, /*

@@ -245,11 +245,11 @@ it defaults to the value of the variable `obarray'.
 
   len = XSTRING_LENGTH (string);
   object = oblookup (obarray, XSTRING_DATA (string), len);
-  if (!INTP (object))
+  if (!FIXNUMP (object))
     /* Found it */
     return object;
 
-  ptr = &XVECTOR_DATA (obarray)[XINT (object)];
+  ptr = &XVECTOR_DATA (obarray)[XFIXNUM (object)];
 
   object = Fmake_symbol (string);
   symbol = object;
@@ -301,7 +301,7 @@ no canonical symbol named NAME, and defaults to nil.
     string = symbol_name (XSYMBOL (name));
 
   tem = oblookup (obarray, XSTRING_DATA (string), XSTRING_LENGTH (string));
-  if (INTP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
+  if (FIXNUMP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
     return default_;
   else
     return tem;
@@ -332,7 +332,7 @@ OBARRAY defaults to the value of the variable `obarray'.
     }
 
   tem = oblookup (obarray, XSTRING_DATA (string), XSTRING_LENGTH (string));
-  if (INTP (tem))
+  if (FIXNUMP (tem))
     return Qnil;
   /* If arg was a symbol, don't delete anything but that symbol itself.  */
   if (SYMBOLP (name) && !EQ (name, tem))
@@ -423,7 +423,7 @@ oblookup (Lisp_Object obarray, const Ibyte *ptr, Bytecount size)
 	if (!tail)
 	  break;
       }
-  return make_int (hash);
+  return make_fixnum (hash);
 }
 
 /* An excellent string hashing function.
@@ -1209,7 +1209,7 @@ do_symval_forwarding (Lisp_Object valcontents, struct buffer *buffer,
     {
     case SYMVAL_FIXNUM_FORWARD:
     case SYMVAL_CONST_FIXNUM_FORWARD:
-      return make_int (*((Fixnum *)symbol_value_forward_forward (fwd)));
+      return make_fixnum (*((Fixnum *)symbol_value_forward_forward (fwd)));
 
     case SYMVAL_BOOLEAN_FORWARD:
     case SYMVAL_CONST_BOOLEAN_FORWARD:
@@ -1271,7 +1271,7 @@ set_default_buffer_slot_variable (Lisp_Object sym,
     = XSYMBOL_VALUE_FORWARD (valcontents);
   int offset = ((Rawbyte *) symbol_value_forward_forward (fwd)
 		- (Rawbyte *) &buffer_local_flags);
-  int mask = XINT (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
+  int mask = XFIXNUM (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
   int (*magicfun) (Lisp_Object simm, Lisp_Object *val, Lisp_Object in_object,
 		   int flags) = symbol_value_forward_magicfun (fwd);
 
@@ -1311,7 +1311,7 @@ set_default_console_slot_variable (Lisp_Object sym,
     = XSYMBOL_VALUE_FORWARD (valcontents);
   int offset = ((Rawbyte *) symbol_value_forward_forward (fwd)
 		- (Rawbyte *) &console_local_flags);
-  int mask = XINT (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
+  int mask = XFIXNUM (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
   int (*magicfun) (Lisp_Object simm, Lisp_Object *val, Lisp_Object in_object,
 		   int flags) = symbol_value_forward_magicfun (fwd);
 
@@ -1379,10 +1379,10 @@ store_symval_forwarding (Lisp_Object sym, Lisp_Object ovalue,
       switch (XSYMBOL_VALUE_MAGIC_TYPE (ovalue))
 	{
 	case SYMVAL_FIXNUM_FORWARD:
-	  CHECK_INT (newval);
+	  CHECK_FIXNUM (newval);
 	  if (magicfun)
 	    magicfun (sym, &newval, Qnil, 0);
-	  *((Fixnum *) symbol_value_forward_forward (fwd)) = XINT (newval);
+	  *((Fixnum *) symbol_value_forward_forward (fwd)) = XFIXNUM (newval);
 	  return;
 
 	case SYMVAL_BOOLEAN_FORWARD:
@@ -1947,7 +1947,7 @@ Set SYMBOL's value to NEWVAL, and return NEWVAL.
       {
 	const struct symbol_value_forward *fwd
 	  = XSYMBOL_VALUE_FORWARD (valcontents);
-	int mask = XINT (*((Lisp_Object *)
+	int mask = XFIXNUM (*((Lisp_Object *)
 			   symbol_value_forward_forward (fwd)));
 	if (mask > 0)
 	  /* Setting this variable makes it buffer-local */
@@ -1959,7 +1959,7 @@ Set SYMBOL's value to NEWVAL, and return NEWVAL.
       {
 	const struct symbol_value_forward *fwd
 	  = XSYMBOL_VALUE_FORWARD (valcontents);
-	int mask = XINT (*((Lisp_Object *)
+	int mask = XFIXNUM (*((Lisp_Object *)
 			   symbol_value_forward_forward (fwd)));
 	if (mask > 0)
 	  /* Setting this variable makes it console-local */
@@ -2243,7 +2243,7 @@ of previous SYMBOLs.
 
   if (nargs & 1)		/* Odd number of arguments? */
     Fsignal (Qwrong_number_of_arguments,
-	     list2 (Qsetq_default, make_int (nargs)));
+	     list2 (Qsetq_default, make_fixnum (nargs)));
 
   GC_PROPERTY_LIST_LOOP_3 (symbol, val, args)
     {
@@ -2547,7 +2547,7 @@ From now on the default value will apply in this buffer.
 	int offset = ((Rawbyte *) symbol_value_forward_forward (fwd)
 			       - (Rawbyte *) &buffer_local_flags);
 	int mask =
-	  XINT (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
+	  XFIXNUM (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
 
 	if (mask > 0)
 	  {
@@ -2642,7 +2642,7 @@ From now on the default value will apply in this console.
 	int offset = ((Rawbyte *) symbol_value_forward_forward (fwd)
 			       - (Rawbyte *) &console_local_flags);
 	int mask =
-	  XINT (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
+	  XFIXNUM (*((Lisp_Object *) symbol_value_forward_forward (fwd)));
 
 	if (mask > 0)
 	  {
@@ -2698,7 +2698,7 @@ symbol_value_buffer_local_info (Lisp_Object symbol, struct buffer *buffer)
 	  {
 	    const struct symbol_value_forward *fwd
 	      = XSYMBOL_VALUE_FORWARD (valcontents);
-	    int mask = XINT (*((Lisp_Object *)
+	    int mask = XFIXNUM (*((Lisp_Object *)
 			       symbol_value_forward_forward (fwd)));
 	    if ((mask <= 0) || (buffer && (buffer->local_var_flags & mask)))
 	      /* Already buffer-local */
@@ -2876,17 +2876,17 @@ user_variable_alias_check_fun (Lisp_Object symbol)
 {
   Lisp_Object documentation = Fget (symbol, Qvariable_documentation, Qnil);
       
-  if ((INTP (documentation) && XINT (documentation) < 0) ||
+  if ((FIXNUMP (documentation) && XFIXNUM (documentation) < 0) ||
       (STRINGP (documentation) &&
        (string_byte (documentation, 0) == '*')) ||
       /* If (STRING . INTEGER), a negative integer means a user variable. */
       (CONSP (documentation)
        && STRINGP (XCAR (documentation))
-       && INTP (XCDR (documentation))
-       && XINT (XCDR (documentation)) < 0) ||
+       && FIXNUMP (XCDR (documentation))
+       && XFIXNUM (XCDR (documentation)) < 0) ||
       !NILP (Fcustom_variable_p (symbol)))
     {
-      return make_int(1);
+      return make_fixnum(1);
     }
 
   return Qzero;
@@ -2925,7 +2925,7 @@ this error if you really want to avoid this.
       return Qnil;
     }
 
-  assert (EQ (make_int (1), mapped));
+  assert (EQ (make_fixnum (1), mapped));
 
   return Qt;
 }

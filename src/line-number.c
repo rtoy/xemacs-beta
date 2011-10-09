@@ -111,7 +111,7 @@ narrow_line_number_cache (struct buffer *b)
     /* Calculating the line number of BUF_BEGV here is a bad idea,
        because there is absolutely no reason to do it before the next
        redisplay.  We simply mark it as dirty instead.  */
-    LINE_NUMBER_BEGV (b) = make_int (-1);
+    LINE_NUMBER_BEGV (b) = make_fixnum (-1);
 }
 
 /* Invalidate the line number cache positions that lie after POS. */
@@ -199,7 +199,7 @@ delete_invalidate_line_number_cache (struct buffer *b, Charbpos from, Charbpos t
    will be stored in LINE.
 
    *LINE should be initialized to the line number of BEG (normally,
-   BEG will be BUF_BEGV, and *LINE will be XINT (LINE_NUMBER_BEGV).
+   BEG will be BUF_BEGV, and *LINE will be XFIXNUM (LINE_NUMBER_BEGV).
    This will initialize the cache, if necessary.  */
 static void
 get_nearest_line_number (struct buffer *b, Charbpos *beg, Charbpos pos,
@@ -223,7 +223,7 @@ get_nearest_line_number (struct buffer *b, Charbpos *beg, Charbpos pos,
 	{
 	  length = howfar;
 	  *beg = newpos;
-	  *line = XINT (XCDR (ring[i]));
+	  *line = XFIXNUM (XCDR (ring[i]));
 	}
     }
 }
@@ -244,9 +244,9 @@ add_position_to_cache (struct buffer *b, Charbpos pos, EMACS_INT line)
     ring[i] = ring[i - 1];
 
   /* ...and update it. */
-  ring[0] = Fcons (Fset_marker (Fmake_marker (), make_int (pos),
+  ring[0] = Fcons (Fset_marker (Fmake_marker (), make_fixnum (pos),
 				wrap_buffer (b)),
-		   make_int (line));
+		   make_fixnum (line));
 }
 
 /* Calculate the line number in buffer B at position POS.  If CACHEP
@@ -280,21 +280,21 @@ buffer_line_number (struct buffer *b, Charbpos pos, int cachep)
       if (NILP (b->text->line_number_cache))
 	allocate_line_number_cache (b);
       /* If we don't know the line number of BUF_BEGV, calculate it now.  */
-      if (XINT (LINE_NUMBER_BEGV (b)) == -1)
+      if (XFIXNUM (LINE_NUMBER_BEGV (b)) == -1)
 	{
 	  LINE_NUMBER_BEGV (b) = Qzero;
 	  /* #### This has a side-effect of changing the cache.  */
 	  LINE_NUMBER_BEGV (b) =
-	    make_int (buffer_line_number (b, BUF_BEGV (b), 1));
+	    make_fixnum (buffer_line_number (b, BUF_BEGV (b), 1));
 	}
-      cached_lines = XINT (LINE_NUMBER_BEGV (b));
+      cached_lines = XFIXNUM (LINE_NUMBER_BEGV (b));
       get_nearest_line_number (b, &beg, pos, &cached_lines);
     }
 
-  scan_buffer (b, '\n', beg, pos, pos > beg ? EMACS_INT_MAX : -EMACS_INT_MAX,
+  scan_buffer (b, '\n', beg, pos, pos > beg ? MOST_POSITIVE_FIXNUM : -MOST_POSITIVE_FIXNUM,
 	       &shortage, 0);
 
-  line = EMACS_INT_MAX - shortage;
+  line = MOST_POSITIVE_FIXNUM - shortage;
   if (beg > pos)
     line = -line;
   line += cached_lines;
@@ -306,7 +306,7 @@ buffer_line_number (struct buffer *b, Charbpos pos, int cachep)
 	add_position_to_cache (b, pos, line);
       /* Account for narrowing.  If cache is not used, this is
 	 unnecessary, because we counted from BUF_BEGV anyway.  */
-      line -= XINT (LINE_NUMBER_BEGV (b));
+      line -= XFIXNUM (LINE_NUMBER_BEGV (b));
     }
 
   return line;
