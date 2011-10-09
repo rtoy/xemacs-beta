@@ -1677,10 +1677,6 @@ enum Lisp_Type
 
 #define FIXNUM_VALBITS (BITS_PER_EMACS_INT - FIXNUM_GCBITS)
 #define VALBITS (BITS_PER_EMACS_INT - GCBITS)
-/* This is badly named; it's not the maximum value that an EMACS_INT can
-   have, it's the maximum value that a Lisp-visible fixnum can have (half
-   the maximum value an EMACS_INT can have) and as such would be better
-   called MOST_POSITIVE_FIXNUM. Similarly for MOST_NEGATIVE_FIXNUM. */
 #define MOST_POSITIVE_FIXNUM ((EMACS_INT) ((1UL << (FIXNUM_VALBITS - 1)) -1UL))
 #define MOST_NEGATIVE_FIXNUM (-(MOST_POSITIVE_FIXNUM) - 1)
 /* WARNING: evaluates its arg twice. */
