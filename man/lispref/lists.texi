@@ -1451,7 +1451,8 @@ is more than one.
   In XEmacs Lisp, it is @emph{not} an error if an element of an
 association list is not a cons cell.  The alist search functions simply
 ignore such elements.  Many other versions of Lisp signal errors in such
-cases.
+cases, and it is good practice to avoid adding non-cons-cells to association
+lists.
 
   Note that property lists are similar to association lists in several
 respects.  A property list behaves like an association list in which
@@ -1569,57 +1570,6 @@ becomes clearer if the association is written in dotted pair notation:
 @end smallexample
 @end defun
 
-@defun remassoc key alist
-This function deletes by side effect any associations with key @var{key}
-in @var{alist}---i.e. it removes any elements from @var{alist} whose
-@code{car} is @code{equal} to @var{key}.  The modified @var{alist} is
-returned.
-
-If the first member of @var{alist} has a @code{car} that is @code{equal}
-to @var{key}, there is no way to remove it by side effect; therefore,
-write @code{(setq foo (remassoc key foo))} to be sure of changing the
-value of @code{foo}.
-@end defun
-
-@defun remassq key alist
-This function deletes by side effect any associations with key @var{key}
-in @var{alist}---i.e. it removes any elements from @var{alist} whose
-@code{car} is @code{eq} to @var{key}.  The modified @var{alist} is
-returned.
-
-This function is exactly like @code{remassoc}, but comparisons between
-@var{key} and keys in @var{alist} are done using @code{eq} instead of
-@code{equal}.
-@end defun
-
-@defun remrassoc value alist
-This function deletes by side effect any associations with value @var{value}
-in @var{alist}---i.e. it removes any elements from @var{alist} whose
-@code{cdr} is @code{equal} to @var{value}.  The modified @var{alist} is
-returned.
-
-If the first member of @var{alist} has a @code{car} that is @code{equal}
-to @var{value}, there is no way to remove it by side effect; therefore,
-write @code{(setq foo (remassoc value foo))} to be sure of changing the
-value of @code{foo}.
-
-@code{remrassoc} is like @code{remassoc} except that it compares the
-@sc{cdr} of each @var{alist} association instead of the @sc{car}.  You
-can think of this as ``reverse @code{remassoc}'', removing an association
-based on its value instead of its key.
-@end defun
-
-@defun remrassq value alist
-This function deletes by side effect any associations with value @var{value}
-in @var{alist}---i.e. it removes any elements from @var{alist} whose
-@code{cdr} is @code{eq} to @var{value}.  The modified @var{alist} is
-returned.
-
-This function is exactly like @code{remrassoc}, but comparisons between
-@var{value} and values in @var{alist} are done using @code{eq} instead of
-@code{equal}.
-@end defun
-
 @defun copy-alist alist
 @cindex copying alists
 This function returns a two-level deep copy of @var{alist}: it creates a
@@ -1670,6 +1620,14 @@ the associations of one copy without affecting the other:
 @end group
 @end smallexample
 @end defun
+
+For removing elements from alists, use @code{remove*} or @code{delete*} with
+appropriate @code{:key} arguments.  If it is necessary that XEmacs not error
+on encountering a non-cons in such a list, there are XEmacs-specific functions
+@code{remassq}, @code{remrassq}, @code{remassoc}, and @code{remrassoc} with
+this behavior, but they are neither available under GNU Emacs nor Common Lisp.
+They are marked as obsolete, and it is preferable to fix your code to avoid
+adding non-cons objects to alists.
 
 @node Property Lists
 @section Property Lists

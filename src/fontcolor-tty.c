@@ -80,7 +80,7 @@ Strings FG-STRING and BG-STRING should specify the escape sequences to
   CHECK_STRING (bg_string);
 
   color = Fintern (color, Qnil);
-  Vtty_color_alist = Fremassq (color, Vtty_color_alist);
+  Vtty_color_alist = remassq_no_quit (color, Vtty_color_alist);
   Vtty_color_alist = Fcons (Fcons (color, Fcons (fg_string, bg_string)),
 			    Vtty_color_alist);
 
@@ -95,7 +95,7 @@ Unregister COLOR as a recognized TTY color.
   CHECK_STRING (color);
 
   color = Fintern (color, Qnil);
-  Vtty_color_alist = Fremassq (color, Vtty_color_alist);
+  Vtty_color_alist = remassq_no_quit (color, Vtty_color_alist);
   return Qnil;
 }
 
@@ -111,7 +111,7 @@ If it is not found, return nil.
 
   CHECK_STRING (color);
 
-  result = Fassq (Fintern (color, Qnil), Vtty_color_alist);
+  result = assq_no_quit (Fintern (color, Qnil), Vtty_color_alist);
   if (!NILP (result))
     return list2 (Fcar (Fcdr (result)), Fcdr (Fcdr (result)));
   else

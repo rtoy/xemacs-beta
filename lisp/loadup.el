@@ -225,7 +225,7 @@ with the exception of `loadup.el'.")
                          (delete*
                           nil
                           (mapc #'(lambda (element)
-                                    (remassq 'defun element)
+                                    (delete* 'defun element :key #'car-safe)
                                     (delete-if
                                      #'(lambda (elt)
                                          (and

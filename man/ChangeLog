@@ -1,5 +1,12 @@
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lispref/lists.texi (Association Lists):
+	Don't document #'remassoc, #'remassq and friends in detail;
+	they're XEmacs-specific and (delete* ... :key #'car) is
+	preferable.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* internals/internals.texi (Top):
 	* internals/internals.texi (Authorship of XEmacs):
 	* internals/internals.texi (Modules for Other Aspects of the Lisp Interpreter and Object System):
