@@ -92,7 +92,7 @@
                      compose-ring-map compose-caron-map compose-macron-map
                      compose-breve-map compose-dot-map
                      compose-doubleacute-map compose-ogonek-map
-                     compose-hook-map compose-horn-map)
+                     compose-hook-map compose-horn-map compose-stroke-map)
     do (autoload map "x-compose" nil t 'keymap))
 
   (loop 
@@ -208,7 +208,8 @@
          (dead-doubleacute      compose-doubleacute-map)
          (dead-ogonek           compose-ogonek-map)
          (dead-hook             compose-hook-map)
-         (dead-horn             compose-horn-map))
+         (dead-horn             compose-horn-map)
+	 (dead-stroke		compose-stroke-map))
     
     ;; Get the correct value for function-key-map
     with function-key-map = (symbol-value-in-console 'function-key-map

@@ -1473,7 +1473,7 @@ Unprocessed messages are messages that didn't match any patterns.
   staticpro (&Vtooltalk_message_gcpro);
   staticpro (&Vtooltalk_pattern_gcpro);
   Vtooltalk_message_gcpro =
-    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, Qeq);
   Vtooltalk_pattern_gcpro =
-    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, Qeq);
 }

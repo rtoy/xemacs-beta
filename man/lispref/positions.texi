@@ -766,7 +766,7 @@ excursion.
 described elsewhere (see @ref{Window Configurations} and @pxref{Frame
 Configurations}).
 
-@defspec save-excursion forms@dots{}
+@deffn {Special Operator} save-excursion forms@dots{}
 @cindex mark excursion
 @cindex point excursion
 @cindex current buffer excursion
@@ -810,29 +810,29 @@ The value returned by @code{save-excursion} is the result of the last of
     (set-marker (mark-marker) old-mark)))
 @end group
 @end example
-@end defspec
+@end deffn
 
-@defspec save-current-buffer forms@dots{}
+@deffn {Special Operator} save-current-buffer forms@dots{}
 This special operator is similar to @code{save-excursion} but it only
 saves and restores the current buffer.  Beginning with XEmacs 20.3,
 @code{save-current-buffer} is a primitive.
-@end defspec
+@end deffn
 
-@defspec with-current-buffer buffer forms@dots{}
+@deffn {Special Operator} with-current-buffer buffer forms@dots{}
 This macro evaluates @var{forms} with @var{buffer} as the current
 buffer.  It returns the value of the last form.
-@end defspec
+@end deffn
 
-@defspec with-temp-file filename forms@dots{}
+@deffn {Special Operator} with-temp-file filename forms@dots{}
 This macro creates a new buffer, evaluates @var{forms} there, and
 writes the buffer to @var{filename}.  It returns the value of the last form
 evaluated.
-@end defspec
+@end deffn
 
-@defspec save-selected-window forms@dots{}
+@deffn {Special Operator} save-selected-window forms@dots{}
 This macro is similar to @code{save-excursion} but it saves and
 restores the selected window and nothing else.
-@end defspec
+@end deffn
 
 @node Narrowing
 @section Narrowing
@@ -893,7 +893,7 @@ It is equivalent to the following expression:
 @var{buffer} defaults to the current buffer if omitted.
 @end deffn
 
-@defspec save-restriction body@dots{}
+@deffn {Special Operator} save-restriction body@dots{}
 This special operator saves the current bounds of the accessible portion,
 evaluates the @var{body} forms, and finally restores the saved bounds,
 thus restoring the same state of narrowing (or absence thereof) formerly
@@ -972,4 +972,4 @@ This is the contents of foo@point{}
 ---------- Buffer: foo ----------
 @end group
 @end example
-@end defspec
+@end deffn

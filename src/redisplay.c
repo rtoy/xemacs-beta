@@ -49,6 +49,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h"
 #include "commands.h"
 #include "debug.h"
 #include "device-impl.h"
@@ -61,7 +62,7 @@ Boston, MA 02111-1307, USA.  */
 #include "gutter.h"
 #include "insdel.h"
 #include "menubar.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 #include "opaque.h"
 #include "process.h"
 #include "profile.h"
@@ -633,13 +634,8 @@ static int
 redisplay_window_text_width_ichar_string (struct window *w, int findex,
 					  Ichar *str, Charcount len)
 {
-  unsigned char charsets[NUM_LEADING_BYTES];
-  Lisp_Object window;
-
-  find_charsets_in_ichar_string (charsets, str, len);
-  window = wrap_window (w);
-  ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), window,
-			       charsets);
+  ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), wrap_window (w),
+			       str, len);
   return DEVMETH (WINDOW_XDEVICE (w),
 		  text_width, (w, WINDOW_FACE_CACHEL (w, findex), str,
 			       len));
@@ -672,7 +668,6 @@ redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
 {
   Lisp_Object window = DOMAIN_WINDOW (domain);
   Lisp_Object frame  = DOMAIN_FRAME  (domain);
-  unsigned char charsets[NUM_LEADING_BYTES];
   struct face_cachel cachel;
 
   if (!rtw_ichar_dynarr)
@@ -683,12 +678,11 @@ redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
   convert_ibyte_string_into_ichar_dynarr (nonreloc, len, rtw_ichar_dynarr);
-  find_charsets_in_ibyte_string (charsets, nonreloc, len);
   reset_face_cachel (&cachel);
   cachel.face = face;
-  ensure_face_cachel_complete (&cachel,
-			       NILP (window) ? frame : window,
-			       charsets);
+  ensure_face_cachel_complete (&cachel, NILP (window) ? frame : window,
+			       Dynarr_atp (rtw_ichar_dynarr, 0),
+			       Dynarr_length (rtw_ichar_dynarr));
   return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (frame))),
 		  /* #### Not clear if we're always passed a window, but
 		     I think so.  If not, we will get an abort here,
@@ -1110,12 +1104,14 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
     }
   else
     {
-      Lisp_Object charset = ichar_charset (data->ch);
+      /* @@#### fix me */
+      struct window *w = XWINDOW (data->window);
+      Lisp_Object charset =
+	buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w), data->ch);
       if (!EQ (charset, data->last_charset) ||
 	  data->findex != data->last_findex)
 	{
 	  /* OK, we need to do things the hard way. */
-	  struct window *w = XWINDOW (data->window);
 	  struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, data->findex);
 	  Lisp_Object font_instance =
 	    ensure_face_cachel_contains_charset (cachel, data->window,
@@ -1133,7 +1129,7 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 	  fi = XFONT_INSTANCE (font_instance);
 	  if (!fi->proportional_p || data->font_is_bogus)
 	    {
-	      Ichar ch = data->font_is_bogus ? '~' : data->ch;
+	      Ichar ch = data->font_is_bogus ? CANT_DISPLAY_CHAR : data->ch;
 
 	      data->last_char_width =
 		redisplay_window_text_width_ichar_string
@@ -1194,7 +1190,7 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
     /* Text but not in buffer */
     crb->charpos = 0;
   crb->type = RUNE_CHAR;
-  crb->object.chr.ch = data->font_is_bogus ? '~' : data->ch;
+  crb->object.chr.ch = data->font_is_bogus ? CANT_DISPLAY_CHAR : data->ch;
   crb->endpos = 0;
 
   if (data->cursor_type == CURSOR_ON)
@@ -1686,7 +1682,10 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	  break;
 	case PROP_STRING:
 	  if (pb->data.p_string.str)
-	    xfree (pb->data.p_string.str);
+	    {
+	      xfree (pb->data.p_string.str);
+	      pb->data.p_string.str = 0;
+	    }
 	  /* #### bogus bogus -- this doesn't do anything!
 	     Should probably call add_ibyte_string_runes(),
 	     once that function is fixed. */
@@ -2220,9 +2219,9 @@ create_text_block (struct window *w, struct display_line *dl,
   else if (MINI_WINDOW_P (w) && !active_minibuffer)
     data.cursor_type = NO_CURSOR;
   else if (w == XWINDOW (FRAME_SELECTED_WINDOW (f)) &&
-	   EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-	   d == XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d))))&&
-	   f == XFRAME(DEVICE_SELECTED_FRAME(d)))
+	   EQ (DEVICE_CONSOLE (d), Vselected_console) &&
+	   d == XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d))))&&
+	   f == XFRAME (DEVICE_SELECTED_FRAME (d)))
     {
       data.byte_cursor_charpos = BYTE_BUF_PT (b);
       data.cursor_type = CURSOR_ON;
@@ -5516,10 +5515,10 @@ Info on reentrancy crashes, with backtraces given:
       Lisp_Object string;
       prop = Dynarr_new (prop_block);
 
-      string = concat2(Vminibuf_preprompt, Vminibuf_prompt);
+      string = concat2 (Vminibuf_preprompt, Vminibuf_prompt);
       pb.type = PROP_MINIBUF_PROMPT;
-      pb.data.p_string.str = XSTRING_DATA(string);
-      pb.data.p_string.len = XSTRING_LENGTH(string);
+      pb.data.p_string.str = XSTRING_DATA (string);
+      pb.data.p_string.len = XSTRING_LENGTH (string);
       Dynarr_add (prop, pb);
     }
   else
@@ -6258,9 +6257,9 @@ redisplay_window (Lisp_Object window, int skip_selected)
   selected_in_its_frame = (w == XWINDOW (FRAME_SELECTED_WINDOW (f)));
   selected_globally =
       selected_in_its_frame &&
-      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d &&
-      XFRAME(DEVICE_SELECTED_FRAME(d)) == f;
+      EQ (DEVICE_CONSOLE (d), Vselected_console) &&
+      XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d)))) == d &&
+      XFRAME (DEVICE_SELECTED_FRAME (d)) == f;
   if (skip_selected && selected_in_its_frame)
     return;
 
@@ -6685,12 +6684,25 @@ run_post_redisplay_actions (void)
   unbind_to (depth);
 }
 
+static int the_ritual_suicide_has_been_cancelled = 0;
+
+void
+redisplay_cancel_ritual_suicide(void)
+{
+  the_ritual_suicide_has_been_cancelled = 1;
+}
+
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
 
 static Lisp_Object
 commit_ritual_suicide (Lisp_Object UNUSED (ceci_nest_pas_une_pipe))
 {
-  assert (!in_display);
+  if (!the_ritual_suicide_has_been_cancelled)
+    {
+      assert (!in_display);
+    }
+  else
+    the_ritual_suicide_has_been_cancelled = 0;
   return Qnil;
 }
 
@@ -7066,7 +7078,7 @@ redisplay_device (struct device *d, int automatic)
 
   if (FRAME_REPAINT_P (f))
     {
-      if (CLASS_REDISPLAY_FLAGS_CHANGEDP(f))
+      if (CLASS_REDISPLAY_FLAGS_CHANGEDP (f))
 	{
 	  int preempted = redisplay_frame (f, 1);
 	  if (preempted)
@@ -7240,10 +7252,10 @@ window_line_number (struct window *w, int type)
      fail if DEVICE_SELECTED_FRAME == Qnil (since w->frame cannot be).
      This can occur when the frame title is computed really early */
   Charbpos pos =
-    ((EQ(DEVICE_SELECTED_FRAME(d), w->frame) &&
-       (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame(d)))) &&
-      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d )
+    ((EQ (DEVICE_SELECTED_FRAME (d), w->frame) &&
+       (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d)))) &&
+      EQ (DEVICE_CONSOLE (d), Vselected_console) &&
+      XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d)))) == d )
      ? BUF_PT (b)
      : marker_position (w->pointm[type]));
   EMACS_INT line;
@@ -7985,7 +7997,7 @@ point_would_be_visible (struct window *w, Charbpos startp, Charbpos point,
 			int partially)
 {
   struct buffer *b = XBUFFER (w->buffer);
-  int pixpos = -WINDOW_TEXT_TOP_CLIP(w);
+  int pixpos = -WINDOW_TEXT_TOP_CLIP (w);
   int bottom = WINDOW_TEXT_HEIGHT (w);
   int start_elt;
 
@@ -9706,7 +9718,7 @@ compute_display_line_dynarr_usage (display_line_dynarr *dyn,
   for (i = 0; i < Dynarr_largest (dyn); i++)
     {
       struct display_line *dl = &Dynarr_at (dyn, i);
-      total += compute_display_block_dynarr_usage(dl->display_blocks, ustats);
+      total += compute_display_block_dynarr_usage (dl->display_blocks, ustats);
       total += compute_glyph_block_dynarr_usage  (dl->left_glyphs,    ustats);
       total += compute_glyph_block_dynarr_usage  (dl->right_glyphs,   ustats);
     }

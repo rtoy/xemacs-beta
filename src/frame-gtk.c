@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "console-gtk-impl.h"
 #include "glyphs-gtk.h"
-#include "objects-gtk-impl.h"
+#include "fontcolor-gtk-impl.h"
 #include "scrollbar-gtk.h"
 #include "ui-gtk.h"
 
@@ -992,11 +992,11 @@ allocate_gtk_frame_struct (struct frame *f)
     now that we have internal_equal_trapping_problems(). --ben
 */
   FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   FRAME_GTK_WIDGET_CALLBACK_EX_HASH_TABLE (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
 }
 
 

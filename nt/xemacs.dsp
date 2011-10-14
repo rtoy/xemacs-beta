@@ -887,35 +887,35 @@ SOURCE=..\src\ntproc.c
 # End Source File
 # Begin Source File
 
-SOURCE="..\src\objects-msw.c"
+SOURCE="..\src\fontcolor-msw.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\src\objects-msw.h"
+SOURCE="..\src\fontcolor-msw.h"
 # End Source File
 # Begin Source File
 
-SOURCE="..\src\objects-tty.c"
+SOURCE="..\src\fontcolor-tty.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\src\objects-tty.h"
+SOURCE="..\src\fontcolor-tty.h"
 # End Source File
 # Begin Source File
 
-SOURCE="..\src\objects-x.c"
+SOURCE="..\src\fontcolor-x.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\src\objects-x.h"
+SOURCE="..\src\fontcolor-x.h"
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\objects.c
+SOURCE=..\src\fontcolor.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\objects.h
+SOURCE=..\src\fontcolor.h
 # End Source File
 # Begin Source File
 

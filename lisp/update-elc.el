@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1996 Sun Microsystems, Inc.
-;; Copyright (C) 2001, 2003 Ben Wing.
+;; Copyright (C) 2001, 2003, 2010 Ben Wing.
 
 ;; Author: Ben Wing <ben@xemacs.org>
 ;; Based On: Original by Steven L Baur <steve@xemacs.org>
@@ -102,6 +102,7 @@
 ;; .elc's.
 (defvar lisp-files-needed-for-byte-compilation
   '("bytecomp"
+    "cl-macs"
     "byte-optimize"))
 
 ;; Lisp files not in `lisp-files-needed-for-byte-compilation' that need
@@ -110,8 +111,7 @@
 (defvar lisp-files-needing-early-byte-compilation
   '("easy-mmode"
     "autoload"
-    "shadow"
-    "cl-macs"))
+    "shadow"))
 
 (defvar unbytecompiled-lisp-files
   '("paths.el"
@@ -122,11 +122,9 @@
 Files in `additional-dump-dependencies' do not need to be listed here.")
 
 (defvar additional-dump-dependencies
-  (nconc '("loadup.el"
-           "loadup-el.el"
-           "update-elc.el")
-         (if (featurep 'mule)
-             '("mule/make-coding-system")))
+  '("loadup.el"
+    "loadup-el.el"
+    "update-elc.el")
   "Lisp files that are not dumped but which the dump depends on.
 If any of these files are changed, we need to redump.")
 
@@ -134,6 +132,13 @@ If any of these files are changed, we need to redump.")
   '("custom-load.el"
     "auto-autoloads.el")
   "Lisp files that should not trigger auto-autoloads rebuilding.")
+
+(defvar lisp-files-dependent-on-configuration
+  '("mule/chinese")
+  "Lisp files that need recompilation when XEmacs has been reconfigured.
+These files have macros or `eval-when-compile' expressions that expand
+differently depending on the presence of certain features, especially
+`unicode-internal'.")
 
 (defun update-elc-chop-extension (file)
   (if (string-match "\\.elc?$" file)
@@ -194,6 +199,23 @@ If any of these files are changed, we need to redump.")
 	(append packages-hardcoded-lisp
 		preloaded-file-list
 		site-load-packages))
+
+  ;; First, delete any .elc file that is dependent on XEmacs configuration
+  ;; but older than the most recent time that XEmacs was configured
+  ;; (as revealed by src/config.h)
+  (setq files-to-process lisp-files-dependent-on-configuration)
+  (let ((config-file (expand-file-name "src/config.h" build-directory)))
+    (while files-to-process
+      (let* ((arg (car files-to-process))
+	     (elc-file (expand-file-name (concat arg ".elc") source-lisp)))
+	(when (file-newer-than-file-p config-file elc-file)
+	  ;; no error if file doesn't exist or for some reason we can't
+	  ;; remove it
+	  (condition-case nil
+	      (delete-file elc-file)
+	    (file-error nil)))
+	(setq files-to-process (cdr files-to-process)))))
+  
   ;; bytecomp, byte-optimize, autoload, etc. are mentioned specially
   ;; in the lisp-files-need* variables.
   (setq files-to-process (append lisp-files-needed-for-byte-compilation
@@ -367,25 +389,26 @@ If any of these files are changed, we need to redump.")
 	   ;; load-ignore-elc-files because byte-optimize gets autoloaded
 	   ;; from bytecomp.
 	   (let ((recompile-bc-bootstrap
-		  (apply #'nconc
-			 (mapcar
-			  #'(lambda (arg)
-			      (when (member arg update-elc-files-to-compile)
-				(append '("-f" "batch-byte-compile-one-file")
-					(list arg))))
-			  bc-bootstrap)))
+                  (mapcan
+                   #'(lambda (arg)
+                       (when (member arg update-elc-files-to-compile)
+                         (append '("-f" "batch-byte-compile-one-file")
+                                 (list arg))))
+                   bc-bootstrap))
 		 (recompile-bootstrap-other
-		  (apply #'nconc
-			 (mapcar
-			  #'(lambda (arg)
-			      (when (member arg update-elc-files-to-compile)
-				(append '("-f" "batch-byte-compile-one-file")
-					(list arg))))
-			  bootstrap-other))))
+                  (mapcan
+                   #'(lambda (arg)
+                       (when (member arg update-elc-files-to-compile)
+                         (append '("-f" "batch-byte-compile-one-file")
+                                 (list arg))))
+                   bootstrap-other)))
 	     (mapc
 	      #'(lambda (arg)
 		  (setq update-elc-files-to-compile
-			(delete arg update-elc-files-to-compile)))
+			(delete* arg update-elc-files-to-compile
+				 :test (if default-file-system-ignore-case
+					   #'equalp
+					 #'equal))))
 	      (append bc-bootstrap bootstrap-other))
 	     (setq command-line-args
 		   (append

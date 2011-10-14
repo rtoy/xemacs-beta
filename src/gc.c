@@ -21,6 +21,318 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* 
+   Garbage Collectors in XEmacs
+
+   Currently, XEmacs comes with two garbage collectors:
+
+   - The "old garbage collector": a simple mark and sweep collector,
+     its implementation is mainly spread out over gc.c and alloc.c.
+     It is used by the default configuration or if you configure
+     `--with-newgc=no'.
+
+   - The "new garbage collector": an incremental mark and sweep collector,
+     its implementation is in gc.c.  It is used if you configure
+     `--with-newgc'.  It comes with a new allocator, see mc-alloc.c, and
+     with the KKCC mark algorith, see below.
+
+   Additionally, the old garbage collectors comes with two mark algorithms:
+
+   - The "recursive mark algorithm" marks live objects by recursively
+     calling mark_* functions on live objects.  It is the default mark 
+     algorithm of the old garbage collector.
+
+   - The "KKCC mark algorithm" uses an explicit stack that to keep
+     track of the current progress of traversal and uses memory layout
+     descriptions (that are also used by the portable dumper) instead
+     of the mark_* functions.  The old garbage collector uses it if
+     you configure `--with-kkcc'.  It is the default and only mark
+     algorithm of the new garbage collector.
+
+
+   The New Incremental Garbage Collector
+
+   An incremental garbage collector keeps garbage collection pause
+   times short by interleaving small amounts of collection work with
+   program execution, it does that by instrumenting write barrier
+   algorithms that essentially allow interrupting the mark phase.
+
+
+   Write Barrier
+
+   A write barrier is the most important prerequisite for fancy
+   garbage collection techniques.  We implement a "Virtual Dirty Bit
+   (short: vdb) Write Barrier" that makes uses of the operating
+   system's memory-protection mechanisms: The write barrier
+   write-protects memory pages containing heap objects.  If the
+   mutator tries to modify these objects by writing into the
+   write-protected page, the operating system generates a fault.  The
+   write barrier catches this fault, reads out the error-causing
+   address and can thus identify the updated object and page.
+
+   Not all environments and operating systems provide the mechanism to
+   write-protect memory, catch resulting write faults, and read out
+   the faulting address.  But luckily, most of today's operating
+   systems provide the features needed for the write-barrier
+   implementation.  Currently, XEmacs includes write-barrier
+   implementations for the following platforms:
+
+   - POSIX-compliant platforms like up-to-date UNIX, Linux, Solaris,
+     etc. use the system call `mprotect' for memory protection,
+     `sigaction' for signal handling and get the faulting address from
+     `struct siginfo'.  See file vdb-posix.c.
+
+  - Mach-based systems like Mac OS X use "Mach Exception Handlers".
+    See file vdb-mach.c.
+
+  - Windows systems like native Windows and Cygwin use Microsoft's
+    so-called "Structured Exception Handling".  See file vdb-win32.c.
+ 
+  The configure script determines which write barrier implementation
+  to use for a system.  If no write barrier implementation is working
+  on that system, a fall-back "fake" implementation is used: This
+  implementation simply turns of the incremental write barrier at
+  runtime and does not allow any incremental collection (see
+  vdb-fake.c).  The garbage collector then acts like a traditional
+  mark-and-sweep garbage collector.  Generally, the incremental
+  garbage collector can be turned of at runtime by the user or by
+  applications, see below.
+   
+   
+  Memory Protection and Object Layout
+
+  Implementations of a memory-protection mechanism may restrict the
+  size and the alignment of the memory region to be on page-size
+  boundaries.  All objects subject to be covered by the write barrier
+  have to be allocated on logical memory pages, so that they meet the
+  requirement to be write-protected.  The new allocator mc-alloc is
+  aware of a system page size---it allocates all Lisp objects on
+  logical memory pages and is therefore defaulted to on when the new
+  garbage collector is enabled.
+
+  Unfortunately, the Lisp object layout that works with the old
+  collector leads to holes in the write barrier: Not all data
+  structures containing pointers to Lisp objects are allocated on the
+  Lisp heap.  Some Lisp objects do not carry all their information in
+  the object itself.  External parts are kept in separately allocated
+  memory blocks that are not managed by the new Lisp allocator.
+  Examples for these objects are hash tables and dynamic arrays, two
+  objects that can dynamically grow and shrink.  The separate memory
+  blocks are not guaranteed to reside on page boundaries, and thus
+  cannot be watched by the write barrier.
+
+  Moreover, the separate parts can contain live pointers to other Lisp
+  objects.  These pointers are not covered by the write barrier and
+  modifications by the client during garbage collection do escape.  In
+  this case, the client changes the connectivity of the reachability
+  graph behind the collector's back, which eventually leads to
+  erroneous collection of live objects.  To solve this problem, I
+  transformed the separately allocated parts to fully qualified Lisp
+  objects that are managed by the allocator and thus are covered by
+  the write barrier.  This also removes a lot of special allocation
+  and removal code for the out-sourced parts.  Generally, allocating
+  all data structures that contain pointers to Lisp objects on one
+  heap makes the whole memory layout more consistent.
+
+
+  Debugging
+
+  The virtual-dirty-bit write barrier provokes signals on purpose,
+  namely SIGSEGV and SIGBUS.  When debugging XEmacs with this write
+  barrier running, the debugger always breaks whenever a signal
+  occurs.  This behavior is generally desired: A debugger has to break
+  on signals, to allow the user to examine the cause of the
+  signal---especially for illegal memory access, which is a common
+  programming error.  But the debugger should not break for signals
+  caused by the write barrier.  Therefore, most debuggers provide the
+  ability to turn of their fault handling for specific signals.  The
+  configure script generates the debugger's settings .gdbinit and
+  .dbxrc, adding code to turn of signal handling for SIGSEGV and
+  SIGBUS, if the new garbage collector is used.
+
+  But what happens if a bug in XEmacs causes an illegal memory access?
+  To maintain basic debugging abilities, we use another signal: First,
+  the write-barrier signal handler has to determine if the current
+  error situation is caused by the write-barrier memory protection or
+  not.  Therefore, the signal handler checks if the faulting address
+  has been write-protected before.  If it has not, the fault is caused
+  by a bug; the debugger has to break in this situation.  To achieve
+  this, the signal handler raises SIGABRT to abort the program.  Since
+  SIGABRT is not masked out by the debugger, XEmacs aborts and allows
+  the user to examine the problem.
+
+
+  Incremental Garbage Collection
+
+  The new garbage collector is still a mark-and-sweep collector, but
+  now the mark phase no longer runs in one atomic action, it is
+  interleaved with program execution.  The incremental garbage
+  collector needs an explicit mark stack to store the state of the
+  incremental traversal: the KKCC mark algorithm is a prerequisite and
+  is enabled by default when the new garbage collector is on.
+
+  Garbage collection is invoked as before: After `gc-cons-threshold'
+  bytes have been allocated since the last garbage collection (or
+  after `gc-cons-percentage' percentage of the total amount of memory
+  used for Lisp data has been allocated since the last garbage
+  collection) a collection starts.  After some initialization, the
+  marking begins.
+
+  The variable `gc-incremental-traversal-threshold' contains how many
+  steps of incremental work have to be executed in one incremental
+  traversal cycle.  After that many steps have been made, the mark
+  phase is interrupted and the client resumes.  Now, the Lisp memory
+  is write-protected and the write barrier records modified objects.
+  Incremental traversal is resumed after
+  `gc-cons-incremental-threshold' bytes have been allocated since the
+  interruption of garbage collection.  Then, the objects recorded by
+  the write-barrier have to be re-examined by the traversal, i.e. they
+  are re-pushed onto the mark stack and processed again.  Once the
+  mark stack is empty, the traversal is done.
+
+  A full incremental collection is slightly slower than a full garbage
+  collection before: There is an overhead for storing pointers into
+  objects when the write barrier is running, and an overhead for
+  repeated traversal of modified objects.  However, the new
+  incremental garbage collector reduces client pause times to
+  one-third, so even when a garbage collection is running, XEmacs
+  stays reactive.
+
+
+  Tricolor Marking: White, Black, and Grey Mark Bits
+
+  Garbage collection traverses the graph of reachable objects and
+  colors them. The objects subject to garbage collection are white at
+  the beginning. By the end of the collection, those that will be
+  retained are colored black. When there are no reachable objects left
+  to blacken, the traversal of live data structures is finished. In
+  traditional mark-and-sweep collectors, this black and white coloring
+  is sufficient.
+
+  In an incremental collector, the intermediate state of the traversal
+  is im- portant because of ongoing mutator activity: the mutator
+  cannot be allowed to change things in such way that the collector
+  will fail to find all reachable objects. To understand and prevent
+  such interactions between the mutator and the collector, it is
+  useful to introduce a third color, grey.
+
+  Grey objects have been reached by the traversal, but its descendants
+  may not have been. White objects are changed to grey when they are
+  reached by the traversal. Grey objects mark the current state of the
+  traversal: traversal pro- ceeds by processing the grey objects. The
+  KKCC mark stack holds all the currently grey-colored objects.
+  Processing a grey object means following its outgoing pointers, and
+  coloring it black afterwards.
+
+  Intuitively, the traversal proceeds in a wavefront of grey objects
+  that separates the unreached objects, which are colored white, from
+  the already processed black objects.
+
+  The allocator takes care of storing the mark bits: The mark bits are
+  kept in a tree like structure, for details see mc-alloc.c.
+
+
+  Internal States of the Incremental Garbage Collector
+
+  To keep track of its current state, the collector holds it's current
+  phase in the global `gc_state' variable.  A collector phase is one
+  of the following:
+
+  NONE  No incremental or full collection is currently running.
+
+  INIT_GC  The collector prepares for a new collection, e.g. sets some
+    global variables.
+
+  PUSH_ROOT_SET  The collector pushes the root set on the mark stack 
+    to start the traversal of live objects.
+
+  MARK   The traversal of live objects colors the reachable objects
+    white, grey, or black, according to their lifeness.  The mark
+    phase can be interrupted by the incremental collection algorithm:
+    Before the client (i.e. the non collector part of XEmacs) resumes,
+    the write barrier has to be installed so that the collector knows
+    what objects get modified during the collector's pause.
+    Installing a write barrier means protecting pages that only
+    contain black objects and recording write access to these objects.
+    Pages with white or grey objects do not need to be protected,
+    since these pages are due to marking anyways when the collector
+    resumes.  Once the collector resumes, it has to re-scan all
+    objects that have been modified during the collector pause and
+    have been caught by the write barrier.  The mark phase is done when
+    there are no more grey objects on the heap, i.e. the KKCC mark stack
+    is empty.
+
+  REPUSH_ROOT_SET  After the mark phase is done, the collector has to 
+    traverse the root set pointers again, since modifications to the
+    objects in the root set can not all be covered by the write barrier
+    (e.g. root set objects that are on the call stack).  Therefore, the
+    collector has to traverse the root set again without interruption.
+
+  FINISH_MARK  After the mark phase is finished, some objects with
+    special liveness semantics have to be treated separately, e.g.
+    ephemerons and the various flavors of weak objects.
+
+  FINALIZE  The collector registers all objects that have finalizers
+    for finalization.  Finalizations happens asynchronously sometimes
+    after the collection has finished.
+
+  SWEEP  The allocator scans the entire heap and frees all white marked
+    objects. The freed memory is recycled and can be re-used for future
+    allocations. The sweep phase is carried out atomically.
+
+  FINISH_GC  The collector cleans up after the garbage collection by
+    resetting some global variables.
+
+
+  Lisp Interface
+
+  The new garbage collector can be accessed directly from Emacs Lisp.
+  Basically, two functions invoke the garbage collector:
+
+  (gc-full) starts a full garbage collection.  If an incremental
+    garbage collection is already running, it is finished without
+    further interruption.  This function guarantees that unused
+    objects have been freed when it returns.
+
+  (gc-incremental) starts an incremental garbage collection.  If an
+    incremental garbage collection is already running, the next cycle
+    of incremental traversal is started.  The garbage collection is
+    finished if the traversal completes.  Note that this function does
+    not necessarily free any memory.  It only guarantees that the
+    traversal of the heap makes progress.
+
+  The old garbage collector uses the function (garbage-collect) to
+  invoke a garbage collection.  This function is still in use by some
+  applications that explicitly want to invoke a garbage collection.
+  Since these applications may expect that unused memory has really
+  been freed when (garbage-collect) returns, it maps to (gc-full).
+
+  The new garbage collector is highly customizable during runtime; it
+  can even be switched back to the traditional mark-and-sweep garbage
+  collector: The variable allow-incremental-gc controls whether
+  garbage collections may be interrupted or if they have to be carried
+  out in one atomic action.  Setting allow-incremental-gc to nil
+  prevents incremental garbage collection, and the garbage collector
+  then only does full collects, even if (gc-incremental) is called.
+  Non-nil allows incremental garbage collection.
+
+  This way applications can freely decide what garbage collection
+  algorithm is best for the upcoming memory usage.  How frequently a
+  garbage collection occurs and how much traversal work is done in one
+  incremental cycle can also be modified during runtime.  See
+
+    M-x customize RET alloc RET
+
+  for an overview of all settings.
+
+
+  More Information
+
+  More details can be found in
+  http://crestani.de/xemacs/pdf/thesis-newgc.pdf .
+
+*/
+
 #include <config.h>
 #include "lisp.h"
 
@@ -50,8 +362,14 @@ Boston, MA 02111-1307, USA.  */
 #include "vdb.h"
 
 
+/* Number of bytes of consing since gc before a full gc should happen. */
 #define GC_CONS_THRESHOLD                  2000000
+
+/* Number of bytes of consing since gc before another cycle of the gc
+   should happen in incremental mode. */
 #define GC_CONS_INCREMENTAL_THRESHOLD       200000
+
+/* Number of elements marked in one cycle of incremental GC. */
 #define GC_INCREMENTAL_TRAVERSAL_THRESHOLD  100000
 
 /* Number of bytes of consing done since the last GC. */
@@ -334,6 +652,24 @@ recompute_need_to_garbage_collect (void)
 /*			      Mark Phase       				*/
 /************************************************************************/
 
+static const struct memory_description int_description_1[] = {
+  { XD_END }
+};
+
+const struct sized_memory_description int_description = {
+  sizeof (int),
+  int_description_1
+};
+
+static const struct memory_description unsigned_char_description_1[] = {
+  { XD_END }
+};
+
+const struct sized_memory_description unsigned_char_description = {
+  sizeof (unsigned char),
+  unsigned_char_description_1
+};
+
 static const struct memory_description lisp_object_description_1[] = {
   { XD_LISP_OBJECT, 0 },
   { XD_END }
@@ -342,6 +678,17 @@ static const struct memory_description lisp_object_description_1[] = {
 const struct sized_memory_description lisp_object_description = {
   sizeof (Lisp_Object),
   lisp_object_description_1
+};
+
+static const struct memory_description Lisp_Object_pair_description_1[] = {
+  { XD_LISP_OBJECT, offsetof (Lisp_Object_pair, key) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Object_pair, value) },
+  { XD_END }
+};
+
+const struct sized_memory_description Lisp_Object_pair_description = {
+  sizeof (Lisp_Object_pair),
+  Lisp_Object_pair_description_1
 };
 
 #if defined (USE_KKCC) || defined (PDUMP)
@@ -381,9 +728,9 @@ lispdesc_indirect_count_1 (EMACS_INT code,
     default:
       stderr_out ("Unsupported count type : %d (line = %d, code = %ld)\n",
 		  idesc[line].type, line, (long) code);
-#if defined(USE_KKCC) && defined(DEBUG_XEMACS)
+#if defined (USE_KKCC) && defined (DEBUG_XEMACS)
       if (gc_in_progress)
-	kkcc_backtrace ();
+	kkcc_detailed_backtrace ();
 #endif
 #ifdef PDUMP
       if (in_pdump)
@@ -436,7 +783,7 @@ lispdesc_one_description_line_size (void *rdata,
     case XD_OPAQUE_PTR:
       return sizeof (void *);
 #ifdef NEW_GC
-    case XD_LISP_OBJECT_BLOCK_PTR:
+    case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 #endif /* NEW_GC */
     case XD_BLOCK_PTR:
       {
@@ -557,8 +904,13 @@ lispdesc_block_size_1 (const void *obj, Bytecount size,
       EMACS_INT offset = lispdesc_indirect_count (desc[pos].offset, desc, obj);
       if (offset == max_offset)
 	{
+#if 0
+	  /* This can legitimately happen with gap arrays -- if there are
+	     no elements in the array, and the gap size is 0, then both
+	     parts of the array will be of size 0 and in the same place. */
 	  stderr_out ("Two relocatable elements at same offset?\n");
 	  ABORT ();
+#endif
 	}
       else if (offset > max_offset)
 	{
@@ -611,6 +963,7 @@ typedef struct
   void *obj;
   const struct memory_description *desc;
   int pos;
+  int is_lisp;
 } kkcc_bt_stack_entry;
 
 static kkcc_bt_stack_entry *kkcc_bt;
@@ -632,25 +985,38 @@ kkcc_bt_init (void)
     }
 }
 
+/* Workhorse backtrace function.  Not static because may potentially be
+   called from a debugger. */
+
+void kkcc_backtrace_1 (int size, int detailed);
 void
-kkcc_backtrace (void)
+kkcc_backtrace_1 (int size, int detailed)
 {
   int i;
   stderr_out ("KKCC mark stack backtrace :\n");
-  for (i = kkcc_bt_depth - 1; i >= 0; i--)
+  for (i = kkcc_bt_depth - 1; i >= kkcc_bt_depth - size && i >= 0; i--)
     {
       Lisp_Object obj = wrap_pointer_1 (kkcc_bt[i].obj);
-      stderr_out (" [%d]", i);
-      if ((XRECORD_LHEADER (obj)->type >= lrecord_type_last_built_in_type)
-	  || (!LRECORDP (obj))
-	  || (!XRECORD_LHEADER_IMPLEMENTATION (obj)))
-	{
-	  stderr_out (" non Lisp Object");
-	}
+      stderr_out (" [%d] ", i);
+      if (!kkcc_bt[i].is_lisp)
+	stderr_out ("non Lisp Object");
+      else if (!LRECORDP (obj))
+	stderr_out ("Lisp Object, non-record");
+      else if (XRECORD_LHEADER (obj)->type >= lrecord_type_last_built_in_type
+	       || (!XRECORD_LHEADER_IMPLEMENTATION (obj)))
+	stderr_out ("WARNING! Bad Lisp Object type %d",
+		    XRECORD_LHEADER (obj)->type);
       else
+	stderr_out ("%s", XRECORD_LHEADER_IMPLEMENTATION (obj)->name);
+      if (detailed && kkcc_bt[i].is_lisp)
 	{
-	  stderr_out (" %s",
-		      XRECORD_LHEADER_IMPLEMENTATION (obj)->name);
+	  stderr_out (" ");
+	  debug_print (obj);
+	}
+      if (detailed)
+	{
+	  stderr_out (" ");
+	  debug_print (obj);
 	}
       stderr_out (" (addr: %p, desc: %p, ",
 		  (void *) kkcc_bt[i].obj,
@@ -663,6 +1029,76 @@ kkcc_backtrace (void)
 	else if (kkcc_bt[i].pos == -2)
 	  stderr_out ("dirty object)\n");
     }
+}
+
+/* Various front ends onto kkcc_backtrace_1(), meant to be called from
+   a debugger.
+
+   The variants are:
+
+   normal vs _full(): Normal displays up to the topmost 100 items on the
+   stack, whereas full displays all items (even if there are thousands)
+
+   _detailed_() vs _short_(): Detailed here means print out the actual
+   Lisp objects on the stack using debug_print() in addition to their type,
+   whereas short means only show the type
+*/
+
+void
+kkcc_detailed_backtrace (void)
+{
+  kkcc_backtrace_1 (100, 1);
+}
+
+void kkcc_short_backtrace (void);
+void
+kkcc_short_backtrace (void)
+{
+  kkcc_backtrace_1 (100, 0);
+}
+
+void kkcc_detailed_backtrace_full (void);
+void
+kkcc_detailed_backtrace_full (void)
+{
+  kkcc_backtrace_1 (kkcc_bt_depth, 1);
+}
+
+void kkcc_short_backtrace_full (void);
+void
+kkcc_short_backtrace_full (void)
+{
+  kkcc_backtrace_1 (kkcc_bt_depth, 0);
+}
+
+/* Short versions for ease in calling from a debugger */
+
+void kbt (void);
+void
+kbt (void)
+{
+  kkcc_detailed_backtrace ();
+}
+
+void kbts (void);
+void
+kbts (void)
+{
+  kkcc_short_backtrace ();
+}
+
+void kbtf (void);
+void
+kbtf (void)
+{
+  kkcc_detailed_backtrace_full ();
+}
+
+void kbtsf (void);
+void
+kbtsf (void)
+{
+  kkcc_short_backtrace_full ();
 }
 
 static void
@@ -688,13 +1124,14 @@ kkcc_bt_free (void)
 }
 
 static void
-kkcc_bt_push (void *obj, const struct memory_description *desc, 
-	      int level, int pos)
+kkcc_bt_push (void *obj, const struct memory_description *desc,
+	      int is_lisp DECLARE_KKCC_DEBUG_ARGS)
 {
   kkcc_bt_depth = level;
   kkcc_bt[kkcc_bt_depth].obj = obj;
   kkcc_bt[kkcc_bt_depth].desc = desc;
   kkcc_bt[kkcc_bt_depth].pos = pos;
+  kkcc_bt[kkcc_bt_depth].is_lisp = is_lisp;
   kkcc_bt_depth++;
   if (kkcc_bt_depth >= kkcc_bt_stack_size)
     kkcc_bt_stack_realloc ();
@@ -702,7 +1139,7 @@ kkcc_bt_push (void *obj, const struct memory_description *desc,
 
 #else /* not DEBUG_XEMACS */
 #define kkcc_bt_init()
-#define kkcc_bt_push(obj, desc, level, pos)
+#define kkcc_bt_push(obj, desc)
 #endif /* not DEBUG_XEMACS */
 
 /* Object memory descriptions are in the lrecord_implementation structure.
@@ -719,6 +1156,7 @@ typedef struct
 #ifdef DEBUG_XEMACS
   int level;
   int pos;
+  int is_lisp;
 #endif
 } kkcc_gc_stack_entry;
 
@@ -794,12 +1232,8 @@ kkcc_gc_stack_realloc (void)
 }
 
 static void
-#ifdef DEBUG_XEMACS
-kkcc_gc_stack_push_1 (void *data, const struct memory_description *desc,
-		    int level, int pos)
-#else
-kkcc_gc_stack_push_1 (void *data, const struct memory_description *desc)
-#endif
+kkcc_gc_stack_push (void *data, const struct memory_description *desc
+		    DECLARE_KKCC_DEBUG_ARGS)
 {
 #ifdef NEW_GC
   GC_STAT_ENQUEUED;
@@ -816,12 +1250,44 @@ kkcc_gc_stack_push_1 (void *data, const struct memory_description *desc)
 }
 
 #ifdef DEBUG_XEMACS
-#define kkcc_gc_stack_push(data, desc, level, pos)	\
-  kkcc_gc_stack_push_1 (data, desc, level, pos)
-#else
-#define kkcc_gc_stack_push(data, desc, level, pos)	\
-  kkcc_gc_stack_push_1 (data, desc)
-#endif
+
+static inline void
+kkcc_gc_stack_push_0 (void *data, const struct memory_description *desc,
+		      int is_lisp DECLARE_KKCC_DEBUG_ARGS)
+{
+  kkcc_gc_stack_push (data, desc KKCC_DEBUG_ARGS);
+  kkcc_gc_stack_ptr[kkcc_gc_stack_rear].is_lisp = is_lisp;
+}
+
+static inline void
+kkcc_gc_stack_push_lisp (void *data, const struct memory_description *desc
+			 DECLARE_KKCC_DEBUG_ARGS)
+{
+  kkcc_gc_stack_push_0 (data, desc, 1 KKCC_DEBUG_ARGS);
+}
+
+static inline void
+kkcc_gc_stack_push_nonlisp (void *data, const struct memory_description *desc
+			    DECLARE_KKCC_DEBUG_ARGS)
+{
+  kkcc_gc_stack_push_0 (data, desc, 0 KKCC_DEBUG_ARGS);
+}
+
+#else /* not DEBUG_XEMACS */
+
+static inline void
+kkcc_gc_stack_push_lisp (void *data, const struct memory_description *desc)
+{
+  kkcc_gc_stack_push (data, desc);
+}
+
+static inline void
+kkcc_gc_stack_push_nonlisp (void *data, const struct memory_description *desc)
+{
+  kkcc_gc_stack_push (data, desc);
+}
+
+#endif /* (not) DEBUG_XEMACS */
 
 static kkcc_gc_stack_entry *
 kkcc_gc_stack_pop (void)
@@ -845,11 +1311,7 @@ kkcc_gc_stack_pop (void)
 }
 
 void
-#ifdef DEBUG_XEMACS
-kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj, int level, int pos)
-#else
-kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj)
-#endif
+kkcc_gc_stack_push_lisp_object (Lisp_Object obj DECLARE_KKCC_DEBUG_ARGS)
 {
   if (XTYPE (obj) == Lisp_Type_Record)
     {
@@ -864,26 +1326,15 @@ kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj)
 #else /* not NEW_GC */
 	  MARK_RECORD_HEADER (lheader);
 #endif /* not NEW_GC */
-	  kkcc_gc_stack_push ((void *) lheader, desc, level, pos);
+	  kkcc_gc_stack_push_lisp ((void *) lheader, desc KKCC_DEBUG_ARGS);
 	}
     }
 }
 
 #ifdef NEW_GC
-#ifdef DEBUG_XEMACS
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj, level, pos)
-#else
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj)
-#endif
 
 void
-#ifdef DEBUG_XEMACS
-kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj, int level, int pos)
-#else
-kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj)
-#endif
+kkcc_gc_stack_repush_dirty_object (Lisp_Object obj DECLARE_KKCC_DEBUG_ARGS)
 {
   if (XTYPE (obj) == Lisp_Type_Record)
     {
@@ -893,7 +1344,7 @@ kkcc_gc_stack_repush_dirty_object_1 (Lisp_Object obj)
       GC_CHECK_LHEADER_INVARIANTS (lheader);
       desc = RECORD_DESCRIPTION (lheader);
       MARK_GREY (lheader);
-      kkcc_gc_stack_push ((void*) lheader, desc, level, pos);
+      kkcc_gc_stack_push_lisp ((void*) lheader, desc KKCC_DEBUG_ARGS);
     }
 }
 #endif /* NEW_GC */
@@ -909,48 +1360,23 @@ do								\
     }								\
 } while (0)
 #else
-#define KKCC_DO_CHECK_FREE(obj, allow_free)
+#define KKCC_DO_CHECK_FREE(obj, allow_free) DO_NOTHING
 #endif
 
-#ifdef ERROR_CHECK_GC
-#ifdef DEBUG_XEMACS
-static void
-mark_object_maybe_checking_free_1 (Lisp_Object obj, int allow_free,
-				 int level, int pos)
-#else
-static void
-mark_object_maybe_checking_free_1 (Lisp_Object obj, int allow_free)
-#endif
+static inline void
+mark_object_maybe_checking_free (Lisp_Object obj, int allow_free
+				 DECLARE_KKCC_DEBUG_ARGS)
 {
   KKCC_DO_CHECK_FREE (obj, allow_free);
-  kkcc_gc_stack_push_lisp_object (obj, level, pos);
+  kkcc_gc_stack_push_lisp_object (obj KKCC_DEBUG_ARGS);
 }
-
-#ifdef DEBUG_XEMACS
-#define mark_object_maybe_checking_free(obj, allow_free, level, pos) \
-  mark_object_maybe_checking_free_1 (obj, allow_free, level, pos)
-#else
-#define mark_object_maybe_checking_free(obj, allow_free, level, pos) \
-  mark_object_maybe_checking_free_1 (obj, allow_free)
-#endif
-#else /* not ERROR_CHECK_GC */
-#define mark_object_maybe_checking_free(obj, allow_free, level, pos) 	\
-  kkcc_gc_stack_push_lisp_object (obj, level, pos)
-#endif /* not ERROR_CHECK_GC */
-
 
 /* This function loops all elements of a struct pointer and calls 
    mark_with_description with each element. */
 static void
-#ifdef DEBUG_XEMACS
-mark_struct_contents_1 (const void *data,
+mark_struct_contents (const void *data,
 		      const struct sized_memory_description *sdesc,
-		      int count, int level, int pos)
-#else
-mark_struct_contents_1 (const void *data,
-		      const struct sized_memory_description *sdesc,
-		      int count)
-#endif
+		      int count DECLARE_KKCC_DEBUG_ARGS)
 {
   int i;
   Bytecount elsize;
@@ -958,33 +1384,19 @@ mark_struct_contents_1 (const void *data,
 
   for (i = 0; i < count; i++)
     {
-      kkcc_gc_stack_push (((char *) data) + elsize * i, sdesc->description,
-			  level, pos);
+      kkcc_gc_stack_push_nonlisp (((char *) data) + elsize * i,
+				  sdesc->description
+				  KKCC_DEBUG_ARGS);
     }
 }
-
-#ifdef DEBUG_XEMACS
-#define mark_struct_contents(data, sdesc, count, level, pos) \
-  mark_struct_contents_1 (data, sdesc, count, level, pos)
-#else
-#define mark_struct_contents(data, sdesc, count, level, pos) \
-  mark_struct_contents_1 (data, sdesc, count)
-#endif
-
 
 #ifdef NEW_GC
 /* This function loops all elements of a struct pointer and calls 
    mark_with_description with each element. */
 static void
-#ifdef DEBUG_XEMACS
-mark_lisp_object_block_contents_1 (const void *data,
-		      const struct sized_memory_description *sdesc,
-		      int count, int level, int pos)
-#else
-mark_lisp_object_block_contents_1 (const void *data,
-		      const struct sized_memory_description *sdesc,
-		      int count)
-#endif
+mark_lisp_object_block_contents (const void *data,
+				 const struct sized_memory_description *sdesc,
+				 int count DECLARE_KKCC_DEBUG_ARGS)
 {
   int i;
   Bytecount elsize;
@@ -1002,19 +1414,12 @@ mark_lisp_object_block_contents_1 (const void *data,
 	  if (! MARKED_RECORD_HEADER_P (lheader)) 
 	    {
 	      MARK_GREY (lheader);
-	      kkcc_gc_stack_push ((void *) lheader, desc, level, pos);
+	      kkcc_gc_stack_push_lisp ((void *) lheader, desc KKCC_DEBUG_ARGS);
 	    }
 	}
     }
 }
 
-#ifdef DEBUG_XEMACS
-#define mark_lisp_object_block_contents(data, sdesc, count, level, pos) \
-  mark_lisp_object_block_contents_1 (data, sdesc, count, level, pos)
-#else
-#define mark_lisp_object_block_contents(data, sdesc, count, level, pos) \
-  mark_lisp_object_block_contents_1 (data, sdesc, count)
-#endif
 #endif /* not NEW_GC */
 
 /* This function implements the KKCC mark algorithm.
@@ -1041,8 +1446,11 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
       desc = stack_entry->desc;
 #ifdef DEBUG_XEMACS
       level = stack_entry->level + 1;
+      kkcc_bt_push (data, desc, stack_entry->is_lisp, stack_entry->level,
+		    stack_entry->pos);
+#else
+      kkcc_bt_push (data, desc);
 #endif
-      kkcc_bt_push (data, desc, stack_entry->level, stack_entry->pos);
 
 #ifdef NEW_GC
       /* Mark black if object is currently grey.  This first checks,
@@ -1093,11 +1501,12 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		if (EQ (*stored_obj, Qnull_pointer))
 		  break;
 #ifdef NEW_GC
-		mark_object_maybe_checking_free (*stored_obj, 0, level, pos);
+		mark_object_maybe_checking_free (*stored_obj, 0
+						 KKCC_DEBUG_ARGS);
 #else /* not NEW_GC */
 		mark_object_maybe_checking_free
-		  (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT,
-		   level, pos);
+		  (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT
+		   KKCC_DEBUG_ARGS);
 #endif /* not NEW_GC */
 		break;
 	      }
@@ -1116,17 +1525,17 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		      break;
 #ifdef NEW_GC
 		    mark_object_maybe_checking_free 
-		      (*stored_obj, 0, level, pos);
+		      (*stored_obj, 0 KKCC_DEBUG_ARGS);
 #else /* not NEW_GC */
 		    mark_object_maybe_checking_free
-		      (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT,
-		       level, pos);
+		      (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT
+		       KKCC_DEBUG_ARGS);
 #endif /* not NEW_GC */
 		  }
 		break;
 	      }
 #ifdef NEW_GC
-	    case XD_LISP_OBJECT_BLOCK_PTR:
+	    case XD_INLINE_LISP_OBJECT_BLOCK_PTR:
 	      {
 		EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 							   data);
@@ -1135,7 +1544,7 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		const char *dobj = * (const char **) rdata;
 		if (dobj)
 		  mark_lisp_object_block_contents 
-		    (dobj, sdesc, count, level, pos);
+		    (dobj, sdesc, count KKCC_DEBUG_ARGS);
 		break;
 	      }
 #endif /* NEW_GC */
@@ -1147,7 +1556,7 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		  lispdesc_indirect_description (data, desc1->data2.descr);
 		const char *dobj = * (const char **) rdata;
 		if (dobj)
-		  mark_struct_contents (dobj, sdesc, count, level, pos);
+		  mark_struct_contents (dobj, sdesc, count KKCC_DEBUG_ARGS);
 		break;
 	      }
 	    case XD_BLOCK_ARRAY:
@@ -1157,7 +1566,7 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		const struct sized_memory_description *sdesc =
 		  lispdesc_indirect_description (data, desc1->data2.descr);
 		      
-		mark_struct_contents (rdata, sdesc, count, level, pos);
+		mark_struct_contents (rdata, sdesc, count KKCC_DEBUG_ARGS);
 		break;
 	      }
 	    case XD_UNION:
@@ -1169,7 +1578,7 @@ kkcc_marking (int USED_IF_NEW_GC (cnt))
 		    
 	    default:
 	      stderr_out ("Unsupported description type : %d\n", desc1->type);
-	      kkcc_backtrace ();
+	      kkcc_detailed_backtrace ();
 	      ABORT ();
 	    }
 	}
@@ -1392,7 +1801,7 @@ register_for_finalization (void)
     }
   /* Keep objects alive that need to be finalized by marking
      Vfinalizers_to_run transitively. */
-  kkcc_gc_stack_push_lisp_object (Vfinalizers_to_run, 0, -1);
+  kkcc_gc_stack_push_lisp_object_0 (Vfinalizers_to_run);
   kkcc_marking (0);
 }
 
@@ -1614,7 +2023,7 @@ gc_mark_root_set (
   /* Mark all the special slots that serve as the roots of accessibility. */
 
 #ifdef USE_KKCC
-# define mark_object(obj) kkcc_gc_stack_push_lisp_object (obj, 0, -1)
+# define mark_object(obj) kkcc_gc_stack_push_lisp_object_0 (obj)
 #endif /* USE_KKCC */
 
   { /* staticpro() */
@@ -1700,6 +2109,7 @@ gc_mark_root_set (
   }
 
   mark_profiling_info ();
+
 #ifdef USE_KKCC
 # undef mark_object
 #endif

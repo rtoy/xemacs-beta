@@ -1,5 +1,5 @@
 /* Define console object for XEmacs.
-   Copyright (C) 1996, 2002, 2003, 2005 Ben Wing
+   Copyright (C) 1996, 2002, 2003, 2005, 2010 Ben Wing
 
 This file is part of XEmacs.
 
@@ -193,7 +193,7 @@ struct console_methods
 				      Lisp_Color_Instance *,
 				      int depth);
   Hashcode (*color_instance_hash_method) (Lisp_Color_Instance *,
-					   int depth);
+                                          int depth);
   Lisp_Object (*color_instance_rgb_components_method) (Lisp_Color_Instance *);
   int (*valid_color_name_p_method) (struct device *, Lisp_Object color);
   Lisp_Object (*color_list_method) (void);
@@ -290,9 +290,10 @@ struct console_methods
 						   scrollbar_instance *);
   void (*scrollbar_pointer_changed_in_window_method) (struct window *w);
 #ifdef MEMORY_USAGE_STATS
-  int (*compute_scrollbar_instance_usage_method) (struct device *,
-						  struct scrollbar_instance *,
-						  struct usage_stats *);
+  Bytecount (*compute_scrollbar_instance_usage_method)
+    (struct device *,
+     struct scrollbar_instance *,
+     struct usage_stats *);
 #endif
   /* Paint the window's deadbox, a rectangle between window
      borders and two short edges of both scrollbars. */
@@ -422,6 +423,8 @@ struct console
      an XD_UNION clause to determine the Lisp objects in console_data. */
   enum console_variant contype;
 
+  /* ~~#### Instead of doing this, attach this data to the end of the same
+     structure; avoids the need to create new TTY, X, etc. Lisp objects */
   /* A structure of auxiliary data specific to the console type.
      struct x_console is used for X window frames; defined in console-x.h
      struct tty_console is used to TTY's; defined in console-tty.h */

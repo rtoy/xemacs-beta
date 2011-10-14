@@ -78,10 +78,12 @@ but you cannot mix the two styles within one structure.
 @defun make-hash-table &key @code{test} @code{size} @code{rehash-size} @code{rehash-threshold} @code{weakness}
 This function returns a new empty hash table object.
 
-Keyword @code{:test} can be @code{eq}, @code{eql} (default) or @code{equal}.
+Keyword @code{:test} can be @code{eq}, @code{eql} (default),
+@code{equal}, or @code{equalp}.
 Comparison between keys is done using this function.
 If speed is important, consider using @code{eq}.
-When storing strings in the hash table, you will likely need to use @code{equal}.
+When storing strings in the hash table, you will likely need to use
+@code{equal}, or @code{equalp} for case-insensitivity.
 
 Keyword @code{:size} specifies the number of keys likely to be inserted.
 This number of entries can be inserted without enlarging the hash table.
@@ -135,7 +137,8 @@ This function returns the number of entries in @var{hash-table}.
 
 @defun hash-table-test hash-table
 This function returns the test function of @var{hash-table}.
-This can be one of @code{eq}, @code{eql} or @code{equal}.
+This can be one of @code{eq}, @code{eql}, @code{equal}, @code{equalp},
+or some @var{name} parameter given to @code{define-hash-table-test}.
 @end defun
 
 @defun hash-table-size hash-table
@@ -191,6 +194,24 @@ that @var{function} may remhash or puthash the entry currently being
 processed by @var{function}.
 @end defun
 
+@defun define-hash-table-test name test-function hash-function
+Creates a new hash table test function, beyond the four specified by
+Common Lisp.  @var{name} is a symbol, and @code{define-hash-table-test}
+will error if there exists a hash table test with that name already.
+(If you want to repeatedly define hash tables, use a symbol generated
+with @code{gensym} for @var{name}).
+
+@var{test-function} must accept two arguments and return non-nil if both
+arguments are the same.
+
+@var{hash-function} must accept one argument and return an integer hash
+code for its argument.  @var{hash-function} should use the entire range
+of the underlying C long type, typically represented with two more value
+bits than the Lisp fixnum type.
+
+Returns t on success, an incompatibility with GNU Emacs, which returns
+a list comprising @var{test-function} and @var{hash-function}.
+@end defun
 
 @node Weak Hash Tables
 @section Weak Hash Tables

@@ -23,9 +23,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
+;; along with XEmacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Commentary:
 
@@ -87,8 +87,8 @@ You can change the coding systems later on using
     ;; We check only the general form of the multicast address.
     ;; The rest will be handled by the internal function.
     (string-match "^\\([0-9\\.]+\\)/\\([0-9]+\\)/\\([0-9]+\\)$" address)
-    (and (not (and (= (match-beginning 0) 0)
-		   (= (match-end 0) (length address))))
+    (and (not (and (eql (match-beginning 0) 0)
+		   (eql (match-end 0) (length address))))
 	 (error "malformed multicast address: %s" address))
     (and (not (setq dest (match-string 1 address)))
 	 (error "invalid destination specification."))

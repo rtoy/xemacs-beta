@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with case tables.
    Copyright (C) 1987, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2010 Ben Wing.
+   Copyright (C) 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -75,10 +75,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+
 #include "buffer.h"
-#include "opaque.h"
-#include "chartab.h"
 #include "casetab.h"
+#include "opaque.h"
 
 Lisp_Object Qcase_tablep, Qdowncase, Qupcase;
 Lisp_Object Vstandard_case_table;
@@ -300,44 +300,53 @@ Return a new case table which is a copy of CASE-TABLE
 }
 
 static int
-compute_canon_mapper (struct chartab_range *range,
-		      Lisp_Object UNUSED (table), Lisp_Object val, void *arg)
+compute_canon_mapper (Lisp_Object UNUSED (table), Ichar from,
+		      Ichar to, Lisp_Object val, void *arg)
 {
   Lisp_Object casetab = GET_LISP_FROM_VOID (arg);
-  if (range->type == CHARTAB_RANGE_CHAR)
-    SET_TRT_TABLE_OF (XCASE_TABLE_CANON (casetab), range->ch,
-		      TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (casetab),
-				    TRT_TABLE_OF (XCASE_TABLE_UPCASE (casetab),
-						  XCHAR (val))));
+  Ichar code;
+
+  for (code = from; code <= to; code++)
+    if (valid_ichar_p (code))
+      SET_TRT_TABLE_OF (XCASE_TABLE_CANON (casetab), code,
+			TRT_TABLE_OF (XCASE_TABLE_DOWNCASE (casetab),
+				      TRT_TABLE_OF (XCASE_TABLE_UPCASE
+						    (casetab),
+						    XCHAR (val))));
 
   return 0;
 }
 
 static int
-initialize_identity_mapper (struct chartab_range *range,
-			    Lisp_Object UNUSED (table),
-			    Lisp_Object UNUSED (val), void *arg)
+initialize_identity_mapper (Lisp_Object UNUSED (table), Ichar from,
+			    Ichar to, Lisp_Object UNUSED (val), void *arg)
 {
   Lisp_Object trt = GET_LISP_FROM_VOID (arg);
-  if (range->type == CHARTAB_RANGE_CHAR)
-    SET_TRT_TABLE_OF (trt, range->ch, range->ch);
+  Ichar code;
+
+  for (code = from; code <= to; code++)
+    if (valid_ichar_p (code))
+      SET_TRT_TABLE_OF (trt, code, code);
   
   return 0;
 }
 
 static int
-compute_up_or_eqv_mapper (struct chartab_range *range,
-			  Lisp_Object UNUSED (table),
-			  Lisp_Object val, void *arg)
+compute_up_or_eqv_mapper (Lisp_Object UNUSED (table), Ichar from,
+			  Ichar to, Lisp_Object val, void *arg)
 {
   Lisp_Object inverse = GET_LISP_FROM_VOID (arg);
+  Ichar code;
   Ichar toch = XCHAR (val);
 
-  if (range->type == CHARTAB_RANGE_CHAR && range->ch != toch)
+  for (code = from; code <= to; code++)
     {
-      Ichar c = TRT_TABLE_OF (inverse, toch);
-      SET_TRT_TABLE_OF (inverse, toch, range->ch);
-      SET_TRT_TABLE_OF (inverse, range->ch, c);
+      if (valid_ichar_p (code) && code != toch)
+	{
+	  Ichar c = TRT_TABLE_OF (inverse, toch);
+	  SET_TRT_TABLE_OF (inverse, toch, code);
+	  SET_TRT_TABLE_OF (inverse, code, c);
+	}
     }
   
   return 0;
@@ -508,6 +517,38 @@ See `set-case-table' for more info on case tables.
 }
 
 
+#ifdef MEMORY_USAGE_STATS
+
+struct case_table_stats
+{
+  struct usage_stats u;
+  /* Ancillary Lisp */
+  Bytecount downcase, upcase, case_canon, case_eqv;
+};
+
+static void
+case_table_memory_usage (Lisp_Object casetab,
+			 struct generic_usage_stats *gustats)
+{
+  struct case_table_stats *stats = (struct case_table_stats *) gustats;
+
+  stats->downcase = lisp_object_memory_usage (XCASE_TABLE_DOWNCASE (casetab));
+  stats->upcase = lisp_object_memory_usage (XCASE_TABLE_UPCASE (casetab));
+  stats->case_canon = lisp_object_memory_usage (XCASE_TABLE_CANON (casetab));
+  stats->case_eqv = lisp_object_memory_usage (XCASE_TABLE_EQV (casetab));
+}
+
+#endif /* MEMORY_USAGE_STATS */
+
+
+void
+casetab_objects_create (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_METHOD (case_table, memory_usage);
+#endif
+}
+
 void
 syms_of_casetab (void)
 {
@@ -527,6 +568,19 @@ syms_of_casetab (void)
   DEFSUBR (Fcopy_case_table);
   DEFSUBR (Fset_case_table);
   DEFSUBR (Fset_standard_case_table);
+}
+
+void
+vars_of_casetab (void)
+{
+#ifdef MEMORY_USAGE_STATS
+  OBJECT_HAS_PROPERTY (case_table, memusage_stats_list,
+		       list5 (Qt,
+			      intern ("downcase"),
+			      intern ("upcase"),
+			      intern ("case-canon"),
+			      intern ("case-eqv")));
+#endif /* MEMORY_USAGE_STATS */
 }
 
 void

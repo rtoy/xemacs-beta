@@ -45,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw-impl.h"
 #include "glyphs-msw.h"
-/* #include "objects-msw.h" */
+/* #include "fontcolor-msw.h" */
 
 #define TOOLBAR_ITEM_ID_MIN 0x4000
 #define TOOLBAR_ITEM_ID_MAX 0x7FFF
@@ -66,7 +66,7 @@ allocate_toolbar_item_id (struct frame *f, struct toolbar_button *button,
 			  enum edge_pos UNUSED (pos))
 {
   /* hmm what do we generate an id based on */
-  int id = TOOLBAR_ITEM_ID_BITS (internal_hash (button->callback, 0));
+  int id = TOOLBAR_ITEM_ID_BITS (internal_hash (button->callback, 0, 0));
   while (!NILP (Fgethash (make_int (id),
 			  FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f), Qnil)))
     {
@@ -187,8 +187,8 @@ mswindows_output_toolbar (struct frame *f, enum edge_pos pos)
 
       struct toolbar_button *tb = XTOOLBAR_BUTTON (button);
       checksum = HASH5 (checksum, 
-			internal_hash (get_toolbar_button_glyph (w, tb), 0),
-			internal_hash (tb->callback, 0),
+			internal_hash (get_toolbar_button_glyph (w, tb), 0, 0),
+			internal_hash (tb->callback, 0, 0),
 			width,
 			LISP_HASH (w->toolbar_buttons_captioned_p));
       button = tb->next;

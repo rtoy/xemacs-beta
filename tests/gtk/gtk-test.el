@@ -1976,7 +1976,7 @@ which is a GtkVBox.
 		close-button (gtk-button-new-with-label "Quit"))
 	  (gtk-window-set-title window
 				(format "%s/GTK %d.%d.%d"
-					(if (featurep 'infodock) "InfoDock" "XEmacs")
+                                        "XEmacs"
 					emacs-major-version emacs-minor-version
 					(or emacs-patch-level emacs-beta-version)))
 

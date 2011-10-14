@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-gtk-impl.h"
 #include "gccache-gtk.h"
 #include "glyphs-gtk.h"
-#include "objects-gtk.h"
+#include "fontcolor-gtk.h"
 #include "gtk-xemacs.h"
 
 #include "sysfile.h"
@@ -184,11 +184,7 @@ mode.
 
   slow_down_interrupts ();
 #ifdef HAVE_GNOME
-#ifdef INFODOCK
-  gnome_init ("InfoDock", EMACS_VERSION, argc, argv);
-#else
   gnome_init ("XEmacs", EMACS_VERSION, argc, argv);
-#endif /* INFODOCK */
 #else
   gtk_init (&argc, &argv);
 #endif

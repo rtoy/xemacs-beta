@@ -50,25 +50,6 @@ DECLARE_LISP_OBJECT (extent_info, struct extent_info);
 #define CONCHECK_EXTENT_INFO(x) CONCHECK_RECORD (x, extent_info)
 
 #ifdef NEW_GC
-struct gap_array_marker;
-
-DECLARE_LISP_OBJECT (gap_array_marker, struct gap_array_marker);
-#define XGAP_ARRAY_MARKER(x) \
-  XRECORD (x, gap_array_marker, struct gap_array_marker)
-#define wrap_gap_array_marker(p) wrap_record (p, gap_array_marker)
-#define GAP_ARRAY_MARKERP(x) RECORDP (x, gap_array_marker)
-#define CHECK_GAP_ARRAY_MARKER(x) CHECK_RECORD (x, gap_array_marker)
-#define CONCHECK_GAP_ARRAY_MARKER(x) CONCHECK_RECORD (x, gap_array_marker)
-
-struct gap_array;
-
-DECLARE_LISP_OBJECT (gap_array, struct gap_array);
-#define XGAP_ARRAY(x) XRECORD (x, gap_array, struct gap_array)
-#define wrap_gap_array(p) wrap_record (p, gap_array)
-#define GAP_ARRAYP(x) RECORDP (x, gap_array)
-#define CHECK_GAP_ARRAY(x) CHECK_RECORD (x, gap_array)
-#define CONCHECK_GAP_ARRAY(x) CONCHECK_RECORD (x, gap_array)
-
 struct extent_list_marker;
 
 DECLARE_LISP_OBJECT (extent_list_marker, struct extent_list_marker);
@@ -154,9 +135,11 @@ EXFUN (Fextent_property, 3);
 EXFUN (Fput_text_property, 5);
 
 EXFUN (Fdetach_extent, 1);
+EXFUN (Fdelete_extent, 1);
 EXFUN (Fextent_end_position, 1);
 EXFUN (Fextent_object, 1);
 EXFUN (Fextent_properties, 1);
+EXFUN (Fextent_face, 1);
 EXFUN (Fextent_start_position, 1);
 EXFUN (Fget_char_property, 4);
 EXFUN (Fmake_extent, 3);
@@ -169,6 +152,8 @@ EXFUN (Fset_extent_property, 3);
 EXFUN (Fset_extent_priority, 2);
 EXFUN (Fset_extent_face, 2);
 EXFUN (Fmap_extents, 8);
+
+extern Lisp_Object Qduplicable;
 
 enum extent_at_flag
 {
@@ -217,6 +202,12 @@ Lisp_Object extent_at (Bytexpos position, Lisp_Object object,
 		       Lisp_Object property, EXTENT before,
 		       enum extent_at_flag at_flag, int all_extents);
 
+typedef int (*map_extents_fun) (EXTENT extent, void *arg);
+
+void map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
+		  void *arg, Lisp_Object obj, EXTENT after,
+		  unsigned int flags);
+
 
 struct extent_fragment *extent_fragment_new (Lisp_Object buffer_or_string,
 					     struct frame *frm);
@@ -237,8 +228,7 @@ void sledgehammer_extent_check (Lisp_Object obj);
 #endif
 
 #ifdef MEMORY_USAGE_STATS
-int compute_buffer_extent_usage (struct buffer *b,
-				 struct usage_stats *ustats);
+Bytecount compute_buffer_extent_usage (struct buffer *b);
 #endif
 
 #endif /* INCLUDED_extents_h_ */

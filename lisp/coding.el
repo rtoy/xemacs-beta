@@ -5,7 +5,7 @@
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2010 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -205,6 +205,15 @@ if does not differ from the encoded string. "
       (case (coding-system-type coding-system)
 	(no-conversion 'no-conversion)
 	(shift-jis 'shift-jis)
+	;; @@#### This is a huge hack.  Fix it properly.
+	(multibyte (loop
+		named category
+		for charset in (coding-system-property coding-system
+						       'charsets)
+		do (if (or (= 2 (charset-dimension charset))
+			   (< (charset-offset charset) #xA0))
+		       (return-from category 'no-conversion))
+		finally return 'iso-8-1))
 	(unicode (case (coding-system-property coding-system 'unicode-type)
 		   (utf-8 (let ((bom (coding-system-property coding-system
 							     'need-bom)))
@@ -275,81 +284,6 @@ alias, though we haven't profiled this yet to see if it makes a difference."
 ;; Sure would be nice to be able to use defface here. 
 (copy-face 'highlight 'query-coding-warning-face)
 
-(defun query-coding-clear-highlights (begin end &optional buffer-or-string)
-  "Remove extent faces added by `query-coding-region' between BEGIN and END.
-
-Optional argument BUFFER-OR-STRING is the buffer or string to use, and
-defaults to the current buffer.
-
-The HIGHLIGHTP argument to `query-coding-region' indicates that it should
-display unencodable characters using `query-coding-warning-face'.  After
-this function has been called, this will no longer be the case.  "
-  (map-extents #'(lambda (extent ignored-arg)
-                   (when (eq 'query-coding-warning-face
-                             (extent-face extent))
-                     (delete-extent extent))) buffer-or-string begin end))
-
-(defun query-coding-string (string coding-system &optional
-                            ignore-invalid-sequencesp errorp highlight)
-  "Work out whether CODING-SYSTEM can losslessly encode STRING.
-CODING-SYSTEM is the coding system to check.
-
-IGNORE-INVALID-SEQUENCESP, an optional argument, says to treat XEmacs
-characters which have an unambiguous encoded representation, despite being
-undefined in what they represent, as encodable.  These chiefly arise with
-variable-length encodings like UTF-8 and UTF-16, where an invalid sequence
-is passed through to XEmacs as a sequence of characters with a defined
-correspondence to the octets on disk, but no non-error semantics; see the
-`invalid-sequence-coding-system' argument to `set-language-info'.
-
-They can also arise with fixed-length encodings like ISO 8859-7, where
-certain octets on disk have undefined values, and treating them as
-corresponding to the ISO 8859-1 characters with the same numerical values
-may lead to data that are not understood by other applications.
-
-Optional argument ERRORP says to signal a `text-conversion-error' if some
-character in the region cannot be encoded, and defaults to nil.
-
-Optional argument HIGHLIGHT says to display unencodable characters in the
-region using `query-coding-warning-face'. It defaults to nil.
-
-This function can return multiple values; the intention is that callers use
-`multiple-value-bind' or the related CL multiple value functions to deal
-with it.  The first result is `t' if the region can be encoded using
-CODING-SYSTEM, or `nil' if not.  If the region cannot be encoded using
-CODING-SYSTEM, the second result is a range table describing the positions
-of the unencodable characters.
-
-Ranges that describe characters that would be ignored were
-IGNORE-INVALID-SEQUENCESP non-nil map to the symbol `invalid-sequence';
-other ranges map to the symbol `unencodable'.  If IGNORE-INVALID-SEQUENCESP
-is non-nil, all ranges will map to the symbol `unencodable'.  See
-`make-range-table' for more details of range tables."
-  (with-temp-buffer 
-    (when highlight
-      (query-coding-clear-highlights 0 (length string) string))
-    (insert string)
-    (multiple-value-bind (result ranges)
-        (query-coding-region (point-min) (point-max) coding-system
-                             (current-buffer) ignore-invalid-sequencesp
-			     errorp)
-        (unless result
-          (let ((original-ranges ranges)
-                extent)
-            (setq ranges (make-range-table))
-            (map-range-table
-             #'(lambda (begin end value)
-                 ;; Sigh, string indices are zero-based, buffer offsets are
-                 ;; one-based.
-                 (put-range-table (decf begin) (decf end) value ranges)
-                 (when highlight
-                   (setq extent (make-extent begin end string))
-                   (set-extent-priority extent (+ mouse-highlight-priority 2))
-                   (set-extent-property extent 'duplicable t)
-                   (set-extent-face extent 'query-coding-warning-face)))
-             original-ranges)))
-        (if result result (values result ranges)))))
-
 ;; Function docstring and API are taken from GNU coding.c version 1.353, GPLv2. 
 (defun unencodable-char-position  (start end coding-system
                                    &optional count string) 
@@ -378,7 +312,7 @@ in the string."
 					(< (length result) count))
 			      (push (if stringp (1- begin) begin) result)
 			      (incf begin))
-			    (when (= (length result) count)
+			    (when (eql (length result) count)
 			      (return-from worked-it-all-out result)))
 			ranges)
 		     (map-range-table
@@ -461,45 +395,10 @@ This function is for GNU compatibility.  See also `query-coding-region'."
 If CODING-SYSTEM can't safely encode CHAR, return nil.
 The optional third argument CHARSET is, for the moment, ignored."
   (check-argument-type #'characterp char)
-  (and (query-coding-string char coding-system)
-       (encode-coding-string char coding-system)))
+  (and (query-coding-string (string char) coding-system)
+       (encode-coding-string (string char) coding-system)))
 
-(if (featurep 'mule)
-    (progn
-      ;; Under Mule, we do much of the complicated coding system creation in
-      ;; Lisp and especially at compile time. We need some function
-      ;; definition for this function to be created in this file, but we can
-      ;; leave assigning the docstring to the autoload cookie
-      ;; handling later. Thankfully; that docstring is big.
-      (autoload 'make-coding-system "mule/make-coding-system")
-
-      ;; (During byte-compile before dumping, make-coding-system may already
-      ;; have been loaded, make sure not to overwrite the correct compiler
-      ;; macro:)
-      (when (eq 'autoload (car (symbol-function 'make-coding-system)))
-        ;; Make sure to pick up the correct compiler macro when compiling
-        ;; files:
-        (define-compiler-macro make-coding-system (&whole form name type
-                                                   &optional description props)
-          (load (second (symbol-function 'make-coding-system)))
-          (funcall (get 'make-coding-system 'cl-compiler-macro)
-                   form name type description props))))
-
-  ;; Mule's not available; 
-  (fset 'make-coding-system (symbol-function 'make-coding-system-internal))
-  (define-compiler-macro make-coding-system (&whole form name type
-                                             &optional description props)
-    (cond
-     ;; We shouldn't normally see these forms under non-Mule; they're all in
-     ;; the mule/ subdirectory.
-     ((equal '(quote fixed-width) type)
-      form)
-     ((byte-compile-constp type)
-      `(funcall (or (and (fboundp 'make-coding-system-internal)
-                         'make-coding-system-internal) 'make-coding-system)
-        ,@(cdr form)))
-     (t form)))
-
+(unless (featurep 'mule)
   (define-coding-system-alias 'escape-quoted 'binary)
 
   ;; These are so that gnus and friends work when not mule:

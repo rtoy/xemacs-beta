@@ -18,8 +18,8 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.28. */
 
@@ -512,11 +512,6 @@ Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 Lisp_Object Vxemacs_extra_name;
 Lisp_Object Vxemacs_release_date;
-#ifdef INFODOCK
-Lisp_Object Vinfodock_major_version;
-Lisp_Object Vinfodock_minor_version;
-Lisp_Object Vinfodock_build_version;
-#endif
 
 /* The path under which XEmacs was invoked. */
 Lisp_Object Vinvocation_path;
@@ -766,6 +761,7 @@ free_argc_argv (Wexttext **argv)
   while (argv[elt])
     {
       xfree (argv[elt]);
+      argv[elt] = 0;
       elt++;
     }
   xfree (argv);
@@ -1472,6 +1468,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_alloc_early ();
       reinit_gc_early ();
       reinit_symbols_early ();
+      reinit_process_early ();
 #ifndef NEW_GC
       reinit_opaque_early ();
 #endif /* not NEW_GC */
@@ -1508,6 +1505,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef NEW_GC
       syms_of_vdb ();
 #endif /* NEW_GC */
+      syms_of_array ();
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
@@ -1585,7 +1583,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef WITH_NUMBER_TYPES
       syms_of_number ();
 #endif
-      syms_of_objects ();
+      syms_of_fontcolor ();
       syms_of_print ();
       syms_of_process ();
 #ifdef HAVE_WIN32_PROCESSES
@@ -1619,14 +1617,14 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_console_tty ();
       syms_of_device_tty ();
       syms_of_frame_tty ();
-      syms_of_objects_tty ();
+      syms_of_fontcolor_tty ();
 #endif
 
 #ifdef HAVE_GTK
       syms_of_device_gtk ();
       syms_of_frame_gtk ();
       syms_of_glyphs_gtk ();
-      syms_of_objects_gtk ();
+      syms_of_fontcolor_gtk ();
       syms_of_ui_gtk ();
       syms_of_select_gtk ();
 #ifdef HAVE_DIALOGS
@@ -1652,7 +1650,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       syms_of_frame_x ();
       syms_of_glyphs_x ();
-      syms_of_objects_x ();
+      syms_of_fontcolor_x ();
 #ifdef HAVE_MENUBARS
       syms_of_menubar_x ();
 #endif
@@ -1681,7 +1679,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_dialog_mswindows ();
 #endif
       syms_of_frame_mswindows ();
-      syms_of_objects_mswindows ();
+      syms_of_fontcolor_mswindows ();
       syms_of_select_mswindows ();
       syms_of_glyphs_mswindows ();
 #ifdef HAVE_GUI_OBJECTS
@@ -1761,6 +1759,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       )
     {
       buffer_objects_create ();
+      casetab_objects_create ();
+      chartab_objects_create ();
       extent_objects_create ();
       face_objects_create ();
       frame_objects_create ();
@@ -1770,6 +1770,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef MULE
       mule_charset_objects_create ();
 #endif
+#ifdef HAVE_SCROLLBARS
+      scrollbar_objects_create ();
+#endif
+      specifier_objects_create ();
 #ifdef HAVE_GTK
       ui_gtk_objects_create ();
 #endif
@@ -1800,7 +1804,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       console_type_create_tty ();
       console_type_create_device_tty ();
       console_type_create_frame_tty ();
-      console_type_create_objects_tty ();
+      console_type_create_fontcolor_tty ();
       console_type_create_redisplay_tty ();
 #endif
 
@@ -1809,7 +1813,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       console_type_create_select_gtk ();
       console_type_create_device_gtk ();
       console_type_create_frame_gtk ();
-      console_type_create_objects_gtk ();
+      console_type_create_fontcolor_gtk ();
       console_type_create_glyphs_gtk ();
       console_type_create_redisplay_gtk ();
 #ifdef HAVE_MENUBARS
@@ -1835,7 +1839,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_MENUBARS
       console_type_create_menubar_x ();
 #endif
-      console_type_create_objects_x ();
+      console_type_create_fontcolor_x ();
       console_type_create_redisplay_x ();
 #ifdef HAVE_SCROLLBARS
       console_type_create_scrollbar_x ();
@@ -1852,7 +1856,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       console_type_create_mswindows ();
       console_type_create_device_mswindows ();
       console_type_create_frame_mswindows ();
-      console_type_create_objects_mswindows ();
+      console_type_create_fontcolor_mswindows ();
       console_type_create_redisplay_mswindows ();
       console_type_create_glyphs_mswindows ();
       console_type_create_select_mswindows ();
@@ -1884,7 +1888,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
       specifier_type_create_image ();
       specifier_type_create_gutter ();
-      specifier_type_create_objects ();
+      specifier_type_create_fontcolor ();
 #ifdef HAVE_TOOLBARS
       specifier_type_create_toolbar ();
 #endif
@@ -1959,7 +1963,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_specifier_type_create ();
       reinit_specifier_type_create_image ();
       reinit_specifier_type_create_gutter ();
-      reinit_specifier_type_create_objects ();
+      reinit_specifier_type_create_fontcolor ();
 #ifdef HAVE_TOOLBARS
       reinit_specifier_type_create_toolbar ();
 #endif
@@ -2092,6 +2096,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_buffer ();
       vars_of_bytecode ();
       vars_of_callint ();
+      vars_of_casetab ();
       vars_of_chartab ();
       vars_of_cmdloop ();
       vars_of_cmds ();
@@ -2182,7 +2187,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef WITH_NUMBER_TYPES
       vars_of_number ();
 #endif
-      vars_of_objects ();
+      vars_of_fontcolor ();
       vars_of_print ();
 
       vars_of_process ();
@@ -2221,7 +2226,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_TTY
       vars_of_console_tty ();
       vars_of_frame_tty ();
-      vars_of_objects_tty ();
+      vars_of_fontcolor_tty ();
 #endif
 
 #ifdef HAVE_GTK
@@ -2237,7 +2242,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_MENUBARS
       vars_of_menubar_gtk ();
 #endif
-      vars_of_objects_gtk ();
+      vars_of_fontcolor_gtk ();
       vars_of_select_gtk ();
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_gtk ();
@@ -2261,7 +2266,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_MENUBARS
       vars_of_menubar_x ();
 #endif
-      vars_of_objects_x ();
+      vars_of_fontcolor_x ();
       vars_of_select_x ();
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_x ();
@@ -2281,7 +2286,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_device_mswindows ();
       vars_of_console_mswindows ();
       vars_of_frame_mswindows ();
-      vars_of_objects_mswindows ();
+      vars_of_fontcolor_mswindows ();
       vars_of_select_mswindows ();
       vars_of_glyphs_mswindows ();
 #ifdef HAVE_SCROLLBARS
@@ -2370,7 +2375,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_SHLIB
       reinit_vars_of_module ();
 #endif
-      reinit_vars_of_objects ();
+      reinit_vars_of_fontcolor ();
       reinit_vars_of_print ();
       reinit_vars_of_search ();
       reinit_vars_of_text ();
@@ -2380,7 +2385,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_MS_WINDOWS
       reinit_vars_of_event_mswindows ();
       reinit_vars_of_frame_mswindows ();
-      reinit_vars_of_object_mswindows ();
+      reinit_vars_of_fontcolor_mswindows ();
 #endif
 
 #ifdef HAVE_GTK
@@ -2451,8 +2456,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 function and another. */
 
 #ifdef MULE
-      /* This depends on vars initialized in vars_of_unicode(). */
+      /* This creates charsets, which depends on vars initialized in
+	 vars_of_unicode(). */
       complex_vars_of_mule_charset ();
+      /* This depends on charsets created in complex_vars_of_mule_charset(). */
+      complex_vars_of_mule_coding ();
 #endif
       /* This one doesn't depend on anything really, and could go into
 	 vars_of_(), but lots of lots of code gets called and it's easily
@@ -2461,10 +2469,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 then we suddenly have dependence on the previous call. */
       complex_vars_of_file_coding ();
 #ifdef WIN32_ANY
+      /* Likewise this one. */
       /* Define MS-Windows Unicode coding systems */
       complex_vars_of_intl_win32 ();
 #endif
-      /* Define UTF-8 coding system */
+      /* Define UTF-8 coding system, create JIT charset */
       complex_vars_of_unicode ();
 
       /* At this point we should be able to do conversion operations.
@@ -2525,12 +2534,12 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* This calls Fcopy_syntax_table(), which relies on char tables. */
       complex_vars_of_syntax ();
 
-      /* This initializes buffer-local variables, sets things up so
-	 that buffers can be created, and creates a couple of basic
-	 buffers.  This depends on Vstandard_syntax_table and
-	 Vstandard_category_table (initialized in the previous
-	 functions), as well as a whole horde of variables that may
-	 have been initialized above. */
+      /* This initializes buffer-local variables, sets things up so that
+	 buffers can be created, and creates a couple of basic buffers.
+	 This depends on Vstandard_syntax_table and
+	 Vstandard_category_table (initialized in the previous functions),
+	 and in Mule on some charsets existing, as well as a whole horde of
+	 variables that may have been initialized above. */
       complex_vars_of_buffer ();
 
       /* This initializes console-local variables. */
@@ -2599,16 +2608,37 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
      where there is typically a dependency from each to the previous.
  */
 
+  if (initialized)
+    {
+#ifdef MULE
+      init_mule_charset (); /* Retrieve the charset objects corresponding to
+			       certain charsets that we want to use internally,
+			       e.g. the ISO 8859 charsets.  We used to create
+			       them ourselves in the C code but it's cleaner
+			       and easier to create them in the Lisp code. */
+      init_mule_coding (); /* depends on those charsets */
+#endif /* MULE */
+    }
 #ifdef WIN32_ANY
   init_intl_win32 (); /* Under Windows, determine whether we use Unicode
 			 or ANSI to call the system routines -- i.e.
 			 determine what the coding system `mswindows-tstr'
 			 is aliased to */
 #endif
-  init_buffer_1 ();	/* Create *scratch* buffer; init_intl() is going to
-			   call Lisp code (the very first code we call),
-			   and needs a current buffer */
+  init_buffer_1 ();	/* Create *scratch* buffer; the code just below is
+			   going to call Lisp code (the very first code we
+			   call), and needs a current buffer */
 #ifdef MULE
+  /* The following two both call Lisp, and are the first Lisp code we call
+     after dumping. */
+  init_unicode (); /* recreate Unicode precedence arrays, necessary for
+                      conversion of Unicode codepoints to charset codepoints.
+		      This has to come first because the Lisp code called
+		      from init_intl() calls set-current-locale, which
+		      converts to external format in preparation for
+		      calling C library functions, which requires that the
+		      global Unicode precedence arrays are available.
+                    */
   init_intl (); /* Figure out the locale and set native and
 		   file-name coding systems, initialize the Unicode tables
 		   so that we will be able to process non-ASCII from here
@@ -3628,15 +3658,9 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 "Your version of XEmacs was distributed with a PROBLEMS file that may describe\n"
 "your crash, and with luck a workaround.  Please check it first, but do report\n"
 "the crash anyway.\n\n"
-#ifdef INFODOCK
-"Please report this bug by selecting `Report-Bug' in the InfoDock menu, or\n"
-"(last resort) by emailing `xemacs-beta@xemacs.org' -- note that this is for\n"
-"XEmacs in general, not just Infodock."
-#else
 "Please report this bug by invoking M-x report-emacs-bug, or by selecting\n"
 "`Send Bug Report' from the Help menu.  If that won't work, send ordinary\n"
 "email to `xemacs-beta@xemacs.org'."
-#endif
 "  *MAKE SURE* to include this entire\n"
 "output from this crash, especially including the Lisp backtrace, as well as\n"
 "the XEmacs configuration from M-x describe-installation (or equivalently,\n"
@@ -4335,22 +4359,6 @@ earlier than 20.3.
   Vemacs_beta_version = Qnil;
 #endif
 
-#ifdef INFODOCK
-  DEFVAR_LISP ("infodock-major-version", &Vinfodock_major_version /*
-Major version number of this InfoDock release.
-*/ );
-  Vinfodock_major_version = make_int (INFODOCK_MAJOR_VERSION);
-
-  DEFVAR_LISP ("infodock-minor-version", &Vinfodock_minor_version /*
-Minor version number of this InfoDock release.
-*/ );
-  Vinfodock_minor_version = make_int (INFODOCK_MINOR_VERSION);
-
-  DEFVAR_LISP ("infodock-build-version", &Vinfodock_build_version /*
-Build version of this InfoDock release.
-*/ );
-  Vinfodock_build_version = make_int (INFODOCK_BUILD_VERSION);
-#endif
 
   DEFVAR_LISP ("xemacs-codename", &Vxemacs_codename /*
 Codename of this version of Emacs (a string).
@@ -4549,7 +4557,6 @@ complex_vars_of_emacs (void)
 
   DEFVAR_LISP ("emacs-program-name", &Vemacs_program_name /*
 *Name of the Emacs variant.
-For example, this may be \"xemacs\" or \"infodock\".
 This is mainly meant for use in path searching.
 */ );
   Vemacs_program_name = build_extstring (PATH_PROGNAME, Qfile_name);

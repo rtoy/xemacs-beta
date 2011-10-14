@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h" /* for Vcharset_ascii */
 #include "device-impl.h"
 #include "events.h"
 #include "extents.h"
@@ -40,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x-impl.h"
+#include "fontcolor-x-impl.h"
 #include "scrollbar-x.h"
 
 #include "xintrinsicp.h"	/* CoreP.h needs this */

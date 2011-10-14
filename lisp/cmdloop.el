@@ -148,7 +148,7 @@ or go back to just one window (by deleting all but the selected window)."
     (message nil)
     (ding nil (cond ((eq etype 'undefined-keystroke-sequence)
 		     (if (and (vectorp (nth 1 error-object))
-			      (/= 0 (length (nth 1 error-object)))
+			      (not (eql 0 (length (nth 1 error-object))))
 			      (button-event-p (aref (nth 1 error-object) 0)))
 			 'undefined-click
 		       'undefined-key))
@@ -301,16 +301,31 @@ The value is measured in seconds.  This only applies if
   :group 'keyboard)
 
 ;That damn RMS went off and implemented something differently, after
-;we had already implemented it.  We can't support both properly until
-;we have Lisp magic variables.
-;(defvar suggest-key-bindings t
-;  "*FSFmacs equivalent of `teach-extended-commands-*'.
-;Provided for compatibility only.
-;Non-nil means show the equivalent key-binding when M-x command has one.
-;The value can be a length of time to show the message for.
-;If the value is non-nil and not a number, we wait 2 seconds.")
-;
-;(make-obsolete-variable 'suggest-key-bindings 'teach-extended-commands-p)
+;we had already implemented it.
+(defcustom suggest-key-bindings t
+  "*FSFmacs equivalent of `teach-extended-commands-p'.
+Provided for compatibility only.
+Non-nil means show the equivalent key-binding when M-x command has one.
+The value can be a length of time to show the message for, in seconds.
+
+If the value is non-nil and not a number, we wait the number of seconds
+specified by `teach-extended-commands-timeout'."
+  :type '(choice
+          (const :tag "off" nil)
+          (integer :tag "time" 2)
+          (other :tag "on")))
+
+(dontusethis-set-symbol-value-handler
+ 'suggest-key-bindings
+ 'set-value
+ #'(lambda (sym args fun harg handler)
+     (setq args (car args))
+     (if (null args)
+         (setq teach-extended-commands-p nil)
+       (setq teach-extended-commands-p t
+             teach-extended-commands-timeout
+             (or (and (integerp args) args)
+                 (and args teach-extended-commands-timeout))))))
 
 (defun execute-extended-command (prefix-arg)
   "Read a command name from the minibuffer using 'completing-read'.
@@ -455,7 +470,7 @@ Also accepts Space to mean yes, or Delete to mean no."
                           (single-key-description event))
                  (ding nil 'y-or-n-p)
                  (discard-input)
-                 (if (= (length pre) 0)
+                 (if (eql (length pre) 0)
                      (setq pre (gettext "Please answer y or n.  ")))))))
       yn)))
 
@@ -549,12 +564,7 @@ the wrong thing for you to be using: consider using the
 
 ;; BEGIN SYNCHED WITH FSF 21.2.
 
-(defvar read-quoted-char-radix 8
-  "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
-Legitimate radix values are 8, 10 and 16.")
-
-(custom-declare-variable-early
- 'read-quoted-char-radix 8 
+(defcustom read-quoted-char-radix 8 
  "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
 Legitimate radix values are 8, 10 and 16."
   :type '(choice (const 8) (const 10) (const 16))

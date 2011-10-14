@@ -4,7 +4,7 @@
 ;;   Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped, internal
@@ -39,18 +39,9 @@
 
 ;; BEGIN SYNCHED WITH FSF 21.2
 
-;;; Code:
-(defvar custom-declare-variable-list nil
-  "Record `defcustom' calls made before `custom.el' is loaded to handle them.
-Each element of this list holds the arguments to one call to `defcustom'.")
+;; XEmacs; no need for custom-declare-variable-list, preloaded-file-list is
+;; ordered to make it unnecessary.
 
-;; Use this, rather than defcustom, in subr.el and other files loaded
-;; before custom.el.  See dumped-lisp.el.
-(defun custom-declare-variable-early (&rest arguments)
-  (setq custom-declare-variable-list
-	(cons arguments custom-declare-variable-list)))
-
-
 (defun macro-declaration-function (macro decl)
   "Process a declaration found in a macro definition.
 This is set as the value of the variable `macro-declaration-function'.
@@ -66,7 +57,20 @@ The return value of this function is not used."
 	   (message "Unknown declaration %s" d)))))
 
 (setq macro-declaration-function 'macro-declaration-function)
-
+
+;; XEmacs; this is here because we use it in backquote.el, so it needs to be
+;; available the first time a `(...) form is expanded.
+(defun list* (first &rest rest)   ; See compiler macro in cl-macs.el
+  "Return a new list with specified args as elements, cons'd to last arg.
+Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
+`(cons A (cons B (cons C D)))'."
+  (cond ((not rest) first)
+	((not (cdr rest)) (cons first (car rest)))
+	(t (let* ((n (length rest))
+		  (copy (copy-sequence rest))
+		  (last (nthcdr (- n 2) copy)))
+	     (setcdr last (car (cdr last)))
+	     (cons first copy)))))
 
 ;;;; Lisp language features.
 
@@ -144,6 +148,40 @@ Used for compatibility among different emacs variants."
      (define-function ,@args)))
 
 
+(defun delete (item sequence)
+  "Delete by side effect any occurrences of ITEM as a member of SEQUENCE.
+
+The modified SEQUENCE is returned.  Comparison is done with `equal'.
+
+If the first member of a list SEQUENCE is ITEM, there is no way to remove it
+by side effect; therefore, write `(setq foo (delete element foo))' to be
+sure of changing the value of `foo'.  Also see: `remove'."
+  (delete* item sequence :test #'equal))
+
+(defun delq (item sequence)
+  "Delete by side effect any occurrences of ITEM as a member of SEQUENCE.
+
+The modified SEQUENCE is returned.  Comparison is done with `eq'.  If
+SEQUENCE is a list and its first member is ITEM, there is no way to remove
+it by side effect; therefore, write `(setq foo (delq element foo))' to be
+sure of changing the value of `foo'."
+  (delete* item sequence :test #'eq))
+
+(defun remove (item sequence)
+  "Remove all occurrences of ITEM in SEQUENCE, testing with `equal'.
+
+This is a non-destructive function; it makes a copy of SEQUENCE if necessary
+to avoid corrupting the original SEQUENCE.
+Also see: `remove*', `delete', `delete*'"
+  (remove* item sequence :test #'equal))
+
+(defun remq (item sequence)
+  "Remove all occurrences of ITEM in SEQUENCE, comparing with `eq'.
+
+This is a non-destructive function; it makes a copy of SEQUENCE to avoid
+corrupting the original SEQUENCE.  See also the more general `remove*'."
+  (remove* item sequence :test #'eq))
+
 (defun assoc-default (key alist &optional test default)
   "Find object KEY in a pseudo-alist ALIST.
 ALIST is a list of conses or objects.  Each element (or the element's car,
@@ -222,6 +260,9 @@ ELT must be a string.  Upper-case and lower-case letters are treated as equal."
 
 ;; XEmacs; this is in Lisp, its bytecode now taken by subseq.
 (define-function 'substring 'subseq)
+
+(define-function 'sort 'sort*)
+(define-function 'fillarray 'fill)
   
 ;; XEmacs:
 (defun local-variable-if-set-p (sym buffer)
@@ -761,14 +802,8 @@ Modifies the match data when successful; use `save-match-data' if necessary."
 (defun subst-char-in-string (fromchar tochar string &optional inplace)
   "Replace FROMCHAR with TOCHAR in STRING each time it occurs.
 Unless optional argument INPLACE is non-nil, return a new string."
-  (let ((i (length string))
-	(newstr (if inplace string (copy-sequence string))))
-    (while (> i 0)
-      (setq i (1- i))
-      (if (eq (aref newstr i) fromchar)
-	  (aset newstr i tochar)))
-    newstr))
-
+  (funcall (if inplace #'nsubstitute #'substitute) tochar fromchar
+	   (the string string) :test #'eq))
 
 ;; XEmacs addition:
 (defun replace-in-string (str regexp newtext &optional literal)
@@ -957,23 +992,11 @@ With international (Mule) support, uses the charset-columns attribute of
 the characters in STRING, which may not accurately represent the actual
 display width when using a window system.  With no international support,
 simply returns the length of the string."
-  (if (featurep 'mule)
-      (let ((col 0)
-	    (len (length string))
-	    (i 0))
-	(with-fboundp '(charset-width char-charset)
-	  (while (< i len)
-	    (setq col (+ col (charset-width (char-charset (aref string i)))))
-	    (setq i (1+ i))))
-	col)
-    (length string)))
+  (reduce #'+ (the string string) :initial-value 0 :key #'char-width))
 
 (defun char-width (character)
   "Return number of columns a CHARACTER occupies when displayed."
-  (if (featurep 'mule)
-      (with-fboundp '(charset-width char-charset)
-	(charset-width (char-charset character)))
-    1))
+  (charset-width (char-charset character)))
 
 ;; The following several functions are useful in GNU Emacs 20 because
 ;; of the multibyte "characters" the internal representation of which
@@ -999,18 +1022,9 @@ TYPE should be `list' or `vector'."
 
 (defun store-substring (string idx obj)
   "Embed OBJ (string or character) at index IDX of STRING."
-  (let* ((str (cond ((stringp obj) obj)
-		    ((characterp obj) (char-to-string obj))
-		    (t (error
-			"Invalid argument (should be string or character): %s"
-			obj))))
-	 (string-len (length string))
-	 (len (length str))
-	 (i 0))
-    (while (and (< i len) (< idx string-len))
-      (aset string idx (aref str i))
-      (setq idx (1+ idx) i (1+ i)))
-    string))
+  (if (stringp obj)
+      (replace (the string string) obj :start1 idx)
+    (prog1 string (aset string idx obj))))
 
 ;; From FSF 21.1; ELLIPSES is XEmacs addition.
 
@@ -1127,13 +1141,13 @@ The original plist is not modified.  See also `destructive-plist-to-alist'."
       "Replace the variable names in MAP-PLIST-DEFINITION with uninterned
 symbols, avoiding the risk of interference with variables in other functions
 introduced by dynamic scope."
-      (if-fboundp 'nsublis 
-	  (nsublis
-	   '((mp-function . #:function)
-	     (plist . #:plist)
-	     (result . #:result))
-	   map-plist-definition)
-	map-plist-definition)))
+      (nsublis '((mp-function . #:function)
+		 (plist . #:plist)
+		 (result . #:result))
+	       ;; Need to specify #'eq as the test, otherwise we have a
+	       ;; bootstrap issue, since #'eql is in cl.el, loaded after
+	       ;; this file.
+	       map-plist-definition :test #'eq)))
  (defun map-plist (mp-function plist)
    "Map FUNCTION (a function of two args) over each key/value pair in PLIST.
 Return a list of the results."
@@ -1447,8 +1461,8 @@ error occurred (i.e. the handler itself)."
 	       ;; Try to eliminate the part of the backtrace
 	       ;; above where the error occurred.
 	       (if (string-match
-		    (concat "bind (\\(?:.* \\)?" (symbol-name handler-arg-name)
-			    "\\(?:.* \\)?)[ \t\n]*\\(?:(lambda \\|#<compiled-function \\)("
+		    (concat "bind (\\(?:.*? \\)?" (symbol-name handler-arg-name)
+			    "\\(?:.*? \\)?)[ \t\n]*\\(?:(lambda \\|#<compiled-function \\)("
 			    (symbol-name handler-arg-name)
 			    ").*\n\\(\\(?:.\\|\n\\)*\\)$")
 		    bt) (match-string 1 bt) bt))))
@@ -1466,6 +1480,7 @@ Usage looks like
     [:class CLASS]
     [:level LEVEL]
     [:resignal RESIGNAL]
+    [:debug DEBUG]
     BODY)
 
 Return value without error is whatever BODY returns.  With error, return
@@ -1474,16 +1489,19 @@ occurs), which defaults to nil.  OPERATION is given in the warning message.
 CLASS and LEVEL are the warning class and level (default to class
 `general', level `warning').  If NO-BACKTRACE is given, no backtrace is
 displayed.  If RESIGNAL is given, the error is resignaled after the warning
-is displayed and the ERROR-FORM is executed."
+is displayed and the ERROR-FORM is executed.  If DEBUG is given, the
+debugger is entered."
   (let ((operation "unknown")
 	(error-form nil)
 	(no-backtrace nil)
 	(class ''general)
 	(level ''warning)
 	(resignal nil)
+	(debug nil)
 	(cte-cc-var '#:cte-cc-var)
 	(call-trapping-errors-arg '#:call-trapping-errors-Ldc9FC5Hr))
-    (let* ((keys '(operation error-form no-backtrace class level resignal))
+    (let* ((keys '(operation error-form no-backtrace class level resignal
+		   debug))
 	   (keys-with-colon
 	    (mapcar #'(lambda (sym)
 			(intern (concat ":" (symbol-name sym)))) keys)))
@@ -1492,29 +1510,32 @@ is displayed and the ERROR-FORM is executed."
 	       (key (intern (substring (symbol-name key-with-colon) 1))))
 	  (set key (pop keys-body)))))
     `(condition-case ,(if resignal cte-cc-var nil)
-	 (call-with-condition-handler
-	     #'(lambda (,call-trapping-errors-arg)
-		 (let ((errstr (error-message-string
-				,call-trapping-errors-arg)))
-		   ,(if no-backtrace
-			`(lwarn ,class ,level
-			   (if (warning-level-<
-				,level
-				display-warning-minimum-level)
-			       "Error in %s: %s"
-			     "Error in %s:\n%s\n")
-			   ,operation errstr)
-		      `(lwarn ,class ,level
-			 "Error in %s: %s\n\nBacktrace follows:\n\n%s"
-			 ,operation errstr
-			 (backtrace-in-condition-handler-eliminating-handler
-			  ',call-trapping-errors-arg)))))
-	     #'(lambda ()
-		 (progn ,@keys-body)))
-       (error
-	,error-form
-	,@(if resignal `((signal (car ,cte-cc-var) (cdr ,cte-cc-var)))))
-       )))
+      (call-with-condition-handler
+	  #'(lambda (,call-trapping-errors-arg)
+	      (let ((errstr (error-message-string
+			     ,call-trapping-errors-arg)))
+		,@(if debug `((funcall debugger 'error
+				       ,call-trapping-errors-arg)))
+		,(if no-backtrace
+		     `(lwarn ,class ,level
+		       (if (warning-level-<
+			    ,level
+			    display-warning-minimum-level)
+			   "Error in %s: %s"
+			 "Error in %s:\n%s\n")
+		       ,operation errstr)
+		   `(lwarn ,class ,level
+		     "Error in %s: %s\n\nBacktrace follows:\n\n%s"
+		     ,operation errstr
+		     (backtrace-in-condition-handler-eliminating-handler
+		      ',call-trapping-errors-arg)))
+		))
+	  #'(lambda ()
+	      (progn ,@keys-body)))
+      (error
+       ,error-form
+       ,@(if resignal `((signal (car ,cte-cc-var) (cdr ,cte-cc-var)))))
+      )))
 
 ;;;; Miscellanea.
 
@@ -1572,19 +1593,6 @@ properties to add to the result."
 
 (define-function 'eval-in-buffer 'with-current-buffer)
 (make-obsolete 'eval-in-buffer 'with-current-buffer)
-
-;;; The real defn is in abbrev.el but some early callers
-;;;  (eg lisp-mode-abbrev-table) want this before abbrev.el is loaded...
-
-(if (not (fboundp 'define-abbrev-table))
-    (progn
-      (setq abbrev-table-name-list '())
-      (fset 'define-abbrev-table
-	    (function (lambda (name defs)
-			;; These are fixed-up when abbrev.el loads.
-			(setq abbrev-table-name-list
-			      (cons (cons name defs)
-				    abbrev-table-name-list)))))))
 
 ;;; `functionp' has been moved into C.
 
@@ -1749,8 +1757,9 @@ if passed to `skip-chars-forward' or `skip-chars-backward'.
 Ranges and carets are not treated specially.  This implementation is
 in Lisp; do not use it in performance-critical code."
   (let ((list (delete-duplicates (string-to-list string) :test #'=)))
-    (when (/= 1 (length list)) ;; No quoting needed in a string of length 1.
-      (when (eq ?^ (car list))
+    (when (not (eql 1 (length list))) ;; No quoting needed in a string of
+				      ;; length 1.
+      (when (eql ?^ (car list))
         (setq list (nconc (cdr list) '(?^))))
       (when (memq ?\\ list)
         (setq list (delq ?\\ list)
@@ -1784,8 +1793,7 @@ See also `special-operator-p', `subr-min-args', `subr-max-args',
 ;; they're used reasonably often, since they've been around for a long time
 ;; and they're portable to GNU.
 
-;; Used in fileio.c if format-annotate-function has a function binding
-;; (which it won't have before this file is loaded):
+;; No longer used in C, now list_merge() accepts a KEY argument.
 (defun car-less-than-car (a b)
   "Return t if the car of A is numerically less than the car of B."
   (< (car a) (car b)))
@@ -1794,5 +1802,24 @@ See also `special-operator-p', `subr-min-args', `subr-max-args',
 (defun cdr-less-than-cdr (a b)
   "Return t if (cdr A) is numerically less than (cdr B)."
   (< (cdr a) (cdr b)))
+
+;; XEmacs; this is in editfns.c in GNU.
+(defun float-time (&optional specified-time)
+  "Convert time value SPECIFIED-TIME to a floating point number.
+
+See `current-time'.  Since the result is a floating-point number, this may
+not have the same accuracy as does the result of `current-time'.
+
+If not supplied, SPECIFIED-TIME defaults to the result of `current-time'."
+  (or specified-time (setq specified-time (current-time)))
+  (+ (* (pop specified-time) (+ #x10000 0.0))
+     (if (consp specified-time)
+	 (pop specified-time)
+       (prog1
+	   specified-time
+	 (setq specified-time nil)))
+     (or (and specified-time
+	      (/ (car specified-time) 1000000.0))
+	 0.0)))
 
 ;;; subr.el ends here

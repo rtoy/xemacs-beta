@@ -5,14 +5,14 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Keywords: alist
 
-;; This file is part of APEL (A Portable Emacs Library).
+;; This file is part of XEmacs.
 
-;; This program is free software; you can redistribute it and/or
+;; XEmacs is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
 ;; published by the Free Software Foundation; either version 2, or (at
 ;; your option) any later version.
 
-;; This program is distributed in the hope that it will be useful, but
+;; XEmacs is distributed in the hope that it will be useful, but
 ;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;; General Public License for more details.

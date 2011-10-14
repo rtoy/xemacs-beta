@@ -1,6 +1,6 @@
 /* Various initialization function prototypes.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002, 2010 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -16,8 +16,8 @@ for more details.
 
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 51 Franklin St - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+Boston, MA 02110-1301, USA.  */
 
 /* Synched up with: Not in FSF. */
 
@@ -54,6 +54,7 @@ void init_elhash_once_early (void);
 void init_errors_once_early (void);
 void reinit_opaque_early (void);
 void init_opaque_once_early (void);
+void reinit_process_early (void);
 void reinit_symbols_early (void);
 void init_symbols_once_early (void);
 
@@ -72,6 +73,7 @@ void init_eval_semi_early (void);
 
 void syms_of_abbrev (void);
 void syms_of_alloc (void);
+void syms_of_array (void);
 void syms_of_balloon_x (void);
 void syms_of_buffer (void);
 void syms_of_bytecode (void);
@@ -164,11 +166,11 @@ void syms_of_mule_coding (void);
 void syms_of_mule_wnn (void);
 void syms_of_nt (void);
 void syms_of_number (void);
-void syms_of_objects (void);
-void syms_of_objects_gtk (void);
-void syms_of_objects_mswindows (void);
-void syms_of_objects_tty (void);
-void syms_of_objects_x (void);
+void syms_of_fontcolor (void);
+void syms_of_fontcolor_gtk (void);
+void syms_of_fontcolor_mswindows (void);
+void syms_of_fontcolor_tty (void);
+void syms_of_fontcolor_x (void);
 EXTERN_C void syms_of_postgresql (void);
 void syms_of_print (void);
 void syms_of_process (void);
@@ -178,7 +180,7 @@ void syms_of_ralloc (void);
 void syms_of_rangetab (void);
 void syms_of_redisplay (void);
 void syms_of_scrollbar (void);
-void syms_of_scrollbar_mswindows(void);
+void syms_of_scrollbar_mswindows (void);
 void syms_of_search (void);
 void syms_of_select (void);
 void syms_of_select_gtk (void);
@@ -208,6 +210,8 @@ void syms_of_window (void);
    Dump time and post-pdump-load-time. */
 
 void buffer_objects_create (void);
+void casetab_objects_create (void);
+void chartab_objects_create (void);
 void extent_objects_create (void);
 void face_objects_create (void);
 void frame_objects_create (void);
@@ -215,6 +219,8 @@ void glyph_objects_create (void);
 void hash_table_objects_create (void);
 void lstream_objects_create (void);
 void mule_charset_objects_create (void);
+void scrollbar_objects_create (void);
+void specifier_objects_create (void);
 void ui_gtk_objects_create (void);
 void window_objects_create (void);
 
@@ -244,10 +250,10 @@ void console_type_create_menubar_mswindows (void);
 void console_type_create_menubar_x (void);
 void console_type_create_mswindows (void);
 void reinit_console_type_create_mswindows (void);
-void console_type_create_objects_gtk (void);
-void console_type_create_objects_mswindows (void);
-void console_type_create_objects_tty (void);
-void console_type_create_objects_x (void);
+void console_type_create_fontcolor_gtk (void);
+void console_type_create_fontcolor_mswindows (void);
+void console_type_create_fontcolor_tty (void);
+void console_type_create_fontcolor_x (void);
 void console_type_create_redisplay_gtk (void);
 void console_type_create_redisplay_mswindows (void);
 void console_type_create_redisplay_tty (void);
@@ -277,8 +283,8 @@ void specifier_type_create_gutter (void);
 void reinit_specifier_type_create_gutter (void);
 void specifier_type_create_image (void);
 void reinit_specifier_type_create_image (void);
-void specifier_type_create_objects (void);
-void reinit_specifier_type_create_objects (void);
+void specifier_type_create_fontcolor (void);
+void reinit_specifier_type_create_fontcolor (void);
 void specifier_type_create_toolbar (void);
 void reinit_specifier_type_create_toolbar (void);
 
@@ -353,6 +359,7 @@ void vars_of_bytecode (void);
 void reinit_vars_of_bytecode (void);
 void vars_of_callint (void);
 EXTERN_C void vars_of_canna_api (void);
+void vars_of_casetab (void);
 void vars_of_chartab (void);
 void vars_of_cmdloop (void);
 void vars_of_cmds (void);
@@ -467,13 +474,13 @@ void reinit_vars_of_mule_wnn (void);
 void vars_of_nt (void);
 void vars_of_number (void);
 void reinit_vars_of_number (void);
-void reinit_vars_of_object_mswindows (void);
-void vars_of_objects (void);
-void reinit_vars_of_objects (void);
-void vars_of_objects_gtk (void);
-void vars_of_objects_mswindows (void);
-void vars_of_objects_tty (void);
-void vars_of_objects_x (void);
+void reinit_vars_of_fontcolor_mswindows (void);
+void vars_of_fontcolor (void);
+void reinit_vars_of_fontcolor (void);
+void vars_of_fontcolor_gtk (void);
+void vars_of_fontcolor_mswindows (void);
+void vars_of_fontcolor_tty (void);
+void vars_of_fontcolor_x (void);
 EXTERN_C void vars_of_postgresql (void);
 void vars_of_print (void);
 void reinit_vars_of_print (void);
@@ -549,11 +556,13 @@ void complex_vars_of_glyphs_gtk (void);
 void complex_vars_of_glyphs_mswindows (void);
 void complex_vars_of_glyphs_x (void);
 void complex_vars_of_intl_win32 (void);
+void complex_vars_of_intl_win32 (void);
 void complex_vars_of_keymap (void);
 void complex_vars_of_menubar (void);
 void complex_vars_of_minibuf (void);
 void reinit_complex_vars_of_minibuf (void);
 void complex_vars_of_mule_charset (void);
+void complex_vars_of_mule_coding (void);
 void complex_vars_of_scrollbar (void);
 void complex_vars_of_syntax (void);
 void complex_vars_of_unicode (void);
@@ -579,12 +588,15 @@ void init_intl (void);
 void init_intl_win32 (void);
 void init_lread (void);
 void init_macros (void);
+void init_mule_charset (void);
+void init_mule_coding (void);
 void init_mswindows_environment (void);
 void init_nt (void);
 void init_postgresql_from_environment (void);
 void init_redisplay (void);
 void init_select_mswindows (void);
 void init_sunpro (void);
+void init_unicode (void);
 void init_win32 (void);
 void init_xemacs_process (void);
 

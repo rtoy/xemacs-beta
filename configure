@@ -941,6 +941,8 @@ enable_native_sound_lib
 with_native_sound_lib
 enable_mule
 with_mule
+enable_unicode_internal
+with_unicode_internal
 enable_xim
 with_xim
 enable_canna
@@ -1005,8 +1007,6 @@ enable_workshop
 with_workshop
 enable_sparcworks
 with_sparcworks
-enable_infodock
-with_infodock
 enable_debug
 with_debug
 enable_error_checking
@@ -1855,9 +1855,14 @@ Sound options
 Internationalization options
 ----------------------------
 
-  --with-mule             Compile with Mule (Multi-Lingual Emacs) support,
-                          needed to support non-Latin-1 (including Asian)
-                          languages.
+  --with-mule             Compile with Mule (Multi-Lingual Emacs), i.e.
+                          internationalization support, needed to support
+                          non-Latin-1 (including Asian) languages.
+  --with-unicode-internal Use Unicode and UTF-8 internally for text.
+                          Automatically selects `--with-mule'. Without this,
+                          Mule uses an old internal encoding that explicitly
+                          encodes the national character set associated with a
+                          char and cannot represent all of Unicode.
   --with-xim==TYPE        Enable XIM support. TYPE is `yes', `no', `xlib', or
                           `motif'
   --with-canna            Support the Canna Japanese input method. Requires
@@ -1952,8 +1957,6 @@ Platform Specific options
   --with-workshop         Support the Sun WorkShop (formerly Sparcworks)
                           development environment.
   --with-sparcworks       Alias for --with-workshop
-  --with-infodock         Support the Infodock version of XEmacs. Infodock is
-                          a SourceForge project).
 
 Debugging options
 -----------------
@@ -4469,6 +4472,22 @@ if test "${with_mule+set}" = set; then
   withval="$with_mule"
 
 fi;
+# If --with-unicode-internal or --without-unicode-internal were given then copy the value to the
+# equivalent enable_unicode-internal variable.
+if test "${with_unicode_internal+set}" = set; then
+  enable_unicode_internal="$with_unicode_internal"
+fi;
+# If -enable-unicode-internal or --disable-unicode-internal were given then copy the value to the
+# equivalent with_unicode-internal variable.
+if test "${enable_unicode_internal+set}" = set; then
+  with_unicode_internal="$enable_unicode_internal"
+fi;
+# Check whether --with-unicode-internal or --without-unicode-internal was given.
+if test "${with_unicode_internal+set}" = set; then
+  enableval="$with_unicode_internal"
+  withval="$with_unicode_internal"
+
+fi;
 
 # If --with-xim or --without-xim were given then copy the value to the
 # equivalent enable_xim variable.
@@ -5190,22 +5209,6 @@ if test "${with_sparcworks+set}" = set; then
   withval="$with_sparcworks"
 
 fi;
-# If --with-infodock or --without-infodock were given then copy the value to the
-# equivalent enable_infodock variable.
-if test "${with_infodock+set}" = set; then
-  enable_infodock="$with_infodock"
-fi;
-# If -enable-infodock or --disable-infodock were given then copy the value to the
-# equivalent with_infodock variable.
-if test "${enable_infodock+set}" = set; then
-  with_infodock="$enable_infodock"
-fi;
-# Check whether --with-infodock or --without-infodock was given.
-if test "${with_infodock+set}" = set; then
-  enableval="$with_infodock"
-  withval="$with_infodock"
-
-fi;
 
 # If --with-debug or --without-debug were given then copy the value to the
 # equivalent enable_debug variable.
@@ -5716,34 +5719,8 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-if test "$with_infodock" = "yes"; then
-  if test ! -f ../../ID-INSTALL; then
-    echo "Cannot build InfoDock without InfoDock sources"
-    with_infodock=no
-  fi
-fi
-
-if test "$with_infodock" = "yes"; then
-      cat >>confdefs.h <<_ACEOF
-#define INFODOCK_MAJOR_VERSION $infodock_major_version
-_ACEOF
-
-  cat >>confdefs.h <<_ACEOF
-#define INFODOCK_MINOR_VERSION $infodock_minor_version
-_ACEOF
-
-  cat >>confdefs.h <<_ACEOF
-#define INFODOCK_BUILD_VERSION $infodock_build_version
-_ACEOF
-
-  version=${infodock_major_version}.${infodock_minor_version}.${infodock_build_version}
-  PROGNAME=infodock
-  SHEBANG_PROGNAME=infodock-script
-  CPPFLAGS="$CPPFLAGS -DINFODOCK"
-else
-  PROGNAME=xemacs
-  SHEBANG_PROGNAME=xemacs-script
-fi
+PROGNAME=xemacs
+SHEBANG_PROGNAME=xemacs-script
 
 
 
@@ -16740,6 +16717,20 @@ test "$with_xft_gauges" = "yes"  && $as_echo "#define HAVE_XFT_GAUGES 1" >>confd
 
 
 
+if test "$with_unicode_internal" = "yes"; then
+  test "$with_mule" = "no" && \
+	(echo "$progname: Usage error:"
+echo " " "Cannot give \`--with-mule=no' and \`--with-unicode-internal=yes'.
+Unicode-internal requires Mule."
+echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
+  test "$with_mule" != "yes" && \
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: \`--with-mule' forced to \`yes': Unicode-internal requires Mule." >&5
+$as_echo "$as_me: WARNING: \`--with-mule' forced to \`yes': Unicode-internal requires Mule." >&2;}
+  with_mule=yes
+  $as_echo "#define UNICODE_INTERNAL 1" >>confdefs.h
+
+fi
+
 test -z "$with_mule" && with_mule=no
 
 
@@ -17592,7 +17583,7 @@ done
 esac
 
 
-for ac_func in cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen
+for ac_func in cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen wcwidth
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -21340,7 +21331,11 @@ fi
 
 echo "
 Internationalization:"
-test "$with_mule" = yes && echo "  Compiling in support for Mule (multi-lingual Emacs)."
+if test "$with_mule" = yes; then
+  echo "  Compiling in support for Mule (multi-lingual Emacs)."
+  test "$with_unicode_internal" = yes && echo "    -  Unicode and UTF-8 will be used internally for text."
+  test "$with_unicode_internal" != yes && echo "    -  The old-Mule format will be used internally for text."
+fi
 test "$with_xim" != no && echo "  Compiling in support for XIM (X11R5+ I18N input method)."
 test "$with_xim" = motif && echo "    - Using Motif to provide XIM support."
 test "$with_xim" = xlib && echo "    - Using raw Xlib to provide XIM support."

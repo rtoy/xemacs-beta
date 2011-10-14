@@ -1,7 +1,7 @@
 /* Lisp functions pertaining to editing.
    Copyright (C) 1985-1987, 1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 1996, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2004, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1044,11 +1044,10 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %Y is replaced by the year with century.
 %z is replaced by the time zone as a numeric offset (e.g +0530, -0800 etc.)
 %Z is replaced by the time zone abbreviation.
+%\\xe6 is replaced by the month as a lowercase Roman number (i-xii)
+%\\xc6 is replaced by the month as an uppercase Roman number (I-XII)
 
 The number of options reflects the `strftime' function.
-
-BUG: If the charset used by the current locale is not ISO 8859-1, the
-characters appearing in the day and month names may be incorrect.
 */
        (format_string, time_))
 {

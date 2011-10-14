@@ -190,7 +190,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
 #ifdef HAVE_TOOLBARS
   /* EQ not EQUAL or we will get QUIT crashes, see below. */
   FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f) = 
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
 #endif
   /* hashtable of instantiated glyphs on the frame. [[ Make them EQ because
      we only use ints as keys.  Otherwise we run into stickiness in
@@ -198,11 +198,11 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
      enter_redisplay_critical_section(). ]] -- probably not true any more,
     now that we have internal_equal_trapping_problems(). --ben */
   FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, Qeq);
   /* Will initialize these in WM_SIZE handler. We cannot do it now,
      because we do not know what is CW_USEDEFAULT height and width */
   FRAME_WIDTH (f) = 0;
@@ -1093,8 +1093,15 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      maybe_error_if_job_active (f);
 	      if (!NILP (val))
 		{
-		  CHECK_NATNUM (val);
-		  FRAME_MSPRINTER_CHARWIDTH (f) = XINT (val);
+#ifdef HAVE_BIGNUM
+                  check_integer_range (val, Qzero, make_integer (INT_MAX));
+		  FRAME_MSPRINTER_CHARWIDTH (f) =
+                    BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                    XINT (val);
+#else
+                  CHECK_NATNUM (val);
+                  FRAME_MSPRINTER_CHARWIDTH (f) = XINT (val);
+#endif
 		}
 	    }
 	  if (EQ (prop, Qheight))
@@ -1102,33 +1109,68 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      maybe_error_if_job_active (f);
 	      if (!NILP (val))
 		{
+#ifdef HAVE_BIGNUM
+                  check_integer_range (val, Qzero, make_integer (INT_MAX));
+		  FRAME_MSPRINTER_CHARHEIGHT (f) =
+                    BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                    XINT (val);
+#else
 		  CHECK_NATNUM (val);
 		  FRAME_MSPRINTER_CHARHEIGHT (f) = XINT (val);
+#endif
 		}
 	    }
 	  else if (EQ (prop, Qleft_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_LEFT_MARGIN (f) =
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_LEFT_MARGIN (f) = XINT (val);
+#endif
 	    }
 	  else if (EQ (prop, Qtop_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_TOP_MARGIN (f) =
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_TOP_MARGIN (f) = XINT (val);
+#endif
 	    }
 	  else if (EQ (prop, Qright_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_RIGHT_MARGIN (f) =
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_RIGHT_MARGIN (f) = XINT (val);
+#endif
 	    }
 	  else if (EQ (prop, Qbottom_margin))
 	    {
 	      maybe_error_if_job_active (f);
+#ifdef HAVE_BIGNUM
+              check_integer_range (val, Qzero, make_integer (INT_MAX));
+	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = 
+                BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
+                XINT (val);
+#else
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = XINT (val);
+#endif
 	    }
 	}
     }

@@ -38,7 +38,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame-impl.h"
 #include "keymap.h"
-#include "objects.h"
+#include "fontcolor.h"
 #include "redisplay.h"
 #include "specifier.h"
 #include "sysdep.h"
@@ -222,9 +222,9 @@ allocate_device (Lisp_Object console)
 
   /* #### is 20 reasonable? */
   d->color_instance_cache =
-    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, Qequal);
   d->font_instance_cache =
-    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, Qequal);
 #ifdef MULE
   initialize_charset_font_caches (d);
 #endif
@@ -234,7 +234,7 @@ allocate_device (Lisp_Object console)
      time there aren't very many different masks that will be used.
      */
   d->image_instance_cache =
-    make_lisp_hash_table (5, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+    make_lisp_hash_table (5, HASH_TABLE_NON_WEAK, Qeq);
 
   UNGCPRO;
   return d;
@@ -1351,6 +1351,12 @@ unlock_device (Lisp_Object d)
   return Qnil;
 }
 
+/* Call lisp function FUNCTION, with argument OBJECT (if OBJECT is nil,
+   call FUNCTION without arguments).  If D is non-NULL, lock the device
+   in the process.  Inhibit garbage collection and quitting during the
+   process, and arrange that all errors trigger `really-early-error-handler'
+   and lead to an abort. */
+
 Lisp_Object
 call_critical_lisp_code (struct device *d, Lisp_Object function,
 			 Lisp_Object object)
@@ -1362,7 +1368,9 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
   Lisp_Object retval;
 
   specbind (Qinhibit_quit, Qt);
-  record_unwind_protect (unlock_device, wrap_device (d));
+  if (d)
+    {
+      record_unwind_protect (unlock_device, wrap_device (d));
 
   /* [[There's no real reason to bother doing unwind-protects, because if
      initialize-*-faces signals an error, emacs is going to crash
@@ -1371,7 +1379,8 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
      with non-initial devices, we should signal an error but NOT kill
      ourselves! --ben
      */
-  LOCK_DEVICE (d);
+      LOCK_DEVICE (d);
+    }
 
   args[0] = Qreally_early_error_handler;
   args[1] = function;

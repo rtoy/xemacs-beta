@@ -785,18 +785,18 @@ The operation of @code{focus-frame} is not affected by the value of
 @code{focus-follows-mouse}.
 @end defun
 
-@defspec save-selected-frame forms@dots{}
+@deffn {Special Operator} save-selected-frame forms@dots{}
 This special operator records the selected frame, executes @var{forms} in
 sequence, then restores the earlier selected frame.  The value returned
 is the value of the last form.
-@end defspec
+@end deffn
 
-@defspec with-selected-frame frame forms@dots{}
+@deffn {Special Operator} with-selected-frame frame forms@dots{}
 This special operator records the selected frame, then selects @var{frame}
 and executes @var{forms} in sequence.  After the last form is finished,
 the earlier selected frame is restored.  The value returned is the value
 of the last form.
-@end defspec
+@end deffn
 
 @ignore (FSF Emacs, continued from defun select-frame)
 XEmacs cooperates with the X server and the window managers by arranging

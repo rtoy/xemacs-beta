@@ -21,7 +21,7 @@
 ** You should have received a copy of the GNU General Public License
 ** along with XEmacs; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-** Boston, MA 02111-1301, USA.  */
+** Boston, MA 02110-1301, USA.  */
 
 #include <config.h>
 #include "lisp.h"
@@ -37,7 +37,7 @@
 
 #include "console-gtk-impl.h"
 #include "glyphs-gtk.h"
-#include "objects-gtk.h"
+#include "fontcolor-gtk.h"
 #include "ui-gtk.h"
 
 /* XEmacs specific GTK types */
@@ -1117,7 +1117,8 @@ emacs_gtk_boxed_equality (Lisp_Object o1, Lisp_Object o2, int UNUSED (depth))
 }
 
 static Hashcode
-emacs_gtk_boxed_hash (Lisp_Object obj, int UNUSED (depth))
+emacs_gtk_boxed_hash (Lisp_Object obj, int UNUSED (depth),
+                      Boolint UNUSED (equalp))
 {
   emacs_gtk_boxed_data *data = XGTK_BOXED(obj);
   return (HASH2 ((Hashcode) data->object, data->object_type));

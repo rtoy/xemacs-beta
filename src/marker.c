@@ -90,7 +90,7 @@ marker_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-marker_hash (Lisp_Object obj, int UNUSED (depth))
+marker_hash (Lisp_Object obj, int UNUSED (depth), Boolint UNUSED (equalp))
 {
   Hashcode hash = (Hashcode) XMARKER (obj)->buffer;
   if (hash)
@@ -111,18 +111,13 @@ finalize_marker (Lisp_Object obj)
 {
   unchain_marker (obj);
 }
+#endif /* NEW_GC */
 
 DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
 					mark_marker, print_marker,
-					finalize_marker,
+					IF_NEW_GC (finalize_marker),
 					marker_equal, marker_hash,
 					marker_description, Lisp_Marker);
-#else /* not NEW_GC */
-DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("marker", marker,
-					mark_marker, print_marker, 0,
-					marker_equal, marker_hash,
-					marker_description, Lisp_Marker);
-#endif /* not NEW_GC */
 
 /* Operations on markers. */
 
@@ -498,13 +493,13 @@ Return t if there are markers pointing at POSITION in the current buffer.
 #ifdef MEMORY_USAGE_STATS
 
 Bytecount
-compute_buffer_marker_usage (struct buffer *b, struct usage_stats *ustats)
+compute_buffer_marker_usage (struct buffer *b)
 {
   Lisp_Marker *m;
   Bytecount total = 0;
 
   for (m = BUF_MARKERS (b); m; m = m->next)
-    total += lisp_object_storage_size (wrap_marker (m), ustats);
+    total += lisp_object_memory_usage (wrap_marker (m));
   return total;
 }
 
@@ -537,7 +532,7 @@ init_buffer_markers (struct buffer *b)
   b->point_marker = Fmake_marker ();
   Fset_marker (b->point_marker,
 	       /* For indirect buffers, point is already set.  */
-	       b->base_buffer ? make_int (BUF_PT (b)) : make_int (1),
+	       b->base_buffer ? make_int (BUF_PT (b)) : Qone,
 	       buf);
 }
 

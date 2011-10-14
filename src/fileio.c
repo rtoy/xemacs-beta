@@ -108,6 +108,8 @@ int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Vdirectory_sep_char;
 
+int default_file_system_ignore_case;
+
 #ifdef HAVE_FSYNC
 /* Nonzero means skip the call to fsync in Fwrite-region.  */
 int write_region_inhibit_fsync;
@@ -129,8 +131,6 @@ Lisp_Object Qexcl;
 Lisp_Object Qauto_save_hook;
 Lisp_Object Qauto_save_error;
 Lisp_Object Qauto_saving;
-
-Lisp_Object Qcar_less_than_car;
 
 Lisp_Object Qcompute_buffer_file_truename;
 
@@ -2322,7 +2322,7 @@ check_writable (const Ibyte *filename)
   GENERIC_MAPPING genericMapping;
   DWORD accessMask;
   PRIVILEGE_SET PrivilegeSet;
-  DWORD dwPrivSetSize = sizeof( PRIVILEGE_SET );
+  DWORD dwPrivSetSize = sizeof ( PRIVILEGE_SET );
   BOOL fAccessGranted = FALSE;
   DWORD dwAccessAllowed;
   Extbyte *fnameext;
@@ -2330,48 +2330,57 @@ check_writable (const Ibyte *filename)
   LOCAL_FILE_FORMAT_TO_TSTR (filename, fnameext);
 
   // First check for a normal file with the old-style readonly bit
-  attributes = qxeGetFileAttributes(fnameext);
-  if (FILE_ATTRIBUTE_READONLY == (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
+  attributes = qxeGetFileAttributes (fnameext);
+  if (FILE_ATTRIBUTE_READONLY ==
+      (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
     return 0;
 
   /* Win32 prototype lacks const. */
-  error = qxeGetNamedSecurityInfo(fnameext, SE_FILE_OBJECT, 
-				  DACL_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
-				  &psidOwner, &psidGroup, &pDacl, &pSacl, &pDesc);
-  if(error != ERROR_SUCCESS) { // FAT?
-    attributes = qxeGetFileAttributes(fnameext);
-    return (attributes & FILE_ATTRIBUTE_DIRECTORY) || (0 == (attributes & FILE_ATTRIBUTE_READONLY));
-  }
+  error = qxeGetNamedSecurityInfo (fnameext, SE_FILE_OBJECT, 
+				   DACL_SECURITY_INFORMATION|
+				   GROUP_SECURITY_INFORMATION|
+				   OWNER_SECURITY_INFORMATION,
+				  &psidOwner, &psidGroup, &pDacl, &pSacl,
+				   &pDesc);
+  if (error != ERROR_SUCCESS)
+    { // FAT?
+      attributes = qxeGetFileAttributes (fnameext);
+      return (attributes & FILE_ATTRIBUTE_DIRECTORY) ||
+	(0 == (attributes & FILE_ATTRIBUTE_READONLY));
+    }
 
   genericMapping.GenericRead = FILE_GENERIC_READ;
   genericMapping.GenericWrite = FILE_GENERIC_WRITE;
   genericMapping.GenericExecute = FILE_GENERIC_EXECUTE;
   genericMapping.GenericAll = FILE_ALL_ACCESS;
 
-  if(!ImpersonateSelf(SecurityDelegation)) {
-    return 0;
-  }
-  if(!OpenThreadToken(GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE, &tokenHandle)) {
-    return 0;
-  }
+  if (!ImpersonateSelf (SecurityDelegation))
+    {
+      return 0;
+    }
+  if (!OpenThreadToken (GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE,
+		       &tokenHandle))
+    {
+      return 0;
+    }
 
   accessMask = GENERIC_WRITE;
-  MapGenericMask(&accessMask, &genericMapping);
+  MapGenericMask (&accessMask, &genericMapping);
 
-  if(!AccessCheck(pDesc, tokenHandle, accessMask, &genericMapping,
+  if (!AccessCheck(pDesc, tokenHandle, accessMask, &genericMapping,
 		  &PrivilegeSet,       // receives privileges used in check
 		  &dwPrivSetSize,      // size of PrivilegeSet buffer
 		  &dwAccessAllowed,    // receives mask of allowed access rights
 		  &fAccessGranted)) 
     {
-      CloseHandle(tokenHandle);
+      CloseHandle (tokenHandle);
       RevertToSelf();
-      LocalFree(pDesc);
+      LocalFree (pDesc);
       return 0;
     }
-  CloseHandle(tokenHandle);
+  CloseHandle (tokenHandle);
   RevertToSelf();
-  LocalFree(pDesc);
+  LocalFree (pDesc);
   return fAccessGranted == TRUE;
 #elif defined (HAVE_EACCESS)
   return (qxe_eaccess (filename, W_OK) >= 0);
@@ -2917,6 +2926,13 @@ under Mule, is very difficult.)
 
   GCPRO4 (filename, val, visit, curbuf);
 
+#ifdef DEBUG_XEMACS
+  if (!NILP (Vdebug_coding_detection))
+    debug_out_lisp
+      ("Called: (insert-file-contents-internal %s %s %s %s %s %s %s)\n",
+       7, filename, visit, start, end, replace, codesys, used_codesys);
+#endif /* DEBUG_XEMACS */
+
   mc_count = (NILP (replace)) ?
     begin_multiple_change (buf, BUF_PT  (buf), BUF_PT (buf)) :
     begin_multiple_change (buf, BUF_BEG (buf), BUF_Z  (buf));
@@ -2959,7 +2975,7 @@ under Mule, is very difficult.)
 
 	  RETURN_UNGCPRO
 	    (Fsignal (Qfile_error,
-		      list2 (build_msg_string("not a regular file"),
+		      list2 (build_msg_string ("not a regular file"),
 			     filename)));
 	}
     }
@@ -3283,7 +3299,7 @@ under Mule, is very difficult.)
 	  Lisp_Object insval = call1 (p, make_int (inserted));
 	  if (!NILP (insval))
 	    {
-	      CHECK_NATNUM (insval);
+              check_integer_range (insval, Qzero, make_int (EMACS_INT_MAX));
 	      inserted = XINT (insval);
 	    }
 	}
@@ -3363,11 +3379,18 @@ here because write-region handler writers need to be aware of it.
   struct gcpro ngcpro1, ngcpro2;
   Lisp_Object curbuf = wrap_buffer (current_buffer);
 
-
   /* start, end, visit, and append are never modified in this fun
      so we don't protect them. */
   GCPRO5 (visit_file, filename, codesys, lockname, annotations);
   NGCPRO2 (curbuf, fn);
+
+#ifdef DEBUG_XEMACS
+  if (!NILP (Vdebug_coding_detection))
+    debug_out_lisp
+      ("Called: (write-region-internal %s %s %s %s %s %s %s %s)\n",
+       8, start, end, filename, append, visit, lockname, codesys,
+       mustbenew);
+#endif /* DEBUG_XEMACS */
 
   /* [[ dmoore - if Fexpand_file_name or handlers kill the buffer,
      we should signal an error rather than blissfully continuing
@@ -3666,7 +3689,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);     /* Check basic validity of return value */
-      annotations = merge (annotations, res, Qcar_less_than_car);
+      annotations = list_merge (annotations, res, check_lss_key_car, Qnil,
+				Qnil);
       p = Fcdr (p);
     }
 
@@ -3697,7 +3721,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  annotations = Qnil;
 	}
       Flength (res);
-      annotations = merge (annotations, res, Qcar_less_than_car);
+      annotations = list_merge (annotations, res, check_lss_key_car, Qnil,
+				Qnil);
       p = Fcdr (p);
     }
 
@@ -3976,11 +4001,11 @@ auto_save_error (Lisp_Object UNUSED (condition_object),
   clear_echo_area (selected_frame (), Qauto_saving, 1);
   Fding (Qt, Qauto_save_error, Qnil);
   message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
-  Fsleep_for (make_int (1));
+  Fsleep_for (Qone);
   message ("Auto-saving...error!for %s", XSTRING_DATA (current_buffer->name));
-  Fsleep_for (make_int (1));
+  Fsleep_for (Qone);
   message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
-  Fsleep_for (make_int (1));
+  Fsleep_for (Qone);
   return Qnil;
 }
 
@@ -4175,7 +4200,7 @@ Non-nil second argument means save only current buffer.
 		     and prevent any more warnings.  */
 		  b->saved_size = make_int (-1);
 		  if (!gc_in_progress)
-		    Fsleep_for (make_int (1));
+		    Fsleep_for (Qone);
 		  continue;
 		}
 	      set_buffer_internal (b);
@@ -4261,7 +4286,7 @@ Non-nil second argument means save only current buffer.
 	      auto_saved++;
 
 	      /* Handler killed their own buffer! */
-	      if (!BUFFER_LIVE_P(b))
+	      if (!BUFFER_LIVE_P (b))
 		continue;
 
 	      b->auto_save_modified = BUF_MODIFF (b);
@@ -4370,7 +4395,6 @@ syms_of_fileio (void)
   DEFSYMBOL (Qwrite_region);
   DEFSYMBOL (Qverify_visited_file_modtime);
   DEFSYMBOL (Qset_visited_file_modtime);
-  DEFSYMBOL (Qcar_less_than_car); /* Vomitous! */
   DEFSYMBOL (Qexcl);
 
   DEFSYMBOL (Qauto_save_hook);
@@ -4551,6 +4575,16 @@ on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.
 */ );
   Vdirectory_sep_char = make_char (DEFAULT_DIRECTORY_SEP);
+
+  DEFVAR_CONST_BOOL ("default-file-system-ignore-case", &default_file_system_ignore_case /*
+What `file-system-ignore-case-p' returns by default.
+This is in the case that nothing in `file-system-case-alist' matches.
+*/ );
+#ifdef DEFAULT_FILE_SYSTEM_IGNORE_CASE
+  default_file_system_ignore_case = DEFAULT_FILE_SYSTEM_IGNORE_CASE;
+#else
+  default_file_system_ignore_case = 0;
+#endif
 }
 
 void

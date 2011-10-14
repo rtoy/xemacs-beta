@@ -1,5 +1,6 @@
 /* Repository for inline functions
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -54,18 +55,20 @@ Boston, MA 02111-1307, USA.  */
 #include "events.h"
 #include "extents-impl.h"
 #include "faces.h"
+#include "file-coding.h"
 #include "frame-impl.h"
 #include "glyphs.h"
 #include "gui.h"
 #include "keymap.h"
 #include "lstream.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 #include "opaque.h"
 #include "process.h"
 #include "rangetab.h"
 #include "specifier.h"
 #include "symeval.h"
 #include "syntax.h"
+#include "unicode.h"
 #include "window.h"
 
 /* If we demand !defined (HAVE_SHLIB) the INLINE_HEADERS aren't instantiated.
@@ -114,15 +117,13 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_TTY
 #include "console-tty-impl.h"
-#include "objects-tty-impl.h"
+#include "fontcolor-tty-impl.h"
 #endif
 
 #ifdef HAVE_GTK
 #include "console-gtk-impl.h"
 #include "ui-gtk.h"
 #endif
-
-#include "file-coding.h"
 
 #ifdef TOOLTALK
 #include "tooltalk.h"

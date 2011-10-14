@@ -433,7 +433,7 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 }
 
 static Hashcode
-event_hash (Lisp_Object obj, int depth)
+event_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Event *e = XEVENT (obj);
   Hashcode hash;
@@ -446,8 +446,8 @@ event_hash (Lisp_Object obj, int depth)
 
     case timeout_event:
       return HASH3 (hash,
-		    internal_hash (EVENT_TIMEOUT_FUNCTION (e), depth + 1),
-		    internal_hash (EVENT_TIMEOUT_OBJECT (e), depth + 1));
+		    internal_hash (EVENT_TIMEOUT_FUNCTION (e), depth + 1, 0),
+		    internal_hash (EVENT_TIMEOUT_OBJECT (e), depth + 1, 0));
 
     case key_press_event:
       return HASH3 (hash, LISP_HASH (EVENT_KEY_KEYSYM (e)),
@@ -462,18 +462,18 @@ event_hash (Lisp_Object obj, int depth)
 
     case misc_user_event:
       return HASH5 (hash,
-		    internal_hash (EVENT_MISC_USER_FUNCTION (e), depth + 1),
-		    internal_hash (EVENT_MISC_USER_OBJECT (e), depth + 1),
+		    internal_hash (EVENT_MISC_USER_FUNCTION (e), depth + 1, 0),
+		    internal_hash (EVENT_MISC_USER_OBJECT (e), depth + 1, 0),
 		    EVENT_MISC_USER_BUTTON (e), EVENT_MISC_USER_MODIFIERS (e));
 
     case eval_event:
-      return HASH3 (hash, internal_hash (EVENT_EVAL_FUNCTION (e), depth + 1),
-		    internal_hash (EVENT_EVAL_OBJECT (e), depth + 1));
+      return HASH3 (hash, internal_hash (EVENT_EVAL_FUNCTION (e), depth + 1, 0),
+		    internal_hash (EVENT_EVAL_OBJECT (e), depth + 1, 0));
 
     case magic_eval_event:
       return HASH3 (hash,
 		    (Hashcode) EVENT_MAGIC_EVAL_INTERNAL_FUNCTION (e),
-		    internal_hash (EVENT_MAGIC_EVAL_OBJECT (e), depth + 1));
+		    internal_hash (EVENT_MAGIC_EVAL_OBJECT (e), depth + 1, 0));
 
     case magic_event:
       return HASH2 (hash, event_stream_hash_magic_event (e));
@@ -641,8 +641,7 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qbutton))
 	  {
-	    CHECK_NATNUM (value);
-	    check_int_range (XINT (value), 0, 7);
+	    check_integer_range (value, Qzero, make_int (26));
 
 	    switch (EVENT_TYPE (e))
 	      {
@@ -737,8 +736,23 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qtimestamp))
 	  {
-	    CHECK_NATNUM (value);
-	    SET_EVENT_TIMESTAMP (e, XINT (value));
+#ifdef HAVE_BIGNUM
+            check_integer_range (value, Qzero, make_integer (UINT_MAX));
+            if (BIGNUMP (value))
+              {
+                SET_EVENT_TIMESTAMP (e, bignum_to_uint (XBIGNUM_DATA (value)));
+              }
+#else
+            check_integer_range (value, Qzero, make_integer (EMACS_INT_MAX));
+#endif
+            if (INTP (value))
+              {
+                SET_EVENT_TIMESTAMP (e, XINT (value));
+              }
+            else
+              {
+                ABORT ();
+              }
 	  }
 	else if (EQ (keyword, Qfunction))
 	  {
@@ -1747,7 +1761,9 @@ See also `current-event-timestamp'.
 {
   CHECK_LIVE_EVENT (event);
   /* This junk is so that timestamps don't get to be negative, but contain
-     as many bits as this particular emacs will allow.
+     as many bits as this particular emacs will allow. We could return
+     bignums on builds that support them, but that involves consing and
+     doesn't work on builds that don't support bignums.
    */
   return make_int (EMACS_INT_MAX & XEVENT_TIMESTAMP (event));
 }
@@ -1763,8 +1779,9 @@ See also `event-timestamp' and `current-event-timestamp'.
 {
   EMACS_INT t1, t2;
 
-  CHECK_NATNUM (time1);
-  CHECK_NATNUM (time2);
+  check_integer_range (time1, Qzero, make_integer (EMACS_INT_MAX));
+  check_integer_range (time2, Qzero, make_integer (EMACS_INT_MAX));
+
   t1 = XINT (time1);
   t2 = XINT (time2);
 

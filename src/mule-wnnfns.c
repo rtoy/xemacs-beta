@@ -1,6 +1,7 @@
 /* -*- coding: utf-8 -*-
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -267,11 +268,11 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h"
 #include "window.h"
 #include "sysdep.h"
 
 #include "wnn/commonhd.h"
-#include "charset.h"
 #include "wnn/jllib.h"
 #include "wnn/cplib.h"
 
@@ -286,13 +287,13 @@ Boston, MA 02111-1307, USA.  */
 #define WNNSERVER_K 3
 
 int check_wnn_server_type (void);
-void w2m (w_char *wp, unsigned char *mp, unsigned char lb);
-void m2w (unsigned char *mp, w_char *wp);
+void w2m (w_char *wp, Ibyte *mp, Lisp_Object charset);
+void m2w (Ibyte *mp, w_char *wp);
 void w2y (w_char *w);
-void c2m (unsigned char *cp, unsigned char *mp, unsigned char lb);
+void c2m (UExtbyte *cp, Ibyte *mp, Lisp_Object charset);
 static void puts2 (char *s);
 static int dai_end (int no, int server);
-static int yes_or_no (unsigned char *s);
+static int yes_or_no (UExtbyte *s);
 
  /* Why doesn't wnn have a prototype for these? */
 typedef unsigned int letter;
@@ -303,8 +304,7 @@ static struct wnn_buf *wnnfns_buf[NSERVER];
 static struct wnn_env *wnnfns_env_norm[NSERVER];
 static struct wnn_env *wnnfns_env_rev[NSERVER];
 static int wnnfns_norm;
-static unsigned char lb_wnn_server_type[NSERVER] =
-{LEADING_BYTE_JAPANESE_JISX0208, LEADING_BYTE_CHINESE_GB2312, LEADING_BYTE_THAI_TIS620, LEADING_BYTE_KOREAN_KSC5601};
+static Lisp_Object charset_wnn_server_type[NSERVER];
 
 /* Lisp Variables and Constants Definition */
 Lisp_Object	Qjserver;
@@ -321,7 +321,7 @@ Lisp_Object	Vwnn_server_type;
 Lisp_Object	Vcwnn_zhuyin;
 Lisp_Object	Vwnnenv_sticky;
 Lisp_Object	Vwnn_uniq_level;
-Fixnum		lb_sisheng;
+Lisp_Object     Qchinese_sisheng;
 
 /* Lisp functions definition */
 
@@ -332,12 +332,10 @@ Return nil if error occurs.
 */
      (hname, lname))
 {
-  char *envname;
-  char *langname;
-  char *hostname;
+  Extbyte *envname;
+  Ascbyte *langname;
+  Extbyte *hostname;
   int	snum;
-  int size;
-  CHECK_STRING (lname);
 
   snum = check_wnn_server_type ();
   switch (snum)
@@ -360,35 +358,31 @@ Return nil if error occurs.
     default:
       return Qnil;
     }
-  size = XSTRING_LENGTH (lname) > 1024 ? 1026 : XSTRING_LENGTH (lname) + 2;
-  /* !!#### */
-  envname = (char *) ALLOCA (size);
-  strncpy (envname, (char *) XSTRING_DATA (lname), size-2);
-  envname[size-2] = '\0';
+  /* #### This is extremely stupid.  I'm sure these alloca() copies are
+     unnecessary, but the old code went out of its way to do this. --ben */
+  CHECK_STRING (lname);
+  EXTBYTE_STRING_TO_ALLOCA (LISP_STRING_TO_EXTERNAL (lname, Qnative),
+			    envname);
   if (NILP (hname)) hostname = "";
   else
     {
       CHECK_STRING (hname);
-      size = XSTRING_LENGTH(hname) > 1024 ? 1025 : XSTRING_LENGTH(hname) + 1;
-
-      hostname = (char *) ALLOCA (size);
-      strncpy (hostname, (char *) XSTRING_DATA (hname), size-1);
-      hostname[size-1] = '\0';
+      EXTBYTE_STRING_TO_ALLOCA (LISP_STRING_TO_EXTERNAL (hname, Qnative),
+				hostname);
     }
-  CHECK_STRING (lname);
   /* 97/4/16 jhod@po.iijnet.or.jp
    * libwnn uses SIGALRM, so we need to stop and start interrupts.
    */
-  stop_interrupts();
+  stop_interrupts ();
   if (!(wnnfns_buf[snum] = jl_open_lang (envname, hostname, langname,
 					 0, 0, 0, EGG_TIMEOUT)))
     {
-      start_interrupts();
+      start_interrupts ();
       return Qnil;
     }
   if (!jl_isconnect (wnnfns_buf[snum]))
     {
-      start_interrupts();
+      start_interrupts ();
       return Qnil;
     }
   wnnfns_env_norm[snum] = jl_env_get (wnnfns_buf[snum]);
@@ -398,12 +392,12 @@ Return nil if error occurs.
   if (!(wnnfns_env_rev[snum] = jl_connect_lang (envname, hostname, langname,
 						0, 0, 0, EGG_TIMEOUT)))
     {
-      start_interrupts();
+      start_interrupts ();
       return Qnil;
     }
 /*  if (Vwnnenv_sticky == Qt) jl_env_sticky_e (wnnfns_env_rev[snum]);
     else jl_env_un_sticky_e (wnnfns_env_rev[snum]);*/
-  start_interrupts();
+  start_interrupts ();
   return Qt;
 }
 
@@ -455,14 +449,16 @@ Specify password files of dictionary and frequency, PW1 and PW2, if needed.
   GCPRO1 (*args);
   gcpro1.nvars = nargs;
   if (jl_dic_add (wnnfns_buf[snum],
-		  XSTRING_DATA (args[0]),
-		  XSTRING_DATA (args[1]),
+		  LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
+		  LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
 		  wnnfns_norm ? WNN_DIC_ADD_NOR : WNN_DIC_ADD_REV,
 		  XINT (args[2]),
 		  NILP (args[3]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
 		  NILP (args[4]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
-		  NILP (args[5]) ? 0 : XSTRING_DATA (args[5]),
-		  NILP (args[6]) ? 0 : XSTRING_DATA (args[6]),
+		  NILP (args[5]) ? 0 :
+		  LISP_STRING_TO_EXTERNAL (args[5], Qfile_name),
+		  NILP (args[6]) ? 0 :
+		  LISP_STRING_TO_EXTERNAL (args[6], Qfile_name),
 		  yes_or_no,
 		  puts2 ) < 0)
     {
@@ -495,13 +491,13 @@ Return information of dictionaries.
 {
   WNN_DIC_INFO	*dicinfo;
   int		cnt, i;
-  unsigned char	comment[1024];
+  Ibyte		comment[1024];
   Lisp_Object	val;
   int	snum;
-  unsigned char lb;
+  Lisp_Object charset;
 
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
 #ifdef	WNN6
   if((cnt = jl_fi_dic_list (wnnfns_buf[snum], 0x3f, &dicinfo)) < 0)
@@ -513,14 +509,11 @@ Return information of dictionaries.
   for (i = 0, dicinfo += cnt; i < cnt; i++)
     {
       dicinfo--;
-      w2m (dicinfo->comment, comment, lb);
-      /* #### The following has not been Mule-ized!!
-         fname and comment must be ASCII strings! */
+      w2m (dicinfo->comment, comment, charset);
       val =
 	Fcons (Fcons (make_int (dicinfo->dic_no),
-		      list4 (make_string ((Ibyte *) (dicinfo->fname),
-					  strlen (dicinfo->fname)),
-			     make_string (comment, strlen ((char *) comment)),
+		      list4 (build_extstring (dicinfo->fname, Qfile_name),
+			     build_istring (comment),
 			     make_int (dicinfo->gosuu),
 			     make_int (dicinfo->nice))), val);
     }
@@ -630,17 +623,17 @@ Get kanji string of KOUHO-NUMBER.
 */
      (kouhoNo))
 {
-  unsigned char	kanji_buf[256];
+  Ibyte		kanji_buf[256];
   w_char	wbuf[256];
   int	snum;
-  unsigned char lb;
+  Lisp_Object charset;
   CHECK_INT (kouhoNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   jl_get_zenkouho_kanji (wnnfns_buf[snum], XINT (kouhoNo), wbuf);
-  w2m (wbuf, kanji_buf, lb);
-  return make_string (kanji_buf, strlen ((char *) kanji_buf));
+  w2m (wbuf, kanji_buf, charset);
+  return build_istring (kanji_buf);
 }
 
 DEFUN ("wnn-server-zenkouho-bun", Fwnn_zenkouho_bun, 0, 0, 0, /*
@@ -739,14 +732,14 @@ Get bunsetsu information specified by BUN-NUMBER.
      (bunNo))
 {
   Lisp_Object		val;
-  unsigned char		cbuf[512];
+  Ibyte			cbuf[512];
   w_char		wbuf[256];
   int			bun_no, yomilen, jirilen, i;
   int	snum;
-  unsigned char		lb;
+  Lisp_Object		charset;
   CHECK_INT (bunNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   bun_no = XINT (bunNo);
   val = Qnil;
@@ -762,11 +755,11 @@ Get bunsetsu information specified by BUN-NUMBER.
   jirilen = wnnfns_buf[snum]->bun[bun_no]->jirilen;
   for (i = yomilen; i >= jirilen; i--) wbuf[i+1] = wbuf[i];
   wbuf[jirilen] = '+';
-  w2m (wbuf, cbuf, lb);
-  val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
+  w2m (wbuf, cbuf, charset);
+  val = Fcons (build_istring (cbuf), val);
   jl_get_kanji (wnnfns_buf[snum], bun_no, bun_no + 1, wbuf);
-  w2m (wbuf, cbuf, lb);
-  return Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
+  w2m (wbuf, cbuf, charset);
+  return Fcons (build_istring (cbuf), val);
 }
 
 
@@ -787,20 +780,19 @@ Get the pair of kanji and length of bunsetsu specified by BUN-NUMBER.
      (bunNo))
 {
   int		no;
-  unsigned char		kanji_buf[256];
+  Ibyte			kanji_buf[256];
   w_char		wbuf[256];
   int			kanji_len;
   int			snum;
-  unsigned char		lb;
+  Lisp_Object		charset;
   CHECK_INT (bunNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   no = XINT (bunNo);
   kanji_len = jl_get_kanji (wnnfns_buf[snum], no, no + 1, wbuf);
-  w2m (wbuf, kanji_buf, lb);
-  return Fcons (make_string (kanji_buf, strlen ((char *) kanji_buf)),
-		make_int (kanji_len));
+  w2m (wbuf, kanji_buf, charset);
+  return Fcons (build_istring (kanji_buf), make_int (kanji_len));
 }
 
 DEFUN ("wnn-server-bunsetu-yomi", Fwnn_bunsetu_yomi, 1, 1, 0, /*
@@ -809,20 +801,19 @@ Get the pair of yomi and length of bunsetsu specified by BUN-NUMBER.
      (bunNo))
 {
   int		no;
-  unsigned char		yomi_buf[256];
+  Ibyte			yomi_buf[256];
   w_char		wbuf[256];
   int			yomi_len;
   int			snum;
-  unsigned char		lb;
+  Lisp_Object		charset;
   CHECK_INT (bunNo);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   no = XINT (bunNo);
   yomi_len = jl_get_yomi (wnnfns_buf[snum], no, no + 1, wbuf);
-  w2m (wbuf, yomi_buf, lb);
-  return Fcons (make_string (yomi_buf, strlen ((char *) yomi_buf)),
-		make_int (yomi_len));
+  w2m (wbuf, yomi_buf, charset);
+  return Fcons (build_istring (yomi_buf), make_int (yomi_len));
 }
 
 DEFUN ("wnn-server-bunsetu-suu", Fwnn_bunsetu_suu, 0, 0, 0, /*
@@ -925,13 +916,13 @@ Return list of yomi, kanji, comment, hindo, hinshi.
 {
   Lisp_Object		val;
   struct wnn_jdata	*info_buf;
-  unsigned char		cbuf[512];
+  Ibyte			cbuf[512];
   int			snum;
-  unsigned char		lb;
+  Lisp_Object		charset;
   CHECK_INT (no);
   CHECK_INT (serial);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   if ((info_buf =  jl_word_info (wnnfns_buf[snum],
 				 XINT (no), XINT (serial))) != NULL)
@@ -943,12 +934,12 @@ Return list of yomi, kanji, comment, hindo, hinshi.
       val = Qnil;
       val = Fcons (make_int (info_buf->hinshi), val);
       val = Fcons (make_int (info_buf->hindo), val);
-      w2m (info_buf->com, cbuf, lb);
-      val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
-      w2m (info_buf->kanji, cbuf, lb);
-      val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
-      w2m (info_buf->yomi, cbuf, lb);
-      val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
+      w2m (info_buf->com, cbuf, charset);
+      val = Fcons (build_istring (cbuf), val);
+      w2m (info_buf->kanji, cbuf, charset);
+      val = Fcons (build_istring (cbuf), val);
+      w2m (info_buf->yomi, cbuf, charset);
+      val = Fcons (build_istring (cbuf), val);
       return val;
     }
 }
@@ -984,13 +975,13 @@ Return list of (kanji hinshi freq dic_no serial).
   Lisp_Object		val;
   struct wnn_jdata	*wordinfo;
   int			i, count;
-  w_char			wbuf[256];
-  unsigned char		kanji_buf[256];
+  w_char		wbuf[256];
+  Ibyte			kanji_buf[256];
   int			snum;
-  unsigned char		lb;
+  Lisp_Object		charset;
   CHECK_STRING (yomi);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   m2w (XSTRING_DATA (yomi), wbuf);
   if (snum == WNNSERVER_C)
@@ -1002,8 +993,8 @@ Return list of (kanji hinshi freq dic_no serial).
   for (i = 0, wordinfo += count; i < count; i++)
     {
       wordinfo--;
-      w2m (wordinfo->kanji, kanji_buf, lb);
-      val = Fcons (Fcons (make_string (kanji_buf, strlen ((char *) kanji_buf)),
+      w2m (wordinfo->kanji, kanji_buf, charset);
+      val = Fcons (Fcons (build_istring (kanji_buf),
 			  list4 (make_int (wordinfo->hinshi),
 				 make_int (wordinfo->hindo),
 				 make_int (wordinfo->dic_no),
@@ -1134,14 +1125,14 @@ Get message string from wnn_perror.
 */
      ())
 {
-  unsigned char mbuf[256];
-  char 			*msgp;
-  int			snum;
-  unsigned char		lb;
-  char  langname[32];
+  Ibyte		mbuf[256];
+  char 		*msgp;
+  int		snum;
+  Lisp_Object	charset;
+  char		langname[32];
 /*  CHECK_INT (errno);*/
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   switch (snum)
     {
     case WNNSERVER_J:
@@ -1162,8 +1153,8 @@ Get message string from wnn_perror.
   if (!wnnfns_buf[snum]) return Qnil;
 /*  msgp = msg_get (wnn_msg_cat, XINT (errno), 0, 0);*/
   msgp = wnn_perror_lang (langname);
-  c2m ((unsigned char *) msgp, mbuf, lb);
-  return make_string (mbuf, strlen ((char *) mbuf));
+  c2m ((UExtbyte *) msgp, mbuf, charset);
+  return build_istring (mbuf);
 }
 
 
@@ -1176,7 +1167,8 @@ For Wnn.
   CHECK_STRING (file);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
-  if (jl_fuzokugo_set (wnnfns_buf[snum], XSTRING_DATA (file)) < 0)
+  if (jl_fuzokugo_set (wnnfns_buf[snum],
+		       LISP_STRING_TO_EXTERNAL (file, Qfile_name)) < 0)
     return Qnil;
   return Qt;
 }
@@ -1191,7 +1183,7 @@ For Wnn.
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   if (jl_fuzokugo_get (wnnfns_buf[snum], fname) < 0) return Qnil;
-  return make_string ((Ibyte *) fname, strlen (fname));
+  return build_extstring (fname, Qfile_name);
 }
 
 
@@ -1237,15 +1229,15 @@ For Wnn.
 {
   int		cnt;
   Lisp_Object	val;
-  w_char		wbuf[256];
-  w_char		**area;
-  unsigned char	cbuf[512];
+  w_char	wbuf[256];
+  w_char	**area;
+  Ibyte		cbuf[512];
   int		snum;
-  unsigned char lb;
+  Lisp_Object	charset;
   CHECK_INT (dicno);
   CHECK_STRING (name);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   m2w (XSTRING_DATA (name), wbuf);
   if ((cnt = jl_hinsi_list (wnnfns_buf[snum], XINT (dicno), wbuf, &area)) < 0)
@@ -1255,8 +1247,8 @@ For Wnn.
   for (area += cnt; cnt > 0; cnt--)
     {
       area--;
-      w2m (*area, cbuf, lb);
-      val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
+      w2m (*area, cbuf, charset);
+      val = Fcons (build_istring (cbuf), val);
     }
   return val;
 }
@@ -1266,17 +1258,17 @@ For Wnn.
 */
      (no))
 {
-  unsigned char	name[256];
-  w_char		*wname;
-  int			snum;
-  unsigned char		lb;
+  Ibyte		name[256];
+  w_char	*wname;
+  int		snum;
+  Lisp_Object	charset;
   CHECK_INT (no);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
   if ((wname = jl_hinsi_name (wnnfns_buf[snum], XINT (no))) == 0) return Qnil;
-  w2m (wname, name, lb);
-  return make_string (name, strlen ((char *) name));
+  w2m (wname, name, charset);
+  return build_istring (name);
 }
 #ifdef	WNN6
 DEFUN ("wnn-server-fisys-dict-add", Fwnn_fisys_dict_add, 3, MANY, 0, /*
@@ -1290,24 +1282,26 @@ Specify password files of dictionary and frequency, PW1 and PW2, if needed.
   int   snum;
   CHECK_STRING (args[0]);
   CHECK_STRING (args[1]);
-  if (! NILP (args[3])) CHECK_STRING (args[3]);
+  if (!NILP (args[3])) CHECK_STRING (args[3]);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
-  if(!wnnfns_buf[snum]) return Qnil;
+  if (!wnnfns_buf[snum]) return Qnil;
   GCPRO1 (*args);
   gcpro1.nvars = nargs;
-  if(jl_fi_dic_add(wnnfns_buf[snum],
-		   XSTRING_DATA (args[0]),
-		   XSTRING_DATA (args[1]),
-		   WNN_FI_SYSTEM_DICT,
-		   WNN_DIC_RDONLY,
-		   NILP (args[2]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
-		   0,
-		   NILP (args[3]) ? 0 : XSTRING_DATA (args[3]),
-		   yes_or_no,
-		   puts2 ) < 0) {
-    UNGCPRO;
-    return Qnil;
-  }
+  if (jl_fi_dic_add (wnnfns_buf[snum],
+		     LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
+		     LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
+		     WNN_FI_SYSTEM_DICT,
+		     WNN_DIC_RDONLY,
+		     NILP (args[2]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
+		     0,
+		     NILP (args[3]) ? 0 :
+		     LISP_STRING_TO_EXTERNAL (args[3], Qfile_name),
+		     yes_or_no,
+		     puts2) < 0)
+    {
+      UNGCPRO;
+      return Qnil;
+    }
   UNGCPRO;
   return Qt;
 }
@@ -1323,25 +1317,28 @@ Specify password files of dictionary and frequency, PW1 and PW2, if needed.
   int   snum;
   CHECK_STRING (args[0]);
   CHECK_STRING (args[1]);
-  if (! NILP (args[4])) CHECK_STRING (args[4]);
-  if (! NILP (args[5])) CHECK_STRING (args[5]);
+  if (!NILP (args[4])) CHECK_STRING (args[4]);
+  if (!NILP (args[5])) CHECK_STRING (args[5]);
   if ((snum = check_wnn_server_type()) == -1) return Qnil;
-  if(!wnnfns_buf[snum]) return Qnil;
+  if (!wnnfns_buf[snum]) return Qnil;
   GCPRO1 (*args);
   gcpro1.nvars = nargs;
-  if(jl_fi_dic_add(wnnfns_buf[snum],
-		   XSTRING_DATA (args[0]),
-		   XSTRING_DATA (args[1]),
-		   WNN_FI_USER_DICT,
-		   NILP (args[2]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
-		   NILP (args[3]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
-		   NILP (args[4]) ? 0 : XSTRING_DATA (args[4]),
-		   NILP (args[5]) ? 0 : XSTRING_DATA (args[5]),
-		   yes_or_no,
-		   puts2 ) < 0) {
-    UNGCPRO;
-    return Qnil;
-  }
+  if (jl_fi_dic_add (wnnfns_buf[snum],
+		     LISP_STRING_TO_EXTERNAL (args[0], Qfile_name),
+		     LISP_STRING_TO_EXTERNAL (args[1], Qfile_name),
+		     WNN_FI_USER_DICT,
+		     NILP (args[2]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
+		     NILP (args[3]) ? WNN_DIC_RDONLY : WNN_DIC_RW,
+		     NILP (args[4]) ? 0 :
+		     LISP_STRING_TO_EXTERNAL (args[4], Qfile_name),
+		     NILP (args[5]) ? 0 :
+		     LISP_STRING_TO_EXTERNAL (args[5], Qfile_name),
+		     yes_or_no,
+		     puts2) < 0)
+    {
+      UNGCPRO;
+      return Qnil;
+    }
   UNGCPRO;
   return Qt;
 }
@@ -1370,37 +1367,47 @@ Specify password files of dictionary and frequency PW1 if needed.
   else
       cur_env = wnnfns_env_rev[snum];
   dic_no = js_get_autolearning_dic(cur_env, WNN_MUHENKAN_LEARNING);
-  if (dic_no == WNN_NO_LEARNING) {
-      if((dic_no = jl_dic_add(wnnfns_buf[snum],
-			      XSTRING_DATA (args[0]),
-			      0,
-			      wnnfns_norm ? WNN_DIC_ADD_NOR : WNN_DIC_ADD_REV,
-			      XINT(args[1]),
-			      WNN_DIC_RW, WNN_DIC_RW,
-			      NILP (args[3]) ? 0 : XSTRING_DATA (args[3]),
-			      0,
-			      yes_or_no,
-			      puts2)) < 0) {
+  if (dic_no == WNN_NO_LEARNING)
+    {
+      if ((dic_no = jl_dic_add (wnnfns_buf[snum],
+				LISP_STRING_TO_EXTERNAL (args[0],
+							     Qfile_name),
+				0,
+				wnnfns_norm ? WNN_DIC_ADD_NOR :
+				WNN_DIC_ADD_REV,
+				XINT (args[1]),
+				WNN_DIC_RW, WNN_DIC_RW,
+				NILP (args[3]) ? 0 :
+				LISP_STRING_TO_EXTERNAL (args[3],
+							     Qfile_name),
+				0,
+				yes_or_no,
+				puts2)) < 0)
+	{
 	  UNGCPRO;
 	  return Qnil;
-      }
-      js_set_autolearning_dic(cur_env, WNN_MUHENKAN_LEARNING, dic_no);
-  }
-  if(!js_is_loaded_temporary_dic(cur_env)) {
-      if(js_temporary_dic_add(cur_env,
-			      wnnfns_norm ? WNN_DIC_ADD_NOR : WNN_DIC_ADD_REV) < 0) {
+	}
+      js_set_autolearning_dic (cur_env, WNN_MUHENKAN_LEARNING, dic_no);
+    }
+  if (!js_is_loaded_temporary_dic (cur_env))
+    {
+      if (js_temporary_dic_add (cur_env,
+				wnnfns_norm ? WNN_DIC_ADD_NOR :
+				WNN_DIC_ADD_REV) < 0)
+	{
 	  UNGCPRO;
           return Qnil;
-      }
-  }
+	}
+    }
   vmask |= WNN_ENV_MUHENKAN_LEARN_MASK;
   henv.muhenkan_flag = NILP (args[2]) ? WNN_DIC_RDONLY : WNN_DIC_RW;
-  if(jl_set_henkan_env(wnnfns_buf[snum],
-                       vmask,
-                       &henv) < 0) {
+  if (jl_set_henkan_env (wnnfns_buf[snum],
+			 vmask,
+			 &henv) < 0)
+    {
       UNGCPRO;
       return Qnil;
-  }
+    }
   UNGCPRO;
   return Qt;
 }
@@ -1429,37 +1436,47 @@ Specify password files of dictionary and frequency PW1 if needed.
   else
       cur_env = wnnfns_env_rev[snum];
   dic_no = js_get_autolearning_dic(cur_env, WNN_BUNSETSUGIRI_LEARNING);
-  if (dic_no == WNN_NO_LEARNING) {
-      if((dic_no = jl_dic_add(wnnfns_buf[snum],
-                              XSTRING_DATA (args[0]),
-                              0,
-                              wnnfns_norm ? WNN_DIC_ADD_NOR : WNN_DIC_ADD_REV,
-                              XINT(args[1]),
-                              WNN_DIC_RW, WNN_DIC_RW,
-                              NILP (args[3]) ? 0 : XSTRING_DATA (args[3]),
-                              0,
-                              yes_or_no,
-                              puts2)) < 0) {
+  if (dic_no == WNN_NO_LEARNING)
+    {
+      if ((dic_no = jl_dic_add (wnnfns_buf[snum],
+				LISP_STRING_TO_EXTERNAL (args[0],
+							 Qfile_name),
+				0,
+				wnnfns_norm ? WNN_DIC_ADD_NOR :
+				WNN_DIC_ADD_REV,
+				XINT(args[1]),
+				WNN_DIC_RW, WNN_DIC_RW,
+				NILP (args[3]) ? 0 :
+				LISP_STRING_TO_EXTERNAL (args[3],
+							 Qfile_name),
+				0,
+				yes_or_no,
+				puts2)) < 0)
+	{
           UNGCPRO;
           return Qnil;
-      }
-      js_set_autolearning_dic(cur_env, WNN_BUNSETSUGIRI_LEARNING, dic_no);
-  }
-  if(!js_is_loaded_temporary_dic(cur_env)) {
-      if(js_temporary_dic_add(cur_env,
-                              wnnfns_norm ? WNN_DIC_ADD_NOR : WNN_DIC_ADD_REV) < 0) {
+	}
+      js_set_autolearning_dic (cur_env, WNN_BUNSETSUGIRI_LEARNING, dic_no);
+    }
+  if (!js_is_loaded_temporary_dic (cur_env))
+    {
+      if (js_temporary_dic_add (cur_env,
+				wnnfns_norm ? WNN_DIC_ADD_NOR :
+				WNN_DIC_ADD_REV) < 0)
+	{
           UNGCPRO;
           return Qnil;
-      }
-  }
+	}
+    }
   vmask |= WNN_ENV_BUNSETSUGIRI_LEARN_MASK;
   henv.bunsetsugiri_flag = NILP (args[2]) ? WNN_DIC_RDONLY : WNN_DIC_RW;
-  if(jl_set_henkan_env(wnnfns_buf[snum],
-                       vmask,
-                       &henv) < 0) {
+  if (jl_set_henkan_env (wnnfns_buf[snum],
+			 vmask,
+			 &henv) < 0)
+    {
       UNGCPRO;
       return Qnil;
-  }
+    }
   UNGCPRO;
   return Qt;
 }
@@ -1886,14 +1903,16 @@ reinit_vars_of_mule_wnn (void)
       wnnfns_env_norm[i] = (struct wnn_env *) 0;
       wnnfns_env_rev[i] = (struct wnn_env *) 0;
     }
+
+  charset_wnn_server_type[0] = Vcharset_japanese_jisx0208;
+  charset_wnn_server_type[1] = Vcharset_chinese_gb2312;
+  charset_wnn_server_type[2] = Vcharset_thai_tis620;
+  charset_wnn_server_type[3] = Vcharset_korean_ksc5601;
 }
 
 void
 vars_of_mule_wnn (void)
 {
-  DEFVAR_INT ("lb-sisheng", &lb_sisheng /*
-Leading character for Sisheng.
-*/ );
   DEFVAR_LISP ("wnn-server-type", &Vwnn_server_type /*
 *jserver, cserver ..
 */ );
@@ -1911,13 +1930,18 @@ Leading character for Sisheng.
   Vcwnn_zhuyin = Qnil;
   Vwnnenv_sticky = Qnil;
 
+  DEFSYMBOL (Qchinese_sisheng);
+
   Vwnn_uniq_level = Qwnn_uniq;
 
   Fprovide (intern ("wnn"));
 }
 
+/* Convert from the wide-char format expected for wnn to the XEmacs string
+   format. */
+
 void
-w2m (w_char *wp, unsigned char *mp, unsigned char lb)
+w2m (w_char *wp, Ibyte *mp, Lisp_Object charset)
 {
   w_char	wc;
   w_char	pzy[10];
@@ -1937,84 +1961,81 @@ w2m (w_char *wp, unsigned char *mp, unsigned char lb)
 	      for (i = 0; i < len; i++)
 		{
 		  if (pzy[i] & 0x80)
-		    {
-		      *mp++ = PRE_LEADING_BYTE_PRIVATE_1; /* #### Not sure about this one... */
-		      *mp++ = lb_sisheng;
-		    }
-		  *mp++ = pzy[i];
+		    mp += charset_codepoint_to_itext
+		      (Fget_charset (Qchinese_sisheng), 0, pzy[i] & 0x7f, mp,
+		       CONVERR_USE_PRIVATE);
+		  else
+		    /* @@#### Correct? */
+		    mp += charset_codepoint_to_itext
+		      (Vcharset_ascii, 0, pzy[i] & 0x7f, mp,
+		       CONVERR_USE_PRIVATE);
 		}
 	    }
 	  else
-	    {
-	      *mp++ = LEADING_BYTE_KATAKANA_JISX0201;
-	      *mp++ = (wc & 0xff);
-	    }
+	    mp += charset_codepoint_to_itext (Vcharset_katakana_jisx0201,
+					      0, wc & 0x7f, mp,
+					      CONVERR_USE_PRIVATE);
 	  break;
 	case 0x8080:
-	  *mp++ = lb;
-	  *mp++ = (wc & 0xff00) >> 8;
-	  *mp++ = wc & 0x00ff;
+	  mp += charset_codepoint_to_itext (charset, (wc & 0x7f00) >> 8,
+					    wc & 0x007f, mp,
+					    CONVERR_USE_PRIVATE);
 	  break;
 	case 0x8000:
-	  if (lb == LEADING_BYTE_JAPANESE_JISX0208)
-	    *mp++ = LEADING_BYTE_JAPANESE_JISX0212;
-	  else if (lb == LEADING_BYTE_CHINESE_BIG5_1)
-	    *mp++ = LEADING_BYTE_CHINESE_BIG5_2;
-	  else
-	    *mp++ = lb;
-	  *mp++ = (wc & 0xff00) >> 8;
-	  *mp++ = (wc & 0x00ff) | 0x80;
-	  break;
+	  {
+	    Lisp_Object newchar = charset;
+	    if (EQ (charset, Vcharset_japanese_jisx0208))
+	      newchar = Vcharset_japanese_jisx0212;
+#ifndef UNICODE_INTERNAL
+	    /* @@#### Something very strange about this */
+	    else if (EQ (charset, Vcharset_chinese_big5_1))
+	      newchar = Vcharset_chinese_big5_2;
+#endif /* not UNICODE_INTERNAL */
+	    mp += charset_codepoint_to_itext (newchar, (wc & 0x7f00) >> 8,
+					      wc & 0x007f, mp,
+					      CONVERR_USE_PRIVATE);
+	    break;
+	  }
 	default:
-	  *mp++ = wc & 0x00ff;
+	  mp += set_itext_ichar (mp, wc & 0x00ff);
 	  break;
 	}
     }
   *mp = 0;
 }
 
+/* Convert XEmacs string format to the wide-char format expected for wnn. */
 void
-m2w (unsigned char *mp, w_char *wp)
+m2w (Ibyte *mp, w_char *wp)
 {
-  int ch;
-
-  while ((ch = *mp++) != 0)
+  while (*mp)
     {
-      if (ibyte_leading_byte_p (ch))
-	{
-	  switch (ch)
-	    {
-	    case LEADING_BYTE_KATAKANA_JISX0201:
-	      *wp++ = *mp++; break;
-	    case LEADING_BYTE_LATIN_JISX0201:
-	      *wp++ = *mp++ & 0x7F; break;
-	    case LEADING_BYTE_JAPANESE_JISX0208_1978:
-	    case LEADING_BYTE_CHINESE_GB2312:
-	    case LEADING_BYTE_JAPANESE_JISX0208:
-	    case LEADING_BYTE_KOREAN_KSC5601:
-	      /* case LEADING_BYTE_TW: */
-	      ch = *mp++;
-	      *wp++ = (ch << 8) | *mp++;
-	      break;
-	    case LEADING_BYTE_JAPANESE_JISX0212:
-	      ch = *mp++;
-	      *wp++ = (ch << 8) | (*mp++ & 0x7f);
-	      break;
-	    case PRE_LEADING_BYTE_PRIVATE_1: /* #### Not sure about this one... */
-	      ch = *mp++;
-	      if (ch == lb_sisheng)
-		*wp++ = 0x8e80 | *mp++;
-	      else
-		mp++;
-	      break;
-	    default:			/* ignore this character */
-	      mp += rep_bytes_by_first_byte(ch) - 1;
-	    }
-	}
-      else
-        {
-	  *wp++ = ch;
-	}
+      Lisp_Object charset;
+      int c1, c2;
+      int ch;
+
+      /* @@#### current_buffer dependency */
+      buffer_itext_to_charset_codepoint (mp, current_buffer,
+					 &charset, &c1, &c2, CONVERR_FAIL);
+      INC_IBYTEPTR (mp);
+      if (EQ (charset, Vcharset_ascii) ||
+	  EQ (charset, Vcharset_latin_jisx0201) ||
+	  EQ (charset, Vcharset_katakana_jisx0201))
+	ch = c2;
+      else if (EQ (charset, Vcharset_japanese_jisx0208) ||
+	       EQ (charset, Vcharset_japanese_jisx0208_1978) ||
+	       EQ (charset, Vcharset_chinese_gb2312) ||
+	       EQ (charset, Vcharset_korean_ksc5601)
+	       /* || other 2-byte charsets??? */
+	       )
+	ch = ((c1 | 0x80) << 8) + (c2 | 0x80);
+      else if (EQ (charset, Vcharset_japanese_jisx0212))
+	ch = ((c1 | 0x80) << 8) + c2;
+      else if (EQ (charset, Fget_charset (Qchinese_sisheng)))
+	ch = 0x8e80 | c2;
+      else /* Ignore character */
+	continue;
+      *wp++ = (w_char) ch;
     }
   *wp = 0;
 }
@@ -2051,18 +2072,26 @@ w2y (w_char *w)
     }
 }
 
+/* Converts text in the multi-byte locale-specific format returned by some
+   WNN functions into XEmacs-internal.  This format appears to be a simple
+   MBCS encoding with a single locale, and we could use probably existing
+   coding systems to handle it. */
+
 void
-c2m (unsigned char *cp, unsigned char *mp, unsigned char lb)
+c2m (UExtbyte *cp, Ibyte *mp, Lisp_Object charset)
 {
-  unsigned char	ch;
+  UExtbyte	ch;
   while ((ch = *cp) != 0)
     {
       if (ch & 0x80)
 	{
-	  *mp++ = lb;
-	  *mp++ = *cp++;
+	  mp += charset_codepoint_to_itext (charset, cp[0] & 0x7f,
+					    cp[1] & 0x7f, mp,
+					    CONVERR_USE_PRIVATE);
+	  cp += 2;
 	}
-      *mp++ = *cp++;
+      else
+	*mp++ = *cp++; /* Guaranteed ASCII */
     }
   *mp = 0;
 }
@@ -2076,18 +2105,18 @@ dai_end (int no, int server)
 }
 
 static int
-yes_or_no (unsigned char *s)
+yes_or_no (UExtbyte *s)
 {
-  unsigned char		mbuf[512];
-  unsigned char		lb;
+  Ibyte			mbuf[512];
+  Lisp_Object		charset;
   int			len;
   int			snum;
   if ((snum  = check_wnn_server_type ()) == -1) return 0;
-  lb = lb_wnn_server_type[snum];
+  charset = charset_wnn_server_type[snum];
   /* if no message found, create file without query */
   /* if (wnn_msg_cat->msg_bd == 0) return 1;*/
   if (*s == 0) return 1;
-  c2m (s, mbuf, lb);
+  c2m (s, mbuf, charset);
   /* truncate "(Y/N)" */
   for (len = 0; (mbuf[len]) && (len < 512); len++);
   for (; (mbuf[len] != '(') && (len > 0); len--);
@@ -2097,7 +2126,7 @@ yes_or_no (unsigned char *s)
 
      str = make_string (mbuf, len);
      GCPRO1 (str);
-     yes = call1(Qyes_or_no_p, str);
+     yes = call1 (Qyes_or_no_p, str);
      UNGCPRO;
      if (NILP (yes)) return 0;
      else return (1);
@@ -2105,23 +2134,16 @@ yes_or_no (unsigned char *s)
 }
 
 static void
-puts2 (char *s)
+puts2 (char *UNUSED (s))
 {
 #if 0 /* jhod: We don't really need this echoed... */
-#if 0
-  Lisp_Object		args[1];
-  char			mbuf[512];
-  unsigned char		lb;
-  extern Lisp_Object 	Fmessage ();
+  Ibyte			mbuf[512];
+  Lisp_Object		charset;
   int			snum;
   if ((snum = check_wnn_server_type ()) == -1) return;
-  lb = lb_wnn_server_type[snum];
-  c2m (s, mbuf, lb);
-  args[0] = make_string (mbuf, strlen (mbuf));
-  Fmessage (1, args);
-#else
-  message("%s",s);
-#endif
+  charset = charset_wnn_server_type[snum];
+  c2m (s, mbuf, charset);
+  message ("%s", mbuf);
 #endif
 }
 

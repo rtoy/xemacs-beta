@@ -26,14 +26,15 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+
+#include "casetab.h"
 #include "console-msw-impl.h"
-#include "redisplay.h"
-#include "gui.h"
-#include "glyphs.h"
-#include "frame-impl.h"
 #include "elhash.h"
 #include "events.h"
-#include "buffer.h"
+#include "frame-impl.h"
+#include "glyphs.h"
+#include "gui.h"
+#include "redisplay.h"
 
 /*
  * Return value is Qt if we have dispatched the command,

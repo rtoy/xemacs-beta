@@ -119,10 +119,10 @@ Boston, MA 02111-1307, USA.  */
 #include <stddef.h>		/* offsetof */
 #include <sys/types.h>
 #include <limits.h>
+#include <math.h>
 #ifdef __cplusplus
 #include <limits>		/* necessary for max()/min() under G++ 4 */
 #endif
-
 
 /************************************************************************/
 /*                            error checking                            */
@@ -421,6 +421,30 @@ Boston, MA 02111-1307, USA.  */
 #define EFFICIENT_INT_128_BIT INT_128_BIT
 #define EFFICIENT_UINT_128_BIT UINT_128_BIT
 #endif
+
+/* These are easily computable using `dc'.
+   (Just in case you cared, the maximum 256-bit unsigned int is
+   115792089237316195423570985008687907853269984665640564039457584007913 \
+   129639935.  You can get this with
+
+   echo '2 256^ 1-p' | dc
+   )
+*/
+
+#define INT_16_BIT_MAX 32767
+#define INT_32_BIT_MAX 2147483647
+#define INT_64_BIT_MAX 9223372036854775807
+#define INT_128_BIT_MAX 170141183460469231731687303715884105727
+
+#define UINT_16_BIT_MAX 65535
+#define UINT_32_BIT_MAX 4294967295
+#define UINT_64_BIT_MAX 18446744073709551615
+#define UINT_128_BIT_MAX 340282366920938463463374607431768211455
+
+#define INT_16_BIT_MIN -32768
+#define INT_32_BIT_MIN -2147483648
+#define INT_64_BIT_MIN -9223372036854775808
+#define INT_128_BIT_MIN -170141183460469231731687303715884105728
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -1267,15 +1291,38 @@ void assert_equal_failed (const Ascbyte *file, int line, EMACS_INT x,
    assert_equal_failed (__FILE__, __LINE__, (EMACS_INT) x, (EMACS_INT) y, \
                         #x, #y))
 #else
-/* This used to be ((void) (0)) but that triggers lots of unused variable
-   warnings.  It's pointless to force all that code to be rewritten, with
-   added ifdefs.  Any reasonable compiler will eliminate an expression with
-   no effects. */
 # define assert(x) disabled_assert (x)
 # define assert_with_message(x, msg) disabled_assert_with_message (x, msg)
 # define assert_at_line(x, file, line) disabled_assert_at_line (x, file, line)
 # define assert_equal(x, y) disabled_assert ((x) == (y))
 #endif
+
+
+/************************************************************************/
+/**                       Simple bit operations                        **/
+/************************************************************************/
+
+#define BIT_INDEX_TO_SET_MASK(ind) (1 << (ind))
+#define BIT_INDEX_TO_CLEAR_MASK(ind) \
+  ((CATEGORY_TAB_BASE_TYPE) ~BIT_INDEX_TO_SET_MASK (ind))
+
+
+/* Set bit number BIT in bit-array ARRAY. */
+#define SET_BIT_IN_ARRAY(array, bit)		\
+do {						\
+  (array) |= BIT_INDEX_TO_SET_MASK (bit);	\
+} while (0)
+
+/* Clear bit number BIT in bit-array ARRAY. */
+#define CLEAR_BIT_IN_ARRAY(array, bit)		\
+do {						\
+  (array) &= BIT_INDEX_TO_CLEAR_MASK (bit);	\
+} while (0)
+
+/* Test whether bit number BIT is set in bit-array ARRAY. */
+#define BIT_IS_SET_IN_ARRAY(array, bit) \
+  ((array) & BIT_INDEX_TO_SET_MASK (bit))
+
 
 /************************************************************************/
 /**                         Memory allocation                          **/
@@ -1360,10 +1407,37 @@ extern MODULE_API int regex_malloc_disallowed;
 /* Do stack or heap alloca() depending on size.
 
 NOTE: The use of a global temporary like this is unsafe if ALLOCA() occurs
-twice anywhere in the same expression; but that seems highly unlikely.  The
-alternative is to force all callers to declare a local temporary if the
-expression has side effects -- something easy to forget. */
+twice anywhere in the same expression.  The alternative is to force all
+callers to declare a local temporary if the argument to ALLOCA() has side
+effects -- something easy to forget.
 
+Normally, the use of ALLOCA() twice in the same expression is unlikely,
+but it can certainly occur in conjunction with the DFC macros.  To fix this,
+we do two things:
+
+  (1) Under GCC, there's an extended syntax we can use that avoids the problem
+      with global temporaries.
+  (2) For other compilers, we provide a special two-argument version that
+      is passed the size twice and uses each argument once and in a guaranteed
+      order.  This is useful in cases where the size argument to ALLOCA()
+      has side effects -- as is the case with the DFC macros. */
+
+/* #define TEST_MULTIUSE_ALLOCA */
+
+#if defined (__GNUC__) && !defined (TEST_MULTIUSE_ALLOCA)
+#define USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#endif
+
+#ifdef USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#define ALLOCA(size)						\
+  ({ Bytecount temp_alloca_size;				\
+     REGEX_MALLOC_CHECK ();					\
+     temp_alloca_size = (size);					\
+     temp_alloca_size  > MAX_ALLOCA_VS_C_ALLOCA ?		\
+       xemacs_c_alloca (temp_alloca_size) :			\
+       (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+	alloca (temp_alloca_size)); })
+#else /* not USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
 #define ALLOCA(size)					\
   (REGEX_MALLOC_CHECK (),				\
    __temp_alloca_size__ = (size),			\
@@ -1371,15 +1445,42 @@ expression has side effects -- something easy to forget. */
    xemacs_c_alloca (__temp_alloca_size__) :		\
    (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
     alloca (__temp_alloca_size__)))
+#endif /* (not) USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
+
+/* Version of ALLOCA() that can be safely used multiple times within
+   a single expression.  Regular ALLOCA() is not safe in this way since it
+   uses a global temporary variable.  However, regular ALLOCA() under GCC
+   *IS* safe since it uses a GCC extension that allows arbitrary code to
+   be made into an expression.  For non-GCC, we define a special
+   MULTIUSE_ALLOCA() that is safe for multiple use in function calls and
+   avoids global temporaries.  To do that, however, it needs to be able to
+   retrieve the size twice -- hence the two arguments.  MULTIUSE_ALLOCA()
+   is guaranteed to evaluate SIZE prior to SIZEAGAIN.  If the first SIZE
+   expression has no side effects, just make SIZEAGAIN be the same as
+   SIZE; otherwise, SIZEAGAIN may have to be different. */
+
+#ifdef USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#define MULTIUSE_ALLOCA(size, sizeagain) ALLOCA(size)
+#else
+#define MULTIUSE_ALLOCA(size, sizeagain)		\
+  (REGEX_MALLOC_CHECK (),				\
+   (size)  > MAX_ALLOCA_VS_C_ALLOCA ?			\
+   xemacs_c_alloca (sizeagain) :			\
+   (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+    alloca (sizeagain)))
+#endif /* (not) USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
 
 /* Version of ALLOCA() that is guaranteed to work inside of function calls
    (i.e., we call the C alloca if regular alloca() is broken inside of
    function calls). */
 #ifdef BROKEN_ALLOCA_IN_FUNCTION_CALLS
 #define ALLOCA_FUNCALL_OK(size) xemacs_c_alloca (size)
-#else
+#define MULTIUSE_ALLOCA_FUNCALL_OK(size, sizeagain) xemacs_c_alloca (size)
+#else /* not BROKEN_ALLOCA_IN_FUNCTION_CALLS */
 #define ALLOCA_FUNCALL_OK(size) ALLOCA (size)
-#endif
+#define MULTIUSE_ALLOCA_FUNCALL_OK(size, sizeagain) \
+  MULTIUSE_ALLOCA (size, sizeagain)
+#endif /* (not) BROKEN_ALLOCA_IN_FUNCTION_CALLS */
 
 MODULE_API void *xemacs_c_alloca (unsigned int size) ATTRIBUTE_MALLOC;
 
@@ -1409,6 +1510,14 @@ xmalloc_and_record_unwind (Bytecount size)
 /* -------------- convenience functions for memory allocation ------------- */
 
 #define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
+/* This is a hack.  Here below we have the standard "portable" definition of
+   offsetof().  Normally we just use offsetof(), but under g++ (but not gcc)
+   complains about using offsetof when the `field' argument is not constant,
+   e.g. it's an array reference using a variable as the index.  So in that
+   case, which happens in file-coding.h, we fall back to portable_offsetof().
+   Fuck me harder!!!! --ben */
+#define portable_offsetof(st, m) \
+    ((size_t) ( (char *)&((st *)(0))->m - (char *)0 ))
 #define xnew(type) ((type *) xmalloc (sizeof (type)))
 #define xnew_array(type, len) ((type *) xmalloc ((len) * sizeof (type)))
 #define xnew_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))
@@ -1421,6 +1530,7 @@ xmalloc_and_record_unwind (Bytecount size)
 #define alloca_itexts(num) alloca_array (Itext, num)
 #define alloca_ibytes(num) alloca_array (Ibyte, num)
 #define alloca_extbytes(num) alloca_array (Extbyte, num)
+#define alloca_chbytes(num) alloca_array (Chbyte, num)
 #define alloca_rawbytes(num) alloca_array (Rawbyte, num)
 #define alloca_binbytes(num) alloca_array (Binbyte, num)
 #define alloca_ascbytes(num) alloca_array (Ascbyte, num)
@@ -1439,6 +1549,16 @@ do {						\
   Bytecount _bsta_3 = qxestrlen (_bsta_2);	\
   *_bsta_ = alloca_ibytes (1 + _bsta_3);	\
   memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);	\
+} while (0)
+
+/* Make an alloca'd copy of a Extbyte * */
+#define EXTBYTE_STRING_TO_ALLOCA(p, lval)	\
+do {						\
+  Extbyte **_esta_ = (Extbyte **) &(lval);	\
+  const Extbyte *_esta_2 = (p);			\
+  Bytecount _esta_3 = strlen (_esta_2);		\
+  *_esta_ = alloca_extbytes (1 + _esta_3);	\
+  memcpy (*_esta_, _esta_2, 1 + _esta_3);	\
 } while (0)
 
 /* ----------------- convenience functions for reallocation --------------- */
@@ -1546,8 +1666,8 @@ typedef struct extent *EXTENT; /* extents-impl.h */
 typedef struct Lisp_Event Lisp_Event; /* "events.h" */
 typedef struct Lisp_Face Lisp_Face;   /* "faces-impl.h" */
 typedef struct Lisp_Process Lisp_Process; /* "procimpl.h" */
-typedef struct Lisp_Color_Instance Lisp_Color_Instance; /* objects-impl.h */
-typedef struct Lisp_Font_Instance Lisp_Font_Instance; /* objects-impl.h */
+typedef struct Lisp_Color_Instance Lisp_Color_Instance; /* fontcolor-impl.h */
+typedef struct Lisp_Font_Instance Lisp_Font_Instance; /* fontcolor-impl.h */
 typedef struct Lisp_Image_Instance Lisp_Image_Instance; /* glyphs.h */
 typedef struct Lisp_Gui_Item Lisp_Gui_Item;
 
@@ -1619,6 +1739,18 @@ struct usage_stats
   Bytecount gap_overhead;
 };
 
+/* Generic version of usage stats structure including extra non-Lisp and
+   Lisp storage associated with the object, but not including the memory
+   used to hold the object itself.  Up to 32 statistics are allowed,
+   in addition to the statistics in `U', which store another slice onto the
+   ancillary non-Lisp storage.
+
+   Normally, each object creates its own version of this structure, e.g.
+   `struct window_stats', which parallels the structure in beginning with
+   a `struct usage_stats' and followed by Bytecount fields, so that a
+   pointer to that structure can be cast to a pointer of this structure
+   and sensible results gotten. */
+
 struct generic_usage_stats
 {
   struct usage_stats u;
@@ -1656,6 +1788,10 @@ enum Lisp_Type
 
 #define INT_VALBITS (BITS_PER_EMACS_INT - INT_GCBITS)
 #define VALBITS (BITS_PER_EMACS_INT - GCBITS)
+/* This is badly named; it's not the maximum value that an EMACS_INT can
+   have, it's the maximum value that a Lisp-visible fixnum can have (half
+   the maximum value an EMACS_INT can have) and as such would be better
+   called MOST_POSITIVE_FIXNUM. Similarly for MOST_NEGATIVE_FIXNUM. */
 #define EMACS_INT_MAX ((EMACS_INT) ((1UL << (INT_VALBITS - 1)) -1UL))
 #define EMACS_INT_MIN (-(EMACS_INT_MAX) - 1)
 /* WARNING: evaluates its arg twice. */
@@ -1732,583 +1868,10 @@ GET_VOID_FROM_LISP (Lisp_Object obj)
 }
 
 /************************************************************************/
-/**    Definitions of dynamic arrays (dynarrs) and other allocators    **/
+/**            Definitions of dynarrs and other allocators             **/
 /************************************************************************/
 
-BEGIN_C_DECLS
-
-/************* Dynarr declaration *************/
-
-#ifdef NEW_GC
-#define DECLARE_DYNARR_LISP_IMP()			\
-  const struct lrecord_implementation *lisp_imp;
-#else
-#define DECLARE_DYNARR_LISP_IMP()
-#endif
-
-#ifdef ERROR_CHECK_DYNARR
-#define DECLARE_DYNARR_LOCKED()				\
-  int locked;
-#else
-#define DECLARE_DYNARR_LOCKED()
-#endif
-
-#define Dynarr_declare(type)			\
-  struct lrecord_header header;			\
-  type *base;					\
-  DECLARE_DYNARR_LISP_IMP ()			\
-  DECLARE_DYNARR_LOCKED ()			\
-  int elsize_;					\
-  int len_;					\
-  int largest_;					\
-  int max_
-
-typedef struct dynarr
-{
-  Dynarr_declare (void);
-} Dynarr;
-
-#define XD_DYNARR_DESC(base_type, sub_desc)				\
-  { XD_BLOCK_PTR, offsetof (base_type, base),				\
-    XD_INDIRECT(1, 0), {sub_desc} },					\
-  { XD_INT,        offsetof (base_type, len_) },			\
-  { XD_INT_RESET,  offsetof (base_type, largest_), XD_INDIRECT(1, 0) },	\
-  { XD_INT_RESET,  offsetof (base_type, max_), XD_INDIRECT(1, 0) }
-
-#ifdef NEW_GC
-#define XD_LISP_DYNARR_DESC(base_type, sub_desc)			\
-  { XD_LISP_OBJECT_BLOCK_PTR, offsetof (base_type, base),		\
-    XD_INDIRECT(1, 0), {sub_desc} },					\
-  { XD_INT,        offsetof (base_type, len_) },			\
-  { XD_INT_RESET,  offsetof (base_type, largest_), XD_INDIRECT(1, 0) },	\
-  { XD_INT_RESET,  offsetof (base_type, max_), XD_INDIRECT(1, 0) }
-#endif /* NEW_GC */
-
-/************* Dynarr verification *************/
-
-/* Dynarr locking and verification.
-
-   [I] VERIFICATION
-
-   Verification routines simply return their basic argument, possibly
-   casted, but in the process perform some verification on it, aborting if
-   the verification fails.  The verification routines take FILE and LINE
-   parameters, and use them to output the file and line of the caller
-   when an abort occurs, rather than the file and line of the inline
-   function, which is less than useful.
-
-   There are three basic types of verification routines:
-
-   (1) Verify the dynarr itself.  This verifies the basic invariant
-   involving the length/size values:
-
-   0 <= Dynarr_length(d) <= Dynarr_largest(d) <= Dynarr_max(d)
-
-   (2) Verify the dynarr itself prior to modifying it.  This performs
-   the same verification as previously, but also checks that the
-   dynarr is not locked (see below).
-
-   (3) Verify a dynarr position.  Unfortunately we have to have
-   different verification routines depending on which kind of operation
-   is being performed:
-
-   (a) For Dynarr_at(), we check that the POS is bounded by Dynarr_largest(),
-       i.e. 0 <= POS < Dynarr_largest().
-   (b) For Dynarr_atp_allow_end(), we also have to allow
-       POS == Dynarr_largest().
-   (c) For Dynarr_atp(), we behave largely like Dynarr_at() but make a
-       special exception when POS == 0 and Dynarr_largest() == 0 -- see
-       comment below.
-   (d) Some other routines contain the POS verification within their code,
-       and make the check 0 <= POS < Dynarr_length() or
-       0 <= POS <= Dynarr_length().
-
-   #### It is not well worked-out whether and in what circumstances it's
-   allowed to use a position that is between Dynarr_length() and
-   Dynarr_largest().  The ideal solution is to never allow this, and require
-   instead that code first change the length before accessing higher
-   positions.  That would require looking through all the code that accesses
-   dynarrs and fixing it appropriately (especially redisplay code, and
-   especially redisplay code in the vicinity of a reference to
-   Dynarr_largest(), since such code usually checks explicitly to see whether
-   there is extra stuff between Dynarr_length() and Dynarr_largest().)
-
-   [II] LOCKING
-
-   The idea behind dynarr locking is simple: Locking a dynarr prevents
-   any modification from occurring, or rather, leads to an abort upon
-   any attempt to modify a dynarr.
-
-   Dynarr locking was originally added to catch some sporadic and hard-to-
-   debug crashes in the redisplay code where dynarrs appeared to be getting
-   corrupted in an unexpected fashion.  The solution was to lock the
-   dynarrs that were getting corrupted (in this case, the display-line
-   dynarrs) around calls to routines that weren't supposed to be changing
-   these dynarrs but might somehow be calling code that modified them.
-   This eventually revealed that there was a reentrancy problem with
-   redisplay that involved the QUIT mechanism and the processing done in
-   order to determine whether C-g had been pressed -- this processing
-   involves retrieving, processing and queueing pending events to see
-   whether any of them result in a C-g keypress.  However, at least under
-   MS Windows this can result in redisplay being called reentrantly.
-   For more info:--
-   
-  (Info-goto-node "(internals)Critical Redisplay Sections")
-
-*/
-
-#ifdef ERROR_CHECK_DYNARR
-DECLARE_INLINE_HEADER (
-int
-Dynarr_verify_pos_at (void *d, Elemcount pos, const Ascbyte *file, int line)
-)
-{
-  Dynarr *dy = (Dynarr *) d;
-  /* We use `largest', not `len', because the redisplay code often
-     accesses stuff between len and largest. */
-  assert_at_line (pos >= 0 && pos < dy->largest_, file, line);
-  return pos;
-}
-
-DECLARE_INLINE_HEADER (
-int
-Dynarr_verify_pos_atp (void *d, Elemcount pos, const Ascbyte *file, int line)
-)
-{
-  Dynarr *dy = (Dynarr *) d;
-  /* We use `largest', not `len', because the redisplay code often
-     accesses stuff between len and largest. */
-  /* [[ Code will often do something like ...
-
-     val = make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
-	                                     Dynarr_length (dyn));
-
-     which works fine when the Dynarr_length is non-zero, but when zero,
-     the result of Dynarr_atp() not only points past the end of the
-     allocated array, but the array may not have ever been allocated and
-     hence the return value is NULL.  But the length of 0 causes the
-     pointer to never get checked.  These can occur throughout the code
-     so we put in a special check. --ben ]]
-
-     Update: The common idiom `Dynarr_atp (dyn, 0)' has been changed to
-     `Dynarr_begin (dyn)'.  Possibly this special check at POS 0 can be
-     done only for Dynarr_begin() not for general Dynarr_atp(). --ben */
-  if (pos == 0 && dy->len_ == 0)
-    return pos;
-  /* #### It's vaguely possible that some code could legitimately want to
-     retrieve a pointer to the position just past the end of dynarr memory.
-     This could happen with Dynarr_atp() but not Dynarr_at().  If so, it
-     will trigger this assert().  In such cases, it should be obvious that
-     the code wants to do this; rather than relaxing the assert, we should
-     probably create a new macro Dynarr_atp_allow_end() which is like
-     Dynarr_atp() but which allows for pointing at invalid addresses -- we
-     really want to check for cases of accessing just past the end of
-     memory, which is a likely off-by-one problem to occur and will usually
-     not trigger a protection fault (instead, you'll just get random
-     behavior, possibly overwriting other memory, which is bad). --ben */
-  assert_at_line (pos >= 0 && pos < dy->largest_, file, line);
-  return pos;
-}
-
-DECLARE_INLINE_HEADER (
-int
-Dynarr_verify_pos_atp_allow_end (void *d, Elemcount pos, const Ascbyte *file,
-				 int line)
-)
-{
-  Dynarr *dy = (Dynarr *) d;
-  /* We use `largest', not `len', because the redisplay code often
-     accesses stuff between len and largest.
-     We also allow referencing the very end, past the end of allocated
-     legitimately space.  See comments in Dynarr_verify_pos_atp.()*/
-  assert_at_line (pos >= 0 && pos <= dy->largest_, file, line);
-  return pos;
-}
-
-#else
-#define Dynarr_verify_pos_at(d, pos, file, line) (pos)
-#define Dynarr_verify_pos_atp(d, pos, file, line) (pos)
-#define Dynarr_verify_pos_atp_allow_end(d, pos, file, line) (pos)
-#endif /* ERROR_CHECK_DYNARR */
-
-#ifdef ERROR_CHECK_DYNARR
-DECLARE_INLINE_HEADER (
-Dynarr *
-Dynarr_verify_1 (void *d, const Ascbyte *file, int line)
-)
-{
-  Dynarr *dy = (Dynarr *) d;
-  assert_at_line (dy->len_ >= 0 && dy->len_ <= dy->largest_ &&
-		  dy->largest_ <= dy->max_, file, line);
-  return dy;
-}
-
-DECLARE_INLINE_HEADER (
-Dynarr *
-Dynarr_verify_mod_1 (void *d, const Ascbyte *file, int line)
-)
-{
-  Dynarr *dy = (Dynarr *) d;
-  assert_at_line (!dy->locked, file, line);
-  return Dynarr_verify_1 (d, file, line);
-}
-
-#define Dynarr_verify(d) Dynarr_verify_1 (d, __FILE__, __LINE__)
-#define Dynarr_verify_mod(d) Dynarr_verify_mod_1 (d, __FILE__, __LINE__)
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_lock (void *d)
-)
-{
-  Dynarr *dy = Dynarr_verify_mod (d);
-  dy->locked = 1;
-}
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_unlock (void *d)
-)
-{
-  Dynarr *dy = Dynarr_verify (d);
-  assert (dy->locked);
-  dy->locked = 0;
-}
-
-#else /* not ERROR_CHECK_DYNARR */
-
-#define Dynarr_verify(d) ((Dynarr *) d)
-#define Dynarr_verify_mod(d) ((Dynarr *) d)
-#define Dynarr_lock(d) DO_NOTHING
-#define Dynarr_unlock(d) DO_NOTHING
-
-#endif /* ERROR_CHECK_DYNARR */
-
-/************* Dynarr creation *************/
-
-MODULE_API void *Dynarr_newf (Bytecount elsize);
-MODULE_API void Dynarr_free (void *d);
-
-#ifdef NEW_GC
-MODULE_API void *Dynarr_lisp_newf (Bytecount elsize,
-				   const struct lrecord_implementation 
-				   *dynarr_imp,
-				   const struct lrecord_implementation *imp);
-
-#define Dynarr_lisp_new(type, dynarr_imp, imp)			\
-  ((type##_dynarr *) Dynarr_lisp_newf (sizeof (type), dynarr_imp, imp))
-#define Dynarr_lisp_new2(dynarr_type, type, dynarr_imp, imp)	\
-  ((dynarr_type *) Dynarr_lisp_newf (sizeof (type)), dynarr_imp, imp)
-#endif /* NEW_GC */
-#define Dynarr_new(type) ((type##_dynarr *) Dynarr_newf (sizeof (type)))
-#define Dynarr_new2(dynarr_type, type) \
-  ((dynarr_type *) Dynarr_newf (sizeof (type)))
-
-/************* Dynarr access *************/
-
-#ifdef ERROR_CHECK_DYNARR
-#define Dynarr_at(d, pos) \
-  ((d)->base[Dynarr_verify_pos_at (d, pos, __FILE__, __LINE__)])
-#define Dynarr_atp_allow_end(d, pos) \
-  (&((d)->base[Dynarr_verify_pos_atp_allow_end (d, pos, __FILE__, __LINE__)]))
-#define Dynarr_atp(d, pos) \
-  (&((d)->base[Dynarr_verify_pos_atp (d, pos, __FILE__, __LINE__)]))
-#else
-#define Dynarr_at(d, pos) ((d)->base[pos])
-#define Dynarr_atp(d, pos) (&Dynarr_at (d, pos))
-#define Dynarr_atp_allow_end(d, pos) Dynarr_atp (d, pos)
-#endif
-
-/* Old #define Dynarr_atp(d, pos) (&Dynarr_at (d, pos)) */
-#define Dynarr_begin(d) Dynarr_atp (d, 0)
-#define Dynarr_lastp(d) Dynarr_atp (d, Dynarr_length (d) - 1)
-#define Dynarr_past_lastp(d) Dynarr_atp_allow_end (d, Dynarr_length (d))
-
-
-/************* Dynarr length/size retrieval and setting *************/
-
-/* Retrieve the length of a dynarr.  The `+ 0' is to ensure that this cannot
-   be used as an lvalue. */
-#define Dynarr_length(d) (Dynarr_verify (d)->len_ + 0)
-/* Retrieve the largest ever length seen of a dynarr.  The `+ 0' is to
-   ensure that this cannot be used as an lvalue. */
-#define Dynarr_largest(d) (Dynarr_verify (d)->largest_ + 0)
-/* Retrieve the number of elements that fit in the currently allocated
-   space.  The `+ 0' is to ensure that this cannot be used as an lvalue. */
-#define Dynarr_max(d) (Dynarr_verify (d)->max_ + 0)
-/* Return the size in bytes of an element in a dynarr. */
-#define Dynarr_elsize(d) (Dynarr_verify (d)->elsize_ + 0)
-/* Retrieve the advertised memory usage of a dynarr, i.e. the number of
-   bytes occupied by the elements in the dynarr, not counting any overhead. */
-#define Dynarr_sizeof(d) (Dynarr_length (d) * Dynarr_elsize (d))
-
-/* Actually set the length of a dynarr.  This is a low-level routine that
-   should not be directly used; use Dynarr_set_length() or
-   Dynarr_set_lengthr() instead. */
-DECLARE_INLINE_HEADER (
-void
-Dynarr_set_length_1 (void *d, Elemcount len)
-)
-{
-  Dynarr *dy = Dynarr_verify_mod (d);
-  dynarr_checking_assert (len >= 0 && len <= Dynarr_max (dy));
-  /* Use the raw field references here otherwise we get a crash because
-     we've set the length but not yet fixed up the largest value. */
-  dy->len_ = len;
-  if (dy->len_ > dy->largest_)
-    dy->largest_ = dy->len_;
-  (void) Dynarr_verify_mod (d);
-}
-
-/* "Restricted set-length": Set the length of dynarr D to LEN,
-    which must be in the range [0, Dynarr_largest(d)]. */
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_set_lengthr (void *d, Elemcount len)
-)
-{
-  Dynarr *dy = Dynarr_verify_mod (d);
-  dynarr_checking_assert (len >= 0 && len <= Dynarr_largest (dy));
-  Dynarr_set_length_1 (dy, len);
-}
-
-/* "Restricted increment": Increment the length of dynarr D by 1; the resulting
-    length must be in the range [0, Dynarr_largest(d)]. */
-
-#define Dynarr_incrementr(d) Dynarr_set_lengthr (d, Dynarr_length (d) + 1)
-
-
-MODULE_API void Dynarr_resize (void *d, Elemcount size);
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_resize_to_fit (void *d, Elemcount size)
-)
-{
-  Dynarr *dy = Dynarr_verify_mod (d);
-  if (size > Dynarr_max (dy))
-    Dynarr_resize (dy, size);
-}
-
-#define Dynarr_resize_to_add(d, numels)			\
-  Dynarr_resize_to_fit (d, Dynarr_length (d) + numels)
-
-/* This is an optimization.  This is like Dynarr_set_length() but the length
-   is guaranteed to be at least as big as the existing length. */
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_increase_length (void *d, Elemcount len)
-)
-{
-  Dynarr *dy = Dynarr_verify_mod (d);
-  dynarr_checking_assert (len >= Dynarr_length (dy));
-  Dynarr_resize_to_fit (dy, len);
-  Dynarr_set_length_1 (dy, len);
-}
-
-/* Set the length of dynarr D to LEN.  If the length increases, resize as
-   necessary to fit. (NOTE: This will leave uninitialized memory.  If you
-   aren't planning on immediately overwriting the memory, use
-   Dynarr_set_length_and_zero() to zero out all the memory that would
-   otherwise be uninitialized.) */
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_set_length (void *d, Elemcount len)
-)
-{
-  Dynarr *dy = Dynarr_verify_mod (d);
-  Elemcount old_len = Dynarr_length (dy);
-  if (old_len >= len)
-    Dynarr_set_lengthr (dy, len);
-  else
-    Dynarr_increase_length (d, len);
-}
-
-#define Dynarr_increment(d) Dynarr_increase_length (d, Dynarr_length (d) + 1)
-
-/* Zero LEN contiguous elements starting at POS. */
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_zero_many (void *d, Elemcount pos, Elemcount len)
-)
-{
-  Dynarr *dy = Dynarr_verify_mod (d);
-  memset ((Rawbyte *) dy->base + pos*Dynarr_elsize (dy), 0,
-	  len*Dynarr_elsize (dy));
-}
-
-/* This is an optimization.  This is like Dynarr_set_length_and_zero() but
-   the length is guaranteed to be at least as big as the existing
-   length. */
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_increase_length_and_zero (void *d, Elemcount len)
-)
-{
-  Dynarr *dy = Dynarr_verify_mod (d);
-  Elemcount old_len = Dynarr_length (dy);
-  Dynarr_increase_length (dy, len);
-  Dynarr_zero_many (dy, old_len, len - old_len);
-}
-
-/* Set the length of dynarr D to LEN.  If the length increases, resize as
-   necessary to fit and zero out all the elements between the old and new
-   lengths. */
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_set_length_and_zero (void *d, Elemcount len)
-)
-{
-  Dynarr *dy = Dynarr_verify_mod (d);
-  Elemcount old_len = Dynarr_length (dy);
-  if (old_len >= len)
-    Dynarr_set_lengthr (dy, len);
-  else
-    Dynarr_increase_length_and_zero (d, len);
-}
-
-/* Reset the dynarr's length to 0. */
-#define Dynarr_reset(d) Dynarr_set_lengthr (d, 0)
-
-#ifdef MEMORY_USAGE_STATS
-struct usage_stats;
-Bytecount Dynarr_memory_usage (void *d, struct usage_stats *stats);
-#endif
-
-/************* Adding/deleting elements to/from a dynarr *************/
-
-/* Set the Lisp implementation of the element at POS in dynarr D.  Only
-   does this if the dynarr holds Lisp objects of a particular type (the
-   objects themselves, not pointers to them), and only under NEW_GC. */
-
-#ifdef NEW_GC
-#define DYNARR_SET_LISP_IMP(d, pos)					\
-do {									\
-  if ((d)->lisp_imp)							\
-    set_lheader_implementation						\
-      ((struct lrecord_header *)&(((d)->base)[pos]), (d)->lisp_imp);	\
-} while (0)  
-#else
-#define DYNARR_SET_LISP_IMP(d, pos) DO_NOTHING
-#endif /* (not) NEW_GC */
-
-/* Add Element EL to the end of dynarr D. */
-
-#define Dynarr_add(d, el)			\
-do {						\
-  Elemcount _da_pos = Dynarr_length (d);	\
-  (void) Dynarr_verify_mod (d);			\
-  Dynarr_increment (d);				\
-  ((d)->base)[_da_pos] = (el);			\
-  DYNARR_SET_LISP_IMP (d, _da_pos);		\
-} while (0)
-
-/* Set EL as the element at position POS in dynarr D.
-   Expand the dynarr as necessary so that its length is enough to include
-   position POS within it, and zero out any new elements created as a
-   result of expansion, other than the one at POS. */
-
-#define Dynarr_set(d, pos, el)				\
-do {							\
-  Elemcount _ds_pos = (pos);				\
-  (void) Dynarr_verify_mod (d);				\
-  if (Dynarr_length (d) < _ds_pos + 1)			\
-    Dynarr_increase_length_and_zero (d, _ds_pos + 1);	\
-  ((d)->base)[_ds_pos] = (el);				\
-  DYNARR_SET_LISP_IMP (d, _ds_pos);			\
-} while (0)
-
-/* Add LEN contiguous elements, stored at BASE, to dynarr D.  If BASE is
-   NULL, reserve space but don't store anything. */
-
-DECLARE_INLINE_HEADER (
-void
-Dynarr_add_many (void *d, const void *base, Elemcount len)
-)
-{
-  /* This duplicates Dynarr_insert_many to some extent; but since it is
-     called so often, it seemed useful to remove the unnecessary stuff
-     from that function and to make it inline */
-  Dynarr *dy = Dynarr_verify_mod (d);
-  Elemcount pos = Dynarr_length (dy);
-  Dynarr_increase_length (dy, Dynarr_length (dy) + len);
-  if (base)
-    memcpy ((Rawbyte *) dy->base + pos*Dynarr_elsize (dy), base,
-	    len*Dynarr_elsize (dy));
-}
-
-/* Insert LEN elements, currently pointed to by BASE, into dynarr D
-   starting at position POS. */
-
-MODULE_API void Dynarr_insert_many (void *d, const void *base, Elemcount len,
-				    Elemcount pos);
-
-/* Prepend LEN elements, currently pointed to by BASE, to the beginning. */
-
-#define Dynarr_prepend_many(d, base, len) Dynarr_insert_many (d, base, len, 0)
-
-/* Add literal string S to dynarr D, which should hold chars or unsigned
-   chars.  The final zero byte is not stored. */
-
-#define Dynarr_add_literal_string(d, s) Dynarr_add_many (d, s, sizeof (s) - 1)
-
-/* Convert Lisp string S to an external encoding according to CODESYS and
-   add to dynarr D, which should hold chars or unsigned chars.  No final
-   zero byte is appended. */
-
-/* #### This should be an inline function but LISP_STRING_TO_SIZED_EXTERNAL
-   isn't declared yet. */
-
-#define Dynarr_add_ext_lisp_string(d, s, codesys)		\
-do {								\
-  Lisp_Object dyna_ls_s = (s);					\
-  Lisp_Object dyna_ls_cs = (codesys);				\
-  Extbyte *dyna_ls_eb;						\
-  Bytecount dyna_ls_bc;						\
-								\
-  LISP_STRING_TO_SIZED_EXTERNAL (dyna_ls_s, dyna_ls_eb,		\
-				 dyna_ls_bc, dyna_ls_cs);	\
-  Dynarr_add_many (d, dyna_ls_eb, dyna_ls_bc);			\
-} while (0)
-
-/* Delete LEN elements starting at position POS. */
-
-MODULE_API void Dynarr_delete_many (void *d, Elemcount pos, Elemcount len);
-
-/* Pop off (i.e. delete) the last element from the dynarr and return it */
-
-#define Dynarr_pop(d)					\
-  (dynarr_checking_assert (Dynarr_length (d) > 0),	\
-   Dynarr_verify_mod (d)->len_--,			\
-   Dynarr_at (d, Dynarr_length (d)))
-
-/* Delete the item at POS */
-
-#define Dynarr_delete(d, pos) Dynarr_delete_many (d, pos, 1)
-
-/* Delete the item located at memory address P, which must be a `type *'
-   pointer, where `type' is the type of the elements of the dynarr. */
-#define Dynarr_delete_by_pointer(d, p) \
-  Dynarr_delete_many (d, (p) - ((d)->base), 1)
-
-/* Delete all elements that are numerically equal to EL. */
-
-#define Dynarr_delete_object(d, el)		\
-do						\
-{						\
-  REGISTER int i;				\
-  for (i = Dynarr_length (d) - 1; i >= 0; i--)	\
-    {						\
-      if (el == Dynarr_at (d, i))		\
-	Dynarr_delete_many (d, i, 1);		\
-    }						\
-} while (0)
+#include "array.h"
 
 /************* Dynarr typedefs *************/
 
@@ -2435,12 +1998,15 @@ typedef struct
   Dynarr_declare (Lisp_Object *);
 } Lisp_Object_ptr_dynarr;
 
+typedef struct
+{
+  Lisp_Object key, value;
+} Lisp_Object_pair;
 
-/************* Stack-like malloc/free: Another allocator *************/
-
-void *stack_like_malloc (Bytecount size);
-void stack_like_free (void *val);
-
+typedef struct
+{
+  Dynarr_declare (Lisp_Object_pair);
+} Lisp_Object_pair_dynarr;
 
 /************************************************************************/
 /**              Definitions of other basic Lisp objects               **/
@@ -2518,16 +2084,43 @@ extern MODULE_API Lisp_Object Qnil;
 #define XCDDDDDR(a) (XCDR (XCDDDDR (a)))
 #define XCADDDDDR(a) (XCAR (XCDDDDDR (a)))
 #define XCDDDDDDR(a) (XCDR (XCDDDDDR (a)))
-#define X1ST(a) XCAR (a)
-#define X2ND(a) XCADR (a)
-#define X3RD(a) XCADDR (a)
-#define X4TH(a) XCADDDR (a)
-#define X5TH(a) XCADDDDR (a)
-#define X6TH(a) XCADDDDDR (a)
+#define XCADDDDDDR(a) (XCAR (XCDDDDDDR (a)))
+#define XCDDDDDDDR(a) (XCDR (XCDDDDDDR (a)))
+#define XCADDDDDDDR(a) (XCAR (XCDDDDDDDR (a)))
+#define XCDDDDDDDDR(a) (XCDR (XCDDDDDDDR (a)))
+#define XCADDDDDDDDR(a) (XCAR (XCDDDDDDDDR (a)))
+#define XCDDDDDDDDDR(a) (XCDR (XCDDDDDDDDR (a)))
+#define XCADDDDDDDDDR(a) (XCAR (XCDDDDDDDDDR (a)))
+#define XCDDDDDDDDDDR(a) (XCDR (XCDDDDDDDDDR (a)))
+#define X1ST(a)  XCAR (a)
+#define X2ND(a)  XCADR (a)
+#define X3RD(a)  XCADDR (a)
+#define X4TH(a)  XCADDDR (a)
+#define X5TH(a)  XCADDDDR (a)
+#define X6TH(a)  XCADDDDDR (a)
+#define X7TH(a)  XCADDDDDDR (a)
+#define X8TH(a)  XCADDDDDDDR (a)
+#define X9TH(a)  XCADDDDDDDDR (a)
+#define X10TH(a) XCADDDDDDDDDR (a)
+#define X1STCDR(a)  XCDR (a)
+#define X2NDCDR(a)  XCDDR (a)
+#define X3RDCDR(a)  XCDDDR (a)
+#define X4THCDR(a)  XCDDDDR (a)
+#define X5THCDR(a)  XCDDDDDR (a)
+#define X6THCDR(a)  XCDDDDDDR (a)
+#define X7THCDR(a)  XCDDDDDDDR (a)
+#define X8THCDR(a)  XCDDDDDDDDR (a)
+#define X9THCDR(a)  XCDDDDDDDDDR (a)
+#define X10THCDR(a) XCDDDDDDDDDDR (a)
 
 #define XSETCAR(a, b) (XCONS (a)->car_ = (b))
 #define XSETCDR(a, b) (XCONS (a)->cdr_ = (b))
 #define LISTP(x) (CONSP(x) || NILP(x))
+
+#define CHECK_NIL(x) do {			\
+  if (!NILP (x))				\
+    dead_wrong_type_argument (Qnull, x);	\
+} while (0)
 
 #define CHECK_LIST(x) do {			\
   if (!LISTP (x))				\
@@ -2686,21 +2279,46 @@ EMACS_INT len;								\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len, tail,			\
 		      tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
 
-
-#define PRIVATE_EXTERNAL_LIST_LOOP_6(elt, list, len, hare,		\
-				     tortoise, suspicion_length)	\
+#define PRIVATE_UNVERIFIED_LIST_LOOP_7(elt, list, len, hare,		\
+				       tortoise, suspicion_length,	\
+                                       signalp)				\
   for (tortoise = hare = list, len = 0;					\
 									\
        (CONSP (hare) ? ((elt = XCAR (hare)), 1) :			\
 	(NILP (hare) ? 0 :						\
-	 (signal_malformed_list_error (list), 0)));			\
+	 ((signalp ? signal_malformed_list_error (list) : (void) 0), 0)));\
 									\
        hare = XCDR (hare),						\
 	 (void)								\
 	 ((++len > suspicion_length)					\
 	  &&								\
 	  ((((len & 1) != 0) && (tortoise = XCDR (tortoise), 0)),	\
-	   (EQ (hare, tortoise) && (signal_circular_list_error (list), 0)))))
+	   (EQ (hare, tortoise) &&					\
+            ((signalp ? signal_circular_list_error (list) : (void) 0), 0)))))
+
+#define PRIVATE_EXTERNAL_LIST_LOOP_6(elt, list, len, hare,		\
+				     tortoise, suspicion_length)	\
+  PRIVATE_UNVERIFIED_LIST_LOOP_7 (elt, list, len, hare, tortoise,	\
+                                  suspicion_length, 1)
+
+#define PRIVATE_SAFE_LIST_LOOP_6(elt, list, len, hare,			\
+				 tortoise, suspicion_length)		\
+  PRIVATE_UNVERIFIED_LIST_LOOP_7 (elt, list, len, hare, tortoise,	\
+                                  suspicion_length, 0)
+
+/* Similar to EXTERNAL_LIST_LOOP_2() but don't signal when an error
+   is detected, just stop. */
+#define SAFE_LIST_LOOP_2(elt, list)					\
+Lisp_Object elt, hare_##elt, tortoise_##elt;				\
+EMACS_INT len_##elt;							\
+PRIVATE_SAFE_LIST_LOOP_6 (elt, list, len_##elt, hare_##elt,		\
+		          tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
+
+#define SAFE_LIST_LOOP_3(elt, list, tail)				\
+Lisp_Object elt, tail, tortoise_##elt;					\
+EMACS_INT len_##elt;							\
+PRIVATE_SAFE_LIST_LOOP_6 (elt, list, len_##elt, tail,			\
+		          tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
 
 /* GET_LIST_LENGTH and GET_EXTERNAL_LIST_LENGTH:
 
@@ -3424,6 +3042,7 @@ DECLARE_MODULE_API_LISP_OBJECT (marker, Lisp_Marker);
 /*-------------------basic int (no connection to char)------------------*/
 
 #define ZEROP(x) EQ (x, Qzero)
+#define ONEP(x) EQ (x, Qone)
 
 #ifdef ERROR_CHECK_TYPES
 
@@ -3446,28 +3065,12 @@ XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
 
 #define CHECK_INT(x) do {			\
   if (!INTP (x))				\
-    dead_wrong_type_argument (Qintegerp, x);	\
+    dead_wrong_type_argument (Qfixnump, x);	\
 } while (0)
 
 #define CONCHECK_INT(x) do {			\
   if (!INTP (x))				\
-    x = wrong_type_argument (Qintegerp, x);	\
-} while (0)
-
-/* NOTE NOTE NOTE! This definition of "natural number" is mathematically
-   wrong.  Mathematically, a natural number is a positive integer; 0
-   isn't included.  This would be better called NONNEGINT(). */
-
-#define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
-
-#define CHECK_NATNUM(x) do {			\
-  if (!NATNUMP (x))				\
-    dead_wrong_type_argument (Qnatnump, x);	\
-} while (0)
-
-#define CONCHECK_NATNUM(x) do {			\
-  if (!NATNUMP (x))				\
-    x = wrong_type_argument (Qnatnump, x);	\
+    x = wrong_type_argument (Qfixnump, x);	\
 } while (0)
 
 END_C_DECLS
@@ -3480,14 +3083,14 @@ END_C_DECLS
 
 BEGIN_C_DECLS
 
-#ifdef ERROR_CHECK_TYPES
-
 /* NOTE: There are basic functions for converting between a character and
    the string representation of a character in text.h, as well as lots of
    other character-related stuff.  There are other functions/macros for
    working with Ichars in charset.h, for retrieving the charset of an
    Ichar, the length of an Ichar when converted to text, etc.
 */
+
+#ifdef ERROR_CHECK_TYPES
 
 DECLARE_INLINE_HEADER (
 int
@@ -3539,7 +3142,7 @@ Lisp_Object
 make_char (Ichar val)
 )
 {
-  type_checking_assert (valid_ichar_p (val));
+  ASSERT_VALID_ICHAR (val);
   /* This is defined in lisp-union.h or lisp-disunion.h */
   return make_char_1 (val);
 }
@@ -3671,6 +3274,10 @@ DECLARE_LISP_OBJECT (float, Lisp_Float);
 } while (0)
 
 # define INT_OR_FLOATP(x) (INTP (x) || FLOATP (x))
+
+/* #### change for 64-bit machines */
+#define FLOAT_HASHCODE_FROM_DOUBLE(dbl)         \
+  (unsigned long)(fmod (dbl, 4e9))
 
 /*--------------------------- readonly objects -------------------------*/
 
@@ -3931,7 +3538,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
   static struct Lisp_Subr *S##Fname;					  \
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 #define GET_DEFUN_LISP_OBJECT(Fname) \
-  wrap_subr (S##Fname);
+  wrap_subr (&MC_ALLOC_S##Fname)
 #else /* not NEW_GC */
 #define DEFUN(lname, Fname, min_args, max_args, prompt, arglist)	\
   Lisp_Object Fname (EXFUN_##max_args);					\
@@ -3971,7 +3578,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
   };									\
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 #define GET_DEFUN_LISP_OBJECT(Fname) \
-  wrap_subr (&S##Fname);
+  wrap_subr (&S##Fname)
 #endif /* not NEW_GC */
 
 /* Heavy ANSI C preprocessor hackery to get DEFUN to declare a
@@ -4021,16 +3628,20 @@ extern MODULE_API int specpdl_depth_counter;
 /************************************************************************/
 
 /* The C subr must have been declared with MANY as its max args, and this
-   PARSE_KEYWORDS call must come before any statements.
+   PARSE_KEYWORDS call must come before any statements. Equivalently, it
+   can appear within braces.
 
-   FUNCTION is the name of the current function, as a symbol.
+   FUNCTION is the C name of the current DEFUN.  If there is no current
+   DEFUN, use the PARSE_KEYWORDS_8 macro, not PARSE_KEYWORDS.  If the
+   current DEFUN has optional arguments that are not keywords, you also need
+   to use the PARSE_KEYWORDS_8 macro.  This is also the case if there are
+   optional arguments that come before the keywords, as Common Lisp
+   specifies for #'parse-integer.
 
    NARGS is the count of arguments supplied to FUNCTION.
 
    ARGS is a pointer to the argument vector (not a Lisp vector) supplied to
    FUNCTION.
-
-   KEYWORDS_OFFSET is the offset into ARGS where the keyword arguments start.
 
    KEYWORD_COUNT is the number of keywords FUNCTION is normally prepared to
    handle.
@@ -4042,11 +3653,6 @@ extern MODULE_API int specpdl_depth_counter;
    initial_value) in this parameter, a collection of C statements surrounded
    by parentheses and separated by the comma operator. If you don't need
    this, supply NULL as KEYWORD_DEFAULTS.
-
-   ALLOW_OTHER_KEYS corresponds to the &allow-other-keys argument list
-   entry in defun*; it is 1 if other keys are normally allowed, 0
-   otherwise. This may be overridden in the caller by specifying
-   :allow-other-keys t in the argument list.
 
    For keywords which appear multiple times in the called argument list, the
    leftmost one overrides, as specified in section 7.1.1 of the CLHS.
@@ -4061,26 +3667,71 @@ extern MODULE_API int specpdl_depth_counter;
    and an unrelated name for the local variable, as is possible with the
    ((:keyword unrelated-var)) syntax in defun* and in Common Lisp. That
    shouldn't matter in practice. */
- 
-#define PARSE_KEYWORDS(function, nargs, args, keywords_offset,          \
-                       keyword_count, keywords, keyword_defaults,       \
-                       allow_other_keys)                                \
+#if defined (DEBUG_XEMACS) && defined (__STDC_VERSION__) &&	\
+  __STDC_VERSION__ >= 199901L
+
+/* This version has the advantage that DEFUN without DEFSUBR still provokes
+   a defined but not used warning, and it provokes an assertion failure at
+   runtime if someone has copied and pasted the PARSE_KEYWORDS macro from
+   another function without changing FUNCTION; that would lead to an
+   incorrect determination of KEYWORDS_OFFSET. */
+
+#define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
+		       keyword_defaults)				\
+  PARSE_KEYWORDS_8 (intern_massaging_name (1 + #function), nargs, args, \
+                    keyword_count, keywords, keyword_defaults,          \
+                    /* Can't XSUBR (Fsymbol_function (...))->min_args,  \
+                       the function may be advised. */                  \
+                    XINT (Ffunction_min_args                            \
+                          (intern_massaging_name (1 + #function))),     \
+                    0);                                                 \
+  assert (0 == strcmp (__func__, #function))
+#else /* defined (DEBUG_XEMACS) && ... */
+#define PARSE_KEYWORDS(function, nargs, args, keyword_count, keywords,	\
+		       keyword_defaults)				\
+  PARSE_KEYWORDS_8 (intern (subr_name (XSUBR                            \
+                                       (GET_DEFUN_LISP_OBJECT (function)))), \
+                    nargs, args, keyword_count, keywords,               \
+                    keyword_defaults,                                   \
+                    XSUBR (GET_DEFUN_LISP_OBJECT (function))->min_args, \
+                    0)
+#endif /* defined (DEBUG_XEMACS) && defined (__STDC_VERSION__) ... */
+
+/* PARSE_KEYWORDS_8 is a more fine-grained version of PARSE_KEYWORDS. The
+   differences are as follows:
+
+   FUNC_SYM is a symbol reflecting the name of the function for which
+   keywords are being parsed.  In PARSE_KEYWORDS, it is the Lisp-visible
+   name of C_FUNC, interned as a symbol in obarray.
+
+   KEYWORDS_OFFSET is the offset into ARGS where the keyword arguments
+   start.  In PARSE_KEYWORDS, this is the index of the first optional
+   argument, determined from the information known about C_FUNC.
+
+   ALLOW_OTHER_KEYS corresponds to the &allow-other-keys argument list entry
+   in defun*; it is 1 if other keys are normally allowed, 0 otherwise. This
+   may be overridden in the caller by specifying :allow-other-keys t in the
+   argument list. In PARSE_KEYWORDS, ALLOW_OTHER_KEYS is always 0. */
+
+#define PARSE_KEYWORDS_8(func_sym, nargs, args,				\
+			 keyword_count, keywords, keyword_defaults,	\
+			 keywords_offset, allow_other_keys)		\
   DECLARE_N_KEYWORDS_##keyword_count keywords;                          \
                                                                         \
   do                                                                    \
     {                                                                   \
       Lisp_Object pk_key, pk_value;                                     \
-      Elemcount pk_i = nargs - 1;                                       \
+      Elemcount pk_i = nargs - 1, pk_offset = keywords_offset;		\
       Boolint pk_allow_other_keys = allow_other_keys;                   \
                                                                         \
-      if ((nargs - keywords_offset) & 1)                                \
+      if ((nargs - pk_offset) & 1)					\
         {                                                               \
           if (!allow_other_keys                                         \
               && !(pk_allow_other_keys                                  \
-                   = non_nil_allow_other_keys_p (keywords_offset,       \
+                   = non_nil_allow_other_keys_p (pk_offset,		\
                                                  nargs, args)))         \
             {                                                           \
-              signal_wrong_number_of_arguments_error (function, nargs); \
+              signal_wrong_number_of_arguments_error (func_sym, nargs); \
             }                                                           \
           else                                                          \
             {                                                           \
@@ -4093,7 +3744,7 @@ extern MODULE_API int specpdl_depth_counter;
       (void)(keyword_defaults);                                         \
                                                                         \
       /* Start from the end, because the leftmost element overrides. */ \
-      while (pk_i > keywords_offset)                                    \
+      while (pk_i > pk_offset)						\
         {                                                               \
           pk_value = args[pk_i--];                                      \
           pk_key = args[pk_i--];                                        \
@@ -4104,11 +3755,20 @@ extern MODULE_API int specpdl_depth_counter;
             {                                                           \
               continue;                                                 \
             }                                                           \
-          else if (!(pk_allow_other_keys                                \
-                     = non_nil_allow_other_keys_p (keywords_offset,     \
-                                                   nargs, args)))       \
+          else if ((pk_allow_other_keys                                 \
+                    = non_nil_allow_other_keys_p (pk_offset,		\
+                                                  nargs, args)))        \
             {                                                           \
-              invalid_keyword_argument (function, pk_key);              \
+              continue;                                                 \
+            }                                                           \
+          else if (EQ (pk_key, Q_allow_other_keys) &&                   \
+                   NILP (pk_value))                                     \
+            {                                                           \
+              continue;                                                 \
+            }                                                           \
+          else                                                          \
+            {                                                           \
+              invalid_keyword_argument (func_sym, pk_key);              \
             }                                                           \
         }                                                               \
     } while (0)
@@ -4127,6 +3787,10 @@ extern MODULE_API int specpdl_depth_counter;
   DECLARE_N_KEYWORDS_5(a,b,c,d,e), f = Qnil
 #define DECLARE_N_KEYWORDS_7(a,b,c,d,e,f,g)     \
   DECLARE_N_KEYWORDS_6(a,b,c,d,e,f), g = Qnil
+#define DECLARE_N_KEYWORDS_8(a,b,c,d,e,f,g,h)	\
+  DECLARE_N_KEYWORDS_7(a,b,c,d,e,f,g), h = Qnil
+#define DECLARE_N_KEYWORDS_9(a,b,c,d,e,f,g,h,i)	\
+  DECLARE_N_KEYWORDS_8(a,b,c,d,e,f,g,h), i = Qnil
 
 #define CHECK_N_KEYWORDS_1(a)                                           \
     else if (EQ (pk_key, Q_##a)) { a = pk_value; }
@@ -4142,6 +3806,12 @@ extern MODULE_API int specpdl_depth_counter;
     else if (EQ (pk_key, Q_##f)) { f = pk_value; }
 #define CHECK_N_KEYWORDS_7(a,b,c,d,e,f,g)   CHECK_N_KEYWORDS_6(a,b,c,d,e,f) \
     else if (EQ (pk_key, Q_##g)) { g = pk_value; }
+#define CHECK_N_KEYWORDS_8(a,b,c,d,e,f,g,h)		\
+  CHECK_N_KEYWORDS_7(a,b,c,d,e,f,g)			\
+  else if (EQ (pk_key, Q_##h)) { h = pk_value; }
+#define CHECK_N_KEYWORDS_9(a,b,c,d,e,f,g,h,i)		\
+  CHECK_N_KEYWORDS_8(a,b,c,d,e,f,g,h)			\
+  else if (EQ (pk_key, Q_##i)) { i = pk_value; }
 
 Boolint non_nil_allow_other_keys_p (Elemcount offset, int nargs,
                                     Lisp_Object *args);
@@ -4247,8 +3917,9 @@ int begin_do_check_for_quit (void);
 
 #define LISP_HASH(obj) ((unsigned long) STORE_LISP_IN_VOID (obj))
 Hashcode memory_hash (const void *xv, Bytecount size);
-Hashcode internal_hash (Lisp_Object obj, int depth);
-Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth);
+Hashcode internal_hash (Lisp_Object obj, int depth, Boolint equalp);
+Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth,
+                              Boolint equalp);
 
 
 /************************************************************************/
@@ -4750,6 +4421,7 @@ MODULE_API EXFUN (Fexpand_abbrev, 0);
 /* Defined in alloc.c */
 MODULE_API EXFUN (Fcons, 2);
 MODULE_API EXFUN (Flist, MANY);
+MODULE_API EXFUN (Facons, 3);
 EXFUN (Fbit_vector, MANY);
 EXFUN (Fmake_byte_code, MANY);
 MODULE_API EXFUN (Fmake_list, 2);
@@ -4770,11 +4442,11 @@ MODULE_API Lisp_Object vector2 (Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object vector3 (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object make_bit_vector (Elemcount, Lisp_Object);
 Lisp_Object make_bit_vector_from_byte_vector (unsigned char *, Elemcount);
+Lisp_Object clone_bit_vector (Lisp_Object bitvec);
 Lisp_Object noseeum_make_marker (void);
 #ifndef NEW_GC
 void garbage_collect_1 (void);
 #endif /* not NEW_GC */
-MODULE_API Lisp_Object acons (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object cons3 (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object list1 (Lisp_Object);
 MODULE_API Lisp_Object list2 (Lisp_Object, Lisp_Object);
@@ -4791,6 +4463,8 @@ DECLARE_DOESNT_RETURN (memory_full (void));
 void disksave_object_finalization (void);
 void finish_object_memory_usage_stats (void);
 extern int purify_flag;
+#define ARRAY_DIMENSION_LIMIT EMACS_INT_MAX
+extern Fixnum Varray_dimension_limit;
 #ifndef NEW_GC
 extern EMACS_INT gc_generation_number[1];
 #endif /* not NEW_GC */
@@ -4812,21 +4486,6 @@ void free_alist (Lisp_Object);
 void free_marker (Lisp_Object);
 int object_dead_p (Lisp_Object);
 void mark_object (Lisp_Object obj);
-#ifndef NEW_GC
-#ifdef USE_KKCC
-#ifdef DEBUG_XEMACS
-void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj, int level, int pos);
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj, level, pos)
-void kkcc_backtrace (void);
-#else
-void kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj);
-#define kkcc_gc_stack_push_lisp_object(obj, level, pos) \
-  kkcc_gc_stack_push_lisp_object_1 (obj)
-#define kkcc_backtrace()
-#endif
-#endif /* USE_KKCC */
-#endif /* not NEW_GC */
 int marked_p (Lisp_Object obj);
 extern int funcall_allocation_flag;
 extern int need_to_garbage_collect;
@@ -4857,6 +4516,18 @@ void free_magic_eval_data (Lisp_Object);
 void free_eval_data (Lisp_Object);
 void free_misc_user_data (Lisp_Object);
 #endif /* EVENT_DATA_AS_OBJECTS */
+
+
+/* Defined in array.c */
+extern const struct sized_memory_description int_dynarr_description;
+extern const struct sized_memory_description unsigned_char_description;
+extern const struct sized_memory_description unsigned_char_dynarr_description;
+extern const struct sized_memory_description lisp_object_description;
+extern const struct sized_memory_description Lisp_Object_dynarr_description;
+extern const struct sized_memory_description Lisp_Object_pair_description;
+extern const struct sized_memory_description Lisp_Object_pair_dynarr_description;
+void mark_Lisp_Object_dynarr (Lisp_Object_dynarr *dyn);
+
 
 /* Defined in buffer.c */
 Lisp_Object get_truename_buffer (Lisp_Object);
@@ -4935,7 +4606,6 @@ EXFUN (Fset_standard_case_table, 1);
 /* Defined in chartab.c */
 EXFUN (Freset_char_table, 1);
 extern Lisp_Object Qcategory_designator_p;
-extern Lisp_Object Qcategory_table_value_p;
 
 /* Defined in cmdloop.c */
 extern Lisp_Object Qdisabled_command_hook;
@@ -4993,7 +4663,7 @@ DECLARE_DOESNT_RETURN (args_out_of_range_3 (Lisp_Object, Lisp_Object,
 MODULE_API Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
 MODULE_API
 DECLARE_DOESNT_RETURN (dead_wrong_type_argument (Lisp_Object, Lisp_Object));
-void check_int_range (EMACS_INT, EMACS_INT, EMACS_INT);
+void check_integer_range (Lisp_Object, Lisp_Object, Lisp_Object);
 
 EXFUN (Fint_to_char, 1);
 EXFUN (Fchar_to_int, 1);
@@ -5019,11 +4689,11 @@ extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
     Qnonnegativep, Qnumber_char_or_marker_p, Qnumberp, Qquote, Qtrue_list_p;
 extern MODULE_API Lisp_Object Qintegerp;
 
-extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
-    Qcircular_list, Qcircular_property_list, Qconversion_error,
-    Qcyclic_variable_indirection, Qdomain_error, Qediting_error,
-    Qend_of_buffer, Qend_of_file, Qerror, Qfile_error, Qinternal_error,
-    Qinvalid_change, Qinvalid_constant, Qinvalid_function, 
+extern Lisp_Object Qargs_out_of_range, Qarith_error, Qbeginning_of_buffer,
+    Qbuffer_read_only, Qcircular_list, Qcircular_property_list,
+    Qconversion_error, Qcyclic_variable_indirection, Qdomain_error,
+    Qediting_error, Qend_of_buffer, Qend_of_file, Qerror, Qfile_error,
+    Qinternal_error, Qinvalid_change, Qinvalid_constant, Qinvalid_function, 
     Qinvalid_keyword_argument, Qinvalid_operation,
     Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlist_formation_error,
     Qmalformed_list, Qmalformed_property_list, Qno_catch, Qout_of_memory,
@@ -5032,6 +4702,7 @@ extern Lisp_Object Qarith_error, Qbeginning_of_buffer, Qbuffer_read_only,
     Qstructure_formation_error, Qtext_conversion_error, Qunderflow_error,
     Qvoid_function, Qvoid_variable, Qwrong_number_of_arguments,
     Qwrong_type_argument;
+
 extern Lisp_Object Qcdr;
 extern Lisp_Object Qerror_lacks_explanatory_string;
 extern Lisp_Object Qfile_error;
@@ -5039,14 +4710,16 @@ extern Lisp_Object Qsequencep;
 extern MODULE_API Lisp_Object Qinvalid_argument, Qsyntax_error;
 
 /* Defined in device.c */
+Lisp_Object call_critical_lisp_code (struct device *d, Lisp_Object function,
+				     Lisp_Object object);
+
 extern Lisp_Object Qdevice_live_p;
 
 /* Defined in device-x.c */
 extern Lisp_Object Vx_initial_argv_list;
 
 /* Defined in dired.c */
-Lisp_Object make_directory_hash_table (const Ibyte *);
-Lisp_Object wasteful_word_to_lisp (unsigned int);
+Lisp_Object make_directory_hash_table (Lisp_Object);
 
 /* Defined in doc.c */
 EXFUN (Fsubstitute_command_keys, 1);
@@ -5096,6 +4769,7 @@ EXFUN (Fbolp, 1);
 EXFUN (Fbuffer_substring, 3);
 EXFUN (Fchar_after, 2);
 EXFUN (Fchar_to_string, 1);
+EXFUN (Fcurrent_time, 0);
 EXFUN (Fdelete_region, 3);
 EXFUN (Feobp, 1);
 EXFUN (Feolp, 1);
@@ -5178,6 +4852,7 @@ extern Lisp_Object Vinvocation_name;
 extern Lisp_Object Vmodule_directory;
 extern Lisp_Object Vsite_directory;
 extern Lisp_Object Vsite_module_directory;
+extern Lisp_Object Vlisp_directory;
 
 /* Defined in emodules.c */
 #ifdef HAVE_SHLIB
@@ -5208,6 +4883,10 @@ EXFUN (Ffunction_min_args, 1);
 MODULE_API DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object,
                                                      Lisp_Object, int,
                                                      Lisp_Object, Lisp_Object));
+
+MODULE_API DECLARE_DOESNT_RETURN (throw_or_bomb_out_unsafe (Lisp_Object,
+							    Lisp_Object, int,
+							    Lisp_Object, Lisp_Object));
 
 MODULE_API DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
 void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
@@ -5323,6 +5002,13 @@ MODULE_API DECLARE_DOESNT_RETURN (out_of_memory (const Ascbyte *reason,
 						 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (stack_overflow (const Ascbyte *reason,
 				       Lisp_Object frob));
+DECLARE_DOESNT_RETURN (text_conversion_error (const CIbyte *reason,
+					      Lisp_Object frob));
+DECLARE_DOESNT_RETURN (text_conversion_error_2 (const CIbyte *reason,
+						Lisp_Object frob1,
+						Lisp_Object frob2));
+void maybe_text_conversion_error (const CIbyte *, Lisp_Object, Lisp_Object,
+				  Error_Behavior);
 
 Lisp_Object signal_void_function_error (Lisp_Object);
 Lisp_Object signal_invalid_function_error (Lisp_Object);
@@ -5498,6 +5184,7 @@ void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
 MODULE_API void warn_when_safe (Lisp_Object, Lisp_Object, const Ascbyte *,
 				...) PRINTF_ARGS (3, 4);
 extern int backtrace_with_internal_sections;
+extern Fixnum Vmultiple_values_limit;
 
 extern Lisp_Object Qand_optional;
 extern Lisp_Object Qand_rest;
@@ -5593,18 +5280,16 @@ EXFUN (Fcoding_system_p, 1);
 EXFUN (Fcoding_system_property, 2);
 EXFUN (Fcoding_system_type, 1);
 EXFUN (Fcopy_coding_system, 2);
-EXFUN (Fdecode_big5_char, 1);
 EXFUN (Fdecode_coding_region, 4);
 EXFUN (Fdecode_shift_jis_char, 1);
 EXFUN (Fdefine_coding_system_alias, 2);
 EXFUN (Fdetect_coding_region, 3);
 EXFUN (Fdefault_encoding_detection_enabled_p, 0);
-EXFUN (Fencode_big5_char, 1);
 EXFUN (Fencode_coding_region, 4);
 EXFUN (Fencode_shift_jis_char, 1);
 EXFUN (Ffind_coding_system, 1);
 EXFUN (Fget_coding_system, 1);
-EXFUN (Fmake_coding_system_internal, 4);
+EXFUN (Fmake_coding_system, 4);
 EXFUN (Fset_coding_category_system, 2);
 EXFUN (Fset_coding_priority_list, 1);
 EXFUN (Fsubsidiary_coding_system, 2);
@@ -5695,8 +5380,6 @@ EXFUN (Fcopy_alist, 1);
 EXFUN (Fcopy_list, 1);
 EXFUN (Fcopy_sequence, 1);
 EXFUN (Fcopy_tree, 2);
-EXFUN (Fdelete, 2);
-EXFUN (Fdelq, 2);
 EXFUN (Fdestructive_alist_to_plist, 1);
 EXFUN (Felt, 2);
 MODULE_API EXFUN (Fequal, 2);
@@ -5727,15 +5410,25 @@ EXFUN (Fremassq, 2);
 EXFUN (Freplace_list, 2);
 MODULE_API EXFUN (Freverse, 1);
 EXFUN (Fsafe_length, 1);
-EXFUN (Fsort, 2);
 EXFUN (Fstring_equal, 2);
 EXFUN (Fstring_lessp, 2);
 EXFUN (Fsubseq, 3);
 EXFUN (Fvalid_plist_p, 1);
 
-Lisp_Object list_sort (Lisp_Object, Lisp_Object,
-		       int (*) (Lisp_Object, Lisp_Object, Lisp_Object));
-Lisp_Object merge (Lisp_Object, Lisp_Object, Lisp_Object);
+extern Boolint check_lss_key_car (Lisp_Object, Lisp_Object, Lisp_Object,
+				  Lisp_Object);
+extern Boolint check_string_lessp_nokey (Lisp_Object, Lisp_Object,
+					 Lisp_Object, Lisp_Object);
+
+typedef Boolint (*check_test_func_t) (Lisp_Object test, Lisp_Object key,
+				      Lisp_Object item, Lisp_Object elt);
+
+Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
+			check_test_func_t check_merge,
+                        Lisp_Object predicate, Lisp_Object key_func);
+Lisp_Object list_sort (Lisp_Object list,
+		       check_test_func_t check_merge,
+                       Lisp_Object predicate, Lisp_Object key_func);
 
 void bump_string_modiff (Lisp_Object);
 Lisp_Object memq_no_quit (Lisp_Object, Lisp_Object);
@@ -5792,12 +5485,20 @@ extern Lisp_Object Qframe_live_p;
 /* Defined in free-hook.c */
 EXFUN (Freally_free, 1);
 
+/* Defined in gc.c */
+extern const struct sized_memory_description int_description;
+extern const struct sized_memory_description unsigned_char_description;
+extern const struct sized_memory_description lisp_object_description;
+extern const struct sized_memory_description Lisp_Object_pair_description;
+
 /* Defined in general.c */
 #define SYMBOL(fou) extern Lisp_Object fou
 #define SYMBOL_MODULE_API(fou) extern MODULE_API Lisp_Object fou
-#define SYMBOL_KEYWORD(la_cle_est_fou) extern Lisp_Object la_cle_est_fou
+#define SYMBOL_KEYWORD(la_cle_est_folle) extern Lisp_Object la_cle_est_folle
 #define SYMBOL_GENERAL(tout_le_monde, est_fou) \
   extern Lisp_Object tout_le_monde
+#define SYMBOL_KEYWORD_GENERAL(y_compris_ben, mais_que_peut_on_faire) \
+  extern Lisp_Object y_compris_ben
 
 #include "general-slots.h"
 
@@ -5805,6 +5506,12 @@ EXFUN (Freally_free, 1);
 #undef SYMBOL_MODULE_API
 #undef SYMBOL_KEYWORD
 #undef SYMBOL_GENERAL
+#undef SYMBOL_KEYWORD_GENERAL
+
+extern Lisp_Object Qeq;
+extern Lisp_Object Qeql;
+extern Lisp_Object Qequal;
+extern Lisp_Object Qequalp;
 
 /* Defined in glyphs.c */
 EXFUN (Fmake_glyph_internal, 1);
@@ -5876,9 +5583,7 @@ void close_load_descs (void);
 int locate_file (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object *, int);
 EXFUN (Flocate_file_clear_hashing, 1);
 int isfloat_string (const char *);
-#ifdef HAVE_RATIO
 int isratio_string (const char *);
-#endif
 
 /* Well, I've decided to enable this. -- ben */
 /* And I've decided to make it work right.  -- sb */
@@ -5928,7 +5633,7 @@ void unchain_marker (Lisp_Object);
 Lisp_Object noseeum_copy_marker (Lisp_Object, Lisp_Object);
 Lisp_Object set_marker_restricted (Lisp_Object, Lisp_Object, Lisp_Object);
 #ifdef MEMORY_USAGE_STATS
-Bytecount compute_buffer_marker_usage (struct buffer *, struct usage_stats *);
+Bytecount compute_buffer_marker_usage (struct buffer *b);
 #endif
 void init_buffer_markers (struct buffer *b);
 void uninit_buffer_markers (struct buffer *b);
@@ -5985,6 +5690,77 @@ extern Lisp_Object Qshort_name;
 /* Defined in nt.c */
 extern Lisp_Object Vmswindows_get_true_file_attributes;
 
+EXFUN (Ffind_charset, 1);
+EXFUN (Fget_charset, 1);
+EXFUN (Fcharset_list, 0);
+EXFUN (Fcharset_name, 1);
+EXFUN (Fcharset_id, 1);
+
+#ifdef MULE
+extern Lisp_Object Vcharset_ascii;
+extern Lisp_Object Vcharset_control_1;
+extern Lisp_Object Vcharset_latin_iso8859_1;
+extern Lisp_Object Vcharset_latin_iso8859_2;
+extern Lisp_Object Vcharset_latin_iso8859_3;
+extern Lisp_Object Vcharset_latin_iso8859_4;
+extern Lisp_Object Vcharset_thai_tis620;
+extern Lisp_Object Vcharset_arabic_iso8859_6;
+extern Lisp_Object Vcharset_greek_iso8859_7;
+extern Lisp_Object Vcharset_hebrew_iso8859_8;
+extern Lisp_Object Vcharset_katakana_jisx0201;
+extern Lisp_Object Vcharset_latin_jisx0201;
+extern Lisp_Object Vcharset_cyrillic_iso8859_5;
+extern Lisp_Object Vcharset_latin_iso8859_9;
+extern Lisp_Object Vcharset_latin_iso8859_15;
+extern Lisp_Object Vcharset_chinese_sisheng;
+extern Lisp_Object Vcharset_japanese_jisx0208_1978;
+extern Lisp_Object Vcharset_chinese_gb2312;
+extern Lisp_Object Vcharset_japanese_jisx0208;
+extern Lisp_Object Vcharset_korean_ksc5601;
+extern Lisp_Object Vcharset_japanese_jisx0212;
+extern Lisp_Object Vcharset_chinese_cns11643_1;
+extern Lisp_Object Vcharset_chinese_cns11643_2;
+#ifdef UNICODE_INTERNAL
+extern Lisp_Object Vcharset_chinese_big5;
+extern Lisp_Object Vcharset_japanese_shift_jis;
+#else
+extern Lisp_Object Vcharset_chinese_big5_1;
+extern Lisp_Object Vcharset_chinese_big5_2;
+#endif /* UNICODE_INTERNAL */
+extern Lisp_Object Vcharset_composite;
+#endif /* MULE */
+
+extern Lisp_Object
+  Qlatin_iso8859_1,
+  Qlatin_iso8859_2,
+  Qlatin_iso8859_3,
+  Qlatin_iso8859_4,
+  Qthai_tis620,
+  Qarabic_iso8859_6,
+  Qgreek_iso8859_7,
+  Qhebrew_iso8859_8,
+  Qkatakana_jisx0201,
+  Qlatin_jisx0201,
+  Qcyrillic_iso8859_5,
+  Qlatin_iso8859_9,
+  Qlatin_iso8859_15,
+  Qjapanese_jisx0208_1978,
+  Qchinese_gb2312,
+  Qjapanese_jisx0208,
+  Qkorean_ksc5601,
+  Qjapanese_jisx0212,
+  Qchinese_cns11643_1,
+  Qchinese_cns11643_2,
+#ifdef UNICODE_INTERNAL
+  Qchinese_big5,
+  Qjapanese_shift_jis,
+#else /* not UNICODE_INTERNAL */
+  Qchinese_big5_1,
+  Qchinese_big5_2,
+#endif /* UNICODE_INTERNAL */
+  Qchinese_sisheng,
+  Qcomposite;
+
 /* Defined in print.c */
 EXFUN (Fdisplay_error, 2);
 EXFUN (Ferror_message_string, 1);
@@ -5998,11 +5774,6 @@ Lisp_Object prin1_to_string (Lisp_Object, int);
 /* Lower-level ways to output data: */
 void default_object_printer (Lisp_Object, Lisp_Object, int);
 void print_internal (Lisp_Object, Lisp_Object, int);
-void debug_print (Lisp_Object);
-void debug_p4 (Lisp_Object obj);
-void debug_p3 (Lisp_Object obj);
-void debug_short_backtrace (int);
-void debug_backtrace (void);
 /* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
  * Note: stream should be defaulted before calling
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
@@ -6024,6 +5795,12 @@ void stderr_out_lisp (const CIbyte *, int nargs, ...);
 void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
 void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+void debug_out_lisp (const CIbyte *, int nargs, ...);
+void debug_print (Lisp_Object);
+void debug_p4 (Lisp_Object obj);
+void debug_p3 (Lisp_Object obj);
+void debug_short_backtrace (int);
+void debug_backtrace (void);
 DECLARE_DOESNT_RETURN (fatal (const CIbyte *, ...)) PRINTF_ARGS(1, 2);
 
 /* Internal functions: */
@@ -6071,6 +5848,7 @@ extern Lisp_Object Qstandard_output;
 extern Lisp_Object Vprint_length;
 extern Lisp_Object Vprint_level;
 extern Lisp_Object Vstandard_output;
+extern Lisp_Object Vprint_table_nonreadably_length;
 
 /* Defined in process.c */
 extern Lisp_Object Qnetwork_error;
@@ -6171,7 +5949,7 @@ EXFUN (Fsymbol_value, 1);
 unsigned int hash_string (const Ibyte *, Bytecount);
 Lisp_Object intern_istring (const Ibyte *str);
 MODULE_API Lisp_Object intern (const CIbyte *str);
-Lisp_Object intern_converting_underscores_to_dashes (const CIbyte *str);
+Lisp_Object intern_massaging_name (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);
 void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);
 Lisp_Object indirect_function (Lisp_Object, int);
@@ -6210,12 +5988,14 @@ long get_random (void);
 void seed_random (long arg);
 
 /* Defined in text.c */
-void find_charsets_in_ibyte_string (unsigned char *charsets,
-				      const Ibyte *str,
-				      Bytecount len);
-void find_charsets_in_ichar_string (unsigned char *charsets,
-				     const Ichar *str,
-				     Charcount len);
+void find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
+				    const Ibyte *str, Bytecount len,
+				    struct buffer *buf);
+void find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
+				    const Ichar *str, Charcount len,
+				    struct buffer *buf);
+void find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
+			      struct buffer *buf, Charbpos pos, Charcount len);
 int ibyte_string_displayed_columns (const Ibyte *str, Bytecount len);
 int ichar_string_displayed_columns (const Ichar *str, Charcount len);
 Charcount ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len);
@@ -6308,43 +6088,20 @@ Charxpos buffer_or_string_clip_to_absolute_char (Lisp_Object object,
 						 Charxpos pos);
 Bytexpos buffer_or_string_clip_to_absolute_byte (Lisp_Object object,
 						 Bytexpos pos);
-
+void internal_to_external_charset_codepoint (Lisp_Object charset,
+					     int int_c1, int int_c2,
+					     int *ext_c1, int *ext_c2,
+					     int munge_codepoints);
+Lisp_Object get_external_charset_codepoint (Lisp_Object charset,
+					    Lisp_Object arg1, Lisp_Object arg2,
+					    int *a1, int *a2,
+					    int munge_codepoints);
+enum converr decode_handle_error (Lisp_Object err, int allow_private);
 
 #ifdef ENABLE_COMPOSITE_CHARS
-
 Ichar lookup_composite_char (Ibyte *str, int len);
 Lisp_Object composite_char_string (Ichar ch);
 #endif /* ENABLE_COMPOSITE_CHARS */
-
-EXFUN (Ffind_charset, 1);
-EXFUN (Fget_charset, 1);
-EXFUN (Fcharset_list, 0);
-
-extern Lisp_Object Vcharset_ascii;
-extern Lisp_Object Vcharset_control_1;
-extern Lisp_Object Vcharset_latin_iso8859_1;
-extern Lisp_Object Vcharset_latin_iso8859_2;
-extern Lisp_Object Vcharset_latin_iso8859_3;
-extern Lisp_Object Vcharset_latin_iso8859_4;
-extern Lisp_Object Vcharset_thai_tis620;
-extern Lisp_Object Vcharset_greek_iso8859_7;
-extern Lisp_Object Vcharset_arabic_iso8859_6;
-extern Lisp_Object Vcharset_hebrew_iso8859_8;
-extern Lisp_Object Vcharset_katakana_jisx0201;
-extern Lisp_Object Vcharset_latin_jisx0201;
-extern Lisp_Object Vcharset_cyrillic_iso8859_5;
-extern Lisp_Object Vcharset_latin_iso8859_9;
-extern Lisp_Object Vcharset_latin_iso8859_15;
-extern Lisp_Object Vcharset_japanese_jisx0208_1978;
-extern Lisp_Object Vcharset_chinese_gb2312;
-extern Lisp_Object Vcharset_japanese_jisx0208;
-extern Lisp_Object Vcharset_korean_ksc5601;
-extern Lisp_Object Vcharset_japanese_jisx0212;
-extern Lisp_Object Vcharset_chinese_cns11643_1;
-extern Lisp_Object Vcharset_chinese_cns11643_2;
-extern Lisp_Object Vcharset_chinese_big5_1;
-extern Lisp_Object Vcharset_chinese_big5_2;
-extern Lisp_Object Vcharset_composite;
 
 Ichar Lstream_get_ichar_1 (Lstream *stream, int first_char);
 int Lstream_fput_ichar (Lstream *stream, Ichar ch);
@@ -6590,6 +6347,11 @@ extern alloca_convert_vals_dynarr *active_alloca_convert;
 MODULE_API int find_pos_of_existing_active_alloca_convert (const char *
 							   srctext);
 
+#ifdef UNICODE_INTERNAL
+extern int firstbyte_mask[];
+extern unsigned int utf8_offsets_by_rep_bytes[];
+#endif /* UNICODE_INTERNAL */
+
 /* Defined in undo.c */
 extern Lisp_Object Qinhibit_read_only;
 
@@ -6598,7 +6360,20 @@ extern const struct sized_memory_description to_unicode_description;
 extern const struct sized_memory_description from_unicode_description;
 void init_charset_unicode_tables (Lisp_Object charset);
 void free_charset_unicode_tables (Lisp_Object charset);
-void recalculate_unicode_precedence (void);
+Lisp_Object allocate_precedence_array (void);
+void reset_precedence_array (Lisp_Object precarray);
+void begin_precedence_array_generation (void);
+void add_charset_to_precedence_array (Lisp_Object charset,
+				     Lisp_Object preclist);
+void add_charsets_to_precedence_array (Lisp_Object list,
+				       Lisp_Object precarray);
+void charset_created_recalculate_unicode_precedence (void);
+void disksave_clear_unicode_precedence (void);
+Lisp_Object simple_convert_predence_list_to_array (Lisp_Object charsets);
+Lisp_Object decode_buffer_or_precedence_list (Lisp_Object preclist);
+int unicode_precedence_list_changed (Lisp_Object sym, Lisp_Object *val,
+				     Lisp_Object in_object, int flags);
+extern Lisp_Object Vdefault_unicode_precedence_array;
 extern Lisp_Object Qunicode;
 extern Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7, Qutf_32;
 #ifdef MEMORY_USAGE_STATS
@@ -6607,6 +6382,13 @@ Bytecount compute_from_unicode_table_size (Lisp_Object charset,
 Bytecount compute_to_unicode_table_size (Lisp_Object charset,
 					 struct usage_stats *stats);
 #endif /* MEMORY_USAGE_STATS */
+void initialize_ascii_control_1_latin_1_unicode_translation (void);
+int decode_unicode (Lisp_Object unicode, enum unicode_allow allow);
+void free_precedence_array (Lisp_Object preclist);
+void init_charset_unicode_map (Lisp_Object charset, Lisp_Object map);
+void autoload_charset_unicode_tables (Lisp_Object charset);
+
+EXFUN (Fset_charset_tags, 2);
 
 /* Defined in undo.c */
 EXFUN (Fundo_boundary, 0);

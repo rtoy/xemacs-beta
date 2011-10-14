@@ -140,17 +140,17 @@ or if you change your font path, you can call this to re-initialize the menus."
 	(mapcar (lambda (x)
 		  (vector x
 			  (list 'font-menu-set-font x nil nil)
-			  ':style 'radio ':active nil ':selected nil))
+			  :style 'radio :active nil :selected nil))
 		families)
 	(mapcar (lambda (x)
 		  (vector (int-to-string x)
 			  (list 'font-menu-set-font nil nil x)
-			  ':style 'radio ':active nil ':selected nil))
+			  :style 'radio :active nil :selected nil))
 		sizes)
 	(mapcar (lambda (x)
 		  (vector x
 			  (list 'font-menu-set-font nil x nil)
-			  ':style 'radio ':active nil ':selected nil))
+			  :style 'radio :active nil :selected nil))
 		weights)))
       (cdr dev-cache)))
 

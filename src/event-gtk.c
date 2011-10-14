@@ -45,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 
 #include "console-gtk-impl.h"
-#include "objects-gtk.h"
+#include "fontcolor-gtk.h"
 
 #include "gtk-xemacs.h"
 
@@ -1759,7 +1759,7 @@ gtk_reset_key_mapping (struct device *d)
   else
     {
       xd->x_keysym_map_hashtable = hashtable =
-	make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+	make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, Qequal);
     }
 
   for (keysym = xd->x_keysym_map,

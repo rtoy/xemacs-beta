@@ -640,8 +640,14 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
 
   b->generated_modeline_string = Fmake_string (make_int (84), make_int (' '));
   b->modeline_extent_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
-						   HASH_TABLE_EQ);
+                                                   Qeq);
 
+#ifdef MULE
+  /* Fill in a blank array for now, to go with the value of `nil' for
+     b->unicode_precedence_list.  This will change if
+     `set-buffer-unicode-precedence-list' is called. */
+  b->unicode_precedence_array = allocate_precedence_array ();
+#endif
 
   return buf;
 }
@@ -1754,6 +1760,7 @@ struct buffer_stats
 {
   struct usage_stats u;
   Bytecount text;
+  /* Ancillary Lisp */
   Bytecount markers;
   Bytecount extents;
 };
@@ -1787,8 +1794,8 @@ compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
 		      struct usage_stats *ustats)
 {
   stats->text    += compute_buffer_text_usage   (b, ustats);
-  stats->markers += compute_buffer_marker_usage (b, ustats);
-  stats->extents += compute_buffer_extent_usage (b, ustats);
+  stats->markers += compute_buffer_marker_usage (b);
+  stats->extents += compute_buffer_extent_usage (b);
 }
 
 static void
@@ -1818,10 +1825,10 @@ The values returned are in the form of a plist of properties and values.
 
 #define ADD_INT(field) \
   plist = cons3 (make_int (b->text->field), \
-		 intern_converting_underscores_to_dashes (#field), plist)
+		 intern_massaging_name (#field), plist)
 #define ADD_BOOL(field) \
   plist = cons3 (b->text->field ? Qt : Qnil, \
-		 intern_converting_underscores_to_dashes (#field), plist)
+		 intern_massaging_name (#field), plist)
   ADD_INT (bufz);
   ADD_INT (z);
 #ifdef OLD_BYTE_CHAR
@@ -1976,7 +1983,7 @@ vars_of_buffer (void)
   /* This function can GC */
 #ifdef MEMORY_USAGE_STATS
   OBJECT_HAS_PROPERTY
-    (buffer, memusage_stats_list, list3 (Qtext, Qmarkers, Qextents));
+    (buffer, memusage_stats_list, list4 (Qtext, Qt, Qmarkers, Qextents));
 #endif /* MEMORY_USAGE_STATS */
 
   staticpro (&QSFundamental);
@@ -2239,8 +2246,10 @@ common_init_complex_vars_of_buffer (void)
   defs->category_table = Vstandard_category_table;
 #endif /* MULE */
   defs->syntax_table = Vstandard_syntax_table;
+#ifdef MIRROR_TABLE
   defs->mirror_syntax_table =
     XCHAR_TABLE (Vstandard_syntax_table)->mirror_table;
+#endif /* MIRROR_TABLE */
   defs->modeline_format = build_ascstring ("%-");  /* reset in loaddefs.el */
   defs->case_fold_search = Qt;
   defs->selective_display_ellipses = Qt;
@@ -2255,6 +2264,8 @@ common_init_complex_vars_of_buffer (void)
   defs->invisibility_spec = Qt;
   defs->buffer_local_face_property = 0;
 
+  /* These are not listed in the buffer slots because we don't want them
+     marked, so we need to initialize them to nil. */
   defs->indirect_children = Qnil;
   syms->indirect_children = Qnil;
 
@@ -2306,6 +2317,8 @@ common_init_complex_vars_of_buffer (void)
 #ifdef MULE
     buffer_local_flags.category_table	= resettable;
 #endif
+    buffer_local_flags.display_time     = always_local_no_default;
+    buffer_local_flags.display_count    = make_int (0);
 
     buffer_local_flags.modeline_format		  = make_int (1<<0);
     buffer_local_flags.abbrev_mode		  = make_int (1<<1);
@@ -2325,11 +2338,8 @@ common_init_complex_vars_of_buffer (void)
 #endif
     buffer_local_flags.buffer_file_coding_system  = make_int (1<<14);
 
-    /* #### Warning: 1<<31 is the largest number currently allowable
-       due to the XINT() handling of this value.  With some
-       rearrangement you can get 3 more bits.
-
-       #### 3 more?  34 bits???? -ben */
+    /* Warning: 1<<30 is the largest number currently allowable
+       due to the XINT() handling of this value. */
   }
 }
 
@@ -2798,6 +2808,18 @@ List of formats to use when saving this buffer.
 Formats are defined by `format-alist'.  This variable is
 set when a file is visited.  Automatically local in all buffers.
 */ );
+
+  DEFVAR_BUFFER_LOCAL ("buffer-display-count", display_count /*
+A number incremented each time this buffer is displayed in a window.
+The function `set-window-buffer' updates it.
+*/ );
+
+  DEFVAR_BUFFER_LOCAL ("buffer-display-time", display_time /*
+Time stamp updated each time this buffer is displayed in a window.
+The function `set-window-buffer' updates this variable
+to the value obtained by calling `current-time'.
+If the buffer has never been shown in a window, the value is nil.
+*/);
 
   DEFVAR_BUFFER_LOCAL_MAGIC ("buffer-invisibility-spec", invisibility_spec /*
 Invisibility spec of this buffer.
