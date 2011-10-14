@@ -35,7 +35,7 @@
 # subdirectories here rather than creating a separate item list"
 ROOT_EXES="configure config.guess install-sh move-if-change \
             modules/canna/configure"
-LIB_SRC_EXES="ad2c gnuattach gnudoit rcs2log vcdiff *.pl"
+LIB_SRC_EXES="ad2c gnuattach gnudoit rcs2log vcdiff *.pl *.py"
 ETC_EXES=""
 
 LIB_SRC_BUILT_EXES="`cd lib-src; ls -1 *.c | sed 's/\.c$//g'`"

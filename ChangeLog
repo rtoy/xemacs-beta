@@ -1,3 +1,65 @@
+2010-11-02  Mats Lidell  <matsl@xemacs.org>
+
+	* netinstall: removed 
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* aclocal.m4: Add standard permission boilerplate.
+
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* version.sh.in: 
+	* configure.ac (XE_COMPLEX_ARG, XE_EXPAND_VARIABLE):
+	Remove conditionals and information for InfoDock.
+
+2010-04-09  Ben Wing  <ben@xemacs.org>
+
+	* CHANGES-beta:
+	Update with my changes to the trunk since the release of 21.5.29
+	in 2009 up through April 9, 2010.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* README.unicode-internal:
+	Update bug list.
+
+2010-03-14  Ben Wing  <ben@xemacs.org>
+
+	* README.unicode-internal:
+	Update bug list.
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* README.unicode-internal:
+	Update bug list.
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* README.unicode-internal:
+	Update bug list.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* README.unicode-internal:
+	Update bug list.
+
+2010-02-16  Ben Wing  <ben@xemacs.org>
+
+	* README.unicode-internal:
+	Add bug list to README.unicode-internal.
+	
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (.PHONY):
+	Also pass unicode-encapsulate and make-case-conv targets down
+	to src/Makefile.in.in.
+
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* CHANGES-beta:
+	Update with my changes to the trunk since 2009-09-20.
+
 2010-03-18  Ben Wing  <ben@xemacs.org>
 
 	* CHANGES-beta:

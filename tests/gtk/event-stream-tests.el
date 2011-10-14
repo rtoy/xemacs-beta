@@ -1,3 +1,8 @@
+;; event-stream-tests.el --- test the GTK event stream
+;;
+;; Copyright 2000, 2001 William Perry
+;; Seems to be based on the comment at the end of src/event-stream.c.
+;;
 ;; This file is part of XEmacs.
 ;;
 ;; XEmacs is free software; you can redistribute it and/or modify it
@@ -13,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to
 ;; the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-;; Boston, MA 02111-1301, USA.  */
+;; Boston, MA 02110-1301, USA.  */
 
 ;also do this: make two frames, one viewing "*scratch*", the other "foo".
 ;in *scratch*, type (sit-for 20)^J

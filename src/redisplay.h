@@ -848,4 +848,6 @@ void exit_redisplay_critical_section_maybe (int depth);
 int enter_redisplay_critical_section_if (Boolint from_outside);
 void exit_redisplay_critical_section_if (Boolint from_outside, int depth);
 
+void redisplay_cancel_ritual_suicide(void);
+
 #endif /* INCLUDED_redisplay_h_ */

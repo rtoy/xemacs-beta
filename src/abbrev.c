@@ -1,6 +1,6 @@
 /* Primitives for word-abbrev mode.
    Copyright (C) 1985, 1986, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -36,6 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "casetab.h"
 #include "commands.h"
 #include "insdel.h"
 #include "syntax.h"
@@ -75,7 +76,7 @@ Fixnum last_abbrev_location;
 /* Hook to run before expanding any abbrev.  */
 Lisp_Object Vpre_abbrev_expand_hook, Qpre_abbrev_expand_hook;
 
-Lisp_Object Qsystem_type, Qcount;
+Lisp_Object Qsystem_type;
 
 struct abbrev_match_mapper_closure
 {
@@ -162,7 +163,7 @@ abbrev_match (struct buffer *buf, Lisp_Object obarray)
   closure.buf = buf;
   closure.point = BUF_PT (buf);
   closure.maxlen = closure.point - BUF_BEGV (buf);
-  closure.chartab = buf->mirror_syntax_table;
+  closure.chartab = BUFFER_MIRROR_SYNTAX_TABLE (buf);
   closure.found = 0;
 
   map_obarray (obarray, abbrev_match_mapper, &closure);
@@ -343,7 +344,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
     count = Qzero;
   else
     CHECK_NATNUM (count);
-  symbol_plist (abbrev_symbol) = make_int (1 + XINT (count));
+  symbol_plist (abbrev_symbol) = Fadd1 (count);
 
   /* Count the case in the original text. */
   abbrev_count_case (buf, abbrev_start, abbrev_length, &lccount, &uccount);
@@ -388,7 +389,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
       Charbpos pos = abbrev_start;
       /* Find the initial.  */
       while (pos < point
-	     && !WORD_SYNTAX_P (buf->mirror_syntax_table,
+	     && !WORD_SYNTAX_P (BUFFER_MIRROR_SYNTAX_TABLE (buf),
 				BUF_FETCH_CHAR (buf, pos)))
 	pos++;
       /* Change just that.  */
@@ -439,7 +440,7 @@ write_abbrev (Lisp_Object sym, Lisp_Object stream)
 static void
 describe_abbrev (Lisp_Object sym, Lisp_Object stream)
 {
-  Lisp_Object one, count, system_flag;
+  Lisp_Object count, system_flag;
   /* This function can GC */
   struct buffer *buf = current_buffer;
 
@@ -457,23 +458,22 @@ describe_abbrev (Lisp_Object sym, Lisp_Object stream)
   if (NILP (XSYMBOL_VALUE (sym)))
     return;
 
-  one = make_int (1);
   Fprin1 (Fsymbol_name (sym), stream);
 
   if (!NILP (system_flag))
     {
       buffer_insert_ascstring (buf, " (sys)");
-      Findent_to (make_int (20), one, Qnil);
+      Findent_to (make_int (20), Qone, Qnil);
     }
   else
-    Findent_to (make_int (15), one, Qnil);
+    Findent_to (make_int (15), Qone, Qnil);
 
   Fprin1 (count, stream);
-  Findent_to (make_int (20), one, Qnil);
+  Findent_to (make_int (20), Qone, Qnil);
   Fprin1 (XSYMBOL_VALUE (sym), stream);
   if (!NILP (XSYMBOL (sym)->function))
     {
-      Findent_to (make_int (45), one, Qnil);
+      Findent_to (make_int (45), Qone, Qnil);
       Fprin1 (XSYMBOL (sym)->function, stream);
     }
   buffer_insert_ascstring (buf, "\n");
@@ -524,7 +524,7 @@ READABLE is non-nil, they are listed.  */
   map_obarray (table, record_symbol, &symbols);
   /* map_obarray (table, record_symbol, &closure); */
   symbols = XCDR (symbols);
-  symbols = Fsort (symbols, Qstring_lessp);
+  symbols = list_sort (symbols, check_string_lessp_nokey, Qnil, Qnil);
 
   if (!NILP (readable))
     {
@@ -558,9 +558,6 @@ READABLE is non-nil, they are listed.  */
 void
 syms_of_abbrev (void)
 {
-  DEFSYMBOL(Qcount);
-  Qcount = intern ("count");
-  staticpro (&Qcount);
   DEFSYMBOL(Qsystem_type);
   Qsystem_type = intern ("system-type");
   DEFSYMBOL (Qpre_abbrev_expand_hook);

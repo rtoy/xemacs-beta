@@ -90,7 +90,7 @@ Boston, MA 02111-1307, USA.  */
 #    include "glyphs-x.h"
 #  endif
 #  ifdef NEED_OBJECTS_IMPL_H
-#    include "objects-x-impl.h"
+#    include "fontcolor-x-impl.h"
 #  endif
 #else /* THIS_IS_GTK */
 #  include "console-gtk-impl.h"
@@ -101,7 +101,7 @@ Boston, MA 02111-1307, USA.  */
 #    include "glyphs-gtk.h"
 #  endif
 #  ifdef NEED_OBJECTS_IMPL_H
-#    include "objects-gtk-impl.h"
+#    include "fontcolor-gtk-impl.h"
 #  endif
 #endif /* THIS_IS_GTK */
 

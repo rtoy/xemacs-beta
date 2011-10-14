@@ -198,15 +198,23 @@ intern (const CIbyte *str)
 }
 
 Lisp_Object
-intern_converting_underscores_to_dashes (const CIbyte *str)
+intern_massaging_name (const CIbyte *str)
 {
   Bytecount len = strlen (str);
   CIbyte *tmp = alloca_extbytes (len + 1);
   Bytecount i;
   strcpy (tmp, str);
   for (i = 0; i < len; i++)
-    if (tmp[i] == '_')
-      tmp[i] = '-';
+    {
+      if (tmp[i] == '_')
+	{
+	  tmp[i] = '-';
+	}
+      else if (tmp[i] == 'X')
+	{
+	  tmp[i] = '*';
+	}
+    }
   return intern_istring ((Ibyte *) tmp);
 }
 
@@ -500,7 +508,8 @@ If optional 2nd arg PREDICATE is non-nil, only symbols for which
   closure.accumulation = Qnil;
   GCPRO1 (closure.accumulation);
   map_obarray (Vobarray, apropos_mapper, &closure);
-  closure.accumulation = Fsort (closure.accumulation, Qstring_lessp);
+  closure.accumulation = list_sort (closure.accumulation,
+				    check_string_lessp_nokey, Qnil, Qnil);
   UNGCPRO;
   return closure.accumulation;
 }
@@ -597,7 +606,7 @@ reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
 !(unloading_module && UNBOUNDP(newval)) &&
 #endif
       (symbol_is_constant (sym, val)
-#ifndef NO_NEED_TO_HANDLE_21_4_CODE
+#ifdef NEED_TO_HANDLE_21_4_CODE
        || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym))
 #endif
       ))
@@ -914,8 +923,12 @@ Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
       types for ints and booleans couldn't be added).  Note that
       some of these variables are automatically local in each
       buffer, while some are only local when they become set
-      (similar to `make-variable-buffer-local').  In these latter
-      cases, of course, the default value shows through in all
+      (similar to `make-variable-buffer-local').  The function
+      common_init_complex_vars_of_buffer() determines which variables
+      behave in which way.
+
+      In the case of variables that are only local when set,
+      of course, the default value shows through in all
       buffers in which the variable doesn't have a local value.
       This is implemented by making sure the "struct buffer" field
       always contains the correct value (whether it's local or
@@ -1513,7 +1526,7 @@ flush_buffer_local_cache (Lisp_Object sym,
   bfwd->current_alist_element = Qnil;
   bfwd->current_buffer = Qnil;
 
-  /* Now store default the value into the current-value slot.
+  /* Now store the default value into the current-value slot.
      We don't simply write it there, because the current-value
      slot might be a forwarding pointer, in which case we need
      to instead write the value into the C variable.
@@ -2537,7 +2550,8 @@ From now on the default value will apply in this buffer.
 	  = buffer_local_alist_element (current_buffer, variable, bfwd);
 
 	if (!NILP (alist_element))
-	  current_buffer->local_var_alist = Fdelq (alist_element, alist);
+	  current_buffer->local_var_alist = delq_no_quit (alist_element,
+							  alist);
 
 	/* Make sure symbol does not think it is set up for this buffer;
 	   force it to look once again for this buffer's value */
@@ -2885,7 +2899,7 @@ this error if you really want to avoid this.
       return Qnil;
     }
 
-  assert (EQ (make_int (1), mapped));
+  assert (EQ (Qone, mapped));
 
   return Qt;
 }
@@ -3500,6 +3514,9 @@ If the current binding is global (the default), the value is nil.
 #ifndef Qzero
 Lisp_Object Qzero;
 #endif
+#ifndef Qone
+Lisp_Object Qone;
+#endif
 #ifndef Qnull_pointer
 Lisp_Object Qnull_pointer;
 #endif
@@ -3529,6 +3546,7 @@ reinit_symbol_objects_early (void)
   OBJECT_HAS_METHOD (symbol, putprop);
   OBJECT_HAS_METHOD (symbol, remprop);
   OBJECT_HAS_NAMED_METHOD (symbol, plist, Fsymbol_plist);
+  OBJECT_HAS_NAMED_METHOD (symbol, setplist, Fsetplist);
 }
 
 void

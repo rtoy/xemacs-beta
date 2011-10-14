@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1985-7, 1993-5, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: lisp, extensions, internal, dumped
@@ -3332,11 +3332,6 @@ when it is off screen."
 ;; keyboard-quit
 ;; buffer-quit-function
 ;; keyboard-escape-quit
-
-(defun assoc-ignore-case (key alist)
-  "Like `assoc', but assumes KEY is a string and ignores case when comparing."
-  (assoc* key alist :test #'equalp))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                          mail composition code                        ;;
@@ -3855,6 +3850,15 @@ The words not capitalized are specified in `uncapitalized-title-words'."
 	      (capitalize-word 1)
 	    (forward-word 1))
 	  (setq first nil))))))
+
+(defun convert-symbol-into-title-string (symbol &optional titlify-fun)
+  "Convert symbol into a string suitable as a title in a menu option.
+This converts to a string, converts hyphens and underscores into spaces and
+applies TITLIFY-FUN to make the string into a form suitable for a title.
+TITLIFY-FUN defaults to `capitalize-string-as-title'."
+  (let ((str (replace-in-string (symbol-name symbol) "[-_]" " "))
+	(titlify-fun (or titlify-fun #'capitalize-string-as-title)))
+    (funcall titlify-fun str)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4681,8 +4685,7 @@ long as they're not listed in that variable as well."
   (or level (setq level 'warning))
   (or (listp class) (setq class (list class)))
   (check-argument-type 'warning-level-p level)
-  (if (and (not (featurep 'infodock))
-	   (not init-file-loaded))
+  (if (not init-file-loaded)
       (push (list class message level) before-init-deferred-warnings)
     (catch 'ignored
       (let ((display-p t)
@@ -4772,8 +4775,7 @@ The C code calls this periodically, right before redisplay."
 
 (defun emacs-name ()
   "Return the printable name of this instance of Emacs."
-  (cond ((featurep 'infodock) "InfoDock")
-	((featurep 'xemacs) "XEmacs")
+  (cond ((featurep 'xemacs) "XEmacs")
 	(t "Emacs")))
 
 (defun debug-print-1 (&rest args)

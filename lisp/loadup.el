@@ -220,10 +220,22 @@ with the exception of `loadup.el'.")
   (load "site-init" t))
 
 ;; Add information from this file to the load history. Delete information
-;; for those files in preloaded-file-list; the symbol file information can
-;; be taken from DOC, and #'unload-feature makes very little sense for
-;; dumped functionality.
-(setq load-history (cons (nreverse current-load-list) (last load-history))
+;; that is available from DOC for those files in preloaded-file-list; in
+;; practice, this boils down to #'provide and #'require calls, and variables
+;; without documentation. Yes, this is a bit ugly.
+(setq load-history (cons (nreverse current-load-list)
+                         (delete*
+                          nil
+                          (mapc #'(lambda (element)
+                                    (remassq 'defun element)
+                                    (delete-if
+                                     #'(lambda (elt)
+                                         (and
+                                          (symbolp elt)
+                                          (get elt 'variable-documentation)))
+                                     element))
+                                load-history)
+                          :key #'cdr))
       ;; Clear current-load-list; this (and adding information to
       ;; load-history) is normally done in lread.c after reading the
       ;; entirety of a file, something which never happens for loadup.el.
@@ -252,12 +264,7 @@ with the exception of `loadup.el'.")
 	load-always-display-messages nil
 	debug-on-error nil)
   (dump-emacs
-   (cond
-    ((featurep 'infodock) "infodock")
-    ;; #### BILL!!!
-    ;; If we want to dump under a name other than `xemacs', do that here!
-    ;; ((featurep 'gtk) "xemacs-gtk")
-    (t "xemacs"))
+   "xemacs"
    "temacs")
   (kill-emacs))
 

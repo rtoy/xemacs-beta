@@ -27,6 +27,7 @@ Boston, MA 02111-1307, USA.  */
 
    Copyright (c) 1988-1997 Sam Leffler
    Copyright (c) 1991-1997 Silicon Graphics, Inc.
+   Copyright (C) 2010 Ben Wing.
    
    Permission to use, copy, modify, distribute, and sell this software and 
    its documentation for any purpose is hereby granted without fee, provided
@@ -551,8 +552,12 @@ build_EImage_quantable(Binbyte *eimage, int width, int height, int num_colors)
   /* 5c: done with ColorCells */
   for (i = 0; i < C_LEN*C_LEN*C_LEN; i++)
     if (qt->ColorCells[i])
-      xfree (qt->ColorCells[i]);
+      {
+	xfree (qt->ColorCells[i]);
+	qt->ColorCells[i] = 0;
+      }
   xfree (qt->ColorCells);
+  qt->ColorCells = 0;
   
   if (res)
     {

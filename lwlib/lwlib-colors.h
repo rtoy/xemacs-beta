@@ -35,7 +35,7 @@ void visual_info_from_widget (Widget widget, Visual **visual, int *depth);
 /* basic version from xlwmenu.c */
 int FIXME_allocate_nearest_color (Display *display, Colormap screen_colormap,
 				  XColor *color_def);
-/* haired-up version from ../src/objects-x.c */
+/* haired-up version from ../src/fontcolor-x.c */
 int x_allocate_nearest_color (Display *display, Colormap screen_colormap,
 			      Visual *visual, XColor *color_def);
 

@@ -695,12 +695,7 @@ However, the overlays you get are the real objects that the buffer uses."
 	  (setq tmp (cdr tmp)))
       (setq ovls tmp
 	    tmp nil))
-    (car-safe
-     (sort ovls
-	   (function
-	    (lambda (a b)
-	      (< (- (extent-end-position a) (extent-start-position a))
-		 (- (extent-end-position b) (extent-start-position b)))))))))
+    (car (sort* ovls #'< :key #'extent-length))))
 
 (defun-compat map-extents (function &optional object from to
 				    maparg flags property value)

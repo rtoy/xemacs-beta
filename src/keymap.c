@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1991-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2010 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
    Totally redesigned by jwz in 1991.
 
 This file is part of XEmacs.
@@ -253,7 +253,7 @@ keymap_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-keymap_hash (Lisp_Object obj, int depth)
+keymap_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Keymap *k = XKEYMAP (obj);
   Hashcode hash = 0xCAFEBABE; /* why not? */
@@ -261,7 +261,7 @@ keymap_hash (Lisp_Object obj, int depth)
   depth++;
 
 #define MARKED_SLOT(x) \
-  hash = HASH2 (hash, internal_hash (k->x, depth));
+  hash = HASH2 (hash, internal_hash (k->x, depth, 0));
 #define MARKED_SLOT_NOCOMPARE(x)
 #include "keymap-slots.h"
 
@@ -737,8 +737,9 @@ keymap_submaps_mapper (Lisp_Object key, Lisp_Object value,
   return 0;
 }
 
-static int map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
-                                      Lisp_Object pred);
+static Boolint map_keymap_sort_predicate (Lisp_Object pred, Lisp_Object key,
+					  Lisp_Object obj1, Lisp_Object obj2);
+					  
 
 static Lisp_Object
 keymap_submaps (Lisp_Object keymap)
@@ -761,9 +762,8 @@ keymap_submaps (Lisp_Object keymap)
       elisp_maphash (keymap_submaps_mapper, k->table,
 		     &keymap_submaps_closure);
       /* keep it sorted so that the result of accessible-keymaps is ordered */
-      k->sub_maps_cache = list_sort (result,
-				     Qnil,
-				     map_keymap_sort_predicate);
+      k->sub_maps_cache = list_sort (result, map_keymap_sort_predicate,
+                                     Qnil, Qnil);
       UNGCPRO;
     }
   return k->sub_maps_cache;
@@ -786,12 +786,12 @@ make_keymap (Elemcount size)
   if (size != 0) /* hack for copy-keymap */
     {
       keymap->table =
-	make_lisp_hash_table (size, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+	make_lisp_hash_table (size, HASH_TABLE_NON_WEAK, Qeq);
       /* Inverse table is often less dense because of duplicate key-bindings.
          If not, it will grow anyway. */
       keymap->inverse_table =
 	make_lisp_hash_table (size * 3 / 4, HASH_TABLE_NON_WEAK,
-			      HASH_TABLE_EQ);
+			      Qeq);
     }
   return obj;
 }
@@ -1527,7 +1527,13 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
 
   define_key_parser (list, &raw_key);
 
-  if (
+  /* The first zero is needed for Apple's i686-apple-darwin8-g++-4.0.1,
+     otherwise the build fails with:
+
+     In function ‘void key_desc_list_to_event(Lisp_Object, Lisp_Object, int)’:
+     cc1plus: error: expected primary-expression
+     cc1plus: error: expected `)'  */
+  if (0 ||
 #define INCLUDE_BUTTON_ZERO
 #define FROB(num)				\
       EQ (raw_key.keysym, Qbutton##num) ||	\
@@ -2889,9 +2895,9 @@ map_keymap_sorted_mapper (Lisp_Object key, Lisp_Object value,
 /* used by map_keymap_sorted(), describe_map_sort_predicate(),
    and keymap_submaps().
  */
-static int
-map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
-                           Lisp_Object UNUSED (pred))
+static Boolint
+map_keymap_sort_predicate (Lisp_Object UNUSED (pred), Lisp_Object UNUSED (key),
+			   Lisp_Object obj1, Lisp_Object obj2)
 {
   /* obj1 and obj2 are conses with keysyms in their cars.  Cdrs are ignored.
    */
@@ -2904,12 +2910,12 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   obj2 = XCAR (obj2);
 
   if (EQ (obj1, obj2))
-    return -1;
+    return 0;
   bit1 = MODIFIER_HASH_KEY_BITS (obj1);
   bit2 = MODIFIER_HASH_KEY_BITS (obj2);
 
-  /* If either is a symbol with a Qcharacter_of_keysym property, then sort it by
-     that code instead of alphabetically.
+  /* If either is a symbol with a Qcharacter_of_keysym property, then sort
+     it by that code instead of alphabetically.
      */
   if (! bit1 && SYMBOLP (obj1))
     {
@@ -2934,7 +2940,7 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
 
   /* all symbols (non-ASCIIs) come after characters (ASCIIs) */
   if (XTYPE (obj1) != XTYPE (obj2))
-    return SYMBOLP (obj2) ? 1 : -1;
+    return SYMBOLP (obj2);
 
   if (! bit1 && CHARP (obj1)) /* they're both ASCII */
     {
@@ -2942,24 +2948,24 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
       int o2 = XCHAR (obj2);
       if (o1 == o2 &&		/* If one started out as a symbol and the */
 	  sym1_p != sym2_p)	/* other didn't, the symbol comes last. */
-	return sym2_p ? 1 : -1;
+	return sym2_p;
 
-      return o1 < o2 ? 1 : -1;	/* else just compare them */
+      return o1 < o2;		/* else just compare them */
     }
 
   /* else they're both symbols.  If they're both buckys, then order them. */
   if (bit1 && bit2)
-    return bit1 < bit2 ? 1 : -1;
+    return bit1 < bit2;
 
   /* if only one is a bucky, then it comes later */
   if (bit1 || bit2)
-    return bit2 ? 1 : -1;
+    return bit2;
 
   /* otherwise, string-sort them. */
   {
     Ibyte *s1 = XSTRING_DATA (XSYMBOL (obj1)->name);
     Ibyte *s2 = XSTRING_DATA (XSYMBOL (obj2)->name);
-    return 0 > qxestrcmp (s1, s2) ? 1 : -1;
+    return 0 > qxestrcmp (s1, s2);
   }
 }
 
@@ -2987,7 +2993,7 @@ map_keymap_sorted (Lisp_Object keymap_table,
     c1.result_locative = &contents;
     elisp_maphash (map_keymap_sorted_mapper, keymap_table, &c1);
   }
-  contents = list_sort (contents, Qnil, map_keymap_sort_predicate);
+  contents = list_sort (contents, map_keymap_sort_predicate, Qnil, Qidentity);
   for (; !NILP (contents); contents = XCDR (contents))
     {
       Lisp_Object keysym = XCAR (XCAR (contents));
@@ -3403,34 +3409,63 @@ of a character from a buffer rather than a key read from the user.
     {
       p += set_itext_ichar (p, c);
     }
-  else if (c < 040 && ctl_p)
+  else if (c < 32 && ctl_p)
     {
       *p++ = '^';
-      *p++ = c + 64;		/* 'A' - 1 */
+      *p++ = c + 'A' - 1; /* 1 -> 'A' */
     }
-  else if (c == 0177)
+  else if (c == 127)
     {
       *p++ = '^';
       *p++ = '?';
     }
-  else if (c >= 0200 || c < 040)
+  else if (c >= 128 || c < 32)
     {
       *p++ = '\\';
 #ifdef MULE
-      /* !!#### This syntax is not readable.  It will
-	 be interpreted as a 3-digit octal number rather
-	 than a 7-digit octal number. */
-      if (c >= 0400)
+#ifdef UNICODE_INTERNAL
+      /* Output Unicode codes directly */
+#define FROB(x) ((Ibyte) ((x) >= 10 ? (x) + 'A' - 10 : (x) + '0'))
+      if (c >= 65536)
 	{
-	  *p++ = '0' + ((c & 07000000) >> 18);
-	  *p++ = '0' + ((c & 0700000) >> 15);
-	  *p++ = '0' + ((c & 070000) >> 12);
-	  *p++ = '0' + ((c & 07000) >> 9);
+	  *p++ = 'U';
+	  *p++ = FROB (c >> 28);
+	  *p++ = FROB (c >> 24 & 0x0F);
+	  *p++ = FROB (c >> 20 & 0x0F);
+	  *p++ = FROB (c >> 16 & 0x0F);
+	  *p++ = FROB (c >> 12 & 0x0F);
+	  *p++ = FROB (c >>  8 & 0x0F);
+	  *p++ = FROB (c >>  4 & 0x0F);
+	  *p++ = FROB (c & 0x0F);
 	}
-#endif
-      *p++ = '0' + ((c & 0700) >> 6);
-      *p++ = '0' + ((c & 0070) >> 3);
-      *p++ = '0' + ((c & 0007));
+      else if (c >= 256)
+	{
+	  *p++ = 'u';
+	  *p++ = FROB (c >> 12 & 0x0F);
+	  *p++ = FROB (c >>  8 & 0x0F);
+	  *p++ = FROB (c >>  4 & 0x0F);
+	  *p++ = FROB (c & 0x0F);
+	}
+#undef FROB
+#else /* not UNICODE_INTERNAL */
+      /* Don't output Unicode because it is lossy. */
+      if (c >= 256)
+	{
+	  Ibyte hexbuf[200]; /* Way more than enough */
+	  Ibyte *hp = hexbuf;
+	  qxesprintf (hexbuf, "%X", c);
+	  *p++ = 'x';
+	  while (*hp)
+	    *p++ = *hp++;
+	}
+#endif /* not UNICODE_INTERNAL */
+      else
+#endif /* MULE */
+	{
+	  *p++ = '0' + ((c & 0700) >> 6);
+	  *p++ = '0' + ((c & 0070) >> 3);
+	  *p++ = '0' + ((c & 0007));
+	}
     }
   else
     {
@@ -3662,7 +3697,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	    {
 	      assert (firstonly);
 	      format_raw_keys (so_far, keys_count + 1, target_buffer);
-	      return make_int (1);
+	      return Qone;
 	    }
 	  else if (firstonly)
 	    return raw_keys_to_keys (so_far, keys_count + 1);
@@ -4079,10 +4114,10 @@ describe_map_mapper (const Lisp_Key_Data *key,
 			    *(closure->list));
 }
 
-
-static int
-describe_map_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
-			     Lisp_Object pred)
+static Boolint
+describe_map_sort_predicate (Lisp_Object pred, Lisp_Object key_func,
+			     Lisp_Object obj1, Lisp_Object obj2)
+			     
 {
   /* obj1 and obj2 are conses of the form
      ( ( <keysym> . <modifiers> ) . <binding> )
@@ -4094,9 +4129,9 @@ describe_map_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   bit1 = XINT (XCDR (obj1));
   bit2 = XINT (XCDR (obj2));
   if (bit1 != bit2)
-    return bit1 < bit2 ? 1 : -1;
+    return bit1 < bit2;
   else
-    return map_keymap_sort_predicate (obj1, obj2, pred);
+    return map_keymap_sort_predicate (pred, key_func, obj1, obj2);
 }
 
 /* Elide 2 or more consecutive numeric keysyms bound to the same thing,
@@ -4204,7 +4239,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 
   if (!NILP (list))
     {
-      list = list_sort (list, Qnil, describe_map_sort_predicate);
+      list = list_sort (list, describe_map_sort_predicate, Qnil, Qnil);
       buffer_insert_ascstring (buf, "\n");
       while (!NILP (list))
 	{
@@ -4372,7 +4407,7 @@ This character followed by some character `foo' turns into `Meta-foo'.
 This can be any form recognized as a single key specifier.
 To disable the meta-prefix-char, set it to a negative number.
 */ );
-  Vmeta_prefix_char = make_char (033);
+  Vmeta_prefix_char = make_char (0x1B);
 
   DEFVAR_LISP ("mouse-grabbed-buffer", &Vmouse_grabbed_buffer /*
 A buffer which should be consulted first for all mouse activity.

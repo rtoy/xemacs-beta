@@ -51,190 +51,100 @@
 (eval-when-compile
   (require 'obsolete))
 
-(or (memq 'cl-19 features)
-    (error "Tried to load `cl-extra' before `cl'!"))
-
-
 ;;; Type coercion.
 
-(defun coerce (x type)
+(defun coerce (object type)
   "Coerce OBJECT to type TYPE.
 TYPE is a Common Lisp type specifier."
-  (cond ((eq type 'list) (if (listp x) x (append x nil)))
-	((eq type 'vector) (if (vectorp x) x (vconcat x)))
-	((eq type 'string) (if (stringp x) x (concat x)))
-	((eq type 'array) (if (arrayp x) x (vconcat x)))
-	((and (eq type 'character) (stringp x) (= (length x) 1)) (aref x 0))
-	((and (eq type 'character) (symbolp x)) (coerce (symbol-name x) type))
+  (cond ((eq type 'list) (if (listp object) object (append object nil)))
+	((eq type 'vector) (if (vectorp object) object (vconcat object)))
+	((eq type 'string) (if (stringp object) object (concat object)))
+	((eq type 'array) (if (arrayp object) object (vconcat object)))
+	((and (eq type 'character) (stringp object)
+	      (eql (length object) 1)) (aref object 0))
+	((and (eq type 'character) (symbolp object))
+	 (coerce (symbol-name object) type))
 	;; XEmacs addition character <-> integer coercions
-	((and (eq type 'character) (char-int-p x)) (int-char x))
-	((and (eq type 'integer) (characterp x)) (char-int x))
-	((eq type 'float) (float x))
+	((and (eq type 'character) (char-int-p object)) (int-char object))
+	((and (memq type '(integer fixnum)) (characterp object))
+	 (char-int object))
+	((eq type 'float) (float object))
 	;; XEmacs addition: enhanced numeric type coercions
 	((and-fboundp 'coerce-number
-	   (memq type '(integer ratio bigfloat))
-	   (coerce-number x type)))
+	   (memq type '(integer ratio bigfloat fixnum))
+	   (coerce-number object type)))
 	;; XEmacs addition: bit-vector coercion
 	((or (eq type 'bit-vector)
 	     (eq type 'simple-bit-vector))
-	 (if (bit-vector-p x) x (apply 'bit-vector (append x nil))))
+	 (if (bit-vector-p object)
+	     object
+	   (apply 'bit-vector (append object nil))))
 	;; XEmacs addition: weak-list coercion
 	((eq type 'weak-list)
-	 (if (weak-list-p x) x
+	 (if (weak-list-p object) object
 	   (let ((wl (make-weak-list)))
-	     (set-weak-list-list wl (if (listp x) x (append x nil)))
+	     (set-weak-list-list wl (if (listp object)
+					object
+				      (append object nil)))
 	     wl)))
 	((and
-	  (consp type)
-	  (or (eq (car type) 'vector)
-	      (eq (car type) 'simple-array)
-	      (eq (car type) 'simple-vector))
-	  (cond
-	   ((equal (cdr-safe type) '(*))
-	    (coerce x 'vector))
-	   ((equal (cdr-safe type) '(bit))
-	    (coerce x 'bit-vector))
-	   ((equal (cdr-safe type) '(character))
-	    (coerce x 'string)))))
-	((typep x type) x)
-	(t (error "Can't coerce %s to type %s" x type))))
+	  (memq (car-safe type) '(vector simple-array))
+	  (loop
+	    for (ignore elements length) = type
+	    initially (declare (special ignore))
+	    return (if (or (memq length '(* nil)) (eql length (length object)))
+		       (cond
+			((memq elements '(t * nil))
+			 (coerce object 'vector))
+			((memq elements '(string-char character))
+			 (coerce object 'string))
+			((eq elements 'bit)
+			 (coerce object 'bit-vector)))
+		     (error 
+		      'wrong-type-argument
+		      "Type specifier length must equal sequence length"
+		      type)))))
+	((eq (car-safe type) 'simple-vector)
+	 (coerce object (list* 'vector t (cdr type))))
+	((memq (car-safe type)
+	       '(string simple-string base-string simple-base-string))
+	 (coerce object (list* 'vector 'character (cdr type))))
+	((eq (car-safe type) 'bit-vector)
+	 (coerce object (list* 'vector 'bit (cdr type))))
+	((typep object type) object)
+	(t (error 'invalid-operation
+		  "Can't coerce object to type" object type))))
 
-
-;;;;; Predicates.
-;;
-;;;; I'd actually prefer not to have this inline, the space
-;;;; vs. amount-it's-called trade-off isn't reasonable, but that would
-;;;; introduce bytecode problems with the compiler macro in cl-macs.el.
-;;(defsubst cl-string-vector-equalp (cl-string cl-vector)
-;;  "Helper function for `equalp', which see."
-;;;  (check-argument-type #'stringp cl-string)
-;;;  (check-argument-type #'vector cl-vector)
-;;  (let ((cl-i (length cl-string))
-;;	cl-char cl-other)
-;;    (when (= cl-i (length cl-vector))
-;;      (while (and (>= (setq cl-i (1- cl-i)) 0)
-;;		  (or (eq (setq cl-char (aref cl-string cl-i))
-;;			  (setq cl-other (aref cl-vector cl-i)))
-;;		      (and (characterp cl-other) ; Note we want to call this
-;;						 ; as rarely as possible, it
-;;						 ; doesn't have a bytecode.
-;;			   (eq (downcase cl-char) (downcase cl-other))))))
-;;      (< cl-i 0))))
-;;
-;;;; See comment on cl-string-vector-equalp above.
-;;(defsubst cl-bit-vector-vector-equalp (cl-bit-vector cl-vector)
-;;  "Helper function for `equalp', which see."
-;;;  (check-argument-type #'bit-vector-p cl-bit-vector)
-;;;  (check-argument-type #'vectorp cl-vector)
-;;  (let ((cl-i (length cl-bit-vector))
-;;	cl-other)
-;;    (when (= cl-i (length cl-vector))
-;;      (while (and (>= (setq cl-i (1- cl-i)) 0)
-;;		  (numberp (setq cl-other (aref cl-vector cl-i)))
-;;		  ;; Differs from clisp here.
-;;		  (= (aref cl-bit-vector cl-i) cl-other)))
-;;      (< cl-i 0))))
-;;
-;;;; These two helper functions call equalp recursively, the two above have no
-;;;; need to.
-;;(defsubst cl-vector-array-equalp (cl-vector cl-array)
-;;  "Helper function for `equalp', which see."
-;;;  (check-argument-type #'vector cl-vector)
-;;;  (check-argument-type #'arrayp cl-array)
-;;  (let ((cl-i (length cl-vector)))
-;;    (when (= cl-i (length cl-array))
-;;      (while (and (>= (setq cl-i (1- cl-i)) 0)
-;;		  (equalp (aref cl-vector cl-i) (aref cl-array cl-i))))
-;;      (< cl-i 0))))
-;;
-;;(defsubst cl-hash-table-contents-equalp (cl-hash-table-1 cl-hash-table-2)
-;;  "Helper function for `equalp', which see."
-;;  (symbol-macrolet
-;;      ;; If someone has gone and fished the uninterned symbol out of this
-;;      ;; function's constants vector, and subsequently stored it as a value
-;;      ;; in a hash table, it's their own damn fault when
-;;      ;; `cl-hash-table-contents-equalp' gives the wrong answer.
-;;      ((equalp-default '#:equalp-default))
-;;    (loop
-;;      for x-key being the hash-key in cl-hash-table-1
-;;      using (hash-value x-value)
-;;      with y-value = nil
-;;      always (and (not (eq equalp-default
-;;			   (setq y-value (gethash x-key cl-hash-table-2
-;;						  equalp-default))))
-;;		  (equalp y-value x-value)))))
-;;
-;;(defun equalp (x y)
-;;  "Return t if two Lisp objects have similar structures and contents.
-;;
-;;This is like `equal', except that it accepts numerically equal
-;;numbers of different types (float, integer, bignum, bigfloat), and also
-;;compares strings and characters case-insensitively.
-;;
-;;Arrays (that is, strings, bit-vectors, and vectors) of the same length and
-;;with contents that are `equalp' are themselves `equalp'.
-;;
-;;Two hash tables are `equalp' if they have the same test (see
-;;`hash-table-test'), if they have the same number of entries, and if, for
-;;each entry in one hash table, its key is equivalent to a key in the other
-;;hash table using the hash table test, and its value is `equalp' to the other
-;;hash table's value for that key."
-;;  (cond ((eq x y))
-;;	((stringp x)
-;;	 (if (stringp y)
-;;	     (eq t (compare-strings x nil nil y nil nil t))
-;;	   (if (vectorp y)
-;;	       (cl-string-vector-equalp x y)
-;;	     ;; bit-vectors and strings are only equalp if they're
-;;	     ;; zero-length:
-;;	     (and (equal "" x) (equal #* y)))))
-;;	((numberp x)
-;;	 (and (numberp y) (= x y)))
-;;	((consp x)
-;;	 (while (and (consp x) (consp y) (equalp (car x) (car y)))
-;;	   (setq x (cdr x) y (cdr y)))
-;;	 (and (not (consp x)) (equalp x y)))
-;;	(t
-;;	 ;; From here on, the type tests don't (yet) have bytecodes.
-;;	 (let ((x-type (type-of x)))
-;;	   (cond ((eq 'vector x-type)
-;;		  (if (stringp y)
-;;		      (cl-string-vector-equalp y x)
-;;		    (if (vectorp y)
-;;			(cl-vector-array-equalp x y)
-;;		      (if (bit-vector-p y)
-;;			  (cl-bit-vector-vector-equalp y x)))))
-;;		 ((eq 'character x-type)
-;;		  (and (characterp y)
-;;		       ;; If the characters are actually identical, the
-;;		       ;; first eq test will have caught them above; we only
-;;		       ;; need to check them case-insensitively here.
-;;		       (eq (downcase x) (downcase y))))
-;;		 ((eq 'hash-table x-type)
-;;		  (and (hash-table-p y)
-;;		       (eq (hash-table-test x) (hash-table-test y))
-;;		       (= (hash-table-count x) (hash-table-count y))
-;;		       (cl-hash-table-contents-equalp x y)))
-;;		 ((eq 'bit-vector x-type)
-;;		  (if (bit-vector-p y)
-;;		      (equal x y)
-;;		    (if (vectorp y)
-;;			(cl-bit-vector-vector-equalp x y)
-;;		      ;; bit-vectors and strings are only equalp if they're
-;;		      ;; zero-length:
-;;		      (and (equal "" y) (equal #* x)))))
-;;		 (t (equal x y)))))))
+;; XEmacs; #'equalp is in C.
 
 ;; XEmacs; #'map, #'mapc, #'mapl, #'maplist, #'mapcon, #'some and #'every
 ;; are now in C, together with #'map-into, which was never in this file.
 
-(defun notany (cl-pred cl-seq &rest cl-rest)
-  "Return true if PREDICATE is false of every element of SEQ or SEQs."
-  (not (apply 'some cl-pred cl-seq cl-rest)))
+;; The compiler macro for this in cl-macs.el means if #'complement is handed
+;; a constant expression, byte-compiled code will see a byte-compiled
+;; function.
+(defun complement (function &optional documentation)
+  "Return a function which gives the logical inverse of what FUNCTION would."
+  `(lambda (&rest arguments) ,@(if documentation (list documentation))
+     (not (apply ',function arguments))))
 
-(defun notevery (cl-pred cl-seq &rest cl-rest)
-  "Return true if PREDICATE is false of some element of SEQ or SEQs."
-  (not (apply 'every cl-pred cl-seq cl-rest)))
+(defun notany (cl-predicate cl-seq &rest cl-rest)
+  "Return true if PREDICATE is false of every element of SEQUENCE.
+
+With optional SEQUENCES, call PREDICATE each time with as many arguments as
+there are SEQUENCES (plus one for the element from SEQUENCE).
+
+arguments: (PREDICATE SEQUENCES &rest SEQUENCES)"
+  (not (apply 'some cl-predicate cl-seq cl-rest)))
+
+(defun notevery (cl-predicate cl-seq &rest cl-rest)
+  "Return true if PREDICATE is false of some element of SEQUENCE.
+
+With optional SEQUENCES, call PREDICATE each time with as many arguments as
+there are SEQUENCES (plus one for the element from SEQUENCE).
+
+arguments: (PREDICATE SEQUENCES &rest SEQUENCES)"
+  (not (apply 'every cl-predicate cl-seq cl-rest)))
 
 ;;; Support for `loop'.
 (defalias 'cl-map-keymap 'map-keymap)
@@ -348,7 +258,6 @@ TYPE is a Common Lisp type specifier."
       (makunbound (car cl-progv-save)))
     (pop cl-progv-save)))
 
-
 ;;; Numbers.
 
 (defun gcd (&rest args)
@@ -380,14 +289,6 @@ TYPE is a Common Lisp type specifier."
 	  (setq g g2))
 	g)
     (if (eq a 0) 0 (signal 'arith-error nil))))
-
-;; XEmacs addition
-(defun cl-expt (x y)
-  "Return X raised to the power of Y.  Works only for integer arguments."
-  (if (<= y 0) (if (= y 0) 1 (if (memq x '(-1 1)) (cl-expt x (- y)) 0))
-    (* (if (= (% y 2) 0) 1 x) (cl-expt (* x x) (/ y 2)))))
-(or (and (fboundp 'expt) (subrp (symbol-function 'expt)))
-    (defalias 'expt 'cl-expt))
 
 ;; We can't use macrolet in this file; whence the literal macro
 ;; definition-and-call:
@@ -473,15 +374,6 @@ If STATE is t, return a new state object seeded from the time of day."
 	(and (numberp res) (/= res (/ res 2)) res))
     (arith-error nil)))
 
-(defvar most-positive-float)
-(defvar most-negative-float)
-(defvar least-positive-float)
-(defvar least-negative-float)
-(defvar least-positive-normalized-float)
-(defvar least-negative-normalized-float)
-(defvar float-epsilon)
-(defvar float-negative-epsilon)
-
 (defun cl-float-limits ()
   (or most-positive-float (not (numberp '2e1))
       (let ((x '2e0) y z)
@@ -516,34 +408,12 @@ If STATE is t, return a new state object seeded from the time of day."
 	(setq float-negative-epsilon (* x 2))))
   nil)
 
+;; XEmacs; call cl-float-limits at dump time.
+(cl-float-limits)
 
 ;;; Sequence functions.
 
-;XEmacs -- our built-in is more powerful.
-;(defun subseq (seq start &optional end)
-;  "Return the subsequence of SEQ from START to END.
-;If END is omitted, it defaults to the length of the sequence.
-;If START or END is negative, it counts from the end."
-;  (if (stringp seq) (substring seq start end)
-;    (let (len)
-;      (and end (< end 0) (setq end (+ end (setq len (length seq)))))
-;      (if (< start 0) (setq start (+ start (or len (setq len (length seq))))))
-;      (cond ((listp seq)
-;	     (if (> start 0) (setq seq (nthcdr start seq)))
-;	     (if end
-;		 (let ((res nil))
-;		   (while (>= (setq end (1- end)) start)
-;		     (push (pop seq) res))
-;		   (nreverse res))
-;	       (copy-sequence seq)))
-;	    (t
-;	     (or end (setq end (or len (length seq))))
-;	     (let ((res (make-vector (max (- end start) 0) nil))
-;		   (i 0))
-;	       (while (< start end)
-;		 (aset res i (aref seq start))
-;		 (setq i (1+ i) start (1+ start)))
-;	       res))))))
+;; XEmacs; #'subseq is in C.
 
 (defun concatenate (type &rest seqs)
   "Concatenate, into a sequence of type TYPE, the argument SEQUENCES."
@@ -551,8 +421,9 @@ If STATE is t, return a new state object seeded from the time of day."
   (case type
     (vector (apply 'vconcat seqs))
     (string (apply 'concat seqs))
-    (list   (apply 'append (append seqs '(nil))))
-    (t (error "Not a sequence type name: %s" type))))
+    (list   (reduce 'append seqs :from-end t :initial-value nil))
+    (bit-vector (apply 'bvconcat seqs))
+    (t (coerce (reduce 'append seqs :from-end t :initial-value nil) type))))
 
 ;;; List functions.
 
@@ -564,21 +435,19 @@ If STATE is t, return a new state object seeded from the time of day."
   "Equivalent to (nconc (nreverse X) Y)."
   (nconc (nreverse x) y))
 
-(defun list-length (x)
-  "Return the length of a list.  Return nil if list is circular."
-  (let ((n 0) (fast x) (slow x))
-    (while (and (cdr fast) (not (and (eq fast slow) (> n 0))))
-      (setq n (+ n 2) fast (cdr (cdr fast)) slow (cdr slow)))
-    (if fast (if (cdr fast) nil (1+ n)) n)))
-
+;; XEmacs; check LIST for type and circularity.
 (defun tailp (sublist list)
   "Return true if SUBLIST is a tail of LIST."
-  (while (and (consp list) (not (eq sublist list)))
-    (setq list (cdr list)))
-  (if (numberp sublist) (equal sublist list) (eq sublist list)))
+  (check-argument-type #'listp list)
+  (let ((before list) (evenp t))
+    (while (and (consp list) (not (eq sublist list)))
+      (setq list (cdr list)
+	    evenp (not evenp))
+      (if evenp (setq before (cdr before)))
+      (if (eq before list) (error 'circular-list list)))
+    (eql sublist list)))
 
 (defalias 'cl-copy-tree 'copy-tree)
-
 
 ;;; Property lists.
 
@@ -586,17 +455,9 @@ If STATE is t, return a new state object seeded from the time of day."
 (defalias 'get* 'get)
 (defalias 'getf 'plist-get)
 
-(defun cl-set-getf (plist tag val)
-  (let ((p plist))
-    (while (and p (not (eq (car p) tag))) (setq p (cdr (cdr p))))
-    (if p (progn (setcar (cdr p) val) plist) (list* tag val plist))))
-
-(defun cl-do-remf (plist tag)
-  (let ((p (cdr plist)))
-    (while (and (cdr p) (not (eq (car (cdr p)) tag))) (setq p (cdr (cdr p))))
-    (and (cdr p) (progn (setcdr p (cdr (cdr (cdr p)))) t))))
-
-;; XEmacs change: we have a builtin remprop
+;; XEmacs; these are built-in.
+(defalias 'cl-set-getf 'plist-put)
+(defalias 'cl-do-remf 'plist-remprop)
 (defalias 'cl-remprop 'remprop)
 
 (defun get-properties (plist indicator-list)
@@ -797,8 +658,11 @@ This also does some trivial optimizations to make the form prettier."
 				     '((quote --cl-rest--)))))))
 		 (list (car form) (list* 'lambda (cadadr form) body))))
 	   (let ((found (assq (cadr form) env)))
-	     ;; XEmacs: cadr/caddr operate on nil without errors
-	     (if (eq (cadr (caddr found)) 'cl-labels-args)
+	     ;; XEmacs: cadr/caddr operate on nil without errors. But the
+	     ;; macro definition may be compiled, in which case there's
+	     ;; nothing for us to do.
+	     (if (and (listp (cdr found))
+		      (eq (cadr (caddr found)) 'cl-labels-args))
 		 (cl-macroexpand-all (cadr (caddr (cadddr found))) env)
 	       form))))
 	((memq (car form) '(defun defmacro))
@@ -824,7 +688,10 @@ This also does some trivial optimizations to make the form prettier."
     (prog1 (cl-prettyprint form)
       (message ""))))
 
-
+;; XEmacs addition; force cl-macs to be available from here on when
+;; compiling files to be dumped.  This is more reasonable than forcing other
+;; files to do the same, multiple times.
+(eval-when-compile (or (cl-compiling-file) (load "cl-macs")))
 
 (run-hooks 'cl-extra-load-hook)
 

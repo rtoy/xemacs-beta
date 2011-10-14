@@ -1,3 +1,2174 @@
+<<<<<<< local
+2010-04-14  Ben Wing  <ben@xemacs.org>
+=======
+2011-02-24  Aidan Kehoe  <kehoea@parhasard.net>
+>>>>>>> other
+
+<<<<<<< local
+	* array.h (Stynarr_declare):
+	Remove extra semi-colon leading to syntax errors.
+=======
+	* fns.c (Fsubstring_no_properties):
+	Sigh, get_string_range_char checks the type of its START and END
+	arguments, but doesn't check the type of its STRING
+	argument. Thank you Raymond Toy!
+>>>>>>> other
+
+<<<<<<< local
+2010-04-07  Ben Wing  <ben@xemacs.org>
+=======
+2011-02-19  Aidan Kehoe  <kehoea@parhasard.net>
+>>>>>>> other
+
+<<<<<<< local
+	* redisplay-msw.c (mswindows_output_vertical_divider):
+	* redisplay-xlike-inc.c:
+=======
+	* fns.c (Fset_exclusive_or):
+	This function accepts the :stable keyword too, document this in
+	its arglist.
+
+2011-02-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs.def.in.in:
+	No longer export acons(), export Facons() instead, thank you Mats,
+	Jerry and Jeff Sparkes.
+
+2011-02-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (shortest_length_among_sequences):
+	This was buggy, it always errored if the last argument was
+	circular, even if other arguments were non-circular. Correct that.
+
+2011-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (Facons):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (syms_of_alloc):
+	* faces.c (complex_vars_of_faces):
+	* lisp.h:
+	* mc-alloc.c (Fmc_alloc_memory_usage):
+	Rename acons() to Facons(), make it visible to Lisp. Change uses
+	of the function in C accordingly.
+
+2011-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (describe_map_sort_predicate): Correct the order of
+	arguments to map_keymap_sort_predicate() here. Thanks again, Mats.
+
+2011-02-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fapropos_internal):
+	Supply check_string_lessp_nokey explicitly as the CHECK_MERGE
+	argument to list_sort(), NULL no longer works. Thank you Mats
+	Lidell in IRC!
+
+2011-02-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c:
+	* fns.c (check_lss_key, check_lss_key_car): New.
+	* fns.c (check_string_lessp_key check_string_lessp_key_car): New.
+	* fns.c (get_merge_predicate): New.
+	* fns.c (list_merge):
+	* fns.c (array_merge):
+	* fns.c (list_array_merge_into_list):
+	* fns.c (list_list_merge_into_array):
+	* fns.c (list_array_merge_into_array):
+	* fns.c (Fmerge):
+	* fns.c (list_sort):
+	* fns.c (array_sort):
+	* fns.c (FsortX):
+	* fns.c (syms_of_fns):
+	* lisp.h:
+	Move #'sort, #'merge to using the same test approach as is used in
+	the functions that take TEST, TEST-NOT and KEY arguments.  This
+	allows us to avoid the Ffuncall() overhead when the most common
+	PREDICATE arguments are supplied, in particular #'< and
+	#'string-lessp.
+
+	* fontcolor-msw.c (sort_font_list_function):
+	* fontcolor-msw.c (mswindows_enumerate_fonts):
+	* dired.c:
+	* dired.c (Fdirectory_files):
+	* fileio.c:
+	* fileio.c (build_annotations):
+	* fileio.c (syms_of_fileio):
+	* keymap.c:
+	* keymap.c (keymap_submaps):
+	* keymap.c (map_keymap_sort_predicate):
+	* keymap.c (describe_map_sort_predicate):
+	* keymap.c (describe_map):
+	Change the various C predicates passed to list_sort () and
+	list_merge () to fit the new calling convention, returning
+	non-zero if the first argument is less than the second, zero
+	otherwise.
+
+2011-01-30  Michael Sperber  <mike@xemacs.org>
+
+	* redisplay.h: 
+	* redisplay.c: 
+	(redisplay_cancel_ritual_suicide): 
+	* eval.c (throw_or_bomb_out_unsafe): 
+	* device-x.c (x_IO_error_handler): Don't commit suicide when an X
+	device dies.
+
+2011-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (complex_vars_of_file_coding):
+	* intl-win32.c (complex_vars_of_intl_win32):
+	* profile.c (Fget_profiling_info):
+	* unicode.c (complex_vars_of_unicode):
+	Replace various awkward calls to nconc2 () with list6 () with
+	analogous calls to Ben's relatively-recently introduced listu (),
+	constructing a list from an arbitrary number of C arguments.
+
+2011-01-18  Mike Sperber  <mike@xemacs.org>
+
+	* s/freebsd.h: Zap. Not really needed anymore, and it has unclear
+	license status.
+
+2011-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* s/usg5-4.h (PTY_NAME_SPRINTF, PTY_TTY_NAME_SPRINTF):
+	That didn't work; attempt with qxestrcpy_ascii(),
+	qxestrncpy_ascii().
+
+2011-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* s/hpux11.h (PTY_TTY_NAME_SPRINTF, PTY_NAME_SPRINTF):
+	* s/usg5-4.h (PTY_TTY_NAME_SPRINTF, PTY_NAME_SPRINTF):
+	Replace sprintf() with qxesprintf(), strcpy with qxestrpy(),
+	hopefully fixing some platform-specific C++ builds.
+
+2011-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Ffind): Use the correct subr information here, pass in
+	the DEFAULT keyword argument value correctly.
+
+2011-01-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-msw.c (Fmswindows_printer_list): Remove a Fdelete ()
+	call here, remove the necessity for it.
+	* fns.c (Fdelete, Fdelq): 
+	* lisp.h:
+	Move #'delete, #'delq to Lisp, implemented in terms of #'delete*
+	* select.c (Fown_selection_internal):
+	* select.c (handle_selection_clear):
+	Use delq_no_quit() in these functions, don't reimplement it or use
+	Fdelq(), which is now gone.
+
+2011-01-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mc-alloc.c (get_used_list_index):
+	Replace some C++ comments with C-style /* comments.
+
+2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (FdeleteX, FremoveX, Fnsubstitute, Fsubstitute, syms_of_fns): 
+	Don't repeat the declaration and DEFSYMBOL() for Qnintersection in
+	this file; don't assume that bignums are always available. Fixes
+	some of the build problems the buildbot is showing me at the
+	moment.
+	(syms_of_fns): Remove a couple more duplicate symbol declarations.
+
+2011-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (print_ephemeron, print_weak_list, print_weak_box):
+	Be more helpful in printing these structures; show their contents,
+	print their UIDs so it's possible to distinguish between them.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move the heavy lifting from cl-seq.el to C, finally making those
+	functions first-class XEmacs citizens, with circularity checking,
+	built-in support for tests other than #'eql, and as much
+	compatibility with current Common Lisp as Paul Dietz' tests require.
+
+	* fns.c (check_eq_nokey, check_eq_key, check_eql_nokey)
+	(check_eql_key, check_equal_nokey, check_equal_key)
+	(check_equalp_nokey, check_equalp_key, check_string_match_nokey)
+	(check_string_match_key, check_other_nokey, check_other_key)
+	(check_if_nokey, check_if_key, check_match_eq_key)
+	(check_match_eql_key, check_match_equal_key)
+	(check_match_equalp_key, check_match_other_key): New. These are
+	basically to provide function pointers to be used by Lisp
+	functions that take TEST, TEST-NOT and KEY arguments.
+
+	(get_check_match_function_1, get_check_test_function)
+	(get_check_match_function): These functions work out which of the
+	previous list of functions to use, given the keywords supplied by
+	the user.
+
+	(count_with_tail): New. This is the bones of #'count.
+	(list_count_from_end, string_count_from_end): Utility functions
+	for #'count.
+	(Fcount): New, moved from cl-seq.el.
+	(list_position_cons_before): New. The implementation of #'member*,
+	and important in implementing various other functions.
+
+	(FmemberX, Fadjoin, FassocX, FrassocX, Fposition, Ffind)
+	(FdeleteX, FremoveX, Fdelete_duplicates, Fremove_duplicates)
+	(Fnsubstitute, Fsubstitute, Fsublis, Fnsublis, Fsubst, Fnsubst)
+	(Ftree_equal, Fmismatch, Fsearch, Fintersection, Fnintersection)
+	(Fsubsetp, Fset_difference, Fnset_difference, Fnunion, Funion)
+	(Fset_exclusive_or, Fnset_exclusive_or): New, moved here from
+	cl-seq.el.
+
+	(position): New. The implementation of #'find and #'position.
+	(list_delete_duplicates_from_end, subst, sublis, nsublis)
+	(tree_equal, mismatch_from_end, mismatch_list_list)
+	(mismatch_list_string, mismatch_list_array)
+	(mismatch_string_array, mismatch_string_string)
+	(mismatch_array_array, get_mismatch_func): Helper C functions for
+	the Lisp-visible functions.
+	(venn, nvenn): New. The implementation of the main Lisp functions that
+	treat lists as sets.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (DECLARE_N_KEYWORDS_8, DECLARE_N_KEYWORDS_9)
+	(CHECK_N_KEYWORDS_8, CHECK_N_KEYWORDS_9):
+	Support up to nine keywords in the PARSE_KEYWORDS() macro.
+
+2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (syms_of_elhash): 
+	* chartab.c (syms_of_chartab):
+	* abbrev.c (syms_of_abbrev):
+	* general-slots.h:
+	Move Qcount, Q_default, Q_test to general-slots.h, they're about
+	to be used by other files. Rename Q_default to Q_default_, for the
+	sake of the PARSE_KEYWORDS macro (given that default is a reserved
+	identifier in C). Add SYMBOL_KEYWORD_GENERAL(), analogous to
+	SYMBOL_GENERAL() to make this easier.
+
+2010-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* floatfns.c (Ffloat): If we've been handed a bigfloat here, it's
+	appropriate to give the same bigfloat back.
+
+2010-11-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Ffill):
+	Move all declarations before statements, for the sake of the
+	Visual Studio build. Thank you Vin!
+
+2010-11-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* font-mgr.c (Ffc_pattern_get): Fix my last change when both
+	--with-union-type and --with-xft are specified, thank you Robert
+	Delius Royar!
+
+2010-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.c (Fexpand_abbrev):
+	* alloc.c:
+	* alloc.c (Fmake_list):
+	* alloc.c (Fmake_vector):
+	* alloc.c (Fmake_bit_vector):
+	* alloc.c (Fmake_byte_code):
+	* alloc.c (Fmake_string):
+	* alloc.c (vars_of_alloc):
+	* bytecode.c (UNUSED):
+	* bytecode.c (Fbyte_code):
+	* chartab.c (decode_char_table_range):
+	* cmds.c (Fself_insert_command):
+	* data.c (check_integer_range):
+	* data.c (Fnatnump):
+	* data.c (Fnonnegativep):
+	* data.c (Fstring_to_number):
+	* elhash.c (hash_table_size_validate):
+	* elhash.c (decode_hash_table_size):
+	* eval.c (Fbacktrace_frame):
+	* event-stream.c (lisp_number_to_milliseconds):
+	* event-stream.c (Faccept_process_output):
+	* event-stream.c (Frecent_keys):
+	* event-stream.c (Fdispatch_event):
+	* events.c (Fmake_event):
+	* events.c (Fevent_timestamp):
+	* events.c (Fevent_timestamp_lessp):
+	* events.h:
+	* events.h (struct command_builder):
+	* file-coding.c (gzip_putprop):
+	* fns.c:
+	* fns.c (check_sequence_range):
+	* fns.c (Frandom):
+	* fns.c (Fnthcdr):
+	* fns.c (Flast):
+	* fns.c (Fnbutlast):
+	* fns.c (Fbutlast):
+	* fns.c (Fmember):
+	* fns.c (Ffill):
+	* fns.c (Freduce):
+	* fns.c (replace_string_range_1):
+	* fns.c (Freplace):
+	* font-mgr.c (Ffc_pattern_get):
+	* frame-msw.c (msprinter_set_frame_properties):
+	* glyphs.c (check_valid_xbm_inline):
+	* indent.c (Fmove_to_column):
+	* intl-win32.c (mswindows_multibyte_to_unicode_putprop):
+	* lisp.h:
+	* lisp.h (ARRAY_DIMENSION_LIMIT):
+	* lread.c (decode_mode_1):
+	* mule-ccl.c (ccl_get_compiled_code):
+	* number.h:
+	* process-unix.c (unix_open_multicast_group):
+	* process.c (Fset_process_window_size):
+	* profile.c (Fstart_profiling):
+	* unicode.c (Funicode_to_char):
+	Change NATNUMP to return 1 for positive bignums; changes uses of
+	it and of CHECK_NATNUM appropriately, usually by checking for an
+	integer in an appropriate range.
+	Add array-dimension-limit and use it in #'make-vector,
+	#'make-string. Add array-total-size-limit, array-rank-limit while
+	we're at it, for the sake of any Common Lisp-oriented code that
+	uses these limits.
+	Rename check_int_range to check_integer_range, have it take
+	Lisp_Objects (and thus bignums) instead.
+	Remove bignum_butlast(), just set int_n to an appropriately large
+	integer if N is a bignum.
+	Accept bignums in check_sequence_range(), change the functions
+	that use check_sequence_range() appropriately.
+	Move the definition of NATNUMP() to number.h; document why it's a
+	reasonable name, contradicting an old comment.
+
+2010-11-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (bignum_butlast): New.
+	(Fnbutlast, Fbutlast): Use it.
+	In #'butlast and #'nbutlast, if N is a bignum, we should always
+	return nil. Bug revealed by Paul Dietz' test suite, thank you
+	Paul.
+
+2010-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* .gdbinit.in: Remove lrecord_type_popup_data,
+	lrecord_type_window_configuration from this file, they're not
+	used, and their presence breaks pobj in GDB at runtime for me.
+
+2010-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fnreverse):
+	Check that non-list sequences are writable from Lisp before
+	modifying them. (There's an argument that we should do this for
+	list sequences too, but for the moment other code (e.g. #'setcar)
+	doesn't.)
+	(mapcarX): Initialise lisp_vals_staging, lisp_vals_type
+	explicitly, for the sake of compile warnings. Check if
+	lisp_vals_staging is non-NULL when deciding whether to replace a
+	string's range.
+	(Fsome): Cross-reference to #'find-if in the doc string for this
+	function.
+	(Freduce): GCPRO accum in this function, when a key argument is
+	specicified it can be silently garbage-collected.  When deciding
+	whether to iterate across a string, check whether the cursor
+	exceeds the byte len; while iterating, increment an integer
+	counter.  Don't ABORT() if check_sequence_range() returns when
+	handed a suspicious sequence; it is legal to supply the length of
+	SEQUENCE as the :end keyword value, and this will provoke our
+	suspicions, legitimately enough. (Problems with this function
+	revealed by Paul Dietz' ANSI test suite, thank you Paul Dietz.)
+	(Freplace): Check list sequence lengths using the arguments, not
+	the conses we're currently looking at, thank you Paul Dietz.
+
+2010-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Frandom): Correct the docstring here, the name of the
+	argument is LIMIT, not N.
+
+2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (bytecode_nreverse): Call Fnreverse() if SEQUENCE is
+	not a cons in this function.
+	(Fnreverse, Freverse):
+	Accept sequences, not just lists, in these functions.
+
+2010-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Flist_length): Error if LIST is dotted in this function;
+	document this behaviour.
+
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c (specifier_instance_from_inst_list):
+	Call call_with_suspended_errors() with ERROR_ME_WARN, explicitly;
+	avoids the problem Giacomo Boffi describes in
+	http://mid.gmane.org/19617.52517.341117.388679@aiuole.stru.polimi.it
+	, but the specifier instantiation bug that makes XEmacs fail for
+	him is still visible.
+
+2010-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (ulong_to_bit_string): If printing zero, actually print
+	a zero, don't return the empty string.
+
+2010-07-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* emodules.c (emodules_load):
+	Add one more dereference on f = dll_variable() in three places.
+	We then use EXTERNAL_TO_ITEXT on it, which returns an alloca'd
+	string, so I delete the unneeded alloca copy statements.
+	Fixes error reported by Anders Odberg, confirmed in
+	<rfawrpfhm3l.fsf@fangorn.uio.no>.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ui-byhand.c:
+	* gtk-glue.c:
+	Add copyright notice based on internal evidence.
+
+2010-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* number.h: Another permission consistency fix.
+
+2010-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fnbutlast, Fbutlast):
+	Tighten up Common Lisp compatibility for these two functions; they
+	need to operate on dotted lists without erroring.
+
+2010-10-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (list_merge):
+	Circularity checking here needs to be done independently for each
+	list, they can't share a loop counter. Thank you for the bug
+	report, Robert Pluim!
+
+2010-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (GET_DEFUN_LISP_OBJECT): Make the NEW_GC version of this
+	work, remove a needless and unhelpful semicolon.
+	(GET_DEFUN_LISP_OBJECT): Remove a needless semicolon from the
+	non-NEW_GC version of this.
+	(PARSE_KEYWORDS): Fix the indentation for the DEBUG_XEMACS
+	version of this macro.
+	(PARSE_KEYWORDS): Use GET_DEFUN_LISP_OBJECT() for both the NEW_GC
+	and non-NEW_GC versions of this macro, when working out the
+	function's min args. 
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS):
+	Turns out #elsif is not valid preprocessor syntax, who knew!
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS):
+	Correct the NEW_GC non-DEBUG_XEMACS version of this macro; under
+	such builds S##function is a pointer, not a Lisp_Subr structure.
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Simplify the API of PARSE_KEYWORDS for callers.
+
+	* lisp.h (PARSE_KEYWORDS): Simply the API, while making the
+	implementation a little more complex; work out KEYWORDS_OFFSET
+	from the appropriate Lisp_Subr struct, take the function name as
+	the C name of the DEFUN rather than a symbol visible as a
+	Lisp_Object, on debug builds assert that we're actually in the
+	function so we choke on badly-done copy-and-pasting,
+
+	* lisp.h (PARSE_KEYWORDS_8): New. This is the old PARSE_KEYWORDS.
+
+	* fns.c (Fmerge, FsortX, Ffill, Freduce, Freplace):
+	Change to use the new PARSE_KEYWORDS syntax.
+	* elhash.c (Fmake_hash_table): Chance to the new PARSE_KEYWORDS
+	syntax, rename a define to correspond to what other files use.
+	
+	* symbols.c (intern_massaging_name):
+	* buffer.c (ADD_INT):
+	Rename intern_converting_underscores_to_dashes() to
+	intern_massaging_name(), now it does a little more.
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* termcap.c:
+	Add a couple of missing includes here, which should fix builds
+	that use this file. (I have no access to such builds, but Mats'
+	buildbot shows output that indicates they fail at link time since
+	DEVICE_BAUD_RATE and IS_DIRECTORY_SEP are available.)
+
+2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Freduce):
+	Move statements outside of the braces surrounding the
+	EXTERNAL_LIST_LOOP_3 macro, fixing strict C89 builds. Thank you
+	for the report, Vin!
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Flist_length): New, moved here from cl-extra.el, needed
+	by the next function.
+	(shortest_length_among_sequences): New.
+	(Fmapconcat, FmapcarX, Fmapvector, Fmapcan, Fmapc, Fmap)
+	(Fmap_into, Fsome, Fevery):
+	Use shortest_length_among_sequences() when working out how many
+	iterations to do, only giving circular list errors if all
+	arguments are circular.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsubseq):
+	Change the string code to better fit in with the rest of this
+	function (it still uses get_string_range_char(), though, which *may*
+	diverge algorithmically from what we're doing).
+
+	If dealing with a cons, only call #'length if we have reason to
+	believe that the START and END arguments are badly specified, and
+	check for circular lists ourselves when that's appropriate.
+
+	If dealing with a vector, call Fvector() on the appropriate subset
+	of the old vector's data directly, don't initialise the result
+	with nil and then copy.
+
+	(Ffill):
+	Only check the range arguments for a cons SEQUENCE if we have good
+	reason to think they were badly specified.
+	
+	(Freduce):
+	Handle multiple values properly. Add bounds checking to this
+	function, as specificied by ANSI Common Lisp.
+
+2010-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Ffunction, Fquote):
+	Add argument information in the arguments: () format for these two
+	special operators.
+
+2010-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Freplace): 
+	Replace an accidental double semi-colon with a single semi-colon,
+	hopefully fixing Vin's Visual Studio 6 build. (Visual Studio 2005
+	had no problem with it, oddly.)
+
+2010-09-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move #'replace to C; add bounds checking to it and to #'fill.
+
+	* fns.c (Fsubseq, Ffill, mapcarX):
+	Don't #'nreverse in #'subseq, use fill_string_range and check
+	bounds in #'fill, use replace_string_range() in #'map-into
+	avoiding quadratic time when modfiying the string.
+
+	* fns.c (check_sequence_range, fill_string_range)
+	(replace_string_range, replace_string_range_1, Freplace):
+	New functions; check that arguments fit sequence dimensions, fill
+	a string range with a given character, replace a string range from
+	an Ibyte pointer.
+
+2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (char_table_default_for_type,
+	chartab_default_validate): New. 
+	(print_char_table, Freset_char_table, chartab_default_validate)
+	(chartab_instantiate, structure_type_create_chartab):
+	Accept keyword :default in the read syntax for char tables, and
+	print the default when it is not what was expected for the
+	time. Makes it a little easier to debug things.
+
+2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c (Fformat_time_string):
+	Use two backslashes so that there is at least one present in the
+	output of describe function, when describing the Roman month
+	number syntax in this function's docstring. Thanks for provoking
+	me to look at this, Stephen Turnbull.
+
+2010-09-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symsinit.h: Declare reinit_process_early() here, fixing the C++
+	build; thank you for pointing this out, Adam Sjøgren!
+	* fontcolor-msw.c (mswindows_string_to_color):
+	Cast the result of bsearch() to a colormap_t pointer, fixing the
+	Visual Studio 2005 build.
+
+2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* strftime.c (roman_upper, roman_lower, strftime):
+	Implement Roman month numbers, as used in central and eastern
+	Europe.
+	* editfns.c (Fformat_time_string):
+	Document two new escapes, to allow uppercase and lowercase Roman
+	month numbers. Remove documentation of a bug that we didn't
+	actually have.
+	* text.h (Qtime_function_encoding): We know the text encoding
+	coming from strftime(), because we always use the one in
+	strftime.c. Don't use Qnative.
+
+2010-09-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (list_merge, list_array_merge_into_list)
+	(list_array_merge_into_array):
+	Avoid algorithmic complexity surprises when checking for
+	circularity in these functions.
+	(Freduce): Fix some formatting, in passing.
+
+	(mapcarX): Drop the SOME_OR_EVERY argument to this function;
+	instead, take CALLER, a symbol reflecting the Lisp-visible
+	function that called mapcarX(). Use CALLER with
+	mapping_interaction_error() when sequences are modified
+	illegally. Don't cons with #'some, #'every, not even a little.
+	(Fmapconcat, FmapcarX, Fmapvector, Fmapcan, Fmapc, Fmap)
+	(Fmap_into, Fsome, Fevery): Call mapcarX() with its new
+	arguments.
+	(Fmapcan): Don't unnecessarily complicate the nconc call.
+
+	(maplist): Take CALLER, a symbol reflecting the Lisp-visible
+	function that called maplist(), rather than having separate
+	arguments to indicate mapl vs. mapcon.
+	Avoid algorithmic complexity surprises when checking for
+	circularity. In #'mapcon, check a given stretch of
+	result for well-formedness once, which was not previously the
+	case, despite what the comments said.
+	(Fmaplist, Fmapl, Fmapcon):
+	Call maplist() with its new arguments.	
+
+2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.c (process_getprop, process_putprop, process_remprop)
+	(process_plist, process_setplist, reinit_process_early):
+	Add functions to modify a process's property list.
+	* process-slots.h (MARKED_SLOT): Add a plist slot.
+
+	* fns.c (Fobject_setplist): New function, analogous to #'setplist,
+	but more general.
+	Update the documentation in the other plist functions to reflect
+	that processes now have property lists.
+	* emacs.c (main_1): Call reinit_process_early(), now processes have
+	plist methods that need to be initialised.
+	* symbols.c (reinit_symbol_objects_early): Fsetplist is the named
+	setplist method for symbols.
+
+2010-08-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* floatfns.c (ceiling_one_mundane_arg, floor_one_mundane_arg)
+	(round_one_mundane_arg, truncate_one_mundane_arg):
+	INTEGERP is always available, no need to wrap calls to it with
+	#ifdef HAVE_BIGNUM.
+	(Fceiling, Ffloor, Fround, Ftruncate, Ffceiling, Fffloor)
+	(Ffround, Fftruncate):
+	Correct some code formatting here.
+	* doprnt.c (emacs_doprnt_1):
+	Remove some needless #ifdef WITH_NUMBER_TYPES, now number.h is
+	always #included. 
+
+2010-08-26  Adam Sjøgren <asjo@koldfront.dk>
+
+	* glyphs-eimage.c (gif_instantiate): Try harder to find an
+	appropriate GIF colormap and then flag an error if one can't be
+	found.
+
+2010-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read_escape):
+	Make error messages better reflect the text that was encountered,
+	when overlong hex character escapes or non-Latin-1 octal character
+	escapes are encountered.
+
+2010-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (print_symbol):
+	Escape any symbols that look like ratios, in the same way we do
+	symbols that look like floats or integers. Prevents confusion in
+	the Lisp reader.
+	* lread.c (isratio_string): Make this available even on builds
+	without HAVE_RATIO, so we can print symbols that look like ratios
+	with the appropriate escapes.
+	* lisp.h:
+	Make isratio_string available even if HAVE_RATIO is not defined.
+
+2010-07-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (PARSE_KEYWORDS):
+	Always accept a nil :allow-other-keys keyword argument, as
+	described in the ALLOW-OTHER-KEYS-NIL Common Lisp issue writeup,
+	and as necessary for Paul Dietz' tests for #'reduce.
+
+	* fns.c (mapping_interaction_error): New.
+	(Freduce): Call mapping_interaction_error when KEY or FUNCTION
+	have modified a string SEQUENCE such that the byte length of the
+	string has changed, or such that the current cursor pointer
+	doesn't point to the beginning of a character.
+	Cf. the MAPPING-DESTRUCTIVE-INTERACTION Common Lisp issue
+	writeup.
+	When traversing a list, GCPRO the part of it we still have to
+	traverse, to avoid any crashes if FUNCTION or KEY amputate it
+	behind us and force a garbage collection.
+
+2010-06-05  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* gc.c:
+	* mc-alloc.c:
+	Document the new allocator and the new garbage collector.
+
+2010-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* elhash.c:
+	* emacs.c:
+	* glade.c:
+	* gtk-glue.c:
+	* gtk-xemacs.c:
+	* gtk-xemacs.h:
+	* m/alpha.h:
+	* number-gmp.c:
+	* number-gmp.h:
+	* number-mp.c:
+	* number-mp.h:
+	* number.c:
+	* number.h:
+	* s/hpux11-shr.h:
+	* s/mach-bsd4-3.h:
+	* s/sco7.h:
+	* symsinit.h:
+	* ui-byhand.c:
+	* ui-gtk.c:
+	* ui-gtk.h:
+	Correct FSF address in permission notice.
+	
+2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (Fpurecopy):
+	Moved to obsolete.el as an alias for #'identity, marked obsolete.
+
+2010-06-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Freduce):
+	Move this here from cl-seq.el, avoiding the need to cons.  This
+	has been tested using Paul Dietz' test suite, and everything
+	applicable passes, with the exception that the
+	ALLOW-OTHER-KEYS-NIL Common Lisp issue (functions with &key must
+	*always* accept :allow-other-keys nil) hasn't been implemented.
+
+2010-06-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (vars_of_lread):
+	* emacs.c:
+	(shut_down_emacs, vars_of_emacs, complex_vars_of_emacs):
+	* device-x.c (get_device_from_display)
+	(have_xemacs_resources_in_xrdb):
+	* device-gtk.c (Fgtk_init):
+	* config.h.in:
+	Remove all checks for InfoDock.
+
+2010-06-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Fsubstring_no_properties):
+	Add this function, API taken from GNU, though ours drops all
+	extent data, not just properties.
+
+2010-06-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs.c (syms_of_glyphs):
+	Remove the definition of Q_data from this file, now it's in
+	general-slots.h. Problem picked up by a C++ build.
+
+2010-05-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* rangetab.c (print_range_table, rangetab_instantiate)
+	(structure_type_create_rangetab):
+	* chartab.c (print_char_table, chartab_instantiate)
+	(structure_type_create_chartab):
+	* faces.c (syms_of_faces, print_face, face_validate):
+
+	Move structure syntax in these files to using keywords by default,
+	as is done in Common Lisp and GNU Emacs, accepting for the moment
+	the older non-keywords syntax too.
+
+	* glyphs.h: No need to have Q_data here.
+	* general-slots.h: Add Q_data, Q_type here.
+
+	* config.h.in (NEED_TO_HANDLE_21_4_CODE):
+	New #define, always 1 for the moment, replacing the previous
+	never-really-used NO_NEED_TO_HANDLE_21_4_CODE, and avoiding
+	confusing syntax.
+	
+	* eval.c (Ffuncall): Wrap the hack that allows #'throw to be
+	funcalled in #ifdef NEED_TO_HANDLE_21_4_CODE.
+	* elhash.c (syms_of_elhash): Move Q_type, Q_data to
+	general-slots.h. Change to NEED_TO_HANDLE_21_4_CODE throughout
+	this file.
+
+2010-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fontcolor-msw.c (mswindows_X_color_map): Sort this, case
+	insensitively, by the color name.
+	(colormap_t_compare): New function.
+	(mswindows_string_to_color): When using symbolic color names, use
+	binary search, not linear search.
+	(mswindows_color_list): No need to start from the beginning of the
+	array and call #'nreverse to get the colors in an intuitive order,
+	just build the list starting from the end of the array.
+
+2010-05-28  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* window.c (compute_window_usage): Unbreak `show-memory-usage' for
+	NEW_GC.
+
+2010-05-28  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* mc-alloc.c: 
+	* mc-alloc.c (visit_all_used_page_headers): 
+	* mc-alloc.c (install_page_in_used_list): 
+	* mc-alloc.c (mc_alloc_1): 
+	* mc-alloc.c (init_mc_allocator): 
+	* mc-alloc.c (Fmc_alloc_memory_usage): Allocate lrecord arrays in
+	own size class.
+
+2010-05-24  Mike Sperber  <mike@xemacs.org>
+
+	* lread.c (read1): Accept #B<binary>, #O<octal>, and #X<hex>, just
+	like GNU Emacs.
+
+2010-05-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* buffer.c (complex_vars_of_buffer):
+	Add buffer local variables buffer-display-count and
+	buffer-display-time.
+	(common_init_complex_vars_of_buffer):
+	Initialize them here.
+
+	* bufslots.h: Add slots for buffer-display-count and buffer-display-time.
+
+	* window.c (Fset_window_buffer): Update buffer-display-count and
+	buffer-display-time whenever a buffer is displayed.
+
+2010-05-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move `default-file-system-ignore-case' to C; pay attention to it
+	in creating the directory hash tables for #'locate-file. Fix a bug
+	where #'eq was specified when creating directory hash tables in
+	dired.c. 
+
+	* config.h.in (DEFAULT_FILE_SYSTEM_IGNORE_CASE): This is 1 on
+	Darwin.
+	* dired.c (make_directory_hash_table): If
+	#'file-system-ignore-case-p gives non-nil for a directory, created
+	the associated hash table with #'equalp as its test. Never use
+	#'eq as a directory hash table test.
+	* fileio.c (vars_of_fileio):
+	Move `default-file-system-ignore-case' here, so it can be a
+	constant boolean reflecting a compile-time #define.
+	* lisp.h: Update the declaration of make_directory_hash_table;
+	remove the declaration of wasteful_word_to_lisp, which was
+	#ifdef'd out.
+	* lread.c (Flocate_file): Take out a debugging statement from
+	this function.
+	(locate_file_refresh_hashing): Call make_directory_hash_table with
+	a Lisp string, not an Ibyte pointer.
+	(vars_of_lread): If DEFAULT_FILE_SYSTEM_IGNORE_CASE is defined,
+	use #'equalp as the hash table test for locate-file-hash-table,
+	not #'equal.
+	* s/win32-common.h (DEFAULT_FILE_SYSTEM_IGNORE_CASE):
+	Case should normally be ignored in file names on Win32.
+
+2010-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fquote, Ffunction): Error on more than one argument to
+	these special operators.
+	* data.c (syms_of_data): Move Qquote to general-slots.h from this
+	file, now it's used in eval.c
+
+2010-04-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fdocumentation):
+	If we have a zero length doc string in DOC, as may happen for
+	undocumented compiled function objects which nonetheless have file
+	information stored, return nil.
+	(Fsnarf_documentation):
+	DOC info existing for compiled functions without docstrings is
+	perfectly legitimate, now the file is also used to store file names.
+	* bytecode.c (set_compiled_function_documentation):
+	Allow this function to set the documentation successfully for
+	compiled function objects that don't currently have documentation;
+	most relevant for functions without docstrings which have file
+	information stored in DOC.
+
+2010-04-15  Ben Wing  <ben@xemacs.org>
+
+	* device-x.c (x_init_device):
+	Don't declare something const if we're going to modify it.
+	Clean up code to follow GNU coding standards.
+
+2010-04-12  Ben Wing  <ben@xemacs.org>
+
+	* specifier.c (specifier_memory_usage):
+	Disable specifier memory-usage stats for now.  Sometimes they can
+	end up with circularities in them and I'm not sure exactly whats
+	going on to produce them.
+
+2010-04-12  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* lisp.h:
+	* lisp.h (XREALLOC_ARRAY):
+	* text.h:
+	Port charset_codepoint_to_itext(), buffer_itext_to_charset_codepoint(),
+	EXTBYTE_STRING_TO_ALLOCA(), `enum converr' from ben-unicode-internal,
+	for use with the mule-wnnfns.c changes.
+	
+	* mule-wnnfns.c:
+	* mule-wnnfns.c (Fwnn_open):
+	* mule-wnnfns.c (Fwnn_dict_add):
+	* mule-wnnfns.c (Fwnn_dict_list):
+	* mule-wnnfns.c (Fwnn_get_zenkouho):
+	* mule-wnnfns.c (Fwnn_inspect):
+	* mule-wnnfns.c (Fwnn_bunsetu_kanji):
+	* mule-wnnfns.c (Fwnn_bunsetu_yomi):
+	* mule-wnnfns.c (Fwnn_word_info):
+	* mule-wnnfns.c (Fwnn_dict_search):
+	* mule-wnnfns.c (Fwnn_get_msg):
+	* mule-wnnfns.c (Fwnn_fuzokugo_set):
+	* mule-wnnfns.c (Fwnn_fuzokugo_get):
+	* mule-wnnfns.c (Fwnn_hinsi_list):
+	* mule-wnnfns.c (Fwnn_fisys_dict_add):
+	* mule-wnnfns.c (Fwnn_fiusr_dict_add):
+	* mule-wnnfns.c (Fwnn_notrans_dict_add):
+	* mule-wnnfns.c (Fwnn_bmodify_dict_add):
+	* mule-wnnfns.c (reinit_vars_of_mule_wnn):
+	* mule-wnnfns.c (vars_of_mule_wnn):
+	* mule-wnnfns.c (w2m):
+	* mule-wnnfns.c (m2w):
+	* mule-wnnfns.c (yes_or_no):
+	* mule-wnnfns.c (puts2):
+	* mule-wnnfns.c (check_wnn_server_type):
+	Mule-ize, borrowed from ben-unicode-internal.
+
+2010-04-09  Ben Wing  <ben@xemacs.org>
+
+	* fileio.c (check_writable):
+	* fileio.c (Fdo_auto_save):
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+>>>>>>> other
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+<<<<<<< local
+	* search.c (byte_scan_buffer):
+	Rename some variables to avoid warnings about global shadowings.
+	
+	* text.c:
+	* text.c (non_ascii_charset_codepoint_to_itext):
+	* text.c (round_up_to_valid_ichar):
+	* text.c (round_down_to_valid_ichar):
+	Provide round_down_to_valid_ichar() and round_up_to_valid_ichar()
+	when not Mule.
+	
+	* unicode.c (autoload_charset_unicode_tables):
+	Don't fclose() in the first stage since we will do it later when
+	we unbind, and doubly fclosing is fatal in Linux glibc.
+	
+	* window.c:
+	Put ifdefs around find_window_mirror_maybe() to avoid warnings.
+=======
+	* redisplay.c (create_text_block):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (redisplay_device):
+	* redisplay.c (window_line_number):
+	* redisplay.c (point_would_be_visible):
+	* redisplay.c (compute_display_line_dynarr_usage):
+	* specifier.c (prune_specifiers):
+	* specifier.c (finalize_specifier):
+	* specifier.c (make_magic_specifier):
+	* specifier.c (charset_matches_specifier_tag_set_p):
+	* specifier.c (Fdefine_specifier_tag):
+	* specifier.c (setup_device_initial_specifier_tags):
+	* specifier.c (bodily_specifier):
+	* specifier.c (add_spec_to_ghost_specifier):
+	* specifier.c (remove_ghost_specifier):
+	* specifier.c (set_specifier_fallback):
+	* specifier.c (specifier_instance_from_inst_list):
+	* specifier.c (set_specifier_caching):
+	Fix coding style to correspond to GNU standard.
+>>>>>>> other
+
+<<<<<<< local
+=======
+2010-04-09  Didier Verna  <didier@xemacs.org>
+
+	* fontcolor-xlike-inc.c (DEBUG_FONTS2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS4):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP1):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP4): Conditionalize
+	definitions on DEBUG_XEMACS, provide empty definitions otherwise.
+
+>>>>>>> other
+2010-04-06  Ben Wing  <ben@xemacs.org>
+
+	* elhash.c (Feq_hash):
+	Cast to EMACS_INT to fix warning.
+
+	* elhash.c (internal_hash):
+	* elhash.c (Feql_hash):
+	Fix spacing before parens.
+	
+	* general-slots.h:
+	* xemacs.def.in.in:
+	Export Qfixnump to fix eldap.c link error.
+
+2010-04-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* toolbar-msw.c (allocate_toolbar_item_id)
+	(mswindows_output_toolbar):
+	* menubar-msw.c (allocate_menu_item_id, checksum_menu_item): 
+	* glyphs-msw.c (mswindows_image_instance_hash):
+	* fontcolor-msw.c (mswindows_color_instance_equal):
+	* device-msw.c (hash_devmode):
+	Call internal_hash() with the correct number of arguments, declare
+	various hash methods with the correct number of arguments, fixing
+	the Win32 build. Thank you Vin.
+
+2010-04-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame.c (print_frame):
+	When printing a frame, print its device, making the output of
+	#'frame-list a lot more helpful if using gnuclient.
+
+2010-04-04  Ben Wing  <ben@xemacs.org>
+
+	* fontcolor-xlike-inc.c (mule_to_fc_charset):
+	* fontcolor-xlike-inc.c (struct charset_reporter):
+	Don't try to kludgily look directly into the Unicode tables; use
+	the API provided.
+
+2010-04-04  Ben Wing  <ben@xemacs.org>
+2010-04-04  Ben Wing  <ben@xemacs.org>
+
+	* font-mgr.c:
+	* font-mgr.c (fc_standard_properties):
+	* font-mgr.c (Ffc_pattern_p):
+	* font-mgr.c (Ffc_pattern_create):
+	* font-mgr.c (Ffc_name_parse):
+	* font-mgr.c (Ffc_name_unparse):
+	* font-mgr.c (Ffc_pattern_duplicate):
+	* font-mgr.c (Ffc_pattern_add):
+	* font-mgr.c (Ffc_pattern_del):
+	* font-mgr.c (Ffc_pattern_get):
+	* font-mgr.c (fc_config_create_using):
+	* font-mgr.c (fc_strlist_to_lisp_using):
+	* font-mgr.c (fontset_to_list):
+	* font-mgr.c (Ffc_config_p):
+	* font-mgr.c (Ffc_config_create):
+	* font-mgr.c (Ffc_config_destroy):
+	* font-mgr.c (Ffc_config_up_to_date):
+	* font-mgr.c (Ffc_config_build_fonts):
+	* font-mgr.c (Ffc_config_get_config_dirs):
+	* font-mgr.c (Ffc_config_get_font_dirs):
+	* font-mgr.c (Ffc_config_get_config_files):
+	* font-mgr.c (Ffc_config_get_cache):
+	* font-mgr.c (Ffc_config_get_fonts):
+	* font-mgr.c (Ffc_config_set_current):
+	* font-mgr.c (Ffc_config_get_blanks):
+	* font-mgr.c (Ffc_config_get_rescan_interval):
+	* font-mgr.c (Ffc_config_set_rescan_interval):
+	* font-mgr.c (Ffc_config_app_font_add_file):
+	* font-mgr.c (Ffc_config_app_font_add_dir):
+	* font-mgr.c (Ffc_config_app_font_clear):
+	* font-mgr.c (Ffc_init_load_config):
+	* font-mgr.c (Ffc_init_load_config_and_fonts):
+	* font-mgr.c (Ffc_config_get_current):
+	* font-mgr.c (size):
+	* font-mgr.c (Ffc_font_render_prepare):
+	* font-mgr.c (Ffc_font_match):
+	* font-mgr.c (Ffc_font_sort):
+	* font-mgr.c (Ffc_init):
+	* font-mgr.c (Ffc_get_version):
+	* font-mgr.c (Ffc_init_reinitialize):
+	* font-mgr.c (Ffc_init_bring_up_to_date):
+	* font-mgr.c (Fxlfd_font_name_p):
+	* font-mgr.c (make_xlfd_font_regexp):
+	* font-mgr.c (syms_of_font_mgr):
+	* font-mgr.c (vars_of_font_mgr):
+	* font-mgr.c (complex_vars_of_font_mgr):
+	Fix the code to conform to GNU style standards.
+	Rename xft-debug-level to debug-xft.
+	
+	* fontcolor-x.c:
+	* fontcolor-x.c (vars_of_fontcolor_x):
+	Rename debug-x-objects to debug-x-fonts.
+	
+	* fontcolor-xlike-inc.c:
+	* fontcolor-xlike-inc.c (DEBUG_FONTS1):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS4):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP1):
+	* fontcolor-xlike-inc.c (count_hyphens):
+	* fontcolor-xlike-inc.c (XFUN):
+	* fontcolor-xlike-inc.c (xlistfonts_checking_charset):
+	* fontcolor-xlike-inc.c (xft_find_charset_font):
+	Misc. code fixes, mostly cosmetic.  Get rid of some warnings.
+	Fix the code to conform to GNU style standards.
+	
+	* lisp.h:
+	* print.c:
+	* print.c (debug_out_lisp):
+	New function for doing printf-like formatting involving Lisp objects
+	and outputting to the debug output.
+
+2010-04-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (Ffill):
+	Be much more careful about resizing a string argument, update
+	pointers to within the string data that may have been relocated
+	with the string resize. Fixes a test hang reported by Vin Shelton;
+	thanks, Vin.
+
+2010-04-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.h:
+	* elhash.c (struct Hash_Table_Test, lisp_object_eql_equal)
+	(lisp_object_eql_hash, lisp_object_equal_equal)
+	(lisp_object_equal_hash, lisp_object_equalp_hash)
+	(lisp_object_equalp_equal, lisp_object_general_hash)
+	(lisp_object_general_equal, Feq_hash, Feql_hash, Fequal_hash)
+	(Fequalp_hash, define_hash_table_test, Fdefine_hash_table_test)
+	(init_elhash_once_early, mark_hash_table_tests, string_equalp_hash):
+	* glyphs.c (vars_of_glyphs):
+	Add a new hash table test in C, #'equalp.
+	Make it possible to specify new hash table tests with functions
+	define_hash_table_test, #'define-hash-table-test.
+	Use define_hash_table_test() in glyphs.c.
+	Expose the hash functions (besides that used for #'equal) to Lisp,
+	for people writing functions to be used with #'define-hash-table-test.
+	Call define_hash_table_test() very early in temacs, to create the
+	built-in hash table tests.
+
+	* ui-gtk.c (emacs_gtk_boxed_hash):
+	* specifier.h (struct specifier_methods):
+	* specifier.c (specifier_hash):
+	* rangetab.c (range_table_entry_hash, range_table_hash):
+	* number.c (bignum_hash, ratio_hash, bigfloat_hash):
+	* marker.c (marker_hash):
+	* lrecord.h (struct lrecord_implementation):
+	* keymap.c (keymap_hash):
+	* gui.c (gui_item_id_hash, gui_item_hash):
+	* glyphs.c (image_instance_hash, glyph_hash):
+	* glyphs-x.c (x_image_instance_hash):
+	* glyphs-msw.c (mswindows_image_instance_hash):
+	* glyphs-gtk.c (gtk_image_instance_hash):
+	* frame-msw.c (mswindows_set_title_from_ibyte):
+	* fontcolor.c (color_instance_hash, font_instance_hash):
+	* fontcolor-x.c (x_color_instance_hash):
+	* fontcolor-tty.c (tty_color_instance_hash):
+	* fontcolor-msw.c (mswindows_color_instance_hash):
+	* fontcolor-gtk.c (gtk_color_instance_hash):
+	* fns.c (bit_vector_hash):
+	* floatfns.c (float_hash):
+	* faces.c (face_hash):
+	* extents.c (extent_hash):
+	* events.c (event_hash):
+	* data.c (weak_list_hash, weak_box_hash):
+	* chartab.c (char_table_entry_hash, char_table_hash):
+	* bytecode.c (compiled_function_hash):
+	* alloc.c (vector_hash):
+	Change the various object hash methods to take a new EQUALP
+	parameter, hashing appropriately for #'equalp if it is true.
+
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (FsortX, Ffill):
+	Don't try to be clever with the ascii_begin string header slot in
+	these functions, just call init_string_ascii_begin().
+
+2010-04-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Avoid build failure, Apple's g++-4.0.1, Mac OS 10.4.
+	* sysdll.c (search_linked_libs, dll_variable): Correct some casts
+	for the C++ build.
+	* regex.h (END_C_DECLS, BEGIN_C_DECLS): Wrap function declarations
+	in extern "C" { ... } on the C++ build.
+	* mule-ccl.c (ccl_driver): Initialise i, silencing a warning on
+	a C++ build.
+	* keymap.c (key_desc_list_to_event):
+	Work around a bug in Apple's g++-4.0.1.
+
+2010-03-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (STRING_DATA_TO_OBJECT_ARRAY)
+	(BIT_VECTOR_TO_OBJECT_ARRAY, c_merge_predicate_key)
+	(c_merge_predicate_nokey, list_merge, array_merge)
+	(list_array_merge_into_list, list_list_merge_into_array)
+	(list_array_merge_into_array, CHECK_KEY_ARGUMENT, Fmerge)
+	(list_sort, array_sort, FsortX):
+	Move #'sort*, #'fill, #'merge from cl-seq.el to C, extending the
+	implementations of Fsort, Ffillarray, and merge() to do so.
+
+	* keymap.c (keymap_submaps, map_keymap_sort_predicate)
+	(describe_map_sort_predicate):
+	Change the calling semantics of the C sort predicates to return a
+	non-nil Lisp object if the first argument is less than the second,
+	rather than C integers.
+
+	* fontcolor-msw.c (sort_font_list_function): 
+	* fileio.c (build_annotations):
+	* dired.c (Fdirectory_files):
+	* abbrev.c (Finsert_abbrev_table_description):
+	Call list_sort instead of Fsort, list_merge instead of merge() in
+	these functions.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	Need to cast 0 to void (so both parts of conditional expression
+	have void type) to fix C++ compilation.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (lisp_object_memory_usage_full):
+	Don't crash if passed a non-record object (int or char).
+	
+	* alloc.c (tree_memory_usage_1):
+	* lrecord.h:
+	New function tree_memory_usage() to return the memory usage of
+	a tree of conses and/or vectors.
+	
+	* lisp.h:
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	Add SAFE_LIST_LOOP_* functions for looping over a list not known
+	to be correct or non-circular, but without signalling an error --
+	instead, just stop enumerating when an error detected.
+	
+	* emacs.c (main_1):
+	* specifier.c:
+	* specifier.c (specifier_memory_usage):
+	* specifier.c (vars_of_specifier):
+	* symsinit.h:
+	Add memory usage info for specifiers.
+
+2010-03-28  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c (put_char_table):
+	* text.h (rep_bytes_by_first_byte):
+	* text.h (valid_ibyteptr_p):
+	Fix compile errors/warnings when not --with-mule.
+
+	* font-mgr.c (fc_config_create_using):
+	* fontcolor-xlike-inc.c (XFUN):
+	Fix compile warnings when --with-xft.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	Fix bugs, make map-char-table smarter.
+
+	* chartab.c:
+	* chartab.c (create_new_chartab_table):
+	* chartab.c (put_chartab_table):
+	* chartab.c (put_char_table):
+	Setting a new range that partially overlapped an existing range
+	didn't work.
+	
+	* chartab.c (struct map_chartab_range):
+	* chartab.c (map_chartab_table):
+	* chartab.c (map_char_table):
+	Group together adjacent ranges.  This should significantly reduce
+	the number of times the mapping function is called and hide the
+	page-table implementation.
+	
+	* chartab.c (print_char_table):
+	* chartab.c (print_category_table):
+	When printing char tables and category tables, print the UID.
+	
+	* chartab.c (Fcopy_category_table):
+	`copy-category-table' was broken.
+
+	* chartab.c (complex_vars_of_chartab):
+	Create a category table using `make-category-table', not
+	`copy-category-table'.
+	
+	* text.c (old_mule_round_up_to_valid_ichar):
+	* text.c (old_mule_round_down_to_valid_ichar):
+	Fix bug preventing this from working properly.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* unicode.c (ensure_to_unicode_holds_range):
+	If memory is dumped, allocate a new block and copy the existing one,
+	rather than trying to realloc.
+
+2010-03-29  Ben Wing  <ben@xemacs.org>
+
+	* abbrev.c:
+	* abbrev.c (describe_abbrev):
+	* alloc.c:
+	* alloc.c (common_init_alloc_early):
+	* callint.c (Fprefix_numeric_value):
+	* callint.c (syms_of_callint):
+	* console.c (common_init_complex_vars_of_console):
+	* data.c (Fdiv):
+	* data.c (Fquo):
+	* event-stream.c (vars_of_event_stream):
+	* fileio.c (auto_save_error):
+	* fileio.c (Fdo_auto_save):
+	* fns.c:
+	* fns.c (bump_string_modiff):
+	* keymap.c (where_is_recursive_mapper):
+	* lisp.h (ONEP):
+	* lisp-disunion.h:
+	* lisp-disunion.h (INT_PLUS1):
+	* lisp-disunion.h (Qone):
+	* lisp-union.h:
+	* lisp-union.h (INT_MINUS):
+	* macros.c (Fstart_kbd_macro):
+	* marker.c (init_buffer_markers):
+	* marker.c (uninit_buffer_markers):
+	* minibuf.c (read_minibuffer_internal_unwind):
+	* number.c (Fdenominator):
+	* number.c (bigfloat_print):
+	* print.c (print_symbol):
+	* process-unix.c (get_internet_address):
+	* scrollbar.c (Fscrollbar_line_up):
+	* scrollbar.c (Fscrollbar_line_down):
+	* symbols.c:
+	* symbols.c (Fuser_variable_p):
+	* syntax.c (reset_buffer_syntax_cache_range):
+	* sysdep.c (init_system_name):
+	* tests.c (Ftest_hash_tables):
+	* unicode.c (allocate_jit_ucs_charset):
+	* window.c (temp_output_buffer_show):
+	* window.c (specifier_vars_of_window):
+	Create Qone, similar to Qzero, along with ONEP.  Use it.
+
+	* alloc.c (clone_bit_vector):
+	* lisp.h:
+	New function.
+	
+	* casetab.c (case_table_char):
+	* casetab.c (compute_canon_mapper):
+	* casetab.c (initialize_identity_mapper):
+	* casetab.c (compute_up_or_eqv_mapper):
+	* casetab.h:
+	* chartab.c:
+	* chartab.c (check_chartab_invariants):
+	* chartab.c (clone_chartab_table):
+	* chartab.c (create_new_chartab_table):
+	* chartab.c (free_chartab_table):
+	* chartab.c (compute_chartab_table_size_1):
+	* chartab.c (compute_chartab_table_size):
+	* chartab.c (compute_char_table_usage):
+	* chartab.c (char_table_memory_usage):
+	* chartab.c (put_chartab_table):
+	* chartab.c (put_char_table):
+	* chartab.c (map_chartab_table):
+	* chartab.c (check_if_blank):
+	* chartab.c (chartab_tables_equal):
+	* chartab.c (char_table_equal):
+	* chartab.c (hash_raw_chartab_val):
+	* chartab.c (char_table_hash):
+	* chartab.c (FROB1):
+	* chartab.c (init_chartab_tables):
+	* chartab.c (free_chartab_tables):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (Fget_char_table):
+	* chartab.c (put_char_table_range):
+	* chartab.c (Fput_char_table):
+	* chartab.c (map_char_table):
+	* chartab.c (slow_map_char_table_fun):
+	* chartab.c (chartab_data_validate):
+	* chartab.c (chartab_instantiate):
+	* chartab.c (category_table_equal):
+	* chartab.c (check_char_in_category):
+	* chartab.c (slow_map_category_table_fun):
+	* chartab.c (syms_of_chartab):
+	* chartab.c (vars_of_chartab):
+	* chartab.c (structure_type_create_chartab):
+	* chartab.h:
+	* chartab.h (SUBTAB_ARRAY_FROM_SUBTAB):
+	* chartab.h (ALLOCATE_LEVEL_1_CATEGORY_SUBTAB):
+	* chartab.h (GET_CHAR_BYTES):
+	* chartab.h (struct Lisp_Char_Table):
+	* chartab.h (enum chartab_range_type):
+	* chartab.h (CHAR_TABLES_PER_CATEGORY_TABLE):
+	* chartab.h (DESIGNATOR_TO_CHAR_TABLE):
+	* cmds.c (internal_self_insert):
+	* cmds.c (vars_of_cmds):
+	* editfns.c (Ftranslate_region):
+	* glyphs.c (display_table_entry):
+	* lrecord.h (enum lrecord_type):
+	* syntax.c (syntax_match):
+	* syntax.c (copy_to_mirrortab):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.c (update_just_this_syntax_table):
+	* syntax.h:
+	* text.c:
+	* text.c (old_mule_round_up_to_valid_ichar):
+	* text.c (old_mule_round_down_to_valid_ichar):
+	* text.c (Fchar_octet):
+	Redo char tables and category tables again:
+
+	(1) In a category table, store one char table per bit.  These char
+	tables are category char tables, and at level 1 instead of storing
+	a category subtable they store a size-256 bit vector.
+	Accordingly, the `category-subtable' object has been removed. All
+	the junk that involved multiplexing integral and Lisp_Object
+	values into a void * pointer has been removed.  Now we're back to
+	always just using Lisp_Object pointers.
+
+	Accordingly, we rename/merge functions:
+
+	get_char_table_lisp merged into get_char_table
+	get_char_table_lisp_raw merged into get_char_table_raw
+	get_char_table_lisp_1 -> get_char_table_1
+
+	(2) We now efficiently store ranges of characters, not just single
+	characters.  Essentially, at any level of the char tables, we can
+	store a non-table Lisp object, indicating that all the characters
+	spanned by that entry have the value of the given object.  Accordingly,
+	put_char_table() now takes a range, and the function passed to
+	map_char_table() is given a range.  Various places where
+	map_char_table() is called have been changed.
+
+	This also means that there is no more need for blank tables of the
+	sort that still exist in the Unicode tables.
+	
+	IMPORTANT: The ranges passed in to put_char_table() may encompass
+	non-characters, especially in old-Mule where there are lots of gaps
+	in the representation of characters.  put_char_table() simply stores
+	the ranges as-is, and does not try to avoid storing values for
+	non-characters.  This doesn't affect get_char_table(), but it
+	definitely does affect map_char_table().  To deal with this, we
+	create new functions round_up_to_valid_ichar() and
+	round_down_to_valid_ichar() that are used to take raw ranges in
+	map_char_table() and coerce them into possibly smaller ranges where
+	the characters on both ends are valid characters.  It may still be
+	the case that characters within the range are invalid.
+
+	This also means that if you copy a table in Lisp using
+	`map-char-table', the new table may not be `equal' to the first table
+	-- essentially, the "junk" areas where non-characters lie may be
+	set in the original table but unset in the new table, and
+	char_table_equal() isn't smart enough to ignore those "junk" areas.
+	Possibly this can be fixed by making map_char_table() expand its
+	ranges to the maximum extent.
+
+	* text.h:
+	* unicode.c (decode_utf_8):
+	* unicode.c (unicode_decode):
+
+	Rename the following functions and make them work correctly when
+	passed any Unicode codepoint:
+
+	valid_utf_16_first_surrogate() -> valid_unicode_leading_surrogate()
+	valid_utf_16_last_surrogate() -> valid_unicode_trailing_surrogate()
+	valid_utf_16_surrogate() -> valid_unicode_surrogate()
+
+	Change the definition of valid_unicode_codepoint_p() to reject
+	codepoints in the surrogate area.  This also affects valid_ichar_p().
+	Also make valid_ichar_p() reject characters that don't fit into
+	30 bits, which is as much as we can store.  Create ICHAR_MAX to
+	represent the maximum Ichar that fits in 30 bits.
+	Use the newer definition of valid_unicode_codepoint_p() in
+	decode_utf_8() rather than manually duplicating it.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c: Expand comment at top about recent change involving
+	category tables.
+	* unicode.c: #ifdnef UNICODE_INTERNAL around a label to avoid a
+	"label" unused" warning.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (to_unicode_base):
+	* charset.h (ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR):
+	* unicode.c:
+	* unicode.c (needed_sizeof_to_unicode_base):
+	* unicode.c (init_blank_unicode_tables):
+	* unicode.c (init_charset_unicode_tables):
+	* unicode.c (free_from_unicode_table):
+	* unicode.c (free_to_unicode_table):
+	* unicode.c (compute_from_unicode_table_size_1):
+	* unicode.c (compute_to_unicode_table_size_1):
+	* unicode.c (assert_not_any_blank_table):
+	* unicode.c (sledgehammer_check_from_table):
+	* unicode.c (sledgehammer_check_to_table):
+	* unicode.c (sledgehammer_check_unicode_tables):
+	* unicode.c (ensure_to_unicode_holds_range):
+	* unicode.c (set_unicode_conversion_char_to_unicode):
+	At the lowest level of the charset to-Unicode tables, store a
+	`struct to_unicode_base *' of variable size, instead of a fixed
+	size-256 array.  Since large charsets are usually of size 94x94,
+	the lowest levels will consist of 94-element arrays instead of
+	256-element arrays, saving more than half of the memory needed.
+	This makes the memory usage for these tables comparable to what
+	it was when charsets were not allowed to be larger than 96x96.
+
+	Also, when initializing the to-Unicode tables, start with a
+	blank table at level-2 rather than a 256-element table, and
+	change functions that process the to-Unicode tables so they
+	can handle this.  Change the functions that handle from-Unicode
+	tables similarly, although we haven't yet made the corresponding
+	change to the from-Unicode tables themselves.
+
+2010-03-23  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (free_normal_lisp_object): Fix unused var warning.
+	
+	* array.c:
+	* array.c (Stynarr_insert_many_1):
+	* array.h:
+	* array.h (Stynarr_declare):
+	* array.h (struct):
+	* array.h (Stynarr_init):
+	* array.h (Stynarr_free):
+	* array.h (Stynarr_add):
+	* faces.h:
+	* faces.h (struct):
+	* faces.h (struct face_cachel):
+	* window.c:
+	Stynarr code and especially the hacked-up way of describing stynarrs
+	for KKCC had various problems that led to crashes.  Fix it by adding
+	a nels_static tracking how many static elements have been created,
+	and make Stynarr_declare() parallel to Dynarr_declare(), add add
+	XD_STYNARR_DESC parallel to XD_DYNARR_DESC.
+	
+	Use new stynarr code to declare various foo-stynarr objects and
+	associated descriptions; use both in face_cachel definition
+	(faces.h) and description (window.c).
+	
+	* file-coding.c:
+	* file-coding.c (chain_finalize_coding_stream_1):
+	* file-coding.c (chain_finalize):
+	When xfree()ing a value, set the value to 0 afterwards so KKCC
+	doesn't end up trying to mark 0xDEADBEEF and crashing.
+	
+	* file-coding.c (detection_state_description_0): Deleted.
+	* file-coding.c (mark_detection_state):
+	`struct detection_state *' is actually a Lisp object, so declare it
+	that way in the description or KKCC will crash.
+	
+	* file-coding.c (coding_system_type_create):
+	* file-coding.h:
+	* file-coding.h (INITIALIZE_DETECTOR_DESCRIPTION):
+	* file-coding.h (INITIALIZE_DETECTOR_WITH_DESCRIPTION):
+	* mule-coding.c (reinit_coding_system_type_create_mule_coding):
+	Don't dump coding_detector_description_lines_count; instead, we
+	need to reinitialize the description of a `struct detection_state'
+	after pdump load because it's dynamically initialized; else we
+	will get a KKCC crash due to uninitialized description.
+	* gc.c (kkcc_backtrace_1):
+	Stop backtracing when we reach the bottom; else, we crash.
+	
+	* mule-coding.c (iso2022_finalize_detection_state):
+	When xfreeing a value, set the value to 0 afterwards so KKCC
+	doesn't end up trying to mark 0xDEADBEEF and crashing.
+	
+2010-03-22  Ben Wing  <ben@xemacs.org>
+
+	* casetab.c (case_table_char):
+	* casetab.c (compute_canon_mapper):
+	* casetab.c (initialize_identity_mapper):
+	* casetab.c (compute_up_or_eqv_mapper):
+	* casetab.h:
+	* chartab.c:
+	* chartab.c (init_blank_chartab_tables_1):
+	* chartab.c (init_blank_chartab_tables):
+	* chartab.c (copy_chartab_table):
+	* chartab.c (create_new_chartab_table):
+	* chartab.c (free_chartab_table):
+	* chartab.c (compute_chartab_table_size_1):
+	* chartab.c (compute_chartab_table_size):
+	* chartab.c (compute_char_table_usage):
+	* chartab.c (put_char_table):
+	* chartab.c (map_chartab_table):
+	* chartab.c (check_if_blank):
+	* chartab.c (chartab_tables_equal):
+	* chartab.c (char_table_equal):
+	* chartab.c (hash_raw_chartab_val):
+	* chartab.c (char_table_hash):
+	* chartab.c (FROB1):
+	* chartab.c (init_chartab_tables):
+	* chartab.c (free_chartab_tables):
+	* chartab.c (struct ptemap):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* chartab.c (check_non_category_char_table):
+	* chartab.c (make_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (Fchar_table_default):
+	* chartab.c (Fget_char_table):
+	* chartab.c (check_valid_char_table_value):
+	* chartab.c (put_char_table_range):
+	* chartab.c (Fput_char_table):
+	* chartab.c (Fremove_char_table):
+	* chartab.c (map_char_table):
+	* chartab.c (slow_map_char_table_fun):
+	* chartab.c (Fmap_char_table):
+	* chartab.c (init_blank_category_chartab_tables):
+	* chartab.c (category_table_equal):
+	* chartab.c (category_table_hash):
+	* chartab.c (mark_category_table):
+	* chartab.c (print_category_table):
+	* chartab.c (Fmake_category_table):
+	* chartab.c (check_category_table):
+	* chartab.c (check_char_in_category):
+	* chartab.c (Fcheck_category_at):
+	* chartab.c (Fchar_in_category_p):
+	* chartab.c (Fcopy_category_table):
+	* chartab.c (struct slow_map_category_table_arg):
+	* chartab.c (slow_map_category_table_fun):
+	* chartab.c (Fmap_category_table):
+	* chartab.c (word_boundary_p):
+	* chartab.c (syms_of_chartab):
+	* chartab.c (vars_of_chartab):
+	* chartab.c (structure_type_create_chartab):
+	* chartab.h:
+	* chartab.h (ALLOCATE_LEVEL_N_SUBTAB):
+	* chartab.h (FREE_ONE_SUBTAB):
+	* chartab.h (SUBTAB_EQ):
+	* chartab.h (enum chartab_range_type):
+	* chartab.h (CATEGORY_DESIGNATORP):
+	* cmds.c:
+	* cmds.c (internal_self_insert):
+	* cmds.c (vars_of_cmds):
+	* editfns.c:
+	* editfns.c (Ftranslate_region):
+	* elhash.c:
+	* elhash.c (print_hash_table_data):
+	* glyphs.c (display_table_entry):
+	* lisp.h:
+	* lrecord.h (enum lrecord_type):
+	* print.c:
+	* print.c (vars_of_print):
+	* rangetab.c (print_range_table):
+	* regex.c (re_match_2_internal):
+	* syntax.c (syntax_match):
+	* syntax.c (copy_to_mirrortab):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.h:
+	Rewrite category tables to reduce memory usage.  Instead of a
+	regular char table with pointers to bit vectors, we now have a
+	category-table object holding a set of 12 special char tables,
+	each of which reserves only 8 bits instead of 32 or 64 for each
+	value, corresponding to 8 tags.  #### It might make sense to
+	reserve even less space per char table, but we'd have to do some
+	trickiness to stuff multiple values into a single byte.
+
+	Add a variable `print-table-nonreadably-length' controlling the
+	number of entries printed in char, range, and hash tables when
+	`print-readably' is nil; defaults to 20. (When `print-readably'
+	is t, we print everything out.)
+
+	Renames:
+	
+	get_char_table -> get_char_table_lisp
+	get_char_table_raw -> get_char_table_lisp_raw
+	get_char_table_1 -> get_char_table_lisp_1
+
+	We also add a new get_char_table and get_char_table_raw that
+	return a void * pointer, which holds either a Lisp_Object or
+	a bit array of 8 bits or whatever, for category char tables.
+
+	To handle these new category tables, we have two new object
+	types: category tables and category subtables (which sit at
+	the lowest level of the page tables inside a char table, to
+	hold the 8-bit-wide bit arrays).
+	
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (struct Lisp_Charset):
+	* charset.h (CHARSET_DO_AUTOLOAD):
+	* charset.h (XCHARSET_DO_AUTOLOAD):
+	* lisp.h:
+	Add a `do_autoload' flag indicating whether the Unicode tables need
+	to be autoloaded still.
+
+	In charset_codepoint_to_unicode_raw_1(), autoload Unicode tables
+	if needed.
+	
+	* lisp.h:
+	* lisp.h (XCADDDDDDR):
+	Add X7TH() - X10TH(), as well as X1STCDR() - X10THCDR(), and
+	corresponding XCAD*R and XDD*R macros.
+	
+	* mule-charset.c (Fmake_charset):
+	Document the `unicode-map' property.
+	
+	* unicode.c (get_unicode_conversion_1):
+	Autoload Unicode tables if needed.
+
+	* unicode.c (set_unicode_conversion):
+	Don't try to retrieve previous conversion if we haven't yet autoloaded
+	the Unicode map, or we will trigger an infinite loop.
+
+	* unicode.c (enum load_unicode_flags):
+	* unicode.c (verify_load_unicode_args):
+	New function, to verify arguments to `load-unicode-mapping-table'.
+	Add bit flags to correspond to the `flags' argument.
+
+	* lisp.h:
+	* unicode.c (Fload_unicode_mapping_table):
+	Use verify_load_unicode_args().  If filename is relative, expand it
+	relative to `data-directory' (or `../etc' relative to `lisp-directory'
+	during loadup).  Document this behavior in the docstring.
+	
+	* unicode.c (autoload_charset_unicode_tables):
+	Load charset Unicode tables by calling Fload_unicode_mapping_table().
+	
+	* unicode.c (init_charset_unicode_map):
+	Instead of directly loading the Unicode tables from a file,
+	verify the arguments to `load-unicode-mapping-table', store them,
+	and set the `do_autoload' flag, so that the tables will be autoloaded
+	when needed.
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+2010-03-28  Ben Wing  <ben@xemacs.org>
+
+	* window.c (find_window_mirror_internal):
+	Stop looking if no window mirror, and return 0.
+	
+	* window.c (window_display_lines):
+	* window.c (window_display_buffer):
+	* window.c (set_window_display_buffer):
+	Don't need to update window mirror before calling find_window_mirror
+	because does the updating automatically.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* abbrev.c:
+	* abbrev.c (describe_abbrev):
+	* alloc.c:
+	* alloc.c (common_init_alloc_early):
+	* callint.c (Fprefix_numeric_value):
+	* callint.c (syms_of_callint):
+	* console.c (common_init_complex_vars_of_console):
+	* data.c (Fdiv):
+	* data.c (Fquo):
+	* event-stream.c (vars_of_event_stream):
+	* fileio.c (auto_save_error):
+	* fileio.c (Fdo_auto_save):
+	* fns.c:
+	* fns.c (bump_string_modiff):
+	* keymap.c (where_is_recursive_mapper):
+	* lisp.h (ONEP):
+	* lisp-disunion.h:
+	* lisp-disunion.h (INT_PLUS1):
+	* lisp-disunion.h (Qone):
+	* lisp-union.h:
+	* lisp-union.h (INT_MINUS):
+	* macros.c (Fstart_kbd_macro):
+	* marker.c (init_buffer_markers):
+	* marker.c (uninit_buffer_markers):
+	* minibuf.c (read_minibuffer_internal_unwind):
+	* number.c (Fdenominator):
+	* number.c (bigfloat_print):
+	* print.c (print_symbol):
+	* process-unix.c (get_internet_address):
+	* scrollbar.c (Fscrollbar_line_up):
+	* scrollbar.c (Fscrollbar_line_down):
+	* symbols.c:
+	* symbols.c (Fuser_variable_p):
+	* syntax.c (reset_buffer_syntax_cache_range):
+	* sysdep.c (init_system_name):
+	* tests.c (Ftest_hash_tables):
+	* unicode.c (allocate_jit_ucs_charset):
+	* window.c (temp_output_buffer_show):
+	* window.c (specifier_vars_of_window):
+	Create Qone, similar to Qzero, along with ONEP.  Use it.
+
+	* alloc.c (clone_bit_vector):
+	* lisp.h:
+	New function.
+	
+	* casetab.c (case_table_char):
+	* casetab.c (compute_canon_mapper):
+	* casetab.c (initialize_identity_mapper):
+	* casetab.c (compute_up_or_eqv_mapper):
+	* casetab.h:
+	* chartab.c:
+	* chartab.c (check_chartab_invariants):
+	* chartab.c (clone_chartab_table):
+	* chartab.c (create_new_chartab_table):
+	* chartab.c (free_chartab_table):
+	* chartab.c (compute_chartab_table_size_1):
+	* chartab.c (compute_chartab_table_size):
+	* chartab.c (compute_char_table_usage):
+	* chartab.c (char_table_memory_usage):
+	* chartab.c (put_chartab_table):
+	* chartab.c (put_char_table):
+	* chartab.c (map_chartab_table):
+	* chartab.c (check_if_blank):
+	* chartab.c (chartab_tables_equal):
+	* chartab.c (char_table_equal):
+	* chartab.c (hash_raw_chartab_val):
+	* chartab.c (char_table_hash):
+	* chartab.c (FROB1):
+	* chartab.c (init_chartab_tables):
+	* chartab.c (free_chartab_tables):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (Fget_char_table):
+	* chartab.c (put_char_table_range):
+	* chartab.c (Fput_char_table):
+	* chartab.c (map_char_table):
+	* chartab.c (slow_map_char_table_fun):
+	* chartab.c (chartab_data_validate):
+	* chartab.c (chartab_instantiate):
+	* chartab.c (category_table_equal):
+	* chartab.c (check_char_in_category):
+	* chartab.c (slow_map_category_table_fun):
+	* chartab.c (syms_of_chartab):
+	* chartab.c (vars_of_chartab):
+	* chartab.c (structure_type_create_chartab):
+	* chartab.h:
+	* chartab.h (SUBTAB_ARRAY_FROM_SUBTAB):
+	* chartab.h (ALLOCATE_LEVEL_1_CATEGORY_SUBTAB):
+	* chartab.h (GET_CHAR_BYTES):
+	* chartab.h (struct Lisp_Char_Table):
+	* chartab.h (enum chartab_range_type):
+	* chartab.h (CHAR_TABLES_PER_CATEGORY_TABLE):
+	* chartab.h (DESIGNATOR_TO_CHAR_TABLE):
+	* cmds.c (internal_self_insert):
+	* cmds.c (vars_of_cmds):
+	* editfns.c (Ftranslate_region):
+	* glyphs.c (display_table_entry):
+	* lrecord.h (enum lrecord_type):
+	* syntax.c (syntax_match):
+	* syntax.c (copy_to_mirrortab):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.c (update_just_this_syntax_table):
+	* syntax.h:
+	* text.c:
+	* text.c (old_mule_round_up_to_valid_ichar):
+	* text.c (old_mule_round_down_to_valid_ichar):
+	* text.c (Fchar_octet):
+	Redo char tables and category tables again:
+
+	(1) In a category table, store one char table per bit.  These char
+	tables are category char tables, and at level 1 instead of storing
+	a category subtable they store a size-256 bit vector.
+	Accordingly, the `category-subtable' object has been removed. All
+	the junk that involved multiplexing integral and Lisp_Object
+	values into a void * pointer has been removed.  Now we're back to
+	always just using Lisp_Object pointers.
+
+	Accordingly, we rename/merge functions:
+
+	get_char_table_lisp merged into get_char_table
+	get_char_table_lisp_raw merged into get_char_table_raw
+	get_char_table_lisp_1 -> get_char_table_1
+
+	(2) We now efficiently store ranges of characters, not just single
+	characters.  Essentially, at any level of the char tables, we can
+	store a non-table Lisp object, indicating that all the characters
+	spanned by that entry have the value of the given object.  Accordingly,
+	put_char_table() now takes a range, and the function passed to
+	map_char_table() is given a range.  Various places where
+	map_char_table() is called have been changed.
+
+	This also means that there is no more need for blank tables of the
+	sort that still exist in the Unicode tables.
+	
+	IMPORTANT: The ranges passed in to put_char_table() may encompass
+	non-characters, especially in old-Mule where there are lots of gaps
+	in the representation of characters.  put_char_table() simply stores
+	the ranges as-is, and does not try to avoid storing values for
+	non-characters.  This doesn't affect get_char_table(), but it
+	definitely does affect map_char_table().  To deal with this, we
+	create new functions round_up_to_valid_ichar() and
+	round_down_to_valid_ichar() that are used to take raw ranges in
+	map_char_table() and coerce them into possibly smaller ranges where
+	the characters on both ends are valid characters.  It may still be
+	the case that characters within the range are invalid.
+
+	This also means that if you copy a table in Lisp using
+	`map-char-table', the new table may not be `equal' to the first table
+	-- essentially, the "junk" areas where non-characters lie may be
+	set in the original table but unset in the new table, and
+	char_table_equal() isn't smart enough to ignore those "junk" areas.
+	Possibly this can be fixed by making map_char_table() expand its
+	ranges to the maximum extent.
+
+	* text.h:
+	* unicode.c (decode_utf_8):
+	* unicode.c (unicode_decode):
+
+	Rename the following functions and make them work correctly when
+	passed any Unicode codepoint:
+
+	valid_utf_16_first_surrogate() -> valid_unicode_leading_surrogate()
+	valid_utf_16_last_surrogate() -> valid_unicode_trailing_surrogate()
+	valid_utf_16_surrogate() -> valid_unicode_surrogate()
+
+	Change the definition of valid_unicode_codepoint_p() to reject
+	codepoints in the surrogate area.  This also affects valid_ichar_p().
+	Also make valid_ichar_p() reject characters that don't fit into
+	30 bits, which is as much as we can store.  Create ICHAR_MAX to
+	represent the maximum Ichar that fits in 30 bits.
+	Use the newer definition of valid_unicode_codepoint_p() in
+	decode_utf_8() rather than manually duplicating it.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c: Expand comment at top about recent change involving
+	category tables.
+	* unicode.c: #ifdnef UNICODE_INTERNAL around a label to avoid a
+	"label" unused" warning.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (to_unicode_base):
+	* charset.h (ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR):
+	* unicode.c:
+	* unicode.c (needed_sizeof_to_unicode_base):
+	* unicode.c (init_blank_unicode_tables):
+	* unicode.c (init_charset_unicode_tables):
+	* unicode.c (free_from_unicode_table):
+	* unicode.c (free_to_unicode_table):
+	* unicode.c (compute_from_unicode_table_size_1):
+	* unicode.c (compute_to_unicode_table_size_1):
+	* unicode.c (assert_not_any_blank_table):
+	* unicode.c (sledgehammer_check_from_table):
+	* unicode.c (sledgehammer_check_to_table):
+	* unicode.c (sledgehammer_check_unicode_tables):
+	* unicode.c (ensure_to_unicode_holds_range):
+	* unicode.c (set_unicode_conversion_char_to_unicode):
+	At the lowest level of the charset to-Unicode tables, store a
+	`struct to_unicode_base *' of variable size, instead of a fixed
+	size-256 array.  Since large charsets are usually of size 94x94,
+	the lowest levels will consist of 94-element arrays instead of
+	256-element arrays, saving more than half of the memory needed.
+	This makes the memory usage for these tables comparable to what
+	it was when charsets were not allowed to be larger than 96x96.
+
+	Also, when initializing the to-Unicode tables, start with a
+	blank table at level-2 rather than a 256-element table, and
+	change functions that process the to-Unicode tables so they
+	can handle this.  Change the functions that handle from-Unicode
+	tables similarly, although we haven't yet made the corresponding
+	change to the from-Unicode tables themselves.
+
+2010-03-23  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (free_normal_lisp_object): Fix unused var warning.
+	
+	* array.c:
+	* array.c (Stynarr_insert_many_1):
+	* array.h:
+	* array.h (Stynarr_declare):
+	* array.h (struct):
+	* array.h (Stynarr_init):
+	* array.h (Stynarr_free):
+	* array.h (Stynarr_add):
+	* faces.h:
+	* faces.h (struct):
+	* faces.h (struct face_cachel):
+	* window.c:
+	Stynarr code and especially the hacked-up way of describing stynarrs
+	for KKCC had various problems that led to crashes.  Fix it by adding
+	a nels_static tracking how many static elements have been created,
+	and make Stynarr_declare() parallel to Dynarr_declare(), add add
+	XD_STYNARR_DESC parallel to XD_DYNARR_DESC.
+	
+	Use new stynarr code to declare various foo-stynarr objects and
+	associated descriptions; use both in face_cachel definition
+	(faces.h) and description (window.c).
+	
+	* file-coding.c:
+	* file-coding.c (chain_finalize_coding_stream_1):
+	* file-coding.c (chain_finalize):
+	When xfree()ing a value, set the value to 0 afterwards so KKCC
+	doesn't end up trying to mark 0xDEADBEEF and crashing.
+	
+	* file-coding.c (detection_state_description_0): Deleted.
+	* file-coding.c (mark_detection_state):
+	`struct detection_state *' is actually a Lisp object, so declare it
+	that way in the description or KKCC will crash.
+	
+	* file-coding.c (coding_system_type_create):
+	* file-coding.h:
+	* file-coding.h (INITIALIZE_DETECTOR_DESCRIPTION):
+	* file-coding.h (INITIALIZE_DETECTOR_WITH_DESCRIPTION):
+	* mule-coding.c (reinit_coding_system_type_create_mule_coding):
+	Don't dump coding_detector_description_lines_count; instead, we
+	need to reinitialize the description of a `struct detection_state'
+	after pdump load because it's dynamically initialized; else we
+	will get a KKCC crash due to uninitialized description.
+	* gc.c (kkcc_backtrace_1):
+	Stop backtracing when we reach the bottom; else, we crash.
+	
+	* mule-coding.c (iso2022_finalize_detection_state):
+	When xfreeing a value, set the value to 0 afterwards so KKCC
+	doesn't end up trying to mark 0xDEADBEEF and crashing.
+	
+2010-03-22  Ben Wing  <ben@xemacs.org>
+
+	* casetab.c (case_table_char):
+	* casetab.c (compute_canon_mapper):
+	* casetab.c (initialize_identity_mapper):
+	* casetab.c (compute_up_or_eqv_mapper):
+	* casetab.h:
+	* chartab.c:
+	* chartab.c (init_blank_chartab_tables_1):
+	* chartab.c (init_blank_chartab_tables):
+	* chartab.c (copy_chartab_table):
+	* chartab.c (create_new_chartab_table):
+	* chartab.c (free_chartab_table):
+	* chartab.c (compute_chartab_table_size_1):
+	* chartab.c (compute_chartab_table_size):
+	* chartab.c (compute_char_table_usage):
+	* chartab.c (put_char_table):
+	* chartab.c (map_chartab_table):
+	* chartab.c (check_if_blank):
+	* chartab.c (chartab_tables_equal):
+	* chartab.c (char_table_equal):
+	* chartab.c (hash_raw_chartab_val):
+	* chartab.c (char_table_hash):
+	* chartab.c (FROB1):
+	* chartab.c (init_chartab_tables):
+	* chartab.c (free_chartab_tables):
+	* chartab.c (struct ptemap):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* chartab.c (check_non_category_char_table):
+	* chartab.c (make_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (Fchar_table_default):
+	* chartab.c (Fget_char_table):
+	* chartab.c (check_valid_char_table_value):
+	* chartab.c (put_char_table_range):
+	* chartab.c (Fput_char_table):
+	* chartab.c (Fremove_char_table):
+	* chartab.c (map_char_table):
+	* chartab.c (slow_map_char_table_fun):
+	* chartab.c (Fmap_char_table):
+	* chartab.c (init_blank_category_chartab_tables):
+	* chartab.c (category_table_equal):
+	* chartab.c (category_table_hash):
+	* chartab.c (mark_category_table):
+	* chartab.c (print_category_table):
+	* chartab.c (Fmake_category_table):
+	* chartab.c (check_category_table):
+	* chartab.c (check_char_in_category):
+	* chartab.c (Fcheck_category_at):
+	* chartab.c (Fchar_in_category_p):
+	* chartab.c (Fcopy_category_table):
+	* chartab.c (struct slow_map_category_table_arg):
+	* chartab.c (slow_map_category_table_fun):
+	* chartab.c (Fmap_category_table):
+	* chartab.c (word_boundary_p):
+	* chartab.c (syms_of_chartab):
+	* chartab.c (vars_of_chartab):
+	* chartab.c (structure_type_create_chartab):
+	* chartab.h:
+	* chartab.h (ALLOCATE_LEVEL_N_SUBTAB):
+	* chartab.h (FREE_ONE_SUBTAB):
+	* chartab.h (SUBTAB_EQ):
+	* chartab.h (enum chartab_range_type):
+	* chartab.h (CATEGORY_DESIGNATORP):
+	* cmds.c:
+	* cmds.c (internal_self_insert):
+	* cmds.c (vars_of_cmds):
+	* editfns.c:
+	* editfns.c (Ftranslate_region):
+	* elhash.c:
+	* elhash.c (print_hash_table_data):
+	* glyphs.c (display_table_entry):
+	* lisp.h:
+	* lrecord.h (enum lrecord_type):
+	* print.c:
+	* print.c (vars_of_print):
+	* rangetab.c (print_range_table):
+	* regex.c (re_match_2_internal):
+	* syntax.c (syntax_match):
+	* syntax.c (copy_to_mirrortab):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.h:
+	Rewrite category tables to reduce memory usage.  Instead of a
+	regular char table with pointers to bit vectors, we now have a
+	category-table object holding a set of 12 special char tables,
+	each of which reserves only 8 bits instead of 32 or 64 for each
+	value, corresponding to 8 tags.  #### It might make sense to
+	reserve even less space per char table, but we'd have to do some
+	trickiness to stuff multiple values into a single byte.
+
+	Add a variable `print-table-nonreadably-length' controlling the
+	number of entries printed in char, range, and hash tables when
+	`print-readably' is nil; defaults to 20. (When `print-readably'
+	is t, we print everything out.)
+
+	Renames:
+	
+	get_char_table -> get_char_table_lisp
+	get_char_table_raw -> get_char_table_lisp_raw
+	get_char_table_1 -> get_char_table_lisp_1
+
+	We also add a new get_char_table and get_char_table_raw that
+	return a void * pointer, which holds either a Lisp_Object or
+	a bit array of 8 bits or whatever, for category char tables.
+
+	To handle these new category tables, we have two new object
+	types: category tables and category subtables (which sit at
+	the lowest level of the page tables inside a char table, to
+	hold the 8-bit-wide bit arrays).
+	
+2010-03-19  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (struct Lisp_Charset):
+	* charset.h (CHARSET_DO_AUTOLOAD):
+	* charset.h (XCHARSET_DO_AUTOLOAD):
+	* lisp.h:
+	Add a `do_autoload' flag indicating whether the Unicode tables need
+	to be autoloaded still.
+
+	In charset_codepoint_to_unicode_raw_1(), autoload Unicode tables
+	if needed.
+	
+	* lisp.h:
+	* lisp.h (XCADDDDDDR):
+	Add X7TH() - X10TH(), as well as X1STCDR() - X10THCDR(), and
+	corresponding XCAD*R and XDD*R macros.
+	
+	* mule-charset.c (Fmake_charset):
+	Document the `unicode-map' property.
+	
+	* unicode.c (get_unicode_conversion_1):
+	Autoload Unicode tables if needed.
+
+	* unicode.c (set_unicode_conversion):
+	Don't try to retrieve previous conversion if we haven't yet autoloaded
+	the Unicode map, or we will trigger an infinite loop.
+
+	* unicode.c (enum load_unicode_flags):
+	* unicode.c (verify_load_unicode_args):
+	New function, to verify arguments to `load-unicode-mapping-table'.
+	Add bit flags to correspond to the `flags' argument.
+
+	* lisp.h:
+	* unicode.c (Fload_unicode_mapping_table):
+	Use verify_load_unicode_args().  If filename is relative, expand it
+	relative to `data-directory' (or `../etc' relative to `lisp-directory'
+	during loadup).  Document this behavior in the docstring.
+	
+	* unicode.c (autoload_charset_unicode_tables):
+	Load charset Unicode tables by calling Fload_unicode_mapping_table().
+	
+	* unicode.c (init_charset_unicode_map):
+	Instead of directly loading the Unicode tables from a file,
+	verify the arguments to `load-unicode-mapping-table', store them,
+	and set the `do_autoload' flag, so that the tables will be autoloaded
+	when needed.
+
 2010-03-22  Vin Shelton  <acs@xemacs.org>
 
 	* window.c (vars_of_window): Move HAVE_SCROLLBARS test so the code
@@ -8,6 +2179,1235 @@
 	* alloc.c (tick_lrecord_stats):
 	Fix the union build after Ben's last change, don't assume that a
 	Lisp_Object will fit into a Bytecount.
+
+2010-03-20  Ben Wing  <ben@xemacs.org>
+
+	* tests.c (Ftest_data_format_conversion):
+	Fix remaining test failures with c-tests -- problem was with the
+	tests, not the code being tested.
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c:
+	* file-coding.c (find_coding_system):
+	* file-coding.c (Ffind_coding_system):
+	* file-coding.c (Fautoload_coding_system):
+	* file-coding.c (coding_stream_set_state):
+	* file-coding.c (coding_stream_call_converter_1):
+	* file-coding.c (coding_stream_call_converter):
+	* file-coding.c (coding_reader):
+	* file-coding.c (coding_writer):
+	* file-coding.c (coding_closer):
+	* file-coding.c (coding_finalizer):
+	* file-coding.c (coding_stream_get_error_info):
+	* file-coding.c (set_coding_stream_coding_system):
+	* file-coding.c (make_coding_stream_1):
+	* file-coding.c (handle_encoding_error_after_output):
+	* file-coding.c (handle_encoding_error_before_output):
+	* file-coding.c (query_coding_1):
+	* file-coding.c (chain_convert):
+	* file-coding.c (chain_get_error_info):
+	* file-coding.c (convert_eol_decode):
+	* file-coding.c (output_bytes_in_ascii_and_hex):
+	* file-coding.c (undecided_decode):
+	* file-coding.c (gzip_decode):
+	* file-coding.c (gzip_encode):
+	* file-coding.h:
+	* file-coding.h (DECLARE_CODING_SYSTEM_TYPE):
+	* file-coding.h (struct coding_stream_state):
+	* file-coding.h (struct coding_stream):
+	* file-coding.h (CODING_STREAM_TYPE_DATA):
+	* file-coding.h (DECODE_OUTPUT_PARTIAL_CHAR):
+	* file-coding.h (ENCODING_ERROR_RETURN_OR_CONTINUE):
+	* lstream.c:
+	* lstream.c (Lstream_write):
+	* lstream.c (Lstream_read):
+	* lstream.c (Lstream_clear_error_occurred_p):
+	* lstream.c (Lstream_set_error_occurred_p):
+	* lstream.h:
+	* mule-coding.c (multibyte_decode):
+	* mule-coding.c (iso2022_decode):
+	* mule-coding.c (iso2022_encode):
+	* mule-coding.c (ccl_convert):
+	* unicode.c:
+	* unicode.c (unicode_decode):
+	Finish implementation of query-coding mechanism.
+
+	(1) Move `struct coding_stream' fields that encapsulate the current
+	state of the conversion into a `struct coding_stream_state' stored
+	inside `struct coding_stream'.  Add functions to retrieve and set
+	the conversion state.
+
+	(2) Extract code to call the convert method into separate functions.
+
+	(3) Implement coding_stream_back_propagate_offset() to convert an
+	offset in the other-end stream into an offset in this stream.
+	Basically, need to seek back to a known place and move forward
+	character by character until we have outputted the proper offset,
+	and observe the input offset.
+
+	(4) Use it in coding_writer().
+
+	(5) Redo error-handling mechanism somewhat.  Lstream_error_occurred_p()
+	now serves as an extra return value to Lstream_write() and
+	Lstream_read(), and is not guaranteed to be accurate otherwise.
+	Instead use coding_stream_get_error_info() to return info about
+	coding errors.
+
+	(6) Change good_written and total_written so when the values are set
+	they incorporate the written_before_convert offset rather than
+	having to subtract the value later.
+	
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c (coding_writer):
+	Add comments concerning what to do to implement back-propagation
+	of error offsets.
+	
+	* file-coding.c (coding_rewinder):
+	* file-coding.h (HAS_XCODESYSMETH_P):
+	* file-coding.c (gzip_rewind_coding_stream):
+	* file-coding.c (coding_system_type_create):
+	* file-coding.h (struct coding_system_methods):
+	* mule-coding.c (iso2022_rewind_coding_stream):
+	* mule-coding.c (coding_system_type_create_mule_coding):
+	* mule-coding.c (ccl_rewind_coding_stream):
+	* unicode.c (unicode_rewind_coding_stream):
+	* unicode.c (coding_system_type_create_unicode):
+	When no rewind_coding_stream method, call init_coding_stream if
+	available.  New macro HAS_XCODESYSMETH_P to make it easier to check
+	if a method exists.  Eliminate rewind_coding_stream methods from
+	a number of coding-system types, as they just called the
+	init_coding_stream method (gzip, ...).
+	
+	* file-coding.c (coding_rewinder):
+	* file-coding.c (set_coding_stream_coding_system):
+	* file-coding.c (make_coding_stream_1):
+	* file-coding.h (struct coding_stream):
+	* file-coding.h (DECODE_OUTPUT_PARTIAL_CHAR):
+	* mule-coding.c (struct multibyte_coding_stream):
+	* mule-coding.c (multibyte_init_coding_stream):
+	* mule-coding.c (multibyte_decode):
+	* mule-coding.c (struct shift_jis_coding_system):
+	* mule-coding.c (shift_jis_decode):
+	* mule-coding.c (shift_jis_init_coding_stream):
+	* mule-coding.c (struct big5_coding_system):
+	* mule-coding.c (big5_decode):
+	* mule-coding.c (big5_init_coding_stream):
+	* mule-coding.c (struct iso2022_coding_stream):
+	* mule-coding.c (iso2022_decode):
+	Get rid of coding-stream state variable `ch'.  Move to type-specific
+	state info.
+	
+	* file-coding.h (struct coding_system_methods):
+	Add copy_coding_stream method, for use in implementing tell()
+	on a stream (the whole state has to be copied).
+	
+	* file-coding.h (struct coding_stream):
+	Add `data_copy' for storing a copy of the type-specific state data.
+	(#### Perhaps not the final interface.)
+	
+	* lisp.h (Dynarr_delete_object):
+	Flobmoxify (i.e. mangle) variable name to make it unique in macro.
+
+	* lisp.h (Dynarr_copy):
+	New macro.
+	
+	* mule-coding.c (struct iso2022_coding_stream):
+	* mule-coding.c (reset_iso2022_decode):
+	* mule-coding.c (reset_iso2022_encode):
+	* mule-coding.c (iso2022_mark_iso2022_coding_stream):
+	* mule-coding.c (iso2022_designate):
+	* mule-coding.c (iso2022_encode):
+	Get rid of Unicode-precedence object stored in the iso2022 stream.
+	It's only used in one place -- substitute a loop over the charsets
+	that would have been placed into the Unicode-precedence object.
+	(Doing this eliminates some complexities with iso2022 state info.)
+	
+	* mule-coding.c (iso2022_copy_coding_stream):
+	* mule-coding.c (iso2022_finalize_coding_stream):
+	* mule-coding.c (coding_system_type_create_mule_coding):
+	Add iso2022_copy_coding_stream, but only when
+	ENABLE_COMPOSITE_CHARS.  iso2022_finalize_coding_stream now used
+	only when ENABLE_COMPOSITE_CHARS.
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c:
+	* file-coding.c (coding_rewinder):
+	* file-coding.c (no_conversion_decode):
+	* file-coding.c (no_conversion_encode):
+	* file-coding.c (convert_eol_decode):
+	* file-coding.c (convert_eol_encode):
+	* file-coding.c (undecided_decode):
+	* file-coding.c (internal_convert):
+	* file-coding.c (gzip_decode):
+	* file-coding.c (gzip_encode):
+	* file-coding.c (gzip_convert):
+	* file-coding.h:
+	* file-coding.h (struct coding_stream):
+	* intl-win32.c (mswindows_multibyte_convert):
+	* mule-coding.c:
+	* mule-coding.c (multibyte_decode):
+	* mule-coding.c (multibyte_encode):
+	* mule-coding.c (multibyte_convert):
+	* mule-coding.c (shift_jis_decode):
+	* mule-coding.c (shift_jis_encode):
+	* mule-coding.c (big5_decode):
+	* mule-coding.c (big5_encode):
+	* mule-coding.c (iso2022_decode):
+	* mule-coding.c (iso2022_encode):
+	* mule-coding.c (iso2022_convert):
+	* mule-coding.c (ccl_convert):
+	* unicode.c:
+	* unicode.c (unicode_decode):
+	* unicode.c (unicode_encode):
+	Create separate *_encode() and *_decode() routines, with correct
+	type of the underlying unsigned char * pointers (UExtbyte for
+	external, byte-oriented data vs. Ibyte for internal, character-
+	oriented data).  Eliminate most of the partial-char mechanism for
+	accumulating a partial character during encoding -- it's not
+	necessary since we're always passed data in chunks of whole characters
+	when encoding.  Eliminate COPY_PARTIAL_CHAR_BYTE.
+
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* console-tty.c (tty_init_console):
+	* event-msw.c (make_ntpipe_input_stream):
+	* event-msw.c (make_ntpipe_output_stream):
+	* event-msw.c (winsock_closer):
+	* event-msw.c (make_winsock_stream_1):
+	* event-msw.c (make_winsock_input_stream):
+	* event-msw.c (make_winsock_output_stream):
+	* event-msw.c (get_winsock_stream_waitable):
+	* file-coding.c:
+	* file-coding.c (Fautoload_coding_system):
+	* file-coding.c (setup_eol_coding_systems):
+	* file-coding.c (make_coding_system_1):
+	* file-coding.c (coding_reader):
+	* file-coding.c (coding_writer):
+	* file-coding.c (set_coding_character_mode):
+	* file-coding.c (coding_closer):
+	* file-coding.c (set_coding_stream_coding_system):
+	* file-coding.c (make_coding_stream_1):
+	* file-coding.c (make_coding_input_stream):
+	* file-coding.c (make_coding_output_stream):
+	* file-coding.c (encode_decode_coding_region):
+	* file-coding.c (query_coding_1):
+	* file-coding.c (chain_canonicalize_after_coding):
+	* file-coding.c (chain_init_coding_streams_1):
+	* file-coding.c (chain_convert):
+	* file-coding.c (chain_finalize_coding_stream_1):
+	* file-coding.c (chain_get_error_info):
+	* file-coding.c (convert_eol_convert):
+	* file-coding.c (convert_eol_canonicalize_after_coding):
+	* file-coding.c (coding_category_symbol_to_id):
+	* file-coding.c (detection_result_symbol_to_number):
+	* file-coding.c (detect_coding_type):
+	* file-coding.c (look_for_coding_system_magic_cookie):
+	* file-coding.c (undecided_print):
+	* file-coding.c (undecided_init_coding_stream):
+	* file-coding.c (undecided_convert):
+	* file-coding.c (undecided_canonicalize_after_coding):
+	* file-coding.c (detect_coding_stream):
+	* file-coding.c (Fdetect_coding_region):
+	* file-coding.c (gzip_convert):
+	* file-coding.h:
+	* file-coding.h (struct coding_stream):
+	* lstream.c:
+	* lstream.c (finalize_lstream):
+	* lstream.c (disksave_lstream):
+	* lstream.c (Lstream_new):
+	* lstream.c (Lstream_set_character_mode):
+	* lstream.c (Lstream_unset_character_mode):
+	* lstream.c (Lstream_reopen):
+	* lstream.c (Lstream_really_write):
+	* lstream.c (Lstream_write_1):
+	* lstream.c (Lstream_write):
+	* lstream.c (Lstream_raw_read):
+	* lstream.c (Lstream_read_1):
+	* lstream.c (Lstream_pseudo_close):
+	* lstream.c (Lstream_close):
+	* lstream.c (Lstream_fputc):
+	* lstream.c (Lstream_set_error_occurred_p):
+	* lstream.c (struct stdio_stream):
+	* lstream.c (make_stdio_stream_1):
+	* lstream.c (make_stdio_input_stream):
+	* lstream.c (make_stdio_output_stream):
+	* lstream.c (stdio_flusher):
+	* lstream.c (stdio_closer):
+	* lstream.c (struct filedesc_stream):
+	* lstream.c (make_filedesc_stream_1):
+	* lstream.c (make_filedesc_input_stream):
+	* lstream.c (make_filedesc_output_stream):
+	* lstream.c (filedesc_reader):
+	* lstream.c (filedesc_write_single_byte):
+	* lstream.c (filedesc_writer):
+	* lstream.c (filedesc_closer):
+	* lstream.c (filedesc_stream_set_pty_flushing):
+	* lstream.c (make_lisp_string_input_stream):
+	* lstream.c (lisp_string_reader):
+	* lstream.c (make_fixed_buffer_input_stream):
+	* lstream.c (make_fixed_buffer_output_stream):
+	* lstream.c (make_resizing_buffer_output_stream):
+	* lstream.c (make_dynarr_output_stream):
+	* lstream.c (struct lisp_buffer_stream):
+	* lstream.c (make_lisp_buffer_stream_1):
+	* lstream.c (make_lisp_buffer_input_stream):
+	* lstream.c (make_lisp_buffer_output_stream):
+	* lstream.c (lisp_buffer_reader):
+	* lstream.h:
+	* lstream.h (LSTR_CLOSING):
+	* lstream.h (LSTR_ALLOW_QUIT):
+	* lstream.h (LSTR_PTY_FLUSHING):
+	* lstream.h (LSTR_BLOCKED_OK):
+	* process-unix.c (unix_send_process):
+	* text.c (Lstream_fput_ichar):
+	Cleanups of lstream code in preparation for further changes
+	to query-coding-region mechanism:
+
+	-- Rename Lstream flags from LSTREAM_FL_* to LSTR_*.
+	-- Change Lstream_new() to take flags, ala read(), instead of
+	   an fread()-style mode string.  Update lstream-type-specific flags
+	   so they consistently start at 1 << 16, and eliminate various
+           lstream-type-specific mechanisms for handling flags in favor of
+	   unifying generic and type-specific flags and storing all the flags
+	   in a single `flags' field in the Lstream.
+	-- Add new "cumulative read/written" fields in the coding lstream;
+	   stored, but not used yet.
+	-- Instead of Lstream_write_no_store(), use a flag LSTR_NO_SQUIRREL.
+	   Pass this flag in query_coding_1().  Propagate this flag from a
+	   chain coding stream to the underlying coding streams.  Change
+	   Lstream_write() to return number of bytes written instead of
+	   just 0 or -1.
+	-- Write a long comment about the workings of the chain coding system
+	   and how it interacts with back-propagation of the good_read and
+	   similar error offsets; not finished.
+	-- Write code in chain_convert() to back-propagate error info;
+	   doesn't yet actually convert the offsets properly.
+	-- Add functions Lstream_set_error_occurred_p() and Lstream_is_type().
+	
+
+2010-03-14  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c:
+	Update `make-coding-system' doc string on safe-chars, safe-charsets.
+
+2010-03-14  Ben Wing  <ben@xemacs.org>
+
+	OVERALL CHANGES:
+
+	-- New query-coding-region mechanism; instead of a separate
+	mechanism, it simply tries to encode the data and watches for
+	errors.  This requires a new mechanism for signalling errors in
+	encoding methods, and the encoding methods of the various coding
+	systems have to be modified appropriately.  We also need to
+	improve error-handling in Lstreams so we can properly propagate
+	these errors back to the caller.  In particular, previously errors
+	were signalled by returning -1 from reader and writer methods, but
+	this was only possible when no data was read or written.  Now the
+	two (returning amount of data processed and signalling an error)
+	have been separated, at least at the lowest level.  Higher levels
+	still use the "-1 for error when no data processed" convention,
+	but eventually this will change, too.
+
+	-- Some cleanup and refactoring of UTF-8 handling code, especially
+	between unicode.c (`unicode' coding system) and mule-coding.c
+	(`iso2022' coding system).
+	
+	* charset.h: Spacing changes.
+	
+	* event-msw.c (ntpipe_slurp_reader):
+	* event-msw.c (ntpipe_shove_writer):
+	* event-msw.c (winsock_reader):
+	* event-msw.c (winsock_writer):
+	* file-coding.c (coding_reader):
+	* file-coding.c (coding_writer):
+	* lstream.c:
+	* lstream.c (Lstream_really_write):
+	* lstream.c (Lstream_write_1):
+	* lstream.c (Lstream_write):
+	* lstream.c (Lstream_raw_read):
+	* lstream.c (Lstream_fputc):
+	* lstream.c (Lstream_error_occurred_p):
+	* lstream.c (make_lisp_buffer_input_stream):
+	* lstream.c (make_lisp_buffer_output_stream):
+	* lstream.h:
+	* lstream.h (struct lstream):
+	Lstream reader and writer methods now set a flag to signal an error
+	rather than returning -1.  Modify all such methods and callers
+	(Lstream_really_write(), Lstream_raw_read()) appropriately.
+
+	Add a new function Lstream_write_no_store() for use with the new
+	query-error mechanism below, that doesn't buffer (aka "squirrel
+	away") remaining data when less than all of it was written.
+	(We don't want this buffering when using the query-error mechanism
+	because we purposely want to stop converting each time an error is
+	encountered.) #### This should have a better name and perhaps
+	better interface.  Perhaps we should never squirrel data away when
+	an error occurs.  Currently we don't squirrel if an error occurs
+	and no data was written, but we do if some data was written.
+
+	Add new functions Lstream_error_occurred_p() and
+	Lstream_clear_error_occurred_p() to query/clear the flag indicating
+	that an error occurred.
+
+	#### We should probably further modify the reader/writer interface
+	to separate out returning 0 and encountering EOF.
+
+	Factor out some duplicated code inside of filedesc_writer() into
+	filedesc_write_single_byte().
+	
+	* extents.c:
+	* extents.c (Fset_extent_face):
+	* extents.h:
+	Make map_extents() externally callable and better document the
+	flags to the function.  Add EXFUN declarations for `delete-extent',
+	`extent-face' and `duplicable'.
+	
+	* file-coding.c:
+	* file-coding.c (Fvalid_coding_system_type_p):
+	* file-coding.c (make_coding_stream_1):
+	* file-coding.c (encode_decode_coding_region):
+	* file-coding.c (cleanup_query_streams):
+	* file-coding.c (query_coding_1):
+	* file-coding.c (Fquery_coding_region):
+	* file-coding.c (Fquery_coding_string):
+	* file-coding.c (chain_init_coding_streams_1):
+	* file-coding.c (chain_convert):
+	* file-coding.c (chain_get_error_info):
+	* file-coding.c (no_conversion_convert):
+	* file-coding.c (convert_eol_convert):
+	* file-coding.c (undecided_convert):
+	* file-coding.c (internal_convert):
+	* file-coding.c (gzip_convert):
+	* file-coding.c (syms_of_file_coding):
+	* file-coding.c (vars_of_file_coding):
+	* file-coding.c (complex_vars_of_file_coding):
+	* file-coding.h:
+	* file-coding.h (enum handle_coding_error):
+	* file-coding.h (enum coding_system_variant):
+	* file-coding.h (struct coding_system_methods):
+	* file-coding.h (INITIALIZE_CODING_SYSTEM_TYPE):
+	* file-coding.h (struct coding_stream):
+	* file-coding.h (LSTREAM_FL_NO_CLOSE_OTHER):
+	* intl-win32.c:
+	* intl-win32.c (mswindows_multibyte_to_unicode_convert):
+	* intl-win32.c (complex_vars_of_intl_win32):
+	* lisp.h:
+	* mule-coding.c (multibyte_convert):
+	* mule-coding.c (shift_jis_convert):
+	* mule-coding.c (big5_convert):
+	* mule-coding.c (struct iso2022_coding_stream):
+	* mule-coding.c (parse_iso2022_esc):
+	* mule-coding.c (iso2022_encode):
+	* mule-coding.c (iso2022_convert):
+	* mule-coding.c (ccl_convert):
+	Eliminate default_query_method and all other stuff related to the
+	old query-coding-region machinery.  Rewrite all the convert
+	methods so that they indicate when an error occurs -- during
+	decoding by inserting "error octets" into the stream of characters
+	and during encoding by making note of where the error occurred in
+	the source and sink streams. (Done using functions such as
+	handle_encoding_error_after_output(),
+	handle_encoding_error_before_output(),
+	handle_standard_encoding_error(), handle_possible_error_octet(),
+	ENCODING_ERROR_RETURN_OR_CONTINUE().) Add flags to
+	make_coding_input_stream() and make_coding_output_stream() that
+	allow different handling of errors -- either ignore them
+	("continue"), stop on error, or stop but ignore invalid-sequence
+	errors. (Generally speaming, invalid-sequence errors are
+	data-preserving whereas unencodable errors are data-losing.)  Add
+	coding_stream_get_error_info() to retrieve error info after an
+	error has occurred.
+
+	Write a new query-coding-region that uses this mechanism; also
+	move query-coding-string into C, since it's only a minor change as
+	everything is now done with streams.
+
+	#### NOTE FIXME: There is still a major problem with the new
+	query-error mechanism when we have a coding system with non-default
+	EOL handling (i.e. `-mac' or `-dos'.)  Internally such a coding
+	system is converted ("canonicalized") into a chain of two coding
+	systems, one which handles the actual conversion and one which
+	handles EOL conversion.  Propagating error positions back through
+	the chain of coding systems is tricky and not yet written.
+	There is some #if 0'ed out code that was a start but it won't
+	get done till the next commit.
+
+	Note also that the order of arguments to the `convert' methods
+	has changed to group the source and its length together.
+	
+	Rename `make-coding-system-internal' back to `make-coding-system'
+	and move its documentation back to C.
+
+	Add a long comment about different properties of coding streams
+	(input vs. output, decoding vs. encoding, byte vs. character source
+	and/or sink).
+
+	Fix documentation on LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING.
+
+	Better document the fields in `struct coding_stream'.  Add new
+	fields to handle the new error mechanism and new error-related flags.
+	
+	* mule-coding.c:
+	* unicode.c (indicate_invalid_utf_8):
+	Move add_unicode_to_dynarr() and indicate_invalid_utf_8()
+	to unicode.c, move handle_possible_error_octet() to file-coding.c.
+	
+	* mule-coding.c (iso2022_decode):
+	* unicode.c (decode_utf_8):
+	* unicode.c (unicode_convert):
+	Extract duplicated UTF-8-handling code (in unicode_convert() and
+	iso2022_decode(), to handle UTF-8 inside of ISO-2022) to a single
+	function decode_utf_8(), with a flag allow_private to determine
+	whether we allow Unicode codepoints over #x10FFFF (yes with
+	escape-quoted, no otherwise).
+
+	Fix a bug (typo) in handling 4-byte UTF-8 sequences. (Actually
+	turns out not to matter.)
+	
+	* mule-coding.c (iso2022_encode):
+	* mule-coding.c (iso2022_convert):
+	Fix some places with poor CONVERR_* error handling.
+	
+	* mule-coding.c (syms_of_mule_coding):
+	* mule-coding.c (coding_system_type_create_mule_coding):
+	* mule-coding.c (reinit_coding_system_type_create_mule_coding):
+	* mule-coding.c (vars_of_mule_coding):
+	Eliminate the `fixed-width' coding-system type, replaced by
+	`multibyte'.
+	
+	* rangetab.c (put_range_table):
+	Note in comment that the comparison method should probably be
+	specifiable instead of always `eq'.
+	
+	* text.c (non_ascii_set_itext_ichar):
+	Fix comment about where UTF-8 encoding code is duplicated.
+	
+	* unicode.c:
+	* unicode.c (Fset_unicode_query_skip_chars_args): Removed.
+	* unicode.c (syms_of_unicode):
+	* unicode.c (coding_system_type_create_unicode):
+	* unicode.c (complex_vars_of_unicode):
+	Eliminate some stuff related to the old query-error mechanism.
+	Kill `set-unicode-query-skip-chars-args'.
+	
+	* unicode.c (UNICODE_DECODE_ERROR_OCTET):
+	Rename from DECODE_ERROR_OCTET(), because there is now another
+	DECODE_ERROR_OCTET() that does less.
+	
+	* unicode.c (decode_unicode_to_dynarr):
+	Rename decode_unicode_char to decode_unicode_to_dynarr_0() and
+	extract part of it into decode_unicode_to_dynarr().
+	
+	* unicode.c (encode_unicode_to_dynarr):
+	Rename encode_unicode_char to encode_unicode_to_dynarr() and
+	clean up a lot.
+	
+	* unicode.c (unicode_convert):
+	Get rid of use of `unsigned int' `unsigned char' etc. for
+	integral types and use `int' consistently.
+
+	* lisp.h:
+	* unicode.h:
+	Move `enum unicode_encoding_type' and related prototypes from
+	lisp.h to unicode.h; move `struct unicode_coding_stream' from
+	unicode.c to unicode.h as it's now used in mule-coding.c.
+
+	* Makefile.in.in:
+	general-late.el no longer dependent on whether compiled with
+	--unicode-internal.
+
+2010-03-08  Ben Wing  <ben@xemacs.org>
+
+	* unicode.c:
+	Support ranges of charset codepoints mapping onto ranges of
+	Unicode codepoints.  Necessary in order to integrate GNU Emacs
+	mapping tables.
+
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c (output_bytes_in_ascii_and_hex):
+	* file-coding.c (detect_coding_type):
+	* file-coding.c (undecided_init_coding_stream):
+	* file-coding.c (undecided_rewind_coding_stream):
+	Use debug_out* instead of stderr_out*, in case print-readably has
+	been set.
+	
+	* file-coding.h:
+	* file-coding.h (LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING):
+	extern Vdebug_coding_detection.
+
+	* fileio.c:
+	* lread.c (Fload_internal):
+	during load-internal, insert-file-contents-internal and
+	write-region-internal, if `debug-coding-detection', show arguments
+	to all calls.
+
+	* lisp.h:
+	* print.c:
+	* print.c (fatal):
+	* print.c (ext_print_begin):
+	* print.c (debug_out_lisp):
+	* print.c (debug_backtrace):
+	* print.c (debug_short_backtrace):
+	Clean up and rearrange; add debug_out_lisp(), for printf-like
+	output involving Lisp objects.
+
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* charset.h (struct Lisp_Charset):
+	* charset.h (CHARSET_BADVAL_UNICODE_CODE):
+	* charset.h (XCHARSET_BADVAL_UNICODE_CODE):
+	* text.c:
+	* text.c (ichar_string_displayed_columns):
+	* text.c (ibyte_string_nonascii_chars):
+	* unicode.c:
+	* unicode.c (find_badval_for_charset):
+	* unicode.c (init_charset_unicode_tables):
+	* unicode.c (set_unicode_conversion_char_to_unicode):
+	* unicode.c (set_unicode_conversion_unicode_to_char):
+	* unicode.c (set_unicode_conversion):
+	* unicode.c (get_unicode_conversion_1):
+	(1) Allow `nil' as a value to `set-unicode-conversion', to remove
+	    a conversion for a particular charset codepoint.
+	(2) Fix Unicode conversion so that all charset codepoints can be
+	    assigned Unicode conversions.  We have to reserve one charset
+	    codepoint as a "badval" to indicate that no conversion from
+	    a particular Unicode codepoint exists.  Previously it was
+	    impossible to assign a conversion to that charset codepoint,
+	    but now we store the value specially in the charset and check
+	    for it.  The setting for "badval" attempts to avoid any value
+	    that is likely to exist in any known charsets, but the previous
+	    value was set incorrectly so that it included an actual 
+	    codepoint in `viscii'.  We also now have a test in mule-tests
+	    that creates a 256x256 charset and checks that all codepoints
+	    can be assigned conversions, to make sure we exercise the
+	    "badval"-handling code.
+	(3) There was still a bug in text.h that prevented non-Mule compiling;
+	    fixed.
+	(4) The previous check for setting a conversion for ascii or latin-1
+	    was incorrect.
+
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* .gdbinit.in.in:
+	* charset.h:
+	* file-coding.c:
+	* file-coding.c (coding_stream_extra_description_map):
+	* file-coding.c (set_coding_stream_coding_system):
+	* file-coding.c (sizeof_detection_state):
+	* file-coding.c (allocate_detection_state):
+	* file-coding.c (mark_detection_state):
+	* file-coding.c (free_detection_state):
+	* file-coding.c (struct undecided_coding_stream):
+	* file-coding.c (undecided_init):
+	* file-coding.c (undecided_mark):
+	* file-coding.c (undecided_print):
+	* file-coding.c (undecided_putprop):
+	* file-coding.c (undecided_getprop):
+	* file-coding.c (undecided_convert):
+	* file-coding.c (syms_of_file_coding):
+	* file-coding.c (coding_system_type_create):
+	* file-coding.h:
+	* file-coding.h (struct coding_system_methods):
+	* file-coding.h (DEFINE_CODING_SYSTEM_TYPE_WITH_DATA):
+	* file-coding.h (INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA):
+	* file-coding.h (struct detection_state):
+	* file-coding.h (struct detector_category):
+	* file-coding.h (struct detector):
+	* file-coding.h (struct coding_stream):
+	* file-coding.h (CODING_STREAM_DATA):
+	* gc.c:
+	* gc.c (lispdesc_indirect_count_1):
+	* gc.c (kkcc_backtrace_1):
+	* gc.c (kkcc_short_backtrace):
+	* gc.c (kkcc_marking):
+	* gc.h:
+	* gc.h (kkcc_detailed_backtrace):
+	* inline.c:
+	* intl-win32.c:
+	* intl-win32.c (mswindows_multibyte_convert):
+	* lisp.h:
+	* lrecord.h:
+	* lrecord.h (enum lrecord_type):
+	* mule-ccl.c:
+	* mule-ccl.c (syms_of_mule_ccl):
+	* mule-ccl.h:
+	* mule-coding.c:
+	* mule-coding.c (struct multibyte_coding_stream):
+	* mule-coding.c (struct iso2022_coding_stream):
+	* mule-coding.c (iso2022_mark_iso2022_coding_stream):
+	* mule-coding.c (iso2022_mark_coding_stream):
+	* mule-coding.c (struct iso2022_detector):
+	* mule-coding.c (iso2022_detect):
+	* mule-coding.c (iso2022_mark_detection_state):
+	* mule-coding.c (ccl_mark_coding_stream):
+	* mule-coding.c (fixed_width_mark_coding_stream):
+	* mule-coding.c (coding_system_type_create_mule_coding):
+	* text.h:
+	* unicode.c:
+	Add general mechanisms for marking foo_coding_stream and
+	foo_detector structures.  We have to add two mechanisms: one
+	for old-GC (mark functions) and one for NEW_GC (KKCC/pdump
+	object descriptions).  The latter is more of a pain and requires
+	that we do some serious hacking in DEFINE_DETECTOR and friends.
+	We also have to create a new `detection-state' Lisp object.
+	All coding-system types that have associated data now have to
+	provide a KKCC object description for the data.  Add descriptions
+	and mark_coding_stream methods for iso2022, fixed-width, ccl and
+	multibyte coding-system types.  We also add
+	a new class of detectors with associated KKCC descriptions,
+	when the foo_detector structure has Lisp objects in it;
+	currently only iso2022 uses this.  Add a mark_detection_state()
+	method for use in old-GC; again, only iso2022 uses this.
+
+	Add mark_ccl_program() and a CCL-program KKCC description for
+	use by the CCL coding-system type.
+
+	Expand KKCC backtrace methods to four: short vs. detailed (detailed
+	backtraces print the objects in question as opposed to just their
+	types) and full vs. normal (normal prints only the 100 items at
+	the top of the stack, instead of all of them).
+
+	Clean up file-coding.h and add a big diagram at top showing
+	how the various conversion and detection structures work.
+
+	Clean up file-coding.c, rearranging code so that the detection
+	code and the `undecided' coding system are no longer intermingled.
+
+	Various fixes to charset.h and text.h to make things work under
+	non-Mule; previous changes broke this.  Also change so that
+	SLEDGEHAMMER_CHECK_TEXT is only defined when ERROR_CHECK_TEXT, not
+	always.
+	
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.h (DECODE_OUTPUT_PARTIAL_CHAR):
+	When there's a leftover partial, it's an error, so output an
+	error octet character.
+	
+	* mule-coding.c (try_to_derive_character): Remove accidental
+	debugging junk.
+	* mule-coding.c (multibyte_print): Cosmetic fixes.
+	* mule-coding.c (shift_jis_convert):
+	* mule-coding.c (big5_convert):
+	Rather than just outputting binary characters when an error is found,
+	output an error-octet character.  Treat all high bytes other than
+	those that correspond with Big5 or Shift-JIS character encoding
+	sequences as errors.
+	
+	* mule-coding.c (iso2022_decode):
+	* mule-coding.c (iso2022_encode):
+	Output error-octet characters in various situations where errors
+	occur.  FIXME: Currently, not guaranteed that we can exactly
+	preserve the output upon various types of errors, although we try.
+	We need to try harder and insert more error-octets.
+
+	Upon encoding, recognize error-octet characters and output as such.
+	(Same thing also happens now with Shift-JIS, and Big5, as well as
+	Multibyte and Unicode, where it was doing it before.)
+
+	Also fix a problem where interpretation of str->ch was changed from
+	"0 means not there" to "-1 means not there" (so that zero bytes
+	can be handled properly) but change wasn't propagated into code
+	that Aidan had added.
+	
+	* mule-coding.c (ccl_convert):
+	Comment fix.
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* charset.h: 
+	* unicode.c:
+	New functions unicode_to_one_charset_codepoint() and
+	ichar_to_one_charset_codepoint() for converting a Unicode codepoint
+	or Ichar to a charset codepoint of a single specified charset.
+	
+	* mule-coding.c:
+	* mule-coding.c (handle_possible_error_octet):
+	* mule-coding.c (try_to_derive_character):
+	* mule-coding.c (multibyte_convert):
+	Change the algorithm under old-Mule to iterate one charset at a
+	time, in each charset trying to convert directly and then through
+	Unicode-unification, rather than trying to convert directly on
+	all charsets then do Unicode-unification on all charsets.
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	* lisp.h (MULTIUSE_ALLOCA_FUNCALL_OK):
+	New multi-use versions of ALLOCA() that are safe to use when
+	more than one call to ALLOCA() occurs inside a single expression.
+	Using GCC extensions, we can make all ALLOCA() calls safe in this
+	way; otherwise we need additional trickery.
+	
+	* lisp.h (EXTBYTE_STRING_TO_ALLOCA):
+	Fix defn of this macro.
+
+	* lisp.h (C_STRING_TO_ALLOCA):
+	Remove unused C_STRING_TO_ALLOCA.
+	
+	* text.c:
+	* text.c (new_dfc_get_existing_size):
+	* text.h:
+	* text.h (NEW_DFC_CONVERT_1_ALLOCA):
+	Fix DFC macros to use the multi-use versions of ALLOCA().
+
+2010-03-02  Ben Wing  <ben@xemacs.org>
+
+	* mule-wnnfns.c:
+	* mule-wnnfns.c (Fwnn_open):
+	* mule-wnnfns.c (Fwnn_dict_add):
+	* mule-wnnfns.c (Fwnn_dict_list):
+	* mule-wnnfns.c (Fwnn_get_zenkouho):
+	* mule-wnnfns.c (Fwnn_inspect):
+	* mule-wnnfns.c (Fwnn_bunsetu_kanji):
+	* mule-wnnfns.c (Fwnn_bunsetu_yomi):
+	* mule-wnnfns.c (Fwnn_word_info):
+	* mule-wnnfns.c (Fwnn_dict_search):
+	* mule-wnnfns.c (Fwnn_get_msg):
+	* mule-wnnfns.c (Fwnn_fuzokugo_set):
+	* mule-wnnfns.c (Fwnn_fuzokugo_get):
+	* mule-wnnfns.c (Fwnn_hinsi_list):
+	* mule-wnnfns.c (Fwnn_fisys_dict_add):
+	* mule-wnnfns.c (Fwnn_fiusr_dict_add):
+	* mule-wnnfns.c (Fwnn_notrans_dict_add):
+	* mule-wnnfns.c (Fwnn_bmodify_dict_add):
+	* mule-wnnfns.c (puts2):
+	Fix compilation problems.
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* mule-coding.c (charsets_overlap): New function to properly
+	compute whether two charsets overlap.
+	* mule-coding.c (multibyte_putprop): Use it.
+	
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (ASSERT_VALID_CHARSET_CODEPOINT):
+	* chartab.c (put_char_table):
+	* chartab.c (map_char_table):
+	* mule-charset.c (get_charset_limits):
+	* mule-coding.c (multibyte_putprop):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	* text.c (get_external_charset_codepoint):
+	* unicode.c (sledgehammer_check_to_table):
+	Reverse args 3/4 of get_charset_limits so that the new order mirrors
+	the logical range statement (LO1,LO2) - (HI1,HI2).  That is,
+	logically it's a single two-dimensional range not two one-dimensional
+	ranges, and the order now mirrors that.
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	Add non-Mule XCHARSET_MIN_CODE and XCHARSET_MAX_CODE defs to
+	get things to compile.
+
+	Delete an erroneous assert triggered by preceding changes in
+	multibyte encoding/decoding.
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* mule-coding.c:
+	* mule-coding.c (add_unicode_to_dynarr):
+	Move this function and macro DECODE_ERROR_OCTET up top so they can
+	be used everywhere in the file.
+
+	Various changes to multibyte:
+
+	(1) Check for and disallow overlapping ranges.  Alternate code is in
+	place to handle overlapping ranges, protected by an ifdef; but it
+	needs more thought so it isn't enabled currently.
+
+	(2) Implement Unicode unification under old-Mule -- if it can't
+	convert directly between charset codepoint and character encoded
+	using that charset, convert between charset codepoint and any
+	character with the same Unicode mapping as the charset codepoint.
+
+	(3) Implement proper error-handling -- or at least, insert error
+	octets in a buffer upon error, and translate them back into raw
+	octets upon write-out.
+
+	In ISO-2022 decoding, instead of adding raw bytes upon invalid
+	sequence, add equivalent error octets.
+
+	Use UNICODE_PRIVATE_MAX instead of hardcoded number.
+	
+	* mule-coding.c (try_to_derive_character):
+	* mule-coding.c (multibyte_convert):
+	* mule-coding.c (multibyte_putprop):
+	* mule-coding.c (big5_convert):
+	* mule-coding.c (indicate_invalid_utf_8):
+	* mule-coding.c (iso2022_decode):
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	* text.c (internal_to_external_charset_codepoint):
+	* text.c (check_coerce_octet):
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Add munge_codepoints argument to
+	internal_to_external_charset_codepoint so in a single step we
+	convert from internal to external, either munged or not.  Remove
+	the munge_codepoints argument from
+	external_char_to_charset_codepoint().  Together, these get rid
+	of assertion failures that came from have internal munged (i.e.
+	invalid) codepoints.  It may also fix some CCL problems -- it
+	definitely fixed a bug in CCL handling, where munging wasn't
+	happening but was certainly expected.  Eliminate
+	external_to_internal_charset_codepoint() --
+	just use get_external_unicode_codepoint().  
+
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* text.h:
+	* text.h (ibyte_first_byte_p):
+	* unicode.c:
+	* unicode.c (encode_unicode_char):
+	* unicode.c (unicode_convert):
+	* unicode.h:
+	Add non-Mule defn of ibyte_first_byte_p(), now needed.
+
+	Move some basic Unicode defns from text.h and unicode.c
+	to unicode.h.	Add unicode_error_octet_code_p() to check if
+	a particular Unicode codepoint is an error-octet codepoint.
+
+	Use unicode_error_octet_code_p() and UNICODE_OFFICIAL_MAX in
+	place of hard-coded values.  Simplify logic that handles
+	error-octets.
+
+2010-03-22  Vin Shelton  <acs@xemacs.org>
+
+	* window.c (vars_of_window): Move HAVE_SCROLLBARS test so the code
+	can compile under Visual Studio 6.
+
+2010-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (tick_lrecord_stats):
+	Fix the union build after Ben's last change, don't assume that a
+	Lisp_Object will fit into a Bytecount.
+
+2010-03-25  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (struct):
+	* alloc.c (finish_object_memory_usage_stats):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (lisp_object_memory_usage_full):
+	* alloc.c (compute_memusage_stats_length):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	Add fields to the `lrecord_implementation' structure to list an
+	offset into the array of extra statistics in a
+	`struct generic_usage_stats' and a length, listing the first slice
+	of ancillary Lisp-object memory.  Compute automatically in
+	compute_memusage_stats_length().  Use to add an entry
+	`FOO-lisp-ancillary-storage' for object type FOO.
+
+	Don't crash when an int or char is given to object-memory-usage,
+	signal an error instead.
+
+	Add functions lisp_object_memory_usage_full() and
+	lisp_object_memory_usage() to compute the total memory usage of an
+	object (sum of object, non-Lisp attached, and Lisp ancillary
+	memory).
+	
+	* array.c:
+	* array.c (gap_array_memory_usage):
+	* array.h:
+	Add function to return memory usage of a gap array.
+	
+	* buffer.c (struct buffer_stats):
+	* buffer.c (compute_buffer_usage):
+	* buffer.c (vars_of_buffer):
+	* extents.c (compute_buffer_extent_usage):
+	* marker.c:
+	* marker.c (compute_buffer_marker_usage):
+	* extents.h:
+	* lisp.h:
+	Remove `struct usage_stats' arg from compute_buffer_marker_usage()
+	and compute_buffer_extent_usage() -- these are ancillary Lisp
+	objects and don't get accumulated into `struct usage_stats';
+	change the value of `memusage_stats_list' so that `markers' and
+	`extents' memory is in Lisp-ancillary, where it belongs.
+
+	In compute_buffer_marker_usage(), use lisp_object_memory_usage()
+	rather than lisp_object_storage_size().
+	
+	* casetab.c:
+	* casetab.c (case_table_memory_usage):
+	* casetab.c (vars_of_casetab):
+	* emacs.c (main_1):
+	Add memory usage stats for case tables.
+	
+	* lisp.h:
+	Add comment explaining the `struct generic_usage_stats' more,
+	as well as the new fields in lrecord_implementation.
+
+	* console-impl.h:
+	* console-impl.h (struct console_methods):
+	* scrollbar-gtk.c:
+	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage):
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage):
+	* scrollbar-x.c:
+	* scrollbar-x.c (x_compute_scrollbar_instance_usage):
+	* scrollbar.c:
+	* scrollbar.c (struct scrollbar_instance_stats):
+	* scrollbar.c (compute_all_scrollbar_instance_usage):
+	* scrollbar.c (scrollbar_instance_memory_usage):
+	* scrollbar.c (scrollbar_objects_create):
+	* scrollbar.c (vars_of_scrollbar):
+	* scrollbar.h:
+	* symsinit.h:
+	* window.c:
+	* window.c (find_window_mirror_maybe):
+	* window.c (struct window_mirror_stats):
+	* window.c (compute_window_mirror_usage):
+	* window.c (window_mirror_memory_usage):
+	* window.c (compute_window_usage):
+	* window.c (window_objects_create):
+	* window.c (syms_of_window):
+	* window.c (vars_of_window):
+	Redo memory-usage associated with windows, window mirrors, and
+	scrollbar instances.  Should fix crash in find_window_mirror,
+	among other things.  Properly assign memo ry to object memory,
+	non-Lisp extra memory, and Lisp ancillary memory.  For example,
+	redisplay structures are non-Lisp memory hanging off a window
+	mirror, not a window; make it an ancillary Lisp-object field.
+	Window mirrors and scrollbar instances have their own statistics,
+	among other things.
+	 
+2010-03-24  Ben Wing  <ben@xemacs.org>
+
+	* array.h:
+	* array.h (XD_LISP_DYNARR_DESC):
+	* dumper.c (pdump_register_sub):
+	* dumper.c (pdump_store_new_pointer_offsets):
+	* dumper.c (pdump_reloc_one_mc):
+	* elhash.c:
+	* gc.c  (lispdesc_one_description_line_size):
+	* gc.c (kkcc_marking):
+	* lrecord.h:
+	* lrecord.h (IF_NEW_GC):
+	* lrecord.h (enum memory_description_type):
+	* lrecord.h (enum data_description_entry_flags):
+	* lrecord.h (struct opaque_convert_functions):
+	Rename XD_LISP_OBJECT_BLOCK_PTR to XD_INLINE_LISP_OBJECT_BLOCK_PTR
+	and document it in lrecord.h.
+
+	* data.c:
+	* data.c (finish_marking_weak_lists):
+	* data.c (continue_marking_ephemerons):
+	* data.c (finish_marking_ephemerons):
+	* elhash.c (MARK_OBJ):
+	* gc.c:
+	* gc.c (lispdesc_indirect_count_1):
+	* gc.c (struct):
+	* gc.c (kkcc_bt_push):
+	* gc.c (kkcc_gc_stack_push):
+	* gc.c (kkcc_gc_stack_push_lisp_object):
+	* gc.c (kkcc_gc_stack_repush_dirty_object):
+	* gc.c (KKCC_DO_CHECK_FREE):
+	* gc.c (mark_object_maybe_checking_free):
+	* gc.c (mark_struct_contents):
+	* gc.c (mark_lisp_object_block_contents):
+	* gc.c (register_for_finalization):
+	* gc.c (mark_object):
+	* gc.h:
+	* lisp.h:
+	* profile.c:
+	* profile.c (mark_profiling_info_maphash):
+	Clean up KKCC code related to DEBUG_XEMACS.  Rename
+	kkcc_backtrace() to kkcc_backtrace_1() and add two params: a
+	`size' arg to control how many stack elements to print and a
+	`detailed' arg to control whether Lisp objects are printed using
+	`debug_print()'.  Create front-ends to kkcc_backtrace_1() --
+	kkcc_detailed_backtrace(), kkcc_short_backtrace(),
+	kkcc_detailed_backtrace_full(), kkcc_short_backtrace_full(), as
+	well as shortened versions kbt(), kbts(), kbtf(), kbtsf() -- to
+	call it with various parameter values.  Add an `is_lisp' field to
+	the stack and backtrace structures and use it to keep track of
+	whether an object pushed onto the stack is a Lisp object or a
+	non-Lisp structure; in kkcc_backtrace_1(), don't try to print a
+	non-Lisp structure as a Lisp object.
+	
+	* elhash.c:
+	* extents.c:
+	* file-coding.c:
+	* lrecord.h:
+	* lrecord.h (IF_NEW_GC):
+	* marker.c:
+	* marker.c (Fmarker_buffer):
+	* mule-coding.c:
+	* number.c:
+	* rangetab.c:
+	* specifier.c:
+	New macros IF_OLD_GC(), IF_NEW_GC() to simplify declaration of
+	Lisp objects when a finalizer may exist in one but not the other.
+	Use them appropriately.
+
+	* extents.c (finalize_extent_info):
+	Don't zero out data->soe and data->extents before trying to free,
+	else we get memory leaks.
+	
+	* lrecord.h (enum lrecord_type):
+	Make the first lrecord type have value 1 not 0 so that 0 remains
+	without implementation and attempts to interpret zeroed memory
+	as a Lisp object will be more obvious.
+
+	* array.c (Dynarr_free):
+	* device-msw.c (msprinter_delete_device):
+	* device-tty.c (free_tty_device_struct):
+	* device-tty.c (tty_delete_device):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dialog-x.c:
+	* emacs.c (free_argc_argv):
+	* emodules.c (attempt_module_delete):
+	* file-coding.c (chain_finalize_coding_stream_1):
+	* file-coding.c (chain_finalize_coding_stream):
+	* glyphs-eimage.c:
+	* glyphs-eimage.c (jpeg_instantiate_unwind):
+	* glyphs-eimage.c (gif_instantiate_unwind):
+	* glyphs-eimage.c (png_instantiate_unwind):
+	* glyphs-eimage.c (tiff_instantiate_unwind):
+	* imgproc.c:
+	* imgproc.c (build_EImage_quantable):
+	* insdel.c (uninit_buffer_text):
+	* mule-coding.c (iso2022_finalize_detection_state):
+	* objects-tty.c (tty_finalize_color_instance):
+	* objects-tty.c (tty_finalize_font_instance):
+	* objects-tty.c (tty_font_list):
+	* process.c:
+	* process.c (finalize_process):
+	* redisplay.c (add_propagation_runes):
+	* scrollbar-gtk.c:
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance):
+	* scrollbar-gtk.c (gtk_release_scrollbar_instance):
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_free_scrollbar_instance):
+	* scrollbar-msw.c (unshow_that_mofo):
+	* scrollbar-x.c (x_free_scrollbar_instance):
+	* scrollbar-x.c (x_release_scrollbar_instance):
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* syntax.c:
+	* syntax.c (uninit_buffer_syntax_cache):
+	* text.h (eifree):
+	If possible, whenever we call xfree() on a field in a structure,
+	set the field to 0 afterwards.  A lot of code is written so that
+	it checks the value being freed to see if it is non-zero before
+	freeing it -- doing this and setting the value to 0 afterwards
+	ensures (a) we won't try to free twice if the cleanup code is
+	called twice; (b) if the object itself stays around, KKCC won't
+	crash when attempting to mark the freed field.
+
+	* rangetab.c:
+	Add a finalization method when not NEW_GC to avoid memory leaks.
+	(#### We still get memory leaks when NEW_GC; need to convert gap
+	array to Lisp object).
+
+2010-03-22  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (objs):
+	* array.c:
+	* array.c (gap_array_adjust_markers):
+	* array.c (gap_array_move_gap):
+	* array.c (gap_array_make_gap):
+	* array.c (gap_array_insert_els):
+	* array.c (gap_array_delete_els):
+	* array.c (gap_array_make_marker):
+	* array.c (gap_array_delete_marker):
+	* array.c (gap_array_delete_all_markers):
+	* array.c (gap_array_clone):
+	* array.h:
+	* depend:
+	* emacs.c (main_1):
+	* extents.c:
+	* extents.c (EXTENT_GAP_ARRAY_AT):
+	* extents.c (extent_list_num_els):
+	* extents.c (extent_list_locate):
+	* extents.c (extent_list_at):
+	* extents.c (extent_list_delete_all):
+	* extents.c (allocate_extent_list):
+	* extents.c (syms_of_extents):
+	* extents.h:
+	* extents.h (XEXTENT_LIST_MARKER):
+	* lisp.h:
+	* rangetab.c:
+	* rangetab.c (mark_range_table):
+	* rangetab.c (print_range_table):
+	* rangetab.c (range_table_equal):
+	* rangetab.c (range_table_hash):
+	* rangetab.c (verify_range_table):
+	* rangetab.c (get_range_table_pos):
+	* rangetab.c (Fmake_range_table):
+	* rangetab.c (Fcopy_range_table):
+	* rangetab.c (Fget_range_table):
+	* rangetab.c (put_range_table):
+	* rangetab.c (Fclear_range_table):
+	* rangetab.c (Fmap_range_table):
+	* rangetab.c (unified_range_table_bytes_needed):
+	* rangetab.c (unified_range_table_copy_data):
+	* rangetab.c (unified_range_table_lookup):
+	* rangetab.h:
+	* rangetab.h (struct range_table_entry):
+	* rangetab.h (struct Lisp_Range_Table):
+	* rangetab.h (rangetab_gap_array_at):
+	* symsinit.h:
+	Rename dynarr.c to array.c.  Move gap array from extents.c to array.c.
+	Extract dynarr, gap array and stack-like malloc into new file array.h.
+	Rename GAP_ARRAY_NUM_ELS -> gap_array_length().  Add gap_array_at(),
+	gap_array_atp().
+
+	Rewrite range table code to use gap arrays.  Make put_range_table()
+	smarter so that its operation is O(log n) for adding a localized
+	range.
+
+	* gc.c (lispdesc_block_size_1):
+	Don't ABORT() when two elements are located at the same place.
+	This will happen with a size-0 gap array -- both parts of the array
+	(before and after gap) are in the same place.
+
+2010-03-21  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (assert_proper_sizing):
+	* alloc.c (c_readonly):
+	* alloc.c (malloced_storage_size):
+	* alloc.c (fixed_type_block_overhead):
+	* alloc.c (lisp_object_storage_size):
+	* alloc.c (inc_lrecord_stats):
+	* alloc.c (dec_lrecord_stats):
+	* alloc.c (pluralize_word):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (compute_memusage_stats_length):
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (Fgarbage_collect):
+	* mc-alloc.c:
+	* mc-alloc.c (mc_alloced_storage_size):
+	* mc-alloc.h:
+	No functionality change here.  Collect the allocations-statistics
+	code that was scattered throughout alloc.c into one place.  Add
+	remaining section headings so that all sections have headings
+	clearly identifying the start of the section and its purpose.
+	Expose mc_alloced_storage_size() even when not MEMORY_USAGE_STATS;
+	this fixes build problems and is related to the export of
+	lisp_object_storage_size() and malloced_storage_size() when
+	non-MEMORY_USAGE_STATS in the previous change set.
 
 2010-03-20  Ben Wing  <ben@xemacs.org>
 
@@ -1719,6 +5119,101 @@
 
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
+	* EmacsFrame.c:
+	* Makefile.in.in (x_objs):
+	* Makefile.in.in (mswindows_objs):
+	* Makefile.in.in (tty_objs):
+	* Makefile.in.in (gtk_objs):
+	* Makefile.in.in (objs):
+	* console-tty.h:
+	* console-x-impl.h:
+	* console-x-impl.h (struct x_device):
+	* console-x.h:
+	* console-xlike-inc.h:
+	* depend:
+	* device-gtk.c:
+	* device-msw.c:
+	* device-x.c:
+	* device-x.c (x_init_device):
+	* device-x.c (x_finish_init_device):
+	* device.c:
+	* devslots.h (MARKED_SLOT):
+	* emacs.c (main_1):
+	* event-Xt.c:
+	* event-gtk.c:
+	* event-msw.c:
+	* faces.c:
+	* font-mgr.c:
+	* fontcolor-gtk-impl.h:
+	* fontcolor-gtk.c:
+	* fontcolor-gtk.c (syms_of_fontcolor_gtk):
+	* fontcolor-gtk.c (console_type_create_fontcolor_gtk):
+	* fontcolor-gtk.c (vars_of_fontcolor_gtk):
+	* fontcolor-gtk.h:
+	* fontcolor-impl.h:
+	* fontcolor-msw-impl.h:
+	* fontcolor-msw.c:
+	* fontcolor-msw.c (syms_of_fontcolor_mswindows):
+	* fontcolor-msw.c (console_type_create_fontcolor_mswindows):
+	* fontcolor-msw.c (reinit_vars_of_fontcolor_mswindows):
+	* fontcolor-msw.c (vars_of_fontcolor_mswindows):
+	* fontcolor-msw.h:
+	* fontcolor-msw.h (mswindows_color_to_string):
+	* fontcolor-tty-impl.h:
+	* fontcolor-tty.c:
+	* fontcolor-tty.c (syms_of_fontcolor_tty):
+	* fontcolor-tty.c (console_type_create_fontcolor_tty):
+	* fontcolor-tty.c (vars_of_fontcolor_tty):
+	* fontcolor-tty.h:
+	* fontcolor-x-impl.h:
+	* fontcolor-x.c:
+	* fontcolor-x.c (syms_of_fontcolor_x):
+	* fontcolor-x.c (console_type_create_fontcolor_x):
+	* fontcolor-x.c (vars_of_fontcolor_x):
+	* fontcolor-x.c (Xatoms_of_fontcolor_x):
+	* fontcolor-x.h:
+	* fontcolor.c:
+	* fontcolor.c (syms_of_fontcolor):
+	* fontcolor.c (specifier_type_create_fontcolor):
+	* fontcolor.c (reinit_specifier_type_create_fontcolor):
+	* fontcolor.c (reinit_vars_of_fontcolor):
+	* fontcolor.c (vars_of_fontcolor):
+	* fontcolor.h:
+	* fontcolor.h (set_face_boolean_attached_to):
+	* frame-gtk.c:
+	* frame-x.c:
+	* glyphs-eimage.c:
+	* glyphs-gtk.c:
+	* glyphs-msw.c:
+	* glyphs-widget.c:
+	* glyphs-x.c:
+	* glyphs.c:
+	* gtk-glue.c:
+	* gtk-glue.c (xemacs_type_register):
+	* gtk-xemacs.c:
+	* inline.c:
+	* intl-win32.c:
+	* lisp.h:
+	* lrecord.h:
+	* mule-charset.c:
+	* native-gtk-toolbar.c:
+	* redisplay-msw.c:
+	* redisplay-tty.c:
+	* redisplay.c:
+	* select-x.c:
+	* select.c:
+	* symsinit.h:
+	* toolbar-msw.c:
+	* toolbar-msw.c (TOOLBAR_ITEM_ID_BITS):
+	* toolbar-x.c:
+	* ui-gtk.c:
+	* window.c:
+	Rename objects*.[ch] -> fontcolor*.[ch].  Fix up all references to
+	the old files (e.g. in #include statements, Makefiles,
+	functions like syms_of_objects_x(), etc.).
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
 	* .gdbinit.in.in:
 	* Makefile.in.in (batch_test_emacs):
 	test-harness.el is in lisp directory now so change how we call it.
@@ -1797,6 +5292,986 @@
 
 	* extents.c (process_extents_for_insertion_mapper):
 	Assertion wasn't quite set up correctly in previous patch.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* mule-charset.c:
+	* mule-charset.c (split_combined_codepoint):
+	* mule-charset.c (Fmap_charset_chars):
+	* mule-charset.c (syms_of_mule_charset):
+	map-charset-chars moved to C.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (CHARSET_MIN_CODE):
+	* charset.h (XCHARSET_MIN_CODE):
+	* charset.h (XCHARSET_ALGO_LOW):
+	* mule-charset.c:
+	* mule-charset.c (print_charset):
+	* mule-charset.c (get_charset_limits):
+	New macros X?CHARSET_(MIN|MAX)_CODE.  Use them instead of
+	XCHARSET_OFFSET, XCHARSET_CHARS when appropriate.
+	
+	* mule-charset.c (Fcharset_property):
+	When no final byte, return nil instead of ?\^@; fixes some `make
+	check' issues.
+
+	* mule-charset.c (Fcharsets_in_region):
+	Return name of charsets, not charset objects; fixes some `make
+	check' issues.
+	
+	* mule-charset.c (Fmap_charset_chars):
+	New function, #if 0 still.
+
+	* mule-charset.c (Fcharset_memory_usage):
+	Fix doc string.
+
+	* chartab.c:
+	* chartab.c (compute_chartab_table_size):
+	* chartab.c (compute_char_table_usage):
+	* chartab.c (Fchar_table_memory_usage):
+	* chartab.c (syms_of_chartab):
+	New function char-table-memory-usage.
+	
+	* eval.c:
+	Better doc string for `debugger'.
+	
+	* lisp.h:
+	* lisp.h (UNICODE_PRIVATE_MAX):
+	* lisp.h (enum unicode_encoding_type):
+	* text.c (get_external_unicode_codepoint):
+	* unicode.c (struct unicode_coding_system):
+	* unicode.c (encode_unicode_char):
+	* unicode.c (unicode_convert):
+	* unicode.c (unicode_putprop):
+	* unicode.c (decode_unicode):
+	Rename `enum unicode_class' to `enum unicode_allow'.
+	Rename `enum unicode_type' to `enum unicode_encoding_type'.
+	Create UNICODE_OFFICIAL_MAX, UNICODE_PRIVATE_MAX and
+	EMACS_INT_UNICODE_PRIVATE_MAX.  Use in valid_unicode_codepoint_p().
+	Add an allow-private arg to decode_unicode(); use it, and review
+	places where Unicode codepoints are called for to see whether they
+	should allow private or not.
+	
+	* mule-coding.c:
+	* mule-coding.c (Fdecode_shift_jis_char):
+	* mule-coding.c (decode_big5_char):
+	* mule-coding.c (Fdecode_big5_char):
+	Don't allow a second arg `handle-error' to `decode-big5-char',
+	just return nil on error.  Don't crash when unable to decode
+	a Shift-JIS char, just return nil; fixes some `make check' issues.
+	
+	* regex.c (re_compile_fastmap):
+	* text.h:
+	Fix a bug in computing the fastmap; fixes some `make check' issues.
+	Also do a better job determining the exact fastmap bounds of a
+	Unicode range.  Create FIRST_TRAILING_BYTE and LAST_TRAILING_BYTE
+	for use in this computation.
+	
+	* text.c:
+	* text.c (ibyte_string_displayed_columns):
+	* text.c (ichar_string_displayed_columns):
+	Don't abort when non-Mule, since some of these functions are used
+	in non-Mule.
+
+2010-02-16  Ben Wing  <ben@xemacs.org>
+
+	* frame-impl.h:
+	* frame-impl.h (FRAME_INTERNAL_BORDER_WIDTH):
+	* frame-impl.h (FRAME_REAL_TOOLBAR_BOUNDS):
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BOUNDS):
+	* frame-impl.h (FRAME_BOTTOM_BORDER_START):
+	* frame-impl.h (FRAME_LEFT_BORDER_START):
+	* frame-impl.h (FRAME_RIGHT_BORDER_START):
+	* frame.c (frame_conversion_internal_1):
+	* frame.c (change_frame_size_1):
+	* redisplay-output.c (clear_left_border):
+	* redisplay-output.c (clear_right_border):
+	* redisplay-output.c (redisplay_clear_top_of_window):
+	* redisplay-output.c (redisplay_clear_to_window_end):
+	* redisplay-output.c (redisplay_clear_bottom_of_window):
+	Rename FRAME_BORDER_* to FRAME_INTERNAL_BORDER_*.  Add
+	general FRAME_INTERNAL_BORDER_SIZE().  Add FRAME_REAL_TOOLBAR_BOUNDS()
+	to encompass the entire size of the toolbar including its border.
+	Add specific top/left/bottom/right versions of this macro.
+	Rewrite FRAME_*_BORDER_START and FRAME_*_BORDER_END to take into use
+	FRAME_REAL_*_TOOLBAR_BOUNDS().  Add some comments about existing
+	problems in frame sizing and how they might be fixed.  Simplify
+	change_frame_size_1() using the macros just created.
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* frame.c (change_frame_size_1):
+	Simplify the logic in this function.
+
+	(1) Don't allow 0 as the value of height or width.  The old code
+	that tried to allow this was totally broken, anyway, so obviously
+	this never happens any more.
+
+	(2) Don't duplicate the code in frame_conversion_internal() that
+	converts displayable pixel size to total pixel size -- just call
+	that function.
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* EmacsFrame.c:
+	* EmacsFrame.c (EmacsFrameResize):
+	* console-msw-impl.h:
+	* console-msw-impl.h (struct mswindows_frame):
+	* console-msw-impl.h (FRAME_MSWINDOWS_TARGET_RECT):
+	* device-tty.c:
+	* device-tty.c (tty_asynch_device_change):
+	* event-msw.c:
+	* event-msw.c (mswindows_wnd_proc):
+	* faces.c (Fface_list):
+	* faces.h:
+	* frame-gtk.c:
+	* frame-gtk.c (gtk_set_initial_frame_size):
+	* frame-gtk.c (gtk_set_frame_size):
+	* frame-msw.c:
+	* frame-msw.c (mswindows_init_frame_1):
+	* frame-msw.c (mswindows_set_frame_size):
+	* frame-msw.c (mswindows_size_frame_internal):
+	* frame-msw.c (msprinter_init_frame_3):
+	* frame.c:
+	* frame.c (enum):
+	* frame.c (Fmake_frame):
+	* frame.c (adjust_frame_size):
+	* frame.c (store_minibuf_frame_prop):
+	* frame.c (Fframe_property):
+	* frame.c (Fframe_properties):
+	* frame.c (Fframe_displayable_pixel_height):
+	* frame.c (Fframe_displayable_pixel_width):
+	* frame.c (internal_set_frame_size):
+	* frame.c (Fset_frame_height):
+	* frame.c (Fset_frame_pixel_height):
+	* frame.c (Fset_frame_displayable_pixel_height):
+	* frame.c (Fset_frame_width):
+	* frame.c (Fset_frame_pixel_width):
+	* frame.c (Fset_frame_displayable_pixel_width):
+	* frame.c (Fset_frame_size):
+	* frame.c (Fset_frame_pixel_size):
+	* frame.c (Fset_frame_displayable_pixel_size):
+	* frame.c (frame_conversion_internal_1):
+	* frame.c (get_frame_displayable_pixel_size):
+	* frame.c (change_frame_size_1):
+	* frame.c (change_frame_size):
+	* frame.c (generate_title_string):
+	* frame.h:
+	* gtk-xemacs.c:
+	* gtk-xemacs.c (gtk_xemacs_size_request):
+	* gtk-xemacs.c (gtk_xemacs_size_allocate):
+	* gtk-xemacs.c (gtk_xemacs_paint):
+	* gutter.c:
+	* gutter.c (update_gutter_geometry):
+	* redisplay.c (end_hold_frame_size_changes):
+	* redisplay.c (redisplay_frame):
+	* toolbar.c:
+	* toolbar.c (update_frame_toolbars_geometry):
+	* window.c:
+	* window.c (frame_pixsize_valid_p):
+	* window.c (check_frame_size):
+	Various fixes to frame geometry to make it a bit easier to understand
+	and fix some bugs.
+
+	1. IMPORTANT: Some renamings.  Will need to be applied carefully to
+	the carbon repository, in the following order:
+
+	-- pixel_to_char_size -> pixel_to_frame_unit_size
+	-- char_to_pixel_size -> frame_unit_to_pixel_size
+	-- pixel_to_real_char_size -> pixel_to_char_size
+	-- char_to_real_pixel_size -> char_to_pixel_size
+	-- Reverse second and third arguments of change_frame_size() and
+	   change_frame_size_1() to try to make functions consistent in
+	   putting width before height.
+	-- Eliminate old round_size_to_char, because it didn't really
+	   do anything differently from round_size_to_real_char()
+	-- round_size_to_real_char -> round_size_to_char; any places that
+	   called the old round_size_to_char should just call the new one.
+
+	2. IMPORTANT FOR CARBON: The set_frame_size() method is now passed
+	   sizes in "frame units", like all other frame-sizing functions,
+	   rather than some hacked-up combination of char-cell units and
+	   total pixel size.  This only affects window systems that use
+	   "pixelated geometry", and I'm not sure if Carbon is one of them.
+	   MS Windows is pixelated, X and GTK are not.  For pixelated-geometry
+	   systems, the size in set_frame_size() is in displayable pixels
+	   rather than total pixels and needs to be converted appropriately;
+	   take a look at the changes made to mswindows_set_frame_size()
+	   method if necessary.
+	
+	3. Add a big long comment in frame.c describing how frame geometry
+	   works.
+
+	4. Remove MS Windows-specific character height and width fields,
+	   duplicative and unused.
+
+	5. frame-displayable-pixel-* and set-frame-displayable-pixel-*
+	   didn't use to work on MS Windows, but they do now.
+
+	6. In general, clean up the handling of "pixelated geometry" so
+	   that fewer functions have to worry about this.  This is really
+	   an abomination that should be removed entirely but that will
+	   have to happen later.  Fix some buggy code in
+	   frame_conversion_internal() that happened to "work" because it
+	   was countered by oppositely buggy code in change_frame_size().
+
+	7. Clean up some frame-size code in toolbar.c and use functions
+	   already provided in frame.c instead of rolling its own.
+
+	8. Fix check_frame_size() in window.c, which formerly didn't take
+	   pixelated geometry into account.
+
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* mc-alloc.c:
+	* mc-alloc.c (mc_realloc_1):
+	* mc-alloc.c (set_dirty_bit):
+	* mc-alloc.c (set_dirty_bit_for_address):
+	* mc-alloc.c (get_dirty_bit):
+	* mc-alloc.c (get_dirty_bit_for_address):
+	* mc-alloc.c (set_protection_bit):
+	* mc-alloc.c (set_protection_bit_for_address):
+	* mc-alloc.c (get_protection_bit):
+	* mc-alloc.c (get_protection_bit_for_address):
+	* mc-alloc.c (get_page_start):
+	* vdb-win32.c (win32_fault_handler):
+	* vdb.c:
+	Fix some compile warnings, make vdb test code conditional on
+	DEBUG_XEMACS.
+	
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* regex.c:
+	* regex.c (DEBUG_FAIL_PRINT1):
+	* regex.c (PUSH_FAILURE_POINT):
+	* regex.c (POP_FAILURE_POINT):
+	* regex.c (regex_compile):
+	* regex.c (re_match_2_internal):
+	* regex.h:
+	* search.c:
+	* search.c (search_buffer):
+	* search.c (debug_regexps_changed):
+	* search.c (vars_of_search):
+	Add an internal variable debug_regexps and a corresponding Lisp
+	variable `debug-regexps' that takes a list of areas in which to
+	display debugging info about regex compilation and matching
+	(currently three areas exist).  Use existing debugging code
+	already in regex.c and modify it so that it recognizes the
+	debug_regexps variable and the flags in it.
+
+	Rename variable `debug-xemacs-searches' to just `debug-searches',
+	consistent with other debug vars.
+
+2010-02-10  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* mule-ccl.c (ccl_driver):
+	* mule-coding.c (multibyte_putprop):
+	* search.c (boyer_moore):
+	* unicode.c (get_unicode_conversion_1):
+	Fix warnings due to shadowing local variables (some real bugs here)
+	and declarations after statements.
+
+2010-02-10  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	Add comment about @@####.
+	
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
+	* mule-coding.c (struct iso2022_coding_system):
+	* mule-coding.c (struct iso2022_coding_stream):
+	Use `Boolbyte' for a byte-wide flag instead of `unsigned char'.
+	Remove `warned_chars'.  Correct the comment about the contents
+	of the Unicode precedence array.
+	
+	* mule-coding.c (reset_iso2022_decode):
+	* mule-coding.c (reset_iso2022_encode):
+	* mule-coding.c (iso2022_mark_coding_stream):
+	* mule-coding.c (iso2022_encode):
+	Get rid of `warned_chars' and the whole warning mechanism since
+	it never happens any more.  Fix problems under Unicode-internal
+	with non-ISO2022-encodable characters -- they should properly be
+	encoded as UTF-8.
+	
+	* mule-coding.c (FROB_INITIAL_CHARSET):
+	Fix spacing typo.
+
+2010-02-08  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (remove-config-dependent-elcs):
+	Use $(RM) instead of just `rm' so it doesn't make things fail
+	if the target doesn't exist.
+
+2010-02-07  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (disksave_object_finalization):
+	Don't clear Unicode precedence when non-Mule, fn doesn't exist.
+	
+	* buffer.h:
+	buffer_* versions of charset functions need to be defined even when
+	non-Mule.
+	
+	* charset.h:
+	* charset.h (INLINE_ASSERT_VALID_CHARSET_CODEPOINT):
+	filtered_* versions of charset functions need to be defined even when
+	non-Mule.
+	
+	* emacs.c (main_1):
+	Don't call init_mule_* when non-Mule.
+	
+	* glyphs-msw.c:
+	* glyphs-msw.c (charset_of_text):
+	No need to special-case this when non-Mule.
+	
+	* text.c:
+	* text.c (find_charsets_in_buffer):
+	Fix comments.
+	
+	* unicode.c:
+	Need a non-Mule version of decode_buffer_or_precedence_list.
+	
+	* unicode.c (syms_of_unicode):
+	* unicode.c (init_unicode):
+	Don't initialize or recalculate precedence arrays when non-Mule,
+	since precedence array object doesn't exist.
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c:
+	* chartab.c (char_table_hash):
+	* search.c (boyer_moore):
+	Fix compile errors.
+
+2010-01-29  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (common_init_alloc_early):
+	Fix compile error.
+	
+	* buffer.h:
+	Fix unused-var warning.
+	
+	* regex.c:
+	* regex.c (compile_extended_range):
+	Delete stray code that (thankfully) triggered an use-of-uninit-var
+	warning.
+
+	* unicode.c:
+	* unicode.c (get_unicode_conversion_1):
+	* unicode.c (complex_vars_of_unicode):
+	Fix compile error and unused-argument warning.
+
+2010-01-28  Ben Wing  <ben@xemacs.org>
+
+	* unicode.h:
+	* unicode.h (struct precedence_array):
+	Forgot to add this file.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in: New target `make-case-conv' to generate
+	mule/uni-case-conv.el.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* charset.h:
+	* charset.h (HANDLE_CHARSET_CODEPOINT_ERROR):
+	* mule-coding.c (decode_big5_char):
+	* text.c (old_mule_unicode_to_ichar):
+	Clean up, add HANDLE_UNICODE_ERROR, HANDLE_ICHAR_ERROR.
+	Use them.
+	
+	* emacs.c (main_1):
+	Comment fix.
+	
+	* mule-coding.c:
+	* mule-coding.c (Fdecode_big5_char):
+	Clean up doc string.
+	
+	* redisplay-xlike-inc.c:
+	Remove accidental merge marker.
+	
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Add a FAIL argument and use it.
+
+	* lisp.h:
+	* mule-coding.c (Fdecode_big5_char):
+	* text.c (decode_handle_error):
+	* text.c (Fmake_char):
+	* text.c (Fchar_to_unicode):
+	* text.c (Funicode_to_char):
+	Add ALLOW_PRIVATE arg to decode_handle_error to control
+	whether to allow `use-private'.
+	
+	* text.c (Funicode_to_charset_codepoint):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Add HANDLE-ERROR argument and document.
+	
+	* unicode.c:
+	Delete non-Mule stubs of precedence-array functions.
+	
+	* unicode.c (print_precedence_array):
+	New fun for displaying the contents of a precedence-array.
+	
+	* unicode.c (filter_precedence_array):
+	* unicode.c (Fnormalized_unicode_precedence_list):
+	Resurrect filter_precedence_array.
+	Use in Fnormalized_unicode_precedence_list.
+	
+	* unicode.c (free_precedence_array):
+	Comment fix.
+	
+	* lisp.h:
+	* mule-coding.c (init_mule_coding):
+	* unicode.c (simple_convert_predence_list_to_array):
+	Rename internal_convert_precedence_list_to_array() to
+	simple_convert_predence_list_to_array().
+
+	* lisp.h:
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (get_external_unicode_codepoint):
+	* text.c (Funicode_to_char):
+	* text.c (Funicode_to_charset_codepoint):
+	* unicode.c (external_convert_precedence_list_to_array):
+	* unicode.c (decode_buffer_or_precedence_list):
+	Don't allow external_convert_precedence_list_to_array() to take
+	a buffer, and don't directly retrieve a precedence list from a
+	buffer.  Instead, use the buffer_*() charset-codepoint functions
+	so that both the buffer-local and global precedence lists are
+	consulted; use new fn decode_buffer_or_precedence_list() in
+	doing this.
+	
+	* unicode.c (RUP_MAKE_FULL_P):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (recalculate_unicode_precedence):
+	Don't automatically make precedence lists full in
+	recalculate_unicode_precedence_1(), because then buffer-local
+	cached versions have everything in them.  Instead, add a flag
+	RUP_MAKE_FULL_P and use it only when normalizing the default
+	precedence list.
+	
+	* unicode.c (precedence_array_to_list):
+	* unicode.c (Fnormalized_unicode_precedence_list):
+	New fn precedence_array_to_list.  Use in
+	Fnormalized_unicode_precedence_list.  Clean up
+	Fnormalized_unicode_precedence_list to handle the
+	BUFFER-OR-PRECEDENCE-ARRAY argument properly.
+	
+	* unicode.c (complex_vars_of_unicode):
+	Set initial values of the default precedence arrays for use
+	in unicode.el before the proper value gets set.
+	Bracket precedence-array creation in #ifdef MULE.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* lrecord.h (enum lrecord_type):
+	Sort the order of types.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	* .gdbinit.in.in:
+	Add all of the lrecord types to `pobj' and sort according to the
+	order in lrecord.h.
+
+2010-01-24  Ben Wing  <ben@xemacs.org>
+
+	NOT WORKING, NEED TO CHECK IN TO SYNC WITH MAINLINE.
+	
+	* buffer.h:
+	Create buffer_*() versions of charset-codepoint functions that
+	take a precedence array.  Make them take a buffer instead and call
+	the wrapped functions first on the buffer-local precedence array
+	then the default one.
+
+	* buffer.c (finish_init_buffer):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* buffer.c (complex_vars_of_buffer):
+	* bufslots.h:
+	* lisp.h:
+	* unicode.c (free_precedence_array):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (recalculate_unicode_precedence):
+	* unicode.c (Fset_buffer_unicode_precedence_list,
+	             Fset_default_unicode_precedence_list,
+		     Fbuffer_unicode_precedence_list,
+		     Fdefault_unicode_precedence_list):
+	* unicode.c (syms_of_unicode):
+	Remove buffer-local variable unicode-precedence-list.
+	Instead have subrs `set-default-unicode-precedence-list',
+	`set-buffer-unicode-precedence-list', etc.  Also resurrect
+	Vdefault_unicode_precedence_array and
+	Vdefault_unicode_precedence_list instead of using the
+	buffer-defaults structure.
+	
+	Keep the cached buffer-local Unicode-precedence array but now it
+	caches only the values specified in the buffer.  At buffer
+	creation just allocate a blank precedence array for this field.
+
+	Don't cache a combined buffer-local/global Unicode-precedence
+	array because we don't use it anymore; instead, we have
+	buffer_*() charset-codepoint functions (described above),
+	which implement what this combined array was doing.
+	
+	* buffer.h:
+	* charset.h:
+	Rename ichar_charset_obsolete_me_baby_please() to
+	buffer_ichar_charset_obsolete_me_baby(), add a `buffer' argument
+	and move to buffer.h from charset.h.
+	
+	* charset.h (ichar_to_charset_codepoint, unicode_to_charset_codepoint):
+	* charset.h (filtered_*()):
+	* charset.h (HANDLE_CHARSET_CODEPOINT_ERROR):
+	* mule-coding.c (Fencode_shift_jis_char):
+	* mule-coding.c (Fencode_big5_char):
+	* text.h:
+	* text.c (old_mule_unicode_to_ichar):
+	Add a `fail' argument to certain functions that took a precedence
+	list but had no `fail' argument.  Use HANDLE_CHARSET_CODEPOINT_ERROR()
+	to abstract the handle-failure behavior.
+
+	Add various filtered_*() versions of all the functions that take
+	a precedence list, allowing a predicate to be specified to control
+	which charsets are processed.
+
+	* charset.h (struct Lisp_Charset):
+	* text.c (old_mule_unicode_to_ichar):
+	* mule-coding.c (shift_jis_convert):
+	* mule-coding.c (big5_convert):
+	* unicode.c (add_charset_to_precedence_array):
+	* unicode.c (unicode_convert):
+	* unicode.h:
+	Fix a longstanding problem: Don't do shortcuts involving ASCII
+	if there is a charset higher in the precedence list that specifies
+	Unicode translations involving ASCII characters.  Remove shortcuts
+	involving Control-1 entirely.  Add flags to `struct Lisp_Charset'
+	and `struct precedence_array' to facilitate this change.
+	Track them in add_charset_to_precedence_array().
+	Rename non_ascii_itext_to_charset_codepoint_raw() to just
+	itext_to_charset_codepoint_raw() since it now has to handle
+	ASCII as result of these changes.
+	
+	* chartab.c (Fmake_char_table): Comment fix, default value for
+	syntax tables changed in 21.5 to `word' not `inherit'.
+
+	* chartab.c (word_boundary_p):
+	* chartab.h:
+	* glyphs-msw.c (charset_of_text):
+	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):
+	* event-Xt.c:
+	* event-xlike-inc.c (USE_UNICODE_MAP):
+	* event-xlike-inc.c (endif):
+	* glyphs-msw.c:
+	* glyphs-msw.c (mswindows_widget_hfont):
+	* lisp.h:
+	* lread.c (read_unicode_escape):
+	* mule-charset.c (Fcharsets_in_region):
+	* mule-coding.c (add_unicode_to_dynarr):
+	* mule-wnnfns.c (m2w):
+	* redisplay-gtk.c (gtk_output_display_block):
+	* redisplay-msw.c:
+	* redisplay-msw.c (separate_textual_runs):
+	* redisplay-msw.c (mswindows_output_cursor):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-msw.c (mswindows_output_display_block):
+	* redisplay-msw.c (mswindows_text_width):
+	* redisplay-x.c:
+	* redisplay-x.c (x_text_width):
+	* redisplay-x.c (x_output_display_block):
+	* redisplay-x.c (x_output_string):
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	* redisplay-xlike-inc.c (separate_textual_runs):
+	* redisplay.c (add_ichar_rune_1):
+	* syntax.c (Fset_syntax_table):
+	* syntax.c (WORD_BOUNDARY_P):
+	* syntax.c (scan_words):
+	* unicode.c (decode_unicode_char):
+	Add a `buffer' argument to various functions that used to call
+	charset-codepoint functions that took a precedence array and
+	passed in get_unicode_precedence().
+
+	Don't call get_unicode_precedence() when calling charset-
+	codepoint functions taking a precedence array, instead use the
+	buffer_*() version of charset-codepoint functions and pass in
+	`current_buffer' (@@#### FIXME) or a buffer derived from
+	an argument or elsewhere.  In fact, delete get_unicode_precedence().
+
+	Remove `precedence-list' argument from `charsets-in-region',
+	use precedence-list from buffer argument.
+	
+	* mule-ccl.c (charset_7bit_p):
+	* mule-ccl.c (ccl_driver):
+	* mule-coding.c (ccl_convert):
+	* mule-coding.c (fixed_width_convert):
+	* mule-ccl.h:
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	Add a buffer argument to ccl_driver() and pass it in when
+	possible, otherwise current_buffer. (See previous entry.)
+
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	If we can't convert to a charset codepoint, substitute the
+	CANT_DISPLAY_CHAR (~).  @@#### Big hack, needs to be fixed.
+
+	* depend: Regenerate.
+	
+	* faces.c (ensure_face_cachel_complete):
+	* faces.c (face_cachel_char_font_metric_info):
+	* lisp.h:
+	* text.c (find_charsets_in_ibyte_string):
+	* text.c (find_charsets_in_ichar_string):
+	* text.c (find_charsets_in_buffer):
+	Change `find_charsets_in*' to take a buffer argument instead of
+	a precedence array, and use the buffer_*()
+	version of charset-codepoint functions.
+	
+	* mule-ccl.c:
+	* mule-ccl.c (CCL_HANDLE_ERROR):
+	* mule-ccl.c (Fccl_execute):
+	* mule-ccl.h:
+	When DEBUG_XEMACS, turn on CCL_DEBUG.
+
+	Clean up error-handling code when unable to convert or a
+	bad charset or charset ID passed in.  Create new CCL error
+	classes for these two types of errors.
+
+	Use a filtering predicate to ensure that we only process
+	"7-bit" charsets when we are forced to shove charset codepoints
+	into 14 bits. (@@#### Nasty hack.  Don't maul the codepoints
+	like this.  At least use 16 bits.)
+	
+	
+	* mule-coding.c (reset_iso2022_unicode_precedence):
+	* mule-coding.c (iso2022_encode):
+	Don't create a full precedence array listing all charsets.
+	Instead list only the ones derivable from the coding system
+	(@@#### also currently ASCII and Control-1, should be removed),
+	and implement the preference for ISO2022 charsets by using
+	a filter predicate when converting to a charset codepoint.	
+
+	* text.c (old_mule_non_ascii_itext_to_charset_codepoint_raw):
+	Cosmetic change.
+
+	* text.c (Funicode_to_char):
+	Clean up doc string.
+
+	* lisp.h:
+	* text.c:
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (get_external_unicode_codepoint):
+	* text.c (Funicode_to_char):
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	* unicode.c (external_convert_precedence_list_to_array):
+	Modify various subrs that took a precedence-list to have an
+	argument that can either be a buffer (retrieve the buffer's
+	precedence list) or an explicit precedence list.  Modify
+	external_convert_precedence_list_to_array() to optionally
+	allow buffers in place of predence lists.
+
+	* unicode.c: Some rearrangement of code in header section.
+
+	* text.c (old_mule_unicode_to_ichar):
+	* unicode.c (get_unicode_conversion_1):
+	* unicode.c (get_unicode_conversion):
+	* unicode.c (unicode_to_charset_codepoint_raw):
+	Abstract out the section to retrieve a mapping for a single
+	charset from unicode_to_charset_codepoint_raw() (renamed from
+	non_ascii_unicode_to_charset_codepoint).  Function
+	get_unicode_conversion(), to do a single charset mapping,
+	not currently used but was at one point and might be in the future.
+	
+2010-01-21  Ben Wing  <ben@xemacs.org>
+
+	* buffer.c (finish_init_buffer):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* buffer.c (complex_vars_of_buffer):
+	* bufslots.h:
+	Create a new buffer-local variable `unicode-precedence-list'.
+	Create a couple of extra buffer slots for caching an internal
+	normalized version of the list.
+	
+	* emacs.c (main_1):
+	Comment about new dependencies on complex_vars_of_buffer().
+	
+	* lisp.h:
+	Declare some functions in unicode.c.
+	
+	* mule-charset.c:
+	* mule-charset.c (remove_charset_from_hash_tables):
+	* mule-charset.c (make_charset):
+	* mule-charset.c (Fmake_charset):
+	Put an unwind-protect around the code that handles initializing
+	tags and unicode maps -- in case of error, remove the charset
+	from the hash tables that record it.
+	
+	* mule-charset.c (Fset_charset_tags):
+	* mule-charset.c (syms_of_mule_charset):
+	New function `set-charset-tags'.
+	
+	* unicode.c:
+	* unicode.c (allocate_jit_ucs_charset):
+	Add tags `jit' and `internal' to JIT charsets.
+	
+	* unicode.c (free_precedence_array):
+	Check that any global or buffer-local precedence array isn't
+	being freed.
+	
+	* unicode.c (cplta_mapper):
+	* unicode.c (convert_precedence_list_to_array_1):
+	* unicode.c (convert_precedence_list_to_array):
+	* unicode.c (internal_convert_precedence_list_to_array):
+	* unicode.c (external_convert_precedence_list_to_array):
+	Clean up and use bit flags rather than extra parameters for
+	holding flags.
+	
+	* unicode.c (RUP_NUKE_BUFFER_SLOTS):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (charset_created_recalculate_unicode_precedence):
+	* unicode.c (disksave_clear_unicode_precedence):
+	* unicode.c (unicode_precedence_list_changed):
+	When recalculating the precedence arrays, compute both the
+	global and buffer-local values.  Create another hash table
+	to cache mappings from conses of buffer-local and default
+	precedence arrays to the precedence array representing the
+	combined value.  Create functions init_default_unicode_precedence()
+	and init_buffer_unicode_precedence() to initialize default and
+	buffer-local values of the caches when a new buffer is created.
+	
+	* unicode.c (syms_of_unicode):
+	* unicode.c (init_unicode):
+	Delete the various old functions for manipulating Unicode
+	precedence list.  Access is now through the variable
+	`unicode-precedence-list' and a single function
+	`normalized-unicode-precedence-list'.  Delete the old hash
+	table that holds the global precedence array.
+
+	* lisp.h:
+	* unicode.c (filter_precedence_array):
+	No longer used, so #if-0 out.
+	
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* tests.c (Ftest_data_format_conversion):
+	Put in the right internal-format data under Unicode-internal;
+	at least it doesn't crash any more.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* search.c (boyer_moore):
+	Initialize translate_prev_len in the right place in the inner
+	loop; fixes `make check' failures.
+
+2010-01-20  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (disksave_object_finalization):
+	* lisp.h:
+	* unicode.c (disksave_clear_unicode_precedence):
+	Clear Unicode precedence tables before dumping so we don't have
+	precedence-array objects trying to get dumped.
+	
+	* device.c:
+	* device.c (call_critical_lisp_code):
+	* device.h:
+	* lisp.h:
+	Allow call_critical_lisp_code to be called by callers who don't
+	have any devices to lock.
+	
+	* emacs.c (main_1):
+	* intl.c (init_intl):
+	* intl.c (syms_of_intl):
+	* symsinit.h:
+	* unicode.c (init_unicode):
+	New function init_unicode() to recreate the Unicode precedence
+	tables after dumping.  Call it from main_1().  Declare it in
+	symsinit.h.  Use call_critical_lisp_code in init_intl() instead
+	of home-grown code to do the same thing.
+	
+	* text.c (external_char_to_charset_codepoint):
+	* text.c (Funicode_to_char):
+	* unicode.c:
+	* unicode.c (free_precedence_array):
+	* unicode.c (convert_precedence_list_to_array_2):
+	* unicode.c (cplta_mapper):
+	* unicode.c (convert_precedence_list_to_array_1):
+	* unicode.c (internal_convert_precedence_list_to_array):
+	* unicode.c (external_convert_precedence_list_to_array):
+	* unicode.c (recalculate_unicode_precedence_1):
+	* unicode.c (recalculate_unicode_precedence):
+	Redo somewhat the code handling precedence-array objects.
+	For simplicity, don't overwrite an existing precedence-array
+	object, but create a new one when we need to recalculate the
+	precedence arrays.
+
+	Fix a genuine bug: recalculating the precedence arrays, we
+	didn't clear the precedence-array hash tables.  Clean up the
+	code so that this always happens.
+
+	When calling Lisp, if we're doing it from init_unicode(),
+	wrap in call_critical_lisp_code().  Add a flag to various
+	precedence-array functions to indicate whether we need to
+	be wrapping in this way.
+
+	* mule-charset.c (vars_of_mule_charset):
+	* mule-coding.c:
+	* mule-coding.c (struct multibyte_coding_system):
+	* mule-coding.c (struct multibyte_coding_stream):
+	* mule-coding.c (multibyte_init_coding_stream):
+	* mule-coding.c (multibyte_convert):
+	* mule-coding.c (multibyte_init):
+	* mule-coding.c (multibyte_mark):
+	* mule-coding.c (multibyte_finalize):
+	* mule-coding.c (multibyte_putprop):
+	* mule-coding.c (multibyte_getprop):
+	* mule-coding.c (multibyte_print):
+	* mule-coding.c (coding_system_type_create_mule_coding):
+	Put back the old way of storing a Lisp-object dynarr of
+	charsets rather than a precedence array in multibyte coding
+	systems.  Instead, create the precedence array in the
+	type-specific coding-stream object -- create two new methods
+	multibyte_init_coding_stream() and multibyte_mark_coding_stream()
+	for this purpose.  This way, no precedence arrays will be
+	hanging around at dump time.
+
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* mule-charset.c:
+	* mule-charset.c (Fcharset_short_name):
+	* mule-charset.c (Fcharset_long_name):
+	* mule-charset.c (Fcharset_description):
+	* text.c:
+	* text.c (Fchar_to_charset_codepoint):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	Rewrite many docstrings for additional clarity.  `make-char'
+	got an especially thorough rewrite.
+
+	* text.c (syms_of_text):
+	Add comments about where some symbols are to be found, and
+	a #### comment about Qsubstitute_negated.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+	* mule-charset.c (make_charset):
+	Initialize Unicode-map to Qnil, for charsets such as `ascii' without
+	an explicit map.
+
+2010-01-17  Ben Wing  <ben@xemacs.org>
+
+
+	Fundamental changes:
+
+	1) We no longer create the "internal" charsets.  Instead that
+	happens in Lisp, and at run time we fetch pointers to the charsets
+	using their names.
+
+	2) When allocating ID's for charsets, we first allocate official
+	ID's, then private ID's, then non-encodable ID's. (Under
+	Unicode-internal, there is only one kind of ID.) Formerly under
+	old-Mule, official ID's were reserved for charsets created in C,
+	and Lisp-created charsets always went into private ID space even
+	if there was room in the official ID space.
+	
+	* charset.h:
+	* charset.h (struct charset_lookup):
+	* mule-charset.c:
+
+	Rename next_allocated_private_* to next_allocated_*.
+	
+	* emacs.c (main_1):
+	* symsinit.h:
+	* mule-charset.c (init_mule_charset):
+	* mule-coding.c (complex_vars_of_mule_coding):
+	* mule-coding.c (init_mule_coding):
+	New init_mule_* functions.  Define them in mule-*.c, declare them
+	in symsinit.h, and call them in emacs.c (but only when we have
+	previously dumped).
+
+	The charsets are no longer created during early initialization but
+	during dumping, so at run-time, init_mule_charset() fetches the
+	created charsets and stores them into variables.
+
+	Some code to set precedence tables for Big5 and Shift-JIS depends
+	on charsets being created, so move it out of
+	complex_vars_of_mule_coding() (run at init time) to
+	init_mule_coding() (run at run time, after init_mule_charset()).
+	
+	* lisp.h:
+	Add external declarations for all charset symbols, so code can
+	fetch charsets through Fget_charset() if necessary.
+	
+	* mule-charset.c (get_unallocated_encodable_charset_id):
+	Rename next_charset_id -> next_non_encodable_charset_id.
+	Fix up get_unallocated_encodable_charset_id() so that under
+	old-Mule it allocates first official ID's, then private ID's.
+	Previously it only allocated private ID's.
+	
+	* mule-charset.c (make_charset):
+	Clean up code to allocate charset ID's.
+	
+	* mule-charset.c (syms_of_mule_charset):
+	Set next_allocated_*_id to point to the beginning of allocatable
+	official ID space rather than private ID space.
+	
+	* mule-charset.c (vars_of_mule_charset):
+	Don't create charsets here, except for ascii, control-1,
+	iso-8859-1 and composite.  For remaining charsets, set their value
+	to nil.
+	
+	* mule-charset.c (complex_vars_of_mule_charset):
+	Bracket code to create special fixed-offset Unicode charsets
+	in FIXED_UNICODE_CHARSETS; not currently used.
+	
+	* mule-charset.c (enum fixed_unicode_charset_id):
+	Delete enum CHARSET_ID_OFFICIAL; we fetch these charsets through
+	symbols.  Take what's left of the enum and put it into `enum
+	fixed_unicode_charset_id', only used when FIXED_UNICODE_CHARSETS.
+
+	* text.h:
+	Move CHARSET_ID_COMPOSITE here from mule-charset.c, and create
+	constants for the boundaries of 1- and 2-dimensional official ID
+	space.
+	
+	* unicode.c:
+	When processing special `big5' flag, fetch the big5 charsets
+	through their names, since we may be called at dump time when the
+	charset variables have not been initialized. (Warning: This
+	depends on the initialization of the Unicode map specified at
+	creation time happening as the *very last* thing at creation, in
+	particular after the charset has been added to the
+	name->charset-object hash table.
+	
+
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (Dynarr_verify, Dynarr_verify_mod):
+	If ERROR_CHECK_STRUCTURES is not defined, cast the argument in
+	these two macros; fixes the g++ build.
+
+2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Finsert_file_contents_internal):
+	Only call format-decode if it has a function binding.
+	(build_annotations): Only call format-annotate-function if it has
+	a function binding; incidentally only calling #'car-less-than-car
+	if *it* has a function binding.
+	(syms_of_fileio): #'car-less-than-car and #'cdr-less-than-cdr are
+	now in Lisp.
 
 2010-02-20  Ben Wing  <ben@xemacs.org>
 

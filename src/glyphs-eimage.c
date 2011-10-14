@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994, 1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005, 2010 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -47,7 +47,7 @@ Boston, MA 02111-1307, USA.  */
 #include "device-impl.h"
 #include "faces.h"
 #include "glyphs.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 
 #include "buffer.h"
 #include "frame.h"
@@ -177,10 +177,16 @@ jpeg_instantiate_unwind (Lisp_Object unwind_obj)
     jpeg_destroy_decompress (data->cinfo_ptr);
 
   if (data->instream)
-    retry_fclose (data->instream);
+    {
+      retry_fclose (data->instream);
+      data->instream = 0;
+    }
 
   if (data->eimage)
-    xfree (data->eimage);
+    {
+      xfree (data->eimage);
+      data->eimage = 0;
+    }
 
   return Qnil;
 }
@@ -577,10 +583,14 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
   if (data->giffile)
     {
       DGifCloseFile (data->giffile);
-      FreeSavedImages(data->giffile);
+      FreeSavedImages (data->giffile);
+      data->giffile = 0;
     }
   if (data->eimage)
-    xfree (data->eimage);
+    {
+      xfree (data->eimage);
+      data->eimage = 0;
+    }
 
   return Qnil;
 }
@@ -684,7 +694,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* 3. Now create the EImage(s) */
   {
-    ColorMapObject *cmo = unwind.giffile->SColorMap;
+    ColorMapObject *cmo = (unwind.giffile->Image.ColorMap ? unwind.giffile->Image.ColorMap : unwind.giffile->SColorMap);
     int i, j, row, pass, interlace, slice;
     UINT_64_BIT pixels_sq;
     Binbyte *eip;
@@ -692,6 +702,9 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        0, 8, 16, ..., 4, 12, 20, ..., 2, 6, 10, ..., 1, 3, 5, ...  */
     static int InterlacedOffset[] = { 0, 4, 2, 1 };
     static int InterlacedJumps[] = { 8, 8, 4, 2 };
+
+    if (cmo == NULL)
+      signal_image_error ("GIF image has no color map", instantiator);
 
     height = unwind.giffile->SHeight;
     width = unwind.giffile->SWidth;
@@ -878,10 +891,16 @@ png_instantiate_unwind (Lisp_Object unwind_obj)
     }
 
   if (data->instream)
-    retry_fclose (data->instream);
+    {
+      retry_fclose (data->instream);
+      data->instream = 0;
+    }
 
   if (data->eimage)
-    xfree (data->eimage);
+    {
+      xfree (data->eimage);
+      data->eimage = 0;
+    }
 
   return Qnil;
 }
@@ -1134,10 +1153,14 @@ tiff_instantiate_unwind (Lisp_Object unwind_obj)
   free_opaque_ptr (unwind_obj);
   if (data->tiff)
     {
-      TIFFClose(data->tiff);
+      TIFFClose (data->tiff);
+      data->tiff = 0;
     }
   if (data->eimage)
-    xfree (data->eimage);
+    {
+      xfree (data->eimage);
+      data->eimage = 0;
+    }
 
   return Qnil;
 }

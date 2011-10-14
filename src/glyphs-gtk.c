@@ -67,7 +67,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-gtk-impl.h"
 #include "glyphs-gtk.h"
-#include "objects-gtk-impl.h"
+#include "fontcolor-gtk-impl.h"
 #include "ui-gtk.h"
 
 #include "sysfile.h"
@@ -483,7 +483,8 @@ gtk_image_instance_equal (struct Lisp_Image_Instance *p1,
 }
 
 static Hashcode
-gtk_image_instance_hash (struct Lisp_Image_Instance *p, int UNUSED (depth))
+gtk_image_instance_hash (struct Lisp_Image_Instance *p, int UNUSED (depth),
+                         Boolint UNUSED (equalp))
 {
   switch (IMAGE_INSTANCE_TYPE (p))
     {

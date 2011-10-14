@@ -434,17 +434,17 @@ X fonts can be specified (by the user) in either pixels or 10ths of points,
 	       (concat (substring font 0 (match-beginning 1)) "*"
 		       (substring font (match-end 1) (match-end 0))))))
   (sort
-   (delq nil
-	 (mapcar (function
-		  (lambda (name)
-		    (and (string-match x-font-regexp name)
-			 (list
-			  (string-to-int (substring name (match-beginning 5)
-						    (match-end 5)))
-			  (string-to-int (substring name (match-beginning 6)
-						    (match-end 6)))
-			  name))))
-		 (font-list font device)))
+   (mapcan (function
+            (lambda (name)
+              (and (string-match x-font-regexp name)
+                   (list
+                    (list
+                     (string-to-int (substring name (match-beginning 5)
+                                               (match-end 5)))
+                     (string-to-int (substring name (match-beginning 6)
+                                               (match-end 6)))
+                     name)))))
+           (font-list font device))
    (function (lambda (x y) (if (= (nth 1 x) (nth 1 y))
 			       (< (nth 0 x) (nth 0 y))
 			       (< (nth 1 x) (nth 1 y)))))))
@@ -611,7 +611,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;; -- sjt 2007-10-06
 
 ;; This function is probably also used by the GTK platform.  Cf.
-;; gtk_color_list in src/objects-gtk.c.
+;; gtk_color_list in src/fontcolor-gtk.c.
 (defun x-color-list-internal ()
   (if (boundp 'x-color-list-internal-cache)
       x-color-list-internal-cache

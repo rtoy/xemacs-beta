@@ -1,5 +1,5 @@
 /* Why the hell is XEmacs so fucking slow?
-   Copyright (C) 1996, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 1996, 2002, 2003, 2004, 2010 Ben Wing.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -25,6 +25,7 @@ Boston, MA 02111-1307, USA.  */
 #include "backtrace.h"
 #include "bytecode.h"
 #include "elhash.h"
+#include "gc.h"
 #include "hash.h"
 #include "profile.h"
 
@@ -137,16 +138,16 @@ create_profile_tables (void)
   create_timing_profile_table ();
   if (NILP (Vtotal_timing_profile_table))
     Vtotal_timing_profile_table =
-      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, Qeq);
   if (NILP (Vcall_count_profile_table))
     Vcall_count_profile_table =
-      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, Qeq);
   if (NILP (Vgc_usage_profile_table))
     Vgc_usage_profile_table =
-      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, Qeq);
   if (NILP (Vtotal_gc_usage_profile_table))
     Vtotal_gc_usage_profile_table =
-      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, Qeq);
 }
 
 static Lisp_Object
@@ -364,8 +365,16 @@ will be properly accumulated. (To clear, use `clear-profiling-info'.)
     msecs = default_profiling_interval;
   else
     {
-      CHECK_NATNUM (microsecs);
+#ifdef HAVE_BIGNUM
+      check_integer_range (microsecs, make_int (1000), make_integer (INT_MAX));
+      msecs =
+        BIGNUMP (microsecs) ? bignum_to_int (XBIGNUM_DATA (microsecs)) :
+                                             XINT (microsecs);
+#else
+      check_integer_range (microsecs, make_int (1000),
+                           make_integer (EMACS_INT_MAX));
       msecs = XINT (microsecs);
+#endif
     }
   if (msecs <= 0)
     msecs = 1000;
@@ -475,7 +484,7 @@ copy_hash_table_or_blank (Lisp_Object table)
 {
   return !NILP (table) ? Fcopy_hash_table (table) :
     make_lisp_hash_table (100, HASH_TABLE_NON_WEAK,
-			  HASH_TABLE_EQ);
+			  Qeq);
 }
 
 DEFUN ("get-profiling-info", Fget_profiling_info, 0, 0, 0, /*
@@ -514,7 +523,7 @@ are recorded
   const void *overhead;
 
   closure.timing =
-    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, Qequal);
 
   if (big_profile_table)
     {
@@ -533,15 +542,16 @@ are recorded
       unbind_to (count);
     }
 
-  retv = nconc2 (list6 (Qtiming, closure.timing, Qtotal_timing,
-			copy_hash_table_or_blank (Vtotal_timing_profile_table),
-			Qcall_count,
-			copy_hash_table_or_blank (Vcall_count_profile_table)),
-		 list4 (Qgc_usage,
-			copy_hash_table_or_blank (Vgc_usage_profile_table),
-			Qtotal_gc_usage,
-			copy_hash_table_or_blank (Vtotal_gc_usage_profile_table
-						  )));
+  retv = listu (Qtiming, closure.timing,
+                Qtotal_timing,
+                copy_hash_table_or_blank (Vtotal_timing_profile_table),
+                Qcall_count,
+                copy_hash_table_or_blank (Vcall_count_profile_table),
+                Qgc_usage,
+                copy_hash_table_or_blank (Vgc_usage_profile_table),
+                Qtotal_gc_usage,
+                copy_hash_table_or_blank (Vtotal_gc_usage_profile_table),
+                Qunbound);
   unbind_to (depth);
   return retv;
 }
@@ -609,7 +619,7 @@ mark_profiling_info_maphash (const void *void_key,
 			     void *UNUSED (void_closure))
 {
 #ifdef USE_KKCC
-  kkcc_gc_stack_push_lisp_object (GET_LISP_FROM_VOID (void_key), 0, -1);
+  kkcc_gc_stack_push_lisp_object_0 (GET_LISP_FROM_VOID (void_key));
 #else /* NOT USE_KKCC */
   mark_object (GET_LISP_FROM_VOID (void_key));
 #endif /* NOT USE_KKCC */

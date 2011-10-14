@@ -76,7 +76,10 @@ x_free_scrollbar_instance (struct scrollbar_instance *instance)
   if (instance->scrollbar_data)
     {
       if (SCROLLBAR_X_NAME (instance))
-	xfree (SCROLLBAR_X_NAME (instance));
+	{
+	  xfree (SCROLLBAR_X_NAME (instance));
+	  SCROLLBAR_X_NAME (instance) = 0;
+	}
 
       if (SCROLLBAR_X_WIDGET (instance))
 	{
@@ -87,6 +90,7 @@ x_free_scrollbar_instance (struct scrollbar_instance *instance)
 	}
 
       xfree (instance->scrollbar_data);
+      instance->scrollbar_data = 0;
     }
 }
 
@@ -694,23 +698,18 @@ x_update_frame_scrollbars (struct frame *f)
 
 #ifdef MEMORY_USAGE_STATS
 
-static int
+static Bytecount
 x_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 				    struct scrollbar_instance *inst,
 				    struct usage_stats *ustats)
 {
-  int total = 0;
+  Bytecount total = 0;
+  struct x_scrollbar_data *data =
+    (struct x_scrollbar_data *) inst->scrollbar_data;
 
-  while (inst)
-    {
-      struct x_scrollbar_data *data =
-	(struct x_scrollbar_data *) inst->scrollbar_data;
-
-      total += malloced_storage_size (data, sizeof (*data), ustats);
-      total += malloced_storage_size (data->name, 1 + strlen (data->name),
-				      ustats);
-      inst = inst->next;
-    }
+  total += malloced_storage_size (data, sizeof (*data), ustats);
+  total += malloced_storage_size (data->name, 1 + strlen (data->name),
+				  ustats);
 
   return total;
 }

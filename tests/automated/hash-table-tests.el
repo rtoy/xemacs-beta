@@ -37,7 +37,7 @@
      (require 'test-harness))))
 
 ;; Test all combinations of make-hash-table keywords
-(dolist (test '(eq eql equal))
+(dolist (test '(eq eql equal equalp))
   (dolist (size '(0 1 100))
     (dolist (rehash-size '(1.1 9.9))
       (dolist (rehash-threshold '(0.2 .9))
@@ -200,6 +200,25 @@
     (check-copy ht)
     )
 
+  (let ((ht (make-hash-table :size 100 :rehash-threshold .6 :test 'equalp)))
+    (dotimes (j iterations)
+      (puthash (+ one 0.0) t ht)
+      (puthash 1 t ht)
+      (puthash (+ two 0.0) t ht)
+      (puthash 2 t ht)
+      (puthash (cons 1.0 2.0) (gensym) ht)
+      ;; Override the previous entry.
+      (puthash (cons 1 2) t ht)
+      (puthash (cons 3.0 4.0) (gensym) ht)
+      (puthash (cons 3 4) t ht))
+    (Assert (eq (hashtable-test-function ht) 'equalp))
+    (Assert (eq (hash-table-test ht) 'equalp))
+    (Assert (= 4 (hash-table-count ht)))
+    (Assert (eq t (gethash 1.0 ht)))
+    (Assert (eq t (gethash '(1 . 2) ht)))
+    (check-copy ht)
+    )
+
   ))
 
 ;; Test that weak hash-tables are properly handled
@@ -248,8 +267,8 @@
     (Assert (= v-sum k-sum))))
 
 ;;; Test reading and printing of hash-table objects
-(let ((h1 #s(hashtable  weakness t rehash-size 3.0 rehash-threshold .2 test eq data (1 2 3 4)))
-      (h2 #s(hash-table weakness t rehash-size 3.0 rehash-threshold .2 test eq data (1 2 3 4)))
+(let ((h1 #s(hashtable :weakness t :rehash-size 3.0 :rehash-threshold .2 :test eq :data (1 2 3 4)))
+      (h2 #s(hash-table :weakness t :rehash-size 3.0 :rehash-threshold .2 :test eq :data (1 2 3 4)))
       (h3 (make-hash-table :weakness t :rehash-size 3.0 :rehash-threshold .2 :test 'eq)))
   (Assert (equal h1 h2))
   (Assert (not (equal h1 h3)))
@@ -282,3 +301,91 @@
 (Assert (= (sxhash "foo") (sxhash "foo")))
 (Assert (= (sxhash '(1 2 3)) (sxhash '(1 2 3))))
 (Assert (/= (sxhash '(1 2 3)) (sxhash '(3 2 1))))
+
+;; Test #'define-hash-table-test.
+
+(defstruct hash-table-test-structure
+  number-identifier padding-zero padding-one padding-two)
+
+(macrolet
+    ((good-hash () 65599)
+     (hash-modulo-figure ()
+       (if (featurep 'bignum)
+           (1+ (* most-positive-fixnum 2))
+         most-positive-fixnum))
+     (hash-table-test-structure-first-hash-figure ()
+       (rem* (* 65599 (eq-hash 'hash-table-test-structure))
+             (if (featurep 'bignum)
+                 (1+ (* most-positive-fixnum 2))
+               most-positive-fixnum))))
+  (let ((hash-table-test (gensym))
+        (no-entry-found (gensym))
+        (two 2.0)
+        (equal-function
+         #'(lambda (object-one object-two)
+             (or (equal object-one object-two)
+                 (and (hash-table-test-structure-p object-one)
+                      (hash-table-test-structure-p object-two)
+                      (= (hash-table-test-structure-number-identifier
+                          object-one)
+                         (hash-table-test-structure-number-identifier
+                          object-two))))))
+        (hash-function
+         #'(lambda (object)
+             (if (hash-table-test-structure-p object)
+                 (rem* (+ (hash-table-test-structure-first-hash-figure)
+                          (equalp-hash
+                           (hash-table-test-structure-number-identifier
+                            object)))
+                       (hash-modulo-figure))
+            (equal-hash object))))
+        hash-table-test-hash equal-hash)
+    (Check-Error wrong-type-argument (define-hash-table-test
+                                       "hi there everyone"
+                                       equal-function hash-function))
+    (Check-Error wrong-number-of-arguments (define-hash-table-test
+                                             (gensym)
+                                             hash-function hash-function))
+    (Check-Error wrong-number-of-arguments (define-hash-table-test
+                                             (gensym)
+                                             equal-function equal-function))
+    (define-hash-table-test hash-table-test equal-function hash-function)
+    (Assert (valid-hash-table-test-p hash-table-test))
+    (setq equal-hash (make-hash-table :test #'equal)
+          hash-table-test-hash (make-hash-table :test hash-table-test))
+    (Assert (hash-table-p equal-hash))
+    (Assert (hash-table-p hash-table-test-hash))
+    (Assert (eq hash-table-test (hash-table-test hash-table-test-hash)))
+    (loop
+      for ii from 200 below 300
+      with structure = nil
+      do 
+      (setf structure (make-hash-table-test-structure
+                       :number-identifier (if (oddp ii) (float (% ii 10))
+                                                               (% ii 10))
+                       :padding-zero (random)
+                       :padding-one (random)
+                       :padding-two (random))
+            (gethash structure hash-table-test-hash) t
+            (gethash structure equal-hash) t))
+    (Assert (= (hash-table-count hash-table-test-hash) 10))
+    (Assert (= (hash-table-count equal-hash) 100))
+    (Assert (eq t (gethash (make-hash-table-test-structure
+                            :number-identifier 1
+                            :padding-zero (random)
+                            :padding-one (random)
+                            :padding-two (random))
+                           hash-table-test-hash)))
+    (Assert (eq t (gethash (make-hash-table-test-structure
+                            :number-identifier 2.0
+                            :padding-zero (random)
+                            :padding-one (random)
+                            :padding-two (random))
+                           hash-table-test-hash)))
+    (Assert (eq no-entry-found (gethash (make-hash-table-test-structure
+                                         :number-identifier (+ two 0.0)
+                                         :padding-zero (random)
+                                         :padding-one (random)
+                                         :padding-two (random))
+                                        equal-hash
+                                        no-entry-found)))))

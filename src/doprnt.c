@@ -591,11 +591,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      Lisp_Object obj = largs[spec->argnum - 1];
 	      if (CHARP (obj))
 		obj = make_int (XCHAR (obj));
-#ifdef WITH_NUMBER_TYPES
 	      if (!NUMBERP (obj))
-#else
-	      if (!INT_OR_FLOATP (obj))
-#endif
 		{
 		  /* WARNING!  This MUST be big enough for the sprintf below */
 		  CIbyte msg[48];
@@ -606,9 +602,10 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		}
 	      else if (strchr (double_converters, ch))
 		{
-#ifdef WITH_NUMBER_TYPES
-		  if (INTP (obj) || FLOATP (obj))
-		    arg.d = XFLOATINT (obj);
+		  if (INTP (obj))
+		    arg.d = XINT (obj);
+		  else if (FLOATP (obj))
+		    arg.d = XFLOAT_DATA (obj);
 #ifdef HAVE_BIGNUM
 		  else if (BIGNUMP (obj))
 		    arg.d = bignum_to_double (XBIGNUM_DATA (obj));
@@ -631,9 +628,6 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 			}
 		    }
 #endif
-#else /* !WITH_NUMBER_TYPES */
-		  arg.d = XFLOATINT (obj);
-#endif /* WITH_NUMBER_TYPES */
 		}
 	      else
 		{

@@ -1,4 +1,4 @@
-;;; mule-cmds.el --- Commands for multilingual environment -*- coding: iso-2022-7bit; -*-
+;;; mule-cmds.el --- Commands for multilingual environment
 
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -779,7 +779,7 @@ the language environment for the major languages of Western Europe."
      #'(lambda (key entry)
          (setq string (decode-coding-string (string entry)
                                             invalid-sequence-coding-system))
-         (when (= 1 (length string))
+         (when (eql 1 (length string))
 	   ;; Treat Unicode error sequence chars as the octets
 	   ;; corresponding to those on disk:
 	   (setq unicode-error-lookup
@@ -789,8 +789,7 @@ the language environment for the major languages of Western Europe."
 	     (setq string (format "%c" unicode-error-lookup)))
            ;; Treat control characters specially:
            (setq first-char (aref string 0))
-           (when (or (and (>= first-char #x00) (<= first-char #x1f))
-                     (and (>= first-char #x80) (<= first-char #x9f)))
+           (when (or (<= #x00 first-char #x1f) (<= #x80 first-char #x9f))
 	     (setq string (format "^%c" (+ ?@ (aref string 0))))))
          (setq glyph (make-glyph (vector 'string :data string)))
          (set-glyph-face glyph 'unicode-invalid-sequence-warning-face)
@@ -798,10 +797,10 @@ the language environment for the major languages of Western Europe."
          nil)
      unicode-error-default-translation-table))
 
-  ;; Fit the charsets preferences in unicode conversions for the
-  ;; language environment.
-  (set-language-unicode-precedence-list
-   (get-language-info language-name 'charset))
+  ;; Set the buffer-local Unicode precedence list from the the charset
+  ;; preferences in the language environment.
+  (set-buffer-unicode-precedence-list
+   (current-buffer) (get-language-info language-name 'charset))
 
   (run-hooks 'set-language-environment-hook)
   (force-mode-line-update t))
@@ -1332,15 +1331,16 @@ of buffer-file-coding-system set by this function."
 ;; reset-coding-categories-to-default before calling this function.  ####
 ;; Should we rethink this?
 
-; Note that `coding-priority-list' is not reset first; thus changing language
-; environment allows recognition of coding systems from previously set language
-; environments.  (This will not work if the desired coding systems are from the
-; same category.  E.g., starting with a Hebrew language environment, ISO 8859-8
-; will be recognized.  If you shift to Russian, ISO 8859-8 will be shadowed by
-; ISO 8859-5, and cannot be automatically recognized without resetting the
-; language environment to Hebrew.  However, if you shift from Japanese to
-; Russian, ISO-2022-JP will continue to be automatically recognized, since
-; ISO-8859-5 and ISO-2022-JP are different coding categories.)"
+; Note that `coding-priority-list' is not reset first; thus changing
+; language environment allows recognition of coding systems from previously
+; set language environments.  (This will not work if the desired coding
+; systems are from the same category.  E.g., starting with a Hebrew
+; language environment, ISO 8859-8 will be recognized.  If you shift to
+; Russian, ISO 8859-8 will be shadowed by ISO 8859-5, and cannot be
+; automatically recognized without resetting the language environment to
+; Hebrew.  However, if you shift from Japanese to Russian, ISO-2022-JP will
+; continue to be automatically recognized, since ISO-8859-5 and ISO-2022-JP
+; are different coding categories.)"
 
   (flet ((maybe-change-coding-system-with-eol (codesys eol-type)
 	   ;; if the EOL type specifies a specific type of ending,
@@ -1366,13 +1366,14 @@ of buffer-file-coding-system set by this function."
 	  ))
 
       ;; set the default buffer coding system from the first element of the
-      ;; list in the `coding-priority' property, under Unix.  Under Windows, it
-      ;; should stay at `mswindows-multibyte', which will reference the current
-      ;; code page. ([Does it really make sense to set the Unix default
-      ;; that way?  NOTE also that it's not the same as the native coding
-      ;; system for the locale, which is correct -- the form we choose for text
-      ;; files should not necessarily have any relevance to whether we're in a
-      ;; Shift-JIS, EUC-JP, JIS, or other Japanese locale.])
+      ;; list in the `coding-priority' property, under Unix.  Under
+      ;; Windows, it should stay at `mswindows-multibyte', which will
+      ;; reference the current code page. ([Does it really make sense to
+      ;; set the Unix default that way?  NOTE also that it's not the same
+      ;; as the native coding system for the locale, which is correct --
+      ;; the form we choose for text files should not necessarily have any
+      ;; relevance to whether we're in a Shift-JIS, EUC-JP, JIS, or other
+      ;; Japanese locale.])
       ;;
       ;;     On Unix--with the exception of Mac OS X--there is no way to
       ;;     know for certain what coding system to use for file names, and
@@ -1498,8 +1499,8 @@ of buffer-file-coding-system set by this function."
 (defun init-mule-at-startup ()
   "Initialize MULE environment at startup.  Don't call this."
 
-  (when (not load-unicode-tables-at-dump-time)
-    (load-unicode-tables))
+;   (when (not load-unicode-tables-at-dump-time)
+;     (load-unicode-tables))
 
   ;; This is called (currently; might be moved earlier) from startup.el,
   ;; after the basic GUI systems have been initialized, and just before the

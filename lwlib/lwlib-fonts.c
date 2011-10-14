@@ -76,7 +76,7 @@ xft_open_font_by_name (Display *dpy, char *name)
   int count = 0;
   char *pos = name;
   /* extra parens shut up gcc */
-  while ((pos = index (pos, '-')))
+  while ((pos = strchr (pos, '-')))
     {
       count++;
       pos++;
@@ -86,7 +86,7 @@ xft_open_font_by_name (Display *dpy, char *name)
   if (count == 14		/* fully-qualified XLFD */
       || (count < 14		/* heuristic for wildcarded XLFD */
 	  && count >= 5
-	  && index (name, '*')))
+	  && strchr (name, '*')))
     res = XftFontOpenXlfd (dpy, DefaultScreen (dpy), name);
   else
     res = XftFontOpenName (dpy, DefaultScreen (dpy), name);

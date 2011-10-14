@@ -256,13 +256,13 @@
 		    (setq length (length button))
 
 		    (cond
-		     ((= length 1)	; [ "name" ]
+		     ((eql length 1)	; [ "name" ]
 		      (setq callback nil
 			    activep nil))
-		     ((= length 2)	; [ "name" callback ]
+		     ((eql length 2)	; [ "name" callback ]
 		      (setq callback (aref button 1)
 			    activep t))
-		     ((and (or (= length 3) (= length 4))
+		     ((and (or (eql length 3) (eql length 4))
 			   (not (keywordp (aref button 2))))
 		      ;; [ "name" callback active-p ] or
 		      ;; [ "name" callback active-p suffix ]

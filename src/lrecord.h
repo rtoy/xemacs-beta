@@ -187,6 +187,8 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct lrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) 0
+#define IF_NEW_GC(x) x
+#define IF_OLD_GC(x) 0
 #else /* not NEW_GC */
 #define ALLOC_NORMAL_LISP_OBJECT(type) alloc_automanaged_lcrecord (&lrecord_##type)
 #define ALLOC_SIZED_LISP_OBJECT(size, type) \
@@ -194,6 +196,8 @@ Boston, MA 02111-1307, USA.  */
 #define NORMAL_LISP_OBJECT_HEADER struct old_lcrecord_header
 #define FROB_BLOCK_LISP_OBJECT_HEADER struct lrecord_header
 #define LISP_OBJECT_FROB_BLOCK_P(obj) (XRECORD_LHEADER_IMPLEMENTATION(obj)->frob_block_p)
+#define IF_NEW_GC(x) 0
+#define IF_OLD_GC(x) x
 #endif /* not NEW_GC */
 
 #define LISP_OBJECT_UID(obj) (XRECORD_LHEADER (obj)->uid)
@@ -304,131 +308,150 @@ struct free_lcrecord_header
 };
 #endif /* not NEW_GC */
 
-/* DON'T FORGET to update .gdbinit.in if you change this list. */
+/* DON'T FORGET to update .gdbinit.in.in if you change this list. */
 enum lrecord_type
 {
-  /* Symbol value magic types come first to make SYMBOL_VALUE_MAGIC_P fast.
+  /* Symbol value magic types come first so that SYMBOL_VALUE_MAGIC_P
+     can be written as a single '<= lrecord_type_max_symbol_value_magic'.
+     In practice, if we moved them somewhere else but kept them together,
+     the single extra comparison would hardly make a difference.
      #### This should be replaced by a symbol_value_magic_p flag
      in the Lisp_Symbol lrecord_header. */
-  lrecord_type_symbol_value_forward,      /*  0 */
-  lrecord_type_symbol_value_varalias,
-  lrecord_type_symbol_value_lisp_magic,
-  lrecord_type_symbol_value_buffer_local,
+  /* Don't assign any type to 0, so in case we come across zeroed memory
+     it will be more obvious when printed */
+  lrecord_type_symbol_value_forward = 1, /* struct symbol_value_forward */
+  lrecord_type_symbol_value_varalias,    /* struct symbol_value_varalias */
+  lrecord_type_symbol_value_lisp_magic,  /* struct symbol_value_lisp_magic */
+  lrecord_type_symbol_value_buffer_local,/* struct symbol_value_buffer_local */
   lrecord_type_max_symbol_value_magic = lrecord_type_symbol_value_buffer_local,
-  lrecord_type_symbol,
-  lrecord_type_subr,
-  lrecord_type_multiple_value,
-  lrecord_type_cons,
-  lrecord_type_vector,
-  lrecord_type_string,
-#ifndef NEW_GC
-  lrecord_type_lcrecord_list,
-#endif /* not NEW_GC */
-  lrecord_type_compiled_function,
-  lrecord_type_weak_list,
-  lrecord_type_bit_vector,
-  lrecord_type_float,
-  lrecord_type_hash_table,
-  lrecord_type_lstream,
-  lrecord_type_process,
-  lrecord_type_charset,
-  lrecord_type_coding_system,
-  lrecord_type_char_table,
-  lrecord_type_char_table_entry,
-  lrecord_type_range_table,
-  lrecord_type_opaque,
-  lrecord_type_opaque_ptr,
-  lrecord_type_buffer,
-  lrecord_type_extent,
-  lrecord_type_extent_info,
-  lrecord_type_extent_auxiliary,
-  lrecord_type_marker,
-  lrecord_type_event,
+
+  /* Keep the rest of these (up to #ifdef EVENT_DATA_AS_OBJECTS) sorted,
+     to facilitate keeping .gdbinit.in.in in sync.  Also sort within
+     the #ifdef EVENT_DATA_AS_OBJECTS and within the commented-out
+     #ifdef NEW_GC.  Leave the symbol-value stuff at the beginning and the
+     free/undefined/last at the end as-is. */
+  lrecord_type_bigfloat,		/* Lisp_Bigfloat */
+  lrecord_type_bignum,			/* Lisp_Bignum */
+  lrecord_type_bit_vector,		/* Lisp_Bit_Vector */
+  lrecord_type_buffer,			/* struct buffer */
+  lrecord_type_case_table,		/* Lisp_Case_Table */
+  lrecord_type_category_table,		/* Lisp_Category_Table */
+  lrecord_type_char_subtable,		/* Lisp_Char_Subtable */
+  lrecord_type_char_table,		/* Lisp_Char_Table */
+  lrecord_type_charset,			/* Lisp_Charset */
+  lrecord_type_coding_system,		/* Lisp_Coding_System */
+  lrecord_type_color_instance,		/* Lisp_Color_Instance */
+  lrecord_type_command_builder,		/* struct command_builder */
+  lrecord_type_compiled_function,	/* Lisp_Compiled_Function */
+  lrecord_type_cons,			/* Lisp_Cons */
+  lrecord_type_console,			/* struct console */
+  lrecord_type_database,		/* Lisp_Database */
+  lrecord_type_detection_state,		/* struct detection_state */
+  lrecord_type_device,			/* struct device */
+  lrecord_type_devmode,			/* Lisp_Devmode */
+  lrecord_type_emacs_ffi,		/* emacs_ffi_data */
+  lrecord_type_emacs_gtk_boxed,		/* emacs_gtk_boxed_data */
+  lrecord_type_emacs_gtk_object,	/* emacs_gtk_object_data */
+  lrecord_type_ephemeron,		/* struct ephemeron */
+  lrecord_type_event,			/* Lisp_Event */
+  lrecord_type_extent,			/* struct extent */
+  lrecord_type_extent_auxiliary,	/* struct extent_auxiliary */
+  lrecord_type_extent_info,		/* struct extent_info */
+  lrecord_type_face,			/* Lisp_Face */
+  lrecord_type_fc_config,		/* struct fc_config */
+  lrecord_type_fc_pattern,		/* struct fc_pattern */
+  lrecord_type_float,			/* Lisp_Float */
+  lrecord_type_font_instance,		/* Lisp_Font_Instance */
+  lrecord_type_frame,			/* struct frame */
+  lrecord_type_glyph,			/* Lisp_Glyph */
+  lrecord_type_gui_item,		/* Lisp_Gui_Item */
+  lrecord_type_hash_table,		/* Lisp_Hash_Table */
+  lrecord_type_hash_table_test,		/* Hash_Table_Test */
+  lrecord_type_image_instance,		/* Lisp_Image_Instance */
+  lrecord_type_keymap,			/* Lisp_Keymap */
+  /* #ifndef NEW_GC */
+  lrecord_type_lcrecord_list,		/* struct lcrecord_list */
+  /* #endif not NEW_GC */
+  /* #### Do we need the following module entry? */
+  lrecord_type_ldap,			/* Lisp_LDAP */
+  lrecord_type_lstream,			/* struct lstream */
+  lrecord_type_marker,			/* Lisp_Marker */
+  lrecord_type_mswindows_dialog_id,	/* struct mswindows_dialog_id */
+  lrecord_type_multiple_value,		/* multiple_value */
+  lrecord_type_opaque,			/* Lisp_Opaque */
+  lrecord_type_opaque_ptr,		/* Lisp_Opaque_Ptr */
+  /* #### Do we need the following two module entries? */
+  lrecord_type_pgconn,			/* Lisp_PGconn */
+  lrecord_type_pgresult,		/* Lisp_PGresult */
+  lrecord_type_precedence_array,	/* struct precedence_array */
+  lrecord_type_process,			/* Lisp_Process */
+  lrecord_type_range_table,		/* Lisp_Range_Table */
+  lrecord_type_ratio,			/* Lisp_Ratio */
+  lrecord_type_scrollbar_instance,	/* struct scrollbar_instance */
+  lrecord_type_specifier,		/* Lisp_Specifier */
+  lrecord_type_string,			/* Lisp_String */
+  lrecord_type_subr,			/* Lisp_Subr */
+  lrecord_type_symbol,			/* Lisp_Symbol */
+  lrecord_type_timeout,			/* Lisp_Timeout */
+  lrecord_type_toolbar_button,		/* struct toolbar_button */
+  lrecord_type_tooltalk_message,	/* Lisp_Tooltalk_Message */
+  lrecord_type_tooltalk_pattern,	/* Lisp_Tooltalk_Pattern */
+  lrecord_type_vector,			/* Lisp_Vector */
+  lrecord_type_weak_box,		/* struct weak_box */
+  lrecord_type_weak_list,		/* struct weak_list */
+  lrecord_type_window,			/* struct window */
+  lrecord_type_window_mirror,		/* struct window_mirror */
+
 #ifdef EVENT_DATA_AS_OBJECTS /* not defined */
-  lrecord_type_key_data,
-  lrecord_type_button_data,
-  lrecord_type_motion_data,
-  lrecord_type_process_data,
-  lrecord_type_timeout_data,
-  lrecord_type_eval_data,
-  lrecord_type_misc_user_data,
-  lrecord_type_magic_eval_data,
-  lrecord_type_magic_data,
+  lrecord_type_button_data,		/* Lisp_Button_Data */
+  lrecord_type_eval_data,		/* Lisp_Eval_Data */
+  lrecord_type_key_data,		/* Lisp_Key_Data */
+  lrecord_type_magic_data,		/* Lisp_Magic_Data */
+  lrecord_type_magic_eval_data,		/* Lisp_Magic_Eval_Data */
+  lrecord_type_misc_user_data,		/* Lisp_Misc_User_Data */
+  lrecord_type_motion_data,		/* Lisp_Motion_Data */
+  lrecord_type_process_data,		/* Lisp_Process_Data */
+  lrecord_type_timeout_data,		/* Lisp_Timeout_Data */
 #endif /* EVENT_DATA_AS_OBJECTS */
-  lrecord_type_keymap,
-  lrecord_type_command_builder,
-  lrecord_type_timeout,
-  lrecord_type_specifier,
-  lrecord_type_console,
-  lrecord_type_device,
-  lrecord_type_frame,
-  lrecord_type_window,
-  lrecord_type_window_mirror,
-  lrecord_type_gui_item,
-  lrecord_type_toolbar_button,
-  lrecord_type_scrollbar_instance,
-  lrecord_type_color_instance,
-  lrecord_type_font_instance,
-  lrecord_type_image_instance,
-  lrecord_type_glyph,
-  lrecord_type_face,
-  lrecord_type_fc_config,
-  lrecord_type_fc_pattern,
-  lrecord_type_database,
-  lrecord_type_tooltalk_message,
-  lrecord_type_tooltalk_pattern,
-  lrecord_type_ldap,
-  lrecord_type_pgconn,
-  lrecord_type_pgresult,
-  lrecord_type_devmode,
-  lrecord_type_mswindows_dialog_id,
-  lrecord_type_case_table,
-  lrecord_type_emacs_ffi,
-  lrecord_type_emacs_gtk_object,
-  lrecord_type_emacs_gtk_boxed,
-  lrecord_type_weak_box,
-  lrecord_type_ephemeron,
-  lrecord_type_bignum,
-  lrecord_type_ratio,
-  lrecord_type_bigfloat,
-#ifndef NEW_GC
-  lrecord_type_free, /* only used for "free" lrecords */
-  lrecord_type_undefined, /* only used for debugging */
-#endif /* not NEW_GC */
-#ifdef NEW_GC
+
+  /* #ifdef NEW_GC */
   /* See comment up top explaining why these extra object types must exist. */
-  lrecord_type_string_indirect_data,
-  lrecord_type_string_direct_data,
-  lrecord_type_hash_table_entry,
-  lrecord_type_syntax_cache,
-  lrecord_type_buffer_text,
-  lrecord_type_compiled_function_args,
-  lrecord_type_tty_console,
-  lrecord_type_stream_console,
-  lrecord_type_dynarr,
-  lrecord_type_face_cachel,
-  lrecord_type_face_cachel_dynarr,
-  lrecord_type_glyph_cachel,
-  lrecord_type_glyph_cachel_dynarr,
-  lrecord_type_x_device,
-  lrecord_type_gtk_device,
-  lrecord_type_tty_device,
-  lrecord_type_mswindows_device,
-  lrecord_type_msprinter_device,
-  lrecord_type_x_frame,
-  lrecord_type_gtk_frame,
-  lrecord_type_mswindows_frame,
-  lrecord_type_gap_array_marker,
-  lrecord_type_gap_array,
-  lrecord_type_extent_list_marker,
-  lrecord_type_extent_list,
-  lrecord_type_stack_of_extents,
-  lrecord_type_tty_color_instance_data,
-  lrecord_type_tty_font_instance_data,
-  lrecord_type_specifier_caching,
-  lrecord_type_expose_ignore,
-#endif /* NEW_GC */
-  lrecord_type_last_built_in_type         /* must be last */
+  lrecord_type_buffer_text,		/* Lisp_Buffer_Text */
+  lrecord_type_compiled_function_args,	/* Lisp_Compiled_Function_Args */
+  lrecord_type_dynarr,			/* Dynarr */
+  lrecord_type_expose_ignore,		/* struct expose_ignore */
+  lrecord_type_extent_list,		/* struct extent_list */
+  lrecord_type_extent_list_marker,	/* struct extent_list_marker */
+  lrecord_type_face_cachel,		/* Lisp_Face_Cachel */
+  lrecord_type_face_cachel_dynarr,	/* face_cachel_dynarr */
+  lrecord_type_gap_array,		/* struct gap_array */
+  lrecord_type_gap_array_marker,	/* struct gap_array_marker */
+  lrecord_type_glyph_cachel,		/* Lisp_Glyph_Cachel */
+  lrecord_type_glyph_cachel_dynarr,	/* glyph_cachel_dynarr */
+  lrecord_type_gtk_device,		/* Lisp_Gtk_Device */
+  lrecord_type_gtk_frame,		/* Lisp_Gtk_Frame */
+  lrecord_type_hash_table_entry,	/* Lisp_Hash_Table_Entry */
+  lrecord_type_msprinter_device,	/* Lisp_Msprinter_Device */
+  lrecord_type_mswindows_device,	/* Lisp_Mswindows_Device */
+  lrecord_type_mswindows_frame,		/* Lisp_Mswindows_Frame */
+  lrecord_type_specifier_caching,	/* struct specifier_caching */
+  lrecord_type_stack_of_extents,	/* struct stack_of_extents */
+  lrecord_type_stream_console,		/* Lisp_Stream_Console */
+  lrecord_type_string_direct_data,	/* Lisp_String_Direct_Data */
+  lrecord_type_string_indirect_data,	/* Lisp_String_Indirect_Data */
+  lrecord_type_syntax_cache,		/* Lisp_Syntax_Cache */
+  lrecord_type_tty_color_instance_data,	/* struct tty_color_instance_data */
+  lrecord_type_tty_console,		/* Lisp_Tty_Console */
+  lrecord_type_tty_device,		/* Lisp_Tty_Device */
+  lrecord_type_tty_font_instance_data,	/* struct tty_font_instance_data */
+  lrecord_type_x_device,		/* Lisp_X_Device */
+  lrecord_type_x_frame,			/* Lisp_X_Frame */
+  /* #endif NEW_GC */
+
+  /* next two not used under NEW_GC */
+  lrecord_type_free,			/* only used for "free" lrecords */
+  lrecord_type_undefined,		/* only used for debugging */
+  lrecord_type_last_built_in_type,	/* must be last */
 };
 
 extern MODULE_API int lrecord_type_count;
@@ -483,7 +506,7 @@ struct lrecord_implementation
      hash to the same value in order for hash tables to work properly.
      This means that `hash' can be NULL only if the `equal' method is
      also NULL. */
-  Hashcode (*hash) (Lisp_Object, int);
+  Hashcode (*hash) (Lisp_Object, int, Boolint);
 
   /* Data layout description for your object.  See long comment below. */
   const struct memory_description *description;
@@ -508,8 +531,8 @@ struct lrecord_implementation
 
   /**********************************************************************/
   /* Remaining stuff is not assignable statically using
-     DEFINE_*_LISP_OBJECT, but must be assigned with OBJECT_HAS_METHOD
-     or the like. */
+     DEFINE_*_LISP_OBJECT, but must be assigned with OBJECT_HAS_METHOD,
+     OBJECT_HAS_PROPERTY or the like. */
 
   /* These functions allow any object type to have builtin property
      lists that can be manipulated from the lisp level with
@@ -518,6 +541,7 @@ struct lrecord_implementation
   int (*putprop) (Lisp_Object obj, Lisp_Object prop, Lisp_Object val);
   int (*remprop) (Lisp_Object obj, Lisp_Object prop);
   Lisp_Object (*plist) (Lisp_Object obj);
+  Lisp_Object (*setplist) (Lisp_Object obj, Lisp_Object newplist);
 
   /* `disksave' is called at dump time.  It is used for objects that
      contain pointers or handles to objects created in external libraries,
@@ -536,34 +560,73 @@ struct lrecord_implementation
 
 #ifdef MEMORY_USAGE_STATS
   /* Return memory-usage information about the object in question, stored
-     into STATS. */
+     into STATS.
+
+     Two types of information are stored: storage (including overhead) for
+     ancillary non-Lisp structures attached to the object, and storage
+     (including overhead) for ancillary Lisp objects attached to the
+     object.  The third type of memory-usage information (storage for the
+     object itself) is not noted here, because it's computed automatically
+     by the calling function.  Also, the computed storage for ancillary
+     Lisp objects is the sum of all three source of memory associated with
+     the Lisp object: the object itself, ancillary non-Lisp structures and
+     ancillary Lisp objects.  Note also that the `struct usage_stats u' at
+     the beginning of the STATS structure is for ancillary non-Lisp usage
+     *ONLY*; do not store any memory into it related to ancillary Lisp
+     objects.
+
+     Note that it may be subjective which Lisp objects are considered
+     "attached" to the object.  Some guidelines:
+
+     -- Lisp objects which are "internal" to the main object and not
+        accessible except through the main object should be included
+     -- Objects linked by a weak reference should *NOT* be included
+  */
   void (*memory_usage) (Lisp_Object obj, struct generic_usage_stats *stats);
-
-  /* Number of additional type-specific statistics related to memory usage.
-     Automatically calculated (see compute_memusage_stats_length()) based
-     on the value placed in `memusage_stats_list'. */
-  Elemcount num_extra_memusage_stats;
-
-  /* Number of additional type-specific statistics related to
-     non-Lisp-Object memory usage for this object.  Automatically
-     calculated (see compute_memusage_stats_length()) based on the value
-     placed in `memusage_stats_list'. */
-  Elemcount num_extra_nonlisp_memusage_stats;
 
   /* List of tags to be given to the extra statistics, one per statistic.
      Qnil or Qt can be present to separate off different slices.  Qnil
-     separates different slices within the same type of statistics.
-     Qt separates slices corresponding to different types of statistics.
+     separates different slices within the same group of statistics.
+     These represent different ways of partitioning the same memory space.
+     Qt separates different groups; these represent different spaces of
+     memory.
+
      If Qt is not present, all slices describe extra non-Lisp-Object memory
-     associated with a Lisp object.  If Qt is present, slices after Qt
-     describe non-Lisp-Object memory and slices before Qt describe
-     Lisp-Object memory logically associated with the object.  For example,
-     if the object is a table, then Lisp-Object memory might be the entries
-     in the table.  This info is only advisory since it will duplicate
-     memory described elsewhere and since it may not be possible to be
-     completely accurate if the same object occurs multiple times in the
-     table. */
+     associated with a Lisp object.  If Qt is present, slices before Qt
+     describe non-Lisp-Object memory, as before, and slices after Qt
+     describe ancillary Lisp-Object memory logically associated with the
+     object.  For example, if the object is a table, then ancillary
+     Lisp-Object memory might be the entries in the table.  This info is
+     only advisory since it will duplicate memory described elsewhere and
+     since it may not be possible to be completely accurate, e.g. it may
+     not be clear what to count in "ancillary objects", and the value may
+     be too high if the same object occurs multiple times in the table. */
   Lisp_Object memusage_stats_list;
+
+  /* --------------------------------------------------------------------- */
+
+  /* The following are automatically computed based on the value in
+     `memusage_stats_list' (see compute_memusage_stats_length()). */
+
+  /* Total number of additional type-specific statistics related to memory
+     usage. */
+  Elemcount num_extra_memusage_stats;
+
+  /* Number of additional type-specific statistics belonging to the first
+     slice of the group describing non-Lisp-Object memory usage for this
+     object.  These stats occur starting at offset 0. */
+  Elemcount num_extra_nonlisp_memusage_stats;
+
+  /* The offset into the extra statistics at which the Lisp-Object
+     memory-usage statistics begin. */
+  Elemcount offset_lisp_ancillary_memusage_stats;
+
+  /* Number of additional type-specific statistics belonging to the first
+     slice of the group describing Lisp-Object memory usage for this
+     object.  These stats occur starting at offset
+     `offset_lisp_ancillary_memusage_stats'. */
+  Elemcount num_extra_lisp_ancillary_memusage_stats;
+
 #endif /* MEMORY_USAGE_STATS */
 };
 
@@ -974,16 +1037,27 @@ void tick_lrecord_stats (const struct lrecord_header *h,
 
     XD_LISP_OBJECT
 
-  A Lisp object.  This is also the type to use for pointers to other lrecords
+  A Lisp_Object.  This is also the type to use for pointers to other lrecords
   (e.g. struct frame *).
 
     XD_LISP_OBJECT_ARRAY
 
-  An array of Lisp objects or (equivalently) pointers to lrecords.
+  An array of Lisp_Objects or (equivalently) pointers to lrecords.
   The parameter (i.e. third element) is the count.  This would be declared
   as Lisp_Object foo[666].  For something declared as Lisp_Object *foo,
   use XD_BLOCK_PTR, whose description parameter is a sized_memory_description
   consisting of only XD_LISP_OBJECT and XD_END.
+
+    XD_INLINE_LISP_OBJECT_BLOCK_PTR
+
+  An pointer to a contiguous block of inline Lisp objects -- i.e., the Lisp
+  object itself rather than a Lisp_Object pointer is stored in the block.
+  This is used only under NEW_GC and is useful for increased efficiency when
+  an array of the same kind of object is needed.  Examples of the use of this
+  type are Lisp dynarrs, where the array elements are inline Lisp objects
+  rather than non-Lisp structures, as is normally the case; and hash tables,
+  where the key/value pairs are encapsulated as hash-table-entry objects and
+  an array of inline hash-table-entry objects is stored.
 
     XD_LO_LINK
 
@@ -1067,7 +1141,7 @@ void tick_lrecord_stats (const struct lrecord_header *h,
   "inline" to the union data, like XD_BLOCK_ARRAY and not XD_BLOCK_PTR.
   If the union data is a pointer to different types of structures, each
   element in the memory_description should be an XD_BLOCK_PTR.  See
-  unicode.c, redisplay.c and objects.c for examples of XD_UNION.
+  unicode.c, redisplay.c and fontcolor.c for examples of XD_UNION.
 
     XD_UNION_DYNAMIC_SIZE
 
@@ -1150,7 +1224,7 @@ enum memory_description_type
   XD_LISP_OBJECT_ARRAY,
   XD_LISP_OBJECT,
 #ifdef NEW_GC
-  XD_LISP_OBJECT_BLOCK_PTR,
+  XD_INLINE_LISP_OBJECT_BLOCK_PTR,
 #endif /* NEW_GC */
   XD_LO_LINK,
   XD_OPAQUE_PTR,
@@ -1200,10 +1274,9 @@ enum data_description_entry_flags
      lcrecord-lists, where the objects have had their type changed to
      lrecord_type_free and also have had their free bit set, but we mark
      them as normal. */
-  XD_FLAG_FREE_LISP_OBJECT = 8
+  XD_FLAG_FREE_LISP_OBJECT = 8,
 #endif /* not NEW_GC */
 #if 0
-  ,
   /* Suggestions for other possible flags: */
 
   /* Eliminate XD_UNION_DYNAMIC_SIZE and replace it with a flag, like this. */
@@ -1215,7 +1288,7 @@ enum data_description_entry_flags
      expanded and we need to stick a pointer in the second slot (although
      we could still ensure that the second slot in the first entry was NULL
      or <0). */
-  XD_FLAG_DESCRIPTION_MAP = 32
+  XD_FLAG_DESCRIPTION_MAP = 32,
 #endif
 };
 
@@ -1258,24 +1331,22 @@ struct opaque_convert_functions
 
      This function must put a pointer to the opaque result in *data
      and its size in *size. */
-  void (*convert)(const void *object, void **data, Bytecount *size);
+  void (*convert) (const void *object, void **data, Bytecount *size);
 
   /* Post-conversion cleanup.  Optional (null if not provided).
 
      When provided it will be called post-dumping to free any storage
      allocated for the conversion results. */
-  void (*convert_free)(const void *object, void *data, Bytecount size);
+  void (*convert_free) (const void *object, void *data, Bytecount size);
 
   /* De-conversion.
 
      At reload time, rebuilds the object from the converted form.
      "object" is 0 for the PTR case, return is ignored in the DATA
      case. */
-  void *(*deconvert)(void *object, void *data, Bytecount size);
+  void *(*deconvert) (void *object, void *data, Bytecount size);
 
 };
-
-extern const struct sized_memory_description lisp_object_description;
 
 #define XD_INDIRECT(val, delta) (-1 - (Bytecount) ((val) | ((delta) << 8)))
 
@@ -2024,6 +2095,13 @@ MODULE_API void zero_sized_lisp_object (Lisp_Object obj, Bytecount size);
 MODULE_API void zero_nonsized_lisp_object (Lisp_Object obj);
 Bytecount lisp_object_storage_size (Lisp_Object obj,
 				    struct usage_stats *ustats);
+Bytecount lisp_object_memory_usage_full (Lisp_Object object,
+					 Bytecount *storage_size,
+					 Bytecount *extra_nonlisp_storage,
+					 Bytecount *extra_lisp_storage,
+					 struct generic_usage_stats *stats);
+Bytecount lisp_object_memory_usage (Lisp_Object object);
+Bytecount tree_memory_usage (Lisp_Object arg, int vectorp);
 void free_normal_lisp_object (Lisp_Object obj);
 
 

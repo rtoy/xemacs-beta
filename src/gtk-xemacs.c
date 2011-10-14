@@ -21,7 +21,7 @@
 ** You should have received a copy of the GNU General Public License
 ** along with XEmacs; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-** Boston, MA 02111-1301, USA.  */
+** Boston, MA 02110-1301, USA.  */
 
 #include <config.h>
 
@@ -36,7 +36,7 @@
 #include "console-gtk-impl.h"
 #include "device-impl.h"
 #include "gtk-xemacs.h"
-#include "objects-gtk.h"
+#include "fontcolor-gtk.h"
 
 extern Lisp_Object Vmodeline_face;
 extern Lisp_Object Vscrollbar_on_left_p;
@@ -148,7 +148,7 @@ __nuke_background_items (GtkWidget *widget)
 
 extern Lisp_Object xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w);
 
-/* From objects-gtk.c */
+/* From fontcolor-gtk.c */
 extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
 
 #define convert_font(f) __get_gtk_font_truename (f, 0)

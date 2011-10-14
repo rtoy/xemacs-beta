@@ -1,7 +1,7 @@
 /* Lisp parsing and input streams.
    Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -34,7 +34,6 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "opaque.h"
 #include "profile.h"
-#include "charset.h"	/* For Funicode_to_char. */
 
 #include "sysfile.h"
 #include "sysfloat.h"
@@ -555,6 +554,13 @@ encoding detection or end-of-line detection.
 
   PROFILE_RECORD_ENTERING_SECTION (Qload_internal);
 
+#ifdef DEBUG_XEMACS
+  if (!NILP (Vdebug_coding_detection))
+    debug_out_lisp ("Called: (load-internal %s %s %s %s %s %s)\n",
+		    6, file, noerror, nomessage, nosuffix, codesys,
+		    used_codesys);
+#endif /* DEBUG_XEMACS */
+
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
   if (!NILP (handler))
@@ -844,9 +850,9 @@ decode_mode_1 (Lisp_Object mode)
     return W_OK;
   else if (EQ (mode, Qreadable))
     return R_OK;
-  else if (INTP (mode))
+  else if (INTEGERP (mode))
     {
-      check_int_range (XINT (mode), 0, 7);
+      check_integer_range (mode, Qzero, make_int (7));
       return XINT (mode);
     }
   else
@@ -915,8 +921,7 @@ for details.
 static Lisp_Object
 locate_file_refresh_hashing (Lisp_Object directory)
 {
-  Lisp_Object hash =
-    make_directory_hash_table (XSTRING_DATA (directory));
+  Lisp_Object hash = make_directory_hash_table (directory);
 
   if (!NILP (hash))
     Fputhash (directory, hash, Vlocate_file_hash_table);
@@ -1685,9 +1690,10 @@ read0 (Lisp_Object readcharfun)
 static Ichar
 read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
 {
-  REGISTER Ichar i = 0, c;
+  REGISTER Ichar c;
+  REGISTER int i = 0; /* built-up codepoint */
   REGISTER int count = 0;
-  Lisp_Object lisp_char;
+
   while (++count <= unicode_hex_count)
     {
       c = readchar (readcharfun);
@@ -1703,26 +1709,21 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
 	}
     }
 
-  if (i >= 0x110000 || i < 0)
-    {
-      syntax_error ("Not a Unicode code point", make_int(i));
-    }
+  if (!valid_unicode_codepoint_p (i, UNICODE_OFFICIAL_ONLY))
+    syntax_error ("Invalid Unicode codepoint",
+		  emacs_sprintf_string ("#x%X", i));
 
-  lisp_char = Funicode_to_char(make_int(i), Qnil);
-
-  if (EQ(Qnil, lisp_char))
-    {
-      /* Will happen on non-Mule. Silent corruption is what happens
-         elsewhere, and we used to do that to be consistent, but GNU error,
-         so people writing portable code need to be able to handle that, and
-         given a choice I prefer that behaviour.
-
-         An undesirable aspect to this error is that the code point is shown
-         as a decimal integer, which is mostly unreadable. */
-      syntax_error ("Unsupported Unicode code point", make_int(i));
-    }
-
-  return XCHAR(lisp_char);
+  /* @@#### current_buffer dependency */
+  c = buffer_unicode_to_ichar (i, current_buffer, CONVERR_FAIL);
+  /* Will happen on non-Mule. (On Mule, now, we have just-in-time creation
+     of characters to handle this.)  Silent corruption is what happens
+     elsewhere, and we used to do that to be consistent, but GNU error,
+     so people writing portable code need to be able to handle that, and
+     given a choice I prefer that behaviour. */
+  if (c < 0)
+    syntax_error ("Unicode character can't be converted to a charset",
+		  emacs_sprintf_string ("#x%X", i));
+  return c;
 }
 
 
@@ -1739,8 +1740,8 @@ read_escape (Lisp_Object readcharfun)
     {
     case 'a': return '\007';
     case 'b': return '\b';
-    case 'd': return 0177;
-    case 'e': return 033;
+    case 'd': return 0x7F;
+    case 'e': return 0x1B;
     case 'f': return '\f';
     case 'n': return '\n';
     case 'r': return '\r';
@@ -1759,7 +1760,7 @@ read_escape (Lisp_Object readcharfun)
 	signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
       if (c == '\\')
 	c = read_escape (readcharfun);
-      return c | 0200;
+      return c | 0x80;
 
       /* Originally, FSF_KEYS provided a degree of FSF Emacs
 	 compatibility by defining character "modifiers" alt, super,
@@ -1792,9 +1793,9 @@ read_escape (Lisp_Object readcharfun)
       /* FSFmacs junk for non-ASCII controls.
 	 Not used here. */
       if (c == '?')
-	return 0177;
+	return 0x7F;
       else
-        return c & (0200 | 037);
+        return c & (0x80 | 0x1F);
 
     case '0':
     case '1':
@@ -1819,8 +1820,12 @@ read_escape (Lisp_Object readcharfun)
 	      }
 	  }
 	if (i >= 0400)
-	  syntax_error ("Non-ISO-8859-1 character specified with octal escape",
-			make_int (i));
+	  {
+	    read_syntax_error ((Ascbyte *) emacs_sprintf_malloc
+			       (NULL,
+				"Non-ISO-8859-1 octal character escape, "
+				"?\\%.3o", i));
+	  }
 	return i;
       }
 
@@ -1828,13 +1833,23 @@ read_escape (Lisp_Object readcharfun)
       /* A hex escape, as in ANSI C, except that we only allow latin-1
 	 characters to be read this way.  What is "\x4e03" supposed to
 	 mean, anyways, if the internal representation is hidden?
-         This is also consistent with the treatment of octal escapes. */
+         This is also consistent with the treatment of octal escapes.
+
+         Note that we don't accept ?\XAB as specifying the character with
+         numeric value 171; it must be ?\xAB. */
       {
+#define OVERLONG_INFO "Overlong hex character escape, ?\\x"
+
 	REGISTER Ichar i = 0;
 	REGISTER int count = 0;
+	Ascbyte seen[] = OVERLONG_INFO "\0\0\0\0\0";
+	REGISTER Ascbyte *seenp = seen + sizeof (OVERLONG_INFO) - 1;
+
+#undef OVERLONG_INFO
+
 	while (++count <= 2)
 	  {
-	    c = readchar (readcharfun);
+	    c = readchar (readcharfun), *seenp = c, ++seenp;
 	    /* Remember, can't use isdigit(), isalpha() etc. on Ichars */
 	    if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
 	    else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
@@ -1848,21 +1863,12 @@ read_escape (Lisp_Object readcharfun)
 
         if (count == 3)
           {
-            c = readchar (readcharfun);
+            c = readchar (readcharfun), *seenp = c, ++seenp;
             if ((c >= '0' && c <= '9') ||
                 (c >= 'a' && c <= 'f') ||
                 (c >= 'A' && c <= 'F'))
               {
-                Lisp_Object args[2];
-
-                if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
-                else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
-                else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
-
-                args[0] = build_ascstring ("?\\x%x");
-                args[1] = make_int (i);
-                syntax_error ("Overlong hex character escape",
-                              Fformat (2, args));
+		read_syntax_error (seen);
               }
             unreadchar (readcharfun, c);
           }
@@ -1871,10 +1877,10 @@ read_escape (Lisp_Object readcharfun)
       }
     case 'U':
       /* Post-Unicode-2.0: Up to eight hex chars */
-      return read_unicode_escape(readcharfun, 8);
+      return read_unicode_escape (readcharfun, 8);
     case 'u':
       /* Unicode-2.0 and before; four hex chars. */
-      return read_unicode_escape(readcharfun, 4);
+      return read_unicode_escape (readcharfun, 4);
 
     default:
 	return c;
@@ -1893,7 +1899,7 @@ read_atom_0 (Lisp_Object readcharfun, Ichar firstchar, int *saw_a_backslash)
 
   *saw_a_backslash = 0;
 
-  while (c > 040	/* #### - comma should be here as should backquote */
+  while (c > ' '	/* #### - comma should be here as should backquote */
          && !(c == '\"' || c == '\'' || c == ';'
               || c == '(' || c == ')'
               || c == '[' || c == ']' || c == '#'
@@ -2287,7 +2293,7 @@ reader_nextchar (Lisp_Object readcharfun)
     default:
       {
 	/* Ignore whitespace and control characters */
-	if (c <= 040)
+	if (c <= ' ')
 	  goto retry;
 	return c;
       }
@@ -2653,11 +2659,11 @@ retry:
             /* bit vectors */
 	  case '*': return read_bit_vector (readcharfun);
             /* #o10 => 8 -- octal constant syntax */
-	  case 'o': return read_integer (readcharfun, 8);
+	  case 'o': case 'O': return read_integer (readcharfun, 8);
             /* #xdead => 57005 -- hex constant syntax */
-	  case 'x': return read_integer (readcharfun, 16);
+	  case 'x': case 'X': return read_integer (readcharfun, 16);
             /* #b010 => 2 -- binary constant syntax */
-	  case 'b': return read_integer (readcharfun, 2);
+	  case 'b': case 'B': return read_integer (readcharfun, 2);
 	    /* #r"raw\stringt" -- raw string syntax */
 	  case 'r': return read_raw_string(readcharfun);
             /* #s(foobar key1 val1 key2 val2) -- structure syntax */
@@ -2813,7 +2819,7 @@ retry:
     default:
       {
 	/* Ignore whitespace and control characters */
-	if (c <= 040)
+	if (c <= ' ')
 	  goto retry;
 	return read_atom (readcharfun, c, 0);
       }
@@ -2877,7 +2883,6 @@ isfloat_string (const char *cp)
 	      || state == (DOT_CHAR|TRAIL_INT|E_CHAR|EXP_INT)));
 }
 
-#ifdef HAVE_RATIO
 int
 isratio_string (const char *cp)
 {
@@ -2908,7 +2913,7 @@ isratio_string (const char *cp)
   return *cp == '\0' || *cp == ' ' || *cp =='\t' || *cp == '\n' ||
     *cp == '\r' || *cp == '\f';
 }
-#endif
+
 
 static void *
 sequence_reader (Lisp_Object readcharfun,
@@ -3461,9 +3466,6 @@ character escape syntaxes or just read them incorrectly.
 #ifdef FEATUREP_SYNTAX
   DEFSYMBOL (Qfeaturep);
   Fprovide (intern ("xemacs"));
-#ifdef INFODOCK
-  Fprovide (intern ("infodock"));
-#endif /* INFODOCK */
 #endif /* FEATUREP_SYNTAX */
 
 #ifdef LISP_BACKQUOTES
@@ -3480,7 +3482,12 @@ character escape syntaxes or just read them incorrectly.
 
   Vlocate_file_hash_table = make_lisp_hash_table (200,
 						  HASH_TABLE_NON_WEAK,
-						  HASH_TABLE_EQUAL);
+#ifdef DEFAULT_FILE_SYSTEM_IGNORE_CASE
+						  Qequalp
+#else
+						  Qequal
+#endif
+						  );
   staticpro (&Vlocate_file_hash_table);
 #ifdef DEBUG_XEMACS
   symbol_value (XSYMBOL (intern ("Vlocate-file-hash-table")))

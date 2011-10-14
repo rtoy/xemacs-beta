@@ -590,7 +590,7 @@ to read a file name from the minibuffer."
 	   (equal (nth 1 p) "info")
 	   (not Info-standalone)
 	   (setq Info-standalone t)
-	   (= (length p) 3)
+	   (eql (length p) 3)
 	   (not (string-match "^-" (nth 2 p)))
 	   (setq file (nth 2 p))
 	   (setq command-line-args-left nil))
@@ -864,14 +864,13 @@ actually get any text from."
   (if (and Info-dir-contents Info-dir-file-attributes
 	   ;; Verify that none of the files we used has changed
 	   ;; since we used it.
-	   (eval (cons 'and
-		       (mapcar #'(lambda (elt)
-				   (let ((curr (file-attributes (car elt))))
-				     ;; Don't compare the access time.
-				     (if curr (setcar (nthcdr 4 curr) 0))
-				     (setcar (nthcdr 4 (cdr elt)) 0)
-				     (equal (cdr elt) curr)))
-			       Info-dir-file-attributes))))
+	   (every #'(lambda (elt)
+                      (let ((curr (file-attributes (car elt))))
+                        ;; Don't compare the access time.
+                        (if curr (setcar (nthcdr 4 curr) 0))
+                        (setcar (nthcdr 4 (cdr elt)) 0)
+                        (equal (cdr elt) curr)))
+                  Info-dir-file-attributes))
       (insert Info-dir-contents)
     (let ((dirs (reverse Info-directory-list))
 	  buffers lbuffers buffer others nodes dirs-done)

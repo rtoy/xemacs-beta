@@ -7,7 +7,7 @@
 
 ;; This file is part of XEmacs.
 
-;; This file is free software; you can redistribute it and/or modify it
+;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
@@ -206,7 +206,7 @@ This bug has been fixed. -sb"
 
 (defbug 8 current
   "Crashes in debug version only
-Fatal error: assertion failed, file src/objects.h, line 149,
+Fatal error: assertion failed, file src/fontcolor.h, line 149,
 RECORD_TYPEP (_obj, lrecord_font_instance) || MARKED_RECORD_P (_obj)"
   (let (glyph ext)
     (make-face 'adobe-symbol-face)

@@ -1,5 +1,5 @@
 ;;; mule-msw-init-late.el --- initialization code for MS Windows under MULE
-;;; Copyright (C) 2001, 2002 Ben Wing.
+;;; Copyright (C) 2001, 2002, 2005 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -30,7 +30,7 @@
 ;; guess we're supposed to query the font for what ranges it supports, and
 ;; what its preferred range is.)
 
-(let ((l '((ascii . "Western")
+(let ((l `((ascii . "Western")
 	   (latin-iso8859-2 . "Central European")
 	   (cyrillic-iso8859-5 . "Cyrillic")
 	   (latin-iso8859-1 . "Western")
@@ -49,15 +49,17 @@
 	   (japanese-jisx0212 . "Japanese")
 	   (chinese-gb2312 . "Simplified Chinese")
 	   (korean-ksc5601 . "Korean")
-	   (chinese-big5-1 . "Traditional Chinese")
-	   (chinese-big5-2 . "Traditional Chinese"))))
+	   ,@(if (find-charset 'chinese-big5-1)
+		 '((chinese-big5-1 . "Traditional Chinese")
+		   (chinese-big5-2 . "Traditional Chinese"))
+	       '((chinese-big5 . "Traditional Chinese"))))))
   (while l
     (let ((charset (car (car l)))
 	  (registry (cdr (car l))))
     (declare-fboundp (mswindows-set-charset-registry charset registry))
     (setq l (cdr l)))))
 
-(let ((l '((ascii . 1252)
+(let ((l `((ascii . 1252)
 	   (latin-iso8859-2 . 1250)
 	   (cyrillic-iso8859-5 . 1251)
 	   (latin-iso8859-1 . 1252)
@@ -76,8 +78,10 @@
 	   (japanese-jisx0212 . 932)
 	   (chinese-gb2312 . 936)
 	   (korean-ksc5601 . 949)
-	   (chinese-big5-1 . 950)
-	   (chinese-big5-2 . 950))))
+	   ,@(if (find-charset 'chinese-big5-1)
+		 '((chinese-big5-1 . 950)
+		   (chinese-big5-2 . 950))
+	       '((chinese-big5 . 950))))))
   (while l
     (let ((charset (car (car l)))
 	  (code-page (cdr (car l))))

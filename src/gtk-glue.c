@@ -1,4 +1,7 @@
-/*
+/* gtk-glue.c --- GTK interfaces with XEmacs
+
+Copyright (C) 2000, 2001 William M. Perry
+
 This file is part of XEmacs.
 
 XEmacs is free software; you can redistribute it and/or modify it
@@ -14,7 +17,7 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-Boston, MA 02111-1301, USA.  */
+Boston, MA 02110-1301, USA.  */
 
 GtkType GTK_TYPE_ARRAY = 0;
 GtkType GTK_TYPE_STRING_ARRAY = 0;
@@ -26,7 +29,7 @@ GtkType GTK_TYPE_OBJECT_LIST = 0;
 GtkType GTK_TYPE_GDK_GC = 0;
 
 #include "console-gtk.h"
-#include "objects-gtk-impl.h"
+#include "fontcolor-gtk-impl.h"
 
 static GtkType
 xemacs_type_register (gchar *name, GtkType parent)

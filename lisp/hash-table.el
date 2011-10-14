@@ -37,34 +37,27 @@
 
 (defun hash-table-key-list (hash-table)
   "Return a list of all keys in HASH-TABLE."
-  (let (lis)
-    (maphash #'(lambda (key val)
-		 (push key lis))
-	     hash-table)
-    (nreverse lis)))
+  (let (list)
+    (maphash #'(lambda (key value) (push key list)) hash-table)
+    list))
 
 (defun hash-table-value-list (hash-table)
   "Return a list of all values in HASH-TABLE."
-  (let (lis)
-    (maphash #'(lambda (key val)
-		 (push val lis))
-	     hash-table)
-    (nreverse lis)))
+  (let (list)
+    (maphash #'(lambda (key value) (push value list)) hash-table)
+    list))
 
 (defun hash-table-key-value-alist (hash-table)
   "Return an alist of (KEY . VALUE) for all keys and values in HASH-TABLE."
-  (let (lis)
-    (maphash #'(lambda (key val)
-		 (push (cons key val) lis))
+  (let (list)
+    (maphash #'(lambda (key value) (setq list (acons key value list)))
 	     hash-table)
-    (nreverse lis)))
+    list))
 
 (defun hash-table-key-value-plist (hash-table)
   "Return a plist for all keys and values in HASH-TABLE.
 A plist is a simple list containing alternating keys and values."
-  (let (lis)
-    (maphash #'(lambda (key val)
-		 (push key lis)
-		 (push val lis))
+  (let (list)
+    (maphash #'(lambda (key value) (setq list (list* key value list)))
 	     hash-table)
-    (nreverse lis)))
+    list))

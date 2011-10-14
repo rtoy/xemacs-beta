@@ -31,23 +31,7 @@
 ;; This file is dumped with XEmacs.
 
 ;; This file provides low level facilities for XEmacs startup --
-;; particularly regarding the package setup.  This code has to run in
-;; what we call "bare temacs" -- i.e. XEmacs without the usual Lisp
-;; environment.  Pay special attention:
-
-;; - not to use the `lambda' macro.  Use #'(lambda ...) instead.
-;;   (this goes for any package loaded before `subr.el'.)
-;;
-;; - not to use macros, because they are not yet available (and this
-;;   file must be loadable uncompiled.)  Built in macros, such as
-;;   `when' and `unless' are fine, of course.
-;;
-;; - not to use `defcustom'.  If you must add user-customizable
-;;   variables here, use `defvar', and add the variable to
-;;   `cus-start.el'.
-
-;; Because of all this, make sure that the stuff you put here really
-;; belongs here.
+;; particularly regarding the package setup.
 
 ;; This file requires find-paths.el.
 
@@ -107,7 +91,6 @@
 These are the valid immediate directory names of package
 directories, directories with higher priority first"
   (delq nil `("site-packages"
-              ,(when (featurep 'infodock) "infodock-packages")
               ,(when (featurep 'mule) "mule-packages")
               "xemacs-packages")))
 
@@ -468,13 +451,11 @@ list of the last hierarchies."
 PACKAGE-HIERARCHIES is a list of package hierarchies.
 SUFFIXES is a list of names of hierarchy subdirectories to look for."
   (let ((directories
-	 (apply
-	  #'nconc
-	  (mapcar #'(lambda (hierarchy)
-		      (mapcar #'(lambda (suffix)
-				  (file-name-as-directory (concat hierarchy suffix)))
-			      suffixes))
-		  package-hierarchies))))
+         (mapcan #'(lambda (hierarchy)
+                     (mapcar #'(lambda (suffix)
+                                 (file-name-as-directory (concat hierarchy suffix)))
+                             suffixes))
+                 package-hierarchies)))
     (paths-directories-which-exist directories)))
 
 (defun packages-find-package-load-path (package-hierarchies)
@@ -536,9 +517,7 @@ Call HANDLE on each file off definitions of PACKAGE-LISP there."
 		    (load file-name)
 		    ;; dumped-lisp.el could have set this ...
 		    (if package-lisp
-			(mapcar #'(lambda (base)
-				  (funcall handle base))
-			      package-lisp))))))
+			(mapcar handle package-lisp))))))
 	package-load-path))
 
 (defun packages-load-package-dumped-lisps (package-load-path)

@@ -1,7 +1,7 @@
 /* Primitive operations on Lisp data types for XEmacs Lisp interpreter.
    Copyright (C) 1985, 1986, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -30,10 +30,11 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "bytecode.h"
+#include "gc.h"
 #include "syssignal.h"
 #include "sysfloat.h"
 
-Lisp_Object Qnil, Qt, Qquote, Qlambda, Qunbound;
+Lisp_Object Qnil, Qt, Qlambda, Qunbound;
 Lisp_Object Qerror_conditions, Qerror_message;
 Lisp_Object Qerror, Qquit, Qsyntax_error, Qinvalid_read_syntax;
 Lisp_Object Qlist_formation_error, Qstructure_formation_error;
@@ -157,10 +158,18 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 }
 
 void
-check_int_range (EMACS_INT val, EMACS_INT min, EMACS_INT max)
+check_integer_range (Lisp_Object val, Lisp_Object min, Lisp_Object max)
 {
-  if (val < min || val > max)
-    args_out_of_range_3 (make_int (val), make_int (min), make_int (max));
+  Lisp_Object args[] = { min, val, max };
+  int ii;
+
+  for (ii = 0; ii < countof (args); ii++)
+    {
+      CHECK_INTEGER (args[ii]);
+    }
+
+  if (NILP (Fleq (countof (args), args)))
+    args_out_of_range_3 (val, min, max);
 }
 
 
@@ -503,11 +512,7 @@ Return t if OBJECT is a nonnegative integer.
 */
        (object))
 {
-  return NATNUMP (object)
-#ifdef HAVE_BIGNUM
-    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
-#endif
-    ? Qt : Qnil;
+  return NATNUMP (object) ? Qt : Qnil;
 }
 
 DEFUN ("nonnegativep", Fnonnegativep, 1, 1, 0, /*
@@ -516,9 +521,6 @@ Return t if OBJECT is a nonnegative number.
        (object))
 {
   return NATNUMP (object)
-#ifdef HAVE_BIGNUM
-    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
-#endif
 #ifdef HAVE_RATIO
     || (RATIOP (object) && ratio_sign (XRATIO_DATA (object)) >= 0)
 #endif
@@ -1294,9 +1296,8 @@ Floating point numbers always use base 10.
     b = 10;
   else
     {
-      CHECK_INT (base);
+      check_integer_range (base, make_int (2), make_int (16));
       b = XINT (base);
-      check_int_range (b, 2, 16);
     }
 
   p = XSTRING_DATA (string);
@@ -1736,7 +1737,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_int (1);
+      accum = Qone;
     }
   else
     {
@@ -1806,7 +1807,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_int (1);
+      accum = Qone;
     }
   else
     {
@@ -2611,14 +2612,19 @@ mark_weak_list (Lisp_Object UNUSED (obj))
 
 static void
 print_weak_list (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED (escapeflag))
+		 int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
 
-  write_fmt_string_lisp (printcharfun, "#<weak-list %s %S>", 2,
-			 encode_weak_list_type (XWEAK_LIST (obj)->type),
-			 XWEAK_LIST (obj)->list);
+  write_ascstring (printcharfun, "#<weak-list :type ");
+  print_internal (encode_weak_list_type (XWEAK_LIST (obj)->type),
+                  printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :list ");
+  print_internal (XWEAK_LIST (obj)->list, printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -2632,12 +2638,12 @@ weak_list_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-weak_list_hash (Lisp_Object obj, int depth)
+weak_list_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   struct weak_list *w = XWEAK_LIST (obj);
 
   return HASH2 ((Hashcode) w->type,
-		internal_hash (w->list, depth + 1));
+		internal_hash (w->list, depth + 1, equalp));
 }
 
 Lisp_Object
@@ -2804,7 +2810,7 @@ finish_marking_weak_lists (void)
 	  if (need_to_mark_elem && ! marked_p (elem))
 	    {
 #ifdef USE_KKCC
-	      kkcc_gc_stack_push_lisp_object (elem, 0, -1);
+	      kkcc_gc_stack_push_lisp_object_0 (elem);
 #else /* NOT USE_KKCC */
 	      mark_object (elem);
 #endif /* NOT USE_KKCC */
@@ -2832,7 +2838,7 @@ finish_marking_weak_lists (void)
       if (!NILP (rest2) && ! marked_p (rest2))
 	{
 #ifdef USE_KKCC
-	  kkcc_gc_stack_push_lisp_object (rest2, 0, -1);
+	  kkcc_gc_stack_push_lisp_object_0 (rest2);
 #else /* NOT USE_KKCC */
 	  mark_object (rest2);
 #endif /* NOT USE_KKCC */
@@ -3086,12 +3092,16 @@ mark_weak_box (Lisp_Object UNUSED (obj))
 }
 
 static void
-print_weak_box (Lisp_Object obj, Lisp_Object printcharfun,
-		int UNUSED (escapeflag))
+print_weak_box (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string (printcharfun, "#<weak-box>"); /* #### fix */
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
+
+  write_ascstring (printcharfun, "#<weak-box ");
+  print_internal (XWEAK_BOX (obj)->value, printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3104,11 +3114,11 @@ weak_box_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-weak_box_hash (Lisp_Object obj, int depth)
+weak_box_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   struct weak_box *wb = XWEAK_BOX (obj);
 
-  return internal_hash (wb->value, depth + 1);
+  return internal_hash (wb->value, depth + 1, equalp);
 }
 
 Lisp_Object
@@ -3208,8 +3218,8 @@ continue_marking_ephemerons(void)
 	  if (marked_p (XEPHEMERON (rest)->key))
 	    {
 #ifdef USE_KKCC
-	      kkcc_gc_stack_push_lisp_object 
-		(XCAR (XEPHEMERON (rest)->cons_chain), 0, -1);
+	      kkcc_gc_stack_push_lisp_object_0 
+		(XCAR (XEPHEMERON (rest)->cons_chain));
 #else /* NOT USE_KKCC */
 	      mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
 #endif /* NOT USE_KKCC */
@@ -3258,8 +3268,8 @@ finish_marking_ephemerons(void)
 	    {
 	      MARK_CONS (XCONS (XEPHEMERON (rest)->cons_chain));
 #ifdef USE_KKCC
-	      kkcc_gc_stack_push_lisp_object 
-		(XCAR (XEPHEMERON (rest)->cons_chain), 0, -1);
+	      kkcc_gc_stack_push_lisp_object_0
+		(XCAR (XEPHEMERON (rest)->cons_chain));
 #else /* NOT USE_KKCC */
 	      mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
 #endif /* NOT USE_KKCC */
@@ -3308,12 +3318,20 @@ mark_ephemeron (Lisp_Object UNUSED (obj))
 }
 
 static void
-print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED (escapeflag))
+print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
-    printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string (printcharfun, "#<ephemeron>"); /* #### fix */
+    {
+      printing_unreadable_lisp_object (obj, 0);
+    }
+
+  write_ascstring (printcharfun, "#<ephemeron :key ");
+  print_internal (XEPHEMERON (obj)->key, printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :value ");
+  print_internal (XEPHEMERON (obj)->value, printcharfun, escapeflag);
+  write_ascstring (printcharfun, " :finalizer ");
+  print_internal (XEPHEMERON_FINALIZER (obj), printcharfun, escapeflag);
+  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
 static int
@@ -3325,9 +3343,9 @@ ephemeron_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 }
 
 static Hashcode
-ephemeron_hash(Lisp_Object obj, int depth)
+ephemeron_hash(Lisp_Object obj, int depth, Boolint equalp)
 {
-  return internal_hash (XEPHEMERON_REF (obj), depth + 1);
+  return internal_hash (XEPHEMERON_REF (obj), depth + 1, equalp);
 }
 
 Lisp_Object
@@ -3497,6 +3515,8 @@ init_errors_once_early (void)
   DEFERROR (Qio_error, "IO Error", Qinvalid_operation);
   DEFERROR_STANDARD (Qfile_error, Qio_error);
   DEFERROR (Qend_of_file, "End of file or stream", Qfile_error);
+  /* #### It's questionable whether conversion-error should be a subclass
+     of io-error or directly of invalid-operation */
   DEFERROR_STANDARD (Qconversion_error, Qio_error);
   DEFERROR_STANDARD (Qtext_conversion_error, Qconversion_error);
 
@@ -3515,7 +3535,6 @@ syms_of_data (void)
   INIT_LISP_OBJECT (ephemeron);
   INIT_LISP_OBJECT (weak_box);
 
-  DEFSYMBOL (Qquote);
   DEFSYMBOL (Qlambda);
   DEFSYMBOL (Qlistp);
   DEFSYMBOL (Qtrue_list_p);

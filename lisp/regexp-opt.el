@@ -175,23 +175,23 @@ so we can use character sets rather than grouping parenthesis."
     (cond
      ;;
      ;; If there are no strings, just return the empty string.
-     ((= (length strings) 0)
+     ((eql (length strings) 0)
       "")
      ;;
      ;; If there is only one string, just return it.
-     ((= (length strings) 1)
-      (if (= (length (car strings)) 1)
+     ((eql (length strings) 1)
+      (if (eql (length (car strings)) 1)
 	  (concat open-charset (regexp-quote (car strings)) close-charset)
 	(concat open-group (regexp-quote (car strings)) close-group)))
      ;;
      ;; If there is an empty string, remove it and recurse on the rest.
-     ((= (length (car strings)) 0)
+     ((eql (length (car strings)) 0)
       (concat open-charset
 	      (regexp-opt-group (cdr strings) t t) "?"
 	      close-charset))
      ;;
      ;; If all are one-character strings, just return a character set.
-     ((= (length strings) (apply '+ (mapcar 'length strings)))
+     ((eql (length strings) (apply '+ (mapcar 'length strings)))
       (concat open-charset
 	      (regexp-opt-charset strings)
 	      close-charset))

@@ -51,7 +51,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw-impl.h"
 #include "glyphs-msw.h"
-#include "objects-msw-impl.h"
+#include "fontcolor-msw-impl.h"
 
 #define MSWINDOWS_EOL_CURSOR_WIDTH	5
 
@@ -81,7 +81,7 @@ typedef struct textual_run
    Returns the textual runs (STATICALLY ALLOCATED!) in RUN_STORAGE_PTR. */
 
 static int
-separate_textual_runs (textual_run **run_storage_ptr,
+separate_textual_runs (struct buffer *buf, textual_run **run_storage_ptr,
 		       const Ichar *str, Charcount len)
 {
   static WCHAR *ext_storage;
@@ -97,11 +97,13 @@ separate_textual_runs (textual_run **run_storage_ptr,
   if (len == 0)
     return 0;
 
-  prev_charset = ichar_charset (str[0]);
+  /* @@#### fix me */
+  prev_charset = buffer_ichar_charset_obsolete_me_baby (buf, str[0]);
 
   for (i = 1; i <= len; i++)
     {
-      if (i == len || !EQ (ichar_charset (str[i]), prev_charset))
+      if (i == len || !EQ (buffer_ichar_charset_obsolete_me_baby (buf, str[i]),
+			   prev_charset))
 	{
 	  int j;
 	  Ibyte *int_storage =
@@ -132,7 +134,7 @@ separate_textual_runs (textual_run **run_storage_ptr,
 	  runs_so_far++;
 	  runbegin = i;
 	  if (i < len)
-	    prev_charset = ichar_charset (str[i]);
+	    prev_charset = buffer_ichar_charset_obsolete_me_baby (buf, str[i]);
 	}
     }
 
@@ -344,7 +346,7 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
     {
       /* Use the font from the underlying character */
       struct face_cachel *font_cachel = WINDOW_FACE_CACHEL (w, findex);
-      nruns = separate_textual_runs (&run, &ch, 1);
+      nruns = separate_textual_runs (WINDOW_XBUFFER (w), &run, &ch, 1);
       font = FACE_CACHEL_FONT (font_cachel, run->charset);
       mswindows_set_dc_font (hdc, font,
 			     font_cachel->underline, font_cachel->strikethru);
@@ -518,8 +520,8 @@ mswindows_output_string (struct window *w, struct display_line *dl,
       cachel = WINDOW_FACE_CACHEL (w, findex);
     }
 
-  nruns = separate_textual_runs (&runs, Dynarr_begin (buf),
-				 Dynarr_length (buf));
+  nruns = separate_textual_runs (WINDOW_XBUFFER (w), &runs,
+				 Dynarr_begin (buf), Dynarr_length (buf));
 
   for (i = 0; i < nruns; i++)
     {
@@ -973,7 +975,9 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
   xpos = rb->xpos;
   width = 0;
   if (rb->type == RUNE_CHAR)
-    charset = ichar_charset (rb->object.chr.ch);
+    /* @@#### fix me */
+    charset = buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+						     rb->object.chr.ch);
 
   if (end < 0)
     end = Dynarr_length (rba);
@@ -985,7 +989,10 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
+	  /* @@#### fix me */
+	  && EQ (charset,
+		 buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+							rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -1007,7 +1014,10 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = ichar_charset (rb->object.chr.ch);
+	      /* @@#### fix me */
+	      charset =
+		buffer_ichar_charset_obsolete_me_baby (WINDOW_XBUFFER (w),
+						       rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{
@@ -1166,14 +1176,14 @@ mswindows_output_vertical_divider (struct window *w, int UNUSED (clear_unused))
   int abs_shadow = abs (shadow);
   int line_width = XINT (w->vertical_divider_line_width);
   int div_left = WINDOW_RIGHT (w) - window_divider_width (w);
-  int y1 = WINDOW_TOP (w);
-  int y2 = WINDOW_BOTTOM (w);
+  int ytop = WINDOW_TOP (w);
+  int ybot = WINDOW_BOTTOM (w);
 
   /* Clear left and right spacing areas */
   if (spacing)
     {
-      rect.top = y1;
-      rect.bottom = y2;
+      rect.top = ytop;
+      rect.bottom = ybot;
       mswindows_update_dc (hdc, Qnil,
 		   WINDOW_FACE_CACHEL_BACKGROUND (w, DEFAULT_INDEX), Qnil);
       rect.right = WINDOW_RIGHT (w);
@@ -1185,8 +1195,8 @@ mswindows_output_vertical_divider (struct window *w, int UNUSED (clear_unused))
     }
   
   /* Clear divider face */
-  rect.top = y1 + abs_shadow;
-  rect.bottom = y2 - abs_shadow;
+  rect.top = ytop + abs_shadow;
+  rect.bottom = ybot - abs_shadow;
   rect.left = div_left + spacing + abs_shadow;
   rect.right = rect.left + line_width;
   if (rect.left < rect.right)
@@ -1225,7 +1235,7 @@ mswindows_text_width (struct window *w, struct face_cachel *cachel,
   int nruns;
   int i;
 
-  nruns = separate_textual_runs (&runs, str, len);
+  nruns = separate_textual_runs (WINDOW_XBUFFER (w), &runs, str, len);
 
   for (i = 0; i < nruns; i++)
     width_so_far += mswindows_text_width_single_run (hdc, cachel, runs + i);

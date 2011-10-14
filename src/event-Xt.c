@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with Xt, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2005, 2010 Ben Wing.
    Copyright (C) 2010 Didier Verna
 
 This file is part of XEmacs.
@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "blocktype.h"
+#include "buffer.h"
 #include "charset.h"
 #include "console.h"
 #include "device-impl.h"
@@ -51,7 +52,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 
 #include "console-x-impl.h"
-#include "objects-x.h"
+#include "fontcolor-x.h"
 #include "../lwlib/lwlib.h"
 #include "EmacsFrame.h"
 
@@ -142,6 +143,14 @@ static int last_quit_check_signal_tick_count;
 /*                            keymap handling                           */
 /************************************************************************/
 
+/* @@#### This is the wrong approach, I think.  We should not be exposing the
+   name of the keysym anywhere, or forcing the user to use this name.
+   At the Lisp level, the user should simply see the character itself, and
+   should be able to bind the actual character.  Furthermore, introducing
+   the symbol introduces an X-specific dependency; I can't expect to set
+   a binding for a particular Unicode character and have it work on both
+   Windows and X. --ben */
+
 /* See comment near character_to_event(). */
 static void
 maybe_define_x_key_as_self_inserting_character (KeySym keysym,
@@ -231,7 +240,7 @@ x_reset_key_mapping (struct device *d)
     Fclrhash (hash_table);
   else
     xd->x_keysym_map_hash_table = hash_table =
-      make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+      make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, Qequal);
 
   for (keysym = xd->x_keysym_map,
 	 keysyms_per_code = xd->x_keysym_map_keysyms_per_code,

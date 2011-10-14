@@ -337,8 +337,9 @@ This is what @code{subseq} does; @code{nil} as the third argument to
 @cindex CL note---default optional arg
 @quotation
 @b{Common Lisp note:} Common Lisp allows the function to specify what
-default value to use when an optional argument is omitted; XEmacs Lisp
-always uses @code{nil}.
+default value to use when an optional argument is omitted; this is
+available in XEmacs Lisp with the @code{defun*} macro, an alternative to
+@code{defun}.
 @end quotation
 
   For example, an argument list that looks like this:
@@ -474,7 +475,7 @@ these two uses of a symbol are independent and do not conflict.
 is called @dfn{defining a function}, and it is done with the
 @code{defun} special operator.
 
-@defspec defun name argument-list body-forms
+@deffn {Special Operator} defun name argument-list body-forms
 @code{defun} is the usual way to define new Lisp functions.  It
 defines the symbol @var{name} as a function that looks like this:
 
@@ -543,7 +544,7 @@ Be careful not to redefine existing functions unintentionally.
 without any hesitation or notification.  Redefining a function already
 defined is often done deliberately, and there is no way to distinguish
 deliberate redefinition from unintentional redefinition.
-@end defspec
+@end deffn
 
 @defun define-function name definition
 @defunx defalias name definition
@@ -833,14 +834,14 @@ a number by two:
 In such cases, we usually use the special operator @code{function} instead
 of simple quotation to quote the anonymous function.
 
-@defspec function function-object
+@deffn {Special Operator} function function-object
 @cindex function quoting
 This special operator returns @var{function-object} without evaluating it.
 In this, it is equivalent to @code{quote}.  However, it serves as a
 note to the XEmacs Lisp compiler that @var{function-object} is intended
 to be used only as a function, and therefore can safely be compiled.
 Contrast this with @code{quote}, in @ref{Quoting}.
-@end defspec
+@end deffn
 
   Using @code{function} instead of @code{quote} makes a difference
 inside a function or macro that you are going to compile.  For example:

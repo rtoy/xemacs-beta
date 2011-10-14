@@ -57,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs.h"
 #include "gui.h"
 #include "insdel.h"
-#include "objects-impl.h"
+#include "fontcolor-impl.h"
 #include "opaque.h"
 #include "rangetab.h"
 #include "redisplay.h"
@@ -82,7 +82,7 @@ Lisp_Object Qsubwindow_image_instance_p;
 Lisp_Object Qwidget_image_instance_p;
 Lisp_Object Qconst_glyph_variable;
 Lisp_Object Qmono_pixmap, Qcolor_pixmap, Qsubwindow;
-Lisp_Object Q_file, Q_data, Q_face, Q_pixel_width, Q_pixel_height;
+Lisp_Object Q_file, Q_face, Q_pixel_width, Q_pixel_height;
 Lisp_Object Qformatted_string;
 Lisp_Object Vcurrent_display_table;
 Lisp_Object Vtruncation_glyph, Vcontinuation_glyph, Voctal_escape_glyph;
@@ -94,6 +94,7 @@ Lisp_Object Vimage_instance_type_list;
 Lisp_Object Vglyph_type_list;
 
 int disable_animated_pixmaps;
+static Lisp_Object Vimage_instance_hash_table_test;
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (nothing);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (inherit);
@@ -1259,7 +1260,7 @@ image_instance_live_p (Lisp_Object instance)
 }
 
 static Hashcode
-image_instance_hash (Lisp_Object obj, int depth)
+image_instance_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   Lisp_Image_Instance *i = XIMAGE_INSTANCE (obj);
   Hashcode hash = HASH5 (LISP_HASH (IMAGE_INSTANCE_DOMAIN (i)),
@@ -1267,7 +1268,7 @@ image_instance_hash (Lisp_Object obj, int depth)
 			  IMAGE_INSTANCE_MARGIN_WIDTH (i),
 			  IMAGE_INSTANCE_HEIGHT (i),
 			  internal_hash (IMAGE_INSTANCE_INSTANTIATOR (i),
-					 depth + 1));
+					 depth + 1, 0));
 
   ERROR_CHECK_IMAGE_INSTANCE (obj);
 
@@ -1278,7 +1279,7 @@ image_instance_hash (Lisp_Object obj, int depth)
 
     case IMAGE_TEXT:
       hash = HASH2 (hash, internal_hash (IMAGE_INSTANCE_TEXT_STRING (i),
-					 depth + 1));
+					 depth + 1, 0));
       break;
 
     case IMAGE_MONO_PIXMAP:
@@ -1287,7 +1288,7 @@ image_instance_hash (Lisp_Object obj, int depth)
       hash = HASH4 (hash, IMAGE_INSTANCE_PIXMAP_DEPTH (i),
 		    IMAGE_INSTANCE_PIXMAP_SLICE (i),
 		    internal_hash (IMAGE_INSTANCE_PIXMAP_FILENAME (i),
-				   depth + 1));
+				   depth + 1, 0));
       break;
 
     case IMAGE_WIDGET:
@@ -1295,10 +1296,12 @@ image_instance_hash (Lisp_Object obj, int depth)
 	 displayed. */
       hash = HASH5 (hash,
 		    LISP_HASH (IMAGE_INSTANCE_WIDGET_TYPE (i)),
-		    internal_hash (IMAGE_INSTANCE_WIDGET_PROPS (i), depth + 1),
-		    internal_hash (IMAGE_INSTANCE_WIDGET_ITEMS (i), depth + 1),
+		    internal_hash (IMAGE_INSTANCE_WIDGET_PROPS (i),
+                                   depth + 1, 0),
+		    internal_hash (IMAGE_INSTANCE_WIDGET_ITEMS (i),
+                                   depth + 1, 0),
 		    internal_hash (IMAGE_INSTANCE_LAYOUT_CHILDREN (i),
-				   depth + 1));
+				   depth + 1, 0));
     case IMAGE_SUBWINDOW:
       hash = HASH2 (hash, (EMACS_INT) IMAGE_INSTANCE_SUBWINDOW_ID (i));
       break;
@@ -2372,10 +2375,10 @@ string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
    helper that is used elsewhere for calculating text geometry. */
 void
 query_string_geometry (Lisp_Object string, Lisp_Object face,
-		       int* width, int* height, int* descent, Lisp_Object domain)
+		       int *width, int *height, int *descent,
+		       Lisp_Object domain)
 {
   struct font_metric_info fm;
-  unsigned char charsets[NUM_LEADING_BYTES];
   struct face_cachel cachel;
   struct face_cachel *the_cachel;
   Lisp_Object window = DOMAIN_WINDOW (domain);
@@ -2386,10 +2389,11 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
   /* Compute height */
   if (height)
     {
+      Ichar_dynarr *buf = Dynarr_new (Ichar);
+      convert_ibyte_string_into_ichar_dynarr
+	(XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
+
       /* Compute string metric info */
-      find_charsets_in_ibyte_string (charsets,
-				       XSTRING_DATA   (string),
-				       XSTRING_LENGTH (string));
 
       /* Fallback to the default face if none was provided. */
       if (!NILP (face))
@@ -2408,13 +2412,15 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
 	the_cachel = WINDOW_FACE_CACHEL (DOMAIN_XWINDOW (domain),
 					 DEFAULT_INDEX);
 
-      ensure_face_cachel_complete (the_cachel, domain, charsets);
-      face_cachel_charset_font_metric_info (the_cachel, charsets, &fm);
+      face_cachel_char_font_metric_info (the_cachel, domain,
+					 Dynarr_atp (buf, 0),
+					 Dynarr_length (buf), &fm);
 
       *height = fm.ascent + fm.descent;
       /* #### descent only gets set if we query the height as well. */
       if (descent)
 	*descent = fm.descent;
+      Dynarr_free (buf);
     }
 
   /* Compute width */
@@ -2422,32 +2428,6 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
     *width = redisplay_text_width_string (domain,
 					  NILP (face) ? Vdefault_face : face,
 					  0, string, 0, -1);
-}
-
-Lisp_Object
-query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
-{
-  unsigned char charsets[NUM_LEADING_BYTES];
-  struct face_cachel cachel;
-  int i;
-  Lisp_Object window = DOMAIN_WINDOW (domain);
-  Lisp_Object frame  = DOMAIN_FRAME  (domain);
-
-  /* Compute string font info */
-  find_charsets_in_ibyte_string (charsets,
-				 XSTRING_DATA   (string),
-				 XSTRING_LENGTH (string));
-
-  reset_face_cachel (&cachel);
-  update_face_cachel_data (&cachel, NILP (window) ? frame : window, face);
-  ensure_face_cachel_complete (&cachel, domain, charsets);
-
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    if (charsets[i])
-      return FACE_CACHEL_FONT
-	((&cachel), charset_by_leading_byte (i + MIN_LEADING_BYTE));
-
-  return Qnil;			/* NOT REACHED */
 }
 
 static void
@@ -2627,7 +2607,7 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 static void
 check_valid_xbm_inline (Lisp_Object data)
 {
-  Lisp_Object width, height, bits;
+  Lisp_Object width, height, bits, args[2];
 
   if (!CONSP (data) ||
       !CONSP (XCDR (data)) ||
@@ -2647,7 +2627,16 @@ check_valid_xbm_inline (Lisp_Object data)
   if (!NATNUMP (height))
     invalid_argument ("Height must be a natural number", height);
 
-  if (((XINT (width) * XINT (height)) / 8) > string_char_length (bits))
+  args[0] = width;
+  args[1] = height;
+
+  args[0] = Ftimes (countof (args), args);
+  args[1] = make_integer (8);
+
+  args[0] = Fquo (countof (args), args);
+  args[1] = make_integer (string_char_length (bits));
+
+  if (!NILP (Fgtr (countof (args), args)))
     invalid_argument ("data is too short for width and height",
 			 vector3 (width, height, bits));
 }
@@ -3202,29 +3191,29 @@ image_mark (Lisp_Object obj)
 }
 
 static int
-instantiator_eq_equal (Lisp_Object obj1, Lisp_Object obj2)
+instantiator_eq_equal (const Hash_Table_Test *UNUSED (http),
+                       Lisp_Object obj1, Lisp_Object obj2)
 {
   if (EQ (obj1, obj2))
     return 1;
 
   else if (CONSP (obj1) && CONSP (obj2))
     {
-      return instantiator_eq_equal (XCAR (obj1), XCAR (obj2))
-	&&
-	instantiator_eq_equal (XCDR (obj1), XCDR (obj2));
+      return instantiator_eq_equal (NULL, XCAR (obj1), XCAR (obj2))
+	&& instantiator_eq_equal (NULL, XCDR (obj1), XCDR (obj2));
     }
   return 0;
 }
 
 static Hashcode
-instantiator_eq_hash (Lisp_Object obj)
+instantiator_eq_hash (const Hash_Table_Test *UNUSED (http), Lisp_Object obj)
 {
   if (CONSP (obj))
     {
       /* no point in worrying about tail recursion, since we're not
 	 going very deep */
-      return HASH2 (instantiator_eq_hash (XCAR (obj)),
-		    instantiator_eq_hash (XCDR (obj)));
+      return HASH2 (instantiator_eq_hash (NULL, XCAR (obj)),
+		    instantiator_eq_hash (NULL, XCDR (obj)));
     }
   return LISP_HASH (obj);
 }
@@ -3233,10 +3222,9 @@ instantiator_eq_hash (Lisp_Object obj)
 Lisp_Object
 make_image_instance_cache_hash_table (void)
 {
-  return make_general_lisp_hash_table
-    (instantiator_eq_hash, instantiator_eq_equal,
-     30, -1.0, -1.0,
-     HASH_TABLE_KEY_CAR_VALUE_WEAK);
+  return make_general_lisp_hash_table (Vimage_instance_hash_table_test, 30,
+                                       -1.0, -1.0,
+                                       HASH_TABLE_KEY_CAR_VALUE_WEAK);
 }
 
 static Lisp_Object
@@ -3737,14 +3725,14 @@ glyph_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 }
 
 static Hashcode
-glyph_hash (Lisp_Object obj, int depth)
+glyph_hash (Lisp_Object obj, int depth, Boolint UNUSED (equalp))
 {
   depth++;
 
   /* No need to hash all of the elements; that would take too long.
      Just hash the most common ones. */
-  return HASH2 (internal_hash (XGLYPH (obj)->image, depth),
-		internal_hash (XGLYPH (obj)->face,  depth));
+  return HASH2 (internal_hash (XGLYPH (obj)->image, depth, 0),
+		internal_hash (XGLYPH (obj)->face,  depth, 0));
 }
 
 static Lisp_Object
@@ -4759,7 +4747,8 @@ redisplay_subwindow (Lisp_Object subwindow)
      we might need. We can get better hashing by making the depth
      negative - currently it will recurse down 7 levels.*/
   IMAGE_INSTANCE_DISPLAY_HASH (ii) = internal_hash (subwindow,
-						    IMAGE_INSTANCE_HASH_DEPTH);
+						    IMAGE_INSTANCE_HASH_DEPTH,
+                                                    0);
 
   unbind_to (count);
 }
@@ -4778,7 +4767,7 @@ image_instance_changed (Lisp_Object subwindow)
 {
   Lisp_Image_Instance* ii = XIMAGE_INSTANCE (subwindow);
 
-  if (internal_hash (subwindow, IMAGE_INSTANCE_HASH_DEPTH) !=
+  if (internal_hash (subwindow, IMAGE_INSTANCE_HASH_DEPTH, 0) !=
       IMAGE_INSTANCE_DISPLAY_HASH (ii))
     return 1;
   /* #### I think there is probably a bug here. This gets called for
@@ -5206,7 +5195,6 @@ syms_of_glyphs (void)
   DEFSUBR (Fconsole_type_image_conversion_list);
 
   DEFKEYWORD (Q_file);
-  DEFKEYWORD (Q_data);
   DEFKEYWORD (Q_face);
   DEFKEYWORD (Q_pixel_height);
   DEFKEYWORD (Q_pixel_width);
@@ -5523,6 +5511,12 @@ vars_of_glyphs (void)
 				     list6 (Qtext, Qmono_pixmap, Qcolor_pixmap,
 					    Qpointer, Qsubwindow, Qwidget));
   staticpro (&Vimage_instance_type_list);
+
+  /* The Qunbound name means this test is not available from Lisp. */
+  Vimage_instance_hash_table_test
+    = define_hash_table_test (Qunbound, instantiator_eq_equal,
+                              instantiator_eq_hash, Qunbound, Qunbound);
+  staticpro (&Vimage_instance_hash_table_test);
 
   /* glyphs */
 

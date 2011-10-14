@@ -278,7 +278,7 @@ function pobj {
   elif test $lrecord_type = lrecord_type_coding_system; then
     pstruct file-coding.c Lisp_Coding_System
   elif test $lrecord_type = lrecord_type_color_instance; then
-    pstruct objects.c Lisp_Color_Instance
+    pstruct fontcolor.c Lisp_Color_Instance
   elif test $lrecord_type = lrecord_type_command_builder; then
     pstruct event-stream.c command_builder
   elif test $lrecord_type = lrecord_type_compiled_function; then
@@ -302,7 +302,7 @@ function pobj {
   elif test $lrecord_type = lrecord_type_float; then
     pstruct floatfns.c Lisp_Float
   elif test $lrecord_type = lrecord_type_font_instance; then
-    pstruct objects.c Lisp_Font_Instance
+    pstruct fontcolor.c Lisp_Font_Instance
   elif test $lrecord_type = lrecord_type_frame; then
     pstruct frame.c frame
   elif test $lrecord_type = lrecord_type_glyph; then

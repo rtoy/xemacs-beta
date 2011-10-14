@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x.h"
+#include "fontcolor-x.h"
 
 #include <X11/Shell.h>
 #include <X11/Xmu/CharSet.h>
