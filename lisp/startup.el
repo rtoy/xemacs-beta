@@ -796,7 +796,7 @@ If this is nil, no message will be displayed.")
 
 (defun load-terminal-library ()
   (when term-file-prefix
-    (let ((term (getenv "TERM"))
+    (let ((term (console-tty-terminal-type))
 	  hyphend)
       (while (and term
 		  (not (load (concat term-file-prefix term) t t)))

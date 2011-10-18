@@ -1,3 +1,10 @@
+2011-10-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* startup.el (load-terminal-library):
+	Don't (getenv "TERM") here, call #'console-tty-terminal-type
+	instead, different gnuclient consoles can and should have
+	different terminal type function maps effective.
+
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* obsolete.el:
