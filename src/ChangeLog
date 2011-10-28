@@ -1,3 +1,16 @@
+2011-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Prevent assert at frame.c, l. 6311 by initializing glyph cachels.
+
+	* frame.c (Fmake_frame): Ensure that reset_glyph_cachels gets called.
+	(setup_minibuffer_frame): Improve header comment.
+
+	* redisplay.c (redisplay_window): Update comment.
+	Remove code checking for uninitialized face_cachels and glyph_cachels.
+	Can't happen in theory, and guarded by asserts in practice.
+
+	* window.c (allocate_window): Update comment on reset_*_cachels.
+
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (remassoc_no_quit):
