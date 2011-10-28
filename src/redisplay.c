@@ -6306,18 +6306,19 @@ redisplay_window (Lisp_Object window, int skip_selected)
      because we initialized them at startup and the only way to reduce
      their number is through calling reset_face_cachels() or
      reset_glyph_cachels(), which as a side effect sets up a number of
-     standard entries */
+     standard entries
+     2011-10-29 -- We were managing to hit the glyph_cachels assert in certain
+     contexts where VM was creating a lot of frames.  I don't have a full
+     analysis, but I suspect that we were failing to setup the glyph_cachels
+     at about l. 961 of frame.c, and a message was being sent to the echo area
+     before the initialization was complete.  This triggered a redisplay of
+     the minibuffer window (this part is confirmed), and thus this assert. */
   assert (Dynarr_length (w->face_cachels));
   assert (Dynarr_length (w->glyph_cachels));
 
   /* If the buffer has changed we have to invalidate all of our face
      cache elements. */
   if ((!echo_active && b != window_display_buffer (w))
-#if 0
-  /* #### Delete this code sometime later than 2-1-10 when we're sure it's
-     not needed */
-      || !Dynarr_length (w->face_cachels)
-#endif
       || f->faces_changed)
     reset_face_cachels (w);
   else
@@ -6327,11 +6328,6 @@ redisplay_window (Lisp_Object window, int skip_selected)
      the cache purely because glyphs have changed - this is now
      handled by the dirty flag.*/
   if ((!echo_active && b != window_display_buffer (w))
-#if 0
-  /* #### Delete this code sometime later than 2-1-10 when we're sure it's
-     not needed */
-      || !Dynarr_length (w->glyph_cachels)
-#endif
       || f->faces_changed)
     reset_glyph_cachels (w);
   else
