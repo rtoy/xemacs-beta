@@ -1,3 +1,7 @@
+2011-10-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (with_athena): Refactor check for Xaw3d.
+
 2011-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac: $machine is intel386, reflecting the file name
