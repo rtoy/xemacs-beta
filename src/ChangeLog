@@ -1,5 +1,18 @@
 2011-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	Prevent SIGPIPEs in deactivate_process().
+
+	* process.c (deactivate_process):
+	Use Lstream_close_noflush on output pipe instead of Lstream_close.
+
+	* lstream.c (Lstream_close_noflush):
+	New.  Factored out of Lstream_close.
+	(Lstream_close): Use Lstream_close_noflush.
+
+	* lstream.h (Lstream_close_noflush): Declare it.
+
+2011-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	Prevent assert at frame.c, l. 6311 by initializing glyph cachels.
 
 	* frame.c (Fmake_frame): Ensure that reset_glyph_cachels gets called.
