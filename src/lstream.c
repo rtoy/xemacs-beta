@@ -791,6 +791,45 @@ Lstream_pseudo_close (Lstream *lstr)
   return Lstream_flush (lstr);
 }
 
+/* Close the stream without flushing buffers.
+   In current practice, this is only useful when a subprocess terminates
+   unexpectedly, and the OS closes its pipes without warning.  In that case,
+   we do not want to flush our output buffers, as there is no longer a pipe
+   to write to.
+   This nomenclature may deserve review if XEmacs starts getting called as
+   a subprocess. */
+
+int
+Lstream_close_noflush (Lstream *lstr)
+{
+  lstr->flags &= ~LSTREAM_FL_IS_OPEN;
+  lstr->byte_count = 0;
+  /* Note that Lstream_flush() reset all the buffer indices.  That way,
+     the next call to Lstream_putc(), Lstream_getc(), or Lstream_ungetc()
+     on a closed stream will call into the function equivalents, which will
+     cause an error. */
+
+  /* We set the pointers to 0 so that we don't lose when this function
+     is called more than once on the same object */
+  if (lstr->out_buffer)
+    {
+      xfree (lstr->out_buffer);
+      lstr->out_buffer = 0;
+    }
+  if (lstr->in_buffer)
+    {
+      xfree (lstr->in_buffer);
+      lstr->in_buffer = 0;
+    }
+  if (lstr->unget_buffer)
+    {
+      xfree (lstr->unget_buffer);
+      lstr->unget_buffer = 0;
+    }
+
+  return 0;
+}
+
 /* Close the stream.  All data will be flushed out.  If the stream is
    already closed, nothing happens.  Note that, even if all data has
    already been flushed out, the act of closing a stream may generate more
@@ -838,30 +877,7 @@ Lstream_close (Lstream *lstr)
 	  rc = -1;
     }
 
-  lstr->flags &= ~LSTREAM_FL_IS_OPEN;
-  lstr->byte_count = 0;
-  /* Note that Lstream_flush() reset all the buffer indices.  That way,
-     the next call to Lstream_putc(), Lstream_getc(), or Lstream_ungetc()
-     on a closed stream will call into the function equivalents, which will
-     cause an error. */
-
-  /* We set the pointers to 0 so that we don't lose when this function
-     is called more than once on the same object */
-  if (lstr->out_buffer)
-    {
-      xfree (lstr->out_buffer);
-      lstr->out_buffer = 0;
-    }
-  if (lstr->in_buffer)
-    {
-      xfree (lstr->in_buffer);
-      lstr->in_buffer = 0;
-    }
-  if (lstr->unget_buffer)
-    {
-      xfree (lstr->unget_buffer);
-      lstr->unget_buffer = 0;
-    }
+  Lstream_close_noflush (lstr);
 
   return rc;
 }

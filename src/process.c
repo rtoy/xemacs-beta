@@ -2150,8 +2150,20 @@ deactivate_process (Lisp_Object process)
   /* Must call this before setting the streams to nil */
   event_stream_unselect_process (p, 1, 1);
 
+  /* We can get here in case of a crash in the external process, and then
+     the Lstream_close on output will cause a SIGPIPE, which we're not ready
+     for here.  It looks to me like all cases where this function is called
+     we know the process has exited (but I'm not 100% sure for the call in
+     execute_internal_event (event-stream.c)), so it should be OK to use
+     Lstream_close_noflush.
+
+     #### The layering here needs a rethink.  We should just be able
+     to call Lstream_close, and let the Lstream's implementation decide
+     if it can flush safely or not.  The immediate problem is that the
+     Lstream needs to know the process's status, but I don't think it has
+     a handle to the process. */
   if (!NILP (DATA_OUTSTREAM (p)))
-    Lstream_close (XLSTREAM (DATA_OUTSTREAM (p)));
+    Lstream_close_noflush (XLSTREAM (DATA_OUTSTREAM (p)));
   if (!NILP (DATA_INSTREAM (p)))
     Lstream_close (XLSTREAM (DATA_INSTREAM (p)));
   if (!NILP (DATA_ERRSTREAM (p)))
