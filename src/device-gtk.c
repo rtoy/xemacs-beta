@@ -47,10 +47,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "sysfile.h"
 #include "systime.h"
 
-#ifdef HAVE_BONOBO
-#include <bonobo.h>
-#endif
-
 #include <locale.h>
 
 Lisp_Object Qmake_device_early_gtk_entry_point,
@@ -158,10 +154,6 @@ extern void emacs_gtk_selection_received (GtkWidget *widget,
 					  GtkSelectionData *selection_data,
 					  gpointer user_data);
 
-#ifdef HAVE_BONOBO
-static CORBA_ORB orb;
-#endif
-
 DEFUN ("gtk-init", Fgtk_init, 1, 1, 0, /*
 Initialize the GTK subsystem.
 ARGS is a standard list of command-line arguments.
@@ -190,17 +182,6 @@ mode.
      the Lisp reader doesn't necessarily understand the radix character for
      floats, which is a problem. */
   setlocale (LC_NUMERIC, "C");
-
-#ifdef HAVE_BONOBO
-  orb = oaf_init (argc, argv);
-
-  if (bonobo_init (orb, NULL, NULL) == FALSE)
-    {
-      g_warning ("Could not initialize bonobo...");
-    }
-
-  bonobo_activate ();
-#endif
 
   speed_up_interrupts ();
 
