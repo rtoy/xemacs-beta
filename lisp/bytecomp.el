@@ -563,24 +563,25 @@ easily determined from the input file.")
                                               'byte-optimizer)
                                         'byte-compile-inline-expand)
                                        `(((function ,placeholder)
-                                          ,(byte-compile-lambda lambda)
+                                          ,(byte-compile-lambda lambda name)
                                           (function ,lambda)))))
                                   names placeholders lambdas))
                                (compiled
-                                (mapcar #'byte-compile-lambda 
-                                        (if (not inline)
-                                            lambdas
-                                          ;; See further down for the
+                                (mapcar* #'byte-compile-lambda 
+                                         (if (not inline)
+                                             lambdas
+                                           ;; See further down for the
                                           ;; rationale of the sublis calls.
-                                          (sublis (pairlis
-                                                   (mapcar #'cadar inline)
-                                                   (mapcar #'third inline))
-                                                  (sublis
-                                                   (pairlis
-                                                    (mapcar #'car inline)
-                                                    (mapcar #'second inline))
-                                                   lambdas :test #'equal)
-                                                  :test #'eq))))
+                                           (sublis (pairlis
+                                                    (mapcar #'cadar inline)
+                                                    (mapcar #'third inline))
+                                                   (sublis
+                                                    (pairlis
+                                                     (mapcar #'car inline)
+                                                     (mapcar #'second inline))
+                                                    lambdas :test #'equal)
+                                                   :test #'eq))
+                                         names))
                                elt)
                           (mapc #'(lambda (placeholder function)
                                     (nsubst function placeholder compiled
@@ -2736,10 +2737,11 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 ;; Byte-compile a lambda-expression and return a valid function.
 ;; The value is usually a compiled function but may be the original
 ;; lambda-expression.
-(defun byte-compile-lambda (fun)
+(defun byte-compile-lambda (fun &optional name)
   (or (eq 'lambda (car-safe fun))
       (error "not a lambda -- %s" (prin1-to-string fun)))
-  (let* ((arglist (nth 1 fun))
+  (let* ((byte-compile-current-form (or name byte-compile-current-form))
+         (arglist (nth 1 fun))
 	 (byte-compile-bound-variables
 	  (let ((new-bindings
 		 (mapcar #'(lambda (x) (cons x byte-compile-arglist-bit))
