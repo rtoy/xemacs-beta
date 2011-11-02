@@ -1,3 +1,14 @@
+2011-10-31  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_font_list): Check font pattern for
+	"monospace" using utf-8 encoding.
+
+	* device-x.c (x_delete_device): Remove DEVICE_X_XFTDRAW, remnants
+	of an experimental change that had nothing to do with Gtk.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Use FRAME_X_XFTDRAW
+	instead of incorrect DEVICE_X_XFTDRAW.
+
 2011-09-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* menubar-gtk.c (remove_underscores):
