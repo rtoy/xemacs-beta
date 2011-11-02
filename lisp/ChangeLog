@@ -1,3 +1,12 @@
+2011-11-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-lambda):
+	Accept a new NAME argument here, have byte-compile-current-form
+	reflect that if it's specified. 
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	Specify the label name when byte-compiling it, so warning and
+	errors are more helpful.
+
 2011-10-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* startup.el (load-terminal-library):
