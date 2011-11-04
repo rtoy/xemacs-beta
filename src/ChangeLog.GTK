@@ -2,6 +2,7 @@
 
 	* glyphs-gtk.c (gtk_map_subwindow): Use gtk_widget_hide/show
 	instead of using obsolete GTK_WIDGET_FLAGS.
+	(gtk_map_subwindow): Accidental hide instead of show.
 
 	* frame-gtk.c (gtk_frame_visible_p): Use FRAME_VISIBLE_P instead
 	of f->visible.
