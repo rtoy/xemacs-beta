@@ -1359,7 +1359,7 @@ gtk_frame_visible_p (struct frame *f)
 {
     GtkWidget *w = FRAME_GTK_SHELL_WIDGET (f);
 
-    FRAME_VISIBLE_P (f) = (GTK_OBJECT_FLAGS (w) & GTK_VISIBLE);
+    FRAME_VISIBLE_P (f) = gtk_widget_get_visible (w);
 
     return FRAME_VISIBLE_P (f);
 }
