@@ -4,6 +4,8 @@
 	of f->visible.
 	(gtk_popup_frame): Ditto.
 	(gtk_frame_visible_p): Ditto.
+	(gtk_frame_visible_p): use gtk_widget_get_visible instead of
+	obsolete GTK_OBJECT_FLAGS.
 
 	* console-gtk-impl.h (struct gtk_frame): Remove unused field
 	visible_p and accessor macro for it.
