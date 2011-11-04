@@ -1,3 +1,31 @@
+2011-11-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console.c (Fsuspend_console): Use FRAME_VISIBLE_P instead of
+	f->visible.
+
+	* console-stream.c (stream_init_frame_1): Ditto.
+
+	* device-x.c (x_error_handler): Ditto.
+
+	* frame.c (delete_frame_internal): Ditto.
+	(Fframe_visible_p): Ditto.
+	(Fframe_totally_visible_p): Ditto.
+	(Fframe_iconified_p): Ditto.
+
+	* frame-msw.c (mswindows_make_frame_visible): Ditto.
+	(mswindows_make_frame_invisible): Ditto.
+	(mswindows_iconify_frame): Ditto.
+
+	* frame-tty.c (tty_make_frame_visible): Ditto.
+	(tty_make_frame_invisible): Ditto.
+	(tty_make_frame_hidden): Ditto.
+	(tty_make_frame_unhidden): Ditto.
+
+	* frame-x.c (x_frame_visible_p): Ditto.
+	(x_focus_on_frame): Ditto.
+	(x_popup_frame): Ditto.
+	(x_init_frame_1): Ditto.
+
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Do a couple of non-mechanical things that would otherwise have
