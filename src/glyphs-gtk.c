@@ -2078,7 +2078,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
       a.width = dga->width;
       a.height = dga->height;
 
-      /* Is the widget cganging position? */
+      /* Is the widget changing position? */
       moving = (a.x != wid->allocation.x) ||
 	(a.y != wid->allocation.y);
 
@@ -2096,8 +2096,9 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 	  /* GtkFixed widget queues a resize when you add a widget.
 	  ** But only if it is visible.
 	  ** losers.
+          ** Check if still truce for Gtk 2.0 - jsparkes
 	  */
-	  GTK_WIDGET_FLAGS(FRAME_GTK_TEXT_WIDGET (f)) &= ~GTK_VISIBLE;
+          gtk_widget_hide (FRAME_GTK_TEXT_WIDGET (f));
 
 	  if (IMAGE_INSTANCE_GTK_ALREADY_PUT(p))
 	    {
@@ -2113,7 +2114,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 			     a.x, a.y);
 	    }
 
-	  GTK_WIDGET_FLAGS(FRAME_GTK_TEXT_WIDGET (f)) = old_flags;
+          gtk_widget_hide (FRAME_GTK_TEXT_WIDGET (f));
 	}
       else
 	{
