@@ -1952,19 +1952,6 @@ cursor_font_possible_dest_types (void)
   return IMAGE_POINTER_MASK;
 }
 
-static char *__downcase (const char *name)
-{
-    char *converted = strdup(name);
-    char *work = converted;
-
-    while (*work)
-    {
-	*work = tolower(*work);
-	work++;
-    }
-    return(converted);
-}
-
 /* This is basically the equivalent of XmuCursorNameToIndex */
 static GdkCursorType
 cursor_name_to_index (const char *name)
