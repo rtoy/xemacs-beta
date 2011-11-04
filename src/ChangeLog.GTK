@@ -5,6 +5,7 @@
 	(gtk_map_subwindow): Accidental hide instead of show.
 	(register_cursor_name): Take a const char * arg to avoid warnings.
 	(gtk_map_subwindow): Remove unused variable old_flags.
+	(gtk_image_instance_hash): ifdef out unused function.
 
 	* frame-gtk.c (gtk_frame_visible_p): Use FRAME_VISIBLE_P instead
 	of f->visible.
