@@ -2534,7 +2534,7 @@ frame is iconified, it will not be visible.
        (frame))
 {
   struct frame *f = decode_frame (frame);
-  if (f->visible)
+  if (FRAME_VISIBLE_P (f))
     return Qnil;
   f->iconified = FRAMEMETH_OR_GIVEN (f, frame_iconified_p, (f), 0);
   return f->iconified ? Qt : Qnil;
