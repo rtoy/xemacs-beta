@@ -1,5 +1,10 @@
 2011-11-04  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* frame-gtk.c (gtk_frame_visible_p): Use FRAME_VISIBLE_P instead
+	of f->visible.
+	(gtk_popup_frame): Ditto.
+	(gtk_frame_visible_p): Ditto.
+
 	* console-gtk-impl.h (struct gtk_frame): Remove unused field
 	visible_p and accessor macro for it.
 

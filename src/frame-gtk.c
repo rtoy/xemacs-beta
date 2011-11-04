@@ -1011,7 +1011,7 @@ gtk_popup_frame (struct frame *f)
                          UNMAPPED_DATA_IDENTIFIER))
     {
       FRAME_GTK_TOTALLY_VISIBLE_P (f) = 0;
-      f->visible = 0;
+      FRAME_VISIBLE_P (f) = 0;
       gtk_widget_realize (FRAME_GTK_SHELL_WIDGET (f));
       gtk_widget_realize (FRAME_GTK_TEXT_WIDGET (f));
       gtk_widget_hide_all (FRAME_GTK_SHELL_WIDGET (f));
@@ -1359,9 +1359,9 @@ gtk_frame_visible_p (struct frame *f)
 {
     GtkWidget *w = FRAME_GTK_SHELL_WIDGET (f);
 
-    f->visible = (GTK_OBJECT_FLAGS (w) & GTK_VISIBLE);
+    FRAME_VISIBLE_P (f) = (GTK_OBJECT_FLAGS (w) & GTK_VISIBLE);
 
-    return f->visible;
+    return FRAME_VISIBLE_P (f);
 }
 
 static int
