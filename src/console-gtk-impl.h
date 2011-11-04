@@ -192,9 +192,6 @@ struct gtk_frame
      or partially hidden by another X window */
   unsigned int totally_visible_p :1;
 
-    /* Is it visible at all? */
-  unsigned int visible_p :1;
-
   /* Are we a top-level frame?  This means that our shell is a
      TopLevelShell, and we should do certain things to interact with
      the window manager. */
@@ -245,7 +242,6 @@ DECLARE_LISP_OBJECT (gtk_frame, Lisp_Gtk_Frame);
 #define FRAME_GTK_GEOM_FREE_ME_PLEASE(f) (FRAME_GTK_DATA (f)->geom_free_me_please)
 
 #define FRAME_GTK_TOTALLY_VISIBLE_P(f) (FRAME_GTK_DATA (f)->totally_visible_p)
-#define FRAME_GTK_VISIBLE_P(f) (FRAME_GTK_DATA (f)->visible_p)
 #define FRAME_GTK_TOP_LEVEL_FRAME_P(f) (FRAME_GTK_DATA (f)->top_level_frame_p)
 #define FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE(f) (FRAME_GTK_DATA (f)->widget_instance_hash_table)
 #define FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE(f) (FRAME_GTK_DATA (f)->widget_callback_hash_table)

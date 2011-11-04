@@ -1,3 +1,8 @@
+2011-11-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-gtk-impl.h (struct gtk_frame): Remove unused field
+	visible_p and accessor macro for it.
+
 2011-10-31  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-gtk.c (gtk_font_list): Check font pattern for
