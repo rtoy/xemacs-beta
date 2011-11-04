@@ -484,6 +484,7 @@ gtk_image_instance_equal (struct Lisp_Image_Instance *p1,
   return 1;
 }
 
+#ifdef NOT_USED
 static Hashcode
 gtk_image_instance_hash (struct Lisp_Image_Instance *p, int UNUSED (depth),
 			 Boolint UNUSED (equalp))
@@ -503,6 +504,7 @@ gtk_image_instance_hash (struct Lisp_Image_Instance *p, int UNUSED (depth),
       return 0;
     }
 }
+#endif
 
 /* Set all the slots in an image instance structure to reasonable
    default values.  This is used somewhere within an instantiate
