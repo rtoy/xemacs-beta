@@ -599,7 +599,7 @@ locate_pixmap_file (Lisp_Object name)
 
 #ifdef HAVE_GTK
 static void
-register_cursor_name (char *real_name, int value)
+register_cursor_name (const char *real_name, int value)
 {
   Ibyte *name = alloca_ibytes (strlen (real_name));
   int len = strlen (real_name);
