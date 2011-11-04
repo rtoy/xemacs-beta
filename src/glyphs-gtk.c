@@ -2114,7 +2114,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 			     a.x, a.y);
 	    }
 
-          gtk_widget_hide (FRAME_GTK_TEXT_WIDGET (f));
+          gtk_widget_show (FRAME_GTK_TEXT_WIDGET (f));
 	}
       else
 	{
