@@ -2091,8 +2091,6 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 
       if (moving)
 	{
-	  guint32 old_flags = GTK_WIDGET_FLAGS (FRAME_GTK_TEXT_WIDGET (f));
-
 	  /* GtkFixed widget queues a resize when you add a widget.
 	  ** But only if it is visible.
 	  ** losers.
