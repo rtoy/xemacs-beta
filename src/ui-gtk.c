@@ -1424,6 +1424,8 @@ The type is returned as a string, so this is a type validator.
 {
   guint type = G_TYPE_NONE;
   
+  if (SYMBOLP (type_name))
+    type_name = Fsymbol_name (type_name);
   CHECK_STRING (type_name);
   type = g_type_from_name (LISP_STRING_TO_EXTERNAL (type_name, Qutf_8));
   if (type == G_TYPE_INVALID || type == G_TYPE_NONE)
@@ -1447,6 +1449,8 @@ Return the name of GTYPE, which is the name of a type..
     }
   else
     {
+      if (SYMBOLP (type))
+        type = Fsymbol_name (type);
       CHECK_STRING (type);
       /* Seems redundant, but validates the type name. */
       t = g_type_from_name (LISP_STRING_TO_EXTERNAL (type, Qutf_8));
