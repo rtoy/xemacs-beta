@@ -2,6 +2,9 @@
 
 	* ui-gtk.c (Fg_enumeration): Define new function.
 	(syms_of_ui_gtk): DEFSUBR for it.
+	(list_enumeration): Define.
+	(Fg_enumeration): Single type argument means return an alist of
+	enumerations for that type.
 
 	* sysgtk.h: Include glib-object.h for enum functions.
 
