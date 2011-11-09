@@ -273,6 +273,39 @@ import_gtk_flags_internal (GType the_type)
   return mark_type_as_imported (the_type);
 }
 
+DEFUN ("g-enumeration", Fg_enumeration, 2, 2, 0, /*
+Return the value of TYPE.ENUMERATION value.
+The ENUMERATION may be name or nickname. */
+       (type_name, enumeration))
+{
+  GType type  = G_TYPE_INVALID;
+  GEnumValue *value = NULL;
+  GEnumClass *klass = NULL;
+  char *name = NULL;
+
+  if (SYMBOLP (type_name))
+    type_name = Fsymbol_name (type_name);
+  CHECK_STRING (type_name);
+  type = g_type_from_name (LISP_STRING_TO_EXTERNAL (type_name, Qutf_8));
+  if (type == G_TYPE_INVALID)
+    invalid_state ("type is invalid", type_name);
+  if (type == G_TYPE_NONE)
+    invalid_state ("type is unknown", type_name);
+
+  if (SYMBOLP (enumeration))
+    enumeration = Fsymbol_name (enumeration);
+  CHECK_STRING (enumeration);
+  name = LISP_STRING_TO_EXTERNAL (enumeration, Qutf_8);
+  klass = (GEnumClass *) g_type_class_ref (type);
+
+  value = g_enum_get_value_by_name (klass, name);
+  if (value == NULL)
+    value = g_enum_get_value_by_nick (klass, name);
+  if (value == NULL)
+    invalid_state ("unknown enumeration", enumeration);
+  return make_fixnum (value->value);
+}
+  
 static Lisp_Object
 import_gtk_enumeration_internal (GType the_type)
 {
@@ -1587,6 +1620,7 @@ syms_of_ui_gtk (void)
   DEFSYMBOL_MULTIWORD_PREDICATE (Qemacs_gtk_boxedp);
   DEFSYMBOL (Qvoid);
   DEFSUBR (Fdll_load);
+  DEFSUBR (Fg_enumeration);
   DEFSUBR (Fgtk_import_function_internal);
   DEFSUBR (Fgtk_import_variable_internal);
   DEFSUBR (Fgtk_signal_connect);

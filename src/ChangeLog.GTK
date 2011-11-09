@@ -1,5 +1,10 @@
 2011-11-09  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (Fg_enumeration): Define new function.
+	(syms_of_ui_gtk): DEFSUBR for it.
+
+	* sysgtk.h: Include glib-object.h for enum functions.
+
 	* ui-gtk.c (Fg_type_from_name): Return type name as symbol.
 	(Fg_type_name): Ditto.
 

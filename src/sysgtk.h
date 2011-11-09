@@ -33,6 +33,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <gdk/gdkx.h>
 #include <gdk/gdkkeysyms.h>
 #include <glib.h>
+#include <glib-object.h>
 
 #include <pango/pango.h>
 #include <pango/pangoxft.h>
