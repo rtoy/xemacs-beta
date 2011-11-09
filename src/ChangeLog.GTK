@@ -1,3 +1,8 @@
+2011-11-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_from_name): Return type name as symbol.
+	(Fg_type_name): Ditto.
+
 2011-11-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (Fg_type_from_name): Allow symbol as argument.

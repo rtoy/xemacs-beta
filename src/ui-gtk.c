@@ -1430,7 +1430,7 @@ The type is returned as a string, so this is a type validator.
   type = g_type_from_name (LISP_STRING_TO_EXTERNAL (type_name, Qutf_8));
   if (type == G_TYPE_INVALID || type == G_TYPE_NONE)
     return Qnil;
-  return (build_ascstring (g_type_name (type)));
+  return type_name_as_symbol (type);
 }
 
 DEFUN ("g-type-name", Fg_type_name, 1, 1, 0, /*
@@ -1461,7 +1461,7 @@ Return the name of GTYPE, which is the name of a type..
   name = g_type_name (t);
   if (name == NULL)
     invalid_state ("type does not exist", type);
-  return build_extstring (name, Qutf_8);
+  return type_name_as_symbol (type);
 }
 
 DEFUN ("g-type-parent", Fg_type_parent, 1, 1, 0, /*
