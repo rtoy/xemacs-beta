@@ -283,7 +283,10 @@ list_enumeration(GEnumClass *klass)
     {
       GEnumValue *gev = &klass->values[i];
       value = Facons (intern (gev->value_name), make_fixnum (gev->value),
-                      value);
+                        value);
+      if (gev->value_nick != NULL)
+        value = Facons (intern (gev->value_nick), make_fixnum (gev->value),
+                        value);
     }
   return Fnreverse (value);
 }
