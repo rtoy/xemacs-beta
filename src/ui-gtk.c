@@ -273,8 +273,24 @@ import_gtk_flags_internal (GType the_type)
   return mark_type_as_imported (the_type);
 }
 
-DEFUN ("g-enumeration", Fg_enumeration, 2, 2, 0, /*
+static Lisp_Object
+list_enumeration(GEnumClass *klass)
+{
+  guint i;
+  Lisp_Object value = Qnil;
+
+  for (i = 0; i < klass->n_values; i++)
+    {
+      GEnumValue *gev = &klass->values[i];
+      value = Facons (intern (gev->value_name), make_fixnum (gev->value),
+                      value);
+    }
+  return Fnreverse (value);
+}
+
+DEFUN ("g-enumeration", Fg_enumeration, 1, 2, 0, /*
 Return the value of TYPE.ENUMERATION value.
+If only TYPE is given, return an alist of enumerations for that type.
 The ENUMERATION may be name or nickname. */
        (type_name, enumeration))
 {
@@ -292,11 +308,14 @@ The ENUMERATION may be name or nickname. */
   if (type == G_TYPE_NONE)
     invalid_state ("type is unknown", type_name);
 
+  klass = G_ENUM_CLASS (g_type_class_ref (type));
+  if (NILP (enumeration))
+    return list_enumeration (klass);
+
   if (SYMBOLP (enumeration))
     enumeration = Fsymbol_name (enumeration);
   CHECK_STRING (enumeration);
   name = LISP_STRING_TO_EXTERNAL (enumeration, Qutf_8);
-  klass = (GEnumClass *) g_type_class_ref (type);
 
   value = g_enum_get_value_by_name (klass, name);
   if (value == NULL)
