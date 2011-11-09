@@ -987,7 +987,7 @@
 ;;-----------------------------------------------------
 (Assert (eq (type-of load-path) 'cons))
 (Assert (eq (type-of obarray) 'vector))
-(Assert (eq (type-of 42) 'integer))
+(Assert (eq (type-of 42) 'fixnum))
 (Assert (eq (type-of ?z) 'character))
 (Assert (eq (type-of "42") 'string))
 (Assert (eq (type-of 'foo) 'symbol))
@@ -2907,12 +2907,9 @@ via the hepatic alpha-tocopherol transfer protein")))
                      third
                      #'(lambda () (return-from awkward 0)))
                   first)))))
-  (if (compiled-function-p
-       (ignore-errors (indirect-function #'needs-lexical-context)))
-      (Known-Bug-Expect-Failure
-       (Assert (eql 0 (needs-lexical-context 2 nil nil))
-	"the function special operator doesn't create a lexical context."))
-    (Assert (eql 0 (needs-lexical-context 2 nil nil)))))
+  (Known-Bug-Expect-Failure
+   (Assert (eql 0 (needs-lexical-context 2 nil nil))
+           "the function special operator doesn't create a lexical context.")))
 
 ;; Test symbol-macrolet with symbols with identical string names.
 
