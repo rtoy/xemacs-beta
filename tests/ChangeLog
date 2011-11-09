@@ -1,3 +1,18 @@
+2011-11-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Update some tests that have started failing because of some
+	changed design decisions.
+	* automated/lisp-tests.el (eq):
+	(type-of 42) now returns the symbol fixnum.
+	* automated/lisp-tests.el (needs-lexical-context):
+	(function ...) doesn't create a lexical context, and this is now the
+	case in interpreted as well as in compiled code.
+	* automated/mule-tests.el (featurep):
+	Silence messages when byte-compiling files; if a file doesn't have
+	the escape-quoted coding cookie, it will now have the
+	raw-text-unix coding cookie, look for that instead of looking for
+	the absence of the escape-quoted coding cookie.
+
 2011-10-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/case-tests.el (uni-mappings):

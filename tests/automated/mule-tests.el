@@ -654,25 +654,26 @@ This is a naive implementation in Lisp.  "
              (let* ((temporary-file-name (make-temp-name
 					  (expand-file-name "zjPQ2Pk"
 							    (temp-directory))))
-		    (byte-compile-result (byte-compile-from-buffer
-					  (current-buffer) temporary-file-name
-					  nil)))
+		    (byte-compile-result
+                     (Silence-Message (byte-compile-from-buffer
+                                       (current-buffer) temporary-file-name
+                                       nil))))
                (Assert (string-match
                         "^;;;###coding system: escape-quoted"
                         (buffer-substring nil nil byte-compile-result))))))
-         (Assert-elc-has-no-specified-encoding ()
+         (Assert-elc-is-raw-text-unix ()
            "Assert the current buffer has no coding cookie if compiled."
            (save-excursion
              (let* ((temporary-file-name (make-temp-name
 					  (expand-file-name "zjPQ2Pk"
 							    (temp-directory))))
-		    (byte-compile-result (byte-compile-from-buffer
-					  (current-buffer) temporary-file-name
-					  nil)))
-               (Assert (not (string-match
-                             ";;;###coding system:"
-                             (buffer-substring nil nil
-                                               byte-compile-result))))))))
+                    (byte-compile-result
+                     (Silence-Message
+                      (byte-compile-from-buffer (current-buffer)
+                                                temporary-file-name nil))))
+               (Assert (string-match
+                        "^;;;###coding system: raw-text-unix"
+                        (buffer-substring nil nil byte-compile-result)))))))
       (insert 
        ;; Create a buffer with Unicode escapes. The #'read call is at
        ;; runtime, because this file may be compiled and read in a non-Mule
@@ -730,7 +731,7 @@ This is a naive implementation in Lisp.  "
        #r" (defvar testing-mule-compilation-handling 
          (string ?\xab))   ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK")
       
-      (Assert-elc-has-no-specified-encoding)
+      (Assert-elc-is-raw-text-unix)
       (delete-region (point-min) (point-max))
 
       (insert
@@ -738,7 +739,7 @@ This is a naive implementation in Lisp.  "
        #ru" (defvar testing-mule-compilation-handling 
         (string ?\u00AB))   ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK\")")
       
-      (Assert-elc-has-no-specified-encoding)
+      (Assert-elc-is-raw-text-unix)
       (delete-region (point-min) (point-max))
 
       (insert
@@ -746,7 +747,7 @@ This is a naive implementation in Lisp.  "
        #r" (defvar testing-mule-compilation-handling 
             (string ?A))   ;; LATIN CAPITAL LETTER A")
       
-      (Assert-elc-has-no-specified-encoding)
+      (Assert-elc-is-raw-text-unix)
       (delete-region (point-min) (point-max))
 
       ;; There used to be a bug here because the coding-cookie insertion code
