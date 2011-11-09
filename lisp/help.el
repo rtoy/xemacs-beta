@@ -1395,33 +1395,37 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 	      macrop t)
       (setq fndef def))
     (if aliases (princ aliases))
-    (let ((int #'(lambda (string an-p macro-p)
-		   (princ (format
-			   (gettext (concat
-				     (cond ((commandp def)
-					    "an interactive ")
-					   (an-p "an ")
-					   (t "a "))
-				     "%s"
-                                     (cond
-                                      ((eq 'neither macro-p)
-                                       "")
-                                      (macro-p " macro")
-                                      (t " function"))))
-			   string)))))
+    (labels
+        ((int (string an-p macro-p)
+           (princ (format
+                   (gettext (concat
+                             (cond ((commandp def)
+                                    "an interactive ")
+                                   (an-p "an ")
+                                   (t "a "))
+                             "%s"
+                             (cond
+                              ((eq 'neither macro-p)
+                               "")
+                              (macro-p " macro")
+                              (t " function"))))
+                   string))))
+      (declare (inline int))
       (cond ((or (stringp def) (vectorp def))
              (princ "a keyboard macro.")
 	     (setq kbd-macro-p t))
             ((special-operator-p fndef)
-             (funcall int "built-in special operator" nil 'neither))
+             (int "built-in special operator" nil 'neither))
             ((subrp fndef)
-             (funcall int "built-in" nil macrop))
+             (int "built-in" nil macrop))
             ((compiled-function-p fndef)
-             (funcall int "compiled Lisp" nil macrop))
+             (int (concat (if (built-in-symbol-file function 'defun)
+                              "built-in "
+                            "") "compiled Lisp") nil macrop))
             ((eq (car-safe fndef) 'lambda)
-             (funcall int "Lisp" nil macrop))
+             (int "Lisp" nil macrop))
             ((eq (car-safe def) 'autoload)
-	     (funcall int "autoloaded Lisp" t (elt def 4)))
+	     (int "autoloaded Lisp" t (elt def 4)))
 	    ((and (symbolp def) (not (fboundp def)))
 	     (princ "a symbol with a void (unbound) function definition."))
             (t
