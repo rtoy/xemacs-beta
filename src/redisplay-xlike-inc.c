@@ -1053,6 +1053,8 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
                      gint x, gint y, struct textual_run *run);
 
 #endif /* THIS_IS_GTK */
+
+#ifndef THIS_IS_GTK
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,
 		     Ichar_dynarr *buf, int xpos, int xoffset, int clip_start,
@@ -1676,6 +1678,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 #undef XFT_FROB_LISP_COLOR
 #endif
 }
+/* not THIS_IS_GTK */
+#endif
 
 static void
 XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,

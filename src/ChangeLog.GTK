@@ -1,3 +1,10 @@
+2011-11-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Copied from
+	redisplay-xlike-inc.c to allow better adaptation to Gtk.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Only use if not Gtk.
+
 2011-11-09  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (Fg_enumeration): Define new function.
