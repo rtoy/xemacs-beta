@@ -2,6 +2,7 @@
 
 	* redisplay-gtk.c (XLIKE_output_string): Copied from
 	redisplay-xlike-inc.c to allow better adaptation to Gtk.
+	(XLIKE_output_string): Remove USE_XFT code.
 
 	* redisplay-xlike-inc.c (XLIKE_output_string): Only use if not Gtk.
 

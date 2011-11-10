@@ -281,25 +281,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   int use_x_font = 1;		/* #### bogus!!
 				   The logic of this function needs review! */
 #endif
-#ifdef USE_XFT
-  Colormap cmap = DEVICE_X_COLORMAP (d);
-  Visual *visual = DEVICE_X_VISUAL (d);
-  static XftColor fg, bg;
-  XftDraw *xftDraw;
-
-  /* Lazily initialize frame's xftDraw member. */
-  if (!FRAME_X_XFTDRAW (f)) {
-    FRAME_X_XFTDRAW (f) = XftDrawCreate (dpy, x_win, visual, cmap);
-  }
-  xftDraw = FRAME_X_XFTDRAW (f);
-
-  /* #### This will probably cause asserts when passed a Lisp integer for a
-     color.  See ca. line 759 this file.
-     #### Maybe xft_convert_color should take an XColor, not a pixel. */
-#define XFT_FROB_LISP_COLOR(color, dim)					\
-  xft_convert_color (dpy, cmap, visual,					\
-		     XCOLOR_INSTANCE_X_COLOR (color).pixel, (dim))
-#endif /* USE_XFT */
 
   if (width < 0)
     width = XLIKE_text_width (w, cachel, Dynarr_begin (buf),
@@ -466,10 +447,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (cursor && cursor_cachel && focus && NILP (bar_cursor_value))
 	{
-#ifdef USE_XFT
-	  fg = XFT_FROB_LISP_COLOR (cursor_cachel->foreground, 0);
-	  bg = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
-#endif
 	  gc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
 			     cursor_cachel->background, Qnil, Qnil, Qnil);
 	}
@@ -488,91 +465,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      ;
 
 	  /* Request a GC with the gray stipple pixmap to draw dimmed text */
-#ifdef USE_XFT
-	  fg = XFT_FROB_LISP_COLOR (cachel->foreground, 1);
-	  bg = XFT_FROB_LISP_COLOR (cachel->background, 0);
-#endif
 	  gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
 			     bg_pmap, cachel->background_placement, Qnil);
 	}
       else
 	{
-#ifdef USE_XFT
-	  fg = XFT_FROB_LISP_COLOR (cachel->foreground, 0);
-	  bg = XFT_FROB_LISP_COLOR (cachel->background, 0);
-#endif
 	  gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
 			     Qnil, Qnil, Qnil);
 	}
-#ifdef USE_XFT
-      {
-	XftFont *rf = FONT_INSTANCE_X_XFTFONT (fi);
-
-	if (rf)
-	  {
-	    use_x_font = 0;
-	    if (need_clipping)
-	      {
-		Region clip_reg = XCreateRegion();
-		XRectangle clip_box = { clip_start, ypos,
-					clip_end - clip_start, height };
-
-		XUnionRectWithRegion (&clip_box, clip_reg, clip_reg); 
-		XftDrawSetClip (xftDraw, clip_reg);
-		XDestroyRegion (clip_reg);
-	      }
-
-	    if (!bgc)
-	      {
-		/* #### Neither rect_height nor XftTextExtents as computed
-		   below handles the vertical space taken up by antialiasing,
-		   which for some fonts (eg, Bitstream Vera Sans Mono-16 on
-		   my Mac PowerBook G4) leaves behind orphaned dots on
-		   insertion or deletion earlier in the line, especially in
-		   the case of the underscore character.
-		   Interestingly, insertion or deletion of a single character
-		   immediately after a refresh does not leave any droppings,
-		   but any further insertions or deletions do.
-		   While adding a pixel to rect_height (mostly) takes care of
-		   this, it trashes aggressively laid-out elements like the
-		   modeline (overwriting part of the bevel).
-		   OK, unconditionally redraw the bevel, and increment
-		   rect_height by 1.  See x_output_display_block. -- sjt */
-		struct textual_run *run = &runs[i];
-		int rect_width = x_text_width_single_run (f, cachel, run);
-#ifndef USE_XFTTEXTENTS_TO_AVOID_FONT_DROPPINGS
-		int rect_height = FONT_INSTANCE_ASCENT (fi)
-                  + FONT_INSTANCE_DESCENT (fi) + 1;
-#else
-		int rect_height = FONT_INSTANCE_ASCENT (fi)
-                  + FONT_INSTANCE_DESCENT (fi);
-		XGlyphInfo gi;
-		if (run->dimension == 2) {
-		  XftTextExtents16 (dpy,
-				    FONT_INSTANCE_X_XFTFONT (fi),
-				    (XftChar16 *) run->ptr, run->len, &gi);
-		} else {
-		  XftTextExtents8 (dpy,
-				   FONT_INSTANCE_X_XFTFONT (fi),
-				   run->ptr, run->len, &gi);
-		}
-		rect_height = rect_height > gi.height
-                  ? rect_height : gi.height;
-#endif
-
-		XftDrawRect (xftDraw, &bg,
-			     xpos, ypos, rect_width, rect_height);
-	      }
-	
-	    if (runs[i].dimension == 1)
-	      XftDrawString8 (xftDraw, &fg, rf, xpos, dl->ypos,
-			      runs[i].ptr, runs[i].len);
-	    else
-	      XftDrawString16 (xftDraw, &fg, rf, xpos, dl->ypos,
-			       (XftChar16 *) runs[i].ptr, runs[i].len);
-	  }
-      }
-#endif /* USE_XFT */
 
 #ifdef THIS_IS_X
       if (use_x_font)
@@ -695,13 +595,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       /* Restore the GC */
       if (need_clipping)
 	{
-#ifdef USE_XFT
-	  if (!use_x_font)
-	    {
-	      XftDrawSetClip (xftDraw, 0);
-	    }
-	  else
-#endif
 	    XLIKE_CLEAR_CLIP_MASK (dpy, gc);
 	}
 
@@ -709,43 +602,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	 the appropriate section highlighted. */
       if (cursor_clip && !cursor && focus && cursor_cachel)
 	{
-#ifdef USE_XFT
-	  if (!use_x_font)	/* Xft */
-	    {
-	      XftFont *rf = FONT_INSTANCE_X_XFTFONT (fi);
-	  
-	      { /* set up clipping */
-		Region clip_reg = XCreateRegion();
-		XRectangle clip_box = { cursor_start, ypos,
-					cursor_width, height };
-	    
-		XUnionRectWithRegion (&clip_box, clip_reg, clip_reg); 
-		XftDrawSetClip (xftDraw, clip_reg);
-		XDestroyRegion (clip_reg);
-	      }
-	      { /* draw background rectangle & draw text */
-		int rect_height = FONT_INSTANCE_ASCENT (fi)
-                  + FONT_INSTANCE_DESCENT (fi);
-		int rect_width = x_text_width_single_run (f, cachel, &runs[i]);
-		XftColor xft_color;
-
-		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
-		XftDrawRect (xftDraw, &xft_color,
-			     xpos, ypos, rect_width, rect_height);
-
-		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->foreground, 0);
-		if (runs[i].dimension == 1)
-		  XftDrawString8 (xftDraw, &xft_color, rf, xpos, dl->ypos,
-				  runs[i].ptr, runs[i].len);
-		else
-		  XftDrawString16 (xftDraw, &xft_color, rf, xpos, dl->ypos,
-				   (XftChar16 *) runs[i].ptr, runs[i].len);
-	      }
-
-	      XftDrawSetClip (xftDraw, 0);
-	    }
-	  else			/* core font, not Xft */
-#endif /* USE_XFT */
 	    {
 	      XLIKE_RECTANGLE clip_box;
 	      XLIKE_GC cgc;
@@ -861,8 +717,4 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  XLIKE_CLEAR_CLIP_MASK (dpy, gc);
 	}
     }
-
-#ifdef USE_XFT
-#undef XFT_FROB_LISP_COLOR
-#endif
 }
