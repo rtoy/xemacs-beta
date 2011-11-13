@@ -1,3 +1,8 @@
+2011-11-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.h (GTK_XEMACS_CLASS): Define standard set of macros
+	for Gtk 2.0 classes.
+
 2011-11-10  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_string): Copied from
