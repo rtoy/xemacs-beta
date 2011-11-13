@@ -432,8 +432,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	    }
 	}
 
-      if (cursor && cursor_cachel && focus && NILP (bar_cursor_value))
+      if (cursor && focus && NILP (bar_cursor_value))
 	{
+          assert (cursor_cachel);
 	  gc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
 			     cursor_cachel->background, Qnil, Qnil, Qnil);
 	}
@@ -488,12 +489,13 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       /* If we are actually superimposing the cursor then redraw with just
 	 the appropriate section highlighted. */
-      if (cursor_clip && !cursor && focus && cursor_cachel)
+      if (cursor_clip && !cursor && focus)
 	{
           XLIKE_RECTANGLE clip_box;
           XLIKE_GC cgc;
           GtkWidget *widget = NULL;
-          
+
+          assert (cursor_cachel);
           cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
                               cursor_cachel->background, Qnil, Qnil, Qnil);
 
@@ -516,8 +518,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
   /* Draw the non-focus box or bar-cursor as needed. */
   /* Can't this logic be simplified? */
-  if (cursor_cachel
-      && ((cursor && !focus && NILP (bar_cursor_value))
+  if (((cursor && !focus && NILP (bar_cursor_value))
 	  || (cursor_width
 	      && (cursor_start + cursor_width >= clip_start)
 	      && !NILP (bar_cursor_value))))
@@ -544,6 +545,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       int bogusly_obtained_ascent_value =
 	XFONT_INSTANCE (FACE_CACHEL_FONT (cachel, runs[0].charset))->ascent;
 
+      assert (cursor_cachel);
       if (!NILP (bar_cursor_value))
 	{
 	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
