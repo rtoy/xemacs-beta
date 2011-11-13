@@ -1,5 +1,7 @@
 2011-11-13  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_output_string): Remove THIS_IS_X code. 
+
 	* gtk-xemacs.c (gtk_xemacs_init): Gtk 2.0 instance init also has
 	class argument.
 	(gtk_xemacs_new): Use GTK_TYPE_XEMACS.

@@ -277,11 +277,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
-#ifdef THIS_IS_X
-  int use_x_font = 1;		/* #### bogus!!
-				   The logic of this function needs review! */
-#endif
-
   if (width < 0)
     width = XLIKE_text_width (w, cachel, Dynarr_begin (buf),
 			      Dynarr_length (buf));
@@ -344,12 +339,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                             height);
     }
 
-#ifndef THIS_IS_GTK
-  runs = alloca_array (struct textual_run, len);
-  text_storage = (unsigned char *) ALLOCA (2 * len);
-  nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
-				 Dynarr_length (buf), cachel);
-#else
   runs = alloca_new (struct textual_run);
   nruns = 1;
   {
@@ -372,14 +361,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     runs->dimension = 1;
     runs->charset = Vcharset_ascii;
   }
-#endif
 
-#ifdef THIS_IS_GTK
   /* XXX Horrible kludge to force display of the only block cursor
      I can get to work correctly!   -- jsparkes */
   if (NILP (bar_cursor_value))
     focus = 0;
-#endif
+
   for (i = 0; i < nruns; i++)
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
@@ -474,124 +461,23 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 			     Qnil, Qnil, Qnil);
 	}
 
-#ifdef THIS_IS_X
-      if (use_x_font)
-#endif
-	{
-	  if (need_clipping)
-	    {
-	      XLIKE_RECTANGLE clip_box;
+      if (need_clipping)
+        {
+          XLIKE_RECTANGLE clip_box;
 
-	      clip_box.x = 0;
-	      clip_box.y = 0;
-	      clip_box.width = clip_end - clip_start;
-	      clip_box.height = height;
+          clip_box.x = 0;
+          clip_box.y = 0;
+          clip_box.width = clip_end - clip_start;
+          clip_box.height = height;
+          
+          XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, ypos, &clip_box);
+        }
 
-	      XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, ypos, &clip_box);
-	    }
+      GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
 
-#ifdef THIS_IS_X
-	  if (runs[i].dimension == 1)
-	    (bgc ? XDrawString : XDrawImageString)
-	      (dpy, x_win, gc, xpos, dl->ypos,
-	       (char *) runs[i].ptr, runs[i].len);
-	  else
-	    (bgc ? XDrawString16 : XDrawImageString16)
-	      (dpy, x_win, gc, xpos, dl->ypos,
-	       (XChar2b *) runs[i].ptr, runs[i].len);
-#else /* THIS_IS_GTK */
+      gdk_draw_text_image (widget, cachel, gc,
+                           xpos, dl->ypos, &runs[i]);
 
-          {
-	    GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
-
-            gdk_draw_text_image (widget, cachel, gc,
-				 xpos, dl->ypos, &runs[i]);
-          }
-#endif 
-	}
-
-#ifdef THIS_IS_X
-      /* We draw underlines in the same color as the text. */
-      if (cachel->underline)
-	{
-	  int upos, uthick;
-	  unsigned long upos_ext, uthick_ext;
-	  XFontStruct *fs =
-	    use_x_font ? FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)) : 0;
-	  /* #### the logic of the next two may be suboptimal: we may want
-	     to use the POSITION and/or THICKNESS information with Xft */
-	  if (fs && XGetFontProperty (fs, XA_UNDERLINE_POSITION, &upos_ext))
-	    upos = (int) upos_ext;
-	  else
-	    upos = dl->descent / 2;
-	  if (fs && XGetFontProperty (fs, XA_UNDERLINE_THICKNESS, &uthick_ext))
-	    uthick = (int) uthick_ext;
-	  else
-	    uthick = 1;
-
-	  if (dl->ypos + upos < dl->ypos + dl->descent - dl->clip)
-	    {
-	      if (dl->ypos + upos + uthick > dl->ypos + dl->descent - dl->clip)
-		uthick = dl->descent - dl->clip - upos;
-
-	      if (uthick == 1)
-		{
-		  XLIKE_DRAW_LINE (dpy, x_win, gc, xpos, dl->ypos + upos,
-				   xpos + this_width, dl->ypos + upos);
-		}
-	      else if (uthick > 1)
-		{
-		  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, xpos,
-					dl->ypos + upos, this_width, uthick);
-		}
-	    }
-	}
-
-      if (cachel->strikethru)
-	{
-	  int ascent, descent, upos, uthick;
-	  unsigned long ascent_ext, descent_ext, uthick_ext;
-	  XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
-
-	  if (!use_x_font)
-	    {
-	      ascent = dl->ascent;
-	      descent = dl->descent;
-	      uthick = 1;
-	    }
-	  else
-	    {
-	      if (!XGetFontProperty (fs, XA_STRIKEOUT_ASCENT, &ascent_ext))
-		ascent = fs->ascent;
-	      else
-		ascent = (int) ascent_ext;
-	      if (!XGetFontProperty (fs, XA_STRIKEOUT_DESCENT, &descent_ext))
-		descent = fs->descent;
-	      else
-		descent = (int) descent_ext;
-	      if (!XGetFontProperty (fs, XA_UNDERLINE_THICKNESS, &uthick_ext))
-		uthick = 1;
-	      else
-		uthick = (int) uthick_ext;
-	    }
-	  upos = ascent - ((ascent + descent) / 2) + 1;
-
-	  /* Generally, upos will be positive (above the baseline),so
-             subtract */
-	  if (dl->ypos - upos < dl->ypos + dl->descent - dl->clip)
-	    {
-	      if (dl->ypos - upos + uthick > dl->ypos + dl->descent - dl->clip)
-		uthick = dl->descent - dl->clip + upos;
-
-	      if (uthick == 1)
-		XLIKE_DRAW_LINE (dpy, x_win, gc, xpos, dl->ypos - upos,
-				 xpos + this_width, dl->ypos - upos);
-	      else if (uthick > 1)
-                XLIKE_FILL_RECTANGLE (dpy, x_win, gc, xpos, dl->ypos + upos,
-                                      this_width, uthick);
-	    }
-	}
-#endif
       /* Restore the GC */
       if (need_clipping)
 	{
@@ -602,37 +488,25 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	 the appropriate section highlighted. */
       if (cursor_clip && !cursor && focus && cursor_cachel)
 	{
-	    {
-	      XLIKE_RECTANGLE clip_box;
-	      XLIKE_GC cgc;
-	      cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
-				  cursor_cachel->background, Qnil, Qnil, Qnil);
+          XLIKE_RECTANGLE clip_box;
+          XLIKE_GC cgc;
+          GtkWidget *widget = NULL;
+          
+          cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
+                              cursor_cachel->background, Qnil, Qnil, Qnil);
 
-	      clip_box.x = 0;
-	      clip_box.y = 0;
-	      clip_box.width = cursor_width;
-	      clip_box.height = height;
+          clip_box.x = 0;
+          clip_box.y = 0;
+          clip_box.width = cursor_width;
+          clip_box.height = height;
 
-              XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
-                                        &clip_box);
-#ifdef THIS_IS_X
-	      if (runs[i].dimension == 1)
-		XDrawImageString (dpy, x_win, cgc, xpos, dl->ypos,
-				  (char *) runs[i].ptr, runs[i].len);
-	      else
-		XDrawImageString16 (dpy, x_win, cgc, xpos, dl->ypos,
-				    (XChar2b *) runs[i].ptr, runs[i].len);
-#else
-              {
-		GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
+          XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
+                                    &clip_box);
+          widget = FRAME_GTK_TEXT_WIDGET(f);
                 
-                gdk_draw_text_image (widget, cursor_cachel, cgc,
+          gdk_draw_text_image (widget, cursor_cachel, cgc,
 				     xpos, dl->ypos, &runs[i]);
-              }
-#endif /* (not) THIS_IS_X */
-
-	      XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
-	    }
+          XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
 	}
 
       xpos += this_width;
@@ -706,7 +580,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	}
       else if (focus && !NILP (bar_cursor_value))
 	{
-	  XLIKE_DRAW_LINE (dpy, x_win, gc, cursor_start + bar_width - 1, tmp_y,
+	  XLIKE_DRAW_LINE (dpy, x_win, gc,
+                           cursor_start + bar_width - 1, tmp_y,
 			   cursor_start + bar_width - 1,
 			   tmp_y + tmp_height - 1);
 	}
