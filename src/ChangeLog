@@ -1,3 +1,11 @@
+2011-11-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fbuilt_in_symbol_file):
+	Don't attempt to take file information from lazy docstring
+	information in compiled functions; those functions are not
+	built-in, and as such it's appropriate to give nil.
+	Fix some indentation in passing.
+
 2011-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Prevent SIGPIPEs in deactivate_process().
