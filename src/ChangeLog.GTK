@@ -1,6 +1,9 @@
 2011-11-13  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_string): Remove THIS_IS_X code. 
+	(XLIKE_output_string): Add a block to localize declaration.
+	(XLIKE_output_string): Replace cursor_cachel checks with assert to
+	simplify logic.
 
 	* gtk-xemacs.c (gtk_xemacs_init): Gtk 2.0 instance init also has
 	class argument.
