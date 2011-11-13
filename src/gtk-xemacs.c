@@ -42,7 +42,7 @@ extern Lisp_Object Vscrollbar_on_left_p;
 EXFUN (Fmake_image_instance, 4);
 
 static void gtk_xemacs_class_init	(GtkXEmacsClass *klass);
-static void gtk_xemacs_init		(GtkXEmacs *xemacs);
+static void gtk_xemacs_init		(GtkXEmacs *xemacs, GtkXEmacsClass *klass);
 static void gtk_xemacs_size_allocate	(GtkWidget *widget, GtkAllocation *allocaction);
 static void gtk_xemacs_draw		(GtkWidget *widget, GdkRectangle *area);
 static void gtk_xemacs_paint		(GtkWidget *widget, GdkRectangle *area);
@@ -58,19 +58,14 @@ gtk_xemacs_get_type (void)
 
   if (!xemacs_type)
     {
-      static const GtkTypeInfo xemacs_info =
-      {
-	(gchar *) "GtkXEmacs",
-	sizeof (GtkXEmacs),
-	sizeof (GtkXEmacsClass),
-	(GtkClassInitFunc) gtk_xemacs_class_init,
-	(GtkObjectInitFunc) gtk_xemacs_init,
-	/* reserved_1 */ NULL,
-        /* reserved_2 */ NULL,
-        (GtkClassInitFunc) NULL,
-      };
-
-      xemacs_type = gtk_type_unique (gtk_fixed_get_type (), &xemacs_info);
+      xemacs_type =
+        g_type_register_static_simple (GTK_TYPE_FIXED,
+                                       "GtkXEmacs",
+                                       sizeof (GtkXEmacsClass),
+                                       (GClassInitFunc) gtk_xemacs_class_init,
+                                       sizeof (GtkXEmacs),
+                                       (GInstanceInitFunc) gtk_xemacs_init,
+                                       0);
     }
 
   return xemacs_type;
@@ -83,8 +78,8 @@ gtk_xemacs_class_init (GtkXEmacsClass *class_)
 {
   GtkWidgetClass *widget_class;
 
-  widget_class = (GtkWidgetClass*) class_;
-  parent_class = (GtkWidgetClass *) gtk_type_class (gtk_fixed_get_type ());
+  widget_class = (GtkWidgetClass *) class_;
+  parent_class = (GtkWidgetClass *) gtk_type_class (GTK_TYPE_FIXED);
 
   widget_class->size_allocate = gtk_xemacs_size_allocate;
   widget_class->size_request = gtk_xemacs_size_request;
@@ -100,7 +95,7 @@ gtk_xemacs_class_init (GtkXEmacsClass *class_)
 }
 
 static void
-gtk_xemacs_init (GtkXEmacs *xemacs)
+gtk_xemacs_init (GtkXEmacs *xemacs, GtkXEmacsClass * UNUSED (klass))
 {
     GTK_WIDGET_SET_FLAGS (xemacs, GTK_CAN_FOCUS);
 }
@@ -110,7 +105,7 @@ gtk_xemacs_new (struct frame *f)
 {
   GtkXEmacs *xemacs;
 
-  xemacs = (GtkXEmacs*) gtk_type_new (gtk_xemacs_get_type ());
+  xemacs = GTK_XEMACS (gtk_type_new (GTK_TYPE_XEMACS));
   gtk_widget_set_has_window (GTK_WIDGET (xemacs), TRUE);
   xemacs->f = f;
 

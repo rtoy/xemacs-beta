@@ -1,5 +1,12 @@
 2011-11-13  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-xemacs.c (gtk_xemacs_init): Gtk 2.0 instance init also has
+	class argument.
+	(gtk_xemacs_new): Use GTK_TYPE_XEMACS.
+	(gtk_xemacs_new): Use type check cast for GtkXEmacs.
+	(gtk_xemacs_get_type): Use g_type_register_static_simple instead
+	of obsolete gtk_type_unique.
+
 	* gtk-xemacs.h (GTK_XEMACS_CLASS): Define standard set of macros
 	for Gtk 2.0 classes.
 
