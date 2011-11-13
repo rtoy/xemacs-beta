@@ -473,10 +473,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
           XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, ypos, &clip_box);
         }
 
-      GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
+      {
+        GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
 
-      gdk_draw_text_image (widget, cachel, gc,
+        gdk_draw_text_image (widget, cachel, gc,
                            xpos, dl->ypos, &runs[i]);
+      }
 
       /* Restore the GC */
       if (need_clipping)
