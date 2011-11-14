@@ -65,7 +65,7 @@ gtk_xemacs_get_type (void)
                                        (GClassInitFunc) gtk_xemacs_class_init,
                                        sizeof (GtkXEmacs),
                                        (GInstanceInitFunc) gtk_xemacs_init,
-                                       0);
+                                       (GTypeFlags) 0);
     }
 
   return xemacs_type;
