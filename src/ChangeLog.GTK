@@ -1,3 +1,8 @@
+2011-11-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_get_type): Cast a 0 to GTypeFlags to make
+	g++ happy.
+
 2011-11-13  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_string): Remove THIS_IS_X code. 
