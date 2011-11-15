@@ -4,6 +4,7 @@
 	cursor displays.
 	(gdk_draw_text_image): Use pango_itemize to break text into LTR
 	and RTL segments, and display RTL better.
+	(gtk_text_attributes): Extract from gdk_draw_text_image.
 
 2011-11-14  Jeff Sparkes  <jsparkes@gmail.com>
 
