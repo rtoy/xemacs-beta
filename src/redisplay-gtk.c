@@ -362,12 +362,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     runs->charset = Vcharset_ascii;
   }
 
-  /* XXX Horrible kludge to force display of the only block cursor
-     I can get to work correctly!   -- jsparkes */
-  if (NILP (bar_cursor_value))
-    focus = 0;
-
-  for (i = 0; i < nruns; i++)
+ for (i = 0; i < nruns; i++)
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
       Lisp_Font_Instance *fi = XFONT_INSTANCE (font);
@@ -386,6 +381,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       need_clipping = (dl->clip || clip_start > xpos ||
 		       clip_end < xpos + this_width);
 
+ #if 0
       /* XDrawImageString only clears the area equal to the height of
 	 the given font.  It is possible that a font is being displayed
 	 on a line taller than it is, so this would cause us to fail to
@@ -431,7 +427,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                                       height);
 	    }
 	}
-
+#endif
       if (cursor && focus && NILP (bar_cursor_value))
 	{
           assert (cursor_cachel);
@@ -489,7 +485,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       /* If we are actually superimposing the cursor then redraw with just
 	 the appropriate section highlighted. */
-      if (cursor_clip && !cursor && focus)
+      if (cursor_clip && cursor && focus)
 	{
           XLIKE_RECTANGLE clip_box;
           XLIKE_GC cgc;
