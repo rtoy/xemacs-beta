@@ -2,6 +2,8 @@
 
 	* redisplay-gtk.c (XLIKE_output_string): Fix logic so that block
 	cursor displays.
+	(gdk_draw_text_image): Use pango_itemize to break text into LTR
+	and RTL segments, and display RTL better.
 
 2011-11-14  Jeff Sparkes  <jsparkes@gmail.com>
 
