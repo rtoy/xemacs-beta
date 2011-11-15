@@ -132,7 +132,8 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
   GdkDrawable *drawable = gtk_widget_get_window (widget);
   cairo_t *cr = gdk_cairo_create (drawable);
   PangoContext *context = gtk_widget_get_pango_context (widget);
-  PangoLayout *layout = pango_layout_new (context);
+  /* PangoLayout *layout = pango_layout_new (context); */
+  PangoLayout *layout = pango_cairo_create_layout (cr);
   PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
   PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
   PangoAttrList *attr_list = gtk_text_attributes (cachel);
@@ -164,9 +165,12 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
 
       /* xft draw */
       /* pango_xft_layout_render (xft_draw, xft_color, layout, x, y); */
-
+      cairo_new_path (cr);
+      cairo_move_to (cr, x, y - ascent);
+      pango_cairo_update_layout (cr, layout);
+      pango_cairo_show_layout (cr, layout);
       /* Gtk draw */
-      gdk_draw_layout (drawable, gc, x, y - ascent, layout);
+      /* gdk_draw_layout (drawable, gc, x, y - ascent, layout); */
       pango_item_free (item);
       current = g_list_next (current);
     }
