@@ -96,28 +96,12 @@ void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
   cairo_restore (cr);
 }
 
-static void
-gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
-		     gint x, gint y, struct textual_run *run)
+static PangoAttrList *
+gtk_text_attributes (struct face_cachel *cachel)
 {
-  Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
-  Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
-  gint width = 0;
-  gint height = 0;
-
-  GdkDrawable *drawable = gtk_widget_get_window (widget);
-  cairo_t *cr = gdk_cairo_create (drawable);
-  PangoContext *context = gtk_widget_get_pango_context (widget);
-  PangoLayout *layout = pango_layout_new (context);
-  PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
-  PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
   PangoAttrList *attr_list = pango_attr_list_new ();
-  GList *items = NULL, *current = NULL;;
-
   GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground);
   GdkColor *bg = XCOLOR_INSTANCE_GTK_COLOR (cachel->background);
-
-  assert (run->dimension == 1);  /* UTF-8 only. */
 
   pango_attr_list_insert (attr_list,
                           pango_attr_foreground_new (fg->red,
@@ -135,6 +119,27 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
     pango_attr_list_insert (attr_list,
                             pango_attr_underline_new (PANGO_UNDERLINE_SINGLE));
 
+  return attr_list;
+}
+
+static void
+gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
+		     gint x, gint y, struct textual_run *run)
+{
+  Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
+  Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
+
+  GdkDrawable *drawable = gtk_widget_get_window (widget);
+  cairo_t *cr = gdk_cairo_create (drawable);
+  PangoContext *context = gtk_widget_get_pango_context (widget);
+  PangoLayout *layout = pango_layout_new (context);
+  PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
+  PangoFontMetrics *pfm = FONT_INSTANCE_GTK_FONT_METRICS (fi);
+  PangoAttrList *attr_list = gtk_text_attributes (cachel);
+  GList *items = NULL, *current = NULL;;
+
+  assert (run->dimension == 1);  /* UTF-8 only. */
+
   pango_layout_set_attributes (layout, attr_list);
   pango_layout_set_font_description (layout, pfd);
   /* Pango breaks text into directional sections. */
@@ -146,6 +151,8 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
     {
       PangoItem *item = (PangoItem *) current->data;
       gint ascent = 0;
+      gint width = 0;
+      gint height = 0;
 
       pango_layout_set_text (layout, (const char *) run->ptr + item->offset,
                              item->length);
