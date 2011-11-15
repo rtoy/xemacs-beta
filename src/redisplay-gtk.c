@@ -24,8 +24,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define THIS_IS_GTK
 #include "redisplay-xlike-inc.c"
 
-void gtk_fill_rectangle (cairo_t *cr, gint x, gint y, gint width, gint height);
-
 /*****************************************************************************
  Draw a shadow around the given area using the standard theme engine routines.
  ****************************************************************************/
@@ -78,22 +76,35 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
 
 #include "sysgdkx.h"
 
-void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
-                         gint width, gint height)
+static void
+gtk_set_source_rgb (cairo_t *cr, GdkColor *fg)
 {
-  GdkRectangle area;
-  area.x = x; area.y = y;
-  area.width = width;
-  area.height = height;
+  cairo_set_source_rgb (cr,
+                        (double) fg->red/65535,
+                        (double) fg->green/65535,
+                        (double) fg->blue/65535);
+}
 
-  /* Set new clip region and fill it. */
-  cairo_save (cr);
+#ifdef UNUSED
+static void
+gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
+                    gint width, gint height)
+{
   cairo_new_path (cr);
-  gdk_cairo_rectangle (cr, &area);
+  cairo_set_line_width (cr, 0.5);
+  cairo_rectangle (cr, x, y, width, height);
   cairo_fill (cr);
+}
+#endif
+
+static void
+gtk_draw_rectangle (cairo_t *cr, gint x, gint y,
+                    gint width, gint height)
+{
   cairo_new_path (cr);
-  gdk_cairo_rectangle (cr, &area);
-  cairo_restore (cr);
+  cairo_set_line_width (cr, 0.5);
+  cairo_rectangle (cr, x, y, width, height);
+  cairo_stroke_preserve (cr);
 }
 
 static PangoAttrList *
@@ -277,7 +288,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   Lisp_Object window = wrap_window (w);
-
   int clip_end;
 
   /* Cursor-related variables */
@@ -597,8 +607,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (!focus && NILP (bar_cursor_value))
 	{
-	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, tmp_y, 
-				cursor_width - 1, tmp_height - 1);
+          GdkDrawable *drawable = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f));
+          cairo_t *cr = gdk_cairo_create (drawable);
+          GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cursor_cachel->background);
+
+          gtk_set_source_rgb (cr, fg);
+          gtk_draw_rectangle (cr, cursor_start, tmp_y,
+                              cursor_width - 1, tmp_height - 1);
+          cairo_destroy (cr);
 	}
       else if (focus && !NILP (bar_cursor_value))
 	{
