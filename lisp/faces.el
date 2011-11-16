@@ -1586,7 +1586,6 @@ examine the brightness for you."
 		  (device-type (frame-device frame)))
 	'class (device-class (frame-device frame))
 	'background (or frame-background-mode
-			(frame-property frame 'background-mode)
 			(get-frame-background-mode frame))))
 
 (defcustom init-face-from-resources t
@@ -1647,15 +1646,7 @@ See `defface' for a list of valid keys and values for the plist.")
 (defun get-custom-frame-properties (&optional frame)
   "Return a plist with the frame properties of FRAME used by custom.
 If FRAME is nil, return the default frame properties."
-  (cond (frame
-	 ;; Try to get from cache.
-	 (let ((cache (frame-property frame 'custom-properties)))
-	   (unless cache
-	     ;; Oh well, get it then.
-	     (setq cache (extract-custom-frame-properties frame))
-	     ;; and cache it...
-	     (set-frame-property frame 'custom-properties cache))
-	   cache))
+  (cond (frame (extract-custom-frame-properties frame))
 	(default-custom-frame-properties)
 	(t
 	 (setq default-custom-frame-properties
