@@ -289,7 +289,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   Lisp_Object window = wrap_window (w);
   int clip_end;
-
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
+  
   /* Cursor-related variables */
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   int cursor_clip;
@@ -502,12 +503,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
           XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, ypos, &clip_box);
         }
 
-      {
-        GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
-
-        gdk_draw_text_image (widget, cachel, gc,
-                           xpos, dl->ypos, &runs[i]);
-      }
+      gdk_draw_text_image (widget, cachel, gc, xpos, dl->ypos, &runs[i]);
 
       /* Restore the GC */
       if (need_clipping)
@@ -521,7 +517,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	{
           XLIKE_RECTANGLE clip_box;
           XLIKE_GC cgc;
-          GtkWidget *widget = NULL;
 
           assert (cursor_cachel);
           cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
@@ -534,8 +529,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
           XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
                                     &clip_box);
-          widget = FRAME_GTK_TEXT_WIDGET(f);
-                
           gdk_draw_text_image (widget, cursor_cachel, cgc,
 				     xpos, dl->ypos, &runs[i]);
           XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
@@ -607,7 +600,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (!focus && NILP (bar_cursor_value))
 	{
-          GdkDrawable *drawable = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f));
+          GdkDrawable *drawable = gtk_widget_get_window (widget);
           cairo_t *cr = gdk_cairo_create (drawable);
           GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cursor_cachel->background);
 

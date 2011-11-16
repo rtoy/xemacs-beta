@@ -1,3 +1,8 @@
+2011-11-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Hoist widget variable up
+	to function scope.
+
 2011-11-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_string): Fix logic so that block
