@@ -473,14 +473,15 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (need_clipping)
         {
-          XLIKE_RECTANGLE clip_box;
+          GdkRectangle clip_box;
 
           clip_box.x = 0;
           clip_box.y = 0;
           clip_box.width = clip_end - clip_start;
           clip_box.height = height;
           
-          /* XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, ypos, &clip_box); */
+          gdk_cairo_rectangle (cr, &clip_box);
+          cairo_clip (cr);
         }
 
       gdk_draw_text_image (widget, cachel, cr, xpos, dl->ypos, &runs[i]);
@@ -489,19 +490,17 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	 the appropriate section highlighted. */
       if (cursor_clip && cursor && focus)
 	{
-          XLIKE_RECTANGLE clip_box;
-          XLIKE_GC cgc;
+          GdkRectangle clip_box;
 
           clip_box.x = 0;
           clip_box.y = 0;
           clip_box.width = cursor_width;
           clip_box.height = height;
 
-          /* XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
-             &clip_box); */
+          gdk_cairo_rectangle (cr, &clip_box);
+          cairo_clip (cr);
           gdk_draw_text_image (widget, cachel, cr,
 				     xpos, dl->ypos, &runs[i]);
-          /* XLIKE_CLEAR_CLIP_MASK (dpy, cgc); */
 	}
 
       xpos += this_width;
@@ -539,23 +538,15 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       face_index ix = get_builtin_face_cache_index (w, Vtext_cursor_face);
       struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, ix);
+      cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+      GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cursor_cachel->background);
 
+      gtk_set_source_rgb (cr, fg);
       assert (cursor_cachel);
 
-      if (!NILP (bar_cursor_value))
-	{
-	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
-			     Qnil, Qnil,
-			     make_fixnum (bar_width));
-	}
-      else
-	{
-	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background,
-			     Qnil, Qnil, Qnil, Qnil);
-	}
       tmp_y = dl->ypos - bogusly_obtained_ascent_value;
-
       tmp_height = cursor_height;
+
       if (tmp_y + tmp_height > (int) (ypos + height))
 	{
 	  tmp_y = ypos + height - tmp_height;
@@ -565,37 +556,28 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (need_clipping)
 	{
-	  XLIKE_RECTANGLE clip_box;
+	  GdkRectangle clip_box;
 	  clip_box.x = 0;
 	  clip_box.y = 0;
 	  clip_box.width = clip_end - clip_start;
 	  clip_box.height = tmp_height;
-	  XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, tmp_y, &clip_box);
+
+          gdk_cairo_rectangle (cr, &clip_box);
+          cairo_clip (cr);
 	}
 
       if (!focus && NILP (bar_cursor_value))
 	{
-          GdkDrawable *drawable = gtk_widget_get_window (widget);
-          cairo_t *cr = gdk_cairo_create (drawable);
-          GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cursor_cachel->background);
-
-          gtk_set_source_rgb (cr, fg);
           gtk_draw_rectangle (cr, cursor_start, tmp_y,
                               cursor_width - 1, tmp_height - 1);
-          cairo_destroy (cr);
 	}
       else if (focus && !NILP (bar_cursor_value))
 	{
-	  XLIKE_DRAW_LINE (dpy, x_win, gc,
-                           cursor_start + bar_width - 1, tmp_y,
-			   cursor_start + bar_width - 1,
-			   tmp_y + tmp_height - 1);
+          gtk_draw_rectangle (cr, cursor_start, tmp_y,
+                              bar_width - 1, tmp_height - 1);
+
 	}
 
-      /* Restore the GC */
-      if (need_clipping)
-	{
-	  XLIKE_CLEAR_CLIP_MASK (dpy, gc);
-	}
+      cairo_destroy (cr);
     }
 }
