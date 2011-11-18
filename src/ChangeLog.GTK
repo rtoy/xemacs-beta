@@ -1,3 +1,13 @@
+2011-11-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c: Remove unused prototype declaration of
+	gtk_output_string.
+
+	* redisplay-gtk.c (gdk_draw_text_image): Take a cairo_t argument
+	instead of GdkGC.
+	(XLIKE_output_string): Use a cairo_t to store graphics information
+	instead of a GdkGC.
+
 2011-11-16  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_string): Hoist widget variable up

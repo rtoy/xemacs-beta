@@ -1047,13 +1047,6 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
  Starting Y position of cursor is the top of the text line.
  The cursor is drawn sometimes whether or not CURSOR is set. ???
  ****************************************************************************/
-#ifdef THIS_IS_GTK
-static void
-gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
-                     gint x, gint y, struct textual_run *run);
-
-#endif /* THIS_IS_GTK */
-
 #ifndef THIS_IS_GTK
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,

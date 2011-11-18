@@ -134,14 +134,12 @@ gtk_text_attributes (struct face_cachel *cachel)
 }
 
 static void
-gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
+gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, cairo_t *cr,
 		     gint x, gint y, struct textual_run *run)
 {
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
   Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
 
-  GdkDrawable *drawable = gtk_widget_get_window (widget);
-  cairo_t *cr = gdk_cairo_create (drawable);
   PangoContext *context = gtk_widget_get_pango_context (widget);
   /* PangoLayout *layout = pango_layout_new (context); */
   PangoLayout *layout = pango_cairo_create_layout (cr);
@@ -186,7 +184,6 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, GdkGC *gc,
       current = g_list_next (current);
     }
   g_list_free (items);
-  cairo_destroy (cr);
   g_object_unref (layout);
   pango_attr_list_unref (attr_list);
 }
@@ -296,8 +293,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   int cursor_clip;
   Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
 							 WINDOW_BUFFER (w));
-  struct face_cachel *cursor_cachel = 0;
-
   /* Text-related variables */
   Lisp_Object bg_pmap;
   XLIKE_GC gc, bgc;
@@ -309,6 +304,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   int nruns;
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
+
+  if (cursor == 1)
+    assert (Dynarr_length (buf) == 1);
 
   if (width < 0)
     width = XLIKE_text_width (w, cachel, Dynarr_begin (buf),
@@ -329,25 +327,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
   cursor_clip = (cursor_start >= clip_start &&
 		 cursor_start < clip_end);
-
-  /* This cursor code is really a mess. */
-  if (!NILP (w->text_cursor_visible_p)
-      && (cursor
-	  || cursor_clip
-	  || (cursor_width
-	      && (cursor_start + cursor_width >= clip_start)
-	      && !NILP (bar_cursor_value))))
-    {
-      /* These have to be in separate statements in order to avoid a
-         compiler bug. */
-      face_index sucks = get_builtin_face_cache_index (w, Vtext_cursor_face);
-      cursor_cachel = WINDOW_FACE_CACHEL (w, sucks);
-
-      /* We have to reset this since any call to WINDOW_FACE_CACHEL
-         may cause the cache to resize and any pointers to it to
-         become invalid. */
-      cachel = WINDOW_FACE_CACHEL (w, findex);
-    }
 
 #ifdef HAVE_XIM
   if (cursor && focus && (cursor_start == clip_start) && cursor_height)
@@ -401,9 +380,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       Lisp_Font_Instance *fi = XFONT_INSTANCE (font);
       int this_width;
       int need_clipping;
+      cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+      GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground);
 
       if (EQ (font, Vthe_null_font_instance))
 	continue;
+
+      cachel = WINDOW_FACE_CACHEL (w, findex);
+      gtk_set_source_rgb (cr, fg);
 
 #ifdef THIS_IS_GTK
       this_width = width;
@@ -461,13 +445,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	    }
 	}
 #endif
+
       if (cursor && focus && NILP (bar_cursor_value))
-	{
-          assert (cursor_cachel);
-	  gc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
-			     cursor_cachel->background, Qnil, Qnil, Qnil);
-	}
-      else if (cachel->dim)
+        {
+          face_index ix = get_builtin_face_cache_index (w, Vtext_cursor_face);
+          cachel = WINDOW_FACE_CACHEL (w, ix);
+        }
+      
+      if (cachel->dim)
 	{
 	  /* Ensure the gray bitmap exists */
 	  if (DEVICE_XLIKE_GRAY_PIXMAP (d) == XLIKE_NONE)
@@ -482,13 +467,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      ;
 
 	  /* Request a GC with the gray stipple pixmap to draw dimmed text */
-	  gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
-			     bg_pmap, cachel->background_placement, Qnil);
-	}
-      else
-	{
-	  gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
-			     Qnil, Qnil, Qnil);
+	  /* gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
+             bg_pmap, cachel->background_placement, Qnil); */
 	}
 
       if (need_clipping)
@@ -500,16 +480,10 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
           clip_box.width = clip_end - clip_start;
           clip_box.height = height;
           
-          XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, ypos, &clip_box);
+          /* XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, ypos, &clip_box); */
         }
 
-      gdk_draw_text_image (widget, cachel, gc, xpos, dl->ypos, &runs[i]);
-
-      /* Restore the GC */
-      if (need_clipping)
-	{
-	    XLIKE_CLEAR_CLIP_MASK (dpy, gc);
-	}
+      gdk_draw_text_image (widget, cachel, cr, xpos, dl->ypos, &runs[i]);
 
       /* If we are actually superimposing the cursor then redraw with just
 	 the appropriate section highlighted. */
@@ -518,23 +492,20 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
           XLIKE_RECTANGLE clip_box;
           XLIKE_GC cgc;
 
-          assert (cursor_cachel);
-          cgc = XLIKE_get_gc (f, font, cursor_cachel->foreground,
-                              cursor_cachel->background, Qnil, Qnil, Qnil);
-
           clip_box.x = 0;
           clip_box.y = 0;
           clip_box.width = cursor_width;
           clip_box.height = height;
 
-          XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
-                                    &clip_box);
-          gdk_draw_text_image (widget, cursor_cachel, cgc,
+          /* XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
+             &clip_box); */
+          gdk_draw_text_image (widget, cachel, cr,
 				     xpos, dl->ypos, &runs[i]);
-          XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
+          /* XLIKE_CLEAR_CLIP_MASK (dpy, cgc); */
 	}
 
       xpos += this_width;
+      cairo_destroy (cr);
     }
 
   /* Draw the non-focus box or bar-cursor as needed. */
@@ -566,7 +537,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       int bogusly_obtained_ascent_value =
 	XFONT_INSTANCE (FACE_CACHEL_FONT (cachel, runs[0].charset))->ascent;
 
+      face_index ix = get_builtin_face_cache_index (w, Vtext_cursor_face);
+      struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, ix);
+
       assert (cursor_cachel);
+
       if (!NILP (bar_cursor_value))
 	{
 	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
