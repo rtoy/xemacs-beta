@@ -2,6 +2,8 @@
 
 	* redisplay-gtk.c (XLIKE_output_string): Hoist cairo_t up in
 	cursor drawing code.  Use cairo to draw bar cursor as well.
+	(XLIKE_output_string): Move bar cursor width calculation closer to
+	use.
 
 	* redisplay-xlike-inc.c: Remove unused prototype declaration of
 	gtk_output_string.
