@@ -515,7 +515,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      && !NILP (bar_cursor_value))))
     {
       int tmp_height, tmp_y;
-      int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
       int need_clipping = (cursor_start < clip_start
 			   || clip_end < cursor_start + cursor_width);
 
@@ -573,6 +572,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	}
       else if (focus && !NILP (bar_cursor_value))
 	{
+          int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
+
           gtk_draw_rectangle (cr, cursor_start, tmp_y,
                               bar_width - 1, tmp_height - 1);
 
