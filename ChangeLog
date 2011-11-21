@@ -1,5 +1,12 @@
 2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
+	* .hgignore:
+	* configure.ac: 
+	Reflect move of etc/dbxrc.in to src/.dbxrc.in.
+	* configure: Regenerate.
+
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
 	* configure: Regenerate with Autoconf 2.68.  Default Autoconf 2.61
 	that comes with Mac OS X Lion breaks configure's ability to create
 	Makefiles.

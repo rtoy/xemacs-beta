@@ -5375,12 +5375,6 @@ dnl Regenerate them locally on every configure.
 dnl .gdbinit is now handled like xemacs.def or other src files, and
 dnl its source is in src/.gdbinit.in.in.
 
-dnl Create a .dbxrc useful for debugging XEmacs
-if test -f "$srcdir/etc/dbxrc.in"; then
-  test "$verbose" = "yes" && echo "creating src/.dbxrc"
-  echo ". $srcdir/etc/dbxrc" > "$srcdir/src/.dbxrc"
-fi
-
 dnl Create a useful TAGS file
 if test -f "$srcdir/TAGS" -a ! -f "TAGS"; then
   test "$verbose" = "yes" && echo "creating TAGS"
@@ -6009,9 +6003,6 @@ dnl Convert comments -- must come after the unquoting operations
     mv -f Makefile.new $2
 ])dnl CPP_MAKEFILE
 
-dnl for creation of /etc/dbxrc
-XE_APPEND(etc, MAKE_SUBDIR)
-
 AC_CONFIG_COMMANDS([default],
 [for dir in . $MAKE_SUBDIR; do
   (
@@ -6030,9 +6021,9 @@ dnl debugger init files (in the src/ and etc/ directories).
       MAKE_JUNK_C(.gdbinit.in)
       CPP_MAKEFILE(,.gdbinit)
     fi
-    if test -r "dbxrc.in"; then
-      MAKE_JUNK_C(dbxrc.in)
-      CPP_MAKEFILE(,dbxrc)
+    if test -r ".dbxrc.in"; then
+      MAKE_JUNK_C(.dbxrc.in)
+      CPP_MAKEFILE(,.dbxrc)
     fi
     if test -r "xemacs.def.in"; then
 dnl #### We should be using MAKE_JUNK_C instead of the next two lines.
