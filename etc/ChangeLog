@@ -1,5 +1,9 @@
 2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
+	* dbxrc.in: Move to src/.dbxrc.in.
+
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
 	* dbxrc.in: There is no lrecord_type_lcrecord_list when using the
 	new garbage collector; print $lrecord_type when Lisp Object type
 	is unknown to pobj.

@@ -20715,11 +20715,6 @@ fi
 
 
 
-if test -f "$srcdir/etc/dbxrc.in"; then
-  test "$verbose" = "yes" && echo "creating src/.dbxrc"
-  echo ". $srcdir/etc/dbxrc" > "$srcdir/src/.dbxrc"
-fi
-
 if test -f "$srcdir/TAGS" -a ! -f "TAGS"; then
   test "$verbose" = "yes" && echo "creating TAGS"
   echo "
@@ -21396,8 +21391,6 @@ test "$with_modules" = "yes" && ac_config_files="$ac_config_files lib-src/ellcc.
 
 
 
-
-MAKE_SUBDIR="$MAKE_SUBDIR etc" &&  if test "$verbose" = "yes"; then echo "    Appending \"etc\" to \$MAKE_SUBDIR"; fi
 
 ac_config_commands="$ac_config_commands default"
 
@@ -22763,9 +22756,9 @@ $CPP -I. -I${srcdir}/src  junk.c \
     mv -f Makefile.new .gdbinit
 
     fi
-    if test -r "dbxrc.in"; then
+    if test -r ".dbxrc.in"; then
           rm -f junk.c
-    < dbxrc.in \
+    < .dbxrc.in \
       sed -e '/^# Generated/d' \
           -e 's%/\*\*/#.*%%' \
           -e 's/^ *# */#/' \
@@ -22780,7 +22773,7 @@ s/^/"/
 s/$/"/
 }'  > junk.c;
 
-      echo creating $dir/dbxrc
+      echo creating $dir/.dbxrc
 $CPP -I. -I${srcdir}/src  junk.c \
   | sed -e 's/^\#.*//'		\
 	-e 's/^[ TAB][ TAB]*$//'\
@@ -22793,7 +22786,7 @@ $CPP -I. -I${srcdir}/src  junk.c \
 }'				\
 	-e 's/^XCOMM /\# /' > Makefile.new
     chmod 444 Makefile.new
-    mv -f Makefile.new dbxrc
+    mv -f Makefile.new .dbxrc
 
     fi
     if test -r "xemacs.def.in"; then
