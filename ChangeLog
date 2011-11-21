@@ -1,3 +1,9 @@
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* configure.ac: Fix creation of etc/dbxrc and src/.dbxrc; only try
+	to create Makefile when Makefile.in is there.
+	* configure: Regenerate.
+	
 2011-10-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (with_athena): Refactor check for Xaw3d.
