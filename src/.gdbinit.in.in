@@ -391,9 +391,11 @@ define pobj
   if $lrecord_type == lrecord_type_keymap
     pptype Lisp_Keymap
   else
+#ifndef NEW_GC
   if $lrecord_type == lrecord_type_lcrecord_list
     pstructtype lcrecord_list
   else
+#endif
   if $lrecord_type == lrecord_type_ldap
     pptype Lisp_LDAP
   else
@@ -458,6 +460,7 @@ define pobj
     pstructtype fc_config
   else
     echo Unknown Lisp Object type\n
+    print $lrecord_type
     print $arg0
   ## Barf, gag, retch
   end
@@ -466,7 +469,9 @@ define pobj
   end
   end
   end
+#ifndef NEW_GC
   end
+#endif
   end
   end
   end

@@ -5377,8 +5377,8 @@ dnl its source is in src/.gdbinit.in.in.
 
 dnl Create a .dbxrc useful for debugging XEmacs
 if test -f "$srcdir/etc/dbxrc.in"; then
-  test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
-  echo ". $srcdir/etc/dbxrc.in" > "src/.dbxrc.in"
+  test "$verbose" = "yes" && echo "creating src/.dbxrc"
+  echo ". $srcdir/etc/dbxrc" > "$srcdir/src/.dbxrc"
 fi
 
 dnl Create a useful TAGS file
@@ -6009,6 +6009,9 @@ dnl Convert comments -- must come after the unquoting operations
     mv -f Makefile.new $2
 ])dnl CPP_MAKEFILE
 
+dnl for creation of /etc/dbxrc
+XE_APPEND(etc, MAKE_SUBDIR)
+
 AC_CONFIG_COMMANDS([default],
 [for dir in . $MAKE_SUBDIR; do
   (
@@ -6017,17 +6020,19 @@ AC_CONFIG_COMMANDS([default],
 dnl Create a GNUmakefile and Makefile from Makefile.in.
 dnl Create xemacs.def from xemacs.def.in in the same fashion,
 dnl if it exists (i.e. in the src/ directory).  Ditto for the
-dnl debugger init files (in the src/ directory).
-    MAKE_JUNK_C(Makefile.in)
-    CPP_MAKEFILE(,Makefile)
-    CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
+dnl debugger init files (in the src/ and etc/ directories).
+    if test -r "Makefile.in"; then
+      MAKE_JUNK_C(Makefile.in)
+      CPP_MAKEFILE(,Makefile)
+      CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
+    fi
     if test -r ".gdbinit.in"; then
       MAKE_JUNK_C(.gdbinit.in)
       CPP_MAKEFILE(,.gdbinit)
     fi
-    if test -r ".dbxrc.in"; then
-      MAKE_JUNK_C(.dbxrc.in)
-      CPP_MAKEFILE(,.dbxrc)
+    if test -r "dbxrc.in"; then
+      MAKE_JUNK_C(dbxrc.in)
+      CPP_MAKEFILE(,dbxrc)
     fi
     if test -r "xemacs.def.in"; then
 dnl #### We should be using MAKE_JUNK_C instead of the next two lines.

@@ -313,8 +313,10 @@ function pobj {
     pstruct glyphs.c Lisp_Image_Instance
   elif test $lrecord_type = lrecord_type_keymap; then
     pstruct keymap.c Lisp_Keymap
+#ifndef NEW_GC
   elif test $lrecord_type = lrecord_type_lcrecord_list; then
     pstruct alloc.c lcrecord_list
+#endif
   elif test $lrecord_type = lrecord_type_ldap; then
     pstruct ldap.c Lisp_LDAP
   elif test $lrecord_type = lrecord_type_lstream; then
@@ -361,6 +363,7 @@ function pobj {
     echo "Lisp Object is a null pointer!!"
   else
     echo "Unknown Lisp Object type"
+    print $lrecord_type
     print $1
   fi
 }
