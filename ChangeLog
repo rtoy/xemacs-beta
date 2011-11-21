@@ -1,5 +1,11 @@
 2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
+	* configure: Regenerate with Autoconf 2.68.  Default Autoconf 2.61
+	that comes with Mac OS X Lion breaks configure's ability to create
+	Makefiles.
+	
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
 	* configure.ac: Fix creation of etc/dbxrc and src/.dbxrc; only try
 	to create Makefile when Makefile.in is there.
 	* configure: Regenerate.
