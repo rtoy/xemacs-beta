@@ -180,6 +180,7 @@ struct textual_run
    the 8-bit versions in computing runs and runes, it would seem.
 */
 
+#if !defined(THIS_IS_GTK)
 #if !defined(USE_XFT) && !defined(MULE)
 static int
 separate_textual_runs_nomule (unsigned char *text_storage,
@@ -433,76 +434,12 @@ separate_textual_runs_mule (unsigned char *text_storage,
 }
 #endif
 
-#if defined (HAVE_GTK)
-static int
-separate_textual_runs_utf8 (unsigned char *text_storage,
-                            struct textual_run *run_storage,
-                            const Ichar *str, Charcount len,
-                            struct face_cachel * UNUSED (cachel))
-{
-  int runs_so_far = 0;
-  int runbegin = 0;
-  int total_nchars = 0;
-  int i;
-  Lisp_Object prev_charset = Qunbound;
-  
-  if (len == 0)
-    return 0;
-  
-  prev_charset = ichar_charset (str[0]);
-  
-  for (i = 1; i <= len; i++)
-    {
-      if (i == len || !EQ (ichar_charset (str[i]), prev_charset))
-        {
-          int j;
-          /* Storage for UCS-2 characters. */
-          Ibyte *int_storage =
-            alloca_ibytes (MAX_ICHAR_LEN * (i - runbegin));
-          int int_storage_ptr = 0;
-          int nchars;
-          char *convert_buffer = 0;
-          
-          int_storage_ptr = 0;
-          /* Convert input to internal format in temp buffer.. */
-          for (j = runbegin; j < i; j++)
-            int_storage_ptr +=
-              set_itext_ichar (int_storage + int_storage_ptr, str[j]);
-          /* Convert internal format to utf-8 into an temp buffer. */
-          TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr),
-                              ALLOCA, (convert_buffer, nchars),
-                              Qutf_8);
-          nchars /= sizeof (UExtbyte); /* Tricky ... */
-          /* Copy temp buffer into given storage. */
-          memcpy (text_storage + total_nchars, convert_buffer,
-                  nchars * sizeof (UExtbyte));
-          /* Adjust run pointer to point into given storage space. */
-          run_storage[runs_so_far].ptr = text_storage + total_nchars;
-          run_storage[runs_so_far].charset = prev_charset;
-          run_storage[runs_so_far].len = nchars;
-          run_storage[runs_so_far].dimension = 1;
-          total_nchars += nchars;
-          runs_so_far++;
-          runbegin = i;
-          if (i < len)
-            prev_charset = ichar_charset (str[i]);
-        }
-    }
-  return runs_so_far;
-}
-#endif
-
 static int
 separate_textual_runs (unsigned char *text_storage,
 		       struct textual_run *run_storage,
 		       const Ichar *str, Charcount len,
 		       struct face_cachel *cachel)
 {
-#if defined (HAVE_GTK)
-  /* Should check for device type and allow both Gtk and Xft. */
-  return separate_textual_runs_utf8 (text_storage, run_storage,
-				     str, len, cachel);
-#else
 #if defined(USE_XFT) && defined(MULE)
   return separate_textual_runs_xft_mule (text_storage, run_storage,
 					 str, len, cachel);
@@ -519,8 +456,10 @@ separate_textual_runs (unsigned char *text_storage,
   return separate_textual_runs_nomule (text_storage, run_storage,
 				       str, len, cachel);
 #endif
-#endif
 }
+
+/* !THIS_IS_GTK */
+#endif
 
 /****************************************************************************/
 /*                                                                          */
@@ -1168,42 +1107,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                            height);
     }
 
-#ifndef THIS_IS_GTK
   runs = alloca_array (struct textual_run, len);
   text_storage = (unsigned char *) ALLOCA (2 * len);
   nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
 				 Dynarr_length (buf), cachel);
-#else
-  runs = alloca_new (struct textual_run);
-  nruns = 1;
-  {
-    Elemcount ii, extbytes;
-    Ibyte *int_storage = alloca_ibytes (MAX_ICHAR_LEN * len);
-    Ibyte *int_storage_ptr = int_storage;
 
-    for (ii = 0; ii < len; ii++)
-      {
-        int_storage_ptr += set_itext_ichar (int_storage_ptr,
-                                            Dynarr_at (buf, ii));
-      }
-
-    TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr - int_storage),
-                        ALLOCA, (text_storage, extbytes),
-                        Qutf_8);
-
-    runs->ptr = text_storage;
-    runs->len = extbytes;
-    runs->dimension = 1;
-    runs->charset = Vcharset_ascii;
-  }
-#endif
-
-#ifdef THIS_IS_GTK
-  /* XXX Horrible kludge to force display of the only block cursor
-     I can get to work correctly!   -- jsparkes */
-  if (NILP (bar_cursor_value))
-    focus = 0;
-#endif
   for (i = 0; i < nruns; i++)
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
@@ -1214,11 +1122,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
-#ifdef THIS_IS_GTK
-      this_width = width;
-#else
       this_width = XLIKE_text_width_single_run (f, cachel, runs + i);
-#endif
 
       need_clipping = (dl->clip || clip_start > xpos ||
 		       clip_end < xpos + this_width);
@@ -1283,14 +1187,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  /* Ensure the gray bitmap exists */
 	  if (DEVICE_XLIKE_GRAY_PIXMAP (d) == XLIKE_NONE)
 	    DEVICE_XLIKE_GRAY_PIXMAP (d) =
-#ifdef THIS_IS_X
 	      XCreateBitmapFromData (dpy, x_win, (char *)gray_bits,
-				     gray_width, gray_height)
-#else
-	      /* #### FIXME! Implement me! */
-	      XLIKE_NONE
-#endif
-	      ;
+				     gray_width, gray_height);
 
 	  /* Request a GC with the gray stipple pixmap to draw dimmed text */
 #ifdef USE_XFT
@@ -1379,9 +1277,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       }
 #endif /* USE_XFT */
 
-#ifdef THIS_IS_X
       if (use_x_font)
-#endif
 	{
 	  if (need_clipping)
 	    {
@@ -1395,7 +1291,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, ypos, &clip_box);
 	    }
 
-#ifdef THIS_IS_X
 	  if (runs[i].dimension == 1)
 	    (bgc ? XDrawString : XDrawImageString)
 	      (dpy, x_win, gc, xpos, dl->ypos,
@@ -1404,18 +1299,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	    (bgc ? XDrawString16 : XDrawImageString16)
 	      (dpy, x_win, gc, xpos, dl->ypos,
 	       (XChar2b *) runs[i].ptr, runs[i].len);
-#else /* THIS_IS_GTK */
-
-          {
-	    GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
-
-            gdk_draw_text_image (widget, cachel, gc,
-				 xpos, dl->ypos, &runs[i]);
-          }
-#endif 
 	}
 
-#ifdef THIS_IS_X
       /* We draw underlines in the same color as the text. */
       if (cachel->underline)
 	{
@@ -1496,7 +1381,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
                                       this_width, uthick);
 	    }
 	}
-#endif
       /* Restore the GC */
       if (need_clipping)
 	{
@@ -1564,21 +1448,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
               XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
                                         &clip_box);
-#ifdef THIS_IS_X
 	      if (runs[i].dimension == 1)
 		XDrawImageString (dpy, x_win, cgc, xpos, dl->ypos,
 				  (char *) runs[i].ptr, runs[i].len);
 	      else
 		XDrawImageString16 (dpy, x_win, cgc, xpos, dl->ypos,
 				    (XChar2b *) runs[i].ptr, runs[i].len);
-#else
-              {
-		GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
-                
-                gdk_draw_text_image (widget, cursor_cachel, cgc,
-				     xpos, dl->ypos, &runs[i]);
-              }
-#endif /* (not) THIS_IS_X */
 
 	      XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
 	    }
