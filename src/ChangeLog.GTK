@@ -1,3 +1,9 @@
+2011-11-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Remove Gtk code.
+	Separating textual runs is not done by for Gtk, so ifdef those
+	functions out.
+
 2011-11-18  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_string): Hoist cairo_t up in

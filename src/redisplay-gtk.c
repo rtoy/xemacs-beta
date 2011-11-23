@@ -555,13 +555,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (need_clipping)
 	{
-	  GdkRectangle clip_box;
-	  clip_box.x = 0;
-	  clip_box.y = 0;
-	  clip_box.width = clip_end - clip_start;
-	  clip_box.height = tmp_height;
-
-          gdk_cairo_rectangle (cr, &clip_box);
+          cairo_rectangle (cr, 0, 0, clip_end - clip_start, tmp_height);
           cairo_clip (cr);
 	}
 
