@@ -931,59 +931,31 @@ static Lisp_Object
 emacs_gtk_object_getprop (Lisp_Object obj, Lisp_Object prop)
 {
   Lisp_Object rval = Qnil;
-  GValue value;
+  GValue *value = xmalloc_and_zero (sizeof (GValue));
   gchar *name = NULL;
+  GParamSpec *info;
 
   CHECK_SYMBOL (prop);
   name = LISP_STRING_TO_EXTERNAL (XSYMBOL_NAME (prop), Qutf_8);
 
+  info = g_object_class_find_property (G_OBJECT_GET_CLASS (XGTK_OBJECT
+                                                           (obj)->object),
+                                       name);
   /* Check class and instance property? */
-  if (NULL == g_object_class_find_property (G_OBJECT_GET_CLASS (XGTK_OBJECT
-                                                                (obj)->object),
-                                            name))
+  if (NULL == info)
     {
       /* Not a magic symbol, fall back to just looking in our real plist */
       return (Fplist_get (XGTK_OBJECT (obj)->plist, prop, Qunbound));
     }
 
-  g_object_get_property (XGTK_OBJECT (obj)->object, name, &value);
-
-#ifdef JSPARKES
-  if (!(info->arg_flags & GTK_ARG_READABLE))
+  if (!(info->flags & G_PARAM_READABLE))
     {
       invalid_operation ("Attempt to get write-only property", prop);
     }
-
-  g_object_getv (XGTK_OBJECT (obj)->object, 1, args);
-
-  if (args[0].type == G_TYPE_INVALID)
-    {
-      /* If we can't get the attribute, then let the code in Fget know
-         so it can use the default value supplied by the caller */
-      return (Qunbound);
-    }
-
-  rval = g_type_to_lisp (&args[0]);
-
-  /* Free up any memory.  According to the documentation and Havoc's
-     book, if the fundamental type of the returned value is
-     GTK_TYPE_STRING, G_TYPE_BOXED, or G_TYPE_ARGS, you are
-     responsible for freeing it. */
-  switch (GTK_FUNDAMENTAL_TYPE (args[0].type))
-    {
-    case GTK_TYPE_STRING:
-      g_free (GTK_VALUE_STRING (args[0]));
-      break;
-    case GTK_TYPE_BOXED:
-      g_free (GTK_VALUE_BOXED (args[0]));
-      break;
-    case GTK_TYPE_ARGS:
-      g_free (GTK_VALUE_ARGS (args[0]).args);
-    default:
-      break;
-    }
-#endif
-
+  g_value_init (value, info->value_type);
+  g_object_get_property (XGTK_OBJECT (obj)->object, name, value);
+  rval = g_type_to_lisp (value);
+  xfree (value);
   return (rval);
 }
 
@@ -1591,7 +1563,7 @@ Return the interface types of TYPE.
 }
 
 DEFUN ("g-object-class-list-properties", Fg_object_class_list_properties, 1, 1, 0, /*
-Return a list of all properties for class TYPE.
+Return a list of all property names for class TYPE.
 */
        (type))
 {
