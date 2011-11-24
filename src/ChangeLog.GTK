@@ -1,3 +1,9 @@
+2011-11-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (emacs_gtk_object_getprop): Convert return value to
+	lisp properly.  Remove obsolete code.
+	(Fg_object_class_list_properties): Update documentation.
+
 2011-11-23  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-xlike-inc.c (XLIKE_output_string): Remove Gtk code.
