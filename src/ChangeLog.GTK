@@ -1,5 +1,9 @@
 2011-11-25  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (Fgtk_fundamental_type): Return type as symbol.
+	(Fgtk_object_type): Ditto.
+	(Fg_object_type): Ditto.
+
 	* gui-gtk.c (vars_of_gui_gtk): Add var g-object-registry for
 	debugging.  It probably needs a better name.
 
