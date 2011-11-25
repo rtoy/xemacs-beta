@@ -2149,7 +2149,7 @@ lisp_to_gtk_enum (Lisp_Object obj)
 
   value = Fassq (obj, Vgtk_enumerations);
 
-  if (NILP (value))
+ if (NILP (value))
     invalid_argument ("Unknown enumeration", obj);
 
   CHECK_FIXNUM (XCDR (value));
@@ -2199,11 +2199,17 @@ flag_to_symbol (const GValue *arg)
       invalid_argument ("Unknown flag",
                         build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
-  
+  return type_as_symbol (G_VALUE_TYPE (arg));
+
+  /* XXX Flags need to be calculated via GIR */
+  /*
   value = Frassq (make_fixnum (flag), Vgtk_flags);
   if (NILP (value))
-    invalid_argument ("Unknown flag", make_fixnum (flag));
+    {
+      invalid_argument ("Unknown flag", make_fixnum (flag));
+    }
   return XCAR (value);
+  */
 }
 
 static Lisp_Object
@@ -2211,6 +2217,8 @@ enum_to_symbol (const GValue *arg)
 {
   gint enumeration = g_value_get_enum (arg);
   Lisp_Object value;
+  Lisp_Object enums;
+  Lisp_Object type_name;
 
   if (enumeration < 0)
     {
@@ -2218,8 +2226,21 @@ enum_to_symbol (const GValue *arg)
                         build_cistring (g_type_name (G_VALUE_TYPE (arg))));
     }
 
-  value = Frassq (make_fixnum (enumeration), Vgtk_enumerations);
-  if (NILP (value))
-    invalid_argument ("Unknown enumeration", make_fixnum (enumeration));
-  return XCAR (value);
+  type_name = type_as_symbol (G_VALUE_TYPE (arg));
+  enums = Fg_enumeration (type_as_symbol (G_VALUE_TYPE (arg)),
+                          Qnil);
+  if (!NILP (enums))
+    {
+      value = Frassq (make_fixnum (enumeration), enums);
+      if (!NILP (value))
+        {
+          /* return XCAR (value); */
+          return intern (XSTRING_DATA (concat3 (Fsymbol_name (type_name),
+                                                build_ascstring (":"),
+                                                Fsymbol_name (XCAR (value)))));
+        }
+    }
+  /* XXX */
+  /* invalid_argument ("Unknown enumeration", make_fixnum (enumeration)); */
+  return type_name;
 }

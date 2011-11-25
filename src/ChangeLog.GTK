@@ -6,6 +6,8 @@
 	(Fg_object_class_list_properties): Return property names as symbols.
 	(Fg_object_properties): Define.
 	(syms_of_ui_gtk): Defsubr g-object-properties.
+	(flag_to_symbol): Return symbol name of flag for now.
+	(enum_to_symbol): Return symbol based on enumeration name in C.
 
 	* gui-gtk.c (vars_of_gui_gtk): Add var g-object-registry for
 	debugging.  It probably needs a better name.
