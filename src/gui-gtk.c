@@ -86,6 +86,13 @@ vars_of_gui_gtk (void)
 {
   staticpro (&Vpopup_callbacks);
   Vpopup_callbacks = Qnil;
+
+  DEFVAR_LISP ("g-object-registry", &Vpopup_callbacks /*
+An alist of GObjects for garbage collection purposes.
+Each GObject has a unique id, and the wrapper will be nulled after the
+GObject is destroyed.
+Do not alter.
+*/ );
 #ifdef HAVE_POPUPS
   popup_up_p = 0;
 
