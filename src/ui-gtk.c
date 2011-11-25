@@ -1313,7 +1313,7 @@ This is the base object type.
     {
       invalid_argument ("Not a GTK type", type);
     }
-  return (make_fixnum (GTK_FUNDAMENTAL_TYPE (t)));
+  return (type_as_symbol (GTK_FUNDAMENTAL_TYPE (t)));
 }
 
 DEFUN ("gtk-object-type", Fgtk_object_type, 1, 1, 0, /*
@@ -1322,7 +1322,7 @@ Return the GType of OBJECT.
        (object))
 {
   CHECK_GTK_OBJECT (object);
-  return (make_fixnum (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
+  return (type_as_symbol (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
 }
 
 DEFUN ("g-object-type", Fg_object_type, 1, 1, 0, /*
@@ -1331,7 +1331,7 @@ Return the GType of OBJECT.
        (object))
 {
   CHECK_GTK_OBJECT (object);
-  return (make_fixnum (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
+  return (type_as_symbol (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
 }
 
 DEFUN ("gtk-describe-type", Fgtk_describe_type, 1, 1, 0, /*
