@@ -1586,7 +1586,7 @@ Return a list of all property names for class TYPE.
 
   props = g_object_class_list_properties (type_class, &n_props);
   for (i = 0; i < n_props; i++) 
-    prop_list = Facons (build_cistring (props[i]->name),
+    prop_list = Facons (intern (props[i]->name),
                         type_as_symbol (props[i]->value_type),
                         prop_list);
   prop_list = Freverse (prop_list);
