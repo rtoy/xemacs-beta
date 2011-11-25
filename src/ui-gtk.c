@@ -1594,6 +1594,35 @@ Return a list of all property names for class TYPE.
   return prop_list;
 }
 
+DEFUN ("g-object-properties", Fg_object_properties, 1, 1, 0, /*
+Return an alist of properties for OBJECT.
+*/
+       (object))
+{
+  GObjectClass *type_class = NULL;
+  Lisp_Object prop_list = Qnil;
+  GParamSpec **props = NULL;
+  guint n_props = 0, i;
+  GObject *o;
+
+  CHECK_GTK_OBJECT (object);
+  o = XGTK_OBJECT (object)->object;
+  type_class = G_OBJECT_GET_CLASS (o);
+  props = g_object_class_list_properties (type_class, &n_props);
+  for (i = 0; i < n_props; i++)
+    {
+      if (!(props[i]->flags & G_PARAM_READABLE))
+        continue;
+      Lisp_Object p = intern(props[i]->name);
+      prop_list = Facons (p,
+                          emacs_gtk_object_getprop (object, p),
+                          prop_list);
+    }
+  prop_list = Fnreverse (prop_list);
+  g_free (props);
+  return prop_list;
+}
+
 
 void
 ui_gtk_objects_create (void)
@@ -1629,6 +1658,7 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fg_object_type);
   DEFSUBR (Fg_type_interfaces);
   DEFSUBR (Fg_object_class_list_properties);
+  DEFSUBR (Fg_object_properties);
   syms_of_ui_byhand ();
 #ifdef JSPARKES
   syms_of_glade ();

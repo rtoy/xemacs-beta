@@ -4,6 +4,8 @@
 	(Fgtk_object_type): Ditto.
 	(Fg_object_type): Ditto.
 	(Fg_object_class_list_properties): Return property names as symbols.
+	(Fg_object_properties): Define.
+	(syms_of_ui_gtk): Defsubr g-object-properties.
 
 	* gui-gtk.c (vars_of_gui_gtk): Add var g-object-registry for
 	debugging.  It probably needs a better name.
