@@ -1,3 +1,8 @@
+2011-11-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gui-gtk.c (vars_of_gui_gtk): Add var g-object-registry for
+	debugging.  It probably needs a better name.
+
 2011-11-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (emacs_gtk_object_getprop): Convert return value to
