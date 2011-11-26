@@ -42,7 +42,7 @@ bignum_to_string (bignum b, int base)
   /* FIXME: signal something if base is < 2 or doesn't fit into a short. */
 
   /* Save the sign for later */
-  sign = MP_MCMP (b, bignum_zero);
+  sign = bignum_sign (b);
 
   if (sign == 0)
     {
@@ -56,8 +56,6 @@ bignum_to_string (bignum b, int base)
     MP_MSUB (bignum_zero, b, quo);
   else
     MP_MOVE (b, quo);
-
-  quo = MP_ITOM (0);
 
   /* Loop over the digits of b (in BASE) and place each one into buffer */
   for (i = 0U; MP_MCMP(quo, bignum_zero) > 0; i++)
@@ -90,13 +88,28 @@ bignum_to_string (bignum b, int base)
 }
 
 #define BIGNUM_TO_TYPE(type,accumtype) do {	\
-  MP_MULT (b, quo, quo);			\
+    if (0 == sign)				\
+      {						\
+	return (type)0;				\
+      }						\
+						\
+    bignum_init (quo);				\
+						\
+    if (sign < 0)				\
+      {						\
+	MP_MSUB (bignum_zero, b, quo);		\
+      }						\
+    else					\
+      {						\
+	MP_MOVE (b, quo);			\
+      }						\
+						\
   for (i = 0U; i < sizeof(type); i++)		\
     {						\
       MP_SDIV (quo, 256, quo, &rem);		\
       retval |= ((accumtype) rem) << (8 * i);	\
     }						\
-  MP_MFREE (quo);				\
+  bignum_fini (quo);				\
 } while (0)
 
 int
@@ -107,8 +120,7 @@ bignum_to_int (bignum b)
   REGISTER unsigned int i;
   MINT *quo;
 
-  sign = MP_MCMP (b, bignum_zero) < 0 ? -1 : 1;
-  quo = MP_ITOM (sign);
+  sign = bignum_sign (b);
   BIGNUM_TO_TYPE (int, unsigned int);
   return ((int) retval) * sign;
 }
@@ -116,12 +128,12 @@ bignum_to_int (bignum b)
 unsigned int
 bignum_to_uint (bignum b)
 {
-  short rem;
+  short rem, sign;
   unsigned int retval = 0U;
   REGISTER unsigned int i;
   MINT *quo;
 
-  quo = MP_ITOM (MP_MCMP (b, bignum_zero) < 0 ? -1 : 1);
+  sign = bignum_sign (b);
   BIGNUM_TO_TYPE (unsigned int, unsigned int);
   return retval;
 }
@@ -134,8 +146,7 @@ bignum_to_long (bignum b)
   REGISTER unsigned int i;
   MINT *quo;
 
-  sign = MP_MCMP (b, bignum_zero) < 0 ? -1 : 1;
-  quo = MP_ITOM (sign);
+  sign = bignum_sign (b);
   BIGNUM_TO_TYPE (long, unsigned long);
   return ((long) retval) * sign;
 }
@@ -143,12 +154,12 @@ bignum_to_long (bignum b)
 unsigned long
 bignum_to_ulong (bignum b)
 {
-  short rem;
+  short rem, sign;
   unsigned long retval = 0UL;
   REGISTER unsigned int i;
   MINT *quo;
 
-  quo = MP_ITOM (MP_MCMP (b, bignum_zero) < 0 ? -1 : 1);
+  sign = bignum_sign (b);
   BIGNUM_TO_TYPE (unsigned long, unsigned long);
   return retval;
 }
@@ -161,9 +172,17 @@ bignum_to_double (bignum b)
   REGISTER unsigned int i;
   MINT *quo;
 
-  sign = MP_MCMP (b, bignum_zero) < 0 ? -1 : 1;
-  quo = MP_ITOM (sign);
-  MP_MULT (b, quo, quo);
+  sign = bignum_sign (b);
+  bignum_init (quo);
+  if (sign < 0)
+    {
+      MP_MSUB (bignum_zero, b, quo);
+    }
+  else
+    {
+      MP_MOVE (b, quo);
+    }
+
   for (i = 0U; MP_MCMP (quo, bignum_zero) > 0; i++)
     {
       MP_SDIV (quo, 256, quo, &rem);
@@ -303,17 +322,51 @@ bignum_divisible_p (bignum b1, bignum b2)
 void bignum_ceil (bignum quotient, bignum N, bignum D)
 {
   MP_MDIV (N, D, quotient, intern_bignum);
-  if (MP_MCMP (intern_bignum, bignum_zero) > 0 &&
-      MP_MCMP (quotient, bignum_zero) > 0)
-    MP_MADD (quotient, bignum_one, quotient);
+  MP_MDIV (N, D, quotient, intern_bignum);
+  if (MP_MCMP (intern_bignum, bignum_zero) != 0)
+    {
+      short signN = MP_MCMP (N, bignum_zero);
+      short signD = MP_MCMP (D, bignum_zero);
+
+      /* If the quotient is positive, add one, since we're rounding to
+	 positive infinity. */
+      if (signD < 0)
+	{
+	  if (signN <= 0)
+	    {
+	      MP_MADD (quotient, bignum_one, quotient);
+	    }
+	}
+      else if (signN >= 0)
+	{
+	  MP_MADD (quotient, bignum_one, quotient);
+	}
+    }
 }
 
 void bignum_floor (bignum quotient, bignum N, bignum D)
 {
   MP_MDIV (N, D, quotient, intern_bignum);
-  if (MP_MCMP (intern_bignum, bignum_zero) > 0 &&
-      MP_MCMP (quotient, bignum_zero) < 0)
-    MP_MSUB (quotient, bignum_one, quotient);
+
+  if (MP_MCMP (intern_bignum, bignum_zero) != 0)
+    {
+      short signN = MP_MCMP (N, bignum_zero);
+      short signD = MP_MCMP (D, bignum_zero);
+
+      /* If the quotient is negative, subtract one, we're rounding to minus
+	 infinity.  */
+      if (signD < 0)
+	{
+	  if (signN >= 0)
+	    {
+	      MP_MSUB (quotient, bignum_one, quotient);
+	    }
+	}
+      else if (signN < 0)
+	{
+	  MP_MSUB (quotient, bignum_one, quotient);
+	}
+    }
 }
 
 /* RESULT = N to the POWth power */
