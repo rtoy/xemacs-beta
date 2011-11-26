@@ -1,3 +1,39 @@
+2011-11-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-mp.c (bignum_to_string):
+	Don't overwrite the accumulator we've just set up for this
+	function.
+
+	* number-mp.c (BIGNUM_TO_TYPE):
+	mp_itom() doesn't necessarily do what this code used to think with
+	negative numbers, it can treat them as unsigned ints. Subtract
+	numbers from bignum_zero instead of multiplying them by -1 to
+	convert them to their negative equivalents.
+
+	* number-mp.c (bignum_to_int):
+	* number-mp.c (bignum_to_uint):
+	* number-mp.c (bignum_to_long):
+	* number-mp.c (bignum_to_ulong):
+	* number-mp.c (bignum_to_double):
+	Use the changed BIGNUM_TO_TYPE() in these functions.
+
+	* number-mp.c (bignum_ceil):
+	* number-mp.c (bignum_floor):
+	In these functions, be more careful about rounding to positive and
+	negative infinity, respectively. Don't use the sign of QUOTIENT
+	when working out out whether to add or subtract one, rather use
+	the sign QUOTIENT would have if arbitrary-precision division were
+	done.
+
+	* number-mp.h:
+	* number-mp.h (MP_GCD):
+	Wrap #include <mp.h> in BEGIN_C_DECLS/END_C_DECLS.
+
+	* number.c (Fbigfloat_get_precision):
+	* number.c (Fbigfloat_set_precision):
+	Don't attempt to call XBIGFLOAT_GET_PREC if this build doesn't
+	support big floats.
+
 2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* .dbxrc.in: Move from etc/.dbxrc.in.
