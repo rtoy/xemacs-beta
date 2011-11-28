@@ -3,6 +3,7 @@
 	* ui-gtk.c (Fg_enumeration): Throw an invalid argument if given
 	type is not an enumeration.  Use invalid_argument instead of
 	invalid_state for other type errors as well.
+	(enum_to_symbol): Don't prepend the enum type to the enum name.
 
 2011-11-25  Jeff Sparkes  <jsparkes@gmail.com>
 
