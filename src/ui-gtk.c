@@ -184,18 +184,6 @@ import_gtk_object_internal (GType the_type)
   stderr_out ("import_gtk_object_internal %s\n", g_type_name (the_type));
   do
     {
-#ifdef JSPARKES
-      GParamSpec *args;
-      guint n_params;
-      guint i;
-#endif
-#if 0
-      GtkObjectClass *klass;
-      GtkSignalQuery *query;
-      guint32 *signals;
-      guint n_signals;
-#endif
-
       /* Register the type before we do anything else with it... */
       if (!first_time)
 	{
@@ -214,32 +202,40 @@ import_gtk_object_internal (GType the_type)
 	}
 
       ABORT ();
-#ifdef JSPARKES
-      args = g_object_class_list_properties (the_type, &n_params);
+      {
+        guint n_params = 0;
+        guint i;
+        GParamSpec **args = g_object_class_list_properties (the_type,
+                                                           &n_params);
 
-      for (i = 0; i < n_params; i++) 
-	{
-	  if (!NILP (type_already_imported_p (args[i].value_type)))
-	    {
-	      import_gtk_type (args[i].type);
-	    }
-	}
-
-      g_free(args);
-#endif
+        for (i = 0; i < n_params; i++) 
+          {
+            if (!NILP (type_already_imported_p (args[i]->value_type)))
+              {
+                import_gtk_type (args[i]->value_type);
+              }
+          }
+        g_free(args);
+      }
 
 #if 0
-      /* Now lets publish the signals */
-      klass = (GtkObjectClass *) gtk_type_class (the_type);
-      signals = klass->signals;
-      n_signals = klass->nsignals;
+      {
+        GtkSignalQuery *query;
+        guint32 *signals;
+        guint n_signals;
+        /* How do we find signals in Gtk 2.0? -jsparkes */
+        /* Now lets publish the signals */
+        klass = (GtkObjectClass *) gtk_type_class (the_type);
+        signals = klass->signals;
+        n_signals = klass->nsignals;
 
-      for (i = 0; i < n_signals; i++)
-	{
-	  query = gtk_signal_query (signals[i]);
-	  /* What do we want to do here? */
-	  g_free (query);
-	}
+        for (i = 0; i < n_signals; i++)
+          {
+            query = gtk_signal_query (signals[i]);
+            /* What do we want to do here? */
+            g_free (query);
+          }
+      }
 #endif
 
       the_type = g_type_parent(the_type);
