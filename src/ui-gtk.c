@@ -2218,9 +2218,9 @@ static Lisp_Object
 enum_to_symbol (const GValue *arg)
 {
   gint enumeration = g_value_get_enum (arg);
-  Lisp_Object value;
-  Lisp_Object enums;
-  Lisp_Object type_name;
+  Lisp_Object rval = Qnil;
+  Lisp_Object enums = Qnil;
+  Lisp_Object type_name = Qnil;
 
   if (enumeration < 0)
     {
@@ -2229,20 +2229,22 @@ enum_to_symbol (const GValue *arg)
     }
 
   type_name = type_as_symbol (G_VALUE_TYPE (arg));
+  rval = type_name;
   enums = Fg_enumeration (type_as_symbol (G_VALUE_TYPE (arg)),
                           Qnil);
   if (!NILP (enums))
     {
-      value = Frassq (make_fixnum (enumeration), enums);
+      Lisp_Object value = Frassq (make_fixnum (enumeration), enums);
       if (!NILP (value))
         {
-          /* return XCAR (value); */
-          return intern (XSTRING_DATA (concat3 (Fsymbol_name (type_name),
+          rval = XCAR (value);
+          /* Return EnumClass.EnunName */
+          /*
+          rval = intern (XSTRING_DATA (concat3 (Fsymbol_name (type_name),
                                                 build_ascstring (":"),
                                                 Fsymbol_name (XCAR (value)))));
+          */
         }
     }
-  /* XXX */
-  /* invalid_argument ("Unknown enumeration", make_fixnum (enumeration)); */
-  return type_name;
+  return rval;
 }
