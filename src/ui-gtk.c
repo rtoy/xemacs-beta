@@ -307,9 +307,11 @@ The ENUMERATION may be name or nickname. */
   CHECK_STRING (type_name);
   type = g_type_from_name (LISP_STRING_TO_EXTERNAL (type_name, Qutf_8));
   if (type == G_TYPE_INVALID)
-    invalid_state ("type is invalid", type_name);
+    invalid_argument ("type is invalid", type_name);
   if (type == G_TYPE_NONE)
-    invalid_state ("type is unknown", type_name);
+    invalid_argument ("type is unknown", type_name);
+  if (!G_TYPE_IS_ENUM (type))
+    invalid_argument ("type is not an enum", type_as_symbol (type));
 
   klass = G_ENUM_CLASS (g_type_class_ref (type));
   if (NILP (enumeration))
