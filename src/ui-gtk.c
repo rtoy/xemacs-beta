@@ -244,6 +244,64 @@ import_gtk_object_internal (GType the_type)
 }
 
 static Lisp_Object
+list_flags(GFlagsClass *klass)
+{
+  guint i;
+  Lisp_Object value = Qnil;
+
+  for (i = 0; i < klass->n_values; i++)
+    {
+      GFlagsValue *gfl = &klass->values[i];
+      value = Facons (intern (gfl->value_name), make_fixnum (gfl->value),
+                      value);
+      if (gfl->value_nick != NULL)
+        value = Facons (intern (gfl->value_nick), make_fixnum (gfl->value),
+                        value);
+    }
+  return Fnreverse (value);
+}
+
+DEFUN ("g-flag", Fg_flag, 1, 2, 0, /*
+Return the value of TYPE FLAG.
+If only TYPE is given, return an alist of flag for that type.
+The FLAG may be name or nickname. */
+       (type_name, flag))
+{
+  GType type  = G_TYPE_INVALID;
+  GFlagsValue *value = NULL;
+  GFlagsClass *klass = NULL;
+  char *name = NULL;
+
+  if (SYMBOLP (type_name))
+    type_name = Fsymbol_name (type_name);
+  CHECK_STRING (type_name);
+  type = g_type_from_name (LISP_STRING_TO_EXTERNAL (type_name, Qutf_8));
+  if (type == G_TYPE_INVALID)
+    invalid_argument ("type is invalid", type_name);
+  if (type == G_TYPE_NONE)
+    invalid_argument ("type is unknown", type_name);
+  if (!G_TYPE_IS_FLAGS (type))
+    invalid_argument ("type is not flag", type_as_symbol (type));
+
+  klass = G_FLAGS_CLASS (g_type_class_ref (type));
+  if (NILP (flag))
+    return list_flags (klass);
+
+  if (SYMBOLP (flag))
+    flag = Fsymbol_name (flag);
+  CHECK_STRING (flag);
+  name = LISP_STRING_TO_EXTERNAL (flag, Qutf_8);
+
+  value = g_flags_get_value_by_name (klass, name);
+  if (value == NULL)
+    value = g_flags_get_value_by_nick (klass, name);
+  if (value == NULL)
+    invalid_state ("unknown flag", flag);
+  /* XXX fixnum is not big enough for GdkEventMask */
+  return make_fixnum (value->value);
+}
+
+static Lisp_Object
 import_gtk_flags_internal (GType the_type)
 {
   GtkFlagValue *vals = gtk_type_flags_get_values (the_type);
@@ -1642,6 +1700,7 @@ syms_of_ui_gtk (void)
   DEFSYMBOL (Qvoid);
   DEFSUBR (Fdll_load);
   DEFSUBR (Fg_enumeration);
+  DEFSUBR (Fg_flag);
   DEFSUBR (Fgtk_import_function_internal);
   DEFSUBR (Fgtk_import_variable_internal);
   DEFSUBR (Fgtk_signal_connect);

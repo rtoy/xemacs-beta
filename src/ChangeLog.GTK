@@ -6,6 +6,8 @@
 	(enum_to_symbol): Don't prepend the enum type to the enum name.
 	(import_gtk_object_internal): Implement importing types of any
 	parameters as well.  Move declarations into blocks, closer to use.
+	(list_flags): Define.  Return an alist of flag names and values.
+	(Fg_flag): Define.  Return integer value of flag name.
 
 2011-11-25  Jeff Sparkes  <jsparkes@gmail.com>
 
