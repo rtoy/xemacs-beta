@@ -1,3 +1,9 @@
+2011-11-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_enumeration): Throw an invalid argument if given
+	type is not an enumeration.  Use invalid_argument instead of
+	invalid_state for other type errors as well.
+
 2011-11-25  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (Fgtk_fundamental_type): Return type as symbol.
