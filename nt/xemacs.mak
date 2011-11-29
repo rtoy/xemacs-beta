@@ -1630,6 +1630,14 @@ NEW_USERS_GUIDE_SRCS = \
 	$(MANDIR)\new-users-guide\region.texi \
 	$(MANDIR)\new-users-guide\search.texi \
 	$(MANDIR)\new-users-guide\xmenu.texi
+	
+TEXINFO_SRCS = \
+	$(MANDIR)\texinfo\texinfo.texi \
+	$(MANDIR)\texinfo\version.texi
+	
+$(INFODIR)\texinfo.info: $(TEXINFO_SRCS)
+	cd $(MANDIR)\texinfo
+	$(MAKEINFO) texinfo.texi
 
 $(INFODIR)\xemacs.info: $(XEMACS_SRCS)
 	cd $(MANDIR)\xemacs

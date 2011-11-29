@@ -1,3 +1,8 @@
+2011-11-28  Vin Shelton  <acs@xemacs.org>
+
+	* config.inc.samp: Update version number for png, zlib, jpeg and tiff.
+	* xemacs.mak: Add rules for building texinfo.info.
+
 2011-04-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.31 "ginger" is released.
