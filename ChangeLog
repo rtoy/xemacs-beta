@@ -1,3 +1,10 @@
+2011-11-27  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* configure.ac: 
+	Add "-Wl,-no_pie" to linker flags on Mac OS X Lion to disable ASLR
+	that breaks pdump.
+	* configure: Regenerate.
+
 2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* .hgignore:

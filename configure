@@ -11845,6 +11845,18 @@ $as_echo "no" >&6; } ;;
   fi
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ASLR needs to be disabled" >&5
+$as_echo_n "checking whether ASLR needs to be disabled... " >&6; }
+case `uname -s`:`uname -r` in
+	    Darwin:11.*)
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	LDFLAGS="$LDFLAGS -Wl,-no_pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-Wl,-no_pie\" to \$LDFLAGS"; fi
+	;;
+    *) { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; } ;;
+esac
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for specified window system" >&5
 $as_echo_n "checking for specified window system... " >&6; }
