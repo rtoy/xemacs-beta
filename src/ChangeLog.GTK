@@ -1,5 +1,9 @@
 2011-12-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (Fg_flags): Define.
+	(syms_of_ui_gtk): Add g-flags.
+	(flag_to_symbol): Return list of symbols for flags that are set.
+
 	* event-gtk.c (emacs_gtk_drain_queue): Replace obsolete function
 	GDK_DISPLAY. 
 	(gtk_reset_key_mapping): Ditto.
