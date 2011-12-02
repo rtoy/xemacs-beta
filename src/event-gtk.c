@@ -1559,7 +1559,7 @@ emacs_gtk_drain_queue (void)
      pending.  Using GDK_events_pending() only shows us windowing
      system events.
   */
-  if (GDK_DISPLAY ())
+  if (gdk_display_get_default ())
     while (gdk_events_pending ())
       gtk_main_iteration ();
 
@@ -1705,7 +1705,7 @@ event_name (GdkEvent *ev)
 static void
 gtk_reset_key_mapping (struct device *d)
 {
-  Display *display = GDK_DISPLAY ();
+  Display *display = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
   struct gtk_device *xd = DEVICE_GTK_DATA (d);
   KeySym *keysym, *keysym_end;
   Lisp_Object hashtable;
@@ -1805,7 +1805,7 @@ struct c_doesnt_have_closures   /* #### not yet used */
 static void
 gtk_reset_modifier_mapping (struct device *d)
 {
-  Display *display = GDK_DISPLAY ();
+  Display *display = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
   struct gtk_device *xd = DEVICE_GTK_DATA (d);
   int modifier_index, modifier_key, column, mkpm;
   int warned_about_overlapping_modifiers = 0;

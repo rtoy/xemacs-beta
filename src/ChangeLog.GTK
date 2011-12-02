@@ -1,5 +1,10 @@
 2011-12-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* event-gtk.c (emacs_gtk_drain_queue): Replace obsolete function
+	GDK_DISPLAY. 
+	(gtk_reset_key_mapping): Ditto.
+	(gtk_reset_modifier_mapping): Ditto.
+
 	* device-gtk.c (gtk_device_init_x_specific_cruft): Replace
 	obsolete function.
 
