@@ -796,5 +796,5 @@ This is used during startup to communicate the default geometry to GTK.
 static void
 gtk_device_init_x_specific_cruft (struct device *d)
 {
-  DEVICE_INFD (d) = DEVICE_OUTFD (d) = ConnectionNumber (GDK_DISPLAY ());
+  DEVICE_INFD (d) = DEVICE_OUTFD (d) = ConnectionNumber (gdk_display_get_default ());
 }
