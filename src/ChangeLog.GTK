@@ -1,5 +1,8 @@
 2011-12-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* device-gtk.c (gtk_device_init_x_specific_cruft): Replace
+	obsolete function.
+
 	* gtk-glue.c (xemacs_type_register): Ifdef out unused function.
 	(xemacs_list_to_gtklist): Ditto.
 	(__make_gtk_object_mapper): Ditto.
