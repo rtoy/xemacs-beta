@@ -39,6 +39,7 @@ GType GTK_TYPE_OBJECT_SLIST = 0;
 
 static int lisp_to_g_value (Lisp_Object obj, GValue *arg);
 
+#ifdef UNSED
 static GType
 xemacs_type_register (const gchar *name, GType parent)
 {
@@ -62,6 +63,7 @@ xemacs_type_register (const gchar *name, GType parent)
 
   return (type_id);
 }
+#endif
 
 static void
 xemacs_init_gtk_classes (void)
@@ -80,6 +82,7 @@ xemacs_init_gtk_classes (void)
 #endif
 }
 
+#ifdef NOTUSED
 static void
 xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
 {
@@ -170,7 +173,9 @@ xemacs_list_to_gtklist (Lisp_Object obj, GValue *arg)
       ABORT ();
     }
 }
+#endif
 
+#ifdef NOTUSED
 static void
 __make_gtk_object_mapper (gpointer data, gpointer user_data)
 {
@@ -178,7 +183,9 @@ __make_gtk_object_mapper (gpointer data, gpointer user_data)
   assert (G_IS_OBJECT (data));
   *rv = Fcons (build_gtk_object (G_OBJECT (data)), *rv);
 }
+#endif
 
+#ifdef NOTUSED
 static void
 __make_string_mapper (gpointer data, gpointer user_data)
 {
@@ -186,7 +193,9 @@ __make_string_mapper (gpointer data, gpointer user_data)
 
   *rv = Fcons (build_cistring ((char *)data), *rv);
 }
+#endif
 
+#ifdef NOTUSED
 static Lisp_Object
 xemacs_gtklist_to_list (GType *UNUSED(arg))
 {
@@ -210,7 +219,9 @@ xemacs_gtklist_to_list (GType *UNUSED(arg))
 #endif
   return (rval);
 }
+#endif
 
+#ifdef NOTUSED
 static void
 xemacs_list_to_array (Lisp_Object obj, GValue *arg)
 {
@@ -284,7 +295,9 @@ xemacs_list_to_array (Lisp_Object obj, GValue *arg)
 #undef FROB
 #endif
 }
+#endif
 
+#ifdef NOTUSED
 static GdkGC *
 face_to_gc (Lisp_Object face)
 {
@@ -305,7 +318,9 @@ face_to_gc (Lisp_Object face)
 					   frame, Qnil, Qnil),
 		      Qnil));
 }
+#endif
 
+#ifdef NOTUSED
 static GtkStyle *
 face_to_style (Lisp_Object face)
 {
@@ -338,7 +353,9 @@ face_to_style (Lisp_Object face)
 #endif
   return (style);
 }
+#endif
 
+#ifdef NOTUSED
 static Lisp_Object
 gdk_event_to_emacs_event (GdkEvent *ev)
 {
@@ -377,3 +394,4 @@ gdk_event_to_emacs_event (GdkEvent *ev)
     }
   return (event);
 }
+#endif /* NOTUSED */

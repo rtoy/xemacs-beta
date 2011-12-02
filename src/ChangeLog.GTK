@@ -1,3 +1,20 @@
+2011-12-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-glue.c (xemacs_type_register): Ifdef out unused function.
+	(xemacs_list_to_gtklist): Ditto.
+	(__make_gtk_object_mapper): Ditto.
+	(__make_string_mapper): Ditto.
+	(xemacs_gtklist_to_list): Ditto.
+	(xemacs_list_to_array): Ditto.
+	(face_to_gc): Ditto.
+	(face_to_style): Ditto.
+	(gdk_event_to_emacs_event): Ditto.
+
+2011-11-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (emacs_gtk_drain_queue): Replace deprecated
+	GDK_DISPLAY with gdk_display_get_default.
+
 2011-11-28  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (Fg_enumeration): Throw an invalid argument if given
