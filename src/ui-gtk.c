@@ -301,6 +301,32 @@ The FLAG may be name or nickname. */
   return make_fixnum (value->value);
 }
 
+DEFUN ("g-flags", Fg_flags, 2, 2, 0, /*
+Return list of flag names set in FLAG_TYPE VALUE.
+*/
+       (type_name, flags))
+{
+  GValue val = G_VALUE_INIT;
+  GType type;
+
+  if (SYMBOLP (type_name))
+    type_name = Fsymbol_name (type_name);
+  CHECK_STRING (type_name);
+  type = g_type_from_name (LISP_STRING_TO_EXTERNAL (type_name, Qutf_8));
+  if (type == G_TYPE_INVALID)
+    invalid_argument ("type is invalid", type_name);
+  if (type == G_TYPE_NONE)
+    invalid_argument ("type is unknown", type_name);
+  if (!G_TYPE_IS_FLAGS (type))
+    invalid_argument ("type is not flag", type_as_symbol (type));
+
+  g_value_init (&val, type);
+  /* Are there flags that exceed fixnum limit? */
+  CHECK_FIXNUM (flags);
+  g_value_set_flags (&val, XFIXNUM (flags));
+  return flag_to_symbol (&val);
+}
+
 static Lisp_Object
 import_gtk_flags_internal (GType the_type)
 {
@@ -1701,6 +1727,7 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fdll_load);
   DEFSUBR (Fg_enumeration);
   DEFSUBR (Fg_flag);
+  DEFSUBR (Fg_flags);
   DEFSUBR (Fgtk_import_function_internal);
   DEFSUBR (Fgtk_import_variable_internal);
   DEFSUBR (Fgtk_signal_connect);
@@ -2243,30 +2270,42 @@ lisp_to_gtk_flag (Lisp_Object obj)
     invalid_argument ("Unknown flag ", obj);
   return val;
 }
- 
+
 static Lisp_Object
 flag_to_symbol (const GValue *arg)
 {
-  /* Do we ever get more than a single flag this way? */
-  gint flag = g_value_get_flags (arg);
-  Lisp_Object value;
-  
-  if (flag < 0)
+  gint flags = g_value_get_flags (arg);
+  GFlagsClass *type_class;
+  Lisp_Object rval = Qnil;
+  int i;
+ 
+  if (flags < 0)
     {
-      invalid_argument ("Unknown flag",
-                        build_cistring (g_type_name (G_VALUE_TYPE (arg))));
+      invalid_argument ("Unknown flags type",
+                        type_as_symbol (G_VALUE_TYPE (arg)));
     }
-  return type_as_symbol (G_VALUE_TYPE (arg));
 
-  /* XXX Flags need to be calculated via GIR */
-  /*
-  value = Frassq (make_fixnum (flag), Vgtk_flags);
-  if (NILP (value))
+  type_class = (GObjectClass *)g_type_class_peek (G_VALUE_TYPE (arg));
+  if (type_class == NULL)
+    invalid_state("Unable to find type class", 
+                  type_as_symbol (G_VALUE_TYPE (arg)));
+
+  for (i = 0; i < 31; i++)
     {
-      invalid_argument ("Unknown flag", make_fixnum (flag));
+      int bit = 1 << i;
+      GFlagsValue *fv = NULL;
+
+      if ((flags & bit) == 0)
+        continue;
+
+      fv = g_flags_get_first_value (type_class, bit);
+      if (fv == NULL)
+        continue;
+
+      rval = Fcons (intern (fv->value_name), rval);
+      
     }
-  return XCAR (value);
-  */
+  return Fnreverse (rval);
 }
 
 static Lisp_Object
