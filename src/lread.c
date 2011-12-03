@@ -2711,13 +2711,15 @@ retry:
 		}
 
 	      Lstream_flush (XLSTREAM (Vread_buffer_stream));
+	      /* blasted terminating 0 */
+	      Lstream_put_ichar (XLSTREAM (Vread_buffer_stream), 0);
 
 	      parsed
 		= parse_integer (resizing_buffer_stream_ptr
 				 (XLSTREAM (Vread_buffer_stream)),
 				 Lstream_byte_count (XLSTREAM
-						     (Vread_buffer_stream)),
-				 10);
+						     (Vread_buffer_stream))
+				 - 1, 10);
 
 	      found = assoc_no_quit (parsed, Vread_objects);
 	      if (c == '=')
