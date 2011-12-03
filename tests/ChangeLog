@@ -1,3 +1,9 @@
+2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	Check that integer object labels (using the #N=... syntax) treat 
+	bignums as such, rather than as fixnums that have wrapped.
+
 2011-11-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Update some tests that have started failing because of some
