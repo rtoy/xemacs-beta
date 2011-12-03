@@ -2697,20 +2697,29 @@ retry:
 	  case '5': case '6': case '7': case '8': case '9':
 	    /* Reader forms that can reuse previously read objects.  */
 	    {
-	      int n = 0;
-	      Lisp_Object found;
+	      Lisp_Object parsed, found;
+
+	      Lstream_rewind (XLSTREAM (Vread_buffer_stream));
 
 	      /* Using read_integer() here is impossible, because it
-                 chokes on `='.  Using parse_integer() is too hard.
-                 So we simply read it in, and ignore overflows, which
-                 is safe.  */
+                 chokes on `='. */
 	      while (c >= '0' && c <= '9')
 		{
-		  n *= 10;
-		  n += c - '0';
+		  Lstream_put_ichar (XLSTREAM (Vread_buffer_stream), c);
+		  QUIT;
 		  c = readchar (readcharfun);
 		}
-	      found = assq_no_quit (make_fixnum (n), Vread_objects);
+
+	      Lstream_flush (XLSTREAM (Vread_buffer_stream));
+
+	      parsed
+		= parse_integer (resizing_buffer_stream_ptr
+				 (XLSTREAM (Vread_buffer_stream)),
+				 Lstream_byte_count (XLSTREAM
+						     (Vread_buffer_stream)),
+				 10);
+
+	      found = assoc_no_quit (parsed, Vread_objects);
 	      if (c == '=')
 		{
 		  /* #n=object returns object, but associates it with
@@ -2720,13 +2729,13 @@ retry:
                       return Fsignal (Qinvalid_read_syntax,
                                       list2 (build_msg_string
                                              ("Multiply defined object label"),
-                                             make_fixnum (n)));
+                                             parsed));
                     }
                   else
                     {
                       Lisp_Object object;
 
-                      found = Fcons (make_fixnum (n), Qnil);
+                      found = Fcons (parsed, Qnil);
                       /* Make FOUND a placeholder for the object that will
                          be read. (We've just consed it, and it's not
                          visible from Lisp, so there's no possibility of
@@ -2751,7 +2760,7 @@ retry:
 		    return Fsignal (Qinvalid_read_syntax,
 				    list2 (build_msg_string
 					   ("Undefined symbol label"),
-					   make_fixnum (n)));
+					   parsed));
 		}
 	      return Fsignal (Qinvalid_read_syntax,
 			      list1 (build_ascstring ("#")));
