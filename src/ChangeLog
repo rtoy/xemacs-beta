@@ -1,6 +1,12 @@
 2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (read1):
+	Zero-terminate what we're giving to parse_integer(), it needs it
+	if it's calling bignum_set_string().
+
+2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1):
 	Don't wrap when reading expressions that use bignums as object
 	labels, that can lead to ambiguity and it's not actually that hard
 	to use parse_integer() to avoid it.
