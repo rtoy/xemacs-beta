@@ -1,3 +1,129 @@
+2011-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* Makefile.in.in (objs):
+	* depend:
+	Add sequence.o to the list of objects and dependencies.
+
+	* alloc.c:
+	* alloc.c (mark_bit_vector):
+	* alloc.c (print_bit_vector):
+	* alloc.c (bit_vector_equal):
+	* alloc.c (internal_bit_vector_equalp_hash):
+	* alloc.c (bit_vector_hash):
+	* alloc.c (init_alloc_once_early):
+	Move the implementation of the bit vector type here from fns.c. 
+
+	* emacs.c (main_1):
+	Call syms_of_sequence() here, now sequence.c is included.
+
+	* fns.c (Fold_rassq):
+	Move this together with the rest of the Fold_* functions.
+	* fns.c:
+	* fns.c (syms_of_fns):
+	Move most functions dealing with sequences generally, and
+	especially those taking key arguments, to a separate file,
+	sequence.c.
+
+	* general-slots.h:
+	Qyes_or_no_p belong here, not fns.c.
+
+	* lisp.h:
+	Make Flist_length available here, it's used by sequence.c
+
+	* sequence.c:
+	* sequence.c (check_sequence_range):
+	* sequence.c (Flength):
+	* sequence.c (check_other_nokey):
+	* sequence.c (check_other_key):
+	* sequence.c (check_if_key):
+	* sequence.c (check_match_eq_key):
+	* sequence.c (check_match_eql_key):
+	* sequence.c (check_match_equal_key):
+	* sequence.c (check_match_equalp_key):
+	* sequence.c (check_match_other_key):
+	* sequence.c (check_lss_key):
+	* sequence.c (check_lss_key_car):
+	* sequence.c (check_string_lessp_key):
+	* sequence.c (check_string_lessp_key_car):
+	* sequence.c (get_check_match_function_1):
+	* sequence.c (get_merge_predicate):
+	* sequence.c (count_with_tail):
+	* sequence.c (list_count_from_end):
+	* sequence.c (string_count_from_end):
+	* sequence.c (Fcount):
+	* sequence.c (Fsubseq):
+	* sequence.c (list_position_cons_before):
+	* sequence.c (FmemberX):
+	* sequence.c (Fadjoin):
+	* sequence.c (FassocX):
+	* sequence.c (FrassocX):
+	* sequence.c (position):
+	* sequence.c (Fposition):
+	* sequence.c (Ffind):
+	* sequence.c (delq_no_quit_and_free_cons):
+	* sequence.c (FdeleteX):
+	* sequence.c (FremoveX):
+	* sequence.c (list_delete_duplicates_from_end):
+	* sequence.c (Fdelete_duplicates):
+	* sequence.c (Fremove_duplicates):
+	* sequence.c (Fnreverse):
+	* sequence.c (Freverse):
+	* sequence.c (list_merge):
+	* sequence.c (array_merge):
+	* sequence.c (list_array_merge_into_list):
+	* sequence.c (list_list_merge_into_array):
+	* sequence.c (list_array_merge_into_array):
+	* sequence.c (Fmerge):
+	* sequence.c (list_sort):
+	* sequence.c (array_sort):
+	* sequence.c (FsortX):
+	* sequence.c (Ffill):
+	* sequence.c (mapcarX):
+	* sequence.c (shortest_length_among_sequences):
+	* sequence.c (Fmapconcat):
+	* sequence.c (FmapcarX):
+	* sequence.c (Fmapvector):
+	* sequence.c (Fmapcan):
+	* sequence.c (Fmap):
+	* sequence.c (Fmap_into):
+	* sequence.c (Fsome):
+	* sequence.c (Fevery):
+	* sequence.c (Freduce):
+	* sequence.c (replace_string_range_1):
+	* sequence.c (Freplace):
+	* sequence.c (Fnsubstitute):
+	* sequence.c (Fsubstitute):
+	* sequence.c (subst):
+	* sequence.c (sublis):
+	* sequence.c (Fsublis):
+	* sequence.c (nsublis):
+	* sequence.c (Fnsublis):
+	* sequence.c (Fsubst):
+	* sequence.c (Fnsubst):
+	* sequence.c (tree_equal):
+	* sequence.c (Ftree_equal):
+	* sequence.c (mismatch_from_end):
+	* sequence.c (mismatch_list_list):
+	* sequence.c (mismatch_list_string):
+	* sequence.c (mismatch_list_array):
+	* sequence.c (mismatch_string_array):
+	* sequence.c (mismatch_string_string):
+	* sequence.c (mismatch_array_array):
+	* sequence.c (get_mismatch_func):
+	* sequence.c (Fmismatch):
+	* sequence.c (Fsearch):
+	* sequence.c (venn):
+	* sequence.c (nvenn):
+	* sequence.c (Funion):
+	* sequence.c (Fset_exclusive_or):
+	* sequence.c (Fnset_exclusive_or):
+	* sequence.c (syms_of_sequence):
+	Add this file, containing those general functions that dealt with
+	sequences that were in fns.c.
+
+	* symsinit.h:
+	Make syms_of_sequence() available here.
+
 2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (read1):

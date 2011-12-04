@@ -5269,6 +5269,7 @@ EXFUN (Flast, 2);
 EXFUN (Flax_plist_get, 3);
 EXFUN (Flax_plist_remprop, 2);
 MODULE_API EXFUN (Flength, 1);
+EXFUN (Flist_length, 1);
 EXFUN (FmapcarX, MANY);
 EXFUN (Fmember, 2);
 EXFUN (Fmemq, 2);
