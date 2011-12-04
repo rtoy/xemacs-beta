@@ -204,7 +204,7 @@ number-gmp.o: $(CONFIG_H) $(LISP_H) sysproc.h syssignal.h systime.h
 number-mp.o: $(CONFIG_H) $(LISP_H)
 number.o: $(CONFIG_H) $(LISP_H)
 opaque.o: $(CONFIG_H) $(LISP_H) opaque.h
-print.o: $(CONFIG_H) $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h conslots.h console-impl.h console-msw.h console-stream-impl.h console-stream.h console-tty-impl.h console-tty.h console.h device-impl.h device.h devslots.h extents.h frame.h insdel.h intl-auto-encap-win32.h lstream.h opaque.h redisplay.h specifier.h sysfile.h systty.h syswindows.h
+print.o: $(CONFIG_H) $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h conslots.h console-impl.h console-msw.h console-stream-impl.h console-stream.h console-tty-impl.h console-tty.h console.h device-impl.h device.h devslots.h elhash.h extents.h frame.h insdel.h intl-auto-encap-win32.h lstream.h opaque.h redisplay.h specifier.h sysfile.h systty.h syswindows.h
 process-nt.o: $(CONFIG_H) $(LISP_H) console-msw.h console.h events.h hash.h intl-auto-encap-win32.h keymap-buttons.h lstream.h process-slots.h process.h procimpl.h sysfile.h sysproc.h syssignal.h systime.h syswindows.h
 process-unix.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h console.h events.h file-coding.h frame.h hash.h intl-auto-encap-win32.h keymap-buttons.h lstream.h ndir.h opaque.h process-slots.h process.h procimpl.h redisplay.h scrollbar.h sysdep.h sysdir.h sysfile.h sysproc.h syssignal.h systime.h systty.h syswait.h syswindows.h window.h
 process.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h commands.h console.h device.h events.h file-coding.h frame.h hash.h insdel.h intl-auto-encap-win32.h keymap-buttons.h lstream.h opaque.h process-slots.h process.h procimpl.h redisplay.h scrollbar.h sysdep.h sysfile.h sysproc.h syssignal.h systime.h systty.h syswait.h syswindows.h window.h
@@ -218,6 +218,7 @@ regex.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h
 scrollbar.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h commands.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h frame-impl.h frame.h frameslots.h glyphs.h gutter.h redisplay.h scrollbar.h specifier.h window-impl.h window.h winslots.h
 search.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h insdel.h opaque.h regex.h syntax.h
 select.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h extents.h fontcolor.h frame.h opaque.h redisplay.h select.h specifier.h
+sequence.o: $(CONFIG_H) $(LISP_H) extents.h
 sgiplay.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h intl-auto-encap-win32.h libst.h sound.h sysfile.h sysproc.h syssignal.h systime.h syswindows.h
 sheap.o: $(CONFIG_H) $(LISP_H) intl-auto-encap-win32.h sheap-adjust.h sysfile.h syswindows.h
 signal.o: $(CONFIG_H) $(LISP_H) conslots.h console-impl.h console.h device-impl.h device.h devslots.h events.h frame-impl.h frame.h frameslots.h intl-auto-encap-win32.h keymap-buttons.h process.h redisplay.h specifier.h sysdep.h sysfile.h syssignal.h systime.h syswindows.h

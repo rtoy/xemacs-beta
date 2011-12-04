@@ -1,3 +1,8 @@
+2011-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi (Basic Lisp Modules):
+	Document sequence.c here too.
+
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/lists.texi (Association Lists):

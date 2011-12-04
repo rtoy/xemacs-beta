@@ -3211,6 +3211,7 @@ The following table contains cross-references from each module in XEmacs
 @item @file{select-x.c} @tab @ref{Modules for Interfacing with X Windows}.
 @item @file{select.c} @tab @ref{Modules for Interfacing with X Windows}.
 @item @file{select.h} @tab @ref{Modules for Interfacing with X Windows}.
+@item @file{sequence.c} @tab @ref{Basic Lisp Modules}.
 @item @file{sgiplay.c} @tab @ref{Modules for Interfacing with the Operating System}.
 @item @file{sheap.c} @tab
 @item @file{signal.c} @tab @ref{Low-Level Modules}.
@@ -3634,6 +3635,7 @@ created, and those symbols are used everywhere throughout XEmacs.
 @file{data.c}
 @file{floatfns.c}
 @file{fns.c}
+@file{sequence.c}
 @end example
 
 These modules implement the methods and standard Lisp primitives for all
@@ -3641,11 +3643,11 @@ the basic Lisp object types other than symbols (which are described
 above).  @file{data.c} contains all the predicates (primitives that return
 whether an object is of a particular type); the integer arithmetic
 functions; and the basic accessor and mutator primitives for the various
-object types.  @file{fns.c} contains all the standard predicates for working
+object types.  @file{sequence.c} contains all the built-in functions for working
 with sequences (where, abstractly speaking, a sequence is an ordered set
 of objects, and can be represented by a list, string, vector, or
-bit-vector); it also contains @code{equal}, perhaps on the grounds that
-bulk of the operation of @code{equal} is comparing sequences.
+bit-vector). @file{fns.c} contains @code{equal} and a grab-bag of other
+functions that should probably be refactored elsewhere.
 @file{floatfns.c} contains methods and primitives for floats and floating-point
 arithmetic.
 
