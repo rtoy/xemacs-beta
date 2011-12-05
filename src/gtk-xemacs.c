@@ -319,7 +319,7 @@ gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
 	  Scrollbars are the only widget that is managed by GTK.  See
 	  comments in gtk_create_scrollbar_instance().
 	*/
-	if (GTK_WIDGET_VISIBLE (child->widget) &&
+	if (gtk_widget_get_visible (child->widget) &&
 	    gtk_type_is_a(GTK_OBJECT_TYPE(child->widget), GTK_TYPE_SCROLLBAR))
 	  {
 	    GtkAllocation child_allocation;

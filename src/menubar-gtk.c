@@ -96,7 +96,7 @@ __maybe_destroy (GtkWidget *child, GtkWidget *UNUSED (precious))
 {
   if (GTK_IS_MENU_ITEM (child))
     {
-      if (GTK_WIDGET_VISIBLE (child))
+      if (gtk_widget_get_visible (child))
 	{
 	  /* If we delete the menu item that was 'active' when the
 	     menu was cancelled, GTK gets upset because it tries to
@@ -1112,7 +1112,7 @@ gtk_update_frame_menubar_internal (struct frame *f)
      || (!EQ (XFRAME_GTK_MENUBAR_DATA_LASTBUFF (f),
 	      XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer)));
 
-  gboolean menubar_was_visible = GTK_WIDGET_VISIBLE (FRAME_GTK_MENUBAR_WIDGET (f));
+  gboolean menubar_was_visible = gtk_get_widget_visible (FRAME_GTK_MENUBAR_WIDGET (f));
   gboolean menubar_will_be_visible = menubar_was_visible;
   gboolean menubar_visibility_changed;
 
