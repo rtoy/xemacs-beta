@@ -1,5 +1,12 @@
 2011-12-05  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (__maybe_destroy): Replace obsolete
+	GTK_WIDGET_VISIBLE. 
+	(gtk_update_frame_menubar_internal): Ditto.
+
+	* gtk-xemacs.c (gtk_xemacs_size_allocate): Replace obsolete
+	GTK_WIDGET_VISIBLE. 
+
 	* ui-gtk.c (import_gtk_enumeration_internal): Replace obsolete
 	GtkEnumValue code.
 	(import_gtk_flags_internal): Replace obsolete GtkFlagValue.
