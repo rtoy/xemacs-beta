@@ -285,7 +285,10 @@ The FLAG may be name or nickname. */
 
   klass = G_FLAGS_CLASS (g_type_class_ref (type));
   if (NILP (flag))
-    return list_flags (klass);
+    {
+      g_type_class_unref (klass);
+      return list_flags (klass);
+    }
 
   if (SYMBOLP (flag))
     flag = Fsymbol_name (flag);
@@ -297,7 +300,8 @@ The FLAG may be name or nickname. */
     value = g_flags_get_value_by_nick (klass, name);
   if (value == NULL)
     invalid_state ("unknown flag", flag);
-  /* XXX fixnum is not big enough for GdkEventMask */
+  g_type_class_unref (klass);
+  /* XXX fixnum may not be big enough for GdkEventMask */
   return make_fixnum (value->value);
 }
 
@@ -402,7 +406,10 @@ The ENUMERATION may be name or nickname. */
 
   klass = G_ENUM_CLASS (g_type_class_ref (type));
   if (NILP (enumeration))
-    return list_enumeration (klass);
+    {
+      g_type_class_unref (klass);
+      return list_enumeration (klass);
+    }
 
   if (SYMBOLP (enumeration))
     enumeration = Fsymbol_name (enumeration);
@@ -414,6 +421,7 @@ The ENUMERATION may be name or nickname. */
     value = g_enum_get_value_by_nick (klass, name);
   if (value == NULL)
     invalid_state ("unknown enumeration", enumeration);
+  g_type_class_unref (klass);
   return make_fixnum (value->value);
 }
   
@@ -1675,9 +1683,12 @@ Return a list of all property names for class TYPE.
   if (gt == G_TYPE_INVALID)
     invalid_state ("type does not exist", type);
 
-  type_class = (GObjectClass *)g_type_class_peek (gt);
+  type_class = (GObjectClass *)g_type_class_ref (gt);
   if (type_class == NULL)
-    invalid_state("Unable to create GObject of class", type);
+    {
+      g_type_class_unref (type_class);
+      invalid_state("Unable to create GObject of class", type);
+    }
 
   props = g_object_class_list_properties (type_class, &n_props);
   for (i = 0; i < n_props; i++) 
@@ -1686,6 +1697,7 @@ Return a list of all property names for class TYPE.
                         prop_list);
   prop_list = Freverse (prop_list);
   g_free (props);
+  g_type_class_unref (type_class);
   return prop_list;
 }
 
@@ -2298,10 +2310,12 @@ flag_to_symbol (const GValue *arg)
                         type_as_symbol (G_VALUE_TYPE (arg)));
     }
 
-  type_class = (GObjectClass *)g_type_class_peek (G_VALUE_TYPE (arg));
+  type_class = (GObjectClass *)g_type_class_ref (G_VALUE_TYPE (arg));
   if (type_class == NULL)
-    invalid_state("Unable to find type class", 
-                  type_as_symbol (G_VALUE_TYPE (arg)));
+    {
+      g_type_class_unref (type_class);
+      invalid_state("Unable to find type class", 
+                    type_as_symbol (G_VALUE_TYPE (arg)));
 
   for (i = 0; i < 31; i++)
     {
@@ -2318,6 +2332,7 @@ flag_to_symbol (const GValue *arg)
       rval = Fcons (intern (fv->value_name), rval);
       
     }
+  g_type_class_unref (type_class);
   return Fnreverse (rval);
 }
 

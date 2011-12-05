@@ -3,6 +3,11 @@
 	* ui-gtk.c (import_gtk_enumeration_internal): Replace obsolete
 	GtkEnumValue code.
 	(import_gtk_flags_internal): Replace obsolete GtkFlagValue.
+	(Fg_flag): Unref type class.
+	(Fg_enumeration): Ditto.
+	(Fg_object_class_list_properties): Don't just peek, reference the
+	type class to ensure it is instantiated.  Unref when done.
+	(flag_to_symbol): Ditto.
 
 2011-12-02  Jeff Sparkes  <jsparkes@gmail.com>
 
