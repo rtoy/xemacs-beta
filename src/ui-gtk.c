@@ -413,24 +413,30 @@ The ENUMERATION may be name or nickname. */
 static Lisp_Object
 import_gtk_enumeration_internal (GType the_type)
 {
-  GtkEnumValue *vals = gtk_type_enum_get_values (the_type);
+  GEnumClass *klass = NULL;
+  int i;
   
   if (!G_TYPE_IS_ENUM (the_type))
-    invalid_argument ("Gtk type is not an enum",
-                      intern (g_type_name (the_type)));
+    invalid_argument ("type is not an enum",
+                      type_as_symbol (the_type));
 
-  while (vals && vals->value_name)
+  klass = G_ENUM_CLASS (the_type);
+  if (klass != NULL)
     {
-      Vgtk_enumerations = Facons (intern (vals->value_nick),
-                                  make_fixnum (vals->value),
-                                  Vgtk_enumerations);
-      Vgtk_enumerations = Facons (intern (vals->value_name),
-                                  make_fixnum (vals->value),
-                                  Vgtk_enumerations);
+      for (i = 0; i < klass->n_values; i++)
+        {
+          GEnumValue *val = &klass->values[i];
+          Vgtk_enumerations = Facons (intern (val->value_nick),
+                                      make_fixnum (val->value),
+                                      Vgtk_enumerations);
+          Vgtk_enumerations = Facons (intern (val->value_name),
+                                      make_fixnum (val->value),
+                                      Vgtk_enumerations);
 #if DEBUG_XEMACS
-      debug_out("enum %s %s => %d\n", vals->value_nick, vals->value_name, vals->value);
+          debug_out("enum %s %s => %d\n", val->value_nick,
+                    val->value_name, val->value);
 #endif
-      vals++;
+        }
     }
   return mark_type_as_imported (the_type);
 }
