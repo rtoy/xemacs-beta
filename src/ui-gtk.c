@@ -330,26 +330,33 @@ Return list of flag names set in FLAG_TYPE VALUE.
 static Lisp_Object
 import_gtk_flags_internal (GType the_type)
 {
-  GtkFlagValue *vals = gtk_type_flags_get_values (the_type);
+  GFlagsClass *klass = NULL;
+  guint i;
 
   if (!G_TYPE_IS_FLAGS (the_type))
-    invalid_argument ("Gtk type is not a flag", type_as_symbol (the_type));
+    invalid_argument ("type is not a flag", type_as_symbol (the_type));
 
-  while (vals && vals->value_name)
+  klass = G_FLAGS_CLASS (g_type_class_ref (the_type));
+
+  if (klass)
     {
-      /* The nickname is more likely to be used, but save both names. */
-      Vgtk_flags = Facons (intern ((CIbyte *)vals->value_nick),
-                           make_fixnum (vals->value),
-                           Vgtk_flags);
-      Vgtk_flags = Facons (intern ((CIbyte *)vals->value_name),
-                           make_fixnum (vals->value),
-                           Vgtk_flags);
+      for (i = 0; i < klass->n_values; i++)
+        {
+          GFlagsValue *val = &(klass->values[i]);
+          /* The nickname is more likely to be used, but save both names. */
+          Vgtk_flags = Facons (intern (val->value_nick),
+                               make_fixnum (val->value),
+                               Vgtk_flags);
+          Vgtk_flags = Facons (intern (val->value_name),
+                               make_fixnum (val->value),
+                               Vgtk_flags);
 #if DEBUG_XEMACS
-      debug_out("flag %s %s => %d\n", vals->value_nick, vals->value_name,
-                vals->value);
+          debug_out("flag %s %s => %d\n", val->value_nick, val->value_name,
+                    val->value);
 #endif
-      vals++;
+        }
     }
+  g_type_class_unref (klass);
   return mark_type_as_imported (the_type);
 }
 
