@@ -2,6 +2,7 @@
 
 	* ui-gtk.c (import_gtk_enumeration_internal): Replace obsolete
 	GtkEnumValue code.
+	(import_gtk_flags_internal): Replace obsolete GtkFlagValue.
 
 2011-12-02  Jeff Sparkes  <jsparkes@gmail.com>
 
