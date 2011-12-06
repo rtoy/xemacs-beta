@@ -1,5 +1,7 @@
 2011-12-06  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-xemacs.c (gtk_xemacs_init): Replace GTK_WIDGET_SET_FLAGS.
+
 	* menubar-gtk.c (gtk_update_frame_menubar_internal): Fix undefined
 	function call.
 
