@@ -1,6 +1,9 @@
 2011-12-06  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* ui-byhand.c: Remove GtkCList related functions.
+	* event-gtk.c (handle_focus_event_1): Remove obsolete widget focus
+	flags.
+
+	* ui-byhand.c: Remove deprecated GtkCList related functions.
 
 	* toolbar-xlike.c (__INTERNAL_MAPPED_P): Replace GTK_WIDGET_REALIZED.
 

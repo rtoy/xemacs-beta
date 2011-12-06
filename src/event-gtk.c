@@ -124,16 +124,8 @@ handle_focus_event_1 (struct frame *f, int in_p)
    */
   x_focus_timestamp_really_sucks_fix_me_better = time(0);
 
-    if (in_p)
-    {
-	GTK_WIDGET_SET_FLAGS (FRAME_GTK_TEXT_WIDGET (f), GTK_HAS_FOCUS);
-    }
-    else
-    {
-	GTK_WIDGET_UNSET_FLAGS (FRAME_GTK_TEXT_WIDGET (f), GTK_HAS_FOCUS);
-    }
     gtk_widget_grab_focus (FRAME_GTK_TEXT_WIDGET (f));
-    // Note: what is this replaced with?
+    // Note: what is this replaced with? -jsparkes
     // gtk_widget_draw_focus (FRAME_GTK_TEXT_WIDGET (f));
 
     {
