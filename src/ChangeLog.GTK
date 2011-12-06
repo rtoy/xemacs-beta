@@ -1,5 +1,7 @@
 2011-12-06  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-byhand.c: Remove GtkCList related functions.
+
 	* toolbar-xlike.c (__INTERNAL_MAPPED_P): Replace GTK_WIDGET_REALIZED.
 
 	* gtk-xemacs.c (gtk_xemacs_init): Replace GTK_WIDGET_SET_FLAGS.
