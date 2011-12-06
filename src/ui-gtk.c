@@ -2316,7 +2316,7 @@ flag_to_symbol (const GValue *arg)
       g_type_class_unref (type_class);
       invalid_state("Unable to find type class", 
                     type_as_symbol (G_VALUE_TYPE (arg)));
-
+    }
   for (i = 0; i < 31; i++)
     {
       int bit = 1 << i;
