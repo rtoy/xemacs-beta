@@ -198,7 +198,7 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
 {
   struct frame *f = XFRAME (w->frame);
   GtkWidget *wid = SCROLLBAR_GTK_WIDGET (instance);
-  gboolean managed = GTK_WIDGET_MAPPED (wid);
+  gboolean managed = gtk_widget_get_mapped (wid);
 
   if (active && size)
     {
@@ -291,11 +291,11 @@ gtk_scrollbar_loop (enum gtk_scrollbar_loop type, Lisp_Object window,
                   GtkWidget *widget;
 
 		  widget = SCROLLBAR_GTK_WIDGET (hinstance);
-		  if (widget && GTK_WIDGET_MAPPED (widget))
+		  if (widget && gtk_widget_get_mapped (widget))
 		    update_one_widget_scrollbar_pointer (w, widget);
 
 		  widget = SCROLLBAR_GTK_WIDGET (vinstance);
-		  if (widget && GTK_WIDGET_MAPPED (widget))
+		  if (widget && gtk_widget_get_mapped (widget))
 		    update_one_widget_scrollbar_pointer (w, widget);
 		}
 	      break;
@@ -305,12 +305,12 @@ gtk_scrollbar_loop (enum gtk_scrollbar_loop type, Lisp_Object window,
 		  GtkWidget *widget;
 
 		  widget = SCROLLBAR_GTK_WIDGET (hinstance);
-		  if (widget && GTK_WIDGET_MAPPED (widget) &&
+		  if (widget && gtk_widget_get_mapped (widget) &&
 		      GET_GTK_WIDGET_WINDOW (widget) == x_win)
 		    return (struct window_mirror *) 1;
 
 		  widget = SCROLLBAR_GTK_WIDGET (vinstance);
-		  if (widget && GTK_WIDGET_MAPPED (widget) &&
+		  if (widget && gtk_widget_get_mapped (widget) &&
 		      GET_GTK_WIDGET_WINDOW (widget) == x_win)
 		    return (struct window_mirror *) 1;
 		}
