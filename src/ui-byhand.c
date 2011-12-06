@@ -91,122 +91,6 @@ Return a list of (YEAR MONTH DAY) from the CALENDAR object.
   return (list3 (make_fixnum (year), make_fixnum (month), make_fixnum (day)));
 }
 
-/* gint gtk_clist_get_text (GtkCList  *clist,
-			 gint       row,
-			 gint       column,
-			 gchar    **text);
-*/
-DEFUN ("gtk-clist-get-text", Fgtk_clist_get_text, 3, 3, 0, /*
-Returns the text from GtkCList OBJ cell at coordinates ROW, COLUMN.
-*/
-       (obj, row, column))
-{
-  gchar *text = NULL;
-  Lisp_Object rval = Qnil;
-
-  CHECK_GTK_OBJECT (obj);
-  CHECK_FIXNUM (row);
-  CHECK_FIXNUM (column);
-
-  if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
-    {
-      wtaerror ("Object is not a GtkCList", obj);
-    }
-
-  gtk_clist_get_text (GTK_CLIST (XGTK_OBJECT (obj)->object), XFIXNUM (row), XFIXNUM (column), &text);
-
-  if (text)
-    {
-      rval = build_cistring (text);
-      /* NOTE: This is NOT a memory leak.  GtkCList returns a pointer
-	 to internally used memory, not a copy of it.
-	 g_free (text);
-      */
-    }
-
-  return (rval);
-}
-
-/* gint gtk_clist_get_selection_info (GtkCList *clist,
-			     	   gint      x,
-			     	   gint      y,
-			     	   gint     *row,
-			     	   gint *column); */
-DEFUN ("gtk-clist-get-selection-info", Fgtk_clist_get_selection, 3, 3, 0, /*
-Returns a cons cell of (ROW . COLUMN) of the GtkCList OBJ at coordinates X, Y.
-*/
-       (obj, x, y))
-{
-  gint row, column;
-
-  CHECK_GTK_OBJECT (obj);
-  CHECK_FIXNUM (x);
-  CHECK_FIXNUM (y);
-
-  if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
-    {
-      wtaerror ("Object is not a GtkCList", obj);
-    }
-
-  gtk_clist_get_selection_info (GTK_CLIST (XGTK_OBJECT (obj)->object),
-				XFIXNUM (x), XFIXNUM (y), &row, &column);
-
-  return (Fcons (make_fixnum (row), make_fixnum (column)));
-}
-
-DEFUN ("gtk-clist-get-pixmap", Fgtk_clist_get_pixmap, 3, 3, 0, /*
-Return a cons of (pixmap . mask) at ROW,COLUMN in CLIST.
-*/
-       (clist, row, column))
-{
-  GdkPixmap *pixmap = NULL;
-  GdkBitmap *mask = NULL;
-
-  CHECK_GTK_OBJECT (clist);
-  CHECK_FIXNUM (row);
-  CHECK_FIXNUM (column);
-
-  if (!GTK_IS_CLIST (XGTK_OBJECT (clist)->object))
-    {
-      wtaerror ("Object is not a GtkCList", clist);
-    }
-
-  gtk_clist_get_pixmap (GTK_CLIST (XGTK_OBJECT (clist)->object),
-			XFIXNUM (row), XFIXNUM (column),
-			&pixmap, &mask);
-
-  return (Fcons (pixmap ? build_gtk_object (G_OBJECT (pixmap)) : Qnil,
-		 mask ? build_gtk_object (G_OBJECT (mask)) : Qnil));
-}
-
-DEFUN ("gtk-clist-get-pixtext", Fgtk_clist_get_pixtext, 3, 3, 0, /*
-Return a list of (pixmap mask text) at ROW,COLUMN in CLIST.
-*/
-       (clist, row, column))
-{
-  GdkPixmap *pixmap = NULL;
-  GdkBitmap *mask = NULL;
-  char *text = NULL;
-  guint8 spacing;
-
-  CHECK_GTK_OBJECT (clist);
-  CHECK_FIXNUM (row);
-  CHECK_FIXNUM (column);
-
-  if (!GTK_IS_CLIST (XGTK_OBJECT (clist)->object))
-    {
-      wtaerror ("Object is not a GtkCList", clist);
-    }
-
-  gtk_clist_get_pixtext (GTK_CLIST (XGTK_OBJECT (clist)->object),
-			 XFIXNUM (row), XFIXNUM (column), &text, &spacing,
-			 &pixmap, &mask);
-
-  return (list3 (pixmap ? build_gtk_object (G_OBJECT (pixmap)) : Qnil,
-		 mask ? build_gtk_object (G_OBJECT (mask)) : Qnil,
-		 (text && text[0]) ? build_cistring (text) : Qnil));
-}
-
 /* void gtk_color_selection_get_color(GtkColorSelection *colorsel, gdouble *color); */
 DEFUN ("gtk-color-selection-get-color", Fgtk_color_selection_get_color, 1, 1, 0, /*
 Return a list of (RED GREEN BLUE ALPHA) from the GtkColorSelection OBJECT.
@@ -541,10 +425,6 @@ void syms_of_ui_byhand (void)
 {
   DEFSUBR (Fgtk_box_query_child_packing);
   DEFSUBR (Fgtk_calendar_get_date);
-  DEFSUBR (Fgtk_clist_get_text);
-  DEFSUBR (Fgtk_clist_get_selection);
-  DEFSUBR (Fgtk_clist_get_pixmap);
-  DEFSUBR (Fgtk_clist_get_pixtext);
   DEFSUBR (Fgtk_color_selection_get_color);
   DEFSUBR (Fgtk_editable_insert_text);
   DEFSUBR (Fgtk_pixmap_get);
