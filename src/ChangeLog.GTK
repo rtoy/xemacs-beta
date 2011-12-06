@@ -1,5 +1,8 @@
 2011-12-06  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_tab_control_callback): Remove reference to
+	obsolete class GtkNotebookPage.
+
 	* event-gtk.c (handle_focus_event_1): Remove obsolete widget focus
 	flags.
 
