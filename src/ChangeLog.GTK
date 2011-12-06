@@ -1,5 +1,8 @@
 2011-12-06  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (gtk_update_frame_menubar_internal): Fix undefined
+	function call.
+
 	* ui-gtk.c (flag_to_symbol): Added missing }.
 
 2011-12-05  Jeff Sparkes  <jsparkes@gmail.com>
