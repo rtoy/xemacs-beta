@@ -97,7 +97,7 @@ gtk_xemacs_class_init (GtkXEmacsClass *class_)
 static void
 gtk_xemacs_init (GtkXEmacs *xemacs, GtkXEmacsClass * UNUSED (klass))
 {
-    GTK_WIDGET_SET_FLAGS (xemacs, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (GTK_WIDGET (xemacs), TRUE);
 }
 
 GtkWidget*
