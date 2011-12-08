@@ -914,6 +914,7 @@ TEMACS_COMMON_OBJS= \
 	$(OUTDIR)\regex.obj \
 	$(OUTDIR)\search.obj \
 	$(OUTDIR)\select.obj \
+	$(OUTDIR)\sequence.obj \
 	$(OUTDIR)\signal.obj \
 	$(OUTDIR)\sound.obj \
 	$(OUTDIR)\specifier.obj \

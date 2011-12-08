@@ -1,3 +1,8 @@
+2011-12-08  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak: Added sequence.obj to the object list, per Aidan's
+	latest check-in.
+
 2011-11-28  Vin Shelton  <acs@xemacs.org>
 
 	* config.inc.samp: Update version number for png, zlib, jpeg and tiff.
