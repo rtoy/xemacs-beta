@@ -3891,8 +3891,10 @@ non-nil, `the' is equivalent to FORM without any type checks."
 
 ;;;###autoload
 (defmacro load-time-value (form &optional read-only)
-  "Like `progn', but evaluates the body at load time.
-The result of the body appears to the compiler as a quoted constant."
+  "Evaluate FORM once at load time if byte-compiled.
+
+The result of FORM is returned and stored for later access.  In
+interpreted code, `load-time-value' is equivalent to `progn'."
   (list 'progn form))
 
 ;;;###autoload

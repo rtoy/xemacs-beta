@@ -1,3 +1,9 @@
+2011-12-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (load-time-value):
+	Clarify the docstring here, thanks for pointing out its inaccuracy
+	Julian Bradfield.
+
 2011-11-14  Vin Shelton  <acs@xemacs.org>
 
 	* faces.el: When the default background was changed from light to
