@@ -1,3 +1,8 @@
+2011-12-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (posix-charset-to-coding-system-hash):
+	Correct the docstring for this variable.
+
 2011-12-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (load-time-value):
