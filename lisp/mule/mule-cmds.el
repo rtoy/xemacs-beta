@@ -1024,7 +1024,7 @@ when the language environment is made current."
 ;; on--has been loaded.
 (defvar posix-charset-to-coding-system-hash nil
   "A map from the POSIX locale charset versions of the defined coding
-systems' names, with all alpha-numeric characters removed, to the actual
+systems' names, with all non-alpha-numeric characters removed, to the actual
 coding system names.  Used at startup when working out which coding system
 should be the default for the locale.  ")
 
