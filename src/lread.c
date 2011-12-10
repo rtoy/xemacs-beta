@@ -2710,9 +2710,9 @@ retry:
 		  c = readchar (readcharfun);
 		}
 
-	      Lstream_flush (XLSTREAM (Vread_buffer_stream));
 	      /* blasted terminating 0 */
 	      Lstream_put_ichar (XLSTREAM (Vread_buffer_stream), 0);
+	      Lstream_flush (XLSTREAM (Vread_buffer_stream));
 
 	      parsed
 		= parse_integer (resizing_buffer_stream_ptr
