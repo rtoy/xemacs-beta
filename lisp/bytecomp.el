@@ -455,11 +455,16 @@ easily determined from the input file.")
 ;;; "If a file being compiled contains a `defmacro' form, the macro is
 ;;; defined temporarily for the rest of the compilation of that file."
 (defun byte-compile-eval (form)
-  (let ((save-macro-environment nil))
+  (let ((save-macro-environment nil)
+	;; These are macros in byte-compile-initial-macro-environment that
+	;; shouldn't be shadowed when calling #'byte-compile-eval, since
+	;; such code is interpreted, not compiled.
+	;; #### Consider giving this a docstring and a top-level value.
+	(byte-compile-no-shadow '(load-time-value labels flet)))
     (unwind-protect
 	(loop
 	  for (sym . def) in byte-compile-macro-environment
-	  do (when (symbolp sym)
+	  do (when (and (symbolp sym) (not (memq sym byte-compile-no-shadow)))
 	       (push
 		(if (fboundp sym)
 		    (cons sym (symbol-function sym))
