@@ -5,6 +5,13 @@
 
 2011-12-13  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (byte-compile-eval):
+	When evaluating code at compile time, don't put those macros in
+	the macro environment that only make sense when creating
+	byte-compiled output.
+
+2011-12-13  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el (byte-compile-initial-macro-environment):
 	If lexical let has played with our lambas, give up on constructing
 	the compiled functions at compiled time, that strategy doesn't
