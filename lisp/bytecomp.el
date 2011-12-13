@@ -636,9 +636,31 @@ easily determined from the input file.")
                                (cons 'progn
                                      (byte-compile-transform-labels
                                       form names lambdas placeholders))))))
-                   (cl-macroexpand-all `(,gensym ',names (list ,@lambdas)
-                                         ',placeholders ,@body)
-                                       byte-compile-macro-environment)))))
+		   (setq body
+			 (cl-macroexpand-all `(,gensym ',names (list ,@lambdas)
+					       ',placeholders ,@body)
+					     byte-compile-macro-environment))
+		   (if (position 'lambda (mapcar #'(lambda (object)
+						     (car-safe (cdr-safe
+								object)))
+						 (cdr (third body)))
+				 :key #'car-safe :test-not #'eq)
+		       ;; #'lexical-let has worked its magic, not all the
+		       ;; lambdas are lambdas. Give up on pre-compiling the
+		       ;; labels.
+		       (setq names (mapcar #'copy-symbol names)
+			     lambdas (cdr (third body))
+			     body (sublis (pairlis placeholders names)
+					  (nthcdr 4 body) :test #'eq)
+			     lambdas (sublis (pairlis placeholders names)
+					     lambdas :test #'eq)
+			     body (cl-macroexpand-all
+				   `(lexical-let
+				     ,names
+				     (setf ,@(mapcan #'list names lambdas))
+				     ,@body)
+				   byte-compile-macro-environment))
+		     body)))))
     (flet .
       ,#'(lambda (bindings &rest body)
            (let* ((names (mapcar 'car bindings))
