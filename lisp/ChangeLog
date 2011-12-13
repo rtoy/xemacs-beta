@@ -3,6 +3,13 @@
 	* mule/mule-cmds.el (posix-charset-to-coding-system-hash):
 	Correct the docstring for this variable.
 
+2011-12-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	If lexical let has played with our lambas, give up on constructing
+	the compiled functions at compiled time, that strategy doesn't
+	work.
+
 2011-12-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (load-time-value):
