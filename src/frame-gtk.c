@@ -921,11 +921,11 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 		     dnd_target_table, dnd_n_targets,
 		     GDK_ACTION_COPY | GDK_ACTION_LINK | GDK_ACTION_ASK);
   assert (g_signal_connect (G_OBJECT (text), "drag_drop",
-                            GTK_SIGNAL_FUNC (dragndrop_dropped), text));
+                            G_CALLBACK (dragndrop_dropped), text));
   assert (g_signal_connect (G_OBJECT (text), "drag_data_received",
-                            GTK_SIGNAL_FUNC (dragndrop_data_received), text));
+                            G_CALLBACK (dragndrop_data_received), text));
   assert (g_signal_connect (G_OBJECT (text), "drag_data_get",
-                            GTK_SIGNAL_FUNC (dragndrop_get_drag), NULL));
+                            G_CALLBACK (dragndrop_get_drag), NULL));
 #endif
 
 #ifdef HAVE_MENUBARS
@@ -949,7 +949,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
   /* Connect main event handler */
   assert (g_signal_connect (G_OBJECT (shell), "delete-event",
-                            GTK_SIGNAL_FUNC (delete_event_cb), f));
+                            G_CALLBACK (delete_event_cb), f));
 
   {
     static const gchar *events_to_frob[] = { "focus-in-event",
@@ -971,17 +971,17 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
     for (i = 0; events_to_frob[i]; i++)
       {
 	assert (g_signal_connect (G_OBJECT (shell), events_to_frob[i],
-                                  GTK_SIGNAL_FUNC (emacs_shell_event_handler), f));
+                                  G_CALLBACK (emacs_shell_event_handler), f));
       }
   }
 
   assert (g_signal_connect (G_OBJECT (shell), "size-allocate",
-                            GTK_SIGNAL_FUNC (size_allocate_cb), f));
+                            G_CALLBACK (size_allocate_cb), f));
   assert (g_signal_connect (G_OBJECT (shell), "size-request",
-                            GTK_SIGNAL_FUNC (size_request_cb), f));
+                            G_CALLBACK (size_request_cb), f));
 
   /* This might be safe to call now... */
-  /* gtk_signal_connect (GTK_OBJECT (shell), "event", GTK_SIGNAL_FUNC (emacs_shell_event_handler), f); */
+  /* gtk_signal_connect (GTK_OBJECT (shell), "event", G_CALLBACK (emacs_shell_event_handler), f); */
 
   /* Let's make sure we get all the events we can */
   gtk_widget_set_events (text, GDK_ALL_EVENTS_MASK);
