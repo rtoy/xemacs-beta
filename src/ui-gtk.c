@@ -1024,7 +1024,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
   write_ascstring (printcharfun, "#<GtkObject (");
   /* Haven't found alive indicator in 2.X */
   if (XGTK_OBJECT (obj)->alive_p)
-    write_cistring (printcharfun, g_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
+    write_cistring (printcharfun, g_type_name (G_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
   else
     write_ascstring (printcharfun, "dead");
   write_fmt_string (printcharfun, ") 0x%0x>", (void *) XGTK_OBJECT (obj)->object);
@@ -1151,7 +1151,7 @@ allocate_emacs_gtk_object_data (void)
 
 /* We need to keep track of when the object is destroyed so that we
    can mark it as dead, otherwise even our print routine (which calls
-   GTK_OBJECT_TYPE) will crap out and die.  This is also used in the
+   G_OBJECT_TYPE) will crap out and die.  This is also used in the
    lisp_to_g_value() routine to defend against passing dead objects
    to GTK routines. */
 static void
@@ -1419,22 +1419,13 @@ This is the base object type.
   return (type_as_symbol (GTK_FUNDAMENTAL_TYPE (t)));
 }
 
-DEFUN ("gtk-object-type", Fgtk_object_type, 1, 1, 0, /*
-Return the GType of OBJECT.
-*/
-       (object))
-{
-  CHECK_GTK_OBJECT (object);
-  return (type_as_symbol (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
-}
-
 DEFUN ("g-object-type", Fg_object_type, 1, 1, 0, /*
 Return the GType of OBJECT.
 */
        (object))
 {
   CHECK_GTK_OBJECT (object);
-  return (type_as_symbol (GTK_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
+  return (type_as_symbol (G_OBJECT_TYPE (XGTK_OBJECT (object)->object)));
 }
 
 DEFUN ("gtk-describe-type", Fgtk_describe_type, 1, 1, 0, /*
@@ -1758,7 +1749,6 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fgtk_signal_connect);
   DEFSUBR (Fgtk_call_function);
   DEFSUBR (Fgtk_fundamental_type);
-  DEFSUBR (Fgtk_object_type);
   DEFSUBR (Fgtk_describe_type);
   DEFSUBR (Fg_type_name);
   DEFSUBR (Fg_type_from_name);
@@ -1868,7 +1858,7 @@ void describe_gtk_arg (GtkParamSpec *arg)
       /* base type of the object system */
     case G_TYPE_OBJECT:
       if (GTK_VALUE_OBJECT (a))
-	stderr_out ("object: %s\n", g_type_name (GTK_OBJECT_TYPE (GTK_VALUE_OBJECT (a))));
+	stderr_out ("object: %s\n", g_type_name (G_OBJECT_TYPE (GTK_VALUE_OBJECT (a))));
       else
 	stderr_out ("object: NULL\n");
       break;
