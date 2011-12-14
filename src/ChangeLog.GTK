@@ -1,5 +1,8 @@
 2011-12-14  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (menu_convert): Cast to GTK_MENU_SHELL.
+	(__activate_menu): Ditto.
+
 	* ui-gtk.c (Fg_object_properties): Move declaration before code.
 	(__allocate_object_storage): Remove.
 

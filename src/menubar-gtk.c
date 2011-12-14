@@ -181,8 +181,8 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
       if (next)
         {
           gtk_widget_show_all (next);
-          gtk_menu_shell_append (GTK_MENU (gtk_menu_item_get_submenu (item)),
-                           next);
+          gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (item)),
+                                 next);
         }
     }
 }
@@ -396,7 +396,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 
 	g_object_set_qdata (G_OBJECT (menu_item), XEMACS_MENU_FIRSTTIME_TAG, (gpointer)0x01);
 	gtk_widget_show_all (bogus_item);
-	gtk_menu_shell_append (GTK_MENU (submenu), bogus_item);
+	gtk_menu_shell_append (GTK_MENU_SHELL (submenu), bogus_item);
       }
 
       desc = Fcdr (desc);
