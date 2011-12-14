@@ -136,7 +136,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
       gtk_container_foreach (GTK_CONTAINER (sub),
                             (GtkCallback) __maybe_destroy, selected);
     }
-  else if (gtk_container_children (GTK_CONTAINER (gtk_menu_item_get_submenu (item))))
+  else if (gtk_container_get_children (GTK_CONTAINER (gtk_menu_item_get_submenu (item))))
     {
       return;
     }
@@ -181,7 +181,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
       if (next)
         {
           gtk_widget_show_all (next);
-          gtk_menu_append (GTK_MENU (gtk_menu_item_get_submenu (item)),
+          gtk_menu_shell_append (GTK_MENU (gtk_menu_item_get_submenu (item)),
                            next);
         }
     }
@@ -396,7 +396,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 
 	g_object_set_qdata (G_OBJECT (menu_item), XEMACS_MENU_FIRSTTIME_TAG, (gpointer)0x01);
 	gtk_widget_show_all (bogus_item);
-	gtk_menu_append (GTK_MENU (submenu), bogus_item);
+	gtk_menu_shell_append (GTK_MENU (submenu), bogus_item);
       }
 
       desc = Fcdr (desc);
@@ -469,15 +469,15 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	{
 	  /* If the menu item had a GUI_ID that means it was a filter menu */
 	  __remove_gcpro_by_id (id, NULL);
-	  gtk_signal_disconnect_by_func (GTK_OBJECT (reuse),
-                                       G_CALLBACK (__activate_menu),
-                                       (gpointer) 0x01);
+	  g_signal_handlers_disconnect_by_func (GTK_OBJECT (reuse),
+                                                G_CALLBACK (__activate_menu),
+                                                (gpointer) 0x01);
 	}
       else
 	{
-	  gtk_signal_disconnect_by_func (GTK_OBJECT (reuse),
-					 G_CALLBACK (__activate_menu),
-					 NULL);
+	  g_signal_handlers_disconnect_by_func (GTK_OBJECT (reuse),
+                                                G_CALLBACK (__activate_menu),
+                                                NULL);
 	}
 
       GTK_MENU_ITEM (reuse)->right_justify = 0;
@@ -759,7 +759,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	      GSList *group = NULL;
 
 	      dummy_sibling = gtk_radio_menu_item_new (group);
-	      group = gtk_radio_menu_item_group (GTK_RADIO_MENU_ITEM (dummy_sibling));
+	      group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (dummy_sibling));
 	      widget = gtk_radio_menu_item_new (group);
 
 	      /* We need to notice when the 'real' one gets destroyed
@@ -858,7 +858,7 @@ menu_can_reuse_widget (GtkWidget *child, const Ibyte *label)
   ** sure we don't seriously foobar ourselves.
   */
   gpointer possible_child =
-    g_list_nth_data (gtk_container_children (GTK_CONTAINER (child)), 0);
+    g_list_nth_data (gtk_container_get_children (GTK_CONTAINER (child)), 0);
   gboolean ret_val = FALSE;
 
   if (possible_child && GTK_IS_LABEL (possible_child))
@@ -957,7 +957,10 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 
 	    if (widget)
 	      {
-		if (right_justify) gtk_menu_item_right_justify (GTK_MENU_ITEM (widget));
+#if HAVE_GTK2
+		if (right_justify)
+                  gtk_menu_item_right_justify (GTK_MENU_ITEM (widget));
+#endif
 	      }
 	    else
 	      {

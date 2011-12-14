@@ -1,3 +1,15 @@
+2011-12-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_can_reuse_widget): Use non-deprecated
+	function gtk_container_get_children.
+	(__activate_menu): Ditto.
+	(menu_convert): Use gtk_menu_shell_append.
+	(__activate_menu): Ditto.
+	(menu_convert): Replace deprecated signal function.
+	(menu_create_menubar): Gtk 3.0 no longer supports right
+	justification.
+	(menu_descriptor_to_widget_1): Use gtk_radio_menu_item_get_group.
+
 2011-12-13  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* device-gtk.c (gtk_init_device): Use G_CALLBACK instead of
