@@ -1,5 +1,10 @@
 2011-12-14  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_button_redisplay): Use G_OBJECT_TYPE.
+	(gtk_tab_control_instantiate): Use gtk_notebook_set_current_page.
+	(gtk_progress_gauge_redisplay): Use GTK_PROGRESS_BAR cast and
+	gtk_progress_bar_set_fraction.
+
 	* gtk-xemacs.c (gtk_xemacs_size_allocate): Use G_OBJECT_TYPE.
 	Use gtk_widget_is_drawable.
 	(gtk_xemacs_draw): Ditto.
