@@ -1709,9 +1709,10 @@ Return an alist of properties for OBJECT.
   props = g_object_class_list_properties (type_class, &n_props);
   for (i = 0; i < n_props; i++)
     {
+      Lisp_Object p;
       if (!(props[i]->flags & G_PARAM_READABLE))
         continue;
-      Lisp_Object p = intern(props[i]->name);
+      p = intern(props[i]->name);
       prop_list = Facons (p,
                           emacs_gtk_object_getprop (object, p),
                           prop_list);

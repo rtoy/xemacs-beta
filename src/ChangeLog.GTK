@@ -1,5 +1,7 @@
 2011-12-14  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (Fg_object_properties): Move declaration before code.
+
 	* ui-byhand.c: Remove GtkCurve related functions.
 
 	* ui-gtk.c: Remove Fgtk_object_type.
