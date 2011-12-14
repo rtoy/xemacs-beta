@@ -1189,7 +1189,7 @@ Lisp_Object build_gtk_object (GObject *obj)
       g_object_set_qdata (obj, GTK_DATA_GUI_IDENTIFIER, GUINT_TO_POINTER (id));
       gcpro_popup_callbacks (id, retval);
       g_object_ref (obj);
-      g_signal_connect (obj, "destroy", GTK_SIGNAL_FUNC (__notice_object_destruction), GUINT_TO_POINTER (id));
+      g_signal_connect (obj, "destroy", G_CALLBACK (__notice_object_destruction), GUINT_TO_POINTER (id));
     }
 
   return (retval);

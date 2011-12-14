@@ -114,10 +114,10 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
                            G_CALLBACK (scrollbar_cb),
                            GUINT_TO_POINTER (vertical)));
   assert(g_signal_connect (G_OBJECT (sb), "button-press-event",
-                           GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb),
+                           G_CALLBACK (scrollbar_drag_hack_cb),
                            GUINT_TO_POINTER (1)));
   assert(g_signal_connect (G_OBJECT (sb), "button-release-event",
-                             GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 0));
+                           G_CALLBACK (scrollbar_drag_hack_cb), (gpointer) 0));
 
   /* Do we need to connect to "destroy" too? --jsparkes */
   gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)), SCROLLBAR_GTK_WIDGET (instance), 0, 0);

@@ -1,3 +1,20 @@
+2011-12-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_init_device): Use G_CALLBACK instead of
+	obsolete GTK_SIGNAL_FUNC.
+
+	* frame-gtk.c (gtk_create_widgets): Ditto.
+
+	* glyphs-gtk.c (gtk_tab_control_instantiate): Ditto.
+	* menubar-gtk.c (menu_convert): Ditto.
+	(menu_descriptor_to_widget_1): Ditto.
+	(create_menubar_widget): Ditto.
+	(gtk_popup_menu): Ditto
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Ditto.
+
+	* ui-gtk.c (build_gtk_object): Ditto.
+
 2011-12-06  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status):

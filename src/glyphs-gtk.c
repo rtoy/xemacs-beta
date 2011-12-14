@@ -2723,7 +2723,7 @@ gtk_tab_control_instantiate (Lisp_Object image_instance,
 
   /* Call per-tab lisp callback when a tab is pressed. */
   assert (g_signal_connect (G_OBJECT (nb), "switch-page",
-                            GTK_SIGNAL_FUNC (gtk_tab_control_callback), NULL));
+                            G_CALLBACK (gtk_tab_control_callback), NULL));
 }
 
 /* Set the properties of a tab control */
