@@ -320,7 +320,7 @@ gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
 	  comments in gtk_create_scrollbar_instance().
 	*/
 	if (gtk_widget_get_visible (child->widget) &&
-	    gtk_type_is_a(GTK_OBJECT_TYPE(child->widget), GTK_TYPE_SCROLLBAR))
+	    g_type_is_a(G_OBJECT_TYPE(child->widget), GTK_TYPE_SCROLLBAR))
 	  {
 	    GtkAllocation child_allocation;
 	    GtkRequisition child_requisition;
@@ -353,7 +353,7 @@ gtk_xemacs_paint (GtkWidget *widget, GdkRectangle *area)
     GtkXEmacs *x = GTK_XEMACS (widget);
     struct frame *f = GTK_XEMACS_FRAME (x);
 
-    if (GTK_WIDGET_DRAWABLE (widget))
+    if (gtk_widget_is_drawable (widget))
       redisplay_redraw_exposed_area (f, area->x, area->y, area->width,
 				     area->height);
 }
@@ -371,7 +371,7 @@ gtk_xemacs_draw (GtkWidget *widget, GdkRectangle *area)
        gtk_fixed_paint() directly, which clears the background window,
        which causes A LOT of flashing. */
 
-  if (GTK_WIDGET_DRAWABLE (widget))
+  if (gtk_widget_is_drawable (widget))
     {
       gtk_xemacs_paint (widget, area);
 
@@ -409,7 +409,7 @@ gtk_xemacs_expose (GtkWidget *widget, GdkEventExpose *event)
     struct frame *f = GTK_XEMACS_FRAME (x);
     GdkRectangle *a = &event->area;
 
-  if (GTK_WIDGET_DRAWABLE (widget))
+  if (gtk_widget_is_drawable (widget))
     {
       /* This takes care of drawing the scrollbars, etc */
       parent_class->expose_event (widget, event);
