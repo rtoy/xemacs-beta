@@ -1,5 +1,7 @@
 2011-12-14  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-byhand.c: Remove GtkCurve related functions.
+
 	* ui-gtk.c: Remove Fgtk_object_type.
 	(emacs_gtk_object_printer): Use G_OBJECT_TYPE.
 	(Fg_object_type): Ditto.

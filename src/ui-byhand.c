@@ -162,66 +162,6 @@ Return a cons cell of (PIXMAP . MASK) from GtkPixmap OBJECT.
 		 mask ? build_gtk_object (G_OBJECT (mask)) : Qnil));
 }
 
-DEFUN ("gtk-curve-get-vector", Fgtk_curve_get_vector, 2, 2, 0, /*
-Returns a vector of LENGTH points representing the curve of CURVE.
-*/
-       (curve, length))
-{
-  gfloat *vector = NULL;
-  Lisp_Object lisp_vector = Qnil;
-  int i;
-
-  CHECK_GTK_OBJECT (curve);
-  CHECK_FIXNUM (length);
-
-  if (!GTK_IS_CURVE (XGTK_OBJECT (curve)->object))
-    {
-      wtaerror ("Object is not a GtkCurve", curve);
-    }
-
-  vector = alloca_array (gfloat, XFIXNUM (length));
-
-  gtk_curve_get_vector (GTK_CURVE (XGTK_OBJECT (curve)->object), XFIXNUM (length), vector);
-  lisp_vector = make_vector (XFIXNUM (length), Qnil);
-
-  for (i = 0; i < XFIXNUM (length); i++)
-    {
-      XVECTOR_DATA (lisp_vector)[i] = make_float (vector[i]);
-    }
-
-  return (lisp_vector);
-}
-
-DEFUN ("gtk-curve-set-vector", Fgtk_curve_set_vector, 2, 2, 0, /*
-Set the vector of points on CURVE to VECTOR.
-*/
-       (curve, vector))
-{
-  gfloat *c_vector = NULL;
-  int vec_length = 0;
-  int i;
-
-  CHECK_GTK_OBJECT (curve);
-  CHECK_VECTOR (vector);
-
-  vec_length = XVECTOR_LENGTH (vector);
-
-  if (!GTK_IS_CURVE (XGTK_OBJECT (curve)->object))
-    {
-      wtaerror ("Object is not a GtkCurve", curve);
-    }
-
-  c_vector = alloca_array (gfloat, vec_length);
-
-  for (i = 0; i < vec_length; i++)
-    {
-      CHECK_FLOAT (XVECTOR_DATA (vector)[i]);
-      c_vector[i] = extract_float (XVECTOR_DATA (vector)[i]);
-    }
-
-  gtk_curve_set_vector (GTK_CURVE (XGTK_OBJECT (curve)->object), vec_length, c_vector);
-  return (Qt);
-}
 
 DEFUN ("gtk-label-get", Fgtk_label_get, 1, 1, 0, /*
 Return the text of LABEL.
@@ -428,8 +368,6 @@ void syms_of_ui_byhand (void)
   DEFSUBR (Fgtk_color_selection_get_color);
   DEFSUBR (Fgtk_editable_insert_text);
   DEFSUBR (Fgtk_pixmap_get);
-  DEFSUBR (Fgtk_curve_get_vector);
-  DEFSUBR (Fgtk_curve_set_vector);
   DEFSUBR (Fgtk_label_get);
   DEFSUBR (Fgtk_notebook_query_tab_label_packing);
   DEFSUBR (Fgtk_widget_get_pointer);
