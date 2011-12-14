@@ -1,5 +1,11 @@
 2011-12-14  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-xemacs.c (gtk_xemacs_size_allocate): Use G_OBJECT_TYPE.
+	Use gtk_widget_is_drawable.
+	(gtk_xemacs_draw): Ditto.
+	(gtk_xemacs_paint): Ditto.
+	(gtk_xemacs_expose): Ditto.
+
 	* menubar-gtk.c (menu_can_reuse_widget): Use non-deprecated
 	function gtk_container_get_children.
 	(__activate_menu): Ditto.
