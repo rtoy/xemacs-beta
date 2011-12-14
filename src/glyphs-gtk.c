@@ -2477,13 +2477,13 @@ gtk_button_redisplay (Lisp_Object image_instance)
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   GtkWidget *w = IMAGE_INSTANCE_GTK_CLIPWIDGET (p);
 
-  if (GTK_WIDGET_TYPE (w) == gtk_button_get_type ())
+  if (G_OBJECT_TYPE (w) == gtk_button_get_type ())
     {
     }
-  else if (GTK_WIDGET_TYPE (w) == gtk_check_button_get_type ())
+  else if (G_OBJECT_TYPE (w) == gtk_check_button_get_type ())
     {
     }
-  else if (GTK_WIDGET_TYPE (w) == gtk_radio_button_get_type ())
+  else if (G_OBJECT_TYPE (w) == gtk_radio_button_get_type ())
     {
     }
   else
@@ -2502,7 +2502,7 @@ gtk_button_property (Lisp_Object image_instance, Lisp_Object prop)
   /* check the state of a button */
   if (EQ (prop, Q_selected))
     {
-      if (GTK_WIDGET_HAS_FOCUS (IMAGE_INSTANCE_SUBWINDOW_ID (ii)))
+      if (gtk_widget_has_focus (IMAGE_INSTANCE_SUBWINDOW_ID (ii)))
 	return Qt;
       else
 	return Qnil;
@@ -2527,8 +2527,8 @@ gtk_progress_gauge_redisplay (Lisp_Object image_instance)
       val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii))->value;
       f = XFLOATFIXNUM (val);
 
-      gtk_progress_set_value (GTK_PROGRESS (IMAGE_INSTANCE_SUBWINDOW_ID (ii)),
-			      f);
+      gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (IMAGE_INSTANCE_SUBWINDOW_ID (ii)),
+                                     f);
     }
 }
 
@@ -2719,7 +2719,7 @@ gtk_tab_control_instantiate (Lisp_Object image_instance,
       i++;
     }
 
-  gtk_notebook_set_page(nb, selected);
+  gtk_notebook_set_current_page(nb, selected);
 
   /* Call per-tab lisp callback when a tab is pressed. */
   assert (g_signal_connect (G_OBJECT (nb), "switch-page",
