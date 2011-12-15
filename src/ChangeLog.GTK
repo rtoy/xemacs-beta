@@ -1,5 +1,12 @@
 2011-12-15  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (type_already_imported_p): Replace deprecated
+	GTK_FUNDAMENTAL_TYPE.
+	(CONVERT_RETVAL): Ditto.
+	(build_gtk_boxed): Ditto.
+	(Fgtk_fundamental_type): Ditto, rename lisp function to match.
+	(describe_gtk_arg): Ditto.
+
 	* ui-byhand.c (Fgtk_pixmap_get): Comment out unused code.
 	(syms_of_ui_byhand): Ditto.
 
