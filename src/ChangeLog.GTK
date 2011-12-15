@@ -1,3 +1,8 @@
+2011-12-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-byhand.c (Fgtk_pixmap_get): Comment out unused code.
+	(syms_of_ui_byhand): Ditto.
+
 2011-12-14  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_frame_properties): Remove unused variable.
