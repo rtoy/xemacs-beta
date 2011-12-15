@@ -321,7 +321,6 @@ gtk_frame_properties (struct frame *f)
   Lisp_Object props = Qnil;
   GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
   gint x, y;
-  GValue val;
 
   props = cons3 (Qshell_widget, FRAME_GTK_LISP_WIDGETS (f)[0], props);
   props = cons3 (Qcontainer_widget, FRAME_GTK_LISP_WIDGETS (f)[1], props);
@@ -718,7 +717,7 @@ size_request_cb (GtkWidget *w, GtkRequisition *req,
 }
 
 static gboolean
-delete_event_cb (GtkWidget *w, GdkEvent *UNUSED (ev),
+delete_event_cb (GtkWidget *UNUSED (w), GdkEvent *UNUSED (ev),
 		 gpointer user_data)
 {
     struct frame *f = (struct frame *) user_data;
@@ -905,6 +904,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   g_object_set_qdata (G_OBJECT (G_OBJECT (shell)), GTK_DATA_FRAME_IDENTIFIER, f);
 
   FRAME_GTK_SHELL_WIDGET (f) = shell;
+  gtk_widget_set_name (shell, name);
 
   text = GTK_WIDGET (gtk_xemacs_new (f));
 
