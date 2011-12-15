@@ -142,6 +142,7 @@ Returns the new position of the cursor in the widget.
   return (make_fixnum (the_pos));
 }
 
+#ifdef NOTUSED
 DEFUN ("gtk-pixmap-get", Fgtk_pixmap_get, 1, 1, 0, /*
 Return a cons cell of (PIXMAP . MASK) from GtkPixmap OBJECT.
 */
@@ -161,6 +162,7 @@ Return a cons cell of (PIXMAP . MASK) from GtkPixmap OBJECT.
   return (Fcons (pixmap ? build_gtk_object (G_OBJECT (pixmap)) : Qnil,
 		 mask ? build_gtk_object (G_OBJECT (mask)) : Qnil));
 }
+#endif
 
 
 DEFUN ("gtk-label-get", Fgtk_label_get, 1, 1, 0, /*
@@ -367,7 +369,9 @@ void syms_of_ui_byhand (void)
   DEFSUBR (Fgtk_calendar_get_date);
   DEFSUBR (Fgtk_color_selection_get_color);
   DEFSUBR (Fgtk_editable_insert_text);
+#ifdef NOTUSED
   DEFSUBR (Fgtk_pixmap_get);
+#endif
   DEFSUBR (Fgtk_label_get);
   DEFSUBR (Fgtk_notebook_query_tab_label_packing);
   DEFSUBR (Fgtk_widget_get_pointer);
