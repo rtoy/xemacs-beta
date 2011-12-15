@@ -1,5 +1,9 @@
 2011-12-14  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* frame-gtk.c (gtk_frame_properties): Remove unused variable.
+	(delete_event_cb): Unused argument.
+	(gtk_create_widgets): Set the frame widget name.
+
 	* menubar-gtk.c (menu_convert): Cast to GTK_MENU_SHELL.
 	(__activate_menu): Ditto.
 
