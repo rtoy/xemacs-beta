@@ -44,7 +44,7 @@
 #include "gtk-glue.c"
 
 /* Is the fundamental type of 't' the xemacs defined fundamental type 'type'? */
-#define IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t,type) (((GType) GTK_FUNDAMENTAL_TYPE(t)) == (type))
+#define IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t,type) (((GType) G_TYPE_FUNDAMENTAL(t)) == (type))
 
 Lisp_Object Qemacs_ffip;
 Lisp_Object Qemacs_gtk_objectp;
@@ -133,7 +133,7 @@ type_already_imported_p (GType t)
   Lisp_Object value;
   
   /* These are cases that we don't need to import */
-  switch (GTK_FUNDAMENTAL_TYPE (t))
+  switch (G_TYPE_FUNDAMENTAL (t))
     {
     case G_TYPE_NONE:
     case G_TYPE_CHAR:
@@ -558,7 +558,7 @@ typedef GList * (*__LIST_fn) (MANY_ARGS);
 #define CONVERT_RETVAL(a,freep) 			\
   do {							\
     void *v = GTK_VALUE_POINTER(a);			\
-    switch (GTK_FUNDAMENTAL_TYPE (a.type))		\
+    switch (G_TYPE_FUNDAMENTAL (a.type))		\
       {							\
 	CONVERT_SINGLE_TYPE(a,CHAR,gchar);		\
 	CONVERT_SINGLE_TYPE(a,UCHAR,guchar);		\
@@ -613,8 +613,8 @@ static Lisp_Object type_to_marshaller_type (GType t)
     case G_TYPE_POINTER:
       return (build_ascstring ("POINTER"));
     default:
-      stderr_out ("type_to_marshaller type %s, fundamental %s\n", g_type_name(t),
-                  g_type_name (GTK_FUNDAMENTAL_TYPE (t)));
+      stderr_out ("type_to_marshaller type %s, fundamental %s\n",
+                  g_type_name(t), g_type_name (G_TYPE_FUNDAMENTAL (t)));
       
       /* ABORT(); */
       /* I can't put this in the main switch statement because it is a
@@ -1298,7 +1298,7 @@ Lisp_Object build_gtk_boxed (void *obj, GType t)
   Lisp_Object retval = Qnil;
   emacs_gtk_boxed_data *data = NULL;
 
-  if (GTK_FUNDAMENTAL_TYPE (t) != G_TYPE_BOXED)
+  if (G_TYPE_FUNDAMENTAL (t) != G_TYPE_BOXED)
     ABORT();
 
   data = allocate_emacs_gtk_boxed_data ();
@@ -1322,7 +1322,7 @@ Lisp_Object build_gtk_boxed (void *obj, GType t)
 
 
 /* Type manipulation */
-DEFUN ("gtk-fundamental-type", Fgtk_fundamental_type, 1, 1, 0, /*
+DEFUN ("g-type-fundamental", Fg_type_fundamental, 1, 1, 0, /*
 Return the fundamental GType of OBJECT.
 This is the base object type.
 */
@@ -1341,7 +1341,7 @@ This is the base object type.
     {
       invalid_argument ("Not a GTK type", type);
     }
-  return (type_as_symbol (GTK_FUNDAMENTAL_TYPE (t)));
+  return (type_as_symbol (G_TYPE_FUNDAMENTAL (t)));
 }
 
 DEFUN ("g-object-type", Fg_object_type, 1, 1, 0, /*
@@ -1674,7 +1674,7 @@ syms_of_ui_gtk (void)
   DEFSUBR (Fgtk_import_variable_internal);
   DEFSUBR (Fgtk_signal_connect);
   DEFSUBR (Fgtk_call_function);
-  DEFSUBR (Fgtk_fundamental_type);
+  DEFSUBR (Fg_type_fundamental);
   DEFSUBR (Fgtk_describe_type);
   DEFSUBR (Fg_type_name);
   DEFSUBR (Fg_type_from_name);
@@ -1719,7 +1719,7 @@ void describe_gtk_arg (GtkParamSpec *arg)
 {
   GtkParamSpec a = *arg;
 
-  switch (GTK_FUNDAMENTAL_TYPE (a.type))
+  switch (G_TYPE_FUNDAMENTAL (a.type))
     {
       /* flag types */
     case G_TYPE_CHAR:
@@ -1888,7 +1888,7 @@ Lisp_Object g_type_to_lisp (GValue *arg)
 int
 lisp_to_g_value (Lisp_Object obj, GValue *val)
 {
-  switch (GTK_FUNDAMENTAL_TYPE (G_VALUE_TYPE (val)))
+  switch (G_TYPE_FUNDAMENTAL (G_VALUE_TYPE (val)))
     {
     case G_TYPE_INVALID:
       break;
