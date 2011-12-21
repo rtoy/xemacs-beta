@@ -1,3 +1,12 @@
+2011-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-transform-function-property):
+	Call #'cl-macroexpand-all when doing this, avoiding unpleasantness
+	with defsetf and lexical variables.
+	* cl-macs.el (assert):
+	The previous change meant #'remove-if isn't necessarily available
+	yet; use the :key argument with #'remove* instead.
+
 2011-12-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el (posix-charset-to-coding-system-hash):

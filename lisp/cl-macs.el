@@ -292,7 +292,9 @@ ARGLIST allows full Common Lisp conventions."
        symbol-or-lambda)))
 
 (defun cl-transform-function-property (func prop form)
-  `(put ',func ',prop #'(lambda ,@(cdr (cl-transform-lambda form func)))))
+  (cl-macroexpand-all
+  `(put ',func ',prop #'(lambda ,@(cdr (cl-transform-lambda form func))))
+  byte-compile-macro-environment))
 
 (defconst lambda-list-keywords
   '(&optional &rest &key &allow-other-keys &aux &whole &body &environment))
@@ -3054,7 +3056,9 @@ They are not evaluated unless the assertion fails.  If STRING is
 omitted, a default message listing FORM itself is used."
   (and (or (not (cl-compiling-file))
 	   (< cl-optimize-speed 3) (= cl-optimize-safety 3))
-       (let ((sargs (and show-args (remove-if #'cl-const-expr-p (cdr form)))))
+       (let ((sargs (and show-args
+                         ;; #'remove-if isn't necessarily available yet.
+                         (remove* t (cdr form) :key #'cl-const-expr-p))))
 	 (list 'progn
 	       (list 'or form
 		     (if string
