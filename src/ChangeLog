@@ -1,3 +1,14 @@
+2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fmacroexpand): Rename Fmacroexpand_internal, add the
+	functionality that used to be in #'cl-macroexpand--it makes no
+	sense for us, and needlessly slows things down, to have two
+	separate functions.
+	* eval.c:
+	* eval.c (syms_of_eval):
+	Move byte-compile-macro-environment here, now it's used by
+	#'macroexpand.
+
 2011-12-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (read1): Add the zero, *then* flush, when reading an

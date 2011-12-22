@@ -1,3 +1,16 @@
+2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (byte-compile-macro-environment): Moved to
+	eval.c.
+	* cl.el:
+	* cl.el ('cl-macroexpand): New alias.
+	* cl.el ('macroexpand-internal): New alias.
+	* cl.el (cl-macroexpand): Move the functionality of this to
+	#'macroexpand (formerly #'macroexpand-internal) in eval.c; since
+	CL is always loaded in XEmacs, it brings nothing and slows things
+	down to have the two functions separate.
+
 2011-12-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (cl-transform-function-property):
