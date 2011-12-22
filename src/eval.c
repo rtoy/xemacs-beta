@@ -230,7 +230,7 @@ Lisp_Object Vquit_flag, Vinhibit_quit;
 Lisp_Object Qand_rest, Qand_optional;
 Lisp_Object Qdebug_on_error, Qstack_trace_on_error;
 Lisp_Object Qdebug_on_signal, Qstack_trace_on_signal;
-Lisp_Object Qdebugger;
+Lisp_Object Qdebugger, Qbyte_compile_macro_environment;
 Lisp_Object Qinhibit_quit;
 Lisp_Object Qfinalize_list;
 Lisp_Object Qrun_hooks;
@@ -273,7 +273,7 @@ Lisp_Object Vlog_warning_minimum_level;
    (FUN . ODEF) for a defun, (OFEATURES . nil) for a provide.  */
 Lisp_Object Vautoload_queue;
 
-Lisp_Object Vmacro_declaration_function;
+Lisp_Object Vmacro_declaration_function, Vbyte_compile_macro_environment;
 
 /* Current number of specbindings allocated in specpdl.  */
 int specpdl_size;
@@ -1549,7 +1549,7 @@ arguments: (SYMBOL &optional INITVALUE DOCSTRING)
 /* XEmacs: user-variable-p is in symbols.c, since it needs to mess around
    with the symbol variable aliases. */
 
-DEFUN ("macroexpand-internal", Fmacroexpand_internal, 1, 2, 0, /*
+DEFUN ("macroexpand", Fmacroexpand, 1, 2, 0, /*
 Return result of expanding macros at top level of FORM.
 If FORM is not a macro call, it is returned unchanged.
 Otherwise, the macro is expanded and the expansion is considered
@@ -1563,11 +1563,51 @@ definitions to shadow the loaded ones for use in file byte-compilation.
   /* This function can GC */
   /* With cleanups from Hallvard Furuseth.  */
   REGISTER Lisp_Object expander, sym, def, tem;
+  int speccount = specpdl_depth ();
+
+  if (!NILP (environment))
+    {
+      if (NILP (Vbyte_compile_macro_environment))
+        {
+          specbind (Qbyte_compile_macro_environment, environment);
+        }
+      else
+        {
+          specbind (Qbyte_compile_macro_environment,
+                    nconc2 (Fcopy_list (environment),
+                            Vbyte_compile_macro_environment));
+          environment = Vbyte_compile_macro_environment;
+        }
+    }
 
   while (1)
     {
       /* Come back here each time we expand a macro call,
 	 in case it expands into another macro call.  */
+      if (SYMBOLP (form))
+        {
+          Lisp_Object hashed = make_integer ((EMACS_INT) (LISP_HASH (form)));
+          Lisp_Object assocked;
+
+          if (BIGNUMP (hashed))
+            {
+              struct gcpro gcpro1;
+              GCPRO1 (hashed);
+              assocked = Fassoc (hashed, environment);
+              UNGCPRO;
+            }
+          else
+            {
+              assocked = Fassq (hashed, environment);
+            }
+
+          if (CONSP (assocked) && !NILP (XCDR (assocked)))
+            {
+              form = Fcar (XCDR (assocked));
+              continue;
+            }
+        }
+
       if (!CONSP (form))
 	break;
       /* Set SYM, give DEF and TEM right values in case SYM is not a symbol. */
@@ -1624,6 +1664,9 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 	}
       form = apply1 (expander, XCDR (form));
     }
+
+  unbind_to (speccount);
+
   return form;
 }
 
@@ -7334,6 +7377,7 @@ syms_of_eval (void)
 
   DEFSYMBOL (Qinhibit_quit);
   DEFSYMBOL (Qautoload);
+  DEFSYMBOL (Qbyte_compile_macro_environment);
   DEFSYMBOL (Qdebug_on_error);
   DEFSYMBOL (Qstack_trace_on_error);
   DEFSYMBOL (Qdebug_on_signal);
@@ -7379,7 +7423,7 @@ syms_of_eval (void)
   DEFSUBR (Flet);
   DEFSUBR (FletX);
   DEFSUBR (Fwhile);
-  DEFSUBR (Fmacroexpand_internal);
+  DEFSUBR (Fmacroexpand);
   DEFSUBR (Fcatch);
   DEFSUBR (Fthrow);
   DEFSUBR (Funwind_protect);
@@ -7610,6 +7654,13 @@ DECL is a list `(declare ...)' containing the declarations.
 The value the function returns is not used.
 */);
   Vmacro_declaration_function = Qnil;
+
+  DEFVAR_LISP ("byte-compile-macro-environment", &Vbyte_compile_macro_environment /*
+Alist of macros defined in the file being compiled.
+Each element looks like (MACRONAME . DEFINITION).  It is
+\(MACRONAME . nil) when a macro is redefined as a function.
+*/);
+  Vbyte_compile_macro_environment = Qnil;
 
   staticpro (&Vcatch_everything_tag);
   Vcatch_everything_tag = make_opaque (OPAQUE_CLEAR, 0);
