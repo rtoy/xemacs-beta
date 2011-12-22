@@ -911,7 +911,7 @@ init_image_instance_from_gdk_image (struct Lisp_Image_Instance *ii,
   gdk_draw_image (GDK_DRAWABLE (pixmap), gc, gdk_image,
 		  0, 0, 0, 0, gdk_image->width, gdk_image->height);
 
-  gdk_gc_destroy (gc);
+  g_object_unref (gc);
 
   gtk_initialize_pixmap_image_instance (ii, slices, IMAGE_COLOR_PIXMAP);
 
@@ -999,7 +999,7 @@ image_instance_add_gdk_image (Lisp_Image_Instance *ii,
   gdk_draw_image (GDK_DRAWABLE (pixmap), gc, gdk_image, 0, 0, 0, 0,
 		  gdk_image->width, gdk_image->height);
 
-  gdk_gc_destroy (gc);
+  g_object_unref (gc);
 
   IMAGE_INSTANCE_GTK_PIXMAP_SLICE (ii, slice) = pixmap;
 }
@@ -3072,7 +3072,7 @@ gtk_colorize_image_instance (Lisp_Object image_instance,
 		IMAGE_INSTANCE_PIXMAP_HEIGHT (p),
 		0, 0, 1);
 
-    gdk_gc_destroy (gc);
+    g_object_unref (gc);
     IMAGE_INSTANCE_GTK_PIXMAP (p) = new_pxmp;
     IMAGE_INSTANCE_PIXMAP_DEPTH (p) = DEVICE_GTK_DEPTH (XDEVICE (IMAGE_INSTANCE_DEVICE (p)));
     IMAGE_INSTANCE_PIXMAP_FG (p) = foreground;

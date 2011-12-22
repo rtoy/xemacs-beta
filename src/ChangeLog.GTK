@@ -1,5 +1,14 @@
 2011-12-22  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gccache-gtk.c (free_gc_cache): Replace obsolete
+	gdk_gc_destroy().
+	(gc_cache_lookup): Ditto.
+
+	* glyphs-gtk.c (init_image_instance_from_gdk_image): Replace
+	obsolete gdk_gc_destroy().
+	(image_instance_add_gdk_image): Ditto.
+	(gtk_colorize_image_instance): Ditto.
+
 	* redisplay-gtk.c (XLIKE_output_string): Remove unused X11
 	variables.  Remove XLIKE code.
 
