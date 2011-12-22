@@ -1,3 +1,8 @@
+2011-12-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Remove unused X11
+	variables.  Remove XLIKE code.
+
 2011-12-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (type_already_imported_p): Replace deprecated
