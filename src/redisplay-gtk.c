@@ -24,6 +24,12 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define THIS_IS_GTK
 #include "redisplay-xlike-inc.c"
 
+static void gtk_set_source_rgb (cairo_t *cr, GdkColor *fg);
+static void gtk_draw_rectangle (cairo_t *cr, gint x, gint y,
+                                gint width, gint height);
+static void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
+                                gint width, gint height);
+
 /*****************************************************************************
  Draw a shadow around the given area using the standard theme engine routines.
  ****************************************************************************/
@@ -59,7 +65,58 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
 		    x, y, width, height);
 }
 
+/*****************************************************************************
+ XLIKE_output_vertical_divider
 
+ Draw a vertical divider down the right side of the given window.
+****************************************************************************/
+static void
+gtk_output_vertical_divider (struct window *w, int clear)
+{
+  struct frame *f = XFRAME (w->frame);
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  Lisp_Object tmp_pixel;
+  enum edge_style style;
+  int x, ytop, ybottom, width, shadow_thickness, spacing;
+  face_index div_face =
+    get_builtin_face_cache_index (w, Vvertical_divider_face);
+  GdkColor *fg;
+  GdkColor *bg;
+
+  width = window_divider_width (w);
+  shadow_thickness = XFIXNUM (w->vertical_divider_shadow_thickness);
+  spacing = XFIXNUM (w->vertical_divider_spacing);
+  /* line_width = XFIXNUM (w->vertical_divider_line_width); */
+  x = WINDOW_RIGHT (w) - width;
+  ytop = WINDOW_TOP (w);
+  ybottom = WINDOW_BOTTOM (w);
+
+  tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, div_face);
+  bg = XCOLOR_INSTANCE_GTK_COLOR (tmp_pixel);
+
+  gtk_set_source_rgb (cr, bg);
+  gtk_fill_rectangle (cr, x, ytop, width, ybottom - ytop);
+
+  if (shadow_thickness < 0)
+    {
+      shadow_thickness = -shadow_thickness;
+      style = EDGE_BEVEL_IN;
+    }
+  else
+    {
+      style = EDGE_BEVEL_OUT;
+    }
+
+  tmp_pixel = WINDOW_FACE_CACHEL_FOREGROUND (w, div_face);
+  fg = XCOLOR_INSTANCE_GTK_COLOR (tmp_pixel);
+  gtk_set_source_rgb (cr, fg);
+
+  /* Draw the shadows around the divider line */
+  gtk_bevel_area (w, div_face, x + spacing, ytop,
+		    width - 2 * spacing, ybottom - ytop,
+		    shadow_thickness, EDGE_ALL, style);
+}
 
 /* Make audible bell.  */
 static void
@@ -85,7 +142,6 @@ gtk_set_source_rgb (cairo_t *cr, GdkColor *fg)
                         (double) fg->blue/65535);
 }
 
-#ifdef UNUSED
 static void
 gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
                     gint width, gint height)
@@ -95,7 +151,6 @@ gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
   cairo_rectangle (cr, x, y, width, height);
   cairo_fill (cr);
 }
-#endif
 
 static void
 gtk_draw_rectangle (cairo_t *cr, gint x, gint y,
@@ -342,7 +397,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   else
     {
       /* Clear the cursor location? */
-#if NOTUSED
+#ifdef NOTUSED
       bgc = XLIKE_get_gc (f, Qnil, cachel->background, cachel->background,
                           bg_pmap, cachel->background_placement, Qnil);
       XLIKE_FILL_RECTANGLE (dpy, x_win, bgc, clip_start,

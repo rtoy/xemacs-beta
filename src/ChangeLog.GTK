@@ -1,5 +1,14 @@
 2011-12-22  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c: Add declaration.
+	(XLIKE_output_vertical_divider): #ifndef THIS_IS_GTK.
+
+	* redisplay-gtk.c: Declare function prototypes.
+	(gtk_output_vertical_divider): New function that uses cairo to
+	draw the divider.
+	(gtk_fill_rectangle): Enable.
+	(XLIKE_output_string): Fix compile error from previous changeset.
+
 	* gccache-gtk.c (free_gc_cache): Replace obsolete
 	gdk_gc_destroy().
 	(gc_cache_lookup): Ditto.

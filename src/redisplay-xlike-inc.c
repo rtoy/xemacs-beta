@@ -96,6 +96,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define XLIKE_output_blank XFUN (output_blank)
 #define XLIKE_text_width_single_run XFUN (text_width_single_run)
 
+static void XLIKE_output_vertical_divider (struct window *w, int clear);
 static void XLIKE_output_blank (struct window *w, struct display_line *dl,
 				struct rune *rb, int start_pixpos,
 				int cursor_start, int cursor_width);
@@ -1695,6 +1696,7 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
     }
 }
 
+#ifndef THIS_IS_GTK
 /*****************************************************************************
  XLIKE_output_vertical_divider
 
@@ -1772,7 +1774,7 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
 		    width - 2 * spacing, ybottom - ytop,
 		    shadow_thickness, EDGE_ALL, style);
 }
-
+#endif
 
 /*****************************************************************************
  XLIKE_output_blank
