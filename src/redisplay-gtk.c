@@ -282,8 +282,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   /* General variables */
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
-  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   Lisp_Object window = wrap_window (w);
   int clip_end;
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
@@ -344,11 +342,13 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   else
     {
       /* Clear the cursor location? */
+#if NOTUSED
       bgc = XLIKE_get_gc (f, Qnil, cachel->background, cachel->background,
                           bg_pmap, cachel->background_placement, Qnil);
       XLIKE_FILL_RECTANGLE (dpy, x_win, bgc, clip_start,
                             ypos, clip_end - clip_start,
                             height);
+#endif
     }
 
   runs = alloca_new (struct textual_run);
@@ -457,14 +457,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  /* Ensure the gray bitmap exists */
 	  if (DEVICE_XLIKE_GRAY_PIXMAP (d) == XLIKE_NONE)
 	    DEVICE_XLIKE_GRAY_PIXMAP (d) =
-#ifdef THIS_IS_X
-	      XCreateBitmapFromData (dpy, x_win, (char *)gray_bits,
-				     gray_width, gray_height)
-#else
 	      /* #### FIXME! Implement me! */
-	      XLIKE_NONE
-#endif
-	      ;
+	      XLIKE_NONE;
 
 	  /* Request a GC with the gray stipple pixmap to draw dimmed text */
 	  /* gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
