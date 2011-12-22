@@ -1,5 +1,19 @@
 2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* select-gtk.c (vars_of_select_gtk):
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (syms_of_select_x):
+	* select-x.c (vars_of_select_x):
+	* select.c:
+	* select.c (handle_selection_clear):
+	* select.c (syms_of_select):
+	* select.c (vars_of_select):
+	Use va_run_hooks_with_args for x-sent-selection-hooks
+	and lost-selection-hooks, instead of rolling our own.
+
+2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* eval.c (Fmacroexpand): Rename Fmacroexpand_internal, add the
 	functionality that used to be in #'cl-macroexpand--it makes no
 	sense for us, and needlessly slows things down, to have two

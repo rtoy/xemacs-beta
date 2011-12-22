@@ -53,6 +53,8 @@ Lisp_Object Qselection_conversion_error;
 /* A couple of Lisp functions */
 Lisp_Object Qselect_convert_in, Qselect_convert_out, Qselect_coerce;
 
+Lisp_Object Qlost_selection_hooks;
+
 /* These are alists whose CARs are selection-types (whose names are the same
    as the names of X Atoms or Windows clipboard formats) and whose CDRs are
    the names of Lisp functions to call to convert the given Emacs selection
@@ -402,20 +404,8 @@ handle_selection_clear (Lisp_Object selection_symbol)
   /* Otherwise, we're really honest and truly being told to drop it. */
   Vselection_alist = delq_no_quit (local_selection_data, Vselection_alist);
 
-  /* Let random lisp code notice that the selection has been stolen.
-   */
-  {
-    Lisp_Object rest;
-    Lisp_Object val = Vlost_selection_hooks;
-    if (!UNBOUNDP (val) && !NILP (val))
-      {
-	if (CONSP (val) && !EQ (XCAR (val), Qlambda))
-	  for (rest = val; !NILP (rest); rest = Fcdr (rest))
-	    call1 (Fcar (rest), selection_symbol);
-	else
-	  call1 (val, selection_symbol);
-      }
-  }
+  /* Let random lisp code notice that the selection has been stolen. */
+  va_run_hook_with_args (Qlost_selection_hooks, 1, selection_symbol);
 }
 
 DEFUN ("disown-selection-internal", Fdisown_selection_internal, 1, 3, 0, /*
@@ -754,6 +744,8 @@ syms_of_select (void)
   DEFSYMBOL (Qselect_convert_out);
   DEFSYMBOL (Qselect_coerce);
 
+  DEFSYMBOL (Qlost_selection_hooks);
+
   /* X Atoms */
   DEFSYMBOL (QPRIMARY);
   DEFSYMBOL (QSECONDARY);
@@ -927,5 +919,5 @@ that we have lost the selection.  The function(s) will be called with one
 argument, a symbol naming the selection (typically PRIMARY, SECONDARY, or
 CLIPBOARD).
 */ );
-  Vlost_selection_hooks = Qunbound;
+  Vlost_selection_hooks = Qnil;
 }
