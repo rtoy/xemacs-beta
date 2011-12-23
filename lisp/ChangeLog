@@ -1,3 +1,15 @@
+2011-12-23  Didier Verna  <didier@xemacs.org>
+
+	* cl-macs.el (face-flush-p): New defsetf.
+	* faces.el (set-face-property): Document the flush property.
+	* faces.el (face-flush-p): New function.
+	* faces.el (set-face-flush-p): New function.
+	* faces.el (face-equal):
+	* cus-face.el (custom-face-attributes):
+	* x-faces.el (x-init-face-from-resources):
+	* x-faces.el (make-face-x-resource-internal): Handle the flush
+	property.
+
 2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp-runtime.el:

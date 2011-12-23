@@ -1159,7 +1159,8 @@ face_boolean_validate (Lisp_Object instantiator)
 	      && !EQ (field, Qhighlight)
 	      && !EQ (field, Qdim)
 	      && !EQ (field, Qblinking)
-	      && !EQ (field, Qreverse))
+	      && !EQ (field, Qreverse)
+	      && !EQ (field, Qflush))
 	    invalid_constant ("Invalid face-boolean inheritance field",
 				 field);
 	}

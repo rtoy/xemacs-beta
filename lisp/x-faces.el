@@ -714,6 +714,10 @@ Otherwise, it returns the next larger version of this font that is defined."
 	       (concat name ".attributeStrikethru")
 	       "Face.AttributeStrikethru"
 	       'boolean locale))
+	 (fp (x-get-resource-and-maybe-bogosity-check
+	      (concat name ".attributeFlush")
+	      "Face.AttributeFlush"
+	      'boolean locale))
 	 ;; we still resource for these TTY-only resources so that you can
 	 ;; specify resources for TTY frames/devices. This is useful when you
 	 ;; start up your XEmacs on an X display and later open some TTY
@@ -879,6 +883,22 @@ Otherwise, it returns the next larger version of this font that is defined."
 	(remove-specifier (face-property face 'reverse) locale
 			  tty-tag-set nil))
       (set-face-reverse-p face rp locale our-tag-set append))
+    (when fp
+      (cond (device-class
+	     (remove-specifier-specs-matching-tag-set-cdrs (face-property
+							    face 'flush)
+							   locale
+							   tty-tag-set)
+	     (remove-specifier-specs-matching-tag-set-cdrs (face-property
+							    face 'flush)
+							   locale
+							   x-tag-set))
+	    (t
+	     (remove-specifier (face-property face 'flush) locale
+			       tty-tag-set nil)
+	     (remove-specifier (face-property face 'flush) locale
+			       x-tag-set nil)))
+      (set-face-flush-p face fp locale our-tag-set append))
     ))
 
 ;; GNU Emacs compatibility. (move to obsolete.el?)

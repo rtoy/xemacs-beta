@@ -2186,6 +2186,7 @@ create_text_block (struct window *w, struct display_line *dl,
   dl->used_prop_data = 0;
   dl->num_chars = 0;
   dl->line_continuation = 0;
+  dl->clear_findex = DEFAULT_INDEX;
 
   xzero (data);
   data.ef = extent_fragment_new (w->buffer, f);
@@ -2499,6 +2500,12 @@ create_text_block (struct window *w, struct display_line *dl,
 	     to the line and end this loop. */
 	  else if (data.ch == '\n')
 	    {
+	      /* Update the clearing face index when the flush property is
+		 set. -- dvl */ 
+	      if ((data.findex > DEFAULT_INDEX)
+		  && WINDOW_FACE_CACHEL_FLUSH_P (w, data.findex))
+		dl->clear_findex = data.findex;
+
 	      /* We aren't going to be adding an end glyph so give its
 		 space back in order to make sure that the cursor can
 		 fit. */
@@ -4690,7 +4697,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   dl->line_continuation = 0;
 
   /* Set up faces to use for clearing areas, used by output_display_line. */
-  dl->default_findex = default_face;
+  dl->clear_findex = default_face;
   if (default_face > DEFAULT_INDEX)
     {
       dl->left_margin_findex = default_face;
@@ -4931,6 +4938,12 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	     to the line and end this loop. */
 	  else if (data.ch == '\n')
 	    {
+	      /* Update the clearing face index when the flush property is
+		 set. -- dvl */ 
+	      if ((data.findex > DEFAULT_INDEX)
+		  && WINDOW_FACE_CACHEL_FLUSH_P (w, data.findex))
+		dl->clear_findex = data.findex;
+
 	      /* We aren't going to be adding an end glyph so give its
 		 space back in order to make sure that the cursor can
 		 fit. */
@@ -5871,7 +5884,8 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
 	  || (cdl->cursor_elt == -1 && ddl->cursor_elt != -1)
 	  || old_start != ddl->charpos
 	  || old_end != ddl->end_charpos
-	  || initial_size != Dynarr_length (db->runes))
+	  || initial_size != Dynarr_length (db->runes)
+	  || cdl->clear_findex != ddl->clear_findex)
 	{
 	  return 0;
 	}
@@ -6020,7 +6034,8 @@ regenerate_window_incrementally (struct window *w, Charbpos startp,
 	  || cdl->descent != ddl->descent
 	  || cdl->top_clip != ddl->top_clip
 	  || (cdl->cursor_elt != -1 && ddl->cursor_elt == -1)
-	  || (cdl->cursor_elt == -1 && ddl->cursor_elt != -1))
+	  || (cdl->cursor_elt == -1 && ddl->cursor_elt != -1)
+	  || cdl->clear_findex != ddl->clear_findex)
 	{
 	  return 0;
 	}

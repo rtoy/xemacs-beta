@@ -1,3 +1,46 @@
+2011-12-23  Didier Verna  <didier@xemacs.org>
+
+	* faces.h (struct Lisp_Face): New 'flush slot.
+	* faces.h (struct face_cachel): New 'flush and 'flush_specified
+	flags.
+	* faces.h (WINDOW_FACE_CACHEL_FLUSH_P):
+	* faces.h (FACE_FLUSH_P): New macros.
+	* faces.c: Declare Qflush.
+	* lisp.h: Externalize it.
+	* faces.c (syms_of_faces): Define it.
+	* faces.c (vars_of_faces): Update built-in face specifiers.
+	* faces.c (complex_vars_of_faces): Update specifier fallbacks.
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (Fmake_face):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (Fcopy_face):
+	* fontcolor.c (face_boolean_validate): Handle the flush property.
+	* redisplay.h (struct display_line): Rename 'default_findex slot to
+	clearer name 'clear_findex.
+	* redisplay.h (DISPLAY_LINE_INIT): Update accordingly.
+	* redisplay-output.c (compare_display_blocks):
+	* redisplay-output.c (output_display_line):
+	* redisplay-output.c (redisplay_output_window):
+	* redisplay.c (regenerate_window_extents_only_changed):
+	* redisplay.c (regenerate_window_incrementally): Update the
+	comparison tests between the current and desired display lines to
+	cope for different 'clear_findex values.	
+	* redisplay.c (create_text_block): Initialize the display line's
+	'clear_findex slot to DEFAULT_INDEX. Record a new 'clear_findex
+	value when we encounter a newline character displayed in a flushed
+	face.
+	* redisplay.c (create_string_text_block): Record a new
+	'clear_findex value when we encounter a newline character
+	displayed in a flushed face.
+
 2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select-gtk.c (vars_of_select_gtk):

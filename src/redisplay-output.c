@@ -556,6 +556,7 @@ compare_display_blocks (struct window *w, struct display_line *cdl,
       cdl->ascent != ddl->ascent ||
       cdl->descent != ddl->descent ||
       cdl->clip != ddl->clip ||
+      cdl->clear_findex != ddl->clear_findex ||
       force)
     {
       start_pos = 0;
@@ -788,7 +789,8 @@ output_display_line (struct window *w, display_line_dynarr *cdla,
 			   cdl->ascent != ddl->ascent ||
 			   cdl->descent != ddl->descent ||
 			   cdl->top_clip != ddl->top_clip ||
-			   cdl->clip != ddl->clip)))
+			   cdl->clip != ddl->clip ||
+			   cdl->clear_findex != ddl->clear_findex)))
 		{
 		  int x, y, width, height;
 		  face_index findex;
@@ -807,8 +809,8 @@ output_display_line (struct window *w, display_line_dynarr *cdla,
 		    }
 		  else if (x < ddl->bounds.right_in)
 		    {
-		      findex = (ddl->default_findex >= DEFAULT_INDEX) ?
-			ddl->default_findex
+		      findex = (ddl->clear_findex >= DEFAULT_INDEX) ?
+			ddl->clear_findex
 			: DEFAULT_INDEX;
 		    }
 		  else if (x < ddl->bounds.right_out)
@@ -2425,7 +2427,8 @@ redisplay_output_window (struct window *w)
 	  else if (cdl->ypos != ddl->ypos ||
 		   cdl->ascent != ddl->ascent ||
 		   cdl->descent != ddl->descent ||
-		   cdl->clip != ddl->clip)
+		   cdl->clip != ddl->clip ||
+		   cdl->clear_findex != ddl->clear_findex)
 	    need_to_clear_bottom = 1;
 
 	  /* #### This kludge is to make sure the modeline shadows get

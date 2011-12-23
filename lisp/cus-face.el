@@ -126,6 +126,10 @@ Control whether the text should be strikethru.")
 			    :help-echo "\
 Control whether the text should be inverted.  Works only on TTY-s")
 		    set-face-reverse-p face-reverse-p)
+    (:flush (toggle :format "%[Flush%]: %v\n"
+		    :help-echo "\
+Control whether the face should flush to the right border.")
+		    set-face-flush-p face-flush-p)
     (:inherit
      (repeat :tag "Inherit"
 	     :help-echo "List of faces to inherit attributes from."
