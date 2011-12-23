@@ -1,3 +1,15 @@
+2011-12-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el (activate-region-as-selection):
+	* select.el (select-make-extent-for-selection):
+	* select.el (select-convert-in):
+	* select.el (select-convert-out):
+	* select.el (select-coerce):
+	* select.el (select-convert-to-targets):
+	Improve Lisp style in a few places here; don't re-implement
+	#'delete-duplicates, use #'funcall instead of consing up a list to
+	pass to #'apply.
+
 2011-12-23  Didier Verna  <didier@xemacs.org>
 
 	* cl-macs.el (face-flush-p): New defsetf.
