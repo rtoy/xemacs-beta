@@ -361,9 +361,9 @@ The following symbols have predefined meanings:
                     Only used by faces on TTY devices.
                     For valid instantiators, see `make-face-boolean-specifier'.
 
- flush              When the end of line is reached in a flushing face, also
-                    paint the rest of the line (up to the right border) with
-                    that face. The effect will only be visible if the face has
+ shrink             Shrink the face to the actual text on the line instead of
+                    covering the whole line until the right border of the
+                    window.  The effect will only be visible if the face has
                     a non default background.
                     For valid instantiators, see `make-face-boolean-specifier'.
 
@@ -903,19 +903,19 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
   (interactive (face-interactive "reverse-p" "reversed"))
   (set-face-property face 'reverse reverse-p locale tag-set how-to-add))
 
-(defun face-flush-p (face &optional domain default no-fallback)
-  "Return t if FACE is flushed in DOMAIN.
+(defun face-shrink-p (face &optional domain default no-fallback)
+  "Return t if FACE is shrinked in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
-  (face-property-instance face 'flush domain default no-fallback))
+  (face-property-instance face 'shrink domain default no-fallback))
 
-(defun set-face-flush-p (face flush-p &optional locale tag-set how-to-add)
-  "Change whether FACE is flushed in LOCALE.
-FLUSH-P is normally a face-boolean instantiator; see
+(defun set-face-shrink-p (face shrink-p &optional locale tag-set how-to-add)
+  "Change whether FACE is shrinked in LOCALE.
+SHRINK-P is normally a face-boolean instantiator; see
  `make-face-boolean-specifier'.
 See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
  HOW-TO-ADD arguments."
-  (interactive (face-interactive "flush-p" "flushed"))
-  (set-face-property face 'flush flush-p locale tag-set how-to-add))
+  (interactive (face-interactive "shrink-p" "shrinked"))
+  (set-face-property face 'shrink shrink-p locale tag-set how-to-add))
 
 
 (defun face-property-equal (face1 face2 prop domain)
@@ -936,7 +936,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
       (error "Invalid specifier domain"))
   (let ((device (dfw-device domain))
 	(common-props '(foreground background font display-table underline
-				   dim inherit flush))
+				   dim inherit shrink))
 	(win-props '(background-pixmap background-placement strikethru))
 	(tty-props '(highlight blinking reverse)))
 

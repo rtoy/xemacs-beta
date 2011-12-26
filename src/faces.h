@@ -54,7 +54,7 @@ struct Lisp_Face
   Lisp_Object dim;
   Lisp_Object blinking;
   Lisp_Object reverse;
-  Lisp_Object flush;
+  Lisp_Object shrink;
 
   Lisp_Object plist;
 
@@ -181,7 +181,7 @@ struct face_cachel
   unsigned int dim :1;
   unsigned int blinking :1;
   unsigned int reverse :1;
-  unsigned int flush :1;
+  unsigned int shrink :1;
 
   /* Used when merging to tell if the above field represents an actual
      value of this face or a fallback value. */
@@ -199,7 +199,7 @@ struct face_cachel
   unsigned int dim_specified :1;
   unsigned int blinking_specified :1;
   unsigned int reverse_specified :1;
-  unsigned int flush_specified :1;
+  unsigned int shrink_specified :1;
 
   /* The updated flag is set after we calculate the values for the
      face cachel and cleared whenever a face changes, to indicate
@@ -359,8 +359,8 @@ void default_face_width_and_height (Lisp_Object domain, int *width,
   (WINDOW_FACE_CACHEL (window, index)->blinking)
 #define WINDOW_FACE_CACHEL_REVERSE_P(window, index)			\
   (WINDOW_FACE_CACHEL (window, index)->reverse)
-#define WINDOW_FACE_CACHEL_FLUSH_P(window, index)			\
-  (WINDOW_FACE_CACHEL (window, index)->flush)
+#define WINDOW_FACE_CACHEL_SHRINK_P(window, index)			\
+  (WINDOW_FACE_CACHEL (window, index)->shrink)
 
 #define FACE_PROPERTY_SPECIFIER(face, property) Fget (face, property, Qnil)
 
@@ -422,7 +422,7 @@ extern Lisp_Object Qbackground_placement;
   (!NILP (FACE_PROPERTY_INSTANCE (face, Qblinking, domain, 0, Qzero)))
 #define FACE_REVERSE_P(face, domain)					\
   (!NILP (FACE_PROPERTY_INSTANCE (face, Qreverse, domain, 0, Qzero)))
-#define FACE_FLUSH_P(face, domain)					\
-  (!NILP (FACE_PROPERTY_INSTANCE (face, Qflush, domain, 0, Qzero)))
+#define FACE_SHRINK_P(face, domain)					\
+  (!NILP (FACE_PROPERTY_INSTANCE (face, Qshrink, domain, 0, Qzero)))
 
 #endif /* INCLUDED_faces_h_ */
