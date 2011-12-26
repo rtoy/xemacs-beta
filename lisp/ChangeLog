@@ -1,3 +1,18 @@
+2011-12-26  Didier Verna  <didier@xemacs.org>
+
+	* cl-macs.el (face-flush-p): Removed.
+	* cl-macs.el (face-shrink-p): New.
+	* faces.el (face-flush-p): Removed.
+	* faces.el (face-shrink-p): New.
+	* faces.el (set-face-flush-p): Removed.
+	* faces.el (set-face-shrink-p): New.
+	* cus-face.el (custom-face-attributes):
+	* faces.el (set-face-property):
+	* faces.el (face-equal):
+	* x-faces.el (x-init-face-from-resources):
+	* x-faces.el (make-face-x-resource-internal): Replace the 'flush
+	property with the opposite 'shrink one.
+
 2011-12-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select.el (activate-region-as-selection):

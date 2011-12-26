@@ -715,8 +715,8 @@ Otherwise, it returns the next larger version of this font that is defined."
 	       "Face.AttributeStrikethru"
 	       'boolean locale))
 	 (fp (x-get-resource-and-maybe-bogosity-check
-	      (concat name ".attributeFlush")
-	      "Face.AttributeFlush"
+	      (concat name ".attributeShrink")
+	      "Face.AttributeShrink"
 	      'boolean locale))
 	 ;; we still resource for these TTY-only resources so that you can
 	 ;; specify resources for TTY frames/devices. This is useful when you
@@ -886,19 +886,19 @@ Otherwise, it returns the next larger version of this font that is defined."
     (when fp
       (cond (device-class
 	     (remove-specifier-specs-matching-tag-set-cdrs (face-property
-							    face 'flush)
+							    face 'shrink)
 							   locale
 							   tty-tag-set)
 	     (remove-specifier-specs-matching-tag-set-cdrs (face-property
-							    face 'flush)
+							    face 'shrink)
 							   locale
 							   x-tag-set))
 	    (t
-	     (remove-specifier (face-property face 'flush) locale
+	     (remove-specifier (face-property face 'shrink) locale
 			       tty-tag-set nil)
-	     (remove-specifier (face-property face 'flush) locale
+	     (remove-specifier (face-property face 'shrink) locale
 			       x-tag-set nil)))
-      (set-face-flush-p face fp locale our-tag-set append))
+      (set-face-shrink-p face fp locale our-tag-set append))
     ))
 
 ;; GNU Emacs compatibility. (move to obsolete.el?)

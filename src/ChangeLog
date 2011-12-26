@@ -1,3 +1,31 @@
+2011-12-26  Didier Verna  <didier@xemacs.org>
+
+	* lisp.h:
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (Fmake_face):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (Fcopy_face):
+	* faces.c (syms_of_faces):
+	* faces.c (vars_of_faces):
+	* faces.c (complex_vars_of_faces):
+	* faces.h (struct Lisp_Face):
+	* faces.h (struct face_cachel):
+	* faces.h (WINDOW_FACE_CACHEL_SHRINK_P):
+	* faces.h (FACE_SHRINK_P):
+	* fontcolor.c (face_boolean_validate): Replace the 'flush property
+	with the opposite 'shrink one.
+	* redisplay.c (create_text_block):
+	* redisplay.c (create_string_text_block): Ditto. Invert the logic
+	for storing a new clear_findex in the display lines.
+
 2011-12-23  Didier Verna  <didier@xemacs.org>
 
 	* faces.h (struct Lisp_Face): New 'flush slot.

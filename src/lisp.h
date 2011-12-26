@@ -5144,7 +5144,7 @@ extern Lisp_Object Qdim;
 extern Lisp_Object Qdisplay_table;
 extern Lisp_Object Qforeground;
 extern Lisp_Object Qunderline;
-extern Lisp_Object Qflush;
+extern Lisp_Object Qshrink;
 
 /* Defined in file-coding.c */
 EXFUN (Fcoding_category_list, 0);

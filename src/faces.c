@@ -42,7 +42,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 Lisp_Object Qfacep;
 Lisp_Object Qforeground, Qbackground, Qdisplay_table;
 Lisp_Object Qbackground_pixmap, Qbackground_placement, Qunderline, Qdim;
-Lisp_Object Qblinking, Qstrikethru, Qflush, Q_name;
+Lisp_Object Qblinking, Qstrikethru, Qshrink, Q_name;
 
 Lisp_Object Qinit_face_from_resources;
 Lisp_Object Qinit_frame_faces;
@@ -117,7 +117,7 @@ mark_face (Lisp_Object obj)
   mark_object (face->dim);
   mark_object (face->blinking);
   mark_object (face->reverse);
-  mark_object (face->flush);
+  mark_object (face->shrink);
 
   mark_object (face->charsets_warned_about);
 
@@ -172,7 +172,7 @@ face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
      internal_equal (f1->dim,		     f2->dim,		    depth) &&
      internal_equal (f1->blinking,	     f2->blinking,	    depth) &&
      internal_equal (f1->reverse,	     f2->reverse,	    depth) &&
-     internal_equal (f1->flush,	             f2->flush,	            depth) &&
+     internal_equal (f1->shrink,             f2->shrink,            depth) &&
 
      ! plists_differ (f1->plist, f2->plist, 0, 0, depth + 1, 0));
 }
@@ -209,7 +209,7 @@ face_getprop (Lisp_Object obj, Lisp_Object prop)
      EQ (prop, Qdim)		      ? f->dim                  :
      EQ (prop, Qblinking)	      ? f->blinking             :
      EQ (prop, Qreverse)	      ? f->reverse              :
-     EQ (prop, Qflush)	              ? f->flush                :
+     EQ (prop, Qshrink)	              ? f->shrink               :
      EQ (prop, Qdoc_string)	      ? f->doc_string           :
      external_plist_get (&f->plist, prop, 0, ERROR_ME));
 }
@@ -231,7 +231,7 @@ face_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
       EQ (prop, Qdim)                  ||
       EQ (prop, Qblinking)             ||
       EQ (prop, Qreverse)              ||
-      EQ (prop, Qflush))
+      EQ (prop, Qshrink))
     return 0;
 
   if (EQ (prop, Qdoc_string))
@@ -263,7 +263,7 @@ face_remprop (Lisp_Object obj, Lisp_Object prop)
       EQ (prop, Qdim)                  ||
       EQ (prop, Qblinking)             ||
       EQ (prop, Qreverse)              ||
-      EQ (prop, Qflush))
+      EQ (prop, Qshrink))
     return -1;
 
   if (EQ (prop, Qdoc_string))
@@ -281,7 +281,7 @@ face_plist (Lisp_Object obj)
   Lisp_Face *face = XFACE (obj);
   Lisp_Object result = face->plist;
 
-  result = cons3 (Qflush,	         face->flush,	               result);
+  result = cons3 (Qshrink,	         face->shrink,	               result);
   result = cons3 (Qreverse,	         face->reverse,	               result);
   result = cons3 (Qblinking,	         face->blinking,               result);
   result = cons3 (Qdim,		         face->dim,	               result);
@@ -313,7 +313,7 @@ static const struct memory_description face_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Face, dim) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, blinking) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, reverse) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Face, flush) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Face, shrink) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, plist) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, charsets_warned_about) },
   { XD_END }
@@ -407,7 +407,7 @@ reset_face (Lisp_Face *f)
   f->dim = Qnil;
   f->blinking = Qnil;
   f->reverse = Qnil;
-  f->flush = Qnil;
+  f->shrink = Qnil;
   f->plist = Qnil;
   f->charsets_warned_about = Qnil;
 }
@@ -563,7 +563,7 @@ update_face_inheritance_mapper (const void *hash_key, void *hash_contents,
 	   EQ (fcl->property, Qdim)        ||
 	   EQ (fcl->property, Qblinking)   ||
 	   EQ (fcl->property, Qreverse)    ||
-	   EQ (fcl->property, Qflush))
+	   EQ (fcl->property, Qshrink))
     {
       update_inheritance_mapper_internal (contents, fcl->face, Qunderline);
       update_inheritance_mapper_internal (contents, fcl->face, Qstrikethru);
@@ -571,7 +571,7 @@ update_face_inheritance_mapper (const void *hash_key, void *hash_contents,
       update_inheritance_mapper_internal (contents, fcl->face, Qdim);
       update_inheritance_mapper_internal (contents, fcl->face, Qblinking);
       update_inheritance_mapper_internal (contents, fcl->face, Qreverse);
-      update_inheritance_mapper_internal (contents, fcl->face, Qflush);
+      update_inheritance_mapper_internal (contents, fcl->face, Qshrink);
     }
   return 0;
 }
@@ -879,8 +879,8 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use.
   set_face_boolean_attached_to (f->blinking, face, Qblinking);
   f->reverse = Fmake_specifier (Qface_boolean);
   set_face_boolean_attached_to (f->reverse, face, Qreverse);
-  f->flush = Fmake_specifier (Qface_boolean);
-  set_face_boolean_attached_to (f->flush, face, Qflush);
+  f->shrink = Fmake_specifier (Qface_boolean);
+  set_face_boolean_attached_to (f->shrink, face, Qshrink);
   if (!NILP (Vdefault_face))
     {
       /* If the default face has already been created, set it as
@@ -913,8 +913,8 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use.
 			     Fget (Vdefault_face, Qblinking, Qunbound));
       set_specifier_fallback (f->reverse,
 			     Fget (Vdefault_face, Qreverse, Qunbound));
-      set_specifier_fallback (f->flush,
-			     Fget (Vdefault_face, Qflush, Qunbound));
+      set_specifier_fallback (f->shrink,
+			     Fget (Vdefault_face, Qshrink, Qunbound));
     }
 
   /* Add the face to the appropriate list. */
@@ -1485,7 +1485,7 @@ update_face_cachel_data (struct face_cachel *cachel,
       FROB (highlight);
       FROB (dim);
       FROB (reverse);
-      FROB (flush);
+      FROB (shrink);
       FROB (blinking);
 #undef FROB
     }
@@ -1525,7 +1525,7 @@ merge_face_cachel_data (struct window *w, face_index findex,
   FROB (highlight);
   FROB (dim);
   FROB (reverse);
-  FROB (flush);
+  FROB (shrink);
   FROB (blinking);
 
   for (offs = 0; offs < NUM_LEADING_BYTES; ++offs)
@@ -2039,7 +2039,7 @@ LOCALE, TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
   COPY_PROPERTY (dim);
   COPY_PROPERTY (blinking);
   COPY_PROPERTY (reverse);
-  COPY_PROPERTY (flush);
+  COPY_PROPERTY (shrink);
 #undef COPY_PROPERTY
   /* #### should it copy the individual specifiers, if they exist? */
   fnew->plist = Fcopy_sequence (fold->plist);
@@ -2179,7 +2179,7 @@ syms_of_faces (void)
   /* Qhighlight, Qreverse defined in general.c */
   DEFSYMBOL (Qdim);
   DEFSYMBOL (Qblinking);
-  DEFSYMBOL (Qflush);
+  DEFSYMBOL (Qshrink);
 
   DEFSYMBOL (Qface_alias);
   DEFERROR_STANDARD (Qcyclic_face_alias, Qinvalid_state);
@@ -2246,7 +2246,7 @@ If non-zero, display debug information about X faces
   Vbuilt_in_face_specifiers =
     listu (Qforeground, Qbackground, Qfont, Qdisplay_table, Qbackground_pixmap,
 	   Qbackground_placement, Qunderline, Qstrikethru, Qhighlight, Qdim,
-	   Qblinking, Qreverse, Qflush, Qunbound);
+	   Qblinking, Qreverse, Qshrink, Qunbound);
   staticpro (&Vbuilt_in_face_specifiers);
 }
 
@@ -2502,7 +2502,7 @@ complex_vars_of_faces (void)
 			 list1 (Fcons (Qnil, Qnil)));
   set_specifier_fallback (Fget (Vdefault_face, Qreverse, Qnil),
 			 list1 (Fcons (Qnil, Qnil)));
-  set_specifier_fallback (Fget (Vdefault_face, Qflush, Qnil),
+  set_specifier_fallback (Fget (Vdefault_face, Qshrink, Qnil),
 			 list1 (Fcons (Qnil, Qnil)));
 
   /* gui-element is the parent face of all gui elements such as

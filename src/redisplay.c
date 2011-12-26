@@ -2500,10 +2500,10 @@ create_text_block (struct window *w, struct display_line *dl,
 	     to the line and end this loop. */
 	  else if (data.ch == '\n')
 	    {
-	      /* Update the clearing face index when the flush property is
+	      /* Update the clearing face index unless the shrink property is
 		 set. -- dvl */ 
 	      if ((data.findex > DEFAULT_INDEX)
-		  && WINDOW_FACE_CACHEL_FLUSH_P (w, data.findex))
+		  && ! WINDOW_FACE_CACHEL_SHRINK_P (w, data.findex))
 		dl->clear_findex = data.findex;
 
 	      /* We aren't going to be adding an end glyph so give its
@@ -4938,10 +4938,10 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	     to the line and end this loop. */
 	  else if (data.ch == '\n')
 	    {
-	      /* Update the clearing face index when the flush property is
+	      /* Update the clearing face index unless the shrink property is
 		 set. -- dvl */ 
 	      if ((data.findex > DEFAULT_INDEX)
-		  && WINDOW_FACE_CACHEL_FLUSH_P (w, data.findex))
+		  && ! WINDOW_FACE_CACHEL_SHRINK_P (w, data.findex))
 		dl->clear_findex = data.findex;
 
 	      /* We aren't going to be adding an end glyph so give its
