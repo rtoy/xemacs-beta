@@ -557,7 +557,7 @@ See `face-property-instance' for more information."
 FACE may be either a face object or a symbol representing a face.
 
 Normally DOMAIN will be a window or nil (meaning the selected window),
-  and an instance object describing how the background appears in that
+  and an instance object describing how the foreground appears in that
   particular window and buffer will be returned.
 
 See `face-property-instance' for more information."

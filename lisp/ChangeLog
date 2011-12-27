@@ -1,5 +1,9 @@
 2011-12-27  Didier Verna  <didier@xemacs.org>
 
+	* faces.el (face-foreground-name): Fix docstring typo.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
 	* faces.el: Explicitely set the 'zmacs-region face to not shrink
 	so as to override a shrink setting for a face under it (during
 	face merging).
