@@ -1845,7 +1845,7 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
 /*****************************************************************************
  XLIKE_output_blank
 
- Output a blank by clearing the area it covers in the foreground color
+ Output a blank by clearing the area it covers in the background color
  of its face.
  ****************************************************************************/
 static void
