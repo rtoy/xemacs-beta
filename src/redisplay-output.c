@@ -1789,12 +1789,12 @@ redisplay_clear_region (Lisp_Object locale, face_index findex, int x, int y,
     {
       if (w)
 	{
-	  fcolor = WINDOW_FACE_CACHEL_FOREGROUND (w, findex);
+	  fcolor = WINDOW_FACE_CACHEL_FOREBACK (w, findex);
 	  bcolor = WINDOW_FACE_CACHEL_BACKGROUND (w, findex);
 	}
       else
 	{
-	  fcolor = FACE_FOREGROUND (Vdefault_face, locale);
+	  fcolor = FACE_FOREBACK (Vdefault_face, locale);
 	  bcolor = FACE_BACKGROUND (Vdefault_face, locale);
 	}
     }

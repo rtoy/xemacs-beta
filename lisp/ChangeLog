@@ -1,5 +1,19 @@
 2011-12-27  Didier Verna  <didier@xemacs.org>
 
+	* cl-macs.el (face-foreback): New defsetf.
+	* faces.el (set-face-property): Document the foreback property.
+	* faces.el (face-foreback):
+	* faces.el (face-foreback-instance):
+	* faces.el (face-foreback-name):
+	* faces.el (set-face-foreback): New functions.
+	* faces.el (face-equal):
+	* faces.el (init-other-random-faces):
+	* cus-face.el (custom-face-attributes):
+	* x-faces.el (x-init-face-from-resources): Handle the foreback
+	property.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
 	* faces.el (face-foreground-name): Fix docstring typo.
 
 2011-12-27  Didier Verna  <didier@xemacs.org>

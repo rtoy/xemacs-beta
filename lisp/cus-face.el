@@ -83,6 +83,10 @@
 			:value ""
 			:help-echo "Set foreground color.")
 		 set-face-foreground face-foreground-name)
+    (:foreback (color :tag "Foreback"
+			:value ""
+			:help-echo "Set foreback color.")
+		 set-face-foreback face-foreback-name)
     (:background (color :tag "Background"
 			:value ""
 			:help-echo "Set background color.")

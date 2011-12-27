@@ -293,7 +293,7 @@ mswindows_output_blank (struct window *w, struct display_line *dl,
 					 start_pixpos, rb->width,
 					 &db, &dga);
       /* blank the background in the appropriate color */
-      mswindows_update_dc (hdc, cachel->foreground,
+      mswindows_update_dc (hdc, cachel->foreback,
 			   cachel->background, Qnil);
       redisplay_output_pixmap (w, bg_pmap, &db, &dga, rb->findex,
 			       0, 0, 0, TRUE);
@@ -507,8 +507,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
       redisplay_calculate_display_boxes (dl, xpos + xoffset, 0, 0,
 					 clip_start, width, &db, &dga);
       /* blank the background in the appropriate color */
-      mswindows_update_dc (hdc,
-			   cachel->foreground, cachel->background, Qnil);
+      mswindows_update_dc (hdc, cachel->foreback, cachel->background, Qnil);
       redisplay_output_pixmap (w, bg_pmap, &db, &dga, findex,
 			       0, 0, 0, TRUE);
       /* output pixmap calls this so we have to recall to get correct

@@ -5137,12 +5137,13 @@ extern Lisp_Object Qextent_live_p;
 extern Lisp_Object Qstart_open;
 
 /* Defined in faces.c */
+extern Lisp_Object Qforeground;
+extern Lisp_Object Qforeback;
 extern Lisp_Object Qbackground;
 extern Lisp_Object Qbackground_pixmap;
 extern Lisp_Object Qblinking;
 extern Lisp_Object Qdim;
 extern Lisp_Object Qdisplay_table;
-extern Lisp_Object Qforeground;
 extern Lisp_Object Qunderline;
 extern Lisp_Object Qshrink;
 
