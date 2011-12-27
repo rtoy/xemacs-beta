@@ -1351,16 +1351,29 @@ face_cachel_charset_font_metric_info (struct face_cachel *cachel,
     cachel->field##_specified = (bound || default_face);		     \
   } while (0)
 
-/*
- * A face's background pixmap will override the face's
- * background color.  But the background pixmap of the
- * default face should not override the background color of
- * a face if the background color has been specified or
- * inherited.
- *
- * To accomplish this we remove the background pixmap of the
- * cachel and mark it as having been specified so that cachel
- * merging won't override it later.
+
+/* #### FIXME:
+
+   This is shaky and might not even be what's desired from time to time. Why
+   restrict to the default face? Somebody could want to specify the background
+   color of *any* face, and make it have precedence over inherited pixmaps.
+   
+   What's really needed is a more general background property:
+   - type: color or pixmap
+   - color (for the color type)
+   - pixmap + fg color / bg color (in case of bitmap) for the pixmap type.
+   
+   And, BTW, the foreground property could also behave like this.
+   
+   -- dvl
+
+   A face's background pixmap will override the face's background color. But
+   the background pixmap of the default face should not override the
+   background color of a face if the background color has been specified or
+   inherited.
+ 
+   To accomplish this we remove the background pixmap of the cachel and mark
+   it as having been specified so that cachel merging won't override it later.
  */
 #define MAYBE_UNFROB_BACKGROUND_PIXMAP          \
 do                                              \
