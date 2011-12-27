@@ -41,6 +41,7 @@ struct Lisp_Face
 			    a face. */
 
   Lisp_Object foreground;
+  Lisp_Object foreback;
   Lisp_Object background;
   Lisp_Object font;
 
@@ -160,6 +161,7 @@ struct face_cachel
      faces.  This is what the _specified flags below are for. */
 
   Lisp_Object foreground;
+  Lisp_Object foreback;
   Lisp_Object background;
   /* There are currently 128 or 129 possible charsets under Mule.  For the
      moment we just take the easy way out and allocate space for each
@@ -188,6 +190,7 @@ struct face_cachel
   DECLARE_INLINE_LISP_BIT_VECTOR(NUM_LEADING_BYTES) font_specified;
 
   unsigned int foreground_specified :1;
+  unsigned int foreback_specified :1;
   unsigned int background_specified :1;
   unsigned int display_table_specified :1;
   unsigned int background_pixmap_specified :1;
@@ -331,6 +334,8 @@ void default_face_width_and_height (Lisp_Object domain, int *width,
   (WINDOW_FACE_CACHEL (window, index)->face)
 #define WINDOW_FACE_CACHEL_FOREGROUND(window, index)			\
   (WINDOW_FACE_CACHEL (window, index)->foreground)
+#define WINDOW_FACE_CACHEL_FOREBACK(window, index)			\
+  (WINDOW_FACE_CACHEL (window, index)->foreback)
 #define WINDOW_FACE_CACHEL_BACKGROUND(window, index)			\
   (WINDOW_FACE_CACHEL (window, index)->background)
 /* #### This can be referenced by various functions,
@@ -391,6 +396,8 @@ Lisp_Object face_property_matching_instance
 
 #define FACE_FOREGROUND(face, domain)					\
   FACE_PROPERTY_INSTANCE (face, Qforeground, domain, 0, Qzero)
+#define FACE_FOREBACK(face, domain)					\
+  FACE_PROPERTY_INSTANCE (face, Qforeback, domain, 0, Qzero)
 #define FACE_BACKGROUND(face, domain)					\
   FACE_PROPERTY_INSTANCE (face, Qbackground, domain, 0, Qzero)
 

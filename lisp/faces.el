@@ -322,6 +322,11 @@ The following symbols have predefined meanings:
  foreground         The foreground color of the face.
                     For valid instantiators, see `make-color-specifier'.
 
+ foreback           The foreground color of the face's background pixmap,
+                    when the pixmap is a bitmap.
+                    Only used by faces on X and MS Windows devices.
+                    For valid instantiators, see `make-color-specifier'.
+
  background         The background color of the face.
                     For valid instantiators, see `make-color-specifier'.
 
@@ -582,6 +587,72 @@ If COLOR is an alist, LOCALE must be omitted.  If COLOR is a
 See `set-face-property' for more information."
   (interactive (face-interactive "foreground"))
   (set-face-property face 'foreground color locale tag-set how-to-add))
+
+(defun face-foreback (face &optional locale tag-set exact-p)
+  "Return the foreback spec of FACE in LOCALE, or nil if it is unspecified.
+
+NOTE: This returns a locale-specific specification, not any sort of value
+corresponding to the actual foreback being used.  If you want to know the
+actual foreback color used in a particular domain, use
+`face-foreback-instance', or `face-foreback-name' for its name
+\(i.e. the instantiator used to create it).
+
+FACE may be either a face object or a symbol representing a face.
+
+LOCALE may be a locale (the instantiators for that particular locale
+  will be returned), a locale type (the specifications for all locales
+  of that type will be returned), `all' (all specifications will be
+  returned), or nil (the actual specifier object will be returned).
+
+See `face-property' for more information."
+  (face-property face 'foreback locale tag-set exact-p))
+
+(defun face-foreback-instance (face &optional domain default no-fallback)
+  "Return the instance of FACE's foreback in DOMAIN.
+
+Return value will be a color instance object; query its properties using
+`color-instance-name' or `color-instance-rgb-properties'.
+
+FACE may be either a face object or a symbol representing a face.
+
+Normally DOMAIN will be a window or nil (meaning the selected window),
+  and an instance object describing how the foreback appears in that
+  particular window and buffer will be returned.
+
+See `face-property-instance' for more information."
+  (face-property-instance face 'foreback domain default no-fallback))
+
+(defun face-foreback-name (face &optional domain default no-fallback)
+  "Return the name of FACE's foreback color in DOMAIN.
+
+FACE may be either a face object or a symbol representing a face.
+
+Normally DOMAIN will be a window or nil (meaning the selected window),
+  and an instance object describing how the foreback appears in that
+  particular window and buffer will be returned.
+
+See `face-property-instance' for more information."
+  (color-instance-name (face-foreback-instance
+			face domain default no-fallback)))
+
+(defun set-face-foreback (face color &optional locale tag-set how-to-add)
+  "Change the foreback color of FACE to COLOR in LOCALE.
+
+FACE may be either a face object or a symbol representing a face.
+
+COLOR should be an instantiator (see `make-color-specifier'), a list of
+  instantiators, an alist of specifications (each mapping a locale to
+  an instantiator list), or a color specifier object.
+
+If COLOR is an alist, LOCALE must be omitted.  If COLOR is a
+  specifier object, LOCALE can be a locale, a locale type, `all',
+  or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
+  specifies the locale under which the specified instantiator(s)
+  will be added, and defaults to `global'.
+
+See `set-face-property' for more information."
+  (interactive (face-interactive "foreback"))
+  (set-face-property face 'foreback color locale tag-set how-to-add))
 
 (defun face-background (face &optional locale tag-set exact-p)
   "Return the background color of FACE in LOCALE, or nil if it is unspecified.
@@ -935,9 +1006,11 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (if (not (valid-specifier-domain-p domain))
       (error "Invalid specifier domain"))
   (let ((device (dfw-device domain))
-	(common-props '(foreground background font display-table underline
-				   dim inherit shrink))
-	(win-props '(background-pixmap background-placement strikethru))
+	(common-props '(foreground background
+			font display-table underline
+			dim inherit shrink))
+	(win-props '(foreback background-pixmap background-placement
+		     strikethru))
 	(tty-props '(highlight blinking reverse)))
 
     ;; First check the properties which are used in common between the
@@ -2005,7 +2078,7 @@ you want to add code to do stuff like this, use the create-device-hook."
   ;; element faces. So take the modeline face information from its
   ;; fallbacks, themselves ultimately set up in faces.c:
   (loop
-    for face-property in '(foreground background 
+    for face-property in '(foreground foreback background 
 			   background-pixmap background-placement)
     do (when (and (setq face-property (face-property 'modeline face-property))
                   (null (specifier-instance face-property device nil t))

@@ -698,6 +698,10 @@ Otherwise, it returns the next larger version of this font that is defined."
 	      (concat name ".attributeForeground")
 	      "Face.AttributeForeground"
 	      'string locale))
+	 (fb (x-get-resource-and-maybe-bogosity-check
+	      (concat name ".attributeForeback")
+	      "Face.AttributeForeback"
+	      'string locale))
 	 (bg (x-get-resource-and-maybe-bogosity-check
 	      (concat name ".attributeBackground")
 	      "Face.AttributeBackground"
@@ -815,6 +819,13 @@ Otherwise, it returns the next larger version of this font that is defined."
 							x-tag-set)
 	(remove-specifier (face-foreground face) locale x-tag-set nil))
       (set-face-foreground face fg locale our-tag-set append))
+    (when fb
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-foreback face)
+							locale
+							x-tag-set)
+	(remove-specifier (face-foreback face) locale x-tag-set nil))
+      (set-face-foreback face fb locale our-tag-set append))
     (when bg
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-background face)

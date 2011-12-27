@@ -1094,8 +1094,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
        && !NILP (w->text_cursor_visible_p)) || NILP (bg_pmap))
     bgc = 0;
   else
-    bgc = XLIKE_get_gc (f, Qnil, cachel->foreground, cachel->background,
-			bg_pmap, cachel->background_placement, Qnil);
+    bgc = XLIKE_get_gc
+      (f, Qnil, NILP (bg_pmap) ? cachel->foreground : cachel->foreback,
+       cachel->background, bg_pmap, cachel->background_placement, Qnil);
 
   if (bgc)
     {
@@ -1895,7 +1896,7 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
     gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
 		       Qnil, Qnil, Qnil, Qnil);
   else
-    gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
+    gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_FOREBACK (w, rb->findex),
 		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
 		       bg_pmap,
 		       WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT (w, rb->findex),

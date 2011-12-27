@@ -1,5 +1,41 @@
 2011-12-27  Didier Verna  <didier@xemacs.org>
 
+	* faces.h (struct Lisp_Face): New 'foreback slot.
+	* faces.h (struct face_cachel): New 'foreback and
+	'foreback_specified slots.
+	* faces.h (WINDOW_FACE_CACHEL_FOREBACK):
+	* faces.h (FACE_FOREBACK): New macros.
+	* faces.c: Declare Qforeback.
+	* lisp.h: Externalize it.
+	* faces.c (syms_of_faces): Define it.
+	* faces.c (vars_of_faces): Update built-in face specifiers.
+	* faces.c (complex_vars_of_faces): Update specifier fallbacks.
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (Fmake_face):
+	* faces.c (mark_face_cachels):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (reset_face_cachel):
+	* faces.c (face_property_was_changed):
+	* faces.c (Fcopy_face):
+	* fontcolor.c (face_color_validate): Handle the foreback property.
+	* redisplay-msw.c (mswindows_output_blank):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-output.c (redisplay_clear_region):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_blank): Use the face's
+	foreback color instead of the foreground one for drawing a
+	background bitmap.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
 	* redisplay-xlike-inc.c (XLIKE_output_blank): Fix comment typo.
 
 2011-12-26  Didier Verna  <didier@xemacs.org>

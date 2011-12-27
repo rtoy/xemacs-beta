@@ -694,10 +694,12 @@ color_validate (Lisp_Object instantiator)
 	  if (XVECTOR_LENGTH (instantiator) == 2)
 	    {
 	      Lisp_Object field = XVECTOR_DATA (instantiator)[1];
-	      if (!EQ (field, Qforeground) && !EQ (field, Qbackground))
+	      if (!EQ (field, Qforeground)
+		  && !EQ (field, Qforeback)
+		  && !EQ (field, Qbackground))
 		invalid_constant
-		  ("Inheritance field must be `foreground' or `background'",
-		   field);
+("Inheritance field must be `foreground', `foreback' or `background'",
+ field);
 	    }
 	}
     }
