@@ -1,5 +1,11 @@
 2011-12-27  Didier Verna  <didier@xemacs.org>
 
+	* glyphs.c (update_image_instance):
+	* glyphs.c (image_instantiate): More comments about the current
+	glyphs cache coherency problem.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
 	* faces.c: Add a comment about the way background pixmaps are
 	handled right now, just above MAYBE_UNFROB_BACKGROUND_PIXMAP.
 
