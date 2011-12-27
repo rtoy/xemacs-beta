@@ -1,5 +1,10 @@
 2011-12-27  Didier Verna  <didier@xemacs.org>
 
+	* faces.c: Add a comment about the way background pixmaps are
+	handled right now, just above MAYBE_UNFROB_BACKGROUND_PIXMAP.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
 	* faces.h (struct Lisp_Face): New 'foreback slot.
 	* faces.h (struct face_cachel): New 'foreback and
 	'foreback_specified slots.
