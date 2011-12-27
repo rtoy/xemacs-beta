@@ -2113,6 +2113,9 @@ in that frame; otherwise change each frame."
 			    '(((win default mono) . "gray1"))
 			    'global)
 
+;; We need to set this face to not shrink *explicitely* in order to force
+;; covering a shrinked selection. -- dvl
+(set-face-shrink-p 'zmacs-region nil)
 (set-face-background 'zmacs-region
 		     '(((win default color) . "gray65")
 		       ((win default grayscale) . "gray65"))

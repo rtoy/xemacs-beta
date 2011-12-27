@@ -1,5 +1,11 @@
 2011-12-27  Didier Verna  <didier@xemacs.org>
 
+	* faces.el: Explicitely set the 'zmacs-region face to not shrink
+	so as to override a shrink setting for a face under it (during
+	face merging).
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
 	* wid-edit.el (widget-field-face): Set this face to shrink. Fix
 	incorrect specification.
 
