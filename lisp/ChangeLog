@@ -1,3 +1,8 @@
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* wid-edit.el (widget-field-face): Set this face to shrink. Fix
+	incorrect specification.
+
 2011-12-26  Didier Verna  <didier@xemacs.org>
 
 	* cl-macs.el (face-flush-p): Removed.

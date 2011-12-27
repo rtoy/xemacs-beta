@@ -88,22 +88,18 @@ This exists as a variable so it can be set locally in certain buffers.")
 ;; TTY gets special definitions here and in the next defface, because
 ;; the gray colors defined for other displays cause black text on a black
 ;; background, at least on light-background TTYs.
-(defface widget-field-face '(
-			     ;; #### sjt sez:  XEmacs doesn't like this.
-			     ;; The Custom face editor widget shows a Lisp
-			     ;; form, not a face structure.  Does it produce
-			     ;; the right face on TTYs?
-			     ;; One hypothesis is that the editor doesn't
-			     ;; grok non-default display types in the value.
-			     (((type tty))
-			      (:background "yellow3")
-			      (:foreground "black"))
+(defface widget-field-face '((((type tty))
+			      (:background "yellow3"
+			       :foreground "black"
+			       :shrink t))
 			     (((class grayscale color)
 			       (background light))
-			      (:background "gray85"))
+			      (:background "gray85"
+			       :shrink t))
 			     (((class grayscale color)
 			       (background dark))
-			      (:background "dim gray"))
+			      (:background "dim gray"
+			       :shrink t))
 			     (t
 			      (:italic t)))
   "Face used for editable fields."
