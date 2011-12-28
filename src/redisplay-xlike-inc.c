@@ -459,7 +459,7 @@ separate_textual_runs (unsigned char *text_storage,
 /****************************************************************************/
 
 static int
-XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
+XLIKE_text_width_single_run (XLIKE_DISPLAY USED_IF_XFT (dpy),
 			     struct face_cachel *cachel,
 			     struct textual_run *run)
 {
@@ -472,8 +472,6 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
   else if (FONT_INSTANCE_X_XFTFONT (fi))
     {
       static XGlyphInfo glyphinfo;
-      struct device *d = XDEVICE (f->device);
-      Display *dpy = DEVICE_X_DISPLAY (d);
 
       if (run->dimension == 2)
 	{
@@ -526,7 +524,9 @@ XLIKE_text_width (struct window *w, struct face_cachel *cachel,
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
   struct textual_run *runs = alloca_array (struct textual_run, len);
-  struct frame *f = WINDOW_XFRAME (w);
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
   int nruns;
   int i;
 
@@ -534,7 +534,7 @@ XLIKE_text_width (struct window *w, struct face_cachel *cachel,
 				 cachel);
 
   for (i = 0; i < nruns; i++)
-    width_so_far += XLIKE_text_width_single_run (f, cachel, runs + i);
+    width_so_far += XLIKE_text_width_single_run (dpy, cachel, runs + i);
 
   return width_so_far;
 }
@@ -1118,7 +1118,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
-      this_width = XLIKE_text_width_single_run (f, cachel, runs + i);
+      this_width = XLIKE_text_width_single_run (dpy, cachel, runs + i);
       need_clipping = (dl->clip || clip_start > xpos ||
 		       clip_end < xpos + this_width);
 
@@ -1245,7 +1245,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		   OK, unconditionally redraw the bevel, and increment
 		   rect_height by 1.  See x_output_display_block. -- sjt */
 		struct textual_run *run = &runs[i];
-		int rect_width = x_text_width_single_run (f, cachel, run);
+		int rect_width
+		  = XLIKE_text_width_single_run (dpy, cachel, run);
 #ifndef USE_XFTTEXTENTS_TO_AVOID_FONT_DROPPINGS
 		int rect_height = FONT_INSTANCE_ASCENT (fi)
 				  + FONT_INSTANCE_DESCENT (fi) + 1;
@@ -1458,7 +1459,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      { /* draw background rectangle & draw text */
 		int rect_height = FONT_INSTANCE_ASCENT (fi)
 				  + FONT_INSTANCE_DESCENT (fi);
-		int rect_width = x_text_width_single_run (f, cachel, &runs[i]);
+		int rect_width
+		  = XLIKE_text_width_single_run (dpy, cachel, &runs[i]);
 		XftColor xft_color;
 
 		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
