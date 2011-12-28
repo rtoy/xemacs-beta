@@ -1,3 +1,9 @@
+2011-12-28  Jerry James  <james@xemacs.org>
+
+	* lisp-disunion.h (make_fixnum): avoid losing bits off the left end
+	if the value is of large magnitude and narrow type.
+	(make_char_1): ditto.
+
 2011-12-28  Didier Verna  <didier@xemacs.org>
 
 	* console-impl.h (struct console_methods): Have the text_width
