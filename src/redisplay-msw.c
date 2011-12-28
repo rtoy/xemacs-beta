@@ -467,7 +467,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 #if 0	/* #### FIXME? */
   /* We can't work out the width before we've set the font in the DC */
   if (width < 0)
-    width = mswindows_text_width (w, cachel, Dynarr_begin (buf),
+    width = mswindows_text_width (f, cachel, Dynarr_begin (buf),
 				  Dynarr_length (buf));
 #else
   assert (width >= 0);
@@ -1212,10 +1212,9 @@ mswindows_output_vertical_divider (struct window *w, int UNUSED (clear_unused))
  displayed in the font associated with the face.
  ****************************************************************************/
 static int
-mswindows_text_width (struct window *w, struct face_cachel *cachel,
+mswindows_text_width (struct frame *f, struct face_cachel *cachel,
 		      const Ichar *str, Charcount len)
 {
-  struct frame *f = WINDOW_XFRAME (w);
   HDC hdc = get_frame_dc (f, 0);
   int width_so_far = 0;
   textual_run *runs;

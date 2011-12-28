@@ -517,16 +517,14 @@ XLIKE_text_width_single_run (XLIKE_DISPLAY USED_IF_XFT (dpy),
    */
 
 static int
-XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
 		  const Ichar *str, Charcount len)
 {
   /* !!#### Needs review */
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
   struct textual_run *runs = alloca_array (struct textual_run, len);
-  struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (XDEVICE (f->device));
   int nruns;
   int i;
 
@@ -1040,7 +1038,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 #endif /* USE_XFT */
 
   if (width < 0)
-    width = XLIKE_text_width (w, cachel, Dynarr_begin (buf),
+    width = XLIKE_text_width (f, cachel, Dynarr_begin (buf),
 			      Dynarr_length (buf));
 
   /* Regularize the variables passed in. */

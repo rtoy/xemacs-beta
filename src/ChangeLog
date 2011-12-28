@@ -1,5 +1,20 @@
 2011-12-28  Didier Verna  <didier@xemacs.org>
 
+	* console-impl.h (struct console_methods): Have the text_width
+	methods expect a frame instead of a window pointer.
+	* console-stream.c (stream_text_width):
+	* redisplay-msw.c (mswindows_text_width):
+	* redisplay-tty.c (tty_text_width):
+	* redisplay-xlike-inc.c (XLIKE_text_width): Update accordingly.
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay.c (redisplay_window_text_width_ichar_string):
+	* redisplay.c (redisplay_text_width_string): Update the callers.
+	This also fixes an uncertainty about always getting a window from
+	a domain.
+
+2011-12-28  Didier Verna  <didier@xemacs.org>
+
 	* redisplay-xlike-inc.c (XLIKE_text_width_single_run): Get only
 	what's needed as argument: an XLIKE_DISPLAY instead of a frame
 	pointer.
