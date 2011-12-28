@@ -1,3 +1,12 @@
+2011-12-28  Didier Verna  <didier@xemacs.org>
+
+	* redisplay-xlike-inc.c (XLIKE_text_width_single_run): Get only
+	what's needed as argument: an XLIKE_DISPLAY instead of a frame
+	pointer.
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c (XLIKE_output_string): Update accordingly.
+	Use the generic XLIKE_ name instead of the specific x_ one.
+
 2011-12-27  Didier Verna  <didier@xemacs.org>
 
 	* glyphs.c (update_image_instance):
