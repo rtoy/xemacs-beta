@@ -639,7 +639,8 @@ redisplay_window_text_width_ichar_string (struct window *w, int findex,
   ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), window,
 			       charsets);
   return DEVMETH (WINDOW_XDEVICE (w),
-		  text_width, (w, WINDOW_FACE_CACHEL (w, findex), str,
+		  text_width, (WINDOW_XFRAME (w),
+			       WINDOW_FACE_CACHEL (w, findex), str,
 			       len));
 }
 
@@ -687,13 +688,8 @@ redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
   ensure_face_cachel_complete (&cachel,
 			       NILP (window) ? frame : window,
 			       charsets);
-  return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (frame))),
-		  /* #### Not clear if we're always passed a window, but
-		     I think so.  If not, we will get an abort here,
-		     and then we need to either fix the callers to pass in
-		     a window, or change *text_width() to take a domain
-		     argument. */
-		  text_width, (XWINDOW (window),
+  return DEVMETH (FRAME_XDEVICE (XFRAME (frame)),
+		  text_width, (XFRAME (frame),
 			       &cachel,
 			       Dynarr_begin (rtw_ichar_dynarr),
 			       Dynarr_length (rtw_ichar_dynarr)));
