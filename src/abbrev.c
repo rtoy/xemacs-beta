@@ -468,6 +468,7 @@ describe_abbrev (Lisp_Object sym, Lisp_Object stream)
 
   Fprin1 (count, stream);
   Findent_to (make_fixnum (20), Qone, Qnil);
+
   Fprin1 (XSYMBOL_VALUE (sym), stream);
   if (!NILP (XSYMBOL (sym)->function))
     {

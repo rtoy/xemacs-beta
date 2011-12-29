@@ -1,3 +1,1439 @@
+2011-12-28  Jerry James  <james@xemacs.org>
+
+	* lisp-disunion.h (make_fixnum): avoid losing bits off the left end
+	if the value is of large magnitude and narrow type.
+	(make_char_1): ditto.
+
+2011-12-28  Didier Verna  <didier@xemacs.org>
+
+	* console-impl.h (struct console_methods): Have the text_width
+	methods expect a frame instead of a window pointer.
+	* console-stream.c (stream_text_width):
+	* redisplay-msw.c (mswindows_text_width):
+	* redisplay-tty.c (tty_text_width):
+	* redisplay-xlike-inc.c (XLIKE_text_width): Update accordingly.
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay.c (redisplay_window_text_width_ichar_string):
+	* redisplay.c (redisplay_text_width_string): Update the callers.
+	This also fixes an uncertainty about always getting a window from
+	a domain.
+
+2011-12-28  Didier Verna  <didier@xemacs.org>
+
+	* redisplay-xlike-inc.c (XLIKE_text_width_single_run): Get only
+	what's needed as argument: an XLIKE_DISPLAY instead of a frame
+	pointer.
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c (XLIKE_output_string): Update accordingly.
+	Use the generic XLIKE_ name instead of the specific x_ one.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* glyphs.c (update_image_instance):
+	* glyphs.c (image_instantiate): More comments about the current
+	glyphs cache coherency problem.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* faces.c: Add a comment about the way background pixmaps are
+	handled right now, just above MAYBE_UNFROB_BACKGROUND_PIXMAP.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* faces.h (struct Lisp_Face): New 'foreback slot.
+	* faces.h (struct face_cachel): New 'foreback and
+	'foreback_specified slots.
+	* faces.h (WINDOW_FACE_CACHEL_FOREBACK):
+	* faces.h (FACE_FOREBACK): New macros.
+	* faces.c: Declare Qforeback.
+	* lisp.h: Externalize it.
+	* faces.c (syms_of_faces): Define it.
+	* faces.c (vars_of_faces): Update built-in face specifiers.
+	* faces.c (complex_vars_of_faces): Update specifier fallbacks.
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (Fmake_face):
+	* faces.c (mark_face_cachels):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (reset_face_cachel):
+	* faces.c (face_property_was_changed):
+	* faces.c (Fcopy_face):
+	* fontcolor.c (face_color_validate): Handle the foreback property.
+	* redisplay-msw.c (mswindows_output_blank):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-output.c (redisplay_clear_region):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_blank): Use the face's
+	foreback color instead of the foreground one for drawing a
+	background bitmap.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* redisplay-xlike-inc.c (XLIKE_output_blank): Fix comment typo.
+
+2011-12-26  Didier Verna  <didier@xemacs.org>
+
+	* lisp.h:
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (Fmake_face):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (Fcopy_face):
+	* faces.c (syms_of_faces):
+	* faces.c (vars_of_faces):
+	* faces.c (complex_vars_of_faces):
+	* faces.h (struct Lisp_Face):
+	* faces.h (struct face_cachel):
+	* faces.h (WINDOW_FACE_CACHEL_SHRINK_P):
+	* faces.h (FACE_SHRINK_P):
+	* fontcolor.c (face_boolean_validate): Replace the 'flush property
+	with the opposite 'shrink one.
+	* redisplay.c (create_text_block):
+	* redisplay.c (create_string_text_block): Ditto. Invert the logic
+	for storing a new clear_findex in the display lines.
+
+2011-12-23  Didier Verna  <didier@xemacs.org>
+
+	* faces.h (struct Lisp_Face): New 'flush slot.
+	* faces.h (struct face_cachel): New 'flush and 'flush_specified
+	flags.
+	* faces.h (WINDOW_FACE_CACHEL_FLUSH_P):
+	* faces.h (FACE_FLUSH_P): New macros.
+	* faces.c: Declare Qflush.
+	* lisp.h: Externalize it.
+	* faces.c (syms_of_faces): Define it.
+	* faces.c (vars_of_faces): Update built-in face specifiers.
+	* faces.c (complex_vars_of_faces): Update specifier fallbacks.
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (Fmake_face):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (Fcopy_face):
+	* fontcolor.c (face_boolean_validate): Handle the flush property.
+	* redisplay.h (struct display_line): Rename 'default_findex slot to
+	clearer name 'clear_findex.
+	* redisplay.h (DISPLAY_LINE_INIT): Update accordingly.
+	* redisplay-output.c (compare_display_blocks):
+	* redisplay-output.c (output_display_line):
+	* redisplay-output.c (redisplay_output_window):
+	* redisplay.c (regenerate_window_extents_only_changed):
+	* redisplay.c (regenerate_window_incrementally): Update the
+	comparison tests between the current and desired display lines to
+	cope for different 'clear_findex values.	
+	* redisplay.c (create_text_block): Initialize the display line's
+	'clear_findex slot to DEFAULT_INDEX. Record a new 'clear_findex
+	value when we encounter a newline character displayed in a flushed
+	face.
+	* redisplay.c (create_string_text_block): Record a new
+	'clear_findex value when we encounter a newline character
+	displayed in a flushed face.
+
+2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select-gtk.c (vars_of_select_gtk):
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (syms_of_select_x):
+	* select-x.c (vars_of_select_x):
+	* select.c:
+	* select.c (handle_selection_clear):
+	* select.c (syms_of_select):
+	* select.c (vars_of_select):
+	Use va_run_hooks_with_args for x-sent-selection-hooks
+	and lost-selection-hooks, instead of rolling our own.
+
+2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fmacroexpand): Rename Fmacroexpand_internal, add the
+	functionality that used to be in #'cl-macroexpand--it makes no
+	sense for us, and needlessly slows things down, to have two
+	separate functions.
+	* eval.c:
+	* eval.c (syms_of_eval):
+	Move byte-compile-macro-environment here, now it's used by
+	#'macroexpand.
+
+2011-12-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1): Add the zero, *then* flush, when reading an
+	integer into Vread_buffer_stream.
+
+2011-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* Makefile.in.in (objs):
+	* depend:
+	Add sequence.o to the list of objects and dependencies.
+
+	* alloc.c:
+	* alloc.c (mark_bit_vector):
+	* alloc.c (print_bit_vector):
+	* alloc.c (bit_vector_equal):
+	* alloc.c (internal_bit_vector_equalp_hash):
+	* alloc.c (bit_vector_hash):
+	* alloc.c (init_alloc_once_early):
+	Move the implementation of the bit vector type here from fns.c. 
+
+	* emacs.c (main_1):
+	Call syms_of_sequence() here, now sequence.c is included.
+
+	* fns.c (Fold_rassq):
+	Move this together with the rest of the Fold_* functions.
+	* fns.c:
+	* fns.c (syms_of_fns):
+	Move most functions dealing with sequences generally, and
+	especially those taking key arguments, to a separate file,
+	sequence.c.
+
+	* general-slots.h:
+	Qyes_or_no_p belong here, not fns.c.
+
+	* lisp.h:
+	Make Flist_length available here, it's used by sequence.c
+
+	* sequence.c:
+	* sequence.c (check_sequence_range):
+	* sequence.c (Flength):
+	* sequence.c (check_other_nokey):
+	* sequence.c (check_other_key):
+	* sequence.c (check_if_key):
+	* sequence.c (check_match_eq_key):
+	* sequence.c (check_match_eql_key):
+	* sequence.c (check_match_equal_key):
+	* sequence.c (check_match_equalp_key):
+	* sequence.c (check_match_other_key):
+	* sequence.c (check_lss_key):
+	* sequence.c (check_lss_key_car):
+	* sequence.c (check_string_lessp_key):
+	* sequence.c (check_string_lessp_key_car):
+	* sequence.c (get_check_match_function_1):
+	* sequence.c (get_merge_predicate):
+	* sequence.c (count_with_tail):
+	* sequence.c (list_count_from_end):
+	* sequence.c (string_count_from_end):
+	* sequence.c (Fcount):
+	* sequence.c (Fsubseq):
+	* sequence.c (list_position_cons_before):
+	* sequence.c (FmemberX):
+	* sequence.c (Fadjoin):
+	* sequence.c (FassocX):
+	* sequence.c (FrassocX):
+	* sequence.c (position):
+	* sequence.c (Fposition):
+	* sequence.c (Ffind):
+	* sequence.c (delq_no_quit_and_free_cons):
+	* sequence.c (FdeleteX):
+	* sequence.c (FremoveX):
+	* sequence.c (list_delete_duplicates_from_end):
+	* sequence.c (Fdelete_duplicates):
+	* sequence.c (Fremove_duplicates):
+	* sequence.c (Fnreverse):
+	* sequence.c (Freverse):
+	* sequence.c (list_merge):
+	* sequence.c (array_merge):
+	* sequence.c (list_array_merge_into_list):
+	* sequence.c (list_list_merge_into_array):
+	* sequence.c (list_array_merge_into_array):
+	* sequence.c (Fmerge):
+	* sequence.c (list_sort):
+	* sequence.c (array_sort):
+	* sequence.c (FsortX):
+	* sequence.c (Ffill):
+	* sequence.c (mapcarX):
+	* sequence.c (shortest_length_among_sequences):
+	* sequence.c (Fmapconcat):
+	* sequence.c (FmapcarX):
+	* sequence.c (Fmapvector):
+	* sequence.c (Fmapcan):
+	* sequence.c (Fmap):
+	* sequence.c (Fmap_into):
+	* sequence.c (Fsome):
+	* sequence.c (Fevery):
+	* sequence.c (Freduce):
+	* sequence.c (replace_string_range_1):
+	* sequence.c (Freplace):
+	* sequence.c (Fnsubstitute):
+	* sequence.c (Fsubstitute):
+	* sequence.c (subst):
+	* sequence.c (sublis):
+	* sequence.c (Fsublis):
+	* sequence.c (nsublis):
+	* sequence.c (Fnsublis):
+	* sequence.c (Fsubst):
+	* sequence.c (Fnsubst):
+	* sequence.c (tree_equal):
+	* sequence.c (Ftree_equal):
+	* sequence.c (mismatch_from_end):
+	* sequence.c (mismatch_list_list):
+	* sequence.c (mismatch_list_string):
+	* sequence.c (mismatch_list_array):
+	* sequence.c (mismatch_string_array):
+	* sequence.c (mismatch_string_string):
+	* sequence.c (mismatch_array_array):
+	* sequence.c (get_mismatch_func):
+	* sequence.c (Fmismatch):
+	* sequence.c (Fsearch):
+	* sequence.c (venn):
+	* sequence.c (nvenn):
+	* sequence.c (Funion):
+	* sequence.c (Fset_exclusive_or):
+	* sequence.c (Fnset_exclusive_or):
+	* sequence.c (syms_of_sequence):
+	Add this file, containing those general functions that dealt with
+	sequences that were in fns.c.
+
+	* symsinit.h:
+	Make syms_of_sequence() available here.
+
+2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1):
+	Zero-terminate what we're giving to parse_integer(), it needs it
+	if it's calling bignum_set_string().
+
+2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1):
+	Don't wrap when reading expressions that use bignums as object
+	labels, that can lead to ambiguity and it's not actually that hard
+	to use parse_integer() to avoid it.
+
+2011-11-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-mp.c (bignum_to_string):
+	Don't overwrite the accumulator we've just set up for this
+	function.
+
+	* number-mp.c (BIGNUM_TO_TYPE):
+	mp_itom() doesn't necessarily do what this code used to think with
+	negative numbers, it can treat them as unsigned ints. Subtract
+	numbers from bignum_zero instead of multiplying them by -1 to
+	convert them to their negative equivalents.
+
+	* number-mp.c (bignum_to_int):
+	* number-mp.c (bignum_to_uint):
+	* number-mp.c (bignum_to_long):
+	* number-mp.c (bignum_to_ulong):
+	* number-mp.c (bignum_to_double):
+	Use the changed BIGNUM_TO_TYPE() in these functions.
+
+	* number-mp.c (bignum_ceil):
+	* number-mp.c (bignum_floor):
+	In these functions, be more careful about rounding to positive and
+	negative infinity, respectively. Don't use the sign of QUOTIENT
+	when working out out whether to add or subtract one, rather use
+	the sign QUOTIENT would have if arbitrary-precision division were
+	done.
+
+	* number-mp.h:
+	* number-mp.h (MP_GCD):
+	Wrap #include <mp.h> in BEGIN_C_DECLS/END_C_DECLS.
+
+	* number.c (Fbigfloat_get_precision):
+	* number.c (Fbigfloat_set_precision):
+	Don't attempt to call XBIGFLOAT_GET_PREC if this build doesn't
+	support big floats.
+
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* .dbxrc.in: Move from etc/.dbxrc.in.
+
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* .gdbinit.in.in: There is no lrecord_type_lcrecord_list when
+	using the new garbage collector; print $lrecord_type when Lisp
+	Object type is unknown to pobj.
+
+2011-11-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fbuilt_in_symbol_file):
+	Don't attempt to take file information from lazy docstring
+	information in compiled functions; those functions are not
+	built-in, and as such it's appropriate to give nil.
+	Fix some indentation in passing.
+
+2011-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Prevent SIGPIPEs in deactivate_process().
+
+	* process.c (deactivate_process):
+	Use Lstream_close_noflush on output pipe instead of Lstream_close.
+
+	* lstream.c (Lstream_close_noflush):
+	New.  Factored out of Lstream_close.
+	(Lstream_close): Use Lstream_close_noflush.
+
+	* lstream.h (Lstream_close_noflush): Declare it.
+
+2011-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Prevent assert at frame.c, l. 6311 by initializing glyph cachels.
+
+	* frame.c (Fmake_frame): Ensure that reset_glyph_cachels gets called.
+	(setup_minibuffer_frame): Improve header comment.
+
+	* redisplay.c (redisplay_window): Update comment.
+	Remove code checking for uninitialized face_cachels and glyph_cachels.
+	Can't happen in theory, and guarded by asserts in practice.
+
+	* window.c (allocate_window): Update comment on reset_*_cachels.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (remassoc_no_quit):
+	* fns.c (remrassq_no_quit):
+	* fns.c (syms_of_fns):
+	* fontcolor-tty.c (Fregister_tty_color):
+	* fontcolor-tty.c (Funregister_tty_color):
+	* fontcolor-tty.c (Ffind_tty_color):
+	* lisp.h:
+	Remove Fremassq, Fremrassq, Fremassoc, Fremrassoc, they're
+	XEmacs-specific functions and Lisp callers should use (delete*
+	... :key #'car) anyway. Keep the non-Lisp-visible _no_quit
+	versions, calling FdeleteX from C with the appropriate arguments
+	is ungainly.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Do a couple of non-mechanical things that would otherwise have
+	been included in the last change.
+	* data.c:
+	* data.c (Ftype_of):
+	Return Qfixnum for fixnums, not Qinteger.
+	* lisp.h (MOST_POSITIVE_FIXNUM):
+	Delete an obsolete comment here.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* EmacsFrame.c (EmacsFrameSetValues):
+	* README:
+	* abbrev.c (Fexpand_abbrev):
+	* abbrev.c (write_abbrev):
+	* abbrev.c (describe_abbrev):
+	* alloc.c (Fmake_list):
+	* alloc.c (Fmake_vector):
+	* alloc.c (Fmake_bit_vector):
+	* alloc.c (Fmake_byte_code):
+	* alloc.c (string_plist_ptr):
+	* alloc.c (Fmake_string):
+	* alloc.c (gc_plist_hack):
+	* alloc.c (garbage_collection_statistics):
+	* alloc.c (Fobject_memory_usage):
+	* alloc.c (Ftotal_object_memory_usage):
+	* alloc.c (Fconsing_since_gc):
+	* alloc.c (Fmemory_limit):
+	* alloc.c (Ftotal_memory_usage):
+	* alloc.c (common_init_alloc_early):
+	* buffer.c (finish_init_buffer):
+	* buffer.c (MARKED_SLOT):
+	* buffer.c (Fbuffer_modified_tick):
+	* buffer.c (set_buffer_internal):
+	* buffer.c (ADD_INT):
+	* buffer.c (Fstring_char_byte_converion_info):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* buffer.c (complex_vars_of_buffer):
+	* buffer.h:
+	* buffer.h (make_charbpos):
+	* bytecode.c:
+	* bytecode.c (meter_code):
+	* bytecode.c (bytecode_negate):
+	* bytecode.c (bytecode_arithcompare):
+	* bytecode.c (bytecode_arithop):
+	* bytecode.c (UNUSED):
+	* bytecode.c (check_opcode):
+	* bytecode.c (optimize_compiled_function):
+	* bytecode.c (set_compiled_function_documentation):
+	* bytecode.c (Fcompiled_function_stack_depth):
+	* bytecode.c (Fbyte_code):
+	* callint.c (Fcall_interactively):
+	* callint.c (Fprefix_numeric_value):
+	* callint.c (syms_of_callint):
+	* casefiddle.c (casify_word):
+	* chartab.c (nsubst_structures_mapper):
+	* chartab.c (decode_char_table_range):
+	* chartab.c (encode_char_table_range):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (check_valid_char_table_value):
+	* chartab.c (Fcheck_category_at):
+	* chartab.c (Fset_category_table):
+	* chartab.c (Fcategory_designator_p):
+	* cmdloop.c (top_level_1):
+	* cmdloop.c (initial_command_loop):
+	* cmdloop.c (initial_error_handler):
+	* cmdloop.c (Fcommand_loop_1):
+	* cmds.c (Fforward_char):
+	* cmds.c (Fbackward_char):
+	* cmds.c (Fforward_line):
+	* cmds.c (Fpoint_at_bol):
+	* cmds.c (Fbeginning_of_line):
+	* cmds.c (Fpoint_at_eol):
+	* cmds.c (Fend_of_line):
+	* cmds.c (Fdelete_char):
+	* cmds.c (Fdelete_backward_char):
+	* cmds.c (Fself_insert_command):
+	* cmds.c (internal_self_insert):
+	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):
+	* console-msw.c (Fmswindows_message_box):
+	* console-tty.c (tty_init_console):
+	* console-x.c (x_canonicalize_console_connection):
+	* console.c (delete_console_internal):
+	* console.c (Fsuspend_console):
+	* console.c (common_init_complex_vars_of_console):
+	* console.c (MARKED_SLOT):
+	* data.c (eq_with_ebola_notice):
+	* data.c (Fsubr_min_args):
+	* data.c (Fsubr_max_args):
+	* data.c (Fchar_to_int):
+	* data.c (Fint_to_char):
+	* data.c (Ffixnump):
+	* data.c (Faref):
+	* data.c (Faset):
+	* data.c (number_char_or_marker_to_int_or_double):
+	* data.c (number_char_or_marker_to_double):
+	* data.c (fixnum_char_or_marker_to_int):
+	* data.c (ARITHCOMPARE_MANY):
+	* data.c (Fneq):
+	* data.c (Fzerop):
+	* data.c (word_to_lisp):
+	* data.c (lisp_to_word):
+	* data.c (Fnumber_to_string):
+	* data.c (Fstring_to_number):
+	* data.c (Fplus):
+	* data.c (Fminus):
+	* data.c (Ftimes):
+	* data.c (Fdiv):
+	* data.c (Fquo):
+	* data.c (Fmax):
+	* data.c (Fmin):
+	* data.c (Flogand):
+	* data.c (Flogior):
+	* data.c (Flogxor):
+	* data.c (Flognot):
+	* data.c (Frem):
+	* data.c (Fmod):
+	* data.c (Fash):
+	* data.c (Flsh):
+	* data.c (Fadd1):
+	* data.c (Fsub1):
+	* data.c (vars_of_data):
+	* database.c (Fopen_database):
+	* debug.c (FROB):
+	* debug.c (Fset_debug_class_types_to_check):
+	* device-gtk.c (Fgtk_display_visual_depth):
+	* device-gtk.c (gtk_device_system_metrics):
+	* device-msw.c (build_sysmetrics_cons):
+	* device-msw.c (build_devicecaps_cons):
+	* device-msw.c (mswindows_device_system_metrics):
+	* device-msw.c (FROB):
+	* device-msw.c (msprinter_device_system_metrics):
+	* device-msw.c (print_dialog_worker):
+	* device-msw.c (plist_get_margin):
+	* device-msw.c (plist_set_margin):
+	* device-msw.c (signal_enum_printer_error):
+	* device-msw.c (Fmswindows_printer_list):
+	* device-tty.c (tty_device_system_metrics):
+	* device-x.c (Fx_get_resource):
+	* device-x.c (Fx_display_visual_depth):
+	* device-x.c (x_device_system_metrics):
+	* device-x.c (Fx_server_version):
+	* device-x.c (Fx_valid_keysym_name_p):
+	* device.c (delete_device_internal):
+	* device.c (Fset_device_baud_rate):
+	* device.c (Fdevice_baud_rate):
+	* device.c (Fdevice_printer_p):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dialog-msw.c (handle_file_dialog_box):
+	* dialog-x.c (dbox_selection_callback):
+	* dialog-x.c (x_make_dialog_box_internal):
+	* dialog-x.c (syms_of_dialog_x):
+	* dired.c:
+	* dired.c (file_name_completion):
+	* dired.c (user_name_completion):
+	* dired.c (Ffile_attributes):
+	* doc.c (extract_object_file_name):
+	* doc.c (unparesseuxify_doc_string):
+	* doc.c (get_doc_string):
+	* doc.c (get_object_file_name):
+	* doc.c (Fbuilt_in_symbol_file):
+	* doc.c (Fdocumentation):
+	* doc.c (Fdocumentation_property):
+	* doc.c (Fsnarf_documentation):
+	* doc.c (verify_doc_mapper):
+	* doprnt.c (get_doprnt_args):
+	* doprnt.c (emacs_doprnt_1):
+	* editfns.c (buildmark):
+	* editfns.c (Fpoint):
+	* editfns.c (Fgoto_char):
+	* editfns.c (region_limit):
+	* editfns.c (save_excursion_save):
+	* editfns.c (Fbuffer_size):
+	* editfns.c (Fpoint_min):
+	* editfns.c (Fpoint_max):
+	* editfns.c (Fuser_login_name):
+	* editfns.c (Fuser_uid):
+	* editfns.c (Fuser_real_uid):
+	* editfns.c (Femacs_pid):
+	* editfns.c (Fcurrent_time):
+	* editfns.c (lisp_to_time):
+	* editfns.c (time_to_lisp):
+	* editfns.c (Fdecode_time):
+	* editfns.c (make_time):
+	* editfns.c (Fencode_time):
+	* editfns.c (Fcurrent_time_zone):
+	* editfns.c (Finsert_char):
+	* editfns.c (Fcompare_buffer_substrings):
+	* editfns.c (Ftranslate_region):
+	* editfns.c (save_restriction_save):
+	* elhash.c (lisp_object_general_hash):
+	* elhash.c (hash_table_size_validate):
+	* elhash.c (decode_hash_table_size):
+	* elhash.c (inchash_eq):
+	* elhash.c (Fhash_table_count):
+	* elhash.c (Fhash_table_size):
+	* elhash.c (internal_hash):
+	* elhash.c (Fdefine_hash_table_test):
+	* elhash.c (vars_of_elhash):
+	* emacs.c (make_argc_argv):
+	* emacs.c (main_1):
+	* emacs.c (Fkill_emacs):
+	* emacs.c (vars_of_emacs):
+	* emodules.c (Fload_module):
+	* emodules.c (module_load_unwind):
+	* eval.c:
+	* eval.c (Fsetq):
+	* eval.c (Fquote):
+	* eval.c (Ffunction):
+	* eval.c (Fdefmacro):
+	* eval.c (Fmacroexpand_internal):
+	* eval.c (Fthrow):
+	* eval.c (Fcall_with_condition_handler):
+	* eval.c (signal_wrong_number_of_arguments_error):
+	* eval.c (funcall_compiled_function):
+	* eval.c (function_argcount):
+	* eval.c (multiple_value_aset):
+	* eval.c (multiple_value_aref):
+	* eval.c (bind_multiple_value_limits):
+	* eval.c (multiple_value_call):
+	* eval.c (Fmultiple_value_call):
+	* eval.c (multiple_value_list_internal):
+	* eval.c (Fbacktrace_debug):
+	* eval.c (Fbacktrace):
+	* eval.c (Fbacktrace_frame):
+	* event-Xt.c (x_handle_sticky_modifiers):
+	* event-msw.c (dde_eval_string):
+	* event-stream.c (maybe_echo_keys):
+	* event-stream.c (lisp_number_to_milliseconds):
+	* event-stream.c (Fadd_timeout):
+	* event-stream.c (Fdisable_timeout):
+	* event-stream.c (Fadd_async_timeout):
+	* event-stream.c (Fdisable_async_timeout):
+	* event-stream.c (detect_input_pending):
+	* event-stream.c (Fnext_event):
+	* event-stream.c (Faccept_process_output):
+	* event-stream.c (Fsleep_for):
+	* event-stream.c (Fsit_for):
+	* event-stream.c (Frecent_keys):
+	* event-stream.c (Frecent_keys_ring_size):
+	* event-stream.c (Fset_recent_keys_ring_size):
+	* event-stream.c (Fdispatch_event):
+	* event-stream.c (Fcurrent_event_timestamp):
+	* event-stream.c (vars_of_event_stream):
+	* event-xlike-inc.c (USE_UNICODE_MAP):
+	* event-xlike-inc.c (endif):
+	* events.c (print_event):
+	* events.c (Fmake_event):
+	* events.c (nth_of_key_sequence_as_event):
+	* events.c (key_sequence_to_event_chain):
+	* events.c (Fevent_timestamp):
+	* events.c (TIMESTAMP_HALFSPACE):
+	* events.c (Fevent_timestamp_lessp):
+	* events.c (Fevent_button):
+	* events.c (Fevent_modifier_bits):
+	* events.c (Fevent_modifiers):
+	* events.c (Fevent_window_x_pixel):
+	* events.c (Fevent_window_y_pixel):
+	* events.c (Fevent_x_pixel):
+	* events.c (Fevent_y_pixel):
+	* events.c (Fevent_point):
+	* events.c (Fevent_closest_point):
+	* events.c (Fevent_x):
+	* events.c (Fevent_y):
+	* events.c (Fevent_modeline_position):
+	* events.c (Fevent_glyph_x_pixel):
+	* events.c (Fevent_glyph_y_pixel):
+	* events.c (Fevent_properties):
+	* extents.c:
+	* extents.c (print_extent_1):
+	* extents.c (extent_endpoint_external):
+	* extents.c (Fextent_length):
+	* extents.c (Fnext_extent_change):
+	* extents.c (Fprevious_extent_change):
+	* extents.c (report_extent_modification_mapper):
+	* extents.c (memoize_extent_face_internal):
+	* extents.c (Fset_extent_priority):
+	* extents.c (Fextent_priority):
+	* extents.c (Fextent_property):
+	* extents.c (extent_properties):
+	* extents.c (run_extent_copy_paste_internal):
+	* extents.c (next_previous_single_property_change_fn):
+	* file-coding.c (default_query_method):
+	* file-coding.c (encode_decode_coding_region):
+	* file-coding.c (gzip_print):
+	* file-coding.c (gzip_putprop):
+	* file-coding.c (gzip_getprop):
+	* fileio.c (close_file_unwind):
+	* fileio.c (Ffile_modes):
+	* fileio.c (Fset_file_modes):
+	* fileio.c (Fset_default_file_modes):
+	* fileio.c (Fdefault_file_modes):
+	* fileio.c (build_annotations):
+	* fileio.c (a_write):
+	* fileio.c (auto_save_error):
+	* fileio.c (do_auto_save_unwind):
+	* fileio.c (Fdo_auto_save):
+	* fileio.c (Fset_buffer_auto_saved):
+	* floatfns.c:
+	* floatfns.c (extract_float):
+	* floatfns.c (Fexpt):
+	* floatfns.c (Fabs):
+	* floatfns.c (Ffloat):
+	* floatfns.c (Flogb):
+	* floatfns.c (CONVERT_WITHOUT_NUMBER_TYPES):
+	* floatfns.c (MAYBE_CHAR_OR_MARKER):
+	* floatfns.c (ceiling_two_fixnum):
+	* floatfns.c (ceiling_two_bigfloat):
+	* floatfns.c (ceiling_one_bigfloat):
+	* floatfns.c (ceiling_one_mundane_arg):
+	* floatfns.c (floor_two_fixnum):
+	* floatfns.c (floor_two_bigfloat):
+	* floatfns.c (floor_one_bigfloat):
+	* floatfns.c (round_two_fixnum):
+	* floatfns.c (round_two_bigfloat):
+	* floatfns.c (round_one_bigfloat):
+	* floatfns.c (truncate_two_fixnum):
+	* floatfns.c (truncate_two_bigfloat):
+	* floatfns.c (truncate_one_bigfloat):
+	* floatfns.c (truncate_one_float):
+	* fns.c (print_bit_vector):
+	* fns.c (get_check_match_function_1):
+	* fns.c (Frandom):
+	* fns.c (Flength):
+	* fns.c (Fsafe_length):
+	* fns.c (Flist_length):
+	* fns.c (count_with_tail):
+	* fns.c (list_count_from_end):
+	* fns.c (string_count_from_end):
+	* fns.c (Fcompare_strings):
+	* fns.c (Fstring_modified_tick):
+	* fns.c (bump_string_modiff):
+	* fns.c (concat):
+	* fns.c (Fsubseq):
+	* fns.c (Fnthcdr):
+	* fns.c (Felt):
+	* fns.c (Flast):
+	* fns.c (Fnbutlast):
+	* fns.c (Fbutlast):
+	* fns.c (list_position_cons_before):
+	* fns.c (position):
+	* fns.c (FdeleteX):
+	* fns.c (FremoveX):
+	* fns.c (list_delete_duplicates_from_end):
+	* fns.c (Fdelete_duplicates):
+	* fns.c (Fremove_duplicates):
+	* fns.c (BIT_VECTOR_TO_OBJECT_ARRAY):
+	* fns.c (Fmerge):
+	* fns.c (list_sort):
+	* fns.c (FsortX):
+	* fns.c (plists_differ):
+	* fns.c (tweaked_internal_equal):
+	* fns.c (internal_equal_trapping_problems):
+	* fns.c (internal_equalp):
+	* fns.c (Ffill):
+	* fns.c (mapcarX):
+	* fns.c (shortest_length_among_sequences):
+	* fns.c (Fmapconcat):
+	* fns.c (Freduce):
+	* fns.c (replace_string_range_1):
+	* fns.c (Freplace):
+	* fns.c (Fnsubstitute):
+	* fns.c (Fsubstitute):
+	* fns.c (mismatch_from_end):
+	* fns.c (mismatch_list_list):
+	* fns.c (mismatch_list_string):
+	* fns.c (mismatch_list_array):
+	* fns.c (mismatch_string_array):
+	* fns.c (mismatch_string_string):
+	* fns.c (mismatch_array_array):
+	* fns.c (Fsearch):
+	* fns.c (Fload_average):
+	* fns.c (Ffeaturep):
+	* fns.c (base64_decode_1):
+	* fns.c (Fbase64_encode_region):
+	* fns.c (Fbase64_decode_region):
+	* fns.c (Fbase64_decode_string):
+	* font-lock.c (end_of_defun):
+	* font-lock.c (Fsyntactically_sectionize):
+	* font-mgr.c (Ffc_pattern_add):
+	* font-mgr.c (Ffc_pattern_get):
+	* font-mgr.c (Ffc_config_get_rescan_interval):
+	* font-mgr.c (Ffc_config_set_rescan_interval):
+	* font-mgr.c (Ffc_get_version):
+	* font-mgr.c (Ffc_init_reinitialize):
+	* fontcolor-gtk.c (gtk_color_instance_rgb_components):
+	* fontcolor-gtk.c (gtk_valid_color_name_p):
+	* fontcolor-msw.c (mswindows_color_instance_rgb_components):
+	* fontcolor-msw.c (mswindows_valid_color_name_p):
+	* fontcolor-x.c (x_color_instance_rgb_components):
+	* fontcolor-x.c (x_font_instance_properties):
+	* fontcolor-x.c (x_font_list):
+	* fontcolor.c (Ffont_instance_ascent):
+	* fontcolor.c (Ffont_instance_descent):
+	* fontcolor.c (Ffont_instance_width):
+	* fontcolor.c (Ffont_instance_proportional_p):
+	* frame-gtk.c (gtk_frame_property):
+	* frame-gtk.c (gtk_frame_properties):
+	* frame-gtk.c (gtk_set_frame_properties):
+	* frame-impl.h (FRAME_SCROLLBAR_WIDTH):
+	* frame-impl.h (FRAME_RAW_THEORETICAL_TOOLBAR_SIZE):
+	* frame-impl.h (FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH):
+	* frame-msw.c (mswindows_init_frame_1):
+	* frame-msw.c (mswindows_frame_property):
+	* frame-msw.c (mswindows_frame_properties):
+	* frame-msw.c (mswindows_set_frame_properties):
+	* frame-msw.c (msprinter_frame_property):
+	* frame-msw.c (msprinter_frame_properties):
+	* frame-msw.c (msprinter_set_frame_properties):
+	* frame-tty.c:
+	* frame-tty.c (tty_frame_property):
+	* frame-tty.c (tty_frame_properties):
+	* frame-x.c (x_frame_property):
+	* frame-x.c (x_frame_properties):
+	* frame-x.c (x_set_frame_properties):
+	* frame.c (Fmake_frame):
+	* frame.c (delete_frame_internal):
+	* frame.c (Fmouse_pixel_position):
+	* frame.c (Fmouse_position):
+	* frame.c (Fset_mouse_position):
+	* frame.c (Fset_mouse_pixel_position):
+	* frame.c (Fprint_job_page_number):
+	* frame.c (Fframe_modified_tick):
+	* frame.c (Fframe_property):
+	* frame.c (Fframe_properties):
+	* frame.c (Fframe_pixel_height):
+	* frame.c (Fframe_displayable_pixel_height):
+	* frame.c (Fframe_pixel_width):
+	* frame.c (Fframe_displayable_pixel_width):
+	* frame.c (Fset_frame_height):
+	* frame.c (Fset_frame_pixel_height):
+	* frame.c (Fset_frame_displayable_pixel_height):
+	* frame.c (Fset_frame_width):
+	* frame.c (Fset_frame_pixel_width):
+	* frame.c (Fset_frame_displayable_pixel_width):
+	* frame.c (Fset_frame_size):
+	* frame.c (Fset_frame_pixel_size):
+	* frame.c (Fset_frame_displayable_pixel_size):
+	* frame.c (Fset_frame_position):
+	* frame.c (adjust_frame_size):
+	* free-hook.c (Freally_free):
+	* free-hook.c (really_free_one_entry):
+	* glyphs-eimage.c (gif_instantiate):
+	* glyphs-eimage.c (GETCOLOR):
+	* glyphs-gtk.c (image_instance_convert_to_pointer):
+	* glyphs-gtk.c (init_image_instance_from_xbm_inline):
+	* glyphs-gtk.c (xbm_instantiate_1):
+	* glyphs-gtk.c (gtk_xbm_instantiate):
+	* glyphs-gtk.c (gtk_xpm_instantiate):
+	* glyphs-gtk.c (check_valid_string_or_int):
+	* glyphs-gtk.c (autodetect_normalize):
+	* glyphs-gtk.c (gtk_progress_gauge_redisplay):
+	* glyphs-gtk.c (gtk_register_gui_item):
+	* glyphs-gtk.c (gtk_tab_control_callback):
+	* glyphs-gtk.c (BUILD_GLYPH_INST):
+	* glyphs-msw.c (init_image_instance_from_dibitmap):
+	* glyphs-msw.c (mswindows_initialize_image_instance_icon):
+	* glyphs-msw.c (xpm_to_eimage):
+	* glyphs-msw.c (resource_name_to_resource):
+	* glyphs-msw.c (mswindows_resource_instantiate):
+	* glyphs-msw.c (init_image_instance_from_xbm_inline):
+	* glyphs-msw.c (xbm_instantiate_1):
+	* glyphs-msw.c (mswindows_xbm_instantiate):
+	* glyphs-msw.c (mswindows_register_gui_item):
+	* glyphs-msw.c (mswindows_subwindow_instantiate):
+	* glyphs-msw.c (mswindows_widget_instantiate):
+	* glyphs-msw.c (mswindows_progress_gauge_instantiate):
+	* glyphs-msw.c (mswindows_progress_gauge_redisplay):
+	* glyphs-msw.c (mswindows_control_wnd_proc):
+	* glyphs-widget.c:
+	* glyphs-widget.c (check_valid_int_or_function):
+	* glyphs-widget.c (widget_query_geometry):
+	* glyphs-widget.c (widget_instantiate):
+	* glyphs-widget.c (layout_update):
+	* glyphs-widget.c (layout_query_geometry):
+	* glyphs-widget.c (layout_layout):
+	* glyphs-widget.c (layout_property):
+	* glyphs-widget.c (Fwidget_logical_to_character_width):
+	* glyphs-widget.c (Fwidget_logical_to_character_height):
+	* glyphs-x.c (image_instance_convert_to_pointer):
+	* glyphs-x.c (init_image_instance_from_xbm_inline):
+	* glyphs-x.c (xbm_instantiate_1):
+	* glyphs-x.c (x_xbm_instantiate):
+	* glyphs-x.c (x_xpm_instantiate):
+	* glyphs-x.c (autodetect_normalize):
+	* glyphs-x.c (x_progress_gauge_redisplay):
+	* glyphs-x.c (BUILD_GLYPH_INST):
+	* glyphs.c:
+	* glyphs.c (process_image_string_instantiator):
+	* glyphs.c (check_valid_int):
+	* glyphs.c (alist_to_tagged_vector):
+	* glyphs.c (normalize_image_instantiator):
+	* glyphs.c (print_image_instance):
+	* glyphs.c (make_image_instance_1):
+	* glyphs.c (Fimage_instance_depth):
+	* glyphs.c (Fimage_instance_height):
+	* glyphs.c (Fimage_instance_width):
+	* glyphs.c (bitmap_to_lisp_data):
+	* glyphs.c (xbm_normalize):
+	* glyphs.c (pixmap_to_lisp_data):
+	* glyphs.c (image_instantiate):
+	* glyphs.c (image_going_to_add):
+	* glyphs.c (Fglyph_width):
+	* glyphs.c (Fglyph_ascent):
+	* glyphs.c (Fglyph_descent):
+	* glyphs.c (Fglyph_height):
+	* glyphs.c (glyph_baseline):
+	* glyphs.c (subwindow_instantiate):
+	* glyphs.c (Fimage_instance_subwindow_id):
+	* glyphs.c (Fresize_subwindow):
+	* glyphs.c (disable_glyph_animated_timeout):
+	* gpmevent.c (Fgpm_enable):
+	* gtk-glue.c (xemacs_list_to_array):
+	* gtk-xemacs.c (FROB_FACE):
+	* gtk-xemacs.c (smash_scrollbar_specifiers):
+	* gtk-xemacs.c (smash_toolbar_specifiers):
+	* gui-gtk.c (gcpro_popup_callbacks):
+	* gui-gtk.c (ungcpro_popup_callbacks):
+	* gui-gtk.c (get_gcpro_popup_callbacks):
+	* gui-msw.c (mswindows_handle_gui_wm_command):
+	* gui-x.c:
+	* gui-x.c (gcpro_popup_callbacks):
+	* gui-x.c (ungcpro_popup_callbacks):
+	* gui-x.c (popup_handled_p):
+	* gui.c (gui_item_id_hash):
+	* gutter.c (calculate_gutter_size):
+	* gutter.c (Fgutter_pixel_width):
+	* gutter.c (Fgutter_pixel_height):
+	* gutter.c (gutter_specs_changed_1):
+	* gutter.c (gutter_specs_changed):
+	* gutter.c (gutter_size_validate):
+	* gutter.c (specifier_vars_of_gutter):
+	* gutter.h (WINDOW_GUTTER_BORDER_WIDTH):
+	* indent.c (last_visible_position):
+	* indent.c (column_at_point):
+	* indent.c (Fcurrent_column):
+	* indent.c (Findent_to):
+	* indent.c (byte_spaces_at_point):
+	* indent.c (Fcurrent_indentation):
+	* indent.c (Fmove_to_column):
+	* indent.c (Fcompute_motion):
+	* indent.c (vertical_motion_1):
+	* indent.c (Fvertical_motion_pixels):
+	* indent.c (syms_of_indent):
+	* insdel.c (make_gap):
+	* insdel.c (signal_before_change):
+	* insdel.c (signal_after_change):
+	* insdel.c (buffer_insert_string_1):
+	* intl-win32.c:
+	* intl-win32.c (mswindows_get_code_page_charset):
+	* intl-win32.c (Fmswindows_get_locale_info):
+	* intl-win32.c (enum_code_page_fn):
+	* intl-win32.c (Fmswindows_get_console_code_page):
+	* intl-win32.c (Fmswindows_set_console_code_page):
+	* intl-win32.c (Fmswindows_get_console_output_code_page):
+	* intl-win32.c (Fmswindows_set_console_output_code_page):
+	* intl-win32.c (Fmswindows_get_code_page_charset):
+	* intl-win32.c (Fmswindows_get_valid_keyboard_layouts):
+	* intl-win32.c (Fmswindows_get_keyboard_layout):
+	* intl-win32.c (Fmswindows_set_keyboard_layout):
+	* intl-win32.c (mswindows_multibyte_to_unicode_putprop):
+	* intl-win32.c (mswindows_multibyte_to_unicode_getprop):
+	* intl-win32.c (mswindows_multibyte_to_unicode_print):
+	* keymap.c (MAKE_MODIFIER_HASH_KEY):
+	* keymap.c (print_keymap):
+	* keymap.c (get_keyelt):
+	* keymap.c (keymap_fullness):
+	* keymap.c (Fkeymap_fullness):
+	* keymap.c (event_matches_key_specifier_p):
+	* keymap.c (ensure_meta_prefix_char_keymapp):
+	* keymap.c (Fdefine_key):
+	* keymap.c (raw_lookup_key_mapper):
+	* keymap.c (lookup_events):
+	* keymap.c (get_relevant_keymaps):
+	* keymap.c (Fkey_binding):
+	* keymap.c (map_keymap_sorted):
+	* keymap.c (Faccessible_keymaps):
+	* keymap.c (Fkey_description):
+	* keymap.c (Fwhere_is_internal):
+	* keymap.c (where_is_recursive_mapper):
+	* keymap.c (describe_map_tree):
+	* keymap.c (describe_command):
+	* keymap.c (describe_map_mapper):
+	* keymap.c (describe_map_sort_predicate):
+	* keymap.c (describe_map):
+	* line-number.c (narrow_line_number_cache):
+	* line-number.c (get_nearest_line_number):
+	* line-number.c (add_position_to_cache):
+	* line-number.c (buffer_line_number):
+	* lisp-disunion.h:
+	* lisp-disunion.h (Lisp_Type_Fixnum_Bit):
+	* lisp-disunion.h (make_fixnum):
+	* lisp-disunion.h (FIXNUMP):
+	* lisp-disunion.h (Qzero):
+	* lisp-union.h:
+	* lisp-union.h (union Lisp_Object):
+	* lisp-union.h (XREALFIXNUM):
+	* lisp-union.h (FIXNUMP):
+	* lisp.h:
+	* lisp.h (enum Lisp_Type):
+	* lisp.h (FIXNUM_GCBITS):
+	* lisp.h (HACKEQ_UNSAFE):
+	* lisp.h (BITP):
+	* lisp.h (XFIXNUM):
+	* lisp.h (CHECK_FIXNUM):
+	* lisp.h (CONCHECK_FIXNUM):
+	* lisp.h (XCHAR_OR_FIXNUM):
+	* lisp.h (CHAR_INTP):
+	* lisp.h (CHECK_CHAR_COERCE_INT):
+	* lisp.h (CHECK_FIXNUM_COERCE_CHAR):
+	* lisp.h (CHECK_FIXNUM_COERCE_MARKER):
+	* lisp.h (CHECK_FIXNUM_COERCE_CHAR_OR_MARKER):
+	* lisp.h (XFLOATFIXNUM):
+	* lisp.h (CONCHECK_FIXNUM_OR_FLOAT):
+	* lisp.h (FIXNUM_OR_FLOATP):
+	* lisp.h (PARSE_KEYWORDS):
+	* lisp.h (ARRAY_DIMENSION_LIMIT):
+	* lread.c (pas_de_holgazan_ici):
+	* lread.c (load_force_doc_string_unwind):
+	* lread.c (close_load_descs):
+	* lread.c (Fload_internal):
+	* lread.c (decode_mode_1):
+	* lread.c (Feval_region):
+	* lread.c (Fread_from_string):
+	* lread.c (read_unicode_escape):
+	* lread.c (read_atom):
+	* lread.c (parse_integer):
+	* lread.c (read_structure):
+	* lread.c (read1):
+	* lread.c (read_vector):
+	* lread.c (read_compiled_function):
+	* lstream.c (make_lisp_buffer_stream_1):
+	* macros.c (Fstart_kbd_macro):
+	* macros.c (Fend_kbd_macro):
+	* macros.c (pop_kbd_macro_event):
+	* macros.c (Fexecute_kbd_macro):
+	* marker.c (Fmarker_position):
+	* marker.c (set_marker_internal):
+	* marker.c (copy_marker_1):
+	* marker.c (init_buffer_markers):
+	* marker.c (uninit_buffer_markers):
+	* mc-alloc.c (Fmc_alloc_memory_usage):
+	* mc-alloc.c (syms_of_mc_alloc):
+	* menubar-msw.c (allocate_menu_item_id):
+	* menubar-msw.c (populate_menu_add_item):
+	* menubar-msw.c (mswindows_handle_wm_command):
+	* menubar.c (Fcompare_menu_text):
+	* minibuf.c:
+	* minibuf.c (Fminibuffer_depth):
+	* minibuf.c (read_minibuffer_internal_unwind):
+	* minibuf.c (Fminibuffer_prompt_width):
+	* mule-ccl.c (CCL_CALL_FOR_MAP_INSTRUCTION):
+	* mule-ccl.c (CCL_WRITE_STRING):
+	* mule-ccl.c (ccl_driver):
+	* mule-ccl.c (resolve_symbol_ccl_program):
+	* mule-ccl.c (ccl_get_compiled_code):
+	* mule-ccl.c (setup_ccl_program):
+	* mule-ccl.c (Fccl_execute):
+	* mule-ccl.c (vars_of_mule_ccl):
+	* mule-charset.c:
+	* mule-charset.c (get_unallocated_leading_byte):
+	* mule-charset.c (Fmake_charset):
+	* mule-charset.c (Fcharset_from_attributes):
+	* mule-charset.c (Fcharset_dimension):
+	* mule-charset.c (Fcharset_property):
+	* mule-charset.c (Fcharset_id):
+	* mule-coding.c (Fdecode_shift_jis_char):
+	* mule-coding.c (Fencode_shift_jis_char):
+	* mule-coding.c (Fdecode_big5_char):
+	* mule-coding.c (Fencode_big5_char):
+	* mule-coding.c (charset_by_attributes_or_create_one):
+	* mule-coding.c (decode_unicode_char):
+	* mule-coding.c (fixed_width_skip_chars_data_given_strings):
+	* mule-coding.c (fixed_width_query):
+	* mule-wnnfns.c (Fwnn_dict_add):
+	* mule-wnnfns.c (Fwnn_dict_delete):
+	* mule-wnnfns.c (Fwnn_dict_list):
+	* mule-wnnfns.c (Fwnn_dict_comment):
+	* mule-wnnfns.c (Fwnn_begin_henkan):
+	* mule-wnnfns.c (Fwnn_zenkouho):
+	* mule-wnnfns.c (Fwnn_get_zenkouho):
+	* mule-wnnfns.c (Fwnn_zenkouho_bun):
+	* mule-wnnfns.c (Fwnn_zenkouho_suu):
+	* mule-wnnfns.c (Fwnn_dai_top):
+	* mule-wnnfns.c (Fwnn_dai_end):
+	* mule-wnnfns.c (Fwnn_kakutei):
+	* mule-wnnfns.c (Fwnn_bunsetu_henkou):
+	* mule-wnnfns.c (Fwnn_inspect):
+	* mule-wnnfns.c (Fwnn_bunsetu_kanji):
+	* mule-wnnfns.c (Fwnn_bunsetu_yomi):
+	* mule-wnnfns.c (Fwnn_bunsetu_suu):
+	* mule-wnnfns.c (Fwnn_hindo_update):
+	* mule-wnnfns.c (Fwnn_word_toroku):
+	* mule-wnnfns.c (Fwnn_word_sakujo):
+	* mule-wnnfns.c (Fwnn_word_use):
+	* mule-wnnfns.c (Fwnn_word_info):
+	* mule-wnnfns.c (Fwnn_hindo_set):
+	* mule-wnnfns.c (Fwnn_dict_search):
+	* mule-wnnfns.c (Fwnn_get_param):
+	* mule-wnnfns.c (Fwnn_set_param):
+	* mule-wnnfns.c (Fwnn_get_msg):
+	* mule-wnnfns.c (Fwnn_hinsi_dicts):
+	* mule-wnnfns.c (Fwnn_hinsi_list):
+	* mule-wnnfns.c (Fwnn_notrans_dict_add):
+	* mule-wnnfns.c (Fwnn_bmodify_dict_add):
+	* mule-wnnfns.c (Fwnn_okuri_flag):
+	* mule-wnnfns.c (Fwnn_prefix_flag):
+	* mule-wnnfns.c (Fwnn_freq_func):
+	* mule-wnnfns.c (Fwnn_numeric):
+	* mule-wnnfns.c (Fwnn_alphabet):
+	* mule-wnnfns.c (Fwnn_symbol):
+	* mule-wnnfns.c (Fwnn_version):
+	* mule-wnnfns.c (Fwnn_hinsi_number):
+	* mule-wnnfns.c (syms_of_mule_wnn):
+	* number.c:
+	* number.c (Fdenominator):
+	* number.c (Fbigfloat_get_precision):
+	* number.c (Fbigfloat_set_precision):
+	* number.c (default_float_precision_changed):
+	* number.c (Fcanonicalize_number):
+	* number.c (get_number_type):
+	* number.c (promote_args):
+	* number.c (Fcoerce_number):
+	* number.c (vars_of_number):
+	* number.h (INTEGERP):
+	* number.h (make_integer):
+	* number.h (NATNUMP):
+	* number.h (CHECK_NATNUM):
+	* print.c (output_string):
+	* print.c (print_vector_internal):
+	* print.c (print_cons):
+	* print.c (print_string):
+	* print.c (print_preprocess_inchash_eq):
+	* print.c (print_seen_once):
+	* print.c (print_nonsymbol_seen_once):
+	* print.c (print_sort_get_numbers):
+	* print.c (print_gensym_or_circle):
+	* print.c (nsubst_structures_descend):
+	* print.c (print_internal):
+	* print.c (restore_inhibit_non_essential_conversion_operations):
+	* print.c (begin_inhibit_non_essential_conversion_operations):
+	* print.c (debug_print_enter):
+	* print.c (debug_p4):
+	* process-nt.c (validate_signal_number):
+	* process-nt.c (nt_send_process):
+	* process-nt.c (nt_open_network_stream):
+	* process-nt.c (Fmswindows_set_process_priority):
+	* process-unix.c:
+	* process-unix.c (connect_to_file_descriptor):
+	* process-unix.c (get_internet_address):
+	* process-unix.c (child_setup):
+	* process-unix.c (unix_update_status_if_terminated):
+	* process-unix.c (unix_reap_exited_processes):
+	* process-unix.c (unix_send_process):
+	* process-unix.c (unix_kill_child_process):
+	* process-unix.c (unix_open_network_stream):
+	* process-unix.c (unix_open_multicast_group):
+	* process.c (create_process):
+	* process.c (Fstart_process_internal):
+	* process.c (Fset_process_window_size):
+	* process.c (read_process_output):
+	* process.c (status_message):
+	* process.c (status_notify):
+	* process.c (Fprocess_exit_status):
+	* process.c (decode_signal):
+	* process.c (Fprocess_send_eof):
+	* profile.c:
+	* profile.c (profile_sow_backtrace):
+	* profile.c (profile_reap_backtrace):
+	* profile.c (Fstart_profiling):
+	* profile.c (get_profiling_info_timing_maphash):
+	* profile.c (Fget_profiling_info):
+	* profile.c (set_profiling_info_timing_maphash):
+	* ralloc.c:
+	* ralloc.c (MLVAL):
+	* rangetab.c (Fget_range_table):
+	* rangetab.c (Fput_range_table):
+	* rangetab.c (Fmap_range_table):
+	* rangetab.c (rangetab_data_validate):
+	* redisplay-msw.c (mswindows_output_vertical_divider):
+	* redisplay-output.c (redisplay_move_cursor):
+	* redisplay-output.c (redisplay_output_layout):
+	* redisplay-output.c (redisplay_output_window):
+	* redisplay-output.c (redisplay_redraw_exposed_area_1):
+	* redisplay-output.c (redisplay_redraw_exposed_area):
+	* redisplay-output.c (bevel_modeline):
+	* redisplay-xlike-inc.c (XLIKE_get_gc):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider):
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor):
+	* redisplay.c (tab_char_width):
+	* redisplay.c (add_glyph_rune):
+	* redisplay.c (create_text_block):
+	* redisplay.c (generate_fstring_runes):
+	* redisplay.c (create_string_text_block):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (regenerate_window_extents_only_changed):
+	* redisplay.c (regenerate_window_incrementally):
+	* redisplay.c (regenerate_window_point_center):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (validate_line_start_cache):
+	* redisplay.c (update_line_start_cache):
+	* scrollbar-gtk.c (scrollbar_cb):
+	* scrollbar-msw.c (mswindows_handle_scrollbar_event):
+	* scrollbar-x.c (x_update_vertical_scrollbar_callback):
+	* scrollbar-x.c (x_update_horizontal_scrollbar_callback):
+	* scrollbar.c (scrollbar_reset_cursor):
+	* scrollbar.c (Fscrollbar_line_up):
+	* scrollbar.c (Fscrollbar_line_down):
+	* scrollbar.c (Fscrollbar_page_up):
+	* scrollbar.c (Fscrollbar_page_down):
+	* scrollbar.c (Fscrollbar_to_bottom):
+	* scrollbar.c (Fscrollbar_vertical_drag):
+	* scrollbar.c (Fscrollbar_set_hscroll):
+	* scrollbar.c (specifier_vars_of_scrollbar):
+	* search.c (string_match_1):
+	* search.c (skip_chars):
+	* search.c (search_command):
+	* search.c (Freplace_match):
+	* search.c (match_limit):
+	* search.c (Fmatch_data):
+	* search.c (Fstore_match_data):
+	* select-gtk.c (gtk_get_foreign_selection):
+	* select-msw.c (x_sym_p):
+	* select-msw.c (symbol_to_ms_cf):
+	* select-msw.c (ms_cf_to_symbol):
+	* select-msw.c (mswindows_own_selection):
+	* select-msw.c (mswindows_register_selection_data_type):
+	* select-msw.c (mswindows_selection_data_type_name):
+	* select-x.c:
+	* select-x.c (x_get_foreign_selection):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* select-x.c (Fx_rotate_cutbuffers_internal):
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	* select-xlike-inc.c (lisp_data_to_selection_data):
+	* select.c (Favailable_selection_types):
+	* sgiplay.c (close_sound_file):
+	* sgiplay.c (play_sound_file):
+	* sgiplay.c (restore_audio_port):
+	* sgiplay.c (audio_initialize):
+	* sgiplay.c (set_channels):
+	* sgiplay.c (set_output_format):
+	* sound.c (Fplay_sound_file):
+	* sound.c (parse_sound_alist_elt):
+	* sound.c (Fplay_sound):
+	* specifier.c:
+	* specifier.c (print_specifier):
+	* specifier.c (canonicalize_tag_set):
+	* specifier.c (call_charset_predicate):
+	* specifier.c (Fdefine_specifier_tag):
+	* specifier.c (specifier_instance_1):
+	* specifier.c (integer_validate):
+	* specifier.h (XFIXNUMEGER_SPECIFIER):
+	* symbols.c:
+	* symbols.c (Fintern):
+	* symbols.c (Fintern_soft):
+	* symbols.c (Funintern):
+	* symbols.c (oblookup):
+	* symbols.c (do_symval_forwarding):
+	* symbols.c (set_default_buffer_slot_variable):
+	* symbols.c (set_default_console_slot_variable):
+	* symbols.c (store_symval_forwarding):
+	* symbols.c (Fset):
+	* symbols.c (Fsetq_default):
+	* symbols.c (symbol_value_buffer_local_info):
+	* symbols.c (user_variable_alias_check_fun):
+	* symbols.c (Fuser_variable_p):
+	* syntax.c (Fsyntax_cache_info):
+	* syntax.c (Fset_syntax_table):
+	* syntax.c (reset_syntax_cache_range):
+	* syntax.c (update_syntax_cache):
+	* syntax.c (syntax_match):
+	* syntax.c (Fforward_word):
+	* syntax.c (Fforward_comment):
+	* syntax.c (scan_lists):
+	* syntax.c (Fscan_lists):
+	* syntax.c (Fscan_sexps):
+	* syntax.c (scan_sexps_forward):
+	* syntax.c (Fparse_partial_sexp):
+	* syntax.c (copy_to_mirrortab):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.c (update_just_this_syntax_table):
+	* syntax.c (define_standard_syntax):
+	* syntax.c (SET_RANGE_SYNTAX):
+	* syntax.c (complex_vars_of_syntax):
+	* syntax.h:
+	* sysdep.c:
+	* sysdep.c (init_system_name):
+	* sysdep.c (get_random):
+	* tests.c:
+	* tests.c (test_hash_tables_mapper):
+	* tests.c (test_hash_tables_modifying_mapper):
+	* tests.c (test_hash_tables_predicate):
+	* tests.c (Ftest_hash_tables):
+	* text.c (get_buffer_pos_char):
+	* text.c (get_string_pos_char_1):
+	* text.c (non_ascii_valid_ichar_p):
+	* text.c (Fmake_char):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	* toolbar-msw.c (allocate_toolbar_item_id):
+	* toolbar-msw.c (mswindows_clear_toolbar):
+	* toolbar-msw.c (mswindows_output_toolbar):
+	* toolbar-msw.c (mswindows_get_toolbar_button_text):
+	* toolbar-msw.c (mswindows_handle_toolbar_wm_command):
+	* toolbar-xlike.c (__prepare_button_area):
+	* toolbar-xlike.c (xlike_get_button_size):
+	* toolbar.c (Fcheck_toolbar_button_syntax):
+	* toolbar.c (specifier_vars_of_toolbar):
+	* tooltalk.c (tooltalk_constant_value):
+	* tooltalk.c (Fadd_tooltalk_message_arg):
+	* tooltalk.c (Fadd_tooltalk_pattern_arg):
+	* tooltalk.c (init_tooltalk):
+	* tooltalk.c (MAKE_CONSTANT):
+	* tooltalk.c (vars_of_tooltalk):
+	* tooltalk.h (CHECK_TOOLTALK_CONSTANT):
+	* tooltalk.h (VALID_TOOLTALK_MESSAGEP):
+	* ui-byhand.c (Fgtk_box_query_child_packing):
+	* ui-byhand.c (Fgtk_button_box_get_child_size):
+	* ui-byhand.c (Fgtk_calendar_get_date):
+	* ui-byhand.c (Fgtk_clist_get_text):
+	* ui-byhand.c (Fgtk_clist_get_selection):
+	* ui-byhand.c (Fgtk_clist_get_pixmap):
+	* ui-byhand.c (Fgtk_clist_get_pixtext):
+	* ui-byhand.c (Fgtk_editable_insert_text):
+	* ui-byhand.c (Fgtk_curve_get_vector):
+	* ui-byhand.c (Fgtk_notebook_query_tab_label_packing):
+	* ui-byhand.c (Fgtk_widget_get_pointer):
+	* ui-byhand.c (generic_toolbar_insert_item):
+	* ui-byhand.c (Fgtk_toolbar_insert_item):
+	* ui-byhand.c (Fgtk_ctree_recurse):
+	* ui-gtk.c:
+	* ui-gtk.c (import_gtk_enumeration_internal):
+	* ui-gtk.c (Fgtk_call_function):
+	* ui-gtk.c (__internal_callback_destroy):
+	* ui-gtk.c (Fgtk_signal_connect):
+	* ui-gtk.c (Fgtk_fundamental_type):
+	* ui-gtk.c (Fgtk_object_type):
+	* ui-gtk.c (Fgtk_describe_type):
+	* ui-gtk.c (gtk_type_to_lisp):
+	* ui-gtk.c (lisp_to_gtk_type):
+	* ui-gtk.c (lisp_to_gtk_ret_type):
+	* ui-gtk.c (get_enumeration):
+	* ui-gtk.c (symbol_to_enum):
+	* ui-gtk.c (flags_to_list):
+	* ui-gtk.c (enum_to_symbol):
+	* undo.c (undo_prelude):
+	* undo.c (record_insert):
+	* undo.c (record_delete):
+	* undo.c (record_property_change):
+	* undo.c (Fprimitive_undo):
+	* unicode.c (unicode_to_ichar):
+	* unicode.c (Fchar_to_unicode):
+	* unicode.c (Funicode_to_char):
+	* unicode.c (add_lisp_string_to_skip_chars_range):
+	* unicode.c (unicode_query):
+	* unicode.c (vars_of_unicode):
+	* win32.c (Fmswindows_shell_execute):
+	* window-impl.h (MODELINE_OFF_SHADOW_THICKNESS_ADJUSTED):
+	* window-impl.h (MODELINE_SHADOW_THICKNESS):
+	* window.c (window_divider_width):
+	* window.c (window_scrollbar_width):
+	* window.c (window_scrollbar_height):
+	* window.c (margin_width_internal):
+	* window.c (Fpos_visible_in_window_p):
+	* window.c (Fwindow_height):
+	* window.c (Fwindow_displayed_height):
+	* window.c (Fwindow_pixel_height):
+	* window.c (Fwindow_text_area_height):
+	* window.c (Fwindow_width):
+	* window.c (Fwindow_full_width):
+	* window.c (Fwindow_pixel_width):
+	* window.c (Fwindow_hscroll):
+	* window.c (Fmodeline_hscroll):
+	* window.c (Fset_modeline_hscroll):
+	* window.c (Fset_window_hscroll):
+	* window.c (Fwindow_pixel_edges):
+	* window.c (Fwindow_end):
+	* window.c (Fwindow_last_line_visible_height):
+	* window.c (Fset_window_point):
+	* window.c (Fset_window_start):
+	* window.c (unshow_buffer):
+	* window.c (Fother_window):
+	* window.c (window_loop):
+	* window.c (buffer_window_count):
+	* window.c (Fdelete_other_windows):
+	* window.c (Fset_window_buffer):
+	* window.c (Fselect_window):
+	* window.c (temp_output_buffer_show):
+	* window.c (Fsplit_window):
+	* window.c (Fenlarge_window):
+	* window.c (Fenlarge_window_pixels):
+	* window.c (Fshrink_window):
+	* window.c (Fshrink_window_pixels):
+	* window.c (window_scroll):
+	* window.c (Fscroll_left):
+	* window.c (Fscroll_right):
+	* window.c (Fcenter_to_window_line):
+	* window.c (Fmove_to_window_line):
+	* window.c (get_current_pixel_pos):
+	* window.c (Fcurrent_pixel_column):
+	* window.c (Fcurrent_pixel_row):
+	* window.c (specifier_vars_of_window):
+	* xemacs.def.in.in:
+	Mechanically change INT (where it refers to non-bignum Lisp
+	integers) to FIXNUM in our sources. Done for the following
+	functions, enums, and macros: Lisp_Type_Int_Even,
+	Lisp_Type_Int_Odd, INT_GCBITS, INT_VALBITS, make_int(), INTP(),
+	XINT(), CHECK_INT(), XREALINT(), INT_PLUS(), INT_MINUS(),
+	EMACS_INT_MAX (to MOST_POSITIVE_FIXNUM), EMACS_INT_MIN (to
+	MOST_NEGATIVE_FIXNUM), NUMBER_FITS_IN_AN_EMACS_INT() to
+	NUMBER_FITS_IN_A_FIXNUM(), XFLOATINT, XCHAR_OR_INT, INT_OR_FLOAT.
+	The EMACS_INT typedef was not changed, it does not describe
+	non-bignum Lisp integers.
+	Script that did the change available in
+	http://mid.gmane.org/20067.17650.181273.12014@parhasard.net . 
+
 2011-09-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* redisplay-tty.c (init_tty_for_redisplay):

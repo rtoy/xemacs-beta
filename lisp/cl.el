@@ -213,35 +213,10 @@ See `member*' for the meaning of :test, :test-not and :key."
 
 ;;; Macros.
 
-;; XEmacs: we renamed the internal function to macroexpand-internal
-;; to avoid doc-file problems.
-(defvar cl-old-macroexpand (prog1 (symbol-function 'macroexpand-internal)
-			     (defalias 'macroexpand 'cl-macroexpand)))
-
-(defun cl-macroexpand (cl-macro &optional cl-env)
-  "Return result of expanding macros at top level of FORM.
-If FORM is not a macro call, it is returned unchanged.
-Otherwise, the macro is expanded and the expansion is considered
-in place of FORM.  When a non-macro-call results, it is returned.
-
-The second optional arg ENVIRONMENT specifies an environment of macro
-definitions to shadow the loaded ones for use in file byte-compilation."
-  (let ((byte-compile-macro-environment
-	 (if byte-compile-macro-environment
-             (append cl-env byte-compile-macro-environment) cl-env))
-	eq-hash)
-    (while (progn (setq cl-macro
-			(macroexpand-internal cl-macro
-                                              byte-compile-macro-environment))
-		  (and (symbolp cl-macro)
-		       (setq eq-hash (eq-hash cl-macro))
-		       (cdr (if (fixnump eq-hash)
-                                (assq eq-hash byte-compile-macro-environment)
-                              (assoc eq-hash byte-compile-macro-environment)))))
-      (setq cl-macro (cadr (assoc* eq-hash byte-compile-macro-environment))))
-    cl-macro))
-
-;;; Declarations.
+;; XEmacs: incorporate the functionality of #'cl-macroexpand into
+;; #'macroexpand, in eval.c.
+(defalias 'cl-macroexpand 'macroexpand)
+(defalias 'macroexpand-internal 'macroexpand)
 
 (defvar cl-compiling-file nil)
 (defun cl-compiling-file ()

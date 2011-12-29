@@ -1,3 +1,165 @@
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* cl-macs.el (face-foreback): New defsetf.
+	* faces.el (set-face-property): Document the foreback property.
+	* faces.el (face-foreback):
+	* faces.el (face-foreback-instance):
+	* faces.el (face-foreback-name):
+	* faces.el (set-face-foreback): New functions.
+	* faces.el (face-equal):
+	* faces.el (init-other-random-faces):
+	* cus-face.el (custom-face-attributes):
+	* x-faces.el (x-init-face-from-resources): Handle the foreback
+	property.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* faces.el (face-foreground-name): Fix docstring typo.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* faces.el: Explicitely set the 'zmacs-region face to not shrink
+	so as to override a shrink setting for a face under it (during
+	face merging).
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* wid-edit.el (widget-field-face): Set this face to shrink. Fix
+	incorrect specification.
+
+2011-12-26  Didier Verna  <didier@xemacs.org>
+
+	* cl-macs.el (face-flush-p): Removed.
+	* cl-macs.el (face-shrink-p): New.
+	* faces.el (face-flush-p): Removed.
+	* faces.el (face-shrink-p): New.
+	* faces.el (set-face-flush-p): Removed.
+	* faces.el (set-face-shrink-p): New.
+	* cus-face.el (custom-face-attributes):
+	* faces.el (set-face-property):
+	* faces.el (face-equal):
+	* x-faces.el (x-init-face-from-resources):
+	* x-faces.el (make-face-x-resource-internal): Replace the 'flush
+	property with the opposite 'shrink one.
+
+2011-12-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el (activate-region-as-selection):
+	* select.el (select-make-extent-for-selection):
+	* select.el (select-convert-in):
+	* select.el (select-convert-out):
+	* select.el (select-coerce):
+	* select.el (select-convert-to-targets):
+	Improve Lisp style in a few places here; don't re-implement
+	#'delete-duplicates, use #'funcall instead of consing up a list to
+	pass to #'apply.
+
+2011-12-23  Didier Verna  <didier@xemacs.org>
+
+	* cl-macs.el (face-flush-p): New defsetf.
+	* faces.el (set-face-property): Document the flush property.
+	* faces.el (face-flush-p): New function.
+	* faces.el (set-face-flush-p): New function.
+	* faces.el (face-equal):
+	* cus-face.el (custom-face-attributes):
+	* x-faces.el (x-init-face-from-resources):
+	* x-faces.el (make-face-x-resource-internal): Handle the flush
+	property.
+
+2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (byte-compile-macro-environment): Moved to
+	eval.c.
+	* cl.el:
+	* cl.el ('cl-macroexpand): New alias.
+	* cl.el ('macroexpand-internal): New alias.
+	* cl.el (cl-macroexpand): Move the functionality of this to
+	#'macroexpand (formerly #'macroexpand-internal) in eval.c; since
+	CL is always loaded in XEmacs, it brings nothing and slows things
+	down to have the two functions separate.
+
+2011-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-transform-function-property):
+	Call #'cl-macroexpand-all when doing this, avoiding unpleasantness
+	with defsetf and lexical variables.
+	* cl-macs.el (assert):
+	The previous change meant #'remove-if isn't necessarily available
+	yet; use the :key argument with #'remove* instead.
+
+2011-12-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (posix-charset-to-coding-system-hash):
+	Correct the docstring for this variable.
+
+2011-12-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-eval):
+	When evaluating code at compile time, don't put those macros in
+	the macro environment that only make sense when creating
+	byte-compiled output.
+
+2011-12-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	If lexical let has played with our lambas, give up on constructing
+	the compiled functions at compiled time, that strategy doesn't
+	work.
+
+2011-12-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (load-time-value):
+	Clarify the docstring here, thanks for pointing out its inaccuracy
+	Julian Bradfield.
+
+2011-11-14  Vin Shelton  <acs@xemacs.org>
+
+	* faces.el: When the default background was changed from light to
+	dark or vice versa, the custom-property cache maintained the old
+	value, preventing face definitions from choosing the proper
+	values.  Patch from Aidan Kehoe.
+
+2011-11-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (describe-function-1):
+	When printing compiled functions, mention whether they're
+	built-in.
+
+2011-11-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-lambda):
+	Accept a new NAME argument here, have byte-compile-current-form
+	reflect that if it's specified. 
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	Specify the label name when byte-compiling it, so warning and
+	errors are more helpful.
+
+2011-10-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* startup.el (load-terminal-library):
+	Don't (getenv "TERM") here, call #'console-tty-terminal-type
+	instead, different gnuclient consoles can and should have
+	different terminal type function maps effective.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obsolete.el:
+	* obsolete.el (assq-delete-all):
+	* packages.el (package-provide):
+	* packages.el (package-suppress):
+	* mule/cyrillic.el ("Cyrillic-KOI8"):
+	* mule/cyrillic.el (koi8-u):
+	* mule/general-late.el (posix-charset-to-coding-system-hash):
+	* mule/latin.el:
+	* mule/latin.el (for):
+	* cl-extra.el:
+	* cl-extra.el (cl-extra):
+	* loadup.el (load-history):
+	Change any uses of #'remassq, #'remassoc and friends to calling
+	#'delete* with an appropriate key argument. Provide compatibility
+	implementations, mark them obsolete.
+
 2011-10-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el:

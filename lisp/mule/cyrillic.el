@@ -162,7 +162,7 @@ characters of the opposite case). "
 
 (set-language-info-alist
  "Cyrillic-KOI8"
- (remassq 'locale (copy-list (cdr (assoc "Russian" language-info-alist))))
+ (remove* 'locale (cdr (assoc "Russian" language-info-alist)) :key #'car)
  '("Cyrillic"))
 
 (make-128-byte-charset

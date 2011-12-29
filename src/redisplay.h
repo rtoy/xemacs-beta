@@ -322,17 +322,17 @@ struct display_line
   glyph_block_dynarr *left_glyphs;
   glyph_block_dynarr *right_glyphs;
 
-  face_index	left_margin_findex;
-  face_index	right_margin_findex;
-  face_index	default_findex;
+  face_index left_margin_findex;
+  face_index right_margin_findex;
+  face_index clear_findex;
 };
 
-#define DISPLAY_LINE_INIT(dl)			\
-  do						\
-    {						\
-      xzero (dl);				\
-      dl.default_findex = DEFAULT_INDEX;	\
-    }						\
+#define DISPLAY_LINE_INIT(dl)		\
+  do					\
+    {					\
+      xzero (dl);			\
+      dl.clear_findex = DEFAULT_INDEX;	\
+    }					\
   while (0)
 
 #define DISPLAY_LINE_HEIGHT(dl) \

@@ -328,11 +328,13 @@ Return the precision of bigfloat F as an integer.
        (f))
 {
   CHECK_BIGFLOAT (f);
+#ifdef HAVE_BIGFLOAT
 #ifdef HAVE_BIGNUM
   bignum_set_ulong (scratch_bignum, XBIGFLOAT_GET_PREC (f));
   return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
   return make_fixnum ((int) XBIGFLOAT_GET_PREC (f));
+#endif
 #endif
 }
 
@@ -364,8 +366,9 @@ PRECISION bits of precision.
       dead_wrong_type_argument (Qintegerp, f);
       return Qnil;
     }
-
+#ifdef HAVE_BIGFLOAT
   XBIGFLOAT_SET_PREC (f, prec);
+#endif
   return Fbigfloat_get_precision (f);
 }
 

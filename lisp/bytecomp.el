@@ -455,11 +455,16 @@ easily determined from the input file.")
 ;;; "If a file being compiled contains a `defmacro' form, the macro is
 ;;; defined temporarily for the rest of the compilation of that file."
 (defun byte-compile-eval (form)
-  (let ((save-macro-environment nil))
+  (let ((save-macro-environment nil)
+	;; These are macros in byte-compile-initial-macro-environment that
+	;; shouldn't be shadowed when calling #'byte-compile-eval, since
+	;; such code is interpreted, not compiled.
+	;; #### Consider giving this a docstring and a top-level value.
+	(byte-compile-no-shadow '(load-time-value labels flet)))
     (unwind-protect
 	(loop
 	  for (sym . def) in byte-compile-macro-environment
-	  do (when (symbolp sym)
+	  do (when (and (symbolp sym) (not (memq sym byte-compile-no-shadow)))
 	       (push
 		(if (fboundp sym)
 		    (cons sym (symbol-function sym))
@@ -563,24 +568,25 @@ easily determined from the input file.")
                                               'byte-optimizer)
                                         'byte-compile-inline-expand)
                                        `(((function ,placeholder)
-                                          ,(byte-compile-lambda lambda)
+                                          ,(byte-compile-lambda lambda name)
                                           (function ,lambda)))))
                                   names placeholders lambdas))
                                (compiled
-                                (mapcar #'byte-compile-lambda 
-                                        (if (not inline)
-                                            lambdas
-                                          ;; See further down for the
+                                (mapcar* #'byte-compile-lambda 
+                                         (if (not inline)
+                                             lambdas
+                                           ;; See further down for the
                                           ;; rationale of the sublis calls.
-                                          (sublis (pairlis
-                                                   (mapcar #'cadar inline)
-                                                   (mapcar #'third inline))
-                                                  (sublis
-                                                   (pairlis
-                                                    (mapcar #'car inline)
-                                                    (mapcar #'second inline))
-                                                   lambdas :test #'equal)
-                                                  :test #'eq))))
+                                           (sublis (pairlis
+                                                    (mapcar #'cadar inline)
+                                                    (mapcar #'third inline))
+                                                   (sublis
+                                                    (pairlis
+                                                     (mapcar #'car inline)
+                                                     (mapcar #'second inline))
+                                                    lambdas :test #'equal)
+                                                   :test #'eq))
+                                         names))
                                elt)
                           (mapc #'(lambda (placeholder function)
                                     (nsubst function placeholder compiled
@@ -635,9 +641,31 @@ easily determined from the input file.")
                                (cons 'progn
                                      (byte-compile-transform-labels
                                       form names lambdas placeholders))))))
-                   (cl-macroexpand-all `(,gensym ',names (list ,@lambdas)
-                                         ',placeholders ,@body)
-                                       byte-compile-macro-environment)))))
+		   (setq body
+			 (cl-macroexpand-all `(,gensym ',names (list ,@lambdas)
+					       ',placeholders ,@body)
+					     byte-compile-macro-environment))
+		   (if (position 'lambda (mapcar #'(lambda (object)
+						     (car-safe (cdr-safe
+								object)))
+						 (cdr (third body)))
+				 :key #'car-safe :test-not #'eq)
+		       ;; #'lexical-let has worked its magic, not all the
+		       ;; lambdas are lambdas. Give up on pre-compiling the
+		       ;; labels.
+		       (setq names (mapcar #'copy-symbol names)
+			     lambdas (cdr (third body))
+			     body (sublis (pairlis placeholders names)
+					  (nthcdr 4 body) :test #'eq)
+			     lambdas (sublis (pairlis placeholders names)
+					     lambdas :test #'eq)
+			     body (cl-macroexpand-all
+				   `(lexical-let
+				     ,names
+				     (setf ,@(mapcan #'list names lambdas))
+				     ,@body)
+				   byte-compile-macro-environment))
+		     body)))))
     (flet .
       ,#'(lambda (bindings &rest body)
            (let* ((names (mapcar 'car bindings))
@@ -2744,10 +2772,11 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 ;; Byte-compile a lambda-expression and return a valid function.
 ;; The value is usually a compiled function but may be the original
 ;; lambda-expression.
-(defun byte-compile-lambda (fun)
+(defun byte-compile-lambda (fun &optional name)
   (or (eq 'lambda (car-safe fun))
       (error "not a lambda -- %s" (prin1-to-string fun)))
-  (let* ((arglist (nth 1 fun))
+  (let* ((byte-compile-current-form (or name byte-compile-current-form))
+         (arglist (nth 1 fun))
 	 (byte-compile-bound-variables
 	  (let ((new-bindings
 		 (mapcar #'(lambda (x) (cons x byte-compile-arglist-bit))
