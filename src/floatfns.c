@@ -132,14 +132,14 @@ float_to_int (double x,
 #else
   REGISTER EMACS_INT result = (EMACS_INT) x;
 
-  if (result > EMACS_INT_MAX || result < EMACS_INT_MIN)
+  if (result > MOST_POSITIVE_FIXNUM || result < MOST_NEGATIVE_FIXNUM)
     {
       if (!UNBOUNDP (num2))
 	range_error2 (name, num, num2);
       else
 	range_error (name, num);
     }
-  return make_int (result);
+  return make_fixnum (result);
 #endif /* HAVE_BIGNUM */
 }
 
@@ -203,8 +203,8 @@ extract_float (Lisp_Object num)
   if (FLOATP (num))
     return XFLOAT_DATA (num);
 
-  if (INTP (num))
-    return (double) XINT (num);
+  if (FIXNUMP (num))
+    return (double) XFIXNUM (num);
 
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (num))
@@ -444,26 +444,26 @@ Return the exponential NUMBER1 ** NUMBER2.
        (number1, number2))
 {
 #ifdef HAVE_BIGNUM
-  if (INTEGERP (number1) && INTP (number2))
+  if (INTEGERP (number1) && FIXNUMP (number2))
     {
-      if (INTP (number1))
+      if (FIXNUMP (number1))
 	{
-	  bignum_set_long (scratch_bignum2, XREALINT (number1));
-	  bignum_pow (scratch_bignum, scratch_bignum2, XREALINT (number2));
+	  bignum_set_long (scratch_bignum2, XREALFIXNUM (number1));
+	  bignum_pow (scratch_bignum, scratch_bignum2, XREALFIXNUM (number2));
 	}
       else
 	bignum_pow (scratch_bignum, XBIGNUM_DATA (number1),
-		    XREALINT (number2));
+		    XREALFIXNUM (number2));
       return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
     }
 #endif
 
-  if (INTP (number1) && /* common lisp spec */
-      INTP (number2)) /* don't promote, if both are ints */
+  if (FIXNUMP (number1) && /* common lisp spec */
+      FIXNUMP (number2)) /* don't promote, if both are ints */
     {
       EMACS_INT retval;
-      EMACS_INT x = XINT (number1);
-      EMACS_INT y = XINT (number2);
+      EMACS_INT x = XFIXNUM (number1);
+      EMACS_INT y = XFIXNUM (number2);
 
       if (y < 0)
 	{
@@ -485,7 +485,7 @@ Return the exponential NUMBER1 ** NUMBER2.
 	      y = (EMACS_UINT) y >> 1;
 	    }
 	}
-      return make_int (retval);
+      return make_fixnum (retval);
     }
 
 #if defined(HAVE_BIGFLOAT) && defined(bigfloat_pow)
@@ -711,12 +711,12 @@ Return the absolute value of NUMBER.
       return number;
     }
 
-  if (INTP (number))
+  if (FIXNUMP (number))
 #ifdef HAVE_BIGNUM
     /* The most negative Lisp fixnum will overflow */
-    return (XINT (number) >= 0) ? number : make_integer (- XINT (number));
+    return (XFIXNUM (number) >= 0) ? number : make_integer (- XFIXNUM (number));
 #else
-    return (XINT (number) >= 0) ? number : make_int (- XINT (number));
+    return (XFIXNUM (number) >= 0) ? number : make_fixnum (- XFIXNUM (number));
 #endif
 
 #ifdef HAVE_BIGNUM
@@ -758,8 +758,8 @@ Return the floating point number numerically equal to NUMBER.
 */
        (number))
 {
-  if (INTP (number))
-    return make_float ((double) XINT (number));
+  if (FIXNUMP (number))
+    return make_float ((double) XFIXNUM (number));
 
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (number))
@@ -804,11 +804,11 @@ This is the same as the exponent of a float.
   double f = extract_float (number);
 
   if (f == 0.0)
-    return make_int (EMACS_INT_MIN);
+    return make_fixnum (MOST_NEGATIVE_FIXNUM);
 #ifdef HAVE_LOGB
   {
     Lisp_Object val;
-    IN_FLOAT (val = make_int ((EMACS_INT) logb (f)), "logb", number);
+    IN_FLOAT (val = make_fixnum ((EMACS_INT) logb (f)), "logb", number);
     return val;
   }
 #else
@@ -816,7 +816,7 @@ This is the same as the exponent of a float.
   {
     int exqp;
     IN_FLOAT (frexp (f, &exqp), "logb", number);
-    return make_int (exqp - 1);
+    return make_fixnum (exqp - 1);
   }
 #else
   {
@@ -840,7 +840,7 @@ This is the same as the exponent of a float.
         f /= d;
         val += i;
       }
-    return make_int (val);
+    return make_fixnum (val);
   }
 #endif /* ! HAVE_FREXP */
 #endif /* ! HAVE_LOGB */
@@ -895,24 +895,24 @@ This is the same as the exponent of a float.
          does these conversions, we do them too for symmetry: */\
       if (CHARP (number))                                       \
         {                                                       \
-          number = make_int (XCHAR (number));                   \
+          number = make_fixnum (XCHAR (number));                   \
         }                                                       \
       else if (MARKERP (number))				\
         {                                                       \
-          number = make_int (marker_position (number));         \
+          number = make_fixnum (marker_position (number));         \
         }                                                       \
                                                                 \
       if (CHARP (divisor))                                      \
         {                                                       \
-          divisor = make_int (XCHAR (divisor));                 \
+          divisor = make_fixnum (XCHAR (divisor));                 \
         }                                                       \
       else if (MARKERP (divisor))				\
         {                                                       \
-          divisor = make_int (marker_position (divisor));       \
+          divisor = make_fixnum (marker_position (divisor));       \
         }                                                       \
                                                                 \
-      CHECK_INT_OR_FLOAT (divisor);                             \
-      if (INTP (number) && INTP (divisor))                      \
+      CHECK_FIXNUM_OR_FLOAT (divisor);                             \
+      if (FIXNUMP (number) && FIXNUMP (divisor))                      \
         {                                                       \
           return conversion##_two_fixnum (number, divisor,      \
                                         return_float);          \
@@ -988,13 +988,13 @@ This is the same as the exponent of a float.
 #define MAYBE_CHAR_OR_MARKER(conversion) do {                           \
   if (CHARP (number))                                                   \
     {                                                                   \
-      return conversion##_one_mundane_arg (make_int (XCHAR (number)),   \
+      return conversion##_one_mundane_arg (make_fixnum (XCHAR (number)),   \
                                            divisor, return_float);      \
     }                                                                   \
                                                                         \
   if (MARKERP (number))                                                 \
     {                                                                   \
-      return conversion##_one_mundane_arg (make_int                     \
+      return conversion##_one_mundane_arg (make_fixnum                     \
                                            (marker_position(number)),   \
                                            divisor, return_float);      \
     }                                                                   \
@@ -1007,8 +1007,8 @@ static Lisp_Object
 ceiling_two_fixnum (Lisp_Object number, Lisp_Object divisor,
 		    int return_float)
 {
-  EMACS_INT i1 = XREALINT (number);
-  EMACS_INT i2 = XREALINT (divisor);
+  EMACS_INT i1 = XREALFIXNUM (number);
+  EMACS_INT i2 = XREALFIXNUM (divisor);
   EMACS_INT i3 = 0, i4 = 0;
 
   if (i2 == 0)
@@ -1062,11 +1062,11 @@ ceiling_two_fixnum (Lisp_Object number, Lisp_Object divisor,
 
   if (!return_float)
     {
-      return values2 (make_int (i3), make_int (i4));
+      return values2 (make_fixnum (i3), make_fixnum (i4));
     }
 
   return values2 (make_float ((double)i3),
-		  make_int (i4));
+		  make_fixnum (i4));
 }
 
 #ifdef HAVE_BIGNUM
@@ -1160,7 +1160,7 @@ ceiling_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
       bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
       res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+      res0 = make_fixnum ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
 #endif /* HAVE_BIGNUM */
     }
 
@@ -1220,7 +1220,7 @@ ceiling_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
       bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
       res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+      res0 = make_fixnum ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
 #endif /* HAVE_BIGNUM */
     }
 
@@ -1288,9 +1288,9 @@ ceiling_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 
   if (return_float)
     {
-      if (INTP (number))
+      if (FIXNUMP (number))
 	{
-	  return values2 (make_float ((double) XINT (number)), Qzero);
+	  return values2 (make_float ((double) XFIXNUM (number)), Qzero);
 	}
 #ifdef HAVE_BIGNUM
       else if (BIGNUMP (number))
@@ -1318,8 +1318,8 @@ static Lisp_Object
 floor_two_fixnum (Lisp_Object number, Lisp_Object divisor,
 		  int return_float)
 {
-  EMACS_INT i1 = XREALINT (number);
-  EMACS_INT i2 = XREALINT (divisor);
+  EMACS_INT i1 = XREALFIXNUM (number);
+  EMACS_INT i2 = XREALFIXNUM (divisor);
   EMACS_INT i3 = 0, i4 = 0;
   Lisp_Object res0;
 
@@ -1342,10 +1342,10 @@ floor_two_fixnum (Lisp_Object number, Lisp_Object divisor,
     }
   else
     {
-      res0 = make_int (i3);
+      res0 = make_fixnum (i3);
     }
 
-  return values2 (res0, make_int (i4));
+  return values2 (res0, make_fixnum (i4));
 }
 
 #ifdef HAVE_BIGNUM
@@ -1446,7 +1446,7 @@ floor_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
       bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
       res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+      res0 = make_fixnum ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
 #endif /* HAVE_BIGNUM */
     }
 
@@ -1507,7 +1507,7 @@ floor_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
       bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
       res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+      res0 = make_fixnum ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
 #endif /* HAVE_BIGNUM */
     }
 
@@ -1594,8 +1594,8 @@ floor_one_mundane_arg (Lisp_Object number, Lisp_Object divisor,
 static Lisp_Object
 round_two_fixnum (Lisp_Object number, Lisp_Object divisor, int return_float)
 {
-  EMACS_INT i1 = XREALINT (number);
-  EMACS_INT i2 = XREALINT (divisor);
+  EMACS_INT i1 = XREALFIXNUM (number);
+  EMACS_INT i2 = XREALFIXNUM (divisor);
   EMACS_INT i0, hi2, flooring, floored, flsecond;
 
   if (i2 == 0)
@@ -1617,13 +1617,13 @@ round_two_fixnum (Lisp_Object number, Lisp_Object divisor, int return_float)
     {
       i0 = floored - 1;
       return values2 (return_float ? make_float ((double)i0) :
-		      make_int (i0), make_int (hi2));
+		      make_fixnum (i0), make_fixnum (hi2));
     }
   else
     {
       return values2 (return_float ? make_float ((double)floored) :
-		      make_int (floored),
-		      make_int (flsecond - hi2));
+		      make_fixnum (floored),
+		      make_fixnum (flsecond - hi2));
     }
 }
 
@@ -1852,7 +1852,7 @@ round_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
       bignum_set_bigfloat (scratch_bignum, XBIGFLOAT_DATA (res0));
       res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-      res0 = make_int ((EMACS_INT) bigfloat_to_long (XBIGFLOAT_DATA (res0)));
+      res0 = make_fixnum ((EMACS_INT) bigfloat_to_long (XBIGFLOAT_DATA (res0)));
 #endif /* HAVE_BIGNUM */
     }
 
@@ -1904,7 +1904,7 @@ round_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
       bignum_set_bigfloat (scratch_bignum, XBIGFLOAT_DATA (res0));
       res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-      res0 = make_int ((EMACS_INT) bigfloat_to_long
+      res0 = make_fixnum ((EMACS_INT) bigfloat_to_long
 		       (XBIGFLOAT_DATA (res0)));
 #endif /* HAVE_BIGNUM */
     }
@@ -1994,8 +1994,8 @@ static Lisp_Object
 truncate_two_fixnum (Lisp_Object number, Lisp_Object divisor,
 		     int return_float)
 {
-  EMACS_INT i1 = XREALINT (number);
-  EMACS_INT i2 = XREALINT (divisor);
+  EMACS_INT i1 = XREALFIXNUM (number);
+  EMACS_INT i2 = XREALFIXNUM (divisor);
   EMACS_INT i0;
 
   if (i2 == 0)
@@ -2010,11 +2010,11 @@ truncate_two_fixnum (Lisp_Object number, Lisp_Object divisor,
 
   if (return_float)
     {
-      return values2 (make_float ((double)i0), make_int (i1 - (i0 * i2)));
+      return values2 (make_float ((double)i0), make_fixnum (i1 - (i0 * i2)));
     }
   else
     {
-      return values2 (make_int (i0), make_int (i1 - (i0 * i2)));
+      return values2 (make_fixnum (i0), make_fixnum (i1 - (i0 * i2)));
     }
 }
 
@@ -2121,7 +2121,7 @@ truncate_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
       bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
       res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+      res0 = make_fixnum ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
 #endif /* HAVE_BIGNUM */
     }
 
@@ -2187,7 +2187,7 @@ truncate_one_bigfloat (Lisp_Object number, Lisp_Object UNUSED (divisor),
       bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
       res0 = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-      res0 = make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+      res0 = make_fixnum ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
 #endif /* HAVE_BIGNUM */
     }
 
@@ -2232,14 +2232,14 @@ truncate_one_float (Lisp_Object number, int return_float)
 		    number, Qunbound);
   if (return_float)
     {
-      res0 = make_float ((double)XINT(res0));
+      res0 = make_float ((double)XFIXNUM(res0));
       return values2 (res0, make_float ((XFLOAT_DATA (number)
 					 - XFLOAT_DATA (res0))));
     }
   else
     {
       return values2 (res0, make_float (XFLOAT_DATA (number)
-					- XREALINT (res0)));
+					- XREALFIXNUM (res0)));
     }
 }
 

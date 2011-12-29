@@ -1599,7 +1599,7 @@ static Lisp_Object Qmmap_addrlist_size;
 #define N_Meterables 12		/* Total number of meterables */
 #define MEMMETER(x) {x;}
 #define MVAL(x) (meter[x])
-#define MLVAL(x) (make_int (meter[x]))
+#define MLVAL(x) (make_fixnum (meter[x]))
 static int meter[N_Meterables];
 
 DEFUN ("mmap-allocator-status", Fmmap_allocator_status, 0, 0, 0, /*

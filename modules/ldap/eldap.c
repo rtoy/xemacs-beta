@@ -234,8 +234,8 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 	/* TCP Port */
 	if (EQ (keyword, Qport))
 	  {
-	    CHECK_INT (value);
-	    ldap_port = XINT (value);
+	    CHECK_FIXNUM (value);
+	    ldap_port = XFIXNUM (value);
 	  }
 	/* Authentication method */
 	if (EQ (keyword, Qauth))
@@ -282,14 +282,14 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 	/* Timelimit */
 	else if (EQ (keyword, Qtimelimit))
 	  {
-	    CHECK_INT (value);
-	    ldap_timelimit = XINT (value);
+	    CHECK_FIXNUM (value);
+	    ldap_timelimit = XFIXNUM (value);
 	  }
 	/* Sizelimit */
 	else if (EQ (keyword, Qsizelimit))
 	  {
-	    CHECK_INT (value);
-	    ldap_sizelimit = XINT (value);
+	    CHECK_FIXNUM (value);
+	    ldap_sizelimit = XFIXNUM (value);
 	  }
       }
   }
@@ -473,7 +473,7 @@ entry according to the value of WITHDN.
   if (!NILP (attrs))
     {
       CHECK_CONS (attrs);
-      ldap_attributes = alloca_array (char *, 1 + XINT (Flength (attrs)));
+      ldap_attributes = alloca_array (char *, 1 + XFIXNUM (Flength (attrs)));
 
       i = 0;
       {
@@ -628,7 +628,7 @@ containing attribute/value string pairs.
     invalid_operation ("Cannot add void entry", entry);
 
   /* Build the ldap_mods array */
-  len = (Elemcount) XINT (Flength (entry));
+  len = (Elemcount) XFIXNUM (Flength (entry));
   ldap_mods = alloca_array (LDAPMod, len);
   ldap_mods_ptrs = alloca_array (LDAPMod *, 1 + len);
   i = 0;
@@ -645,7 +645,7 @@ containing attribute/value string pairs.
 	values = XCDR (current);
 	if (CONSP (values))
 	  {
-	    len = (Elemcount) XINT (Flength (values));
+	    len = (Elemcount) XFIXNUM (Flength (values));
 	    bervals = alloca_array (struct berval, len);
 	    ldap_mods[i].mod_vals.modv_bvals =
 	      alloca_array (struct berval *, 1 + len);
@@ -724,7 +724,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
     return Qnil;
 
   /* Build the ldap_mods array */
-  len = (Elemcount) XINT (Flength (mods));
+  len = (Elemcount) XFIXNUM (Flength (mods));
   ldap_mods = alloca_array (LDAPMod, len);
   ldap_mods_ptrs = alloca_array (LDAPMod *, 1 + len);
   i = 0;
@@ -751,7 +751,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
 	ldap_mods[i].mod_type =
 	  LISP_STRING_TO_EXTERNAL (XCAR (current), Qnative);
 	values = XCDR (current);
-	len = (Elemcount) XINT (Flength (values));
+	len = (Elemcount) XFIXNUM (Flength (values));
 	bervals = alloca_array (struct berval, len);
 	ldap_mods[i].mod_vals.modv_bvals =
 	  alloca_array (struct berval *, 1 + len);

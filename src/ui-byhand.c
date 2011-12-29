@@ -57,8 +57,8 @@ Return value is a list of (EXPAND FILL PADDING PACK_TYPE).
 			       GTK_WIDGET (XGTK_OBJECT (child)->object),
 			       &expand, &fill, &padding, &pack_type);
 
-  result = Fcons (make_int (pack_type), result);
-  result = Fcons (make_int (padding), result);
+  result = Fcons (make_fixnum (pack_type), result);
+  result = Fcons (make_fixnum (padding), result);
   result = Fcons (fill ? Qt : Qnil, result);
   result = Fcons (expand ? Qt : Qnil, result);
 
@@ -76,7 +76,7 @@ Return a cons cell (WIDTH . HEIGHT) of the default button box child size.
 
   gtk_button_box_get_child_size_default (&width, &height);
 
-  return (Fcons (make_int (width), make_int (height)));
+  return (Fcons (make_fixnum (width), make_fixnum (height)));
 }
 
 /* void gtk_button_box_get_child_ipadding_default (gint *ipad_x, gint *ipad_y);  */
@@ -90,7 +90,7 @@ Return a cons cell (X . Y) of the default button box ipadding.
 
   gtk_button_box_get_child_ipadding_default (&x, &y);
 
-  return (Fcons (make_int (x), make_int (y)));
+  return (Fcons (make_fixnum (x), make_fixnum (y)));
 }
 
 /* void gtk_button_box_get_child_size (GtkButtonBox *widget,
@@ -112,7 +112,7 @@ Get the current size of a child in the buttonbox BOX.
   gtk_button_box_get_child_size (GTK_BUTTON_BOX (XGTK_OBJECT (box)->object),
 				 &width, &height);
 
-  return (Fcons (make_int (width), make_int (height)));
+  return (Fcons (make_fixnum (width), make_fixnum (height)));
 }
 
 /* void gtk_button_box_get_child_ipadding (GtkButtonBox *widget, gint *ipad_x, gint *ipad_y); */
@@ -134,7 +134,7 @@ Return a cons cell (X . Y) of the current buttonbox BOX ipadding.
   gtk_button_box_get_child_ipadding (GTK_BUTTON_BOX (XGTK_OBJECT (box)->object),
 				     &x, &y);
 
-  return (Fcons (make_int (x), make_int (y)));
+  return (Fcons (make_fixnum (x), make_fixnum (y)));
 }
 
 /*void	   gtk_calendar_get_date	(GtkCalendar *calendar, 
@@ -159,7 +159,7 @@ Return a list of (YEAR MONTH DAY) from the CALENDAR object.
   gtk_calendar_get_date (GTK_CALENDAR (XGTK_OBJECT (calendar)->object),
 			 &year, &month, &day);
 
-  return (list3 (make_int (year), make_int (month), make_int (day)));
+  return (list3 (make_fixnum (year), make_fixnum (month), make_fixnum (day)));
 }
 
 /* gint gtk_clist_get_text (GtkCList  *clist,
@@ -176,15 +176,15 @@ Returns the text from GtkCList OBJ cell at coordinates ROW, COLUMN.
   Lisp_Object rval = Qnil;
 
   CHECK_GTK_OBJECT (obj);
-  CHECK_INT (row);
-  CHECK_INT (column);
+  CHECK_FIXNUM (row);
+  CHECK_FIXNUM (column);
 
   if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
     {
       wtaerror ("Object is not a GtkCList", obj);
     }
 
-  gtk_clist_get_text (GTK_CLIST (XGTK_OBJECT (obj)->object), XINT (row), XINT (column), &text);
+  gtk_clist_get_text (GTK_CLIST (XGTK_OBJECT (obj)->object), XFIXNUM (row), XFIXNUM (column), &text);
 
   if (text)
     {
@@ -211,8 +211,8 @@ Returns a cons cell of (ROW . COLUMN) of the GtkCList OBJ at coordinates X, Y.
   gint row, column;
 
   CHECK_GTK_OBJECT (obj);
-  CHECK_INT (x);
-  CHECK_INT (y);
+  CHECK_FIXNUM (x);
+  CHECK_FIXNUM (y);
 
   if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
     {
@@ -220,9 +220,9 @@ Returns a cons cell of (ROW . COLUMN) of the GtkCList OBJ at coordinates X, Y.
     }
 
   gtk_clist_get_selection_info (GTK_CLIST (XGTK_OBJECT (obj)->object),
-				XINT (x), XINT (y), &row, &column);
+				XFIXNUM (x), XFIXNUM (y), &row, &column);
 
-  return (Fcons (make_int (row), make_int (column)));
+  return (Fcons (make_fixnum (row), make_fixnum (column)));
 }
 
 DEFUN ("gtk-clist-get-pixmap", Fgtk_clist_get_pixmap, 3, 3, 0, /*
@@ -234,8 +234,8 @@ Return a cons of (pixmap . mask) at ROW,COLUMN in CLIST.
   GdkBitmap *mask = NULL;
 
   CHECK_GTK_OBJECT (clist);
-  CHECK_INT (row);
-  CHECK_INT (column);
+  CHECK_FIXNUM (row);
+  CHECK_FIXNUM (column);
 
   if (!GTK_IS_CLIST (XGTK_OBJECT (clist)->object))
     {
@@ -243,7 +243,7 @@ Return a cons of (pixmap . mask) at ROW,COLUMN in CLIST.
     }
 
   gtk_clist_get_pixmap (GTK_CLIST (XGTK_OBJECT (clist)->object),
-			XINT (row), XINT (column),
+			XFIXNUM (row), XFIXNUM (column),
 			&pixmap, &mask);
 
   return (Fcons (pixmap ? build_gtk_boxed (pixmap, GTK_TYPE_GDK_WINDOW) : Qnil,
@@ -261,8 +261,8 @@ Return a list of (pixmap mask text) at ROW,COLUMN in CLIST.
   guint8 spacing;
 
   CHECK_GTK_OBJECT (clist);
-  CHECK_INT (row);
-  CHECK_INT (column);
+  CHECK_FIXNUM (row);
+  CHECK_FIXNUM (column);
 
   if (!GTK_IS_CLIST (XGTK_OBJECT (clist)->object))
     {
@@ -270,7 +270,7 @@ Return a list of (pixmap mask text) at ROW,COLUMN in CLIST.
     }
 
   gtk_clist_get_pixtext (GTK_CLIST (XGTK_OBJECT (clist)->object),
-			 XINT (row), XINT (column), &text, &spacing,
+			 XFIXNUM (row), XFIXNUM (column), &text, &spacing,
 			 &pixmap, &mask);
 
   return (list3 (pixmap ? build_gtk_boxed (pixmap, GTK_TYPE_GDK_WINDOW) : Qnil,
@@ -312,9 +312,9 @@ Returns the new position of the cursor in the widget.
 
   CHECK_GTK_OBJECT (obj);
   CHECK_STRING (string);
-  CHECK_INT (pos);
+  CHECK_FIXNUM (pos);
 
-  the_pos = XINT (pos);
+  the_pos = XFIXNUM (pos);
 
   if (!GTK_IS_EDITABLE (XGTK_OBJECT (obj)->object))
     {
@@ -326,7 +326,7 @@ Returns the new position of the cursor in the widget.
 			    XSTRING_LENGTH (string),
 			    &the_pos);
 
-  return (make_int (the_pos));
+  return (make_fixnum (the_pos));
 }
 
 DEFUN ("gtk-pixmap-get", Fgtk_pixmap_get, 1, 1, 0, /*
@@ -359,19 +359,19 @@ Returns a vector of LENGTH points representing the curve of CURVE.
   int i;
 
   CHECK_GTK_OBJECT (curve);
-  CHECK_INT (length);
+  CHECK_FIXNUM (length);
 
   if (!GTK_IS_CURVE (XGTK_OBJECT (curve)->object))
     {
       wtaerror ("Object is not a GtkCurve", curve);
     }
 
-  vector = alloca_array (gfloat, XINT (length));
+  vector = alloca_array (gfloat, XFIXNUM (length));
 
-  gtk_curve_get_vector (GTK_CURVE (XGTK_OBJECT (curve)->object), XINT (length), vector);
-  lisp_vector = make_vector (XINT (length), Qnil);
+  gtk_curve_get_vector (GTK_CURVE (XGTK_OBJECT (curve)->object), XFIXNUM (length), vector);
+  lisp_vector = make_vector (XFIXNUM (length), Qnil);
 
-  for (i = 0; i < XINT (length); i++)
+  for (i = 0; i < XFIXNUM (length); i++)
     {
       XVECTOR_DATA (lisp_vector)[i] = make_float (vector[i]);
     }
@@ -454,7 +454,7 @@ Return a list of packing information (EXPAND FILL PACK_TYPE) for CHILD in NOTEBO
 					GTK_WIDGET (XGTK_OBJECT (child)->object),
 					&expand, &fill, &pack_type);
 
-  return (list3 (expand ? Qt : Qnil, fill ? Qt : Qnil, make_int (pack_type)));
+  return (list3 (expand ? Qt : Qnil, fill ? Qt : Qnil, make_fixnum (pack_type)));
 }
 
 DEFUN ("gtk-widget-get-pointer", Fgtk_widget_get_pointer, 1, 1, 0, /*
@@ -472,7 +472,7 @@ Return the pointer position relative to WIDGET as a cons of (X . Y).
 
   gtk_widget_get_pointer (GTK_WIDGET (XGTK_OBJECT (widget)->object), &x, &y);
 
-  return (Fcons (make_int (x), make_int (y)));
+  return (Fcons (make_fixnum (x), make_fixnum (y)));
 }
 
 /* This is called whenever an item with a GUI_ID associated with it is
@@ -561,7 +561,7 @@ generic_toolbar_insert_item (Lisp_Object toolbar,
 				   GTK_WIDGET (XGTK_OBJECT (icon)->object),
 				   GTK_SIGNAL_FUNC (__generic_toolbar_callback),
 				   STORE_LISP_IN_VOID (callback),
-				   XINT (position));
+				   XFIXNUM (position));
     }
 
 
@@ -589,7 +589,7 @@ Adds a new button to the beginning (left or top edges) of the given toolbar.
 */
 	   (toolbar, text, tooltip_text, tooltip_private_text, icon, callback, position, data))
 {
-  CHECK_INT (position);
+  CHECK_FIXNUM (position);
 
   return (generic_toolbar_insert_item (toolbar,text,tooltip_text,tooltip_private_text,icon,callback,data,Qnil,position));
 }
@@ -654,7 +654,7 @@ void gtk_ctree_pre_recursive_to_depth            (GtkCTree     *ctree,
 
   if (!NILP (depth))
     {
-      CHECK_INT (depth);
+      CHECK_FIXNUM (depth);
     }
 
   closure = Fcons (func, data);
@@ -674,7 +674,7 @@ void gtk_ctree_pre_recursive_to_depth            (GtkCTree     *ctree,
       (NILP (childfirstp) ? gtk_ctree_post_recursive_to_depth : gtk_ctree_pre_recursive_to_depth)
 	(GTK_CTREE (XGTK_OBJECT (ctree)->object),
 	 NILP (node) ? NULL : (GtkCTreeNode *) XGTK_BOXED (node)->object,
-	 XINT (depth),
+	 XFIXNUM (depth),
 	 __emacs_gtk_ctree_recurse_internal,
 	 STORE_LISP_IN_VOID (closure));
     }

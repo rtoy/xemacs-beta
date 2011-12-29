@@ -124,8 +124,8 @@ Windows the sound file must be in WAV format.
     vol = bell_volume;
   else
     {
-      CHECK_INT (volume);
-      vol = XINT (volume);
+      CHECK_FIXNUM (volume);
+      vol = XFIXNUM (volume);
     }
 
   GCPRO1 (file);
@@ -245,14 +245,14 @@ parse_sound_alist_elt (Lisp_Object elt,
     {
       *sound = XCAR (elt);
     }
-  else if (INT_OR_FLOATP (XCAR (elt)) &&	/* ( name <vol> . <sound> ) */
+  else if (FIXNUM_OR_FLOATP (XCAR (elt)) &&	/* ( name <vol> . <sound> ) */
 	   (SYMBOLP (XCDR (elt)) ||
 	    STRINGP (XCDR (elt))))
     {
       *volume = XCAR (elt);
       *sound = XCDR (elt);
     }
-  else if (INT_OR_FLOATP (XCAR (elt)) &&	/* ( name <vol> <sound> ) */
+  else if (FIXNUM_OR_FLOATP (XCAR (elt)) &&	/* ( name <vol> <sound> ) */
 	   CONSP (XCDR (elt)) &&
 	   NILP (XCDR (XCDR (elt))) &&
 	   (SYMBOLP (XCAR (XCDR (elt))) ||
@@ -263,7 +263,7 @@ parse_sound_alist_elt (Lisp_Object elt,
     }
   else if ((SYMBOLP (XCAR (elt)) ||	/* ( name <sound> . <vol> ) */
 	    STRINGP (XCAR (elt))) &&
-	   INT_OR_FLOATP (XCDR (elt)))
+	   FIXNUM_OR_FLOATP (XCDR (elt)))
     {
       *sound = XCAR (elt);
       *volume = XCDR (elt);
@@ -273,7 +273,7 @@ parse_sound_alist_elt (Lisp_Object elt,
 	    STRINGP (XCAR (elt))) &&
 	   CONSP (XCDR (elt)) &&
 	   NILP (XCDR (XCDR (elt))) &&
-	   INT_OR_FLOATP (XCAR (XCDR (elt))))
+	   FIXNUM_OR_FLOATP (XCAR (XCDR (elt))))
     {
       *sound = XCAR (elt);
       *volume = XCAR (XCDR (elt));
@@ -292,16 +292,16 @@ parse_sound_alist_elt (Lisp_Object elt,
 	  val = XCAR (val);
 	  if (EQ (key, Q_volume))
 	    {
-	      if (INT_OR_FLOATP (val)) *volume = val;
+	      if (FIXNUM_OR_FLOATP (val)) *volume = val;
 	    }
 	  else if (EQ (key, Q_pitch))
 	    {
-	      if (INT_OR_FLOATP (val)) *pitch = val;
+	      if (FIXNUM_OR_FLOATP (val)) *pitch = val;
 	      if (NILP (*sound)) *sound = Qt;
 	    }
 	  else if (EQ (key, Q_duration))
 	    {
-	      if (INT_OR_FLOATP (val)) *duration = val;
+	      if (FIXNUM_OR_FLOATP (val)) *duration = val;
 	      if (NILP (*sound)) *sound = Qt;
 	    }
 	  else if (EQ (key, Q_sound))
@@ -366,9 +366,9 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
     }
 
 
-  vol = (INT_OR_FLOATP (volume)   ? (int) XFLOATINT (volume)   : bell_volume);
-  pit = (INT_OR_FLOATP (pitch)    ? (int) XFLOATINT (pitch)    : -1);
-  dur = (INT_OR_FLOATP (duration) ? (int) XFLOATINT (duration) : -1);
+  vol = (FIXNUM_OR_FLOATP (volume)   ? (int) XFLOATFIXNUM (volume)   : bell_volume);
+  pit = (FIXNUM_OR_FLOATP (pitch)    ? (int) XFLOATFIXNUM (pitch)    : -1);
+  dur = (FIXNUM_OR_FLOATP (duration) ? (int) XFLOATFIXNUM (duration) : -1);
 
   /* If the sound is a string, and we're connected to ALSA, NAS, or ESD, do
      that.  Else if the sound is a string, and we're on console, play it

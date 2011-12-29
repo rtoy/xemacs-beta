@@ -2875,7 +2875,7 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
     if (!NILP (auto_outstream))
       Lstream_delete (XLSTREAM (auto_outstream));
     Lstream_delete (XLSTREAM (lb_outstream));
-    return make_int (retlen);
+    return make_fixnum (retlen);
   }
 }
 
@@ -3115,27 +3115,27 @@ query_coding_1 (Lisp_Object buffer_or_string, Charxpos b, Charxpos e,
 		     make_string_from_buffer (XBUFFER (buffer_or_string),
 					      errstart,
 					      errend - errstart) :
-		     Fsubseq (buffer_or_string, make_int (errstart),
-			      make_int (errend)),
+		     Fsubseq (buffer_or_string, make_fixnum (errstart),
+			      make_fixnum (errend)),
 		     XCODING_SYSTEM_NAME (coding_system));
 		}
 
 	      if (NILP (result))
 		result = Fmake_range_table (Qstart_closed_end_open);
 
-	      Fput_range_table (make_int (errstart), make_int (errend),
+	      Fput_range_table (make_fixnum (errstart), make_fixnum (errend),
 				errtype == CODING_UNENCODABLE ? Qunencodable :
 				Qinvalid_sequence, result);
 
 	      if (!NILP (highlight))
 		{
                   Lisp_Object extent
-                    = Fmake_extent (make_int (errstart),
-                                    make_int (errend),
+                    = Fmake_extent (make_fixnum (errstart),
+                                    make_fixnum (errend),
                                     buffer_or_string);
 
                   Fset_extent_priority
-                    (extent, make_int (2 + mouse_highlight_priority));
+                    (extent, make_fixnum (2 + mouse_highlight_priority));
 		  /* #### FIXME! Do we really want this?  The former
 		     code did this. */
 		  if (STRINGP (buffer_or_string))
@@ -5373,7 +5373,7 @@ gzip_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
   if (data->level == -1)
     write_ascstring (printcharfun, "default");
   else
-    print_internal (make_int (data->level), printcharfun, 0);
+    print_internal (make_fixnum (data->level), printcharfun, 0);
   write_ascstring (printcharfun, ")");
 }
 
@@ -5388,8 +5388,8 @@ gzip_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 	data->level = -1;
       else
 	{
-	  check_integer_range (value, Qzero, make_int (9));
-	  data->level = XINT (value);
+	  check_integer_range (value, Qzero, make_fixnum (9));
+	  data->level = XFIXNUM (value);
 	}
     }
   else
@@ -5407,7 +5407,7 @@ gzip_getprop (Lisp_Object coding_system, Lisp_Object prop)
     {
       if (data->level == -1)
 	return Qdefault;
-      return make_int (data->level);
+      return make_fixnum (data->level);
     }
 
   return Qunbound;

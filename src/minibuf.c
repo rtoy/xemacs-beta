@@ -70,7 +70,7 @@ Return current depth of activations of minibuffer, a nonnegative integer.
 */
        ())
 {
-  return make_int (minibuf_level);
+  return make_fixnum (minibuf_level);
 }
 
 /* The default buffer to use as the window-buffer of minibuffer windows */
@@ -91,7 +91,7 @@ read_minibuffer_internal_unwind (Lisp_Object unwind_data)
   XWINDOW (minibuf_window)->last_facechange[DESIRED_DISP] = Qzero;
   XWINDOW (minibuf_window)->last_facechange[CMOTION_DISP] = Qzero;
   Vminibuf_prompt = Felt (unwind_data, Qzero);
-  minibuf_level = XINT (Felt (unwind_data, Qone));
+  minibuf_level = XFIXNUM (Felt (unwind_data, Qone));
   while (CONSP (unwind_data))
     {
       Lisp_Object victim = unwind_data;
@@ -152,7 +152,7 @@ Lowest-level interface to minibuffers.  Don't call this.
   record_unwind_protect (read_minibuffer_internal_unwind,
                          noseeum_cons
 			 (Vminibuf_prompt,
-			  noseeum_cons (make_int (minibuf_level), Qnil)));
+			  noseeum_cons (make_fixnum (minibuf_level), Qnil)));
   Vminibuf_prompt = LISP_GETTEXT (prompt);
 
   /* NOTE: Here (or somewhere around here), in FSFmacs 19.30,
@@ -512,7 +512,7 @@ or the symbol from the obarray.
     return Qt;
 
   /* Else extract the part in which all completions agree */
-  return Fsubseq (bestmatch, Qzero, make_int (bestmatchsize));
+  return Fsubseq (bestmatch, Qzero, make_fixnum (bestmatchsize));
 }
 
 
@@ -667,7 +667,7 @@ Return the display width of the minibuffer prompt.
 */
 	 ())
 {
-  return make_int (minibuf_prompt_width);
+  return make_fixnum (minibuf_prompt_width);
 }
 #endif /* 0 */
 

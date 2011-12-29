@@ -423,13 +423,13 @@ int
 decode_unicode (Lisp_Object unicode, enum unicode_allow allow)
 {
   EMACS_INT val;
-  CHECK_INT (unicode);
-  val = XINT (unicode);
+  CHECK_FIXNUM (unicode);
+  val = XFIXNUM (unicode);
   if (!valid_unicode_codepoint_p (val, allow))
     {
       EMACS_INT maxval = allow == UNICODE_ALLOW_PRIVATE ?
 	EMACS_INT_UNICODE_PRIVATE_MAX : UNICODE_OFFICIAL_MAX;
-      args_out_of_range_3 (unicode, Qzero, make_int (maxval));
+      args_out_of_range_3 (unicode, Qzero, make_fixnum (maxval));
     }
   return (int) val;
 }
@@ -1304,8 +1304,8 @@ allocate_jit_ucs_charset (void)
   Vcurrent_jit_charset = Fmake_charset 
     (intern (setname), Vcharset_descr, 
      nconc2 (list6 (Qcolumns, Qone, Qchars,
-		    make_int (96),
-		    Qdimension, make_int (2)),
+		    make_fixnum (96),
+		    Qdimension, make_fixnum (2)),
 	     list4 (Qregistries, Qunicode_registries,
 		    /* not allowed to set non-nil tags when not yet
 		       initialized, for bootstrapping reasons; these
@@ -1648,7 +1648,7 @@ print_precedence_array (Lisp_Object obj, Lisp_Object printcharfun,
   for (i = 0; i < Dynarr_length (data->precdyn); i++)
     {
       Lisp_Object charset = Dynarr_at (data->precdyn, i);
-      write_fmt_string_lisp (printcharfun, " #%d: %s", 2, make_int (i + 1),
+      write_fmt_string_lisp (printcharfun, " #%d: %s", 2, make_fixnum (i + 1),
 			     XCHARSET_NAME (charset));
     }
   write_fmt_string (printcharfun, " 0x%lx>", (unsigned long) XPNTR (obj));
@@ -2223,18 +2223,18 @@ verify_load_unicode_args (Lisp_Object filename, Lisp_Object start,
   CHECK_STRING (filename);
   if (!NILP (start))
     {
-      CHECK_INT (start);
-      *st = XINT (start);
+      CHECK_FIXNUM (start);
+      *st = XFIXNUM (start);
     }
   if (!NILP (end))
     {
-      CHECK_INT (end);
-      *en = XINT (end);
+      CHECK_FIXNUM (end);
+      *en = XFIXNUM (end);
     }
   if (!NILP (offset))
     {
-      CHECK_INT (offset);
-      *of = XINT (offset);
+      CHECK_FIXNUM (offset);
+      *of = XFIXNUM (offset);
     }
 
   if (!LISTP (flags))
@@ -2576,7 +2576,7 @@ autoload_charset_unicode_tables (Lisp_Object charset)
   Lisp_Object offset = X4TH (map);
   Lisp_Object flags = X5TH (map);
 
-  assert (EQ (Flength (map), make_int (5)));
+  assert (EQ (Flength (map), make_fixnum (5)));
   Fload_unicode_mapping_table (filename, charset, start, end, offset, flags);
   XCHARSET_DO_AUTOLOAD (charset) = 0;
 }
@@ -2633,7 +2633,7 @@ init_charset_unicode_map (Lisp_Object charset, Lisp_Object map)
 	{
 	  int len;
 	  CHECK_TRUE_LIST (entry);
-	  len = XINT (Flength (entry));
+	  len = XFIXNUM (Flength (entry));
 	  if (XCHARSET_DIMENSION (charset) == 1)
 	    {
 	      if (len != 2)

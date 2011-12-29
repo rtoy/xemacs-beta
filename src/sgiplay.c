@@ -194,7 +194,7 @@ static int parse_snd_header (void*, long, AudioContext);
 static Lisp_Object
 close_sound_file (Lisp_Object closure)
 {
-  close (XINT (closure));
+  close (XFIXNUM (closure));
   return Qnil;
 }
 
@@ -214,7 +214,7 @@ play_sound_file (Extbyte *sound_file, int volume)
        file for us. */
     return;
 
-  record_unwind_protect (close_sound_file, make_int (input_fd));
+  record_unwind_protect (close_sound_file, make_fixnum (input_fd));
 
   while ((bytes_read = read (input_fd, buffer, CHUNKSIZE)) > 0)
     {
@@ -246,9 +246,9 @@ static Lisp_Object
 restore_audio_port (Lisp_Object closure)
 {
   Lisp_Object * contents = XVECTOR_DATA (closure);
-  saved_device_state[1] = XINT (contents[0]);
-  saved_device_state[3] = XINT (contents[1]);
-  saved_device_state[5] = XINT (contents[2]);
+  saved_device_state[1] = XFIXNUM (contents[0]);
+  saved_device_state[3] = XFIXNUM (contents[1]);
+  saved_device_state[5] = XFIXNUM (contents[2]);
   ALsetparams (AL_DEFAULT_DEVICE, saved_device_state, 6);
   return Qnil;
 }
@@ -302,9 +302,9 @@ audio_initialize (Binbyte *data, int length, int volume)
      its initial characteristics after exit */
   ALgetparams (desc.ac_device, saved_device_state,
 	       sizeof (saved_device_state) / sizeof (long));
-  audio_port_state[0] = make_int (saved_device_state[1]);
-  audio_port_state[1] = make_int (saved_device_state[3]);
-  audio_port_state[2] = make_int (saved_device_state[5]);
+  audio_port_state[0] = make_fixnum (saved_device_state[1]);
+  audio_port_state[1] = make_fixnum (saved_device_state[3]);
+  audio_port_state[2] = make_fixnum (saved_device_state[5]);
   record_unwind_protect (restore_audio_port,
 			 Fvector (3, &audio_port_state[0]));
 
@@ -525,7 +525,7 @@ set_channels (ALconfig config, unsigned int nchan)
 #endif /* HAVE_STEREO */
     default:
       report_sound_error ("Unsupported channel count",
-			  make_int (nchan));
+			  make_fixnum (nchan));
       return -1;
     }
   return 0;
@@ -561,7 +561,7 @@ set_output_format (ALconfig config, AudioFormat format)
 #endif
 #endif
     default:
-      report_sound_error ("Unsupported audio format", make_int (format));
+      report_sound_error ("Unsupported audio format", make_fixnum (format));
       return -1;
     }
   old_samplesize = ALgetwidth (config);

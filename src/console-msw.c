@@ -640,7 +640,7 @@ no effect.  */
 #undef FROB
     
     invalid_argument ("Unknown return value from MessageBox()",
-		      make_int (retval));
+		      make_fixnum (retval));
   }
 
   return Qnil;

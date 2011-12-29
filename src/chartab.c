@@ -1218,16 +1218,16 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
 			     range);
       outrange->type = CHARTAB_RANGE_ROW;
       outrange->charset = Fget_charset (elts[0]);
-      CHECK_INT (elts[1]);
-      outrange->row = XINT (elts[1]);
+      CHECK_FIXNUM (elts[1]);
+      outrange->row = XFIXNUM (elts[1]);
       if (XCHARSET_DIMENSION (outrange->charset) == 1)
 	sferror ("Charset in row vector must be multi-byte",
 		 outrange->charset);
       else
 	{
 	  check_integer_range
-            (elts[1], make_int (XCHARSET_OFFSET (outrange->charset, 0)),
-             make_int (XCHARSET_OFFSET (outrange->charset, 0) +
+            (elts[1], make_fixnum (XCHARSET_OFFSET (outrange->charset, 0)),
+             make_fixnum (XCHARSET_OFFSET (outrange->charset, 0) +
                        XCHARSET_CHARS (outrange->charset, 0) - 1));
 	}
     }
@@ -1358,7 +1358,7 @@ make_char_table (Lisp_Object type, int internal_p)
       /* Qgeneric not Qsyntax because a syntax table has a mirror table
 	 and we don't want infinite recursion */
       ct->mirror_table = Fmake_char_table (Qgeneric);
-      set_char_table_default (ct->mirror_table, make_int (Sword));
+      set_char_table_default (ct->mirror_table, make_fixnum (Sword));
       XCHAR_TABLE (ct->mirror_table)->mirror_table_p = 1;
       XCHAR_TABLE (ct->mirror_table)->mirror_table = obj;
     }
@@ -1480,7 +1480,7 @@ as CHAR-TABLE.  The values will not themselves be copied.
   if (!EQ (ct->mirror_table, Qnil))
     {
       ctnew->mirror_table = Fmake_char_table (Qgeneric);
-      set_char_table_default (ctnew->mirror_table, make_int (Sword));
+      set_char_table_default (ctnew->mirror_table, make_fixnum (Sword));
       XCHAR_TABLE (ctnew->mirror_table)->mirror_table = obj;
       XCHAR_TABLE (ctnew->mirror_table)->mirror_table_p = 1;
       XCHAR_TABLE (ctnew->mirror_table)->dirty = 1;
@@ -1543,16 +1543,16 @@ check_valid_char_table_value (Lisp_Object value, enum char_table_type type,
     {
     case CHAR_TABLE_TYPE_SYNTAX:
       if (!ERRB_EQ (errb, ERROR_ME))
-	return INTP (value) || (CONSP (value) && INTP (XCAR (value))
+	return FIXNUMP (value) || (CONSP (value) && FIXNUMP (XCAR (value))
 				&& CHAR_OR_CHAR_INTP (XCDR (value)));
       if (CONSP (value))
         {
 	  Lisp_Object cdr = XCDR (value);
-          CHECK_INT (XCAR (value));
+          CHECK_FIXNUM (XCAR (value));
 	  CHECK_CHAR_COERCE_INT (cdr);
          }
       else
-        CHECK_INT (value);
+        CHECK_FIXNUM (value);
       break;
 
 #ifdef MULE
@@ -2221,11 +2221,11 @@ use, and defaults to BUFFER's category table.
   int des;
   struct buffer *buf = decode_buffer (buffer, 0);
 
-  CHECK_INT (position);
+  CHECK_FIXNUM (position);
   CHECK_CATEGORY_DESIGNATOR (designator);
   des = XCHAR (designator);
   ctbl = check_category_table (category_table, buf->category_table);
-  ch = BUF_FETCH_CHAR (buf, XINT (position));
+  ch = BUF_FETCH_CHAR (buf, XFIXNUM (position));
   return check_char_in_category (ch, ctbl, des, 0) ? Qt : Qnil;
 }
 
@@ -2296,7 +2296,7 @@ BUFFER defaults to the current buffer if omitted.
   category_table = check_category_table (category_table, Qnil);
   buf->category_table = category_table;
   /* Indicate that this buffer now has a specified category table.  */
-  buf->local_var_flags |= XINT (buffer_local_flags.category_table);
+  buf->local_var_flags |= XFIXNUM (buffer_local_flags.category_table);
   return category_table;
 }
 

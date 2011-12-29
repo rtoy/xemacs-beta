@@ -196,9 +196,9 @@ static Lisp_Object
 gtk_color_instance_rgb_components (struct Lisp_Color_Instance *c)
 {
   GdkColor *color = COLOR_INSTANCE_GTK_COLOR (c);
-  return (list3 (make_int (color->red),
-		 make_int (color->green),
-		 make_int (color->blue)));
+  return (list3 (make_fixnum (color->red),
+		 make_fixnum (color->green),
+		 make_fixnum (color->blue)));
 }
 
 static int

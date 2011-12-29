@@ -442,7 +442,7 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
     case GTK_SCROLL_JUMP:
       inhibit_slider_size_change = 1;
       event_type = vertical ? Qscrollbar_vertical_drag : Qscrollbar_horizontal_drag;
-      event_data = Fcons (win, make_int ((int)adj->value));
+      event_data = Fcons (win, make_fixnum ((int)adj->value));
       break;
     default:
       ABORT();

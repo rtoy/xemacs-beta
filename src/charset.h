@@ -582,8 +582,8 @@ charset_codepoint_to_unicode (Lisp_Object charset, int c1, int c2,
   code = charset_codepoint_to_unicode_raw (charset, c1, c2);
   HANDLE_UNICODE_ERROR ("Can't convert charset codepoint to Unicode",
 			XCHARSET_DIMENSION (charset) == 2 ?
-			list3 (charset, make_int (c1), make_int (c2)) :
-			list2 (charset, make_int (c2)),
+			list3 (charset, make_fixnum (c1), make_fixnum (c2)) :
+			list2 (charset, make_fixnum (c2)),
 			code, charset, c1, c2, fail);
   ASSERT_VALID_UNICODE_CODEPOINT_OR_ERROR (code);
   return code;
@@ -634,7 +634,7 @@ filtered_unicode_to_charset_codepoint (int code,
     }
 #endif /* (not) MULE */
   HANDLE_CHARSET_CODEPOINT_ERROR
-    ("Can't convert Unicode codepoint to charset codepoint", make_int (code),
+    ("Can't convert Unicode codepoint to charset codepoint", make_fixnum (code),
      charset, c1, c2, fail);
   ASSERT_VALID_CHARSET_CODEPOINT_OR_ERROR (*charset, *c1, *c2);
 }

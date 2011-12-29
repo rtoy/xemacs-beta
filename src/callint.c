@@ -966,7 +966,7 @@ when reading the arguments.
        temporarily, convert it to an integer now.  */
     for (argnum = 0; argnum < argcount; argnum++)
       if (!NILP (varies[argnum]))
-	args[argnum] = make_int (marker_position (args[argnum]));
+	args[argnum] = make_fixnum (marker_position (args[argnum]));
 
     single_console_state ();
     specbind (Qcommand_debug_status, Qnil);
@@ -988,10 +988,10 @@ Its numeric meaning is what you would get from `(interactive "p")'.
   if (NILP (raw))
     return Qone;
   if (EQ (raw, Qminus))
-    return make_int (-1);
-  if (INTP (raw))
+    return make_fixnum (-1);
+  if (FIXNUMP (raw))
     return raw;
-  if (CONSP (raw) && INTP (XCAR (raw)))
+  if (CONSP (raw) && FIXNUMP (XCAR (raw)))
     return XCAR (raw);
 
   return Qone;
