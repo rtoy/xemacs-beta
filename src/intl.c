@@ -168,22 +168,14 @@ init_intl (void)
   /* This function cannot GC, because it explicitly prevents it. */
   if (initialized)
     {
-      int count = begin_gc_forbidden ();
-      Lisp_Object args[2];
-
-      specbind (Qinhibit_quit, Qt);
-      args[0] = Qreally_early_error_handler;
-      args[1] = intern ("init-locale-at-early-startup");
-      Fcall_with_condition_handler (2, args);
-
+      call_critical_lisp_code (NULL, intern ("init-locale-at-early-startup"),
+                               Qnil);
       /* Should be calling this here, but problems with
          `data-directory' and locating the files.  See comment in
          mule-cmds.el:`init-mule-at-startup'.
-
-      args[1] = intern ("init-unicode-at-early-startup");
-      Fcall_with_condition_handler (2, args);
+      call_critical_lisp_code (NULL, intern ("init-unicode-at-early-startup"),
+                               Qnil);
        */
-      unbind_to (count);
     }
 }
 
@@ -205,4 +197,8 @@ vars_of_intl (void)
 #ifdef MULE
   Fprovide (intern ("mule"));
 #endif /* MULE */
+
+#ifdef UNICODE_INTERNAL
+  Fprovide (intern ("unicode-internal"));
+#endif /* UNICODE_INTERNAL */
 }

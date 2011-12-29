@@ -19,7 +19,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
+#include "casetab.h"
 #include "console-msw.h"
 #include "hash.h"
 #include "profile.h"

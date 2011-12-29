@@ -1,6 +1,6 @@
 /* Random utility Lisp functions.
    Copyright (C) 1985, 86, 87, 93, 94, 95 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2010 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -39,6 +39,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "buffer.h"
 #include "bytecode.h"
+#include "casetab.h"
 #include "device.h"
 #include "events.h"
 #include "extents.h"
@@ -56,7 +57,7 @@ Lisp_Object Qstring_lessp, Qmerge, Qfill, Qreplace, QassocX, QrassocX;
 Lisp_Object Qposition, Qfind, QdeleteX, QremoveX, Qidentity, Qadjoin;
 Lisp_Object Qvector, Qarray, Qbit_vector, QsortX, Q_from_end, Q_initial_value;
 Lisp_Object Qmapconcat, QmapcarX, Qmapvector, Qmapcan, Qmapc, Qmap, Qmap_into;
-Lisp_Object Qsome, Qevery, Qmaplist, Qmapl, Qmapcon, Qreduce, Qsubstitute;
+Lisp_Object Qsome, Qevery, Qmaplist, Qmapl, Qmapcon, Qreduce;
 Lisp_Object Q_start1, Q_start2, Q_end1, Q_end2, Q_if_, Q_if_not, Q_stable;
 Lisp_Object Q_test_not, Q_count, Qnsubstitute, Qdelete_duplicates, Qmismatch;
 Lisp_Object Q_descend_structures;
@@ -1315,22 +1316,16 @@ If string STR1 is greater, the value is a positive number N;
 
 DEFUN ("string-lessp", Fstring_lessp, 2, 2, 0, /*
 Return t if first arg string is less than second in lexicographic order.
-Comparison is simply done on a character-by-character basis using the
-numeric value of a character. (Note that this may not produce
-particularly meaningful results under Mule if characters from
-different charsets are being compared.)
-
-Symbols are also allowed; their print names are used instead.
-
-Currently we don't do proper language-specific collation or handle
-multiple character sets.  This may be changed when Unicode support
-is implemented.
+Under old-Mule, comparison of chars within a charset is will-defined but
+comparison of chars from different charsets is produce well-defined
+results; however, ASCII, Control-1 and Latin-1 are guaranteed to compare in
+the expected fashion and will be below all other charsets.  Under
+Unicode-internal, comparison will happen according to the Unicode codepoint
+assigned to each character.
 */
        (string1, string2))
 {
   Lisp_Object p1, p2;
-  Charcount end, len2;
-  int i;
 
   if (SYMBOLP (string1))
     p1 = XSYMBOL (string1)->name;
@@ -1348,33 +1343,17 @@ is implemented.
       p2 = string2;
     }
 
-  end  = string_char_length (p1);
-  len2 = string_char_length (p2);
-  if (end > len2)
-    end = len2;
+  /* Since we've assigned Control-1 and Latin-1 the two lowest leading
+     bytes, the statement above about them and their ordering w.r.t.  other
+     charsets is guaranteed.  Also, UTF-8 preserves Unicode character order
+     when comparing byte-by-byte.  So need no to do an actual char-by-char
+     comparison. */
 
-  {
-    Ibyte *ptr1 = XSTRING_DATA (p1);
-    Ibyte *ptr2 = XSTRING_DATA (p2);
-
-    /* #### It is not really necessary to do this: We could compare
-       byte-by-byte and still get a reasonable comparison, since this
-       would compare characters with a charset in the same way.  With
-       a little rearrangement of the leading bytes, we could make most
-       inter-charset comparisons work out the same, too; even if some
-       don't, this is not a big deal because inter-charset comparisons
-       aren't really well-defined anyway. */
-    for (i = 0; i < end; i++)
-      {
-	if (itext_ichar (ptr1) != itext_ichar (ptr2))
-	  return itext_ichar (ptr1) < itext_ichar (ptr2) ? Qt : Qnil;
-	INC_IBYTEPTR (ptr1);
-	INC_IBYTEPTR (ptr2);
-      }
-  }
-  /* Can't do i < len2 because then comparison between "foo" and "foo^@"
-     won't work right in I18N2 case */
-  return end < len2 ? Qt : Qnil;
+  if (qxememcmp4 (XSTRING_DATA (p1), XSTRING_LENGTH (p1),
+		  XSTRING_DATA (p2), XSTRING_LENGTH (p2)) < 0)
+    return Qt;
+  else
+    return Qnil;
 }
 
 DEFUN ("string-modified-tick", Fstring_modified_tick, 1, 1, 0, /*
@@ -1406,7 +1385,7 @@ bump_string_modiff (Lisp_Object str)
   if (CONSP (*ptr) && INTP (XCAR (*ptr)))
     XCAR (*ptr) = make_int (1+XINT (XCAR (*ptr)));
   else
-    *ptr = Fcons (make_int (1), *ptr);
+    *ptr = Fcons (Qone, *ptr);
 }
 
 
@@ -11705,7 +11684,6 @@ syms_of_fns (void)
   DEFSYMBOL (Qmapcon);
   DEFSYMBOL (Qnsubstitute);
   DEFSYMBOL (Qdelete_duplicates);
-  DEFSYMBOL (Qsubstitute);
   DEFSYMBOL (Qmismatch);
   DEFSYMBOL (Qintersection);
   DEFSYMBOL (Qnintersection);
@@ -11730,7 +11708,7 @@ syms_of_fns (void)
 
   DEFSYMBOL (Qyes_or_no_p);
 
-  DEFERROR_STANDARD (Qbase64_conversion_error, Qconversion_error);
+  DEFERROR_STANDARD (Qbase64_conversion_error, Qtext_conversion_error);
 
   DEFSUBR (Fidentity);
   DEFSUBR (Frandom);

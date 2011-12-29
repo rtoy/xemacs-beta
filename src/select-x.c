@@ -1,6 +1,6 @@
 /* X Selection processing for XEmacs
    Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 2001, 2002, 2010 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -322,11 +322,10 @@ hack_motif_clipboard_selection (Atom selection_atom,
 		continue;
 	      }
 
-	    if ((*ptr) == LEADING_BYTE_LATIN_ISO8859_1 ||
-		(*ptr) == LEADING_BYTE_CONTROL_1)
+	    if (itext_ichar (ptr) < 256)
 	      {
 		chartypes = LATIN_1;
-		ptr += 2;
+		INC_IBYTEPTR (ptr);
 		continue;
 	      }
 
@@ -1421,11 +1420,10 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
 	  continue;
 	}
 
-      if ((*ptr) == LEADING_BYTE_LATIN_ISO8859_1 ||
-	  (*ptr) == LEADING_BYTE_CONTROL_1)
+      if (itext_ichar (ptr) < 256)
 	{
 	  chartypes = LATIN_1;
-	  ptr += 2;
+	  INC_IBYTEPTR (ptr);
 	  continue;
 	}
 

@@ -464,7 +464,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
       if (! (host_info_ptr == 0 && h_errno == TRY_AGAIN))
 #endif
 	break;
-      Fsleep_for (make_int (1));
+      Fsleep_for (Qone);
     }
   if (host_info_ptr)
     {
@@ -1546,8 +1546,8 @@ unix_send_process (Lisp_Object proc, struct lstream *lstream)
       /* Close the file lstream so we don't attempt to write to it further */
       /* #### There is controversy over whether this might cause fd leakage */
       /*      my tests say no. -slb */
-      XLSTREAM (p->pipe_outstream)->flags &= ~LSTREAM_FL_IS_OPEN;
-      XLSTREAM (p->coding_outstream)->flags &= ~LSTREAM_FL_IS_OPEN;
+      XLSTREAM (p->pipe_outstream)->flags &= ~LSTR_IS_OPEN;
+      XLSTREAM (p->coding_outstream)->flags &= ~LSTR_IS_OPEN;
       p->status_symbol = Qexit;
       p->exit_code = 256; /* #### SIGPIPE ??? */
       p->core_dumped = 0;

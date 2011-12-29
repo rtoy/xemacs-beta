@@ -1,3 +1,4 @@
+;; mule-tests.el --- Test of international support     -*- coding: utf-8 -*-
 ;; Copyright (C) 1999 Free Software Foundation, Inc.
 ;; Copyright (C) 2010 Ben Wing.
 
@@ -117,7 +118,7 @@ This is a naive implementation in Lisp.  "
 ;; Fixed 2007-06-22 <18043.2793.611745.734215@parhasard.net>.
 ;;----------------------------------------------------------------
 
-(let ((test-file-name 
+(let ((test-file-name
        (make-temp-file (expand-file-name "tXfXsKc" (temp-directory))))
       revert-buffer-function
       kill-buffer-hook)		; paranoia
@@ -166,6 +167,22 @@ This is a naive implementation in Lisp.  "
 ;;-----------------------------------------------------------------
 
 (when (featurep 'mule)
+
+  ;;-----------------------------------------------------------------
+  ;; Some tests of the multibyte coding system
+  ;;-----------------------------------------------------------------
+
+  (let ((cap-y-umlaut (make-char 'latin-iso8859-15 190))
+	(cap-y-umlaut2 (make-char 'latin-iso8859-16 190)))
+    ;; Test that the `multibyte' coding system unifies characters by
+    ;; Unicode codepoint.
+    (Assert (equal (encode-coding-string cap-y-umlaut 'iso-8859-15) "¾"))
+    (Assert (equal (encode-coding-string cap-y-umlaut 'iso-8859-16) "¾"))
+    (Assert (equal (encode-coding-string cap-y-umlaut 'iso-8859-1) "?"))
+    (Assert (equal (encode-coding-string cap-y-umlaut2 'iso-8859-15) "¾"))
+    (Assert (equal (encode-coding-string cap-y-umlaut2 'iso-8859-16) "¾"))
+    (Assert (equal (encode-coding-string cap-y-umlaut2 'iso-8859-1) "?")))
+
   ;;---------------------------------------------------------------
   ;; Test fillarray
   ;;---------------------------------------------------------------
@@ -313,30 +330,34 @@ This is a naive implementation in Lisp.  "
   (Assert (not (coding-system-alias-p 'nested-mule-tests-alias-dos)))
 
   ;;---------------------------------------------------------------
-  ;; Test strings waxing and waning across the 8k BIG_STRING limit (see alloc.c)
+  ;; Test strings waxing and waning across the 8k BIG_STRING limit (see
+  ;; alloc.c)
   ;;---------------------------------------------------------------
   (defun charset-char-string (charset)
-    (let (lo hi string n (gc-cons-threshold most-positive-fixnum))
-      (if (= (charset-chars charset) 94)
-	  (setq lo 33 hi 126)
-	(setq lo 32 hi 127))
+    (let ((gc-cons-threshold most-positive-fixnum)
+	  string n
+	  (chars (charset-chars charset))
+	  (offset (charset-offset charset)))
       (if (= (charset-dimension charset) 1)
 	  (progn
-	    (setq string (make-string (1+ (- hi lo)) ??))
+	    (setq string (make-string (charset-chars charset) ??))
 	    (setq n 0)
-	    (loop for j from lo to hi do
+	    (loop for j from offset to (+ offset chars -1)
+	      for ch = (make-char charset j) do
 	      (progn
-		(aset string n (make-char charset j))
+		(when ch (aset string n ch))
 		(incf n)))
 	    (garbage-collect)
 	    string)
-	(progn
-	  (setq string (make-string (* (1+ (- hi lo)) (1+ (- hi lo))) ??))
+	(let ((ch1 (first chars)) (ch2 (second chars))
+	      (off1 (first offset)) (off2 (second offset)))
+	  (setq string (make-string (* ch1 ch2) ??))
 	  (setq n 0)
-	  (loop for j from lo to hi do
-	    (loop for k from lo to hi do
+	  (loop for j from off1 to (+ off1 ch1 -1) do
+	    (loop for k from off2 to (+ off2 ch2 -1)
+	      for ch = (make-char charset j k) do
 	      (progn
-		(aset string n (make-char charset j k))
+		(when ch (aset string n ch))
 		(incf n))))
 	  (garbage-collect)
 	  string))))
@@ -345,33 +366,28 @@ This is a naive implementation in Lisp.  "
   (Assert (charset-char-string 'japanese-jisx0208))
   (aset (make-string 9003 ??) 1 (make-char 'latin-iso8859-1 77))
 
-  (let ((greek-string (charset-char-string 'greek-iso8859-7))
-	(string (make-string (* 96 60) ??)))
-    (loop for j from 0 below (length string) do
-      (aset string j (aref greek-string (mod j 96))))
-    (loop for k in '(0 1 58 59) do
-      (Assert (equal (substring string (* 96 k) (* 96 (1+ k))) greek-string))))
+  (loop for (charset ch) in `((greek-iso8859-7 ??)
+			      (ascii ,(make-char 'greek-iso8859-7 57)))
+    do
 
-  (let ((greek-string (charset-char-string 'greek-iso8859-7))
-	(string (make-string (* 96 60) ??)))
-   (loop for j from (1- (length string)) downto 0 do
-     (aset string j (aref greek-string (mod j 96))))
-   (loop for k in '(0 1 58 59) do
-     (Assert (equal (substring string (* 96 k) (* 96 (1+ k))) greek-string))))
+    (let* ((charset-string (charset-char-string charset))
+	   (len (length charset-string))
+	   (string (make-string (* len 60) ch)))
+      (loop for j from 0 below (length string) do
+	(aset string j (aref charset-string (mod j len))))
+      (loop for k in '(0 1 58 59) do
+	(Assert (equal (substring string (* len k) (* len (1+ k)))
+		       charset-string))))
 
-  (let ((ascii-string (charset-char-string 'ascii))
-	(string (make-string (* 94 60) (make-char 'greek-iso8859-7 57))))
-   (loop for j from 0 below (length string) do
-      (aset string j (aref ascii-string (mod j 94))))
-    (loop for k in '(0 1 58 59) do
-      (Assert (equal (substring string (* 94 k) (+ 94 (* 94 k))) ascii-string))))
-
-  (let ((ascii-string (charset-char-string 'ascii))
-	(string (make-string (* 94 60) (make-char 'greek-iso8859-7 57))))
-    (loop for j from (1- (length string)) downto 0 do
-      (aset string j (aref ascii-string (mod j 94))))
-    (loop for k in '(0 1 58 59) do
-      (Assert (equal (substring string (* 94 k) (* 94 (1+ k))) ascii-string))))
+    (let* ((charset-string (charset-char-string charset))
+	   (len (length charset-string))
+	   (string (make-string (* len 60) ch)))
+      (loop for j from (1- (length string)) downto 0 do
+	(aset string j (aref charset-string (mod j len))))
+      (loop for k in '(0 1 58 59) do
+	(Assert (equal (substring string (* len k) (* len (1+ k)))
+		       charset-string))))
+    )
 
   ;;---------------------------------------------------------------
   ;; Test string character conversion
@@ -448,18 +464,34 @@ This is a naive implementation in Lisp.  "
   ;;---------------------------------------------------------------
   ;; Test Unicode-related functions
   ;;---------------------------------------------------------------
-  (let* ((scaron (make-char 'latin-iso8859-2 57)))
+  (let* ((scaron '(latin-iso8859-2 185)))
     ;; Used to try #x0000, but you can't change ASCII or Latin-1
     (loop
+      ;; We have to be VERY careful here not to mess up the Unicode
+      ;; conversion tables.  The problem is that the code internally has
+      ;; tables to convert in both directions; however, the two directions
+      ;; are not equivalent in function, since a charset codepoint maps to
+      ;; only one Unicode code, but a single Unicode code can map to
+      ;; multiple charset codepoints.  Because the tables go in both
+      ;; directions, we have to put both directions back when undoing a
+      ;; single change.  Currently there is no way to put a null conversion
+      ;; back, but that isn't a problem because the C code is able to
+      ;; handle this case by itself.
+      with initial-unicode = (apply 'charset-codepoint-to-unicode scaron)
       for code in '(#x0100 #x2222 #x4444 #xffff)
-      with initial-unicode = (char-to-unicode scaron)
+      for initial-codepoint = (unicode-to-charset-codepoint code
+							    '(latin-iso8859-2))
       do
       (progn
-	(set-unicode-conversion scaron code)
-	(Assert (eq code (char-to-unicode scaron)))
-	(Assert (eq scaron (unicode-to-char code '(latin-iso8859-2)))))
-      finally (set-unicode-conversion scaron initial-unicode))
-    (Check-Error args-out-of-range (set-unicode-conversion scaron -10000)))
+	(apply 'set-unicode-conversion code scaron)
+	(Assert (eq code (apply 'charset-codepoint-to-unicode scaron)))
+	(Assert (equal scaron (unicode-to-charset-codepoint
+			       code '(latin-iso8859-2))))
+	(when initial-codepoint
+	  (apply 'set-unicode-conversion code initial-codepoint)))
+      finally (apply 'set-unicode-conversion initial-unicode scaron))
+    (Check-Error 'invalid-argument (apply 'set-unicode-conversion -10000
+					  scaron)))
 
   (dolist (utf-8-char 
 	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK
@@ -484,9 +516,10 @@ This is a naive implementation in Lisp.  "
 		      (encode-char xemacs-character 'ucs))
 		     utf-8-char))
 
-      ;; Check that, if this character has been JIT-allocated, it is encoded
+      ;; Check that, if this character has no corresponding ISO-2022 charset
+      ;; (under old-Mule, this means it's been JIT-allocated), it is encoded
       ;; in escape-quoted using the corresponding UTF-8 escape. 
-      (when (charset-property xemacs-charset 'encode-as-utf-8)
+      (when (and xemacs-charset (not (charset-iso-2022-p xemacs-charset)))
 	(Assert (equal (concat "\033%G" utf-8-char)
 		       (encode-coding-string xemacs-character 'escape-quoted)))
 	(Assert (equal (concat "\033%G" utf-8-char)
@@ -504,7 +537,43 @@ This is a naive implementation in Lisp.  "
                     (decode-char 'ucs code-point) 'utf-16-le)
                    utf-16-little-endian)))
 
-         
+  ;; Create a 256x256 charset and test that we can assign Unicode codepoints
+  ;; to all charset codepoints, and the conversion works in both directions.
+  ;; Then remove all conversions and test that conversion in both directions
+  ;; for all codepoints returns nil.  Among other things, this tests the
+  ;; C code that handles charset codepoints equal to BADVAL_FROM_TABLE, and
+  ;; tests that removal of codepoints works correctly.
+  (when (not (find-charset 'mule-test-unicode))
+    ;; The second time around (testing byte-compiled code), the charset
+    ;; will already exist, and we can't create it again.
+    (make-charset 'mule-test-unicode "Test Unicode"
+		  '(dimension 2 chars 256 offset 0)))
+  (let ((charset 'mule-test-unicode))
+    (flet ((codepoint-to-unicode (c1 c2)
+	     (+ 65536 (+ (* c1 256) c2))))
+      (loop for c1 from 0 to 255 do
+	(loop for c2 from 0 to 255 do
+	  (set-unicode-conversion (codepoint-to-unicode c1 c2) charset c1 c2)))
+      ;; #### We used to loop over all 256 rows; this was reasonably fast
+      ;; when called noninteractively, but horrendously show when called
+      ;; interactively.  I don't know why.
+      (loop for c1 in '(0 1 254 255) do
+	(loop for c2 from 0 to 255 do
+	  (Assert (eq (charset-codepoint-to-unicode charset c1 c2)
+		     (codepoint-to-unicode c1 c2)))
+	  (Assert (equal (unicode-to-charset-codepoint
+			  (codepoint-to-unicode c1 c2) (list charset))
+			 `(,charset ,c1 ,c2)))))
+      (loop for c1 from 0 to 255 do
+	(loop for c2 from 0 to 255 do
+	  (set-unicode-conversion nil charset c1 c2)))
+      (loop for c1 in '(0 1 254 255) do
+	(loop for c2 from 0 to 255 do
+	  (Assert (eq nil (charset-codepoint-to-unicode charset c1 c2)))
+	  (Assert (equal (unicode-to-charset-codepoint
+			  (codepoint-to-unicode c1 c2) (list charset))
+			 nil))))))
+
   ;;---------------------------------------------------------------
   ;; Regression test for a couple of CCL-related bugs. 
   ;;---------------------------------------------------------------
@@ -513,26 +582,26 @@ This is a naive implementation in Lisp.  "
     (define-ccl-program ccl-write-two-control-1-chars 
       `(1 
 	((r0 = ,(charset-id 'control-1))
-	 (r1 = 0) 
+	 (r1 = 128) 
 	 (write-multibyte-character r0 r1) 
-	 (r1 = 31) 
+	 (r1 = 159) 
 	 (write-multibyte-character r0 r1))) 
       "CCL program that writes two control-1 multibyte characters.") 
  
     (Assert (equal 
 	     (ccl-execute-on-string 'ccl-write-two-control-1-chars  
 				    ccl-vector "") 
-	     (format "%c%c" (make-char 'control-1 0) 
-		     (make-char 'control-1 31))))
+	     (format "%c%c" (make-char 'control-1 128) 
+		     (make-char 'control-1 159))))
 
     (define-ccl-program ccl-unicode-two-control-1-chars 
       `(1 
 	((r0 = ,(charset-id 'control-1))
-	 (r1 = 31) 
+	 (r1 = 159) 
 	 (mule-to-unicode r0 r1) 
 	 (r4 = r0) 
 	 (r3 = ,(charset-id 'control-1))
-	 (r2 = 0) 
+	 (r2 = 128) 
 	 (mule-to-unicode r3 r2))) 
       "CCL program that writes two control-1 UCS code points in r3 and r4")
 
@@ -543,9 +612,9 @@ This is a naive implementation in Lisp.  "
     (ccl-execute-on-string 'ccl-unicode-two-control-1-chars ccl-vector "") 
  
     (Assert (and (eq (aref ccl-vector 3)  
-                   (encode-char (make-char 'control-1 0) 'ucs)) 
+                   (encode-char (make-char 'control-1 128) 'ucs)) 
                (eq (aref ccl-vector 4)  
-                   (encode-char (make-char 'control-1 31) 'ucs)))))
+                   (encode-char (make-char 'control-1 159) 'ucs)))))
 
 
   ;; Test the 8 bit fixed-width coding systems for round-trip
@@ -556,7 +625,11 @@ This is a naive implementation in Lisp.  "
 				      (loop for i from ?\x00 to ?\xFF
 					collect i))
     do
-    (when (and (eq 'fixed-width (coding-system-type coding-system))
+    (when (and (eq 'multibyte (coding-system-type coding-system))
+	       ;; Should have only dimension-1 charsets.
+	       (every #'(lambda (x)
+			  (= 1 (charset-dimension x)))
+		      (coding-system-property coding-system 'charsets))
 	       ;; Don't check the coding systems with odd line endings
 	       ;; (maybe we should):
 	       (eq 'lf (coding-system-eol-type coding-system)))
@@ -631,7 +704,7 @@ This is a naive implementation in Lisp.  "
        (Assert (equal language-input-method current-input-method))))
 
     (dolist (charset (get-language-info language 'charset))
-      (Assert (charsetp (find-charset charset))))
+      (Assert (charset-or-charset-tag-p (find-charset charset))))
     (dolist (coding-system (get-language-info language 'coding-system))
       (Assert (coding-system-p (find-coding-system coding-system))))
     (dolist (coding-system

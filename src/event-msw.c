@@ -325,7 +325,10 @@ slurp_thread (LPVOID vparam)
 static Lisp_Object
 make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
 {
-  Lstream *lstr = Lstream_new (lstream_ntpipe_slurp, "r");
+  Lstream *lstr = Lstream_new (lstream_ntpipe_slurp,
+			       LSTR_READ |
+			       LSTR_CLOSE_AT_DISKSAVE);
+
   struct ntpipe_slurp_stream *s = NTPIPE_SLURP_STREAM_DATA (lstr);
   DWORD thread_id_unused;
   HANDLE hthread;
@@ -366,7 +369,6 @@ make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
   ResumeThread (hthread);
   CloseHandle (hthread);
 
-  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   return wrap_lstream (lstr);
 }
 
@@ -410,7 +412,8 @@ ntpipe_slurp_reader (Lstream *stream, unsigned char *data,
       if (wait_result == WAIT_TIMEOUT)
 	{
 	  errno = EAGAIN;
-	  return -1;
+	  stream->error_occurred_p = 1;
+	  return 0;
 	}
     }
 
@@ -424,7 +427,10 @@ ntpipe_slurp_reader (Lstream *stream, unsigned char *data,
   if (s->eof_p)
     return 0;
   if (s->error_p || s->die_p)
-    return -1;
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
 
   /* Ok, there were no error neither eof - we've got a byte from the
      pipe */
@@ -553,7 +559,9 @@ shove_thread (LPVOID vparam)
 static Lisp_Object
 make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
 {
-  Lstream *lstr = Lstream_new (lstream_ntpipe_shove, "w");
+  Lstream *lstr = Lstream_new (lstream_ntpipe_shove,
+			       LSTR_WRITE |
+			       LSTR_CLOSE_AT_DISKSAVE);
   struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA (lstr);
   DWORD thread_id_unused;
 
@@ -587,7 +595,6 @@ make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
   /* Now let it go */
   ResumeThread (s->hthread);
 
-  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   return wrap_lstream (lstr);
 }
 
@@ -602,16 +609,19 @@ static Bytecount
 ntpipe_shove_writer (Lstream *stream, const unsigned char *data,
 		     Bytecount size)
 {
-  struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA(stream);
+  struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA (stream);
 
   if (s->error_p)
-    return -1;
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
 
   s->blocking_p = !s->idle_p;
   if (s->blocking_p)
     return 0;
 
-  if (size>MAX_SHOVE_BUFFER_SIZE)
+  if (size > MAX_SHOVE_BUFFER_SIZE)
     return 0;
 
   memcpy (s->buffer, data, size);
@@ -726,7 +736,8 @@ winsock_reader (Lstream *stream, unsigned char *data, Bytecount size)
       if (WaitForSingleObject (str->ov.hEvent, 0) == WAIT_TIMEOUT)
 	{
 	  errno = EAGAIN;
-	  return -1;
+	  stream->error_occurred_p = 1;
+	  return 0;
 	}
       else
 	{
@@ -747,7 +758,10 @@ winsock_reader (Lstream *stream, unsigned char *data, Bytecount size)
   if (str->eof_p)
     return 0;
   if (str->error_p)
-    return -1;
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
 
   /* Return as much of buffer as we have */
   size = min (size, (Bytecount) (str->bufsize - str->charbpos));
@@ -772,7 +786,8 @@ winsock_writer (Lstream *stream, const unsigned char *data,
       if (WaitForSingleObject (str->ov.hEvent, 0) == WAIT_TIMEOUT)
 	{
 	  str->blocking_p = 1;
-	  return -1;
+	  stream->error_occurred_p = 1;
+	  return 0;
 	}
       else
 	{
@@ -787,7 +802,10 @@ winsock_writer (Lstream *stream, const unsigned char *data,
   str->blocking_p = 0;
 
   if (str->error_p)
-    return -1;
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
 
   if (size == 0)
     return 0;
@@ -811,7 +829,13 @@ winsock_writer (Lstream *stream, const unsigned char *data,
   else
     str->error_p = 1;
 
-  return str->error_p ? -1 : size;
+  if (str->error_p)
+    {
+      stream->error_occurred_p = 1;
+      return 0;
+    }
+
+  return size;
 }
 
 static int
@@ -819,7 +843,7 @@ winsock_closer (Lstream *lstr)
 {
   struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
 
-  if (lstr->flags & LSTREAM_FL_READ)
+  if (lstr->flags & LSTR_READ)
     shutdown (str->s, 0);
   else
     shutdown (str->s, 1);
@@ -846,9 +870,10 @@ winsock_was_blocked_p (Lstream *stream)
 }
 
 static Lisp_Object
-make_winsock_stream_1 (SOCKET s, LPARAM param, const char *mode)
+make_winsock_stream_1 (SOCKET s, LPARAM param, int flags)
 {
-  Lstream *lstr = Lstream_new (lstream_winsock, mode);
+  Lstream *lstr =
+    Lstream_new (lstream_winsock, flags | LSTR_CLOSE_AT_DISKSAVE);
   struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
 
   xzero (*str);
@@ -857,26 +882,25 @@ make_winsock_stream_1 (SOCKET s, LPARAM param, const char *mode)
 
   str->ov.hEvent = qxeCreateEvent (NULL, TRUE, FALSE, NULL);
 
-  if (lstr->flags & LSTREAM_FL_READ)
+  if (lstr->flags & LSTR_READ)
     {
       str->buffer = xmalloc (WINSOCK_READ_BUFFER_SIZE);
       winsock_initiate_read (str);
     }
 
-  lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   return wrap_lstream (lstr);
 }
 
 static Lisp_Object
 make_winsock_input_stream (SOCKET s, LPARAM param)
 {
-  return make_winsock_stream_1 (s, param, "r");
+  return make_winsock_stream_1 (s, param, LSTR_READ);
 }
 
 static Lisp_Object
 make_winsock_output_stream (SOCKET s, LPARAM param)
 {
-  return make_winsock_stream_1 (s, param, "w");
+  return make_winsock_stream_1 (s, param, LSTR_WRITE);
 }
 
 static HANDLE

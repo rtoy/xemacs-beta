@@ -301,12 +301,6 @@ define pobj
       printf "Char: %d\n", $val
     end
   else
-  if $lrecord_type == lrecord_type_string
-    pptype Lisp_String
-  else
-  if $lrecord_type == lrecord_type_cons
-    pptype Lisp_Cons
-  else
   if $lrecord_type == lrecord_type_symbol
     pptype Lisp_Symbol
     printf "Symbol name: %s\n", ((Lisp_String *)$type_ptr->name)->data_
@@ -315,6 +309,20 @@ define pobj
     pptype Lisp_Vector
     printf "Vector of length %d\n", $type_ptr->size
     ##print *($type_ptr->data) @ $type_ptr->size
+  if $lrecord_type == lrecord_type_symbol_value_forward
+    pstructtype symbol_value_forward
+  else
+  if $lrecord_type == lrecord_type_symbol_value_varalias
+    pstructtype symbol_value_varalias
+  else
+  if $lrecord_type == lrecord_type_symbol_value_lisp_magic
+    pstructtype symbol_value_lisp_magic
+  else
+  if $lrecord_type == lrecord_type_symbol_value_buffer_local
+    pptype Lisp_Bigfloat
+  else
+  if $lrecord_type == lrecord_type_bignum
+    pptype Lisp_Bignum
   else
   if $lrecord_type == lrecord_type_bit_vector
     pptype Lisp_Bit_Vector
@@ -322,11 +330,14 @@ define pobj
   if $lrecord_type == lrecord_type_buffer
     pstructtype buffer
   else
+  if $lrecord_type == lrecord_type_case_table
+    pptype Lisp_Case_Table
+  else
+  if $lrecord_type == lrecord_type_char_subtable
+    pptype Lisp_Char_Subtable
+  else
   if $lrecord_type == lrecord_type_char_table
     pptype Lisp_Char_Table
-  else
-  if $lrecord_type == lrecord_type_char_table_entry
-    pptype Lisp_Char_Table_Entry
   else
   if $lrecord_type == lrecord_type_charset
     pptype Lisp_Charset
@@ -338,10 +349,13 @@ define pobj
     pptype Lisp_Color_Instance
   else
   if $lrecord_type == lrecord_type_command_builder
-    pptype command_builder
+    pstructtype command_builder
   else
   if $lrecord_type == lrecord_type_compiled_function
     pptype Lisp_Compiled_Function
+  else
+  if $lrecord_type == lrecord_type_cons
+    pptype Lisp_Cons
   else
   if $lrecord_type == lrecord_type_console
     pstructtype console
@@ -349,8 +363,26 @@ define pobj
   if $lrecord_type == lrecord_type_database
     pptype Lisp_Database
   else
+  if $lrecord_type == lrecord_type_detection_state
+    pstructtype detection_state
+  else
   if $lrecord_type == lrecord_type_device
     pstructtype device
+  else
+  if $lrecord_type == lrecord_type_devmode
+    pptype Lisp_Devmode
+  else
+  if $lrecord_type == lrecord_type_emacs_ffi
+    pptype emacs_ffi_data
+  else
+  if $lrecord_type == lrecord_type_emacs_gtk_boxed
+    pptype emacs_gtk_boxed_data
+  else
+  if $lrecord_type == lrecord_type_emacs_gtk_object
+    pptype emacs_gtk_object_data
+  else
+  if $lrecord_type == lrecord_type_ephemeron
+    pstructtype ephemeron
   else
   if $lrecord_type == lrecord_type_event
     pptype Lisp_Event
@@ -366,6 +398,12 @@ define pobj
   else
   if $lrecord_type == lrecord_type_face
     pptype Lisp_Face
+  else
+  if $lrecord_type == lrecord_type_fc_config
+    pstructtype fc_config
+  else
+  if $lrecord_type == lrecord_type_fc_pattern
+    pstructtype fc_pattern
   else
   if $lrecord_type == lrecord_type_float
     pptype Lisp_Float
@@ -403,11 +441,26 @@ define pobj
   if $lrecord_type == lrecord_type_marker
     pptype Lisp_Marker
   else
+  if $lrecord_type == lrecord_type_mswindows_dialog_id
+    pstructtype mswindows_dialog_id
+  else
+  if $lrecord_type == lrecord_type_multiple_value
+    pptype multiple_value
+  else
   if $lrecord_type == lrecord_type_opaque
     pptype Lisp_Opaque
   else
   if $lrecord_type == lrecord_type_opaque_ptr
     pptype Lisp_Opaque_Ptr
+  else
+  if $lrecord_type == lrecord_type_pgconn
+    pptype Lisp_PGconn
+  else
+  if $lrecord_type == lrecord_type_pgresult
+    pptype Lisp_PGresult
+  else
+  if $lrecord_type == lrecord_type_precedence_array
+    pstructtype precedence_array
   else
   if $lrecord_type == lrecord_type_process
     pptype Lisp_Process
@@ -415,23 +468,20 @@ define pobj
   if $lrecord_type == lrecord_type_range_table
     pptype Lisp_Range_Table
   else
+  if $lrecord_type == lrecord_type_ratio
+    pptype Lisp_Ratio
+  else
+  if $lrecord_type == lrecord_type_scrollbar_instance
+    pstructtype scrollbar_instance
+  else
   if $lrecord_type == lrecord_type_specifier
     pptype Lisp_Specifier
   else
+  if $lrecord_type == lrecord_type_string
+    pptype Lisp_String
+  else
   if $lrecord_type == lrecord_type_subr
     pptype Lisp_Subr
-  else
-  if $lrecord_type == lrecord_type_symbol_value_buffer_local
-    pstructtype symbol_value_buffer_local
-  else
-  if $lrecord_type == lrecord_type_symbol_value_forward
-    pstructtype symbol_value_forward
-  else
-  if $lrecord_type == lrecord_type_symbol_value_lisp_magic
-    pstructtype symbol_value_lisp_magic
-  else
-  if $lrecord_type == lrecord_type_symbol_value_varalias
-    pstructtype symbol_value_varalias
   else
   if $lrecord_type == lrecord_type_timeout
     pptype Lisp_Timeout
@@ -445,23 +495,132 @@ define pobj
   if $lrecord_type == lrecord_type_tooltalk_pattern
     pptype Lisp_Tooltalk_Pattern
   else
+  if $lrecord_type == lrecord_type_weak_box
+    pstructtype weak_box
+  else
   if $lrecord_type == lrecord_type_weak_list
     pstructtype weak_list
   else
   if $lrecord_type == lrecord_type_window
     pstructtype window
   else
-  if $lrecord_type == lrecord_type_fc_pattern
-    pstructtype fc_pattern
+  if $lrecord_type == lrecord_type_window_mirror
+    pstructtype window_mirror
   else
-  if $lrecord_type == lrecord_type_fc_config
-    pstructtype fc_config
+  if $lrecord_type == lrecord_type_buffer_text
+    pptype Lisp_Buffer_Text
+  else
+  if $lrecord_type == lrecord_type_compiled_function_args
+    pptype Lisp_Compiled_Function_Args
+  else
+  if $lrecord_type == lrecord_type_dynarr
+    pptype Dynarr
+  else
+  if $lrecord_type == lrecord_type_expose_ignore
+    pstructtype expose_ignore
+  else
+  if $lrecord_type == lrecord_type_extent_list
+    pstructtype extent_list
+  else
+  if $lrecord_type == lrecord_type_extent_list_marker
+    pstructtype extent_list_marker
+  else
+  if $lrecord_type == lrecord_type_face_cachel
+    pptype Lisp_Face_Cachel
+  else
+  if $lrecord_type == lrecord_type_face_cachel_dynarr
+    pptype face_cachel_dynarr
+  else
+  if $lrecord_type == lrecord_type_gap_array
+    pstructtype gap_array
+  else
+  if $lrecord_type == lrecord_type_gap_array_marker
+    pstructtype gap_array_marker
+  else
+  if $lrecord_type == lrecord_type_glyph_cachel
+    pptype Lisp_Glyph_Cachel
+  else
+  if $lrecord_type == lrecord_type_glyph_cachel_dynarr
+    pptype glyph_cachel_dynarr
+  else
+  if $lrecord_type == lrecord_type_gtk_device
+    pptype Lisp_Gtk_Device
+  else
+  if $lrecord_type == lrecord_type_gtk_frame
+    pptype Lisp_Gtk_Frame
+  else
+  if $lrecord_type == lrecord_type_hash_table_entry
+    pptype Lisp_Hash_Table_Entry
+  else
+  if $lrecord_type == lrecord_type_msprinter_device
+    pptype Lisp_Msprinter_Device
+  else
+  if $lrecord_type == lrecord_type_mswindows_device
+    pptype Lisp_Mswindows_Device
+  else
+  if $lrecord_type == lrecord_type_mswindows_frame
+    pptype Lisp_Mswindows_Frame
+  else
+  if $lrecord_type == lrecord_type_specifier_caching
+    pstructtype specifier_caching
+  else
+  if $lrecord_type == lrecord_type_stack_of_extents
+    pstructtype stack_of_extents
+  else
+  if $lrecord_type == lrecord_type_stream_console
+    pptype Lisp_Stream_Console
+  else
+  if $lrecord_type == lrecord_type_string_direct_data
+    pptype Lisp_String_Direct_Data
+  else
+  if $lrecord_type == lrecord_type_string_indirect_data
+    pptype Lisp_String_Indirect_Data
+  else
+  if $lrecord_type == lrecord_type_syntax_cache
+    pptype Lisp_Syntax_Cache
+  else
+  if $lrecord_type == lrecord_type_tty_color_instance_data
+    pstructtype tty_color_instance_data
+  else
+  if $lrecord_type == lrecord_type_tty_console
+    pptype Lisp_Tty_Console
+  else
+  if $lrecord_type == lrecord_type_tty_device
+    pptype Lisp_Tty_Device
+  else
+  if $lrecord_type == lrecord_type_tty_font_instance_data
+    pstructtype tty_font_instance_data
+  else
+  if $lrecord_type == lrecord_type_x_device
+    pptype Lisp_X_Device
+  else
+  if $lrecord_type == lrecord_type_x_frame
+    pptype Lisp_X_Frame
   else
     echo Unknown Lisp Object type\n
     print $arg0
   ## Barf, gag, retch
   end
-  end 
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
   end
   end
   end
@@ -496,7 +655,35 @@ define pobj
   end
   end
   end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
   ## Are we having fun yet??
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
   end
   end
   end

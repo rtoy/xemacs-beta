@@ -53,6 +53,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "events.h"
 #include "extents-impl.h"
 #include "faces.h"
+#include "file-coding.h"
 #include "frame-impl.h"
 #include "glyphs.h"
 #include "gui.h"
@@ -65,6 +66,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "specifier.h"
 #include "symeval.h"
 #include "syntax.h"
+#include "unicode.h"
 #include "window.h"
 
 /* If we demand !defined (HAVE_SHLIB) the INLINE_HEADERS aren't instantiated.
@@ -120,8 +122,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "console-gtk-impl.h"
 #include "ui-gtk.h"
 #endif
-
-#include "file-coding.h"
 
 #ifdef TOOLTALK
 #include "tooltalk.h"

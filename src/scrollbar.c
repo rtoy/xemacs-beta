@@ -746,7 +746,7 @@ behavior.
        (window))
 {
   CHECK_LIVE_WINDOW (window);
-  window_scroll (window, make_int (1), -1, ERROR_ME_NOT);
+  window_scroll (window, Qone, -1, ERROR_ME_NOT);
   zmacs_region_stays = 1;
   return Qnil;
 }
@@ -760,7 +760,7 @@ behavior.
        (window))
 {
   CHECK_LIVE_WINDOW (window);
-  window_scroll (window, make_int (1), 1, ERROR_ME_NOT);
+  window_scroll (window, Qone, 1, ERROR_ME_NOT);
   zmacs_region_stays = 1;
   return Qnil;
 }

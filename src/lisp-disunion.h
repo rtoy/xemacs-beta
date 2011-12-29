@@ -1,6 +1,6 @@
 /* Fundamental definitions for XEmacs Lisp interpreter -- non-union objects.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -71,6 +71,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
  XUINT     The value bits of a Lisp_Object storing an integer, unsigned
  INTP      Non-zero if this Lisp_Object is an integer
  Qzero     Lisp Integer 0
+ Qone      Lisp Integer 1
  EQ        Non-zero if two Lisp_Objects are identical, not merely equal. */
 
 
@@ -80,7 +81,9 @@ typedef EMACS_INT Lisp_Object;
 #define VALMASK (((1UL << VALBITS) - 1UL) << GCTYPEBITS)
 #define XTYPE(x) ((enum Lisp_Type) (((EMACS_UINT)(x)) & ~VALMASK))
 #define XPNTRVAL(x) (x) /* This depends on Lisp_Type_Record == 0 */
-#define XCHARVAL(x) ((x) >> GCBITS)
+/* A character is always >= 0, so get 30 bits out of it by treating it as
+   unsigned */
+#define XCHARVAL(x) ((EMACS_UINT)(x) >> GCBITS)
 #define XREALINT(x) ((x) >> INT_GCBITS)
 #define XUINT(x) ((EMACS_UINT)(x) >> INT_GCBITS)
 
@@ -103,10 +106,11 @@ make_int_verify (EMACS_INT val)
 #define INTP(x) ((EMACS_UINT)(x) & Lisp_Type_Int_Bit)
 #define INT_PLUS(x,y)  ((x)+(y)-Lisp_Type_Int_Bit)
 #define INT_MINUS(x,y) ((x)-(y)+Lisp_Type_Int_Bit)
-#define INT_PLUS1(x)   INT_PLUS  (x, make_int (1))
-#define INT_MINUS1(x)  INT_MINUS (x, make_int (1))
+#define INT_PLUS1(x)   INT_PLUS  (x, Qone)
+#define INT_MINUS1(x)  INT_MINUS (x, Qone)
 
 #define Qzero make_int (0)
+#define Qone make_int (1)
 #define Qnull_pointer ((Lisp_Object) 0)
 #define EQ(x,y) ((x) == (y))
 
