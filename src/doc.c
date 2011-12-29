@@ -513,12 +513,19 @@ If TYPE is `defvar', then variable definitions are acceptable.
   Lisp_Object fun;
   Lisp_Object filename = Qnil;
 
-  if (EQ(Ffboundp(symbol), Qt) && (EQ(type, Qnil) || EQ(type, Qdefun)))
+  CHECK_SYMBOL (symbol);
+
+  if (!UNBOUNDP (XSYMBOL_FUNCTION (symbol))
+      && (NILP (type) || EQ (type, Qdefun)))
     {
       fun = Findirect_function (symbol);
 
-      if (SUBRP (fun) || (CONSP(fun) && (EQ (Qmacro, Fcar_safe (fun)))
-                          && (fun = Fcdr_safe (fun), SUBRP (fun))))
+      if (EQ (Qmacro, Fcar_safe (fun)))
+        {
+          fun = XCDR (fun);
+        }
+
+      if (SUBRP (fun))
 	{
 	  if (XSUBR (fun)->doc == 0)
 	    return Qnil;
@@ -537,10 +544,7 @@ If TYPE is `defvar', then variable definitions are acceptable.
 	    }
 	}
 
-      if (COMPILED_FUNCTIONP (fun) || (CONSP(fun) &&
-				       (EQ (Qmacro, Fcar_safe (fun)))
-				       && (fun = Fcdr_safe (fun),
-					   COMPILED_FUNCTIONP (fun))))
+      if (COMPILED_FUNCTIONP (fun))
 	{
 	  Lisp_Object tem;
 	  Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (fun);
@@ -548,29 +552,24 @@ If TYPE is `defvar', then variable definitions are acceptable.
 	  if (! (f->flags.documentationp))
 	    return Qnil;
 	  tem = compiled_function_documentation (f);
-	  if (NATNUMP (tem) || CONSP (tem))
+	  if (NATNUMP (tem))
 	    {
-	      filename = get_object_file_name (tem);
-	      return filename;
-	    }
+              return get_object_file_name (tem);
+            }
 	}
     }
 
-  if (EQ(Fboundp(symbol), Qt) && (EQ(type, Qnil) || EQ(type, Qdefvar)))
+  if (!UNBOUNDP (XSYMBOL_VALUE (symbol)) && (NILP (type) || EQ (type, Qdefvar)))
     {
       Lisp_Object doc_offset = Fget (symbol, Qvariable_documentation, Qnil);
 
-      if (!NILP(doc_offset)) 
+      if (!NILP (doc_offset))
 	{
-	  if (FIXNUMP(doc_offset))
+	  if (FIXNUMP (doc_offset))
 	    {
-	      filename = get_object_file_name 
+	      filename = get_object_file_name
 		(XFIXNUM (doc_offset) > 0 ? doc_offset
 		 : make_fixnum (- XFIXNUM (doc_offset)));
-	    }
-	  else if (CONSP(doc_offset))
-	    {
-	      filename = get_object_file_name(doc_offset);
 	    }
 	  return filename;
 	}

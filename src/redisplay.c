@@ -635,7 +635,8 @@ redisplay_window_text_width_ichar_string (struct window *w, int findex,
   ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), wrap_window (w),
 			       str, len);
   return DEVMETH (WINDOW_XDEVICE (w),
-		  text_width, (w, WINDOW_FACE_CACHEL (w, findex), str,
+		  text_width, (WINDOW_XFRAME (w),
+			       WINDOW_FACE_CACHEL (w, findex), str,
 			       len));
 }
 
@@ -681,13 +682,8 @@ redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
   ensure_face_cachel_complete (&cachel, NILP (window) ? frame : window,
 			       Dynarr_atp (rtw_ichar_dynarr, 0),
 			       Dynarr_length (rtw_ichar_dynarr));
-  return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (frame))),
-		  /* #### Not clear if we're always passed a window, but
-		     I think so.  If not, we will get an abort here,
-		     and then we need to either fix the callers to pass in
-		     a window, or change *text_width() to take a domain
-		     argument. */
-		  text_width, (XWINDOW (window),
+  return DEVMETH (FRAME_XDEVICE (XFRAME (frame)),
+		  text_width, (XFRAME (frame),
 			       &cachel,
 			       Dynarr_begin (rtw_ichar_dynarr),
 			       Dynarr_length (rtw_ichar_dynarr)));
@@ -2182,6 +2178,7 @@ create_text_block (struct window *w, struct display_line *dl,
   dl->used_prop_data = 0;
   dl->num_chars = 0;
   dl->line_continuation = 0;
+  dl->clear_findex = DEFAULT_INDEX;
 
   xzero (data);
   data.ef = extent_fragment_new (w->buffer, f);
@@ -2495,6 +2492,12 @@ create_text_block (struct window *w, struct display_line *dl,
 	     to the line and end this loop. */
 	  else if (data.ch == '\n')
 	    {
+	      /* Update the clearing face index unless the shrink property is
+		 set. -- dvl */ 
+	      if ((data.findex > DEFAULT_INDEX)
+		  && ! WINDOW_FACE_CACHEL_SHRINK_P (w, data.findex))
+		dl->clear_findex = data.findex;
+
 	      /* We aren't going to be adding an end glyph so give its
 		 space back in order to make sure that the cursor can
 		 fit. */
@@ -4686,7 +4689,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   dl->line_continuation = 0;
 
   /* Set up faces to use for clearing areas, used by output_display_line. */
-  dl->default_findex = default_face;
+  dl->clear_findex = default_face;
   if (default_face > DEFAULT_INDEX)
     {
       dl->left_margin_findex = default_face;
@@ -4927,6 +4930,12 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	     to the line and end this loop. */
 	  else if (data.ch == '\n')
 	    {
+	      /* Update the clearing face index unless the shrink property is
+		 set. -- dvl */ 
+	      if ((data.findex > DEFAULT_INDEX)
+		  && ! WINDOW_FACE_CACHEL_SHRINK_P (w, data.findex))
+		dl->clear_findex = data.findex;
+
 	      /* We aren't going to be adding an end glyph so give its
 		 space back in order to make sure that the cursor can
 		 fit. */
@@ -5867,7 +5876,8 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
 	  || (cdl->cursor_elt == -1 && ddl->cursor_elt != -1)
 	  || old_start != ddl->charpos
 	  || old_end != ddl->end_charpos
-	  || initial_size != Dynarr_length (db->runes))
+	  || initial_size != Dynarr_length (db->runes)
+	  || cdl->clear_findex != ddl->clear_findex)
 	{
 	  return 0;
 	}
@@ -6016,7 +6026,8 @@ regenerate_window_incrementally (struct window *w, Charbpos startp,
 	  || cdl->descent != ddl->descent
 	  || cdl->top_clip != ddl->top_clip
 	  || (cdl->cursor_elt != -1 && ddl->cursor_elt == -1)
-	  || (cdl->cursor_elt == -1 && ddl->cursor_elt != -1))
+	  || (cdl->cursor_elt == -1 && ddl->cursor_elt != -1)
+	  || cdl->clear_findex != ddl->clear_findex)
 	{
 	  return 0;
 	}
@@ -6302,18 +6313,19 @@ redisplay_window (Lisp_Object window, int skip_selected)
      because we initialized them at startup and the only way to reduce
      their number is through calling reset_face_cachels() or
      reset_glyph_cachels(), which as a side effect sets up a number of
-     standard entries */
+     standard entries
+     2011-10-29 -- We were managing to hit the glyph_cachels assert in certain
+     contexts where VM was creating a lot of frames.  I don't have a full
+     analysis, but I suspect that we were failing to setup the glyph_cachels
+     at about l. 961 of frame.c, and a message was being sent to the echo area
+     before the initialization was complete.  This triggered a redisplay of
+     the minibuffer window (this part is confirmed), and thus this assert. */
   assert (Dynarr_length (w->face_cachels));
   assert (Dynarr_length (w->glyph_cachels));
 
   /* If the buffer has changed we have to invalidate all of our face
      cache elements. */
   if ((!echo_active && b != window_display_buffer (w))
-#if 0
-  /* #### Delete this code sometime later than 2-1-10 when we're sure it's
-     not needed */
-      || !Dynarr_length (w->face_cachels)
-#endif
       || f->faces_changed)
     reset_face_cachels (w);
   else
@@ -6323,11 +6335,6 @@ redisplay_window (Lisp_Object window, int skip_selected)
      the cache purely because glyphs have changed - this is now
      handled by the dirty flag.*/
   if ((!echo_active && b != window_display_buffer (w))
-#if 0
-  /* #### Delete this code sometime later than 2-1-10 when we're sure it's
-     not needed */
-      || !Dynarr_length (w->glyph_cachels)
-#endif
       || f->faces_changed)
     reset_glyph_cachels (w);
   else

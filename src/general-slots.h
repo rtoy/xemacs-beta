@@ -328,3 +328,5 @@ SYMBOL (Qwindows);
 SYMBOL (Qx);
 SYMBOL (Qy);
 SYMBOL (Qyes);
+SYMBOL (Qyes_or_no_p);
+

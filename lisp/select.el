@@ -256,9 +256,7 @@ With an argument, discard the secondary selection instead of the
 primary selection."
   (disown-selection-internal (if secondary-p 'SECONDARY 'PRIMARY))
   (when (and selection-sets-clipboard
-	     (or (not secondary-p)
-		 (eq secondary-p 'PRIMARY)
-		 (eq secondary-p 'CLIPBOARD)))
+             (memq secondary-p '(nil PRIMARY CLIPBOARD)))
     (disown-selection-internal 'CLIPBOARD)))
 
 ;; selections and active regions
@@ -428,29 +426,25 @@ any more, because just about anything could be a valid selection now."
   "Attempt to convert the specified external VALUE to the specified DATA-TYPE,
 for the specified SELECTION. Return nil if this is impossible, or a
 suitable internal representation otherwise."
-  (when value
-    (let ((handler-fn (cdr (assq type selection-converter-in-alist))))
-      (if handler-fn
-          (apply handler-fn (list selection type value))
-        value))))
+  (and value
+       (funcall (or (cdr (assq type selection-converter-in-alist)) #'ignore)
+                selection type value)))
 
 (defun select-convert-out (selection type value)
   "Attempt to convert the specified internal VALUE for the specified DATA-TYPE
 and SELECTION. Return nil if this is impossible, or a suitable external
 representation otherwise."
-  (when value
-    (let ((handler-fn (cdr (assq type selection-converter-out-alist))))
-      (when handler-fn
-	(apply handler-fn (list selection type value))))))
+  (and value
+       (funcall (or (cdr (assq type selection-converter-out-alist)) #'ignore)
+                selection type value)))
 
 (defun select-coerce (selection type value)
   "Attempt to convert the specified internal VALUE to a representation
 suitable for return from `get-selection' in the specified DATA-TYPE. Return
 nil if this is impossible, or a suitable representation otherwise."
-  (when value
-    (let ((handler-fn (cdr (assq type selection-coercion-alist))))
-      (when handler-fn
-	(apply handler-fn (list selection type value))))))
+  (and value
+       (funcall (or (cdr (assq type selection-conversion-alist)) #'ignore)
+                selection type value)))
 
 ;; The rest of the functions on this "page" are conversion handlers,
 ;; append handlers and buffer-kill handlers.
@@ -550,14 +544,7 @@ nil if this is impossible, or a suitable representation otherwise."
 
 (defun select-convert-to-targets (selection type value)
   ;; return a vector of atoms, but remove duplicates first.
-  (let* ((all (cons 'TIMESTAMP (mapcar 'car selection-converter-alist)))
-	 (rest all))
-    (while rest
-      (cond ((memq (car rest) (cdr rest))
-	     (setcdr rest (delq (car rest) (cdr rest))))
-	    (t
-	     (setq rest (cdr rest)))))
-    (apply 'vector all)))
+  (delete-duplicates (map 'vector #'car selection-converter-out-alist)))
 
 (defun select-convert-to-delete (selection type value)
   (disown-selection-internal selection)

@@ -2791,6 +2791,17 @@ if test "$opsys" = "sol2"; then
   fi
 fi
 
+dnl Disable ASLR on systems where it breaks pdump.
+AC_MSG_CHECKING([whether ASLR needs to be disabled]) 
+case `uname -s`:`uname -r` in
+	dnl Mac OS X 10.7 Lion
+    Darwin:11.*)
+	AC_MSG_RESULT(yes)
+	XE_APPEND([-Wl,-no_pie], LDFLAGS) 
+	;;
+    *) AC_MSG_RESULT(no) ;;
+esac
+
 dnl ----------------------
 dnl Choose a window system
 dnl ----------------------
@@ -3900,22 +3911,24 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
     *)		XE_DIE("Unknown Athena widget set \`$with_athena'. This should not happen.") ;;
   esac
 
+  athena_3d_function=Xaw3dComputeBottomShadowRGB
+
   dnl Search for the Athena library...
   if test "$athena_3d" = "no"; then
     AC_CHECK_LIB($athena_variant, XawScrollbarSetThumb,
       [
         dnl Must not be a 3d library...
-        AC_CHECK_LIB($athena_variant, XawSme3dComputeTopShadowRGB,
+        AC_CHECK_LIB($athena_variant, $athena_3d_function,
           [AC_MSG_WARN([Could not find a non-3d Athena widget library.])],
           athena_lib=$athena_variant)
       ],
       AC_MSG_WARN([Could not find an Athena widget library.]))
   else
     dnl The real configuration, need 3d library
-    AC_CHECK_LIB($athena_variant, XawSme3dComputeTopShadowRGB, athena_lib=$athena_variant,
+    AC_CHECK_LIB($athena_variant, $athena_3d_function, athena_lib=$athena_variant,
       dnl OK, couldn't find it with a proper name, try the standard Athena lib
       dnl If that is 3d, presume the user asked for what they have installed.
-      AC_CHECK_LIB(Xaw, XawSme3dComputeTopShadowRGB,
+      AC_CHECK_LIB(Xaw, $athena_3d_function,
         [
           athena_lib=Xaw;
           AC_MSG_WARN([Assuming that libXaw is actually $athena_variant.]);
@@ -5388,12 +5401,6 @@ dnl Regenerate them locally on every configure.
 dnl .gdbinit is now handled like xemacs.def or other src files, and
 dnl its source is in src/.gdbinit.in.in.
 
-dnl Create a .dbxrc useful for debugging XEmacs
-if test -f "$srcdir/etc/dbxrc.in"; then
-  test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
-  echo ". $srcdir/etc/dbxrc.in" > "src/.dbxrc.in"
-fi
-
 dnl Create a useful TAGS file
 if test -f "$srcdir/TAGS" -a ! -f "TAGS"; then
   test "$verbose" = "yes" && echo "creating TAGS"
@@ -6034,10 +6041,12 @@ AC_CONFIG_COMMANDS([default],
 dnl Create a GNUmakefile and Makefile from Makefile.in.
 dnl Create xemacs.def from xemacs.def.in in the same fashion,
 dnl if it exists (i.e. in the src/ directory).  Ditto for the
-dnl debugger init files (in the src/ directory).
-    MAKE_JUNK_C(Makefile.in)
-    CPP_MAKEFILE(,Makefile)
-    CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
+dnl debugger init files (in the src/ and etc/ directories).
+    if test -r "Makefile.in"; then
+      MAKE_JUNK_C(Makefile.in)
+      CPP_MAKEFILE(,Makefile)
+      CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
+    fi
     if test -r ".gdbinit.in"; then
       MAKE_JUNK_C(.gdbinit.in)
       CPP_MAKEFILE(,.gdbinit)

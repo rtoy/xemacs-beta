@@ -1786,10 +1786,6 @@ enum Lisp_Type
 
 #define FIXNUM_VALBITS (BITS_PER_EMACS_INT - FIXNUM_GCBITS)
 #define VALBITS (BITS_PER_EMACS_INT - GCBITS)
-/* This is badly named; it's not the maximum value that an EMACS_INT can
-   have, it's the maximum value that a Lisp-visible fixnum can have (half
-   the maximum value an EMACS_INT can have) and as such would be better
-   called MOST_POSITIVE_FIXNUM. Similarly for MOST_NEGATIVE_FIXNUM. */
 #define MOST_POSITIVE_FIXNUM ((EMACS_INT) ((1UL << (FIXNUM_VALBITS - 1)) -1UL))
 #define MOST_NEGATIVE_FIXNUM (-(MOST_POSITIVE_FIXNUM) - 1)
 /* WARNING: evaluates its arg twice. */
@@ -5310,13 +5306,15 @@ extern Lisp_Object Qextent_live_p;
 extern Lisp_Object Qstart_open;
 
 /* Defined in faces.c */
+extern Lisp_Object Qforeground;
+extern Lisp_Object Qforeback;
 extern Lisp_Object Qbackground;
 extern Lisp_Object Qbackground_pixmap;
 extern Lisp_Object Qblinking;
 extern Lisp_Object Qdim;
 extern Lisp_Object Qdisplay_table;
-extern Lisp_Object Qforeground;
 extern Lisp_Object Qunderline;
+extern Lisp_Object Qshrink;
 
 /* Defined in file-coding.c */
 EXFUN (Fcoding_category_list, 0);
@@ -5440,6 +5438,7 @@ EXFUN (Flast, 2);
 EXFUN (Flax_plist_get, 3);
 EXFUN (Flax_plist_remprop, 2);
 MODULE_API EXFUN (Flength, 1);
+EXFUN (Flist_length, 1);
 EXFUN (FmapcarX, MANY);
 EXFUN (Fmember, 2);
 EXFUN (Fmemq, 2);
@@ -5457,7 +5456,6 @@ EXFUN (Fplist_put, 3);
 MODULE_API EXFUN (Fprovide, 1);
 MODULE_API EXFUN (Fput, 3);
 EXFUN (Frassq, 2);
-EXFUN (Fremassq, 2);
 EXFUN (Freplace_list, 2);
 MODULE_API EXFUN (Freverse, 1);
 EXFUN (Fsafe_length, 1);

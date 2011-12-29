@@ -38,6 +38,7 @@ struct Lisp_Face
 			    a face. */
 
   Lisp_Object foreground;
+  Lisp_Object foreback;
   Lisp_Object background;
   Lisp_Object font;
 
@@ -51,6 +52,7 @@ struct Lisp_Face
   Lisp_Object dim;
   Lisp_Object blinking;
   Lisp_Object reverse;
+  Lisp_Object shrink;
 
   Lisp_Object plist;
 
@@ -170,6 +172,7 @@ struct face_cachel
      faces.  This is what the _specified flags below are for. */
 
   Lisp_Object foreground;
+  Lisp_Object foreback;
   Lisp_Object background;
 
   /* Static dynarr, mapping charsets to font objects.  Note: The use of an
@@ -190,11 +193,13 @@ struct face_cachel
   unsigned int dim :1;
   unsigned int blinking :1;
   unsigned int reverse :1;
+  unsigned int shrink :1;
 
   /* Used when merging to tell if the above field represents an actual
      value of this face or a fallback value. */
   unsigned_char_stynarr font_specified;
   unsigned int foreground_specified :1;
+  unsigned int foreback_specified :1;
   unsigned int background_specified :1;
   unsigned int display_table_specified :1;
   unsigned int background_pixmap_specified :1;
@@ -206,6 +211,7 @@ struct face_cachel
   unsigned int dim_specified :1;
   unsigned int blinking_specified :1;
   unsigned int reverse_specified :1;
+  unsigned int shrink_specified :1;
 
   /* The updated flag is set after we calculate the values for the
      face cachel and cleared whenever a face changes, to indicate
@@ -387,7 +393,9 @@ FACE_CACHEL_OFFSET_ENSURE (struct face_cachel *cachel, Lisp_Object charset)
   (WINDOW_FACE_CACHEL (window, index)->face)
 #define WINDOW_FACE_CACHEL_FOREGROUND(window, index)                    \
   (WINDOW_FACE_CACHEL (window, index)->foreground)
-#define WINDOW_FACE_CACHEL_BACKGROUND(window, index)                    \
+#define WINDOW_FACE_CACHEL_FOREBACK(window, index)			\
+  (WINDOW_FACE_CACHEL (window, index)->foreback)
+#define WINDOW_FACE_CACHEL_BACKGROUND(window, index)			\
   (WINDOW_FACE_CACHEL (window, index)->background)
 /* #### This can be referenced by various functions,
    but face_cachels isn't initialized for the stream device.
@@ -415,6 +423,8 @@ FACE_CACHEL_OFFSET_ENSURE (struct face_cachel *cachel, Lisp_Object charset)
   (WINDOW_FACE_CACHEL (window, index)->blinking)
 #define WINDOW_FACE_CACHEL_REVERSE_P(window, index)                     \
   (WINDOW_FACE_CACHEL (window, index)->reverse)
+#define WINDOW_FACE_CACHEL_SHRINK_P(window, index)			\
+  (WINDOW_FACE_CACHEL (window, index)->shrink)
 
 #define FACE_PROPERTY_SPECIFIER(face, property) Fget (face, property, Qnil)
 
@@ -445,6 +455,8 @@ Lisp_Object face_property_matching_instance
 
 #define FACE_FOREGROUND(face, domain)					\
   FACE_PROPERTY_INSTANCE (face, Qforeground, domain, 0, Qzero)
+#define FACE_FOREBACK(face, domain)					\
+  FACE_PROPERTY_INSTANCE (face, Qforeback, domain, 0, Qzero)
 #define FACE_BACKGROUND(face, domain)					\
   FACE_PROPERTY_INSTANCE (face, Qbackground, domain, 0, Qzero)
 
@@ -476,5 +488,7 @@ extern Lisp_Object Qbackground_placement;
   (!NILP (FACE_PROPERTY_INSTANCE (face, Qblinking, domain, 0, Qzero)))
 #define FACE_REVERSE_P(face, domain)					\
   (!NILP (FACE_PROPERTY_INSTANCE (face, Qreverse, domain, 0, Qzero)))
+#define FACE_SHRINK_P(face, domain)					\
+  (!NILP (FACE_PROPERTY_INSTANCE (face, Qshrink, domain, 0, Qzero)))
 
 #endif /* INCLUDED_faces_h_ */

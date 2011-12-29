@@ -508,5 +508,5 @@ to convert into a type that we don't know about or that is inappropriate.
 This hook doesn't let you change the behavior of emacs's selection replies,
 it merely informs you that they have happened.
 */ );
-  Vgtk_sent_selection_hooks = Qunbound;
+  Vgtk_sent_selection_hooks = Qnil;
 }

@@ -292,7 +292,9 @@ ARGLIST allows full Common Lisp conventions."
        symbol-or-lambda)))
 
 (defun cl-transform-function-property (func prop form)
-  `(put ',func ',prop #'(lambda ,@(cdr (cl-transform-lambda form func)))))
+  (cl-macroexpand-all
+  `(put ',func ',prop #'(lambda ,@(cdr (cl-transform-lambda form func))))
+  byte-compile-macro-environment))
 
 (defconst lambda-list-keywords
   '(&optional &rest &key &allow-other-keys &aux &whole &body &environment))
@@ -2109,15 +2111,18 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf extent-start-position (ext) (store)
   `(progn (set-extent-endpoints ,ext ,store (extent-end-position ,ext))
 	  ,store))
+(defsetf face-foreground (f &optional s) (x) (list 'set-face-foreground f x s))
+(defsetf face-foreback (f &optional s) (x) (list 'set-face-foreback f x s))
 (defsetf face-background (f &optional s) (x) (list 'set-face-background f x s))
 (defsetf face-background-pixmap (f &optional s) (x)
   (list 'set-face-background-pixmap f x s))
 (defsetf face-background-placement (f &optional s) (x)
   (list 'set-face-background-placement f x s))
 (defsetf face-font (f &optional s) (x) (list 'set-face-font f x s))
-(defsetf face-foreground (f &optional s) (x) (list 'set-face-foreground f x s))
 (defsetf face-underline-p (f &optional s) (x)
   (list 'set-face-underline-p f x s))
+(defsetf face-shrink-p (f &optional s) (x)
+  (list 'set-face-shrink-p f x s))
 (defsetf file-modes set-file-modes t)
 (defsetf frame-height (&optional f) (v)
   `(progn (set-frame-height ,f ,v) ,v))
@@ -3054,7 +3059,9 @@ They are not evaluated unless the assertion fails.  If STRING is
 omitted, a default message listing FORM itself is used."
   (and (or (not (cl-compiling-file))
 	   (< cl-optimize-speed 3) (= cl-optimize-safety 3))
-       (let ((sargs (and show-args (remove-if #'cl-const-expr-p (cdr form)))))
+       (let ((sargs (and show-args
+                         ;; #'remove-if isn't necessarily available yet.
+                         (remove* t (cdr form) :key #'cl-const-expr-p))))
 	 (list 'progn
 	       (list 'or form
 		     (if string
@@ -3891,8 +3898,10 @@ non-nil, `the' is equivalent to FORM without any type checks."
 
 ;;;###autoload
 (defmacro load-time-value (form &optional read-only)
-  "Like `progn', but evaluates the body at load time.
-The result of the body appears to the compiler as a quoted constant."
+  "Evaluate FORM once at load time if byte-compiled.
+
+The result of FORM is returned and stored for later access.  In
+interpreted code, `load-time-value' is equivalent to `progn'."
   (list 'progn form))
 
 ;;;###autoload

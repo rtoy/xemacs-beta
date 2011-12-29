@@ -175,12 +175,13 @@ struct textual_run
    the 8-bit versions in computing runs and runes, it would seem.
 */
 
-#if !defined(USE_XFT) && !defined(MULE)
+#if !defined (USE_XFT) && !defined (MULE)
 static int
-separate_textual_runs_nomule (unsigned char *text_storage,
+separate_textual_runs_nomule (struct buffer * UNUSED (buf),
+			      unsigned char *text_storage,
 			      struct textual_run *run_storage,
 			      const Ichar *str, Charcount len,
-			      struct face_cachel *UNUSED (cachel))
+			      struct face_cachel *UNUSED(cachel))
 {
   if (!len)
     return 0;
@@ -196,7 +197,7 @@ separate_textual_runs_nomule (unsigned char *text_storage,
 }
 #endif
 
-#if defined(USE_XFT) && !defined(MULE)
+#if defined (USE_XFT) && !defined (MULE)
 /*
   Note that in this configuration the "Croatian hack" of using an 8-bit,
   non-Latin-1 font to get localized display without Mule simply isn't
@@ -207,7 +208,8 @@ separate_textual_runs_nomule (unsigned char *text_storage,
   #### Is there an alignment issue with text_storage?
 */
 static int
-separate_textual_runs_xft_nomule (unsigned char *text_storage,
+separate_textual_runs_xft_nomule (struct buffer * UNUSED (buf),
+				  unsigned char *text_storage,
 				  struct textual_run *run_storage,
 				  const Ichar *str, Charcount len,
 				  struct face_cachel *UNUSED (cachel))
@@ -223,14 +225,14 @@ separate_textual_runs_xft_nomule (unsigned char *text_storage,
 
   for (i = 0; i < len; i++)
     {
-      *(XftChar16 *)text_storage = str[i];
+      *(XftChar16 *) text_storage = str[i];
       text_storage += sizeof (XftChar16);
     }
   return 1;
 }
 #endif
 
-#if defined(USE_XFT) && defined(MULE)
+#if defined (USE_XFT) && defined (MULE)
 static int
 separate_textual_runs_xft_mule (struct buffer *buf,
 				unsigned char *text_storage,
@@ -288,7 +290,7 @@ separate_textual_runs_xft_mule (struct buffer *buf,
 }
 #endif
 
-#if !defined(USE_XFT) && defined(MULE)
+#if !defined (USE_XFT) && defined (MULE)
 /*
   This is the most complex function of this group, due to the various
   indexing schemes used by different fonts.  For our purposes, they
@@ -479,7 +481,7 @@ separate_textual_runs (struct buffer *buf,
 /****************************************************************************/
 
 static int
-XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
+XLIKE_text_width_single_run (XLIKE_DISPLAY USED_IF_XFT (dpy),
 			     struct face_cachel *cachel,
 			     struct textual_run *run)
 {
@@ -492,8 +494,6 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
   else if (FONT_INSTANCE_X_XFTFONT (fi))
     {
       static XGlyphInfo glyphinfo;
-      struct device *d = XDEVICE (f->device);
-      Display *dpy = DEVICE_X_DISPLAY (d);
 
       if (run->dimension == 2)
 	{
@@ -539,22 +539,22 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
    */
 
 static int
-XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
 		  const Ichar *str, Charcount len)
 {
   /* !!#### Needs review */
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
   struct textual_run *runs = alloca_array (struct textual_run, len);
-  struct frame *f = WINDOW_XFRAME (w);
+  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (XDEVICE (f->device));
   int nruns;
   int i;
 
-  nruns = separate_textual_runs (WINDOW_XBUFFER (w), text_storage, runs, str,
-				 len, cachel);
+  nruns = separate_textual_runs (WINDOW_XBUFFER (FRAME_SELECTED_XWINDOW (f)),
+                                 text_storage, runs, str, len, cachel);
 
   for (i = 0; i < nruns; i++)
-    width_so_far += XLIKE_text_width_single_run (f, cachel, runs + i);
+    width_so_far += XLIKE_text_width_single_run (dpy, cachel, runs + i);
 
   return width_so_far;
 }
@@ -1068,7 +1068,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 #endif /* USE_XFT */
 
   if (width < 0)
-    width = XLIKE_text_width (w, cachel, Dynarr_begin (buf),
+    width = XLIKE_text_width (f, cachel, Dynarr_begin (buf),
 			      Dynarr_length (buf));
 
   /* Regularize the variables passed in. */
@@ -1122,8 +1122,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
        && !NILP (w->text_cursor_visible_p)) || NILP (bg_pmap))
     bgc = 0;
   else
-    bgc = XLIKE_get_gc (f, Qnil, cachel->foreground, cachel->background,
-			bg_pmap, cachel->background_placement, Qnil);
+    bgc = XLIKE_get_gc
+      (f, Qnil, NILP (bg_pmap) ? cachel->foreground : cachel->foreback,
+       cachel->background, bg_pmap, cachel->background_placement, Qnil);
 
   if (bgc)
     {
@@ -1146,7 +1147,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
-      this_width = XLIKE_text_width_single_run (f, cachel, runs + i);
+      this_width = XLIKE_text_width_single_run (dpy, cachel, runs + i);
       need_clipping = (dl->clip || clip_start > xpos ||
 		       clip_end < xpos + this_width);
 
@@ -1273,7 +1274,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		   OK, unconditionally redraw the bevel, and increment
 		   rect_height by 1.  See x_output_display_block. -- sjt */
 		struct textual_run *run = &runs[i];
-		int rect_width = x_text_width_single_run (f, cachel, run);
+		int rect_width
+		  = XLIKE_text_width_single_run (dpy, cachel, run);
 #ifndef USE_XFTTEXTENTS_TO_AVOID_FONT_DROPPINGS
 		int rect_height = FONT_INSTANCE_ASCENT (fi)
 				  + FONT_INSTANCE_DESCENT (fi) + 1;
@@ -1486,7 +1488,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      { /* draw background rectangle & draw text */
 		int rect_height = FONT_INSTANCE_ASCENT (fi)
 				  + FONT_INSTANCE_DESCENT (fi);
-		int rect_width = x_text_width_single_run (f, cachel, &runs[i]);
+		int rect_width
+		  = XLIKE_text_width_single_run (dpy, cachel, &runs[i]);
 		XftColor xft_color;
 
 		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
@@ -1874,7 +1877,7 @@ XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
 /*****************************************************************************
  XLIKE_output_blank
 
- Output a blank by clearing the area it covers in the foreground color
+ Output a blank by clearing the area it covers in the background color
  of its face.
  ****************************************************************************/
 static void
@@ -1924,7 +1927,7 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
     gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
 		       Qnil, Qnil, Qnil, Qnil);
   else
-    gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
+    gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_FOREBACK (w, rb->findex),
 		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
 		       bg_pmap,
 		       WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT (w, rb->findex),

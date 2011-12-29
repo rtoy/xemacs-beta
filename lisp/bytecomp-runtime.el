@@ -634,9 +634,4 @@ For example, something like this might appear at the top of a source file:
       (file-format emacs19))"
   nil)
 
-(defvar byte-compile-macro-environment nil
-  "Alist of macros defined in the file being compiled.
-Each element looks like (MACRONAME . DEFINITION).  It is
-\(MACRONAME . nil) when a macro is redefined as a function.")
-
 ;;; bytecomp-runtime.el ends here

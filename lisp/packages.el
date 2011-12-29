@@ -111,7 +111,8 @@ directories, directories with higher priority first"
 		  (list :version (car attributes))
 		attributes)))
     (setq packages-package-list
-	  (cons (cons name info) (remassq name packages-package-list)))))
+	  (cons (cons name info) (delete* name packages-package-list
+                                          :test #'eq :key #'car)))))
 
 (defun package-suppress (package file form)
   "Set up a package-suppress condition FORM for FILE in PACKAGE.

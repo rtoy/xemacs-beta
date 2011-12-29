@@ -2178,6 +2178,7 @@ CHARSET (see `make-char').
      various places.  It's not clear whether we have such assumptions
      about Control-1 or Latin-1 but it's clearly not a good idea to
      change them. */
+
   if ((EQ (charset, Vcharset_ascii) ||
        EQ (charset, Vcharset_latin_iso8859_1) ||
        EQ (charset, Vcharset_control_1)))

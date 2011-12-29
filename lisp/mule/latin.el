@@ -857,6 +857,6 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
   (setcar assocked
           (upcase (symbol-name coding-system)))
   (setcdr assocked
-          (remassq 'locale (cdr assocked))))
+          (delete* 'locale (cdr assocked) :key #'car)))
 
 ;;; latin.el ends here

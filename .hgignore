@@ -31,7 +31,8 @@ info/.*\.info(-[0-9]+)?$
 ^modules/ldap/eldap_i\.c$
 ^(xemacs|mule)-packages
 ^etc/PROBLEMS$
-^src/(.dbxrc|.gdbinit)(\.in)?$ 
+^src/\.dbxrc$ 
+^src/\.gdbinit(\.in)?$
 ^src/(GNUmakefile|Makefile(\.in)?)$
 ^src/NEEDTODUMP$
 ^src/config\.h$
