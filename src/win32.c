@@ -350,8 +350,8 @@ otherwise it is an integer representing a ShowWindow flag:
       LISP_LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR (document, doc);
 
     ret = (int) qxeShellExecute (NULL, opext, doc, parmext, path,
-				 (INTP (show_flag) ?
-				  XINT (show_flag) : SW_SHOWDEFAULT));
+				 (FIXNUMP (show_flag) ?
+				  XFIXNUM (show_flag) : SW_SHOWDEFAULT));
   }
 
   if (ret <= 32)

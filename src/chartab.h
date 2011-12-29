@@ -427,7 +427,7 @@ get_char_table_raw (Ichar ch, Lisp_Object chartab)
 	    type_checking_assert (!CHAR_SUBTABLEP (table));
 	    if (!BIT_VECTORP (table))
 	      return table;
-	    return make_int (bit_vector_bit (XBIT_VECTOR (table), u1));
+	    return make_fixnum (bit_vector_bit (XBIT_VECTOR (table), u1));
 	  }
 	if (!CHAR_SUBTABLEP (table))
 	  return table;

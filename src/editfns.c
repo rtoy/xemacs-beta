@@ -142,7 +142,7 @@ static Lisp_Object
 buildmark (Charbpos val, Lisp_Object buffer)
 {
   Lisp_Object mark = Fmake_marker ();
-  Fset_marker (mark, make_int (val), buffer);
+  Fset_marker (mark, make_fixnum (val), buffer);
   return mark;
 }
 
@@ -154,7 +154,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return make_int (BUF_PT (b));
+  return make_fixnum (BUF_PT (b));
 }
 
 DEFUN ("point-marker", Fpoint_marker, 0, 2, 0, /*
@@ -197,7 +197,7 @@ Return value of POSITION, as an integer.
   Charbpos n = get_buffer_pos_char (b, position, GB_COERCE_RANGE);
   BUF_SET_PT (b, n);
   atomic_extent_goto_char_p = 1;
-  return make_int (n);
+  return make_fixnum (n);
 }
 
 static Lisp_Object
@@ -212,8 +212,8 @@ region_limit (int beginningp, struct buffer *b)
 #endif
   m = Fmarker_position (b->mark);
   if (NILP (m)) invalid_operation ("There is no region now", Qunbound);
-  if (!!(BUF_PT (b) < XINT (m)) == !!beginningp)
-    return make_int (BUF_PT (b));
+  if (!!(BUF_PT (b) < XFIXNUM (m)) == !!beginningp)
+    return make_fixnum (BUF_PT (b));
   else
     return m;
 }
@@ -312,8 +312,8 @@ save_excursion_save (void)
      incorrect. --ben */
 
 #ifdef ERROR_CHECK_TEXT
-  assert (XINT (Fpoint (Qnil)) ==
-	  XINT (Fmarker_position (Fpoint_marker (Qt, Qnil))));
+  assert (XFIXNUM (Fpoint (Qnil)) ==
+	  XFIXNUM (Fmarker_position (Fpoint_marker (Qt, Qnil))));
 #endif
 
   b = current_buffer;
@@ -415,7 +415,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return make_int (BUF_SIZE (b));
+  return make_fixnum (BUF_SIZE (b));
 }
 
 DEFUN ("point-min", Fpoint_min, 0, 1, 0, /*
@@ -427,7 +427,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return make_int (BUF_BEGV (b));
+  return make_fixnum (BUF_BEGV (b));
 }
 
 DEFUN ("point-min-marker", Fpoint_min_marker, 0, 1, 0, /*
@@ -451,7 +451,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return make_int (BUF_ZV (b));
+  return make_fixnum (BUF_ZV (b));
 }
 
 DEFUN ("point-max-marker", Fpoint_max_marker, 0, 1, 0, /*
@@ -665,8 +665,8 @@ ignored and this function returns the login name for that UID, or nil.
 
   if (!NILP (uid))
     {
-      CHECK_INT (uid);
-      local_uid = XINT (uid);
+      CHECK_FIXNUM (uid);
+      local_uid = XFIXNUM (uid);
       returned_name = user_login_name (&local_uid);
     }
   else
@@ -750,7 +750,7 @@ Return the effective uid of Emacs, as an integer.
 */
        ())
 {
-  return make_int (geteuid ());
+  return make_fixnum (geteuid ());
 }
 
 DEFUN ("user-real-uid", Fuser_real_uid, 0, 0, 0, /*
@@ -758,7 +758,7 @@ Return the real uid of Emacs, as an integer.
 */
        ())
 {
-  return make_int (getuid ());
+  return make_fixnum (getuid ());
 }
 
 DEFUN ("user-full-name", Fuser_full_name, 0, 1, 0, /*
@@ -910,7 +910,7 @@ Return the process ID of Emacs, as an integer.
 */
        ())
 {
-  return make_int (qxe_getpid ());
+  return make_fixnum (qxe_getpid ());
 }
 
 DEFUN ("current-time", Fcurrent_time, 0, 0, 0, /*
@@ -928,9 +928,9 @@ resolution finer than a second.
   EMACS_TIME t;
 
   EMACS_GET_TIME (t);
-  return list3 (make_int ((EMACS_SECS (t) >> 16) & 0xffff),
-		make_int ((EMACS_SECS (t) >> 0)  & 0xffff),
-		make_int (EMACS_USECS (t)));
+  return list3 (make_fixnum ((EMACS_SECS (t) >> 16) & 0xffff),
+		make_fixnum ((EMACS_SECS (t) >> 0)  & 0xffff),
+		make_fixnum (EMACS_USECS (t)));
 }
 
 DEFUN ("current-process-time", Fcurrent_process_time, 0, 0, 0, /*
@@ -979,10 +979,10 @@ lisp_to_time (Lisp_Object specified_time, time_t *result)
   low  = XCDR (specified_time);
   if (CONSP (low))
     low = XCAR (low);
-  CHECK_INT (high);
-  CHECK_INT (low);
-  *result = (XINT (high) << 16) + (XINT (low) & 0xffff);
-  return *result >> 16 == XINT (high);
+  CHECK_FIXNUM (high);
+  CHECK_FIXNUM (low);
+  *result = (XFIXNUM (high) << 16) + (XFIXNUM (low) & 0xffff);
+  return *result >> 16 == XFIXNUM (high);
 }
 
 Lisp_Object time_to_lisp (time_t the_time);
@@ -990,7 +990,7 @@ Lisp_Object
 time_to_lisp (time_t the_time)
 {
   unsigned int item = (unsigned int) the_time;
-  return Fcons (make_int (item >> 16), make_int (item & 0xffff));
+  return Fcons (make_fixnum (item >> 16), make_fixnum (item & 0xffff));
 }
 
 size_t emacs_strftime (Extbyte *string, size_t max, const Extbyte *format,
@@ -1111,17 +1111,17 @@ ZONE is an integer indicating the number of seconds east of Greenwich.
   decoded_time = gmtime (&time_spec);
 
   return listn(9,
-	       make_int (save_tm.tm_sec),
-	       make_int (save_tm.tm_min),
-	       make_int (save_tm.tm_hour),
-	       make_int (save_tm.tm_mday),
-	       make_int (save_tm.tm_mon + 1),
-	       make_int (save_tm.tm_year + 1900),
-	       make_int (save_tm.tm_wday),
+	       make_fixnum (save_tm.tm_sec),
+	       make_fixnum (save_tm.tm_min),
+	       make_fixnum (save_tm.tm_hour),
+	       make_fixnum (save_tm.tm_mday),
+	       make_fixnum (save_tm.tm_mon + 1),
+	       make_fixnum (save_tm.tm_year + 1900),
+	       make_fixnum (save_tm.tm_wday),
 	       save_tm.tm_isdst ? Qt : Qnil,
 	       (decoded_time == NULL)
 	       ? Qnil
-	       : make_int (difftm (&save_tm, decoded_time)));
+	       : make_fixnum (difftm (&save_tm, decoded_time)));
 }
 
 static void set_time_zone_rule (Extbyte *tzstring);
@@ -1131,8 +1131,8 @@ static void set_time_zone_rule (Extbyte *tzstring);
 Lisp_Object
 make_time (time_t tiempo)
 {
-  return list2 (make_int (tiempo < 0 ? tiempo / 0x10000 : tiempo >> 16),
-		make_int (tiempo & 0xFFFF));
+  return list2 (make_fixnum (tiempo < 0 ? tiempo / 0x10000 : tiempo >> 16),
+		make_fixnum (tiempo & 0xFFFF));
 }
 
 DEFUN ("encode-time", Fencode_time, 6, MANY, 0, /*
@@ -1161,12 +1161,12 @@ arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
   struct tm tm;
   Lisp_Object zone = (nargs > 6) ? args[nargs - 1] : Qnil;
 
-  CHECK_INT (*args); tm.tm_sec  = XINT (*args++);	/* second */
-  CHECK_INT (*args); tm.tm_min  = XINT (*args++);	/* minute */
-  CHECK_INT (*args); tm.tm_hour = XINT (*args++);	/* hour */
-  CHECK_INT (*args); tm.tm_mday = XINT (*args++);	/* day */
-  CHECK_INT (*args); tm.tm_mon  = XINT (*args++) - 1;	/* month */
-  CHECK_INT (*args); tm.tm_year = XINT (*args++) - 1900;/* year */
+  CHECK_FIXNUM (*args); tm.tm_sec  = XFIXNUM (*args++);	/* second */
+  CHECK_FIXNUM (*args); tm.tm_min  = XFIXNUM (*args++);	/* minute */
+  CHECK_FIXNUM (*args); tm.tm_hour = XFIXNUM (*args++);	/* hour */
+  CHECK_FIXNUM (*args); tm.tm_mday = XFIXNUM (*args++);	/* day */
+  CHECK_FIXNUM (*args); tm.tm_mon  = XFIXNUM (*args++) - 1;	/* month */
+  CHECK_FIXNUM (*args); tm.tm_year = XFIXNUM (*args++) - 1900;/* year */
 
   tm.tm_isdst = -1;
 
@@ -1185,10 +1185,10 @@ arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
 
       if (STRINGP (zone))
 	tzstring = LISP_STRING_TO_EXTERNAL (zone, Qtime_zone_encoding);
-      else if (INTP (zone))
+      else if (FIXNUMP (zone))
 	{
-	  int abszone = abs (XINT (zone));
-	  sprintf (tzbuf, "XXX%s%d:%02d:%02d", "-" + (XINT (zone) < 0),
+	  int abszone = abs (XFIXNUM (zone));
+	  sprintf (tzbuf, "XXX%s%d:%02d:%02d", "-" + (XFIXNUM (zone) < 0),
 		   abszone / (60*60), (abszone/60) % 60, abszone % 60);
 	  tzstring = tzbuf;
 	}
@@ -1327,7 +1327,7 @@ the data it can't find.
 		      am%60);
 	  tem = build_istring (buf);
 	}
-      return list2 (make_int (offset), tem);
+      return list2 (make_fixnum (offset), tem);
     }
   else
     return list2 (Qnil, Qnil);
@@ -1579,8 +1579,8 @@ text into.  If BUFFER is nil, the current buffer is assumed.
     cou = 1;
   else
     {
-      CHECK_INT (count);
-      cou = XINT (count);
+      CHECK_FIXNUM (count);
+      cou = XFIXNUM (count);
     }
 
   charlen = set_itext_ichar (str, XCHAR (character));
@@ -1718,17 +1718,17 @@ determines whether case is significant or ignored.
 	  c2 = TRT_TABLE_OF (trt, c2);
 	}
       if (c1 < c2)
-	return make_int (- 1 - i);
+	return make_fixnum (- 1 - i);
       if (c1 > c2)
-	return make_int (i + 1);
+	return make_fixnum (i + 1);
     }
 
   /* The strings match as far as they go.
      If one is shorter, that one is less.  */
   if (length < len1)
-    return make_int (length + 1);
+    return make_fixnum (length + 1);
   else if (length < len2)
-    return make_int (- length - 1);
+    return make_fixnum (- length - 1);
 
   /* Same length too => they are equal.  */
   return Qzero;
@@ -1962,7 +1962,7 @@ Returns the number of substitutions performed.
     dead_wrong_type_argument (Qstringp, table);
   end_multiple_change (buf, mc_count);
 
-  return make_int (cnt);
+  return make_fixnum (cnt);
 }
 
 DEFUN ("delete-region", Fdelete_region, 2, 3, "r", /*
@@ -2070,8 +2070,8 @@ save_restriction_save (struct buffer *buf)
 
      But that was clearly before the advent of marker-insertion-type. --ben */
 
-  Fset_marker (bottom, make_int (BUF_BEGV (buf)), wrap_buffer (buf));
-  Fset_marker (top, make_int (BUF_ZV (buf)), wrap_buffer (buf));
+  Fset_marker (bottom, make_fixnum (BUF_BEGV (buf)), wrap_buffer (buf));
+  Fset_marker (top, make_fixnum (BUF_ZV (buf)), wrap_buffer (buf));
   Fset_marker_insertion_type (top, Qt);
 
   return noseeum_cons (wrap_buffer (buf), noseeum_cons (bottom, top));

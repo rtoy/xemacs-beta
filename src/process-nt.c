@@ -636,7 +636,7 @@ validate_signal_number (int signo)
   if (signo != SIGKILL && signo != SIGTERM
       && signo != SIGQUIT && signo != SIGINT
       && signo != SIGHUP)
-    invalid_constant ("Signal number not supported", make_int (signo));
+    invalid_constant ("Signal number not supported", make_fixnum (signo));
 }
 
 /*-----------------------------------------------------------------------*/
@@ -1137,7 +1137,7 @@ nt_send_process (Lisp_Object proc, struct lstream *lstream)
 	  {
 	    /* Buffer is full.  Wait, accepting input; that may allow
 	       the program to finish doing output and read more.  */
-	    Faccept_process_output (Qnil, Qzero, make_int (wait_ms));
+	    Faccept_process_output (Qnil, Qzero, make_fixnum (wait_ms));
 	    Lstream_flush (XLSTREAM (p->pipe_outstream));
 	    wait_ms = min (1000, 2 * wait_ms);
 	  }
@@ -1337,8 +1337,8 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
   if (!EQ (protocol, Qtcp))
     invalid_constant ("Unsupported protocol", protocol);
 
-  if (INTP (service))
-    port = htons ((unsigned short) XINT (service));
+  if (FIXNUMP (service))
+    port = htons ((unsigned short) XFIXNUM (service));
   else
     {
       struct servent *svc_info;
@@ -1537,13 +1537,13 @@ If successful, the return value is t, otherwise nil.
 	}
       else
 	{
-	  CHECK_INT (process);
+	  CHECK_FIXNUM (process);
 
 	  /* Allow pid to be an internally generated one, or one obtained
 	     externally.  This is necessary because real pids on Win95 are
 	     negative.  */
 
-	  pid = XINT (process);
+	  pid = XFIXNUM (process);
 	  p = find_process_from_pid (pid);
 	  if (p != NULL)
 	    pid = NT_DATA (p)->dwProcessId;

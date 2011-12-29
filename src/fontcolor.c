@@ -452,7 +452,7 @@ the baseline.
        (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
-  return make_int (XFONT_INSTANCE (font_instance)->ascent);
+  return make_fixnum (XFONT_INSTANCE (font_instance)->ascent);
 }
 
 DEFUN ("font-instance-descent", Ffont_instance_descent, 1, 1, 0, /*
@@ -465,7 +465,7 @@ descent are lowercase p and lowercase g.)
        (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
-  return make_int (XFONT_INSTANCE (font_instance)->descent);
+  return make_fixnum (XFONT_INSTANCE (font_instance)->descent);
 }
 
 DEFUN ("font-instance-width", Ffont_instance_width, 1, 1, 0, /*
@@ -475,7 +475,7 @@ The returned value is the average width for all characters in the font.
        (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
-  return make_int (XFONT_INSTANCE (font_instance)->width);
+  return make_fixnum (XFONT_INSTANCE (font_instance)->width);
 }
 
 DEFUN ("font-instance-proportional-p", Ffont_instance_proportional_p, 1, 1, 0, /*

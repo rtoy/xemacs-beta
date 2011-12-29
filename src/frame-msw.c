@@ -155,19 +155,19 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
 
   left = Fplist_get (props, Qleft, Qnil);
   if (!NILP (left))
-    CHECK_INT (left);
+    CHECK_FIXNUM (left);
 
   top = Fplist_get (props, Qtop, Qnil);
   if (!NILP (top))
-    CHECK_INT (top);
+    CHECK_FIXNUM (top);
 
   width = Fplist_get (props, Qwidth, Qnil);
   if (!NILP (width))
-    CHECK_INT (width);
+    CHECK_FIXNUM (width);
 
   height = Fplist_get (props, Qheight, Qnil);
   if (!NILP (height))
-    CHECK_INT (height);
+    CHECK_FIXNUM (height);
 
 #ifdef NEW_GC
   f->frame_data = XMSWINDOWS_FRAME (ALLOC_NORMAL_LISP_OBJECT (mswindows_frame));
@@ -176,12 +176,12 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
 #endif /* not NEW_GC */
   FRAME_MSWINDOWS_TARGET_RECT (f) = xnew_and_zero (XEMACS_RECT_WH);
 
-  FRAME_MSWINDOWS_TARGET_RECT (f)->left = NILP (left) ? -1 : abs (XINT (left));
-  FRAME_MSWINDOWS_TARGET_RECT (f)->top = NILP (top) ? -1 : abs (XINT (top));
+  FRAME_MSWINDOWS_TARGET_RECT (f)->left = NILP (left) ? -1 : abs (XFIXNUM (left));
+  FRAME_MSWINDOWS_TARGET_RECT (f)->top = NILP (top) ? -1 : abs (XFIXNUM (top));
   FRAME_MSWINDOWS_TARGET_RECT (f)->width = NILP (width) ? -1 :
-    abs (XINT (width));
+    abs (XFIXNUM (width));
   FRAME_MSWINDOWS_TARGET_RECT (f)->height = NILP (height) ? -1 :
-    abs (XINT (height));
+    abs (XFIXNUM (height));
 
   /* Misc frame stuff */
   FRAME_MSWINDOWS_MENU_HASH_TABLE (f) = Qnil;
@@ -613,7 +613,7 @@ mswindows_frame_property (struct frame *f, Lisp_Object property)
     {
       RECT rc;
       GetWindowRect (FRAME_MSWINDOWS_HANDLE (f), &rc);
-      return make_int (EQ (Qtop,  property) ? rc.top : rc.left);
+      return make_fixnum (EQ (Qtop,  property) ? rc.top : rc.left);
     }
   if (EQ (Qwindow_id, property))
     return mswindows_window_id (wrap_frame (f));
@@ -640,8 +640,8 @@ mswindows_frame_properties (struct frame *f)
   RECT rc;
   GetWindowRect (FRAME_MSWINDOWS_HANDLE (f), &rc);
 
-  props = cons3 (Qtop,  make_int (rc.top), props);
-  props = cons3 (Qleft, make_int (rc.left), props);
+  props = cons3 (Qtop,  make_fixnum (rc.top), props);
+  props = cons3 (Qleft, make_fixnum (rc.left), props);
   props = cons3 (Qwindow_id, mswindows_window_id (wrap_frame (f)), props);
 
   return props;
@@ -683,26 +683,26 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 	    }
 	  else if (EQ (prop, Qwidth))
 	    {
-	      CHECK_INT (val);
-	      width = XINT (val);
+	      CHECK_FIXNUM (val);
+	      width = XFIXNUM (val);
 	      width_specified_p = TRUE;
 	    }
 	  else if (EQ (prop, Qheight))
 	    {
-	      CHECK_INT (val);
-	      height = XINT (val);
+	      CHECK_FIXNUM (val);
+	      height = XFIXNUM (val);
 	      height_specified_p = TRUE;
 	    }
 	  else if (EQ (prop, Qleft))
 	    {
-	      CHECK_INT (val);
-	      x = XINT (val);
+	      CHECK_FIXNUM (val);
+	      x = XFIXNUM (val);
 	      x_specified_p = TRUE;
 	    }
 	  else if (EQ (prop, Qtop))
 	    {
-	      CHECK_INT (val);
-	      y = XINT (val);
+	      CHECK_FIXNUM (val);
+	      y = XFIXNUM (val);
 	      y_specified_p = TRUE;
 	    }
 	}
@@ -1039,13 +1039,13 @@ static Lisp_Object
 msprinter_frame_property (struct frame *f, Lisp_Object property)
 {
   if (EQ (Qleft_margin, property))
-    return make_int (FRAME_MSPRINTER_LEFT_MARGIN (f));
+    return make_fixnum (FRAME_MSPRINTER_LEFT_MARGIN (f));
   else if (EQ (Qtop_margin, property))
-    return make_int (FRAME_MSPRINTER_TOP_MARGIN (f));
+    return make_fixnum (FRAME_MSPRINTER_TOP_MARGIN (f));
   if (EQ (Qright_margin, property))
-    return make_int (FRAME_MSPRINTER_RIGHT_MARGIN (f));
+    return make_fixnum (FRAME_MSPRINTER_RIGHT_MARGIN (f));
   else if (EQ (Qbottom_margin, property))
-    return make_int (FRAME_MSPRINTER_BOTTOM_MARGIN (f));
+    return make_fixnum (FRAME_MSPRINTER_BOTTOM_MARGIN (f));
   else
     return Qunbound;
 }
@@ -1063,13 +1063,13 @@ msprinter_frame_properties (struct frame *f)
 {
   Lisp_Object props = Qnil;
   props = cons3 (Qbottom_margin,
-		 make_int (FRAME_MSPRINTER_BOTTOM_MARGIN (f)), props);
+		 make_fixnum (FRAME_MSPRINTER_BOTTOM_MARGIN (f)), props);
   props = cons3 (Qright_margin,
-		 make_int (FRAME_MSPRINTER_RIGHT_MARGIN (f)), props);
+		 make_fixnum (FRAME_MSPRINTER_RIGHT_MARGIN (f)), props);
   props = cons3 (Qtop_margin,
-		 make_int (FRAME_MSPRINTER_TOP_MARGIN (f)), props);
+		 make_fixnum (FRAME_MSPRINTER_TOP_MARGIN (f)), props);
   props = cons3 (Qleft_margin,
-		 make_int (FRAME_MSPRINTER_LEFT_MARGIN (f)), props);
+		 make_fixnum (FRAME_MSPRINTER_LEFT_MARGIN (f)), props);
   return props;
 }
 
@@ -1095,10 +1095,10 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
                   check_integer_range (val, Qzero, make_integer (INT_MAX));
 		  FRAME_MSPRINTER_CHARWIDTH (f) =
                     BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
-                    XINT (val);
+                    XFIXNUM (val);
 #else
                   CHECK_NATNUM (val);
-                  FRAME_MSPRINTER_CHARWIDTH (f) = XINT (val);
+                  FRAME_MSPRINTER_CHARWIDTH (f) = XFIXNUM (val);
 #endif
 		}
 	    }
@@ -1111,10 +1111,10 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
                   check_integer_range (val, Qzero, make_integer (INT_MAX));
 		  FRAME_MSPRINTER_CHARHEIGHT (f) =
                     BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
-                    XINT (val);
+                    XFIXNUM (val);
 #else
 		  CHECK_NATNUM (val);
-		  FRAME_MSPRINTER_CHARHEIGHT (f) = XINT (val);
+		  FRAME_MSPRINTER_CHARHEIGHT (f) = XFIXNUM (val);
 #endif
 		}
 	    }
@@ -1125,10 +1125,10 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
               check_integer_range (val, Qzero, make_integer (INT_MAX));
 	      FRAME_MSPRINTER_LEFT_MARGIN (f) =
                 BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
-                XINT (val);
+                XFIXNUM (val);
 #else
 	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_LEFT_MARGIN (f) = XINT (val);
+	      FRAME_MSPRINTER_LEFT_MARGIN (f) = XFIXNUM (val);
 #endif
 	    }
 	  else if (EQ (prop, Qtop_margin))
@@ -1138,10 +1138,10 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
               check_integer_range (val, Qzero, make_integer (INT_MAX));
 	      FRAME_MSPRINTER_TOP_MARGIN (f) =
                 BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
-                XINT (val);
+                XFIXNUM (val);
 #else
 	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_TOP_MARGIN (f) = XINT (val);
+	      FRAME_MSPRINTER_TOP_MARGIN (f) = XFIXNUM (val);
 #endif
 	    }
 	  else if (EQ (prop, Qright_margin))
@@ -1151,10 +1151,10 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
               check_integer_range (val, Qzero, make_integer (INT_MAX));
 	      FRAME_MSPRINTER_RIGHT_MARGIN (f) =
                 BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
-                XINT (val);
+                XFIXNUM (val);
 #else
 	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_RIGHT_MARGIN (f) = XINT (val);
+	      FRAME_MSPRINTER_RIGHT_MARGIN (f) = XFIXNUM (val);
 #endif
 	    }
 	  else if (EQ (prop, Qbottom_margin))
@@ -1164,10 +1164,10 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
               check_integer_range (val, Qzero, make_integer (INT_MAX));
 	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = 
                 BIGNUMP (val) ? bignum_to_int (XBIGNUM_DATA (val)) : 
-                XINT (val);
+                XFIXNUM (val);
 #else
 	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = XINT (val);
+	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = XFIXNUM (val);
 #endif
 	    }
 	}

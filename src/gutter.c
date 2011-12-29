@@ -340,7 +340,7 @@ calculate_gutter_size (struct window *w, enum edge_pos pos)
       /* Let GC happen again. */
       exit_redisplay_critical_section (count);
 
-      ret = make_int (calculate_gutter_size_from_display_lines (pos, ddla));
+      ret = make_fixnum (calculate_gutter_size_from_display_lines (pos, ddla));
       free_display_lines (ddla);
     }
 
@@ -776,7 +776,7 @@ the current window.
   get_gutter_coords (f, p, &x, &y, &width, &height);
   width -= (FRAME_GUTTER_BORDER_WIDTH (f, p) * 2);
 
-  return make_int (width);
+  return make_fixnum (width);
 }
 
 DEFUN ("gutter-pixel-height", Fgutter_pixel_height, 0, 2, 0, /*
@@ -797,7 +797,7 @@ the current window.
   get_gutter_coords (f, p, &x, &y, &width, &height);
   height -= (FRAME_GUTTER_BORDER_WIDTH (f, p) * 2);
 
-  return make_int (height);
+  return make_fixnum (height);
 }
 
 DEFINE_SPECIFIER_TYPE (gutter);
@@ -862,7 +862,7 @@ static void
 gutter_specs_changed_1 (Lisp_Object arg)
 {
   gutter_specs_changed (X1ST (arg), XWINDOW (X2ND (arg)),
-			X3RD (arg), (enum edge_pos) XINT (X4TH (arg)));
+			X3RD (arg), (enum edge_pos) XFIXNUM (X4TH (arg)));
   free_list (arg);
 }
 
@@ -873,7 +873,7 @@ gutter_specs_changed (Lisp_Object specifier, struct window *w,
   if (in_display)
     register_post_redisplay_action (gutter_specs_changed_1,
 				    list4 (specifier, wrap_window (w),
-					   oldval, make_int (pos)));
+					   oldval, make_fixnum (pos)));
   else
     {
       w->real_gutter[pos] = construct_window_gutter_spec (w, pos);
@@ -1004,7 +1004,7 @@ gutter_size_validate (Lisp_Object instantiator)
   if (NILP (instantiator))
     return;
 
-  if (!INTP (instantiator) && !EQ (instantiator, Qautodetect))
+  if (!FIXNUMP (instantiator) && !EQ (instantiator, Qautodetect))
     invalid_argument ("Gutter size must be an integer or `autodetect'", instantiator);
 }
 
@@ -1527,11 +1527,11 @@ See `default-gutter-height' for more information.
   fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-  fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_GUTTER_BORDER_WIDTH)), fb);
+  fb = Fcons (Fcons (list1 (Qx), make_fixnum (DEFAULT_GUTTER_BORDER_WIDTH)), fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
   fb = Fcons (Fcons (list1 (Qmsprinter), Qzero), fb);
-  fb = Fcons (Fcons (list1 (Qmswindows), make_int (DEFAULT_GUTTER_BORDER_WIDTH)), fb);
+  fb = Fcons (Fcons (list1 (Qmswindows), make_fixnum (DEFAULT_GUTTER_BORDER_WIDTH)), fb);
 #endif
   if (!NILP (fb))
     set_specifier_fallback (Vdefault_gutter_border_width, fb);

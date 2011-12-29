@@ -342,7 +342,7 @@ gtk_get_foreign_selection (Lisp_Object selection_symbol,
   /* add a timeout handler */
   if (gtk_selection_timeout > 0)
     {
-      Lisp_Object id = Fadd_timeout (make_int (x_selection_timeout),
+      Lisp_Object id = Fadd_timeout (make_fixnum (x_selection_timeout),
 				     Qx_selection_reply_timeout_internal,
 				     Qnil, Qnil);
       record_unwind_protect (Fdisable_timeout, id);

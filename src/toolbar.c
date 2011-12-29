@@ -1129,7 +1129,7 @@ whole, use `check-valid-instantiator' with a specifier type of `toolbar'.
   else
     value = elt[0];
 
-  len = XINT (Flength (value));
+  len = XFIXNUM (Flength (value));
   if (len < 1)
     CTB_ERROR ("toolbar button glyph list must have at least 1 entry");
 
@@ -1718,13 +1718,13 @@ This is a specifier; use `set-specifier' to change it.
   fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_GTK
-  fb = Fcons (Fcons (list1 (Qgtk), make_int (2)), fb);
+  fb = Fcons (Fcons (list1 (Qgtk), make_fixnum (2)), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-  fb = Fcons (Fcons (list1 (Qx), make_int (2)), fb);
+  fb = Fcons (Fcons (list1 (Qx), make_fixnum (2)), fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
-  fb = Fcons (Fcons (list1 (Qmswindows), make_int (2)), fb);
+  fb = Fcons (Fcons (list1 (Qmswindows), make_fixnum (2)), fb);
 #endif
 
   if (!NILP (fb))
@@ -1735,14 +1735,14 @@ This is a specifier; use `set-specifier' to change it.
   fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_GTK
-  fb = Fcons (Fcons (list1 (Qgtk), make_int (DEFAULT_TOOLBAR_HEIGHT)), fb);
+  fb = Fcons (Fcons (list1 (Qgtk), make_fixnum (DEFAULT_TOOLBAR_HEIGHT)), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-  fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)), fb);
+  fb = Fcons (Fcons (list1 (Qx), make_fixnum (DEFAULT_TOOLBAR_HEIGHT)), fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
   fb = Fcons (Fcons (list1 (Qmswindows),
-		     make_int (MSWINDOWS_DEFAULT_TOOLBAR_HEIGHT)), fb);
+		     make_fixnum (MSWINDOWS_DEFAULT_TOOLBAR_HEIGHT)), fb);
 #endif
   if (!NILP (fb))
     set_specifier_fallback (Vdefault_toolbar_height, fb);
@@ -1752,14 +1752,14 @@ This is a specifier; use `set-specifier' to change it.
   fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_GTK
-  fb = Fcons (Fcons (list1 (Qgtk), make_int (DEFAULT_TOOLBAR_WIDTH)), fb);
+  fb = Fcons (Fcons (list1 (Qgtk), make_fixnum (DEFAULT_TOOLBAR_WIDTH)), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-  fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)), fb);
+  fb = Fcons (Fcons (list1 (Qx), make_fixnum (DEFAULT_TOOLBAR_WIDTH)), fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
   fb = Fcons (Fcons (list1 (Qmswindows),
-		     make_int (MSWINDOWS_DEFAULT_TOOLBAR_WIDTH)), fb);
+		     make_fixnum (MSWINDOWS_DEFAULT_TOOLBAR_WIDTH)), fb);
 #endif
   if (!NILP (fb))
     set_specifier_fallback (Vdefault_toolbar_width, fb);
@@ -1868,13 +1868,13 @@ See `default-toolbar-height' for more information.
   fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-  fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_BORDER_WIDTH)), fb);
+  fb = Fcons (Fcons (list1 (Qx), make_fixnum (DEFAULT_TOOLBAR_BORDER_WIDTH)), fb);
 #endif
 #ifdef HAVE_GTK
-  fb = Fcons (Fcons (list1 (Qgtk), make_int (DEFAULT_TOOLBAR_BORDER_WIDTH)), fb);
+  fb = Fcons (Fcons (list1 (Qgtk), make_fixnum (DEFAULT_TOOLBAR_BORDER_WIDTH)), fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
-  fb = Fcons (Fcons (list1 (Qmswindows), make_int (MSWINDOWS_DEFAULT_TOOLBAR_BORDER_WIDTH)), fb);
+  fb = Fcons (Fcons (list1 (Qmswindows), make_fixnum (MSWINDOWS_DEFAULT_TOOLBAR_BORDER_WIDTH)), fb);
 #endif
   if (!NILP (fb))
     set_specifier_fallback (Vdefault_toolbar_border_width, fb);

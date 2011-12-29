@@ -743,10 +743,10 @@ Return the corresponding character, or nil if no character can be found.
   int c1, c2, s1, s2;
 
   CHECK_CONS (code);
-  CHECK_INT (XCAR (code));
-  CHECK_INT (XCDR (code));
-  s1 = XINT (XCAR (code));
-  s2 = XINT (XCDR (code));
+  CHECK_FIXNUM (XCAR (code));
+  CHECK_FIXNUM (XCDR (code));
+  s1 = XFIXNUM (XCAR (code));
+  s2 = XFIXNUM (XCDR (code));
   if (byte_shift_jis_two_byte_1_p (s1) &&
       byte_shift_jis_two_byte_2_p (s2))
     {
@@ -779,7 +779,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
       EQ (charset, Vcharset_japanese_jisx0208_1978))
     {
       ENCODE_SHIFT_JIS (c1, c2, s1, s2);
-      return Fcons (make_int (s1), make_int (s2));
+      return Fcons (make_fixnum (s1), make_fixnum (s2));
     }
   else
     return Qnil;
@@ -1185,9 +1185,9 @@ decodes an external representation.
   Ichar ch;
 
   CHECK_CONS (code);
-  CHECK_INT (XCAR (code));
-  CHECK_INT (XCDR (code));
-  ch = decode_big5_char (XINT (XCAR (code)), XINT (XCDR (code)));
+  CHECK_FIXNUM (XCAR (code));
+  CHECK_FIXNUM (XCDR (code));
+  ch = decode_big5_char (XFIXNUM (XCAR (code)), XFIXNUM (XCDR (code)));
   if (ch < 0)
     return Qnil;
   else
@@ -1211,7 +1211,7 @@ term `encode' is used for this operation.
 #ifdef UNICODE_INTERNAL
   if (EQ (charset, Vcharset_chinese_big5))
     {
-      return Fcons (make_int (c1), make_int (c2));
+      return Fcons (make_fixnum (c1), make_fixnum (c2));
     }
 #else /* not UNICODE_INTERNAL */
   if (EQ (charset, Vcharset_chinese_big5_1) ||
@@ -1219,7 +1219,7 @@ term `encode' is used for this operation.
     {
       int b1, b2;
       ENCODE_BIG5 (charset, c1, c2, b1, b2);
-      return Fcons (make_int (b1), make_int (b2));
+      return Fcons (make_fixnum (b1), make_fixnum (b2));
     }
 #endif /* UNICODE_INTERNAL */
   else
@@ -2132,8 +2132,8 @@ charset_by_attributes_or_create_one (int type, Ibyte final, int dir)
 
       charset = Fmake_charset (Qunbound, Qnil,
 			       nconc2 (list6 (Qfinal, make_char (final),
-					      Qchars, make_int (chars),
-					      Qdimension, make_int (dim)),
+					      Qchars, make_fixnum (chars),
+					      Qdimension, make_fixnum (dim)),
 				       list2 (Qdirection, 
 					      dir == CHARSET_LEFT_TO_RIGHT ?
 					      Ql2r : Qr2l)));

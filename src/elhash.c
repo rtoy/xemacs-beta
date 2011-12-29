@@ -291,9 +291,9 @@ lisp_object_general_hash (const Hash_Table_Test *http, Lisp_Object obj)
   res = IGNORE_MULTIPLE_VALUES (Ffuncall (countof (args), args));
   UNGCPRO;
 
-  if (INTP (res))
+  if (FIXNUMP (res))
     {
-      return (Hashcode) (XINT (res));
+      return (Hashcode) (XFIXNUM (res));
     }
 
 #ifdef HAVE_BIGNUM
@@ -546,8 +546,8 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
 	QUIT;
 	if (count > 0)
 	  write_ascstring (printcharfun, " ");
-	if (!print_readably && INTP (Vprint_table_nonreadably_length)
-	    && count > XINT (Vprint_table_nonreadably_length))
+	if (!print_readably && FIXNUMP (Vprint_table_nonreadably_length)
+	    && count > XFIXNUM (Vprint_table_nonreadably_length))
 	  {
 	    write_ascstring (printcharfun, "...");
 	    break;
@@ -824,7 +824,7 @@ hash_table_size_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
           /* hash_table_size() can't handle excessively large sizes. */
           maybe_signal_error_1 (Qargs_out_of_range,
                                 list3 (value, Qzero,
-                                       make_integer (EMACS_INT_MAX)),
+                                       make_integer (MOST_POSITIVE_FIXNUM)),
                                 Qhash_table, errb);
           return 0;
         }
@@ -845,7 +845,7 @@ hash_table_size_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 static Elemcount
 decode_hash_table_size (Lisp_Object obj)
 {
-  return NILP (obj) ? HASH_TABLE_DEFAULT_SIZE : XINT (obj);
+  return NILP (obj) ? HASH_TABLE_DEFAULT_SIZE : XFIXNUM (obj);
 }
 
 static int
@@ -1377,11 +1377,11 @@ inchash_eq (Lisp_Object key, Lisp_Object table, EMACS_INT offset)
       break;
 
   if (!HTENTRY_CLEAR_P (probe))
-    probe->value = make_int (XINT (probe->value) + offset);
+    probe->value = make_fixnum (XFIXNUM (probe->value) + offset);
   else
     {
       probe->key   = key;
-      probe->value = make_int (offset);
+      probe->value = make_fixnum (offset);
 
       if (++ht->count >= ht->rehash_count)
         {
@@ -1494,7 +1494,7 @@ Return the number of entries in HASH-TABLE.
 */
        (hash_table))
 {
-  return make_int (xhash_table (hash_table)->count);
+  return make_fixnum (xhash_table (hash_table)->count);
 }
 
 DEFUN ("hash-table-test", Fhash_table_test, 1, 1, 0, /*
@@ -1515,7 +1515,7 @@ This is the current number of slots in HASH-TABLE, whether occupied or not.
 */
        (hash_table))
 {
-  return make_int (xhash_table (hash_table)->size);
+  return make_fixnum (xhash_table (hash_table)->size);
 }
 
 DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size, 1, 1, 0, /*
@@ -2089,9 +2089,9 @@ internal_hash (Lisp_Object obj, int depth, Boolint equalp)
           return LISP_HASH (make_char (CANONCASE (NULL, XCHAR (obj))));
         }
 
-      if (INTP (obj))
+      if (FIXNUMP (obj))
         {
-          return FLOAT_HASHCODE_FROM_DOUBLE ((double) (XINT (obj)));
+          return FLOAT_HASHCODE_FROM_DOUBLE ((double) (XFIXNUM (obj)));
         }
     }
 
@@ -2210,7 +2210,7 @@ cannot be defined as a hash table test.
   min = Ffunction_min_args (equal_function);
   max = Ffunction_max_args (equal_function);
 
-  if (!((XINT (min) <= 2) && (NILP (max) || 2 <= XINT (max))))
+  if (!((XFIXNUM (min) <= 2) && (NILP (max) || 2 <= XFIXNUM (max))))
     {
       signal_wrong_number_of_arguments_error (equal_function, 2);
     }
@@ -2218,7 +2218,7 @@ cannot be defined as a hash table test.
   min = Ffunction_min_args (hash_function);
   max = Ffunction_max_args (hash_function);
 
-  if (!((XINT (min) <= 1) && (NILP (max) || 1 <= XINT (max))))
+  if (!((XFIXNUM (min) <= 1) && (NILP (max) || 1 <= XFIXNUM (max))))
     {
       signal_wrong_number_of_arguments_error (hash_function, 1);
     }
@@ -2407,7 +2407,7 @@ vars_of_elhash (void)
   assert (!NILP (Fassq (Qeql, weak_list_list)));
   assert (!NILP (Fassq (Qequal, weak_list_list)));
   assert (!NILP (Fassq (Qequalp, weak_list_list)));
-  assert (4 == XINT (Flength (weak_list_list)));
+  assert (4 == XFIXNUM (Flength (weak_list_list)));
 
   Vhash_table_test_weak_list = make_weak_list (WEAK_LIST_KEY_ASSOC);
   XWEAK_LIST_LIST (Vhash_table_test_weak_list) = weak_list_list;

@@ -193,8 +193,8 @@ Only useful in debugging internals.
 {
   struct buffer *buf = decode_buffer (buffer, 0);
   struct syntax_cache *cache = buf->syntax_cache;
-  return list4 (cache->start, cache->end, make_int (cache->prev_change),
-		make_int (cache->next_change));
+  return list4 (cache->start, cache->end, make_fixnum (cache->prev_change),
+		make_fixnum (cache->next_change));
 }
 
 #endif /* DEBUG_XEMACS */
@@ -235,7 +235,7 @@ See `make-syntax-table' for more information.
 #endif /* MIRROR_TABLE */
   syntax_cache_table_was_changed (buf);
   /* Indicate that this buffer now has a specified syntax table.  */
-  buf->local_var_flags |= XINT (buffer_local_flags.syntax_table);
+  buf->local_var_flags |= XFIXNUM (buffer_local_flags.syntax_table);
   return syntax_table;
 }
 
@@ -298,8 +298,8 @@ reset_syntax_cache_range (struct syntax_cache *cache,  /* initialized cache */
   if (BUFFERP (cache->object))
     {
       /* make known region zero-length and reset insertion behavior */
-      Fset_marker (cache->start, make_int (1), cache->object);
-      Fset_marker (cache->end, make_int (1), cache->object);
+      Fset_marker (cache->start, make_fixnum (1), cache->object);
+      Fset_marker (cache->end, make_fixnum (1), cache->object);
       Fset_marker_insertion_type (cache->start, Qnil);
       Fset_marker_insertion_type (cache->end, Qt);
     }
@@ -307,8 +307,8 @@ reset_syntax_cache_range (struct syntax_cache *cache,  /* initialized cache */
      If so, also reset tables. */
   if (valid_everywhere)
     {
-      cache->prev_change = EMACS_INT_MIN;
-      cache->next_change = EMACS_INT_MAX;
+      cache->prev_change = MOST_NEGATIVE_FIXNUM;
+      cache->next_change = MOST_POSITIVE_FIXNUM;
     }
   else /* valid nowhere */
     {
@@ -498,13 +498,13 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
 	 then we can safely make the end closed, so it will take in newly
 	 inserted text. (If such an extent is inserted, we will be informed
 	 through signal_syntax_cache_extent_changed().) */
-      Fset_marker (cache->start, make_int (cache->prev_change), cache->object);
+      Fset_marker (cache->start, make_fixnum (cache->prev_change), cache->object);
       Fset_marker_insertion_type
 	(cache->start,
 	 at_begin && NILP (extent_at (prev, cache->object, Qsyntax_table,
 				      NULL, EXTENT_AT_AT, 0))
 	 ? Qnil : Qt);
-      Fset_marker (cache->end, make_int (cache->next_change), cache->object);
+      Fset_marker (cache->end, make_fixnum (cache->next_change), cache->object);
       Fset_marker_insertion_type
 	(cache->end,
 	 at_end && NILP (extent_at (next, cache->object, Qsyntax_table,
@@ -523,10 +523,10 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
       update_mirror_syntax_if_dirty (cache->mirror_table);
 #endif /* NOT_WORTH_THE_EFFORT */
     } 
-  else if (CONSP (tmp_table) && INTP (XCAR (tmp_table)))
+  else if (CONSP (tmp_table) && FIXNUMP (XCAR (tmp_table)))
     {
       cache->source = syntax_source_property_code;
-      cache->syntax_code = XINT (XCAR (tmp_table));
+      cache->syntax_code = XFIXNUM (XCAR (tmp_table));
     }
   else 
     {
@@ -704,7 +704,7 @@ syntax_match (Lisp_Object syntax_table, Ichar ch)
 
   if (CONSP (code))
     code2 = XCAR (code);
-  if (SYNTAX_FROM_CODE (XINT (code2)) == Sinherit)
+  if (SYNTAX_FROM_CODE (XFIXNUM (code2)) == Sinherit)
     code = get_char_table (ch, Vstandard_syntax_table);
 
   return CONSP (code) ? XCDR (code) : Qnil;
@@ -860,8 +860,8 @@ the documentation for this variable for more details.
     n = 1;
   else
     {
-      CHECK_INT (count);
-      n = XINT (count);
+      CHECK_FIXNUM (count);
+      n = XFIXNUM (count);
     }
 
   val = scan_words (buf, BUF_PT (buf), n);
@@ -1176,8 +1176,8 @@ the motion would cross the buffer boundary or encounters a noncomment token).
     n = 1;
   else
     {
-      CHECK_INT (count);
-      n = XINT (count);
+      CHECK_FIXNUM (count);
+      n = XFIXNUM (count);
     }
 
   from = BUF_PT (buf);
@@ -1497,7 +1497,7 @@ scan_lists (struct buffer *buf, Charbpos from, int count, int depth,
 		  return Qnil;
 		signal_error_2 (Qscan_error,
 				"Containing expression ends prematurely",
-				make_int (last_good), make_int (from));
+				make_fixnum (last_good), make_fixnum (from));
 	      }
 	    break;
 
@@ -1671,7 +1671,7 @@ scan_lists (struct buffer *buf, Charbpos from, int count, int depth,
 		  return Qnil;
 		signal_error_2 (Qscan_error,
 				"Containing expression ends prematurely",
-				make_int (last_good), make_int (from));
+				make_fixnum (last_good), make_fixnum (from));
 	      }
 	    break;
 
@@ -1737,12 +1737,12 @@ scan_lists (struct buffer *buf, Charbpos from, int count, int depth,
     }
 
 
-  return (make_int (from));
+  return (make_fixnum (from));
 
 lose:
   if (!noerror)
     signal_error_2 (Qscan_error, "Unbalanced parentheses",
-		    make_int (last_good), make_int (from));
+		    make_fixnum (last_good), make_fixnum (from));
   return Qnil;
 }
 
@@ -1793,12 +1793,12 @@ If the depth is right but the count is not used up, nil is returned.
 {
   struct buffer *buf;
 
-  CHECK_INT (from);
-  CHECK_INT (count);
-  CHECK_INT (depth);
+  CHECK_FIXNUM (from);
+  CHECK_FIXNUM (count);
+  CHECK_FIXNUM (depth);
   buf = decode_buffer (buffer, 0);
 
-  return scan_lists (buf, XINT (from), XINT (count), XINT (depth), 0,
+  return scan_lists (buf, XFIXNUM (from), XFIXNUM (count), XFIXNUM (depth), 0,
 		     !NILP (noerror));
 }
 
@@ -1821,10 +1821,10 @@ but before count is used up, nil is returned.
        (from, count, buffer, noerror))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
-  CHECK_INT (from);
-  CHECK_INT (count);
+  CHECK_FIXNUM (from);
+  CHECK_FIXNUM (count);
 
-  return scan_lists (buf, XINT (from), XINT (count), 0, 1, !NILP (noerror));
+  return scan_lists (buf, XFIXNUM (from), XFIXNUM (count), 0, 1, !NILP (noerror));
 }
 
 DEFUN ("backward-prefix-chars", Fbackward_prefix_chars, 0, 1, 0, /*
@@ -1894,7 +1894,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
     {
       tem = Fcar (oldstate);    /* elt 0, depth */
       if (!NILP (tem))
-	depth = XINT (tem);
+	depth = XFIXNUM (tem);
       else
 	depth = 0;
 
@@ -1903,7 +1903,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
       oldstate = Fcdr (oldstate);
       tem = Fcar (oldstate);    /* elt 3, instring */
       state.instring = ( !NILP (tem) 
-			 ? ( INTP (tem) ? XINT (tem) : ST_STRING_STYLE) 
+			 ? ( FIXNUMP (tem) ? XFIXNUM (tem) : ST_STRING_STYLE) 
 			 : -1);
 
       oldstate = Fcdr (oldstate);
@@ -1925,7 +1925,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 
       oldstate = Fcdr (oldstate); /* elt 8, start of last comment/string */
       tem = Fcar (oldstate);
-      state.comstr_start = NILP (tem) ? -1 : XINT (tem);
+      state.comstr_start = NILP (tem) ? -1 : XFIXNUM (tem);
 
       /* elt 9, char numbers of starts-of-expression of levels
          (starting from outermost). */
@@ -1935,10 +1935,10 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 				   to change). */
       while (!NILP (tem))	/* >= second enclosing sexps.  */
 	{
-	  curlevel->last = XINT (Fcar (tem));
+	  curlevel->last = XFIXNUM (Fcar (tem));
 	  if (++curlevel == endlevel)
 	    stack_overflow ("Nesting too deep for parser",
-			    make_int (curlevel - levelstart));
+			    make_fixnum (curlevel - levelstart));
 	  curlevel->prev = -1;
 	  curlevel->last = -1;
 	  tem = Fcdr (tem);
@@ -2081,7 +2081,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	  curlevel->last = from - 1;
 	  if (++curlevel == endlevel)
 	    stack_overflow ("Nesting too deep for parser",
-			    make_int (curlevel - levelstart));
+			    make_fixnum (curlevel - levelstart));
 	  curlevel->prev = -1;
 	  curlevel->last = -1;
 	  if (targetdepth == depth) goto done;
@@ -2191,7 +2191,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
   state.location = from;
   state.levelstarts = Qnil;
   while (--curlevel >= levelstart)
-    state.levelstarts = Fcons (make_int (curlevel->last),
+    state.levelstarts = Fcons (make_fixnum (curlevel->last),
 			       state.levelstarts);
 
   *stateptr = state;
@@ -2241,8 +2241,8 @@ to the current buffer.
 
   if (!NILP (targetdepth))
     {
-      CHECK_INT (targetdepth);
-      target = XINT (targetdepth);
+      CHECK_FIXNUM (targetdepth);
+      target = XFIXNUM (targetdepth);
     }
   else
     target = -100000;		/* We won't reach this depth */
@@ -2258,21 +2258,21 @@ to the current buffer.
   val = Qnil;
   val = Fcons (state.levelstarts, val);
   val = Fcons ((state.incomment || (state.instring >= 0))
-	       ? make_int (state.comstr_start) : Qnil, val);
+	       ? make_fixnum (state.comstr_start) : Qnil, val);
   val = Fcons (state.comstyle  ? (state.comstyle == ST_COMMENT_STYLE
 				  ? Qsyntax_table : Qt) : Qnil, val);
-  val = Fcons (make_int (state.mindepth),   val);
+  val = Fcons (make_fixnum (state.mindepth),   val);
   val = Fcons (state.quoted    ? Qt : Qnil, val);
   val = Fcons (state.incomment ? Qt : Qnil, val);
   val = Fcons (state.instring < 0
 	       ? Qnil
 	       : (state.instring == ST_STRING_STYLE
-		  ? Qt : make_int (state.instring)), val);
+		  ? Qt : make_fixnum (state.instring)), val);
   val = Fcons (state.thislevelstart < 0 ? Qnil :
-	       make_int (state.thislevelstart), val);
+	       make_fixnum (state.thislevelstart), val);
   val = Fcons (state.prevlevelstart < 0 ? Qnil :
-	       make_int (state.prevlevelstart), val);
-  val = Fcons (make_int (state.depth), val);
+	       make_fixnum (state.prevlevelstart), val);
+  val = Fcons (make_fixnum (state.depth), val);
 
   return val;
 }
@@ -2304,7 +2304,7 @@ copy_to_mirrortab (Lisp_Object UNUSED (table), Ichar from,
 
   if (CONSP (val))
     val = XCAR (val);
-  if (SYNTAX_FROM_CODE (XINT (val)) != Sinherit)
+  if (SYNTAX_FROM_CODE (XFIXNUM (val)) != Sinherit)
     put_char_table (mirrortab, from, to, val);
   return 0;
 }
@@ -2317,7 +2317,7 @@ copy_if_not_already_present (Lisp_Object UNUSED (table), Ichar from,
 
   if (CONSP (val))
     val = XCAR (val);
-  if (SYNTAX_FROM_CODE (XINT (val)) != Sinherit)
+  if (SYNTAX_FROM_CODE (XFIXNUM (val)) != Sinherit)
     {
       Ichar ch;
       for (ch = from; ch <= to; ch++)
@@ -2360,7 +2360,7 @@ update_just_this_syntax_table (Lisp_Object table)
 		    copy_if_not_already_present,
 		    STORE_LISP_IN_VOID (mirrortab));
   /* The resetting made the default be Qnil.  Put it back to Sword. */
-  set_char_table_default (mirrortab, make_int (Sword));
+  set_char_table_default (mirrortab, make_fixnum (Sword));
   XCHAR_TABLE (mirrortab)->dirty = 0;
 }
 
@@ -2464,7 +2464,7 @@ static void
 define_standard_syntax (const UExtbyte *p, enum syntaxcode syn)
 {
   for (; *p; p++)
-    Fput_char_table (make_char (*p), make_int (syn), Vstandard_syntax_table);
+    Fput_char_table (make_char (*p), make_fixnum (syn), Vstandard_syntax_table);
 }
 
 void
@@ -2476,7 +2476,7 @@ complex_vars_of_syntax (void)
 #define SET_RANGE_SYNTAX(start, end, syntax)				\
   do {									\
     for (i = start; i <= end; i++)					\
-      Fput_char_table(make_char(i), make_int(syntax),			\
+      Fput_char_table(make_char(i), make_fixnum(syntax),			\
 		      Vstandard_syntax_table);				\
   } while (0)
 
@@ -2493,7 +2493,7 @@ complex_vars_of_syntax (void)
   staticpro (&Vsyntax_designator_chars_string);
 
   /* Default character syntax is word. */
-  set_char_table_default (Vstandard_syntax_table, make_int (Sword));
+  set_char_table_default (Vstandard_syntax_table, make_fixnum (Sword));
 
   /* Control 0; treat as punctuation */
   SET_RANGE_SYNTAX(0, 32, Spunct);
@@ -2514,10 +2514,10 @@ complex_vars_of_syntax (void)
   for (p = (const UExtbyte *)"()[]{}"; *p; p+=2)
     {
       Fput_char_table (make_char (p[0]),
-		       Fcons (make_int (Sopen), make_char (p[1])),
+		       Fcons (make_fixnum (Sopen), make_char (p[1])),
 		       Vstandard_syntax_table);
       Fput_char_table (make_char (p[1]),
-		       Fcons (make_int (Sclose), make_char (p[0])),
+		       Fcons (make_fixnum (Sclose), make_char (p[0])),
 		       Vstandard_syntax_table);
     }
 

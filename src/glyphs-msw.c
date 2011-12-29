@@ -389,8 +389,8 @@ init_image_instance_from_dibitmap (Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_MSWINDOWS_BITMAP_REAL_HEIGHT (ii) =
     bmp_info->bmiHeader.biHeight;
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii)   = bmp_info->bmiHeader.biBitCount;
-  IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (x_hot);
-  IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (y_hot);
+  IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_fixnum (x_hot);
+  IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_fixnum (y_hot);
   init_image_instance_geometry (ii);
 
   if (create_mask)
@@ -618,8 +618,8 @@ mswindows_initialize_image_instance_icon (Lisp_Image_Instance *image,
 
   /* we rely on windows to do any resizing necessary */
   x_icon.fIcon = cursor ? FALSE : TRUE;
-  x_icon.xHotspot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (image));
-  x_icon.yHotspot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (image));
+  x_icon.xHotspot = XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (image));
+  x_icon.yHotspot = XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (image));
   x_icon.hbmMask = IMAGE_INSTANCE_MSWINDOWS_MASK (image);
   x_icon.hbmColor = IMAGE_INSTANCE_MSWINDOWS_BITMAP (image);
 
@@ -833,7 +833,7 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
       {
 	signal_double_image_error_2 ("Parsing pixmap data",
 				     "unknown error",
-				     make_int (result), image);
+				     make_fixnum (result), image);
       }
     }
 
@@ -1171,8 +1171,8 @@ resource_name_to_resource (Lisp_Object name, int type)
 			   : type == IMAGE_ICON ? icon_table
 			   : bitmap_table);
 
-  if (INTP (name))
-    return XINT (name);
+  if (FIXNUMP (name))
+    return XFIXNUM (name);
   else if (!STRINGP (name))
     invalid_argument ("invalid resource identifier", name);
 
@@ -1284,8 +1284,8 @@ mswindows_resource_instantiate (Lisp_Object image_instance,
       GetIconInfo ((HICON)himage, &iconinfo);
       IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = iconinfo.hbmColor;
       IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = iconinfo.hbmMask;
-      IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (iconinfo.xHotspot);
-      IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (iconinfo.yHotspot);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_fixnum (iconinfo.xHotspot);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_fixnum (iconinfo.yHotspot);
       IMAGE_INSTANCE_MSWINDOWS_ICON (ii) = (HICON) himage;
     }
   else
@@ -1293,8 +1293,8 @@ mswindows_resource_instantiate (Lisp_Object image_instance,
       IMAGE_INSTANCE_MSWINDOWS_ICON (ii) = NULL;
       IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = (HBITMAP) himage;
       IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = NULL;
-      IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (0);
-      IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (0);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_fixnum (0);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_fixnum (0);
     }
 }
 
@@ -1475,8 +1475,8 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_MSWINDOWS_BITMAP_REAL_WIDTH (ii) = width;
   IMAGE_INSTANCE_MSWINDOWS_BITMAP_REAL_HEIGHT (ii) = height;
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = 1;
-  IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (0);
-  IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (0);
+  IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_fixnum (0);
+  IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_fixnum (0);
   init_image_instance_geometry (ii);
 
   IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = mask ? mask :
@@ -1574,8 +1574,8 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 					     Qbinary);
       mask = xbm_create_bitmap_from_data (hdc,
 					  ext_data,
-					  XINT (XCAR (mask_data)),
-					  XINT (XCAR (XCDR (mask_data))),
+					  XFIXNUM (XCAR (mask_data)),
+					  XFIXNUM (XCAR (XCDR (mask_data))),
 					  FALSE,
 					  PALETTERGB (0,0,0),
 					  PALETTERGB (255,255,255));
@@ -1604,8 +1604,8 @@ mswindows_xbm_instantiate (Lisp_Object image_instance,
 					       Qbinary);
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
-		     pointer_bg, dest_mask, XINT (XCAR (data)),
-		     XINT (XCAR (XCDR (data))), ext_data);
+		     pointer_bg, dest_mask, XFIXNUM (XCAR (data)),
+		     XFIXNUM (XCAR (XCDR (data))), ext_data);
 }
 
 #ifdef HAVE_XFACE
@@ -2072,11 +2072,11 @@ mswindows_register_gui_item (Lisp_Object image_instance,
   int id = gui_item_id_hash (FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f),
 			     gui,
 			     WIDGET_GLYPH_SLOT);
-  Fputhash (make_int (id), image_instance,
+  Fputhash (make_fixnum (id), image_instance,
 	    FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f));
-  Fputhash (make_int (id), XGUI_ITEM (gui)->callback,
+  Fputhash (make_fixnum (id), XGUI_ITEM (gui)->callback,
 	    FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f));
-  Fputhash (make_int (id), XGUI_ITEM (gui)->callback_ex,
+  Fputhash (make_fixnum (id), XGUI_ITEM (gui)->callback_ex,
 	    FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f));
   return id;
 }
@@ -2125,7 +2125,7 @@ mswindows_subwindow_instantiate (Lisp_Object image_instance,
 			    NULL, /* must be null for this class */
 			    NULL)) == NULL)
     gui_error ("window creation failed with code",
-	       make_int (GetLastError()));
+	       make_fixnum (GetLastError()));
 
   wnd = qxeCreateWindow (XETEXT ("STATIC"), XETEXT (""),
 			 WS_CHILD,
@@ -2265,7 +2265,7 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 			    NULL, /* must be null for this class */
 			    NULL)) == NULL)
     gui_error ("window creation failed with code",
-	       make_int (GetLastError()));
+	       make_fixnum (GetLastError()));
 
   classext = ITEXT_TO_TSTR (class_);
 
@@ -2286,7 +2286,7 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 				 GWL_HINSTANCE),
 				NULL)) == NULL)
     gui_error ("window creation failed with code",
-	       make_int (GetLastError()));
+	       make_fixnum (GetLastError()));
 
   IMAGE_INSTANCE_SUBWINDOW_ID (ii) = wnd;
   qxeSetWindowLong (wnd, GWL_USERDATA, (LONG)STORE_LISP_IN_VOID(image_instance));
@@ -2458,9 +2458,9 @@ mswindows_progress_gauge_instantiate (Lisp_Object image_instance,
 			       XIMAGE_INSTANCE_FRAME (ii))))));
 #endif
   val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_ITEMS (ii))->value;
-  CHECK_INT (val);
+  CHECK_FIXNUM (val);
   qxeSendMessage (WIDGET_INSTANCE_MSWINDOWS_HANDLE (ii),
-		  PBM_SETPOS, (WPARAM)XINT (val), 0);
+		  PBM_SETPOS, (WPARAM)XFIXNUM (val), 0);
 }
 
 /* instantiate a tree view widget */
@@ -2882,11 +2882,11 @@ mswindows_progress_gauge_redisplay (Lisp_Object image_instance)
 #ifdef DEBUG_WIDGET_OUTPUT
       stderr_out ("progress gauge displayed value on %p updated to %ld\n",
 		  WIDGET_INSTANCE_MSWINDOWS_HANDLE (ii),
-		  XINT(val));
+		  XFIXNUM(val));
 #endif
-      CHECK_INT (val);
+      CHECK_FIXNUM (val);
       qxeSendMessage (WIDGET_INSTANCE_MSWINDOWS_HANDLE (ii),
-		      PBM_SETPOS, (WPARAM)XINT (val), 0);
+		      PBM_SETPOS, (WPARAM)XFIXNUM (val), 0);
     }
 }
 

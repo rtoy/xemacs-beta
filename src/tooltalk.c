@@ -291,10 +291,10 @@ Return non-nil if OBJECT is a tooltalk pattern.
 static int
 tooltalk_constant_value (Lisp_Object s)
 {
-  if (INTP (s))
-    return XINT (s);
+  if (FIXNUMP (s))
+    return XFIXNUM (s);
   else if (SYMBOLP (s))
-    return XINT (XSYMBOL (s)->value);
+    return XFIXNUM (XSYMBOL (s)->value);
   else
     return 0;   /* should never occur */
 }
@@ -586,8 +586,8 @@ value returned by `arg_bval' like a string is fine.
       EQ (attribute, (Qtt_arg_type))  ||
       EQ (attribute, (Qtt_arg_val)))
     {
-      CHECK_INT (argn);
-      n = XINT (argn);
+      CHECK_FIXNUM (argn);
+      n = XFIXNUM (argn);
     }
 
   if (!VALID_TOOLTALK_MESSAGEP (m))
@@ -609,7 +609,7 @@ value returned by `arg_bval' like a string is fine.
     return tt_message_arg_bval_vector (m, n);
 
   else if (EQ (attribute, Qtt_args_count))
-    return make_int (tt_message_args_count (m));
+    return make_fixnum (tt_message_args_count (m));
 
   else if (EQ (attribute, Qtt_address))
     return tt_address_symbol (tt_message_address (m));
@@ -618,13 +618,13 @@ value returned by `arg_bval' like a string is fine.
     return tt_class_symbol (tt_message_class (m));
 
   else if (EQ (attribute, Qtt_disposition))
-    return make_int (tt_message_disposition (m));
+    return make_fixnum (tt_message_disposition (m));
 
   else if (EQ (attribute, Qtt_file))
     return tt_build_c_string (tt_message_file (m));
 
   else if (EQ (attribute, Qtt_gid))
-    return make_int (tt_message_gid (m));
+    return make_fixnum (tt_message_gid (m));
 
   else if (EQ (attribute, Qtt_handler))
     return tt_build_c_string (tt_message_handler (m));
@@ -660,13 +660,13 @@ value returned by `arg_bval' like a string is fine.
     return tt_state_symbol (tt_message_state (m));
 
   else if (EQ (attribute, Qtt_status))
-    return make_int (tt_message_status (m));
+    return make_fixnum (tt_message_status (m));
 
   else if (EQ (attribute, Qtt_status_string))
     return tt_build_c_string (tt_message_status_string (m));
 
   else if (EQ (attribute, Qtt_uid))
-    return make_int (tt_message_uid (m));
+    return make_fixnum (tt_message_uid (m));
 
   else if (EQ (attribute, Qtt_callback))
     return XTOOLTALK_MESSAGE (message_)->callback;
@@ -716,8 +716,8 @@ New arguments can be added to a message with add-tooltalk-message-arg.
       EQ (attribute, (Qtt_arg_ival))  ||
       EQ (attribute, (Qtt_arg_val)))
     {
-      CHECK_INT (argn);
-      n = XINT (argn);
+      CHECK_FIXNUM (argn);
+      n = XFIXNUM (argn);
     }
 
   if (!VALID_TOOLTALK_MESSAGEP (m))
@@ -773,8 +773,8 @@ New arguments can be added to a message with add-tooltalk-message-arg.
     }
   else if (EQ (attribute, Qtt_arg_ival))
     {
-      CHECK_INT (value);
-      tt_message_arg_ival_set (m, n, XINT (value));
+      CHECK_FIXNUM (value);
+      tt_message_arg_ival_set (m, n, XFIXNUM (value));
     }
   else if (EQ (attribute, Qtt_arg_val))
     {
@@ -785,8 +785,8 @@ New arguments can be added to a message with add-tooltalk-message-arg.
     }
   else if (EQ (attribute, Qtt_status))
     {
-      CHECK_INT (value);
-      tt_message_status_set (m, XINT (value));
+      CHECK_FIXNUM (value);
+      tt_message_status_set (m, XFIXNUM (value));
     }
   else if (EQ (attribute, Qtt_callback))
     {
@@ -930,8 +930,8 @@ embedded nulls (use `arg_bval').
 	value_ext = LISP_STRING_TO_EXTERNAL (value, Qtooltalk_encoding);
 	tt_message_arg_add (m, n, vtype_ext, value_ext);
       }
-    else if (INTP (value))
-      tt_message_iarg_add (m, n, vtype_ext, XINT (value));
+    else if (FIXNUMP (value))
+      tt_message_iarg_add (m, n, vtype_ext, XFIXNUM (value));
   }
 
   return Qnil;
@@ -1129,8 +1129,8 @@ is added.  At present there's no way to add a binary data argument.
 	value_ext = LISP_STRING_TO_EXTERNAL (value, Qtooltalk_encoding);
 	tt_pattern_arg_add (p, n, vtype_ext, value_ext);
       }
-    else if (INTP (value))
-      tt_pattern_iarg_add (p, n, vtype_ext, XINT (value));
+    else if (FIXNUMP (value))
+      tt_pattern_iarg_add (p, n, vtype_ext, XFIXNUM (value));
   }
 
   return Qnil;
@@ -1254,7 +1254,7 @@ init_tooltalk (void)
   if (tt_ptr_error (retval) != TT_OK)
     return;
 
-  Vtooltalk_fd = make_int (tt_fd ());
+  Vtooltalk_fd = make_fixnum (tt_fd ());
 
   tt_session_join (tt_default_session ());
 
@@ -1422,7 +1422,7 @@ Unprocessed messages are messages that didn't match any patterns.
 
 #define MAKE_CONSTANT(name) do { \
     defsymbol (&Q_ ## name, #name); \
-    Fset (Q_ ## name, make_int (name)); \
+    Fset (Q_ ## name, make_fixnum (name)); \
   } while (0)
 
   MAKE_CONSTANT (TT_MODE_UNDEFINED);

@@ -237,7 +237,7 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
     {
       /* 確定した文字列 (the confirmed string) */
       Vcanna_kakutei_string = make_euc_string (buf, len);
-      val = make_int (len);
+      val = make_fixnum (len);
       /* 確定した文字列の読みの情報...
 	 (info about the reading of the confirmed string) */
       Vcanna_kakutei_yomi = Vcanna_kakutei_romaji = Qnil;
@@ -375,8 +375,8 @@ If nil is specified for each arg, the default value will be used.
     }
   else
     {
-      CHECK_INT (num);
-      kugiri = (XINT (num) == 1) ? (char *) 1 : (char *) 0;
+      CHECK_FIXNUM (num);
+      kugiri = (XFIXNUM (num) == 1) ? (char *) 1 : (char *) 0;
     }
 
   if (NILP (server))
@@ -506,9 +506,9 @@ kanji candidates.
 */
        (num))
 {
-  CHECK_INT (num);
+  CHECK_FIXNUM (num);
 
-  jrKanjiControl (0, KC_SETWIDTH,  (char *) XINT (num));
+  jrKanjiControl (0, KC_SETWIDTH,  (char *) XFIXNUM (num));
   return Qnil;
 }
 
@@ -520,12 +520,12 @@ Change Japanese pre-edit mode.
   jrKanjiStatusWithValue ksv;
   jrKanjiStatus ks;
 
-  CHECK_INT (num);
+  CHECK_FIXNUM (num);
 
   ksv.buffer = (unsigned char *) key_buffer;
   ksv.bytes_buffer = KEYTOSTRSIZE;
   ksv.ks = &ks;
-  ksv.val = XINT (num);
+  ksv.val = XFIXNUM (num);
   jrKanjiControl (0, KC_CHANGEMODE,  (char *)&ksv);
   return storeResults (key_buffer, ksv.val, ksv.ks);
 }
@@ -596,7 +596,7 @@ Do specified function at current mode.
   jrKanjiStatusWithValue ksv;
   jrKanjiStatus ks;
 
-  CHECK_INT (num);
+  CHECK_FIXNUM (num);
 
   if (NILP (ch))
     {
@@ -611,7 +611,7 @@ Do specified function at current mode.
   ksv.buffer = (unsigned char *) key_buffer;
   ksv.bytes_buffer = KEYTOSTRSIZE;
   ksv.ks = &ks;
-  ksv.val = XINT (num);
+  ksv.val = XFIXNUM (num);
   jrKanjiControl (0, KC_DO, (char *) &ksv);
   return storeResults (key_buffer, ksv.val, ksv.ks);
 }
@@ -762,12 +762,12 @@ Return the list of candidates.
   UExtbyte *p, RkBuf[RKBUFSIZE];
   Lisp_Object res = Qnil;
 
-  CHECK_INT (bunsetsu);
+  CHECK_FIXNUM (bunsetsu);
   if (confirmContext () == 0)
     {
       return Qnil;
     }
-  RkGoTo (IRCP_context, XINT (bunsetsu));
+  RkGoTo (IRCP_context, XFIXNUM (bunsetsu));
   len = RkGetKanjiList (IRCP_context, RkBuf, RKBUFSIZE);
   p = RkBuf;
   for (i = 0 ; i < len ; i++)
@@ -793,16 +793,16 @@ Specify the length of a clause.
 {
   int nbun, len;
 
-  CHECK_INT (bunsetsu);
-  CHECK_INT (bunlen);
+  CHECK_FIXNUM (bunsetsu);
+  CHECK_FIXNUM (bunlen);
 
-  nbun = XINT (bunsetsu);
+  nbun = XFIXNUM (bunsetsu);
   if (confirmContext () == 0)
     {
       return Qnil;
     }
   RkGoTo (IRCP_context, nbun);
-  len = byteLen (nbun, XINT (bunlen));
+  len = byteLen (nbun, XFIXNUM (bunlen));
   return kanjiYomiList (IRCP_context, RkResize (IRCP_context, len));
 }
 
@@ -817,10 +817,10 @@ Select a candidate.
     {
       return Qnil;
     }
-  nbun = XINT(bun);
+  nbun = XFIXNUM(bun);
   RkGoTo (IRCP_context, nbun);
 
-  nkouho = XINT(kouho);
+  nkouho = XFIXNUM(kouho);
   RkXfer (IRCP_context, nkouho);
   return Qt;
 }

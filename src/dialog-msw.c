@@ -447,7 +447,7 @@ handle_directory_dialog_box (struct frame *f, Lisp_Object keys)
   else
     signal_error (Qdialog_box_error,
 		  "Unable to create folder browser",
-		  make_int (0));
+		  make_fixnum (0));
   return ret;
 }
 
@@ -523,7 +523,7 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
 	  
 	  signal_error (Qdialog_box_error,
 			"Unknown common dialog box error???",
-			make_int (err));
+			make_fixnum (err));
 	}
     }
   

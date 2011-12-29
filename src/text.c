@@ -1543,7 +1543,7 @@ old_mule_non_ascii_valid_ichar_p (Ichar ch)
 #ifdef ENABLE_COMPOSITE_CHARS
       if (EQ (charset, Vcharset_composite))
 	{
-	  if (UNBOUNDP (Fgethash (make_int (ch),
+	  if (UNBOUNDP (Fgethash (make_fixnum (ch),
 				  Vcomposite_char_char2string_hash_table,
 				  Qunbound)))
 	    return 0;
@@ -1773,7 +1773,7 @@ old_mule_unicode_to_ichar (int code, Lisp_Object precarray,
 				    &charset, &c1, &c2);
   if (NILP (charset))
     HANDLE_ICHAR_ERROR ("Can't convert Unicode codepoint to character",
-			make_int (code), fail);
+			make_fixnum (code), fail);
   return charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL);
 }
 
@@ -4290,8 +4290,8 @@ get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
   Charbpos ind;
   Charbpos min_allowed, max_allowed;
 
-  CHECK_INT_COERCE_MARKER (pos);
-  ind = XINT (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
+  ind = XFIXNUM (pos);
   min_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_BEG (b) : BUF_BEGV (b);
   max_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_Z   (b) : BUF_ZV   (b);
 
@@ -4403,8 +4403,8 @@ get_string_pos_char_1 (Lisp_Object string, Lisp_Object pos, unsigned int flags,
 
   /* Computation of KNOWN_LENGTH is potentially expensive so we pass
      it in. */
-  CHECK_INT (pos);
-  ccpos = XINT (pos);
+  CHECK_FIXNUM (pos);
+  ccpos = XFIXNUM (pos);
   if (ccpos < 0 && flags & GB_NEGATIVE_FROM_END)
     ccpos += max_allowed;
 
@@ -5364,8 +5364,8 @@ check_coerce_octet (Lisp_Object charset, Lisp_Object arg, int low, int high,
 		    int munge_codepoints)
 {
   int retval;
-  CHECK_INT (arg);
-  retval = XINT (arg);
+  CHECK_FIXNUM (arg);
+  retval = XFIXNUM (arg);
   if (munge_codepoints)
     {
       if (EQ (charset, Vcharset_control_1) && retval >= 32 && retval < 64)
@@ -5383,7 +5383,7 @@ check_coerce_octet (Lisp_Object charset, Lisp_Object arg, int low, int high,
 	    retval += 128;
 	}
     }
-  check_integer_range (make_int (retval), make_int (low), make_int (high));
+  check_integer_range (make_fixnum (retval), make_fixnum (low), make_fixnum (high));
   return retval;
 }
 
@@ -5425,18 +5425,18 @@ get_external_charset_codepoint (Lisp_Object charset,
   return charset;
 #else /* not MULE */
   CHECK_SYMBOL (charset);
-  CHECK_INT (arg1);
+  CHECK_FIXNUM (arg1);
   CHECK_NIL (arg2);
   *a1 = 0;
-  *a2 = XINT (arg1);
+  *a2 = XFIXNUM (arg1);
   if (EQ (charset, Vcharset_ascii))
-    check_integer_range (make_int (*a2), Qzero, make_int (255));
+    check_integer_range (make_fixnum (*a2), Qzero, make_fixnum (255));
   else if (munge_codepoints)
     {
       /* If munge checkpoints, we are very free with what we allow, just
 	 to make sure we're backward-compatible with various versions of
 	 XEmacs and GNU Emacs, and coerce to the proper range. */
-      check_integer_range (make_int (*a2), Qzero, make_int (255));
+      check_integer_range (make_fixnum (*a2), Qzero, make_fixnum (255));
       if (EQ (charset, Vcharset_control_1))
 	*a2 = (*a2 & 0x1F) + 128;
       else
@@ -5445,9 +5445,9 @@ get_external_charset_codepoint (Lisp_Object charset,
   else
     {
       if (EQ (charset, Vcharset_control_1))
-        check_integer_range (make_int (*a2), make_int (128), make_int (159));
+        check_integer_range (make_fixnum (*a2), make_fixnum (128), make_fixnum (159));
       else
-        check_integer_range (make_int (*a2), make_int (160), make_int (255));
+        check_integer_range (make_fixnum (*a2), make_fixnum (160), make_fixnum (255));
     }
   return Vcharset_ascii;
 #endif /* (not) MULE */
@@ -5751,7 +5751,7 @@ nil or `fail'	Return nil
   enum converr fail = decode_handle_error (handle_error, 1);
 
   CHECK_CHAR_COERCE_INT (character);
-  return make_int (ichar_to_unicode (XCHAR (character), fail));
+  return make_fixnum (ichar_to_unicode (XCHAR (character), fail));
 }
 
 DEFUN ("unicode-to-char", Funicode_to_char, 1, 3, 0, /*
@@ -5863,10 +5863,10 @@ nil or `fail'	Return nil
     return Qnil;
 
   if (XCHARSET_DIMENSION (charset) == 2)
-    return list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
+    return list3 (XCHARSET_NAME (charset), make_fixnum (c1), make_fixnum (c2));
   else
     /* See comment at internal_to_external_charset_codepoint(). */
-    return list2 (XCHARSET_NAME (charset), make_int (c2));
+    return list2 (XCHARSET_NAME (charset), make_fixnum (c2));
 }
 
 
@@ -5895,7 +5895,7 @@ nil or `fail'	Return nil
   code = charset_codepoint_to_unicode (charset, a1, a2, err);
   if (code == -1)
     return Qnil;
-  return make_int (code);
+  return make_fixnum (code);
 }
 
 DEFUN ("unicode-to-charset-codepoint", Funicode_to_charset_codepoint,
@@ -5941,10 +5941,10 @@ nil or `fail'	Return nil
     return Qnil;
 
   if (XCHARSET_DIMENSION (charset) == 2)
-    return list3 (XCHARSET_NAME (charset), make_int (a1), make_int (a2));
+    return list3 (XCHARSET_NAME (charset), make_fixnum (a1), make_fixnum (a2));
   else
     /* See comment at internal_to_external_charset_codepoint(). */
-    return list2 (XCHARSET_NAME (charset), make_int (a2));
+    return list2 (XCHARSET_NAME (charset), make_fixnum (a2));
 }
 
 DEFUN ("char-charset", Fchar_charset, 1, 3, 0, /*
@@ -6016,9 +6016,9 @@ has only one dimension.
   internal_to_external_charset_codepoint (charset, c1, c2, &c1, &c2, 1);
 
   if (NILP (n) || EQ (n, Qzero))
-    return make_int (c1);
+    return make_fixnum (c1);
   else if (EQ (n, Qone))
-    return make_int (c2);
+    return make_fixnum (c2);
   else
     invalid_constant ("Octet number must be 0 or 1", n);
 }
@@ -6066,10 +6066,10 @@ nil or `fail'	Return nil
   internal_to_external_charset_codepoint (charset, c1, c2, &c1, &c2, 1);
 
   if (XCHARSET_DIMENSION (charset) == 2)
-    return list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
+    return list3 (XCHARSET_NAME (charset), make_fixnum (c1), make_fixnum (c2));
   else
     /* See comment at internal_to_external_charset_codepoint(). */
-    return list2 (XCHARSET_NAME (charset), make_int (c1));
+    return list2 (XCHARSET_NAME (charset), make_fixnum (c1));
 }
 
 

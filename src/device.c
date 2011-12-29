@@ -805,7 +805,7 @@ delete_device_internal (struct device *d, int force,
       int delete_console = 0;
       /* If we're deleting the only device on the console,
 	 delete the console. */
-      if ((XINT (Flength (CONSOLE_DEVICE_LIST (c))) == 1)
+      if ((XFIXNUM (Flength (CONSOLE_DEVICE_LIST (c))) == 1)
 	  /* if we just created the device, it might not be listed,
 	     or something ... */
 	  && !NILP (memq_no_quit (device, CONSOLE_DEVICE_LIST (c))))
@@ -1031,9 +1031,9 @@ and other strategic decisions made during redisplay.
 */
        (device, rate))
 {
-  CHECK_INT (rate);
+  CHECK_FIXNUM (rate);
 
-  DEVICE_BAUD_RATE (decode_device (device)) = XINT (rate);
+  DEVICE_BAUD_RATE (decode_device (device)) = XFIXNUM (rate);
 
   return rate;
 }
@@ -1043,7 +1043,7 @@ Return the output baud rate of DEVICE.
 */
        (device))
 {
-  return make_int (DEVICE_BAUD_RATE (decode_device (device)));
+  return make_fixnum (DEVICE_BAUD_RATE (decode_device (device)));
 }
 
 DEFUN ("device-printer-p", Fdevice_printer_p, 0, 1, 0, /*

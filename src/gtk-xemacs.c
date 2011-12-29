@@ -178,7 +178,7 @@ do {											\
 	{										\
 		FROB (Vdefault_face, Qbackground_pixmap,				\
 			Fmake_image_instance (build_cistring (style->rc_style->bg_pixmap_name[GTK_STATE_NORMAL]), \
-					  f->device, Qnil, make_int (5)));			\
+					  f->device, Qnil, make_fixnum (5)));			\
 	}										\
 	else										\
 	{										\
@@ -214,8 +214,8 @@ smash_scrollbar_specifiers (struct frame *f, GtkStyle *style)
   style = gtk_style_attach (style,
 			    GTK_WIDGET (DEVICE_GTK_APP_SHELL (XDEVICE (FRAME_DEVICE (f))))->window);
 
-  Fadd_spec_to_specifier (Vscrollbar_width, make_int (vsize), frame, Qnil, Qnil);
-  Fadd_spec_to_specifier (Vscrollbar_height, make_int (hsize), frame, Qnil, Qnil);
+  Fadd_spec_to_specifier (Vscrollbar_width, make_fixnum (vsize), frame, Qnil, Qnil);
+  Fadd_spec_to_specifier (Vscrollbar_height, make_fixnum (hsize), frame, Qnil, Qnil);
 }
 #endif /* HAVE_SCROLLBARS */
 
@@ -230,7 +230,7 @@ smash_toolbar_specifiers(struct frame *f, GtkStyle *style)
 
   frame = wrap_frame (f);
 
-  Fadd_spec_to_specifier (Vtoolbar_shadow_thickness, make_int (klass->xthickness),
+  Fadd_spec_to_specifier (Vtoolbar_shadow_thickness, make_fixnum (klass->xthickness),
 			  Qnil, list2 (Qgtk, Qdefault), Qprepend);
 }
 #endif /* HAVE_TOOLBARS */

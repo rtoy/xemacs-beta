@@ -78,7 +78,7 @@ mswindows_empty_clipboard (void)
 static int
 x_sym_p (Lisp_Object value)
 {
-  if (NILP (value) || INTP (value))
+  if (NILP (value) || FIXNUMP (value))
     return 0;
 
   /* Check for some of the X symbols */
@@ -101,7 +101,7 @@ symbol_to_ms_cf (Lisp_Object value)
   if (NILP (value))			return 0;
 
   /* If it's an integer, assume it's a format ID */
-  if (INTP (value))			return (UINT) (XINT (value));
+  if (FIXNUMP (value))			return (UINT) (XFIXNUM (value));
 
   /* If it's a string, register the format(!) */
   if (STRINGP (value))
@@ -171,7 +171,7 @@ ms_cf_to_symbol (UINT format)
     case CF_DSPBITMAP:		return QCF_DSPBITMAP;
     case CF_DSPMETAFILEPICT:	return QCF_DSPMETAFILEPICT;
     case CF_DSPENHMETAFILE:	return QCF_DSPENHMETAFILE;
-    default:			return make_int ((int) format);
+    default:			return make_fixnum ((int) format);
     }
 }
 
@@ -362,7 +362,7 @@ mswindows_own_selection (Lisp_Object selection_name,
   if (!cf_is_autofreed (cfType))
     {
       Lisp_Object alist_elt = Qnil, rest;
-      Lisp_Object cfType_int = make_int (cfType);
+      Lisp_Object cfType_int = make_fixnum (cfType);
 
       /* First check if there's an element in the alist for this type
 	 already. */
@@ -440,7 +440,7 @@ mswindows_register_selection_data_type (Lisp_Object type_name)
   format = qxeRegisterClipboardFormat (nameext);
 
   if (format)
-    return make_int ((int) format);
+    return make_fixnum ((int) format);
   else
     return Qnil;
 }
@@ -453,8 +453,8 @@ mswindows_selection_data_type_name (Lisp_Object type_id)
   int numchars;
 
   /* If it's an integer, convert to a symbol if appropriate */
-  if (INTP (type_id))
-    type_id = ms_cf_to_symbol (XINT (type_id));
+  if (FIXNUMP (type_id))
+    type_id = ms_cf_to_symbol (XFIXNUM (type_id));
 
   /* If this is a symbol, return it */
   if (SYMBOLP (type_id))

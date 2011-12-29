@@ -581,9 +581,9 @@ validate_charset_offset_or_size (Lisp_Object keyword, Lisp_Object value,
       minval = 0, maxval = 255;
     }
 
-  if (INTP (value))
+  if (FIXNUMP (value))
     {
-      *dim0 = *dim1 = XINT (value);
+      *dim0 = *dim1 = XFIXNUM (value);
       if (*dim0 < minval || *dim0 > maxval)
 	goto bzzzzt;
     }
@@ -600,8 +600,8 @@ validate_charset_offset_or_size (Lisp_Object keyword, Lisp_Object value,
 	  ("Invalid value for property (list of 1 or 2 integers)",
 	   keyword, value);
       tem = X1ST (value);
-      CHECK_INT (tem);
-      *dim0 = *dim1 = XINT (tem);
+      CHECK_FIXNUM (tem);
+      *dim0 = *dim1 = XFIXNUM (tem);
       if (*dim0 < minval || *dim0 > maxval)
 	{
 	  value = tem;
@@ -610,8 +610,8 @@ validate_charset_offset_or_size (Lisp_Object keyword, Lisp_Object value,
       if (len == 2)
 	{
 	  tem = X2ND (value);
-	  CHECK_INT (tem);
-	  *dim1 = XINT (tem);
+	  CHECK_FIXNUM (tem);
+	  *dim1 = XFIXNUM (tem);
 	  if (*dim1 < minval || *dim1 > maxval)
 	    {
 	      value = tem;
@@ -634,7 +634,7 @@ validate_charset_offset_or_size (Lisp_Object keyword, Lisp_Object value,
 Lisp_Object
 charset_by_id (int id)
 {
-  return Fgethash (make_int (id), Vcharset_id_table, Qnil);
+  return Fgethash (make_fixnum (id), Vcharset_id_table, Qnil);
 }
 
 static void
@@ -644,7 +644,7 @@ remove_charset_from_hash_tables (Lisp_Object charset)
 
   ret = Fremhash (XCHARSET_NAME (charset), Vcharset_hash_table);
   assert (!NILP (ret));
-  ret = Fremhash (make_int (XCHARSET_ID (charset)), Vcharset_id_table);
+  ret = Fremhash (make_fixnum (XCHARSET_ID (charset)), Vcharset_id_table);
   assert (!NILP (ret));
 }
 
@@ -810,8 +810,8 @@ make_charset (int id, int no_init_unicode_tables,
       init_charset_unicode_tables (obj);
     }
 
-  assert (NILP (Fgethash (make_int (id), Vcharset_id_table, Qnil)));
-  Fputhash (make_int (id), obj, Vcharset_id_table);
+  assert (NILP (Fgethash (make_fixnum (id), Vcharset_id_table, Qnil)));
+  Fputhash (make_fixnum (id), obj, Vcharset_id_table);
 
   /* [[ Some charsets are "faux" and don't have names or really exist at
      all except in the charset ID table. ]]
@@ -1016,8 +1016,8 @@ character set.  Recognized properties are:
 
 	else if (EQ (keyword, Qdimension))
 	  {
-	    CHECK_INT (value);
-	    dimension = XINT (value);
+	    CHECK_FIXNUM (value);
+	    dimension = XFIXNUM (value);
 	    if (dimension < 1 || dimension > 2)
 	      invalid_constant ("Invalid value for `dimension'", value);
 	  }
@@ -1032,16 +1032,16 @@ character set.  Recognized properties are:
 	  }
 	else if (EQ (keyword, Qcolumns))
 	  {
-	    CHECK_INT (value);
-	    columns = XINT (value);
+	    CHECK_FIXNUM (value);
+	    columns = XFIXNUM (value);
 	    if (columns != 1 && columns != 2)
 	      invalid_constant ("Invalid value for `columns'", value);
 	  }
 
 	else if (EQ (keyword, Qgraphic))
 	  {
-	    CHECK_INT (value);
-	    graphic = XINT (value);
+	    CHECK_FIXNUM (value);
+	    graphic = XFIXNUM (value);
 	    if (graphic < 0 || graphic > 1)
 	      invalid_constant ("Invalid value for `graphic'", value);
 	  }
@@ -1283,13 +1283,13 @@ character sets exist for both directions).
   int type;
   Lisp_Object obj = Qnil;
 
-  CHECK_INT (dimension);
-  dm = XINT (dimension);
+  CHECK_FIXNUM (dimension);
+  dm = XFIXNUM (dimension);
   if (dm < 1 || dm > 2)
     invalid_constant ("Invalid value for DIMENSION", dimension);
 
-  CHECK_INT (chars);
-  ch = XINT (chars);
+  CHECK_FIXNUM (chars);
+  ch = XFIXNUM (chars);
   if (ch != 94 && ch != 96)
     invalid_constant ("Invalid value for CHARS, must be 94 or 96", chars);
 
@@ -1389,7 +1389,7 @@ Return dimension of CHARSET.  See `make-charset'.
 */
        (charset))
 {
-  return make_int (XCHARSET_DIMENSION (Fget_charset (charset)));
+  return make_fixnum (XCHARSET_DIMENSION (Fget_charset (charset)));
 }
 
 DEFUN ("charset-property", Fcharset_property, 2, 2, 0, /*
@@ -1411,9 +1411,9 @@ Recognized properties are those listed in `make-charset', as well as
   if (EQ (prop, Qunicode_map)) return CHARSET_UNICODE_MAP (cs);
   if (EQ (prop, Qtags))        return CHARSET_TAGS (cs);
   if (EQ (prop, Qdoc_string))  return CHARSET_DOC_STRING (cs);
-  if (EQ (prop, Qdimension))   return make_int (CHARSET_DIMENSION (cs));
-  if (EQ (prop, Qcolumns))     return make_int (CHARSET_COLUMNS (cs));
-  if (EQ (prop, Qgraphic))     return make_int (CHARSET_GRAPHIC (cs));
+  if (EQ (prop, Qdimension))   return make_fixnum (CHARSET_DIMENSION (cs));
+  if (EQ (prop, Qcolumns))     return make_fixnum (CHARSET_COLUMNS (cs));
+  if (EQ (prop, Qgraphic))     return make_fixnum (CHARSET_GRAPHIC (cs));
   if (EQ (prop, Qfinal))
     {
       if (CHARSET_FINAL (cs))
@@ -1424,18 +1424,18 @@ Recognized properties are those listed in `make-charset', as well as
   if (EQ (prop, Qchars))
     {
       if (CHARSET_DIMENSION (cs) == 1)
-	return make_int (CHARSET_CHARS (cs, 1));
+	return make_fixnum (CHARSET_CHARS (cs, 1));
       else
-	return list2 (make_int (CHARSET_CHARS (cs, 0)),
-		      make_int (CHARSET_CHARS (cs, 1)));
+	return list2 (make_fixnum (CHARSET_CHARS (cs, 0)),
+		      make_fixnum (CHARSET_CHARS (cs, 1)));
     }
   if (EQ (prop, Qoffset))
     {
       if (CHARSET_DIMENSION (cs) == 1)
-	return make_int (CHARSET_OFFSET (cs, 1));
+	return make_fixnum (CHARSET_OFFSET (cs, 1));
       else
-	return list2 (make_int (CHARSET_OFFSET (cs, 0)),
-		      make_int (CHARSET_OFFSET (cs, 1)));
+	return list2 (make_fixnum (CHARSET_OFFSET (cs, 0)),
+		      make_fixnum (CHARSET_OFFSET (cs, 1)));
     }
   if (EQ (prop, Qregistries))    return CHARSET_REGISTRIES (cs);
   if (EQ (prop, Qccl_program)) return CHARSET_CCL_PROGRAM (cs);
@@ -1461,7 +1461,7 @@ normally used only by CCL.
 */
 	(charset))
 {
-  return make_int (XCHARSET_ID (Fget_charset (charset)));
+  return make_fixnum (XCHARSET_ID (Fget_charset (charset)));
 }
 
 /* #### We need to figure out which properties we really want to
@@ -1624,15 +1624,15 @@ split_combined_codepoint (Lisp_Object charset, Lisp_Object codepoint,
     {
       EMACS_INT cp;
       CHECK_NATNUM (codepoint);
-      cp = XINT (codepoint);
+      cp = XFIXNUM (codepoint);
       *c1 = cp >> 8;
       *c2 = cp & 255;
-      check_integer_range (make_int (*c1),
-                           make_int (XCHARSET_MIN_CODE (charset, 0)),
-                           make_int (XCHARSET_MAX_CODE (charset, 0)));
-      check_integer_range (make_int (*c2),
-                           make_int (XCHARSET_MIN_CODE (charset, 1)),
-                           make_int (XCHARSET_MAX_CODE (charset, 1)));
+      check_integer_range (make_fixnum (*c1),
+                           make_fixnum (XCHARSET_MIN_CODE (charset, 0)),
+                           make_fixnum (XCHARSET_MAX_CODE (charset, 0)));
+      check_integer_range (make_fixnum (*c2),
+                           make_fixnum (XCHARSET_MIN_CODE (charset, 1)),
+                           make_fixnum (XCHARSET_MAX_CODE (charset, 1)));
     }
 }
 
