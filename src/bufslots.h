@@ -100,13 +100,26 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
     MARKED_SLOT (abbrev_table)
     /* This buffer's syntax table.  */
     MARKED_SLOT (syntax_table)
+#ifdef MIRROR_TABLE
     /* Massaged values from the syntax table, for faster lookup. */
     MARKED_SLOT (mirror_syntax_table)
+#endif /* MIRROR_TABLE */
 
 #ifdef MULE
     /* This buffer's category table. */
     MARKED_SLOT (category_table)
+
+    /* The unicode precedence list for this buffer, used when converting
+       Unicode codepoints to charset codepoints. */
+    MARKED_SLOT (unicode_precedence_list)
+
+    /* The above value converted into an internal precedence-array object.
+       This is cached because the above value may have tags referring to
+       multiple charsets, which need to be expanded into those charsets,
+       and duplicates removed. */
+    MARKED_SLOT (unicode_precedence_array)
 #endif /* MULE */
+
     /* This buffer's coding system. */
     MARKED_SLOT (buffer_file_coding_system)
     /* Values of several buffer-local variables.

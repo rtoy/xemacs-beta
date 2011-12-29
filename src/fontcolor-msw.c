@@ -2134,31 +2134,25 @@ mswindows_font_spec_matches_charset_stage_2 (struct device *d,
     }
 
   {
-    int lowlim, highlim;
-    int dim, j, cp = -1;
+    int l1, l2, h1, h2;
+    int j, cp = -1;
 
     /* Try to find a Unicode char in the charset.  #### This is somewhat
        bogus.  See below.
 
        #### Cache me baby!!!!!!!!!!!!!
     */
-    get_charset_limits (charset, &lowlim, &highlim);
-    dim = XCHARSET_DIMENSION (charset);
+    get_charset_limits (charset, &l1, &l2, &h1, &h2);
 
-    if (dim == 1)
-      {
-	for (i = lowlim; i <= highlim; i++)
-	  if ((cp = ichar_to_unicode (make_ichar (charset, i, 0))) >= 0)
-	    break;
-      }
-    else
-      {
-	for (i = lowlim; i <= highlim; i++)
-	  for (j = lowlim; j <= highlim; j++)
-	    if ((cp = ichar_to_unicode (make_ichar (charset, i, j))) >= 0)
-	      break;
-      }
-      
+    /* @@#### This needs major fixing.  We need to be passed the character,
+       not the charset. */
+    for (i = l1; i <= h1; i++)
+      for (j = l2; j <= h2; j++)
+	if ((cp = charset_codepoint_to_unicode (charset, i, j, CONVERR_FAIL))
+	    >= 0)
+	  goto multi_break;
+
+  multi_break:
     if (cp < 0)
       return 0;
 

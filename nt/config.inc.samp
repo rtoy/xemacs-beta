@@ -39,6 +39,9 @@ INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
 # Multilingual support.
 MULE=0
 
+# Use Unicode internally rather than the old flawed Mule encoding.
+UNICODE_INTERNAL=1
+
 # Native MS Windows support.
 HAVE_MS_WINDOWS=1
 

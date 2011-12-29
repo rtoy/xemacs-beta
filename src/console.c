@@ -368,7 +368,7 @@ time this function is called.
 	  Fselect_window (FRAME_SELECTED_WINDOW (f), Qnil);
 	}
       else
- invalid_operation ("Can't select console with no frames", Qunbound);
+	invalid_operation ("Can't select console with no frames", Qunbound);
     }
   else
     invalid_operation ("Can't select a console with no devices", Qunbound);
@@ -1462,7 +1462,7 @@ common_init_complex_vars_of_console (void)
     console_local_flags.tty_erase_char = always_local_resettable;
 #endif
 
-    console_local_flags.function_key_map = make_int (1);
+    console_local_flags.function_key_map = Qone;
 
     /* #### Warning, 0x4000000 (that's six zeroes) is the largest number
        currently allowable due to the XINT() handling of this value.

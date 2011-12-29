@@ -77,11 +77,13 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <config.h>
 #include "lisp.h"
+
+#include "buffer.h"
 #include "bytecode.h"
+#include "casetab.h"
 #include "elhash.h"
 #include "gc.h"
 #include "opaque.h"
-#include "buffer.h"
 
 Lisp_Object Qhash_tablep;
 Lisp_Object Qeq, Qeql, Qequal, Qequalp;
@@ -524,8 +526,8 @@ hash_table_memory_usage (Lisp_Object hashtab,
 
    #<hash-table size 2/13 data (key1 value1 key2 value2) 0x874d>
 
-   The data is truncated to four pairs, and the rest is shown with
-   `...'.  This printer does not cons.  */
+   The data is truncated to `print-table-nonreadably-length' pairs, and the
+   rest is shown with `...'.  This printer does not cons.  */
 
 
 /* Print the data of the hash table.  This maps through a Lisp
@@ -541,9 +543,11 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
     if (!HTENTRY_CLEAR_P (e))
       {
+	QUIT;
 	if (count > 0)
 	  write_ascstring (printcharfun, " ");
-	if (!print_readably && count > 3)
+	if (!print_readably && INTP (Vprint_table_nonreadably_length)
+	    && count > XINT (Vprint_table_nonreadably_length))
 	  {
 	    write_ascstring (printcharfun, "...");
 	    break;

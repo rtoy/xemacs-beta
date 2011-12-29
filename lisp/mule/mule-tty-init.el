@@ -1,4 +1,4 @@
-;;; mule-tty-init.el --- Initialization code for console tty under MULE -*- coding: iso-2022-7bit; -*-
+;;; mule-tty-init.el --- Initialization code for console tty under MULE
 
 ;; Copyright (C) 1998 Free Software Foundation, Inc.
 ;; Copyright (C) 1998 Kazuyuki IENAGA <kazz@imasy.or.jp>

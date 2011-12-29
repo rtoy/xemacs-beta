@@ -165,11 +165,7 @@ column_at_point (struct buffer *buf, Charbpos init_pos, int cur_col)
 		  - (displayed_glyphs->begin_columns
 		     + displayed_glyphs->end_columns));
 #else /* XEmacs */
-#ifdef MULE
-	  col += XCHARSET_COLUMNS (ichar_charset (c));
-#else
-	  col ++;
-#endif /* MULE */
+	  col += ichar_columns (c);
 #endif /* XEmacs */
 	}
     }
@@ -222,11 +218,7 @@ string_column_at_point (Lisp_Object s, Charbpos init_pos, int tab_width)
       else if (c == '\n')
 	break;
       else
-#ifdef MULE
-	  col += XCHARSET_COLUMNS (ichar_charset (c));
-#else
-	  col ++;
-#endif /* MULE */
+	col += ichar_columns (c);
     }
 
   if (tab_seen)
@@ -453,11 +445,7 @@ Returns the actual column that it moved to.
 		  - (displayed_glyphs->begin_columns
 		     + displayed_glyphs->end_columns));
 #else /* XEmacs */
-#ifdef MULE
-	  col += XCHARSET_COLUMNS (ichar_charset (c));
-#else
-	  col ++;
-#endif /* MULE */
+	  col += ichar_columns (c);
 #endif /* XEmacs */
 	}
 

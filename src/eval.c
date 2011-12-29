@@ -3231,6 +3231,27 @@ out_of_memory (const Ascbyte *reason, Lisp_Object frob)
   signal_error (Qout_of_memory, reason, frob);
 }
 
+DOESNT_RETURN
+text_conversion_error (const CIbyte *reason, Lisp_Object frob)
+{
+  signal_error (Qtext_conversion_error, reason, frob);
+}
+
+DOESNT_RETURN
+text_conversion_error_2 (const CIbyte *reason, Lisp_Object frob1,
+			 Lisp_Object frob2)
+{
+  signal_error_2 (Qtext_conversion_error, reason, frob1, frob2);
+}
+
+void
+maybe_text_conversion_error (const CIbyte *reason, Lisp_Object frob,
+			     Lisp_Object class_, Error_Behavior errb)
+{
+  maybe_signal_error (Qtext_conversion_error, reason, frob, class_, errb);
+}
+
+
 
 /************************************************************************/
 /*			      User commands				*/
@@ -7588,7 +7609,8 @@ particularly useful when XEmacs crashes, in helping to pinpoint the problem.
 Function to call to invoke debugger.
 If due to frame exit, args are `exit' and the value being returned;
  this function's value will be returned instead of that.
-If due to error, args are `error' and a list of the args to `signal'.
+If due to error, args are `error' and a cons of the args
+ (SIG . DATA) that were passed to `signal'.
 If due to `apply' or `funcall' entry, one arg, `lambda'.
 If due to `eval' entry, one arg, t.
 */ );

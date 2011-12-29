@@ -78,6 +78,8 @@ struct device
   /* Duplicates devmeths->symbol.  See comment in struct console. */
   enum console_variant devtype;
 
+  /* ~~#### Instead of doing this, attach this data to the end of the same
+     structure; avoids the need to create new TTY, X, etc. Lisp objects */
   /* A structure of auxiliary data specific to the device type.
      struct x_device is used for X window frames; defined in console-x.h
      struct tty_device is used to TTY's; defined in console-tty.h */

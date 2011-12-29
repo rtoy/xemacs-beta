@@ -1,6 +1,7 @@
 /* Text manipulation primitives for XEmacs.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004, 2005, 2010
+   Ben Wing.
    Copyright (C) 1999 Martin Buchholz.
 
 This file is part of XEmacs.
@@ -27,6 +28,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "casetab.h"
 #include "charset.h"
 #include "file-coding.h"
 #include "lstream.h"
@@ -178,7 +180,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
    etc.  However, we really need to represent Unicode characters internally
    as-is, rather than converting to some language-specific character set.
    For efficiency, we should represent Unicode characters using 3 bytes
-   rather than 4.  This means we need to find leading bytes for Unicode.
+   rather than 4.  This means we need to find charset ID's for Unicode.
    Given that there are 65,536 characters in Unicode and we can attach
    96x96 = 9,216 characters per leading byte, we need eight leading bytes
    for Unicode.  We currently have four free (0x9A - 0x9D), and with a
@@ -213,11 +215,14 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
       this to 2048, and further shrinkage would become uncomfortable.
       No such problems exist in XEmacs.
 
-      Composite characters could be represented as 0x8D C1 C2 C3, where each
-      C[1-3] is in the range 0xA0 - 0xFF.  This allows for slightly under
-      2^20 (one million) composite characters over the XEmacs process
-      lifetime. Or you could use 0x8D C1 C2 C3 C4, allowing for about 85
-      million (slightly over 2^26) composite characters.
+      Composite characters could be represented as 0x8D C1 C2 C3, where
+      each C[1-3] is in the range 0xA0 - 0xFF.  This allows for slightly
+      under 2^20 (one million) composite characters over the XEmacs process
+      lifetime.  Mule characters are already 21 bits, which should
+      more-or-less be enough to fit them, but maybe we might need to
+      increase the size to 22 bits.  Or you could use 0x8D C1 C2 C3 C4,
+      allowing for about 85 million (slightly over 2^26) composite
+      characters.
 
    ==========================================================================
                                10. Internal API's
@@ -225,72 +230,63 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
    All of these are documented in more detail in text.h.
 
-@enumerate
-@item
-Basic internal-format API's
-
-These are simple functions and macros to convert between text
-representation and characters, move forward and back in text, etc.
-
-@item
-The DFC API
-
-This is for conversion between internal and external text.  Note that
-there is also the "new DFC" API, which *returns* a pointer to the
-converted text (in alloca space), rather than storing it into a
-variable.
-
-@item
-The Eistring API
-
-\(This API is currently under-used) When doing simple things with
-internal text, the basic internal-format API's are enough.  But to do
-things like delete or replace a substring, concatenate various strings,
-etc. is difficult to do cleanly because of the allocation issues.
-The Eistring API is designed to deal with this, and provides a clean
-way of modifying and building up internal text. (Note that the former
-lack of this API has meant that some code uses Lisp strings to do
-similar manipulations, resulting in excess garbage and increased
-garbage collection.)
-
-NOTE: The Eistring API is (or should be) Mule-correct even without
-an ASCII-compatible internal representation.
-@end enumerate
+   Basic internal-format API's
+   
+   These are simple functions and macros to convert between text
+   representation and characters, move forward and back in text, etc.
+   
+   The DFC API
+   
+   This is for conversion between internal and external text.  Note that
+   there is also the "new DFC" API, which *returns* a pointer to the
+   converted text (in alloca space), rather than storing it into a
+   variable.
+   
+   The Eistring API
+   
+   (This API is currently under-used) When doing simple things with
+   internal text, the basic internal-format API's are enough.  But to do
+   things like delete or replace a substring, concatenate various strings,
+   etc. is difficult to do cleanly because of the allocation issues.
+   The Eistring API is designed to deal with this, and provides a clean
+   way of modifying and building up internal text. (Note that the former
+   lack of this API has meant that some code uses Lisp strings to do
+   similar manipulations, resulting in excess garbage and increased
+   garbage collection.)
+   
+   NOTE: The Eistring API is (or should be) Mule-correct even without
+   an ASCII-compatible internal representation.
 
    ==========================================================================
                       11. Other Sources of Documentation
    ==========================================================================
 
    man/lispref/mule.texi
-@enumerate
-@item
-another intro to characters, encodings, etc; #### Merge with the
-above info
-@item
-documentation of ISO-2022
-@item
-The charset and coding-system Lisp API's
-@item
-The CCL conversion language for writing encoding conversions
-@item
-The Latin-Unity package for unifying Latin charsets
-@end enumerate
+
+      another intro to characters, encodings, etc; #### Merge with the
+      above info
+      
+      documentation of ISO-2022
+      
+      The charset and coding-system Lisp API's
+      
+      The CCL conversion language for writing encoding conversions
+      
+      The Latin-Unity package for unifying Latin charsets
 
    man/internals/internals.texi (the Internals manual)
-@enumerate
-@item
-"Coding for Mule" -- how to write Mule-aware code
-@item
-"Modules for Internationalization"
-@item
-"The Text in a Buffer" -- more about the different ways of
-viewing buffer positions; #### Merge with the above info
-@item
-"MULE Character Sets and Encodings" -- yet another intro
-to characters, encodings, etc; #### Merge with the
-above info; also some documentation of Japanese EUC and JIS7,
-and CCL internals
-@end enumerate
+
+      "Coding for Mule" -- how to write Mule-aware code
+      
+      "Modules for Internationalization"
+      
+      "The Text in a Buffer" -- more about the different ways of
+      viewing buffer positions; #### Merge with the above info
+      
+      "MULE Character Sets and Encodings" -- yet another intro
+      to characters, encodings, etc; #### Merge with the
+      above info; also some documentation of Japanese EUC and JIS7,
+      and CCL internals
 
    text.h -- info about specific XEmacs-C API's for handling internal and
              external text
@@ -320,191 +316,191 @@ and CCL internals
                    - Mule design issues (ben)
    ==========================================================================
 
-circa 1999
-
-Here is a more detailed list of Mule-related projects that we will be
-working on.  They are more or less ordered according to how we will
-proceed, but it's not exact.  In particular, there will probably be
-time overlap among adjacent projects.
-
-@enumerate
-@item
-Modify the internal/external conversion macros to allow for
-MS Windows support.
-
-@item
-Modify the buffer macros to allow for more than one internal
-representation, e.g. fixed width and variable width.
-
-@item
-Review the existing Mule code, especially the lisp code, for code
-quality issues and improve the cleanliness of it.  Also work on
-creating a specification for the Mule API.
-
-@item
-Write some more automated mule tests.
-
-@item
-Integrate Tomohiko's UTF-2000 code, fixing it up so that nothing is
-broken when the UTF-2000 configure option is not enabled.
-
-@item
-Fix up the MS Windows code to be Mule-correct, so that you can
-compile with Mule support under MS windows and have a working
-XEmacs, at least just with Latin-1.
-
-@item
-Implement a scheme to guarantee no corruption of files, even with
-an incorrect coding system - in particular, guarantee no corruption
-of binary files.
-
-@item
-Make the text property support in XEmacs robust with respect to
-string and text operations, so that the `no corruption' support in
-the previous entry works properly, even if a lot of cutting and
-pasting is done.
-
-@item
-Improve the handling of auto-detection so that, when there is any
-possibility at all of mistake, the user is informed of the detected
-encoding and given the choice of choosing other possibilities.
-
-@item
-Improve the support for different language environments in XEmacs,
-for example, the priority of coding systems used in auto-detection
-should properly reflect the language environment.  This probably
-necessitates rethinking the current `coding system priority'
-scheme.
-
-@item
-Do quality work to improve the existing UTF-2000 implementation.
-
-@item
-Implement preliminary support for 8-bit fixed width
-representation.  First, we will only implement 7-bit support, and
-will fall back to variable width as soon as any non-ASCII
-character is encountered.  Then we will improve the support to
-handle an arbitrary character set in the upper half of the 8-bit space.
-
-@item
-Investigate any remaining hurdles to making --with-mule be the
-default configure option.
-@end enumerate
-
+   circa 1999
+   
+   Here is a more detailed list of Mule-related projects that we will be
+   working on.  They are more or less ordered according to how we will
+   proceed, but it's not exact.  In particular, there will probably be
+   time overlap among adjacent projects.
+   
+   @enumerate
+   @item
+   Modify the internal/external conversion macros to allow for
+   MS Windows support.
+   
+   @item
+   Modify the buffer macros to allow for more than one internal
+   representation, e.g. fixed width and variable width.
+   
+   @item
+   Review the existing Mule code, especially the lisp code, for code
+   quality issues and improve the cleanliness of it.  Also work on
+   creating a specification for the Mule API.
+   
+   @item
+   Write some more automated mule tests.
+   
+   @item
+   Integrate Tomohiko's UTF-2000 code, fixing it up so that nothing is
+   broken when the UTF-2000 configure option is not enabled.
+   
+   @item
+   Fix up the MS Windows code to be Mule-correct, so that you can
+   compile with Mule support under MS windows and have a working
+   XEmacs, at least just with Latin-1.
+   
+   @item
+   Implement a scheme to guarantee no corruption of files, even with
+   an incorrect coding system - in particular, guarantee no corruption
+   of binary files.
+   
+   @item
+   Make the text property support in XEmacs robust with respect to
+   string and text operations, so that the `no corruption' support in
+   the previous entry works properly, even if a lot of cutting and
+   pasting is done.
+   
+   @item
+   Improve the handling of auto-detection so that, when there is any
+   possibility at all of mistake, the user is informed of the detected
+   encoding and given the choice of choosing other possibilities.
+   
+   @item
+   Improve the support for different language environments in XEmacs,
+   for example, the priority of coding systems used in auto-detection
+   should properly reflect the language environment.  This probably
+   necessitates rethinking the current `coding system priority'
+   scheme.
+   
+   @item
+   Do quality work to improve the existing UTF-2000 implementation.
+   
+   @item
+   Implement preliminary support for 8-bit fixed width
+   representation.  First, we will only implement 7-bit support, and
+   will fall back to variable width as soon as any non-ASCII
+   character is encountered.  Then we will improve the support to
+   handle an arbitrary character set in the upper half of the 8-bit space.
+   
+   @item
+   Investigate any remaining hurdles to making --with-mule be the
+   default configure option.
+   @end enumerate
+   
    ==========================================================================
                    - Mule design issues (stephen)
    ==========================================================================
 
-What I see as Mule priorities (in rough benefit order, I am not taking
-account of difficulty, nor the fact that some - eg 8 & 10 - will
-probably come as packages):
-
-@enumerate
-@item
-Fix the autodetect problem (by making the coding priority list
-user-configurable, as short as he likes, even null, with "binary"
-as the default).
-@item
-Document the language environments and other Mule "APIs" as
-implemented (since there is no real design spec).  Check to see 
-how and where they are broken.
-@item
-Make the Mule menu useful to non-ISO-2022-literate folks.
-@item
-Redo the lstreams stuff to make it easy and robust to "pipeline",
-eg, libz | gnupg | jis2mule.
-@item
-Make Custom Mule-aware.  (This probably depends on a sensible
-fonts model.)
-@item
-Implement the "literal byte stream" memory feature.
-@item
-Study the FSF implementation of Mule for background for 7 & 8.
-@item
-Identify desirable Mule features (eg, i18n-ized messages as above, 
-collating tables by language environment, etc).  (New features
-might have priority as high as 9.)
-@item
-Specify Mule UIs, APIs, etc, and design and (re)implement them.
-@item
-Implement the 8-bit-wide buffer optimization.
-@item
-Move the internal encoding to UTF-32 (subject to Olivier's caveats 
-regarding compose characters), with the variable-width char
-buffers using UTF-8.
-@item
-Implement the 16- and 32-bit-wide buffer optimizations.
-@end enumerate
-
+   What I see as Mule priorities (in rough benefit order, I am not taking
+   account of difficulty, nor the fact that some - eg 8 & 10 - will
+   probably come as packages):
+   
+   @enumerate
+   @item
+   Fix the autodetect problem (by making the coding priority list
+   user-configurable, as short as he likes, even null, with "binary"
+   as the default).
+   @item
+   Document the language environments and other Mule "APIs" as
+   implemented (since there is no real design spec).  Check to see 
+   how and where they are broken.
+   @item
+   Make the Mule menu useful to non-ISO-2022-literate folks.
+   @item
+   Redo the lstreams stuff to make it easy and robust to "pipeline",
+   eg, libz | gnupg | jis2mule.
+   @item
+   Make Custom Mule-aware.  (This probably depends on a sensible
+   fonts model.)
+   @item
+   Implement the "literal byte stream" memory feature.
+   @item
+   Study the FSF implementation of Mule for background for 7 & 8.
+   @item
+   Identify desirable Mule features (eg, i18n-ized messages as above, 
+   collating tables by language environment, etc).  (New features
+   might have priority as high as 9.)
+   @item
+   Specify Mule UIs, APIs, etc, and design and (re)implement them.
+   @item
+   Implement the 8-bit-wide buffer optimization.
+   @item
+   Move the internal encoding to UTF-32 (subject to Olivier's caveats 
+   regarding compose characters), with the variable-width char
+   buffers using UTF-8.
+   @item
+   Implement the 16- and 32-bit-wide buffer optimizations.
+   @end enumerate
+   
    ==========================================================================
                    - Mule design issues "short term" (ben)
    ==========================================================================
 
-@enumerate
-@item
-Finish changes in fixup/directory, get in CVS.
-
-(Test with and without "quick-build", to see if really faster)
-(need autoconf)
-
-@item
-Finish up Windows/Mule changes.  Outline of this elsewhere;  Do
-*minimal* effort.
-
-@item
-Continue work on Windows stability, e.g. go through existing notes
-on Windows Mule-ization + extract all info.
-
-@item
-Get Unicode translation tables integrated.
-
-Finish UCS2/UTF16 coding system.
-
-@item
-Make sure coding system priority list is language-environment specific.
-
-@item
-Consider moving language selection Menu up to be parallel with Mule menu.
-
-@item
-Check to make sure we grok the default locale at startup under
-Windows and understand the Windows locales.  Finish implementation
-of mswindows-multibyte and make sure it groks all the locales.
-
-@item
-Do the above as best as we can without using Unicode tables.
-
-@item
-Start tagging all text with a language text property,
-indicating the current language environment when the text was input.
-
-@item
-Make sure we correctly accept input of non-ASCII chars
-(probably already do!)
-
-@item
-Implement active language/keyboard switching under Windows.
-
-@item
-Look into implementing support for "MS IME" protocol (Microsoft
-fancy built-in Asian input methods).
-
-@item
-Redo implementation of mswindows-multibyte and internal display to
-entirely use translation to/from Unicode for increased accuracy.
-
-@item
-Implement buf<->char improvements from FSF.  Also implement
-my string byte<->char optimization structure.
-
-@item
-Integrate all Mule DOCS from 20.6 or 21.0.  Try to add sections
-for what we've added.
-
-@item
-Implement 8-bit fixed width optimizations.  Then work on 16-bit.
-@end enumerate
-
+   @enumerate
+   @item
+   Finish changes in fixup/directory, get in CVS.
+   
+   (Test with and without "quick-build", to see if really faster)
+   (need autoconf)
+   
+   @item
+   Finish up Windows/Mule changes.  Outline of this elsewhere;  Do
+   *minimal* effort.
+   
+   @item
+   Continue work on Windows stability, e.g. go through existing notes
+   on Windows Mule-ization + extract all info.
+   
+   @item
+   Get Unicode translation tables integrated.
+   
+   Finish UCS2/UTF16 coding system.
+   
+   @item
+   Make sure coding system priority list is language-environment specific.
+   
+   @item
+   Consider moving language selection Menu up to be parallel with Mule menu.
+   
+   @item
+   Check to make sure we grok the default locale at startup under
+   Windows and understand the Windows locales.  Finish implementation
+   of mswindows-multibyte and make sure it groks all the locales.
+   
+   @item
+   Do the above as best as we can without using Unicode tables.
+   
+   @item
+   Start tagging all text with a language text property,
+   indicating the current language environment when the text was input.
+   
+   @item
+   Make sure we correctly accept input of non-ASCII chars
+   (probably already do!)
+   
+   @item
+   Implement active language/keyboard switching under Windows.
+   
+   @item
+   Look into implementing support for "MS IME" protocol (Microsoft
+   fancy built-in Asian input methods).
+   
+   @item
+   Redo implementation of mswindows-multibyte and internal display to
+   entirely use translation to/from Unicode for increased accuracy.
+   
+   @item
+   Implement buf<->char improvements from FSF.  Also implement
+   my string byte<->char optimization structure.
+   
+   @item
+   Integrate all Mule DOCS from 20.6 or 21.0.  Try to add sections
+   for what we've added.
+   
+   @item
+   Implement 8-bit fixed width optimizations.  Then work on 16-bit.
+   @end enumerate
+   
    ==========================================================================
                    - Mule design issues (more) (ben)
    ==========================================================================
@@ -540,89 +536,85 @@ Implement 8-bit fixed width optimizations.  Then work on 16-bit.
                    - Mule design discussion
    ==========================================================================
 
---------------------------------------------------------------------------
-
-Ben
-
-April 11, 2000
-
-Well yes, this was the whole point of my "no lossage" proposal of being
-able to undo any coding-system transformation on a buffer.  The idea was
-to figure out which transformations were definitely reversible, and for
-all the others, cache the original text in a text property.  This way, you
-could probably still do a fairly good job at constructing a good reversal
-even after you've gone into the text and added, deleted, and rearranged
-some things.
-
-But you could implement it much more simply and usefully by just
-determining, for any text being decoded into mule-internal, can we go back
-and read the source again?  If not, remember the entire file (GNUS
-message, etc) in text properties.  Then, implement the UI interface (like
-Netscape's) on top of that.  This way, you have something that at least
-works, but it might be inefficient.  All we would need to do is work on
-making the
-underlying implementation more efficient.
-
-Are you interested in doing this?  It would be a huge win for users.
-Hrvoje Niksic wrote:
-
-> Ben Wing <ben@666.com> writes:
->
-> > let me know exactly what "rethink" functionality you want and i'll
-> > come up with an interface.  perhaps you just want something like
-> > netscape's encoding menu, where if you switch encodings, it reloads
-> > and reencodes?
->
-> It might be a bit more complex than that.  In many cases, it's hard or
-> impossible to meaningfully "reload" -- for instance, this
-> functionality should be available while editing a Gnus message, as
-> well as while visiting a file.
->
-> For the special case of Latin-N <-> Latin-M conversion, things could
-> be done easily -- to convert from N to M, you only need to convert
-> internal representation back to N, and then convert it forth to M.
-
---------------------------------------------------------------------------
-April 11, 2000
-
-Well yes, this was the whole point of my "no lossage" proposal of being
-able to undo any coding-system transformation on a buffer.  The idea was
-to figure out which transformations were definitely reversible, and for
-all the others, cache the original text in a text property.  This way, you
-could probably still do a fairly good job at constructing a good reversal
-even after you've gone into the text and added, deleted, and rearranged
-some things.
-
-But you could implement it much more simply and usefully by just
-determining, for any text being decoded into mule-internal, can we go back
-and read the source again?  If not, remember the entire file (GNUS
-message, etc) in text properties.  Then, implement the UI interface (like
-Netscape's) on top of that.  This way, you have something that at least
-works, but it might be inefficient.  All we would need to do is work on
-making the
-underlying implementation more efficient.
-
-Are you interested in doing this?  It would be a huge win for users.
-Hrvoje Niksic wrote:
-
-> Ben Wing <ben@666.com> writes:
->
-> > let me know exactly what "rethink" functionality you want and i'll
-> > come up with an interface.  perhaps you just want something like
-> > netscape's encoding menu, where if you switch encodings, it reloads
-> > and reencodes?
->
-> It might be a bit more complex than that.  In many cases, it's hard or
-> impossible to meaningfully "reload" -- for instance, this
-> functionality should be available while editing a Gnus message, as
-> well as while visiting a file.
->
-> For the special case of Latin-N <-> Latin-M conversion, things could
-> be done easily -- to convert from N to M, you only need to convert
-> internal representation back to N, and then convert it forth to M.
-
-
-------------------------------------------------------------------------
+   Ben
+   
+   April 11, 2000
+   
+   Well yes, this was the whole point of my "no lossage" proposal of being
+   able to undo any coding-system transformation on a buffer.  The idea was
+   to figure out which transformations were definitely reversable, and for
+   all the others, cache the original text in a text property.  This way, you
+   could probably still do a fairly good job at constructing a good reversal
+   even after you've gone into the text and added, deleted, and rearranged
+   some things.
+   
+   But you could implement it much more simply and usefully by just
+   determining, for any text being decoded into mule-internal, can we go back
+   and read the source again?  If not, remember the entire file (GNUS
+   message, etc) in text properties.  Then, implement the UI interface (like
+   Netscape's) on top of that.  This way, you have something that at least
+   works, but it might be inefficient.  All we would need to do is work on
+   making the
+   underlying implementation more efficient.
+   
+   Are you interested in doing this?  It would be a huge win for users.
+   Hrvoje Niksic wrote:
+   
+   > Ben Wing <ben@666.com> writes:
+   >
+   > > let me know exactly what "rethink" functionality you want and i'll
+   > > come up with an interface.  perhaps you just want something like
+   > > netscape's encoding menu, where if you switch encodings, it reloads
+   > > and reencodes?
+   >
+   > It might be a bit more complex than that.  In many cases, it's hard or
+   > impossible to meaningfully "reload" -- for instance, this
+   > functionality should be available while editing a Gnus message, as
+   > well as while visiting a file.
+   >
+   > For the special case of Latin-N <-> Latin-M conversion, things could
+   > be done easily -- to convert from N to M, you only need to convert
+   > internal representation back to N, and then convert it forth to M.
+   
+   --------------------------------------------------------------------------
+   April 11, 2000
+   
+   Well yes, this was the whole point of my "no lossage" proposal of being
+   able to undo any coding-system transformation on a buffer.  The idea was
+   to figure out which transformations were definitely reversable, and for
+   all the others, cache the original text in a text property.  This way, you
+   could probably still do a fairly good job at constructing a good reversal
+   even after you've gone into the text and added, deleted, and rearranged
+   some things.
+   
+   But you could implement it much more simply and usefully by just
+   determining, for any text being decoded into mule-internal, can we go back
+   and read the source again?  If not, remember the entire file (GNUS
+   message, etc) in text properties.  Then, implement the UI interface (like
+   Netscape's) on top of that.  This way, you have something that at least
+   works, but it might be inefficient.  All we would need to do is work on
+   making the
+   underlying implementation more efficient.
+   
+   Are you interested in doing this?  It would be a huge win for users.
+   Hrvoje Niksic wrote:
+   
+   > Ben Wing <ben@666.com> writes:
+   >
+   > > let me know exactly what "rethink" functionality you want and i'll
+   > > come up with an interface.  perhaps you just want something like
+   > > netscape's encoding menu, where if you switch encodings, it reloads
+   > > and reencodes?
+   >
+   > It might be a bit more complex than that.  In many cases, it's hard or
+   > impossible to meaningfully "reload" -- for instance, this
+   > functionality should be available while editing a Gnus message, as
+   > well as while visiting a file.
+   >
+   > For the special case of Latin-N <-> Latin-M conversion, things could
+   > be done easily -- to convert from N to M, you only need to convert
+   > internal representation back to N, and then convert it forth to M.
+   
 
    ==========================================================================
    - Redoing translation macros [old]
@@ -823,137 +815,137 @@ Hrvoje Niksic wrote:
                    - UTF-16 compatible representation
    ==========================================================================
 
-NOTE: One possible default internal representation that was compatible
-with UTF16 but allowed all possible chars in UCS4 would be to take a
-more-or-less unused range of 2048 chars (not from the private area
-because Microsoft actually uses up most or all of it with EUDC chars).
-Let's say we picked A400 - ABFF.  Then, we'd have:
-
-0000 - FFFF    Simple chars
-
-D[8-B]xx D[C-F]xx  Surrogate char, represents 1M chars
-
-A[4-B]xx D[C-F]xx D[C-F]xx   Surrogate char, represents 2G chars
-
-This is exactly the same number of chars as UCS-4 handles, and it follows the
-same property as UTF8 and Mule-internal:
-
-@enumerate
-@item
-There are two disjoint groupings of units, one representing leading units
-and one representing non-leading units.
-@item
-Given a leading unit, you immediately know how many units follow to make
-up a valid char, irrespective of any other context.
-@end enumerate
-
-Note that A4xx is actually currently assigned to Yi.  Since this is an
-internal representation, we could just move these elsewhere.
-
-An alternative is to pick two disjoint ranges, e.g. 2D00 - 2DFF and
-A500 - ABFF.
-
+ NOTE: One possible default internal representation that was compatible
+ with UTF16 but allowed all possible chars in UCS4 would be to take a
+ more-or-less unused range of 2048 chars (not from the private area
+ because Microsoft actually uses up most or all of it with EUDC chars).
+ Let's say we picked A400 - ABFF.  Then, we'd have:
+ 
+ 0000 - FFFF    Simple chars
+ 
+ D[8-B]xx D[C-F]xx  Surrogate char, represents 1M chars
+ 
+ A[4-B]xx D[C-F]xx D[C-F]xx   Surrogate char, represents 2G chars
+ 
+ This is exactly the same number of chars as UCS-4 handles, and it follows the
+ same property as UTF8 and Mule-internal:
+ 
+ @enumerate
+ @item
+ There are two disjoint groupings of units, one representing leading units
+ and one representing non-leading units.
+ @item
+ Given a leading unit, you immediately know how many units follow to make
+ up a valid char, irrespective of any other context.
+ @end enumerate
+ 
+ Note that A4xx is actually currently assigned to Yi.  Since this is an
+ internal representation, we could just move these elsewhere.
+ 
+ An alternative is to pick two disjoint ranges, e.g. 2D00 - 2DFF and
+ A500 - ABFF.
+ 
    ==========================================================================
                         New API for char->font mapping
    ==========================================================================
-- ; supersedes charset-registry and CCL;
-  supports all windows systems; powerful enough for Unicode; etc.
-
-  (charset-font-mapping charset)
-
-font-mapping-specifier  string
-
-char-font-mapping-table
-
-  char-table, specifier; elements of char table are either strings (which
-  specify a registry or comparable font property, or vectors of a string
-  (same) followed by keyword-value pairs (optional).  The only allowable
-  keyword currently is :ccl-program, which specifies a CCL program to map
-  the characters into font indices.  Other keywords may be added
-  e.g. allowing Elisp fragments instead of CCL programs, also allowed is
-  [inherit], which inherits from the next less-specific char-table in the
-  specifier.
-
-  The preferred interface onto this mapping (which should be portable
-  across Emacsen) is
-
-  (set-char-font-mapping key value &optional locale tag-set how-to-add)
-
-  where key is a char, range or charset (as for put-char-table), value is
-  as above, and the other arguments are standard for specifiers.  This
-  automatically creates a char table in the locale, as necessary (all
-  elements default to [inherit]).  On GNU Emacs, some specifiers arguments
-  may be unimplemented.
-
- (char-font-mapping key value &optional locale)
-works vaguely like get-specifier?   But does inheritance processing.
-locale should clearly default here to current-buffer
-
-#### should get-specifier as well?  Would make it work most like
-#### buffer-local variables.
-
-NB.  set-charset-registry and set-charset-ccl-program are obsoleted.
-
+ - ; supersedes charset-registry and CCL;
+   supports all windows systems; powerful enough for Unicode; etc.
+ 
+   (charset-font-mapping charset)
+ 
+ font-mapping-specifier  string
+ 
+ char-font-mapping-table
+ 
+   char-table, specifier; elements of char table are either strings (which
+   specify a registry or comparable font property, or vectors of a string
+   (same) followed by keyword-value pairs (optional).  The only allowable
+   keyword currently is :ccl-program, which specifies a CCL program to map
+   the characters into font indices.  Other keywords may be added
+   e.g. allowing Elisp fragments instead of CCL programs, also allowed is
+   [inherit], which inherits from the next less-specific char-table in the
+   specifier.
+ 
+   The preferred interface onto this mapping (which should be portable
+   across Emacsen) is
+ 
+   (set-char-font-mapping key value &optional locale tag-set how-to-add)
+ 
+   where key is a char, range or charset (as for put-char-table), value is
+   as above, and the other arguments are standard for specifiers.  This
+   automatically creates a char table in the locale, as necessary (all
+   elements default to [inherit]).  On GNU Emacs, some specifiers arguments
+   may be unimplemented.
+ 
+  (char-font-mapping key value &optional locale)
+ works vaguely like get-specifier?   But does inheritance processing.
+ locale should clearly default here to current-buffer
+ 
+ #### should get-specifier as well?  Would make it work most like
+ #### buffer-local variables.
+ 
+ NB.  set-charset-registry and set-charset-ccl-program are obsoleted.
+ 
    ==========================================================================
                  Implementing fixed-width 8,16,32 bit buffer optimizations
    ==========================================================================
 
-Add set-buffer-optimization (buffer &rest keywords) for
-controlling these things.
-
-Also, put in hack so that correct arglist can be retrieved by
-Lisp code.
-
-Look at the way keyword primitives are currently handled; make
-sure it works and is documented, etc.
-
-Implement 8-bit fixed width optimization.  Take the things that
-know about the actual implementation and put them in a single
-file, in essence creating an abstraction layer to allow
-pluggable internal representations.  Implement a fairly general
-scheme for mapping between character codes in the 8 bits or 16
-bits representation and on actual charset characters.  As part of
-set-buffer-optimization, you can specify a list of character sets
-to be used in the 8 bit to 16 bit, etc. world.  You can also
-request that the buffer be in 8, 16, etc. if possible.
-
--> set defaults wrt this.
--> perhaps this should be just buffer properties.
--> this brings up the idea of default properties on an object.
--> Implement default-put, default-get, etc.
-
-What happens when a character not assigned in the range gets
-added?  Then, must convert to variable width of some sort.
-
-Note: at first, possibly we just convert whole hog to get things
-right.  Then we'd have to poy alternative to characters that got
-added + deleted that were unassigned in the fixed width.  When
-this goes to zero and there's been enough time (heuristics), we
-go back to fixed.
-
-Side note:  We could dynamically build up the set of assigned
-chars as they go.  Conceivably this could even go down to the
-single char level: Just keep a big array of mapping from 16 bit
-values to chars, and add empty time, a char has been encountered
-that wasn't there before.  Problem need inverse mapping.
-
--> Possibility; chars are actual objects, not just numbers.
-Then you could keep track of such info in the chars itself.
-*Think about this.*
-
-Eventually, we might consider allowing mixed fixed-width,
-variable-width buffer encodings.  Then, we use range tables to
-indicate which sections are fixed and which variable and INC_CHAR does
-something like this: binary search to find the current range, which
-indicates whether it's fixed or variable, and tells us what the
-increment is.  We can cache this info and use it next time to speed
-up.
-
--> We will then have two partially shared range tables - one for
-overall fixed width vs. variable width, and possibly one containing
-this same info, but partitioning the variable width in one.  Maybe
-need fancier nested range table model.
-
+ Add set-buffer-optimization (buffer &rest keywords) for
+ controlling these things.
+ 
+ Also, put in hack so that correct arglist can be retrieved by
+ Lisp code.
+ 
+ Look at the way keyword primitives are currently handled; make
+ sure it works and is documented, etc.
+ 
+ Implement 8-bit fixed width optimization.  Take the things that
+ know about the actual implementation and put them in a single
+ file, in essence creating an abstraction layer to allow
+ pluggable internal representations.  Implement a fairly general
+ scheme for mapping between character codes in the 8 bits or 16
+ bits representation and on actual charset characters.  As part of
+ set-buffer-optimization, you can specify a list of character sets
+ to be used in the 8 bit to 16 bit, etc. world.  You can also
+ request that the buffer be in 8, 16, etc. if possible.
+ 
+ -> set defaults wrt this.
+ -> perhaps this should be just buffer properties.
+ -> this brings up the idea of default properties on an object.
+ -> Implement default-put, default-get, etc.
+ 
+ What happens when a character not assigned in the range gets
+ added?  Then, must convert to variable width of some sort.
+ 
+ Note: at first, possibly we just convert whole hog to get things
+ right.  Then we'd have to poy alternative to characters that got
+ added + deleted that were unassigned in the fixed width.  When
+ this goes to zero and there's been enough time (heuristics), we
+ go back to fixed.
+ 
+ Side note:  We could dynamically build up the set of assigned
+ chars as they go.  Conceivably this could even go down to the
+ single char level: Just keep a big array of mapping from 16 bit
+ values to chars, and add empty time, a char has been encountered
+ that wasn't there before.  Problem need inverse mapping.
+ 
+ -> Possibility; chars are actual objects, not just numbers.
+ Then you could keep track of such info in the chars itself.
+ *Think about this.*
+ 
+ Eventually, we might consider allowing mixed fixed-width,
+ variable-width buffer encodings.  Then, we use range tables to
+ indicate which sections are fixed and which variable and INC_CHAR does
+ something like this: binary search to find the current range, which
+ indicates whether it's fixed or variable, and tells us what the
+ increment is.  We can cache this info and use it next time to speed
+ up.
+ 
+ -> We will then have two partially shared range tables - one for
+ overall fixed width vs. variable width, and possibly one containing
+ this same info, but partitioning the variable width in one.  Maybe
+ need fancier nested range table model.
+ 
    ==========================================================================
         Expansion of display table and case mapping table support for all
                            chars, not just ASCII/Latin1.
@@ -1263,7 +1255,6 @@ need fancier nested range table model.
 
 */
 
-
 
 /************************************************************************/
 /*                              declarations                            */
@@ -1271,21 +1262,61 @@ need fancier nested range table model.
 
 Eistring the_eistring_zero_init, the_eistring_malloc_zero_init;
 
+#ifdef MULE
+
 #define MAX_CHARBPOS_GAP_SIZE_3 (65535/3)
 #define MAX_BYTEBPOS_GAP_SIZE_3 (3 * MAX_CHARBPOS_GAP_SIZE_3)
 
-short three_to_one_table[1 + MAX_BYTEBPOS_GAP_SIZE_3];
 
-#ifdef MULE
+short three_to_one_table[1 + MAX_BYTEBPOS_GAP_SIZE_3];
 
 /* Table of number of bytes in the string representation of a character
    indexed by the first byte of that representation.
+*/
 
-   rep_bytes_by_first_byte(c) is more efficient than the equivalent
-   canonical computation:
-
-   XCHARSET_REP_BYTES (charset_by_leading_byte (c)) */
-
+#ifdef UNICODE_INTERNAL
+const Bytecount rep_bytes_by_first_byte[256] =
+{ /* 0x00 - 0x7f are for straight ASCII */
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  /* 0x80 - 0xbf are not valid first bytes */
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  /* 0xc0 - 0xdf for 2-byte sequences */
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  /* 0xe0 - 0xef for 3-byte sequences */
+  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+  /* 0xf0 - 0xf7 for 4-byte sequences;
+     0xf8 - 0xfb for 5-byte sequences;
+     0xfc - 0xfd for 6-byte sequences;
+     0xfe, 0xff not allowed
+   */
+  4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 0xDEADBEEF, 0xDEADBEEF
+};
+#else
+/* #### Maybe this table should be derived programmatically, at least
+   the parts from 0x80 - 0x9D. */
 const Bytecount rep_bytes_by_first_byte[0xA0] =
 { /* 0x00 - 0x7f are for straight ASCII */
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -1296,13 +1327,27 @@ const Bytecount rep_bytes_by_first_byte[0xA0] =
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  /* 0x80 - 0x8f are for Dimension-1 official charsets */
-  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-  /* 0x90 - 0x9d are for Dimension-2 official charsets */
+  /* 0x80 - 0x8c/8d are for Dimension-1 official charsets */
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+#ifndef ENABLE_COMPOSITE_CHARS
+  2,
+#else
+  3,
+#endif
+  /* 0x8d/8e - 0x9d are for Dimension-2 official charsets */
+  3, 3,
   /* 0x9e is for Dimension-1 private charsets */
   /* 0x9f is for Dimension-2 private charsets */
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4
 };
+#endif /* UNICODE_INTERNAL */
+
+
+#ifdef UNICODE_INTERNAL
+/* For UTF-8 conversion */
+unsigned int utf8_offsets_by_rep_bytes[7] = {0, 0, 0x3080, 0xE2080, 0x03C82080,
+					     0xFA082080U, 0x82082080U};
+#endif /* UNICODE_INTERNAL */
 
 #ifdef ENABLE_COMPOSITE_CHARS
 
@@ -1316,11 +1361,560 @@ static int composite_char_row_next;
 static int composite_char_col_next;
 
 #endif /* ENABLE_COMPOSITE_CHARS */
-
 #endif /* MULE */
+
+/* For UTF-8 conversion */
+
+int firstbyte_mask[7] = {0, 0, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC};
 
 Lisp_Object QSin_char_byte_conversion;
 Lisp_Object QSin_internal_external_conversion;
+
+Lisp_Object /* Qfail, Qsubstitute, */ Qsubstitute_negated, Quse_private;
+
+
+/************************************************************************/
+/*                       Basic Ichar functions                          */
+/************************************************************************/
+
+#ifdef MULE
+
+/* Convert a non-ASCII Mule character C into a one-character Mule-encoded
+   string in STR.  Returns the number of bytes stored.
+   Do not call this directly.  Use the macro set_itext_ichar() instead.
+ */
+
+Bytecount
+non_ascii_set_itext_ichar (Ibyte *str, Ichar c)
+{
+#ifdef UNICODE_INTERNAL
+  /* #### This code is duplicated in encode_unicode_to_dynarr in unicode.c.
+     There should be a better way. */
+  register Bytecount bytes;
+
+  text_checking_assert (c >= 0x80);
+  ASSERT_VALID_ICHAR (c);
+  if (c <= 0x7ff) bytes = 2;
+  else if (c <= 0xffff) bytes = 3;
+  else if (c <= 0x1fffff) bytes = 4;
+  else if (c <= 0x3ffffff) bytes = 5;
+  else bytes = 6;
+    
+  str += bytes;
+  switch (bytes)
+    {
+    case 6:*--str = (c | 0x80) & 0xBF; c >>= 6;
+    case 5:*--str = (c | 0x80) & 0xBF; c >>= 6;
+    case 4:*--str = (c | 0x80) & 0xBF; c >>= 6;
+    case 3:*--str = (c | 0x80) & 0xBF; c >>= 6;
+    case 2:*--str = (c | 0x80) & 0xBF; c >>= 6;
+    case 1:*--str = c | firstbyte_mask[bytes];
+    }
+
+  ASSERT_VALID_ITEXT (str);
+  return bytes;
+#else
+  Lisp_Object charset;
+  int c1, c2;
+  Bytecount bytes;
+
+  old_mule_non_ascii_ichar_to_charset_codepoint_raw (c, &charset, &c1, &c2);
+  bytes = old_mule_non_ascii_charset_codepoint_to_itext_raw (charset, c1, c2,
+							     str);
+  text_checking_assert (bytes > 0);
+  return bytes;
+#endif /* UNICODE_INTERNAL */
+}
+
+/* Return the first character from a Mule-encoded string in STR,
+   assuming it's non-ASCII.  Do not call this directly.
+   Use the macro itext_ichar() instead. */
+
+Ichar
+non_ascii_itext_ichar (const Ibyte *str)
+{
+#ifdef UNICODE_INTERNAL
+  /* #### Conversion from UTF8 also happens in unicode_convert in unicode.c.
+     The algorithm is very different, however (this algorithm is the optimized
+     kind from Appendix A of the Unicode Standard, V 2.0).  The other situation
+     would be tricky to convert using this algorithm since (a) it gets
+     arbitrarily buffered data, which may cross character boundaries; (b)
+     there's no guarantee the UTF8 is correct (maybe we misguessed and we're
+     reading totally random bytes and trying to interpret them as UTF8). */
+  unsigned int ch = 0;
+  int bytes = rep_bytes_by_first_byte (*str);
+  Ichar ich;
+
+  /* The ASCII case should already have been filtered out. */
+  text_checking_assert (!byte_ascii_p (*str));
+  ASSERT_VALID_ITEXT (str);
+
+  switch (bytes)
+    {
+    case 6: ch += *str++; ch <<= 6;
+    case 5: ch += *str++; ch <<= 6;
+    case 4: ch += *str++; ch <<= 6;
+    case 3: ch += *str++; ch <<= 6;
+    case 2: ch += *str++; ch <<= 6;
+    case 1: ch += *str;
+    }
+
+  ich = (Ichar) (ch - utf8_offsets_by_rep_bytes[bytes]);
+  ASSERT_VALID_ICHAR (ich);
+  return ich;
+#else /* not UNICODE_INTERNAL */
+  Lisp_Object charset;
+  int c1, c2;
+  Ichar ich;
+
+  old_mule_non_ascii_itext_to_charset_codepoint_raw (str, &charset, &c1, &c2);
+  ich = old_mule_non_ascii_charset_codepoint_to_ichar_raw (charset, c1, c2);
+  ASSERT_VALID_ICHAR (ich);
+  return ich;
+#endif /* UNICODE_INTERNAL */
+}
+
+/* Convert a charset codepoint (guaranteed not to be ASCII) into a
+   character in the internal string representation.  Return number
+   of bytes written out.  FAIL controls what happens when the charset
+   codepoint cannot be converted to Unicode. */
+Bytecount
+non_ascii_charset_codepoint_to_itext (Lisp_Object charset, int c1, int c2,
+				      Ibyte *ptr, enum converr fail)
+{
+  Ichar ch;
+
+  text_checking_assert (!EQ (charset, Vcharset_ascii));
+  ch = charset_codepoint_to_ichar (charset, c1, c2, fail);
+
+  if (ch < 0)
+    return 0;
+  /* We can't rely on the converted character being non-ASCII.  For
+     example, JISX0208 codepoint (33, 64) == Unicode 0x5C (ASCII
+     backslash). */
+  return set_itext_ichar (ptr, ch);
+}
+
+#ifndef UNICODE_INTERNAL
+
+/* Return whether CH is a valid Ichar, assuming it's >= 0x100.
+   Do not call this directly.  Use the macro valid_ichar_p() instead. */
+
+int
+old_mule_non_ascii_valid_ichar_p (Ichar ch)
+{
+  int f1, f2, f3;
+
+  /* Must have only lowest 21 bits set */
+  if (ch & ~0x1FFFFF)
+    return 0;
+
+  f1 = ichar_field1 (ch);
+  f2 = ichar_field2 (ch);
+  f3 = ichar_field3 (ch);
+
+  if (f1 == 0)
+    {
+      /* dimension-1 char */
+      Lisp_Object charset =
+	charset_by_encodable_id (f2 + FIELD2_TO_CHARSET_ID);
+      /* charset exists and of the correct dimension */
+      if (NILP (charset) || XCHARSET_DIMENSION (charset) == 2)
+	return 0;
+      /* octet not out of range */
+      if (f3 < 0x20)
+	return 0;
+      /* check range as per size (94 or 96) of charset */
+      return ((f3 > 0x20 && f3 < 0x7f) || XCHARSET_CHARS (charset, 1) == 96);
+    }
+  else
+    {
+      /* dimension-2 char */
+      Lisp_Object charset =
+	charset_by_encodable_id (f1 <= MAX_ICHAR_FIELD1_OFFICIAL ?
+				 f1 + FIELD1_TO_OFFICIAL_CHARSET_ID :
+				 f1 + FIELD1_TO_PRIVATE_CHARSET_ID);
+      /* charset exists and of the correct dimension */
+      if (NILP (charset) || XCHARSET_DIMENSION (charset) == 1)
+	return 0;
+      /* octets not out of range */
+      if (f2 < 0x20 || f3 < 0x20)
+	return 0;
+#ifdef ENABLE_COMPOSITE_CHARS
+      if (EQ (charset, Vcharset_composite))
+	{
+	  if (UNBOUNDP (Fgethash (make_int (ch),
+				  Vcomposite_char_char2string_hash_table,
+				  Qunbound)))
+	    return 0;
+	  return 1;
+	}
+#endif /* ENABLE_COMPOSITE_CHARS */
+      /* check range as per size (94x94 or 96x96) of charset */
+      return
+	(((f2 != 0x20 && f2 != 0x7F) || XCHARSET_CHARS (charset, 0) == 96) &&
+	 ((f3 != 0x20 && f3 != 0x7F) || XCHARSET_CHARS (charset, 1) == 96));
+    }
+}
+
+/* Separate an Ichar into its components.  The charset of character C is
+   stored in CHARSET, and the position-codes of C are stored in C1 and C2.
+   A dimension-1 character has a C1 of 0.  */
+
+void
+old_mule_non_ascii_ichar_to_charset_codepoint_raw (Ichar c,
+						   Lisp_Object *charset,
+						   int *c1, int *c2)
+{
+  text_checking_assert (c >= 0x80);
+  ASSERT_VALID_ICHAR (c);
+  if (c <= 0x9F)
+    {
+      *charset = Vcharset_control_1;
+      *c1 = 0;
+      *c2 = (int) c;
+    }
+  else
+    {
+      *charset = charset_by_encodable_id (old_mule_ichar_charset_id (c));
+      *c1 = XCHARSET_DIMENSION (*charset) == 1 ? 0 : ichar_field2 (c);
+      *c2 = ichar_field3 (c);
+      if (XCHARSET_OFFSET (*charset, 0) >= 128)
+	*c1 += 128;
+      if (XCHARSET_OFFSET (*charset, 1) >= 128)
+	*c2 += 128;
+    }
+  ASSERT_VALID_CHARSET_CODEPOINT (*charset, *c1, *c2);
+}
+
+/* Convert a character in the internal string representation (guaranteed
+   not to be ASCII) into a charset codepoint. */
+void
+old_mule_non_ascii_itext_to_charset_codepoint_raw (const Ibyte *ptr,
+						   Lisp_Object *charset,
+						   int *c1, int *c2)
+{
+  int id;
+
+  text_checking_assert (!byte_ascii_p (*ptr));
+  ASSERT_VALID_ITEXT (ptr);
+
+  if (*ptr == LEAD_BYTE_PRIVATE_1)
+    id = byte_id_to_private_charset_id (*++ptr, 1);
+  else if (*ptr == LEAD_BYTE_PRIVATE_2)
+    id = byte_id_to_private_charset_id (*++ptr, 2);
+  else
+    id = byte_id_to_official_charset_id (*ptr);
+
+  *charset = charset_by_encodable_id (id);
+  if (XCHARSET_DIMENSION (*charset) == 2)
+    *c1 = *++ptr & 0x7F;
+  else
+    *c1 = 0;
+  *c2 = *++ptr & 0x7F;
+  if (XCHARSET_OFFSET (*charset, 0) >= 128)
+    *c1 += 128;
+  if (XCHARSET_OFFSET (*charset, 1) >= 128)
+    *c2 += 128;
+  if (EQ (*charset, Vcharset_control_1))
+    *c2 -= 0x20;
+
+  ASSERT_VALID_CHARSET_CODEPOINT (*charset, *c1, *c2);
+}
+
+Ichar
+old_mule_non_ascii_charset_codepoint_to_ichar_raw (Lisp_Object charset,
+						   int c1, int c2)
+{
+  Ichar retval;
+
+  text_checking_assert (!EQ (charset, Vcharset_ascii));
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+  if (EQ (charset, Vcharset_control_1))
+    retval = c2;
+  else
+    {
+      int id = XCHARSET_ID (charset);
+      if (id > MAX_ENCODABLE_CHARSET_ID)
+	return -1;
+      c1 &= 127;
+      c2 &= 127;
+      if (XCHARSET_DIMENSION (charset) == 1)
+	retval = ((id - FIELD2_TO_CHARSET_ID) << 7) | (c2);
+      else
+	retval =
+	  ((id - (id >= MIN_PRIVATE_CHARSET_ID ?
+		  FIELD1_TO_PRIVATE_CHARSET_ID :
+		  FIELD1_TO_OFFICIAL_CHARSET_ID)) << 14) |
+	  ((c1) << 7) | (c2);
+    }
+
+  ASSERT_VALID_ICHAR (retval);
+  return retval;
+}
+
+/* Convert a charset codepoint (guaranteed not to be ASCII) into a
+   character in the old-Mule internal string representation.  Return number
+   of bytes written out. */
+
+Bytecount
+old_mule_non_ascii_charset_codepoint_to_itext_raw (Lisp_Object charset,
+						   int c1, int c2, Ibyte *ptr)
+{
+  Ibyte *p = ptr;
+  int id = XCHARSET_ID (charset);
+
+  text_checking_assert (!EQ (charset, Vcharset_ascii));
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, c1, c2);
+
+  /* We are only called as a result of breaking a character into charset
+     and octets; so non-encodable charsets that cannot form a character
+     should never occur */
+  text_checking_assert (id <= MAX_ENCODABLE_CHARSET_ID);
+
+  if (EQ (charset, Vcharset_control_1))
+    c2 += 0x20;
+
+  if (id >= MIN_PRIVATE_CHARSET_ID)
+    {
+    *p++ = (XCHARSET_DIMENSION (charset) == 1 ? LEAD_BYTE_PRIVATE_1 :
+	    LEAD_BYTE_PRIVATE_2);
+    *p++ = private_charset_id_to_byte_id (id, XCHARSET_DIMENSION (charset));
+    }
+  else
+    *p++ = official_charset_id_to_byte_id (id);
+  if (XCHARSET_DIMENSION (charset) == 2)
+    *p++ = c1 | 0x80;
+  *p++ = c2 | 0x80;
+
+  ASSERT_VALID_ITEXT (ptr);
+  return (p - ptr);
+}
+
+int
+old_mule_ichar_columns (Ichar c)
+{
+  return XCHARSET_COLUMNS (charset_by_encodable_id
+			   (old_mule_ichar_charset_id (c)));
+}
+
+int
+old_mule_ichar_to_unicode (Ichar chr, enum converr fail)
+{
+  ASSERT_VALID_ICHAR (chr);
+
+  /* This shortcut depends on the representation of an Ichar, see text.c. */
+  if (chr < 256)
+    return (int) chr;
+
+  {
+    int c1, c2;
+    Lisp_Object charset;
+
+    old_mule_non_ascii_ichar_to_charset_codepoint_raw (chr, &charset, &c1,
+						       &c2);
+    return charset_codepoint_to_unicode (charset, c1, c2, fail);
+  }
+}
+
+/* @@#### This is a big kludge.  It could fail, e.g., if the predicate in
+   question triggers a recursive call to old_mule_unicode_to_ichar().
+   It would also fail if we parallelized XEmacs (not bloody likely).
+   A better fix is to change the predicate to take an extra "void *" argument
+   and add an extra void * argument to all functions that take a predicate
+   argument (yuck).  Alternatively, make the predicate argument a structure
+   and have it contain the predicate and extra argument.  That way there's
+   only one argument, a structure. */
+static charset_pred omu2i_kludge_predicate;
+
+static int
+omu2i_predicate (Lisp_Object charset)
+{
+  return (old_mule_charset_encodable (charset) &&
+	  omu2i_kludge_predicate (charset));
+}
+
+/* Convert a Unicode codepoint to an Ichar.  Return value will correspond
+   to FAIL -- possibly (Ichar) -1, a substituted character, or something
+   else. */
+
+Ichar
+old_mule_unicode_to_ichar (int code, Lisp_Object precarray,
+			   charset_pred predicate, enum converr fail)
+{
+  Lisp_Object charset;
+  int c1, c2;
+  charset_pred mypred;
+
+  /* This shortcut depends on the representation of an Ichar, see text.c.
+     It could potentially be extended to 0x80 to 0x9F, if we bothered to
+     keep track of whether there are any Unicode mappings in the range
+     0x80 to 0x9F that override Control-1, similar to what we do below
+     for ASCII.
+
+     Note that it may _not_ be extended to U+00A0 to U+00FF (many ISO 8859
+     coded character sets have points that map into that region, so this
+     function is many-valued).
+  */
+  if (code <= 0x7F && !XPRECEDENCE_ARRAY (precarray)->has_overriding_ascii
+      && (!predicate || (*predicate) (Vcharset_ascii)))
+    return (Ichar) code;
+
+  /* Convert to a charset codepoint, but ignore charsets that can't be
+     encoded into text */
+  if (!predicate)
+    mypred = old_mule_charset_encodable;
+  else
+    {
+      mypred = omu2i_predicate;
+      omu2i_kludge_predicate = predicate;
+    }
+  unicode_to_charset_codepoint_raw (code, precarray, mypred,
+				    &charset, &c1, &c2);
+  if (NILP (charset))
+    HANDLE_ICHAR_ERROR ("Can't convert Unicode codepoint to character",
+			make_int (code), fail);
+  return charset_codepoint_to_ichar (charset, c1, c2, CONVERR_FAIL);
+}
+
+static Ichar
+old_mule_round_up_to_valid_ichar (int charpos)
+{
+  int i, dim;
+
+  /* Within a particular dimension (1 or 2), charset ID order corresponds
+     to character order.  Furthermore, all dimension-1 characters are less
+     than all dimension-2 characters.  This is not the case with charset
+     ID's, however.  So we have to loop twice over the range of encodable
+     ID's, once per dimension.  We could shorten things somewhat by using
+     more specific knowledge about exactly which ID's are assigned to which
+     dimensions, but that would be more fragile, and it's unlikely that
+     this way takes a significant amount of time as there are only 225 or
+     so possible encodable ID's. */
+  for (dim = 1; dim <= 2; dim++)
+    {
+      for (i = MIN_ENCODABLE_CHARSET_ID; i <= MAX_ENCODABLE_CHARSET_ID; i++)
+	{
+	  Lisp_Object charset = charset_by_encodable_id (i);
+	  if (!NILP (charset) && XCHARSET_DIMENSION (charset) == dim)
+	    {
+	      int l1, l2, h1, h2;
+	      Ichar minchar, maxchar;
+	      get_charset_limits (charset, &l1, &l2, &h1, &h2);
+	      minchar = charset_codepoint_to_ichar (charset, l1, l2,
+						    CONVERR_ABORT);
+	      maxchar = charset_codepoint_to_ichar (charset, h1, h2,
+						    CONVERR_ABORT);
+	      /* Either we are between charsets, or in a gap within a
+		 charset. */
+	      if (charpos < minchar)
+		/* We are between charsets */
+		return minchar;
+	      if (charpos < maxchar)
+		{
+		  /* We are in a gap.  The gaps aren't more than 34 characters
+		     wide, so just move up till we find the end of the gap. */
+		  while (!valid_ichar_p (charpos))
+		    charpos++;
+		  return charpos;
+		}
+	    }
+	}
+    }
+
+  return -1;
+}
+
+static Ichar
+old_mule_round_down_to_valid_ichar (int charpos)
+{
+  int i, dim;
+
+  for (dim = 2; dim >= 1; dim--)
+    {
+      for (i = MAX_ENCODABLE_CHARSET_ID; i >= MIN_ENCODABLE_CHARSET_ID; i--)
+	{
+	  Lisp_Object charset = charset_by_encodable_id (i);
+	  if (!NILP (charset) && XCHARSET_DIMENSION (charset) == dim)
+	    {
+	      int l1, l2, h1, h2;
+	      Ichar minchar, maxchar;
+	      get_charset_limits (charset, &l1, &l2, &h1, &h2);
+	      minchar = charset_codepoint_to_ichar (charset, l1, l2,
+						    CONVERR_ABORT);
+	      maxchar = charset_codepoint_to_ichar (charset, h1, h2,
+						    CONVERR_ABORT);
+	      if (charpos > maxchar)
+		return maxchar;
+	      if (charpos > minchar)
+		{
+		  while (!valid_ichar_p (charpos))
+		    charpos--;
+		  return charpos;
+		}
+	    }
+	}
+    }
+
+  return -1;
+}
+
+#endif /* not UNICODE_INTERNAL */
+
+#endif /* MULE */
+
+/* Take a possibly invalid Ichar value (must be >= 0) and move upwards as
+   necessary until we find the first valid Ichar.  Return -1 if we're above
+   all valid Ichars. */
+
+Ichar
+round_up_to_valid_ichar (int charpos)
+{
+  text_checking_assert (charpos >= 0);
+  if (valid_ichar_p (charpos))
+    return (Ichar) charpos;
+#ifdef UNICODE_INTERNAL
+  if (valid_unicode_surrogate (charpos))
+    return (Ichar) (LAST_UTF_16_SURROGATE + 1);
+  text_checking_assert (charpos > ICHAR_MAX);
+  return -1;
+#elif defined (MULE)
+  return old_mule_round_up_to_valid_ichar (charpos);
+#else
+  return -1;
+#endif
+}
+
+/* Take a possibly invalid Ichar value (must be >= 0) and move downwards as
+   necessary until we find the first valid Ichar. */
+
+Ichar
+round_down_to_valid_ichar (int charpos)
+{
+  text_checking_assert (charpos >= 0);
+  if (valid_ichar_p (charpos))
+    return (Ichar) charpos;
+#ifdef UNICODE_INTERNAL
+  if (charpos > ICHAR_MAX)
+    return ICHAR_MAX;
+  text_checking_assert (valid_unicode_surrogate (charpos));
+  return (Ichar) (FIRST_UTF_16_SURROGATE - 1);
+#elif defined (MULE)
+  return old_mule_round_down_to_valid_ichar (charpos);
+#else
+  return 255;
+#endif
+}
+
+/****************************************************************************/
+/*--------------------------------------------------------------------------*/
+/*                                                                          */
+/*              Everything above here knows about the specifics of          */
+/*              the internal character and text formats.  Nothing           */
+/*              below or anywhere else knows, except text.h.                */
+/*                                                                          */
+/*--------------------------------------------------------------------------*/
+/****************************************************************************/
 
 
 /************************************************************************/
@@ -1748,7 +2342,7 @@ convert_ibyte_string_into_ichar_string (const Ibyte *str, Bytecount len,
 
 void
 convert_ichar_string_into_ibyte_dynarr (Ichar *arr, int nels,
-					  Ibyte_dynarr *dyn)
+					Ibyte_dynarr *dyn)
 {
   Ibyte str[MAX_ICHAR_LEN];
   int i;
@@ -1768,7 +2362,7 @@ convert_ichar_string_into_ibyte_dynarr (Ichar *arr, int nels,
 
 Ibyte *
 convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
-					    Bytecount *len_out)
+					   Bytecount *len_out)
 {
   /* Damn zero-termination. */
   Ibyte *str = alloca_ibytes (nels * MAX_ICHAR_LEN + 1);
@@ -1788,53 +2382,53 @@ convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
   return str;
 }
 
-#define COPY_TEXT_BETWEEN_FORMATS(srcfmt, dstfmt)			 \
-do									 \
-{									 \
-  if (dst)								 \
-    {									 \
-      Ibyte *dstend = dst + dstlen;					 \
-      Ibyte *dstp = dst;						 \
-      const Ibyte *srcend = src + srclen;				 \
-      const Ibyte *srcp = src;					 \
-									 \
-      while (srcp < srcend)						 \
-	{								 \
-	  Ichar ch = itext_ichar_fmt (srcp, srcfmt, srcobj);	 \
-	  Bytecount len = ichar_len_fmt (ch, dstfmt);			 \
-									 \
-	    if (dstp + len <= dstend)					 \
-	      {								 \
-		(void) set_itext_ichar_fmt (dstp, ch, dstfmt, dstobj);	 \
-		dstp += len;						 \
-	      }								 \
-	    else							 \
-	      break;							 \
-	  INC_IBYTEPTR_FMT (srcp, srcfmt);				 \
-	}								 \
-      text_checking_assert (srcp <= srcend);				 \
-      if (src_used)							 \
-	*src_used = srcp - src;						 \
-      return dstp - dst;						 \
-    }									 \
-  else									 \
-    {									 \
-      const Ibyte *srcend = src + srclen;				 \
-      const Ibyte *srcp = src;					 \
-      Bytecount total = 0;						 \
-									 \
-      while (srcp < srcend)						 \
-	{								 \
-	  total += ichar_len_fmt (itext_ichar_fmt (srcp, srcfmt,	 \
+#define COPY_TEXT_BETWEEN_FORMATS(srcfmt, dstfmt)			\
+do									\
+{									\
+  if (dst)								\
+    {									\
+      Ibyte *dstend = dst + dstlen;					\
+      Ibyte *dstp = dst;						\
+      const Ibyte *srcend = src + srclen;				\
+      const Ibyte *srcp = src;						\
+									\
+      while (srcp < srcend)						\
+	{								\
+	  Ichar ch = itext_ichar_fmt (srcp, srcfmt, srcobj);		\
+	  Bytecount len = ichar_len_fmt (ch, dstfmt);			\
+									\
+	    if (dstp + len <= dstend)					\
+	      {								\
+		(void) set_itext_ichar_fmt (dstp, ch, dstfmt, dstobj);	\
+		dstp += len;						\
+	      }								\
+	    else							\
+	      break;							\
+	  INC_IBYTEPTR_FMT (srcp, srcfmt);				\
+	}								\
+      text_checking_assert (srcp <= srcend);				\
+      if (src_used)							\
+	*src_used = srcp - src;						\
+      return dstp - dst;						\
+    }									\
+  else									\
+    {									\
+      const Ibyte *srcend = src + srclen;				\
+      const Ibyte *srcp = src;						\
+      Bytecount total = 0;						\
+									\
+      while (srcp < srcend)						\
+	{								\
+	  total += ichar_len_fmt (itext_ichar_fmt (srcp, srcfmt,	\
 						       srcobj), dstfmt); \
-	  INC_IBYTEPTR_FMT (srcp, srcfmt);				 \
-	}								 \
-      text_checking_assert (srcp == srcend);				 \
-      if (src_used)							 \
-	*src_used = srcp - src;						 \
-      return total;							 \
-    }									 \
-}									 \
+	  INC_IBYTEPTR_FMT (srcp, srcfmt);				\
+	}								\
+      text_checking_assert (srcp == srcend);				\
+      if (src_used)							\
+	*src_used = srcp - src;						\
+      return total;							\
+    }									\
+}									\
 while (0)
 
 /* Copy as much text from SRC/SRCLEN to DST/DSTLEN as will fit, converting
@@ -1941,81 +2535,128 @@ copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
 /*                    charset properties of strings                     */
 /************************************************************************/
 
-void
-find_charsets_in_ibyte_string (unsigned char *charsets,
-			       const Ibyte *USED_IF_MULE (str),
-			       Bytecount USED_IF_MULE (len))
+/* Add OBJ to DYNARR unless it's already present in DYNARR */
+
+static void
+add_to_dynarr_unless_present (Lisp_Object obj, Lisp_Object_dynarr *dynarr)
 {
-#ifndef MULE
-  /* Telescope this. */
-  charsets[0] = 1;
-#else
+  int i;
+
+  for (i = 0; i < Dynarr_length (dynarr); i++)
+    {
+      if (EQ (Dynarr_at (dynarr, i), obj))
+	return;
+    }
+  Dynarr_add (dynarr, obj);
+}
+
+
+#if 0 /* Not currently used */
+
+void
+find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
+			       const Ibyte *str, Bytecount len,
+			       struct buffer *buf)
+{
+  Lisp_Object prev_charset = Qunbound;
   const Ibyte *strend = str + len;
-  memset (charsets, 0, NUM_LEADING_BYTES);
 
   /* #### SJT doesn't like this. */
   if (len == 0)
     {
-      charsets[XCHARSET_LEADING_BYTE (Vcharset_ascii) - MIN_LEADING_BYTE] = 1;
+      Dynarr_add (charsets, Vcharset_ascii);
       return;
     }
 
   while (str < strend)
     {
-      charsets[ichar_leading_byte (itext_ichar (str)) - MIN_LEADING_BYTE] =
-	1;
+      Lisp_Object charset;
+      int c1, c2;
+      buffer_itext_to_charset_codepoint (str, buf, &charset,
+					 &c1, &c2, CONVERR_FAIL);
+      if (!NILP (charset) && !EQ (charset, prev_charset))
+	{
+	  prev_charset = charset;
+	  add_to_dynarr_unless_present (charset, charsets);
+	}
+
       INC_IBYTEPTR (str);
     }
-#endif
 }
 
-void
-find_charsets_in_ichar_string (unsigned char *charsets,
-			       const Ichar *USED_IF_MULE (str),
-			       Charcount USED_IF_MULE (len))
-{
-#ifndef MULE
-  /* Telescope this. */
-  charsets[0] = 1;
-#else
-  int i;
+#endif /* 0 */
 
-  memset (charsets, 0, NUM_LEADING_BYTES);
+/* Find the charsets in an array of Ichars, using BUF's Unicode-precedence
+   list when under Unicode-internal to decide which charset to pick.  Add
+   the charsets found to CHARSETS, but don't add any duplicates. */
+
+void
+find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
+			       const Ichar *str, Charcount len,
+			       struct buffer *buf)
+{
+  Lisp_Object prev_charset = Qunbound;
+  int j;
 
   /* #### SJT doesn't like this. */
   if (len == 0)
     {
-      charsets[XCHARSET_LEADING_BYTE (Vcharset_ascii) - MIN_LEADING_BYTE] = 1;
+      Dynarr_add (charsets, Vcharset_ascii);
       return;
     }
 
-  for (i = 0; i < len; i++)
+  for (j = 0; j < len; j++)
     {
-      charsets[ichar_leading_byte (str[i]) - MIN_LEADING_BYTE] = 1;
+      Lisp_Object charset;
+      int c1, c2;
+      buffer_ichar_to_charset_codepoint (str[j], buf, &charset,
+					 &c1, &c2, CONVERR_FAIL);
+      if (!NILP (charset) && !EQ (charset, prev_charset))
+	{
+	  prev_charset = charset;
+	  add_to_dynarr_unless_present (charset, charsets);
+	}
     }
-#endif
 }
 
-/* A couple of these functions should only be called on a non-Mule build. */
-#ifdef MULE
-#define ASSERT_BUILT_WITH_MULE() assert(1)
-#else /* MULE */
-#define ASSERT_BUILT_WITH_MULE() assert(0)
-#endif /* MULE */
+
+/* Find the charsets in a region of a buffer.  Add the
+   charsets found to CHARSETS, but don't add any duplicates. */
+
+void
+find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
+			 struct buffer *buf, Charbpos pos, Charcount len)
+{
+  Lisp_Object prev_charset = Qunbound;
+  Charbpos stop = pos + len;
+
+  while (pos < stop)
+    {
+      Ichar ich = BUF_FETCH_CHAR (buf, pos);
+      Lisp_Object charset;
+      int c1, c2;
+      
+      buffer_ichar_to_charset_codepoint (ich, buf, &charset,
+					 &c1, &c2, CONVERR_FAIL);
+      if (!NILP (charset) && !EQ (charset, prev_charset))
+	{
+	  prev_charset = charset;
+	  add_to_dynarr_unless_present (charset, charsets);
+	}
+
+      ++pos;
+    }
+}
 
 int
 ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
 {
   int cols = 0;
   const Ibyte *end = str + len;
-  Ichar ch;
-
-  ASSERT_BUILT_WITH_MULE();
 
   while (str < end)
     {
-      ch = itext_ichar (str);
-      cols += XCHARSET_COLUMNS (ichar_charset (ch));
+      cols += ichar_columns (itext_ichar (str));
       INC_IBYTEPTR (str);
     }
 
@@ -2023,24 +2664,20 @@ ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
 }
 
 int
-ichar_string_displayed_columns (const Ichar * USED_IF_MULE(str), Charcount len)
+ichar_string_displayed_columns (const Ichar *str, Charcount len)
 {
   int cols = 0;
   int i;
 
-  ASSERT_BUILT_WITH_MULE();
-
   for (i = 0; i < len; i++)
-    cols += XCHARSET_COLUMNS (ichar_charset (str[i]));
+    cols += ichar_columns (str[i]);
 
   return cols;
 }
 
 Charcount
-ibyte_string_nonascii_chars (const Ibyte *USED_IF_MULE (str),
-			     Bytecount USED_IF_MULE (len))
+ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len)
 {
-#ifdef MULE
   const Ibyte *end = str + len;
   Charcount retval = 0;
 
@@ -2052,9 +2689,6 @@ ibyte_string_nonascii_chars (const Ibyte *USED_IF_MULE (str),
     }
 
   return retval;
-#else
-  return 0;
-#endif
 }
 
 
@@ -2296,9 +2930,14 @@ bytecount_to_charcount_fun (const Ibyte *ptr, Bytecount len)
 	break;
       {
 	/* Optimize for successive characters from the same charset */
-	Ibyte leading_byte = *ptr;
-	int bytes = rep_bytes_by_first_byte (leading_byte);
-	while (ptr < end && *ptr == leading_byte)
+	/* This still sort of works in the Unicode world -- 0 - 7F take one
+	   byte, 80 - 7FF take two bytes, 800 - FFFF take three bytes.
+	   Latin, Greek, Cyrillic, Hebrew and Arabic scripts end up
+	   (mostly) in the two-byte ranges, and Indian and CJK scripts in
+	   the three-byte ranges. */
+	Ibyte lead_byte = *ptr;
+	int bytes = rep_bytes_by_first_byte (lead_byte);
+	while (ptr < end && *ptr == lead_byte)
 	  ptr += bytes, count++;
       }
     }
@@ -2327,9 +2966,11 @@ charcount_to_bytecount_fun (const Ibyte *ptr, Charcount len)
 	break;
       {
 	/* Optimize for successive characters from the same charset */
-	Ibyte leading_byte = *newptr;
-	int bytes = rep_bytes_by_first_byte (leading_byte);
-	while (len > 0 && *newptr == leading_byte)
+	/* This still sort of works in the Unicode world -- see
+	   comment in bytecount_to_charcount_fun(). */
+	Ibyte lead_byte = *newptr;
+	int bytes = rep_bytes_by_first_byte (lead_byte);
+	while (len > 0 && *newptr == lead_byte)
 	  newptr += bytes, len--;
       }
     }
@@ -4022,8 +4663,8 @@ buffer_or_string_clip_to_absolute_byte (Lisp_Object object, Bytexpos pos)
 
 typedef struct
 {
-  Dynarr_declare (Ibyte_dynarr *);
-} Ibyte_dynarr_dynarr;
+  Dynarr_declare (unsigned_char_dynarr *);
+} unsigned_char_dynarr_dynarr;
 
 typedef struct
 {
@@ -4031,7 +4672,7 @@ typedef struct
 } Extbyte_dynarr_dynarr;
 
 static Extbyte_dynarr_dynarr *conversion_out_dynarr_list;
-static Ibyte_dynarr_dynarr *conversion_in_dynarr_list;
+static unsigned_char_dynarr_dynarr *conversion_in_dynarr_list;
 
 static int dfc_convert_to_external_format_in_use;
 static int dfc_convert_to_internal_format_in_use;
@@ -4103,11 +4744,19 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	const Ibyte *end;
 	for (end = ptr + len; ptr < end;)
 	  {
-	    Ibyte c =
-	      (byte_ascii_p (*ptr))		   ? *ptr :
-	      (*ptr == LEADING_BYTE_CONTROL_1)	   ? (*(ptr+1) - 0x20) :
-	      (*ptr == LEADING_BYTE_LATIN_ISO8859_1) ? (*(ptr+1)) :
-	      '~';
+	    Ibyte c;
+	    if (byte_ascii_p (*ptr))
+	      c = *ptr;
+	    else
+	      {
+		Ichar ich = non_ascii_itext_ichar (ptr);
+		if (ich < 256)
+		  c = (Ibyte) ich;
+		else
+		  /* #### This is just plain unacceptable. */
+		  /* untranslatable character */
+		  c = CANT_CONVERT_CHAR_WHEN_ENCODING;
+	      }
 
 	    Dynarr_add (conversion_out_dynarr, (Extbyte) c);
 	    INC_IBYTEPTR (ptr);
@@ -4209,12 +4858,12 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	    if (size_in_bytes == 0)
 	      break;
 	    else if (size_in_bytes < 0)
-	      signal_error (Qtext_conversion_error,
-			    "Error converting to external format", Qunbound);
+	      text_conversion_error ("Error converting to external format",
+				     Qunbound);
 
 	    if (Lstream_write (writer, tempbuf, size_in_bytes) < 0)
-	      signal_error (Qtext_conversion_error,
-			    "Error converting to external format", Qunbound);
+	      text_conversion_error ("Error converting to external format",
+				     Qunbound);
 	  }
 
 	/* Closing writer will close any stream at the other end of writer. */
@@ -4253,7 +4902,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
      esp. given that this code conversion occurs in many very hidden
      places. */
   int count;
-  Ibyte_dynarr *conversion_in_dynarr;
+  unsigned_char_dynarr *conversion_in_dynarr;
   Lisp_Object underlying_cs;
   PROFILE_DECLARE ();
 
@@ -4271,7 +4920,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 
   if (Dynarr_length (conversion_in_dynarr_list) <=
       dfc_convert_to_internal_format_in_use)
-    Dynarr_add (conversion_in_dynarr_list, Dynarr_new (Ibyte));
+    Dynarr_add (conversion_in_dynarr_list, Dynarr_new (unsigned_char));
   conversion_in_dynarr = Dynarr_at (conversion_in_dynarr_list,
 				    dfc_convert_to_internal_format_in_use);
   Dynarr_reset (conversion_in_dynarr);
@@ -4313,18 +4962,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
         {
           Ibyte c = *ptr;
 
-	  if (byte_ascii_p (c))
-	    Dynarr_add (conversion_in_dynarr, c);
-	  else if (byte_c1_p (c))
-	    {
-	      Dynarr_add (conversion_in_dynarr, LEADING_BYTE_CONTROL_1);
-	      Dynarr_add (conversion_in_dynarr, c + 0x20);
-	    }
-	  else
-	    {
-	      Dynarr_add (conversion_in_dynarr, LEADING_BYTE_LATIN_ISO8859_1);
-	      Dynarr_add (conversion_in_dynarr, c);
-	    }
+	  DECODE_ADD_BINARY_CHAR (c, conversion_in_dynarr);
         }
 #else
       Dynarr_add_many (conversion_in_dynarr, source->data.ptr, source->data.len);
@@ -4370,20 +5008,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 	{
           Ibyte c = *ptr;
 
-	  if (byte_ascii_p (c))
-	    Dynarr_add (conversion_in_dynarr, c);
-#ifdef MULE
-	  else if (byte_c1_p (c))
-	    {
-	      Dynarr_add (conversion_in_dynarr, LEADING_BYTE_CONTROL_1);
-	      Dynarr_add (conversion_in_dynarr, c + 0x20);
-	    }
-	  else
-	    {
-	      Dynarr_add (conversion_in_dynarr, LEADING_BYTE_LATIN_ISO8859_1);
-	      Dynarr_add (conversion_in_dynarr, c);
-	    }
-#endif /* MULE */
+	  DECODE_ADD_BINARY_CHAR (c, conversion_in_dynarr);
         }
     }
 #endif /* WIN32_ANY */
@@ -4438,12 +5063,12 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 	    if (size_in_bytes == 0)
 	      break;
 	    else if (size_in_bytes < 0)
-	      signal_error (Qtext_conversion_error,
-			    "Error converting to internal format", Qunbound);
+	      text_conversion_error ("Error converting to internal format",
+				     Qunbound);
 
 	    if (Lstream_write (writer, tempbuf, size_in_bytes) < 0)
-	      signal_error (Qtext_conversion_error,
-			    "Error converting to internal format", Qunbound);
+	      text_conversion_error ("Error converting to internal format",
+				     Qunbound);
 	  }
 
 	/* Closing writer will close any stream at the other end of writer. */
@@ -4601,6 +5226,17 @@ new_dfc_convert_size (const char *srctext, const void *src,
   return vals.dst_size;
 }
 
+Bytecount
+new_dfc_get_existing_size (const char *srctext)
+{
+  alloca_convert_vals *vals;
+  int i = find_pos_of_existing_active_alloca_convert (srctext);
+
+  assert (i >= 0);
+  vals = Dynarr_atp (active_alloca_convert, i);
+  return vals->dst_size;
+}
+
 void *
 new_dfc_convert_copy_data (const char *srctext, void *alloca_data)
 {
@@ -4629,165 +5265,7 @@ new_dfc_convert_malloc (const void *src, Bytecount src_size,
 
 
 /************************************************************************/
-/*                       Basic Ichar functions                         */
-/************************************************************************/
-
-#ifdef MULE
-
-/* Convert a non-ASCII Mule character C into a one-character Mule-encoded
-   string in STR.  Returns the number of bytes stored.
-   Do not call this directly.  Use the macro set_itext_ichar() instead.
- */
-
-Bytecount
-non_ascii_set_itext_ichar (Ibyte *str, Ichar c)
-{
-  Ibyte *p;
-  Ibyte lb;
-  int c1, c2;
-  Lisp_Object charset;
-
-  p = str;
-  BREAKUP_ICHAR (c, charset, c1, c2);
-  lb = ichar_leading_byte (c);
-  if (leading_byte_private_p (lb))
-    *p++ = private_leading_byte_prefix (lb);
-  *p++ = lb;
-  if (EQ (charset, Vcharset_control_1))
-    c1 += 0x20;
-  *p++ = c1 | 0x80;
-  if (c2)
-    *p++ = c2 | 0x80;
-
-  return (p - str);
-}
-
-/* Return the first character from a Mule-encoded string in STR,
-   assuming it's non-ASCII.  Do not call this directly.
-   Use the macro itext_ichar() instead. */
-
-Ichar
-non_ascii_itext_ichar (const Ibyte *str)
-{
-  Ibyte i0 = *str, i1, i2 = 0;
-  Lisp_Object charset;
-
-  if (i0 == LEADING_BYTE_CONTROL_1)
-    return (Ichar) (*++str - 0x20);
-
-  if (leading_byte_prefix_p (i0))
-    i0 = *++str;
-
-  i1 = *++str & 0x7F;
-
-  charset = charset_by_leading_byte (i0);
-  if (XCHARSET_DIMENSION (charset) == 2)
-    i2 = *++str & 0x7F;
-
-  return make_ichar (charset, i1, i2);
-}
-
-/* Return whether CH is a valid Ichar, assuming it's non-ASCII.
-   Do not call this directly.  Use the macro valid_ichar_p() instead. */
-
-int
-non_ascii_valid_ichar_p (Ichar ch)
-{
-  int f1, f2, f3;
-
-  /* Must have only lowest 21 bits set */
-  if (ch & ~0x1FFFFF)
-    return 0;
-
-  f1 = ichar_field1 (ch);
-  f2 = ichar_field2 (ch);
-  f3 = ichar_field3 (ch);
-
-  if (f1 == 0)
-    {
-      /* dimension-1 char */
-      Lisp_Object charset;
-
-      /* leading byte must be correct */
-      if (f2 < MIN_ICHAR_FIELD2_OFFICIAL ||
-	  (f2 > MAX_ICHAR_FIELD2_OFFICIAL && f2 < MIN_ICHAR_FIELD2_PRIVATE) ||
-	   f2 > MAX_ICHAR_FIELD2_PRIVATE)
-	return 0;
-      /* octet not out of range */
-      if (f3 < 0x20)
-	return 0;
-      /* charset exists */
-      /*
-	 NOTE: This takes advantage of the fact that
-	 FIELD2_TO_OFFICIAL_LEADING_BYTE and
-	 FIELD2_TO_PRIVATE_LEADING_BYTE are the same.
-	 */
-      charset = charset_by_leading_byte (f2 + FIELD2_TO_OFFICIAL_LEADING_BYTE);
-      if (EQ (charset, Qnil))
-	return 0;
-      /* check range as per size (94 or 96) of charset */
-      return ((f3 > 0x20 && f3 < 0x7f) || XCHARSET_CHARS (charset) == 96);
-    }
-  else
-    {
-      /* dimension-2 char */
-      Lisp_Object charset;
-
-      /* leading byte must be correct */
-      if (f1 < MIN_ICHAR_FIELD1_OFFICIAL ||
-	  (f1 > MAX_ICHAR_FIELD1_OFFICIAL && f1 < MIN_ICHAR_FIELD1_PRIVATE) ||
-	  f1 > MAX_ICHAR_FIELD1_PRIVATE)
-	return 0;
-      /* octets not out of range */
-      if (f2 < 0x20 || f3 < 0x20)
-	return 0;
-
-#ifdef ENABLE_COMPOSITE_CHARS
-      if (f1 + FIELD1_TO_OFFICIAL_LEADING_BYTE == LEADING_BYTE_COMPOSITE)
-	{
-	  if (UNBOUNDP (Fgethash (make_int (ch),
-				  Vcomposite_char_char2string_hash_table,
-				  Qunbound)))
-	    return 0;
-	  return 1;
-	}
-#endif /* ENABLE_COMPOSITE_CHARS */
-
-      /* charset exists */
-      if (f1 <= MAX_ICHAR_FIELD1_OFFICIAL)
-	charset =
-	  charset_by_leading_byte (f1 + FIELD1_TO_OFFICIAL_LEADING_BYTE);
-      else
-	charset =
-	  charset_by_leading_byte (f1 + FIELD1_TO_PRIVATE_LEADING_BYTE);
-
-      if (EQ (charset, Qnil))
-	return 0;
-      /* check range as per size (94x94 or 96x96) of charset */
-      return ((f2 != 0x20 && f2 != 0x7F && f3 != 0x20 && f3 != 0x7F) ||
-	      XCHARSET_CHARS (charset) == 96);
-    }
-}
-
-/* Copy the character pointed to by SRC into DST.  Do not call this
-   directly.  Use the macro itext_copy_ichar() instead.
-   Return the number of bytes copied.  */
-
-Bytecount
-non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst)
-{
-  Bytecount bytes = rep_bytes_by_first_byte (*src);
-  Bytecount i;
-  for (i = bytes; i; i--, dst++, src++)
-    *dst = *src;
-  return bytes;
-}
-
-#endif /* MULE */
-
-
-/************************************************************************/
-/*                        streams of Ichars                            */
+/*                        streams of Ichars                             */
 /************************************************************************/
 
 #ifdef MULE
@@ -4819,7 +5297,7 @@ Lstream_fput_ichar (Lstream *stream, Ichar ch)
 {
   Ibyte str[MAX_ICHAR_LEN];
   Bytecount len = set_itext_ichar (str, ch);
-  return Lstream_write (stream, str, len);
+  return Lstream_write (stream, str, len) >= 0 ? 0 : -1;
 }
 
 void
@@ -4837,16 +5315,264 @@ Lstream_funget_ichar (Lstream *stream, Ichar ch)
 /*              Lisp primitives for working with characters             */
 /************************************************************************/
 
-DEFUN ("make-char", Fmake_char, 2, 3, 0, /*
-Make a character from CHARSET and octets ARG1 and ARG2.
-ARG2 is required only for characters from two-dimensional charsets.
+/* Internally, dimension-1 charset codepoints are "little-endian", stored
+   as (0, C2), whereas externally they are "big-endian", stored as (C1, 0). */
+void
+internal_to_external_charset_codepoint (Lisp_Object charset,
+					int int_c1, int int_c2,
+					int *ext_c1, int *ext_c2,
+					int munge_codepoints)
+{
+  ASSERT_VALID_CHARSET_CODEPOINT (charset, int_c1, int_c2);
+  if (XCHARSET_DIMENSION (charset) == 1)
+    {
+      *ext_c1 = int_c2;
+      *ext_c2 = 0;
+    }
+  else
+    {
+      *ext_c1 = int_c1;
+      *ext_c2 = int_c2;
+    }
 
-Each octet should be in the range 32 through 127 for a 96 or 96x96
-charset and 33 through 126 for a 94 or 94x94 charset. (Most charsets
-are either 96 or 94x94.) Note that this is 32 more than the values
-typically given for 94x94 charsets.  When two octets are required, the
-order is "standard" -- the same as appears in ISO-2022 encodings,
-reference tables, etc.
+  if (munge_codepoints)
+    {
+      /* Bogus bogus bogus.  Munge the codepoints to match the old way of
+	 doing things, where all charset codepoints were coerced to be in
+	 the range of 32-127 and ascii and control-1 were handled specially.
+      */
+      if (EQ (charset, Vcharset_control_1))
+	{
+	  text_checking_assert (*ext_c2 == 0);
+	  text_checking_assert (*ext_c1 >= 128 && *ext_c1 <= 159);
+	  *ext_c1 -= 96;
+	}
+#ifdef MULE
+      else if (get_charset_iso2022_type (charset) >= 0)
+	{
+	  *ext_c1 &= 127;
+	  *ext_c2 &= 127;
+	}
+#endif /* MULE */
+    }
+}
+
+#ifdef MULE
+
+static int
+check_coerce_octet (Lisp_Object charset, Lisp_Object arg, int low, int high,
+		    int munge_codepoints)
+{
+  int retval;
+  CHECK_INT (arg);
+  retval = XINT (arg);
+  if (munge_codepoints)
+    {
+      if (EQ (charset, Vcharset_control_1) && retval >= 32 && retval < 64)
+	retval += 96;
+      else if (get_charset_iso2022_type (charset) >= 0)
+	{
+	  /* It is useful (and safe, according to Olivier Galibert) to strip
+	     the 8th bit off ARG1 and ARG2 because it allows programmers to
+	     write (make-char 'latin-iso8859-2 CODE) where code is the actual
+	     Latin 2 code of the character.  */
+
+	  if (high < 128 && retval - 128 >= low && retval - 128 <= high)
+	    retval -= 128;
+	  if (low >= 128 && retval + 128 >= low && retval + 128 <= high)
+	    retval += 128;
+	}
+    }
+  check_integer_range (make_int (retval), make_int (low), make_int (high));
+  return retval;
+}
+
+#endif /* MULE */
+
+/******************** Helper functions for basic conversions ***************/
+
+
+/* Validate an external charset codepoint and convert to internal form.
+   This involves reversing the octets for dimension-1 charsets.
+   See comment at internal_to_external_charset_codepoint().
+   */
+Lisp_Object
+get_external_charset_codepoint (Lisp_Object charset,
+				Lisp_Object arg1, Lisp_Object arg2,
+				int *a1, int *a2, int munge_codepoints)
+{
+#ifdef MULE
+  int low1, low2, high1, high2;
+
+  charset = Fget_charset (charset);
+  get_charset_limits (charset, &low1, &low2, &high1, &high2);
+
+  if (XCHARSET_DIMENSION (charset) == 1)
+    {
+      if (!NILP (arg2))
+	invalid_argument
+	  ("Charset is of dimension one; second octet must be nil", arg2);
+      /* Dimension-1 internal and external codepoints are handled
+	 differently, see above. */
+      *a1 = 0;
+      *a2 = check_coerce_octet (charset, arg1, low2, high2, munge_codepoints);
+    }
+  else
+    {
+      *a1 = check_coerce_octet (charset, arg1, low1, high1, munge_codepoints);
+      *a2 = check_coerce_octet (charset, arg2, low2, high2, munge_codepoints);
+    }
+  return charset;
+#else /* not MULE */
+  CHECK_SYMBOL (charset);
+  CHECK_INT (arg1);
+  CHECK_NIL (arg2);
+  *a1 = 0;
+  *a2 = XINT (arg1);
+  if (EQ (charset, Vcharset_ascii))
+    check_integer_range (make_int (*a2), Qzero, make_int (255));
+  else if (munge_codepoints)
+    {
+      /* If munge checkpoints, we are very free with what we allow, just
+	 to make sure we're backward-compatible with various versions of
+	 XEmacs and GNU Emacs, and coerce to the proper range. */
+      check_integer_range (make_int (*a2), Qzero, make_int (255));
+      if (EQ (charset, Vcharset_control_1))
+	*a2 = (*a2 & 0x1F) + 128;
+      else
+	*a2 = (*a2 & 0x7F) + 128;
+    }
+  else
+    {
+      if (EQ (charset, Vcharset_control_1))
+        check_integer_range (make_int (*a2), make_int (128), make_int (159));
+      else
+        check_integer_range (make_int (*a2), make_int (160), make_int (255));
+    }
+  return Vcharset_ascii;
+#endif /* (not) MULE */
+}
+
+/* Like ichar_to_charset_codepoint(..., CONVERR_FAIL) but takes a
+   BUFFER_OR_PRECEDENCE_LIST list and converts it into an internal
+   precedence array. */
+static void
+external_char_to_charset_codepoint (Lisp_Object lispch,
+				    Lisp_Object buffer_or_precedence_list,
+				    Lisp_Object *charset, int *c1, int *c2,
+				    enum converr fail)
+{
+  Lisp_Object bopa =
+    decode_buffer_or_precedence_list (buffer_or_precedence_list);
+  Ichar ch;
+  CHECK_CHAR_COERCE_INT (lispch);
+  ch = XCHAR (lispch);
+
+  if (BUFFERP (bopa))
+    buffer_ichar_to_charset_codepoint (ch, XBUFFER (bopa),
+				       charset, c1, c2, fail);
+  else
+    ichar_to_charset_codepoint (ch, bopa, charset, c1, c2, fail);
+  if (NILP (*charset))
+    return;
+}
+
+/* Convert an Lisp integer into a Unicode codepoint, and convert a
+   BUFFER_OR_PRECEDENCE_LIST into a precedence array. */
+static int
+get_external_unicode_codepoint (Lisp_Object unicode,
+				Lisp_Object buffer_or_precedence_list,
+				Lisp_Object *buffer_or_precarray_out)
+{
+  int code = decode_unicode (unicode, UNICODE_ALLOW_PRIVATE);
+  Lisp_Object bopa =
+    decode_buffer_or_precedence_list (buffer_or_precedence_list);
+
+  if (buffer_or_precarray_out)
+    *buffer_or_precarray_out = bopa;
+  return code;
+}
+
+enum converr
+decode_handle_error (Lisp_Object err, int allow_use_private)
+{
+  CHECK_SYMBOL (err);
+  if (NILP (err) || EQ (err, Qfail))
+    return CONVERR_FAIL;
+  if (EQ (err, Qerror))
+    return CONVERR_ERROR;
+  if (EQ (err, Qsucceed))
+    return CONVERR_SUCCEED;
+  if (EQ (err, Qsubstitute))
+    return CONVERR_SUBSTITUTE;
+  if (allow_use_private)
+    {
+      if (EQ (err, Quse_private))
+	return CONVERR_USE_PRIVATE;
+      invalid_constant
+	("Must be nil, `fail', `error', `succeed', `substitute', or `use-private'", err);
+    }
+  else
+    invalid_constant
+      ("Must be nil, `fail', `error', `succeed', or `substitute'", err);
+  /* Not reached */
+}
+
+DEFUN ("make-char", Fmake_char, 1, 4, 0, /*
+Make a character from a charset codepoint (a charset and one or two octets).
+
+This attempts to generate a character from a particular codepoint in a
+coded character set such as ISO 8859-1 or GB-2312.  See also
+`unicode-to-char', used for generating a character from a Unicode
+codepoint.
+
+CHARSET is a symbol naming a "charset", e.g. `latin-iso8859-1'. "Charsets"
+are coded character sets, i.e. sets of characters indexed by one or two
+octets (integers in the range 0-255, also known as "position codes").
+Charsets are typically intended to be sufficient to encode text in a
+particular nation's language.  See `make-charset' for more information on
+charsets.
+
+OCTET1 and OCTET2 are the octets (i.e. indices) specifying the particular
+character to select.  OCTET2 is either required or disallowed, depending on
+whether CHARSET is of one or two dimensions (see `make-charset').
+
+HANDLE-ERROR is a symbol controlling error behavior stemming from inability
+to translate.  Currently, this happens only with Unicode-internal (see
+below):
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute the Unicode replacement char (0xFFFD)
+`use-private'	Encode using private Unicode space
+
+Each octet should be in the range corresponding to the offset and size
+for that dimension, as defined in the charset.  For a typical one-dimensional
+charset of size 96, such as ISO-8859-1 (aka Latin-1), the range will be
+\[160, 255].  For a typical two-dimensional charset of size 94x94, such as
+GB-2312 (Simplified Chinese), JISX-0208 (Japanese), or KS-5601 (Korean),
+the range will be [33, 126] in each dimension.  Big5 and certain other
+large charsets have a range of [33, 126] in the first dimension and
+\[64, 253] or something similar in the second dimension.  Other charsets
+may have other dimensions; e.g. ASCII has the range [0, 127] and Control-1
+\(i.e. high-bit control characters) has the range [128, 159].
+
+Note that the ranges as used for 94x94 charsets are 32 more in each dimension
+than the "ku-ten" representation often seen for these charsets, with a range
+of [1, 94] in each dimension.
+
+For compatibility purposes, if the allowed values in a particular dimension
+are entirely in the range [0, 127] or [128, 255], octet values offset by
+128 are allowed and will be converted appropriately.  Hence, either
+\(make-char 'latin-iso8859-2 185) or (make-char 'latin-iso8859-2 57) will
+return the Latin 2 character s with caron.  This behavior should not be
+relied upon, and is present only in functions that existed prior to XEmacs
+21.5 (e.g. `make-char' and `split-char').  It is not present in new
+functions in version 21.5 (e.g. `char-to-charset-codepoint').
+
+When two octets are required, the order is "standard" -- the same as
+appears in ISO-2022 encodings, reference tables, etc.
 
 \(Note the following non-obvious result: Computerized translation
 tables often encode the two octets as the high and low bytes,
@@ -4855,11 +5581,8 @@ goes in the low byte.  When decoding such a value, you need to treat
 the two cases differently when calling make-char: One is (make-char
 CHARSET HIGH LOW), the other is (make-char CHARSET LOW).)
 
-For example, (make-char 'latin-iso8859-2 185) or (make-char
-'latin-iso8859-2 57) will return the Latin 2 character s with caron.
-
-As another example, the Japanese character for "kawa" (stream), which
-looks something like this:
+As an example, the Japanese character for "kawa" (stream), looks something
+like this:
 
    |     |
    |  |  |
@@ -4867,7 +5590,7 @@ looks something like this:
    |  |  |
   /      |
 
-appears in the Unicode Standard (version 2.0) on page 7-287 with the
+It appears in the Unicode Standard (version 2.0) on page 7-287 with the
 following values (see also page 7-4):
 
 U 5DDD     (Unicode)
@@ -4886,147 +5609,467 @@ These are equivalent to:
 \(make-char 'chinese-cns11643-1 76 87)
 \(decode-big5-char '(164 . 116))
 
-\(All codes above are two decimal numbers except for Big Five and ANSI
-Z39.64, which we don't support.  We add 32 to each of the decimal
-numbers.  Big Five is split in a rather hackish fashion into two
-charsets, `big5-1' and `big5-2', due to its excessive size -- 94x157,
-with the first codepoint in the range 0xA1 to 0xFE and the second in
-the range 0x40 to 0x7E or 0xA1 to 0xFE.  `decode-big5-char' is used to
-generate the char from its codes, and `encode-big5-char' extracts the
-codes.)
+All codes above are two decimal numbers except for Big Five and ANSI
+Z39.64, which we don't support.  We add 32 to each of the decimal numbers.
+Note that in an old-Mule world (see below), Big Five is split in a rather
+hackish fashion into two charsets, `chinese-big5-1' and `chinese-big5-2',
+due to its excessive size (94x157), with the first codepoint in the range
+0xA1 to 0xFE and the second in the range 0x40 to 0x7E or 0xA1 to 0xFE.
+`decode-big5-char' is used to generate the char from its codes, and
+`encode-big5-char' extracts the codes.  This hack doesn't exist with
+Unicode-internal, and hence the expression (make-char 'chinese-big5 164 116)
+could be used.
 
-When compiled without MULE, this function does not do much, but it's
-provided for compatibility.  In this case, the following CHARSET symbols
-are allowed:
+Note that there are three different internal formats for characters:
 
-`ascii' -- ARG1 should be in the range 0 through 127.
-`control-1' -- ARG1 should be in the range 128 through 159.
- else -- ARG1 is coerced to be between 0 and 255, and then the high
-         bit is set.
+1. ("non-Mule", configured `--with-mule=no')
+   An integer between 0 and 255.  All characters are taken to be in charset
+   `ascii'.  No charset object exists corresponding to this name (see
+   `get-charset').
 
- `int-to-char of the resulting ARG1' is returned, and ARG2 is always ignored. 
+2. ("Unicode-internal", configured `--with-mule' and `--with-unicode-internal')
+   An integer representing a Unicode codepoint.
+
+3. ("old-Mule", configured `--with-mule' and `--with-unicode-internal=no')
+   An integer that internally encodes a national character set
+   (e.g. ISO-8859-1 or GB-2312) and associated codepoint.  This is the old
+   Mule representation.  This is a flawed representation because what is
+   the same character from a logical standpoint can have multiple
+   representations. (This is a particular problem with accented Latin
+   characters.)
+
+Note that all three representations more or less agree in encoding ASCII in
+the range 0-127 and ISO-8859-1 in the range 128-255. ("More or less"
+because representation #1 does not really care what the actual significance
+of the characters is.  Under X Windows at least, XEmacs without Mule
+support could be made to support various character sets with appropriate
+font settings.)
+
+XEmacs tries to hide the internal representation of characters as much as
+possible, but it is not completely possible to hide the difference between
+representations #2 and #3 because of the explicit encoding of a charset or
+lack thereof in the character.  Conversion from Unicode codepoints to
+charset codepoints is a one-to-many operation, and requires a charset
+precedence list to determine which of many charsets to choose from.  This
+means:
+
+-- In a Unicode-internal world, conversion from a character to a charset
+   codepoint (`char-charset', `char-octet', `split-char') uses a charset
+   precedence list.
+
+-- In an old Mule-internal world, conversion from a Unicode codepoint to
+   a character (`make-char') uses a charset precedence list.
+
+In all cases, the precedence list is optional; when not specified, a
+default list is used.  See `unicode-to-char' for more information on
+charset precedence lists.
+
+When compiled non-Mule, this function does not do much, but it's provided
+for compatibility.   CHARSET should be the symbol `ascii', OCTET1 should
+be in the range 0-255, and OCTET2 should not be present.  The resulting
+character is equivalent to what would be returned by calling `int-to-char'.
+For compatibility, if CHARSET is `control-1', OCTET1 is first coerced
+\(using logical AND and OR) to the range 128-159, and for other values of
+CHARSET, OCTET1 is coerced to the range 128-255 by setting the high bit.
+This behavior should not be relied upon.
+
+Note that there are various ways of representing a character:
+
+1. A character object, as returned by `make-char' or `unicode-to-char'.
+
+2. An integer, the raw internal representation of a character.  With
+   Unicode-internal, this will simply be a Unicode codepoint.  With old-Mule,
+   this will be a 21-bit number in which the charset and octets have been
+   encoded in different bit fields.
+
+3. A charset codepoint, consisting of a symbol naming a charset
+   (alternatively, a charset object as returned by `get-charset') and
+   one or two octets, typically specifying a character in a national
+   character set.
+
+4. A Unicode codepoint, an integer between 0 and 0x10FFFF.  Unicode is a
+   standard that attempts to encompass all the characters required to
+   encoded text in any human language, past or present, as well as certain
+   other language-like systems (e.g. mathematical symbols or musical
+   notation).
+    
+The following funtions deal with the various representations of a
+character:
+
+-- `make-char' and `charset-codepoint-to-char' generate a
+   character from a charset codepoint.
+-- `char-to-charset-codepoint' converts a character into a charset
+   codepoint.  See also the compatibility functions `split-char',
+   `char-charset' and `char-octet'.
+-- `unicode-to-char' and `char-to-unicode' convert between a character
+   and a Unicode codepoint.
+-- `int-to-char' and `char-to-int' convert between a character and its
+   internal integer representation.
+-- `charset-codepoint-to-unicode' and `unicode-to-charset-codepoint'
+   convert directly between charset codepoints and Unicode codepoints,
+   regardless of the particular representation of a character.
+
+Functions that involve converting from a Unicode codepoint to a charset
+codepoint, regardless of whether these codepoints are encapsulated as a
+character object, involve a charset precedence list, which is an optional
+argument.  The following functions make use of a charset precedence list:
+
+-- Under Unicode-internal, `char-to-charset-codepoint', along with
+   `split-char', `char-charset' and `char-octet'.
+-- Under old-Mule, `unicode-to-char'.
+-- In all circumstances, `unicode-to-charset-codepoint'.
 */
-       (charset, arg1, USED_IF_MULE (arg2)))
+       (charset, octet1, octet2, handle_error))
 {
-#ifdef MULE
-  Lisp_Charset *cs;
+  enum converr fail = decode_handle_error (handle_error, 1);
   int a1, a2;
-  int lowlim, highlim;
+  Ichar ch;
 
-  charset = Fget_charset (charset);
-  cs = XCHARSET (charset);
-
-  get_charset_limits (charset, &lowlim, &highlim);
-
-  CHECK_INT (arg1);
-  /* It is useful (and safe, according to Olivier Galibert) to strip
-     the 8th bit off ARG1 and ARG2 because it allows programmers to
-     write (make-char 'latin-iso8859-2 CODE) where code is the actual
-     Latin 2 code of the character.  */
-  a1 = XINT (arg1) & 0x7f;
-  if (a1 < lowlim || a1 > highlim)
-    args_out_of_range_3 (arg1, make_int (lowlim), make_int (highlim));
-
-  if (CHARSET_DIMENSION (cs) == 1)
-    {
-      if (!NILP (arg2))
-        invalid_argument
-          ("Charset is of dimension one; second octet must be nil", arg2);
-      return make_char (make_ichar (charset, a1, 0));
-    }
-
-  CHECK_INT (arg2);
-  a2 = XINT (arg2) & 0x7f;
-  if (a2 < lowlim || a2 > highlim)
-    args_out_of_range_3 (arg2, make_int (lowlim), make_int (highlim));
-
-  return make_char (make_ichar (charset, a1, a2));
-#else
-  int a1;
-  int lowlim, highlim;
-
-  if      (EQ (charset, Qascii))     lowlim =  0, highlim = 127;
-  else if (EQ (charset, Qcontrol_1)) lowlim =  0, highlim =  31;
-  else	                             lowlim =  0, highlim = 127;
-
-  CHECK_INT (arg1);
-  /* It is useful (and safe, according to Olivier Galibert) to strip
-     the 8th bit off ARG1 and ARG2 because it allows programmers to
-     write (make-char 'latin-iso8859-2 CODE) where code is the actual
-     Latin 2 code of the character.  */
-  a1 = XINT (arg1) & 0x7f;
-  if (a1 < lowlim || a1 > highlim)
-    args_out_of_range_3 (arg1, make_int (lowlim), make_int (highlim));
-
-  if (EQ (charset, Qascii))
-    return make_char (a1);
-  return make_char (a1 + 128);
-#endif /* MULE */
+  charset = get_external_charset_codepoint (charset, octet1, octet2,
+					    &a1, &a2, 1);
+  ch = charset_codepoint_to_ichar (charset, a1, a2, fail);
+  if (ch < 0)
+    return Qnil;
+  return make_char (ch);
 }
 
-#ifdef MULE
+DEFUN ("char-to-unicode", Fchar_to_unicode, 1, 2, 0, /*
+Convert character to Unicode codepoint.
+When there is no international support (i.e. the 'mule feature is not
+present), this function simply does `char-to-int'.
 
-DEFUN ("char-charset", Fchar_charset, 1, 1, 0, /*
-Return the character set of char CH.
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute the Unicode replacement char (0xFFFD)
+`use-private'	Encode using private Unicode space
 */
-       (ch))
+       (character, handle_error))
 {
-  CHECK_CHAR_COERCE_INT (ch);
+  enum converr fail = decode_handle_error (handle_error, 1);
 
-  return XCHARSET_NAME (charset_by_leading_byte
-			(ichar_leading_byte (XCHAR (ch))));
+  CHECK_CHAR_COERCE_INT (character);
+  return make_int (ichar_to_unicode (XCHAR (character), fail));
 }
 
-DEFUN ("char-octet", Fchar_octet, 1, 2, 0, /*
-Return the octet numbered N (should be 0 or 1) of char CH.
-N defaults to 0 if omitted.
+DEFUN ("unicode-to-char", Funicode_to_char, 1, 3, 0, /*
+Convert Unicode codepoint to char.
+
+Attempts to generate a character from a particular Unicode codepoint, which
+should be a non-negative integer.  When the new Unicode-internal
+representation is used, the conversion is quite direct and there are no
+errors.
+
+See `make-char' for more information about characters.
+
+When the old Mule-internal representation is used, there are multiple
+possible return values; the particular value returned will reflect the
+given charset precedence list, or the default precedence.  The codepoint
+will be converted according to BUFFER-OR-PRECEDENCE-LIST.  This is either a
+Unicode precedence list, a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).
+
+A Unicode precedence list is a list of charsets or charset tags, used to
+convert Unicode codepoints to charset codepoints.  These are searched in
+order for a translation matching a given Unicode character.  Charset tags
+are tags that can match multiple charsets and generally correspond to
+classes of charsets. (See `define-charset-tag'.)
+
+The actual charset ordering used for converting Unicode codepoints is
+determined by concatenating the buffer-specific Unicode precedence list
+\(see `set-buffer-unicode-precedence-list'), the default precedence list
+\(see `set-default-unicode-precedence-list'), and the list of all charsets;
+converting tags to their corresponding charsets using
+`charset-tag-to-charset-list'; and removing any duplicates.
+
+When there is no international support \(i.e. the `mule' feature is not
+present, caused by configuring `--with-mule=no'), this function simply does
+`int-to-char' and ignores the PRECEDENCE-LIST argument. (Redisplay will
+work on the sjt-xft branch, but not with server-side X11 fonts as is the
+default.)
+
+Under old-Mule, if the UNICODE codepoint would not otherwise be converted
+to an XEmacs character, and a buffer or nil was given as the argument to
+BUFFER-OR-PRECEDENCE LIST, a new XEmacs character will be created for it in
+one of the `jit-ucs-charset' Mule character sets, and that character will
+be returned. (More specifically, this will happen when the list of charsets
+to be consulted includes `jit-ucs-charset-0', which will be the case for
+buffer-local Unicode precedence lists, since they list all existing
+charsets in some order.)
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
 */
-       (ch, n))
+       (unicode, buffer_or_precedence_list, handle_error))
+{
+  Lisp_Object bopa;
+  int c = get_external_unicode_codepoint (unicode, buffer_or_precedence_list,
+					  &bopa);
+  enum converr fail = decode_handle_error (handle_error, 0);
+  Ichar ret;
+
+  if (BUFFERP (bopa))
+    ret = buffer_unicode_to_ichar (c, XBUFFER (bopa), fail);
+  else
+    ret = unicode_to_ichar (c, bopa, fail);
+
+  if (ret == -1)
+    return Qnil;
+  return make_char (ret);
+}
+
+DEFUN ("char-to-charset-codepoint", Fchar_to_charset_codepoint, 1, 3, 0, /*
+Return a charset codepoint corresponding to character CH.
+A charset codepoint is a list of a charset symbol (typically describing a
+national character set) and one or two octets, indexing the particular
+character in the character set (see `make-char').
+
+Use this function in place of `split-char'.
+
+When a Unicode internal representation is used (--with-unicode-internal
+option to configure), CH will be converted according to
+BUFFER-OR-PRECEDENCE-LIST.  This is either a Unicode precedence list \(see
+`unicode-to-char'), a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).  The returned charset is determined by searching the list
+of charsets specified by the Unicode precedence list, in order, for the
+given character.  The return value will be nil if the character is not
+found in any of the charsets in the precedence list.
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
+*/
+       (ch, buffer_or_precedence_list, handle_error))
 {
   Lisp_Object charset;
-  int octet0, octet1;
+  int c1, c2;
+  enum converr fail = decode_handle_error (handle_error, 0);
 
-  CHECK_CHAR_COERCE_INT (ch);
+  external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
+				      &charset, &c1, &c2, fail);
 
-  BREAKUP_ICHAR (XCHAR (ch), charset, octet0, octet1);
+  if (NILP (charset))
+    return Qnil;
+
+  if (XCHARSET_DIMENSION (charset) == 2)
+    return list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
+  else
+    /* See comment at internal_to_external_charset_codepoint(). */
+    return list2 (XCHARSET_NAME (charset), make_int (c2));
+}
+
+
+DEFUN ("charset-codepoint-to-unicode", Fcharset_codepoint_to_unicode,
+       2, 4, 0, /*
+Convert a charset codepoint to a Unicode codepoint.
+A charset codepoint is a list of a charset symbol (typically describing a
+national character set) and one or two octets, indexing the particular
+character in the character set (see `make-char').
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute the Unicode replacement char (0xFFFD)
+`use-private'	Encode using private Unicode space
+*/
+       (charset, arg1, arg2, handle_error))
+{
+  int a1, a2;
+  enum converr err = decode_handle_error (handle_error, 1);
+  int code;
+
+  charset = get_external_charset_codepoint (charset, arg1, arg2, &a1, &a2, 0);
+  code = charset_codepoint_to_unicode (charset, a1, a2, err);
+  if (code == -1)
+    return Qnil;
+  return make_int (code);
+}
+
+DEFUN ("unicode-to-charset-codepoint", Funicode_to_charset_codepoint,
+       1, 3, 0, /*
+Convert a Unicode codepoint to a charset codepoint.
+A charset codepoint is a list of a charset symbol (typically describing a
+national character set) and one or two octets, indexing the particular
+character in the character set (see `make-char').
+
+When a Unicode internal representation is used (--with-unicode-internal
+option to configure), CH will be converted according to
+BUFFER-OR-PRECEDENCE-LIST.  This is either a Unicode precedence list \(see
+`unicode-to-char'), a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).  The returned charset is determined by searching the list
+of charsets specified by the Unicode precedence list, in order, for the
+given codepoint.  The return value will be nil if the codepoint is not
+found in any of the charsets in the precedence list.
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
+*/
+       (code, buffer_or_precedence_list, handle_error))
+{
+  Lisp_Object bopa;
+  int c = get_external_unicode_codepoint (code, buffer_or_precedence_list,
+					  &bopa);
+  enum converr fail = decode_handle_error (handle_error, 0);
+  Lisp_Object charset;
+  int a1, a2;
+
+  if (BUFFERP (bopa))
+    buffer_unicode_to_charset_codepoint (c, XBUFFER (bopa),
+					 &charset, &a1, &a2, fail);
+  else
+    unicode_to_charset_codepoint (c, bopa, &charset, &a1, &a2, fail);
+  
+  if (NILP (charset))
+    return Qnil;
+
+  if (XCHARSET_DIMENSION (charset) == 2)
+    return list3 (XCHARSET_NAME (charset), make_int (a1), make_int (a2));
+  else
+    /* See comment at internal_to_external_charset_codepoint(). */
+    return list2 (XCHARSET_NAME (charset), make_int (a2));
+}
+
+DEFUN ("char-charset", Fchar_charset, 1, 3, 0, /*
+Convert character CH to a charset codepoint and return the charset.
+The returned value is a symbol naming a charset (typically, a national
+character set); see `make-char'.
+
+This function is exactly equivalent to the expression
+\(first (char-to-charset-codepoint CH PRECEDENCE-LIST HANDLE-ERROR)).
+
+When a Unicode internal representation is used (--with-unicode-internal
+option to configure), CH will be converted according to
+BUFFER-OR-PRECEDENCE-LIST.  This is either a Unicode precedence list \(see
+`unicode-to-char'), a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).  The returned charset is determined by searching the list
+of charsets specified by the Unicode precedence list, in order, for the
+given character.  The return value will be nil if the character is not
+found in any of the charsets in the precedence list.
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
+*/
+       (ch, buffer_or_precedence_list, handle_error))
+{
+  Lisp_Object charset;
+  int c1, c2;
+  enum converr fail = decode_handle_error (handle_error, 0);
+
+  external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
+				      &charset, &c1, &c2, fail);
+
+  if (NILP (charset))
+    return Qnil;
+
+  return XCHARSET_NAME (charset);
+}
+
+DEFUN ("char-octet", Fchar_octet, 1, 4, 0, /*
+Return the octet numbered N (should be 0 or 1) of char CH.
+N defaults to 0 if omitted.
+
+This function is for compatibility; consider using `char-to-charset-codepoint'
+instead.  See `char-to-charset-codepoint' for the semantics of
+BUFFER-OR-PRECEDENCE-LIST and HANDLE-ERROR.
+
+This function is not very useful when a Unicode internal representation is
+used (--with-unicode-internal option to configure). Specifically, this
+function is more or less equivalent to (nth (1+ N) (split-char CH)), but
+returns 0 instead of nil when N=1 and the discovered charset of the character
+has only one dimension.
+*/
+       (ch, n, buffer_or_precedence_list, handle_error))
+{
+  Lisp_Object charset;
+  int c1, c2;
+  enum converr fail = decode_handle_error (handle_error, 0);
+
+  external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
+				      &charset, &c1, &c2, fail);
+
+  if (NILP (charset))
+    return Qnil;
+
+  internal_to_external_charset_codepoint (charset, c1, c2, &c1, &c2, 1);
 
   if (NILP (n) || EQ (n, Qzero))
-    return make_int (octet0);
-  else if (EQ (n, make_int (1)))
-    return make_int (octet1);
+    return make_int (c1);
+  else if (EQ (n, Qone))
+    return make_int (c2);
   else
     invalid_constant ("Octet number must be 0 or 1", n);
 }
 
-#endif /* MULE */
+DEFUN ("split-char", Fsplit_char, 1, 3, 0, /*
+Return list of charset and one or two position-codes of char CH.
 
-DEFUN ("split-char", Fsplit_char, 1, 1, 0, /*
-Return list of charset and one or two position-codes of CHAR.
+This function is for compatibility; consider using `char-to-charset-codepoint'
+instead.
+
+This function is like `char-to-charset-codepoint' but its return
+value is hacked up for compatibility purposes: If the returned charset of
+the character is ISO-2022 compatible, the position codes will be coerced into
+the range [0, 127], even if they should be in the range [128, 255].
+
+When a Unicode internal representation is used (--with-unicode-internal
+option to configure), CH will be converted according to
+BUFFER-OR-PRECEDENCE-LIST.  This is either a Unicode precedence list \(see
+`unicode-to-char'), a buffer (use that buffer's precedence list, see
+`set-buffer-unicode-precedence-list'), or nil (use the current buffer's
+precedence list).  The returned charset is determined by searching the list
+of charsets specified by the Unicode precedence list, in order, for the
+given character.  The return value will be nil if the character is not
+found in any of the charsets in the precedence list.
+
+HANDLE-ERROR controls error behavior:
+
+nil or `fail'	Return nil
+`abort'		Signal an error
+`succeed'	Same as `substitute'
+`substitute'	Substitute a '?' character
 */
-       (character))
+       (ch, buffer_or_precedence_list, handle_error))
 {
-  /* This function can GC */
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object charset = Qnil;
-  Lisp_Object rc = Qnil;
+  Lisp_Object charset;
   int c1, c2;
+  enum converr fail = decode_handle_error (handle_error, 0);
 
-  GCPRO2 (charset, rc);
-  CHECK_CHAR_COERCE_INT (character);
+  external_char_to_charset_codepoint (ch, buffer_or_precedence_list,
+				      &charset, &c1, &c2, fail);
 
-  BREAKUP_ICHAR (XCHAR (character), charset, c1, c2);
+  if (NILP (charset))
+    return Qnil;
+
+  internal_to_external_charset_codepoint (charset, c1, c2, &c1, &c2, 1);
 
   if (XCHARSET_DIMENSION (charset) == 2)
-    {
-      rc = list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
-    }
+    return list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
   else
-    {
-      rc = list2 (XCHARSET_NAME (charset), make_int (c1));
-    }
-  UNGCPRO;
-
-  return rc;
+    /* See comment at internal_to_external_charset_codepoint(). */
+    return list2 (XCHARSET_NAME (charset), make_int (c1));
 }
 
 
@@ -5049,8 +6092,10 @@ lookup_composite_char (Ibyte *str, int len)
     {
       if (composite_char_row_next >= 128)
 	invalid_operation ("No more composite chars available", lispstr);
-      emch = make_ichar (Vcharset_composite, composite_char_row_next,
-			composite_char_col_next);
+      emch = charset_codepoint_to_ichar (Vcharset_composite,
+					 composite_char_row_next,
+					 composite_char_col_next,
+					 CONVERR_SUCCEED);
       Fputhash (make_char (emch), lispstr,
 	        Vcomposite_char_char2string_hash_table);
       Fputhash (lispstr, make_char (emch),
@@ -5098,7 +6143,7 @@ Return a string of the characters comprising a composite character.
 
   CHECK_CHAR (ch);
   emch = XCHAR (ch);
-  if (ichar_leading_byte (emch) != LEADING_BYTE_COMPOSITE)
+  if (!EQ (ichar_charset (emch), Vcharset_composite))
     invalid_argument ("Must be composite char", ch);
   return composite_char_string (emch);
 }
@@ -5126,31 +6171,41 @@ void
 syms_of_text (void)
 {
   DEFSUBR (Fmake_char);
-  DEFSUBR (Fsplit_char);
-
-#ifdef MULE
+  DEFSUBR (Fchar_to_unicode);
+  DEFSUBR (Funicode_to_char);
+  DEFSUBR (Fchar_to_charset_codepoint);
+  DEFSUBR (Fcharset_codepoint_to_unicode);
+  DEFSUBR (Funicode_to_charset_codepoint);
   DEFSUBR (Fchar_charset);
   DEFSUBR (Fchar_octet);
+  DEFSUBR (Fsplit_char);
+
+  /* Qfail, Qsubstitute, Qsucceed in general.c */
+  DEFSYMBOL (Qsubstitute_negated); /* #### what's this used for? */
+  DEFSYMBOL (Quse_private);
 
 #ifdef ENABLE_COMPOSITE_CHARS
   DEFSUBR (Fmake_composite_char);
   DEFSUBR (Fcomposite_char_string);
 #endif
-#endif /* MULE */
 }
 
 void
 reinit_vars_of_text (void)
 {
-  int i;
-
-  conversion_in_dynarr_list = Dynarr_new2 (Ibyte_dynarr_dynarr,
-					   Ibyte_dynarr *);
+  conversion_in_dynarr_list = Dynarr_new2 (unsigned_char_dynarr_dynarr,
+					   unsigned_char_dynarr *);
   conversion_out_dynarr_list = Dynarr_new2 (Extbyte_dynarr_dynarr,
 					    Extbyte_dynarr *);
 
-  for (i = 0; i <= MAX_BYTEBPOS_GAP_SIZE_3; i++)
-    three_to_one_table[i] = i / 3;
+#ifdef MULE
+  {
+    int i;
+
+    for (i = 0; i <= MAX_BYTEBPOS_GAP_SIZE_3; i++)
+      three_to_one_table[i] = i / 3;
+  }
+#endif /* MULE */
 }
 
 void

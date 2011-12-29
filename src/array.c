@@ -241,6 +241,47 @@ Use the following functions/macros:
 
 */
 
+static const struct memory_description int_dynarr_description_1[] = {
+  XD_DYNARR_DESC (int_dynarr, &int_description),
+  { XD_END }
+};
+
+const struct sized_memory_description int_dynarr_description = {
+  sizeof (int_dynarr),
+  int_dynarr_description_1
+};
+
+static const struct memory_description unsigned_char_dynarr_description_1[] = {
+  XD_DYNARR_DESC (unsigned_char_dynarr, &unsigned_char_description),
+  { XD_END }
+};
+
+const struct sized_memory_description unsigned_char_dynarr_description = {
+  sizeof (unsigned_char_dynarr),
+  unsigned_char_dynarr_description_1
+};
+
+static const struct memory_description Lisp_Object_dynarr_description_1[] = {
+  XD_DYNARR_DESC (Lisp_Object_dynarr, &lisp_object_description),
+  { XD_END }
+};
+
+/* Not static; used in mule-coding.c */
+const struct sized_memory_description Lisp_Object_dynarr_description = {
+  sizeof (Lisp_Object_dynarr),
+  Lisp_Object_dynarr_description_1
+};
+
+static const struct memory_description Lisp_Object_pair_dynarr_description_1[] = {
+  XD_DYNARR_DESC (Lisp_Object_pair_dynarr, &Lisp_Object_pair_description),
+  { XD_END }
+};
+
+const struct sized_memory_description Lisp_Object_pair_dynarr_description = {
+  sizeof (Lisp_Object_pair_dynarr),
+  Lisp_Object_pair_dynarr_description_1
+};
+
 static const struct memory_description const_Ascbyte_ptr_description_1[] = {
   { XD_ASCII_STRING, 0 },
   { XD_END }
@@ -467,6 +508,58 @@ Dynarr_memory_usage (void *d, struct usage_stats *stats)
 }
 
 #endif /* MEMORY_USAGE_STATS */
+
+void
+mark_Lisp_Object_dynarr (Lisp_Object_dynarr *dyn)
+{
+  int i;
+  for (i = 0; i < Dynarr_length (dyn); i++)
+    mark_object (Dynarr_at (dyn, i));
+}
+
+
+/*****************************************************************************/
+/*                              static dynarrs                               */
+/*****************************************************************************/
+
+#if 0 /* #### not yet finished */
+
+/* Add a number of contiguous elements to the array starting at START. */
+void
+Stynarr_insert_many_1 (void *d, const void *els, int len, int start,
+		       int num_static, int elsize, int staticoff)
+{
+  Stynarr *sty = (Stynarr *) d;
+  type_checking_assert (start >= 0 && start <= sty->nels);
+  /* If we'll need Dynarr space, make sure the Dynarr is there */
+  if (len + sty->nels > num_static && !sty->els)
+    VOIDP_CAST (sty->els) = Dynarr_newf (elsize);
+  /* Entirely within Dynarr? */
+  if (start >= num_static)
+    Dynarr_insert_many (sty->els, els, len, start - num_static);
+  /* Entirely within static part? */
+  else if (len + sty->nels <= num_static)
+    {
+      if (start != sty->nels)
+	{
+	  memmove ((char *) sty + staticoff + (start + len)*elsize,
+		   (char *) sty + staticoff + start*elsize,
+		   (sty->nels - start)*elsize);
+	}
+      if (els)
+	memcpy ((char *) sty + staticoff + start*elsize, els, len*elsize);
+    }
+  /* Else, partly within static, partly within Dynarr */
+  else
+    {
+      /* #### Finish me */
+      ABORT ();
+    }
+  sty->nels += len;
+  sty->nels_static = min (len, num_static);
+}
+
+#endif /* 0 */
 
 
 /*****************************************************************************/

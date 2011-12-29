@@ -17,15 +17,13 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
-Other files in this directory are subject to O'Reilly Media and
-Unicode Consortium licenses.  The files oreilly.html and
-unicode-consortium.html are not part of XEmacs; they are property of
-O'Reilly Media, Inc. and Unicode, Inc. respectively.  They are
-included here for informational purposes only, and may be
-redistributed in verbatim form only.  These files were downloaded from
-those vendors on January 28, 2007.  If you can't read them easily
-(they probably require network connections for full functionality),
-report a bug to XEmacs at <xemacs-beta@xemacs.org>.
+Other files in this directory are subject to Unicode Consortium licenses.
+The file unicode-consortium.html is not part of XEmacs; it is property of
+Unicode, Inc.  It is included here for informational purposes only, and may
+be redistributed in verbatim form only.  These files were downloaded on
+January 28, 2007.  If you can't read them easily (they probably require
+network connections for full functionality), report a bug to XEmacs at
+<xemacs-beta@xemacs.org>.
 
 The following files were copied from locations below
 http://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/
@@ -46,21 +44,9 @@ BIG5.TXT     CNS11643.TXT
 JIS0201.TXT  JIS0208.TXT  JIS0212.TXT  SHIFTJIS.TXT
 JOHAB.TXT    KSX1001.TXT  OLD5601.TXT
 
-The following file was copied from
-http://examples.oreilly.com/cjkvinfo/unicode/gb12345-90.txt
-and is covered by the O'Reilly Media copying policy in
-http://www.oreilly.com/pub/a/oreilly/ask_tim/2001/codepolicy.html.
-A copy of that notice is in oreilly.html in this directory.  This data
-file is is an appendix to the book *Chinese, Japanese, Korean, and
-Vietnamese Information Processing* by Ken Lunde, published by O'Reilly
-Media (ISBN-13 978-1565922242).
-
-GB12345.TXT
-
 The following files are taken from locations below
-http://www.unicode.org/Public/MAPPINGS/
-and are covered by the conditions in Exhibit 1 of unicode.html in this
-directory.
+http://www.unicode.org/Public/MAPPINGS/ and are covered by the conditions
+in Exhibit 1 of unicode-consortium.html in this directory.
 
 8859-1.TXT  8859-10.TXT 8859-13.TXT 8859-14.TXT 8859-15.TXT 8859-16.TXT
 8859-2.TXT  8859-3.TXT  8859-4.TXT  8859-5.TXT  8859-6.TXT  8859-7.TXT
