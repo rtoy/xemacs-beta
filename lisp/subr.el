@@ -466,7 +466,7 @@ just before emacs is actually killed.")
   "Return a new uninterned symbol with the same name as SYMBOL.
 If COPY-PROPERTIES is non-nil, the new symbol will have a copy of
 SYMBOL's value, function, and property lists."
-  (let ((new (make-symbol (symbol-name symbol))))
+  (let ((new (make-symbol (symbol-name symbol))) plist)
     (when copy-properties
       ;; This will not copy SYMBOL's chain of forwarding objects, but
       ;; I think that's OK.  Callers should not expect such magic to
@@ -475,7 +475,9 @@ SYMBOL's value, function, and property lists."
 	   (set new (symbol-value symbol)))
       (and (fboundp symbol)
 	   (fset new (symbol-function symbol)))
-      (setplist new (copy-list (symbol-plist symbol))))
+      (setq plist (symbol-plist symbol)
+            plist (if (consp plist) (copy-list plist) plist))
+      (setplist new plist))
     new))
 
 (defun set-symbol-value-in-buffer (sym val buffer)
