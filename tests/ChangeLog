@@ -1,3 +1,9 @@
+2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/hash-table-tests.el:
+	No longer use the obsolete function names in the tests, now
+	they've been removed from cl.el.
+
 2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-reader-tests.el:
