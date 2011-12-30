@@ -3,6 +3,82 @@
 	* subr.el (copy-symbol): Don't error with a non-list plist, as
 	happens with symbols in abbrev tables.
 
+2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	Call #'cl-compile-time-init explicitly here, don't rely on
+	bytecomp-load-hook for what is core functionality.
+
+	* cl-extra.el:
+	* cl-extra.el (require):
+	* cl-extra.el (make-random-state):
+	* cl-extra.el (random-state-p):
+	* cl-extra.el (make-hashtable): Removed.
+	* cl-extra.el (make-weak-hashtable): Removed.
+	* cl-extra.el (make-key-weak-hashtable): Removed.
+	* cl-extra.el (make-value-weak-hashtable): Removed.
+	* cl-extra.el ('hashtablep): Removed.
+	* cl-extra.el ('hashtable-fullness): Removed.
+	* cl-extra.el ('hashtable-test-function): Removed.
+	* cl-extra.el ('hashtable-type): Removed.
+	* cl-extra.el ('hashtable-size): Removed.
+	* cl-extra.el ('copy-hashtable): Removed.
+	* cl-extra.el (cl-builtin-gethash): Removed.
+	* cl-extra.el (cl-builtin-remhash): Removed.
+	* cl-extra.el (cl-builtin-clrhash): Removed.
+	* cl-extra.el (cl-builtin-maphash): Removed.
+	* cl-extra.el ('cl-gethash): Removed.
+	* cl-extra.el ('cl-puthash): Removed.
+	* cl-extra.el ('cl-remhash): Removed.
+	* cl-extra.el ('cl-clrhash): Removed.
+	* cl-extra.el ('cl-maphash): Removed.
+	* cl-extra.el ('cl-make-hash-table): Removed.
+	* cl-extra.el ('cl-hash-table-p): Removed.
+	* cl-extra.el ('cl-hash-table-count): Removed.
+	* cl-extra.el (cl-prettyexpand):
+	* cl-extra.el (names):
+	Remove compatibility aliases from this file.
+	In #'cl-prettyexpand, if FULL is nil, don't expand return-from
+	either, for symmetry with not expanding block.
+	Drop cl-extra-load-hook, it's useless when cl-extra is dumped
+	(since third-party code can't use it, and dumped code shouldn't
+	use it.)
+
+	* cl-macs.el:
+	* cl-macs.el (cl-pop2):
+	* cl-macs.el (defun*):
+	* cl-macs.el (cl-parse-loop-clause):
+	Remove some no-longer-needed compatibility kludges.
+
+	* cl.el:
+	* cl.el ('cl-map-extents): Removed.
+	* cl.el (cl-random-time):
+	* cl.el (list*): New, moved back from subr.el, given a shorter
+	implementation. 
+	* cl.el ('cl-member): Removed.
+	* cl.el ('cl-floor): Removed.
+	* cl.el ('cl-ceiling): Removed.
+	* cl.el ('cl-truncate): Removed.
+	* cl.el ('cl-round): Removed.
+	* cl.el ('cl-mod): Removed.
+	Remove some compatibility aliases; these may conflict with
+	package usage, in which case the packages need to be updated, the
+	new names are available in 21.4, and that's the most recent
+	version we support.
+
+	* cl.el (cl-hacked-flag): Removed.
+	* cl.el (cl-hack-byte-compiler): Removed.
+	* subr.el:
+	* subr.el (list*): Moved back to cl.el.
+
+	* update-elc-2.el (batch-update-elc-2):
+	* update-elc.el (do-autoload-commands):
+	Add an autoload for cl-compile-time-init in these two files, they
+	run on bare temacs, auto-autoload isn't available to them, and now
+	bytecomp calls cl-compile-time-init explicitly.
+
+	* cl-compat.el: Removed. This file was long obsolete.
+
 2011-12-27  Didier Verna  <didier@xemacs.org>
 
 	* cl-macs.el (face-foreback): New defsetf.

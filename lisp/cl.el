@@ -201,8 +201,6 @@ See `member*' for the meaning of :test, :test-not and :key."
 ;; ALWAYS be available.  So they've been moved from cl.el to eval.c.
 ;; Note: FSF Emacs moved them to subr.el in FSF 20.
 
-(defalias 'cl-map-extents 'map-extents)
-
 ;;; XEmacs; multiple values are in eval.c and cl-macs.el. 
 
 ;;; We no longer support `multiple-value-apply', which was ill-conceived to
@@ -249,7 +247,7 @@ See `member*' for the meaning of :test, :test-not and :key."
 (defun cl-random-time ()
   (let* ((time (copy-sequence (current-time-string))) (i (length time)) (v 0))
     (while (>= (decf i) 0) (setq v (+ (* v 3) (aref time i))))
-    (if-fboundp 'coerce-number
+    (if (fboundp 'coerce-number)
 	(coerce-number v 'fixnum) 
       v)))
 
@@ -516,7 +514,11 @@ Equivalent to `(fourth X)'."
 
 ;;; `last' is implemented as a C primitive, as of 1998-11
 
-;;; XEmacs: `list*' is in subr.el.
+(defun list* (first &rest rest)   ; See compiler macro in cl-macs.el
+  "Return a new list with specified args as elements, cons'd to last arg.
+Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
+`(cons A (cons B (cons C D)))'."
+  (if rest (cons first (reduce #'cons rest :from-end t)) first))
 
 ;; XEmacs; handle dotted lists properly, error on circularity and if LIST is
 ;; not a list.
@@ -540,13 +542,6 @@ of some cons making up LIST), this function is equivalent to
 	     (if (eq before list) (error 'circular-list list)))))))
 
 ;;; `copy-list' is implemented as a C primitive, as of 1998-11
-
-(defalias 'cl-member 'memq)   ; for compatibility with old CL package
-(defalias 'cl-floor 'floor*)
-(defalias 'cl-ceiling 'ceiling*)
-(defalias 'cl-truncate 'truncate*)
-(defalias 'cl-round 'round*)
-(defalias 'cl-mod 'mod*)
 
 ;;; XEmacs; #'acons is in C.
 
@@ -618,34 +613,14 @@ If ALIST is non-nil, the new pairs are prepended to it."
    ((loop) defun (&rest &or symbolp form))
    ((ignore-errors) 0 (&rest form))))
 
-;;; This goes here so that cl-macs can find it if it loads right now.
-(provide 'cl-19)
-
-;;; Things to do after byte-compiler is loaded.
-;;; As a side effect, we cause cl-macs to be loaded when compiling, so
-;;; that the compiler-macros defined there will be present.
-
-(defvar cl-hacked-flag nil)
-(defun cl-hack-byte-compiler ()
-  (if (and (not cl-hacked-flag) (fboundp 'byte-compile-file-form))
-      (progn
-	(setq cl-hacked-flag t)		; Do it first, to prevent recursion.
-	(when (not (fboundp 'cl-compile-time-init))
-	  (load "cl-macs" nil t))
-	(cl-compile-time-init))))	; In cl-macs.el.
-
-;;; Try it now in case the compiler has already been loaded.
-(cl-hack-byte-compiler)
-
-;;; Also make a hook in case compiler is loaded after this file. 
-(add-hook 'bytecomp-load-hook 'cl-hack-byte-compiler)
-
-;;; The following ensures that packages which expect the old-style cl.el
-;;; will be happy with this one.
+;;; Things to do after byte-compiler is loaded. XEmacs; no longer done here
+;;; using bytecomp-load-hook, done explicitly in bytecomp.el
+;;; instead.
+;;; cl-load-hook is also gone; given that cl.el is dumped it is not
+;;; available to non-dumped code, and dumped code should not be and is not
+;;; using it anyway.
 
 (provide 'cl)
-
-(run-hooks 'cl-load-hook)
 
 ;;; arch-tag: 5f07fa74-f153-4524-9303-21f5be125851
 ;;; cl.el ends here
