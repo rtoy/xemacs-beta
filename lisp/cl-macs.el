@@ -45,10 +45,6 @@
 
 ;;; Code:
 
-(or (memq 'cl-19 features)
-    (error "Tried to load `cl-macs' before `cl'!"))
-
-
 (defmacro cl-pop2 (place)
   (list 'prog1 (list 'car (list 'cdr place))
 	(list 'setq place (list 'cdr (list 'cdr place)))))
@@ -56,20 +52,6 @@
 
 (defvar cl-optimize-safety)
 (defvar cl-optimize-speed)
-
-
-;;; This kludge allows macros which use cl-transform-function-property
-;;; to be called at compile-time.
-
-(require
- (progn
-   (or (fboundp 'cl-transform-function-property)
-       (defalias 'cl-transform-function-property
-	 #'(lambda (n p f)
-	     (list 'put (list 'quote n) (list 'quote p)
-		   (list 'function (cons 'lambda f))))))
-   'xemacs))
-
 
 ;;; Initialization.
 
@@ -191,7 +173,7 @@ and BODY is implicitly surrounded by (block NAME ...).
    variables, they can be lists of the form (VAR [INITFORM [SVAR]]); when
    no argument is available for VAR, INITFORM is evaluated (or nil, if
    INITFORM is omitted) and stored as VAR's value, and SVAR is bound to t.
-   If an arguent is available for VAR, and INITFORM is unused, SVAR is
+   If an argument is available for VAR, and INITFORM is unused, SVAR is
    bound to nil.
 
 -- &key specifies keyword arguments.  The format of each argument is
@@ -1306,7 +1288,7 @@ either `being each foo' or `being the foos'.)
 			  ((eq (car args) 'to) (setq to (cl-pop2 args)))
 			  (t (setq buf (cl-pop2 args)))))
 		  (setq loop-map-form
-			(list 'cl-map-extents
+			(list 'map-extents
 			      (list 'function (list 'lambda (list var (gensym))
 						    '(progn . --cl-map) nil))
 			      buf from to))))

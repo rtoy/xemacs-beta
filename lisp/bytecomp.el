@@ -5036,6 +5036,8 @@ For example, invoke `xemacs -batch -f batch-byte-recompile-directory .'."
 	      byte-compile-constant
 	      byte-compile-variable-ref)))))
 
+;; XEmacs; call this explicitly, don't implement it using bytecomp-load-hook.
+(cl-compile-time-init)
 
 (run-hooks 'bytecomp-load-hook)
 
