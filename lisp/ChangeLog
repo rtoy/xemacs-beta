@@ -1,3 +1,8 @@
+2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (copy-symbol): Don't error with a non-list plist, as
+	happens with symbols in abbrev tables.
+
 2011-12-27  Didier Verna  <didier@xemacs.org>
 
 	* cl-macs.el (face-foreback): New defsetf.
