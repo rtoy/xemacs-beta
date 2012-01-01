@@ -5797,7 +5797,9 @@ Lisp_Object intern_istring (const Ibyte *str);
 MODULE_API Lisp_Object intern (const CIbyte *str);
 Lisp_Object intern_massaging_name (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);
-void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);
+/* Note that the mapper function has the same signature as in elisp_maphash. */
+void map_obarray (Lisp_Object, int (*) (Lisp_Object, Lisp_Object, void *),
+                  void *);
 Lisp_Object indirect_function (Lisp_Object, int);
 Lisp_Object symbol_value_in_buffer (Lisp_Object, Lisp_Object);
 void kill_buffer_local_variables (struct buffer *);

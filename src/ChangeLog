@@ -1,3 +1,49 @@
+2012-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Add #'test-completion, API from GNU.
+	Accept hash table COLLECTIONs in it and in the other
+	completion-oriented functions, #'try-completion,
+	#'all-completions, and those Lisp functions implemented in terms
+	of them.
+
+	* lisp.h: Update the prototype of map_obarray(), making FN
+	compatible with the FUNCTION argument of elisp_maphash();
+
+	* abbrev.c (abbrev_match_mapper):
+	* abbrev.c (record_symbol):
+	* doc.c (verify_doc_mapper):
+	* symbols.c (mapatoms_1):
+	* symbols.c (apropos_mapper):
+	Update these mapper functions to reflect the new argument to
+	map_obarray().
+
+	* symbols.c (map_obarray):
+	Call FN with two arguments, the string name of the symbol, and the
+	symbol itself, for API (mapper) compatibility with
+	elisp_maphash().
+
+	* minibuf.c (map_completion): New. Map a maphash_function_t across
+	a non function COLLECTION, as appropriate for #'try-completion and
+	friends.
+	* minibuf.c (map_completion_list): New. Map a maphash_function_t
+	across a pseudo-alist, as appropriate for the completion
+	functions. 
+	* minibuf.c (ignore_completion_p): PRED needs to be called with
+	two args if and only if the collection is a hash table. Implement
+	this.
+	* minibuf.c (try_completion_mapper): New. The loop body of
+	#'try-completion, refactored out.
+	* minibuf.c (Ftry_completion): Use try_completion_mapper(),
+	map_completion(). 
+	* minibuf.c (all_completions_mapper): New. The loop body of
+	#'all-completions, refactored out.
+	* minibuf.c (Fall_completions): Use all_completions_mapper(),
+	map_completion().
+	* minibuf.c (test_completion_mapper): New. The loop body of
+	#'test-completion. 
+	* minibuf.c (Ftest_completion): New, API from GNU.
+	* minibuf.c (syms_of_minibuf): Make Ftest_completion available.
+
 2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (Fmacroexpand):

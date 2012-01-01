@@ -88,7 +88,8 @@ struct abbrev_match_mapper_closure
    before point, case-insensitively.  When found, return non-zero, so
    that map_obarray terminates mapping.  */
 static int
-abbrev_match_mapper (Lisp_Object symbol, void *arg)
+abbrev_match_mapper (Lisp_Object UNUSED (key), Lisp_Object symbol, 
+                     void *arg)
 {
   struct abbrev_match_mapper_closure *closure =
     (struct abbrev_match_mapper_closure *)arg;
@@ -478,7 +479,7 @@ describe_abbrev (Lisp_Object sym, Lisp_Object stream)
 }
 
 static int
-record_symbol (Lisp_Object sym, void *arg)
+record_symbol (Lisp_Object UNUSED (key), Lisp_Object sym, void *arg)
 {
   Lisp_Object closure = * (Lisp_Object *) arg;
   XSETCDR (closure, Fcons (sym, XCDR (closure)));
