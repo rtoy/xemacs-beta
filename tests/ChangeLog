@@ -1,3 +1,9 @@
+2012-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/completion-tests.el: New.
+	Test #'try-completion, #'all-completion and #'test-completion with
+	list, vector and hash-table COLLECTION arguments.
+
 2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/hash-table-tests.el:

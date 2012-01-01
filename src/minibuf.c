@@ -35,6 +35,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "insdel.h"
 #include "redisplay.h"
 #include "window-impl.h"
+#include "elhash.h"
 
 /* Depth in minibuffer invocations.  */
 int minibuf_level;
@@ -244,6 +245,51 @@ scmp_1 (const Ibyte *s1, const Ibyte *s2, Charcount len,
   else return len - l;
 }
 
+/* Map FUNCTION, a C function, across LISZT, a pseudo-alist, calling
+   it with three args, ELTSTRING (the car of the element if a cons,
+   otherwise the element itself), ELT (the element, always) and
+   EXTRA_ARG. Stop if FUNCTION returns non-zero. */
+static void
+map_completion_list (maphash_function_t function, Lisp_Object liszt,
+                     void *extra_arg)
+{
+  Lisp_Object eltstring;
+
+  GC_EXTERNAL_LIST_LOOP_2 (elt, liszt)
+    {
+      eltstring = CONSP (elt) ? XCAR (elt) : elt;
+      if (function (eltstring, elt, extra_arg))
+        {
+          XUNGCPRO (elt);
+          return;
+        }
+    }
+  END_GC_EXTERNAL_LIST_LOOP (elt);
+}
+
+static void
+map_completion (maphash_function_t function, Lisp_Object collection,
+                void *extra_arg, Lisp_Object predicate)
+{
+  if (LISTP (collection))
+    {
+      map_completion_list (function, collection, extra_arg);
+    }
+  else if (VECTORP (collection))
+    {
+      map_obarray (collection, function, extra_arg);
+    }
+  else if (NILP (predicate))
+    {
+      /* This can't call Lisp, no need to copy and compress the hash
+         table entries. */
+      elisp_maphash_unsafe (function, collection, extra_arg);
+    }
+  else
+    {
+      elisp_maphash (function, collection, extra_arg);
+    }
+}
 
 int
 regexp_ignore_completion_p (const Ibyte *nonreloc,
@@ -264,53 +310,157 @@ regexp_ignore_completion_p (const Ibyte *nonreloc,
   return 0;
 }
 
-
 /* Callers should GCPRO, since this may call eval */
 static int
 ignore_completion_p (Lisp_Object completion_string,
-                     Lisp_Object pred, Lisp_Object completion)
+                     Lisp_Object pred, Lisp_Object completion,
+                     Boolint hash_tablep)
 {
+  Lisp_Object tem;
+
   if (regexp_ignore_completion_p (0, completion_string, 0, -1))
     return 1;
 
-  /* Ignore this element if there is a predicate
-     and the predicate doesn't like it. */
-  if (!NILP (pred))
-  {
-    Lisp_Object tem;
-    if (EQ (pred, Qcommandp))
+  if (NILP (pred))
+    {
+      return 0;
+    }
+
+  /* Ignore this element if there is a predicate and the predicate doesn't
+     like it. */
+  if (hash_tablep)
+    {
+      tem = call2 (pred, completion_string, completion);
+    }
+  else if (EQ (pred, Qcommandp))
+    {
       tem = Fcommandp (completion);
-    else
+    }
+  else
+    {
       tem = call1 (pred, completion);
-    if (NILP (tem))
-      return 1;
-  }
+    }
+
+  return NILP (tem);
+}
+
+struct try_completion_closure 
+{
+  Lisp_Object string;
+  Charcount slength;
+  Lisp_Object predicate;
+  Lisp_Object bestmatch;
+  Charcount blength;
+  Charcount bestmatchsize;
+  Boolint hash_tablep;
+  int matchcount;
+};
+
+static int
+try_completion_mapper (Lisp_Object eltstring, Lisp_Object value,
+                       void *arg)
+{
+  struct try_completion_closure *tcc = (struct try_completion_closure *) arg;
+  Charcount eltlength;
+
+  if (SYMBOLP (eltstring))
+    {
+      eltstring = XSYMBOL_NAME (eltstring);
+    }
+
+  if (!STRINGP (eltstring))
+    {
+      return 0;
+    }
+
+  /* Is this element a possible completion? */
+  eltlength = string_char_length (eltstring);
+  if (tcc->slength <= eltlength
+      && (0 > scmp (XSTRING_DATA (eltstring), XSTRING_DATA (tcc->string),
+                    tcc->slength)))
+    {
+      struct gcpro gcpro1, gcpro2, gcpro3;
+      int loser;
+      GCPRO3 (tcc->string, eltstring, tcc->bestmatch);
+      loser = ignore_completion_p (eltstring, tcc->predicate, value,
+                                   tcc->hash_tablep);
+      UNGCPRO;
+      if (loser)      /* reject this one */
+        {
+          return 0;
+        }
+
+      /* Update computation of how much all possible completions
+         match */
+
+      tcc->matchcount++;
+      if (NILP (tcc->bestmatch))
+        {
+          tcc->bestmatch = eltstring;
+          tcc->blength = eltlength;
+          tcc->bestmatchsize = eltlength;
+        }
+      else
+        {
+          Charcount compare = min (tcc->bestmatchsize, eltlength);
+          Charcount matchsize =
+            scmp (XSTRING_DATA (tcc->bestmatch), XSTRING_DATA (eltstring),
+                  compare);
+          if (matchsize < 0)
+            matchsize = compare;
+          if (completion_ignore_case)
+            {
+              /* If this is an exact match except for case, use it as
+                 the best match rather than one that is not an exact
+                 match.  This way, we get the case pattern of the
+                 actual match.  */
+              if ((matchsize == eltlength
+                   && matchsize < tcc->blength)
+                  ||
+                  /* If there is more than one exact match ignoring
+                     case, and one of them is exact including case,
+                     prefer that one.  */
+                  /* If there is no exact match ignoring case,
+                     prefer a match that does not change the case of
+                     the input.  */
+                  ((matchsize == eltlength)
+                   ==
+                   (matchsize == tcc->blength)
+                   && 0 > scmp_1 (XSTRING_DATA (eltstring),
+                                  XSTRING_DATA (tcc->string),
+                                  tcc->slength, 0)
+                   && 0 <= scmp_1 (XSTRING_DATA (tcc->bestmatch),
+                                   XSTRING_DATA (tcc->string),
+                                   tcc->slength, 0)))
+                {
+                  tcc->bestmatch = eltstring;
+                  tcc->blength = eltlength;
+                }
+            }
+          tcc->bestmatchsize = matchsize;
+        }
+    }
+
   return 0;
 }
 
-
-/* #### Maybe we should allow COLLECTION to be a hash table.
-   It is wrong for the use of obarrays to be better-rewarded than the
-   use of hash tables.  By better-rewarded I mean that you can pass an
-   obarray to all of the completion functions, whereas you can't do
-   anything like that with a hash table.
-
-   To do so, there should probably be a
-   map_obarray_or_alist_or_hash_table function which would be used by
-   both Ftry_completion and Fall_completions.  [[ But would the
-   additional funcalls slow things down? ]] Seriously doubtful. --ben */
-
 DEFUN ("try-completion", Ftry_completion, 2, 3, 0, /*
 Return common substring of all completions of STRING in COLLECTION.
-COLLECTION must be an alist, an obarray, or a function.
-Each string in COLLECTION is tested to see if it begins with STRING.
-All that match are compared together; the longest initial sequence
-common to all matches is returned as a string.  If there is no match
-at all, nil is returned.  For an exact match, t is returned.
+COLLECTION must be a list, a hash table, an obarray, or a function.
 
-If COLLECTION is list, the elements of the list that are not cons
+Each string (or symbol) in COLLECTION is tested to see if it (or its
+name) begins with STRING.  All that match are compared together; the
+longest initial sequence common to all matches is returned as a
+string.  If there is no match at all, nil is returned.  For an exact
+match, t is returned.
+
+If COLLECTION is a list, the elements of the list that are not cons
 cells and the cars of the elements of the list that are cons cells
-(which must be strings) form the set of possible completions.
+\(which must be strings or symbols) form the set of possible
+completions.
+
+If COLLECTION is a hash table, all the keys that are strings or symbols
+are the possible completions.
 
 If COLLECTION is an obarray, the names of all symbols in the obarray
 are the possible completions.
@@ -322,207 +472,122 @@ value of `try-completion'.
 If optional third argument PREDICATE is non-nil, it is used to test
 each possible match.  The match is a candidate only if PREDICATE
 returns non-nil.  The argument given to PREDICATE is the alist element
-or the symbol from the obarray.
+or the symbol from the obarray.  If COLLECTION is a hash table,
+PREDICATE is passed two arguments, the key and the value of the hash
+table entry.
 */
        (string, collection, predicate))
 {
   /* This function can GC */
-  Lisp_Object bestmatch, tail;
-  Charcount bestmatchsize = 0;
-  int list;
-  int indice = 0;
-  int matchcount = 0;
-  int obsize;
-  Lisp_Object bucket;
-  Charcount slength, blength;
+  struct try_completion_closure tcc;
 
   CHECK_STRING (string);
 
-  if (CONSP (collection))
+  if (!NILP (Ffunctionp (collection)))
     {
-      Lisp_Object tem = XCAR (collection);
-      if (SYMBOLP (tem))	/* lambda, autoload, etc.  Emacs-lisp sucks */
-	return call3 (collection, string, predicate, Qnil);
-      else
-	list = 1;
-    }
-  else if (VECTORP (collection))
-    list = 0;
-  else if (NILP (collection))
-    list = 1;
-  else
-    return call3 (collection, string, predicate, Qnil);
-
-  bestmatch = Qnil;
-  blength = 0;
-  slength = string_char_length (string);
-
-  /* If COLLECTION is not a list, set TAIL just for gc pro.  */
-  tail = collection;
-  if (!list)
-    {
-      obsize = XVECTOR_LENGTH (collection);
-      bucket = XVECTOR_DATA (collection)[indice];
-    }
-  else /* warning suppression */
-    {
-      obsize = 0;
-      bucket = Qnil;
+      return call3 (collection, string, predicate, Qnil);
     }
 
-  while (1)
+  if (!(LISTP (collection) || VECTORP (collection) || HASH_TABLEP (collection)))
     {
-      /* Get the next element of the alist or obarray. */
-      /* Exit the loop if the elements are all used up. */
-      /* elt gets the alist element or symbol.
-	 eltstring gets the name to check as a completion. */
-      Lisp_Object elt;
-      Lisp_Object eltstring;
-
-      if (list)
-	{
-	  if (NILP (tail))
-	    break;
-	  elt = Fcar (tail);
-	  if (CONSP (elt))
-	    eltstring = Fcar (elt);
-	  else
-	    eltstring = elt;
-	  tail = Fcdr (tail);
-	}
-      else
-	{
-	  if (!ZEROP (bucket))
-	    {
-              Lisp_Symbol *next;
-	      if (!SYMBOLP (bucket))
-		{
-		  invalid_argument ("Bad obarray passed to try-completions",
-				    bucket);
-		}
-	      next = symbol_next (XSYMBOL (bucket));
-	      elt = bucket;
-	      eltstring = Fsymbol_name (elt);
-              if (next)
-		bucket = wrap_symbol (next);
-	      else
-		bucket = Qzero;
-	    }
-	  else if (++indice >= obsize)
-	    break;
-	  else
-	    {
-	      bucket = XVECTOR_DATA (collection)[indice];
-	      continue;
-	    }
-	}
-
-      /* Is this element a possible completion? */
-
-      if (STRINGP (eltstring))
-	{
-	  Charcount eltlength = string_char_length (eltstring);
-	  if (slength <= eltlength
-	      && (0 > scmp (XSTRING_DATA (eltstring),
-                            XSTRING_DATA (string),
-                            slength)))
-	    {
-              {
-                struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-                int loser;
-                GCPRO4 (tail, string, eltstring, bestmatch);
-                loser = ignore_completion_p (eltstring, predicate, elt);
-                UNGCPRO;
-                if (loser)      /* reject this one */
-                  continue;
-              }
-
-	      /* Update computation of how much all possible
-		 completions match */
-
-	      matchcount++;
-	      if (NILP (bestmatch))
-		{
-		  bestmatch = eltstring;
-                  blength = eltlength;
-		  bestmatchsize = eltlength;
-		}
-	      else
-		{
-		  Charcount compare = min (bestmatchsize, eltlength);
-		  Charcount matchsize =
-		    scmp (XSTRING_DATA (bestmatch),
-			  XSTRING_DATA (eltstring),
-			  compare);
-		  if (matchsize < 0)
-		    matchsize = compare;
-		  if (completion_ignore_case)
-		    {
-		      /* If this is an exact match except for case,
-			 use it as the best match rather than one that is not
-			 an exact match.  This way, we get the case pattern
-			 of the actual match.  */
-		      if ((matchsize == eltlength
-			   && matchsize < blength)
-			  ||
-			  /* If there is more than one exact match ignoring
-			     case, and one of them is exact including case,
-			     prefer that one.  */
-			  /* If there is no exact match ignoring case,
-			     prefer a match that does not change the case
-			     of the input.  */
-			  ((matchsize == eltlength)
-			   ==
-			   (matchsize == blength)
-			   && 0 > scmp_1 (XSTRING_DATA (eltstring),
-					  XSTRING_DATA (string),
-					  slength, 0)
-			   && 0 <= scmp_1 (XSTRING_DATA (bestmatch),
-					   XSTRING_DATA (string),
-					   slength, 0)))
-                      {
-			bestmatch = eltstring;
-                        blength = eltlength;
-                      }
-		    }
-		  bestmatchsize = matchsize;
-		}
-	    }
-	}
+      signal_error (Qwrong_type_argument,
+                    "must be a list, vector, hash table or function",
+                    collection);
     }
 
-  if (NILP (bestmatch))
+  tcc.string = string;
+  tcc.slength = string_char_length (string);
+  tcc.bestmatch = Qnil;
+  tcc.blength = 0;
+  tcc.bestmatchsize = 0;
+  tcc.predicate = predicate;
+  tcc.hash_tablep = HASH_TABLEP (collection);
+  tcc.matchcount = 0;
+
+  map_completion (try_completion_mapper, collection, &tcc, predicate);
+
+  if (NILP (tcc.bestmatch))
     return Qnil;		/* No completions found */
-  /* If we are ignoring case, and there is no exact match,
-     and no additional text was supplied,
-     don't change the case of what the user typed.  */
-  if (completion_ignore_case
-      && bestmatchsize == slength
-      && blength > bestmatchsize)
+
+  /* If we are ignoring case, and there is no exact match, and no
+     additional text was supplied, don't change the case of what the
+     user typed.  */
+  if (completion_ignore_case && tcc.bestmatchsize == tcc.slength
+      && tcc.blength > tcc.bestmatchsize)
     return string;
 
-  /* Return t if the supplied string is an exact match (counting case);
-     it does not require any change to be made.  */
-  if (matchcount == 1
-      && bestmatchsize == slength
-      && 0 > scmp_1 (XSTRING_DATA (bestmatch),
-		     XSTRING_DATA (string),
-		     bestmatchsize, 0))
+  /* Return t if the supplied string is an exact match (counting
+     case); it does not require any change to be made.  */
+  if (tcc.matchcount == 1 && tcc.bestmatchsize == tcc.slength
+      && 0 > scmp_1 (XSTRING_DATA (tcc.bestmatch), XSTRING_DATA (tcc.string),
+		     tcc.bestmatchsize, 0))
     return Qt;
 
   /* Else extract the part in which all completions agree */
-  return Fsubseq (bestmatch, Qzero, make_fixnum (bestmatchsize));
+  return Fsubseq (tcc.bestmatch, Qzero, make_fixnum (tcc.bestmatchsize));
+}
+
+struct all_completions_closure
+{
+  Lisp_Object string;
+  Charcount slength;
+  Lisp_Object predicate;
+  Lisp_Object allmatches;
+  Boolint hash_tablep;
+};
+
+static int
+all_completions_mapper (Lisp_Object eltstring, Lisp_Object value, void *arg)
+{
+  struct all_completions_closure *acc = (struct all_completions_closure *) arg;
+  /* Is this element a possible completion? */
+
+  if (SYMBOLP (eltstring))
+    {
+      eltstring = XSYMBOL_NAME (eltstring);
+    }
+
+  if (STRINGP (eltstring) && (acc->slength <= string_char_length (eltstring))
+      /* Reject alternatives that start with space unless the input
+         starts with space.  */
+      && ((acc->slength > 0 && string_ichar (acc->string, 0) == ' ')
+          || string_ichar (eltstring, 0) != ' ')
+      && (0 > scmp (XSTRING_DATA (eltstring), XSTRING_DATA (acc->string),
+                    acc->slength)))
+    {
+      /* Yes.  Now check whether predicate likes it. */
+      struct gcpro gcpro1, gcpro2;
+      int loser;
+      GCPRO2 (eltstring, acc->string);
+      loser = ignore_completion_p (eltstring, acc->predicate, value,
+                                   acc->hash_tablep);
+      UNGCPRO;
+      if (!loser)
+        {
+          /* Ok => put it on the list. */
+          XSETCDR (acc->allmatches, Fcons (eltstring, Qnil));
+          acc->allmatches = XCDR (acc->allmatches);
+        }
+    }
+
+  return 0;
 }
 
-
 DEFUN ("all-completions", Fall_completions, 2, 3, 0, /*
 Search for partial matches to STRING in COLLECTION.
-COLLECTION must be an alist, an obarray, or a function.
-Each string in COLLECTION is tested to see if it begins with STRING.
-The value is a list of all the strings from COLLECTION that match.
+COLLECTION must be an list, a hash table, an obarray, or a function.
 
-If COLLECTION is an alist, the cars of the elements of the alist
-\(which must be strings) form the set of possible completions.
+Each string (or symbol) in COLLECTION is tested to see if it (or its
+name) begins with STRING.  The value is a list of all the strings from
+COLLECTION that match.
+
+If COLLECTION is a list, the elements of the list that are not cons
+cells and the cars of the elements of the list that are cons cells
+\(which must be strings or symbols) form the set of possible
+completions.
+
+If COLLECTION is a hash-table, all the keys that are strings or symbols
+are the possible completions.
 
 If COLLECTION is an obarray, the names of all symbols in the obarray
 are the possible completions.
@@ -534,117 +599,179 @@ value of `all-completions'.
 If optional third argument PREDICATE is non-nil, it is used to test
 each possible match.  The match is a candidate only if PREDICATE
 returns non-nil.  The argument given to PREDICATE is the alist element
-or the symbol from the obarray.
+or the symbol from the obarray.  If COLLECTION is a hash table,
+PREDICATE is passed two arguments, the key and the value of the hash
+table entry.
 */
        (string, collection, predicate))
 {
   /* This function can GC */
-  Lisp_Object tail;
-  Lisp_Object allmatches;
-  int list;
-  int indice = 0;
-  int obsize;
-  Lisp_Object bucket;
-  Charcount slength;
+  struct all_completions_closure acc;
+  Lisp_Object allmatches = noseeum_cons (Qnil, Qnil);
+  struct gcpro gcpro1;
 
   CHECK_STRING (string);
 
-  if (CONSP (collection))
+  if (!NILP (Ffunctionp (collection)))
     {
-      Lisp_Object tem = XCAR (collection);
-      if (SYMBOLP (tem))	/* lambda, autoload, etc.  Emacs-lisp sucks */
-	return call3 (collection, string, predicate, Qt);
-      else
-	list = 1;
-    }
-  else if (VECTORP (collection))
-    list = 0;
-  else if (NILP (collection))
-    list = 1;
-  else
-    return call3 (collection, string, predicate, Qt);
-
-  allmatches = Qnil;
-  slength = string_char_length (string);
-
-  /* If COLLECTION is not a list, set TAIL just for gc pro.  */
-  tail = collection;
-  if (!list)
-    {
-      obsize = XVECTOR_LENGTH (collection);
-      bucket = XVECTOR_DATA (collection)[indice];
-    }
-  else /* warning suppression */
-    {
-      obsize = 0;
-      bucket = Qnil;
+      return call3 (collection, string, predicate, Qt);
     }
 
-  while (1)
+  if (!(LISTP (collection) || VECTORP (collection) || HASH_TABLEP (collection)))
     {
-      /* Get the next element of the alist or obarray. */
-      /* Exit the loop if the elements are all used up. */
-      /* elt gets the alist element or symbol.
-	 eltstring gets the name to check as a completion. */
-      Lisp_Object elt;
-      Lisp_Object eltstring;
+      signal_error (Qwrong_type_argument,
+                    "must be a list, vector, hash table or function",
+                    collection);
+    }
+  GCPRO1 (allmatches);
+  acc.string = string;
+  acc.slength = string_char_length (string);
+  acc.predicate = predicate;
+  acc.allmatches = allmatches;
+  acc.hash_tablep = HASH_TABLEP (collection);
 
-      if (list)
-	{
-	  if (NILP (tail))
-	    break;
-	  elt = Fcar (tail);
-	  eltstring = Fcar (elt);
-	  tail = Fcdr (tail);
-	}
-      else
-	{
-	  if (!ZEROP (bucket))
-	    {
-              Lisp_Symbol *next = symbol_next (XSYMBOL (bucket));
-	      elt = bucket;
-	      eltstring = Fsymbol_name (elt);
-              if (next)
-		bucket = wrap_symbol (next);
-	      else
-		bucket = Qzero;
-            }
-	  else if (++indice >= obsize)
-	    break;
-	  else
-	    {
-	      bucket = XVECTOR_DATA (collection)[indice];
-	      continue;
-	    }
-	}
+  map_completion (all_completions_mapper, collection, &acc, predicate);
 
-      /* Is this element a possible completion? */
+  acc.allmatches = XCDR (allmatches);
+  free_cons (allmatches);
+  UNGCPRO;
+  return acc.allmatches;
+}
+
+struct test_completion_closure
+{
+  Lisp_Object string;
+  Lisp_Object predicate;
+  Lisp_Object result;
+  Boolint hash_tablep;
+};
 
-      if (STRINGP (eltstring)
-          && (slength <= string_char_length (eltstring))
-          /* Reject alternatives that start with space
-	     unless the input starts with space.  */
-	  && ((string_char_length (string) > 0 &&
-	       string_ichar (string, 0) == ' ')
-	      || string_ichar (eltstring, 0) != ' ')
-	  && (0 > scmp (XSTRING_DATA (eltstring),
-                        XSTRING_DATA (string),
-                        slength)))
-	{
-	  /* Yes.  Now check whether predicate likes it. */
-          struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-          int loser;
-          GCPRO4 (tail, eltstring, allmatches, string);
-          loser = ignore_completion_p (eltstring, predicate, elt);
-          UNGCPRO;
-          if (!loser)
-            /* Ok => put it on the list. */
-            allmatches = Fcons (eltstring, allmatches);
+static int
+test_completion_mapper (Lisp_Object eltstring, Lisp_Object value, void *arg)
+{
+  struct test_completion_closure *tcc = (struct test_completion_closure *) arg;
+
+  if (SYMBOLP (eltstring))
+    {
+      eltstring = XSYMBOL_NAME (eltstring);
+    }
+
+  if (!STRINGP (eltstring))
+    {
+      return 0;
+    }
+
+  if (completion_ignore_case ?
+      0 == qxetextcasecmp (XSTRING_DATA (tcc->string),
+                           XSTRING_LENGTH (tcc->string),
+                           XSTRING_DATA (eltstring),
+                           XSTRING_LENGTH (eltstring))
+      : 0 == qxememcmp4 (XSTRING_DATA (tcc->string),
+                         XSTRING_LENGTH (tcc->string),
+                         XSTRING_DATA (eltstring),
+                         XSTRING_LENGTH (eltstring)))
+    {
+      struct gcpro gcpro1, gcpro2, gcpro3;
+      int loser;
+      GCPRO3 (eltstring, tcc->string, tcc->predicate);
+      loser = ignore_completion_p (eltstring, tcc->predicate, value,
+                                   tcc->hash_tablep);
+      UNGCPRO;
+      if (!loser)
+        {
+          tcc->result = Qt;
+          return 1;
         }
     }
 
-  return Fnreverse (allmatches);
+  return 0;
 }
+
+DEFUN ("test-completion", Ftest_completion, 2, 3, 0, /*
+Return non-nil if STRING is a valid completion in COLLECTION.
+
+COLLECTION must be a list, a hash table, an obarray, or a function.
+
+Each string (or symbol) in COLLECTION is tested to see if it (or its
+name) begins with STRING.  The value is a list of all the strings from
+COLLECTION that match.
+
+If COLLECTION is a list, the elements of the list that are not cons
+cells and the cars of the elements of the list that are cons cells
+\(which must be strings or symbols) form the set of possible
+completions.
+
+If COLLECTION is a hash-table, all the keys that are strings or symbols
+are the possible completions.
+
+If COLLECTION is an obarray, the names of all symbols in the obarray
+are the possible completions.
+
+If COLLECTION is a function, it is called with three arguments: the
+values STRING, PREDICATE and the symbol `lambda'.  Whatever it returns
+is passed back by `test-completion'.
+
+If optional third argument PREDICATE is non-nil, it is used to test
+for possible matches.  The match is a candidate only if PREDICATE
+returns non-nil.  The argument given to PREDICATE is the alist element
+or the symbol from the obarray.  If COLLECTION is a hash table,
+PREDICATE is passed two arguments, the key and the value of the hash
+table entry.
+*/
+       (string, collection, predicate))
+{
+  struct test_completion_closure tcc;
+
+  CHECK_STRING (string);
+
+  if (!NILP (Ffunctionp (collection)))
+    {
+      return call3 (collection, string, predicate, Qlambda);
+    }
+
+  if (!(LISTP (collection) || VECTORP (collection) || HASH_TABLEP (collection)))
+    {
+      signal_error (Qwrong_type_argument,
+                    "must be a list, vector, hash table or function",
+                    collection);
+    }
+
+  tcc.string = string;
+  tcc.predicate = predicate;
+  tcc.result = Qnil;
+  tcc.hash_tablep = HASH_TABLEP (collection);
+
+  if (VECTORP (collection) && !completion_ignore_case)
+    {
+      /* We're case sensitive -> no need for a linear search. */
+      Lisp_Object lookup = Fintern_soft (string, collection, Qzero);
+
+      if (ZEROP (lookup))
+        {
+          return Qnil;
+        }
+
+      return ignore_completion_p (XSYMBOL_NAME (lookup), tcc.predicate,
+                                  lookup, 0) ? Qnil : Qt;
+
+      /* It would be reasonable to do something similar for the hash
+         tables, except, both symbol and string keys are vaild
+         completions there. So a negative #'gethash for the string
+         (with #'equal as the hash table tests) still means you have
+         to do the linear search, for any symbols with that string
+         name, which hash very differently; returning t is a little
+         quicker, but returning nil is just as slow, so our average
+         performance barely changes, at the cost of code
+         complexity. */
+    }
+  else
+    {
+      map_completion (test_completion_mapper, collection, &tcc, predicate);
+    }
+
+  return tcc.result;
+}
+
 
 /* Useless FSFmacs functions */
 /* More than useless.  I've nuked minibuf_prompt_width so they won't
@@ -939,6 +1066,7 @@ syms_of_minibuf (void)
 
   DEFSUBR (Ftry_completion);
   DEFSUBR (Fall_completions);
+  DEFSUBR (Ftest_completion);
 
   DEFSYMBOL (Qappend_message);
   DEFSYMBOL (Qclear_message);

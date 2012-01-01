@@ -972,7 +972,7 @@ kludgily_ignore_lost_doc_p (Lisp_Object sym)
 
 
 static int
-verify_doc_mapper (Lisp_Object sym, void *arg)
+verify_doc_mapper (Lisp_Object UNUSED (key), Lisp_Object sym, void *arg)
 {
   Lisp_Object closure = * (Lisp_Object *) arg;
 
