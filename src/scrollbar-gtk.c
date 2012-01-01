@@ -113,12 +113,13 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   assert(g_signal_connect (G_OBJECT (sb),"change-value",
                            G_CALLBACK (scrollbar_cb),
                            GUINT_TO_POINTER (vertical)));
+#ifdef NOTUSED
   assert(g_signal_connect (G_OBJECT (sb), "button-press-event",
                            G_CALLBACK (scrollbar_drag_hack_cb),
                            GUINT_TO_POINTER (1)));
   assert(g_signal_connect (G_OBJECT (sb), "button-release-event",
                            G_CALLBACK (scrollbar_drag_hack_cb), (gpointer) 0));
-
+#endif
   /* Do we need to connect to "destroy" too? --jsparkes */
   gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)), SCROLLBAR_GTK_WIDGET (instance), 0, 0);
 
@@ -417,7 +418,7 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble UNUSED (value),
     gtk_adjustment_value_changed (adj);
   gtk_adjustment_changed (adj);
 
-  return (TRUE);
+  return FALSE;
 }
 
 static void
