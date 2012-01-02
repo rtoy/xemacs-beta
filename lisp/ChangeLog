@@ -1,3 +1,9 @@
+2012-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obsolete.el (cl-puthash): Put back a compatibility alias for
+	this, setf-expansion of #'gethash calls it on 21.4, so it will
+	occur in packages for a while to come.
+
 2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (copy-symbol): Don't error with a non-list plist, as

@@ -257,6 +257,10 @@ later, no need to call it in user code.")
 
 (make-obsolete 'cl-delete-duplicates 'delete-duplicates)
 
+;; This occurs because of setf expansion by 21.4, changing the affected
+;; packages won't fix that.
+(define-obsolete-function-alias 'cl-puthash 'puthash)
+
 ; old names
 (define-compatible-function-alias 'byte-code-function-p
   'compiled-function-p) ;FSFmacs
