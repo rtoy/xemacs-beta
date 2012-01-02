@@ -5036,6 +5036,9 @@ For example, invoke `xemacs -batch -f batch-byte-recompile-directory .'."
 	      byte-compile-constant
 	      byte-compile-variable-ref)))))
 
+;;; Some packages byte-compile with -no-autoloads, so this is necessary:
+(autoload 'cl-compile-time-init "cl-macs")
+
 ;; XEmacs; call this explicitly, don't implement it using bytecomp-load-hook.
 (cl-compile-time-init)
 
