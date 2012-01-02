@@ -1,5 +1,9 @@
 2012-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (cl-compile-time-init): Add an autoload for this,
+	some code supplies -no-autoloads when byte-compiling, making it
+	necessary.
+
 	* obsolete.el (cl-puthash): Put back a compatibility alias for
 	this, setf-expansion of #'gethash calls it on 21.4, so it will
 	occur in packages for a while to come.
