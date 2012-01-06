@@ -1,3 +1,8 @@
+2012-01-03  Didier Verna  <didier@xemacs.org>
+
+	* faces.c (complex_vars_of_faces): Add missing foreback specifier
+	values to the GUI Element face.
+
 2012-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Add #'test-completion, API from GNU.
