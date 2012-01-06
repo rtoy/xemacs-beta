@@ -2563,20 +2563,25 @@ complex_vars_of_faces (void)
        #%!@#ed up before the styles are set, which override the
        fallbacks. */
     fg_fb = Facons (list1 (Qgtk), build_ascstring ("black"), fg_fb);
+    fb_fb = Facons (list1 (Qgtk), build_ascstring ("Gray70"), fb_fb);
     bg_fb = Facons (list1 (Qgtk), build_ascstring ("Gray80"), bg_fb);
 #endif
 #ifdef HAVE_X_WINDOWS
     fg_fb = Facons (list1 (Qx), build_ascstring ("black"), fg_fb);
+    fb_fb = Facons (list1 (Qx), build_ascstring ("Gray70"), fb_fb);
     bg_fb = Facons (list1 (Qx), build_ascstring ("Gray80"), bg_fb);
 #endif
 #ifdef HAVE_TTY
     fg_fb = Facons (list1 (Qtty), Fvector (0, 0), fg_fb);
+    fb_fb = Facons (list1 (Qtty), Fvector (0, 0), fb_fb);
     bg_fb = Facons (list1 (Qtty), Fvector (0, 0), bg_fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
     fg_fb = Facons (list1 (Qmsprinter), build_ascstring ("black"), fg_fb);
+    fb_fb = Facons (list1 (Qmsprinter), build_ascstring ("Gray90"), fb_fb);
     bg_fb = Facons (list1 (Qmsprinter), build_ascstring ("white"), bg_fb);
     fg_fb = Facons (list1 (Qmswindows), build_ascstring ("black"), fg_fb);
+    fb_fb = Facons (list1 (Qmswindows), build_ascstring ("Gray65"), fb_fb);
     bg_fb = Facons (list1 (Qmswindows), build_ascstring ("Gray75"), bg_fb);
 #endif
     set_specifier_fallback (Fget (Vgui_element_face, Qforeground, Qnil),
