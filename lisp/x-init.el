@@ -31,8 +31,7 @@
 ;;; Code:
 
 (globally-declare-fboundp
- '(x-keysym-on-keyboard-p
-   x-server-vendor x-init-specifier-from-resources init-mule-x-win))
+ '(x-server-vendor x-init-specifier-from-resources init-mule-x-win))
 
 (globally-declare-boundp
  '(x-initial-argv-list x-app-defaults-directory))
@@ -78,6 +77,56 @@
   "Search backward for the previous occurrence of the text of the selection."
   (interactive)
   (ow-find t))
+
+(labels
+    ((pseudo-canonicalize-keysym (keysym)
+       "If KEYSYM (a string or a symbol) might describe a keysym on
+the current keyboard, return its canonical XEmacs form, a symbol;
+otherwise return nil.
+
+Does not intern new symbols, since if a string doesn't correspond to a
+keysym that XEmacs has seen, that string won't be in obarray."
+       (if (symbolp keysym)
+	   keysym
+	 (if (stringp keysym)
+             (or (intern-soft keysym)
+                 (intern-soft (nsubstitute ?- ?_ (downcase keysym))))))))
+  (declare (inline pseudo-canonicalize-keysym))
+
+  (defun x-keysym-on-keyboard-sans-modifiers-p (keysym &optional device)
+    "Return true if KEYSYM names a key on the keyboard of DEVICE.
+More precisely, return true if pressing a physical key
+on the keyboard of DEVICE without any modifier keys generates KEYSYM.
+Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
+/usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
+The keysym name can be provided in two forms:
+- if keysym is a string, it must be the name as known to X windows.
+- if keysym is a symbol, it must be the name as known to XEmacs.
+The two names differ in capitalization and underscoring."
+    (eq 'sans-modifiers (gethash (pseudo-canonicalize-keysym keysym)
+				 (x-keysym-hash-table device))))
+
+ (defun x-keysym-on-keyboard-p (keysym &optional device)
+   "Return true if KEYSYM names a key on the keyboard of DEVICE.
+More precisely, return true if some keystroke (possibly including modifiers)
+on the keyboard of DEVICE keys generates KEYSYM.
+Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
+/usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
+The keysym name can be provided in two forms:
+- if keysym is a string, it must be the name as known to X windows.
+- if keysym is a symbol, it must be the name as known to XEmacs.
+The two names differ in capitalization and underscoring.
+
+This function is not entirely trustworthy, in that Xlib compose processing
+can produce keysyms that XEmacs will not have seen when it examined the
+keysyms available on startup.  So pressing `dead-diaeresis' and then 'a' may
+pass `adiaeresis' to XEmacs, or (in some implementations) even `U00E4',
+where `(x-keysym-on-keyboard-p 'adiaeresis)' and `(x-keysym-on-keyboard-p
+'U00E4)' would both have returned nil.  Subsequent to XEmacs seeing a keysym
+it was previously unaware of, the predicate will take note of it, though."
+   (and	(gethash (pseudo-canonicalize-keysym keysym)
+                 (x-keysym-hash-table device))
+	t)))
 
 (eval-when-compile
   (load "x-win-sun"     nil t)
