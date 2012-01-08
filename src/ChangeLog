@@ -1,3 +1,17 @@
+2012-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-x.c:
+	* device-x.c (syms_of_device_x):
+	Move #'x-keysym-on-keyboard{,-sans-modifiers}-p to Lisp, the hash
+	table no longer stores the X keysyms, so we need to manipulate any
+	strings we have been handed.
+	* event-Xt.c (x_has_keysym):
+	Don't call XKeysymToString() here, it leaks; trust
+	x_keysym_to_emacs_keysym() instead.
+	* event-Xt.c (x_keysym_to_emacs_keysym):
+	No longer leak when looking up the strings for keysyms of the form
+	UABCD.
+
 2012-01-03  Didier Verna  <didier@xemacs.org>
 
 	* faces.c (complex_vars_of_faces): Add missing foreback specifier

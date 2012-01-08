@@ -1830,60 +1830,6 @@ DEVICE must be an X11 display device.  See `x-keysym-on-keyboard-p'.
 
   return DEVICE_X_DATA (d)->x_keysym_map_hash_table;
 }
-
-DEFUN ("x-keysym-on-keyboard-sans-modifiers-p", Fx_keysym_on_keyboard_sans_modifiers_p,
-       1, 2, 0, /*
-Return true if KEYSYM names a key on the keyboard of DEVICE.
-More precisely, return true if pressing a physical key
-on the keyboard of DEVICE without any modifier keys generates KEYSYM.
-Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
-/usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
-The keysym name can be provided in two forms:
-- if keysym is a string, it must be the name as known to X windows.
-- if keysym is a symbol, it must be the name as known to XEmacs.
-The two names differ in capitalization and underscoring.
-*/
-       (keysym, device))
-{
-  struct device *d = decode_device (device);
-  if (!DEVICE_X_P (d))
-    gui_error ("Not an X device", device);
-
-  return (EQ (Qsans_modifiers,
-	      Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d), Qnil)) ?
-	  Qt : Qnil);
-}
-
-
-DEFUN ("x-keysym-on-keyboard-p", Fx_keysym_on_keyboard_p, 1, 2, 0, /*
-Return true if KEYSYM names a key on the keyboard of DEVICE.
-More precisely, return true if some keystroke (possibly including modifiers)
-on the keyboard of DEVICE keys generates KEYSYM.
-Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
-/usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
-The keysym name can be provided in two forms:
-- if keysym is a string, it must be the name as known to X windows.
-- if keysym is a symbol, it must be the name as known to XEmacs.
-The two names differ in capitalization and underscoring.
-
-This function is not entirely trustworthy, in that Xlib compose processing
-can produce keysyms that XEmacs will not have seen when it examined the
-keysyms available on startup.  So pressing `dead-diaeresis' and then 'a' may
-pass `adiaeresis' to XEmacs, or (in some implementations) even `U00E4',
-where `(x-keysym-on-keyboard-p 'adiaeresis)' and `(x-keysym-on-keyboard-p
-'U00E4)' would both have returned nil.  Subsequent to XEmacs seeing a keysym
-it was previously unaware of, the predicate will take note of it, though.
-*/
-       (keysym, device))
-{
-  struct device *d = decode_device (device);
-  if (!DEVICE_X_P (d))
-    gui_error ("Not an X device", device);
-
-  return (NILP (Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d), Qnil)) ?
-	  Qnil : Qt);
-}
-
 
 /************************************************************************/
 /*                          grabs and ungrabs                           */
@@ -2105,8 +2051,6 @@ syms_of_device_x (void)
   DEFSUBR (Fx_server_version);
   DEFSUBR (Fx_valid_keysym_name_p);
   DEFSUBR (Fx_keysym_hash_table);
-  DEFSUBR (Fx_keysym_on_keyboard_p);
-  DEFSUBR (Fx_keysym_on_keyboard_sans_modifiers_p);
 
   DEFSUBR (Fx_grab_pointer);
   DEFSUBR (Fx_ungrab_pointer);

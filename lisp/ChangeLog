@@ -1,3 +1,15 @@
+2012-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-init.el:
+	* x-init.el (pseudo-canonicalize-keysym): New.
+	* x-init.el: Move #'x-keysym-on-keyboard-sans-modifiers-p,
+	#'x-keysym-on-keyboard-p here from device-x.c, some string
+	manipulation it now needs to do is far easier in Lisp.
+	* x-win-xfree86.el:
+	* x-win-xfree86.el (x-win-init-xfree86):
+	No longer call #'x-keysym-on-keyboard{,-sans-modifiers}-p,
+	implement it ourselves cheaply.
+
 2012-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (cl-compile-time-init): Add an autoload for this,
