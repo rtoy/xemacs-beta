@@ -1,3 +1,7 @@
+ 2012-01-08  Vin Shelton  <acs@xemacs.org>
+
+	* cus-face.el: autoload custom-set-face-bold.
+
 2012-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-init.el:
