@@ -75,6 +75,10 @@
 
 2011-12-28  Jerry James  <james@xemacs.org>
 
+	* .gdbinit.in.in: fix symbol and string printing with pobj and NEW_GC.
+
+2011-12-28  Jerry James  <james@xemacs.org>
+
 	* lisp-disunion.h (make_fixnum): avoid losing bits off the left end
 	if the value is of large magnitude and narrow type.
 	(make_char_1): ditto.

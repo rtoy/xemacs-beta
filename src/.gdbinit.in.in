@@ -309,7 +309,19 @@ define pobj
   else
   if $lrecord_type == lrecord_type_symbol
     pptype Lisp_Symbol
+#ifdef NEW_GC
+    set $val = ((Lisp_String *)$type_ptr->name)->data_object
+    decode_object $val
+    if $lrecord_type == lrecord_type_string_indirect_data
+      printf "Symbol name: %s\n", ((Lisp_String_Indirect_Data *)$val)->data
+    else
+    if $lrecord_type == lrecord_type_string_direct_data
+      printf "Symbol name: %s\n", ((Lisp_String_Direct_Data *)$val)->data
+    end
+    end
+#else
     printf "Symbol name: %s\n", ((Lisp_String *)$type_ptr->name)->data_
+#endif
   else
   if $lrecord_type == lrecord_type_vector
     pptype Lisp_Vector
@@ -391,11 +403,6 @@ define pobj
   if $lrecord_type == lrecord_type_keymap
     pptype Lisp_Keymap
   else
-#ifndef NEW_GC
-  if $lrecord_type == lrecord_type_lcrecord_list
-    pstructtype lcrecord_list
-  else
-#endif
   if $lrecord_type == lrecord_type_ldap
     pptype Lisp_LDAP
   else
@@ -459,19 +466,32 @@ define pobj
   if $lrecord_type == lrecord_type_fc_config
     pstructtype fc_config
   else
+#ifndef NEW_GC
+  if $lrecord_type == lrecord_type_lcrecord_list
+    pstructtype lcrecord_list
+  else
+  if $lrecord_type == lrecord_type_string_direct_data
+    pptype Lisp_String_Direct_Data
+  else
+  if $lrecord_type == lrecord_type_string_indirect_data
+    pptype Lisp_String_Indirect_Data
+  else
+#endif
     echo Unknown Lisp Object type\n
     print $lrecord_type
     print $arg0
   ## Barf, gag, retch
   end
-  end 
-  end
-  end
-  end
-  end
 #ifndef NEW_GC
   end
+  end
+  end
 #endif
+  end
+  end
+  end
+  end
+  end
   end
   end
   end
