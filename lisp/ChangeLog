@@ -1,4 +1,11 @@
- 2012-01-08  Vin Shelton  <acs@xemacs.org>
+2012-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-catch):
+	Be more careful about non-quoted-symbol TAGs here; thank you
+	Robert Pluim in
+	CAMTcmTeLaZVrABnP-1MRUA3ZpZ=h2S_YVxKWDDNuc5bAyJD-gg@mail.gmail.com !
+
+2012-01-08  Vin Shelton  <acs@xemacs.org>
 
 	* cus-face.el: autoload custom-set-face-bold.
 

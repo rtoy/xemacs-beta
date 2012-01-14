@@ -1,3 +1,9 @@
+2012-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that `byte-compile-catch' doesn't strip keyword (as such,
+	non-quoted) TAGs.
+
 2012-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/completion-tests.el: New.

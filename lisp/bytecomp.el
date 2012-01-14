@@ -4382,8 +4382,9 @@ corresponding `return-from' within the block--or equivalently, it was
 optimized away--just byte compile and return the BODY."
   (let* ((symbol (car-safe (cdr-safe (nth 1 form))))
 	 (not-present '#:not-present)
-	 (block (and symbol (symbolp symbol)
-		     (get symbol 'cl-block-name not-present)))
+	 (block (cond ((null symbol) not-present)
+                      ((not (symbolp symbol)) not-present)
+                      (t (get symbol 'cl-block-name not-present))))
 	 (elt (and (not (eq block not-present)) (list block)))
 	 (byte-compile-active-blocks
 	  (if elt
