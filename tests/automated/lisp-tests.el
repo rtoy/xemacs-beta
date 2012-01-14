@@ -2911,6 +2911,9 @@ via the hepatic alpha-tocopherol transfer protein")))
    (Assert (eql 0 (needs-lexical-context 2 nil nil))
            "the function special operator doesn't create a lexical context.")))
 
+(Assert (eql 10 (catch ':keyword (+ (catch :keyword (throw :keyword 9)) 1)))
+        "checking `byte-compile-catch' doesn't strip keyword TAGs")
+
 ;; Test symbol-macrolet with symbols with identical string names.
 
 (macrolet

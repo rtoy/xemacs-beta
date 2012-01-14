@@ -4390,8 +4390,9 @@ corresponding `return-from' within the block--or equivalently, it was
 optimized away--just byte compile and return the BODY."
   (let* ((symbol (car-safe (cdr-safe (nth 1 form))))
 	 (not-present '#:not-present)
-	 (block (and symbol (symbolp symbol)
-		     (get symbol 'cl-block-name not-present)))
+	 (block (cond ((null symbol) not-present)
+                      ((not (symbolp symbol)) not-present)
+                      (t (get symbol 'cl-block-name not-present))))
 	 (elt (and (not (eq block not-present)) (list block)))
 	 (byte-compile-active-blocks
 	  (if elt
@@ -5044,6 +5045,11 @@ For example, invoke `xemacs -batch -f batch-byte-recompile-directory .'."
 	      byte-compile-constant
 	      byte-compile-variable-ref)))))
 
+;;; Some packages byte-compile with -no-autoloads, so this is necessary:
+(autoload 'cl-compile-time-init "cl-macs")
+
+;; XEmacs; call this explicitly, don't implement it using bytecomp-load-hook.
+(cl-compile-time-init)
 
 (run-hooks 'bytecomp-load-hook)
 

@@ -446,7 +446,7 @@ hash_string (const Ibyte *ptr, Bytecount len)
    non-zero value.  */
 void
 map_obarray (Lisp_Object obarray,
-	     int (*fn) (Lisp_Object, void *), void *arg)
+	     int (*fn) (Lisp_Object, Lisp_Object, void *), void *arg)
 {
   REGISTER int i;
 
@@ -458,7 +458,7 @@ map_obarray (Lisp_Object obarray,
 	while (1)
 	  {
 	    Lisp_Symbol *next;
-	    if ((*fn) (tail, arg))
+	    if ((*fn) (XSYMBOL_NAME (tail), tail, arg))
 	      return;
 	    next = symbol_next (XSYMBOL (tail));
 	    if (!next)
@@ -469,7 +469,7 @@ map_obarray (Lisp_Object obarray,
 }
 
 static int
-mapatoms_1 (Lisp_Object sym, void *arg)
+mapatoms_1 (Lisp_Object UNUSED (key), Lisp_Object sym, void *arg)
 {
   call1 (*(Lisp_Object *)arg, sym);
   return 0;
@@ -506,7 +506,7 @@ struct appropos_mapper_closure
 };
 
 static int
-apropos_mapper (Lisp_Object symbol, void *arg)
+apropos_mapper (Lisp_Object UNUSED (key), Lisp_Object symbol, void *arg)
 {
   struct appropos_mapper_closure *closure =
     (struct appropos_mapper_closure *) arg;

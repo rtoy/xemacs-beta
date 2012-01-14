@@ -1565,7 +1565,8 @@ definitions to shadow the loaded ones for use in file byte-compilation.
   REGISTER Lisp_Object expander, sym, def, tem;
   int speccount = specpdl_depth ();
 
-  if (!NILP (environment))
+  if (!NILP (environment) &&
+      !EQ (environment, Vbyte_compile_macro_environment))
     {
       if (NILP (Vbyte_compile_macro_environment))
         {
@@ -1576,9 +1577,10 @@ definitions to shadow the loaded ones for use in file byte-compilation.
           specbind (Qbyte_compile_macro_environment,
                     nconc2 (Fcopy_list (environment),
                             Vbyte_compile_macro_environment));
-          environment = Vbyte_compile_macro_environment;
         }
     }
+
+  environment = Vbyte_compile_macro_environment;
 
   while (1)
     {
