@@ -215,6 +215,7 @@ If FRAME is nil, use the default face."
       (list (list t (face-custom-attributes-get
 		     symbol (selected-frame))))))
 
+;;;###autoload
 (defun custom-set-face-bold (face value &optional frame tags)
   "Set the bold property of FACE to VALUE."
   (if value

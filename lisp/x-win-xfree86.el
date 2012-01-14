@@ -39,9 +39,6 @@
 
 ;;; Code:
 
-(globally-declare-fboundp
- '(x-keysym-on-keyboard-p x-keysym-on-keyboard-sans-modifiers-p))
-
 (defun x-win-init-xfree86 (device)
 
   ;; We know this keyboard is an XFree86 keyboard. As such, we can predict
@@ -74,9 +71,6 @@
 	     nil nil nil nil nil ?/ nil nil nil nil nil nil nil nil 
 	     nil nil nil nil nil ?=])
 
-  (when (x-keysym-on-keyboard-p 'iso-left-tab device) 
-    (define-key function-key-map 'iso-left-tab [(shift tab)]))
-
   (loop for (key sane-key) in
     '((f13 f1)
       (f14 f2)
@@ -94,13 +88,17 @@
     with function-key-map = (symbol-value-in-console 'function-key-map
                                                      (device-console device)
                                                      function-key-map)
+    with x-keysym-hash-table = (x-keysym-hash-table device)
+
+    initially
+    (when (gethash 'iso-left-tab x-keysym-hash-table)
+      (define-key function-key-map 'iso-left-tab [(shift tab)]))
 
     do
-    (when (and (x-keysym-on-keyboard-p key device)
-	       (not (x-keysym-on-keyboard-sans-modifiers-p key device)))
+    (when (not (memq (gethash key x-keysym-hash-table) '(nil sans-modifiers)))
       ;; define also the control, meta, and meta-control versions.
       (loop for mods in '(() (control) (meta) (meta control)) do
-	(define-key function-key-map `[(,@mods ,key)] `[(shift ,@mods ,sane-key)])
-	))))
+	(define-key function-key-map `[(,@mods ,key)]
+          `[(shift ,@mods ,sane-key)])))))
 
 ;;; x-win-xfree86.el ends here

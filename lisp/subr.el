@@ -40,20 +40,6 @@
 ;; XEmacs; no need for custom-declare-variable-list, preloaded-file-list is
 ;; ordered to make it unnecessary.
 
-;; XEmacs; this is here because we use it in backquote.el, so it needs to be
-;; available the first time a `(...) form is expanded.
-(defun list* (first &rest rest)   ; See compiler macro in cl-macs.el
-  "Return a new list with specified args as elements, cons'd to last arg.
-Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
-`(cons A (cons B (cons C D)))'."
-  (cond ((not rest) first)
-	((not (cdr rest)) (cons first (car rest)))
-	(t (let* ((n (length rest))
-		  (copy (copy-sequence rest))
-		  (last (nthcdr (- n 2) copy)))
-	     (setcdr last (car (cdr last)))
-	     (cons first copy)))))
-
 ;;;; Lisp language features.
 
 (defmacro lambda (&rest cdr)
@@ -466,7 +452,7 @@ just before emacs is actually killed.")
   "Return a new uninterned symbol with the same name as SYMBOL.
 If COPY-PROPERTIES is non-nil, the new symbol will have a copy of
 SYMBOL's value, function, and property lists."
-  (let ((new (make-symbol (symbol-name symbol))))
+  (let ((new (make-symbol (symbol-name symbol))) plist)
     (when copy-properties
       ;; This will not copy SYMBOL's chain of forwarding objects, but
       ;; I think that's OK.  Callers should not expect such magic to
@@ -475,7 +461,9 @@ SYMBOL's value, function, and property lists."
 	   (set new (symbol-value symbol)))
       (and (fboundp symbol)
 	   (fset new (symbol-function symbol)))
-      (setplist new (copy-list (symbol-plist symbol))))
+      (setq plist (symbol-plist symbol)
+            plist (if (consp plist) (copy-list plist) plist))
+      (setplist new plist))
     new))
 
 (defun set-symbol-value-in-buffer (sym val buffer)

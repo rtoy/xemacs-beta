@@ -1,3 +1,12 @@
+2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.texi (Top):
+	* cl.texi (Usage):
+	* cl.texi (Organization):
+	* cl.texi (Efficiency Concerns):
+	* cl.texi (Common Lisp Compatibility):
+	Remove documentation of cl-compat, now it's deleted.
+
 2011-12-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* internals/internals.texi (Basic Lisp Modules):
