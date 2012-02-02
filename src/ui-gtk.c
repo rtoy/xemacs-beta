@@ -435,22 +435,25 @@ import_gtk_enumeration_internal (GType the_type)
     invalid_argument ("type is not an enum",
                       type_as_symbol (the_type));
 
-  klass = G_ENUM_CLASS (the_type);
+  klass = G_ENUM_CLASS (g_type_class_ref (the_type));
   if (klass != NULL)
     {
       for (i = 0; i < klass->n_values; i++)
         {
           GEnumValue *val = &klass->values[i];
-          Vgtk_enumerations = Facons (intern (val->value_nick),
-                                      make_fixnum (val->value),
-                                      Vgtk_enumerations);
-          Vgtk_enumerations = Facons (intern (val->value_name),
-                                      make_fixnum (val->value),
-                                      Vgtk_enumerations);
+          if (val)
+            {
+              Vgtk_enumerations = Facons (intern (val->value_nick),
+                                          make_fixnum (val->value),
+                                          Vgtk_enumerations);
+              Vgtk_enumerations = Facons (intern (val->value_name),
+                                          make_fixnum (val->value),
+                                          Vgtk_enumerations);
 #if DEBUG_XEMACS
-          debug_out("enum %s %s => %d\n", val->value_nick,
-                    val->value_name, val->value);
+              debug_out("enum %s (%s) => %d\n", val->value_nick,
+                        val->value_name, val->value);
 #endif
+            }
         }
     }
   return mark_type_as_imported (the_type);
