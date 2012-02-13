@@ -1,3 +1,10 @@
+2012-02-12  Vin Shelton  <acs@xemacs.org>
+
+	* sysproc.h: As of Cygwin 1.7.10, /usr/include/process.h has moved
+	to /usr/include/cygwin/process.h, so sysproc.h could no longer
+	find it.  It wasn't needed anyway, so remove the include under
+	cygwin.
+
 2012-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* device-x.c:
