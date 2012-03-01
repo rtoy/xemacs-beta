@@ -1,3 +1,8 @@
+2012-03-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_convert): Cast function pointer to gpointer to
+	avoid gcc 4.7 error.  Use G_OBJECT.
+
 2012-02-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (import_gtk_enumeration_internal): Protect against
