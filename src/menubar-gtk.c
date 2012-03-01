@@ -469,14 +469,14 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	{
 	  /* If the menu item had a GUI_ID that means it was a filter menu */
 	  __remove_gcpro_by_id (id, NULL);
-	  g_signal_handlers_disconnect_by_func (GTK_OBJECT (reuse),
-                                                G_CALLBACK (__activate_menu),
+	  g_signal_handlers_disconnect_by_func (G_OBJECT (reuse),
+                                                (gpointer)__activate_menu,
                                                 (gpointer) 0x01);
 	}
       else
 	{
-	  g_signal_handlers_disconnect_by_func (GTK_OBJECT (reuse),
-                                                G_CALLBACK (__activate_menu),
+	  g_signal_handlers_disconnect_by_func (G_OBJECT (reuse),
+						(gpointer)__activate_menu,
                                                 NULL);
 	}
 
@@ -957,7 +957,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 
 	    if (widget)
 	      {
-#if HAVE_GTK2
+#ifdef HAVE_GTK2
 		if (right_justify)
                   gtk_menu_item_right_justify (GTK_MENU_ITEM (widget));
 #endif
