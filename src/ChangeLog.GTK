@@ -1,5 +1,10 @@
 2012-03-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (import_gtk_object_internal): Ifdef out unreachable
+	code with compile errors.
+	(emacs_gtk_object_getprop): Cast allocated value.
+	(flag_to_symbol): Cast to correct class.  Remove trailing whitespace.
+
 	* glyphs-gtk.c (gtk_button_property): Add cast to GTK_WIDGET.
 
 2012-03-01  Jeff Sparkes  <jsparkes@gmail.com>
