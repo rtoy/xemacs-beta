@@ -1,3 +1,7 @@
+2012-03-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_button_property): Add cast to GTK_WIDGET.
+
 2012-03-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (menu_convert): Cast function pointer to gpointer to
