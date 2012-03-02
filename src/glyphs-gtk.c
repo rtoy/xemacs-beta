@@ -2502,7 +2502,7 @@ gtk_button_property (Lisp_Object image_instance, Lisp_Object prop)
   /* check the state of a button */
   if (EQ (prop, Q_selected))
     {
-      if (gtk_widget_has_focus (IMAGE_INSTANCE_SUBWINDOW_ID (ii)))
+      if (gtk_widget_has_focus (GTK_WIDGET (IMAGE_INSTANCE_SUBWINDOW_ID (ii))))
 	return Qt;
       else
 	return Qnil;
