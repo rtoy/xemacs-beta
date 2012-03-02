@@ -443,7 +443,7 @@ representation otherwise."
 suitable for return from `get-selection' in the specified DATA-TYPE. Return
 nil if this is impossible, or a suitable representation otherwise."
   (and value
-       (funcall (or (cdr (assq type selection-conversion-alist)) #'ignore)
+       (funcall (or (cdr (assq type selection-coercion-alist)) #'ignore)
                 selection type value)))
 
 ;; The rest of the functions on this "page" are conversion handlers,
