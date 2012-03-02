@@ -2223,7 +2223,7 @@ flag_to_symbol (const GValue *arg)
   GFlagsClass *type_class;
   Lisp_Object rval = Qnil;
   int i;
- 
+
   if (flags < 0)
     {
       invalid_argument ("Unknown flags type",
@@ -2234,7 +2234,7 @@ flag_to_symbol (const GValue *arg)
   if (type_class == NULL)
     {
       g_type_class_unref (type_class);
-      invalid_state("Unable to find type class", 
+      invalid_state("Unable to find type class",
                     type_as_symbol (G_VALUE_TYPE (arg)));
     }
   for (i = 0; i < 31; i++)
@@ -2250,7 +2250,6 @@ flag_to_symbol (const GValue *arg)
         continue;
 
       rval = Fcons (intern (fv->value_name), rval);
-      
     }
   g_type_class_unref (type_class);
   return Fnreverse (rval);
