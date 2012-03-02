@@ -1,3 +1,9 @@
+2012-03-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el (select-coerce):
+	Whoops, selection-coercion-alist, not selection-conversion-alist,
+	thank you Philip Aston in 4F4A2CBC.1060709@mail.com .
+
 2012-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-catch):
