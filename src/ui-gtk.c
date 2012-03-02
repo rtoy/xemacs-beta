@@ -202,6 +202,7 @@ import_gtk_object_internal (GType the_type)
 	}
 
       ABORT ();
+#if 0
       {
         guint n_params = 0;
         guint i;
@@ -217,7 +218,7 @@ import_gtk_object_internal (GType the_type)
           }
         g_free(args);
       }
-
+#endif
 #if 0
       {
         GtkSignalQuery *query;
@@ -962,7 +963,7 @@ static Lisp_Object
 emacs_gtk_object_getprop (Lisp_Object obj, Lisp_Object prop)
 {
   Lisp_Object rval = Qnil;
-  GValue *value = xmalloc_and_zero (sizeof (GValue));
+  GValue *value = (GValue *)xmalloc_and_zero (sizeof (GValue));
   gchar *name = NULL;
   GParamSpec *info;
 
@@ -2229,7 +2230,7 @@ flag_to_symbol (const GValue *arg)
                         type_as_symbol (G_VALUE_TYPE (arg)));
     }
 
-  type_class = (GObjectClass *)g_type_class_ref (G_VALUE_TYPE (arg));
+  type_class = (GFlagsClass *)g_type_class_ref (G_VALUE_TYPE (arg));
   if (type_class == NULL)
     {
       g_type_class_unref (type_class);
