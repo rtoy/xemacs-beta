@@ -2872,6 +2872,7 @@ if test "${GTK_CONFIG}" != "no"; then
 
       AC_DEFINE(HAVE_XPM)
       AC_DEFINE(HAVE_GTK)
+      AC_DEFINE(HAVE_GTK2)
       AC_DEFINE(HAVE_PANGO)
 
       AC_SUBST(GTK_CONFIG)

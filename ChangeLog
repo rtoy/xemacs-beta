@@ -1,3 +1,7 @@
+2012-03-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (TAB): Add HAVE_GTK2 to AC_DEFINE list.
+
 2011-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac: $machine is intel386, reflecting the file name
