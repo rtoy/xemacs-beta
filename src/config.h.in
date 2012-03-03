@@ -234,6 +234,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_PANGO
 #undef HAVE_PANGOXFT
 #undef HAVE_GTK
+#undef HAVE_GTK2
 #undef HAVE_GDK_IMLIB_INIT
 #undef HAVE_GLADE_GLADE_H
 #undef HAVE_GLADE_H

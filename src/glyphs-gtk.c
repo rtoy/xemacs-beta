@@ -162,21 +162,19 @@ Lisp_Object Vgtk_cursor_names;
 /*                      image instance methods                          */
 /************************************************************************/
 
-/************************************************************************/
-/* convert from a series of RGB triples to an XImage formated for the   */
-/* proper display							*/
-/************************************************************************/
-static GdkImage *
+/* Convert from a series of RGB triples to a GdkPixbuf. */
+static GdkPixbuf *
 convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 			    unsigned char *pic, unsigned long **pixtbl,
 			    int *npixels)
 {
   GdkColormap *cmap;
   GdkVisual *vis;
-  GdkImage *outimg;
+  GdkPixbuf *out;
   int depth, byte_cnt, i, j;
+  int rowstride, n_channels;
   int rd,gr,bl,q;
-  unsigned char *data, *ip, *dp = NULL;
+  guchar *data, *ip, *dp = NULL;
   quant_table *qtable = NULL;
   union {
     UINT_32_BIT val;
@@ -197,27 +195,28 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
   if (vis->type == GDK_VISUAL_PSEUDO_COLOR)
     {
       /* Quantize the image and get a histogram while we're at it.
+         This should not be necessary for cairo.  -jsparkes
 	 Do this first to save memory */
       qtable = build_EImage_quantable(pic, width, height, 256);
-      if (qtable == NULL) return NULL;
+      if (qtable == NULL)
+        return NULL;
     }
 
-  /* The first parameter (GdkWindow *) is allowed to be NULL if we
-  ** specify the depth */
-  outimg = gdk_image_new (GDK_IMAGE_FASTEST, vis, width, height);
+  out = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE /* has_alpha */,
+                        8, width, height);
 
-  if (!outimg) return NULL;
+  if (!out)
+    return NULL;
 
-  byte_cnt = outimg->bpp;
+  byte_cnt = 4;
+  rowstride = gdk_pixbuf_get_rowstride (out);
+  n_channels = gdk_pixbuf_get_n_channels (out);
 
-  data = (unsigned char *) outimg->mem;
+  data = gdk_pixbuf_get_pixels (out);
 
   if (!data)
-    {
-      gdk_image_destroy (outimg);
-      return NULL;
-    }
-
+    return NULL;
+  
   if (vis->type == GDK_VISUAL_PSEUDO_COLOR)
     {
       unsigned long pixarray[256];
@@ -250,12 +249,17 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
       ip = pic;
       for (i = 0; i < height; i++)
 	{
-	  dp = data + (i * outimg->bpl);
 	  for (j = 0; j < width; j++)
 	    {
 	      rd = *ip++;
 	      gr = *ip++;
 	      bl = *ip++;
+              dp = data + i * rowstride + j * n_channels;
+              dp[0] = rd;
+              dp[1] = gr;
+              dp[2] = bl;
+              dp[3] = 255;
+#ifdef OLD
 	      conv.val = pixarray[QUANT_GET_COLOR(qtable,rd,gr,bl)];
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	      if (outimg->byte_order == GDK_MSB_FIRST)
@@ -267,6 +271,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 		for (q = byte_cnt-1; q >= 0; q--) *dp++ = conv.cp[q];
 	      else
 		for (q = 0; q < byte_cnt; q++) *dp++ = conv.cp[q];
+#endif
 #endif
 	    }
 	}
@@ -315,7 +320,6 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
       ip = pic;
       for (i = 0; i < height; i++)
 	{
-	  dp = data + (i * outimg->bpl);
 	  for (j = 0; j < width; j++)
 	    {
 	      if (rbits > 8)
@@ -331,6 +335,12 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 	      else
 		bl = *ip++ >> (8 - bbits);
 
+              dp = data + i * rowstride + j * n_channels;
+              dp[0] = rd;
+              dp[1] = gr;
+              dp[2] = bl;
+              dp[3] = 255;
+#ifdef OLD
 	      conv.val = (rd << rshift) | (gr << gshift) | (bl << bshift);
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	      if (outimg->byte_order == GDK_MSB_FIRST)
@@ -343,10 +353,11 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 	      else
 		for (q = 0; q < byte_cnt; q++) *dp++ = conv.cp[q];
 #endif
+#endif
 	    }
 	}
     }
-  return outimg;
+  return out;
 }
 
 static void

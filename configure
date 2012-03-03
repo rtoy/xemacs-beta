@@ -12021,6 +12021,8 @@ done
 
       $as_echo "#define HAVE_GTK 1" >>confdefs.h
 
+      $as_echo "#define HAVE_GTK2 1" >>confdefs.h
+
       $as_echo "#define HAVE_PANGO 1" >>confdefs.h
 
 
