@@ -414,90 +414,96 @@ This takes into account the override information specified."
     )
   )
 
-(defun behavior-menu-filter-1 (menu group)
-  (submenu-generate-accelerator-spec
-   (let* (
-	  ;;options
-	  ;;help
-	  (enable
-	   (menu-split-long-menu
-	    (menu-sort-menu
-	     (let ((group-plist (gethash group behavior-group-hash-table)))
-	       (loop for behavior in (getf group-plist :children)
-		 nconc (if (behavior-group-p behavior)
-			   (list
-			    (cons (getf
-				   (gethash behavior behavior-group-hash-table)
-				   :short-doc)
-				  (behavior-menu-filter-1 menu behavior)))
-			 (let* ((plist (gethash behavior behavior-hash-table))
-				(commands (getf plist :commands)))
-			   (nconc
-			    (if (getf plist :enable)
-				`([,(format "%s (%s) [toggle]"
-					    (getf plist :short-doc)
-					    behavior)
-				   (if (memq ',behavior
-					     enabled-behavior-list)
-				       (disable-behavior ',behavior)
-				     (enable-behavior ',behavior))
-				   :active ,(if (getf plist :disable) t
-					      (not (memq
-						    ',behavior
-						    enabled-behavior-list)))
-				   :style toggle
-				   :selected (memq ',behavior
-						   enabled-behavior-list)]))
-			    (cond ((null commands) nil)
-				  ((and (eq (length commands) 1)
-					(vectorp (elt commands 0)))
-				   (let ((comm (copy-sequence
-						(elt commands 0))))
-				     (setf (elt comm 0)
-					   (format "%s (%s)"
-						   (elt comm 0) behavior))
-				     (list comm)))
-				  (t (list
-				      (cons (format "%s (%s) Commands"
-						    (getf plist :short-doc)
-						    behavior)
-					    commands)))))))))
-	     ))
-	   )
-	  )
-     enable)
-   '(?p)))
-
 (defun behavior-menu-filter (menu)
-  (append
-   `(("%_Package Utilities"
-       ("%_Set Download Site"
-	("%_Official Releases"
-	 :filter ,#'(lambda (&rest junk)
-                      (menu-split-long-menu
-                       (submenu-generate-accelerator-spec
-                        (package-ui-download-menu)))))
-	("%_Pre-Releases"
-	 :filter ,#'(lambda (&rest junk)
-                      (menu-split-long-menu
-                       (submenu-generate-accelerator-spec
-                        (package-ui-pre-release-download-menu)))))
-	("%_Site Releases"
-	 :filter ,#'(lambda (&rest junk)
-                      (menu-split-long-menu
-                       (submenu-generate-accelerator-spec
-                        (package-ui-site-release-download-menu))))))
-       "--:shadowEtchedIn"
-      ["%_Update Package Index" package-get-update-base]
-      ["%_List and Install" pui-list-packages]
-      ["U%_pdate Installed Packages" package-get-update-all]
-      ["%_Help" (Info-goto-node "(xemacs)Packages")])
-     "----")
-   (behavior-menu-filter-1 menu nil)))
+  (labels
+      ((behavior-menu-filter-1 (menu group)
+	 (submenu-generate-accelerator-spec
+	  (let* ((enable
+		  (menu-split-long-menu
+		   (menu-sort-menu
+		    (let ((group-plist (gethash group
+						behavior-group-hash-table)))
+		      (loop for behavior in (getf group-plist :children)
+			nconc (if (behavior-group-p behavior)
+				  (list
+				   (cons (getf
+					  (gethash behavior
+						   behavior-group-hash-table)
+					  :short-doc)
+					 (behavior-menu-filter-1
+					  menu behavior)))
+				(let* ((plist (gethash behavior
+						       behavior-hash-table))
+				       (commands (getf plist :commands)))
+				  (nconc
+				   (if (getf plist :enable)
+				       `([,(format "%s (%s) [toggle]"
+						   (getf plist :short-doc)
+						   behavior)
+					  (if (memq ',behavior
+						    enabled-behavior-list)
+					      (disable-behavior ',behavior)
+					    (enable-behavior ',behavior))
+					  :active ,(if (getf plist :disable)
+						       t
+						     (not
+						      (memq
+						       ',behavior
+						       enabled-behavior-list)))
+					  :style toggle
+					  :selected (memq
+						     ',behavior
+						     enabled-behavior-list)]))
+				   (cond ((null commands) nil)
+					 ((and (eq (length commands) 1)
+					       (vectorp (elt commands 0)))
+					  (let ((comm (copy-sequence
+						       (elt commands 0))))
+					    (setf (elt comm 0)
+						  (format "%s (%s)"
+							  (elt comm 0)
+							  behavior))
+					    (list comm)))
+					 (t (list
+					     (cons (format "%s (%s) Commands"
+							   (getf plist
+								 :short-doc)
+							   behavior)
+						   commands)))))))))
+		    ))
+		  )
+		 )
+	    enable)
+	  '(?p))))
+    (append
+     `(("%_Package Utilities"
+	("%_Set Download Site"
+	 ("%_Official Releases"
+	  :filter ,#'(lambda (&rest junk)
+		       (menu-split-long-menu
+			(submenu-generate-accelerator-spec
+			 (package-ui-download-menu)))))
+	 ("%_Pre-Releases"
+	  :filter ,#'(lambda (&rest junk)
+		       (menu-split-long-menu
+			(submenu-generate-accelerator-spec
+			 (package-ui-pre-release-download-menu)))))
+	 ("%_Site Releases"
+	  :filter ,#'(lambda (&rest junk)
+		       (menu-split-long-menu
+			(submenu-generate-accelerator-spec
+			 (package-ui-site-release-download-menu))))))
+	"--:shadowEtchedIn"
+	["%_Update Package Index" package-get-update-base]
+	["%_List and Install" pui-list-packages]
+	["U%_pdate Installed Packages" package-get-update-all]
+	["%_Help" (Info-goto-node "(xemacs)Packages")])
+       "----")
+     (behavior-menu-filter-1 menu nil))))
 
 ;; Initialize top-level group.
 (puthash nil '(:children nil :short-doc "Root") behavior-group-hash-table)
 
 (provide 'behavior)
 
-;;; finder-inf.el ends here
+;;; behavior.el ends here
