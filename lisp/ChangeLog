@@ -1,3 +1,21 @@
+2012-04-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove some utility functions from the global namespace, it's more
+	appropriate to have them as labels (that is, lexically-visible
+	functions.) 
+	* behavior.el:
+	* behavior.el (behavior-menu-filter-1): Moved to being a label.
+	* behavior.el (behavior-menu-filter): Use the label.
+	* cus-edit.el (custom-load-symbol-1): Moved to being a label.
+	* cus-edit.el (custom-load-symbol): Use the label.
+	* menubar.el (find-menu-item-1): Moved to being a label.
+	* menubar.el (find-menu-item): Use the label.
+	* window-xemacs.el:
+	* window-xemacs.el (display-buffer-1): Moved to being a label.
+	* window-xemacs.el (display-buffer): Use the label; use (block
+	...) instead of (catch ...), use prog1 instead of needlessly
+	binding a variable.
+
 2012-03-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select.el (select-coerce):

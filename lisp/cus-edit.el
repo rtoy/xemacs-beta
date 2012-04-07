@@ -1684,33 +1684,28 @@ and `face'."
 
 (defun custom-load-symbol (symbol)
   "Load all dependencies for SYMBOL."
-  (unless custom-load-recursion
-    (let ((custom-load-recursion t)
-	  (loads (get symbol 'custom-loads))
-	  load)
-      (while loads
-	(setq load (car loads)
-	      loads (cdr loads))
-	(custom-load-symbol-1 load)))))
-
-(defun custom-load-symbol-1 (load)
-  (cond ((symbolp load)
-	 (condition-case nil
-	     (require load)
-	   (error nil)))
-	;; Don't reload a file already loaded.
-	((and (boundp 'preloaded-file-list)
-	      (member load preloaded-file-list)))
-	((assoc load load-history))
-	((assoc (locate-library load) load-history))
-	(t
-	 (condition-case nil
-	     ;; Without this, we would load cus-edit recursively.
-	     ;; We are still loading it when we call this,
-	     ;; and it is not in load-history yet.
-	     (or (equal load "cus-edit")
-		 (load-library load))
-	   (error nil)))))
+  (labels
+      ((custom-load-symbol-1 (load)
+	 (cond ((symbolp load)
+		(condition-case nil
+		    (require load)
+		  (error nil)))
+	       ;; Don't reload a file already loaded.
+	       ((and (boundp 'preloaded-file-list)
+		     (member load preloaded-file-list)))
+	       ((assoc load load-history))
+	       ((assoc (locate-library load) load-history))
+	       (t
+		(condition-case nil
+		    ;; Without this, we would load cus-edit recursively.
+		    ;; We are still loading it when we call this,
+		    ;; and it is not in load-history yet.
+		    (or (equal load "cus-edit")
+			(load-library load))
+		  (error nil))))))
+    (unless custom-load-recursion
+      (let ((custom-load-recursion t))
+        (map nil #'custom-load-symbol-1 (get symbol 'custom-loads))))))
 
 (defvar custom-already-loaded-custom-defines nil
   "List of already-loaded `custom-defines' files.")

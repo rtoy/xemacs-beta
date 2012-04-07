@@ -178,35 +178,36 @@ Returns (ITEM . PARENT), where PARENT is the immediate parent of
  the item found.
 If the item does not exist, the car of the returned value is nil.
 If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
-  (find-menu-item-1 menubar item-path-list))
-
-(defun find-menu-item-1 (menubar item-path-list &optional parent)
-  (check-argument-type 'listp item-path-list)
-  (if (not (consp menubar))
-      nil
-    (let ((rest menubar)
-	  result)
-      (when (stringp (car rest))
-	(setq rest (cdr rest)))
-      (while (keywordp (car rest))
-	(setq rest (cddr rest)))
-      (while rest
-	(if (and (car rest)
-		 (stringp (car item-path-list))
-		 (= 0 (compare-menu-text (car item-path-list)
-					 (menu-item-text (car rest)))))
-	    (setq result (car rest)
-		  rest nil)
-	  (setq rest (cdr rest))))
-      (if (cdr item-path-list)
-	  (cond ((consp result)
-		 (find-menu-item-1 (cdr result) (cdr item-path-list) result))
-		(result
-		 (signal 'error (list (gettext "not a submenu") result)))
-		(t
-		 (signal 'error (list (gettext "no such submenu")
-				      (car item-path-list)))))
-	(cons result parent)))))
+  (labels
+      ((find-menu-item-1 (menubar item-path-list &optional parent)
+         (check-argument-type 'listp item-path-list)
+         (if (not (consp menubar))
+             nil
+           (let ((rest menubar)
+                 result)
+             (when (stringp (car rest))
+               (setq rest (cdr rest)))
+             (while (keywordp (car rest))
+               (setq rest (cddr rest)))
+             (while rest
+               (if (and (car rest)
+                        (stringp (car item-path-list))
+                        (= 0 (compare-menu-text (car item-path-list)
+                                                (menu-item-text (car rest)))))
+                   (setq result (car rest)
+                         rest nil)
+                 (setq rest (cdr rest))))
+             (if (cdr item-path-list)
+                 (cond ((consp result)
+                        (find-menu-item-1 (cdr result) (cdr item-path-list)
+                                          result))
+                       (result
+                        (signal 'error (list (gettext "not a submenu") result)))
+                       (t
+                        (signal 'error (list (gettext "no such submenu")
+                                             (car item-path-list)))))
+               (cons result parent))))))
+    (find-menu-item-1 menubar item-path-list)))
 
 (defun add-menu-item-1 (leaf-p menu-path new-item before in-menu)
   ;; This code looks like it could be cleaned up some more
