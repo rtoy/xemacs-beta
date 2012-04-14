@@ -5,6 +5,11 @@
 	find it.  It wasn't needed anyway, so remove the include under
 	cygwin.
 
+2012-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-mp.c (bignum_ceil): Remove a redundant double division
+	from this function.
+
 2012-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* device-x.c:
