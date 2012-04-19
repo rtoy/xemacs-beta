@@ -3,6 +3,7 @@
 	* redisplay-gtk.c (cr_set_foreground): Define.
 	(gtk_output_vertical_divider): Use new function.
 	(XLIKE_output_string): Use it.
+	(gtk_output_vertical_divider): Add cairo_destroy.
 
 2012-03-03  Jeff Sparkes  <jsparkes@gmail.com>
 
