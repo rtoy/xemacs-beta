@@ -1,3 +1,9 @@
+2012-04-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (cr_set_foreground): Define.
+	(gtk_output_vertical_divider): Use new function.
+	(XLIKE_output_string): Use it.
+
 2012-03-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* config.h.in: Add HAVE_GTK2

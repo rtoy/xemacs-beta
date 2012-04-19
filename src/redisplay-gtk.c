@@ -24,7 +24,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define THIS_IS_GTK
 #include "redisplay-xlike-inc.c"
 
-static void gtk_set_source_rgb (cairo_t *cr, GdkColor *fg);
+static void cr_set_foreground (cairo_t *cr, Lisp_Object color);
 static void gtk_draw_rectangle (cairo_t *cr, gint x, gint y,
                                 gint width, gint height);
 static void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
@@ -76,13 +76,10 @@ gtk_output_vertical_divider (struct window *w, int clear)
   struct frame *f = XFRAME (w->frame);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-  Lisp_Object tmp_pixel;
   enum edge_style style;
   int x, ytop, ybottom, width, shadow_thickness, spacing;
   face_index div_face =
     get_builtin_face_cache_index (w, Vvertical_divider_face);
-  GdkColor *fg;
-  GdkColor *bg;
 
   width = window_divider_width (w);
   shadow_thickness = XFIXNUM (w->vertical_divider_shadow_thickness);
@@ -92,10 +89,7 @@ gtk_output_vertical_divider (struct window *w, int clear)
   ytop = WINDOW_TOP (w);
   ybottom = WINDOW_BOTTOM (w);
 
-  tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, div_face);
-  bg = XCOLOR_INSTANCE_GTK_COLOR (tmp_pixel);
-
-  gtk_set_source_rgb (cr, bg);
+  cr_set_foreground (cr, WINDOW_FACE_CACHEL_BACKGROUND (w, div_face));
   gtk_fill_rectangle (cr, x, ytop, width, ybottom - ytop);
 
   if (shadow_thickness < 0)
@@ -108,10 +102,7 @@ gtk_output_vertical_divider (struct window *w, int clear)
       style = EDGE_BEVEL_OUT;
     }
 
-  tmp_pixel = WINDOW_FACE_CACHEL_FOREGROUND (w, div_face);
-  fg = XCOLOR_INSTANCE_GTK_COLOR (tmp_pixel);
-  gtk_set_source_rgb (cr, fg);
-
+  cr_set_foreground (cr, WINDOW_FACE_CACHEL_FOREGROUND (w, div_face));
   /* Draw the shadows around the divider line */
   gtk_bevel_area (w, div_face, x + spacing, ytop,
 		    width - 2 * spacing, ybottom - ytop,
@@ -134,12 +125,14 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
 #include "sysgdkx.h"
 
 static void
-gtk_set_source_rgb (cairo_t *cr, GdkColor *fg)
+cr_set_foreground (cairo_t *cr, Lisp_Object color)
 {
+  GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (color);
+
   cairo_set_source_rgb (cr,
-                        (double) fg->red/65535,
-                        (double) fg->green/65535,
-                        (double) fg->blue/65535);
+			(double) fg->red/65535,
+			(double) fg->green/65535,
+			(double) fg->blue/65535);
 }
 
 static void
@@ -436,13 +429,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       int this_width;
       int need_clipping;
       cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-      GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground);
 
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
       cachel = WINDOW_FACE_CACHEL (w, findex);
-      gtk_set_source_rgb (cr, fg);
+      cr_set_foreground (cr, cachel->foreground);
 
 #ifdef THIS_IS_GTK
       this_width = width;
@@ -587,10 +579,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       face_index ix = get_builtin_face_cache_index (w, Vtext_cursor_face);
       struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, ix);
       cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-      GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cursor_cachel->background);
 
-      gtk_set_source_rgb (cr, fg);
       assert (cursor_cachel);
+      cr_set_foreground (cr, cursor_cachel->background);
 
       tmp_y = dl->ypos - bogusly_obtained_ascent_value;
       tmp_height = cursor_height;
