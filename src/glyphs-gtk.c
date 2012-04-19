@@ -1036,7 +1036,7 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 
   for (slice = 0; slice < slices; slice++)
     {
-      gdk_image = convert_EImage_to_GDKImage (device, width, height, eimage,
+      gdk_image = (GdkImage *)convert_EImage_to_GDKImage (device, width, height, eimage,
 					      &pixtbl, &npixels);
       if (!gdk_image)
 	{
