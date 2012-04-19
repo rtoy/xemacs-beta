@@ -105,8 +105,9 @@ gtk_output_vertical_divider (struct window *w, int clear)
   cr_set_foreground (cr, WINDOW_FACE_CACHEL_FOREGROUND (w, div_face));
   /* Draw the shadows around the divider line */
   gtk_bevel_area (w, div_face, x + spacing, ytop,
-		    width - 2 * spacing, ybottom - ytop,
-		    shadow_thickness, EDGE_ALL, style);
+		  width - 2 * spacing, ybottom - ytop,
+		  shadow_thickness, EDGE_ALL, style);
+  cairo_destroy (cr);
 }
 
 /* Make audible bell.  */
