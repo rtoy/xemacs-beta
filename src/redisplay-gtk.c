@@ -390,10 +390,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   /* General variables */
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
-  Lisp_Object window = wrap_window (w);
   int clip_end;
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
-  
+
   /* Cursor-related variables */
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   int cursor_clip;
@@ -401,7 +400,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 							 WINDOW_BUFFER (w));
   /* Text-related variables */
   Lisp_Object bg_pmap;
-  XLIKE_GC gc, bgc;
   int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
   int ypos = XLIKE_DISPLAY_LINE_YPOS (dl);
   int len = Dynarr_length (buf);
@@ -446,7 +444,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
   if ((cursor && focus && NILP (bar_cursor_value)
        && !NILP (w->text_cursor_visible_p)) || NILP (bg_pmap))
-    bgc = 0;
+    {
+      /* Nothing. */
+    }
   else
     {
       /* Clear the cursor location? */
@@ -485,7 +485,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
  for (i = 0; i < nruns; i++)
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
-      Lisp_Font_Instance *fi = XFONT_INSTANCE (font);
       int this_width;
       int need_clipping;
       cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
@@ -558,7 +557,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
           face_index ix = get_builtin_face_cache_index (w, Vtext_cursor_face);
           cachel = WINDOW_FACE_CACHEL (w, ix);
         }
-      
+
       if (cachel->dim)
 	{
 	  /* Ensure the gray bitmap exists */
@@ -580,7 +579,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
           clip_box.y = 0;
           clip_box.width = clip_end - clip_start;
           clip_box.height = height;
-          
+
           gdk_cairo_rectangle (cr, &clip_box);
           cairo_clip (cr);
         }
