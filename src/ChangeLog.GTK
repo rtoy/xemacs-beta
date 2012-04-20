@@ -2,6 +2,7 @@
 
 	* redisplay-gtk.c (XLIKE_output_eol_cursor): Copy here.  Convert
 	to use cairo methods.
+	(XLIKE_output_string): Remove unused variable.
 
 	* redisplay-x.c (XLIKE_output_eol_cursor): Copy here.
 
