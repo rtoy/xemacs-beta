@@ -1,3 +1,13 @@
+2012-04-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_eol_cursor): Copy here.  Convert
+	to use cairo methods.
+
+	* redisplay-x.c (XLIKE_output_eol_cursor): Copy here.
+
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor): Copied to x and
+	gtk versions.
+
 2012-04-19  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (cr_set_foreground): Define.

@@ -122,6 +122,65 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
     }
 }
 
+static void
+XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
+		       face_index findex)
+{
+  struct frame *f = XFRAME (w->frame);
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  struct device *d = XDEVICE (f->device);
+  Lisp_Object window;
+
+  face_index elt = get_builtin_face_cache_index (w, Vtext_cursor_face);
+  struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, elt);
+
+  int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
+  Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
+							 WINDOW_BUFFER (w));
+  int x = xpos;
+  int y = XLIKE_DISPLAY_LINE_YPOS (dl);
+  int width = EOL_CURSOR_WIDTH;
+  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
+  int cursor_height, cursor_y;
+  int defheight, defascent;
+
+  window = wrap_window (w);
+  redisplay_clear_region (window, findex, x, y, width, height);
+
+  if (NILP (w->text_cursor_visible_p))
+    return;
+
+  default_face_font_info (window, &defascent, 0, 0, &defheight, 0);
+
+  /* make sure the cursor is entirely contained between y and y+height */
+  cursor_height = min (defheight, height);
+  cursor_y = max (y, min (y + height - cursor_height,
+			  dl->ypos - defascent));
+  cr_set_foreground (cr, cursor_cachel->background);
+
+  if (focus)
+    {
+      if (NILP (bar_cursor_value))
+	{
+	  gtk_fill_rectangle (cr, x, cursor_y, width, cursor_height);
+	}
+      else
+	{
+	  int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
+	  gtk_fill_rectangle (cr, x + bar_width - 1, cursor_y,
+			 bar_width, cursor_height);
+	}
+    }
+  else if (NILP (bar_cursor_value))
+    {
+      gtk_draw_rectangle (cr, x, cursor_y, width - 1, cursor_height - 1);
+    }
+
+  cairo_destroy (cr);
+}
+
+
 
 #include "sysgdkx.h"
 
