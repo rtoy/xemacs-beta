@@ -95,6 +95,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define XLIKE_get_gc XFUN (get_gc)
 #define XLIKE_output_blank XFUN (output_blank)
 #define XLIKE_text_width_single_run XFUN (text_width_single_run)
+#define XLIKE_output_horizontal_line XFUN (output_horizontal_line)
+#define XLIKE_output_eol_cursor XFUN (output_eol_cursor)
+#define XLIKE_clear_frame_window XFUN (clear_frame_window)
+#define XLIKE_clear_frame_windows XFUN (clear_frame_windows)
 
 static void XLIKE_output_vertical_divider (struct window *w, int clear);
 static void XLIKE_output_blank (struct window *w, struct display_line *dl,
