@@ -640,10 +640,13 @@ Point size to use for fonts if not otherwise specified.
   Vgtk_fallback_font_size = make_float (10.0);
 }
 
+#if 0
+/* It's difficult to validate font names in Gtk because the toolkit
+   does fallbacks for you. */
 static int
 valid_font_name_p (Display *dpy, char *name)
 {
-  /* Maybe this should be implemented by callign XLoadFont and trapping
+  /* Maybe this should be implemented by calling XLoadFont and trapping
      the error.  That would be a lot of work, and wasteful as hell, but
      might be more correct.
    */
@@ -656,6 +659,7 @@ valid_font_name_p (Display *dpy, char *name)
     XFreeFontNames (names);
   return (nnames != 0);
 }
+#endif
 
 Lisp_Object
 __get_gtk_font_truename (PangoFont *pf, int UNUSED (expandp))
