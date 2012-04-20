@@ -1,8 +1,11 @@
 2012-04-20  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c (XLIKE_clear_frame_windows): Wrap a couple
+	more XLIKE functions.
+
 	* redisplay-gtk.c (XLIKE_output_eol_cursor): Copy here.  Convert
 	to use cairo methods.
-	(XLIKE_output_string): Remove unused variable.
+	(XLIKE_output_string): Remove unused variables.
 
 	* redisplay-x.c (XLIKE_output_eol_cursor): Copy here.
 
