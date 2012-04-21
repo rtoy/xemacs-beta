@@ -1,5 +1,43 @@
 2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Support non-ASCII correctly in character classes ([:alnum:] and
+	friends).
+
+	* regex.c:
+	* regex.c (ISBLANK, ISUNIBYTE): New. Make these and friends
+	independent of the locale, since we want them to be consistent in
+	XEmacs.
+	* regex.c (print_partial_compiled_pattern): Print the flags for
+	charset_mule; don't print non-ASCII as the character values in
+	ranges, this breaks with locales.
+	* regex.c (enum):
+	Define various flags the charset_mule and charset_mule_not opcodes
+	can now take.
+	* regex.c (CHAR_CLASS_MAX_LENGTH): Update this.
+	* regex.c (re_iswctype, re_wctype): New, from GNU.
+	* regex.c (re_wctype_can_match_non_ascii): New; used when deciding
+	on whether to use charset_mule or the ASCII-only regex character
+	set opcode.
+	* regex.c (regex_compile):
+	Error correctly on long, non-existent character class names.
+	Break out the handling of charsets that can match non-ASCII into a
+	separate clause. Use compile_char_class when compiling character
+	classes.
+	* regex.c (compile_char_class): New. Used in regex_compile when
+	compiling character sets that may match non-ASCII.
+	* regex.c (re_compile_fastmap):
+	If there are flags set for charset_mule or charset_mule_not, we
+	can't use the fastmap (since we need to check syntax table values
+	that aren't available there).
+	* regex.c (re_match_2_internal):
+	Check the new flags passed to the charset_mule{,_not} opcode,
+	observe them if appropriate.
+	* regex.h:
+	* regex.h (enum):
+	Expose re_wctype_t here, imported from GNU.
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* regex.h (RE_SYNTAX_EMACS):
 	Turn on character classes ([:alnum:] and friends) by default. This
 	implementation is incomplete, am working on a version that handles

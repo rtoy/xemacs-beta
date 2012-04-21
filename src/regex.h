@@ -546,6 +546,19 @@ enum regex_debug
 
 extern int debug_regexps;
 
+typedef enum
+  {
+    RECC_ERROR = 0,
+    RECC_ALNUM, RECC_ALPHA, RECC_WORD,
+    RECC_GRAPH, RECC_PRINT,
+    RECC_LOWER, RECC_UPPER,
+    RECC_PUNCT, RECC_CNTRL,
+    RECC_DIGIT, RECC_XDIGIT,
+    RECC_BLANK, RECC_SPACE,
+    RECC_MULTIBYTE, RECC_NONASCII,
+    RECC_ASCII, RECC_UNIBYTE
+} re_wctype_t;
+
 END_C_DECLS
 
 #endif /* INCLUDED_regex_h_ */

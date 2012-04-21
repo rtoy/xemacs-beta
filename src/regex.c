@@ -178,53 +178,91 @@ init_syntax_once (void)
 /* isalpha etc. are used for the character classes.  */
 #include <ctype.h>
 
-/* Jim Meyering writes:
+#ifdef emacs
 
-   "... Some ctype macros are valid only for character codes that
-   isascii says are ASCII (SGI's IRIX-4.0.5 is one such system --when
-   using /bin/cc or gcc but without giving an ansi option).  So, all
-   ctype uses should be through macros like ISPRINT...  If
-   STDC_HEADERS is defined, then autoconf has verified that the ctype
-   macros don't need to be guarded with references to isascii. ...
-   Defining isascii to 1 should let any compiler worth its salt
-   eliminate the && through constant folding."  */
+/* 1 if C is an ASCII character.  */
+#define ISASCII(c) ((c) < 0x80)
 
-#if defined (STDC_HEADERS) || (!defined (isascii) && !defined (HAVE_ISASCII))
-#define ISASCII_1(c) 1
-#else
-#define ISASCII_1(c) isascii(c)
-#endif
+/* 1 if C is a unibyte character.  */
+#define ISUNIBYTE(c) 0
 
-#ifdef MULE
-/* The IS*() macros can be passed any character, including an extended
-   one.  We need to make sure there are no crashes, which would occur
-   otherwise due to out-of-bounds array references. */
-#define ISASCII(c) (((EMACS_UINT) (c)) < 0x100 && ISASCII_1 (c))
-#else
-#define ISASCII(c) ISASCII_1 (c)
-#endif /* MULE */
+/* The Emacs definitions should not be directly affected by locales.  */
+
+/* In Emacs, these are only used for single-byte characters.  */
+#define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
+#define ISCNTRL(c) ((c) < ' ')
+#define ISXDIGIT(c) (ISDIGIT (c) || ((c) >= 'a' && (c) <= 'f')	\
+		     || ((c) >= 'A' && (c) <= 'F'))
+
+/* This is only used for single-byte characters.  */
+#define ISBLANK(c) ((c) == ' ' || (c) == '\t')
+
+/* The rest must handle multibyte characters.  */
+
+#define ISGRAPH(c) ((c) > ' ' && (c) != 0x7f)
+#define ISPRINT(c) ((c) == ' ' || ISGRAPH (c))
+#define ISALPHA(c) (ISASCII (c) ? (((c) >= 'a' && (c) <= 'z')		\
+				   || ((c) >= 'A' && (c) <= 'Z'))	\
+		    : ISWORD (c))
+#define ISALNUM(c) (ISALPHA (c) || ISDIGIT (c))
+
+#define ISLOWER(c) LOWERCASEP (lispbuf, c)
+
+#define ISPUNCT(c) (ISASCII (c)                                 \
+		    ? ((c) > ' ' && (c) < 0x7F			\
+		       && !(((c) >= 'a' && (c) <= 'z')		\
+		            || ((c) >= 'A' && (c) <= 'Z')	\
+		            || ((c) >= '0' && (c) <= '9')))	\
+		    : !ISWORD (c))
+
+#define ISSPACE(c) \
+	(SYNTAX (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf), c) == Swhitespace)
+
+#define ISUPPER(c) UPPERCASEP (lispbuf, c)
+
+#define ISWORD(c) (SYNTAX (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf), c) == Sword)
+
+#else /* not emacs */
+
+/* 1 if C is an ASCII character.  */
+#define ISASCII(c) ((c) < 0200)
+
+/* 1 if C is a unibyte character.  */
+#define ISUNIBYTE(c) 0
 
 #ifdef isblank
-#define ISBLANK(c) (ISASCII (c) && isblank (c))
+# define ISBLANK(c) isblank (c)
 #else
-#define ISBLANK(c) ((c) == ' ' || (c) == '\t')
+# define ISBLANK(c) ((c) == ' ' || (c) == '\t')
 #endif
 #ifdef isgraph
-#define ISGRAPH(c) (ISASCII (c) && isgraph (c))
+# define ISGRAPH(c) isgraph (c)
 #else
-#define ISGRAPH(c) (ISASCII (c) && isprint (c) && !isspace (c))
+# define ISGRAPH(c) (isprint (c) && !isspace (c))
 #endif
 
-#define ISPRINT(c) (ISASCII (c) && isprint (c))
-#define ISDIGIT(c) (ISASCII (c) && isdigit (c))
-#define ISALNUM(c) (ISASCII (c) && isalnum (c))
-#define ISALPHA(c) (ISASCII (c) && isalpha (c))
-#define ISCNTRL(c) (ISASCII (c) && iscntrl (c))
-#define ISLOWER(c) (ISASCII (c) && islower (c))
-#define ISPUNCT(c) (ISASCII (c) && ispunct (c))
-#define ISSPACE(c) (ISASCII (c) && isspace (c))
-#define ISUPPER(c) (ISASCII (c) && isupper (c))
-#define ISXDIGIT(c) (ISASCII (c) && isxdigit (c))
+/* Solaris defines ISPRINT so we must undefine it first.  */
+#undef ISPRINT
+#define ISPRINT(c) isprint (c)
+#define ISDIGIT(c) isdigit (c)
+#define ISALNUM(c) isalnum (c)
+#define ISALPHA(c) isalpha (c)
+#define ISCNTRL(c) iscntrl (c)
+#define ISLOWER(c) islower (c)
+#define ISPUNCT(c) ispunct (c)
+#define ISSPACE(c) isspace (c)
+#define ISUPPER(c) isupper (c)
+#define ISXDIGIT(c) isxdigit (c)
+
+#define ISWORD(c) ISALPHA (c)
+
+#ifdef _tolower
+# define TOLOWER(c) _tolower (c)
+#else
+# define TOLOWER(c) tolower (c)
+#endif
+
+#endif /* emacs */
 
 #ifndef NULL
 #define NULL (void *)0
@@ -913,6 +951,7 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 
 	    printf ("/charset_mule [%s",
 	            (re_opcode_t) *(p - 1) == charset_mule_not ? "^" : "");
+	    printf (" flags: 0x%02x ", *p++);
 	    nentries = unified_range_table_nentries (p);
 	    for (i = 0; i < nentries; i++)
 	      {
@@ -921,14 +960,14 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 
 		unified_range_table_get_range (p, i, &first, &last,
 					       &dummy_val);
-		if (first < 0x100)
+		if (first < 0x80)
 		  putchar (first);
 		else
 		  printf ("(0x%lx)", (long)first);
 		if (first != last)
 		  {
 		    putchar ('-');
-		    if (last < 0x100)
+		    if (last < 0x80)
 		      putchar (last);
 		    else
 		      printf ("(0x%lx)", (long)last);
@@ -1974,6 +2013,22 @@ typedef struct
 /* The next available element.  */
 #define COMPILE_STACK_TOP (compile_stack.stack[compile_stack.avail])
 
+/* Bits used to implement the multibyte-part of the various character
+   classes such as [:alnum:] in a charset's range table. XEmacs; use an
+   enum, so they're visible in the debugger. */
+enum
+{
+  BIT_WORD = (1 << 0),
+  BIT_LOWER = (1 << 1),
+  BIT_PUNCT = (1 << 2),
+  BIT_SPACE = (1 << 3),
+  BIT_UPPER = (1 << 4),
+  /* XEmacs; we need this, because we unify treatment of ASCII and non-ASCII
+     (possible matches) in charset_mule. [:alpha:] matches all characters
+     with word syntax, with the exception of [0-9]. We don't need
+     BIT_MULTIBYTE. */
+  BIT_ALPHA = (1 << 5)
+};
 
 /* Set the bit for character C in a bit vector.  */
 #define SET_LIST_BIT(c)				\
@@ -1985,21 +2040,7 @@ typedef struct
 /* Set the "bit" for character C in a range table. */
 #define SET_RANGETAB_BIT(c) put_range_table (rtab, c, c, Qt)
 
-/* Set the "bit" for character c in the appropriate table. */
-#define SET_EITHER_BIT(c)			\
-  do {						\
-    if (has_extended_chars)			\
-      SET_RANGETAB_BIT (c);			\
-    else					\
-      SET_LIST_BIT (c);				\
-  } while (0)
-
-#else /* not MULE */
-
-#define SET_EITHER_BIT(c) SET_LIST_BIT (c)
-
 #endif
-
 
 /* Get the next unsigned number in the uncompiled pattern.  */
 #define GET_UNSIGNED_NUMBER(num) 					\
@@ -2018,15 +2059,110 @@ typedef struct
        } 								\
     }
 
-#define CHAR_CLASS_MAX_LENGTH  6 /* Namely, `xdigit'.  */
+#define CHAR_CLASS_MAX_LENGTH  9 /* Namely, `multibyte'.  */
 
-#define IS_CHAR_CLASS(string)						\
-   (STREQ (string, "alpha") || STREQ (string, "upper")			\
-    || STREQ (string, "lower") || STREQ (string, "digit")		\
-    || STREQ (string, "alnum") || STREQ (string, "xdigit")		\
-    || STREQ (string, "space") || STREQ (string, "print")		\
-    || STREQ (string, "punct") || STREQ (string, "graph")		\
-    || STREQ (string, "cntrl") || STREQ (string, "blank"))
+/* Map a string to the char class it names (if any).  */
+static re_wctype_t
+re_wctype (const char *string)
+{
+  if      (STREQ (string, "alnum"))	return RECC_ALNUM;
+  else if (STREQ (string, "alpha"))	return RECC_ALPHA;
+  else if (STREQ (string, "word"))	return RECC_WORD;
+  else if (STREQ (string, "ascii"))	return RECC_ASCII;
+  else if (STREQ (string, "nonascii"))	return RECC_NONASCII;
+  else if (STREQ (string, "graph"))	return RECC_GRAPH;
+  else if (STREQ (string, "lower"))	return RECC_LOWER;
+  else if (STREQ (string, "print"))	return RECC_PRINT;
+  else if (STREQ (string, "punct"))	return RECC_PUNCT;
+  else if (STREQ (string, "space"))	return RECC_SPACE;
+  else if (STREQ (string, "upper"))	return RECC_UPPER;
+  else if (STREQ (string, "unibyte"))	return RECC_UNIBYTE;
+  else if (STREQ (string, "multibyte"))	return RECC_MULTIBYTE;
+  else if (STREQ (string, "digit"))	return RECC_DIGIT;
+  else if (STREQ (string, "xdigit"))	return RECC_XDIGIT;
+  else if (STREQ (string, "cntrl"))	return RECC_CNTRL;
+  else if (STREQ (string, "blank"))	return RECC_BLANK;
+  else return RECC_ERROR;
+}
+
+/* True if CH is in the char class CC.  */
+static re_bool
+re_iswctype (int ch, re_wctype_t cc)
+{
+#ifdef emacs
+  /* This is cheesy, lispbuf isn't available to us when compiling the
+     pattern. It's effectively only called (on Mule builds) when the current
+     buffer doesn't matter (e.g. for RECC_ASCII, RECC_CNTRL), so it's not a
+     big deal. */
+  struct buffer *lispbuf = current_buffer;
+#endif
+
+  switch (cc)
+    {
+    case RECC_ALNUM: return ISALNUM (ch) != 0;
+    case RECC_ALPHA: return ISALPHA (ch) != 0;
+    case RECC_BLANK: return ISBLANK (ch) != 0;
+    case RECC_CNTRL: return ISCNTRL (ch) != 0;
+    case RECC_DIGIT: return ISDIGIT (ch) != 0;
+    case RECC_GRAPH: return ISGRAPH (ch) != 0;
+    case RECC_LOWER: return ISLOWER (ch) != 0;
+    case RECC_PRINT: return ISPRINT (ch) != 0;
+    case RECC_PUNCT: return ISPUNCT (ch) != 0;
+    case RECC_SPACE: return ISSPACE (ch) != 0;
+    case RECC_UPPER: return ISUPPER (ch) != 0;
+    case RECC_XDIGIT: return ISXDIGIT (ch) != 0;
+    case RECC_ASCII: return ISASCII (ch) != 0;
+    case RECC_NONASCII: case RECC_MULTIBYTE: return !ISASCII (ch);
+    case RECC_UNIBYTE: return ISUNIBYTE (ch) != 0;
+    case RECC_WORD: return ISWORD (ch) != 0;
+    case RECC_ERROR: return false;
+    default:
+      abort ();
+    }
+}
+
+#ifdef MULE
+
+static re_bool
+re_wctype_can_match_non_ascii (re_wctype_t cc)
+{
+  switch (cc)
+    {
+    case RECC_ASCII:
+    case RECC_UNIBYTE:
+    case RECC_CNTRL:
+    case RECC_DIGIT:
+    case RECC_XDIGIT:
+    case RECC_BLANK:
+      return false;
+    default:
+      return true;
+    }
+}
+
+/* Return a bit-pattern to use in the range-table bits to match multibyte
+   chars of class CC.  */
+static unsigned char
+re_wctype_to_bit (re_wctype_t cc)
+{
+  switch (cc)
+    {
+    case RECC_PRINT: case RECC_GRAPH:
+    case RECC_ALPHA: return BIT_ALPHA;
+    case RECC_ALNUM: case RECC_WORD: return BIT_WORD;
+    case RECC_LOWER: return BIT_LOWER;
+    case RECC_UPPER: return BIT_UPPER;
+    case RECC_PUNCT: return BIT_PUNCT;
+    case RECC_SPACE: return BIT_SPACE;
+    case RECC_MULTIBYTE: case RECC_NONASCII: 
+    case RECC_ASCII: case RECC_DIGIT: case RECC_XDIGIT: case RECC_CNTRL:
+    case RECC_BLANK: case RECC_UNIBYTE: case RECC_ERROR: return 0;
+    default:
+      abort ();
+    }
+}
+
+#endif /* emacs */
 
 static void store_op1 (re_opcode_t op, unsigned char *loc, int arg);
 static void store_op2 (re_opcode_t op, unsigned char *loc, int arg1, int arg2);
@@ -2049,6 +2185,8 @@ static reg_errcode_t compile_extended_range (re_char **p_ptr,
 					     RE_TRANSLATE_TYPE translate,
 					     reg_syntax_t syntax,
 					     Lisp_Object rtab);
+static reg_errcode_t compile_char_class (re_wctype_t cc, Lisp_Object rtab,
+                                         Bitbyte *flags_out);
 #endif /* MULE */
 static re_bool group_match_null_string_p (unsigned char **p,
 					  unsigned char *end,
@@ -2512,15 +2650,20 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
           BUF_PUSH (anychar);
           break;
 
+#ifdef MULE
+#define MAYBE_START_OVER_WITH_EXTENDED(ch)	\
+	  if (ch >= 0x80)                       \
+	    {					\
+	      goto start_over_with_extended;	\
+	    } while (0)
+#else
+#define MAYBE_START_OVER_WITH_EXTENDED(ch)
+#endif
 
         case '[':
           {
 	    /* XEmacs change: this whole section */
             re_bool had_char_class = false;
-#ifdef MULE
-	    re_bool has_extended_chars = false;
-	    REGISTER Lisp_Object rtab = Qnil;
-#endif
 
             if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
 
@@ -2550,29 +2693,6 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                 && (syntax & RE_HAT_LISTS_NOT_NEWLINE))
               SET_LIST_BIT ('\n');
 
-#ifdef MULE
-	  start_over_with_extended:
-	    if (has_extended_chars)
-	      {
-		/* There are extended chars here, which means we need to start
-		   over and shift to unified range-table format. */
-		if (buf_end[-2] == charset)
-		  buf_end[-2] = charset_mule;
-		else
-		  buf_end[-2] = charset_mule_not;
-		buf_end--;
-		p = p1; /* go back to the beginning of the charset, after
-			   a possible ^. */
-		rtab = Vthe_lisp_rangetab;
-		Fclear_range_table (rtab);
-
-		/* charset_not matches newline according to a syntax bit.  */
-		if ((re_opcode_t) buf_end[-1] == charset_mule_not
-		    && (syntax & RE_HAT_LISTS_NOT_NEWLINE))
-		  SET_EITHER_BIT ('\n');
-	      }
-#endif /* MULE */
-
             /* Read in characters and ranges, setting map bits.  */
             for (;;)
               {
@@ -2580,32 +2700,22 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 
                 PATFETCH (c);
 
-#ifdef MULE
-		if (c >= 0x80 && !has_extended_chars)
-		  {
-		    has_extended_chars = 1;
-		    /* Frumble-bumble, we've found some extended chars.
-		       Need to start over, process everything using
-		       the general extended-char mechanism, and need
-		       to use charset_mule and charset_mule_not instead
-		       of charset and charset_not. */
-		    goto start_over_with_extended;
-		  }
-#endif /* MULE */
+		/* Frumble-bumble, we may have found some extended chars.
+		   Need to start over, process everything using the general
+		   extended-char mechanism, and need to use charset_mule and
+		   charset_mule_not instead of charset and charset_not. */
+		MAYBE_START_OVER_WITH_EXTENDED (c);
+
                 /* \ might escape characters inside [...] and [^...].  */
                 if ((syntax & RE_BACKSLASH_ESCAPE_IN_LISTS) && c == '\\')
                   {
                     if (p == pend) FREE_STACK_RETURN (REG_EESCAPE);
 
                     PATFETCH (c1);
-#ifdef MULE
-		    if (c1 >= 0x80 && !has_extended_chars)
-		      {
-		        has_extended_chars = 1;
-		        goto start_over_with_extended;
-                      }
-#endif /* MULE */
-                    SET_EITHER_BIT (c1);
+
+		    MAYBE_START_OVER_WITH_EXTENDED (c1);
+
+                    SET_LIST_BIT (c1);
                     continue;
                   }
 
@@ -2631,18 +2741,11 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                   {
                     reg_errcode_t ret;
 
-#ifdef MULE
-		    if (* (unsigned char *) p >= 0x80 && !has_extended_chars)
-		      {
-		        has_extended_chars = 1;
-		        goto start_over_with_extended;
-                      }
-                    if (has_extended_chars)
-		      ret = compile_extended_range (&p, pend, translate,
-						    syntax, rtab);
-		    else
-#endif /* MULE */
-		      ret = compile_range (&p, pend, translate, syntax, buf_end);
+		    MAYBE_START_OVER_WITH_EXTENDED (*(unsigned char *)p);
+
+		    ret = compile_range (&p, pend, translate, syntax,
+					 buf_end);
+
                     if (ret != REG_NOERROR) FREE_STACK_RETURN (ret);
                   }
 
@@ -2653,18 +2756,177 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 		    /* Move past the `-'.  */
                     PATFETCH (c1);
 
-#ifdef MULE
-		    if (* (unsigned char *) p >= 0x80 && !has_extended_chars)
-		      {
-		        has_extended_chars = 1;
-		        goto start_over_with_extended;
+		    MAYBE_START_OVER_WITH_EXTENDED (*(unsigned char *)p);
+
+		    ret = compile_range (&p, pend, translate, syntax, buf_end);
+
+                    if (ret != REG_NOERROR) FREE_STACK_RETURN (ret);
+                  }
+
+                /* See if we're at the beginning of a possible character
+                   class.  */
+
+                else if (syntax & RE_CHAR_CLASSES && c == '[' && *p == ':')
+                  { /* Leave room for the null.  */
+                    char str[CHAR_CLASS_MAX_LENGTH + 1];
+                    int ch = 0;
+
+                    PATFETCH (c);
+                    c1 = 0;
+
+                    /* If pattern is `[[:'.  */
+                    if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
+
+                    for (;;)
+                      {
+		        PATFETCH (c);
+		        if ((c == ':' && *p == ']') || p == pend)
+		          break;
+			if (c1 < CHAR_CLASS_MAX_LENGTH)
+			  str[c1++] = c;
+			else
+			  /* This is in any case an invalid class name.  */
+			  str[0] = '\0';
                       }
-                    if (has_extended_chars)
-		      ret = compile_extended_range (&p, pend, translate,
-						    syntax, rtab);
-		    else
+                    str[c1] = '\0';
+
+                    /* If isn't a word bracketed by `[:' and `:]':
+                       undo the ending character, the letters, and leave
+                       the leading `:' and `[' (but set bits for them).  */
+                    if (c == ':' && *p == ']')
+                      {
+			re_wctype_t cc = re_wctype (str);
+
+			if (cc == RECC_ERROR)
+			  FREE_STACK_RETURN (REG_ECTYPE);
+
+                        /* Throw away the ] at the end of the character
+                           class.  */
+                        PATFETCH (c);
+
+                        if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
+
+#ifdef MULE
+			if (re_wctype_can_match_non_ascii (cc))
+			  {
+			    goto start_over_with_extended;
+			  }
 #endif /* MULE */
-		      ret = compile_range (&p, pend, translate, syntax, buf_end);
+			for (ch = 0; ch < (1 << BYTEWIDTH); ++ch)
+			  {
+			    if (re_iswctype (ch, cc))
+			      {
+				SET_LIST_BIT (ch);
+			      }
+			  }
+
+                        had_char_class = true;
+                      }
+                    else
+                      {
+                        c1++;
+                        while (c1--)
+                          PATUNFETCH;
+                        SET_LIST_BIT ('[');
+                        SET_LIST_BIT (':');
+                        had_char_class = false;
+                      }
+                  }
+                else
+                  {
+                    had_char_class = false;
+                    SET_LIST_BIT (c);
+                  }
+              }
+
+            /* Discard any (non)matching list bytes that are all 0 at the
+               end of the map.  Decrease the map-length byte too.  */
+            while ((int) buf_end[-1] > 0 && buf_end[buf_end[-1] - 1] == 0)
+              buf_end[-1]--;
+            buf_end += buf_end[-1];
+	  }
+	  break;
+
+#ifdef MULE
+        start_over_with_extended:
+          {
+            REGISTER Lisp_Object rtab = Qnil;
+            Bitbyte flags = 0;
+            int bytes_needed = sizeof (flags);
+            re_bool had_char_class = false;
+
+            /* There are extended chars here, which means we need to use the
+               unified range-table format. */
+            if (buf_end[-2] == charset)
+              buf_end[-2] = charset_mule;
+            else
+              buf_end[-2] = charset_mule_not;
+            buf_end--;
+            p = p1; /* go back to the beginning of the charset, after
+                       a possible ^. */
+            rtab = Vthe_lisp_rangetab;
+            Fclear_range_table (rtab);
+
+            /* charset_not matches newline according to a syntax bit.  */
+            if ((re_opcode_t) buf_end[-1] == charset_mule_not
+                && (syntax & RE_HAT_LISTS_NOT_NEWLINE))
+              SET_RANGETAB_BIT ('\n');
+
+            /* Read in characters and ranges, setting map bits.  */
+            for (;;)
+              {
+                if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
+
+                PATFETCH (c);
+
+                /* \ might escape characters inside [...] and [^...].  */
+                if ((syntax & RE_BACKSLASH_ESCAPE_IN_LISTS) && c == '\\')
+                  {
+                    if (p == pend) FREE_STACK_RETURN (REG_EESCAPE);
+
+                    PATFETCH (c1);
+
+                    SET_RANGETAB_BIT (c1);
+                    continue;
+                  }
+
+                /* Could be the end of the bracket expression.  If it's
+                   not (i.e., when the bracket expression is `[]' so
+                   far), the ']' character bit gets set way below.  */
+                if (c == ']' && p != p1 + 1)
+                  break;
+
+                /* Look ahead to see if it's a range when the last thing
+                   was a character class.  */
+                if (had_char_class && c == '-' && *p != ']')
+                  FREE_STACK_RETURN (REG_ERANGE);
+
+                /* Look ahead to see if it's a range when the last thing
+                   was a character: if this is a hyphen not at the
+                   beginning or the end of a list, then it's the range
+                   operator.  */
+                if (c == '-'
+                    && !(p - 2 >= pattern && p[-2] == '[')
+                    && !(p - 3 >= pattern && p[-3] == '[' && p[-2] == '^')
+                    && *p != ']')
+                  {
+                    reg_errcode_t ret;
+
+                    ret = compile_extended_range (&p, pend, translate, syntax,
+                                                  rtab);
+
+                    if (ret != REG_NOERROR) FREE_STACK_RETURN (ret);
+                  }
+
+                else if (p[0] == '-' && p[1] != ']')
+                  { /* This handles ranges made up of characters only.  */
+                    reg_errcode_t ret;
+
+                    /* Move past the `-'.  */
+                    PATFETCH (c1);
+                    
+                    ret = compile_extended_range (&p, pend, translate,
+                                                  syntax, rtab);
                     if (ret != REG_NOERROR) FREE_STACK_RETURN (ret);
                   }
 
@@ -2683,14 +2945,14 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 
                     for (;;)
                       {
-			/* #### This code is unused.
-			   Correctness is not checked after TRT
-			   table change.  */
                         PATFETCH (c);
-                        if (c == ':' || c == ']' || p == pend
-                            || c1 == CHAR_CLASS_MAX_LENGTH)
+                        if ((c == ':' && *p == ']') || p == pend)
                           break;
-                        str[c1++] = (char) c;
+                        if (c1 < CHAR_CLASS_MAX_LENGTH)
+                          str[c1++] = c;
+                        else
+                          /* This is in any case an invalid class name.  */
+                          str[0] = '\0';
                       }
                     str[c1] = '\0';
 
@@ -2699,22 +2961,11 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                        the leading `:' and `[' (but set bits for them).  */
                     if (c == ':' && *p == ']')
                       {
-                        int ch;
-                        re_bool is_alnum = STREQ (str, "alnum");
-                        re_bool is_alpha = STREQ (str, "alpha");
-                        re_bool is_blank = STREQ (str, "blank");
-                        re_bool is_cntrl = STREQ (str, "cntrl");
-                        re_bool is_digit = STREQ (str, "digit");
-                        re_bool is_graph = STREQ (str, "graph");
-                        re_bool is_lower = STREQ (str, "lower");
-                        re_bool is_print = STREQ (str, "print");
-                        re_bool is_punct = STREQ (str, "punct");
-                        re_bool is_space = STREQ (str, "space");
-                        re_bool is_upper = STREQ (str, "upper");
-                        re_bool is_xdigit = STREQ (str, "xdigit");
+                        re_wctype_t cc = re_wctype (str);
+                        reg_errcode_t ret = REG_NOERROR;
 
-                        if (!IS_CHAR_CLASS (str))
-			  FREE_STACK_RETURN (REG_ECTYPE);
+                        if (cc == RECC_ERROR)
+                          FREE_STACK_RETURN (REG_ECTYPE);
 
                         /* Throw away the ] at the end of the character
                            class.  */
@@ -2722,26 +2973,10 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 
                         if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
 
-                        for (ch = 0; ch < 1 << BYTEWIDTH; ch++)
-                          {
-			    /* This was split into 3 if's to
-			       avoid an arbitrary limit in some compiler.  */
-                            if (   (is_alnum  && ISALNUM (ch))
-                                || (is_alpha  && ISALPHA (ch))
-                                || (is_blank  && ISBLANK (ch))
-                                || (is_cntrl  && ISCNTRL (ch)))
-			      SET_EITHER_BIT (ch);
-			    if (   (is_digit  && ISDIGIT (ch))
-                                || (is_graph  && ISGRAPH (ch))
-                                || (is_lower  && ISLOWER (ch))
-                                || (is_print  && ISPRINT (ch)))
-			      SET_EITHER_BIT (ch);
-			    if (   (is_punct  && ISPUNCT (ch))
-                                || (is_space  && ISSPACE (ch))
-                                || (is_upper  && ISUPPER (ch))
-                                || (is_xdigit && ISXDIGIT (ch)))
-			      SET_EITHER_BIT (ch);
-                          }
+                        ret = compile_char_class (cc, rtab, &flags);
+
+                        if (ret != REG_NOERROR) FREE_STACK_RETURN (ret);
+
                         had_char_class = true;
                       }
                     else
@@ -2749,38 +2984,26 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                         c1++;
                         while (c1--)
                           PATUNFETCH;
-                        SET_EITHER_BIT ('[');
-                        SET_EITHER_BIT (':');
+                        SET_RANGETAB_BIT ('[');
+                        SET_RANGETAB_BIT (':');
                         had_char_class = false;
                       }
                   }
                 else
                   {
                     had_char_class = false;
-                    SET_EITHER_BIT (c);
+                    SET_RANGETAB_BIT (c);
                   }
               }
 
-#ifdef MULE
-	    if (has_extended_chars)
-	      {
-		/* We have a range table, not a bit vector. */
-		int bytes_needed =
-		  unified_range_table_bytes_needed (rtab);
-		GET_BUFFER_SPACE (bytes_needed);
-		unified_range_table_copy_data (rtab, buf_end);
-		buf_end += unified_range_table_bytes_used (buf_end);
-		break;
-	      }
+            bytes_needed += unified_range_table_bytes_needed (rtab);
+            GET_BUFFER_SPACE (bytes_needed);
+            *buf_end++ = flags;
+            unified_range_table_copy_data (rtab, buf_end);
+            buf_end += unified_range_table_bytes_used (buf_end);
+            break;
+          }
 #endif /* MULE */
-            /* Discard any (non)matching list bytes that are all 0 at the
-               end of the map.  Decrease the map-length byte too.  */
-            while ((int) buf_end[-1] > 0 && buf_end[buf_end[-1] - 1] == 0)
-              buf_end[-1]--;
-            buf_end += buf_end[-1];
-	  }
-	  break;
-
 
 	case '(':
           if (syntax & RE_NO_BK_PARENS)
@@ -3715,6 +3938,69 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
   return REG_NOERROR;
 }
 
+static reg_errcode_t
+compile_char_class (re_wctype_t cc, Lisp_Object rtab, Bitbyte *flags_out)
+{
+  *flags_out |= re_wctype_to_bit (cc);
+
+  switch (cc)
+    {
+    case RECC_ASCII:
+      put_range_table (rtab, 0, 0x7f, Qt);
+      break;
+
+    case RECC_XDIGIT:
+      put_range_table (rtab, 'a', 'f', Qt);
+      put_range_table (rtab, 'A', 'f', Qt);
+      /* fallthrough */
+    case RECC_DIGIT:
+      put_range_table (rtab, '0', '9', Qt);
+      break;
+
+    case RECC_BLANK:
+      put_range_table (rtab, ' ', ' ', Qt);
+      put_range_table (rtab, '\t', '\t', Qt);
+      break;
+
+    case RECC_PRINT:
+      put_range_table (rtab, ' ', 0x7e, Qt);
+      put_range_table (rtab, 0x80, MOST_POSITIVE_FIXNUM, Qt);
+      break;
+
+    case RECC_GRAPH:
+      put_range_table (rtab, '!', 0x7e, Qt);
+      put_range_table (rtab, 0x80, MOST_POSITIVE_FIXNUM, Qt);
+      break;
+
+    case RECC_NONASCII:
+    case RECC_MULTIBYTE:
+      put_range_table (rtab, 0x80, MOST_POSITIVE_FIXNUM, Qt);
+      break;
+
+    case RECC_CNTRL:
+      put_range_table (rtab, 0x00, 0x1f, Qt);
+      break;
+
+    case RECC_UNIBYTE:
+      /* Never true in XEmacs. */
+      break;
+
+      /* The following all have their own bits in the class_bits argument to
+         charset_mule and charset_mule_not, they don't use the range table
+         information. */
+    case RECC_ALPHA:
+    case RECC_WORD:
+    case RECC_ALNUM: /* Equivalent to RECC_WORD */
+    case RECC_LOWER:
+    case RECC_PUNCT:
+    case RECC_SPACE:
+    case RECC_UPPER:
+      break;
+    }
+
+    return REG_NOERROR;
+}
+
 #endif /* MULE */
 
 /* re_compile_fastmap computes a ``fastmap'' for the compiled pattern in
@@ -3855,6 +4141,15 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	  {
 	    int nentries;
 	    int i;
+	    Bitbyte flags = *p++;
+
+	    if (flags)
+	      {
+                /* We need to consult the syntax table, fastmap won't
+                   work. */
+                bufp->can_be_null = 1;
+                goto done;
+	      }
 
 	    nentries = unified_range_table_nentries (p);
 	    for (i = 0; i < nentries; i++)
@@ -3878,6 +4173,16 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		    set_itext_ichar (strr, last);
 		    fastmap[*strr] = 1;
 		  }
+                else if (MOST_POSITIVE_FIXNUM == last)
+                  {
+		    /* This is RECC_MULTIBYTE or RECC_NONASCII; true for all
+                       non-ASCII characters. */
+		    jj = 0x80;
+		    while (jj < 0xA0)
+		      {
+			fastmap[jj++] = 1;
+		      }
+                  }
 	      }
 	  }
 	  break;
@@ -3887,6 +4192,15 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	    int nentries;
 	    int i;
 	    int smallest_prev = 0;
+	    Bitbyte flags = *p++;
+
+	    if (flags)
+              {
+                /* We need to consult the syntax table, fastmap won't
+                   work. */
+                bufp->can_be_null = 1;
+                goto done;
+              }
 
 	    nentries = unified_range_table_nentries (p);
 	    for (i = 0; i < nentries; i++)
@@ -5416,15 +5730,27 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	  {
 	    REGISTER Ichar c;
 	    re_bool not_p = (re_opcode_t) *(p - 1) == charset_mule_not;
+	    Bitbyte class_bits = *p++;
 
             DEBUG_MATCH_PRINT2 ("EXECUTING charset_mule%s.\n", not_p ? "_not" : "");
-
 	    REGEX_PREFETCH ();
 	    c = itext_ichar_fmt (d, fmt, lispobj);
 	    c = RE_TRANSLATE (c); /* The character to match.  */
 
-	    if (EQ (Qt, unified_range_table_lookup (p, c, Qnil)))
-	      not_p = !not_p;
+	    if ((class_bits &&
+		 ((class_bits & BIT_ALPHA && ISALPHA (c))
+		  || (class_bits & BIT_SPACE && ISSPACE (c))
+		  || (class_bits & BIT_PUNCT && ISPUNCT (c))
+                  || (class_bits & BIT_WORD && ISWORD (c))
+                  || (TRANSLATE_P (translate) ?
+                      (class_bits & (BIT_UPPER | BIT_LOWER)
+                       && !NOCASEP (lispbuf, c))
+                      : ((class_bits & BIT_UPPER && ISUPPER (c))
+                         || (class_bits & BIT_LOWER && ISLOWER (c))))))
+                || EQ (Qt, unified_range_table_lookup (p, c, Qnil)))
+	      {
+		not_p = !not_p;
+	      }
 
 	    p += unified_range_table_bytes_used (p);
 
