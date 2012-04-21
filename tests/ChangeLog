@@ -2,6 +2,16 @@
 
 	* automated/regexp-tests.el:
 	* automated/regexp-tests.el (Assert-char-class):
+	Check that #'string-match errors correctly with an over-long
+	character class name.
+	Add tests for character class functionality that supports
+	non-ASCII characters. These tests expose bugs in GNU Emacs
+	24.0.94.2, but pass under current XEmacs.
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (Assert-char-class):
 	Test the character classes functionality that was always in
 	regex.c but that has only just been turned on. These tests pass on
 	GNU Emacs 24.0.94.2.
