@@ -193,7 +193,7 @@ extern reg_syntax_t re_syntax_options;
    (The [[[ comments delimit what gets put into the Texinfo file, so
    don't delete them!)  */
 /* [[[begin syntaxes]]] */
-#define RE_SYNTAX_EMACS RE_INTERVALS
+#define RE_SYNTAX_EMACS (RE_INTERVALS | RE_CHAR_CLASSES)
 
 #define RE_SYNTAX_AWK							\
   (RE_BACKSLASH_ESCAPE_IN_LISTS | RE_DOT_NOT_NULL			\

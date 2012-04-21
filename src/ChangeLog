@@ -1,3 +1,10 @@
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.h (RE_SYNTAX_EMACS):
+	Turn on character classes ([:alnum:] and friends) by default. This
+	implementation is incomplete, am working on a version that handles
+	non-ASCII characters correctly.
+
 2012-02-12  Vin Shelton  <acs@xemacs.org>
 
 	* sysproc.h: As of Cygwin 1.7.10, /usr/include/process.h has moved
