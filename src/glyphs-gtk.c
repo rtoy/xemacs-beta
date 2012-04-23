@@ -2539,7 +2539,7 @@ gtk_progress_gauge_redisplay (Lisp_Object image_instance)
       f = XFLOATFIXNUM (val);
 
       gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (IMAGE_INSTANCE_SUBWINDOW_ID (ii)),
-                                     f);
+                                     f / 100.0);
     }
 }
 

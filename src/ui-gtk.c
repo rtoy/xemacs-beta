@@ -578,7 +578,7 @@ typedef GList * (*__LIST_fn) (MANY_ARGS);
 	CONVERT_SINGLE_TYPE(a,FLAGS,guint);		\
 	CONVERT_SINGLE_TYPE(a,BOXED,void *);		\
 	CONVERT_SINGLE_TYPE(a,POINTER,void *);		\
-	CONVERT_SINGLE_TYPE(a,OBJECT,GtkObject *);	\
+	CONVERT_SINGLE_TYPE(a,OBJECT,GObject *);	\
       default:						\
 	GTK_VALUE_POINTER (a) = * (void **) v;		\
 	break;						\
@@ -942,7 +942,7 @@ Call an external function.
 
 
 
-/* GtkObject wrapping for Lisp */
+/* GObject wrapping for Lisp */
 static void
 emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			  int UNUSED (escapeflag))
@@ -950,7 +950,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
 
-  write_ascstring (printcharfun, "#<GtkObject (");
+  write_ascstring (printcharfun, "#<GObject (");
   /* Haven't found alive indicator in 2.X */
   if (XGTK_OBJECT (obj)->alive_p)
     write_cistring (printcharfun, g_type_name (G_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
@@ -1386,7 +1386,7 @@ The cdr is a list of all the magic properties it has.
     }
 
   if (G_TYPE_IS_OBJECT (t) != TRUE)
-    invalid_argument ("Not a GtkObject", type);
+    invalid_argument ("Not a GObject", type);
 
   /* Need to do stupid shit like this to get the args
   ** registered... damn GTK and its lazy loading

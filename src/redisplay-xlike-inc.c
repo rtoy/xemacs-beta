@@ -116,8 +116,12 @@ static void XLIKE_bevel_area (struct window *w, face_index findex,
 			      int shadow_thickness, int edges,
 			      enum edge_style style);
 static void XLIKE_ring_bell (struct device *d, int volume, int pitch,
-			     int duration);
-
+			       int duration);
+static void XLIKE_clear_region (Lisp_Object local, struct frame *f,
+				face_index findex, int x, int y,
+				int width, int height, Lisp_Object fg,
+				Lisp_Object bg, Lisp_Object bg_pixmap,
+				Lisp_Object bg_placement);
 #ifdef THIS_IS_X
 static void XLIKE_window_output_begin (struct window *UNUSED (w));
 static void XLIKE_window_output_end (struct window *w);
@@ -1871,36 +1875,6 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
   if (ypos3 - ypos2 > 0)
     XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos2, width, ypos3 - ypos2);
 #endif /* THIS_IS_X */
-}
-
-/****************************************************************************
- XLIKE_clear_region
-
- Clear the area in the box defined by the given parameters using the
- given face.
- ****************************************************************************/
-static void
-XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
-		    face_index UNUSED (findex),
-		    int x, int y, int width, int height,
-		    Lisp_Object fcolor, Lisp_Object bcolor,
-		    Lisp_Object background_pixmap,
-		    Lisp_Object background_placement)
-{
-  XLIKE_DISPLAY dpy =  GET_XLIKE_DISPLAY (XDEVICE (f->device));
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc = NULL;
-
-  if (!UNBOUNDP (background_pixmap))
-    {
-      gc = XLIKE_get_gc (f, Qnil, fcolor, bcolor,
-			 background_pixmap, background_placement, Qnil);
-    }
-
-  if (gc)
-    XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, y, width, height);
-  else
-    XLIKE_CLEAR_AREA (dpy, x_win, x, y, width, height);
 }
 
 static void
