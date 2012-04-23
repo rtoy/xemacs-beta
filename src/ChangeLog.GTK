@@ -1,3 +1,13 @@
+2012-04-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (__notice_object_destruction): GtkWidget has the
+	destroy signal for Gtk 3.X.
+
+	* menubar-gtk.c (__kill_stupid_gtk_timer): Use GObject instead of
+	GtkObject.
+
+	* ui-gtk.c: Use GObject instead of GtkObject.
+
 2012-04-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-x.c (XLIKE_clear_region): Copied here.

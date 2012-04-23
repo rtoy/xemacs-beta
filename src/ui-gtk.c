@@ -545,7 +545,7 @@ DEFINE_NODUMP_LISP_OBJECT ("ffi", emacs_ffi,
 #endif
 
 typedef void (*pfv)(void);
-typedef GtkObject * (*__OBJECT_fn) (MANY_ARGS);
+typedef GObject * (*__OBJECT_fn) (MANY_ARGS);
 typedef gint (*__INT_fn) (MANY_ARGS);
 typedef void (*__NONE_fn) (MANY_ARGS);
 typedef gchar * (*__STRING_fn) (MANY_ARGS);
@@ -1084,7 +1084,7 @@ allocate_emacs_gtk_object_data (void)
    lisp_to_g_value() routine to defend against passing dead objects
    to GTK routines. */
 static void
-__notice_object_destruction (GtkObject *UNUSED (obj), gpointer user_data)
+__notice_object_destruction (GtkWidget *UNUSED (obj), gpointer user_data)
 {
   ungcpro_popup_callbacks ((GUI_ID) GPOINTER_TO_UINT (user_data));
 }
