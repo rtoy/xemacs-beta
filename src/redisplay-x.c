@@ -59,6 +59,36 @@ XLIKE_window_output_end (struct window *w)
     XFlush (DEVICE_X_DISPLAY (WINDOW_XDEVICE (w)));
 }
 
+/****************************************************************************
+ XLIKE_clear_region
+
+ Clear the area in the box defined by the given parameters using the
+ given face.
+****************************************************************************/
+static void
+XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
+		    face_index UNUSED (findex),
+		    int x, int y, int width, int height,
+		    Lisp_Object fcolor, Lisp_Object bcolor,
+		    Lisp_Object background_pixmap,
+		    Lisp_Object background_placement)
+{
+  XLIKE_DISPLAY dpy =  GET_XLIKE_DISPLAY (XDEVICE (f->device));
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc = NULL;
+
+  if (!UNBOUNDP (background_pixmap))
+    {
+      gc = XLIKE_get_gc (f, Qnil, fcolor, bcolor,
+			 background_pixmap, background_placement, Qnil);
+      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, y, width, height);
+    }
+  else
+    {
+      XLIKE_CLEAR_AREA (dpy, x_win, x, y, width, height);
+    }
+}
+
 /*****************************************************************************
  x_bevel_area
 

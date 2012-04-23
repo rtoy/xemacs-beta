@@ -30,6 +30,45 @@ static void gtk_draw_rectangle (cairo_t *cr, gint x, gint y,
 static void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
                                 gint width, gint height);
 
+/****************************************************************************
+ XLIKE_clear_region
+
+ Clear the area in the box defined by the given parameters using the
+ given face.
+****************************************************************************/
+static void
+XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
+		    face_index UNUSED (findex),
+		    int x, int y, int width, int height,
+		    Lisp_Object fcolor, Lisp_Object bcolor,
+		    Lisp_Object background_pixmap,
+		    Lisp_Object background_placement)
+{
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+  if (!NILP (bcolor))
+    {
+      cr_set_foreground (cr, bcolor);
+      gtk_fill_rectangle (cr, x, y, width, height);
+    }
+  else
+    {
+      /* XXX lookup default style background colour? -jsparkes */
+    }
+
+  if (!UNBOUNDP (background_pixmap))
+    {
+      /* XXX Implement me! */
+      /*
+      gc = XLIKE_get_gc (f, Qnil, fcolor, bcolor,
+      background_pixmap, background_placement, Qnil);
+      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, y, width, height);
+      */
+    }
+  cairo_destroy (cr);
+}
+
 /*****************************************************************************
  Draw a shadow around the given area using the standard theme engine routines.
  ****************************************************************************/
