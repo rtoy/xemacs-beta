@@ -4960,10 +4960,15 @@ it won't work in an interactive Emacs."
   (batch-byte-recompile-directory))
 
 ;;;###autoload
-(defun batch-byte-recompile-directory ()
+(defun batch-byte-recompile-directory (&optional arg)
   "Runs `byte-recompile-directory' on the dirs remaining on the command line.
 Must be used only with `-batch', and kills Emacs on completion.
-For example, invoke `xemacs -batch -f batch-byte-recompile-directory .'."
+For example, invoke `xemacs -batch -f batch-byte-recompile-directory .'.
+
+The optional argument is passed to `byte-recompile-directory' as the
+prefix argument; see the documentation there for its meaing.
+In particular, passing 0 means to compile files for which no `.elc' files
+exist."
   ;; command-line-args-left is what is left of the command line (startup.el)
   (defvar command-line-args-left)	;Avoid 'free variable' warning
   (if (not noninteractive)
@@ -4972,7 +4977,7 @@ For example, invoke `xemacs -batch -f batch-byte-recompile-directory .'."
       (setq command-line-args-left '(".")))
   (let ((byte-recompile-directory-ignore-errors-p t))
     (while command-line-args-left
-      (byte-recompile-directory (car command-line-args-left))
+      (byte-recompile-directory (car command-line-args-left) arg)
       (setq command-line-args-left (cdr command-line-args-left))))
   (kill-emacs 0))
 

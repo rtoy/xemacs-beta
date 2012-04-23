@@ -1,3 +1,9 @@
+2012-04-23  Michael Sperber  <mike@xemacs.org>
+
+	* bytecomp.el (batch-byte-recompile-directory): Accept an optional
+	argument that's passed on to `byte-recompile-directory' as the
+	prefix argument, thus imitating GNU Emacs's API.
+
 2012-04-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Remove some utility functions from the global namespace, it's more
