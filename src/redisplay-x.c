@@ -367,6 +367,60 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
 }
 
 /*****************************************************************************
+ XLIKE_output_horizontal_line
+
+ Output a horizontal line in the foreground of its face.
+****************************************************************************/
+static void
+XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
+			      struct rune *rb)
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc;
+  int x = rb->xpos;
+  int width = rb->width;
+  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
+  int ypos1, ypos2, ypos3, ypos4;
+
+  ypos1 = XLIKE_DISPLAY_LINE_YPOS (dl);
+  ypos2 = ypos1 + rb->object.hline.yoffset;
+  ypos3 = ypos2 + dl->ascent / 2;
+  ypos4 = dl->ypos + dl->descent - dl->clip;
+
+  /* First clear the area not covered by the line. Clear rectangles
+     above and below the line. */
+  if (height - rb->object.hline.thickness > 0)
+    {
+      gc = XLIKE_get_gc (f, Qnil,
+			 WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
+			 Qnil, Qnil, Qnil, Qnil);
+
+      if (ypos2 - ypos1 > 0)
+	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos1, width, ypos2 - ypos1);
+      if (ypos4 - ypos3 > 0)
+	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos3, width, ypos4 - ypos3);
+    }
+
+  /* Now draw the line. */
+  gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
+		     Qnil, Qnil, Qnil, Qnil);
+
+  if (ypos2 < ypos1)
+    ypos2 = ypos1;
+  if (ypos3 > ypos4)
+    ypos3 = ypos4;
+
+  if (ypos3 - ypos2 > 0)
+    {
+      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos3, width,
+			    rb->object.hline.thickness);
+    }
+}
+
+/*****************************************************************************
  XLIKE_output_vertical_divider
 
  Draw a vertical divider down the right side of the given window.

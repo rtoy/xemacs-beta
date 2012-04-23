@@ -149,6 +149,56 @@ gtk_output_vertical_divider (struct window *w, int clear)
   cairo_destroy (cr);
 }
 
+/*****************************************************************************
+ XLIKE_output_horizontal_line
+
+ Output a horizontal line in the foreground of its face.
+****************************************************************************/
+static void
+XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
+			      struct rune *rb)
+{
+  struct frame *f = XFRAME (w->frame);
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+  int x = rb->xpos;
+  int width = rb->width;
+  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
+  int ypos1, ypos2, ypos3, ypos4;
+
+  ypos1 = XLIKE_DISPLAY_LINE_YPOS (dl);
+  ypos2 = ypos1 + rb->object.hline.yoffset;
+  ypos3 = ypos2 + dl->ascent / 2;
+  ypos4 = dl->ypos + dl->descent - dl->clip;
+
+  /* First clear the area not covered by the line. Clear rectangles
+   above and below the line. */
+  if (height - rb->object.hline.thickness > 0)
+    {
+      cr_set_foreground (cr, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex));
+      gtk_fill_rectangle (cr, x, ypos1, width, ypos4 - ypos1);
+      /*
+      if (ypos2 - ypos1 > 0)
+	gtk_draw_rectangle (cr, x, ypos1, width, ypos2 - ypos1);
+      if (ypos4 - ypos3 > 0)
+      gtk_draw_rectangle (cr, x, ypos3, width, ypos4 - ypos3);
+      */
+    }
+
+  cr_set_foreground (cr, WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex));
+
+  if (ypos2 < ypos1)
+    ypos2 = ypos1;
+  if (ypos3 > ypos4)
+    ypos3 = ypos4;
+
+  if (ypos3 - ypos2 > 0)
+    {
+      gtk_fill_rectangle (cr, x, ypos3, width, rb->object.hline.thickness);
+    }
+}
+
 /* Make audible bell.  */
 static void
 XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
