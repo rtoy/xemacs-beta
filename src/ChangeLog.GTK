@@ -1,5 +1,14 @@
 2012-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_output_horizontal_line): Copied to here,
+	fixed and updated for cairo.
+
+	* redisplay-x.c (XLIKE_output_horizontal_line): Copied to here and
+	fixed.
+
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line): Copied for
+	X and gtk redisplay.
+
 	* ui-gtk.c (__notice_object_destruction): GtkWidget has the
 	destroy signal for Gtk 3.X.
 
