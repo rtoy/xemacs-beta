@@ -1,0 +1,8 @@
+Here we have notes about the conversion to GPLv3. Things left to do,
+things to check, etc...
+
+* File with copyright notices that ought to be checked
+
+"etc/gnuserv.1" and "etc/gnuserv.README". Copyright added with date
+1998. If more accurate dates for the respective contributions can be
+deduced it would be good.
