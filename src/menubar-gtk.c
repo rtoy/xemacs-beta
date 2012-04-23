@@ -206,7 +206,7 @@ __destroy_notify (gpointer user_data, GObject *UNUSED (old))
 }
 
 static void
-__kill_stupid_gtk_timer (GtkObject *obj, gpointer UNUSED (user_data))
+__kill_stupid_gtk_timer (GObject *obj, gpointer UNUSED (user_data))
 {
   GtkMenuItem *mi = GTK_MENU_ITEM (obj);
 

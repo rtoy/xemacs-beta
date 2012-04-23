@@ -38,9 +38,9 @@
 /* This is based on the code from rep-gtk 0.11 in libglade-support.c */
 
 static void
-connector (const gchar *handler_name, GtkObject *object,
+connector (const gchar *handler_name, GObject *object,
 	   const gchar *signal_name, const gchar *signal_data,
-	   GtkObject *connect_object, gboolean after, gpointer user_data)
+	   GObject *connect_object, gboolean after, gpointer user_data)
 {
   Lisp_Object func;
   Lisp_Object lisp_data = Qnil;
