@@ -1817,66 +1817,6 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
     }
 }
 
-/*****************************************************************************
- XLIKE_output_horizontal_line
-
- Output a horizontal line in the foreground of its face.
- ****************************************************************************/
-static void
-XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
-			      struct rune *rb)
-{
-  struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
-
-  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc;
-
-  int x = rb->xpos;
-  int width = rb->width;
-  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
-  int ypos1, ypos2, ypos3, ypos4;
-
-  ypos1 = XLIKE_DISPLAY_LINE_YPOS (dl);
-  ypos2 = ypos1 + rb->object.hline.yoffset;
-  ypos3 = ypos2 + rb->object.hline.thickness;
-  ypos4 = dl->ypos + dl->descent - dl->clip;
-
-  /* First clear the area not covered by the line. */
-  if (height - rb->object.hline.thickness > 0)
-    {
-      gc = XLIKE_get_gc (f, Qnil,
-			 WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
-			 Qnil, Qnil, Qnil, Qnil);
-
-      if (ypos2 - ypos1 > 0)
-	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos1, width, ypos2 - ypos1);
-      if (ypos4 - ypos3 > 0)
-	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos1, width, ypos2 - ypos1);
-    }
-
-#ifdef THIS_IS_GTK
-  {
-    GtkStyle *style = FRAME_GTK_TEXT_WIDGET (f)->style;
-    gtk_paint_hline (style, x_win, GTK_STATE_NORMAL, NULL,
-		     FRAME_GTK_TEXT_WIDGET (f), "hline", x, x + width, ypos2);
-  }
-#else /* THIS_IS_X */
-  /* Now draw the line. */
-  gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
-		     Qnil, Qnil, Qnil, Qnil);
-
-  if (ypos2 < ypos1)
-    ypos2 = ypos1;
-  if (ypos3 > ypos4)
-    ypos3 = ypos4;
-
-  if (ypos3 - ypos2 > 0)
-    XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos2, width, ypos3 - ypos2);
-#endif /* THIS_IS_X */
-}
-
 static void
 XLIKE_clear_frame_window (Lisp_Object window)
 {

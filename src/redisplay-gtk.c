@@ -195,7 +195,13 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
 
   if (ypos3 - ypos2 > 0)
     {
-      gtk_fill_rectangle (cr, x, ypos3, width, rb->object.hline.thickness);
+      GtkStyle *style = FRAME_GTK_TEXT_WIDGET (f)->style;
+      XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+
+      gtk_paint_hline (style, x_win, GTK_STATE_NORMAL, NULL,
+		       FRAME_GTK_TEXT_WIDGET (f), "hline", x, x + width,
+		       ypos3 + rb->object.hline.thickness / 2);
+      /* gtk_fill_rectangle (cr, x, ypos3, width, rb->object.hline.thickness); */
     }
 }
 

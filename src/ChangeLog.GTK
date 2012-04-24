@@ -1,3 +1,10 @@
+2012-04-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_horizontal_line): Use a Gtk style
+	to draw the line.
+
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line): Remove.
+
 2012-04-23  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_horizontal_line): Copied to here,
