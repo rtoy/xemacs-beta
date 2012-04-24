@@ -2,6 +2,7 @@
 
 	* redisplay-gtk.c (XLIKE_output_horizontal_line): Use a Gtk style
 	to draw the line.
+	(XLIKE_output_horizontal_line): Add cairo_destroy().
 
 	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line): Remove.
 
