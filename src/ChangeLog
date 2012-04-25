@@ -1,3 +1,9 @@
+2012-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* search.c (string_match_1): Actually use the POSIX argument here,
+	pass it to compile_pattern(). Thank you for the bug report, Ilya
+	Shlyakhter!
+
 2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Support non-ASCII correctly in character classes ([:alnum:] and
