@@ -419,7 +419,7 @@ Optional argument BUFFER defaults to the current buffer.
 
 static Lisp_Object
 string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
-		struct buffer *buf, int UNUSED (posix))
+		struct buffer *buf, int posix)
 {
   Bytecount val;
   Charcount s;
@@ -450,7 +450,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   bufp = compile_pattern (regexp, &search_regs,
 			  (!NILP (buf->case_fold_search)
 			   ? XCASE_TABLE_DOWNCASE (buf->case_table) : Qnil),
-			  string, buf, 0, ERROR_ME);
+			  string, buf, posix, ERROR_ME);
   QUIT;
   {
     Bytecount bis = string_index_char_to_byte (string, s);

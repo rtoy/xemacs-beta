@@ -1,3 +1,9 @@
+2012-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el: Check that #'posix-string-match
+	actually returns the longest match; thank you Ilya Shlyakhter in
+	jn1j8t$ujq$1@dough.gmane.org !
+
 2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el:

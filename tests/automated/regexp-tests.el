@@ -69,6 +69,15 @@
   (Assert (string-match "Ä" "Ä"))
   (Assert (not (string-match "Ä" "ä"))))
 
+;; Is posix-string-match passing the POSIX flag correctly?
+
+(Assert
+ (equal 
+  (save-match-data
+    (progn (posix-string-match "i\\|ii" "ii") (match-data)))
+  '(0 2))
+ "checking #'posix-string-match actually returns the longest match"))
+
 ;; looking-at
 (with-temp-buffer
   (insert "äÄ")
