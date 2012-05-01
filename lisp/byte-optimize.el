@@ -710,7 +710,7 @@
 			    (apply fun (mapcar 'float constants))
 			    (float (apply fun constants)))))
 		(setq form orig)
-	      (setq form (nconc (delq nil form)
+	      (setq form (nconc (delete* nil form)
 				(list (apply fun (nreverse constants)))))))))
     form))
 
@@ -787,7 +787,7 @@
    (cond ((memq 0 form)
 	  (setq form (if (eq (car form) 'logand)
 			 (cons 'progn (cdr form))
-		       (delq 0 (copy-sequence form)))))
+		       (remove* 0 form))))
 	 ((and (eq (car-safe form) 'logior)
 	       (memq -1 form))
 	  (cons 'progn (cdr form)))
@@ -1462,7 +1462,7 @@
 	       ;; this addr is jumped to
 	       (setcdr rest (cons (cons nil (cdr tmp))
 				  (cdr rest)))
-	       (setq tags (delq tmp tags))
+	       (setq tags (delete* tmp tags))
 	       (setq rest (cdr rest))))
 	(setq rest (cdr rest))))
     (if tags (error "optimizer error: missed tags %s" tags))
@@ -1591,11 +1591,11 @@
 	       (cond ((= tmp 1)
 		      (byte-compile-log-lap
  		       "  %s discard\t-->\t<deleted>" lap0)
-		      (setq lap (delq lap0 (delq lap1 lap))))
+		      (setq lap (delete* lap0 (delete* lap1 lap))))
 		     ((= tmp 0)
 		      (byte-compile-log-lap
 		       "  %s discard\t-->\t<deleted> discard" lap0)
-		      (setq lap (delq lap0 lap)))
+		      (setq lap (delete* lap0 lap)))
 		     ((= tmp -1)
 		      (byte-compile-log-lap
 		       "  %s discard\t-->\tdiscard discard" lap0)
@@ -1608,7 +1608,7 @@
 	      ((and (memq (car lap0) byte-goto-ops)
 		    (eq (cdr lap0) lap1))
 	       (cond ((eq (car lap0) 'byte-goto)
-		      (setq lap (delq lap0 lap))
+		      (setq lap (delete* lap0 lap))
 		      (setq tmp "<deleted>"))
 		     ((memq (car lap0) byte-goto-always-pop-ops)
 		      (setcar lap0 (setq tmp 'byte-discard))
@@ -1665,7 +1665,7 @@
 	       (byte-compile-log-lap "  dup %s discard\t-->\t%s" lap1 lap1)
 	       (setq keep-going t
 		     rest (cdr rest))
-	       (setq lap (delq lap0 (delq lap2 lap))))
+	       (setq lap (delete* lap0 (delete* lap2 lap))))
 	      ;;
 	      ;; not goto-X-if-nil              -->  goto-X-if-non-nil
 	      ;; not goto-X-if-non-nil          -->  goto-X-if-nil
@@ -1685,7 +1685,7 @@
 	       (setcar lap1 (if (eq (car lap1) 'byte-goto-if-nil)
 				'byte-goto-if-not-nil
 				'byte-goto-if-nil))
-	       (setq lap (delq lap0 lap))
+	       (setq lap (delete* lap0 lap))
 	       (setq keep-going t))
 	      ;;
 	      ;; goto-X-if-nil     goto-Y X:  -->  goto-Y-if-non-nil X:
@@ -1702,7 +1702,7 @@
 		 (byte-compile-log-lap "  %s %s %s:\t-->\t%s %s:"
 				       lap0 lap1 lap2
 				       (cons inverse (cdr lap1)) lap2)
-		 (setq lap (delq lap0 lap))
+		 (setq lap (delete* lap0 lap))
 		 (setcar lap1 inverse)
 		 (setq keep-going t)))
 	      ;;
@@ -1717,13 +1717,13 @@
 		      (byte-compile-log-lap "  %s %s\t-->\t<deleted>"
 					    lap0 lap1)
 		      (setq rest (cdr rest)
-			    lap (delq lap0 (delq lap1 lap))))
+			    lap (delete* lap0 (delete* lap1 lap))))
 		     (t
 		      (if (memq (car lap1) byte-goto-always-pop-ops)
 			  (progn
 			    (byte-compile-log-lap "  %s %s\t-->\t%s"
 			     lap0 lap1 (cons 'byte-goto (cdr lap1)))
-			    (setq lap (delq lap0 lap)))
+			    (setq lap (delete* lap0 lap)))
 			(byte-compile-log-lap "  %s %s\t-->\t%s" lap0 lap1
 			 (cons 'byte-goto (cdr lap1))))
 		      (setcar lap1 'byte-goto)))
@@ -1768,7 +1768,7 @@
 	       (while (setq tmp2 (rassq lap0 tmp3))
 		 (setcdr tmp2 lap1)
 		 (setq tmp3 (cdr (memq tmp2 tmp3))))
-	       (setq lap (delq lap0 lap)
+	       (setq lap (delete* lap0 lap)
 		     keep-going t))
 	      ;;
 	      ;; unused-TAG: --> <deleted>
@@ -1777,7 +1777,7 @@
 		    (not (rassq lap0 lap)))
 	       (and (memq byte-optimize-log '(t byte))
 		    (byte-compile-log "  unused tag %d removed" (nth 1 lap0)))
-	       (setq lap (delq lap0 lap)
+	       (setq lap (delete* lap0 lap)
 		     keep-going t))
 	      ;;
 	      ;; goto   ... --> goto   <delete until TAG or end>
@@ -1832,10 +1832,10 @@
 				       byte-save-restriction))
 		    (< 0 (cdr lap1)))
 	       (if (zerop (setcdr lap1 (1- (cdr lap1))))
-		   (delq lap1 rest))
+		   (delete* lap1 rest))
 	       (if (eq (car lap0) 'byte-varbind)
 		   (setcar rest (cons 'byte-discard 0))
-		 (setq lap (delq lap0 lap)))
+		 (setq lap (delete* lap0 lap)))
 	       (byte-compile-log-lap "  %s %s\t-->\t%s %s"
 		 lap0 (cons (car lap1) (1+ (cdr lap1)))
 		 (if (eq (car lap0) 'byte-varbind)
@@ -1922,7 +1922,7 @@
 			  (setcdr tmp (cons (byte-compile-make-tag)
 					    (cdr tmp))))
 		      (setcdr lap1 (car (cdr tmp)))
-		      (setq lap (delq lap0 lap))))
+		      (setq lap (delete* lap0 lap))))
 	       (setq keep-going t))
 	      ;;
 	      ;; X: varref-Y    ...     varset-Y goto-X  -->
@@ -2058,7 +2058,7 @@
 				   (cons 'byte-unbind
 					 (+ (cdr lap0) (cdr lap1))))
 	     (setq keep-going t)
-	     (setq lap (delq lap0 lap))
+	     (setq lap (delete* lap0 lap))
 	     (setcdr lap1 (+ (cdr lap1) (cdr lap0))))
 	    )
       (setq rest (cdr rest)))

@@ -218,7 +218,7 @@ Pass it BUFFER as first arg, and (cddr ARGS) gives the rest of the args."
 	;; frame, then we need to create the opening frame.  Make sure
 	;; it has a minibuffer, but let initial-frame-plist omit the
 	;; minibuffer spec.
-	(or (delq terminal-frame (minibuffer-frame-list))
+	(or (delete* terminal-frame (minibuffer-frame-list))
 	    (progn
 	      (setq frame-initial-frame-plist
 		    (append initial-frame-plist default-frame-plist))
@@ -230,8 +230,8 @@ Pass it BUFFER as first arg, and (cddr ARGS) gives the rest of the args."
 	      (setq default-minibuffer-frame
 		    (setq frame-initial-frame
 			  (make-frame initial-frame-plist
-				      (car (delq terminal-device
-						 (device-list))))))
+				      (car (delete* terminal-device
+                                                    (device-list))))))
 	      ;; Delete any specifications for window geometry properties
 	      ;; so that we won't reapply them in frame-notice-user-settings.
 	      ;; It would be wrong to reapply them then,
@@ -465,7 +465,7 @@ React to settings of `default-frame-plist', `initial-frame-plist' there."
 	      ;; The initial frame, which we are about to delete, may be
 	      ;; the only frame with a minibuffer.  If it is, create a
 	      ;; new one.
-	      (or (delq frame-initial-frame (minibuffer-frame-list))
+	      (or (delete* frame-initial-frame (minibuffer-frame-list))
 		  (make-initial-minibuffer-frame nil))
 
 	      ;; If the initial frame is serving as a surrogate
@@ -991,7 +991,7 @@ pixels) is kept by adjusting the numbers of the lines and columns."
 	 (face-list-to-change (face-list)))
     (when (eq (device-type) 'mswindows)
       (setq face-list-to-change
-	    (delq 'border-glyph face-list-to-change)))
+	    (delete* 'border-glyph face-list-to-change)))
     ;; FIXME: Is it sufficient to just change the default face, due to
     ;; face inheritance?
     (dolist (face face-list-to-change)
@@ -1325,7 +1325,7 @@ left untouched.  FRAME nil or omitted means use the selected frame."
   (unless frame
     (setq frame (selected-frame)))
   (let* ((mini-frame (window-frame (minibuffer-window frame)))
-	 (frames (delq mini-frame (delq frame (frame-list)))))
+	 (frames (delete* mini-frame (delete* frame (frame-list)))))
     (mapc 'delete-frame frames)))
 
 ;; XEmacs change: we still use delete-frame-hook
@@ -1699,7 +1699,7 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 	;; but the selected frame should come first, even if it's occluded,
 	;; to minimize thrashing.
 	(setq frames (cons (selected-frame)
-			   (delq (selected-frame) frames)))
+			   (delete* (selected-frame) frames)))
 
 	(setq name (symbol-name name))
 	(while frames
@@ -1760,7 +1760,7 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 			      (t))))))
 	;; put the selected frame last.  The user wants a new frame,
 	;; so don't reuse the existing one unless forced to.
-	(setq frames (append (delq (selected-frame) frames) (list frames)))
+	(setq frames (append (delete* (selected-frame) frames) (list frames)))
 	(if (or (eq limit 0) ; means create with reckless abandon
 		(< (length frames) limit))
 	    (get-frame-for-buffer-make-new-frame buffer)

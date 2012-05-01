@@ -2964,7 +2964,7 @@ settings."
 (defun widget-face-value-delete (widget)
   ;; Remove the child from the options.
   (let ((child (car (widget-get widget :children))))
-    (setq custom-options (delq child custom-options))
+    (setq custom-options (delete* child custom-options))
     (widget-children-value-delete widget)))
 
 (defvar face-history nil

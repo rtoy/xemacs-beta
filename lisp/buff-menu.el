@@ -860,10 +860,10 @@ redefining the function `format-buffers-menu-line'."
 		 (not in-deletion)
 		 (not (eq first-buf (window-buffer (selected-window frame)))))
 	(setq buffers (cons (window-buffer (selected-window frame))
-			    (delq first-buf buffers))))
+			    (delete* first-buf buffers))))
       ;; if we're in deletion ignore the current buffer
       (when in-deletion 
-	(setq buffers (delq (current-buffer) buffers))
+	(setq buffers (delete* (current-buffer) buffers))
 	(setq first-buf (car buffers)))
       ;; filter buffers
       (when buffers-tab-filter-functions

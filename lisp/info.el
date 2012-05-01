@@ -798,7 +798,7 @@ node of a file of this name."
 		  (if (re-search-backward regexp beg t)
 		      (throw 'foo t))))
 	      (setq found nil)
-	      (let ((bufs (delq nil (mapcar 'get-file-buffer
+	      (let ((bufs (delete* nil (mapcar 'get-file-buffer
 					    Info-annotations-path)))
 		    (pattern (if (string-match "\\`<<.*>>\\'" qnode) qnode
 			       (format "\"%s\"\\|<<%s>>" qnode qnode)))
@@ -1384,7 +1384,7 @@ invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\"."
       (let* ((name (format "(%s)%s" (Info-file-name-only file) node))
 	     (found (assoc name Info-history)))
 	(if found
-	    (setq Info-history (delq found Info-history)))
+	    (setq Info-history (delete* found Info-history)))
 	(setq Info-history (cons (list name (- point (point-min))
 				       (and (eq (window-buffer)
 						(current-buffer))
@@ -1702,7 +1702,7 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
 (defun Info-build-annotation-completions ()
   (or Info-current-annotation-completions
       (save-excursion
-	(let ((bufs (delq nil (mapcar 'get-file-buffer
+	(let ((bufs (delete* nil (mapcar 'get-file-buffer
 				      Info-annotations-path)))
 	      (compl nil))
 	  (while bufs
@@ -2360,7 +2360,7 @@ combined together."
     ;; Here it is a feature that assoc is case-sensitive.
     (while (setq found (assoc topic matches))
       (setq exact (cons found exact)
-	    matches (delq found matches)))
+	    matches (delete* found matches)))
   (setq Info-index-alternatives (nconc exact matches)
 	Info-index-first-alternative (car Info-index-alternatives))
   (Info-index-next 0)))
@@ -2528,7 +2528,7 @@ Select node it's found in."
 
 
 (defun Info-reannotate-node ()
-  (let ((bufs (delq nil (mapcar 'get-file-buffer Info-annotations-path))))
+  (let ((bufs (delete* nil (mapcar 'get-file-buffer Info-annotations-path))))
     (if bufs
 	(let ((ibuf (current-buffer))
 	      (file (concat "\\(" (regexp-quote

@@ -352,8 +352,8 @@ as the menu to change."
       ;; the menubar is the only special case, because other menus begin
       ;; with their name.
       (if (eq parent current-menubar)
-	  (setq current-menubar (delq item parent))
-	(delq item parent))
+	  (setq current-menubar (delete* item parent))
+	(delete* item parent))
       (set-menubar-dirty-flag)
       item)))
 

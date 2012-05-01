@@ -2838,7 +2838,7 @@ in such cases.")
   (let ((localval (copy-list (symbol-value hook)))
 	(globalval (copy-list (default-value hook))))
     (if (memq t localval)
-	(setq localval (append (delq t localval) (delq t globalval))))
+	(setq localval (append (delete* t localval) (delete* t globalval))))
     localval))
 
 (defun basic-save-buffer ()
@@ -4065,13 +4065,9 @@ default directory.  However, if FULL is non-nil, they are absolute."
 		(file-directory-p (directory-file-name (car dirs))))
 	(let ((this-dir-contents
 	       ;; Filter out "." and ".."
-	       (delq nil
-		     (mapcar #'(lambda (name)
-				 (unless (string-match "\\`\\.\\.?\\'"
-						       (file-name-nondirectory name))
-				   name))
-			     (directory-files (or (car dirs) ".") full
-					      (wildcard-to-regexp nondir))))))
+               (nset-difference (directory-files (or (car dirs) ".") full
+                                                 (wildcard-to-regexp nondir))
+                                '("." "..") :test #'equal)))
 	  (setq contents
 		(nconc
 		 (if (and (car dirs) (not full))

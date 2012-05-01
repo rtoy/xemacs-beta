@@ -316,7 +316,7 @@ minibuffer as initial user input."
 (defun delete-itimer (itimer)
   "Deletes ITIMER.  ITIMER may be an itimer or the name of one."
   (check-itimer-coerce-string itimer)
-  (setq itimer-list (delq itimer itimer-list)))
+  (setq itimer-list (delete* itimer itimer-list)))
 
 (defun start-itimer (name function value &optional restart
 		     is-idle with-args &rest function-arguments)

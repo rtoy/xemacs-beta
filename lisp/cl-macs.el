@@ -299,9 +299,9 @@ ARGLIST allows full Common Lisp conventions."
 	   ;; Clean the list
 	   (let ((p (last arg))) (if (cdr p) (setcdr p (list '&rest (cdr p)))))
 	   (if (setq junk (cadr (memq '&cl-defs arg)))
-	       (setq arg (delq '&cl-defs (delq junk arg))))
+	       (setq arg (delete* '&cl-defs (delete* junk arg))))
 	   (if (memq '&cl-quote arg)
-	       (setq arg (delq '&cl-quote arg)))
+	       (setq arg (delete* '&cl-quote arg)))
 	   (mapcar 'cl-upcase-arg arg)))
 	(t arg)))                         ; Maybe we are in initializer
 
@@ -346,13 +346,13 @@ block."
     (setq args (if (listp args) (copy-list args) (list '&rest args)))
     (let ((p (last args))) (if (cdr p) (setcdr p (list '&rest (cdr p)))))
     (if (setq bind-defs (cadr (memq '&cl-defs args)))
-	(setq args (delq '&cl-defs (delq bind-defs args))
+	(setq args (delete* '&cl-defs (delete* bind-defs args))
 	      bind-defs (cadr bind-defs)))
     (if (setq bind-enquote (memq '&cl-quote args))
-	(setq args (delq '&cl-quote args)))
+	(setq args (delete* '&cl-quote args)))
     (if (memq '&whole args) (error "&whole not currently implemented"))
     (let* ((p (memq '&environment args)) (v (cadr p)))
-      (if p (setq args (nconc (delq (car p) (delq v args))
+      (if p (setq args (nconc (delete* (car p) (delete* v args))
                               `(&aux (,v byte-compile-macro-environment))))))
     (while (and args (symbolp (car args))
 		(not (memq (car args) '(nil &rest &body &key &aux)))
@@ -1916,7 +1916,7 @@ Returns the first of the multiple values given by FORM."
 	   (if (consp (car spec))
 	       (if (eq (cadar spec) 0)
 		   (setq byte-compile-warnings
-			 (delq (caar spec) byte-compile-warnings))
+			 (delete* (caar spec) byte-compile-warnings))
 		 (setq byte-compile-warnings
 		       (adjoin (caar spec) byte-compile-warnings)))))))
   nil)
@@ -2806,7 +2806,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 				     (caar include-descs) include))
 			  old-descs)
 		    (pop include-descs)))
-	  (setq descs (append old-descs (delq (assq 'cl-tag-slot descs) descs))
+	  (setq descs (append old-descs (delete* (assq 'cl-tag-slot descs) descs))
 		type (car inc-type)
 		named (assq 'cl-tag-slot descs))
 	  (if (cadr inc-type) (setq tag name named t))
@@ -2822,7 +2822,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 		(error "Illegal :type specifier: %s" type))
 	    (if named (setq tag name)))
 	(setq type 'vector named 'true)))
-    (or named (setq descs (delq (assq 'cl-tag-slot descs) descs)))
+    (or named (setq descs (delete* (assq 'cl-tag-slot descs) descs)))
     (push (list 'defvar tag-symbol) forms)
     (setq pred-form (and named
 			 (let ((pos (- (length descs)
@@ -2896,8 +2896,8 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 		(push (cons copier t) side-eff)))
     (if constructor
 	(push (list constructor
-		       (cons '&key (delq nil (copy-sequence slots))))
-		 constrs))
+                    (cons '&key (remove* nil slots)))
+              constrs))
     (while constrs
       (let* ((name (caar constrs))
 	     (args (cadr (pop constrs)))
@@ -2988,7 +2988,7 @@ The type name can then be used in `typecase', `check-type', etc."
 	   (cl-make-type-test val (apply (get (car type) 'cl-deftype-handler)
 					 (cdr type))))
 	  ((memq (car-safe type) '(integer float real number))
-	   (delq t (list 'and (cl-make-type-test val (car type))
+	   (delete* t (list 'and (cl-make-type-test val (car type))
 			 (if (memq (cadr type) '(* nil)) t
 			   (if (consp (cadr type)) (list '> val (caadr type))
 			     (list '>= val (cadr type))))
@@ -3086,7 +3086,7 @@ and then returning foo."
   (list 'eval-when '(compile load eval)
 	(cl-transform-function-property
 	 func 'cl-compiler-macro
-	 (cons (if (memq '&whole args) (delq '&whole args)
+	 (cons (if (memq '&whole args) (delete* '&whole args)
 		 (cons '--cl-whole-arg-- args)) body))
 	(list 'or (list 'get (list 'quote func) '(quote byte-compile))
 	      (list 'put (list 'quote func) '(quote byte-compile)
@@ -3519,7 +3519,7 @@ in the constants vector and in the arguments")
 		(cl-seq begin))
 	  (while cl-seq
 	    (setq cl-seq (setcdr cl-seq
-				 (delq (car cl-seq) (cdr cl-seq)))))
+				 (delete* (car cl-seq) (cdr cl-seq)))))
 	  begin))
        ((or (plists-equal cl-keys '(:test 'equal) t)
 	    (plists-equal cl-keys '(:test #'equal) t))
