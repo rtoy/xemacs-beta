@@ -431,7 +431,7 @@
 	     (byte-optimize-form (nth 1 form) for-effect)))
 	  ((eq fn 'prog1)
 	   (if (cdr (cdr form))
-	       (cons 'prog1
+	       (cons (if for-effect 'progn 'prog1)
 		     (cons (byte-optimize-form (nth 1 form) for-effect)
 			   (byte-optimize-body (cdr (cdr form)) t)))
 	     (byte-optimize-form `(or ,(nth 1 form) nil) for-effect)))
@@ -537,6 +537,12 @@
 		(setq tmp (byte-optimize-side-effect-free-p form))
 		(or byte-compile-delete-errors
 		    (eq tmp 'error-free)
+                    ;; XEmacs; GNU handles the expansion of (pop foo) specially
+                    ;; here. We changed the macro to expand to (prog1 (car-safe
+                    ;; PLACE) (setq PLACE (cdr PLACE))) , which has the same
+                    ;; effect. (This only matters when
+                    ;; byte-compile-delete-errors is nil, which is usually true
+                    ;; for GNU and usually false for XEmacs.)
 		    (progn
 		      (byte-compile-warn "%s called for effect"
 					 (prin1-to-string form))
@@ -947,20 +953,17 @@
 (defun byte-optimize-or (form)
   ;; Throw away unneeded nils, and simplify if less than 2 args.
   ;; XEmacs; change to be more careful about discarding multiple values. 
-  (let* ((memqueued (memq nil form))
-         (trailing-nil (and (cdr memqueued)
-                            (equal '(nil) (last form))))
-         rest)
-    ;; A trailing nil indicates to discard multiple values, and we need to
-    ;; respect that:
-    (when (and memqueued (cdr memqueued))
-      (setq form (delq nil (copy-sequence form)))
-      (when trailing-nil
-        (setcdr (last form) '(nil))))
-    (setq rest form)
-    ;; If there is a literal non-nil constant in the args to `or', throw
-    ;; away all following forms. We can do this because a literal non-nil
-    ;; constant cannot be multiple.
+  (if (memq nil form)
+      (setq form (remove* nil form
+                          ;; A trailing nil indicates to discard multiple
+                          ;; values, and we need to respect that. No need if
+                          ;; this is for-effect, though, multiple values
+                          ;; will be discarded anyway.
+                          :end (if (not for-effect) (1- (length form))))))
+  ;; If there is a literal non-nil constant in the args to `or', throw
+  ;; away all following forms. We can do this because a literal non-nil
+  ;; constant cannot be multiple.
+  (let ((rest form))
     (while (cdr (setq rest (cdr rest)))
       (if (byte-compile-trueconstp (car rest))
 	  (setq form (copy-sequence form)

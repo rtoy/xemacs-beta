@@ -1,3 +1,22 @@
+2012-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	* byte-optimize.el (byte-optimize-or):
+	Improve handling of for-effect here; we don't need to worry about
+	discarding multiple values when for-effect is non-nil, this
+	applies to both #'prog1 and #'or.
+	* bytecomp.el (progn):
+	* bytecomp.el (byte-compile-file-form-progn): New.
+	Put back this function, since it's for-effect there's no need to
+	worry about passing back multiple values.
+	* cl-macs.el (cl-pop2):
+	* cl-macs.el (cl-do-pop):
+	* cl-macs.el (remf):
+	* cl.el (pop):
+	Expand to (prog1 (car-safe PLACE) (setq PLACE (cdr PLACE))) in all
+	these macros, since that optimizes better (especially for-effect
+	handling) when byte-compile-delete-errors is nil.
+
 2012-04-23  Michael Sperber  <mike@xemacs.org>
 
 	* bytecomp.el (batch-byte-recompile-directory): Accept an optional
