@@ -152,7 +152,7 @@ Analogous to (prog1 (car PLACE) (setf PLACE (cdr PLACE))), though more
 careful about evaluating each argument only once and in the right order.
 PLACE may be a symbol, or any generalized variable allowed by `setf'."
   (if (symbolp place)
-      `(car (prog1 ,place (setq ,place (cdr ,place))))
+      `(car-safe (prog1 ,place (setq ,place (cdr ,place))))
     (cl-do-pop place)))
 
 (defmacro push (newelt listname)

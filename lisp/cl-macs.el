@@ -46,7 +46,7 @@
 ;;; Code:
 
 (defmacro cl-pop2 (place)
-  (list 'prog1 (list 'car (list 'cdr place))
+  (list 'prog1 (list 'car-safe (list 'cdr-safe place))
 	(list 'setq place (list 'cdr (list 'cdr place)))))
 (put 'cl-pop2 'edebug-form-spec 'edebug-sexps)
 
@@ -2456,14 +2456,14 @@ before assigning any PLACEs to the corresponding values."
 ;;;###autoload
 (defun cl-do-pop (place)
   (if (cl-simple-expr-p place)
-      (list 'prog1 (list 'car place) (list 'setf place (list 'cdr place)))
+      (list 'prog1 (list 'car-safe place) (list 'setf place (list 'cdr place)))
     (let* ((method (cl-setf-do-modify place t))
 	   (temp (gensym "--pop--")))
       (list 'let*
 	    (append (car method)
 		    (list (list temp (nth 2 method))))
 	    (list 'prog1
-		  (list 'car temp)
+		  (list 'car-safe temp)
 		  (cl-setf-do-store (nth 1 method) (list 'cdr temp)))))))
 
 ;;;###autoload

@@ -2411,29 +2411,13 @@ list that represents a doc string reference.
   (eval form)
   (byte-compile-keep-pending form 'byte-compile-normal-call))
 
-;; XEmacs change: be careful about multiple values with these three forms.
-(put 'progn 'byte-hunk-handler
-     #'(lambda (form)
-         (mapc 'byte-compile-file-form (cdr form))
-         ;; Return nil so the forms are not output twice.
-         nil))
-
-(put 'prog1 'byte-hunk-handler
-     #'(lambda (form)
-         (when (first form)
-           (byte-compile-file-form `(or ,(first form) nil))
-           (mapc 'byte-compile-file-form (cdr form))
-           nil)))
-
-(put 'prog2 'byte-hunk-handler
-     #'(lambda (form)
-         (when (first form)
-           (byte-compile-file-form (first form))
-           (when (second form)
-             (setq form (cdr form))
-             (byte-compile-file-form `(or ,(first form) nil))
-             (mapc 'byte-compile-file-form (cdr form))
-             nil))))
+(put 'progn 'byte-hunk-handler 'byte-compile-file-form-progn)
+(put 'prog1 'byte-hunk-handler 'byte-compile-file-form-progn)
+(put 'prog2 'byte-hunk-handler 'byte-compile-file-form-progn)
+(defun byte-compile-file-form-progn (form)
+  (mapc 'byte-compile-file-form (cdr form))
+  ;; Return nil so the forms are not output twice.
+  nil)
 
 ;; This handler is not necessary, but it makes the output from dont-compile
 ;; and similar macros cleaner.
