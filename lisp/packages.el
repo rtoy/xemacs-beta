@@ -85,12 +85,11 @@
   "Load path for packages last in the load path.")
 
 (defun packages-package-hierarchy-directory-names ()
-  "Returns a list package hierarchy directory names.
+  "Returns a list of package hierarchy directory names.
 These are the valid immediate directory names of package
 directories, directories with higher priority first"
-  (delq nil `("site-packages"
-              ,(when (featurep 'mule) "mule-packages")
-              "xemacs-packages")))
+  `("site-packages" ,@(when (featurep 'mule) '("mule-packages"))
+    "xemacs-packages"))
 
 (defun package-get-key-1 (info key)
   "Locate keyword `key' in list."

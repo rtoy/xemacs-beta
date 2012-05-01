@@ -958,7 +958,7 @@ A numeric argument serves as a repeat count."
 	(if (fixnump (car tail))
 	    (progn
 	      (setq done t)
-	      (setq buffer-undo-list (delq (car tail) buffer-undo-list))))
+	      (setq buffer-undo-list (delete* (car tail) buffer-undo-list))))
 	(setq tail (cdr tail))))
     (and modified (not (buffer-modified-p))
 	 (delete-auto-save-file-if-necessary recent-save)))
@@ -2100,7 +2100,7 @@ either a character or a symbol, uppercase or lowercase."
          (loop
            for keysym in motion-keys-for-shifted-motion
            with key = (event-key last-input-event)
-           with mods = (delq 'shift (event-modifiers last-input-event))
+           with mods = (delete* 'shift (event-modifiers last-input-event))
            with char-list = '(?a) ;; Some random character; the list will be
 				  ;; modified in the constants vector over
 				  ;; time.

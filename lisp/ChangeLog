@@ -1,5 +1,94 @@
 2012-05-01  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Avoid #'delq in core code, for the sake of style and a (very
+	slightly) smaller binary.
+
+	* behavior.el (disable-behavior):
+	* behavior.el (compute-behavior-group-children):
+	* buff-menu.el (buffers-tab-items):
+	* byte-optimize.el (byte-optimize-delay-constants-math):
+	* byte-optimize.el (byte-optimize-logmumble):
+	* byte-optimize.el (byte-decompile-bytecode-1):
+	* byte-optimize.el (byte-optimize-lapcode):
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-arglist-warn):
+	* bytecomp.el (byte-compile-warn-about-unresolved-functions):
+	* bytecomp.el (byte-compile-lambda):
+	* bytecomp.el (byte-compile-out-toplevel):
+	* bytecomp.el (byte-compile-insert):
+	* bytecomp.el (byte-compile-defalias-warn):
+	* cl-macs.el (cl-upcase-arg):
+	* cl-macs.el (cl-transform-lambda):
+	* cl-macs.el (cl-do-proclaim):
+	* cl-macs.el (defstruct):
+	* cl-macs.el (cl-make-type-test):
+	* cl-macs.el (define-compiler-macro):
+	* cl-macs.el (delete-duplicates):
+	* cus-edit.el (widget-face-value-delete):
+	* cus-edit.el (face-history):
+	* easymenu.el (easy-menu-remove):
+	* files.el (files-fetch-hook-value):
+	* files.el (file-expand-wildcards):
+	* font-lock.el (font-lock-update-removed-keyword-alist):
+	* font-lock.el (font-lock-remove-keywords):
+	* frame.el (frame-initialize):
+	* frame.el (frame-notice-user-settings):
+	* frame.el (set-frame-font):
+	* frame.el (delete-other-frames):
+	* frame.el (get-frame-for-buffer-noselect):
+	* gnuserv.el (gnuserv-kill-buffer-function):
+	* gnuserv.el (gnuserv-check-device):
+	* gnuserv.el (gnuserv-kill-client):
+	* gnuserv.el (gnuserv-buffer-done-1):
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* gutter-items.el (buffers-tab-items):
+	* gutter.el (set-gutter-element-visible-p):
+	* info.el (Info-find-file-node):
+	* info.el (Info-history-add):
+	* info.el (Info-build-annotation-completions):
+	* info.el (Info-index):
+	* info.el (Info-reannotate-node):
+	* itimer.el (delete-itimer):
+	* itimer.el (start-itimer):
+	* lib-complete.el (lib-complete:cache-completions):
+	* loadhist.el (unload-feature):
+	* menubar-items.el (build-buffers-menu-internal):
+	* menubar.el (delete-menu-item):
+	* menubar.el (relabel-menu-item):
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	* mule/make-coding-system.el (fixed-width-generate-helper):
+	* next-error.el (next-error-find-buffer):
+	* obsolete.el:
+	* obsolete.el (find-non-ascii-charset-string):
+	* obsolete.el (find-non-ascii-charset-region):
+	* occur.el (multi-occur-by-filename-regexp):
+	* occur.el (occur-1):
+	* packages.el (packages-package-hierarchy-directory-names):
+	* packages.el (package-get-key-1):
+	* process.el (setenv):
+	* simple.el (undo):
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	* sound.el (load-sound-file):
+	* wid-edit.el (widget-field-value-delete):
+	* wid-edit.el (widget-checklist-match-inline):
+	* wid-edit.el (widget-checklist-match-find):
+	* wid-edit.el (widget-editable-list-delete-at):
+	* wid-edit.el (widget-editable-list-entry-create):
+	* window.el (quit-window):
+	* x-font-menu.el (x-reset-device-font-menus-core):
+
+	1. Replace (delq nil (mapcar ....)) with analogous (mapcan ...)
+	forms; this is in non-dumped files, it was done previously in
+	dumped files.
+	2. Replace (delq FOO (copy-sequence BAR)) with (remove* FOO BAR),
+	where #'eq and #'eql are equivalent
+	3. Replace (delq FOO BAR) with (delete* FOO BAR), where FOO is not
+	a non-fixnum number. Saves a little space in the dumped file
+	(since the compiler macro adds :test #'eq to the delete* call if
+	it's not clear that FOO is not a non-fixnum number).
+
+2012-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* byte-optimize.el (byte-optimize-form-code-walker):
 	* byte-optimize.el (byte-optimize-or):
 	Improve handling of for-effect here; we don't need to worry about

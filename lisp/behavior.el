@@ -403,7 +403,7 @@ Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
       (message "Disabling behavior %s...done" behavior)
       (let ((within-behavior-enabling-disabling t))
 	(customize-set-variable 'enabled-behavior-list
-				(delq behavior enabled-behavior-list))))))
+				(delete* behavior enabled-behavior-list))))))
 
 (defun compute-behavior-group-children (group hash)
   "Compute the actual children for GROUP and its subgroups.

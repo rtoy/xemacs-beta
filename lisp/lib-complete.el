@@ -180,7 +180,7 @@ where each <cache-record> has the form
 	 (new-cache-records (list (list root modtimes table))))
     (if (not cache-entry) nil
       ;; Remove old cache entry
-      (setq lib-complete:cache (delq cache-entry lib-complete:cache))
+      (setq lib-complete:cache (delete* cache-entry lib-complete:cache))
       ;; Copy non-redundant entries from old cache entry
       (while cache-records
 	(if (or (equal root (nth 0 (car cache-records)))

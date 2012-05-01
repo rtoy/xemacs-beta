@@ -1488,7 +1488,7 @@ otherwise pop it")
 		    (byte-compile-arglist-signature-string (cons min max))))
 
 	      (setq byte-compile-unresolved-functions
-		    (delq calls byte-compile-unresolved-functions)))))
+		    (delete* calls byte-compile-unresolved-functions)))))
       )))
 
 ;; If we have compiled any calls to functions which are not known to be
@@ -1503,7 +1503,7 @@ otherwise pop it")
 	   (while rest
 	     (if (assq (car (car rest)) byte-compile-autoload-environment)
 		 (setq byte-compile-unresolved-functions
-		       (delq (car rest) byte-compile-unresolved-functions)))
+		       (delete* (car rest) byte-compile-unresolved-functions)))
 	     (setq rest (cdr rest)))))
      ;; Now warn.
      (if (cdr byte-compile-unresolved-functions)
@@ -2757,8 +2757,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	  (let ((new-bindings
 		 (mapcar #'(lambda (x) (cons x byte-compile-arglist-bit))
 			 (and (memq 'free-vars byte-compile-warnings)
-			      (delq '&rest (delq '&optional
-						 (copy-sequence arglist)))))))
+			      (remove* '&rest (remove* '&optional arglist))))))
 	    (nconc new-bindings
 		   (cons 'new-scope byte-compile-bound-variables))))
 	 (body (cdr (cdr fun)))
@@ -2963,7 +2962,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 				     (cons (nth 1 (car body)) (cdr body))
 				   (cons tmp body))))
 		     (or (eq output-type 'file)
-			 (not (delq nil (mapcar 'consp (cdr (car body))))))))
+                         (notany #'consp (cdar body)))))
 	      (setq rest (cdr rest)))
 	    rest))
       (let ((byte-compile-vector (byte-compile-constants-vector)))
@@ -3814,7 +3813,7 @@ forcing function quoting" ,en (car form))))
 	 (if (cdr (cdr form))
 	     (byte-compile-out 'byte-insertN (length (cdr form)))
 	   (byte-compile-out 'byte-insert 0)))
-	((memq t (mapcar 'consp (cdr (cdr form))))
+	((some #'consp (cddr form))
 	 (byte-compile-normal-call form))
 	;; We can split it; there is no function call after inserting 1st arg.
 	(t
@@ -4669,7 +4668,7 @@ optimized away--just byte compile and return the BODY."
   (let ((calls (assq new byte-compile-unresolved-functions)))
     (if calls
 	(setq byte-compile-unresolved-functions
-	      (delq calls byte-compile-unresolved-functions)))))
+	      (delete* calls byte-compile-unresolved-functions)))))
 
 ;;; tags
 
