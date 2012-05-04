@@ -1,3 +1,19 @@
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c:
+	Move various #defines and enums to regex.h, since we need them
+	when implementing #'skip-chars-{backward,forward}.
+	* regex.c (re_wctype):
+	* regex.c (re_iswctype):
+	Be more robust about case insensitivity here.
+	* regex.c (regex_compile):
+	* regex.h:
+	* regex.h (RE_ISWCTYPE_ARG_DECL):
+	* regex.h (CHAR_CLASS_MAX_LENGTH):
+	* search.c (skip_chars):
+	Implement support for the predefined character classes in this
+	function.
+
 2012-04-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* search.c (string_match_1): Actually use the POSIX argument here,

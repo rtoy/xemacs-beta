@@ -30,6 +30,8 @@
 #define RE_LISP_CONTEXT_ARGS_DECL , Lisp_Object lispobj, struct buffer *lispbuf, struct syntax_cache *scache
 #define RE_LISP_CONTEXT_ARGS_MULE_DECL , Lisp_Object lispobj, struct buffer *USED_IF_MULE (lispbuf), struct syntax_cache *scache
 #define RE_LISP_CONTEXT_ARGS , lispobj, lispbuf, scache
+#define RE_ISWCTYPE_ARG_DECL , struct buffer *lispbuf
+#define RE_ISWCTYPE_ARG(varname) , varname
 #else
 #define RE_TRANSLATE_TYPE char *
 #define RE_LISP_SHORT_CONTEXT_ARGS_DECL
@@ -37,6 +39,8 @@
 #define RE_LISP_CONTEXT_ARGS_DECL
 #define RE_LISP_CONTEXT_ARGS_MULE_DECL
 #define RE_LISP_CONTEXT_ARGS
+#define RE_ISWCTYPE_ARG_DECL 
+#define RE_ISWCTYPE_ARG(varname)
 #define Elemcount ssize_t
 #define Bytecount ssize_t
 #endif /* emacs */
@@ -558,6 +562,86 @@ typedef enum
     RECC_MULTIBYTE, RECC_NONASCII,
     RECC_ASCII, RECC_UNIBYTE
 } re_wctype_t;
+
+#define CHAR_CLASS_MAX_LENGTH  9 /* Namely, `multibyte'.  */
+
+/* Map a string to the char class it names (if any).  */
+re_wctype_t re_wctype (const char *);
+
+/* Is character CH a member of the character class CC? */
+int re_iswctype (int ch, re_wctype_t cc RE_ISWCTYPE_ARG_DECL);
+
+/* Bits used to implement the multibyte-part of the various character
+   classes such as [:alnum:] in a charset's range table. XEmacs; use an
+   enum, so they're visible in the debugger. */
+enum
+{
+  BIT_WORD = (1 << 0),
+  BIT_LOWER = (1 << 1),
+  BIT_PUNCT = (1 << 2),
+  BIT_SPACE = (1 << 3),
+  BIT_UPPER = (1 << 4),
+  /* XEmacs; we need this, because we unify treatment of ASCII and non-ASCII
+     (possible matches) in charset_mule. [:alpha:] matches all characters
+     with word syntax, with the exception of [0-9]. We don't need
+     BIT_MULTIBYTE. */
+  BIT_ALPHA = (1 << 5)
+};
+
+#ifdef emacs
+reg_errcode_t compile_char_class (re_wctype_t cc, Lisp_Object rtab,
+                                  Bitbyte *flags_out);
+
+#endif
+
+/* isalpha etc. are used for the character classes.  */
+#include <ctype.h>
+
+#ifdef emacs
+
+/* 1 if C is an ASCII character.  */
+#define ISASCII(c) ((c) < 0x80)
+
+/* 1 if C is a unibyte character.  */
+#define ISUNIBYTE ISASCII
+
+/* The Emacs definitions should not be directly affected by locales.  */
+
+/* In Emacs, these are only used for single-byte characters.  */
+#define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
+#define ISCNTRL(c) ((c) < ' ')
+#define ISXDIGIT(c) (ISDIGIT (c) || ((c) >= 'a' && (c) <= 'f')	\
+		     || ((c) >= 'A' && (c) <= 'F'))
+
+/* This is only used for single-byte characters.  */
+#define ISBLANK(c) ((c) == ' ' || (c) == '\t')
+
+/* The rest must handle multibyte characters.  */
+
+#define ISGRAPH(c) ((c) > ' ' && (c) != 0x7f)
+#define ISPRINT(c) ((c) == ' ' || ISGRAPH (c))
+#define ISALPHA(c) (ISASCII (c) ? (((c) >= 'a' && (c) <= 'z')		\
+				   || ((c) >= 'A' && (c) <= 'Z'))	\
+		    : ISWORD (c))
+#define ISALNUM(c) (ISALPHA (c) || ISDIGIT (c))
+
+#define ISLOWER(c) LOWERCASEP (lispbuf, c)
+
+#define ISPUNCT(c) (ISASCII (c)                                 \
+		    ? ((c) > ' ' && (c) < 0x7F			\
+		       && !(((c) >= 'a' && (c) <= 'z')		\
+		            || ((c) >= 'A' && (c) <= 'Z')	\
+		            || ((c) >= '0' && (c) <= '9')))	\
+		    : !ISWORD (c))
+
+#define ISSPACE(c) \
+	(SYNTAX (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf), c) == Swhitespace)
+
+#define ISUPPER(c) UPPERCASEP (lispbuf, c)
+
+#define ISWORD(c) (SYNTAX (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf), c) == Sword)
+
+#endif 
 
 END_C_DECLS
 
