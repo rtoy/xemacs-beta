@@ -1,3 +1,11 @@
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el (equal):
+	* automated/regexp-tests.el (Assert-char-class):
+	Correct a stray parenthesis; add tests for the predefined
+	character classes with #'skip-chars-{forward,backward}; update the
+	tests to reflect some changed design decisions on my part.
+
 2012-04-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el: Check that #'posix-string-match

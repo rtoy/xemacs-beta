@@ -1,3 +1,11 @@
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/searching.texi (Regular Expressions):
+	* lispref/searching.texi (Syntax of Regexps):
+	* lispref/searching.texi (Char Classes):
+	* lispref/searching.texi (Regexp Example):
+	Document the predefined character classes in this file.
+
 2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.texi (Top):

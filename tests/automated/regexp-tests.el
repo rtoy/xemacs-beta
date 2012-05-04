@@ -76,7 +76,7 @@
   (save-match-data
     (progn (posix-string-match "i\\|ii" "ii") (match-data)))
   '(0 2))
- "checking #'posix-string-match actually returns the longest match"))
+ "checking #'posix-string-match actually returns the longest match")
 
 ;; looking-at
 (with-temp-buffer
@@ -665,7 +665,25 @@ baaaa
          (Assert (null (string-match ,(concat "[^" class
                                               (string non-matching-char) "]")
                                      ,(concat (string matching-char)
-                                              (string non-matching-char)))))))
+                                              (string non-matching-char)))))
+         (let ((old-case-fold-search case-fold-search))
+           (with-temp-buffer
+             (setq case-fold-search old-case-fold-search)
+             (insert-char ,matching-char 20)
+             (insert-char ,non-matching-char 20)
+             (goto-char (point-min))
+             (Assert (eql (skip-chars-forward ,class) 20)
+                     ,(format "making sure %s skips %S forward"
+                              class matching-char))
+             (Assert (eql (skip-chars-forward ,(concat "^" class)) 20)
+                     ,(format "making sure ^%s skips %S forward"
+                              class non-matching-char))
+             (Assert (eql (skip-chars-backward ,(concat "^" class)) -20)
+                     ,(format "making sure ^%s skips %S backward"
+                              class non-matching-char))
+             (Assert (eql (skip-chars-backward ,class) -20)
+                     ,(format "making sure %s skips %S backward"
+                              class matching-char))))))
      (Assert-never-matching (class &rest characters)
        (cons
         'progn
@@ -706,7 +724,7 @@ baaaa
   (Assert-char-class "[:alnum:]" ?A ?/)
   (Assert-char-class "[:alnum:]" ?Z ?!)
   (Assert-char-class "[:alnum:]" ?0 ?,)
-  (Assert-char-class "[:alnum:]" ?9 ?$)
+  (Assert-char-class "[:alnum:]" ?9 ?\t)
   (Assert-char-class "[:alnum:]" ?b ?\x00)
   (Assert-char-class "[:alnum:]" ?c ?\x09)
   (Assert-char-class "[:alnum:]" ?d ?\   )
@@ -724,13 +742,12 @@ baaaa
    (decode-char 'ucs #x03B2)  ;; GREEK SMALL LETTER BETA
    (decode-char 'ucs #x0385)) ;; GREEK DIALYTIKA TONOS
 
-  ;; Word is equivalent to alnum in this implementation.
   (Assert-char-class "[:word:]" ?a ?.)
   (Assert-char-class "[:word:]" ?z ?')
   (Assert-char-class "[:word:]" ?A ?/)
   (Assert-char-class "[:word:]" ?Z ?!)
   (Assert-char-class "[:word:]" ?0 ?,)
-  (Assert-char-class "[:word:]" ?9 ?$)
+  (Assert-char-class "[:word:]" ?9 ?\t)
   (Assert-char-class "[:word:]" ?b ?\x00)
   (Assert-char-class "[:word:]" ?c ?\x09)
   (Assert-char-class "[:word:]" ?d ?\   )
@@ -1083,7 +1100,7 @@ baaaa
 
   (Assert-never-matching
    "[:unibyte:]"
-   ?\x01 ?\t ?A ?B ?C ?\x7f
+   ?\x80 ?\xe4 ?\xdf ?\xf8
    (decode-char 'ucs #x03B2) ;; GREEK SMALL LETTER BETA
    (decode-char 'ucs #x0410) ;; CYRILLIC CAPITAL LETTER A
    (decode-char 'ucs #x0430) ;; CYRILLIC SMALL LETTER A

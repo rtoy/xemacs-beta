@@ -180,6 +180,7 @@ section.
 
 @menu
 * Syntax of Regexps::       Rules for writing regular expressions.
+* Char Classes::            Predefined character classes for searching.
 * Regexp Example::          Illustrates regular expression syntax.
 @end menu
 
@@ -334,6 +335,11 @@ immediately after a range.  (You can replace one individual character
 
 To include @samp{^} in a set, put it anywhere but at the beginning of
 the set.
+
+It is also possible to specify named character classes as part of your
+character set; for example, @samp{[:xdigit:]} will match hexadecimal
+digits, @samp{[:nonascii:]} will match characters outside the basic
+ASCII set.  These are documented elsewhere, @pxref{Char Classes}.
 
 @item [^ @dots{} ]
 @cindex @samp{^} in regexp
@@ -603,6 +609,61 @@ whitespace:
 @end group
 @end example
 @end defun
+
+@node Char Classes
+@subsection Char Classes
+
+These are the predefined character classes available within regular
+expression character sets, and within @samp{skip-chars-forward} and
+@samp{skip-chars-backward}, @xref{Skipping Characters}.
+
+@table @samp
+@item [:alnum:]
+This matches any ASCII letter or digit, or any non-ASCII character
+with word syntax.
+@item [:alpha:]
+This matches any ASCII letter, or any non-ASCII character with word syntax.
+@item [:ascii:]
+This matches any character with a numeric value below @samp{?\x80}.
+@item [:blank:]
+This matches space or tab.
+@item [:cntrl:]
+This matches any character with a numeric value below @samp{?\x20},
+the code for space; these are the ASCII control characters.
+@item [:digit:]
+This matches the characters @samp{?0} to @samp{?9}, inclusive.
+@item [:graph:]
+This matches ``graphic'' characters, with numeric values greater than
+@samp{?\x20}, exclusive of @samp{?\x7f}, the delete character. 
+@item [:lower:]
+This matches minuscule characters, or any character with case
+information if @samp{case-fold-search} is non-nil.
+@item [:multibyte:]
+This matches non-ASCII characters, that is, any character with a
+numeric value above @samp{?\x7f}.
+@item [:nonascii:]
+This is equivalent to @samp{[:multibyte:]}.
+@item [:print:]
+This is equivalent to [:graph:], but also matches the space character,
+@samp{?\x20}.
+@item [:punct:]
+This matches non-control, non-alphanumeric ASCII characters, or any
+non-ASCII character without word syntax.
+@item [:space:]
+This matches any character with whitespace syntax.
+@item [:unibyte:]
+This is a GNU Emacs extension; in XEmacs it is equivalent to
+@samp{[:ascii:]}. Note that this means it is not equivalent to
+@samp{"\x00-\xff"}, which one might have assumed to be the case.
+@item [:upper:]
+This matches majuscule characters, or any character with case
+information if @samp{case-fold-search} is non-nil.
+@item [:word:]
+This matches any character with word syntax.
+@item [:xdigit:]
+This matches hexadecimal digits, so the decimal digits @samp{0-9} and the
+letters @samp{a-F} and @samp{A-F}.
+@end table
 
 @node Regexp Example
 @subsection Complex Regexp Example
