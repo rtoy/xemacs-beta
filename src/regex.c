@@ -178,51 +178,7 @@ init_syntax_once (void)
 /* isalpha etc. are used for the character classes.  */
 #include <ctype.h>
 
-#ifdef emacs
-
-/* 1 if C is an ASCII character.  */
-#define ISASCII(c) ((c) < 0x80)
-
-/* 1 if C is a unibyte character.  */
-#define ISUNIBYTE(c) 0
-
-/* The Emacs definitions should not be directly affected by locales.  */
-
-/* In Emacs, these are only used for single-byte characters.  */
-#define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
-#define ISCNTRL(c) ((c) < ' ')
-#define ISXDIGIT(c) (ISDIGIT (c) || ((c) >= 'a' && (c) <= 'f')	\
-		     || ((c) >= 'A' && (c) <= 'F'))
-
-/* This is only used for single-byte characters.  */
-#define ISBLANK(c) ((c) == ' ' || (c) == '\t')
-
-/* The rest must handle multibyte characters.  */
-
-#define ISGRAPH(c) ((c) > ' ' && (c) != 0x7f)
-#define ISPRINT(c) ((c) == ' ' || ISGRAPH (c))
-#define ISALPHA(c) (ISASCII (c) ? (((c) >= 'a' && (c) <= 'z')		\
-				   || ((c) >= 'A' && (c) <= 'Z'))	\
-		    : ISWORD (c))
-#define ISALNUM(c) (ISALPHA (c) || ISDIGIT (c))
-
-#define ISLOWER(c) LOWERCASEP (lispbuf, c)
-
-#define ISPUNCT(c) (ISASCII (c)                                 \
-		    ? ((c) > ' ' && (c) < 0x7F			\
-		       && !(((c) >= 'a' && (c) <= 'z')		\
-		            || ((c) >= 'A' && (c) <= 'Z')	\
-		            || ((c) >= '0' && (c) <= '9')))	\
-		    : !ISWORD (c))
-
-#define ISSPACE(c) \
-	(SYNTAX (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf), c) == Swhitespace)
-
-#define ISUPPER(c) UPPERCASEP (lispbuf, c)
-
-#define ISWORD(c) (SYNTAX (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf), c) == Sword)
-
-#else /* not emacs */
+#ifndef emacs /* For the emacs build, we need these in the header. */
 
 /* 1 if C is an ASCII character.  */
 #define ISASCII(c) ((c) < 0200)
@@ -2013,23 +1969,6 @@ typedef struct
 /* The next available element.  */
 #define COMPILE_STACK_TOP (compile_stack.stack[compile_stack.avail])
 
-/* Bits used to implement the multibyte-part of the various character
-   classes such as [:alnum:] in a charset's range table. XEmacs; use an
-   enum, so they're visible in the debugger. */
-enum
-{
-  BIT_WORD = (1 << 0),
-  BIT_LOWER = (1 << 1),
-  BIT_PUNCT = (1 << 2),
-  BIT_SPACE = (1 << 3),
-  BIT_UPPER = (1 << 4),
-  /* XEmacs; we need this, because we unify treatment of ASCII and non-ASCII
-     (possible matches) in charset_mule. [:alpha:] matches all characters
-     with word syntax, with the exception of [0-9]. We don't need
-     BIT_MULTIBYTE. */
-  BIT_ALPHA = (1 << 5)
-};
-
 /* Set the bit for character C in a bit vector.  */
 #define SET_LIST_BIT(c)				\
   (buf_end[((unsigned char) (c)) / BYTEWIDTH]	\
@@ -2059,10 +1998,8 @@ enum
        } 								\
     }
 
-#define CHAR_CLASS_MAX_LENGTH  9 /* Namely, `multibyte'.  */
-
 /* Map a string to the char class it names (if any).  */
-static re_wctype_t
+re_wctype_t
 re_wctype (const char *string)
 {
   if      (STREQ (string, "alnum"))	return RECC_ALNUM;
@@ -2086,17 +2023,10 @@ re_wctype (const char *string)
 }
 
 /* True if CH is in the char class CC.  */
-static re_bool
-re_iswctype (int ch, re_wctype_t cc)
+int
+re_iswctype (int ch, re_wctype_t cc
+             RE_ISWCTYPE_ARG_DECL)
 {
-#ifdef emacs
-  /* This is cheesy, lispbuf isn't available to us when compiling the
-     pattern. It's effectively only called (on Mule builds) when the current
-     buffer doesn't matter (e.g. for RECC_ASCII, RECC_CNTRL), so it's not a
-     big deal. */
-  struct buffer *lispbuf = current_buffer;
-#endif
-
   switch (cc)
     {
     case RECC_ALNUM: return ISALNUM (ch) != 0;
@@ -2105,11 +2035,20 @@ re_iswctype (int ch, re_wctype_t cc)
     case RECC_CNTRL: return ISCNTRL (ch) != 0;
     case RECC_DIGIT: return ISDIGIT (ch) != 0;
     case RECC_GRAPH: return ISGRAPH (ch) != 0;
-    case RECC_LOWER: return ISLOWER (ch) != 0;
     case RECC_PRINT: return ISPRINT (ch) != 0;
     case RECC_PUNCT: return ISPUNCT (ch) != 0;
     case RECC_SPACE: return ISSPACE (ch) != 0;
+#ifdef emacs
+    case RECC_UPPER: 
+      return NILP (lispbuf->case_fold_search) ? ISUPPER (ch) != 0
+        : !NOCASEP (lispbuf, ch);
+    case RECC_LOWER: 
+      return NILP (lispbuf->case_fold_search) ? ISLOWER (ch) != 0
+        : !NOCASEP (lispbuf, ch);
+#else
     case RECC_UPPER: return ISUPPER (ch) != 0;
+    case RECC_LOWER: return ISLOWER (ch) != 0;
+#endif
     case RECC_XDIGIT: return ISXDIGIT (ch) != 0;
     case RECC_ASCII: return ISASCII (ch) != 0;
     case RECC_NONASCII: case RECC_MULTIBYTE: return !ISASCII (ch);
@@ -2140,6 +2079,10 @@ re_wctype_can_match_non_ascii (re_wctype_t cc)
     }
 }
 
+#endif /* MULE */
+
+#ifdef emacs
+
 /* Return a bit-pattern to use in the range-table bits to match multibyte
    chars of class CC.  */
 static unsigned char
@@ -2158,7 +2101,8 @@ re_wctype_to_bit (re_wctype_t cc)
     case RECC_ASCII: case RECC_DIGIT: case RECC_XDIGIT: case RECC_CNTRL:
     case RECC_BLANK: case RECC_UNIBYTE: case RECC_ERROR: return 0;
     default:
-      abort ();
+      ABORT ();
+      return 0;
     }
 }
 
@@ -2185,9 +2129,12 @@ static reg_errcode_t compile_extended_range (re_char **p_ptr,
 					     RE_TRANSLATE_TYPE translate,
 					     reg_syntax_t syntax,
 					     Lisp_Object rtab);
-static reg_errcode_t compile_char_class (re_wctype_t cc, Lisp_Object rtab,
-                                         Bitbyte *flags_out);
 #endif /* MULE */
+#ifdef emacs
+reg_errcode_t compile_char_class (re_wctype_t cc, Lisp_Object rtab,
+                                  Bitbyte *flags_out);
+#endif
+
 static re_bool group_match_null_string_p (unsigned char **p,
 					  unsigned char *end,
 					  register_info_type *reg_info);
@@ -2814,7 +2761,8 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 #endif /* MULE */
 			for (ch = 0; ch < (1 << BYTEWIDTH); ++ch)
 			  {
-			    if (re_iswctype (ch, cc))
+			    if (re_iswctype (ch, cc
+                                             RE_ISWCTYPE_ARG (current_buffer)))
 			      {
 				SET_LIST_BIT (ch);
 			      }
@@ -3938,7 +3886,11 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
   return REG_NOERROR;
 }
 
-static reg_errcode_t
+#endif /* MULE */
+
+#ifdef emacs
+
+reg_errcode_t
 compile_char_class (re_wctype_t cc, Lisp_Object rtab, Bitbyte *flags_out)
 {
   *flags_out |= re_wctype_to_bit (cc);
