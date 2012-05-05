@@ -1,3 +1,82 @@
+2012-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove some redundant functions; turn other utility functions into
+	labels, avoiding visibility in the global namespace, and reducing
+	the size of the dumped binary.
+
+	* auto-save.el (auto-save-unhex): Removed.
+	* auto-save.el (auto-save-unescape-name): Use #'string-to-number
+	instead of #'auto-save-unhex.
+	* files.el (save-some-buffers):
+	* files.el (save-some-buffers-1): Changed to a label.
+	* files.el (not-modified):
+	* gui.el (make-gui-button):
+	* gui.el (gui-button-action): Changed to a label.
+	* gui.el (insert-gui-button):
+	* indent.el (indent-for-tab-command):
+	* indent.el (insert-tab): Changed to a label.
+	* indent.el (indent-rigidly):
+	* isearch-mode.el:
+	* isearch-mode.el (isearch-ring-adjust):
+	* isearch-mode.el (isearch-ring-adjust1): Changed to a label.
+	* isearch-mode.el (isearch-pre-command-hook):
+	* isearch-mode.el (isearch-maybe-frob-keyboard-macros): Changed to
+	a label.
+	* isearch-mode.el (isearch-highlight):
+	* isearch-mode.el (isearch-make-extent): Changed to a label.
+	* itimer.el:
+	* itimer.el (itimer-decrement): Removed, replaced uses with decf.
+	* itimer.el (itimer-increment): Removed, replaced uses with incf.
+	* itimer.el (itimer-signum): Removed, replaced uses with minusp, plusp.
+	* itimer.el (itimer-name):
+	* itimer.el (check-itimer): Removed, replaced with #'check-type calls.
+	* itimer.el (itimer-value):
+	* itimer.el (check-itimer-coerce-string): Removed.
+	* itimer.el (itimer-restart):
+	* itimer.el (itimer-function):
+	* itimer.el (check-nonnegative-number): Removed.
+	* itimer.el (itimer-uses-arguments):
+	* itimer.el (check-string): Removed.
+	* itimer.el (itimer-function-arguments):
+	* itimer.el (itimer-recorded-run-time):
+	* itimer.el (set-itimer-name):
+	* itimer.el (set-itimer-value):
+	* itimer.el (set-itimer-value-internal):
+	* itimer.el (set-itimer-restart):
+	* itimer.el (set-itimer-function):
+	* itimer.el (set-itimer-is-idle):
+	* itimer.el (set-itimer-recorded-run-time):
+	* itimer.el (get-itimer):
+	* itimer.el (delete-itimer):
+	* itimer.el (start-itimer):
+	* itimer.el (activate-itimer):
+	* itimer.el (itimer-edit-set-field):
+	* itimer.el (itimer-edit-next-field):
+	* itimer.el (itimer-edit-previous-field):
+	Use incf, decf, plusp, minusp and the more general argument type
+	checking macros.
+	* lib-complete.el:
+	* lib-complete.el (lib-complete:better-root): Changed to a label.
+	* lib-complete.el (lib-complete:get-completion-table): Changed to
+	a label.
+	* lib-complete.el (read-library-internal): Include labels.
+	* lib-complete.el (lib-complete:cache-completions): Changed to a
+	label.
+	* minibuf.el (read-buffer): Use #'set-difference, don't reinvent it.
+	* newcomment.el (comment-padright): Use a label instead of
+	repeating a lambda expression.
+	* packages.el (package-get-key):
+	* packages.el (package-get-key-1): Removed, use #'getf instead.
+	* simple.el (kill-backward-chars): Removed; this isn't used.
+	* simple.el (what-cursor-position):
+	(lambda (arg) (format "%S" arg) -> #'prin1-to-string. 
+	* simple.el (debug-print-1): Renamed to #'debug-print.
+	* simple.el (debug-print): Removed, #'debug-print-1 was equivalent.
+	* subr.el (integer-to-bit-vector): check-nonnegative-number no
+	longer available.
+	* widget.el (define-widget):
+	* widget.el (define-widget-keywords): Removed, this was long obsolete.
+
 2012-05-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Avoid #'delq in core code, for the sake of style and a (very

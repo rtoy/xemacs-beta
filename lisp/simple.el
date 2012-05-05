@@ -407,12 +407,6 @@ column specified by the function `current-left-margin'."
   (if (eq arg '-) (setq arg -1))
   (kill-region (point) (+ (point) arg)))
 
-;; Internal subroutine of backward-delete-char
-(defun kill-backward-chars (arg)
-  (if (listp arg) (setq arg (car arg)))
-  (if (eq arg '-) (setq arg -1))
-  (kill-region (point) (- (point) arg)))
-
 (defun backward-delete-char-untabify (arg &optional killp)
   "Delete characters backward, changing tabs into spaces.
 Delete ARG chars, and kill (save in kill ring) if KILLP is non-nil.
@@ -824,8 +818,7 @@ separate buffer.  See also the command `describe-char'."
                        percent narrowed-details col hscroll)
         (message "Char: %s (%s %s) point=%d of %d(%d%%)%s column %d %s"
                  (text-char-description char) unicode-string
-                 (mapconcat (lambda (arg) (format "%S" arg))
-                            (split-char char) " ")
+                 (mapconcat #'prin1-to-string (split-char char) " ")
                  pos total
                  percent narrowed-details col hscroll)))))
 
@@ -4766,8 +4759,8 @@ The C code calls this periodically, right before redisplay."
   (cond ((featurep 'xemacs) "XEmacs")
 	(t "Emacs")))
 
-(defun debug-print-1 (&rest args)
-  "Send a debugging-type string to standard output.
+(defun debug-print (&rest args)
+  "Send a string to the debugging output.
 If the first argument is a string, it is considered to be a format
 specifier if there are sufficient numbers of other args, and the string is
 formatted using (apply #'format args).  Otherwise, each argument is printed
@@ -4789,15 +4782,6 @@ individually in a numbered list."
 	  (prin1 sgra)
 	  (incf i))
 	(terpri)))))
-
-(defun debug-print (&rest args)
-  "Send a string to the debugging output.
-If the first argument is a string, it is considered to be a format
-specifier if there are sufficient numbers of other args, and the string is
-formatted using (apply #'format args).  Otherwise, each argument is printed
-individually in a numbered list."
-  (let ((standard-output 'external-debugging-output))
-    (apply #'debug-print-1 args)))
 
 (defun debug-backtrace ()
   "Send a backtrace to the debugging output."
