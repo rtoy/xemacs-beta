@@ -105,10 +105,10 @@ When ACTION is called, the buffer containing the button is made current."
     (vector 'button
             :descriptor string
             :face 'gui-button-face
-            :callback-ex `(lambda (image-instance event)
-                            (gui-button-action image-instance
-                                               (quote ,action)
-                                               (quote ,user-data))))))
+            :callback-ex
+            `(lambda (image-instance event)
+               (funcall ,#'gui-button-action image-instance ',action
+                        ',user-data)))))
 
 (defun insert-gui-button (button &optional pos buffer)
   "Insert GUI button BUTTON at POS in BUFFER."

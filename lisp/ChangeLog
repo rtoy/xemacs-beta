@@ -1,5 +1,46 @@
 2012-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Co-operate with the byte-optimizer in the bytecomp.el labels
+	implementation, don't work against it.
+
+	* byte-optimize.el:
+	* byte-optimize.el (byte-compile-inline-expand):
+	Call #'byte-compile-unfold-lambda explicitly here, don't assume
+	that the byte-optimizer will do it.
+	* byte-optimize.el (byte-compile-unfold-lambda):
+	Call #'byte-optimize-body on the body, don't just mapcar
+	#'byte-optimize-form along it.
+	* byte-optimize.el (byte-optimize-lambda): New. Optimize a lambda
+	form. 
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	Descend lambda expressions, defun, and defmacro, relevant for
+	lexically-oriented operators like #'labels.
+	* byte-optimize.el (byte-optimize-body): Only return a non-eq
+	object if we've actually optimized something
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	In the labels implementation, work with the byte optimizer, not
+	against it; warn when labels are defined but not used,
+	automatically inline labels that are used only once.
+	* bytecomp.el (byte-recompile-directory):
+	No need to wrap #'byte-compile-report-error in a lambda with
+	#'call-with-condition-handler here. 
+	* bytecomp.el (byte-compile-form):
+	Don't inline compiled-function objects, they're probably labels.
+	* bytecomp.el (byte-compile-funcall):
+	No longer inline lambdas, trust the byte optimizer to have done it
+	properly, even for labels.
+	* cl-extra.el (cl-macroexpand-all):
+	Treat labels established by the byte compiler distinctly from
+	those established by cl-macs.el.
+	* cl-macs.el (cl-do-proclaim):
+	Treat labels established by the byte compiler distinctly from
+	those established by cl-macs.el.
+	* gui.el (make-gui-button):
+	When referring to the #'gui-button-action label, quote it using
+	function, otherwise there's a warning from the byte compiler.
+
+2012-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Remove some redundant functions; turn other utility functions into
 	labels, avoiding visibility in the global namespace, and reducing
 	the size of the dumped binary.
