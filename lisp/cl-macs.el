@@ -1863,39 +1863,40 @@ Returns the first of the multiple values given by FORM."
 		    byte-compile-bound-variables))))
 
 	((eq (car-safe spec) 'inline)
-	 (while (setq spec (cdr spec))
-	   (let ((assq (cdr (assq (car spec) byte-compile-macro-environment))))
-	     (if (and (consp assq) (eq (nth 1 (nth 1 assq)) 'cl-labels-args)
-		      (atom (setq assq (nth 2 (nth 2 assq)))))
-		 ;; It's a label, and we're using the labels
-		 ;; implementation in bytecomp.el. Tell the compiler
-		 ;; to inline it, don't mark the symbol to be inlined
-		 ;; globally.
-		 (setf (getf (aref (compiled-function-constants assq) 0)
-                             'byte-optimizer)
-                       'byte-compile-inline-expand)
-	       (or (memq (get (car spec) 'byte-optimizer)
-			 '(nil byte-compile-inline-expand))
-		   (error
-		    "%s already has a byte-optimizer, can't make it inline"
-		    (car spec)))
-	       (put (car spec) 'byte-optimizer 'byte-compile-inline-expand)))))
+         (while (setq spec (cdr spec))
+           (let* ((assq (cdr (assq (car spec)
+                                   byte-compile-macro-environment)))
+                  (symbol (if (and (consp assq)
+                                   (eq (nth 1 (nth 1 assq))
+                                       'byte-compile-labels-args))
+                              ;; It's a label, and we're using the labels
+                              ;; implementation in bytecomp.el. Tell the
+                              ;; compiler to inline it, don't mark the
+                              ;; symbol to be inlined globally.
+                              (nth 1 (nth 1 (nth 3 assq)))
+                            (car spec))))
+             (or (memq (get symbol 'byte-optimizer)
+                       '(nil byte-compile-inline-expand))
+                 (error
+                  "%s already has a byte-optimizer, can't make it inline"
+                  symbol))
+             (put symbol 'byte-optimizer 'byte-compile-inline-expand))))
 	((eq (car-safe spec) 'notinline)
 	 (while (setq spec (cdr spec))
-	   (let ((assq (cdr (assq (car spec) byte-compile-macro-environment))))
-	     (if (and (consp assq) (eq (nth 1 (nth 1 assq)) 'cl-labels-args)
-		      (atom (setq assq (nth 2 (nth 2 assq)))))
-		 ;; It's a label, and we're using the labels
-		 ;; implementation in bytecomp.el. Tell the compiler
-		 ;; not to inline it.
-                 (if (eq 'byte-compile-inline-expand
-                         (getf (aref (compiled-function-constants assq) 0)
-                               'byte-optimizer))
-                     (remf (aref (compiled-function-constants assq) 0)
-                           'byte-optimizer))
-	       (if (eq (get (car spec) 'byte-optimizer)
-		       'byte-compile-inline-expand)
-		   (put (car spec) 'byte-optimizer nil))))))
+           (let* ((assq (cdr (assq (car spec)
+                                   byte-compile-macro-environment)))
+                  (symbol (if (and (consp assq)
+                                   (eq (nth 1 (nth 1 assq))
+                                       'byte-compile-labels-args))
+                              ;; It's a label, and we're using the labels
+                              ;; implementation in bytecomp.el. Tell the
+                              ;; compiler not to inline it, don't mark the
+                              ;; symbol to be notinline globally.
+                              (nth 1 (nth 1 (nth 3 assq)))
+                            (car spec))))
+             (if (eq (get symbol 'byte-optimizer)
+                     'byte-compile-inline-expand)
+                 (put symbol 'byte-optimizer nil)))))
 	((eq (car-safe spec) 'optimize)
 	 (let ((speed (assq (nth 1 (assq 'speed (cdr spec)))
 			    '((0 . nil) (1 . t) (2 . t) (3 . t))))

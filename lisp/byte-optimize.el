@@ -284,19 +284,10 @@
 	  (error "file \"%s\" didn't define \"%s\"" (nth 1 fn) name))
       (if (symbolp fn)
 	  (byte-compile-inline-expand (cons fn (cdr form)))
-	(if (compiled-function-p fn)
-	    (progn
-	      (fetch-bytecode fn)
-	      (cons (list 'lambda (compiled-function-arglist fn)
-			  (list 'byte-code
-				(compiled-function-instructions fn)
-				(compiled-function-constants fn)
-				(compiled-function-stack-depth fn)))
-		    (cdr form)))
-	  (if (eq (car-safe fn) 'lambda)
-	      (cons fn (cdr form))
-	    ;; Give up on inlining.
-	    form))))))
+	(if (or (eq (car-safe fn) 'lambda) (compiled-function-p fn))
+	    (byte-compile-unfold-lambda (cons fn (cdr form)))
+	  ;; Give up on inlining.
+	  form)))))
 
 ;;; ((lambda ...) ...)
 ;;;
@@ -354,7 +345,7 @@
 		(byte-compile-warn
 		 "attempt to open-code %s with too many arguments" name))
 	    form)
-	(setq body (mapcar 'byte-optimize-form body))
+	(setq body (byte-optimize-body body nil))
 	(let ((newform
 	       (if bindings
 		   (cons 'let (cons (nreverse bindings) body))
@@ -363,6 +354,15 @@
 	  newform)))))
 
 
+(defun byte-optimize-lambda (form)
+  (let* ((offset 2) (body (nthcdr offset form)))
+    (if (stringp (car body)) (setq body (nthcdr (incf offset) form)))
+    (if (eq 'interactive (car-safe (car body)))
+	(setq body (nthcdr (incf offset) form)))
+    (if (eq body (setq body (byte-optimize-body body nil)))
+        form
+      (nconc (subseq form 0 offset) body))))
+
 ;;; implementing source-level optimizers
 
 (defun byte-optimize-form-code-walker (form for-effect)
@@ -390,9 +390,19 @@
 	   (and (nth 1 form)
 		(not for-effect)
 		form))
-	  ((or (compiled-function-p fn)
-	       (eq 'lambda (car-safe fn)))
-	   (byte-compile-unfold-lambda form))
+	  ((eq fn 'function) 
+	   (when (cddr form)
+             (byte-compile-warn "malformed function form: %S" form))
+	   (cond
+            (for-effect nil)
+            ((and (eq (car-safe (cadr form)) 'lambda)
+                  (not (eq (cadr form) (setq tmp (byte-optimize-lambda
+                                                  (cadr form))))))
+             (list fn tmp))
+            (t form)))
+	  ((and (eq 'lambda (car-safe fn))
+                (not (eq form (setq form (byte-compile-unfold-lambda form)))))
+           form)
 	  ((memq fn '(let let*))
 	   ;; recursively enter the optimizer for the bindings and body
 	   ;; of a let or let*.  This for depth-firstness: forms that
@@ -490,11 +500,19 @@
 			      (prin1-to-string form))
 	   nil)
 
-	  ((memq fn '(defun defmacro function
-		      condition-case save-window-excursion))
-	   ;; These forms are compiled as constants or by breaking out
-	   ;; all the subexpressions and compiling them separately.
-	   form)
+          ((memq fn '(defun defmacro))
+           (if (eq (setq tmp (cons 'lambda (cddr form)))
+                   (setq tmp (byte-optimize-lambda tmp)))
+               (cons fn (cdr tmp))
+             form))
+
+          ((eq fn 'condition-case)
+           (list* fn (nth 1 form) (byte-optimize-form (nth 2 form) for-effect)
+                  (mapcar #'(lambda (handler)
+                              (cons (car handler)
+                                    (byte-optimize-body (cdr handler)
+                                                        for-effect)))
+                          (cdddr form))))
 
 	  ((eq fn 'unwind-protect)
 	   ;; the "protected" part of an unwind-protect is compiled (and thus
@@ -524,8 +542,11 @@
 					    byte-compile-macro-environment))))
 	   (byte-optimize-form form for-effect))
 
+	  ((compiled-function-p fn)
+           (cons fn (mapcar #'byte-optimize-form (cdr form))))
+
 	  ((not (symbolp fn))
-	   (byte-compile-warn "%s is a malformed function" (prin1-to-string fn))
+           (byte-compile-warn "%S is a malformed function" fn)
 	   form)
 
 	  ;; Support compiler macros as in cl.el.
@@ -593,14 +614,17 @@
   ;; all-for-effect is true.  Returns a new list of forms.
   (let ((rest forms)
 	(result nil)
+        (modified nil)
 	fe new)
     (while rest
       (setq fe (or all-for-effect (cdr rest)))
       (setq new (and (car rest) (byte-optimize-form (car rest) fe)))
       (if (or new (not fe))
-	  (setq result (cons new result)))
+	  (setq result (cons new result)
+                modified (or modified (not (eq new (car rest)))))
+        (setq modified t))
       (setq rest (cdr rest)))
-    (nreverse result)))
+    (if modified (nreverse result) forms)))
 
 
 ;;; some source-level optimizers
