@@ -3175,85 +3175,88 @@ If PRED is t, then certain non-file buffers will also be considered.
 If PRED is a zero-argument function, it indicates for each buffer whether
 to consider it or not when called with that buffer current."
   (interactive "P")
-  (save-excursion
-    ;; `delete-other-windows' can bomb during autoloads generation, so
-    ;; guard it well.
-    (if (or noninteractive
-	    (eq (selected-window) (minibuffer-window))
-	    (not save-some-buffers-query-display-buffer))
-	;; If playing with windows is unsafe or undesired, just do the
-	;; usual drill.
-	(save-some-buffers-1 arg pred nil)
-      ;; Else, protect the windows.
-      (when (save-window-excursion
-	      (save-some-buffers-1 arg pred t))
-	;; Force redisplay.
-	(sit-for 0)))))
-
-;; XEmacs - do not use queried flag
-(defun save-some-buffers-1 (arg pred switch-buffer)
-  (let* ((switched nil)
-	 (last-buffer nil)
-	 (files-done
-	  (map-y-or-n-p
-	   (lambda (buffer)
-	     (prog1
-		 (and (buffer-modified-p buffer)
-		      (not (buffer-base-buffer buffer))
-		      ;; XEmacs addition:
-		      (not (symbol-value-in-buffer 'save-buffers-skip buffer))
-		      (or
-		       (buffer-file-name buffer)
-		       (and pred
-			    (progn
-			      (set-buffer buffer)
-			      (and buffer-offer-save (> (buffer-size) 0)))))
-		      (or (not (functionp pred))
-			  (with-current-buffer buffer (funcall pred)))
-		      (if arg
-			  t
-			;; #### We should provide a per-buffer means to
-			;; disable the switching.  For instance, you might
-			;; want to turn it off for buffers the contents of
-			;; which is meaningless to humans, such as
-			;; `.newsrc.eld'.
-			(when (and switch-buffer
-				   ;; map-y-or-n-p is displaying help
-				   (not (eq last-buffer buffer)))
-			  (unless (one-window-p)
-			    (delete-other-windows))
-			  (setq switched t)
-			  ;; #### Consider using `display-buffer' here for 21.1!
-			  ;;(display-buffer buffer nil (selected-frame)))
-			  (switch-to-buffer buffer t))
-			(if (buffer-file-name buffer)
-			    (format "Save file %s? "
-				    (buffer-file-name buffer))
-			  (format "Save buffer %s? "
-				  (buffer-name buffer)))))
-	       (setq last-buffer buffer)))
-	   (lambda (buffer)
-	     (set-buffer buffer)
-	     (condition-case ()
-		 (save-buffer)
-	       (error nil)))
-	   (buffer-list)
-	   '("buffer" "buffers" "save")
-	   save-some-buffers-action-alist))
-	 (abbrevs-done
-	  (and save-abbrevs abbrevs-changed
-	       (progn
-		 (if (or arg
-			 (eq save-abbrevs 'silently)
-			 (y-or-n-p (format "Save abbrevs in %s? " abbrev-file-name)))
-		     (write-abbrev-file nil))
-		 ;; Don't keep bothering user if he says no.
-		 (setq abbrevs-changed nil)
-		 t))))
-    (or (> files-done 0) abbrevs-done
-	(display-message 'no-log "(No files need saving)"))
-    switched))
-
+  (labels
+      ;; XEmacs - do not use queried flag, make this function a label.
+      ((save-some-buffers-1 (arg pred switch-buffer)
+         (let* ((switched nil)
+                (last-buffer nil)
+                (files-done
+                 (map-y-or-n-p
+                  (lambda (buffer)
+                    (prog1
+                        (and (buffer-modified-p buffer)
+                             (not (buffer-base-buffer buffer))
+                             ;; XEmacs addition:
+                             (not (symbol-value-in-buffer
+                                   'save-buffers-skip buffer))
+                             (or
+                              (buffer-file-name buffer)
+                              (and pred
+                                   (progn
+                                     (set-buffer buffer)
+                                     (and buffer-offer-save (> (buffer-size)
+                                                               0)))))
+                             (or (not (functionp pred))
+                                 (with-current-buffer buffer (funcall pred)))
+                             (if arg
+                                 t
+                               ;; #### We should provide a per-buffer means
+                               ;; to disable the switching.  For instance,
+                               ;; you might want to turn it off for buffers
+                               ;; the contents of which is meaningless to
+                               ;; humans, such as `.newsrc.eld'.
+                               (when (and switch-buffer
+                                          ;; map-y-or-n-p is displaying help
+                                          (not (eq last-buffer buffer)))
+                                 (unless (one-window-p)
+                                   (delete-other-windows))
+                                 (setq switched t)
+                                 ;; #### Consider using `display-buffer'
+                                 ;; here for 21.1!
+                                 ;;(display-buffer buffer nil (selected-frame)))
+                                 (switch-to-buffer buffer t))
+                               (if (buffer-file-name buffer)
+                                   (format "Save file %s? "
+                                           (buffer-file-name buffer))
+                                 (format "Save buffer %s? "
+                                         (buffer-name buffer)))))
+                      (setq last-buffer buffer)))
+                  (lambda (buffer)
+                    (set-buffer buffer)
+                    (condition-case ()
+                        (save-buffer)
+                      (error nil)))
+                  (buffer-list)
+                  '("buffer" "buffers" "save")
+                  save-some-buffers-action-alist))
+                (abbrevs-done
+                 (and save-abbrevs abbrevs-changed
+                      (progn
+                        (if (or arg
+                                (eq save-abbrevs 'silently)
+                                (y-or-n-p (format "Save abbrevs in %s? "
+                                                  abbrev-file-name)))
+                            (write-abbrev-file nil))
+                        ;; Don't keep bothering user if he says no.
+                        (setq abbrevs-changed nil)
+                        t))))
+           (or (> files-done 0) abbrevs-done
+               (display-message 'no-log "(No files need saving)"))
+           switched)))
+    (save-excursion
+      ;; `delete-other-windows' can bomb during autoloads generation, so
+      ;; guard it well.
+      (if (or noninteractive
+           (eq (selected-window) (minibuffer-window))
+           (not save-some-buffers-query-display-buffer))
+          ;; If playing with windows is unsafe or undesired, just do the
+          ;; usual drill.
+          (save-some-buffers-1 arg pred nil)
+        ;; Else, protect the windows.
+        (when (save-window-excursion
+                (save-some-buffers-1 arg pred t))
+          ;; Force redisplay.
+          (sit-for 0))))))
 
 
 (defun not-modified (&optional arg)

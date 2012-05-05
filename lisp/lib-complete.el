@@ -118,83 +118,8 @@ where each <cache-record> has the form
 
    (<root> <modtimes> <completion-table>)")
 
-(defun lib-complete:better-root (ROOT1 ROOT2)
-  "Return non-nil if ROOT1 is a superset of ROOT2."
-  (and (equal (file-name-directory ROOT1) (file-name-directory ROOT2))
-       (string-match
-	(concat "^" (regexp-quote (file-name-nondirectory ROOT1)))
-	ROOT2)))
-
-(defun lib-complete:get-completion-table (FILE PATH FILTER)
-  (let* ((subdir (file-name-directory FILE))
-	 (root (file-name-nondirectory FILE))
-	 (PATH 
-	  (mapcar 
-	   (function (lambda (dir) (file-name-as-directory
-				    (expand-file-name (or dir "")))))
-	   PATH))
-	 (key (vector PATH subdir FILTER))
-	 (real-dirs 
-	  (if subdir
-	      (mapcar (function (lambda (dir) (concat dir subdir))) PATH)
-	    PATH))
-	 (path-modtimes
-	  (mapcar 
-	   (function (lambda (fn) (if fn (nth 5 (file-attributes fn))))) 
-	   real-dirs))
-	 (cache-entry (assoc key lib-complete:cache))
-	 (cache-records (cdr cache-entry)))
-    ;; Look for cached entry
-    (catch 'table
-      (while cache-records
-	(if (and 
-	     (lib-complete:better-root (nth 0 (car cache-records)) root)
-	     (equal (nth 1 (car cache-records)) path-modtimes))
-	    (throw 'table (nth 2 (car cache-records))))
-	(setq cache-records (cdr cache-records)))
-      ;; Otherwise build completions
-      (let ((completion-list 
-	     (progn-with-message "(building completion table...)"
-	       (library-all-completions FILE PATH nil 'fast)))
-	    (completion-table (make-vector 127 0)))
-	(while completion-list
-	  (let ((completion
-		 (if (or (not FILTER) 
-			 (file-directory-p (car completion-list))) 
-		     (car completion-list)
-		   (funcall FILTER (car completion-list)))))
-	    (if completion
-		(intern completion completion-table)))
-	  (setq completion-list (cdr completion-list)))
-	;; Cache the completions
-	(lib-complete:cache-completions key root 
-					path-modtimes completion-table)
-	completion-table))))
-
 (defvar lib-complete:max-cache-size 40 
   "*Maximum number of search paths which are cached.")
-
-(defun lib-complete:cache-completions (key root modtimes table)
-  (let* ((cache-entry (assoc key lib-complete:cache))
-	 (cache-records (cdr cache-entry))
-	 (new-cache-records (list (list root modtimes table))))
-    (if (not cache-entry) nil
-      ;; Remove old cache entry
-      (setq lib-complete:cache (delete* cache-entry lib-complete:cache))
-      ;; Copy non-redundant entries from old cache entry
-      (while cache-records
-	(if (or (equal root (nth 0 (car cache-records)))
-		(lib-complete:better-root root (nth 0 (car cache-records))))
-	    nil
-	  (setq new-cache-records 
-		(cons (car cache-records) new-cache-records)))
-	(setq cache-records (cdr cache-records))))
-    ;; Add entry to front of cache
-    (setq lib-complete:cache
-	  (cons (cons key (nreverse new-cache-records)) lib-complete:cache))
-    ;; Trim cache
-    (let ((tail (nthcdr lib-complete:max-cache-size lib-complete:cache)))
-      (if tail (setcdr tail nil)))))
 
 ;;=== Read a filename, with completion in a search path ===================
 
@@ -202,6 +127,81 @@ where each <cache-record> has the form
   "Don't call this."
   ;; Relies on read-library-internal-search-path being let-bound
   (declare (special read-library-internal-search-path))
+  (labels
+      ((lib-complete:better-root (ROOT1 ROOT2)
+         ; Return non-nil if ROOT1 is a superset of ROOT2.
+         (and (equal (file-name-directory ROOT1) (file-name-directory ROOT2))
+              (string-match
+               (concat "^" (regexp-quote (file-name-nondirectory ROOT1)))
+               ROOT2)))
+       (lib-complete:get-completion-table (FILE PATH FILTER)
+         (let* ((subdir (file-name-directory FILE))
+                (root (file-name-nondirectory FILE))
+                (PATH 
+                 (mapcar 
+                  (function (lambda (dir) (file-name-as-directory
+                                           (expand-file-name (or dir "")))))
+                  PATH))
+                (key (vector PATH subdir FILTER))
+                (real-dirs 
+                 (if subdir
+                     (mapcar (function (lambda (dir) (concat dir subdir))) PATH)
+                   PATH))
+                (path-modtimes
+                 (mapcar 
+                  (function (lambda (fn) (if fn (nth 5 (file-attributes fn))))) 
+                  real-dirs))
+                (cache-entry (assoc key lib-complete:cache))
+                (cache-records (cdr cache-entry)))
+           ;; Look for cached entry
+           (catch 'table
+             (while cache-records
+               (if (and 
+                    (lib-complete:better-root (nth 0 (car cache-records)) root)
+                    (equal (nth 1 (car cache-records)) path-modtimes))
+                   (throw 'table (nth 2 (car cache-records))))
+               (setq cache-records (cdr cache-records)))
+             ;; Otherwise build completions
+             (let ((completion-list 
+                    (progn-with-message "(building completion table...)"
+                      (library-all-completions FILE PATH nil 'fast)))
+                   (completion-table (make-vector 127 0)))
+               (while completion-list
+                 (let ((completion
+                        (if (or (not FILTER) 
+                                (file-directory-p (car completion-list))) 
+                            (car completion-list)
+                          (funcall FILTER (car completion-list)))))
+                   (if completion
+                       (intern completion completion-table)))
+                 (setq completion-list (cdr completion-list)))
+               ;; Cache the completions
+               (lib-complete:cache-completions key root 
+                                               path-modtimes completion-table)
+               completion-table))))
+       (lib-complete:cache-completions (key root modtimes table)
+         (let* ((cache-entry (assoc key lib-complete:cache))
+                (cache-records (cdr cache-entry))
+                (new-cache-records (list (list root modtimes table))))
+           (if (not cache-entry) nil
+             ;; Remove old cache entry
+             (setq lib-complete:cache (delete* cache-entry lib-complete:cache))
+             ;; Copy non-redundant entries from old cache entry
+             (while cache-records
+               (if (or (equal root (nth 0 (car cache-records)))
+                       (lib-complete:better-root root
+                                                 (nth 0 (car cache-records))))
+                   nil
+                 (setq new-cache-records 
+                       (cons (car cache-records) new-cache-records)))
+               (setq cache-records (cdr cache-records))))
+           ;; Add entry to front of cache
+           (setq lib-complete:cache
+                 (cons (cons key (nreverse new-cache-records))
+                       lib-complete:cache))
+           ;; Trim cache
+           (let ((tail (nthcdr lib-complete:max-cache-size lib-complete:cache)))
+             (if tail (setcdr tail nil))))))
   (let ((completion-table
 	 (lib-complete:get-completion-table
 	  FILE read-library-internal-search-path FILTER)))
@@ -212,7 +212,7 @@ where each <cache-record> has the form
      ((eq FLAG nil) (try-completion FILE completion-table nil))
      ((eq FLAG t) (all-completions FILE completion-table nil))
      ((eq FLAG 'lambda) (and (intern-soft FILE completion-table) t))
-     )))
+     ))))
 
 (defun read-library (PROMPT SEARCH-PATH &optional DEFAULT MUST-MATCH 
 			    FULL FILTER)

@@ -975,9 +975,9 @@ See also `equalp'."
   "Return INTEGER converted to a bit vector.
 Optional argument MINLENGTH gives a minimum length for the returned vector.
 If MINLENGTH is not given, zero high-order bits will be ignored."
-  (check-argument-type #'integerp integer)
+  (check-type integer integer)
   (setq minlength (or minlength 0))
-  (check-nonnegative-number minlength)
+  (check-type minlength natnum)
   (read (format (format "#*%%0%db" minlength) integer)))
 
 ;; XEmacs addition.

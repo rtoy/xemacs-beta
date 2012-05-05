@@ -102,62 +102,6 @@ many seconds.")
 
 (defvar itimer-edit-start-marker nil)
 
-;; macros must come first... or byte-compile'd code will throw back its
-;; head and scream.
-
-(defmacro itimer-decrement (variable)
-  (list 'setq variable (list '1- variable)))
-
-(defmacro itimer-increment (variable)
-  (list 'setq variable (list '1+ variable)))
-
-(defmacro itimer-signum (n)
-  (list 'if (list '> n 0) 1
-    (list 'if (list 'zerop n) 0 -1)))
-
-;; Itimer access functions should behave as if they were subrs.  These
-;; macros are used to check the arguments to the itimer functions and
-;; signal errors appropriately if the arguments are not valid.
-
-(defmacro check-itimer (var)
-  "If VAR is not bound to an itimer, signal `wrong-type-argument'.
-This is a macro."
-  (list 'setq var
-	(list 'if (list 'itimerp var) var
-	      (list 'signal ''wrong-type-argument
-		    (list 'list ''itimerp var)))))
-
-(defmacro check-itimer-coerce-string (var)
-  "If VAR is bound to a string, look up the itimer that it names and
-bind VAR to it.  Otherwise, if VAR is not bound to an itimer, signal
-`wrong-type-argument'.  This is a macro."
-  (list 'setq var
-	(list 'cond
-	      (list (list 'itimerp var) var)
-	      (list (list 'stringp var) (list 'get-itimer var))
-	      (list t (list 'signal ''wrong-type-argument
-			    (list 'list ''string-or-itimer-p var))))))
-
-(defmacro check-nonnegative-number (var)
-  "If VAR is not bound to a number, signal `wrong-type-argument'.
-If VAR is not bound to a positive number, signal `args-out-of-range'.
-This is a macro."
-  (list 'setq var
-	(list 'if (list 'not (list 'numberp var))
-	      (list 'signal ''wrong-type-argument
-		    (list 'list ''natnump var))
-	      (list 'if (list '< var 0)
-		    (list 'signal ''args-out-of-range (list 'list var))
-		    var))))
-
-(defmacro check-string (var)
-  "If VAR is not bound to a string, signal `wrong-type-argument'.
-This is a macro."
-  (list 'setq var
-	(list 'if (list 'stringp var) var
-	      (list 'signal ''wrong-type-argument
-		    (list 'list ''stringp var)))))
-
 ;; Functions to access and modify itimer attributes.
 
 (defun itimerp (object)
@@ -173,24 +117,24 @@ Itimers started with `start-itimer' are automatically active."
 
 (defun itimer-name (itimer)
   "Return the name of ITIMER."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (car itimer))
 
 (defun itimer-value (itimer)
   "Return the number of seconds until ITIMER expires."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (nth 1 itimer))
 
 (defun itimer-restart (itimer)
   "Return the value to which ITIMER will be set at restart.
 The value nil is returned if this itimer isn't set to restart."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (nth 2 itimer))
 
 (defun itimer-function (itimer)
   "Return the function of ITIMER.
 This function is called each time ITIMER expires."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (nth 3 itimer))
 
 (defun itimer-is-idle (itimer)
@@ -198,31 +142,31 @@ This function is called each time ITIMER expires."
 Normal timers expire after a set interval.  Idle timers expire
 only after Emacs has been idle for a specific interval.  ``Idle''
 means no command events have occurred within the interval."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (nth 4 itimer))
 
 (defun itimer-uses-arguments (itimer)
   "Return non-nil if the function of ITIMER will be called with arguments.
 ITIMER's function is called with the arguments each time ITIMER expires.
 The arguments themselves are retrievable with `itimer-function-arguments'."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (nth 5 itimer))
 
 (defun itimer-function-arguments (itimer)
   "Return the function arguments of ITIMER as a list.
 ITIMER's function is called with these arguments each time ITIMER expires."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (nth 6 itimer))
 
 (defun itimer-recorded-run-time (itimer)
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (nth 7 itimer))
 
 (defun set-itimer-name (itimer name)
   "Set the name of ITIMER to be NAME.
 NAME is an identifier for the itimer.  It must be a string.  If an active
 itimer already exists with this name, an error is signaled."
-  (check-string name)
+  (check-type name string)
   (and (itimer-live-p itimer)
        (get-itimer name)
        (error "itimer named \"%s\" already existing and activated" name))
@@ -235,8 +179,9 @@ If your version of Emacs supports floating point numbers then
 VALUE can be a floating point number.  Otherwise it
 must be an integer.
 Returns VALUE."
-  (check-itimer itimer)
-  (check-nonnegative-number value)
+  (check-type itimer itimer)
+  (check-type value number)
+  (check-argument-range value 0 nil)
   (let ((inhibit-quit t))
     ;; If the itimer is in the active list, and under the new
     ;; timeout value would expire before we would normally
@@ -253,8 +198,9 @@ Returns VALUE."
 ;; Same as set-itimer-value but does not wakeup the driver.
 ;; Only should be used by the drivers when processing expired timers.
 (defun set-itimer-value-internal (itimer value)
-  (check-itimer itimer)
-  (check-nonnegative-number value)
+  (check-type itimer itimer)
+  (check-type value number)
+  (check-argument-range value 0 nil)
   (setcar (cdr itimer) value))
 
 (defun set-itimer-restart (itimer restart)
@@ -264,22 +210,24 @@ If your version of Emacs supports floating point numbers then
 RESTART can be a floating point number.  Otherwise it
 must be an integer.
 Returns RESTART."
-  (check-itimer itimer)
-  (if restart (check-nonnegative-number restart))
+  (check-type itimer itimer)
+  (when restart 
+    (check-type restart number)
+    (check-argument-range restart 0 nil))
   (setcar (cdr (cdr itimer)) restart))
 
 (defun set-itimer-function (itimer function)
   "Set the function of ITIMER to be FUNCTION.
 FUNCTION will be called when itimer expires.
 Returns FUNCTION."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (setcar (nthcdr 3 itimer) function))
 
 (defun set-itimer-is-idle (itimer flag)
   "Set flag that says whether ITIMER is an idle timer.
 If FLAG is non-nil, then ITIMER will be considered an idle timer.
 Returns FLAG."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (setcar (nthcdr 4 itimer) flag))
 
 (defun set-itimer-uses-arguments (itimer flag)
@@ -287,23 +235,23 @@ Returns FLAG."
 If FLAG is non-nil, then the function will be called with one argument,
 otherwise the function will be called with no arguments.
 Returns FLAG."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (setcar (nthcdr 5 itimer) flag))
 
 (defun set-itimer-function-arguments (itimer &optional arguments)
   "Set the function arguments of ITIMER to be ARGUMENTS.
 The function of ITIMER will be called with ARGUMENTS when itimer expires.
 Returns ARGUMENTS."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (setcar (nthcdr 6 itimer) arguments))
 
 (defun set-itimer-recorded-run-time (itimer time)
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (setcar (nthcdr 7 itimer) time))
 
 (defun get-itimer (name)
   "Return itimer named NAME, or nil if there is none."
-  (check-string name)
+  (check-type name string)
   (assoc name itimer-list))
 
 (defun read-itimer (prompt &optional initial-input)
@@ -315,7 +263,8 @@ minibuffer as initial user input."
 
 (defun delete-itimer (itimer)
   "Deletes ITIMER.  ITIMER may be an itimer or the name of one."
-  (check-itimer-coerce-string itimer)
+  (if (stringp itimer) (setq itimer (get-itimer itimer)))
+  (check-type itimer itimer)
   (setq itimer-list (delete* itimer itimer-list)))
 
 (defun start-itimer (name function value &optional restart
@@ -362,15 +311,18 @@ Returns the newly created itimer."
 	 ;; hard to imagine the user specifying these interactively
 	 nil
 	 nil ))
-  (check-string name)
-  (check-nonnegative-number value)
-  (if restart (check-nonnegative-number restart))
+  (check-type name string)
+  (check-type value number)
+  (check-argument-range value 0 nil)
+  (when restart
+    (check-type restart number)
+    (check-argument-range restart 0 nil))
   ;; Make proposed itimer name unique if it's not already.
   (let ((oname name)
 	(num 2))
     (while (get-itimer name)
       (setq name (format "%s<%d>" oname num))
-      (itimer-increment num)))
+      (incf num)))
   (activate-itimer (list name value restart function is-idle
 			 with-args function-arguments (list 0 0 0)))
   (car itimer-list))
@@ -387,7 +339,7 @@ Once this is done, the timer can be activated."
   "Activate ITIMER, which was previously created with `make-itimer'.
 ITIMER will be added to the global list of running itimers,
 its FUNCTION will be called when it expires, and so on."
-  (check-itimer itimer)
+  (check-type itimer itimer)
   (if (memq itimer itimer-list)
       (error "itimer already activated"))
   (if (not (numberp (itimer-value itimer)))
@@ -408,7 +360,7 @@ its FUNCTION will be called when it expires, and so on."
 	    (num 1))
 	(while (get-itimer name)
 	  (setq name (format "%s<%d>" oname num))
-	  (itimer-increment num))
+	  (incf num))
 	(setcar itimer name))
     ;; signal an error if the timer's name matches an already
     ;; activated timer.
@@ -569,7 +521,7 @@ x      start a new itimer
 		    (while (and (>= opoint (point)) (< n 6))
 		      (forward-sexp 2)
 		      (backward-sexp)
-		      (itimer-increment n))
+		      (incf n))
 		    (cond ((eq n 1) (error "Cannot change itimer name."))
 			  ((eq n 2) 'value)
 			  ((eq n 3) 'restart)
@@ -630,7 +582,7 @@ x      start a new itimer
 (defun itimer-edit-next-field (count)
   (interactive "p")
   (itimer-edit-beginning-of-field)
-  (cond ((> (itimer-signum count) 0)
+  (cond ((plusp count)
 	 (while (not (zerop count))
 	   (forward-sexp)
 	   ;; wrap from eob to itimer-edit-start-marker
@@ -645,8 +597,8 @@ x      start a new itimer
 	       (progn
 		 (forward-sexp 2)
 		 (backward-sexp)))
-	   (itimer-decrement count)))
-	((< (itimer-signum count) 0)
+	   (decf count)))
+	((minusp count)
 	 (while (not (zerop count))
 	   (backward-sexp)
 	   ;; treat fields at beginning of line as if they weren't there.
@@ -657,7 +609,7 @@ x      start a new itimer
 	       (progn
 		 (goto-char (point-max))
 		 (backward-sexp)))
-	   (itimer-increment count)))))
+	   (incf count)))))
 
 (defun itimer-edit-previous-field (count)
   (interactive "p")

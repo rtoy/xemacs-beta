@@ -1479,8 +1479,7 @@ a buffer or a list of buffers to exclude from the completion list."
 					       default))
 		    prompt))
 	(alist (mapcar #'(lambda (b) (cons (buffer-name b) b))
-		       (remove-if (lambda (elt) (member elt exclude))
-				  (buffer-list))))
+                       (set-difference (buffer-list) exclude)))
 	result)
     (while (progn
              (setq result (completing-read prompt alist nil require-match
