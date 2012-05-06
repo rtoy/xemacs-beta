@@ -229,8 +229,12 @@ and BODY is implicitly surrounded by (block NAME ...).
    macro expansion time, reflects all the arguments supplied to the macro,
    as if it had been declared with a single &rest argument.
 
-   &environment specifies local semantics for various macros for use within
-   the expansion of BODY.  See the ENVIRONMENT argument to `macroexpand'.
+   &environment allows access to the macro environment at the time of
+   expansion; it is most relevant when it's necessary to force macro expansion
+   of the body of a form at the time of macro expansion of its top level.
+   &environment is followed by variable name, and this variable will be bound
+   to the value of the macro environment within BODY. See the ENVIRONMENT
+   argument to `macroexpand'.
 
 -- The macro arg list syntax allows for \"destructuring\" -- see also
    `destructuring-bind', which destructures exactly like `defmacro*', and
@@ -715,6 +719,8 @@ not inside other functions called from BODY."
     ;; as such it can eliminate it if that's appropriate:
     (put (cdar cl-active-block-names) 'cl-block-name name)
     `(catch ',(cdar cl-active-block-names)
+      ;; Can't use &environment, since #'block is used in
+      ;; #'cl-transform-lambda.
       ,(cl-macroexpand-all body byte-compile-macro-environment))))
 
 ;;;###autoload
@@ -1693,7 +1699,7 @@ a `let' form, except that the list of symbols can be computed at run-time."
 	      '(cl-progv-after))))
 
 ;;;###autoload
-(defmacro* macrolet ((&rest macros) &body form)
+(defmacro* macrolet ((&rest macros) &body form &environment env)
   "Make temporary macro definitions.
 This is like `flet', but for macros instead of functions."
   (cl-macroexpand-all (cons 'progn form)
@@ -1704,10 +1710,10 @@ This is like `flet', but for macros instead of functions."
                          collect
                          (list* name 'lambda (cdr (cl-transform-lambda details
                                                                        name))))
-                       byte-compile-macro-environment)))
+                       env)))
 
 ;;;###autoload
-(defmacro* symbol-macrolet ((&rest symbol-macros) &body form)
+(defmacro* symbol-macrolet ((&rest symbol-macros) &body form &environment env)
   "Make temporary symbol macro definitions.
 Elements in SYMBOL-MACROS look like (NAME EXPANSION).
 Within the body FORMs, a reference to NAME is replaced with its EXPANSION,
@@ -1717,11 +1723,11 @@ and (setq NAME ...) acts like (setf EXPANSION ...)."
 			       for (name expansion) in symbol-macros
 			       do (check-type name symbol)
 			       collect (list (eq-hash name) expansion))
-			     byte-compile-macro-environment)))
+			     env)))
 
 (defvar cl-closure-vars nil)
 ;;;###autoload
-(defmacro lexical-let (bindings &rest body)
+(defmacro* lexical-let (bindings &rest body &environment env)
   "Like `let', but lexically scoped.
 The main visible difference is that lambdas inside BODY will create
 lexical closures as in Common Lisp."
@@ -1743,7 +1749,7 @@ lexical closures as in Common Lisp."
 				    t))
 			  vars)
 		  (list '(defun . cl-defun-expander))
-		  byte-compile-macro-environment))))
+		  env))))
     (if (not (get (car (last cl-closure-vars)) 'used))
 	(list 'let (mapcar #'(lambda (x) (list (caddr x) (cadr x))) vars)
 	      (sublis (mapcar #'(lambda (x)
@@ -3888,7 +3894,7 @@ interpreted code, `load-time-value' is equivalent to `progn'."
   (list 'progn form))
 
 ;;;###autoload
-(defmacro labels (bindings &rest body)
+(defmacro* labels (bindings &rest body &environment env)
   "Make temporary function bindings.
 
 This is like `flet', except the bindings are lexical instead of dynamic.
@@ -3908,8 +3914,7 @@ arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)
   ;; XEmacs; the byte-compiler has a much better implementation of `labels'
   ;; in `byte-compile-initial-macro-environment' that is used in compiled
   ;; code.
-  (let ((vars nil) (sets nil)
-        (byte-compile-macro-environment byte-compile-macro-environment))
+  (let ((vars nil) (sets nil))
     (while bindings
       (let ((var (gensym)))
 	(push var vars)
@@ -3919,9 +3924,8 @@ arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)
 	(push (list (car (pop bindings)) 'lambda '(&rest cl-labels-args)
 		       (list 'list* '(quote funcall) (list 'quote var)
 			     'cl-labels-args))
-		 byte-compile-macro-environment)))
-    (cl-macroexpand-all (list* 'lexical-let vars (cons (cons 'setq sets) body))
-			byte-compile-macro-environment)))
+              env)))
+    (cl-macroexpand-all `(lexical-let ,vars (setq ,@sets) ,@body) env)))
 
 ;;;###autoload
 (defmacro flet (functions &rest form)

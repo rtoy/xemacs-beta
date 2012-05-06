@@ -1565,22 +1565,10 @@ definitions to shadow the loaded ones for use in file byte-compilation.
   REGISTER Lisp_Object expander, sym, def, tem;
   int speccount = specpdl_depth ();
 
-  if (!NILP (environment) &&
-      !EQ (environment, Vbyte_compile_macro_environment))
+  if (!EQ (environment, Vbyte_compile_macro_environment))
     {
-      if (NILP (Vbyte_compile_macro_environment))
-        {
-          specbind (Qbyte_compile_macro_environment, environment);
-        }
-      else
-        {
-          specbind (Qbyte_compile_macro_environment,
-                    nconc2 (Fcopy_list (environment),
-                            Vbyte_compile_macro_environment));
-        }
+      specbind (Qbyte_compile_macro_environment, environment);
     }
-
-  environment = Vbyte_compile_macro_environment;
 
   while (1)
     {
@@ -7661,6 +7649,10 @@ The value the function returns is not used.
 Alist of macros defined in the file being compiled.
 Each element looks like (MACRONAME . DEFINITION).  It is
 \(MACRONAME . nil) when a macro is redefined as a function.
+
+You should normally access this using the &environment argument to
+#'macrolet, #'defmacro* and friends, and not directly; see the documentation
+of those macros.
 */);
   Vbyte_compile_macro_environment = Qnil;
 

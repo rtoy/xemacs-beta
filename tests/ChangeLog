@@ -1,3 +1,9 @@
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Use &environment appropriately in #'macrolet, instead of relying
+	on #'macroexpand to guess what we mean.
+
 2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el (equal):
