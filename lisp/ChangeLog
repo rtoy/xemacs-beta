@@ -1,5 +1,16 @@
 2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (block): Comment on why we can't use &environment
+	here.
+	* cl-macs.el (defmacro*): Document &environment in more detail.
+	* cl-macs.el (macrolet): Use &environment, instead of referencing
+	byte-compile-macro-environment directly.
+	* cl-macs.el (symbol-macrolet): Ditto.
+	* cl-macs.el (lexical-let): Ditto.
+	* cl-macs.el (labels): Ditto.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* byte-optimize.el:
 	* byte-optimize.el (or):
 	* byte-optimize.el (byte-optimize-or):

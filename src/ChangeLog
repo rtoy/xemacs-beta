@@ -1,3 +1,14 @@
+012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c:
+	* eval.c (Fmacroexpand):
+	Don't prepend any supplied environment to
+	Vbyte_compile_macro_environment, leave that up to our callers
+	(that's what the &environment argument is for).
+	Document that one should normally access
+	byte-compile-macro-environment using the &environment lambda list
+	keyword.
+
 2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* regex.c:
