@@ -1,3 +1,14 @@
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el:
+	* byte-optimize.el (or):
+	* byte-optimize.el (byte-optimize-or):
+	Declare for-effect properly, it's not free.
+	* byte-optimize.el (byte-optimize-condition-case): New.
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	Be more exhaustive in descending special forms, for the sake of
+	lexically-oriented optimizers such as that for #'labels.
+
 2012-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Co-operate with the byte-optimizer in the bytecomp.el labels

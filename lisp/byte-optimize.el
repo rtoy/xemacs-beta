@@ -363,6 +363,28 @@
         form
       (nconc (subseq form 0 offset) body))))
 
+;; Setting this to the byte-optimizer property of condition-case gives an
+;; infinite loop, as of So 6 Mai 2012 05:10:44 IST
+(defun byte-optimize-condition-case (form &optional for-effect)
+  (let ((modified nil)
+        (result nil)
+        (new nil))
+    (setq result
+          (list* (car form) (nth 1 form)
+                 (prog1
+                     (setq new (byte-optimize-form (nth 2 form) for-effect))
+                   (setq modified (or modified (eq new (nth 2 form)))))
+                 (mapcar #'(lambda (handler)
+                             (if (eq (cdr handler)
+                                     (setq new
+                                           (byte-optimize-body (cdr handler)
+                                                               for-effect)))
+                                 handler
+                               (setq modified t)
+                               (cons (car handler) new)))
+                         (cdddr form))))
+    (if modified result form)))
+
 ;;; implementing source-level optimizers
 
 (defun byte-optimize-form-code-walker (form for-effect)
@@ -503,35 +525,32 @@
           ((memq fn '(defun defmacro))
            (if (eq (setq tmp (cons 'lambda (cddr form)))
                    (setq tmp (byte-optimize-lambda tmp)))
-               (cons fn (cdr tmp))
-             form))
+               form
+             (nconc (subseq form 0 2) (cdr tmp))))
 
           ((eq fn 'condition-case)
-           (list* fn (nth 1 form) (byte-optimize-form (nth 2 form) for-effect)
-                  (mapcar #'(lambda (handler)
-                              (cons (car handler)
-                                    (byte-optimize-body (cdr handler)
-                                                        for-effect)))
-                          (cdddr form))))
+           (if (eq (setq tmp (byte-optimize-condition-case form for-effect))
+                   form)
+               form
+             tmp))
 
 	  ((eq fn 'unwind-protect)
-	   ;; the "protected" part of an unwind-protect is compiled (and thus
-	   ;; optimized) as a top-level form, so don't do it here.  But the
+	   ;; the "protected" part of an unwind-protect is compiled (and
+	   ;; thus optimized) as a top-level form, but do it here too for
+	   ;; the sake of lexically-oriented code (labels, and so on).  The
 	   ;; non-protected part has the same for-effect status as the
-	   ;; unwind-protect itself.  (The protected part is always for effect,
-	   ;; but that isn't handled properly yet.)
+	   ;; unwind-protect itself.
 	   (cons fn
 		 (cons (byte-optimize-form (nth 1 form) for-effect)
-		       (cdr (cdr form)))))
+                       (byte-optimize-body (cddr form) t))))
 
 	  ((eq fn 'catch)
-	   ;; the body of a catch is compiled (and thus optimized) as a
-	   ;; top-level form, so don't do it here.  The tag is never
-	   ;; for-effect.  The body should have the same for-effect status
-	   ;; as the catch form itself, but that isn't handled properly yet.
+	   ;; The body of a catch is compiled (and thus optimized) as a
+	   ;; top-level form, but do it here too for the sake of
+	   ;; lexically-oriented code.  The tag is never for-effect.
 	   (cons fn
 		 (cons (byte-optimize-form (nth 1 form) nil)
-		       (cdr (cdr form)))))
+                       (byte-optimize-body (cddr form) for-effect))))
 
 	  ;; If optimization is on, this is the only place that macros are
 	  ;; expanded.  If optimization is off, then macroexpansion happens
@@ -974,7 +993,7 @@
 	 (nth 1 form))
 	((byte-optimize-predicate form))))
 
-(defun byte-optimize-or (form)
+(defun byte-optimize-or (form &optional for-effect)
   ;; Throw away unneeded nils, and simplify if less than 2 args.
   ;; XEmacs; change to be more careful about discarding multiple values. 
   (if (memq nil form)
@@ -1057,6 +1076,8 @@
 
 (put 'and   'byte-optimizer 'byte-optimize-and)
 (put 'or    'byte-optimizer 'byte-optimize-or)
+(put 'or    'byte-for-effect-optimizer
+     #'(lambda (form) (byte-optimize-or form t)))
 (put 'cond  'byte-optimizer 'byte-optimize-cond)
 (put 'if    'byte-optimizer 'byte-optimize-if)
 (put 'while 'byte-optimizer 'byte-optimize-while)
