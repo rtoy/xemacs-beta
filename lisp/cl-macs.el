@@ -3203,7 +3203,7 @@ surrounded by (block NAME ...)."
     ((most-positive-fixnum-on-32-bit-machines () (1- (lsh 1 30)))
      (most-negative-fixnum-on-32-bit-machines ()
        (lognot (most-positive-fixnum-on-32-bit-machines))))
-  (defun cl-non-fixnum-number-p (object)
+  (defun cl-non-immediate-number-p (object)
     "Return t if OBJECT is a number not guaranteed to be immediate."
     (and (numberp object)
 	 (or (not (fixnump object))
@@ -3218,15 +3218,54 @@ surrounded by (block NAME ...)."
 (define-compiler-macro eql (&whole form a b)
   (cond ((eq (cl-const-expr-p a) t)
 	 (let ((val (cl-const-expr-val a)))
-	   (if (cl-non-fixnum-number-p val)
+	   (if (cl-non-immediate-number-p val)
 	       (list 'equal a b)
 	     (list 'eq a b))))
 	((eq (cl-const-expr-p b) t)
 	 (let ((val (cl-const-expr-val b)))
-	   (if (cl-non-fixnum-number-p val)
+	   (if (cl-non-immediate-number-p val)
 	       (list 'equal a b)
 	     (list 'eq a b))))
 	(t form)))
+
+(defun cl-equal-equivalent-to-eq-p (object)
+  (or (symbolp object) (characterp object)
+      (and (fixnump object) (not (cl-non-immediate-number-p object)))))
+
+(defun cl-car-or-pi (object)
+  (if (consp object) (car object) pi))
+
+(defun cl-cdr-or-pi (object)
+  (if (consp object) (cdr object) pi))
+
+(define-compiler-macro equal (&whole form a b)
+  (if (or (cl-equal-equivalent-to-eq-p (cl-const-expr-val a pi))
+          (cl-equal-equivalent-to-eq-p (cl-const-expr-val b pi)))
+      (cons 'eq (cdr form))
+    form))
+
+(define-compiler-macro member (&whole form elt list)
+  (if (or (cl-equal-equivalent-to-eq-p (cl-const-expr-val elt pi))
+          (every #'cl-equal-equivalent-to-eq-p
+                 (cl-const-expr-val list '(1.0))))
+      (cons 'memq (cdr form))
+    form))
+
+(define-compiler-macro assoc (&whole form elt list)
+  (if (or (cl-equal-equivalent-to-eq-p (cl-const-expr-val elt pi))
+          (not (find-if-not #'cl-equal-equivalent-to-eq-p
+                            (cl-const-expr-val list '((1.0 . nil)))
+                            :key #'cl-car-or-pi)))
+      (cons 'assq (cdr form))
+    form))
+
+(define-compiler-macro rassoc (&whole form elt list)
+  (if (or (cl-equal-equivalent-to-eq-p (cl-const-expr-val elt pi))
+          (not (find-if-not #'cl-equal-equivalent-to-eq-p
+                            (cl-const-expr-val list '((nil . 1.0)))
+                            :key #'cl-cdr-or-pi)))
+      (cons 'rassq (cdr form))
+    form)))
 
 (macrolet
     ((define-star-compiler-macros (&rest macros)
@@ -3256,12 +3295,12 @@ surrounded by (block NAME ...)."
                                  `(,',equal-function ,item ,list))
                                 ((and (eq test 'eql)
                                       (not (eq not-constant item-val)))
-                                 (if (cl-non-fixnum-number-p item-val)
+                                 (if (cl-non-immediate-number-p item-val)
                                      `(,',equal-function ,item ,list)
                                    `(,',eq-function ,item ,list)))
                                 ((and (eq test 'eql) (not (eq not-constant
                                                               list-val)))
-                                 (if (some 'cl-non-fixnum-number-p list-val)
+                                 (if (some 'cl-non-immediate-number-p list-val)
                                      `(,',equal-function ,item ,list)
                                    ;; This compiler macro used to limit
                                    ;; calls to ,,eq-function to lists where
@@ -3313,7 +3352,7 @@ surrounded by (block NAME ...)."
           ((not-constant '#:not-constant))
         (let ((cl-const-expr-val (cl-const-expr-val (nth 1 form) not-constant)))
           (if (and (cdr form) (not (eq not-constant cl-const-expr-val))
-                   (not (cl-non-fixnum-number-p cl-const-expr-val)))
+                   (not (cl-non-immediate-number-p cl-const-expr-val)))
               (cons 'delete* (cdr form))
             `(delete* ,@(cdr form) :test #'eq))))
     form))
@@ -3336,7 +3375,7 @@ surrounded by (block NAME ...)."
           ((not-constant '#:not-constant))
         (let ((cl-const-expr-val (cl-const-expr-val (nth 1 form) not-constant)))
           (if (and (cdr form) (not (eq not-constant cl-const-expr-val))
-                   (not (cl-non-fixnum-number-p cl-const-expr-val)))
+                   (not (cl-non-immediate-number-p cl-const-expr-val)))
               (cons 'remove* (cdr form))
             `(remove* ,@(cdr form) :test #'eq))))
     form))

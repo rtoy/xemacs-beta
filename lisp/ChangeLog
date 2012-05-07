@@ -229,6 +229,31 @@
 	(since the compiler macro adds :test #'eq to the delete* call if
 	it's not clear that FOO is not a non-fixnum number).
 
+2012-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (cl-non-fixnum-number-p): Rename, to
+	cl-non-immediate-number-p. This is a little more informative as a
+	name, though still not ideal, in that it will give t for some
+	immediate fixnums on 64-bit builds.
+	* cl-macs.el (eql):
+	* cl-macs.el (define-star-compiler-macros):
+	* cl-macs.el (delq):
+	* cl-macs.el (remq):
+	Use the new name.
+	* cl-macs.el (cl-equal-equivalent-to-eq-p): New.
+	* cl-macs.el (cl-car-or-pi): New.
+	* cl-macs.el (cl-cdr-or-pi): New.
+	* cl-macs.el (equal): New compiler macro.
+	* cl-macs.el (member): New compiler macro.
+	* cl-macs.el (assoc): New compiler macro.
+	* cl-macs.el (rassoc): New compiler macro.
+	If any of #'equal, #'member, #'assoc or #'rassoc has a constant
+	argument such that #'eq, #'memq, #'assq or #'rassq, respectively,
+	are equivalent, make the substitution. Relevant in files like
+	ispell.el, there's a reasonable amount of code out there that
+	doesn't quite get the distinction.
+
 2012-05-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el (byte-optimize-form-code-walker):
