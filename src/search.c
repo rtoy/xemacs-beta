@@ -972,7 +972,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
                   break;
                 }
 
-              colonp = memchr (p, ':', pend - p);
+              colonp = (Ibyte *) memchr (p, ':', pend - p);
               if (NULL == colonp || (colonp + 1) == pend || colonp[1] != ']')
                 {
                   fastmap ['['] = fastmap[':'] = 1;

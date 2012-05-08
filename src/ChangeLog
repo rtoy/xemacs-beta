@@ -1,4 +1,8 @@
-012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+2012-05-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* search.c (skip_chars): Add cast to Ibyte *.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c:
 	* eval.c (Fmacroexpand):
