@@ -1,3 +1,8 @@
+2012-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (rassoc): Remove a stray parenthesis here, thank you
+	Vin!
+
 2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (block): Comment on why we can't use &environment
