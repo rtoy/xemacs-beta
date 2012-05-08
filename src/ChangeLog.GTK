@@ -1,3 +1,13 @@
+2012-05-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay.c (vars_of_redisplay): Document that Gtk supports
+	special values for visible-bell as well.
+
+	* redisplay-gtk.c (XLIKE_flash): Copy from redisplay-xlike-inc.c,
+	convert to cairo.
+
+	* redisplay-x.c (XLIKE_flash): Copy from redisplay-xlike-inc.c
+
 2012-04-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_horizontal_line): Use a Gtk style

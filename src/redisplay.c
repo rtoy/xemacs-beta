@@ -9992,7 +9992,7 @@ special effects are available using the following values:
 `top-bottom'    Flash only the top and bottom lines of the selected frame.
 
 When effects are unavailable on a platform, the visual bell is the
-default, whole screen.  (Currently only X supports any special effects.)
+default, whole screen.  (Currently only X and Gtk support any special effects.)
 */ );
   Vvisible_bell = Qnil;
 
