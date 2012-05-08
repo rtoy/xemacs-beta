@@ -3265,7 +3265,7 @@ surrounded by (block NAME ...)."
                             (cl-const-expr-val list '((nil . 1.0)))
                             :key #'cl-cdr-or-pi)))
       (cons 'rassq (cdr form))
-    form)))
+    form))
 
 (macrolet
     ((define-star-compiler-macros (&rest macros)
