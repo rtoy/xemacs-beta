@@ -114,6 +114,8 @@ gtk_output_vertical_divider (struct window *w, int clear)
 {
   struct frame *f = XFRAME (w->frame);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  GtkStyle *gstyle = FRAME_GTK_TEXT_WIDGET (f)->style;
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
   enum edge_style style;
   int x, ytop, ybottom, width, shadow_thickness, spacing;
@@ -146,6 +148,9 @@ gtk_output_vertical_divider (struct window *w, int clear)
   gtk_bevel_area (w, div_face, x + spacing, ytop,
 		  width - 2 * spacing, ybottom - ytop,
 		  shadow_thickness, EDGE_ALL, style);
+  gtk_paint_vline (gstyle, x_win, GTK_STATE_NORMAL, NULL,
+		   FRAME_GTK_TEXT_WIDGET (f), "vline", ytop + spacing,
+		   ybottom + spacing, x + width / 2);
   cairo_destroy (cr);
 }
 
@@ -203,6 +208,7 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
 		       ypos3 + rb->object.hline.thickness / 2);
       /* gtk_fill_rectangle (cr, x, ypos3, width, rb->object.hline.thickness); */
     }
+  cairo_destroy (cr);
 }
 
 /* Make audible bell.  */
@@ -215,6 +221,55 @@ XLIKE_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
     {
       gdk_beep ();
     }
+}
+
+static int
+XLIKE_flash (struct device *d)
+{
+  struct frame *f = device_selected_frame (d);
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  struct window *w = XWINDOW (FRAME_ROOT_WINDOW (f));
+  Lisp_Object frame = wrap_frame (f);
+  int flash_height;
+
+  cr_set_foreground (cr, FACE_FOREGROUND (Vdefault_face, frame));
+  cairo_set_operator (cr, CAIRO_OPERATOR_XOR);
+  default_face_width_and_height (frame, 0, &flash_height);
+
+  /* If window is tall, flash top and bottom line.  */
+  if (EQ (Vvisible_bell, Qtop_bottom) && w->pixel_height > 3 * flash_height)
+    {
+      gtk_fill_rectangle (cr, w->pixel_left, w->pixel_top,
+			  w->pixel_width, flash_height);
+      gtk_fill_rectangle (cr, w->pixel_left,
+			  w->pixel_top + w->pixel_height - flash_height,
+			  w->pixel_width, flash_height);
+    }
+  else
+    /* If it is short, flash it all.  */
+    gtk_fill_rectangle (cr, w->pixel_left, w->pixel_top,
+			w->pixel_width, w->pixel_height);
+
+  gdk_flush ();
+  g_poll (NULL, 0, 100);
+
+  /* If window is tall, flash top and bottom line.  */
+  if (EQ (Vvisible_bell, Qtop_bottom) && w->pixel_height > 3 * flash_height)
+    {
+      gtk_fill_rectangle (cr, w->pixel_left, w->pixel_top,
+			  w->pixel_width, flash_height);
+      gtk_fill_rectangle (cr, w->pixel_left,
+			  w->pixel_top + w->pixel_height - flash_height,
+			  w->pixel_width, flash_height);
+    }
+  else
+    /* If it is short, flash it all.  */
+    gtk_fill_rectangle (cr, w->pixel_left, w->pixel_top,
+			w->pixel_width, w->pixel_height);
+
+  cairo_destroy (cr);
+  return 1;
 }
 
 static void
@@ -274,7 +329,6 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
 
   cairo_destroy (cr);
 }
-
 
 
 #include "sysgdkx.h"

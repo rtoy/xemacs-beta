@@ -524,6 +524,87 @@ XLIKE_ring_bell (struct device *d, int volume, int pitch, int duration)
     }
 }
 
+/* briefly swap the foreground and background colors.
+ */
+static int
+XLIKE_flash (struct device *d)
+{
+  struct frame *f = device_selected_frame (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc = NULL;
+  XLIKE_GCVALUES gcv;
+  XLIKE_PIXEL tmp_fcolor, tmp_bcolor;
+  Lisp_Object tmp_pixel, frame;
+  struct window *w = XWINDOW (FRAME_ROOT_WINDOW (f));
+  int flash_height;
+
+  frame = wrap_frame (f);
+
+  tmp_pixel = FACE_FOREGROUND (Vdefault_face, frame);
+  tmp_fcolor = XLIKE_COLOR_TO_PIXEL (XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
+  tmp_pixel = FACE_BACKGROUND (Vdefault_face, frame);
+  tmp_bcolor = XLIKE_COLOR_TO_PIXEL (XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
+  memset (&gcv, ~0, sizeof (gcv)); /* initialize all slots to ~0 */
+  XLIKE_SET_GC_PIXEL (gcv.foreground, tmp_fcolor ^ tmp_bcolor);
+  gcv.function = XLIKE_GX_XOR;
+  gcv.graphics_exposures = XLIKE_FALSE;
+  gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (XDEVICE (f->device)), &gcv,
+			XLIKE_GC_FOREGROUND | XLIKE_GC_FUNCTION | XLIKE_GC_EXPOSURES);
+  default_face_width_and_height (frame, 0, &flash_height);
+
+  /* If window is tall, flash top and bottom line.  */
+  if (EQ (Vvisible_bell, Qtop_bottom) && w->pixel_height > 3 * flash_height)
+    {
+      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
+			    w->pixel_width, flash_height);
+      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left,
+			    w->pixel_top + w->pixel_height - flash_height,
+			    w->pixel_width, flash_height);
+    }
+  else
+    /* If it is short, flash it all.  */
+    XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
+			  w->pixel_width, w->pixel_height);
+
+  XLIKE_FLUSH (dpy);
+
+#ifdef HAVE_SELECT
+  {
+    int usecs = 100000;
+    struct timeval tv;
+    tv.tv_sec  = usecs / 1000000L;
+    tv.tv_usec = usecs % 1000000L;
+    /* I'm sure someone is going to complain about this... */
+    select (0, 0, 0, 0, &tv);
+  }
+#else
+#ifdef HAVE_POLL
+  poll (0, 0, 100);
+#else /* !HAVE_POLL */
+#error bite me
+#endif /* HAVE_POLL */
+#endif /* HAVE_SELECT */
+
+  /* If window is tall, flash top and bottom line.  */
+  if (EQ (Vvisible_bell, Qtop_bottom) && w->pixel_height > 3 * flash_height)
+    {
+      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
+			    w->pixel_width, flash_height);
+      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left,
+			    w->pixel_top + w->pixel_height - flash_height,
+			    w->pixel_width, flash_height);
+    }
+  else
+    /* If it is short, flash it all.  */
+    XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
+			  w->pixel_width, w->pixel_height);
+
+  XLIKE_FLUSH (dpy);
+
+  return 1;
+}
+
 /* The end-of-line cursor is narrower than the normal cursor. */
 static void
 XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
