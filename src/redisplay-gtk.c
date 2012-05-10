@@ -625,7 +625,7 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 	    {
 	      int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
 
-	      gtk_draw_rectangle (cr, cursor_start, cursor_y,
+	      gtk_fill_rectangle (cr, cursor_start, cursor_y,
 				  bar_width, cursor_height);
 	      /*
 	      XLIKE_DRAW_LINE (dpy, x_win, gc, cursor_start + bar_width - 1,
@@ -640,6 +640,7 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 			      fi->width - 1, cursor_height - 1);
         }
     }
+  cairo_destroy (cr);
 }
 
 void
