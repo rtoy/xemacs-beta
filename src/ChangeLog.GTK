@@ -4,6 +4,8 @@
 	cairo.
 	(XLIKE_output_blank): Fill bar cursor rectangle.  Use
 	cairo_destroy.
+	(XLIKE_output_vertical_divider): Restore XLIKE prefix for
+	consistency.
 
 	* redisplay-x.c (XLIKE_output_blank): Move here from
 	redisplay-xlike-inc.c.

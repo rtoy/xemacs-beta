@@ -105,7 +105,7 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
  Draw a vertical divider down the right side of the given window.
 ****************************************************************************/
 static void
-gtk_output_vertical_divider (struct window *w, int clear)
+XLIKE_output_vertical_divider (struct window *w, int clear)
 {
   struct frame *f = XFRAME (w->frame);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
