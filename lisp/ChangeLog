@@ -1,3 +1,11 @@
+2012-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-category.el (word-combining-categories):
+	Be better about default word boundaries when text contains
+	just-in-time-allocated Unicode code points. Document what we
+	should do instead once we have Unicode internally.
+	* mule/misc-lang.el: IPA characters are Latin.
+
 2012-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (rassoc): Remove a stray parenthesis here, thank you
