@@ -1,5 +1,8 @@
 2012-05-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_output_string): Remove unused Xlib
+	related code.
+
 	* redisplay-x.c (XLIKE_text_width): Move here.
 
 	* redisplay-gtk.c (XLIKE_output_blank): Copy here, convert to
