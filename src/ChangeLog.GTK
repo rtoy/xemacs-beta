@@ -1,3 +1,8 @@
+2012-05-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_region): Use cairo clear operator.
+	Fix unused parameters.
+
 2012-05-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay.c (vars_of_redisplay): Document that Gtk supports
