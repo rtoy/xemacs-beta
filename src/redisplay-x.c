@@ -32,6 +32,34 @@ int x_interline_space; /* #### this needs to be implemented, but per-font */
 #define THIS_IS_X
 #include "redisplay-xlike-inc.c"
 
+/*
+  XLIKE_text_width
+
+  Given a string and a merged face, return the string's length in pixels
+  when displayed in the fonts associated with the face.
+*/
+
+static int
+XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+		  const Ichar *str, Charcount len)
+{
+  /* !!#### Needs review */
+  int width_so_far = 0;
+  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
+  struct textual_run *runs = alloca_array (struct textual_run, len);
+  struct frame *f = WINDOW_XFRAME (w);
+  int nruns;
+  int i;
+
+  nruns = separate_textual_runs (text_storage, runs, str, len, 
+				 cachel);
+
+  for (i = 0; i < nruns; i++)
+    width_so_far += XLIKE_text_width_single_run (f, cachel, runs + i);
+
+  return width_so_far;
+}
+
 static void x_output_shadows (struct frame *f, int x, int y, int width,
 			      int height, GC top_shadow_gc,
 			      GC bottom_shadow_gc, GC background_gc,

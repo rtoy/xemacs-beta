@@ -99,7 +99,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define XLIKE_output_eol_cursor XFUN (output_eol_cursor)
 #define XLIKE_clear_frame_window XFUN (clear_frame_window)
 #define XLIKE_clear_frame_windows XFUN (clear_frame_windows)
+#define XLIKE_text_width XFUN (text_width)
 
+static int XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+                             const Ichar *str, Charcount len);
 static void XLIKE_output_vertical_divider (struct window *w, int clear);
 static void XLIKE_output_blank (struct window *w, struct display_line *dl,
 				struct rune *rb, int start_pixpos,
@@ -529,39 +532,6 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
     abort();
   return 0;			/* shut up GCC */
 }
-#endif
-
-#ifndef THIS_IS_GTK
-/*
-   XLIKE_text_width
-
-   Given a string and a merged face, return the string's length in pixels
-   when displayed in the fonts associated with the face.
-   */
-
-static int
-XLIKE_text_width (struct window *w, struct face_cachel *cachel,
-		  const Ichar *str, Charcount len)
-{
-  /* !!#### Needs review */
-  int width_so_far = 0;
-  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
-  struct textual_run *runs = alloca_array (struct textual_run, len);
-  struct frame *f = WINDOW_XFRAME (w);
-  int nruns;
-  int i;
-
-  nruns = separate_textual_runs (text_storage, runs, str, len, 
-				 cachel);
-
-  for (i = 0; i < nruns; i++)
-    width_so_far += XLIKE_text_width_single_run (f, cachel, runs + i);
-
-  return width_so_far;
-}
-#else
-static int XLIKE_text_width (struct window *w, struct face_cachel *cachel,
-                             const Ichar *str, Charcount len);
 #endif
 
 /*****************************************************************************
