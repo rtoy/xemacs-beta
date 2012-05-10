@@ -325,7 +325,6 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
   cairo_destroy (cr);
 }
 
-
 #include "sysgdkx.h"
 
 static void
@@ -523,6 +522,124 @@ XLIKE_text_width (struct window *w, struct face_cachel *cachel,
   g_object_unref (layout);
   pango_attr_list_unref (attr_list);
   return width;
+}
+
+
+/*****************************************************************************
+ XLIKE_output_blank
+
+ Output a blank by clearing the area it covers in the foreground color
+ of its face.
+****************************************************************************/
+static void
+XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
+		    int start_pixpos, int cursor_start, int cursor_width)
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+  struct face_cachel *cursor_cachel =
+    WINDOW_FACE_CACHEL (w,
+			get_builtin_face_cache_index
+			(w, Vtext_cursor_face));
+  Lisp_Object bg_pmap;
+  Lisp_Object buffer = WINDOW_BUFFER (w);
+  Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
+							 buffer);
+
+  int x = rb->xpos;
+  int y = XLIKE_DISPLAY_LINE_YPOS (dl);
+  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
+  int width = rb->width;
+
+  /* Unmap all subwindows in the area we are going to blank. */
+  redisplay_unmap_subwindows_maybe (f, x, y, width, height);
+
+  if (start_pixpos > x)
+    {
+      if (start_pixpos >= (x + width))
+	return;
+      else
+	{
+	  width -= (start_pixpos - x);
+	  x = start_pixpos;
+	}
+    }
+
+  bg_pmap = WINDOW_FACE_CACHEL_BACKGROUND_PIXMAP (w, rb->findex);
+  if (!IMAGE_INSTANCEP (bg_pmap)
+      || !IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pmap)))
+    bg_pmap = Qnil;
+
+  if (NILP (bg_pmap))
+    {
+      cr_set_foreground (cr, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex));
+    }
+  else
+    {
+      /* XXX Implement me. */
+      /*
+      gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
+		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
+		       bg_pmap,
+		       WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT (w, rb->findex),
+		       Qnil);
+      */
+      cr_set_foreground (cr, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex));
+    }
+
+  gtk_fill_rectangle (cr, x, y, width, height);
+
+  /* If this rune is marked as having the cursor, then it is actually
+     representing a tab. */
+  if (!NILP (w->text_cursor_visible_p)
+      && (rb->cursor_type == CURSOR_ON
+	  || (cursor_width
+	      && (cursor_start + cursor_width > x)
+	      && cursor_start < (x + width))))
+    {
+      int cursor_height, cursor_y;
+      int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
+      Lisp_Font_Instance *fi;
+
+      fi = XFONT_INSTANCE (FACE_CACHEL_FONT
+			   (WINDOW_FACE_CACHEL (w, rb->findex),
+			    Vcharset_ascii));
+
+      cr_set_foreground (cr, cursor_cachel->background);
+      cursor_y = dl->ypos - fi->ascent;
+      cursor_height = fi->height;
+      if (cursor_y + cursor_height > y + height)
+	cursor_height = y + height - cursor_y;
+
+      if (focus)
+	{
+	  if (NILP (bar_cursor_value))
+	    {
+	      gtk_fill_rectangle (cr, cursor_start, cursor_y,
+				  fi->width, cursor_height);
+	    }
+	  else
+	    {
+	      int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
+
+	      gtk_draw_rectangle (cr, cursor_start, cursor_y,
+				  bar_width, cursor_height);
+	      /*
+	      XLIKE_DRAW_LINE (dpy, x_win, gc, cursor_start + bar_width - 1,
+			       cursor_y, cursor_start + bar_width - 1,
+			       cursor_y + cursor_height - 1);
+	      */
+	    }
+	}
+      else if (NILP (bar_cursor_value))
+        {
+	  gtk_draw_rectangle (cr, cursor_start, cursor_y,
+			      fi->width - 1, cursor_height - 1);
+        }
+    }
 }
 
 void

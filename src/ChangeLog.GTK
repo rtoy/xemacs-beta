@@ -1,5 +1,11 @@
 2012-05-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_output_blank): Copy here, convert to
+	cairo.
+
+	* redisplay-x.c (XLIKE_output_blank): Move here from
+	redisplay-xlike-inc.c.
+
 	* redisplay-gtk.c (XLIKE_clear_region): Use cairo clear operator.
 	Fix unused parameters.
 
