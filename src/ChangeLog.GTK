@@ -1,5 +1,7 @@
 2012-05-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-x.c (XLIKE_text_width): Move here.
+
 	* redisplay-gtk.c (XLIKE_output_blank): Copy here, convert to
 	cairo.
 	(XLIKE_output_blank): Fill bar cursor rectangle.  Use
