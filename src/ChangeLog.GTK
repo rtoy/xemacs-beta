@@ -2,6 +2,8 @@
 
 	* redisplay-gtk.c (XLIKE_output_blank): Copy here, convert to
 	cairo.
+	(XLIKE_output_blank): Fill bar cursor rectangle.  Use
+	cairo_destroy.
 
 	* redisplay-x.c (XLIKE_output_blank): Move here from
 	redisplay-xlike-inc.c.
