@@ -747,7 +747,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
  for (i = 0; i < nruns; i++)
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
-      int this_width;
       int need_clipping;
       cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
 
@@ -757,62 +756,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       cachel = WINDOW_FACE_CACHEL (w, findex);
       cr_set_foreground (cr, cachel->foreground);
 
-#ifdef THIS_IS_GTK
-      this_width = width;
-#else
-      this_width = XLIKE_text_width_single_run (f, cachel, runs + i);
-#endif
-
       need_clipping = (dl->clip || clip_start > xpos ||
-		       clip_end < xpos + this_width);
-
- #if 0
-      /* XDrawImageString only clears the area equal to the height of
-	 the given font.  It is possible that a font is being displayed
-	 on a line taller than it is, so this would cause us to fail to
-	 clear some areas. */
-      if ((int) fi->height < (int) (height + dl->clip +
-				    XLIKE_DISPLAY_LINE_TOP_CLIP (dl)))
-	{
-	  int clear_start = max (xpos, clip_start);
-	  int clear_end = min (xpos + this_width, clip_end);
-
-	  if (cursor)
-	    {
-	      int ypos1_line, ypos1_string, ypos2_line, ypos2_string;
-
-	      ypos1_string = dl->ypos - fi->ascent;
-	      ypos2_string = dl->ypos + fi->descent;
-	      ypos1_line = ypos;
-	      ypos2_line = ypos1_line + height;
-
-	      /* Make sure we don't clear below the real bottom of the
-		 line. */
-              ypos1_string = min (ypos1_string, ypos2_line);
-              ypos2_string = min (ypos2_string, ypos2_line);
-
-	      if (ypos1_line < ypos1_string)
-		{
-		  redisplay_clear_region (window, findex, clear_start, ypos1_line,
-                                          clear_end - clear_start,
-                                          ypos1_string - ypos1_line);
-		}
-
-	      if (ypos2_line > ypos2_string)
-		{
-		  redisplay_clear_region (window, findex, clear_start, ypos2_string,
-                                          clear_end - clear_start,
-                                          ypos2_line - ypos2_string);
-		}
-	    }
-	  else
-	    {
-	      redisplay_clear_region (window, findex, clear_start,
-                                      ypos, clear_end - clear_start,
-                                      height);
-	    }
-	}
-#endif
+		       clip_end < xpos + width);
 
       if (cursor && focus && NILP (bar_cursor_value))
         {
@@ -865,7 +810,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 				     xpos, dl->ypos, &runs[i]);
 	}
 
-      xpos += this_width;
+      xpos += width;
       cairo_destroy (cr);
     }
 
