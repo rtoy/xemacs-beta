@@ -1,3 +1,9 @@
+2012-05-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_frame): Copy to here and convert to cairo.
+
+	* redisplay-x.c (XLIKE_clear_frame): Move here.
+
 2012-05-10  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_string): Remove unused Xlib

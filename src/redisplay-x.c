@@ -117,6 +117,50 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
     }
 }
 
+static void
+XLIKE_clear_frame_windows (Lisp_Object window)
+{
+  for (; !NILP (window); window = XWINDOW (window)->next)
+    XLIKE_clear_frame_window (window);
+}
+
+static void
+XLIKE_clear_frame (struct frame *f)
+{
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (XDEVICE (f->device));
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  int x, y, width, height;
+  Lisp_Object frame;
+
+  /* #### GEOM! This clears the internal border and gutter (and scrollbars)
+     but not the toolbar.  Correct? */
+  x = FRAME_LEFT_INTERNAL_BORDER_START (f);
+  width = (FRAME_RIGHT_INTERNAL_BORDER_END (f) - x);
+  /* #### This adjustment by 1 should be being done in the macros.
+     There is some small differences between when the menubar is on
+     and off that we still need to deal with.  The adjustment also occurs in
+     redisplay_clear_top_of_window(). */
+  y = FRAME_TOP_INTERNAL_BORDER_START (f) - 1;
+  height = (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - y);
+
+  XLIKE_CLEAR_AREA (dpy, x_win, x, y, width, height);
+
+  frame = wrap_frame (f);
+
+  if (!UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vdefault_face, frame))
+      || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vleft_margin_face, frame))
+      || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vright_margin_face, frame)))
+    {
+      XLIKE_clear_frame_windows (f->root_window);
+    }
+  {
+    struct device *d = XDEVICE (f->device);
+    if (!(check_if_pending_expose_event (d)))
+      XFlush (DEVICE_X_DISPLAY (d));
+  }
+}
+
+
 /*****************************************************************************
  x_bevel_area
 
