@@ -1,5 +1,11 @@
 2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* subr.el:
+	* subr.el (truncate-string-to-width):
+	Sync with GNU's version, use its test suite in mule-tests.el.
+
+2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* byte-optimize.el (byte-compile-unfold-lambda):
 	Fetch the bytecode before unfolding a compiled function, its body
 	may have been compiled lazily thanks to
