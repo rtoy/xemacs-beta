@@ -1062,18 +1062,15 @@ defaults to \"...\"."
     (setq ellipsis "..."))
   (let ((str-len (length str))
 	(str-width (string-width str))
-	(ellipsis-len (if ellipsis (length ellipsis) 0))
 	(ellipsis-width (if ellipsis (string-width ellipsis) 0))
 	(idx 0)
 	(column 0)
 	(head-padding "") (tail-padding "")
 	ch last-column last-idx from-idx)
-    (condition-case nil
-	(while (< column start-column)
-	  (setq ch (aref str idx)
-		column (+ column (char-width ch))
-		idx (1+ idx)))
-      (args-out-of-range (setq idx str-len)))
+    (while (and (< column start-column) (< idx str-len))
+      (setq ch (aref str idx)
+            column (+ column (char-width ch))
+            idx (1+ idx)))
     (if (< column start-column)
 	(if padding (make-string end-column padding) "")
       (when (and padding (> column start-column))
@@ -1084,14 +1081,12 @@ defaults to \"...\"."
 		 (> str-width ellipsis-width))
 	    (setq end-column (- end-column ellipsis-width))
 	  (setq ellipsis ""))
-	(condition-case nil
-	    (while (< column end-column)
-	      (setq last-column column
-		    last-idx idx
-		    ch (aref str idx)
-		    column (+ column (char-width ch))
-		    idx (1+ idx)))
-	  (args-out-of-range (setq idx str-len)))
+        (while (and (< column end-column) (< idx str-len))
+          (setq last-column column
+                last-idx idx
+                ch (aref str idx)
+                column (+ column (char-width ch))
+                idx (1+ idx)))
 	(when (> column end-column)
 	  (setq column last-column
 		idx last-idx))

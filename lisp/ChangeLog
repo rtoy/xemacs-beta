@@ -3,6 +3,10 @@
 	* subr.el:
 	* subr.el (truncate-string-to-width):
 	Sync with GNU's version, use its test suite in mule-tests.el.
+	Avoid args-out-of-range errors, this function is regularly called
+	from menu code and with debug-on-signal non-nil, this can be very
+	irritating.
+	Don't bind ellipsis-len, we don't use it.
 
 2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
 
