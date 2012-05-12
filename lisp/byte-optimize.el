@@ -296,11 +296,12 @@
   (let ((lambda (car form))
 	(values (cdr form)))
     (if (compiled-function-p lambda)
-	(setq lambda (list 'lambda (compiled-function-arglist lambda)
-			  (list 'byte-code
-				(compiled-function-instructions lambda)
-				(compiled-function-constants lambda)
-				(compiled-function-stack-depth lambda)))))
+	(setq lambda (fetch-bytecode lambda)
+              lambda (list 'lambda (compiled-function-arglist lambda)
+                           (list 'byte-code
+                                 (compiled-function-instructions lambda)
+                                 (compiled-function-constants lambda)
+                                 (compiled-function-stack-depth lambda)))))
     (let ((arglist (nth 1 lambda))
 	  (body (cdr (cdr lambda)))
 	  optionalp restp
