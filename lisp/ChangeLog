@@ -1,3 +1,11 @@
+2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (byte-compile-unfold-lambda):
+	Fetch the bytecode before unfolding a compiled function, its body
+	may have been compiled lazily thanks to
+	byte-compile-dynamic. Thank you Mats Lidell and the package
+	smoketest!
+
 2012-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-category.el (word-combining-categories):
