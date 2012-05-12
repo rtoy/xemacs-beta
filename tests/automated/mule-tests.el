@@ -808,7 +808,81 @@ This is a naive implementation in Lisp.  "
       (Assert (let (default-process-coding-system)
 		(shell-command "cat </dev/null >/dev/null")
 		t))))
-
+  ;;; Test suite for truncate-string-to-width, from Colin Walters' tests in
+  ;;; mult-util.el in GNU.
+  (macrolet
+      ((test-truncate-string-to-width (&rest tests)
+         (let ((decode-any-string
+                ;; We can't store the East Asian characters directly in this
+                ;; file, since it needs to be read (but not executed) by
+                ;; non-Mule. Store them as UTF-8, decode them at
+                ;; macro-expansion time.
+                #'(lambda (object)
+                    (if (stringp object)
+                        (decode-coding-string object 'utf-8)
+                      object))))
+           (cons
+            'progn
+            (mapcar
+             (function*
+              (lambda ((arguments . result))
+                `(Assert (equal (truncate-string-to-width
+                               ,@(mapcar decode-any-string arguments))
+                                ,(funcall decode-any-string result)))))
+             tests)))))
+    (test-truncate-string-to-width
+      (("" 0) . "")
+      (("x" 1) . "x")
+      (("xy" 1) . "x")
+      (("xy" 2 1) . "y")
+      (("xy" 0) . "")
+      (("xy" 3) . "xy")
+      (("\344\270\255" 0) . "")
+      (("\344\270\255" 1) . "")
+      (("\344\270\255" 2) . "\344\270\255")
+      (("\344\270\255" 1 nil ? ) . " ")
+      (("\344\270\255\346\226\207" 3 1 ? ) . "  ")
+      (("x\344\270\255x" 2) . "x")
+      (("x\344\270\255x" 3) . "x\344\270\255")
+      (("x\344\270\255x" 3) . "x\344\270\255")
+      (("x\344\270\255x" 4 1) . "\344\270\255x")
+      (("kor\355\225\234e\352\270\200an" 8 1 ? ) .
+       "or\355\225\234e\352\270\200")
+      (("kor\355\225\234e\352\270\200an" 7 2 ? ) . "r\355\225\234e ")
+      (("" 0 nil nil "...") . "")
+      (("x" 3 nil nil "...") . "x")
+      (("\344\270\255" 3 nil nil "...") . "\344\270\255")
+      (("foo" 3 nil nil "...") . "foo")
+      (("foo" 2 nil nil "...") . "fo") ;; (old) XEmacs failure?
+      (("foobar" 6 0 nil "...") . "foobar")
+      (("foobarbaz" 6 nil nil "...") . "foo...")
+      (("foobarbaz" 7 2 nil "...") . "ob...")
+      (("foobarbaz" 9 3 nil "...") . "barbaz")
+      (("\343\201\223h\343\202\223e\343\201\253l\343\201\241l\343\201\257o" 15
+        1 ?  t) . " h\343\202\223e\343\201\253l\343\201\241l\343\201\257o")
+      (("\343\201\223h\343\202\223e\343\201\253l\343\201\241l\343\201\257o" 14
+        1 ?  t) . " h\343\202\223e\343\201\253l\343\201\241...")
+      (("x" 3 nil nil "\347\262\265\350\252\236") . "x")
+      (("\344\270\255" 2 nil nil "\347\262\265\350\252\236") . "\344\270\255")
+      ;; XEmacs used to error
+      (("\344\270\255" 1 nil ?x "\347\262\265\350\252\236") . "x") 
+      (("\344\270\255\346\226\207" 3 nil ?  "\347\262\265\350\252\236") .
+       ;; XEmacs used to error
+       "\344\270\255 ") 
+      (("foobarbaz" 4 nil nil  "\347\262\265\350\252\236") .
+       "\347\262\265\350\252\236")
+      (("foobarbaz" 5 nil nil  "\347\262\265\350\252\236") .
+       "f\347\262\265\350\252\236")
+      (("foobarbaz" 6 nil nil  "\347\262\265\350\252\236") .
+       "fo\347\262\265\350\252\236")
+      (("foobarbaz" 8 3 nil "\347\262\265\350\252\236") .
+       "b\347\262\265\350\252\236")
+      (("\343\201\223h\343\202\223e\343\201\253l\343\201\241l\343\201\257o" 14
+        4 ?x "\346\227\245\346\234\254\350\252\236") .
+        "xe\343\201\253\346\227\245\346\234\254\350\252\236")
+      (("\343\201\223h\343\202\223e\343\201\253l\343\201\241l\343\201\257o" 13
+        4 ?x "\346\227\245\346\234\254\350\252\236") .
+        "xex\346\227\245\346\234\254\350\252\236")))
   ) ; end of tests that require MULE built in.
 
 ;;; end of mule-tests.el

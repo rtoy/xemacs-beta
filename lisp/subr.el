@@ -1030,76 +1030,60 @@ TYPE should be `list' or `vector'."
       (replace (the string string) obj :start1 idx)
     (prog1 string (aset string idx obj))))
 
-;; From FSF 21.1; ELLIPSES is XEmacs addition.
-
-(defun truncate-string-to-width (str end-column &optional start-column padding
-				 ellipses)
+;; XEmacs; this is in mule-util in GNU. See tests/automated/mule-tests.el for
+;; the tests that Colin Walters includes in that file.
+(defun truncate-string-to-width (str end-column
+				     &optional start-column padding ellipsis)
   "Truncate string STR to end at column END-COLUMN.
-The optional 3rd arg START-COLUMN, if non-nil, specifies
-the starting column; that means to return the characters occupying
-columns START-COLUMN ... END-COLUMN of STR.
+The optional 3rd arg START-COLUMN, if non-nil, specifies the starting
+column; that means to return the characters occupying columns
+START-COLUMN ... END-COLUMN of STR.  Both END-COLUMN and START-COLUMN
+are specified in terms of character display width in the current
+buffer; see also `char-width'.
 
-The optional 4th arg PADDING, if non-nil, specifies a padding character
-to add at the end of the result if STR doesn't reach column END-COLUMN,
-or if END-COLUMN comes in the middle of a character in STR.
-PADDING is also added at the beginning of the result
-if column START-COLUMN appears in the middle of a character in STR.
+The optional 4th arg PADDING, if non-nil, specifies a padding
+character (which should have a display width of 1) to add at the end
+of the result if STR doesn't reach column END-COLUMN, or if END-COLUMN
+comes in the middle of a character in STR.  PADDING is also added at
+the beginning of the result if column START-COLUMN appears in the
+middle of a character in STR.
 
 If PADDING is nil, no padding is added in these cases, so
 the resulting string may be narrower than END-COLUMN.
 
-BUG: Currently assumes that the padding character is of width one.  You
-will get weird results if not.
-
-If ELLIPSES is non-nil, add ellipses (specified by ELLIPSES if a string,
-else `...') if STR extends past END-COLUMN.  The ellipses will be added in
-such a way that the total string occupies no more than END-COLUMN columns
--- i.e. if the string goes past END-COLUMN, it will be truncated somewhere
-short of END-COLUMN so that, with the ellipses added (and padding, if the
-proper place to truncate the string would be in the middle of a character),
-the string occupies exactly END-COLUMN columns."
+If ELLIPSIS is non-nil, it should be a string which will replace the
+end of STR (including any padding) if it extends beyond END-COLUMN,
+unless the display width of STR is equal to or less than the display
+width of ELLIPSIS.  If it is non-nil and not a string, then ELLIPSIS
+defaults to \"...\"."
   (or start-column
       (setq start-column 0))
-  (let ((len (length str))
+  (when (and ellipsis (not (stringp ellipsis)))
+    (setq ellipsis "..."))
+  (let ((str-len (length str))
+	(str-width (string-width str))
+	(ellipsis-len (if ellipsis (length ellipsis) 0))
+	(ellipsis-width (if ellipsis (string-width ellipsis) 0))
 	(idx 0)
 	(column 0)
 	(head-padding "") (tail-padding "")
 	ch last-column last-idx from-idx)
-
-    ;; find the index of START-COLUMN; bail out if end of string reached.
     (condition-case nil
 	(while (< column start-column)
 	  (setq ch (aref str idx)
 		column (+ column (char-width ch))
 		idx (1+ idx)))
-      (args-out-of-range (setq idx len)))
+      (args-out-of-range (setq idx str-len)))
     (if (< column start-column)
-	;; if string ends before START-COLUMN, return either a blank string
-	;; or a string entirely padded.
-	(if padding (make-string (- end-column start-column) padding) "")
-      (if (and padding (> column start-column))
-	  (setq head-padding (make-string (- column start-column) padding)))
+	(if padding (make-string end-column padding) "")
+      (when (and padding (> column start-column))
+	(setq head-padding (make-string (- column start-column) padding)))
       (setq from-idx idx)
-      ;; If END-COLUMN is before START-COLUMN, then bail out.
-      (if (< end-column column)
-	  (setq idx from-idx ellipses "")
-
-	;; handle ELLIPSES
-	(cond ((null ellipses) (setq ellipses ""))
-	      ((if (<= (string-width str) end-column)
-		   ;; string fits, no ellipses
-		   (setq ellipses "")))
-	      (t
-	       ;; else, insert default value and ...
-	       (or (stringp ellipses) (setq ellipses "..."))
-	       ;; ... take away the width of the ellipses from the
-	       ;; destination.  do all computations with new, shorter
-	       ;; width.  the padding computed will get us exactly up to
-	       ;; the shorted width, which is right -- it just gets added
-	       ;; to the right of the ellipses.
-	       (setq end-column (- end-column (string-width ellipses)))))
-
-	;; find the index of END-COLUMN; bail out if end of string reached.
+      (when (>= end-column column)
+	(if (and (< end-column str-width)
+		 (> str-width ellipsis-width))
+	    (setq end-column (- end-column ellipsis-width))
+	  (setq ellipsis ""))
 	(condition-case nil
 	    (while (< column end-column)
 	      (setq last-column column
@@ -1107,20 +1091,14 @@ the string occupies exactly END-COLUMN columns."
 		    ch (aref str idx)
 		    column (+ column (char-width ch))
 		    idx (1+ idx)))
-	  (args-out-of-range (setq idx len)))
-	;; if we went too far (stopped in middle of character), back up.
-	(if (> column end-column)
-	    (setq column last-column idx last-idx))
-	;; compute remaining padding
-	(if (and padding (< column end-column))
-	    (setq tail-padding (make-string (- end-column column) padding))))
-      ;; get substring ...
-      (setq str (substring str from-idx idx))
-      ;; and construct result
-      (if padding
-	  (concat head-padding str tail-padding ellipses)
-	(concat str ellipses)))))
-
+	  (args-out-of-range (setq idx str-len)))
+	(when (> column end-column)
+	  (setq column last-column
+		idx last-idx))
+	(when (and padding (< column end-column))
+	  (setq tail-padding (make-string (- end-column column) padding))))
+      (concat head-padding (substring str from-idx idx)
+	      tail-padding ellipsis))))
 
 ;; alist/plist functions
 (defun plist-to-alist (plist)
