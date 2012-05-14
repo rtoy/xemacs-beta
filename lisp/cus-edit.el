@@ -878,10 +878,7 @@ Show the buffer in another window, but don't select it."
 	     ;; Make a choice only amongst the faces under point:
 	     (let ((choice (completing-read
 			    "Customize face: (default all faces at point) "
-			    (mapcar (lambda (face)
-				      (list (symbol-name face) face))
-				    faces)
-			    nil t)))
+                            faces nil t)))
 	       (if (eql (length choice) 0)
 		   (list faces)
 		 (list (intern choice)))))))))
@@ -2972,12 +2969,8 @@ settings."
 
 (defun widget-face-action (widget &optional event)
   "Prompt for a face."
-  (let ((answer (completing-read "Face: "
-				 (mapcar (lambda (face)
-					   (list (symbol-name face)))
-					 (face-list))
-				 nil nil nil
-				 'face-history)))
+  (let ((answer (completing-read "Face: " (face-list) nil nil nil
+                                 'face-history)))
     (unless (eql (length answer) 0)
       (widget-value-set widget (intern answer))
       (widget-apply widget :notify widget event)

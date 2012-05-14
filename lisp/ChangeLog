@@ -1,3 +1,26 @@
+2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Update minibuf.el to use #'test-completion, use the generality of
+	recent completion changes to avoid some unnecessary consing when
+	reading.
+	* behavior.el (read-behavior):
+	* cus-edit.el (custom-face-prompt):
+	* cus-edit.el (widget-face-action):
+	* faces.el (read-face-name):
+	* minibuf.el:
+	* minibuf.el (minibuffer-completion-table):
+	* minibuf.el (exact-minibuffer-completion-p):
+	Removed. #'test-completion is equivalent to this, but more
+	general.
+	* minibuf.el (minibuffer-do-completion-1): Use #'test-completion.
+	* minibuf.el (completing-read): Update the documentation of the
+	arguments used for completion.
+	* minibuf.el (minibuffer-complete-and-exit): Use #'test-completion.
+	* minibuf.el (exit-minibuffer): Use #'test-completion.
+	* minibuf.el (minibuffer-smart-mouse-tracker): Use #'test-completion.
+	* minibuf.el (read-color): No need to construct a completion table
+	separate from the colour list.
+
 2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el:
