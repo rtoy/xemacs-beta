@@ -1,5 +1,11 @@
 2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* byte-optimize.el (byte-optimize-letX):
+	In (let ...) forms, group constant initialisations together, so we
+	can just dup in the byte code.
+
+2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Update minibuf.el to use #'test-completion, use the generality of
 	recent completion changes to avoid some unnecessary consing when
 	reading.

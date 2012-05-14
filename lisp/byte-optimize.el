@@ -1194,7 +1194,27 @@
 	 ;; No bindings
 	 (cons 'progn (cdr (cdr form))))
 	((or (nth 2 form) (nthcdr 3 form))
-	 form)
+	 (if (and (eq 'let (car form)) (> (length (nth 1 form)) 2))
+	     ;; Group constant initialisations together, so we can
+	     ;; just dup in the lap code. Can't group other
+	     ;; initialisations together if they have side-effects,
+	     ;; that would re-order them.
+	     (let ((sort (stable-sort
+			  (copy-list (nth 1 form))
+			  #'< :key #'(lambda (object)
+				       (cond ((atom object)
+					      most-positive-fixnum)
+					     ((null (cadr object))
+					      most-positive-fixnum)
+					     ((byte-compile-trueconstp
+					       (cadr object))
+					      (mod (sxhash (cadr object))
+						   most-positive-fixnum))
+					     (t 0))))))
+	       (if (equal sort (nth 1 form))
+		   form
+		 `(let ,sort ,@(cddr form))))
+	   form))
 	 ;; The body is nil
 	((eq (car form) 'let)
 	 (append '(progn) (mapcar 'car-safe (mapcar 'cdr-safe (nth 1 form)))
