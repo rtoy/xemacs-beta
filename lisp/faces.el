@@ -54,14 +54,10 @@
 Such a collection of attributes is called a \"face\"."
   :group 'emacs)
 
-
 (defun read-face-name (prompt)
   (let (face)
     (while (eql (length face) 0) ; nil or ""
-      (setq face (completing-read prompt
-				  (mapcar (lambda (x) (list (symbol-name x)))
-					  (face-list))
-				  nil t)))
+      (setq face (completing-read prompt (face-list) nil t)))
     (intern face)))
 
 (defun face-interactive (what &optional bool)

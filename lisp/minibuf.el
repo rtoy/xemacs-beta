@@ -58,18 +58,11 @@ rather than just consing the new element onto the front of the list."
   :group 'minibuffer)
 
 (defvar minibuffer-completion-table nil
-  "Alist or obarray used for completion in the minibuffer.
-This becomes the ALIST argument to `try-completion' and `all-completions'.
+  "List, hash table, function or obarray used for minibuffer completion.
 
-The value may alternatively be a function, which is given three arguments:
-  STRING, the current buffer contents;
-  PREDICATE, the predicate for filtering possible matches;
-  CODE, which says what kind of things to do.
-CODE can be nil, t or `lambda'.
-nil means to return the best completion of STRING, nil if there is none,
-  or t if it is already a unique completion.
-t means to return a list of all possible completions of STRING.
-`lambda' means to return t if STRING is a valid completion as it stands.")
+This becomes the COLLECTION argument to `try-completion', `all-completions'
+and `test-completion'; see the documentation of those functions for how
+values are interpreted.")
 
 (defvar minibuffer-completion-predicate nil
   "Within call to `completing-read', this holds the PREDICATE argument.")
@@ -621,56 +614,6 @@ See also the variable `completion-highlight-first-word-only' for
           (setq unread-command-event (character-to-event (quit-char))
                 quit-flag nil)))))
 
-
-;; Determines whether buffer-string is an exact completion
-(defun exact-minibuffer-completion-p (buffer-string)
-  (cond ((not minibuffer-completion-table)
-         ;; Empty alist
-         nil)
-        ((vectorp minibuffer-completion-table)
-         (let ((tem (intern-soft buffer-string
-                                 minibuffer-completion-table)))
-           (if (or tem
-                   (and (string-equal buffer-string "nil")
-                        ;; intern-soft loses for 'nil
-                        (catch 'found
-                          (mapatoms #'(lambda (s)
-					(if (string-equal
-					     (symbol-name s)
-					     buffer-string)
-					    (throw 'found t)))
-				    minibuffer-completion-table)
-                          nil)))
-               (if minibuffer-completion-predicate
-                   (funcall minibuffer-completion-predicate
-                            tem)
-                   t)
-               nil)))
-        ((and (consp minibuffer-completion-table)
-              ;;#### Emacs-Lisp truly sucks!
-              ;; lambda, autoload, etc
-              (not (symbolp (car minibuffer-completion-table))))
-         (if (not completion-ignore-case)
-             (assoc buffer-string minibuffer-completion-table)
-             (let ((s (upcase buffer-string))
-                   (tail minibuffer-completion-table)
-                   tem)
-               (while tail
-                 (setq tem (car (car tail)))
-                 (if (or (equal tem buffer-string)
-                         (equal tem s)
-                        (if tem (equal (upcase tem) s)))
-                     (setq s 'win
-                           tail nil)    ;exit
-                     (setq tail (cdr tail))))
-               (eq s 'win))))
-        (t
-         (funcall minibuffer-completion-table
-                  buffer-string
-                  minibuffer-completion-predicate
-                  'lambda)))
-  )
-
 ;; 0 'none                 no possible completion
 ;; 1 'unique               was already an exact and unique completion
 ;; 3 'exact                was already an exact (but nonunique) completion
@@ -693,7 +636,8 @@ See also the variable `completion-highlight-first-word-only' for
                  (erase-buffer)
                  (insert completion)
                  (setq buffer-string completion)))
-           (if (exact-minibuffer-completion-p buffer-string)
+           (if (test-completion buffer-string minibuffer-completion-table
+                                minibuffer-completion-predicate)
                ;; An exact completion was possible
                (if completedp
 ;; Since no callers need to know the difference, don't bother
@@ -752,20 +696,18 @@ See also the variable `completion-highlight-first-word-only' for
 
 ;;;; completing-read
 
-(defun completing-read (prompt table
-                        &optional predicate require-match
-                                  initial-contents history default)
+(defun completing-read (prompt collection &optional predicate require-match
+                        initial-contents history default)
   "Read a string in the minibuffer, with completion.
 
 PROMPT is a string to prompt with; normally it ends in a colon and a space.
-TABLE is an alist whose elements' cars are strings, or an obarray.
-TABLE can also be a function which does the completion itself.
-PREDICATE limits completion to a subset of TABLE.
-See `try-completion' and `all-completions' for more details
-  on completion, TABLE, and PREDICATE.
+COLLECTION is a set of objects that are the possible completions.
+PREDICATE limits completion to a subset of COLLECTION.
+See `try-completion' and `all-completions' for details of COLLECTION,
+  PREDICATE, and completion in general.
 
 If REQUIRE-MATCH is non-nil, the user is not allowed to exit unless
-  the input is (or completes to) an element of TABLE or is null.
+  the input is (or completes to) an element of COLLECTION or is null.
   If it is also not t, Return does not exit if it does non-null completion.
 If INITIAL-CONTENTS is non-nil, insert it in the minibuffer initially.
   If it is (STRING . POSITION), the initial input
@@ -785,7 +727,7 @@ DEFAULT, if non-nil, will be returned when the user enters an empty
 
 Completion ignores case if the ambient value of
   `completion-ignore-case' is non-nil."
-  (let ((minibuffer-completion-table table)
+  (let ((minibuffer-completion-table collection)
         (minibuffer-completion-predicate predicate)
         (minibuffer-completion-confirm (if (eq require-match 't) nil t))
         (last-exact-completion nil)
@@ -862,7 +804,8 @@ a repetition of this command will exit."
   (let ((buffer-string (buffer-string)))
     ;; Short-cut -- don't call minibuffer-do-completion if we already
     ;;  have an (possibly nonunique) exact completion.
-    (if (exact-minibuffer-completion-p buffer-string)
+    (if (test-completion buffer-string minibuffer-completion-table
+                                minibuffer-completion-predicate)
         (throw 'exit nil))
     (let ((status (minibuffer-do-completion buffer-string)))
       (if (or (eq status 'unique)
@@ -893,7 +836,8 @@ the character in question must be typed again)."
   (if (not minibuffer-confirm-incomplete)
       (throw 'exit nil))
   (let ((buffer-string (buffer-string)))
-    (if (exact-minibuffer-completion-p buffer-string)
+    (if (test-completion buffer-string minibuffer-completion-table
+                                minibuffer-completion-predicate)
         (throw 'exit nil))
     (let ((completion (if (not minibuffer-completion-table)
                           t
@@ -1092,6 +1036,9 @@ This is not enabled by default because
 		  ;; prefix for other completions.  This means that we
 		  ;; can't just do the obvious thing, (eq t
 		  ;; (try-completion ...)).
+                  ;; 
+                  ;; Could be reasonable to use #'test-completion
+                  ;; instead. Aidan Kehoe, Mo 14 Mai 2012 08:17:10 IST
 		  (let (comp)
 		    (if (and filename-kludge-p
 			     ;; #### evil evil evil evil
@@ -2186,7 +2133,7 @@ On X devices, this uses `x-library-search-path' to find rgb.txt in order
  to build a completion table.
 On TTY devices, this uses `tty-color-list'.
 On mswindows devices, this uses `mswindows-color-list'."
-  (let ((table (read-color-completion-table)))
+  (let ((table (color-list)))
     (completing-read prompt table nil (and table must-match)
 		     initial-contents)))
 

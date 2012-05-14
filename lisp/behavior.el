@@ -345,16 +345,10 @@ Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
  for history command, and as the value to return if the user enters the
  empty string."
   (let ((result
-	 (completing-read
-	  prompt
-	  (let (list)
-	    (maphash #'(lambda (key value)
-			 (push (cons (symbol-name key) value) list))
-		     behavior-hash-table)
-	    list)
-	  nil must-match initial-contents (or history 'behavior-history)
-	  default-value)))
-    (if (and result (stringp result))
+	 (completing-read prompt behavior-hash-table nil must-match
+                          initial-contents (or history 'behavior-history)
+                          default-value)))
+    (if (stringp result)
 	(intern result)
       result)))
 

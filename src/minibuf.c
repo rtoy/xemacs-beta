@@ -688,13 +688,12 @@ test_completion_mapper (Lisp_Object eltstring, Lisp_Object value, void *arg)
 }
 
 DEFUN ("test-completion", Ftest_completion, 2, 3, 0, /*
-Return non-nil if STRING is a valid completion in COLLECTION.
+Return non-nil if STRING is an exact completion in COLLECTION.
 
 COLLECTION must be a list, a hash table, an obarray, or a function.
 
 Each string (or symbol) in COLLECTION is tested to see if it (or its
-name) begins with STRING.  The value is a list of all the strings from
-COLLECTION that match.
+name) begins with STRING, until a valid, exact completion is found.
 
 If COLLECTION is a list, the elements of the list that are not cons
 cells and the cars of the elements of the list that are cons cells
@@ -755,7 +754,7 @@ table entry.
                                   lookup, 0) ? Qnil : Qt;
 
       /* It would be reasonable to do something similar for the hash
-         tables, except, both symbol and string keys are vaild
+         tables, except, both symbol and string keys are valid
          completions there. So a negative #'gethash for the string
          (with #'equal as the hash table tests) still means you have
          to do the linear search, for any symbols with that string

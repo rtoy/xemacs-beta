@@ -1,3 +1,8 @@
+2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.c (Ftest_completion):
+	Correct some documentation here.
+
 2012-05-07  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* search.c (skip_chars): Add cast to Ibyte *.
