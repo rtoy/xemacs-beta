@@ -118,13 +118,6 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
 }
 
 static void
-XLIKE_clear_frame_windows (Lisp_Object window)
-{
-  for (; !NILP (window); window = XWINDOW (window)->next)
-    XLIKE_clear_frame_window (window);
-}
-
-static void
 XLIKE_clear_frame (struct frame *f)
 {
   XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (XDEVICE (f->device));
