@@ -1698,6 +1698,13 @@ XLIKE_clear_frame_window (Lisp_Object window)
 				 WINDOW_TEXT_BOTTOM (w));
 }
 
+static void
+XLIKE_clear_frame_windows (Lisp_Object window)
+{
+  for (; !NILP (window); window = XWINDOW (window)->next)
+    XLIKE_clear_frame_window (window);
+}
+
 
 /************************************************************************/
 /*                            initialization                            */

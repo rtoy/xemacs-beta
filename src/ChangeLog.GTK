@@ -1,6 +1,12 @@
+2012-05-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_clear_frame_windows): Accidentally
+	moved to redisplay-x.c, move it back.
+
 2012-05-11  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* redisplay-gtk.c (XLIKE_clear_frame): Copy to here and convert to cairo.
+	* redisplay-gtk.c (XLIKE_clear_frame): Copy to here and convert to
+	cairo.
 
 	* redisplay-x.c (XLIKE_clear_frame): Move here.
 
