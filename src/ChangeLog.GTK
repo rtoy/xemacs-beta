@@ -1,3 +1,8 @@
+2012-05-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_event_name): Get event names by
+	stringification of constants.
+
 2012-05-16  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-xlike-inc.c (XLIKE_clear_frame_windows): Accidentally
