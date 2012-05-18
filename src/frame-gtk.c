@@ -952,20 +952,24 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
                             G_CALLBACK (delete_event_cb), f));
 
   {
-    static const gchar *events_to_frob[] = { "focus-in-event",
-				      "focus-out-event",
-				      "enter-notify-event",
-				      "leave-notify-event",
-				      "map-event",
-				      "unmap-event",
-				      "property-notify-event",
-				      "selection-clear-event",
-				      "selection-request-event",
-				      "selection-notify-event",
-				      "client-event",
-				      /* "configure-event", */
-				      "visibility-notify-event",
-				      NULL };
+    static const gchar *events_to_frob[] =
+      {
+	"focus-in-event",
+	"focus-out-event",
+	"enter-notify-event",
+	"leave-notify-event",
+	"map-event",
+	"unmap-event",
+	"property-notify-event",
+	"selection-clear-event",
+	"selection-request-event",
+	"selection-notify-event",
+	"client-event",
+	/* "configure-event", */
+	"visibility-notify-event",
+	"scroll-event",
+	NULL
+      };
     int i;
 
     for (i = 0; events_to_frob[i]; i++)
@@ -984,7 +988,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   /* gtk_signal_connect (GTK_OBJECT (shell), "event", G_CALLBACK (emacs_shell_event_handler), f); */
 
   /* Let's make sure we get all the events we can */
-  gtk_widget_set_events (text, GDK_ALL_EVENTS_MASK);
+  gtk_widget_add_events (text, GDK_ALL_EVENTS_MASK);
 
   if (shell != container)
     gtk_container_add (GTK_CONTAINER (shell), container);

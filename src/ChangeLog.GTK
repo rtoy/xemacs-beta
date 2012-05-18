@@ -1,3 +1,13 @@
+2012-05-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (handle_scroll_event): Define.
+	(emacs_gtk_handle_magic_event): Add scroll event.
+	(set_last_server_timestamp): Handle scroll event.
+	(emacs_shell_event_handler): Add scroll event.
+
+	* frame-gtk.c (gtk_create_widgets): Add scroll-events to requested
+	events.
+
 2012-05-17  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* device-gtk.c (gtk_event_name): Get event names by

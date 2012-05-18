@@ -212,6 +212,53 @@ handle_client_message (struct frame *f, GdkEvent *event)
 }
 
 static void
+handle_scroll_event (struct frame *frame, GdkEvent *event)
+{
+  Lisp_Object f = wrap_frame (frame);
+  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
+  GdkEventScroll *sevt = &event->scroll;
+
+  /* There are two choices for handling scroll events:
+     1. convert them into the button presses that XEmacs currently uses
+     2. handle the scroll events in elisp
+
+     Here we choose #1 for compatibility. */
+
+  XSET_EVENT_TYPE (emacs_event, button_release_event);
+  XSET_EVENT_CHANNEL (emacs_event, f);
+
+  /* SET_EVENT_BUTTON_MODIFIERS (emacs_event, modifiers); */
+  XSET_EVENT_TIMESTAMP (emacs_event, sevt->time);
+  XSET_EVENT_BUTTON_X (emacs_event, (int) sevt->x);
+  XSET_EVENT_BUTTON_Y (emacs_event, (int) sevt->y);
+
+  switch (sevt->direction)
+    {
+    case GDK_SCROLL_UP:
+      XSET_EVENT_BUTTON_BUTTON (emacs_event, 4);
+      break;
+    case GDK_SCROLL_DOWN:
+      XSET_EVENT_BUTTON_BUTTON (emacs_event, 5);
+      break;
+    case GDK_SCROLL_LEFT:
+      XSET_EVENT_BUTTON_BUTTON (emacs_event, 6);
+      break;
+    case GDK_SCROLL_RIGHT:
+      XSET_EVENT_BUTTON_BUTTON (emacs_event, 7);
+      break;
+#ifdef GDK_SCROLL_SMOOTH
+    case GDK_SCROLL_SMOOTH:
+      /* XXX Implement me. */
+      break;
+#endif
+    default:
+      stderr_out ("Unknown scroll direction %d\n", sevt->direction);
+      break;
+    }
+  enqueue_dispatch_event (emacs_event);
+}
+
+static void
 emacs_gtk_format_magic_event (Lisp_Event *emacs_event, Lisp_Object pstream)
 {
   Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (emacs_event));
@@ -308,6 +355,10 @@ emacs_gtk_handle_magic_event (struct Lisp_Event *emacs_event)
 	}
       break;
 
+    case GDK_SCROLL:
+      handle_scroll_event (f, event);
+      break;
+
     default:
       break;
     }
@@ -356,6 +407,7 @@ set_last_server_timestamp (struct device *d, GdkEvent *gdk_event)
     case GDK_SELECTION_CLEAR:
     case GDK_SELECTION_REQUEST:
     case GDK_SELECTION_NOTIFY: t = gdk_event->selection.time; break;
+    case GDK_SCROLL:           t = gdk_event->scroll.time; break;
     default: return;
     }
   DEVICE_GTK_LAST_SERVER_TIMESTAMP (d) = t;
@@ -1426,7 +1478,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
            (but it definitely should ignore Caps_Lock). */
         SET_EVENT_MOTION_MODIFIERS (emacs_event, modifiers);
       }
-    break;
+      break;
 
     default: /* it's a magic event */
       return (0);
@@ -1509,6 +1561,7 @@ emacs_shell_event_handler (GtkWidget *UNUSED (wid),
     case GDK_LEAVE_NOTIFY:      FROB(crossing); break;
     case GDK_FOCUS_CHANGE:      FROB(focus_change); break;
     case GDK_VISIBILITY_NOTIFY: FROB(visibility); break;
+    case GDK_SCROLL:            FROB(scroll); break;
     default:
 	ignore_p = TRUE;
 	/* Hrmm... do we really want to swallow all the other events as magic? */
