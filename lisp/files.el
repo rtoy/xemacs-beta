@@ -4482,14 +4482,46 @@ absolute one."
       (error "Apparently circular symlink path"))))
 
 ;; Suggested by Michael Kifer <kifer@CS.SunySB.EDU>
-(defun file-remote-p (file-name)
-  "Test whether FILE-NAME is looked for on a remote system."
-  (cond ((not (declare-boundp allow-remote-paths)) nil)
-	((fboundp 'ange-ftp-ftp-path)
-	 (declare-fboundp (ange-ftp-ftp-path file-name)))
-	((fboundp 'efs-ftp-path)
-	 (declare-fboundp (efs-ftp-path file-name)))
-	(t nil)))
+(defun file-remote-p (file &optional identification connected)
+  "Test whether FILE specifies a location on a remote system.
+Return an identification of the system if the location is indeed
+remote.  The identification of the system may comprise a method
+to access the system and its hostname, amongst other things.
+
+For example, the filename \"/user@host:/foo\" specifies a location
+on the system \"/user@host:\".
+
+IDENTIFICATION specifies which part of the identification shall
+be returned as string.  IDENTIFICATION can be the symbol
+`method', `user' or `host'; any other value is handled like nil
+and means to return the complete identification string.
+
+If CONNECTED is non-nil, the function returns an identification only
+if FILE is located on a remote system, and a connection is established
+to that remote system.
+
+`file-remote-p' will never open a connection on its own."
+  (let ((handler (find-file-name-handler file 'file-remote-p)))
+    (cond
+     (handler
+      (funcall handler 'file-remote-p file identification connected))
+     ;; legacy code; can probably go by mid-2008
+     ((fboundp 'efs-ftp-path)
+      (let ((parsed (declare-fboundp (efs-ftp-path file))))
+	(and parsed
+	     (let ((host (nth 0 parsed))
+		   (user (nth 1 parsed)))
+	       (and (or (not connected)
+		    (let ((proc (get-process (declare-fboundp (efs-ftp-process-buffer host user)))))
+		      (and proc (processp proc)
+			   (memq (process-status proc) '(run open)))))
+		(cond
+		 ((eq identification 'method) (and parsed "ftp"))
+		 ((eq identification 'user) user)
+		 ((eq identification 'host) host)
+		 (t
+		  (concat "/" user "@" host ":/"))))))))
+     (t nil))))
 
 
 ;; We use /: as a prefix to "quote" a file name

@@ -5208,6 +5208,12 @@
 	Bind print-gensym-alist to nil, as we do within
 	byte-compile-output-docform.
 
+2008-01-03  Michael Sperber  <mike@xemacs.org>
+
+	* files.el (file-remote-p): Synch with GNU Emac: Add
+	`identification' and `connected' parameters, and use file-name
+	handler if available.  Zap support for ange-ftp.
+
 2008-01-04  Michael Sperber  <mike@xemacs.org>
 
 	* code-files.el (insert-file-contents):
