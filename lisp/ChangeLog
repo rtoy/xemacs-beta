@@ -1,3 +1,7 @@
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
 2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el (byte-optimize-letX):

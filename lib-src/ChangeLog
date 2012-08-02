@@ -1,3 +1,7 @@
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
 2011-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gnuslib.c (connect_to_unix_server):

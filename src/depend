@@ -194,7 +194,7 @@ marker.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.
 mc-alloc.o: $(CONFIG_H) $(LISP_H) blocktype.h getpagesize.h
 md5.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h file-coding.h lstream.h
 menubar.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h frame-impl.h frame.h frameslots.h gui.h keymap-buttons.h keymap.h menubar.h redisplay.h scrollbar.h specifier.h window-impl.h window.h winslots.h
-minibuf.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h commands.h conslots.h console-impl.h console-stream.h console.h events.h frame-impl.h frame.h frameslots.h insdel.h keymap-buttons.h redisplay.h scrollbar.h specifier.h systime.h window-impl.h window.h winslots.h
+minibuf.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h commands.h conslots.h console-impl.h console-stream.h console.h elhash.h events.h frame-impl.h frame.h frameslots.h insdel.h keymap-buttons.h redisplay.h scrollbar.h specifier.h systime.h window-impl.h window.h winslots.h
 miscplay.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h intl-auto-encap-win32.h miscplay.h sound.h sysfile.h syssignal.h syswindows.h
 nas.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h sound.h sysdep.h syssignal.h
 nt.o: $(CONFIG_H) $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h intl-auto-encap-win32.h ndir.h process.h sysdir.h sysfile.h sysproc.h syspwd.h syssignal.h systime.h syswindows.h
