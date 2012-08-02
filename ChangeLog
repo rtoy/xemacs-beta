@@ -1,3 +1,10 @@
+2012-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Thanks to Robert Delius Royar <xemacs@frinabulax.org>.
+
+	* configure.ac (ASLR): Disable it on Mountain Lion, too.
+	* configure: Regenerate.
+
 2011-11-27  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* configure.ac: 

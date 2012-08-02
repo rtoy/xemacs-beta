@@ -1,16 +1,153 @@
 # DO NOT PUT A VERSION MARKER HERE, ADDED AT RELEASE
 
-Major Features and Backward Incompatible Changes
-User-Visible Bug Fixes and Minor Improvements
+Major Features, Bugfixes, and Backward Incompatible Changes
 
--- improve: Backward-compatible MATCHSPEC in face-property-matching-instance. -- Stephen Turnbull
+-- Fix: Prevent SIGPIPEs in deactivate_process(). -- Stephen Turnbull
+-- Fix: Prevent assert at frame.c, l. 6311. -- Stephen Turnbull
+
+User-Visible Bug Fixes and Improvements
+
+-- Fix: 'most-positive-fixnum-on-32-bit-machines value. -- Aidan Kehoe, Raymond Toy
+-- Fix: Bug where syntax cache overruns restriction. -- Stephen Turnbull, Alan Mackenzie
+-- Fix: Don't initialize bit 7 as meta if native coding system uses that bit. -- Aidan Kehoe
+-- Fix: Handling of face background values. -- Vin Shelton, Aidan Kehoe
+-- Improve: Determine terminal type dynamically, not from TERM envvar. -- Aidan Kehoe
+-- Improve: Implement printing of circular structures readably. -- Aidan Kehoe
+-- New: 'foreback property for faces. -- Didier Verna
+-- New: 'shrink property for faces. -- Didier Verna
+-- New: Custom group "view". -- Aidan Kehoe
 
 Build Infrastructure and Source Tree
+
+-- Fix: CPP error breaking build on OpenBSD/NetBSD. -- Aidan Kehoe, Adam Sjøgren
+-- Fix: Creation of etc/dbxrc and src/.dbxrc. -- Marcus Crestani
+-- Fix: Disable ASLR on Mac OS X Lion & Mountain Lion (breaks pdump). -- Marcus Crestani, Stephen Turnbull, Robert Royer
+-- Fix: Printing of Lisp_Object types in dbxrc. -- Marcus Crestani
+-- Fix: Use libraries in /usr/lib/w32api on Cygwin. -- jeff
+-- Fix: Workaround link problem in pdump.  -- Stephen Turnbull, Hans de Graaf, Marcus Crestani
+-- Fix: configure detection of VDB_POSIX vs. VDB_MACH. -- Aidan Kehoe
+-- Improve: Move dbxrc.in (back?) to ./src. -- Marcus Crestani
+-- Improve: Prefer dlopen() to dyld() in configure on Mac OS X. -- Aidan Kehoe
+-- Improve: Refactor check for Xaw3d. -- Stephen Turnbull
+-- Improve: Remove unused include of process.h from Cygwin. -- Vin Shelton
+-- Improve: gnuclient to fall back to /tmp to search for socket. -- Aidan Kehoe
+-- New: Support DESTDIR. -- Jerry James
+-- New: Support building texinfo.info in native builds. -- Vin Shelton
+
 Documentation
+
+-- Fix: #'eq-hash docstring. -- Aidan Kehoe
+-- Fix: Comment in #'byte-compile-funcall. -- Aidan Kehoe
+-- Fix: Comment typo. -- Didier Verna
+-- Fix: Comments in fns.c. -- Aidan Kehoe
+-- Fix: Correct usage of the term "special operator" in manuals. -- Aidan Kehoe
+-- Fix: Docstrings of #'posix-charset-to-coding-system-hash, load-time-value. -- Aidan Kehoe
+-- Fix: Document change of location of packages from lib/ to share/. -- Aidan Kehoe
+-- Fix: Typos. -- Didier Verna
+-- Improve: Docstrings in syntax.c. -- Stephen Turnbull
+-- Improve: Document a reasonable approach to improving #'symbol-macrolet. -- Aidan Kehoe
+-- Improve: Emphasize #'labels of #'flet in CL manual. -- Aidan Kehoe
+-- Improve: Make describe-function-1 mention whether byte-compiled functions are built-in. -- Aidan Kehoe
+-- Improve: Update versions numbers for libs in config.inc.samp. -- Vin Shelton
+-- Improve: Use ISO-IR-196 sequences to encode Unicode in HELLO. -- Aidan Kehoe
+-- New: Comment re: background pixmaps in faces.c, cache coherency in glyphs.c. -- Didier Verna
+-- New: Docstring for #'cl-transform-lambda. -- Aidan Kehoe
+-- New: Document Mercurial techniques in Internals manual. -- Stephen Turnbull
+-- New: Internals documentation of sequence.c. -- Aidan Kehoe
+
 Lisp API
+
+-- Fix: Correctly lex a bignum with leading "+". -- Aidan Kehoe
+-- Improve: #'face-property-matching-instance 21.4 compatibility. -- Stephen Turnbull
+-- Improve: #'labels supports inline label declaration. -- Aidan Kehoe
+-- Improve: Add .pdf and other types to 'binary-file-regexps.
+-- Improve: Common Lisp conformance. -- Aidan Kehoe, Didier Verna
+-- Improve: Default print_gensym to t (CL compatibility). -- Aidan Kehoe
+-- Improve: Make #'built-in-symbol-file ignore non-built-ins. -- Aidan Kehoe
+-- Improve: Make #'make-modeline-command-wrapper evaluate COMMAND lazily. -- Aidan Kehoe
+-- Improve: Obsolete #'remassoc and friends, and remove instances from core. -- Aidan Kehoe
+-- Improve: Partial, undocumented support for #'macro-declaration-function in #'defmacro. -- Aidan Kehoe.
+-- Improve: Provide API for disabling symbol macros in cl-macroexpand. -- Aidan Kehoe
+-- Improve: Refactor completion code, improve GNU compatibility. -- Aidan Kehoe
+-- Improve: Remove XEmacs-specific #'remassoc functions, and substitute CL-style #'delete* for uses. -- Aidan Kehoe
+-- Improve: Remove cl-compat.el and related documentation. -- Aidan Kehoe
+-- Improve: Remove long-obsolete cl-compat.el. -- Aidan Kehoe
+-- Improve: Remove obsolete compatibility aliases from cl*.el. -- Aidan Kehoe
+-- Improve: Sync #'shell-command{,-on-region}. -- Mats Lidell
+-- New: #'apply-partially. -- Aidan Kehoe
+-- New: #'event-apply-modifiers. -- Aidan Kehoe
+-- New: #'looking-back. -- Didier Verna
+-- New: #'macro-declaration-function support (GNU compatibility). -- Aidan Kehoe
+-- New: #'special-mode. -- Didier Verna
+-- New: #'test-completion. -- Aidan Kehoe
+-- New: 'function-key-map-parent improves x-compose processing. -- Aidan Kehoe
+-- New: 'print-circle, 'print-continuous-numbering. -- Aidan Kehoe
+-- New: Add a defsetf for #'get-char-table. -- Aidan Kehoe
+-- New: Implement #'load-time-value, #'labels. -- Aidan Kehoe
+-- New: Sexp movement recognises notation for circular lists. -- Aidan Kehoe
+-- New: syntax-ppss.el. -- Mats Lidell
+
 Internal API and Implementation
+
+-- Fix: Array declaration and bounds checks of syntax_spec_code. -- Stephen Turnbull
+-- Fix: Autoload `custom-set-face-bold'. -- Vin Shelton
+-- Fix: Duplicate arglist info in autoloads. -- Aidan Kehoe
+-- Fix: Ignore extent info in select-convert-to-text functions, fixing a copy problem in ERC. -- Aidan Kehoe
+-- Fix: Loss of precision in building FIXNUMs. -- Jerry James
+-- Fix: Remove 'device' parameter from 'clear_region' methods. -- Didier Verna
+-- Fix: Syntax error in #'get-other-frame. -- Didier Verna, Steven Mitchell
+-- Fix: pixel_to_glyph_translation to handle redisplay edge case. -- Mike Kupfer
+-- Improve: #'copy-symbol handles non-list plists. -- Aidan Kehoe
+-- Improve: Backward-compatible MATCHSPEC in face-property-matching-instance. -- Stephen Turnbull
+-- Improve: Byte-optimize more carefully. -- Aidan Kehoe
+-- Improve: Coding style in select.el. -- Aidan Kehoe
+-- Improve: Error when compiling an eval-when-compile form that changes the current buffer. -- Aidan Kehoe
+-- Improve: Handling of 'byte-compile-initial-macro-environment. -- Aidan Kehoe
+-- Improve: Handling of X keysyms. -- Aidan Kehoe
+-- Improve: Implementation of #'labels forms. -- Aidan Kehoe
+-- Improve: Lexical analysis of bignums. -- Aidan Kehoe
+-- Improve: Move #'split-path to Lisp. -- Aidan Kehoe
+-- Improve: Move #'x-keysym-on-keyboard-sans-modifiers-p, #'x-keysym-on-keyboard-p here from device-x.c to Lisp. -- Aidan Kehoe
+-- Improve: Move #'x-keysym-on-keyboard{,-sans-modifiers}-p to Lisp. -- Aidan Kehoe.
+-- Improve: Move config.h macros to configure. -- Aidan Kehoe
+-- Improve: Refactor #'cl-defsubst-expand, #'enable-behavior, #'disable-behavior, #'cl-transform-lambda. -- Aidan Kehoe
+-- Improve: Refactor #'macroexpand, various CL macros. -- Aidan Kehoe
+-- Improve: Refactor X keystroke handling to avoid XKeysymToString. -- Aidan Kehoe.
+-- Improve: Refactor XLIKE redisplay functions to use display, not frame. -- Didier Verna
+-- Improve: Refactor selection C code to use va_run_hooks_with_args. -- Aidan Kehoe
+-- Improve: Refactor some subr.el functions to use CL for circularity checking. -- Aidan Kehoe
+-- Improve: Refactor syntax cache. -- Stephen Turnbull
+-- Improve: Refactor text_width methods to expect a frame, not a window. -- Didier Verna
+-- Improve: Refactor to avoid #'mapcar where result is discarded. -- Aidan Kehoe
+-- Improve: Refactor to use #'labels for efficiency. -- Aidan Kehoe
+-- Improve: Remove #'bind-inits and fix up related functions. -- Aidan Kehoe
+-- Improve: Remove .elc from 'binary-file-regexps, and ensure all .elcs have coding cookies. -- Aidan Kehoe
+-- Improve: Remove MULE-only cases from non-MULE code. -- Stephen Turnbull
+-- Improve: Remove all autoload cookies from dumped files. -- Aidan Kehoe
+-- Improve: Remove obsolete LOSING_BYTECODE compile-time option. -- Aidan Kehoe
+-- Improve: Remove obsolete syntax code parsing macros. -- Stephen Turnbull
+-- Improve: Remove superfluous GCPRO in sublis. -- Aidan Kehoe
+-- Improve: Remove support for generating Emacs 19-compatible bytecode. -- Aidan Kehoe
+-- Improve: Rename INT to FIXNUM. -- Aidan Kehoe
+-- Improve: Warning removal. -- Stephen Turnbull
+-- New: Refactor sequence code into sequence.c. -- Aidan Kehoe, Vin Shelton
+
 Testing and Debugging
 
+-- Fix: Test leading ?+ in bignum read syntax. -- Aidan Kehoe
+-- Fix: Various cases testing changed APIs. -- Aidan Kehoe
+-- Fix: pobj printing of symbols and strings with NEW_GC. -- Jerry James
+-- Improve: #'substitute-in-file-name tests belong in os, not syntax. -- Stephen Turnbull
+-- Improve: Known bug code in test harness. -- Stephen Turnbull
+-- Improve: Replace #'flet with #'labels in tests where appropriate. -- Aidan Kehoe
+-- Improve: Replace obsolete function names in tests. -- Aidan Kehoe
+-- Improve: lisp-maint compliance in syntax-tests.el. -- Stephen Turnbull
+-- Improve: pobj falls back to $lrecord_type. -- Marcus Crestani
+-- New: File completion-tests.el. -- Aidan Kehoe
+-- New: File syntax-ppss-tests.el. -- Mats Lidell
+-- New: Syntax cache test. -- Stephen Turnbull, Alan Mackenzie
+-- New: Tests for #'byte-compile-catch, bignums, #'labels, #'print-circle, #'apply-partially. -- Aidan Kehoe
+-- New: Tests for #'shell-command. -- Mats Lidell
 
 to XEmacs 21.5.31 "ginger"
 
