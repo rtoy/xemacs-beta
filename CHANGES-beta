@@ -68,12 +68,16 @@ Lisp API
 -- Improve: Obsolete #'remassoc and friends, and remove instances from core. -- Aidan Kehoe
 -- Improve: Partial, undocumented support for #'macro-declaration-function in #'defmacro. -- Aidan Kehoe.
 -- Improve: Provide API for disabling symbol macros in cl-macroexpand. -- Aidan Kehoe
--- Improve: Refactor completion code, improve GNU compatibility. -- Aidan Kehoe
--- Improve: Remove XEmacs-specific #'remassoc functions, and substitute CL-style #'delete* for uses. -- Aidan Kehoe
+-- Improve: Refactor completion code, improve GNU compatibility. -- Aidan Kehoe-- Improve: Remove XEmacs-specific #'remassoc functions, and substitute CL-style #'delete* for uses. -- Aidan Kehoe
 -- Improve: Remove cl-compat.el and related documentation. -- Aidan Kehoe
 -- Improve: Remove long-obsolete cl-compat.el. -- Aidan Kehoe
 -- Improve: Remove obsolete compatibility aliases from cl*.el. -- Aidan Kehoe
+-- Improve: Support POSIX semantics in #'posix-string-match. -- Aidan Kehoe
+-- Improve: Sync #'batch-byte-recompile-directory API. -- Mike Sperber
 -- Improve: Sync #'shell-command{,-on-region}. -- Mats Lidell
+-- Improve: Sync #'truncate-string-to-width. -- Aidan Kehoe
+-- Improve: Character syntax of JIT Unicode characters. -- Aidan Kehoe
+-- Improve: Update #'file-name-remote-p. -- Mike Sperber
 -- New: #'apply-partially. -- Aidan Kehoe
 -- New: #'event-apply-modifiers. -- Aidan Kehoe
 -- New: #'looking-back. -- Didier Verna
@@ -85,6 +89,7 @@ Lisp API
 -- New: Add a defsetf for #'get-char-table. -- Aidan Kehoe
 -- New: Implement #'load-time-value, #'labels. -- Aidan Kehoe
 -- New: Sexp movement recognises notation for circular lists. -- Aidan Kehoe
+-- New: Support POSIX classes in regexps, #'skip-chars-{forward,backward}. -- Aidan Kehoe
 -- New: syntax-ppss.el. -- Mats Lidell
 
 Internal API and Implementation
@@ -94,6 +99,7 @@ Internal API and Implementation
 -- Fix: Duplicate arglist info in autoloads. -- Aidan Kehoe
 -- Fix: Ignore extent info in select-convert-to-text functions, fixing a copy problem in ERC. -- Aidan Kehoe
 -- Fix: Loss of precision in building FIXNUMs. -- Jerry James
+-- Fix: Redundant division in bignum_ceil. -- Aidan Kehoe
 -- Fix: Remove 'device' parameter from 'clear_region' methods. -- Didier Verna
 -- Fix: Syntax error in #'get-other-frame. -- Didier Verna, Steven Mitchell
 -- Fix: pixel_to_glyph_translation to handle redisplay edge case. -- Mike Kupfer
