@@ -5680,6 +5680,63 @@ case "$ld_switch_site" in
     - Consider configuring with --with-pdump." ;;
 esac
 
+define(COLON_TO_SPACE_WARN,
+  [case "$[$1]" in *:* [)] dnl
+case "$opsys" in *cygwin* [)]
+  echo "  WARNING: Paths containing spaces will be misinterpreted." ;;
+esac
+[$1]="`echo '' $[$1] | sed -e 's/^ //' -e 's/:/ /g'`";; esac])dnl
+
+echo "
+Package Search (a 'root' contains '{xemacs,mule,site}-packages'):"
+
+if test -n "$with_early_packages"; then
+  COLON_TO_SPACE_WARN(with_early_packages)
+  echo "  User package roots:    $with_early_packages"
+else
+  echo "  User package roots:    ~/.xemacs"
+fi
+
+dnl Unlike the others, with_late_packages gets a non-null default.
+XE_EXPAND_VARIABLE(with_late_packages,with_late_packages_expanded)
+COLON_TO_SPACE_WARN(with_late_packages_expanded)
+echo "  System package roots:  $with_late_packages_expanded"
+for path in $with_late_packages_expanded; do
+  if test ! -d $path; then
+    echo "    WARNING: $path was specified, but doesn't exist."
+    echo "    WARNING: XEmacs functionality will be noticably limited until"
+    echo "    WARNING: some packages are installed."
+  elif test ! -d "$path/xemacs-packages" \
+         -a ! -d "$path/mule-packages" \
+         -a ! -d "$path/site-packages"; then
+    echo "    WARNING: No packages found in $path."
+    echo "    WARNING: XEmacs functionality will be noticably limited until"
+    echo "    WARNING: some packages are installed."
+  fi
+done
+dnl #### Shouldn't need this.
+if test -z "$with_late_packages"; then
+  echo "    XEmacs BUG: with_late_packages is unset.  Please report this!"
+fi
+
+if test -n "$with_last_packages"; then
+  COLON_TO_SPACE_WARN(with_last_packages)
+  echo "  Legacy package roots:  $with_last_packages"
+  for path in $with_last_packages; do
+    if test ! -d $path; then
+      echo "    WARNING: $path was specified, but doesn't exist."
+      echo "    WARNING: If you don't need this setting, it is recommended"
+      echo "    WARNING: that you not use it."
+    elif test ! -d "$path/xemacs-packages" \
+           -a ! -d "$path/mule-packages" \
+           -a ! -d "$path/site-packages"; then
+      echo "    WARNING: No packages found in $path."
+      echo "    WARNING: If you don't need this setting, it is recommended"
+      echo "    WARNING: that you not use it."
+    fi
+  done
+fi
+
 echo "
 Window System:"
 if test "$with_msw" = "yes"; then

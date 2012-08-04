@@ -1,3 +1,10 @@
+2012-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Package Search): New Installation section.
+	Warn about missing system package hierarchies.
+
+	* configure: Regenerate.
+
 2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.32 "habanero" is released.
