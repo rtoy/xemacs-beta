@@ -2654,6 +2654,8 @@ retry:
 
 	      goto retry;
 	    }
+            /* The interned symbol with the empty name. */
+          case '#': return intern ("");
 	  case '$': return Vload_file_name_internal;
             /* bit vectors */
 	  case '*': return read_bit_vector (readcharfun);

@@ -1,3 +1,10 @@
+2012-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1):
+	* print.c (print_symbol):
+	Adopt GNU's ## syntax for the interned symbol with the zero-length
+	name.
+
 2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.32 "habanero" is released.
