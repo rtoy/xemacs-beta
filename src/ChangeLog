@@ -1,3 +1,15 @@
+2012-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c (define_specifier_tag):
+	GC protect the list that Fcharset_list () gave back, it's freshly
+	consed.
+	Clear the alist entries for this tag in CHARSET's tag list if the
+	charset_predicate is nil, so re-creating a charset tag works more
+	effectively.
+	* specifier.c (Fdefine_specifier_tag):
+	Device-type-specific tags *are* available, even if that device
+	type isn't; see specifier.el.
+
 2012-08-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (read1):
