@@ -2,6 +2,11 @@
 
 	* XEmacs 21.5.32 "habanero" is released.
 
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (describe-function-1):
+	Document any command remapping that has been done in this function.
+
 2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el (byte-optimize-letX):

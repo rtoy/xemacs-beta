@@ -2,6 +2,11 @@
 
 	* XEmacs 21.5.32 "habanero" is released.
 
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/keymap-tests.el:
+	Test the new command remapping functionality.
+
 2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:

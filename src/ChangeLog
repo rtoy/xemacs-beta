@@ -21,6 +21,41 @@
 
 	* XEmacs 21.5.32 "habanero" is released.
 
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c:
+	Add command remapping, a more robust equivalent to
+	#'substitute-key-definition.
+	* keymap.c (CHECK_REMAPPING_POSITION): New.
+	* keymap.c (keymap_equal): Correct a comment here.
+	* keymap.c (Fdefine_key): Document the command remapping syntax.
+	* keymap.c (Fremap_command): New.
+	* keymap.c (command_remapping): New.
+	* keymap.c (Fcommand_remapping): New.
+	* keymap.c (commands_remapped_to_mapper): New.
+	* keymap.c (commands_remapped_to_traverser): New.
+	* keymap.c (Fcommands_remapped_to): New.
+	* keymap.c (get_relevant_keymaps): Take a new POSITION argument.
+	* keymap.c (Fcurrent_keymaps, event_binding):
+	Supply the new POSITION argument to get_relevant_keymaps.
+	* keymap.c (Fkey_binding):
+	Add new arguments, NO-REMAP and POSITION.
+
+	* keymap.c (map_keymap_mapper):
+	* keymap.c (Fwhere_is_internal):
+	* keymap.c (where_is_to_char):
+	* keymap.c (where_is_recursive_mapper):
+	Don't expose the key remapping in these functions. This conflicts
+	with GNU, but is more sane for our callers. Access to command
+	remapping is with the functions #'command-remapping,
+	#'commands-remapped-to, and #'remap-command, not with the general
+	keymap functions, apart from the compatibility hack in #'define-key.
+
+	* keymap.c (syms_of_keymap):
+	* keymap.c (vars_of_keymap):
+	* keymap.c (complex_vars_of_keymap):
+	* lisp.h: New CHECK_COMMAND macro.
+
 2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* minibuf.c (Ftest_completion):
