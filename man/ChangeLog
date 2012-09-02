@@ -8,6 +8,16 @@
 
 	* XEmacs 21.5.32 "habanero" is released.
 
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/keymaps.texi (Keymaps):
+	* lispref/keymaps.texi (Changing Key Bindings):
+	* lispref/keymaps.texi (Scanning Keymaps):
+	* lispref/keymaps.texi (Remapping commands):
+	* lispref/keymaps.texi (XEmacs): New.
+	* lispref/keymaps.texi (Other Keymap Functions):
+	Document the new command remapping functionality in this file.
+
 2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/macros.texi (Expansion):
