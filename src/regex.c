@@ -4663,6 +4663,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 
 #ifdef emacs
   BEGIN_REGEX_MALLOC_OK ();
+  update_mirror_syntax_if_dirty (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf));
   scache = setup_syntax_cache (scache, lispobj, lispbuf,
 			       offset_to_charxpos (lispobj, startpos),
 			       1);
@@ -5052,6 +5053,10 @@ re_match_2 (struct re_pattern_buffer *bufp, const char *string1,
   int result;
 
 #ifdef emacs
+  /* Update the mirror syntax table if it's dirty now, this would otherwise
+     cause a malloc() in charset_mule in re_match_2_internal() when checking
+     characters' syntax. */
+  update_mirror_syntax_if_dirty (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf));
   scache = setup_syntax_cache (scache, lispobj, lispbuf,
 			       offset_to_charxpos (lispobj, pos),
 			       1);

@@ -1109,3 +1109,11 @@ baaaa
    (decode-char 'ucs #x2116) ;; NUMERO SIGN
    (decode-char 'ucs #x5357))) ;; kDefinition south; southern part; southward
 
+(with-temp-buffer
+  (insert "hi there")
+  (goto-char 1)
+  (set-syntax-table (copy-syntax-table))
+  (modify-syntax-entry 'ascii "<")
+  (Assert (null (re-search-forward "[[:alnum:]]" nil t))
+          "checking that a bug with dirty syntax table caches has been fixed"))
+  

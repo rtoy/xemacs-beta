@@ -1,3 +1,11 @@
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c (re_search_2):
+	* regex.c (re_match_2):
+	If the mirror syntax table is dirty, update it before the search,
+	preventing a malloc() inside the search code, something which
+	isn't allowed. Thank you Henry Thompson!
+
 2012-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.c (define_specifier_tag):
