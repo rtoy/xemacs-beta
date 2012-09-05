@@ -1,3 +1,13 @@
+2012-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c:
+	* keymap.c (Fdefine_key):
+	* keymap.c (remap_command):
+	* keymap.c (Fremap_command):
+	Don't sanity-check commands to be remapped with the (define-key
+	KEYMAP [remap COMMAND1] COMMAND2) syntax, for better compatibility
+	with GNU Emacs. Thank you Robert Pluim!
+
 2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* regex.c (re_search_2):
