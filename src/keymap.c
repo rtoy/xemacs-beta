@@ -195,8 +195,9 @@ Lisp_Object Qxemacs_command_remapping; /* Uninterned, so there's no conflict
 EXFUN (Fkeymap_fullness, 1);
 EXFUN (Fset_keymap_name, 2);
 EXFUN (Fsingle_key_description, 1);
-EXFUN (Fremap_command, 3);
 
+static Lisp_Object remap_command (Lisp_Object keymap, Lisp_Object old,
+                                  Lisp_Object new_);
 static void describe_command (Lisp_Object definition, Lisp_Object buffer);
 static void describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 			  void (*elt_describer) (Lisp_Object, Lisp_Object),
@@ -1939,12 +1940,6 @@ it is possible to redefine only one of those sequences like so:
 
   GCPRO3 (keymap, keys, def);
 
-  /* Allow access to any keys named remap, use our uninterned symbol. */
-  if (2 == len && VECTORP (keys) && EQ (Qremap, XVECTOR_DATA (keys) [0]))
-    {
-      return Fremap_command (keymap, XVECTOR_DATA (keys) [1], def);
-    }
-
   /* ASCII grunge.
      When the user defines a key which, in a strictly ASCII world, would be
      produced by two different keys (^J and linefeed, or ^H and backspace,
@@ -1957,6 +1952,13 @@ it is possible to redefine only one of those sequences like so:
   ascii_hack = (STRINGP (keys));
 
   keymap = get_keymap (keymap, 1, 1);
+
+  /* Allow access to any keys named remap, use our uninterned symbol. For
+     compatibility, don't sanity-check (aref KEYS 1) or DEF. */
+  if (2 == len && VECTORP (keys) && EQ (Qremap, XVECTOR_DATA (keys) [0]))
+    {
+      RETURN_UNGCPRO (remap_command (keymap, XVECTOR_DATA (keys) [1], def));
+    }
 
   idx = 0;
   while (1)
@@ -2066,22 +2068,11 @@ it is possible to redefine only one of those sequences like so:
     }
 }
 
-DEFUN ("remap-command", Fremap_command, 3, 3, 0, /*
-Ensure that NEW is called when previously OLD would be, in KEYMAP.
-
-NEW and OLD are both command symbols.  KEYMAP is a keymap object.
-
-This is equivalent to `(define-key KEYMAP [remap OLD] NEW])'.  See also
-`substitute-key-definition', an older way of doing a similar thing.
-*/
-       (keymap, old, new_))
+static Lisp_Object
+remap_command (Lisp_Object keymap, Lisp_Object old, Lisp_Object new_)
 {
-  Lisp_Object cmd;
   Lisp_Key_Data parsed;
-
-  keymap = get_keymap (keymap, 1, 1);
-  CHECK_COMMAND (old);
-  CHECK_COMMAND (new_);
+  Lisp_Object cmd;
 
   define_key_parser (Qxemacs_command_remapping, &parsed);
   cmd = keymap_lookup_1 (keymap, &parsed, 0);
@@ -2097,6 +2088,24 @@ This is equivalent to `(define-key KEYMAP [remap OLD] NEW])'.  See also
   define_key_parser (old, &parsed);
   keymap_store (cmd, &parsed, new_);
   return new_;
+}
+
+
+DEFUN ("remap-command", Fremap_command, 3, 3, 0, /*
+Ensure that NEW is called when previously OLD would be, in KEYMAP.
+
+NEW and OLD are both command symbols.  KEYMAP is a keymap object.
+
+This is equivalent to `(define-key KEYMAP [remap OLD] NEW])'.  See also
+`substitute-key-definition', an older way of doing a similar thing.
+*/
+       (keymap, old, new_))
+{
+  keymap = get_keymap (keymap, 1, 1);
+  CHECK_COMMAND (old);
+  CHECK_COMMAND (new_);
+
+  return remap_command (keymap, old, new_);
 }
 
 static Lisp_Object
