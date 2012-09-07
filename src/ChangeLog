@@ -1,3 +1,19 @@
+2012-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c:
+	* file-coding.c (snarf_coding_system):
+	Take a new parameter, FIND_CODING_SYSTEM_P, which indicates that
+	find_coding_system() should be called.
+	* file-coding.c (look_for_coding_system_magic_cookie):
+	* file-coding.c (determine_real_coding_system):
+	* file-coding.c (undecided_convert):
+	Use this parameter.
+	* file-coding.c (Ffind_coding_system_magic_cookie_in_file):	
+	New, moved from files.el, so we can use
+	look_for_coding_system_magic_cookie's implementation.
+	* file-coding.c (syms_of_file_coding):
+	Make Ffind_coding_system_magic_cookie_in_file available.
+
 2012-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.c:

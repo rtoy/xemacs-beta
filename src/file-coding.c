@@ -79,6 +79,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "extents.h"
 #include "rangetab.h"
 #include "chartab.h"
+#include "sysfile.h"
 
 #ifdef HAVE_ZLIB
 #include "zlib.h"
@@ -3674,7 +3675,8 @@ detected_coding_system (struct detection_state *st)
    blanks).  If found, return it, otherwise nil. */
 
 static Lisp_Object
-snarf_coding_system (const UExtbyte *p, Bytecount len)
+snarf_coding_system (const UExtbyte *p, Bytecount len,
+                     Boolint find_coding_system_p)
 {
   Bytecount n;
   UExtbyte *name;
@@ -3698,7 +3700,16 @@ snarf_coding_system (const UExtbyte *p, Bytecount len)
       name[n] = '\0';
       /* This call to intern_istring() is OK because we already verified that
 	 there are only ASCII characters in the string */
-      return find_coding_system_for_text_file (intern_istring ((Ibyte *) name), 0);
+      if (find_coding_system_p)
+        {
+          return
+            find_coding_system_for_text_file (intern_istring ((Ibyte *) name),
+                                              0);
+        }
+      else
+        {
+          return build_ascstring ((const Ascbyte *) name);
+        }
     }
 
   return Qnil;
@@ -3725,11 +3736,9 @@ unwind_free_detection_state (Lisp_Object opaque)
   return Qnil;
 }
 
-/* #### This duplicates code in `find-coding-system-magic-cookie-in-file'
-   in files.el.  Look into combining them. */
-
 static Lisp_Object
-look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
+look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len,
+                                     Boolint find_coding_system_p)
 {
   const UExtbyte *p;
   const UExtbyte *scan_end;
@@ -3767,7 +3776,8 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 			    *(p-1) == ';')))
 		  {
 		    p += LENGTH ("coding:");
-		    return snarf_coding_system (p, suffix - p);
+		    return snarf_coding_system (p, suffix - p,
+                                                find_coding_system_p);
 		    break;
 		  }
 	      break;
@@ -3792,7 +3802,7 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 	suffix = p;
 	while (suffix < scan_end && !isspace (*suffix))
 	  suffix++;
-	return snarf_coding_system (p, suffix - p);
+	return snarf_coding_system (p, suffix - p, find_coding_system_p);
       }
   }
 
@@ -3807,7 +3817,8 @@ determine_real_coding_system (Lstream *stream)
 				     make_opaque_ptr (st));
   UExtbyte buf[4096];
   Bytecount nread = Lstream_read (stream, buf, sizeof (buf));
-  Lisp_Object coding_system = look_for_coding_system_magic_cookie (buf, nread);
+  Lisp_Object coding_system
+    = look_for_coding_system_magic_cookie (buf, nread, 1);
 
   if (NILP (coding_system))
     {
@@ -3971,7 +3982,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 		/* #### This is cheesy.  What we really ought to do is buffer
 		   up a certain minimum amount of data to get a better result.
 		   */
-		data->actual = look_for_coding_system_magic_cookie (src, n);
+		data->actual = look_for_coding_system_magic_cookie (src, n, 1);
 	      if (NILP (data->actual))
 		{
 		  /* #### This is cheesy.  What we really ought to do is buffer
@@ -4216,6 +4227,50 @@ type.  Optional arg BUFFER defaults to the current buffer.
   return val;
 }
 
+DEFUN ("find-coding-system-magic-cookie-in-file",
+       Ffind_coding_system_magic_cookie_in_file, 1, 1, 0, /*
+Look for the coding-system magic cookie in FILENAME.
+The coding-system magic cookie is either the local variable specification
+-*- ... coding: ... -*- on the first line, or the exact string
+\";;;###coding system: \" somewhere within the first 3000 characters
+of the file.  If found, the coding system name (as a string) is returned;
+otherwise nil is returned.  Note that it is extremely unlikely that
+either such string would occur coincidentally as the result of encoding
+some characters in a non-ASCII charset, and that the spaces make it
+even less likely since the space character is not a valid octet in any
+ISO 2022 encoding of most non-ASCII charsets.
+*/
+       (filename))
+{
+  Lisp_Object lstream;
+  UExtbyte buf[4096];
+  Bytecount nread;
+  int fd = -1;
+  struct stat st;
+
+  filename = Fexpand_file_name (filename, Qnil);
+
+  if (qxe_stat (XSTRING_DATA (filename), &st) < 0)
+    {
+    badopen:
+      report_file_error ("Opening input file", filename);
+    }
+
+  if (fd < 0)
+    {
+      if ((fd = qxe_interruptible_open (XSTRING_DATA (filename),
+					O_RDONLY | OPEN_BINARY, 0)) < 0)
+	goto badopen;
+    }
+
+  lstream = make_filedesc_input_stream (fd, 0, -1, 0);
+  Lstream_set_buffering (XLSTREAM (lstream), LSTREAM_UNBUFFERED, 0);
+  nread = Lstream_read (XLSTREAM (lstream), buf, sizeof (buf));
+  Lstream_delete (XLSTREAM (lstream));
+  retry_close (fd);
+
+  return look_for_coding_system_magic_cookie (buf, nread, 0);
+}
 
 
 #ifdef DEBUG_XEMACS
@@ -4524,6 +4579,7 @@ syms_of_file_coding (void)
   DEFSUBR (Fdecode_coding_region);
   DEFSUBR (Fencode_coding_region);
   DEFSUBR (Fquery_coding_region);
+  DEFSUBR (Ffind_coding_system_magic_cookie_in_file);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qcoding_systemp);
   DEFSYMBOL (Qno_conversion);
   DEFSYMBOL (Qconvert_eol);
