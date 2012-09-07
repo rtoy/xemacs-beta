@@ -1,3 +1,10 @@
+2012-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el:
+	* files.el (find-coding-system-magic-cookie-in-file):
+	Removed. Move this to C, so we can use
+	look_for_coding_system_magic_cookie().
+
 2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.32 "habanero" is released.

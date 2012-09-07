@@ -2126,52 +2126,6 @@ A few variable names are treated specially."
 	;; Ordinary variable, really set it.
 	(t (make-local-variable var)
 	   (set var val))))
-
-(defun find-coding-system-magic-cookie-in-file (file)
-  "Look for the coding-system magic cookie in FILE.
-The coding-system magic cookie is either the local variable specification
--*- ... coding: ... -*- on the first line, or the exact string
-\";;;###coding system: \" somewhere within the first 3000 characters
-of the file.  If found, the coding system name (as a string) is returned;
-otherwise nil is returned.  Note that it is extremely unlikely that
-either such string would occur coincidentally as the result of encoding
-some characters in a non-ASCII charset, and that the spaces make it
-even less likely since the space character is not a valid octet in any
-ISO 2022 encoding of most non-ASCII charsets."
-  (save-excursion
-    (with-temp-buffer
-      (let ((coding-system-for-read 'raw-text))
-	(insert-file-contents file nil 0 3000))
-      (goto-char (point-min))
-      (or (and (looking-at
-		"^[^\n]*-\\*-[^\n]*coding: \\([^ \t\n;]+\\)[^\n]*-\\*-")
-	       (buffer-substring (match-beginning 1) (match-end 1)))
-	  ;; (save-excursion
-	  ;;   (let (start end)
-	  ;;     (and (re-search-forward "^;+[ \t]*Local Variables:" nil t)
-	  ;;          (setq start (match-end 0))
-	  ;;          (re-search-forward "\n;+[ \t]*End:")
-	  ;;          (setq end (match-beginning 0))
-	  ;;          (save-restriction
-	  ;;            (narrow-to-region start end)
-	  ;;            (goto-char start)
-	  ;;            (re-search-forward "^;;; coding: \\([^\n]+\\)$" nil t)
-	  ;;            )
-	  ;;          (let ((codesys
-	  ;;                 (intern (buffer-substring
-	  ;;                          (match-beginning 1)(match-end 1)))))
-	  ;;            (if (find-coding-system codesys) codesys))
-	  ;;          )))
-	  (let ((case-fold-search nil))
-	    (if (search-forward
-		 ";;;###coding system: " (+ (point-min) 3000) t)
-		(let ((start (point))
-		      (end (progn
-			     (skip-chars-forward "^ \t\n\r")
-			     (point))))
-		  (if (> end start) (buffer-substring start end))
-		  )))
-	  ))))
 
 
 (defcustom change-major-mode-with-file-name t
