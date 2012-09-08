@@ -369,6 +369,54 @@ On nonblank line, delete any immediately following blank lines."
     (if (looking-at "^[ \t]*\n\\'")
 	(delete-region (point) (point-max)))))
 
+(defcustom delete-trailing-lines t
+  "If non-nil, \\[delete-trailing-whitespace] deletes trailing lines.
+Trailing lines are deleted only if `delete-trailing-whitespace'
+is called on the entire buffer (rather than an active region)."
+  :type 'boolean
+  :group 'editing)
+  ; :version "24.2")
+
+(defun delete-trailing-whitespace (&optional start end)
+  "Delete trailing whitespace between START and END.
+If called interactively, START and END are the start/end of the
+region if the mark is active, or of the buffer's accessible
+portion if the mark is inactive.
+
+This command deletes whitespace characters after the last
+non-whitespace character in each line between START and END.  It
+does not consider formfeed characters to be whitespace.
+
+If this command acts on the entire buffer (i.e. if called
+interactively with the mark inactive, or called from Lisp with
+END nil), it also deletes all trailing lines at the end of the
+buffer if the variable `delete-trailing-lines' is non-nil."
+  ;; XEmacs; "*r" instead of re-implementing it.
+  (interactive "*r")
+  (save-match-data
+    (save-excursion
+      (let ((end-marker (copy-marker (or end (point-max))))
+            (start (or start (point-min))))
+        (goto-char start)
+        (while (re-search-forward "\\s-$" end-marker t)
+          (skip-syntax-backward "-" (line-beginning-position))
+          ;; Don't delete formfeeds, even if they are considered whitespace.
+          ;; XEmacs; #'looking-at-p not (yet) available
+          (if (save-match-data (looking-at ".*\f")) 
+              (goto-char (match-end 0)))
+          (delete-region (point) (match-end 0)))
+        ;; Delete trailing empty lines.
+        (goto-char end-marker)
+        (when (and (not end)
+		   delete-trailing-lines
+                   ;; Really the end of buffer.
+                   (save-restriction (widen) (eobp))
+                   (<= (skip-chars-backward "\n") -2))
+          (delete-region (1+ (point)) end-marker))
+        (set-marker end-marker nil))))
+  ;; Return nil for the benefit of `write-file-functions'.
+  nil)
+
 (defun back-to-indentation ()
   "Move point to the first non-whitespace character on this line."
   ;; XEmacs change
