@@ -391,8 +391,13 @@ If this command acts on the entire buffer (i.e. if called
 interactively with the mark inactive, or called from Lisp with
 END nil), it also deletes all trailing lines at the end of the
 buffer if the variable `delete-trailing-lines' is non-nil."
-  ;; XEmacs; "*r" instead of re-implementing it.
-  (interactive "*r")
+  (interactive (progn
+                 (barf-if-buffer-read-only)
+                 (if (if zmacs-regions
+                         zmacs-region-active-p
+                       (eq (marker-buffer (mark-marker t)) (current-buffer)))
+                     (list (region-beginning) (region-end))
+                   (list nil nil))))
   (save-match-data
     (save-excursion
       (let ((end-marker (copy-marker (or end (point-max))))
