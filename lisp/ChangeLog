@@ -1,3 +1,11 @@
+2012-09-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el:
+	* simple.el (delete-trailing-lines): New.
+	* simple.el (delete-trailing-whitespace): New.
+	Import this function and an associated variable from GNU, thank
+	you GNU.
+
 2012-09-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el:
