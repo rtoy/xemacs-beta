@@ -5,6 +5,7 @@
 	* simple.el (delete-trailing-whitespace): New.
 	Import this function and an associated variable from GNU, thank
 	you GNU.
+	Update its interactive spec to work correctly in XEmacs.
 
 2012-09-07  Aidan Kehoe  <kehoea@parhasard.net>
 
