@@ -878,10 +878,7 @@ Show the buffer in another window, but don't select it."
 	     ;; Make a choice only amongst the faces under point:
 	     (let ((choice (completing-read
 			    "Customize face: (default all faces at point) "
-			    (mapcar (lambda (face)
-				      (list (symbol-name face) face))
-				    faces)
-			    nil t)))
+                            faces nil t)))
 	       (if (eql (length choice) 0)
 		   (list faces)
 		 (list (intern choice)))))))))
@@ -1684,33 +1681,28 @@ and `face'."
 
 (defun custom-load-symbol (symbol)
   "Load all dependencies for SYMBOL."
-  (unless custom-load-recursion
-    (let ((custom-load-recursion t)
-	  (loads (get symbol 'custom-loads))
-	  load)
-      (while loads
-	(setq load (car loads)
-	      loads (cdr loads))
-	(custom-load-symbol-1 load)))))
-
-(defun custom-load-symbol-1 (load)
-  (cond ((symbolp load)
-	 (condition-case nil
-	     (require load)
-	   (error nil)))
-	;; Don't reload a file already loaded.
-	((and (boundp 'preloaded-file-list)
-	      (member load preloaded-file-list)))
-	((assoc load load-history))
-	((assoc (locate-library load) load-history))
-	(t
-	 (condition-case nil
-	     ;; Without this, we would load cus-edit recursively.
-	     ;; We are still loading it when we call this,
-	     ;; and it is not in load-history yet.
-	     (or (equal load "cus-edit")
-		 (load-library load))
-	   (error nil)))))
+  (labels
+      ((custom-load-symbol-1 (load)
+	 (cond ((symbolp load)
+		(condition-case nil
+		    (require load)
+		  (error nil)))
+	       ;; Don't reload a file already loaded.
+	       ((and (boundp 'preloaded-file-list)
+		     (member load preloaded-file-list)))
+	       ((assoc load load-history))
+	       ((assoc (locate-library load) load-history))
+	       (t
+		(condition-case nil
+		    ;; Without this, we would load cus-edit recursively.
+		    ;; We are still loading it when we call this,
+		    ;; and it is not in load-history yet.
+		    (or (equal load "cus-edit")
+			(load-library load))
+		  (error nil))))))
+    (unless custom-load-recursion
+      (let ((custom-load-recursion t))
+        (map nil #'custom-load-symbol-1 (get symbol 'custom-loads))))))
 
 (defvar custom-already-loaded-custom-defines nil
   "List of already-loaded `custom-defines' files.")
@@ -2969,7 +2961,7 @@ settings."
 (defun widget-face-value-delete (widget)
   ;; Remove the child from the options.
   (let ((child (car (widget-get widget :children))))
-    (setq custom-options (delq child custom-options))
+    (setq custom-options (delete* child custom-options))
     (widget-children-value-delete widget)))
 
 (defvar face-history nil
@@ -2977,12 +2969,8 @@ settings."
 
 (defun widget-face-action (widget &optional event)
   "Prompt for a face."
-  (let ((answer (completing-read "Face: "
-				 (mapcar (lambda (face)
-					   (list (symbol-name face)))
-					 (face-list))
-				 nil nil nil
-				 'face-history)))
+  (let ((answer (completing-read "Face: " (face-list) nil nil nil
+                                 'face-history)))
     (unless (eql (length answer) 0)
       (widget-value-set widget (intern answer))
       (widget-apply widget :notify widget event)

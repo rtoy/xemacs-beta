@@ -551,7 +551,7 @@ Any client that remains \"empty\" after the removal is informed that the
 editing has ended."
   (let* ((buf (current-buffer)))
     (dolist (client (gnuserv-buffer-clients buf))
-      (callf2 delq buf (gnuclient-buffers client))
+      (callf2 delete* buf (gnuclient-buffers client))
       ;; If no more buffers, kill the client.
       (when (null (gnuclient-buffers client))
 	(gnuserv-kill-client client)))))
@@ -588,7 +588,7 @@ editing has ended."
 	;; killing the device, because it would cause a device-dead
 	;; error when `delete-device' tries to do the job later.
 	(gnuserv-kill-client client t))))
-  (callf2 delq device gnuserv-devices))
+  (callf2 delete* device gnuserv-devices))
 
 (add-hook 'delete-device-hook 'gnuserv-check-device)
 
@@ -608,7 +608,7 @@ This will do away with all the associated buffers.  If LEAVE-FRAME,
 the function will not remove the frames associated with the client."
   ;; Order is important: first delete client from gnuserv-clients, to
   ;; prevent gnuserv-buffer-done-1 calling us recursively.
-  (callf2 delq client gnuserv-clients)
+  (callf2 delete* client gnuserv-clients)
   ;; Process the buffers.
   (mapc 'gnuserv-buffer-done-1 (gnuclient-buffers client))
   (unless leave-frame
@@ -636,7 +636,7 @@ the function will not remove the frames associated with the client."
 ;; Do away with the buffer.
 (defun gnuserv-buffer-done-1 (buffer)
   (dolist (client (gnuserv-buffer-clients buffer))
-    (callf2 delq buffer (gnuclient-buffers client))
+    (callf2 delete* buffer (gnuclient-buffers client))
     (when (null (gnuclient-buffers client))
       (gnuserv-kill-client client)))
   ;; Get rid of the buffer.

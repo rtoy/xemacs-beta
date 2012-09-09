@@ -1,3 +1,61 @@
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Make sure we can search for character ranges successfully when the
+	syntax table is dirty.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/keymap-tests.el:
+	Test the new command remapping functionality.
+
+2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Test #'truncate-string-to-width, thank you Colin Walters.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Use &environment appropriately in #'macrolet, instead of relying
+	on #'macroexpand to guess what we mean.
+
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el (equal):
+	* automated/regexp-tests.el (Assert-char-class):
+	Correct a stray parenthesis; add tests for the predefined
+	character classes with #'skip-chars-{forward,backward}; update the
+	tests to reflect some changed design decisions on my part.
+
+2012-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el: Check that #'posix-string-match
+	actually returns the longest match; thank you Ilya Shlyakhter in
+	jn1j8t$ujq$1@dough.gmane.org !
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (Assert-char-class):
+	Check that #'string-match errors correctly with an over-long
+	character class name.
+	Add tests for character class functionality that supports
+	non-ASCII characters. These tests expose bugs in GNU Emacs
+	24.0.94.2, but pass under current XEmacs.
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (Assert-char-class):
+	Test the character classes functionality that was always in
+	regex.c but that has only just been turned on. These tests pass on
+	GNU Emacs 24.0.94.2.
+
 2012-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

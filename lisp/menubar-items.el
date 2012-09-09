@@ -1806,7 +1806,7 @@ This groups buffers by major mode.  It only really makes sense if
 		       (funcall fn buffer)
 		     (funcall fn buffer n))))
 	   (if complex-buffers-menu-p
-	       (delq nil
+	       (delete* nil
 		     (list line
 			   (vector "S%_witch to Buffer"
 				   (list buffers-menu-switch-to-buffer-function

@@ -1,3 +1,194 @@
+2012-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c:
+	* file-coding.c (snarf_coding_system):
+	Take a new parameter, FIND_CODING_SYSTEM_P, which indicates that
+	find_coding_system() should be called.
+	* file-coding.c (look_for_coding_system_magic_cookie):
+	* file-coding.c (determine_real_coding_system):
+	* file-coding.c (undecided_convert):
+	Use this parameter.
+	* file-coding.c (Ffind_coding_system_magic_cookie_in_file):	
+	New, moved from files.el, so we can use
+	look_for_coding_system_magic_cookie's implementation.
+	* file-coding.c (syms_of_file_coding):
+	Make Ffind_coding_system_magic_cookie_in_file available.
+
+2012-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c:
+	* keymap.c (Fdefine_key):
+	* keymap.c (remap_command):
+	* keymap.c (Fremap_command):
+	Don't sanity-check commands to be remapped with the (define-key
+	KEYMAP [remap COMMAND1] COMMAND2) syntax, for better compatibility
+	with GNU Emacs. Thank you Robert Pluim!
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c (re_search_2):
+	* regex.c (re_match_2):
+	If the mirror syntax table is dirty, update it before the search,
+	preventing a malloc() inside the search code, something which
+	isn't allowed. Thank you Henry Thompson!
+
+2012-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c (define_specifier_tag):
+	GC protect the list that Fcharset_list () gave back, it's freshly
+	consed.
+	Clear the alist entries for this tag in CHARSET's tag list if the
+	charset_predicate is nil, so re-creating a charset tag works more
+	effectively.
+	* specifier.c (Fdefine_specifier_tag):
+	Device-type-specific tags *are* available, even if that device
+	type isn't; see specifier.el.
+
+2012-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1):
+	* print.c (print_symbol):
+	Adopt GNU's ## syntax for the interned symbol with the zero-length
+	name.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c:
+	Add command remapping, a more robust equivalent to
+	#'substitute-key-definition.
+	* keymap.c (CHECK_REMAPPING_POSITION): New.
+	* keymap.c (keymap_equal): Correct a comment here.
+	* keymap.c (Fdefine_key): Document the command remapping syntax.
+	* keymap.c (Fremap_command): New.
+	* keymap.c (command_remapping): New.
+	* keymap.c (Fcommand_remapping): New.
+	* keymap.c (commands_remapped_to_mapper): New.
+	* keymap.c (commands_remapped_to_traverser): New.
+	* keymap.c (Fcommands_remapped_to): New.
+	* keymap.c (get_relevant_keymaps): Take a new POSITION argument.
+	* keymap.c (Fcurrent_keymaps, event_binding):
+	Supply the new POSITION argument to get_relevant_keymaps.
+	* keymap.c (Fkey_binding):
+	Add new arguments, NO-REMAP and POSITION.
+
+	* keymap.c (map_keymap_mapper):
+	* keymap.c (Fwhere_is_internal):
+	* keymap.c (where_is_to_char):
+	* keymap.c (where_is_recursive_mapper):
+	Don't expose the key remapping in these functions. This conflicts
+	with GNU, but is more sane for our callers. Access to command
+	remapping is with the functions #'command-remapping,
+	#'commands-remapped-to, and #'remap-command, not with the general
+	keymap functions, apart from the compatibility hack in #'define-key.
+
+	* keymap.c (syms_of_keymap):
+	* keymap.c (vars_of_keymap):
+	* keymap.c (complex_vars_of_keymap):
+	* lisp.h: New CHECK_COMMAND macro.
+
+2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.c (Ftest_completion):
+	Correct some documentation here.
+
+2012-05-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* search.c (skip_chars): Add cast to Ibyte *.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c:
+	* eval.c (Fmacroexpand):
+	Don't prepend any supplied environment to
+	Vbyte_compile_macro_environment, leave that up to our callers
+	(that's what the &environment argument is for).
+	Document that one should normally access
+	byte-compile-macro-environment using the &environment lambda list
+	keyword.
+
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c:
+	Move various #defines and enums to regex.h, since we need them
+	when implementing #'skip-chars-{backward,forward}.
+	* regex.c (re_wctype):
+	* regex.c (re_iswctype):
+	Be more robust about case insensitivity here.
+	* regex.c (regex_compile):
+	* regex.h:
+	* regex.h (RE_ISWCTYPE_ARG_DECL):
+	* regex.h (CHAR_CLASS_MAX_LENGTH):
+	* search.c (skip_chars):
+	Implement support for the predefined character classes in this
+	function.
+
+2012-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* search.c (string_match_1): Actually use the POSIX argument here,
+	pass it to compile_pattern(). Thank you for the bug report, Ilya
+	Shlyakhter!
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Support non-ASCII correctly in character classes ([:alnum:] and
+	friends).
+
+	* regex.c:
+	* regex.c (ISBLANK, ISUNIBYTE): New. Make these and friends
+	independent of the locale, since we want them to be consistent in
+	XEmacs.
+	* regex.c (print_partial_compiled_pattern): Print the flags for
+	charset_mule; don't print non-ASCII as the character values in
+	ranges, this breaks with locales.
+	* regex.c (enum):
+	Define various flags the charset_mule and charset_mule_not opcodes
+	can now take.
+	* regex.c (CHAR_CLASS_MAX_LENGTH): Update this.
+	* regex.c (re_iswctype, re_wctype): New, from GNU.
+	* regex.c (re_wctype_can_match_non_ascii): New; used when deciding
+	on whether to use charset_mule or the ASCII-only regex character
+	set opcode.
+	* regex.c (regex_compile):
+	Error correctly on long, non-existent character class names.
+	Break out the handling of charsets that can match non-ASCII into a
+	separate clause. Use compile_char_class when compiling character
+	classes.
+	* regex.c (compile_char_class): New. Used in regex_compile when
+	compiling character sets that may match non-ASCII.
+	* regex.c (re_compile_fastmap):
+	If there are flags set for charset_mule or charset_mule_not, we
+	can't use the fastmap (since we need to check syntax table values
+	that aren't available there).
+	* regex.c (re_match_2_internal):
+	Check the new flags passed to the charset_mule{,_not} opcode,
+	observe them if appropriate.
+	* regex.h:
+	* regex.h (enum):
+	Expose re_wctype_t here, imported from GNU.
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.h (RE_SYNTAX_EMACS):
+	Turn on character classes ([:alnum:] and friends) by default. This
+	implementation is incomplete, am working on a version that handles
+	non-ASCII characters correctly.
+
+2012-02-12  Vin Shelton  <acs@xemacs.org>
+
+	* sysproc.h: As of Cygwin 1.7.10, /usr/include/process.h has moved
+	to /usr/include/cygwin/process.h, so sysproc.h could no longer
+	find it.  It wasn't needed anyway, so remove the include under
+	cygwin.
+
+2012-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-mp.c (bignum_ceil): Remove a redundant double division
+	from this function.
+
 2012-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* device-x.c:

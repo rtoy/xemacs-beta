@@ -2957,10 +2957,10 @@ via the hepatic alpha-tocopherol transfer protein")))
         (append form (list 1 [hi there] 40 "this is a string" pi)))
        (with-second-arguments (&optional form)
          (append form (list pi e ''hello ''there [40 50 60])))
-       (with-both-arguments (&optional form)
+       (with-both-arguments (&optional form &environment env)
          (append form
-                 (macroexpand '(with-first-arguments))
-                 (macroexpand '(with-second-arguments)))))
+                 (macroexpand '(with-first-arguments) env)
+                 (macroexpand '(with-second-arguments) env))))
 
     (with-temp-buffer
       (Assert
@@ -2985,5 +2985,21 @@ via the hepatic alpha-tocopherol transfer protein")))
               "checking the buffer contents are as expected at the end.")
       (Assert (not (funcall (intern "eq") #'bookend #'refer-to-bookend))
 	      "checking two mutually recursive functions compiled OK"))))
+
+;; Test macroexpand's handling of the ENVIRONMENT argument. We augmented it
+;; quietly for about four months, and this was incorrect.
+
+(Check-Error
+ void-variable
+ (macrolet
+     ((with-first-arguments (&optional form)
+        (append form (list 1 [hi there] 40 "this is a string" pi)))
+      (with-second-arguments (&optional form)
+        (append form (list pi e ''hello ''there [40 50 60])))
+      (with-both-arguments (&optional form)
+        (append form
+                (macroexpand '(with-first-arguments))
+                (macroexpand '(with-second-arguments)))))
+   (with-both-arguments (list))))
 
 ;;; end of lisp-tests.el

@@ -88,7 +88,9 @@ calls to other macros.  It may even be a call to the same macro, though
 this is unusual.
 
   You can see the expansion of a given macro call by calling
-@code{macroexpand}.
+@code{macroexpand}.  However, in normal use, @code{cl-prettyexpand} will be
+more helpful, since it expands @emph{all} the macros in the form, and prints
+the output with more readable indentation. @pxref{(cl)Efficiency Concerns}.
 
 @defun macroexpand form &optional environment
 @cindex macro expansion
@@ -106,9 +108,16 @@ The function @code{macroexpand} does not expand calls to inline functions.
 Normally there is no need for that, since a call to an inline function is
 no harder to understand than a call to an ordinary function.
 
-If @var{environment} is provided, it specifies an alist of macro
-definitions that shadow the currently defined macros.  Byte compilation
-uses this feature.
+If @var{environment} is provided, it specifies an alist of macro definitions
+that shadow the currently defined macros.  Byte compilation uses this feature.
+
+To access @var{environment} within the body of a macro, define the macro using
+@code{defmacro*} or @code{macrolet}, and use the @code{&environment} lambda
+list keyword.  This may be necessary if you need to force macro expansion of
+the body of a form at the same time as top-level macro expansion.
+@pxref{(cl)Argument Lists}.
+
+Macro expansion examples:
 
 @smallexample
 @group

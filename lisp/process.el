@@ -707,7 +707,8 @@ a side-effect."
 	(cond ((string-match pattern (car scan))
 	       (setq found t)
 	       (if (eq nil value)
-		   (setq process-environment (delq (car scan) process-environment))
+		   (setq process-environment
+                         (delete* (car scan) process-environment))
 		 (setcar scan (concat variable "=" value)))
 	       (setq scan nil)))
 	(setq scan (cdr scan)))

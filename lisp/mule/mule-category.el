@@ -243,6 +243,7 @@ The descriptions are inserted in a buffer, which is then displayed."
 	    (chinese-big5-2	?t))
 	'((chinese-big5	?t)))
     (korean-ksc5601	?h "Hangul (Korean) 2-byte character set")
+    (jit-ucs-charset-0  ?J "Just-in-time-allocated Unicode character")
     )
   "List of predefined categories.
 Each element is a list of a charset, a designator, and maybe a doc string.")
@@ -257,16 +258,28 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
     (setq i (1+ i)))
   (setq l predefined-category-list)
   (while l
-    (if (and (nth 2 (car l))
-	     (not (defined-category-p (nth 2 (car l)))))
-	(define-category (nth 1 (car l)) (nth 2 (car l))))
-    (modify-category-entry (car (car l)) (nth 1 (car l)) nil t)
+    (when (find-charset (caar l))
+      (if (and (nth 2 (car l))
+               (not (defined-category-p (nth 2 (car l)))))
+          (define-category (nth 1 (car l)) (nth 2 (car l))))
+      (modify-category-entry (car (car l)) (nth 1 (car l)) nil t))
     (setq l (cdr l))))
 
 ;;; Setting word boundary.
 
 (setq word-combining-categories
-      '((?l . ?l)))
+      ;; XEmacs; we should change to defining scripts, as does GNU, once
+      ;; unicode-internal is the default, and placing word boundaries
+      ;; between different scripts, not different charsets, by default.
+      ;; Then we can remove the jit-ucs-charset-0 entry above and all the
+      ;; entries containing ?J in this list.
+      ;;
+      ;; These entries are a bit heuristic, working on the assumption that
+      ;; characters that will be just-in-time-allocated will not be East
+      ;; Asian in XEmacs, and there's also no mechanism to apply the ?J
+      ;; category to further newly-created JIT categories.
+      '((?l . ?l) (?J . ?l) (?l . ?J) (?J . ?y) (?y . ?J) (?J . ?b) (?b . ?J)
+        (?J . ?g) (?J . ?w) (?w . ?J)))
 
 (setq word-separating-categories	;  (2-byte character sets)
       '((?A . ?K)			; Alpha numeric - Katakana

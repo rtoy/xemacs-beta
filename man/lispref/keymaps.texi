@@ -33,6 +33,8 @@ is found.  The whole process is called @dfn{key lookup}.
 * Changing Key Bindings::    Redefining a key in a keymap.
 * Key Binding Commands::     Interactive interfaces for redefining keys.
 * Scanning Keymaps::         Looking through all keymaps, for printing help.
+* Remapping commands::       Specifying that one command should override
+                                another.
 * Other Keymap Functions::   Miscellaneous keymap functions.
 @end menu
 
@@ -1168,7 +1170,8 @@ This function replaces @var{olddef} with @var{newdef} for any keys in
 @var{olddef} is replaced with @var{newdef} wherever it appears.  Prefix
 keymaps are checked recursively.
 
-The function returns @code{nil}.
+The function returns @code{nil}.  @pxref{Remapping commands} for a more
+robust way of doing the same thing.
 
 For example, this redefines @kbd{C-x C-f}, if you do it in an XEmacs with
 standard bindings:
@@ -1580,6 +1583,37 @@ If the second optional argument @var{mouse-only-p} (prefix arg,
 interactively) is non-@code{nil} then only the mouse bindings are
 displayed.
 @end deffn
+
+@node Remapping commands
+@section Remapping commands
+
+This section describes some functionality to allow commands to be
+remapped, e.g. when providing workalike commands.
+
+@defun remap-command keymap old new
+This function ensures that in @var{keymap} any command lookups that
+would previously have given @var{old} now give @var{new}.  This is
+equivalent to the following GNU-compatible code, which also works in
+XEmacs:
+
+@smallexample
+(define-key KEYMAP [remap OLD] NEW)
+@end smallexample
+@end defun
+
+@defun command-remapping command &optional position keymaps
+If @var{command} has a remapping in @var{keymaps}, this function returns
+that remapping.  Otherwise it returns @var{nil}.  @var{keymaps} defaults
+to the currently active keymaps. @var{position} specifies the relevant buffer
+position where keymaps should be searched for, and overrides
+@var{keymaps}.  It can also be a marker or an event.
+@end defun
+
+@defun commands-remapped-to command &optional position keymaps
+This is the inverse operation of @code{command-remapping}; it returns a
+list of the commands that will never be executed in @var{keymaps}
+because @var{command} will be execute instead.
+@end defun
 
 @node Other Keymap Functions
 @section Other Keymap Functions

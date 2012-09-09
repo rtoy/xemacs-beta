@@ -223,7 +223,7 @@ non-default value for `mode-popup-menu' that existed when
   (when (featurep 'menubar)
     (setq 
      ;; Remove this menu from the list of popups we know about. 
-     easy-menu-all-popups (delq menu easy-menu-all-popups)
+     easy-menu-all-popups (delete* menu easy-menu-all-popups)
      ;; If there are multiple popup menus available, make the popup menu
      ;; normally shown with button-3 a menu of them. If there is just one,
      ;; make that button show it, and no super-menu.

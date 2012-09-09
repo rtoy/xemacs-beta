@@ -1497,7 +1497,9 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 		       (global-tty-binding 
 			(where-is-internal function global-tty-map))
 		       (global-window-system-binding 
-			(where-is-internal function global-window-system-map)))
+			(where-is-internal function global-window-system-map))
+                       (command-remapping (command-remapping function))
+                       (commands-remapped-to (commands-remapped-to function)))
                    (if (or global-binding global-tty-binding
                            global-window-system-binding)
                        (if (and (equal global-binding
@@ -1531,11 +1533,23 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
                              "\n%s\n        -- generally (that is, unless\
  overridden by TTY- or
            window-system-specific mappings)\n"
-                             (mapconcat #'key-description
-                                        global-binding
+                             (mapconcat #'key-description global-binding
                                         ", ")))))
-                     (princ (substitute-command-keys
-                             (format "\n\\[%s]" function))))))))))))
+                       (if command-remapping
+                           (progn
+                             (princ "Its keys are remapped to `")
+                             (princ (symbol-name command-remapping))
+                             (princ "'.\n"))
+                           (princ (substitute-command-keys
+                                   (format "\n\\[%s]" function))))
+                       (when commands-remapped-to
+                         (if (cdr commands-remapped-to)
+                             (princ (format "The following functions are \
+remapped to it:\n`%s'" (mapconcat #'prin1-to-string commands-remapped-to
+                                  "', `")))
+                           (princ (format "`%s' is remapped to it.\n"
+                                          (car
+                                           commands-remapped-to))))))))))))))
 
 ;;; [Obnoxious, whining people who complain very LOUDLY on Usenet
 ;;; are binding this to keys.]

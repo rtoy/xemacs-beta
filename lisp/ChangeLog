@@ -1,3 +1,393 @@
+2012-09-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el:
+	* simple.el (delete-trailing-lines): New.
+	* simple.el (delete-trailing-whitespace): New.
+	Import this function and an associated variable from GNU, thank
+	you GNU.
+	Update its interactive spec to work correctly in XEmacs.
+
+2012-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el:
+	* files.el (find-coding-system-magic-cookie-in-file):
+	Removed. Move this to C, so we can use
+	look_for_coding_system_magic_cookie().
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (describe-function-1):
+	Document any command remapping that has been done in this function.
+
+2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (byte-optimize-letX):
+	In (let ...) forms, group constant initialisations together, so we
+	can just dup in the byte code.
+
+2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Update minibuf.el to use #'test-completion, use the generality of
+	recent completion changes to avoid some unnecessary consing when
+	reading.
+	* behavior.el (read-behavior):
+	* cus-edit.el (custom-face-prompt):
+	* cus-edit.el (widget-face-action):
+	* faces.el (read-face-name):
+	* minibuf.el:
+	* minibuf.el (minibuffer-completion-table):
+	* minibuf.el (exact-minibuffer-completion-p):
+	Removed. #'test-completion is equivalent to this, but more
+	general.
+	* minibuf.el (minibuffer-do-completion-1): Use #'test-completion.
+	* minibuf.el (completing-read): Update the documentation of the
+	arguments used for completion.
+	* minibuf.el (minibuffer-complete-and-exit): Use #'test-completion.
+	* minibuf.el (exit-minibuffer): Use #'test-completion.
+	* minibuf.el (minibuffer-smart-mouse-tracker): Use #'test-completion.
+	* minibuf.el (read-color): No need to construct a completion table
+	separate from the colour list.
+
+2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el:
+	* subr.el (truncate-string-to-width):
+	Sync with GNU's version, use its test suite in mule-tests.el.
+	Avoid args-out-of-range errors, this function is regularly called
+	from menu code and with debug-on-signal non-nil, this can be very
+	irritating.
+	Don't bind ellipsis-len, we don't use it.
+
+2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (byte-compile-unfold-lambda):
+	Fetch the bytecode before unfolding a compiled function, its body
+	may have been compiled lazily thanks to
+	byte-compile-dynamic. Thank you Mats Lidell and the package
+	smoketest!
+
+2012-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-category.el (word-combining-categories):
+	Be better about default word boundaries when text contains
+	just-in-time-allocated Unicode code points. Document what we
+	should do instead once we have Unicode internally.
+	* mule/misc-lang.el: IPA characters are Latin.
+
+2012-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (rassoc): Remove a stray parenthesis here, thank you
+	Vin!
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (block): Comment on why we can't use &environment
+	here.
+	* cl-macs.el (defmacro*): Document &environment in more detail.
+	* cl-macs.el (macrolet): Use &environment, instead of referencing
+	byte-compile-macro-environment directly.
+	* cl-macs.el (symbol-macrolet): Ditto.
+	* cl-macs.el (lexical-let): Ditto.
+	* cl-macs.el (labels): Ditto.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el:
+	* byte-optimize.el (or):
+	* byte-optimize.el (byte-optimize-or):
+	Declare for-effect properly, it's not free.
+	* byte-optimize.el (byte-optimize-condition-case): New.
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	Be more exhaustive in descending special forms, for the sake of
+	lexically-oriented optimizers such as that for #'labels.
+
+2012-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Co-operate with the byte-optimizer in the bytecomp.el labels
+	implementation, don't work against it.
+
+	* byte-optimize.el:
+	* byte-optimize.el (byte-compile-inline-expand):
+	Call #'byte-compile-unfold-lambda explicitly here, don't assume
+	that the byte-optimizer will do it.
+	* byte-optimize.el (byte-compile-unfold-lambda):
+	Call #'byte-optimize-body on the body, don't just mapcar
+	#'byte-optimize-form along it.
+	* byte-optimize.el (byte-optimize-lambda): New. Optimize a lambda
+	form. 
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	Descend lambda expressions, defun, and defmacro, relevant for
+	lexically-oriented operators like #'labels.
+	* byte-optimize.el (byte-optimize-body): Only return a non-eq
+	object if we've actually optimized something
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	In the labels implementation, work with the byte optimizer, not
+	against it; warn when labels are defined but not used,
+	automatically inline labels that are used only once.
+	* bytecomp.el (byte-recompile-directory):
+	No need to wrap #'byte-compile-report-error in a lambda with
+	#'call-with-condition-handler here. 
+	* bytecomp.el (byte-compile-form):
+	Don't inline compiled-function objects, they're probably labels.
+	* bytecomp.el (byte-compile-funcall):
+	No longer inline lambdas, trust the byte optimizer to have done it
+	properly, even for labels.
+	* cl-extra.el (cl-macroexpand-all):
+	Treat labels established by the byte compiler distinctly from
+	those established by cl-macs.el.
+	* cl-macs.el (cl-do-proclaim):
+	Treat labels established by the byte compiler distinctly from
+	those established by cl-macs.el.
+	* gui.el (make-gui-button):
+	When referring to the #'gui-button-action label, quote it using
+	function, otherwise there's a warning from the byte compiler.
+
+2012-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove some redundant functions; turn other utility functions into
+	labels, avoiding visibility in the global namespace, and reducing
+	the size of the dumped binary.
+
+	* auto-save.el (auto-save-unhex): Removed.
+	* auto-save.el (auto-save-unescape-name): Use #'string-to-number
+	instead of #'auto-save-unhex.
+	* files.el (save-some-buffers):
+	* files.el (save-some-buffers-1): Changed to a label.
+	* files.el (not-modified):
+	* gui.el (make-gui-button):
+	* gui.el (gui-button-action): Changed to a label.
+	* gui.el (insert-gui-button):
+	* indent.el (indent-for-tab-command):
+	* indent.el (insert-tab): Changed to a label.
+	* indent.el (indent-rigidly):
+	* isearch-mode.el:
+	* isearch-mode.el (isearch-ring-adjust):
+	* isearch-mode.el (isearch-ring-adjust1): Changed to a label.
+	* isearch-mode.el (isearch-pre-command-hook):
+	* isearch-mode.el (isearch-maybe-frob-keyboard-macros): Changed to
+	a label.
+	* isearch-mode.el (isearch-highlight):
+	* isearch-mode.el (isearch-make-extent): Changed to a label.
+	* itimer.el:
+	* itimer.el (itimer-decrement): Removed, replaced uses with decf.
+	* itimer.el (itimer-increment): Removed, replaced uses with incf.
+	* itimer.el (itimer-signum): Removed, replaced uses with minusp, plusp.
+	* itimer.el (itimer-name):
+	* itimer.el (check-itimer): Removed, replaced with #'check-type calls.
+	* itimer.el (itimer-value):
+	* itimer.el (check-itimer-coerce-string): Removed.
+	* itimer.el (itimer-restart):
+	* itimer.el (itimer-function):
+	* itimer.el (check-nonnegative-number): Removed.
+	* itimer.el (itimer-uses-arguments):
+	* itimer.el (check-string): Removed.
+	* itimer.el (itimer-function-arguments):
+	* itimer.el (itimer-recorded-run-time):
+	* itimer.el (set-itimer-name):
+	* itimer.el (set-itimer-value):
+	* itimer.el (set-itimer-value-internal):
+	* itimer.el (set-itimer-restart):
+	* itimer.el (set-itimer-function):
+	* itimer.el (set-itimer-is-idle):
+	* itimer.el (set-itimer-recorded-run-time):
+	* itimer.el (get-itimer):
+	* itimer.el (delete-itimer):
+	* itimer.el (start-itimer):
+	* itimer.el (activate-itimer):
+	* itimer.el (itimer-edit-set-field):
+	* itimer.el (itimer-edit-next-field):
+	* itimer.el (itimer-edit-previous-field):
+	Use incf, decf, plusp, minusp and the more general argument type
+	checking macros.
+	* lib-complete.el:
+	* lib-complete.el (lib-complete:better-root): Changed to a label.
+	* lib-complete.el (lib-complete:get-completion-table): Changed to
+	a label.
+	* lib-complete.el (read-library-internal): Include labels.
+	* lib-complete.el (lib-complete:cache-completions): Changed to a
+	label.
+	* minibuf.el (read-buffer): Use #'set-difference, don't reinvent it.
+	* newcomment.el (comment-padright): Use a label instead of
+	repeating a lambda expression.
+	* packages.el (package-get-key):
+	* packages.el (package-get-key-1): Removed, use #'getf instead.
+	* simple.el (kill-backward-chars): Removed; this isn't used.
+	* simple.el (what-cursor-position):
+	(lambda (arg) (format "%S" arg) -> #'prin1-to-string. 
+	* simple.el (debug-print-1): Renamed to #'debug-print.
+	* simple.el (debug-print): Removed, #'debug-print-1 was equivalent.
+	* subr.el (integer-to-bit-vector): check-nonnegative-number no
+	longer available.
+	* widget.el (define-widget):
+	* widget.el (define-widget-keywords): Removed, this was long obsolete.
+
+2012-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Avoid #'delq in core code, for the sake of style and a (very
+	slightly) smaller binary.
+
+	* behavior.el (disable-behavior):
+	* behavior.el (compute-behavior-group-children):
+	* buff-menu.el (buffers-tab-items):
+	* byte-optimize.el (byte-optimize-delay-constants-math):
+	* byte-optimize.el (byte-optimize-logmumble):
+	* byte-optimize.el (byte-decompile-bytecode-1):
+	* byte-optimize.el (byte-optimize-lapcode):
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-arglist-warn):
+	* bytecomp.el (byte-compile-warn-about-unresolved-functions):
+	* bytecomp.el (byte-compile-lambda):
+	* bytecomp.el (byte-compile-out-toplevel):
+	* bytecomp.el (byte-compile-insert):
+	* bytecomp.el (byte-compile-defalias-warn):
+	* cl-macs.el (cl-upcase-arg):
+	* cl-macs.el (cl-transform-lambda):
+	* cl-macs.el (cl-do-proclaim):
+	* cl-macs.el (defstruct):
+	* cl-macs.el (cl-make-type-test):
+	* cl-macs.el (define-compiler-macro):
+	* cl-macs.el (delete-duplicates):
+	* cus-edit.el (widget-face-value-delete):
+	* cus-edit.el (face-history):
+	* easymenu.el (easy-menu-remove):
+	* files.el (files-fetch-hook-value):
+	* files.el (file-expand-wildcards):
+	* font-lock.el (font-lock-update-removed-keyword-alist):
+	* font-lock.el (font-lock-remove-keywords):
+	* frame.el (frame-initialize):
+	* frame.el (frame-notice-user-settings):
+	* frame.el (set-frame-font):
+	* frame.el (delete-other-frames):
+	* frame.el (get-frame-for-buffer-noselect):
+	* gnuserv.el (gnuserv-kill-buffer-function):
+	* gnuserv.el (gnuserv-check-device):
+	* gnuserv.el (gnuserv-kill-client):
+	* gnuserv.el (gnuserv-buffer-done-1):
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* gutter-items.el (buffers-tab-items):
+	* gutter.el (set-gutter-element-visible-p):
+	* info.el (Info-find-file-node):
+	* info.el (Info-history-add):
+	* info.el (Info-build-annotation-completions):
+	* info.el (Info-index):
+	* info.el (Info-reannotate-node):
+	* itimer.el (delete-itimer):
+	* itimer.el (start-itimer):
+	* lib-complete.el (lib-complete:cache-completions):
+	* loadhist.el (unload-feature):
+	* menubar-items.el (build-buffers-menu-internal):
+	* menubar.el (delete-menu-item):
+	* menubar.el (relabel-menu-item):
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	* mule/make-coding-system.el (fixed-width-generate-helper):
+	* next-error.el (next-error-find-buffer):
+	* obsolete.el:
+	* obsolete.el (find-non-ascii-charset-string):
+	* obsolete.el (find-non-ascii-charset-region):
+	* occur.el (multi-occur-by-filename-regexp):
+	* occur.el (occur-1):
+	* packages.el (packages-package-hierarchy-directory-names):
+	* packages.el (package-get-key-1):
+	* process.el (setenv):
+	* simple.el (undo):
+	* simple.el (handle-pre-motion-command-current-command-is-motion):
+	* sound.el (load-sound-file):
+	* wid-edit.el (widget-field-value-delete):
+	* wid-edit.el (widget-checklist-match-inline):
+	* wid-edit.el (widget-checklist-match-find):
+	* wid-edit.el (widget-editable-list-delete-at):
+	* wid-edit.el (widget-editable-list-entry-create):
+	* window.el (quit-window):
+	* x-font-menu.el (x-reset-device-font-menus-core):
+
+	1. Replace (delq nil (mapcar ....)) with analogous (mapcan ...)
+	forms; this is in non-dumped files, it was done previously in
+	dumped files.
+	2. Replace (delq FOO (copy-sequence BAR)) with (remove* FOO BAR),
+	where #'eq and #'eql are equivalent
+	3. Replace (delq FOO BAR) with (delete* FOO BAR), where FOO is not
+	a non-fixnum number. Saves a little space in the dumped file
+	(since the compiler macro adds :test #'eq to the delete* call if
+	it's not clear that FOO is not a non-fixnum number).
+
+2012-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (cl-non-fixnum-number-p): Rename, to
+	cl-non-immediate-number-p. This is a little more informative as a
+	name, though still not ideal, in that it will give t for some
+	immediate fixnums on 64-bit builds.
+	* cl-macs.el (eql):
+	* cl-macs.el (define-star-compiler-macros):
+	* cl-macs.el (delq):
+	* cl-macs.el (remq):
+	Use the new name.
+	* cl-macs.el (cl-equal-equivalent-to-eq-p): New.
+	* cl-macs.el (cl-car-or-pi): New.
+	* cl-macs.el (cl-cdr-or-pi): New.
+	* cl-macs.el (equal): New compiler macro.
+	* cl-macs.el (member): New compiler macro.
+	* cl-macs.el (assoc): New compiler macro.
+	* cl-macs.el (rassoc): New compiler macro.
+	If any of #'equal, #'member, #'assoc or #'rassoc has a constant
+	argument such that #'eq, #'memq, #'assq or #'rassq, respectively,
+	are equivalent, make the substitution. Relevant in files like
+	ispell.el, there's a reasonable amount of code out there that
+	doesn't quite get the distinction.
+
+2012-05-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	* byte-optimize.el (byte-optimize-or):
+	Improve handling of for-effect here; we don't need to worry about
+	discarding multiple values when for-effect is non-nil, this
+	applies to both #'prog1 and #'or.
+	* bytecomp.el (progn):
+	* bytecomp.el (byte-compile-file-form-progn): New.
+	Put back this function, since it's for-effect there's no need to
+	worry about passing back multiple values.
+	* cl-macs.el (cl-pop2):
+	* cl-macs.el (cl-do-pop):
+	* cl-macs.el (remf):
+	* cl.el (pop):
+	Expand to (prog1 (car-safe PLACE) (setq PLACE (cdr PLACE))) in all
+	these macros, since that optimizes better (especially for-effect
+	handling) when byte-compile-delete-errors is nil.
+
+2012-04-23  Michael Sperber  <mike@xemacs.org>
+
+	* bytecomp.el (batch-byte-recompile-directory): Accept an optional
+	argument that's passed on to `byte-recompile-directory' as the
+	prefix argument, thus imitating GNU Emacs's API.
+
+2012-04-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove some utility functions from the global namespace, it's more
+	appropriate to have them as labels (that is, lexically-visible
+	functions.) 
+	* behavior.el:
+	* behavior.el (behavior-menu-filter-1): Moved to being a label.
+	* behavior.el (behavior-menu-filter): Use the label.
+	* cus-edit.el (custom-load-symbol-1): Moved to being a label.
+	* cus-edit.el (custom-load-symbol): Use the label.
+	* menubar.el (find-menu-item-1): Moved to being a label.
+	* menubar.el (find-menu-item): Use the label.
+	* window-xemacs.el:
+	* window-xemacs.el (display-buffer-1): Moved to being a label.
+	* window-xemacs.el (display-buffer): Use the label; use (block
+	...) instead of (catch ...), use prog1 instead of needlessly
+	binding a variable.
+
+2012-03-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el (select-coerce):
+	Whoops, selection-coercion-alist, not selection-conversion-alist,
+	thank you Philip Aston in 4F4A2CBC.1060709@mail.com .
+
 2012-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-catch):
@@ -5372,6 +5762,12 @@
 	* bytecomp.el (byte-compile-output-file-form):
 	Bind print-gensym-alist to nil, as we do within
 	byte-compile-output-docform.
+
+2008-01-03  Michael Sperber  <mike@xemacs.org>
+
+	* files.el (file-remote-p): Synch with GNU Emac: Add
+	`identification' and `connected' parameters, and use file-name
+	handler if available.  Zap support for ange-ftp.
 
 2008-01-04  Michael Sperber  <mike@xemacs.org>
 

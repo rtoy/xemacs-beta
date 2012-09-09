@@ -322,7 +322,7 @@ bignum_divisible_p (bignum b1, bignum b2)
 void bignum_ceil (bignum quotient, bignum N, bignum D)
 {
   MP_MDIV (N, D, quotient, intern_bignum);
-  MP_MDIV (N, D, quotient, intern_bignum);
+
   if (MP_MCMP (intern_bignum, bignum_zero) != 0)
     {
       short signN = MP_MCMP (N, bignum_zero);

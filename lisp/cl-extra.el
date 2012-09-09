@@ -569,19 +569,26 @@ This also does some trivial optimizations to make the form prettier."
            ;; This is a bit of a hack; special-case symbols with bindings as
            ;; labels.
 	   (let ((found (cdr (assq (cadr form) env))))
-	     (if (and (consp found) (eq (nth 1 (nth 1 found)) 'cl-labels-args))
-                 (if (consp (nth 2 (nth 2 found)))
-                     ;; It's a cons; this is the implementation of
-                     ;; labels in cl-macs.el.
-                     (cl-macroexpand-all (nth 1 (nth 2 (nth 2 found))) env)
-                   ;; It's an atom, almost certainly a compiled function;
-                   ;; we're using the implementation of labels in
-                   ;; bytecomp.el. Quote it with FUNCTION so that code can
-                   ;; tell uses as data apart from the uses with funcall,
-                   ;; where it's unquoted. #### We should warn if (car form)
-                   ;; above is quote, rather than function.
-                   (list 'function (nth 2 (nth 2 found))))
-	       form))))
+	     (cond
+              ((and (consp found) (eq (nth 1 (nth 1 found)) 'cl-labels-args))
+               ;; This is the implementation of labels in cl-macs.el.
+               (cl-macroexpand-all (nth 1 (nth 2 (nth 2 found))) env))
+              ((and (consp found) (eq (nth 1 (nth 1 found))
+                                      'byte-compile-labels-args))
+               ;; We're using the implementation of labels in
+               ;; bytecomp.el. Quote its data-placeholder with FUNCTION so
+               ;; that code can tell uses as data apart from the uses with
+               ;; funcall.
+               (unless (eq 'function (car form))
+                 (byte-compile-warn
+                  "deprecated: '%s, use #'%s instead to quote it as a function"
+                  (cadr form) (cadr form)))
+               (setq found (get (nth 1 (nth 1 (nth 3 found)))
+                                'byte-compile-data-placeholder))
+               (put found 'byte-compile-label-calls
+                    (1+ (get found 'byte-compile-label-calls 0)))
+               (list 'function found))
+              (t form)))))
 	((memq (car form) '(defun defmacro))
 	 (list* (car form) (nth 1 form) (cl-macroexpand-body (cddr form) env)))
 	((and (eq (car form) 'progn) (not (cddr form)))
