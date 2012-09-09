@@ -2126,52 +2126,6 @@ A few variable names are treated specially."
 	;; Ordinary variable, really set it.
 	(t (make-local-variable var)
 	   (set var val))))
-
-(defun find-coding-system-magic-cookie-in-file (file)
-  "Look for the coding-system magic cookie in FILE.
-The coding-system magic cookie is either the local variable specification
--*- ... coding: ... -*- on the first line, or the exact string
-\";;;###coding system: \" somewhere within the first 3000 characters
-of the file.  If found, the coding system name (as a string) is returned;
-otherwise nil is returned.  Note that it is extremely unlikely that
-either such string would occur coincidentally as the result of encoding
-some characters in a non-ASCII charset, and that the spaces make it
-even less likely since the space character is not a valid octet in any
-ISO 2022 encoding of most non-ASCII charsets."
-  (save-excursion
-    (with-temp-buffer
-      (let ((coding-system-for-read 'raw-text))
-	(insert-file-contents file nil 0 3000))
-      (goto-char (point-min))
-      (or (and (looking-at
-		"^[^\n]*-\\*-[^\n]*coding: \\([^ \t\n;]+\\)[^\n]*-\\*-")
-	       (buffer-substring (match-beginning 1) (match-end 1)))
-	  ;; (save-excursion
-	  ;;   (let (start end)
-	  ;;     (and (re-search-forward "^;+[ \t]*Local Variables:" nil t)
-	  ;;          (setq start (match-end 0))
-	  ;;          (re-search-forward "\n;+[ \t]*End:")
-	  ;;          (setq end (match-beginning 0))
-	  ;;          (save-restriction
-	  ;;            (narrow-to-region start end)
-	  ;;            (goto-char start)
-	  ;;            (re-search-forward "^;;; coding: \\([^\n]+\\)$" nil t)
-	  ;;            )
-	  ;;          (let ((codesys
-	  ;;                 (intern (buffer-substring
-	  ;;                          (match-beginning 1)(match-end 1)))))
-	  ;;            (if (find-coding-system codesys) codesys))
-	  ;;          )))
-	  (let ((case-fold-search nil))
-	    (if (search-forward
-		 ";;;###coding system: " (+ (point-min) 3000) t)
-		(let ((start (point))
-		      (end (progn
-			     (skip-chars-forward "^ \t\n\r")
-			     (point))))
-		  (if (> end start) (buffer-substring start end))
-		  )))
-	  ))))
 
 
 (defcustom change-major-mode-with-file-name t
@@ -2838,7 +2792,7 @@ in such cases.")
   (let ((localval (copy-list (symbol-value hook)))
 	(globalval (copy-list (default-value hook))))
     (if (memq t localval)
-	(setq localval (append (delq t localval) (delq t globalval))))
+	(setq localval (append (delete* t localval) (delete* t globalval))))
     localval))
 
 (defun basic-save-buffer ()
@@ -3175,85 +3129,88 @@ If PRED is t, then certain non-file buffers will also be considered.
 If PRED is a zero-argument function, it indicates for each buffer whether
 to consider it or not when called with that buffer current."
   (interactive "P")
-  (save-excursion
-    ;; `delete-other-windows' can bomb during autoloads generation, so
-    ;; guard it well.
-    (if (or noninteractive
-	    (eq (selected-window) (minibuffer-window))
-	    (not save-some-buffers-query-display-buffer))
-	;; If playing with windows is unsafe or undesired, just do the
-	;; usual drill.
-	(save-some-buffers-1 arg pred nil)
-      ;; Else, protect the windows.
-      (when (save-window-excursion
-	      (save-some-buffers-1 arg pred t))
-	;; Force redisplay.
-	(sit-for 0)))))
-
-;; XEmacs - do not use queried flag
-(defun save-some-buffers-1 (arg pred switch-buffer)
-  (let* ((switched nil)
-	 (last-buffer nil)
-	 (files-done
-	  (map-y-or-n-p
-	   (lambda (buffer)
-	     (prog1
-		 (and (buffer-modified-p buffer)
-		      (not (buffer-base-buffer buffer))
-		      ;; XEmacs addition:
-		      (not (symbol-value-in-buffer 'save-buffers-skip buffer))
-		      (or
-		       (buffer-file-name buffer)
-		       (and pred
-			    (progn
-			      (set-buffer buffer)
-			      (and buffer-offer-save (> (buffer-size) 0)))))
-		      (or (not (functionp pred))
-			  (with-current-buffer buffer (funcall pred)))
-		      (if arg
-			  t
-			;; #### We should provide a per-buffer means to
-			;; disable the switching.  For instance, you might
-			;; want to turn it off for buffers the contents of
-			;; which is meaningless to humans, such as
-			;; `.newsrc.eld'.
-			(when (and switch-buffer
-				   ;; map-y-or-n-p is displaying help
-				   (not (eq last-buffer buffer)))
-			  (unless (one-window-p)
-			    (delete-other-windows))
-			  (setq switched t)
-			  ;; #### Consider using `display-buffer' here for 21.1!
-			  ;;(display-buffer buffer nil (selected-frame)))
-			  (switch-to-buffer buffer t))
-			(if (buffer-file-name buffer)
-			    (format "Save file %s? "
-				    (buffer-file-name buffer))
-			  (format "Save buffer %s? "
-				  (buffer-name buffer)))))
-	       (setq last-buffer buffer)))
-	   (lambda (buffer)
-	     (set-buffer buffer)
-	     (condition-case ()
-		 (save-buffer)
-	       (error nil)))
-	   (buffer-list)
-	   '("buffer" "buffers" "save")
-	   save-some-buffers-action-alist))
-	 (abbrevs-done
-	  (and save-abbrevs abbrevs-changed
-	       (progn
-		 (if (or arg
-			 (eq save-abbrevs 'silently)
-			 (y-or-n-p (format "Save abbrevs in %s? " abbrev-file-name)))
-		     (write-abbrev-file nil))
-		 ;; Don't keep bothering user if he says no.
-		 (setq abbrevs-changed nil)
-		 t))))
-    (or (> files-done 0) abbrevs-done
-	(display-message 'no-log "(No files need saving)"))
-    switched))
-
+  (labels
+      ;; XEmacs - do not use queried flag, make this function a label.
+      ((save-some-buffers-1 (arg pred switch-buffer)
+         (let* ((switched nil)
+                (last-buffer nil)
+                (files-done
+                 (map-y-or-n-p
+                  (lambda (buffer)
+                    (prog1
+                        (and (buffer-modified-p buffer)
+                             (not (buffer-base-buffer buffer))
+                             ;; XEmacs addition:
+                             (not (symbol-value-in-buffer
+                                   'save-buffers-skip buffer))
+                             (or
+                              (buffer-file-name buffer)
+                              (and pred
+                                   (progn
+                                     (set-buffer buffer)
+                                     (and buffer-offer-save (> (buffer-size)
+                                                               0)))))
+                             (or (not (functionp pred))
+                                 (with-current-buffer buffer (funcall pred)))
+                             (if arg
+                                 t
+                               ;; #### We should provide a per-buffer means
+                               ;; to disable the switching.  For instance,
+                               ;; you might want to turn it off for buffers
+                               ;; the contents of which is meaningless to
+                               ;; humans, such as `.newsrc.eld'.
+                               (when (and switch-buffer
+                                          ;; map-y-or-n-p is displaying help
+                                          (not (eq last-buffer buffer)))
+                                 (unless (one-window-p)
+                                   (delete-other-windows))
+                                 (setq switched t)
+                                 ;; #### Consider using `display-buffer'
+                                 ;; here for 21.1!
+                                 ;;(display-buffer buffer nil (selected-frame)))
+                                 (switch-to-buffer buffer t))
+                               (if (buffer-file-name buffer)
+                                   (format "Save file %s? "
+                                           (buffer-file-name buffer))
+                                 (format "Save buffer %s? "
+                                         (buffer-name buffer)))))
+                      (setq last-buffer buffer)))
+                  (lambda (buffer)
+                    (set-buffer buffer)
+                    (condition-case ()
+                        (save-buffer)
+                      (error nil)))
+                  (buffer-list)
+                  '("buffer" "buffers" "save")
+                  save-some-buffers-action-alist))
+                (abbrevs-done
+                 (and save-abbrevs abbrevs-changed
+                      (progn
+                        (if (or arg
+                                (eq save-abbrevs 'silently)
+                                (y-or-n-p (format "Save abbrevs in %s? "
+                                                  abbrev-file-name)))
+                            (write-abbrev-file nil))
+                        ;; Don't keep bothering user if he says no.
+                        (setq abbrevs-changed nil)
+                        t))))
+           (or (> files-done 0) abbrevs-done
+               (display-message 'no-log "(No files need saving)"))
+           switched)))
+    (save-excursion
+      ;; `delete-other-windows' can bomb during autoloads generation, so
+      ;; guard it well.
+      (if (or noninteractive
+           (eq (selected-window) (minibuffer-window))
+           (not save-some-buffers-query-display-buffer))
+          ;; If playing with windows is unsafe or undesired, just do the
+          ;; usual drill.
+          (save-some-buffers-1 arg pred nil)
+        ;; Else, protect the windows.
+        (when (save-window-excursion
+                (save-some-buffers-1 arg pred t))
+          ;; Force redisplay.
+          (sit-for 0))))))
 
 
 (defun not-modified (&optional arg)
@@ -4065,13 +4022,9 @@ default directory.  However, if FULL is non-nil, they are absolute."
 		(file-directory-p (directory-file-name (car dirs))))
 	(let ((this-dir-contents
 	       ;; Filter out "." and ".."
-	       (delq nil
-		     (mapcar #'(lambda (name)
-				 (unless (string-match "\\`\\.\\.?\\'"
-						       (file-name-nondirectory name))
-				   name))
-			     (directory-files (or (car dirs) ".") full
-					      (wildcard-to-regexp nondir))))))
+               (nset-difference (directory-files (or (car dirs) ".") full
+                                                 (wildcard-to-regexp nondir))
+                                '("." "..") :test #'equal)))
 	  (setq contents
 		(nconc
 		 (if (and (car dirs) (not full))
@@ -4483,14 +4436,46 @@ absolute one."
       (error "Apparently circular symlink path"))))
 
 ;; Suggested by Michael Kifer <kifer@CS.SunySB.EDU>
-(defun file-remote-p (file-name)
-  "Test whether FILE-NAME is looked for on a remote system."
-  (cond ((not (declare-boundp allow-remote-paths)) nil)
-	((fboundp 'ange-ftp-ftp-path)
-	 (declare-fboundp (ange-ftp-ftp-path file-name)))
-	((fboundp 'efs-ftp-path)
-	 (declare-fboundp (efs-ftp-path file-name)))
-	(t nil)))
+(defun file-remote-p (file &optional identification connected)
+  "Test whether FILE specifies a location on a remote system.
+Return an identification of the system if the location is indeed
+remote.  The identification of the system may comprise a method
+to access the system and its hostname, amongst other things.
+
+For example, the filename \"/user@host:/foo\" specifies a location
+on the system \"/user@host:\".
+
+IDENTIFICATION specifies which part of the identification shall
+be returned as string.  IDENTIFICATION can be the symbol
+`method', `user' or `host'; any other value is handled like nil
+and means to return the complete identification string.
+
+If CONNECTED is non-nil, the function returns an identification only
+if FILE is located on a remote system, and a connection is established
+to that remote system.
+
+`file-remote-p' will never open a connection on its own."
+  (let ((handler (find-file-name-handler file 'file-remote-p)))
+    (cond
+     (handler
+      (funcall handler 'file-remote-p file identification connected))
+     ;; legacy code; can probably go by mid-2008
+     ((fboundp 'efs-ftp-path)
+      (let ((parsed (declare-fboundp (efs-ftp-path file))))
+	(and parsed
+	     (let ((host (nth 0 parsed))
+		   (user (nth 1 parsed)))
+	       (and (or (not connected)
+		    (let ((proc (get-process (declare-fboundp (efs-ftp-process-buffer host user)))))
+		      (and proc (processp proc)
+			   (memq (process-status proc) '(run open)))))
+		(cond
+		 ((eq identification 'method) (and parsed "ftp"))
+		 ((eq identification 'user) user)
+		 ((eq identification 'host) host)
+		 (t
+		  (concat "/" user "@" host ":/"))))))))
+     (t nil))))
 
 
 ;; We use /: as a prefix to "quote" a file name

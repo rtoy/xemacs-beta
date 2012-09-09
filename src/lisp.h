@@ -3667,6 +3667,13 @@ extern MODULE_API int specpdl_depth_counter;
  while (NILP (Ffunctionp (fun)))		\
    signal_invalid_function_error (fun);		\
  } while (0)
+
+#define CHECK_COMMAND(x) do {                           \
+    if (NILP (Fcommandp (x)))                           \
+      {                                                 \
+        dead_wrong_type_argument (Qcommandp, x);        \
+      }                                                 \
+  } while (0)
 
 /************************************************************************/
 /*                      Parsing keyword arguments                       */

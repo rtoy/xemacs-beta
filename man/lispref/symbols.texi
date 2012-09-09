@@ -73,9 +73,15 @@ other three cells can be set individually to any specified Lisp object.
 Since symbols are represented textually by their names, it is important
 not to have two symbols with the same name.  The Lisp reader ensures
 this: every time it reads a symbol, it looks for an existing symbol with
-the specified name before it creates a new one.  (In XEmacs Lisp,
-this lookup uses a hashing algorithm and an obarray; see @ref{Creating
-Symbols}.)
+the specified name before it creates a new one.  In XEmacs Lisp,
+this lookup uses an hashing algorithm and an obarray; see @ref{Creating
+Symbols}.  In Emacs Lisp, the symbol with the zero-length name has the
+special print syntax @code{##}:
+
+@example
+(intern "")
+        @result{} ##
+@end example
 
   In normal usage, the function cell usually contains a function or
 macro, as that is what the Lisp interpreter expects to see there

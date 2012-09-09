@@ -417,7 +417,7 @@ Optional argument BUFFER defaults to the current buffer.
 
 static Lisp_Object
 string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
-		struct buffer *buf, int UNUSED (posix))
+		struct buffer *buf, int posix)
 {
   Bytecount val;
   Charcount s;
@@ -448,7 +448,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   bufp = compile_pattern (regexp, &search_regs,
 			  (!NILP (buf->case_fold_search)
 			   ? XCASE_TABLE_DOWNCASE (buf->case_table) : Qnil),
-			  string, buf, 0, ERROR_ME);
+			  string, buf, posix, ERROR_ME);
   QUIT;
   {
     Bytecount bis = string_index_char_to_byte (string, s);
@@ -885,9 +885,9 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
      a range table. */
   unsigned char fastmap[256];
   int negate = 0;
-  REGISTER int i;
   Charbpos limit;
   struct syntax_cache *scache;
+  Bitbyte class_bits = 0;
   
   if (NILP (lim))
     limit = forwardp ? BUF_ZV (buf) : BUF_BEGV (buf);
@@ -955,6 +955,51 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 				  Vskip_chars_range_table);
 	      INC_IBYTEPTR (p);
 	    }
+          else if ('[' == c && p != pend && *p == ':')
+            {
+              Ibyte *colonp;
+              Extbyte *classname;
+              int ch = 0;
+              re_wctype_t cc;
+
+              INC_IBYTEPTR (p);
+
+              if (p == pend)
+                {
+                  fastmap ['['] = fastmap[':'] = 1;
+                  break;
+                }
+
+              colonp = (Ibyte *) memchr (p, ':', pend - p);
+              if (NULL == colonp || (colonp + 1) == pend || colonp[1] != ']')
+                {
+                  fastmap ['['] = fastmap[':'] = 1;
+                  continue;
+                }
+
+              classname = alloca_extbytes (colonp - p + 1);
+              memmove (classname, p, colonp - p);
+              classname[colonp - p] = '\0';
+              cc = re_wctype (classname);
+                  
+              if (cc == RECC_ERROR)
+                {
+                  invalid_argument ("Invalid character class",
+                                    build_extstring (classname, Qbinary));
+                }
+
+              for (ch = 0; ch < countof (fastmap); ++ch)
+                {
+                  if (re_iswctype (ch, cc, buf))
+                    {
+                      fastmap[ch] = 1;
+                    }
+                }
+
+              compile_char_class (cc, Vskip_chars_range_table, &class_bits);
+
+              p = colonp + 2;
+            }
 	  else
 	    {
 	      if (c < 256)
@@ -969,14 +1014,6 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
   /* #### Not in FSF 21.1 */
   if (syntaxp && fastmap['-'] != 0)
     fastmap[' '] = 1;
-
-  /* If ^ was the first character, complement the fastmap.
-     We don't complement the range table, however; we just use negate
-     in the comparisons below. */
-
-  if (negate)
-    for (i = 0; i < (int) (sizeof (fastmap)); i++)
-      fastmap[i] ^= 1;
 
   {
     Charbpos start_point = BUF_PT (buf);
@@ -994,7 +1031,8 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	      while (fastmap[(unsigned char)
 			     syntax_code_spec
 			     [(int) SYNTAX_FROM_CACHE
-			      (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]])
+			      (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]]
+                     != negate)
 		{
 		  pos++;
 		  INC_BYTEBPOS (buf, pos_byte);
@@ -1011,10 +1049,11 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 		pos--;
 		DEC_BYTEBPOS (buf, pos_byte);
 		UPDATE_SYNTAX_CACHE_BACKWARD (scache, pos);
-		if (!fastmap[(unsigned char)
-			     syntax_code_spec
-			     [(int) SYNTAX_FROM_CACHE
-			      (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]])
+		if (fastmap[(unsigned char)
+                            syntax_code_spec
+                            [(int) SYNTAX_FROM_CACHE
+                             (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]]
+                    == negate)
 		  {
 		    pos++;
 		    pos_byte = savepos;
@@ -1025,16 +1064,29 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
       }
     else
       {
+        struct buffer *lispbuf = buf;
+
+#define CLASS_BIT_CHECK(c)                                              \
+        (class_bits && ((class_bits & BIT_ALPHA && ISALPHA (c))         \
+                        || (class_bits & BIT_SPACE && ISSPACE (c))      \
+                        || (class_bits & BIT_PUNCT && ISPUNCT (c))      \
+                        || (class_bits & BIT_WORD && ISWORD (c))        \
+                        || (NILP (buf->case_fold_search) ?              \
+                            ((class_bits & BIT_UPPER && ISUPPER (c))    \
+                             || (class_bits & BIT_LOWER && ISLOWER (c))) \
+                            : (class_bits & (BIT_UPPER | BIT_LOWER)     \
+                               && !NOCASEP (buf, c)))))
 	if (forwardp)
 	  {
 	    while (pos < limit)
 	      {
 		Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
-		if ((ch < 256) ? fastmap[ch] :
-		    (NILP (Fget_range_table (make_fixnum (ch),
-					     Vskip_chars_range_table,
-					     Qnil))
-		     == negate))
+                if ((ch < countof (fastmap) ? fastmap[ch]
+                     : (CLASS_BIT_CHECK (ch) ||
+                        (EQ (Qt, Fget_range_table (make_fixnum (ch),
+                                                   Vskip_chars_range_table,
+                                                   Qnil)))))
+                    != negate)
 		  {
 		    pos++;
 		    INC_BYTEBPOS (buf, pos_byte);
@@ -1052,11 +1104,12 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 
 		DEC_BYTEBPOS (buf, prev_pos_byte);
 		ch = BYTE_BUF_FETCH_CHAR (buf, prev_pos_byte);
-		if ((ch < 256) ? fastmap[ch] :
-		    (NILP (Fget_range_table (make_fixnum (ch),
-					     Vskip_chars_range_table,
-					     Qnil))
-		     == negate))
+                if ((ch < countof (fastmap) ? fastmap[ch]
+                     : (CLASS_BIT_CHECK (ch) ||
+                        (EQ (Qt, Fget_range_table (make_fixnum (ch),
+                                                   Vskip_chars_range_table,
+                                                   Qnil)))))
+                    != negate)
 		  {
 		    pos--;
 		    pos_byte = prev_pos_byte;

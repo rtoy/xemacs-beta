@@ -577,12 +577,14 @@ the string for any N."
 	  (concat lpad s (when multi (make-string n (aref str (1- (match-end 1))))) rpad)
 	;; construct a regexp that would match anything from just S
 	;; to any possible output of this function for any N.
-	(concat (mapconcat (lambda (c) (concat (regexp-quote (string c)) "?"))
-			   lpad "")	;padding is not required
-		(regexp-quote s)
-		(when multi "+")	;the last char of S might be repeated
-		(mapconcat (lambda (c) (concat (regexp-quote (string c)) "?"))
-			   rpad "")))))) ;padding is not required
+        (labels
+            ((regexp-quote-with-? (c) (concat (regexp-quote (string c)) "?")))
+          (concat (mapconcat #'regexp-quote-with-?
+                             lpad "")	;padding is not required
+                  (regexp-quote s)
+                  (when multi "+")	;the last char of S might be repeated
+                  (mapconcat #'regexp-quote-with-?
+                             rpad ""))))))) ;padding is not required
 
 (defun comment-padleft (str &optional n)
   "Construct a string composed of `comment-padding' plus STR.

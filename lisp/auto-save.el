@@ -412,24 +412,15 @@ a special signal for non-file buffers."
 	(char-to-string char))))
    str ""))
 
-(defun auto-save-unhex (x)
-  (if (> x ?9)
-      (if (>= x ?a)
-	  (+ 10 (- x ?a))
-	(+ 10 (- x ?A)))
-    (- x ?0)))
-
 (defun auto-save-unescape-name (str)
   "Undo any escaping of evil nasty characters in a file name.
 See `auto-save-escape-name'."
   (setq str (or str ""))
   (let ((tmp "")
 	(case-fold-search t))
-    (while (string-match "=[0-9a-f][0-9a-f]" str)
+    (while (string-match #r"=\([0-9a-f][0-9a-f]\)" str)
       (let* ((start (match-beginning 0))
-	     (ch1 (auto-save-unhex (elt str (+ start 1))))
-	     (code (+ (* 16 ch1)
-		      (auto-save-unhex (elt str (+ start 2))))))
+             (code (string-to-number (match-string 1 str) 16)))
 	(setq tmp (concat tmp (substring str 0 start)
 			  (char-to-string code))
 	      str (substring str (match-end 0)))))

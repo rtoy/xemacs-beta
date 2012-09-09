@@ -185,7 +185,7 @@ is nil, raise an error."
                  ((consp x)
                   ;; Remove any feature names that this file provided.
                   (if (eq (car x) 'provide)
-                      (setq features (delq (cdr x) features))
+                      (setq features (delete* (cdr x) features))
                     (if (eq (car x) 'module)
                         (setq unloading-module t))))
                  ((and (boundp x)
@@ -201,7 +201,7 @@ is nil, raise an error."
        (cdr flist)))
     ;; Delete the load-history element for this file.
     (let ((elt (assoc file load-history)))
-      (setq load-history (delq elt load-history)))
+      (setq load-history (delete* elt load-history)))
     ;; If it is a module, really unload it.
     (if unloading-module
 	(declare-fboundp (unload-module (symbol-name feature))))))
