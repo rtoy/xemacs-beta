@@ -500,7 +500,7 @@ gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
 }
 
 static Lisp_Object
-gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
+gtk_to_emacs_keysym (GdkEventKey *event, int simple_p)
      /* simple_p means don't try too hard (ASCII only) */
 {
   if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_Mode_switch))
@@ -1369,7 +1369,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 
 	    /* Keysym mucking has already been done inside the
                GdkEventKey parsing */
-	    keysym = gtk_to_emacs_keysym (d, key_event, 0);
+	    keysym = gtk_to_emacs_keysym (key_event, 0);
 
 	    /* If the emacs keysym is nil, then that means that the X
 	       keysym was either a Modifier or NoSymbol, which

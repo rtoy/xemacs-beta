@@ -2150,6 +2150,15 @@ update_image_instance (Lisp_Object image_instance,
       struct gcpro gcpro1;
       GCPRO1 (diffs);
 
+      /* #### FIXME: in image_instantiate, somebody commented that updating
+         process is incomplete. Here is an example: there is no update method
+         available when updating a pixmap (AFAICS, there is only text_update). 
+         As a consequence, this code does nothing, apart from setting the
+         dirty flag on an image instance that hasn't changed. We have this
+         problem in 21.4 as well. See image_instantiate for more information.
+
+         -- dvl */
+
       /* try device specific methods first ... */
       meths = decode_device_ii_format (image_instance_device (image_instance),
 				       type, ERROR_ME_NOT);
@@ -3441,13 +3450,26 @@ image_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 	}
       else if (NILP (instance))
 	gui_error ("Can't instantiate image (probably cached)", instantiator);
+
       /* We found an instance. However, because we are using the glyph
 	 as the hash key instead of the instantiator, the current
 	 instantiator may not be the same as the original. Thus we
-	 must update the instance based on the new
-	 instantiator. Preserving instance identity like this is
-	 important to stop excessive window system widget creation and
-	 deletion - and hence flashing. */
+	 must update the instance based on the new instantiator. Preserving
+	 instance identity like this is important to stop excessive window
+	 system widget creation and deletion - and hence flashing. */
+      
+      /* #### NOTE: except that it doesn't work: currently, we have very
+	 serious cache coherency problems (see the comment in
+	 update_image_instance, and the one just below). For instance, try to
+	 call set-face-background-pixmap[-file] twice and see what happens
+	 (hint: nothing). That's because update_image_instance basically
+	 doesn't work.
+	
+	 Either we fix it, or we hash on the instantiator after all. One of
+	 these days, when I feel bold, I will try that and see if we still get
+	 intolerable flashing.
+
+	 -- dvl */
       else
 	{
 	  /* #### This function should be able to cope with *all*

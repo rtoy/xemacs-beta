@@ -96,9 +96,9 @@ make_fixnum_verify (EMACS_INT val)
   return obj;
 }
 
-#define make_fixnum(x) ((Lisp_Object) (((x) << FIXNUM_GCBITS) | Lisp_Type_Fixnum_Bit))
+#define make_fixnum(x) ((Lisp_Object) ((((EMACS_INT)(x)) << FIXNUM_GCBITS) | Lisp_Type_Fixnum_Bit))
 
-#define make_char_1(x) ((Lisp_Object) (((x) << GCBITS) | Lisp_Type_Char))
+#define make_char_1(x) ((Lisp_Object) ((((EMACS_UINT)(x)) << GCBITS) | Lisp_Type_Char))
 
 #define FIXNUMP(x) ((EMACS_UINT)(x) & Lisp_Type_Fixnum_Bit)
 #define FIXNUM_PLUS(x,y)  ((x)+(y)-Lisp_Type_Fixnum_Bit)

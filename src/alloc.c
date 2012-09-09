@@ -1987,6 +1987,120 @@ vector8 (Lisp_Object obj0, Lisp_Object obj1, Lisp_Object obj2,
 /*			 Bit Vector allocation				*/
 /************************************************************************/
 
+static Lisp_Object
+mark_bit_vector (Lisp_Object UNUSED (obj))
+{
+  return Qnil;
+}
+
+static void
+print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun,
+		  int UNUSED (escapeflag))
+{
+  Elemcount i;
+  Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
+  Elemcount len = bit_vector_length (v);
+  Elemcount last = len;
+
+  if (FIXNUMP (Vprint_length))
+    last = min (len, XFIXNUM (Vprint_length));
+  write_ascstring (printcharfun, "#*");
+  for (i = 0; i < last; i++)
+    {
+      if (bit_vector_bit (v, i))
+	write_ascstring (printcharfun, "1");
+      else
+	write_ascstring (printcharfun, "0");
+    }
+
+  if (last != len)
+    write_ascstring (printcharfun, "...");
+}
+
+static int
+bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
+		  int UNUSED (foldcase))
+{
+  Lisp_Bit_Vector *v1 = XBIT_VECTOR (obj1);
+  Lisp_Bit_Vector *v2 = XBIT_VECTOR (obj2);
+
+  return ((bit_vector_length (v1) == bit_vector_length (v2)) &&
+	  !memcmp (v1->bits, v2->bits,
+		   BIT_VECTOR_LONG_STORAGE (bit_vector_length (v1)) *
+		   sizeof (long)));
+}
+
+/* This needs to be algorithmically identical to internal_array_hash in
+   elhash.c when equalp is one, so arrays and bit vectors with the same
+   contents hash the same. It would be possible to enforce this by giving
+   internal_ARRAYLIKE_hash its own file and including it twice, but right
+   now that doesn't seem worth it. */
+static Hashcode
+internal_bit_vector_equalp_hash (Lisp_Bit_Vector *v)
+{
+  int ii, size = bit_vector_length (v);
+  Hashcode hash = 0;
+
+  if (size <= 5)
+    {
+      for (ii = 0; ii < size; ii++)
+        {
+          hash = HASH2
+            (hash,
+             FLOAT_HASHCODE_FROM_DOUBLE ((double) (bit_vector_bit (v, ii))));
+        }
+      return hash;
+    }
+
+  /* just pick five elements scattered throughout the array.
+     A slightly better approach would be to offset by some
+     noise factor from the points chosen below. */
+  for (ii = 0; ii < 5; ii++)
+    hash = HASH2 (hash,
+                  FLOAT_HASHCODE_FROM_DOUBLE
+                  ((double) (bit_vector_bit (v, ii * size / 5))));
+
+  return hash;
+}
+
+static Hashcode
+bit_vector_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
+{
+  Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
+  if (equalp)
+    {
+      return HASH2 (bit_vector_length (v),
+                    internal_bit_vector_equalp_hash (v));
+    }
+
+  return HASH2 (bit_vector_length (v),
+		memory_hash (v->bits,
+			     BIT_VECTOR_LONG_STORAGE (bit_vector_length (v)) *
+			     sizeof (long)));
+}
+
+static Bytecount
+size_bit_vector (Lisp_Object obj)
+{
+  Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
+  return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector, unsigned long, bits,
+				       BIT_VECTOR_LONG_STORAGE (bit_vector_length (v)));
+}
+
+static const struct memory_description bit_vector_description[] = {
+  { XD_END }
+};
+
+
+DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("bit-vector", bit_vector,
+				     mark_bit_vector,
+				     print_bit_vector, 0,
+				     bit_vector_equal,
+				     bit_vector_hash,
+				     bit_vector_description,
+				     size_bit_vector,
+				     Lisp_Bit_Vector);
+
 /* #### should allocate `small' bit vectors from a frob-block */
 static Lisp_Bit_Vector *
 make_bit_vector_internal (Elemcount sizei)
@@ -5796,6 +5910,7 @@ init_alloc_once_early (void)
 
   INIT_LISP_OBJECT (cons);
   INIT_LISP_OBJECT (vector);
+  INIT_LISP_OBJECT (bit_vector);
   INIT_LISP_OBJECT (string);
 
 #ifdef NEW_GC

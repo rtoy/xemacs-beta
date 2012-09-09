@@ -150,3 +150,8 @@
               (car (get-range-table #x1001 deserialized-range-table)))
           "checking the lisp reader handles deserialization identity, mixed"))
 
+(when (featurep 'bignum)
+  (Assert (null (list-length (read (format "#%d=(1 #1=(5) 3 4 . #%d#)"
+					   (+ most-positive-fixnum 2)
+					   (+ most-positive-fixnum 2)))))
+	  "checking bignum object labels don't wrap on reading"))

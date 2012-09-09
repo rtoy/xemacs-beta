@@ -386,6 +386,7 @@ If any of these files are changed, we need to redump.")
 					   #'equalp
 					 #'equal))))
 	      (append bc-bootstrap bootstrap-other))
+             (autoload 'cl-compile-time-init "cl-macs")
 	     (setq command-line-args
 		   (append
 		    '("-l" "loadup-el.el" "run-temacs"

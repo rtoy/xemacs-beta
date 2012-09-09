@@ -294,7 +294,7 @@ objs=\
  $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) $(number_objs) fontcolor.o\
  opaque.o $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
  rangetab.o realpath.o redisplay.o redisplay-output.o regex.o\
- search.o select.o $(sheap_objs) $(shlib_objs) signal.o sound.o\
+ search.o select.o sequence.o $(sheap_objs) $(shlib_objs) signal.o sound.o\
  specifier.o strftime.o $(sunpro_objs) symbols.o syntax.o sysdep.o\
  text.o $(tooltalk_objs) $(tty_objs) undo.o unicode.o $(x_objs) $(x_gui_objs)\
  widget.o window.o $(win32_objs)

@@ -365,24 +365,21 @@ See also `multi-occur'."
     (occur-read-primary-args)))
   (when bufregexp
     (occur-1 regexp nlines
-	     (delq nil
-		   (mapcar (lambda (buf)
-			     (when (and (buffer-file-name buf)
-					(string-match bufregexp
-						      (buffer-file-name buf)))
-			       buf))
-			   (buffer-list))))))
+             (mapcan #'(lambda (buf)
+                         (when (and (buffer-file-name buf)
+                                    (string-match bufregexp
+                                                  (buffer-file-name buf)))
+                           (list buf)))
+                     (buffer-list)))))
 
 (defun occur-1 (regexp nlines bufs &optional buf-name)
   (unless buf-name
     (setq buf-name "*Occur*"))
   (let (occur-buf
-	(active-bufs (delq nil (mapcar #'(lambda (buf)
-					   (when (buffer-live-p buf) buf))
-				       bufs))))
+	(active-bufs (remove-if-not #'buffer-live-p bufs)))
     ;; Handle the case where one of the buffers we're searching is the
     ;; output buffer.  Just rename it.
-    (when (member buf-name (mapcar 'buffer-name active-bufs))
+    (when (position buf-name active-bufs :test #'equal :key #'buffer-name)
       (with-current-buffer (get-buffer buf-name)
 	(rename-uniquely)))
 

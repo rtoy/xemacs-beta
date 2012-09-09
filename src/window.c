@@ -383,7 +383,10 @@ DEFINE_NODUMP_LISP_OBJECT ("window", window,
    All callers of allocate_window should therefore call
    reset_face_cachels on the created window.  We can't do it
    here because the window must have its frame pointer set or
-   reset_face_cachels will fail. */
+   reset_face_cachels will fail.
+   A similar requirement holds for reset_glyph_cachels.  We *could* do
+   that here (there's no reference to the frame pointer in that function),
+   but we may as well have the same discipline. */
 Lisp_Object
 allocate_window (void)
 {

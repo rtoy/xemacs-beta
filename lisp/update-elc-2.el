@@ -137,6 +137,7 @@
   (let ((dir (car command-line-args-left)))
     ;; don't depend on being able to autoload `update-autoload-files'!
     (load "autoload")
+    (autoload 'cl-compile-time-init "cl-macs")
     (load "bytecomp")
     (load "byte-optimize")
     ;; #### the API used here is deprecated, convert to one with explicit

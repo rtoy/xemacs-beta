@@ -184,6 +184,7 @@ void syms_of_select (void);
 void syms_of_select_gtk (void);
 void syms_of_select_mswindows (void);
 void syms_of_select_x (void);
+void syms_of_sequence (void);
 void syms_of_signal (void);
 void syms_of_sound (void);
 void syms_of_specifier (void);

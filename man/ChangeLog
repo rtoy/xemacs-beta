@@ -1,3 +1,58 @@
+2012-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/symbols.texi (Symbol Components):
+	Document the new syntax of ## for the symbol with name "" interned
+	in obarray.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/keymaps.texi (Keymaps):
+	* lispref/keymaps.texi (Changing Key Bindings):
+	* lispref/keymaps.texi (Scanning Keymaps):
+	* lispref/keymaps.texi (Remapping commands):
+	* lispref/keymaps.texi (XEmacs): New.
+	* lispref/keymaps.texi (Other Keymap Functions):
+	Document the new command remapping functionality in this file.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/macros.texi (Expansion):
+	Cross-reference to documentation of #'cl-prettyexpand, #'defmacro*
+	when talking about #'macroexpand.
+
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/searching.texi (Regular Expressions):
+	* lispref/searching.texi (Syntax of Regexps):
+	* lispref/searching.texi (Char Classes):
+	* lispref/searching.texi (Regexp Example):
+	Document the predefined character classes in this file.
+
+2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.texi (Top):
+	* cl.texi (Usage):
+	* cl.texi (Organization):
+	* cl.texi (Efficiency Concerns):
+	* cl.texi (Common Lisp Compatibility):
+	Remove documentation of cl-compat, now it's deleted.
+
+2011-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi (Basic Lisp Modules):
+	Document sequence.c here too.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/lists.texi (Association Lists):
+	Don't document #'remassoc, #'remassq and friends in detail;
+	they're XEmacs-specific and (delete* ... :key #'car) is
+	preferable.
+
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* internals/internals.texi (Top):

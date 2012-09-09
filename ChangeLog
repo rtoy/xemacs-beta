@@ -1,3 +1,51 @@
+2012-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Package Search): New Installation section.
+	Warn about missing system package hierarchies.
+
+	* configure: Regenerate.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
+2012-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Thanks to Robert Delius Royar <xemacs@frinabulax.org>.
+
+	* configure.ac (ASLR): Disable it on Mountain Lion, too.
+	* configure: Regenerate.
+
+2011-11-27  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* configure.ac: 
+	Add "-Wl,-no_pie" to linker flags on Mac OS X Lion to disable ASLR
+	that breaks pdump.
+	* configure: Regenerate.
+
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* .hgignore:
+	* configure.ac: 
+	Reflect move of etc/dbxrc.in to src/.dbxrc.in.
+	* configure: Regenerate.
+
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* configure: Regenerate with Autoconf 2.68.  Default Autoconf 2.61
+	that comes with Mac OS X Lion breaks configure's ability to create
+	Makefiles.
+	
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* configure.ac: Fix creation of etc/dbxrc and src/.dbxrc; only try
+	to create Makefile when Makefile.in is there.
+	* configure: Regenerate.
+	
+2011-10-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (with_athena): Refactor check for Xaw3d.
+
 2012-03-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac (TAB): Add HAVE_GTK2 to AC_DEFINE list.

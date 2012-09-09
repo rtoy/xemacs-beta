@@ -1395,33 +1395,37 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 	      macrop t)
       (setq fndef def))
     (if aliases (princ aliases))
-    (let ((int #'(lambda (string an-p macro-p)
-		   (princ (format
-			   (gettext (concat
-				     (cond ((commandp def)
-					    "an interactive ")
-					   (an-p "an ")
-					   (t "a "))
-				     "%s"
-                                     (cond
-                                      ((eq 'neither macro-p)
-                                       "")
-                                      (macro-p " macro")
-                                      (t " function"))))
-			   string)))))
+    (labels
+        ((int (string an-p macro-p)
+           (princ (format
+                   (gettext (concat
+                             (cond ((commandp def)
+                                    "an interactive ")
+                                   (an-p "an ")
+                                   (t "a "))
+                             "%s"
+                             (cond
+                              ((eq 'neither macro-p)
+                               "")
+                              (macro-p " macro")
+                              (t " function"))))
+                   string))))
+      (declare (inline int))
       (cond ((or (stringp def) (vectorp def))
              (princ "a keyboard macro.")
 	     (setq kbd-macro-p t))
             ((special-operator-p fndef)
-             (funcall int "built-in special operator" nil 'neither))
+             (int "built-in special operator" nil 'neither))
             ((subrp fndef)
-             (funcall int "built-in" nil macrop))
+             (int "built-in" nil macrop))
             ((compiled-function-p fndef)
-             (funcall int "compiled Lisp" nil macrop))
+             (int (concat (if (built-in-symbol-file function 'defun)
+                              "built-in "
+                            "") "compiled Lisp") nil macrop))
             ((eq (car-safe fndef) 'lambda)
-             (funcall int "Lisp" nil macrop))
+             (int "Lisp" nil macrop))
             ((eq (car-safe def) 'autoload)
-	     (funcall int "autoloaded Lisp" t (elt def 4)))
+	     (int "autoloaded Lisp" t (elt def 4)))
 	    ((and (symbolp def) (not (fboundp def)))
 	     (princ "a symbol with a void (unbound) function definition."))
             (t
@@ -1493,7 +1497,9 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 		       (global-tty-binding 
 			(where-is-internal function global-tty-map))
 		       (global-window-system-binding 
-			(where-is-internal function global-window-system-map)))
+			(where-is-internal function global-window-system-map))
+                       (command-remapping (command-remapping function))
+                       (commands-remapped-to (commands-remapped-to function)))
                    (if (or global-binding global-tty-binding
                            global-window-system-binding)
                        (if (and (equal global-binding
@@ -1527,11 +1533,23 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
                              "\n%s\n        -- generally (that is, unless\
  overridden by TTY- or
            window-system-specific mappings)\n"
-                             (mapconcat #'key-description
-                                        global-binding
+                             (mapconcat #'key-description global-binding
                                         ", ")))))
-                     (princ (substitute-command-keys
-                             (format "\n\\[%s]" function))))))))))))
+                       (if command-remapping
+                           (progn
+                             (princ "Its keys are remapped to `")
+                             (princ (symbol-name command-remapping))
+                             (princ "'.\n"))
+                           (princ (substitute-command-keys
+                                   (format "\n\\[%s]" function))))
+                       (when commands-remapped-to
+                         (if (cdr commands-remapped-to)
+                             (princ (format "The following functions are \
+remapped to it:\n`%s'" (mapconcat #'prin1-to-string commands-remapped-to
+                                  "', `")))
+                           (princ (format "`%s' is remapped to it.\n"
+                                          (car
+                                           commands-remapped-to))))))))))))))
 
 ;;; [Obnoxious, whining people who complain very LOUDLY on Usenet
 ;;; are binding this to keys.]

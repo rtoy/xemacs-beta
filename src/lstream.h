@@ -306,6 +306,7 @@ void Lstream_unread (Lstream *lstr, const void *data, Bytecount size);
 int Lstream_rewind (Lstream *lstr);
 int Lstream_seekable_p (Lstream *lstr);
 int Lstream_close (Lstream *lstr);
+int Lstream_close_noflush (Lstream *lstr);
 
 void Lstream_delete (Lstream *lstr);
 void Lstream_set_character_mode (Lstream *str);

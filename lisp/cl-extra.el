@@ -46,8 +46,7 @@
 
 ;;; Code:
 ;; XEmacs addition
-(eval-when-compile
-  (require 'obsolete))
+(eval-when-compile (require 'obsolete))
 
 ;;; Type coercion.
 
@@ -354,13 +353,13 @@ Optional second arg STATE is a random-state object."
   "Return a copy of random-state STATE, or of `*random-state*' if omitted.
 If STATE is t, return a new state object seeded from the time of day."
   (cond ((null state) (make-random-state *random-state*))
-	((vectorp state) (cl-copy-tree state t))
+	((vectorp state) (copy-tree state t))
 	((integerp state) (vector 'cl-random-state-tag -1 30 state))
 	(t (make-random-state (cl-random-time)))))
 
 (defun random-state-p (object)
   "Return t if OBJECT is a random-state object."
-  (and (vectorp object) (= (length object) 4)
+  (and (vectorp object) (eql (length object) 4)
        (eq (aref object 0) 'cl-random-state-tag)))
 
 ;;; Sequence functions.
@@ -452,50 +451,8 @@ Members of MORE-VALUES, if provided, will be passed as multiple values; see
            (compiled-function-instructions compiled)))
        (vector value) 1))))
 
-;;; Hash tables.
-
-;; The `regular' Common Lisp hash-table stuff has been moved into C.
-;; Only backward compatibility stuff remains here.
-(defun make-hashtable (size &optional test)
-  (make-hash-table :test test :size size))
-(defun make-weak-hashtable (size &optional test)
-  (make-hash-table :test test :size size :weakness t))
-(defun make-key-weak-hashtable (size &optional test)
-  (make-hash-table :test test :size size :weakness 'key))
-(defun make-value-weak-hashtable (size &optional test)
-  (make-hash-table :test test :size size :weakness 'value))
-
-(define-obsolete-function-alias 'hashtablep 'hash-table-p)
-(define-obsolete-function-alias 'hashtable-fullness 'hash-table-count)
-(define-obsolete-function-alias 'hashtable-test-function 'hash-table-test)
-(define-obsolete-function-alias 'hashtable-type 'hash-table-type)
-(define-obsolete-function-alias 'hashtable-size 'hash-table-size)
-(define-obsolete-function-alias 'copy-hashtable 'copy-hash-table)
-
-(make-obsolete 'make-hashtable            'make-hash-table)
-(make-obsolete 'make-weak-hashtable       'make-hash-table)
-(make-obsolete 'make-key-weak-hashtable   'make-hash-table)
-(make-obsolete 'make-value-weak-hashtable 'make-hash-table)
-(make-obsolete 'hash-table-type           'hash-table-weakness)
-
-(when (fboundp 'x-keysym-hash-table)
-  (make-obsolete 'x-keysym-hashtable 'x-keysym-hash-table))
-
-;; Compatibility stuff for old kludgy cl.el hash table implementation
-(defvar cl-builtin-gethash (symbol-function 'gethash))
-(defvar cl-builtin-remhash (symbol-function 'remhash))
-(defvar cl-builtin-clrhash (symbol-function 'clrhash))
-(defvar cl-builtin-maphash (symbol-function 'maphash))
-
-(defalias 'cl-gethash 'gethash)
-(defalias 'cl-puthash 'puthash)
-(defalias 'cl-remhash 'remhash)
-(defalias 'cl-clrhash 'clrhash)
-(defalias 'cl-maphash 'maphash)
-;; These three actually didn't exist in Emacs-20.
-(defalias 'cl-make-hash-table 'make-hash-table)
-(defalias 'cl-hash-table-p 'hash-table-p)
-(defalias 'cl-hash-table-count 'hash-table-count)
+;;; Hash tables. XEmacs; remove the compatibility stuff, which was all that
+;;; remained here, given the hash table implementation is in C.
 
 ;;; Some debugging aids.
 
@@ -612,19 +569,26 @@ This also does some trivial optimizations to make the form prettier."
            ;; This is a bit of a hack; special-case symbols with bindings as
            ;; labels.
 	   (let ((found (cdr (assq (cadr form) env))))
-	     (if (and (consp found) (eq (nth 1 (nth 1 found)) 'cl-labels-args))
-                 (if (consp (nth 2 (nth 2 found)))
-                     ;; It's a cons; this is the implementation of
-                     ;; labels in cl-macs.el.
-                     (cl-macroexpand-all (nth 1 (nth 2 (nth 2 found))) env)
-                   ;; It's an atom, almost certainly a compiled function;
-                   ;; we're using the implementation of labels in
-                   ;; bytecomp.el. Quote it with FUNCTION so that code can
-                   ;; tell uses as data apart from the uses with funcall,
-                   ;; where it's unquoted. #### We should warn if (car form)
-                   ;; above is quote, rather than function.
-                   (list 'function (nth 2 (nth 2 found))))
-	       form))))
+	     (cond
+              ((and (consp found) (eq (nth 1 (nth 1 found)) 'cl-labels-args))
+               ;; This is the implementation of labels in cl-macs.el.
+               (cl-macroexpand-all (nth 1 (nth 2 (nth 2 found))) env))
+              ((and (consp found) (eq (nth 1 (nth 1 found))
+                                      'byte-compile-labels-args))
+               ;; We're using the implementation of labels in
+               ;; bytecomp.el. Quote its data-placeholder with FUNCTION so
+               ;; that code can tell uses as data apart from the uses with
+               ;; funcall.
+               (unless (eq 'function (car form))
+                 (byte-compile-warn
+                  "deprecated: '%s, use #'%s instead to quote it as a function"
+                  (cadr form) (cadr form)))
+               (setq found (get (nth 1 (nth 1 (nth 3 found)))
+                                'byte-compile-data-placeholder))
+               (put found 'byte-compile-label-calls
+                    (1+ (get found 'byte-compile-label-calls 0)))
+               (list 'function found))
+              (t form)))))
 	((memq (car form) '(defun defmacro))
 	 (list* (car form) (nth 1 form) (cl-macroexpand-body (cddr form) env)))
 	((and (eq (car form) 'progn) (not (cddr form)))
@@ -643,7 +607,8 @@ This also does some trivial optimizations to make the form prettier."
   (let ((cl-macroexpand-cmacs full) (cl-compiling-file full)
 	(byte-compile-macro-environment nil))
     (setq form (cl-macroexpand-all form
-				   (and (not full) '((block) (eval-when)))))
+				   (and (not full)
+                                        '((block) (return-from) (eval-when)))))
     (message "Formatting...")
     (prog1 (cl-prettyprint form)
       (message ""))))
@@ -828,7 +793,8 @@ available; see `describe-char-unicode-data'."
 	    (require 'descr-text)
 	    (when (zerop (buffer-size))
 	      ;; Don't use -literally in case of DOS line endings.
-	      (insert-file-contents describe-char-unicodedata-file))
+	      (insert-file-contents
+               (declare-boundp describe-char-unicodedata-file)))
 	    (goto-char (point-min))
 	    (setq case-fold-search nil)
 	    (and (re-search-forward (format #r"^\([0-9A-F]\{4,6\}\);%s;"
@@ -874,7 +840,33 @@ Otherwise, return CHARACTER."
     (-1 (1- (length (format "%b" (- integer)))))
     (1 (length (format "%b" integer)))))
 
-(run-hooks 'cl-extra-load-hook)
+;; These are here because labels and symbol-macrolet are not available in
+;; obsolete.el. They are, however, all marked as obsolete in that file.
+(symbol-macrolet ((not-nil '#:not-nil))
+  (labels ((car-or-not-nil (object)
+             (if (consp object) (car object) not-nil))
+           (cdr-or-not-nil (object)
+             (if (consp object) (cdr object) not-nil)))
+    (defalias 'remassoc
+      #'(lambda (key alist)
+         (delete* key alist :test #'equal
+                  :key (if key #'car-safe #'car-or-not-nil))))
+    (defalias 'remrassoc
+      #'(lambda (key alist)
+         (delete* key alist :test #'equal
+                  :key (if key #'cdr-safe #'cdr-or-not-nil))))
+    (defalias 'remrassq
+      #'(lambda (key alist)
+         (delete* key alist :test #'eq
+                  :key (if key #'cdr-safe #'cdr-or-not-nil))))
+    (defalias 'remassq
+      #'(lambda (key alist)
+         (delete* key alist :test #'eq
+                  :key (if key #'car-safe #'car-or-not-nil))))))
+
+;; XEmacs; since cl-extra.el is dumped, cl-extra-load-hook is
+;; useless. (Dumped files normally shouldn't be using hooks, functionality
+;; should be implemented explicitly.)
 
 ;; XEmacs addition
 (provide 'cl-extra)

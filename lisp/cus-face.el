@@ -83,6 +83,10 @@
 			:value ""
 			:help-echo "Set foreground color.")
 		 set-face-foreground face-foreground-name)
+    (:foreback (color :tag "Foreback"
+			:value ""
+			:help-echo "Set foreback color.")
+		 set-face-foreback face-foreback-name)
     (:background (color :tag "Background"
 			:value ""
 			:help-echo "Set background color.")
@@ -126,6 +130,10 @@ Control whether the text should be strikethru.")
 			    :help-echo "\
 Control whether the text should be inverted.  Works only on TTY-s")
 		    set-face-reverse-p face-reverse-p)
+    (:shrink (toggle :format "%[Shrink%]: %v\n"
+		     :help-echo "\
+Control whether the face should shrink to the actual text on the line.")
+		    set-face-shrink-p face-shrink-p)
     (:inherit
      (repeat :tag "Inherit"
 	     :help-echo "List of faces to inherit attributes from."
@@ -207,6 +215,7 @@ If FRAME is nil, use the default face."
       (list (list t (face-custom-attributes-get
 		     symbol (selected-frame))))))
 
+;;;###autoload
 (defun custom-set-face-bold (face value &optional frame tags)
   "Set the bold property of FACE to VALUE."
   (if value

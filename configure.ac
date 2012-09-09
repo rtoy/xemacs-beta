@@ -2786,6 +2786,17 @@ if test "$opsys" = "sol2"; then
   fi
 fi
 
+dnl Disable ASLR on systems where it breaks pdump.
+AC_MSG_CHECKING([whether ASLR needs to be disabled]) 
+case `uname -s`:`uname -r` in
+	dnl Mac OS X 10.7 Lion, 10.8 Mountain Lion
+    Darwin:1[[12]].*)
+	AC_MSG_RESULT(yes)
+	XE_APPEND([-Wl,-no_pie], LDFLAGS) 
+	;;
+    *) AC_MSG_RESULT(no) ;;
+esac
+
 dnl ----------------------
 dnl Choose a window system
 dnl ----------------------
@@ -3918,22 +3929,24 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
     *)		XE_DIE("Unknown Athena widget set \`$with_athena'. This should not happen.") ;;
   esac
 
+  athena_3d_function=Xaw3dComputeBottomShadowRGB
+
   dnl Search for the Athena library...
   if test "$athena_3d" = "no"; then
     AC_CHECK_LIB($athena_variant, XawScrollbarSetThumb,
       [
         dnl Must not be a 3d library...
-        AC_CHECK_LIB($athena_variant, XawSme3dComputeTopShadowRGB,
+        AC_CHECK_LIB($athena_variant, $athena_3d_function,
           [AC_MSG_WARN([Could not find a non-3d Athena widget library.])],
           athena_lib=$athena_variant)
       ],
       AC_MSG_WARN([Could not find an Athena widget library.]))
   else
     dnl The real configuration, need 3d library
-    AC_CHECK_LIB($athena_variant, XawSme3dComputeTopShadowRGB, athena_lib=$athena_variant,
+    AC_CHECK_LIB($athena_variant, $athena_3d_function, athena_lib=$athena_variant,
       dnl OK, couldn't find it with a proper name, try the standard Athena lib
       dnl If that is 3d, presume the user asked for what they have installed.
-      AC_CHECK_LIB(Xaw, XawSme3dComputeTopShadowRGB,
+      AC_CHECK_LIB(Xaw, $athena_3d_function,
         [
           athena_lib=Xaw;
           AC_MSG_WARN([Assuming that libXaw is actually $athena_variant.]);
@@ -5396,12 +5409,6 @@ dnl Regenerate them locally on every configure.
 dnl .gdbinit is now handled like xemacs.def or other src files, and
 dnl its source is in src/.gdbinit.in.in.
 
-dnl Create a .dbxrc useful for debugging XEmacs
-if test -f "$srcdir/etc/dbxrc.in"; then
-  test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
-  echo ". $srcdir/etc/dbxrc.in" > "src/.dbxrc.in"
-fi
-
 dnl Create a useful TAGS file
 if test -f "$srcdir/TAGS" -a ! -f "TAGS"; then
   test "$verbose" = "yes" && echo "creating TAGS"
@@ -5695,6 +5702,63 @@ case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
     - Consider configuring with --with-pdump." ;;
 esac
+
+define(COLON_TO_SPACE_WARN,
+  [case "$[$1]" in *:* [)] dnl
+case "$opsys" in *cygwin* [)]
+  echo "  WARNING: Paths containing spaces will be misinterpreted." ;;
+esac
+[$1]="`echo '' $[$1] | sed -e 's/^ //' -e 's/:/ /g'`";; esac])dnl
+
+echo "
+Package Search (a 'root' contains '{xemacs,mule,site}-packages'):"
+
+if test -n "$with_early_packages"; then
+  COLON_TO_SPACE_WARN(with_early_packages)
+  echo "  User package roots:    $with_early_packages"
+else
+  echo "  User package roots:    ~/.xemacs"
+fi
+
+dnl Unlike the others, with_late_packages gets a non-null default.
+XE_EXPAND_VARIABLE(with_late_packages,with_late_packages_expanded)
+COLON_TO_SPACE_WARN(with_late_packages_expanded)
+echo "  System package roots:  $with_late_packages_expanded"
+for path in $with_late_packages_expanded; do
+  if test ! -d $path; then
+    echo "    WARNING: $path was specified, but doesn't exist."
+    echo "    WARNING: XEmacs functionality will be noticably limited until"
+    echo "    WARNING: some packages are installed."
+  elif test ! -d "$path/xemacs-packages" \
+         -a ! -d "$path/mule-packages" \
+         -a ! -d "$path/site-packages"; then
+    echo "    WARNING: No packages found in $path."
+    echo "    WARNING: XEmacs functionality will be noticably limited until"
+    echo "    WARNING: some packages are installed."
+  fi
+done
+dnl #### Shouldn't need this.
+if test -z "$with_late_packages"; then
+  echo "    XEmacs BUG: with_late_packages is unset.  Please report this!"
+fi
+
+if test -n "$with_last_packages"; then
+  COLON_TO_SPACE_WARN(with_last_packages)
+  echo "  Legacy package roots:  $with_last_packages"
+  for path in $with_last_packages; do
+    if test ! -d $path; then
+      echo "    WARNING: $path was specified, but doesn't exist."
+      echo "    WARNING: If you don't need this setting, it is recommended"
+      echo "    WARNING: that you not use it."
+    elif test ! -d "$path/xemacs-packages" \
+           -a ! -d "$path/mule-packages" \
+           -a ! -d "$path/site-packages"; then
+      echo "    WARNING: No packages found in $path."
+      echo "    WARNING: If you don't need this setting, it is recommended"
+      echo "    WARNING: that you not use it."
+    fi
+  done
+fi
 
 echo "
 Window System:"
@@ -6038,10 +6102,12 @@ AC_CONFIG_COMMANDS([default],
 dnl Create a GNUmakefile and Makefile from Makefile.in.
 dnl Create xemacs.def from xemacs.def.in in the same fashion,
 dnl if it exists (i.e. in the src/ directory).  Ditto for the
-dnl debugger init files (in the src/ directory).
-    MAKE_JUNK_C(Makefile.in)
-    CPP_MAKEFILE(,Makefile)
-    CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
+dnl debugger init files (in the src/ and etc/ directories).
+    if test -r "Makefile.in"; then
+      MAKE_JUNK_C(Makefile.in)
+      CPP_MAKEFILE(,Makefile)
+      CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
+    fi
     if test -r ".gdbinit.in"; then
       MAKE_JUNK_C(.gdbinit.in)
       CPP_MAKEFILE(,.gdbinit)

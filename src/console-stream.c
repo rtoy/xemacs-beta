@@ -198,7 +198,7 @@ stream_init_frame_1 (struct frame *f, Lisp_Object UNUSED (props),
 
 
 static int
-stream_text_width (struct window *UNUSED (w),
+stream_text_width (struct frame *UNUSED (f),
 		   struct face_cachel *UNUSED (cachel),
 		   const Ichar *UNUSED (str), Charcount len)
 {

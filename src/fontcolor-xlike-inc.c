@@ -222,6 +222,8 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
   return 0;
 }
 
+#ifndef HAVE_GTK
+
 static Lisp_Object
 xlistfonts_checking_charset (Lisp_Object device, const Ibyte *xlfd,
 			     Lisp_Object charset, 
@@ -263,6 +265,7 @@ xlistfonts_checking_charset (Lisp_Object device, const Ibyte *xlfd,
   DEBUG_FONTS_LISP1 ("xlistfonts_checking_charset returns %s\n", result);
   return result;
 }
+#endif
 
 #ifdef USE_XFT
 /* #### debug functions: find a better place for us */

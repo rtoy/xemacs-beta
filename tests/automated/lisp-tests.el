@@ -987,7 +987,7 @@
 ;;-----------------------------------------------------
 (Assert (eq (type-of load-path) 'cons))
 (Assert (eq (type-of obarray) 'vector))
-(Assert (eq (type-of 42) 'integer))
+(Assert (eq (type-of 42) 'fixnum))
 (Assert (eq (type-of ?z) 'character))
 (Assert (eq (type-of "42") 'string))
 (Assert (eq (type-of 'foo) 'symbol))
@@ -2907,12 +2907,12 @@ via the hepatic alpha-tocopherol transfer protein")))
                      third
                      #'(lambda () (return-from awkward 0)))
                   first)))))
-  (if (compiled-function-p
-       (ignore-errors (indirect-function #'needs-lexical-context)))
-      (Known-Bug-Expect-Failure
-       (Assert (eql 0 (needs-lexical-context 2 nil nil))
-	"the function special operator doesn't create a lexical context."))
-    (Assert (eql 0 (needs-lexical-context 2 nil nil)))))
+  (Known-Bug-Expect-Failure
+   (Assert (eql 0 (needs-lexical-context 2 nil nil))
+           "the function special operator doesn't create a lexical context.")))
+
+(Assert (eql 10 (catch ':keyword (+ (catch :keyword (throw :keyword 9)) 1)))
+        "checking `byte-compile-catch' doesn't strip keyword TAGs")
 
 ;; Test symbol-macrolet with symbols with identical string names.
 
@@ -2957,10 +2957,10 @@ via the hepatic alpha-tocopherol transfer protein")))
         (append form (list 1 [hi there] 40 "this is a string" pi)))
        (with-second-arguments (&optional form)
          (append form (list pi e ''hello ''there [40 50 60])))
-       (with-both-arguments (&optional form)
+       (with-both-arguments (&optional form &environment env)
          (append form
-                 (macroexpand '(with-first-arguments))
-                 (macroexpand '(with-second-arguments)))))
+                 (macroexpand '(with-first-arguments) env)
+                 (macroexpand '(with-second-arguments) env))))
 
     (with-temp-buffer
       (Assert
@@ -2985,5 +2985,21 @@ via the hepatic alpha-tocopherol transfer protein")))
               "checking the buffer contents are as expected at the end.")
       (Assert (not (funcall (intern "eq") #'bookend #'refer-to-bookend))
 	      "checking two mutually recursive functions compiled OK"))))
+
+;; Test macroexpand's handling of the ENVIRONMENT argument. We augmented it
+;; quietly for about four months, and this was incorrect.
+
+(Check-Error
+ void-variable
+ (macrolet
+     ((with-first-arguments (&optional form)
+        (append form (list 1 [hi there] 40 "this is a string" pi)))
+      (with-second-arguments (&optional form)
+        (append form (list pi e ''hello ''there [40 50 60])))
+      (with-both-arguments (&optional form)
+        (append form
+                (macroexpand '(with-first-arguments))
+                (macroexpand '(with-second-arguments)))))
+   (with-both-arguments (list))))
 
 ;;; end of lisp-tests.el

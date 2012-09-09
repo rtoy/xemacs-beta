@@ -219,6 +219,7 @@ while (0)
 #define XLIKE_SET_GC_COLOR(lval, rval) ((lval) = (rval).pixel)
 #define XLIKE_SET_GC_PIXEL(lval, rval) ((lval) = (rval))
 #define XLIKE_FONT_NUM(val) ((val)->fid)
+#define XLIKE_ICHAR_CHARSET(c) ichar_charset (c)
 
 /************ End X flavor of XLIKE **********/
 
@@ -331,6 +332,7 @@ while (0)
 #define XLIKE_SET_GC_COLOR(lval, rval) ((lval) = (rval))
 #define XLIKE_SET_GC_PIXEL(lval, rval) ((lval).pixel = (rval))
 #define XLIKE_FONT_NUM(val) (val)
+#define XLIKE_ICHAR_CHARSET(c) Vcharset_ascii
 
 /************ End GTK flavor of XLIKE **********/
 

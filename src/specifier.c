@@ -1162,15 +1162,18 @@ define_specifier_tag (Lisp_Object tag, Lisp_Object device_predicate,
 
   if (recompute_charsets)
     {
-
-      LIST_LOOP_2 (charset_name, Fcharset_list ())
+      GC_EXTERNAL_LIST_LOOP_2 (charset_name, Fcharset_list ())
 	{
 	  Lisp_Object charset = Fget_charset (charset_name);
 	  Lisp_Object tag_list = Fgethash (charset, Vcharset_tag_lists, Qnil);
 	  Lisp_Object charpres;
 
-	  if (NILP (charset_predicate))
-	    continue;
+          if (NILP (charset_predicate))
+            {
+	      Fputhash (charset, remassq_no_quit (tag, tag_list),
+                        Vcharset_tag_lists);
+              continue;
+            }
 
 	  charpres = call_charset_predicate (charset_predicate, charset);
 
@@ -1186,6 +1189,7 @@ define_specifier_tag (Lisp_Object tag, Lisp_Object device_predicate,
 			Vcharset_tag_lists);
 	    }
 	}
+      END_GC_EXTERNAL_LIST_LOOP (charset_name);
     }
   return Qt;
 }
@@ -1222,9 +1226,6 @@ it on the second pass, where character set information is ignored.
 You can redefine an existing user-defined specifier tag.  However, you
 cannot redefine most of the built-in specifier tags \(the device types and
 classes, `initial', and `final') or the symbols nil, t, `all', or `global'.
-Note that if a device type is not supported in this XEmacs, it will not be
-available as a built-in specifier tag; this is probably something we should
-change.
 */
        (tag, device_predicate, charset_predicate))
 {
