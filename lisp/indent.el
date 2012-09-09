@@ -48,20 +48,20 @@ Default number of columns for margin-changing functions to indent.")
 (defun indent-for-tab-command (&optional prefix-arg)
   "Indent line in proper way for current major mode."
   (interactive "P")
-  (if (eq indent-line-function 'indent-to-left-margin)
-      (insert-tab prefix-arg)
-    (if prefix-arg
-	(funcall indent-line-function prefix-arg)
-      (funcall indent-line-function))))
-
-(defun insert-tab (&optional prefix-arg)
-  (let ((count (prefix-numeric-value prefix-arg)))
-    (if abbrev-mode
-	(expand-abbrev))
-    (if indent-tabs-mode
-	(insert-char ?\t count)
-      ;; XEmacs: (Need the `1+')
-      (indent-to (* tab-width (1+ (/ (current-column) tab-width)))))))
+  (labels
+      ((insert-tab (&optional prefix-arg)
+         (let ((count (prefix-numeric-value prefix-arg)))
+           (if abbrev-mode
+               (expand-abbrev))
+           (if indent-tabs-mode
+               (insert-char ?\t count)
+             ;; XEmacs: (Need the `1+')
+             (indent-to (* tab-width (1+ (/ (current-column) tab-width))))))))
+    (if (eq indent-line-function 'indent-to-left-margin)
+        (insert-tab prefix-arg)
+      (if prefix-arg
+          (funcall indent-line-function prefix-arg)
+        (funcall indent-line-function)))))
 
 (defun indent-rigidly (start end count)
   "Indent all lines starting in the region sideways by COUNT columns.

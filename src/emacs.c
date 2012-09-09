@@ -1547,6 +1547,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif /* CLASH_DETECTION */
       syms_of_floatfns ();
       syms_of_fns ();
+      syms_of_sequence ();
 #ifdef USE_C_FONT_LOCK
       syms_of_font_lock ();
 #endif /* USE_C_FONT_LOCK */

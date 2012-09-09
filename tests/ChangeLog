@@ -1,3 +1,100 @@
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Make sure we can search for character ranges successfully when the
+	syntax table is dirty.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/keymap-tests.el:
+	Test the new command remapping functionality.
+
+2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Test #'truncate-string-to-width, thank you Colin Walters.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Use &environment appropriately in #'macrolet, instead of relying
+	on #'macroexpand to guess what we mean.
+
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el (equal):
+	* automated/regexp-tests.el (Assert-char-class):
+	Correct a stray parenthesis; add tests for the predefined
+	character classes with #'skip-chars-{forward,backward}; update the
+	tests to reflect some changed design decisions on my part.
+
+2012-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el: Check that #'posix-string-match
+	actually returns the longest match; thank you Ilya Shlyakhter in
+	jn1j8t$ujq$1@dough.gmane.org !
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (Assert-char-class):
+	Check that #'string-match errors correctly with an over-long
+	character class name.
+	Add tests for character class functionality that supports
+	non-ASCII characters. These tests expose bugs in GNU Emacs
+	24.0.94.2, but pass under current XEmacs.
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (Assert-char-class):
+	Test the character classes functionality that was always in
+	regex.c but that has only just been turned on. These tests pass on
+	GNU Emacs 24.0.94.2.
+
+2012-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that `byte-compile-catch' doesn't strip keyword (as such,
+	non-quoted) TAGs.
+
+2012-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/completion-tests.el: New.
+	Test #'try-completion, #'all-completion and #'test-completion with
+	list, vector and hash-table COLLECTION arguments.
+
+2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/hash-table-tests.el:
+	No longer use the obsolete function names in the tests, now
+	they've been removed from cl.el.
+
+2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	Check that integer object labels (using the #N=... syntax) treat 
+	bignums as such, rather than as fixnums that have wrapped.
+
+2011-11-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Update some tests that have started failing because of some
+	changed design decisions.
+	* automated/lisp-tests.el (eq):
+	(type-of 42) now returns the symbol fixnum.
+	* automated/lisp-tests.el (needs-lexical-context):
+	(function ...) doesn't create a lexical context, and this is now the
+	case in interpreted as well as in compiled code.
+	* automated/mule-tests.el (featurep):
+	Silence messages when byte-compiling files; if a file doesn't have
+	the escape-quoted coding cookie, it will now have the
+	raw-text-unix coding cookie, look for that instead of looking for
+	the absence of the escape-quoted coding cookie.
+
 2011-10-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/case-tests.el (uni-mappings):

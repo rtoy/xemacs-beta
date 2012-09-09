@@ -1,3 +1,689 @@
+2012-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c:
+	* file-coding.c (snarf_coding_system):
+	Take a new parameter, FIND_CODING_SYSTEM_P, which indicates that
+	find_coding_system() should be called.
+	* file-coding.c (look_for_coding_system_magic_cookie):
+	* file-coding.c (determine_real_coding_system):
+	* file-coding.c (undecided_convert):
+	Use this parameter.
+	* file-coding.c (Ffind_coding_system_magic_cookie_in_file):	
+	New, moved from files.el, so we can use
+	look_for_coding_system_magic_cookie's implementation.
+	* file-coding.c (syms_of_file_coding):
+	Make Ffind_coding_system_magic_cookie_in_file available.
+
+2012-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c:
+	* keymap.c (Fdefine_key):
+	* keymap.c (remap_command):
+	* keymap.c (Fremap_command):
+	Don't sanity-check commands to be remapped with the (define-key
+	KEYMAP [remap COMMAND1] COMMAND2) syntax, for better compatibility
+	with GNU Emacs. Thank you Robert Pluim!
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c (re_search_2):
+	* regex.c (re_match_2):
+	If the mirror syntax table is dirty, update it before the search,
+	preventing a malloc() inside the search code, something which
+	isn't allowed. Thank you Henry Thompson!
+
+2012-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c (define_specifier_tag):
+	GC protect the list that Fcharset_list () gave back, it's freshly
+	consed.
+	Clear the alist entries for this tag in CHARSET's tag list if the
+	charset_predicate is nil, so re-creating a charset tag works more
+	effectively.
+	* specifier.c (Fdefine_specifier_tag):
+	Device-type-specific tags *are* available, even if that device
+	type isn't; see specifier.el.
+
+2012-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1):
+	* print.c (print_symbol):
+	Adopt GNU's ## syntax for the interned symbol with the zero-length
+	name.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c:
+	Add command remapping, a more robust equivalent to
+	#'substitute-key-definition.
+	* keymap.c (CHECK_REMAPPING_POSITION): New.
+	* keymap.c (keymap_equal): Correct a comment here.
+	* keymap.c (Fdefine_key): Document the command remapping syntax.
+	* keymap.c (Fremap_command): New.
+	* keymap.c (command_remapping): New.
+	* keymap.c (Fcommand_remapping): New.
+	* keymap.c (commands_remapped_to_mapper): New.
+	* keymap.c (commands_remapped_to_traverser): New.
+	* keymap.c (Fcommands_remapped_to): New.
+	* keymap.c (get_relevant_keymaps): Take a new POSITION argument.
+	* keymap.c (Fcurrent_keymaps, event_binding):
+	Supply the new POSITION argument to get_relevant_keymaps.
+	* keymap.c (Fkey_binding):
+	Add new arguments, NO-REMAP and POSITION.
+
+	* keymap.c (map_keymap_mapper):
+	* keymap.c (Fwhere_is_internal):
+	* keymap.c (where_is_to_char):
+	* keymap.c (where_is_recursive_mapper):
+	Don't expose the key remapping in these functions. This conflicts
+	with GNU, but is more sane for our callers. Access to command
+	remapping is with the functions #'command-remapping,
+	#'commands-remapped-to, and #'remap-command, not with the general
+	keymap functions, apart from the compatibility hack in #'define-key.
+
+	* keymap.c (syms_of_keymap):
+	* keymap.c (vars_of_keymap):
+	* keymap.c (complex_vars_of_keymap):
+	* lisp.h: New CHECK_COMMAND macro.
+
+2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.c (Ftest_completion):
+	Correct some documentation here.
+
+2012-05-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* search.c (skip_chars): Add cast to Ibyte *.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c:
+	* eval.c (Fmacroexpand):
+	Don't prepend any supplied environment to
+	Vbyte_compile_macro_environment, leave that up to our callers
+	(that's what the &environment argument is for).
+	Document that one should normally access
+	byte-compile-macro-environment using the &environment lambda list
+	keyword.
+
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c:
+	Move various #defines and enums to regex.h, since we need them
+	when implementing #'skip-chars-{backward,forward}.
+	* regex.c (re_wctype):
+	* regex.c (re_iswctype):
+	Be more robust about case insensitivity here.
+	* regex.c (regex_compile):
+	* regex.h:
+	* regex.h (RE_ISWCTYPE_ARG_DECL):
+	* regex.h (CHAR_CLASS_MAX_LENGTH):
+	* search.c (skip_chars):
+	Implement support for the predefined character classes in this
+	function.
+
+2012-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* search.c (string_match_1): Actually use the POSIX argument here,
+	pass it to compile_pattern(). Thank you for the bug report, Ilya
+	Shlyakhter!
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Support non-ASCII correctly in character classes ([:alnum:] and
+	friends).
+
+	* regex.c:
+	* regex.c (ISBLANK, ISUNIBYTE): New. Make these and friends
+	independent of the locale, since we want them to be consistent in
+	XEmacs.
+	* regex.c (print_partial_compiled_pattern): Print the flags for
+	charset_mule; don't print non-ASCII as the character values in
+	ranges, this breaks with locales.
+	* regex.c (enum):
+	Define various flags the charset_mule and charset_mule_not opcodes
+	can now take.
+	* regex.c (CHAR_CLASS_MAX_LENGTH): Update this.
+	* regex.c (re_iswctype, re_wctype): New, from GNU.
+	* regex.c (re_wctype_can_match_non_ascii): New; used when deciding
+	on whether to use charset_mule or the ASCII-only regex character
+	set opcode.
+	* regex.c (regex_compile):
+	Error correctly on long, non-existent character class names.
+	Break out the handling of charsets that can match non-ASCII into a
+	separate clause. Use compile_char_class when compiling character
+	classes.
+	* regex.c (compile_char_class): New. Used in regex_compile when
+	compiling character sets that may match non-ASCII.
+	* regex.c (re_compile_fastmap):
+	If there are flags set for charset_mule or charset_mule_not, we
+	can't use the fastmap (since we need to check syntax table values
+	that aren't available there).
+	* regex.c (re_match_2_internal):
+	Check the new flags passed to the charset_mule{,_not} opcode,
+	observe them if appropriate.
+	* regex.h:
+	* regex.h (enum):
+	Expose re_wctype_t here, imported from GNU.
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.h (RE_SYNTAX_EMACS):
+	Turn on character classes ([:alnum:] and friends) by default. This
+	implementation is incomplete, am working on a version that handles
+	non-ASCII characters correctly.
+
+2012-02-12  Vin Shelton  <acs@xemacs.org>
+
+	* sysproc.h: As of Cygwin 1.7.10, /usr/include/process.h has moved
+	to /usr/include/cygwin/process.h, so sysproc.h could no longer
+	find it.  It wasn't needed anyway, so remove the include under
+	cygwin.
+
+2012-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-mp.c (bignum_ceil): Remove a redundant double division
+	from this function.
+
+2012-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-x.c:
+	* device-x.c (syms_of_device_x):
+	Move #'x-keysym-on-keyboard{,-sans-modifiers}-p to Lisp, the hash
+	table no longer stores the X keysyms, so we need to manipulate any
+	strings we have been handed.
+	* event-Xt.c (x_has_keysym):
+	Don't call XKeysymToString() here, it leaks; trust
+	x_keysym_to_emacs_keysym() instead.
+	* event-Xt.c (x_keysym_to_emacs_keysym):
+	No longer leak when looking up the strings for keysyms of the form
+	UABCD.
+
+2012-01-03  Didier Verna  <didier@xemacs.org>
+
+	* faces.c (complex_vars_of_faces): Add missing foreback specifier
+	values to the GUI Element face.
+
+2012-01-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Add #'test-completion, API from GNU.
+	Accept hash table COLLECTIONs in it and in the other
+	completion-oriented functions, #'try-completion,
+	#'all-completions, and those Lisp functions implemented in terms
+	of them.
+
+	* lisp.h: Update the prototype of map_obarray(), making FN
+	compatible with the FUNCTION argument of elisp_maphash();
+
+	* abbrev.c (abbrev_match_mapper):
+	* abbrev.c (record_symbol):
+	* doc.c (verify_doc_mapper):
+	* symbols.c (mapatoms_1):
+	* symbols.c (apropos_mapper):
+	Update these mapper functions to reflect the new argument to
+	map_obarray().
+
+	* symbols.c (map_obarray):
+	Call FN with two arguments, the string name of the symbol, and the
+	symbol itself, for API (mapper) compatibility with
+	elisp_maphash().
+
+	* minibuf.c (map_completion): New. Map a maphash_function_t across
+	a non function COLLECTION, as appropriate for #'try-completion and
+	friends.
+	* minibuf.c (map_completion_list): New. Map a maphash_function_t
+	across a pseudo-alist, as appropriate for the completion
+	functions. 
+	* minibuf.c (ignore_completion_p): PRED needs to be called with
+	two args if and only if the collection is a hash table. Implement
+	this.
+	* minibuf.c (try_completion_mapper): New. The loop body of
+	#'try-completion, refactored out.
+	* minibuf.c (Ftry_completion): Use try_completion_mapper(),
+	map_completion(). 
+	* minibuf.c (all_completions_mapper): New. The loop body of
+	#'all-completions, refactored out.
+	* minibuf.c (Fall_completions): Use all_completions_mapper(),
+	map_completion().
+	* minibuf.c (test_completion_mapper): New. The loop body of
+	#'test-completion. 
+	* minibuf.c (Ftest_completion): New, API from GNU.
+	* minibuf.c (syms_of_minibuf): Make Ftest_completion available.
+
+2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fmacroexpand):
+	Don't cons if ENVIRONMENT is the same object as
+	byte-compile-macro-environment.
+	Always look up symbol- and other macros in the (possibly modified)
+	byte-compile-macro-environment, not the supplied ENVIRONMENT.
+	byte-compile-macro-environment reflects ENVIRONMENT, so that's OK
+	and preferred.
+
+2011-12-28  Jerry James  <james@xemacs.org>
+
+	* .gdbinit.in.in: fix symbol and string printing with pobj and NEW_GC.
+
+2011-12-28  Jerry James  <james@xemacs.org>
+
+	* lisp-disunion.h (make_fixnum): avoid losing bits off the left end
+	if the value is of large magnitude and narrow type.
+	(make_char_1): ditto.
+
+2011-12-28  Didier Verna  <didier@xemacs.org>
+
+	* console-impl.h (struct console_methods): Have the text_width
+	methods expect a frame instead of a window pointer.
+	* console-stream.c (stream_text_width):
+	* redisplay-msw.c (mswindows_text_width):
+	* redisplay-tty.c (tty_text_width):
+	* redisplay-xlike-inc.c (XLIKE_text_width): Update accordingly.
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay.c (redisplay_window_text_width_ichar_string):
+	* redisplay.c (redisplay_text_width_string): Update the callers.
+	This also fixes an uncertainty about always getting a window from
+	a domain.
+
+2011-12-28  Didier Verna  <didier@xemacs.org>
+
+	* redisplay-xlike-inc.c (XLIKE_text_width_single_run): Get only
+	what's needed as argument: an XLIKE_DISPLAY instead of a frame
+	pointer.
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c (XLIKE_output_string): Update accordingly.
+	Use the generic XLIKE_ name instead of the specific x_ one.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* glyphs.c (update_image_instance):
+	* glyphs.c (image_instantiate): More comments about the current
+	glyphs cache coherency problem.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* faces.c: Add a comment about the way background pixmaps are
+	handled right now, just above MAYBE_UNFROB_BACKGROUND_PIXMAP.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* faces.h (struct Lisp_Face): New 'foreback slot.
+	* faces.h (struct face_cachel): New 'foreback and
+	'foreback_specified slots.
+	* faces.h (WINDOW_FACE_CACHEL_FOREBACK):
+	* faces.h (FACE_FOREBACK): New macros.
+	* faces.c: Declare Qforeback.
+	* lisp.h: Externalize it.
+	* faces.c (syms_of_faces): Define it.
+	* faces.c (vars_of_faces): Update built-in face specifiers.
+	* faces.c (complex_vars_of_faces): Update specifier fallbacks.
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (Fmake_face):
+	* faces.c (mark_face_cachels):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (reset_face_cachel):
+	* faces.c (face_property_was_changed):
+	* faces.c (Fcopy_face):
+	* fontcolor.c (face_color_validate): Handle the foreback property.
+	* redisplay-msw.c (mswindows_output_blank):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-output.c (redisplay_clear_region):
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	* redisplay-xlike-inc.c (XLIKE_output_blank): Use the face's
+	foreback color instead of the foreground one for drawing a
+	background bitmap.
+
+2011-12-27  Didier Verna  <didier@xemacs.org>
+
+	* redisplay-xlike-inc.c (XLIKE_output_blank): Fix comment typo.
+
+2011-12-26  Didier Verna  <didier@xemacs.org>
+
+	* lisp.h:
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (Fmake_face):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (Fcopy_face):
+	* faces.c (syms_of_faces):
+	* faces.c (vars_of_faces):
+	* faces.c (complex_vars_of_faces):
+	* faces.h (struct Lisp_Face):
+	* faces.h (struct face_cachel):
+	* faces.h (WINDOW_FACE_CACHEL_SHRINK_P):
+	* faces.h (FACE_SHRINK_P):
+	* fontcolor.c (face_boolean_validate): Replace the 'flush property
+	with the opposite 'shrink one.
+	* redisplay.c (create_text_block):
+	* redisplay.c (create_string_text_block): Ditto. Invert the logic
+	for storing a new clear_findex in the display lines.
+
+2011-12-23  Didier Verna  <didier@xemacs.org>
+
+	* faces.h (struct Lisp_Face): New 'flush slot.
+	* faces.h (struct face_cachel): New 'flush and 'flush_specified
+	flags.
+	* faces.h (WINDOW_FACE_CACHEL_FLUSH_P):
+	* faces.h (FACE_FLUSH_P): New macros.
+	* faces.c: Declare Qflush.
+	* lisp.h: Externalize it.
+	* faces.c (syms_of_faces): Define it.
+	* faces.c (vars_of_faces): Update built-in face specifiers.
+	* faces.c (complex_vars_of_faces): Update specifier fallbacks.
+	* faces.c (mark_face):
+	* faces.c (face_equal):
+	* faces.c (face_getprop):
+	* faces.c (face_putprop):
+	* faces.c (face_remprop):
+	* faces.c (face_plist):
+	* faces.c (reset_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (Fmake_face):
+	* faces.c (update_face_cachel_data):
+	* faces.c (merge_face_cachel_data):
+	* faces.c (Fcopy_face):
+	* fontcolor.c (face_boolean_validate): Handle the flush property.
+	* redisplay.h (struct display_line): Rename 'default_findex slot to
+	clearer name 'clear_findex.
+	* redisplay.h (DISPLAY_LINE_INIT): Update accordingly.
+	* redisplay-output.c (compare_display_blocks):
+	* redisplay-output.c (output_display_line):
+	* redisplay-output.c (redisplay_output_window):
+	* redisplay.c (regenerate_window_extents_only_changed):
+	* redisplay.c (regenerate_window_incrementally): Update the
+	comparison tests between the current and desired display lines to
+	cope for different 'clear_findex values.	
+	* redisplay.c (create_text_block): Initialize the display line's
+	'clear_findex slot to DEFAULT_INDEX. Record a new 'clear_findex
+	value when we encounter a newline character displayed in a flushed
+	face.
+	* redisplay.c (create_string_text_block): Record a new
+	'clear_findex value when we encounter a newline character
+	displayed in a flushed face.
+
+2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select-gtk.c (vars_of_select_gtk):
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (syms_of_select_x):
+	* select-x.c (vars_of_select_x):
+	* select.c:
+	* select.c (handle_selection_clear):
+	* select.c (syms_of_select):
+	* select.c (vars_of_select):
+	Use va_run_hooks_with_args for x-sent-selection-hooks
+	and lost-selection-hooks, instead of rolling our own.
+
+2011-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Fmacroexpand): Rename Fmacroexpand_internal, add the
+	functionality that used to be in #'cl-macroexpand--it makes no
+	sense for us, and needlessly slows things down, to have two
+	separate functions.
+	* eval.c:
+	* eval.c (syms_of_eval):
+	Move byte-compile-macro-environment here, now it's used by
+	#'macroexpand.
+
+2011-12-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1): Add the zero, *then* flush, when reading an
+	integer into Vread_buffer_stream.
+
+2011-12-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* Makefile.in.in (objs):
+	* depend:
+	Add sequence.o to the list of objects and dependencies.
+
+	* alloc.c:
+	* alloc.c (mark_bit_vector):
+	* alloc.c (print_bit_vector):
+	* alloc.c (bit_vector_equal):
+	* alloc.c (internal_bit_vector_equalp_hash):
+	* alloc.c (bit_vector_hash):
+	* alloc.c (init_alloc_once_early):
+	Move the implementation of the bit vector type here from fns.c. 
+
+	* emacs.c (main_1):
+	Call syms_of_sequence() here, now sequence.c is included.
+
+	* fns.c (Fold_rassq):
+	Move this together with the rest of the Fold_* functions.
+	* fns.c:
+	* fns.c (syms_of_fns):
+	Move most functions dealing with sequences generally, and
+	especially those taking key arguments, to a separate file,
+	sequence.c.
+
+	* general-slots.h:
+	Qyes_or_no_p belong here, not fns.c.
+
+	* lisp.h:
+	Make Flist_length available here, it's used by sequence.c
+
+	* sequence.c:
+	* sequence.c (check_sequence_range):
+	* sequence.c (Flength):
+	* sequence.c (check_other_nokey):
+	* sequence.c (check_other_key):
+	* sequence.c (check_if_key):
+	* sequence.c (check_match_eq_key):
+	* sequence.c (check_match_eql_key):
+	* sequence.c (check_match_equal_key):
+	* sequence.c (check_match_equalp_key):
+	* sequence.c (check_match_other_key):
+	* sequence.c (check_lss_key):
+	* sequence.c (check_lss_key_car):
+	* sequence.c (check_string_lessp_key):
+	* sequence.c (check_string_lessp_key_car):
+	* sequence.c (get_check_match_function_1):
+	* sequence.c (get_merge_predicate):
+	* sequence.c (count_with_tail):
+	* sequence.c (list_count_from_end):
+	* sequence.c (string_count_from_end):
+	* sequence.c (Fcount):
+	* sequence.c (Fsubseq):
+	* sequence.c (list_position_cons_before):
+	* sequence.c (FmemberX):
+	* sequence.c (Fadjoin):
+	* sequence.c (FassocX):
+	* sequence.c (FrassocX):
+	* sequence.c (position):
+	* sequence.c (Fposition):
+	* sequence.c (Ffind):
+	* sequence.c (delq_no_quit_and_free_cons):
+	* sequence.c (FdeleteX):
+	* sequence.c (FremoveX):
+	* sequence.c (list_delete_duplicates_from_end):
+	* sequence.c (Fdelete_duplicates):
+	* sequence.c (Fremove_duplicates):
+	* sequence.c (Fnreverse):
+	* sequence.c (Freverse):
+	* sequence.c (list_merge):
+	* sequence.c (array_merge):
+	* sequence.c (list_array_merge_into_list):
+	* sequence.c (list_list_merge_into_array):
+	* sequence.c (list_array_merge_into_array):
+	* sequence.c (Fmerge):
+	* sequence.c (list_sort):
+	* sequence.c (array_sort):
+	* sequence.c (FsortX):
+	* sequence.c (Ffill):
+	* sequence.c (mapcarX):
+	* sequence.c (shortest_length_among_sequences):
+	* sequence.c (Fmapconcat):
+	* sequence.c (FmapcarX):
+	* sequence.c (Fmapvector):
+	* sequence.c (Fmapcan):
+	* sequence.c (Fmap):
+	* sequence.c (Fmap_into):
+	* sequence.c (Fsome):
+	* sequence.c (Fevery):
+	* sequence.c (Freduce):
+	* sequence.c (replace_string_range_1):
+	* sequence.c (Freplace):
+	* sequence.c (Fnsubstitute):
+	* sequence.c (Fsubstitute):
+	* sequence.c (subst):
+	* sequence.c (sublis):
+	* sequence.c (Fsublis):
+	* sequence.c (nsublis):
+	* sequence.c (Fnsublis):
+	* sequence.c (Fsubst):
+	* sequence.c (Fnsubst):
+	* sequence.c (tree_equal):
+	* sequence.c (Ftree_equal):
+	* sequence.c (mismatch_from_end):
+	* sequence.c (mismatch_list_list):
+	* sequence.c (mismatch_list_string):
+	* sequence.c (mismatch_list_array):
+	* sequence.c (mismatch_string_array):
+	* sequence.c (mismatch_string_string):
+	* sequence.c (mismatch_array_array):
+	* sequence.c (get_mismatch_func):
+	* sequence.c (Fmismatch):
+	* sequence.c (Fsearch):
+	* sequence.c (venn):
+	* sequence.c (nvenn):
+	* sequence.c (Funion):
+	* sequence.c (Fset_exclusive_or):
+	* sequence.c (Fnset_exclusive_or):
+	* sequence.c (syms_of_sequence):
+	Add this file, containing those general functions that dealt with
+	sequences that were in fns.c.
+
+	* symsinit.h:
+	Make syms_of_sequence() available here.
+
+2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1):
+	Zero-terminate what we're giving to parse_integer(), it needs it
+	if it's calling bignum_set_string().
+
+2011-12-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1):
+	Don't wrap when reading expressions that use bignums as object
+	labels, that can lead to ambiguity and it's not actually that hard
+	to use parse_integer() to avoid it.
+
+2011-11-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-mp.c (bignum_to_string):
+	Don't overwrite the accumulator we've just set up for this
+	function.
+
+	* number-mp.c (BIGNUM_TO_TYPE):
+	mp_itom() doesn't necessarily do what this code used to think with
+	negative numbers, it can treat them as unsigned ints. Subtract
+	numbers from bignum_zero instead of multiplying them by -1 to
+	convert them to their negative equivalents.
+
+	* number-mp.c (bignum_to_int):
+	* number-mp.c (bignum_to_uint):
+	* number-mp.c (bignum_to_long):
+	* number-mp.c (bignum_to_ulong):
+	* number-mp.c (bignum_to_double):
+	Use the changed BIGNUM_TO_TYPE() in these functions.
+
+	* number-mp.c (bignum_ceil):
+	* number-mp.c (bignum_floor):
+	In these functions, be more careful about rounding to positive and
+	negative infinity, respectively. Don't use the sign of QUOTIENT
+	when working out out whether to add or subtract one, rather use
+	the sign QUOTIENT would have if arbitrary-precision division were
+	done.
+
+	* number-mp.h:
+	* number-mp.h (MP_GCD):
+	Wrap #include <mp.h> in BEGIN_C_DECLS/END_C_DECLS.
+
+	* number.c (Fbigfloat_get_precision):
+	* number.c (Fbigfloat_set_precision):
+	Don't attempt to call XBIGFLOAT_GET_PREC if this build doesn't
+	support big floats.
+
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* .dbxrc.in: Move from etc/.dbxrc.in.
+
+2011-11-21  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* .gdbinit.in.in: There is no lrecord_type_lcrecord_list when
+	using the new garbage collector; print $lrecord_type when Lisp
+	Object type is unknown to pobj.
+
+2011-11-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fbuilt_in_symbol_file):
+	Don't attempt to take file information from lazy docstring
+	information in compiled functions; those functions are not
+	built-in, and as such it's appropriate to give nil.
+	Fix some indentation in passing.
+
+2011-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Prevent SIGPIPEs in deactivate_process().
+
+	* process.c (deactivate_process):
+	Use Lstream_close_noflush on output pipe instead of Lstream_close.
+
+	* lstream.c (Lstream_close_noflush):
+	New.  Factored out of Lstream_close.
+	(Lstream_close): Use Lstream_close_noflush.
+
+	* lstream.h (Lstream_close_noflush): Declare it.
+
+2011-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Prevent assert at frame.c, l. 6311 by initializing glyph cachels.
+
+	* frame.c (Fmake_frame): Ensure that reset_glyph_cachels gets called.
+	(setup_minibuffer_frame): Improve header comment.
+
+	* redisplay.c (redisplay_window): Update comment.
+	Remove code checking for uninitialized face_cachels and glyph_cachels.
+	Can't happen in theory, and guarded by asserts in practice.
+
+	* window.c (allocate_window): Update comment on reset_*_cachels.
+
+2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (remassoc_no_quit):
+	* fns.c (remrassq_no_quit):
+	* fns.c (syms_of_fns):
+	* fontcolor-tty.c (Fregister_tty_color):
+	* fontcolor-tty.c (Funregister_tty_color):
+	* fontcolor-tty.c (Ffind_tty_color):
+	* lisp.h:
+	Remove Fremassq, Fremrassq, Fremassoc, Fremrassoc, they're
+	XEmacs-specific functions and Lisp callers should use (delete*
+	... :key #'car) anyway. Keep the non-Lisp-visible _no_quit
+	versions, calling FdeleteX from C with the appropriate arguments
+	is ungainly.
+
 2011-11-04  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console.c (Fsuspend_console): Use FRAME_VISIBLE_P instead of

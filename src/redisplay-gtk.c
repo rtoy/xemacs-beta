@@ -137,7 +137,7 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
  Draw a vertical divider down the right side of the given window.
 ****************************************************************************/
 static void
-XLIKE_output_vertical_divider (struct window *w, int clear)
+XLIKE_output_vertical_divider (struct window *w, int UNUSED (clear))
 {
   struct frame *f = XFRAME (w->frame);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
@@ -509,7 +509,7 @@ our_draw_bitmap (GdkDrawable *drawable,
    when displayed in the fonts associated with the face. */
 
 static int
-XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
 		  const Ichar *str, Charcount len)
 {
   Ibyte *int_storage = alloca_ibytes (MAX_ICHAR_LEN * len);
@@ -518,7 +518,7 @@ XLIKE_text_width (struct window *w, struct face_cachel *cachel,
   Bytecount extbytes = 0;
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
   Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
-  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (WINDOW_XFRAME (w));
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
   gint width, height;
   PangoContext *context = gtk_widget_get_pango_context (widget);
   PangoLayout *layout = pango_layout_new (context);
@@ -707,7 +707,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     assert (Dynarr_length (buf) == 1);
 
   if (width < 0)
-    width = XLIKE_text_width (w, cachel, Dynarr_begin (buf),
+    width = XLIKE_text_width (f, cachel, Dynarr_begin (buf),
 			      Dynarr_length (buf));
 
   /* Regularize the variables passed in. */

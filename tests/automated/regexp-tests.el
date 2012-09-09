@@ -69,6 +69,15 @@
   (Assert (string-match "Ä" "Ä"))
   (Assert (not (string-match "Ä" "ä"))))
 
+;; Is posix-string-match passing the POSIX flag correctly?
+
+(Assert
+ (equal 
+  (save-match-data
+    (progn (posix-string-match "i\\|ii" "ii") (match-data)))
+  '(0 2))
+ "checking #'posix-string-match actually returns the longest match")
+
 ;; looking-at
 (with-temp-buffer
   (insert "äÄ")
@@ -596,3 +605,515 @@ baaaa
 (Assert (eql (string-match "[\x7f\x80\x9f]" "\x80") 0))
 (Assert (eql (string-match "[\x7e\x80-\x9f]" "\x80") 0))
 (Assert (eql (string-match "[\x7f\x81-\x9f]" "\x81") 0))
+
+;; Test character classes
+
+;; This used not to error:
+(Check-Error-Message invalid-regexp "Invalid character class name"
+                     (string-match "[[:alnum12345:]]" "a"))
+;; This alwayed errored, as long as character classes were turned on
+(Check-Error-Message invalid-regexp "Invalid character class name"
+                     (string-match "[[:alnum1234:]]" "a"))
+
+(macrolet
+    ((Assert-char-class (class matching-char non-matching-char)
+       (if (and (not (featurep 'mule))
+                (or (eq (car-safe matching-char) 'decode-char)
+                    (eq (car-safe non-matching-char) 'decode-char)))
+           ;; Don't attempt expansion if these clauses require Mule and we
+           ;; don't have it.
+           (return-from Assert-char-class nil)
+         (setq matching-char (eval matching-char)
+               non-matching-char (eval non-matching-char)))
+       `(progn
+         (Assert (eql (string-match ,(concat "[" class "]")
+                                      ,(concat (string matching-char)
+                                               (string non-matching-char)))
+                      0))
+         (Assert (eql (string-match ,(concat "[" class class class "]")
+                                      ,(concat (string matching-char)
+                                               (string non-matching-char)))
+                      0))
+         (Assert (eql (string-match ,(concat "[^" class "]")
+                                      ,(concat (string non-matching-char)
+                                               (string matching-char)))
+                      0))
+         (Assert (eql (string-match ,(concat "[^" class class class "]")
+                                      ,(concat (string non-matching-char)
+                                               (string matching-char)))
+                      0))
+         (Assert (eql (string-match ,(concat "[" class "]")
+                                      ,(concat (string non-matching-char)
+                                               (string matching-char)))
+                      1))
+         (Assert (eql (string-match ,(concat "[" class class class "]")
+                                      ,(concat (string non-matching-char)
+                                               (string matching-char)))
+                      1))
+         (Assert (eql (string-match ,(concat "[^" class "]")
+                                      ,(concat (string matching-char)
+                                               (string non-matching-char)))
+                      1))
+         (Assert (eql (string-match ,(concat "[^" class class class "]")
+                                      ,(concat (string matching-char)
+                                               (string non-matching-char)))
+                      1))
+         (Assert (null (string-match ,(concat "[" class "]")
+                                     ,(string non-matching-char))))
+         (Assert (null (string-match ,(concat "[^" class "]")
+                                     ,(string matching-char))))
+         (Assert (null (string-match ,(concat "[^" class
+                                              (string non-matching-char) "]")
+                                     ,(concat (string matching-char)
+                                              (string non-matching-char)))))
+         (let ((old-case-fold-search case-fold-search))
+           (with-temp-buffer
+             (setq case-fold-search old-case-fold-search)
+             (insert-char ,matching-char 20)
+             (insert-char ,non-matching-char 20)
+             (goto-char (point-min))
+             (Assert (eql (skip-chars-forward ,class) 20)
+                     ,(format "making sure %s skips %S forward"
+                              class matching-char))
+             (Assert (eql (skip-chars-forward ,(concat "^" class)) 20)
+                     ,(format "making sure ^%s skips %S forward"
+                              class non-matching-char))
+             (Assert (eql (skip-chars-backward ,(concat "^" class)) -20)
+                     ,(format "making sure ^%s skips %S backward"
+                              class non-matching-char))
+             (Assert (eql (skip-chars-backward ,class) -20)
+                     ,(format "making sure %s skips %S backward"
+                              class matching-char))))))
+     (Assert-never-matching (class &rest characters)
+       (cons
+        'progn
+        (mapcan #'(lambda (character)
+                    (if (or (not (eq 'decode-char (car-safe character)))
+                            (featurep 'mule))
+                        `((Assert (null (string-match
+                                         ,(concat "[" class "]")
+                                         ,(string (eval character)))))
+                          (Assert (eql (string-match
+                                        ,(concat "[^" class "]")
+                                        ,(string (eval character)))
+                                       0)))))
+                characters))))
+  (Assert-char-class "[:alpha:]" ?a ?0)
+  (Assert-char-class "[:alpha:]" ?z ?9)
+  (Assert-char-class "[:alpha:]" ?A ?0)
+  (Assert-char-class "[:alpha:]" ?Z ?9)
+  (Assert-char-class "[:alpha:]" ?b ?\x00)
+  (Assert-char-class "[:alpha:]" ?c ?\x09)
+  (Assert-char-class "[:alpha:]" ?d ?\ )
+  (Assert-char-class "[:alpha:]" ?e ?\x7f)
+  (Assert-char-class
+   "[:alpha:]"
+   (decode-char 'ucs #x0430)  ;; CYRILLIC SMALL LETTER A
+   (decode-char 'ucs #x2116)) ;; NUMERO SIGN
+  (Assert-char-class
+   "[:alpha:]"
+   (decode-char 'ucs #x0410)  ;; CYRILLIC CAPITAL LETTER A
+   ?\x02)
+  (Assert-char-class
+   "[:alpha:]"
+   (decode-char 'ucs #x03B2)  ;; GREEK SMALL LETTER BETA
+   (decode-char 'ucs #x0385)) ;; GREEK DIALYTIKA TONOS
+
+  (Assert-char-class "[:alnum:]" ?a ?.)
+  (Assert-char-class "[:alnum:]" ?z ?')
+  (Assert-char-class "[:alnum:]" ?A ?/)
+  (Assert-char-class "[:alnum:]" ?Z ?!)
+  (Assert-char-class "[:alnum:]" ?0 ?,)
+  (Assert-char-class "[:alnum:]" ?9 ?\t)
+  (Assert-char-class "[:alnum:]" ?b ?\x00)
+  (Assert-char-class "[:alnum:]" ?c ?\x09)
+  (Assert-char-class "[:alnum:]" ?d ?\   )
+  (Assert-char-class "[:alnum:]" ?e ?\x7f)
+  (Assert-char-class
+   "[:alnum:]"
+   (decode-char 'ucs #x0430)  ;; CYRILLIC SMALL LETTER A
+   (decode-char 'ucs #x2116)) ;; NUMERO SIGN
+  (Assert-char-class
+   "[:alnum:]"
+   (decode-char 'ucs #x0410)  ;; CYRILLIC CAPITAL LETTER A
+   ?\x02)
+  (Assert-char-class
+   "[:alnum:]"
+   (decode-char 'ucs #x03B2)  ;; GREEK SMALL LETTER BETA
+   (decode-char 'ucs #x0385)) ;; GREEK DIALYTIKA TONOS
+
+  (Assert-char-class "[:word:]" ?a ?.)
+  (Assert-char-class "[:word:]" ?z ?')
+  (Assert-char-class "[:word:]" ?A ?/)
+  (Assert-char-class "[:word:]" ?Z ?!)
+  (Assert-char-class "[:word:]" ?0 ?,)
+  (Assert-char-class "[:word:]" ?9 ?\t)
+  (Assert-char-class "[:word:]" ?b ?\x00)
+  (Assert-char-class "[:word:]" ?c ?\x09)
+  (Assert-char-class "[:word:]" ?d ?\   )
+  (Assert-char-class "[:word:]" ?e ?\x7f)
+  (Assert-char-class
+   "[:word:]"
+   (decode-char 'ucs #x0430)  ;; CYRILLIC SMALL LETTER A
+   (decode-char 'ucs #x2116)) ;; NUMERO SIGN
+  (Assert-char-class
+   "[:word:]"
+   (decode-char 'ucs #x0410)  ;; CYRILLIC CAPITAL LETTER A
+   ?\x02)
+  (Assert-char-class
+   "[:word:]"
+   (decode-char 'ucs #x03B2)  ;; GREEK SMALL LETTER BETA
+   (decode-char 'ucs #x0385)) ;; GREEK DIALYTIKA TONOS
+
+  (let ((case-fold-search nil))
+    (Assert-char-class "[:upper:]" ?A ?a)
+    (Assert-char-class "[:upper:]" ?Z ?z)
+    (Assert-char-class "[:upper:]" ?B ?0)
+    (Assert-char-class "[:upper:]" ?C ?9)
+    (Assert-char-class "[:upper:]" ?D ?\x00)
+    (Assert-char-class "[:upper:]" ?E ?\x09)
+    (Assert-char-class "[:upper:]" ?F ?\ )
+    (Assert-char-class "[:upper:]" ?G ?\x7f)
+    (Assert-char-class
+     "[:upper:]"
+     (decode-char 'ucs #x0410)  ;; CYRILLIC CAPITAL LETTER A
+     (decode-char 'ucs #x0686)) ;; ARABIC LETTER TCHEH
+    (Assert-char-class
+     "[:upper:]"
+     (decode-char 'ucs #x0392)  ;; GREEK CAPITAL LETTER BETA
+     (decode-char 'ucs #x5357)) ;; kDefinition south; southern part; southward
+
+    (Assert-char-class "[:lower:]" ?a ?A)
+    (Assert-char-class "[:lower:]" ?z ?Z)
+    (Assert-char-class "[:lower:]" ?b ?0)
+    (Assert-char-class "[:lower:]" ?c ?9)
+    (Assert-char-class "[:lower:]" ?d ?\x00)
+    (Assert-char-class "[:lower:]" ?e ?\x09)
+    (Assert-char-class "[:lower:]" ?f ? )
+    (Assert-char-class "[:lower:]" ?g ?\x7f)
+    (Assert-char-class
+     "[:lower:]"
+     (decode-char 'ucs #x0430)  ;; CYRILLIC SMALL LETTER A
+     (decode-char 'ucs #x0686)) ;; ARABIC LETTER TCHEH
+    (Assert-char-class
+     "[:lower:]"
+     (decode-char 'ucs #x03B2)  ;; GREEK SMALL LETTER BETA
+     (decode-char 'ucs #x5357)));; kDefinition south; southern part; southward
+
+  (let ((case-fold-search t))
+    (Assert-char-class "[:upper:]" ?a ?\x00)
+    (Assert-char-class "[:upper:]" ?z ?\x01)
+    (Assert-char-class "[:upper:]" ?b ?{)
+    (Assert-char-class "[:upper:]" ?c ?})
+    (Assert-char-class "[:upper:]" ?d ?<)
+    (Assert-char-class "[:upper:]" ?e ?>)
+    (Assert-char-class "[:upper:]" ?f ?\ )
+    (Assert-char-class "[:upper:]" ?g ?\x7f)
+    (Assert-char-class
+     "[:upper:]"
+     (decode-char 'ucs #x0430)  ;; CYRILLIC SMALL LETTER A
+     (decode-char 'ucs #x0686)) ;; ARABIC LETTER TCHEH
+    (Assert-char-class
+     "[:upper:]"
+     (decode-char 'ucs #x03B2)  ;; GREEK SMALL LETTER BETA
+     (decode-char 'ucs #x5357)) ;; kDefinition south; southern part; southward
+    (Assert-char-class "[:lower:]" ?A ?\x00)
+    (Assert-char-class "[:lower:]" ?Z ?\x01)
+    (Assert-char-class "[:lower:]" ?B ?{)
+    (Assert-char-class "[:lower:]" ?C ?})
+    (Assert-char-class "[:lower:]" ?D ?<)
+    (Assert-char-class "[:lower:]" ?E ?>)
+    (Assert-char-class "[:lower:]" ?F ?\ )
+    (Assert-char-class "[:lower:]" ?G ?\x7F)
+    (Assert-char-class
+     "[:lower:]"
+     (decode-char 'ucs #x0410)  ;; CYRILLIC CAPITAL LETTER A
+     (decode-char 'ucs #x0686)) ;; ARABIC LETTER TCHEH
+    (Assert-char-class
+     "[:lower:]"
+     (decode-char 'ucs #x0392)  ;; GREEK CAPITAL LETTER BETA
+     (decode-char 'ucs #x5357)));; kDefinition south; southern part; southward
+
+  (Assert-char-class "[:digit:]" ?0 ?a)
+  (Assert-char-class "[:digit:]" ?9 ?z)
+  (Assert-char-class "[:digit:]" ?1 ?A)
+  (Assert-char-class "[:digit:]" ?2 ?Z)
+  (Assert-char-class "[:digit:]" ?3 ?\x00)
+  (Assert-char-class "[:digit:]" ?4 ?\x09)
+  (Assert-char-class "[:digit:]" ?5 ? )
+  (Assert-char-class "[:digit:]" ?6 ?\x7f)
+  (Assert-char-class 
+   "[:digit:]" ?7
+   (decode-char 'ucs #x0385)) ;; GREEK DIALYTIKA TONOS
+  (Assert-char-class
+   "[:digit:]" ?8
+   (decode-char 'ucs #x0392)) ;; GREEK CAPITAL LETTER BETA
+  (Assert-char-class
+   "[:digit:]" ?9
+   (decode-char 'ucs #x03B2)) ;; GREEK SMALL LETTER BETA
+  (Assert-char-class
+   "[:digit:]" ?0
+   (decode-char 'ucs #x0410)) ;; CYRILLIC CAPITAL LETTER A
+  (Assert-char-class
+   "[:digit:]" ?1
+   (decode-char 'ucs #x0430)) ;; CYRILLIC SMALL LETTER A
+  (Assert-char-class
+   "[:digit:]" ?2
+   (decode-char 'ucs #x0686)) ;; ARABIC LETTER TCHEH
+  (Assert-char-class
+   "[:digit:]" ?3
+   (decode-char 'ucs #x2116)) ;; NUMERO SIGN
+  (Assert-char-class
+   "[:digit:]" ?4
+   (decode-char 'ucs #x5357)) ;; kDefinition south; southern part; southward
+
+  (Assert-char-class "[:xdigit:]" ?0 ?g)
+  (Assert-char-class "[:xdigit:]" ?9 ?G)
+  (Assert-char-class "[:xdigit:]" ?A ?{)
+  (Assert-char-class "[:xdigit:]" ?a ?})
+  (Assert-char-class "[:xdigit:]" ?1 ? )
+  (Assert-char-class "[:xdigit:]" ?2 ?Z)
+  (Assert-char-class "[:xdigit:]" ?3 ?\x00)
+  (Assert-char-class "[:xdigit:]" ?4 ?\x09)
+  (Assert-char-class "[:xdigit:]" ?5 ?\x7f)
+  (Assert-char-class "[:xdigit:]" ?6 ?z)
+  (Assert-char-class 
+   "[:xdigit:]" ?7
+   (decode-char 'ucs #x0385)) ;; GREEK DIALYTIKA TONOS
+  (Assert-char-class
+   "[:xdigit:]" ?8
+   (decode-char 'ucs #x0392)) ;; GREEK CAPITAL LETTER BETA
+  (Assert-char-class
+   "[:xdigit:]" ?9
+   (decode-char 'ucs #x03B2)) ;; GREEK SMALL LETTER BETA
+  (Assert-char-class
+   "[:xdigit:]" ?a
+   (decode-char 'ucs #x0410)) ;; CYRILLIC CAPITAL LETTER A
+  (Assert-char-class
+   "[:xdigit:]" ?B
+   (decode-char 'ucs #x0430)) ;; CYRILLIC SMALL LETTER A
+  (Assert-char-class
+   "[:xdigit:]" ?c
+   (decode-char 'ucs #x0686)) ;; ARABIC LETTER TCHEH
+  (Assert-char-class
+   "[:xdigit:]" ?D
+   (decode-char 'ucs #x2116)) ;; NUMERO SIGN
+  (Assert-char-class
+   "[:xdigit:]" ?e
+   (decode-char 'ucs #x5357)) ;; kDefinition south; southern part; southward
+
+  (Assert-char-class "[:space:]" ?\  ?0)
+  (Assert-char-class "[:space:]" ?\t ?9)
+  (Assert-char-class "[:space:]" ?\  ?A)
+  (Assert-char-class "[:space:]" ?\t ?Z)
+  (Assert-char-class "[:space:]" ?\  ?\x00)
+  (Assert-char-class "[:space:]" ?\  ?\x7f)
+  (Assert-char-class "[:space:]" ?\t ?a)
+  (Assert-char-class "[:space:]" ?\  ?z)
+  (Assert-char-class 
+   "[:space:]" ?\ 
+   (decode-char 'ucs #x0385)) ;; GREEK DIALYTIKA TONOS
+  (Assert-char-class
+   "[:space:]" ?\t
+   (decode-char 'ucs #x0392)) ;; GREEK CAPITAL LETTER BETA
+  (Assert-char-class
+   "[:space:]" ?\ 
+   (decode-char 'ucs #x03B2)) ;; GREEK SMALL LETTER BETA
+  (Assert-char-class
+   "[:space:]" ?\t
+   (decode-char 'ucs #x0410)) ;; CYRILLIC CAPITAL LETTER A
+  (Assert-char-class
+   "[:space:]" ?\ 
+   (decode-char 'ucs #x0430)) ;; CYRILLIC SMALL LETTER A
+  (Assert-char-class
+   "[:space:]" ?\t
+   (decode-char 'ucs #x0686)) ;; ARABIC LETTER TCHEH
+  (Assert-char-class
+   "[:space:]" ?\ 
+   (decode-char 'ucs #x2116)) ;; NUMERO SIGN
+  (Assert-char-class
+   "[:space:]" ?\t
+   (decode-char 'ucs #x5357)) ;; kDefinition south; southern part; southward
+
+  (Assert-char-class "[:print:]" ?\  ?\x00)
+  (Assert-char-class "[:print:]" ?0 ?\x09)
+  (Assert-char-class "[:print:]" ?9 ?\x7f)
+  (Assert-char-class "[:print:]" ?A ?\x01)
+  (Assert-char-class "[:print:]" ?Z ?\x02)
+  (Assert-char-class "[:print:]" ?B ?\t)
+  (Assert-char-class "[:print:]" ?a ?\x03)
+  (Assert-char-class "[:print:]" ?z ?\x04)
+  (Assert-char-class 
+   "[:print:]" (decode-char 'ucs #x0385) ;; GREEK DIALYTIKA TONOS
+   ?\x05)
+  (Assert-char-class
+   "[:print:]" (decode-char 'ucs #x0392) ;; GREEK CAPITAL LETTER BETA
+   ?\x06)
+  (Assert-char-class
+   "[:print:]" (decode-char 'ucs #x03B2) ;; GREEK SMALL LETTER BETA
+   ?\x07)
+  (Assert-char-class
+   "[:print:]" (decode-char 'ucs #x0410) ;; CYRILLIC CAPITAL LETTER A
+   ?\x08)
+  (Assert-char-class
+   "[:print:]" (decode-char 'ucs #x0430) ;; CYRILLIC SMALL LETTER A
+   ?\x09)
+  (Assert-char-class
+   "[:print:]" (decode-char 'ucs #x0686) ;; ARABIC LETTER TCHEH
+   ?\x0a)
+  (Assert-char-class
+   "[:print:]" (decode-char 'ucs #x2116) ;; NUMERO SIGN
+   ?\x0b)
+  (Assert-char-class
+   "[:print:]" (decode-char 'ucs #x5357) ;; kDefinition south; southern part; southward
+   ?\x0c)
+
+  (Assert-char-class "[:graph:]" ?!  ?\ )
+  (Assert-char-class "[:graph:]" ?0 ?\x09)
+  (Assert-char-class "[:graph:]" ?9 ?\x7f)
+  (Assert-char-class "[:graph:]" ?A ?\x01)
+  (Assert-char-class "[:graph:]" ?Z ?\x02)
+  (Assert-char-class "[:graph:]" ?B ?\t)
+  (Assert-char-class "[:graph:]" ?a ?\x03)
+  (Assert-char-class "[:graph:]" ?z ?\x04)
+  (Assert-char-class 
+   "[:graph:]" (decode-char 'ucs #x0385) ;; GREEK DIALYTIKA TONOS
+   ?\x05)
+  (Assert-char-class
+   "[:graph:]" (decode-char 'ucs #x0392) ;; GREEK CAPITAL LETTER BETA
+   ?\x06)
+  (Assert-char-class
+   "[:graph:]" (decode-char 'ucs #x03B2) ;; GREEK SMALL LETTER BETA
+   ?\x07)
+  (Assert-char-class
+   "[:graph:]" (decode-char 'ucs #x0410) ;; CYRILLIC CAPITAL LETTER A
+   ?\x08)
+  (Assert-char-class
+   "[:graph:]" (decode-char 'ucs #x0430) ;; CYRILLIC SMALL LETTER A
+   ?\x09)
+  (Assert-char-class
+   "[:graph:]" (decode-char 'ucs #x0686) ;; ARABIC LETTER TCHEH
+   ?\x0a)
+  (Assert-char-class
+   "[:graph:]" (decode-char 'ucs #x2116) ;; NUMERO SIGN
+   ?\x0b)
+  (Assert-char-class
+   "[:graph:]" (decode-char 'ucs #x5357) ;; kDefinition south; southern part; southward
+   ?\x0c)
+
+  (Assert-char-class "[:punct:]" ?\( ?0)
+  (Assert-char-class "[:punct:]" ?. ?9)
+  (Assert-char-class "[:punct:]" ?{ ?A)
+  (Assert-char-class "[:punct:]" ?} ?Z)
+  (Assert-char-class "[:punct:]" ?: ?\t)
+  (Assert-char-class "[:punct:]" ?\; ?\x00)
+  (Assert-char-class "[:punct:]" ?< ?\x09)
+  (Assert-char-class "[:punct:]" ?> ?\x7f)
+  (Assert-char-class "[:punct:]" ?= ?a)
+  (Assert-char-class "[:punct:]" ?\? ?z)
+  (Assert-char-class 
+   "[:punct:]"
+   (decode-char 'ucs #x0385) ;; GREEK DIALYTIKA TONOS
+   ?a)
+  (Assert-char-class
+   "[:punct:]"
+   (decode-char 'ucs #x20af)  ;; DRACHMA SIGN
+   (decode-char 'ucs #x0392)) ;; GREEK CAPITAL LETTER BETA
+  (Assert-char-class
+   "[:punct:]"
+   (decode-char 'ucs #x00a7)  ;; SECTION SIGN
+   (decode-char 'ucs #x03B2)) ;; GREEK SMALL LETTER BETA
+  (Assert-char-class
+   "[:punct:]"
+   (decode-char 'ucs #x00a8)  ;; DIAERESIS
+   (decode-char 'ucs #x0410)) ;; CYRILLIC CAPITAL LETTER A
+  (Assert-char-class
+   "[:punct:]"
+   (decode-char 'ucs #x0384) ;; GREEK TONOS
+   (decode-char 'ucs #x0430)) ;; CYRILLIC SMALL LETTER A
+  (Assert-char-class
+   "[:punct:]" 
+   (decode-char 'ucs #x00b7)  ;; MIDDLE DOT
+   (decode-char 'ucs #x0686)) ;; ARABIC LETTER TCHEH
+  (Assert-char-class
+   "[:punct:]" 
+   (decode-char 'ucs #x2116) ;; NUMERO SIGN
+   ?x)
+  (Assert-char-class
+   "[:punct:]"
+   ?=
+   (decode-char 'ucs #x5357)) ;; kDefinition south; southern part; southward
+
+  (Assert-char-class "[:ascii:]" ?a (decode-char 'ucs #x00a7)) ;; SECTION SIGN
+  (Assert-char-class "[:ascii:]" ?b (decode-char 'ucs #x00a8))  ;; DIAERESIS
+  (Assert-char-class "[:ascii:]" ?c (decode-char 'ucs #x00b7))  ;; MIDDLE DOT
+  (Assert-char-class "[:ascii:]" ?d (decode-char 'ucs #x0384))  ;; GREEK TONOS
+  (Assert-char-class
+   "[:ascii:]" ?\x00 (decode-char 'ucs #x0392)) ;; GREEK CAPITAL LETTER BETA
+  (Assert-char-class
+   "[:ascii:]" ?\x01 (decode-char 'ucs #x03B2)) ;; GREEK SMALL LETTER BETA
+  (Assert-char-class
+   "[:ascii:]" ?\t (decode-char 'ucs #x0410)) ;; CYRILLIC CAPITAL LETTER A
+  (Assert-char-class
+   "[:ascii:]" ?A (decode-char 'ucs #x0430)) ;; CYRILLIC SMALL LETTER A
+  (Assert-char-class
+   "[:ascii:]" ?B (decode-char 'ucs #x0686)) ;; ARABIC LETTER TCHEH
+  (Assert-char-class
+   "[:ascii:]" ?C (decode-char 'ucs #x20af)) ;; DRACHMA SIGN
+  (Assert-char-class
+   "[:ascii:]" ?\x7f (decode-char 'ucs #x2116)) ;; NUMERO SIGN
+
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x00a7) ?a) ;; SECTION SIGN
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x00a8) ?b) ;; DIAERESIS
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x00b7) ?c) ;; MIDDLE DOT
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x0384) ?d) ;; GREEK TONOS
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x0392) ?\x00) ;; GREEK CAPITAL LETTER BETA
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x03B2) ?\x01) ;; GREEK SMALL LETTER BETA
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x0410) ?\t) ;; CYRILLIC CAPITAL LETTER A
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x0430) ?A) ;; CYRILLIC SMALL LETTER A
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x0686) ?B) ;; ARABIC LETTER TCHEH
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x20af) ?C) ;; DRACHMA SIGN
+  (Assert-char-class
+   "[:nonascii:]" (decode-char 'ucs #x2116) ?\x7f) ;; NUMERO SIGN
+
+  (Assert-char-class
+   "[:multibyte:]"  (decode-char 'ucs #x00a7) ?a) ;; SECTION SIGN
+  (Assert-char-class
+   "[:multibyte:]"  (decode-char 'ucs #x00a8) ?b) ;; DIAERESIS
+  (Assert-char-class
+   "[:multibyte:]"  (decode-char 'ucs #x00b7) ?c) ;; MIDDLE DOT
+  (Assert-char-class
+   "[:multibyte:]"  (decode-char 'ucs #x0384) ?d) ;; GREEK TONOS
+  (Assert-char-class
+   "[:multibyte:]"  (decode-char 'ucs #x0392)
+   ?\x00) ;; GREEK CAPITAL LETTER BETA
+
+  (Assert-never-matching
+   "[:unibyte:]"
+   ?\x80 ?\xe4 ?\xdf ?\xf8
+   (decode-char 'ucs #x03B2) ;; GREEK SMALL LETTER BETA
+   (decode-char 'ucs #x0410) ;; CYRILLIC CAPITAL LETTER A
+   (decode-char 'ucs #x0430) ;; CYRILLIC SMALL LETTER A
+   (decode-char 'ucs #x0686) ;; ARABIC LETTER TCHEH
+   (decode-char 'ucs #x20af) ;; DRACHMA SIGN
+   (decode-char 'ucs #x2116) ;; NUMERO SIGN
+   (decode-char 'ucs #x5357))) ;; kDefinition south; southern part; southward
+
+(with-temp-buffer
+  (insert "hi there")
+  (goto-char 1)
+  (set-syntax-table (copy-syntax-table))
+  (modify-syntax-entry 'ascii "<")
+  (Assert (null (re-search-forward "[[:alnum:]]" nil t))
+          "checking that a bug with dirty syntax table caches has been fixed"))
+  

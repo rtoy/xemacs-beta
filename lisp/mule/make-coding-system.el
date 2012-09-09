@@ -90,7 +90,7 @@ message--it will not work.  ")
 
     (loop for char across decode-table
       do (pushnew (char-charset char) known-charsets))
-    (setq known-charsets (delq 'ascii known-charsets))
+    (setq known-charsets (delete* 'ascii known-charsets))
 
     (loop for known-charset in known-charsets 
       do

@@ -41,4 +41,26 @@
 		short-name "IPA"
 		long-name "IPA"))
 
+;; XEmacs; these are Latin, it's not useful to put word boundaries between
+;; them and ASCII.
+(modify-category-entry 'ipa ?l nil t)
+
+;; XEmacs; why are these Latin? See the following:
+;;
+;; (let ((scripts
+;;        (mapcar #'(lambda (character)
+;;                    (car
+;;                     (split-string
+;;                      (cadr (assoc "Name" (describe-char-unicode-data
+;;                                           character))))))
+;;                (loop
+;;                  for i from 33 to 127
+;;                  if (not (eql -1 (char-to-unicode (make-char 'ipa i))))
+;;                  nconc (list (make-char 'ipa i))))))
+;;   (mapcar #'(lambda (script)
+;;               (cons script (count script scripts :test #'equal)))
+;;           (remove-duplicates scripts :test #'equal)))
+;; => (("GREEK" . 1) ("LATIN" . 55) ("MODIFIER" . 3))
+
+
 ;;; misc-lang.el ends here

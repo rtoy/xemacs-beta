@@ -32,7 +32,9 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
    function anyway, so we do this for safety purposes.  However, this means
    that number-mp.h must always be included before math.h. */
 #define pow mp_pow
+BEGIN_C_DECLS
 #include <mp.h>
+END_C_DECLS
 #undef pow
 
 #ifdef MP_PREFIX

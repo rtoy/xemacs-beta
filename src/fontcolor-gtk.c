@@ -278,7 +278,6 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
   PangoFontMask mask;
   PangoFont *pf;
   char *nm;
-  int count = 0;
   
   extname = LISP_STRING_TO_EXTERNAL (f->name, Qutf_8);
 
@@ -424,9 +423,9 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object device,
 /* find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
 static Lisp_Object
-gtk_find_charset_font (Lisp_Object device, Lisp_Object font,
-			  Lisp_Object charset,
-			  enum font_specifier_matchspec_stages stage)
+gtk_find_charset_font (Lisp_Object UNUSED (device), Lisp_Object font,
+                       Lisp_Object UNUSED (charset),
+                       enum font_specifier_matchspec_stages UNUSED (stage))
 {
   /* Pango doesn't understand charset.  Maybe PangoCoverage? */
   return font;

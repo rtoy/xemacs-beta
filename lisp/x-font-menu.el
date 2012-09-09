@@ -233,7 +233,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	       done)
 	     (setq sizes (cons (car common) sizes)))
 	    (setq common (cdr common)))
-	  (setq sizes (delq 0 sizes))))
+	  (setq sizes (delete* 0 sizes))))
     
     (setq families (sort families 'string-lessp)
 	  weights  (sort weights 'string-lessp)

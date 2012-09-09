@@ -181,26 +181,17 @@ x_has_keysym (KeySym keysym, Lisp_Object hash_table, int with_modifiers)
 
   for (j = 0; j < (upper_lower[0] == upper_lower[1] ? 1 : 2); j++)
     {
-      Extbyte *name;
-      keysym = upper_lower[j];
+      KeySym ks = upper_lower[j];
+      Lisp_Object sym = x_keysym_to_emacs_keysym (ks, 0);
+      Lisp_Object new_value = with_modifiers ? Qt : Qsans_modifiers;
+      Lisp_Object old_value = Fgethash (sym, hash_table, Qnil);
 
-      name = XKeysymToString (keysym);
-      if (name)
-	{
-	  /* X guarantees NAME to be in the Host Portable Character Encoding */
-	  Lisp_Object sym = x_keysym_to_emacs_keysym (keysym, 0);
-	  Lisp_Object new_value = with_modifiers ? Qt : Qsans_modifiers;
-	  Lisp_Object old_value = Fgethash (sym, hash_table, Qnil);
-
-	  if (! EQ (old_value, new_value)
-	      && ! (EQ (old_value, Qsans_modifiers) &&
-		    EQ (new_value, Qt)))
-	    {
-	      maybe_define_x_key_as_self_inserting_character (keysym, sym);
-	      Fputhash (build_extstring (name, Qbinary), new_value,
-			hash_table);
-	      Fputhash (sym, new_value, hash_table);
-	    }
+      if (! EQ (old_value, new_value)
+          && ! (EQ (old_value, Qsans_modifiers) &&
+                EQ (new_value, Qt)))
+        {
+          maybe_define_x_key_as_self_inserting_character (ks, sym);
+          Fputhash (sym, new_value, hash_table);
 	}
     }
 }
@@ -756,6 +747,17 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
     /* We must assume that the X keysym numbers for the ASCII graphic
        characters are the same as their ASCII codes.  */
     return make_char (keysym);
+
+  if (keysym >= 0x01000000 && keysym <= 0x0110FFFF)
+    {
+      /* These keysyms malloc with XKeysymToString(), *every time the
+         function is called.* Avoid leaking, construct the keysym string
+         ourselves. */
+      Ascbyte buf [10];
+      qxesprintf ((Ibyte *) buf, keysym & 0xff0000 ? "U%06X" : "U%04X",
+                  (unsigned int) (keysym & 0xffffff));
+      return KEYSYM (buf);
+    }
 
   switch (keysym)
     {

@@ -111,7 +111,6 @@ Lisp, it does assume a basic familiarity with Emacs Lisp.
 
 * Efficiency Concerns::         Hints and techniques
 * Common Lisp Compatibility::   All known differences with Steele
-* Old CL Compatibility::        All known differences with old cl.el
 * Porting Common Lisp::         Hints for porting Common Lisp code
 
 * Function Index::
@@ -190,20 +189,6 @@ include at the beginning:
 (require 'cl)
 @end example
 
-@noindent
-If you want to ensure that the new (Gillespie) version of @dfn{CL}
-is the one that is present, add an additional @code{(require 'cl-19)}
-call:
-
-@example
-(require 'cl)
-(require 'cl-19)
-@end example
-
-@noindent
-The second call will fail (with ``@file{cl-19.el} not found'') if
-the old @file{cl.el} package was in use.
-
 It is safe to arrange to load @dfn{CL} at all times, e.g.,
 in your @file{.emacs} file.  But it's a good idea, for portability,
 to @code{(require 'cl)} in your code even if you do this.
@@ -245,12 +230,6 @@ commands for the functions and macros in the other three files.
 All you have to do is @code{(require 'cl)}, and @file{cl.el}
 will take care of pulling in the other files when they are
 needed.
-
-There is another file, @file{cl-compat.el}, which defines some
-routines from the older @file{cl.el} package that are no longer
-present in the new package.  This includes internal routines
-like @code{setelt} and @code{zip-lists}, and deprecated features
-like @code{defkeyword}.  @xref{Old CL Compatibility}.
 
 @node Installation, Naming Conventions, Organization, Overview
 @section Installation
@@ -5247,7 +5226,7 @@ code which can be improved by optimization.  In particular,
 optimizing compiler removes @code{block}s which are not actually
 referenced by @code{return} or @code{return-from} inside the block.
 
-@node Common Lisp Compatibility, Old CL Compatibility, Efficiency Concerns, Top
+@node Common Lisp Compatibility, Porting Common Lisp, Efficiency Concerns, Top
 @appendix Common Lisp Compatibility
 
 @noindent
@@ -5308,87 +5287,7 @@ special, distinct type.  Also, the @code{:type} slot option is ignored.
 
 The second argument of @code{check-type} is treated differently.
 
-@node Old CL Compatibility, Porting Common Lisp, Common Lisp Compatibility, Top
-@appendix Old CL Compatibility
-
-@noindent
-Following is a list of all known incompatibilities between this package
-and the older Quiroz @file{cl.el} package.
-
-The @code{defkeyword} form and @code{keywordp} function are not
-implemented in this package.
-
-The @code{member}, @code{floor}, @code{ceiling}, @code{truncate},
-@code{round}, @code{mod}, and @code{rem} functions are suffixed
-by @samp{*} in this package to avoid collision with existing
-functions in Emacs 18 or Emacs 19.  The older package simply
-redefined these functions, overwriting the built-in meanings and
-causing serious portability problems with Emacs 19.  (Some more
-recent versions of the Quiroz package changed the names to
-@code{cl-member}, etc.; this package defines the latter names as
-aliases for @code{member*}, etc.)
-
-Certain functions in the old package which were buggy or inconsistent
-with the Common Lisp standard are incompatible with the conforming
-versions in this package.  For example, @code{eql} and @code{member}
-were synonyms for @code{eq} and @code{memq} in that package, @code{setf}
-failed to preserve correct order of evaluation of its arguments, etc.
-
-Finally, unlike the older package, this package is careful to
-prefix all of its internal names with @code{cl-}.  Except for a
-few functions which are explicitly defined as additional features
-(such as @code{floatp-safe} and @code{letf}), this package does not
-export any non-@samp{cl-} symbols which are not also part of Common
-Lisp.
-
-@ifinfo
-@example
-
-@end example
-@end ifinfo
-@appendixsec The @code{cl-compat} package
-
-@noindent
-The @dfn{CL} package includes emulations of some features of the
-old @file{cl.el}, in the form of a compatibility package
-@code{cl-compat}.  To use it, put @code{(require 'cl-compat)} in
-your program.
-
-The old package defined a number of internal routines without
-@code{cl-} prefixes or other annotations.  Call to these routines
-may have crept into existing Lisp code.  @code{cl-compat}
-provides emulations of the following internal routines:
-@code{pair-with-newsyms}, @code{zip-lists}, @code{unzip-lists},
-@code{reassemble-arglists}, @code{duplicate-symbols-p},
-@code{safe-idiv}.
-
-Some @code{setf} forms translated into calls to internal
-functions that user code might call directly.  The functions
-@code{setnth}, @code{setnthcdr}, and @code{setelt} fall in
-this category; they are defined by @code{cl-compat}, but the
-best fix is to change to use @code{setf} properly.
-
-The @code{cl-compat} file defines the keyword functions
-@code{keywordp}, @code{keyword-of}, and @code{defkeyword},
-which are not defined by the new @dfn{CL} package because the
-use of keywords as data is discouraged.
-
-The @code{build-klist} mechanism for parsing keyword arguments
-is emulated by @code{cl-compat}; the @code{with-keyword-args}
-macro is not, however, and in any case it's best to change to
-use the more natural keyword argument processing offered by
-@code{defun*}.
-
-The functions @code{cl-floor}, @code{cl-ceiling}, @code{cl-truncate},
-and @code{cl-round} are defined by @code{cl-compat} to use the
-old-style multiple-value mechanism, just as they did in the old
-package.  The newer @code{floor*} and friends return their two
-results in a list rather than as multiple values.  Note that
-older versions of the old package used the unadorned names
-@code{floor}, @code{ceiling}, etc.; @code{cl-compat} cannot use
-these names because they conflict with Emacs 19 built-ins.
-
-@node Porting Common Lisp, Function Index, Old CL Compatibility, Top
+@node Porting Common Lisp, Function Index, Common Lisp Compatibility, Top
 @appendix Porting Common Lisp
 
 @noindent

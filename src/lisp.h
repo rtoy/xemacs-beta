@@ -3528,6 +3528,13 @@ extern MODULE_API int specpdl_depth_counter;
  while (NILP (Ffunctionp (fun)))		\
    signal_invalid_function_error (fun);		\
  } while (0)
+
+#define CHECK_COMMAND(x) do {                           \
+    if (NILP (Fcommandp (x)))                           \
+      {                                                 \
+        dead_wrong_type_argument (Qcommandp, x);        \
+      }                                                 \
+  } while (0)
 
 /************************************************************************/
 /*                      Parsing keyword arguments                       */
@@ -5144,13 +5151,15 @@ extern Lisp_Object Qextent_live_p;
 extern Lisp_Object Qstart_open;
 
 /* Defined in faces.c */
+extern Lisp_Object Qforeground;
+extern Lisp_Object Qforeback;
 extern Lisp_Object Qbackground;
 extern Lisp_Object Qbackground_pixmap;
 extern Lisp_Object Qblinking;
 extern Lisp_Object Qdim;
 extern Lisp_Object Qdisplay_table;
-extern Lisp_Object Qforeground;
 extern Lisp_Object Qunderline;
+extern Lisp_Object Qshrink;
 
 /* Defined in file-coding.c */
 EXFUN (Fcoding_category_list, 0);
@@ -5276,6 +5285,7 @@ EXFUN (Flast, 2);
 EXFUN (Flax_plist_get, 3);
 EXFUN (Flax_plist_remprop, 2);
 MODULE_API EXFUN (Flength, 1);
+EXFUN (Flist_length, 1);
 EXFUN (FmapcarX, MANY);
 EXFUN (Fmember, 2);
 EXFUN (Fmemq, 2);
@@ -5293,7 +5303,6 @@ EXFUN (Fplist_put, 3);
 MODULE_API EXFUN (Fprovide, 1);
 MODULE_API EXFUN (Fput, 3);
 EXFUN (Frassq, 2);
-EXFUN (Fremassq, 2);
 EXFUN (Freplace_list, 2);
 MODULE_API EXFUN (Freverse, 1);
 EXFUN (Fsafe_length, 1);
@@ -5802,7 +5811,9 @@ Lisp_Object intern_istring (const Ibyte *str);
 MODULE_API Lisp_Object intern (const CIbyte *str);
 Lisp_Object intern_massaging_name (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);
-void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);
+/* Note that the mapper function has the same signature as in elisp_maphash. */
+void map_obarray (Lisp_Object, int (*) (Lisp_Object, Lisp_Object, void *),
+                  void *);
 Lisp_Object indirect_function (Lisp_Object, int);
 Lisp_Object symbol_value_in_buffer (Lisp_Object, Lisp_Object);
 void kill_buffer_local_variables (struct buffer *);

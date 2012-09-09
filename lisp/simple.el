@@ -369,6 +369,59 @@ On nonblank line, delete any immediately following blank lines."
     (if (looking-at "^[ \t]*\n\\'")
 	(delete-region (point) (point-max)))))
 
+(defcustom delete-trailing-lines t
+  "If non-nil, \\[delete-trailing-whitespace] deletes trailing lines.
+Trailing lines are deleted only if `delete-trailing-whitespace'
+is called on the entire buffer (rather than an active region)."
+  :type 'boolean
+  :group 'editing)
+  ; :version "24.2")
+
+(defun delete-trailing-whitespace (&optional start end)
+  "Delete trailing whitespace between START and END.
+If called interactively, START and END are the start/end of the
+region if the mark is active, or of the buffer's accessible
+portion if the mark is inactive.
+
+This command deletes whitespace characters after the last
+non-whitespace character in each line between START and END.  It
+does not consider formfeed characters to be whitespace.
+
+If this command acts on the entire buffer (i.e. if called
+interactively with the mark inactive, or called from Lisp with
+END nil), it also deletes all trailing lines at the end of the
+buffer if the variable `delete-trailing-lines' is non-nil."
+  (interactive (progn
+                 (barf-if-buffer-read-only)
+                 (if (if zmacs-regions
+                         zmacs-region-active-p
+                       (eq (marker-buffer (mark-marker t)) (current-buffer)))
+                     (list (region-beginning) (region-end))
+                   (list nil nil))))
+  (save-match-data
+    (save-excursion
+      (let ((end-marker (copy-marker (or end (point-max))))
+            (start (or start (point-min))))
+        (goto-char start)
+        (while (re-search-forward "\\s-$" end-marker t)
+          (skip-syntax-backward "-" (line-beginning-position))
+          ;; Don't delete formfeeds, even if they are considered whitespace.
+          ;; XEmacs; #'looking-at-p not (yet) available
+          (if (save-match-data (looking-at ".*\f")) 
+              (goto-char (match-end 0)))
+          (delete-region (point) (match-end 0)))
+        ;; Delete trailing empty lines.
+        (goto-char end-marker)
+        (when (and (not end)
+		   delete-trailing-lines
+                   ;; Really the end of buffer.
+                   (save-restriction (widen) (eobp))
+                   (<= (skip-chars-backward "\n") -2))
+          (delete-region (1+ (point)) end-marker))
+        (set-marker end-marker nil))))
+  ;; Return nil for the benefit of `write-file-functions'.
+  nil)
+
 (defun back-to-indentation ()
   "Move point to the first non-whitespace character on this line."
   ;; XEmacs change
@@ -406,12 +459,6 @@ column specified by the function `current-left-margin'."
   (if (listp arg) (setq arg (car arg)))
   (if (eq arg '-) (setq arg -1))
   (kill-region (point) (+ (point) arg)))
-
-;; Internal subroutine of backward-delete-char
-(defun kill-backward-chars (arg)
-  (if (listp arg) (setq arg (car arg)))
-  (if (eq arg '-) (setq arg -1))
-  (kill-region (point) (- (point) arg)))
 
 (defun backward-delete-char-untabify (arg &optional killp)
   "Delete characters backward, changing tabs into spaces.
@@ -824,8 +871,7 @@ separate buffer.  See also the command `describe-char'."
                        percent narrowed-details col hscroll)
         (message "Char: %s (%s %s) point=%d of %d(%d%%)%s column %d %s"
                  (text-char-description char) unicode-string
-                 (mapconcat (lambda (arg) (format "%S" arg))
-                            (split-char char) " ")
+                 (mapconcat #'prin1-to-string (split-char char) " ")
                  pos total
                  percent narrowed-details col hscroll)))))
 
@@ -958,7 +1004,7 @@ A numeric argument serves as a repeat count."
 	(if (fixnump (car tail))
 	    (progn
 	      (setq done t)
-	      (setq buffer-undo-list (delq (car tail) buffer-undo-list))))
+	      (setq buffer-undo-list (delete* (car tail) buffer-undo-list))))
 	(setq tail (cdr tail))))
     (and modified (not (buffer-modified-p))
 	 (delete-auto-save-file-if-necessary recent-save)))
@@ -2100,7 +2146,7 @@ either a character or a symbol, uppercase or lowercase."
          (loop
            for keysym in motion-keys-for-shifted-motion
            with key = (event-key last-input-event)
-           with mods = (delq 'shift (event-modifiers last-input-event))
+           with mods = (delete* 'shift (event-modifiers last-input-event))
            with char-list = '(?a) ;; Some random character; the list will be
 				  ;; modified in the constants vector over
 				  ;; time.
@@ -4766,8 +4812,8 @@ The C code calls this periodically, right before redisplay."
   (cond ((featurep 'xemacs) "XEmacs")
 	(t "Emacs")))
 
-(defun debug-print-1 (&rest args)
-  "Send a debugging-type string to standard output.
+(defun debug-print (&rest args)
+  "Send a string to the debugging output.
 If the first argument is a string, it is considered to be a format
 specifier if there are sufficient numbers of other args, and the string is
 formatted using (apply #'format args).  Otherwise, each argument is printed
@@ -4789,15 +4835,6 @@ individually in a numbered list."
 	  (prin1 sgra)
 	  (incf i))
 	(terpri)))))
-
-(defun debug-print (&rest args)
-  "Send a string to the debugging output.
-If the first argument is a string, it is considered to be a format
-specifier if there are sufficient numbers of other args, and the string is
-formatted using (apply #'format args).  Otherwise, each argument is printed
-individually in a numbered list."
-  (let ((standard-output 'external-debugging-output))
-    (apply #'debug-print-1 args)))
 
 (defun debug-backtrace ()
   "Send a backtrace to the debugging output."

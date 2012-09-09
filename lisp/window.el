@@ -580,7 +580,7 @@ and the buffer that is killed or buried is the one in that window."
     ;; Get rid of the frame, if it has just one dedicated window
     ;; and other visible frames exist.
     (and (or (window-minibuffer-p) (window-dedicated-p window))
-	 (delq frame (visible-frame-list))
+	 (delete* frame (visible-frame-list))
 	 window-solitary
 	 (if (and (eq default-minibuffer-frame frame)
 		  (eql 1 (length (minibuffer-frame-list))))

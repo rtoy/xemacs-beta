@@ -64,6 +64,8 @@ Lisp_Object QCUT_BUFFER0, QCUT_BUFFER1, QCUT_BUFFER2, QCUT_BUFFER3,
 
 Lisp_Object Vx_sent_selection_hooks;
 
+Lisp_Object Qx_sent_selection_hooks;
+
 /* If this is a smaller number than the max-request-size of the display,
    emacs will use INCR selection transfer when the selection is larger
    than this.  The max-request-size is usually around 64k, so if you want
@@ -700,18 +702,8 @@ x_handle_selection_request (XSelectionRequestEvent *event)
   UNGCPRO;
 
   /* Let random lisp code notice that the selection has been asked for. */
-  {
-    Lisp_Object val = Vx_sent_selection_hooks;
-    if (!UNBOUNDP (val) && !NILP (val))
-      {
-	Lisp_Object rest;
-	if (CONSP (val) && !EQ (XCAR (val), Qlambda))
-	  for (rest = val; !NILP (rest); rest = Fcdr (rest))
-	    call3 (Fcar (rest), selection_symbol, target_symbol, successful_p);
-	else
-	  call3 (val, selection_symbol, target_symbol, successful_p);
-      }
-  }
+  va_run_hook_with_args (Qx_sent_selection_hooks, 3, selection_symbol,
+                         target_symbol, successful_p);
 }
 
 
@@ -1502,6 +1494,8 @@ syms_of_select_x (void)
   DEFSUBR (Fx_rotate_cutbuffers_internal);
 #endif /* CUT_BUFFER_SUPPORT */
 
+  DEFSYMBOL (Qx_sent_selection_hooks);
+
   /* Unfortunately, timeout handlers must be lisp functions. */
   DEFSYMBOL (Qx_selection_reply_timeout_internal);
   DEFSUBR (Fx_selection_reply_timeout_internal);
@@ -1559,7 +1553,7 @@ to convert into a type that we don't know about or that is inappropriate.
 This hook doesn't let you change the behavior of emacs's selection replies,
 it merely informs you that they have happened.
 */ );
-  Vx_sent_selection_hooks = Qunbound;
+  Vx_sent_selection_hooks = Qnil;
 
   DEFVAR_INT ("x-selection-timeout", &x_selection_timeout /*
 If the selection owner doesn't reply in this many seconds, we give up.

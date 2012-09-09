@@ -793,7 +793,8 @@ setup_frame_without_minibuffer (struct frame *f, Lisp_Object mini_window)
     f->minibuffer_window = Qnil;
 }
 
-/* Make a frame containing only a minibuffer window.  */
+/* Make a frame containing only a minibuffer window.
+   The minibuffer window is also the root window.  */
 
 static void
 setup_minibuffer_frame (struct frame *f)
@@ -957,8 +958,12 @@ See `set-frame-properties', `default-x-frame-plist', and
   if (initialized && !DEVICE_STREAM_P (d))
     {
       if (!NILP (f->minibuffer_window))
-	reset_face_cachels (XWINDOW (f->minibuffer_window));
+	{
+	  reset_face_cachels (XWINDOW (f->minibuffer_window));
+	  reset_glyph_cachels (XWINDOW (f->minibuffer_window));
+	}
       reset_face_cachels (XWINDOW (f->root_window));
+      reset_glyph_cachels (XWINDOW (f->root_window));
     }
 
   /* If no frames on this device formerly existed, say this is the

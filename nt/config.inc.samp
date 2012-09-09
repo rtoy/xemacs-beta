@@ -77,20 +77,20 @@ GIF_DIR=$(OPTIONAL_LIBRARY_DIR)\giflib-4.1.6
 # have to rename the zlib directory to just `zlib'.  We don't do that here
 # so we can preserve the version number, like for the other libraries.
 HAVE_PNG=1
-PNG_DIR=$(OPTIONAL_LIBRARY_DIR)\libpng-1.2.8
-ZLIB_DIR=$(OPTIONAL_LIBRARY_DIR)\zlib-1.2.3
+PNG_DIR=$(OPTIONAL_LIBRARY_DIR)\libpng-1.2.46
+ZLIB_DIR=$(OPTIONAL_LIBRARY_DIR)\zlib
 
 # Set this to enable JPEG support (useful, but not necessary), and specify
 # the directory containing jpeg.  Get the latest version from
 # http://www.ijg.org/ or ftp://ftp.uu.net/graphics/jpeg/.
 HAVE_JPEG=1
-JPEG_DIR=$(OPTIONAL_LIBRARY_DIR)\jpeg-6b
+JPEG_DIR=$(OPTIONAL_LIBRARY_DIR)\jpeg-8c
 
 # Set this to enable TIFF support (not very important), and specify the
 # directory containing tiff.  Get the latest version from
 # http://www.remotesensing.org/libtiff/.
 HAVE_TIFF=1
-TIFF_DIR=$(OPTIONAL_LIBRARY_DIR)\tiff-3.7.3
+TIFF_DIR=$(OPTIONAL_LIBRARY_DIR)\tiff-3.9.5
 
 # Set this to enable XFace support (not very important), and specify the
 # directory containing compface.  Get the library from

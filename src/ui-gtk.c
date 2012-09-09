@@ -311,7 +311,7 @@ Return list of flag names set in FLAG_TYPE VALUE.
 */
        (type_name, flags))
 {
-  GValue val = G_VALUE_INIT;
+  GValue val;
   GType type;
 
   if (SYMBOLP (type_name))

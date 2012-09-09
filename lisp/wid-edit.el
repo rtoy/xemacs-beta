@@ -88,22 +88,18 @@ This exists as a variable so it can be set locally in certain buffers.")
 ;; TTY gets special definitions here and in the next defface, because
 ;; the gray colors defined for other displays cause black text on a black
 ;; background, at least on light-background TTYs.
-(defface widget-field-face '(
-			     ;; #### sjt sez:  XEmacs doesn't like this.
-			     ;; The Custom face editor widget shows a Lisp
-			     ;; form, not a face structure.  Does it produce
-			     ;; the right face on TTYs?
-			     ;; One hypothesis is that the editor doesn't
-			     ;; grok non-default display types in the value.
-			     (((type tty))
-			      (:background "yellow3")
-			      (:foreground "black"))
+(defface widget-field-face '((((type tty))
+			      (:background "yellow3"
+			       :foreground "black"
+			       :shrink t))
 			     (((class grayscale color)
 			       (background light))
-			      (:background "gray85"))
+			      (:background "gray85"
+			       :shrink t))
 			     (((class grayscale color)
 			       (background dark))
-			      (:background "dim gray"))
+			      (:background "dim gray"
+			       :shrink t))
 			     (t
 			      (:italic t)))
   "Face used for editable fields."
@@ -2336,7 +2332,7 @@ and `widget-toggle-action' use `run-hook-with-args' to run these functions.")
 
 (defun widget-field-value-delete (widget)
   "Remove the widget from the list of active editing fields."
-  (setq widget-field-list (delq widget widget-field-list))
+  (setq widget-field-list (delete* widget widget-field-list))
   ;; These are nil if the :format string doesn't contain `%v'.
   (let ((extent (widget-get widget :field-extent)))
     (when extent
@@ -2680,7 +2676,7 @@ If the item is checked, CHOSEN is a cons whose cdr is the value."
 	       (let ((vals (widget-match-inline answer values)))
 		 (setq found (append found (car vals))
 		       values (cdr vals)
-		       args (delq answer args))))
+		       args (delete* answer args))))
 	      (greedy
 	       (setq rest (append rest (list (car values)))
 		     values (cdr values)))
@@ -2701,7 +2697,7 @@ Return an alist of (TYPE MATCH)."
 	       (let ((match (widget-match-inline answer vals)))
 		 (setq found (cons (cons answer (car match)) found)
 		       vals (cdr match)
-		       args (delq answer args))))
+		       args (delete* answer args))))
 	      (greedy
 	       (setq vals (cdr vals)))
 	      (t
@@ -3095,7 +3091,7 @@ The parent of several `radio-button' widgets, one for each option."
 	      buttons (cdr buttons))
 	(when (eq (widget-get button :widget) child)
 	  (widget-put widget
-		      :buttons (delq button (widget-get widget :buttons)))
+		      :buttons (delete* button (widget-get widget :buttons)))
 	  (widget-delete button))))
     (let ((entry-from (widget-get child :entry-from))
 	  (entry-to (widget-get child :entry-to))
@@ -3106,7 +3102,7 @@ The parent of several `radio-button' widgets, one for each option."
       (delete-region entry-from entry-to)
       (set-marker entry-from nil)
       (set-marker entry-to nil))
-    (widget-put widget :children (delq child (widget-get widget :children))))
+    (widget-put widget :children (delete* child (widget-get widget :children))))
   (widget-setup)
   (widget-apply widget :notify widget))
 

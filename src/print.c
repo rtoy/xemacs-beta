@@ -2375,8 +2375,6 @@ void
 print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
-  /* #### Bug!! (intern "") isn't printed in some distinguished way */
-  /* ####  (the reader also loses on it) */
   Lisp_Object name = symbol_name (XSYMBOL (obj));
   Bytecount size = XSTRING_LENGTH (name);
   struct gcpro gcpro1, gcpro2;
@@ -2390,12 +2388,15 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   GCPRO2 (obj, printcharfun);
 
-  if (print_gensym)
+  if (print_gensym && !IN_OBARRAY (obj))
     {
-      if (!IN_OBARRAY (obj))
-        {
-          write_ascstring (printcharfun, "#:");
-        }
+      write_ascstring (printcharfun, "#:");
+    }
+  else if (0 == size)
+    {
+      /* Compatible with GNU, but not with Common Lisp, where the syntax for
+         this symbol is ||. */
+      write_ascstring (printcharfun, "##");
     }
 
   /* Does it look like an integer or a float? */

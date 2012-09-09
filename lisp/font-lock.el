@@ -987,14 +987,14 @@ see the variables `c-font-lock-extra-types', `c++-font-lock-extra-types',
 	    ;; A new set of keywords is defined.  Forget all about
 	    ;; our old keywords that should be removed.
 	    (setq font-lock-removed-keywords-alist
-		  (delq cell font-lock-removed-keywords-alist))
+		  (delete* cell font-lock-removed-keywords-alist))
 	  ;; Delete all previously removed keywords.
 	  (dolist (kword keywords)
 	    (setcdr cell (delete kword (cdr cell))))
 	  ;; Delete the mode cell if empty.
 	  (if (null (cdr cell))
 	      (setq font-lock-removed-keywords-alist
-		    (delq cell font-lock-removed-keywords-alist)))))))
+		    (delete* cell font-lock-removed-keywords-alist)))))))
 
 ;; Written by Anders Lindgren <andersl@andersl.com>.
 ;;
@@ -1053,7 +1053,7 @@ happens, so the major mode can be corrected."
 	       ;; was deleted.
 	       (if (null (cdr top-cell))
 		   (setq font-lock-keywords-alist
-			 (delq top-cell font-lock-keywords-alist))))
+			 (delete* top-cell font-lock-keywords-alist))))
 	     ;; Remember the keyword in case it is not local.
 	     (let ((cell (assq mode font-lock-removed-keywords-alist)))
 	       (if cell

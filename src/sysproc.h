@@ -30,8 +30,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #ifdef MINGW
 #include <../mingw/process.h>
-#elif defined (CYGWIN)
-#include <../include/process.h>
 #elif defined (WIN32_NATIVE)
 /* <process.h> should not conflict with "process.h", as per ANSI definition.
    This is not true with visual c though. The trick below works with

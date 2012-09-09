@@ -104,10 +104,10 @@ static void term_get_fkeys (Lisp_Object keymap, char **address);
  column, so we use ichar_string_displayed_columns().
  ****************************************************************************/
 static int
-tty_text_width (struct window *w, struct face_cachel *UNUSED (cachel),
+tty_text_width (struct frame *f, struct face_cachel *UNUSED (cachel),
 		const Ichar *str, Charcount len)
 {
-  struct console *c = WINDOW_XCONSOLE (w);
+  struct console *c = FRAME_XCONSOLE (f);
 
   if (CONSOLE_TTY_MULTIPLE_WIDTH (c))
     {

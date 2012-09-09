@@ -257,14 +257,18 @@ later, no need to call it in user code.")
 
 (make-obsolete 'cl-delete-duplicates 'delete-duplicates)
 
+;; This occurs because of setf expansion by 21.4, changing the affected
+;; packages won't fix that.
+(define-obsolete-function-alias 'cl-puthash 'puthash)
+
 ; old names
 (define-compatible-function-alias 'byte-code-function-p
   'compiled-function-p) ;FSFmacs
 
 (define-compatible-function-alias 'interactive-form 
   'function-interactive) ;GNU 21.1
-(define-compatible-function-alias 'assq-delete-all
-  'remassq) ;GNU 21.1
+(define-function 'assq-delete-all 'remassq) ;GNU 21.1
+(make-compatible 'assq-delete-all "use (delete* ITEM SEQUENCE :key #'car)")
 
 (defun makehash (&optional test)
   "Create a new hash table.
@@ -406,7 +410,8 @@ It always returns 1 in XEmacs, and in recent FSF Emacs versions."
   "Return a list of charsets in the STRING except ascii.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (and-fboundp 'charsets-in-string (charsets-in-string string))))
+  (delete* 'ascii
+           (and-fboundp 'charsets-in-string (charsets-in-string string))))
 (make-obsolete 'find-non-ascii-charset-string
 	       "use (delq 'ascii (charsets-in-string STRING)) instead.")
 
@@ -414,8 +419,8 @@ because its `find-charset-string' ignores ASCII charset."
   "Return a list of charsets except ascii in the region between START and END.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (and-fboundp 'charsets-in-region
-                 (charsets-in-region start end))))
+  (delete* 'ascii (and-fboundp 'charsets-in-region
+                    (charsets-in-region start end))))
 (make-obsolete 'find-non-ascii-charset-region
 	       "use (delq 'ascii (charsets-in-region START END)) instead.")
 
@@ -451,6 +456,16 @@ because its `find-charset-string' ignores ASCII charset."
 
 (define-obsolete-variable-alias 'cl-macro-environment
   'byte-compile-macro-environment)
+
+;; Actual implementations of these functions are in cl-extra.el, after
+;; cl-macs is loaded, since those implementations use #'labels and
+;; #'symbol-macrolet. These APIs were always XEmacs-specific, were never
+;; widely used, and it was always more readable and more compatible to use
+;; the CL functions.
+(make-obsolete 'remassoc "use delete* with :test #'equal, :key #'car")
+(make-obsolete 'remassq "use delete* with :test #'eq, :key #'car")
+(make-obsolete 'remrassoc "use delete* with :test #'equal, :key #'cdr")
+(make-obsolete 'remrassq "use delete* with :test #'eq, :key #'cdr")
 
 (provide 'obsolete)
 ;;; obsolete.el ends here
