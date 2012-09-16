@@ -998,11 +998,13 @@ size_t emacs_strftime (Extbyte *string, size_t max, const Extbyte *format,
 static long difftm (const struct tm *a, const struct tm *b);
 
 
-DEFUN ("format-time-string", Fformat_time_string, 1, 2, 0, /*
+DEFUN ("format-time-string", Fformat_time_string, 1, 3, 0, /*
 Use FORMAT-STRING to format the time TIME.
 TIME is specified as (HIGH LOW . IGNORED) or (HIGH . LOW), as from
 `current-time' and `file-attributes'.  If TIME is not specified it
 defaults to the current time.
+The third, optional, argument UNIVERSAL, if non-nil, means describe TIME
+as Universal Time; nil means describe TIME in the local time zone.
 FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %a is replaced by the abbreviated name of the day of week.
 %A is replaced by the full name of the day of week.
@@ -1047,7 +1049,7 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 
 The number of options reflects the `strftime' function.
 */
-       (format_string, time_))
+       (format_string, time_, universal))
 {
   time_t value;
   Bytecount size;
@@ -1065,7 +1067,7 @@ The number of options reflects the `strftime' function.
       Extbyte *buf = alloca_extbytes (size);
       Extbyte *formext;
       /* make a copy of the static buffer returned by localtime() */
-      struct tm tm = *localtime (&value); 
+      struct tm tm = NILP (universal) ? *localtime (&value) : *gmtime (&value);
       
       *buf = 1;
 
