@@ -1,3 +1,18 @@
+2012-09-18  Mats Lidell  <matsl@xemacs.org>
+
+	* window-xemacs.el (recenter-positions): New defcustom.
+	(recenter-top-bottom): New command.
+	(recenter-last-op): New defvar.
+
+	* replace.el (perform-replace): Let-bind recenter-last-op to nil.
+	For def=recenter, replace `recenter' with `recenter-top-bottom'
+	that is called with `this-command' and `last-command' let-bound to
+	`recenter-top-bottom'.  When the last `def' was not `recenter',
+	set `recenter-last-op' to nil.
+
+	* keydefs.el (global-map): Make recenter-top-bottom new default
+	for C-l.
+
 2012-09-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el:

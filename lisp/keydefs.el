@@ -1,6 +1,6 @@
 ;;; keydefs.el --- Define standard keybindings.
 
-;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1992-4, 1997, 2012 Free Software Foundation, Inc.
 ;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
@@ -444,7 +444,7 @@ Keymap for characters following C-c.")
 ; meta-shift-V, that is.
 (define-key global-map '(meta V) 'scroll-other-window-down)
 
-(define-key global-map "\C-l" 'recenter)
+(define-key global-map "\C-l" 'recenter-top-bottom)
 (define-key global-map "\M-r" 'move-to-window-line)
 
 ;; FSFmacs window.el
