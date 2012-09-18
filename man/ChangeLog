@@ -1,3 +1,11 @@
+2012-09-18  Mats Lidell  <matsl@xemacs.org>
+
+	* lispref/windows.texi (Vertical Scrolling): Added
+	recenter-top-bottom and recenter-positions
+
+	* xemacs/display.texi (Display): Rearranged and added
+	documentation due to new function recenter-top-bottom.
+
 2012-08-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/symbols.texi (Symbol Components):

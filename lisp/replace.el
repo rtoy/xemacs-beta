@@ -1,6 +1,6 @@
 ;;; replace.el --- search and replace commands for XEmacs.
 
-;; Copyright (C) 1985-7, 1992, 1994, 1997, 2003 Free Software Foundation, Inc.
+;; Copyright (C) 1985-7, 1992, 1994, 1997, 2003, 2012 Free Software Foundation, Inc.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: dumped, matching
@@ -559,6 +559,7 @@ When searching for a match, this function uses
 	 ;; stop.
 	 (limit nil)
 	 (match-again t)
+	 (recenter-last-op nil) ; Start cycling order with initial position.
 	 ;; XEmacs addition
 	 (qr-case-fold-search
 	  (if (and case-fold-search search-caps-disable-folding)
@@ -700,7 +701,12 @@ When searching for a match, this function uses
 		      ((eq def 'skip)
 		       (setq done t))
 		      ((eq def 'recenter)
-		       (recenter nil))
+		       ;; `this-command' has the value `query-replace',
+		       ;; so we need to bind it to `recenter-top-bottom'
+		       ;; to allow it to detect a sequence of `C-l'.
+		       (let ((this-command 'recenter-top-bottom)
+			     (last-command 'recenter-top-bottom))
+			 (recenter-top-bottom)))
 		      ((eq def 'edit)
 		       (store-match-data
 			(prog1 (match-data)
@@ -724,6 +730,9 @@ When searching for a match, this function uses
 		       (setq unread-command-events
 			     (cons event unread-command-events))
 		       (setq done t))))
+	      (unless (eq def 'recenter)
+		;; Reset recenter cycling order to initial position.
+		(setq recenter-last-op nil))
 	      ;; Record previous position for ^ when we move on.
 	      ;; Change markers to numbers in the match data
 	      ;; since lots of markers slow down editing.

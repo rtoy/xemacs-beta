@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the XEmacs Lisp Reference Manual.
-@c Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+@c Copyright (C) 1990, 1991, 1992, 1993, 1994, 2012 Free Software Foundation, Inc.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/windows.info
 @node Windows, Frames, Buffers, Top
@@ -1476,6 +1476,22 @@ Replaces three keystroke sequence C-u 0 C-l."
 @end group
 @end example
 @end deffn
+
+@deffn Command recenter-top-bottom &optional count
+This command, which is the default binding for @kbd{C-l}, acts like
+@code{recenter}, except if called with no argument.  In that case,
+successive calls place point according to the cycling order defined
+by the variable @code{recenter-positions}.
+@end deffn
+
+@defopt recenter-positions
+This variable controls how @code{recenter-top-bottom} behaves when
+called with no argument.  The default value is @code{(middle top
+bottom)}, which means that successive calls of
+@code{recenter-top-bottom} with no argument cycle between placing
+point at the middle, top, and bottom of the window.
+@end defopt
+
 
 @node Horizontal Scrolling
 @section Horizontal Scrolling
