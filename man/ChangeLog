@@ -1,3 +1,8 @@
+2012-10-13  Mats Lidell  <matsl@xemacs.org>
+
+	* lispref/processes.texi (Synchronous Processes): New function
+	call-process-shell-command.
+
 2012-09-18  Mats Lidell  <matsl@xemacs.org>
 
 	* lispref/windows.texi (Vertical Scrolling): Added

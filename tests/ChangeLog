@@ -1,3 +1,8 @@
+2012-10-13  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/process-tests.el: Simple test cases for
+	call-process-shell-command.
+
 2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el:
