@@ -259,6 +259,12 @@ struct prop_block
       int width;
       Lisp_Object glyph;
     } p_glyph;
+    
+    struct
+    {
+      Lisp_Object preprompt;
+      Lisp_Object prompt;
+    } p_minibuf_prompt;
 
   } data;
 };
@@ -1692,30 +1698,77 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	  {
 	    face_index old_findex = data->findex;
 	    Bytebpos byte_old_charpos = data->byte_charpos;
+            Boolint stop_after = NILP (pb->data.p_minibuf_prompt.preprompt);
+            Lisp_Object str = stop_after ? pb->data.p_minibuf_prompt.prompt
+              : pb->data.p_minibuf_prompt.preprompt;
+            struct window *w = XWINDOW (data->window);
 
-	    data->findex = DEFAULT_INDEX;
 	    data->byte_charpos = 0;
 	    data->cursor_type = NO_CURSOR;
 
-	    while (pb->data.p_string.len > 0)
-	      {
-		data->ch = itext_ichar (pb->data.p_string.str);
-		add_failed = add_ichar_rune (data);
+            /* This doesn't handle begin-glyphs and end-glyphs and so on. It
+               may be reasonable not to, given that we're a "propagation
+               glyph", but it's not intuitively clear either way. It is
+               clear that it should handle the face and the display
+               table. */
 
-		if (add_failed)
-		  {
-		    data->findex = old_findex;
-		    data->byte_charpos = byte_old_charpos;
-		    goto oops_no_more_space;
+            while (STRINGP (str))
+              {
+                Ibyte *pstart = XSTRING_DATA (str), *pp = pstart,
+                  *pend = pstart + XSTRING_LENGTH (str);
+                struct extent_fragment *ef
+                  = extent_fragment_new (str, XFRAME (w->frame));
+
+                while (pp < pend)
+                  {
+                    Lisp_Object face_dt, window_dt, entry = Qnil;
+                    face_index new_findex
+                      = data->findex = extent_fragment_update (w, ef,
+                                                               pp - pstart,
+                                                               Qnil);
+                    
+                    data->ch = itext_ichar (pp);
+                    get_display_tables (w, new_findex, &face_dt, &window_dt);
+
+                    if (!NILP (face_dt) || !NILP (window_dt))
+                      {
+                        entry = display_table_entry (data->ch, face_dt,
+                                                     window_dt);
+                      }
+
+                    /* If there is a display table entry for it, hand it off
+                       to add_disp_table_entry_runes and let it worry about
+                       it. */
+                    if (!NILP (entry) && !EQ (entry, make_char (data->ch)))
+                      {
+                        add_failed = add_disp_table_entry_runes (data, entry);
+                      }
+                    else
+                      {
+                        add_failed = add_ichar_rune (data);
+                      }
+
+                    if (add_failed)
+                      {
+                        data->findex = old_findex;
+                        data->byte_charpos = byte_old_charpos;
+                        extent_fragment_delete (ef);
+                        goto oops_no_more_space;
+                      }
+
+                    INC_IBYTEPTR (pp);
 		  }
-		else
-		  {
-		    /* Complicated equivalent of ptr++, len-- */
-		    Ibyte *oldpos = pb->data.p_string.str;
-		    INC_IBYTEPTR (pb->data.p_string.str);
-		    pb->data.p_string.len -= pb->data.p_string.str - oldpos;
-		  }
-	      }
+
+                extent_fragment_delete (ef);
+
+                if (stop_after)
+                  {
+                    break;
+                  }
+
+                str = pb->data.p_minibuf_prompt.prompt;
+                stop_after = 1;
+              }
 
 	    data->findex = old_findex;
 	    /* ##### FIXME FIXME FIXME -- Upon successful return from
@@ -5523,13 +5576,11 @@ Info on reentrancy crashes, with backtraces given:
       && start_pos == BUF_BEGV (b))
     {
       struct prop_block pb;
-      Lisp_Object string;
       prop = Dynarr_new (prop_block);
 
-      string = concat2 (Vminibuf_preprompt, Vminibuf_prompt);
       pb.type = PROP_MINIBUF_PROMPT;
-      pb.data.p_string.str = XSTRING_DATA (string);
-      pb.data.p_string.len = XSTRING_LENGTH (string);
+      pb.data.p_minibuf_prompt.preprompt = Vminibuf_preprompt;
+      pb.data.p_minibuf_prompt.prompt = Vminibuf_prompt;
       Dynarr_add (prop, pb);
     }
   else

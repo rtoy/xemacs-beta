@@ -1,3 +1,17 @@
+2012-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Respect face and display table information in the minibuffer
+	prompt. Thanks for the bug report, Nelson Ferreira!
+	* redisplay.c (struct prop_block):
+	Add entries representing the minibuffer prompt explicitly to the
+	union here.
+	* redisplay.c (add_propagation_runes):
+	Respect the face and the display table for the minibuffer prompt
+	here.
+	* redisplay.c (regenerate_window):
+	Use the new union members when passing the minibuffer prompt info
+	to add_propagation_runes().
+
 2012-09-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* editfns.c (Fformat_time_string):
