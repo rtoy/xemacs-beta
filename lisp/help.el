@@ -1544,10 +1544,10 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
                                    (format "\n\\[%s]" function))))
                        (when commands-remapped-to
                          (if (cdr commands-remapped-to)
-                             (princ (format "The following functions are \
+                             (princ (format "\n\nThe following functions are \
 remapped to it:\n`%s'" (mapconcat #'prin1-to-string commands-remapped-to
                                   "', `")))
-                           (princ (format "`%s' is remapped to it.\n"
+                           (princ (format "\n\n`%s' is remapped to it.\n"
                                           (car
                                            commands-remapped-to))))))))))))))
 
