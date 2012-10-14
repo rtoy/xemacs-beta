@@ -5473,6 +5473,9 @@ EXFUN (Flookup_key, 3);
 EXFUN (Fmake_sparse_keymap, 1);
 EXFUN (Fset_keymap_parents, 2);
 
+Lisp_Object command_remapping_for_event (Lisp_Object command,
+                                         Lisp_Object event0);
+
 void where_is_to_char (Lisp_Object, Eistring *);
 
 /* Defined in lread.c */

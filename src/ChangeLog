@@ -1,5 +1,16 @@
 2012-10-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Have command remapping work interactively too, thank you Robert
+	Pluim.
+	* event-stream.c (Fdispatch_event):
+	Obey command remapping here, it wasn't done for us.
+	* keymap.c:
+	* keymap.c (command_remapping_for_event): New, needed to observe
+	command remapping interactively.
+	* lisp.h: Make it available.
+
+2012-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Respect face and display table information in the minibuffer
 	prompt. Thanks for the bug report, Nelson Ferreira!
 	* redisplay.c (struct prop_block):
