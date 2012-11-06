@@ -1,5 +1,14 @@
 2012-11-06  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* keymap.c (define_key_check_and_coerce_keysym):
+	When worrying about GNU Emacs-like keysym syntax, if the symbol
+	name starts with c-whatever (or s-whatever, or m-whatever), check
+	for a function binding for that before erroring. Otherwise command
+	remapping and C mode interact badly, since most of the C mode
+	commands are regarded as GNU Emacs-style keysyms.
+
+2012-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* keymap.c (event_binding):
 	Do command remapping here for interactive lookups; avoids a
 	relatively expensive repeated call to get_relevant_keymaps(), as
