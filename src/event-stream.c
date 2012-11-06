@@ -4550,6 +4550,8 @@ Magic events are handled as necessary.
 	    int magic_undo = 0;
 	    Elemcount magic_undo_count = 20;
 
+	    Vthis_command = leaf;
+
 	    /* Don't push an undo boundary if the command set the prefix arg,
 	       or if we are executing a keyboard macro, or if in the
 	       minibuffer.  If the command we are about to execute is
@@ -4565,8 +4567,6 @@ Magic events are handled as necessary.
 	    if (SYMBOLP (leaf))
 	      {
 		Lisp_Object prop = Fget (leaf, Qself_insert_defer_undo, Qnil);
-                Lisp_Object remap = Qnil;
-
 		if (NATNUMP (prop))
                   {
                     magic_undo = 1;
@@ -4587,15 +4587,7 @@ Magic events are handled as necessary.
 		  magic_undo = 1;
 		else if (EQ (leaf, Qself_insert_command))
 		  magic_undo = 1;
-
-                remap = command_remapping_for_event (leaf, event);
-                if (!NILP (remap))
-                  {
-                    leaf = remap;
-                  }
 	      }
-
-	    Vthis_command = leaf;
 
 	    if (!magic_undo)
 	      command_builder->self_insert_countdown = 0;

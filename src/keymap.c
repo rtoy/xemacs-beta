@@ -2127,20 +2127,6 @@ command_remapping (Lisp_Object definition, int nmaps, Lisp_Object *maps)
   return Qnil;
 }
 
-Lisp_Object
-command_remapping_for_event (Lisp_Object command, Lisp_Object event0)
-{
-  /* This function can GC */
-  Lisp_Object maps[100];
-  int nmaps;
-
-  nmaps = get_relevant_keymaps (event0, Qnil, countof (maps), maps);
-  if (nmaps > countof (maps))
-    nmaps = countof (maps);
-
-  return command_remapping (command, nmaps, maps);
-}                             
-
 DEFUN ("command-remapping", Fcommand_remapping, 1, 3, 0, /*
 Return the remapping for command COMMAND.
 
