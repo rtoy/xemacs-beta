@@ -2996,7 +2996,7 @@ Lisp_Object
 event_binding (Lisp_Object event0, int accept_default)
 {
   /* This function can GC */
-  Lisp_Object maps[100];
+  Lisp_Object maps[100], result;
   int nmaps;
 
   assert (EVENTP (event0));
@@ -3004,8 +3004,20 @@ event_binding (Lisp_Object event0, int accept_default)
   nmaps = get_relevant_keymaps (event0, Qnil, countof (maps), maps);
   if (nmaps > countof (maps))
     nmaps = countof (maps);
-  return process_event_binding_result (lookup_events (event0, nmaps, maps,
-						      accept_default));
+
+  result = process_event_binding_result (lookup_events (event0, nmaps, maps,
+							accept_default));
+
+  if (!NILP (result) && SYMBOLP (result))
+    {
+      Lisp_Object remap = command_remapping (result, nmaps, maps);
+      if (!NILP (remap))
+	{
+	  result = remap;
+	}
+    }
+
+  return result;
 }
 
 /* like event_binding, but specify a keymap to search */

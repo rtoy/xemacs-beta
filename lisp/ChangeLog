@@ -1,3 +1,10 @@
+2012-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el:
+	* help.el (describe-function-1):
+	Add some newlines here when dealing with remapped commands, thank
+	you Robert Pluim.
+
 2012-10-13  Mats Lidell  <matsl@xemacs.org>
 
 	* process.el (call-process-shell-command): New function from GNU.
