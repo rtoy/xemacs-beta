@@ -3238,34 +3238,46 @@ surrounded by (block NAME ...)."
 (defun cl-cdr-or-pi (object)
   (if (consp object) (cdr object) pi))
 
-(define-compiler-macro equal (&whole form a b)
-  (if (or (cl-equal-equivalent-to-eq-p (cl-const-expr-val a pi))
-          (cl-equal-equivalent-to-eq-p (cl-const-expr-val b pi)))
-      (cons 'eq (cdr form))
-    form))
+(define-compiler-macro equal (&whole form &rest args)
+  (cond
+   ((not (eql (length form) 3))
+    form)
+   ((or (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi))
+        (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi)))
+    (cons 'eq (cdr form)))
+   (t form)))
 
-(define-compiler-macro member (&whole form elt list)
-  (if (or (cl-equal-equivalent-to-eq-p (cl-const-expr-val elt pi))
-          (every #'cl-equal-equivalent-to-eq-p
-                 (cl-const-expr-val list '(1.0))))
-      (cons 'memq (cdr form))
-    form))
+(define-compiler-macro member (&whole form &rest args)
+  (cond
+   ((not (eql (length form) 3))
+    form)
+   ((or (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi))
+        (every #'cl-equal-equivalent-to-eq-p
+               (cl-const-expr-val (pop args) '(1.0))))
+    (cons 'memq (cdr form)))
+   (t form)))
 
-(define-compiler-macro assoc (&whole form elt list)
-  (if (or (cl-equal-equivalent-to-eq-p (cl-const-expr-val elt pi))
-          (not (find-if-not #'cl-equal-equivalent-to-eq-p
-                            (cl-const-expr-val list '((1.0 . nil)))
-                            :key #'cl-car-or-pi)))
-      (cons 'assq (cdr form))
-    form))
+(define-compiler-macro assoc (&whole form &rest args)
+  (cond
+   ((not (eql (length form) 3))
+    form)
+   ((or (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi))
+        (not (find-if-not #'cl-equal-equivalent-to-eq-p
+                          (cl-const-expr-val (pop args) '((1.0 . nil)))
+                          :key #'cl-car-or-pi)))
+    (cons 'assq (cdr form)))
+   (t form)))
 
-(define-compiler-macro rassoc (&whole form elt list)
-  (if (or (cl-equal-equivalent-to-eq-p (cl-const-expr-val elt pi))
-          (not (find-if-not #'cl-equal-equivalent-to-eq-p
-                            (cl-const-expr-val list '((nil . 1.0)))
+(define-compiler-macro rassoc (&whole form &rest args)
+  (cond
+   ((not (eql (length form) 3))
+    form)
+   ((or (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi))
+        (not (find-if-not #'cl-equal-equivalent-to-eq-p
+                            (cl-const-expr-val (pop args) '((nil . 1.0)))
                             :key #'cl-cdr-or-pi)))
-      (cons 'rassq (cdr form))
-    form))
+    (cons 'rassq (cdr form)))
+   (t form)))
 
 (macrolet
     ((define-star-compiler-macros (&rest macros)
