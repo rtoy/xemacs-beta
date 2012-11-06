@@ -1,3 +1,11 @@
+2012-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (event_binding):
+	Do command remapping here for interactive lookups; avoids a
+	relatively expensive repeated call to get_relevant_keymaps(), as
+	was necessary in 7371081ce8f7 (which changeset has been backed
+	out).
+
 2012-10-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Respect face and display table information in the minibuffer
