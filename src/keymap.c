@@ -1344,7 +1344,11 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	 sanitize the Sun keyboards, and would make it trickier to
 	 conditionalize a .emacs file for multiple X servers.
 	 */
-      if (((int) qxestrlen (name) >= 2 && name[1] == '-')
+      if (((int) qxestrlen (name) >= 2 && name[1] == '-'
+	   /* Check for a function binding if the symbol looks like
+	      c-..., otherwise command remapping and C mode interact
+	      badly. */
+           && NILP (Ffunctionp (XSYMBOL_FUNCTION (*keysym))))
 #if 1
           ||
 	  /* Ok, this is a bit more dubious - prevent people from doing things
