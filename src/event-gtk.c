@@ -416,7 +416,9 @@ set_last_server_timestamp (struct device *d, GdkEvent *gdk_event)
 static Lisp_Object
 gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
 {
-  char *name;
+  Ascbyte *guname = NULL;
+  guint32 unicode = 0; 
+
   if (keysym >= GDK_KEY_exclam && keysym <= GDK_KEY_asciitilde)
     /* We must assume that the X keysym numbers for the ASCII graphic
        characters are the same as their ASCII codes.  */
@@ -427,75 +429,47 @@ gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
       /* These would be handled correctly by the default case, but by
 	 special-casing them here we don't garbage a string or call
 	 intern().  */
-    case GDK_KEY_BackSpace:	return QKbackspace;
-    case GDK_KEY_Tab:	return QKtab;
-    case GDK_KEY_Linefeed:	return QKlinefeed;
-    case GDK_KEY_Return:	return QKreturn;
-    case GDK_KEY_Escape:	return QKescape;
-    case GDK_KEY_space:	return QKspace;
-    case GDK_KEY_Delete:	return QKdelete;
-    case GDK_KEY_Prior:     return KEYSYM("prior");
-    case GDK_KEY_Next:      return KEYSYM("next");
-    case 0:		return Qnil;
+    case GDK_KEY_BackSpace:     return QKbackspace;
+    case GDK_KEY_Tab:           return QKtab;
+    case GDK_KEY_Linefeed:      return QKlinefeed;
+    case GDK_KEY_Return:        return QKreturn;
+    case GDK_KEY_Escape:        return QKescape;
+    case GDK_KEY_space:         return QKspace;
+    case GDK_KEY_Delete:        return QKdelete;
+    case 0:                     return Qnil;
+
     default:
-      if (simple_p) return Qnil;
-      /* !!#### not Mule-ized */
-      name = gdk_keyval_name (keysym);
-      if (!name || !name[0])
-	/* This happens if there is a mismatch between the Xlib of
-           XEmacs and the Xlib of the X server...
+      if (simple_p)
+        {
+          return Qnil;
+        }
 
-	   Let's hard-code in some knowledge of common keysyms introduced
-	   in recent X11 releases.  Snarfed from X11/keysymdef.h
+      unicode = gdk_keyval_to_unicode (keysym);
 
-	   Probably we should add some stuff here for X11R6. */
-	switch (keysym)
-	  {
-	  case 0xFF95: return KEYSYM ("kp-home");
-	  case 0xFF96: return KEYSYM ("kp-left");
-	  case 0xFF97: return KEYSYM ("kp-up");
-	  case 0xFF98: return KEYSYM ("kp-right");
-	  case 0xFF99: return KEYSYM ("kp-down");
-	  case 0xFF9A: return KEYSYM ("kp-prior");
-	  case 0xFF9B: return KEYSYM ("kp-next");
-	  case 0xFF9C: return KEYSYM ("kp-end");
-	  case 0xFF9D: return KEYSYM ("kp-begin");
-	  case 0xFF9E: return KEYSYM ("kp-insert");
-	  case 0xFF9F: return KEYSYM ("kp-delete");
+      if (unicode != 0)
+        {
+          return Funicode_to_char (make_fixnum ((EMACS_INT) unicode), Qnil);
+        }
 
-	  case 0x1005FF10: return KEYSYM ("SunF36"); /* labeled F11 */
-	  case 0x1005FF11: return KEYSYM ("SunF37"); /* labeled F12 */
-	  default:
-	    {
-	      char buf [64];
-	      sprintf (buf, "unknown-keysym-0x%X", (int) keysym);
-	      return KEYSYM (buf);
-	    }
-	  }
-      /* If it's got a one-character name, that's good enough. */
-      if (!name[1])
-	return make_char (name[0]);
+      /* All of the names gdkkeysms-compat.h are ASCII-only, and if keysym
+         is non-zero this function will never return NULL. */
+      guname = (Ascbyte *) gdk_keyval_name (keysym);
 
-      /* If it's in the "Keyboard" character set, downcase it.
-	 The case of those keysyms is too totally random for us to
-	 force anyone to remember them.
-	 The case of the other character sets is significant, however.
-	 */
+      /* If it's in the "Keyboard" character set, downcase it and transform
+         underscores to minus.  The case of those keysyms is too totally
+         random for us to force anyone to remember them.  The case of the
+         other character sets is significant, however. */
       if ((((unsigned int) keysym) & (~0x1FF)) == ((unsigned int) 0xFE00))
-	{
-	  char buf [255];
-	  char *s1, *s2;
-	  for (s1 = name, s2 = buf; *s1; s1++, s2++) {
-	    if (*s1 == '_') {
-	      *s2 = '-';
-	    } else {
-	      *s2 = tolower (* (unsigned char *) s1);
-	    }
-	  }
-	  *s2 = 0;
-	  return KEYSYM (buf);
-	}
-      return KEYSYM (name);
+        {
+          DECLARE_EISTRING (buf);
+
+          eicpy_ascii (buf, guname);
+          eilwr (buf);
+
+          return KEYSYM_MASSAGING_NAME ((const CIbyte *) eidata (buf));
+        }
+
+      return KEYSYM (guname);
     }
 }
 
