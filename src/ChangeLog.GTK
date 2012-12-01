@@ -1,3 +1,16 @@
+2012-12-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-Xt.c:
+	* event-Xt.c (x_keysym_to_character):
+	Move this here, from events-xlike-inc.c.
+	* event-gtk.c (gtk_keysym_to_emacs_keysym):
+	Mule-ize this. Use gdk_keyval_to_unicode(), it's always available
+	on GTK 2. 
+	* event-xlike-inc.c:
+	Remove xlike_keysym_to_character.
+	* events.h (KEYSYM_MASSAGING_NAME):
+	New. Keysym equivalent of intern_massaging_name.
+
 2012-05-18  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-gtk.c (handle_scroll_event): Define.
