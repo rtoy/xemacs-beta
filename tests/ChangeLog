@@ -1,3 +1,8 @@
+2012-12-14  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/register-tests.el: New. Test for register.el. Test
+	case for bug in regular expression in describe-register-1
+
 2012-10-13  Mats Lidell  <matsl@xemacs.org>
 
 	* automated/process-tests.el: Simple test cases for
