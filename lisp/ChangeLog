@@ -1,3 +1,8 @@
+2012-12-14  Mats Lidell  <matsl@xemacs.org>
+
+	* register.el (describe-register-1): Fix erroneous regular
+	expression. Thank you Stephen Turnbull.
+
 2012-11-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (equal, member, assoc, rassoc):
