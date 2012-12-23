@@ -1469,22 +1469,28 @@ Write your filter like this:
      nil	      ; the partition: menus after this are flushright
 
      ("%_Help"
-     ["%_About XEmacs..." about-xemacs]
-     ["%_Home Page (www.xemacs.org)" xemacs-www-page
-      :active (fboundp 'browse-url)]
-     ["What's %_New in XEmacs" view-emacs-news]
+     ["%_About XEmacs and Contributors" about-xemacs]
+     ("%_More about XEmacs"
+      ["What's %_New in XEmacs" view-emacs-news]
+      ["XEmacs %_License" describe-copying]
+      ["%_No Warranty" describe-no-warranty]
+      ["%_Obtaining the Latest Version" describe-distribution]
+      ["View %_Splash Screen" xemacs-splash-buffer]
+      ["%_Home Page (www.xemacs.org)" xemacs-www-page
+       :active (fboundp 'browse-url)])
      ["B%_eta Info" describe-beta
       :included (string-match "beta" emacs-version)]
      "-----"
      ("%_Info (Online Docs)"
       ["%_Info Contents" (Info-goto-node "(dir)")]
+      ["%_How to Use Info" (Info-goto-node "(Info)")]
       "-----"
       ["XEmacs %_User's Manual" (Info-goto-node "(XEmacs)")]
+      ["%_Getting Started with XEmacs" (Info-goto-node "(New-Users-Guide)")]
       ["XEmacs %_Lisp Reference Manual" (Info-goto-node "(Lispref)")]
       ["All About %_Packages" (Info-goto-node "(xemacs)Packages")]
-      ["%_Getting Started with XEmacs" (Info-goto-node "(New-Users-Guide)")]
+      ["Find %_Packages" finder-by-keyword]
       ["%_XEmacs Internals Manual" (Info-goto-node "(Internals)")]
-      ["%_How to Use Info" (Info-goto-node "(Info)")]
       "-----"
       ["Lookup %_Key Sequence in User's Manual..."
        Info-goto-emacs-key-command-node]
@@ -1554,20 +1560,15 @@ Write your filter like this:
 	    ["Show %_Diagnosis for MULE" mule-diag :active nil]
 	    ["Show \"%_hello\" in Many Languages" view-hello-file]
 	    )))
-     ("%_Other"
-      ["%_Current Installation Info" describe-installation
-       :active (boundp 'Installation-string)]
-      ["%_Known Problems" view-xemacs-problems ]
-      ["%_Obtaining the Latest Version" describe-distribution]
-      ["%_No Warranty" describe-no-warranty]
-      ["XEmacs %_License" describe-copying]
-      ["Find %_Packages" finder-by-keyword]
-      ["View %_Splash Screen" xemacs-splash-buffer]
-      ["%_Unix Manual..." manual-entry])
+     ["%_Unix Manual" manual-entry]
      "-----"
-     ["Recent %_Messages" (view-lossage t)]
-     ["Recent %_Keystrokes" view-lossage]
-     ["Recent %_Warnings" view-warnings]
+     ["%_Current Installation Info" describe-installation
+      :active (boundp 'Installation-string)]
+     ["%_Known Problems" view-xemacs-problems ]
+     ("Recent History"
+      ["%_Messages" (view-lossage t)]
+      ["%_Keystrokes" view-lossage]
+      ["%_Warnings" view-warnings])
      ["Send %_Bug Report..." report-xemacs-bug
       :active (fboundp 'report-xemacs-bug)]))
    "The default XEmacs menubar.
