@@ -51,14 +51,14 @@
 	Removed. Move this to C, so we can use
 	look_for_coding_system_magic_cookie().
 
-2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* XEmacs 21.5.32 "habanero" is released.
-
 2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* help.el (describe-function-1):
 	Document any command remapping that has been done in this function.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
 
 2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
 
