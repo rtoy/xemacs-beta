@@ -1,3 +1,8 @@
+2012-10-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fontcolor-xlike-inc.c (xft_find_charset_font):
+	Improve charset not in table warning message.
+
 2012-11-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.c (define_key_check_and_coerce_keysym):

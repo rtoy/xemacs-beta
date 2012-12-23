@@ -589,7 +589,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	  {
 	    /* OK, we fell off the end of the table */
 	    warn_when_safe_lispobj (intern ("xft"), intern ("alert"),
-				    list2 (build_ascstring ("unchecked charset"),
+				    list2 (build_ascstring ("unknown charset in conversion to Xft font"),
 					   charset));
 	    /* default to "en"
 	       #### THIS IS WRONG, WRONG, WRONG!!
