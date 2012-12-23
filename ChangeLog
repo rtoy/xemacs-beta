@@ -1,3 +1,8 @@
+2012-11-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* INSTALL: Reorganize and update.
+	Thanks to Steven Mitchell for the suggestion.
+
 2012-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (Package Search): New Installation section.
