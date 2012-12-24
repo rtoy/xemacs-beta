@@ -1,3 +1,8 @@
+2012-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/lisp-tests.el: Add tests of #'subsetp.
+	Thanks Steven and Benson Mitchell <smitchell@bnin.net>.
+
 2012-12-14  Mats Lidell  <matsl@xemacs.org>
 
 	* automated/register-tests.el: New. Test for register.el. Test
