@@ -334,7 +334,7 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
 
   /* It is sometimes useful to specify `self-insert-commmand' in Lisp code.
      We may as well as all that to be done with default = 1. */
-  count = NILP (count) ? make_int(1) : count;
+  count = NILP (count) ? make_fixnum(1) : count;
   /* Can't insert more than most-positive-fixnum characters, the buffer
      won't hold that many. */
   check_integer_range (count, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
