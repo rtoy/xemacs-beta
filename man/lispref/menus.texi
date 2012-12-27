@@ -638,7 +638,7 @@ For example, the command
 will add a new menu to the top level menubar.  The new menu can be reached
 by pressing "t" while the top level menubar is active.  When the menu is
 active, pressing "1" will activate the first item and insert the character
-"1" into the buffer.  Pressing "2" will activate the second item and insert
+"1" into the buffer.  Pressing "T" will activate the second item and insert
 the character "2" into the buffer.  Pressing "3" will activate the third item
 and insert the character "3" into the buffer.
 
