@@ -1,12 +1,35 @@
+2012-12-28  Byrel Mitchell  <byrel.mitchell@gmail.com>
+
+	* lispref/menus.texi (Menu Format):
+	Document use of :active in submenu specs.
+
+2012-12-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Mercurial Basics):
+	Update references to repository to reflect current reality.
+
+2012-12-28  Byrel Mitchell  <byrel.mitchell@gmail.com>
+
+	* lispref/menus.texi (Creating Menu Accelerators): Typo fix.
+
+2012-10-13  Mats Lidell  <matsl@xemacs.org>
+
+	* lispref/processes.texi (Synchronous Processes): New function
+	call-process-shell-command.
+
+2012-09-18  Mats Lidell  <matsl@xemacs.org>
+
+	* lispref/windows.texi (Vertical Scrolling): Added
+	recenter-top-bottom and recenter-positions
+
+	* xemacs/display.texi (Display): Rearranged and added
+	documentation due to new function recenter-top-bottom.
+
 2012-08-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/symbols.texi (Symbol Components):
 	Document the new syntax of ## for the symbol with name "" interned
 	in obarray.
-
-2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* XEmacs 21.5.32 "habanero" is released.
 
 2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -17,6 +40,10 @@
 	* lispref/keymaps.texi (XEmacs): New.
 	* lispref/keymaps.texi (Other Keymap Functions):
 	Document the new command remapping functionality in this file.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
 
 2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
 

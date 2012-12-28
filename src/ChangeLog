@@ -1,3 +1,64 @@
+2012-12-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	(Fself_insert_command): Oops, Aidan renamed make_int to make_fixnum.
+	Adjust my patch to match.  Thank you, Mr. Buildbot (and matsl! :-)
+
+2012-12-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cmds.c (Fself_insert_command):
+	Allow noninteractive call with null argument.
+
+2012-12-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Based on patch by Benson and Steven Mitchell on XEmacs Beta
+	<50D16FF7.4090708@bnin.net>.
+
+	* sequence.c (venn): Fix bug in handling null arguments.
+	Add null set short circuits, conditional on caller is `subsetp'.
+
+2012-10-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fontcolor-xlike-inc.c (xft_find_charset_font):
+	Improve charset not in table warning message.
+
+2012-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (define_key_check_and_coerce_keysym):
+	When worrying about GNU Emacs-like keysym syntax, if the symbol
+	name starts with c-whatever (or s-whatever, or m-whatever), check
+	for a function binding for that before erroring. Otherwise command
+	remapping and C mode interact badly, since most of the C mode
+	commands are regarded as GNU Emacs-style keysyms.
+
+2012-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (event_binding):
+	Do command remapping here for interactive lookups; avoids a
+	relatively expensive repeated call to get_relevant_keymaps(), as
+	was necessary in 7371081ce8f7 (which changeset has been backed
+	out).
+
+2012-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Respect face and display table information in the minibuffer
+	prompt. Thanks for the bug report, Nelson Ferreira!
+	* redisplay.c (struct prop_block):
+	Add entries representing the minibuffer prompt explicitly to the
+	union here.
+	* redisplay.c (add_propagation_runes):
+	Respect the face and the display table for the minibuffer prompt
+	here.
+	* redisplay.c (regenerate_window):
+	Use the new union members when passing the minibuffer prompt info
+	to add_propagation_runes().
+
+2012-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c (Fformat_time_string):
+	Accept GNU's UNIVERSAL argument, which means we call gmtime()
+	instead of localtime(). Thanks for the report of org-mode
+	incompatibility, Matsl!
+
 2012-09-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c:
@@ -51,10 +112,6 @@
 	Adopt GNU's ## syntax for the interned symbol with the zero-length
 	name.
 
-2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* XEmacs 21.5.32 "habanero" is released.
-
 2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.c:
@@ -89,6 +146,10 @@
 	* keymap.c (vars_of_keymap):
 	* keymap.c (complex_vars_of_keymap):
 	* lisp.h: New CHECK_COMMAND macro.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
 
 2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
 

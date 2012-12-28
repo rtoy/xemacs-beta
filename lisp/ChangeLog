@@ -1,3 +1,52 @@
+2012-12-28  Byrel Mitchell  <byrel.mitchell@gmail.com>
+
+	* menubar.el (check-menu-syntax): Implement :active in submenu specs.
+
+2012-08-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* menubar-items.el (default-menubar): Reorganize.
+	Add PROBLEMS to toplevel.
+	New "More about XEmacs" submenu for NEWS, licensing, etc.
+	New "Recent History" menu for messages, lossage, etc.
+	Get rid of ugly and unexpressive ellipses.
+
+2012-12-14  Mats Lidell  <matsl@xemacs.org>
+
+	* register.el (describe-register-1): Fix erroneous regular
+	expression. Thank you Stephen Turnbull.
+
+2012-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (equal, member, assoc, rassoc):
+	Never error at compile time in these compiler macros because of an
+	incorrect number of arguments.
+
+2012-10-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el:
+	* help.el (describe-function-1):
+	Add some newlines here when dealing with remapped commands, thank
+	you Robert Pluim.
+
+2012-10-13  Mats Lidell  <matsl@xemacs.org>
+
+	* process.el (call-process-shell-command): New function from GNU.
+
+2012-09-18  Mats Lidell  <matsl@xemacs.org>
+
+	* window-xemacs.el (recenter-positions): New defcustom.
+	(recenter-top-bottom): New command.
+	(recenter-last-op): New defvar.
+
+	* replace.el (perform-replace): Let-bind recenter-last-op to nil.
+	For def=recenter, replace `recenter' with `recenter-top-bottom'
+	that is called with `this-command' and `last-command' let-bound to
+	`recenter-top-bottom'.  When the last `def' was not `recenter',
+	set `recenter-last-op' to nil.
+
+	* keydefs.el (global-map): Make recenter-top-bottom new default
+	for C-l.
+
 2012-09-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el:
@@ -14,14 +63,14 @@
 	Removed. Move this to C, so we can use
 	look_for_coding_system_magic_cookie().
 
-2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* XEmacs 21.5.32 "habanero" is released.
-
 2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* help.el (describe-function-1):
 	Document any command remapping that has been done in this function.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
 
 2012-05-14  Aidan Kehoe  <kehoea@parhasard.net>
 
