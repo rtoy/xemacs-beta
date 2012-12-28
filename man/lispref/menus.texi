@@ -39,7 +39,7 @@ parent.  In this case, the string will be displayed at the top of the
 menu if @code{popup-menu-titles} is non-@code{nil}.
 
 Immediately following the first element there may optionally be up
-to four keyword-value pairs, as follows:
+to five keyword-value pairs, as follows:
 
 @table @code
 @item :included @var{form}
@@ -64,7 +64,13 @@ filter function should have no side-effects.
 @item :accelerator @var{key}
 A menu accelerator is a keystroke which can be pressed while the menu is
 visible which will immediately activate the item.  @var{key} must be a char
-or the symbol name of a key.  @xref{Menu Accelerators}.
+or the symbol name of a key. 
+
+@item :active @var{form}
+@var{form} will be evaluated when the submenu is about to be displayed,
+and the menu contents will be displayed only if the result is non-@code{nil}.
+If the submenu is inactive, it will display the word "Invalid", grayed-out.
+@xref{Menu Accelerators}.
 @end table
 
 The rest of the menu consists of elements as follows:
