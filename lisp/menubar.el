@@ -79,9 +79,9 @@ See `current-menubar' for a description of the syntax of a menubar."
     (setq menu (cdr menu)))
   (let (menuitem item)
     (while (keywordp (setq item (car menu)))
-      (or (memq item '(:config :included :filter :accelerator))
+      (or (memq item '(:config :included :filter :accelerator :active))
 	  (signal 'error
-		  (list "menu keyword must be :config, :included, :accelerator or :filter"
+		  (list "menu keyword must be :config, :included, :accelerator, :active or :filter"
 			item)))
       (if (or (not (cdr menu))
 	      (vectorp (nth 1 menu))
