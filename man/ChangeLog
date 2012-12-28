@@ -1,3 +1,8 @@
+2012-12-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/programs.texi (Defuns): Improve description of `mark-defun'.
+	Thanks to Steven Mitchell for the suggestion.
+
 2012-12-28  Byrel Mitchell  <byrel.mitchell@gmail.com>
 
 	* lispref/menus.texi (Menu Format):

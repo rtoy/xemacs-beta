@@ -297,13 +297,18 @@ Put region around whole current or following defun (@code{mark-defun}).
   The commands to move to the beginning and end of the current defun are
 @kbd{C-M-a} (@code{beginning-of-defun}) and @kbd{C-M-e} (@code{end-of-defun}).
 
-   To operate on the current defun, use @kbd{C-M-h} (@code{mark-defun})
+  To operate on the current defun, use @kbd{C-M-h} (@code{mark-defun})
 which puts point at the beginning and the mark at the end of the current
 or next defun.  This is the easiest way to prepare for moving the defun
-to a different place.  In C mode, @kbd{C-M-h} runs the function
-@code{mark-c-function}, which is almost the same as @code{mark-defun},
-but which backs up over the argument declarations, function name, and
-returned data type so that the entire C function is inside the region.
+to a different place.  In Lisp modes, a ``defun'' is merely any sexp
+starting in column 1.  In other modes, a defun is a syntactic unit
+defining an entity, and these modes often bind @kbd{C-M-h} to a
+different function.  For example, in CC Mode's C mode, @kbd{C-M-h} runs
+the function @code{c-mark-function}, which is almost the same as
+@code{mark-defun}, but which backs up over the argument declarations,
+function name, and returned data type so that the entire C function is
+inside the region.  It also knows about struct definitions, macro
+definitions, and many other constructs.
 
 @findex compile-defun
 To compile and evaluate the current defun, use @kbd{M-x compile-defun}. 
