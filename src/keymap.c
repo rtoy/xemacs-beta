@@ -1344,7 +1344,11 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	 sanitize the Sun keyboards, and would make it trickier to
 	 conditionalize a .emacs file for multiple X servers.
 	 */
-      if (((int) qxestrlen (name) >= 2 && name[1] == '-')
+      if (((int) qxestrlen (name) >= 2 && name[1] == '-'
+	   /* Check for a function binding if the symbol looks like
+	      c-..., otherwise command remapping and C mode interact
+	      badly. */
+           && NILP (Ffunctionp (XSYMBOL_FUNCTION (*keysym))))
 #if 1
           ||
 	  /* Ok, this is a bit more dubious - prevent people from doing things
@@ -2996,7 +3000,7 @@ Lisp_Object
 event_binding (Lisp_Object event0, int accept_default)
 {
   /* This function can GC */
-  Lisp_Object maps[100];
+  Lisp_Object maps[100], result;
   int nmaps;
 
   assert (EVENTP (event0));
@@ -3004,8 +3008,20 @@ event_binding (Lisp_Object event0, int accept_default)
   nmaps = get_relevant_keymaps (event0, Qnil, countof (maps), maps);
   if (nmaps > countof (maps))
     nmaps = countof (maps);
-  return process_event_binding_result (lookup_events (event0, nmaps, maps,
-						      accept_default));
+
+  result = process_event_binding_result (lookup_events (event0, nmaps, maps,
+							accept_default));
+
+  if (!NILP (result) && SYMBOLP (result))
+    {
+      Lisp_Object remap = command_remapping (result, nmaps, maps);
+      if (!NILP (remap))
+	{
+	  result = remap;
+	}
+    }
+
+  return result;
 }
 
 /* like event_binding, but specify a keymap to search */

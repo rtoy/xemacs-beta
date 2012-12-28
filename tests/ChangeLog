@@ -1,17 +1,32 @@
+2012-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/lisp-tests.el: Add tests of #'subsetp.
+	Thanks Steven and Benson Mitchell <smitchell@bnin.net>.
+
+2012-12-14  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/register-tests.el: New. Test for register.el. Test
+	case for bug in regular expression in describe-register-1
+
+2012-10-13  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/process-tests.el: Simple test cases for
+	call-process-shell-command.
+
 2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el:
 	Make sure we can search for character ranges successfully when the
 	syntax table is dirty.
 
-2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* XEmacs 21.5.32 "habanero" is released.
-
 2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/keymap-tests.el:
 	Test the new command remapping functionality.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
 
 2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
 

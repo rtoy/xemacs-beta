@@ -2435,6 +2435,23 @@ via the hepatic alpha-tocopherol transfer protein")))
 	       (gethash hashed-bignum hashing))
 	      "checking hashing works correctly with #'eql tests and bignums"))))
 
+;; #'subsetp tests.
+;; Return non-nil if every element of LIST1 also appears in LIST2.
+;; A couple of non-nondegenerate false cases.
+(Assert (not (subsetp (list ?a ?b) (list ?c ?d))))
+(Assert (not (subsetp (list ?a ?b) (list ?b ?c ?d))))
+;; Next five thanks to Steven and Benson Mitchell on XEmacs Beta
+;; <50D16FF7.4090708@bnin.net>.
+;; Two non-degenerate true cases.
+(Assert (subsetp (list ?a) (list ?a ?b ?c ?d)))
+(Assert (subsetp (list ?a ?b) (list ?a ?b ?c ?d)))
+;; The three degenerate cases involving nil.
+(Assert (not (subsetp (list ?a) nil)))
+(Assert (subsetp nil (list ?a ?b ?c ?d)))
+(Assert (subsetp nil nil))
+;; #### We should also test the keywords.
+;; #### We should also test the error conditions.
+
 ;; 
 (when (decode-char 'ucs #x0192)
   (Check-Error

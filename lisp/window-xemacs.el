@@ -1,6 +1,6 @@
 ;;; window-xemacs.el --- XEmacs window commands aside from those written in C.
 
-;; Copyright (C) 1985, 1989, 1993-94, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1989, 1993-94, 1997, 2012 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
@@ -21,7 +21,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Synched up with: Not synched.
+;;; Synched up with: Not synched except for partial sync of
+;;; recenter-top-bottom
 
 ;;; Commentary:
 
@@ -48,6 +49,61 @@ If WINDOW is nil, the selected window is used."
   (center-to-window-line (if (consp n) nil n) window)
   (when (null n)
     (redraw-frame (window-frame window) t)))
+
+(defvar recenter-last-op nil
+  "Indicates the last recenter operation performed.
+Possible values: `top', `middle', `bottom', integer or float numbers.")
+
+;; Merged from FSF 23.2 with use of scroll-margin for top and bottom
+;; destinations removed. We don't support scroll-margin.
+(defcustom recenter-positions '(middle top bottom)
+  "Cycling order for `recenter-top-bottom'.
+A list of elements with possible values `top', `middle', `bottom',
+integer or float numbers that define the cycling order for
+the command `recenter-top-bottom'.
+
+Top and bottom destinations are the window top and bottom.  Middle
+redraws the frame and centers point vertically within the window.
+Integer number moves current line to the specified absolute
+window-line.  Float number between 0.0 and 1.0 means the percentage of
+the screen space from the top.  The default cycling order is middle ->
+top -> bottom."
+  :type '(repeat (choice
+		  (const :tag "Top" top)
+		  (const :tag "Middle" middle)
+		  (const :tag "Bottom" bottom)
+		  (integer :tag "Line number")
+		  (float :tag "Percentage")))
+  :version "23.2"
+  :group 'windows)
+
+(defun recenter-top-bottom (&optional arg)
+  "Move current buffer line to the specified window line.
+With no prefix argument, successive calls place point according
+to the cycling order defined by `recenter-positions'.
+
+A prefix argument is handled like `recenter':
+ With numeric prefix ARG, move current line to window-line ARG.
+ With plain `C-u', move current line to window center."
+  (interactive "P")
+  (cond
+   (arg (recenter arg))			; Always respect ARG.
+   (t
+    (setq recenter-last-op
+	  (if (eq this-command last-command)
+	      (car (or (cdr (member recenter-last-op recenter-positions))
+		       recenter-positions))
+	    (car recenter-positions)))
+    (cond ((eq recenter-last-op 'middle)
+	   (recenter))
+	  ((eq recenter-last-op 'top)
+	   (recenter 0))
+	  ((eq recenter-last-op 'bottom)
+	   (recenter -1))
+	  ((integerp recenter-last-op)
+	   (recenter recenter-last-op))
+	  ((floatp recenter-last-op)
+	   (recenter (round (* recenter-last-op (window-height)))))))))
 
 (defun backward-other-window (count &optional which-frames which-devices)
   "Select the COUNT'th different window on this frame, going backwards.

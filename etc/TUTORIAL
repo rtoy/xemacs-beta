@@ -71,11 +71,11 @@ The following commands are useful for viewing screenfuls:
 		 to the center of the window.
 		 (That's CONTROL-L, not CONTROL-1.)
 
->> Find the cursor, and note what text is near it.
-   Then type C-l.
-   Find the cursor again and notice that the same text
-   is near the cursor now.
-
+>> Find the cursor, and note what text is near it. Then type C-l.
+   Find the cursor again and notice that the same text is still near
+   the cursor, but now it is in the center of the screen.
+   If you press C-l again, this piece of text will move to the top of
+   the screen.  Press C-l again, and it moves to the bottom.
 
 * SOME TERMINOLOGY
 ------------------
@@ -1410,7 +1410,7 @@ found something unclear, don't sit and blame yourself - complain!
 COPYRIGHTS, COPYING, ORIGINS
 ----------------------------
 
-Copyright (c) 1985, 1996 Free Software Foundation.
+Copyright (c) 1985, 1996, 2012 Free Software Foundation.
 Copyright (c) 2001 Ben Wing.
 This tutorial is synched with FSF 21.0.106.
 

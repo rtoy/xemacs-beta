@@ -7606,6 +7606,20 @@ venn (Lisp_Object caller, int nargs, Lisp_Object *args, Boolint intersectionp)
   CHECK_LIST (liszt2);
 
   CHECK_KEY_ARGUMENT (key);
+ 
+  /* #### Consider refactoring these tests into callers, and/or optimizing
+     tests. */
+  if (EQ (caller, Qsubsetp))
+    {
+      if (NILP (liszt1))
+	{
+	  return Qt;
+	}
+      if (NILP (liszt2))
+        {
+	  return Qnil;
+        }
+    }
 
   if (NILP (liszt1) && intersectionp)
     {

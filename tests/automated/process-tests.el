@@ -1,4 +1,4 @@
-;; Copyright (C) 2011 Free Software Foundation, Inc.
+;; Copyright (C) 2011, 2012 Free Software Foundation, Inc.
 
 ;; Author: Mats Lidell <matsl@xemacs.org>
 ;; Maintainer: 
@@ -67,4 +67,18 @@
   (with-current-buffer "Output buffer" 
     (goto-char (point-min))
     (Assert (looking-at "foobar")))
-)
+  )
+
+;; call-process-shell-command
+(when (equal system-type 'linux)
+  (setenv "LANG" "C")
+
+  ;; Output one line
+  (Assert (= 0 (call-process-shell-command "echo hello")))
+
+  ;; Output to stderr but no error buffer
+  (Assert (= 0 (call-process-shell-command "echo -e \"barefoot\nfoobar\n\" 1>&2" nil "Output buffer")))
+  (with-current-buffer "Output buffer" 
+    (goto-char (point-min))
+    (Assert (looking-at "barefoot\n")))
+  )

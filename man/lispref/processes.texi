@@ -309,6 +309,13 @@ inputinput@point{}
 @end smallexample
 @end defun
 
+@defun call-process-shell-command command &optional infile destination display &rest args
+This function executes the shell command @var{command} synchronously.
+The final arguments @var{args} are additional arguments to add at the
+end of @var{command}.  The other arguments are handled as in
+@code{call-process}.
+@end defun
+
 @node MS-DOS Subprocesses
 @section MS-DOS Subprocesses
 
