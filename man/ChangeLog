@@ -1,3 +1,8 @@
+2012-12-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Mercurial Basics):
+	Update references to repository to reflect current reality.
+
 2012-12-28  Byrel Mitchell  <byrel.mitchell@gmail.com>
 
 	* lispref/menus.texi (Creating Menu Accelerators): Typo fix.

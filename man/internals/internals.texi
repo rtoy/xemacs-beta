@@ -6634,9 +6634,9 @@ XEmacs facilities.  @xref{Regression Testing XEmacs}.
 @cindex Mercurial techniques
 
 @dfn{Mercurial} is the @emph{distributed version control system} used to
-manage the XEmacs core code.  We plan to migrate the packages as well in
-the near future.  The command used is @code{hg}; the entire system is
-implemented as subcommands of the @code{hg} command.
+manage XEmacs code, both core and packages.  The VCS command is
+@file{hg}; the entire system is implemented as subcommands of the
+@file{hg} command.
 
 @menu
 * Mercurial Basics::
@@ -6660,10 +6660,14 @@ to stay on the leading edge.
 @subheading Documentation
 
 The primary online command for getting help on Mercurial is @code{hg
-help}.
+help}.  @code{hg help commands} lists the main commands, while @code{hg
+help @var{cmd}} provides a man-page like description of command
+@var{cmd}.
 
 @subheading What is the XEmacs repository URL?
 
+@uref{http://hg.xemacs.org/} is one place to start.  As of the date of
+writing, this points to our repositories on BitBucket.
 For up-to-date information about this, other information about accessing
 the repository @strong{including making your first clone of the
 repository}, and availability of branches, please refer to our website,
