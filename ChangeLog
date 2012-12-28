@@ -1,3 +1,13 @@
+2012-12-27  Robert D. Royar	<xemacs@royar.org>
+
+	Minor additions by Stephen J. Turnbull <stephen@xemacs.org>.
+
+	* INSTALL: correct typographical errors; update 
+	version numbers provided in Running Make section;
+	change default datadir reference to /usr/local/share
+	to match all other references to datadir's subdirectories;
+	change "can not" to "cannot".
+
 2012-11-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* INSTALL: Reorganize and update.
