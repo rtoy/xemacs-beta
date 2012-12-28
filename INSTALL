@@ -28,8 +28,8 @@ PREREQUISITES
 
 Modern systems generally have more than enough RAM and virtual memory to run
 XEmacs well.  If you run into an "insufficient memory" error when building
-or on the first execution, see the 'PROBLEMS' file.  In sufficient stack
-space is a separate problem, also address in 'PROBLEMS'.
+or on the first execution, see the 'PROBLEMS' file.  Insufficient stack
+space is a separate problem, also addressed in 'PROBLEMS'.
 
 Building XEmacs requires about 100 Mb of disk space (including the XEmacs
 sources).  Once installed, XEmacs occupies about 200 MB in the file system
@@ -136,7 +136,7 @@ help, or you think you have the right files installed but the built XEmacs
 doesn't seem to have all the corresponding features, check with the newsgroup
 'comp.emacs.xemacs' or the mailing list 'xemacs-beta@xemacs.org'.
 
-SELECTING configure OPTIONS
+SELECTING CONFIGURE OPTIONS
 ===========================
 
 Options are generally of the form `--with-FEATURE' to use a feature or
@@ -402,7 +402,7 @@ the following directories:
 `/usr/local/share/xemacs-VERSION/lisp' holds the basic Emacs Lisp libraries
                 (including core implementations of many Lisp primitives);
 		`VERSION' stands for the number of the XEmacs version
-		you are installing, like `19.14' or `21.5.31'.  Since
+		you are installing, like `21.4.22' or `21.5-b32'.  Since
 		the lisp libraries change from one version of XEmacs to
 		another, including the version number in the path
 		allows you to have several versions of XEmacs installed
@@ -500,7 +500,7 @@ PROBLEMS
 ========
 
 The most common problem is that you forgot to read and follow the directions
-for installing bootstrap packages in the FAQ.  You can not have a normal
+for installing bootstrap packages in the FAQ.  You cannot have a normal
 XEmacs without downloading some additional packages.
 
 See the file PROBLEMS in this directory for a list of various problems
@@ -760,17 +760,19 @@ is a complete list of the variables you may want to set.
 
 `datadir' indicates where to put the architecture-independent
 	read-only data files that XEmacs refers to while it runs; it
-	defaults to /usr/local/data.  We create the following
+	defaults to /usr/local/share.  We create the following
 	subdirectories under `datadir':
+
 	- `xemacs-VERSION/lisp', containing the XEmacs lisp libraries, and
 
 	- `xemacs-VERSION/etc', containing the XEmacs tutorial and the
 		`yow' database.
+
 	`VERSION' is the number of the XEmacs version you are installing,
-	like `18.59' or `19.14'.  Since these files vary from one version
-	of XEmacs to another, including the version number in the path
-	allows you to have several versions of XEmacs installed at the
-	same time; this means that you don't have to make XEmacs
+	like `21.4.22' or `21.5-b32'.  Since these files vary from one
+	version	of XEmacs to another, including the version number in the
+	path allows you to have several versions of XEmacs installed at
+	the same time; this means that you don't have to make XEmacs
 	unavailable while installing a new version.
 
 `datarootdir' indicates where to put the documentation.  (Usually,
@@ -884,7 +886,7 @@ for the subdirectories, so you don't have to specify them when running make
 in the subdirectories.
 
 Using GNU Make allows for simultaneous builds with and without the --srcdir
-option.
+option (see the section Running Configure).
 
 MAIL LOCKING
 ============
@@ -1176,6 +1178,10 @@ unnecessary directories leads to obscure problems (typically startup delays)
 if those directories are mounted over a network, and the automounter
 configuration changes.  Not all systems need this option; it's best to avoid
 using it if you can.
+
+To specify multiple directories in these commands, use a list delimited by
+spaces, colons, or commas.  You will need to protect space-delimited lists
+from shell parsing by quoting them.
 
 If you haven't built XEmacs 21.5 recently, the change from the configure
 script based on Autoconf 2.13 can be a shock.  Appendix: Correspondence to
