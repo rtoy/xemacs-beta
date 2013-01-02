@@ -635,18 +635,19 @@ indicating an accelerator key to a user.
 For example, the command
 
 @example
-(add-submenu nil '("%_Test"
+(add-submenu nil '("Te%_st"
                    ["One" (insert "1") :accelerator ?1 :active t]
                    ["%_Two" (insert "2")]
                    ["%_3" (insert "3")]))
 @end example
 
-will add a new menu to the top level menubar.  The new menu can be reached
-by pressing "t" while the top level menubar is active.  When the menu is
-active, pressing "1" will activate the first item and insert the character
-"1" into the buffer.  Pressing "T" will activate the second item and insert
-the character "2" into the buffer.  Pressing "3" will activate the third item
-and insert the character "3" into the buffer.
+will add a new menu to the top level menubar.  The new menu can be
+reached by pressing "s" while the top level menubar is active.  When
+the menu is active, pressing "1" will activate the first item and
+insert the character "1" into the buffer, pressing "t" will activate
+the second item and insert the character "2" into the buffer, and
+pressing "3" will activate the third item and insert the character "3"
+into the buffer.
 
 It is possible to activate the top level menubar itself using accelerator keys.
 @xref{Menu Accelerator Functions}.
