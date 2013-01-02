@@ -1,3 +1,8 @@
+2013-01-02  Vin Shelton  <acs@xemacs.org>
+
+	* lispref/menus.texi (Creating Menu Accelerators): Clarify that
+	the menu accelerator must be lowercase.
+
 2012-12-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs/programs.texi (Defuns): Improve description of `mark-defun'.
