@@ -1,5 +1,56 @@
 # DO NOT PUT A VERSION MARKER HERE, ADDED AT RELEASE
 
+Major Features, Bugfixes, and Backward Incompatible Changes
+
+-- Nothing major this time.
+
+User-Visible Bug Fixes and Improvements
+
+-- Fix: Implement :active in submenu specs. -- Byrel Mitchell
+-- Improve: Reorganize default menubar. -- Stephen J. Turnbull
+
+Build Infrastructure and Source Tree
+
+-- Fix: Prevent make distclean from deleting configure in modules. -- Mats Lidell
+-- Improve: Make configure warn about missing system package hierarchies. -- Stephen J. Turnbull
+
+Documentation
+
+-- Fix: Description of Mercurial repositories. -- Stephen J. Turnbull
+-- Fix: TUTORIAL to describe recenter-top-bottom correctly. -- Mats Lidell
+-- Improve: Description of `mark-defun'. -- Steven Mitchell
+-- Improve: Documentation of menus. -- Byrel Mitchell, Vin Shelton
+-- Improve: INSTALL. -- Steven Mitchell, Stephen J. Turnbull, Robert D. Royar
+
+Lisp API
+
+-- New: Adopt GNU's ## syntax for the interned symbol with the zero-length name. -- Aidan Kehoe
+-- New: Command remapping in keymaps from GNU. -- Aidan Kehoe
+-- New: call-process-shell-command from GNU. -- Mats Lidell
+-- New: delete-trailing-lines, delete-trailing-whitespace from GNU. -- Aidan Kehoe
+-- New: recenter-positions, recenter-top-bottom, recenter-last-op from GNU. -- Mats Lidell
+-- Improve: Accept GNU's UNIVERSAL argument in format-time-string. -- Aidan Kehoe
+-- Improve: Allow noninteractive call of self-insert-command with null count. -- Stephen J. Turnbull
+
+Internal API and Implementation
+
+-- Fix: Avoid malloc'ing inside search. -- Aidan Kehoe
+-- Fix: GCPRO etc in define-specifier-tag. -- Aidan Kehoe
+-- Fix: Incorrect handling of empty sets in subsetp. -- Stephen J. Turnbull, Benson Mitchell, Steven Mitchell
+-- Fix: Inhibit error at compile time in equal, member, assoc, rassoc. -- Aidan Kehoe
+-- Fix: Regexp in describe-register-1. -- Stephen Turnbull, Mats Lidell
+-- Fix: Respect face and display table information in the minibuffer prompt. -- Aidan Kehoe
+-- Improve: Charset not in table warning message. -- Stephen J. Turnbull
+-- Improve: find-coding-system-magic-cookie-in-file moved to C. -- Aidan Kehoe
+
+Testing and Debugging
+
+-- New: Simple test cases for call-process-shell-command. -- Mats Lidell
+-- New: Test regular expression in describe-register-1. -- Mats Lidell
+-- New: Test search for character ranges with dirty syntax table. -- Aidan Kehoe
+-- New: Test the new command remapping functionality. -- Aidan Kehoe
+-- New: Tests of #'subsetp. -- Stephen J. Turnbull, Steven Mitchell, Benson Mitchell
+
 to XEmacs 21.5.32 "habanero"
 
 Major Features, Bugfixes, and Backward Incompatible Changes
