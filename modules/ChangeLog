@@ -1,3 +1,7 @@
+2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.33 "horseradish" is released.
+
 2012-10-15  Mats Lidell  <matsl@xemacs.org>
 
 	* common/Makefile.common (distclean): Don't delete configure.

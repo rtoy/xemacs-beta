@@ -1,3 +1,7 @@
+2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.33 "horseradish" is released.
+
 2013-01-02  Vin Shelton  <acs@xemacs.org>
 
 	* lispref/menus.texi (Creating Menu Accelerators): Clarify that
