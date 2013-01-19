@@ -1,3 +1,37 @@
+2013-01-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-gtk.h: Declare gtk_draw_pixbuf.
+
+	* frame-gtk.c (gtk_set_frame_icon): Use GdkPixbuf.
+	(gtk_update_frame_external_traits): Comment out unused code.
+
+	* glyphs-gtk.h (g): Use GdkPixbuf in image instance.
+
+	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Return GdkPixbuf, not GdkPixmap
+	(gtk_finalize_image_instance): Unref GdkPixbuf correctly.
+	(gtk_initialize_pixmap_image_instance): Allocate GdkPixbuf* now.
+	(image_instance_convert_to_pointer): Use GdkPixbuf.
+	(init_image_instance_from_gdk_pixbuf): Use GdkPixbuf.
+	(image_instance_add_gdk_pixbuf): Use GdkPixbuf.
+	(gtk_init_image_instance_from_eimage): Use GdkPixbuf.
+	(pixbuf_from_xbm_inline): Define.
+	(init_image_instance_from_xbm_inline): Use GdkPixbuf. (Needs more work.)
+	(gtk_xpm_instantiate): Use GdkPixbuf.
+
+	* redisplay-gtk.c (XLIKE_clear_region): bcolor parameter is used.
+	(XLIKE_clear_frame): Use just gdk_clear_window.
+	(gtk_draw_pixbuf): Renamed from our_draw_bitmap. Use gdk_draw_pixbuf.
+	(XLIKE_text_width): Only call pango for proportional fonts.
+	(XLIKE_output_string): Call XLIKE_text_width the proper args.
+	(XLIKE_output_xlike_pixmap): Define.
+	(XLIKE_output_pixmap): Define.
+
+	* redisplay-xlike-inc.c: Fix declaration of XLIKE_text_width.  Add
+	declaration for XLIKE_output_pixmap.
+	(XLIKE_get_gc): GdkGC can't use GdkPixbuf for background.
+	(XLIKE_output_xlike_pixmap): This version is for X only.
+	(XLIKE_output_pixmap): This version is for X only.
+
 2012-12-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-Xt.c:
@@ -5,7 +39,7 @@
 	Move this here, from events-xlike-inc.c.
 	* event-gtk.c (gtk_keysym_to_emacs_keysym):
 	Mule-ize this. Use gdk_keyval_to_unicode(), it's always available
-	on GTK 2. 
+	on GTK 2.
 	* event-xlike-inc.c:
 	Remove xlike_keysym_to_character.
 	* events.h (KEYSYM_MASSAGING_NAME):
