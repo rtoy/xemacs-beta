@@ -1153,21 +1153,18 @@ gtk_mark_frame (struct frame *f)
 static void
 gtk_set_frame_icon (struct frame *f)
 {
-  GdkPixmap *gtk_pixmap = NULL, *gtk_mask = NULL;
+  GdkPixbuf *gtk_pixbuf = NULL;
+  GList *icons = NULL;
 
   if (IMAGE_INSTANCEP (f->icon)
       && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (f->icon)))
     {
-      gtk_pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (f->icon);
-      gtk_mask = XIMAGE_INSTANCE_GTK_MASK (f->icon);
+      gtk_pixbuf = XIMAGE_INSTANCE_GTK_PIXMAP (f->icon);
+      icons = g_list_append(icons, gtk_pixbuf);
+      gdk_window_set_icon_list
+	(GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f)), icons);
+      g_list_free (icons);
     }
-  else
-    {
-      gtk_pixmap = 0;
-      gtk_mask = 0;
-    }
-
-  gdk_window_set_icon (GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f)), NULL, gtk_pixmap, gtk_mask);
 }
 
 static void
@@ -1450,11 +1447,12 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
   if (EQ (name, Qforeground))
    {
      Lisp_Object color = FACE_FOREGROUND (Vdefault_face, frame);
-     GdkColor *fgc;
 
      if (!EQ (color, Vthe_null_color_instance))
        {
-	 fgc = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (color));
+	 /*
+	   GdkColor *fgc = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (color));
+	 */
 	 /* #### BILL!!! The X code set the XtNforeground property of
 	    the text widget here.  Why did they bother?  All that type
 	    of thing is done down in the guts of the redisplay code,

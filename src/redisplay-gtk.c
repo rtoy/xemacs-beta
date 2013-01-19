@@ -68,23 +68,33 @@ static void
 XLIKE_clear_frame (struct frame *f)
 {
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  GdkWindow *w = gtk_widget_get_window (widget);
+
+  if (w)
+    gdk_window_clear (w);
+
+#if 0
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-  int x, y, width, height;
+  /* int x, y, width, height; */
   Lisp_Object frame;
 
   /* #### GEOM! This clears the internal border and gutter (and scrollbars)
      but not the toolbar.  Correct? */
-  x = FRAME_LEFT_INTERNAL_BORDER_START (f);
-  width = (FRAME_RIGHT_INTERNAL_BORDER_END (f) - x);
+  /*
+    x = FRAME_LEFT_INTERNAL_BORDER_START (f);
+    width = (FRAME_RIGHT_INTERNAL_BORDER_END (f) - x);
+  */
   /* #### This adjustment by 1 should be being done in the macros.
      There is some small differences between when the menubar is on
      and off that we still need to deal with.  The adjustment also occurs in
      redisplay_clear_top_of_window(). */
-  y = FRAME_TOP_INTERNAL_BORDER_START (f) - 1;
-  height = (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - y);
+  /*
+    y = FRAME_TOP_INTERNAL_BORDER_START (f) - 1;
+    height = (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - y);
+  */
 
-  cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-  gtk_fill_rectangle (cr, x, y, width, height);
+  /* cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR); */
+  /* gtk_fill_rectangle (cr, x, y, width, height); */
 
   frame = wrap_frame (f);
 
@@ -94,6 +104,8 @@ XLIKE_clear_frame (struct frame *f)
     {
       XLIKE_clear_frame_windows (f->root_window);
     }
+  cairo_destroy (cr);
+  #endif
 }
 
 /*****************************************************************************
@@ -471,11 +483,10 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, cairo_t *cr,
   pango_attr_list_unref (attr_list);
 }
 
-#ifdef NOTUSED
 static void
-our_draw_bitmap (GdkDrawable *drawable,
+gtk_draw_pixbuf (GdkDrawable *drawable,
 		 GdkGC       *gc,
-		 GdkPixmap   *src,
+		 GdkPixbuf   *src,
 		 gint         xsrc,
 		 gint         ysrc,
 		 gint         xdest,
@@ -489,6 +500,7 @@ our_draw_bitmap (GdkDrawable *drawable,
   g_return_if_fail (src != NULL);
   g_return_if_fail (gc != NULL);
 
+  /*
   gdk_drawable_get_size (src, &src_width, &src_height);
 
   if (width == -1)
@@ -496,12 +508,15 @@ our_draw_bitmap (GdkDrawable *drawable,
   if (height == -1)
     height = src_height;
 
-  gdk_draw_drawable(drawable, gc, src, xsrc, ysrc, xdest, ydest,
-                    width, height);
+  */
+  gdk_draw_pixbuf(drawable, gc, src, xsrc, ysrc, xdest, ydest,
+                  -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
+  /*
+  gdk_pixbuf_render_to_drawable (src, drawable, xsrc, ysrc, xdest, ydest,
+                                 width, height, GDK_RGB_DITHER_NONE,
+                                 0, 0);
+  */
 }
-
-#endif
-
 
 /* XLIKE_text_width
 
@@ -509,21 +524,16 @@ our_draw_bitmap (GdkDrawable *drawable,
    when displayed in the fonts associated with the face. */
 
 static int
-XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
+XLIKE_text_width (struct window *w, struct face_cachel *cachel,
 		  const Ichar *str, Charcount len)
 {
   Ibyte *int_storage = alloca_ibytes (MAX_ICHAR_LEN * len);
   Ibyte *int_storage_ptr = int_storage;
   Extbyte *alloca_ext_storage;
   Bytecount extbytes = 0;
+  gint width = 0;
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
   Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
-  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
-  gint width, height;
-  PangoContext *context = gtk_widget_get_pango_context (widget);
-  PangoLayout *layout = pango_layout_new (context);
-  PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
-  PangoAttrList *attr_list = pango_attr_list_new ();
   int ii;
 
   for (ii = 0; ii < len; ii++)
@@ -535,24 +545,38 @@ XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
                       ALLOCA, (alloca_ext_storage, extbytes),
                       Qutf_8);
 
-  if (cachel->strikethru)
+  if (!fi->proportional_p)
     {
-      pango_attr_list_insert (attr_list, pango_attr_strikethrough_new (TRUE));
+      width = fi->width * extbytes;
     }
+  else
+    {
+      GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (WINDOW_XFRAME (w));
+      gint height;
+      PangoContext *context = gtk_widget_get_pango_context (widget);
+      PangoLayout *layout = pango_layout_new (context);
+      PangoFontDescription *pfd = FONT_INSTANCE_GTK_FONT_DESC (fi);
+      PangoAttrList *attr_list = pango_attr_list_new ();
 
-  if (cachel->underline)
-    {
-      pango_attr_list_insert (attr_list,
-                              pango_attr_underline_new
-                              (PANGO_UNDERLINE_SINGLE));
+      if (cachel->strikethru)
+        {
+          pango_attr_list_insert (attr_list, pango_attr_strikethrough_new (TRUE));
+        }
+
+      if (cachel->underline)
+        {
+          pango_attr_list_insert (attr_list,
+                                  pango_attr_underline_new
+                                  (PANGO_UNDERLINE_SINGLE));
+        }
+
+      pango_layout_set_attributes (layout, attr_list);
+      pango_layout_set_font_description (layout, pfd);
+      pango_layout_set_text (layout, (const char *) alloca_ext_storage, extbytes);
+      pango_layout_get_pixel_size (layout, &width, &height);
+      g_object_unref (layout);
+      pango_attr_list_unref (attr_list);
     }
-  
-  pango_layout_set_attributes (layout, attr_list);
-  pango_layout_set_font_description (layout, pfd);
-  pango_layout_set_text (layout, (const char *) alloca_ext_storage, extbytes);
-  pango_layout_get_pixel_size (layout, &width, &height);
-  g_object_unref (layout);
-  pango_attr_list_unref (attr_list);
   return width;
 }
 
@@ -685,7 +709,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   int clip_end;
-  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
 
   /* Cursor-related variables */
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
@@ -707,7 +731,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     assert (Dynarr_length (buf) == 1);
 
   if (width < 0)
-    width = XLIKE_text_width (f, cachel, Dynarr_begin (buf),
+    width = XLIKE_text_width (w, cachel, Dynarr_begin (buf),
 			      Dynarr_length (buf));
 
   /* Regularize the variables passed in. */
@@ -912,5 +936,130 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	}
 
       cairo_destroy (cr);
+    }
+}
+
+static void
+XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
+			   int y, int xoffset, int yoffset,
+			   int width, int height,
+			   XLIKE_COLOR fg, XLIKE_COLOR bg,
+			   XLIKE_GC override_gc)
+{
+  struct device *d = XDEVICE (f->device);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc;
+  XLIKE_GCVALUES gcv;
+  unsigned long pixmap_mask;
+
+  if (!override_gc)
+    {
+      memset (&gcv, ~0, sizeof (gcv));
+      gcv.graphics_exposures = XLIKE_FALSE;
+      XLIKE_SET_GC_COLOR (gcv.foreground, fg);
+      XLIKE_SET_GC_COLOR (gcv.background, bg);
+      pixmap_mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
+
+      if (IMAGE_INSTANCE_XLIKE_MASK (p))
+	{
+	  gcv.function = XLIKE_GX_COPY;
+	  gcv.clip_mask = IMAGE_INSTANCE_XLIKE_MASK (p);
+	  gcv.clip_x_origin = x - xoffset;
+	  gcv.clip_y_origin = y - yoffset;
+	  pixmap_mask |= (XLIKE_GC_FUNCTION | XLIKE_GC_CLIP_MASK |
+			  XLIKE_GC_CLIP_X_ORIGIN |
+			  XLIKE_GC_CLIP_Y_ORIGIN);
+	  /* Can't set a clip rectangle below because we already have a mask.
+	     We could conceivably create a new clipmask by zeroing out
+	     everything outside the clip region.  Is it worth it?
+	     Is it possible to get an equivalent effect by changing the
+	     args to XCopyArea below rather than messing with a clip box?
+	     - dkindred@cs.cmu.edu
+	     Yes. We don't clip at all now - andy@xemacs.org
+	  */
+	}
+
+      gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, pixmap_mask);
+    }
+  else
+    {
+      gc = override_gc;
+      /* override_gc might have a mask already--we don't want to nuke it.
+	 Maybe we can insist that override_gc have no mask, or use
+	 one of the suggestions above. */
+    }
+
+  if (IMAGE_INSTANCE_PIXMAP_DEPTH (p) > 0)
+    {
+      USED (dpy);
+      gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc,
+		       IMAGE_INSTANCE_GTK_PIXMAP (p),
+		       xoffset, yoffset, x, y, width, height);
+    }
+  else
+    {
+      USED (dpy);
+      gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc,
+		       IMAGE_INSTANCE_GTK_PIXMAP (p),
+		       xoffset, yoffset, x, y, width, height);
+    }
+}
+
+static void
+XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
+		     struct display_box *db, struct display_glyph_area *dga,
+		     face_index findex, int cursor_start, int cursor_width,
+		     int cursor_height, int UNUSED (bg_pixmap))
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+
+  /* Output the pixmap. */
+  {
+    Lisp_Object tmp_pixel;
+    XLIKE_COLOR tmp_bcolor, tmp_fcolor;
+
+    tmp_pixel = WINDOW_FACE_CACHEL_FOREGROUND (w, findex);
+    tmp_fcolor = XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel);
+    tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, findex);
+    tmp_bcolor = XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel);
+
+    XLIKE_output_xlike_pixmap (f, p, db->xpos, db->ypos,
+			       dga->xoffset, dga->yoffset,
+			       dga->width, dga->height,
+			       tmp_fcolor, tmp_bcolor, 0);
+  }
+
+  /* Draw a cursor over top of the pixmap. */
+  if (cursor_width && cursor_height && (cursor_start >= db->xpos)
+      && !NILP (w->text_cursor_visible_p)
+      && (cursor_start < db->xpos + dga->width))
+    {
+      XLIKE_GC gc;
+      int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
+      struct face_cachel *cursor_cachel =
+	WINDOW_FACE_CACHEL (w,
+			    get_builtin_face_cache_index
+			    (w, Vtext_cursor_face));
+
+      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil,
+			 Qnil);
+
+      if (cursor_width > db->xpos + dga->width - cursor_start)
+	cursor_width = db->xpos + dga->width - cursor_start;
+
+      if (focus)
+	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
+			      cursor_width, cursor_height);
+      else
+	{
+	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
+				cursor_width, cursor_height);
+	}
     }
 }
