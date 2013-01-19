@@ -164,26 +164,29 @@ Lisp_Object Vgtk_cursor_names;
 
 /* Convert from a series of RGB triples to a GdkPixbuf. */
 static GdkPixbuf *
-convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
-			    unsigned char *pic, unsigned long **pixtbl,
-			    int *npixels)
+convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
+			     unsigned char *pic, unsigned long **pixtbl,
+			     int *npixels)
 {
   GdkColormap *cmap;
   GdkVisual *vis;
   GdkPixbuf *out;
-  int depth, byte_cnt, i, j;
+  int i, j;
+  /* int depth, byte_cnt; */
   int rowstride, n_channels;
-  int rd,gr,bl,q;
+  int rd,gr,bl;
   guchar *data, *ip, *dp = NULL;
   quant_table *qtable = NULL;
+  /*
   union {
     UINT_32_BIT val;
     char cp[4];
   } conv;
+  */
 
   cmap = DEVICE_GTK_COLORMAP (XDEVICE(device));
   vis = DEVICE_GTK_VISUAL (XDEVICE(device));
-  depth = DEVICE_GTK_DEPTH(XDEVICE(device));
+  /* depth = DEVICE_GTK_DEPTH(XDEVICE(device)); */
 
   if (vis->type == GDK_VISUAL_GRAYSCALE || vis->type == GDK_VISUAL_STATIC_COLOR ||
       vis->type == GDK_VISUAL_STATIC_GRAY)
@@ -208,7 +211,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
   if (!out)
     return NULL;
 
-  byte_cnt = 4;
+  /* byte_cnt = 4; */
   rowstride = gdk_pixbuf_get_rowstride (out);
   n_channels = gdk_pixbuf_get_n_channels (out);
 
@@ -216,7 +219,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 
   if (!data)
     return NULL;
-  
+
   if (vis->type == GDK_VISUAL_PSEUDO_COLOR)
     {
       unsigned long pixarray[256];
@@ -225,7 +228,6 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
       pixcount = 32;
       *pixtbl = xnew_array (unsigned long, pixcount);
       *npixels = 0;
-
       /* ### should implement a sort by popularity to assure proper allocation */
       n = *npixels;
       for (i = 0; i < qtable->num_active_colors; i++)
@@ -424,7 +426,7 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 
 	  if (IMAGE_INSTANCE_GTK_MASK (p) &&
 	      IMAGE_INSTANCE_GTK_MASK (p) != IMAGE_INSTANCE_GTK_PIXMAP (p))
-	    gdk_pixmap_unref (IMAGE_INSTANCE_GTK_MASK (p));
+	    g_object_unref (IMAGE_INSTANCE_GTK_MASK (p));
 	  IMAGE_INSTANCE_PIXMAP_MASK (p) = 0;
 
 	  if (IMAGE_INSTANCE_GTK_PIXMAP_SLICES (p))
@@ -432,7 +434,7 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 	      for (i = 0; i < IMAGE_INSTANCE_PIXMAP_MAXSLICE (p); i++)
 		if (IMAGE_INSTANCE_GTK_PIXMAP_SLICE (p,i))
 		  {
-		    gdk_pixmap_unref (IMAGE_INSTANCE_GTK_PIXMAP_SLICE (p,i));
+		    g_object_unref (IMAGE_INSTANCE_GTK_PIXMAP_SLICE (p,i));
 		    IMAGE_INSTANCE_GTK_PIXMAP_SLICE (p, i) = 0;
 		  }
 	      xfree (IMAGE_INSTANCE_GTK_PIXMAP_SLICES (p));
@@ -531,7 +533,7 @@ gtk_initialize_pixmap_image_instance (struct Lisp_Image_Instance *ii,
   ii->data = xnew_and_zero (struct gtk_image_instance_data);
   IMAGE_INSTANCE_PIXMAP_MAXSLICE (ii) = slices;
   IMAGE_INSTANCE_GTK_PIXMAP_SLICES (ii) =
-    xnew_array_and_zero (GdkPixmap *, slices);
+    xnew_array_and_zero (GdkPixbuf *, slices);
   IMAGE_INSTANCE_TYPE (ii) = type;
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) = Qnil;
   IMAGE_INSTANCE_PIXMAP_MASK_FILENAME (ii) = Qnil;
@@ -599,18 +601,11 @@ gtk_locate_pixmap_file (Lisp_Object name)
   }
 }
 
-static Lisp_Object
-locate_pixmap_file (Lisp_Object name)
-{
-  return gtk_locate_pixmap_file (name);
-}
-
 
 /************************************************************************/
 /*                           cursor functions                           */
 /************************************************************************/
 
-#ifdef HAVE_GTK
 static void
 register_cursor_name (const char *real_name, int value)
 {
@@ -731,12 +726,10 @@ register_cursor_names (void)
       Vgtk_cursor_names = Fnreverse (Vgtk_cursor_names);
     }
 }
-#endif
 
 /* Check that this server supports cursors of size WIDTH * HEIGHT.  If
    not, signal an error.  INSTANTIATOR is only used in the error
    message. */
-
 static void
 check_pointer_sizes (GdkDisplay *display, guint width, guint height,
 		     Lisp_Object instantiator)
@@ -818,10 +811,12 @@ image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
 				   Lisp_Object pointer_bg)
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-  GdkPixmap *pixmap = IMAGE_INSTANCE_GTK_PIXMAP (ii);
-  GdkPixmap *mask = (GdkPixmap *) IMAGE_INSTANCE_GTK_MASK (ii);
+  GtkWidget *widget = DEVICE_GTK_APP_SHELL (XDEVICE (device));
+  GdkDisplay *display = gtk_widget_get_display(widget);
+  GdkPixbuf *pixbuf = IMAGE_INSTANCE_GTK_PIXMAP (ii);
+  /* GdkPixbuf *mask = (GdkPixbuf *) IMAGE_INSTANCE_GTK_MASK (ii); */
   GdkColor fg, bg;
-  int xhot = 0, yhot = 0;
+  gint xhot = 0, yhot = 0;
   int w, h;
 
   if (FIXNUMP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
@@ -835,25 +830,12 @@ image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
                        (DEVICE_GTK_APP_SHELL (XDEVICE (device))),
                        w, h, instantiator);
 
-  /* If the loaded pixmap has colors allocated (meaning it came from an
-     XPM file), then use those as the default colors for the cursor we
-     create.  Otherwise, default to pointer_fg and pointer_bg.
-  */
-  if (DEVICE_GTK_DEPTH (XDEVICE (device)) > 1)
-    {
-      warn_when_safe (Qunimplemented, Qnotice,
-		      "GTK does not support XPM cursors...\n");
-      IMAGE_INSTANCE_GTK_CURSOR (ii) = gdk_cursor_new (GDK_COFFEE_MUG);
-    }
-  else
-    {
-      generate_cursor_fg_bg (device, &pointer_fg, &pointer_bg,
-			     &fg, &bg);
-      IMAGE_INSTANCE_PIXMAP_FG (ii) = pointer_fg;
-      IMAGE_INSTANCE_PIXMAP_BG (ii) = pointer_bg;
-      IMAGE_INSTANCE_GTK_CURSOR (ii) =
-	gdk_cursor_new_from_pixmap (pixmap, mask, &fg, &bg, xhot, yhot);
-    }
+  generate_cursor_fg_bg (device, &pointer_fg, &pointer_bg,
+			 &fg, &bg);
+  IMAGE_INSTANCE_PIXMAP_FG (ii) = pointer_fg;
+  IMAGE_INSTANCE_PIXMAP_BG (ii) = pointer_bg;
+  IMAGE_INSTANCE_GTK_CURSOR (ii) =
+    gdk_cursor_new_from_pixbuf (display, pixbuf, xhot, yhot);
 }
 
 /* Initialize an image instance from an XImage.
@@ -877,27 +859,25 @@ image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
    Use the same code as for `xpm'. */
 
 static void
-init_image_instance_from_gdk_image (struct Lisp_Image_Instance *ii,
-				    GdkImage *gdk_image,
-				    int dest_mask,
-				    GdkColormap *cmap,
-				    unsigned long *pixels,
-				    int npixels,
-				    int slices,
-				    Lisp_Object instantiator,
-				    Lisp_Object pointer_fg,
-				    Lisp_Object pointer_bg)
+init_image_instance_from_gdk_pixbuf (struct Lisp_Image_Instance *ii,
+				     GdkPixbuf *gdk_pixbuf,
+				     int dest_mask,
+				     GdkColormap * UNUSED(cmap),
+				     unsigned long *pixels,
+				     int npixels,
+				     int slices,
+				     Lisp_Object instantiator,
+				     Lisp_Object pointer_fg,
+				     Lisp_Object pointer_bg)
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-  GdkGC *gc;
-  GdkWindow *d;
-  GdkPixmap *pixmap;
+  /* GdkWindow *d; */
   enum image_instance_type type;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
     gui_error ("Not a Gtk device", device);
 
-  d = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
+  /* d = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device))); */
 
   if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
     type = IMAGE_COLOR_PIXMAP;
@@ -908,111 +888,34 @@ init_image_instance_from_gdk_image (struct Lisp_Image_Instance *ii,
 			      IMAGE_COLOR_PIXMAP_MASK
 			      | IMAGE_POINTER_MASK);
 
-  pixmap = gdk_pixmap_new (d, gdk_image->width, gdk_image->height, gdk_image->depth);
-  if (!pixmap)
-    gui_error ("Unable to create pixmap", instantiator);
-
-  gc = gdk_gc_new (pixmap);
-  if (!gc)
-    {
-      gdk_pixmap_unref (pixmap);
-      gui_error ("Unable to create GC", instantiator);
-    }
-
-  gdk_draw_image (GDK_DRAWABLE (pixmap), gc, gdk_image,
-		  0, 0, 0, 0, gdk_image->width, gdk_image->height);
-
-  g_object_unref (gc);
-
   gtk_initialize_pixmap_image_instance (ii, slices, IMAGE_COLOR_PIXMAP);
 
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) =
     find_keyword_in_vector (instantiator, Q_file);
-
-  IMAGE_INSTANCE_GTK_PIXMAP (ii) = pixmap;
+  IMAGE_INSTANCE_GTK_PIXMAP (ii) = gdk_pixbuf;
   IMAGE_INSTANCE_PIXMAP_MASK (ii) = 0;
-  IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = gdk_image->width;
-  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = gdk_image->height;
-  IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = gdk_image->depth;
-  IMAGE_INSTANCE_GTK_COLORMAP (ii) = cmap;
-  IMAGE_INSTANCE_GTK_PIXELS (ii) = pixels;
-  IMAGE_INSTANCE_GTK_NPIXELS (ii) = npixels;
+  IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = gdk_pixbuf_get_width (gdk_pixbuf);
+  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = gdk_pixbuf_get_height (gdk_pixbuf);
+  IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = gdk_pixbuf_get_bits_per_sample (gdk_pixbuf);
+  IMAGE_INSTANCE_GTK_COLORMAP (ii) = 0;
+  IMAGE_INSTANCE_GTK_PIXELS (ii) = 0;
+  IMAGE_INSTANCE_GTK_NPIXELS (ii) = 0;
 
+  g_object_ref (gdk_pixbuf);
+  
   if (type == IMAGE_POINTER)
     image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
 				       pointer_bg);
 }
 
-#if 0
-void init_image_instance_from_gdk_pixmap (struct Lisp_Image_Instance *ii,
-					  struct device *device,
-					  GdkPixmap *gdk_pixmap,
-					  int dest_mask,
-					  Lisp_Object instantiator)
-{
-  GdkWindow *d;
-  gint width, height, depth;
-
-  assert (DEVICE_GTK_P (device));
-
-  IMAGE_INSTANCE_DEVICE (ii) = device;
-  IMAGE_INSTANCE_TYPE (ii) = IMAGE_COLOR_PIXMAP;
-
-  d = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (device));
-
-  if (!(dest_mask & IMAGE_COLOR_PIXMAP_MASK))
-    incompatible_image_types (instantiator, dest_mask,
-			      IMAGE_COLOR_PIXMAP_MASK);
-
-  gtk_initialize_pixmap_image_instance (ii, IMAGE_COLOR_PIXMAP);
-
-  depth = gdk_drawable_get_depth (pixmap);
-  gdk_drawable_get_size (pixmap, &w, &h);
-
-  IMAGE_INSTANCE_PIXMAP_FILENAME (ii) = Qnil;
-  IMAGE_INSTANCE_GTK_PIXMAP (ii) = gdk_pixmap;
-  IMAGE_INSTANCE_PIXMAP_MASK (ii) = 0;
-  IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = width;
-  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = height;
-  IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = depth;
-  IMAGE_INSTANCE_GTK_COLORMAP (ii) = gdk_window_get_colormap (gdk_pixmap);
-  IMAGE_INSTANCE_GTK_PIXELS (ii) = 0;
-  IMAGE_INSTANCE_GTK_NPIXELS (ii) = 0;
-}
-#endif
-
 static void
-image_instance_add_gdk_image (Lisp_Image_Instance *ii,
-			      GdkImage *gdk_image,
-			      int slice,
-			      Lisp_Object instantiator)
+image_instance_add_gdk_pixbuf (Lisp_Image_Instance *ii,
+			       GdkPixbuf *gdk_pixbuf,
+			       int slice,
+			       Lisp_Object UNUSED (instantiator))
 {
-  Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-  GdkWindow *d;
-  GdkPixmap *pixmap;
-  GdkGC *gc;
-
-  d = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
-
-  pixmap = gdk_pixmap_new (d, gdk_image->width, gdk_image->height, gdk_image->depth);
-
-  if (!pixmap)
-    gui_error ("Unable to create pixmap", instantiator);
-
-  gc = gdk_gc_new (pixmap);
-
-  if (!gc)
-    {
-      gdk_pixmap_unref (pixmap);
-      gui_error ("Unable to create GC", instantiator);
-    }
-
-  gdk_draw_image (GDK_DRAWABLE (pixmap), gc, gdk_image, 0, 0, 0, 0,
-		  gdk_image->width, gdk_image->height);
-
-  g_object_unref (gc);
-
-  IMAGE_INSTANCE_GTK_PIXMAP_SLICE (ii, slice) = pixmap;
+  g_object_ref (gdk_pixbuf);
+  IMAGE_INSTANCE_GTK_PIXMAP_SLICE (ii, slice) = gdk_pixbuf;
 }
 
 static void
@@ -1031,47 +934,87 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
   unsigned long *pixtbl = NULL;
   int npixels = 0;
   int slice;
-  GdkImage* gdk_image;
-
+  GdkPixbuf *gdk_pixbuf;
 
   for (slice = 0; slice < slices; slice++)
     {
-      gdk_image = (GdkImage *)convert_EImage_to_GDKImage (device, width, height, eimage,
-					      &pixtbl, &npixels);
-      if (!gdk_image)
+      gdk_pixbuf = convert_EImage_to_GDKPixbuf (device, width, height, eimage,
+						&pixtbl, &npixels);
+      if (!gdk_pixbuf)
 	{
 	  if (pixtbl)
 	    xfree (pixtbl);
-	  signal_image_error("EImage to GdkImage conversion failed", instantiator);
+	  signal_image_error("EImage to GdkPixbuf conversion failed",
+			     instantiator);
 	}
 
       if (slice == 0)
 	/* Now create the pixmap and set up the image instance */
-	init_image_instance_from_gdk_image (ii, gdk_image, dest_mask,
-					    cmap, pixtbl, npixels, slices,
-					    instantiator, pointer_fg,
-					    pointer_bg);
+	init_image_instance_from_gdk_pixbuf (ii, gdk_pixbuf, dest_mask,
+					     cmap, pixtbl, npixels, slices,
+					     instantiator, pointer_fg,
+					     pointer_bg);
       else
-	image_instance_add_gdk_image (ii, gdk_image, slice, instantiator);
+	image_instance_add_gdk_pixbuf (ii, gdk_pixbuf, slice, instantiator);
 
-      if (gdk_image)
+      if (gdk_pixbuf)
 	{
-	  gdk_image_destroy (gdk_image);
+	  g_object_unref (gdk_pixbuf);
 	}
-      gdk_image = 0;
+      gdk_pixbuf = 0;
     }
 }
 
-/* Given inline data for a mono pixmap, create and return the
-   corresponding X object. */
+/* with help from glyphs-msw.c */
 
-static GdkPixmap *
-pixmap_from_xbm_inline (Lisp_Object device, int width, int height,
+/* the bitmap data comes in the following format: Widths are padded to
+   a multiple of 8.  Scan lines are stored in increasing byte order
+   from left to right, little-endian within a byte.  0 = white, 1 =
+   black. */
+
+static GdkPixbuf *
+pixbuf_from_xbm_inline (Lisp_Object UNUSED (device), int width, int height,
 			/* Note that data is in ext-format! */
 			const Extbyte *bits)
 {
-    return (gdk_bitmap_create_from_data (GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device))),
-					 (char *) bits, width, height));
+  GdkPixbuf *out = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, width, height);
+  int old_width = (width + 7) / 8;
+  int rowstride;
+  int n_channels;
+  int i, j, k;
+  guchar *data = NULL;
+
+  if (out == NULL)
+    return NULL;
+
+  rowstride = gdk_pixbuf_get_rowstride (out);
+  n_channels = gdk_pixbuf_get_n_channels (out);
+  data = gdk_pixbuf_get_pixels (out);
+
+  for (i = 0; i < height; i++)
+    {
+      const Extbyte *base = bits + i * ((width+7)/8);
+
+      for (j = 0; j < width; j++)
+	{
+	  guchar bite = base[j / 8];
+	  int bitpos = j % 8;
+	  /* XXX what if bigendian? */
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+	  int bit = bite & (1 << bitpos);
+#else
+	  /* untested */
+	  int bit = bite & (0x10 >> (7-bitpos));
+#endif
+	  gint pixel = (bit == 0) ? 0xff : 0;
+	  guchar *dp = data + i * rowstride + j * n_channels;
+
+	  for (k = 0; k < n_channels; k++)
+	    *dp++ = pixel;
+	}
+    }
+
+  return out;
 }
 
 /* Given inline data for a mono pixmap, initialize the given
@@ -1086,7 +1029,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 				     Lisp_Object pointer_fg,
 				     Lisp_Object pointer_bg,
 				     int dest_mask,
-				     GdkPixmap *mask,
+				     GdkPixbuf *mask,
 				     Lisp_Object UNUSED (mask_filename))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -1136,7 +1079,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
     case IMAGE_MONO_PIXMAP:
       {
 	IMAGE_INSTANCE_GTK_PIXMAP (ii) =
-	  pixmap_from_xbm_inline (device, width, height, (Extbyte *) bits);
+	  pixbuf_from_xbm_inline (device, width, height, (Extbyte *) bits);
       }
       break;
 
@@ -1167,7 +1110,8 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	IMAGE_INSTANCE_PIXMAP_FG (ii) = foreground;
 	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
 	IMAGE_INSTANCE_GTK_PIXMAP (ii) =
-	    gdk_pixmap_create_from_data (draw, (char *) bits, width, height, d, &fg, &bg);
+	  gdk_pixbuf_new_from_data ((guchar *)bits, GDK_COLORSPACE_RGB, 0,
+				    1, width, height, 8, NULL, NULL);
 	IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = d;
       }
       break;
@@ -1219,7 +1163,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
-  GdkPixmap *mask = 0;
+  GdkPixbuf *mask = 0;
   const Extbyte *gcc_may_you_rot_in_hell;
 
   if (!NILP (mask_data))
@@ -1228,7 +1172,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 	LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (mask_data))),
 				 Qfile_name);
       mask =
-	pixmap_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
+	pixbuf_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
 				XFIXNUM (XCAR (mask_data)),
 				XFIXNUM (XCAR (XCDR (mask_data))),
 				gcc_may_you_rot_in_hell);
@@ -1344,17 +1288,15 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   GdkColormap *cmap;
   int depth;
-  GdkVisual *visual;
-  GdkPixmap *pixmap;
-  GdkPixmap *mask = 0;
+  /* GdkVisual *visual; */
+  GdkPixbuf *pixbuf;
   GdkWindow *window = 0;
   int nsymbols = 0, i = 0;
   struct color_symbol *color_symbols = NULL;
   Lisp_Object color_symbol_alist = find_keyword_in_vector (instantiator,
 							   Q_color_symbols);
   enum image_instance_type type;
-  int force_mono;
-  gint w, h;
+  /* int force_mono; */
   struct gcpro gcpro1, gcpro2, gcpro3;
   const Extbyte * volatile dstring;
 
@@ -1371,14 +1313,14 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     incompatible_image_types (instantiator, dest_mask,
 			      IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK
 			      | IMAGE_POINTER_MASK);
-  force_mono = (type != IMAGE_COLOR_PIXMAP);
+  /* force_mono = (type != IMAGE_COLOR_PIXMAP); */
 
   GCPRO3 (device, data, color_symbol_alist);
 
   window = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
   cmap = DEVICE_GTK_COLORMAP (XDEVICE (device));
   depth = DEVICE_GTK_DEPTH (XDEVICE (device));
-  visual = DEVICE_GTK_VISUAL (XDEVICE (device));
+  /* visual = DEVICE_GTK_VISUAL (XDEVICE (device)); */
 
   gtk_initialize_pixmap_image_instance (ii, 1, type);
 
@@ -1430,26 +1372,24 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     XpmCreateDataFromXpmImage (&data, &image, &info);
 
-    pixmap = gdk_pixmap_create_from_xpm_d (window, &mask, NULL,
-					   data);
+    pixbuf = gdk_pixbuf_new_from_xpm_data ((const char **)data);
   }
 
   if (color_symbols)
     xfree (color_symbols);
 
-  if (!pixmap)
-    signal_image_error ("Error reading pixmap", data);
+  if (!pixbuf)
+    signal_image_error ("Error reading pixbuf", data);
 
-  depth = gdk_drawable_get_depth (pixmap);
-  gdk_drawable_get_size (pixmap, &w, &h);
+  depth = gdk_pixbuf_get_bits_per_sample (pixbuf);
 
-  IMAGE_INSTANCE_GTK_PIXMAP (ii) = pixmap;
-  IMAGE_INSTANCE_PIXMAP_MASK (ii) = mask;
+  IMAGE_INSTANCE_GTK_PIXMAP (ii) = pixbuf;
+  IMAGE_INSTANCE_PIXMAP_MASK (ii) = 0;
   IMAGE_INSTANCE_GTK_COLORMAP (ii) = cmap;
   IMAGE_INSTANCE_GTK_PIXELS (ii) = 0;
   IMAGE_INSTANCE_GTK_NPIXELS (ii) = 0;
-  IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = w;
-  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = h;
+  IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = gdk_pixbuf_get_width (pixbuf);
+  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = gdk_pixbuf_get_height (pixbuf);
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) =
     find_keyword_in_vector (instantiator, Q_file);
 
@@ -1599,7 +1539,7 @@ gtk_resource_possible_dest_types (void)
 
 extern gint lisp_to_gtk_enum (Lisp_Object);
 
-static guint resource_name_to_resource (Lisp_Object name,
+static guint resource_name_to_resource (Lisp_Object UNUSED (name),
 					enum image_instance_type type)
 {
   if (type == IMAGE_POINTER)
@@ -1726,7 +1666,7 @@ autodetect_normalize (Lisp_Object instantiator,
 
   alist = tagged_vector_to_alist (instantiator);
 
-  filename = locate_pixmap_file (file);
+  filename = gtk_locate_pixmap_file (file);
   if (!NILP (filename))
     {
       int xhot, yhot;
@@ -2022,9 +1962,12 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   maybe_recolor_cursor (image_instance, foreground, background);
 }
 
+#ifdef JSPARKES
+/* Not yet ported to pixbuf */
 static int
 gtk_colorize_image_instance (Lisp_Object image_instance,
-			     Lisp_Object foreground, Lisp_Object background);
+			       Lisp_Object foreground, Lisp_Object background);
+#endif
 
 
 /************************************************************************/
@@ -2205,7 +2148,7 @@ gtk_redisplay_widget (Lisp_Image_Instance *p)
       char* str;
       Lisp_Object val = IMAGE_INSTANCE_WIDGET_TEXT (p);
       str = LISP_STRING_TO_EXTERNAL (val, Qnative);
-
+      (void)str;
       /* #### Need to special case each type of GtkWidget here! */
     }
 
@@ -2273,11 +2216,12 @@ gtk_subwindow_instantiate (Lisp_Object image_instance,
 /*                            widgets                            */
 /************************************************************************/
 static void
-update_widget_face (GtkWidget *w, Lisp_Image_Instance *ii,
-		    Lisp_Object domain)
+update_widget_face (GtkWidget *UNUSED (w), Lisp_Image_Instance *UNUSED (ii),
+		    Lisp_Object UNUSED (domain))
 {
   if (0)
     {
+#if 0
       GtkStyle *style = gtk_widget_get_style (w);
       Lisp_Object pixel = Qnil;
       GdkColor *fcolor, *bcolor;
@@ -2297,6 +2241,7 @@ update_widget_face (GtkWidget *w, Lisp_Image_Instance *ii,
       ** set the widgets style to the new style...
       */
       gtk_widget_set_style (w, style);
+#endif
 
       /* #### Megahack - but its just getting too complicated to do this
 	 in the right place. */
@@ -2344,7 +2289,7 @@ gtk_widget_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object widget = Qnil;
-  char *nm = NULL;
+  /* char *nm = NULL; */
   GtkWidget *w = NULL;
   struct gcpro gcpro1;
 
@@ -2352,7 +2297,7 @@ gtk_widget_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 
   if (!NILP (IMAGE_INSTANCE_WIDGET_TEXT (ii)))
     {
-      nm = LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii), Qnative);
+      /* nm = LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii), Qnative); */
     }
 
   ii->data = xnew_and_zero (struct gtk_subwindow_data);
@@ -2627,7 +2572,7 @@ gtk_add_tab_item(Lisp_Object image_instance,
 /* Signal handler for the switch-page signal. */
 static void gtk_tab_control_callback(GtkNotebook *notebook,
 				     gpointer *page,
-				     gint page_num,
+				     gint UNUSED (page_num),
 				     gpointer UNUSED (user_data))
 {
   /*
@@ -2855,7 +2800,10 @@ console_type_create_glyphs_gtk (void)
 #if 0
   CONSOLE_HAS_METHOD (gtk, image_instance_hash);
 #endif
+#ifdef JSPARKES
+  /* Not yet ported to pixbuf. */
   CONSOLE_HAS_METHOD (gtk, colorize_image_instance);
+#endif
   CONSOLE_HAS_METHOD (gtk, init_image_instance_from_eimage);
   CONSOLE_HAS_METHOD (gtk, locate_pixmap_file);
   CONSOLE_HAS_METHOD (gtk, unmap_subwindow);
@@ -3036,6 +2984,9 @@ complex_vars_of_glyphs_gtk (void)
   register_cursor_names ();
 }
 
+#ifdef JSPARKES
+/* Needs to be ported to Pixbuf. */
+
 /* X specific crap */
 #include "sysgdkx.h"
 /* #### Should remove all this X specific stuff when GTK/GDK matures a
@@ -3091,3 +3042,5 @@ gtk_colorize_image_instance (Lisp_Object image_instance,
     return 1;
   }
 }
+
+#endif

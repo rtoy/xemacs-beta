@@ -101,7 +101,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define XLIKE_clear_frame_windows XFUN (clear_frame_windows)
 #define XLIKE_text_width XFUN (text_width)
 
-static int XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
+static int XLIKE_text_width (struct window *w, struct face_cachel *cachel,
                              const Ichar *str, Charcount len);
 static void XLIKE_output_vertical_divider (struct window *w, int clear);
 static void XLIKE_output_blank (struct window *w, struct display_line *dl,
@@ -113,6 +113,10 @@ static void XLIKE_output_horizontal_line (struct window *w,
 static void XLIKE_output_eol_cursor (struct window *w,
 				     struct display_line *dl,
 				     int xpos, face_index findex);
+static void XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
+				struct display_box *db, struct display_glyph_area *dga,
+				face_index findex, int cursor_start, int cursor_width,
+				int cursor_height, int bg_pixmap);
 static void XLIKE_clear_frame_windows (Lisp_Object window);
 static void XLIKE_clear_frame (struct frame *f);
 static void XLIKE_bevel_area (struct window *w, face_index findex,
@@ -894,6 +898,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
       gcv.stipple = DEVICE_XLIKE_GRAY_PIXMAP (d);
       mask |= (XLIKE_GC_FILL | XLIKE_GC_STIPPLE);
     }
+#ifdef THIS_IS_X
   else if (IMAGE_INSTANCEP (bg_pixmap)
 	   && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pixmap)))
     {
@@ -924,7 +929,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #endif
 	}
     }
-
+#endif
   if (!NILP (lwidth))
     {
       gcv.line_width = XFIXNUM (lwidth);
@@ -1534,6 +1539,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 /* not THIS_IS_GTK */
 #endif
 
+#ifdef THIS_IS_X
 static void
 XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 			   int y, int xoffset, int yoffset,
@@ -1601,7 +1607,7 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 		 height, x, y);
 #else /* THIS_IS_GTK */
       USED (dpy);
-      gdk_draw_pixmap (GDK_DRAWABLE (x_win), gc,
+      gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc,
 		       IMAGE_INSTANCE_GTK_PIXMAP (p),
 		       xoffset, yoffset, x, y, width, height);
 #endif /* THIS_IS_GTK */
@@ -1614,11 +1620,9 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 		  xoffset, yoffset, width, height, x, y, 1L);
 #else /* THIS_IS_GTK */
       USED (dpy);
-#ifdef JSPARKES
-      our_draw_bitmap (GDK_DRAWABLE (x_win), gc,
+      gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc,
 		       IMAGE_INSTANCE_GTK_PIXMAP (p),
 		       xoffset, yoffset, x, y, width, height);
-#endif
 #endif /* THIS_IS_GTK */
     }
 }
@@ -1679,6 +1683,7 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
 	}
     }
 }
+#endif
 
 static void
 XLIKE_clear_frame_window (Lisp_Object window)
