@@ -551,7 +551,7 @@ XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
     }
   else
     {
-      GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (WINDOW_XFRAME (w));
+      GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
       gint height;
       PangoContext *context = gtk_widget_get_pango_context (widget);
       PangoLayout *layout = pango_layout_new (context);
