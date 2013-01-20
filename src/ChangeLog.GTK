@@ -1,3 +1,16 @@
+2013-01-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-gtk.h: Remove unneeded function prototype.
+
+	* redisplay-xlike-inc.c: Add forward declaration for XLIKE_output_xlike_pixmap.
+	(XLIKE_output_pixmap): Adjust indentation.
+
+	* redisplay-x.c (XLIKE_output_xlike_pixmap): Move here from
+	redisplay-xlike-inc.c.  Remove Gtk code.
+
+	* redisplay-gtk.c: Delete XLIKE_output_pixmap; use common version
+	in redisplay-xlike-inc.c with no Gtk changes required.
+
 2013-01-19  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console-gtk.h: Declare gtk_draw_pixbuf.
