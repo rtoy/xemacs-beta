@@ -524,7 +524,7 @@ gtk_draw_pixbuf (GdkDrawable *drawable,
    when displayed in the fonts associated with the face. */
 
 static int
-XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
 		  const Ichar *str, Charcount len)
 {
   Ibyte *int_storage = alloca_ibytes (MAX_ICHAR_LEN * len);

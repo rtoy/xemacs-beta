@@ -40,18 +40,17 @@ int x_interline_space; /* #### this needs to be implemented, but per-font */
 */
 
 static int
-XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
 		  const Ichar *str, Charcount len)
 {
   /* !!#### Needs review */
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
   struct textual_run *runs = alloca_array (struct textual_run, len);
-  struct frame *f = WINDOW_XFRAME (w);
   int nruns;
   int i;
 
-  nruns = separate_textual_runs (text_storage, runs, str, len, 
+  nruns = separate_textual_runs (text_storage, runs, str, len,
 				 cachel);
 
   for (i = 0; i < nruns; i++)
