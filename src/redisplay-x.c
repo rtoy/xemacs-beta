@@ -857,8 +857,7 @@ static void
 XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 			   int y, int xoffset, int yoffset,
 			   int width, int height,
-			   XLIKE_COLOR fg, XLIKE_COLOR bg,
-			   XLIKE_GC override_gc)
+			   XLIKE_COLOR fg, XLIKE_COLOR bg)
 {
   struct device *d = XDEVICE (f->device);
   XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);

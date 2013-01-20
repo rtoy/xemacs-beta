@@ -943,8 +943,7 @@ static void
 XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 			   int y, int xoffset, int yoffset,
 			   int width, int height,
-			   XLIKE_COLOR fg, XLIKE_COLOR bg,
-			   XLIKE_GC override_gc)
+			   XLIKE_COLOR fg, XLIKE_COLOR bg)
 {
   struct device *d = XDEVICE (f->device);
   XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
@@ -953,42 +952,24 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
   XLIKE_GCVALUES gcv;
   unsigned long pixmap_mask;
 
-  if (!override_gc)
-    {
-      memset (&gcv, ~0, sizeof (gcv));
-      gcv.graphics_exposures = XLIKE_FALSE;
-      XLIKE_SET_GC_COLOR (gcv.foreground, fg);
-      XLIKE_SET_GC_COLOR (gcv.background, bg);
-      pixmap_mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
+  memset (&gcv, ~0, sizeof (gcv));
+  gcv.graphics_exposures = XLIKE_FALSE;
+  XLIKE_SET_GC_COLOR (gcv.foreground, fg);
+  XLIKE_SET_GC_COLOR (gcv.background, bg);
+  pixmap_mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
 
-      if (IMAGE_INSTANCE_XLIKE_MASK (p))
-	{
-	  gcv.function = XLIKE_GX_COPY;
-	  gcv.clip_mask = IMAGE_INSTANCE_XLIKE_MASK (p);
-	  gcv.clip_x_origin = x - xoffset;
-	  gcv.clip_y_origin = y - yoffset;
-	  pixmap_mask |= (XLIKE_GC_FUNCTION | XLIKE_GC_CLIP_MASK |
-			  XLIKE_GC_CLIP_X_ORIGIN |
-			  XLIKE_GC_CLIP_Y_ORIGIN);
-	  /* Can't set a clip rectangle below because we already have a mask.
-	     We could conceivably create a new clipmask by zeroing out
-	     everything outside the clip region.  Is it worth it?
-	     Is it possible to get an equivalent effect by changing the
-	     args to XCopyArea below rather than messing with a clip box?
-	     - dkindred@cs.cmu.edu
-	     Yes. We don't clip at all now - andy@xemacs.org
-	  */
-	}
-
-      gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, pixmap_mask);
-    }
-  else
+  if (IMAGE_INSTANCE_XLIKE_MASK (p))
     {
-      gc = override_gc;
-      /* override_gc might have a mask already--we don't want to nuke it.
-	 Maybe we can insist that override_gc have no mask, or use
-	 one of the suggestions above. */
+      gcv.function = XLIKE_GX_COPY;
+      gcv.clip_mask = IMAGE_INSTANCE_XLIKE_MASK (p);
+      gcv.clip_x_origin = x - xoffset;
+      gcv.clip_y_origin = y - yoffset;
+      pixmap_mask |= (XLIKE_GC_FUNCTION | XLIKE_GC_CLIP_MASK |
+		      XLIKE_GC_CLIP_X_ORIGIN |
+		      XLIKE_GC_CLIP_Y_ORIGIN);
     }
+
+  gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, pixmap_mask);
 
   if (IMAGE_INSTANCE_PIXMAP_DEPTH (p) > 0)
     {

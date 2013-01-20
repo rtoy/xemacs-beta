@@ -116,8 +116,7 @@ static void XLIKE_output_eol_cursor (struct window *w,
 static void XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 				       int y, int xoffset, int yoffset,
 				       int width, int height,
-				       XLIKE_COLOR fg, XLIKE_COLOR bg,
-				       XLIKE_GC override_gc);
+				       XLIKE_COLOR fg, XLIKE_COLOR bg);
 static void XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
 				struct display_box *db, struct display_glyph_area *dga,
 				face_index findex, int cursor_start, int cursor_width,
@@ -1570,7 +1569,7 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
     XLIKE_output_xlike_pixmap (f, p, db->xpos, db->ypos,
 			       dga->xoffset, dga->yoffset,
 			       dga->width, dga->height,
-			       tmp_fcolor, tmp_bcolor, 0);
+			       tmp_fcolor, tmp_bcolor);
   }
 
   /* Draw a cursor over top of the pixmap. */

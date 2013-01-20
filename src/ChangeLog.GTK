@@ -1,5 +1,12 @@
 2013-01-20  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Last argument was
+	always NULL, so it was removed.
+
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Ditto.
+
+	* redisplay-x.c (XLIKE_output_xlike_pixmap): Ditto.
+
 	* redisplay-gtk.c (XLIKE_text_width): Text width functions take
 	frame arguments
 
