@@ -101,7 +101,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define XLIKE_clear_frame_windows XFUN (clear_frame_windows)
 #define XLIKE_text_width XFUN (text_width)
 
-static int XLIKE_text_width (struct window *w, struct face_cachel *cachel,
+static int XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
                              const Ichar *str, Charcount len);
 static void XLIKE_output_vertical_divider (struct window *w, int clear);
 static void XLIKE_output_blank (struct window *w, struct display_line *dl,
@@ -505,6 +505,7 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
   else if (FONT_INSTANCE_X_XFTFONT (fi))
     {
       static XGlyphInfo glyphinfo;
+
       struct device *d = XDEVICE (f->device);
       Display *dpy = DEVICE_X_DISPLAY (d);
 
@@ -1116,7 +1117,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
-      this_width = XLIKE_text_width_single_run (dpy, cachel, runs + i);
+      this_width = XLIKE_text_width_single_run (f, cachel, runs + i);
       need_clipping = (dl->clip || clip_start > xpos ||
 		       clip_end < xpos + this_width);
 
@@ -1236,7 +1237,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		   rect_height by 1.  See x_output_display_block. -- sjt */
 		struct textual_run *run = &runs[i];
 		int rect_width
-		  = XLIKE_text_width_single_run (dpy, cachel, run);
+		  = XLIKE_text_width_single_run (f, cachel, run);
 #ifndef USE_XFTTEXTENTS_TO_AVOID_FONT_DROPPINGS
 		int rect_height = FONT_INSTANCE_ASCENT (fi)
 				  + FONT_INSTANCE_DESCENT (fi) + 1;
@@ -1410,7 +1411,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		int rect_height = FONT_INSTANCE_ASCENT (fi)
 				  + FONT_INSTANCE_DESCENT (fi);
 		int rect_width
-		  = XLIKE_text_width_single_run (dpy, cachel, &runs[i]);
+		  = XLIKE_text_width_single_run (f, cachel, &runs[i]);
 		XftColor xft_color;
 
 		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
