@@ -113,6 +113,11 @@ static void XLIKE_output_horizontal_line (struct window *w,
 static void XLIKE_output_eol_cursor (struct window *w,
 				     struct display_line *dl,
 				     int xpos, face_index findex);
+static void XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
+				       int y, int xoffset, int yoffset,
+				       int width, int height,
+				       XLIKE_COLOR fg, XLIKE_COLOR bg,
+				       XLIKE_GC override_gc);
 static void XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
 				struct display_box *db, struct display_glyph_area *dga,
 				face_index findex, int cursor_start, int cursor_width,
@@ -1539,94 +1544,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 /* not THIS_IS_GTK */
 #endif
 
-#ifdef THIS_IS_X
-static void
-XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
-			   int y, int xoffset, int yoffset,
-			   int width, int height,
-			   XLIKE_COLOR fg, XLIKE_COLOR bg,
-			   XLIKE_GC override_gc)
-{
-  struct device *d = XDEVICE (f->device);
-  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc;
-  XLIKE_GCVALUES gcv;
-  unsigned long pixmap_mask;
-
-  if (!override_gc)
-    {
-      memset (&gcv, ~0, sizeof (gcv));
-      gcv.graphics_exposures = XLIKE_FALSE;
-      XLIKE_SET_GC_COLOR (gcv.foreground, fg);
-      XLIKE_SET_GC_COLOR (gcv.background, bg);
-      pixmap_mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
-
-      if (IMAGE_INSTANCE_XLIKE_MASK (p))
-	{
-	  gcv.function = XLIKE_GX_COPY;
-	  gcv.clip_mask = IMAGE_INSTANCE_XLIKE_MASK (p);
-	  gcv.clip_x_origin = x - xoffset;
-	  gcv.clip_y_origin = y - yoffset;
-	  pixmap_mask |= (XLIKE_GC_FUNCTION | XLIKE_GC_CLIP_MASK |
-			  XLIKE_GC_CLIP_X_ORIGIN |
-			  XLIKE_GC_CLIP_Y_ORIGIN);
-	  /* Can't set a clip rectangle below because we already have a mask.
-	     We could conceivably create a new clipmask by zeroing out
-	     everything outside the clip region.  Is it worth it?
-	     Is it possible to get an equivalent effect by changing the
-	     args to XCopyArea below rather than messing with a clip box?
-	     - dkindred@cs.cmu.edu
-	     Yes. We don't clip at all now - andy@xemacs.org
-	  */
-	}
-
-      gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, pixmap_mask);
-    }
-  else
-    {
-      gc = override_gc;
-      /* override_gc might have a mask already--we don't want to nuke it.
-	 Maybe we can insist that override_gc have no mask, or use
-	 one of the suggestions above. */
-    }
-
-#ifdef THIS_IS_X
-  /* depth of 0 means it's a bitmap, not a pixmap, and we should use
-     XCopyPlane (1 = current foreground color, 0 = background) instead
-     of XCopyArea, which means that the bits in the pixmap are actual
-     pixel values, instead of symbolic of fg/bg. */
-#endif /* THIS_IS_X */
-  if (IMAGE_INSTANCE_PIXMAP_DEPTH (p) > 0)
-    {
-#ifdef THIS_IS_X
-      XCopyArea (dpy,
-		 IMAGE_INSTANCE_X_PIXMAP_SLICE
-		 (p, IMAGE_INSTANCE_PIXMAP_SLICE (p)), x_win, gc, xoffset,
-		 yoffset, width,
-		 height, x, y);
-#else /* THIS_IS_GTK */
-      USED (dpy);
-      gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc,
-		       IMAGE_INSTANCE_GTK_PIXMAP (p),
-		       xoffset, yoffset, x, y, width, height);
-#endif /* THIS_IS_GTK */
-    }
-  else
-    {
-#ifdef THIS_IS_X
-      XCopyPlane (dpy, IMAGE_INSTANCE_X_PIXMAP_SLICE
-		  (p, IMAGE_INSTANCE_PIXMAP_SLICE (p)), x_win, gc,
-		  xoffset, yoffset, width, height, x, y, 1L);
-#else /* THIS_IS_GTK */
-      USED (dpy);
-      gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc,
-		       IMAGE_INSTANCE_GTK_PIXMAP (p),
-		       xoffset, yoffset, x, y, width, height);
-#endif /* THIS_IS_GTK */
-    }
-}
-
 static void
 XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
 		     struct display_box *db, struct display_glyph_area *dga,
@@ -1674,8 +1591,10 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
 	cursor_width = db->xpos + dga->width - cursor_start;
 
       if (focus)
+	{
 	  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
 				cursor_width, cursor_height);
+	}
       else
 	{
 	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
@@ -1683,7 +1602,6 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
 	}
     }
 }
-#endif
 
 static void
 XLIKE_clear_frame_window (Lisp_Object window)
