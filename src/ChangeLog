@@ -1,3 +1,9 @@
+2013-01-16  Jerry James  <james@xemacs.org>
+
+	* menubar-x.c (set_frame_menubar): when a menubar specification has an
+	error, don't fail an assert() and bring XEmacs down.  Instead, return
+	0 to skip the faulty menu and show any errors in *Warnings*.
+
 2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.33 "horseradish" is released.
