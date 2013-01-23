@@ -45,6 +45,7 @@ to five keyword-value pairs, as follows:
 @item :included @var{form}
 This can be used to control the visibility of a menu.  The form is
 evaluated and the menu will be omitted if the result is @code{nil}.
+The keyword @code{:visible} is an alias for @code{:included}.
 
 @item :config @var{symbol}
 This is an efficient shorthand for @code{:included (memq @var{symbol}
@@ -224,7 +225,8 @@ evaluated and the menu item is only displayed if the result is
 non-@code{nil}.  Note that this is different from @code{:active}: If
 @code{:active} evaluates to @code{nil}, the item will be displayed
 grayed out, while if @code{:included} evaluates to @code{nil}, the item
-will be omitted entirely.
+will be omitted entirely.  The keyword @code{:visible} is an alias for
+@code{:included}.
 
 @item :config @var{symbol}
 This is an efficient shorthand for @code{:included (memq @var{symbol}

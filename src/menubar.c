@@ -495,7 +495,7 @@ the first character has been tagged as an accelerator.
 
 Immediately following the name string of the menu, various optional
 keyword-value pairs are permitted: currently, :filter, :active, :included,
-and :config. (See below.)
+:visible, and :config. (See below.)
 
 If an element of a menu (or menubar) is a string, then that string will be
 presented as unselectable text.
@@ -597,7 +597,8 @@ The possible keywords are:
 
  :included <form>    This can be used to control the visibility of a menu or
 		     menu item.  The form is evaluated and the menu or menu
-		     item is only displayed if the result is non-nil.
+		     item is only displayed if the result is non-nil.  The
+		     keyword :visible is an alias for :included.
 
  :config  <symbol>   This is an efficient shorthand for
 		         :included (memq symbol menubar-configuration)

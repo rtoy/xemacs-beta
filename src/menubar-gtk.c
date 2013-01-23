@@ -631,7 +631,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 				 cascade);
 	  val = Fcar (desc);
 	  desc = Fcdr (desc);
-	  if (EQ (key, Q_included))
+	  if (EQ (key, Q_included) || EQ(key, Q_visible))
 	    include_p = val, included_spec = 1;
 	  else if (EQ (key, Q_config))
 	    config_tag = val;

@@ -172,7 +172,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		sferror ("Keyword in menu lacks a value", cascade);
 	      val = Fcar (desc);
 	      desc = Fcdr (desc);
-	      if (EQ (key, Q_included))
+	      if (EQ (key, Q_included) || EQ (key, Q_visible))
 		include_p = val, included_spec = 1;
 	      else if (EQ (key, Q_config))
 		config_tag = val;

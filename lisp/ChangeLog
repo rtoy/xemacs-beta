@@ -1,3 +1,9 @@
+2013-01-22  Jerry James  <james@xemacs.org>
+
+	* glyphs.el (make-image-specifier): Document that :visible is a
+	widget keyword.
+	* menubar.el (check-menu-syntax): Allow :visible in menu specs.
+
 2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.33 "horseradish" is released.

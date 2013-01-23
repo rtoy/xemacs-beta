@@ -299,6 +299,7 @@ It defaults to gui-element-face.
 @itemx :filter
 @itemx :config
 @itemx :included
+@itemx :visible
 @itemx :key-sequence
 @itemx :accelerator
 @itemx :label

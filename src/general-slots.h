@@ -312,6 +312,7 @@ SYMBOL (Quser_default);
 SYMBOL_KEYWORD (Q_value);
 SYMBOL (Qvalue_assoc);
 SYMBOL (Qvertical);
+SYMBOL_KEYWORD (Q_visible);
 SYMBOL (Qwarning);
 SYMBOL (Qwidget);
 SYMBOL (Qwidth);
