@@ -266,7 +266,7 @@ The valid keywords are:
 \[WIDGET-KEYWORDS] stands for the standard keywords accepted by widgets:
 These are `:selected', `:active', `:suffix', `:keys', `:style',
 `:filter', `:config', `:included', `:key-sequence', `:accelerator',
-`:label', `:callback', `:initial-focus', and `:descriptor'.
+`:label', `:callback', `:initial-focus', `:descriptor', and `:visible'.
 #### Document me.
 
 \[GUI-KEYWORDS] stands for keywords accepted by many widgets.

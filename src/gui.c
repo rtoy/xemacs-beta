@@ -144,7 +144,6 @@ gui_item_add_keyval_pair (Lisp_Object gui_item,
   }
   FROB (suffix)
   FROB (active)
-  FROB (included)
   FROB (config)
   FROB (filter)
   FROB (style)
@@ -154,6 +153,14 @@ gui_item_add_keyval_pair (Lisp_Object gui_item,
   FROB (callback_ex)
   FROB (value)
 #undef FROB
+  else if (EQ (key, Q_included) || EQ (key, Q_visible))
+    {
+      if (!EQ (pgui_item->included, val))
+	{
+	  retval = 1;
+	  pgui_item->included = val;
+	}
+    }
   else if (EQ (key, Q_key_sequence)) ;   /* ignored for FSF compatibility */
   else if (EQ (key, Q_label)) ;   /* ignored for 21.0 implement in 21.2  */
   else if (EQ (key, Q_accelerator))

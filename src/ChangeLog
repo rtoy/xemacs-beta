@@ -1,3 +1,13 @@
+2013-01-22  Jerry James  <james@xemacs.org>
+
+	* general-slots.h: Add Q_visible.
+	* gui.c (gui_item_add_keyval_pair): Add :visible as an alias to
+	:included.
+	* menubar.c (vars_of_menubar): Document that :visible is an alias
+	to :included.
+	* menubar-gtk.c (menu_convert): Ditto.
+	* menubar-x.c (menu_item_descriptor_to_widget_value_1): Ditto.
+
 2013-01-16  Jerry James  <james@xemacs.org>
 
 	* menubar-x.c (set_frame_menubar): when a menubar specification has an

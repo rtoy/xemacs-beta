@@ -1,3 +1,10 @@
+2013-01-22  Jerry James  <james@xemacs.org>
+
+	* lispref/glyphs.texi (Image Instantiators): Add :visible to the
+	list of allowed menu keywords.
+	* lispref/menus.tex (Menu Format): Document that :visible is an
+	alias for :included.
+
 2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.33 "horseradish" is released.
