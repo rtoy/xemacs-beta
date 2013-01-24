@@ -25,10 +25,13 @@
 
 BEGIN_C_DECLS
 
-#define GTK_XEMACS(obj)			GTK_CHECK_CAST (obj, gtk_xemacs_get_type (), GtkXEmacs)
-#define GTK_XEMACS_CLASS(klass)	GTK_CHECK_CLASS_CAST (klass, gtk_xemacs_get_type (), GtkXEmacsClass)
-#define GTK_IS_XEMACS(obj)		GTK_CHECK_TYPE (obj, gtk_xemacs_get_type ())
-#define GTK_XEMACS_FRAME(obj)	GTK_XEMACS (obj)->f
+#define GTK_TYPE_XEMACS            (gtk_xemacs_get_type ())
+#define GTK_XEMACS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_XEMACS, GtkXEmacs))
+#define GTK_XEMACS_CLASS(klass)	   (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_XEMACS, GtkXEmacsClass))
+#define GTK_IS_XEMACS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_XEMACS))
+#define GTK_IS_XEMACS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_XEMACS)
+#define GTK_XEMACS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_XEMACS, GtkXEmacsClass))
+#define GTK_XEMACS_FRAME(obj)	   GTK_XEMACS (obj)->f
 
 typedef struct _GtkXEmacs GtkXEmacs;
 typedef struct _GtkXEmacsClass GtkXEmacsClass;

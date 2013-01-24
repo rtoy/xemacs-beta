@@ -2815,11 +2815,11 @@ GTK_CONFIG=no
 
 if test "$with_gnome" != "no"; then
    AC_MSG_CHECKING(for GNOME configuration script)
-   for possible in gnome-config
+   for possible in libgnome-2.0
    do
-      possible_version=`${possible} --version 2> /dev/null`
-      if test "x${possible_version}" != "x"; then
-              GNOME_CONFIG="${possible}"
+      pkg-config --exists $possible
+      if test $?; then
+              GNOME_CONFIG="pkg-config"
               with_gnome=yes
               with_gtk=yes
               break
@@ -2828,28 +2828,30 @@ if test "$with_gnome" != "no"; then
    AC_MSG_RESULT([${GNOME_CONFIG}])
 fi
 
-if test "${GNOME_CONFIG}" != "no"; then
-      GNOME_LIBS=`${GNOME_CONFIG} --libs gnomeui`
-      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags gnomeui`
-      AC_DEFINE(HAVE_GNOME)
-      XE_APPEND(${GNOME_LIBS}, libs_gtk)
-      XE_APPEND(${GNOME_CFLAGS}, c_switch_gtk)
-fi
-
 if test "$with_gtk" != "no";then
    AC_MSG_CHECKING(for GTK configuration script)
-   for possible in gtk12-config gtk14-config gtk-config
+   for possible in gtk+-2.0
    do
-      possible_version=`${possible} --version 2> /dev/null`
+      possible_version=`pkg-config {possible} --version 2> /dev/null`
       if test "x${possible_version}" != "x"; then
-              GTK_CONFIG="${possible}"
+              GTK_CONFIG="pkg-config ${possible}"
 	      case "${possible_version}" in
-        	1.0.*) AC_MSG_WARN([GTK 1.2 is required, please upgrade your version of GTK.]); with_gtk=no;;
-	        1.3.*) AC_MSG_WARN([GTK 1.3 is not supported right now]); with_gtk=no;;
-		1.2.*)
-			with_gtk=yes
-			break
-			;;
+	        1.*) AC_MSG_WARN([GTK 1.X is not supported]);
+                        with_gtk=no
+                        break
+                        ;;
+                0.22*)
+                        with_gtk=yes
+                        break
+                        ;;
+                0.25*)
+                        with_gtk=yes
+                        break
+                        ;;
+                0.26*)
+                        with_gtk=yes
+                        break
+                        ;;
 	        *)     AC_MSG_WARN([Found unsupported version of GTK: $possible_version]);;
 	      esac
       fi
@@ -2881,6 +2883,9 @@ if test "${GTK_CONFIG}" != "no"; then
 
       AC_DEFINE(HAVE_XPM)
       AC_DEFINE(HAVE_GTK)
+      AC_DEFINE(HAVE_GTK2)
+      AC_DEFINE(HAVE_PANGO)
+
       AC_SUBST(GTK_CONFIG)
 
       window_system=gtk
@@ -2929,6 +2934,24 @@ if test "${GTK_CONFIG}" != "no"; then
       CFLAGS="${OLD_CFLAGS}"
       CPPFLAGS="${OLD_CPPFLAGS}"
       LDFLAGS="${OLD_LDFLAGS}"
+fi
+
+if test "${GTK_CONFIG}" != "no"; then
+   AC_MSG_CHECKING(for pangoxft configuration)
+   for possible in pangoxft
+   do
+      pkg-config --exists $possible
+      if test $?; then
+         PANGO_LIBS=`pkg-config --libs $possible`
+         PANGO_CFLAGS=`pkg-config --cflags $possible`
+         AC_DEFINE(HAVE_PANGOXFT)      
+         XE_APPEND(${PANGO_LIBS}, libs_gtk)
+         XE_APPEND(${PANGO_CFLAGS}, c_switch_gtk)
+         AC_MSG_RESULT([yes])
+      else
+         AC_MSG_RESULT([no])
+      fi
+   done
 fi
 
 dnl We may eventually prefer gtk/gdk over vanilla X11...

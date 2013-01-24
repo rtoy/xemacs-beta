@@ -2075,7 +2075,7 @@ delete_frame_internal (struct frame *f, int force,
   d->frame_list = delq_no_quit (frame, d->frame_list);
   RESET_CHANGED_SET_FLAGS;
 
-  f->visible = 0;
+  FRAME_VISIBLE_P (f) = 0;
 
   free_window_mirror (XWINDOW_MIRROR (f->root_mirror));
 
@@ -2512,7 +2512,8 @@ actually visible on screen then `frame-visible-p' returns `hidden'.
        (frame))
 {
   struct frame *f = decode_frame (frame);
-  int visible = FRAMEMETH_OR_GIVEN (f, frame_visible_p, (f), f->visible);
+  int visible = FRAMEMETH_OR_GIVEN (f, frame_visible_p, (f),
+                                    FRAME_VISIBLE_P (f));
   return visible ? ( visible > 0 ? Qt : Qhidden ) : Qnil;
 }
 
@@ -2523,7 +2524,8 @@ Always returns t for tty frames.
        (frame))
 {
   struct frame *f = decode_frame (frame);
-  return (FRAMEMETH_OR_GIVEN (f, frame_totally_visible_p, (f), f->visible)
+  return (FRAMEMETH_OR_GIVEN (f, frame_totally_visible_p, (f),
+                              FRAME_VISIBLE_P (f))
 	  ? Qt : Qnil);
 }
 
@@ -2537,7 +2539,7 @@ frame is iconified, it will not be visible.
        (frame))
 {
   struct frame *f = decode_frame (frame);
-  if (f->visible)
+  if (FRAME_VISIBLE_P (f))
     return Qnil;
   f->iconified = FRAMEMETH_OR_GIVEN (f, frame_iconified_p, (f), 0);
   return f->iconified ? Qt : Qnil;

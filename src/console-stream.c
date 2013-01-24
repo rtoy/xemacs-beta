@@ -193,7 +193,7 @@ stream_init_frame_1 (struct frame *f, Lisp_Object UNUSED (props),
     f->name = build_ascstring ("stream");
   f->height = 80;
   f->width = 24;
-  f->visible = 0; /* so redisplay doesn't try to do anything */
+  FRAME_VISIBLE_P (f) = 0; /* so redisplay doesn't try to do anything */
 }
 
 

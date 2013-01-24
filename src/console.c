@@ -1048,7 +1048,7 @@ On such systems, who knows what will happen.
 	    {
 	      struct frame *f = XFRAME (XCAR (frame_list));
 	      if (FRAME_REPAINT_P (f))
-		f->visible = -1;
+		FRAME_VISIBLE_P (f) = -1;
 	      frame_list = XCDR (frame_list);
 	    }
 	}
