@@ -42,7 +42,7 @@ extern Lisp_Object Vscrollbar_on_left_p;
 EXFUN (Fmake_image_instance, 4);
 
 static void gtk_xemacs_class_init	(GtkXEmacsClass *klass);
-static void gtk_xemacs_init		(GtkXEmacs *xemacs);
+static void gtk_xemacs_init		(GtkXEmacs *xemacs, GtkXEmacsClass *klass);
 static void gtk_xemacs_size_allocate	(GtkWidget *widget, GtkAllocation *allocaction);
 static void gtk_xemacs_draw		(GtkWidget *widget, GdkRectangle *area);
 static void gtk_xemacs_paint		(GtkWidget *widget, GdkRectangle *area);
@@ -58,19 +58,14 @@ gtk_xemacs_get_type (void)
 
   if (!xemacs_type)
     {
-      static const GtkTypeInfo xemacs_info =
-      {
-	"GtkXEmacs",
-	sizeof (GtkXEmacs),
-	sizeof (GtkXEmacsClass),
-	(GtkClassInitFunc) gtk_xemacs_class_init,
-	(GtkObjectInitFunc) gtk_xemacs_init,
-	/* reserved_1 */ NULL,
-        /* reserved_2 */ NULL,
-        (GtkClassInitFunc) NULL,
-      };
-
-      xemacs_type = gtk_type_unique (gtk_fixed_get_type (), &xemacs_info);
+      xemacs_type =
+        g_type_register_static_simple (GTK_TYPE_FIXED,
+                                       "GtkXEmacs",
+                                       sizeof (GtkXEmacsClass),
+                                       (GClassInitFunc) gtk_xemacs_class_init,
+                                       sizeof (GtkXEmacs),
+                                       (GInstanceInitFunc) gtk_xemacs_init,
+                                       (GTypeFlags) 0);
     }
 
   return xemacs_type;
@@ -83,12 +78,12 @@ gtk_xemacs_class_init (GtkXEmacsClass *class_)
 {
   GtkWidgetClass *widget_class;
 
-  widget_class = (GtkWidgetClass*) class_;
-  parent_class = (GtkWidgetClass *) gtk_type_class (gtk_fixed_get_type ());
+  widget_class = (GtkWidgetClass *) class_;
+  parent_class = (GtkWidgetClass *) gtk_type_class (GTK_TYPE_FIXED);
 
   widget_class->size_allocate = gtk_xemacs_size_allocate;
   widget_class->size_request = gtk_xemacs_size_request;
-  widget_class->draw = gtk_xemacs_draw;
+  //widget_class->draw = gtk_xemacs_draw;
   widget_class->expose_event = gtk_xemacs_expose;
   widget_class->realize = gtk_xemacs_realize;
   widget_class->button_press_event = emacs_gtk_button_event_handler;
@@ -100,9 +95,9 @@ gtk_xemacs_class_init (GtkXEmacsClass *class_)
 }
 
 static void
-gtk_xemacs_init (GtkXEmacs *xemacs)
+gtk_xemacs_init (GtkXEmacs *xemacs, GtkXEmacsClass * UNUSED (klass))
 {
-    GTK_WIDGET_SET_FLAGS (xemacs, GTK_CAN_FOCUS);
+  gtk_widget_set_can_focus (GTK_WIDGET (xemacs), TRUE);
 }
 
 GtkWidget*
@@ -110,7 +105,8 @@ gtk_xemacs_new (struct frame *f)
 {
   GtkXEmacs *xemacs;
 
-  xemacs = (GtkXEmacs*) gtk_type_new (gtk_xemacs_get_type ());
+  xemacs = GTK_XEMACS (gtk_type_new (GTK_TYPE_XEMACS));
+  gtk_widget_set_has_window (GTK_WIDGET (xemacs), TRUE);
   xemacs->f = f;
 
   return GTK_WIDGET (xemacs);
@@ -202,14 +198,14 @@ smash_scrollbar_specifiers (struct frame *f, GtkStyle *style)
   Lisp_Object frame;
   int slider_size = 0;
   int hsize, vsize;
-  GtkRangeClass *klass;
 
   frame = wrap_frame (f);
 
-  klass = (GtkRangeClass *) gtk_type_class (GTK_TYPE_SCROLLBAR);
-  slider_size = klass->slider_width;
-  hsize = slider_size + (style->klass->ythickness * 2);
-  vsize = slider_size + (style->klass->xthickness * 2);
+  // Note: where do I get this?  -- jsparkes
+  //slider_size = style->slider_width;
+  slider_size = 10;
+  hsize = slider_size + (style->ythickness * 2);
+  vsize = slider_size + (style->xthickness * 2);
 
   style = gtk_style_attach (style,
 			    GTK_WIDGET (DEVICE_GTK_APP_SHELL (XDEVICE (FRAME_DEVICE (f))))->window);
@@ -226,12 +222,12 @@ static void
 smash_toolbar_specifiers(struct frame *f, GtkStyle *style)
 {
   Lisp_Object frame;
-  GtkStyleClass *klass = (GtkStyleClass *) style->klass;
 
   frame = wrap_frame (f);
 
-  Fadd_spec_to_specifier (Vtoolbar_shadow_thickness, make_fixnum (klass->xthickness),
-			  Qnil, list2 (Qgtk, Qdefault), Qprepend);
+  Fadd_spec_to_specifier (Vtoolbar_shadow_thickness,
+			  make_fixnum (style->xthickness), Qnil, 
+			  list2 (Qgtk, Qdefault), Qprepend);
 }
 #endif /* HAVE_TOOLBARS */
 
@@ -304,7 +300,7 @@ gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
     guint16 border_width;
 
     widget->allocation = *allocation;
-    if (GTK_WIDGET_REALIZED (widget))
+    if (gtk_widget_get_realized (widget))
       gdk_window_move_resize (widget->window,
 			      allocation->x, 
 			      allocation->y,
@@ -323,8 +319,8 @@ gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
 	  Scrollbars are the only widget that is managed by GTK.  See
 	  comments in gtk_create_scrollbar_instance().
 	*/
-	if (GTK_WIDGET_VISIBLE (child->widget) &&
-	    gtk_type_is_a(GTK_OBJECT_TYPE(child->widget), GTK_TYPE_SCROLLBAR))
+	if (gtk_widget_get_visible (child->widget) &&
+	    g_type_is_a(G_OBJECT_TYPE(child->widget), GTK_TYPE_SCROLLBAR))
 	  {
 	    GtkAllocation child_allocation;
 	    GtkRequisition child_requisition;
@@ -357,7 +353,7 @@ gtk_xemacs_paint (GtkWidget *widget, GdkRectangle *area)
     GtkXEmacs *x = GTK_XEMACS (widget);
     struct frame *f = GTK_XEMACS_FRAME (x);
 
-    if (GTK_WIDGET_DRAWABLE (widget))
+    if (gtk_widget_is_drawable (widget))
       redisplay_redraw_exposed_area (f, area->x, area->y, area->width,
 				     area->height);
 }
@@ -375,7 +371,7 @@ gtk_xemacs_draw (GtkWidget *widget, GdkRectangle *area)
        gtk_fixed_paint() directly, which clears the background window,
        which causes A LOT of flashing. */
 
-  if (GTK_WIDGET_DRAWABLE (widget))
+  if (gtk_widget_is_drawable (widget))
     {
       gtk_xemacs_paint (widget, area);
 
@@ -413,7 +409,7 @@ gtk_xemacs_expose (GtkWidget *widget, GdkEventExpose *event)
     struct frame *f = GTK_XEMACS_FRAME (x);
     GdkRectangle *a = &event->area;
 
-  if (GTK_WIDGET_DRAWABLE (widget))
+  if (gtk_widget_is_drawable (widget))
     {
       /* This takes care of drawing the scrollbars, etc */
       parent_class->expose_event (widget, event);

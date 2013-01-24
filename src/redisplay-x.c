@@ -32,6 +32,33 @@ int x_interline_space; /* #### this needs to be implemented, but per-font */
 #define THIS_IS_X
 #include "redisplay-xlike-inc.c"
 
+/*
+  XLIKE_text_width
+
+  Given a string and a merged face, return the string's length in pixels
+  when displayed in the fonts associated with the face.
+*/
+
+static int
+XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
+		  const Ichar *str, Charcount len)
+{
+  /* !!#### Needs review */
+  int width_so_far = 0;
+  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
+  struct textual_run *runs = alloca_array (struct textual_run, len);
+  int nruns;
+  int i;
+
+  nruns = separate_textual_runs (text_storage, runs, str, len,
+				 cachel);
+
+  for (i = 0; i < nruns; i++)
+    width_so_far += XLIKE_text_width_single_run (f, cachel, runs + i);
+
+  return width_so_far;
+}
+
 static void x_output_shadows (struct frame *f, int x, int y, int width,
 			      int height, GC top_shadow_gc,
 			      GC bottom_shadow_gc, GC background_gc,
@@ -58,6 +85,73 @@ XLIKE_window_output_end (struct window *w)
   if (!(check_if_pending_expose_event (WINDOW_XDEVICE (w))))
     XFlush (DEVICE_X_DISPLAY (WINDOW_XDEVICE (w)));
 }
+
+/****************************************************************************
+ XLIKE_clear_region
+
+ Clear the area in the box defined by the given parameters using the
+ given face.
+****************************************************************************/
+static void
+XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
+		    face_index UNUSED (findex),
+		    int x, int y, int width, int height,
+		    Lisp_Object fcolor, Lisp_Object bcolor,
+		    Lisp_Object background_pixmap,
+		    Lisp_Object background_placement)
+{
+  XLIKE_DISPLAY dpy =  GET_XLIKE_DISPLAY (XDEVICE (f->device));
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc = NULL;
+
+  if (!UNBOUNDP (background_pixmap))
+    {
+      gc = XLIKE_get_gc (f, Qnil, fcolor, bcolor,
+			 background_pixmap, background_placement, Qnil);
+      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, y, width, height);
+    }
+  else
+    {
+      XLIKE_CLEAR_AREA (dpy, x_win, x, y, width, height);
+    }
+}
+
+static void
+XLIKE_clear_frame (struct frame *f)
+{
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (XDEVICE (f->device));
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  int x, y, width, height;
+  Lisp_Object frame;
+
+  /* #### GEOM! This clears the internal border and gutter (and scrollbars)
+     but not the toolbar.  Correct? */
+  x = FRAME_LEFT_INTERNAL_BORDER_START (f);
+  width = (FRAME_RIGHT_INTERNAL_BORDER_END (f) - x);
+  /* #### This adjustment by 1 should be being done in the macros.
+     There is some small differences between when the menubar is on
+     and off that we still need to deal with.  The adjustment also occurs in
+     redisplay_clear_top_of_window(). */
+  y = FRAME_TOP_INTERNAL_BORDER_START (f) - 1;
+  height = (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - y);
+
+  XLIKE_CLEAR_AREA (dpy, x_win, x, y, width, height);
+
+  frame = wrap_frame (f);
+
+  if (!UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vdefault_face, frame))
+      || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vleft_margin_face, frame))
+      || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vright_margin_face, frame)))
+    {
+      XLIKE_clear_frame_windows (f->root_window);
+    }
+  {
+    struct device *d = XDEVICE (f->device);
+    if (!(check_if_pending_expose_event (d)))
+      XFlush (DEVICE_X_DISPLAY (d));
+  }
+}
+
 
 /*****************************************************************************
  x_bevel_area
@@ -336,6 +430,126 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
     }
 }
 
+/*****************************************************************************
+ XLIKE_output_horizontal_line
+
+ Output a horizontal line in the foreground of its face.
+****************************************************************************/
+static void
+XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
+			      struct rune *rb)
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc;
+  int x = rb->xpos;
+  int width = rb->width;
+  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
+  int ypos1, ypos2, ypos3, ypos4;
+
+  ypos1 = XLIKE_DISPLAY_LINE_YPOS (dl);
+  ypos2 = ypos1 + rb->object.hline.yoffset;
+  ypos3 = ypos2 + dl->ascent / 2;
+  ypos4 = dl->ypos + dl->descent - dl->clip;
+
+  /* First clear the area not covered by the line. Clear rectangles
+     above and below the line. */
+  if (height - rb->object.hline.thickness > 0)
+    {
+      gc = XLIKE_get_gc (f, Qnil,
+			 WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
+			 Qnil, Qnil, Qnil, Qnil);
+
+      if (ypos2 - ypos1 > 0)
+	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos1, width, ypos2 - ypos1);
+      if (ypos4 - ypos3 > 0)
+	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos3, width, ypos4 - ypos3);
+    }
+
+  /* Now draw the line. */
+  gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
+		     Qnil, Qnil, Qnil, Qnil);
+
+  if (ypos2 < ypos1)
+    ypos2 = ypos1;
+  if (ypos3 > ypos4)
+    ypos3 = ypos4;
+
+  if (ypos3 - ypos2 > 0)
+    {
+      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos3, width,
+			    rb->object.hline.thickness);
+    }
+}
+
+/*****************************************************************************
+ XLIKE_output_vertical_divider
+
+ Draw a vertical divider down the right side of the given window.
+****************************************************************************/
+static void
+XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  Lisp_Object tmp_pixel;
+  XLIKE_GCVALUES gcv;
+  XLIKE_GC background_gc;
+  enum edge_style style;
+  unsigned long mask;
+  int x, ytop, ybottom, width, shadow_thickness, spacing, line_width;
+  face_index div_face =
+    get_builtin_face_cache_index (w, Vvertical_divider_face);
+
+  width = window_divider_width (w);
+  shadow_thickness = XFIXNUM (w->vertical_divider_shadow_thickness);
+  spacing = XFIXNUM (w->vertical_divider_spacing);
+  line_width = XFIXNUM (w->vertical_divider_line_width);
+  x = WINDOW_RIGHT (w) - width;
+  ytop = WINDOW_TOP (w);
+  ybottom = WINDOW_BOTTOM (w);
+
+  memset (&gcv, ~0, sizeof (gcv));
+
+  tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, div_face);
+
+  /* First, get the GC's. */
+  XLIKE_SET_GC_COLOR (gcv.background, XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
+  gcv.foreground = gcv.background;
+  gcv.graphics_exposures = XLIKE_FALSE;
+  mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
+
+  background_gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, mask);
+
+  /* Clear the divider area first.  This needs to be done when a
+     window split occurs. */
+  if (clear)
+    XClearArea (dpy, x_win, x, ytop, width, ybottom - ytop, False);
+
+  /* Draw the divider line. */
+  XLIKE_FILL_RECTANGLE (dpy, x_win, background_gc,
+			x + spacing + shadow_thickness, ytop,
+			line_width, ybottom - ytop);
+  if (shadow_thickness < 0)
+    {
+      shadow_thickness = -shadow_thickness;
+      style = EDGE_BEVEL_IN;
+    }
+  else
+    {
+      style = EDGE_BEVEL_OUT;
+    }
+
+  /* Draw the shadows around the divider line */
+  XLIKE_bevel_area (w, div_face, x + spacing, ytop,
+		    width - 2 * spacing, ybottom - ytop,
+		    shadow_thickness, EDGE_ALL, style);
+}
 
 /* Make audible bell.  */
 
@@ -373,3 +587,330 @@ XLIKE_ring_bell (struct device *d, int volume, int pitch, int duration)
       XSync (display, 0);
     }
 }
+
+/* briefly swap the foreground and background colors.
+ */
+static int
+XLIKE_flash (struct device *d)
+{
+  struct frame *f = device_selected_frame (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc = NULL;
+  XLIKE_GCVALUES gcv;
+  XLIKE_PIXEL tmp_fcolor, tmp_bcolor;
+  Lisp_Object tmp_pixel, frame;
+  struct window *w = XWINDOW (FRAME_ROOT_WINDOW (f));
+  int flash_height;
+
+  frame = wrap_frame (f);
+
+  tmp_pixel = FACE_FOREGROUND (Vdefault_face, frame);
+  tmp_fcolor = XLIKE_COLOR_TO_PIXEL (XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
+  tmp_pixel = FACE_BACKGROUND (Vdefault_face, frame);
+  tmp_bcolor = XLIKE_COLOR_TO_PIXEL (XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
+  memset (&gcv, ~0, sizeof (gcv)); /* initialize all slots to ~0 */
+  XLIKE_SET_GC_PIXEL (gcv.foreground, tmp_fcolor ^ tmp_bcolor);
+  gcv.function = XLIKE_GX_XOR;
+  gcv.graphics_exposures = XLIKE_FALSE;
+  gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (XDEVICE (f->device)), &gcv,
+			XLIKE_GC_FOREGROUND | XLIKE_GC_FUNCTION | XLIKE_GC_EXPOSURES);
+  default_face_width_and_height (frame, 0, &flash_height);
+
+  /* If window is tall, flash top and bottom line.  */
+  if (EQ (Vvisible_bell, Qtop_bottom) && w->pixel_height > 3 * flash_height)
+    {
+      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
+			    w->pixel_width, flash_height);
+      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left,
+			    w->pixel_top + w->pixel_height - flash_height,
+			    w->pixel_width, flash_height);
+    }
+  else
+    /* If it is short, flash it all.  */
+    XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
+			  w->pixel_width, w->pixel_height);
+
+  XLIKE_FLUSH (dpy);
+
+#ifdef HAVE_SELECT
+  {
+    int usecs = 100000;
+    struct timeval tv;
+    tv.tv_sec  = usecs / 1000000L;
+    tv.tv_usec = usecs % 1000000L;
+    /* I'm sure someone is going to complain about this... */
+    select (0, 0, 0, 0, &tv);
+  }
+#else
+#ifdef HAVE_POLL
+  poll (0, 0, 100);
+#else /* !HAVE_POLL */
+#error bite me
+#endif /* HAVE_POLL */
+#endif /* HAVE_SELECT */
+
+  /* If window is tall, flash top and bottom line.  */
+  if (EQ (Vvisible_bell, Qtop_bottom) && w->pixel_height > 3 * flash_height)
+    {
+      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
+			    w->pixel_width, flash_height);
+      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left,
+			    w->pixel_top + w->pixel_height - flash_height,
+			    w->pixel_width, flash_height);
+    }
+  else
+    /* If it is short, flash it all.  */
+    XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
+			  w->pixel_width, w->pixel_height);
+
+  XLIKE_FLUSH (dpy);
+
+  return 1;
+}
+
+/*****************************************************************************
+ XLIKE_output_blank
+
+ Output a blank by clearing the area it covers in the foreground color
+ of its face.
+****************************************************************************/
+static void
+XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
+		    int start_pixpos, int cursor_start, int cursor_width)
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc;
+  struct face_cachel *cursor_cachel =
+    WINDOW_FACE_CACHEL (w,
+			get_builtin_face_cache_index
+			(w, Vtext_cursor_face));
+  Lisp_Object bg_pmap;
+  Lisp_Object buffer = WINDOW_BUFFER (w);
+  Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
+							 buffer);
+
+  int x = rb->xpos;
+  int y = XLIKE_DISPLAY_LINE_YPOS (dl);
+  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
+  int width = rb->width;
+
+  /* Unmap all subwindows in the area we are going to blank. */
+  redisplay_unmap_subwindows_maybe (f, x, y, width, height);
+
+  if (start_pixpos > x)
+    {
+      if (start_pixpos >= (x + width))
+	return;
+      else
+	{
+	  width -= (start_pixpos - x);
+	  x = start_pixpos;
+	}
+    }
+
+  bg_pmap = WINDOW_FACE_CACHEL_BACKGROUND_PIXMAP (w, rb->findex);
+  if (!IMAGE_INSTANCEP (bg_pmap)
+      || !IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pmap)))
+    bg_pmap = Qnil;
+
+  if (NILP (bg_pmap))
+    gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
+		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
+                       Qnil, Qnil, Qnil);
+  else
+    gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
+		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
+		       bg_pmap,
+		       WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT (w, rb->findex),
+		       Qnil);
+
+  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, y, width, height);
+
+  /* If this rune is marked as having the cursor, then it is actually
+     representing a tab. */
+  if (!NILP (w->text_cursor_visible_p)
+      && (rb->cursor_type == CURSOR_ON
+	  || (cursor_width
+	      && (cursor_start + cursor_width > x)
+	      && cursor_start < (x + width))))
+    {
+      int cursor_height, cursor_y;
+      int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
+      Lisp_Font_Instance *fi;
+
+      fi = XFONT_INSTANCE (FACE_CACHEL_FONT
+			   (WINDOW_FACE_CACHEL (w, rb->findex),
+			    Vcharset_ascii));
+
+      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
+			 Qnil, Qnil, Qnil);
+
+      cursor_y = dl->ypos - fi->ascent;
+      cursor_height = fi->height;
+      if (cursor_y + cursor_height > y + height)
+	cursor_height = y + height - cursor_y;
+
+      if (focus)
+	{
+	  if (NILP (bar_cursor_value))
+	    {
+	      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
+				    fi->width, cursor_height);
+	    }
+	  else
+	    {
+	      int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
+
+	      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background,
+				 Qnil, Qnil, Qnil,
+				 make_fixnum (bar_width));
+	      XLIKE_DRAW_LINE (dpy, x_win, gc, cursor_start + bar_width - 1,
+			       cursor_y, cursor_start + bar_width - 1,
+			       cursor_y + cursor_height - 1);
+	    }
+	}
+      else if (NILP (bar_cursor_value))
+        {
+          XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
+                                fi->width - 1, cursor_height - 1);
+        }
+    }
+}
+
+/* The end-of-line cursor is narrower than the normal cursor. */
+static void
+XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
+			 face_index findex)
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+  Lisp_Object window;
+
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc = NULL;
+  face_index elt = get_builtin_face_cache_index (w, Vtext_cursor_face);
+  struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, elt);
+
+  int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
+  Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
+							 WINDOW_BUFFER (w));
+
+  int x = xpos;
+  int y = XLIKE_DISPLAY_LINE_YPOS (dl);
+  int width = EOL_CURSOR_WIDTH;
+  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
+  int cursor_height, cursor_y;
+  int defheight, defascent;
+
+  window = wrap_window (w);
+  redisplay_clear_region (window, findex, x, y, width, height);
+
+  if (NILP (w->text_cursor_visible_p))
+    return;
+
+  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
+		     Qnil, Qnil, Qnil);
+
+  default_face_font_info (window, &defascent, 0, 0, &defheight, 0);
+
+  /* make sure the cursor is entirely contained between y and y+height */
+  cursor_height = min (defheight, height);
+  cursor_y = max (y, min (y + height - cursor_height,
+			  dl->ypos - defascent));
+
+  if (focus)
+    {
+#ifdef HAVE_XIM
+      XIM_SetSpotLocation (f, x - 2 , cursor_y + cursor_height - 2);
+#endif /* HAVE_XIM */
+
+      if (NILP (bar_cursor_value))
+	{
+	  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, cursor_y, width,
+				cursor_height);
+	}
+      else
+	{
+	  int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
+
+	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
+			     Qnil, Qnil,
+			     make_fixnum (bar_width));
+	  XLIKE_DRAW_LINE (dpy, x_win, gc, x + bar_width - 1, cursor_y,
+			   x + bar_width - 1, cursor_y + cursor_height - 1);
+	}
+    }
+  else if (NILP (bar_cursor_value))
+    {
+      XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, x, cursor_y, width - 1,
+			    cursor_height - 1);
+    }
+}
+
+static void
+XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
+			   int y, int xoffset, int yoffset,
+			   int width, int height,
+			   XLIKE_COLOR fg, XLIKE_COLOR bg)
+{
+  struct device *d = XDEVICE (f->device);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+  XLIKE_GC gc;
+  XLIKE_GCVALUES gcv;
+  unsigned long pixmap_mask;
+
+  memset (&gcv, ~0, sizeof (gcv));
+  gcv.graphics_exposures = XLIKE_FALSE;
+  XLIKE_SET_GC_COLOR (gcv.foreground, fg);
+  XLIKE_SET_GC_COLOR (gcv.background, bg);
+  pixmap_mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
+
+  if (IMAGE_INSTANCE_XLIKE_MASK (p))
+    {
+      gcv.function = XLIKE_GX_COPY;
+      gcv.clip_mask = IMAGE_INSTANCE_XLIKE_MASK (p);
+      gcv.clip_x_origin = x - xoffset;
+      gcv.clip_y_origin = y - yoffset;
+      pixmap_mask |= (XLIKE_GC_FUNCTION | XLIKE_GC_CLIP_MASK |
+		      XLIKE_GC_CLIP_X_ORIGIN |
+		      XLIKE_GC_CLIP_Y_ORIGIN);
+      /* Can't set a clip rectangle below because we already have a mask.
+	 We could conceivably create a new clipmask by zeroing out
+	 everything outside the clip region.  Is it worth it?
+	 Is it possible to get an equivalent effect by changing the
+	 args to XCopyArea below rather than messing with a clip box?
+	 - dkindred@cs.cmu.edu
+	 Yes. We don't clip at all now - andy@xemacs.org
+      */
+    }
+
+  gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, pixmap_mask);
+
+  /* depth of 0 means it's a bitmap, not a pixmap, and we should use
+     XCopyPlane (1 = current foreground color, 0 = background) instead
+     of XCopyArea, which means that the bits in the pixmap are actual
+     pixel values, instead of symbolic of fg/bg. */
+
+  if (IMAGE_INSTANCE_PIXMAP_DEPTH (p) > 0)
+    {
+      XCopyArea (dpy,
+		 IMAGE_INSTANCE_X_PIXMAP_SLICE
+		 (p, IMAGE_INSTANCE_PIXMAP_SLICE (p)), x_win, gc, xoffset,
+		 yoffset, width,
+		 height, x, y);
+    }
+  else
+    {
+      XCopyPlane (dpy, IMAGE_INSTANCE_X_PIXMAP_SLICE
+		  (p, IMAGE_INSTANCE_PIXMAP_SLICE (p)), x_win, gc,
+		  xoffset, yoffset, width, height, x, y, 1L);
+    }
+}
+

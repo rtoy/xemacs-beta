@@ -65,6 +65,10 @@
 
 	* configure.ac (with_athena): Refactor check for Xaw3d.
 
+2012-03-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (TAB): Add HAVE_GTK2 to AC_DEFINE list.
+
 2011-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac: $machine is intel386, reflecting the file name
@@ -123,6 +127,27 @@
 	* version.sh.in: 
 	* configure.ac (XE_COMPLEX_ARG, XE_EXPAND_VARIABLE):
 	Remove conditionals and information for InfoDock.
+
+2011-03-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (TAB): Fix the pangoxft check and add output
+	messages.
+
+2011-03-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (TAB): gtk-config version 0.25 is the current 2.0
+	configuration. HAVE_GTK implies HAVE_PANGO.  Moved check
+	for PANGOXFT after HAVE_GTK.  Removed check for libgnomeui, it
+	will no longer in Gtk 3.0, and is no longer used in XEmacs.
+
+2011-03-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (HAVE_PANGO): Add HAVE_PANGOXFT.
+
+2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac: Make check for pango separate from libgnomeui
+	check.  Define HAVE_PANGO.
 
 2010-04-09  Ben Wing  <ben@xemacs.org>
 
