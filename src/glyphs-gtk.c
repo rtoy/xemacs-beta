@@ -972,6 +972,22 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
    from left to right, little-endian within a byte.  0 = white, 1 =
    black. */
 
+static int
+get_bit (const Extbyte *bits, int row, int col, int width)
+{
+  const Extbyte *base = bits + row * ((width + 7) / 8);
+  guchar bite = base [col / 8];
+  int bitpos = col % 8;
+
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+  int bit = bite & (1 << bitpos);
+#else
+  /* untested */
+  int bit = bite & (0x80 >> bitpos);
+#endif
+  return bit;
+}
+
 static GdkPixbuf *
 pixbuf_from_xbm_inline (Lisp_Object UNUSED (device), int width, int height,
 			/* Note that data is in ext-format! */
@@ -993,19 +1009,9 @@ pixbuf_from_xbm_inline (Lisp_Object UNUSED (device), int width, int height,
 
   for (i = 0; i < height; i++)
     {
-      const Extbyte *base = bits + i * ((width+7)/8);
-
       for (j = 0; j < width; j++)
 	{
-	  guchar bite = base[j / 8];
-	  int bitpos = j % 8;
-	  /* XXX what if bigendian? */
-#if G_BYTE_ORDER == G_LITTLE_ENDIAN
-	  int bit = bite & (1 << bitpos);
-#else
-	  /* untested */
-	  int bit = bite & (0x10 >> (7-bitpos));
-#endif
+	  int bit = get_bit (bits, i, j, width);
 	  gint pixel = (bit == 0) ? 0xff : 0;
 	  guchar *dp = data + i * rowstride + j * n_channels;
 
