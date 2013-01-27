@@ -991,13 +991,13 @@ get_bit (const Extbyte *bits, int row, int col, int width)
 static GdkPixbuf *
 pixbuf_from_xbm_inline (Lisp_Object UNUSED (device), int width, int height,
 			/* Note that data is in ext-format! */
-			const Extbyte *bits)
+			const Extbyte *bits, const GdkColor fg, const GdkColor bg)
 {
-  GdkPixbuf *out = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, width, height);
+  GdkPixbuf *out = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
   int old_width = (width + 7) / 8;
   int rowstride;
   int n_channels;
-  int i, j, k;
+  int i, j;
   guchar *data = NULL;
 
   if (out == NULL)
@@ -1012,11 +1012,22 @@ pixbuf_from_xbm_inline (Lisp_Object UNUSED (device), int width, int height,
       for (j = 0; j < width; j++)
 	{
 	  int bit = get_bit (bits, i, j, width);
-	  gint pixel = (bit == 0) ? 0xff : 0;
 	  guchar *dp = data + i * rowstride + j * n_channels;
 
-	  for (k = 0; k < n_channels; k++)
-	    *dp++ = pixel;
+	  if (bit != 0)
+	    {
+	      *dp++ = fg.red;
+	      *dp++ = fg.green;
+	      *dp++ = fg.blue;
+	    }
+	  else
+	    {
+	      *dp++ = bg.red;
+	      *dp++ = bg.green;
+	      *dp++ = bg.blue;
+	    }
+	  /* Alpha */
+	  *dp++ = 0xff;
 	}
     }
 
@@ -1085,7 +1096,8 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
     case IMAGE_MONO_PIXMAP:
       {
 	IMAGE_INSTANCE_GTK_PIXMAP (ii) =
-	  pixbuf_from_xbm_inline (device, width, height, (Extbyte *) bits);
+	  pixbuf_from_xbm_inline (device, width, height, (Extbyte *) bits,
+				  black, white);
       }
       break;
 
@@ -1167,11 +1179,18 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 		   /* Note that data is in ext-format! */
 		   const char *bits)
 {
+  Lisp_Object device = IMAGE_INSTANCE_DEVICE (XIMAGE_INSTANCE (image_instance));
   Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   GdkPixbuf *mask = 0;
   const Extbyte *gcc_may_you_rot_in_hell;
+  GdkColormap *cmap = DEVICE_GTK_COLORMAP (XDEVICE(device));
+  GdkColor black;
+  GdkColor white;
+
+  gdk_color_black(cmap, &black);
+  gdk_color_white(cmap, &white);
 
   if (!NILP (mask_data))
     {
@@ -1182,7 +1201,8 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 	pixbuf_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
 				XFIXNUM (XCAR (mask_data)),
 				XFIXNUM (XCAR (XCDR (mask_data))),
-				gcc_may_you_rot_in_hell);
+				gcc_may_you_rot_in_hell,
+				black, white);
     }
 
   init_image_instance_from_xbm_inline (ii, width, height, bits,

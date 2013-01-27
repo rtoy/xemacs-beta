@@ -1,5 +1,11 @@
 2013-01-27  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (pixbuf_from_xbm_inline): Add foreground and
+	background color parameters.
+	(init_image_instance_from_xbm_inline): Use black and white as
+	foreground and background.
+	(xbm_instantiate_1): Ditto.
+
 	* device-gtk.c (Fgtk_init): Turn ubuntu overlay scrollbars off.
 
 	* scrollbar-gtk.c (update_one_widget_scrollbar_pointer): Don't
