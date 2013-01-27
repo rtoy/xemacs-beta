@@ -946,7 +946,7 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 			   XLIKE_COLOR fg, XLIKE_COLOR bg)
 {
   struct device *d = XDEVICE (f->device);
-  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
+  /* XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d); */
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   XLIKE_GC gc;
   XLIKE_GCVALUES gcv;
@@ -971,18 +971,6 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 
   gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, pixmap_mask);
 
-  if (IMAGE_INSTANCE_PIXMAP_DEPTH (p) > 0)
-    {
-      USED (dpy);
-      gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc,
-		       IMAGE_INSTANCE_GTK_PIXMAP (p),
-		       xoffset, yoffset, x, y, width, height);
-    }
-  else
-    {
-      USED (dpy);
-      gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc,
-		       IMAGE_INSTANCE_GTK_PIXMAP (p),
-		       xoffset, yoffset, x, y, width, height);
-    }
+  gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc, IMAGE_INSTANCE_GTK_PIXMAP (p),
+		   xoffset, yoffset, x, y, width, height);
 }

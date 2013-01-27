@@ -2954,6 +2954,25 @@ if test "${GTK_CONFIG}" != "no"; then
    done
 fi
 
+if test "${GTK_CONFIG}" != "no"; then
+   AC_MSG_CHECKING(for GNOME gobject introspection)
+   for possible in gobject-introspection-1.0
+   do
+      pkg-config --exists $possible
+      if test $?; then
+         GIR_LIBS=`pkg-config --libs $possible`
+         GIR_CFLAGS=`pkg-config --cflags $possible`
+         AC_DEFINE(HAVE_GIR)
+         AC_DEFINE(HAVE_GIR_1_0)      
+         XE_APPEND(${GIR_LIBS}, libs_gtk)
+         XE_APPEND(${GIR_CFLAGS}, c_switch_gtk)
+         AC_MSG_RESULT([yes])
+      else
+         AC_MSG_RESULT([no])
+      fi
+   done
+fi
+
 dnl We may eventually prefer gtk/gdk over vanilla X11...
 
 if test "$with_x11" != "no"; then
