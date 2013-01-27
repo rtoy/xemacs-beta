@@ -1,6 +1,12 @@
+2013-01-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (gtk_keysym_to_emacs_keysym): Map page-up, page-down
+	to prior and next.
+
 2013-01-26  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* toolbar-gtk.c (gtk_output_toolbar): Switch to GdkPixbuf for toolbar image.
+	* toolbar-gtk.c (gtk_output_toolbar): Switch to GdkPixbuf for
+	toolbar image.
 
 	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Both output cases
 	have the same code.
