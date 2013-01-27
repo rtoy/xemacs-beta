@@ -1,5 +1,8 @@
 2013-01-27  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* scrollbar-gtk.c (update_one_widget_scrollbar_pointer): Don't
+	access widget field directly.
+
 	* event-gtk.c (gtk_keysym_to_emacs_keysym): Map page-up, page-down
 	to prior and next.
 
