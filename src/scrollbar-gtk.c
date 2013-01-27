@@ -181,7 +181,7 @@ gtk_update_scrollbar_instance_values (struct window *w,
 static void
 update_one_widget_scrollbar_pointer (struct window *w, GtkWidget *wid)
 {
-  if (!gtk_widget_get_realize (wid))
+  if (gtk_widget_get_window (wid) == 0)
     gtk_widget_realize (wid);
 
   if (POINTER_IMAGE_INSTANCEP (w->scrollbar_pointer))
