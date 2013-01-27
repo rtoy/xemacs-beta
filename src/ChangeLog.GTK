@@ -1,3 +1,8 @@
+2013-01-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Both output cases
+	have the same code.
+
 2013-01-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (get_bit): Extracted from below.
