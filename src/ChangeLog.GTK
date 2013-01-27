@@ -1,5 +1,7 @@
 2013-01-27  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* device-gtk.c (Fgtk_init): Turn ubuntu overlay scrollbars off.
+
 	* scrollbar-gtk.c (update_one_widget_scrollbar_pointer): Don't
 	access widget field directly.
 

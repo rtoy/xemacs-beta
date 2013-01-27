@@ -176,6 +176,9 @@ mode.
   make_argc_argv (args, &argc, &argv);
 
   slow_down_interrupts ();
+  /* Turn ubuntu overlay scrollbars off.  They don't have per-line scrolling. */
+  setenv("LIBOVERLAY_SCROLLBAR", "0", 0);
+
   gtk_init (&argc, &argv);
 
   /* Sigh, gtk_init stomped on LC_NUMERIC, which we need to be C. Otherwise
