@@ -189,8 +189,7 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 	    {
               GtkToolItem *item  = NULL;
 	      GtkWidget *pixmapwid;
-	      GdkPixmap *pixmap;
-              GdkBitmap *mask;
+	      GdkPixbuf *pixmap;
 	      Ibyte *tooltip = NULL;
 
 	      if (STRINGP (tb->help_string))
@@ -207,9 +206,8 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
               if (item == NULL)
                 {
                   pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
-                  mask = XIMAGE_INSTANCE_GTK_MASK (instance);
-                  pixmapwid = gtk_pixmap_new (pixmap, mask);
-                  item = gtk_tool_button_new (pixmapwid, ""); 
+                  pixmapwid = gtk_image_new_from_pixbuf (pixmap);
+                  item = gtk_tool_button_new (pixmapwid, "");
                 }
               
               gtk_toolbar_insert (GTK_TOOLBAR(toolbar), item, -1);
