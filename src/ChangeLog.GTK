@@ -1,5 +1,8 @@
 2013-02-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* toolbar-gtk.c (gtk_output_toolbar): Replace casts with Gtk type
+	conversion macros.
+
 	* glyphs-gtk.c (gtk_finalize_image_instance): Unref/free image
 	pixbuf.
 
