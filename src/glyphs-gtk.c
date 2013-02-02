@@ -420,17 +420,20 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 	}
       else
 	{
-	  int i;
 	  if (IMAGE_INSTANCE_PIXMAP_TIMEOUT (p))
 	    disable_glyph_animated_timeout (IMAGE_INSTANCE_PIXMAP_TIMEOUT (p));
 
 	  if (IMAGE_INSTANCE_GTK_MASK (p) &&
 	      IMAGE_INSTANCE_GTK_MASK (p) != IMAGE_INSTANCE_GTK_PIXMAP (p))
 	    g_object_unref (IMAGE_INSTANCE_GTK_MASK (p));
+
 	  IMAGE_INSTANCE_PIXMAP_MASK (p) = 0;
+	  g_object_unref (IMAGE_INSTANCE_GTK_PIXMAP (p));
+	  IMAGE_INSTANCE_GTK_PIXMAP (p);
 
 	  if (IMAGE_INSTANCE_GTK_PIXMAP_SLICES (p))
 	    {
+	      int i;
 	      for (i = 0; i < IMAGE_INSTANCE_PIXMAP_MAXSLICE (p); i++)
 		if (IMAGE_INSTANCE_GTK_PIXMAP_SLICE (p,i))
 		  {

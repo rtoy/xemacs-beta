@@ -1,3 +1,8 @@
+2013-02-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_finalize_image_instance): Unref/free image
+	pixbuf.
+
 2013-01-27  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (pixbuf_from_xbm_inline): Add foreground and
