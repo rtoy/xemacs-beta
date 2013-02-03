@@ -928,6 +928,7 @@ enum event_modifiers
 
 /* Maybe this should be trickier */
 #define KEYSYM(x) (intern (x))
+#define KEYSYM_MASSAGING_NAME intern_massaging_name
 
 typedef enum character_to_event_meta_behavior
 {

@@ -33,7 +33,9 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "glyphs-gtk.h"
 #include "scrollbar-gtk.h"
 
-static gboolean scrollbar_cb (GtkAdjustment *adj, gpointer user_data);
+static gboolean scrollbar_cb (GtkRange *, GtkScrollType scroll,
+                              gdouble value, gpointer user_data);
+
 
 /* Used to prevent changing the size of the slider while drag
    scrolling, under Motif.  This is necessary because the Motif
@@ -61,10 +63,9 @@ gtk_free_scrollbar_instance (struct scrollbar_instance *instance)
 	{
 	  gtk_widget_hide_all (SCROLLBAR_GTK_WIDGET (instance));
 	  gtk_widget_destroy (SCROLLBAR_GTK_WIDGET (instance));
+          SCROLLBAR_GTK_WIDGET (instance) = 0;
 	}
-
-      xfree (instance->scrollbar_data);
-      instance->scrollbar_data = 0;
+      XFREE (instance->scrollbar_data);
     }
 }
 
@@ -72,16 +73,16 @@ gtk_free_scrollbar_instance (struct scrollbar_instance *instance)
 static void
 gtk_release_scrollbar_instance (struct scrollbar_instance *instance)
 {
-    /* It won't hurt to hide it all the time, will it? */
-    gtk_widget_hide_all (SCROLLBAR_GTK_WIDGET (instance));
+  /* It won't hurt to hide it all the time, will it? */
+  gtk_widget_hide_all (SCROLLBAR_GTK_WIDGET (instance));
 }
 
 static gboolean
 scrollbar_drag_hack_cb (GtkWidget *UNUSED (w), GdkEventButton *UNUSED (ev),
 			gpointer v)
 {
-  vertical_drag_in_progress = (int) v;
-  inhibit_slider_size_change = (int) v;
+  vertical_drag_in_progress = GPOINTER_TO_UINT (v);
+  inhibit_slider_size_change = GPOINTER_TO_UINT (v);
   return (FALSE);
 }
 
@@ -100,44 +101,38 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   SCROLLBAR_GTK_VDRAG_ORIG_VALUE (instance) = -1;
   SCROLLBAR_GTK_LAST_VALUE (instance) = adj->value;
 
-  gtk_object_set_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER, (void *) SCROLLBAR_GTK_ID (instance));
-  gtk_object_set_data (GTK_OBJECT (adj), GTK_DATA_FRAME_IDENTIFIER, f);
+  g_object_set_qdata (G_OBJECT (G_OBJECT (adj)), GTK_DATA_GUI_IDENTIFIER,
+                      GUINT_TO_POINTER (SCROLLBAR_GTK_ID (instance)));
+  g_object_set_qdata (G_OBJECT (G_OBJECT (adj)), GTK_DATA_FRAME_IDENTIFIER,
+                      f);
 
   sb = GTK_SCROLLBAR (vertical ? gtk_vscrollbar_new (adj) : gtk_hscrollbar_new (adj));
   SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
+  gtk_range_set_update_policy (GTK_RANGE (sb), GTK_UPDATE_CONTINUOUS);
 
-  gtk_signal_connect (GTK_OBJECT (adj),"value-changed",
-		      GTK_SIGNAL_FUNC (scrollbar_cb), (gpointer) vertical);
-
-  gtk_signal_connect (GTK_OBJECT (sb), "button-press-event",
-		      GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 1);
-  gtk_signal_connect (GTK_OBJECT (sb), "button-release-event",
-		      GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 0);
-
+  assert(g_signal_connect (G_OBJECT (sb),"change-value",
+                           G_CALLBACK (scrollbar_cb),
+                           GUINT_TO_POINTER (vertical)));
+#ifdef NOTUSED
+  assert(g_signal_connect (G_OBJECT (sb), "button-press-event",
+                           G_CALLBACK (scrollbar_drag_hack_cb),
+                           GUINT_TO_POINTER (1)));
+  assert(g_signal_connect (G_OBJECT (sb), "button-release-event",
+                           G_CALLBACK (scrollbar_drag_hack_cb), (gpointer) 0));
+#endif
+  /* Do we need to connect to "destroy" too? --jsparkes */
   gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)), SCROLLBAR_GTK_WIDGET (instance), 0, 0);
-
-  /*
-  ** With gtk version > 1.2.8 the scrollbars in gtk-xemacs and xemacs
-  ** from CVS are invisible. In fact they are not invisible but very
-  ** thin (0 pixels wide). This is so, because the new gtk code does
-  ** not call gtk_widget_request_size() on the newly created
-  ** scrollbars anymore. this change was done to allow the theme
-  ** engines to manipulate the scrollbar width. This patch calls
-  ** gtk_widget_request_size with the newly created scollbars. Maybe
-  ** it is better to postpone this call just before the
-  ** gtk_widget_show() call is done on the scrolbar.
-  */
-  gtk_widget_size_request(GTK_WIDGET(sb), &(GTK_WIDGET(sb)->requisition));
 
   gtk_widget_hide (SCROLLBAR_GTK_WIDGET (instance));
 }
 
 #define UPDATE_DATA_FIELD(field)				\
   if (new_##field >= 0 &&					\
-      SCROLLBAR_GTK_POS_DATA (inst).field != new_##field) {	\
-    SCROLLBAR_GTK_POS_DATA (inst).field = new_##field;		\
-    inst->scrollbar_instance_changed = 1;			\
-  }
+      SCROLLBAR_GTK_POS_DATA (inst).field != new_##field)	\
+    {                                                           \
+      SCROLLBAR_GTK_POS_DATA (inst).field = new_##field;        \
+      inst->scrollbar_instance_changed = 1;			\
+    }
 
 /* A device method. */
 /* #### The -1 check is such a hack. */
@@ -186,7 +181,7 @@ gtk_update_scrollbar_instance_values (struct window *w,
 static void
 update_one_widget_scrollbar_pointer (struct window *w, GtkWidget *wid)
 {
-  if (!wid->window)
+  if (gtk_widget_get_window (wid) == 0)
     gtk_widget_realize (wid);
 
   if (POINTER_IMAGE_INSTANCEP (w->scrollbar_pointer))
@@ -204,87 +199,39 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
 {
   struct frame *f = XFRAME (w->frame);
   GtkWidget *wid = SCROLLBAR_GTK_WIDGET (instance);
-  gboolean managed = GTK_WIDGET_MAPPED (wid);
+  gboolean managed = gtk_widget_get_mapped (wid);
 
   if (active && size)
     {
       if (instance->scrollbar_instance_changed)
-	{
-	  /* Need to set the height, width, and position of the widget */
-	  GtkAdjustment *adj = gtk_range_get_adjustment (GTK_RANGE (wid));
-	  scrollbar_values *pos_data = & SCROLLBAR_GTK_POS_DATA (instance);
-	  int modified_p = 0;
+        {
+          /* Need to set the height, width, and position of the widget */
+          GtkAdjustment *adj = gtk_range_get_adjustment (GTK_RANGE (wid));
+          scrollbar_values *pos_data = & SCROLLBAR_GTK_POS_DATA (instance);
 
-	  /* We do not want to update the size all the time if we can
-             help it.  This cuts down on annoying flicker.
-	  */
-	  if ((wid->allocation.width != pos_data->scrollbar_width) ||
-	      (wid->allocation.height != pos_data->scrollbar_height))
-	    {
-	      gtk_widget_set_usize (wid,
-				    pos_data->scrollbar_width,
-				    pos_data->scrollbar_height);
+          gtk_widget_set_size_request (wid,
+                                       pos_data->scrollbar_width,
+                                       pos_data->scrollbar_height);
 
-	      /*
-		UGLY! UGLY! UGLY!  Changes to wid->allocation are queued and
-		not performed until the GTK event loop.  However, when the
-		fontlock progress bar is run, the vertical scrollbar's height
-		is change and then changed back before events are again
-		processed.  This means that the change back is not seen and
-		the scrollbar is left too short.  Fix this by making the
-		change manually so the test above sees the change.  This does
-		not seem to cause problems in other cases.
-	       */
+          gtk_fixed_move (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
+                          wid,
+                          pos_data->scrollbar_x,
+                          pos_data->scrollbar_y);
+      
+          adj->lower = pos_data->minimum;
+          adj->upper = pos_data->maximum;
+          adj->page_increment = pos_data->slider_size + 1;
+          adj->step_increment = w->max_line_len - 1;
+          adj->page_size = pos_data->slider_size + 1;
+          
+          if (adj->value != pos_data->slider_position)
+            {
+              adj->value = pos_data->slider_position;
+            }
 
-	      wid->allocation.width = pos_data->scrollbar_width;
-	      wid->allocation.height = pos_data->scrollbar_height;
-
-	      modified_p = 1;
-	    }
-
-	  /* Ditto for the x/y position. */
-	  if ((wid->allocation.x != pos_data->scrollbar_x) ||
-	      (wid->allocation.y != pos_data->scrollbar_y))
-	    {
-	      gtk_fixed_move (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
-			      wid,
-			      pos_data->scrollbar_x,
-			      pos_data->scrollbar_y);
-
-	      /*
-		UGLY! UGLY! UGLY!  Changes to wid->allocation are queued and
-		not performed until the GTK event loop.  However, when the
-		fontlock progress bar is run, the horizontal scrollbar's
-		position is change and then changed back before events are
-		again processed.  This means that the change back is not seen
-		and the scrollbar is left in the wrong position.  Fix this by
-		making the change manually so the test above sees the change.
-		This does not seem to cause problems in other cases.
-	       */
-
-	      wid->allocation.x = pos_data->scrollbar_x;
-	      wid->allocation.y = pos_data->scrollbar_y;
-
-	      modified_p = 1;
-	    }
-
-	  adj->lower = pos_data->minimum;
-	  adj->upper = pos_data->maximum;
-	  adj->page_increment = pos_data->slider_size + 1;
-	  adj->step_increment = w->max_line_len - 1;
-	  adj->page_size = pos_data->slider_size + 1;
-	  adj->value = pos_data->slider_position;
-
-	  /* But, if we didn't resize or move the scrollbar, the
-             widget will not get redrawn correctly when the user
-             scrolls around in the XEmacs frame manually.  So we
-             update the slider manually here.
-	  */
-	  if (!modified_p)
-	    gtk_range_slider_update (GTK_RANGE (wid));
-
-	  instance->scrollbar_instance_changed = 0;
-	}
+          gtk_adjustment_changed (adj);
+          instance->scrollbar_instance_changed = 0;
+        }
 
       if (!managed)
 	{
@@ -345,11 +292,11 @@ gtk_scrollbar_loop (enum gtk_scrollbar_loop type, Lisp_Object window,
                   GtkWidget *widget;
 
 		  widget = SCROLLBAR_GTK_WIDGET (hinstance);
-		  if (widget && GTK_WIDGET_MAPPED (widget))
+		  if (widget && gtk_widget_get_mapped (widget))
 		    update_one_widget_scrollbar_pointer (w, widget);
 
 		  widget = SCROLLBAR_GTK_WIDGET (vinstance);
-		  if (widget && GTK_WIDGET_MAPPED (widget))
+		  if (widget && gtk_widget_get_mapped (widget))
 		    update_one_widget_scrollbar_pointer (w, widget);
 		}
 	      break;
@@ -359,12 +306,12 @@ gtk_scrollbar_loop (enum gtk_scrollbar_loop type, Lisp_Object window,
 		  GtkWidget *widget;
 
 		  widget = SCROLLBAR_GTK_WIDGET (hinstance);
-		  if (widget && GTK_WIDGET_MAPPED (widget) &&
+		  if (widget && gtk_widget_get_mapped (widget) &&
 		      GET_GTK_WIDGET_WINDOW (widget) == x_win)
 		    return (struct window_mirror *) 1;
 
 		  widget = SCROLLBAR_GTK_WIDGET (vinstance);
-		  if (widget && GTK_WIDGET_MAPPED (widget) &&
+		  if (widget && gtk_widget_get_mapped (widget) &&
 		      GET_GTK_WIDGET_WINDOW (widget) == x_win)
 		    return (struct window_mirror *) 1;
 		}
@@ -393,20 +340,31 @@ find_scrollbar_window_mirror (struct frame *f, GUI_ID id)
 }
 
 static gboolean
-scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
+scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble UNUSED (value),
+              gpointer UNUSED (user_data))
 {
   /* This function can GC */
-  int vertical = (int) user_data;
-  struct frame *f = (struct frame*) gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_FRAME_IDENTIFIER);
+  GtkAdjustment *adj = gtk_range_get_adjustment (range);
+  GtkRange *r = 0;
+  int vertical = gtk_orientable_get_orientation ((GtkOrientable *)range) ==
+    GTK_ORIENTATION_VERTICAL;
+  struct frame *f = 0;
   struct scrollbar_instance *instance;
-  GUI_ID id = (GUI_ID) gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER);
+  GUI_ID id;
+  /* gdouble position = gtk_adjustment_get_value (adj); */
   Lisp_Object win, frame;
   struct window_mirror *mirror;
   Lisp_Object event_type = Qnil;
   Lisp_Object event_data = Qnil;
 
+  f = (struct frame*) g_object_get_qdata (G_OBJECT (adj),
+                                          GTK_DATA_FRAME_IDENTIFIER);
   if (!f)
     return(FALSE);
+
+  id = GPOINTER_TO_UINT (g_object_get_qdata (G_OBJECT (adj),
+                                             GTK_DATA_GUI_IDENTIFIER));
+  assert (id !=  0);
 
   mirror = find_scrollbar_window_mirror (f, id);
   if (!mirror)
@@ -418,39 +376,49 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
     return(FALSE);
   instance = vertical ? mirror->scrollbar_vertical_instance : mirror->scrollbar_horizontal_instance;
   frame = WINDOW_FRAME (XWINDOW (win));
-
+  r = GTK_RANGE (SCROLLBAR_GTK_WIDGET (instance));
   inhibit_slider_size_change = 0;
-  switch (GTK_RANGE (SCROLLBAR_GTK_WIDGET (instance))->scroll_type)
+  switch (scroll)
     {
     case GTK_SCROLL_PAGE_BACKWARD:
+    case GTK_SCROLL_PAGE_UP:
+    case GTK_SCROLL_START:
       event_type = vertical ? Qscrollbar_page_up : Qscrollbar_page_left;
       event_data = Fcons (win, Qnil);
       break;
     case GTK_SCROLL_PAGE_FORWARD:
+    case GTK_SCROLL_PAGE_DOWN:
+    case GTK_SCROLL_END:
       event_type = vertical ? Qscrollbar_page_down : Qscrollbar_page_right;
       event_data = Fcons (win, Qnil);
       break;
     case GTK_SCROLL_STEP_FORWARD:
+    case GTK_SCROLL_STEP_DOWN:
+    case GTK_SCROLL_STEP_LEFT:
       event_type = vertical ? Qscrollbar_line_down : Qscrollbar_char_right;
       event_data = win;
       break;
     case GTK_SCROLL_STEP_BACKWARD:
+    case GTK_SCROLL_STEP_UP:
+    case GTK_SCROLL_STEP_RIGHT:
       event_type = vertical ? Qscrollbar_line_up : Qscrollbar_char_left;
       event_data = win;
       break;
     case GTK_SCROLL_NONE:
     case GTK_SCROLL_JUMP:
-      inhibit_slider_size_change = 1;
+      /* inhibit_slider_size_change = 1; */
       event_type = vertical ? Qscrollbar_vertical_drag : Qscrollbar_horizontal_drag;
       event_data = Fcons (win, make_fixnum ((int)adj->value));
       break;
     default:
       ABORT();
     }
-
   signal_special_gtk_user_event (frame, event_type, event_data);
+  if (scroll != GTK_SCROLL_NONE)
+    gtk_adjustment_value_changed (adj);
+  gtk_adjustment_changed (adj);
 
-  return (TRUE);
+  return FALSE;
 }
 
 static void
@@ -512,3 +480,5 @@ vars_of_scrollbar_gtk (void)
 {
   Fprovide (intern ("gtk-scrollbars"));
 }
+
+  

@@ -40,9 +40,9 @@
   gtk-color-selection-dialog-cancel-button gtk-widget-show-now
   gtk-widget-grab-focus gtk-widget-destroy gtk-dialog-new
   gtk-window-set-title gtk-container-set-border-width
-  gtk-box-set-spacing gtk-dialog-vbox gtk-container-add
+  gtk-box-set-spacing gtk-dialog-get-content-area gtk-container-add
   gtk-label-new gtk-button-new-with-label
-  gtk-widget-set-sensitive gtk-widget-show gtk-dialog-action-area
+  gtk-widget-set-sensitive gtk-widget-show gtk-dialog-get-action-area
   gtk-label-parse-uline gtk-widget-add-accelerator gtk-accel-group-new
   gtk-misc-set-alignment gtk-button-new gtk-window-add-accel-group))
 
@@ -238,8 +238,8 @@
 	  (setq dialog (gtk-dialog-new))
 	  (gtk-window-set-title dialog title)
 	  (gtk-container-set-border-width dialog 3)
-	  (gtk-box-set-spacing (gtk-dialog-vbox dialog) 5)
-	  (gtk-container-add (gtk-dialog-vbox dialog) (gtk-label-new question))
+	  (gtk-box-set-spacing (gtk-dialog-get-action-area dialog) 5)
+	  (gtk-container-add (gtk-dialog-get-action-area dialog) (gtk-label-new question))
 
 	  ;; Create the buttons.
 	  (mapc (lambda (button)
@@ -308,7 +308,7 @@
 
 		    (gtk-widget-show (car buttons))
 		    (funcall (if flushrightp 'gtk-box-pack-end 'gtk-box-pack-start)
-			     (gtk-dialog-action-area dialog) (car buttons)
+			     (gtk-dialog-get-action-area dialog) (car buttons)
 			     nil t 2)))
 		buttons-descr)
 

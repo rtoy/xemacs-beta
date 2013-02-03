@@ -33,17 +33,37 @@
  '(gtk-import-function-internal
    gtk-call-function gtk-import-variable-internal gtk-ctree-recurse))
 
+
+;; GtkWidget, general functions
+(gtk-import-function nil gtk_widget_show GtkWidget)
+(gtk-import-function nil gtk_widget_show_all GtkWidget)
+(gtk-import-function nil gtk_widget_hide GtkWidget)
+(gtk-import-function nil gtk_widget_hide_all GtkWidget)
+(gtk-import-function nil gtk_widget_map GtkWidget)
+(gtk-import-function nil gtk_widget_unmap GtkWidget)
+(gtk-import-function nil gtk_widget_realize GtkWidget)
+(gtk-import-function nil gtk_widget_unrealize GtkWidget)
+(gtk-import-function gboolean gtk_widget_get_visible GtkWidget)
+(gtk-import-function nil gtk_widget_set_visible GtkWidget gboolean)
+(gtk-import-function GtkString gtk_widget_get_name GtkWidget)
+(gtk-import-function nil gtk_widget_set_name GtkWidget GtkString)
+
+
+;; GtkWindow
+(gtk-import-function GtkWidget gtk_window_new GtkWindowType)
+
+
 (gtk-import-function GtkAccelGroup gtk_accel_group_new)
 
 
-(gtk-import-function GtkType gtk_accel_label_get_type)
+(gtk-import-function GType gtk_accel_label_get_type)
 (gtk-import-function GtkWidget gtk_accel_label_new GtkString)
 (gtk-import-function guint gtk_accel_label_get_accel_width GtkAccelLabel)
 (gtk-import-function nil gtk_accel_label_set_accel_widget GtkAccelLabel GtkWidget)
 (gtk-import-function gboolean gtk_accel_label_refetch GtkAccelLabel)
 
 
-(gtk-import-function GtkType gtk_adjustment_get_type)
+(gtk-import-function GType gtk_adjustment_get_type)
 (gtk-import-function GtkObject gtk_adjustment_new gfloat gfloat gfloat gfloat gfloat gfloat)
 (gtk-import-function nil gtk_adjustment_changed GtkAdjustment)
 (gtk-import-function nil gtk_adjustment_value_changed GtkAdjustment)
@@ -51,25 +71,25 @@
 (gtk-import-function nil gtk_adjustment_set_value GtkAdjustment gfloat)
 
 
-(gtk-import-function GtkType gtk_alignment_get_type)
+(gtk-import-function GType gtk_alignment_get_type)
 (gtk-import-function GtkWidget gtk_alignment_new gfloat gfloat gfloat gfloat)
 (gtk-import-function nil gtk_alignment_set GtkAlignment gfloat gfloat gfloat gfloat)
 
 
-(gtk-import-function GtkType gtk_arrow_get_type)
+(gtk-import-function GType gtk_arrow_get_type)
 (gtk-import-function GtkWidget gtk_arrow_new GtkArrowType GtkShadowType)
 (gtk-import-function nil gtk_arrow_set GtkArrow GtkArrowType GtkShadowType)
 
 
-(gtk-import-function GtkType gtk_aspect_frame_get_type)
+(gtk-import-function GType gtk_aspect_frame_get_type)
 (gtk-import-function GtkWidget gtk_aspect_frame_new GtkString gfloat gfloat gfloat gboolean)
 (gtk-import-function nil gtk_aspect_frame_set GtkAspectFrame gfloat gfloat gfloat gboolean)
 
 
-(gtk-import-function GtkType gtk_bin_get_type)
+(gtk-import-function GType gtk_bin_get_type)
 
 
-(gtk-import-function GtkType gtk_box_get_type)
+(gtk-import-function GType gtk_box_get_type)
 (gtk-import-function nil gtk_box_pack_start
 		     (GtkBox     . box)
 		     (GtkWidget  . child)
@@ -122,7 +142,7 @@
 		     (GtkPackType . pack_type))
 
 
-(gtk-import-function GtkType gtk_button_get_type)
+(gtk-import-function GType gtk_button_get_type)
 (gtk-import-function GtkWidget gtk_button_new)
 (gtk-import-function GtkWidget gtk_button_new_with_label GtkString)
 (gtk-import-function nil gtk_button_pressed GtkButton)
@@ -145,7 +165,7 @@
     button))
 
 
-(gtk-import-function GtkType gtk_button_box_get_type)
+(gtk-import-function GType gtk_button_box_get_type)
 
 ;Handcoded in ui-byhand.c... #### FIXME
 ;;;void gtk_button_box_get_child_size_default (gint *min_width, gint *min_height);
@@ -167,7 +187,7 @@
 (gtk-import-function nil gtk_button_box_set_child_ipadding GtkButtonBox gint gint)
 
 
-(gtk-import-function GtkType gtk_calendar_get_type)
+(gtk-import-function GType gtk_calendar_get_type)
 (gtk-import-function GtkWidget gtk_calendar_new)
 (gtk-import-function gint gtk_calendar_select_month GtkCalendar guint guint)
 (gtk-import-function nil gtk_calendar_select_day GtkCalendar guint)
@@ -186,12 +206,12 @@
 (gtk-import-function nil gtk_calendar_thaw GtkCalendar)
 
 
-(gtk-import-function GtkType gtk_check_button_get_type)
+(gtk-import-function GType gtk_check_button_get_type)
 (gtk-import-function GtkWidget gtk_check_button_new)
 (gtk-import-function GtkWidget gtk_check_button_new_with_label GtkString)
 
 
-(gtk-import-function GtkType gtk_check_menu_item_get_type)
+(gtk-import-function GType gtk_check_menu_item_get_type)
 (gtk-import-function GtkWidget gtk_check_menu_item_new)
 (gtk-import-function GtkWidget gtk_check_menu_item_new_with_label GtkString)
 (gtk-import-function nil gtk_check_menu_item_set_active GtkCheckMenuItem gboolean)
@@ -199,7 +219,7 @@
 (gtk-import-function nil gtk_check_menu_item_toggled GtkCheckMenuItem)
 
 
-(gtk-import-function GtkType gtk_clist_get_type)
+(gtk-import-function GType gtk_clist_get_type)
 (gtk-import-function GtkWidget gtk_clist_new gint)
 
 (gtk-import-function GtkWidget gtk_clist_new_with_titles
@@ -444,7 +464,7 @@
 
 ;; ColorSelection
 
-(gtk-import-function GtkType gtk_color_selection_get_type)
+(gtk-import-function GType gtk_color_selection_get_type)
 (gtk-import-function GtkWidget gtk_color_selection_new)
 (gtk-import-function nil gtk_color_selection_set_update_policy GtkColorSelection GtkUpdateType)
 (gtk-import-function nil gtk_color_selection_set_opacity GtkColorSelection gint)
@@ -455,11 +475,11 @@
 ;                                                  gdouble               *color);
 
 ;; ColorSelectionDialog
-(gtk-import-function GtkType gtk_color_selection_dialog_get_type)
+(gtk-import-function GType gtk_color_selection_dialog_get_type)
 (gtk-import-function GtkWidget gtk_color_selection_dialog_new GtkString)
 
 
-(gtk-import-function GtkType gtk_combo_get_type)
+(gtk-import-function GType gtk_combo_get_type)
 (gtk-import-function GtkWidget gtk_combo_new)
 
 ;; the text in the entry must be or not be in the list
@@ -485,7 +505,7 @@
 (gtk-import-function nil gtk_combo_disable_activate GtkCombo)
 
 
-(gtk-import-function GtkType gtk_container_get_type)
+(gtk-import-function GType gtk_container_get_type)
 (gtk-import-function nil gtk_container_set_border_width GtkContainer guint)
 (gtk-import-function nil gtk_container_add GtkContainer GtkWidget)
 (gtk-import-function nil gtk_container_remove GtkContainer GtkWidget)
@@ -523,7 +543,7 @@
 
 ; the `arg_name' argument needs to be a const static string */
 ;void    gtk_container_add_child_arg_type   (const gchar      *arg_name,
-;					    GtkType           arg_type,
+;					    GType           arg_type,
 ;					    guint             arg_flags,
 ;					    guint             arg_id);
      
@@ -536,7 +556,7 @@
 ; * It is the callers response to do a
 ; * g_free (returned_args); g_free (*arg_flags).
 ; */
-;GtkArg* gtk_container_query_child_args	   (GtkType	       class_type,
+;GtkArg* gtk_container_query_child_args	   (GType	       class_type,
 ;					    guint32          **arg_flags,
 ;					    guint             *nargs);
 
@@ -573,7 +593,7 @@
 ;					    ...);
 
 
-(gtk-import-function GtkType gtk_curve_get_type)
+(gtk-import-function GType gtk_curve_get_type)
 (gtk-import-function GtkWidget gtk_curve_new)
 (gtk-import-function nil gtk_curve_reset GtkCurve)
 (gtk-import-function nil gtk_curve_set_gamma GtkCurve gfloat)
@@ -589,19 +609,44 @@
 (gtk-import-function nil gtk_curve_set_curve_type GtkCurve GtkCurveType)
 
 
-(gtk-import-function GtkType gtk_data_get_type)
+;; (gtk-import-function GType gtk_data_get_type)
 
 
-(gtk-import-function GtkType gtk_dialog_get_type)
+(gtk-import-function GType gtk_dialog_get_type)
 (gtk-import-function GtkWidget gtk_dialog_new)
-
-
-(gtk-import-function GtkType gtk_drawing_area_get_type)
+(gtk-import-function gint gtk_dialog_run
+                     GtkDialog)
+(gtk-import-function nil gtk_dialog_response
+                     GtkDialog gint)
+(gtk-import-function nil gtk_dialog_add_button
+                     GtkDialog gchararray gint)
+(gtk-import-function nil gtk_dialog_add_action_widget
+                     GtkDialog GtkWidget gint)
+(gtk-import-function gboolean gtk_dialog_get_has_separator
+                     GtkDialog)
+(gtk-import-function nil gtk_dialog_set_default_response
+                     GtkDialog gint)
+(gtk-import-function nil gtk_dialog_set_has_separator
+                     GtkDialog gboolean)
+(gtk-import-function nil gtk_dialog_set_response_sensitive
+                     GtkDialog gint gboolean)
+(gtk-import-function GtkWidget gtk_dialog_get_response_for_widget
+                     GtkDialog GtkWidget)
+(gtk-import-function GtkWidget gtk_dialog_get_widget_for_response
+                     GtkDialog gint)
+(gtk-import-function GtkWidget gtk_dialog_get_action_area
+                     GtkDialog)
+(gtk-import-function GtkWidget gtk_dialog_get_content_area
+                     GtkDialog)
+;;;(gtk-import-function gboolean gtk_alternative_dialog_button_order
+;;;                     GdkScreen)
+                     
+(gtk-import-function GType gtk_drawing_area_get_type)
 (gtk-import-function GtkWidget gtk_drawing_area_new)
 (gtk-import-function nil gtk_drawing_area_size GtkDrawingArea gint gint)
 
 
-(gtk-import-function GtkType gtk_editable_get_type)
+(gtk-import-function GType gtk_editable_get_type)
 (gtk-import-function nil gtk_editable_select_region GtkEditable gint gint)
 
 ;;;Handcoded in ui-byhand.c... #### FIXME
@@ -620,7 +665,7 @@
 (gtk-import-function nil gtk_editable_set_editable GtkEditable gboolean)
 
 
-(gtk-import-function GtkType gtk_entry_get_type)
+(gtk-import-function GType gtk_entry_get_type)
 (gtk-import-function GtkWidget gtk_entry_new)
 (gtk-import-function GtkWidget gtk_entry_new_with_max_length guint)
 (gtk-import-function nil gtk_entry_set_text GtkEntry GtkString)
@@ -638,11 +683,11 @@
 (gtk-import-function nil gtk_entry_set_max_length GtkEntry guint)
 
 
-(gtk-import-function GtkType gtk_event_box_get_type)
+(gtk-import-function GType gtk_event_box_get_type)
 (gtk-import-function GtkWidget gtk_event_box_new)
 
 
-(gtk-import-function GtkType gtk_file_selection_get_type)
+(gtk-import-function GType gtk_file_selection_get_type)
 (gtk-import-function GtkWidget gtk_file_selection_new GtkString)
 (gtk-import-function nil gtk_file_selection_set_filename GtkFileSelection GtkString)
 (gtk-import-function GtkString gtk_file_selection_get_filename GtkFileSelection)
@@ -651,13 +696,13 @@
 (gtk-import-function nil gtk_file_selection_hide_fileop_buttons GtkFileSelection)
 
 
-(gtk-import-function GtkType gtk_fixed_get_type)
+(gtk-import-function GType gtk_fixed_get_type)
 (gtk-import-function GtkWidget gtk_fixed_new)
 (gtk-import-function nil gtk_fixed_put GtkFixed GtkWidget gint gint)
 (gtk-import-function nil gtk_fixed_move  GtkFixed GtkWidget gint gint)
 
 
-(gtk-import-function GtkType gtk_font_selection_get_type)
+(gtk-import-function GType gtk_font_selection_get_type)
 (gtk-import-function GtkWidget gtk_font_selection_new)
 (gtk-import-function GtkString gtk_font_selection_get_font_name GtkFontSelection)
 ;(gtk-import-function GdkFont gtk_font_selection_get_font GtkFontSelection)
@@ -682,7 +727,7 @@
 ;;   most of these functions simply call the corresponding function in the
 ;;   GtkFontSelection.
 
-(gtk-import-function GtkType gtk_font_selection_dialog_get_type)
+(gtk-import-function GType gtk_font_selection_dialog_get_type)
 (gtk-import-function GtkWidget gtk_font_selection_dialog_new GtkString)
 
 ;; This returns the X Logical Font Description fontname, or NULL if no font
@@ -745,29 +790,29 @@
 (gtk-import-function nil gtk_font_selection_dialog_set_preview_text GtkFontSelectionDialog GtkString)
 
 
-(gtk-import-function GtkType gtk_frame_get_type)
+(gtk-import-function GType gtk_frame_get_type)
 (gtk-import-function GtkWidget gtk_frame_new GtkString)
 (gtk-import-function nil gtk_frame_set_label GtkFrame GtkString)
 (gtk-import-function nil gtk_frame_set_label_align GtkFrame gfloat gfloat)
 (gtk-import-function nil gtk_frame_set_shadow_type GtkFrame GtkShadowType)
 
 
-(gtk-import-function GtkType gtk_gamma_curve_get_type)
+(gtk-import-function GType gtk_gamma_curve_get_type)
 (gtk-import-function GtkWidget gtk_gamma_curve_new)
 
 
-(gtk-import-function GtkType gtk_handle_box_get_type)
+(gtk-import-function GType gtk_handle_box_get_type)
 (gtk-import-function GtkWidget gtk_handle_box_new)
 (gtk-import-function nil gtk_handle_box_set_shadow_type GtkHandleBox GtkShadowType)
 (gtk-import-function nil gtk_handle_box_set_handle_position GtkHandleBox GtkPositionType)
 (gtk-import-function nil gtk_handle_box_set_snap_edge GtkHandleBox GtkPositionType)
 
 
-(gtk-import-function GtkType gtk_hbox_get_type)
+(gtk-import-function GType gtk_hbox_get_type)
 (gtk-import-function GtkWidget gtk_hbox_new gboolean gint)
 
 
-(gtk-import-function GtkType gtk_hbutton_box_get_type)
+(gtk-import-function GType gtk_hbutton_box_get_type)
 (gtk-import-function GtkWidget gtk_hbutton_box_new)
 
 ;; buttons can be added by gtk_container_add()
@@ -778,41 +823,41 @@
 (gtk-import-function nil gtk_hbutton_box_set_layout_default GtkButtonBoxStyle)
 
 
-(gtk-import-function GtkType gtk_hpaned_get_type)
+(gtk-import-function GType gtk_hpaned_get_type)
 (gtk-import-function GtkWidget gtk_hpaned_new)
 
 
-(gtk-import-function GtkType gtk_hruler_get_type)
+(gtk-import-function GType gtk_hruler_get_type)
 (gtk-import-function GtkWidget gtk_hruler_new)
 
 
-(gtk-import-function GtkType gtk_hscale_get_type)
+(gtk-import-function GType gtk_hscale_get_type)
 (gtk-import-function GtkWidget gtk_hscale_new GtkAdjustment)
 
 
-(gtk-import-function GtkType gtk_hscrollbar_get_type)
+(gtk-import-function GType gtk_hscrollbar_get_type)
 (gtk-import-function GtkWidget gtk_hscrollbar_new GtkAdjustment)
 
 
-(gtk-import-function GtkType gtk_hseparator_get_type)
+(gtk-import-function GType gtk_hseparator_get_type)
 (gtk-import-function GtkWidget gtk_hseparator_new)
 
 
-(gtk-import-function GtkType gtk_input_dialog_get_type)
+(gtk-import-function GType gtk_input_dialog_get_type)
 (gtk-import-function GtkWidget gtk_input_dialog_new)
 
 
-(gtk-import-function GtkType gtk_invisible_get_type)
+(gtk-import-function GType gtk_invisible_get_type)
 (gtk-import-function GtkWidget gtk_invisible_new)
 
 
-(gtk-import-function GtkType gtk_item_get_type)
+(gtk-import-function GType gtk_item_get_type)
 (gtk-import-function nil gtk_item_select GtkItem)
 (gtk-import-function nil gtk_item_deselect GtkItem)
 (gtk-import-function nil gtk_item_toggle GtkItem)
 
 
-(gtk-import-function GtkType gtk_label_get_type)
+(gtk-import-function GType gtk_label_get_type)
 (gtk-import-function GtkWidget gtk_label_new GtkString)
 (gtk-import-function nil gtk_label_set_text GtkLabel GtkString)
 (gtk-import-function nil gtk_label_set_justify GtkLabel GtkJustification)
@@ -829,7 +874,7 @@
 (gtk-import-function guint gtk_label_parse_uline GtkLabel GtkString)
 
 
-(gtk-import-function GtkType gtk_layout_get_type)
+(gtk-import-function GType gtk_layout_get_type)
 (gtk-import-function GtkWidget gtk_layout_new GtkAdjustment GtkAdjustment)
 (gtk-import-function nil gtk_layout_put GtkLayout GtkWidget gint gint)
 (gtk-import-function nil gtk_layout_move GtkLayout GtkWidget gint gint)
@@ -852,7 +897,7 @@
 (gtk-import-function nil gtk_layout_thaw GtkLayout)
 
 
-(gtk-import-function GtkType gtk_list_get_type)
+(gtk-import-function GType gtk_list_get_type)
 (gtk-import-function GtkWidget gtk_list_new)
 
 (gtk-import-function nil gtk_list_insert_items
@@ -894,7 +939,7 @@
 (gtk-import-function nil gtk_list_end_drag_selection GtkList)
 
 
-(gtk-import-function GtkType gtk_list_item_get_type)
+(gtk-import-function GType gtk_list_item_get_type)
 (gtk-import-function GtkWidget gtk_list_item_new)
 (gtk-import-function GtkWidget gtk_list_item_new_with_label GtkString)
 (gtk-import-function nil gtk_list_item_select GtkListItem)
@@ -922,7 +967,7 @@
 (gtk-import-function gint gtk_false)
 
 
-(gtk-import-function GtkType gtk_menu_get_type)
+(gtk-import-function GType gtk_menu_get_type)
 (gtk-import-function GtkWidget gtk_menu_new)
 
 ;; Wrappers for the Menu Shell operations
@@ -976,7 +1021,7 @@
 (gtk-import-function nil gtk_menu_reorder_child GtkMenu GtkWidget gint)
 
 
-(gtk-import-function GtkType gtk_menu_bar_get_type)
+(gtk-import-function GType gtk_menu_bar_get_type)
 (gtk-import-function GtkWidget gtk_menu_bar_new)
 (gtk-import-function nil gtk_menu_bar_append GtkMenuBar GtkWidget)
 (gtk-import-function nil gtk_menu_bar_prepend GtkMenuBar GtkWidget)
@@ -984,7 +1029,7 @@
 (gtk-import-function nil gtk_menu_bar_set_shadow_type GtkMenuBar GtkShadowType)
 
 
-(gtk-import-function GtkType gtk_menu_item_get_type)
+(gtk-import-function GType gtk_menu_item_get_type)
 (gtk-import-function GtkWidget gtk_menu_item_new)
 (gtk-import-function GtkWidget gtk_menu_item_new_with_label GtkString)
 (gtk-import-function nil gtk_menu_item_set_submenu GtkMenuItem GtkWidget)
@@ -997,7 +1042,7 @@
 (gtk-import-function nil gtk_menu_item_right_justify GtkMenuItem)
 
 
-(gtk-import-function GtkType gtk_misc_get_type)
+(gtk-import-function GType gtk_misc_get_type)
 (gtk-import-function nil gtk_misc_set_alignment
 		     (GtkMisc . misc)
 		     (gfloat  . xalign)
@@ -1009,45 +1054,89 @@
 		     (gint    . ypad))
 
 
-(gtk-import-function GtkType gtk_notebook_get_type)
+(gtk-import-function GType gtk_notebook_get_type)
 (gtk-import-function GtkWidget gtk_notebook_new)
-(gtk-import-function nil gtk_notebook_append_page GtkNotebook GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_append_page_menu GtkNotebook GtkWidget GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_prepend_page GtkNotebook GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_prepend_page_menu GtkNotebook GtkWidget GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_insert_page GtkNotebook GtkWidget GtkWidget gint)
-(gtk-import-function nil gtk_notebook_insert_page_menu GtkNotebook GtkWidget GtkWidget GtkWidget gint)
+(gtk-import-function nil gtk_notebook_append_page
+                     GtkNotebook GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_append_page_menu
+                     GtkNotebook GtkWidget GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_prepend_page
+                     GtkNotebook GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_prepend_page_menu
+                     GtkNotebook GtkWidget GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_insert_page
+                     GtkNotebook GtkWidget GtkWidget gint)
+(gtk-import-function nil gtk_notebook_insert_page_menu
+                     GtkNotebook GtkWidget GtkWidget GtkWidget gint)
 (gtk-import-function nil gtk_notebook_remove_page GtkNotebook gint)
 
-;;query, set current NoteebookPage
+;;query, set current NotebookPage
 (gtk-import-function gint gtk_notebook_get_current_page GtkNotebook)
-(gtk-import-function GtkWidget gtk_notebook_get_nth_page GtkNotebook gint)
 (gtk-import-function gint gtk_notebook_page_num GtkNotebook GtkWidget)
-(gtk-import-function nil gtk_notebook_set_page GtkNotebook gint)
+;; deprecated (gtk-import-function nil gtk_notebook_set_page GtkNotebook gint)
 (gtk-import-function nil gtk_notebook_next_page GtkNotebook)
 (gtk-import-function nil gtk_notebook_prev_page GtkNotebook)
+(gtk-import-function nil gtk_notebook_reorder_child GtkNotebook GtkWidget gint)
 
 ;; set Notebook, NotebookTab style
-(gtk-import-function nil gtk_notebook_set_show_border GtkNotebook gboolean)
-(gtk-import-function nil gtk_notebook_set_show_tabs GtkNotebook gboolean)
 (gtk-import-function nil gtk_notebook_set_tab_pos GtkNotebook GtkPositionType)
-(gtk-import-function nil gtk_notebook_set_homogeneous_tabs GtkNotebook gboolean)
-(gtk-import-function nil gtk_notebook_set_tab_border GtkNotebook guint)
-(gtk-import-function nil gtk_notebook_set_tab_hborder GtkNotebook guint)
-(gtk-import-function nil gtk_notebook_set_tab_vborder GtkNotebook guint)
+(gtk-import-function nil gtk_notebook_set_show_tabs GtkNotebook gboolean)
+(gtk-import-function nil gtk_notebook_set_show_border GtkNotebook gboolean)
 (gtk-import-function nil gtk_notebook_set_scrollable GtkNotebook gboolean)
+(gtk-import-function nil gtk_notebook_set_tab_border GtkNotebook guint)
 
 ;; enable/disable PopupMenu
 (gtk-import-function nil gtk_notebook_popup_enable GtkNotebook)
 (gtk-import-function nil gtk_notebook_popup_disable GtkNotebook)
 
+(gtk-import-function GtkWidget gtk_notebook_get_nth_page GtkNotebook gint)
+(gtk-import-function GtkWidget gtk_notebook_get_menu_label
+                     GtkNotebook GtkWidget)
+(gtk-import-function gint gtk_notebook_get_n_pages GtkNotebook gint)
+(gtk-import-function GtkWidget gtk_notebook_get_tab_label
+                     GtkNotebook GtkWidget)
+(gtk-import-function GtkWidget gtk_notebook_query_tab_label_packing
+                     GtkNotebook GtkWidget gboolean gboolean GtkPackType)
+(gtk-import-function nil gtk_notebook_set_homogeneous_tabs GtkNotebook gboolean)
+
 ;; query/set NotebookPage Properties
-(gtk-import-function GtkWidget gtk_notebook_get_tab_label GtkNotebook GtkWidget)
-(gtk-import-function nil gtk_notebook_set_tab_label GtkNotebook GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_set_tab_label_text GtkNotebook GtkWidget GtkString)
-(gtk-import-function GtkWidget gtk_notebook_get_menu_label GtkNotebook GtkWidget)
-(gtk-import-function nil gtk_notebook_set_menu_label GtkNotebook GtkWidget GtkWidget)
-(gtk-import-function nil gtk_notebook_set_menu_label_text GtkNotebook GtkWidget GtkString)
+(gtk-import-function nil gtk_notebook_set_menu_label
+                     GtkNotebook GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_set_menu_label_text
+                     GtkNotebook GtkWidget GtkString)
+(gtk-import-function nil gtk_notebook_set_tab_hborder GtkNotebook guint)
+(gtk-import-function nil gtk_notebook_set_tab_label
+                     GtkNotebook GtkWidget GtkWidget)
+(gtk-import-function nil gtk_notebook_set_tab_label_packing
+                     GtkNotebook GtkWidget gboolean gboolean GtkPackType)
+(gtk-import-function nil gtk_notebook_set_tab_label_text
+                     GtkNotebook GtkWidget GtkString)
+(gtk-import-function nil gtk_notebook_set_tab_vborder GtkNotebook guint)
+(gtk-import-function nil gtk_notebook_set_tab_reorderable
+                     GtkNotebook GtkWidget gboolean)
+(gtk-import-function nil gtk_notebook_set_tab_detachable
+                     GtkNotebook GtkWidget gboolean)
+(gtk-import-function gchararray gtk_notebook_get_menu_label_text
+                     GtkNotebook GtkWidget)
+(gtk-import-function gboolean gtk_notebook_get_scrollable GtkNotebook)
+(gtk-import-function gboolean gtk_notebook_get_show_border GtkNotebook)
+(gtk-import-function gboolean gtk_notebook_get_show_tabs GtkNotebook)
+(gtk-import-function gchararray gtk_notebook_get_tab_label_text
+                     GtkNotebook GtkWidget)
+(gtk-import-function GtkPositionType gtk_notebook_get_tab_pos GtkNotebook)
+(gtk-import-function gboolean gtk_notebook_get_tab_detachable
+                     GtkNotebook GtkWidget)
+(gtk-import-function nil gtk_notebook_set_current_page GtkNotebook gint)
+(gtk-import-function nil gtk_notebook_set_group_id GtkNotebook gint)
+(gtk-import-function gint gtk_notebook_get_group_id GtkNotebook)
+(gtk-import-function nil gtk_notebook_set_group GtkNotebook gpointer)
+(gtk-import-function gpointer gtk_notebook_get_group GtkNotebook)
+(gtk-import-function void gtk_notebook_set_action_widget
+                     GtkNotebook GtkWidget GtkPackType)
+(gtk-import-function GtkWidget gtk_notebook_get_action_widget
+                     GtkNotebook GtkPackType)
+;;(gtk-import-function gtk_notebook_set_window_creation_hook
+;;                     GtkNoteBookWindowCreationFunc gpointer GDestroyNotify)
 
 ;;;Handcoded in ui-byhand.c... #### FIXME
 ;;;void gtk_notebook_query_tab_label_packing (GtkNotebook *notebook,
@@ -1055,12 +1144,12 @@
 ;;;					   gboolean    *expand,
 ;;;					   gboolean    *fill,
 ;;;					   GtkPackType *pack_type);
-(gtk-import-function nil gtk_notebook_set_tab_label_packing GtkNotebook GtkWidget gboolean gboolean GtkPackType)
+;;(gtk-import-function nil gtk_notebook_set_tab_label_packing GtkNotebook GtkWidget gboolean gboolean GtkPackType)
 
-(gtk-import-function nil gtk_notebook_reorder_child GtkNotebook GtkWidget gint)
+
 
 
-(gtk-import-function GtkType gtk_object_get_type)
+(gtk-import-function GType gtk_object_get_type)
 ;(gtk-import-function 'GtkObject gtk_object_newv 'guint 'guint 'GtkArg)
 (gtk-import-function nil gtk_object_sink GtkObject)
 (gtk-import-function nil gtk_object_ref GtkObject)
@@ -1080,7 +1169,7 @@
 ;; handlers for types of GtkObject
 
 
-(gtk-import-function GtkType gtk_option_menu_get_type)
+(gtk-import-function GType gtk_option_menu_get_type)
 (gtk-import-function GtkWidget gtk_option_menu_new)
 (gtk-import-function GtkWidget gtk_option_menu_get_menu GtkOptionMenu)
 (gtk-import-function nil gtk_option_menu_set_menu GtkOptionMenu GtkWidget)
@@ -1088,40 +1177,40 @@
 (gtk-import-function nil gtk_option_menu_set_history GtkOptionMenu guint)
 
 
-(gtk-import-function GtkType gtk_packer_get_type)
-(gtk-import-function GtkWidget gtk_packer_new)
-(gtk-import-function nil gtk_packer_add_defaults GtkPacker GtkWidget
-		     GtkSideType GtkAnchorType GtkPackerOptions)
-(gtk-import-function nil gtk_packer_add GtkPacker
-		     GtkWidget
-		     GtkSideType
-		     GtkAnchorType
-		     GtkPackerOptions
-		     guint
-		     guint
-		     guint
-		     guint
-		     guint)
+;; (gtk-import-function GType gtk_packer_get_type)
+;; (gtk-import-function GtkWidget gtk_packer_new)
+;; (gtk-import-function nil gtk_packer_add_defaults GtkPacker GtkWidget
+;; 		     GtkSideType GtkAnchorType GtkPackerOptions)
+;; (gtk-import-function nil gtk_packer_add GtkPacker
+;; 		     GtkWidget
+;; 		     GtkSideType
+;; 		     GtkAnchorType
+;; 		     GtkPackerOptions
+;; 		     guint
+;; 		     guint
+;; 		     guint
+;; 		     guint
+;; 		     guint)
 
-(gtk-import-function nil gtk_packer_set_child_packing GtkPacker
-		     GtkWidget
-		     GtkSideType
-		     GtkAnchorType
-		     GtkPackerOptions
-		     guint
-		     guint
-		     guint
-		     guint
-		     guint)
+;; (gtk-import-function nil gtk_packer_set_child_packing GtkPacker
+;; 		     GtkWidget
+;; 		     GtkSideType
+;; 		     GtkAnchorType
+;; 		     GtkPackerOptions
+;; 		     guint
+;; 		     guint
+;; 		     guint
+;; 		     guint
+;; 		     guint)
 
-(gtk-import-function nil gtk_packer_reorder_child GtkPacker GtkWidget gint)
-(gtk-import-function nil gtk_packer_set_spacing GtkPacker guint)
-(gtk-import-function nil gtk_packer_set_default_border_width GtkPacker guint)
-(gtk-import-function nil gtk_packer_set_default_pad GtkPacker guint guint)
-(gtk-import-function nil gtk_packer_set_default_ipad GtkPacker guint guint)
+;; (gtk-import-function nil gtk_packer_reorder_child GtkPacker GtkWidget gint)
+;; (gtk-import-function nil gtk_packer_set_spacing GtkPacker guint)
+;; (gtk-import-function nil gtk_packer_set_default_border_width GtkPacker guint)
+;; (gtk-import-function nil gtk_packer_set_default_pad GtkPacker guint guint)
+;; (gtk-import-function nil gtk_packer_set_default_ipad GtkPacker guint guint)
 
 
-(gtk-import-function GtkType gtk_paned_get_type)
+(gtk-import-function GType gtk_paned_get_type)
 (gtk-import-function nil gtk_paned_add1 GtkPaned GtkWidget)
 (gtk-import-function nil gtk_paned_add2 GtkPaned GtkWidget)
 (gtk-import-function nil gtk_paned_pack1 GtkPaned GtkWidget gboolean gboolean)
@@ -1134,7 +1223,7 @@
 (gtk-import-function nil gtk_paned_compute_position GtkPaned gint gint gint)
 
 
-(gtk-import-function GtkType gtk_pixmap_get_type)
+(gtk-import-function GType gtk_pixmap_get_type)
 (gtk-import-function GtkWidget gtk_pixmap_new
 		     (GdkPixmap . pixmap)
 		     (GdkPixmap . mask))
@@ -1153,12 +1242,12 @@
 		     (guint     . build))
 
 
-(gtk-import-function GtkType gtk_plug_get_type)
+(gtk-import-function GType g_type_get_plugin)
 (gtk-import-function GtkWidget gtk_plug_new guint)
 (gtk-import-function nil gtk_plug_construct GtkPlug guint)
 
 
-(gtk-import-function GtkType gtk_progress_get_type)
+(gtk-import-function GType gtk_progress_get_type)
 (gtk-import-function nil gtk_progress_set_show_text GtkProgress gint)
 (gtk-import-function nil gtk_progress_set_text_alignment GtkProgress gfloat gfloat)
 (gtk-import-function nil gtk_progress_set_format_string GtkProgress GtkString)
@@ -1174,7 +1263,7 @@
 (gtk-import-function gfloat gtk_progress_get_percentage_from_value GtkProgress gfloat)
 
 
-(gtk-import-function GtkType gtk_progress_bar_get_type)
+(gtk-import-function GType gtk_progress_bar_get_type)
 (gtk-import-function GtkWidget gtk_progress_bar_new)
 (gtk-import-function GtkWidget gtk_progress_bar_new_with_adjustment GtkAdjustment)
 (gtk-import-function nil gtk_progress_bar_set_bar_style GtkProgressBar GtkProgressBarStyle)
@@ -1188,7 +1277,7 @@
 ;; All of the gpointers below really need to be `GSList *'
 ;; For now, need to create the first radio button with 'nil' and then use
 ;; (gtk-radio-button-group first-radio) for the rest.
-(gtk-import-function GtkType gtk_radio_button_get_type)
+(gtk-import-function GType gtk_radio_button_get_type)
 (gtk-import-function GtkWidget gtk_radio_button_new gpointer)
 (gtk-import-function GtkWidget gtk_radio_button_new_from_widget GtkRadioButton)
 (gtk-import-function GtkWidget gtk_radio_button_new_with_label gpointer GtkString)
@@ -1197,7 +1286,7 @@
 (gtk-import-function nil gtk_radio_button_set_group GtkRadioButton gpointer)
 
 
-(gtk-import-function GtkType gtk_radio_menu_item_get_type)
+(gtk-import-function GType gtk_radio_menu_item_get_type)
 
 ;; #### BILLL!!
 ;; All of these gpointer args should be GList *
@@ -1207,7 +1296,7 @@
 (gtk-import-function nil gtk_radio_menu_item_set_group GtkRadioMenuItem gpointer)
 
 
-(gtk-import-function GtkType gtk_range_get_type)
+(gtk-import-function GType gtk_range_get_type)
 (gtk-import-function GtkAdjustment gtk_range_get_adjustment GtkRange)
 (gtk-import-function nil gtk_range_set_update_policy GtkRange GtkUpdateType)
 (gtk-import-function nil gtk_range_set_adjustment GtkRange GtkAdjustment)
@@ -1243,14 +1332,14 @@
 (gtk-import-function nil gtk_range_default_vmotion GtkRange gint gint)
 
 
-(gtk-import-function GtkType gtk_ruler_get_type)
+(gtk-import-function GType gtk_ruler_get_type)
 (gtk-import-function nil gtk_ruler_set_metric GtkRuler GtkMetricType)
 (gtk-import-function nil gtk_ruler_set_range GtkRuler gfloat gfloat gfloat gfloat)
 (gtk-import-function nil gtk_ruler_draw_ticks GtkRuler)
 (gtk-import-function nil gtk_ruler_draw_pos GtkRuler)
 
 
-(gtk-import-function GtkType gtk_scale_get_type)
+(gtk-import-function GType gtk_scale_get_type)
 (gtk-import-function nil gtk_scale_set_digits GtkScale gint)
 (gtk-import-function nil gtk_scale_set_draw_value GtkScale gboolean)
 (gtk-import-function nil gtk_scale_set_value_pos GtkScale GtkPositionType)
@@ -1258,10 +1347,10 @@
 (gtk-import-function nil gtk_scale_draw_value GtkScale)
 
 
-(gtk-import-function GtkType gtk_scrollbar_get_type)
+(gtk-import-function GType gtk_scrollbar_get_type)
 
 
-(gtk-import-function GtkType gtk_scrolled_window_get_type)
+(gtk-import-function GType gtk_scrolled_window_get_type)
 (gtk-import-function GtkWidget gtk_scrolled_window_new GtkAdjustment GtkAdjustment)
 (gtk-import-function nil gtk_scrolled_window_set_hadjustment GtkScrolledWindow GtkAdjustment)
 (gtk-import-function nil gtk_scrolled_window_set_vadjustment GtkScrolledWindow GtkAdjustment)
@@ -1272,15 +1361,16 @@
 (gtk-import-function nil gtk_scrolled_window_add_with_viewport GtkScrolledWindow GtkWidget)
 
 
-(gtk-import-function GtkType gtk_separator_get_type)
+(gtk-import-function GType gtk_separator_tool_item_get_type)
+(gtk-import-function GType gtk_separator_tool_item_new)
 
 
-(gtk-import-function GtkType gtk_socket_get_type)
+(gtk-import-function GType gtk_socket_get_type)
 (gtk-import-function GtkWidget gtk_socket_new)
 (gtk-import-function nil gtk_socket_steal GtkSocket guint)
 
 
-(gtk-import-function GtkType gtk_table_get_type)
+(gtk-import-function GType gtk_table_get_type)
 (gtk-import-function GtkWidget gtk_table_new guint guint gboolean)
 (gtk-import-function nil gtk_table_resize GtkTable guint guint)
 
@@ -1296,11 +1386,11 @@
 (gtk-import-function nil gtk_table_set_homogeneous GtkTable gboolean)
 
 
-(gtk-import-function GtkType gtk_tearoff_menu_item_get_type)
+(gtk-import-function GType gtk_tearoff_menu_item_get_type)
 (gtk-import-function GtkWidget gtk_tearoff_menu_item_new)
 
 
-(gtk-import-function GtkType gtk_text_get_type)
+(gtk-import-function GType gtk_text_get_type)
 (gtk-import-function GtkWidget gtk_text_new GtkAdjustment GtkAdjustment)
 (gtk-import-function nil gtk_text_set_editable GtkText gboolean)
 (gtk-import-function nil gtk_text_set_word_wrap GtkText gint)
@@ -1316,7 +1406,7 @@
 (gtk-import-function nil gtk_text_forward_delete GtkText guint)
 
 
-(gtk-import-function GtkType gtk_tips_query_get_type)
+(gtk-import-function GType gtk_tips_query_get_type)
 (gtk-import-function GtkWidget gtk_tips_query_new)
 (gtk-import-function nil gtk_tips_query_start_query GtkTipsQuery)
 (gtk-import-function nil gtk_tips_query_stop_query GtkTipsQuery)
@@ -1324,7 +1414,7 @@
 (gtk-import-function nil gtk_tips_query_set_labels GtkTipsQuery GtkString GtkString)
 
 
-(gtk-import-function GtkType gtk_toggle_button_get_type)
+(gtk-import-function GType gtk_toggle_button_get_type)
 (gtk-import-function GtkWidget gtk_toggle_button_new)
 (gtk-import-function GtkWidget gtk_toggle_button_new_with_label GtkString)
 (gtk-import-function nil gtk_toggle_button_set_mode GtkToggleButton gboolean)
@@ -1333,94 +1423,20 @@
 (gtk-import-function nil gtk_toggle_button_toggled GtkToggleButton)
 
 
-(gtk-import-function GtkType gtk_toolbar_get_type)
-(gtk-import-function GtkWidget gtk_toolbar_new GtkOrientation GtkToolbarStyle)
-
-;; Simple button items
-;;; Handcoded in ui-byhand.c... #### FIXME
-;;;GtkWidget* gtk_toolbar_append_item     (GtkToolbar      *toolbar,
-;;;					const char      *text,
-;;;					const char      *tooltip_text,
-;;;					const char      *tooltip_private_text,
-;;;					GtkWidget       *icon,
-;;;					GtkSignalFunc    callback,
-;;;					gpointer         user_data);
-;;;GtkWidget* gtk_toolbar_prepend_item    (GtkToolbar      *toolbar,
-;;;					const char      *text,
-;;;					const char      *tooltip_text,
-;;;					const char      *tooltip_private_text,
-;;;					GtkWidget       *icon,
-;;;					GtkSignalFunc    callback,
-;;;					gpointer         user_data);
-;;;GtkWidget* gtk_toolbar_insert_item     (GtkToolbar      *toolbar,
-;;;					const char      *text,
-;;;					const char      *tooltip_text,
-;;;					const char      *tooltip_private_text,
-;;;					GtkWidget       *icon,
-;;;					GtkSignalFunc    callback,
-;;;					gpointer         user_data,
-;;;					gint             position);
-
-;; Space Items
-(gtk-import-function nil gtk_toolbar_append_space GtkToolbar)
-(gtk-import-function nil gtk_toolbar_prepend_space GtkToolbar)
-(gtk-import-function nil gtk_toolbar_insert_space GtkToolbar gint)
-
-;; Any element type
-;; Cannot currently do this!  Need to have something similar to
-;; GtkCallback in order to deal with this.
-;; Of what possible use are these functions?  I don't see the
-;; difference between them and the _item functions.
-;;
-;; From looking at the code in gtktoolbar.c, the GtkWidget argument
-;; here is ignored!!!
-'(gtk-import-function GtkWidget gtk_toolbar_append_element GtkToolbar
-		      GtkToolbarChildType
-		      GtkWidget
-		      GtkString
-		      GtkString
-		      GtkString
-		      GtkWidget
-		      GtkSignal
-		      gpointer)
-
-'(gtk-import-function GtkWidget gtk_toolbar_prepend_element GtkToolbar
-		      GtkToolbarChildType
-		      GtkWidget
-		      GtkString
-		      GtkString
-		      GtkString
-		      GtkWidget
-		      GtkSignal
-		      gpointer)
-
-'(gtk-import-function GtkWidget gtk_toolbar_insert_element GtkToolbar
-		      GtkToolbarChildType
-		      GtkWidget
-		      GtkString
-		      GtkString
-		      GtkString
-		      GtkWidget
-		      GtkSignal
-		      gpointer
-		      gint)
-
-;; Generic Widgets
-(gtk-import-function nil gtk_toolbar_append_widget GtkToolbar GtkWidget GtkString GtkString)
-(gtk-import-function nil gtk_toolbar_prepend_widget GtkToolbar GtkWidget GtkString GtkString)
-(gtk-import-function nil gtk_toolbar_insert_widget GtkToolbar GtkWidget GtkString GtkString gint)
-
-;; Style functions
-(gtk-import-function nil gtk_toolbar_set_orientation GtkToolbar GtkOrientation)
-(gtk-import-function nil gtk_toolbar_set_style GtkToolbar GtkToolbarStyle)
-(gtk-import-function nil gtk_toolbar_set_space_size GtkToolbar gint)
-(gtk-import-function nil gtk_toolbar_set_space_style GtkToolbar GtkToolbarSpaceStyle)
-(gtk-import-function nil gtk_toolbar_set_tooltips GtkToolbar gint)
-(gtk-import-function nil gtk_toolbar_set_button_relief GtkToolbar GtkReliefStyle)
-(gtk-import-function GtkReliefStyle gtk_toolbar_get_button_relief GtkToolbar)
+(gtk-import-function GtkToolItem gtk_tool_button_new)
+(gtk-import-function GtkToolItem gtk_tool_button_new_from_stock GtkString)
+(gtk-import-function nil gtk_tool_button_set_label GtkString)
+(gtk-import-function GtkString gtk_tool_button_get_label)
 
 
-(gtk-import-function GtkType gtk_tooltips_get_type)
+(gtk-import-function GtkToolItem gtk_tool_item_new)
+(gtk-import-function nil gtk_tool_item_set_homogeneous GtkToolItem gboolean)
+(gtk-import-function gboolean gtk_tool_item_get_homogeneous GtkToolItem)
+(gtk-import-function nil gtk_tool_item_set_expand GtkToolItem gboolean)
+(gtk-import-function gboolean gtk_tool_item_get_expand GtkToolItem)
+
+
+(gtk-import-function GType gtk_tooltips_get_type)
 (gtk-import-function GtkObject gtk_tooltips_new)
 (gtk-import-function nil gtk_tooltips_enable GtkTooltips)
 (gtk-import-function nil gtk_tooltips_disable GtkTooltips)
@@ -1433,7 +1449,7 @@
 (gtk-import-function nil gtk_tooltips_force_window GtkTooltips)
 
 
-(gtk-import-function GtkType gtk_tree_get_type)
+(gtk-import-function GType gtk_tree_get_type)
 (gtk-import-function GtkWidget gtk_tree_new)
 
 (gtk-import-function nil gtk_tree_append
@@ -1495,7 +1511,7 @@
 		     (GtkWidget . child))
 
 
-(gtk-import-function GtkType gtk_tree_item_get_type)
+(gtk-import-function GType gtk_tree_item_get_type)
 (gtk-import-function GtkWidget gtk_tree_item_new)
 (gtk-import-function GtkWidget gtk_tree_item_new_with_label GtkString)
 (gtk-import-function nil gtk_tree_item_set_subtree GtkTreeItem GtkWidget)
@@ -1506,15 +1522,15 @@
 (gtk-import-function nil gtk_tree_item_collapse GtkTreeItem)
 
 
-(gtk-import-function GtkString gtk_type_name GtkType)
+(gtk-import-function GtkString gtk_type_name GType)
 (gtk-import-function guint gtk_type_from_name GtkString)
 
 
-(gtk-import-function GtkType gtk_vbox_get_type)
+(gtk-import-function GType gtk_vbox_get_type)
 (gtk-import-function GtkWidget gtk_vbox_new gboolean gint)
 
 
-(gtk-import-function GtkType gtk_vbutton_box_get_type)
+(gtk-import-function GType gtk_vbutton_box_get_type)
 (gtk-import-function GtkWidget gtk_vbutton_box_new)
 
 ;; buttons can be added by gtk_container_add()
@@ -1525,7 +1541,7 @@
 (gtk-import-function nil gtk_vbutton_box_set_layout_default GtkButtonBoxStyle)
 
 
-(gtk-import-function GtkType gtk_viewport_get_type)
+(gtk-import-function GType gtk_viewport_get_type)
 (gtk-import-function GtkWidget gtk_viewport_new GtkAdjustment GtkAdjustment)
 (gtk-import-function GtkAdjustment gtk_viewport_get_hadjustment GtkViewport)
 (gtk-import-function GtkAdjustment gtk_viewport_get_vadjustment GtkViewport)
@@ -1534,27 +1550,27 @@
 (gtk-import-function nil gtk_viewport_set_shadow_type GtkViewport GtkShadowType)
 
 
-(gtk-import-function GtkType gtk_vpaned_get_type)
+(gtk-import-function GType gtk_vpaned_get_type)
 (gtk-import-function GtkWidget gtk_vpaned_new)
 
 
-(gtk-import-function GtkType gtk_vruler_get_type)
+(gtk-import-function GType gtk_vruler_get_type)
 (gtk-import-function GtkWidget gtk_vruler_new)
 
 
-(gtk-import-function GtkType gtk_vscale_get_type)
+(gtk-import-function GType gtk_vscale_get_type)
 (gtk-import-function GtkWidget gtk_vscale_new GtkAdjustment)
 
 
-(gtk-import-function GtkType gtk_vscrollbar_get_type)
+(gtk-import-function GType gtk_vscrollbar_get_type)
 (gtk-import-function GtkWidget gtk_vscrollbar_new GtkAdjustment)
 
 
-(gtk-import-function GtkType gtk_vseparator_get_type)
+(gtk-import-function GType gtk_vseparator_get_type)
 (gtk-import-function GtkWidget gtk_vseparator_new)
 
 
-(gtk-import-function GtkType gtk_widget_get_type)
+(gtk-import-function GType gtk_widget_get_type)
 (gtk-import-function nil gtk_widget_ref GtkWidget)
 (gtk-import-function nil gtk_widget_unref GtkWidget)
 (gtk-import-function nil gtk_widget_destroy GtkWidget)
@@ -1682,7 +1698,7 @@
 ;					    gchar    **path_reversed);
 
 
-(gtk-import-function GtkType gtk_window_get_type)
+(gtk-import-function GType gtk_window_get_type)
 (gtk-import-function GtkWidget gtk_window_new GtkWindowType)
 (gtk-import-function nil gtk_window_set_title GtkWindow GtkString)
 (gtk-import-function nil gtk_window_set_wmclass GtkWindow GtkString GtkString)
@@ -1706,7 +1722,7 @@
 '(gtk-import-function nil gtk_window_reposition GtkWindow gint gint)
 
 
-(gtk-import-function GtkType gtk_spin_button_get_type)
+(gtk-import-function GType gtk_spin_button_get_type)
 (gtk-import-function nil gtk_spin_button_configure
 		     (GtkSpinButton . spin_button)
 		     (GtkAdjustment . adjustment)
@@ -1754,7 +1770,7 @@
 		      (GtkSpinButton . spin_button))
 
 
-(gtk-import-function GtkType gtk_statusbar_get_type)
+(gtk-import-function GType gtk_statusbar_get_type)
 (gtk-import-function GtkWidget gtk_statusbar_new)
 (gtk-import-function guint gtk_statusbar_get_context_id
 		     (GtkStatusbar . statusbar)
@@ -1774,7 +1790,7 @@
 		     (guint        . message_id))
 
 
-(gtk-import-function GtkType gtk_ctree_get_type)
+(gtk-import-function GType gtk_ctree_get_type)
 (gtk-import-function none gtk_ctree_construct
 		     (GtkCTree . ctree)
 		     (gint     . columns)
@@ -2032,7 +2048,7 @@
   (gtk-ctree-recurse ctree node func data nil depth))
 
 
-(gtk-import-function GtkType gtk_preview_get_type)
+(gtk-import-function GType gtk_preview_get_type)
 (gtk-import-function void gtk_preview_uninit)
 (gtk-import-function GtkWidget gtk_preview_new
 		     (GtkPreviewType . type))

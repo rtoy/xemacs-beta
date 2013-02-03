@@ -2248,6 +2248,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_gtk ();
 #endif
+#ifdef HAVE_TOOLBARS
+      vars_of_toolbar_gtk();
+#endif
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui_gtk ();
 #endif
@@ -2391,7 +2394,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 #ifdef HAVE_GTK
       reinit_vars_of_event_gtk ();
+#ifdef HAVE_MENUBARS
       reinit_vars_of_menubar_gtk ();
+#endif
 #endif
 
 #ifdef HAVE_X_WINDOWS
