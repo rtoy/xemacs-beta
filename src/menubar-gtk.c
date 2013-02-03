@@ -926,9 +926,11 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	      }
 
 	    gtk_widget_show_all (item);
-	    if (current_child)
-              gtk_widget_destroy (GTK_WIDGET (current_child));
-            
+	    /* The need to check for the parent is an indicator of a
+	       possible bug.  Need to ensure we're only deleting the child
+	       at only one point in the code. */
+	    if (current_child && gtk_widget_get_parent (current_child) != 0)
+	      gtk_widget_destroy (GTK_WIDGET (current_child));
 	    gtk_menu_shell_insert (GTK_MENU_SHELL (menubar),
                                    item, menu_position);
 	  }
@@ -949,7 +951,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	    else
 	      {
 		widget = menu_convert (item_descr, NULL, menubar_accel_group);
-		if (current_child)
+		if (current_child && gtk_widget_get_parent (current_child) != 0)
                   gtk_widget_destroy (GTK_WIDGET (current_child));
 		gtk_menu_shell_insert (GTK_MENU_SHELL (menubar),
                                        widget, menu_position);
