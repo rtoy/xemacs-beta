@@ -1,5 +1,8 @@
 2013-02-03  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (menu_create_menubar): Be careful when deleting
+	menubar children to avoid runtime warnings.
+
 	* fontcolor-gtk.c: Define debug_gtk_fonts; use it to separate font
 	debugging between Gtk and X.
 	(gtk_initialize_font_instance): Use it.
