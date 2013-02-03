@@ -30,6 +30,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "events.h"
 #include "extents.h"
 #include "faces.h"
+#include "gutter.h"
 #include "frame-impl.h"
 #include "window.h"
 
@@ -46,12 +47,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "gtk-xemacs.h"
 
-#ifdef HAVE_GNOME
-#include <libgnomeui/libgnomeui.h>
-#endif
-
-#define BORDER_WIDTH 0
-#define INTERNAL_BORDER_WIDTH 0
+#define BORDER_WIDTH 2
+#define INTERNAL_BORDER_WIDTH 2
 
 #define TRANSIENT_DATA_IDENTIFIER "xemacs::transient_for"
 #define UNMAPPED_DATA_IDENTIFIER "xemacs::initially_unmapped"
@@ -92,11 +89,15 @@ static guint dnd_n_targets = sizeof(dnd_target_table) / sizeof(dnd_target_table[
 #endif
 
 static const struct memory_description gtk_frame_data_description_1 [] = {
-  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap) },
-  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap_mask) },
   { XD_LISP_OBJECT_ARRAY, offsetof (struct gtk_frame, lisp_visible_widgets),
     3 },
   { XD_LISP_OBJECT, offsetof (struct gtk_frame, menubar_data) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap_mask) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, widget_instance_hash_table) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, widget_callback_hash_table) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame,
+                              widget_callback_ex_hash_table) },
   { XD_END }
 };
 
@@ -125,8 +126,8 @@ gtk_widget_to_frame (GtkWidget *w)
 
   for (; w; w = w->parent)
     {
-      if ((f = (struct frame *) gtk_object_get_data (GTK_OBJECT (w),
-						     GTK_DATA_FRAME_IDENTIFIER)))
+      if ((f = (struct frame *) g_object_get_qdata (G_OBJECT(w),
+                                                    GTK_DATA_FRAME_IDENTIFIER)))
 	return (f);
     }
 
@@ -194,17 +195,17 @@ gtk_any_widget_or_parent_to_frame (struct device *d, GtkWidget *widget)
 struct device *
 gtk_any_window_to_device (GdkWindow *w)
 {
-	struct device *d = NULL;
-	Lisp_Object devcons, concons;
+  struct device *d = NULL;
+  Lisp_Object devcons, concons;
 
-	DEVICE_LOOP_NO_BREAK (devcons, concons)
-		{
-			d = XDEVICE (XCAR (devcons));
-			if (!DEVICE_GTK_P (d)) continue;
-			if (gtk_any_window_to_frame (d, w))
-				return (d);
-		}
-	return (NULL);
+  DEVICE_LOOP_NO_BREAK (devcons, concons)
+    {
+      d = XDEVICE (XCAR (devcons));
+      if (!DEVICE_GTK_P (d)) continue;
+      if (gtk_any_window_to_frame (d, w))
+        return (d);
+    }
+  return (NULL);
 }
 
 struct frame *
@@ -235,6 +236,30 @@ gtk_frame_iconified_p (struct frame *f)
 /************************************************************************/
 
 static Lisp_Object
+gtk_toolbar_plist (struct frame *f)
+{
+  Lisp_Object plist = Qnil;
+
+  plist = cons3 (Qright,
+                 build_gtk_object ((GObject *) (FRAME_GTK_TOOLBAR_WIDGET (f)
+                                                [RIGHT_EDGE])),
+                 plist);
+  plist = cons3 (Qleft,
+                 build_gtk_object ((GObject *) (FRAME_GTK_TOOLBAR_WIDGET (f)
+                                                [LEFT_EDGE])),
+                 plist);
+  plist = cons3 (Qbottom,
+                 build_gtk_object ((GObject *) (FRAME_GTK_TOOLBAR_WIDGET (f)
+                                                [BOTTOM_EDGE])),
+                 plist);
+  plist = cons3 (Qtop,
+                 build_gtk_object ((GObject *) (FRAME_GTK_TOOLBAR_WIDGET (f)
+                                                [TOP_EDGE])),
+                 plist);
+  return plist;
+}
+
+static Lisp_Object
 gtk_frame_property (struct frame *f, Lisp_Object property)
 {
   GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
@@ -244,7 +269,7 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
       gint x, y;
       if (!GET_GTK_WIDGET_WINDOW(shell))
 	return Qzero;
-      gdk_window_get_deskrelative_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
+      gdk_window_get_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
       if (EQ (Qleft, property)) return make_fixnum (x);
       if (EQ (Qtop,  property)) return make_fixnum (y);
     }
@@ -259,6 +284,14 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
   if (EQ (Qtext_widget, property))
     {
       return (FRAME_GTK_LISP_WIDGETS (f)[2]);
+    }
+  if (EQ (Qmenubar, property))
+    {
+      return build_gtk_object (G_OBJECT (FRAME_GTK_MENUBAR_WIDGET (f)));
+    }
+  if (EQ (Qtoolbar, property))
+    {
+      return gtk_toolbar_plist (f);
     }
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
   if (EQ (Qwindow_id, property))
@@ -277,6 +310,8 @@ gtk_internal_frame_property_p (struct frame *UNUSED(f), Lisp_Object property)
     || EQ (Qcontainer_widget, property)
     || EQ (Qtext_widget, property)
     || EQ (property, Qwindow_id)
+    || EQ (property, Qtoolbar)
+    || EQ (property, Qmenubar)
     || STRINGP (property);
 }
 
@@ -290,6 +325,8 @@ gtk_frame_properties (struct frame *f)
   props = cons3 (Qshell_widget, FRAME_GTK_LISP_WIDGETS (f)[0], props);
   props = cons3 (Qcontainer_widget, FRAME_GTK_LISP_WIDGETS (f)[1], props);
   props = cons3 (Qtext_widget, FRAME_GTK_LISP_WIDGETS (f)[2], props);
+  props = cons3 (Qmenubar, build_gtk_object (G_OBJECT (FRAME_GTK_MENUBAR_WIDGET (f))), props);
+  props = cons3 (Qtoolbar, gtk_toolbar_plist (f), props);
 
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
   props = cons3 (Qwindow_id, Fgtk_window_id (wrap_frame (f)), props);
@@ -298,7 +335,7 @@ gtk_frame_properties (struct frame *f)
   if (!GET_GTK_WIDGET_WINDOW (shell))
     x = y = 0;
   else
-    gdk_window_get_deskrelative_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
+    gdk_window_get_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
 
   props = cons3 (Qtop,  make_fixnum (y), props);
   props = cons3 (Qleft, make_fixnum (x), props);
@@ -315,27 +352,10 @@ gtk_set_frame_text_value (struct frame *UNUSED (f), Ibyte *value,
 			  void (*func) (gpointer, gchar *),
 			  gpointer arg)
 {
-  gchar *the_text = (gchar *) value;
-
   /* Programmer fuckup or window is not realized yet. */
   if (!func || !arg) return;
 
-#ifdef MULE
-  {
-    Ibyte *ptr;
-    
-    /* Optimize for common ASCII case */
-    for (ptr = value; *ptr; ptr++)
-      if (!byte_ascii_p (*ptr))
-	{
-	  char *tmp = ITEXT_TO_EXTERNAL (value, Qctext);
-	  the_text = tmp;
-	  break;
-	}
-  }
-#endif /* MULE */
-
-  (*func) (arg, (gchar *) the_text);
+  (*func) (arg, ITEXT_TO_EXTERNAL (value, Qutf_8));
 }
 
 static void
@@ -374,7 +394,7 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
 				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);
       gdk_window_set_hints (GET_GTK_WIDGET_WINDOW (shell), x, y, 0, 0, 0, 0, GDK_HINT_POS);
-      gtk_window_set_policy (GTK_WINDOW (shell), TRUE, TRUE, FALSE);
+      gtk_window_set_resizable (GTK_WINDOW (shell), TRUE);
     }
 
   FRAME_HEIGHT (f) = h;
@@ -385,7 +405,6 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
     GtkRequisition req;
  
     gtk_widget_size_request (FRAME_GTK_SHELL_WIDGET (f), &req);
-    gtk_widget_set_usize (FRAME_GTK_SHELL_WIDGET (f), req.width, req.height);
   }
 }
 
@@ -475,9 +494,9 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
       {
 	gint dummy;
 	GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
-	gdk_window_get_deskrelative_origin (GET_GTK_WIDGET_WINDOW (shell),
-					    (x_position_specified_p ? &dummy : &x),
-					    (y_position_specified_p ? &dummy : &y));
+	gdk_window_get_origin (GET_GTK_WIDGET_WINDOW (shell),
+                               (x_position_specified_p ? &dummy : &x),
+                               (y_position_specified_p ? &dummy : &y));
       }
 
     if (!f->init_finished)
@@ -513,7 +532,6 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
 
 extern Lisp_Object Vgtk_initial_geometry;
 
-#ifndef HAVE_GNOME
 static int
 get_number (const char **geometry)
 {
@@ -609,7 +627,6 @@ gnome_parse_geometry (const gchar *geometry, gint *xpos,
     *ypos = subtract - *ypos;
   return TRUE;
 }
-#endif
 
 static void
 gtk_initialize_frame_size (struct frame *f)
@@ -618,7 +635,9 @@ gtk_initialize_frame_size (struct frame *f)
 
   if (STRINGP (Vgtk_initial_geometry))
     {
-      if (!gnome_parse_geometry ((char*) XSTRING_DATA (Vgtk_initial_geometry), &x,&y,&w,&h))
+      if (!gnome_parse_geometry (LISP_STRING_TO_EXTERNAL (Vgtk_initial_geometry,
+                                                          Qutf_8),
+                                 &x,&y,&w,&h))
 	{
 	  x = y = 10;
 	  w = 80;
@@ -645,20 +664,54 @@ gtk_initialize_frame_size (struct frame *f)
 }
 
 static gboolean
-resize_event_cb (GtkWidget *UNUSED (w), GtkAllocation *allocation,
+size_allocate_cb (GtkWidget *w, GtkAllocation *allocation,
 		 gpointer user_data)
 {
   struct frame *f = (struct frame *) user_data;
 
+  if (!GTK_IS_FIXED (w))
+    return TRUE;
+
   f->pixwidth = allocation->width;
   f->pixheight = allocation->height;
 
-  if (FRAME_GTK_TEXT_WIDGET (f)->window)
-    {
-      Lisp_Object frame = wrap_frame (f);
+  debug_out ("frame size allocation  %d %d\n", allocation->width,
+             allocation->height);
 
-      Fredraw_frame (frame, Qt);
-    }
+/*   if (FRAME_GTK_TEXT_WIDGET (f)->window) */
+/*     { */
+/*       Lisp_Object frame = wrap_frame (f); */
+
+/*       Fredraw_frame (frame, Qt); */
+/*     } */
+
+  return (FALSE);
+}
+
+static gboolean
+size_request_cb (GtkWidget *w, GtkRequisition *req,
+		 gpointer user_data)
+{
+  struct frame *f = (struct frame *) user_data;
+
+  if (!GTK_IS_FIXED (w))
+    return TRUE;
+
+  debug_out ("frame size request  %d %d\n", req->width, req->height);
+
+  // FRAME_PIXWIDTH (f)  = allocation->width;
+  // FRAME_PIXHEIGHT (f)  = allocation->height;
+  req->width  = FRAME_PIXWIDTH (f);
+  req->height = FRAME_PIXHEIGHT (f);
+
+  debug_out ("frame size request  %d %d\n", req->width, req->height);
+
+  /*   if (FRAME_GTK_TEXT_WIDGET (f)->window) */
+  /*     { */
+  /*       Lisp_Object frame = wrap_frame (f); */
+
+  /*       Fredraw_frame (frame, Qt); */
+  /*     } */
 
   return (FALSE);
 }
@@ -680,7 +733,7 @@ delete_event_cb (GtkWidget *UNUSED (w), GdkEvent *UNUSED (ev),
 }
 
 extern gboolean emacs_shell_event_handler (GtkWidget *wid, GdkEvent *event, gpointer closure);
-extern Lisp_Object build_gtk_object (GtkObject *obj);
+extern Lisp_Object build_gtk_object (GObject *obj);
 
 #ifndef GNOME_IS_APP
 #define GNOME_IS_APP(x) 0
@@ -688,7 +741,7 @@ extern Lisp_Object build_gtk_object (GtkObject *obj);
 #endif
 
 static void
-cleanup_deleted_frame (gpointer data)
+cleanup_deleted_frame (gpointer data, GObject *UNUSED(old))
 {
   struct frame *f = (struct frame *) data;
   Lisp_Object frame = wrap_frame (f);
@@ -726,23 +779,26 @@ dragndrop_get_drag (GtkWidget *UNUSED (widget),
 		    gpointer UNUSED (user_data))
 {
   gtk_selection_data_set (data, GDK_SELECTION_TYPE_STRING, 8,
-			  DRAG_SELECTION_DATA_ERROR,
-			  strlen (DRAG_SELECTION_DATA_ERROR));
+			  (guchar *) DRAG_SELECTION_DATA_ERROR,
+			  sizeof (DRAG_SELECTION_DATA_ERROR) - 1);
 
   switch (info)
     {
     case TARGET_TYPE_STRING:
       {
 	Lisp_Object string = Vcurrent_drag_object;
-	
+        guchar *extstring;
+
 	if (!STRINGP (Vcurrent_drag_object))
 	  {
 	    string = Fprin1_to_string (string, Qnil);
 	    /* Convert to a string */
 	  }
+
+        extstring = LISP_STRING_TO_EXTERNAL (string, Qutf_8);
 	
 	gtk_selection_data_set (data, GDK_SELECTION_TYPE_STRING,
-				8, XSTRING_DATA (string), XSTRING_LENGTH (string));
+				8, extstring, strlen (extstring));
       }
       break;
     case TARGET_TYPE_URI_LIST:
@@ -776,7 +832,8 @@ The type defaults to text/plain.
 
       /* get the desired type */
       if (!NILP (dtyp) && STRINGP (dtyp))
-	dnd_typ = gdk_atom_intern (XSTRING_DATA (dtyp), FALSE);
+	dnd_typ = gdk_atom_intern (LISP_STRING_TO_EXTERNAL (dtyp, Qutf_8),
+                                   FALSE);
 
       gtk_drag_begin (wid, tl, GDK_ACTION_COPY,
 		      EVENT_BUTTON_BUTTON (lisp_event), NULL);
@@ -807,7 +864,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 #endif
 
   if (STRINGP (f->name))
-    name = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
+    name = LISP_STRING_TO_EXTERNAL (f->name, Qutf_8);
   else
     name = "emacs";
 
@@ -824,23 +881,19 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
       shell = gtk_vbox_new (FALSE, 0);
 
-      gtk_object_weakref (GTK_OBJECT (shell), cleanup_deleted_frame, f);
+      g_object_weak_ref (G_OBJECT (shell), cleanup_deleted_frame, f);
       gtk_container_add (GTK_CONTAINER (XGTK_OBJECT (lisp_window_id)->object), shell);
     }
   else
     {
-#ifdef HAVE_GNOME
-      shell = GTK_WIDGET (gnome_app_new ("XEmacs", "XEmacs/GNOME"));
-#else
       shell = GTK_WIDGET (gtk_window_new (GTK_WINDOW_TOPLEVEL));
-#endif
     }
 
   if (!NILP (parent))
   {
       /* If this is a transient window, keep the parent info around */
       GtkWidget *parentwid = FRAME_GTK_SHELL_WIDGET (XFRAME (parent));
-      gtk_object_set_data (GTK_OBJECT (shell), TRANSIENT_DATA_IDENTIFIER, parentwid);
+      g_object_set_data (G_OBJECT (shell), TRANSIENT_DATA_IDENTIFIER, parentwid);
       gtk_window_set_transient_for (GTK_WINDOW (shell), GTK_WINDOW (parentwid));
   }
 
@@ -848,9 +901,10 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
   /* Add a mapping from widget to frame to help widget callbacks quickly find
      their corresponding frame. */
-  gtk_object_set_data (GTK_OBJECT (shell), GTK_DATA_FRAME_IDENTIFIER, f);
+  g_object_set_qdata (G_OBJECT (G_OBJECT (shell)), GTK_DATA_FRAME_IDENTIFIER, f);
 
   FRAME_GTK_SHELL_WIDGET (f) = shell;
+  gtk_widget_set_name (shell, name);
 
   text = GTK_WIDGET (gtk_xemacs_new (f));
 
@@ -866,12 +920,12 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   gtk_drag_dest_set (text, GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT,
 		     dnd_target_table, dnd_n_targets,
 		     GDK_ACTION_COPY | GDK_ACTION_LINK | GDK_ACTION_ASK);
-  gtk_signal_connect (GTK_OBJECT (text), "drag_drop",
-		      GTK_SIGNAL_FUNC (dragndrop_dropped), text);
-  gtk_signal_connect (GTK_OBJECT (text), "drag_data_received",
-		      GTK_SIGNAL_FUNC (dragndrop_data_received), text);
-  gtk_signal_connect (GTK_OBJECT (text), "drag_data_get",
-		      GTK_SIGNAL_FUNC (dragndrop_get_drag), NULL);
+  assert (g_signal_connect (G_OBJECT (text), "drag_drop",
+                            G_CALLBACK (dragndrop_dropped), text));
+  assert (g_signal_connect (G_OBJECT (text), "drag_data_received",
+                            G_CALLBACK (dragndrop_data_received), text));
+  assert (g_signal_connect (G_OBJECT (text), "drag_data_get",
+                            G_CALLBACK (dragndrop_get_drag), NULL));
 #endif
 
 #ifdef HAVE_MENUBARS
@@ -890,42 +944,51 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
     /* Now comes the drawing area, which should fill the rest of the
     ** frame completely.
     */
-    gtk_box_pack_end (GTK_BOX (container), text, TRUE, TRUE, 0);
+    if (GTK_IS_BOX (container)) 
+      gtk_box_pack_end (GTK_BOX (container), text, TRUE, TRUE, 0);
 
   /* Connect main event handler */
-  gtk_signal_connect (GTK_OBJECT (shell), "delete-event", GTK_SIGNAL_FUNC (delete_event_cb), f);
+  assert (g_signal_connect (G_OBJECT (shell), "delete-event",
+                            G_CALLBACK (delete_event_cb), f));
 
   {
-    static char *events_to_frob[] = { "focus-in-event",
-				      "focus-out-event",
-				      "enter-notify-event",
-				      "leave-notify-event",
-				      "map-event",
-				      "unmap-event",
-				      "property-notify-event",
-				      "selection-clear-event",
-				      "selection-request-event",
-				      "selection-notify-event",
-				      "client-event",
-				      /* "configure-event", */
-				      "visibility-notify-event",
-				      NULL };
+    static const gchar *events_to_frob[] =
+      {
+	"focus-in-event",
+	"focus-out-event",
+	"enter-notify-event",
+	"leave-notify-event",
+	"map-event",
+	"unmap-event",
+	"property-notify-event",
+	"selection-clear-event",
+	"selection-request-event",
+	"selection-notify-event",
+	"client-event",
+	/* "configure-event", */
+	"visibility-notify-event",
+	"scroll-event",
+	NULL
+      };
     int i;
 
     for (i = 0; events_to_frob[i]; i++)
       {
-	gtk_signal_connect (GTK_OBJECT (shell), events_to_frob[i],
-			    GTK_SIGNAL_FUNC (emacs_shell_event_handler), f);
+	assert (g_signal_connect (G_OBJECT (shell), events_to_frob[i],
+                                  G_CALLBACK (emacs_shell_event_handler), f));
       }
   }
 
-  gtk_signal_connect (GTK_OBJECT (shell), "size-allocate", GTK_SIGNAL_FUNC (resize_event_cb), f);
+  assert (g_signal_connect (G_OBJECT (shell), "size-allocate",
+                            G_CALLBACK (size_allocate_cb), f));
+  assert (g_signal_connect (G_OBJECT (shell), "size-request",
+                            G_CALLBACK (size_request_cb), f));
 
   /* This might be safe to call now... */
-  /* gtk_signal_connect (GTK_OBJECT (shell), "event", GTK_SIGNAL_FUNC (emacs_shell_event_handler), f); */
+  /* gtk_signal_connect (GTK_OBJECT (shell), "event", G_CALLBACK (emacs_shell_event_handler), f); */
 
   /* Let's make sure we get all the events we can */
-  gtk_widget_set_events (text, GDK_ALL_EVENTS_MASK);
+  gtk_widget_add_events (text, GDK_ALL_EVENTS_MASK);
 
   if (shell != container)
     gtk_container_add (GTK_CONTAINER (shell), container);
@@ -934,9 +997,9 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   gtk_widget_set_name (container, "XEmacs::container");
   gtk_widget_set_name (text, "XEmacs::text");
 
-  FRAME_GTK_LISP_WIDGETS(f)[0] = build_gtk_object (GTK_OBJECT (shell));
-  FRAME_GTK_LISP_WIDGETS(f)[1] = build_gtk_object (GTK_OBJECT (container));
-  FRAME_GTK_LISP_WIDGETS(f)[2] = build_gtk_object (GTK_OBJECT (text));
+  FRAME_GTK_LISP_WIDGETS(f)[0] = build_gtk_object (G_OBJECT (shell));
+  FRAME_GTK_LISP_WIDGETS(f)[1] = build_gtk_object (G_OBJECT (container));
+  FRAME_GTK_LISP_WIDGETS(f)[2] = build_gtk_object (G_OBJECT (text));
 
   gtk_widget_realize (shell);
 }
@@ -948,11 +1011,11 @@ static void
 gtk_popup_frame (struct frame *f)
 {
   /* */
-
-  if (gtk_object_get_data (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f)), UNMAPPED_DATA_IDENTIFIER))
+  if (g_object_get_data (G_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
+                         UNMAPPED_DATA_IDENTIFIER))
     {
       FRAME_GTK_TOTALLY_VISIBLE_P (f) = 0;
-      f->visible = 0;
+      FRAME_VISIBLE_P (f) = 0;
       gtk_widget_realize (FRAME_GTK_SHELL_WIDGET (f));
       gtk_widget_realize (FRAME_GTK_TEXT_WIDGET (f));
       gtk_widget_hide_all (FRAME_GTK_SHELL_WIDGET (f));
@@ -1041,8 +1104,8 @@ gtk_init_frame_1 (struct frame *f, Lisp_Object props,
 
   if (!NILP (initially_unmapped))
     {
-      gtk_object_set_data (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
-			   UNMAPPED_DATA_IDENTIFIER, (gpointer) 1);
+      g_object_set_data (G_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
+			   UNMAPPED_DATA_IDENTIFIER, GUINT_TO_POINTER (1));
     }
 }
 
@@ -1076,12 +1139,12 @@ gtk_init_frame_3 (struct frame *f)
 static void
 gtk_mark_frame (struct frame *f)
 {
-  mark_object (FRAME_GTK_ICON_PIXMAP (f));
-  mark_object (FRAME_GTK_ICON_PIXMAP_MASK (f));
-  mark_object (FRAME_GTK_MENUBAR_DATA (f));
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[0]);
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[1]);
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[2]);
+  mark_object (FRAME_GTK_MENUBAR_DATA (f));
+  mark_object (FRAME_GTK_ICON_PIXMAP (f));
+  mark_object (FRAME_GTK_ICON_PIXMAP_MASK (f));
   mark_object (FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE (f));
   mark_object (FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE (f));
   mark_object (FRAME_GTK_WIDGET_CALLBACK_EX_HASH_TABLE (f));
@@ -1090,21 +1153,18 @@ gtk_mark_frame (struct frame *f)
 static void
 gtk_set_frame_icon (struct frame *f)
 {
-  GdkPixmap *gtk_pixmap = NULL, *gtk_mask = NULL;
+  GdkPixbuf *gtk_pixbuf = NULL;
+  GList *icons = NULL;
 
   if (IMAGE_INSTANCEP (f->icon)
       && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (f->icon)))
     {
-      gtk_pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (f->icon);
-      gtk_mask = XIMAGE_INSTANCE_GTK_MASK (f->icon);
+      gtk_pixbuf = XIMAGE_INSTANCE_GTK_PIXMAP (f->icon);
+      icons = g_list_append(icons, gtk_pixbuf);
+      gdk_window_set_icon_list
+	(GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f)), icons);
+      g_list_free (icons);
     }
-  else
-    {
-      gtk_pixmap = 0;
-      gtk_mask = 0;
-    }
-
-  gdk_window_set_icon (GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f)), NULL, gtk_pixmap, gtk_mask);
 }
 
 static void
@@ -1128,8 +1188,9 @@ gtk_set_frame_pointer (struct frame *f)
 static Lisp_Object
 gtk_get_frame_parent (struct frame *f)
 {
-  GtkWidget *parentwid = (GtkWidget*) gtk_object_get_data (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
-							   TRANSIENT_DATA_IDENTIFIER);
+  GtkWidget *parentwid = (GtkWidget*)
+    g_object_get_data (G_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
+                       TRANSIENT_DATA_IDENTIFIER);
 
     /* find the frame whose wid is parentwid */
     if (parentwid)
@@ -1171,6 +1232,7 @@ a string.
 static void
 gtk_set_frame_position (struct frame *f, int xoff, int yoff)
 {
+  /* Deprecated, what is the replacement? */
     gtk_widget_set_uposition (FRAME_GTK_SHELL_WIDGET (f), xoff, yoff);
 }
 
@@ -1204,18 +1266,15 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
   }
 }
 
-#ifdef STUPID_X_SPECIFIC_GTK_STUFF
-/* There is NO equivalent to XWarpPointer under Gtk */
 static void
 gtk_set_mouse_position (struct window *w, int x, int y)
 {
   struct frame *f = XFRAME (w->frame);
-  Display *display = GDK_DISPLAY ();
-  XWarpPointer (display, None,
-		GDK_WINDOW_XWINDOW (GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f))),
-                0, 0, 0, 0, w->pixel_left + x, w->pixel_top + y);
+  GdkDisplay *display = gtk_widget_get_display (FRAME_GTK_TEXT_WIDGET (f));
+  GdkScreen *screen = gtk_widget_get_screen (FRAME_GTK_TEXT_WIDGET (f));
+  gdk_display_warp_pointer (display, screen, 
+                            w->pixel_left + x, w->pixel_top + y);
 }
-#endif /* STUPID_X_SPECIFIC_GTK_STUFF */
 
 static int
 gtk_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
@@ -1301,9 +1360,9 @@ gtk_frame_visible_p (struct frame *f)
 {
     GtkWidget *w = FRAME_GTK_SHELL_WIDGET (f);
 
-    f->visible = (GTK_OBJECT_FLAGS (w) & GTK_VISIBLE);
+    FRAME_VISIBLE_P (f) = gtk_widget_get_visible (w);
 
-    return f->visible;
+    return FRAME_VISIBLE_P (f);
 }
 
 static int
@@ -1388,11 +1447,12 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
   if (EQ (name, Qforeground))
    {
      Lisp_Object color = FACE_FOREGROUND (Vdefault_face, frame);
-     GdkColor *fgc;
 
      if (!EQ (color, Vthe_null_color_instance))
        {
-	 fgc = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (color));
+	 /*
+	   GdkColor *fgc = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (color));
+	 */
 	 /* #### BILL!!! The X code set the XtNforeground property of
 	    the text widget here.  Why did they bother?  All that type
 	    of thing is done down in the guts of the redisplay code,

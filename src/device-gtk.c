@@ -36,6 +36,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
+#include "select.h"
 
 #include "console-gtk-impl.h"
 #include "gccache-gtk.h"
@@ -46,13 +47,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "sysfile.h"
 #include "systime.h"
 
-#ifdef HAVE_GNOME
-#include <libgnomeui/libgnomeui.h>
-#endif
-
-#ifdef HAVE_BONOBO
-#include <bonobo.h>
-#endif
+#include <locale.h>
 
 Lisp_Object Qmake_device_early_gtk_entry_point,
    Qmake_device_late_gtk_entry_point;
@@ -62,8 +57,6 @@ Lisp_Object Vgtk_emacs_application_class;
 
 Lisp_Object Vgtk_initial_argv_list; /* #### ugh! */
 Lisp_Object Vgtk_initial_geometry;
-
-Lisp_Object Qgtk_seen_characters;
 
 static void gtk_device_init_x_specific_cruft (struct device *d);
 
@@ -105,7 +98,13 @@ decode_gtk_device (Lisp_Object device)
 extern Lisp_Object
 xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w);
 
-extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
+#ifdef USE_PANGO
+extern Lisp_Object __get_gtk_font_truename (PangoFont *font,
+					    int expandp);
+#else
+extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font,
+					    int expandp);
+#endif
 
 #define convert_font(f) __get_gtk_font_truename (f, 0)
 
@@ -155,10 +154,6 @@ extern void emacs_gtk_selection_received (GtkWidget *widget,
 					  GtkSelectionData *selection_data,
 					  gpointer user_data);
 
-#ifdef HAVE_BONOBO
-static CORBA_ORB orb;
-#endif
-
 DEFUN ("gtk-init", Fgtk_init, 1, 1, 0, /*
 Initialize the GTK subsystem.
 ARGS is a standard list of command-line arguments.
@@ -181,26 +176,20 @@ mode.
   make_argc_argv (args, &argc, &argv);
 
   slow_down_interrupts ();
-#ifdef HAVE_GNOME
-  gnome_init ("XEmacs", EMACS_VERSION, argc, argv);
-#else
+  /* Turn ubuntu overlay scrollbars off.  They don't have per-line scrolling. */
+  setenv("LIBOVERLAY_SCROLLBAR", "0", 0);
+
   gtk_init (&argc, &argv);
-#endif
 
-#ifdef HAVE_BONOBO
-  orb = oaf_init (argc, argv);
-
-  if (bonobo_init (orb, NULL, NULL) == FALSE)
-    {
-      g_warning ("Could not initialize bonobo...");
-    }
-
-  bonobo_activate ();
-#endif
+  /* Sigh, gtk_init stomped on LC_NUMERIC, which we need to be C. Otherwise
+     the Lisp reader doesn't necessarily understand the radix character for
+     floats, which is a problem. */
+  setlocale (LC_NUMERIC, "C");
 
   speed_up_interrupts ();
 
   free_argc_argv (argv);
+  done = 1;
   return (Qt);
 }
 
@@ -288,6 +277,17 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
     gtk_container_add (GTK_CONTAINER (w), app_shell);
 
     gtk_widget_realize (w);
+    {
+      PangoContext *context = 0;
+      PangoFontMap *font_map = 0;
+      Display *disp = GDK_DISPLAY_XDISPLAY (gtk_widget_get_display (w));
+      int screen = GDK_SCREEN_XNUMBER (gtk_widget_get_screen (w));
+
+      font_map = pango_xft_get_font_map (disp, screen);
+      DEVICE_GTK_FONT_MAP (d) = font_map;
+      context = pango_font_map_create_context (font_map);
+      DEVICE_GTK_CONTEXT (d) = context;
+    }
   }
 
   DEVICE_GTK_APP_SHELL (d) = app_shell;
@@ -296,20 +296,68 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
      purposes */
   gtk_widget_realize (GTK_WIDGET (app_shell));
 
-  /* Need to set up some selection handlers */
-  gtk_selection_add_target (GTK_WIDGET (app_shell), GDK_SELECTION_PRIMARY,
-			    GDK_SELECTION_TYPE_STRING, 0);
-  gtk_selection_add_target (GTK_WIDGET (app_shell),
-                            gdk_atom_intern("CLIPBOARD", FALSE),
-			    GDK_SELECTION_TYPE_STRING, 0);
+  /* Set up the selection handlers. I attempted just to register the handler
+     for TARGETS, and this works in that the requestor does see our offered
+     list of targets (GTK gets out of the way for this), but then further
+     attempts to transfer COMPOUND_TEXT and so on fail, because GTK
+     interposes itself, and ignores that we've demonstrated we know what
+     formats we can transfer by sending TARGETS.
+
+     Note that under X11 the cars of selection-converter-out-alist can
+     usefully be modified at runtime, making fewer or more selection types
+     available; this isn't the case under GTK, the set is examined once at
+     startup. */
+  {
+    guint target_count = XFIXNUM (Fsafe_length (Vselection_converter_out_alist));
+    GtkTargetEntry *targets = alloca_array (GtkTargetEntry, target_count);
+    Lisp_Object tail = Vselection_converter_out_alist;
+    DECLARE_EISTRING(ei_symname);
+    guint ii;
+
+    for (ii = 0; ii < target_count; ii++)
+      {
+        targets[ii].flags = 0;
+        /* We don't use info at the moment. */
+        targets[ii].info = ii;
+        if (CONSP (Fcar (tail)) && SYMBOLP (XCAR (XCAR (tail))))
+          {
+            eicpy_lstr (ei_symname, XSYMBOL_NAME (XCAR (XCAR (tail))));
+            /* GTK doesn't specify the encoding of their atom names. */
+            eito_external (ei_symname, Qbinary);
+            targets[ii].target = alloca_array (gchar, eiextlen (ei_symname)
+                                               + 1);
+            memcpy ((void *) (targets[ii].target),
+                    (void *) eiextdata (ei_symname), eiextlen (ei_symname) + 1);
+          }
+        else
+          {
+            if (ii > 0xFF)
+              {
+                /* It was corrupt long before ii > 0xff, of course. */
+                gui_error ("selection-converter-out-alist is corrupt",
+                           Vselection_converter_out_alist);
+              }
+            targets[ii].target = alloca_array (gchar, sizeof ("TARGETFF"));
+            sprintf (targets[ii].target, "TARGET%02X", ii);
+          }
+        tail = Fcdr (tail);
+      }
+
+    gtk_selection_add_targets (GTK_WIDGET (app_shell), GDK_SELECTION_PRIMARY,
+                               targets, target_count);
+    gtk_selection_add_targets (GTK_WIDGET (app_shell), GDK_SELECTION_SECONDARY,
+                               targets, target_count);
+    gtk_selection_add_targets (GTK_WIDGET (app_shell), GDK_SELECTION_CLIPBOARD,
+                               targets, target_count);
+  }
   
-  gtk_signal_connect (GTK_OBJECT (app_shell), "selection_get",
-		      GTK_SIGNAL_FUNC (emacs_gtk_selection_handle), NULL);
-  gtk_signal_connect (GTK_OBJECT (app_shell), "selection_clear_event",
-                      GTK_SIGNAL_FUNC (emacs_gtk_selection_clear_event_handle),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (app_shell), "selection_received",
-		      GTK_SIGNAL_FUNC (emacs_gtk_selection_received), NULL);
+  g_signal_connect (G_OBJECT (app_shell), "selection_get",
+                    G_CALLBACK (emacs_gtk_selection_handle), NULL);
+  g_signal_connect (G_OBJECT (app_shell), "selection_clear_event",
+                    G_CALLBACK (emacs_gtk_selection_clear_event_handle),
+                    NULL);
+  g_signal_connect (G_OBJECT (app_shell), "selection_received",
+                    G_CALLBACK (emacs_gtk_selection_received), NULL);
 
   DEVICE_GTK_WM_COMMAND_FRAME (d) = Qnil;
 
@@ -348,7 +396,9 @@ gtk_mark_device (struct device *d)
 static void
 free_gtk_device_struct (struct device *d)
 {
+  //xfree (DEVICE_GTK_DATA (d));
   xfree (d->device_data);
+  d->device_data = 0;
 }
 #endif /* not NEW_GC */
 
@@ -377,8 +427,10 @@ gtk_delete_device (struct device *d)
 	enable_strict_free_check ();
 #endif
     }
-
+  /* g_free(DEVICE_GTK_CONTEXT (d)); */
+#ifndef NEW_GC
   free_gtk_device_struct (d);
+#endif
 }
 
 
@@ -389,14 +441,51 @@ gtk_delete_device (struct device *d)
 const char *
 gtk_event_name (GdkEventType event_type)
 {
-  GtkEnumValue *vals = gtk_type_enum_get_values (GTK_TYPE_GDK_EVENT_TYPE);
 
-  while (vals && ((GdkEventType)(vals->value) != event_type)) vals++;
+#define GET_EVENT_NAME(ev) case ev: return #ev;
 
-  if (vals)
-    return (vals->value_nick);
-
-  return (NULL);
+  switch (event_type)
+  {
+    GET_EVENT_NAME (GDK_NOTHING);
+    GET_EVENT_NAME (GDK_DELETE);
+    GET_EVENT_NAME (GDK_DESTROY);
+    GET_EVENT_NAME (GDK_EXPOSE);
+    GET_EVENT_NAME (GDK_MOTION_NOTIFY);
+    GET_EVENT_NAME (GDK_BUTTON_PRESS);
+    GET_EVENT_NAME (GDK_2BUTTON_PRESS);
+    GET_EVENT_NAME (GDK_3BUTTON_PRESS);
+    GET_EVENT_NAME (GDK_BUTTON_RELEASE);
+    GET_EVENT_NAME (GDK_KEY_PRESS);
+    GET_EVENT_NAME (GDK_KEY_RELEASE);
+    GET_EVENT_NAME (GDK_ENTER_NOTIFY);
+    GET_EVENT_NAME (GDK_LEAVE_NOTIFY);
+    GET_EVENT_NAME (GDK_FOCUS_CHANGE);
+    GET_EVENT_NAME (GDK_CONFIGURE);
+    GET_EVENT_NAME (GDK_MAP);
+    GET_EVENT_NAME (GDK_UNMAP);
+    GET_EVENT_NAME (GDK_PROPERTY_NOTIFY);
+    GET_EVENT_NAME (GDK_SELECTION_CLEAR);
+    GET_EVENT_NAME (GDK_SELECTION_REQUEST);
+    GET_EVENT_NAME (GDK_SELECTION_NOTIFY);
+    GET_EVENT_NAME (GDK_PROXIMITY_IN);
+    GET_EVENT_NAME (GDK_PROXIMITY_OUT);
+    GET_EVENT_NAME (GDK_DRAG_ENTER);
+    GET_EVENT_NAME (GDK_DRAG_LEAVE);
+    GET_EVENT_NAME (GDK_DRAG_MOTION);
+    GET_EVENT_NAME (GDK_DRAG_STATUS);
+    GET_EVENT_NAME (GDK_DROP_START);
+    GET_EVENT_NAME (GDK_DROP_FINISHED);
+    GET_EVENT_NAME (GDK_CLIENT_EVENT);
+    GET_EVENT_NAME (GDK_VISIBILITY_NOTIFY);
+    GET_EVENT_NAME (GDK_SCROLL);
+    GET_EVENT_NAME (GDK_WINDOW_STATE);
+    GET_EVENT_NAME (GDK_SETTING);
+    GET_EVENT_NAME (GDK_OWNER_CHANGE);
+    GET_EVENT_NAME (GDK_GRAB_BROKEN);
+    GET_EVENT_NAME (GDK_DAMAGE);
+  }
+#undef GET_EVENT_NAME
+  return "Unknown GdkEventType";
 }
 
 
@@ -656,8 +745,13 @@ Get the style information for a Gtk device.
   FROB_COLOR (base, "base");
 #undef FROB_COLOR
 
-  result = nconc2 (result, list2 (Qfont, convert_font (style->font)));
-
+#ifdef USE_PANGO
+  result = nconc2 (result, list2 (Qfont,
+                                  build_cistring (pango_font_description_to_string (style->font_desc))
+                                  /* convert_font (style->font_desc) */
+                                  ));
+#endif
+  
 #define FROB_PIXMAP(state) (style->rc_style->bg_pixmap_name[state] ? build_cistring (style->rc_style->bg_pixmap_name[state]) : Qnil)
 
   if (style->rc_style)
@@ -734,8 +828,6 @@ This is used during startup to communicate the default geometry to GTK.
 
   Vgtk_initial_geometry = Qnil;
   Vgtk_initial_argv_list = Qnil;
-
-  Qgtk_seen_characters = Qnil;
 }
 
 #include "sysgdkx.h"
@@ -743,5 +835,5 @@ This is used during startup to communicate the default geometry to GTK.
 static void
 gtk_device_init_x_specific_cruft (struct device *d)
 {
-  DEVICE_INFD (d) = DEVICE_OUTFD (d) = ConnectionNumber (GDK_DISPLAY ());
+  DEVICE_INFD (d) = DEVICE_OUTFD (d) = ConnectionNumber (gdk_display_get_default ());
 }

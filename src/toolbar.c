@@ -771,7 +771,7 @@ update_frame_toolbars_geometry (struct frame *f)
 
       EDGE_POS_LOOP (pos)
 	{
-	  f->current_toolbar_size[pos] = FRAME_REAL_TOOLBAR_SIZE (f, pos);
+	  FRAME_CURRENT_TOOLBAR_SIZE (f, pos) = FRAME_REAL_TOOLBAR_SIZE (f, pos);
 	}
 
       /* Removed the check for the minibuffer here.  We handle this
@@ -848,7 +848,7 @@ init_frame_toolbars (struct frame *f)
 	 initialization. Remember current toolbar geometry so next
 	 redisplay will not needlessly relayout toolbars. */
       EDGE_POS_LOOP (pos)
-	f->current_toolbar_size[pos] = FRAME_REAL_TOOLBAR_SIZE (f, pos);
+        FRAME_CURRENT_TOOLBAR_SIZE (f, pos) = FRAME_REAL_TOOLBAR_SIZE (f, pos);
     }
 }
 
