@@ -44,7 +44,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define MAX_FONT_COUNT INT_MAX
 
 #ifdef DEBUG_XEMACS 
-Fixnum debug_x_fonts;
+Fixnum debug_gtk_fonts;
 #endif /* DEBUG_XEMACS */
 static Lisp_Object Vgtk_fallback_font_name;
 static Lisp_Object Vgtk_fallback_font_size;
@@ -306,7 +306,7 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
       return 0;
     }
 #ifdef DEBUG_XEMACS
-  if (debug_x_fonts)
+  if (debug_gtk_fonts)
     debug_out ("font requested \"%s\" loaded \"%s\"\n", extname, nm);
 #endif
   g_free (nm);
@@ -472,7 +472,7 @@ Return a specifier for bold version of FONT on DEVICE.
   pango_font_description_set_weight (pfd, PANGO_WEIGHT_BOLD);
   new_name = pango_font_description_to_string (pfd);
 #ifdef DEBUG_XEMACS
-  if (debug_x_fonts)
+  if (debug_gtk_fonts)
     debug_out ("%s -> %s\n", extname, new_name);
 #endif
   val = build_cistring (new_name);
@@ -497,7 +497,7 @@ Return a specifier for normal, non-bold version of FONT on DEVICE.
   pango_font_description_set_weight (pfd, PANGO_WEIGHT_MEDIUM);
   new_name = pango_font_description_to_string (pfd);
 #ifdef DEBUG_XEMACS
-  if (debug_x_fonts)
+  if (debug_gtk_fonts)
     debug_out ("%s -> %s\n", extname, new_name);
 #endif
   val = build_cistring (new_name);
@@ -522,7 +522,7 @@ Return a specifier for italic version of FONT on DEVICE.
   pango_font_description_set_style (pfd, PANGO_STYLE_ITALIC);
   new_name = pango_font_description_to_string (pfd);
 #ifdef DEBUG_XEMACS
-  if (debug_x_fonts)
+  if (debug_gtk_fonts)
     debug_out ("%s -> %s\n", extname, new_name);
 #endif
   val = build_cistring (new_name);
@@ -569,7 +569,7 @@ Return a specifier for bold italic version of FONT on DEVICE.
   pango_font_description_set_style (pfd, PANGO_STYLE_ITALIC);
   new_name = pango_font_description_to_string (pfd);
 #ifdef DEBUG_XEMACS
-  if (debug_x_fonts)
+  if (debug_gtk_fonts)
     debug_out ("%s -> %s\n", extname, new_name);
 #endif
   val = build_cistring (new_name);
@@ -624,13 +624,13 @@ void
 vars_of_fontcolor_gtk (void)
 {
 #ifdef DEBUG_XEMACS
-  DEFVAR_INT ("debug-x-fonts", &debug_x_fonts /*
-If non-zero, display debug information about X, Xft and Gtk fonts.
+  DEFVAR_INT ("debug-gtk-fonts", &debug_gtk_fonts /*
+If non-zero, display debug information about Gtk fonts.
 */ );
-  debug_x_fonts = 1;
+  debug_gtk_fonts = 0;
 #endif
   DEFVAR_LISP ("gtk-fallback-font-name", &Vgtk_fallback_font_name/*
-Name of font to be loaded instead of a failed font.                
+Name of font to be loaded instead of a failed font.
 */);
   Vgtk_fallback_font_name = build_cistring ("Monospace");
   DEFVAR_LISP ("gtk-fallback-font-size", &Vgtk_fallback_font_size/*

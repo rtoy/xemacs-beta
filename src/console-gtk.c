@@ -1,4 +1,4 @@
-/* Console functions for X windows.
+/* Console functions for Gtk windows.
    Copyright (C) 1996 Ben Wing.
 
 This file is part of XEmacs.

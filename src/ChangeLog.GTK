@@ -1,3 +1,15 @@
+2013-02-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c: Define debug_gtk_fonts; use it to separate font
+	debugging between Gtk and X.
+	(gtk_initialize_font_instance): Use it.
+	(Fgtk_make_font_bold): Ditto.
+	(Fgtk_make_font_unbold): Ditto.
+	(Fgtk_make_font_italic): Ditto.
+	(Fgtk_make_font_bold_italic): Ditto.
+	(vars_of_fontcolor_gtk): Defvar debug-gtk-fonts.  It defaults to
+	false.
+
 2013-02-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* toolbar-gtk.c (gtk_output_toolbar): Replace casts with Gtk type
