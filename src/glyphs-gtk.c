@@ -428,8 +428,9 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 	    g_object_unref (IMAGE_INSTANCE_GTK_MASK (p));
 
 	  IMAGE_INSTANCE_PIXMAP_MASK (p) = 0;
+
 	  g_object_unref (IMAGE_INSTANCE_GTK_PIXMAP (p));
-	  IMAGE_INSTANCE_GTK_PIXMAP (p);
+	  IMAGE_INSTANCE_GTK_PIXMAP (p) = 0;
 
 	  if (IMAGE_INSTANCE_GTK_PIXMAP_SLICES (p))
 	    {

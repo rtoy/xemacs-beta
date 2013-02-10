@@ -1,3 +1,8 @@
+2013-02-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_finalize_image_instance): Set image to 0 after
+	freeing it.
+
 2013-02-03  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (menu_create_menubar): Be careful when deleting
