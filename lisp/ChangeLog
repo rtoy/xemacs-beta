@@ -1,7 +1,7 @@
 2013-02-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	Thanks to Jeff Sparkes for the original patches and to Mike Sperber
-	for discussion.
+	Thanks to Jeff Sparkes for suggestion and the original patches and
+	to Mike Sperber for discussion.
 
 	* obsolete.el (define-obsolete-function-alias):
 	(define-compatible-function-alias):
