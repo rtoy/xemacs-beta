@@ -1,3 +1,8 @@
+2013-02-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Add test code to show that
+	toolbar is built correctly.
+
 2013-02-09  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_finalize_image_instance): Set image to 0 after
