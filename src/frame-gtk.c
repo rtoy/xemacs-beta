@@ -988,6 +988,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   /* gtk_signal_connect (GTK_OBJECT (shell), "event", G_CALLBACK (emacs_shell_event_handler), f); */
 
   /* Let's make sure we get all the events we can */
+  gtk_widget_add_events (shell, GDK_ALL_EVENTS_MASK);
   gtk_widget_add_events (text, GDK_ALL_EVENTS_MASK);
 
   if (shell != container)
