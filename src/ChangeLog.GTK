@@ -1,3 +1,8 @@
+2013-02-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_create_widgets): Get events from the shell
+	widget as well.
+
 2013-02-10  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* toolbar-gtk.c (gtk_output_toolbar): Add test code to show that
