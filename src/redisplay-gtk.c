@@ -643,6 +643,12 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 		       WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT (w, rb->findex),
 		       Qnil);
       */
+      if (IMAGE_INSTANCEP (bg_pmap))
+	{
+	  Lisp_Image_Instance *p = XIMAGE_INSTANCE (bg_pmap);
+	  gdk_cairo_set_source_pixbuf(cr, IMAGE_INSTANCE_GTK_PIXMAP (p),
+				      0.0, 0.0);
+	}
       cr_set_foreground (cr, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex));
     }
 
@@ -805,6 +811,13 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
       int need_clipping;
       cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+      if (!NILP (bg_pmap) && IMAGE_INSTANCEP (bg_pmap))
+	{
+	  Lisp_Image_Instance *p = XIMAGE_INSTANCE (bg_pmap);
+	  gdk_cairo_set_source_pixbuf(cr, IMAGE_INSTANCE_GTK_PIXMAP (p),
+				      0.0, 0.0);
+	}
 
       if (EQ (font, Vthe_null_font_instance))
 	continue;

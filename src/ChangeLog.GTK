@@ -1,5 +1,8 @@
 2013-02-16  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_output_blank): Set background pixmap.
+	(XLIKE_output_string): Set background pixmap.
+
 	* frame-gtk.c (gtk_create_widgets): Get events from the shell
 	widget as well.
 
