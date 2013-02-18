@@ -934,7 +934,7 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
      resized. */
 
   gdk_cairo_set_source_pixbuf (cr, IMAGE_INSTANCE_GTK_PIXMAP (p),
-			       x, y);
+			       x + xoffset, y + yoffset);
   cairo_paint (cr);
   cairo_destroy (cr);
 }
