@@ -2,6 +2,7 @@
 
 	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Draw without using
 	only cairo calls.  Avoid GdkGC.
+	(XLIKE_output_xlike_pixmap): Add x and y offsets to pixmap.
 
 2013-02-16  Jeff Sparkes  <jsparkes@gmail.com>
 
