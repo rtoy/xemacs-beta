@@ -483,41 +483,6 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, cairo_t *cr,
   pango_attr_list_unref (attr_list);
 }
 
-static void
-gtk_draw_pixbuf (GdkDrawable *drawable,
-		 GdkGC       *gc,
-		 GdkPixbuf   *src,
-		 gint         xsrc,
-		 gint         ysrc,
-		 gint         xdest,
-		 gint         ydest,
-		 gint         width,
-		 gint         height)
-{
-  gint src_width, src_height;
-
-  g_return_if_fail (drawable != NULL);
-  g_return_if_fail (src != NULL);
-  g_return_if_fail (gc != NULL);
-
-  /*
-  gdk_drawable_get_size (src, &src_width, &src_height);
-
-  if (width == -1)
-    width = src_width;
-  if (height == -1)
-    height = src_height;
-
-  */
-  gdk_draw_pixbuf(drawable, gc, src, xsrc, ysrc, xdest, ydest,
-                  -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
-  /*
-  gdk_pixbuf_render_to_drawable (src, drawable, xsrc, ysrc, xdest, ydest,
-                                 width, height, GDK_RGB_DITHER_NONE,
-                                 0, 0);
-  */
-}
-
 /* XLIKE_text_width
 
    Given a string and a merged face, return the string's length in pixels
@@ -961,29 +926,15 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
   struct device *d = XDEVICE (f->device);
   /* XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d); */
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc;
-  XLIKE_GCVALUES gcv;
-  unsigned long pixmap_mask;
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  double xpos, ypos;
 
-  memset (&gcv, ~0, sizeof (gcv));
-  gcv.graphics_exposures = XLIKE_FALSE;
-  XLIKE_SET_GC_COLOR (gcv.foreground, fg);
-  XLIKE_SET_GC_COLOR (gcv.background, bg);
-  pixmap_mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
+  /* There is a possibility that callers expect the pixbuf to be
+     resized. */
 
-  if (IMAGE_INSTANCE_XLIKE_MASK (p))
-    {
-      gcv.function = XLIKE_GX_COPY;
-      gcv.clip_mask = IMAGE_INSTANCE_XLIKE_MASK (p);
-      gcv.clip_x_origin = x - xoffset;
-      gcv.clip_y_origin = y - yoffset;
-      pixmap_mask |= (XLIKE_GC_FUNCTION | XLIKE_GC_CLIP_MASK |
-		      XLIKE_GC_CLIP_X_ORIGIN |
-		      XLIKE_GC_CLIP_Y_ORIGIN);
-    }
-
-  gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, pixmap_mask);
-
-  gtk_draw_pixbuf (GDK_DRAWABLE (x_win), gc, IMAGE_INSTANCE_GTK_PIXMAP (p),
-		   xoffset, yoffset, x, y, width, height);
+  gdk_cairo_set_source_pixbuf (cr, IMAGE_INSTANCE_GTK_PIXMAP (p),
+			       x, y);
+  cairo_paint (cr);
+  cairo_destroy (cr);
 }
