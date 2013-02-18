@@ -3,6 +3,9 @@
 	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Draw without using
 	only cairo calls.  Avoid GdkGC.
 	(XLIKE_output_xlike_pixmap): Add x and y offsets to pixmap.
+	(XLIKE_output_blank): Paint the background pattern.  Currently
+	does not repeat the pattern.
+	(XLIKE_output_string): Ditto.
 
 2013-02-16  Jeff Sparkes  <jsparkes@gmail.com>
 

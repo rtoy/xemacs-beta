@@ -613,6 +613,7 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 	  Lisp_Image_Instance *p = XIMAGE_INSTANCE (bg_pmap);
 	  gdk_cairo_set_source_pixbuf(cr, IMAGE_INSTANCE_GTK_PIXMAP (p),
 				      0.0, 0.0);
+	  cairo_paint (cr);
 	}
       cr_set_foreground (cr, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex));
     }
@@ -782,6 +783,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  Lisp_Image_Instance *p = XIMAGE_INSTANCE (bg_pmap);
 	  gdk_cairo_set_source_pixbuf(cr, IMAGE_INSTANCE_GTK_PIXMAP (p),
 				      0.0, 0.0);
+	  cairo_paint (cr);
 	}
 
       if (EQ (font, Vthe_null_font_instance))
