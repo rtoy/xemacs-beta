@@ -39,14 +39,7 @@ struct gtk_image_instance_data
   GdkPixbuf **pixbufs;
   GdkCursor *cursor;
 
-  /* If depth>0, then that means that other colors were allocated when
-     this pixbuf was loaded.  These are they; we need to free them when
-     finalizing the image instance. */
-  GdkColormap *colormap;
-  unsigned long *pixels;
-  int npixels;
-
-  /* Should we hang on to the extra info from the XpmAttributes, like
+ /* Should we hang on to the extra info from the XpmAttributes, like
      the textual color table and the comments?   Is that useful? */
 };
 
@@ -87,9 +80,6 @@ void init_image_instance_from_gdk_pixbuf (struct Lisp_Image_Instance *ii,
      (GTK_IMAGE_INSTANCE_DATA (i)->pixbufs)
 #define IMAGE_INSTANCE_GTK_MASK(i) ((GdkPixbuf*)(IMAGE_INSTANCE_PIXMAP_MASK (i)))
 #define IMAGE_INSTANCE_GTK_CURSOR(i) (GTK_IMAGE_INSTANCE_DATA (i)->cursor)
-#define IMAGE_INSTANCE_GTK_COLORMAP(i) (GTK_IMAGE_INSTANCE_DATA (i)->colormap)
-#define IMAGE_INSTANCE_GTK_PIXELS(i) (GTK_IMAGE_INSTANCE_DATA (i)->pixels)
-#define IMAGE_INSTANCE_GTK_NPIXELS(i) (GTK_IMAGE_INSTANCE_DATA (i)->npixels)
 
 #define XIMAGE_INSTANCE_GTK_PIXMAP(i) \
   IMAGE_INSTANCE_GTK_PIXMAP (XIMAGE_INSTANCE (i))

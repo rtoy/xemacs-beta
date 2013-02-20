@@ -451,26 +451,6 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 	      IMAGE_INSTANCE_GTK_CURSOR (p) = 0;
 	    }
 	}
-
-#if 0
-	    /* #### BILL!!! */
-      if (IMAGE_INSTANCE_GTK_NPIXELS (p) != 0)
-	{
-	  XFreeColors (dpy,
-		       IMAGE_INSTANCE_GTK_COLORMAP (p),
-		       IMAGE_INSTANCE_GTK_PIXELS (p),
-		       IMAGE_INSTANCE_GTK_NPIXELS (p), 0);
-	  IMAGE_INSTANCE_GTK_NPIXELS (p) = 0;
-	}
-#endif
-    }
-
-  if (IMAGE_INSTANCE_TYPE (p) != IMAGE_WIDGET
-      && IMAGE_INSTANCE_TYPE (p) != IMAGE_SUBWINDOW
-      && IMAGE_INSTANCE_GTK_PIXELS (p))
-    {
-      xfree (IMAGE_INSTANCE_GTK_PIXELS (p));
-      IMAGE_INSTANCE_GTK_PIXELS (p) = 0;
     }
 
   xfree (p->data);
@@ -486,9 +466,7 @@ gtk_image_instance_equal (struct Lisp_Image_Instance *p1,
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      if (IMAGE_INSTANCE_GTK_COLORMAP (p1) != IMAGE_INSTANCE_GTK_COLORMAP (p2) ||
-	  IMAGE_INSTANCE_GTK_NPIXELS (p1) != IMAGE_INSTANCE_GTK_NPIXELS (p2))
-	return 0;
+return 0;
 #ifdef HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
@@ -901,12 +879,9 @@ init_image_instance_from_gdk_pixbuf (struct Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = gdk_pixbuf_get_width (gdk_pixbuf);
   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = gdk_pixbuf_get_height (gdk_pixbuf);
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = gdk_pixbuf_get_bits_per_sample (gdk_pixbuf);
-  IMAGE_INSTANCE_GTK_COLORMAP (ii) = 0;
-  IMAGE_INSTANCE_GTK_PIXELS (ii) = 0;
-  IMAGE_INSTANCE_GTK_NPIXELS (ii) = 0;
 
   g_object_ref (gdk_pixbuf);
-  
+
   if (type == IMAGE_POINTER)
     image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
 				       pointer_bg);
@@ -1416,9 +1391,6 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   IMAGE_INSTANCE_GTK_PIXMAP (ii) = pixbuf;
   IMAGE_INSTANCE_PIXMAP_MASK (ii) = 0;
-  IMAGE_INSTANCE_GTK_COLORMAP (ii) = cmap;
-  IMAGE_INSTANCE_GTK_PIXELS (ii) = 0;
-  IMAGE_INSTANCE_GTK_NPIXELS (ii) = 0;
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = gdk_pixbuf_get_width (pixbuf);
   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = gdk_pixbuf_get_height (pixbuf);
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) =
