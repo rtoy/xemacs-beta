@@ -1,3 +1,12 @@
+2013-02-20  Michael Sperber  <mike@xemacs.org>
+
+	* font-lock.el (font-lock-beg)
+	(font-lock-extend-region-functions)
+	(font-lock-extend-region-multiline)
+	(font-lock-extend-region-wholelines)
+	(font-lock-default-fontify-region): Add and use
+	`font-lock-extend-region-functions' from GNU Emacs.
+
 2013-02-08  Michael Sperber  <mike@xemacs.org>
 
 	* font-lock.el (font-lock-set-defaults-1):
