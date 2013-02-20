@@ -2,6 +2,7 @@
 
 	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Remove unused
 	variable.  Mark unused parameters.
+	(XLIKE_output_string): Wrong parameter for XLIKE_text_width.
 
 	* glyphs-gtk.h (g): Remove Gtk colormap and associated fields from
 	struct gtk_image_instance_data.  Also remove access macros.
