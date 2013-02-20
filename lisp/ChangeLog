@@ -1,3 +1,10 @@
+2013-02-08  Michael Sperber  <mike@xemacs.org>
+
+	* font-lock.el (font-lock-set-defaults-1):
+	(font-lock-defaults): Allow the left-hand-side of a syntax-alist
+	entry in `font-lock-defaults' to be a string, in addition to a
+	char.  (This is a sync with GNU Emacs.)
+
 2013-02-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Thanks to Jeff Sparkes for suggestion and the original patches and
