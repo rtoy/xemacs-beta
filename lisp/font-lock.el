@@ -529,9 +529,9 @@ KEYWORDS may be a symbol (a variable or function whose value is the keywords
 to use for fontification) or a list of symbols.  If KEYWORDS-ONLY is non-nil,
 syntactic fontification (strings and comments) is not performed.  If CASE-FOLD
 is non-nil, the case of the keywords is ignored when fontifying.  If
-SYNTAX-ALIST is non-nil, it should be a list of cons pairs of the form (CHAR
-. STRING) used to set the local Font Lock syntax table, for keyword and
-syntactic fontification (see `modify-syntax-entry').
+SYNTAX-ALIST is non-nil, it should be a list of cons pairs of the form 
+(CHAR-OR-STRING . STRING) used to set the local Font Lock syntax table, for
+keyword and syntactic fontification (see `modify-syntax-entry').
 
 If SYNTAX-BEGIN is non-nil, it should be a function with no args used to move
 backwards outside any enclosing syntactic block, for syntactic fontification.
@@ -2070,8 +2070,16 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 		(setq font-lock-syntax-table
 		      (copy-syntax-table (syntax-table)))
 		(while slist
-		  (modify-syntax-entry (car (car slist)) (cdr (car slist))
-				       font-lock-syntax-table)
+		  (let ((entry (cdr (car slist)))
+			(thing (car (car slist))))
+		    (mapc #'(lambda (char)
+			      (modify-syntax-entry char entry
+						   font-lock-syntax-table))
+			  (cond
+			   ((stringp thing) (string-to-list thing))
+			   ((characterp thing) (list thing))
+			   (t
+			    (error "invalid syntax-alist entry for `font-lock-defaults': %S" (car slist))))))
 		  (setq slist (cdr slist)))))
 
 	  ;; Syntax function?
