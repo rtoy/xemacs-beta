@@ -1,5 +1,10 @@
 2013-02-20  Michael Sperber  <mike@xemacs.org>
 
+	* files.el (file-remote-p): Remove an ancient piece of obsolete
+	legacy code that looks at `efs-ftp-path'.
+
+2013-02-20  Michael Sperber  <mike@xemacs.org>
+
 	* font-lock.el (font-lock-beg)
 	(font-lock-extend-region-functions)
 	(font-lock-extend-region-multiline)
