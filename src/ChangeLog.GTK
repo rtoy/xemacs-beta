@@ -1,5 +1,8 @@
 2013-02-20  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Remove unused
+	variable.  Mark unused parameters.
+
 	* glyphs-gtk.h (g): Remove Gtk colormap and associated fields from
 	struct gtk_image_instance_data.  Also remove access macros.
 
