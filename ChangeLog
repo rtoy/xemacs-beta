@@ -1,3 +1,9 @@
+2013-02-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* obsolete.el (define-obsolete-function-alias): Add args to match
+	FSF function.
+	(define-obsolete-variable-alias): Add args to match FSF function.
+
 2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.33 "horseradish" is released.

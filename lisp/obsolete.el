@@ -36,12 +36,13 @@
 
 ;;; Code:
 
-(defsubst define-obsolete-function-alias (oldfun newfun)
+(defsubst define-obsolete-function-alias (oldfun newfun &optional when
+						 docstring)
   "Define OLDFUN as an obsolete alias for function NEWFUN.
 This makes calling OLDFUN equivalent to calling NEWFUN and marks OLDFUN
 as obsolete."
   (define-function oldfun newfun)
-  (make-obsolete oldfun newfun))
+  (make-obsolete oldfun newfun when))
 
 (defsubst define-compatible-function-alias (oldfun newfun)
   "Define OLDFUN as a compatible alias for function NEWFUN.
@@ -50,7 +51,8 @@ as provided for compatibility only."
   (define-function oldfun newfun)
   (make-compatible oldfun newfun))
 
-(defsubst define-obsolete-variable-alias (oldvar newvar)
+(defsubst define-obsolete-variable-alias (oldvar newvar &optional when
+					  docstring)
   "Define OLDVAR as an obsolete alias for variable NEWVAR.
 This makes referencing or setting OLDVAR equivalent to referencing or
 setting NEWVAR and marks OLDVAR as obsolete.
@@ -59,7 +61,7 @@ If OLDVAR was bound and NEWVAR was not, Set NEWVAR to OLDVAR.
 Note: Use this before any other references (defvar/defcustom) to NEWVAR."
   (let ((needs-setting (and (boundp oldvar) (not (boundp newvar))))
         (value (and (boundp oldvar) (symbol-value oldvar))))
-     (defvaralias oldvar newvar)
+     (defvaralias oldvar newvar docstring)
      (make-obsolete-variable oldvar newvar)
      (and needs-setting (set newvar value))))
 
