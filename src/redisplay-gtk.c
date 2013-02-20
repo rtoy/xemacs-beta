@@ -922,15 +922,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 static void
 XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 			   int y, int xoffset, int yoffset,
-			   int width, int height,
-			   XLIKE_COLOR fg, XLIKE_COLOR bg)
+			   int UNUSED (width), int UNUSED (height),
+			   XLIKE_COLOR UNUSED (fg), XLIKE_COLOR UNUSED (bg))
 {
-  struct device *d = XDEVICE (f->device);
-  /* XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d); */
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-  double xpos, ypos;
 
   /* There is a possibility that callers expect the pixbuf to be
      resized. */
