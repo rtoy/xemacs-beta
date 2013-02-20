@@ -703,7 +703,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     assert (Dynarr_length (buf) == 1);
 
   if (width < 0)
-    width = XLIKE_text_width (w, cachel, Dynarr_begin (buf),
+    width = XLIKE_text_width (f, cachel, Dynarr_begin (buf),
 			      Dynarr_length (buf));
 
   /* Regularize the variables passed in. */
