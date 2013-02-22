@@ -1,3 +1,9 @@
+2013-02-22  Michael Sperber  <mike@xemacs.org>
+
+	* event-stream.c (post_command_hook): Don't complain about throws
+	out of `post-command-hook'.  This is quite common, for example to
+	exit the minibuffer.
+
 2013-02-04  Vin Shelton  <acs@xemacs.org>
 
 	* syswindows.h: Fix the cygwin build by supporting win32api 3.14
