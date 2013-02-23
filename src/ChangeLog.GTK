@@ -1,5 +1,11 @@
 2013-02-23  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Move a line of X
+	code inside the right ifdef.
+
+	* console-xlike-inc.h (XLIKE_DRAW_LINE): Remove XLIKE_GC and
+	related macros.
+
 	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Avoid XLIKE_GC when
 	THIS_IS_GTK.
 	(XLIKE_get_gc): Ifdef for THIS_IS_X only.

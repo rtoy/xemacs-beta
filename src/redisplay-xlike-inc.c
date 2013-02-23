@@ -1597,12 +1597,12 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
       if (cursor_width > db->xpos + dga->width - cursor_start)
 	cursor_width = db->xpos + dga->width - cursor_start;
 
-      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil,
-			 Qnil);
-
 #ifdef THIS_IS_X
       {
 	XLIKE_GC gc;
+
+	gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil,
+			   Qnil);
 
 	if (focus)
 	  {
