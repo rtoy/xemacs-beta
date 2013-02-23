@@ -77,6 +77,7 @@ gtk_release_scrollbar_instance (struct scrollbar_instance *instance)
   gtk_widget_hide_all (SCROLLBAR_GTK_WIDGET (instance));
 }
 
+#if 0
 static gboolean
 scrollbar_drag_hack_cb (GtkWidget *UNUSED (w), GdkEventButton *UNUSED (ev),
 			gpointer v)
@@ -85,6 +86,7 @@ scrollbar_drag_hack_cb (GtkWidget *UNUSED (w), GdkEventButton *UNUSED (ev),
   inhibit_slider_size_change = GPOINTER_TO_UINT (v);
   return (FALSE);
 }
+#endif
 
 /* A device method. */
 static void
@@ -345,7 +347,6 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble UNUSED (value),
 {
   /* This function can GC */
   GtkAdjustment *adj = gtk_range_get_adjustment (range);
-  GtkRange *r = 0;
   int vertical = gtk_orientable_get_orientation ((GtkOrientable *)range) ==
     GTK_ORIENTATION_VERTICAL;
   struct frame *f = 0;
@@ -369,14 +370,13 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble UNUSED (value),
   mirror = find_scrollbar_window_mirror (f, id);
   if (!mirror)
     return(FALSE);
-  
+
   win = real_window (mirror, 1);
 
   if (NILP (win))
     return(FALSE);
   instance = vertical ? mirror->scrollbar_vertical_instance : mirror->scrollbar_horizontal_instance;
   frame = WINDOW_FRAME (XWINDOW (win));
-  r = GTK_RANGE (SCROLLBAR_GTK_WIDGET (instance));
   inhibit_slider_size_change = 0;
   switch (scroll)
     {

@@ -459,7 +459,8 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 
 static int
 gtk_image_instance_equal (struct Lisp_Image_Instance *p1,
-			  struct Lisp_Image_Instance *p2, int UNUSED (depth))
+			  struct Lisp_Image_Instance * UNUSED (p2),
+			  int UNUSED (depth))
 {
   switch (IMAGE_INSTANCE_TYPE (p1))
     {
@@ -844,9 +845,6 @@ static void
 init_image_instance_from_gdk_pixbuf (struct Lisp_Image_Instance *ii,
 				     GdkPixbuf *gdk_pixbuf,
 				     int dest_mask,
-				     GdkColormap * UNUSED(cmap),
-				     unsigned long *pixels,
-				     int npixels,
 				     int slices,
 				     Lisp_Object instantiator,
 				     Lisp_Object pointer_fg,
@@ -909,7 +907,6 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 				     Lisp_Object UNUSED (domain))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-  GdkColormap *cmap = DEVICE_GTK_COLORMAP (XDEVICE(device));
   unsigned long *pixtbl = NULL;
   int npixels = 0;
   int slice;
@@ -930,9 +927,8 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
       if (slice == 0)
 	/* Now create the pixmap and set up the image instance */
 	init_image_instance_from_gdk_pixbuf (ii, gdk_pixbuf, dest_mask,
-					     cmap, pixtbl, npixels, slices,
-					     instantiator, pointer_fg,
-					     pointer_bg);
+					     slices, instantiator,
+					     pointer_fg, pointer_bg);
       else
 	image_instance_add_gdk_pixbuf (ii, gdk_pixbuf, slice, instantiator);
 
@@ -970,10 +966,10 @@ get_bit (const Extbyte *bits, int row, int col, int width)
 static GdkPixbuf *
 pixbuf_from_xbm_inline (Lisp_Object UNUSED (device), int width, int height,
 			/* Note that data is in ext-format! */
-			const Extbyte *bits, const GdkColor fg, const GdkColor bg)
+			const Extbyte *bits, const GdkColor fg,
+			const GdkColor bg)
 {
   GdkPixbuf *out = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
-  int old_width = (width + 7) / 8;
   int rowstride;
   int n_channels;
   int i, j;
@@ -1292,11 +1288,9 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-  GdkColormap *cmap;
   int depth;
   /* GdkVisual *visual; */
   GdkPixbuf *pixbuf;
-  GdkWindow *window = 0;
   int nsymbols = 0, i = 0;
   struct color_symbol *color_symbols = NULL;
   Lisp_Object color_symbol_alist = find_keyword_in_vector (instantiator,
@@ -1323,8 +1317,6 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   GCPRO3 (device, data, color_symbol_alist);
 
-  window = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
-  cmap = DEVICE_GTK_COLORMAP (XDEVICE (device));
   depth = DEVICE_GTK_DEPTH (XDEVICE (device));
   /* visual = DEVICE_GTK_VISUAL (XDEVICE (device)); */
 
