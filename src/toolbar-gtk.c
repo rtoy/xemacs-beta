@@ -103,10 +103,10 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
   w = XWINDOW (window);
 
   get_toolbar_coords (f, pos, &x, &y, &bar_width, &bar_height, &vert, 0);
-	
+
   /* Get the toolbar and delete the old widgets in it */
   button = FRAME_TOOLBAR_BUTTONS (f, pos);
-	
+
   /* First loop over all of the buttons to determine how many there
      are. This loop will also make sure that all instances are
      instantiated so when we actually output them they will come up
@@ -182,7 +182,7 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 					     ERROR_ME_DEBUG_WARN, 1);
 	  else
 	    instance = Qnil;
-	  
+
 	  if (IMAGE_INSTANCEP(instance))
 	    {
               GtkToolItem *item  = NULL;
@@ -190,8 +190,6 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 	      GdkPixbuf *pixmap;
 	      Ibyte *tooltip = NULL;
 
-	      if (STRINGP (tb->help_string))
-		tooltip = XSTRING_DATA (tb->help_string);
               /* Map toolbar actions to Gtk stock icons.  This mapping should be
                  done in lisp.   Perhaps using a hashtable. */
               stock_icon = Fgethash (tb->callback, Vgtk_toolbar_stock_icons, Qnil);
@@ -207,7 +205,7 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
                   pixmapwid = gtk_image_new_from_pixbuf (pixmap);
                   item = gtk_tool_button_new (pixmapwid, "");
                 }
-              
+
               gtk_toolbar_insert (GTK_TOOLBAR(toolbar), item, -1);
               gtk_tool_item_set_tooltip_text (item,
                                               LISP_STRING_TO_EXTERNAL (tb->help_string,
@@ -227,21 +225,21 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
   x -= vert ? 3 : 2;
   y -= vert ? 2 : 3;
 
-  gtk_widget_set_size_request (toolbar, bar_width, bar_height);
+  gtk_widget_set_size_request (GTK_WIDGET (toolbar), bar_width, bar_height);
 
   if (1)
     {
       gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
-		     toolbar, x, y);
-      gtk_widget_show_all (toolbar);
-      gtk_widget_realize (toolbar);
+		     GTK_WIDGET (toolbar), x, y);
+      gtk_widget_show_all (GTK_WIDGET (toolbar));
+      gtk_widget_realize (GTK_WIDGET (toolbar));
     }
   else
     {
       /* This displays the toolbar correctly in an external window.
 	 Why doesn't the above code work? */
       GtkWidget *win = gtk_window_new (GTK_WINDOW_POPUP);
-      gtk_container_add (win, toolbar);
+      gtk_container_add (GTK_CONTAINER (win), GTK_WIDGET (toolbar));
       gtk_widget_show_all (win);
       gtk_widget_realize (win);
     }

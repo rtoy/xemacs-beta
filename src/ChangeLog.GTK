@@ -1,5 +1,26 @@
 2013-02-23  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* toolbar-gtk.c (gtk_output_toolbar): Remove unused variable
+	tooltip.
+
+	* scrollbar-gtk.c (scrollbar_drag_hack_cb): ifdefed out.
+
+	* toolbar-gtk.c (gtk_output_toolbar): Cast args to GTK_WIDGET.
+	Remove extraneous whitespace.
+
+	* scrollbar-gtk.c (scrollbar_cb): Remove unused variable.
+
+	* glyphs-gtk.c (gtk_image_instance_equal): Mark parameters as
+	unused.
+	(init_image_instance_from_gdk_pixbuf): Remove unused parameters.
+	(gtk_init_image_instance_from_eimage): Remove params from call.
+	Remove unused variable.
+	(pixbuf_from_xbm_inline): Remove unused variable.  Wrap parameter
+	list.
+	(gtk_xpm_instantiate): Remove unused variables.
+
+	* event-gtk.c (emacs_gtk_unselect_console): Remove unused variable.
+
 	* fontcolor-gtk.c (font_description_from_string): Use size_t to
 	avoid compiler warning.
 
