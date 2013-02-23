@@ -1,3 +1,10 @@
+2013-02-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Avoid XLIKE_GC when
+	THIS_IS_GTK.
+	(XLIKE_get_gc): Ifdef for THIS_IS_X only.
+	Add prototypes for several GTK functions.
+
 2013-02-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Remove unused
