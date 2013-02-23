@@ -69,6 +69,14 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <X11/bitmaps/gray>
 #endif /* THIS_IS_X */
 
+#ifdef THIS_IS_GTK
+static void cr_set_foreground (cairo_t *cr, Lisp_Object color);
+static void gtk_draw_rectangle (cairo_t *cr, gint x, gint y,
+                                gint width, gint height);
+static void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
+                                gint width, gint height);
+#endif
+
 #define EOL_CURSOR_WIDTH	5
 
 /* Device methods */
@@ -816,7 +824,7 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
   Dynarr_free (buf);
 }
 
-/* Called as gtk_get_gc from gtk-glue.c */
+#ifdef THIS_IS_X
 
 XLIKE_GC XLIKE_get_gc (struct frame *f, Lisp_Object font,
 		       Lisp_Object fg, Lisp_Object bg,
@@ -946,6 +954,8 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #endif
   return gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, mask);
 }
+
+#endif
 
 /*****************************************************************************
  XLIKE_output_string
@@ -1553,8 +1563,10 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
+#ifdef THIS_IS_X
   XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+#endif
 
   /* Output the pixmap. */
   {
@@ -1577,29 +1589,52 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
       && !NILP (w->text_cursor_visible_p)
       && (cursor_start < db->xpos + dga->width))
     {
-      XLIKE_GC gc;
       int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
       struct face_cachel *cursor_cachel =
 	WINDOW_FACE_CACHEL (w,
 			    get_builtin_face_cache_index
 			    (w, Vtext_cursor_face));
+      if (cursor_width > db->xpos + dga->width - cursor_start)
+	cursor_width = db->xpos + dga->width - cursor_start;
 
       gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil,
 			 Qnil);
 
-      if (cursor_width > db->xpos + dga->width - cursor_start)
-	cursor_width = db->xpos + dga->width - cursor_start;
+#ifdef THIS_IS_X
+      {
+	XLIKE_GC gc;
 
-      if (focus)
-	{
-	  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
+	if (focus)
+	  {
+	    XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
+				  cursor_width, cursor_height);
+	  }
+	else
+	  {
+	    XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
+				  cursor_width, cursor_height);
+	  }
+      }
+#endif
+#ifdef THIS_IS_GTK
+      {
+	GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+	cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+	cr_set_foreground (cr, cursor_cachel->background);
+
+	if (focus)
+	  {
+	    gtk_fill_rectangle (cr, cursor_start, db->ypos,
 				cursor_width, cursor_height);
-	}
-      else
-	{
-	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
+	  }
+	else
+	  {
+	    gtk_draw_rectangle (cr, cursor_start, db->ypos,
 				cursor_width, cursor_height);
-	}
+	  }
+      }
+#endif
     }
 }
 
