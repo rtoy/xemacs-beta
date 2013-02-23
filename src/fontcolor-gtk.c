@@ -235,7 +235,7 @@ font_description_from_string (char *extname)
   PangoFontDescription *pfd;
   char *p;
   int count = 0;
-  int len = strlen (extname);
+  size_t len = strlen (extname);
 
   p = extname;
   /* Current lisp code makes an XLFD, which we can't load. */
