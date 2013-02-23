@@ -1,5 +1,8 @@
 2013-02-23  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* fontcolor-gtk.c (font_description_from_string): Use size_t to
+	avoid compiler warning.
+
 	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Move a line of X
 	code inside the right ifdef.
 
