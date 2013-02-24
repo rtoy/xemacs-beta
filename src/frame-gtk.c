@@ -460,14 +460,14 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      continue;
 	  }
 	  /* Further kludge the x/y. */
-	  else if (EQ (prop, Qx))
+	  else if (EQ (prop, Qleft) || EQ (prop, Qx))
 	  {
 	      CHECK_FIXNUM (val);
 	      x = (gint) XFIXNUM (val);
 	      x_position_specified_p = TRUE;
 	      continue;
 	  }
-	  else if (EQ (prop, Qy))
+	  else if (EQ (prop, Qtop) || EQ (prop, Qy))
 	  {
 	      CHECK_FIXNUM (val);
 	      y = (gint) XFIXNUM (val);
