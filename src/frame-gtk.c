@@ -486,7 +486,7 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
     if (!width_specified_p)
       width = 80;
     if (!height_specified_p)
-      height = 30;
+      height = 40;
 
     /* Kludge kludge kludge kludge. */
     if (position_specified_p &&
@@ -631,7 +631,7 @@ gnome_parse_geometry (const gchar *geometry, gint *xpos,
 static void
 gtk_initialize_frame_size (struct frame *f)
 {
-  gint x = 10, y = 10, w = 80, h = 30;
+  gint x = 10, y = 10, w = 80, h = 40;
 
   if (STRINGP (Vgtk_initial_geometry))
     {
@@ -641,7 +641,7 @@ gtk_initialize_frame_size (struct frame *f)
 	{
 	  x = y = 10;
 	  w = 80;
-	  h = 30;
+	  h = 40;
 	}
     }
 
@@ -989,7 +989,6 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
   /* Let's make sure we get all the events we can */
   gtk_widget_add_events (shell, GDK_ALL_EVENTS_MASK);
-  gtk_widget_add_events (text, GDK_ALL_EVENTS_MASK);
 
   if (shell != container)
     gtk_container_add (GTK_CONTAINER (shell), container);
