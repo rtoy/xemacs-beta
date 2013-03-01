@@ -1,3 +1,9 @@
+2013-03-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_frame_properties): Set default frame height
+	to 40 to match Xt version.
+	(gtk_initialize_frame_size): Ditto.
+
 2013-02-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_set_frame_properties): Make left and top
