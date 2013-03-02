@@ -1,3 +1,13 @@
+2013-03-02  Michael Sperber  <mike@xemacs.org>
+
+	* bytecomp.el (byte-compile-if): Port this patch from GNU Emacs:
+
+	Author: Dave Love <fx@gnu.org>
+	Date:   Thu Dec 12 20:27:43 2002 +0000
+
+	    (byte-compile-if): Suppress warnings from
+	    things protected by `(if (fboundp ...' or `(if (boundp ...'.
+
 2013-02-20  Michael Sperber  <mike@xemacs.org>
 
 	* files.el (file-remote-p): Remove an ancient piece of obsolete
