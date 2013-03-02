@@ -1,3 +1,9 @@
+2013-03-02  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Make symbolic links in src for module source files
+	if they are built into the executable, so they are built with the
+	same CFLAGS as the non-module source files.
+
 2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.33 "horseradish" is released.

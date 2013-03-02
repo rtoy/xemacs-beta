@@ -15216,10 +15216,14 @@ fi
 done
 
   LIBS="$save_LIBS"
-  MAKE_SUBDIR="$MAKE_SUBDIR modules/ldap" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/ldap\" to \$MAKE_SUBDIR"; fi
-  need_modules_common=yes
   if test "$with_modules" = "yes"; then
+    MAKE_SUBDIR="$MAKE_SUBDIR modules/ldap" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/ldap\" to \$MAKE_SUBDIR"; fi
     INSTALL_ARCH_DEP_SUBDIR="$INSTALL_ARCH_DEP_SUBDIR modules/ldap" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/ldap\" to \$INSTALL_ARCH_DEP_SUBDIR"; fi
+  else
+    mkdir src
+    for fil in eldap.c eldap.h; do
+      ${LN_S} "$srcdir/modules/ldap/$fil" "src/$fil"
+    done
   fi
 fi
 
@@ -15388,10 +15392,14 @@ fi
 _ACEOF
 
     postgresql_libs="$pq_libs $postgresql_libs" &&  if test "$verbose" = "yes"; then echo "    Prepending \"$pq_libs\" to \$postgresql_libs"; fi
-    MAKE_SUBDIR="$MAKE_SUBDIR modules/postgresql" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/postgresql\" to \$MAKE_SUBDIR"; fi
-    need_modules_common=yes
     if test "$with_modules" = "yes"; then
+      MAKE_SUBDIR="$MAKE_SUBDIR modules/postgresql" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/postgresql\" to \$MAKE_SUBDIR"; fi
       INSTALL_ARCH_DEP_SUBDIR="$INSTALL_ARCH_DEP_SUBDIR modules/postgresql" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/postgresql\" to \$INSTALL_ARCH_DEP_SUBDIR"; fi
+    else
+      mkdir src
+      for fil in postgresql.c postgresql.h; do
+        ${LN_S} "$srcdir/modules/postgresql/$fil" "src/$fil"
+      done
     fi
   elif test "$with_postgresql" = "yes"; then
     { echo "Error:" "Required PostgreSQL support cannot be provided.  Check --with-site-prefixes." >&2; exit 1; }
@@ -17431,10 +17439,12 @@ fi
 
     test -n "$canna_wchar_aware" && $as_echo "#define CANNA_NEW_WCHAR_AWARE 1" >>confdefs.h
 
-    MAKE_SUBDIR="$MAKE_SUBDIR modules/canna" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/canna\" to \$MAKE_SUBDIR"; fi
-    need_modules_common=yes
     if test "$with_modules" = "yes"; then
+      MAKE_SUBDIR="$MAKE_SUBDIR modules/canna" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/canna\" to \$MAKE_SUBDIR"; fi
       INSTALL_ARCH_DEP_SUBDIR="$INSTALL_ARCH_DEP_SUBDIR modules/canna" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/canna\" to \$INSTALL_ARCH_DEP_SUBDIR"; fi
+    else
+      mkdir src
+      ${LN_S} "$srcdir/modules/canna/canna_api.c" "src/canna_api.c"
     fi
     canna_libs="-lcanna -lRKC $canna_libs" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lcanna -lRKC\" to \$canna_libs"; fi
   elif test "$with_canna" != "no"; then
