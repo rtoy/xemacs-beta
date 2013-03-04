@@ -5369,7 +5369,7 @@ for dir in src/s src/m; do
 done
 
 dnl Also make modules/common link if needed for the module Makefiles.
-if test "$need_modules_common" = "yes"; then
+if test "$with_modules" = "yes"; then
   for dir in modules/common; do
     if test ! -d "$dir" ; then
       echo Making symbolic link to "$srcdir/$dir"
