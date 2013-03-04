@@ -1,3 +1,8 @@
+2013-03-04  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Complete removal of need_modules_common, forgotten
+	in the previous patch.
+
 2013-03-02  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Make symbolic links in src for module source files
