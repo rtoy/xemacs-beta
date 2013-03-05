@@ -192,7 +192,7 @@ gpm_objs=gpmevent.o
 #endif
 
 #if defined(HAVE_LDAP) && !defined(HAVE_SHLIB)
-ldap_objs=$(BLDMODULES)/ldap/eldap.o
+ldap_objs=eldap.o
 #endif
 
 #ifdef MULE
@@ -200,7 +200,7 @@ mule_objs=mule-ccl.o mule-charset.o mule-coding.o
 #endif
 
 #if defined(HAVE_CANNA) && !defined(HAVE_SHLIB)
-mule_canna_objs=$(BLDMODULES)/canna/canna_api.o
+mule_canna_objs=canna_api.o
 #endif
 
 #ifdef HAVE_WNN
@@ -215,7 +215,7 @@ number_objs=number-mp.o number.o
 #endif
 
 #if defined(HAVE_POSTGRESQL) && !defined(HAVE_SHLIB)
-postgresql_objs=$(BLDMODULES)/postgresql/postgresql.o
+postgresql_objs=postgresql.o
 #endif
 
 #ifdef HAVE_WIN32_PROCESSES

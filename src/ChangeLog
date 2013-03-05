@@ -1,3 +1,9 @@
+2013-03-02  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: If modules are built into the executable, assume
+	that module source files are available in the current directory,
+	since configure now creates soft links for them.
+
 2013-02-22  Michael Sperber  <mike@xemacs.org>
 
 	* event-stream.c (post_command_hook): Don't complain about throws

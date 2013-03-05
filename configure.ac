@@ -3613,10 +3613,14 @@ if test "$with_ldap" = "yes"; then
   save_LIBS="$LIBS" LIBS="$LIBS $ldap_libs"
   AC_CHECK_FUNCS(ldap_set_option ldap_get_lderrno ldap_result2error ldap_parse_result)
   LIBS="$save_LIBS"
-  XE_APPEND(modules/ldap, MAKE_SUBDIR)
-  need_modules_common=yes
   if test "$with_modules" = "yes"; then
+    XE_APPEND(modules/ldap, MAKE_SUBDIR)
     XE_APPEND(modules/ldap, INSTALL_ARCH_DEP_SUBDIR)
+  else
+    mkdir src
+    for fil in eldap.c eldap.h; do
+      ${LN_S} "$srcdir/modules/ldap/$fil" "src/$fil"
+    done
   fi
 fi
 AC_SUBST(ldap_libs)
@@ -3664,10 +3668,14 @@ dnl Look for these standard header file locations, known to be used on Linux
                  AC_DEFINE(HAVE_POSTGRESQLV7)], [:], $extra_libs)
     AC_DEFINE_UNQUOTED(LIBPQ_FE_H_FILE, "$libpq_fe_h_file")
     XE_PREPEND([$pq_libs], postgresql_libs)
-    XE_APPEND(modules/postgresql, MAKE_SUBDIR)
-    need_modules_common=yes
     if test "$with_modules" = "yes"; then
+      XE_APPEND(modules/postgresql, MAKE_SUBDIR)
       XE_APPEND(modules/postgresql, INSTALL_ARCH_DEP_SUBDIR)
+    else
+      mkdir src
+      for fil in postgresql.c postgresql.h; do
+        ${LN_S} "$srcdir/modules/postgresql/$fil" "src/$fil"
+      done
     fi
   elif test "$with_postgresql" = "yes"; then
     XE_DIE("Required PostgreSQL support cannot be provided.  Check --with-site-prefixes.")
@@ -4340,10 +4348,12 @@ if test "$with_mule" = "yes" ; then
   if test "$have_canna" = "yes"; then
     AC_DEFINE(HAVE_CANNA)
     test -n "$canna_wchar_aware" && AC_DEFINE(CANNA_NEW_WCHAR_AWARE)
-    XE_APPEND(modules/canna, MAKE_SUBDIR)
-    need_modules_common=yes
     if test "$with_modules" = "yes"; then
+      XE_APPEND(modules/canna, MAKE_SUBDIR)
       XE_APPEND(modules/canna, INSTALL_ARCH_DEP_SUBDIR)
+    else
+      mkdir src
+      ${LN_S} "$srcdir/modules/canna/canna_api.c" "src/canna_api.c"
     fi
     XE_PREPEND(-lcanna -lRKC, canna_libs)
   elif test "$with_canna" != "no"; then
@@ -5359,7 +5369,7 @@ for dir in src/s src/m; do
 done
 
 dnl Also make modules/common link if needed for the module Makefiles.
-if test "$need_modules_common" = "yes"; then
+if test "$with_modules" = "yes"; then
   for dir in modules/common; do
     if test ! -d "$dir" ; then
       echo Making symbolic link to "$srcdir/$dir"
