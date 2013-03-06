@@ -1,5 +1,9 @@
 2013-03-04  Jerry James  <james@xemacs.org>
 
+	* configure.ac: Check for large file support.
+
+2013-03-04  Jerry James  <james@xemacs.org>
+
 	* configure.ac: Complete removal of need_modules_common, forgotten
 	in the previous patch.
 
