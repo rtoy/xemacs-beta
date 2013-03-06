@@ -2721,6 +2721,11 @@ AC_CHECK_SIZEOF(double)
 dnl check for long file names
 AC_SYS_LONG_FILE_NAMES
 
+dnl check for large file support
+AC_SYS_LARGEFILE
+AC_FUNC_FSEEKO
+AC_CHECK_SIZEOF(off_t)
+
 dnl -lm is required for floating point support, among other things
 AC_CHECK_FUNC(sin, ,AC_CHECK_LIB(m, sin))
 

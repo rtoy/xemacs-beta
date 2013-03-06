@@ -1,3 +1,13 @@
+2013-03-04  Jerry James  <james@xemacs.org>
+
+	* config.h.in: Add placeholders and definitions needed for large
+	file support.
+	* dired.c (Ffile_attributes): Some elements of the stat structure
+	can overflow a fixnum.  Allow them to be bignums, if possible.
+	* dumper.c (pdump_align_stream): Use OFF_T, FTELL, and FSEEK macros
+	to get large file support.
+	(pdump): Ditto.
+
 2013-03-02  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: If modules are built into the executable, assume

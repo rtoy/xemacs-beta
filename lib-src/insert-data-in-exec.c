@@ -32,6 +32,7 @@ http://lkml.org/lkml/2003/7/11/141 for more information. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <config.h>
 
 static const unsigned char key[] = {
   255,
@@ -55,8 +56,9 @@ int main(int argc, char **argv)
 {
   FILE *te, *xe, *dump;
   unsigned char *xed, *p;
-  long size, size_dump, size1, i;
-  long max_size, offset;
+  size_t size, size_dump, size1, i;
+  size_t max_size, offset;
+  OFF_T off;
 
   char msg[65536];
 
@@ -73,24 +75,25 @@ int main(int argc, char **argv)
       exit(1);
     }
 
-    if(fseek(dump, 0, SEEK_END)) {
+    if(FSEEK(dump, 0, SEEK_END)) {
       perror("fseek end dump");
       exit(1);
     }
 
-    size = ftell(dump);
-    if(size == -1) {
+    off = FTELL(dump);
+    if(off == -1) {
       perror("ftell dump");
       exit(1);
     }
+    size = (size_t)off;
 
-    printf("%ld\n", size);
+    printf("%zu\n", size);
     exit(0);
   }
 
 
-  max_size = strtol(argv[4], 0, 10);
-  offset   = strtol(argv[5], 0, 10);
+  max_size = strtoul(argv[4], 0, 10);
+  offset   = strtoul(argv[5], 0, 10);
 
   sprintf(msg, "Opening %s failed", argv[1]);
   te = fopen(argv[1], "rb");
@@ -99,18 +102,19 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  if(fseek(te, 0, SEEK_END)) {
+  if(FSEEK(te, 0, SEEK_END)) {
     perror("fseek end");
     exit(1);
   }
 
-  size = ftell(te);
-  if(size == -1) {
+  off = FTELL(te);
+  if(off == -1) {
     perror("ftell");
     exit(1);
   }
+  size = (size_t)off;
 
-  if(fseek(te, 0, SEEK_SET)) {
+  if(FSEEK(te, 0, SEEK_SET)) {
     perror("fseek beginning");
     exit(1);
   }
@@ -127,7 +131,7 @@ int main(int argc, char **argv)
       perror("fread temacs");
       exit(1);
     }
-    fprintf(stderr, "Fread returned %ld, expected %ld ?\n", size1, size);
+    fprintf(stderr, "Fread returned %zu, expected %zu ?\n", size1, size);
     exit(1);
   }
 
@@ -137,7 +141,7 @@ int main(int argc, char **argv)
   }
 
   p = xed;
-  for(i=0; i<size-(long)sizeof(key); i++) {
+  for(i=0; i<size-sizeof(key); i++) {
     if(!memcmp(p, key, sizeof(key)))
       goto found;
     p++;
@@ -147,7 +151,7 @@ int main(int argc, char **argv)
   exit(1);
 
  found:
-  fprintf(stderr, "dumped_data found at offset 0x%lx, patching.\n", i);
+  fprintf(stderr, "dumped_data found at offset 0x%zx, patching.\n", i);
 
   sprintf(msg, "Opening %s failed", argv[2]);
   dump = fopen(argv[2], "rb");
@@ -156,23 +160,24 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  if(fseek(dump, 0, SEEK_END)) {
+  if(FSEEK(dump, 0, SEEK_END)) {
     perror("fseek end dump");
     exit(1);
   }
 
-  size_dump = ftell(dump);
-  if(size_dump == -1) {
+  off = FTELL(dump);
+  if(off == -1) {
     perror("ftell dump");
     exit(1);
   }
+  size_dump = (size_t)off;
 
   if(size_dump > max_size) {
-    fprintf(stderr, "Dump file too big for available space (max=%ld, dump=%ld)\n", max_size, size_dump);
+    fprintf(stderr, "Dump file too big for available space (max=%zu, dump=%zu)\n", max_size, size_dump);
     exit(2);
   }
 
-  if(fseek(dump, 0, SEEK_SET)) {
+  if(FSEEK(dump, 0, SEEK_SET)) {
     perror("fseek beginning dump");
     exit(1);
   }
@@ -183,7 +188,7 @@ int main(int argc, char **argv)
       perror("fread dump");
       exit(1);
     }
-    fprintf(stderr, "Fread dump returned %ld, expected %ld ?\n", size1, size_dump);
+    fprintf(stderr, "Fread dump returned %zu, expected %zu ?\n", size1, size_dump);
     exit(1);
   }
 
@@ -199,7 +204,7 @@ int main(int argc, char **argv)
   xed[i+2] = size_dump >> 16;
   xed[i+3] = size_dump >> 24;
 
-  fprintf(stderr, "dumped_data found at offset 0x%lx, patching.\n", i);
+  fprintf(stderr, "dumped_data found at offset 0x%zx, patching.\n", i);
 
   sprintf(msg, "Opening %s failed", argv[3]);
   xe = fopen(argv[3], "wb");
@@ -214,7 +219,7 @@ int main(int argc, char **argv)
       perror("fwrite xemacs");
       exit(1);
     }
-    fprintf(stderr, "Fwrite xemacs returned %ld, expected %ld ?\n", size1, size);
+    fprintf(stderr, "Fwrite xemacs returned %zu, expected %zu ?\n", size1, size);
     exit(1);
   }
 
