@@ -376,7 +376,7 @@ hexl: ${srcdir}/hexl.c
 make-dump-id: ${srcdir}/make-dump-id.c
 	$(CC) $(cflags) ${srcdir}/make-dump-id.c $(ldflags) -o $@
 
-#ifndef DUMP_IN_EXEC
+#ifdef DUMP_IN_EXEC
 insert-data-in-exec: ${srcdir}/insert-data-in-exec.c
 	$(CC) $(cflags) ${srcdir}/insert-data-in-exec.c $(ldflags) -o $@
 #endif /* not DUMP_IN_EXEC */

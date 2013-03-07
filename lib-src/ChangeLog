@@ -1,3 +1,7 @@
+2013-03-06  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Fix reversed test for insert-data-in-exec build.
+
 2013-03-04  Jerry James  <james@xemacs.org>
 
 	* insert-data-in-exec.c (main): Use OFF_T, FSEEK, and FTELL macros,
