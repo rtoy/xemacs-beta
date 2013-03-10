@@ -62,7 +62,6 @@ struct gtk_device
   /* Selected visual, depth and colormap for this device */
   GdkVisual *visual;
   int depth;
-  GdkColormap *device_cmap;
 
   PangoContext *context;
   PangoFontMap *font_map;
@@ -131,7 +130,6 @@ DECLARE_LISP_OBJECT (gtk_device, Lisp_Gtk_Device);
 
 #define DEVICE_GTK_VISUAL(d)	(DEVICE_GTK_DATA (d)->visual)
 #define DEVICE_GTK_DEPTH(d)	(DEVICE_GTK_DATA (d)->depth)
-#define DEVICE_GTK_COLORMAP(d) 	(DEVICE_GTK_DATA (d)->device_cmap)
 #define DEVICE_GTK_CONTEXT(d) 	(DEVICE_GTK_DATA (d)->context)
 #define DEVICE_GTK_FONT_MAP(d)	(DEVICE_GTK_DATA (d)->font_map)
 #define DEVICE_GTK_APP_SHELL(d) 	(DEVICE_GTK_DATA (d)->gtk_app_shell)

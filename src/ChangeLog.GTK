@@ -1,5 +1,10 @@
 2013-03-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* console-gtk-impl.h (g): Remove colormap from gtk_device. Remove
+	access macro. No longer required since cairo handles colors.
+
+	* device-gtk.c (gtk_init_device): Avoid use of GdkColormap.
+
 	* glyphs-gtk.c (init_image_instance_from_xbm_inline): Avoid
 	deprecated gdk_color_black, gdk_color_white.
 	(xbm_instantiate_1): Ditto.
