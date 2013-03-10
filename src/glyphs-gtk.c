@@ -945,12 +945,11 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
   GdkColor bg;
   enum image_instance_type type;
   GdkWindow *draw = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
-  GdkColormap *cmap = DEVICE_GTK_COLORMAP (XDEVICE(device));
   GdkColor black;
   GdkColor white;
 
-  gdk_color_black(cmap, &black);
-  gdk_color_white(cmap, &white);
+  gdk_color_parse ("black", &black);
+  gdk_color_parse ("white", &white);
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
     gui_error ("Not a Gtk device", device);
@@ -1074,12 +1073,11 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   GdkPixbuf *mask = 0;
   const Extbyte *gcc_may_you_rot_in_hell;
-  GdkColormap *cmap = DEVICE_GTK_COLORMAP (XDEVICE(device));
   GdkColor black;
   GdkColor white;
 
-  gdk_color_black(cmap, &black);
-  gdk_color_white(cmap, &white);
+  gdk_color_parse ("black", &black);
+  gdk_color_parse ("white", &white);
 
   if (!NILP (mask_data))
     {

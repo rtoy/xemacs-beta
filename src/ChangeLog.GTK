@@ -1,5 +1,9 @@
 2013-03-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (init_image_instance_from_xbm_inline): Avoid
+	deprecated gdk_color_black, gdk_color_white.
+	(xbm_instantiate_1): Ditto.
+
 	* fontcolor-gtk-impl.h (g): Remove dealloc flag from
 	gtk_color_instance_data; colors are never allocated now.
 
