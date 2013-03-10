@@ -199,7 +199,6 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   Lisp_Object display;
   GtkWidget *app_shell = NULL;
   GdkVisual *visual = NULL;
-  GdkColormap *cmap = NULL;
 
   /* Run the early elisp side of the GTK device initialization. */
   call0 (Qmake_device_early_gtk_entry_point);
@@ -264,10 +263,8 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   /* Always search for the best visual */
   visual = gdk_visual_get_best();
-  cmap = gdk_colormap_new (visual, TRUE);
 
   DEVICE_GTK_VISUAL (d) = visual;
-  DEVICE_GTK_COLORMAP (d) = cmap;
   DEVICE_GTK_DEPTH (d) = visual->depth;
 
   {
