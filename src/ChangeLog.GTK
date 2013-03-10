@@ -1,3 +1,10 @@
+2013-03-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_colorize_image_instance): Update to work on
+	GdkPixbufs.
+	(console_type_create_glyphs_gtk): Register colorize_image_instance
+	device method.
+
 2013-02-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_set_frame_properties): Make left and top
