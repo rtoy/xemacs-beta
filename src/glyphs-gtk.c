@@ -1957,12 +1957,9 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   maybe_recolor_cursor (image_instance, foreground, background);
 }
 
-#ifdef JSPARKES
-/* Not yet ported to pixbuf */
 static int
 gtk_colorize_image_instance (Lisp_Object image_instance,
 			       Lisp_Object foreground, Lisp_Object background);
-#endif
 
 
 /************************************************************************/
@@ -2795,10 +2792,7 @@ console_type_create_glyphs_gtk (void)
 #if 0
   CONSOLE_HAS_METHOD (gtk, image_instance_hash);
 #endif
-#ifdef JSPARKES
-  /* Not yet ported to pixbuf. */
   CONSOLE_HAS_METHOD (gtk, colorize_image_instance);
-#endif
   CONSOLE_HAS_METHOD (gtk, init_image_instance_from_eimage);
   CONSOLE_HAS_METHOD (gtk, locate_pixmap_file);
   CONSOLE_HAS_METHOD (gtk, unmap_subwindow);
@@ -2979,13 +2973,6 @@ complex_vars_of_glyphs_gtk (void)
   register_cursor_names ();
 }
 
-#ifdef JSPARKES
-/* Needs to be ported to Pixbuf. */
-
-/* X specific crap */
-#include "sysgdkx.h"
-/* #### Should remove all this X specific stuff when GTK/GDK matures a
-   bit more and provides an abstraction for it. */
 static int
 gtk_colorize_image_instance (Lisp_Object image_instance,
 			     Lisp_Object foreground, Lisp_Object background)
@@ -3008,34 +2995,34 @@ gtk_colorize_image_instance (Lisp_Object image_instance,
     }
 
   {
-    GdkWindow *draw = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (IMAGE_INSTANCE_DEVICE (p))));
-    GdkPixmap *new_pxmp = gdk_pixmap_new (draw,
-					  IMAGE_INSTANCE_PIXMAP_WIDTH (p),
-					  IMAGE_INSTANCE_PIXMAP_HEIGHT (p),
-					  DEVICE_GTK_DEPTH (XDEVICE (IMAGE_INSTANCE_DEVICE (p))));
-    GdkGCValues gcv;
-    GdkGC *gc;
+    GdkPixbuf *pb = IMAGE_INSTANCE_GTK_PIXMAP (p);
+    gint rowstride = gdk_pxibuf_get_rowstride (pb);
+    gint n_channels = gdk_pixbuf_get_n_channels (pb);
+    guchar *data = gdk_pixbuf_get_pixels (pb);
+    guchar *dp = data;
+    GdkColor *color;
+    gint width = gdk_pixbuf_get_width (pb);
+    gint height = gdk_pixbuf_get_height (pb);
+    int i,j;
 
-    gcv.foreground = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (foreground));
-    gcv.background = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (background));
-    gc = gdk_gc_new_with_values (new_pxmp, &gcv,
-				 (GdkGCValuesMask) (GDK_GC_BACKGROUND | GDK_GC_FOREGROUND));
-
-    XCopyPlane (GDK_WINDOW_XDISPLAY (draw),
-		GDK_WINDOW_XWINDOW (IMAGE_INSTANCE_GTK_PIXMAP (p)),
-		GDK_WINDOW_XWINDOW (new_pxmp),
-		GDK_GC_XGC (gc), 0, 0,
-		IMAGE_INSTANCE_PIXMAP_WIDTH (p),
-		IMAGE_INSTANCE_PIXMAP_HEIGHT (p),
-		0, 0, 1);
-
-    g_object_unref (gc);
-    IMAGE_INSTANCE_GTK_PIXMAP (p) = new_pxmp;
-    IMAGE_INSTANCE_PIXMAP_DEPTH (p) = DEVICE_GTK_DEPTH (XDEVICE (IMAGE_INSTANCE_DEVICE (p)));
+    for (i = 0; i < height; i++)
+      {
+	for (j = 0; i < width; j++)
+	  {
+	    dp = data + i * rowstride + j * n_channels;
+	    if (*dp == 0)
+	      color = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (foreground));
+	    else
+	      color = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (background));
+	    *dp++ = color->red;
+	    *dp++ = color->green;
+	    *dp++ = color->blue;
+	    if (n_channels == 4)
+	      *dp++ = 0xff;
+	  }
+      }
     IMAGE_INSTANCE_PIXMAP_FG (p) = foreground;
     IMAGE_INSTANCE_PIXMAP_BG (p) = background;
     return 1;
   }
 }
-
-#endif
