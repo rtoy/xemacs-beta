@@ -4,6 +4,7 @@
 	GdkPixbufs.
 	(console_type_create_glyphs_gtk): Register colorize_image_instance
 	device method.
+	(gtk_colorize_image_instance): Fix loop error.
 
 2013-03-01  Jeff Sparkes  <jsparkes@gmail.com>
 
