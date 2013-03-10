@@ -5,6 +5,10 @@
 	(console_type_create_glyphs_gtk): Register colorize_image_instance
 	device method.
 	(gtk_colorize_image_instance): Fix loop error.
+	(convert_EImage_to_GDKPixbuf): Don't quantize the colors on pseudo
+	color displays.  Rely on cairo to handle it for us.
+	(gtk_init_image_instance_from_eimage): No need to keep track of
+	allocated colors because none are.
 
 2013-03-01  Jeff Sparkes  <jsparkes@gmail.com>
 
