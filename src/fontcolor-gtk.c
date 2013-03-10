@@ -54,68 +54,23 @@ static Lisp_Object Vgtk_fallback_font_size;
 /*                          color instances                             */
 /************************************************************************/
 
-/* Replacement for XAllocColor() that tries to return the nearest
-   available color if the colormap is full.  Original was from FSFmacs,
-   but rewritten by Jareth Hein <jareth@camelot-soft.com> 97/11/25
-   Modified by Lee Kindness <lkindness@csl.co.uk> 31/08/99 to handle previous
-   total failure which was due to a read/write colorcell being the nearest
-   match - tries the next nearest...
-
-   Gdk takes care of all this behind the scenes, so we don't need to
-   worry about it.
-
-   Return value is 1 for normal success, 2 for nearest color success,
-   3 for Non-deallocable success. */
 int
-allocate_nearest_color (GdkColormap *colormap, GdkVisual *UNUSED (visual),
-		        GdkColor *color_def)
+gtk_parse_nearest_color (struct device *d, GdkColor *color, Lisp_Object name,
+			 Error_Behavior errb)
 {
-  int rc;
-
-  rc = gdk_colormap_alloc_color (colormap, color_def, FALSE, TRUE);
-
-  if (rc == TRUE)
-      return (1);
-
-  return (0);
-}
-
-int
-gtk_parse_nearest_color (struct device *d, GdkColor *color, Ibyte *name,
-			 Bytecount len, Error_Behavior errb)
-{
-  GdkColormap *cmap;
-  GdkVisual *visual;
+  const Extbyte *extname;
   int result;
 
-  cmap = DEVICE_GTK_COLORMAP(d);
-  visual = DEVICE_GTK_VISUAL (d);
-
   xzero (*color);
-  {
-    const Extbyte *extname;
-    Bytecount extnamelen;
+  CHECK_STRING (name);
+  extname = LISP_STRING_TO_EXTERNAL (name, Qutf_8);
+  result = gdk_color_parse (extname, color);
 
-    TO_EXTERNAL_FORMAT (DATA, (name, len), ALLOCA, (extname, extnamelen),
-                        Qutf_8);
-
-    result = gdk_color_parse (extname, color);
-  }
-  
   if (result == FALSE)
     {
-      maybe_invalid_argument ("unrecognized color", make_string (name, len),
-			  Qcolor, errb);
+      maybe_invalid_argument ("unrecognized color", name, Qcolor, errb);
       return 0;
     }
-  result = allocate_nearest_color (cmap, visual, color);
-  if (!result)
-    {
-      maybe_signal_error (Qgui_error, "couldn't allocate color",
-			  make_string (name, len), Qcolor, errb);
-      return 0;
-    }
-
   return result;
 }
 
@@ -127,9 +82,7 @@ gtk_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
   int result;
 
   result = gtk_parse_nearest_color (XDEVICE (device), &color,
-				    XSTRING_DATA   (name),
-				    XSTRING_LENGTH (name),
-				    errb);
+				    name, errb);
 
   if (!result)
     return 0;
@@ -137,10 +90,6 @@ gtk_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   c->data = xnew (struct gtk_color_instance_data);
-  if (result == 3)
-    COLOR_INSTANCE_GTK_DEALLOC (c) = 0;
-  else
-    COLOR_INSTANCE_GTK_DEALLOC (c) = 1;
   COLOR_INSTANCE_GTK_COLOR (c) = gdk_color_copy (&color);
   return 1;
 }
@@ -162,12 +111,7 @@ gtk_finalize_color_instance (struct Lisp_Color_Instance *c)
     {
       if (DEVICE_LIVE_P (XDEVICE (c->device)))
 	{
-	  if (COLOR_INSTANCE_GTK_DEALLOC (c))
-	    {
-		gdk_colormap_free_colors (DEVICE_GTK_COLORMAP (XDEVICE (c->device)),
-					  COLOR_INSTANCE_GTK_COLOR (c), 1);
-	    }
-	    gdk_color_free (COLOR_INSTANCE_GTK_COLOR (c));
+	  gdk_color_free (COLOR_INSTANCE_GTK_COLOR (c));
 	}
       xfree (c->data);
       c->data = 0;

@@ -1,5 +1,16 @@
 2013-03-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* fontcolor-gtk-impl.h (g): Remove dealloc flag from
+	gtk_color_instance_data; colors are never allocated now.
+
+	* fontcolor-gtk.h: Remove declaration for allocate_nearest_color.
+
+	* fontcolor-gtk.c (gtk_parse_nearest_color): No longer call
+	allocate_nearest_color, which has been deleted.  No need to
+	allocate colors, cairo handles it.
+	(gtk_initialize_color_instance): No dealloc flag to set.
+	(gtk_finalize_color_instance): No color to deallocate.
+
 	* glyphs-gtk.c (gtk_colorize_image_instance): Update to work on
 	GdkPixbufs.
 	(console_type_create_glyphs_gtk): Register colorize_image_instance
