@@ -165,10 +165,8 @@ Lisp_Object Vgtk_cursor_names;
 /* Convert from a series of RGB triples to a GdkPixbuf. */
 static GdkPixbuf *
 convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
-			     unsigned char *pic, unsigned long **pixtbl,
-			     int *npixels)
+			     unsigned char *pic)
 {
-  GdkColormap *cmap;
   GdkVisual *vis;
   GdkPixbuf *out;
   int i, j;
@@ -176,17 +174,8 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
   int rowstride, n_channels;
   int rd,gr,bl;
   guchar *data, *ip, *dp = NULL;
-  quant_table *qtable = NULL;
-  /*
-  union {
-    UINT_32_BIT val;
-    char cp[4];
-  } conv;
-  */
 
-  cmap = DEVICE_GTK_COLORMAP (XDEVICE(device));
   vis = DEVICE_GTK_VISUAL (XDEVICE(device));
-  /* depth = DEVICE_GTK_DEPTH(XDEVICE(device)); */
 
   if (vis->type == GDK_VISUAL_GRAYSCALE || vis->type == GDK_VISUAL_STATIC_COLOR ||
       vis->type == GDK_VISUAL_STATIC_GRAY)
@@ -195,23 +184,12 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
       return NULL;
     }
 
-  if (vis->type == GDK_VISUAL_PSEUDO_COLOR)
-    {
-      /* Quantize the image and get a histogram while we're at it.
-         This should not be necessary for cairo.  -jsparkes
-	 Do this first to save memory */
-      qtable = build_EImage_quantable(pic, width, height, 256);
-      if (qtable == NULL)
-        return NULL;
-    }
-
   out = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE /* has_alpha */,
                         8, width, height);
 
   if (!out)
     return NULL;
 
-  /* byte_cnt = 4; */
   rowstride = gdk_pixbuf_get_rowstride (out);
   n_channels = gdk_pixbuf_get_n_channels (out);
 
@@ -219,66 +197,7 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
 
   if (!data)
     return NULL;
-
-  if (vis->type == GDK_VISUAL_PSEUDO_COLOR)
-    {
-      unsigned long pixarray[256];
-      int pixcount, n;
-      /* use our quantize table to allocate the colors */
-      pixcount = 32;
-      *pixtbl = xnew_array (unsigned long, pixcount);
-      *npixels = 0;
-      /* ### should implement a sort by popularity to assure proper allocation */
-      n = *npixels;
-      for (i = 0; i < qtable->num_active_colors; i++)
-	{
-	  GdkColor color;
-	  int res;
-
-	  color.red = qtable->rm[i] ? qtable->rm[i] << 8 : 0;
-	  color.green = qtable->gm[i] ? qtable->gm[i] << 8 : 0;
-	  color.blue = qtable->bm[i] ? qtable->bm[i] << 8 : 0;
-	  res = allocate_nearest_color (cmap, vis, &color);
-	  if (res > 0 && res < 3)
-	    {
-	      DO_REALLOC(*pixtbl, pixcount, n+1, unsigned long);
-	      (*pixtbl)[n] = color.pixel;
-	      n++;
-	    }
-	  pixarray[i] = color.pixel;
-	}
-      *npixels = n;
-      ip = pic;
-      for (i = 0; i < height; i++)
-	{
-	  for (j = 0; j < width; j++)
-	    {
-	      rd = *ip++;
-	      gr = *ip++;
-	      bl = *ip++;
-              dp = data + i * rowstride + j * n_channels;
-              dp[0] = rd;
-              dp[1] = gr;
-              dp[2] = bl;
-              dp[3] = 255;
-#ifdef OLD
-	      conv.val = pixarray[QUANT_GET_COLOR(qtable,rd,gr,bl)];
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-	      if (outimg->byte_order == GDK_MSB_FIRST)
-		for (q = 4-byte_cnt; q < 4; q++) *dp++ = conv.cp[q];
-	      else
-		for (q = 3; q >= 4-byte_cnt; q--) *dp++ = conv.cp[q];
-#else
-	      if (outimg->byte_order == GDK_MSB_FIRST)
-		for (q = byte_cnt-1; q >= 0; q--) *dp++ = conv.cp[q];
-	      else
-		for (q = 0; q < byte_cnt; q++) *dp++ = conv.cp[q];
-#endif
-#endif
-	    }
-	}
-      xfree (qtable);
-    } else {
+  {
       unsigned long rshift,gshift,bshift,rbits,gbits,bbits,junk;
       junk = vis->red_mask;
       rshift = 0;
@@ -907,19 +826,14 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 				     Lisp_Object UNUSED (domain))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-  unsigned long *pixtbl = NULL;
-  int npixels = 0;
   int slice;
   GdkPixbuf *gdk_pixbuf;
 
   for (slice = 0; slice < slices; slice++)
     {
-      gdk_pixbuf = convert_EImage_to_GDKPixbuf (device, width, height, eimage,
-						&pixtbl, &npixels);
+      gdk_pixbuf = convert_EImage_to_GDKPixbuf (device, width, height, eimage);
       if (!gdk_pixbuf)
 	{
-	  if (pixtbl)
-	    xfree (pixtbl);
 	  signal_image_error("EImage to GdkPixbuf conversion failed",
 			     instantiator);
 	}
