@@ -2996,7 +2996,7 @@ gtk_colorize_image_instance (Lisp_Object image_instance,
 
   {
     GdkPixbuf *pb = IMAGE_INSTANCE_GTK_PIXMAP (p);
-    gint rowstride = gdk_pxibuf_get_rowstride (pb);
+    gint rowstride = gdk_pixbuf_get_rowstride (pb);
     gint n_channels = gdk_pixbuf_get_n_channels (pb);
     guchar *data = gdk_pixbuf_get_pixels (pb);
     guchar *dp = data;
@@ -3007,7 +3007,7 @@ gtk_colorize_image_instance (Lisp_Object image_instance,
 
     for (i = 0; i < height; i++)
       {
-	for (j = 0; i < width; j++)
+	for (j = 0; j < width; j++)
 	  {
 	    dp = data + i * rowstride + j * n_channels;
 	    if (*dp == 0)
