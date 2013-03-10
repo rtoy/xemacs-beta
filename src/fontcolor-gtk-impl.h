@@ -36,7 +36,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 struct gtk_color_instance_data
 {
   GdkColor *color;
-  char dealloc_on_gc;
 };
 
 #define GTK_COLOR_INSTANCE_DATA(c) ((struct gtk_color_instance_data *) (c)->data)
