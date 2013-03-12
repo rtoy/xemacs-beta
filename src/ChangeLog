@@ -1,3 +1,7 @@
+2013-03-11  Vin Shelton  <acs@xemacs.org>
+
+	* config.h.in: Move large file support outside WIN32_NO_CONFIGURE block.
+
 2013-03-07  Jerry James  <james@xemacs.org>
 
 	* array.c (stack_like_malloc): Define only if WIN32_ANY.
