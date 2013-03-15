@@ -4364,7 +4364,7 @@ post_command_hook (void)
 
   safe_run_hook_trapping_problems
     (Qcommand, Qpost_command_hook,
-     0);
+     NO_INHIBIT_THROWS);
 
 #if 0 /* FSF Emacs */
   if (!NILP (current_buffer->mark_active))
