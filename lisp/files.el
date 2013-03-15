@@ -4459,22 +4459,6 @@ to that remote system.
     (cond
      (handler
       (funcall handler 'file-remote-p file identification connected))
-     ;; legacy code; can probably go by mid-2008
-     ((fboundp 'efs-ftp-path)
-      (let ((parsed (declare-fboundp (efs-ftp-path file))))
-	(and parsed
-	     (let ((host (nth 0 parsed))
-		   (user (nth 1 parsed)))
-	       (and (or (not connected)
-		    (let ((proc (get-process (declare-fboundp (efs-ftp-process-buffer host user)))))
-		      (and proc (processp proc)
-			   (memq (process-status proc) '(run open)))))
-		(cond
-		 ((eq identification 'method) (and parsed "ftp"))
-		 ((eq identification 'user) user)
-		 ((eq identification 'host) host)
-		 (t
-		  (concat "/" user "@" host ":/"))))))))
      (t nil))))
 
 

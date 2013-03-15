@@ -1,8 +1,46 @@
-2013-02-13  Jeff Sparkes  <jsparkes@gmail.com>
+2013-03-02  Michael Sperber  <mike@xemacs.org>
 
-	* obsolete.el (define-obsolete-function-alias): Add args to match
-	FSF function.
-	(define-obsolete-variable-alias): Add args to match FSF function.
+	* bytecomp.el (byte-compile-if): Port this patch from GNU Emacs:
+
+	Author: Dave Love <fx@gnu.org>
+	Date:   Thu Dec 12 20:27:43 2002 +0000
+
+	    (byte-compile-if): Suppress warnings from
+	    things protected by `(if (fboundp ...' or `(if (boundp ...'.
+
+2013-02-20  Michael Sperber  <mike@xemacs.org>
+
+	* files.el (file-remote-p): Remove an ancient piece of obsolete
+	legacy code that looks at `efs-ftp-path'.
+
+2013-02-20  Michael Sperber  <mike@xemacs.org>
+
+	* font-lock.el (font-lock-beg)
+	(font-lock-extend-region-functions)
+	(font-lock-extend-region-multiline)
+	(font-lock-extend-region-wholelines)
+	(font-lock-default-fontify-region): Add and use
+	`font-lock-extend-region-functions' from GNU Emacs.
+
+2013-02-08  Michael Sperber  <mike@xemacs.org>
+
+	* font-lock.el (font-lock-set-defaults-1):
+	(font-lock-defaults): Allow the left-hand-side of a syntax-alist
+	entry in `font-lock-defaults' to be a string, in addition to a
+	char.  (This is a sync with GNU Emacs.)
+
+2013-02-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Thanks to Jeff Sparkes for suggestion and the original patches and
+	to Mike Sperber for discussion.
+
+	* obsolete.el (define-obsolete-function-alias):
+	(define-compatible-function-alias):
+	(define-obsolete-variable-alias):
+	(define-compatible-variable-alias):
+	Add optional WHEN and DOCSTRING arguments for GNU compatibility.
+	Document WHEN as ignored.  Support DOCSTRING as well as the
+	underlying functions allow.
 
 2013-01-22  Jerry James  <james@xemacs.org>
 

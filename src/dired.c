@@ -927,17 +927,17 @@ If file does not exist, returns nil.
 
   RETURN_UNGCPRO (listn (12,
 			 mode,
-			 make_fixnum (s.st_nlink),
-			 make_fixnum (s.st_uid),
-			 make_fixnum (s.st_gid),
+			 make_integer (s.st_nlink),
+			 make_integer (s.st_uid),
+			 make_integer (s.st_gid),
 			 make_time (s.st_atime),
 			 make_time (s.st_mtime),
 			 make_time (s.st_ctime),
 			 size,
 			 modestring,
 			 gid,
-			 make_fixnum (s.st_ino),
-			 make_fixnum (s.st_dev)));
+			 make_integer (s.st_ino),
+			 make_integer (s.st_dev)));
 }
 
 

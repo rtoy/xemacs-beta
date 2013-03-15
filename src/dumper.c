@@ -203,10 +203,10 @@ dump_add_weak_object_chain (Lisp_Object *varaddress)
 inline static void
 pdump_align_stream (FILE *stream, Bytecount alignment)
 {
-  long offset = ftell (stream);
-  long adjustment = ALIGN_SIZE (offset, alignment) - offset;
+  OFF_T offset = FTELL (stream);
+  OFF_T adjustment = ALIGN_SIZE (offset, alignment) - offset;
   if (adjustment)
-    fseek (stream, adjustment, SEEK_CUR);
+    FSEEK (stream, adjustment, SEEK_CUR);
 }
 
 #define PDUMP_ALIGN_OUTPUT(type) pdump_align_stream (pdump_out, ALIGNOF (type))
@@ -2168,7 +2168,7 @@ pdump (void)
 	elt->fcts->convert_free(elt->object, elt->data, elt->size);
     }
 
-  fseek (pdump_out, header.stab_offset, SEEK_SET);
+  FSEEK (pdump_out, header.stab_offset, SEEK_SET);
 
 #ifdef NEW_GC
   {
