@@ -1,3 +1,9 @@
+2013-03-28  Jerry James  <james@xemacs.org>
+
+	* config.h.in: AC_FUNC_FSEEKO is the name of the autoconf macro.
+	HAVE_FSEEKO is the name of the C preprocessor symbol.  Do not
+	confuse the two.
+
 2013-03-11  Vin Shelton  <acs@xemacs.org>
 
 	* config.h.in: Move large file support outside WIN32_NO_CONFIGURE block.
