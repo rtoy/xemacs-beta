@@ -760,7 +760,7 @@ things are arranged in config.h.in.  In particular:
 #undef SIZEOF_OFF_T
 
 /* Large file support */
-#undef AC_FUNC_FSEEKO
+#undef HAVE_FSEEKO
 
 /* some systems (Cygwin) typedef u?intptr_t in <sys/types.h>
    but the standard is <inttypes.h>
@@ -1179,7 +1179,7 @@ extern "C" {
 #define SUPPORT_CONFOUNDING_FUNCTIONS NEED_TO_HANDLE_21_4_CODE
 
 /* Large file support */
-#ifdef AC_FUNC_FSEEKO
+#ifdef HAVE_FSEEKO
 # define OFF_T off_t
 # define FSEEK(stream, offset, whence) fseeko (stream, offset, whence)
 # define FTELL(stream) ftello (stream)
