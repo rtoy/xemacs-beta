@@ -1,5 +1,5 @@
 /* Interfaces to system-dependent kernel and library entries.
-   Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
+   Copyright (C) 1985-1988, 1992-1995, 2013 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
@@ -3125,6 +3125,13 @@ qxe_getpwuid (uid_t uid)
 #else
   return copy_in_passwd (getpwuid (uid));
 #endif /* WIN32_NATIVE */
+}
+
+// TODO: WIN32 mapping
+struct group *
+qxe_getgrgid (gid_t gid)
+{
+   return getgrgid (gid);
 }
 
 #ifndef WIN32_NATIVE

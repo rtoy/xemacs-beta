@@ -1,3 +1,11 @@
+2013-04-19  Mats Lidell  <matsl@xemacs.org>
+
+	* sysdep.c (qxe_getgrgid): Encapsulation of getgrgid.
+	* syspwd.h: Ditto.
+
+	* dired.c (Ffile_attributes): Added optional ID-FORMAT for
+	compatibility with GNU.
+	
 2013-03-28  Jerry James  <james@xemacs.org>
 
 	* config.h.in: AC_FUNC_FSEEKO is the name of the autoconf macro.
