@@ -20,6 +20,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #ifndef WIN32_NATIVE
 
 # include <pwd.h>
+# include <grp.h>
 
 #else /* WIN32_NATIVE */
 
@@ -52,6 +53,7 @@ gid_t getegid (void);
 
 struct passwd *qxe_getpwnam (const Ibyte *name);
 struct passwd *qxe_getpwuid (uid_t uid);
+struct group *qxe_getgrgid (gid_t gid);
 struct passwd *qxe_getpwent (void);
 
 #endif /* emacs */

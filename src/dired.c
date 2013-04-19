@@ -1,5 +1,5 @@
  /* Lisp functions for making directory listings.
-   Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1985, 1986, 1992, 1993, 1994, 2013 Free Software Foundation, Inc.
    Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
@@ -820,14 +820,20 @@ wasteful_word_to_lisp (unsigned int item)
 }
 #endif
 
-DEFUN ("file-attributes", Ffile_attributes, 1, 1, 0, /*
+DEFUN ("file-attributes", Ffile_attributes, 1, 2, 0, /*
 Return a list of attributes of file FILENAME.
 Value is nil if specified file cannot be opened.
+
+ID-FORMAT specifies the preferred format of attributes uid and gid (see
+below) - valid values are 'string and 'integer.  The latter is the
+default.
+
 Otherwise, list elements are:
  0. t for directory, string (name linked to) for symbolic link, or nil.
  1. Number of links to file.
- 2. File uid.
- 3. File gid.
+ 2. File uid as a string or a number.  If a string value cannot be
+  looked up, a numeric value, either an integer or a float, is returned.
+ 3. File gid, likewise.
  4. Last access time, as a list of two integers.
   First integer has high-order 16 bits of time, second has low 16 bits.
  5. Last modification time, likewise.
@@ -840,7 +846,7 @@ Otherwise, list elements are:
 
 If file does not exist, returns nil.
 */
-       (filename))
+       (filename, id_format))
 {
   /* This function can GC. GC checked 1997.06.04. */
   Lisp_Object directory = Qnil;
@@ -848,6 +854,9 @@ If file does not exist, returns nil.
   char modes[10];
   Lisp_Object handler, mode, modestring = Qnil, size, gid;
   struct gcpro gcpro1, gcpro2, gcpro3;
+
+  Lisp_Object uidInfo = Qnil;
+  Lisp_Object gidInfo = Qnil;
 
   GCPRO3 (filename, directory, modestring);
   filename = Fexpand_file_name (filename, Qnil);
@@ -858,7 +867,10 @@ If file does not exist, returns nil.
   if (!NILP (handler))
     {
       UNGCPRO;
-      return call2 (handler, Qfile_attributes, filename);
+      if (NILP(id_format))
+         return call2 (handler, Qfile_attributes, filename);
+      else
+         return call3 (handler, Qfile_attributes, filename, id_format);
     }
 
   if (qxe_lstat (XSTRING_DATA (filename), &s) < 0)
@@ -925,11 +937,25 @@ If file does not exist, returns nil.
   gid = (s.st_gid != getegid ()) ? Qt : Qnil;
 #endif	/* BSD4_2 or BSD4_3 */
 
+  if (NILP(id_format) || EQ (id_format, Qinteger))
+    {
+      uidInfo = make_integer (s.st_uid);
+      gidInfo = make_integer (s.st_gid);
+    }
+  else
+    {
+      struct passwd *pw = qxe_getpwuid (s.st_uid);
+      struct group *gr = qxe_getgrgid (s.st_gid);
+
+      uidInfo = build_istring (pw ? (Ibyte *) pw->pw_name : NULL);
+      gidInfo = build_istring (gr ? (Ibyte *) gr->gr_name : NULL);
+    }
+  
   RETURN_UNGCPRO (listn (12,
 			 mode,
 			 make_integer (s.st_nlink),
-			 make_integer (s.st_uid),
-			 make_integer (s.st_gid),
+			 uidInfo,
+			 gidInfo,
 			 make_time (s.st_atime),
 			 make_time (s.st_mtime),
 			 make_time (s.st_ctime),
