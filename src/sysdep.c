@@ -3127,11 +3127,14 @@ qxe_getpwuid (uid_t uid)
 #endif /* WIN32_NATIVE */
 }
 
-// TODO: WIN32 mapping
 struct group *
 qxe_getgrgid (gid_t gid)
 {
-   return getgrgid (gid);
+#ifdef WIN32_NATIVE
+  return NULL;
+#else
+  return getgrgid (gid);
+#endif /* WIN32_NATIVE */
 }
 
 #ifndef WIN32_NATIVE
