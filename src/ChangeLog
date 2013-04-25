@@ -1,3 +1,9 @@
+2013-04-23  Vin Shelton  <acs@xemacs.org>
+
+	* sysdep.c (qxe_getgrgid): Hack in WIN32_NATIVE group support.
+	* dired.c (file_attributes): Add a hack for group name in native
+	Windows builds.
+
 2013-04-19  Mats Lidell  <matsl@xemacs.org>
 
 	* sysdep.c (qxe_getgrgid): Encapsulation of getgrgid.

@@ -948,7 +948,11 @@ If file does not exist, returns nil.
       struct group *gr = qxe_getgrgid (s.st_gid);
 
       uidInfo = build_istring (pw ? (Ibyte *) pw->pw_name : NULL);
+#ifndef WIN32_NATIVE
       gidInfo = build_istring (gr ? (Ibyte *) gr->gr_name : NULL);
+#else
+      gidInfo = build_istring (NULL);
+#endif //WIN32_NATIVE
     }
   
   RETURN_UNGCPRO (listn (12,
