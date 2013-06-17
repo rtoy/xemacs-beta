@@ -1,5 +1,13 @@
 2013-06-17  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* process.el (process-synchronize-point): Moved to a label.
+	* process.el (call-process-internal):
+	Now we have better language features, use them rather than
+	creating a closure ourselves or exposing a utility function when
+	there is no need for that with a well-implemented labels function.
+
+2013-06-17  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el:
 	* cl-macs.el (apply-partially):
 	Be more intelligent about constructing (or not) compiled functions
