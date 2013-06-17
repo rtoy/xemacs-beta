@@ -1,3 +1,10 @@
+2013-06-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (apply-partially):
+	Be more intelligent about constructing (or not) compiled functions
+	at runtime or compile time when making these closures.
+
 2013-03-02  Michael Sperber  <mike@xemacs.org>
 
 	* bytecomp.el (byte-compile-if): Port this patch from GNU Emacs:
