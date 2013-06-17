@@ -27,8 +27,42 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 static mp_exp_t float_print_min, float_print_max;
 gmp_randstate_t random_state;
 
+long long
+bignum_to_llong (const bignum b)
+{
+  long long l;
+
+  mpz_export (&l, NULL, 1, sizeof (l), 0, 0U, b);
+  return (mpz_sgn (b) < 0) ? -l : l;
+}
+
+unsigned long long
+bignum_to_ullong (const bignum b)
+{
+  unsigned long long l;
+
+  mpz_export (&l, NULL, 1, sizeof (l), 0, 0U, b);
+  return l;
+}
+
+void
+bignum_set_llong (bignum b, long long l)
+{
+  if (l < 0LL)
+    {
+      /* This even works for LLONG_MIN.  Try it! */
+      l = -l;
+      mpz_import (b, 1U, 1, sizeof (l), 0, 0U, &l);
+      mpz_neg (b, b);
+    }
+  else
+    {
+      mpz_import (b, 1U, 1, sizeof (l), 0, 0U, &l);
+    }
+}
+
 CIbyte *
-bigfloat_to_string(mpf_t f, int base)
+bigfloat_to_string (mpf_t f, int base)
 {
   mp_exp_t expt;
   CIbyte *str = mpf_get_str (NULL, &expt, base, 0, f);
@@ -94,12 +128,14 @@ bigfloat_to_string(mpf_t f, int base)
 
 /* We need the next two functions since GNU MP insists on giving us an extra
    parameter. */
-static void *gmp_realloc (void *ptr, size_t UNUSED (old_size), size_t new_size)
+static void *
+gmp_realloc (void *ptr, size_t UNUSED (old_size), size_t new_size)
 {
   return xrealloc (ptr, new_size);
 }
 
-static void gmp_free (void *ptr, size_t UNUSED (size))
+static void
+gmp_free (void *ptr, size_t UNUSED (size))
 {
   xfree (ptr);
 }

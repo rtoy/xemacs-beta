@@ -820,7 +820,7 @@ hash_table_size_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
           /* hash_table_size() can't handle excessively large sizes. */
           maybe_signal_error_1 (Qargs_out_of_range,
                                 list3 (value, Qzero,
-                                       make_integer (MOST_POSITIVE_FIXNUM)),
+                                       make_fixnum (MOST_POSITIVE_FIXNUM)),
                                 Qhash_table, errb);
           return 0;
         }

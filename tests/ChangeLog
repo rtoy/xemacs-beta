@@ -1,3 +1,8 @@
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* automated/lisp-tests.el: Adjust expected failure message due to
+	changes in check_valid_xbm_inline().
+
 2013-04-20  Mats Lidell  <matsl@xemacs.org>
 
 	* automated/dired-tests.el: New. Tests for file-attributes.

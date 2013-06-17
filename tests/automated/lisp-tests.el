@@ -2641,7 +2641,7 @@ via the hepatic alpha-tocopherol transfer protein")))
   (when (featurep 'xbm)
     (Check-Error-Message
      invalid-argument
-     "^data is too short for width and height"
+     "^Height must be a natural number"
      (set-face-background-pixmap
       'left-margin
       `[xbm :data (20 ,(* 2 most-positive-fixnum) "random-text")])))

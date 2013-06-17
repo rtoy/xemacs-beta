@@ -440,7 +440,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
       check_integer_range (id, Qzero, make_integer (INT_MAX));
       int_id = BIGNUMP (id) ? bignum_to_int (XBIGNUM_DATA (id)) : XFIXNUM (id);
 #else
-      check_integer_range (id, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+      check_integer_range (id, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
       int_id = XFIXNUM (id);      
 #endif
     }

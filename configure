@@ -20897,6 +20897,19 @@ fi
   else
     { echo "Error:" "Required MP numeric support cannot be provided." >&2; exit 1; }
   fi
+  ac_fn_c_check_func "$LINENO" "mp_set_memory_functions" "ac_cv_func_mp_set_memory_functions"
+if test "x$ac_cv_func_mp_set_memory_functions" = xyes; then :
+  $as_echo "#define HAVE_MP_SET_MEMORY_FUNCTIONS 1" >>confdefs.h
+
+else
+  ac_fn_c_check_func "$LINENO" "__gmp_set_memory_functions" "ac_cv_func___gmp_set_memory_functions"
+if test "x$ac_cv_func___gmp_set_memory_functions" = xyes; then :
+  $as_echo "#define HAVE_MP_SET_MEMORY_FUNCTIONS 1" >>confdefs.h
+
+fi
+
+fi
+
   $as_echo "#define WITH_NUMBER_TYPES 1" >>confdefs.h
 
   $as_echo "#define WITH_MP 1" >>confdefs.h

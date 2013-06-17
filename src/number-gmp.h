@@ -69,6 +69,11 @@ extern gmp_randstate_t random_state;
 #define bignum_fits_uint_p(b)           mpz_fits_uint_p (b)
 #define bignum_fits_long_p(b)           mpz_fits_slong_p (b)
 #define bignum_fits_ulong_p(b)          mpz_fits_ulong_p (b)
+#define bignum_fits_llong_p(b)					\
+  (mpz_sizeinbase (b, 2) <= (sizeof(long long) << 3) - 1U)
+#define bignum_fits_ullong_p(b)						\
+  (mpz_sgn (b) >= 0 &&							\
+   mpz_sizeinbase (b, 2) <= (sizeof(unsigned long long) << 3))
 
 /***** Bignum: conversions *****/
 #define bignum_to_string(b,base)        mpz_get_str (NULL, base, b)
@@ -76,6 +81,8 @@ extern gmp_randstate_t random_state;
 #define bignum_to_uint(b)               ((unsigned int) mpz_get_ui (b))
 #define bignum_to_long(b)               mpz_get_si (b)
 #define bignum_to_ulong(b)              mpz_get_ui (b)
+extern long long bignum_to_llong(const bignum b);
+extern unsigned long long bignum_to_ullong(const bignum b);
 #define bignum_to_double(b)             mpz_get_d (b)
 
 /***** Bignum: converting assignments *****/
@@ -83,6 +90,8 @@ extern gmp_randstate_t random_state;
 #define bignum_set_string(b,s,base)     mpz_set_str (b, s, base)
 #define bignum_set_long(b,l)            mpz_set_si (b, l)
 #define bignum_set_ulong(b,l)           mpz_set_ui (b, l)
+extern void bignum_set_llong(bignum b, long long l);
+#define bignum_set_ullong(b,l)          mpz_import (b,1U,1,sizeof (l),0,0U,&l)
 #define bignum_set_double(b,f)          mpz_set_d (b, f)
 #define bignum_set_ratio(b,r)           mpz_set_q (b, r)
 #define bignum_set_bigfloat(b,f)        mpz_set_f (b, f)

@@ -436,7 +436,7 @@ char_table_default_for_type (enum char_table_type type)
       break;
 
     case CHAR_TABLE_TYPE_SYNTAX:
-      return make_integer (Sinherit);
+      return make_fixnum (Sinherit);
       break;
     }
   ABORT();

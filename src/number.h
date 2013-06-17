@@ -105,10 +105,14 @@ DECLARE_LISP_OBJECT (bignum, Lisp_Bignum);
 # define bignum_fits_emacs_int_p(b) bignum_fits_int_p(b)
 # define bignum_to_emacs_int(b) bignum_to_int(b)
 #else
-# error Bignums currently do not work with long long Emacs integers.
+# define bignum_fits_emacs_int_p(b) bignum_fits_llong_p(b)
+# define bignum_to_emacs_int(b) bignum_to_llong(b)
 #endif
 
 extern Lisp_Object make_bignum (long);
+extern Lisp_Object make_bignum_un (unsigned long);
+extern Lisp_Object make_bignum_ll (long long);
+extern Lisp_Object make_bignum_ull (unsigned long long);
 extern Lisp_Object make_bignum_bg (bignum);
 extern bignum scratch_bignum, scratch_bignum2;
 
@@ -119,6 +123,7 @@ extern bignum scratch_bignum, scratch_bignum2;
 #define CONCHECK_BIGNUM(x) dead_wrong_type_argument (Qbignump, x)
 typedef void bignum;
 #define make_bignum(l)     This XEmacs does not support bignums
+#define make_bignum_ll(l)  This XEmacs does not support bignums
 #define make_bignum_bg(b)  This XEmacs does not support bignums
 
 #endif /* HAVE_BIGNUM */
@@ -140,10 +145,15 @@ EXFUN (Fbignump, 1);
 }  while (0)
 
 #ifdef HAVE_BIGNUM
-#define make_integer(x) \
-  (NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x) : make_bignum (x))
+#define make_integer(x)							\
+  (NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x)			\
+   : (sizeof (x) > SIZEOF_LONG ? make_bignum_ll (x) : make_bignum (x)))
+#define make_unsigned_integer(x)					\
+  (UNSIGNED_NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x)		\
+   : (sizeof (x) > SIZEOF_LONG ? make_bignum_ull (x) : make_bignum_un (x)))
 #else
 #define make_integer(x) make_fixnum (x)
+#define make_unsigned_integer(x) make_fixnum ((EMACS_INT) x)
 #endif
 
 extern Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
@@ -170,7 +180,7 @@ EXFUN (Foddp, 1);
 
 #ifdef HAVE_BIGNUM
 #define NATNUMP(x) ((FIXNUMP (x) && XFIXNUM (x) >= 0) || \
-                    (BIGNUMP (x) && bignum_sign (XBIGNUM_DATA (x)) >= 0))
+		    (BIGNUMP (x) && bignum_sign (XBIGNUM_DATA (x)) >= 0))
 #else
 #define NATNUMP(x) (FIXNUMP (x) && XFIXNUM (x) >= 0)
 #endif
@@ -376,19 +386,19 @@ non_fixnum_number_p (Lisp_Object object))
   if (LRECORDP (object))
     {
       switch (XRECORD_LHEADER (object)->type)
-        {
-        case lrecord_type_float:
+	{
+	case lrecord_type_float:
 #ifdef HAVE_BIGNUM
-        case lrecord_type_bignum:
+	case lrecord_type_bignum:
 #endif
 #ifdef HAVE_RATIO
-        case lrecord_type_ratio:
+	case lrecord_type_ratio:
 #endif
 #ifdef HAVE_BIGFLOAT
-        case lrecord_type_bigfloat:
+	case lrecord_type_bigfloat:
 #endif
-          return 1;
-        }
+	  return 1;
+	}
     }
   return 0;
 }

@@ -21,12 +21,14 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <config.h>
 #include <limits.h>
 #include <math.h>
+#include <stdlib.h>
 #include "lisp.h"
 
-static MINT *bignum_bytesize, *bignum_long_sign_bit, *bignum_one, *bignum_two;
+static MINT *bignum_bytesize, *bignum_one, *bignum_two;
 MINT *bignum_zero, *intern_bignum;
 MINT *bignum_min_int, *bignum_max_int, *bignum_max_uint;
 MINT *bignum_min_long, *bignum_max_long, *bignum_max_ulong;
+MINT *bignum_min_llong, *bignum_max_llong, *bignum_max_ullong;
 short div_rem;
 
 char *
@@ -164,6 +166,32 @@ bignum_to_ulong (bignum b)
   return retval;
 }
 
+long long
+bignum_to_llong (bignum b)
+{
+  short rem, sign;
+  unsigned long long retval = 0LL;
+  REGISTER unsigned int i;
+  MINT *quo;
+
+  sign = bignum_sign (b);
+  BIGNUM_TO_TYPE (long long, unsigned long long);
+  return ((long long) retval) * sign;
+}
+
+unsigned long long
+bignum_to_ullong (bignum b)
+{
+  short rem, sign;
+  unsigned long long retval = 0UL;
+  REGISTER unsigned int i;
+  MINT *quo;
+
+  sign = bignum_sign (b);
+  BIGNUM_TO_TYPE (unsigned long long, unsigned long long);
+  return retval;
+}
+
 double
 bignum_to_double (bignum b)
 {
@@ -249,6 +277,7 @@ bignum_set_string (bignum b, const char *s, int base)
       MP_MADD (b, temp, b);
       MP_MFREE (temp);
     }
+  MP_MFREE (mbase);
 
   if (neg)
     MP_MSUB (bignum_zero, b, b);
@@ -257,31 +286,61 @@ bignum_set_string (bignum b, const char *s, int base)
 }
 
 void
-bignum_set_long (MINT *b, long l)
+bignum_set_long (bignum b, long l)
 {
-  /* Negative l is hard, not least because -LONG_MIN == LONG_MIN.  We pretend
-     that l is unsigned, then subtract off the amount equal to the sign bit. */
-  bignum_set_ulong (b, (unsigned long) l);
-  if (l < 0L)
-    MP_MSUB (b, bignum_long_sign_bit, b);
+  char hex[SIZEOF_LONG * 2U + 2U];
+  MINT *temp;
+  int neg = l < 0L;
+
+  snprintf (hex, SIZEOF_LONG * 2U + 2U, "%lx",
+	    neg ? (unsigned long) -l : (unsigned long) l);
+  temp = MP_XTOM (hex);
+  if (neg)
+    MP_MSUB (bignum_zero, temp, b);
+  else
+    MP_MOVE (temp, b);
+  MP_MFREE (temp);
 }
 
 void
 bignum_set_ulong (bignum b, unsigned long l)
 {
-  REGISTER unsigned int i;
-  MINT *multiplier = MP_ITOM (1);
+  char hex[SIZEOF_LONG * 2U + 2U];
+  MINT *temp;
 
-  MP_MOVE (bignum_zero, b);
-  for (i = 0UL; l > 0UL; l >>= 8, i++)
-    {
-      MINT *temp = MP_ITOM ((short) (l & 255));
-      MP_MULT (multiplier, temp, temp);
-      MP_MADD (b, temp, b);
-      MP_MULT (multiplier, bignum_bytesize, multiplier);
-      MP_MFREE (temp);
-    }
-  MP_MFREE (multiplier);
+  snprintf (hex, SIZEOF_LONG * 2U + 2U, "%lx", l);
+  temp = MP_XTOM (hex);
+  MP_MOVE (temp, b);
+  MP_MFREE (temp);
+}
+
+void
+bignum_set_llong (bignum b, long long l)
+{
+  char hex[SIZEOF_LONG_LONG * 2U + 2U];
+  MINT *temp;
+  int neg = l < 0LL;
+
+  snprintf (hex, SIZEOF_LONG_LONG * 2U + 2U, "%llx",
+	    neg ? (unsigned long long) -l : (unsigned long long) l);
+  temp = MP_XTOM (hex);
+  if (neg)
+    MP_MSUB (bignum_zero, temp, b);
+  else
+    MP_MOVE (temp, b);
+  MP_MFREE (temp);
+}
+
+void
+bignum_set_ullong (bignum b, unsigned long long l)
+{
+  char hex[SIZEOF_LONG_LONG * 2U + 2U];
+  MINT *temp;
+
+  snprintf (hex, SIZEOF_LONG_LONG * 2U + 2U, "%llx", l);
+  temp = MP_XTOM (hex);
+  MP_MOVE (temp, b);
+  MP_MFREE (temp);
 }
 
 void
@@ -485,7 +544,7 @@ bignum_clrbit (bignum b, unsigned long bit)
 {
   MINT *num = MP_ITOM (0);
 
-  /* See if the bit is already set, and subtract it off if not */
+  /* See if the bit is set, and subtract it off if so */
   MP_MOVE (b, intern_bignum);
   bignum_pow (num, bignum_two, bit);
   bignum_ior (intern_bignum, intern_bignum, num);
@@ -516,21 +575,59 @@ bignum_rshift (bignum result, bignum b, unsigned long bits)
   MP_MDIV (b, intern_bignum, result, intern_bignum);
 }
 
-void bignum_random_seed(unsigned long seed)
+void
+bignum_random (bignum result, bignum limit)
 {
-  /* FIXME: Implement me */
+  MINT *denominator = MP_ITOM (0), *divisor = MP_ITOM (0);
+  bignum_set_long (denominator, RAND_MAX);
+  MP_MADD (denominator, bignum_one, denominator);
+  MP_MADD (limit, bignum_one, divisor);
+  MP_MDIV (denominator, divisor, denominator, intern_bignum);
+  MP_MFREE (divisor);
+
+  do
+    {
+      MINT *limitcmp = MP_ITOM (1);
+
+      /* Accumulate at least as many random bits as in LIMIT */
+      MP_MOVE (bignum_zero, result);
+      do
+	{
+	  bignum_lshift (limitcmp, limitcmp, FIXNUM_VALBITS);
+	  bignum_lshift (result, result, FIXNUM_VALBITS);
+	  bignum_set_long (intern_bignum, get_random ());
+	  MP_MADD (intern_bignum, result, result);
+	}
+      while (MP_MCMP (limitcmp, limit) <= 0);
+      MP_MDIV (result, denominator, result, intern_bignum);
+      MP_MFREE (limitcmp);
+    }
+  while (MP_MCMP (limit, result) <= 0);
+
+  MP_MFREE (denominator);
 }
 
-void bignum_random(bignum result, bignum limit)
+#ifdef HAVE_MP_SET_MEMORY_FUNCTIONS
+/* We need the next two functions due to the extra parameter. */
+static void *
+mp_realloc (void *ptr, size_t UNUSED (old_size), size_t new_size)
 {
-  /* FIXME: Implement me */
-  MP_MOVE (bignum_zero, result);
+  return xrealloc (ptr, new_size);
 }
+
+static void
+mp_free (void *ptr, size_t UNUSED (size))
+{
+  xfree (ptr);
+}
+#endif
 
 void
 init_number_mp ()
 {
-  REGISTER unsigned int i;
+#ifdef HAVE_MP_SET_MEMORY_FUNCTIONS
+  mp_set_memory_functions ((void *(*) (size_t)) xmalloc, mp_realloc, mp_free);
+#endif
 
   bignum_zero = MP_ITOM (0);
   bignum_one = MP_ITOM (1);
@@ -540,13 +637,8 @@ init_number_mp ()
      number-mp.h.  Its value is immaterial. */
   intern_bignum = MP_ITOM (0);
 
-  /* bignum_bytesize holds the number of bits in a byte. */
+  /* The multiplier used to shift a number left by one byte's worth of bits */
   bignum_bytesize = MP_ITOM (256);
-
-  /* bignum_long_sign_bit holds an adjustment for negative longs. */
-  bignum_long_sign_bit = MP_ITOM (256);
-  for (i = 1UL; i < sizeof (long); i++)
-    MP_MULT (bignum_bytesize, bignum_long_sign_bit, bignum_long_sign_bit);
 
   /* The MP interface only supports turning short ints into MINTs, so we have
      to set these the hard way. */
@@ -568,4 +660,13 @@ init_number_mp ()
 
   bignum_max_ulong = MP_ITOM (0);
   bignum_set_ulong (bignum_max_ulong, ULONG_MAX);
+
+  bignum_min_llong = MP_ITOM (0);
+  bignum_set_llong (bignum_min_llong, LLONG_MIN);
+
+  bignum_max_llong = MP_ITOM (0);
+  bignum_set_llong (bignum_max_llong, LLONG_MAX);
+
+  bignum_max_ullong = MP_ITOM (0);
+  bignum_set_ullong (bignum_max_ullong, ULLONG_MAX);
 }

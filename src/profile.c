@@ -370,7 +370,7 @@ will be properly accumulated. (To clear, use `clear-profiling-info'.)
                                              XFIXNUM (microsecs);
 #else
       check_integer_range (microsecs, make_fixnum (1000),
-                           make_integer (MOST_POSITIVE_FIXNUM));
+                           make_fixnum (MOST_POSITIVE_FIXNUM));
       msecs = XFIXNUM (microsecs);
 #endif
     }

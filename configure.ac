@@ -5287,6 +5287,10 @@ elif test "$with_bignum" = "mp"; then
   else
     XE_DIE("Required MP numeric support cannot be provided.")
   fi
+  AC_CHECK_FUNC(mp_set_memory_functions,
+    [AC_DEFINE(HAVE_MP_SET_MEMORY_FUNCTIONS)],
+    [AC_CHECK_FUNC(__gmp_set_memory_functions,
+      [AC_DEFINE(HAVE_MP_SET_MEMORY_FUNCTIONS)])])
   AC_DEFINE(WITH_NUMBER_TYPES)
   AC_DEFINE(WITH_MP)
 fi
