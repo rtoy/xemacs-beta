@@ -915,8 +915,8 @@ If file does not exist, returns nil.
     }
 
 #ifndef HAVE_BIGNUM
-  size = make_integer (NUMBER_FITS_IN_A_FIXNUM (s.st_size) ?
-		       (EMACS_INT)s.st_size : -1);
+  size = make_fixnum (NUMBER_FITS_IN_A_FIXNUM (s.st_size) ?
+		      (EMACS_INT)s.st_size : -1);
 #else
   size = make_integer (s.st_size);
 #endif
@@ -939,8 +939,8 @@ If file does not exist, returns nil.
 
   if (NILP(id_format) || EQ (id_format, Qinteger))
     {
-      uidInfo = make_integer (s.st_uid);
-      gidInfo = make_integer (s.st_gid);
+      uidInfo = make_unsigned_integer (s.st_uid);
+      gidInfo = make_unsigned_integer (s.st_gid);
     }
   else
     {
@@ -957,7 +957,7 @@ If file does not exist, returns nil.
   
   RETURN_UNGCPRO (listn (12,
 			 mode,
-			 make_integer (s.st_nlink),
+			 make_unsigned_integer (s.st_nlink),
 			 uidInfo,
 			 gidInfo,
 			 make_time (s.st_atime),
@@ -966,8 +966,8 @@ If file does not exist, returns nil.
 			 size,
 			 modestring,
 			 gid,
-			 make_integer (s.st_ino),
-			 make_integer (s.st_dev)));
+			 make_unsigned_integer (s.st_ino),
+			 make_unsigned_integer (s.st_dev)));
 }
 
 

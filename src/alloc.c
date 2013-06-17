@@ -1583,7 +1583,7 @@ Return a new list of length LENGTH, with each element being OBJECT.
   Lisp_Object val = Qnil;
   Elemcount size;
 
-  check_integer_range (length, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (length, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
 
   size = XFIXNUM (length);
 
@@ -1638,6 +1638,45 @@ make_bignum (long bignum_value)
   ALLOC_FROB_BLOCK_LISP_OBJECT (bignum, Lisp_Bignum, b, &lrecord_bignum);
   bignum_init (bignum_data (b));
   bignum_set_long (bignum_data (b), bignum_value);
+  return wrap_bignum (b);
+}
+
+/* WARNING: This function returns a bignum even if its argument fits into a
+   fixnum.  See Fcanonicalize_number(). */
+Lisp_Object
+make_bignum_un (unsigned long bignum_value)
+{
+  Lisp_Bignum *b;
+
+  ALLOC_FROB_BLOCK_LISP_OBJECT (bignum, Lisp_Bignum, b, &lrecord_bignum);
+  bignum_init (bignum_data (b));
+  bignum_set_ulong (bignum_data (b), bignum_value);
+  return wrap_bignum (b);
+}
+
+/* WARNING: This function returns a bignum even if its argument fits into a
+   fixnum.  See Fcanonicalize_number(). */
+Lisp_Object
+make_bignum_ll (long long bignum_value)
+{
+  Lisp_Bignum *b;
+
+  ALLOC_FROB_BLOCK_LISP_OBJECT (bignum, Lisp_Bignum, b, &lrecord_bignum);
+  bignum_init (bignum_data (b));
+  bignum_set_llong (bignum_data (b), bignum_value);
+  return wrap_bignum (b);
+}
+
+/* WARNING: This function returns a bignum even if its argument fits into a
+   fixnum.  See Fcanonicalize_number(). */
+Lisp_Object
+make_bignum_ull (unsigned long long bignum_value)
+{
+  Lisp_Bignum *b;
+
+  ALLOC_FROB_BLOCK_LISP_OBJECT (bignum, Lisp_Bignum, b, &lrecord_bignum);
+  bignum_init (bignum_data (b));
+  bignum_set_ullong (bignum_data (b), bignum_value);
   return wrap_bignum (b);
 }
 

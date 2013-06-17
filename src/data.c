@@ -1447,16 +1447,14 @@ arguments: (&rest ARGS)
 	  break;
 #ifdef HAVE_BIGNUM
 	case BIGNUM_T:
-	  bignum_add (scratch_bignum, XBIGNUM_DATA (accum),
+	  bignum_add (XBIGNUM_DATA (accum), XBIGNUM_DATA (accum),
 		      XBIGNUM_DATA (addend));
-	  accum = make_bignum_bg (scratch_bignum);
 	  break;
 #endif
 #ifdef HAVE_RATIO
 	case RATIO_T:
-	  ratio_add (scratch_ratio, XRATIO_DATA (accum),
+	  ratio_add (XRATIO_DATA (accum), XRATIO_DATA (accum),
 		     XRATIO_DATA (addend));
-	  accum = make_ratio_rt (scratch_ratio);
 	  break;
 #endif
 	case FLOAT_T:
@@ -1464,12 +1462,11 @@ arguments: (&rest ARGS)
 	  break;
 #ifdef HAVE_BIGFLOAT
 	case BIGFLOAT_T:
-	  bigfloat_set_prec (scratch_bigfloat,
+	  bigfloat_set_prec (XBIGFLOAT_DATA (accum),
 			     max (XBIGFLOAT_GET_PREC (addend),
 				  XBIGFLOAT_GET_PREC (accum)));
-	  bigfloat_add (scratch_bigfloat, XBIGFLOAT_DATA (accum),
+	  bigfloat_add (XBIGFLOAT_DATA (accum), XBIGFLOAT_DATA (accum),
 			XBIGFLOAT_DATA (addend));
-	  accum = make_bigfloat_bf (scratch_bigfloat);
 	  break;
 #endif
 	}
@@ -1643,16 +1640,14 @@ arguments: (&rest ARGS)
 	{
 #ifdef HAVE_BIGNUM
 	case BIGNUM_T:
-	  bignum_mul (scratch_bignum, XBIGNUM_DATA (accum),
+	  bignum_mul (XBIGNUM_DATA (accum), XBIGNUM_DATA (accum),
 		      XBIGNUM_DATA (multiplier));
-	  accum = make_bignum_bg (scratch_bignum);
 	  break;
 #endif
 #ifdef HAVE_RATIO
 	case RATIO_T:
-	  ratio_mul (scratch_ratio, XRATIO_DATA (accum),
+	  ratio_mul (XRATIO_DATA (accum), XRATIO_DATA (accum),
 		     XRATIO_DATA (multiplier));
-	  accum = make_ratio_rt (scratch_ratio);
 	  break;
 #endif
 	case FLOAT_T:
@@ -1660,12 +1655,11 @@ arguments: (&rest ARGS)
 	  break;
 #ifdef HAVE_BIGFLOAT
 	case BIGFLOAT_T:
-	  bigfloat_set_prec (scratch_bigfloat,
+	  bigfloat_set_prec (XBIGFLOAT_DATA (accum),
 			     max (XBIGFLOAT_GET_PREC (multiplier),
 				  XBIGFLOAT_GET_PREC (accum)));
-	  bigfloat_mul (scratch_bigfloat, XBIGFLOAT_DATA (accum),
+	  bigfloat_mul (XBIGFLOAT_DATA (accum), XBIGFLOAT_DATA (accum),
 			XBIGFLOAT_DATA (multiplier));
-	  accum = make_bigfloat_bf (scratch_bigfloat);
 	  break;
 #endif
 	}

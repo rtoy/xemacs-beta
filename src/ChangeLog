@@ -1,3 +1,72 @@
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* alloc.c (make_bignum_un): New function.
+	(make_bignum_ll): New function.
+	(make_bignum_ull): New function.
+	* config.h.in (HAVE_MP_SET_MEMORY_FUNCTIONS): Add.
+	* data.c (Fplus): avoid unnecessary consing.
+	(Ftimes): ditto.
+	* glyphs.c (check_valid_xbm_inline): Since this function is called
+	prior to dumping, when bignums are forbidden, do all arithmetic
+	with C integers.
+	* lisp.h (MOST_POSITIVE_FIXNUM_UNSIGNED): New constant.
+	(MOST_POSITIVE_FIXNUM): Redefine in terms of the above.
+	(UNSIGNED_NUMBER_FITS_IN_A_FIXNUM): New macro.
+	* number-gmp.c (bignum_to_llong): New function.
+	(bignum_to_ullong): New function.
+	(bignum_set_llong): New function.
+	(bigfloat_to_string): Adjust whitespace.
+	(gmp_realloc): Ditto.
+	(gmp_free): Ditto.
+	* number-gmp.h (bignum_fits_llong): New macro.
+	(bignum_fits_ullong): New macro.
+	(bignum_set_ullong): New macro.
+	* number-mp.c (bignum_long_sign_bit): Remove, didn't work.
+	(bignum_min_llong): New variable.
+	(bignum_max_llong): New variable.
+	(bignum_max_ullong): New variable.
+	(bignum_to_llong): New function.
+	(bignum_to_ullong): New function.
+	(bignum_set_long): Reimplement using MP_XTOM.
+	(bignum_set_ulong): Ditto.
+	(bignum_set_llong): New function.
+	(bignum_set_ullong): New function.
+	(bignum_clrbit): Fix a comment.
+	(bignum_random_seed): Move to number-mp.h, since it is a no-op.
+	(bignum_random): Implement.
+	(mp_realloc): New function.
+	(mp_free): New function.
+	(init_number_mp): Use them.  Fix a comment.  Eliminate
+	initialization of bignum_long_sign_bit.  Initialize
+	bignum_min_llong, bignum_max_llong, and bignum_set_ullong.
+	* number-mp.h (MP_XTOM): New macro.
+	(bignum_fits_llong_p): New macro.
+	(bignum_fits_ullong_p): New macro.
+	(bignum_random_seed): New macro.
+	* number.h: Implement bignums as long long integers.
+	(make_bignum_ll): New macro.
+	(make_integer): Accept a long long value.
+	(make_unsigned_integer): New macro.
+	(NATNUMP): Adjust whitespace.
+	(non_fixnum_number_p): Ditto.
+
+	* alloc.c (Fmake_list): Use make_unsigned_integer or make_fixnum
+	instead of make_integer where it is appropriate to do so.
+	* chartab.c (char_table_default_for_type): Ditto.
+	* dired.c (Ffile_attributes): Ditto.
+	* elhash.c (hash_table_size_validate): Ditto.
+	* eval.c (Fmacroexpand): Ditto.
+	* event-stream.c (Faccept_process_output): Ditto.
+	(Frecent_keys): Ditto.
+	* events.c (Fmake_event): Ditto.
+	(Fevent_timestamp_lessp): Ditto.
+	* font-mgr.c (Ffc_pattern_get): Ditto.
+	* indent.c (Fmove_to_column): Ditto.
+	* process.c (Fset_process_window_size): Ditto.
+	* profile.c (Fstart_profiling): Ditto.
+	* unicode.c (Fset_unicode_conversion): Ditto.
+	(Funicode_to_char): Ditto.
+
 2013-04-23  Vin Shelton  <acs@xemacs.org>
 
 	* sysdep.c (qxe_getgrgid): Hack in WIN32_NATIVE group support.

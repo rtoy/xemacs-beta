@@ -1370,7 +1370,7 @@ CHARACTER is one of the following:
 
   CHECK_CHAR (character);
 
-  check_integer_range (code, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (code, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
 
   unicode = XFIXNUM (code);
   ichar = XCHAR (character);
@@ -1446,7 +1446,7 @@ internal encoding.
   int lbs[NUM_LEADING_BYTES];
   int c;
 
-  check_integer_range (code, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (code, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
   c = XFIXNUM (code);
   {
     EXTERNAL_LIST_LOOP_2 (elt, charsets)
@@ -1472,7 +1472,7 @@ internal encoding.
     return make_char (ret);
   }
 #else
-  check_integer_range (code, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (code, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
   return Fint_to_char (code);
 #endif /* MULE */
 }
