@@ -2950,12 +2950,34 @@ via the hepatic alpha-tocopherol transfer protein")))
        (times-four (apply-partially '* four))
        (plus-twelve (apply-partially '+ 6 (* 3 2)))
        (construct-list (apply-partially 'list (incf four) (incf four)
-                                        (incf four))))
+                                        (incf four)))
+       (list-and-multiply
+        (apply-partially #'(lambda (a b c d &optional e)
+                             (cons (apply #'+ a b c d (if e (list e)))
+                                   (list* a b c d e)))
+                         ;; Constant arguments -> function can be
+                         ;; constructed at compile time
+                         1 2 3))
+       (list-and-four
+        (apply-partially #'(lambda (a b c d &optional e)
+                             (cons (apply #'+ a b c d (if e (list e)))
+                                   (list* a b c d e)))
+                         ;; Not constant arguments -> function constructed
+                         ;; at runtime.
+                         1 2 four)))
   (Assert (eql (funcall times-four 6) 24))
   (Assert (eql (funcall times-four 4 4) 64))
   (Assert (eql (funcall plus-twelve (funcall times-four 4) 4 4) 36))
   (Check-Error wrong-number-of-arguments (apply-partially))
-  (Assert (equal (funcall construct-list) '(5 6 7))))
+  (Assert (equal (funcall construct-list) '(5 6 7)))
+  (Assert (equal (funcall list-and-multiply 5 6) '(17 1 2 3 5 . 6)))
+  (Assert (equal (funcall list-and-multiply 7) '(13 1 2 3 7)))
+  (Check-Error wrong-number-of-arguments
+               (funcall list-and-multiply 7 8 9 10))
+  (Assert (equal (funcall list-and-four 5 6) '(21 1 2 7 5 . 6)))
+  (Assert (equal (funcall list-and-four 7) '(17 1 2 7 7)))
+  (Check-Error wrong-number-of-arguments
+               (funcall list-and-four 7 8 9 10)))
 
 ;; Test labels and inlining.
 (labels
