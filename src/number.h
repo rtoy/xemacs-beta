@@ -56,7 +56,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 */
 
 /* Load the library definitions */
-#ifdef WITH_GMP
+#if defined(WITH_GMP) || defined(WITH_MPIR)
 #include "number-gmp.h"
 #endif
 #ifdef WITH_MP

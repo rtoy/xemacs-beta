@@ -623,7 +623,7 @@ mp_free (void *ptr, size_t UNUSED (size))
 #endif
 
 void
-init_number_mp ()
+init_number_mp (void)
 {
 #ifdef HAVE_MP_SET_MEMORY_FUNCTIONS
   mp_set_memory_functions ((void *(*) (size_t)) xmalloc, mp_realloc, mp_free);

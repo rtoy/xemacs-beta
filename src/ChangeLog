@@ -1,5 +1,17 @@
 2013-06-17  Jerry James  <james@xemacs.org>
 
+	* Makefile.in.in: Support bignums with MPIR.
+	* config.h.in (WITH_MPIR): New macro.
+	* number.c: Add MPIR support.
+	* number.h: Ditto.
+	* number-gmp.h: Ditto.
+	(ratio_set_long_ulong): Canonicalize the ratio.
+	(ratio_set_ulong_ulong): Ditto.
+	* number-gmp.c (init_number_gmp): Add void param to silence GCC.
+	* number-mp.c (init_number_mp): Ditto.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
 	* alloc.c (make_bignum_un): New function.
 	(make_bignum_ll): New function.
 	(make_bignum_ull): New function.

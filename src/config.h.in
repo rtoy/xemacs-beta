@@ -747,6 +747,7 @@ things are arranged in config.h.in.  In particular:
 /* Enhanced numeric support */
 #undef WITH_NUMBER_TYPES
 #undef WITH_GMP
+#undef WITH_MPIR
 #undef WITH_MP
 #undef MP_PREFIX
 #undef HAVE_MP_MOVE
