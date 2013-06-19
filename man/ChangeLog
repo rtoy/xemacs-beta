@@ -1,3 +1,18 @@
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (Numeric Types): New chapter describing
+	the implementation of bignums, ratios, and bigfloats.
+	* lispref/numbers.texi (The Bignum Extension): Update description
+	to include MPIR, fix broken URLs, and note that BSD MP support is
+	now more complete.
+	(Bignum Basics): Note MPIR support.
+	(Ratio Basics): Add a missing comma.
+	(Bigfloat Basics): Fix an incomplete sentence and add examples.
+	* xemacs-faq.texi (Q7.2.1): Update description to include MPIR,
+	note that BSD MP support is now more complete, and remove the
+	paragraph where I promise to write internals documentation.
+	(Q7.2.3): Update ancient section that mentions the Pentium III.
+
 2013-01-22  Jerry James  <james@xemacs.org>
 
 	* lispref/glyphs.texi (Image Instantiators): Add :visible to the

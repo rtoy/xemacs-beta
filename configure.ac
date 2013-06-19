@@ -964,8 +964,9 @@ XE_MERGED_ARG([modules],
 XE_KEYWORD_ARG([bignum],
 	AS_HELP_STRING([--with-bignum=TYPE],[Compile in support for bignums, ratios, or bigfloats
                         using library support.  TYPE must be one of "gmp"
-                        (for GNU MP), "mp" (for BSD MP), or "no" (disabled).]),
-	[], [with_bignum="no"],[no,gmp,mp])
+                        (for GNU MP), "mpir" (for MPIR), "mp" (for BSD MP),
+                        or "no" (disabled).]),
+	[], [with_bignum="no"],[no,gmp,mpir,mp])
 dnl
 XE_HELP_SUBSECTION([Platform Specific options])
 XE_MERGED_ARG([workshop],
@@ -5264,6 +5265,16 @@ if test "$with_bignum" = "gmp"; then
   else
     XE_DIE("Required GMP numeric support cannot be provided.")
   fi
+elif test "$with_bignum" = "mpir"; then
+  AC_CHECK_HEADER(mpir.h, [
+    AC_CHECK_LIB(mpir, __gmpz_init, have_mpz_init=yes)])
+  if test "$have_mpz_init" = "yes"; then
+    AC_DEFINE(WITH_NUMBER_TYPES)
+    AC_DEFINE(WITH_MPIR)
+    XE_PREPEND(-lmpir, LIBS)
+  else
+    XE_DIE("Required MPIR numeric support cannot be provided.")
+  fi
 elif test "$with_bignum" = "mp"; then
   for library in "" "-lcrypto"; do
     AC_CHECK_HEADER(mp.h, [
@@ -5932,6 +5943,7 @@ test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_dnet" = yes && echo "  Compiling in support for DNET."
 test "$with_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
 test "$with_bignum" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
+test "$with_bignum" = "mpir" && echo "  Compiling in support for more number types using the MPIR library."
 test "$with_bignum" = "mp" && echo "  Compiling in support for more number types using the BSD MP library."
 if test "$with_union_type" = yes ; then
   echo "  Using the union type for Lisp_Objects."

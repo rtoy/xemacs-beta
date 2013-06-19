@@ -7950,19 +7950,19 @@ where the time is being spent.
 
 Thanks to @email{james@@xemacs.org, Jerry James}, XEmacs 21.5.18 and
 later can use the capabilities of multiple-precision libraries that may
-be available for your platform.  The GNU Multiple Precision (GMP) and
-BSD Multiple Precision (MP) libraries are partially supported.  GMP
-gives you @dfn{bignums} (arbitrary precision integers), @dfn{ratios}
-(arbitrary precision fractions), and @dfn{bigfloats} (arbitrary
-precision floating point numbers).  GNU MP is better-supported by XEmacs
-at the time of writing (2004-04-06).  BSD MP support does not include
-ratios or bigfloats, and it throws errors that aren't understood.
+be available for your platform.  The GNU Multiple Precision (GMP),
+Multiple Precision Integers and Rationals (MPIR), and BSD Multiple
+Precision (MP) libraries are supported.  GMP and MPIR give you
+@dfn{bignums} (arbitrary precision integers), @dfn{ratios} (arbitrary
+precision fractions), and @dfn{bigfloats} (arbitrary precision floating
+point numbers).  GMP and MPIR are better-supported by XEmacs.  BSD MP
+support does not include ratios or bigfloats.
 
 In most cases, bignum support should be transparent to users and Lisp
 programmers.  A bignum-enabled XEmacs will automatically convert from
-fixnums to bignums and back in pure integer arithmetic, and for GNU MP,
-from floats to bigfloats.  (Bigfloats must be explicitly coerced to
-other types, even if they are exactly representable by less precise
+fixnums to bignums and back in pure integer arithmetic, and for GMP and
+MPIR, from floats to bigfloats.  (Bigfloats must be explicitly coerced
+to other types, even if they are exactly representable by less precise
 types.)  The Lisp reader and printer have been enhanced to handle
 bignums, as have the mathematical functions.  Rationals (fixnums,
 bignums, and ratios) are printed using the @samp{%d}, @samp{%o},
@@ -8002,17 +8002,9 @@ says.  If you work with extremely large numbers, your machine may
 arbitrarily decide to hand you an unpleasant surprise rather than a
 bignum @ref{Q7.2.2, XEmacs segfaults when I use very big numbers!}.
 
-To configure with GNU MP, add @samp{--use-number-lib=gmp}
-(@samp{--enable-bignum=gmp} in 21.5 or later) to your invocation of
-@file{configure}.  For BSD MP, use @samp{--use-number-lib=mp}
-(@samp{--enable-bignum=mp} for 21.5).
-
-If you would like to help with bignum support, especially on BSD MP,
-please subscribe to the @uref{http://www.xemacs.org/Lists/#xemacs-beta,
-XEmacs Beta mailing list}, and book up on @file{number-gmp.h} and
-@file{number-mp.h}.  Jerry has promised to write internals documentation
-eventually, but if your skills run more to analysis and documentation
-than to writing new code, feel free to fill in the gap!
+To configure with GMP, add @samp{--enable-bignum=gmp} to your invocation
+of @file{configure}.  For MPIR, use @samp{--enable-bignum=mpir}.  For
+BSD MP, use @samp{--enable-bignum=mp}.
 
 
 @node Q7.2.2, Q7.2.3, Q7.2.1, Advanced
@@ -8036,10 +8028,10 @@ yet.)
 @node Q7.2.3, Q7.2.4, Q7.2.2, Advanced
 @unnumberedsubsec Q7.2.3: Bignums are really slow!
 
-Many Linux distributions compile all their packages for the i386, and
-this is costly.  An optimized version can give you two or three orders
-of magnitude better performance for a Pentium III or IV.  (Yes, really.
-See @uref{http://www.swox.com/gmp/gmp-speed.html}.)
+Many Unix and Linux distributions compile all packages for a generic
+version of the supported CPU, and this is costly.  An optimized version
+can improve responiveness dramatically; see
+@uref{http://gmplib.org/gmpbench.html}.)
 
 
 @node Q7.2.4,  , Q7.2.3, Advanced

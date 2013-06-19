@@ -1,5 +1,9 @@
 2013-06-17  Jerry James  <james@xemacs.org>
 
+	* configure.ac: Support bignums with MPIR.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
 	* configure.ac: Add check for mp_set_memory_functions.
 
 2013-03-12  Jerry James  <james@xemacs.org>

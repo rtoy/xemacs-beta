@@ -320,28 +320,29 @@ precision means precisely what it says.  Your ability to work with large
 numbers is limited only by the amount of virtual memory (and time) you
 can throw at them.
 
-  As of 09 April 2004, support for the GNU Multiple Precision
-arithmetic library (GMP) is nearly complete, and support for the BSD
-Multiple Precision arithmetic library (MP) is being debugged.  To enable
-bignum support using GMP (respectively MP), invoke configure with your
-usual options, and add @samp{--use-number-lib=gmp} (respectively
-@samp{--use-number-lib=mp}).  The default is to disable bignum support,
-but if you are using a script to automate the build process, it may be
-convenient to explicitly disable support by @emph{appending}
-@samp{--use-number-lib=no} to your invocation of configure.  GMP has an
-MP compatibility mode, but it is not recommended, as there remain poorly
-understood bugs (even more so than for other vendors' versions of MP).
+  XEmacs supports the GNU Multiple Precision arithmetic library (GMP),
+the Multiple Precision Integers and Rationals library (MPIR), and the
+BSD Multiple Precision arithmetic library (MP).  To enable bignum
+support using GMP, MPIR, or MP, invoke configure with your usual options
+and add @samp{--use-number-lib=gmp}, @samp{--use-number-lib=mpir}, or
+@samp{--use-number-lib=mp}, respectively.  The default is to disable
+bignum support, but if you are using a script to automate the build
+process, it may be convenient to explicitly disable support by
+@emph{appending} @samp{--use-number-lib=no} to your invocation of
+configure.  GMP has an MP compatibility mode, but it is not recommended,
+as there remain poorly understood bugs (even more so than for other
+vendors' versions of MP).
 
-  With GMP, exact arithmetic with integers and ratios of arbitrary
-precision and approximate (``floating point'') arithmetic of arbitrary
-precision are implemented efficiently in the library.  (Note that
-numerical implementations are quite delicate and sensitive to
+  With GMP and MPIR, exact arithmetic with integers and ratios of
+arbitrary precision and approximate (``floating point'') arithmetic of
+arbitrary precision are implemented efficiently in the library.  (Note
+that numerical implementations are quite delicate and sensitive to
 optimization.  If the library was poorly optimized for your hardware, as
 is often the case with Linux distributions for 80x86, you may achieve
 gains of @emph{several orders of magnitude} by rebuilding the MP
-library.  See @uref{http://www.swox.com/gmp/gmp-speed.html}.)  The MP
-implementation provides arbitrary precision integers.  Ratios and arbitrary
-precision floats are not available with MP.
+library.  See @uref{http://gmplib.org/gmpbench.html}.)  The MP
+implementation provides arbitrary precision integers.  Ratios and
+arbitrary precision floats are not available with MP.
 
   If your code needs to run correctly whether or not the feature is
 provided, you may test for the features @code{bignum}, @code{ratio}, and
@@ -363,14 +364,6 @@ implicitly coerced to bigfloats only if other operands in the expression
 are bigfloat, and bigfloats are only coerced to other numerical types by
 explicit calls to the function @code{coerce}.
 
-  Bignum support is incomplete.  If you would like to help with bignum
-support, especially on BSD MP, please subscribe to the
-@uref{http://www.xemacs.org/Lists/#xemacs-beta, XEmacs Beta mailing
-list}, and book up on @file{number-gmp.h} and @file{number-mp.h}.  Jerry
-has promised to write internals documentation eventually, but if your
-skills run more to analysis and documentation than to writing new code,
-feel free to fill in the gap!
-
 @menu
 * Bignum Basics::             Representation and range of integers.
 * Ratio Basics::              Representation and range of rational numbers.
@@ -385,9 +378,9 @@ feel free to fill in the gap!
 
 In most cases, bignum support should be transparent to users and Lisp
 programmers.  A bignum-enabled XEmacs will automatically convert from
-fixnums to bignums and back in pure integer arithmetic, and for GNU MP,
-from floats to bigfloats.  (Bigfloats must be explicitly coerced to
-other types, even if they are exactly representable by less precise
+fixnums to bignums and back in pure integer arithmetic, and for GMP and
+MPIR, from floats to bigfloats.  (Bigfloats must be explicitly coerced
+to other types, even if they are exactly representable by less precise
 types.)  The Lisp reader and printer have been enhanced to handle
 bignums, as have the mathematical functions.  Rationals (fixnums,
 bignums, and ratios) are printed using the @samp{%d}, @samp{%o},
@@ -397,7 +390,7 @@ bignums, and ratios) are printed using the @samp{%d}, @samp{%o},
 @node Ratio Basics
 @subsection Ratio Basics
 
-Ratios, when available have the read syntax and print representation
+Ratios, when available, have the read syntax and print representation
 @samp{3/5}.  Like other rationals (fixnums and bignums), they are
 printed using the @samp{%d}, @samp{%o}, @samp{%x}, and @samp{%u} format
 conversions.
@@ -413,10 +406,36 @@ It is possible to make bigfloat the default floating point format by
 setting @code{default-float-precision} to a non-zero value.  Precision
 is given in bits, with a maximum precision of
 @code{bigfloat-maximum-precision}.
-@c #### is this true?
-Bigfloats are created automatically when a number with yes
 
+@example
+(let* ((float1 (string-to-number "9999999999999999.99999999999999999999"))
+       (default-float-precision 256)
+       (float2 (string-to-number "9999999999999999.99999999999999999999")))
+  (+ (if (bigfloatp float1) 1 0)
+     (if (bigfloatp float2) 2 0)))
+    @result{} 2
+@end example
 
+@example
+(let* ((float1 (float 999999999999999999999999999999999999999999999999999999))
+       (default-float-precision 256)
+       (float2 (float 999999999999999999999999999999999999999999999999999999)))
+  (princ float1)
+  (terpri)
+  (princ float2)
+  (terpri))
+    @result{} 9.999999999999999e+53
+9.99999999999999999999999999999999999999999999999999999E53
+t
+@end example
+
+Explicit type coercion is also available, although then the precision of
+the bigfloat is no greater than the source type.
+
+@example
+(coerce 999999999999999 'bigfloat)
+    @result{} 9.99999999999999E14
+@end example
 
 @node Canonicalization and Contagion
 @subsection Canonicalization and Contagion

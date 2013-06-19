@@ -207,7 +207,7 @@ mule_canna_objs=canna_api.o
 mule_wnn_objs=mule-wnnfns.o
 #endif
 
-#ifdef WITH_GMP
+#if defined(WITH_GMP) || defined(WITH_MPIR)
 number_objs=number-gmp.o number.o
 #endif
 #ifdef WITH_MP
