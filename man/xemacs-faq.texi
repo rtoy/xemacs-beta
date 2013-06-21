@@ -8838,6 +8838,7 @@ keep the history of XEmacs development.
 * Q11.2.7::   Testing patches with Mercurial Queues.
 @end menu
 
+@unnumberedsec 11.0: The XEmacs repositories
 
 @node Q11.0.1, Q11.0.2, Bleeding Edge, Bleeding Edge
 @unnumberedsubsec Where is the most recent XEmacs development code?
@@ -8956,6 +8957,7 @@ submitted to @email{xemacs-patches@@xemacs.org, XEmacs Patches}, as usual.
 
 @xref{Q11.2.1, What is Mercurial?}.
 
+@unnumberedsec 11.1: Working with CVS
 
 @node Q11.1.1, Q11.2.1, Q11.0.5, Bleeding Edge
 @unnumberedsubsec How do I keep cool using CVS?
@@ -8971,6 +8973,7 @@ package hierarchy, while restricting commits to one package at a time.
 For help using CVS, Google or ask on @email{xemacs-beta@@xemacs.org}.
 Please update this FAQ with one or two of the best references you find.
 
+@unnumberedsec 11.1: Working with Mercurial
 
 @node Q11.2.1, Q11.2.2, Q11.1.1, Bleeding Edge
 @unnumberedsubsec What is Mercurial?
