@@ -13717,14 +13717,14 @@ At present, Texinfo supports only these encodings:
 @item US-ASCII
 This has no particular effect, but it's included for completeness.
 
-@itemx UTF-8
+@item UTF-8
 The vast global character encoding, expressed in 8-bit bytes.
 The Texinfo processors have no deep knowledge of Unicode; for the most
 part, they just pass along the input they are given to the output.
 
-@itemx ISO-8859-1
+@item ISO-8859-1
 @itemx ISO-8859-15
-@item ISO-8859-2
+@itemx ISO-8859-2
 These specify the standard encodings for Western European (the first
 two) and Eastern European languages (the third), respectively.  ISO
 8859-15 replaces some little-used characters from 8859-1 (e.g.,
@@ -17428,7 +17428,7 @@ Indicate an acronym in all capital letters, such as `NASA'.
 Generate the uppercase and lowercase AE ligatures, respectively:
 @AE{}, @ae{}.  @xref{Inserting Accents}.
 
-@itemx @@afivepaper
+@item @@afivepaper
 Change page dimensions for the A5 paper size.  @xref{A4 Paper}.
 
 @item @@afourlatex
@@ -17955,7 +17955,7 @@ Begin text to be ignored in one output format but not the others.
 the corresponding @code{@@end ifnot@var{format}}.
 @xref{Conditionals}.
 
-@itemx @@ifnotinfo
+@item @@ifnotinfo
 Begin text to appear in output other than Info and (for historical
 compatibility) plain text.  Pair with @code{@@end ifnotinfo}.
 @xref{Conditionals}.
