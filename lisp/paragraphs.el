@@ -180,7 +180,10 @@ to obtain the value of this variable."
   :type '(choice regexp (const :tag "Use default value" nil)))
 (put 'sentence-end 'safe-local-variable 'string-or-null-p)
 
-(defcustom sentence-end-base "[.?!][]\"'”)}]*"
+(defcustom sentence-end-base
+  (concat "[.?!][]\"'"
+	  (if (featurep 'mule) (unicode-to-char #x201D) "")
+	  ")}]*")
   "Regexp matching the basic end of a sentence, not including following space."
   :group 'paragraphs
   :type 'string
@@ -201,14 +204,14 @@ must be followed by two spaces, with perhaps some closing delimiters
 in between.  See Info node `(elisp)Standard Regexps'."
   (or sentence-end
       ;; We accept non-break space along with space.
-      (concat (if sentence-end-without-period "\\w[ \u00a0][ \u00a0]\\|")
+      (concat (if sentence-end-without-period "\\w[ \240][ \240]\\|")
 	      "\\("
 	      sentence-end-base
               (if sentence-end-double-space
-                  "\\($\\|[ \u00a0]$\\|\t\\|[ \u00a0][ \u00a0]\\)" "\\($\\|[\t \u00a0]\\)")
+                  "\\($\\|[ \240]$\\|\t\\|[ \240][ \240]\\)" "\\($\\|[\t \240]\\)")
               "\\|[" sentence-end-without-space "]+"
 	      "\\)"
-              "[ \u00a0\t\n]*")))
+              "[ \240\t\n]*")))
 
 (defcustom page-delimiter "^\014"
   "*Regexp describing line-beginnings that separate pages."
