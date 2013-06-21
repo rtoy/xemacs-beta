@@ -1,3 +1,10 @@
+2013-06-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix no-Mule build.
+
+	* paragraphs.el (sentence-end): Use octal, not Unicode, escapes.
+	* (sentence-end-base): Use non-ASCII only in Mule.
+
 2013-06-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* process.el (process-synchronize-point): Moved to a label.
