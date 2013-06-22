@@ -182,7 +182,7 @@ to obtain the value of this variable."
 
 (defcustom sentence-end-base
   (concat "[.?!][]\"'"
-	  (if (featurep 'mule) (unicode-to-char #x201D) "")
+	  (if (featurep 'mule) (string (unicode-to-char #x201D)) "")
 	  ")}]*")
   "Regexp matching the basic end of a sentence, not including following space."
   :group 'paragraphs
