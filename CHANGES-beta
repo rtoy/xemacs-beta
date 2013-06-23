@@ -1,5 +1,55 @@
 # DO NOT PUT A VERSION MARKER HERE, ADDED AT RELEASE
 
+Major Features, Bugfixes, and Backward Incompatible Changes
+
+-- Fix: Convert assert on menubar syntax errors to log warning and skip the menu -- Jerry James
+
+User-Visible Bug Fixes and Improvements
+
+-- Fix: Remove a reference to 'efs-ftp-path from #'file-remote-p -- Mike Sperber
+-- Improve: Allow :visible in menu specs; document -- Jerry James
+-- Improve: Allow a string the LHS of a syntax-alist entry in `font-lock-defaults' to be a string (sync to GNU Emacs) -- Mike Sperber
+-- Improve: Make #'byte-compile-if suppress spurious warnings from `(if (fboundp ...' or `(if (boundp ...' constructs (port of Dave Love patch to Emacs) -- Mike Sperber
+-- Improve: Silence warnings about throws out of #'post-command-hook' -- Mike Sperber
+-- New: Support bignums with MPIR -- Jerry James
+
+Build Infrastructure and Source Tree
+
+-- Fix: Change several Mule-specific constructs to generic ones in core Lisp (paragraphs.el); fixes --without-mule build from tarballs -- Stephen Turnbull
+-- Fix: Fix Windows portability issues -- Vin Shelton, Jerry James, Mats Lidell
+-- Fix: Reverse sense of #if for insert-data-in-exec build -- Jerry James
+-- Fix: Silence syntax warnings -- Jerry James
+-- Improve: Update autoconf helpers to latest upstream version -- Jerry James
+
+Documentation
+
+-- Improve: Bignum documentation -- Jerry James
+-- Improve: Port texi files to Texinfo 5, fix style -- Jerry James
+
+Lisp API
+
+-- Fix: Add optional ID-FORMAT to #'file-attributes (GNU compatibility); add tests -- Mats Lidell, Vin Shelton
+-- Fix: Make #'apply-partially more intelligent about constructing compiled functions when making closures; add tests -- Aidan Kehoe
+-- Improve: Add optional WHEN and DOCSTRING arguments to #'define-obsolete-function-alias, #'define-compatible-function-alias, #'define-obsolete-variable-alias, #'define-compatible-variable-alias (GNU compatibility) -- Stephen Turnbull, Mike Sperber, Jeff Sparkes
+-- New: Add #'font-lock-extend-region-functions' from GNU Emacs, use it -- Mike Sperber
+
+Internal API and Implementation
+
+-- Fix: Canonicalize some ratios -- Jerry James
+-- Fix: Change integer arithmetic to fixnums in check_valid_xbm_inline; adjust test to changed error -- Jerry James
+-- Fix: Initialization of bignums from long longs -- Jerry James
+-- Fix: Replace AC_FUNC_FSEEKO with HAVE_FSEEKO in config.h.in -- Jerry James
+-- Improve: Add mp-specific allocation functions -- Jerry James
+-- Improve: Prepare for large file support -- Jerry James
+-- Improve: Reimplement #'process-synchronize-point as a label in #'call-process-internal -- Aidan Kehoe
+-- Improve: Support for statically linked modules -- Jerry James
+-- Improve: Use make_fixnum instead of make_integer where size is known to fit in many places -- Jerry James
+
+Testing and Debugging
+
+-- New: Add tests for #'file-attributes -- Mats Lidell
+
+
 to XEmacs 21.5.33 "horseradish"
 
 Major Features, Bugfixes, and Backward Incompatible Changes
@@ -86,7 +136,7 @@ Build Infrastructure and Source Tree
 -- Improve: Refactor check for Xaw3d. -- Stephen Turnbull
 -- Improve: Remove unused include of process.h from Cygwin. -- Vin Shelton
 -- Improve: gnuclient to fall back to /tmp to search for socket. -- Aidan Kehoe
--- New: Support DESTDIR. -- Jerry James
+-- New: Support DESTDIR. -- Jerry Jerry James
 -- New: Support building texinfo.info in native builds. -- Vin Shelton
 
 Documentation
