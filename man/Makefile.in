@@ -23,7 +23,7 @@
 DESTDIR=
 
 SHELL    = /bin/sh
-MAKEINFO = makeinfo
+MAKEINFO = @MAKEINFO@
 TEXI2DVI = texi2dvi
 TEXI2HTML = texi2html
 TEXI2HTML_NOSPLIT = $(TEXI2HTML) -verbose -subdir $(HTMLDIR)

@@ -524,7 +524,7 @@ checking out the @file{packages} module.
 @item GNU make 
 (3.79 or later preferred).
 @item makeinfo 
-(4.2 from texinfo-4.2)
+(4.12 from texinfo-4.12)
 @item GNU tar
 (or equivalent).
 @item GNU gzip

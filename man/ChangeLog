@@ -1,3 +1,10 @@
+2013-06-25  Jerry James  <james@xemacs.org>
+
+	* Makefile.in: New file, so we can replace @MAKEINFO@.
+	* Makefile: Removed.
+	* lispref/packaging.texi: Update required version of makeinfo.
+	* xemacs/packages.texi: Ditto.
+
 2013-06-19  Jerry James  <james@xemacs.org>
 
 	* beta.texi: Move "@end info" to its own line.
