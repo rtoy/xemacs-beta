@@ -2586,6 +2586,27 @@ AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_YACC
 
+dnl We need a recent version of makeinfo
+AC_MSG_CHECKING([for makeinfo >= 4.12])
+MAKEINFO=
+for prog in `which -a makeinfo`; do
+  mi_verstr=[`$prog --version | sed -rn '1s/.*+[[:blank:]]([^[:blank:]]+)$/\1/p'`]
+  mi_major=`echo $mi_verstr | cut -d. -f1`
+  mi_minor=`echo $mi_verstr | cut -d. -f2`
+  if test $mi_major -gt 4 || ( test $mi_major -eq 4 && test $mi_minor -gt 11 );
+  then
+    MAKEINFO=$prog
+    break
+  fi
+done
+if test -z $MAKEINFO; then
+  AC_MSG_RESULT([no])
+  AC_MSG_WARN([Makeinfo 4.12 or later required to build info files.])
+else
+  AC_MSG_RESULT([yes])
+fi
+AC_CONFIG_FILES([man/Makefile])
+
 dnl checks for header files
 AC_CHECK_HEADERS(dnl
   a.out.h dnl
@@ -5558,7 +5579,8 @@ AC_SUBST(ld_libs_all)
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
-RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)'"
+AC_SUBST(MAKEINFO)
+RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)' MAKEINFO='\$(MAKEINFO)'"
 AC_SUBST(RECURSIVE_MAKE_ARGS)
 
 AC_SUBST(native_sound_lib,$with_native_sound_lib)

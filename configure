@@ -674,6 +674,7 @@ XEMACS_CC
 sound_cflags
 native_sound_lib
 RECURSIVE_MAKE_ARGS
+MAKEINFO
 ld_libs_all
 ld_libs_window_system
 ld_libs_general
@@ -10557,6 +10558,31 @@ fi
   test -n "$YACC" && break
 done
 test -n "$YACC" || YACC="yacc"
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for makeinfo >= 4.12" >&5
+$as_echo_n "checking for makeinfo >= 4.12... " >&6; }
+MAKEINFO=
+for prog in `which -a makeinfo`; do
+  mi_verstr=`$prog --version | sed -rn '1s/.*+[[:blank:]]([^[:blank:]]+)$/\1/p'`
+  mi_major=`echo $mi_verstr | cut -d. -f1`
+  mi_minor=`echo $mi_verstr | cut -d. -f2`
+  if test $mi_major -gt 4 || ( test $mi_major -eq 4 && test $mi_minor -gt 11 );
+  then
+    MAKEINFO=$prog
+    break
+  fi
+done
+if test -z $MAKEINFO; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Makeinfo 4.12 or later required to build info files." >&5
+$as_echo "$as_me: WARNING: Makeinfo 4.12 or later required to build info files." >&2;}
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+fi
+ac_config_files="$ac_config_files man/Makefile"
 
 
 for ac_header in   a.out.h   elf.h   cygwin/version.h   fcntl.h   libgen.h   locale.h   wchar.h   mach/mach.h   sys/param.h   sys/pstat.h   sys/resource.h   sys/time.h   sys/timeb.h   sys/times.h   sys/un.h   sys/vlimit.h   ulimit.h
@@ -21363,7 +21389,8 @@ done
 
 
 
-RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)'"
+
+RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)' MAKEINFO='\$(MAKEINFO)'"
 
 
 native_sound_lib=$with_native_sound_lib
@@ -22579,6 +22606,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
+    "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;
     "src/config.h") CONFIG_HEADERS="$CONFIG_HEADERS src/config.h" ;;
     "lwlib/config.h") CONFIG_HEADERS="$CONFIG_HEADERS lwlib/config.h" ;;
     "$file") CONFIG_FILES="$CONFIG_FILES $file" ;;

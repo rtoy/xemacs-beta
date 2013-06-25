@@ -420,7 +420,7 @@ Currently, source packages are only available via anonymous CVS.  See
 @item GNU make 
 (3.75 or later preferred).
 @item makeinfo 
-(4.2 from GNU texinfo 4.2 or later required).
+(4.12 from GNU texinfo 4.12 or later required).
 @item GNU tar
 (or equivalent).
 @item GNU gzip
