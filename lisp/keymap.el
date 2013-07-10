@@ -305,52 +305,54 @@ Regardless of MAPVAR, COMMAND's function-value is always set to the keymap."
 
 
 ;;; Converting vectors of events to a read-equivalent form.
-;;; This is used both by call-interactively (for the command history)
-;;; and by macros.el (for saving keyboard macros to a file).
-
-;; #### why does (events-to-keys [backspace]) return "\C-h"?
-;; BTW, this function is a mess, and macros.el does *not* use it, in
-;; spite of the above comment.  `format-kbd-macro' is used to save
-;; keyboard macros to a file.
 (defun events-to-keys (events &optional no-mice)
- "Given a vector of event objects, returns a vector of key descriptors,
-or a string (if they all fit in the ASCII range).
-Optional arg NO-MICE means that button events are not allowed."
+ "Given a vector of event objects, return a vector of key descriptors.
+
+If all events can be represented unambiguously as characters, return a
+string.  Both the string and the vector will be equivalent to the events, if
+the elements are passed to `character-to-event'.
+
+If an event represents a key press of a printable ASCII character between ?@
+and ?_, with the control modifier and only the control modifier, it is
+returned as a character between ?\x00 and ?\x1f, inclusive. ?\\C-i, ?\\C-j,
+?\\C-m are returned as the symbols `tab', `linefeed' and `return',
+respectively.
+
+There is a similar equivalence between ASCII characters with the meta
+modifier and Latin 1 characters, but this function does not use that
+equivalence.
+
+Obsolete optional argument NO-MICE means that mouse events are not allowed.
+These are actually never allowed, since `character-to-event' never accepts
+them.
+
+EVENTS can be a string, and will be treated as a vector of the events
+corresponding to those characters."
+ ;; This is only used in packages. There were some contexts where it was
+ ;; used in core, but those dated from before #'lookup-key accepted events
+ ;; in KEYS; it conses less and is more accurate to use the events directly,
+ ;; rather than calling this function. It'd be nice to move this to
+ ;; xemacs-base and add an autoload, there's no need for it to be dumped.
  (if (and events (symbolp events)) (setq events (vector events)))
- (cond ((stringp events)
-        events)
-       ((not (vectorp events))
-        (signal 'wrong-type-argument (list 'vectorp events)))
-       ((let* ((length (length events))
+ (check-type events array)
+ (cond ((let* ((length (length events))
                (string (make-string length 0))
                c ce
                (i 0))
           (while (< i length)
             (setq ce (aref events i))
             (or (eventp ce) (setq ce (character-to-event ce)))
-            ;; Normalize `c' to `?c' and `(control k)' to `?\C-k'
-            ;; By passing t for the `allow-meta' arg we could get kbd macros
-            ;; with meta in them to translate to the string form instead of
-            ;; the list/symbol form; but I expect that would cause confusion,
-            ;; so let's use the list/symbol form whenever there's
-            ;; any ambiguity.
+            ;; Normalize `c' to `?c' and `(control k)' to `?\C-k' We don't
+            ;; "normalize" Latin 1 to the corresponding meta characters, or
+            ;; vice-versa.
             (setq c (event-to-character ce))
             (if (and c
                      (key-press-event-p ce))
-                (cond ((symbolp (event-key ce))
-                       (if (get (event-key ce) 'character-of-keysym)
-                           ;; Don't use a string for `backspace' and `tab' to
-                           ;;  avoid that unpleasant little ambiguity.
-                           (setq c nil)))
-                      ((and (= (event-modifier-bits ce) 1) ;control
-                            (integerp (event-key ce)))
-                       (let* ((te (character-to-event c)))
-                         (if (and (symbolp (event-key te))
-                                  (get (event-key te) 'character-of-keysym))
-                             ;; Don't "normalize" (control i) to tab
-                             ;;  to avoid the ambiguity in the other direction
-                             (setq c nil))
-                         (deallocate-event te)))))
+                (if (symbolp (event-key ce))
+                    (if (get (event-key ce) 'character-of-keysym)
+                        ;; Don't use a string `tab' to avoid that unpleasant
+                        ;; little ambiguity.
+                        (setq c nil))))
             (if c
                 (aset string i c)
                 (setq i length string nil))
@@ -358,33 +360,15 @@ Optional arg NO-MICE means that button events are not allowed."
           string))
        (t
         (let* ((length (length events))
-               (new (copy-sequence events))
+               (new (vconcat events nil))
                event mods key
                (i 0))
           (while (< i length)
             (setq event (aref events i))
+            (or (eventp event) (setq event (character-to-event event)))
             (cond ((key-press-event-p event)
                    (setq mods (event-modifiers event)
                          key (event-key event))
-                   (if (numberp key)
-                       (setq key (intern (make-string 1 key))))
-                   (aset new i (if mods
-                                   (nconc mods (cons key nil))
-                                   key)))
-                  ((misc-user-event-p event)
-                   (aset new i (list 'menu-selection
-                                     (event-function event)
-                                     (event-object event))))
-                  ((or (button-press-event-p event)
-                       (button-release-event-p event))
-                   (if no-mice
-                       (error
-                         "Mouse events can't be saved in keyboard macros."))
-                   (setq mods (event-modifiers event)
-                         key (intern (format "button%d%s"
-                                             (event-button event)
-                                             (if (button-release-event-p event)
-                                                 "up" ""))))
                    (aset new i (if mods
                                    (nconc mods (cons key nil))
                                    key)))
@@ -392,10 +376,10 @@ Optional arg NO-MICE means that button events are not allowed."
                        (and (consp event) (symbolp (car event))))
                    (aset new i event))
                   (t
-                   (signal 'wrong-type-argument (list 'eventp event))))
+                   (signal 'wrong-type-argument
+                           (list 'key-press-event-p event))))
             (setq i (1+ i)))
           new))))
-
 
 (defun next-key-event ()
   "Return the next available keyboard event."
