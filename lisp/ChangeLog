@@ -10,6 +10,26 @@
 	* paragraphs.el (sentence-end): Use octal, not Unicode, escapes.
 	* (sentence-end-base): Use non-ASCII only in Mule.
 
+2013-07-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.el (get-user-response):
+	* cmdloop.el (y-or-n-p-minibuf):
+	No need to call #'events-to-keys in these two functions,
+	#'lookup-key accepts events directly.
+	* keymap.el:
+	* keymap.el (events-to-keys):
+	Document this function some more.
+	Stop passing strings through unexamined, treat them as vectors of
+	characters.
+	Event keys are never integers, remove some code that only ran if
+	(integerp (event-key ce)).
+	Event keys are never numbers, don't check for that.
+	Don't create (menu-selection call-interactively function-name)
+	keystrokes for menu choices, #'character-to-event doesn't
+	understand that syntax, so nothing uses it.
+	Don't ever accept mouse events, #'character-to-event doesn't
+	accept our synthesising of them.
+
 2013-06-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* process.el (process-synchronize-point): Moved to a label.
