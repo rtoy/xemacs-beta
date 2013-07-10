@@ -1,3 +1,13 @@
+2013-06-25  Jerry James  <james@xemacs.org>
+
+	* INSTALL: Update required makeinfo version.
+	* Makefile.in.in: Check for usable makeinfo before invoking submake.
+	* configure.ac: Try to find makeinfo >= 4.12.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Support bignums with MPIR.
+
 2013-06-17  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Add check for mp_set_memory_functions.

@@ -1,3 +1,45 @@
+2013-06-25  Jerry James  <james@xemacs.org>
+
+	* Makefile.in: New file, so we can replace @MAKEINFO@.
+	* Makefile: Removed.
+	* lispref/packaging.texi: Update required version of makeinfo.
+	* xemacs/packages.texi: Ditto.
+
+2013-06-19  Jerry James  <james@xemacs.org>
+
+	* beta.texi: Move "@end info" to its own line.
+	* lispref/edebug-inc.texi (Instrumenting Macro Calls): "@table
+	@bullet" is not supported by texinfo 5.x; use "@table @asis"
+	instead, since each table entry has a label already.
+	* lispref/packaging.texi (Makefile Targets): Use @section instead
+	of @subsection inside a @chapter.
+	* texinfo.tex: Update to new version that is known to work with
+	texinfo 5.x.
+	* texinfo/texinfo.texi (documentencoding): @itemx must always
+	follow an @item.
+	* widget.texi: Sync with the Emacs 24.3 version.  Change all
+	@section to @chapter, and all @subsection to @section.
+	* xemacs-faq.texi (11.0: The XEmacs repositories): Add
+	@unnumberedsec entry to contain the @unnumberedsubsec for each
+	question.
+	(11.1: Working with CVS): Ditto.
+	(11.2: Working with Mercurial): Ditto.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (Numeric Types): New chapter describing
+	the implementation of bignums, ratios, and bigfloats.
+	* lispref/numbers.texi (The Bignum Extension): Update description
+	to include MPIR, fix broken URLs, and note that BSD MP support is
+	now more complete.
+	(Bignum Basics): Note MPIR support.
+	(Ratio Basics): Add a missing comma.
+	(Bigfloat Basics): Fix an incomplete sentence and add examples.
+	* xemacs-faq.texi (Q7.2.1): Update description to include MPIR,
+	note that BSD MP support is now more complete, and remove the
+	paragraph where I promise to write internals documentation.
+	(Q7.2.3): Update ancient section that mentions the Pentium III.
+
 2013-01-22  Jerry James  <james@xemacs.org>
 
 	* lispref/glyphs.texi (Image Instantiators): Add :visible to the

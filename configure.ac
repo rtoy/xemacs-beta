@@ -964,8 +964,9 @@ XE_MERGED_ARG([modules],
 XE_KEYWORD_ARG([bignum],
 	AS_HELP_STRING([--with-bignum=TYPE],[Compile in support for bignums, ratios, or bigfloats
                         using library support.  TYPE must be one of "gmp"
-                        (for GNU MP), "mp" (for BSD MP), or "no" (disabled).]),
-	[], [with_bignum="no"],[no,gmp,mp])
+                        (for GNU MP), "mpir" (for MPIR), "mp" (for BSD MP),
+                        or "no" (disabled).]),
+	[], [with_bignum="no"],[no,gmp,mpir,mp])
 dnl
 XE_HELP_SUBSECTION([Platform Specific options])
 XE_MERGED_ARG([workshop],
@@ -2584,6 +2585,27 @@ dnl These tests don't necessarily check that the program exists.
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_YACC
+
+dnl We need a recent version of makeinfo
+AC_MSG_CHECKING([for makeinfo >= 4.12])
+MAKEINFO=
+for prog in `which -a makeinfo`; do
+  mi_verstr=[`$prog --version | sed -rn '1s/.*+[[:blank:]]([^[:blank:]]+)$/\1/p'`]
+  mi_major=`echo $mi_verstr | cut -d. -f1`
+  mi_minor=`echo $mi_verstr | cut -d. -f2`
+  if test $mi_major -gt 4 || ( test $mi_major -eq 4 && test $mi_minor -gt 11 );
+  then
+    MAKEINFO=$prog
+    break
+  fi
+done
+if test -z $MAKEINFO; then
+  AC_MSG_RESULT([no])
+  AC_MSG_WARN([Makeinfo 4.12 or later required to build info files.])
+else
+  AC_MSG_RESULT([yes])
+fi
+AC_CONFIG_FILES([man/Makefile])
 
 dnl checks for header files
 AC_CHECK_HEADERS(dnl
@@ -5264,6 +5286,16 @@ if test "$with_bignum" = "gmp"; then
   else
     XE_DIE("Required GMP numeric support cannot be provided.")
   fi
+elif test "$with_bignum" = "mpir"; then
+  AC_CHECK_HEADER(mpir.h, [
+    AC_CHECK_LIB(mpir, __gmpz_init, have_mpz_init=yes)])
+  if test "$have_mpz_init" = "yes"; then
+    AC_DEFINE(WITH_NUMBER_TYPES)
+    AC_DEFINE(WITH_MPIR)
+    XE_PREPEND(-lmpir, LIBS)
+  else
+    XE_DIE("Required MPIR numeric support cannot be provided.")
+  fi
 elif test "$with_bignum" = "mp"; then
   for library in "" "-lcrypto"; do
     AC_CHECK_HEADER(mp.h, [
@@ -5547,7 +5579,8 @@ AC_SUBST(ld_libs_all)
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
-RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)'"
+AC_SUBST(MAKEINFO)
+RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)' MAKEINFO='\$(MAKEINFO)'"
 AC_SUBST(RECURSIVE_MAKE_ARGS)
 
 AC_SUBST(native_sound_lib,$with_native_sound_lib)
@@ -5932,6 +5965,7 @@ test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_dnet" = yes && echo "  Compiling in support for DNET."
 test "$with_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
 test "$with_bignum" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
+test "$with_bignum" = "mpir" && echo "  Compiling in support for more number types using the MPIR library."
 test "$with_bignum" = "mp" && echo "  Compiling in support for more number types using the BSD MP library."
 if test "$with_union_type" = yes ; then
   echo "  Using the union type for Lisp_Objects."

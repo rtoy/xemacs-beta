@@ -77,6 +77,7 @@ LN_S=@LN_S@
 CFLAGS=@CFLAGS@
 CPPFLAGS=@CPPFLAGS@
 LDFLAGS=@LDFLAGS@
+MAKEINFO=@MAKEINFO@
 
 ## These help us choose version- and architecture-specific directories
 ## to install files in.
@@ -738,7 +739,7 @@ TAGS tags: FRC.tags
 	  xargs etags -a -l none -r "/^(def\\(var\\|un\\|alias\\|const\\|macro\\|subst\\|struct\\|face\\|group\\|custom\\|ine-\\(function\\|compiler-macro\\|[a-z-]+alias\\)\\)[ 	]+'?\\([^ 	]+\\)/\\3/"
 
 info: FRC.info
-	cd ${srcdir}/man && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@
+	if test -n "$(MAKEINFO)"; then cd ${srcdir}/man && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@; fi
 
 dvi:
 	cd ${srcdir}/man && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@

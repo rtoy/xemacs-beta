@@ -870,7 +870,7 @@ init_number (void)
     {
       number_initialized = 1;
 
-#ifdef WITH_GMP
+#if defined(WITH_GMP) || defined(WITH_MPIR)
       init_number_gmp ();
 #endif
 #ifdef WITH_MP
