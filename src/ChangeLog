@@ -10,6 +10,21 @@
 	* number-gmp.c (init_number_gmp): Add void param to silence GCC.
 	* number-mp.c (init_number_mp): Ditto.
 
+2013-07-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c:
+	* keymap.c (key_desc_list_to_event):
+	Drop the allow_menu_events argument.
+	Don't accept lists starting with Qmenu_selection as describing
+	keys, nothing generates them in a way this function
+	understands. The intention is reasonable but the implementation
+	was never documented and never finished.
+	* keymap.c (syms_of_keymap):
+	Drop Qmenu_selection.
+	* events.c (Fcharacter_to_event):
+	* keymap.h:
+	Drop the allow_menu_events argument to key_desc_list_to_event.
+
 2013-06-17  Jerry James  <james@xemacs.org>
 
 	* alloc.c (make_bignum_un): New function.

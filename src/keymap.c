@@ -223,8 +223,6 @@ Lisp_Object Qbutton##num;			\
 Lisp_Object Qbutton##num##up;
 #include "keymap-buttons.h"
 
-Lisp_Object Qmenu_selection;
-
 /* Emacs compatibility */
 #define FROB(num)				\
 Lisp_Object Qmouse_##num;			\
@@ -1520,30 +1518,9 @@ define_key_parser (Lisp_Object spec, Lisp_Key_Data *returned_value)
 
 /* Used by character-to-event */
 void
-key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
-                        int allow_menu_events)
+key_desc_list_to_event (Lisp_Object list, Lisp_Object event)
 {
   Lisp_Key_Data raw_key;
-
-  if (allow_menu_events &&
-      CONSP (list) &&
-      /* #### where the hell does this come from? */
-      EQ (XCAR (list), Qmenu_selection))
-    {
-      Lisp_Object fn, arg;
-      if (! NILP (Fcdr (Fcdr (list))))
-	invalid_argument ("Invalid menu event desc", list);
-      arg = Fcar (Fcdr (list));
-      if (SYMBOLP (arg))
-	fn = Qcall_interactively;
-      else
-	fn = Qeval;
-      XSET_EVENT_TYPE (event, misc_user_event);
-      XSET_EVENT_CHANNEL (event, wrap_frame (selected_frame ()));
-      XSET_EVENT_MISC_USER_FUNCTION (event, fn);
-      XSET_EVENT_MISC_USER_OBJECT (event, arg);
-      return;
-    }
 
   define_key_parser (list, &raw_key);
 
@@ -4672,7 +4649,6 @@ syms_of_keymap (void)
   DEFSYMBOL (Qmouse_##num);			\
   DEFSYMBOL (Qdown_mouse_##num);
 #include "keymap-buttons.h"
-  DEFSYMBOL (Qmenu_selection);
   DEFSYMBOL (QLFD);
   DEFSYMBOL (QTAB);
   DEFSYMBOL (QRET);

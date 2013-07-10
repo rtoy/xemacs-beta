@@ -1441,7 +1441,7 @@ Lisp character object type can encode.
   else
     CHECK_LIVE_EVENT (event);
   if (CONSP (keystroke) || SYMBOLP (keystroke))
-    key_desc_list_to_event (keystroke, event, 1);
+    key_desc_list_to_event (keystroke, event);
   else
     {
       CHECK_CHAR_COERCE_INT (keystroke);
