@@ -1,3 +1,15 @@
+2013-06-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* paragraphs.el (sentence-end-base):
+	Fix stupid omission of cast to string.
+
+2013-06-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix no-Mule build.
+
+	* paragraphs.el (sentence-end): Use octal, not Unicode, escapes.
+	* (sentence-end-base): Use non-ASCII only in Mule.
+
 2013-07-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* minibuf.el (get-user-response):

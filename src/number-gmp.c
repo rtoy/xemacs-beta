@@ -1,5 +1,5 @@
-/* Numeric types for XEmacs using the GNU MP library.
-   Copyright (C) 2004 Jerry James.
+/* Numeric types for XEmacs using the GMP or MPIR library.
+   Copyright (C) 2004,2013 Jerry James.
 
 This file is part of XEmacs.
 
@@ -141,7 +141,7 @@ gmp_free (void *ptr, size_t UNUSED (size))
 }
 
 void
-init_number_gmp ()
+init_number_gmp (void)
 {
   mp_set_memory_functions ((void *(*) (size_t)) xmalloc, gmp_realloc,
 			   gmp_free);

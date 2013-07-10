@@ -1,4 +1,4 @@
-        \input texinfo  @c -*-texinfo-*-
+\input texinfo  @c -*-texinfo-*-
 @c %**start of header
 @setfilename ../../info/internals.info
 @settitle XEmacs Internals Manual
@@ -88,6 +88,7 @@ Improvements by
 @author Matthias Neubauer
 @author Olivier Galibert
 @author Andy Piper
+@author Jerry James
 
 
 @page
@@ -353,6 +354,7 @@ Similar but generates a general subsection.
 * CVS Techniques::              
 * XEmacs from the Inside::      
 * Basic Types::                 
+* Numeric Types::               
 * Low-Level Allocation::        
 * The XEmacs Object System (Abstractly Speaking)::  
 * How Lisp Objects Are Represented in C::  
@@ -3143,12 +3145,14 @@ The following table contains cross-references from each module in XEmacs
 @item @file{nt.c} @tab
 @item @file{ntheap.c} @tab
 @item @file{ntplay.c} @tab
-@item @file{number-gmp.c} @tab
-@item @file{number-gmp.h} @tab
-@item @file{number-mp.c} @tab
-@item @file{number-mp.h} @tab
-@item @file{number.c} @tab
-@item @file{number.h} @tab
+@item @file{number-gmp.c} @tab @ref{GMP and MPIR driver}
+@item @file{number-gmp.h} @tab @ref{GMP and MPIR driver}
+@item @file{number-mp.c} @tab @ref{BSD MP driver}
+@item @file{number-mp.h} @tab @ref{BSD MP driver}
+@item @file{number-mpir.c} @tab @ref{GMP and MPIR driver}
+@item @file{number-mpir.h} @tab @ref{GMP and MPIR driver}
+@item @file{number.c} @tab @ref{Abstract Numeric Interface}
+@item @file{number.h} @tab @ref{Abstract Numeric Interface}
 @item @file{fontcolor-gtk-impl.h} @tab
 @item @file{fontcolor-gtk.c} @tab
 @item @file{fontcolor-gtk.h} @tab
@@ -7230,14 +7234,569 @@ customize XEmacs, because they can make a change with much less chance
 of obscure and unwanted interactions occurring than if they were to
 change the C code.
 
-@node Basic Types, Low-Level Allocation, XEmacs from the Inside, Top
+@node Basic Types, Numeric Types, XEmacs from the Inside, Top
 @chapter Basic Types
 @cindex basic types
 @cindex types, basic
 
 Not yet documented.
 
-@node Low-Level Allocation, The XEmacs Object System (Abstractly Speaking), Basic Types, Top
+@node Numeric Types, Low-Level Allocation, Basic Types, Top
+@chapter Numeric Types
+@cindex numeric types
+@cindex types, numeric
+
+@menu
+* Abstract Numeric Interface::  
+* GMP and MPIR driver::         
+* BSD MP driver::               
+* Numeric driver interface::    
+@end menu
+
+@node Abstract Numeric Interface, GMP and MPIR driver, Numeric Types, Numeric Types
+@section Abstract Interface
+@cindex abstract numeric interface
+
+The following types are always defined in the same manner:
+@itemize
+@item fixnum
+Whatever fits in the @code{Lisp_Object} type.
+@item integer
+The union of the @code{fixnum} and @code{bignum} types.
+@item rational
+The union of the @code{integer} and @code{ratio} types.
+@item float
+The equivalent of a C @code{double}.
+@item floating
+The union of the @code{float} and @code{bigfloat} types.
+@item real
+The union of the @code{rational} and @code{floating} types.
+@item number
+The union of the @code{real} and @code{complex} types.  Since there is
+no @code{complex} type, this is currently equivalent to the @code{real}
+type.
+@end itemize
+
+The remaining types (@code{bignum}, @code{ratio}, and @code{bigfloat})
+are defined by library-specific drivers, as detailed in the remaining
+sections of this chapter.  A given driver may define one or more of
+these types to be empty.  In fact, the default configuration makes all
+three types empty, so that @code{integer} and @code{rational} are the
+same types as @code{fixnum}, etc.  The configure script sets zero or
+more of the symbols @code{HAVE_BIGNUM}, @code{HAVE_RATIO}, and
+@code{HAVE_BIGFLOAT} to indicate which types are nonempty.  These are
+the consequences of an empty type:
+@itemize
+@item bignum
+Then @code{bignump(x)} is false for all x.  Any attempt to create a
+bignum causes an error to be raised.
+@item ratio
+Then @code{ratiop(x)} is false for all x.  Any attempt to create a ratio
+causes an error to be raised.
+@item bigfloat
+Then @code{bigfloat(x)} is false for all x.  Any attempt to create a
+bigfloat causes an error to be raised.
+@end itemize
+
+We @code{(provide)} the following symbols, so that Lisp code can
+determine when the various numeric types are available for use:
+@itemize @bullet
+@item
+@code{(provide 'bignum)} if @code{HAVE_BIGNUM} is set
+@item
+@code{(provde 'ratio)} if @code{HAVE_RATIO} is set
+@item
+@code{(provide 'bigfloat)} if @code{HAVE_BIGFLOAT} is set
+@end itemize
+
+C code should use one of the following macros to create a Lisp integer,
+depending on the type of the C integer to be converted.
+@itemize @bullet
+@item
+@code{make_fixnum(x)} if x is guaranteed to fit into a Lisp fixnum.
+@item
+@code{make_integer(x)} if x is a signed C integer of any type.
+@item
+@code{make_unsigned_integer(x)} if x is an unsigned C integer of any type.
+@end itemize
+
+The @code{make_integer(x)} and @code{make_unsigned_integer(x)} macros
+both create a fixnum if possible, and a bignum otherwise.  The value
+@code{x} can be a C integer of any size up to and including the size
+of a C @code{long long int}.  The @code{make_fixnum(x)} macro is
+intended to signal the programmer's intent that only fixnum-sized
+integers will be used.  In some cases, if the compiler cannot prove
+that the parameter is always in the fixnum range, this macro is also a
+code optimization.
+
+@node GMP and MPIR driver, BSD MP driver, Abstract Numeric Interface, Numeric Types
+@section GMP driver
+@cindex gmp
+@cindex mpir
+
+The GNU Multiple Precision library (@uref{http://gmplib.org/}) and its
+fork, the Multiple Precision Integers and Rationals library
+(@uref{http://www.mpir.org/}), provide large integers, ratios, and
+floating point numbers.  The same driver supports both GMP and MPIR, and
+provides all 3 of the optional types: bignums, ratios, and bigfloats,
+implemented with the types @code{mpz_t}, @code{mpq_t}, and @code{mpf_t},
+respectively.  Most of the abstract numeric interface is defined in
+terms of macros that expand directly into GMP or MPIR API calls, since
+GMP and MPIR provide a rich interface.
+
+@node BSD MP driver, Numeric driver interface, GMP and MPIR driver, Numeric Types
+@section BSD MP driver
+@cindex BSD mp
+
+The BSD MP interface is less rich than its GMP and MPIR counterparts.
+It provides only large integers, implemented as type @code{MINT *};
+ratios and bigfloats are not available.  BSD MP libraries are supplied
+by multiple vendors, with some small variations.  This driver is
+intended to work with any variation.
+
+Some BSD MP libraries use function names that are likely cause name
+collisions, such as @code{gcd}, @code{mult}, and @code{pow}.  Others
+follow the Single Unix Specification recommendation (see
+@uref{http://www.unix.com/man-page/all/3mp/mp_mcmp/}) and prefix all of
+the function names with ``mp_'': @code{mp_gcd}, @code{mp_mult},
+@code{mp_pow}, etc.  The XEmacs configure script detects which of the
+two interfaces is in use, and defines @code{MP_PREFIX} for the latter
+case.  We use macros (@code{MP_MULT}, etc.) to hide this difference.
+
+Another variation is that some, but not all, BSD MP libraries supply a
+function named @code{move} or @code{mp_move} that copies its first
+argument into its second argument.  We define the move operation as
+setting the destination number to the source number plus zero for those
+libraries that do not supply this function.
+
+The BSD MP interface does not directly support many of the operations
+that we need, so the implementations sometimes consist of complex
+functions.  See the implementation of @code{bignum_random}, for
+example.
+
+@node Numeric driver interface,  , BSD MP driver, Numeric Types
+@section Numeric driver interface
+@cindex numeric driver interface
+
+@menu
+* Bignum interface::              
+* Ratio interface::               
+* Bigfloat interface::            
+@end menu
+
+@node Bignum interface, Ratio interface, Numeric driver interface, Numeric driver interface
+@subsection Bignum interface
+@cindex bignum interface
+
+Each bignum implementation defines @code{HAVE_BIGNUM} and an appropriate
+bignum type.  For example, the GMP driver uses this definition:
+
+@example
+typedef mpz_t bignum;
+@end example
+
+The following names are defined for each driver, either as real C
+functions or as C preprocessor macros.
+@itemize
+@item void bignum_init(bignum b)
+Does any necessary initialization before the bignum @code{b} can be
+used.  This function typically allocates memory for the bignum.
+@item void bignum_fini(bignum b)
+Cleans up any resources held by the bignum @code{b}, typically
+deallocating the memory dedicated to that bignum.  The object referred
+to by @code{b} must not be accessed after this call returns.
+@item unsigned int bignum_hashcode(bignum b)
+Returns a hash code for the bignum, suitable for use in XEmacs hash
+tables.
+@item int bignum_sign(bignum b)
+Returns a positive value, zero, or a negative value to indicate that
+@code{b} is positive, zero, or negative, respectively.
+@item int bignum_evenp(bignum b)
+Returns a nonzero value if @code{b} is an even number, zero if it is odd.
+@item int bignum_oddp(bignum b)
+Returns a nonzero value if @code{b} is an odd number, zero if it is even.
+@item int bignum_fits_int_p(bignum b)
+Returns a nonzero value if @code{b} can be represented in a C
+@code{int}, zero otherwise.
+@item int bignum_fits_uint_p(bignum b)
+Returns a nonzero value if @code{b} can be represented in a C
+@code{unsigned int}, zero otherwise.
+@item int bignum_fits_long_p(bignum b)
+Returns a nonzero value if @code{b} can be represented in a C
+@code{long int}, zero otherwise.
+@item int bignum_fits_ulong_p(bignum b)
+Returns a nonzero value if @code{b} can be represented in a C
+@code{unsigned long int}, zero otherwise.
+@item int bignum_fits_llong_p(bignum b)
+Returns a nonzero value if @code{b} can be represented in a C
+@code{long long int}, zero otherwise.
+@item int bignum_fits_ullong_p(bignum b)
+Returns a nonzero value if @code{b} can be represented in a C
+@code{unsigned long long int}, zero otherwise.
+@item void bignum_to_string(bignum b, int base)
+Converts @code{b} into a string representation using the given base,
+which is an integer between 2 and 36, inclusive.
+@item int bignum_to_int(bignum b)
+Converts @code{b} into a C @code{int}.  If @code{b} does not fit into a
+C @code{int}, the results are undefined.
+@item unsigned int bignum_to_uint(bignum b)
+Converts @code{b} into a C @code{unsigned int}.  If @code{b} does not
+fit into a C @code{unsigned int}, the results are undefined.
+@item long bignum_to_long(bignum b)
+Converts @code{b} into a C @code{long int}.  If @code{b} does not fit
+into a C @code{long int}, the results are undefined.
+@item unsigned long bignum_to_ulong(bignum b)
+Converts @code{b} into a C @code{unsigned long int}.  If @code{b} does
+not fit into a C @code{unsigned long int}, the results are undefined.
+@item long long bignum_to_llong(bignum b)
+Converts @code{b} into a C @code{long long int}.  If @code{b} does not
+fit into a C @code{long long int}, the results are undefined.
+@item unsigned long long bignum_to_ullong(bignum b)
+Converts @code{b} into a C @code{unsigned long long int}.  If @code{b}
+does not fit into a C @code{unsigned long long int}, the results are
+undefined.
+@item double bignum_to_double(bignum b)
+Converts @code{b} into a C @code{double}.  If @code{b} is too large to
+represent as a C @code{double}, the results are implementation-specific.
+Typically, the result is positive or negative infinity, for
+implementations that can represent infinity.
+@item void bignum_set(bignum b1, bignum b2)
+Assigns the value of @code{b2} to the bignum @code{b1} by copying.
+@item void bignum_set_string(bignum b, const char *s, int base)
+Assigns @code{b} the value of the integer contained in string @code{s},
+which is a number in base @code{base}.
+@item void bignum_set_long(bignum b, long l)
+Assigns @code{b} the value of the long integer @code{l}.
+@item void bignum_set_ulong(bignum b, unsigned long l)
+Assigns @code{b} the value of the unsigned long integer @code{l}.
+@item void bignum_set_llong(bignum b, long long l)
+Assigns @code{b} the value of the long long integer @code{l}.
+@item void bignum_set_ullong(bignum b, unsigned long long l)
+Assigns @code{b} the value of the unsigned long long integer @code{l}.
+@item void bignum_set_double(bignum b, double d)
+Assigns @code{b} to the truncated value of @code{d}; i.e, the fractional
+part of @code{d} is dropped.
+@item void bignum_set_ratio(bignum b, ratio r)
+Assigns @code{b} to the truncated value of @code{r}; i.e., the
+non-integer part of @code{r} is dropped.  This function exists only if
+the driver supports ratios.
+@item void bignum_set_bigfloat(bignum b, bigfloat f)
+Assigns @code{b} to the truncated value of @code{f}; i.e., the
+fractional part of @code{f} is dropped.  This function exists only if
+the driver supports bigfloats.
+@item int bignum_cmp(bignum b1, bignum b2)
+Returns a positive value, zero, or a negative value as @code{b1} is
+greater than, equal to, or less than @code{b2}, respectively.
+@item int bignum_lt(bignum b1, bignum b2)
+Returns nonzero if @code{b1} is less than @code{b2}, zero otherwise.
+@item int bignum_le(bignum b1, bignum b2)
+Returns nonzero if @code{b1} is less than or equal to @code{b2}, zero
+otherwise.
+@item int bignum_eql(bignum b1, bignum b2)
+Returns nonzero if @code{b1} is equal to @code{b2}, zero otherwise.
+@item int bignum_ge(bignum b1, bignum b2)
+Returns nonzero if @code{b1} is greater than or equal to @code{b2}, zero
+otherwise.
+@item int bignum_gt(bignum b1, bignum b2)
+Returns nonzero if @code{b1} is greater than @code{b2}, zero otherwise.
+@item void bignum_neg(bignum b, bignum b2)
+Sets @code{b} to the negation of @code{b2}.
+@item void bignum_abs(bignum b, bignum b2)
+Sets @code{b} to the absolute value of @code{b2}.
+@item void bignum_add(bignum b, bignum b1, bignum b2)
+Sets @code{b} to the sum of @code{b1} and @code{b2}.
+@item void bignum_sub(bignum b, bignum b1, bignum b2)
+Sets @code{b} to the value of @code{b1} minus @code{b2}.
+@item void bignum_mul(bignum b, bignum b1, bignum b2)
+Sets @code{b} to the product of @code{b1} and @code{b2}.
+@item int bignum_divisible_p(bignum b1, bignum b2)
+Returns nonzero if @code{b1} is evenly divisible by @code{b2}.
+@item void bignum_div(bignum b, bignum b1, bignum b2)
+Sets @code{b} to the truncated value of @code{b1} divided by @code{b2}.
+That is, this function rounds toward zero.
+@item void bignum_ceil(bignum b, bignum b1, bignum b2)
+Sets @code{b} to the ceiling of @code{b1} divided by @code{b2}.  That
+is, ths function rounds toward positive infinity.
+@item void bignum_floor(bignum b, bignum b1, bignum b2)
+Sets @code{b} to the floor of @code{b1} divided by @code{b2}.  That is,
+ths function rounds toward negative infinity.
+@item void bignum_mod(bignum b, bignum b1, bignum b2)
+Sets @code{b} to @code{b1} mod @code{b2}; i.e., the remainder after
+dividing @code{b1} by @code{b2}.  The sign is ignored; @code{b} is
+always nonnegative after this operation.
+@item void bignum_pow(bignum res, bignum b, unsigned int pow)
+Sets @code{res} to @code{b} to the @code{pow}th power.
+@item void bignum_gcd(bignum res, bignum b1, bignum b2)
+Sets @code{res} to the greatest common divisor of @code{b1} and
+@code{b2}.
+@item void bignum_lcm(bignum res, bignum b1, bignum b2)
+Sets @code{res} to the least common multiple of @code{b1} and @code{b2}.
+@item void bignum_and(bignum res, bignum b1, bignum b2)
+Sets @code{res} to the bitwise AND of @code{b1} and @code{b2}.
+@item void bignum_ior(bignum res, bignum b1, bignum b2)
+Sets @code{res} to the bitwise inclusive OR of @code{b1} and @code{b2}.
+@item void bignum_xor(bignum res, bignum b1, bignum b2)
+Sets @code{res} to the bitwise exclusive OR of @code{b1} and @code{b2}.
+@item void bignum_not(bignum res, bignum b)
+Sets @code{res} to the bitwise NOT of @code{b}.
+@item void bignum_setbit(bignum b, unsigned int bit)
+Sets the @code{bit}th bit of @code{b} to one, where the zeroth bit is
+the least significant.
+@item void bignum_clrbit(bignum b, unsigned int bit)
+Clears the @code{bit}th bit of @code{b} (i.e., sets it to zero), where
+the zeroth bit is the least significant.
+@item int bignum_testbit(bignum b, unsigned int bit)
+Returns the @code{bit}th bit of @code{b}, where the zeroth bit is the
+least significant.
+@item void bignum_lshift(bignum res, bignum b, unsigned int bits)
+Sets @code{res} to the value of @code{b} shifted left by @code{bits}
+bits.
+@item void bignum_rshift(bignum res, bignum b, unsigned int bits)
+Sets @code{res} to the value of @code{b} shifted right by @code{bits}
+bits.
+@item void bignum_random_seed(unsigned int seed)
+If the implementing library has its own pseudorandom number generator,
+then this function seeds the generator.  If there is no generator, this
+function is a no-op.
+@item void bignum_random(bignum res, bignum limit)
+Sets @code{res} to a random number between zero (inclusive) and
+@code{limit} (exclusive).
+@end itemize
+
+@node Ratio interface, Bigfloat interface, Bignum interface, Numeric driver interface
+@subsection Ratio interface
+@cindex ratio interface
+
+Each ratio implementation defines @code{HAVE_RATIO} and an appropriate
+ratio type.  For example, the GMP driver uses this definition:
+
+@example
+typedef mpq_t ratio;
+@end example
+
+The following names are defined for each driver, either as real C
+functions or as C preprocessor macros.
+@itemize
+@item void ratio_init(ratio r)
+Does any necessary initialization before the ratio @code{r} can be
+used.  This function typically allocates memory for the ratio.
+@item void ratio_fini(ratio r)
+Cleans up any resources held by the ratio @code{r}, typically
+deallocating the memory dedicated to that ratio.  The object referred
+to by @code{r} must not be accessed after this call returns.
+@item unsigned int ratio_hashcode(ratio r)
+Returns a hash code for the ratio, suitable for use in XEmacs hash
+tables.
+@item int ratio_sign(ratio r)
+Returns a positive value, zero, or a negative value to indicate that
+@code{r} is positive, zero, or negative, respectively.
+@item bignum ratio_numerator(ratio r)
+Returns the numerator of @code{r}.
+@item bignum ratio_denominator(ratio r)
+Returns the denominator of @code{r}.
+@item void ratio_canonicalize(ratio r)
+Removes any common factors from the numerator and denominator of
+@code{r}.
+@item void ratio_to_string(ratio r, int base)
+Converts @code{r} into a string representation using the given base,
+which is an integer between 2 and 36, inclusive.
+@item int ratio_to_int(ratio r)
+Converts @code{r} into a C @code{int} by truncating the ratio.  If the
+truncation of @code{r} does not fit into a C @code{int}, the results are
+undefined.
+@item unsigned int ratio_to_uint(ratio r)
+Converts @code{r} into a C @code{unsigned int} by truncating the ratio.
+If the truncation of @code{r} does not fit into a C @code{unsigned int},
+the results are undefined.
+@item long ratio_to_long(ratio r)
+Converts @code{r} into a C @code{long int} by truncating the ratio.  If
+the truncation of @code{r} does not fit into a C @code{long int}, the
+results are undefined.
+@item unsigned long ratio_to_ulong(ratio r)
+Converts @code{r} into a C @code{unsigned long int} by truncating the
+ratio.  If @code{r} does not fit into a C @code{unsigned long int}, the
+results are undefined.
+@item double ratio_to_double(ratio r)
+Converts @code{r} into a C @code{double}.  If @code{r} is too large to
+represent as a C @code{double}, the results are implementation-specific.
+Typically, the result is positive or negative infinity, for
+implementations that can represent infinity.
+@item void ratio_set(ratio r1, ratio r2)
+Assigns the value of @code{r2} to the ratio @code{r1} by copying.
+@item void ratio_set_string(ratio r, const char *s, int base)
+Assigns @code{r} the value of the ratio contained in string @code{s},
+which is a pair of numbers in base @code{base} separated by a forward
+slash.
+@item void ratio_set_long(ratio r, long l)
+Assigns @code{r} the value of the long integer @code{l}.
+@item void ratio_set_ulong(ratio r, unsigned long l)
+Assigns @code{r} the value of the unsigned long integer @code{l}.
+@item void ratio_set_double(ratio r, double d)
+Assigns @code{r} to the exact value of @code{d}.  There is no rounding.
+@item void ratio_set_bignum(ratio r, bignum b)
+Assigns @code{r} to the value of @code{b}; i.e., the denominator is set
+to one.
+@item void ratio_set_bigfloat(ratio b, bigfloat f)
+Assigns @code{b} to the exact value of @code{f}.  There is no rounding.
+This function exists only if the driver supports bigfloats.
+@item void ratio_set_long_ulong(ratio r, long num, unsigned long den)
+Assigns @code{r} the canonicalized ratio resulting from the division of
+@code{num} by @code{den}.
+@item void ratio_set_ulong_ulong(ratio r, unsigned long num, unsigned long den)
+Assigns @code{r} the canonicalized ratio resulting from the division of
+@code{num} by @code{den}.
+@item void ratio_set_bignum_bignum(ratio r, bignum num, bignum den)
+Assigns @code{r} the canonicalized ratio resulting from the division of
+@code{num} by @code{den}.
+@item int ratio_cmp(ratio r1, ratio r2)
+Returns a positive value, zero, or a negative value as @code{r1} is
+greater than, equal to, or less than @code{r2}, respectively.
+@item int ratio_lt(ratio r1, ratio r2)
+Returns nonzero if @code{r1} is less than @code{r2}, zero otherwise.
+@item int ratio_le(ratio r1, ratio r2)
+Returns nonzero if @code{r1} is less than or equal to @code{r2}, zero
+otherwise.
+@item int ratio_eql(ratio r1, ratio r2)
+Returns nonzero if @code{r1} is equal to @code{r2}, zero otherwise.
+@item int ratio_ge(ratio r1, ratio r2)
+Returns nonzero if @code{r1} is greater than or equal to @code{r2}, zero
+otherwise.
+@item int ratio_gt(ratio r1, ratio r2)
+Returns nonzero if @code{r1} is greater than @code{r2}, zero otherwise.
+@item void ratio_neg(ratio q, ratio q2)
+Sets @code{q} to the negation of @code{q2}.
+@item void ratio_abs(ratio q, ratio q2)
+Sets @code{q} to the absolute value of @code{q2}.
+@item void ratio_inv(ratio q, ratio q2)
+Sets @code{q} to the inverse of @code{q2}.
+@item void ratio_add(ratio res, ratio q1, ratio q2)
+Sets @code{res} to the sum of @code{q1} and @code{q2}.
+@item void ratio_sub(ratio res, ratio q1, ratio q2)
+Sets @code{res} to the value of @code{q1} minus @code{q2}.
+@item void ratio_mul(ratio res, ratio q1, ratio q2)
+Sets @code{res} to the product of @code{q1} and @code{q2}.
+@item void ratio_div(ratio res, ratio q1, ratio q2)
+Sets @code{res} to the value of @code{q1} divided by @code{q2}.
+@end itemize
+
+@node Bigfloat interface,  , Ratio interface, Numeric driver interface
+@subsection Bigfloat interface
+@cindex bigfloat interface
+
+Each bigfloat implementation defines @code{HAVE_BIGFLOAT} and an
+appropriate bigfloat type.  For example, the GMP driver uses this
+definition:
+
+@example
+typedef mpf_t bigfloat;
+@end example
+
+The following names are defined for each driver, either as real C
+functions or as C preprocessor macros.
+@itemize
+@item void bigfloat_init(bigfloat f)
+Does any necessary initialization before the bigfloat @code{f} can be
+used.  This function typically allocates memory for the bigfloat.
+@item void bigfloat_init_prec(bigfloat f, unsigned int prec)
+Like @code{bigfloat_init}, but also sets the precision of @code{f} to
+@emph{at least} @code{prec} bits.
+@item void bigfloat_fini(bigfloat f)
+Cleans up any resources held by the bigfloat @code{f}, typically
+deallocating the memory dedicated to that bigfloat.  The object referred
+to by @code{f} must not be accessed after this call returns.
+@item unsigned int bigfloat_hashcode(bigfloat f)
+Returns a hash code for the bigfloat, suitable for use in XEmacs hash
+tables.
+@item int bigfloat_sign(bigfloat f)
+Returns a positive value, zero, or a negative value to indicate that
+@code{f} is positive, zero, or negative, respectively.
+@item unsigned int bigfloat_get_prec(bigfloat f)
+Returns the precision of @code{f} in bits.
+@item void bigfloat_set_prec(bigfloat f, unsigned int prec)
+Sets the precision of @code{f} to @emph{at least} @code{prec} bits.
+@item void bigfloat_set_default_prec(unsigned int prec)
+Sets the default precision of newly created bigfloats.
+@item unsigned int bigfloat_get_default_prec(void)
+Gets the default precision of newly created bigfloats.
+@item void bigfloat_to_string(bigfloat f, int base)
+Converts @code{f} into a string representation using the given base,
+which is an integer between 2 and 36, inclusive.
+@item int bigfloat_to_int(bigfloat f)
+Converts @code{f} into a C @code{int} by truncating the bigfloat.  If the
+truncation of @code{f} does not fit into a C @code{int}, the results are
+undefined.
+@item unsigned int bigfloat_to_uint(bigfloat f)
+Converts @code{f} into a C @code{unsigned int} by truncating the bigfloat.
+If the truncation of @code{f} does not fit into a C @code{unsigned int},
+the results are undefined.
+@item long bigfloat_to_long(bigfloat f)
+Converts @code{f} into a C @code{long int} by truncating the bigfloat.  If
+the truncation of @code{f} does not fit into a C @code{long int}, the
+results are undefined.
+@item unsigned long bigfloat_to_ulong(bigfloat f)
+Converts @code{f} into a C @code{unsigned long int} by truncating the
+bigfloat.  If @code{f} does not fit into a C @code{unsigned long int}, the
+results are undefined.
+@item double bigfloat_to_double(bigfloat f)
+Converts @code{f} into a C @code{double}.  If @code{f} is too large to
+represent as a C @code{double}, the results are implementation-specific.
+Typically, the result is positive or negative infinity, for
+implementations that can represent infinity.
+@item void bigfloat_set(bigfloat f1, bigfloat f2)
+Assigns the value of @code{f2} to the bigfloat @code{f1} by copying.
+@item void bigfloat_set_string(bigfloat f, const char *s, int base)
+Assigns @code{f} the value of the bigfloat contained in string @code{s}.
+@item void bigfloat_set_long(bigfloat f, long l)
+Assigns @code{f} the value of the long integer @code{l}.
+@item void bigfloat_set_ulong(bigfloat f, unsigned long l)
+Assigns @code{f} the value of the unsigned long integer @code{l}.
+@item void bigfloat_set_double(bigfloat f, double d)
+Assigns @code{f} the value of @code{d}.
+@item void bigfloat_set_bignum(bigfloat f, bignum b)
+Assigns @code{f} to the value of @code{b}.
+@item void bigfloat_set_ratio(bigfloat b, ratio r)
+Assigns @code{b} to the result of dividing the numerator of @code{r} by
+its denominator.
+@item int bigfloat_cmp(bigfloat f1, bigfloat f2)
+Returns a positive value, zero, or a negative value as @code{f1} is
+greater than, equal to, or less than @code{f2}, respectively.
+@item int bigfloat_lt(bigfloat f1, bigfloat f2)
+Returns nonzero if @code{f1} is less than @code{f2}, zero otherwise.
+@item int bigfloat_le(bigfloat f1, bigfloat f2)
+Returns nonzero if @code{f1} is less than or equal to @code{f2}, zero
+otherwise.
+@item int bigfloat_eql(bigfloat f1, bigfloat f2)
+Returns nonzero if @code{f1} is equal to @code{f2}, zero otherwise.
+@item int bigfloat_ge(bigfloat f1, bigfloat f2)
+Returns nonzero if @code{f1} is greater than or equal to @code{f2}, zero
+otherwise.
+@item int bigfloat_gt(bigfloat f1, bigfloat f2)
+Returns nonzero if @code{f1} is greater than @code{f2}, zero otherwise.
+@item void bigfloat_neg(bigfloat f, bigfloat f2)
+Sets @code{f} to the negation of @code{f2}.
+@item void bigfloat_abs(bigfloat f, bigfloat f2)
+Sets @code{f} to the absolute value of @code{f2}.
+@item void bigfloat_add(bigfloat res, bigfloat f1, bigfloat f2)
+Sets @code{res} to the sum of @code{f1} and @code{f2}.
+@item void bigfloat_sub(bigfloat res, bigfloat f1, bigfloat f2)
+Sets @code{res} to the value of @code{f1} minus @code{f2}.
+@item void bigfloat_mul(bigfloat res, bigfloat f1, bigfloat f2)
+Sets @code{res} to the product of @code{f1} and @code{f2}.
+@item void bigfloat_div(bigfloat res, bigfloat f1, bigfloat f2)
+Sets @code{res} to the value of @code{f1} divided by @code{f2}.
+@item void bigfloat_ceil(bigfloat res, bigfloat f)
+Sets @code{res} to the ceiling of @code{f}.
+@item void bigfloat_floor(bigfloat res, bigfloat f)
+Sets @code{res} to the floor of @code{f}.
+@item void bigfloat_trunc(bigfloat res, bigfloat f)
+Sets @code{res} to the truncation of @code{f}.
+@item void bigfloat_sqrt(bigfloat res, bigfloat f)
+Sets @code{res} to the square root of @code{f}.
+@item void bigfloat_pow(bigfloat res, bigfloat f, unsigned int exp)
+Sets @code{res} to the value of @code{f} raised to the @code{exp}th power.
+@end itemize
+
+@node Low-Level Allocation, The XEmacs Object System (Abstractly Speaking), Numeric Types, Top
 @chapter Low-Level Allocation
 @cindex low-level allocation
 @cindex allocation, low-level
@@ -21337,7 +21896,7 @@ or @code{nil} if it is using pipes.
 
 
 @node Ben's separate stderr notes,  , Subprocesses, Subprocesses
-@subsection Ben's separate stderr notes (probably obsolete)
+@section Ben's separate stderr notes (probably obsolete)
 
 This node contains some notes that Ben kept on his separate subprocess
 workspace.  These notes probably describe changes and features that have

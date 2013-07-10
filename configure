@@ -674,6 +674,7 @@ XEMACS_CC
 sound_cflags
 native_sound_lib
 RECURSIVE_MAKE_ARGS
+MAKEINFO
 ld_libs_all
 ld_libs_window_system
 ld_libs_general
@@ -1968,7 +1969,8 @@ Emacs Lisp options
                           loaded libraries (Dynamic Shared Objects).
   --with-bignum=TYPE      Compile in support for bignums, ratios, or bigfloats
                           using library support. TYPE must be one of "gmp"
-                          (for GNU MP), "mp" (for BSD MP), or "no" (disabled).
+                          (for GNU MP), "mpir" (for MPIR), "mp" (for BSD MP),
+                          or "no" (disabled).
 
 Platform Specific options
 -------------------------
@@ -5178,14 +5180,14 @@ if test "${with_bignum+set}" = set; then
   enableval="$with_bignum"
   withval="$with_bignum"
   _bignum_bogus=yes
- for x in no gmp mp ; do
+ for x in no gmp mpir mp ; do
    if test $x = $with_bignum ; then
 	_bignum_bogus=no
    fi
  done
  if test "$_bignum_bogus" = "yes" ; then
 	(echo "$progname: Usage error:"
-echo " " "The --with-bignum option must have one of these values: \`no',\`gmp',\`mp'."
+echo " " "The --with-bignum option must have one of these values: \`no',\`gmp',\`mpir',\`mp'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
  fi
 unset _bignum_bogus
@@ -10556,6 +10558,31 @@ fi
   test -n "$YACC" && break
 done
 test -n "$YACC" || YACC="yacc"
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for makeinfo >= 4.12" >&5
+$as_echo_n "checking for makeinfo >= 4.12... " >&6; }
+MAKEINFO=
+for prog in `which -a makeinfo`; do
+  mi_verstr=`$prog --version | sed -rn '1s/.*+[[:blank:]]([^[:blank:]]+)$/\1/p'`
+  mi_major=`echo $mi_verstr | cut -d. -f1`
+  mi_minor=`echo $mi_verstr | cut -d. -f2`
+  if test $mi_major -gt 4 || ( test $mi_major -eq 4 && test $mi_minor -gt 11 );
+  then
+    MAKEINFO=$prog
+    break
+  fi
+done
+if test -z $MAKEINFO; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Makeinfo 4.12 or later required to build info files." >&5
+$as_echo "$as_me: WARNING: Makeinfo 4.12 or later required to build info files." >&2;}
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+fi
+ac_config_files="$ac_config_files man/Makefile"
 
 
 for ac_header in   a.out.h   elf.h   cygwin/version.h   fcntl.h   libgen.h   locale.h   wchar.h   mach/mach.h   sys/param.h   sys/pstat.h   sys/resource.h   sys/time.h   sys/timeb.h   sys/times.h   sys/un.h   sys/vlimit.h   ulimit.h
@@ -20779,6 +20806,62 @@ fi
   else
     { echo "Error:" "Required GMP numeric support cannot be provided." >&2; exit 1; }
   fi
+elif test "$with_bignum" = "mpir"; then
+  ac_fn_c_check_header_mongrel "$LINENO" "mpir.h" "ac_cv_header_mpir_h" "$ac_includes_default"
+if test "x$ac_cv_header_mpir_h" = xyes; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __gmpz_init in -lmpir" >&5
+$as_echo_n "checking for __gmpz_init in -lmpir... " >&6; }
+if ${ac_cv_lib_mpir___gmpz_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmpir  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char __gmpz_init ();
+int
+main ()
+{
+return __gmpz_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_mpir___gmpz_init=yes
+else
+  ac_cv_lib_mpir___gmpz_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mpir___gmpz_init" >&5
+$as_echo "$ac_cv_lib_mpir___gmpz_init" >&6; }
+if test "x$ac_cv_lib_mpir___gmpz_init" = xyes; then :
+  have_mpz_init=yes
+fi
+
+fi
+
+
+  if test "$have_mpz_init" = "yes"; then
+    $as_echo "#define WITH_NUMBER_TYPES 1" >>confdefs.h
+
+    $as_echo "#define WITH_MPIR 1" >>confdefs.h
+
+    LIBS="-lmpir $LIBS" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lmpir\" to \$LIBS"; fi
+  else
+    { echo "Error:" "Required MPIR numeric support cannot be provided." >&2; exit 1; }
+  fi
 elif test "$with_bignum" = "mp"; then
   for library in "" "-lcrypto"; do
     ac_fn_c_check_header_mongrel "$LINENO" "mp.h" "ac_cv_header_mp_h" "$ac_includes_default"
@@ -21306,7 +21389,8 @@ done
 
 
 
-RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)'"
+
+RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)' MAKEINFO='\$(MAKEINFO)'"
 
 
 native_sound_lib=$with_native_sound_lib
@@ -21728,6 +21812,7 @@ test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_dnet" = yes && echo "  Compiling in support for DNET."
 test "$with_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
 test "$with_bignum" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
+test "$with_bignum" = "mpir" && echo "  Compiling in support for more number types using the MPIR library."
 test "$with_bignum" = "mp" && echo "  Compiling in support for more number types using the BSD MP library."
 if test "$with_union_type" = yes ; then
   echo "  Using the union type for Lisp_Objects."
@@ -22521,6 +22606,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
+    "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;
     "src/config.h") CONFIG_HEADERS="$CONFIG_HEADERS src/config.h" ;;
     "lwlib/config.h") CONFIG_HEADERS="$CONFIG_HEADERS lwlib/config.h" ;;
     "$file") CONFIG_FILES="$CONFIG_FILES $file" ;;
