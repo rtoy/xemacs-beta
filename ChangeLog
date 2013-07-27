@@ -1,3 +1,9 @@
+2013-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (makeinfo):
+	Use basic regexp.  Avoid autoconf errors on empty version strings.
+	Report version found if insufficient.  Lightly tested.
+
 2013-06-25  Jerry James  <james@xemacs.org>
 
 	* INSTALL: Update required makeinfo version.

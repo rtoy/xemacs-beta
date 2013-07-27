@@ -2590,10 +2590,10 @@ dnl We need a recent version of makeinfo
 AC_MSG_CHECKING([for makeinfo >= 4.12])
 MAKEINFO=
 for prog in `which -a makeinfo`; do
-  mi_verstr=[`$prog --version | sed -rn '1s/.*+[[:blank:]]([^[:blank:]]+)$/\1/p'`]
+  mi_verstr=[`$prog --version | sed -n '1s/^.* \([0-9][0-9]*\.[0-9][0-9]*\)$/\1/p'`]
   mi_major=`echo $mi_verstr | cut -d. -f1`
   mi_minor=`echo $mi_verstr | cut -d. -f2`
-  if test $mi_major -gt 4 || ( test $mi_major -eq 4 && test $mi_minor -gt 11 );
+  if test "$mi_major" -gt 4 || ( test "$mi_major" -eq 4 && test "$mi_minor" -gt 11 );
   then
     MAKEINFO=$prog
     break
@@ -2601,7 +2601,7 @@ for prog in `which -a makeinfo`; do
 done
 if test -z $MAKEINFO; then
   AC_MSG_RESULT([no])
-  AC_MSG_WARN([Makeinfo 4.12 or later required to build info files.])
+  AC_MSG_WARN([Found Makeinfo $mi_verstr.  4.12 or later required.])
 else
   AC_MSG_RESULT([yes])
 fi
