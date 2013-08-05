@@ -1,6 +1,7 @@
 ;;; ccl-tests.el --- Testsuites on CCL ; -*- coding: iso-2022-7bit -*-
 
 ;; Copyright (C) 2000 MIYASHITA Hisashi
+;; Copyright (C) 2010 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -160,19 +161,19 @@
 	func high low)
     (setq func
 	  (lambda (high low)
-	    (let (ch c1 c2)
-	      (setq ch (split-char (decode-shift-jis-char
-				    (cons high low))))
-	      (setq c1 (nth 1 ch)
-		    c2 (nth 2 ch))
-	      (ccl-test '(0 ((r0 = (r1 de-sjis r2))))
-			(list 0 high low))
-	      (Assert (and (= c1 (aref ccl-test-last-register-state 0))
-			   (= c2 (aref ccl-test-last-register-state 7))))
-	      (ccl-test '(0 ((r0 = (r1 en-sjis r2))))
-			(list 0 c1 c2))
-	      (Assert (and (= high (aref ccl-test-last-register-state 0))
-			   (= low (aref ccl-test-last-register-state 7)))))))
+	    (let* ((ch (decode-shift-jis-char (cons high low)))
+		   (split (and ch (split-char ch)))
+		   (c1 (and split (nth 1 split)))
+		   (c2 (and split (nth 2 split))))
+	      (when (and split (eq 'japanese-jisx0208 (nth 0 split)))
+		(ccl-test '(0 ((r0 = (r1 de-sjis r2))))
+			  (list 0 high low))
+		(Assert (= c1 (aref ccl-test-last-register-state 0)))
+		(Assert (= c2 (aref ccl-test-last-register-state 7)))
+		(ccl-test '(0 ((r0 = (r1 en-sjis r2))))
+			  (list 0 c1 c2))
+		(Assert (= high (aref ccl-test-last-register-state 0)))
+		(Assert (= low (aref ccl-test-last-register-state 7)))))))
     (while (setq high (car hs))
       (setq hs (cdr hs))
       (setq low #x40)

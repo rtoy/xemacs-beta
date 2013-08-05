@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1991-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2010 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
    Totally redesigned by jwz in 1991.
 
 This file is part of XEmacs.
@@ -3684,34 +3684,63 @@ of a character from a buffer rather than a key read from the user.
     {
       p += set_itext_ichar (p, c);
     }
-  else if (c < 040 && ctl_p)
+  else if (c < 32 && ctl_p)
     {
       *p++ = '^';
-      *p++ = c + 64;		/* 'A' - 1 */
+      *p++ = c + 'A' - 1; /* 1 -> 'A' */
     }
-  else if (c == 0177)
+  else if (c == 127)
     {
       *p++ = '^';
       *p++ = '?';
     }
-  else if (c >= 0200 || c < 040)
+  else if (c >= 128 || c < 32)
     {
       *p++ = '\\';
 #ifdef MULE
-      /* !!#### This syntax is not readable.  It will
-	 be interpreted as a 3-digit octal number rather
-	 than a 7-digit octal number. */
-      if (c >= 0400)
+#ifdef UNICODE_INTERNAL
+      /* Output Unicode codes directly */
+#define FROB(x) ((Ibyte) ((x) >= 10 ? (x) + 'A' - 10 : (x) + '0'))
+      if (c >= 65536)
 	{
-	  *p++ = '0' + ((c & 07000000) >> 18);
-	  *p++ = '0' + ((c & 0700000) >> 15);
-	  *p++ = '0' + ((c & 070000) >> 12);
-	  *p++ = '0' + ((c & 07000) >> 9);
+	  *p++ = 'U';
+	  *p++ = FROB (c >> 28);
+	  *p++ = FROB (c >> 24 & 0x0F);
+	  *p++ = FROB (c >> 20 & 0x0F);
+	  *p++ = FROB (c >> 16 & 0x0F);
+	  *p++ = FROB (c >> 12 & 0x0F);
+	  *p++ = FROB (c >>  8 & 0x0F);
+	  *p++ = FROB (c >>  4 & 0x0F);
+	  *p++ = FROB (c & 0x0F);
 	}
-#endif
-      *p++ = '0' + ((c & 0700) >> 6);
-      *p++ = '0' + ((c & 0070) >> 3);
-      *p++ = '0' + ((c & 0007));
+      else if (c >= 256)
+	{
+	  *p++ = 'u';
+	  *p++ = FROB (c >> 12 & 0x0F);
+	  *p++ = FROB (c >>  8 & 0x0F);
+	  *p++ = FROB (c >>  4 & 0x0F);
+	  *p++ = FROB (c & 0x0F);
+	}
+#undef FROB
+#else /* not UNICODE_INTERNAL */
+      /* Don't output Unicode because it is lossy. */
+      if (c >= 256)
+	{
+	  Ibyte hexbuf[200]; /* Way more than enough */
+	  Ibyte *hp = hexbuf;
+	  qxesprintf (hexbuf, "%X", c);
+	  *p++ = 'x';
+	  while (*hp)
+	    *p++ = *hp++;
+	}
+#endif /* not UNICODE_INTERNAL */
+      else
+#endif /* MULE */
+	{
+	  *p++ = '0' + ((c & 0700) >> 6);
+	  *p++ = '0' + ((c & 0070) >> 3);
+	  *p++ = '0' + ((c & 0007));
+	}
     }
   else
     {
@@ -3948,7 +3977,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	    {
 	      assert (firstonly);
 	      format_raw_keys (so_far, keys_count + 1, target_buffer);
-	      return make_fixnum (1);
+	      return Qone;
 	    }
 	  else if (firstonly)
 	    return raw_keys_to_keys (so_far, keys_count + 1);
@@ -4667,7 +4696,7 @@ This character followed by some character `foo' turns into `Meta-foo'.
 This can be any form recognized as a single key specifier.
 To disable the meta-prefix-char, set it to a negative number.
 */ );
-  Vmeta_prefix_char = make_char (033);
+  Vmeta_prefix_char = make_char (0x1B);
 
   DEFVAR_LISP ("mouse-grabbed-buffer", &Vmouse_grabbed_buffer /*
 A buffer which should be consulted first for all mouse activity.

@@ -28,6 +28,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "casetab.h"
 #include "commands.h"
 #include "console-stream.h"
 #include "events.h"
@@ -91,7 +92,7 @@ read_minibuffer_internal_unwind (Lisp_Object unwind_data)
   XWINDOW (minibuf_window)->last_facechange[DESIRED_DISP] = Qzero;
   XWINDOW (minibuf_window)->last_facechange[CMOTION_DISP] = Qzero;
   Vminibuf_prompt = Felt (unwind_data, Qzero);
-  minibuf_level = XFIXNUM (Felt (unwind_data, make_fixnum (1)));
+  minibuf_level = XFIXNUM (Felt (unwind_data, Qone));
   while (CONSP (unwind_data))
     {
       Lisp_Object victim = unwind_data;

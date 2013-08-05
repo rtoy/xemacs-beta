@@ -1705,7 +1705,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_fixnum (1);
+      accum = Qone;
     }
   else
     {
@@ -1775,7 +1775,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_fixnum (1);
+      accum = Qone;
     }
   else
     {
@@ -3484,6 +3484,8 @@ init_errors_once_early (void)
   DEFERROR (Qio_error, "IO Error", Qinvalid_operation);
   DEFERROR_STANDARD (Qfile_error, Qio_error);
   DEFERROR (Qend_of_file, "End of file or stream", Qfile_error);
+  /* #### It's questionable whether conversion-error should be a subclass
+     of io-error or directly of invalid-operation */
   DEFERROR_STANDARD (Qconversion_error, Qio_error);
   DEFERROR_STANDARD (Qtext_conversion_error, Qconversion_error);
 

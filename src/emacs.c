@@ -2457,8 +2457,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 function and another. */
 
 #ifdef MULE
-      /* This depends on vars initialized in vars_of_unicode(). */
+      /* This creates charsets, which depends on vars initialized in
+	 vars_of_unicode(). */
       complex_vars_of_mule_charset ();
+      /* This depends on charsets created in complex_vars_of_mule_charset(). */
+      complex_vars_of_mule_coding ();
 #endif
       /* This one doesn't depend on anything really, and could go into
 	 vars_of_(), but lots of lots of code gets called and it's easily
@@ -2467,10 +2470,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 then we suddenly have dependence on the previous call. */
       complex_vars_of_file_coding ();
 #ifdef WIN32_ANY
+      /* Likewise this one. */
       /* Define MS-Windows Unicode coding systems */
       complex_vars_of_intl_win32 ();
 #endif
-      /* Define UTF-8 coding system */
+      /* Define UTF-8 coding system, create JIT charset */
       complex_vars_of_unicode ();
 
       /* At this point we should be able to do conversion operations.
@@ -2531,12 +2535,12 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* This calls Fcopy_syntax_table(), which relies on char tables. */
       complex_vars_of_syntax ();
 
-      /* This initializes buffer-local variables, sets things up so
-	 that buffers can be created, and creates a couple of basic
-	 buffers.  This depends on Vstandard_syntax_table and
-	 Vstandard_category_table (initialized in the previous
-	 functions), as well as a whole horde of variables that may
-	 have been initialized above. */
+      /* This initializes buffer-local variables, sets things up so that
+	 buffers can be created, and creates a couple of basic buffers.
+	 This depends on Vstandard_syntax_table and
+	 Vstandard_category_table (initialized in the previous functions),
+	 and in Mule on some charsets existing, as well as a whole horde of
+	 variables that may have been initialized above. */
       complex_vars_of_buffer ();
 
       /* This initializes console-local variables. */
@@ -2605,16 +2609,37 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
      where there is typically a dependency from each to the previous.
  */
 
+  if (initialized)
+    {
+#ifdef MULE
+      init_mule_charset (); /* Retrieve the charset objects corresponding to
+			       certain charsets that we want to use internally,
+			       e.g. the ISO 8859 charsets.  We used to create
+			       them ourselves in the C code but it's cleaner
+			       and easier to create them in the Lisp code. */
+      init_mule_coding (); /* depends on those charsets */
+#endif /* MULE */
+    }
 #ifdef WIN32_ANY
   init_intl_win32 (); /* Under Windows, determine whether we use Unicode
 			 or ANSI to call the system routines -- i.e.
 			 determine what the coding system `mswindows-tstr'
 			 is aliased to */
 #endif
-  init_buffer_1 ();	/* Create *scratch* buffer; init_intl() is going to
-			   call Lisp code (the very first code we call),
-			   and needs a current buffer */
+  init_buffer_1 ();	/* Create *scratch* buffer; the code just below is
+			   going to call Lisp code (the very first code we
+			   call), and needs a current buffer */
 #ifdef MULE
+  /* The following two both call Lisp, and are the first Lisp code we call
+     after dumping. */
+  init_unicode (); /* recreate Unicode precedence arrays, necessary for
+                      conversion of Unicode codepoints to charset codepoints.
+		      This has to come first because the Lisp code called
+		      from init_intl() calls set-current-locale, which
+		      converts to external format in preparation for
+		      calling C library functions, which requires that the
+		      global Unicode precedence arrays are available.
+                    */
   init_intl (); /* Figure out the locale and set native and
 		   file-name coding systems, initialize the Unicode tables
 		   so that we will be able to process non-ASCII from here
