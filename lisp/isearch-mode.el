@@ -1579,7 +1579,28 @@ If there is no completion possible, say so and continue searching."
 	 ;; FSF does similar magic in `isearch-other-meta-char', which
 	 ;; is horribly complex.  I *hope* what we do works in all
 	 ;; cases.
-	 (setq this-command (key-binding (this-command-keys))))
+	 (setq this-command
+               (condition-case nil
+                   (key-binding (this-command-keys))
+                 (wrong-type-argument
+                  ;; #'key-binding didn't like one of the events --> it's
+                  ;; probably a misc-user object, repeat what
+                  ;; #'dispatch-event does for this case.
+                  (let ((this-command-keys (this-command-keys))
+                        event-function)
+                    (when (and (> (length this-command-keys) 0)
+                               (misc-user-event-p (aref this-command-keys 0)))
+                      (setq event-function
+                            (event-function (aref this-command-keys 0)))
+                      (case event-function
+                        (call-interactively
+                         (event-object (aref this-command-keys 0)))
+                        (eval
+                         `(lambda nil (interactive)
+                           ,(event-object (aref this-command-keys 0))))
+                        (otherwise
+                         ;; Scrollbar command or the like.
+                         (and (symbolp event-function) event-function)))))))))
 	(t
          (labels
              ((isearch-maybe-frob-keyboard-macros ()
