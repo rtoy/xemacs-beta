@@ -1778,7 +1778,20 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
                    (lambda ()
                      ;; Restore the normal case mappings for the characters.
                      (put-case-table-pair ?I ?i (standard-case-table))))
+
+;; Latin-script Azeri. This uses schwa, and has no non-Unicode encoding
+;; available. The Turkish case rules apply, though, so we can copy that
+;; language environment.
 
+(let* ((name (create-variant-language-environment "Turkish" 'utf-8))
+       (assoc (assoc name language-info-alist)))
+  (setf (car assoc) "Azeri")
+  (set-language-info "Azeri" 'locale "az")
+  (put-case-table-pair
+   (decode-char 'ucs #x018F) ;; LATIN CAPITAL LETTER SCHWA
+   (decode-char 'ucs #x0259) ;; LATIN SMALL LETTER SCHWA
+   (standard-case-table)))
+
 (make-coding-system
  'macintosh 'fixed-width "MacRoman"
  '(unicode-map
