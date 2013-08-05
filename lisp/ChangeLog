@@ -1,5 +1,18 @@
 2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* isearch-mode.el (isearch-pre-command-hook):
+	If this function is called and (this-command-keys) contains
+	misc-user events, #'key-binding throws an error.
+	Eddie Corns and Alex Belits describe this happening in tracker
+	issue 336, and we can avoid this by catching the error and
+	handling the misc-user event in the same way that #'dispatch-event
+	does.
+	I haven't reproduced the actual error they describe, and welcome
+	testing to make sure it's gone.
+	Thank you Eddie, thank you Alex!
+
+2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* behavior.el:
 	(override-behavior):
 	Correct some spelling and formatting here, thank you Steven
