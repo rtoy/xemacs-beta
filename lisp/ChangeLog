@@ -1,5 +1,12 @@
 2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* behavior.el:
+	(override-behavior):
+	Correct some spelling and formatting here, thank you Steven
+	Mitchell in tracker issue 826.
+
+2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/latin.el:
 	Add a Latin-script Azeri language environment, with UTF-8 as the
 	encoding and case information for schwa.
