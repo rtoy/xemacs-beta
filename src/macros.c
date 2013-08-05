@@ -81,7 +81,7 @@ Non-nil arg (prefix arg) means append to last macro defined;
     {
       message ("Appending to kbd macro...");
       con->kbd_macro_ptr = con->kbd_macro_end;
-      Fexecute_kbd_macro (con->last_kbd_macro, make_fixnum (1));
+      Fexecute_kbd_macro (con->last_kbd_macro, Qone);
     }
   con->defining_kbd_macro = Qt;
 

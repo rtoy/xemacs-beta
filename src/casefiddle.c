@@ -23,6 +23,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "casetab.h"
 #include "insdel.h"
 #include "syntax.h"
 
@@ -60,7 +61,7 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
 
   if (STRINGP (string_or_char))
     {
-      Lisp_Object syntax_table = buf->mirror_syntax_table;
+      Lisp_Object syntax_table = BUFFER_MIRROR_SYNTAX_TABLE (buf);
       Ibyte *storage =
 	alloca_ibytes (XSTRING_LENGTH (string_or_char) * MAX_ICHAR_LEN);
       Ibyte *newp = storage;
@@ -188,7 +189,7 @@ casify_region_internal (enum case_action flag, Lisp_Object start,
 {
   /* This function can GC */
   Charbpos pos, s, e;
-  Lisp_Object syntax_table = buf->mirror_syntax_table;
+  Lisp_Object syntax_table = BUFFER_MIRROR_SYNTAX_TABLE (buf);
   int mccount;
   int wordp = 0, wordp_prev;
 

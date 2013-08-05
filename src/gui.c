@@ -26,8 +26,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
 #include "bytecode.h"
+#include "casetab.h"
 #include "elhash.h"
 #include "gui.h"
 #include "menubar.h"

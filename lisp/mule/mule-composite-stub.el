@@ -1,4 +1,4 @@
-;;; mule-composite-stub.el --- Stubs of composition support -*- coding: iso-2022-7bit; -*-
+;;; mule-composite-stub.el --- Stubs of composition support
 
 ;; Copyright (C) 2002 Ben Wing.
 

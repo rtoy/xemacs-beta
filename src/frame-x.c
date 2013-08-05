@@ -28,6 +28,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "charset.h" /* for Vcharset_ascii */
 #include "device-impl.h"
 #include "events.h"
 #include "extents.h"

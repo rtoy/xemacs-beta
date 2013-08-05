@@ -31,7 +31,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
+#include "casetab.h"
 #include "device-impl.h"
 #include "frame-impl.h"
 #include "gui.h"
@@ -128,7 +128,7 @@ menubar_visible_p_changed_in_frame (Lisp_Object UNUSED (specifier),
 }
 
 Lisp_Object
-current_frame_menubar (const struct frame* f)
+current_frame_menubar (const struct frame *f)
 {
   struct window *w = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f));
   return symbol_value_in_buffer (Qcurrent_menubar, w->buffer);

@@ -1,0 +1,37 @@
+COPYING for O'Reilly mapping files in XEmacs.
+
+Copyright (c) 2007  The Free Software Foundation, Inc.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
+Other files in this directory are subject to O'Reilly Media licenses.  The
+file oreilly.html is not part of XEmacs; it is property of O'Reilly Media,
+Inc.  It is included here for informational purposes only, and may be
+redistributed in verbatim form only.  These files were downloaded on
+January 28, 2007.  If you can't read them easily (they probably require
+network connections for full functionality), report a bug to XEmacs at
+<xemacs-beta@xemacs.org>.
+
+The following file was copied from
+http://examples.oreilly.com/cjkvinfo/unicode/gb12345-90.txt
+and is covered by the O'Reilly Media copying policy in
+http://www.oreilly.com/pub/a/oreilly/ask_tim/2001/codepolicy.html.
+A copy of that notice is in oreilly.html in this directory.  This data
+file is is an appendix to the book *Chinese, Japanese, Korean, and
+Vietnamese Information Processing* by Ken Lunde, published by O'Reilly
+Media (ISBN-13 978-1565922242).
+
+GB12345.TXT

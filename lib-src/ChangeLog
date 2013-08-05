@@ -79,6 +79,43 @@
 	Even if a function doesn't have a doc string, store its file name
 	in DOC.
 
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* make-case-conv.py:
+	nreverse the list of mappings before applying so that the bad
+	mappings for S, K, etc. get overridden.
+
+2010-02-04  Ben Wing  <ben@xemacs.org>
+
+	* make-case-conv.py:
+	Take out the junk but leave it in the form of a comment.  Take out
+	the commented junk entirely when we're sure the bug is fixed.
+
+2010-01-27  Ben Wing  <ben@xemacs.org>
+
+	* make-case-conv.py:
+	Update with various junk to check for mappings that cross charsets,
+	etc.  Put in for testing purposes.  Take out when the underlying
+	bug is fixed.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* make-case-conv.py:
+	* make-case-conv.py (uni_casefold_url):
+	* make-case-conv.py (our_filepath):
+	* make-case-conv.py (output_filename):
+	* make-case-conv.py (argformat):
+	* make-case-conv.py (outout):
+	* make-case-conv.py (errout):
+	* make-case-conv.py (saveline):
+	* make-case-conv.py (line):
+	New file.  Reads http://www.unicode.org/Public/UNIDATA/CaseFolding.txt
+	and generates lisp/mule/uni-case-conv.el.
+
+2010-01-25  Ben Wing  <ben@xemacs.org>
+
+	* fix-perms.sh: Also make lib-src/*.py executable.
+
 2010-03-02  Ben Wing  <ben@xemacs.org>
 
 	* digest-doc.c:

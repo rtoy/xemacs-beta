@@ -1,6 +1,6 @@
 /* Declarations having to do with XEmacs syntax tables.
    Copyright (C) 1985, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2002, 2003 Ben Wing.
+   Copyright (C) 2002, 2003, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,6 +22,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #ifndef INCLUDED_syntax_h_
 #define INCLUDED_syntax_h_
 
+#include "buffer.h"
 #include "chartab.h"
 
 /* A syntax table is a type of char table.
@@ -30,21 +31,36 @@ The values in a syntax table are either integers or conses of
 integers and chars.  The lowest 7 bits of the integer are the syntax
 class.  If this is Sinherit, then the actual syntax value needs to
 be retrieved from the standard syntax table.
+*/
 
-It turns out to be worth optimizing lookups of character syntax in two
-ways.  First, although the logic involved in finding the actual integer
-isn't complex, the syntax value is accessed in functions such as
-scan_lists() many times for each character scanned.  A "mirror syntax
-table" that contains the actual integers speeds this up.
-
-Second, due to the syntax-table text property, the table for looking up
-syntax may change from character to character.  Since looking up properties
-is expensive, a "syntax cache" which contains the current syntax table and
-the region where it is valid can speed up linear scans dramatically.
+#ifdef MIRROR_TABLE
+/*
 
 The low 7 bits of the integer is a code, as follows. The 8th bit is
 used as the prefix bit flag (see below).
+
+[[ Since the logic involved in finding the actual integer isn't very
+complex, you'd think the time required to retrieve it is not a
+factor.  If you thought that, however, you'd be wrong, due to the
+high number of times (many per character) that the syntax value is
+accessed in functions such as scan_lists().  To speed this up,
+we maintain a mirror syntax table that contains the actual
+integers.  We can do this successfully because syntax tables are
+now an abstract type, where we control all access. ]]
+
+I'm not sure I believe this any more, and maintaining these tables is
+more difficult with the new char tables, and is time consuming in and of
+itself.  For the moment, we're just disabling this; redo if profiling shows
+the need. --ben
 */
+
+#endif /* MIRROR_TABLE */
+
+#ifdef MIRROR_TABLE
+#define USED_IF_MIRROR_TABLE(x) x
+#else
+#define USED_IF_MIRROR_TABLE(x) UNUSED (x)
+#endif
 
 enum syntaxcode
 {
@@ -69,10 +85,46 @@ enum syntaxcode
   Smax	 /* Upper bound on codes that are meaningful */
 };
 
-enum syntaxcode charset_syntax (struct buffer *buf, Lisp_Object charset,
-				int *multi_p_out);
+/* Retrieve the syntax table from a buffer. */
+DECLARE_INLINE_HEADER (
+Lisp_Object
+BUFFER_SYNTAX_TABLE (struct buffer *buf)
+)
+{
+  return buf ? buf->syntax_table : Vstandard_syntax_table;
+}
+
+/* Retrieve the mirror syntax table from a buffer. */
+DECLARE_INLINE_HEADER (
+Lisp_Object
+BUFFER_MIRROR_SYNTAX_TABLE (struct buffer *buf)
+)
+{
+#ifdef MIRROR_TABLE
+  return buf ? buf->mirror_syntax_table :
+    XCHAR_TABLE (Vstandard_syntax_table)->mirror_table;
+#else
+  return BUFFER_SYNTAX_TABLE (buf);
+#endif /* MIRROR_TABLE */
+}
+
+
+#ifdef MULE
+
+/* Retrieve the category table from a buffer. */
+DECLARE_INLINE_HEADER (
+Lisp_Object
+BUFFER_CATEGORY_TABLE (struct buffer *buf)
+)
+{
+  return buf ? buf->category_table : Vstandard_category_table;
+}
+
+#endif /* MULE */
 
 void update_syntax_table (Lisp_Object table);
+
+#ifdef MIRROR_TABLE
 
 DECLARE_INLINE_HEADER (
 void
@@ -83,6 +135,10 @@ update_mirror_syntax_if_dirty (Lisp_Object table)
     update_syntax_table (table);
 }
 
+#endif /* MIRROR_TABLE */
+
+#define SYNTAX_FROM_CODE(code) ((enum syntaxcode) ((code) & 0177))
+
 /* Return the syntax code for a particular character and mirror table. */
 
 DECLARE_INLINE_HEADER (
@@ -90,9 +146,28 @@ int
 SYNTAX_CODE (Lisp_Object table, Ichar c)
 )
 {
+  Lisp_Object code;
+#ifdef MIRROR_TABLE
   type_checking_assert (XCHAR_TABLE (table)->mirror_table_p);
   update_mirror_syntax_if_dirty (table);
   return XFIXNUM (get_char_table_1 (c, table));
+#else
+  code = get_char_table (c, table);
+
+  /* #### It's possible this code will be time consuming because of getting
+     run in an inner-loop.  But it's all inlined. */
+
+  if (CONSP (code))
+    code = XCAR (code);
+  if (SYNTAX_FROM_CODE (XFIXNUM (code)) == Sinherit)
+    {
+      code = get_char_table (c, Vstandard_syntax_table);
+      if (CONSP (code))
+	code = XCAR (code);
+    }
+
+  return XFIXNUM (code);
+#endif /* MIRROR_TABLE */
 }
 
 #ifdef NOT_WORTH_THE_EFFORT
@@ -109,8 +184,6 @@ SYNTAX_CODE_1 (Lisp_Object table, Ichar c)
 }
 
 #endif /* NOT_WORTH_THE_EFFORT */
-
-#define SYNTAX_FROM_CODE(code) ((enum syntaxcode) ((code) & 0177))
 
 #define SYNTAX(table, c) SYNTAX_FROM_CODE (SYNTAX_CODE (table, c))
 
@@ -344,10 +417,17 @@ UPDATE_SYNTAX_CACHE (struct syntax_cache *cache, Charxpos pos)
 #define SYNTAX_FROM_CACHE(cache, c)			\
    SYNTAX_FROM_CODE (SYNTAX_CODE_FROM_CACHE (cache, c))
 
+#ifdef MIRROR_TABLE
 #define SYNTAX_CODE_FROM_CACHE(cache, c)	\
   (SOURCE_IS_TABLE ((cache)->source)		\
    ? SYNTAX_CODE ((cache)->mirror_table, c)	\
    : (cache)->syntax_code)
+#else
+#define SYNTAX_CODE_FROM_CACHE(cache, c)	\
+  (SOURCE_IS_TABLE ((cache)->source)		\
+   ? SYNTAX_CODE ((cache)->syntax_table, c)	\
+   : (cache)->syntax_code)
+#endif /* MIRROR_TABLE */
 
 #ifdef NOT_WORTH_THE_EFFORT
 /* If we really cared about the theoretical performance hit of the dirty
