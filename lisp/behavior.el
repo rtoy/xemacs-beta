@@ -62,7 +62,7 @@
 ;;    package is enabled, the user doesn't have to do anything specific for
 ;;    the package to do its thing -- it happens automatically if the user is
 ;;    using the area whose behavior has been changed.  These include packages
-;;    such as `avoid' (which makes the mouse poointer move when the cursor
+;;    such as `avoid' (which makes the mouse pointer move when the cursor
 ;;    gets too close), EFS (which adds the ability to treat an FTP site as
 ;;    part of the local file system), the packages that supply the
 ;;    mode-specific handling for various files, etc
@@ -285,7 +285,9 @@ have no user-invocable behavior."
 Normally, groups are created and assigned properties by individual packages.
 The resulting hierarchy may not make much sense globally.  This function
 allows the hierarchy and appearance of a group to be specified globally,
-and will take precendence over the properties assigned by `define-behavior-group'.  This allows a global organization to be imposed on groups, while still allowing for graceful handling of new or unknown groups.
+and will take precendence over the properties assigned by
+`define-behavior-group'.  This allows a global organization to be imposed on
+groups, while still allowing for graceful handling of new or unknown groups.
 
 NAME can be a symbol specifying a group name, or a list of
 \(PARENT [...] NAME), where a path from a particular parent is explicitly
