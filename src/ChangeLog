@@ -1,3 +1,30 @@
+2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c:
+	* data.c (Fcar):
+	* data.c (Fcdr):
+	* data.c (Fmake_weak_box):
+	* data.c (Fweak_box_ref):
+	* data.c (init_marking_ephemerons):
+	* data.c (continue_marking_ephemerons):
+	* data.c (finish_marking_ephemerons):
+	* data.c (prune_ephemerons):
+	* data.c (zap_finalize_list):
+	* data.c (ephemeron_equal):
+	* data.c (ephemeron_hash):
+	* data.c (Fmake_ephemeron):
+	* data.c (Fephemeron_ref):
+	* data.c (Fephemeronp):
+	* sequence.c:
+	* sequence.c (Fcopy_tree):
+	* sequence.c (Freplace):
+	Improve coding style here; #'car and #'cdr accept lists, not just
+	cons cells, update their argument names to reflect that.
+	Follow coding conventions in the weak box and ephemeron code.
+	Don't needlessly abbreviate in copy-tree, use argument names from
+	Common Lisp in #'merge and #'replace.
+	Document ALIST better in #'nsublis, #'sublis.
+
 2013-06-17  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Support bignums with MPIR.

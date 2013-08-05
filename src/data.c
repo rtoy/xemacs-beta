@@ -572,21 +572,21 @@ Return a symbol representing the type of OBJECT.
 /* Extract and set components of lists */
 
 DEFUN ("car", Fcar, 1, 1, 0, /*
-Return the car of CONS.  If CONS is nil, return nil.
+Return the car of LIST.  If LIST is nil, return nil.
 The car of a list or a dotted pair is its first element.
 
-Error if CONS is not nil and not a cons cell.  See also `car-safe'.
+Error if LIST is not nil and not a cons cell.  See also `car-safe'.
 */
-       (cons))
+       (list))
 {
   while (1)
     {
-      if (CONSP (cons))
-	return XCAR (cons);
-      else if (NILP (cons))
+      if (CONSP (list))
+	return XCAR (list);
+      else if (NILP (list))
 	return Qnil;
       else
-	cons = wrong_type_argument (Qlistp, cons);
+	list = wrong_type_argument (Qlistp, list);
     }
 }
 
@@ -599,22 +599,22 @@ Return the car of OBJECT if it is a cons cell, or else nil.
 }
 
 DEFUN ("cdr", Fcdr, 1, 1, 0, /*
-Return the cdr of CONS.  If CONS is nil, return nil.
+Return the cdr of LIST.  If LIST is nil, return nil.
 The cdr of a list is the list without its first element.  The cdr of a
 dotted pair (A . B) is the second element, B.
 
 Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
 */
-       (cons))
+       (list))
 {
   while (1)
     {
-      if (CONSP (cons))
-	return XCDR (cons);
-      else if (NILP (cons))
+      if (CONSP (list))
+	return XCDR (list);
+      else if (NILP (list))
 	return Qnil;
       else
-	cons = wrong_type_argument (Qlistp, cons);
+	list = wrong_type_argument (Qlistp, list);
     }
 }
 
@@ -3121,16 +3121,16 @@ reachability of CONTENTS.  When CONTENTS is garbage-collected,
 */
        (value))
 {
-  return make_weak_box(value);
+  return make_weak_box (value);
 }
 
 DEFUN ("weak-box-ref", Fweak_box_ref, 1, 1, 0, /*
 Return the contents of weak box WEAK-BOX.
 If the contents have been GCed, return NIL.
 */
-       (wb))
+       (weak_box))
 {
-  return XWEAK_BOX (wb)->value;
+  return XWEAK_BOX (weak_box)->value;
 }
 
 DEFUN ("weak-box-p", Fweak_boxp, 1, 1, 0, /*
@@ -3161,7 +3161,7 @@ static Lisp_Object Vnew_all_ephemerons;
 static Lisp_Object Vfinalize_list;
 
 void
-init_marking_ephemerons(void)
+init_marking_ephemerons (void)
 {
   Vnew_all_ephemerons = Qnil;
 }
@@ -3171,7 +3171,7 @@ init_marking_ephemerons(void)
  * way. */
 
 int
-continue_marking_ephemerons(void)
+continue_marking_ephemerons (void)
 {
   Lisp_Object rest = Vall_ephemerons, next, prev = Qnil;
   int did_mark = 0;
@@ -3217,7 +3217,7 @@ continue_marking_ephemerons(void)
  */
 
 int
-finish_marking_ephemerons(void)
+finish_marking_ephemerons (void)
 {
   Lisp_Object rest = Vall_ephemerons, next, prev = Qnil;
   int did_mark = 0;
@@ -3264,13 +3264,13 @@ finish_marking_ephemerons(void)
 }
 
 void
-prune_ephemerons(void)
+prune_ephemerons (void)
 {
   Vall_ephemerons = Vnew_all_ephemerons;
 }
 
 Lisp_Object
-zap_finalize_list(void)
+zap_finalize_list (void)
 {
   Lisp_Object finalizers = Vfinalize_list;
 
@@ -3306,12 +3306,12 @@ static int
 ephemeron_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
   return
-    internal_equal_0 (XEPHEMERON_REF (obj1), XEPHEMERON_REF(obj2), depth + 1,
-		      foldcase);
+    internal_equal_0 (XEPHEMERON_REF (obj1), XEPHEMERON_REF (obj2),
+                      depth + 1, foldcase);
 }
 
 static Hashcode
-ephemeron_hash(Lisp_Object obj, int depth, Boolint equalp)
+ephemeron_hash (Lisp_Object obj, int depth, Boolint equalp)
 {
   return internal_hash (XEPHEMERON_REF (obj), depth + 1, equalp);
 }
@@ -3345,11 +3345,11 @@ make_ephemeron (Lisp_Object key, Lisp_Object value, Lisp_Object finalizer)
 /* Ephemerons are special cases in the KKCC mark algorithm, so nothing
    is marked here. */
 static const struct memory_description ephemeron_description[] = {
-  { XD_LISP_OBJECT, offsetof(struct ephemeron, key),
+  { XD_LISP_OBJECT, offsetof (struct ephemeron, key),
     0, { 0 }, XD_FLAG_NO_KKCC },
-  { XD_LISP_OBJECT, offsetof(struct ephemeron, cons_chain),
+  { XD_LISP_OBJECT, offsetof (struct ephemeron, cons_chain),
     0, { 0 }, XD_FLAG_NO_KKCC },
-  { XD_LISP_OBJECT, offsetof(struct ephemeron, value),
+  { XD_LISP_OBJECT, offsetof (struct ephemeron, value),
     0, { 0 }, XD_FLAG_NO_KKCC },
   { XD_END }
 };
@@ -3372,16 +3372,16 @@ future calls to `ephemeron-ref' will return NIL.
 */
        (key, value, finalizer))
 {
-  return make_ephemeron(key, value, finalizer);
+  return make_ephemeron (key, value, finalizer);
 }
 
 DEFUN ("ephemeron-ref",  Fephemeron_ref, 1, 1, 0, /*
 Return the contents of ephemeron EPHEMERON.
 If the contents have been GCed, return NIL.
 */
-       (eph))
+       (ephemeron))
 {
-  return XEPHEMERON_REF (eph);
+  return XEPHEMERON_REF (ephemeron);
 }
 
 DEFUN ("ephemeron-p", Fephemeronp, 1, 1, 0, /*
