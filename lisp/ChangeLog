@@ -14,7 +14,7 @@
 	useful.
 	Warn about non-string non-integer ARGs, this is incorrect.
 	Am not changing the function to error with same, most code that
-	makes the mistake is has no problems, which is why it has survived
+	makes the mistake has no problems, which is why it has survived
 	so long.
 	* window-xemacs.el (save-window-excursion/mapping):
 	* window.el (save-window-excursion):
