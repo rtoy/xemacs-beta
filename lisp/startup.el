@@ -544,59 +544,61 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
     ;; frame?
     (startup-load-autoloads)
 
-    (let (error-data)
-      ;; if noninteractive, an error will kill us.  by catching and
-      ;; resignalling, we don't accomplish much, but do make it difficult
-      ;; to determine where the error really occurred.  when interactive,
-      ;; however, an error processing the command line does NOT kill us;
-      ;; instead, the error handler tries to display an error on the frame.
-      ;; In that case, we must make sure that all the remaining initialization
-      ;; gets done!!!
-      ;;
-      ;; #### A better solution in the interactive case is to use
-      ;; call-with-condition-handler, which would let us do the rest of
-      ;; the initialization AND allow the user to get an accurate backtrace.
-      (if (noninteractive)
-	  (command-line)
-	(condition-case data
-	    (command-line)
-	  ;; catch non-error signals, especially quit
-	  (t (setq error-data data))))
-      ;; Do this again, in case the init file defined more abbreviations.
-      (setq default-directory (abbreviate-file-name default-directory))
-      ;; Specify the file for recording all the auto save files of
-      ;; this session.  This is used by recover-session.
-      (if auto-save-list-file-prefix
-	  (setq auto-save-list-file-name
-		(expand-file-name
-		 (format "%s%d-%s"
-			 auto-save-list-file-prefix
-			 (emacs-pid)
-			 (system-name)))))
-      (run-hooks 'emacs-startup-hook)
-      (and term-setup-hook
-	   (run-hooks 'term-setup-hook))
-      (setq term-setup-hook nil)
-      ;;      ;; Modify the initial frame based on what the init file puts into
-      ;;      ;; ...-frame-alist.
-      (frame-notice-user-settings)
-      ;;      ;;#### GNU Emacs junk
-      ;;      ;; Now we know the user's default font, so add it to the menu.
-      ;;      (if (fboundp 'font-menu-add-default)
-      ;;	  (font-menu-add-default))
-      (when window-setup-hook
-	(run-hooks 'window-setup-hook))
-      (setq window-setup-hook nil)
-      (if error-data
-	  ;; re-signal, and don't allow continuation as that will probably
-          ;; wipe out the user's .emacs if she hasn't migrated yet!
-	  (signal-error (car error-data) (cdr error-data))))
+    (macrolet
+        ((replace-ntl-buffer (&body body)
+           ;; Create a dynamic variable that won't escape outside this
+           ;; function (which will not be called recursively, and so won't
+           ;; shadow itself) and doesn't require consing a closure at
+           ;; runtime:
+           (cons 'progn (subst '#:ntl-buffer 'ntl-buffer body :test #'eq))))
+      (replace-ntl-buffer
+       (let ((ntl-buffer (current-buffer)))
+         (labels ((after-command-line (&optional error-data)
+                    (with-current-buffer ntl-buffer
+                      ;; Do this again, in case the init file defined more
+                      ;; abbreviations.
+                      (setq default-directory
+                            (abbreviate-file-name default-directory))
+                      ;; Specify the file for recording all the auto save
+                      ;; files of this session.  This is used by
+                      ;; recover-session.
+                      (if auto-save-list-file-prefix
+                          (setq auto-save-list-file-name
+                                (expand-file-name
+                                 (format "%s%d-%s"
+                                         auto-save-list-file-prefix
+                                         (emacs-pid)
+                                         (system-name)))))
+                      (run-hooks 'emacs-startup-hook)
+                      (and term-setup-hook
+                           (run-hooks 'term-setup-hook))
+                      (setq term-setup-hook nil)
+                      ;; Modify the initial frame based on what the init file
+                      ;; puts into ...-frame-alist.
+                      (frame-notice-user-settings)
+                      (when window-setup-hook
+                        (run-hooks 'window-setup-hook))
+                      (setq window-setup-hook nil))))
+           (call-with-condition-handler
+               (if (noninteractive)
+                   #'ignore
+                 ;; If noninteractive, an error will kill us.  When
+                 ;; interactive, however, an error processing the command
+                 ;; line does NOT kill us; instead, the error handler tries
+                 ;; to display an error on the frame.  In that case, we must
+                 ;; make sure that all the remaining initialization gets
+                 ;; done.
+                 #'after-command-line)
+               #'command-line)
+
+           ;; If we're here, we haven't errored, and the function still needs
+           ;; to be called.
+           (after-command-line)))))
 
     (if load-user-init-file-p
-	(maybe-migrate-user-init-file))
-    ;; GNU calls precompute-menubar-bindings.  We don't mix menubars
-    ;; and keymaps.
-    ))
+	(maybe-migrate-user-init-file))))
+;; GNU calls precompute-menubar-bindings.  We don't mix menubars
+;; and keymaps.
 
 (defun command-line-early (args)
   ;; This processes those switches which need to be processed before
