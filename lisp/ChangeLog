@@ -1,3 +1,18 @@
+2013-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (gensym):
+	* bytecomp.el (byte-compile-gensym): New.
+	Warn that gensym called in a for-effect context is unlikely to be
+	useful.
+	Warn about non-string non-integer ARGs, this is incorrect.
+	Am not changing the function to error with same, most code that
+	makes the mistake is has no problems, which is why it has survived
+	so long.
+	* window-xemacs.el (save-window-excursion/mapping):
+	* window.el (save-window-excursion):
+	Call #'gensym with a string, not a symbol.
+
 2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* isearch-mode.el (isearch-pre-command-hook):
