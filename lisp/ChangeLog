@@ -1,5 +1,12 @@
 2013-08-21  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* startup.el (normal-top-level):
+	Use #'call-with-condition-handler here when calling
+	#'command-line, giving better backtraces on error.
+	Be careful about the current buffer in HANDLER.
+
+2013-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el:
 	* bytecomp.el (gensym):
 	* bytecomp.el (byte-compile-gensym): New.
