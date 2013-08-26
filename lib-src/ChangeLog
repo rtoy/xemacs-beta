@@ -1,3 +1,7 @@
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
 2013-03-06  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Fix reversed test for insert-data-in-exec build.
