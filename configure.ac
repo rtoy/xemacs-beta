@@ -1448,6 +1448,7 @@ if test "$with_newgc" = "yes"; then
     case "$opsys" in
       darwin )  case "$machine" in
 		  intel386 ) check_vdb_posix=yes ;;
+		  x86_64 ) check_vdb_posix=yes ;;
 		  * ) AC_DEFINE(VDB_MACH)  have_vdb_mach=yes ;;
 		esac ;;
       cygwin* ) AC_DEFINE(VDB_WIN32) have_vdb_win32=yes ;;
