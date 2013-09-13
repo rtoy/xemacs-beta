@@ -1,3 +1,8 @@
+2013-09-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (init_image_instance_from_xbm_inline): Use GdkPixbuf
+	for cursor.
+
 2013-03-10  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console-gtk-impl.h (g): Remove colormap from gtk_device. Remove

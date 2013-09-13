@@ -1025,7 +1025,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
     case IMAGE_POINTER:
     {
 	GdkColor fg_color, bg_color;
-	GdkPixmap *source;
+	GdkPixbuf *source;
 
 	check_pointer_sizes (gdk_drawable_get_display (draw), width, height,
                              instantiator);
@@ -1047,11 +1047,12 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) =
 	  find_keyword_in_vector (instantiator, Q_hotspot_y);
 	IMAGE_INSTANCE_GTK_CURSOR (ii) =
-	    gdk_cursor_new_from_pixbuf (source, mask,
-					!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) ?
-					XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) : 0,
-					!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) ?
-					XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) : 0);
+	  gdk_cursor_new_from_pixbuf (gdk_drawable_get_display (draw), source,
+				      !NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) ?
+				      XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) : 0,
+				      !NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) ?
+				      XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) : 0);
+
       }
       break;
 
