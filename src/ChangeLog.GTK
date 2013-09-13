@@ -1,3 +1,8 @@
+2013-09-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_create_menubar): Cast current child pointer
+	as GTK_WIDGET at declaration. Remove unused variable.
+
 2013-09-09  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (init_image_instance_from_xbm_inline): Use GdkPixbuf

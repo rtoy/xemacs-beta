@@ -904,7 +904,9 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
   {
     EXTERNAL_LIST_LOOP_2 (item_descr, value)
       {
-	gpointer current_child = g_list_nth_data (GTK_MENU_SHELL (menubar)->children, menu_position);
+	GtkWidget *current_child =
+	  GTK_WIDGET (g_list_nth_data (GTK_MENU_SHELL (menubar)->children,
+				       menu_position));
 
 	if (NILP (item_descr))
 	  {
@@ -930,7 +932,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	       possible bug.  Need to ensure we're only deleting the child
 	       at only one point in the code. */
 	    if (current_child && gtk_widget_get_parent (current_child) != 0)
-	      gtk_widget_destroy (GTK_WIDGET (current_child));
+	      gtk_widget_destroy (current_child);
 	    gtk_menu_shell_insert (GTK_MENU_SHELL (menubar),
                                    item, menu_position);
 	  }
@@ -941,10 +943,10 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	    gboolean reused_p = FALSE;
 
 	    /* We may be able to reuse the widget, let's at least check. */
-	    if (current_child && menu_can_reuse_widget (GTK_WIDGET (current_child),
+	    if (current_child && menu_can_reuse_widget (current_child,
 							XSTRING_DATA (XCAR (item_descr))))
 	      {
-		widget = menu_convert (item_descr, GTK_WIDGET (current_child),
+		widget = menu_convert (item_descr, current_child,
 				       menubar_accel_group);
 		reused_p = TRUE;
 	      }
@@ -952,7 +954,9 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	      {
 		widget = menu_convert (item_descr, NULL, menubar_accel_group);
 		if (current_child && gtk_widget_get_parent (current_child) != 0)
-                  gtk_widget_destroy (GTK_WIDGET (current_child));
+		  {
+		    gtk_widget_destroy (current_child);
+		  }
 		gtk_menu_shell_insert (GTK_MENU_SHELL (menubar),
                                        widget, menu_position);
 	      }
