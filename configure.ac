@@ -2872,6 +2872,8 @@ if test "${GTK_CONFIG}" != "no"; then
       AC_MSG_CHECKING(gtk libs)
       GTK_LIBS=`${GTK_CONFIG} --libs`
       XE_APPEND(${GTK_LIBS}, libs_gtk)
+      dnl Add -lX11 for XKeysymToString()
+      XE_APPEND("-lX11", libs_gtk)
       AC_MSG_RESULT(${GTK_LIBS})
 
       AC_MSG_CHECKING(gtk cflags)
