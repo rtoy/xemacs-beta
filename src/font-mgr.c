@@ -2,7 +2,7 @@
 
 Copyright (C) 2003 Eric Knauel and Matthias Neubauer
 Copyright (C) 2005 Eric Knauel
-Copyright (C) 2004-2009 Free Software Foundation, Inc.
+Copyright (C) 2004-2009, 2013 Free Software Foundation, Inc.
 Copyright (C) 2010 Ben Wing.
 
 Authors:	Eric Knauel <knauel@informatik.uni-tuebingen.de>
@@ -143,11 +143,9 @@ static Lisp_Object make_xlfd_font_regexp (void);
 static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
 
 /* 
-   extract the C representation of the Lisp string STR and convert it
+   Extract the C representation of the Lisp string STR and convert it
    to the encoding used by the Fontconfig API for property and font
-   names.  I suppose that Qnative is the right encoding, the manual
-   doesn't say much about this topic.  This functions assumes that STR
-   is a Lisp string.
+   names.  These functions assume that STR is a Lisp string.
 */
 #define extract_fcapi_string(str) \
   (LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
@@ -157,6 +155,7 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
 
 /* #### This homebrew lashup should be replaced with FcConstants.
 
+   #### This isn't true any more (fontconfig v2.10.95), if it ever was.
    fontconfig assumes that objects (property names) are statically allocated,
    and you will get bizarre results if you pass Lisp string data or strings
    allocated on the stack as objects.  fontconfig _does_ copy values, so we
@@ -227,19 +226,28 @@ Return a new, empty fc-pattern object.
   fc_pattern *fcpat = XFC_PATTERN (ALLOC_NORMAL_LISP_OBJECT (fc_pattern));
 
   fcpat->fcpatPtr = FcPatternCreate ();
+  assert (fcpat->fcpatPtr);
   return wrap_fc_pattern (fcpat);
 }
 
 DEFUN ("fc-name-parse", Ffc_name_parse, 1, 1, 0, /*
-Parse an Fc font name and return its representation as a fc pattern object.
+Parse an Fc font name and return its representation as a Fc pattern object.
+Signal `invalid-argument' if the name is unparseable.
+
+Note: The name returned by xft-font-truename has been observed to be
+unparseable \(in the case of the xft-font-default-font-name).  The cause
+is unknown so you can't assume getting a name from a font instance then
+instantiating the font again will round-trip.  See `fc-name-parse-harder'.
 */
       (name))
 {
   fc_pattern *fcpat = XFC_PATTERN (ALLOC_NORMAL_LISP_OBJECT (fc_pattern));
 
   CHECK_STRING (name);
-
   fcpat->fcpatPtr = FcNameParse ((FcChar8 *) extract_fcapi_string (name));
+  if (!fcpat->fcpatPtr)
+    /* #### Is this the best API?  Could return a symbol or similar. */
+    invalid_argument ("unparseable Fc font name", name);
   return wrap_fc_pattern (fcpat);
 }
 
@@ -1386,8 +1394,8 @@ complex_vars_of_font_mgr (void)
 #endif
 
   DEFVAR_LISP ("xft-xlfd-font-regexp", &Vxlfd_font_name_regexp /*
-The regular expression used to match XLFD font names. */			       
-	      );
+The regular expression used to match XLFD font names.
+*/ );
   Vxlfd_font_name_regexp = make_xlfd_font_regexp();
 }
 

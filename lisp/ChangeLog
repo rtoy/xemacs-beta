@@ -1,3 +1,10 @@
+2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fontconfig.el (fc-name-parse-known-problem-attributes): New.
+	(fc-name-parse-harder): New.
+
+	* font.el (xft-font-create-object): Use fc-name-parse-harder.
+
 2013-08-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* startup.el (normal-top-level):
