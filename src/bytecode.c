@@ -239,8 +239,8 @@ bytecode_negate (Lisp_Object obj)
 
   if (FIXNUMP    (obj)) return make_integer (- XFIXNUM (obj));
   if (FLOATP  (obj)) return make_float (- XFLOAT_DATA (obj));
-  if (CHARP   (obj)) return make_integer (- ((int) XCHAR (obj)));
-  if (MARKERP (obj)) return make_integer (- ((int) marker_position (obj)));
+  if (CHARP   (obj)) return make_integer (- ((EMACS_INT) XCHAR (obj)));
+  if (MARKERP (obj)) return make_integer (- marker_position (obj));
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (obj)) BIGNUM_ARITH_RETURN (obj, neg);
 #endif

@@ -832,23 +832,25 @@ zero_nonsized_lisp_object (Lisp_Object obj)
   zero_sized_lisp_object (obj, lisp_object_size (obj));
 }
 
+#ifdef NEW_GC
+void
+free_normal_lisp_object (Lisp_Object UNUSED(obj))
+{
+  /* Manual frees are not allowed with asynchronous finalization */
+  return;
+}
+#else
 void
 free_normal_lisp_object (Lisp_Object obj)
 {
-#ifndef NEW_GC
   const struct lrecord_implementation *imp =
     XRECORD_LHEADER_IMPLEMENTATION (obj);
-#endif /* not NEW_GC */
 
-#ifdef NEW_GC
-  /* Manual frees are not allowed with asynchronous finalization */
-  return;
-#else
   assert (!imp->frob_block_p);
   assert (!imp->size_in_bytes_method);
   old_free_lcrecord (obj);
-#endif
 }
+#endif
 
 #ifndef NEW_GC
 int
