@@ -1,6 +1,6 @@
 ;;; files.el --- file input and output commands for XEmacs.
 
-;; Copyright (C) 1985-1987, 1992-1995, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1987, 1992-1995, 1997, 2013 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 2001, 2002, 2003 Ben Wing.
 
@@ -297,13 +297,46 @@ Includes the new backup.  Must be > 0"
   :group 'backup)
 
 (defcustom require-final-newline nil
-  "*Value of t says silently ensure a file ends in a newline when it is saved.
-Non-nil but not t says ask user whether to add a newline when there isn't one.
-nil means don't add newlines."
-  :type '(choice (const :tag "Off" nil)
-		 (const :tag "Add" t)
-		 (sexp :tag "Ask" :format "%t\n" ask))
-  :group 'editing-basics)
+  "Whether to add a newline automatically at the end of the file.
+
+A value of t means do this only when the file is about to be saved.
+A value of `visit' means do this right after the file is visited.
+A value of `visit-save' means do it at both of those times.
+Any other non-nil value means ask user whether to add a newline, when saving.
+A value of nil means don't add newlines.
+
+Certain major modes set this locally to the value obtained
+from `mode-require-final-newline'."
+  :type '(choice (const :tag "When visiting" visit)
+		 (const :tag "When saving" t)
+		 (const :tag "When visiting or saving" visit-save)
+		 (const :tag "Don't add newlines" nil)
+		 (other :tag "Ask each time" ask))
+  :group 'editing-basics
+  :version "21.5.35")
+
+(defcustom mode-require-final-newline t
+  "Whether to add a newline at end of file, in certain major modes.
+Those modes set `require-final-newline' to this value when you enable them.
+They do so because they are often used for files that are supposed
+to end in newlines, and the question is how to arrange that.
+
+A value of t means do this only when the file is about to be saved.
+A value of `visit' means do this right after the file is visited.
+A value of `visit-save' means do it at both of those times.
+Any other non-nil value means ask user whether to add a newline, when saving.
+
+A value of nil means do not add newlines.  That is a risky choice in this
+variable since this value is used for modes for files that ought to have
+final newlines.  So if you set this to nil, you must explicitly check and
+add a final newline, whenever you save a file that really needs one."
+  :type '(choice (const :tag "When visiting" visit)
+		 (const :tag "When saving" t)
+		 (const :tag "When visiting or saving" visit-save)
+		 (const :tag "Don't add newlines" nil)
+		 (other :tag "Ask each time" ask))
+  :group 'editing-basics
+  :version "21.5.35")
 
 (defcustom auto-save-default t
   "*Non-nil says by default do auto-saving of every file-visiting buffer."
@@ -1576,6 +1609,16 @@ The directory containing %s does not exist.  Create? "
 ;     (when view-read-only
 ;       (and-boundp 'view-mode (view-mode-disable)))
     (normal-mode t)
+    ;; If requested, add a newline at the end of the file.
+    (and (memq require-final-newline '(visit visit-save))
+	 (> (point-max) (point-min))
+	 (/= (char-after (1- (point-max))) ?\n)
+	 (not (and (eq selective-display t)
+		   (= (char-after (1- (point-max))) ?\r)))
+	 (not buffer-read-only)
+	 (save-excursion
+	   (goto-char (point-max))
+	   (ignore-errors (insert "\n"))))
     (when (and buffer-read-only
 	       view-read-only
 	       (not (eq (get major-mode 'mode-class) 'special)))
@@ -2833,6 +2876,7 @@ After saving the buffer, this function runs `after-save-hook'."
 		   (not (and (eq selective-display t)
 			     (eq (char-after (1- (point-max))) ?\r)))
 		   (or (eq require-final-newline t)
+		       (eq require-final-newline 'visit-save)
 		       (and require-final-newline
 			    (y-or-n-p
 			     (format "Buffer %s does not end in newline.  Add one? "

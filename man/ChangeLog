@@ -1,3 +1,8 @@
+2013-09-15  Mats Lidell  <matsl@xemacs.org>
+
+	* xemacs/files.texi (Saving): New variable
+	mode-require-final-newline. Update info for require-final-newline.
+
 2013-06-25  Jerry James  <james@xemacs.org>
 
 	* Makefile.in: New file, so we can replace @MAKEINFO@.
