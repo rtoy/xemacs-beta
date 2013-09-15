@@ -1,5 +1,9 @@
 2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* automated/process-tests.el: Should work on all POSIX systems.
+
+2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* automated/face-tests.el: New file.  Start with fontconfig tests.
 
 2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
