@@ -1,3 +1,8 @@
+2013-09-15  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/files-tests.el: New file. Test new states in
+	require-final-newline and new variable mode-require-final-newline.
+
 2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/process-tests.el: Should work on all POSIX systems.

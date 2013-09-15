@@ -1,6 +1,6 @@
 ;;; text-mode.el --- text mode, and its idiosyncratic commands.
 
-;; Copyright (C) 1985, 1992, 1994, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1992, 1994, 1997, 2013 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: wp, dumped
@@ -83,6 +83,8 @@ Turning on Text mode runs the normal hook `text-mode-hook'."
   (setq paragraph-start (concat page-delimiter "\\|[ \t]*$"))
   (make-local-variable 'paragraph-separate)
   (setq paragraph-separate paragraph-start)
+  (set (make-local-variable 'require-final-newline)
+       mode-require-final-newline)
   (setq mode-name "Text")
   (setq major-mode 'text-mode)
   (run-hooks 'text-mode-hook))

@@ -1,3 +1,11 @@
+2013-09-15  Mats Lidell  <matsl@cxemacs.org>
+
+	* files.el (mode-require-final-newline): Variable synced from
+	GNU. Thank you GNU. Allows modes to control final newlines.
+	(require-final-newline): Add action on visiting and visiting or
+	saving in sync with GNU.
+	* text-mode.el (text-mode): Use mode-require-final-newline.
+
 2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* fontconfig.el (fc-name-parse-known-problem-attributes): New.
