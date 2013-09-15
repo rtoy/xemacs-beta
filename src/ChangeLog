@@ -1,3 +1,9 @@
+2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font-mgr.c: Fix a bunch of comments and reformat some docstrings.
+	(Ffc_name_parse):
+	Make FcNameParse signal invalid-argument when parse fails.
+
 2013-09-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* alloc.c (free_normal_lisp_object):
