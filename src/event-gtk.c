@@ -899,13 +899,11 @@ emacs_gtk_select_console (struct console *con)
 static void
 emacs_gtk_unselect_console (struct console *con)
 {
-  Lisp_Object console;
   int infd;
 
   if (CONSOLE_GTK_P (con))
 	return; /* X consoles are automatically selected for when we initialize them */
   infd = event_stream_unixoid_unselect_console (con);
-  console = wrap_console (con);
   unselect_filedesc (infd);
 }
 
@@ -1829,8 +1827,8 @@ gtk_reset_modifier_mapping (struct device *d)
   Display *display = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
   struct gtk_device *xd = DEVICE_GTK_DATA (d);
   int modifier_index, modifier_key, column, mkpm;
-  int warned_about_overlapping_modifiers = 0;
-  /*  int warned_about_predefined_modifiers  = 0; */
+  /* int warned_about_overlapping_modifiers = 0; */
+  /* int warned_about_predefined_modifiers  = 0; */
   /* int warned_about_duplicate_modifiers   = 0; */
   int meta_bit  = 0;
   int hyper_bit = 0;
@@ -1929,8 +1927,8 @@ gtk_reset_modifier_mapping (struct device *d)
 	  warn_when_safe
 	    (Qkey_mapping, Qwarning,
 	     "XEmacs:  %s is being used for both Mode_switch and %s.",
-	     index_to_name (mode_bit), warn),
-	    warned_about_overlapping_modifiers = 1;
+	     index_to_name (mode_bit), warn);
+	  /* warned_about_overlapping_modifiers = 1; */
 	}
     }
 #undef index_to_name

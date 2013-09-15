@@ -430,7 +430,7 @@ static Lisp_Object
 import_gtk_enumeration_internal (GType the_type)
 {
   GEnumClass *klass = NULL;
-  int i;
+  uint i;
   
   if (!G_TYPE_IS_ENUM (the_type))
     invalid_argument ("type is not an enum",

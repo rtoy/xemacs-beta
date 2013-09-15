@@ -328,13 +328,13 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
   Lisp_Object key, val;
   Lisp_Object include_p = Qnil, hook_fn = Qnil, config_tag = Qnil;
   Lisp_Object active_p = Qt;
-  Lisp_Object accel;
+  /* Lisp_Object accel; */
   int included_spec = 0;
   int active_spec = 0;
 
   if (STRINGP (XCAR (desc)))
     {
-      accel = menu_name_to_accelerator (XSTRING_DATA (XCAR (desc)));
+      /* accel = menu_name_to_accelerator (XSTRING_DATA (XCAR (desc))); */
 
       if (!reuse)
 	{
@@ -940,7 +940,6 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	  {
 	    /* Need to actually convert it into a menu and slap it in */
 	    GtkWidget *widget;
-	    gboolean reused_p = FALSE;
 
 	    /* We may be able to reuse the widget, let's at least check. */
 	    if (current_child && menu_can_reuse_widget (current_child,
@@ -948,7 +947,6 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	      {
 		widget = menu_convert (item_descr, current_child,
 				       menubar_accel_group);
-		reused_p = TRUE;
 	      }
 	    else
 	      {

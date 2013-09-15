@@ -68,7 +68,9 @@ xemacs_type_register (const gchar *name, GType parent)
 static void
 xemacs_init_gtk_classes (void)
 {
+#if !GLIB_CHECK_VERSION(2, 35, 0)
   g_type_init();
+#endif
 #if 0
   /* These are all stored as GValue or GValueArray */
   /* Why aren't GLib types GOBjects? */
