@@ -350,7 +350,6 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble UNUSED (value),
   int vertical = gtk_orientable_get_orientation ((GtkOrientable *)range) ==
     GTK_ORIENTATION_VERTICAL;
   struct frame *f = 0;
-  struct scrollbar_instance *instance;
   GUI_ID id;
   /* gdouble position = gtk_adjustment_get_value (adj); */
   Lisp_Object win, frame;
@@ -375,7 +374,7 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble UNUSED (value),
 
   if (NILP (win))
     return(FALSE);
-  instance = vertical ? mirror->scrollbar_vertical_instance : mirror->scrollbar_horizontal_instance;
+
   frame = WINDOW_FRAME (XWINDOW (win));
   inhibit_slider_size_change = 0;
   switch (scroll)
