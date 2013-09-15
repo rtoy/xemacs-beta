@@ -5660,17 +5660,6 @@ dnl -------------------------------
 dnl #### We should tag this as the _build_ environment.
 dnl Before doing that, though, must check if tools care about line 1.
 
-(
-dnl /etc/osversion is on SONY NEWS-OS
-if test -f /etc/osversion; then dnl SONY NEWS-OS
-  echo "osversion: `cat /etc/osversion`"
-else
-  echo "uname -a: `uname -a`"
-fi
-echo ""
-echo "$progname $ac_configure_args"
-) > Installation
-
 if test ! -z ${emacs_beta_version} ; then
   if test -z "${emacs_is_beta}" ; then
 	xemacs_betaname=".${emacs_beta_version}"
@@ -5681,8 +5670,20 @@ else
   xemacs_betaname=""
 fi
 
+echo ""
+: > Installation
+
 dnl Start stdout redirection to '| tee -a Installation'
 (
+dnl /etc/osversion is on SONY NEWS-OS
+if test -f /etc/osversion; then dnl SONY NEWS-OS
+  echo "osversion: `cat /etc/osversion`"
+else
+  echo "uname -a: `uname -a`"
+fi
+echo ""
+echo "$progname $ac_configure_args"
+
 echo "
 
 XEmacs ${emacs_major_version}.${emacs_minor_version}${xemacs_betaname} \"$xemacs_codename\" $xemacs_extra_name configured for \`$ac_cv_build'."
