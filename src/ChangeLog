@@ -1,3 +1,27 @@
+2013-09-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* alloc.c (free_normal_lisp_object):
+	Mark unused argument.
+
+	* bytecode.c (bytecode_negate): 
+	* data.c (Fsub1):
+	Shut up compiler warnings about always true comparisons.
+
+	* dired.c (Ffile_attributes):
+	Shut up compiler warnings about signedness in comparison.
+
+	* editfns.c (Fencode_time):
+	Fix addition of int to string to shut up compiler.  Still broken?
+
+	* glyphs.c (check_valid_xbm_inline):
+	Shut up compiler warnings about unused variable and signedness.
+
+	* lread.c (unreadchar):
+	Shut up compiler warning about unused format argument.
+
+	* sysdep.c (child_setup_tty):
+	Shut up compiler warning about empty if body.
+
 2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c:

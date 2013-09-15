@@ -2637,8 +2637,8 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 static void
 check_valid_xbm_inline (Lisp_Object data)
 {
-  Lisp_Object width, height, bits, args[2];
-  unsigned long i_width, i_height;
+  Lisp_Object width, height, bits;
+  EMACS_INT i_width, i_height;
 
   if (!CONSP (data) ||
       !CONSP (XCDR (data)) ||
@@ -2658,9 +2658,9 @@ check_valid_xbm_inline (Lisp_Object data)
   if (!FIXNUMP (height) || XREALFIXNUM (height) < 0)
     invalid_argument ("Height must be a natural number", height);
 
-  i_width = (unsigned long) XREALFIXNUM (width);
-  i_height = (unsigned long) XREALFIXNUM (height);
-  if (i_width * i_height / 8UL > string_char_length (bits))
+  i_width = XREALFIXNUM (width);
+  i_height = XREALFIXNUM (height);
+  if (i_width * i_height / 8 > string_char_length (bits))
     invalid_argument ("data is too short for width and height",
 			 vector3 (width, height, bits));
 }

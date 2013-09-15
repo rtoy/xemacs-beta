@@ -2477,7 +2477,7 @@ Markers and characters are converted to integers.
  retry:
 
   if (FIXNUMP    (number)) return make_integer (XFIXNUM (number) + 1);
-  if (CHARP   (number)) return make_integer (XCHAR (number) + 1);
+  if (CHARP   (number)) return make_integer ((EMACS_INT) XCHAR (number) + 1);
   if (MARKERP (number)) return make_integer (marker_position (number) + 1);
   if (FLOATP  (number)) return make_float (XFLOAT_DATA (number) + 1.0);
 #ifdef HAVE_BIGNUM
@@ -2521,7 +2521,7 @@ Markers and characters are converted to integers.
  retry:
 
   if (FIXNUMP    (number)) return make_integer (XFIXNUM (number) - 1);
-  if (CHARP   (number)) return make_integer (XCHAR (number) - 1);
+  if (CHARP   (number)) return make_integer ((EMACS_INT) XCHAR (number) - 1);
   if (MARKERP (number)) return make_integer (marker_position (number) - 1);
   if (FLOATP  (number)) return make_float (XFLOAT_DATA (number) - 1.0);
 #ifdef HAVE_BIGNUM

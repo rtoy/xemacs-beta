@@ -939,8 +939,8 @@ If file does not exist, returns nil.
 
   if (NILP(id_format) || EQ (id_format, Qinteger))
     {
-      uidInfo = make_unsigned_integer (s.st_uid);
-      gidInfo = make_unsigned_integer (s.st_gid);
+      uidInfo = make_unsigned_integer ((EMACS_UINT) s.st_uid);
+      gidInfo = make_unsigned_integer ((EMACS_UINT) s.st_gid);
     }
   else
     {
@@ -957,7 +957,7 @@ If file does not exist, returns nil.
   
   RETURN_UNGCPRO (listn (12,
 			 mode,
-			 make_unsigned_integer (s.st_nlink),
+			 make_unsigned_integer ((EMACS_UINT) s.st_nlink),
 			 uidInfo,
 			 gidInfo,
 			 make_time (s.st_atime),
@@ -967,7 +967,7 @@ If file does not exist, returns nil.
 			 modestring,
 			 gid,
 			 make_unsigned_integer (s.st_ino),
-			 make_unsigned_integer (s.st_dev)));
+			 make_unsigned_integer ((EMACS_UINT) s.st_dev)));
 }
 
 
