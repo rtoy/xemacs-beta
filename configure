@@ -12259,7 +12259,9 @@ $as_echo "${GTK_VERSION}" >&6; }
 $as_echo_n "checking gtk libs... " >&6; }
       GTK_LIBS=`${GTK_CONFIG} --libs`
       libs_gtk="$libs_gtk ${GTK_LIBS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${GTK_LIBS}\" to \$libs_gtk"; fi
-            libs_gtk="$libs_gtk "-lX11"" &&  if test "$verbose" = "yes"; then echo "    Appending \""-lX11"\" to \$libs_gtk"; fi
+
+                  libs_gtk="$libs_gtk "-lX11"" &&  if test "$verbose" = "yes"; then echo "    Appending \""-lX11"\" to \$libs_gtk"; fi
+
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${GTK_LIBS}" >&5
 $as_echo "${GTK_LIBS}" >&6; }
 
