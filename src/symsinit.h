@@ -548,6 +548,7 @@ void complex_vars_of_chartab (void);
 void complex_vars_of_console (void);
 void reinit_complex_vars_of_console_runtime_only (void);
 void complex_vars_of_emacs (void);
+void complex_vars_of_event_gtk (void);
 void complex_vars_of_faces (void);
 void complex_vars_of_file_coding (void);
 void complex_vars_of_font_mgr (void);
