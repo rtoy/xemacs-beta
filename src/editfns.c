@@ -1168,7 +1168,7 @@ arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
   CHECK_FIXNUM (*args); tm.tm_hour = XFIXNUM (*args++);	/* hour */
   CHECK_FIXNUM (*args); tm.tm_mday = XFIXNUM (*args++);	/* day */
   CHECK_FIXNUM (*args); tm.tm_mon  = XFIXNUM (*args++) - 1;	/* month */
-  CHECK_FIXNUM (*args); tm.tm_year = XFIXNUM (*args++) - 1900;/* year */
+  CHECK_FIXNUM (*args); tm.tm_year = XFIXNUM (*args++) - 1900;	/* year */
 
   tm.tm_isdst = -1;
 
@@ -1190,7 +1190,9 @@ arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
       else if (FIXNUMP (zone))
 	{
 	  int abszone = abs (XFIXNUM (zone));
-	  sprintf (tzbuf, "XXX%s%d:%02d:%02d", "-" + (XFIXNUM (zone) < 0),
+	  /* #### I have no idea what this conforms to,
+	     but the compiler has stopped whining. */
+	  sprintf (tzbuf, "XXX%s%d:%02d:%02d", (XFIXNUM (zone) < 0) ? "-" : "+",
 		   abszone / (60*60), (abszone/60) % 60, abszone % 60);
 	  tzstring = tzbuf;
 	}

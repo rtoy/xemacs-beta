@@ -1,3 +1,117 @@
+2013-09-15  Mats Lidell  <matsl@cxemacs.org>
+
+	* files.el (mode-require-final-newline): Variable synced from
+	GNU. Thank you GNU. Allows modes to control final newlines.
+	(require-final-newline): Add action on visiting and visiting or
+	saving in sync with GNU.
+	* text-mode.el (text-mode): Use mode-require-final-newline.
+
+2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fontconfig.el (fc-name-parse-known-problem-attributes): New.
+	(fc-name-parse-harder): New.
+
+	* font.el (xft-font-create-object): Use fc-name-parse-harder.
+
+2013-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* startup.el (normal-top-level):
+	Use #'call-with-condition-handler here when calling
+	#'command-line, giving better backtraces on error.
+	Be careful about the current buffer in HANDLER.
+
+2013-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (gensym):
+	* bytecomp.el (byte-compile-gensym): New.
+	Warn that gensym called in a for-effect context is unlikely to be
+	useful.
+	Warn about non-string non-integer ARGs, this is incorrect.
+	Am not changing the function to error with same, most code that
+	makes the mistake has no problems, which is why it has survived
+	so long.
+	* window-xemacs.el (save-window-excursion/mapping):
+	* window.el (save-window-excursion):
+	Call #'gensym with a string, not a symbol.
+
+2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* isearch-mode.el (isearch-pre-command-hook):
+	If this function is called and (this-command-keys) contains
+	misc-user events, #'key-binding throws an error.
+	Eddie Corns and Alex Belits describe this happening in tracker
+	issue 336, and we can avoid this by catching the error and
+	handling the misc-user event in the same way that #'dispatch-event
+	does.
+	I haven't reproduced the actual error they describe, and welcome
+	testing to make sure it's gone.
+	Thank you Eddie, thank you Alex!
+
+2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* behavior.el:
+	(override-behavior):
+	Correct some spelling and formatting here, thank you Steven
+	Mitchell in tracker issue 826.
+
+2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/latin.el:
+	Add a Latin-script Azeri language environment, with UTF-8 as the
+	encoding and case information for schwa.
+
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
+2013-06-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* paragraphs.el (sentence-end-base):
+	Fix stupid omission of cast to string.
+
+2013-06-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix no-Mule build.
+
+	* paragraphs.el (sentence-end): Use octal, not Unicode, escapes.
+	* (sentence-end-base): Use non-ASCII only in Mule.
+
+2013-07-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.el (get-user-response):
+	* cmdloop.el (y-or-n-p-minibuf):
+	No need to call #'events-to-keys in these two functions,
+	#'lookup-key accepts events directly.
+	* keymap.el:
+	* keymap.el (events-to-keys):
+	Document this function some more.
+	Stop passing strings through unexamined, treat them as vectors of
+	characters.
+	Event keys are never integers, remove some code that only ran if
+	(integerp (event-key ce)).
+	Event keys are never numbers, don't check for that.
+	Don't create (menu-selection call-interactively function-name)
+	keystrokes for menu choices, #'character-to-event doesn't
+	understand that syntax, so nothing uses it.
+	Don't ever accept mouse events, #'character-to-event doesn't
+	accept our synthesising of them.
+
+2013-06-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.el (process-synchronize-point): Moved to a label.
+	* process.el (call-process-internal):
+	Now we have better language features, use them rather than
+	creating a closure ourselves or exposing a utility function when
+	there is no need for that with a well-implemented labels function.
+
+2013-06-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (apply-partially):
+	Be more intelligent about constructing (or not) compiled functions
+	at runtime or compile time when making these closures.
+
 2013-03-02  Michael Sperber  <mike@xemacs.org>
 
 	* bytecomp.el (byte-compile-if): Port this patch from GNU Emacs:

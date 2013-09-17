@@ -304,7 +304,7 @@ unreadchar (Lisp_Object readcharfun, Ichar c)
         if (testing_mule)
           fprintf (stderr,
                    (c >= 0x20 && c <= 0x7E) ? "UU%c" :
-                   ((c == '\n') ? "UU\\n\n" : "UU\\%o"), c);
+                   ((c == '\n') ? "UU\\n%c" : "UU\\%o"), c);
       }
 #endif
     }

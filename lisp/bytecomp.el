@@ -4111,6 +4111,7 @@ forcing function quoting" ,en (car form))))
 (byte-defop-compiler-1 integerp)
 (byte-defop-compiler-1 eql)
 (byte-defop-compiler-1 fillarray)
+(byte-defop-compiler-1 gensym)
 
 (defun byte-compile-progn (form)
   (byte-compile-body-do-effect (cdr form)))
@@ -4398,6 +4399,19 @@ forcing function quoting" ,en (car form))))
       (byte-compile-out 'byte-eq 0)
       (byte-compile-out-tag donetag))
     (byte-compile-subr-wrong-args form 2)))
+
+(defun byte-compile-gensym (form)
+  (when for-effect
+    (byte-compile-warn "%s: %S: called for-effect, unlikely to be useful"
+                       (car form) form))
+  (when (and (cdr form) (cl-const-expr-p (nth 1 form))
+             (not (typep (cl-const-expr-val (nth 1 form) '#:not-constant)
+                         '(or string integer))))
+    (byte-compile-warn "%s: %s: only strings and integers valid for ARG"
+                       (car form)
+                       (let ((print-readably t))
+                         (prin1-to-string (nth 1 form)))))
+  (byte-compile-normal-call form))
 
 ;;(byte-defop-compiler-1 /= byte-compile-negated)
 (byte-defop-compiler-1 atom byte-compile-negated)

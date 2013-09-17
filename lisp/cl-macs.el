@@ -3517,28 +3517,87 @@ non-standard :if and :if-not keywords at compile time."
 
 (define-compiler-macro apply-partially (&whole form &rest args)
   "Generate a #'make-byte-code call for #'apply-partially, if appropriate."
-  (if (< (length args) 1)
-      form
-    (if (cl-const-exprs-p args)
-        `#'(lambda (&rest args) (apply ,@args args))
-      (let* ((placeholders (mapcar 'quote-maybe (mapcar 'gensym args)))
-             (compiled (byte-compile-sexp
-                        `#'(lambda (&rest args) (apply ,@placeholders args)))))
-        (assert (equal (intersection
-                        (mapcar 'quote-maybe (compiled-function-constants
-                                              compiled))
-                        placeholders :test 'equal :stable t)
-                       placeholders)
-                t "This macro requires that the relative order is the same\
-in the constants vector and in the arguments")
+  (when (< (length args) 1)
+    (return-from apply-partially form))
+  (let* ((values (cdr args)) (count (length values))
+         (placeholders (mapcar #'quote-maybe (mapcar #'gensym values)))
+         (sublis (pairlis placeholders values))
+         restp lambda arglist bindings compiled)
+    (when (and (eq 'function (car-safe (nth 0 args)))
+               (eq 'lambda (car-safe (nth 1 (nth 0 args)))))
+      (setq lambda (nth 1 (nth 0 args))
+            arglist (nth 1 lambda))
+      (when (> count (function-max-args lambda))
+        (byte-compile-warn
+         "attempt to apply-partially %S with too many arguments" lambda)
+        (return-from apply-partially form))
+      (while (and arglist placeholders)
+	(cond ((eq (car arglist) '&optional)
+	       (if restp
+                   (error 'syntax-error
+                          "&optional found after &rest in %S" lambda))
+	       (if (null (cdr arglist))
+		   (error 'syntax-error "nothing after &optional in %S"
+                          lambda)))
+	      ((eq (car arglist) '&rest)
+	       (if (null (cdr arglist))
+		   (error 'syntax-error "nothing after &rest in %S" lambda))
+	       (if (cdr (cdr arglist))
+		   (error 'syntax-error "multiple vars after &rest in %S"
+                          lambda))
+	       (setq restp t))
+	      (restp
+	       (setq bindings (cons (list (car arglist)
+					  (and placeholders
+                                               (cons 'list placeholders)))
+				    bindings)
+		     placeholders nil))
+	      (t
+	       (setq bindings (cons (list (car arglist) (car placeholders))
+				    bindings)
+		     placeholders (cdr placeholders))))
+	(setq arglist (cdr arglist)))
+      (when (cl-const-exprs-p values)
+        ;; Values are constant, no need to construct the compiled function
+        ;; at runtime.
+        (return-from apply-partially
+          (byte-compile-lambda
+           `(lambda ,arglist (let ,(sublis sublis (nreverse bindings)
+                                           :test #'equal)
+                               ,@(cddr lambda))))))
+      (setq compiled (byte-compile-lambda
+                      `(lambda ,arglist (let ,(nreverse bindings)
+                                          ,@(cddr lambda)))))
+      (return-from apply-partially
         `(make-byte-code
           ',(compiled-function-arglist compiled)
           ,(compiled-function-instructions compiled)
-          (vector ,@(sublis (pairlis placeholders args)
+          (vector ,@(sublis sublis
                             (mapcar 'quote-maybe
                                     (compiled-function-constants compiled))
                             :test 'equal))
-          ,(compiled-function-stack-depth compiled))))))
+          ,(compiled-function-stack-depth compiled))))
+    (if (cl-const-exprs-p args)
+        `#'(lambda (&rest args) (apply ,@args args))
+        (let* ((placeholders (mapcar 'quote-maybe (mapcar 'gensym args)))
+               (compiled (byte-compile-sexp
+                          `#'(lambda (&rest args)
+                               (apply ,@placeholders args)))))
+          (assert (equal (intersection
+                          (mapcar 'quote-maybe (compiled-function-constants
+                                                compiled))
+                          placeholders :test 'equal :stable t)
+                         placeholders)
+                  t "This macro requires that the relative order is the same\
+in the constants vector and in the arguments")
+          `(make-byte-code
+            ',(compiled-function-arglist compiled)
+            ,(compiled-function-instructions compiled)
+            (vector ,@(sublis (pairlis placeholders args)
+                              (mapcar 'quote-maybe
+                                      (compiled-function-constants compiled))
+                              :test 'equal))
+            ,(compiled-function-stack-depth compiled))))))
 
 (define-compiler-macro delete-dups (list)
   `(delete-duplicates (the list ,list) :test #'equal :from-end t))

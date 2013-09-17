@@ -1,3 +1,190 @@
+2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font-mgr.c: Fix a bunch of comments and reformat some docstrings.
+	(Ffc_name_parse):
+	Make FcNameParse signal invalid-argument when parse fails.
+
+2013-09-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* alloc.c (free_normal_lisp_object):
+	Mark unused argument.
+
+	* bytecode.c (bytecode_negate): 
+	* data.c (Fsub1):
+	Shut up compiler warnings about always true comparisons.
+
+	* dired.c (Ffile_attributes):
+	Shut up compiler warnings about signedness in comparison.
+
+	* editfns.c (Fencode_time):
+	Fix addition of int to string to shut up compiler.  Still broken?
+
+	* glyphs.c (check_valid_xbm_inline):
+	Shut up compiler warnings about unused variable and signedness.
+
+	* lread.c (unreadchar):
+	Shut up compiler warning about unused format argument.
+
+	* sysdep.c (child_setup_tty):
+	Shut up compiler warning about empty if body.
+
+2013-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c:
+	* data.c (Fcar):
+	* data.c (Fcdr):
+	* data.c (Fmake_weak_box):
+	* data.c (Fweak_box_ref):
+	* data.c (init_marking_ephemerons):
+	* data.c (continue_marking_ephemerons):
+	* data.c (finish_marking_ephemerons):
+	* data.c (prune_ephemerons):
+	* data.c (zap_finalize_list):
+	* data.c (ephemeron_equal):
+	* data.c (ephemeron_hash):
+	* data.c (Fmake_ephemeron):
+	* data.c (Fephemeron_ref):
+	* data.c (Fephemeronp):
+	* sequence.c:
+	* sequence.c (Fcopy_tree):
+	* sequence.c (Freplace):
+	Improve coding style here; #'car and #'cdr accept lists, not just
+	cons cells, update their argument names to reflect that.
+	Follow coding conventions in the weak box and ephemeron code.
+	Don't needlessly abbreviate in copy-tree, use argument names from
+	Common Lisp in #'merge and #'replace.
+	Document ALIST better in #'nsublis, #'sublis.
+
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Support bignums with MPIR.
+	* config.h.in (WITH_MPIR): New macro.
+	* number.c: Add MPIR support.
+	* number.h: Ditto.
+	* number-gmp.h: Ditto.
+	(ratio_set_long_ulong): Canonicalize the ratio.
+	(ratio_set_ulong_ulong): Ditto.
+	* number-gmp.c (init_number_gmp): Add void param to silence GCC.
+	* number-mp.c (init_number_mp): Ditto.
+
+2013-07-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c:
+	* keymap.c (key_desc_list_to_event):
+	Drop the allow_menu_events argument.
+	Don't accept lists starting with Qmenu_selection as describing
+	keys, nothing generates them in a way this function
+	understands. The intention is reasonable but the implementation
+	was never documented and never finished.
+	* keymap.c (syms_of_keymap):
+	Drop Qmenu_selection.
+	* events.c (Fcharacter_to_event):
+	* keymap.h:
+	Drop the allow_menu_events argument to key_desc_list_to_event.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* alloc.c (make_bignum_un): New function.
+	(make_bignum_ll): New function.
+	(make_bignum_ull): New function.
+	* config.h.in (HAVE_MP_SET_MEMORY_FUNCTIONS): Add.
+	* data.c (Fplus): avoid unnecessary consing.
+	(Ftimes): ditto.
+	* glyphs.c (check_valid_xbm_inline): Since this function is called
+	prior to dumping, when bignums are forbidden, do all arithmetic
+	with C integers.
+	* lisp.h (MOST_POSITIVE_FIXNUM_UNSIGNED): New constant.
+	(MOST_POSITIVE_FIXNUM): Redefine in terms of the above.
+	(UNSIGNED_NUMBER_FITS_IN_A_FIXNUM): New macro.
+	* number-gmp.c (bignum_to_llong): New function.
+	(bignum_to_ullong): New function.
+	(bignum_set_llong): New function.
+	(bigfloat_to_string): Adjust whitespace.
+	(gmp_realloc): Ditto.
+	(gmp_free): Ditto.
+	* number-gmp.h (bignum_fits_llong): New macro.
+	(bignum_fits_ullong): New macro.
+	(bignum_set_ullong): New macro.
+	* number-mp.c (bignum_long_sign_bit): Remove, didn't work.
+	(bignum_min_llong): New variable.
+	(bignum_max_llong): New variable.
+	(bignum_max_ullong): New variable.
+	(bignum_to_llong): New function.
+	(bignum_to_ullong): New function.
+	(bignum_set_long): Reimplement using MP_XTOM.
+	(bignum_set_ulong): Ditto.
+	(bignum_set_llong): New function.
+	(bignum_set_ullong): New function.
+	(bignum_clrbit): Fix a comment.
+	(bignum_random_seed): Move to number-mp.h, since it is a no-op.
+	(bignum_random): Implement.
+	(mp_realloc): New function.
+	(mp_free): New function.
+	(init_number_mp): Use them.  Fix a comment.  Eliminate
+	initialization of bignum_long_sign_bit.  Initialize
+	bignum_min_llong, bignum_max_llong, and bignum_set_ullong.
+	* number-mp.h (MP_XTOM): New macro.
+	(bignum_fits_llong_p): New macro.
+	(bignum_fits_ullong_p): New macro.
+	(bignum_random_seed): New macro.
+	* number.h: Implement bignums as long long integers.
+	(make_bignum_ll): New macro.
+	(make_integer): Accept a long long value.
+	(make_unsigned_integer): New macro.
+	(NATNUMP): Adjust whitespace.
+	(non_fixnum_number_p): Ditto.
+
+	* alloc.c (Fmake_list): Use make_unsigned_integer or make_fixnum
+	instead of make_integer where it is appropriate to do so.
+	* chartab.c (char_table_default_for_type): Ditto.
+	* dired.c (Ffile_attributes): Ditto.
+	* elhash.c (hash_table_size_validate): Ditto.
+	* eval.c (Fmacroexpand): Ditto.
+	* event-stream.c (Faccept_process_output): Ditto.
+	(Frecent_keys): Ditto.
+	* events.c (Fmake_event): Ditto.
+	(Fevent_timestamp_lessp): Ditto.
+	* font-mgr.c (Ffc_pattern_get): Ditto.
+	* indent.c (Fmove_to_column): Ditto.
+	* process.c (Fset_process_window_size): Ditto.
+	* profile.c (Fstart_profiling): Ditto.
+	* unicode.c (Fset_unicode_conversion): Ditto.
+	(Funicode_to_char): Ditto.
+
+2013-04-23  Vin Shelton  <acs@xemacs.org>
+
+	* sysdep.c (qxe_getgrgid): Hack in WIN32_NATIVE group support.
+	* dired.c (file_attributes): Add a hack for group name in native
+	Windows builds.
+
+2013-04-19  Mats Lidell  <matsl@xemacs.org>
+
+	* sysdep.c (qxe_getgrgid): Encapsulation of getgrgid.
+	* syspwd.h: Ditto.
+
+	* dired.c (Ffile_attributes): Added optional ID-FORMAT for
+	compatibility with GNU.
+	
+2013-03-28  Jerry James  <james@xemacs.org>
+
+	* config.h.in: AC_FUNC_FSEEKO is the name of the autoconf macro.
+	HAVE_FSEEKO is the name of the C preprocessor symbol.  Do not
+	confuse the two.
+
+2013-03-11  Vin Shelton  <acs@xemacs.org>
+
+	* config.h.in: Move large file support outside WIN32_NO_CONFIGURE block.
+
+2013-03-07  Jerry James  <james@xemacs.org>
+
+	* array.c (stack_like_malloc): Define only if WIN32_ANY.
+	(stack_like_free): Ditto.
+	* array.h: Ditto.
+
 2013-03-04  Jerry James  <james@xemacs.org>
 
 	* config.h.in: Add placeholders and definitions needed for large

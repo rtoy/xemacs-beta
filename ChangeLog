@@ -1,9 +1,44 @@
 2013-09-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac: Force -lX11 for gtk to link XKeycodeToKeysym.
-
 	* configure: Regenerate.
 
+2013-09-08  Marcus Crestani  <crestani@xemacs.org>
+	* configure.ac: x86_64 Macs also use POSIX virtual-dirty-bit write
+	barrier.
+	* configure: Rebuild.
+
+2013-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (makeinfo):
+	Use basic regexp.  Avoid autoconf errors on empty version strings.
+	Report version found if insufficient.  Lightly tested.
+
+2013-06-25  Jerry James  <james@xemacs.org>
+
+	* INSTALL: Update required makeinfo version.
+	* Makefile.in.in: Check for usable makeinfo before invoking submake.
+	* configure.ac: Try to find makeinfo >= 4.12.
+
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Support bignums with MPIR.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Add check for mp_set_memory_functions.
+
+2013-03-12  Jerry James  <james@xemacs.org>
+
+	* config.guess: Update to latest upstream version.
+	* config.sub: Ditto.
+	* install-sh: Ditto.
+
+>>>>>>> other
 2013-03-04  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Check for large file support.

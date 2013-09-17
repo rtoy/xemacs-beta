@@ -1,5 +1,5 @@
-/* Definitions of numeric types for XEmacs using the GNU MP library.
-   Copyright (C) 2004 Jerry James.
+/* Definitions of numeric types for XEmacs using the GMP or MPIR library.
+   Copyright (C) 2004,2013 Jerry James.
 
 This file is part of XEmacs.
 
@@ -38,7 +38,12 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
    Occurs on line 1596 of gmp.h in version 4.1.4. */
 #pragma warning ( disable : 4146 )
 #endif
+#ifdef WITH_GMP
 #include <gmp.h>
+#endif
+#ifdef WITH_MPIR
+#include <mpir.h>
+#endif
 #ifdef _MSC_VER
 #pragma warning ( default : 4146 )
 #endif
@@ -69,6 +74,11 @@ extern gmp_randstate_t random_state;
 #define bignum_fits_uint_p(b)           mpz_fits_uint_p (b)
 #define bignum_fits_long_p(b)           mpz_fits_slong_p (b)
 #define bignum_fits_ulong_p(b)          mpz_fits_ulong_p (b)
+#define bignum_fits_llong_p(b)					\
+  (mpz_sizeinbase (b, 2) <= (sizeof(long long) << 3) - 1U)
+#define bignum_fits_ullong_p(b)						\
+  (mpz_sgn (b) >= 0 &&							\
+   mpz_sizeinbase (b, 2) <= (sizeof(unsigned long long) << 3))
 
 /***** Bignum: conversions *****/
 #define bignum_to_string(b,base)        mpz_get_str (NULL, base, b)
@@ -76,6 +86,8 @@ extern gmp_randstate_t random_state;
 #define bignum_to_uint(b)               ((unsigned int) mpz_get_ui (b))
 #define bignum_to_long(b)               mpz_get_si (b)
 #define bignum_to_ulong(b)              mpz_get_ui (b)
+extern long long bignum_to_llong(const bignum b);
+extern unsigned long long bignum_to_ullong(const bignum b);
 #define bignum_to_double(b)             mpz_get_d (b)
 
 /***** Bignum: converting assignments *****/
@@ -83,6 +95,8 @@ extern gmp_randstate_t random_state;
 #define bignum_set_string(b,s,base)     mpz_set_str (b, s, base)
 #define bignum_set_long(b,l)            mpz_set_si (b, l)
 #define bignum_set_ulong(b,l)           mpz_set_ui (b, l)
+extern void bignum_set_llong(bignum b, long long l);
+#define bignum_set_ullong(b,l)          mpz_import (b,1U,1,sizeof (l),0,0U,&l)
 #define bignum_set_double(b,f)          mpz_set_d (b, f)
 #define bignum_set_ratio(b,r)           mpz_set_q (b, r)
 #define bignum_set_bigfloat(b,f)        mpz_set_f (b, f)
@@ -156,9 +170,14 @@ extern gmp_randstate_t random_state;
 #define ratio_set_double(r,f)           mpq_set_d (r, f)
 #define ratio_set_bignum(r,b)           mpq_set_z (r, b)
 #define ratio_set_bigfloat(r,f)         mpq_set_f (r, f)
-#define ratio_set_long_ulong(r,num,den)    mpq_set_si (r, num, den)
-#define ratio_set_ulong_ulong(r,num,den)   mpq_set_ui (r, num, den)
-/* FIXME: Why does this canonicalize, but the previous 2 don't? */
+#define ratio_set_long_ulong(r,num,den) do {	\
+    mpq_set_si (r, num, den);			\
+    mpq_canonicalize (r);			\
+  } while (0)
+#define ratio_set_ulong_ulong(r,num,den) do {	\
+    mpq_set_ui (r, num, den);			\
+    mpq_canonicalize (r);			\
+  } while (0)
 #define ratio_set_bignum_bignum(r,num,den) do {	\
     mpz_set (mpq_numref (r), num);		\
     mpz_set (mpq_denref (r), den);		\

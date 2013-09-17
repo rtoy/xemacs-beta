@@ -6,12 +6,11 @@
 @syncodeindex vr cp
 @syncodeindex ky cp
 @c %**end of header
-@c Synced up with: FSF 23.1.92.
-@c Synced by: Ben Wing, 2-17-10.
+@c Synced up with: FSF 24.3
+@c Synced by: Jerry James, 19-Jun-2013.
 
 @copying
-Copyright @copyright{} 2000, 2001, 2002, 2003, 2004, 2005,
-2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+Copyright @copyright{} 2000--2013 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -108,25 +107,15 @@ Sexp Types
 @end detailmenu
 @end menu
 
-
-
-
-
-
-
-
-
-
-
 @node  Introduction, User Interface, Top, Top
 @comment  node-name,  next,  previous,  up
-@section Introduction
+@chapter Introduction
 
 @c XEmacs changes to reflect history, native widgets, and GTK
 Most graphical user interface toolkits provide
 a number of standard user interface controls (sometimes known as
 `widgets' or `gadgets').  Historically, Emacs didn't support anything like
-this, except for its incredible powerful text ``widget''.  However,
+this, except for its incredibly powerful text ``widget''.  However,
 since XEmacs 21.4, XEmacs has supported ``native'' widgets (GUI controls
 implemented as Lisp APIs in C for the MS Windows, Motif, Athena, and GTK
 toolkits) and libglade (GUI controls with an XML API for the GTK
@@ -193,13 +182,13 @@ text field, and sometimes prevent entering invalid data.
 You can have fixed sized fields, thus allowing multiple fields to be
 lined up in columns.
 @item
-It is simple to query or set the value of a field. 
-@item 
+It is simple to query or set the value of a field.
+@item
 Editing happens in a normal buffer, not in the mini-buffer.
-@item 
+@item
 Packages using the library get a uniform look-and-feel, making them easier for
 the user to learn.
-@item 
+@item
 As support for embedded graphics improve, the widget library will be
 extended to use the GUI features.  This means that your code using the
 widget library will also use the new graphic features automatically.
@@ -234,7 +223,7 @@ it will be autoloaded when needed.
 
 @node User Interface, Programming Example, Introduction, Top
 @comment  node-name,  next,  previous,  up
-@section User Interface
+@chapter User Interface
 
 A form consists of read only text for documentation and some fields,
 where each field contains two parts, a tag and a value.  The tags are
@@ -280,7 +269,7 @@ The top level widgets in this example are tagged @samp{Name},
 within a form, namely editing the editable text fields and activating
 the buttons.
 
-@subsection Editable Text Fields
+@section Editable Text Fields
 
 In the example, the value for the @samp{Name} is most likely displayed
 in an editable text field, and so are values for each of the members of
@@ -317,7 +306,7 @@ The editing text fields are highlighted with the
 Face used for other editing fields.
 @end deffn
 
-@subsection Buttons
+@section Buttons
 
 @cindex widget buttons
 @cindex button widgets
@@ -388,7 +377,7 @@ Face used for highlighting a button when the mouse pointer moves across
 it.
 @end defopt
 
-@subsection Navigation
+@section Navigation
 
 You can use all the normal Emacs commands to move around in a form
 buffer, plus you will have these additional commands:
@@ -407,7 +396,7 @@ Move point @var{count} buttons or editing fields backward.
 
 @node Programming Example, Setting Up the Buffer, User Interface, Top
 @comment  node-name,  next,  previous,  up
-@section Programming Example
+@chapter Programming Example
 
 @cindex widgets, programming example
 @cindex example of using widgets
@@ -503,7 +492,7 @@ Interface}).
 
 @node Setting Up the Buffer, Basic Types, Programming Example, Top
 @comment  node-name,  next,  previous,  up
-@section Setting Up the Buffer
+@chapter Setting Up the Buffer
 
 Widgets are created with @code{widget-create}, which returns a
 @dfn{widget} object.  This object can be queried and manipulated by
@@ -558,7 +547,7 @@ when not on a button.  By default this is @code{global-map}.
 
 @node Basic Types, Sexp Types, Setting Up the Buffer, Top
 @comment  node-name,  next,  previous,  up
-@section Basic Types
+@chapter Basic Types
 
 This is the general syntax of a type specification:
 
@@ -803,7 +792,7 @@ If non-@code{nil}, allow glyphs to appear on displays where they are supported.
 
 @node link, url-link, Basic Types, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{link} Widget
+@section The @code{link} Widget
 @findex link@r{ widget}
 
 Syntax:
@@ -828,7 +817,7 @@ String to suffix links.
 
 @node url-link, info-link, link, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{url-link} Widget
+@section The @code{url-link} Widget
 @findex url-link@r{ widget}
 
 Syntax:
@@ -843,7 +832,7 @@ When this link is invoked, the @acronym{WWW} browser specified by
 
 @node info-link, push-button, url-link, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{info-link} Widget
+@section The @code{info-link} Widget
 @findex info-link@r{ widget}
 
 Syntax:
@@ -857,7 +846,7 @@ When this link is invoked, the built-in Info reader is started on
 
 @node  push-button, editable-field, info-link, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{push-button} Widget
+@section The @code{push-button} Widget
 @findex push-button@r{ widget}
 
 Syntax:
@@ -882,7 +871,7 @@ String to suffix push buttons.
 
 @node editable-field, text, push-button, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{editable-field} Widget
+@section The @code{editable-field} Widget
 @findex editable-field@r{ widget}
 
 Syntax:
@@ -934,7 +923,7 @@ them.  Pressing @key{RET} invokes the function specified by
 
 @node text, menu-choice, editable-field, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{text} Widget
+@section The @code{text} Widget
 @findex text@r{ widget}
 
 @vindex widget-text-keymap
@@ -944,7 +933,7 @@ does not rebind the @key{RET} key.
 
 @node menu-choice, radio-button-choice, text, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{menu-choice} Widget
+@section The @code{menu-choice} Widget
 @findex menu-choice@r{ widget}
 
 Syntax:
@@ -985,7 +974,7 @@ The list of types.
 
 @node radio-button-choice, item, menu-choice, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{radio-button-choice} Widget
+@section The @code{radio-button-choice} Widget
 @findex radio-button-choice@r{ widget}
 
 Syntax:
@@ -1052,7 +1041,7 @@ you call @code{widget-delete}.
 
 @node item, choice-item, radio-button-choice, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{item} Widget
+@section The @code{item} Widget
 @findex item@r{ widget}
 
 Syntax:
@@ -1067,7 +1056,7 @@ buffer.  This widget will only match the specified value.
 
 @node choice-item, toggle, item, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{choice-item} Widget
+@section The @code{choice-item} Widget
 @findex choice-item@r{ widget}
 
 Syntax:
@@ -1084,7 +1073,7 @@ the specified value.
 
 @node toggle, checkbox, choice-item, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{toggle} Widget
+@section The @code{toggle} Widget
 @findex toggle@r{ widget}
 
 Syntax:
@@ -1117,7 +1106,7 @@ emacsen that supports this.
 
 @node checkbox, checklist, toggle, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{checkbox} Widget
+@section The @code{checkbox} Widget
 @findex checkbox@r{ widget}
 
 This widget has two possible states, @samp{selected} and
@@ -1131,7 +1120,7 @@ Syntax:
 
 @node checklist, editable-list, checkbox, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{checklist} Widget
+@section The @code{checklist} Widget
 @findex checklist@r{ widget}
 
 Syntax:
@@ -1189,7 +1178,7 @@ The list of types.
 
 @node editable-list, group, checklist, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{editable-list} Widget
+@section The @code{editable-list} Widget
 @findex editable-list@r{ widget}
 
 Syntax:
@@ -1247,7 +1236,7 @@ List whose @sc{car} is the type of the list elements.
 
 @node group,  , editable-list, Basic Types
 @comment  node-name,  next,  previous,  up
-@subsection The @code{group} Widget
+@section The @code{group} Widget
 @findex group@r{ widget}
 
 This widget simply groups other widgets together.
@@ -1262,7 +1251,7 @@ The value is a list, with one member for each @var{type}.
 
 @node Sexp Types, Widget Properties, Basic Types, Top
 @comment
-@section Sexp Types
+@chapter Sexp Types
 @cindex sexp types
 
 A number of widgets for editing @dfn{s-expressions} (Lisp types), sexp
@@ -1278,7 +1267,7 @@ categories described in this section.
 
 @node constants, generic, Sexp Types, Sexp Types
 @comment  node-name,  next,  previous,  up
-@subsection The Constant Widgets
+@section The Constant Widgets
 @cindex constant widgets
 
 The @code{const} widget can contain any Lisp expression, but the user is
@@ -1315,7 +1304,7 @@ An immutable symbol that is bound as a function.
 
 @node generic, atoms, constants, Sexp Types
 @comment  node-name,  next,  previous,  up
-@subsection Generic Sexp Widget
+@section Generic Sexp Widget
 @cindex generic sexp widget
 
 The @code{sexp} widget can contain any Lisp expression, and allows the
@@ -1337,7 +1326,7 @@ The @code{sexp} widget takes the same keyword arguments as the
 
 @node atoms, composite, generic, Sexp Types
 @comment  node-name,  next,  previous,  up
-@subsection Atomic Sexp Widgets
+@section Atomic Sexp Widgets
 @cindex atomic sexp widget
 
 The atoms are s-expressions that do not consist of other s-expressions.
@@ -1415,7 +1404,7 @@ either @code{nil} meaning false, or non-@code{nil} meaning true.
 
 @node composite,  , atoms, Sexp Types
 @comment  node-name,  next,  previous,  up
-@subsection Composite Sexp Widgets
+@section Composite Sexp Widgets
 @cindex composite sexp widgets
 
 The syntax for the composite widget construct is:
@@ -1517,7 +1506,7 @@ Specifies a list of any number of elements that fit a certain type.
 
 @node Widget Properties, Defining New Widgets, Sexp Types, Top
 @comment  node-name,  next,  previous,  up
-@section Properties
+@chapter Properties
 @cindex properties of widgets
 @cindex widget properties
 
@@ -1612,7 +1601,7 @@ its ancestors have been deactivated.  Do not attempt to set the
 
 @node Defining New Widgets, Widget Browser, Widget Properties, Top
 @comment  node-name,  next,  previous,  up
-@section Defining New Widgets
+@chapter Defining New Widgets
 @cindex new widgets
 @cindex defining new widgets
 
@@ -1629,7 +1618,7 @@ of the existing widget types.
 
 The third argument @var{doc} is a documentation string for the widget.
 
-After the new widget has been defined the following two calls will
+After the new widget has been defined, the following two calls will
 create identical widgets:
 
 @itemize @bullet
@@ -1856,7 +1845,7 @@ is called implicitly through the @samp{widget-create*} functions.
 
 @node Widget Browser, Widget Minor Mode, Defining New Widgets, Top
 @comment  node-name,  next,  previous,  up
-@section Widget Browser
+@chapter Widget Browser
 @cindex widget browser
 
 There is a separate package to browse widgets.  This is intended to help
@@ -1881,7 +1870,7 @@ When called interactively, use the position of point.
 
 @node  Widget Minor Mode, Utilities, Widget Browser, Top
 @comment  node-name,  next,  previous,  up
-@section Widget Minor Mode
+@chapter Widget Minor Mode
 @cindex widget minor mode
 
 There is a minor mode for manipulating widgets in major modes that
@@ -1899,7 +1888,7 @@ Keymap used in @code{widget-minor-mode}.
 
 @node  Utilities, Widget Wishlist, Widget Minor Mode, Top
 @comment  node-name,  next,  previous,  up
-@section Utilities.
+@chapter Utilities
 @cindex utility functions for widgets
 
 @defun widget-prompt-value widget prompt [ value unbound ]
@@ -1915,7 +1904,7 @@ This is only meaningful for radio buttons or checkboxes in a list.
 
 @node Widget Wishlist, Widget Internals, Utilities, Top
 @comment  node-name,  next,  previous,  up
-@section Wishlist
+@chapter Wishlist
 @cindex todo
 
 @itemize @bullet
@@ -2029,7 +2018,3 @@ variables, and widgets described in this manual.
 @printindex cp
 
 @bye
-
-@ignore
-   arch-tag: 2b427731-4c61-4e72-85de-5ccec9c623f0
-@end ignore

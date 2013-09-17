@@ -1,7 +1,9 @@
-;; Copyright (C) 2011, 2012 Free Software Foundation, Inc.
+;;; process-tests.el --- test process execution
+
+;; Copyright (C) 2011-2013 Free Software Foundation, Inc.
 
 ;; Author: Mats Lidell <matsl@xemacs.org>
-;; Maintainer: 
+;; Maintainer: XEmacs Dev Team <xemacs-beta@xemacs.org>
 ;; Created: 2011
 ;; Keywords: tests
 
@@ -29,7 +31,8 @@
 
 (require 'test-harness)
 
-(when (equal system-type 'linux)
+;; Should work on all POSIX systems.
+(unless (member system-type '(windows-nt))
   (setenv "LANG" "C")
   
   ;; One line output
