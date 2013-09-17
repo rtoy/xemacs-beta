@@ -1,7 +1,7 @@
 2013-09-17  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* emacs.c (main_1): Call syms and complex_vars for event-gtk.c
-	
+
 	* event-gtk.c (complex_vars_of_event_gtk): New function.
 	(register_event_names): New function.
 	(register_event_name): New function.
