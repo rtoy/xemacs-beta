@@ -40,6 +40,7 @@ END_C_DECLS
 #ifdef MP_PREFIX
 #define MP_GCD   mp_gcd
 #define MP_ITOM  mp_itom
+#define MP_XTOM  mp_xtom
 #define MP_MADD  mp_madd
 #define MP_MCMP  mp_mcmp
 #define MP_MDIV  mp_mdiv
@@ -55,6 +56,7 @@ END_C_DECLS
 #else
 #define MP_GCD   gcd
 #define MP_ITOM  itom
+#define MP_XTOM  xtom
 #define MP_MADD  madd
 #define MP_MCMP  mcmp
 #define MP_MDIV  mdiv
@@ -81,6 +83,7 @@ extern void init_number_mp(void);
 extern MINT *bignum_zero, *intern_bignum;
 extern MINT *bignum_min_int, *bignum_max_int, *bignum_max_uint;
 extern MINT *bignum_min_long, *bignum_max_long, *bignum_max_ulong;
+extern MINT *bignum_min_llong, *bignum_max_llong, *bignum_max_ullong;
 extern short div_rem;
 
 /***** Bignum: basic functions *****/
@@ -102,6 +105,10 @@ extern short div_rem;
 				     MP_MCMP (b, bignum_max_long) <= 0)
 #define bignum_fits_ulong_p(b)      (MP_MCMP (b, bignum_zero) >= 0 &&	\
 				     MP_MCMP (b, bignum_max_ulong) <= 0)
+#define bignum_fits_llong_p(b)      (MP_MCMP (b, bignum_min_llong) >= 0 && \
+				     MP_MCMP (b, bignum_max_llong) <= 0)
+#define bignum_fits_ullong_p(b)     (MP_MCMP (b, bignum_zero) >= 0 &&	\
+				     MP_MCMP (b, bignum_max_ullong) <= 0)
 
 /***** Bignum: conversions *****/
 extern char *bignum_to_string(bignum, int);
@@ -109,6 +116,8 @@ extern int bignum_to_int(bignum);
 extern unsigned int bignum_to_uint(bignum);
 extern long bignum_to_long(bignum);
 extern unsigned long bignum_to_ulong(bignum);
+extern long long bignum_to_llong(bignum);
+extern unsigned long long bignum_to_ullong(bignum);
 extern double bignum_to_double(bignum);
 
 /***** Bignum: converting assignments *****/
@@ -116,6 +125,8 @@ extern double bignum_to_double(bignum);
 extern int bignum_set_string(bignum, const char *, int);
 extern void bignum_set_long(bignum, long);
 extern void bignum_set_ulong(bignum, unsigned long);
+extern void bignum_set_llong(bignum, long long);
+extern void bignum_set_ullong(bignum, unsigned long long);
 extern void bignum_set_double(bignum, double);
 
 /***** Bignum: comparisons *****/
@@ -155,7 +166,7 @@ extern void bignum_lshift(bignum, bignum, unsigned long);
 extern void bignum_rshift(bignum, bignum, unsigned long);
 
 /***** Bignum: random numbers *****/
-extern void bignum_random_seed(unsigned long);
+#define bignum_random_seed(s)
 extern void bignum_random(bignum, bignum);
 
 #endif /* INCLUDED_number_mp_h_ */

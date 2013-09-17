@@ -1,3 +1,35 @@
+2013-09-15  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/files-tests.el: New file. Test new states in
+	require-final-newline and new variable mode-require-final-newline.
+
+2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/process-tests.el: Should work on all POSIX systems.
+
+2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/face-tests.el: New file.  Start with fontconfig tests.
+
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
+2013-06-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test #'apply-partially more extensively, given changes in
+	cl-macs.el.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* automated/lisp-tests.el: Adjust expected failure message due to
+	changes in check_valid_xbm_inline().
+
+2013-04-20  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/dired-tests.el: New. Tests for file-attributes.
+
 2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.33 "horseradish" is released.

@@ -1576,7 +1576,7 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 	 in case it expands into another macro call.  */
       if (SYMBOLP (form))
         {
-          Lisp_Object hashed = make_integer ((EMACS_INT) (LISP_HASH (form)));
+          Lisp_Object hashed = make_unsigned_integer (LISP_HASH (form));
           Lisp_Object assocked;
 
           if (BIGNUMP (hashed))
@@ -7276,7 +7276,7 @@ If NFRAMES is more than the number of frames, the value is nil.
   REGISTER int i;
   Lisp_Object tem;
 
-  check_integer_range (nframes, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (nframes, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
 
   /* Find the frame requested.  */
   for (i = XFIXNUM (nframes); backlist && (i-- > 0);)

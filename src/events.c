@@ -735,13 +735,13 @@ WARNING: the event object returned may be a reused one; see the function
 	else if (EQ (keyword, Qtimestamp))
 	  {
 #ifdef HAVE_BIGNUM
-            check_integer_range (value, Qzero, make_integer (UINT_MAX));
+            check_integer_range (value, Qzero, make_unsigned_integer (UINT_MAX));
             if (BIGNUMP (value))
               {
                 SET_EVENT_TIMESTAMP (e, bignum_to_uint (XBIGNUM_DATA (value)));
               }
 #else
-            check_integer_range (value, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+            check_integer_range (value, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
 #endif
             if (FIXNUMP (value))
               {
@@ -1441,7 +1441,7 @@ Lisp character object type can encode.
   else
     CHECK_LIVE_EVENT (event);
   if (CONSP (keystroke) || SYMBOLP (keystroke))
-    key_desc_list_to_event (keystroke, event, 1);
+    key_desc_list_to_event (keystroke, event);
   else
     {
       CHECK_CHAR_COERCE_INT (keystroke);
@@ -1777,8 +1777,8 @@ See also `event-timestamp' and `current-event-timestamp'.
 {
   EMACS_INT t1, t2;
 
-  check_integer_range (time1, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
-  check_integer_range (time2, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (time1, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
+  check_integer_range (time2, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
 
   t1 = XFIXNUM (time1);
   t2 = XFIXNUM (time2);

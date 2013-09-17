@@ -1,5 +1,5 @@
 /* Interfaces to system-dependent kernel and library entries.
-   Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
+   Copyright (C) 1985-1988, 1992-1995, 2013 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2010 Ben Wing.
 
@@ -494,8 +494,10 @@ child_setup_tty (int out)
 #else
   /* <mdiers> What to do upon failure? Just ignoring rc is probably
      not acceptable, is it? */
-  if (cfsetispeed (&s.main, B9600) == -1) /* ignore */;
-  if (cfsetospeed (&s.main, B9600) == -1) /* ignore */;
+  if (cfsetispeed (&s.main, B9600) == -1)
+    ;				/* ignore */
+  if (cfsetospeed (&s.main, B9600) == -1)
+    ;				/* ignore */
 #endif /* defined (CBAUD) */
 
 #else /* not HAVE_TERMIO */
@@ -3124,6 +3126,16 @@ qxe_getpwuid (uid_t uid)
   return getpwuid (uid);
 #else
   return copy_in_passwd (getpwuid (uid));
+#endif /* WIN32_NATIVE */
+}
+
+struct group *
+qxe_getgrgid (gid_t gid)
+{
+#ifdef WIN32_NATIVE
+  return NULL;
+#else
+  return getgrgid (gid);
 #endif /* WIN32_NATIVE */
 }
 

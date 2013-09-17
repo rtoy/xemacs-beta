@@ -749,9 +749,11 @@ things are arranged in config.h.in.  In particular:
 /* Enhanced numeric support */
 #undef WITH_NUMBER_TYPES
 #undef WITH_GMP
+#undef WITH_MPIR
 #undef WITH_MP
 #undef MP_PREFIX
 #undef HAVE_MP_MOVE
+#undef HAVE_MP_SET_MEMORY_FUNCTIONS
 
 #undef SIZEOF_SHORT
 #undef SIZEOF_INT
@@ -762,16 +764,7 @@ things are arranged in config.h.in.  In particular:
 #undef SIZEOF_OFF_T
 
 /* Large file support */
-#undef AC_FUNC_FSEEKO
-#ifdef AC_FUNC_FSEEKO
-# define OFF_T off_t
-# define FSEEK(stream, offset, whence) fseeko (stream, offset, whence)
-# define FTELL(stream) ftello (stream)
-#else
-# define OFF_T long
-# define FSEEK(stream, offset, whence) fseek (stream, offset, whence)
-# define FTELL(stream) ftell (stream)
-#endif
+#undef HAVE_FSEEKO
 
 /* some systems (Cygwin) typedef u?intptr_t in <sys/types.h>
    but the standard is <inttypes.h>
@@ -1188,5 +1181,16 @@ extern "C" {
 #define NEED_TO_HANDLE_21_4_CODE 1
 
 #define SUPPORT_CONFOUNDING_FUNCTIONS NEED_TO_HANDLE_21_4_CODE
+
+/* Large file support */
+#ifdef HAVE_FSEEKO
+# define OFF_T off_t
+# define FSEEK(stream, offset, whence) fseeko (stream, offset, whence)
+# define FTELL(stream) ftello (stream)
+#else
+# define OFF_T long
+# define FSEEK(stream, offset, whence) fseek (stream, offset, whence)
+# define FTELL(stream) ftell (stream)
+#endif
 
 #endif /* _SRC_CONFIG_H_ */

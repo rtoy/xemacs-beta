@@ -608,9 +608,10 @@ do						\
 /**                       Stack-like malloc/free                       **/
 /************************************************************************/
 
+#ifdef WIN32_ANY
 void *stack_like_malloc (Bytecount size);
 void stack_like_free (void *val);
-
+#endif
 
 
 /************************************************************************/

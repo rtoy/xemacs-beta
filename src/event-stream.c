@@ -2626,7 +2626,7 @@ Return non-nil iff we received any output before the timeout expired.
       if (!NILP (timeout_msecs))
 	{
           check_integer_range (timeout_msecs, Qzero,
-                               make_integer (MOST_POSITIVE_FIXNUM));
+                               make_fixnum (MOST_POSITIVE_FIXNUM));
 	  msecs += XFIXNUM (timeout_msecs);
 	}
       if (msecs)
@@ -3716,7 +3716,7 @@ modify them.
   else
     {
       check_integer_range (number, Qzero,
-                           make_integer (ARRAY_DIMENSION_LIMIT));
+                           make_fixnum (ARRAY_DIMENSION_LIMIT));
       nwanted = XFIXNUM (number);
     }
 

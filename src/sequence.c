@@ -1161,12 +1161,12 @@ DEFUN ("copy-tree", Fcopy_tree, 1, 2, 0, /*
 Return a copy of a list and substructures.
 The argument is copied, and any lists contained within it are copied
 recursively.  Circularities and shared substructures are not preserved.
-Second arg VECP causes vectors to be copied, too.  Strings and bit vectors
-are not copied.
+Second arg VECTORP causes vectors to be copied, too.  Strings and bit
+vectors are not copied.
 */
-       (arg, vecp))
+       (arg, vectorp))
 {
-  return safe_copy_tree (arg, vecp, 0);
+  return safe_copy_tree (arg, vectorp, 0);
 }
 
 Lisp_Object
@@ -3723,15 +3723,15 @@ list_array_merge_into_array (Lisp_Object *output, Elemcount output_len,
   } while (0)
 
 DEFUN ("merge", Fmerge, 4, MANY, 0, /*
-Destructively merge SEQUENCE-ONE and SEQUENCE-TWO, producing a new sequence.
+Destructively merge SEQUENCE1 and SEQUENCE2, producing a new sequence.
 
 TYPE is the type of sequence to return.  PREDICATE is a `less-than'
 predicate on the elements.
 
 Optional keyword argument KEY is a function used to extract an object to be
-used for comparison from each element of SEQUENCE-ONE and SEQUENCE-TWO.
+used for comparison from each element of SEQUENCE1 and SEQUENCE2.
 
-arguments: (TYPE SEQUENCE-ONE SEQUENCE-TWO PREDICATE &key (KEY #'IDENTITY))
+arguments: (TYPE SEQUENCE1 SEQUENCE2 PREDICATE &key (KEY #'IDENTITY))
 */
        (int nargs, Lisp_Object *args))
 {
@@ -5270,16 +5270,16 @@ replace_string_range_1 (Lisp_Object dest, Lisp_Object start, Lisp_Object end,
 }
 
 DEFUN ("replace", Freplace, 2, MANY, 0, /*
-Replace the elements of SEQUENCE-ONE with the elements of SEQUENCE-TWO.
+Replace the elements of SEQUENCE1 with the elements of SEQUENCE2.
 
-SEQUENCE-ONE is destructively modified, and returned.  Its length is not
+SEQUENCE1 is destructively modified, and returned.  Its length is not
 changed.
 
-Keywords :start1 and :end1 specify a subsequence of SEQUENCE-ONE, and
-:start2 and :end2 a subsequence of SEQUENCE-TWO.  See `search' for more
+Keywords :start1 and :end1 specify a subsequence of SEQUENCE1, and
+:start2 and :end2 a subsequence of SEQUENCE2.  See `search' for more
 information.
 
-arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE)) (START2 0) (END2 (length SEQUENCE-TWO)))
+arguments: (SEQUENCE1 SEQUENCE2 &key (START1 0) (END1 (length SEQUENCE1)) (START2 0) (END2 (length SEQUENCE2)))
 */
        (int nargs, Lisp_Object *args))
 {
@@ -6234,6 +6234,9 @@ DEFUN ("sublis", Fsublis, 2, MANY, 0, /*
 Perform substitutions indicated by ALIST in TREE (non-destructively).
 Return a copy of TREE with all matching elements replaced.
 
+Each dotted pair in ALIST describes a map from an old value (the car) to be
+replaced by a new value (the cdr).
+
 See `member*' for the meaning of :test, :test-not and :key.
 
 arguments: (ALIST TREE &key (TEST #'eql) (KEY #'identity) TEST-NOT)
@@ -6361,6 +6364,9 @@ nsublis (Lisp_Object alist, Lisp_Object tree,
 DEFUN ("nsublis", Fnsublis, 2, MANY, 0, /*
 Perform substitutions indicated by ALIST in TREE (destructively).
 Any matching element of TREE is changed via a call to `setcar'.
+
+Each dotted pair in ALIST describes a map from an old value (the car) to be
+replaced by a new value (the cdr).
 
 See `member*' for the meaning of :test, :test-not and :key.
 

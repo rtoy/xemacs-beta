@@ -355,8 +355,8 @@ This alist maps the originally captured windows to the windows that correspond
 to them in the restored configuration.  It does not include entries for
 windows that have not changed identity.
 Does not restore the value of point in current buffer."
-  (let ((window-config (gensym 'window-config))
-	(mapping (gensym 'mapping)))
+  (let ((window-config (gensym "window-config"))
+	(mapping (gensym "mapping")))
     `(let ((,window-config (current-window-configuration))
 	   (,mapping))
       (unwind-protect
