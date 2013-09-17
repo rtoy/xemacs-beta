@@ -62,6 +62,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 static struct event_stream *gtk_event_stream;
 
+Lisp_Object Vgdk_event_names;
+
 #ifdef WIN32_ANY
 extern int mswindows_is_blocking;
 #endif
@@ -1644,6 +1646,12 @@ Beware: allowing emacs to process SendEvents opens a big security hole.
   gtk_allow_sendevents = 0;
 
   last_quit_check_signal_tick_count = 0;
+
+  DEFVAR_LISP ("gdk-event-names", &Vgdk_event_names /*
+An alist of Gdk event types to names.
+Do NOT modify.
+*/);
+  Vgdk_event_names = Qnil;
 }
 
 void
@@ -1975,3 +1983,75 @@ gtk_key_is_modifier_p (KeyCode keycode, struct device *d)
   return 0;
 }
 #endif
+
+static void 
+register_event_name(const char *name, int value)
+{
+  char *nm = strdup(name);
+  char *ptr = nm;
+  while (*ptr) {
+    if (*ptr == '_')
+      *ptr = '-';
+    else
+      *ptr = tolower(*ptr);
+    ++ptr;
+  }
+  Vgdk_event_names = Facons (build_extstring (nm, Qutf_8),
+                             make_fixnum (value),
+                             Vgdk_event_names);
+  free (nm);
+}
+
+static void
+register_event_names (void)
+{
+  if (!NILP (Vgdk_event_names))
+    return;
+#define FROB_EVENT_NAME(name) register_event_name(#name, name)
+  FROB_EVENT_NAME(GDK_NOTHING);
+  FROB_EVENT_NAME(GDK_DELETE);
+  FROB_EVENT_NAME(GDK_DESTROY);
+  FROB_EVENT_NAME(GDK_EXPOSE);
+  FROB_EVENT_NAME(GDK_MOTION_NOTIFY);
+  FROB_EVENT_NAME(GDK_BUTTON_PRESS);
+  FROB_EVENT_NAME(GDK_2BUTTON_PRESS);
+  FROB_EVENT_NAME(GDK_3BUTTON_PRESS);
+  FROB_EVENT_NAME(GDK_BUTTON_RELEASE);
+  FROB_EVENT_NAME(GDK_KEY_PRESS);
+  FROB_EVENT_NAME(GDK_KEY_RELEASE);
+  FROB_EVENT_NAME(GDK_ENTER_NOTIFY);
+  FROB_EVENT_NAME(GDK_LEAVE_NOTIFY);
+  FROB_EVENT_NAME(GDK_FOCUS_CHANGE);
+  FROB_EVENT_NAME(GDK_CONFIGURE);
+  FROB_EVENT_NAME(GDK_MAP);
+  FROB_EVENT_NAME(GDK_UNMAP);
+  FROB_EVENT_NAME(GDK_PROPERTY_NOTIFY);
+  FROB_EVENT_NAME(GDK_SELECTION_CLEAR);
+  FROB_EVENT_NAME(GDK_SELECTION_REQUEST);
+  FROB_EVENT_NAME(GDK_SELECTION_NOTIFY);
+  FROB_EVENT_NAME(GDK_PROXIMITY_IN);
+  FROB_EVENT_NAME(GDK_PROXIMITY_OUT);
+  FROB_EVENT_NAME(GDK_DRAG_ENTER);
+  FROB_EVENT_NAME(GDK_DRAG_LEAVE);
+  FROB_EVENT_NAME(GDK_DRAG_MOTION);
+  FROB_EVENT_NAME(GDK_DRAG_STATUS);
+  FROB_EVENT_NAME(GDK_DROP_START);
+  FROB_EVENT_NAME(GDK_DROP_FINISHED);
+  FROB_EVENT_NAME(GDK_CLIENT_EVENT);
+  FROB_EVENT_NAME(GDK_VISIBILITY_NOTIFY);
+  FROB_EVENT_NAME(GDK_NO_EXPOSE);
+  FROB_EVENT_NAME(GDK_SCROLL);
+  FROB_EVENT_NAME(GDK_WINDOW_STATE);
+  FROB_EVENT_NAME(GDK_SETTING);
+  FROB_EVENT_NAME(GDK_OWNER_CHANGE);
+  FROB_EVENT_NAME(GDK_GRAB_BROKEN);
+  FROB_EVENT_NAME(GDK_DAMAGE);
+#undef FROB_EVENT_NAME
+  Vgdk_event_names = Fnreverse (Vgdk_event_names);
+}
+
+void
+complex_vars_of_event_gtk()
+{
+  register_event_names();
+}
