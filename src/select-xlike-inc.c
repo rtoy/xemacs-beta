@@ -69,7 +69,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 static Lisp_Object
 selection_data_to_lisp_data (struct device *d,
-			     Rawbyte *data,
+			     const Rawbyte *data,
 			     Bytecount size,
 			     XE_ATOM_TYPE type,
 			     int format)

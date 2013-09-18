@@ -1,5 +1,9 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* select-gtk.c (emacs_gtk_selection_handle): Use access function
+	for GtkSelectionData.
+	(emacs_gtk_selection_received): Ditto.
+
 	* glyphs-gtk.c (gtk_map_subwindow): Get size allocation via access
 	function and use it.
 	(gtk_redisplay_widget): Ditto.
