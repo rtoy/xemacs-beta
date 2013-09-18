@@ -1,5 +1,11 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (menu_convert): Use menu types access functions
+	instead of widget fields.
+	(menu_can_reuse_widget): Ditto.
+	(menu_create_menubar): Ditto.
+	(gtk_popup_menu): Ditto.
+
 	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use
 	GtkAdjustment access functions instead of using the fields
 	directly.

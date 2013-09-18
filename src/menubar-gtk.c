@@ -480,7 +480,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
                                                 NULL);
 	}
 
-      GTK_MENU_ITEM (reuse)->right_justify = 0;
+      gtk_menu_item_set_right_justified (GTK_MENU_ITEM (reuse), FALSE);
     }
 
   if (NILP (hook_fn))
@@ -869,7 +869,7 @@ menu_can_reuse_widget (GtkWidget *child, const Ibyte *label)
 
       remove_underscores (utf_8_label, &temp_label, temp_label_len);
 
-      if (!strcmp (GTK_LABEL (possible_child)->label, temp_label))
+      if (!strcmp (gtk_label_get_label (GTK_LABEL (possible_child)), temp_label))
         {
           ret_val = TRUE;
         }
@@ -905,7 +905,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
     EXTERNAL_LIST_LOOP_2 (item_descr, value)
       {
 	GtkWidget *current_child =
-	  GTK_WIDGET (g_list_nth_data (GTK_MENU_SHELL (menubar)->children,
+	  GTK_WIDGET (g_list_nth_data (gtk_container_get_children (GTK_CONTAINER (menubar)),
 				       menu_position));
 
 	if (NILP (item_descr))
@@ -988,10 +988,12 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
   {
     GList *l = NULL;
 
-    while ((l = g_list_nth (GTK_MENU_SHELL (menubar)->children, menu_position)))
+    while ((l = g_list_nth (gtk_container_get_children (GTK_CONTAINER (menubar)),
+			    menu_position)))
       {
 	gpointer data = l->data;
-	l = g_list_remove_link (GTK_MENU_SHELL (menubar)->children, l);
+	l = g_list_remove_link (gtk_container_get_children (GTK_CONTAINER (menubar)),
+				l);
 
 	if (data)
 	  {
@@ -1209,7 +1211,7 @@ gtk_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
 
   /* Now lets get down to business... */
   widget = menu_descriptor_to_widget (menu_desc, NULL);
-  menu = GTK_MENU_ITEM (widget)->submenu;
+  menu = gtk_menu_item_get_submenu (GTK_MENU_ITEM (widget));
   gtk_widget_set_name (widget, "XEmacsPopupMenu");
   id = g_object_get_qdata (G_OBJECT (widget), XEMACS_MENU_GUIID_TAG);
 
