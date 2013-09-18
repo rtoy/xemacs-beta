@@ -168,6 +168,7 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
 			     unsigned char *pic)
 {
   GdkVisual *vis;
+  GdkVisualType vtype;
   GdkPixbuf *out;
   int i, j;
   /* int depth, byte_cnt; */
@@ -176,9 +177,10 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
   guchar *data, *ip, *dp = NULL;
 
   vis = DEVICE_GTK_VISUAL (XDEVICE(device));
+  vtype = gdk_visual_get_visual_type (vis);
 
-  if (vis->type == GDK_VISUAL_GRAYSCALE || vis->type == GDK_VISUAL_STATIC_COLOR ||
-      vis->type == GDK_VISUAL_STATIC_GRAY)
+  if (vtype == GDK_VISUAL_GRAYSCALE || vtype == GDK_VISUAL_STATIC_COLOR ||
+      vtype == GDK_VISUAL_STATIC_GRAY)
     {
       /* #### Implement me!!! */
       return NULL;
@@ -1916,7 +1918,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
     {
       struct frame *f = XFRAME (IMAGE_INSTANCE_FRAME (p));
       GtkWidget *wid = IMAGE_INSTANCE_GTK_CLIPWIDGET (p);
-      GtkAllocation a;
+      GtkAllocation a, wa;
       int moving;
 
       if (!wid) return;
@@ -1926,13 +1928,12 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
       a.width = dga->width;
       a.height = dga->height;
 
+      gtk_widget_get_allocation (wid, &wa);
       /* Is the widget changing position? */
-      moving = (a.x != wid->allocation.x) ||
-	(a.y != wid->allocation.y);
+      moving = (a.x != wa.x) ||
+	(a.y != wa.y);
 
-      if ((a.width  != wid->allocation.width)  ||
-	  (a.height != wid->allocation.height) ||
-	  moving)
+      if ((a.width != wa.width) || (a.height != wa.height) || moving)
 	{
 	  gtk_widget_size_allocate (IMAGE_INSTANCE_GTK_CLIPWIDGET (p), &a);
 	}
@@ -1942,7 +1943,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 	  /* GtkFixed widget queues a resize when you add a widget.
 	  ** But only if it is visible.
 	  ** losers.
-          ** Check if still truce for Gtk 2.0 - jsparkes
+          ** Check if still true for Gtk 2.0 - jsparkes
 	  */
           gtk_widget_hide (FRAME_GTK_TEXT_WIDGET (f));
 
@@ -2065,10 +2066,12 @@ gtk_redisplay_widget (Lisp_Image_Instance *p)
       IMAGE_INSTANCE_TEXT_CHANGED (p))
     {
       GtkRequisition r;
-      GtkAllocation a = IMAGE_INSTANCE_GTK_CLIPWIDGET (p)->allocation;
+      GtkAllocation a;
 
       assert (IMAGE_INSTANCE_GTK_WIDGET_ID (p) &&
 	      IMAGE_INSTANCE_GTK_CLIPWIDGET (p)) ;
+
+      gtk_widget_get_allocation (IMAGE_INSTANCE_GTK_CLIPWIDGET (p), &a);
 
       a.width = r.width = IMAGE_INSTANCE_WIDTH (p);
       a.height = r.height = IMAGE_INSTANCE_HEIGHT (p);
