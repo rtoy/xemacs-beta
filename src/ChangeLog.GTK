@@ -1,5 +1,7 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gccache-gtk.c (make_gc_cache): Use gtk_widget_get_window.
+
 	* menubar-gtk.c (menu_convert): Use menu types access functions
 	instead of widget fields.
 	(menu_can_reuse_widget): Ditto.

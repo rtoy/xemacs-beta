@@ -119,7 +119,7 @@ struct gc_cache *
 make_gc_cache (GtkWidget *widget)
 {
   struct gc_cache *cache = xnew (struct gc_cache);
-  cache->window = widget->window;
+  cache->window = gtk_widget_get_window (widget);
   cache->size = 0;
   cache->head = cache->tail = 0;
   cache->create_count = cache->delete_count = 0;
