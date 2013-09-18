@@ -255,7 +255,7 @@ typedef gulong   XLIKE_PIXEL;
 /* Avoid unused-variable warning involving D */
 #define GET_XLIKE_DISPLAY(d) (d)
 #define GET_XLIKE_X_DISPLAY(d) (USED (d), GDK_DISPLAY ())
-#define GET_XLIKE_WINDOW(w) GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (w))
+#define GET_XLIKE_WINDOW(w) gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (w))
 #define XLIKE_FILL_RECTANGLE(dpy, x_win, gc, x, y, width, height)	\
   (USED (dpy), gdk_draw_rectangle (GDK_DRAWABLE (x_win), gc, TRUE,	\
                                    x, y, width, height))

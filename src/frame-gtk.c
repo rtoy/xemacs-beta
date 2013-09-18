@@ -152,7 +152,8 @@ gtk_window_to_frame (struct device *d, GdkWindow *wdesc)
       if (!FRAMEP (frame))
 	continue;
       f = XFRAME (frame);
-      if (FRAME_GTK_P (f) && GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f)) == wdesc)
+      if (FRAME_GTK_P (f)
+	  && gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f)) == wdesc)
 	return f;
     }
   return 0;
@@ -170,12 +171,12 @@ gtk_any_window_to_frame (struct device *d, GdkWindow *w)
 	DEVICE_FRAME_LOOP (frmcons, d)
 	    {
 		struct frame *fr = XFRAME (XCAR (frmcons));
-		if ((w == GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (fr))) ||
-		    (w == GET_GTK_WIDGET_WINDOW (FRAME_GTK_CONTAINER_WIDGET (fr))) ||
+		if ((w == gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (fr))) ||
+		    (w == gtk_widget_get_window (FRAME_GTK_CONTAINER_WIDGET (fr))) ||
 #ifdef HAVE_MENUBARS
-		    (w == GET_GTK_WIDGET_WINDOW (FRAME_GTK_MENUBAR_WIDGET (fr))) ||
+		    (w == gtk_widget_get_window (FRAME_GTK_MENUBAR_WIDGET (fr))) ||
 #endif
-		    (w == GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (fr))))
+		    (w == gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (fr))))
 		{
 		    return (fr);
 		}
@@ -189,7 +190,7 @@ gtk_any_window_to_frame (struct device *d, GdkWindow *w)
 struct frame *
 gtk_any_widget_or_parent_to_frame (struct device *d, GtkWidget *widget)
 {
-    return (gtk_any_window_to_frame (d, GET_GTK_WIDGET_WINDOW (widget)));
+    return (gtk_any_window_to_frame (d, gtk_widget_get_window (widget)));
 }
 
 struct device *
@@ -267,9 +268,9 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
   if (EQ (Qleft, property) || EQ (Qtop, property))
     {
       gint x, y;
-      if (!GET_GTK_WIDGET_WINDOW(shell))
+      if (!gtk_widget_get_window (shell))
 	return Qzero;
-      gdk_window_get_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
+      gdk_window_get_origin (gtk_widget_get_window (shell), &x, &y);
       if (EQ (Qleft, property)) return make_fixnum (x);
       if (EQ (Qtop,  property)) return make_fixnum (y);
     }
@@ -332,10 +333,10 @@ gtk_frame_properties (struct frame *f)
   props = cons3 (Qwindow_id, Fgtk_window_id (wrap_frame (f)), props);
 #endif
 
-  if (!GET_GTK_WIDGET_WINDOW (shell))
+  if (!gtk_widget_get_window (shell))
     x = y = 0;
   else
-    gdk_window_get_origin (GET_GTK_WIDGET_WINDOW (shell), &x, &y);
+    gdk_window_get_origin (gtk_widget_get_window (shell), &x, &y);
 
   props = cons3 (Qtop,  make_fixnum (y), props);
   props = cons3 (Qleft, make_fixnum (x), props);
@@ -393,7 +394,8 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
 
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
 				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);
-      gdk_window_set_hints (GET_GTK_WIDGET_WINDOW (shell), x, y, 0, 0, 0, 0, GDK_HINT_POS);
+      gdk_window_set_hints (gtk_widget_get_window (shell), x, y, 0, 0, 0, 0,
+			    GDK_HINT_POS);
       gtk_window_set_resizable (GTK_WINDOW (shell), TRUE);
     }
 
@@ -494,7 +496,7 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
       {
 	gint dummy;
 	GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
-	gdk_window_get_origin (GET_GTK_WIDGET_WINDOW (shell),
+	gdk_window_get_origin (gtk_widget_get_window (shell),
                                (x_position_specified_p ? &dummy : &x),
                                (y_position_specified_p ? &dummy : &y));
       }
@@ -1162,7 +1164,7 @@ gtk_set_frame_icon (struct frame *f)
       gtk_pixbuf = XIMAGE_INSTANCE_GTK_PIXMAP (f->icon);
       icons = g_list_append(icons, gtk_pixbuf);
       gdk_window_set_icon_list
-	(GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f)), icons);
+	(gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (f)), icons);
       g_list_free (icons);
     }
 }
@@ -1175,7 +1177,7 @@ gtk_set_frame_pointer (struct frame *f)
 
   if (POINTER_IMAGE_INSTANCEP (f->pointer))
     {
-      gdk_window_set_cursor (GET_GTK_WIDGET_WINDOW (w), c);
+      gdk_window_set_cursor (gtk_widget_get_window (w), c);
       gdk_flush ();
     }
   else
@@ -1219,7 +1221,8 @@ a string.
   struct frame *f = decode_gtk_frame (frame);
 
   /* Arrrrggghhh... this defeats the whole purpose of using Gdk... do we really need this? */
-  sprintf (str, "%lu", GDK_WINDOW_XWINDOW( GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f))));
+  sprintf (str, "%lu",
+	   GDK_WINDOW_XWINDOW (gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f))));
   return build_ascstring (str);
 }
 #endif
@@ -1295,7 +1298,7 @@ gtk_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
 
     *frame = wrap_frame (f);
 
-    gdk_window_get_pointer (GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f)),
+    gdk_window_get_pointer (gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f)),
 			    &win_x, &win_y, NULL);
 
     *x = win_x;
@@ -1318,7 +1321,7 @@ gtk_raise_frame_1 (struct frame *f, int force)
 {
   if (FRAME_VISIBLE_P (f) || force)
     {
-      GdkWindow *emacs_window = GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f));
+      GdkWindow *emacs_window = gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (f));
 
       gdk_window_raise (emacs_window);
     }
@@ -1336,7 +1339,7 @@ gtk_lower_frame (struct frame *f)
 {
   if (FRAME_VISIBLE_P (f))
     {
-	gdk_window_lower (GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f)));
+	gdk_window_lower (gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (f)));
     }
 }
 
@@ -1375,7 +1378,7 @@ gtk_frame_totally_visible_p (struct frame *f)
 static void
 gtk_iconify_frame (struct frame *f)
 {
-  GdkWindow *w = GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f));
+  GdkWindow *w = gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (f));
 
   /* There is no equivalent to XIconifyWindow in Gtk/Gdk. */
   if (!XIconifyWindow (GDK_WINDOW_XDISPLAY (w),
@@ -1395,7 +1398,7 @@ gtk_focus_on_frame (struct frame *f)
   assert (FRAME_GTK_P (f));
 
   shell_widget = FRAME_GTK_SHELL_WIDGET (f);
-  if (!GET_GTK_WIDGET_WINDOW (shell_widget))
+  if (!gtk_widget_get_window (shell_widget))
     return;
 
   gtk_widget_grab_focus (shell_widget);

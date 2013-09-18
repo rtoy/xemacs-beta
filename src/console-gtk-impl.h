@@ -42,8 +42,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #ifndef GDK_DRAWABLE
 //#define GDK_DRAWABLE(x) (GdkDrawable *) (x)
 #endif
-#define GET_GTK_WIDGET_WINDOW(x) (GTK_WIDGET (x)->window)
-#define GET_GTK_WIDGET_PARENT(x) (GTK_WIDGET (x)->parent)
+
 #define GCHAR(x) ((gchar *)x)
 
 DECLARE_CONSOLE_TYPE (gtk);

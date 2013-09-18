@@ -119,7 +119,7 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
 		  enum edge_style style)
 {
   struct frame *f = XFRAME (w->frame);
-  GdkWindow *x_win = GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f));
+  GdkWindow *x_win = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f));
   GtkStyle *gstyle = FRAME_GTK_TEXT_WIDGET (f)->style;
   GtkShadowType stype;
 

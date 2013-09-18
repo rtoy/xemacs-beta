@@ -340,7 +340,7 @@ emacs_gtk_handle_magic_event (struct Lisp_Event *emacs_event)
       break;
 
     case GDK_VISIBILITY_NOTIFY: /* window visiblity has changed */
-      if (event->visibility.window == GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f)))
+      if (event->visibility.window == gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (f)))
 	{
 	  FRAME_GTK_TOTALLY_VISIBLE_P (f) =
 	    (event->visibility.state == GDK_VISIBILITY_UNOBSCURED);
