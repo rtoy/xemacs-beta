@@ -101,7 +101,7 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
 
   SCROLLBAR_GTK_ID (instance) = new_gui_id ();
   SCROLLBAR_GTK_VDRAG_ORIG_VALUE (instance) = -1;
-  SCROLLBAR_GTK_LAST_VALUE (instance) = adj->value;
+  SCROLLBAR_GTK_LAST_VALUE (instance) = gtk_adjustment_get_value (adj);
 
   g_object_set_qdata (G_OBJECT (G_OBJECT (adj)), GTK_DATA_GUI_IDENTIFIER,
                       GUINT_TO_POINTER (SCROLLBAR_GTK_ID (instance)));
@@ -219,16 +219,16 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
                           wid,
                           pos_data->scrollbar_x,
                           pos_data->scrollbar_y);
-      
-          adj->lower = pos_data->minimum;
-          adj->upper = pos_data->maximum;
-          adj->page_increment = pos_data->slider_size + 1;
-          adj->step_increment = w->max_line_len - 1;
-          adj->page_size = pos_data->slider_size + 1;
-          
-          if (adj->value != pos_data->slider_position)
+
+          gtk_adjustment_set_lower (adj, pos_data->minimum);
+          gtk_adjustment_set_upper (adj, pos_data->maximum);
+          gtk_adjustment_set_page_increment (adj, pos_data->slider_size + 1);
+          gtk_adjustment_set_step_increment (adj, w->max_line_len - 1);
+	  gtk_adjustment_set_page_size (adj, pos_data->slider_size + 1);
+
+          if (gtk_adjustment_get_value (adj) != pos_data->slider_position)
             {
-              adj->value = pos_data->slider_position;
+              gtk_adjustment_set_value (adj, pos_data->slider_position);
             }
 
           gtk_adjustment_changed (adj);
@@ -408,7 +408,7 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble UNUSED (value),
     case GTK_SCROLL_JUMP:
       /* inhibit_slider_size_change = 1; */
       event_type = vertical ? Qscrollbar_vertical_drag : Qscrollbar_horizontal_drag;
-      event_data = Fcons (win, make_fixnum ((int)adj->value));
+      event_data = Fcons (win, make_fixnum ((int) gtk_adjustment_get_value (adj));
       break;
     default:
       ABORT();
