@@ -632,7 +632,7 @@ Returns t if the grab is successful, nil otherwise.
     }
 
   /* We should call gdk_pointer_grab() and (possibly) gdk_keyboard_grab() here instead */
-  w = GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (device_selected_frame (d)));
+  w = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (device_selected_frame (d)));
 
   result = gdk_pointer_grab (w, FALSE,
 			     (GdkEventMask) (GDK_POINTER_MOTION_MASK |
@@ -685,7 +685,7 @@ Returns t if the grab is successful, nil otherwise.
        (device))
 {
   struct device *d = decode_gtk_device (device);
-  GdkWindow *w = GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (device_selected_frame (d)));
+  GdkWindow *w = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (device_selected_frame (d)));
 
   gdk_keyboard_grab (w, FALSE, GDK_CURRENT_TIME );
 
@@ -714,7 +714,7 @@ Get the style information for a Gtk device.
   GtkStyle *style = NULL;
   Lisp_Object result = Qnil;
   GtkWidget *app_shell = GTK_WIDGET (DEVICE_GTK_APP_SHELL (d));
-  GdkWindow *w = GET_GTK_WIDGET_WINDOW (app_shell);
+  GdkWindow *w = gtk_widget_get_window (app_shell);
 
   if (!DEVICE_GTK_P (d))
     return (Qnil);

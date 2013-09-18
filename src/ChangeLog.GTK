@@ -1,8 +1,35 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* console-gtk-impl.h: Delete GET_GTK_WIDGET_WINDOW.
+	* console-xlike-inc.h (GET_XLIKE_WINDOW): Use
+	gtk_widget_get_window() instead of GET_GTK_WIDGET_WINDOW.
+	* device-gtk.c (Fgtk_grab_pointer): Ditto.
+	(Fgtk_grab_keyboard): Ditto.
+	(Fgtk_style_info): Ditto.
+	* event-gtk.c (emacs_gtk_handle_magic_event): Ditto.
+	* frame-gtk.c (gtk_window_to_frame): Ditto.
+	(gtk_any_window_to_frame): Ditto.
+	(gtk_any_widget_or_parent_to_frame): Ditto.
+	(gtk_frame_property): Ditto.
+	(gtk_frame_properties): Ditto.
+	(gtk_set_initial_frame_size): Ditto.
+	(gtk_set_frame_properties): Ditto.
+	(gtk_set_frame_icon): Ditto.
+	(gtk_set_frame_pointer): Ditto.
+	(Fgtk_window_id): Ditto.
+	(gtk_get_mouse_position): Ditto.
+	(gtk_raise_frame_1): Ditto.
+	(gtk_lower_frame): Ditto.
+	(gtk_iconify_frame): Ditto.
+	(gtk_focus_on_frame): Ditto.
+	* glyphs-gtk.c (init_image_instance_from_gdk_pixbuf): Ditto.
+	(init_image_instance_from_xbm_inline): Ditto.
+	* redisplay-gtk.c (XLIKE_bevel_area): Ditto.
+	* scrollbar-gtk.c (update_one_widget_scrollbar_pointer): Ditto.
+	(gtk_scrollbar_loop): Ditto.
+
 	* frame-gtk.c (gtk_widget_to_frame): Use gtk_widget_get_parent
 	instead of accessing the parent field directly.
-
 	* menubar-gtk.c (__activate_menu): Ditto.
 	(menu_create_menubar): Ditto.
 

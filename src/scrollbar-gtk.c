@@ -188,7 +188,7 @@ update_one_widget_scrollbar_pointer (struct window *w, GtkWidget *wid)
 
   if (POINTER_IMAGE_INSTANCEP (w->scrollbar_pointer))
     {
-      gdk_window_set_cursor (GET_GTK_WIDGET_WINDOW (wid),
+      gdk_window_set_cursor (gtk_widget_get_window (wid),
 			     XIMAGE_INSTANCE_GTK_CURSOR (w->scrollbar_pointer));
       gdk_flush ();
     }
@@ -309,12 +309,12 @@ gtk_scrollbar_loop (enum gtk_scrollbar_loop type, Lisp_Object window,
 
 		  widget = SCROLLBAR_GTK_WIDGET (hinstance);
 		  if (widget && gtk_widget_get_mapped (widget) &&
-		      GET_GTK_WIDGET_WINDOW (widget) == x_win)
+		      gtk_widget_get_window (widget) == x_win)
 		    return (struct window_mirror *) 1;
 
 		  widget = SCROLLBAR_GTK_WIDGET (vinstance);
 		  if (widget && gtk_widget_get_mapped (widget) &&
-		      GET_GTK_WIDGET_WINDOW (widget) == x_win)
+		      gtk_widget_get_window (widget) == x_win)
 		    return (struct window_mirror *) 1;
 		}
 	      break;
