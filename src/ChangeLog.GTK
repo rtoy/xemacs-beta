@@ -1,3 +1,11 @@
+2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_widget_to_frame): Use gtk_widget_get_parent
+	instead of accessing the parent field directly.
+
+	* menubar-gtk.c (__activate_menu): Ditto.
+	(menu_create_menubar): Ditto.
+
 2013-09-17  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* emacs.c (main_1): Call syms and complex_vars for event-gtk.c
