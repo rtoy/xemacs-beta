@@ -1,5 +1,10 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_bevel_area): Use gtk_widget_get_style
+	instead of directly accessing the field.
+	(XLIKE_output_vertical_divider): Ditto.
+	(XLIKE_output_horizontal_line): Ditto.
+
 	* frame-gtk.c (gtk_set_icon_name_from_ibyte): Use
 	gtk_widget_get_window() instead of directly accessing the field.
 	(gtk_update_frame_external_traits): Ditto.

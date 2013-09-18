@@ -120,7 +120,7 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
 {
   struct frame *f = XFRAME (w->frame);
   GdkWindow *x_win = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f));
-  GtkStyle *gstyle = FRAME_GTK_TEXT_WIDGET (f)->style;
+  GtkStyle *gstyle = gtk_widget_get_style (FRAME_GTK_TEXT_WIDGET (f));
   GtkShadowType stype;
 
   if (shadow_thickness == 0)
@@ -153,7 +153,7 @@ XLIKE_output_vertical_divider (struct window *w, int UNUSED (clear))
 {
   struct frame *f = XFRAME (w->frame);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
-  GtkStyle *gstyle = FRAME_GTK_TEXT_WIDGET (f)->style;
+  GtkStyle *gstyle = gtk_widget_get_style (FRAME_GTK_TEXT_WIDGET (f));
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
   enum edge_style style;
@@ -239,7 +239,7 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
 
   if (ypos3 - ypos2 > 0)
     {
-      GtkStyle *style = FRAME_GTK_TEXT_WIDGET (f)->style;
+      GtkStyle *style = gtk_widget_get_style (FRAME_GTK_TEXT_WIDGET (f));
       XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
 
       gtk_paint_hline (style, x_win, GTK_STATE_NORMAL, NULL,
