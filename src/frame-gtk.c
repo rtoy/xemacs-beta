@@ -268,7 +268,7 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
   if (EQ (Qleft, property) || EQ (Qtop, property))
     {
       gint x, y;
-      if (!gtk_widget_get_window (shell))
+      if (!gtk_widget_get_has_window (shell))
 	return Qzero;
       gdk_window_get_origin (gtk_widget_get_window (shell), &x, &y);
       if (EQ (Qleft, property)) return make_fixnum (x);
@@ -373,7 +373,8 @@ gtk_set_icon_name_from_ibyte (struct frame *f, Ibyte *name)
 {
   gtk_set_frame_text_value (f, name,
 			    (void (*)(gpointer, gchar *))
-			    gdk_window_set_icon_name, FRAME_GTK_SHELL_WIDGET (f)->window);
+			    gdk_window_set_icon_name,
+			    gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (f)));
 }
 
 /* Set the initial frame size as specified.  This function is used
@@ -1470,13 +1471,13 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
      if (!EQ (color, Vthe_null_color_instance))
        {
 	 bgc = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (color));
-	 if (FRAME_GTK_SHELL_WIDGET (frm)->window)
+	 if (gtk_widget_get_has_window (FRAME_GTK_SHELL_WIDGET (frm)))
 	   {
-	     gdk_window_set_background (FRAME_GTK_SHELL_WIDGET (frm)->window, bgc);
+	     gdk_window_set_background (gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (frm)), bgc);
 	   }
-	 if (FRAME_GTK_TEXT_WIDGET (frm)->window)
+	 if (gtk_widget_get_has_window (FRAME_GTK_TEXT_WIDGET (frm)))
 	   {
-	     gdk_window_set_background (FRAME_GTK_TEXT_WIDGET (frm)->window, bgc);
+	     gdk_window_set_background (gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (frm)), bgc);
 	   }
        }
 
