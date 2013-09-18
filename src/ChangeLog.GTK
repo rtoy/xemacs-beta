@@ -1,5 +1,11 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use
+	GtkAdjustment access functions instead of using the fields
+	directly.
+	(gtk_update_scrollbar_instance_status): Ditto.
+	(scrollbar_cb): Ditto.
+
 	* redisplay-gtk.c (XLIKE_bevel_area): Use gtk_widget_get_style
 	instead of directly accessing the field.
 	(XLIKE_output_vertical_divider): Ditto.
