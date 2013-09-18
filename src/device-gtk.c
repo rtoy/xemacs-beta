@@ -124,7 +124,7 @@ gtk_init_device_class (struct device *d)
 {
   if (DEVICE_GTK_DEPTH(d) > 2)
     {
-      switch (DEVICE_GTK_VISUAL(d)->type)
+      switch (gdk_visual_get_visual_type (DEVICE_GTK_VISUAL(d)))
 	{
 	case GDK_VISUAL_STATIC_GRAY:
 	case GDK_VISUAL_GRAYSCALE:
@@ -265,7 +265,7 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   visual = gdk_visual_get_best();
 
   DEVICE_GTK_VISUAL (d) = visual;
-  DEVICE_GTK_DEPTH (d) = visual->depth;
+  DEVICE_GTK_DEPTH (d) = gdk_visual_get_depth (visual);
 
   {
     GtkWidget *w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -498,7 +498,7 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
        (device))
 {
   GdkVisual *vis = DEVICE_GTK_VISUAL (decode_gtk_device (device));
-  switch (vis->type)
+  switch (gdk_visual_get_visual_type (vis))
     {
     case GDK_VISUAL_STATIC_GRAY:  return intern ("static-gray");
     case GDK_VISUAL_GRAYSCALE:    return intern ("gray-scale");
