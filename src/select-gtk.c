@@ -150,8 +150,8 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
 
   GCPRO2 (converted_selection, target_symbol);
 
-  selection_symbol = atom_to_symbol (d, selection_data->selection);
-  target_symbol = atom_to_symbol (d, selection_data->target);
+  selection_symbol = atom_to_symbol (d, gtk_selection_data_get_selection (selection_data));
+  target_symbol = atom_to_symbol (d, gtk_selection_data_get_target (selection_data));
 
 #if 0 /* #### MULTIPLE doesn't work yet */
   if (EQ (target_symbol, QMULTIPLE))
@@ -289,17 +289,17 @@ emacs_gtk_selection_received (GtkWidget *UNUSED (widget),
 
   signal_fake_event ();
 
-  if (selection_data->length < 0)
+  if (gtk_selection_data_get_length (selection_data) < 0)
     {
       return;
     }
 
   Vretrieved_selection =
     selection_data_to_lisp_data (NULL,
-				 selection_data->data,
-				 selection_data->length,
-				 selection_data->type,
-				 selection_data->format);
+				 gtk_selection_data_get_data (selection_data),
+				 gtk_selection_data_get_length (selection_data),
+				 gtk_selection_data_get_data_type (selection_data),
+				 gtk_selection_data_get_format (selection_data));
 }
 
 static int
