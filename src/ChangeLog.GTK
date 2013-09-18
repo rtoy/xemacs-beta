@@ -1,5 +1,10 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* frame-gtk.c (gtk_set_icon_name_from_ibyte): Use
+	gtk_widget_get_window() instead of directly accessing the field.
+	(gtk_update_frame_external_traits): Ditto.
+	(gtk_frame_property): Ditto.
+
 	* device-gtk.c (gtk_init_device_class): Use access functions
 	instead of directly accessing GdkVisual fields.
  	(gtk_init_device): Ditto.
