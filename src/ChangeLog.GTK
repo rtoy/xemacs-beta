@@ -1,5 +1,11 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_map_subwindow): Get size allocation via access
+	function and use it.
+	(gtk_redisplay_widget): Ditto.
+	(convert_EImage_to_GDKPixbuf): Get visual type via access function
+	and use it.
+
 	* gccache-gtk.c (make_gc_cache): Use gtk_widget_get_window.
 
 	* menubar-gtk.c (menu_convert): Use menu types access functions
