@@ -2642,25 +2642,20 @@ gtk_tab_control_redisplay (Lisp_Object image_instance)
 	{
 	  /* More than just the order has changed... let's get busy! */
 	  GtkNotebook *nb = GTK_NOTEBOOK (IMAGE_INSTANCE_GTK_CLIPWIDGET (ii));
-	  guint num_pages = g_list_length (nb->children);
+	  GList *children = gtk_container_get_children (GTK_CONTAINER (nb));
 	  Lisp_Object rest;
-	  int i;
 
 	  /* Why is there no API to remove everything from a notebook? */
-	  if (num_pages >= 0)
+	  while (children)
 	    {
-	      for (i = num_pages; i >= 0; --i)
-		{
-		  gtk_notebook_remove_page (nb, -1);
-		}
+	      gtk_widget_destroy (GTK_WIDGET (children->data));
+	      children = children->next;
 	    }
-
-	  i = 0;
 
 	  LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii)))
 	    {
 	      gtk_add_tab_item(image_instance, nb, XCAR(rest),
-			       IMAGE_INSTANCE_FRAME(ii), i);
+			       IMAGE_INSTANCE_FRAME(ii), 0);
 	    }
 
 	  /* Show all the new widgets we just added... */
