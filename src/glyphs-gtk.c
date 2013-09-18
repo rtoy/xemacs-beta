@@ -937,7 +937,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 				     Lisp_Object pointer_fg,
 				     Lisp_Object pointer_bg,
 				     int dest_mask,
-				     GdkPixbuf *mask,
+				     GdkPixbuf * UNUSED (mask),
 				     Lisp_Object UNUSED (mask_filename))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);

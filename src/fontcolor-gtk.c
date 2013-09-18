@@ -55,8 +55,8 @@ static Lisp_Object Vgtk_fallback_font_size;
 /************************************************************************/
 
 int
-gtk_parse_nearest_color (struct device *d, GdkColor *color, Lisp_Object name,
-			 Error_Behavior errb)
+gtk_parse_nearest_color (struct device * UNUSED (d), GdkColor *color,
+			 Lisp_Object name, Error_Behavior errb)
 {
   const Extbyte *extname;
   int result;
