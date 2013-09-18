@@ -1,5 +1,10 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* device-gtk.c (gtk_init_device_class): Use access functions
+	instead of directly accessing GdkVisual fields.
+ 	(gtk_init_device): Ditto.
+	(Fgtk_display_visual_class): Ditto.
+
 	* console-gtk-impl.h: Delete GET_GTK_WIDGET_WINDOW.
 	* console-xlike-inc.h (GET_XLIKE_WINDOW): Use
 	gtk_widget_get_window() instead of GET_GTK_WIDGET_WINDOW.
