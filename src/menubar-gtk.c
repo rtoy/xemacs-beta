@@ -127,7 +127,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
   g_object_set_qdata (G_OBJECT (item), XEMACS_MENU_FIRSTTIME_TAG, 0x00);
 
   /* Delete the old contents of the menu if we are the top level menubar */
-  if (GTK_IS_MENU_BAR (GTK_WIDGET (item)->parent) || force_clear)
+  if (GTK_IS_MENU_BAR (gtk_widget_get_parent(GTK_WIDGET (item))) || force_clear)
     {
       GtkWidget *selected;
       GtkMenu *sub = GTK_MENU (gtk_menu_item_get_submenu (item));
@@ -1144,11 +1144,11 @@ gtk_update_frame_menubar_internal (struct frame *f)
      slot to struct gtk_frame. */
   if (menubar_will_be_visible)
     {
-      gtk_widget_show_all (FRAME_GTK_MENUBAR_WIDGET (f)->parent);
+      gtk_widget_show_all (gtk_widget_get_parent (FRAME_GTK_MENUBAR_WIDGET (f)));
     }
   else
     {
-      gtk_widget_hide_all (FRAME_GTK_MENUBAR_WIDGET (f)->parent);
+      gtk_widget_hide_all (gtk_widget_get_parent (FRAME_GTK_MENUBAR_WIDGET (f)));
     }
 
   MARK_FRAME_SIZE_SLIPPED (f);

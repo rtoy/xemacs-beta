@@ -124,7 +124,7 @@ gtk_widget_to_frame (GtkWidget *w)
 {
   struct frame *f = NULL;
 
-  for (; w; w = w->parent)
+  for (; w; w = gtk_widget_get_parent (w))
     {
       if ((f = (struct frame *) g_object_get_qdata (G_OBJECT(w),
                                                     GTK_DATA_FRAME_IDENTIFIER)))
