@@ -1,5 +1,8 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_tab_control_redisplay): Cleaner method to
+	remove all notebook pages.
+
 	* select-gtk.c (emacs_gtk_selection_handle): Use access function
 	for GtkSelectionData.
 	(emacs_gtk_selection_received): Ditto.
