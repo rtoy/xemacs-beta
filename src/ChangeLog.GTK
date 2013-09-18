@@ -1,5 +1,8 @@
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* fontcolor-gtk.c (gtk_parse_nearest_color): Unused parameter.
+	* glyphs-gtk.c (init_image_instance_from_xbm_inline): Ditto.
+
 	* glyphs-gtk.c (gtk_tab_control_redisplay): Cleaner method to
 	remove all notebook pages.
 
