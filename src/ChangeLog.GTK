@@ -1,3 +1,8 @@
+2013-09-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_update_frame_external_traits): Set the
+	background on widget, not on its window.
+
 2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-gtk.c (gtk_parse_nearest_color): Unused parameter.
