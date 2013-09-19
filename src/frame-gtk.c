@@ -1471,14 +1471,8 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
      if (!EQ (color, Vthe_null_color_instance))
        {
 	 bgc = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (color));
-	 if (gtk_widget_get_has_window (FRAME_GTK_SHELL_WIDGET (frm)))
-	   {
-	     gdk_window_set_background (gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (frm)), bgc);
-	   }
-	 if (gtk_widget_get_has_window (FRAME_GTK_TEXT_WIDGET (frm)))
-	   {
-	     gdk_window_set_background (gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (frm)), bgc);
-	   }
+	 /* Is it necessary to set bg for other states as well?  -jsparkes */
+	 gtk_widget_modify_bg (FRAME_GTK_TEXT_WIDGET (frm), GTK_STATE_NORMAL, bgc);
        }
 
      /* Really crappy way to force the modeline shadows to be
