@@ -738,11 +738,6 @@ delete_event_cb (GtkWidget *UNUSED (w), GdkEvent *UNUSED (ev),
 extern gboolean emacs_shell_event_handler (GtkWidget *wid, GdkEvent *event, gpointer closure);
 extern Lisp_Object build_gtk_object (GObject *obj);
 
-#ifndef GNOME_IS_APP
-#define GNOME_IS_APP(x) 0
-#define gnome_app_set_contents(x,y) 0
-#endif
-
 static void
 cleanup_deleted_frame (gpointer data, GObject *UNUSED(old))
 {
@@ -910,11 +905,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   gtk_widget_set_name (shell, name);
 
   text = GTK_WIDGET (gtk_xemacs_new (f));
-
-  if (!GNOME_IS_APP (shell))
-    container = GTK_WIDGET (gtk_vbox_new (FALSE, INTERNAL_BORDER_WIDTH));
-  else
-    container = shell;
+  container = GTK_WIDGET (gtk_vbox_new (FALSE, INTERNAL_BORDER_WIDTH));
 
   FRAME_GTK_CONTAINER_WIDGET (f) = container;
   FRAME_GTK_TEXT_WIDGET (f) = text;
@@ -941,14 +932,11 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
     }
 #endif /* HAVE_MENUBARS */
 
-  if (GNOME_IS_APP (shell))
-    gnome_app_set_contents (GNOME_APP (shell), text);
-  else
-    /* Now comes the drawing area, which should fill the rest of the
-    ** frame completely.
-    */
-    if (GTK_IS_BOX (container)) 
-      gtk_box_pack_end (GTK_BOX (container), text, TRUE, TRUE, 0);
+  /* Now comes the drawing area, which should fill the rest of the
+  ** frame completely.
+  */
+  if (GTK_IS_BOX (container))
+    gtk_box_pack_end (GTK_BOX (container), text, TRUE, TRUE, 0);
 
   /* Connect main event handler */
   assert (g_signal_connect (G_OBJECT (shell), "delete-event",

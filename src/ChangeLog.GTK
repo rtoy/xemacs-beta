@@ -94,6 +94,23 @@
 
 	* symsinit.h: Add complex_vars_of_event_gtk.
 
+2013-09-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (scrollbar_cb): Remove unused variable.
+
+	* gtk-glue.c (xemacs_init_gtk_classes): g_type_init() no longer
+	needs to be called as of glib 2.35.
+
+	* frame-gtk.c (gtk_create_widgets): Remove GNOME_IS_APP macro,
+	which dates from Gnome 1.
+
+	* menubar-gtk.c (menu_convert): Comment out unused variable.
+	(menu_create_menubar): Remove unused variable.
+
+	* event-gtk.c (emacs_gtk_unselect_console): Remove unused
+	variable.
+	(gtk_reset_modifier_mapping): Comment out unused warning variable.
+
 2013-09-13  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (menu_create_menubar): Cast current child pointer
