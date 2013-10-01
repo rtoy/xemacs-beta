@@ -1,3 +1,9 @@
+2013-10-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (__kill_stupid_gtk_timer): MenuItem timers are
+	obsolete; remove this function.
+	(menu_convert): Don't call deleted function.
+
 2013-09-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-xlike-inc.c (emacs_gtk_event_pending_p): Gtk 2.0 can check

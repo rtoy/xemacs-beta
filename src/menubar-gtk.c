@@ -205,18 +205,6 @@ __destroy_notify (gpointer user_data, GObject *UNUSED (old))
   gtk_widget_destroy (GTK_WIDGET (user_data));
 }
 
-static void
-__kill_stupid_gtk_timer (GObject *obj, gpointer UNUSED (user_data))
-{
-  GtkMenuItem *mi = GTK_MENU_ITEM (obj);
-
-  if (mi->timer)
-    {
-      g_source_remove (mi->timer);
-      mi->timer = 0;
-    }
-}
-
 /* Convert the XEmacs menu accelerator representation (already in UTF-8) to
    Gtk mnemonic form. If no accelerator has been provided, put one at the
    start of the string (this mirrors the behaviour under X).  This algorithm
@@ -371,10 +359,6 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       submenu = gtk_menu_new ();
       gtk_widget_show (menu_item);
       gtk_widget_show (submenu);
-
-      if (!reuse)
-        assert (g_signal_connect (G_OBJECT (menu_item), "destroy",
-                                  G_CALLBACK (__kill_stupid_gtk_timer), NULL));
 
       /* Without this sometimes a submenu gets left on the screen -
       ** urk
