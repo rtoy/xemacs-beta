@@ -1,6 +1,6 @@
 2013-10-01  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* menubar-gtk.c (__kill_stupid_gtk_timer): MenuItem timers are
+	* menubar-gtk.c (__kill_stupid_gtk_timer): GtkMenuItem timers are
 	obsolete; remove this function.
 	(menu_convert): Don't call deleted function.
 
