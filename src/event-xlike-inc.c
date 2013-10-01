@@ -86,8 +86,8 @@ emacs_Xt_event_pending_p (int how_many)
       if (XtAppPending (Xt_app_con) & XtIMTimer)
 	return 1;
 #else
-      /* #### Is there any way to do this in Gtk?  I don't think there
-              is a 'peek' for events */
+      if (gtk_events_pending ())
+	return 1;
 #endif
     }
   else
@@ -128,7 +128,10 @@ emacs_Xt_event_pending_p (int how_many)
       if (last_quit_check_signal_tick_count != tick_count_val
 #if !defined (THIS_IS_GTK) && (!defined (SIGIO) || defined (CYGWIN))
 	  || (XtIMXEvent & XtAppPending (Xt_app_con))
-#endif 
+#endif
+#ifdef THIS_IS_GTK
+	  || gtk_events_pending ()
+#endif
 	  )
 	{
 	  last_quit_check_signal_tick_count = tick_count_val;
