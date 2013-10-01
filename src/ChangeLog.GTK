@@ -1,3 +1,8 @@
+2013-09-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-xlike-inc.c (emacs_gtk_event_pending_p): Gtk 2.0 can check
+	for pending events.
+
 2013-09-19  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_update_frame_external_traits): Set the
