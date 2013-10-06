@@ -55,9 +55,6 @@ struct gtk_device
   /* Gtk application info. */
   GtkWidget *gtk_app_shell;
 
-  /* Cache of GC's for frame's on this device. */
-  struct gc_cache *gc_cache;
-
   /* Selected visual, depth and colormap for this device */
   GdkVisual *visual;
   int depth;
@@ -132,7 +129,6 @@ DECLARE_LISP_OBJECT (gtk_device, Lisp_Gtk_Device);
 #define DEVICE_GTK_CONTEXT(d) 	(DEVICE_GTK_DATA (d)->context)
 #define DEVICE_GTK_FONT_MAP(d)	(DEVICE_GTK_DATA (d)->font_map)
 #define DEVICE_GTK_APP_SHELL(d) 	(DEVICE_GTK_DATA (d)->gtk_app_shell)
-#define DEVICE_GTK_GC_CACHE(d) 	(DEVICE_GTK_DATA (d)->gc_cache)
 #define DEVICE_GTK_GRAY_PIXMAP(d) (DEVICE_GTK_DATA (d)->gray_pixmap)
 #define DEVICE_GTK_WM_COMMAND_FRAME(d) (DEVICE_GTK_DATA (d)->WM_COMMAND_frame)
 #define DEVICE_GTK_MOUSE_TIMESTAMP(d)  (DEVICE_GTK_DATA (d)->mouse_timestamp)

@@ -39,7 +39,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "select.h"
 
 #include "console-gtk-impl.h"
-#include "gccache-gtk.h"
 #include "glyphs-gtk.h"
 #include "fontcolor-gtk.h"
 #include "gtk-xemacs.h"
@@ -365,7 +364,6 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   init_baud_rate (d);
   init_one_device (d);
 
-  DEVICE_GTK_GC_CACHE (d) = make_gc_cache (GTK_WIDGET (app_shell));
   DEVICE_GTK_GRAY_PIXMAP (d) = NULL;
 
   gtk_init_device_class (d);
@@ -416,8 +414,6 @@ gtk_delete_device (struct device *d)
       if (checking_free)
 	disable_strict_free_check ();
 #endif
-
-      free_gc_cache (DEVICE_GTK_GC_CACHE (d));
 
 #ifdef FREE_CHECKING
       if (checking_free)
