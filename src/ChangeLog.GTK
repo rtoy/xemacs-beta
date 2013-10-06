@@ -1,5 +1,18 @@
 2013-10-06  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* Makefile.in.in (gtk_objs): Remove gccache-gtk.
+
+	* device-gtk.c: Remove include GC cache header.
+	(gtk_init_device): No longer have GC cache.
+	(gtk_delete_device): Ditto.
+
+	* console-xlike-inc.h: Remove include of GC cache header.
+
+	* console-gtk.h: Remove declaration of gtk_get_gc.
+
+	* console-gtk-impl.h (gtk_device): Remove gc-cache from gtk_device
+	structure.
+
 	* frame-gtk.c (gtk_popup_frame): Replace gtk_widget_hide_all with
 	gtk_widget_hide.
 	* menubar-gtk.c (__maybe_destroy): Ditto.
