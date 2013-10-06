@@ -803,15 +803,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (cachel->dim)
 	{
-	  /* Ensure the gray bitmap exists */
-	  if (DEVICE_XLIKE_GRAY_PIXMAP (d) == XLIKE_NONE)
-	    DEVICE_XLIKE_GRAY_PIXMAP (d) =
-	      /* #### FIXME! Implement me! */
-	      XLIKE_NONE;
-
-	  /* Request a GC with the gray stipple pixmap to draw dimmed text */
-	  /* gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
-             bg_pmap, cachel->background_placement, Qnil); */
+	  /* TODO This should be done with by setting the alpha? -jsparkes */
 	}
 
       if (need_clipping)

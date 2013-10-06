@@ -92,9 +92,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #  endif
 #else /* THIS_IS_GTK */
 #  include "console-gtk-impl.h"
-#  ifdef NEED_GCCACHE_H
-#    include "gccache-gtk.h"
-#  endif
 #  ifdef NEED_GLYPHS_H
 #    include "glyphs-gtk.h"
 #  endif

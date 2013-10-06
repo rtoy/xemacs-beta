@@ -1,6 +1,10 @@
 2013-10-06  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* Makefile.in.in (gtk_objs): Remove gccache-gtk.
+	* console-gtk-impl.h (g): Remove gray_pixmap from gtk_device.
+	* device-gtk.c (gtk_init_device): No more gray_pixmap.
+	* redisplay-gtk.c (XLIKE_output_string): Ditto.
+
+	* Makefile.in.in (gtk_objs): Remove gccache-gtk from list.
 
 	* device-gtk.c: Remove include GC cache header.
 	(gtk_init_device): No longer have GC cache.
