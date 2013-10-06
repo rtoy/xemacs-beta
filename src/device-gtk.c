@@ -364,8 +364,6 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   init_baud_rate (d);
   init_one_device (d);
 
-  DEVICE_GTK_GRAY_PIXMAP (d) = NULL;
-
   gtk_init_device_class (d);
 }
 

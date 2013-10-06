@@ -61,9 +61,6 @@ struct gtk_device
 
   PangoContext *context;
   PangoFontMap *font_map;
-  
-  /* Used by x_bevel_modeline in redisplay-x.c */
-  GdkBitmap *gray_pixmap;
 
   /* frame that holds the WM_COMMAND property; there should be exactly
      one of these per device. */
@@ -129,7 +126,6 @@ DECLARE_LISP_OBJECT (gtk_device, Lisp_Gtk_Device);
 #define DEVICE_GTK_CONTEXT(d) 	(DEVICE_GTK_DATA (d)->context)
 #define DEVICE_GTK_FONT_MAP(d)	(DEVICE_GTK_DATA (d)->font_map)
 #define DEVICE_GTK_APP_SHELL(d) 	(DEVICE_GTK_DATA (d)->gtk_app_shell)
-#define DEVICE_GTK_GRAY_PIXMAP(d) (DEVICE_GTK_DATA (d)->gray_pixmap)
 #define DEVICE_GTK_WM_COMMAND_FRAME(d) (DEVICE_GTK_DATA (d)->WM_COMMAND_frame)
 #define DEVICE_GTK_MOUSE_TIMESTAMP(d)  (DEVICE_GTK_DATA (d)->mouse_timestamp)
 #define DEVICE_GTK_GLOBAL_MOUSE_TIMESTAMP(d) (DEVICE_GTK_DATA (d)->global_mouse_timestamp)
