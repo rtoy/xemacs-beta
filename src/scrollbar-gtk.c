@@ -61,7 +61,7 @@ gtk_free_scrollbar_instance (struct scrollbar_instance *instance)
     {
       if (SCROLLBAR_GTK_WIDGET (instance))
 	{
-	  gtk_widget_hide_all (SCROLLBAR_GTK_WIDGET (instance));
+	  gtk_widget_hide (SCROLLBAR_GTK_WIDGET (instance));
 	  gtk_widget_destroy (SCROLLBAR_GTK_WIDGET (instance));
           SCROLLBAR_GTK_WIDGET (instance) = 0;
 	}
@@ -73,8 +73,7 @@ gtk_free_scrollbar_instance (struct scrollbar_instance *instance)
 static void
 gtk_release_scrollbar_instance (struct scrollbar_instance *instance)
 {
-  /* It won't hurt to hide it all the time, will it? */
-  gtk_widget_hide_all (SCROLLBAR_GTK_WIDGET (instance));
+  gtk_widget_hide (SCROLLBAR_GTK_WIDGET (instance));
 }
 
 #if 0

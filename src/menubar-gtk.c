@@ -106,7 +106,7 @@ __maybe_destroy (GtkWidget *child, GtkWidget *UNUSED (precious))
 	     not be visible the next time the window is shown.
 	  */
 	  gtk_widget_set_sensitive (child, FALSE);
-	  gtk_widget_hide_all (child);
+	  gtk_widget_hide (child);
 	}
       else
 	{
@@ -203,18 +203,6 @@ __destroy_notify (gpointer user_data, GObject *UNUSED (old))
 {
   assert (user_data != NULL);
   gtk_widget_destroy (GTK_WIDGET (user_data));
-}
-
-static void
-__kill_stupid_gtk_timer (GObject *obj, gpointer UNUSED (user_data))
-{
-  GtkMenuItem *mi = GTK_MENU_ITEM (obj);
-
-  if (mi->timer)
-    {
-      g_source_remove (mi->timer);
-      mi->timer = 0;
-    }
 }
 
 /* Convert the XEmacs menu accelerator representation (already in UTF-8) to
@@ -371,10 +359,6 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
       submenu = gtk_menu_new ();
       gtk_widget_show (menu_item);
       gtk_widget_show (submenu);
-
-      if (!reuse)
-        assert (g_signal_connect (G_OBJECT (menu_item), "destroy",
-                                  G_CALLBACK (__kill_stupid_gtk_timer), NULL));
 
       /* Without this sometimes a submenu gets left on the screen -
       ** urk
@@ -1148,7 +1132,7 @@ gtk_update_frame_menubar_internal (struct frame *f)
     }
   else
     {
-      gtk_widget_hide_all (gtk_widget_get_parent (FRAME_GTK_MENUBAR_WIDGET (f)));
+      gtk_widget_hide (gtk_widget_get_parent (FRAME_GTK_MENUBAR_WIDGET (f)));
     }
 
   MARK_FRAME_SIZE_SLIPPED (f);

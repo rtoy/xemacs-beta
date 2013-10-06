@@ -1,3 +1,16 @@
+2013-10-06  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_popup_frame): Replace gtk_widget_hide_all with
+	gtk_widget_hide.
+	* menubar-gtk.c (__maybe_destroy): Ditto.
+	(gtk_update_frame_menubar_internal): Ditto.
+	(__kill_stupid_gtk_timer): Remove; timer is obsolete.
+	(menu_convert): Remove reference to above.
+
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance): Replace
+	gtk_widget_hide_all.
+	(gtk_release_scrollbar_instance): Ditto.
+
 2013-09-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-xlike-inc.c (emacs_gtk_event_pending_p): Gtk 2.0 can check
