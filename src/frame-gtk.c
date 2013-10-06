@@ -1009,7 +1009,7 @@ gtk_popup_frame (struct frame *f)
       FRAME_VISIBLE_P (f) = 0;
       gtk_widget_realize (FRAME_GTK_SHELL_WIDGET (f));
       gtk_widget_realize (FRAME_GTK_TEXT_WIDGET (f));
-      gtk_widget_hide_all (FRAME_GTK_SHELL_WIDGET (f));
+      gtk_widget_hide (FRAME_GTK_SHELL_WIDGET (f));
     }
   else
     {
