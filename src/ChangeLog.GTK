@@ -1,9 +1,20 @@
-2013-10-06  Jeff Sparkes  <jsparkes@gmail.com>
+2013-10-08  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_add_tab_item): Use gtk_box_new instead of
+	deprecated gtk_hbox_new.
+	(gtk_widget_query_geometry): Use Gtk 3.0 methods here when required.
+	(gtk_redisplay_widget): Ditto.
+	(init_image_instance_from_xbm_inline): Ditto.
+
+2013-10-06  Jeff Sparkes  <jsparkes@gmail.com>
 	* console-gtk-impl.h (g): Remove gray_pixmap from gtk_device.
 	* device-gtk.c (gtk_init_device): No more gray_pixmap.
 	* redisplay-gtk.c (XLIKE_output_string): Ditto.
+2013-10-01  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (__kill_stupid_gtk_timer): GtkMenuItem timers are
+	obsolete; remove this function.
+	(menu_convert): Don't call deleted function.
 	* Makefile.in.in (gtk_objs): Remove gccache-gtk from list.
 
 	* device-gtk.c: Remove include GC cache header.

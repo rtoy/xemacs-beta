@@ -200,8 +200,14 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
   if (!data)
     return NULL;
   {
-      unsigned long rshift,gshift,bshift,rbits,gbits,bbits,junk;
+      unsigned long rshift,gshift,bshift,rbits,gbits,bbits;
+      guint32 junk;
+#ifdef HAVE_GTK2
       junk = vis->red_mask;
+#endif
+#ifdef HAVE_GTK_3
+      gdk_visual_get_red_pixel_details(vis, &junk, NULL, NULL);
+#endif
       rshift = 0;
       while ((junk & 0x1) == 0)
 	{
@@ -214,7 +220,12 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
 	  junk = junk >> 1;
 	  rbits++;
 	}
+#ifdef HAVE_GTK2
       junk = vis->green_mask;
+#endif
+#ifdef HAVE_GTK3
+      gdk_visual_get_green_pixel_details(vis, &junk, NULL, NULL);
+#endif
       gshift = 0;
       while ((junk & 0x1) == 0)
 	{
@@ -227,7 +238,12 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
 	  junk = junk >> 1;
 	  gbits++;
 	}
+#ifdef HAVE_GTK2
       junk = vis->blue_mask;
+#endif
+#ifdef HAVE_GTK3
+      gdk_visual_get_blue_pixel_details(vis, &junk, NULL, NULL);
+#endif
       bshift = 0;
       while ((junk & 0x1) == 0)
 	{
@@ -368,7 +384,12 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 
 	  if (IMAGE_INSTANCE_GTK_CURSOR (p))
 	    {
-	      gdk_cursor_destroy (IMAGE_INSTANCE_GTK_CURSOR (p));
+#ifdef HAVE_GTK2
+	      g_cursor_unref (IMAGE_INSTANCE_GTK_CURSOR (p));
+#endif
+#ifdef HAVE_GTK3
+	      g_object_unref (IMAGE_INSTANCE_GTK_CURSOR (p));
+#endif
 	      IMAGE_INSTANCE_GTK_CURSOR (p) = 0;
 	    }
 	}
@@ -947,6 +968,12 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
   GdkColor bg;
   enum image_instance_type type;
   GdkWindow *draw = gtk_widget_get_window (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
+#ifdef HAVE_GTK2
+  GdkDisplay *display = gdk_drawable_get_display (draw);
+#endif
+#ifdef HAVE_GTK3
+  GdkDisplay *display = gdk_window_get_display (draw);
+#endif
   GdkColor black;
   GdkColor white;
 
@@ -1029,8 +1056,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	GdkColor fg_color, bg_color;
 	GdkPixbuf *source;
 
-	check_pointer_sizes (gdk_drawable_get_display (draw), width, height,
-                             instantiator);
+	check_pointer_sizes (display, width, height, instantiator);
 
 	source = gdk_pixbuf_new_from_data ((guchar *) bits, GDK_COLORSPACE_RGB, 0,
 					   1, width, height, 8, NULL, NULL);
@@ -1049,7 +1075,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) =
 	  find_keyword_in_vector (instantiator, Q_hotspot_y);
 	IMAGE_INSTANCE_GTK_CURSOR (ii) =
-	  gdk_cursor_new_from_pixbuf (gdk_drawable_get_display (draw), source,
+	  gdk_cursor_new_from_pixbuf (display, source,
 				      !NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) ?
 				      XFIXNUM (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) : 0,
 				      !NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)) ?
@@ -1070,7 +1096,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 		   /* Note that data is in ext-format! */
 		   const char *bits)
 {
-  Lisp_Object device = IMAGE_INSTANCE_DEVICE (XIMAGE_INSTANCE (image_instance));
+  /* Lisp_Object device = IMAGE_INSTANCE_DEVICE (XIMAGE_INSTANCE (image_instance)); */
   Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -2078,7 +2104,12 @@ gtk_redisplay_widget (Lisp_Image_Instance *p)
 
       /* Force the widget's preferred and actual size to what we say it shall
 	 be. */
+#ifdef HAVE_GTK2
       gtk_widget_size_request (IMAGE_INSTANCE_GTK_CLIPWIDGET (p), &r);
+#endif
+#ifdef HAVE_GTK3
+      gtk_widget_get_preferred_size (IMAGE_INSTANCE_GTK_CLIPWIDGET (p), NULL, &r);
+#endif
       gtk_widget_size_allocate (IMAGE_INSTANCE_GTK_CLIPWIDGET (p), &a);
     }
 
@@ -2322,11 +2353,18 @@ gtk_widget_query_geometry (Lisp_Object image_instance,
   if (p->data != NULL)
     {
       GtkWidget *w = IMAGE_INSTANCE_GTK_CLIPWIDGET (p);
+
+#ifdef HAVE_GTK2
       GtkRequisition r;
 
       gtk_widget_size_request(w, &r);
       *height= r.height;
       *width = r.width;
+#endif
+#ifdef HAVE_GTK3
+      *height = gtk_widget_get_allocated_height (w);
+      *width  = gtk_widget_get_allocated_width (w);
+#endif
     }
 }
 
@@ -2463,7 +2501,12 @@ gtk_add_tab_item(Lisp_Object image_instance,
   c_name = LISP_STRING_TO_EXTERNAL (name, Qutf_8);
 
   /* Dummy widget that the notbook wants to display when a tab is selected. */
+#ifdef HAVE_GTK2
   box = gtk_vbox_new (FALSE, 3);
+#endif
+#ifdef HAVE_GTK3
+  box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
+#endif
 
   /*
     Store the per-tab callback data id in the tab.  The callback functions
