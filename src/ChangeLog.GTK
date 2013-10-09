@@ -1,3 +1,7 @@
+2013-10-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_finalize_image_instance): Fix GTK 2 function.
+
 2013-10-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_add_tab_item): Use gtk_box_new instead of
