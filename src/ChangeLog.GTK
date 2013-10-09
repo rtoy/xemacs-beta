@@ -1,3 +1,11 @@
+2013-10-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_add_tab_item): Use gtk_box_new instead of
+	deprecated gtk_hbox_new.
+	(gtk_widget_query_geometry): Use Gtk 3.0 methods here when required.
+	(gtk_redisplay_widget): Ditto.
+	(init_image_instance_from_xbm_inline): Ditto.
+
 2013-10-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (__kill_stupid_gtk_timer): GtkMenuItem timers are
