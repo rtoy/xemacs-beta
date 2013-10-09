@@ -385,7 +385,7 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 	  if (IMAGE_INSTANCE_GTK_CURSOR (p))
 	    {
 #ifdef HAVE_GTK2
-	      g_cursor_unref (IMAGE_INSTANCE_GTK_CURSOR (p));
+	      gdk_cursor_unref (IMAGE_INSTANCE_GTK_CURSOR (p));
 #endif
 #ifdef HAVE_GTK3
 	      g_object_unref (IMAGE_INSTANCE_GTK_CURSOR (p));
