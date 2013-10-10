@@ -1,6 +1,12 @@
+2013-10-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c: We don't have support for making cursors from
+	individual font glyphs in Gtk, so ifdef related code out.
+
 2013-10-09  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* glyphs-gtk.c (gtk_finalize_image_instance): Fix GTK 2 function.
+	* glyphs-gtk.c (gtk_finalize_image_instance): Fix Gtk 2 function.
+	(font_instantiate): ifdef out.  Not used, and obsolete in Gtk 3.
 
 2013-10-08  Jeff Sparkes  <jsparkes@gmail.com>
 

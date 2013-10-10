@@ -110,7 +110,8 @@ DEFINE_DEVICE_IIFORMAT (gtk, subwindow);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (cursor_font);
 Lisp_Object Qcursor_font;
 
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (font);
+/* We do not have support for making cursors from font glyphs in Gtk. */
+/* DEFINE_IMAGE_INSTANTIATOR_FORMAT (font); */
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (autodetect);
 
@@ -1726,6 +1727,8 @@ autodetect_instantiate (Lisp_Object image_instance,
  *                              Font                                  *
  **********************************************************************/
 
+#if 0
+/* The font glyph instantiation does not work, and is incompatible with Gtk 3 */
 static void
 font_validate (Lisp_Object instantiator)
 {
@@ -1821,6 +1824,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   gdk_font_unref (source);
   if (mask && mask != source) gdk_font_unref (mask);
 }
+#endif
 
 
 /**********************************************************************
@@ -2833,6 +2837,7 @@ image_instantiator_format_create_glyphs_gtk (void)
   IIFORMAT_VALID_KEYWORD (cursor_font, Q_foreground, check_valid_string);
   IIFORMAT_VALID_KEYWORD (cursor_font, Q_background, check_valid_string);
 
+#if 0
   INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (font, "font");
   IIFORMAT_VALID_CONSOLE (gtk, font);
 
@@ -2843,6 +2848,7 @@ image_instantiator_format_create_glyphs_gtk (void)
   IIFORMAT_VALID_KEYWORD (font, Q_data, check_valid_string);
   IIFORMAT_VALID_KEYWORD (font, Q_foreground, check_valid_string);
   IIFORMAT_VALID_KEYWORD (font, Q_background, check_valid_string);
+#endif
 
 #ifdef HAVE_XPM
   INITIALIZE_DEVICE_IIFORMAT (gtk, xpm);
