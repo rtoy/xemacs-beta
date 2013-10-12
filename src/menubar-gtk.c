@@ -331,25 +331,33 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
           Bytecount desc_len = strlen (desc_in_utf_8);
           Extbyte *converted = alloca_extbytes (1 + (desc_len * 2));
 	  GtkWidget* accel_label = gtk_label_new (NULL);
+#ifdef HAVE_GTK2
 	  guint accel_key;
-          
+#endif
           convert_underscores (desc_in_utf_8, desc_len,
                                &converted, 1 + (desc_len * 2));
 
 	  gtk_misc_set_alignment (GTK_MISC (accel_label), 0.0, 0.5);
           gtk_label_set_use_underline (GTK_LABEL (accel_label), TRUE);
+#ifdef HAVE_GTK2
           accel_key = gtk_label_parse_uline (GTK_LABEL (accel_label),
                                              converted);
+#endif
 	  menu_item = gtk_menu_item_new ();
 	  gtk_container_add (GTK_CONTAINER (menu_item), accel_label);
 	  gtk_widget_show (accel_label);
 
+#ifdef HAVE_GTK2
 	  if (menubar_accel_group)
 	    gtk_widget_add_accelerator (menu_item,
 					"activate",
 					menubar_accel_group,
 					accel_key, GDK_MOD1_MASK,
 					GTK_ACCEL_LOCKED);
+#endif
+#ifdef HAVE_GTK3
+					     /* Implement for Gtk 3 -jsparkes */
+#endif
 	}
       else
 	{
@@ -464,7 +472,9 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
                                                 NULL);
 	}
 
+#ifdef HAVE_GTK2
       gtk_menu_item_set_right_justified (GTK_MENU_ITEM (reuse), FALSE);
+#endif
     }
 
   if (NILP (hook_fn))
@@ -760,7 +770,9 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	    for a toggle menu item is to not show the toggle unless it
 	    is turned on or actively highlighted.  How absolutely
 	    hideous. */
+#ifdef HAVE_GTK2
 	  gtk_check_menu_item_set_show_toggle (GTK_CHECK_MENU_ITEM (widget), TRUE);
+#endif
 	  gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (widget),
 					  NILP (selected_p) ? FALSE : TRUE);
 	}
@@ -793,9 +805,14 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	    {
 	      /* Replace the label widget with a hbox containing label and
 		 key sequence. */
+#ifdef HAVE_GTK2
 	      GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
-	      GtkWidget *acc
-                = gtk_label_new (LISP_STRING_TO_EXTERNAL (keys, Qutf_8));
+#endif
+#ifdef HAVE_GTK3
+	      GtkWidget *hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+#endif
+	      GtkWidget *acc = gtk_label_new (LISP_STRING_TO_EXTERNAL (keys,
+								       Qutf_8));
 	      gtk_misc_set_alignment (GTK_MISC (acc), 1.0, 0.5);
 	      gtk_container_add (GTK_CONTAINER (hbox), main_label);
 	      gtk_container_add (GTK_CONTAINER (hbox), GTK_WIDGET (acc));
@@ -868,7 +885,9 @@ menu_can_reuse_widget (GtkWidget *child, const Ibyte *label)
 static void
 menu_create_menubar (struct frame *f, Lisp_Object descr)
 {
+#ifdef HAVE_GTK2
   gboolean right_justify = FALSE;
+#endif
   Lisp_Object value = descr;
   GtkWidget *menubar = FRAME_GTK_MENUBAR_WIDGET (f);
   GUI_ID id = (GUI_ID) GPOINTER_TO_UINT (g_object_get_qdata (G_OBJECT (menubar), XEMACS_MENU_GUIID_TAG));
@@ -895,7 +914,9 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	if (NILP (item_descr))
 	  {
 	    /* Need to start right-justifying menus */
+#ifdef HAVE_GTK2
 	    right_justify = TRUE;
+#endif
 	    menu_position--;
 	  }
 	else if (VECTORP (item_descr))
@@ -996,10 +1017,16 @@ static gboolean
 run_menubar_hook (GtkWidget *widget, GdkEventButton *UNUSED (event),
 		  gpointer UNUSED (user_data))
 {
+#ifdef HAVE_GTK2
   if (!GTK_MENU_SHELL(widget)->active)
     {
       run_hook (Qactivate_menubar_hook);
     }
+#endif
+#ifdef HAVE_GTK3
+  /* Do we have to be worried about being active here? */
+  run_hook (Qactivate_menubar_hook);
+#endif
   return(FALSE);
 }
 
@@ -1145,6 +1172,7 @@ gtk_update_frame_menubars (struct frame *f)
 
   assert (FRAME_GTK_P (f));
 
+#ifdef HAVE_GTK2
   menubar = FRAME_GTK_MENUBAR_WIDGET (f);
 
   if ((GTK_MENU_SHELL (menubar)->active) ||
@@ -1153,7 +1181,8 @@ gtk_update_frame_menubars (struct frame *f)
     {
       return;
     }
- 
+#endif
+  
   gtk_update_frame_menubar_internal (f);
 }
 
