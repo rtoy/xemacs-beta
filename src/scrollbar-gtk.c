@@ -107,9 +107,16 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   g_object_set_qdata (G_OBJECT (G_OBJECT (adj)), GTK_DATA_FRAME_IDENTIFIER,
                       f);
 
+#ifdef HAVE_GTK2
   sb = GTK_SCROLLBAR (vertical ? gtk_vscrollbar_new (adj) : gtk_hscrollbar_new (adj));
-  SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
   gtk_range_set_update_policy (GTK_RANGE (sb), GTK_UPDATE_CONTINUOUS);
+#endif
+#ifdef HAVE_GTK3
+  sb = GTK_SCROLLBAR (vertical ?
+		      gtk_scrollbar_new (GTK_ORIENTATION_VERTICAL, adj) :
+		      gtk_scrollbar_new (GTK_ORIENTATION_HORIZONTAL, adj));
+#endif
+  SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
 
   assert(g_signal_connect (G_OBJECT (sb),"change-value",
                            G_CALLBACK (scrollbar_cb),

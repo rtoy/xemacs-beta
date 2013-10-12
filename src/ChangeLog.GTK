@@ -1,3 +1,8 @@
+2013-10-12  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use Gtk 3
+	constructors.
+
 2013-10-10  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c: We don't have support for making cursors from
