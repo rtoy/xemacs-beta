@@ -1,5 +1,13 @@
 2013-10-12  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (menu_convert): Gtk 3 removed accelerator code.
+	It should be replaced.
+	(menu_descriptor_to_widget_1): Use Gtk 3 box constructor.
+	(menu_create_menubar): Menu entries can't be right justified in
+	Gtk 3.
+	(run_menubar_hook): Can not tell if menubar is active in Gtk 3.
+	(gtk_update_frame_menubars): Ditto.
+
 	* config.h.in: Add HAVE_GTK3
 
 	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use Gtk 3
