@@ -1,5 +1,7 @@
 2013-10-12  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* config.h.in: Add HAVE_GTK3
+
 	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use Gtk 3
 	constructors.
 
