@@ -1168,7 +1168,9 @@ gtk_update_frame_menubar_internal (struct frame *f)
 static void
 gtk_update_frame_menubars (struct frame *f)
 {
+#ifdef HAVE_GTK2
   GtkWidget *menubar = NULL;
+#endif
 
   assert (FRAME_GTK_P (f));
 
@@ -1182,7 +1184,7 @@ gtk_update_frame_menubars (struct frame *f)
       return;
     }
 #endif
-  
+
   gtk_update_frame_menubar_internal (f);
 }
 
