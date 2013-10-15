@@ -15,6 +15,8 @@
 
 2013-10-10  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* config.h.in: Add HAVE_GTK3.
+
 	* glyphs-gtk.c: We don't have support for making cursors from
 	individual font glyphs in Gtk, so ifdef related code out.
 
