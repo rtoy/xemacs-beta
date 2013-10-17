@@ -1,3 +1,11 @@
+2013-10-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (w): Add GIOChannel to closure struct.
+	(gtk_what_callback): Change to a GIO callback function.  Ignore
+	callbacks with empty channels.
+	(select_filedesc): Use GIO for input callback. Initialize channel.
+	(unselect_filedesc): Cancel GIO callback, delete channel.
+
 2013-10-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (gtk_update_frame_menubars): Fix unused warning.
