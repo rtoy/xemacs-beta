@@ -636,6 +636,7 @@ gtk_timeout_to_emacs_event (struct Lisp_Event *emacs_event)
 struct what_is_ready_closure
 {
   int fd;
+  GIOChannel *channel;		/* not actually used */
   Lisp_Object what;
   gint id;
 };
@@ -698,20 +699,28 @@ mark_what_as_being_ready (struct what_is_ready_closure *closure)
     }
 }
 
-static void
-gtk_what_callback (gpointer closure, gint UNUSED (source),
-		   GdkInputCondition UNUSED (why))
+static gboolean
+gtk_what_callback (GIOChannel * channel,
+		   GIOCondition UNUSED (condition),
+		   gpointer data)
 {
+  struct what_is_ready_closure *closure = data;
+
+  /* Not sure why we get these callbacks. */
+  if (channel == 0)
+    return TRUE;
+
   /* If closure is 0, then we got a fake event from a signal handler.
      The only purpose of this is to make XtAppProcessEvent() stop
      blocking. */
   if (closure)
-    mark_what_as_being_ready ((struct what_is_ready_closure *) closure);
+    mark_what_as_being_ready (closure);
   else
     {
       fake_event_occurred++;
       drain_signal_event_pipe ();
     }
+  return TRUE;
 }
 
 static void
@@ -726,9 +735,10 @@ select_filedesc (int fd, Lisp_Object what)
 
   closure = xnew (struct what_is_ready_closure);
   closure->fd = fd;
+  closure->channel = g_io_channel_unix_new (fd);
   closure->what = what;
-  closure->id = gdk_input_add (fd, GDK_INPUT_READ,
-			       (GdkInputFunction) gtk_what_callback, closure);
+  closure->id = g_io_add_watch (closure->channel, G_IO_IN,
+				gtk_what_callback, closure);
   filedesc_to_what_closure[fd] = closure;
 }
 
@@ -774,7 +784,8 @@ unselect_filedesc (int fd)
 	  tty_events_occurred--;
 	}
     }
-  gdk_input_remove (closure->id);
+  g_source_remove (closure->id);
+  g_io_channel_unref (closure->channel);
   xfree (closure);
   filedesc_to_what_closure[fd] = 0;
 }
