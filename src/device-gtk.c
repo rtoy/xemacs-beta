@@ -468,12 +468,15 @@ gtk_event_name (GdkEventType event_type)
     GET_EVENT_NAME (GDK_DROP_FINISHED);
     GET_EVENT_NAME (GDK_CLIENT_EVENT);
     GET_EVENT_NAME (GDK_VISIBILITY_NOTIFY);
+    GET_EVENT_NAME (GDK_NO_EXPOSE);
     GET_EVENT_NAME (GDK_SCROLL);
     GET_EVENT_NAME (GDK_WINDOW_STATE);
     GET_EVENT_NAME (GDK_SETTING);
     GET_EVENT_NAME (GDK_OWNER_CHANGE);
     GET_EVENT_NAME (GDK_GRAB_BROKEN);
     GET_EVENT_NAME (GDK_DAMAGE);
+    /* Not useful, but clang warns about missing enumeration value. */
+    GET_EVENT_NAME (GDK_EVENT_LAST);
   }
 #undef GET_EVENT_NAME
   return "Unknown GdkEventType";

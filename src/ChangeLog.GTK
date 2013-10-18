@@ -1,3 +1,7 @@
+2013-10-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_event_name): Add missing event GDK_NO_EXPOSE.
+
 2013-10-17  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-gtk.c (w): Add GIOChannel to closure struct.
