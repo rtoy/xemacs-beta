@@ -536,7 +536,7 @@ gtk_device_system_metrics (struct device *d,
       return Fcons (make_fixnum (gdk_screen_width_mm ()),
 		    make_fixnum (gdk_screen_height_mm ()));
     case DM_num_color_cells:
-      return make_fixnum (gdk_colormap_get_system_size ());
+      return make_fixnum (gdk_visual_get_colormap_size (DEVICE_GTK_VISUAL (d)));
     case DM_num_bit_planes:
       return make_fixnum (DEVICE_GTK_DEPTH (d));
 
