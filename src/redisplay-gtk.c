@@ -68,44 +68,51 @@ static void
 XLIKE_clear_frame (struct frame *f)
 {
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+#ifdef HAVE_GTK2
   GdkWindow *w = gtk_widget_get_window (widget);
+#endif
+#ifdef HAVE_GTK3
+  GtkStyleContext *sc = gtk_widget_get_style_context (widget);
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+#if 0
+  Lisp_Object frame;
+#endif
+  GdkRGBA bg;
+  cairo_rectangle_int_t r;
+#endif
 
+#ifdef HAVE_GTK2
   if (w)
     gdk_window_clear (w);
+#endif
 
-#if 0
-  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-  /* int x, y, width, height; */
-  Lisp_Object frame;
-
+#ifdef HAVE_GTK3
   /* #### GEOM! This clears the internal border and gutter (and scrollbars)
      but not the toolbar.  Correct? */
-  /*
-    x = FRAME_LEFT_INTERNAL_BORDER_START (f);
-    width = (FRAME_RIGHT_INTERNAL_BORDER_END (f) - x);
-  */
+  r.x = FRAME_LEFT_INTERNAL_BORDER_START (f);
+  r.width = (FRAME_RIGHT_INTERNAL_BORDER_END (f) - r.x);
   /* #### This adjustment by 1 should be being done in the macros.
      There is some small differences between when the menubar is on
      and off that we still need to deal with.  The adjustment also occurs in
      redisplay_clear_top_of_window(). */
-  /*
-    y = FRAME_TOP_INTERNAL_BORDER_START (f) - 1;
-    height = (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - y);
-  */
+  r.y = FRAME_TOP_INTERNAL_BORDER_START (f) - 1;
+  r.height = (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - r.y);
 
-  /* cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR); */
-  /* gtk_fill_rectangle (cr, x, y, width, height); */
+  gtk_style_context_get_background_color (sc, GTK_STATE_FLAG_NORMAL, &bg);
+  cairo_set_source_rgba (cr, bg.red, bg.green, bg.blue, bg.alpha);
+  gtk_fill_rectangle (cr, r.x, r.y, r.width, r.height);
 
+#if 0
   frame = wrap_frame (f);
-
   if (!UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vdefault_face, frame))
       || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vleft_margin_face, frame))
       || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vright_margin_face, frame)))
     {
       XLIKE_clear_frame_windows (f->root_window);
     }
+#endif
   cairo_destroy (cr);
-  #endif
+#endif
 }
 
 /*****************************************************************************
@@ -119,8 +126,15 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
 		  enum edge_style style)
 {
   struct frame *f = XFRAME (w->frame);
-  GdkWindow *x_win = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f));
-  GtkStyle *gstyle = gtk_widget_get_style (FRAME_GTK_TEXT_WIDGET (f));
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+#ifdef HAVE_GTK2
+  GtkStyle *gstyle = gtk_widget_get_style (widget);
+#endif
+#ifdef HAVE_GTK3
+  GtkStyle *gstyle = gtk_widget_get_style (widget);
+  /* GtkStyleContext *gstyle = gtk_widget_get_style_context (widget); */
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+#endif
   GtkShadowType stype;
 
   if (shadow_thickness == 0)
@@ -137,10 +151,20 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
 
   /* Do we want to have some magic constants to set
      GTK_SHADOW_ETCHED_IN or GTK_SHADOW_ETCHED_OUT? */
-
+#ifdef HAVE_GTK2
   gtk_paint_shadow (gstyle, x_win, GTK_STATE_NORMAL, stype, NULL,
 		    FRAME_GTK_TEXT_WIDGET (f), "modeline",
 		    x, y, width, height);
+#endif
+#ifdef HAVE_GTK3
+  /* This is already deprecated in Gtk 3 in favour of
+     gtk_render_frame(), which requires CSS settings to control */
+  gtk_paint_shadow (gstyle, cr, GTK_STATE_NORMAL, stype, widget,
+		    "modeline", x, y, width, height);
+#if 0
+  gtk_render_frame (gstyle, cr, ...);
+#endif
+#endif
 }
 
 /*****************************************************************************
@@ -153,16 +177,21 @@ XLIKE_output_vertical_divider (struct window *w, int UNUSED (clear))
 {
   struct frame *f = XFRAME (w->frame);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
-  GtkStyle *gstyle = gtk_widget_get_style (FRAME_GTK_TEXT_WIDGET (f));
+#ifdef HAVE_GTK2
+  GtkStyle *gstyle = gtk_widget_get_style (widget);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
   enum edge_style style;
-  int x, ytop, ybottom, width, shadow_thickness, spacing;
+  int shadow_thickness;
+#endif
+#ifdef HAVE_GTK3
+  GtkStyleContext *gstyle = gtk_widget_get_style_context (widget);
+#endif
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  int x, ytop, ybottom, width, spacing;
   face_index div_face =
     get_builtin_face_cache_index (w, Vvertical_divider_face);
 
   width = window_divider_width (w);
-  shadow_thickness = XFIXNUM (w->vertical_divider_shadow_thickness);
   spacing = XFIXNUM (w->vertical_divider_spacing);
   /* line_width = XFIXNUM (w->vertical_divider_line_width); */
   x = WINDOW_RIGHT (w) - width;
@@ -171,6 +200,9 @@ XLIKE_output_vertical_divider (struct window *w, int UNUSED (clear))
 
   cr_set_foreground (cr, WINDOW_FACE_CACHEL_BACKGROUND (w, div_face));
   gtk_fill_rectangle (cr, x, ytop, width, ybottom - ytop);
+
+#ifdef HAVE_GTK2
+  shadow_thickness = XFIXNUM (w->vertical_divider_shadow_thickness);
 
   if (shadow_thickness < 0)
     {
@@ -181,15 +213,22 @@ XLIKE_output_vertical_divider (struct window *w, int UNUSED (clear))
     {
       style = EDGE_BEVEL_OUT;
     }
+#endif
 
   cr_set_foreground (cr, WINDOW_FACE_CACHEL_FOREGROUND (w, div_face));
+#ifdef HAVE_GTK2
   /* Draw the shadows around the divider line */
   gtk_bevel_area (w, div_face, x + spacing, ytop,
 		  width - 2 * spacing, ybottom - ytop,
 		  shadow_thickness, EDGE_ALL, style);
   gtk_paint_vline (gstyle, x_win, GTK_STATE_NORMAL, NULL,
 		   FRAME_GTK_TEXT_WIDGET (f), "vline", ytop + spacing,
-		   ybottom + spacing, x + width / 2);
+		   ybottom + spacing , x + width / 2);
+#endif
+#ifdef HAVE_GTK3
+  gtk_render_line (gstyle, cr, x - (spacing/2), x + (spacing/2),
+		   ytop, ybottom);
+#endif
   cairo_destroy (cr);
 }
 
@@ -239,13 +278,25 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
 
   if (ypos3 - ypos2 > 0)
     {
+#ifdef HAVE_GTK2
       GtkStyle *style = gtk_widget_get_style (FRAME_GTK_TEXT_WIDGET (f));
       XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+#endif
+#ifdef HAVE_GTK3
+      GtkStyleContext *gstyle = gtk_widget_get_style_context (widget);
+#endif
 
+#ifdef HAVE_GTK2
       gtk_paint_hline (style, x_win, GTK_STATE_NORMAL, NULL,
 		       FRAME_GTK_TEXT_WIDGET (f), "hline", x, x + width,
 		       ypos3 + rb->object.hline.thickness / 2);
       /* gtk_fill_rectangle (cr, x, ypos3, width, rb->object.hline.thickness); */
+#endif
+#ifdef HAVE_GTK3
+      gtk_render_line (gstyle, cr, x, x + width,
+		       ypos3 - (rb->object.hline.thickness / 2),
+		       ypos3 + (rb->object.hline.thickness / 2));
+#endif
     }
   cairo_destroy (cr);
 }

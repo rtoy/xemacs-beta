@@ -1,3 +1,10 @@
+2013-10-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_frame): Port to Gtk 3.
+	(XLIKE_bevel_area): Ditto.
+	(XLIKE_output_vertical_divider): Ditto.
+	(XLIKE_output_horizontal_line): Ditto.
+
 2013-10-17  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-gtk.c (w): Add GIOChannel to closure struct.
