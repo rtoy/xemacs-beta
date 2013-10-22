@@ -526,7 +526,7 @@ gtk_device_system_metrics (struct device *d,
 
   style = gtk_style_attach (style, w);
 #endif
-  
+
   switch (m)
     {
     case DM_size_device:

@@ -129,6 +129,7 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
 #ifdef HAVE_GTK2
   GtkStyle *gstyle = gtk_widget_get_style (widget);
+  GdkWindow *x_win = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f));
 #endif
 #ifdef HAVE_GTK3
   GtkStyle *gstyle = gtk_widget_get_style (widget);
