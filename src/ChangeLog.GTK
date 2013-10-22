@@ -1,3 +1,10 @@
+2013-10-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (handle_client_message): GdkEventClient was removed
+	in Gtk 3.
+	(gtk_event_to_emacs_event): Add Gtk 3 code to get current window
+	and pointer coordinates.
+
 2013-10-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_clear_frame): Port to Gtk 3.

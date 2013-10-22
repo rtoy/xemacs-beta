@@ -205,12 +205,22 @@ handle_client_message (struct frame *f, GdkEvent *event)
 {
   /* The event-Xt code used to handle WM_DELETE_WINDOW here, but we
      handle that directly in frame-gtk.c */
-	 
-  if (event->client.message_type == gdk_atom_intern ("WM_PROTOCOLS", 0) &&
-	   (GdkAtom) event->client.data.l[0] == gdk_atom_intern ("WM_TAKE_FOCUS", 0))
+#ifdef HAVE_GTK2
+  GdkEventClient *cev = (GdkEventClient *) event;
+#define CLIENT client
+#endif
+
+#ifdef HAVE_GTK3
+  XEvent *cev = (XEvent *) event;
+#define CLIENT xclient
+#endif
+
+  if ((GdkAtom) cev->CLIENT.message_type == gdk_atom_intern ("WM_PROTOCOLS", 0) &&
+      (GdkAtom) cev->CLIENT.data.l[0] == gdk_atom_intern ("WM_TAKE_FOCUS", 0))
     {
       handle_focus_event_1 (f, 1);
     }
+#undef CLIENT
 }
 
 static void
@@ -1244,14 +1254,24 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 	   range from setting point to the wrong place to selecting
 	   new windows. */
       {
+#ifdef HAVE_GTK2
 	GdkWindow *w = gdk_window_at_pointer (NULL, NULL);
+#endif
+#ifdef HAVE_GTK3
+	GdkEventButton *bev = (GdkEventButton *) gdk_event;
+	GdkWindow *w = gdk_device_get_window_at_position (bev->device,
+							  NULL, NULL);
+#endif
+	GdkScreen *screen = gdk_event_get_screen (gdk_event);
+	GdkDisplay *disp = gdk_screen_get_display (screen);
 
 	/* If you press mouse button and drag it around, and release
            it outside the window, you will get a NULL GdkWindow at
            pointer.  We need to forward these events on to XEmacs so
            that the mouse selection voodoo works.
 	*/
-	if (w && (w != gdk_window_lookup (GDK_ROOT_WINDOW ())))
+	if (w && (w != gdk_x11_window_lookup_for_display (disp,
+							  GDK_ROOT_WINDOW ())))
 	  {
 	    GdkEvent ev;
 	    GtkWidget *wid = NULL;
@@ -1439,7 +1459,13 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
            in motion, then the server will immediately generate
            exactly one more motion event, which will be on the queue
            waiting for us next time around. */
+#ifdef HAVE_GTK2
 	gdk_window_get_pointer (ev->window, &x, &y, &mask);
+#endif
+#ifdef HAVE_GTK3
+	gdk_window_get_device_position (ev->window, ev->device,
+					&x, &y, &mask);
+#endif
 
         DEVICE_GTK_MOUSE_TIMESTAMP (d) = ev->time;
 
