@@ -468,12 +468,15 @@ gtk_event_name (GdkEventType event_type)
     GET_EVENT_NAME (GDK_DROP_FINISHED);
     GET_EVENT_NAME (GDK_CLIENT_EVENT);
     GET_EVENT_NAME (GDK_VISIBILITY_NOTIFY);
+    GET_EVENT_NAME (GDK_NO_EXPOSE);
     GET_EVENT_NAME (GDK_SCROLL);
     GET_EVENT_NAME (GDK_WINDOW_STATE);
     GET_EVENT_NAME (GDK_SETTING);
     GET_EVENT_NAME (GDK_OWNER_CHANGE);
     GET_EVENT_NAME (GDK_GRAB_BROKEN);
     GET_EVENT_NAME (GDK_DAMAGE);
+    /* Not useful, but clang warns about missing enumeration value. */
+    GET_EVENT_NAME (GDK_EVENT_LAST);
   }
 #undef GET_EVENT_NAME
   return "Unknown GdkEventType";
@@ -533,7 +536,7 @@ gtk_device_system_metrics (struct device *d,
       return Fcons (make_fixnum (gdk_screen_width_mm ()),
 		    make_fixnum (gdk_screen_height_mm ()));
     case DM_num_color_cells:
-      return make_fixnum (gdk_colormap_get_system_size ());
+      return make_fixnum (gdk_visual_get_colormap_size (DEVICE_GTK_VISUAL (d)));
     case DM_num_bit_planes:
       return make_fixnum (DEVICE_GTK_DEPTH (d));
 

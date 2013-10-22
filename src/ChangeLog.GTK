@@ -12,6 +12,12 @@
 	(XLIKE_output_vertical_divider): Ditto.
 	(XLIKE_output_horizontal_line): Ditto.
 
+2013-10-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_event_name): Add missing event GDK_NO_EXPOSE.
+	(gtk_device_system_metrics): Use non-deprecated function to get
+	colormap size.
+
 2013-10-17  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-gtk.c (w): Add GIOChannel to closure struct.
