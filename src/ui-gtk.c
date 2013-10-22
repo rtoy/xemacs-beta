@@ -1812,7 +1812,7 @@ Lisp_Object g_type_to_lisp (GValue *arg)
     case G_TYPE_NONE:
       return (Qnil);
     case G_TYPE_CHAR:
-      return (make_char (g_value_get_char (arg)));
+      return (make_char (g_value_get_schar (arg)));
     case G_TYPE_UCHAR:
       return (make_char (g_value_get_uchar (arg)));
     case G_TYPE_BOOLEAN:
@@ -1905,7 +1905,7 @@ lisp_to_g_value (Lisp_Object obj, GValue *val)
 
 	CHECK_CHAR_COERCE_INT (obj);
 	c = XCHAR (obj);
-	g_value_set_char (val, c);
+	g_value_set_uchar (val, c);
       }
       break;
     case G_TYPE_UCHAR:

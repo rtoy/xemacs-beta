@@ -1,5 +1,11 @@
 2013-10-22  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* ui-gtk.c (g_type_to_lisp): Use schar, char is deprecated.
+	(lisp_to_g_value): Ditto.
+
+	* redisplay-gtk.c (XLIKE_bevel_area): Restore accidentally deleted
+	variable for Gtk 2.
+
 	* event-gtk.c (handle_client_message): GdkEventClient was removed
 	in Gtk 3.
 	(gtk_event_to_emacs_event): Add Gtk 3 code to get current window
