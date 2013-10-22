@@ -4,6 +4,7 @@
 	in Gtk 3.
 	(gtk_event_to_emacs_event): Add Gtk 3 code to get current window
 	and pointer coordinates.
+	(handle_client_message): Fix Gtk 2 compile error.
 
 2013-10-20  Jeff Sparkes  <jsparkes@gmail.com>
 

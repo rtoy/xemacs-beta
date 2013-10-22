@@ -207,20 +207,24 @@ handle_client_message (struct frame *f, GdkEvent *event)
      handle that directly in frame-gtk.c */
 #ifdef HAVE_GTK2
   GdkEventClient *cev = (GdkEventClient *) event;
-#define CLIENT client
+
+  if ((GdkAtom) cev->message_type == gdk_atom_intern ("WM_PROTOCOLS", 0) &&
+      (GdkAtom) cev->data.l[0] == gdk_atom_intern ("WM_TAKE_FOCUS", 0))
+    {
+      handle_focus_event_1 (f, 1);
+    }
 #endif
 
 #ifdef HAVE_GTK3
   XEvent *cev = (XEvent *) event;
-#define CLIENT xclient
-#endif
 
-  if ((GdkAtom) cev->CLIENT.message_type == gdk_atom_intern ("WM_PROTOCOLS", 0) &&
-      (GdkAtom) cev->CLIENT.data.l[0] == gdk_atom_intern ("WM_TAKE_FOCUS", 0))
+  if ((GdkAtom) cev->xclient.message_type == gdk_atom_intern ("WM_PROTOCOLS", 0) &&
+      (GdkAtom) cev->xclient.data.l[0] == gdk_atom_intern ("WM_TAKE_FOCUS", 0))
     {
       handle_focus_event_1 (f, 1);
     }
 #undef CLIENT
+#endif
 }
 
 static void
