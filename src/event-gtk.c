@@ -694,7 +694,9 @@ mark_what_as_being_ready (struct what_is_ready_closure *closure)
 	 the stderr_out below, turn NORMAL_QUIT_CHECK_TIMEOUT_MSECS
 	 down to 25, do sh -c 'xemacs -nw -q -f shell 2>/tmp/log'
 	 and press return repeatedly.  (Seen under AIX & Linux.)
-	 -dkindred@cs.cmu.edu */
+	 -dkindred@cs.cmu.edu
+
+         This does not seem to occur anymore with glib 2.36 on linux -jsparkes */
       if (!poll_fds_for_input (temp_mask))
 	{
 #if 0
@@ -720,9 +722,10 @@ gtk_what_callback (GIOChannel * channel,
 {
   struct what_is_ready_closure *closure = data;
 
-  /* Not sure why we get these callbacks. */
+  /* Not sure why we get these callbacks. This happens before we even
+     add any input watches. */
   if (channel == 0)
-    return TRUE;
+    return FALSE;
 
   /* If closure is 0, then we got a fake event from a signal handler.
      The only purpose of this is to make XtAppProcessEvent() stop
@@ -751,7 +754,8 @@ select_filedesc (int fd, Lisp_Object what)
   closure->fd = fd;
   closure->channel = g_io_channel_unix_new (fd);
   closure->what = what;
-  closure->id = g_io_add_watch (closure->channel, G_IO_IN,
+  /* Adding HUP was essential to getting shell-mode to work. */
+  closure->id = g_io_add_watch (closure->channel, G_IO_IN | G_IO_HUP,
 				gtk_what_callback, closure);
   filedesc_to_what_closure[fd] = closure;
 }

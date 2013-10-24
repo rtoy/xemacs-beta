@@ -1,3 +1,12 @@
+2013-10-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (gtk_what_callback): Try to remove watch with
+	invalid channel by returning FALSE.
+	(mark_what_as_being_ready): Update comment to indicate current
+	state.
+	(select_filedesc): Add HUP notification to watch.  This turns out
+	to be necessary for shell-mode for unknown reasons.
+
 2013-10-22  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (g_type_to_lisp): Use schar, char is deprecated.
