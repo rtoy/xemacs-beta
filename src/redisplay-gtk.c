@@ -68,25 +68,19 @@ static void
 XLIKE_clear_frame (struct frame *f)
 {
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_rectangle_int_t r;
+  Lisp_Object frame;
 #ifdef HAVE_GTK2
   GdkWindow *w = gtk_widget_get_window (widget);
+  GtkStyle *style = gtk_widget_get_style (widget);
+  GdkColor *bg;
 #endif
 #ifdef HAVE_GTK3
   GtkStyleContext *sc = gtk_widget_get_style_context (widget);
-  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-#if 0
-  Lisp_Object frame;
-#endif
   GdkRGBA bg;
-  cairo_rectangle_int_t r;
 #endif
 
-#ifdef HAVE_GTK2
-  if (w)
-    gdk_window_clear (w);
-#endif
-
-#ifdef HAVE_GTK3
   /* #### GEOM! This clears the internal border and gutter (and scrollbars)
      but not the toolbar.  Correct? */
   r.x = FRAME_LEFT_INTERNAL_BORDER_START (f);
@@ -98,11 +92,24 @@ XLIKE_clear_frame (struct frame *f)
   r.y = FRAME_TOP_INTERNAL_BORDER_START (f) - 1;
   r.height = (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - r.y);
 
+#ifdef HAVE_GTK2
+  /*
+  bg = &style->bg[GTK_STATE_NORMAL];
+  cairo_set_source_rgb (cr, bg->red, bg->green, bg->blue);
+  gtk_style_apply_default_background (style, w, TRUE, GTK_STATE_NORMAL, NULL,
+    r.x, r.y, r.width, r.height);
+  */
+  /* gdk_window_clear (w); */
+  gdk_window_clear_area (w, r.x, r.y, r.width, r.height);
+#endif
+
+#ifdef HAVE_GTK3
   gtk_style_context_get_background_color (sc, GTK_STATE_FLAG_NORMAL, &bg);
   cairo_set_source_rgba (cr, bg.red, bg.green, bg.blue, bg.alpha);
   gtk_fill_rectangle (cr, r.x, r.y, r.width, r.height);
+#endif
 
-#if 0
+#if 1
   frame = wrap_frame (f);
   if (!UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vdefault_face, frame))
       || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vleft_margin_face, frame))
@@ -112,7 +119,6 @@ XLIKE_clear_frame (struct frame *f)
     }
 #endif
   cairo_destroy (cr);
-#endif
 }
 
 /*****************************************************************************

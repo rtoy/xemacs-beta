@@ -1,5 +1,8 @@
 2013-10-24  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_clear_frame): Attempt to implement for
+	Gtk 3.X; it's probably wrong.
+
 	* event-gtk.c (gtk_what_callback): Try to remove watch with
 	invalid channel by returning FALSE.
 	(mark_what_as_being_ready): Update comment to indicate current
