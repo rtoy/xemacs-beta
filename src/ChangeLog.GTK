@@ -1,3 +1,14 @@
+2013-10-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (gtk_to_emacs_keysym): Use "modern" name
+	GDK_KEY_Mode_switch.
+	(emacs_shell_event_handler): No more client event in Gdk 3 event
+	structure.  Use ABORT placeholder for Gtk 3 for now.
+	(init_event_gtk_late): Use GIO for input.  (This fixes the menubar
+	display.)
+	(register_event_name): Use internal functions xstrdup and xfree.
+	GDK_NO_EXPOSE event gone in Gtk 3.
+
 2013-10-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_clear_frame): Attempt to implement for

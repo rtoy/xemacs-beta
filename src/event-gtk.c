@@ -495,7 +495,7 @@ static Lisp_Object
 gtk_to_emacs_keysym (GdkEventKey *event, int simple_p)
      /* simple_p means don't try too hard (ASCII only) */
 {
-  if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_Mode_switch))
+  if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_KEY_Mode_switch))
     {
       return Qnil;
     }
@@ -1574,7 +1574,12 @@ emacs_shell_event_handler (GtkWidget *UNUSED (wid),
     case GDK_SELECTION_CLEAR:
     case GDK_SELECTION_NOTIFY:  FROB(selection); break;
     case GDK_PROPERTY_NOTIFY:   FROB(property); break;
+#ifdef HAVE_GTK2
     case GDK_CLIENT_EVENT:      FROB(client); break;
+#endif
+#ifdef HAVE_GTK3
+    case GDK_CLIENT_EVENT:      ABORT (); break;
+#endif
     case GDK_MAP:
     case GDK_UNMAP:	      	FROB(any); break;
     case GDK_CONFIGURE:		FROB(configure); break;
@@ -1711,8 +1716,8 @@ init_event_gtk_late (void) /* called when already initialized */
   gdk_error_trap_push ();
 #endif
 
-  gdk_input_add (signal_event_pipe[0], GDK_INPUT_READ,
-		 (GdkInputFunction) gtk_what_callback, NULL);
+  g_io_add_watch (g_io_channel_unix_new (signal_event_pipe[0]),
+		  G_IO_IN | G_IO_HUP, gtk_what_callback, NULL);
 }
 
 /* Bogus utility routines */
@@ -2030,7 +2035,7 @@ gtk_key_is_modifier_p (KeyCode keycode, struct device *d)
 static void 
 register_event_name(const char *name, int value)
 {
-  char *nm = strdup(name);
+  char *nm = xstrdup(name);
   char *ptr = nm;
   while (*ptr) {
     if (*ptr == '_')
@@ -2042,7 +2047,7 @@ register_event_name(const char *name, int value)
   Vgdk_event_names = Facons (build_extstring (nm, Qutf_8),
                              make_fixnum (value),
                              Vgdk_event_names);
-  free (nm);
+  xfree (nm);
 }
 
 static void
@@ -2082,7 +2087,9 @@ register_event_names (void)
   FROB_EVENT_NAME(GDK_DROP_FINISHED);
   FROB_EVENT_NAME(GDK_CLIENT_EVENT);
   FROB_EVENT_NAME(GDK_VISIBILITY_NOTIFY);
+#ifdef HAVE_GTK2
   FROB_EVENT_NAME(GDK_NO_EXPOSE);
+#endif
   FROB_EVENT_NAME(GDK_SCROLL);
   FROB_EVENT_NAME(GDK_WINDOW_STATE);
   FROB_EVENT_NAME(GDK_SETTING);
