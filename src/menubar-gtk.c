@@ -268,6 +268,22 @@ convert_underscores (const Extbyte *name, Bytecount name_len,
   return rval;
 }
 
+#ifdef HAVE_GTK3
+static Extbyte
+get_accelerator (Extbyte *label)
+{
+  while (label)
+    {
+      if (*label == '_')
+	{
+	  return *label++;
+	}
+      label++;
+    }
+  return 0;
+}
+#endif
+
 /* Remove the XEmacs menu accelerator representation from a UTF-8 string. */
 static Extbyte *
 remove_underscores (const Extbyte *name, Extbyte **dest_out,
@@ -331,8 +347,10 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
           Bytecount desc_len = strlen (desc_in_utf_8);
           Extbyte *converted = alloca_extbytes (1 + (desc_len * 2));
 	  GtkWidget* accel_label = gtk_label_new (NULL);
-#ifdef HAVE_GTK2
-	  guint accel_key;
+	  guint accel_key = 0x01000000; /* is there a constant?
+					   See gdk_unicode_to_keyval doc. */
+#ifdef HAVE_GTK3
+	  Extbyte accel_char = 0;
 #endif
           convert_underscores (desc_in_utf_8, desc_len,
                                &converted, 1 + (desc_len * 2));
@@ -343,21 +361,21 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
           accel_key = gtk_label_parse_uline (GTK_LABEL (accel_label),
                                              converted);
 #endif
+#ifdef HAVE_GTK3
+	  accel_char = get_accelerator (converted);
+	  if (accel_char != 0)
+	    accel_key = gdk_unicode_to_keyval (accel_char);
+#endif
 	  menu_item = gtk_menu_item_new ();
 	  gtk_container_add (GTK_CONTAINER (menu_item), accel_label);
 	  gtk_widget_show (accel_label);
 
-#ifdef HAVE_GTK2
-	  if (menubar_accel_group)
+	  if (menubar_accel_group && accel_key != 0x01000000)
 	    gtk_widget_add_accelerator (menu_item,
 					"activate",
 					menubar_accel_group,
 					accel_key, GDK_MOD1_MASK,
 					GTK_ACCEL_LOCKED);
-#endif
-#ifdef HAVE_GTK3
-					     /* Implement for Gtk 3 -jsparkes */
-#endif
 	}
       else
 	{

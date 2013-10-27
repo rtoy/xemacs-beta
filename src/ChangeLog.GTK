@@ -1,5 +1,8 @@
 2013-10-27  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* menubar-gtk.c (get_accelerator): Define for Gtk 3.
+	(menu_convert): Use it to implement menu accelerators for Gtk 3.
+
 	* event-gtk.c (gtk_what_callback): Remove obsolete comment and
 	check for NULL channel.
 
