@@ -722,10 +722,7 @@ gtk_what_callback (GIOChannel * channel,
 {
   struct what_is_ready_closure *closure = data;
 
-  /* Not sure why we get these callbacks. This happens before we even
-     add any input watches. */
-  if (channel == 0)
-    return FALSE;
+  assert (channel);
 
   /* If closure is 0, then we got a fake event from a signal handler.
      The only purpose of this is to make XtAppProcessEvent() stop
