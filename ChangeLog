@@ -1,3 +1,8 @@
+2013-10-28  Marcus Crestani  <crestani@xemacs.org>
+
+	* configure.ac: Disable ASLR on Mavericks.
+	* configure: Rebuild.
+
 2013-09-08  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: x86_64 Macs also use POSIX virtual-dirty-bit write
