@@ -1,3 +1,8 @@
+2013-10-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_frame_position): Replace deprecated function.
+	(gtk_set_frame_size): Ditto.
+
 2013-10-27  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (get_accelerator): Define for Gtk 3.

@@ -1224,8 +1224,7 @@ a string.
 static void
 gtk_set_frame_position (struct frame *f, int xoff, int yoff)
 {
-  /* Deprecated, what is the replacement? */
-    gtk_widget_set_uposition (FRAME_GTK_SHELL_WIDGET (f), xoff, yoff);
+  gtk_window_move (GTK_WINDOW (FRAME_GTK_SHELL_WIDGET (f)), xoff, yoff);
 }
 
 /* Call this to change the size of frame S's x-window. */
@@ -1235,6 +1234,7 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
 {
   GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
   GdkGeometry geometry;
+  GtkRequisition req;
 
   if (GTK_IS_WINDOW (shell))
     {
@@ -1249,13 +1249,14 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
     }
 
   change_frame_size (f, cols, rows, 0);
+  gtk_widget_size_request (FRAME_GTK_SHELL_WIDGET (f), &req);
+  gtk_widget_set_size_request (FRAME_GTK_SHELL_WIDGET (f), req.width, req.height);
 
-  {
-    GtkRequisition req;
-
-    gtk_widget_size_request (FRAME_GTK_SHELL_WIDGET (f), &req);
-    gtk_widget_set_usize (FRAME_GTK_SHELL_WIDGET (f), req.width, req.height);
-  }
+  if (GTK_IS_WINDOW (shell))
+    {
+      gtk_window_set_default_size (GTK_WINDOW (shell), req.width, req.height);
+      /* gtk_window_set_default_geometry (GTK_WINDOW (shell), req.width, req.height); */
+    }
 }
 
 static void
