@@ -51,6 +51,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 Lisp_Object Qmake_device_early_gtk_entry_point,
    Qmake_device_late_gtk_entry_point;
 
+Lisp_Object Vgtk_version, Vgtk_major_version;
+Lisp_Object Vgtk_minor_version, Vgtk_micro_version;
+Lisp_Object Vgtk_binary_age, Vgtk_interface_age;
+
 /* The application class of Emacs. */
 Lisp_Object Vgtk_emacs_application_class;
 
@@ -176,7 +180,7 @@ mode.
 
   slow_down_interrupts ();
   /* Turn ubuntu overlay scrollbars off.  They don't have per-line scrolling. */
-  setenv("LIBOVERLAY_SCROLLBAR", "0", 0);
+  /* setenv("LIBOVERLAY_SCROLLBAR", "0", 0); */
 
   gtk_init (&argc, &argv);
 
@@ -803,8 +807,73 @@ console_type_create_device_gtk (void)
 void
 vars_of_device_gtk (void)
 {
+  Ibyte *version = alloca_ibytes (128);
+
   Fprovide (Qgtk);
 
+  DEFVAR_LISP ("gtk-version", &Vgtk_version /*
+GTK version string.
+*/ );
+#ifdef HAVE_GTK2
+  qxesprintf (version, "%d.%d.%d", GTK_MAJOR_VERSION, GTK_MINOR_VERSION,
+	      GTK_MICRO_VERSION);
+#endif
+#ifdef HAVE_GTK3
+  qxesprintf (version, "%d.%d.%d", gtk_get_major_version(), gtk_get_minor_version(),
+	      gtk_get_micro_version());
+#endif
+  Vgtk_version = build_istring (version);
+
+  DEFVAR_LISP ("gtk-major-version", &Vgtk_major_version /*
+GTK major version as integer.
+*/ );
+#ifdef HAVE_GTK2
+  Vgtk_major_version = make_integer (GTK_MAJOR_VERSION);
+#endif
+#ifdef HAVE_GTK3
+  Vgtk_major_version = (gtk_get_major_version());
+#endif
+
+  DEFVAR_LISP ("gtk-minor-version", &Vgtk_minor_version /*
+GTK minor version as integer.
+*/ );
+#ifdef HAVE_GTK2
+  Vgtk_minor_version = make_integer (GTK_MINOR_VERSION);
+#endif
+#ifdef HAVE_GTK3
+ Vgtk_minor_version make_integer (gtk_get_minor_version());
+#endif
+
+  DEFVAR_LISP ("gtk-micro-version", &Vgtk_micro_version /*
+GTK micro version as integer.
+*/ );
+#ifdef HAVE_GTK2
+  Vgtk_micro_version = make_integer (GTK_MICRO_VERSION);
+#endif
+#ifdef HAVE_GTK3
+  Vgtk_micro_version = make_integer (gtk_get_micro_version());
+#endif
+
+  DEFVAR_LISP ("gtk-binary-age", &Vgtk_binary_age /*
+GTK binary age as integer.
+*/ );
+#ifdef HAVE_GTK2
+  Vgtk_binary_age = make_integer (GTK_BINARY_AGE);
+#endif
+#ifdef HAVE_GTK3
+  Vgtk_binary_age = make_integer (gtk_get_binary_age());
+#endif
+
+  DEFVAR_LISP ("gtk-interface-age", &Vgtk_interface_age /*
+GTK interface age as integer.
+*/ );
+#ifdef HAVE_GTK2
+  Vgtk_interface_age = make_integer (GTK_INTERFACE_AGE);
+#endif
+#ifdef HAVE_GTK3
+  Vgtk_interface_age = make_integer (gtk_get_interface_age());
+#endif
+  
   DEFVAR_LISP ("gtk-initial-argv-list", &Vgtk_initial_argv_list /*
 You don't want to know.
 This is used during startup to communicate the remaining arguments in
