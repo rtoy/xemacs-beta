@@ -1,5 +1,8 @@
 2013-11-01  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-faces.el (gtk-init-device-faces): Only apply style
+	information to faces in Gtk 2, for now.
+
 	* gtk-widgets.el (): Don't import Gtk version variables directly.
 	They are implemented differently between Gtk 2 and 3, so we have
 	to wrap them now.

@@ -52,7 +52,8 @@
   ;;
   ;; If the "default" face didn't have a font specified, try to pick one.
   ;;
-  (when (eq (device-type device) 'gtk)
+  (when (and (eq (device-type device) 'gtk)
+	     (= gtk-major-version 2))
     (let* ((style (gtk-style-info device))
 	   (normal 0)			; GTK_STATE_NORMAL
 	   ;;(active 1)			; GTK_STATE_ACTIVE
