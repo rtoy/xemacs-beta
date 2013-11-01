@@ -946,12 +946,6 @@
 (gtk-import-function nil gtk_list_item_deselect GtkListItem)
 
 
-(gtk-import-variable guint gtk_major_version)
-(gtk-import-variable guint gtk_minor_version)
-(gtk-import-variable guint gtk_micro_version)
-(gtk-import-variable guint gtk_interface_age)
-(gtk-import-variable guint gtk_binary_age)
-
 (gtk-import-function GtkString gtk_check_version
 		     (guint . required_major)
 		     (guint . required_minor)

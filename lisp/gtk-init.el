@@ -21,6 +21,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
+(defvaralias 'gtk-version-string 'gtk-version
+  "For FSF compatibility")
+
 (globally-declare-boundp
  '(gtk-initial-argv-list gtk-initial-geometry))
 

@@ -1,3 +1,12 @@
+2013-11-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el (): Don't import Gtk version variables directly.
+	They are implemented differently between Gtk 2 and 3, so we have
+	to wrap them now.
+
+	* gtk-init.el (gtk-version-string): Declare var alias for FSF
+	compatability.
+
 2013-10-29  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-mouse.el (gtk-init-pointers): Re-enable this function.
