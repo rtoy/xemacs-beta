@@ -394,9 +394,9 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
       default_face_width_and_height (wrap_frame (f), &geometry.width_inc, &geometry.height_inc);
 
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
-				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);
-      gdk_window_set_hints (gtk_widget_get_window (shell), x, y, 0, 0, 0, 0,
-			    GDK_HINT_POS);
+				     FRAME_GTK_TEXT_WIDGET (f),
+				     &geometry, geometry_mask);
+      gtk_window_move (GTK_WINDOW (shell), x, y);
       gtk_window_set_resizable (GTK_WINDOW (shell), TRUE);
     }
 
@@ -406,7 +406,6 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
   change_frame_size (f, w, h, 0);
   {
     GtkRequisition req;
- 
     gtk_widget_size_request (FRAME_GTK_SHELL_WIDGET (f), &req);
   }
 }
@@ -903,6 +902,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
   FRAME_GTK_SHELL_WIDGET (f) = shell;
   gtk_widget_set_name (shell, name);
+  gtk_window_set_resizable (GTK_WINDOW (shell), TRUE);
 
   text = GTK_WIDGET (gtk_xemacs_new (f));
   container = GTK_WIDGET (gtk_vbox_new (FALSE, INTERNAL_BORDER_WIDTH));
@@ -955,7 +955,9 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 	"selection-clear-event",
 	"selection-request-event",
 	"selection-notify-event",
+#ifdef HAVE_GTK2
 	"client-event",
+#endif
 	/* "configure-event", */
 	"visibility-notify-event",
 	"scroll-event",
@@ -972,8 +974,11 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
   assert (g_signal_connect (G_OBJECT (shell), "size-allocate",
                             G_CALLBACK (size_allocate_cb), f));
+#ifdef HAVE_GTK2
+  /* XXX -jsparkes */
   assert (g_signal_connect (G_OBJECT (shell), "size-request",
                             G_CALLBACK (size_request_cb), f));
+#endif
 
   /* This might be safe to call now... */
   /* gtk_signal_connect (GTK_OBJECT (shell), "event", G_CALLBACK (emacs_shell_event_handler), f); */
@@ -1209,9 +1214,14 @@ a string.
   Ascbyte str[255];
   struct frame *f = decode_gtk_frame (frame);
 
-  /* Arrrrggghhh... this defeats the whole purpose of using Gdk... do we really need this? */
+#ifdef HAVE_GTK2
   sprintf (str, "%lu",
 	   GDK_WINDOW_XWINDOW (gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f))));
+  #endif
+#ifdef HAVE_GTK3
+  sprintf (str, "%lu",
+	   gdk_x11_window_get_xid (gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f))));
+#endif
   return build_ascstring (str);
 }
 #endif
@@ -1368,14 +1378,7 @@ gtk_frame_totally_visible_p (struct frame *f)
 static void
 gtk_iconify_frame (struct frame *f)
 {
-  GdkWindow *w = gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (f));
-
-  /* There is no equivalent to XIconifyWindow in Gtk/Gdk. */
-  if (!XIconifyWindow (GDK_WINDOW_XDISPLAY (w),
-		       GDK_WINDOW_XWINDOW (w),
-		       DefaultScreen (GDK_WINDOW_XDISPLAY (w))))
-    gtk_cant_notify_wm_error ();
-
+  gtk_window_iconify (GTK_WINDOW (FRAME_GTK_SHELL_WIDGET (f)));
   f->iconified = 1;
 }
 

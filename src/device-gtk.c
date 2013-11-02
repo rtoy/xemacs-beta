@@ -101,13 +101,8 @@ decode_gtk_device (Lisp_Object device)
 extern Lisp_Object
 xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w);
 
-#ifdef USE_PANGO
 extern Lisp_Object __get_gtk_font_truename (PangoFont *font,
 					    int expandp);
-#else
-extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font,
-					    int expandp);
-#endif
 
 #define convert_font(f) __get_gtk_font_truename (f, 0)
 
@@ -216,7 +211,8 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   allocate_gtk_device_struct (d);
   display = DEVICE_CONNECTION (d);
-
+  /* gtk_init loads these files in Gtk 3, I think -jsparkes */
+#ifdef HAVE_GTK2
   /* Attempt to load a site-specific gtkrc */
   {
     Lisp_Object gtkrc = Fexpand_file_name (build_ascstring ("gtkrc"), Vdata_directory);
@@ -246,7 +242,7 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 	xfree (new_rc_files);
       }
   }
-
+#endif
   Fgtk_init (Vgtk_initial_argv_list);
 
 #ifdef __FreeBSD__
@@ -472,7 +468,9 @@ gtk_event_name (GdkEventType event_type)
     GET_EVENT_NAME (GDK_DROP_FINISHED);
     GET_EVENT_NAME (GDK_CLIENT_EVENT);
     GET_EVENT_NAME (GDK_VISIBILITY_NOTIFY);
+#ifdef HAVE_GTK2
     GET_EVENT_NAME (GDK_NO_EXPOSE);
+#endif
     GET_EVENT_NAME (GDK_SCROLL);
     GET_EVENT_NAME (GDK_WINDOW_STATE);
     GET_EVENT_NAME (GDK_SETTING);
@@ -610,6 +608,19 @@ The two names differ in capitalization and underscoring.
 /*                          grabs and ungrabs                           */
 /************************************************************************/
 
+#ifdef HAVE_GTK3
+static GdkDevice *
+gtk_widget_get_device (GtkWidget *widget)
+{
+  GdkDisplay *display = gtk_widget_get_display (widget);
+  GdkDeviceManager* manager = gdk_display_get_device_manager(display);
+  GdkDevice* device = gdk_device_manager_get_client_pointer(manager);
+
+  assert (device);
+  return device;
+}
+#endif
+
 DEFUN ("gtk-grab-pointer", Fgtk_grab_pointer, 0, 3, 0, /*
 Grab the pointer and restrict it to its current window.
 If optional DEVICE argument is nil, the default device will be used.
@@ -635,6 +646,7 @@ Returns t if the grab is successful, nil otherwise.
   /* We should call gdk_pointer_grab() and (possibly) gdk_keyboard_grab() here instead */
   w = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (device_selected_frame (d)));
 
+#ifdef HAVE_GTK2
   result = gdk_pointer_grab (w, FALSE,
 			     (GdkEventMask) (GDK_POINTER_MOTION_MASK |
 					     GDK_POINTER_MOTION_HINT_MASK |
@@ -646,8 +658,28 @@ Returns t if the grab is successful, nil otherwise.
 			     w,
 			     NULL, /* #### BILL!!! Need to create a GdkCursor * as necessary! */
 			     GDK_CURRENT_TIME);
+#endif
+#ifdef HAVE_GTK3
+  {
+    GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (device_selected_frame (d));
+    GdkDevice *gdk_device = gtk_widget_get_device (widget);
 
-  return (result == 0) ? Qt : Qnil;
+    if (gdk_device)
+      result = gdk_device_grab (gdk_device, w,
+				GDK_OWNERSHIP_APPLICATION, FALSE,
+				(GdkEventMask) (GDK_POINTER_MOTION_MASK |
+						GDK_POINTER_MOTION_HINT_MASK |
+						GDK_BUTTON1_MOTION_MASK |
+						GDK_BUTTON2_MOTION_MASK |
+						GDK_BUTTON3_MOTION_MASK |
+						GDK_BUTTON_PRESS_MASK |
+						GDK_BUTTON_RELEASE_MASK),
+				NULL, /* #### BILL!!! Need to create a GdkCursor * as necessary! */
+				GDK_CURRENT_TIME);
+  }
+#endif
+
+  return (result == GDK_GRAB_SUCCESS) ? Qt : Qnil;
 }
 
 DEFUN ("gtk-ungrab-pointer", Fgtk_ungrab_pointer, 0, 1, 0, /*
@@ -659,7 +691,17 @@ If it is t the pointer will be released on all GTK devices.
 {
   if (!EQ (device, Qt))
     {
-	gdk_pointer_ungrab (GDK_CURRENT_TIME);
+#ifdef HAVE_GTK2
+      gdk_pointer_ungrab (GDK_CURRENT_TIME);
+#endif
+#ifdef HAVE_GTK3
+      struct device *d = decode_gtk_device (device);
+      /* struct device *d = XDEVICE (XCAR (device)); */
+      GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (device_selected_frame (d));
+      GdkDevice *gdk_device = gtk_widget_get_device (widget);
+
+      gdk_device_ungrab (gdk_device, GDK_CURRENT_TIME);
+#endif
     }
   else
     {
@@ -670,7 +712,16 @@ If it is t the pointer will be released on all GTK devices.
 	  struct device *d = XDEVICE (XCAR (devcons));
 
 	  if (DEVICE_GTK_P (d))
+	    {
+#ifdef HAVE_GTK2
 	      gdk_pointer_ungrab (GDK_CURRENT_TIME);
+#endif
+#ifdef HAVE_GTK3
+	      GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (device_selected_frame (d));
+	      GdkDevice *gdk_device = gtk_widget_get_device (widget);
+	      gdk_device_ungrab (gdk_device, GDK_CURRENT_TIME);
+#endif
+	    }
 	}
     }
   return Qnil;
@@ -688,17 +739,47 @@ Returns t if the grab is successful, nil otherwise.
   struct device *d = decode_gtk_device (device);
   GdkWindow *w = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (device_selected_frame (d)));
 
+#ifdef HAVE_GTK2
   gdk_keyboard_grab (w, FALSE, GDK_CURRENT_TIME );
+#endif
 
+#ifdef HAVE_GTK3
+  {
+    GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (device_selected_frame (d));
+    GdkDevice *gdk_device = gtk_widget_get_device (widget);
+
+    if (gdk_device)
+      gdk_device_grab (gdk_device, w, GDK_OWNERSHIP_APPLICATION, FALSE,
+		       (GdkEventMask) (GDK_POINTER_MOTION_MASK |
+				       GDK_POINTER_MOTION_HINT_MASK |
+				       GDK_BUTTON1_MOTION_MASK |
+				       GDK_BUTTON2_MOTION_MASK |
+				       GDK_BUTTON3_MOTION_MASK |
+				       GDK_BUTTON_PRESS_MASK |
+				       GDK_BUTTON_RELEASE_MASK |
+				       GDK_KEY_PRESS),
+		       NULL, /* #### BILL!!! Need to create a GdkCursor * as necessary! */
+		       GDK_CURRENT_TIME);
+  }
+#endif
   return Qt;
 }
 
 DEFUN ("gtk-ungrab-keyboard", Fgtk_ungrab_keyboard, 0, 1, 0, /*
 Release a keyboard grab made with `gtk-grab-keyboard'.
 */
-       (UNUSED (device)))
+       (device))
 {
+#ifdef HAVE_GTK2
   gdk_keyboard_ungrab (GDK_CURRENT_TIME);
+#endif
+#ifdef HAVE_GTK3
+  struct device *d = decode_gtk_device (device);
+  GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (device_selected_frame (d));
+  GdkDevice *gdk_device = gtk_widget_get_device (widget);
+
+  gdk_device_ungrab (gdk_device, GDK_CURRENT_TIME);
+#endif
   return Qnil;
 }
 
@@ -712,8 +793,9 @@ Get the style information for a Gtk device.
        (device))
 {
   struct device *d = decode_device (device);
-  GtkStyle *style = NULL;
   Lisp_Object result = Qnil;
+#ifdef HAVE_GTK2
+  GtkStyle *style = NULL;
   GtkWidget *app_shell = GTK_WIDGET (DEVICE_GTK_APP_SHELL (d));
   GdkWindow *w = gtk_widget_get_window (app_shell);
 
@@ -749,7 +831,7 @@ Get the style information for a Gtk device.
                                   /* convert_font (style->font_desc) */
                                   ));
 #endif
-  
+
 #define FROB_PIXMAP(state) (style->rc_style->bg_pixmap_name[state] ? build_cistring (style->rc_style->bg_pixmap_name[state]) : Qnil)
 
   if (style->rc_style)
@@ -760,6 +842,7 @@ Get the style information for a Gtk device.
 					    FROB_PIXMAP (GTK_STATE_SELECTED),
 					    FROB_PIXMAP (GTK_STATE_INSENSITIVE))));
 #undef FROB_PIXMAP
+#endif
 
   return (result);
 }
@@ -828,52 +911,52 @@ GTK version string.
 GTK major version as integer.
 */ );
 #ifdef HAVE_GTK2
-  Vgtk_major_version = make_integer (GTK_MAJOR_VERSION);
+  Vgtk_major_version = make_unsigned_integer (GTK_MAJOR_VERSION);
 #endif
 #ifdef HAVE_GTK3
-  Vgtk_major_version = (gtk_get_major_version());
+  Vgtk_major_version = make_unsigned_integer (gtk_get_major_version());
 #endif
 
   DEFVAR_LISP ("gtk-minor-version", &Vgtk_minor_version /*
 GTK minor version as integer.
 */ );
 #ifdef HAVE_GTK2
-  Vgtk_minor_version = make_integer (GTK_MINOR_VERSION);
+  Vgtk_minor_version = make_unsigned_integer (GTK_MINOR_VERSION);
 #endif
 #ifdef HAVE_GTK3
- Vgtk_minor_version make_integer (gtk_get_minor_version());
+  Vgtk_minor_version = make_unsigned_integer (gtk_get_minor_version());
 #endif
 
   DEFVAR_LISP ("gtk-micro-version", &Vgtk_micro_version /*
 GTK micro version as integer.
 */ );
 #ifdef HAVE_GTK2
-  Vgtk_micro_version = make_integer (GTK_MICRO_VERSION);
+  Vgtk_micro_version = make_unsigned_integer (GTK_MICRO_VERSION);
 #endif
 #ifdef HAVE_GTK3
-  Vgtk_micro_version = make_integer (gtk_get_micro_version());
+  Vgtk_micro_version = make_unsigned_integer (gtk_get_micro_version());
 #endif
 
   DEFVAR_LISP ("gtk-binary-age", &Vgtk_binary_age /*
 GTK binary age as integer.
 */ );
 #ifdef HAVE_GTK2
-  Vgtk_binary_age = make_integer (GTK_BINARY_AGE);
+  Vgtk_binary_age = make_unsigned_integer (GTK_BINARY_AGE);
 #endif
 #ifdef HAVE_GTK3
-  Vgtk_binary_age = make_integer (gtk_get_binary_age());
+  Vgtk_binary_age = make_unsigned_integer (gtk_get_binary_age());
 #endif
 
   DEFVAR_LISP ("gtk-interface-age", &Vgtk_interface_age /*
 GTK interface age as integer.
 */ );
 #ifdef HAVE_GTK2
-  Vgtk_interface_age = make_integer (GTK_INTERFACE_AGE);
+  Vgtk_interface_age = make_unsigned_integer (GTK_INTERFACE_AGE);
 #endif
 #ifdef HAVE_GTK3
-  Vgtk_interface_age = make_integer (gtk_get_interface_age());
+  Vgtk_interface_age = make_unsigned_integer (gtk_get_interface_age());
 #endif
-  
+
   DEFVAR_LISP ("gtk-initial-argv-list", &Vgtk_initial_argv_list /*
 You don't want to know.
 This is used during startup to communicate the remaining arguments in

@@ -44,12 +44,21 @@ EXFUN (Fmake_image_instance, 4);
 static void gtk_xemacs_class_init	(GtkXEmacsClass *klass);
 static void gtk_xemacs_init		(GtkXEmacs *xemacs, GtkXEmacsClass *klass);
 static void gtk_xemacs_size_allocate	(GtkWidget *widget, GtkAllocation *allocaction);
-static void gtk_xemacs_draw		(GtkWidget *widget, GdkRectangle *area);
-static void gtk_xemacs_paint		(GtkWidget *widget, GdkRectangle *area);
 static void gtk_xemacs_size_request	(GtkWidget *widget, GtkRequisition *requisition);
 static void gtk_xemacs_realize		(GtkWidget *widget);
 static void gtk_xemacs_style_set        (GtkWidget *widget, GtkStyle *previous_style);
+#ifdef HAVE_GTK3
+static void gtk_xemacs_paint (GtkWidget *widget, cairo_rectangle_int_t *cr);
+static void gtk_xemacs_get_preferred_height (GtkWidget *, gint *minimal_height,
+					     gint *natural_height);
+static void gtk_xemacs_get_preferred_width (GtkWidget *, gint *minimal_width,
+						gint *natural_width);
+/* static gboolean gtk_xemacs_draw		(GtkWidget *widget, cairo_t *cr); */
+#endif
+#ifdef HAVE_GTK2
+static void gtk_xemacs_paint		(GtkWidget *widget, GdkRectangle *area);
 static gint gtk_xemacs_expose		(GtkWidget *widget, GdkEventExpose *event);
+#endif
 
 guint
 gtk_xemacs_get_type (void)
@@ -79,19 +88,25 @@ gtk_xemacs_class_init (GtkXEmacsClass *class_)
   GtkWidgetClass *widget_class;
 
   widget_class = (GtkWidgetClass *) class_;
-  parent_class = (GtkWidgetClass *) gtk_type_class (GTK_TYPE_FIXED);
+  parent_class = (GtkWidgetClass *) g_type_class_peek (GTK_TYPE_FIXED);
 
   widget_class->size_allocate = gtk_xemacs_size_allocate;
+#ifdef HAVE_GTK2
   widget_class->size_request = gtk_xemacs_size_request;
-  //widget_class->draw = gtk_xemacs_draw;
   widget_class->expose_event = gtk_xemacs_expose;
+  widget_class->style_set = gtk_xemacs_style_set;
+#endif
+#ifdef HAVE_GTK3
+  widget_class->get_preferred_height = gtk_xemacs_get_preferred_height;
+  widget_class->get_preferred_width  = gtk_xemacs_get_preferred_width;
+  /* widget_class->draw = gtk_xemacs_draw; */
+#endif
   widget_class->realize = gtk_xemacs_realize;
   widget_class->button_press_event = emacs_gtk_button_event_handler;
   widget_class->button_release_event = emacs_gtk_button_event_handler;
   widget_class->key_press_event = emacs_gtk_key_event_handler;
   widget_class->key_release_event = emacs_gtk_key_event_handler;
   widget_class->motion_notify_event = emacs_gtk_motion_event_handler;
-  widget_class->style_set = gtk_xemacs_style_set;
 }
 
 static void
@@ -105,7 +120,7 @@ gtk_xemacs_new (struct frame *f)
 {
   GtkXEmacs *xemacs;
 
-  xemacs = GTK_XEMACS (gtk_type_new (GTK_TYPE_XEMACS));
+  xemacs = GTK_XEMACS (g_object_new (GTK_TYPE_XEMACS, NULL));
   gtk_widget_set_has_window (GTK_WIDGET (xemacs), TRUE);
   xemacs->f = f;
 
@@ -113,7 +128,14 @@ gtk_xemacs_new (struct frame *f)
 }
 
 static void
-__nuke_background_items (GtkWidget *widget)
+__nuke_background_items (GtkWidget
+#ifdef HAVE_GTK2
+			 *widget
+#endif
+#ifdef HAVE_GTK3
+			 * UNUSED (widget)
+#endif
+			 )
 {
   /* This bit of voodoo is here to get around the annoying flicker
      when GDK tries to futz with our background pixmap as well as
@@ -127,8 +149,9 @@ __nuke_background_items (GtkWidget *widget)
      Well, wait, we do... otherwise there sre weird 'seethru' areas
      even when XEmacs does a full redisplay.  Most noticeable in some
      areas of the modeline, or in the right-hand-side of the window
-     between the scrollbar ad n the edge of the window.
+     between the scrollbar and the edge of the window.
   */
+#ifdef HAVE_GTK2
   if (widget->window)
     {
       gdk_window_set_back_pixmap (widget->window, NULL, 0);
@@ -138,12 +161,13 @@ __nuke_background_items (GtkWidget *widget)
       gdk_window_set_background (widget->window,
 				 &widget->style->bg[GTK_STATE_NORMAL]);
     }
+#endif
 }
 
 extern Lisp_Object xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w);
 
 /* From fontcolor-gtk.c */
-extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
+extern Lisp_Object __get_gtk_font_truename (PangoFont *gdk_font, int expandp);
 
 #define convert_font(f) __get_gtk_font_truename (f, 0)
 
@@ -196,12 +220,13 @@ static void
 smash_scrollbar_specifiers (struct frame *f, GtkStyle *style)
 {
   Lisp_Object frame;
-  int slider_size = 0;
+  int slider_size = 10;
   int hsize, vsize;
 
   frame = wrap_frame (f);
 
-  // Note: where do I get this?  -- jsparkes
+#ifdef HAVE_GTK2
+  // Note: where do I get this in Gtk 2.X?  -- jsparkes
   //slider_size = style->slider_width;
   slider_size = 10;
   hsize = slider_size + (style->ythickness * 2);
@@ -209,6 +234,11 @@ smash_scrollbar_specifiers (struct frame *f, GtkStyle *style)
 
   style = gtk_style_attach (style,
 			    GTK_WIDGET (DEVICE_GTK_APP_SHELL (XDEVICE (FRAME_DEVICE (f))))->window);
+#endif
+#ifdef HAVE_GTK3
+  /* No properties for this in Gtk 3.X? */
+  hsize = vsize = slider_size;
+#endif
 
   Fadd_spec_to_specifier (Vscrollbar_width, make_fixnum (vsize), frame, Qnil, Qnil);
   Fadd_spec_to_specifier (Vscrollbar_height, make_fixnum (hsize), frame, Qnil, Qnil);
@@ -266,7 +296,7 @@ gtk_xemacs_size_request (GtkWidget *widget, GtkRequisition *requisition)
 {
     GtkXEmacs *x = GTK_XEMACS (widget);
     struct frame *f = GTK_XEMACS_FRAME (x);
-    int width, height;
+    int width, height, unused;
 
     if (f)
       {
@@ -277,9 +307,42 @@ gtk_xemacs_size_request (GtkWidget *widget, GtkRequisition *requisition)
       }
     else
       {
+#ifdef HAVE_GTK2
 	parent_class->size_request (widget, requisition);
+#endif
+#ifdef HAVE_GTK3
+	parent_class->get_preferred_height (widget, &unused, &height);
+	requisition->height = height;
+	parent_class->get_preferred_width  (widget, &unused, &width);
+	requisition->width  = width;
+#endif
       }
 }
+
+#ifdef HAVE_GTK3
+static void
+gtk_xemacs_get_preferred_height (GtkWidget *widget,
+				 gint *minimal_height,
+				 gint *natural_height)
+{
+  GtkRequisition req;
+
+  gtk_xemacs_size_request (widget, &req);
+  *minimal_height = *natural_height = req.height;
+}
+
+static void
+gtk_xemacs_get_preferred_width (GtkWidget *widget,
+				gint *minimal_width,
+				gint *natural_width)
+{
+  GtkRequisition req;
+
+  gtk_xemacs_size_request (widget, &req);
+  *minimal_width = *natural_width = req.width;
+}
+#endif
+
 
 /* Assign a size and position to the child widgets.  This differs from the
    super class method in that for all widgets except the scrollbars the size
@@ -299,33 +362,46 @@ gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
     GList *children;
     guint16 border_width;
 
+#ifdef HAVE_GTK2
     widget->allocation = *allocation;
+#endif
+#ifdef HAVE_GTK3
+    gtk_widget_set_allocation (widget, allocation);
+#endif
     if (gtk_widget_get_realized (widget))
-      gdk_window_move_resize (widget->window,
-			      allocation->x, 
+      gdk_window_move_resize (gtk_widget_get_window (widget),
+			      allocation->x,
 			      allocation->y,
-			      allocation->width, 
+			      allocation->width,
 			      allocation->height);
 
-    border_width = GTK_CONTAINER (fixed)->border_width;
-  
-    children = fixed->children;
+    border_width = gtk_container_get_border_width (GTK_CONTAINER (fixed));
+
+    children = gtk_container_get_children (GTK_CONTAINER (fixed));
     while (children)
       {
 	GtkFixedChild* child = (GtkFixedChild*) children->data;
 	children = children->next;
-      
+
 	/*
 	  Scrollbars are the only widget that is managed by GTK.  See
 	  comments in gtk_create_scrollbar_instance().
 	*/
-	if (gtk_widget_get_visible (child->widget) &&
-	    g_type_is_a(G_OBJECT_TYPE(child->widget), GTK_TYPE_SCROLLBAR))
+	if (GTK_IS_SCROLLBAR (child->widget)
+	    && gtk_widget_get_visible (child->widget))
 	  {
 	    GtkAllocation child_allocation;
 	    GtkRequisition child_requisition;
 
-	    gtk_widget_get_child_requisition (child->widget, &child_requisition);
+#ifdef HAVE_GTK2
+	    gtk_widget_get_child_requisition (child->widget,
+					      &child_requisition);
+#endif
+#ifdef HAVE_GTK3
+	    GtkRequisition minimum_size;
+	    gtk_widget_get_preferred_size (child->widget, &minimum_size,
+					   &child_requisition);
+#endif
 	    child_allocation.x = child->x + border_width;
 	    child_allocation.y = child->y + border_width;
 	    child_allocation.width = child_requisition.width;
@@ -347,6 +423,7 @@ gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
       }
 }
 
+#ifdef HAVE_GTK2
 static void
 gtk_xemacs_paint (GtkWidget *widget, GdkRectangle *area)
 {
@@ -357,8 +434,23 @@ gtk_xemacs_paint (GtkWidget *widget, GdkRectangle *area)
       redisplay_redraw_exposed_area (f, area->x, area->y, area->width,
 				     area->height);
 }
+#endif
 
+#ifdef HAVE_GTK3
 static void
+gtk_xemacs_paint (GtkWidget *widget, cairo_rectangle_int_t *area)
+{
+  GtkXEmacs *x = GTK_XEMACS (widget);
+  struct frame *f = GTK_XEMACS_FRAME (x);
+
+  if (gtk_widget_is_drawable (widget))
+    redisplay_redraw_exposed_area (f, area->x, area->y, area->width,
+				   area->height);
+}
+#endif
+
+#ifdef HAVE_GTK2
+static gboolean
 gtk_xemacs_draw (GtkWidget *widget, GdkRectangle *area)
 {
     GtkFixed *fixed = GTK_FIXED (widget);
@@ -375,7 +467,7 @@ gtk_xemacs_draw (GtkWidget *widget, GdkRectangle *area)
     {
       gtk_xemacs_paint (widget, area);
 
-      children = fixed->children;
+      children = gtk_container_get_children (GTK_CONTAINER (fixed));
 
       while (children)
 	{
@@ -400,8 +492,11 @@ gtk_xemacs_draw (GtkWidget *widget, GdkRectangle *area)
 	    }
 	}
     }
+  return TRUE;
 }
+#endif
 
+#ifdef HAVE_GTK2
 static gint
 gtk_xemacs_expose (GtkWidget *widget, GdkEventExpose *event)
 {
@@ -423,6 +518,7 @@ gtk_xemacs_expose (GtkWidget *widget, GdkEventExpose *event)
 
   return FALSE;
 }
+#endif
 
 Lisp_Object
 xemacs_gtk_convert_color(GdkColor *c, GtkWidget *UNUSED (w))
