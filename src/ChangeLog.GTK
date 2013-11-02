@@ -1,5 +1,8 @@
 2013-11-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* frame-gtk.c (gtk_set_initial_frame_size): Remove debugging code.
+	(gtk_create_widgets): Use Gtk 3 method to create boxes.
+
 	* ui-byhand.c (Fgtk_color_selection_get_color): Gtk 2 only.
 	(Fgtk_label_get): Use correct accessor function.
 	(Fgtk_notebook_query_tab_label_packing): Gtk 2 only.
