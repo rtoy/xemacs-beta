@@ -404,10 +404,6 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
   FRAME_WIDTH (f) = w;
 
   change_frame_size (f, w, h, 0);
-  {
-    GtkRequisition req;
-    gtk_widget_size_request (FRAME_GTK_SHELL_WIDGET (f), &req);
-  }
 }
 
 /* Report that a frame property of frame S is being set or changed.
@@ -876,8 +872,12 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 	  invalid_argument ("Window ID must be a GtkContainer subclass", lisp_window_id);
 	}
 
+#ifdef HAVE_GTK2
       shell = gtk_vbox_new (FALSE, 0);
-
+#endif
+#ifdef HAVE_GTK3
+      shell = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+#endif
       g_object_weak_ref (G_OBJECT (shell), cleanup_deleted_frame, f);
       gtk_container_add (GTK_CONTAINER (XGTK_OBJECT (lisp_window_id)->object), shell);
     }
@@ -905,7 +905,12 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
   gtk_window_set_resizable (GTK_WINDOW (shell), TRUE);
 
   text = GTK_WIDGET (gtk_xemacs_new (f));
+#ifdef HAVE_GTK2
   container = GTK_WIDGET (gtk_vbox_new (FALSE, INTERNAL_BORDER_WIDTH));
+#endif
+#ifdef HAVE_GTK3
+  container = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+#endif
 
   FRAME_GTK_CONTAINER_WIDGET (f) = container;
   FRAME_GTK_TEXT_WIDGET (f) = text;
