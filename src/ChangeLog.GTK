@@ -1,3 +1,44 @@
+2013-11-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-byhand.c (Fgtk_color_selection_get_color): Gtk 2 only.
+	(Fgtk_label_get): Use correct accessor function.
+	(Fgtk_notebook_query_tab_label_packing): Gtk 2 only.
+	(Fgtk_widget_size_request): Add Gtk 3 implementation.
+	(syms_of_ui_byhand): ifdef Gtk 2 only symbols.
+
+	* gtk-xemacs.c (gtk_xemacs_class_init): Some class functions are
+	different for Gtk 3.
+	(gtk_xemacs_new): Use GObject allocator.
+	(__nuke_background_items): This workaround is for Gtk 2 only.
+	(smash_scrollbar_specifiers): Scrollbar style info is apparently
+	no longer available in Gtk 3.
+	(gtk_xemacs_size_request): Use preferred height/width for Gtk 3.
+	(gtk_xemacs_get_preferred_height): Define for Gtk 3 only.
+	(gtk_xemacs_get_preferred_width): Ditto.
+	(gtk_xemacs_size_allocate): Implement for Gtk 3.
+	(gtk_xemacs_paint): Implement for Gtk 3.
+	(gtk_xemacs_draw): Use function to access children.  Now returns a
+	boolean.
+	(gtk_xemacs_expose): ifdef for Gtk 2 only.
+
+	* device-gtk.c (gtk_init_device): Only explicitly read rc files on
+	Gtk 2.
+	(gtk_event_name): No expose event is only in Gtk 2.
+	(gtk_widget_get_device): Define for Gtk 3.
+	(Fgtk_grab_pointer): Implement for Gtk 3.
+	(Fgtk_ungrab_pointer): Ditto.
+	(Fgtk_grab_keyboard): Ditto.
+	(Fgtk_ungrab_keyboard): Ditto.
+	(Fgtk_style_info): Only for Gtk 2 at the moment.
+	(vars_of_device_gtk): Use unsigned integers for GTK version numbers.
+
+	* frame-gtk.c (gtk_set_initial_frame_size): Move window instead of
+	setting geometry hints.
+	(gtk_create_widgets): Make shell resizable.  No client events in
+	Gtk 3.
+	(Fgtk_window_id): X11 specific windows are different in Gtk 3.
+	(gtk_iconify_frame): Use Gtk function instead of Xlib.
+
 2013-11-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* device-gtk.c (vars_of_device_gtk): Define Gtk version variables.

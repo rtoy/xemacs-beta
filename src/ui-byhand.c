@@ -91,6 +91,7 @@ Return a list of (YEAR MONTH DAY) from the CALENDAR object.
   return (list3 (make_fixnum (year), make_fixnum (month), make_fixnum (day)));
 }
 
+#ifdef HAVE_GTK2
 /* void gtk_color_selection_get_color(GtkColorSelection *colorsel, gdouble *color); */
 DEFUN ("gtk-color-selection-get-color", Fgtk_color_selection_get_color, 1, 1, 0, /*
 Return a list of (RED GREEN BLUE ALPHA) from the GtkColorSelection OBJECT.
@@ -113,6 +114,7 @@ Return a list of (RED GREEN BLUE ALPHA) from the GtkColorSelection OBJECT.
 		 make_float (rgba[2]),
 		 make_float (rgba[3])));
 }
+#endif
 
 /* (gtk-import-function nil "gtk_editable_insert_text" 'GtkEditable 'GtkString 'gint 'pointer-to-gint) */
 DEFUN ("gtk-editable-insert-text", Fgtk_editable_insert_text, 3, 3, 0, /*
@@ -179,11 +181,11 @@ Return the text of LABEL.
       wtaerror ("Object is not a GtkLabel", label);
     }
 
-  gtk_label_get (GTK_LABEL (XGTK_OBJECT (label)->object), &string);
-
+  string = gtk_label_get_text (GTK_LABEL (XGTK_OBJECT (label)->object));
   return (build_cistring (string));
 }
 
+#ifdef HAVE_GTK2
 DEFUN ("gtk-notebook-query-tab-label-packing", Fgtk_notebook_query_tab_label_packing, 2, 2, 0, /*
 Return a list of packing information (EXPAND FILL PACK_TYPE) for CHILD in NOTEBOOK.
 */
@@ -211,6 +213,7 @@ Return a list of packing information (EXPAND FILL PACK_TYPE) for CHILD in NOTEBO
 
   return (list3 (expand ? Qt : Qnil, fill ? Qt : Qnil, make_fixnum (pack_type)));
 }
+#endif
 
 DEFUN ("gtk-widget-get-pointer", Fgtk_widget_get_pointer, 1, 1, 0, /*
 Return the pointer position relative to WIDGET as a cons of (X . Y).
@@ -258,16 +261,22 @@ __generic_toolbar_callback (GtkWidget *UNUSED (item), gpointer user_data)
 DEFUN ("gtk-widget-size-request", Fgtk_widget_size_request, 1, 1, 0, /*
 Sets WIDGET size request to WIDTH by HEIGHT.
 */
-       (widget))
+       (wid))
 {
   GtkRequisition req;
-  
-  CHECK_GTK_OBJECT (widget);
+  GtkWidget *widget = GTK_WIDGET (XGTK_OBJECT (wid)->object);
 
-  if (!GTK_IS_WIDGET (XGTK_OBJECT (widget)->object))
-    wtaerror ("Object is not a GtkWidget", widget);
+  /* CHECK_GTK_OBJECT (wid); */
 
-  gtk_widget_size_request ((GtkWidget *) (XGTK_OBJECT (widget)->object), &req);
+  if (!GTK_IS_WIDGET (widget))
+    wtaerror ("Object is not a GtkWidget", wid);
+
+#ifdef HAVE_GTK2
+  gtk_widget_size_request (widget, &req);
+#endif
+#ifdef HAVE_GTK3
+  gtk_widget_get_preferred_size (widget, NULL, &req);
+#endif
   return cons3 (make_fixnum (req.width), make_fixnum (req.height), Qnil);
 }
 
@@ -367,13 +376,15 @@ void syms_of_ui_byhand (void)
 {
   DEFSUBR (Fgtk_box_query_child_packing);
   DEFSUBR (Fgtk_calendar_get_date);
+#ifdef HAVE_GTK2
   DEFSUBR (Fgtk_color_selection_get_color);
+  DEFSUBR (Fgtk_notebook_query_tab_label_packing);
+#endif
   DEFSUBR (Fgtk_editable_insert_text);
 #ifdef NOTUSED
   DEFSUBR (Fgtk_pixmap_get);
 #endif
   DEFSUBR (Fgtk_label_get);
-  DEFSUBR (Fgtk_notebook_query_tab_label_packing);
   DEFSUBR (Fgtk_widget_get_pointer);
   DEFSUBR (Fgtk_widget_size_request);
 #ifdef JSPARKES
