@@ -1155,16 +1155,13 @@ static void
 gtk_set_frame_icon (struct frame *f)
 {
   GdkPixbuf *gtk_pixbuf = NULL;
-  GList *icons = NULL;
 
   if (IMAGE_INSTANCEP (f->icon)
       && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (f->icon)))
     {
       gtk_pixbuf = XIMAGE_INSTANCE_GTK_PIXMAP (f->icon);
-      icons = g_list_append(icons, gtk_pixbuf);
-      gdk_window_set_icon_list
-	(gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (f)), icons);
-      g_list_free (icons);
+      gtk_window_set_icon (GTK_WINDOW (FRAME_GTK_SHELL_WIDGET (f)),
+			   gtk_pixbuf);
     }
 }
 
