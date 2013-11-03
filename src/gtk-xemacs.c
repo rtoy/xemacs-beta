@@ -53,7 +53,7 @@ static void gtk_xemacs_get_preferred_height (GtkWidget *, gint *minimal_height,
 					     gint *natural_height);
 static void gtk_xemacs_get_preferred_width (GtkWidget *, gint *minimal_width,
 						gint *natural_width);
-/* static gboolean gtk_xemacs_draw		(GtkWidget *widget, cairo_t *cr); */
+static gboolean gtk_xemacs_draw		(GtkWidget *widget, cairo_t *cr);
 #endif
 #ifdef HAVE_GTK2
 static void gtk_xemacs_paint		(GtkWidget *widget, GdkRectangle *area);
@@ -99,7 +99,7 @@ gtk_xemacs_class_init (GtkXEmacsClass *class_)
 #ifdef HAVE_GTK3
   widget_class->get_preferred_height = gtk_xemacs_get_preferred_height;
   widget_class->get_preferred_width  = gtk_xemacs_get_preferred_width;
-  /* widget_class->draw = gtk_xemacs_draw; */
+  widget_class->draw = gtk_xemacs_draw;
 #endif
   widget_class->realize = gtk_xemacs_realize;
   widget_class->button_press_event = emacs_gtk_button_event_handler;
@@ -492,6 +492,76 @@ gtk_xemacs_draw (GtkWidget *widget, GdkRectangle *area)
 	    }
 	}
     }
+  return TRUE;
+}
+#endif
+
+#ifdef HAVE_GTK3
+static gboolean
+gtk_xemacs_draw (GtkWidget *widget, cairo_t *cr)
+{
+  GtkFixed *fixed = GTK_FIXED (widget);
+  GtkAllocation allocation = { 0 };
+  GtkStyleContext *context;
+  GtkStateFlags state;
+  GtkFixedChild *child;
+  GdkRectangle child_area;
+  GList *children;
+
+  gtk_widget_get_allocation (widget, &allocation);
+  context = gtk_widget_get_style_context (widget);
+  state = gtk_widget_get_state_flags (widget);
+
+  gtk_render_background (context, cr, 0, 0,
+			 allocation.width, allocation.height);
+
+  /* I need to manually iterate over the children instead of just
+     chaining to parent_class->draw() because it calls
+     gtk_fixed_paint() directly, which clears the background window,
+     which causes A LOT of flashing. */
+
+  if (gtk_widget_is_drawable (widget))
+    {
+      cairo_rectangle_list_t *rects = cairo_copy_clip_rectangle_list (cr);
+      if (rects->status == CAIRO_STATUS_SUCCESS)
+	{
+	  int i;
+	  for (i=0; i < rects->num_rectangles; i++)
+	    {
+	      gtk_xemacs_paint (widget, (cairo_rectangle_int_t *)
+				&rects->rectangles[i]);
+	    }
+	}
+      cairo_rectangle_list_destroy (rects);
+      rects = 0;
+
+      children = gtk_container_get_children (GTK_CONTAINER (fixed));
+#if 0
+      while (children)
+	{
+	  child = (GtkFixedChild*) children->data;
+	  children = children->next;
+	  /* #### This is what causes the scrollbar flickering!
+	     Evidently the scrollbars pretty much take care of drawing
+	     themselves in most cases.  Then we come along and tell them
+	     to redraw again!
+
+	     But if we just leave it out, then they do not get drawn
+	     correctly the first time!
+
+	     Scrollbar flickering has been greatly helped by the
+	     optimizations in scrollbar-gtk.c /
+	     gtk_update_scrollbar_instance_status (), so this is not that
+	     big a deal anymore.
+	  */
+	  if (gtk_widget_intersect (child->widget, area, &child_area))
+	    {
+	      gtk_widget_draw (child->widget, &child_area);
+	    }
+	}
+#endif
+    }
+  GTK_WIDGET_CLASS (parent_class)->draw (widget, cr);
   return TRUE;
 }
 #endif

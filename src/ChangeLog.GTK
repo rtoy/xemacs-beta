@@ -1,3 +1,8 @@
+2013-11-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_class_init): Call gtk_xemacs_draw.
+	(gtk_xemacs_draw): Implement for Gtk 3.
+
 2013-11-02  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_set_initial_frame_size): Remove debugging code.
