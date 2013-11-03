@@ -1,5 +1,7 @@
 2013-11-03  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* frame-gtk.c (gtk_set_frame_icon): Update to include Gtk 3.
+
 	* gtk-xemacs.c (gtk_xemacs_class_init): Call gtk_xemacs_draw.
 	(gtk_xemacs_draw): Implement for Gtk 3.
 
