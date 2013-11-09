@@ -1241,6 +1241,8 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 
   set_last_server_timestamp (d, gdk_event);
 
+  /* stderr_out ("%s\n", gtk_event_name (gdk_event->type)); */
+
   switch (gdk_event->type)
     {
       /* XEmacs handles double and triple clicking on its own, and if
@@ -1628,8 +1630,8 @@ emacs_gtk_drain_queue (void)
      system events.
   */
   if (gdk_display_get_default ())
-    while (gdk_events_pending ())
-      gtk_main_iteration ();
+    while (gtk_events_pending ())
+      gtk_main_iteration_do (FALSE);
 
 #ifdef HAVE_TTY
   drain_tty_devices ();
