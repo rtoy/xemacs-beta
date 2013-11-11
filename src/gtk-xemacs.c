@@ -528,8 +528,13 @@ gtk_xemacs_draw (GtkWidget *widget, cairo_t *cr)
 	  int i;
 	  for (i=0; i < rects->num_rectangles; i++)
 	    {
-	      gtk_xemacs_paint (widget, (cairo_rectangle_int_t *)
-				&rects->rectangles[i]);
+	      cairo_rectangle_int_t r;
+
+	      r.x = floor (rects->rectangles[i].x);
+	      r.y = floor (rects->rectangles[i].y);
+	      r.width = ceil (rects->rectangles[i].width);
+	      r.height = ceil (rects->rectangles[i].height);
+	      gtk_xemacs_paint (widget, &r);
 	    }
 	}
       cairo_rectangle_list_destroy (rects);
