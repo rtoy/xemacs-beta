@@ -535,6 +535,7 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, cairo_t *cr,
       /* gdk_draw_layout (drawable, gc, x, y - ascent, layout); */
       pango_item_free (item);
       current = g_list_next (current);
+      x += width;
     }
   g_list_free (items);
   g_object_unref (layout);
