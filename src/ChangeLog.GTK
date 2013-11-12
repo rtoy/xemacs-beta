@@ -1,3 +1,8 @@
+2013-11-12  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image): Advance past the last
+	item drawn.
+
 2013-11-11  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-xemacs.c (gtk_xemacs_draw): Convert cairo_rectangle_t to
