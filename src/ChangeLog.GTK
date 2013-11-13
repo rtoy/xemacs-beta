@@ -1,3 +1,8 @@
+2013-11-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (Fgtk_init): Turn ubuntu unity overlay scrollbars
+	off.  They were accidentally re-enabled.
+
 2013-11-12  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (gdk_draw_text_image): Advance past the last

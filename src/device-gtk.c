@@ -175,7 +175,7 @@ mode.
 
   slow_down_interrupts ();
   /* Turn ubuntu overlay scrollbars off.  They don't have per-line scrolling. */
-  /* setenv("LIBOVERLAY_SCROLLBAR", "0", 0); */
+  setenv("LIBOVERLAY_SCROLLBAR", "0", 0);
 
   gtk_init (&argc, &argv);
 
