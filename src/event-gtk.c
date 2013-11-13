@@ -1277,8 +1277,14 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
            pointer.  We need to forward these events on to XEmacs so
            that the mouse selection voodoo works.
 	*/
-	if (w && (w != gdk_x11_window_lookup_for_display (disp,
-							  GDK_ROOT_WINDOW ())))
+	if (w
+#if GTK_CHECK_VERSION(2, 24, 1)
+	    && (w != gdk_x11_window_lookup_for_display (disp,
+							GDK_ROOT_WINDOW ()))
+#else
+	    && (w != gdk_window_lookup (GDK_ROOT_WINDOW ()))
+#endif
+	    )
 	  {
 	    GdkEvent ev;
 	    GtkWidget *wid = NULL;
