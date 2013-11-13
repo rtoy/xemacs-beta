@@ -1,5 +1,8 @@
 2013-11-13  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* event-gtk.c (gtk_event_to_emacs_event): Ifdef window lookup for
+	versions previous to 2.24.
+
 	* device-gtk.c (Fgtk_init): Turn ubuntu unity overlay scrollbars
 	off.  They were accidentally re-enabled.
 
