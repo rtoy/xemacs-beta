@@ -1,3 +1,8 @@
+2013-11-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (IS_MODIFIER_KEY): Use old key definitions for Gtk 2.
+	(keysym_obeys_caps_lock_p): Ditto.
+
 2013-11-13  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-gtk.c (gtk_event_to_emacs_event): Ifdef window lookup for
