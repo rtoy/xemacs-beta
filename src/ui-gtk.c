@@ -1806,13 +1806,17 @@ Lisp_Object g_type_to_lisp (GValue *arg)
     type = g_type_parent (type);
 
   assert (type != G_TYPE_NONE);
-     
+
   switch (type)
     {
     case G_TYPE_NONE:
       return (Qnil);
     case G_TYPE_CHAR:
+#if GLIB_CHECK_VERSION(2,30,1)
       return (make_char (g_value_get_schar (arg)));
+#else
+      return (make_char (g_value_get_char (arg)));
+#endif
     case G_TYPE_UCHAR:
       return (make_char (g_value_get_uchar (arg)));
     case G_TYPE_BOOLEAN:
