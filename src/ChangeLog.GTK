@@ -2,6 +2,10 @@
 
 	* device-gtk.c (Fgtk_display_visual_class):
 	gdk_visual_get_visual_type was added in 2.22.
+	(gtk_init_device_class): Ditto.
+	(gtk_device_system_metrics): Function to determine colormap size
+	was added in 2.22.
+
 	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Ditto.
 
 	* ui-gtk.c (g_type_to_lisp): g_value_get_schar only exists in more
