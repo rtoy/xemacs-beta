@@ -12245,36 +12245,36 @@ fi
 if test "$with_gtk" != "no";then
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK configuration script" >&5
 $as_echo_n "checking for GTK configuration script... " >&6; }
-   #for possible in gtk+-3.0 gtk+-2.0
+   # for possible in gtk+-3.0 gtk+-2.0
    for possible in gtk+-2.0
    do
-      possible_version=`pkg-config {possible} --version 2> /dev/null`
+      possible_version=`pkg-config --modversion ${possible} 2> /dev/null`
       if test "x${possible_version}" != "x"; then
               GTK_CONFIG="pkg-config ${possible}"
+              GTK_VERSION=${possible_version}
 	      case "${possible_version}" in
-	        1.*) { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GTK 1.X is not supported" >&5
+                                	        1.*)    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GTK 1.X is not supported" >&5
 $as_echo "$as_me: WARNING: GTK 1.X is not supported" >&2;};
                         with_gtk=no
                         break
                         ;;
-                0.22*)
+                2.*)
                         with_gtk=yes
-                        GTK_VERSION=`pkg-config --modversion ${possible}`
+                        $as_echo "#define HAVE_GTK2 1" >>confdefs.h
+
                         break
                         ;;
-                0.25*)
+                3.*)
                         with_gtk=yes
-                        GTK_VERSION=`pkg-config --modversion ${possible}`
+                        $as_echo "#define HAVE_GTK3 1" >>confdefs.h
+
                         break
                         ;;
-                0.26*)
-                        with_gtk=yes
-                        GTK_VERSION=`pkg-config --modversion ${possible}`
-                        break
-                        ;;
-	        *)      GTK_VERSION=`pkg-config --modversion ${possible}`
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found unsupported version of GTK: $possible_version, $GTK_VERSION" >&5
-$as_echo "$as_me: WARNING: Found unsupported version of GTK: $possible_version, $GTK_VERSION" >&2;}
+	        *)
+                        GTK_VERSION=${possible_version}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found unsupported version of GTK: $GTK_VERSION" >&5
+$as_echo "$as_me: WARNING: Found unsupported version of GTK: $GTK_VERSION" >&2;}
+                        with_gtk=no
                         ;;
 	      esac
       fi
@@ -12288,15 +12288,6 @@ if test "${GTK_CONFIG}" != "no"; then
 $as_echo_n "checking gtk version... " >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${GTK_VERSION}" >&5
 $as_echo "${GTK_VERSION}" >&6; }
-
-      case "$GTK_VERSION" in
-        2*) $as_echo "#define HAVE_GTK2 1" >>confdefs.h
-;;
-        3*) $as_echo "#define HAVE_GTK3 1" >>confdefs.h
-;;
-        *) { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found unsupported version of GTK: $GTK_VERSION" >&5
-$as_echo "$as_me: WARNING: Found unsupported version of GTK: $GTK_VERSION" >&2;};;
-      esac
 
       $as_echo "#define HAVE_XPM 1" >>confdefs.h
 
