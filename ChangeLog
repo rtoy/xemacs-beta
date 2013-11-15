@@ -1,6 +1,7 @@
 2013-11-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac: Output exact GTK version.
+	Check for GTK 3.X first, then 2.X.
 	* configure: Regenerate.
 
 2013-09-15  Jeff Sparkes  <jsparkes@gmail.com>
@@ -43,7 +44,6 @@
 	* config.sub: Ditto.
 	* install-sh: Ditto.
 
->>>>>>> other
 2013-03-04  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Check for large file support.

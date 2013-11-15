@@ -2859,7 +2859,7 @@ fi
 
 if test "$with_gtk" != "no";then
    AC_MSG_CHECKING(for GTK configuration script)
-   for possible in gtk+-2.0
+   for possible in gtk+-3.0 gtk+-2.0
    do
       possible_version=`pkg-config {possible} --version 2> /dev/null`
       if test "x${possible_version}" != "x"; then
@@ -2871,20 +2871,22 @@ if test "$with_gtk" != "no";then
                         ;;
                 0.22*)
                         with_gtk=yes
-                        GTK_VERSION=`pkg-config --modversion ${possible}"
+                        GTK_VERSION=`pkg-config --modversion ${possible}`
                         break
                         ;;
                 0.25*)
                         with_gtk=yes
-                        GTK_VERSION=`pkg-config --modversion ${possible}"
+                        GTK_VERSION=`pkg-config --modversion ${possible}`
                         break
                         ;;
                 0.26*)
                         with_gtk=yes
-                        GTK_VERSION=`pkg-config --modversion ${possible}"
+                        GTK_VERSION=`pkg-config --modversion ${possible}`
                         break
                         ;;
-	        *)     AC_MSG_WARN([Found unsupported version of GTK: $possible_version]);;
+	        *)      GTK_VERSION=`pkg-config --modversion ${possible}`
+                        AC_MSG_WARN([Found unsupported version of GTK: $possible_version, $GTK_VERSION])
+                        ;;
 	      esac
       fi
    done
@@ -2894,6 +2896,17 @@ fi
 if test "${GTK_CONFIG}" != "no"; then
       AC_MSG_CHECKING(gtk version)
       AC_MSG_RESULT(${GTK_VERSION})
+
+      case "$GTK_VERSION" in
+        2*) AC_DEFINE(HAVE_GTK2);;
+        3*) AC_DEFINE(HAVE_GTK3);;
+        *) AC_MSG_WARN([Found unsupported version of GTK: $GTK_VERSION]);;
+      esac
+
+      AC_DEFINE(HAVE_XPM)
+      AC_DEFINE(HAVE_GTK)
+      AC_DEFINE(HAVE_GTK2)
+      AC_DEFINE(HAVE_PANGO)
 
       AC_MSG_CHECKING(gtk libs)
       GTK_LIBS=`${GTK_CONFIG} --libs`
@@ -2916,11 +2929,6 @@ if test "${GTK_CONFIG}" != "no"; then
       AC_CHECK_LIB(gdk_imlib, main, XE_PREPEND(-lgdk_imlib, libs_gtk))
       AC_CHECK_LIB(Imlib, Imlib_init, XE_APPEND(-lImlib, libs_gtk))
       AC_CHECK_FUNCS(gdk_imlib_init)
-
-      AC_DEFINE(HAVE_XPM)
-      AC_DEFINE(HAVE_GTK)
-      AC_DEFINE(HAVE_GTK2)
-      AC_DEFINE(HAVE_PANGO)
 
       AC_SUBST(GTK_CONFIG)
 
