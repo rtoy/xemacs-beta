@@ -1,6 +1,7 @@
 2013-11-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac: Output exact GTK version.
+	* configure: Regenerate.
 
 2013-09-15  Jeff Sparkes  <jsparkes@gmail.com>
 
