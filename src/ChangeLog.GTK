@@ -1,3 +1,8 @@
+2013-11-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_frame): Use GdkRectangle to support
+	older GTK 2.
+
 2013-11-14  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-gtk.c (IS_MODIFIER_KEY): Use old key definitions for Gtk 2.

@@ -69,14 +69,15 @@ XLIKE_clear_frame (struct frame *f)
 {
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-  cairo_rectangle_int_t r;
   Lisp_Object frame;
 #ifdef HAVE_GTK2
+  GdkRectangle r;
   GdkWindow *w = gtk_widget_get_window (widget);
   GtkStyle *style = gtk_widget_get_style (widget);
   GdkColor *bg;
 #endif
 #ifdef HAVE_GTK3
+  cairo_rectangle_int_t r;
   GtkStyleContext *sc = gtk_widget_get_style_context (widget);
   GdkRGBA bg;
 #endif
