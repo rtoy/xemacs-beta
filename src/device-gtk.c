@@ -122,7 +122,13 @@ gtk_init_device_class (struct device *d)
 {
   if (DEVICE_GTK_DEPTH(d) > 2)
     {
-      switch (gdk_visual_get_visual_type (DEVICE_GTK_VISUAL(d)))
+#if GTK_CHECK_VERSION(2,22,1)
+      GdkVisualType vtype = gdk_visual_get_visual_type (DEVICE_GTK_VISUAL(d));
+#else
+      GdkVisualType vtype = DEVICE_GTK_VISUAL(d)->type;
+#endif
+
+      switch (vtype)
 	{
 	case GDK_VISUAL_STATIC_GRAY:
 	case GDK_VISUAL_GRAYSCALE:
@@ -264,7 +270,11 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   visual = gdk_visual_get_best();
 
   DEVICE_GTK_VISUAL (d) = visual;
+#if GTK_CHECK_VERSION(2,22,1)
   DEVICE_GTK_DEPTH (d) = gdk_visual_get_depth (visual);
+#else
+  DEVICE_GTK_DEPTH (d) = visual->depth;
+#endif
 
   {
     GtkWidget *w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -497,11 +507,11 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
        (device))
 {
   GdkVisual *vis = DEVICE_GTK_VISUAL (decode_gtk_device (device));
-#if GTK_CHECK_VERSION(2,22,1)
-  GdkVisualType type = gdk_visual_get_visual_type (vis);
-#else
-  GdkVisualType type = vis->type;
-#endif
+ #if GTK_CHECK_VERSION(2,22,1)
+   GdkVisualType type = gdk_visual_get_visual_type (vis);
+ #else
+   GdkVisualType type = vis->type;
+ #endif
   switch (type)
     {
     case GDK_VISUAL_STATIC_GRAY:  return intern ("static-gray");
@@ -543,7 +553,11 @@ gtk_device_system_metrics (struct device *d,
       return Fcons (make_fixnum (gdk_screen_width_mm ()),
 		    make_fixnum (gdk_screen_height_mm ()));
     case DM_num_color_cells:
+#if GTK_CHECK_VERSION(2,22,1)
       return make_fixnum (gdk_visual_get_colormap_size (DEVICE_GTK_VISUAL (d)));
+#else
+      return make_fixnum (gdk_colormap_get_system_size ());
+#endif
     case DM_num_bit_planes:
       return make_fixnum (DEVICE_GTK_DEPTH (d));
 
