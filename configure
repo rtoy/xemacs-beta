@@ -12245,6 +12245,7 @@ fi
 if test "$with_gtk" != "no";then
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK configuration script" >&5
 $as_echo_n "checking for GTK configuration script... " >&6; }
+   #for possible in gtk+-3.0 gtk+-2.0
    for possible in gtk+-2.0
    do
       possible_version=`pkg-config {possible} --version 2> /dev/null`
@@ -12271,8 +12272,10 @@ $as_echo "$as_me: WARNING: GTK 1.X is not supported" >&2;};
                         GTK_VERSION=`pkg-config --modversion ${possible}`
                         break
                         ;;
-	        *)     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found unsupported version of GTK: $possible_version" >&5
-$as_echo "$as_me: WARNING: Found unsupported version of GTK: $possible_version" >&2;};;
+	        *)      GTK_VERSION=`pkg-config --modversion ${possible}`
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found unsupported version of GTK: $possible_version, $GTK_VERSION" >&5
+$as_echo "$as_me: WARNING: Found unsupported version of GTK: $possible_version, $GTK_VERSION" >&2;}
+                        ;;
 	      esac
       fi
    done
@@ -12285,6 +12288,24 @@ if test "${GTK_CONFIG}" != "no"; then
 $as_echo_n "checking gtk version... " >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${GTK_VERSION}" >&5
 $as_echo "${GTK_VERSION}" >&6; }
+
+      case "$GTK_VERSION" in
+        2*) $as_echo "#define HAVE_GTK2 1" >>confdefs.h
+;;
+        3*) $as_echo "#define HAVE_GTK3 1" >>confdefs.h
+;;
+        *) { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found unsupported version of GTK: $GTK_VERSION" >&5
+$as_echo "$as_me: WARNING: Found unsupported version of GTK: $GTK_VERSION" >&2;};;
+      esac
+
+      $as_echo "#define HAVE_XPM 1" >>confdefs.h
+
+      $as_echo "#define HAVE_GTK 1" >>confdefs.h
+
+      $as_echo "#define HAVE_GTK2 1" >>confdefs.h
+
+      $as_echo "#define HAVE_PANGO 1" >>confdefs.h
+
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking gtk libs" >&5
 $as_echo_n "checking gtk libs... " >&6; }
@@ -12390,15 +12411,6 @@ _ACEOF
 
 fi
 done
-
-
-      $as_echo "#define HAVE_XPM 1" >>confdefs.h
-
-      $as_echo "#define HAVE_GTK 1" >>confdefs.h
-
-      $as_echo "#define HAVE_GTK2 1" >>confdefs.h
-
-      $as_echo "#define HAVE_PANGO 1" >>confdefs.h
 
 
 
