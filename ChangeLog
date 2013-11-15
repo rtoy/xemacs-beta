@@ -3,6 +3,8 @@
 	* configure.ac: Output exact GTK version.
 	Simplify version checking code.
 	Check for GTK 3.X first, then 2.X.
+	(HAVE_GTK2): Remove incorrect second setting.
+
 	* configure: Regenerate.
 
 2013-10-28  Marcus Crestani  <crestani@xemacs.org>
