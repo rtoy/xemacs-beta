@@ -2840,6 +2840,7 @@ dnl you must use gtk12-config, etc, etc.
 
 GNOME_CONFIG=no
 GTK_CONFIG=no
+GTK_VERSION=""
 
 if test "$with_gnome" != "no"; then
    AC_MSG_CHECKING(for GNOME configuration script)
@@ -2870,14 +2871,17 @@ if test "$with_gtk" != "no";then
                         ;;
                 0.22*)
                         with_gtk=yes
+                        GTK_VERSION=`pkg-config --modversion ${possible}"
                         break
                         ;;
                 0.25*)
                         with_gtk=yes
+                        GTK_VERSION=`pkg-config --modversion ${possible}"
                         break
                         ;;
                 0.26*)
                         with_gtk=yes
+                        GTK_VERSION=`pkg-config --modversion ${possible}"
                         break
                         ;;
 	        *)     AC_MSG_WARN([Found unsupported version of GTK: $possible_version]);;
@@ -2889,7 +2893,6 @@ fi
 
 if test "${GTK_CONFIG}" != "no"; then
       AC_MSG_CHECKING(gtk version)
-      GTK_VERSION=`${GTK_CONFIG} --version`
       AC_MSG_RESULT(${GTK_VERSION})
 
       AC_MSG_CHECKING(gtk libs)
@@ -5859,6 +5862,10 @@ if test "$with_x11" = "yes"; then
   if test "$with_xft_emacs" = "yes"; then
     echo "    - Compiling in support for Xft antialiased fonts (EXPERIMENTAL)."
   fi
+fi
+if test "$with_gtk" = "yes"; then
+  echo "  Compiling in support for GTK."
+  echo "    - GTK version:                                $GTK_VERSION"
 fi
 if test "$need_motif" = "yes" ; then
   echo "  Compiling in support for Motif."

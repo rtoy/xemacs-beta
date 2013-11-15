@@ -1,6 +1,11 @@
+2013-11-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac: Output exact GTK version.
+	* configure: Regenerate.
+
 2013-09-15  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* configure.ac: Force -lX11 for gtk to link XKeycodeToKeysym.
+	* configure.ac: Force -lX11 for GTK to link XKeycodeToKeysym.
 	* configure: Regenerate.
 
 2013-09-08  Marcus Crestani  <crestani@xemacs.org>
