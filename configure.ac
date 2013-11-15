@@ -2861,31 +2861,30 @@ if test "$with_gtk" != "no";then
    AC_MSG_CHECKING(for GTK configuration script)
    for possible in gtk+-3.0 gtk+-2.0
    do
-      possible_version=`pkg-config {possible} --version 2> /dev/null`
+      possible_version=`pkg-config --modversion ${possible} 2> /dev/null`
       if test "x${possible_version}" != "x"; then
               GTK_CONFIG="pkg-config ${possible}"
+              GTK_VERSION=${possible_version}
 	      case "${possible_version}" in
-	        1.*) AC_MSG_WARN([GTK 1.X is not supported]);
+                dnl This case won't ever happen, gtk-config was used
+                dnl before pkg-config existed.  Included for completeness.
+	        1.*)    AC_MSG_WARN([GTK 1.X is not supported]);
                         with_gtk=no
                         break
                         ;;
-                0.22*)
+                2.*)
                         with_gtk=yes
-                        GTK_VERSION=`pkg-config --modversion ${possible}`
+                        AC_DEFINE(HAVE_GTK2)
                         break
                         ;;
-                0.25*)
+                3.*)
                         with_gtk=yes
-                        GTK_VERSION=`pkg-config --modversion ${possible}`
+                        AC_DEFINE(HAVE_GTK3)
                         break
                         ;;
-                0.26*)
-                        with_gtk=yes
-                        GTK_VERSION=`pkg-config --modversion ${possible}`
-                        break
-                        ;;
-	        *)      GTK_VERSION=`pkg-config --modversion ${possible}`
-                        AC_MSG_WARN([Found unsupported version of GTK: $possible_version, $GTK_VERSION])
+	        *)
+                        with_gtk=no
+                        AC_MSG_WARN([Found unsupported version of GTK: $GTK_VERSION])
                         ;;
 	      esac
       fi
@@ -2896,12 +2895,6 @@ fi
 if test "${GTK_CONFIG}" != "no"; then
       AC_MSG_CHECKING(gtk version)
       AC_MSG_RESULT(${GTK_VERSION})
-
-      case "$GTK_VERSION" in
-        2*) AC_DEFINE(HAVE_GTK2);;
-        3*) AC_DEFINE(HAVE_GTK3);;
-        *) AC_MSG_WARN([Found unsupported version of GTK: $GTK_VERSION]);;
-      esac
 
       AC_DEFINE(HAVE_XPM)
       AC_DEFINE(HAVE_GTK)
