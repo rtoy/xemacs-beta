@@ -5,6 +5,11 @@
 	Check for GTK 3.X first, then 2.X.
 	* configure: Regenerate.
 
+2013-10-28  Marcus Crestani  <crestani@xemacs.org>
+
+	* configure.ac: Disable ASLR on Mavericks.
+	* configure: Rebuild.
+
 2013-09-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac: Force -lX11 for GTK to link XKeycodeToKeysym.
