@@ -178,7 +178,11 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
   guchar *data, *ip, *dp = NULL;
 
   vis = DEVICE_GTK_VISUAL (XDEVICE(device));
+#if GTK_CHECK_VERSION(2,22,1)
   vtype = gdk_visual_get_visual_type (vis);
+#else
+  vtype = vis->type;
+#endif
 
   if (vtype == GDK_VISUAL_GRAYSCALE || vtype == GDK_VISUAL_STATIC_COLOR ||
       vtype == GDK_VISUAL_STATIC_GRAY)
