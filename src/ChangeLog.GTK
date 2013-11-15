@@ -1,5 +1,9 @@
 2013-11-15  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* device-gtk.c (Fgtk_display_visual_class):
+	gdk_visual_get_visual_type was added in 2.22.
+	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Ditto.
+
 	* ui-gtk.c (g_type_to_lisp): g_value_get_schar only exists in more
 	recent glib.
 

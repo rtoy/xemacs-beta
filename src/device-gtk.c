@@ -497,7 +497,12 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
        (device))
 {
   GdkVisual *vis = DEVICE_GTK_VISUAL (decode_gtk_device (device));
-  switch (gdk_visual_get_visual_type (vis))
+#if GTK_CHECK_VERSION(2,22,1)
+  GdkVisualType type = gdk_visual_get_visual_type (vis);
+#else
+  GdkVisualType type = vis->type;
+#endif
+  switch (type)
     {
     case GDK_VISUAL_STATIC_GRAY:  return intern ("static-gray");
     case GDK_VISUAL_GRAYSCALE:    return intern ("gray-scale");
