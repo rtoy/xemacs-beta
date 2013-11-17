@@ -1,3 +1,9 @@
+2013-11-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_toolbar_plist): Handle without HAVE_TOOLBARS.
+	(gtk_frame_property): Ditto.
+	(gtk_frame_properties): Ditto.
+
 2013-11-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* device-gtk.c (Fgtk_display_visual_class):
