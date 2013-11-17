@@ -236,6 +236,7 @@ gtk_frame_iconified_p (struct frame *f)
 /*                          frame properties                            */
 /************************************************************************/
 
+#ifdef HAVE_TOOLBARS
 static Lisp_Object
 gtk_toolbar_plist (struct frame *f)
 {
@@ -259,6 +260,7 @@ gtk_toolbar_plist (struct frame *f)
                  plist);
   return plist;
 }
+#endif
 
 static Lisp_Object
 gtk_frame_property (struct frame *f, Lisp_Object property)
@@ -292,7 +294,11 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
     }
   if (EQ (Qtoolbar, property))
     {
+#ifdef HAVE_TOOLBARS
       return gtk_toolbar_plist (f);
+#else
+      return Qnil;
+#endif
     }
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
   if (EQ (Qwindow_id, property))
@@ -327,7 +333,9 @@ gtk_frame_properties (struct frame *f)
   props = cons3 (Qcontainer_widget, FRAME_GTK_LISP_WIDGETS (f)[1], props);
   props = cons3 (Qtext_widget, FRAME_GTK_LISP_WIDGETS (f)[2], props);
   props = cons3 (Qmenubar, build_gtk_object (G_OBJECT (FRAME_GTK_MENUBAR_WIDGET (f))), props);
+#ifdef HAVE_TOOLBARS
   props = cons3 (Qtoolbar, gtk_toolbar_plist (f), props);
+#endif
 
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
   props = cons3 (Qwindow_id, Fgtk_window_id (wrap_frame (f)), props);
