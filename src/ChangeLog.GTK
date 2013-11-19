@@ -1,3 +1,9 @@
+2013-11-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (gtk_what_callback): Cast gpointer when assigning.
+	(select_filedesc): Cast flag combination to GIOCondition.
+	(init_event_gtk_late): Ditto.
+
 2013-11-17  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_toolbar_plist): Handle without HAVE_TOOLBARS.
