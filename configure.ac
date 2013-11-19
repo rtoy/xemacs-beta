@@ -711,7 +711,7 @@ XE_COMPLEX_ARG([xft],
 	XE_COMPLEX_OPTION([tabs],[no]),
 	XE_COMPLEX_OPTION([gauges],[no])])
 XE_MERGED_ARG([gtk],
-	AS_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
+	AS_HELP_STRING([--with-gtk],[Support GTK on the X Window System. Can specify 2 or 3. (EXPERIMENTAL)]),
 	[true], [with_gtk=no])
 XE_MERGED_ARG([gnome],
 	AS_HELP_STRING([--with-gnome],[Support GNOME on the X Window System. (EXPERIMENTAL)]),
@@ -2841,6 +2841,14 @@ dnl you must use gtk12-config, etc, etc.
 GNOME_CONFIG=no
 GTK_CONFIG=no
 GTK_VERSION=""
+GTK_POSSIBLE="gtk+-3.0 gtk+-2.0"
+
+if test "$with_gtk" = "3"; then
+   GTK_POSSIBLE="gtk+-3.0"
+fi
+if test "$with_gtk" = "2"; then
+   GTK_POSSIBLE="gtk+-2.0"
+fi
 
 if test "$with_gnome" != "no"; then
    AC_MSG_CHECKING(for GNOME configuration script)
@@ -2859,7 +2867,7 @@ fi
 
 if test "$with_gtk" != "no";then
    AC_MSG_CHECKING(for GTK configuration script)
-   for possible in gtk+-3.0 gtk+-2.0
+   for possible in $GTK_POSSIBLE
    do
       possible_version=`pkg-config --modversion ${possible} 2> /dev/null`
       if test "x${possible_version}" != "x"; then

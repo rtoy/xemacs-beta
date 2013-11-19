@@ -1799,7 +1799,8 @@ Window-system options
                           and fontconfig support. Default is `noemacs,
                           nomenubars, notabs, nogauges'. The default when
                           selected is `emacs, nomenubars, notabs, nogauges'.
-  --with-gtk              Support GTK on the X Window System. (EXPERIMENTAL)
+  --with-gtk              Support GTK on the X Window System. Can specify 2 or
+                          3. (EXPERIMENTAL)
   --with-gnome            Support GNOME on the X Window System. (EXPERIMENTAL)
   --with-msw              Support MS Windows as a window system (only under
                           Cygwin and MinGW). `--with-msw=no' may be needed on
@@ -12224,6 +12225,14 @@ $as_echo "" >&6; }
 GNOME_CONFIG=no
 GTK_CONFIG=no
 GTK_VERSION=""
+GTK_POSSIBLE="gtk+-3.0 gtk+-2.0"
+
+if test "$with_gtk" = "3"; then
+   GTK_POSSIBLE="gtk+-3.0"
+fi
+if test "$with_gtk" = "2"; then
+   GTK_POSSIBLE="gtk+-2.0"
+fi
 
 if test "$with_gnome" != "no"; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GNOME configuration script" >&5
@@ -12245,7 +12254,7 @@ fi
 if test "$with_gtk" != "no";then
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK configuration script" >&5
 $as_echo_n "checking for GTK configuration script... " >&6; }
-   for possible in gtk+-3.0 gtk+-2.0
+   for possible in $GTK_POSSIBLE
    do
       possible_version=`pkg-config --modversion ${possible} 2> /dev/null`
       if test "x${possible_version}" != "x"; then

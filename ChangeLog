@@ -1,3 +1,9 @@
+2013-11-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac: Add support for --with-gtk=2 and --with-gtk=3 to
+	build with a specific major version.
+	* configure: Regenerate.
+
 2013-11-15  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac: Output exact GTK version.
