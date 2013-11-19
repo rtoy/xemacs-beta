@@ -780,7 +780,7 @@ gtk_what_callback (GIOChannel * channel,
 		   GIOCondition UNUSED (condition),
 		   gpointer data)
 {
-  struct what_is_ready_closure *closure = data;
+  struct what_is_ready_closure *closure = (struct what_is_ready_closure *) data;
 
   assert (channel);
 
@@ -812,7 +812,7 @@ select_filedesc (int fd, Lisp_Object what)
   closure->channel = g_io_channel_unix_new (fd);
   closure->what = what;
   /* Adding HUP was essential to getting shell-mode to work. */
-  closure->id = g_io_add_watch (closure->channel, G_IO_IN | G_IO_HUP,
+  closure->id = g_io_add_watch (closure->channel, (GIOCondition) (G_IO_IN | G_IO_HUP),
 				gtk_what_callback, closure);
   filedesc_to_what_closure[fd] = closure;
 }
@@ -1782,7 +1782,7 @@ init_event_gtk_late (void) /* called when already initialized */
 #endif
 
   g_io_add_watch (g_io_channel_unix_new (signal_event_pipe[0]),
-		  G_IO_IN | G_IO_HUP, gtk_what_callback, NULL);
+		  (GIOCondition) (G_IO_IN | G_IO_HUP), gtk_what_callback, NULL);
 }
 
 /* Bogus utility routines */
