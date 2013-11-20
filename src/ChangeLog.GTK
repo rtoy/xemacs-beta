@@ -1,3 +1,8 @@
+2013-11-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (emacs_gtk_drain_queue): Use gdk_events_pending.  I
+	did not read the comment.
+
 2013-11-19  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_widget_query_geometry): Get preferred size for

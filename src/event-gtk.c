@@ -1684,7 +1684,6 @@ emacs_shell_event_handler (GtkWidget *UNUSED (wid),
 
 static void
 emacs_gtk_drain_queue (void)
-
 {
   /* We can't just spin through here and wait for GTKs idea of the
      event queue to get empty, or the queue never gets drained.  The
@@ -1696,7 +1695,7 @@ emacs_gtk_drain_queue (void)
      system events.
   */
   if (gdk_display_get_default ())
-    while (gtk_events_pending ())
+    while (gdk_events_pending ())
       gtk_main_iteration_do (FALSE);
 
 #ifdef HAVE_TTY
