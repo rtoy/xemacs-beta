@@ -492,7 +492,7 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
     if (!width_specified_p)
       width = 80;
     if (!height_specified_p)
-      height = 40;
+      height = 24;
 
     /* Kludge kludge kludge kludge. */
     if (position_specified_p &&
@@ -637,7 +637,7 @@ gnome_parse_geometry (const gchar *geometry, gint *xpos,
 static void
 gtk_initialize_frame_size (struct frame *f)
 {
-  gint x = 10, y = 10, w = 80, h = 40;
+  gint x = 10, y = 10, w = 80, h = 24;
 
   if (STRINGP (Vgtk_initial_geometry))
     {
@@ -647,7 +647,7 @@ gtk_initialize_frame_size (struct frame *f)
 	{
 	  x = y = 10;
 	  w = 80;
-	  h = 40;
+	  h = 24;
 	}
     }
 
