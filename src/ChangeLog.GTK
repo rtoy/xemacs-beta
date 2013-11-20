@@ -1,5 +1,8 @@
 2013-11-19  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_widget_query_geometry): Get preferred size for
+	Gtk 3.  Make sure width and height are greater than 0.
+
 	* event-gtk.c (gtk_what_callback): Cast gpointer when assigning.
 	(select_filedesc): Cast flag combination to GIOCondition.
 	(init_event_gtk_late): Ditto.
