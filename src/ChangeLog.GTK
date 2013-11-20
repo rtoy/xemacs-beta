@@ -1,6 +1,10 @@
 2013-11-20  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* gtk-xemacs.h: gtk_xemacs_get_type ow returns GType.
+	* frame-gtk.c (gtk_set_frame_properties): Change default height to
+	24 lines.
+	(gtk_initialize_frame_size): Ditto.
+
+	* gtk-xemacs.h: gtk_xemacs_get_type now returns GType.
 	* gtk-xemacs.c (gtk_xemacs_get_type): Use GType instead of guint,
 	patch from Stephen Turnbull.
 	* ui-gtk.c (Fg_type_from_name): Use GType.
