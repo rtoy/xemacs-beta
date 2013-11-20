@@ -60,12 +60,12 @@ static void gtk_xemacs_paint		(GtkWidget *widget, GdkRectangle *area);
 static gint gtk_xemacs_expose		(GtkWidget *widget, GdkEventExpose *event);
 #endif
 
-guint
+GType
 gtk_xemacs_get_type (void)
 {
-  static guint xemacs_type = 0;
+  static GType xemacs_type = G_TYPE_INVALID;
 
-  if (!xemacs_type)
+  if (xemacs_type == G_TYPE_INVALID)
     {
       xemacs_type =
         g_type_register_static_simple (GTK_TYPE_FIXED,
@@ -77,6 +77,7 @@ gtk_xemacs_get_type (void)
                                        (GTypeFlags) 0);
     }
 
+  assert (xemacs_type != G_TYPE_INVALID);
   return xemacs_type;
 }
 
