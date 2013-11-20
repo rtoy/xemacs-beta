@@ -47,7 +47,7 @@ struct _GtkXEmacsClass
   GtkFixedClass parent_class;
 };
 
-guint gtk_xemacs_get_type (void);
+GType gtk_xemacs_get_type (void);
 GtkWidget *gtk_xemacs_new (struct frame *f);
 
 END_C_DECLS

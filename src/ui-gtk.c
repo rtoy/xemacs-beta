@@ -1472,8 +1472,8 @@ The type is returned as a string, so this is a type validator.
 */
        (type_name))
 {
-  guint type = G_TYPE_NONE;
-  
+  GType type = G_TYPE_INVALID;
+
   if (SYMBOLP (type_name))
     type_name = Fsymbol_name (type_name);
   CHECK_STRING (type_name);
