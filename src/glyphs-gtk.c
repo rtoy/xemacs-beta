@@ -2370,8 +2370,16 @@ gtk_widget_query_geometry (Lisp_Object image_instance,
       *width = r.width;
 #endif
 #ifdef HAVE_GTK3
-      *height = gtk_widget_get_allocated_height (w);
-      *width  = gtk_widget_get_allocated_width (w);
+      int minimum, natural;
+
+      gtk_widget_get_preferred_height (w, &minimum, &natural);
+      *height = max (minimum, natural);
+      if (*height == 0)
+        *height = 1;
+      gtk_widget_get_preferred_width (w, &minimum, &natural);
+      *width = max (minimum, natural);
+      if (*width == 0)
+        *width = 1;
 #endif
     }
 }
