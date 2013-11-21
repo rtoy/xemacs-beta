@@ -1,7 +1,12 @@
+2013-11-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_convert): Set the label for the menu in GTK
+	3.
+
 2013-11-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-gtk.c (emacs_gtk_drain_queue): Use gdk_events_pending.  I
-	did not read the comment.
+	did not read the comment that told me not to change it.
 
 2013-11-19  Jeff Sparkes  <jsparkes@gmail.com>
 
