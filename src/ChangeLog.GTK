@@ -5,6 +5,11 @@
 
 2013-11-20  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* gtk-xemacs.h: gtk_xemacs_get_type ow returns GType.
+	* gtk-xemacs.c (gtk_xemacs_get_type): Use GType instead of guint,
+	patch from Stephen Turnbull.
+	* ui-gtk.c (Fg_type_from_name): Use GType.
+
 	* event-gtk.c (emacs_gtk_drain_queue): Use gdk_events_pending.  I
 	did not read the comment that told me not to change it.
 
