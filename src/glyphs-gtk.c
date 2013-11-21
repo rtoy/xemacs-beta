@@ -2013,11 +2013,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 	    }
 	}
 
-      if (!IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (p))
-	{
-	  gtk_widget_map (wid);
-	}
-
+      gtk_widget_map (wid);
       gtk_widget_queue_draw (wid);
     }
 }

@@ -1,5 +1,8 @@
 2013-11-21  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_map_subwindow): Unconditionally map widget.
+	It's harmless to make redundant calls.
+
 	* menubar-gtk.c (menu_convert): Set the label for the menu in GTK
 	3.
 
