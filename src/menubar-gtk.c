@@ -362,6 +362,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
                                              converted);
 #endif
 #ifdef HAVE_GTK3
+	  gtk_label_set_text_with_mnemonic (GTK_LABEL (accel_label), converted);
 	  accel_char = get_accelerator (converted);
 	  if (accel_char != 0)
 	    accel_key = gdk_unicode_to_keyval (accel_char);
