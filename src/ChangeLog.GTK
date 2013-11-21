@@ -1,3 +1,11 @@
+2013-11-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_map_subwindow): Unconditionally map widget.
+	It's harmless to make redundant calls.
+
+	* menubar-gtk.c (menu_convert): Set the label for the menu in GTK
+	3.
+
 2013-11-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_set_frame_properties): Change default height to
@@ -10,7 +18,7 @@
 	* ui-gtk.c (Fg_type_from_name): Use GType.
 
 	* event-gtk.c (emacs_gtk_drain_queue): Use gdk_events_pending.  I
-	did not read the comment.
+	did not read the comment that told me not to change it.
 
 2013-11-19  Jeff Sparkes  <jsparkes@gmail.com>
 
