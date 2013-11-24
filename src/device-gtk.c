@@ -627,19 +627,6 @@ The two names differ in capitalization and underscoring.
 /*                          grabs and ungrabs                           */
 /************************************************************************/
 
-#ifdef HAVE_GTK3
-static GdkDevice *
-gtk_widget_get_device (GtkWidget *widget)
-{
-  GdkDisplay *display = gtk_widget_get_display (widget);
-  GdkDeviceManager* manager = gdk_display_get_device_manager(display);
-  GdkDevice* device = gdk_device_manager_get_client_pointer(manager);
-
-  assert (device);
-  return device;
-}
-#endif
-
 DEFUN ("gtk-grab-pointer", Fgtk_grab_pointer, 0, 3, 0, /*
 Grab the pointer and restrict it to its current window.
 If optional DEVICE argument is nil, the default device will be used.
