@@ -1,5 +1,8 @@
 2013-11-24  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* event-xlike-inc.c (emacs_gtk_event_pending_p): Process only GDK
+	events here.
+
 	* frame-gtk.c (gtk_widget_get_device): Move function to here, make
 	it global.
 	(gtk_set_frame_size): Use preferred size for GTK 3.
