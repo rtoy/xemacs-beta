@@ -130,7 +130,7 @@ emacs_Xt_event_pending_p (int how_many)
 	  || (XtIMXEvent & XtAppPending (Xt_app_con))
 #endif
 #ifdef THIS_IS_GTK
-	  || gtk_events_pending ()
+	  || gdk_events_pending ()
 #endif
 	  )
 	{
