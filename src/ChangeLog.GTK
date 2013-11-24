@@ -1,5 +1,10 @@
 2013-11-24  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* frame-gtk.c (gtk_widget_get_device): Move function to here, make
+	it global.
+	* device-gtk.c: Remove gtk_widget_get_device()..
+	* console-gtk.h: Declare here.
+
 	* ui-byhand.c (Fgtk_label_get): Don't discard const here; some
 	version of gcc thinks it's an error.
 

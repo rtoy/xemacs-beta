@@ -209,6 +209,19 @@ gtk_any_window_to_device (GdkWindow *w)
   return (NULL);
 }
 
+#ifdef HAVE_GTK3
+GdkDevice *
+gtk_widget_get_device (GtkWidget *widget)
+{
+  GdkDisplay *display = gtk_widget_get_display (widget);
+  GdkDeviceManager* manager = gdk_display_get_device_manager(display);
+  GdkDevice* device = gdk_device_manager_get_client_pointer(manager);
+
+  assert (device);
+  return device;
+}
+#endif
+
 struct frame *
 decode_gtk_frame (Lisp_Object frame)
 {
