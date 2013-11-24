@@ -1282,7 +1282,15 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
     }
 
   change_frame_size (f, cols, rows, 0);
+#ifdef HAVE_GTK2
   gtk_widget_size_request (FRAME_GTK_SHELL_WIDGET (f), &req);
+#endif
+#ifdef HAVE_GTK3
+  {
+    GtkRequisition min;
+    gtk_widget_get_preferred_size (FRAME_GTK_SHELL_WIDGET (f), &min, &req);
+  }    
+#endif
   gtk_widget_set_size_request (FRAME_GTK_SHELL_WIDGET (f), req.width, req.height);
 
   if (GTK_IS_WINDOW (shell))
@@ -1296,10 +1304,18 @@ static void
 gtk_set_mouse_position (struct window *w, int x, int y)
 {
   struct frame *f = XFRAME (w->frame);
-  GdkDisplay *display = gtk_widget_get_display (FRAME_GTK_TEXT_WIDGET (f));
+#ifdef HAVE_GTK2
   GdkScreen *screen = gtk_widget_get_screen (FRAME_GTK_TEXT_WIDGET (f));
+  GdkDisplay *display = gtk_widget_get_display (FRAME_GTK_TEXT_WIDGET (f));
+  
   gdk_display_warp_pointer (display, screen, 
                             w->pixel_left + x, w->pixel_top + y);
+#endif
+#ifdef HAVE_GTK3
+  GdkDevice *device = gtk_widget_get_device (FRAME_GTK_TEXT_WIDGET (f));
+
+  gdk_device_warp (device, screen, x, y);
+#endif
 }
 
 static int
@@ -1307,7 +1323,17 @@ gtk_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
 {
     /* Returns the pixel position within the editor text widget */
     gint win_x, win_y;
+#ifdef HAVE_GTK2
     GdkWindow *w = gdk_window_at_pointer (&win_x, &win_y);
+#endif
+#ifdef HAVE_GTK3
+    GdkDisplay *display = gtk_widget_get_display (DEVICE_GTK_APP_SHELL (d));
+    GdkDeviceManager *manager = gdk_display_get_device_manager (display);
+    GdkDevice *device = gdk_device_manager_get_client_pointer (manager);
+    /* This function isn't returning a window -jsparkes */
+    GdkWindow *w = gdk_device_get_window_at_position (device,
+                                                      &win_x, &win_y);
+#endif
     struct frame *f = NULL;
 
     if (!w) return (0);
@@ -1321,8 +1347,13 @@ gtk_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
 
     *frame = wrap_frame (f);
 
+#ifdef HAVE_GTK2
     gdk_window_get_pointer (gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f)),
 			    &win_x, &win_y, NULL);
+#endif
+#ifdef HAVE_GTK3
+    gdk_device_get_position (device, NULL, &win_x, &win_y);
+#endif
 
     *x = win_x;
     *y = win_y;
