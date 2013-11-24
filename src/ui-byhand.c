@@ -172,7 +172,7 @@ Return the text of LABEL.
 */
        (label))
 {
-  gchar *string;
+  const gchar *string;
 
   CHECK_GTK_OBJECT (label);
 
