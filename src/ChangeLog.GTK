@@ -2,6 +2,10 @@
 
 	* frame-gtk.c (gtk_widget_get_device): Move function to here, make
 	it global.
+	(gtk_set_frame_size): Use preferred size for GTK 3.
+	(gtk_set_mouse_position): Use gdk_device_warp in GTK 3.
+	(gtk_get_mouse_position): Use GdkDevice based code in GTK 3.
+
 	* device-gtk.c: Remove gtk_widget_get_device()..
 	* console-gtk.h: Declare here.
 
