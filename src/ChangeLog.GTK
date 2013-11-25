@@ -1,3 +1,8 @@
+2013-11-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_mouse_position): Accidentally moved screen
+	variable inside HAVE_GTK2.  It is use by both flavours of GTK.
+
 2013-11-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* event-xlike-inc.c (emacs_gtk_event_pending_p): Process only GDK

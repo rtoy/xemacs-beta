@@ -1304,11 +1304,11 @@ static void
 gtk_set_mouse_position (struct window *w, int x, int y)
 {
   struct frame *f = XFRAME (w->frame);
-#ifdef HAVE_GTK2
   GdkScreen *screen = gtk_widget_get_screen (FRAME_GTK_TEXT_WIDGET (f));
+#ifdef HAVE_GTK2
   GdkDisplay *display = gtk_widget_get_display (FRAME_GTK_TEXT_WIDGET (f));
-  
-  gdk_display_warp_pointer (display, screen, 
+
+  gdk_display_warp_pointer (display, screen,
                             w->pixel_left + x, w->pixel_top + y);
 #endif
 #ifdef HAVE_GTK3
