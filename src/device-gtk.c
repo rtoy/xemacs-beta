@@ -640,7 +640,7 @@ Returns t if the grab is successful, nil otherwise.
        (device, cursor, UNUSED (ignore_keyboard)))
 {
   GdkWindow *w;
-  int result;
+  int result = -1;
   struct device *d = decode_gtk_device (device);
 
   if (!NILP (cursor))
@@ -651,6 +651,7 @@ Returns t if the grab is successful, nil otherwise.
 
   /* We should call gdk_pointer_grab() and (possibly) gdk_keyboard_grab() here instead */
   w = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (device_selected_frame (d)));
+  assert (w);
 
 #ifdef HAVE_GTK2
   result = gdk_pointer_grab (w, FALSE,
@@ -670,18 +671,18 @@ Returns t if the grab is successful, nil otherwise.
     GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (device_selected_frame (d));
     GdkDevice *gdk_device = gtk_widget_get_device (widget);
 
-    if (gdk_device)
-      result = gdk_device_grab (gdk_device, w,
-				GDK_OWNERSHIP_APPLICATION, FALSE,
-				(GdkEventMask) (GDK_POINTER_MOTION_MASK |
-						GDK_POINTER_MOTION_HINT_MASK |
-						GDK_BUTTON1_MOTION_MASK |
-						GDK_BUTTON2_MOTION_MASK |
-						GDK_BUTTON3_MOTION_MASK |
-						GDK_BUTTON_PRESS_MASK |
-						GDK_BUTTON_RELEASE_MASK),
-				NULL, /* #### BILL!!! Need to create a GdkCursor * as necessary! */
-				GDK_CURRENT_TIME);
+    assert (gdk_device);
+    result = gdk_device_grab (gdk_device, w,
+			      GDK_OWNERSHIP_APPLICATION, FALSE,
+			      (GdkEventMask) (GDK_POINTER_MOTION_MASK |
+					      GDK_POINTER_MOTION_HINT_MASK |
+					      GDK_BUTTON1_MOTION_MASK |
+					      GDK_BUTTON2_MOTION_MASK |
+					      GDK_BUTTON3_MOTION_MASK |
+					      GDK_BUTTON_PRESS_MASK |
+					      GDK_BUTTON_RELEASE_MASK),
+			      NULL, /* #### BILL!!! Need to create a GdkCursor * as necessary! */
+			      GDK_CURRENT_TIME);
   }
 #endif
 

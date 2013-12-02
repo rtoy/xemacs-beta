@@ -1,3 +1,8 @@
+2013-12-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (Fgtk_grab_pointer): Initialize result variable to
+	invalid value.  Add asserts for several calls.
+
 2013-11-25  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* frame-gtk.c (gtk_set_mouse_position): Accidentally moved screen
