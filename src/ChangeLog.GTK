@@ -1,5 +1,7 @@
 2013-12-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* toolbar-gtk.c (gtk_output_toolbar): Remove unused variable.
+
 	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Initialize variable.
 
 	* frame-gtk.c (gtk_cant_notify_wm_error): Remove unused function.

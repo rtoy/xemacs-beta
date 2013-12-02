@@ -188,7 +188,6 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
               GtkToolItem *item  = NULL;
 	      GtkWidget *pixmapwid;
 	      GdkPixbuf *pixmap;
-	      Ibyte *tooltip = NULL;
 
               /* Map toolbar actions to Gtk stock icons.  This mapping should be
                  done in lisp.   Perhaps using a hashtable. */
