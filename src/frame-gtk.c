@@ -1361,14 +1361,6 @@ gtk_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
     return (1);
 }
 
-static DECLARE_DOESNT_RETURN (gtk_cant_notify_wm_error (void));
-
-static DOESNT_RETURN
-gtk_cant_notify_wm_error ()
-{
-  signal_error (Qgui_error, "Can't notify window manager of iconification", Qunbound);
-}
-
 /* Raise frame F.  */
 static void
 gtk_raise_frame_1 (struct frame *f, int force)
