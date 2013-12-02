@@ -206,7 +206,7 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
     return NULL;
   {
       unsigned long rshift,gshift,bshift,rbits,gbits,bbits;
-      guint32 junk;
+      guint32 junk = 0;
 #ifdef HAVE_GTK2
       junk = vis->red_mask;
 #endif

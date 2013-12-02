@@ -1,5 +1,7 @@
 2013-12-02  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Initialize variable.
+
 	* frame-gtk.c (gtk_cant_notify_wm_error): Remove unused function.
 
 	* device-gtk.c (Fgtk_grab_pointer): Initialize result variable to
