@@ -312,9 +312,11 @@ gtk_xemacs_size_request (GtkWidget *widget, GtkRequisition *requisition)
 	parent_class->size_request (widget, requisition);
 #endif
 #ifdef HAVE_GTK3
-	parent_class->get_preferred_height (widget, &unused, &height);
+	GTK_WIDGET_GET_CLASS (widget)->get_preferred_height (widget, &unused,
+							     &height);
 	requisition->height = height;
-	parent_class->get_preferred_width  (widget, &unused, &width);
+	GTK_WIDGET_GET_CLASS (widget)->get_preferred_width  (widget, &unused,
+							     &width);
 	requisition->width  = width;
 #endif
       }
