@@ -302,8 +302,11 @@ gtk_xemacs_size_request (GtkWidget *widget, GtkRequisition *requisition)
     if (f)
       {
 	frame_unit_to_pixel_size (f, FRAME_WIDTH (f), FRAME_HEIGHT (f),
-			    &width, &height);
-	requisition->width = width;
+				  &width, &height);
+	/* The scrollbar width has to be included somewhere. If not,
+	   the frame resizes smaller when the font is changed to a
+	   larger size. */
+	requisition->width = width + 10;
 	requisition->height = height;
       }
     else
