@@ -3091,7 +3091,6 @@ via the hepatic alpha-tocopherol transfer protein")))
 			     context)))
 	              markers))))
     (with-temp-buffer
-      (princ "hello there, in with-temp-buffer\n" (get-buffer "*scratch*"))
       (loop for ii from 0 to 100
 	do (progn
 	     (insert " " character " " character " " character " "

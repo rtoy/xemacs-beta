@@ -384,6 +384,8 @@ enum lazy_number_type { NUMBER_TYPES(LAZY_), LAZY_MARKER_T };
 extern enum number_type get_number_type (Lisp_Object);
 extern enum number_type promote_args (Lisp_Object *, Lisp_Object *);
 
+#ifdef WITH_NUMBER_TYPES
+
 /* promote_args() *always* converts a marker argument to a fixnum.
 
    Unfortunately, for a marker with byte position N, getting the (character)
@@ -409,7 +411,6 @@ promote_args_lazy (Lisp_Object *obj1, Lisp_Object *obj2))
   return (enum lazy_number_type) promote_args (obj1, obj2);
 }
 
-#ifdef WITH_NUMBER_TYPES
 DECLARE_INLINE_HEADER (
 int
 non_fixnum_number_p (Lisp_Object object))

@@ -1,5 +1,10 @@
 2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/lisp-tests.el (character):
+	Remove a debugging statement from this.
+
+2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* automated/face-tests.el:
 	Only test fontconfig if the font-mgr feature is available, avoid
 	errors when it isn't.
