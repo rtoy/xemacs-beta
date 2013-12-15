@@ -1,5 +1,12 @@
 2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* number.h:
+	Only make promote_args_lazy() available on builds
+	WITH_NUMBER_TYPES, in case linking complains about promote_args()
+	not being available.
+
+2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecode.c (bytecode_arithcompare):
 	* bytecode.c (bytecode_arithop):
 	Call promote_args_lazy () in these two functions, only converting
