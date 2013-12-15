@@ -3041,4 +3041,83 @@ via the hepatic alpha-tocopherol transfer protein")))
                 (macroexpand '(with-second-arguments)))))
    (with-both-arguments (list))))
 
+;; Test arithmetic comparisons of markers and operations on markers. Most
+;; relevant with Mule, but also worth doing on non-Mule.
+(let ((character (if (featurep 'mule) (decode-char 'ucs #x20ac) ?\xff))
+      (translation (make-char-table 'generic))
+      markers fixnums)
+  (macrolet
+      ((Assert-arith-equivalences (markers context)
+	 `(progn
+	   (Assert (apply #'> markers)
+		   ,(concat "checking #'> correct with long arguments list, "
+		     context))
+	   (Assert 0 ,context)
+	   (Assert (apply #'< (reverse markers))
+		   ,(concat "checking #'< correct with long arguments list, "
+			    context))
+	   (map-plist #'(lambda (object1 object2)
+			  (Assert (> object1 object2)
+				  ,(concat 
+				    "checking markers correctly ordered, >, "
+				    context))
+			  (Assert (< object2 object1)
+				  ,(concat
+				    "checking markers correctly ordered, <, "
+				    context)))
+		      markers)
+	   ;; OK, so up to this point there has been no need for byte-char
+	   ;; conversion. The following requires it, though:
+	   (map-plist #'(lambda (object1 object2)
+			  (Assert
+			   (= (max object1 object2) object1)
+			   ,(concat
+			     "checking max correct, two markers, " context))
+			  (Assert
+			   (= (min object1 object2) object2)
+			   ,(concat
+			     "checking min, correct, two markers, " context))
+			  ;; It is probably reasonable to change this design
+			  ;; decision.
+			  (Assert
+			   (fixnump (max object1 object2))
+			   ,(concat
+			     "checking fixnum conversion as documented, max, "
+			     context))
+			  (Assert
+			   (fixnump (min object1 object2))
+			   ,(concat
+			     "checking fixnum conversion as documented, min, "
+			     context)))
+	              markers))))
+    (with-temp-buffer
+      (princ "hello there, in with-temp-buffer\n" (get-buffer "*scratch*"))
+      (loop for ii from 0 to 100
+	do (progn
+	     (insert " " character " " character " " character " "
+			 character "\n")
+	     (insert character)
+	     (push (copy-marker (1- (point)) t) markers)
+	     (insert ?\x20)
+	     (push (copy-marker (1- (point)) t) markers)))
+      (Assert-arith-equivalences markers "with Euro sign")
+      ;; Save the markers as fixnum character positions:
+      (setq fixnums (mapcar #'marker-position markers))
+      ;; Check that the equivalences work with the fixnums, while we
+      ;; have them:
+      (Assert-arith-equivalences fixnums "fixnums, with Euro sign")
+      ;; Now, transform the characters that may be problematic to ASCII,
+      ;; check our equivalences still hold.
+      (put-char-table character ?\x7f translation)
+      (translate-region (point-min) (point-max) translation)
+      ;; Sigh, restore the markers #### shouldn't the insertion and
+      ;; deletion code do this?!
+      (map nil #'set-marker markers fixnums)
+      (Assert-arith-equivalences markers "without Euro sign")
+      ;; Restore the problematic character.
+      (put-char-table ?\x7f character translation)
+      (translate-region (point-min) (point-max) translation)
+      (map nil #'set-marker markers fixnums)
+      (Assert-arith-equivalences markers "with Euro sign restored"))))
+
 ;;; end of lisp-tests.el

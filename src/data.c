@@ -899,7 +899,7 @@ fixnum_char_or_marker_to_int (Lisp_Object obj)
 
 #ifdef HAVE_BIGNUM
 #define BIGNUM_CASE(op)							\
-	case BIGNUM_T:							\
+        case LAZY_BIGNUM_T:                                             \
 	  if (!bignum_##op (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2)))	\
 	    return Qnil;						\
 	  break;
@@ -909,7 +909,7 @@ fixnum_char_or_marker_to_int (Lisp_Object obj)
 
 #ifdef HAVE_RATIO
 #define RATIO_CASE(op)							\
-	case RATIO_T:							\
+        case LAZY_RATIO_T:                                              \
 	  if (!ratio_##op (XRATIO_DATA (obj1), XRATIO_DATA (obj2)))	\
 	    return Qnil;						\
 	  break;
@@ -919,7 +919,7 @@ fixnum_char_or_marker_to_int (Lisp_Object obj)
 
 #ifdef HAVE_BIGFLOAT
 #define BIGFLOAT_CASE(op)						\
-	case BIGFLOAT_T:						\
+	case LAZY_BIGFLOAT_T:						\
 	  if (!bigfloat_##op (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2))) \
 	    return Qnil;						\
 	  break;
@@ -936,24 +936,33 @@ fixnum_char_or_marker_to_int (Lisp_Object obj)
     {								\
       obj1 = args[i - 1];					\
       obj2 = args[i];						\
-      switch (promote_args (&obj1, &obj2))			\
+      switch (promote_args_lazy (&obj1, &obj2))                 \
 	{							\
-	case FIXNUM_T:						\
-	  if (!(XREALFIXNUM (obj1) c_op XREALFIXNUM (obj2)))		\
+        case LAZY_FIXNUM_T:                                     \
+          if (!(XREALFIXNUM (obj1) c_op XREALFIXNUM (obj2)))    \
 	    return Qnil;					\
 	  break;						\
 	BIGNUM_CASE (op)					\
 	RATIO_CASE (op)						\
-	case FLOAT_T:						\
+        case LAZY_FLOAT_T:                                      \
 	  if (!(XFLOAT_DATA (obj1) c_op XFLOAT_DATA (obj2)))	\
 	    return Qnil;					\
 	  break;						\
 	BIGFLOAT_CASE (op)					\
+        case LAZY_MARKER_T:                                     \
+          if (!(byte_marker_position (obj1) c_op                \
+                byte_marker_position (obj2)))                   \
+            return Qnil;                                        \
+          break;                                                \
 	}							\
     }								\
   return Qt;							\
 }
 #else /* !WITH_NUMBER_TYPES */
+/* We don't convert markers lazily here, although we could. It's more
+   important that we do this lazily in bytecode, which is the case; see
+   bytecode_arithcompare().
+   */
 #define ARITHCOMPARE_MANY(c_op,op)				\
 {								\
   int_or_double iod1, iod2, *p = &iod1, *q = &iod2;		\

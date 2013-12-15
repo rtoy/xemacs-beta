@@ -1,5 +1,27 @@
 2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecode.c (bytecode_arithcompare):
+	* bytecode.c (bytecode_arithop):
+	Call promote_args_lazy () in these two functions, only converting
+	markers to fixnums if absolutely necessary (since that is ON with
+	large, mule buffers).
+
+	* data.c (BIGNUM_CASE):
+	* data.c (RATIO_CASE):
+	* data.c (BIGFLOAT_CASE):
+	* data.c (ARITHCOMPARE_MANY):
+	Call promote_args_lazy () here too if WITH_NUMBER_TYPES is defined.
+	We're not doing the equivalent with the non-NUMBER_TYPES code, but
+	that's mostly fine, we are doing it in the bytecode.
+	
+	* number.h:
+	* number.h (NUMBER_TYPES):
+	* number.h (promote_args_lazy):
+	Add this, returning LAZY_MARKER_T if both arguments are markers
+	that point to the same buffer.
+
+2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* data.c (Fmax):
 	* data.c (Fmin):
 	When an argument is a marker or a character, and WITH_NUMBER_TYPES
