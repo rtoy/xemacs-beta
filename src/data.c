@@ -1891,7 +1891,6 @@ arguments: (FIRST &rest ARGS)
 {
 #ifdef WITH_NUMBER_TYPES
   REGISTER int i, maxindex = 0;
-  Lisp_Object comp1, comp2;
 
   while (!(CHARP (args[0]) || MARKERP (args[0]) || REALP (args[0])))
     args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
@@ -1901,33 +1900,33 @@ arguments: (FIRST &rest ARGS)
     args[0] = make_fixnum (marker_position (args[0]));
   for (i = 1; i < nargs; i++)
     {
-      comp1 = args[maxindex];
-      comp2 = args[i];
-      switch (promote_args (&comp1, &comp2))
+      switch (promote_args (args + maxindex, args + i))
 	{
 	case FIXNUM_T:
-	  if (XREALFIXNUM (comp1) < XREALFIXNUM (comp2))
+	  if (XREALFIXNUM (args[maxindex]) < XREALFIXNUM (args[i]))
 	    maxindex = i;
 	  break;
 #ifdef HAVE_BIGNUM
 	case BIGNUM_T:
-	  if (bignum_lt (XBIGNUM_DATA (comp1), XBIGNUM_DATA (comp2)))
+	  if (bignum_lt (XBIGNUM_DATA (args[maxindex]),
+			 XBIGNUM_DATA (args[i])))
 	    maxindex = i;
 	  break;
 #endif
 #ifdef HAVE_RATIO
 	case RATIO_T:
-	  if (ratio_lt (XRATIO_DATA (comp1), XRATIO_DATA (comp2)))
+	  if (ratio_lt (XRATIO_DATA (args[maxindex]), XRATIO_DATA (args[i])))
 	    maxindex = i;
 	  break;
 #endif
 	case FLOAT_T:
-	  if (XFLOAT_DATA (comp1) < XFLOAT_DATA (comp2))
+	  if (XFLOAT_DATA (args[maxindex]) < XFLOAT_DATA (args[i]))
 	    maxindex = i;
 	  break;
 #ifdef HAVE_BIGFLOAT
 	case BIGFLOAT_T:
-	  if (bigfloat_lt (XBIGFLOAT_DATA (comp1), XBIGFLOAT_DATA (comp2)))
+	  if (bigfloat_lt (XBIGFLOAT_DATA (args[maxindex]),
+			   XBIGFLOAT_DATA (args[i])))
 	    maxindex = i;
 	  break;
 #endif
@@ -1988,7 +1987,6 @@ arguments: (FIRST &rest ARGS)
 {
 #ifdef WITH_NUMBER_TYPES
   REGISTER int i, minindex = 0;
-  Lisp_Object comp1, comp2;
 
   while (!(CHARP (args[0]) || MARKERP (args[0]) || REALP (args[0])))
     args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
@@ -1998,33 +1996,34 @@ arguments: (FIRST &rest ARGS)
     args[0] = make_fixnum (marker_position (args[0]));
   for (i = 1; i < nargs; i++)
     {
-      comp1 = args[minindex];
-      comp2 = args[i];
-      switch (promote_args (&comp1, &comp2))
+      switch (promote_args (args + minindex, args + i))
 	{
 	case FIXNUM_T:
-	  if (XREALFIXNUM (comp1) > XREALFIXNUM (comp2))
+	  if (XREALFIXNUM (args[minindex]) > XREALFIXNUM (args[i]))
 	    minindex = i;
 	  break;
 #ifdef HAVE_BIGNUM
 	case BIGNUM_T:
-	  if (bignum_gt (XBIGNUM_DATA (comp1), XBIGNUM_DATA (comp2)))
+	  if (bignum_gt (XBIGNUM_DATA (args[minindex]),
+			 XBIGNUM_DATA (args[i])))
 	    minindex = i;
 	  break;
 #endif
 #ifdef HAVE_RATIO
 	case RATIO_T:
-	  if (ratio_gt (XRATIO_DATA (comp1), XRATIO_DATA (comp2)))
+	  if (ratio_gt (XRATIO_DATA (args[minindex]),
+			XRATIO_DATA (args[i])))
 	    minindex = i;
 	  break;
 #endif
 	case FLOAT_T:
-	  if (XFLOAT_DATA (comp1) > XFLOAT_DATA (comp2))
+	  if (XFLOAT_DATA (args[minindex]) > XFLOAT_DATA (args[i]))
 	    minindex = i;
 	  break;
 #ifdef HAVE_BIGFLOAT
 	case BIGFLOAT_T:
-	  if (bigfloat_gt (XBIGFLOAT_DATA (comp1), XBIGFLOAT_DATA (comp2)))
+	  if (bigfloat_gt (XBIGFLOAT_DATA (args[minindex]),
+			   XBIGFLOAT_DATA (args[i])))
 	    minindex = i;
 	  break;
 #endif
