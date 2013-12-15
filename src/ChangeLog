@@ -1,3 +1,11 @@
+2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (Fmax):
+	* data.c (Fmin):
+	When an argument is a marker or a character, and WITH_NUMBER_TYPES
+	is defined, return a fixnum in these functions as is documented
+	and as the non-NUMBER_TYPES code does.
+
 2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* font-mgr.c: Fix a bunch of comments and reformat some docstrings.
