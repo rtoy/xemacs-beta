@@ -373,10 +373,41 @@ EXFUN (Frealp, 1);
 
 EXFUN (Fcanonicalize_number, 1);
 
-enum number_type {FIXNUM_T, BIGNUM_T, RATIO_T, FLOAT_T, BIGFLOAT_T};
+#define NUMBER_TYPES(prefix) prefix##FIXNUM_T, prefix##BIGNUM_T, \
+    prefix##RATIO_T, prefix##FLOAT_T, prefix##BIGFLOAT_T
+
+enum number_type { NUMBER_TYPES() };
+enum lazy_number_type { NUMBER_TYPES(LAZY_), LAZY_MARKER_T };
+
+#undef NUMBER_TYPES
 
 extern enum number_type get_number_type (Lisp_Object);
 extern enum number_type promote_args (Lisp_Object *, Lisp_Object *);
+
+/* promote_args() *always* converts a marker argument to a fixnum.
+
+   Unfortunately, for a marker with byte position N, getting the (character)
+   marker position is O(N). Getting the character position isn't necessary
+   for bytecode_arithcompare() if two markers being compared are in the same
+   buffer, comparing the byte position is enough.
+
+   Similarly, min and max don't necessarily need to have their arguments
+   converted from markers, though we have always promised up to this point
+   that the result is a fixnum rather than a marker, and that's what we're
+   continuing to do. */
+
+DECLARE_INLINE_HEADER (
+enum lazy_number_type
+promote_args_lazy (Lisp_Object *obj1, Lisp_Object *obj2))
+{
+  if (MARKERP (*obj1) && MARKERP (*obj2) &&
+      XMARKER (*obj1)->buffer == XMARKER (*obj2)->buffer)
+    {
+      return LAZY_MARKER_T;
+    }
+
+  return (enum lazy_number_type) promote_args (obj1, obj2);
+}
 
 #ifdef WITH_NUMBER_TYPES
 DECLARE_INLINE_HEADER (

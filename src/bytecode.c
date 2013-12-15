@@ -287,25 +287,32 @@ int
 bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 {
 #ifdef WITH_NUMBER_TYPES
-  switch (promote_args (&obj1, &obj2))
+  switch (promote_args_lazy (&obj1, &obj2))
     {
-    case FIXNUM_T:
+    case LAZY_FIXNUM_T:
       {
 	EMACS_INT ival1 = XREALFIXNUM (obj1), ival2 = XREALFIXNUM (obj2);
 	return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
       }
 #ifdef HAVE_BIGNUM
-    case BIGNUM_T:
+    case LAZY_BIGNUM_T:
       return bignum_cmp (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2));
 #endif
 #ifdef HAVE_RATIO
-    case RATIO_T:
+    case LAZY_RATIO_T:
       return ratio_cmp (XRATIO_DATA (obj1), XRATIO_DATA (obj2));
 #endif
 #ifdef HAVE_BIGFLOAT
-    case BIGFLOAT_T:
+    case LAZY_BIGFLOAT_T:
       return bigfloat_cmp (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2));
 #endif
+    case LAZY_MARKER_T:
+      {
+	Bytebpos ival1 = byte_marker_position (obj1);
+	Bytebpos ival2 = byte_marker_position (obj2);
+	return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
+      }
+
     default: /* FLOAT_T */
       {
 	double dval1 = XFLOAT_DATA (obj1), dval2 = XFLOAT_DATA (obj2);
@@ -320,7 +327,19 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 
     if      (FIXNUMP    (obj1)) ival1 = XFIXNUM  (obj1);
     else if (CHARP   (obj1)) ival1 = XCHAR (obj1);
-    else if (MARKERP (obj1)) ival1 = marker_position (obj1);
+    else if (MARKERP (obj1))
+      {
+	/* Handle markers specially, since #'marker-position can be O(N): */
+	if (MARKERP (obj2)
+	    && (XMARKER (obj1)->buffer == XMARKER (obj2)->buffer))
+	  {
+	    Bytebpos ival1 = byte_marker_position (obj1);
+	    Bytebpos ival2 = byte_marker_position (obj2);
+	    return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
+	  }
+
+	ival1 = marker_position (obj1);
+      }
     else goto arithcompare_float;
 
     if      (FIXNUMP    (obj2)) ival2 = XFIXNUM  (obj2);
@@ -365,9 +384,29 @@ static Lisp_Object
 bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 {
 #ifdef WITH_NUMBER_TYPES
-  switch (promote_args (&obj1, &obj2))
+  switch (promote_args_lazy (&obj1, &obj2))
     {
-    case FIXNUM_T:
+    case LAZY_MARKER_T:
+      {
+	switch (opcode)
+	  {
+	  case Bmax:
+	    return make_fixnum (marker_position
+				((byte_marker_position (obj1)
+				  < byte_marker_position (obj2)) ?
+				 obj2 : obj1));
+	  case Bmin:
+	    return make_fixnum (marker_position
+				((byte_marker_position (obj1)
+				  > byte_marker_position (obj2)) ?
+				 obj2 : obj1));
+	  default:
+	    obj1 = make_fixnum (marker_position (obj1));
+	    obj2 = make_fixnum (marker_position (obj2));
+	    /* FALLTHROUGH */
+	  }
+      }
+    case LAZY_FIXNUM_T:
       {
 	EMACS_INT ival1 = XREALFIXNUM (obj1), ival2 = XREALFIXNUM (obj2);
 	switch (opcode)
@@ -395,7 +434,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	return make_integer (ival1);
       }
 #ifdef HAVE_BIGNUM
-    case BIGNUM_T:
+    case LAZY_BIGNUM_T:
       switch (opcode)
 	{
 	case Bplus:
@@ -426,7 +465,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
       return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #endif
 #ifdef HAVE_RATIO
-    case RATIO_T:
+    case LAZY_RATIO_T:
       switch (opcode)
 	{
 	case Bplus:
@@ -453,7 +492,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
       return make_ratio_rt (scratch_ratio);
 #endif
 #ifdef HAVE_BIGFLOAT
-    case BIGFLOAT_T:
+    case LAZY_BIGFLOAT_T:
       bigfloat_set_prec (scratch_bigfloat, max (XBIGFLOAT_GET_PREC (obj1),
 						XBIGFLOAT_GET_PREC (obj2)));
       switch (opcode)

@@ -1,3 +1,9 @@
+2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test arithmetic comparisons with markers, check the type of the
+	returned values for #'min and #'max.
+
 2013-09-15  Mats Lidell  <matsl@xemacs.org>
 
 	* automated/files-tests.el: New file. Test new states in
