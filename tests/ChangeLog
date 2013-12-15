@@ -1,5 +1,11 @@
 2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/face-tests.el:
+	Only test fontconfig if the font-mgr feature is available, avoid
+	errors when it isn't.
+
+2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* automated/lisp-tests.el:
 	Test arithmetic comparisons with markers, check the type of the
 	returned values for #'min and #'max.
