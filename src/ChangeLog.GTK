@@ -1,3 +1,11 @@
+2013-12-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_new): Request button release events,
+	although it doesn't seem to work.
+
+	* frame-gtk.c (gtk_create_widgets): Request all events from the
+	shell as a workaround for missing button release events.
+
 2013-12-04  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-xemacs.c (gtk_xemacs_size_request): Get preferred height and

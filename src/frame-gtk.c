@@ -1011,6 +1011,8 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
   /* Let's make sure we get all the events we can */
   gtk_widget_add_events (shell, GDK_ALL_EVENTS_MASK);
+  /* This give us button release in the XEmacs widget. */
+  gtk_widget_add_events (text, GDK_ALL_EVENTS_MASK);
 
   if (shell != container)
     gtk_container_add (GTK_CONTAINER (shell), container);
