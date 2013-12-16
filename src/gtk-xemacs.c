@@ -124,6 +124,7 @@ gtk_xemacs_new (struct frame *f)
   xemacs = GTK_XEMACS (g_object_new (GTK_TYPE_XEMACS, NULL));
   gtk_widget_set_has_window (GTK_WIDGET (xemacs), TRUE);
   xemacs->f = f;
+  gtk_widget_add_events (xemacs, GDK_BUTTON_RELEASE);
 
   return GTK_WIDGET (xemacs);
 }
