@@ -44,7 +44,7 @@ mapping_interaction_error (Lisp_Object func, Lisp_Object object)
   invalid_state_2 ("object modified while traversing it", func, object);
 }
 
-static void
+void
 check_sequence_range (Lisp_Object sequence, Lisp_Object start,
 		      Lisp_Object end, Lisp_Object length)
 {

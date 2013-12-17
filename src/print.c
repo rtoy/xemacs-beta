@@ -143,6 +143,8 @@ Elemcount print_number_index;
 Lisp_Object Qdisplay_error;
 Lisp_Object Qprint_message_label;
 
+Lisp_Object Qwrite_sequence;
+
 /* Force immediate output of all printed data.  Used for debugging. */
 int print_unbuffered;
 
@@ -838,6 +840,180 @@ STREAM defaults to the value of `standard-output' (which see).
   return character;
 }
 
+DEFUN ("write-sequence", Fwrite_sequence, 1, MANY, 0, /*
+Output string, list, vector or bit-vector SEQUENCE to STREAM.
+
+STREAM defaults to the value of `standard-output', which see.
+
+Keywords :start and :end, if given, specify indices of a subsequence
+of SEQUENCE to output.  They default to 0 and nil, meaning write the
+entire sequence.
+
+Elements of SEQUENCE can be characters (all are accepted by this function,
+though they may be corrupted depending on the coding system associated with
+STREAM) or integers below #x100, which are treated as equivalent to the
+characters with the corresponding code. This function is from Common Lisp,
+rather GNU Emacs API, so GNU Emacs' character-integer equivalence doesn't
+hold.
+
+Returns SEQUENCE (not the subsequence of SEQUENCE that has been written to
+STREAM).
+
+arguments: (SEQUENCE &optional STREAM &key (START 0) END)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object sequence = args[0], stream = (nargs > 1) ? args[1] : Qnil;
+  Lisp_Object reloc = Qnil;
+  Charcount starting = 0, ending = 1 + MOST_POSITIVE_FIXNUM;
+  Ibyte *nonreloc = NULL, *all = NULL, *allptr = all; 
+  Bytecount bstart = 0, blen = 0;
+  Elemcount ii = 0;
+
+  PARSE_KEYWORDS_8 (Qwrite_sequence, nargs, args, 2, (start, end), 
+                    (start = Qzero), 2, 0);
+
+  CHECK_SEQUENCE (sequence);
+  CHECK_NATNUM (start);
+
+  if (!NILP (end))
+    {
+      CHECK_NATNUM (end);
+    }
+
+  stream = canonicalize_printcharfun (stream);
+
+  if (BIGNUMP (start) || (BIGNUMP (end)))
+    {
+      /* None of the sequences will have bignum lengths. */
+      check_sequence_range (sequence, start, end, Flength (sequence));
+
+      RETURN_NOT_REACHED (sequence);
+    }
+
+  starting = XFIXNUM (start);
+  if (FIXNUMP (end))
+    {
+      ending = XFIXNUM (end);
+    }
+
+  if (STRINGP (sequence))
+    {
+      Ibyte *stringp = XSTRING_DATA (sequence);
+      Ibyte *strend = stringp + XSTRING_LENGTH (sequence);
+
+      reloc = sequence;
+
+      for (ii = 0; ii < starting && stringp < strend; ++ii)
+        {
+          INC_IBYTEPTR (stringp);
+        }
+
+      if (ii != starting)
+        {
+          /* Bad value for start. */
+          check_sequence_range (sequence, start, end,
+                                Flength (sequence));
+          RETURN_NOT_REACHED (sequence);
+        }
+
+      bstart = stringp - XSTRING_DATA (sequence);
+
+      for (; ii < ending && stringp < strend; ++ii)
+        {
+          INC_IBYTEPTR (stringp);
+        }
+
+      if (ii != ending && ending != (1 + MOST_POSITIVE_FIXNUM))
+        {
+          /* Bad value for end. */
+          check_sequence_range (sequence, start, end,
+                                Flength (sequence));
+          RETURN_NOT_REACHED (sequence);
+        }
+
+      blen = stringp - (XSTRING_DATA (sequence) + bstart);
+    }
+  else
+    {
+      Lisp_Object length = Flength (sequence);
+
+      check_sequence_range (sequence, start, end, length);
+      ending = NILP (end) ? XFIXNUM (length) : XFIXNUM (end);
+
+      if (VECTORP (sequence))
+        {
+          Lisp_Object *vdata = XVECTOR_DATA (sequence);
+          /* Worst case scenario; all characters, all the longest possible. More
+             likely: lots of small integers. */
+          nonreloc = allptr
+            = alloca_ibytes (((ending - starting)) * MAX_ICHAR_LEN);
+
+          for (ii = starting; ii < ending; ++ii)
+            {
+              if (!CHARP (vdata[ii]))
+                {
+                  check_integer_range (vdata[ii], Qzero, make_fixnum (0xff));
+                }
+
+              allptr += set_itext_ichar (allptr,
+                                         XCHAR_OR_CHAR_INT (vdata[ii]));
+            }
+        }
+      else if (CONSP (sequence))
+        {
+          /* Worst case scenario; all characters, all the longest
+             possible. More likely: lots of small integers. */
+          nonreloc = allptr
+            = alloca_ibytes (((ending - starting)) * MAX_ICHAR_LEN);
+          ii = 0;
+          {
+            EXTERNAL_LIST_LOOP_2 (elt, sequence)
+              {
+                if (ii >= starting)
+                  {
+                    if (ii >= ending)
+                      {
+                        break;
+                      }
+
+                    if (!CHARP (elt))
+                      {
+                        check_integer_range (elt, Qzero, make_fixnum (0xff));
+                      }
+                    allptr += set_itext_ichar (allptr,
+                                               XCHAR_OR_CHAR_INT (elt));
+                  }
+                ++ii;
+              }
+          }
+        }
+      else if (BIT_VECTORP (sequence))
+        {
+          Ibyte one [MAX_ICHAR_LEN];
+          Lisp_Bit_Vector *vv = XBIT_VECTOR (sequence);
+
+          nonreloc = allptr
+            = alloca_ibytes (((ending - starting) *
+                              (set_itext_ichar (one, (Ichar)1))));
+          for (ii = starting; ii < ending; ++ii)
+            {
+              allptr += set_itext_ichar (allptr, bit_vector_bit (vv, ii));
+            }
+        }
+      else if (NILP (sequence))
+        {
+          nonreloc = allptr = alloca_ibytes (1);
+        }
+
+      bstart = 0;
+      blen = allptr - nonreloc;
+    }
+
+  output_string (stream, nonreloc, reloc, bstart, blen);
+  return sequence;
+}
+
 void
 temp_output_buffer_setup (Lisp_Object bufname)
 {
@@ -2977,6 +3153,7 @@ syms_of_print (void)
 
   DEFSYMBOL (Qdisplay_error);
   DEFSYMBOL (Qprint_message_label);
+  DEFSYMBOL (Qwrite_sequence);
 
   DEFSUBR (Fprin1);
   DEFSUBR (Fprin1_to_string);
@@ -2986,6 +3163,7 @@ syms_of_print (void)
   DEFSUBR (Fdisplay_error);
   DEFSUBR (Fterpri);
   DEFSUBR (Fwrite_char);
+  DEFSUBR (Fwrite_sequence);
   DEFSUBR (Falternate_debugging_output);
   DEFSUBR (Fset_device_clear_left_side);
   DEFSUBR (Fdevice_left_side_clear_p);

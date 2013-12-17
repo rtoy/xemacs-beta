@@ -1,3 +1,15 @@
+2013-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Up max-lisp-eval-depth when compiling this file, some of what
+	we're doing in testing #'write-sequence is demanding.
+	* automated/lisp-tests.el (make-circular-list):
+	New argument VALUE, the car of the conses to create.
+	* automated/lisp-tests.el:
+	Test #'write-sequence, #'write-string, #'write-line with function,
+	buffer and marker STREAMs; test argument types, keyword argument
+	ranges and values.
+
 2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (character):
