@@ -618,6 +618,38 @@ This also does some trivial optimizations to make the form prettier."
 ;; files to do the same, multiple times.
 (eval-when-compile (or (cl-compiling-file) (load "cl-macs")))
 
+;; XEmacs, functions from Common Lisp.
+(defun* write-string (string &optional output-stream &key (start 0) end)
+  "Output STRING to stream OUTPUT-STREAM.
+
+OUTPUT-STREAM defaults to the value of `standard-output', which see.
+
+Keywords :start and :end, if given, specify indices of a subsequence
+of STRING to output.  They default to 0 and nil, meaning write the
+entire string.
+
+Returns STRING (not the subsequence of STRING that has been written to
+OUTPUT-STREAM)."
+  (check-type string string)
+  (write-sequence string output-stream :start start :end end))
+
+(defun* write-line (string &optional output-stream &key (start 0) end)
+  "Output STRING, followed by a newline, to OUTPUT-STREAM.
+
+STRING must be a string.  OUTPUT-STREAM defaults to the value of
+`standard-output' (which see).
+
+Keywords :start and :end, if given, specify indices of a subsequence
+of STRING to output.  They default to 0 and nil, meaning write the
+entire string.
+
+Returns STRING (note, not the subsequence of STRING that has been written to
+OUTPUT-STREAM)."
+  (check-type string string)
+  (prog1
+      (write-sequence string output-stream :start start :end end)
+    (terpri output-stream)))
+
 ;; Implementation limits.
 
 ;; XEmacs; call cl-float-limits at dump time.

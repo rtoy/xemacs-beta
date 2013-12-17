@@ -29,6 +29,9 @@
 ;;; See test-harness.el for instructions on how to run these tests.
 
 (eval-when-compile
+  ;; The labels below give trouble with a max-lisp-eval-depth of less than
+  ;; about 2000, work around that:
+  (setq max-lisp-eval-depth (max 2000 max-lisp-eval-depth))
   (condition-case nil
       (require 'test-harness)
     (file-error
@@ -102,12 +105,16 @@
   (Assert (eq (elt my-bit-vector 2) 0))
   )
 
-(defun make-circular-list (length)
-  "Create evil emacs-crashing circular list of length LENGTH"
+(defun make-circular-list (length &optional value)
+  "Create evil emacs-crashing circular list of length LENGTH.
+
+Optional VALUE is the value to go into the cars. If nil, some non-nil value
+will be used to make debugging easier."
   (let ((circular-list
 	 (make-list
 	  length
-	  'you-are-trapped-in-a-twisty-maze-of-cons-cells-all-alike)))
+          (or value
+              'you-are-trapped-in-a-twisty-maze-of-cons-cells-all-alike))))
     (setcdr (last circular-list) circular-list)
     circular-list))
 
@@ -2867,8 +2874,10 @@ via the hepatic alpha-tocopherol transfer protein")))
 			#'(lambda (object) (if (fixnump object) 1 0)) list))
        (string (map 'string 
 		    #'(lambda (object) (or (and (fixnump object)
-						(int-char object))
-					   (decode-char 'ucs #x20ac))) list))
+                                                (int-char object))
+					   (decode-char 'ucs #x20ac)
+                                           ?\x20))
+                    list))
        (gensym (gensym)))
   (Assert (null (find 'not-in-it list)))
   (Assert (null (find 'not-in-it vector)))
@@ -3118,5 +3127,328 @@ via the hepatic alpha-tocopherol transfer protein")))
       (translate-region (point-min) (point-max) translation)
       (map nil #'set-marker markers fixnums)
       (Assert-arith-equivalences markers "with Euro sign restored"))))
+
+;;-----------------------------------------------------
+;; Test #'write-sequence and friends.
+;;-----------------------------------------------------
+
+(macrolet
+    ((Assert-write-results (function context &key short-string long-string
+                                 sequences-too output-stream
+                                 clear-output get-last-output)
+       "Check correct output in CONTEXT for `write-sequence' and friends."
+       (let* ((short-bit-vector (map 'bit-vector #'logand short-string
+                                     (make-circular-list 1 1)))
+              (long-bit-vector (map 'bit-vector #'logand long-string
+                                    (make-circular-list 1 1)))
+              (short-bit-vector-string
+               (map #'string #'int-char short-bit-vector))
+              (long-bit-vector-string
+               (map #'string #'int-char long-bit-vector)))
+       `(progn
+          (,clear-output ,output-stream)
+          (,function ,short-string ,output-stream)
+          (Assert (equal ,short-string
+			 (,get-last-output ,output-stream
+					   ,(length short-string)))
+                  ,(format "checking %s with short string, %s"
+                           function context))
+          ,@(when sequences-too
+              `((,clear-output ,output-stream)
+                (,function ,(vconcat short-string) ,output-stream)
+                (Assert (equal ,short-string
+			       (,get-last-output ,output-stream
+						 ,(length short-string)))
+                        ,(format "checking %s with short vector, %s"
+                                 function context))
+                (,clear-output ,output-stream)
+                (,function ',(append short-string nil) ,output-stream)
+                (Assert (equal ,short-string
+			       (,get-last-output ,output-stream
+						 ,(length short-string)))
+                        ,(format "checking %s with short list, %s"
+                                 function context))
+                (,clear-output ,output-stream)
+                (,function ,short-bit-vector ,output-stream)
+                (Assert (equal ,short-bit-vector-string
+			       (,get-last-output
+				,output-stream
+				,(length short-bit-vector-string)))
+                        ,(format
+                          "checking %s with short bit-vector, %s"
+                          function context))
+                (,clear-output ,output-stream)
+                (,function ,long-bit-vector ,output-stream)
+                (Assert (equal ,long-bit-vector-string
+			       (,get-last-output
+				,output-stream
+				,(length long-bit-vector-string)))
+                        ,(format
+                          "checking %s with long bit-vector, %s"
+                          function context))))
+          ,(cons
+            'progn
+            (loop
+              for (subseq-start subseq-end description)
+              in `((0 ,(length short-string) "trivial range")
+                   (4 7 "harder range"))
+              nconc
+              `((,clear-output ,output-stream)                  
+                (,function ,short-string ,output-stream :start ,subseq-start
+                           :end ,subseq-end)
+                (Assert
+                  (equal ,(subseq short-string subseq-start subseq-end)
+			 (,get-last-output ,output-stream
+                                           ,(- subseq-end subseq-start)))
+                  ,(format
+                    "checking %s with short string, %s, %s"
+                    function context description))
+                 ,@(when sequences-too
+                     `((,clear-output ,output-stream)
+                       (,function ,(vconcat short-string) ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq short-string subseq-start subseq-end)
+			       (,get-last-output ,output-stream
+                                                 ,(- subseq-end subseq-start)))
+                        ,(format
+                          "checking %s with short vector, %s, %s"
+                          function context description))
+                       (,clear-output ,output-stream)
+                       (,function ',(append short-string nil) ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq short-string subseq-start subseq-end)
+			       (,get-last-output
+				,output-stream
+				,(- subseq-end subseq-start )))
+                        ,(format "checking %s with short list, %s, %s"
+                                 function context description))
+                       (,clear-output ,output-stream)
+                       (,function ,short-bit-vector ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq short-bit-vector-string subseq-start
+                                        subseq-end)
+			       (,get-last-output ,output-stream
+                                                 ,(- subseq-end subseq-start)))
+                        ,(format
+                          "checking %s with short bit-vector, %s, %s"
+                          function context description)))))))
+          ,(cons
+            'progn
+            (loop
+              for (subseq-start subseq-end description)
+              in `((0 ,(length long-string) "trivial range")
+                   (4 90 "harder range"))
+              nconc
+              `((,clear-output ,output-stream)                  
+                (,function ,long-string ,output-stream :start ,subseq-start
+                           :end ,subseq-end)
+                (Assert
+		 (equal ,(subseq long-string subseq-start subseq-end)
+			(,get-last-output ,output-stream
+                                          ,(- subseq-end subseq-start)))
+                  ,(format
+                    "checking %s with long string, %s, %s"
+                    function context description))
+                 ,@(when sequences-too
+                     `((,clear-output ,output-stream)
+                       (,function ,(vconcat long-string) ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq long-string subseq-start subseq-end)
+			       (,get-last-output
+				,output-stream
+                                ,(- subseq-end subseq-start)))
+                        ,(format
+                          "checking %s with long vector, %s, %s"
+                          function context description))
+                       (,clear-output ,output-stream)
+                       (,function ',(append long-string nil) ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq long-string subseq-start subseq-end)
+			       (,get-last-output ,output-stream
+                                                 ,(- subseq-end subseq-start)))
+                        ,(format "checking %s with long list, %s, %s"
+                                 function context description))
+                       (,clear-output ,output-stream)
+                       (,function ,long-bit-vector ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq long-bit-vector-string
+					subseq-start subseq-end)
+			       (,get-last-output
+				,output-stream
+                                ,(- subseq-end subseq-start)))
+                        ,(format
+                          "checking %s with long bit-vector, %s, %s"
+                          function context description)))))))
+          (,clear-output ,output-stream))))
+     (test-write-string (function &key sequences-too worry-about-newline)
+       (let* ((short-string "hello there")
+              (long-string
+               (decode-coding-string
+                (concat
+                 "\xd8\xb3\xd9\x84\xd8\xa7\xd9\x85 \xd8\xb9\xd9\x84"
+                 "\xdb\x8c\xda\xa9\xd9\x85\x2c \xd8\xa7\xd8\xb3\xd9"
+                 "\x85 \xd9\x85\xd9\x86 \xd8\xa7\xdb\x8c\xd8\xaf\xd9"
+                 "\x86 \xda\xa9\xdb\x8c\xd9\x88 \xd8\xa7\xd8\xb3\xd8"
+                 "\xaa\x2e \xd9\x85\xd9\x86 \xd8\xa7\xdb\x8c\xd8\xb1"
+                 "\xd9\x84\xd9\x86\xd8\xaf\xdb\x8c \xd8\xa7\xd9\x85"
+                 "\x2c \xd9\x88 \xd9\x85\xd9\x86 \xd8\xaf\xd8\xb1 "
+                 "\xd8\xa8\xdb\x8c\xd9\x85\xd8\xa7\xd8\xb1\xd8\xb3"
+                 "\xd8\xaa\xd8\xa7\xd9\x86 \xda\xa9\xd8\xa7\xd8\xb1"
+                 "\xd9\x85\xdb\x8c\xe2\x80\x8c\xda\xa9\xd9\x86\xd9"
+                 "\x85\x2e")
+                (if (featurep 'mule) 'utf-8 'raw-text-unix)))
+              (long-string (concat long-string long-string long-string
+                                   long-string long-string long-string
+                                   long-string long-string long-string
+                                   long-string long-string long-string)))
+         `(with-temp-buffer
+            (let* ((long-string ,long-string)
+                   (stashed-data
+                    (get-buffer-create
+                     (generate-new-buffer-name " *stash*")))
+                   (function-output-stream
+                    (apply-partially
+                     #'(lambda (buffer character)
+                         (insert-char character 1 nil buffer))
+                     stashed-data))
+                   (marker-buffer
+                    (get-buffer-create
+                     (generate-new-buffer-name " *for-marker*")))
+                   (marker-base-position 40)
+                   (marker
+                    (progn
+                      (insert-char ?\xff 90 nil marker-buffer)
+                      (set-marker (make-marker) 40 marker-buffer))))
+              (unwind-protect
+                   (labels
+		       ((clear-buffer (buffer)
+			  (delete-region (point-min buffer) (point-max buffer)
+					 buffer))
+			(clear-stashed-data (ignore)
+			  (delete-region (point-min stashed-data)
+					 (point-max stashed-data)
+					 stashed-data))
+			(clear-marker-data (marker)
+			  (delete-region marker-base-position marker
+					 (marker-buffer marker)))
+			(buffer-output (buffer length)
+			  (and (> (point buffer) length)
+			       (buffer-substring (- (point buffer) length)
+						 (point buffer) buffer)))
+			(stashed-data-output (ignore length)
+			  (and (> (point stashed-data) length)
+			       (buffer-substring (- (point stashed-data)
+						    length)
+						 (point stashed-data)
+						 stashed-data)))
+			(marker-data (marker length)
+			  (and (> marker length)
+			       (buffer-substring (- marker length) marker
+						 (marker-buffer marker))))
+			(buffer-output-sans-newline (buffer length)
+			  (and (> (point buffer) (+ length 1))
+			       (buffer-substring (- (point buffer) length 1)
+						 (1- (point buffer)))))
+			(stashed-data-output-sans-newline (ignore length)
+			  (and (> (point stashed-data) (+ length 1))
+			       (buffer-substring (- (point stashed-data)
+						    length 1)
+						 (1- (point stashed-data))
+						 stashed-data)))
+			(marker-data-sans-newline (marker length)
+			  (and (> marker (+ length 1))
+			       (buffer-substring (- marker length 1)
+						 (1- marker)
+						 (marker-buffer marker)))))
+                     (Check-Error wrong-number-of-arguments (,function))
+		     (,(if (subrp (symbol-function function))
+			   'progn
+			 'Implementation-Incomplete-Expect-Failure)
+		      (Check-Error wrong-number-of-arguments
+				   (,function ,short-string
+					      (current-buffer) :start))
+		      (Check-Error wrong-number-of-arguments
+				   (,function ,short-string
+					      (current-buffer) :start 0
+					      :end nil :start)))
+                     (Check-Error invalid-keyword-argument
+                                  (,function ,short-string
+                                             (current-buffer)
+                                             :test #'eq))
+                     (Check-Error wrong-type-argument (,function pi))
+                     ,@(if sequences-too
+                           `((Check-Error
+                              args-out-of-range
+                              (,function (vector most-positive-fixnum)))
+                             (Check-Error
+                              args-out-of-range
+                              (,function (list most-positive-fixnum)))
+                             ,@(if (featurep 'mule)
+                                   `((Check-Error
+                                      args-out-of-range
+                                      (,function
+                                       (vector
+                                        (char-int
+                                         (decode-char 'ucs #x20ac))))))))
+                           `((Check-Error wrong-type-argument
+                                          (,function
+                                           ',(append short-string nil)))
+                             (Check-Error wrong-type-argument
+                                          (,function
+                                           ,(vconcat long-string)))
+                             (Check-Error wrong-type-argument
+                                          (,function #*010010001010101))))
+                     (Check-Error wrong-type-argument
+                                  (,function ,short-string (current-buffer)
+                                             :start 0.0))
+                     (Check-Error wrong-type-argument
+                                  (,function ,short-string (current-buffer)
+                                             :end 4.0))
+                     (Check-Error invalid-function
+                                  (,function ,short-string pi))
+                     (Check-Error args-out-of-range
+                                  (,function ,short-string (current-buffer)
+                                             :end ,(1+ (length short-string))))
+                     (Check-Error args-out-of-range
+                                  (,function ,short-string nil
+                                             :start
+                                             ,(1+ (length short-string))))
+                     ;; Not checked here; output to a stdio stream, output
+                     ;; to an lstream, output to a frame.
+                     (Assert-write-results
+                      ,function "buffer point" :short-string ,short-string
+                      :long-string ,long-string :sequences-too ,sequences-too
+                      :output-stream (current-buffer)
+                      :clear-output clear-buffer
+                      :get-last-output
+                      ,(if worry-about-newline 'buffer-output-sans-newline
+                         'buffer-output))
+                     (Assert-write-results
+                      ,function "function output" :short-string ,short-string
+                      :long-string ,long-string :sequences-too ,sequences-too
+                      :output-stream function-output-stream
+                      :clear-output clear-stashed-data
+                      :get-last-output
+                      ,(if worry-about-newline
+                           'stashed-data-output-sans-newline
+                         'stashed-data-output))
+                     (Assert-write-results
+                      ,function "marker output" :short-string ,short-string
+                      :long-string ,long-string :sequences-too ,sequences-too
+                      :output-stream marker :clear-output clear-marker-data
+                      :get-last-output ,(if worry-about-newline
+                                            'marker-data-sans-newline
+                                          'marker-data)))
+                (kill-buffer stashed-data)
+                (kill-buffer marker-buffer)))))))
+  (test-write-string write-sequence :sequences-too t)
+  (test-write-string write-string :sequences-too nil)
+  (test-write-string write-line :worry-about-newline t :sequences-too nil))
 
 ;;; end of lisp-tests.el

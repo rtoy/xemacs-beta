@@ -1,3 +1,20 @@
+2013-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h:
+	* lisp.h (PARSE_KEYWORDS_8):
+	Correct this in cases where we can have noticeably fewer arguments
+	than KEYWORDS_OFFSET, check whether nargs > pk_offset.
+	Declare check_sequence_range in this header.
+	* print.c:
+	* print.c (Fwrite_sequence) New:
+	Write a sequence to a stream, in the same way #'write-char and
+	#'terpri do. API from Common Lisp, not GNU, so while there is some
+	char-int confoundance, it's more limited than usual with GNU APIs.
+	* print.c (syms_of_print):
+	Make it available.
+	* sequence.c (check_sequence_range):
+	Export this to other files.
+
 2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* number.h:

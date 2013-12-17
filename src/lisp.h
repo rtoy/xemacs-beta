@@ -3633,7 +3633,7 @@ extern MODULE_API int specpdl_depth_counter;
       Elemcount pk_i = nargs - 1, pk_offset = keywords_offset;		\
       Boolint pk_allow_other_keys = allow_other_keys;                   \
                                                                         \
-      if ((nargs - pk_offset) & 1)					\
+      if ((nargs - pk_offset) & 1 && (nargs > pk_offset))               \
         {                                                               \
           if (!allow_other_keys                                         \
               && !(pk_allow_other_keys                                  \
@@ -5306,6 +5306,9 @@ EXFUN (Fstring_equal, 2);
 EXFUN (Fstring_lessp, 2);
 EXFUN (Fsubseq, 3);
 EXFUN (Fvalid_plist_p, 1);
+
+extern void check_sequence_range (Lisp_Object, Lisp_Object, Lisp_Object,
+                                  Lisp_Object);
 
 extern Boolint check_eq_nokey (Lisp_Object, Lisp_Object, Lisp_Object,
                                Lisp_Object);
