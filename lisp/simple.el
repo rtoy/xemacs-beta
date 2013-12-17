@@ -3304,9 +3304,10 @@ when it is off screen."
 	 (save-excursion
 	   (save-restriction
 	     (if blink-matching-paren-distance
-		 (narrow-to-region (max (point-min)
-					(- (point) blink-matching-paren-distance))
-				   oldpos))
+		 (narrow-to-region
+                  (max (point-min)
+                       (- (point) blink-matching-paren-distance))
+                  oldpos))
 	     (condition-case ()
 		 (let ((parse-sexp-ignore-comments
 			(and parse-sexp-ignore-comments
@@ -3322,46 +3323,75 @@ when it is off screen."
 			      (matching-paren (char-after blinkpos))))))
 	   (if mismatch (setq blinkpos nil))
 	   (if blinkpos
-	       (progn
-		(goto-char blinkpos)
-		(if (pos-visible-in-window-p)
-		    (and blink-matching-paren-on-screen
-			 (progn
-			   (auto-show-make-point-visible)
-			   (sit-for blink-matching-delay)))
-		  (goto-char blinkpos)
-		  (lmessage 'command "Matches %s"
-		    ;; Show what precedes the open in its line, if anything.
-		    (if (save-excursion
-			  (skip-chars-backward " \t")
-			  (not (bolp)))
-			(buffer-substring (progn (beginning-of-line) (point))
-					  (1+ blinkpos))
-		      ;; Show what follows the open in its line, if anything.
-		      (if (save-excursion
-			    (forward-char 1)
-			    (skip-chars-forward " \t")
-			    (not (eolp)))
-			  (buffer-substring blinkpos
-					    (progn (end-of-line) (point)))
-			;; Otherwise show the previous nonblank line,
-			;; if there is one.
-			(if (save-excursion
-			      (skip-chars-backward "\n \t")
-			      (not (bobp)))
-			    (concat
-			     (buffer-substring (progn
-						 (skip-chars-backward "\n \t")
-						 (beginning-of-line)
-						 (point))
-					       (progn (end-of-line)
-						      (skip-chars-backward " \t")
-						      (point)))
-			     ;; Replace the newline and other whitespace with `...'.
-			     "..."
-			     (buffer-substring blinkpos (1+ blinkpos)))
-			  ;; There is nothing to show except the char itself.
-			  (buffer-substring blinkpos (1+ blinkpos))))))))
+	       (labels
+                   ((buffer-substring-highlight-blinkpos (start end)
+                      ;; Sometimes there are sufficiently many
+                      ;; parentheses on a line that it's *very*
+                      ;; useful to see exactly which is the match.
+                      (let* ((string (buffer-substring start end))
+                             (extent (make-extent (- blinkpos start)
+                                                  (1+ (- blinkpos start))
+                                                  string)))
+                        (set-extent-face extent 'isearch)
+                        (set-extent-property extent 'duplicable t)
+                        string))
+                    (before-backquote-context ()
+                      ;; Just showing the backquote context is often not
+                      ;; informative enough, if you're writing vaguely
+                      ;; complex macros. Move past it.
+                      (skip-chars-backward "`,@.")))
+                 (declare (inline before-backquote-context))
+                 (goto-char blinkpos)
+                 (if (pos-visible-in-window-p)
+                     (and blink-matching-paren-on-screen
+                          (progn
+                            (auto-show-make-point-visible)
+                            (sit-for blink-matching-delay)))
+                   (goto-char blinkpos)
+                   (lmessage
+                       'command
+                       (concat
+                        "Matches "
+                        ;; Show what precedes the open in its line, if
+                        ;; anything.
+                        (if (save-excursion
+                              (before-backquote-context)
+                              (skip-chars-backward " \t")
+                              (not (bolp)))
+                            (buffer-substring-highlight-blinkpos
+                             (progn (beginning-of-line) (point))
+                             (1+ blinkpos))
+                         ;; Show what follows the open in its line, if
+                         ;; anything.
+                         (if (save-excursion
+                               (forward-char 1)
+                               (skip-chars-forward " \t")
+                               (not (eolp)))
+                             (buffer-substring-highlight-blinkpos
+                              (progn (before-backquote-context) (point))
+                              (progn (end-of-line (point))))
+                           ;; Otherwise show the previous nonblank line,
+                           ;; if there is one.
+                           (if (save-excursion
+                                 (skip-chars-backward "\n \t")
+                                 (not (bobp)))
+                               (concat
+                                (buffer-substring
+                                 (progn (skip-chars-backward "\n \t")
+                                        (beginning-of-line)
+                                        (point))
+                                 (progn (end-of-line)
+                                        (skip-chars-backward " \t")
+                                        (point)))
+                                ;; Replace the newline and other whitespace
+                                ;; with `...'.
+                                "..."
+                                (buffer-substring-highlight-blinkpos
+                                 blinkpos (1+ blinkpos)))
+                             ;; There is nothing to show except the char
+                             ;; itself.
+                             (buffer-substring-highlight-blinkpos
+                              blinkpos (1+ blinkpos)))))))))
 	     (cond (mismatch
 		    (display-message 'no-log "Mismatched parentheses"))
 		   ((not blink-matching-paren-distance)
@@ -4501,9 +4531,9 @@ minibuffer contents show."
   (if (and (null fmt) (null args))
       (prog1 nil
 	(clear-message nil))
-    (let ((str (apply 'format fmt args)))
-      (display-message 'message str)
-      str)))
+    (let ((string (if args (apply 'format fmt args) fmt)))
+      (display-message 'message string)
+      string)))
 
 (defun lmessage (label fmt &rest args)
   "Print a one-line message at the bottom of the frame.
@@ -4514,10 +4544,9 @@ See `display-message' for a list of standard labels."
   (if (and (null fmt) (null args))
       (prog1 nil
 	(clear-message label nil))
-    (let ((str (apply 'format fmt args)))
-      (display-message label str)
-      str)))
-
+    (let ((string (if args (apply 'format fmt args) fmt)))
+      (display-message label string)
+      string)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              warning code                             ;;

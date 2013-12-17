@@ -1,5 +1,22 @@
 2013-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* simple.el (blink-matching-open):
+	When showing the opening parenthesis in the minibiffer, use the
+	isearch face for it, in case there are multiple parentheses in the
+	text shown.
+	When writing moderately involved macros, it's often not enough
+	just to show the backquote context before the parenthesis
+	(e.g. @,.`). Skip over that when searching for useful context in
+	the same way we skip over space and tab.
+	* simple.el (message):
+	* simple.el (lmessage):
+	If there are no ARGS, don't call #'format. This allows extent
+	information to be passed through to the minibuffer.
+	It's probably better still to update #'format to preserve extent
+	info.
+
+2013-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-extra.el:
 	* cl-extra.el (write-string): New.
 	* cl-extra.el (write-line): New.
