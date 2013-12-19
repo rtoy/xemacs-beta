@@ -1,3 +1,16 @@
+2013-12-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c:
+	* text.h:
+	* text.h (skip_ascii):
+	Move skip_ascii (), the very fast inline function from the
+	bytecount-to-charcount code, to text.h, to allow the coding
+	systems to use it too as needed.
+	* file-coding.c (no_conversion_convert):
+	Use skip_ascii() as appropriate here, halving the time taken to
+	write large files in my tests (again, relevant to VM buffers, but
+	not a panacea to our issues with them.)
+
 2013-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h:

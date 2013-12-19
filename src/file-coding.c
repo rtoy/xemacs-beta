@@ -2851,18 +2851,29 @@ no_conversion_convert (struct coding_stream *str,
     }
   else
     {
+      const Ibyte *bend = (const Ibyte *)src + n;
 
-      while (n--)
+      while (n > 0)
 	{
-	  c = *src++;
-	  if (byte_ascii_p (c))
+	  if (byte_ascii_p (*src))
 	    {
-	      assert (ch == 0);
-	      Dynarr_add (dst, c);
+              const Ibyte *nonascii = skip_ascii ((Ibyte *)src, bend);
+
+              Dynarr_add_many (dst, src, nonascii - src);
+              n -= nonascii - src;
+
+              src = nonascii;
+              if (n < 1)
+                {
+                  break;
+                }
 	    }
+
+	  n--, c = *src++;
+
 #ifdef MULE
-	  else if (ibyte_leading_byte_p (c))
-	    {
+	  if (ibyte_leading_byte_p (c))
+ 	    {
 	      assert (ch == 0);
 	      if (c == LEADING_BYTE_LATIN_ISO8859_1 ||
 		  c == LEADING_BYTE_CONTROL_1)
