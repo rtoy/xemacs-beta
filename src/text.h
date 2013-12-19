@@ -831,12 +831,91 @@ charcount_to_bytecount_fmt (const Ibyte *ptr, Charcount len,
     }
 }
 
+#ifdef EFFICIENT_INT_128_BIT
+# define STRIDE_TYPE INT_128_BIT
+# define HIGH_BIT_MASK \
+    MAKE_128_BIT_UNSIGNED_CONSTANT (0x80808080808080808080808080808080)
+#elif defined (EFFICIENT_INT_64_BIT)
+# define STRIDE_TYPE INT_64_BIT
+# define HIGH_BIT_MASK MAKE_64_BIT_UNSIGNED_CONSTANT (0x8080808080808080)
+#else
+# define STRIDE_TYPE INT_32_BIT
+# define HIGH_BIT_MASK MAKE_32_BIT_UNSIGNED_CONSTANT (0x80808080)
+#endif
+
+#define ALIGN_BITS ((EMACS_UINT) (ALIGNOF (STRIDE_TYPE) - 1))
+#define ALIGN_MASK (~ ALIGN_BITS)
+#define ALIGNED(ptr) ((((EMACS_UINT) ptr) & ALIGN_BITS) == 0)
+#define STRIDE sizeof (STRIDE_TYPE)
+
+/* Skip as many ASCII bytes as possible in the memory block [PTR, END).
+   Return pointer to the first non-ASCII byte.  optimized for long
+   stretches of ASCII. */
+DECLARE_INLINE_HEADER (
+const Ibyte *
+skip_ascii (const Ibyte *ptr, const Ibyte *end)
+)
+{
+  const unsigned STRIDE_TYPE *ascii_end;
+
+  /* Need to do in 3 sections -- before alignment start, aligned chunk,
+     after alignment end. */
+  while (!ALIGNED (ptr))
+    {
+      if (ptr == end || !byte_ascii_p (*ptr))
+	return ptr;
+      ptr++;
+    }
+  ascii_end = (const unsigned STRIDE_TYPE *) ptr;
+  /* This loop screams, because we can detect ASCII
+     characters 4 or 8 at a time. */
+  while ((const Ibyte *) ascii_end + STRIDE <= end
+	 && !(*ascii_end & HIGH_BIT_MASK))
+    ascii_end++;
+  ptr = (Ibyte *) ascii_end;
+  while (ptr < end && byte_ascii_p (*ptr))
+    ptr++;
+  return ptr;
+}
+
+/* Skip as many ASCII bytes as possible in the memory block [END, PTR),
+   going downwards.  Return pointer to the location above the first
+   non-ASCII byte.  Optimized for long stretches of ASCII. */
+DECLARE_INLINE_HEADER (
+const Ibyte *
+skip_ascii_down (const Ibyte *ptr, const Ibyte *end)
+)
+{
+  const unsigned STRIDE_TYPE *ascii_end;
+
+  /* Need to do in 3 sections -- before alignment start, aligned chunk,
+     after alignment end. */
+  while (!ALIGNED (ptr))
+    {
+      if (ptr == end || !byte_ascii_p (*(ptr - 1)))
+	return ptr;
+      ptr--;
+    }
+  ascii_end = (const unsigned STRIDE_TYPE *) ptr - 1;
+  /* This loop screams, because we can detect ASCII
+     characters 4 or 8 at a time. */
+  while ((const Ibyte *) ascii_end >= end
+	 && !(*ascii_end & HIGH_BIT_MASK))
+    ascii_end--;
+  ptr = (Ibyte *) (ascii_end + 1);
+  while (ptr > end && byte_ascii_p (*(ptr - 1)))
+    ptr--;
+  return ptr;
+}
+
 #else
 
 #define bytecount_to_charcount(ptr, len) ((Charcount) (len))
 #define bytecount_to_charcount_fmt(ptr, len, fmt) ((Charcount) (len))
 #define charcount_to_bytecount(ptr, len) ((Bytecount) (len))
 #define charcount_to_bytecount_fmt(ptr, len, fmt) ((Bytecount) (len))
+#define skip_ascii(ptr, end) end
+#define skip_ascii_down(ptr, end) end
 
 #endif /* MULE */
 
