@@ -3911,6 +3911,28 @@ the byte optimizer in those cases."
       (list* 'intersection (pop cl-keys) (pop cl-keys) :stable t cl-keys)
     form))
 
+(define-compiler-macro princ (&whole form object &optional stream)
+  "When passing `princ' a string, call `write-sequence' instead.
+
+This avoids the resource- and time-intensive initialization of the printer,
+and functions equivalently. Such code will not run on 21.4, but 21.4 will
+not normally encounter it, and the error message will be clear enough (that
+`write-sequence' has a void function definition) in the odd event that it
+does."
+  (cond ((not (<= 2 (length form) 3))
+	 form)
+	((or (stringp object)
+	     (member (car-safe object)
+		     '(buffer-string buffer-substring concat format gettext
+		       key-description make-string mapconcat
+		       substitute-command-keys substring-no-properties
+		       symbol-name text-char-description string)))
+	 (cons 'write-sequence (cdr form)))
+	((member (car-safe object) '(substring subseq))
+	 `(write-sequence ,(nth 1 object) ,stream :start ,(nth 2 object)
+	                  ,@(if (nth 3 object) `((:end ,(nth 3 object))))))
+	(t form)))
+
 (map nil
      #'(lambda (function)
          ;; There are byte codes for the two-argument versions of these
