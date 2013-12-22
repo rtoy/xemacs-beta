@@ -1,3 +1,12 @@
+2013-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (princ): New compiler macro.
+	Transform #'princ to #'write-sequence if we can determine at
+	compile time that it is being passed a string. Initialising the
+	printer is expensive enough, but much of our code took this
+	approach because #'write-sequence wasn't available.
+
 2013-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (blink-matching-open):
