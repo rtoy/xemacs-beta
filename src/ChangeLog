@@ -1,5 +1,13 @@
 2014-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fileio.c (READ_BUF_SIZE):
+	Stack sizes > 2**16 elicited bugs back in August 1996, but there's
+	nothing to indicate this is still the case. GNU uses a block size
+	of #x10000, and that size works better with the coding system
+	buffering, improving performance there; move to this value.
+
+2014-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* file-coding.c:
 	* file-coding.c (struct no_conversion_coding_stream):
 	* file-coding.c (const struct sized_memory_description
