@@ -2832,31 +2832,13 @@ chain_conversion_end_type (Lisp_Object codesys)
    #### Shouldn't we _call_ it that, then?  And while we're at it,
    separate it into "to_internal" and "to_external"? */
 
-
-struct no_conversion_coding_system
-{
-};
-
 struct no_conversion_coding_stream
 {
   /* Number of characters seen when decoding. */
   Charcount characters_seen;
 };
 
-static const struct memory_description no_conversion_coding_system_description[] = {
-  { XD_END }
-};
-
-static const struct memory_description no_conversion_coding_stream_description_1 [] = {
-  { XD_INT, offsetof (struct no_conversion_coding_stream, characters_seen) },
-  { XD_END }
-};
-
-const struct sized_memory_description no_conversion_coding_stream_description = {
-  sizeof (struct no_conversion_coding_stream), no_conversion_coding_stream_description_1
-};
-
-DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (no_conversion);
+DEFINE_CODING_SYSTEM_TYPE (no_conversion);
 
 /* This is used when reading in "binary" files -- i.e. files that may
    contain all 256 possible byte values and that are not to be
@@ -4740,8 +4722,14 @@ coding_system_type_create (void)
   dump_add_opaque_int (&coding_detector_count);
   dump_add_opaque_int (&coding_detector_category_count);
 
-  INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (no_conversion,
-                                           "no-conversion-coding-system-p");
+  INITIALIZE_CODING_SYSTEM_TYPE (no_conversion,
+				 "no-conversion-coding-system-p");
+  /* This is the only coding system type that has coding_stream info but no
+     coding_system info, which is why we're not using
+     INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA. */
+  no_conversion_coding_system_methods->coding_data_size = 
+    sizeof (struct no_conversion_coding_stream);
+
   CODING_SYSTEM_HAS_METHOD (no_conversion, convert);
   CODING_SYSTEM_HAS_METHOD (no_conversion, character_tell);
 

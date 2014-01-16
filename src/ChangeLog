@@ -1,5 +1,16 @@
 2014-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* file-coding.c:
+	* file-coding.c (struct no_conversion_coding_stream):
+	* file-coding.c (const struct sized_memory_description
+	no_conversion_coding_stream_description): Removed.
+	* file-coding.c (coding_system_type_create):
+	Remove structure and description for struct
+	no_conversion_coding_system, which confused pdump on some builds
+	after the last change.
+
+2014-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Pass character count information from the no-conversion and
 	unicode coding systems to the buffer insertion code, making
 	#'find-file on large buffers a little snappier (if
