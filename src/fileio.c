@@ -1785,6 +1785,8 @@ barf_or_query_if_file_exists (Lisp_Object absname, const Ascbyte *querystring,
     }
   return;
 }
+
+#define READ_BUF_SIZE (2 << 16)
 
 DEFUN ("copy-file", Fcopy_file, 2, 4,
        "fCopy file: \nFCopy %s to file: \np\nP", /*
@@ -1801,7 +1803,7 @@ A prefix arg makes KEEP-TIME non-nil.
 {
   /* This function can call Lisp.  GC checked 2000-07-28 ben */
   int ifd, ofd, n;
-  Rawbyte buf[16 * 1024];
+  Rawbyte buf[READ_BUF_SIZE];
   struct stat st, out_st;
   Lisp_Object handler;
   int speccount = specpdl_depth ();
@@ -2870,8 +2872,6 @@ otherwise, if FILE2 does not exist, the answer is t.
 }
 
 
-#define READ_BUF_SIZE (2 << 16)
-
 DEFUN ("insert-file-contents-internal", Finsert_file_contents_internal,
        1, 7, 0, /*
 Insert contents of file FILENAME after point; no coding-system frobbing.
