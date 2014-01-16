@@ -2870,9 +2870,7 @@ otherwise, if FILE2 does not exist, the answer is t.
 }
 
 
-/* Stack sizes > 2**16 is a good way to elicit compiler bugs */
-/* #define READ_BUF_SIZE (2 << 16) */
-#define READ_BUF_SIZE (1 << 15)
+#define READ_BUF_SIZE (2 << 16)
 
 DEFUN ("insert-file-contents-internal", Finsert_file_contents_internal,
        1, 7, 0, /*
