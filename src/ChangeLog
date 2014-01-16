@@ -6,6 +6,10 @@
 	of #x10000, and that size works better with the coding system
 	buffering, improving performance there; move to this value.
 
+	Use it in #'copy-file too, move its #define earlier to make that
+	possible. Not relevant to the coding system buffering, but still
+	helpful.
+
 2014-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c:
