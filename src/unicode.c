@@ -1707,6 +1707,7 @@ struct unicode_coding_stream
   unsigned char counter;
   unsigned char indicated_length;
   int seen_char;
+  Charcount characters_seen;
   /* encode */
   Lisp_Object current_charset;
   int current_char_boundary;
@@ -1988,6 +1989,17 @@ encode_unicode_char (Lisp_Object USED_IF_MULE (charset), int h,
                          write_error_characters_as_such);
 }
 
+static Charcount
+unicode_character_tell (struct coding_stream *str)
+{
+  if (CODING_STREAM_TYPE_DATA (str, unicode)->counter == 0)
+    {
+      return CODING_STREAM_TYPE_DATA (str, unicode)->characters_seen;
+    }
+
+  return -1;
+}
+
 static Bytecount
 unicode_convert (struct coding_stream *str, const UExtbyte *src,
 		 unsigned_char_dynarr *dst, Bytecount n)
@@ -2006,6 +2018,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
       unsigned char counter = data->counter;
       unsigned char indicated_length
         = data->indicated_length;
+      Charcount characters_seen = data->characters_seen;
 
       while (n--)
 	{
@@ -2020,12 +2033,15 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
                     {
                       /* ASCII. */
                       decode_unicode_char (c, dst, data, ignore_bom);
+                      characters_seen++;
                     }
                   else if (0 == (c & 0x40))
                     {
                       /* Highest bit set, second highest not--there's
                          something wrong. */
                       DECODE_ERROR_OCTET (c, dst, data, ignore_bom);
+                      /* This is a character in the buffer. */
+                      characters_seen++;
                     }
                   else if (0 == (c & 0x20))
                     {
@@ -2050,7 +2066,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
                       /* We don't supports lengths longer than 4 in
                          external-format data. */
                       DECODE_ERROR_OCTET (c, dst, data, ignore_bom);
-
+                      characters_seen++;
                     }
                 }
               else
@@ -2061,15 +2077,20 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
                       indicate_invalid_utf_8(indicated_length, 
                                              counter, 
                                              ch, dst, data, ignore_bom);
+                      /* These are characters our receiver will see, not
+                         actual characters we've seen in the input. */
+                      characters_seen += (indicated_length - counter);
                       if (c & 0x80)
                         {
                           DECODE_ERROR_OCTET (c, dst, data, ignore_bom);
+                          characters_seen++;
                         }
                       else
                         {
                           /* The character just read is ASCII. Treat it as
                              such.  */
                           decode_unicode_char (c, dst, data, ignore_bom);
+                          characters_seen++;
                         }
                       ch = 0;
                       counter = 0;
@@ -2092,10 +2113,12 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
                                                      counter, 
                                                      ch, dst, data,
                                                      ignore_bom);
+                              characters_seen += (indicated_length - counter);
                             }
                           else
                             {
                               decode_unicode_char (ch, dst, data, ignore_bom);
+                              characters_seen++;
                             }
                           ch = 0;
                         }
@@ -2242,6 +2265,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
               indicate_invalid_utf_8(indicated_length, 
                                      counter, ch, dst, data, 
                                      ignore_bom);
+              characters_seen += (indicated_length - counter);
               break;
 
             case UNICODE_UTF_16:
@@ -2295,6 +2319,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 
       data->counter = counter;
       data->indicated_length = indicated_length;
+      data->characters_seen = characters_seen;
     }
   else
     {
@@ -3176,6 +3201,8 @@ coding_system_type_create_unicode (void)
   CODING_SYSTEM_HAS_METHOD (unicode, rewind_coding_stream);
   CODING_SYSTEM_HAS_METHOD (unicode, putprop);
   CODING_SYSTEM_HAS_METHOD (unicode, getprop);
+
+  CODING_SYSTEM_HAS_METHOD (unicode, character_tell);
 
   INITIALIZE_DETECTOR (utf_8);
   DETECTOR_HAS_METHOD (utf_8, detect);

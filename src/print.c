@@ -514,7 +514,7 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 
       buffer_insert_string_1 (XMARKER (function)->buffer,
 			      spoint, nonreloc, reloc, offset, len,
-			      0);
+			      -1, 0);
       Fset_marker (function, make_fixnum (spoint + cclen),
 		   Fmarker_buffer (function));
     }

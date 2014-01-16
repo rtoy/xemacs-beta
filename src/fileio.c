@@ -3180,6 +3180,7 @@ under Mule, is very difficult.)
     struct gcpro ngcpro1;
     Lisp_Object stream = make_filedesc_input_stream (fd, 0, total,
 						     LSTR_ALLOW_QUIT);
+    Charcount last_tell = -1;
 
     NGCPRO1 (stream);
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
@@ -3187,6 +3188,7 @@ under Mule, is very difficult.)
       (XLSTREAM (stream), get_coding_system_for_text_file (codesys, 1),
        CODING_DECODE, 0);
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+    last_tell = Lstream_character_tell (XLSTREAM (stream));
 
     record_unwind_protect (delete_stream_unwind, stream);
 
@@ -3196,7 +3198,7 @@ under Mule, is very difficult.)
     while (1)
       {
 	Bytecount this_len;
-	Charcount cc_inserted;
+	Charcount cc_inserted, this_tell = last_tell;
 
 	QUIT;
 	this_len = Lstream_read (XLSTREAM (stream), read_buf,
@@ -3209,12 +3211,17 @@ under Mule, is very difficult.)
 	    break;
 	  }
 
-	cc_inserted = buffer_insert_raw_string_1 (buf, cur_point, read_buf,
-						  this_len,
-						  !NILP (visit)
-						  ? INSDEL_NO_LOCKING : 0);
+	cc_inserted
+          = buffer_insert_string_1 (buf, cur_point, read_buf, Qnil,
+                                    0, this_len, last_tell >= 0
+                                    ? (this_tell
+                                       = Lstream_character_tell (XLSTREAM
+                                                                 (stream)))
+                                    - last_tell : -1,
+                                    !NILP (visit) ? INSDEL_NO_LOCKING : 0);
 	inserted  += cc_inserted;
 	cur_point += cc_inserted;
+        last_tell = this_tell;
       }
     if (!NILP (used_codesys))
       {

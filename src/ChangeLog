@@ -1,3 +1,82 @@
+2014-01-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Pass character count information from the no-conversion and
+	unicode coding systems to the buffer insertion code, making
+	#'find-file on large buffers a little snappier (if
+	ERROR_CHECK_TEXT is not defined).
+	
+	* file-coding.c:
+	* file-coding.c (coding_character_tell): New.
+	* file-coding.c (conversion_coding_stream_description): New.
+	* file-coding.c (no_conversion_convert):
+	Update characters_seen when decoding.
+	* file-coding.c (no_conversion_character_tell): New.
+	* file-coding.c (lstream_type_create_file_coding): Create the
+	no_conversion type with data.
+	* file-coding.c (coding_system_type_create):
+	Make the character_tell method available here.
+	* file-coding.h:
+	* file-coding.h (struct coding_system_methods):
+	Add a new character_tell() method, passing charcount information
+	from the coding systems to the buffer code, avoiding duplicate
+	bytecount-to-charcount work especially with large buffers.
+
+	* fileio.c (Finsert_file_contents_internal):
+	Update this to pass charcount information to
+	buffer_insert_string_1(), if that is available from the lstream code.
+	
+	* insdel.c:
+	* insdel.c (buffer_insert_string_1):
+	Add a new CCLEN argument, giving the character count of the string
+	to insert. It can be -1 to indicate that te function should work
+	it out itself using bytecount_to_charcount(), as it used to.
+	* insdel.c (buffer_insert_raw_string_1):
+	* insdel.c (buffer_insert_lisp_string_1):
+	* insdel.c (buffer_insert_ascstring_1):
+	* insdel.c (buffer_insert_emacs_char_1):
+	* insdel.c (buffer_insert_from_buffer_1):
+	* insdel.c (buffer_replace_char):
+	Update these functions to use the new calling convention.
+	* insdel.h:
+	* insdel.h (buffer_insert_string):
+	Update this header to reflect the new buffer_insert_string_1()
+	argument.
+
+	* lstream.c (Lstream_character_tell): New.
+	Return the number of characters *read* and seen by the consumer so
+	far, taking into account the unget buffer, and buffered reading.
+
+	* lstream.c (Lstream_unread):
+	Update unget_character_count here as appropriate.
+	* lstream.c (Lstream_rewind):
+	Reset unget_character_count here too.
+
+	* lstream.h:
+	* lstream.h (struct lstream):
+	Provide the character_tell method, add a new field,
+	unget_character_count, giving the number of characters ever passed
+	to Lstream_unread().
+	Declare Lstream_character_tell().
+	Make Lstream_ungetc(), which happens to be unused, an inline
+	function rather than a macro, in the course of updating it to
+	modify unget_character_count.
+
+	* print.c (output_string):
+	Use the new argument to buffer_insert_string_1().
+	* tests.c:
+	* tests.c (Ftest_character_tell):
+	New test function.
+	* tests.c (syms_of_tests):
+	Make it available.
+	* unicode.c:
+	* unicode.c (struct unicode_coding_stream):
+	* unicode.c (unicode_character_tell):
+	New method.
+	* unicode.c (unicode_convert):
+	Update the character counter as appropriate.
+	* unicode.c (coding_system_type_create_unicode):
+	Make the character_tell method available.
+
 2013-12-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c:

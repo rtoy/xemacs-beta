@@ -1990,6 +1990,14 @@ coding_seekable_p (Lstream *stream)
   return Lstream_seekable_p (str->other_end);
 }
 
+static Charcount
+coding_character_tell (Lstream *stream)
+{
+  struct coding_stream *str = CODING_STREAM_DATA (stream);
+
+  return XCODESYSMETH_OR_GIVEN (str->codesys, character_tell, (str), -1);
+}
+
 static int
 coding_flusher (Lstream *stream)
 {
@@ -2823,7 +2831,32 @@ chain_conversion_end_type (Lisp_Object codesys)
 
    #### Shouldn't we _call_ it that, then?  And while we're at it,
    separate it into "to_internal" and "to_external"? */
-DEFINE_CODING_SYSTEM_TYPE (no_conversion);
+
+
+struct no_conversion_coding_system
+{
+};
+
+struct no_conversion_coding_stream
+{
+  /* Number of characters seen when decoding. */
+  Charcount characters_seen;
+};
+
+static const struct memory_description no_conversion_coding_system_description[] = {
+  { XD_END }
+};
+
+static const struct memory_description no_conversion_coding_stream_description_1 [] = {
+  { XD_INT, offsetof (struct no_conversion_coding_stream, characters_seen) },
+  { XD_END }
+};
+
+const struct sized_memory_description no_conversion_coding_stream_description = {
+  sizeof (struct no_conversion_coding_stream), no_conversion_coding_stream_description_1
+};
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (no_conversion);
 
 /* This is used when reading in "binary" files -- i.e. files that may
    contain all 256 possible byte values and that are not to be
@@ -2845,6 +2878,9 @@ no_conversion_convert (struct coding_stream *str,
 
 	  DECODE_ADD_BINARY_CHAR (c, dst);
 	}
+
+      CODING_STREAM_TYPE_DATA (str, no_conversion)->characters_seen
+        += orign;
 
       if (str->eof)
 	DECODE_OUTPUT_PARTIAL_CHAR (ch, dst);
@@ -2902,6 +2938,12 @@ no_conversion_convert (struct coding_stream *str,
 
   str->ch    = ch;
   return orign;
+}
+
+static Charcount
+no_conversion_character_tell (struct coding_stream *str)
+{
+  return CODING_STREAM_TYPE_DATA (str, no_conversion)->characters_seen;
 }
 
 DEFINE_DETECTOR (no_conversion);
@@ -4656,6 +4698,7 @@ lstream_type_create_file_coding (void)
   LSTREAM_HAS_METHOD (coding, writer);
   LSTREAM_HAS_METHOD (coding, rewinder);
   LSTREAM_HAS_METHOD (coding, seekable_p);
+  LSTREAM_HAS_METHOD (coding, character_tell);
   LSTREAM_HAS_METHOD (coding, marker);
   LSTREAM_HAS_METHOD (coding, flusher);
   LSTREAM_HAS_METHOD (coding, closer);
@@ -4697,9 +4740,10 @@ coding_system_type_create (void)
   dump_add_opaque_int (&coding_detector_count);
   dump_add_opaque_int (&coding_detector_category_count);
 
-  INITIALIZE_CODING_SYSTEM_TYPE (no_conversion,
-				 "no-conversion-coding-system-p");
+  INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (no_conversion,
+                                           "no-conversion-coding-system-p");
   CODING_SYSTEM_HAS_METHOD (no_conversion, convert);
+  CODING_SYSTEM_HAS_METHOD (no_conversion, character_tell);
 
   INITIALIZE_DETECTOR (no_conversion);
   DETECTOR_HAS_METHOD (no_conversion, detect);
