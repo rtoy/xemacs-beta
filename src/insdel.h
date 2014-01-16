@@ -38,7 +38,7 @@ void end_multiple_change (struct buffer *buf, int count);
 Charcount buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
 				  const Ibyte *nonreloc, Lisp_Object reloc,
 				  Bytecount offset, Bytecount length,
-				  int flags);
+				  Charcount clen, int flags);
 Charcount buffer_insert_raw_string_1 (struct buffer *buf, Charbpos pos,
 				      const Ibyte *nonreloc,
 				      Bytecount length, int flags);
@@ -58,7 +58,7 @@ Charcount buffer_insert_from_buffer_1 (struct buffer *buf, Charbpos pos,
    All of these can GC. */
 
 #define buffer_insert_string(buf, nonreloc, reloc, offset, length) \
-  buffer_insert_string_1 (buf, -1, nonreloc, reloc, offset, length, 0)
+  buffer_insert_string_1 (buf, -1, nonreloc, reloc, offset, length, -1, 0)
 #define buffer_insert_raw_string(buf, string, length) \
   buffer_insert_raw_string_1 (buf, -1, string, length, 0)
 #define buffer_insert_ascstring(buf, s) \

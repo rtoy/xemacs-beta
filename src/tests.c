@@ -558,6 +558,186 @@ REASON is nil or a string describing the failure (not required).
   return conversion_result;
 }
 
+DEFUN ("test-character-tell", Ftest_character_tell, 0, 0, "", /*
+Return list of results of tests of the stream character offset code.
+For use by the automated test suite.  See tests/automated/c-tests.
+
+Each element is a list (DESCRIPTION, STATUS, REASON).
+DESCRIPTION is a string describing the test.
+STATUS is a symbol, either t (pass) or nil (fail).
+REASON is nil or a string describing the failure (not required).
+*/
+       ())
+{
+  Extbyte ext_unix[]= "\n\nfoo\nbar\n\nf\372b\343\340\nfoo\nbar\n";
+  /* Previous string in UTF-8. */
+  Extbyte ext_utf_8_unix[]
+    = "\n\nfoo\nbar\n\nf\303\272b\303\243\303\240\nfoo\nbar\n";
+  Charcount ext_utf_8_unix_char_len = 25;
+  Ibyte shortbuf[13], longbuf[512];
+  Lisp_Object stream =
+    make_fixed_buffer_input_stream (ext_unix, sizeof (ext_unix) - 1);
+  Lisp_Object result = Qnil, string = Qnil;
+  Charcount count;
+  Bytecount bytecount;
+  struct gcpro gcpro1, gcpro2, gcpro3;
+
+#define CHARACTER_TELL_ASSERT(assertion, description, failing_case) \
+  do                                                                \
+    {                                                               \
+    if (assertion)                                                  \
+      result = Fcons (list3 (build_cistring (description),          \
+                             Qt, Qnil), result);                    \
+    else                                                            \
+      result = Fcons (list3 (build_cistring (description),          \
+                             Qnil, build_ascstring (failing_case)), \
+                      result);                                      \
+    }                                                               \
+  while (0)
+
+  GCPRO3 (stream, result, string);
+
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  stream = make_coding_input_stream
+    (XLSTREAM (stream), Ffind_coding_system (intern ("no-conversion-unix")),
+     CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+
+  bytecount = Lstream_read (XLSTREAM (stream), longbuf, sizeof (longbuf));
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == sizeof (ext_unix) -1,
+                         "basic character tell, no-conversion-unix",
+                         "basic character tell failed");
+
+  string = build_extstring (ext_unix,
+                            Ffind_coding_system (intern
+                                                 ("no-conversion-unix")));
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == string_char_length (string),
+                         "repeat basic character tell, no-conversion-unix",
+                         "repeat basic character tell failed with string");
+
+  count = Lstream_character_tell (XLSTREAM (stream));
+
+  Lstream_unread (XLSTREAM (stream), "r\n", 2);
+
+  /* This should give the same result as before the unread. */
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == count, "checking post-unread character tell",
+                         "post-unread character tell failed");
+  bytecount += Lstream_read (XLSTREAM (stream), longbuf + bytecount,
+                             sizeof (longbuf) - bytecount);
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == count + 2,
+                         "checking post-unread+read character tell",
+                         "post-unread+read character tell failed");
+
+  /* This seems to be buggy for my purposes. */
+  /* Lstream_rewind (XLSTREAM (stream)); */
+  Lstream_close (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+
+  stream = make_fixed_buffer_input_stream (ext_unix, sizeof (ext_unix) - 1);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  Lstream_unset_character_mode (XLSTREAM (stream));
+  stream = make_coding_input_stream
+    (XLSTREAM (stream), Ffind_coding_system (intern ("no-conversion-unix")),
+     CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  Lstream_unset_character_mode (XLSTREAM (stream));
+
+  bytecount = Lstream_read (XLSTREAM (stream), shortbuf, sizeof (shortbuf));
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         /* This should be equal to sizeof (shortbuf) on
+                            non-mule. */
+                         == sizeof (shortbuf) - !(byte_ascii_p (0xff)),
+                         "character tell with short read, no-conversion-unix",
+                         "short read character tell failed");
+
+  Lstream_close (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+
+  stream
+    = make_fixed_buffer_input_stream (ext_utf_8_unix,
+                                      sizeof (ext_utf_8_unix) - 1);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  stream = make_coding_input_stream
+    (XLSTREAM (stream), Ffind_coding_system (intern ("utf-8-unix")),
+     CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+
+  bytecount = Lstream_read (XLSTREAM (stream), longbuf, sizeof (longbuf));
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == ext_utf_8_unix_char_len,
+                         "utf-8 character tell, utf-8-unix",
+                         "utf-8 character tell failed");
+
+  string = build_extstring (ext_utf_8_unix,
+                            Ffind_coding_system (intern
+                                                 ("utf-8-unix")));
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == string_char_length (string),
+                         "repeat utf-8 character tell, utf-8-unix",
+                         "repeat utf-8 character tell failed with string");
+
+  count = Lstream_character_tell (XLSTREAM (stream));
+
+  Lstream_unread (XLSTREAM (stream), "r\n", 2);
+
+  /* This should give the same result as before the unread. */
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == count, "checking post-unread utf-8 tell",
+                         "post-unread utf-8 tell failed");
+  bytecount += Lstream_read (XLSTREAM (stream), longbuf + bytecount,
+                             sizeof (longbuf) - bytecount);
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == count + 2,
+                         "checking post-unread+read utf-8 tell",
+                         "post-unread+read utf-8 tell failed");
+
+  /* This seems to be buggy for my purposes. */
+  /* Lstream_rewind (XLSTREAM (stream)); */
+  Lstream_close (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+
+  stream = make_fixed_buffer_input_stream (ext_utf_8_unix, sizeof (ext_utf_8_unix) - 1);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  Lstream_set_character_mode (XLSTREAM (stream));
+
+  stream = make_coding_input_stream
+    (XLSTREAM (stream), Ffind_coding_system (intern ("utf-8-unix")),
+     CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  Lstream_set_character_mode (XLSTREAM (stream));
+
+  bytecount = Lstream_read (XLSTREAM (stream), shortbuf, sizeof (shortbuf));
+
+  CHARACTER_TELL_ASSERT
+    (bytecount == (sizeof (shortbuf) - 1),
+     "utf-8 Lstream_read, character mode, checking partial char not read",
+     "partial char appars to have been read when it shouldn't");
+
+  CHARACTER_TELL_ASSERT
+    (Lstream_character_tell (XLSTREAM (stream))
+     /* This is shorter, because it's in the middle of a character. */
+     == sizeof (shortbuf) - 1,
+     "utf-8 tell with short read, character mode, utf-8-unix",
+     "utf-8 read character tell, character mode failed");
+
+  Lstream_close (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+
+  UNGCPRO;
+  return result;
+}
+
 
 /* Hash Table testing */
 
@@ -724,6 +904,7 @@ syms_of_tests (void)
   Vtest_function_list = Qnil;
 
   TESTS_DEFSUBR (Ftest_data_format_conversion);
+  TESTS_DEFSUBR (Ftest_character_tell);
   TESTS_DEFSUBR (Ftest_hash_tables);
   TESTS_DEFSUBR (Ftest_store_void_in_lisp);
   /* Add other test functions here with TESTS_DEFSUBR */

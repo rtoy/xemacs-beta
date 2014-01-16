@@ -735,6 +735,134 @@ Lstream_read (Lstream *lstr, void *data, Bytecount size)
   return Lstream_read_1 (lstr, data, size, 0);
 }
 
+Charcount
+Lstream_character_tell (Lstream *lstr)
+{
+  Charcount ctell = lstr->imp->character_tell ?
+    lstr->imp->character_tell (lstr) : -1;
+
+  if (ctell >= 0)
+    {
+      /* Our implementation's character tell code doesn't know about the
+         unget buffer, update its figure to reflect it. */
+      ctell += lstr->unget_character_count;
+
+      if (lstr->unget_buffer_ind > 0)
+        {
+          /* The character count should not include those characters
+             currently *in* the unget buffer, subtract that count.  */
+          Ibyte *ungot, *ungot_ptr;
+          Bytecount ii = lstr->unget_buffer_ind, impartial, sevenflen;
+
+          ungot_ptr = ungot
+            = alloca_ibytes (lstr->unget_buffer_ind) + MAX_ICHAR_LEN;
+
+          /* Make sure the string starts with a valid ibyteptr, otherwise
+             validate_ibyte_string_backward could run off the beginning. */
+          sevenflen = set_itext_ichar (ungot, (Ichar) 0x7f);
+          ungot_ptr += sevenflen;
+
+          /* Internal format data, but in reverse order. There's not
+             actually a need to alloca here, we could work out the character
+             count directly from the reversed bytes, but the alloca approach
+             is more robust to changes in our internal format, and the unget
+             buffer is not going to blow the stack. */
+          while (ii > 0)
+            {
+              *ungot_ptr++ = lstr->unget_buffer[--ii];
+            }
+
+          impartial
+            = validate_ibyte_string_backward (ungot, ungot_ptr - ungot);
+
+          /* Move past the character we added. */
+          impartial -= sevenflen;
+          INC_IBYTEPTR (ungot);
+
+          if (impartial > 0 && !valid_ibyteptr_p (ungot))
+            {
+              Ibyte *newstart = ungot, *limit = ungot + impartial;
+              /* Our consumer has the start of a partial character, we
+                 have the rest. */
+
+              while (!valid_ibyteptr_p (newstart) && newstart < limit)
+                {
+                  newstart++, impartial--;
+                }
+                  
+              /* Remove this character from the count, since the
+                 end-consumer hasn't seen the full character. */
+              ctell--;
+              ungot = newstart;
+            }
+          else if (valid_ibyteptr_p (ungot)
+                   && rep_bytes_by_first_byte (*ungot) > impartial)
+            {
+              /* Rest of a partial character has yet to be read, its first
+                 octet has probably been unread by Lstream_read_1(). We
+                 included it in the accounting in Lstream_unread(), adjust
+                 the figure here appropriately. */
+              ctell--;
+            }
+
+          /* bytecount_to_charcount will throw an assertion failure if we're
+             not at the start of a character. */
+          text_checking_assert (impartial == 0 || valid_ibyteptr_p (ungot));
+
+          /* The character length of this text is included in
+             unget_character_count; if the bytes are still in the unget
+             buffer, then our consumers haven't seen them, and so the
+             character tell figure shouldn't reflect them. Subtract it from
+             the total.  */
+          ctell -= bytecount_to_charcount (ungot, impartial);
+        }
+
+      if (lstr->in_buffer_ind < lstr->in_buffer_current)
+        {
+          Ibyte *inbuf = lstr->in_buffer + lstr->in_buffer_ind;
+          Bytecount partial = lstr->in_buffer_current - lstr->in_buffer_ind,
+            impartial;
+
+          if (!valid_ibyteptr_p (inbuf))
+            {
+              Ibyte *newstart = inbuf;
+              Ibyte *limit = lstr->in_buffer + lstr->in_buffer_current;
+              /* Our consumer has the start of a partial character, we
+                 have the rest. */
+
+              while (newstart < limit && !valid_ibyteptr_p (newstart))
+                {
+                  newstart++;
+                }
+                  
+              /* Remove this character from the count, since the
+                 end-consumer hasn't seen the full character. */
+              ctell--;
+              inbuf = newstart;
+              partial = limit - newstart;
+            }
+
+          if (valid_ibyteptr_p (inbuf)) 
+            {
+              /* There's at least one valid starting char in the string,
+                 validate_ibyte_string_backward won't run off the
+                 begining. */
+              impartial = 
+                validate_ibyte_string_backward (inbuf, partial);
+            }
+          else
+            {
+              impartial = 0;
+            }
+
+          ctell -= bytecount_to_charcount (inbuf, impartial);
+        }
+
+      text_checking_assert (ctell >= 0);
+    }
+
+  return ctell;
+}
 
 /* Push back SIZE bytes of DATA onto the input queue.  The next call
    to Lstream_read() with the same size will read the same bytes back.
@@ -755,7 +883,12 @@ Lstream_unread (Lstream *lstr, const void *data, Bytecount size)
   /* Bytes have to go on in reverse order -- they are reversed
      again when read back. */
   while (size--)
-    lstr->unget_buffer[lstr->unget_buffer_ind++] = p[size];
+    {
+      lstr->unget_buffer[lstr->unget_buffer_ind++] = p[size];
+      /* If we see a valid first byte, that is the last octet in a
+         character, so increase the count of ungot characters. */
+      lstr->unget_character_count += valid_ibyteptr_p (p + size);
+    }
 }
 
 /* Rewind the stream to the beginning. */
@@ -768,6 +901,7 @@ Lstream_rewind (Lstream *lstr)
   if (Lstream_flush (lstr) < 0)
     return -1;
   lstr->byte_count = 0;
+  lstr->unget_character_count = 0;
   return (lstr->imp->rewinder) (lstr);
 }
 

@@ -181,6 +181,10 @@ typedef struct lstream_implementation
      method.  If this method is not present, the result is determined
      by whether a rewind method is present. */
   int (*seekable_p) (Lstream *stream);
+
+  /* Return the number of complete characters read so far. Respects
+     buffering and unget. Returns -1 if unknown or not implemented. */
+  Charcount (*character_tell) (Lstream *stream);
   /* Perform any additional operations necessary to flush the
      data in this stream. */
   int (*flusher) (Lstream *stream);
@@ -250,8 +254,9 @@ struct lstream
      similarly has to push the data on backwards. */
   unsigned char *unget_buffer; /* holds characters pushed back onto input */
   Bytecount unget_buffer_size; /* allocated size of buffer */
-  Bytecount unget_buffer_ind; /* pointer to next buffer spot
-					  to write a character */
+  Bytecount unget_buffer_ind; /* Next buffer spot to write a character */
+
+  Charcount unget_character_count; /* Count of complete characters ever ungot. */
 
   Bytecount byte_count;
   int flags;
@@ -297,8 +302,8 @@ int Lstream_flush_out (Lstream *lstr);
 int Lstream_fputc (Lstream *lstr, int c);
 int Lstream_fgetc (Lstream *lstr);
 void Lstream_fungetc (Lstream *lstr, int c);
-Bytecount Lstream_read (Lstream *lstr, void *data,
-				 Bytecount size);
+Bytecount Lstream_read (Lstream *lstr, void *data, Bytecount size);
+Charcount Lstream_character_tell (Lstream *);
 int Lstream_write (Lstream *lstr, const void *data,
 		   Bytecount size);
 int Lstream_was_blocked_p (Lstream *lstr);
@@ -353,19 +358,28 @@ void Lstream_unset_character_mode (Lstream *lstr);
    reverse order they were pushed back -- most recent first. (This is
    necessary for consistency -- if there are a number of bytes that
    have been unread and I read and unread a byte, it needs to be the
-   first to be read again.) This is a macro and so it is very
-   efficient.  The C argument is only evaluated once but the STREAM
-   argument is evaluated more than once.
- */
+   first to be read again.) */
 
-#define Lstream_ungetc(stream, c)					\
-/* Add to the end if it won't overflow buffer; otherwise call the	\
-   function equivalent */						\
-  ((stream)->unget_buffer_ind >= (stream)->unget_buffer_size ?		\
-   Lstream_fungetc (stream, c) :					\
-   (void) ((stream)->byte_count--,					\
-   ((stream)->unget_buffer[(stream)->unget_buffer_ind++] =		\
-    (unsigned char) (c))))
+DECLARE_INLINE_HEADER (
+void
+Lstream_ungetc (Lstream *lstr, int c)
+)
+{
+  /* Add to the end if it won't overflow buffer; otherwise call the
+     function equivalent */
+  if (lstr->unget_buffer_ind >= lstr->unget_buffer_size)
+    {
+      Lstream_fungetc (lstr, c);
+    }
+  else
+    {
+      lstr->byte_count--;
+      lstr->unget_buffer[lstr->unget_buffer_ind] = (unsigned char) (c);
+      lstr->unget_character_count
+        += valid_ibyteptr_p (lstr->unget_buffer + lstr->unget_buffer_ind);
+      lstr->unget_buffer_ind++;
+    }
+}
 
 #define Lstream_data(stream) ((void *) ((stream)->data))
 #define Lstream_byte_count(stream) ((stream)->byte_count)

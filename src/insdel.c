@@ -1039,14 +1039,15 @@ fixup_internal_substring (const Ibyte *nonreloc, Lisp_Object reloc,
 #endif
 }
 
-/* Insert a string into BUF at Charbpos POS.  The string data comes
-   from one of two sources: constant, non-relocatable data (specified
-   in NONRELOC), or a Lisp string object (specified in RELOC), which
-   is relocatable and may have extent data that needs to be copied
-   into the buffer.  OFFSET and LENGTH specify the substring of the
-   data that is actually to be inserted.  As a special case, if POS
-   is -1, insert the string at point and move point to the end of the
-   string.
+/* Insert a string into BUF at Charbpos POS.  The string data comes from one
+   of two sources: constant, non-relocatable data (specified in NONRELOC),
+   or a Lisp string object (specified in RELOC), which is relocatable and
+   may have extent data that needs to be copied into the buffer.  OFFSET and
+   LENGTH specify the substring of the data that is actually to be inserted.
+   As a special case, if POS is -1, insert the string at point and move
+   point to the end of the string.  CCLEN is the character count of the data
+   to be inserted, and can be -1 to indicate that buffer_insert_string_1 ()
+   should work this out itself with bytecount_to_charcount().
 
    Normally, markers at the insertion point end up before the
    inserted string.  If INSDEL_BEFORE_MARKERS is set in flags, however,
@@ -1061,13 +1062,12 @@ Charcount
 buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
 			const Ibyte *nonreloc, Lisp_Object reloc,
 			Bytecount offset, Bytecount length,
-			int flags)
+                        Charcount cclen, int flags)
 {
   /* This function can GC */
   struct gcpro gcpro1;
   Bytebpos bytepos;
   Bytecount length_in_buffer;
-  Charcount cclen;
   int move_point = 0;
   struct buffer *mbuf;
   Lisp_Object bufcons;
@@ -1118,14 +1118,27 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
 
   bytepos = charbpos_to_bytebpos (buf, pos);
 
-  /* string may have been relocated up to this point */
-  if (STRINGP (reloc))
+  if (cclen < 0)
     {
-      cclen = string_offset_byte_to_char_len (reloc, offset, length);
-      nonreloc = XSTRING_DATA (reloc);
+      /* string may have been relocated up to this point */
+      if (STRINGP (reloc))
+        {
+          cclen = string_offset_byte_to_char_len (reloc, offset, length);
+          nonreloc = XSTRING_DATA (reloc);
+        }
+      else
+        cclen = bytecount_to_charcount (nonreloc + offset, length);
     }
   else
-    cclen = bytecount_to_charcount (nonreloc + offset, length);
+    {
+      text_checking_assert (cclen > 0 && cclen
+                            == (STRINGP (reloc) ?
+                                string_offset_byte_to_char_len (reloc, offset,
+                                                                length)
+                                : bytecount_to_charcount (nonreloc + offset,
+                                                          length)));
+    }
+
   /* &&#### Here we check if the text can't fit into the format of the buffer,
      and if so convert it to another format (either default or 32-bit-fixed,
      according to some flag; if no flag, use default). */
@@ -1286,7 +1299,7 @@ buffer_insert_raw_string_1 (struct buffer *buf, Charbpos pos,
 {
   /* This function can GC */
   return buffer_insert_string_1 (buf, pos, nonreloc, Qnil, 0, length,
-				 flags);
+				 -1, flags);
 }
 
 Charcount
@@ -1295,8 +1308,7 @@ buffer_insert_lisp_string_1 (struct buffer *buf, Charbpos pos, Lisp_Object str,
 {
   /* This function can GC */
   return buffer_insert_string_1 (buf, pos, 0, str, 0,
-				 XSTRING_LENGTH (str),
-				 flags);
+				 XSTRING_LENGTH (str), -1, flags);
 }
 
 /* Insert the null-terminated string S (in external format). */
@@ -1309,7 +1321,7 @@ buffer_insert_ascstring_1 (struct buffer *buf, Charbpos pos, const Ascbyte *s,
   const CIbyte *translated = GETTEXT (s);
   ASSERT_ASCTEXT_ASCII (s);
   return buffer_insert_string_1 (buf, pos, (const Ibyte *) translated, Qnil,
-				 0, strlen (translated), flags);
+				 0, strlen (translated), -1, flags);
 }
 
 Charcount
@@ -1319,7 +1331,7 @@ buffer_insert_emacs_char_1 (struct buffer *buf, Charbpos pos, Ichar ch,
   /* This function can GC */
   Ibyte str[MAX_ICHAR_LEN];
   Bytecount len = set_itext_ichar (str, ch);
-  return buffer_insert_string_1 (buf, pos, str, Qnil, 0, len, flags);
+  return buffer_insert_string_1 (buf, pos, str, Qnil, 0, len, -1, flags);
 }
 
 Charcount
@@ -1339,7 +1351,7 @@ buffer_insert_from_buffer_1 (struct buffer *buf, Charbpos pos,
   /* This function can GC */
   Lisp_Object str = make_string_from_buffer (buf2, pos2, length);
   return buffer_insert_string_1 (buf, pos, 0, str, 0,
-				 XSTRING_LENGTH (str), flags);
+				 XSTRING_LENGTH (str), -1, flags);
 }
 
 
@@ -1674,7 +1686,7 @@ buffer_replace_char (struct buffer *buf, Charbpos pos, Ichar ch,
        * backward so that it now equals the insertion point.
        */
       buffer_insert_string_1 (buf, (movepoint ? -1 : pos),
-			      newstr, Qnil, 0, newlen, 0);
+			      newstr, Qnil, 0, newlen, -1, 0);
     }
 }
 
