@@ -233,7 +233,7 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 		      )))
     (unless menubar
       (error "`current-menubar' is nil: can't add menus to it."))
-    (unless menu
+    (unless menu  ; If we don't have all intervening submenus needed by menu-path, add them.
       (let ((rest menu-path)
 	    (so-far menubar))
 	(while rest
@@ -244,7 +244,7 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 		  (car (find-menu-item (cdr so-far) (list (car rest))))))
 	  (unless menu
 	    (let ((rest2 so-far))
-	      (while (and (cdr rest2) (car (cdr rest2)))
+	      (while (and (cdr rest2) (car (cdr rest2))) ; Walk rest2 down so-far till rest2 is the last item before divider or end of list.
 		(setq rest2 (cdr rest2)))
 	      (setcdr rest2
 		      (nconc (list (setq menu (list (car rest))))
@@ -253,15 +253,13 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 	  (setq rest (cdr rest)))))
     (if (and item-found (car item-found))
 	;; hack the item in place.
-	(if menu
+	(if (or menu (not (eq (car item-found) (car menubar)))) ;If either replacing in submenu, or replacing non-initial top-level item.  
 	    ;; Isn't it very bad form to use nsubstitute for side effects?
-	    (nsubstitute new-item (car item-found) menu)
-	  (setq current-menubar (nsubstitute new-item
-					     (car item-found)
-					     current-menubar)))
+	    (nsubstitute new-item (car item-found) (or menu menubar))
+	  (setcar menubar new-item))
       ;; OK, we have to add the whole thing...
       ;; if BEFORE is specified, try to add it there.
-      (unless menu (setq menu current-menubar))
+      (unless menu (setq menu menubar))
       (when before
 	(setq before (car (find-menu-item menu (list before)))))
       (let ((rest menu)
@@ -275,8 +273,9 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 	(when (not added-before)
 	  ;; adding before the first item on the menubar itself is harder
 	  (if (and (eq menu menubar) (eq before (car menu)))
-	      (setq menu (cons new-item menu)
-		    current-menubar menu)
+	      (let ((old-car (cons (car menubar) (cdr menubar))))
+		(setcar menubar new-item)
+		(setcdr menubar old-car))
 	    ;; otherwise, add the item to the end.
 	    (nconc menu (list new-item))))))
     (set-menubar-dirty-flag)
@@ -342,17 +341,17 @@ in the menu hierarchy.  The documentation of `add-submenu' describes
 menu paths.
 FROM-MENU, if provided, means use that instead of `current-menubar'
 as the menu to change."
-  (let* ((pair (condition-case nil (find-menu-item (or from-menu
-						       current-menubar) path)
+  (let* ((menubar (or from-menu current-menubar))
+	 (pair (condition-case nil (find-menu-item menubar path)
 		 (error nil)))
 	 (item (car pair))
-	 (parent (or (cdr pair) current-menubar)))
+	 (parent (or (cdr pair) menubar)))
     (if (not item)
 	nil
-      ;; the menubar is the only special case, because other menus begin
-      ;; with their name.
-      (if (eq parent current-menubar)
-	  (setq current-menubar (delete* item parent))
+      (if (eq item (car menubar)) ; Deleting first item from a top-level menubar
+	  (progn
+	    (setcar menubar (car (cdr menubar)))
+	    (setcdr menubar (cdr (cdr menubar))))
 	(delete* item parent))
       (set-menubar-dirty-flag)
       item)))
