@@ -1,3 +1,12 @@
+2014-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Fcopy_file, Finsert_file_contents_internal):
+	Use alloca_{rawbytes,ibytes} here instead of the implicit alloca
+	on the stack; doesn't change where the buffers are allocated for
+	these two functions, but does mean that decisions about alloca
+	vs. malloc based on buffer size are made in the same place
+	(ultimately, the ALLOCA() macro).
+
 2014-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (READ_BUF_SIZE):

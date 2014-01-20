@@ -1803,7 +1803,7 @@ A prefix arg makes KEEP-TIME non-nil.
 {
   /* This function can call Lisp.  GC checked 2000-07-28 ben */
   int ifd, ofd, n;
-  Rawbyte buf[READ_BUF_SIZE];
+  Rawbyte *buf = alloca_rawbytes (READ_BUF_SIZE);
   struct stat st, out_st;
   Lisp_Object handler;
   int speccount = specpdl_depth ();
@@ -1909,7 +1909,7 @@ A prefix arg makes KEEP-TIME non-nil.
 
     record_unwind_protect (close_file_unwind, ofd_locative);
 
-    while ((n = read_allowing_quit (ifd, buf, sizeof (buf))) > 0)
+    while ((n = read_allowing_quit (ifd, buf, READ_BUF_SIZE)) > 0)
     {
       if (write_allowing_quit (ofd, buf, n) != n)
 	report_file_error ("I/O error", newname);
@@ -2899,7 +2899,7 @@ under Mule, is very difficult.)
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object val;
   int total;
-  Ibyte read_buf[READ_BUF_SIZE];
+  Ibyte *read_buf = alloca_ibytes (READ_BUF_SIZE);
   int mc_count;
   struct buffer *buf = current_buffer;
   Lisp_Object curbuf;
@@ -3199,8 +3199,7 @@ under Mule, is very difficult.)
 	Charcount cc_inserted, this_tell = last_tell;
 
 	QUIT;
-	this_len = Lstream_read (XLSTREAM (stream), read_buf,
-				 sizeof (read_buf));
+	this_len = Lstream_read (XLSTREAM (stream), read_buf, READ_BUF_SIZE);
 
 	if (this_len <= 0)
 	  {
