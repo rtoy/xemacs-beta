@@ -1786,7 +1786,7 @@ barf_or_query_if_file_exists (Lisp_Object absname, const Ascbyte *querystring,
   return;
 }
 
-#define READ_BUF_SIZE (2 << 16)
+#define READ_BUF_SIZE 0x20000
 
 DEFUN ("copy-file", Fcopy_file, 2, 4,
        "fCopy file: \nFCopy %s to file: \np\nP", /*
