@@ -6,14 +6,19 @@
 	these two functions, but does mean that decisions about alloca
 	vs. malloc based on buffer size are made in the same place
 	(ultimately, the ALLOCA() macro).
+	(READ_BUF_SIZE): Use an explicit hexadecimal constant for the
+	0x20000 value for this, don't left-shift 2 16 times. Correct the
+	last ChangeLog entry after Jerry James pointed out a mistake on my
+	part. Thank you for review and discussion, Jerry and Stephen
+	Turnbull.
 
 2014-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (READ_BUF_SIZE):
 	Stack sizes > 2**16 elicited bugs back in August 1996, but there's
 	nothing to indicate this is still the case. GNU uses a block size
-	of #x10000, and that size works better with the coding system
-	buffering, improving performance there; move to this value.
+	of #x10000 without problems, we can afford to be a bit more
+	adventurous with a value of #x20000.
 
 	Use it in #'copy-file too, move its #define earlier to make that
 	possible. Not relevant to the coding system buffering, but still
