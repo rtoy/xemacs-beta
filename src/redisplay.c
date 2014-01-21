@@ -8287,12 +8287,15 @@ start_with_line_at_pixpos (struct window *w, Charbpos point, int pixpos)
       if (pixheight < 0)
 	{
 	  w->line_cache_validation_override--;
-	  if (-pixheight > point_line_height)
-	    /* We can't make the target line cover pixpos, so put it
-	       above pixpos.  That way it will at least be visible. */
-	    return prev_pos;
-	  else
-	    return cur_pos;
+          /* I see no reason why cur_pos can't be before BEGV
+             here, so check for it. It's not clear to me whether
+             prev_pos could be before BEGV, so check that as well. */
+          if (-pixheight > point_line_height)
+            /* We can't make the target line cover pixpos, so put it
+               above pixpos.  That way it will at least be visible. */
+            return (prev_pos <= BUF_BEGV (b)) ? BUF_BEGV (b) : prev_pos;
+          else
+            return (cur_pos <= BUF_BEGV (b)) ? BUF_BEGV (b) : cur_pos;
 	}
 
       cur_elt--;

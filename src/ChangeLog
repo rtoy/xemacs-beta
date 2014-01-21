@@ -1,3 +1,10 @@
+2014-01-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay.c (start_with_line_at_pixpos):
+	Apply Julian Bradfield's change of
+	slrnlc7tnv.l3h.jcb@home.stevens-bradfield.com , never returning a
+	Charbpos before the visible region. Thank you Julian!
+
 2014-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (Fcopy_file, Finsert_file_contents_internal):
