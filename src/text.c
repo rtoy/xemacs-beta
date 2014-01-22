@@ -2241,6 +2241,60 @@ bytecount_to_charcount_fun (const Ibyte *ptr, Bytecount len)
   return count;
 }
 
+/* Return the character count of an lstream or coding buffer of
+   internal-format text, counting partial characters at the beginning of the
+   buffer as whole characters, and *not* counting partial characters at the
+   end of the buffer. This is because the result of this function is
+   subtracted from the character count given by the coding system character
+   tell methods, which include the former but not the latter. */
+
+Charcount
+buffered_bytecount_to_charcount (const Ibyte *bufptr, Bytecount len)
+{
+  Boolint partial_first = 0;
+  Bytecount impartial;
+
+  if (valid_ibyteptr_p (bufptr))
+    {
+      if (rep_bytes_by_first_byte (*bufptr) > len)
+        {
+          /* This is a partial first character, include it. Return
+             immediately so validate_ibyte_string_backward doesn't run off
+             the beginning of the string. */
+          return (Charcount) 1;
+        }
+    }
+  else
+    {
+      const Ibyte *newstart = bufptr, *limit = newstart + len;
+
+      /* Our consumer has the start of a partial character, we have the
+         rest. */
+      while (newstart < limit && !valid_ibyteptr_p (newstart))
+        {
+          newstart++;
+        }
+                  
+      partial_first = 1;
+      bufptr = newstart;
+      len = limit - newstart;
+    }
+
+  if (len && valid_ibyteptr_p (bufptr))
+    {
+      /* There's at least one valid starting char in the string,
+         validate_ibyte_string_backward won't run off the begining. */
+      impartial = validate_ibyte_string_backward (bufptr, len);
+    }
+  else
+    {
+      impartial = 0;
+    }
+
+  return (Charcount) partial_first + bytecount_to_charcount (bufptr,
+                                                             impartial);
+}
+
 Bytecount
 charcount_to_bytecount_fun (const Ibyte *ptr, Charcount len)
 {

@@ -908,6 +908,12 @@ skip_ascii_down (const Ibyte *ptr, const Ibyte *end)
   return ptr;
 }
 
+/* Return the character count of an lstream or coding buffer of internal
+   format text, counting partial characters at the beginning of the buffer
+   as whole characters, and *not* counting partial characters at the end of
+   the buffer. */
+Charcount buffered_bytecount_to_charcount (const Ibyte *, Bytecount len);
+
 #else
 
 #define bytecount_to_charcount(ptr, len) ((Charcount) (len))
@@ -916,6 +922,7 @@ skip_ascii_down (const Ibyte *ptr, const Ibyte *end)
 #define charcount_to_bytecount_fmt(ptr, len, fmt) ((Bytecount) (len))
 #define skip_ascii(ptr, end) end
 #define skip_ascii_down(ptr, end) end
+#define buffered_bytecount_to_charcount (ptr, len) (len)
 
 #endif /* MULE */
 
