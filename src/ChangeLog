@@ -1,3 +1,19 @@
+2014-01-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c (buffered_bytecount_to_charcount): New.
+	Return the number of characters in a coding or lstream buffer,
+	including partial characters at the beginning of the buffer, but
+	not including those at the end. Refactored from
+	Lstream_character_tell().
+	* text.h:
+	* text.h (buffered_bytecount_to_charcount): Declare it.
+	* lstream.c (Lstream_character_tell):
+	Use the refactored buffered_bytecount_to_charcount () here, both
+	for the unget buffer and in_buffer.
+	* file-coding.c (coding_character_tell):
+	Check the character count of the lstream buffer too, when passing
+	back the character count from the coding stream.
+
 2014-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* redisplay.c (start_with_line_at_pixpos):

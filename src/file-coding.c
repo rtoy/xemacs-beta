@@ -1994,8 +1994,19 @@ static Charcount
 coding_character_tell (Lstream *stream)
 {
   struct coding_stream *str = CODING_STREAM_DATA (stream);
+  Charcount ctell
+    = XCODESYSMETH_OR_GIVEN (str->codesys, character_tell, (str), -1);
+  
+  if (ctell > 0 && Dynarr_length (str->convert_to) > 0)
+    {
+      ctell
+        -= buffered_bytecount_to_charcount ((const Ibyte *)
+                                            (Dynarr_begin (str->convert_to)),
+                                            Dynarr_length (str->convert_to));
+      text_checking_assert (ctell >= 0);
+    }
 
-  return XCODESYSMETH_OR_GIVEN (str->codesys, character_tell, (str), -1);
+  return ctell;
 }
 
 static int

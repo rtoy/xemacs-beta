@@ -752,15 +752,10 @@ Lstream_character_tell (Lstream *lstr)
           /* The character count should not include those characters
              currently *in* the unget buffer, subtract that count.  */
           Ibyte *ungot, *ungot_ptr;
-          Bytecount ii = lstr->unget_buffer_ind, impartial, sevenflen;
+          Bytecount ii = lstr->unget_buffer_ind;
 
           ungot_ptr = ungot
-            = alloca_ibytes (lstr->unget_buffer_ind) + MAX_ICHAR_LEN;
-
-          /* Make sure the string starts with a valid ibyteptr, otherwise
-             validate_ibyte_string_backward could run off the beginning. */
-          sevenflen = set_itext_ichar (ungot, (Ichar) 0x7f);
-          ungot_ptr += sevenflen;
+            = alloca_ibytes (lstr->unget_buffer_ind);
 
           /* Internal format data, but in reverse order. There's not
              actually a need to alloca here, we could work out the character
@@ -772,90 +767,23 @@ Lstream_character_tell (Lstream *lstr)
               *ungot_ptr++ = lstr->unget_buffer[--ii];
             }
 
-          impartial
-            = validate_ibyte_string_backward (ungot, ungot_ptr - ungot);
-
-          /* Move past the character we added. */
-          impartial -= sevenflen;
-          INC_IBYTEPTR (ungot);
-
-          if (impartial > 0 && !valid_ibyteptr_p (ungot))
-            {
-              Ibyte *newstart = ungot, *limit = ungot + impartial;
-              /* Our consumer has the start of a partial character, we
-                 have the rest. */
-
-              while (!valid_ibyteptr_p (newstart) && newstart < limit)
-                {
-                  newstart++, impartial--;
-                }
-                  
-              /* Remove this character from the count, since the
-                 end-consumer hasn't seen the full character. */
-              ctell--;
-              ungot = newstart;
-            }
-          else if (valid_ibyteptr_p (ungot)
-                   && rep_bytes_by_first_byte (*ungot) > impartial)
-            {
-              /* Rest of a partial character has yet to be read, its first
-                 octet has probably been unread by Lstream_read_1(). We
-                 included it in the accounting in Lstream_unread(), adjust
-                 the figure here appropriately. */
-              ctell--;
-            }
-
-          /* bytecount_to_charcount will throw an assertion failure if we're
-             not at the start of a character. */
-          text_checking_assert (impartial == 0 || valid_ibyteptr_p (ungot));
-
           /* The character length of this text is included in
              unget_character_count; if the bytes are still in the unget
              buffer, then our consumers haven't seen them, and so the
              character tell figure shouldn't reflect them. Subtract it from
              the total.  */
-          ctell -= bytecount_to_charcount (ungot, impartial);
+          ctell
+            -= buffered_bytecount_to_charcount (ungot, ungot_ptr - ungot);
         }
 
       if (lstr->in_buffer_ind < lstr->in_buffer_current)
         {
-          Ibyte *inbuf = lstr->in_buffer + lstr->in_buffer_ind;
-          Bytecount partial = lstr->in_buffer_current - lstr->in_buffer_ind,
-            impartial;
-
-          if (!valid_ibyteptr_p (inbuf))
-            {
-              Ibyte *newstart = inbuf;
-              Ibyte *limit = lstr->in_buffer + lstr->in_buffer_current;
-              /* Our consumer has the start of a partial character, we
-                 have the rest. */
-
-              while (newstart < limit && !valid_ibyteptr_p (newstart))
-                {
-                  newstart++;
-                }
-                  
-              /* Remove this character from the count, since the
-                 end-consumer hasn't seen the full character. */
-              ctell--;
-              inbuf = newstart;
-              partial = limit - newstart;
-            }
-
-          if (valid_ibyteptr_p (inbuf)) 
-            {
-              /* There's at least one valid starting char in the string,
-                 validate_ibyte_string_backward won't run off the
-                 begining. */
-              impartial = 
-                validate_ibyte_string_backward (inbuf, partial);
-            }
-          else
-            {
-              impartial = 0;
-            }
-
-          ctell -= bytecount_to_charcount (inbuf, impartial);
+          ctell
+            -= buffered_bytecount_to_charcount ((const Ibyte *)
+                                                (lstr->in_buffer
+                                                 + lstr->in_buffer_ind),
+                                                lstr->in_buffer_current
+                                                - lstr->in_buffer_ind);
         }
 
       text_checking_assert (ctell >= 0);
