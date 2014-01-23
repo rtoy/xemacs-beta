@@ -2244,9 +2244,9 @@ bytecount_to_charcount_fun (const Ibyte *ptr, Bytecount len)
 /* Return the character count of an lstream or coding buffer of
    internal-format text, counting partial characters at the beginning of the
    buffer as whole characters, and *not* counting partial characters at the
-   end of the buffer. This is because the result of this function is
-   subtracted from the character count given by the coding system character
-   tell methods, which include the former but not the latter. */
+   end of the buffer. The result of this function is subtracted from the
+   character count given by the coding system character tell methods, and we
+   need to treat each buffer in the same way to avoid double-counting. */
 
 Charcount
 buffered_bytecount_to_charcount (const Ibyte *bufptr, Bytecount len)
@@ -2258,10 +2258,10 @@ buffered_bytecount_to_charcount (const Ibyte *bufptr, Bytecount len)
     {
       if (rep_bytes_by_first_byte (*bufptr) > len)
         {
-          /* This is a partial first character, include it. Return
-             immediately so validate_ibyte_string_backward doesn't run off
-             the beginning of the string. */
-          return (Charcount) 1;
+          /* This is a partial last character. Return 0, avoid treating it
+             as a partial first character, since that would lead to it being
+             counted twice. */
+          return (Charcount) 0;
         }
     }
   else

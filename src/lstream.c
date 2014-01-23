@@ -721,8 +721,15 @@ Lstream_read_1 (Lstream *lstr, void *data, Bytecount size,
       Bytecount newoff = validate_ibyte_string_backward (p, off);
       if (newoff < off)
 	{
+          Charcount before = lstr->unget_character_count;
 	  Lstream_unread (lstr, p + newoff, off - newoff);
 	  off = newoff;
+
+          /* Since it's Lstream_read rather than our consumers unreading the
+             incomplete character (conceptually, not affecting the number of
+             characters ever Lstream_read() from the stream),
+             unget_character_count shouldn't include it. */
+          lstr->unget_character_count = before;
 	}
     }
 
