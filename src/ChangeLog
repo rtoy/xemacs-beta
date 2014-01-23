@@ -1,3 +1,14 @@
+2014-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lstream.c (Lstream_read_1):
+	Don't include the unread partial character in
+	unget_character_count, since our consumers will never be aware of it.
+	* text.c:
+	* text.c (buffered_bytecount_to_charcount):
+	A buffer consisting entirely of a partial character needs to be
+	treated as a partial last character, not a partial first
+	character, to avoid double-counting.
+
 2014-01-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c (buffered_bytecount_to_charcount): New.
