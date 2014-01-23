@@ -1,5 +1,9 @@
 2014-01-23  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* text.h (buffered_bytecount_to_charcount): This was
+	declared wrong for non-mule, correct this. Thank you Mats Lidell
+	and the buildbot.
+
 	* lstream.c (Lstream_read_1):
 	Don't include the unread partial character in
 	unget_character_count, since our consumers will never be aware of it.

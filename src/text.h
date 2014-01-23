@@ -922,7 +922,7 @@ Charcount buffered_bytecount_to_charcount (const Ibyte *, Bytecount len);
 #define charcount_to_bytecount_fmt(ptr, len, fmt) ((Bytecount) (len))
 #define skip_ascii(ptr, end) end
 #define skip_ascii_down(ptr, end) end
-#define buffered_bytecount_to_charcount (ptr, len) (len)
+#define buffered_bytecount_to_charcount(ptr, len) (len)
 
 #endif /* MULE */
 
