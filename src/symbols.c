@@ -749,14 +749,14 @@ Set SYMBOL's function definition to NEWDEF, and return NEWDEF.
 }
 
 /* FSFmacs */
-DEFUN ("define-function", Fdefine_function, 2, 2, 0, /*
+DEFUN ("define-function", Fdefine_function, 2, 3, 0, /*
 Set SYMBOL's function definition to NEWDEF, and return NEWDEF.
 Associates the function with the current load file, if any.
 If NEWDEF is a compiled-function object, stores the function name in
 the `annotated' slot of the compiled-function (retrievable using
 `compiled-function-annotation').
 */
-       (symbol, newdef))
+       (symbol, newdef, docstring))
 {
   /* This function can GC */
   Ffset (symbol, newdef);
@@ -765,6 +765,10 @@ the `annotated' slot of the compiled-function (retrievable using
   if (COMPILED_FUNCTIONP (newdef))
     XCOMPILED_FUNCTION (newdef)->annotated = symbol;
 #endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
+
+  if (!NILP (docstring))
+    Fput (symbol, Qfunction_documentation, docstring);
+
   return newdef;
 }
 

@@ -37,6 +37,8 @@ Lisp_Object Vinternal_doc_file_name;
 
 Lisp_Object QSsubstitute, Qdefvar;
 
+Lisp_Object Qfunction_documentation;
+
 /* Work out what source file a function or variable came from, taking the
    information from the documentation file. */
 
@@ -578,6 +580,45 @@ If TYPE is `defvar', then variable definitions are acceptable.
   return Qnil;
 }
 
+DEFUN ("documentation-property", Fdocumentation_property, 2, 3, 0, /*
+Return the documentation string that is SYMBOL's PROP property.
+This is like `get', but it can refer to strings stored in the
+`doc-directory/DOC' file; and if the value is a string, it is passed
+through `substitute-command-keys'.  A non-nil third argument avoids this
+translation.
+*/
+       (symbol, prop, raw))
+{
+  /* This function can GC */
+  Lisp_Object doc = Qnil;
+#ifdef I18N3
+  REGISTER Lisp_Object domain;
+#endif
+  struct gcpro gcpro1;
+
+  GCPRO1 (doc);
+
+  doc = Fget (symbol, prop, Qnil);
+  if (FIXNUMP (doc))
+    doc = get_doc_string (XFIXNUM (doc) > 0 ? doc : make_fixnum (- XFIXNUM (doc)));
+  else if (CONSP (doc))
+    doc = get_doc_string (doc);
+#ifdef I18N3
+  if (!NILP (doc))
+    {
+      domain = Fget (symbol, Qvariable_domain, Qnil);
+      if (NILP (domain))
+	doc = Fgettext (doc);
+      else
+	doc = Fdgettext (domain, doc);
+    }
+#endif
+  if (NILP (raw) && STRINGP (doc))
+    doc = Fsubstitute_command_keys (doc);
+  UNGCPRO;
+  return doc;
+}
+
 DEFUN ("documentation", Fdocumentation, 1, 2, 0, /*
 Return the documentation string of FUNCTION.
 Unless a non-nil second argument RAW is given, the
@@ -588,6 +629,14 @@ string is passed through `substitute-command-keys'.
   /* This function can GC */
   Lisp_Object fun;
   Lisp_Object doc;
+
+  if (SYMBOLP (function))
+    {
+      Lisp_Object tem = Fget (function, Qfunction_documentation, Qnil);
+      if (!NILP (tem))
+	return Fdocumentation_property (function, Qfunction_documentation,
+					raw);
+    }
 
   fun = Findirect_function (function);
 
@@ -676,45 +725,6 @@ string is passed through `substitute-command-keys'.
       doc = Fsubstitute_command_keys (doc);
       UNGCPRO;
     }
-  return doc;
-}
-
-DEFUN ("documentation-property", Fdocumentation_property, 2, 3, 0, /*
-Return the documentation string that is SYMBOL's PROP property.
-This is like `get', but it can refer to strings stored in the
-`doc-directory/DOC' file; and if the value is a string, it is passed
-through `substitute-command-keys'.  A non-nil third argument avoids this
-translation.
-*/
-       (symbol, prop, raw))
-{
-  /* This function can GC */
-  Lisp_Object doc = Qnil;
-#ifdef I18N3
-  REGISTER Lisp_Object domain;
-#endif
-  struct gcpro gcpro1;
-
-  GCPRO1 (doc);
-
-  doc = Fget (symbol, prop, Qnil);
-  if (FIXNUMP (doc))
-    doc = get_doc_string (XFIXNUM (doc) > 0 ? doc : make_fixnum (- XFIXNUM (doc)));
-  else if (CONSP (doc))
-    doc = get_doc_string (doc);
-#ifdef I18N3
-  if (!NILP (doc))
-    {
-      domain = Fget (symbol, Qvariable_domain, Qnil);
-      if (NILP (domain))
-	doc = Fgettext (doc);
-      else
-	doc = Fdgettext (domain, doc);
-    }
-#endif
-  if (NILP (raw) && STRINGP (doc))
-    doc = Fsubstitute_command_keys (doc);
-  UNGCPRO;
   return doc;
 }
 
@@ -1299,6 +1309,7 @@ syms_of_doc (void)
   DEFSUBR (Fsubstitute_command_keys);
 
   DEFSYMBOL (Qdefvar);
+  DEFSYMBOL (Qfunction_documentation);
 }
 
 void
