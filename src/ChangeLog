@@ -1,3 +1,14 @@
+2014-01-27  Michael Sperber  <mike@xemacs.org>
+
+	* symbols.c (Fdefine_function): Allow optional `docstring'
+	argument, as in GNU Emacs.
+
+	* lisp.h (Qfunction_documentation): Add extern declaration.
+
+	* doc.c (Fdocumentation_property): Move before its use.
+	(Fdocumentation): Retrieve documentation from `define-function'
+	docstring for symbols.
+
 2014-01-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.h (buffered_bytecount_to_charcount): This was

@@ -4619,6 +4619,8 @@ Lisp_Object make_directory_hash_table (Lisp_Object);
 /* Defined in doc.c */
 EXFUN (Fsubstitute_command_keys, 1);
 
+extern Lisp_Object Qfunction_documentation;
+
 Lisp_Object unparesseuxify_doc_string (int fd, EMACS_INT position,
 				       Ibyte *name_nonreloc,
 				       Lisp_Object name_reloc,
