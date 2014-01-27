@@ -178,6 +178,10 @@ keyword in your own programs.  "
 		 (put symbol 'custom-get value))
 		((eq keyword :require)
 		 (push value requests))
+		((eq keyword :risky)
+		 (put symbol 'risky-local-variable value))
+		((eq keyword :safe)
+		 (put symbol 'safe-local-variable value))
 		((eq keyword :type)
 		 (put symbol 'custom-type value))
 		((eq keyword :options)
@@ -264,6 +268,8 @@ The following keywords are meaningful:
 	VALUE should be a feature symbol.  If you save a value
 	for this option, then when your custom init file loads the value,
 	it does (require VALUE) first.
+:risky  Set SYMBOL's `risky-local-variable' property to VALUE.
+:safe   Set SYMBOL's `safe-local-variable' property to VALUE.
 :version
         VALUE should be a string specifying that the variable was
         first introduced, or its default value was changed, in Emacs
