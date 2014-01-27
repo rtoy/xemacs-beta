@@ -1,5 +1,9 @@
 2014-01-27  Michael Sperber  <mike@xemacs.org>
 
+	* lisp.el (check-parens): Add, from GNU Emacs.
+	
+2014-01-27  Michael Sperber  <mike@xemacs.org>
+
 	* custom.el (custom-declare-variable, defcustom): Add :risky and
 	:safe options
 
