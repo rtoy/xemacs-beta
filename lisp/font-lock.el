@@ -737,7 +737,9 @@ The corresponding face should be set using `edit-faces' or the
     font-lock-constant-face
     font-lock-reference-face
     font-lock-preprocessor-face
-    font-lock-warning-face))
+    font-lock-warning-face
+    font-lock-regexp-grouping-backslash
+    font-lock-regexp-grouping-construct))
 
 (defface font-lock-comment-face
   '((((class color) (background dark)) (:foreground "gray80"))
@@ -857,6 +859,16 @@ on the major mode's symbol."
     (((class color) (background dark)) (:foreground "Pink" :bold t))
     (t (:inverse-video t :bold t)))
   "Font Lock mode face used to highlight warnings."
+  :group 'font-lock-faces)
+
+(defface font-lock-regexp-grouping-backslash
+  '((t (:inherit font-lock-keyword-face :bold t)))
+  "Font Lock mode face for backslashes in Lisp regexp grouping constructs."
+  :group 'font-lock-faces)
+
+(defface font-lock-regexp-grouping-construct
+  '((t (:inherit font-lock-keyword-face :bold t)))
+  "Font Lock mode face used to highlight grouping constructs in Lisp regexps."
   :group 'font-lock-faces)
 
 (defun font-lock-recompute-variables ()
