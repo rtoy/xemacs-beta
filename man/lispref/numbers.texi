@@ -77,7 +77,7 @@ to fix it in the XEmacs manuals would be heartily welcomed.
 * Random Numbers::            Obtaining random integers, predictable or not.
 @end menu
 
-@node Integer Basics
+@node Integer Basics, Rational Basics, Numbers, Numbers
 @section Integer Basics
 
   The range of values for an integer depends on the machine.    If a
@@ -201,7 +201,7 @@ floating point numbers.
 @end ignore
 
 
-@node Rational Basics
+@node Rational Basics, Float Basics, Integer Basics, Numbers
 @section Rational Basics
 
 Ratios (built-in rational numbers) are available only when the bignum
@@ -225,7 +225,7 @@ an integer or a ratio.
 @end defun
 
 
-@node Float Basics
+@node Float Basics, The Bignum Extension, Rational Basics, Numbers
 @section Floating Point Basics
 
   XEmacs supports floating point numbers.  The precise range of floating
@@ -310,7 +310,7 @@ to unnormalized floats by checking whether the number is between
 @code{least-positive-float} and @code{least-positive-normalized-float}.
 
 
-@node The Bignum Extension
+@node The Bignum Extension, Predicates on Numbers, Float Basics, Numbers
 @section The Bignum Extension
 
   In XEmacs 21.5.18, an extension was added by @email{james@@xemacs.org,
@@ -373,7 +373,7 @@ explicit calls to the function @code{coerce}.
 @end menu
 
 
-@node Bignum Basics
+@node Bignum Basics, Ratio Basics, The Bignum Extension, The Bignum Extension
 @subsection Bignum Basics
 
 In most cases, bignum support should be transparent to users and Lisp
@@ -387,7 +387,7 @@ bignums, and ratios) are printed using the @samp{%d}, @samp{%o},
 @samp{%x}, and @samp{%u} format conversions.
 
 
-@node Ratio Basics
+@node Ratio Basics, Bigfloat Basics, Bignum Basics, The Bignum Extension
 @subsection Ratio Basics
 
 Ratios, when available, have the read syntax and print representation
@@ -396,7 +396,7 @@ printed using the @samp{%d}, @samp{%o}, @samp{%x}, and @samp{%u} format
 conversions.
 
 
-@node Bigfloat Basics
+@node Bigfloat Basics, Canonicalization and Contagion, Ratio Basics, The Bignum Extension
 @subsection Bigfloat Basics
 
 Bigfloats, when available, have the same read syntax and print
@@ -437,7 +437,7 @@ the bigfloat is no greater than the source type.
     @result{} 9.99999999999999E14
 @end example
 
-@node Canonicalization and Contagion
+@node Canonicalization and Contagion, Compatibility Issues, Bigfloat Basics, The Bignum Extension
 @subsection Canonicalization and Contagion
 
 @dfn{Canonicalization} is a rule intended to enhance the time and space
@@ -528,7 +528,7 @@ is, if you find a number in un-canonicalized form, please report it as a
 bug.
 
 
-@node Compatibility Issues
+@node Compatibility Issues,  , Canonicalization and Contagion, The Bignum Extension
 @subsection Compatibility Issues
 
   @emph{Surgeon General's Warning}: The automatic conversions cannot be
@@ -592,7 +592,7 @@ any necessary type coercions before comparing for equality
 @ref{Comparison of Numbers}.
 
 
-@node Predicates on Numbers
+@node Predicates on Numbers, Comparison of Numbers, The Bignum Extension, Numbers
 @section Type Predicates for Numbers
 
   The functions in this section test whether the argument is a number or
@@ -702,7 +702,7 @@ so, @code{nil} otherwise.
 @end defun
 
 
-@node Comparison of Numbers
+@node Comparison of Numbers, Numeric Conversions, Predicates on Numbers, Numbers
 @section Comparison of Numbers
 @cindex number equality
 
@@ -876,7 +876,7 @@ This function returns the smallest of its arguments.
 @end example
 @end defun
 
-@node Numeric Conversions
+@node Numeric Conversions, Arithmetic Operations, Comparison of Numbers, Numbers
 @section Numeric Conversions
 @cindex rounding in conversions
 
@@ -923,7 +923,7 @@ direction of rounding depended on the underlying machine and the C
 implementation.
 @end defun
 
-@node Arithmetic Operations
+@node Arithmetic Operations, Rounding Operations, Numeric Conversions, Numbers
 @section Arithmetic Operations
 
   XEmacs Lisp provides the traditional four arithmetic operations:
@@ -1166,7 +1166,7 @@ argument is floating point.  For @code{floor}, see @ref{Numeric
 Conversions}.
 @end defun
 
-@node Rounding Operations
+@node Rounding Operations, Bitwise Operations, Arithmetic Operations, Numbers
 @section Rounding Operations
 @cindex rounding without conversion
 
@@ -1208,7 +1208,7 @@ XEmacs did not make this guarantee, and the direction of rounding
 depended on the underlying machine and the C implementation.
 @end defun
 
-@node Bitwise Operations
+@node Bitwise Operations, Math Functions, Rounding Operations, Numbers
 @section Bitwise Operations on Integers
 
   In a computer, an integer is represented as a binary number, a
@@ -1513,7 +1513,7 @@ bit is one in the result if, and only if, the @var{n}th bit is zero in
 @end example
 @end defun
 
-@node Math Functions
+@node Math Functions, Random Numbers, Bitwise Operations, Numbers
 @section Standard Mathematical Functions
 @cindex transcendental functions
 @cindex mathematical functions
@@ -1595,7 +1595,7 @@ the value is a NaN.
 This returns the cube root of @var{number}.
 @end defun
 
-@node Random Numbers
+@node Random Numbers,  , Math Functions, Numbers
 @section Random Numbers
 @cindex random numbers
 

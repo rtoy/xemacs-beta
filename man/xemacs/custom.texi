@@ -40,7 +40,7 @@ file to do the customization in each session.  @xref{Init File}.
                      behavior of XEmacs.
 @end menu
 
-@node Minor Modes
+@node Minor Modes, Behaviors, Customization, Customization
 @section Minor Modes
 @cindex minor modes
 
@@ -107,7 +107,7 @@ as you type them.  For example, @samp{amd} might expand to @samp{abbrev
 mode}.  @xref{Abbrevs}, for full information.
 
 @c Updated for 21.5.6 2002/03/13 sjt
-@node Behaviors
+@node Behaviors, Variables, Minor Modes, Customization
 @section Behaviors
 @cindex behavior
 
@@ -155,7 +155,7 @@ behavior (denoted by a symbol), and enables it.  Conversely,
 @c @end defun
 
 
-@node Variables
+@node Variables, Keyboard Macros, Behaviors, Customization
 @section Variables
 @cindex variable
 @cindex option
@@ -195,7 +195,7 @@ the left margin) to be used by the fill commands (@pxref{Filling}).
 * File Variables::      How files can specify variable values.
 @end menu
 
-@node Examining
+@node Examining, Easy Customization, Variables, Variables
 @subsection Examining and Setting Variables
 @cindex setting variables
 
@@ -253,7 +253,7 @@ sets @code{fill-column} to 75, as if you had executed the Lisp expression
   Setting variables in this way, like all means of customizing Emacs
 except where explicitly stated, affects only the current Emacs session.
 
-@node Easy Customization
+@node Easy Customization, Edit Options, Examining, Variables
 @subsection Easy Customization Interface
 
 @findex customize
@@ -276,7 +276,7 @@ rest.)
                                 options, faces, or groups.
 @end menu
 
-@node Customization Groups
+@node Customization Groups, Changing an Option, Easy Customization, Easy Customization
 @subsubsection Customization Groups
 @cindex customization groups
 
@@ -348,7 +348,7 @@ that active field creates an ordinary customization buffer showing just
 that group and its contents, just that option, or just that face.
 This is the way to set values in it.
 
-@node Changing an Option
+@node Changing an Option, Face Customization, Customization Groups, Easy Customization
 @subsubsection Changing an Option
 
   Here is an example of what a user option looks like in the
@@ -510,7 +510,7 @@ Invoking @samp{[Done]} buries this customization buffer.  Each of the
 other fields performs an operation---set, save or reset---on each of the
 items in the buffer that could meaningfully be set, saved or reset.
 
-@node Face Customization
+@node Face Customization, Specific Customization, Changing an Option, Easy Customization
 @subsubsection Customizing Faces
 @cindex customizing faces
 @cindex bold font
@@ -572,7 +572,7 @@ get from invoking @samp{[State]}.
 @c you don't want to change that attribute.  Type @samp{none} if you want
 @c to clear out the attribute.
 
-@node Specific Customization
+@node Specific Customization, , Face Customization, Easy Customization
 @subsubsection Customizing Specific Items
 
   Instead of finding the options you want to change by moving down
@@ -632,7 +632,7 @@ you can use two special commands to revisit your previous changes.  Use
 saved.  Use @kbd{M-x customize-customized} to look at the options and
 faces that you have set but not saved.
 
-@node Edit Options
+@node Edit Options, Locals, Easy Customization, Variables
 @subsection Editing Variable Values
 
 @table @kbd
@@ -684,7 +684,7 @@ Set the variable point is in or near to @code{nil}.
 Move to the next or previous variable.
 @end table
 
-@node Locals
+@node Locals, File Variables, Edit Options, Variables
 @subsection Local Variables
 
 @table @kbd
@@ -769,7 +769,7 @@ the case of:
 (default-value 'fill-column)
 @end example
 
-@node File Variables
+@node File Variables, , Locals, Variables
 @subsection Local Variables in Files
 @cindex local variables in files
 
@@ -871,7 +871,7 @@ query.
 The command @code{M-x normal-mode} always obeys local variables lists
 and ignores this variable.
 
-@node Keyboard Macros
+@node Keyboard Macros, Key Bindings, Variables, Customization
 @section Keyboard Macros
 
 @cindex keyboard macros
@@ -921,7 +921,7 @@ set of commands again by invoking the macro.
 * Kbd Macro Query::     Keyboard macros that do different things each use.
 @end menu
 
-@node Basic Kbd Macro
+@node Basic Kbd Macro, Save Kbd Macro, Keyboard Macros, Keyboard Macros
 @subsection Basic Use
 
 @kindex C-x (
@@ -970,7 +970,7 @@ to the end of its definition by typing @kbd{C-u C-x (}.  This is equivalent
 to plain @kbd{C-x (} followed by retyping the whole definition so far.  As
 a consequence it re-executes the macro as previously defined.
 
-@node Save Kbd Macro
+@node Save Kbd Macro, Kbd Macro Query, Basic Kbd Macro, Keyboard Macros
 @subsection Naming and Saving Keyboard Macros
 
 @findex name-last-kbd-macro
@@ -1006,7 +1006,7 @@ additional Lisp code to record the keys (if any) that you have bound to the
 keyboard macro, so that the macro is reassigned the same keys when you
 load the file.
 
-@node Kbd Macro Query
+@node Kbd Macro Query, , Save Kbd Macro, Keyboard Macros
 @subsection Executing Macros With Variations
 
 @kindex C-x q
@@ -1042,7 +1042,7 @@ inside the recursive edit does not become part of the macro.  During macro
 execution, the recursive edit gives you a chance to do some particularized
 editing.  @xref{Recursive Edit}.
 
-@node Key Bindings
+@node Key Bindings, Syntax, Keyboard Macros, Customization
 @section Customizing Key Bindings
 
   This section deals with the @dfn{keymaps} that define the bindings
@@ -1065,7 +1065,7 @@ hyphens.
                 beginners from surprises.
 @end menu
 
-@node Keymaps
+@node Keymaps, Rebinding, Key Bindings, Key Bindings
 @subsection Keymaps
 @cindex keymap
 
@@ -1169,7 +1169,7 @@ definition overriding the global one.  The character after the
 for @kbd{C-x} commands contains @code{nil}, the definition from the global
 keymap for @kbd{C-x} commands is used.@refill
 
-@node Rebinding
+@node Rebinding, Disabling, Keymaps, Key Bindings
 @subsection Changing Key Bindings
 @cindex key rebinding, this session
 @cindex rebinding keys, this session
@@ -1186,7 +1186,7 @@ local map, which affects all buffers using the same major mode.
 * Key Bindings Using Strings:: Using Strings for Changing Key Bindings
 @end menu
 
-@node Interactive Rebinding
+@node Interactive Rebinding, Programmatic Rebinding, Rebinding, Rebinding
 @subsubsection Changing Key Bindings Interactively
 @findex global-set-key
 @findex local-set-key
@@ -1249,7 +1249,7 @@ arguments, an old definition, a new definition, and a keymap, and
 redefines in that keymap all keys that were previously defined with the
 old definition to have the new definition instead.
 
-@node Programmatic Rebinding
+@node Programmatic Rebinding, Key Bindings Using Strings, Interactive Rebinding, Rebinding
 @subsubsection Changing Key Bindings Programmatically
 
   You can use the functions @code{global-set-key} and @code{define-key}
@@ -1348,7 +1348,7 @@ Here are some examples of programmatically binding keys:
 @comment ;;
 @comment (global-set-key "\^J" 'my-command)
 
-@node Key Bindings Using Strings
+@node Key Bindings Using Strings, , Programmatic Rebinding, Rebinding
 @subsubsection Using Strings for Changing Key Bindings
 
   For backward compatibility, you can still use strings to represent
@@ -1403,7 +1403,7 @@ similar fashion:
         control @@      control space
 @end example
 
-@node Disabling
+@node Disabling, , Rebinding, Key Bindings
 @subsection Disabling Commands
 @cindex disabled command
 
@@ -1451,7 +1451,7 @@ invoke it; it also applies if the command is invoked using @kbd{M-x}.
 Disabling a command has no effect on calling it as a function from Lisp
 programs.
 
-@node Syntax
+@node Syntax, Init File, Key Bindings, Customization
 @section The Syntax Table
 @cindex syntax table
 
@@ -1470,7 +1470,7 @@ length 256 whose elements are numbers.
 * Change: Syntax Change.  How to change the information.
 @end menu
 
-@node Syntax Entry
+@node Syntax Entry, Syntax Change, Syntax, Syntax
 @subsection Information About Each Character
 
   The syntax table entry for a character is a number that encodes six
@@ -1568,7 +1568,7 @@ to @code{nil} in modes where comment-terminator sequences are liable to
 appear where there is no comment, for example, in Lisp mode where the
 comment terminator is a newline but not every newline ends a comment.
 
-@node Syntax Change
+@node Syntax Change, , Syntax Entry, Syntax
 @subsection Altering Syntax Information
 
   It is possible to alter a character's syntax table entry by storing a new
@@ -1620,7 +1620,7 @@ character includes both the string you have to pass to
 @code{modify-syntax-entry} to set up that character's current syntax,
 and some English to explain that string if necessary.
 
-@node Init File
+@node Init File, Audible Bell, Syntax, Customization
 @section The Init File
 @cindex init file
 @cindex Emacs initialization file
@@ -1656,7 +1656,7 @@ byte-compile it to @file{~/.xemacs/init.elc} or @file{~/.emacs.elc}.
 * Terminal Init::   Each terminal type can have an init file.
 @end menu
 
-@node Init Syntax
+@node Init Syntax, Init Examples, Init File, Init File
 @subsection Init File Syntax
 
   The init file contains one or more Lisp function call
@@ -1714,7 +1714,7 @@ require one and some contexts require the other.
 Write a single-quote (') followed by the Lisp object you want.
 @end table
 
-@node Init Examples
+@node Init Examples, Terminal Init, Init Syntax, Init File
 @subsection Init File Examples
 
   Here are some examples of doing certain commonly desired things with
@@ -1877,7 +1877,7 @@ Enable the use of the command @code{eval-expression} without confirmation.
 @end example
 @end itemize
 
-@node Terminal Init
+@node Terminal Init, , Init Examples, Init File
 @subsection Terminal-Specific Initialization
 
   Each terminal type can have a Lisp library to be loaded into Emacs when
@@ -1913,7 +1913,7 @@ read.  @xref{Init File}.  You can set the value in the init file to
 override part of any of the terminal-specific libraries and to define
 initializations for terminals that do not have a library.@refill
 
-@node Audible Bell
+@node Audible Bell, Faces, Init File, Customization
 @section Changing the Bell Sound
 @cindex audible bell, changing
 @cindex bell, changing
@@ -2021,8 +2021,7 @@ You type something other than the required @code{y} or @code{n}
 You type something other than @code{yes} or @code{no}
 @end table
 
-@comment  node-name,  next,  previous,  up
-@node Faces
+@node Faces, Frame Components, Audible Bell, Customization
 @section Faces
 
 XEmacs has objects called extents and faces.  An @dfn{extent}
@@ -2041,7 +2040,7 @@ good.  However, customization UI and documentation still leaves a lot to
 be desired.  Here's a first cut, as a separate node.
 
 @menu
-* Xft Font Customization::
+* Xft Font Customization::  How to customize Xft fonts.
 @end menu
 
 @subsection Customizing Faces
@@ -2239,9 +2238,8 @@ to make underlining an attribute of the face or not. If the optional
 @var{frame} argument is provided, the face is changed only in that
 frame; otherwise, it is changed in all frames.
 
-
-@node Xft Font Customization, , , Faces
-@section Xft Font Customization
+@node Xft Font Customization, , Faces, Faces
+@subsection Xft Font Customization
 
 This section was written by @email{stephen@@xemacs.org,Stephen Turnbull},
 and is very much a work in progress.  I've tried to provide pointers to
@@ -2257,17 +2255,31 @@ not able to respond quickly.
 @c Don't blame Ben (or Eric and Matthias, for that matter).  Feel free to
 @c add, edit, and share the blame, everybody!
 
-@c #### Make these @urlref's!!
 As of mid-2005, we have added support for the
-@file{Xft} library, which provides a more robust @emph{font
-configuration} mechanism via Keith Packard's @file{fontconfig} library;
-improved glyph rendering, including antialiasing, via the
-@file{freetype} library; and client-side rendering (saving bandwidth and
-server memory) via the @file{XRender extension}.
+@uref{http://www.freedesktop.org/wiki/Software/Xft/,Xft} library,
+which provides a more robust @emph{font configuration} mechanism via
+Keith Packard's
+@uref{http://www.freedesktop.org/wiki/Software/fontconfig/,fontconfig}
+library; improved glyph rendering, including antialiasing, via the
+@uref{http://freetype.org/,freetype} library; and client-side
+rendering (saving bandwidth and server memory) via the
+@file{XRender extension}.
 
 @c #### Describe Alexey Gladkov and Yury Konovalov's work.
 
-@subheading Font configuration
+@menu
+* Font configuration::    Faces versus fontconfig.
+* fontconfig::            How fontconfig finds fonts.
+* fontconfig font names:: How fonts are named when using fontconfig.
+* Font menus::            Why the XEmacs font menus are broken.
+* X resources::           Specification of fonts with X resources.
+* Specifiers charsets and languages:: On the absence of language specifiers.
+* Known Problems::        XEmacs features that don't work with Xft.
+* Variables Used with Xft and Fontconfig:: Lisp Xft/fontconfig variables.
+@end menu
+
+@node Font configuration, fontconfig, Xft Font Customization, Xft Font Customization
+@subsubsection Font configuration
 
 In XEmacs, font configuration is handled via @emph{faces}.  Currently
 XEmacs uses a special type of @emph{font specifier} to map XEmacs
@@ -2279,7 +2291,8 @@ whatsoever.  However, the @file{fontconfig} library which is used with
 reliably parsable naming scheme similar to that used by TrueType fonts
 on MS Windows and the Macintosh.
 
-@subheading fontconfig
+@node fontconfig, fontconfig font names, Font configuration, Xft Font Customization
+@subsubsection fontconfig
 
 Fontconfig is dramatically different from the X model in several ways.
 In particular, when queried for a font @emph{fontconfig always returns a
@@ -2311,7 +2324,8 @@ Further, a @dfn{standard minimal configuration} is defined that ensures
 that at least the @emph{serif}, @emph{sans-serif}, and @emph{monospace}
 font aliases are available on all @file{fontconfig} systems.
 
-@subheading fontconfig font names
+@node fontconfig font names, Font menus, fontconfig, Xft Font Customization
+@subsubsection fontconfig font names
 
 @file{fontconfig} font names are very regular, and constitute a precise
 and extensible specification of a font's properties.
@@ -2487,7 +2501,8 @@ attribute if present, and lowercasing the name.  Thus
 @kbd{M-x apropos RET fc-.*-mapping} will give a list of variables each
 of which lists such keywords and their meanings.
 
-@subheading Font menus
+@node Font menus, X resources, fontconfig font names, Xft Font Customization
+@subsubsection Font menus
 
 The @samp{Options->Font} and @samp{Options->Font Sizes} menus are
 broken, by design, not just by @file{Xft}.  The problem is that many
@@ -2497,7 +2512,8 @@ whole idea of requiring that the font match the size is strange.  And
 the @samp{Options->Font Weights} menu is just disabled, and has been for
 eons.
 
-@subheading X resources
+@node X resources, Specifiers charsets and languages, Font menus, Xft Font Customization
+@subsubsection X resources
 
 Currently there are @emph{four} treatments of font resources.  There are
 the @samp{XEmacs.@var{face}.attributeFont} resources used to set a
@@ -2524,7 +2540,8 @@ resource manager), and add them to font specifiers as appropriate.  But
 this will require a bit of thought to obey POLA vis-a-vis usual @file{Xt}
 conventions.
 
-@subheading Specifiers, charsets, and languages
+@node Specifiers charsets and languages, Known Problems, X resources, Xft Font Customization
+@subsubsection Specifiers, charsets, and languages
 
 Traditionally Mule uses a rather rigid and low-level abstraction, the
 @emph{charset}, to characterize font repertoires.  Unfortunately,
@@ -2603,7 +2620,8 @@ allows a lot more text to fit there.
 @c platform, Mac OS X, and needs to be rechecked on Linux, where it was
 @c observed.
 
-@subheading Known Problems
+@node Known Problems, Variables Used with Xft and Fontconfig, Specifiers charsets and languages, Xft Font Customization
+@subsubsection Known Problems
 
 @table @code
 @item Options->Font
@@ -2621,7 +2639,8 @@ a series of "phantom" underlines.
 I think this is probably an Xft bug, but I'm not sure.
 @end table
 
-@subheading Variables Used with Xft and Fontconfig
+@node Variables Used with Xft and Fontconfig, , Known Problems, Xft Font Customization
+@subsubsection Variables Used with Xft and Fontconfig
 
 @defvar xft-debug-level
 
@@ -2642,7 +2661,7 @@ Regular expression matching XLFD font names.
 @end defvar
 
 
-@node Frame Components
+@node Frame Components, X Resources, Faces, Customization
 @section Frame Components
 
 You can control the presence and position of most frame components, such
@@ -2652,7 +2671,7 @@ This section is not written yet.  Try the Lisp Reference Manual:
 @ref{Menubar,,,lispref,}, @ref{Toolbar Intro,,,lispref,}, and
 @ref{Gutter Intro,,,lispref,}.
 
-@node X Resources
+@node X Resources, , Frame Components, Customization
 @section X Resources
 @cindex X resources
 @findex x-create-frame
@@ -2719,7 +2738,7 @@ XEmacs*FRAME-NAME.parameter: value
 * Menubar Resources::      Specifying resources for the menubar.
 @end menu
 
-@node Geometry Resources
+@node Geometry Resources, Iconic Resources, X Resources, X Resources
 @subsection Geometry Resources
 
 To make the default size of all XEmacs frames be 80 columns by 55 lines,
@@ -2799,7 +2818,7 @@ This is rather complicated, but it does seem to provide the most
 intuitive behavior with respect to the default sizes and positions of
 frames created in various ways.
 
-@node Iconic Resources
+@node Iconic Resources, Resource List, Geometry Resources, X Resources
 @subsection Iconic Resources
 
 Analogous to @code{-geometry}, the @code{-iconic} command-line option
@@ -2808,7 +2827,7 @@ always applies to the first frame created regardless of its name.
 However, it is possible to set the iconic flag on particular frames (by
 name) by using the @code{XEmacs*FRAME-NAME.iconic} resource.
 
-@node Resource List
+@node Resource List, Face Resources, Iconic Resources, X Resources
 @subsection Resource List
 
 XEmacs frames accept the following resources:
@@ -2945,7 +2964,7 @@ resources are used to initialize the variables
 @code{x-pointer-foreground-color} and @code{x-pointer-background-color}.
 @end table
 
-@node Face Resources
+@node Face Resources, Widgets, Resource List, X Resources
 @subsection Face Resources
 
 The attributes of faces are also per-frame. They can be specified as:
@@ -3075,7 +3094,7 @@ override this for ASCII, and for ASCII alone, by passing the
 @samp{FORCE} argument to @samp{set-charset-registries}, and specifying
 an empty string as one of the charset registries. 
 
-@node Widgets
+@node Widgets, Menubar Resources, Face Resources, X Resources
 @subsection Widgets
 
 There are several structural widgets between the terminal EmacsFrame
@@ -3096,7 +3115,7 @@ where INVOCATION-NAME is the terminal component of the name of the
 XEmacs executable (usually @samp{xemacs}), and
 @samp{x-emacs-application-class} is generally @samp{XEmacs}.
 
-@node Menubar Resources
+@node Menubar Resources, , Widgets, X Resources
 @subsection Menubar Resources
 
 As the menubar is implemented as a widget which is not a part of XEmacs

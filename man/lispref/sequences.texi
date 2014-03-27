@@ -62,7 +62,7 @@ are the numbers 0 and 1.
 * Bit Vector Functions::  Functions specifically for bit vectors.
 @end menu
 
-@node Sequence Functions
+@node Sequence Functions, Arrays, Sequences Arrays Vectors, Sequences Arrays Vectors
 @section Sequences
 
   In XEmacs Lisp, a @dfn{sequence} is either a list, a vector, a bit
@@ -257,7 +257,7 @@ bit-vector can only hold the integers one or zero, strings can only hold
 characters) a @code{wrong-type-argument} error results.
 @end defun
 
-@node Arrays
+@node Arrays, Array Functions, Sequence Functions, Sequences Arrays Vectors
 @section Arrays
 @cindex array
 
@@ -337,7 +337,7 @@ Bit vectors are printed in a way that shows the contents more clearly
 as bits.
 @end itemize
 
-@node Array Functions
+@node Array Functions, Vectors, Arrays, Sequences Arrays Vectors
 @section Functions that Operate on Arrays
 
   In this section, we describe the functions that accept strings, vectors,
@@ -428,7 +428,7 @@ If @var{array} is a string and @var{object} is not a character, a
 The general sequence functions @code{copy-sequence} and @code{length}
 are often useful for objects known to be arrays.  @xref{Sequence Functions}.
 
-@node Vectors
+@node Vectors, Vector Functions, Array Functions, Sequences Arrays Vectors
 @section Vectors
 @cindex vector
 
@@ -467,7 +467,7 @@ not evaluate or even examine the elements of the vector.
 @end group
 @end example
 
-@node Vector Functions
+@node Vector Functions, Bit Vectors, Vectors, Sequences Arrays Vectors
 @section Functions That Operate on Vectors
 
   Here are some functions that relate to vectors:
@@ -562,7 +562,7 @@ list with the same elements (@pxref{Building Lists}):
 @end group
 @end example
 
-@node Bit Vectors
+@node Bit Vectors, Bit Vector Functions, Vector Functions, Sequences Arrays Vectors
 @section Bit Vectors
 @cindex bit vector
 
@@ -584,7 +584,7 @@ whose elements are 0, 1, 1, 0, and 1, respectively, is printed as
   Bit vectors are considered constants for evaluation, like vectors,
 strings, and numbers.  @xref{Self-Evaluating Forms}.
 
-@node Bit Vector Functions
+@node Bit Vector Functions,  , Bit Vectors, Sequences Arrays Vectors
 @section Functions That Operate on Bit Vectors
 
   Here are some functions that relate to bit vectors:

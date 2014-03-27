@@ -31,7 +31,7 @@ not be displayed in any window.
 * Indirect Buffers::    An indirect buffer shares text with some other buffer.
 @end menu
 
-@node Buffer Basics
+@node Buffer Basics, Current Buffer, Buffers, Buffers
 @section Buffer Basics
 
 @ifinfo
@@ -75,7 +75,7 @@ This function returns @code{t} if @var{object} is a buffer,
 @code{nil} otherwise.
 @end defun
 
-@node Current Buffer
+@node Current Buffer, Buffer Names, Buffer Basics, Buffers
 @section The Current Buffer
 @cindex selecting a buffer
 @cindex changing to another buffer
@@ -199,7 +199,7 @@ buffer--else an error is signaled.  This function returns the buffer
 identified by @var{buffer-or-name}.
 @end defun
 
-@node Buffer Names
+@node Buffer Names, Buffer File Name, Current Buffer, Buffers
 @section Buffer Names
 @cindex buffer names
 
@@ -302,7 +302,7 @@ See the related function @code{generate-new-buffer} in @ref{Creating
 Buffers}.
 @end defun
 
-@node Buffer File Name
+@node Buffer File Name, Buffer Modification, Buffer Names, Buffers
 @section Buffer File Name
 @cindex visited file
 @cindex buffer file name
@@ -413,7 +413,7 @@ listing in place of the visited file name, for buffers that don't have a
 visited file name.  Dired buffers use this variable.
 @end defvar
 
-@node Buffer Modification
+@node Buffer Modification, Modification Time, Buffer File Name, Buffers
 @section Buffer Modification
 @cindex buffer modification
 @cindex modification flag (of buffer)
@@ -473,7 +473,7 @@ counter that increments every time the buffer is modified.  If
 @var{buffer} is @code{nil} (or omitted), the current buffer is used.
 @end defun
 
-@node Modification Time
+@node Modification Time, Read Only Buffers, Buffer Modification, Buffers
 @section Comparison of Modification Time
 @cindex comparison of modification time
 @cindex modification time, comparison of
@@ -553,7 +553,7 @@ See the file @file{userlock.el} for the standard definition.
 See also the file locking mechanism in @ref{File Locks}.
 @end defun
 
-@node Read Only Buffers
+@node Read Only Buffers, The Buffer List, Modification Time, Buffers
 @section Read-Only Buffers
 @cindex read-only buffer
 @cindex buffer, read-only
@@ -631,7 +631,7 @@ that extents that lie completely within [@var{start}, @var{end}] are not
 checked.  See @code{extent-in-region-p} for a fuller discussion.
 @end defun
 
-@node The Buffer List
+@node The Buffer List, Creating Buffers, Read Only Buffers, Buffers
 @section The Buffer List
 @cindex buffer list
 
@@ -740,7 +740,7 @@ If you wish to replace a buffer in all the windows that display it, use
 @code{replace-buffer-in-windows}.  @xref{Buffers and Windows}.
 @end deffn
 
-@node Creating Buffers
+@node Creating Buffers, Killing Buffers, The Buffer List, Buffers
 @section Creating Buffers
 @cindex creating buffers
 @cindex buffers, creating
@@ -808,7 +808,7 @@ See the related function @code{generate-new-buffer-name} in @ref{Buffer
 Names}.
 @end defun
 
-@node Killing Buffers
+@node Killing Buffers, Indirect Buffers, Creating Buffers, Buffers
 @section Killing Buffers
 @cindex killing buffers
 @cindex buffers, killing
@@ -898,7 +898,7 @@ variable @code{buffer-offer-save} automatically becomes buffer-local
 when set for any reason.  @xref{Buffer-Local Variables}.
 @end defvar
 
-@node Indirect Buffers
+@node Indirect Buffers,  , Killing Buffers, Buffers
 @section Indirect Buffers
 @cindex indirect buffers
 @cindex base buffer

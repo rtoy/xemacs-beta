@@ -27,7 +27,7 @@ function @code{eval}.
 * Multiple values:: Functions may return more than one result.
 @end menu
 
-@node Intro Eval
+@node Intro Eval, Eval, Evaluation, Evaluation
 @section Introduction to Evaluation
 
   The Lisp interpreter, or evaluator, is the program that computes
@@ -100,7 +100,7 @@ effects is @code{(setq foo 1)}.
   The details of what evaluation means for each kind of form are
 described below (@pxref{Forms}).
 
-@node Eval
+@node Eval, Forms, Intro Eval, Evaluation
 @section Eval
 @c ??? Perhaps this should be the last section in the chapter.
 
@@ -236,7 +236,7 @@ particular elements, like this:
 @end example
 @end defvar
 
-@node Forms
+@node Forms, Quoting, Eval, Evaluation
 @section Kinds of Forms
 
   A Lisp object that is intended to be evaluated is called a @dfn{form}.
@@ -260,7 +260,7 @@ starting with ``all other types'' which are self-evaluating forms.
                               containing their real definitions.
 @end menu
 
-@node Self-Evaluating Forms
+@node Self-Evaluating Forms, Symbol Forms, Forms, Forms
 @subsection Self-Evaluating Forms
 @cindex vector evaluation
 @cindex literal evaluation
@@ -314,7 +314,7 @@ program.  Here is an example:
 @end group
 @end example
 
-@node Symbol Forms
+@node Symbol Forms, Classifying Lists, Self-Evaluating Forms, Forms
 @subsection Symbol Forms
 @cindex symbol evaluation
 
@@ -348,7 +348,7 @@ always @code{t}; you cannot set or bind them to any other values.  Thus,
 these two symbols act like self-evaluating forms, even though
 @code{eval} treats them like any other symbol.
 
-@node Classifying Lists
+@node Classifying Lists, Function Indirection, Symbol Forms, Forms
 @subsection Classification of List Forms
 @cindex list form evaluation
 
@@ -364,7 +364,7 @@ and how the rest of the list is to be processed.  The first element is
 @emph{not} evaluated, as it would be in some Lisp dialects such as
 Scheme.
 
-@node Function Indirection
+@node Function Indirection, Function Forms, Classifying Lists, Forms
 @subsection Symbol Function Indirection
 @cindex symbol function indirection
 @cindex indirection
@@ -463,7 +463,7 @@ Here is how you could define @code{indirect-function} in Lisp:
 @end smallexample
 @end defun
 
-@node Function Forms
+@node Function Forms, Macro Forms, Function Indirection, Forms
 @subsection Evaluation of Function Forms
 @cindex function form evaluation
 @cindex function call
@@ -487,7 +487,7 @@ variables of the function (@pxref{Lambda Expressions}); then the forms
 in the function body are evaluated in order, and the value of the last
 body form becomes the value of the function call.
 
-@node Macro Forms
+@node Macro Forms, Special Operators, Function Forms, Forms
 @subsection Lisp Macro Evaluation
 @cindex macro call evaluation
 
@@ -533,7 +533,7 @@ expansion.
 
 @xref{Macros}, for a complete description of XEmacs Lisp macros.
 
-@node Special Operators
+@node Special Operators, Autoloading, Macro Forms, Forms
 @subsection Special Operators
 @cindex special operator evaluation
 @cindex special form
@@ -643,7 +643,7 @@ both Common Lisp and XEmacs Lisp (because it must be able to throw
 multiple values).@refill
 @end quotation
 
-@node Autoloading
+@node Autoloading,  , Special Operators, Forms
 @subsection Autoloading
 
   The @dfn{autoload} feature allows you to call a function or macro
@@ -653,7 +653,7 @@ appears as a symbol's function definition, calling that symbol as a
 function automatically loads the specified file; then it calls the real
 definition loaded from that file.  @xref{Autoload}.
 
-@node Quoting
+@node Quoting, Multiple values, Forms, Evaluation
 @section Quoting
 @cindex quoting
 
@@ -710,7 +710,7 @@ Functions}), which causes an anonymous lambda expression written in Lisp
 to be compiled, and @samp{`} (@pxref{Backquote}), which is used to quote
 only part of a list, while computing and substituting other parts.
 
-@node Multiple values
+@node Multiple values,  , Quoting, Evaluation
 @section Multiple values
 @cindex multiple values
 

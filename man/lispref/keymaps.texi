@@ -38,7 +38,7 @@ is found.  The whole process is called @dfn{key lookup}.
 * Other Keymap Functions::   Miscellaneous keymap functions.
 @end menu
 
-@node Keymap Terminology
+@node Keymap Terminology, Format of Keymaps, Keymaps, Keymaps
 @section Keymap Terminology
 @cindex key
 @cindex keystroke
@@ -99,7 +99,7 @@ precedence over) the corresponding global bindings.  The minor mode
 keymaps shadow both local and global keymaps.  @xref{Active Keymaps},
 for details.
 
-@node Format of Keymaps
+@node Format of Keymaps, Creating Keymaps, Keymap Terminology, Keymaps
 @section Format of Keymaps
 @cindex format of keymaps
 @cindex keymap format
@@ -113,7 +113,7 @@ This function returns @code{t} if @var{object} is a keymap, @code{nil}
 otherwise.
 @end defun
 
-@node Creating Keymaps
+@node Creating Keymaps, Inheritance and Keymaps, Format of Keymaps, Keymaps
 @section Creating Keymaps
 @cindex creating keymaps
 
@@ -177,7 +177,7 @@ definition is a keymap; the same symbol appears in the new copy.
 @end example
 @end defun
 
-@node Inheritance and Keymaps
+@node Inheritance and Keymaps, Key Sequences, Creating Keymaps, Keymaps
 @section Inheritance and Keymaps
 @cindex keymap inheritance
 @cindex inheriting a keymap's bindings
@@ -233,7 +233,7 @@ This function returns the default binding of @var{keymap}, or @code{nil}
 if it has none.
 @end defun
 
-@node Key Sequences
+@node Key Sequences, Prefix Keys, Inheritance and Keymaps, Keymaps
 @section Key Sequences
 @cindex key sequences
 
@@ -364,7 +364,7 @@ sequence.  This can be useful, e.g., to determine if the user pressed
 @code{help-char} or @code{quit-char}.
 @end defun
 
-@node Prefix Keys
+@node Prefix Keys, Active Keymaps, Key Sequences, Keymaps
 @section Prefix Keys
 @cindex prefix key
 
@@ -483,7 +483,7 @@ stored as the value of @var{symbol}.) The function returns @var{symbol}.
 set, not the value as a variable.
 @end defun
 
-@node Active Keymaps
+@node Active Keymaps, Key Lookup, Prefix Keys, Keymaps
 @section Active Keymaps
 @cindex active keymap
 @cindex global keymap
@@ -737,7 +737,7 @@ if any, overrides all other maps that would have been active, except for
 the current global map.
 @end defvar
 
-@node Key Lookup
+@node Key Lookup, Functions for Key Lookup, Active Keymaps, Keymaps
 @section Key Lookup
 @cindex key lookup
 @cindex keymap entry
@@ -864,7 +864,7 @@ binding is not executable as a command.
   In short, a keymap entry may be a keymap, a command, a keyboard macro,
 a symbol that leads to one of them, or an indirection or @code{nil}.
 
-@node Functions for Key Lookup
+@node Functions for Key Lookup, Changing Key Bindings, Key Lookup, Keymaps
 @section Functions for Key Lookup
 
   Here are the functions and variables pertaining to key lookup.
@@ -1031,7 +1031,7 @@ meta-prefix-char                    ; @r{The default value.}
 @end smallexample
 @end defvar
 
-@node Changing Key Bindings
+@node Changing Key Bindings, Key Binding Commands, Functions for Key Lookup, Keymaps
 @section Changing Key Bindings
 @cindex changing key bindings
 @cindex rebinding
@@ -1282,7 +1282,7 @@ Dired mode is set up:
 @end smallexample
 @end defun
 
-@node Key Binding Commands
+@node Key Binding Commands, Scanning Keymaps, Changing Key Bindings, Keymaps
 @section Commands for Binding Keys
 
   This section describes some convenient interactive interfaces for
@@ -1390,7 +1390,7 @@ local map.
 @end smallexample
 @end deffn
 
-@node Scanning Keymaps
+@node Scanning Keymaps, Remapping commands, Key Binding Commands, Keymaps
 @section Scanning Keymaps
 
   This section describes functions used to scan all the current keymaps,
@@ -1584,7 +1584,7 @@ interactively) is non-@code{nil} then only the mouse bindings are
 displayed.
 @end deffn
 
-@node Remapping commands
+@node Remapping commands, Other Keymap Functions, Scanning Keymaps, Keymaps
 @section Remapping commands
 
 This section describes some functionality to allow commands to be
@@ -1615,7 +1615,7 @@ list of the commands that will never be executed in @var{keymaps}
 because @var{command} will be execute instead.
 @end defun
 
-@node Other Keymap Functions
+@node Other Keymap Functions,  , Remapping commands, Keymaps
 @section Other Keymap Functions
 
 @defun set-keymap-prompt keymap new-prompt

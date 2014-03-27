@@ -6,7 +6,7 @@
 @c Thank you Oscar Figueiredo!  This file was shamelessly cloned from
 @c  ldap.texi.
 @setfilename ../../info/postgresql.info
-@node PostgreSQL Support, Internationalization, LDAP Support, top
+@node PostgreSQL Support, Internationalization, LDAP Support, Top
 @chapter PostgreSQL Support
 @cindex PostgreSQL
 
@@ -19,7 +19,7 @@ relational database access from Emacs Lisp code.
 * XEmacs PostgreSQL libpq Examples::
 @end menu
 
-@node Building XEmacs with PostgreSQL support, XEmacs PostgreSQL libpq API,  ,PostgreSQL Support
+@node Building XEmacs with PostgreSQL support, XEmacs PostgreSQL libpq API, PostgreSQL Support, PostgreSQL Support
 @comment  node-name,  next,  previous,  up
 @section Building XEmacs with PostgreSQL support
 
@@ -928,7 +928,7 @@ The data is returned as a list of lists, where each sublist contains
 info regarding a single option.
 @end defun
 
-@node Unimplemented libpq Functions, , Other libpq Functions, XEmacs PostgreSQL libpq API
+@node Unimplemented libpq Functions,  , Other libpq Functions, XEmacs PostgreSQL libpq API
 @comment  node-name,  next,  previous,  up
 @subsection Unimplemented libpq Functions
 

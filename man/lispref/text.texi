@@ -56,7 +56,7 @@ buffer, together with their properties (when relevant).
 * Transformations::  MD5 and base64 support.
 @end menu
 
-@node Near Point
+@node Near Point, Buffer Contents, Text, Text
 @section Examining Text Near Point
 
   Many functions are provided to look at the characters around point.
@@ -167,7 +167,7 @@ The end of the buffer (or of its accessible portion) is always considered
 the end of a line.
 @end defun
 
-@node Buffer Contents
+@node Buffer Contents, Comparing Text, Near Point, Text
 @section Examining Buffer Contents
 
   This section describes two functions that allow a Lisp program to
@@ -232,7 +232,7 @@ copied from the buffer would make the comparisons fail.
 @end defun
 @end ignore
 
-@node Comparing Text
+@node Comparing Text, Insertion, Buffer Contents, Text
 @section Comparing Text
 @cindex comparing buffer text
 
@@ -267,7 +267,7 @@ at the second character.
 @end example
 @end defun
 
-@node Insertion
+@node Insertion, Commands for Insertion, Comparing Text, Text
 @section Inserting Text
 @cindex insertion of text
 @cindex text insertion
@@ -369,7 +369,7 @@ We hold these truth@point{}
 @end example
 @end defun
 
-@node Commands for Insertion
+@node Commands for Insertion, Deletion, Insertion, Text
 @section User-Level Insertion Commands
 
   This section describes higher-level commands for inserting text,
@@ -443,7 +443,7 @@ non-@code{nil} value enables the mode.  It is automatically made
 buffer-local when set in any fashion.
 @end defvar
 
-@node Deletion
+@node Deletion, User-Level Deletion, Commands for Insertion, Text
 @section Deleting Text
 
 @cindex deletion vs killing
@@ -529,7 +529,7 @@ the kill ring.
 The value returned is always @code{nil}.
 @end deffn
 
-@node User-Level Deletion
+@node User-Level Deletion, The Kill Ring, Deletion, Text
 @section User-Level Deletion Commands
 
   This section describes higher-level commands for deleting text,
@@ -662,7 +662,7 @@ A blank line is defined as a line containing only tabs and spaces.
 @code{delete-blank-lines} returns @code{nil}.
 @end deffn
 
-@node The Kill Ring
+@node The Kill Ring, Undo, User-Level Deletion, Text
 @section The Kill Ring
 @cindex kill ring
 
@@ -706,7 +706,7 @@ would be difficult to change the terminology now.
 * Internals of Kill Ring:: Variables that hold kill-ring data.
 @end menu
 
-@node Kill Ring Concepts
+@node Kill Ring Concepts, Kill Functions, The Kill Ring, The Kill Ring
 @subsection Kill Ring Concepts
 
   The kill ring records killed text as strings in a list, most recent
@@ -732,7 +732,7 @@ different element as the ``front.''  But this virtual rotation doesn't
 change the list itself---the most recent entry always comes first in the
 list.
 
-@node Kill Functions
+@node Kill Functions, Yank Commands, Kill Ring Concepts, The Kill Ring
 @subsection Functions for Killing
 
   @code{kill-region} is the usual subroutine for killing text.  Any
@@ -773,7 +773,7 @@ support Emacs 18.  For Emacs 19, it is better to use @code{kill-new} or
 @code{kill-append} instead.  @xref{Low-Level Kill Ring}.
 @end deffn
 
-@node Yank Commands
+@node Yank Commands, Low-Level Kill Ring, Kill Functions, The Kill Ring
 @subsection Functions for Yanking
 
   @dfn{Yanking} means reinserting an entry of previously killed text
@@ -819,7 +819,7 @@ oldest.
 The value is always @code{nil}.
 @end deffn
 
-@node Low-Level Kill Ring
+@node Low-Level Kill Ring, Internals of Kill Ring, Yank Commands, The Kill Ring
 @subsection Low-Level Kill Ring
 
   These functions and variables provide access to the kill ring at a lower
@@ -890,7 +890,7 @@ The normal use of this hook is to set the X server's primary selection
 to the newly killed text.
 @end defvar
 
-@node Internals of Kill Ring
+@node Internals of Kill Ring,  , Low-Level Kill Ring, The Kill Ring
 @subsection Internals of the Kill Ring
 
   The variable @code{kill-ring} holds the kill ring contents, in the
@@ -960,7 +960,7 @@ ring can grow, before elements are thrown away at the end.  The default
 value for @code{kill-ring-max} is 30.
 @end defopt
 
-@node Undo
+@node Undo, Maintaining Undo, The Kill Ring, Text
 @section Undo
 @cindex redo
 
@@ -1059,7 +1059,7 @@ by undoing are not part of this saved value, so they don't interfere with
 continuing to undo.
 @end defun
 
-@node Maintaining Undo
+@node Maintaining Undo, Filling, Undo, Text
 @section Maintaining Undo Lists
 
   This section describes how to enable and disable undo information for
@@ -1118,7 +1118,7 @@ with all older change groups).  There is one exception: the very latest
 change group is never discarded no matter how big it is.
 @end defvar
 
-@node Filling
+@node Filling, Margins, Maintaining Undo, Text
 @section Filling
 @cindex filling, explicit
 
@@ -1261,7 +1261,7 @@ newlines that have the @code{hard} text property.  These ``hard
 newlines'' act as paragraph separators.
 @end defvar
 
-@node Margins
+@node Margins, Auto Filling, Filling, Text
 @section Margins for Filling
 
 @defopt fill-prefix
@@ -1356,7 +1356,7 @@ mode, @key{LFD} indents to this column.  This variable automatically
 becomes buffer-local when set in any fashion.
 @end defvar
 
-@node Auto Filling
+@node Auto Filling, Sorting, Margins, Text
 @section Auto Filling
 @cindex filling, automatic
 @cindex Auto Fill mode
@@ -1385,7 +1385,7 @@ was renamed to @code{auto-fill-function} in version 19.
 @end quotation
 @end defvar
 
-@node Sorting
+@node Sorting, Columns, Auto Filling, Text
 @section Sorting Text
 @cindex sorting text
 
@@ -1613,7 +1613,7 @@ and so cannot work properly on text containing tab characters.  Use
 @kbd{M-x @code{untabify}} to convert tabs to spaces before sorting.
 @end deffn
 
-@node Columns
+@node Columns, Indentation, Sorting, Text
 @comment  node-name,  next,  previous,  up
 @section Counting Columns
 @cindex columns
@@ -1684,7 +1684,7 @@ If @var{column} is not a non-negative fixnum, an error is signaled.
 The return value is the column number actually moved to.
 @end defun
 
-@node Indentation
+@node Indentation, Case Changes, Columns, Text
 @section Indentation
 @cindex indentation
 
@@ -1702,7 +1702,7 @@ count from zero at the left margin.
 * Motion by Indent::      Move to first non-blank character.
 @end menu
 
-@node Primitive Indent
+@node Primitive Indent, Mode-Specific Indent, Indentation, Indentation
 @subsection Indentation Primitives
 
   This section describes the primitive functions used to count and
@@ -1736,7 +1736,7 @@ tabs as well as spaces.  Otherwise, they insert only spaces.  Setting
 this variable automatically makes it local to the current buffer.
 @end defopt
 
-@node Mode-Specific Indent
+@node Mode-Specific Indent, Region Indent, Primitive Indent, Indentation
 @subsection Indentation Controlled by Major Mode
 
   An important function of each major mode is to customize the @key{TAB}
@@ -1794,7 +1794,7 @@ but in some text modes, where @key{TAB} inserts a tab,
 by @code{left-margin}.
 @end deffn
 
-@node Region Indent
+@node Region Indent, Relative Indent, Mode-Specific Indent, Indentation
 @subsection Indenting an Entire Region
 
   This section describes commands that indent all the lines in the
@@ -1861,7 +1861,7 @@ In addition, it doesn't alter a line if @var{nochange-regexp} matches at
 the beginning of the line (if @var{nochange-regexp} is non-@code{nil}).
 @end deffn
 
-@node Relative Indent
+@node Relative Indent, Indent Tabs, Region Indent, Indentation
 @subsection Indentation Relative to Previous Lines
 
   This section describes two commands that indent the current line
@@ -1938,7 +1938,7 @@ If the previous nonblank line has no indent points beyond the current
 column, this command does nothing.
 @end deffn
 
-@node Indent Tabs
+@node Indent Tabs, Motion by Indent, Relative Indent, Indentation
 @subsection Adjustable ``Tab Stops''
 @cindex tabs stops for indentation
 
@@ -1967,7 +1967,7 @@ Use @kbd{M-x edit-tab-stops} to edit the location of tab stops
 interactively.
 @end defopt
 
-@node Motion by Indent
+@node Motion by Indent,  , Indent Tabs, Indentation
 @subsection Indentation-Based Motion Commands
 
   These commands, primarily for interactive use, act based on the
@@ -1992,7 +1992,7 @@ This command moves point forward @var{arg} lines and then to the first
 nonblank character on that line.  It returns @code{nil}.
 @end deffn
 
-@node Case Changes
+@node Case Changes, Text Properties, Indentation, Text
 @section Case Changes
 @cindex case changes
 
@@ -2084,7 +2084,7 @@ When @code{upcase-word} is called interactively, @var{count} is set to
 the numeric prefix argument.
 @end deffn
 
-@node Text Properties
+@node Text Properties, Substitution, Case Changes, Text
 @section Text Properties
 @cindex text properties
 @cindex attributes of text
@@ -2130,7 +2130,7 @@ along with the characters; this includes such diverse functions as
 * Fields::			Emacs-compatible text fields.
 @end menu
 
-@node Examining Properties
+@node Examining Properties, Changing Properties, Text Properties, Text Properties
 @subsection Examining Text Properties
 
   The simplest way to examine text properties is to ask for the value of
@@ -2192,7 +2192,7 @@ an example:
 @end example
 @end defvar
 
-@node Changing Properties
+@node Changing Properties, Property Search, Examining Properties, Text Properties
 @subsection Changing Text Properties
 
   The primitives for changing properties apply to a specified range of
@@ -2278,7 +2278,7 @@ See also the function @code{buffer-substring-without-properties}
 (@pxref{Buffer Contents}) which copies text from the buffer
 but does not copy its properties.
 
-@node Property Search
+@node Property Search, Special Properties, Changing Properties, Text Properties
 @subsection Property Search Functions
 
 In typical use of text properties, most of the time several or many
@@ -2384,7 +2384,7 @@ buffer to scan.  Positions are relative to @var{object}.  The default
 for @var{object} is the current buffer.
 @end defun
 
-@node Special Properties
+@node Special Properties, Saving Properties, Property Search, Text Properties
 @subsection Properties with Special Meanings
 
 The predefined properties are the same as those for extents.
@@ -2394,7 +2394,7 @@ The predefined properties are the same as those for extents.
 (deleted section describing FSF Emacs special text properties)
 @end ignore
 
-@node Saving Properties
+@node Saving Properties, Fields, Special Properties, Text Properties
 @subsection Saving Text Properties in Files
 @cindex text properties in files
 @cindex saving text properties
@@ -2460,7 +2460,7 @@ types that are reasonably flexible, and not too hard to encode.
 
 @xref{Format Conversion}, for a related feature.
 
-@node Fields
+@node Fields,  , Saving Properties, Text Properties
 @subsection Fields
 @cindex text fields
 @cindex fields
@@ -2580,7 +2580,7 @@ If @var{inhibit-field-text-motion} is non-@code{nil}, then all field
 boundaries are ignored and this function always returns @var{new-pos}.
 @end defun
 
-@node Substitution
+@node Substitution, Registers, Text Properties, Text
 @section Substituting for a Character Code
 
   The following functions replace characters within a specified region
@@ -2677,7 +2677,7 @@ e in the uffer.
 @end example
 @end defun
 
-@node Registers
+@node Registers, Transposition, Substitution, Text
 @section Registers
 @cindex registers
 
@@ -2797,7 +2797,7 @@ This function stores the current frame configuration in register
 @end deffn
 @end ignore
 
-@node Transposition
+@node Transposition, Change Hooks, Registers, Text
 @section Transposition of Text
 
   This subroutine is used by the transposition commands.
@@ -2816,7 +2816,7 @@ is non-@code{nil}, @code{transpose-regions} does not do this---it leaves
 all markers unrelocated.
 @end defun
 
-@node Change Hooks
+@node Change Hooks, Transformations, Transposition, Text
 @section Change Hooks
 @cindex change hooks
 @cindex hooks for text changes
@@ -2869,7 +2869,7 @@ This variable is a normal hook that is run whenever a buffer is changed
 that was previously in the unmodified state.
 @end defvar
 
-@node Transformations
+@node Transformations,  , Change Hooks, Text
 @section Textual transformations---MD5 and base64 support
 @cindex MD5 digests
 @cindex base64

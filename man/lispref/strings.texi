@@ -33,7 +33,7 @@ Lisp programs use strings more often than individual characters.
 * Char Tables::               Mapping from characters to Lisp objects.
 @end menu
 
-@node String Basics
+@node String Basics, Predicates for Strings, Strings and Characters, Strings and Characters
 @section String and Character Basics
 
   Strings in XEmacs Lisp are arrays that contain an ordered sequence of
@@ -100,7 +100,7 @@ Extents}.
 copy them into buffers.  @xref{Character Type}, and @ref{String Type},
 for information about the syntax of characters and strings.
 
-@node Predicates for Strings
+@node Predicates for Strings, Creating Strings, String Basics, Strings and Characters
 @section The Predicates for Strings
 
 For more information about general sequence and array predicates,
@@ -120,7 +120,7 @@ is an integer that can be represented as a character.  This is because
 of compatibility with previous XEmacs and should not be depended on.
 @end defun
 
-@node Creating Strings
+@node Creating Strings, Predicates for Characters, Predicates for Strings, Strings and Characters
 @section Creating Strings
 
   The following functions create strings, either from scratch, or by
@@ -275,7 +275,7 @@ The function @code{split-string}, in @ref{Regexp Search}, generates a
 list of strings by splitting a string on occurrences of a regular
 expression.
 
-@node Predicates for Characters
+@node Predicates for Characters, Character Codes, Creating Strings, Strings and Characters
 @section The Predicates for Characters
 
 @defun characterp object
@@ -297,7 +297,7 @@ using @code{char-int}.
 This function returns @code{t} if @var{object} is an integer or character.
 @end defun
 
-@node Character Codes
+@node Character Codes, Text Comparison, Predicates for Characters, Strings and Characters
 @section Character Codes
 
 @defun char-int character
@@ -341,7 +341,7 @@ integer that can be converted into one.
 @end defun
 
 @need 2000
-@node Text Comparison
+@node Text Comparison, String Conversion, Character Codes, Strings and Characters
 @section Comparison of Characters and Strings
 @cindex string equality
 
@@ -463,7 +463,7 @@ a way to compare text in buffers.  The function @code{string-match},
 which matches a regular expression against a string, can be used
 for a kind of string comparison; see @ref{Regexp Search}.
 
-@node String Conversion
+@node String Conversion, Modifying Strings, Text Comparison, Strings and Characters
 @section Conversion of Characters and Strings
 @cindex conversion of strings
 
@@ -577,7 +577,7 @@ other than ten, only integers can be read.
 @code{string-to-int} is an obsolete alias for this function.
 @end defun
 
-@node Modifying Strings
+@node Modifying Strings, String Properties, String Conversion, Strings and Characters
 @section Modifying Strings
 @cindex strings, modifying
 
@@ -594,7 +594,7 @@ string.
 This function returns the tick counter for @samp{string}.
 @end defun
 
-@node String Properties
+@node String Properties, Formatting Strings, Modifying Strings, Strings and Characters
 @section String Properties
 @cindex string properties
 @cindex properties of strings
@@ -609,7 +609,7 @@ from a string, use @code{get}.  You can also use @code{remprop} to remove
 a property from a string and @code{object-plist} to retrieve a list of
 all the properties in a string.
 
-@node Formatting Strings
+@node Formatting Strings, Character Case, String Properties, Strings and Characters
 @section Formatting Strings
 @cindex formatting strings
 @cindex strings, formatting them
@@ -891,7 +891,7 @@ after it; and trailing zeroes are not omitted in @samp{%g} and @samp{%G}
 conversions.
 @end itemize
 
-@node Character Case
+@node Character Case, Case Tables, Formatting Strings, Strings and Characters
 @section Character Case
 @cindex upper case
 @cindex lower case
@@ -990,7 +990,7 @@ use, and defaults to the current buffer.
 @end example
 @end defun
 
-@node Case Tables
+@node Case Tables, Char Tables, Character Case, Strings and Characters
 @section The Case Table
 
   You can customize case conversion by installing a special @dfn{case
@@ -1097,7 +1097,7 @@ buffer's case table.
 You can load the library @file{iso-syntax} to set up the standard syntax
 table and define a case table for the 8-bit ISO Latin 1 character set.
 
-@node Char Tables
+@node Char Tables,  , Case Tables, Strings and Characters
 @section The Char Table
 
 A char table is a table that maps characters (or ranges of characters)
@@ -1146,7 +1146,7 @@ This function returns non-@code{nil} if @var{object} is a char table.
 * Working With Char Tables::    Creating and working with char tables.
 @end menu
 
-@node Char Table Types
+@node Char Table Types, Working With Char Tables, Char Tables, Char Tables
 @subsection Char Table Types
 
 Each char table type is used for a different purpose and allows different
@@ -1187,7 +1187,7 @@ This function returns a list of the recognized char table types.
 This function returns @code{t} if @var{type} if a recognized char table type.
 @end defun
 
-@node Working With Char Tables
+@node Working With Char Tables,  , Char Table Types, Char Tables
 @subsection Working With Char Tables
 
 @defun make-char-table type

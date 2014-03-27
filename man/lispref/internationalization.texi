@@ -3,7 +3,7 @@
 @c Copyright (C) 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/internationalization.info
-@node Internationalization, MULE, PostgreSQL Support, top
+@node Internationalization, MULE, PostgreSQL Support, Top
 @chapter Internationalization
 
 @menu
@@ -13,7 +13,7 @@
 @end menu
 
 
-@node I18N Levels 1 and 2
+@node I18N Levels 1 and 2, I18N Level 3, Internationalization, Internationalization
 @section I18N Levels 1 and 2
 
 XEmacs is now compliant with I18N levels 1 and 2.  Specifically, this means
@@ -27,7 +27,7 @@ At any time while composing a character, @code{C-h} will display all valid
 completions and the character which would be produced.
 
 
-@node I18N Level 3
+@node I18N Level 3, I18N Level 4, I18N Levels 1 and 2, Internationalization
 @section I18N Level 3
 
 @menu
@@ -37,7 +37,7 @@ completions and the character which would be produced.
 * Domain Specification::
 @end menu
 
-@node Level 3 Basics
+@node Level 3 Basics, Level 3 Primitives, I18N Level 3, I18N Level 3
 @subsection Level 3 Basics
 
 XEmacs now provides alpha-level functionality for I18N Level 3.  This means
@@ -56,7 +56,7 @@ the property name @var{variable-domain}.  The function
 variable's documentation.
 
 
-@node Level 3 Primitives
+@node Level 3 Primitives, Dynamic Messaging, Level 3 Basics, I18N Level 3
 @subsection Level 3 Primitives
 
 @defun gettext string
@@ -103,7 +103,7 @@ when XEmacs was compiled, it always returns @code{nil}.
 @end defun
 
 
-@node Dynamic Messaging
+@node Dynamic Messaging, Domain Specification, Level 3 Primitives, I18N Level 3
 @subsection Dynamic Messaging
 
 The @code{format} function has been extended to permit you to change the
@@ -113,7 +113,7 @@ parameter two.  This is useful when creating translations which require you
 to change the word order.
 
 
-@node Domain Specification
+@node Domain Specification,  , Dynamic Messaging, I18N Level 3
 @subsection Domain Specification
 
 The default message domain of XEmacs is `emacs'.  For add-on packages, it is
@@ -167,7 +167,7 @@ Example:
 @end example
 @end defun
 
-@node I18N Level 4
+@node I18N Level 4,  , I18N Level 3, Internationalization
 @section I18N Level 4
 
 The Asian-language support in XEmacs is called ``MULE''.  @xref{MULE}.

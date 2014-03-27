@@ -43,7 +43,7 @@ containing Lisp code.
 				  particular libraries are loaded.
 @end menu
 
-@node How Programs Do Loading
+@node How Programs Do Loading, Autoload, Loading, Loading
 @section How Programs Do Loading
 
   XEmacs Lisp has several interfaces for loading.  For example,
@@ -274,7 +274,7 @@ out-of-date @samp{.elc} files do not make it mess things up.)
 
   To learn how @code{load} is used to build XEmacs, see @ref{Building XEmacs}.
 
-@node Autoload
+@node Autoload, Repeated Loading, How Programs Do Loading, Loading
 @section Autoload
 @cindex autoload
 
@@ -417,7 +417,7 @@ convention used only in the preloaded Lisp files such as
 @file{loaddefs.el}; they tell @code{make-docfile} to put the
 documentation string in the @file{DOC} file.  @xref{Building XEmacs}.
 
-@node Repeated Loading
+@node Repeated Loading, Named Features, Autoload, Loading
 @section Repeated Loading
 @cindex repeated loading
 
@@ -480,7 +480,7 @@ use @code{featurep} to test whether the library has been loaded.
 @xref{Named Features}.
 @end ifinfo
 
-@node Named Features
+@node Named Features, Unloading, Repeated Loading, Loading
 @section Features
 @cindex features
 @cindex requiring features
@@ -660,7 +660,7 @@ with a call to @code{provide}.  The order of the elements in the
 @code{features} list is not significant.
 @end defvar
 
-@node Unloading
+@node Unloading, Hooks for Loading, Named Features, Loading
 @section Unloading
 @cindex unloading
 
@@ -717,7 +717,7 @@ The value of @code{load-history} may have one element whose @sc{car} is
 by adding the symbols defined to the element for the file being visited,
 rather than replacing that element.
 
-@node Hooks for Loading
+@node Hooks for Loading,  , Unloading, Loading
 @section Hooks for Loading
 @cindex loading hooks
 @cindex hooks for loading

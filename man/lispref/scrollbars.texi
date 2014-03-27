@@ -3,7 +3,7 @@
 @c Copyright (C) 1995 Ben Wing.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/glyphs.info
-@node Scrollbars, Drag and Drop, Gutter, top
+@node Scrollbars, Drag and Drop, Gutter, Top
 @chapter Scrollbars
 @cindex scrollbars
 

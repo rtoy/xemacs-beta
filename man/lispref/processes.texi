@@ -50,7 +50,7 @@ This function returns @code{t} if @var{object} is a process,
 * Network::                  Opening network connections.
 @end menu
 
-@node Subprocess Creation
+@node Subprocess Creation, Synchronous Processes, Processes, Processes
 @section Functions that Create Subprocesses
 
   There are three functions that create a new subprocess in which to run
@@ -129,7 +129,7 @@ The value of @code{exec-path} is used by @code{call-process} and
 file name.
 @end defopt
 
-@node Synchronous Processes
+@node Synchronous Processes, MS-DOS Subprocesses, Subprocess Creation, Processes
 @section Creating a Synchronous Process
 @cindex synchronous subprocess
 
@@ -316,7 +316,7 @@ end of @var{command}.  The other arguments are handled as in
 @code{call-process}.
 @end defun
 
-@node MS-DOS Subprocesses
+@node MS-DOS Subprocesses, Asynchronous Processes, Synchronous Processes, Processes
 @section MS-DOS Subprocesses
 
   On MS-DOS, you must indicate whether the data going to and from
@@ -342,7 +342,7 @@ the output from a synchronous subprocess.
 
   @xref{Files and MS-DOS}, for related information.
 
-@node Asynchronous Processes
+@node Asynchronous Processes, Deleting Processes, MS-DOS Subprocesses, Processes
 @section Creating an Asynchronous Process
 @cindex asynchronous subprocess
 
@@ -446,7 +446,7 @@ process associated with the current buffer.
 @xref{Process Information}.
 @xref{Process Buffers}.
 
-@node Deleting Processes
+@node Deleting Processes, Process Information, Asynchronous Processes, Processes
 @section Deleting Processes
 @cindex deleting processes
 
@@ -498,7 +498,7 @@ return value is @code{t} if a query was formerly required, and
 @end smallexample
 @end defun
 
-@node Process Information
+@node Process Information, Input to Processes, Deleting Processes, Processes
 @section Process Information
 
   Several functions return information about processes.
@@ -633,7 +633,7 @@ instead of a terminal (see @code{process-connection-type} in
 @ref{Asynchronous Processes}).
 @end defun
 
-@node Input to Processes
+@node Input to Processes, Signals to Processes, Process Information, Processes
 @section Sending Input to Processes
 @cindex process input
 
@@ -711,7 +711,7 @@ The function returns the process object identified by @var{process}.
 @end smallexample
 @end defun
 
-@node Signals to Processes
+@node Signals to Processes, Output from Processes, Input to Processes, Processes
 @section Sending Signals to Processes
 @cindex process signals
 @cindex sending signals
@@ -817,7 +817,7 @@ which need not be a child of XEmacs.  The argument @var{signal}
 specifies which signal to send.
 @end deffn
 
-@node Output from Processes
+@node Output from Processes, Sentinels, Signals to Processes, Processes
 @section Receiving Output from Processes
 @cindex process output
 @cindex output from processes
@@ -836,7 +836,7 @@ discarded.
                             Waiting for subprocess output.
 @end menu
 
-@node Process Buffers
+@node Process Buffers, Filter Functions, Output from Processes, Output from Processes
 @subsection Process Buffers
 
   A process can (and usually does) have an @dfn{associated buffer},
@@ -910,7 +910,7 @@ Killing the process's buffer deletes the process, which kills the
 subprocess with a @code{SIGHUP} signal (@pxref{Signals to Processes}).
 @end defun
 
-@node Filter Functions
+@node Filter Functions, Accepting Output, Process Buffers, Output from Processes
 @subsection Process Filter Functions
 @cindex filter function
 @cindex process filter
@@ -1078,7 +1078,7 @@ there is no filter function:
 @end smallexample
 @end ignore
 
-@node Accepting Output
+@node Accepting Output,  , Filter Functions, Output from Processes
 @subsection Accepting Output from Processes
 
   Output from asynchronous subprocesses normally arrives only while
@@ -1121,7 +1121,7 @@ did get some output, or @code{nil} if the timeout expired before output
 arrived.
 @end defun
 
-@node Sentinels
+@node Sentinels, Process Window Size, Output from Processes, Processes
 @section Sentinels: Detecting Process Status Changes
 @cindex process sentinel
 @cindex sentinel
@@ -1215,7 +1215,7 @@ was not.
 @end defun
 
 @c XEmacs feature
-@node Process Window Size
+@node Process Window Size, Transaction Queues, Sentinels, Processes
 @section Process Window Size
 @cindex process window size
 
@@ -1225,7 +1225,7 @@ was not.
 with pty's.
 @end defun
 
-@node Transaction Queues
+@node Transaction Queues, Network, Process Window Size, Processes
 @section Transaction Queues
 @cindex transaction queue
 
@@ -1266,7 +1266,7 @@ to complete, and then terminate the connection or child process.
 Transaction queues are implemented by means of a filter function.
 @xref{Filter Functions}.
 
-@node Network
+@node Network,  , Transaction Queues, Processes
 @section Network Connections
 @cindex network connection
 @cindex TCP

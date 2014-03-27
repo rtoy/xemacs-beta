@@ -3,7 +3,7 @@
 @c Copyright (C) 1995, 1996 Ben Wing.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/glyphs.info
-@node Glyphs, Annotations, Faces and Window-System Objects, top
+@node Glyphs, Annotations, Faces and Window-System Objects, Top
 @chapter Glyphs
 @cindex glyphs
 
@@ -30,7 +30,7 @@ This function returns @code{t} if @var{object} is a glyph.
 @end menu
 
 
-@node Glyph Intro
+@node Glyph Intro, Images, Glyphs, Glyphs
 @section Glyph Introduction
 
   In XEmacs, ``glyph'' does @strong{not} refer to a single unit of textual
@@ -84,7 +84,7 @@ Similarly, the global locale cannot be a domain.)  @ref{Specifiers}, for
 more information about specifier locales and domains.
 
 
-@node Images
+@node Images, Using Glyphs, Glyph Intro, Glyphs
 @section Images
 
 @menu
@@ -95,7 +95,7 @@ more information about specifier locales and domains.
 @end menu
 
 
-@node Image Instantiators
+@node Image Instantiators, Image Instantiator Conversion, Images, Images
 @subsection Image Instantiators
 @cindex image instantiators
 
@@ -309,7 +309,7 @@ instantiated as @code{widget}.  For their semantics, @ref{Menu Format}.
 @end table
 
 
-@node Image Instantiator Conversion
+@node Image Instantiator Conversion, Image Instantiator Formats, Image Instantiators, Images
 @subsection Image Instantiator Conversion
 @cindex image instantiator conversion
 @cindex conversion of image instantiators
@@ -342,7 +342,7 @@ This function returns the image-conversion-list for consoles of the given
 @end defun
 
 
-@node Image Instantiator Formats
+@node Image Instantiator Formats, Image Instances, Image Instantiator Conversion, Images
 @subsection Image Instantiator Formats
 @cindex image instantiator formats
 
@@ -701,7 +701,7 @@ first).
 @end defvar
 
 
-@node Image Instances
+@node Image Instances,  , Image Instantiator Formats, Images
 @subsection Image Instances
 @cindex image instances
 
@@ -723,7 +723,7 @@ This function returns non-@code{nil} if @var{object} is an image instance.
 @end menu
 
 
-@node Image Instance Types
+@node Image Instance Types, Image Instance Functions, Image Instances, Image Instances
 @subsubsection Image Instance Types
 @cindex image instance types
 
@@ -826,7 +826,7 @@ Return non-@code{nil} if @var{object} is an image instance of type
 @end defun
 
 
-@node Image Instance Functions
+@node Image Instance Functions,  , Image Instance Types, Image Instances
 @subsubsection Image Instance Functions
 
 @defun make-image-instance data &optional domain dest-types noerror
@@ -1006,7 +1006,7 @@ be non-@code{nil} for colorized mono pixmaps and for pointers.)
 @end defun
 
 
-@node Using Glyphs
+@node Using Glyphs, Manipulating Glyphs, Images, Glyphs
 @section Using Glyphs
 
 Glyph usage is unfortunately somewhat arcane.  (For discussion of
@@ -1088,7 +1088,7 @@ code creating them, but by the glyph itself (a ``widget'' in X11 or
 @c #### Check status of subwindows ... I thought Andy implemented them.
 @end menu
 
-@node Creating Glyphs
+@node Creating Glyphs, Buffer Glyphs, Using Glyphs, Using Glyphs
 @subsection Creating Glyphs
 
 @defun make-glyph &optional spec-list type
@@ -1197,7 +1197,7 @@ glyph.  Instead, you probably want to be calling @code{set-glyph-image}
 on the existing glyph, @code{frame-icon-glyph}.
 
 
-@node Buffer Glyphs
+@node Buffer Glyphs, Redisplay Glyphs, Creating Glyphs, Using Glyphs
 @subsection Buffer Glyphs
 
 Creating a glyph using @code{make-glyph} does not specify @emph{where}
@@ -1228,7 +1228,7 @@ API for glyphs in a buffer, by setting a layout policy of @code{text}.)
 @end table
 
 
-@node Redisplay Glyphs
+@node Redisplay Glyphs, Frame Glyphs, Buffer Glyphs, Using Glyphs
 @subsection Redisplay Glyphs
 
 To use a glyph to control the shape of miscellaneous redisplay effects
@@ -1290,7 +1290,7 @@ This variable specifies what to use as an arrow for control characters.
 @end defvr
 
 
-@node Frame Glyphs
+@node Frame Glyphs, External Glyphs, Redisplay Glyphs, Using Glyphs
 @subsection Frame Glyphs
 
 There are also a number of special objects whose appearance is specified
@@ -1334,7 +1334,7 @@ bar} glyphs.
 @end table
 
 
-@node External Glyphs
+@node External Glyphs, Native GUI Widgets, Frame Glyphs, Using Glyphs
 @subsection External Glyphs
 @cindex frame icon
 @cindex icon, frame
@@ -1448,7 +1448,7 @@ image instance.  You should not call this function directly.
 @end defun
 
 
-@node Native GUI Widgets
+@node Native GUI Widgets, Subwindows, External Glyphs, Using Glyphs
 @subsection Native GUI Widgets
 @cindex native widget
 
@@ -1464,7 +1464,7 @@ GUI platform or an external toolkit, and accessed from Lisp as a
 * Primitive Widgets::           Catalogue of available native widgets.
 @end menu
 
-@node Introduction to Widgets
+@node Introduction to Widgets, Lisp API to Native Widgets, Native GUI Widgets, Native GUI Widgets
 @subsubsection Introduction to Native Widgets and Subwindow Glyphs
 
 Traditionally Emacsen have hidden the GUI apparatus from the Lisp
@@ -1481,7 +1481,7 @@ However, composite widgets can be created in Lisp using ``layouts,''
 which are horizontal or vertical arrays of subwidgets.  For example, the
 search dialog is formatted using layouts.
 
-@node Lisp API to Native Widgets
+@node Lisp API to Native Widgets, Layouts, Introduction to Widgets, Native GUI Widgets
 @subsubsection Lisp API to Native Widgets
 
 Native widgets are manipulated as @emph{glyphs} (@pxref{Glyphs}).  Thus
@@ -1509,7 +1509,7 @@ that attention will focus on the widget being manipulated, and having
 other instances of the widget respond simultaneously might be more
 disconcerting than the actual case.
 
-@node Layouts
+@node Layouts, Primitive Widgets, Lisp API to Native Widgets, Native GUI Widgets
 @subsubsection Layouts
 
 An XEmacs @dfn{layout} is a one-dimensional array of glyphs.  It is a
@@ -1609,7 +1609,7 @@ makes use of recursive layouts.
      		   (event-channel event)))])])])
 @end example
 
-@node Primitive Widgets
+@node Primitive Widgets,  , Layouts, Native GUI Widgets
 @subsubsection Primitive Widgets
 
 @c #### the following table should be replaced with a menu of nodes
@@ -1642,7 +1642,7 @@ controlling an Emacs window.)
 @end table
 
 
-@node Subwindows
+@node Subwindows,  , Native GUI Widgets, Using Glyphs
 @subsection Subwindows
 
 Subwindows are not currently implemented.
@@ -1653,7 +1653,7 @@ This function returns non-@code{nil} if @var{object} is a subwindow.
 @end defun
 
 
-@node Manipulating Glyphs
+@node Manipulating Glyphs, Glyph Examples, Using Glyphs, Glyphs
 @section Manipulating Glyphs
 
   Each glyphs has properties that may be accessed.  Most of these can
@@ -1669,7 +1669,7 @@ useful to create glyphs of types other than @code{buffer}.
 @end menu
 
 
-@node Glyph Properties
+@node Glyph Properties, Glyph Convenience Functions, Manipulating Glyphs, Manipulating Glyphs
 @subsection Glyph Properties
 
 Each glyph has a list of properties, which control all of the aspects of
@@ -1851,7 +1851,7 @@ and @var{exact-p} arguments.
 @end defun
 
 
-@node Glyph Convenience Functions
+@node Glyph Convenience Functions, Glyph Dimensions, Glyph Properties, Manipulating Glyphs
 @subsection Glyph Convenience Functions
 
   The following functions are provided for working with specific
@@ -1943,7 +1943,7 @@ This function changes the face of @var{glyph} to @var{face}.
 @end defun
 
 
-@node Glyph Dimensions
+@node Glyph Dimensions, Glyph Types, Glyph Convenience Functions, Manipulating Glyphs
 @subsection Glyph Dimensions
 
 @defun glyph-width glyph &optional window
@@ -1972,7 +1972,7 @@ redisplay will.
 @end defun
 
 
-@node Glyph Types
+@node Glyph Types,  , Glyph Dimensions, Manipulating Glyphs
 @subsection Glyph Types
 
   Each glyph has a particular type, which controls how the glyph's image
@@ -2031,7 +2031,7 @@ This function returns non-@code{nil} if @var{object} is a glyph of type
 @end defun
 
 
-@node Glyph Examples
+@node Glyph Examples,  , Manipulating Glyphs, Glyphs
 @section Glyph Examples
 
 For many applications, displaying graphics is a simple process: you

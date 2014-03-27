@@ -100,7 +100,7 @@ window, usually together with some documentation.
                         operations.
 @end menu
 
-@node File Menu
+@node File Menu, Edit Menu, Pull-down Menus, Pull-down Menus
 @subsection The File Menu
 
 @cindex File menu
@@ -208,7 +208,7 @@ Emacs process, the system asks which unsaved buffers to save by going through
 the list of all buffers in that Emacs process.@refill
 @end table
 
-@node Edit Menu
+@node Edit Menu, Apps Menu, File Menu, Pull-down Menus
 @subsection The Edit Menu
 @cindex Edit menu
 
@@ -280,7 +280,7 @@ Recording} and @b{End Macro Recording} menu items.  This is the same
 as the Emacs command @code{call-last-kbd-macro} (@kbd{C-x e}).
 @end table
 
-@node Apps Menu
+@node Apps Menu, Options Menu, Edit Menu, Pull-down Menus
 @subsection The Apps Menu
 @cindex Apps menu
 
@@ -291,7 +291,7 @@ and the @b{Calendar} and @b{Games} sub-menus.  When you select a menu
 item, Emacs executes the equivalent command.  For some of the menu
 items, there are sub-menus which you will need to select.
 
-@node Options Menu
+@node Options Menu, Buffers Menu, Apps Menu, Pull-down Menus
 @subsection The Options Menu
 @cindex Options menu
 
@@ -396,14 +396,14 @@ Selecting this item will save the current settings of your Options
 menu to your init file.  @xref{Init File}.
 @end table
 
-@node Buffers Menu
+@node Buffers Menu, Tools Menu, Options Menu, Pull-down Menus
 @subsection The Buffers Menu
 @cindex Buffers menu
 The @b{Buffers} menu provides a selection of up to ten buffers and the
 item @b{List All Buffers}, which provides a Buffer List. @xref{List
 Buffers}, for more information.  
 
-@node Tools Menu
+@node Tools Menu, Help Menu, Buffers Menu, Pull-down Menus
 @subsection The Tools Menu
 @cindex Tools menu
 
@@ -414,7 +414,7 @@ and @b{Debug(DBX)...} menu items, and the @b{Compare}, @b{Merge},
 Emacs executes the equivalent command.  For some of the menu items,
 there are sub-menus which you will need to select.
 
-@node Help Menu
+@node Help Menu, Menu Customization, Tools Menu, Pull-down Menus
 @subsection The Help Menu
 @cindex Help menu
 
@@ -425,7 +425,7 @@ equivalent for each of the choices you have when using @kbd{C-h}.
 The Help menu also gives access to UNIX online manual pages via the
 @b{UNIX Manual Page} option.  
 
-@node Menu Customization
+@node Menu Customization, , Help Menu, Pull-down Menus
 @subsection Customizing XEmacs Menus
 
 You can customize any of the pull-down menus by adding or removing menu

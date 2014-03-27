@@ -3,7 +3,7 @@
 @c Copyright (C) 1997, 1998 Free Software Foundation, Inc.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../info/customize
-@node Customization, , , Top
+@node Customization, Loading, Macros, Top
 @chapter Writing Customization Definitions
 
   This chapter describes how to declare user options for customization,
@@ -20,7 +20,7 @@ definitions---as well as face definitions.
 * Enabling Behavior::
 @end menu
 
-@node Common Keywords
+@node Common Keywords, Group Definitions, Customization, Customization
 @section Common Keywords for All Kinds of Items
 
   All kinds of customization declarations (for variables and groups, and
@@ -91,7 +91,7 @@ a feature such as a minor mode, and just setting the variable won't have
 any effect unless the code which implements the mode is loaded.
 @end table
 
-@node Group Definitions
+@node Group Definitions, Variable Definitions, Common Keywords, Customization
 @section Defining Custom Groups
 
   Each Emacs Lisp package should have one main customization group which
@@ -160,7 +160,7 @@ One group can have any number of prefixes.
 @c the @code{:prefix} specifications which give unclear results, and then
 @c turn this feature back on, if someone would like to do the work.
 
-@node Variable Definitions
+@node Variable Definitions, Face Definitions, Group Definitions, Customization
 @section Defining Customization Variables
 
   Use @code{defcustom} to declare user-editable variables.
@@ -390,7 +390,7 @@ equivalent to @code{(string)}.
 * Defining New Types::
 @end menu
 
-@node Simple Types
+@node Simple Types, Composite Types, Customization Types, Customization Types
 @subsection Simple Types
 
   This section describes all the simple customization types.
@@ -458,7 +458,7 @@ specify the text to describe each value in a way that fits the specific
 meaning of the alternative.
 @end table
 
-@node Composite Types
+@node Composite Types, Splicing into Lists, Simple Types, Customization Types
 @subsection Composite Types
 
   When none of the simple types is appropriate, you can use composite
@@ -587,7 +587,7 @@ list of elements, with @samp{[INS]} and @samp{[DEL]} buttons for adding
 more elements or removing elements.
 @end table
 
-@node Splicing into Lists
+@node Splicing into Lists, Type Keywords, Composite Types, Customization Types
 @subsection Splicing into Lists
 
   The @code{:inline} feature lets you splice a variable number of
@@ -636,7 +636,7 @@ overall list has two elements and the second element is @code{t}.  If
 the user chooses the second alternative, then the overall list has three
 elements and the second and third must be strings.
 
-@node Type Keywords
+@node Type Keywords, Defining New Types, Splicing into Lists, Customization Types
 @subsection Type Keywords
 
 You can specify keyword-argument pairs in a customization type after the
@@ -813,9 +813,69 @@ arguments, which will be used when creating the @code{radio-button} or
 @end ignore
 @end table
 
+@node Defining New Types,  , Type Keywords, Customization Types
+@subsection Defining New Types
 
-@node Enabling Behavior, , Customization Types, Customization
-@subsection Enabling Behavior
+In the previous sections we have described how to construct elaborate
+type specifications for @code{defcustom}.  In some cases you may want to
+give such a type specification a name.  The obvious case is when you are
+using the same type for many user options, rather than repeat the
+specification for each option, you can give the type specification a
+name once, and use that name each @code{defcustom}.  The other case is
+when a user option accept a recursive datastructure.  To make it
+possible for a datatype to refer to itself, it needs to have a name.
+
+Since custom types are implemented as widgets, the way to define a new
+customize type is to define a new widget.  We are not going to describe
+the widget interface here in details, see @ref{Top, , Introduction,
+widget, The Emacs Widget Library}, for that.  Instead we are going to
+demonstrate the minimal functionality needed for defining new customize
+types by a simple example.
+
+@example
+(define-widget 'binary-tree-of-string 'lazy
+  "A binary tree made of cons-cells and strings."
+  :offset 4
+  :tag "Node"
+  :type '(choice (string :tag "Leaf" :value "")
+                 (cons :tag "Interior"
+                       :value ("" . "")
+                       binary-tree-of-string
+                       binary-tree-of-string)))
+
+(defcustom foo-bar ""
+  "Sample variable holding a binary tree of strings."
+  :type 'binary-tree-of-string)
+@end example
+
+The function to define a new widget is name @code{define-widget}.  The
+first argument is the symbol we want to make a new widget type.  The
+second argument is a symbol representing an existing widget, the new
+widget is going to be defined in terms of difference from the existing
+widget.  For the purpose of defining new customization types, the
+@code{lazy} widget is perfect, because it accept a @code{:type} keyword
+argument with the same syntax as the keyword argument to
+@code{defcustom} with the same name.  The third argument is a
+documentation string for the new widget.  You will be able to see that
+string with the @kbd{M-x widget-browse @key{ret} binary-tree-of-string
+@key{ret}} command.
+
+After these mandatory arguments follows the keyword arguments.  The most
+important is @code{:type}, which describes the datatype we want to match
+with this widget.  Here a @code{binary-tree-of-string} is described as
+being either a string, or a cons-cell whose car and cdr are themselves
+both @code{binary-tree-of-string}.  Note the reference to the widget
+type we are currently in the process of defining.  The @code{:tag}
+attribute is a string to name the widget in the user interface, and the
+@code{:offset} argument are there to ensure that child nodes are
+indented four spaces relatively to the parent node, making the tree
+structure apparent in the customization buffer.
+
+The @code{defcustom} shows how the new widget can be used as an ordinary
+customization type.
+
+@node Enabling Behavior,  , Customization Types, Customization
+@section Enabling Behavior
 @cindex behavior
 
 @c #### Does this belong here?
@@ -914,64 +974,3 @@ The optional argument @var{force} is unimplemented in 21.5.6.
 Called interactively, prompt the user for @var{behavior}, and take
 @var{force} from the prefix argument.
 @end defun
-
-@node Defining New Types
-@subsection Defining New Types
-
-In the previous sections we have described how to construct elaborate
-type specifications for @code{defcustom}.  In some cases you may want to
-give such a type specification a name.  The obvious case is when you are
-using the same type for many user options, rather than repeat the
-specification for each option, you can give the type specification a
-name once, and use that name each @code{defcustom}.  The other case is
-when a user option accept a recursive datastructure.  To make it
-possible for a datatype to refer to itself, it needs to have a name.
-
-Since custom types are implemented as widgets, the way to define a new
-customize type is to define a new widget.  We are not going to describe
-the widget interface here in details, see @ref{Top, , Introduction,
-widget, The Emacs Widget Library}, for that.  Instead we are going to
-demonstrate the minimal functionality needed for defining new customize
-types by a simple example.
-
-@example
-(define-widget 'binary-tree-of-string 'lazy
-  "A binary tree made of cons-cells and strings."
-  :offset 4
-  :tag "Node"
-  :type '(choice (string :tag "Leaf" :value "")
-                 (cons :tag "Interior"
-                       :value ("" . "") 
-                       binary-tree-of-string
-                       binary-tree-of-string)))
-
-(defcustom foo-bar ""
-  "Sample variable holding a binary tree of strings."
-  :type 'binary-tree-of-string)
-@end example
-
-The function to define a new widget is name @code{define-widget}.  The
-first argument is the symbol we want to make a new widget type.  The
-second argument is a symbol representing an existing widget, the new
-widget is going to be defined in terms of difference from the existing
-widget.  For the purpose of defining new customization types, the
-@code{lazy} widget is perfect, because it accept a @code{:type} keyword
-argument with the same syntax as the keyword argument to
-@code{defcustom} with the same name.  The third argument is a
-documentation string for the new widget.  You will be able to see that
-string with the @kbd{M-x widget-browse @key{ret} binary-tree-of-string
-@key{ret}} command.  
-
-After these mandatory arguments follows the keyword arguments.  The most
-important is @code{:type}, which describes the datatype we want to match
-with this widget.  Here a @code{binary-tree-of-string} is described as
-being either a string, or a cons-cell whose car and cdr are themselves
-both @code{binary-tree-of-string}.  Note the reference to the widget
-type we are currently in the process of defining.  The @code{:tag}
-attribute is a string to name the widget in the user interface, and the
-@code{:offset} argument are there to ensure that child nodes are
-indented four spaces relatively to the parent node, making the tree
-structure apparent in the customization buffer.
-
-The @code{defcustom} shows how the new widget can be used as an ordinary
-customization type. 

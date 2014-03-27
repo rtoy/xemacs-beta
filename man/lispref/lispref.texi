@@ -84,7 +84,7 @@ instead of in the original English.
 @subtitle Version 3.3 (for XEmacs 21.0), April 1998
 
 @author by Ben Wing
-@author
+@vskip 12pt
 @author Based on the GNU Emacs Lisp Reference Manual
 @author by Bil Lewis, Dan LaLiberte, Richard Stallman
 @author and the GNU Manual Group
