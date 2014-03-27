@@ -19,7 +19,7 @@
 * Buffers Menu::        The menu that displays the list of buffers.
 @end menu
 
-@node Menu Format
+@node Menu Format, Menubar Format, Menus, Menus
 @section Format of Menus
 @cindex menu format
 @cindex format of menus
@@ -258,7 +258,7 @@ For example:
   )
 @end example
 
-@node Menubar Format
+@node Menubar Format, Menubar, Menu Format, Menus
 @section Format of the Menubar
 @cindex menubar format
 @cindex format of the menubar
@@ -280,7 +280,7 @@ those which are flush-right.  (Note: this isn't completely implemented
 yet.)
 @end itemize
 
-@node Menubar
+@node Menubar, Modifying Menus, Menubar Format, Menus
 @section Menubar
 @cindex menubar
 
@@ -356,7 +356,7 @@ Function or functions to call when a menu or dialog box is dismissed
 without a selection having been made.
 @end defvar
 
-@node Modifying Menus
+@node Modifying Menus, Menu Filters, Menubar, Menus
 @section Modifying Menus
 
 The following functions are provided to modify the menubar of one of its
@@ -485,7 +485,7 @@ item should be added, if this item is not on the menu already.  If the
 item is already present, it will not be moved.
 @end defun
 
-@node Menu Filters
+@node Menu Filters, Pop-Up Menus, Modifying Menus, Menus
 @section Menu Filters
 @cindex menu filters
 
@@ -539,7 +539,7 @@ This function sets up the Buffers menu.  @xref{Buffers Menu}, for
 more information.
 @end defun
 
-@node Pop-Up Menus
+@node Pop-Up Menus, Menu Accelerators, Menu Filters, Menus
 @section Pop-Up Menus
 @cindex pop-up menu
 
@@ -606,7 +606,7 @@ This function pops up a copy of menu that also appears in the menubar.
 It should be bound to a mouse button event.
 @end deffn
 
-@node Menu Accelerators
+@node Menu Accelerators, Buffers Menu, Pop-Up Menus, Menus
 @section Menu Accelerators
 @cindex menu accelerators
 @cindex keyboard menu accelerators
@@ -624,7 +624,7 @@ activate that item.
 * Menu Accelerator Functions::  Functions for working with menu accelerators.
 @end menu
 
-@node Creating Menu Accelerators
+@node Creating Menu Accelerators, Keyboard Menu Traversal, Menu Accelerators, Menu Accelerators
 @subsection Creating Menu Accelerators
 
 Menu accelerators are specified as part of the menubar format using the
@@ -654,7 +654,7 @@ into the buffer.
 It is possible to activate the top level menubar itself using accelerator keys.
 @xref{Menu Accelerator Functions}.
 
-@node Keyboard Menu Traversal
+@node Keyboard Menu Traversal, Menu Accelerator Functions, Creating Menu Accelerators, Menu Accelerators
 @subsection Keyboard Menu Traversal
 
 In addition to immediately activating a menu or menu item, the keyboard can
@@ -667,7 +667,7 @@ This behavior can be changed by modifying the bindings in
 menu-accelerator-map.  At this point, the online help is your best bet
 for more information about how to modify the menu traversal keys.
 
-@node Menu Accelerator Functions
+@node Menu Accelerator Functions,  , Keyboard Menu Traversal, Menu Accelerators
 @subsection Menu Accelerator Functions
 
 @deffn Command accelerate-menu
@@ -737,7 +737,7 @@ C-M-T will activate the menubar and display the "Test" menu.  Pressing
 C-M-T by itself will not activate the menubar.  Neither will pressing C-x
 followed by anything else.
 
-@node Buffers Menu
+@node Buffers Menu,  , Menu Accelerators, Menus
 @section Buffers Menu
 @cindex buffers menu
 

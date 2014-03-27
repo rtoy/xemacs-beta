@@ -1,3 +1,67 @@
+2014-02-11  Jerry James  <james@xemacs.org>
+
+	* lispref/consoles-devices.texi:
+	* lispref/control.texi:
+	* lispref/customize.texi:
+	* lispref/databases.texi:
+	* lispref/debugging.texi:
+	* lispref/dialog.texi:
+	* lispref/display.texi:
+	* lispref/eval.texi:
+	* lispref/extents.texi:
+	* lispref/faces.texi:
+	* lispref/files.texi:
+	* lispref/frames.texi:
+	* lispref/functions.texi:
+	* lispref/glyphs.texi:
+	* lispref/gutter.texi:
+	* lispref/hash-tables.texi:
+	* lispref/help.texi:
+	* lispref/internationalization.texi:
+	* lispref/intro.texi:
+	* lispref/keymaps.texi:
+	* lispref/ldap.texi:
+	* lispref/lispref.texi:
+	* lispref/lists.texi:
+	* lispref/loading.texi:
+	* lispref/macros.texi:
+	* lispref/markers.texi:
+	* lispref/menus.texi:
+	* lispref/minibuf.texi:
+	* lispref/modes.texi:
+	* lispref/mule.texi:
+	* lispref/numbers.texi:
+	* lispref/objects.texi:
+	* lispref/os.texi:
+	* lispref/positions.texi:
+	* lispref/postgresql.texi:
+	* lispref/processes.texi:
+	* lispref/range-tables.texi:
+	* lispref/scrollbars.texi:
+	* lispref/searching.texi:
+	* lispref/sequences.texi:
+	* lispref/specifiers.texi:
+	* lispref/streams.texi:
+	* lispref/strings.texi:
+	* lispref/symbols.texi:
+	* lispref/syntax.texi:
+	* lispref/text.texi:
+	* lispref/tips.texi:
+	* lispref/toolbar.texi:
+	* lispref/tooltalk.texi:
+	* lispref/variables.texi:
+	* lispref/windows.texi:
+	* lispref/x-windows.texi:
+	* xemacs/custom.texi:
+	* xemacs/menus.texi:
+	* xemacs/programs.texi:
+	Add next, prev, and up pointers to each node for texinfo 5.2.
+
+	* texinfo/fdl.texi:
+	* texinfo/texinfo.texi:
+	* texinfo/version.texi:
+	Sync with texinfo 5.2.
+
 2013-09-15  Mats Lidell  <matsl@xemacs.org>
 
 	* xemacs/files.texi (Saving): New variable

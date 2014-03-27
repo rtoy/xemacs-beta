@@ -60,7 +60,7 @@ to use these types can be found in later chapters.
 * Equality Predicates::         Tests of equality between any two objects.
 @end menu
 
-@node Printed Representation
+@node Printed Representation, Comments, Lisp Data Types, Lisp Data Types
 @section Printed Representation and Read Syntax
 @cindex printed representation
 @cindex read syntax
@@ -104,7 +104,7 @@ Lisp object represented by the text that is read; the object may or may
 not be evaluated later.  @xref{Input Functions}, for a description of
 @code{read}, the basic function for reading objects.
 
-@node Comments
+@node Comments, Primitive Types, Printed Representation, Lisp Data Types
 @section Comments
 @cindex comments
 @cindex @samp{;} in comment
@@ -124,7 +124,7 @@ data.  The XEmacs Lisp byte compiler uses this in its output files
 
   @xref{Comment Tips}, for conventions for formatting comments.
 
-@node Primitive Types
+@node Primitive Types, Programming Types, Comments, Lisp Data Types
 @section Primitive Types
 @cindex primitive types
 
@@ -252,7 +252,7 @@ symbol-value-varalias
 toolbar-data
 @end itemize
 
-@node Programming Types
+@node Programming Types, Editing Types, Primitive Types, Lisp Data Types
 @section Programming Types
 @cindex programming types
 
@@ -287,7 +287,7 @@ latter are unique to XEmacs Lisp.
 * Weak List Type::      A list with special garbage-collection properties.
 @end menu
 
-@node Integer Type
+@node Integer Type, Floating Point Type, Programming Types, Programming Types
 @subsection Integer Type
 
   In XEmacs Lisp, integers can be fixnums (that is, fixed-precision
@@ -321,7 +321,7 @@ produced by the Lisp interpreter never has a leading @samp{+}.)
 
   @xref{Numbers}, for more information.
 
-@node Floating Point Type
+@node Floating Point Type, Character Type, Integer Type, Programming Types
 @subsection Floating Point Type
 
   XEmacs supports floating point numbers.  The precise range of floating
@@ -335,7 +335,7 @@ number whose value is 1500.  They are all equivalent.
 
   @xref{Numbers}, for more information.
 
-@node Character Type
+@node Character Type, Symbol Type, Floating Point Type, Programming Types
 @subsection Character Type
 @cindex @sc{ascii} character codes
 @cindex char-int confoundance disease
@@ -673,7 +673,7 @@ space, tab, newline and formfeed.  However, it is cleaner to use one of
 the easily readable escape sequences, such as @samp{\t}, instead of an
 actual whitespace character such as a tab.
 
-@node Symbol Type
+@node Symbol Type, Sequence Type, Character Type, Programming Types
 @subsection Symbol Type
 
   A @dfn{symbol} in XEmacs Lisp is an object with a name.  The symbol
@@ -740,7 +740,7 @@ char-to-string      ; @r{A symbol named @samp{char-to-string}.}
 @end group
 @end example
 
-@node Sequence Type
+@node Sequence Type, Cons Cell Type, Symbol Type, Programming Types
 @subsection Sequence Types
 
   A @dfn{sequence} is a Lisp object that represents an ordered set of
@@ -770,7 +770,7 @@ sequence twice, you get two sequences with equal contents.  There is one
 exception: the empty list @code{()} always stands for the same object,
 @code{nil}.
 
-@node Cons Cell Type
+@node Cons Cell Type, Array Type, Sequence Type, Programming Types
 @subsection Cons Cell and List Types
 @cindex address field of register
 @cindex decrement field of register
@@ -890,7 +890,7 @@ depicted with boxes and arrows:
 * Association List Type::       A specially constructed list.
 @end menu
 
-@node Dotted Pair Notation
+@node Dotted Pair Notation, Association List Type, Cons Cell Type, Cons Cell Type
 @subsubsection Dotted Pair Notation
 @cindex dotted pair notation
 @cindex @samp{.} in lists
@@ -967,7 +967,7 @@ It looks like this:
 @end example
 @end ifinfo
 
-@node Association List Type
+@node Association List Type,  , Dotted Pair Notation, Cons Cell Type
 @subsubsection Association List Type
 
   An @dfn{association list} or @dfn{alist} is a specially-constructed
@@ -992,7 +992,7 @@ first element, @code{rose} is the key and @code{red} is the value.
   @xref{Association Lists}, for a further explanation of alists and for
 functions that work on alists.
 
-@node Array Type
+@node Array Type, String Type, Cons Cell Type, Programming Types
 @subsection Array Type
 
   An @dfn{array} is composed of an arbitrary number of slots for
@@ -1021,7 +1021,7 @@ indices 0, 1, 2, @w{and 3}.
   The array type is contained in the sequence type and contains the
 string type, the vector type, and the bit vector type.
 
-@node String Type
+@node String Type, Vector Type, Array Type, Programming Types
 @subsection String Type
 
   A @dfn{string} is an array of characters.  Strings are used for many
@@ -1134,7 +1134,7 @@ that range.
 
   @xref{Strings and Characters}, for functions that work on strings.
 
-@node Vector Type
+@node Vector Type, Bit Vector Type, String Type, Programming Types
 @subsection Vector Type
 
   A @dfn{vector} is a one-dimensional array of elements of any type.  It
@@ -1154,7 +1154,7 @@ for evaluation.
 
   @xref{Vectors}, for functions that work with vectors.
 
-@node Bit Vector Type
+@node Bit Vector Type, Function Type, Vector Type, Programming Types
 @subsection Bit Vector Type
 
   A @dfn{bit vector} is a one-dimensional array of 1's and 0's.  It
@@ -1176,7 +1176,7 @@ evaluation.
 
   @xref{Bit Vectors}, for functions that work with bit vectors.
 
-@node Function Type
+@node Function Type, Macro Type, Bit Vector Type, Programming Types
 @subsection Function Type
 
   Just as functions in other programming languages are executable,
@@ -1197,7 +1197,7 @@ Lisp expressions in Lisp programs.  However, you can construct or obtain
 a function object at run time and then call it with the primitive
 functions @code{funcall} and @code{apply}.  @xref{Calling Functions}.
 
-@node Macro Type
+@node Macro Type, Primitive Function Type, Function Type, Programming Types
 @subsection Macro Type
 
   A @dfn{Lisp macro} is a user-defined construct that extends the Lisp
@@ -1211,7 +1211,7 @@ is a Lisp function object, including the @code{lambda} symbol.
 a macro as far as XEmacs is concerned.  @xref{Macros}, for an explanation
 of how to write a macro.
 
-@node Primitive Function Type
+@node Primitive Function Type, Compiled-Function Type, Macro Type, Programming Types
 @subsection Primitive Function Type
 @cindex special operators
 
@@ -1247,7 +1247,7 @@ with the name of the subroutine.
 @end group
 @end example
 
-@node Compiled-Function Type
+@node Compiled-Function Type, Autoload Type, Primitive Function Type, Programming Types
 @subsection Compiled-Function Type
 
   The byte compiler produces @dfn{compiled-function objects}.  The
@@ -1259,7 +1259,7 @@ compiler.
 @samp{#<compiled-function...>}.  If @code{print-readably} is true,
 however, it is @samp{#[...]}.
 
-@node Autoload Type
+@node Autoload Type, Char Table Type, Compiled-Function Type, Programming Types
 @subsection Autoload Type
 
   An @dfn{autoload object} is a list whose first element is the symbol
@@ -1279,13 +1279,13 @@ in the loaded file.
 @code{autoload}, which stores the object in the function cell of a
 symbol.  @xref{Autoload}, for more details.
 
-@node Char Table Type
+@node Char Table Type, Hash Table Type, Autoload Type, Programming Types
 @subsection Char Table Type
 @cindex char table type
 
 (not yet documented)
 
-@node Hash Table Type
+@node Hash Table Type, Range Table Type, Char Table Type, Programming Types
 @subsection Hash Table Type
 @cindex hash table type
 
@@ -1317,7 +1317,7 @@ of space for elements.)
 @xref{Hash Tables}, for information on how to create and work with hash
 tables.
 
-@node Range Table Type
+@node Range Table Type, Weak List Type, Hash Table Type, Programming Types
 @subsection Range Table Type
 @cindex range table type
 
@@ -1343,13 +1343,13 @@ x
 @xref{Range Tables}, for information on how to create and work with range
 tables.
 
-@node Weak List Type
+@node Weak List Type,  , Range Table Type, Programming Types
 @subsection Weak List Type
 @cindex weak list type
 
 (not yet documented)
 
-@node Editing Types
+@node Editing Types, Window-System Types, Programming Types, Lisp Data Types
 @section Editing Types
 @cindex editing types
 
@@ -1381,7 +1381,7 @@ with editing.
 * ToolTalk Pattern Type:: A pattern, in the ToolTalk IPC protocol.
 @end menu
 
-@node Buffer Type
+@node Buffer Type, Marker Type, Editing Types, Editing Types
 @subsection Buffer Type
 
   A @dfn{buffer} is an object that holds text that can be edited
@@ -1444,7 +1444,7 @@ buffer name.
 @end group
 @end example
 
-@node Marker Type
+@node Marker Type, Extent Type, Buffer Type, Editing Types
 @subsection Marker Type
 
   A @dfn{marker} denotes a position in a specific buffer.  Markers
@@ -1466,7 +1466,7 @@ current character position and the name of the buffer.
 @xref{Markers}, for information on how to test, create, copy, and move
 markers.
 
-@node Extent Type
+@node Extent Type, Window Type, Marker Type, Editing Types
 @subsection Extent Type
 
   An @dfn{extent} specifies temporary alteration of the display
@@ -1498,7 +1498,7 @@ the extent.
 
   Extents are used to implement text properties.  @xref{Text Properties}.
 
-@node Window Type
+@node Window Type, Frame Type, Extent Type, Editing Types
 @subsection Window Type
 
   A @dfn{window} describes the portion of the frame that XEmacs uses to
@@ -1532,7 +1532,7 @@ buffer displayed in any given window can change frequently.)
 
   @xref{Windows}, for a description of the functions that work on windows.
 
-@node Frame Type
+@node Frame Type, Device Type, Window Type, Editing Types
 @subsection Frame Type
 
   A @var{frame} is a rectangle on the screen (a @dfn{window} in standard
@@ -1555,7 +1555,7 @@ at the time the frame was created.
 
   @xref{Frames}, for a description of the functions that work on frames.
 
-@node Device Type
+@node Device Type, Console Type, Frame Type, Editing Types
 @subsection Device Type
 
   A @dfn{device} represents a single display on which frames exist.
@@ -1579,7 +1579,7 @@ at the time the device was created.
   @xref{Consoles and Devices}, for a description of several functions
 related to devices.
 
-@node Console Type
+@node Console Type, Window Configuration Type, Device Type, Editing Types
 @subsection Console Type
 
   A @dfn{console} represents a single keyboard to which devices
@@ -1608,7 +1608,7 @@ at the time the console was created.
   @xref{Consoles and Devices}, for a description of several functions
 related to consoles.
 
-@node Window Configuration Type
+@node Window Configuration Type, Event Type, Console Type, Editing Types
 @subsection Window Configuration Type
 @cindex screen layout
 
@@ -1630,12 +1630,12 @@ configuration was created.
   @xref{Window Configurations}, for a description of several functions
 related to window configurations.
 
-@node Event Type
+@node Event Type, Process Type, Window Configuration Type, Editing Types
 @subsection Event Type
 
 (not yet documented)
 
-@node Process Type
+@node Process Type, Stream Type, Event Type, Editing Types
 @subsection Process Type
 
   The word @dfn{process} usually means a running program.  XEmacs itself
@@ -1663,7 +1663,7 @@ current state of the process:
 return information about, send input or signals to, and receive output
 from processes.
 
-@node Stream Type
+@node Stream Type, Keymap Type, Process Type, Editing Types
 @subsection Stream Type
 
   A @dfn{stream} is an object that can be used as a source or sink for
@@ -1687,7 +1687,7 @@ print as whatever primitive type they are.
   @xref{Read and Print}, for a description of functions
 related to streams, including parsing and printing functions.
 
-@node Keymap Type
+@node Keymap Type, Syntax Table Type, Stream Type, Editing Types
 @subsection Keymap Type
 
   A @dfn{keymap} maps keys typed by the user to commands.  This mapping
@@ -1700,7 +1700,7 @@ Emacs, a keymap is actually a list whose @sc{car} is the symbol
   @xref{Keymaps}, for information about creating keymaps, handling prefix
 keys, local as well as global keymaps, and changing key bindings.
 
-@node Syntax Table Type
+@node Syntax Table Type, Display Table Type, Keymap Type, Editing Types
 @subsection Syntax Table Type
 
   Under XEmacs 20, a @dfn{syntax table} is a particular type of char
@@ -1720,7 +1720,7 @@ instead of @samp{(} and @samp{)} would be impossible.
   @xref{Syntax Tables}, for details about syntax classes and how to make
 and modify syntax tables.
 
-@node Display Table Type
+@node Display Table Type, Database Type, Syntax Table Type, Editing Types
 @subsection Display Table Type
 
   A @dfn{display table} specifies how to display each character code.
@@ -1728,35 +1728,35 @@ Each buffer and each window can have its own display table.  A display
 table is actually a vector of length 256, although in XEmacs 20 this may
 change to be a particular type of char table.  @xref{Display Tables}.
 
-@node Database Type
+@node Database Type, Charset Type, Display Table Type, Editing Types
 @subsection Database Type
 @cindex database type
 
 (not yet documented)
 
-@node Charset Type
+@node Charset Type, Coding System Type, Database Type, Editing Types
 @subsection Charset Type
 @cindex charset type
 
 (not yet documented)
 
-@node Coding System Type
+@node Coding System Type, ToolTalk Message Type, Charset Type, Editing Types
 @subsection Coding System Type
 @cindex coding system type
 
 (not yet documented)
 
-@node ToolTalk Message Type
+@node ToolTalk Message Type, ToolTalk Pattern Type, Coding System Type, Editing Types
 @subsection ToolTalk Message Type
 
 (not yet documented)
 
-@node ToolTalk Pattern Type
+@node ToolTalk Pattern Type,  , ToolTalk Message Type, Editing Types
 @subsection ToolTalk Pattern Type
 
 (not yet documented)
 
-@node Window-System Types
+@node Window-System Types, Type Predicates, Editing Types, Lisp Data Types
 @section Window-System Types
 @cindex window system types
 
@@ -1779,61 +1779,61 @@ commonly found in windowing systems.
                           compiled into XEmacs.
 @end menu
 
-@node Face Type
+@node Face Type, Glyph Type, Window-System Types, Window-System Types
 @subsection Face Type
 @cindex face type
 
 (not yet documented)
 
-@node Glyph Type
+@node Glyph Type, Specifier Type, Face Type, Window-System Types
 @subsection Glyph Type
 @cindex glyph type
 
 (not yet documented)
 
-@node Specifier Type
+@node Specifier Type, Font Instance Type, Glyph Type, Window-System Types
 @subsection Specifier Type
 @cindex specifier type
 
 (not yet documented)
 
-@node Font Instance Type
+@node Font Instance Type, Color Instance Type, Specifier Type, Window-System Types
 @subsection Font Instance Type
 @cindex font instance type
 
 (not yet documented)
 
-@node Color Instance Type
+@node Color Instance Type, Image Instance Type, Font Instance Type, Window-System Types
 @subsection Color Instance Type
 @cindex color instance type
 
 (not yet documented)
 
-@node Image Instance Type
+@node Image Instance Type, Toolbar Button Type, Color Instance Type, Window-System Types
 @subsection Image Instance Type
 @cindex image instance type
 
 (not yet documented)
 
-@node Toolbar Button Type
+@node Toolbar Button Type, Subwindow Type, Image Instance Type, Window-System Types
 @subsection Toolbar Button Type
 @cindex toolbar button type
 
 (not yet documented)
 
-@node Subwindow Type
+@node Subwindow Type, X Resource Type, Toolbar Button Type, Window-System Types
 @subsection Subwindow Type
 @cindex subwindow type
 
 (not yet documented)
 
-@node X Resource Type
+@node X Resource Type,  , Subwindow Type, Window-System Types
 @subsection X Resource Type
 @cindex X resource type
 
 (not yet documented)
 
-@node Type Predicates
+@node Type Predicates, Equality Predicates, Window-System Types, Lisp Data Types
 @section Type Predicates
 @cindex predicates
 @cindex type checking
@@ -2220,7 +2220,7 @@ This function returns a symbol naming the primitive type of
 @end example
 @end defun
 
-@node Equality Predicates
+@node Equality Predicates,  , Type Predicates, Lisp Data Types
 @section Equality Predicates
 @cindex equality
 

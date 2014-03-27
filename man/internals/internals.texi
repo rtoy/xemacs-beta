@@ -1084,7 +1084,7 @@ Stephen Turnbull has produced many of the beta and semi-stable releases
 and has attempted to be the "face" of XEmacs on the newsgroups and
 mailing lists.
 @item
-Steve Youngs, Ville Skyttä¬ and now Norbert Koch have taken turns
+Steve Youngs, Ville Skyttä and now Norbert Koch have taken turns
 maintaining the packages.
 @item
 Vin Shelton maintains the stable releases.
@@ -17662,7 +17662,6 @@ reading and writing Unicode files.  multiple problems:
   systems:
 
     @enumerate
-    @itemize
     @item
     they would be character->character and operate next to the
     internal data; this means that coding systems need to be able
@@ -17699,7 +17698,6 @@ reading and writing Unicode files.  multiple problems:
     important: we need a way of specifying how detecting works
     when we have more than one coding system.  we might need more
     than a single priority list.  need to think about this.
-    @end itemize
     @end enumerate
 
   @item
@@ -17718,7 +17716,6 @@ reading and writing Unicode files.  multiple problems:
   text when it's written out.  We need two levels
 
     @enumerate
-    @itemize
     @item
     first, a "safe-charset" level that checks before any actual
     encoding to see if all characters in the document can safely
@@ -17750,7 +17747,6 @@ reading and writing Unicode files.  multiple problems:
     @item
     same thing (error checking, list of alternatives, etc.) needs
     to happen when reading!  all of this will be a lot of work!
-    @end itemize
     @end enumerate
   @end itemize
 @end itemize

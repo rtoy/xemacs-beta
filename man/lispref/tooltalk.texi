@@ -3,7 +3,7 @@
 @c Copyright (C) 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/tooltalk.info
-@node ToolTalk Support, LDAP Support, X-Windows, top
+@node ToolTalk Support, LDAP Support, X-Windows, Top
 @chapter ToolTalk Support
 @cindex ToolTalk
 
@@ -13,7 +13,7 @@
 * Receiving Messages::
 @end menu
 
-@node XEmacs ToolTalk API Summary
+@node XEmacs ToolTalk API Summary, Sending Messages, ToolTalk Support, ToolTalk Support
 @section XEmacs ToolTalk API Summary
 
 The XEmacs Lisp interface to ToolTalk is similar, at least in spirit,
@@ -47,7 +47,7 @@ can substitute the corresponding symbol, e.g. @code{'TT_SESSION}.  This
 simplifies building lists that represent messages and patterns.
 @end itemize
 
-@node Sending Messages
+@node Sending Messages, Receiving Messages, XEmacs ToolTalk API Summary, ToolTalk Support
 @section Sending Messages
 @cindex sending ToolTalk messages
 @cindex ToolTalk message
@@ -57,7 +57,7 @@ simplifies building lists that represent messages and patterns.
 * Elisp Interface for Sending Messages::
 @end menu
 
-@node Example of Sending Messages
+@node Example of Sending Messages, Elisp Interface for Sending Messages, Sending Messages, Sending Messages
 @subsection Example of Sending Messages
 
 Here's a simple example that sends a query to another application
@@ -85,7 +85,7 @@ stored in the first argument of the message.
   (send-tooltalk-message m))
 @end example
 
-@node Elisp Interface for Sending Messages
+@node Elisp Interface for Sending Messages,  , Example of Sending Messages, Sending Messages
 @subsection Elisp Interface for Sending Messages
 
 @defun make-tooltalk-message attributes
@@ -242,7 +242,7 @@ destroy messages after they've been processed by a message or pattern
 callback, the Lisp/ToolTalk callback machinery does this for you.
 @end defun
 
-@node Receiving Messages
+@node Receiving Messages,  , Sending Messages, ToolTalk Support
 @section Receiving Messages
 @cindex ToolTalk pattern
 @cindex receiving ToolTalk messages
@@ -252,7 +252,7 @@ callback, the Lisp/ToolTalk callback machinery does this for you.
 * Elisp Interface for Receiving Messages::
 @end menu
 
-@node Example of Receiving Messages
+@node Example of Receiving Messages, Elisp Interface for Receiving Messages, Receiving Messages, Receiving Messages
 @subsection Example of Receiving Messages
 
 Here's a simple example of a handler for a message that tells XEmacs to
@@ -274,7 +274,7 @@ string to display.
   (register-tooltalk-pattern p))
 @end example
 
-@node Elisp Interface for Receiving Messages
+@node Elisp Interface for Receiving Messages,  , Example of Receiving Messages, Receiving Messages
 @subsection Elisp Interface for Receiving Messages
 
 @defun make-tooltalk-pattern attributes

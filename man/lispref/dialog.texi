@@ -12,7 +12,7 @@
 * Dialog Box Functions::
 @end menu
 
-@node Dialog Box Format
+@node Dialog Box Format, Dialog Box Functions, Dialog Boxes, Dialog Boxes
 @section Dialog Box Format
 
 A dialog box description is a list.
@@ -55,7 +55,7 @@ The syntax, more precisely:
    dialog       :=  '(' name [ button ]+ [ partition [ button ]+ ] ')'
 @end example
 
-@node Dialog Box Functions
+@node Dialog Box Functions,  , Dialog Box Format, Dialog Boxes
 @section Dialog Box Functions
 
 @defun popup-dialog-box dbox-desc

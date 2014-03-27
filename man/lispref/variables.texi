@@ -39,7 +39,7 @@ variable.
 * Variable Aliases::	  Making one variable point to another.
 @end menu
 
-@node Global Variables
+@node Global Variables, Constant Variables, Variables, Variables
 @section Global Variables
 @cindex global variable
 
@@ -89,7 +89,7 @@ x
 @end group
 @end example
 
-@node Constant Variables
+@node Constant Variables, Local Variables, Global Variables, Variables
 @section Variables That Never Change
 @vindex nil
 @vindex t
@@ -113,7 +113,7 @@ nil @equiv{} 'nil
 @end group
 @end example
 
-@node Local Variables
+@node Local Variables, Void Variables, Constant Variables, Variables
 @section Local Variables
 @cindex binding local variables
 @cindex local variables
@@ -257,7 +257,7 @@ that Lisp avoids infinite recursion on an ill-defined function.
 @xref{Eval}.
 @end defvar
 
-@node Void Variables
+@node Void Variables, Defining Variables, Local Variables, Variables
 @section When a Variable is ``Void''
 @kindex void-variable
 @cindex void variable
@@ -371,7 +371,7 @@ more precisely, if its current binding is not void.  It returns
 @end smallexample
 @end defun
 
-@node Defining Variables
+@node Defining Variables, Accessing Variables, Void Variables, Variables
 @section Defining Global Variables
 @cindex variable definition
 
@@ -557,7 +557,7 @@ what we really want.  To prevent it, use these special operators at top
 level in a file, where normally no local binding is in effect, and make
 sure to load the file before making a local binding for the variable.
 
-@node Accessing Variables
+@node Accessing Variables, Setting Variables, Defining Variables, Variables
 @section Accessing Variable Values
 
   The usual way to reference a variable is to write the symbol which
@@ -608,7 +608,7 @@ A @code{void-variable} error is signaled if @var{symbol} has neither a
 local binding nor a global value.
 @end defun
 
-@node Setting Variables
+@node Setting Variables, Variable Scoping, Accessing Variables, Variables
 @section How to Alter a Variable Value
 
   The usual way to change the value of a variable is with the special
@@ -763,7 +763,7 @@ foo                       ;; @r{@code{foo} was changed.}
     (setq @var{var} (cons @var{value} @var{var})))
 @end example
 
-@node Variable Scoping
+@node Variable Scoping, Buffer-Local Variables, Setting Variables, Variables
 @section Scoping Rules for Variable Bindings
 
   A given symbol @code{foo} may have several local variable bindings,
@@ -801,7 +801,7 @@ are dynamically scoped, like variables in XEmacs Lisp.
 * Using Scoping::  How to use dynamic scoping carefully and avoid problems.
 @end menu
 
-@node Scope
+@node Scope, Extent, Variable Scoping, Variable Scoping
 @subsection Scope
 
   XEmacs Lisp uses @dfn{indefinite scope} for local variable bindings.
@@ -861,7 +861,7 @@ Here, when @code{foo} is called by @code{binder}, it binds @code{x}.
 by @code{foo} instead of the one bound by @code{binder}.
 @end itemize
 
-@node Extent
+@node Extent, Impl of Scope, Scope, Variable Scoping
 @subsection Extent
 
   @dfn{Extent} refers to the time during program execution that a
@@ -901,7 +901,7 @@ Note that function arguments cannot be closed around using these
 macros, and that any lambda expressions returned will not be
 byte-compiled.  
 
-@node Impl of Scope
+@node Impl of Scope, Using Scoping, Extent, Variable Scoping
 @subsection Implementation of Dynamic Scoping
 @cindex deep binding
 
@@ -941,7 +941,7 @@ off the stack, into the value cell.
 binding, but runs faster, since there is never a need to search for a
 binding.
 
-@node Using Scoping
+@node Using Scoping,  , Impl of Scope, Variable Scoping
 @subsection Proper Use of Dynamic Scoping
 
   Binding a variable in one function and using it in another is a
@@ -976,7 +976,7 @@ for inter-function usage.  It also avoids a warning from the byte
 compiler.  Choose the variable's name to avoid name conflicts---don't
 use short names like @code{x}.
 
-@node Buffer-Local Variables
+@node Buffer-Local Variables, Variable Aliases, Variable Scoping, Variables
 @section Buffer-Local Variables
 @cindex variables, buffer-local
 @cindex buffer-local variables
@@ -995,7 +995,7 @@ important customization method.
                                  that don't have their own local values.
 @end menu
 
-@node Intro to Buffer-Local
+@node Intro to Buffer-Local, Creating Buffer-Local, Buffer-Local Variables, Buffer-Local Variables
 @subsection Introduction to Buffer-Local Variables
 
   A buffer-local variable has a buffer-local binding associated with a
@@ -1046,11 +1046,11 @@ this for XEmacs.
 buffer-local bindings for the buffer that holds the file within XEmacs.
 @xref{Auto Major Mode}.
 
-@node Creating Buffer-Local
+@node Creating Buffer-Local, Default Value, Intro to Buffer-Local, Buffer-Local Variables
 @subsection Creating and Deleting Buffer-Local Bindings
 
   Besides the functions mentioned here, buffer-local variables are also
-created when file-local variables are set.  @xref{Auto Major Mode}
+created when file-local variables are set.  @xref{Auto Major Mode}.
 .  There is no way (outside of `eval' lines, which are normally disabled)
 to set the global value of a variable from the file local variable 
 specifications.  
@@ -1215,7 +1215,7 @@ A local variable is @dfn{permanent} if the variable name (a symbol) has a
 locals are appropriate for data pertaining to where the file came from
 or how to save it, rather than with how to edit the contents.
 
-@node Default Value
+@node Default Value,  , Creating Buffer-Local, Buffer-Local Variables
 @subsection The Default Value of a Buffer-Local Variable
 @cindex default value
 
@@ -1332,7 +1332,7 @@ evaluated.
 @end example
 @end defun
 
-@node Variable Aliases
+@node Variable Aliases,  , Buffer-Local Variables, Variables
 @section Variable Aliases
 @cindex variables, indirect
 @cindex indirect variables

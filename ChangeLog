@@ -1,3 +1,7 @@
+2014-02-11  Jerry James  <james@xemacs.org>
+
+	* .hgignore: Add man/Makefile.
+
 2013-10-28  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Disable ASLR on Mavericks.

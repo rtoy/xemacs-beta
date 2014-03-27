@@ -876,7 +876,7 @@ class browser.  @xref{Ebrowse,,, ebrowse, Ebrowse User's Manual}.
 * List Tags::		Listing and finding tags defined in a file.
 @end menu
 
-@node Tag Syntax
+@node Tag Syntax, Create Tags Table, Tags, Tags
 @subsection Source File Tag Syntax
 
   Here is how tag syntax is defined for the most popular languages:
@@ -1030,7 +1030,7 @@ generate a tag.
   You can also generate tags based on regexp matching (@pxref{Etags
 Regexps}) to handle other formats and languages.
 
-@node Create Tags Table
+@node Create Tags Table, Etags Regexps, Tag Syntax, Tags
 @subsection Creating Tags Tables
 @cindex @code{etags} program
 
@@ -1123,7 +1123,7 @@ knows, and the file name rules for guessing the language. It also prints
 a list of all the available @code{etags} options, together with a short
 explanation.
 
-@node Etags Regexps
+@node Etags Regexps, Select Tags Table, Create Tags Table, Tags
 @subsection Etags Regexps
 
   The @samp{--regex} option provides a general way of recognizing tags

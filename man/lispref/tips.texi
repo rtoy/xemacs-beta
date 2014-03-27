@@ -21,7 +21,7 @@ in the previous chapters.
 * Library Headers::           Standard headers for library packages.
 @end menu
 
-@node Style Tips
+@node Style Tips, Compilation Tips, Tips, Tips
 @section Writing Clean Lisp Programs
 
   Here are some tips for avoiding common errors in writing Lisp code
@@ -256,7 +256,7 @@ Foundation, then place your name in the copyright notice in place of the
 Foundation's name.
 @end itemize
 
-@node Compilation Tips
+@node Compilation Tips, Documentation Tips, Style Tips, Tips
 @section Tips for Making Compiled Code Fast
 @cindex execution speed
 @cindex speedups
@@ -316,7 +316,7 @@ a noticeable speedup in something slow enough that users care about
 the speed.  @xref{Inline Functions}.
 @end itemize
 
-@node Documentation Tips
+@node Documentation Tips, Comment Tips, Compilation Tips, Tips
 @section Tips for Documentation Strings
 
   Here are some tips for the writing of documentation strings.
@@ -446,7 +446,7 @@ describe the most important commands in your major mode, and then use
 @samp{\\@{@dots{}@}} to display the rest of the mode's keymap.
 @end itemize
 
-@node Comment Tips
+@node Comment Tips, Library Headers, Documentation Tips, Tips
 @section Tips on Writing Comments
 
   We recommend these conventions for where to put comments and how to
@@ -536,7 +536,7 @@ automatically indent comments according to these conventions,
 depending on the number of semicolons.  @xref{Comments,,
 Manipulating Comments, xemacs, The XEmacs User's Manual}.
 
-@node Library Headers
+@node Library Headers,  , Comment Tips, Tips
 @section Conventional Headers for XEmacs Libraries
 @cindex header comments
 @cindex library header comments

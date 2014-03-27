@@ -5,7 +5,7 @@
 @c Copyright (C) 1999 Stephen J. Turnbull.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/gutter.info
-@node Gutter, Scrollbars, Toolbar, top
+@node Gutter, Scrollbars, Toolbar, Top
 @chapter Gutter
 @cindex gutter
 

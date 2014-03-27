@@ -31,7 +31,7 @@ displayed in windows.
 * Window Configurations::  Saving and restoring the state of the screen.
 @end menu
 
-@node Basic Windows
+@node Basic Windows, Splitting Windows, Windows, Windows
 @section Basic Concepts of Emacs Windows
 @cindex window
 @cindex selected window
@@ -125,7 +125,7 @@ window's buffer are displayed in the window.
   This function returns @code{t} if @var{object} is a window.
 @end defun
 
-@node Splitting Windows
+@node Splitting Windows, Deleting Windows, Basic Windows, Windows
 @section Splitting Windows
 @cindex splitting windows
 @cindex window splitting
@@ -294,7 +294,7 @@ part of the documentation string):
 @end smallexample
 @end deffn
 
-@node Deleting Windows
+@node Deleting Windows, Selecting Windows, Splitting Windows, Windows
 @section Deleting Windows
 @cindex deleting windows
 
@@ -406,7 +406,7 @@ Consider all devices without restriction.
 This function always returns @code{nil}.
 @end deffn
 
-@node Selecting Windows
+@node Selecting Windows, Cyclic Window Ordering, Deleting Windows, Windows
 @section Selecting Windows
 @cindex selecting windows
 
@@ -526,7 +526,7 @@ The remaining arguments control which set of windows are considered.
 See @code{next-window}, above.
 @end defun
 
-@node Cyclic Window Ordering
+@node Cyclic Window Ordering, Buffers and Windows, Selecting Windows, Windows
 @section Cyclic Ordering of Windows
 @cindex cyclic ordering of windows
 @cindex ordering of windows, cyclic
@@ -669,7 +669,7 @@ The other arguments specify which windows to cycle through, as in
 @code{next-window}.
 @end defun
 
-@node Buffers and Windows
+@node Buffers and Windows, Displaying Buffers, Cyclic Window Ordering, Windows
 @section Buffers and Windows
 @cindex examining windows
 @cindex windows, controlling precisely
@@ -744,7 +744,7 @@ When a buffer is first created, @code{buffer-display-time} starts out
 with the value @code{nil}.
 @end defvar
 
-@node Displaying Buffers
+@node Displaying Buffers, Choosing Window, Buffers and Windows, Windows
 @section Displaying Buffers in Windows
 @cindex switching to a buffer
 @cindex displaying a buffer
@@ -863,7 +863,7 @@ the same meaning as with @code{delete-windows-on}.
 This function returns @code{nil}.
 @end deffn
 
-@node Choosing Window
+@node Choosing Window, Window Point, Displaying Buffers, Windows
 @section Choosing a Window for Display
 
   This section describes the basic facility that chooses a window to
@@ -1058,7 +1058,7 @@ This function marks @var{window} as dedicated if @var{flag} is
 non-@code{nil}, and nondedicated otherwise.
 @end defun
 
-@node Window Point
+@node Window Point, Window Start, Choosing Window, Windows
 @section Windows and Point
 @cindex window position
 @cindex window point
@@ -1183,7 +1183,7 @@ it is non-nil.
 
 @end defun
 
-@node Window Start
+@node Window Start, Vertical Scrolling, Window Point, Windows
 @section The Window Start Position
 
   Each window contains a marker used to keep track of a buffer position
@@ -1330,7 +1330,7 @@ has been scrolled horizontally, @code{pos-visible-in-window-p} returns
 @code{t}.  @xref{Horizontal Scrolling}.
 @end defun
 
-@node Vertical Scrolling
+@node Vertical Scrolling, Horizontal Scrolling, Window Start, Windows
 @section Vertical Scrolling
 @cindex vertical scrolling
 @cindex scrolling vertically
@@ -1493,7 +1493,7 @@ point at the middle, top, and bottom of the window.
 @end defopt
 
 
-@node Horizontal Scrolling
+@node Horizontal Scrolling, Size of Window, Vertical Scrolling, Windows
 @section Horizontal Scrolling
 @cindex horizontal scrolling
 
@@ -1590,7 +1590,7 @@ is off the screen due to horizontal scrolling:
         (window-width window)))))
 @end group
 @end example
-@node Size of Window
+@node Size of Window, Position of Window, Horizontal Scrolling, Windows
 @section The Size of a Window
 @cindex window size
 @cindex size of window
@@ -1744,7 +1744,7 @@ is non-@code{nil}, any space occupied by clipped lines will not be
 included.
 @end defun
 
-@node Position of Window
+@node Position of Window, Resizing Windows, Size of Window, Windows
 @section The Position of a Window
 @cindex window position
 @cindex position of window
@@ -1798,7 +1798,7 @@ a list of integer pixel positions @code{(left top right bottom)}, all
 relative to @code{(0,0)} at the top left corner of the window.
 @end defun
 
-@node Resizing Windows
+@node Resizing Windows, Window Configurations, Position of Window, Windows
 @section Changing the Size of a Window
 @cindex window resizing
 @cindex changing window size
@@ -1934,7 +1934,7 @@ cause these functions to be called over and over.  In most cases,
 @code{save-selected-window} is what you need here.
 @end defvar
 
-@node Window Configurations
+@node Window Configurations,  , Resizing Windows, Windows
 @section Window Configurations
 @cindex window configurations
 @cindex saving window information

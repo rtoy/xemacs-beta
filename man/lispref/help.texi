@@ -32,7 +32,7 @@ topics of discussion.
 * Obsoleteness::	      Upgrading Lisp functionality over time.
 @end menu
 
-@node Documentation Basics
+@node Documentation Basics, Accessing Documentation, Documentation, Documentation
 @section Documentation Basics
 @cindex documentation conventions
 @cindex writing a documentation string
@@ -102,7 +102,7 @@ use to print nice-looking hardcopy for the file
 @file{emacs/etc/DOC-@var{version}}.  These are @file{sorted-doc.c} and
 @file{digest-doc.c}.
 
-@node Accessing Documentation
+@node Accessing Documentation, Keys in Documentation, Documentation Basics, Documentation
 @section Access to Documentation Strings
 
 @defun documentation-property symbol property &optional verbatim
@@ -281,7 +281,7 @@ with XEmacs.  In older Emacs versions, @code{exec-directory} was used for
 this.
 @end defvar
 
-@node Keys in Documentation
+@node Keys in Documentation, Describing Characters, Accessing Documentation, Documentation
 @section Substituting Key Bindings in Documentation
 @cindex documentation, keys in
 @cindex keys in documentation strings
@@ -375,7 +375,7 @@ and \=\[ puts \[ into the output."
 @end group
 @end smallexample
 
-@node Describing Characters
+@node Describing Characters, Help Functions, Keys in Documentation, Documentation
 @section Describing Characters for Help Messages
 
   These functions convert events, key sequences or characters to textual
@@ -450,7 +450,7 @@ XEmacs buffers are usually displayed).
 @end smallexample
 @end defun
 
-@node Help Functions
+@node Help Functions, Obsoleteness, Describing Characters, Documentation
 @section Help Functions
 
   XEmacs provides a variety of on-line help functions, all accessible to
@@ -666,7 +666,7 @@ if the user types the help character again.
 @end defopt
 @end ignore
 
-@node Obsoleteness
+@node Obsoleteness,  , Help Functions, Documentation
 @section Obsoleteness
 
 As you add functionality to a package, you may at times want to

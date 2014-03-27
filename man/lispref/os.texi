@@ -32,7 +32,7 @@ pertaining to the terminal and the screen.
 * Special Keysyms::     Defining system-specific key symbols for X windows.
 @end ignore
 
-@node Starting Up
+@node Starting Up, Getting Out, System Interface, System Interface
 @section Starting Up XEmacs
 
   This section describes what XEmacs does when it is started, and how you
@@ -46,7 +46,7 @@ can customize these actions.
                               and how you can customize them.
 @end menu
 
-@node Start-up Summary
+@node Start-up Summary, Init File, Starting Up, Starting Up
 @subsection Summary: Sequence of Actions at Start Up
 @cindex initialization
 @cindex start up of XEmacs
@@ -157,7 +157,7 @@ but thoughtless copying of your @file{.emacs} file will not inhibit the
 message for someone else.
 @end defopt
 
-@node Init File
+@node Init File, Terminal-Specific, Start-up Summary, Starting Up
 @subsection The Init File: @file{.emacs}
 @cindex init file
 @cindex @file{.emacs}
@@ -212,7 +212,7 @@ These two normal hooks are run just before, and just after, loading of
 the user's init file, @file{default.el}, and/or @file{site-start.el}.
 @end defvar
 
-@node Terminal-Specific
+@node Terminal-Specific, Command Line Arguments, Init File, Starting Up
 @subsection Terminal-Specific Initialization
 @cindex terminal-specific initialization
 
@@ -288,7 +288,7 @@ loading terminal-specific Lisp code, and after running the hook
 @code{term-setup-hook}.
 @end defvar
 
-@node Command Line Arguments
+@node Command Line Arguments,  , Terminal-Specific, Starting Up
 @subsection Command Line Arguments
 @cindex command line arguments
 
@@ -393,7 +393,7 @@ If all of these functions return @code{nil}, then the argument is used
 as a file name to visit.
 @end defvar
 
-@node Getting Out
+@node Getting Out, System Environment, Starting Up, System Interface
 @section Getting out of XEmacs
 @cindex exiting XEmacs
 
@@ -408,7 +408,7 @@ common.
 * Suspending XEmacs::     Exiting XEmacs reversibly.
 @end menu
 
-@node Killing XEmacs
+@node Killing XEmacs, Suspending XEmacs, Getting Out, Getting Out
 @subsection Killing XEmacs
 @cindex killing XEmacs
 
@@ -449,7 +449,7 @@ finished with all file saving and confirmation, it runs the functions in
 this hook.
 @end defvar
 
-@node Suspending XEmacs
+@node Suspending XEmacs,  , Killing XEmacs, Getting Out
 @subsection Suspending XEmacs
 @cindex suspending XEmacs
 
@@ -548,7 +548,7 @@ This variable is a normal hook run before suspending.
 This variable is a normal hook run after suspending.
 @end defvar
 
-@node System Environment
+@node System Environment, User Identification, Getting Out, System Interface
 @section Operating System Environment
 @cindex operating system environment
 
@@ -748,7 +748,7 @@ the function will signal an error.
 This function returns the process @sc{id} of the Emacs process.
 @end defun
 
-@node User Identification
+@node User Identification, Time of Day, System Environment, System Interface
 @section User Identification
 
 @defvar user-mail-address
@@ -867,7 +867,7 @@ Return ``C:\'', as a fallback, but issue a warning.
 @end enumerate
 @end defun
 
-@node Time of Day
+@node Time of Day, Time Conversion, User Identification, System Interface
 @section Time of Day
 
   This section explains how to determine the current time and the time
@@ -940,7 +940,7 @@ fixnums.  Thus, you can use times obtained from @code{current-time}
 (see above) and from @code{file-attributes} (@pxref{File Attributes}).
 @end defun
 
-@node Time Conversion
+@node Time Conversion, Timers, Time of Day, System Interface
 @section Time Conversion
 
   These functions convert time values (lists of two or three fixnums)
@@ -1091,7 +1091,7 @@ would get from @code{decode-time}).  The specified zone is used without
 any further alteration for daylight savings time.
 @end defun
 
-@node Timers
+@node Timers, Terminal Input, Time Conversion, System Interface
 @section Timers for Delayed Execution
 
 You can set up a timer to call a function at a specified future time.
@@ -1136,7 +1136,7 @@ not cause anything special to happen.
 (NOTE: In FSF Emacs, this function is called @code{cancel-timer}.)
 @end defun
 
-@node Terminal Input
+@node Terminal Input, Terminal Output, Timers, System Interface
 @section Terminal Input
 @cindex terminal input
 
@@ -1151,7 +1151,7 @@ functions.
 * Recording Input::	Saving histories of recent or all input events.
 @end menu
 
-@node Input Modes
+@node Input Modes, Translating Input, Terminal Input, Terminal Input
 @subsection Input Modes
 @cindex input modes
 @cindex terminal input modes
@@ -1212,7 +1212,7 @@ is the character XEmacs currently uses for quitting, usually @kbd{C-g}.
 @end table
 @end defun
 
-@node Translating Input
+@node Translating Input, Recording Input, Input Modes, Terminal Input
 @subsection Translating Input Events
 @cindex translating input events
 
@@ -1410,7 +1410,7 @@ to turn the character that follows into a Hyper character:
 The @file{iso-transl} library uses this feature to provide a way of
 inputting non-ASCII Latin-1 characters.
 
-@node Recording Input
+@node Recording Input,  , Translating Input, Terminal Input
 @subsection Recording Input
 
 @defun recent-keys &optional number
@@ -1468,7 +1468,7 @@ trigger an XEmacs bug, for the sake of a bug report.
 
   See also the @code{open-termscript} function (@pxref{Terminal Output}).
 
-@node Terminal Output
+@node Terminal Output, Flow Control, Terminal Input, System Interface
 @section Terminal Output
 @cindex terminal output
 
@@ -1556,7 +1556,7 @@ See also @code{open-dribble-file} in @ref{Terminal Input}.
 @end deffn
 
 @ignore Not in XEmacs
-@node Special Keysyms
+@node Special Keysyms, Flow Control, Terminal Output, System Interface
 @section System-Specific X11 Keysyms
 
 To define system-specific X11 keysyms, set the variable
@@ -1581,7 +1581,7 @@ buffer-local.  @xref{Multiple Displays}.
 @end defvar
 @end ignore
 
-@node Flow Control
+@node Flow Control, Batch Mode, Terminal Output, System Interface
 @section Flow Control
 @cindex flow control characters
 
@@ -1671,7 +1671,7 @@ of padding by customizing the Termcap entry.  You can also reduce it by
 setting @code{baud-rate} to a smaller value so that XEmacs uses a smaller
 speed when calculating the padding needed.  @xref{Terminal Output}.
 
-@node Batch Mode
+@node Batch Mode,  , Flow Control, System Interface
 @section Batch Mode
 @cindex batch mode
 @cindex noninteractive use

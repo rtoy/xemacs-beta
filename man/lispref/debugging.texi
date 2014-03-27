@@ -39,7 +39,7 @@ Afterward, you can examine the file to find out what input was used.
   For debugging problems in terminal descriptions, the
 @code{open-termscript} function can be useful.  @xref{Terminal Output}.
 
-@node Debugger
+@node Debugger, Syntax Errors, Debugging, Debugging
 @section The Lisp Debugger
 @cindex debugger
 @cindex Lisp debugger
@@ -64,7 +64,7 @@ recursively.  @xref{Recursive Editing}.
 * Internals of Debugger:: Subroutines of the debugger, and global variables.
 @end menu
 
-@node Error Debugging
+@node Error Debugging, Infinite Loops, Debugger, Debugger
 @subsection Entering the Debugger on an Error
 @cindex error debugging
 @cindex debugging errors
@@ -130,7 +130,7 @@ this:
           '(lambda () (setq debug-on-error t)))
 @end example
 
-@node Infinite Loops
+@node Infinite Loops, Function Debugging, Error Debugging, Debugger
 @subsection Debugging Infinite Loops
 @cindex infinite loops
 @cindex loops, infinite
@@ -161,7 +161,7 @@ If @code{debug-on-quit} is @code{nil}, then the debugger is not called
 when you quit.  @xref{Quitting}.
 @end defopt
 
-@node Function Debugging
+@node Function Debugging, Explicit Debug, Infinite Loops, Debugger
 @subsection Entering the Debugger on a Function Call
 @cindex function call debugging
 @cindex debugging specific functions
@@ -243,7 +243,7 @@ function, the second call does nothing.  @code{cancel-debug-on-entry}
 returns @var{function-name}.
 @end deffn
 
-@node Explicit Debug
+@node Explicit Debug, Using Debugger, Function Debugging, Debugger
 @subsection Explicit Entry to the Debugger
 
   You can cause the debugger to be called at a certain point in your
@@ -258,7 +258,7 @@ of @code{(debug)} isn't ignored, it will alter the execution of the
 program!)  The most common suitable places are inside a @code{progn} or
 an implicit @code{progn} (@pxref{Sequencing}).
 
-@node Using Debugger
+@node Using Debugger, Debugger Commands, Explicit Debug, Debugger
 @subsection Using the Debugger
 
   When the debugger is entered, it displays the previously selected
@@ -296,7 +296,7 @@ interpreted.
 
 @need 3000
 
-@node Debugger Commands
+@node Debugger Commands, Invoking the Debugger, Using Debugger, Debugger
 @subsection Debugger Commands
 @cindex debugger command list
 
@@ -391,7 +391,7 @@ then the error will immediately be signalled again.  Other errors
 until the problem is corrected.
 @end table
 
-@node Invoking the Debugger
+@node Invoking the Debugger, Internals of Debugger, Debugger Commands, Debugger
 @subsection Invoking the Debugger
 
   Here we describe fully the function used to invoke the debugger.
@@ -490,7 +490,7 @@ under which @code{debug} is called.
 
 @need 5000
 
-@node Internals of Debugger
+@node Internals of Debugger,  , Invoking the Debugger, Debugger
 @subsection Internals of the Debugger
 
   This section describes functions and variables used internally by the
@@ -637,7 +637,7 @@ If @var{frame-number} is out of range, @code{backtrace-frame} returns
 @code{nil}.
 @end defun
 
-@node Syntax Errors
+@node Syntax Errors, Compilation Errors, Debugger, Debugging
 @section Debugging Invalid Lisp Syntax
 
   The Lisp reader reports invalid syntax, but cannot say where the real
@@ -662,7 +662,7 @@ Lisp, and we can give further advice for those cases.
 * Excess Close::    How to find a spurious close paren or missing open.
 @end menu
 
-@node Excess Open
+@node Excess Open, Excess Close, Syntax Errors, Syntax Errors
 @subsection Excess Open Parentheses
 
   The first step is to find the defun that is unbalanced.  If there is
@@ -698,7 +698,7 @@ the old indentation actually fit the intended nesting of parentheses,
 and you have put back those parentheses, @kbd{C-M-q} should not change
 anything.
 
-@node Excess Close
+@node Excess Close,  , Excess Open, Syntax Errors
 @subsection Excess Close Parentheses
 
   To deal with an excess close parenthesis, first insert an open

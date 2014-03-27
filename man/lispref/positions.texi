@@ -26,7 +26,7 @@ surrounding characters.  @xref{Markers}.
 * Narrowing::     Restricting editing to a portion of the buffer.
 @end menu
 
-@node Point
+@node Point, Motion, Positions, Positions
 @section Point
 @cindex point
 
@@ -116,7 +116,7 @@ current buffer if omitted.
 current buffer, as of the last time it was read in, saved or auto-saved.
 @end defvar
 
-@node Motion
+@node Motion, Excursions, Point, Positions
 @section Motion
 
   Motion functions change the value of point, either relative to the
@@ -133,7 +133,7 @@ or relative to the edges of the selected window.  @xref{Point}.
 * Skipping Characters::    Skipping characters belonging to a certain set.
 @end menu
 
-@node Character Motion
+@node Character Motion, Word Motion, Motion, Motion
 @subsection Motion by Characters
 
   These functions move point based on a count of characters.
@@ -187,7 +187,7 @@ defaults to the current buffer if omitted.
 In an interactive call, @var{count} is the numeric prefix argument.
 @end deffn
 
-@node Word Motion
+@node Word Motion, Buffer End Motion, Character Motion, Motion
 @subsection Motion by Words
 
   These functions for parsing words use the syntax table to decide
@@ -224,7 +224,7 @@ that uses it.  If it is non-@code{nil}, then characters in the
 words.  Otherwise, they do not.
 @end defvar
 
-@node Buffer End Motion
+@node Buffer End Motion, Text Lines, Word Motion, Motion
 @subsection Motion to an End of the Buffer
 
   To move point to the beginning of the buffer, write:
@@ -272,7 +272,7 @@ if provided; otherwise @var{count} defaults to @code{nil}.
 Don't use this function in Lisp programs!
 @end deffn
 
-@node Text Lines
+@node Text Lines, Screen Lines, Buffer End Motion, Motion
 @subsection Motion by Text Lines
 @cindex lines
 
@@ -452,7 +452,7 @@ to use and more reliable (no dependence on goal column, etc.).
 These functions do not move point, but test whether it is already at the
 beginning or end of a line.
 
-@node Screen Lines
+@node Screen Lines, List Motion, Text Lines, Motion
 @subsection Motion by Screen Lines
 
   The line functions in the previous section count text lines, delimited
@@ -600,7 +600,7 @@ beginning of the first screen line.  @xref{Minibuffer Misc}.
 @end defun
 @end ignore
 
-@node List Motion
+@node List Motion, Skipping Characters, Screen Lines, Motion
 @subsection Moving over Balanced Expressions
 @cindex sexp motion
 @cindex Lisp expression motion
@@ -693,7 +693,7 @@ match for this regular expression, followed by a character with
 open-parenthesis syntax.
 @end defopt
 
-@node Skipping Characters
+@node Skipping Characters,  , List Motion, Motion
 @subsection Skipping Characters
 @cindex skipping characters
 
@@ -751,7 +751,7 @@ This function moves point backward, skipping characters that match
 @code{skip-chars-forward} except for the direction of motion.
 @end defun
 
-@node Excursions
+@node Excursions, Narrowing, Motion, Positions
 @section Excursions
 @cindex excursion
 
@@ -834,7 +834,7 @@ This macro is similar to @code{save-excursion} but it saves and
 restores the selected window and nothing else.
 @end defmac
 
-@node Narrowing
+@node Narrowing,  , Excursions, Positions
 @section Narrowing
 @cindex narrowing
 @cindex restriction (in a buffer)

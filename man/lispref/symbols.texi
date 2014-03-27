@@ -31,7 +31,7 @@ otherwise.
                               for recording miscellaneous information.
 @end menu
 
-@node Symbol Components
+@node Symbol Components, Definitions, Symbols, Symbols
 @section Symbol Components
 @cindex symbol components
 
@@ -134,7 +134,7 @@ syntax and prints in hash notation (@pxref{Primitive Function Type}).  A
 symbol naming a function written in Lisp would have a lambda expression
 (or a byte-code object) in this cell.
 
-@node Definitions
+@node Definitions, Creating Symbols, Symbol Components, Symbols
 @section Defining Symbols
 @cindex definition of a symbol
 
@@ -179,7 +179,7 @@ utilities such as @file{etags} and @file{make-docfile} recognize
 definitions, and add appropriate information to tag tables and the
 @file{DOC} file. @xref{Accessing Documentation}.
 
-@node Creating Symbols
+@node Creating Symbols, Symbol Properties, Definitions, Symbols
 @section Creating and Interning Symbols
 @cindex reading symbols
 
@@ -379,7 +379,7 @@ If @code{unintern} does delete a symbol, it returns @code{t}.  Otherwise
 it returns @code{nil}.
 @end defun
 
-@node Symbol Properties
+@node Symbol Properties,  , Creating Symbols, Symbols
 @section Symbol Properties
 @cindex property list, symbol
 @cindex plist, symbol
@@ -416,7 +416,7 @@ names, and the other two elements are the corresponding values.
 * Other Plists::                Accessing property lists stored elsewhere.
 @end menu
 
-@node Plists and Alists
+@node Plists and Alists, Object Plists, Symbol Properties, Symbol Properties
 @subsection Property Lists and Association Lists
 
 @cindex property lists vs association lists
@@ -448,7 +448,7 @@ name.)  An association list may be used like a stack where associations
 are pushed on the front of the list and later discarded; this is not
 possible with a property list.
 
-@node Object Plists
+@node Object Plists, Other Plists, Plists and Alists, Symbol Properties
 @subsection Property List Functions for Objects
 
 Once upon a time, only symbols had property lists.  Now, several other
@@ -523,7 +523,7 @@ was @code{nil}; thus, setting a property to @code{nil} was close
 enough to @code{remprop} for most purposes.)
 @end defun
 
-@node Other Plists
+@node Other Plists,  , Object Plists, Symbol Properties
 @subsection Property Lists Not Associated with Objects
 
   These functions are useful for manipulating property lists
