@@ -1,3 +1,10 @@
+2014-03-28  Jerry James  <james@xemacs.org>
+
+	* lispref/loading.texi:
+	* lispref/macros.texi:
+	Fix broken next/prev pointers caught by texinfo 4.x, but not by
+	texinfo 5.x.  Thanks to Thomas Mittelstaedt for reporting.
+
 2014-02-11  Jerry James  <james@xemacs.org>
 
 	* lispref/consoles-devices.texi:
