@@ -12,6 +12,7 @@ User-Visible Bug Fixes and Improvements
 -- Improve: Make #'byte-compile-if suppress spurious warnings from `(if (fboundp ...' or `(if (boundp ...' constructs (port of Dave Love patch to Emacs) -- Mike Sperber
 -- Improve: Silence warnings about throws out of #'post-command-hook' -- Mike Sperber
 -- New: Support bignums with MPIR -- Jerry James
+-- Improve: Help buffer behaviour synced with GNU -- Mats Lidell
 
 Build Infrastructure and Source Tree
 
