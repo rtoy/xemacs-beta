@@ -1,3 +1,10 @@
+2014-04-19  Mats Lidell  <matsl@xemacs.org>
+
+	* help.el: Sync from GNU - Link to customize if applicable and
+	display version info. Other changes: Remove use of button-2.
+	return and button-1 use activate-function. Move between
+	activate-function-extents with tab.
+
 2014-01-27  Michael Sperber  <mike@xemacs.org>
 
 	* font-lock.el (font-lock-regexp-grouping-backslash,

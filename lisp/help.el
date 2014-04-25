@@ -1,6 +1,6 @@
 ;; help.el --- help commands for XEmacs.
 
-;; Copyright (C) 1985, 1986, 1992-4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1986, 1992-4, 1997, 2014 Free Software Foundation, Inc.
 ;; Copyright (C) 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Maintainer: FSF
@@ -55,6 +55,9 @@
 		    map (gettext "(Type ? for further options)"))
                    map)
   "Keymap for characters following the Help key.")
+
+(defvar help-mode-link-positions nil)
+(make-variable-buffer-local 'help-mode-link-positions)
 
 ;; global-map definitions moved to keydefs.el
 (fset 'help-command help-map)
@@ -142,6 +145,7 @@
 Entry to this mode runs the normal hook `help-mode-hook'.
 Commands:
 \\{help-mode-map}"
+  (help-mode-get-link-positions)
   )
 
 (define-key help-mode-map "q" 'help-mode-quit)
@@ -152,9 +156,9 @@ Commands:
 (define-key help-mode-map "i" 'Info-elisp-ref)
 (define-key help-mode-map "c" 'customize-variable)
 (define-key help-mode-map [tab] 'help-next-symbol)
-(define-key help-mode-map [(shift tab)] 'help-prev-symbol)
-(define-key help-mode-map [return] 'help-find-source-or-scroll-up)
-(define-key help-mode-map [button2] 'help-mouse-find-source-or-track)
+(define-key help-mode-map [iso-left-tab] 'help-prev-symbol)
+(define-key help-mode-map [backtab] 'help-prev-symbol)
+(define-key help-mode-map [return] 'help-activate-function-or-scroll-up)
 (define-key help-mode-map "n" 'help-next-section)
 (define-key help-mode-map "p" 'help-prev-section)
 
@@ -185,14 +189,26 @@ Commands:
       (describe-variable symb))))
 
 (defun help-next-symbol ()
-  "Move point to the next quoted symbol."
+  "Move point to the next link."
   (interactive)
-  (search-forward "`" nil t))
+  (let ((p (point))
+	(positions help-mode-link-positions)
+	(firstpos (car help-mode-link-positions)))
+    (while (and positions (>= p (car positions)))
+      (setq positions (cdr positions)))
+    (if (or positions firstpos)
+	(goto-char (or (car positions) firstpos)))))
 
 (defun help-prev-symbol ()
-  "Move point to the previous quoted symbol."
+  "Move point to the previous link."
   (interactive)
-  (search-backward "'" nil t))
+  (let* ((p (point))
+	(positions (reverse help-mode-link-positions))
+	(lastpos (car positions)))
+    (while (and positions (<= p (car positions)))
+      (setq positions (cdr positions)))
+    (if (or positions lastpos)
+	(goto-char (or (car positions) lastpos)))))
 
 (defun help-next-section ()
   "Move point to the next quoted symbol."
@@ -226,6 +242,16 @@ otherwise it is killed."
 (defun help-quit ()
   (interactive)
   nil)
+
+(defun help-mode-get-link-positions ()
+  "Get the positions of the links in the help buffer"
+  (let ((el (extent-list nil (point-min) (point-max) nil 'activate-function))
+	(positions nil))
+    (while el
+      (setq positions (append positions (list (extent-start-position (car el)))))
+      (setq el (cdr el)))
+    (setq help-mode-link-positions positions)))
+    
 
 (define-obsolete-function-alias 'deprecated-help-command 'help-for-help)
 
@@ -1283,11 +1309,13 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
   (let ((help-sticky-window
 	 ;; if we were called from a help buffer, make sure the new help
 	 ;; goes in the same window.
-	 (if (and (event-buffer ev)
+	 (if (and ev 
+		  (event-buffer ev)
 		  (symbol-value-in-buffer 'help-window-config
 					  (event-buffer ev)))
 	     (event-window ev)
-	   help-sticky-window)))
+	   (if ev help-sticky-window
+	     (get-buffer-window (current-buffer))))))
     (funcall fun (extent-property ex 'help-symbol))))
 
 (defun help-symbol-run-function (fun)
@@ -1445,7 +1473,8 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 				 standard-output))
 	    (set-extent-property e 'face 'hyper-apropos-hyperlink)
 	    (set-extent-property e 'mouse-face 'highlight)
-	    (set-extent-property e 'find-function-symbol function)))
+	    (set-extent-property e 'help-symbol function)
+	    (set-extent-property e 'activate-function  #'(lambda (ev ex) (help-symbol-run-function-1 ev ex 'find-function)))))
 	(princ "\"\n"))
     (if describe-function-show-arglist
 	(let ((arglist (function-arglist function)))
@@ -1633,6 +1662,30 @@ there is no variable around that point, nil is returned."
        (if type "an unknown type of built-in variable?"
 	 "a variable declared in Lisp")))))
 
+(defun describe-variable-custom-version-info (variable)
+  (let ((custom-version (get variable 'custom-version))
+	(cpv (get variable 'custom-package-version))
+	(output nil))
+    (if custom-version
+	(setq output
+	      (format "This variable was introduced, or its default value was changed, in\nversion %s of XEmacs.\n"
+		      custom-version))
+      (when cpv
+	(let* ((package (car-safe cpv))
+	       (version (if (listp (cdr-safe cpv))
+			    (car (cdr-safe cpv))
+			  (cdr-safe cpv)))
+	       (pkg-versions (assq package customize-package-emacs-version-alist))
+	       (emacsv (cdr (assoc version pkg-versions))))
+	  (if (and package version)
+	      (setq output
+		    (format (concat "This variable was introduced, or its default value was changed, in\nversion %s of the %s package"
+				    (if emacsv
+					(format " that is part of XEmacs %s" emacsv))
+				    ".\n")
+			    version package))))))
+    output))
+
 (defun describe-variable (variable)
   "Display the full documentation of VARIABLE (a symbol)."
   (interactive
@@ -1684,7 +1737,8 @@ there is no variable around that point, nil is returned."
 				      standard-output))
 		 (set-extent-property e 'face 'hyper-apropos-hyperlink)
 		 (set-extent-property e 'mouse-face 'highlight)
-		 (set-extent-property e 'find-variable-symbol variable))
+		 (set-extent-property e 'help-symbol variable)
+		 (set-extent-property e 'activate-function  #'(lambda (ev ex) (help-symbol-run-function-1 ev ex 'find-variable))))
 	       (princ"\"\n")))
 	 (princ "\nValue: ")
     	 (if (not (boundp variable))
@@ -1739,6 +1793,33 @@ there is no variable around that point, nil is returned."
 		 (frob-help-extents standard-output)
 		 (goto-char newp standard-output))
 	     (princ "not documented as a variable."))))
+       ;; Make a link to customize if this variable can be customized.
+       (when (custom-variable-p variable)
+	 (let ((customize-label "customize"))
+	   (terpri)
+	   (terpri)
+	   (princ (concat "You can " customize-label " this variable."))
+	   (with-current-buffer standard-output
+	     (save-excursion
+	       (re-search-backward
+		(concat "\\(" customize-label "\\)") nil t)
+	       (let ((opoint (point standard-output))
+		     e)
+		 (require 'hyper-apropos)
+		 ;; (princ variable)
+		 (re-search-forward (concat "\\(" customize-label "\\)") nil t)
+		 (setq e (make-extent opoint (point standard-output)
+				      standard-output))
+		 (set-extent-property e 'face 'hyper-apropos-hyperlink)
+		 (set-extent-property e 'mouse-face 'highlight)
+		 (set-extent-property e 'help-symbol variable)
+		 (set-extent-property e 'activate-function  #'(lambda (ev ex) (help-symbol-run-function-1 ev ex 'customize-variable)))))))
+	 ;; Note variable's version or package version
+	 (let ((output (describe-variable-custom-version-info variable)))
+	   (when output
+	     (terpri)
+	     (terpri)
+	     (princ output))))
        (terpri)))
    (format "variable `%s'" variable)))
 
@@ -1870,33 +1951,13 @@ after the listing is made.)"
 	(with-displaying-help-buffer
 	 (insert string)))))
 
-(defun help-find-source-or-scroll-up (&optional pos)
+(defun help-activate-function-or-scroll-up (&optional pos)
   "Follow any cross reference to source code; if none, scroll up.  "
   (interactive "d")
-  (let ((e (extent-at pos nil 'find-function-symbol)))
-    (if (and-fboundp 'find-function e)
-        (with-fboundp 'find-function
-          (find-function (extent-property e 'find-function-symbol)))
-      (setq e (extent-at pos nil 'find-variable-symbol))
-      (if (and-fboundp 'find-variable e)
-          (with-fboundp 'find-variable
-            (find-variable (extent-property e 'find-variable-symbol)))
-	(scroll-up 1)))))
-
-(defun help-mouse-find-source-or-track (event)
-  "Follow any cross reference to source code under the mouse; 
-if none, call mouse-track.  "
-  (interactive "e")
-  (mouse-set-point event)
-  (let ((e (extent-at (point) nil 'find-function-symbol)))
-    (if (and-fboundp 'find-function e)
-        (with-fboundp 'find-function
-          (find-function (extent-property e 'find-function-symbol)))
-      (setq e (extent-at (point) nil 'find-variable-symbol))
-      (if (and-fboundp 'find-variable e)
-          (with-fboundp 'find-variable
-            (find-variable (extent-property e 'find-variable-symbol)))
-	(mouse-track event)))))
+  (let ((e (extent-at pos nil 'activate-function)))
+    (if e
+	(funcall (extent-property e 'activate-function) nil e)
+      (scroll-up 1))))
 
 (define-minor-mode temp-buffer-resize-mode
   "Toggle the mode which makes windows smaller for temporary buffers.

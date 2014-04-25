@@ -1,3 +1,8 @@
+2014-04-19  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/keymap-tests.el: Use
+	help-activate-function-or-scroll-up.
+
 2013-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

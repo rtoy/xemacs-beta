@@ -36,7 +36,7 @@
                             find-function-at-point Q help-mode-bury button2
                             help-mouse-find-source-or-track p
                             help-prev-section n help-next-section return
-                            help-find-source-or-scroll-up)
+                            help-activate-function-or-scroll-up)
         by #'cddr
         do (define-key map (vector keys) def))
   (loop for (keys def) on '(u view-scroll-some-lines-down % view-goto-percent
