@@ -1,5 +1,13 @@
 2014-03-28  Jerry James  <james@xemacs.org>
 
+	* Makefile.in: Do not build texinfo files.
+	* texinfo/fdl.texi:
+	* texinfo/texinfo.texi:
+	* texinfo/version.texi:
+	Remove files belonging to an external project.
+
+2014-03-28  Jerry James  <james@xemacs.org>
+
 	* lispref/loading.texi:
 	* lispref/macros.texi:
 	Fix broken next/prev pointers caught by texinfo 4.x, but not by
