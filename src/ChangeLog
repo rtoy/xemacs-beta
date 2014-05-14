@@ -1,3 +1,22 @@
+2014-05-06  Jerry James  <james@xemacs.org>
+
+	* file-coding.c (encode_decode_coding_region): Signal an error if
+	Lstream_read encounters an error (returns -1).
+	(detect_coding_type): Ditto.  Add an argument for the stream error.
+	(look_for_coding_system_magic_cookie): Ditto.
+	(determine_real_coding_system): Pass new stream error argument.
+	(undecided_convert): Ditto.
+	(Ffind_coding_system_magic_cookie_in_file): Ditto.
+	* lstream.c (Lstream_errno): New function.
+	(struct filedesc_stream): Add saved_errno member.
+	(make_filedesc_stream_1): Initialize it.
+	(filedesc_reader): Set it.
+	(filedesc_writer): Set it.
+	(filedesc_error): New function.
+	(lstream_type_create): Record that filedesc has an error method.
+	* lstream.h (struct lstream_implementation): Add error member.
+	(Lstream_errno): Declare.
+
 2014-01-27  Michael Sperber  <mike@xemacs.org>
 
 	* symbols.c (Fdefine_function): Allow optional `docstring'

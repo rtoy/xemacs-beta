@@ -174,6 +174,10 @@ typedef struct lstream_implementation
      in an attempt to block (EWOULDBLOCK). If this method does not
      exists, the implementation returns 0 */
   int (*was_blocked_p) (Lstream *stream);
+  /* If the reader or writer method returned LSTREAM_ERROR, the errno
+     associated with the error, or zero if there was no system error or this
+     method is not implemented. */
+  int (*error) (Lstream *stream);
   /* Rewind the stream.  If this is NULL, the stream is not seekable. */
   int (*rewinder) (Lstream *stream);
   /* Indicate whether this stream is seekable -- i.e. it can be rewound.
@@ -306,6 +310,7 @@ Bytecount Lstream_read (Lstream *lstr, void *data, Bytecount size);
 Charcount Lstream_character_tell (Lstream *);
 int Lstream_write (Lstream *lstr, const void *data,
 		   Bytecount size);
+int Lstream_errno (Lstream *lstr);
 int Lstream_was_blocked_p (Lstream *lstr);
 void Lstream_unread (Lstream *lstr, const void *data, Bytecount size);
 int Lstream_rewind (Lstream *lstr);

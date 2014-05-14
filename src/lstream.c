@@ -742,6 +742,12 @@ Lstream_read (Lstream *lstr, void *data, Bytecount size)
   return Lstream_read_1 (lstr, data, size, 0);
 }
 
+int
+Lstream_errno (Lstream *lstr)
+{
+  return (lstr->imp->error) ? (lstr->imp->error) (lstr) : 0;
+}
+
 Charcount
 Lstream_character_tell (Lstream *lstr)
 {
@@ -1118,6 +1124,7 @@ struct filedesc_stream
   int current_pos;
   int end_pos;
   int chars_sans_newline;
+  int saved_errno;
   unsigned int closing :1;
   unsigned int allow_quit :1;
   unsigned int blocked_ok :1;
@@ -1146,6 +1153,7 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
   fstr->pty_flushing = !!(flags & LSTR_PTY_FLUSHING);
   fstr->blocking_error_p = 0;
   fstr->chars_sans_newline = 0;
+  fstr->saved_errno = 0;
   fstr->starting_pos = lseek (filedesc, offset, SEEK_CUR);
   fstr->current_pos = max (fstr->starting_pos, 0);
   if (count < 0)
@@ -1192,6 +1200,7 @@ filedesc_reader (Lstream *stream, unsigned char *data, Bytecount size)
 {
   Bytecount nread;
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
+  str->saved_errno = 0;
   if (str->end_pos >= 0)
     size = min (size, (Bytecount) (str->end_pos - str->current_pos));
   nread = str->allow_quit ?
@@ -1202,7 +1211,10 @@ filedesc_reader (Lstream *stream, unsigned char *data, Bytecount size)
   if (nread == 0)
     return 0; /* LSTREAM_EOF; */
   if (nread < 0)
-    return LSTREAM_ERROR;
+    {
+      str->saved_errno = errno;
+      return LSTREAM_ERROR;
+    }
   return nread;
 }
 
@@ -1227,6 +1239,8 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   Bytecount retval;
   int need_newline = 0;
+
+  str->saved_errno = 0;
 
   /* This function would be simple if it were not for the blasted
      PTY max-bytes stuff.  Why the hell can't they just have written
@@ -1266,7 +1280,10 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
     }
   str->blocking_error_p = 0;
   if (retval < 0)
-    return LSTREAM_ERROR;
+    {
+      str->saved_errno = errno;
+      return LSTREAM_ERROR;
+    }
   /**** end non-PTY-crap ****/
 
   if (str->pty_flushing)
@@ -1298,7 +1315,10 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 		      return 0;
 		    }
 		  else
-		    return LSTREAM_ERROR;
+		    {
+		      str->saved_errno = errno;
+		      return LSTREAM_ERROR;
+		    }
 		}
 	      else
 		return retval;
@@ -1334,7 +1354,10 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 		  return 0;
 		}
 	      else
-		return LSTREAM_ERROR;
+		{
+		  str->saved_errno = errno;
+		  return LSTREAM_ERROR;
+		}
 	    }
 	  else
 	    return retval;
@@ -1342,6 +1365,13 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
     }
 
   return retval;
+}
+
+static int
+filedesc_error (Lstream *stream)
+{
+  struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
+  return str->saved_errno;
 }
 
 static int
@@ -1926,6 +1956,7 @@ lstream_type_create (void)
 
   LSTREAM_HAS_METHOD (filedesc, reader);
   LSTREAM_HAS_METHOD (filedesc, writer);
+  LSTREAM_HAS_METHOD (filedesc, error);
   LSTREAM_HAS_METHOD (filedesc, was_blocked_p);
   LSTREAM_HAS_METHOD (filedesc, rewinder);
   LSTREAM_HAS_METHOD (filedesc, seekable_p);

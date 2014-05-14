@@ -2294,6 +2294,23 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
       Bytecount size_in_bytes =
 	Lstream_read (istr, tempbuf, sizeof (tempbuf));
 
+      if (size_in_bytes < 0)
+	{
+	  int err = Lstream_errno (istr);
+	  if (err)
+	    signal_error_2 (Qtext_conversion_error,
+			    direction == CODING_DECODE
+			    ? "Internal error while decoding"
+			    : "Internal error while encoding",
+			    XCODING_SYSTEM_NAME (coding_system),
+			    lisp_strerror (err));
+	  else
+	    signal_error (Qtext_conversion_error,
+			  direction == CODING_DECODE
+			  ? "Internal error while decoding"
+			  : "Internal error while encoding",
+			  XCODING_SYSTEM_NAME (coding_system));
+	}
       if (!size_in_bytes)
 	break;
       newpos = lisp_buffer_stream_startpos (istr);
@@ -3563,11 +3580,16 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
 
 static int
 detect_coding_type (struct detection_state *st, const UExtbyte *src,
-		    Bytecount n)
+		    Bytecount n, int err)
 {
   Bytecount n2 = n;
   const UExtbyte *src2 = src;
   int i;
+
+  if (n < 0)
+    signal_error (Qtext_conversion_error,
+		  "Error reading file to determine coding system",
+		  err ? lisp_strerror (err) : Qnil);
 
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
@@ -3784,11 +3806,18 @@ unwind_free_detection_state (Lisp_Object opaque)
 
 static Lisp_Object
 look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len,
-                                     Boolint find_coding_system_p)
+                                     Boolint find_coding_system_p, int err)
 {
   const UExtbyte *p;
   const UExtbyte *scan_end;
   Bytecount cookie_len;
+
+  if (len < 0)
+    {
+      signal_error (Qtext_conversion_error,
+		    "Internal error while looking for coding cookie",
+		    err ? lisp_strerror (err) : Qnil);
+    }
 
   /* Look for initial "-*-"; mode line prefix */
   for (p = data,
@@ -3864,13 +3893,14 @@ determine_real_coding_system (Lstream *stream)
   UExtbyte buf[4096];
   Bytecount nread = Lstream_read (stream, buf, sizeof (buf));
   Lisp_Object coding_system
-    = look_for_coding_system_magic_cookie (buf, nread, 1);
+    = look_for_coding_system_magic_cookie (buf, nread, 1,
+					   Lstream_errno (stream));
 
   if (NILP (coding_system))
     {
       while (1)
 	{
-	  if (detect_coding_type (st, buf, nread))
+	  if (detect_coding_type (st, buf, nread, Lstream_errno (stream)))
 	    break;
 	  nread = Lstream_read (stream, buf, sizeof (buf));
 	  if (nread == 0)
@@ -3968,6 +3998,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 	XCODING_SYSTEM_TYPE_DATA (str->codesys, undecided);
       struct undecided_coding_stream *data =
 	CODING_STREAM_TYPE_DATA (str, undecided);
+      int err = 0;
 
       if (str->eof)
 	{
@@ -4011,6 +4042,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 
 	  first_time = 1;
 	  data->c.initted = 1;
+	  err = Lstream_errno (str->other_end);
 	}
 
       /* If necessary, do encoding-detection now.  We do this when we're a
@@ -4028,13 +4060,14 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 		/* #### This is cheesy.  What we really ought to do is buffer
 		   up a certain minimum amount of data to get a better result.
 		   */
-		data->actual = look_for_coding_system_magic_cookie (src, n, 1);
+		data->actual =
+		  look_for_coding_system_magic_cookie (src, n, 1, err);
 	      if (NILP (data->actual))
 		{
 		  /* #### This is cheesy.  What we really ought to do is buffer
 		     up a certain minimum amount of data so as to get a less
 		     random result when doing subprocess detection. */
-		  detect_coding_type (data->st, src, n);
+		  detect_coding_type (data->st, src, n, err);
 		  data->actual = detected_coding_system (data->st);
 		  /* kludge to prevent infinite recursion */
 		  if (XCODING_SYSTEM(data->actual)->methods->enumtype == undecided_coding_system)
@@ -4291,7 +4324,7 @@ ISO 2022 encoding of most non-ASCII charsets.
   Lisp_Object lstream;
   UExtbyte buf[4096];
   Bytecount nread;
-  int fd = -1;
+  int fd = -1, err;
   struct stat st;
 
   filename = Fexpand_file_name (filename, Qnil);
@@ -4312,10 +4345,11 @@ ISO 2022 encoding of most non-ASCII charsets.
   lstream = make_filedesc_input_stream (fd, 0, -1, 0);
   Lstream_set_buffering (XLSTREAM (lstream), LSTREAM_UNBUFFERED, 0);
   nread = Lstream_read (XLSTREAM (lstream), buf, sizeof (buf));
+  err = Lstream_errno (XLSTREAM (lstream));
   Lstream_delete (XLSTREAM (lstream));
   retry_close (fd);
 
-  return look_for_coding_system_magic_cookie (buf, nread, 0);
+  return look_for_coding_system_magic_cookie (buf, nread, 0, err);
 }
 
 
