@@ -1,3 +1,9 @@
+2014-05-08  Jerry James  <james@xemacs.org>
+
+	* print.c (struct debug_bindings): Add print_circle field.
+	(debug_print_exit): Restore print_circle.
+	(debug_print_enter): Save print_circle binding and set it.
+
 2014-05-06  Jerry James  <james@xemacs.org>
 
 	* file-coding.c (encode_decode_coding_region): Signal an error if

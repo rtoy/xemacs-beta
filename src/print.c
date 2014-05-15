@@ -164,6 +164,7 @@ struct debug_bindings
   int print_depth;
   int print_readably;
   int print_unbuffered;
+  int print_circle;
   int in_debug_print;
   int gc_currently_forbidden;
   Lisp_Object Vprint_length;
@@ -2847,6 +2848,7 @@ debug_print_exit (Lisp_Object val)
   print_depth = bindings->print_depth;
   print_readably = bindings->print_readably;
   print_unbuffered = bindings->print_unbuffered;
+  print_circle = bindings->print_circle;
   in_debug_print = bindings->in_debug_print;
   gc_currently_forbidden = bindings->gc_currently_forbidden;
   Vprint_length = bindings->Vprint_length;
@@ -2873,6 +2875,7 @@ debug_print_enter (struct debug_bindings *bindings)
   bindings->print_depth = print_depth;
   bindings->print_readably = print_readably;
   bindings->print_unbuffered = print_unbuffered;
+  bindings->print_circle = print_circle;
   bindings->in_debug_print = in_debug_print;
   bindings->gc_currently_forbidden = gc_currently_forbidden;
   bindings->Vprint_length = Vprint_length;
@@ -2885,6 +2888,7 @@ debug_print_enter (struct debug_bindings *bindings)
   print_depth = 0;
   print_readably = debug_print_readably != -1 ? debug_print_readably : 0;
   print_unbuffered++;
+  print_circle = 1;
   in_debug_print = 1;
   gc_currently_forbidden = 1;
   if (debug_print_length > 0)
