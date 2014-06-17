@@ -1,3 +1,18 @@
+2014-06-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* extents.h:
+	* window.c:
+	* window.c (unshow_buffer):
+	* window.c (Fset_window_buffer):
+	Use extents, rather than markers, for the window buffer point
+	cache, so that when the text containing that window buffer point
+	is deleted, the window display code uses the buffer's actual point
+	instead of the position that the marker had been moved to.
+	Fixes Michael Heinrich's problem of
+	http://mid.gmane.org/6zr42uxtf5.fsf@elektra.science-computing.de ,
+	introduced by Ben's patch of
+	https://bitbucket.org/xemacs/xemacs/commits/047d37eb70d70f43803 . 
+
 2014-05-08  Jerry James  <james@xemacs.org>
 
 	* print.c (struct debug_bindings): Add print_circle field.
