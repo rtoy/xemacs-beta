@@ -41,6 +41,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "commands.h"
 #include "device-impl.h"
 #include "elhash.h"
+#include "extents.h"
 #include "faces.h"
 #include "frame-impl.h"
 #include "glyphs.h"
@@ -2047,17 +2048,29 @@ unshow_buffer (struct window *w)
 		 BUF_ZV (b)));
 
   {
-    Lisp_Object marker = Fgethash (buf, w->saved_point_cache, Qnil);
+    Lisp_Object marker;
+    Lisp_Object saved_point = Fgethash (buf, w->saved_point_cache, Qnil);
     int selected = EQ (wrap_window (w), Fselected_window (Qnil));
 
-    if (NILP (marker))
+    if (NILP (saved_point))
       {
-	marker = Fmake_marker ();
-	Fputhash (buf, marker, w->saved_point_cache);
+	saved_point = Fmake_extent (Qnil, Qnil, buf);
+        Fset_extent_property (saved_point, Qstart_open, Qt);
+	Fputhash (buf, saved_point, w->saved_point_cache);
       }
-    Fset_marker (marker,
-		 selected ? make_fixnum (BUF_PT (b)) : w->pointm[CURRENT_DISP],
-		 buf);
+
+    if (selected)
+      {
+        set_extent_endpoints (XEXTENT (saved_point),
+                              BYTE_BUF_PT (b), BYTE_BUF_PT (b), buf);
+      }
+    else
+      {
+        set_extent_endpoints (XEXTENT (saved_point),
+                              byte_marker_position (w->pointm[CURRENT_DISP]),
+                              byte_marker_position (w->pointm[CURRENT_DISP]),
+                              buf);
+      }
 
     marker = Fgethash (buf, w->saved_last_window_start_cache, Qnil);
 
@@ -3710,10 +3723,12 @@ global or per-frame buffer ordering.
 			 buffer);
 #else
   {
-    Lisp_Object marker = Fgethash (buffer, w->saved_point_cache, Qnil);
+    Lisp_Object saved_point = Fgethash (buffer, w->saved_point_cache, Qnil);
     Lisp_Object newpoint =
-      !NILP (marker) ? make_fixnum (marker_position (marker)) :
-      make_fixnum (BUF_PT (XBUFFER (buffer)));
+      (EXTENTP (saved_point) && !NILP (Fextent_detached_p (saved_point)))
+      ? Fextent_start_position (saved_point)
+      : make_fixnum (BUF_PT (XBUFFER (buffer)));
+    Lisp_Object marker;
     /* Previously, we had in here set-window-point, which did one of the
        following two, but not both.  However, that could result in pointm
        being in a different buffer from the window's buffer!  Probably
