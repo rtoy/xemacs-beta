@@ -133,6 +133,7 @@ EXFUN (Fextent_property, 3);
 EXFUN (Fput_text_property, 5);
 
 EXFUN (Fextent_detached_p, 1);
+EXFUN (Fdelete_extent, 1);
 EXFUN (Fdetach_extent, 1);
 EXFUN (Fextent_end_position, 1);
 EXFUN (Fextent_object, 1);
