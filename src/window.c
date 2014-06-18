@@ -2206,6 +2206,14 @@ contains_window (Lisp_Object window, Lisp_Object pwindow)
     return 0;
 }
 
+static int
+delete_saved_point (Lisp_Object UNUSED (buffer), Lisp_Object saved_point,
+                    void *UNUSED (closure))
+{
+  Fdelete_extent (saved_point);
+  return 0;
+}
+
 DEFUN ("delete-window", Fdelete_window, 0, 2, "", /*
 Remove WINDOW from the display.  Default is selected window.
 If window is the only one on its frame, the frame is deleted as well.
@@ -2318,6 +2326,11 @@ will automatically call `save-buffers-kill-emacs'.)
       unchain_marker (w->sb_point);
       w->buffer = Qnil;
     }
+
+  /* Delete the saved point extents, since they will still be referenced
+     from the buffer and thus won't be garbage-collected until the buffer
+     is. */
+  elisp_maphash_unsafe (delete_saved_point, w->saved_point_cache, NULL);
 
   /* close up the hole in the sibling list */
   if (!NILP (w->next))
@@ -3725,7 +3738,7 @@ global or per-frame buffer ordering.
   {
     Lisp_Object saved_point = Fgethash (buffer, w->saved_point_cache, Qnil);
     Lisp_Object newpoint =
-      (EXTENTP (saved_point) && !NILP (Fextent_detached_p (saved_point)))
+      (EXTENTP (saved_point) && NILP (Fextent_detached_p (saved_point)))
       ? Fextent_start_position (saved_point)
       : make_fixnum (BUF_PT (XBUFFER (buffer)));
     Lisp_Object marker;

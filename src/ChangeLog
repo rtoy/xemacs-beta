@@ -1,3 +1,16 @@
+2014-06-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Correct a couple of things in my last change.
+	* extents.h:
+	Make #'delete-extent available.
+	* window.c:
+	* window.c (delete_saved_point): New.
+	* window.c (Fdelete_window): Delete the saved point extents on
+	deletion of the window, since otherwise they will only be
+	garbage-collected when the buffer is.
+	* window.c (Fset_window_buffer): Correct a thinko here, use a
+	saved point when it *hasn't* been detached.
+
 2014-06-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* extents.h:
