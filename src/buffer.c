@@ -2502,7 +2502,7 @@ Automatically becomes buffer-local when set in any fashion.
 */ );
 
   DEFVAR_BUFFER_LOCAL ("case-fold-search", case_fold_search /*
-*Non-nil if searches should ignore case.
+*If non-nil, searches and matches should ignore case.
 Automatically becomes buffer-local when set in any fashion.
 */ );
 

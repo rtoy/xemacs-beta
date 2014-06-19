@@ -26,6 +26,10 @@
 	introduced by Ben's patch of
 	https://bitbucket.org/xemacs/xemacs/commits/047d37eb70d70f43803 . 
 
+2014-06-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* buffer.c (case_fold_search): Improve docstring.
+
 2014-05-08  Jerry James  <james@xemacs.org>
 
 	* print.c (struct debug_bindings): Add print_circle field.
