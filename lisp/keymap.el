@@ -381,12 +381,12 @@ corresponding to those characters."
             (setq i (1+ i)))
           new))))
 
-(defun next-key-event ()
+(defun next-key-event (&optional event prompt)
   "Return the next available keyboard event."
-  (let (event)
-    (while (not (key-press-event-p (setq event (next-command-event))))
-      (dispatch-event event))
-    event))
+  (while (not (key-press-event-p
+               (setq event (next-command-event event prompt))))
+    (dispatch-event event))
+  event)
 
 (defun key-sequence-list-description (keys)
   "Convert a key sequence KEYS to the full [(modifiers... key)...] form.
@@ -457,7 +457,7 @@ LIST describes the names of these modifier, a list of symbols.
     (if binding				; found a binding
 	(progn
 	  ;; allow for several modifiers
-	  (if (and (symbolp binding) (fboundp binding))
+	  (if (functionp binding)
 	      (setq binding (funcall binding nil)))
 	  (setq events (append binding nil))
 	  ;; put remaining keystrokes back into input queue
@@ -477,9 +477,9 @@ See `event-apply-modifiers'."
   (event-apply-modifiers (list symbol)))
 
 (defun synthesize-keysym (ignore-prompt)
-  "Read a sequence of keys, and returned the corresponding key symbol.
-The characters must be from the [-_a-zA-Z0-9].  Reading is terminated
- by RET (which is discarded)."
+  "Read a sequence of characters, and return the corresponding keysym.
+The characters must be ?-, or ?_, or have word syntax.  Reading is
+terminated by RET (which is discarded)."
   (let ((continuep t)
 	event char list)
     (while continuep

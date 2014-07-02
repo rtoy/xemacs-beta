@@ -2436,7 +2436,11 @@ but it also makes a provision for displaying keystrokes in the echo area.
    
   maybe_echo_keys (XCOMMAND_BUILDER
 		   (XCONSOLE (Vselected_console)->
-		    command_builder), 0); /* #### This sucks bigtime */
+		    command_builder),
+                   /* Only snooze displaying keystrokes if we don't have a
+                      prompt. (If we have a prompt, our callers want us to
+                      show it!) */
+                   !NILP (prompt));
 
   for (;;)
     {
