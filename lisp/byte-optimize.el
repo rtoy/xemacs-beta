@@ -1340,7 +1340,7 @@
 	 hash-table-p
 	 identity ignore integerp integer-or-marker-p interactive-p
 	 invocation-directory invocation-name
-	 keymapp list list* listp
+	 list list* listp
 	 make-marker mark mark-marker markerp memory-limit minibuffer-window
 	 ;; mouse-movement-p not in XEmacs
 	 natnump nlistp not null number-or-marker-p numberp
