@@ -1,3 +1,19 @@
+2014-07-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmdloop.el:
+	* cmdloop.el (read-char-1): New.
+	* cmdloop.el (read-char, read-char-exclusive):
+	Use #'read-char-1 in these function; sync their API with that of
+	GNU, respect `function-key-map' where we didn't before, add
+	initial support for Quail input methods.
+	* keymap.el (next-key-event):
+	Accept EVENT and PROMPT arguments, as does #'next-command-event.
+	* keymap.el (event-apply-modifiers):
+	Use #'functionp here, no need to exclude lambdas from
+	`function-key-map'.
+	* keymap.el (synthesize-keysym):
+	Correct this function's docstring.
+
 2014-04-19  Mats Lidell  <matsl@xemacs.org>
 
 	* help.el: Sync from GNU - Link to customize if applicable and

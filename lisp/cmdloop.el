@@ -520,43 +520,120 @@ Also accepts Space to mean yes, or Delete to mean no."
     (y-or-n-p-minibuf prompt)))
 
 
+(labels
+    ((read-char-1 (errorp prompt inherit-input-method seconds)
+       "Return a character from command input or the current macro.
+Look up said input in `function-key-map' as appropriate.
 
-(defun read-char ()
-  "Read a character from the command input (keyboard or macro).
-If a mouse click or non-ASCII character is detected, an error is
-signalled.  The character typed is returned as an ASCII value.  This
-is most likely the wrong thing for you to be using: consider using
-the `next-command-event' function instead."
-  (save-excursion
-    (let ((event (next-command-event)))
-      (or inhibit-quit
-	  (and (event-matches-key-specifier-p event (quit-char))
-	       (signal 'quit nil)))
-      (prog1 (or (event-to-character event)
-                 ;; Kludge.  If the event we read was a mouse-release,
-                 ;; discard it and read the next one.
-                 (if (button-release-event-p event)
-                     (event-to-character (next-command-event event)))
-                 (error "Key read has no ASCII equivalent %S" event))
-        ;; this is not necessary, but is marginally more efficient than GC.
-        (deallocate-event event)))))
+PROMPT is a prompt for `next-command-event', which see.
 
-(defun read-char-exclusive ()
-  "Read a character from the command input (keyboard or macro).
-If a mouse click or non-ASCII character is detected, it is discarded.
-The character typed is returned as an ASCII value.  This is most likely
-the wrong thing for you to be using: consider using the
-`next-command-event' function instead."
-  (let (event ch)
-    (while (progn
-	     (setq event (next-command-event))
-	     (or inhibit-quit
-		 (and (event-matches-key-specifier-p event (quit-char))
-		      (signal 'quit nil)))
-	     (setq ch (event-to-character event))
-	     (deallocate-event event)
-	     (null ch)))
-    ch))
+If ERRORP is non-nil, error if the key sequence has no character equivalent.
+Otherwise, loop, discarding non-character keystrokes or mouse movements.
+
+If INHERIT-INPUT-METHOD is non-nil, and a Quail input method is active in
+the current buffer, use its translation when choosing a character to return.
+
+If SECONDS is non-nil, only wait that number of seconds for input. If no
+input is received in that time, return nil."
+       (let ((timeout
+              (if seconds
+                  (add-timeout seconds #'(lambda (ignore)
+                                           (return-from read-char-1 nil))
+                               nil)))
+             (events []) binding character)
+         (unwind-protect
+              (while t
+                ;; Read keystrokes scanning `function-key-map'.
+                (while (keymapp
+                        (setq binding
+                              (lookup-key
+                               function-key-map
+                               (setq events
+                                     (vconcat events (list
+                                                      (next-key-event
+                                                       nil prompt))))))))
+                (when binding
+                  ;; Found something in function-key-map. If it's a function
+                  ;; (e.g. synthesize-keysym), call it.
+                  (if (functionp binding)
+                      (setq binding (funcall binding nil)))
+                  (setq events (map 'vector #'character-to-event binding)))
+                ;; Put the remaining keystrokes back on the input queue.
+                (setq unread-command-events
+                      (nconc (reduce #'cons events :start 1 :from-end t
+                                     :initial-value nil)
+                             unread-command-events))
+                (unless inhibit-quit
+                  (and (event-matches-key-specifier-p (aref events 0)
+                                                      (quit-char))
+                       (signal 'quit nil)))
+                (if (setq character (event-to-character (aref events 0)))
+                    (progn
+                      ;; If we have a character (the usual case), deallocate
+                      ;; the event and return the character.
+                      (deallocate-event (aref events 0))
+                      ;; Handle quail, if we've been asked to (maybe we
+                      ;; should default to this).
+                      (if (and inherit-input-method (and-boundp 'quail-mode
+                                                      quail-mode))
+                          (with-fboundp
+                              '(quail-map-definition quail-lookup-key)
+                            (let ((binding
+                                   (quail-map-definition
+                                    (quail-lookup-key (string character)))))
+                              (if (characterp binding)
+                                  (return-from read-char-1 binding))
+                              ;; #### Bug, we don't allow users to select from
+                              ;; among multiple characters that may be input
+                              ;; with the same key sequence.
+                              (if (and (consp binding)
+                                       (characterp
+                                        (aref (cdr binding) (caar binding))))
+                                  (return-from read-char-1
+                                    (aref (cdr binding) (caar binding)))))))
+                      (return-from read-char-1 character)))
+                (if errorp
+                    (error 'invalid-key-binding "Not a character keystroke"
+                           (aref events 0)))
+                ;; If we're not erroring, loop until we get a character
+                (setq events []))
+           (if timeout (disable-timeout timeout))))))
+  ;; Because of byte compiler limitations, each function has its own copy of
+  ;; #'read-char-1, so why not inline it.
+  (declare (inline read-char-1))
+
+  (defun read-char (&optional prompt inherit-input-method seconds)
+    "Read a character from the command input (keyboard or macro).
+If a mouse click or non-character keystroke is detected, signal an error.
+The character typed is returned as a Lisp object.  This is most likely the
+wrong thing for you to be using: consider using the `next-command-event'
+function instead.
+
+PROMPT is a prompt, as used by `next-command-event'.
+
+If INHERIT-INPUT-METHOD is non-nil, and a Quail input method is active in
+the current buffer, use its translation for the character returned.
+
+If SECONDS is non-nil, only wait that number of seconds for input. If no
+input is received in that time, return nil."
+    (read-char-1 t prompt inherit-input-method seconds))
+
+  (defun read-char-exclusive (&optional prompt inherit-input-method seconds)
+    "Read a character from the command input (keyboard or macro).
+
+If a mouse click or a non-character keystroke is detected, it is discarded.
+The character typed is returned as a Lisp object. This is most likely the
+wrong thing for you to be using: consider using the `next-command-event'
+function instead.
+
+PROMPT is a prompt, as used by `next-command-event'.
+
+If INHERIT-INPUT-METHOD is non-nil, and a Quail input method is active in
+the current buffer, use its translation for the character returned.
+
+If SECONDS is non-nil, only wait that number of seconds for input. If no
+input is received in that time, return nil."
+    (read-char-1 nil prompt inherit-input-method seconds)))
 
 ;;;; Input and display facilities.
 
