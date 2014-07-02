@@ -1,5 +1,12 @@
 2014-07-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* keymap.c (Fkeymapp):
+	Autoload within this, as documented. Our callers are not prepared
+	to do the intelligent thing if a symbol that is fboundp to an
+	autoloaded keymap, is not itself #'keymapp.
+
+2014-07-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* event-stream.c (Fnext_command_event):
 	Only snooze displaying keystrokes if PROMPT is nil. If prompt is
 	non-nil, our callers want to see it.

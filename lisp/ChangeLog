@@ -1,5 +1,10 @@
 2014-07-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* byte-optimize.el (side-effect-free-fns):
+	#'keymapp is not side-effect-free, it can autoload.
+
+2014-07-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cmdloop.el:
 	* cmdloop.el (read-char-1): New.
 	* cmdloop.el (read-char, read-char-exclusive):

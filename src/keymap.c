@@ -1008,7 +1008,7 @@ The keymap may be autoloaded first if necessary.
        (object))
 {
   /* This function can GC */
-  return KEYMAPP (get_keymap (object, 0, 0)) ? Qt : Qnil;
+  return KEYMAPP (get_keymap (object, 0, 1)) ? Qt : Qnil;
 }
 
 /* Check that OBJECT is a keymap (after dereferencing through any
