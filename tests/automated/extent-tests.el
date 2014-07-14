@@ -367,3 +367,31 @@
     (put e 'start-open t)
     (et-insert-at "foo" 4)
     (Assert (equal (et-range e) '(4 4)))))
+
+;;-----------------------------------------------------
+;; Extents and the minibuffer.
+;;-----------------------------------------------------
+
+(let* ((string (copy-sequence "Der Hoelle Rache kocht in meinem Herzen"))
+       (e (make-extent (search "Rache" string) (search "kocht" string)
+                       string))
+       (ee (make-extent (search "meinem" string) (search "Herzen" string)
+                       string))
+       (property-name '#:secret-token)
+       event list)
+  (setf (extent-property e 'duplicable) t
+        (extent-property e property-name) t
+        (extent-property ee 'duplicable) nil) ;; Actually the default.
+  (block enough
+    (enqueue-eval-event #'(lambda (ignore) (return-from enough)) nil)
+    ;; Silence prompt on TTY. Maybe we shouldn't be doing this.
+    (flet ((send-string-to-terminal (&rest ignore)))
+      (while (setq event (next-event event string))
+        (dispatch-event event))))
+  (setq list (extent-list (get-buffer " *Echo Area*")))
+  (Assert list "checking extent info was preserved in #'next-event")
+  (Assert (eql 1 (length list)) "checking only one extent was preserved")
+  (Assert (eql t (get (car list) property-name))
+          "checking it was our duplicable extent that was preserved"))
+
+

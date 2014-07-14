@@ -1,3 +1,9 @@
+2014-07-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Check that extent information is passed through to the echo area
+	correctly with #'next-event's PROMPT argument.
+
 2014-04-19  Mats Lidell  <matsl@xemacs.org>
 
 	* automated/keymap-tests.el: Use

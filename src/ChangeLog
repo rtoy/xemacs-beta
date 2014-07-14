@@ -1,3 +1,39 @@
+2014-07-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-stream.c:
+	* event-stream.c (mark_command_builder):
+	* event-stream.c (finalize_command_builder): Removed.
+	* event-stream.c (allocate_command_builder):
+	* event-stream.c (free_command_builder): Removed. Use
+	free_normal_lisp_object() instead.
+	* event-stream.c (echo_key_event):
+	* event-stream.c (regenerate_echo_keys_from_this_command_keys):
+	Detach all extents here.
+	* event-stream.c (maybe_echo_keys):
+	* event-stream.c (reset_key_echo):
+	* event-stream.c (execute_help_form):
+	* event-stream.c (Fnext_event):
+	* event-stream.c (command_builder_find_leaf_no_jit_binding):
+	* event-stream.c (command_builder_find_leaf):
+	* event-stream.c (lookup_command_event):
+	* events.h (struct command_builder):
+	Move the command builder's echo_buf to being a Lisp string rather
+	than a malloced Ibyte array. This allows passing through extent
+	information, which was previously dropped. It also simplifies the
+	allocation and release code for the command builder.
+	Rename echo_buf_index to echo_buf_fill_pointer, better reflecting
+	its function.
+	Don't rely on zero-termination (something not particularly
+	compatible with Lisp-level code) when showing a substring of
+	echo_buf that differs from that designated by
+	echo_buf_fill_pointer, keep a separate counter instead and use
+	that.
+	* minibuf.c:
+	* minibuf.c (echo_area_append):
+	Use the new START and END keyword arguments to #'append-message,
+	rather than consing a new string for basically every #'next-event
+	prompt displayed.
+	
 2014-07-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.c (Fkeymapp):
