@@ -81,6 +81,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "device-impl.h"
 #include "elhash.h"
 #include "events.h"
+#include "extents.h"
 #include "frame-impl.h"
 #include "insdel.h"		/* for buffer_reset_changes */
 #include "keymap.h"
@@ -336,6 +337,7 @@ static const struct memory_description command_builder_description [] = {
   { XD_LISP_OBJECT, offsetof (struct command_builder, last_non_munged_event) },
   { XD_LISP_OBJECT, offsetof (struct command_builder, console) },
   { XD_LISP_OBJECT_ARRAY, offsetof (struct command_builder, first_mungeable_event), 2 },
+  { XD_LISP_OBJECT, offsetof (struct command_builder, echo_buf) },
   { XD_END }
 };
 
@@ -348,24 +350,13 @@ mark_command_builder (Lisp_Object obj)
   mark_object (builder->last_non_munged_event);
   mark_object (builder->first_mungeable_event[0]);
   mark_object (builder->first_mungeable_event[1]);
+  mark_object (builder->echo_buf);
   return builder->console;
-}
-
-static void
-finalize_command_builder (Lisp_Object obj)
-{
-  struct command_builder *b = XCOMMAND_BUILDER (obj);
-  if (b->echo_buf)
-    {
-      xfree (b->echo_buf);
-      b->echo_buf = 0;
-    }
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("command-builder", command_builder,
 			   mark_command_builder,
-			   internal_object_printer,
-			   finalize_command_builder, 0, 0, 
+			   internal_object_printer, 0, 0, 0,
 			   command_builder_description,
 			   struct command_builder);
 
@@ -389,17 +380,13 @@ allocate_command_builder (Lisp_Object console, int with_echo_buf)
   reset_command_builder_event_chain (builder);
   if (with_echo_buf)
     {
-      /* #### This badly needs to be turned into a Dynarr */
-      builder->echo_buf_length = 300; /* #### Kludge */
-      builder->echo_buf = xnew_array (Ibyte, builder->echo_buf_length);
-      builder->echo_buf[0] = 0;
+      builder->echo_buf = make_uninit_string (300 * MAX_ICHAR_LEN);
     }
   else
     {
-      builder->echo_buf_length = 0;
-      builder->echo_buf = NULL;
+      builder->echo_buf = Qnil;
     }
-  builder->echo_buf_index = -1;
+  builder->echo_buf_fill_pointer = builder->echo_buf_end = -1;
   builder->self_insert_countdown = 0;
 
   return builder_obj;
@@ -443,17 +430,6 @@ copy_command_builder (struct command_builder *collapsing,
 				  new_buildings->current_events);
 
   return wrap_command_builder (new_buildings);
-}
-
-static void
-free_command_builder (struct command_builder *builder)
-{
-  if (builder->echo_buf)
-    {
-      xfree (builder->echo_buf);
-      builder->echo_buf = NULL;
-    }
-  free_normal_lisp_object (wrap_command_builder (builder));
 }
 
 static void
@@ -660,35 +636,37 @@ echo_key_event (struct command_builder *command_builder,
 {
   /* This function can GC */
   DECLARE_EISTRING_MALLOC (buf);
-  Bytecount buf_index = command_builder->echo_buf_index;
-  Ibyte *e;
+  Bytecount buf_fill_pointer = command_builder->echo_buf_fill_pointer;
   Bytecount len;
 
-  if (buf_index < 0)
+  if (buf_fill_pointer < 0)
     {
-      buf_index = 0;              /* We're echoing now */
+      buf_fill_pointer = 0;
       clear_echo_area (selected_frame (), Qnil, 0);
     }
 
   format_event_object (buf, event, 1);
   len = eilen (buf);
 
-  if (len + buf_index + 4 > command_builder->echo_buf_length)
+  if (NILP (command_builder->echo_buf) ||
+      (len + buf_fill_pointer + 4 > XSTRING_LENGTH (command_builder->echo_buf)))
     {
       eifree (buf);
       return;
     }
-  e = command_builder->echo_buf + buf_index;
-  memcpy (e, eidata (buf), len);
-  e += len;
+
+  eicat_ascii (buf, " - ");
+
+  memcpy (XSTRING_DATA (command_builder->echo_buf) + buf_fill_pointer,
+          eidata (buf), eilen (buf));
+  init_string_ascii_begin (command_builder->echo_buf);
+  bump_string_modiff (command_builder->echo_buf);
+  sledgehammer_check_ascii_begin (command_builder->echo_buf);
+
+  command_builder->echo_buf_end = buf_fill_pointer + eilen (buf);
+  /* *Not* including the trailing " - ". */
+  command_builder->echo_buf_fill_pointer = buf_fill_pointer + len + 1;
   eifree (buf);
-
-  e[0] = ' ';
-  e[1] = '-';
-  e[2] = ' ';
-  e[3] = 0;
-
-  command_builder->echo_buf_index = buf_index + len + 1;
 }
 
 static void
@@ -697,7 +675,11 @@ regenerate_echo_keys_from_this_command_keys (struct command_builder *
 {
   Lisp_Object event;
 
-  builder->echo_buf_index = 0;
+  builder->echo_buf_fill_pointer = builder->echo_buf_end = 0;
+  if (STRINGP (builder->echo_buf))
+    {
+      detach_all_extents (builder->echo_buf);
+    }
 
   EVENT_CHAIN_LOOP (event, Vthis_command_keys)
     echo_key_event (builder, event);
@@ -734,11 +716,8 @@ maybe_echo_keys (struct command_builder *command_builder, int no_snooze)
 	    goto done;
 	}
 
-      echo_area_message (f, command_builder->echo_buf, Qnil, 0,
-			 /* not echo_buf_index.  That doesn't include
-			    the terminating " - ". */
-			 strlen ((char *) command_builder->echo_buf),
-			 Qcommand);
+      echo_area_message (f, NULL, command_builder->echo_buf, 0,
+                         command_builder->echo_buf_end, Qcommand);
     }
 
  done:
@@ -754,7 +733,10 @@ reset_key_echo (struct command_builder *command_builder,
   struct frame *f = selected_frame ();
 
   if (command_builder)
-    command_builder->echo_buf_index = -1;
+    {
+      command_builder->echo_buf_fill_pointer =
+        command_builder->echo_buf_end = -1;
+    }
 
   if (remove_echo_area_echo)
     clear_echo_area (f, Qcommand, 0);
@@ -814,11 +796,11 @@ execute_help_form (struct command_builder *command_builder,
   /* This function can GC */
   Lisp_Object help = Qnil;
   int speccount = specpdl_depth ();
-  Bytecount buf_index = command_builder->echo_buf_index;
-  Lisp_Object echo = ((buf_index <= 0)
-                      ? Qnil
-                      : make_string (command_builder->echo_buf,
-				     buf_index));
+  Bytecount buf_fill_pointer = command_builder->echo_buf_fill_pointer;
+  Bytecount buf_end = command_builder->echo_buf_end;
+  Lisp_Object echo = ((buf_fill_pointer <= 0) ? Qnil
+                      : Fcopy_sequence (command_builder->echo_buf));
+
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (echo, help);
 
@@ -856,10 +838,13 @@ execute_help_form (struct command_builder *command_builder,
       Fnext_command_event (event, Qnil);
     }
 
-  command_builder->echo_buf_index = buf_index;
-  if (buf_index > 0)
-    memcpy (command_builder->echo_buf,
-            XSTRING_DATA (echo), buf_index + 1); /* terminating 0 */
+  command_builder->echo_buf_fill_pointer = buf_fill_pointer;
+  command_builder->echo_buf_end = buf_end;
+
+  if (buf_fill_pointer > 0)
+    {
+      command_builder->echo_buf = echo;
+    }
   UNGCPRO;
 }
 
@@ -2182,19 +2167,28 @@ The returned event will be one of the following types:
   if (!NILP (prompt))
     {
       Bytecount len;
+      Lisp_Object args[] = { Qnil, prompt };
       CHECK_STRING (prompt);
 
       len = XSTRING_LENGTH (prompt);
-      if (command_builder->echo_buf_length < len)
-	len = command_builder->echo_buf_length - 1;
-      memcpy (command_builder->echo_buf, XSTRING_DATA (prompt), len);
-      command_builder->echo_buf[len] = 0;
-      command_builder->echo_buf_index = len;
-      echo_area_message (XFRAME (CONSOLE_SELECTED_FRAME (con)),
-			 command_builder->echo_buf,
-			 Qnil, 0,
-			 command_builder->echo_buf_index,
-			 Qcommand);
+
+      detach_all_extents (command_builder->echo_buf);
+      if (XSTRING_LENGTH (command_builder->echo_buf) < len)
+        {
+          command_builder->echo_buf
+            = make_uninit_string (len + 200 * MAX_ICHAR_LEN);
+        }
+
+      args[0] = command_builder->echo_buf;
+      Freplace (countof (args), args);
+      copy_string_extents (command_builder->echo_buf, prompt, 0, 0,
+                           XSTRING_LENGTH (prompt));
+      command_builder->echo_buf_fill_pointer
+        = command_builder->echo_buf_end = len;
+
+      echo_area_message (XFRAME (CONSOLE_SELECTED_FRAME (con)), NULL,
+			 command_builder->echo_buf, 0,
+                         command_builder->echo_buf_end, Qcommand);
     }
 
  start_over_and_avoid_hosage:
@@ -3392,7 +3386,7 @@ command_builder_find_leaf_no_jit_binding (struct command_builder *builder,
 	      copy_command_builder (neub, builder);
 	      *did_munge = 1;
 	    }
-	  free_command_builder (neub);
+          free_normal_lisp_object (wrap_command_builder (neub));
 	  UNGCPRO;
 	  if (!NILP (result))
             return result;
@@ -3604,7 +3598,7 @@ command_builder_find_leaf (struct command_builder *builder,
 		(newb, allow_misc_user_events_p, did_munge);
 	    }
 
-	  free_command_builder (newb);
+          free_normal_lisp_object (wrap_command_builder (newb));
 	  UNGCPRO;
 
 	  if (!NILP (result))
@@ -4074,14 +4068,27 @@ lookup_command_event (struct command_builder *command_builder,
 	    if (STRINGP (prompt))
 	      {
 		/* Append keymap prompt to key echo buffer */
-		int buf_index = command_builder->echo_buf_index;
+		int buf_fill_pointer = command_builder->echo_buf_fill_pointer;
 		Bytecount len = XSTRING_LENGTH (prompt);
 
-		if (len + buf_index + 1 <= command_builder->echo_buf_length)
+		if (len + buf_fill_pointer + 1
+                    <= XSTRING_LENGTH (command_builder->echo_buf))
 		  {
-		    Ibyte *echo = command_builder->echo_buf + buf_index;
-		    memcpy (echo, XSTRING_DATA (prompt), len);
-		    echo[len] = 0;
+                    memcpy (XSTRING_DATA (command_builder->echo_buf)
+                            + buf_fill_pointer,
+                            XSTRING_DATA (prompt),
+                            len);
+                    copy_string_extents (command_builder->echo_buf, prompt,
+                                         buf_fill_pointer, 0, len);
+
+                    init_string_ascii_begin (command_builder->echo_buf);
+                    bump_string_modiff (command_builder->echo_buf);
+                    sledgehammer_check_ascii_begin (command_builder->echo_buf);
+
+                    /* Show the keymap prompt, but don't adjust the fill
+                       pointer to reflect it. */
+                    command_builder->echo_buf_end
+                      = command_builder->echo_buf_fill_pointer + len;
 		  }
 		maybe_echo_keys (command_builder, 1);
 	      }
@@ -4104,12 +4111,13 @@ lookup_command_event (struct command_builder *command_builder,
     else if (!NILP (leaf))
       {
 	if (EQ (Qcommand, echo_area_status (f))
-	    && command_builder->echo_buf_index > 0)
+	    && command_builder->echo_buf_fill_pointer > 0)
 	  {
 	    /* If we had been echoing keys, echo the last one (without
 	       the trailing dash) and redisplay before executing the
 	       command. */
-	    command_builder->echo_buf[command_builder->echo_buf_index] = 0;
+            command_builder->echo_buf_end =
+              command_builder->echo_buf_fill_pointer;
 	    maybe_echo_keys (command_builder, 1);
 	    Fsit_for (Qzero, Qt);
 	  }

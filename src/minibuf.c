@@ -34,6 +34,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "frame-impl.h"
 #include "insdel.h"
 #include "redisplay.h"
+#include "text.h"
 #include "window-impl.h"
 #include "elhash.h"
 
@@ -842,10 +843,6 @@ echo_area_append (struct frame *f, const Ibyte *nonreloc, Lisp_Object reloc,
 		  Lisp_Object label)
 {
   /* This function can call lisp */
-  Lisp_Object obj;
-  struct gcpro gcpro1;
-  Lisp_Object frame;
-
   /* There is an inlining bug in egcs-20000131 c++ that can be worked
      around as follows:  */
 #if defined (__GNUC__) && defined (__cplusplus)
@@ -864,21 +861,27 @@ echo_area_append (struct frame *f, const Ibyte *nonreloc, Lisp_Object reloc,
   if (length == 0)
     return;
 
-  if (!NILP (Ffboundp (Qappend_message)))
+  if (!UNBOUNDP (XSYMBOL_FUNCTION (Qappend_message)))
     {
-      if (STRINGP (reloc) && offset == 0 && length == XSTRING_LENGTH (reloc))
-	obj = reloc;
-      else
-	{
-	  if (STRINGP (reloc))
-	    nonreloc = XSTRING_DATA (reloc);
-	  obj = make_string (nonreloc + offset, length);
-	}
+      Lisp_Object obj
+        = STRINGP (reloc) ? reloc : make_string (nonreloc + offset, length);
+      Lisp_Object args[] = { Qappend_message, label, obj, wrap_frame (f),
+                             EQ (label, Qprint) ? Qt : Qnil, Q_start, Qzero,
+                             Q_end, Qnil };
+      struct gcpro gcpro1;
 
-      frame = wrap_frame (f);
-      GCPRO1 (obj);
-      call4 (Qappend_message, label, obj, frame,
-	     EQ (label, Qprint) ? Qt : Qnil);
+      if (STRINGP (reloc)
+          && (offset != 0 || length != XSTRING_LENGTH (reloc)))
+        {
+          assert (EQ (args[5], Q_start));
+          args[6] = make_fixnum (string_index_byte_to_char (reloc, offset));
+          assert (EQ (args[7], Q_end));
+          args[8]
+            = make_fixnum (string_index_byte_to_char (reloc, offset + length));
+        }
+      GCPRO1 (args[0]);
+      gcpro1.nvars = countof (args);
+      Ffuncall (countof (args), args);
       UNGCPRO;
     }
   else

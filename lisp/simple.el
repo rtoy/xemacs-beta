@@ -4412,14 +4412,21 @@ you should just use (message nil)."
 			    (car (car log)) (cdr (car log))))
       (setq log (cdr log)))))
 
-(defun append-message (label message &optional frame stdout-p)
+(defun* append-message (label message &optional frame stdout-p
+                              &key (start 0) end)
   "Add MESSAGE to the message-stack, or append it to the existing text.
+
 LABEL is the class of the message.  If it is the same as that of the top of
 the message stack, MESSAGE is appended to the existing message, otherwise
 it is pushed on the stack.
+
 FRAME determines the minibuffer window to send the message to.
+
 STDOUT-P is ignored, except for output to stream devices.  For streams,
-STDOUT-P non-nil directs output to stdout, otherwise to stderr."
+STDOUT-P non-nil directs output to stdout, otherwise to stderr.
+
+START and END, if supplied, designate a substring of MESSAGE to add. See
+`write-sequence'."
   (or frame (setq frame (selected-frame)))
   ;; If outputting to the terminal, make sure output from anyone else clears
   ;; the left side first, but don't do it ourselves, otherwise we won't be
@@ -4430,17 +4437,18 @@ STDOUT-P non-nil directs output to stdout, otherwise to stderr."
     (if (eq label (car top))
 	(setcdr top (concat (cdr top) message))
       (push (cons label message) message-stack)))
-  (raw-append-message message frame stdout-p)
+  (raw-append-message message frame stdout-p :start start :end end)
   (if (eq 'stream (frame-type frame))
       (set-device-clear-left-side (frame-device frame) t)))
 
 ;; Really append the message to the echo area.  No fiddling with
 ;; message-stack.
-(defun raw-append-message (message &optional frame stdout-p)
+(defun* raw-append-message (message &optional frame stdout-p
+                                    &key (start 0) end)
   (unless (equal message "")
     (let ((inhibit-read-only t))
       (with-current-buffer " *Echo Area*"
-	(insert-string message)
+	(write-sequence message (current-buffer) :start start :end end)
 	;; #### This needs to be conditional; cf discussion by Stefan Monnier
 	;; et al on emacs-devel in mid-to-late April 2007.  One problem is
 	;; there is no known good way to guess whether the user wants to have
@@ -4489,7 +4497,8 @@ STDOUT-P non-nil directs output to stdout, otherwise to stderr."
 	  ;; we ever create another non-redisplayable device type (e.g.
 	  ;; processes?  printers?).
 	  (if (eq 'stream (frame-type frame))
-	      (send-string-to-terminal message stdout-p (frame-device frame))
+	      (send-string-to-terminal (subseq message start end) stdout-p
+                                       (frame-device frame))
 	    (funcall redisplay-echo-area-function))))))
 
 (defun display-message (label message &optional frame stdout-p)

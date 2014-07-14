@@ -1148,11 +1148,13 @@ struct command_builder
      translation loop).  If this is nil, then the next-read event is
      the first that can begin a function key sequence. */
   Lisp_Object first_mungeable_event[2];
-  Ibyte *echo_buf;
-
-  Bytecount echo_buf_length;          /* size of echo_buf */
-  Bytecount echo_buf_index;           /* index into echo_buf
+  Lisp_Object echo_buf;
+  Bytecount echo_buf_fill_pointer;    /* Fill pointer for echo_buf.
                                        * -1 before doing echoing for new cmd */
+  Bytecount echo_buf_end;             /* End of the text to be shown in
+                                         echo_buf. Can be after the fill
+                                         pointer, but usually identical to
+                                         it */
   /* Self-insert-command is magic in that it doesn't always push an undo-
      boundary: up to 20 consecutive self-inserts can happen before an undo-
      boundary is pushed.  This variable is that counter.

@@ -1,3 +1,11 @@
+2014-07-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (raw-append-message):
+	Use #'write-sequence in this, take its START and END keyword
+	arguments, so our callers don't have to cons as much.
+	* simple.el (append-message):
+	Pass through START and END here.
+
 2014-07-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el (side-effect-free-fns):
