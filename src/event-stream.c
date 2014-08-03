@@ -380,7 +380,8 @@ allocate_command_builder (Lisp_Object console, int with_echo_buf)
   reset_command_builder_event_chain (builder);
   if (with_echo_buf)
     {
-      builder->echo_buf = make_uninit_string (300 * MAX_ICHAR_LEN);
+      builder->echo_buf = Fmake_string (make_fixnum (300 * MAX_ICHAR_LEN),
+                                        make_char (0));
     }
   else
     {
@@ -2176,7 +2177,8 @@ The returned event will be one of the following types:
       if (XSTRING_LENGTH (command_builder->echo_buf) < len)
         {
           command_builder->echo_buf
-            = make_uninit_string (len + 200 * MAX_ICHAR_LEN);
+            = Fmake_string (make_fixnum (len + 300 * MAX_ICHAR_LEN),
+                            make_char (0));
         }
 
       args[0] = command_builder->echo_buf;
