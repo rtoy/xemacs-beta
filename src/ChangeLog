@@ -5,6 +5,9 @@
 	Use #'make-string rather than make_uninit_string() when allocating
 	the command builder's echo_buf, avoiding having octets in the
 	string that do not correspond to valid internal-format text.
+	* buffer.c (finish_init_buffer):
+	Pass a character as the second argument to #'make-string, not a
+	fixnum.
 
 2014-07-14  Aidan Kehoe  <kehoea@parhasard.net>
 
