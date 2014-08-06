@@ -1,3 +1,11 @@
+2014-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fontconfig.el (fc-name-parse-harder):
+	Improve style here, don't re-implement #'split-string-by-char with
+	its ESCAPE-CHAR argument, look for a string prefix in a list of
+	candidates in a more CL-idiomatic way, use the language's features
+	for boolean or.
+
 2014-07-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (raw-append-message):

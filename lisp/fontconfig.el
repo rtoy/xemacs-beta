@@ -538,55 +538,46 @@ font instance then instantiating the font again will round-trip.  Hypotheses:
 Unlike `fc-parse-name', unparseable objects are skipped and reported in the
 *Warnings* buffer.  \(The *Warnings* buffer is popped up unless all of the
 unparsed objects are listed in `fc-name-parse-known-problem-attributes'.)"
-  (labels ((repair-embedded-colons (l)
-	     ;; #### May need generalization to other separators?
-	     (let ((ll l))
-	       (while (cdr l)
-	         (when (string-match ".*\\\\$" (cadr l))
-		   (setcdr l (cons (concat (cadr l) ":" (caddr l)) (cdddr l))))
-	         (setq l (cdr l)))
-	       ll))
-	   (prepare-omits (object)
-	     (declare (special display))
-	     (let* ((reports fc-name-parse-known-problem-attributes)
-		    (report (car reports))
-		    (display-this t))
-	       (while reports
-		 (if (string= report (subseq object 0 (length report)))
-		     (setq object (concat "(KNOWN) " object)
-			   display-this nil
-			   reports nil)
-		   (setq report (pop reports))))
-	       (push display-this display)
-	       (concat object "\n")))
-	   (any (bools)
-	     (let (ret)
-	       (while bools
-		 (setq ret (or (pop bools) ret))))))
-    (let* ((objects (repair-embedded-colons (split-string fontname ":")))
-	   (name (pop objects))
-	   (omits nil)
-	   (outcomes (list 'dummy)))
-      (while objects
-        (let ((object (pop objects)))
-	  (condition-case nil
-	      (let ((try (concat name ":" object)))
-	        (fc-name-parse try)
-	        (setq name try))
-	    (invalid-argument
-	     (push object omits)))))
+  (let* ((objects (split-string-by-char fontname ?: ?\\))
+         name omits display)
+    (labels ((prefixp (haystack needle)
+               "Return non-nil if HAYSTACK starts with NEEDLE."
+               (not (mismatch haystack needle :end1 (length needle))))
+             (prepare-omit (object)
+               (setq display
+                     (or (if (find object
+                                   fc-name-parse-known-problem-attributes
+                                   :test #'prefixp)
+                             (progn
+                               (setq object (concat "(KNOWN) " object))
+                               ;; This attribute is known, don't display the
+                               ;; error based on it alone.
+                               nil)
+                             ;; Attribute is not known.
+                             t)
+                         ;; Otherwise, if we're already decided we need to
+                         ;; show them, respect that.
+                         display))
+               object)
+             (fontconfig-quote (string)
+              (mapconcat #'identity (split-string-by-char string ?:) #r"\:")))
+      (when (find ?: objects :test #'position) 
+        (setq objects (mapcar #'fontconfig-quote objects)))
+      (setq name (pop objects))
+      (dolist (object objects)
+        (condition-case nil
+            (let ((try (concat name ":" object)))
+              (fc-name-parse try)
+              (setq name try))
+          (invalid-argument (push object omits))))
       (when omits
-	(setq display nil)
-	(setq omits (mapconcat #'prepare-omits omits ""))
-	(lwarn 'fontconfig (if (apply #'any display) 'warning 'info)
-	  "Some objects in fontname weren't parsed (details in *Warnings*).
+        (setq omits (mapconcat #'prepare-omit omits "\n"))
+        (lwarn 'fontconfig (if display 'warning 'info)
+          "Some objects in fontname weren't parsed (details in *Warnings*).
 This shouldn't affect your XEmacs except that the font may be inaccurate.
 Please report any unparseable objects below not marked as KNOWN with
-M-x report-xemacs-bug.  Objects:\n%sFontname:\n%s"
-	  omits
-	  fontname))
-      (fc-name-parse name)
-      )))
+M-x report-xemacs-bug.  Objects:\n%sFontname:\n%s" omits fontname))
+      (fc-name-parse name))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
