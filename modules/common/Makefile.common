@@ -35,6 +35,7 @@ SHELL=/bin/sh
 RM=rm -f
 PROGNAME=@PROGNAME@
 CFLAGS=@XE_CFLAGS@
+CPPFLAGS=@CPPFLAGS@
 INSTALL=@INSTALL@
 version=@version@
 prefix=@prefix@
@@ -67,7 +68,7 @@ IMPORT_LIB=../../src/xemacs-import.a
 all: $(OBJECT_TO_BUILD)
 
 .c.o:
-	$(MODCC) $(MODCFLAGS) -c $<
+	$(MODCC) $(MODCFLAGS) $(CPPFLAGS) -c $<
 
 $(MODNAME).ell: $(OBJS) $(MODNAME)_i.o $(IMPORT_LIB)
 	$(MODCC) --mode=link --mode=verbose --mod-output=$@ \
