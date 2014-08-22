@@ -445,7 +445,7 @@ by comparing the respective outputs of this function using `equal'."
   "Return the next key event, with a list of modifiers applied.
 LIST describes the names of these modifier, a list of symbols.
 `function-key-map' is scanned for prefix bindings."
-  (let (events binding)
+  (let (events binding key-sequence-list-description symbol-name)
     ;; read keystrokes scanning `function-key-map'
     (while (keymapp
 	    (setq binding
@@ -465,11 +465,21 @@ LIST describes the names of these modifier, a list of symbols.
 		(mapcar 'character-to-event (cdr events))))
       (setq unread-command-events (cdr events)))
     ;; add modifiers LIST to the first keystroke or event
+    (setf key-sequence-list-description
+          (aref (key-sequence-list-description (car events)) 0))
+    (if (and (member 'shift list)
+	     (symbolp (car (last key-sequence-list-description)))
+             (eql 1 (length
+                     (setq symbol-name
+                           (symbol-name
+                            (car (last key-sequence-list-description))))))
+             (not (eql (aref symbol-name 0) (upcase (aref symbol-name 0)))))
+        (setf (car (last key-sequence-list-description))
+              (intern (upcase symbol-name))
+              list (remove* 'shift list)))
     (vector
      (append list
-             (set-difference (aref (key-sequence-list-description (car events))
-                                   0)
-                             list :stable t)))))
+             (set-difference key-sequence-list-description list :stable t)))))
 
 (defun event-apply-modifier (symbol)
   "Return the next key event, with a single modifier applied.
@@ -480,6 +490,10 @@ See `event-apply-modifiers'."
   "Read a sequence of characters, and return the corresponding keysym.
 The characters must be ?-, or ?_, or have word syntax.  Reading is
 terminated by RET (which is discarded)."
+  ;; This has the disadvantage that only X11 keysyms (and space, backspace
+  ;; and friends, together with the trivial one-character keysyms) are
+  ;; recognised, and then only on a build with X11 support which has had an
+  ;; X11 frame open at some point.
   (let ((continuep t)
 	event char list)
     (while continuep
@@ -501,6 +515,32 @@ terminated by RET (which is discarded)."
 	     (error "Event has no character equivalent: %s" event))))
     (vector (intern (concat "" (nreverse list))))))
 
+(defun synthesize-unicode-codepoint (ignore-prompt)
+  "Read a sequence of hexadecimal digits and return a one-char keyboard macro.
+
+The character has the Unicode code point corresponding to those hexadecimal
+digits."
+  (symbol-macrolet ((first-prompt "Unicode hex input: u"))
+    (let* ((prompt first-prompt) (integer 0)
+           (extent (make-extent (1- (length first-prompt))
+                                (length first-prompt) prompt))
+	   character digit-char-p)
+      (setf (extent-face extent) 'underline
+	    (extent-property extent 'duplicable) t)
+      (while (not (member (setq character
+				;; Discard non-enter non-hex-digit characters,
+				;; as GTK does.
+				(read-char-exclusive prompt))
+			  '(?\r ?\n)))
+        (when (setq digit-char-p (digit-char-p character 16))
+          (setq integer (logior (lsh integer 4) digit-char-p)
+                prompt (concat prompt (list character)))
+          (if (>= integer #x110000)
+              (error 'args-out-of-range "Not a Unicode code point" integer))
+          (set-extent-endpoints extent (1- (length first-prompt))
+                                (length prompt) prompt)))
+      (vector (list (decode-char 'ucs integer))))))
+
 (define-key function-key-map-parent [?\C-x ?@ ?h] 'event-apply-hyper-modifier)
 (define-key function-key-map-parent [?\C-x ?@ ?s] 'event-apply-super-modifier)
 (define-key function-key-map-parent [?\C-x ?@ ?m] 'event-apply-meta-modifier)
@@ -508,6 +548,7 @@ terminated by RET (which is discarded)."
 (define-key function-key-map-parent [?\C-x ?@ ?c] 'event-apply-control-modifier)
 (define-key function-key-map-parent [?\C-x ?@ ?a] 'event-apply-alt-modifier)
 (define-key function-key-map-parent [?\C-x ?@ ?k] 'synthesize-keysym)
+(define-key function-key-map-parent [(control U)] 'synthesize-unicode-codepoint)
 
 ;; The autoloads for the compose map, and their bindings in
 ;; function-key-map-parent are used by GTK as well as X11. And Julian

@@ -1,3 +1,17 @@
+2014-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.el:
+	* keymap.el (event-apply-modifiers):
+	When a character keysym has case information, apply the shift
+	modifier to it by upcasing it.
+	* keymap.el (synthesize-keysym):
+	Document this a little.
+	* keymap.el (synthesize-unicode-codepoint): New.
+	Like #'synthesize-keysym, but synthesizing a Unicode codepoint.
+	* keymap.el (function-key-map-parent): Bind control shift u to
+	synthesize a Unicode character input, as does GTK+ and as
+	specified by ISO 14755.	
+
 2014-08-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fontconfig.el (fc-name-parse-harder):
