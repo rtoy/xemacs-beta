@@ -1379,9 +1379,8 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   Display *display = DEVICE_X_DISPLAY (d);
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
   Atom cut_buffer_atom;
-  const Ibyte *data  = XSTRING_DATA (string);
-  Bytecount bytes = XSTRING_LENGTH (string);
-  Bytecount bytes_remaining;
+  const Ibyte *data;
+  Bytecount bytes, bytes_remaining;
   Bytecount max_bytes = SELECTION_QUANTUM (display);
 #ifdef MULE
   const Ibyte *ptr, *end;
@@ -1393,7 +1392,10 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
 
   CHECK_CUTBUFFER (cutbuffer);
   CHECK_STRING (string);
+
   cut_buffer_atom = symbol_to_x_atom (d, cutbuffer, 0);
+  data = XSTRING_DATA (string);
+  bytes = XSTRING_LENGTH (string);
 
   if (! cut_buffers_initialized)
     initialize_cut_buffers (display, window);
