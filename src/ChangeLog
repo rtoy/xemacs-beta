@@ -1,3 +1,11 @@
+2014-09-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select-x.c (Fx_store_cutbuffer_internal):
+	Correct the order of XSTRING_{DATA,LENGTH} vs. CHECK_STRING, make
+	sure the former is after the latter, avoiding crashes when passing
+	in arguments of the wrong type, or when ERROR_CHECK_STRUCTURES is
+	defined.
+
 2014-08-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-stream.c (allocate_command_builder):
