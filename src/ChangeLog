@@ -1,3 +1,8 @@
+2014-09-23  Jerry James  <james@xemacs.org>
+
+	* floatfns.c (round_two_bignum_1): Fix memory leak.
+	(round_two_bigfloat): Ditto.
+
 2014-09-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select-x.c (Fx_store_cutbuffer_internal):
