@@ -1681,6 +1681,10 @@ round_two_bignum_1 (bignum number, bignum divisor,
       *res = make_bignum_bg (floored);
       *remain = make_bignum_bg (scratch_bignum);
     }
+  bignum_fini (flsecond);
+  bignum_fini (floored);
+  bignum_fini (flooring);
+  bignum_fini (hi2);
 }
 
 static Lisp_Object
@@ -1835,6 +1839,7 @@ round_two_bigfloat (Lisp_Object number, Lisp_Object divisor,
   bigfloat_div (divided, XBIGFLOAT_DATA (number), XBIGFLOAT_DATA (divisor));
 
   res0 = round_one_bigfloat_1 (divided);
+  bigfloat_fini (divided);
 
   bigfloat_set_prec (scratch_bigfloat, prec);
   bigfloat_set_prec (scratch_bigfloat2, prec);
