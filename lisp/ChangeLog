@@ -1,3 +1,8 @@
+2014-09-27  Michael Sperber  <mike@xemacs.org>
+
+	* custom.el (defcustom): 
+	(custom-handle-keyword): Handle :package-version without bailing out.
+
 2014-09-25  Jerry James  <james@xemacs.org>
 
 	* bytecomp.el (byte-compile-insert-header): do not insert

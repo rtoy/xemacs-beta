@@ -274,6 +274,17 @@ The following keywords are meaningful:
         VALUE should be a string specifying that the variable was
         first introduced, or its default value was changed, in Emacs
         version VERSION.
+:package-version
+        VALUE should be a list with the form (PACKAGE . VERSION),
+        where PACKAGE and VERSION are strings.
+
+        This specifies that the variable was first introduced, or its
+        default value was changed, in PACKAGE version VERSION.  This
+        keyword takes priority over :version.
+
+        Since PACKAGE must be unique and the user might see it in an
+        error message, a good choice is the official name of the
+        package, such as MH-E or Gnus.
 :tag LABEL
         Use LABEL, a string, instead of the item's name, to label the item
         in customization menus and buffers.
@@ -458,6 +469,8 @@ Fourth argument TYPE is the custom option type."
 	 (custom-add-to-group value symbol type))
 	((eq keyword :version)
 	 (custom-add-version symbol value))
+	((eq keyword :package-version)
+	 (custom-add-package-version symbol value))
 	((eq keyword :link)
 	 (custom-add-link symbol value))
 	((eq keyword :load)
@@ -506,6 +519,14 @@ For other types variables, the effect is undefined."
 (defun custom-add-version (symbol version)
   "To the custom option SYMBOL add the version VERSION."
   (put symbol 'custom-version version))
+
+(defun custom-add-package-version (symbol version)
+  "To the custom option SYMBOL add the package version VERSION."
+  (unless (and (consp version)
+	       (stringp (car version))
+	       (stringp (cdr version)))
+        (error "Invalid package version `%s'" value))
+  (put symbol 'custom-package-version version))
 
 (defun custom-add-load (symbol load)
   "To the custom option SYMBOL add the dependency LOAD.
