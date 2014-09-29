@@ -2159,8 +2159,7 @@ docstrings code.")
 	    (insert "\n;;; compiled by "
 		    (or (and (boundp 'user-mail-address) user-mail-address)
 			(concat (user-login-name) "@" (system-name)))
-		    " on "
-		    (current-time-string) "\n;;; from file " filename "\n")
+		    "\n;;; from file " filename "\n")
 	    (insert ";;; emacs version " emacs-version ".\n")
 	    (insert ";;; bytecomp version " byte-compile-version "\n;;; "
 		    (cond
