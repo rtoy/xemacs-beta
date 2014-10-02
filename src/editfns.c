@@ -1190,9 +1190,13 @@ arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
       else if (FIXNUMP (zone))
 	{
 	  int abszone = abs (XFIXNUM (zone));
-	  /* #### I have no idea what this conforms to,
-	     but the compiler has stopped whining. */
-	  sprintf (tzbuf, "XXX%s%d:%02d:%02d", (XFIXNUM (zone) < 0) ? "-" : "+",
+	  /* We specify the time zone in offset notation (see `man
+	     tzset' for details).  The offset indicates the value one
+	     must add to local time to arrive at UTC.  Thus, we sign
+	     the offset with a `-' if the time zone is east of GMT; we
+	     sign the offset with a `+' if the time zone is GMT (then
+	     the offset is 0) or if the time zone is west of GMT. */
+	  sprintf (tzbuf, "XXX%s%d:%02d:%02d", (XFIXNUM (zone) < 0) ? "+" : "-",
 		   abszone / (60*60), (abszone/60) % 60, abszone % 60);
 	  tzstring = tzbuf;
 	}
