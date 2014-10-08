@@ -3177,7 +3177,7 @@ under Mule, is very difficult.)
     Charbpos cur_point = BUF_PT (buf);
     struct gcpro ngcpro1;
     Lisp_Object stream = make_filedesc_input_stream (fd, 0, total,
-						     LSTR_ALLOW_QUIT);
+						     LSTR_ALLOW_QUIT, NULL);
     Charcount last_tell = -1;
 
     NGCPRO1 (stream);
@@ -3516,7 +3516,7 @@ here because write-region handler writers need to be aware of it.
        that need to be made, and there could be a large latency
        for each request.  So I've increased the buffer size
        to 64K.) */
-    outstream = make_filedesc_output_stream (desc, 0, -1, 0);
+    outstream = make_filedesc_output_stream (desc, 0, -1, 0, NULL);
     Lstream_set_buffering (XLSTREAM (outstream),
 			   LSTREAM_BLOCKN_BUFFERED, 65536);
     outstream =

@@ -357,6 +357,7 @@ event_stream_unixoid_create_io_streams (void* inhandle, void* outhandle,
 					USID* err_usid,
 					int flags)
 {
+  tls_state_t *tls_state;
   int infd, outfd, errfd;
   /* Decode inhandle and outhandle. Their meaning depends on
      the process implementation being used. */
@@ -366,17 +367,22 @@ event_stream_unixoid_create_io_streams (void* inhandle, void* outhandle,
   outfd = (EMACS_INT) outhandle;
   errfd = (EMACS_INT) errhandle;
 
+  tls_state = (flags & STREAM_USE_TLS) ? (tls_state_t *) inhandle : NULL;
+
   *instream = (infd >= 0
-	       ? make_filedesc_input_stream (infd, 0, -1, 0)
+	       ? make_filedesc_input_stream (infd, 0, -1,
+					     tls_state ? LSTR_BLOCKED_OK : 0,
+					     tls_state)
 	       : Qnil);
 
   *outstream = (outfd >= 0
-		? make_filedesc_output_stream (outfd, 0, -1, LSTR_BLOCKED_OK)
+		? make_filedesc_output_stream (outfd, 0, -1, LSTR_BLOCKED_OK,
+					       tls_state)
 		: Qnil);
 
   *errstream = (errfd >= 0
-	       ? make_filedesc_input_stream (errfd, 0, -1, 0)
-	       : Qnil);
+		? make_filedesc_input_stream (errfd, 0, -1, 0, tls_state)
+		: Qnil);
 
   /* FLAGS is process->pty_flag for UNIX_PROCESSES */
   if ((flags & STREAM_PTY_FLUSHING) && outfd >= 0)

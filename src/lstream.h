@@ -24,6 +24,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #ifndef INCLUDED_lstream_h_
 #define INCLUDED_lstream_h_
 
+#include "tls.h"
+
 /************************************************************************/
 /*                     definition of Lstream object                     */
 /************************************************************************/
@@ -208,6 +210,12 @@ typedef struct lstream_implementation
   /* Mark this object for garbage collection.  Same semantics as
      a standard Lisp_Object marker.  This function can be NULL. */
   Lisp_Object (*marker) (Lisp_Object lstream);
+  /* Return nonzero if this stream is using a TLS connection */
+  int (*tls_p) (Lstream *stream);
+  /* Perform STARTTLS negotiation on a pair of streams, one for input and one
+     for output.  Both are transformed if negotiation is successful. */
+  int (*tls_negotiater) (Lstream *instream, Lstream *outstream,
+			 const Extbyte *host, Lisp_Object keylist);
 } Lstream_implementation;
 
 #define DEFINE_LSTREAM_IMPLEMENTATION(name, c_name)	\
@@ -317,6 +325,10 @@ int Lstream_rewind (Lstream *lstr);
 int Lstream_seekable_p (Lstream *lstr);
 int Lstream_close (Lstream *lstr);
 int Lstream_close_noflush (Lstream *lstr);
+
+int Lstream_tls_p (Lstream *lstr);
+int Lstream_tls_negotiate (Lstream *instr, Lstream *outstr,
+			   const Extbyte *host, Lisp_Object keylist);
 
 void Lstream_delete (Lstream *lstr);
 void Lstream_set_character_mode (Lstream *str);
@@ -464,9 +476,9 @@ Lstream_unget_ichar (Lstream *stream, Ichar ch)
 Lisp_Object make_stdio_input_stream (FILE *stream, int flags);
 Lisp_Object make_stdio_output_stream (FILE *stream, int flags);
 Lisp_Object make_filedesc_input_stream (int filedesc, int offset, int count,
-					int flags);
+					int flags, tls_state_t *state);
 Lisp_Object make_filedesc_output_stream (int filedesc, int offset, int count,
-					 int flags);
+					 int flags, tls_state_t *state);
 void filedesc_stream_set_pty_flushing (Lstream *stream,
 				       int pty_max_bytes,
 				       Ibyte eof_char);

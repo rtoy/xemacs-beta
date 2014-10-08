@@ -72,6 +72,7 @@ struct event_stream
 /* Flags for create_io_streams_cb() FLAGS parameter */
 #define STREAM_PTY_FLUSHING		0x0001
 #define STREAM_NETWORK_CONNECTION	0x0002
+#define STREAM_USE_TLS			0x0004
 
 extern struct event_stream *event_stream;
 

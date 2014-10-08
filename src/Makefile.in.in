@@ -296,8 +296,8 @@ objs=\
  rangetab.o realpath.o redisplay.o redisplay-output.o regex.o\
  search.o select.o sequence.o $(sheap_objs) $(shlib_objs) signal.o sound.o\
  specifier.o strftime.o $(sunpro_objs) symbols.o syntax.o sysdep.o\
- text.o $(tooltalk_objs) $(tty_objs) undo.o unicode.o $(x_objs) $(x_gui_objs)\
- widget.o window.o $(win32_objs)
+ text.o tls.o $(tooltalk_objs) $(tty_objs) undo.o unicode.o \
+ $(x_objs) $(x_gui_objs) widget.o window.o $(win32_objs)
 
 obj_rtl = $(objs:.o=.c.rtl)
 

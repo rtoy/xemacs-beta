@@ -72,7 +72,7 @@ extract_object_file_name (int fd, EMACS_INT doc_pos,
       goto done;
     }
 
-  fdstream = make_filedesc_input_stream (fd, 0, -1, 0);
+  fdstream = make_filedesc_input_stream (fd, 0, -1, 0, NULL);
   Lstream_set_buffering (XLSTREAM (fdstream), LSTREAM_UNBUFFERED, 0);
   instream =
     make_coding_input_stream
@@ -187,7 +187,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       goto done;
     }
 
-  fdstream = make_filedesc_input_stream (fd, 0, -1, 0);
+  fdstream = make_filedesc_input_stream (fd, 0, -1, 0, NULL);
   Lstream_set_buffering (XLSTREAM (fdstream), LSTREAM_UNBUFFERED, 0);
   instream =
     make_coding_input_stream

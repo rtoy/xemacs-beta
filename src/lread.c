@@ -714,7 +714,7 @@ do {								\
     struct gcpro ngcpro1;
 
     NGCPRO1 (lispstream);
-    lispstream = make_filedesc_input_stream (fd, 0, -1, LSTR_CLOSING);
+    lispstream = make_filedesc_input_stream (fd, 0, -1, LSTR_CLOSING, NULL);
     /* 64K is used for normal files; 8K should be OK here because Lisp
        files aren't really all that big. */
     Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,

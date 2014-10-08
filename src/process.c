@@ -142,6 +142,15 @@ mark_process (Lisp_Object object)
   return Qnil;
 }
 
+static int
+tls_connection_p (Lisp_Object process)
+{
+  Lisp_Process *p = XPROCESS (process);
+  Lstream *in = XLSTREAM (DATA_INSTREAM (p));
+  Lstream *out = XLSTREAM (DATA_OUTSTREAM (p));
+  return Lstream_tls_p (in) || Lstream_tls_p (out);
+}
+
 static void
 print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
@@ -157,9 +166,11 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   else
     {
       int netp = network_connection_p (obj);
+      int tlsp = netp && tls_connection_p (obj);
       write_ascstring (printcharfun,
-		      netp ? GETTEXT ("#<network connection ") :
-		      GETTEXT ("#<process "));
+		       tlsp ? GETTEXT ("#<tls network connection ") :
+		       (netp ? GETTEXT ("#<network connection ") :
+			GETTEXT ("#<process ")));
       print_internal (process->name, printcharfun, 1);
       write_ascstring (printcharfun, (netp ? " " : " pid "));
       print_internal (process->pid, printcharfun, 1);
@@ -844,7 +855,7 @@ arguments: (NAME BUFFER PROGRAM &rest PROGRAM-ARGS)
    connection has no PID; you cannot signal it.  All you can do is
    deactivate and close it via delete-process */
 
-DEFUN ("open-network-stream-internal", Fopen_network_stream_internal, 4, 5,
+DEFUN ("open-network-stream-internal", Fopen_network_stream_internal, 4, 6,
        0, /*
 Open a TCP connection for a service to a host.
 Return a process object to represent the connection.
@@ -863,6 +874,9 @@ Fourth arg SERVICE is the name of the service desired (a string),
 Optional fifth arg PROTOCOL is a network protocol.  Currently only `tcp'
  (Transmission Control Protocol) and `udp' (User Datagram Protocol) are
  supported.  When omitted, `tcp' is assumed.
+Optional sixth arg TLS is a boolean.  If it is NIL, a standard network stream
+ is opened.  If it is non-NIL, a TLS network stream is opened if TLS support
+ is available; otherwise an error is signaled.
 
 Output via `process-send-string' and input via buffer or filter (see
 `set-process-filter') are stream-oriented.  That means UDP datagrams are
@@ -871,12 +885,13 @@ datagrams around 500 bytes that are not truncated by `process-send-string'
 are usually fine.)  Note further that the UDP protocol does not guard
 against lost packets.
 */
-       (name, buffer, host, service, protocol))
+       (name, buffer, host, service, protocol, tls))
 {
   /* This function can GC */
   Lisp_Object process = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5, ngcpro1;
   void *inch, *outch;
+  int flags;
 
   GCPRO5 (name, buffer, host, service, protocol);
   CHECK_STRING (name);
@@ -889,7 +904,7 @@ against lost packets.
   /* Since this code is inside HAVE_SOCKETS, existence of
      open_network_stream is mandatory */
   PROCMETH (open_network_stream, (name, host, service, protocol,
-				  &inch, &outch));
+				  &inch, &outch, !NILP(tls)));
 
   if (!NILP (buffer))
     buffer = Fget_buffer_create (buffer);
@@ -898,15 +913,40 @@ against lost packets.
 
   XPROCESS (process)->pid = Fcons (service, host);
   XPROCESS (process)->buffer = buffer;
+  flags = STREAM_NETWORK_CONNECTION;
+  if (!NILP (tls))
+    flags |= STREAM_USE_TLS;
   init_process_io_handles (XPROCESS (process), (void *) inch, (void *) outch,
-			   (void *) -1,
-			   STREAM_NETWORK_CONNECTION);
+			   (void *) -1, flags);
 
   event_stream_select_process (XPROCESS (process), 1, 1);
 
   NUNGCPRO;
   UNGCPRO;
   return process;
+}
+
+DEFUN ("tls-negotiate", Ftls_negotiate, 3, 3, 0, /*
+  "Negotiate a SSL/TLS connection.  Returns PROCESS if negotiation is
+successful, NIL otherwise.
+
+PROCESS is a process returned by `open-network-stream'.
+HOSTNAME is the remote hostname.  It must be a valid string.
+KEYLIST is an alist of (client key file, client cert file) pairs.
+*/
+       (process, hostname, keylist))
+{
+  Lisp_Process *p;
+  Lstream *in, *out;
+  Extbyte *ext_host;
+
+  CHECK_PROCESS (process);
+  CHECK_STRING (hostname);
+  p = XPROCESS (process);
+  in = XLSTREAM (DATA_INSTREAM (p));
+  out = XLSTREAM (DATA_OUTSTREAM (p));
+  ext_host = LISP_STRING_TO_EXTERNAL (hostname, Qunix_host_name_encoding);
+  return Lstream_tls_negotiate (in, out, ext_host, keylist) ? process : Qnil;
 }
 
 #ifdef HAVE_MULTICAST
@@ -2601,6 +2641,7 @@ syms_of_process (void)
   DEFSUBR (Fstart_process_internal);
 #ifdef HAVE_SOCKETS
   DEFSUBR (Fopen_network_stream_internal);
+  DEFSUBR (Ftls_negotiate);
 #ifdef HAVE_MULTICAST
   DEFSUBR (Fopen_multicast_group_internal);
 #endif /* HAVE_MULTICAST */

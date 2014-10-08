@@ -28,6 +28,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "buffer.h"
 #include "insdel.h"
 #include "lstream.h"
+#include "tls.h"
 
 #include "sysfile.h"
 
@@ -990,6 +991,25 @@ Lstream_fungetc (Lstream *lstr, int c)
   Lstream_unread (lstr, &ch, 1);
 }
 
+/* Detect an active TLS session */
+
+int
+Lstream_tls_p (Lstream *lstr)
+{
+  return (lstr->imp->tls_p) ? (lstr->imp->tls_p) (lstr) : 0;
+}
+
+/* STARTTLS negotiation */
+
+int
+Lstream_tls_negotiate (Lstream *instr, Lstream *outstr, const Extbyte *host,
+		       Lisp_Object keylist)
+{
+  return (instr->imp->tls_negotiater)
+    ? (instr->imp->tls_negotiater) (instr, outstr, host, keylist)
+    : 0;
+}
+
 
 /************************ some stream implementations *********************/
 
@@ -1117,6 +1137,7 @@ stdio_closer (Lstream *stream)
 
 struct filedesc_stream
 {
+  tls_state_t *tls_state;
   int fd;
   int pty_max_bytes;
   Ibyte eof_char;
@@ -1142,11 +1163,12 @@ DEFINE_LSTREAM_IMPLEMENTATION ("filedesc", filedesc);
    ignored when writing); -1 for unlimited. */
 static Lisp_Object
 make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
-			const char *mode)
+			tls_state_t *state, const char *mode)
 {
   Lstream *lstr = Lstream_new (lstream_filedesc, mode);
   struct filedesc_stream *fstr = FILEDESC_STREAM_DATA (lstr);
-  fstr->fd = filedesc;
+  fstr->tls_state = state;
+  fstr->fd = state ? tls_get_fd (state) : filedesc;
   fstr->closing      = !!(flags & LSTR_CLOSING);
   fstr->allow_quit   = !!(flags & LSTR_ALLOW_QUIT);
   fstr->blocked_ok   = !!(flags & LSTR_BLOCKED_OK);
@@ -1154,7 +1176,7 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
   fstr->blocking_error_p = 0;
   fstr->chars_sans_newline = 0;
   fstr->saved_errno = 0;
-  fstr->starting_pos = lseek (filedesc, offset, SEEK_CUR);
+  fstr->starting_pos = lseek (fstr->fd, offset, SEEK_CUR);
   fstr->current_pos = max (fstr->starting_pos, 0);
   if (count < 0)
     fstr->end_pos = -1;
@@ -1184,15 +1206,17 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
  */
 
 Lisp_Object
-make_filedesc_input_stream (int filedesc, int offset, int count, int flags)
+make_filedesc_input_stream (int filedesc, int offset, int count, int flags,
+			    tls_state_t *state)
 {
-  return make_filedesc_stream_1 (filedesc, offset, count, flags, "r");
+  return make_filedesc_stream_1 (filedesc, offset, count, flags, state, "r");
 }
 
 Lisp_Object
-make_filedesc_output_stream (int filedesc, int offset, int count, int flags)
+make_filedesc_output_stream (int filedesc, int offset, int count, int flags,
+			     tls_state_t *state)
 {
-  return make_filedesc_stream_1 (filedesc, offset, count, flags, "w");
+  return make_filedesc_stream_1 (filedesc, offset, count, flags, state, "w");
 }
 
 static Bytecount
@@ -1203,9 +1227,11 @@ filedesc_reader (Lstream *stream, unsigned char *data, Bytecount size)
   str->saved_errno = 0;
   if (str->end_pos >= 0)
     size = min (size, (Bytecount) (str->end_pos - str->current_pos));
-  nread = str->allow_quit ?
-    read_allowing_quit (str->fd, data, size) :
-    retry_read (str->fd, data, size);
+  nread = str->tls_state
+    ? tls_read (str->tls_state, data, size, str->allow_quit)
+    : (str->allow_quit ?
+       read_allowing_quit (str->fd, data, size) :
+       retry_read (str->fd, data, size));
   if (nread > 0)
     str->current_pos += nread;
   if (nread == 0)
@@ -1268,9 +1294,11 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 
   /**** start of non-PTY-crap ****/
   if (size > 0)
-    retval = str->allow_quit ?
-      write_allowing_quit (str->fd, data, size) :
-      retry_write (str->fd, data, size);
+    retval = str->tls_state
+      ? tls_write (str->tls_state, data, size, str->allow_quit)
+      : (str->allow_quit ?
+	 write_allowing_quit (str->fd, data, size) :
+	 retry_write (str->fd, data, size));
   else
     retval = 0;
   if (retval < 0 && errno_would_block_p (errno) && str->blocked_ok)
@@ -1409,7 +1437,9 @@ static int
 filedesc_closer (Lstream *stream)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
-  if (str->closing)
+  if (str->tls_state)
+    return tls_close (str->tls_state);
+  else if (str->closing)
     return retry_close (str->fd);
   else
     return 0;
@@ -1437,6 +1467,32 @@ filedesc_stream_fd (Lstream *stream)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   return str->fd;
+}
+
+static int
+filedesc_tls_p (Lstream *stream)
+{
+  struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
+  return str->tls_state != NULL;
+}
+
+static int
+filedesc_tls_negotiater (Lstream *instream, Lstream *outstream,
+			 const Extbyte *host, Lisp_Object keylist)
+{
+  struct filedesc_stream *in_str, *out_str;
+
+  if (!LSTREAM_TYPE_P (outstream, filedesc))
+    invalid_argument ("STARTTLS applies to file descriptor streams only",
+		      wrap_lstream (outstream));
+
+  in_str = FILEDESC_STREAM_DATA (instream);
+  out_str = FILEDESC_STREAM_DATA (outstream);
+  in_str->tls_state = out_str->tls_state =
+    tls_negotiate (out_str->fd, host, keylist);
+  if (out_str->tls_state != NULL)
+    in_str->fd = out_str->fd = tls_get_fd (out_str->tls_state);
+  return out_str->tls_state != NULL;
 }
 
 /*********** read from a Lisp string ***********/
@@ -1961,6 +2017,8 @@ lstream_type_create (void)
   LSTREAM_HAS_METHOD (filedesc, rewinder);
   LSTREAM_HAS_METHOD (filedesc, seekable_p);
   LSTREAM_HAS_METHOD (filedesc, closer);
+  LSTREAM_HAS_METHOD (filedesc, tls_p);
+  LSTREAM_HAS_METHOD (filedesc, tls_negotiater);
 
   LSTREAM_HAS_METHOD (lisp_string, reader);
   LSTREAM_HAS_METHOD (lisp_string, rewinder);

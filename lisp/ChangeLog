@@ -1,3 +1,14 @@
+2014-10-07  Jerry James  <james@xemacs.org>
+
+	* code-process.el (network-stream-get-response):
+	(network-stream-command):
+	(network-stream-open-plain):
+	(network-stream-open-tls):
+	(network-stream-certificate):
+	(network-stream-open-starttls):
+	(network-stream-open-shell): New functions.
+	(open-network-stream): Accept Emacs-compatible arguments.
+
 2014-09-27  Michael Sperber  <mike@xemacs.org>
 
 	* custom.el (defcustom): 
