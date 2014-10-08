@@ -1116,7 +1116,7 @@ init_tls (void)
 		    SSL_MODE_AUTO_RETRY | SSL_MODE_RELEASE_BUFFERS);
 
   /* Let the system select the ciphers */
-  if (SSL_CTX_set_cipher_list (ssl_ctx, "PROFILE=SYSTEM") != 1)
+  if (SSL_CTX_set_cipher_list (ssl_ctx, "DEFAULT") != 1)
     signal_error (Qtls_error, "SSL_CTX_set_cipher_list failed",
 		  openssl_error_string ());
 
