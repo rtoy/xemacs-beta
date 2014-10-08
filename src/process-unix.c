@@ -43,6 +43,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "sysdep.h"
 #include "window.h"
 #include "file-coding.h"
+#include "tls.h"
 
 #include <setjmp.h>
 #include "sysdir.h"
@@ -1857,10 +1858,12 @@ unix_canonicalize_host_name (Lisp_Object host)
 static void
 unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 			  Lisp_Object service, Lisp_Object protocol,
-			  void **vinfd, void **voutfd)
+			  void **vinfd, void **voutfd, Boolint tls)
 {
   EMACS_INT inch;
   EMACS_INT outch;
+  tls_state_t *tls_state = NULL;
+  Extbyte *ext_host = NULL;
   volatile int s = -1;
   volatile int port;
   volatile int retry = 0;
@@ -1869,6 +1872,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
   int retval;
 
   CHECK_STRING (host);
+  ext_host = LISP_STRING_TO_EXTERNAL (host, Qunix_host_name_encoding);
 
   if (!EQ (protocol, Qtcp) && !EQ (protocol, Qudp))
     invalid_constant ("Unsupported protocol", protocol);
@@ -1879,7 +1883,6 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     struct addrinfo hints, *res;
     struct addrinfo * volatile lres;
     Extbyte *portstring;
-    Extbyte *ext_host;
     Extbyte portbuf[128];
     /*
      * Caution: service can either be a string or int.
@@ -1907,7 +1910,6 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     else /* EQ (protocol, Qudp) */
       hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = 0;
-    ext_host = LISP_STRING_TO_EXTERNAL (host, Qunix_host_name_encoding);
     retval = getaddrinfo (ext_host, portstring, &hints, &res);
     if (retval != 0)
       {
@@ -1960,16 +1962,19 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	int family = address.sin_family;
 #endif
 
-	if (EQ (protocol, Qtcp))
-	  s = socket (family, SOCK_STREAM, 0);
-	else /* EQ (protocol, Qudp) */
-	  s = socket (family, SOCK_DGRAM, 0);
-
-	if (s < 0)
+	if (!tls || TLS_SETUP_SOCK)
 	  {
-	    xerrno = errno;
-	    failed_connect = 0;
-	    continue;
+	    if (EQ (protocol, Qtcp))
+	      s = socket (family, SOCK_STREAM, 0);
+	    else /* EQ (protocol, Qudp) */
+	      s = socket (family, SOCK_DGRAM, 0);
+
+	    if (s < 0)
+	      {
+		xerrno = errno;
+		failed_connect = 0;
+		continue;
+	      }
 	  }
 
       loop:
@@ -1988,10 +1993,20 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	can_break_system_calls = 1;
 
 #ifdef USE_GETADDRINFO
-	retval = connect (s, lres->ai_addr, lres->ai_addrlen);
+	retval = (!tls || TLS_SETUP_SOCK)
+	  ? connect (s, lres->ai_addr, lres->ai_addrlen)
+	  : 0;
 #else
-	retval = connect (s, (struct sockaddr *) &address, sizeof (address));
+	retval = (!tls || TLS_SETUP_SOCK)
+	  ? connect (s, (struct sockaddr *) &address, sizeof (address))
+	  : 0;
 #endif
+	if (retval == 0 && tls)
+	  {
+	    tls_state = tls_open (s, ext_host);
+	    retval = (tls_state == NULL) ? -1 : 0;
+	  }
+
 	can_break_system_calls = 0;
 	if (retval == -1 && errno != EISCONN)
 	  {
@@ -2020,8 +2035,11 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	      }
 
 	    failed_connect = 1;
-	    retry_close (s);
-            s = -1;
+	    if (!tls || TLS_SETUP_SOCK)
+	      {
+		retry_close (s);
+		s = -1;
+	      }
 	    continue;
 	  }
 
@@ -2052,7 +2070,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     freeaddrinfo (res);
 #endif
 
-    if (s < 0)
+    if ((!tls && s < 0) || (tls && tls_state == NULL))
       {
 	errno = xerrno;
 
@@ -2063,6 +2081,14 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	  report_network_error ("error creating socket", name);
       }
   }
+
+  if (tls)
+    {
+      set_socket_nonblocking_maybe (tls_get_fd (tls_state), port, "tcp");
+      *vinfd = (void *) tls_state;
+      *voutfd = (void *) tls_state;
+      return;
+    }
 
   inch = s;
   outch = dup (s);

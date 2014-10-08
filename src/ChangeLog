@@ -1,3 +1,45 @@
+2014-10-07  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Add tls.o to the link.
+	* config.h.in: Add TLS symbols (WITH_TLS, etc.).
+	* emacs.c (main_1): Call new functions in tls.c.
+	* events.h (STREAM_USE_TLS): New macro.
+	* lisp.h (Ffill): Export for nss_pk11_password.
+	* lstream.c (Lstream_tls_p): New function.
+	(Lstream_tls_negotiate): New function.
+	(struct filedesc_stream): Add tls_state member.
+	(make_filedesc_stream_1): Add state parameter.  Use tls_get_fd.
+	(make_filedesc_input_stream): Add state parameter.
+	(make_filedesc_output_stream): Ditto.
+	(filedesc_reader): Use tls_read if tls_state is non-null.
+	(filedesc_writer): Use tls_write if tls_state is non-null.
+	(filedesc_closer): Use tls_close if tls_state is non-null.
+	(filedesc_tls_p): New function.
+	(fildesc_tls_negotiater): New function.
+	* lstream.h (Lstream_implementation): Add tls_p and tls_negotiater
+	members.
+	* process-nt.c (nt_open_network_stream): Add tls parameter.
+	* process-unix.c (unix_open_network_stream): Ditto.  Call TLS
+	functions to set up the socket, if requested.
+	* process.c (tls_connection_p): New function.
+	(print_process): Use it.
+	(Fopen_network_stream_internal): Add optional tls argument.
+	(Ftls_negotiate): New function.
+	* tls.c: New file, with NSS, gnutls, and OpenSSL implementations.
+	* tls.h: New file.
+
+	* console-tty.c (tty_init_console):
+	* doc.c (extract_object_file_name):
+	(unparesseuxify_doc_string):
+	* event-stream.c (Fopen_dribble_file):
+	* event-unixoid.c (event_stream_unixoid_create_io_streams):
+	* file-coding.c (Ffind_coding_system_magic_cookie_in_file):
+	* fileio.c (Finsert_file_contents_internal):
+	(Fwrite_region_internal):
+	* gpmevent.c (tty_get_foreign_selection):
+	* lread.c (Fload_internal): Supply new tls arg to
+	make_filedesc_input_stream and make_filedesc_output_stream.
+
 2014-09-30  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* editfns.c (Fencode_time): Switch signs when calculating the time

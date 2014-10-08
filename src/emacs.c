@@ -437,6 +437,7 @@ Epoch 4.0 released August 27, 1990.
 #include "sysfile.h"
 #include "systime.h"
 #include "sysproc.h" /* for qxe_getpid() */
+#include "tls.h"
 
 #ifdef QUANTIFY
 #include <quantify.h>
@@ -1605,6 +1606,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_scrollbar ();
 #endif
       syms_of_text ();
+      syms_of_tls ();
 #ifdef HAVE_TOOLBARS
       syms_of_toolbar ();
 #endif
@@ -2215,6 +2217,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_symbols ();
       vars_of_syntax ();
       vars_of_text ();
+      vars_of_tls ();
 #ifdef HAVE_TOOLBARS
       vars_of_toolbar ();
 #endif
@@ -2677,6 +2680,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   init_device_tty ();
 #endif
   init_console_stream (restart); /* Create the first console */
+  if (initialized && !restart)
+    init_tls ();
 
   /* try to get the actual pathname of the exec file we are running */
   if (!restart)

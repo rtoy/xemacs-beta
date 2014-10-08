@@ -499,6 +499,15 @@ things are arranged in config.h.in.  In particular:
 /* Compile in support for SOCKS? */
 #undef HAVE_SOCKS
 
+/* Compile in support for TLS */
+#undef WITH_TLS
+#undef HAVE_NSS
+#undef HAVE_GNUTLS
+#undef HAVE_GNUTLS_CERTIFICATE_VERIFICATION_STATUS_PRINT
+#undef HAVE_GNUTLS_CERTIFICATE_VERIFY_PEERS3
+#undef HAVE_OPENSSL
+#undef HAVE_X509_CHECK_HOST
+
 /* Compile in support for X pixmaps via the `xpm' library? */
 #undef HAVE_XPM
 #undef FOR_MSW

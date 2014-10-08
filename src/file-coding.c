@@ -4342,7 +4342,7 @@ ISO 2022 encoding of most non-ASCII charsets.
 	goto badopen;
     }
 
-  lstream = make_filedesc_input_stream (fd, 0, -1, 0);
+  lstream = make_filedesc_input_stream (fd, 0, -1, 0, NULL);
   Lstream_set_buffering (XLSTREAM (lstream), LSTREAM_UNBUFFERED, 0);
   nread = Lstream_read (XLSTREAM (lstream), buf, sizeof (buf));
   err = Lstream_errno (XLSTREAM (lstream));

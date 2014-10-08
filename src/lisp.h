@@ -5768,6 +5768,8 @@ Bytecount fast_string_match (Lisp_Object, const Ibyte *,
 Bytecount fast_lisp_string_match (Lisp_Object, Lisp_Object);
 extern Fixnum warn_about_possibly_incompatible_back_references;
 
+/* Defined in sequence.c */
+EXFUN (Ffill, MANY);
 
 /* Defined in signal.c */
 void init_interrupts_late (void);

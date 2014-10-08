@@ -1006,6 +1006,8 @@ enable_dnet
 with_dnet
 enable_ipv6_cname
 with_ipv6_cname
+enable_tls
+with_tls
 enable_rel_alloc
 with_rel_alloc
 enable_dlmalloc
@@ -1938,6 +1940,9 @@ Networking options
   --with-ipv6-cname       Try IPv6 information first when canonicalizing host
                           names. This option has no effect unless system
                           supports getaddrinfo(3) and getnameinfo(3).
+  --with-tls=TYPE         Support TLS connections. TYPE must be one of "nss",
+                          "gnutls", and "openssl". If TYPE is omitted or
+                          "yes", support is determined automatically.
 
 Memory allocation options
 -------------------------
@@ -4921,6 +4926,22 @@ if test "${with_ipv6_cname+set}" = set; then
 
 else
   with_ipv6_cname="no"
+fi;
+# If --with-tls or --without-tls were given then copy the value to the
+# equivalent enable_tls variable.
+if test "${with_tls+set}" = set; then
+  enable_tls="$with_tls"
+fi;
+# If -enable-tls or --disable-tls were given then copy the value to the
+# equivalent with_tls variable.
+if test "${enable_tls+set}" = set; then
+  with_tls="$enable_tls"
+fi;
+# Check whether --with-tls or --without-tls was given.
+if test "${with_tls+set}" = set; then
+  enableval="$with_tls"
+  withval="$with_tls"
+
 fi;
 
 # If --with-rel-alloc or --without-rel-alloc were given then copy the value to the
@@ -21000,6 +21021,318 @@ fi
 
 fi
 
+if test "$with_tls" = "yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gnutls_global_init in -lgnutls" >&5
+$as_echo_n "checking for gnutls_global_init in -lgnutls... " >&6; }
+if ${ac_cv_lib_gnutls_gnutls_global_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgnutls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gnutls_global_init ();
+int
+main ()
+{
+return gnutls_global_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gnutls_gnutls_global_init=yes
+else
+  ac_cv_lib_gnutls_gnutls_global_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gnutls_gnutls_global_init" >&5
+$as_echo "$ac_cv_lib_gnutls_gnutls_global_init" >&6; }
+if test "x$ac_cv_lib_gnutls_gnutls_global_init" = xyes; then :
+  with_tls=gnutls
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NSS_InitContext in -lnss3" >&5
+$as_echo_n "checking for NSS_InitContext in -lnss3... " >&6; }
+if ${ac_cv_lib_nss3_NSS_InitContext+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lnss3  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char NSS_InitContext ();
+int
+main ()
+{
+return NSS_InitContext ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_nss3_NSS_InitContext=yes
+else
+  ac_cv_lib_nss3_NSS_InitContext=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_nss3_NSS_InitContext" >&5
+$as_echo "$ac_cv_lib_nss3_NSS_InitContext" >&6; }
+if test "x$ac_cv_lib_nss3_NSS_InitContext" = xyes; then :
+  with_tls=nss
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_library_init in -lssl" >&5
+$as_echo_n "checking for SSL_library_init in -lssl... " >&6; }
+if ${ac_cv_lib_ssl_SSL_library_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SSL_library_init ();
+int
+main ()
+{
+return SSL_library_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_ssl_SSL_library_init=yes
+else
+  ac_cv_lib_ssl_SSL_library_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_SSL_library_init" >&5
+$as_echo "$ac_cv_lib_ssl_SSL_library_init" >&6; }
+if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
+  with_tls=openssl
+else
+  with_tls=no
+fi
+
+fi
+
+fi
+
+elif test "$with_tls" = "gnutls"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gnutls_global_init in -lgnutls" >&5
+$as_echo_n "checking for gnutls_global_init in -lgnutls... " >&6; }
+if ${ac_cv_lib_gnutls_gnutls_global_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgnutls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gnutls_global_init ();
+int
+main ()
+{
+return gnutls_global_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gnutls_gnutls_global_init=yes
+else
+  ac_cv_lib_gnutls_gnutls_global_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gnutls_gnutls_global_init" >&5
+$as_echo "$ac_cv_lib_gnutls_gnutls_global_init" >&6; }
+if test "x$ac_cv_lib_gnutls_gnutls_global_init" = xyes; then :
+  with_tls=gnutls
+else
+  { echo "Error:" "Required gnutls support cannot be provided." >&2; exit 1; }
+fi
+
+elif test "$with_tls" = "nss"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NSS_InitContext in -lnss3" >&5
+$as_echo_n "checking for NSS_InitContext in -lnss3... " >&6; }
+if ${ac_cv_lib_nss3_NSS_InitContext+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lnss3  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char NSS_InitContext ();
+int
+main ()
+{
+return NSS_InitContext ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_nss3_NSS_InitContext=yes
+else
+  ac_cv_lib_nss3_NSS_InitContext=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_nss3_NSS_InitContext" >&5
+$as_echo "$ac_cv_lib_nss3_NSS_InitContext" >&6; }
+if test "x$ac_cv_lib_nss3_NSS_InitContext" = xyes; then :
+  with_tls=nss
+else
+  { echo "Error:" "Required NSS support cannot be provided." >&2; exit 1; }
+fi
+
+elif test "$with_tls" = "openssl"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_library_init in -lssl" >&5
+$as_echo_n "checking for SSL_library_init in -lssl... " >&6; }
+if ${ac_cv_lib_ssl_SSL_library_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SSL_library_init ();
+int
+main ()
+{
+return SSL_library_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_ssl_SSL_library_init=yes
+else
+  ac_cv_lib_ssl_SSL_library_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_SSL_library_init" >&5
+$as_echo "$ac_cv_lib_ssl_SSL_library_init" >&6; }
+if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
+  with_tls=openssl
+else
+  { echo "Error:" "Required openssl support cannot be provided." >&2; exit 1; }
+fi
+
+fi
+if test "$with_tls" != "no"; then
+  $as_echo "#define WITH_TLS 1" >>confdefs.h
+
+  if test "$with_tls" = "gnutls"; then
+    $as_echo "#define HAVE_GNUTLS 1" >>confdefs.h
+
+    gnutls_cflags=`pkg-config --cflags gnutls`
+    if test "$?" = 0; then
+      CPPFLAGS=""$gnutls_cflags" $CPPFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$gnutls_cflags"\" to \$CPPFLAGS"; fi
+    fi
+    gnutls_libs=`pkg-config --libs gnutls`
+    if test "$?" = 0; then
+      LDFLAGS=""$gnutls_libs" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$gnutls_libs"\" to \$LDFLAGS"; fi
+    fi
+    ac_fn_c_check_func "$LINENO" "gnutls_certificate_verification_status_print" "ac_cv_func_gnutls_certificate_verification_status_print"
+if test "x$ac_cv_func_gnutls_certificate_verification_status_print" = xyes; then :
+  $as_echo "#define HAVE_GNUTLS_CERTIFICATE_VERIFICATION_STATUS_PRINT 1" >>confdefs.h
+
+fi
+
+    ac_fn_c_check_func "$LINENO" "gnutls_certificate_verify_peers3" "ac_cv_func_gnutls_certificate_verify_peers3"
+if test "x$ac_cv_func_gnutls_certificate_verify_peers3" = xyes; then :
+  $as_echo "#define HAVE_GNUTLS_CERTIFICATE_VERIFY_PEERS3 1" >>confdefs.h
+
+fi
+
+  elif test "$with_tls" = "nss"; then
+    $as_echo "#define HAVE_NSS 1" >>confdefs.h
+
+    nss_cflags=`pkg-config --cflags nss`
+    if test "$?" = 0; then
+      CPPFLAGS=""$nss_cflags" $CPPFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$nss_cflags"\" to \$CPPFLAGS"; fi
+    fi
+    nss_libs=`pkg-config --libs nss`
+    if test "$?" = 0; then
+      LDFLAGS=""$nss_libs" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$nss_libs"\" to \$LDFLAGS"; fi
+    fi
+  else
+    $as_echo "#define HAVE_OPENSSL 1" >>confdefs.h
+
+    openssl_cflags=`pkg-config --cflags openssl`
+    if test "$?" = 0; then
+      CPPFLAGS=""$openssl_cflags" $CPPFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$openssl_cflags"\" to \$CPPFLAGS"; fi
+    fi
+    openssl_libs=`pkg-config --libs openssl`
+    if test "$?" = 0; then
+      LDFLAGS=""$openssl_libs" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$openssl_libs"\" to \$LDFLAGS"; fi
+    fi
+    ac_fn_c_check_func "$LINENO" "X509_check_host" "ac_cv_func_X509_check_host"
+if test "x$ac_cv_func_X509_check_host" = xyes; then :
+  $as_echo "#define HAVE_X509_CHECK_HOST 1" >>confdefs.h
+
+fi
+
+  fi
+fi
+
 if test "$cross_compiling" = yes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
@@ -21806,12 +22139,18 @@ test "$with_hesiod" = yes && echo "  Compiling in support for Hesiod POP server 
 test -n "$with_mail_locking" && echo "  Compiling in support for \"$with_mail_locking\" mail spool file locking method."
 
 echo "
-Other Features:"
+Network:"
 test "$with_ipv6_cname" = no && echo "  Inhibiting IPv6 canonicalization at startup."
 test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_dnet" = yes && echo "  Compiling in support for DNET."
+test "$with_tls" = nss && echo "  Compiling in support for TLS with NSS."
+test "$with_tls" = gnutls && echo "  Compiling in support for TLS with gnutls."
+test "$with_tls" = openssl && echo "  Compiling in support for TLS with OpenSSL."
+
+echo "
+Other Features:"
 test "$with_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
 test "$with_bignum" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
 test "$with_bignum" = "mpir" && echo "  Compiling in support for more number types using the MPIR library."

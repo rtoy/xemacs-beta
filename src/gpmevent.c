@@ -244,7 +244,8 @@ tty_get_foreign_selection (Lisp_Object UNUSED (selection_symbol),
    ** done.
    */
   output_stream = make_resizing_buffer_output_stream ();
-  terminal_stream = make_filedesc_input_stream (fd, 0, -1, LSTR_BLOCKED_OK);
+  terminal_stream = make_filedesc_input_stream (fd, 0, -1, LSTR_BLOCKED_OK,
+						NULL);
   output_string = Qnil;
 
   /* #### We should arguably use a specbind() and an unwind routine here,
