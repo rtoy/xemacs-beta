@@ -1,3 +1,11 @@
+2014-10-08  Jerry James  <james@xemacs.org>
+
+	* tls.c (init_tls): Remove blatant Fedoraism from the OpenSSL version.
+	* tls.h (tls_open):
+	(make_tls_input_stream):
+	(make_tls_output_stream):
+	(tls_get_fd): Fix build failures in the !WITH_TLS case.
+
 2014-10-07  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: Add tls.o to the link.

@@ -80,14 +80,17 @@ int tls_close (tls_state_t *);
 #else /* WITH_TLS */
 typedef int tls_state_t;
 #define TLS_SETUP_SOCK 1
-#define tls_open(x,y)							\
-  signal_error (Qtls_error, "TLS support unavailable", Qnil), NULL
+#define tls_open(x,y) ({						\
+      signal_error (Qtls_error, "TLS support unavailable", Qnil);	\
+      NULL; })
 #define tls_negotiate(x,y,z) NULL
-#define make_tls_input_stream(x)					\
-  signal_error (Qtls_error, "TLS support unavailable", Qnil), NULL
-#define make_tls_output_stream(x)					\
-  signal_error (Qtls_error, "TLS support unavailable", Qnil), NULL
-#define tls_get_fd(x, y)	-1
+#define make_tls_input_stream(x) ({					\
+      signal_error (Qtls_error, "TLS support unavailable", Qnil);	\
+      NULL; })
+#define make_tls_output_stream(x) ({					\
+      signal_error (Qtls_error, "TLS support unavailable", Qnil);	\
+      NULL; })
+#define tls_get_fd(x)		-1
 #define tls_read(w,x,y,z)	-1
 #define tls_write(w,x,y,z)	-1
 #define tls_close(x)		-1
