@@ -5332,19 +5332,34 @@ elif test "$with_bignum" = "mp"; then
 fi
 
 dnl TLS support
-if test "$with_tls" = "yes"; then
-  AC_CHECK_LIB(gnutls, gnutls_global_init, [with_tls=gnutls],
-    AC_CHECK_LIB(nss3, NSS_InitContext, [with_tls=nss],
-      AC_CHECK_LIB(ssl, SSL_library_init, [with_tls=openssl], [with_tls=no])))
-elif test "$with_tls" = "gnutls"; then
-  AC_CHECK_LIB(gnutls, gnutls_global_init, [with_tls=gnutls],
+if test "$with_tls" = "gnutls"; then
+  AC_CHECK_HEADER([gnutls/gnutls.h],
+    [AC_CHECK_LIB(gnutls, gnutls_global_init, [with_tls=gnutls],
+      [XE_DIE("Required gnutls support cannot be provided.")])],
     [XE_DIE("Required gnutls support cannot be provided.")])
 elif test "$with_tls" = "nss"; then
-  AC_CHECK_LIB(nss3, NSS_InitContext, [with_tls=nss],
+  AC_CHECK_HEADER([nss.h],
+    [AC_CHECK_LIB(nss3, NSS_InitContext, [with_tls=nss],
+      [XE_DIE("Required NSS support cannot be provided.")])],
     [XE_DIE("Required NSS support cannot be provided.")])
 elif test "$with_tls" = "openssl"; then
-  AC_CHECK_LIB(ssl, SSL_library_init, [with_tls=openssl],
+  AC_CHECK_HEADER([openssl/ssl.h],
+    [AC_CHECK_LIB(ssl, SSL_library_init, [with_tls=openssl],
+      [XE_DIE("Required openssl support cannot be provided.")])],
     [XE_DIE("Required openssl support cannot be provided.")])
+fi
+dnl Autodetection
+if test "$with_tls" = "yes"; then
+  AC_CHECK_HEADER([gnutls/gnutls.h],
+    [AC_CHECK_LIB(gnutls, gnutls_global_init, [with_tls=gnutls])])
+fi
+if test "$with_tls" = "yes"; then
+  AC_CHECK_HEADER([nss.h],
+    [AC_CHECK_LIB(nss3, NSS_InitContext, [with_tls=nss])])
+fi
+if test "$with_tls" = "yes"; then
+  AC_CHECK_HEADER([openssl/ssl.h],
+    [AC_CHECK_LIB(ssl, SSL_library_init, [with_tls=openssl], [with_tls=no])])
 fi
 if test "$with_tls" != "no"; then
   AC_DEFINE(WITH_TLS)
