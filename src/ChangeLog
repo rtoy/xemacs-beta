@@ -1,3 +1,11 @@
+2014-10-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fontcolor-xlike-inc.c (xft_find_charset_font):
+	* fontcolor-x.c (x_font_instance_truename):
+	* font-mgr.h (PRINT_XFT_PATTERN):
+	* font-mgr.c (Ffc_name_unparse):
+	Protect Ffc_name_unparse from FcNameUnparse crash on charset property.
+
 2014-10-08  Jerry James  <james@xemacs.org>
 
 	* tls.c (init_tls): Remove blatant Fedoraism from the OpenSSL version.

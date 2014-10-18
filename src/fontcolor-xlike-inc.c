@@ -505,7 +505,9 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	FcPattern *p = FcFontRenderPrepare (fcc, fontxft, fontxft);
 	Extbyte *name;
 
-	/* full name, including language coverage and repertoire */
+	/* full name, including language coverage and repertoire
+	   we delete 'charset' here because FcNameUnparse chokes on it */
+	FcPatternDel (p, FC_CHARSET);
 	name = (Extbyte *) FcNameUnparse (p);
 	eicpy_ext (eistr_fullname,
 		   (name ? name : "NOT FOUND"),
@@ -514,7 +516,6 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 
 	/* long name, omitting coverage and repertoire, plus a number
 	   of rarely useful properties */
-	FcPatternDel (p, FC_CHARSET);
 	FcPatternDel (p, FC_LANG);
 #ifdef FC_WIDTH
 	FcPatternDel (p, FC_WIDTH);

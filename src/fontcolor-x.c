@@ -755,13 +755,16 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
   if (NILP (FONT_INSTANCE_TRUENAME (f)) && FONT_INSTANCE_X_XFTFONT (f))
     {
       /* The font is already open, we just unparse. */
-      FcChar8 *res = FcNameUnparse (FONT_INSTANCE_X_XFTFONT (f)->pattern);
-      if (! FONT_INSTANCE_X_XFTFONT (f)->pattern)
+      FcPattern* pattern = FONT_INSTANCE_X_XFTFONT (f)->pattern;
+      FcChar8 *res;
+      if (!pattern)
 	{
 	  maybe_signal_error (Qgui_error,
 			      "Xft font present but lacks pattern",
 			      wrap_font_instance(f), Qfont, errb);
 	}
+      FcPatternDel (pattern, FC_CHARSET);  /* FcNameUnparse may choke */
+      res = FcNameUnparse (pattern);
       if (res)
 	{
 	  FONT_INSTANCE_TRUENAME (f) = 
