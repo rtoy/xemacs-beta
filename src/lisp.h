@@ -1363,12 +1363,12 @@ twice anywhere in the same expression; but that seems highly unlikely.  The
 alternative is to force all callers to declare a local temporary if the
 expression has side effects -- something easy to forget. */
 
-#define ALLOCA(size)					\
-  (REGEX_MALLOC_CHECK (),				\
-   __temp_alloca_size__ = (size),			\
-   __temp_alloca_size__  > MAX_ALLOCA_VS_C_ALLOCA ?	\
-   xemacs_c_alloca (__temp_alloca_size__) :		\
-   (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+#define ALLOCA(size)                                            \
+  (REGEX_MALLOC_CHECK (),                                       \
+   __temp_alloca_size__ = (size),                               \
+   __temp_alloca_size__  > MAX_ALLOCA_VS_C_ALLOCA ?             \
+   xemacs_c_alloca (__temp_alloca_size__) :                     \
+   (need_to_check_c_alloca ? xemacs_c_alloca (0) : (void) 0,    \
     alloca (__temp_alloca_size__)))
 
 /* Version of ALLOCA() that is guaranteed to work inside of function calls
@@ -1397,12 +1397,12 @@ xmalloc_and_record_unwind (Bytecount size)
 /* WARNING: If you use this, you must unbind_to() at the end of your
    function! */
 
-#define MALLOC_OR_ALLOCA(size)				\
-  (REGEX_MALLOC_CHECK (),				\
-   __temp_alloca_size__ = (size),			\
-   __temp_alloca_size__  > MAX_ALLOCA_VS_MALLOC ?	\
-   xmalloc_and_record_unwind (__temp_alloca_size__) :	\
-   (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+#define MALLOC_OR_ALLOCA(size)                                  \
+  (REGEX_MALLOC_CHECK (),                                       \
+   __temp_alloca_size__ = (size),                               \
+   __temp_alloca_size__  > MAX_ALLOCA_VS_MALLOC ?               \
+   xmalloc_and_record_unwind (__temp_alloca_size__) :           \
+   (need_to_check_c_alloca ? xemacs_c_alloca (0) : (void) 0,  \
     alloca (__temp_alloca_size__)))
 
 /* -------------- convenience functions for memory allocation ------------- */
@@ -5770,6 +5770,7 @@ extern Fixnum warn_about_possibly_incompatible_back_references;
 
 /* Defined in sequence.c */
 EXFUN (Ffill, MANY);
+EXFUN (Freplace, MANY);
 
 /* Defined in signal.c */
 void init_interrupts_late (void);

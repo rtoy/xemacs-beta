@@ -642,8 +642,8 @@ do {							\
   ASSERT_ASCTEXT_ASCII_LEN (aiaz2, strlen (aiaz2));	\
 } while (0)
 #else
-#define ASSERT_ASCTEXT_ASCII_LEN(ptr, len)
-#define ASSERT_ASCTEXT_ASCII(ptr)
+#define ASSERT_ASCTEXT_ASCII_LEN(ptr, len) DO_NOTHING
+#define ASSERT_ASCTEXT_ASCII(ptr) DO_NOTHING
 #endif
 
 /* -------------------------------------------------------------- */

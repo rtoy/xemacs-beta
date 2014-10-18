@@ -1,3 +1,9 @@
+2014-10-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* ootags.c (substitute):
+	Cast the result of strlen to int before comparing it with a signed
+	value, for the sake of compiler warnings.
+
 2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.34 "kale" is released.
