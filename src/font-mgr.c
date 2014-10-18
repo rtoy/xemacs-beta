@@ -255,12 +255,19 @@ instantiating the font again will round-trip.  See `fc-name-parse-harder'.
    We provide both. */
 DEFUN ("fc-name-unparse", Ffc_name_unparse, 1, 1, 0, /*
 Unparse an fc pattern object to a string.
+  To work around a bug in fontconfig (at least 2.11.1), the 'charset' property
+is removed before passing to FcNameUnparse.  To extract the 'charset' property,
+use `\(fc-pattern-get PATTERN "charset")'.
 */
       (pattern))
 {
   FcChar8 *name;
   Lisp_Object result;
+
   CHECK_FC_PATTERN (pattern);
+  /* #### Could use multiple values here to extract and return charset? */
+  FcPatternDel (XFC_PATTERN_PTR (pattern), FC_CHARSET);
+
   name = FcNameUnparse (XFC_PATTERN_PTR (pattern));
   result = build_fcapi_string (name);
   xfree (name);
@@ -337,6 +344,9 @@ Remove attribute PROPERTY from fc pattern object OBJECT.
 
 /* Generic interface to FcPatternGet()
  * Don't support the losing symbol-for-property interface.
+ * To support that interface properly, we should have `fc-register-property'
+ * so that only registered symbols could be used.  Then it would serve to
+ * provide the same kind of check that the C-level FC_* macros do.
  */
 DEFUN ("fc-pattern-get", Ffc_pattern_get, 2, 4, 0, /*
 From PATTERN, extract PROPERTY for the ID'th member, of type TYPE.

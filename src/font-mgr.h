@@ -144,8 +144,9 @@ DECLARE_LISP_OBJECT(fc_config, struct fc_config);
 #define PRINT_XFT_PATTERN(level,format,pattern)			\
   do {								\
     DECLARE_EISTRING (eistrpxft_name);				\
-    Extbyte *name = (Extbyte *) FcNameUnparse (pattern);	\
-								\
+    Extbyte *name;						\
+    FcPatternDel(pattern, FC_CHARSET);				\
+    name = (Extbyte *) FcNameUnparse (pattern);			\
     eicpy_ext(eistrpxft_name,					\
               name ? name : "FONT WITH NULL NAME",		\
               Qfc_font_name_encoding);				\
