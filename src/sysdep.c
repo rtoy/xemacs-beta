@@ -495,9 +495,9 @@ child_setup_tty (int out)
   /* <mdiers> What to do upon failure? Just ignoring rc is probably
      not acceptable, is it? */
   if (cfsetispeed (&s.main, B9600) == -1)
-    ;				/* ignore */
+    DO_NOTHING;				/* ignore */
   if (cfsetospeed (&s.main, B9600) == -1)
-    ;				/* ignore */
+    DO_NOTHING;				/* ignore */
 #endif /* defined (CBAUD) */
 
 #else /* not HAVE_TERMIO */

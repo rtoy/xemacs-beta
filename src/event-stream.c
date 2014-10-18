@@ -4826,9 +4826,9 @@ dribble_out_event (Lisp_Object event)
 	/* one-char key events are printed with just the key name */
 	Fprinc (keysym, Vdribble_file);
       else if (EQ (keysym, Qreturn))
-	Lstream_putc (XLSTREAM (Vdribble_file), '\n');
+	(void) Lstream_putc (XLSTREAM (Vdribble_file), '\n');
       else if (EQ (keysym, Qspace))
-	Lstream_putc (XLSTREAM (Vdribble_file), ' ');
+	(void) Lstream_putc (XLSTREAM (Vdribble_file), ' ');
       else
 	Fprinc (event, Vdribble_file);
     }

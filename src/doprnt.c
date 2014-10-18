@@ -122,7 +122,7 @@ doprnt_2 (Lisp_Object stream, const Ibyte *string, Bytecount len,
   /* Padding at beginning to right-justify ... */
   if (!minus_flag)
     while (to_add-- > 0)
-      Lstream_putc (lstr, zero_flag ? '0' : ' ');
+      (void) Lstream_putc (lstr, zero_flag ? '0' : ' ');
 
   if (0 <= maxlen && maxlen < cclen)
     len = charcount_to_bytecount (string, maxlen);
@@ -131,7 +131,7 @@ doprnt_2 (Lisp_Object stream, const Ibyte *string, Bytecount len,
   /* Padding at end to left-justify ... */
   if (minus_flag)
     while (to_add-- > 0)
-      Lstream_putc (lstr, zero_flag ? '0' : ' ');
+      (void) Lstream_putc (lstr, zero_flag ? '0' : ' ');
 }
 
 static const Ibyte *

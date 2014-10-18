@@ -66,7 +66,7 @@ send_string_to_tty_console (struct console *c, unsigned char *str, int len)
     }
 
   if (len == 1)
-    Lstream_putc (lstr, *str);
+    (void) Lstream_putc (lstr, *str);
   else if (len > 0)
     Lstream_write (lstr, str, len);
 }

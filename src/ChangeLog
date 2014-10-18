@@ -1,3 +1,22 @@
+2014-10-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Some changes to eliminate warnings with Apple clang version 1.7.
+	* cm.c (send_string_to_tty_console):
+	* doprnt.c (doprnt_2):
+	* doprnt.c (parse_off_posnum):
+	* event-stream.c (dribble_out_event):
+	Cast various calls to Lstream_putc() to void when the result isn't
+	being used, for the sake of clang.
+	* lisp.h:
+	Declare #'replace here too, it's used in event-stream.c.
+	* lisp.h (ALLOCA):
+	* lisp.h (MALLOC_OR_ALLOCA):
+	Cast a couple of zeros in the context of the ternary operator to
+	void to prevent unused value warnings with clang.
+	* sysdep.c (child_setup_tty):
+	* text.h (ASSERT_ASCTEXT_ASCII_LEN):
+	Use DO_NOTHING in these files to quieten the compiler.
+
 2014-10-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* fontcolor-xlike-inc.c (xft_find_charset_font):
