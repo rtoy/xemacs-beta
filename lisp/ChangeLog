@@ -1,3 +1,9 @@
+2014-10-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/korea-util.el (korean-key-bindings): 
+	* mule/ethio-util.el (setup-ethiopic-environment-internal):
+	Change invalid GNU-style key definitions to XEmacs format.
+
 2014-10-07  Jerry James  <james@xemacs.org>
 
 	* code-process.el (network-stream-get-response):

@@ -39,12 +39,14 @@
 ;;;###autoload
 (defun setup-ethiopic-environment-internal ()
   (let ((key-bindings '((" " . ethio-insert-space)
-			([?\S- ] . ethio-insert-ethio-space)
-			([?\C-'] . ethio-gemination)
+			([(shift space)] . ethio-insert-ethio-space)
+			([(control ?\')] . ethio-gemination)
 
 			;; these old bindings conflict
 			;; with Emacs' binding policy
 
+			;; These are GNU-style bindings that fail in XEmacs
+			;; but I didn't feel like fixing them
 			;; ([f2] . ethio-toggle-space)
 			;; ([S-f2] . ethio-replace-space) ; as requested
 			;; ([f3] . ethio-toggle-punctuation)
@@ -61,17 +63,17 @@
 			;; this is the rewritten bindings
 
 			([f3] . ethio-fidel-to-sera-buffer)
-			([S-f3] . ethio-fidel-to-sera-region)
-			([C-f3] . ethio-fidel-to-sera-mail-or-marker)
+			([(shift f3)] . ethio-fidel-to-sera-region)
+			([(control f3)] . ethio-fidel-to-sera-mail-or-marker)
 			([f4] . ethio-sera-to-fidel-buffer)
-			([S-f4] . ethio-sera-to-fidel-region)
-			([C-f4] . ethio-sera-to-fidel-mail-or-marker)
-			([S-f5] . ethio-toggle-punctuation)
-			([S-f6] . ethio-modify-vowel)
-			([S-f7] . ethio-replace-space)
-			([S-f8] . ethio-input-special-character)
-			([C-f9] . ethio-toggle-space)
-			([S-f9] . ethio-replace-space) ; as requested
+			([(shift f4)] . ethio-sera-to-fidel-region)
+			([(control f4)] . ethio-sera-to-fidel-mail-or-marker)
+			([(shift f5)] . ethio-toggle-punctuation)
+			([(shift f6)] . ethio-modify-vowel)
+			([(shift f7)] . ethio-replace-space)
+			([(shift f8)] . ethio-input-special-character)
+			([(control f9)] . ethio-toggle-space)
+			([(shift f9)] . ethio-replace-space) ; as requested
 			))
 	kb)
     (while key-bindings

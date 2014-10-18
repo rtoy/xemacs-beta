@@ -97,11 +97,11 @@
 
 ;; Information for setting and exiting Korean environment.
 (defvar korean-key-bindings
-  `((global [?\S- ] toggle-korean-input-method nil)
-    (global [C-f9] quail-hangul-switch-symbol-ksc nil)
+  `((global [(shift space)] toggle-korean-input-method nil)
+    (global [(control f9)] quail-hangul-switch-symbol-ksc nil)
     (global [f9]  quail-hangul-switch-hanja nil)
-    (,isearch-mode-map [?\S- ] isearch-toggle-korean-input-method nil)
-    (,isearch-mode-map [C-f9] isearch-hangul-switch-symbol-ksc nil)
+    (,isearch-mode-map [(shift space)] isearch-toggle-korean-input-method nil)
+    (,isearch-mode-map [(control f9)] isearch-hangul-switch-symbol-ksc nil)
     (,isearch-mode-map [f9] isearch-hangul-switch-hanja nil)))
 
 ;;;###autoload
