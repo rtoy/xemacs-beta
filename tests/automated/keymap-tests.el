@@ -31,6 +31,7 @@
                             help-next-symbol c customize-variable V
                             find-variable-at-point q
                             help-mode-quit f find-function-at-point d
+                            describe-function-at-point D
                             describe-function-at-point v
                             describe-variable-at-point i Info-elisp-ref F
                             find-function-at-point Q help-mode-bury button2
@@ -63,7 +64,7 @@
                             view-search-forward N view-buffer m
                             point-to-register h view-mode-describe \7
                             digit-argument
-                            find-function-at-point view-mode-describe)
+                            describe-function-at-point view-mode-describe)
         by #'cddr
         do (define-key parent-map (vector keys) def))
   (Assert (eq (key-binding [F]) 'find-function-at-point)
@@ -74,31 +75,31 @@
           "checking normal key parent lookup works, \\2")
   (Assert (eq (key-binding [|]) 'shell-command-on-region)
           "checking normal key parent lookup works, |")
-  (define-key map [remap find-function-at-point] #'find-file)
-  (Assert (eq (key-binding [F]) 'find-file)
-          "checking remapped key lookup works, F")
-  (Assert (eq (key-binding [f]) 'find-file)
+  (define-key map [remap describe-function-at-point] #'find-file)
+  (Assert (eq (key-binding [D]) 'find-file)
+          "checking remapped key lookup works, d")
+  (Assert (eq (key-binding [d]) 'find-file)
           "checking remapped key lookup works, f")
   (Assert (eq (key-binding [\2]) 'digit-argument)
           "checking normal key parent lookup works, \\2")
   (Assert (eq (key-binding [|]) 'shell-command-on-region)
           "checking normal key parent lookup works, |")
-  (Assert (eq (key-binding [find-function-at-point]) 'view-mode-describe)
+  (Assert (eq (key-binding [describe-function-at-point]) 'view-mode-describe)
           "checking remapped function doesn't affect key name mapping")
   (define-key parent-map [remap help-next-symbol] #'find-file)
   (Assert (eq (key-binding [tab]) 'find-file)
           "checking remapping in parent extends to child")
   (Assert (equal (commands-remapped-to 'find-file)
-		 '(help-next-symbol find-function-at-point))
+		 '(help-next-symbol describe-function-at-point))
 	  "checking #'commands-remapped-to is sane")
   (Check-Error wrong-type-argument (commands-remapped-to pi))
   (Check-Error wrong-type-argument (commands-remapped-to 'find-file pi))
   (Check-Error wrong-type-argument (commands-remapped-to 'find-file nil pi))
-  (Assert (eq (command-remapping 'find-function-at-point) 'find-file)
+  (Assert (eq (command-remapping 'describe-function-at-point) 'find-file)
 	  "checking #'command-remapping is sane")
   (Check-Error wrong-type-argument (command-remapping pi))
-  (Check-Error wrong-type-argument (command-remapping 'find-function-at-point
+  (Check-Error wrong-type-argument (command-remapping 'describe-function-at-point
 						      pi))
-  (Check-Error wrong-type-argument (command-remapping 'find-function-at-point
+  (Check-Error wrong-type-argument (command-remapping 'describe-function-at-point
 						      nil pi)))
  
