@@ -763,8 +763,12 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 			      "Xft font present but lacks pattern",
 			      wrap_font_instance(f), Qfont, errb);
 	}
-      FcPatternDel (pattern, FC_CHARSET);  /* FcNameUnparse may choke */
-      res = FcNameUnparse (pattern);
+      {
+	FcPattern* temp = FcPatternDuplicate (pattern);
+	FcPatternDel (temp, FC_CHARSET);  /* FcNameUnparse may choke */
+	res = FcNameUnparse (temp);
+	FcPatternDestroy (temp);
+      }
       if (res)
 	{
 	  FONT_INSTANCE_TRUENAME (f) = 
