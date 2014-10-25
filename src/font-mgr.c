@@ -266,9 +266,12 @@ use `\(fc-pattern-get PATTERN "charset")'.
 
   CHECK_FC_PATTERN (pattern);
   /* #### Could use multiple values here to extract and return charset? */
-  FcPatternDel (XFC_PATTERN_PTR (pattern), FC_CHARSET);
-
-  name = FcNameUnparse (XFC_PATTERN_PTR (pattern));
+  {
+    FcPattern* temp = FcPatternDuplicate (XFC_PATTERN_PTR (pattern));
+    FcPatternDel (temp, FC_CHARSET);
+    name = FcNameUnparse (XFC_PATTERN_PTR (pattern));
+    FcPatternDestroy (temp);
+  }
   result = build_fcapi_string (name);
   xfree (name);
   return result;

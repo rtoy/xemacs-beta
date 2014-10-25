@@ -145,8 +145,10 @@ DECLARE_LISP_OBJECT(fc_config, struct fc_config);
   do {								\
     DECLARE_EISTRING (eistrpxft_name);				\
     Extbyte *name;						\
-    FcPatternDel(pattern, FC_CHARSET);				\
-    name = (Extbyte *) FcNameUnparse (pattern);			\
+    FcPattern* temp = FcPatternDuplicate (pattern);		\
+    FcPatternDel (temp, FC_CHARSET);				\
+    name = (Extbyte *) FcNameUnparse (temp);			\
+    FcPatternDestroy (temp);					\
     eicpy_ext(eistrpxft_name,					\
               name ? name : "FONT WITH NULL NAME",		\
               Qfc_font_name_encoding);				\

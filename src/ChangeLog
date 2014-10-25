@@ -1,3 +1,10 @@
+2014-10-25  Michael Sperber  <mike@xemacs.org>
+
+	* fontcolor-x.c (x_font_instance_truename): 
+	* font-mgr.c (Ffc_name_unparse): 
+	* font-mgr.h (PRINT_XFT_PATTERN): Don't modify
+	fontconfig pattern passed in in place.
+
 2014-10-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Some changes to eliminate warnings with Apple clang version 1.7.
