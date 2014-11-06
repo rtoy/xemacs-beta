@@ -83,6 +83,7 @@ Lisp_Object Qqueue;
 #endif /* HAVE_BERKELEY_DB */
 
 #ifdef HAVE_DBM
+BEGIN_C_DECLS
 # ifdef TRUST_NDBM_H_PROTOTYPES
 #  include NDBM_H_FILE
 # else /* not TRUST_NDBM_H_PROTOTYPES */
@@ -90,10 +91,6 @@ Lisp_Object Qqueue;
 /* The prototypes in gdbm/ndbm.h currently are broken when compiling
 using C++, since they are of the form `datum dbm_firstkey()', without any
 args given. */
-
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
 
 /* Parameters to dbm_store for simple insertion or replacement. */
 #define  DBM_INSERT  0
@@ -119,11 +116,9 @@ datum   dbm_nextkey(DBM *);
 DBM    *dbm_open(const char *, int, mode_t);
 int     dbm_store(DBM *, datum, datum, int);
 
-#if defined(__cplusplus) || defined(c_plusplus)
-}
-#endif
-
 # endif /* (not) TRUST_NDBM_H_PROTOTYPES */
+END_C_DECLS
+
 Lisp_Object Qdbm;
 #endif /* HAVE_DBM */
 

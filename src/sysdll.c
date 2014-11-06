@@ -454,7 +454,7 @@ dll_error (void)
   NSLinkEditError (&c, &errorNumber, &fileNameWithError, &errorString);
   return build_extstring (errorString, Qerror_message_encoding);
 }
-#elif HAVE_LTDL
+#elif defined(HAVE_LTDL)
 /* Libtool's libltdl */
 #include <ltdl.h>
 

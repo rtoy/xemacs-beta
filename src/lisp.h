@@ -1368,7 +1368,7 @@ expression has side effects -- something easy to forget. */
    __temp_alloca_size__ = (size),                               \
    __temp_alloca_size__  > MAX_ALLOCA_VS_C_ALLOCA ?             \
    xemacs_c_alloca (__temp_alloca_size__) :                     \
-   (need_to_check_c_alloca ? xemacs_c_alloca (0) : (void) 0,    \
+   (need_to_check_c_alloca ? xemacs_c_alloca (0) : NULL,        \
     alloca (__temp_alloca_size__)))
 
 /* Version of ALLOCA() that is guaranteed to work inside of function calls
@@ -1402,7 +1402,7 @@ xmalloc_and_record_unwind (Bytecount size)
    __temp_alloca_size__ = (size),                               \
    __temp_alloca_size__  > MAX_ALLOCA_VS_MALLOC ?               \
    xmalloc_and_record_unwind (__temp_alloca_size__) :           \
-   (need_to_check_c_alloca ? xemacs_c_alloca (0) : (void) 0,  \
+   (need_to_check_c_alloca ? xemacs_c_alloca (0) : NULL,        \
     alloca (__temp_alloca_size__)))
 
 /* -------------- convenience functions for memory allocation ------------- */
@@ -2643,13 +2643,27 @@ DECLARE_MODULE_API_LISP_OBJECT (string, Lisp_String);
 #ifdef NEW_GC
 #define STRING_DATA_OBJECT(s) ((s)->data_object)
 #define XSTRING_DATA_OBJECT(s) (STRING_DATA_OBJECT (XSTRING (s)))
-#define XSTRING_LENGTH(s) (XSTRING_DATA_SIZE (XSTRING (s)))
+DECLARE_INLINE_HEADER (
+Bytecount
+XSTRING_LENGTH (Lisp_Object s)
+)
+{
+  Lisp_String *str = XSTRING (s);
+  return XSTRING_DATA_SIZE (str);
+}
 #else /* not NEW_GC */
 #define XSTRING_LENGTH(s) (XSTRING (s)->size_)
 #endif /* not NEW_GC */
 #define XSTRING_PLIST(s) (XSTRING (s)->plist)
 #ifdef NEW_GC
-#define XSTRING_DATA(s) (XSTRING_DATA_DATA (XSTRING (s)))
+DECLARE_INLINE_HEADER (
+Ibyte *
+XSTRING_DATA (Lisp_Object s)
+)
+{
+  Lisp_String *str = XSTRING (s);
+  return XSTRING_DATA_DATA (str);
+}
 #else /* not NEW_GC */
 #define XSTRING_DATA(s) (XSTRING (s)->data_ + 0)
 #endif /* not NEW_GC */

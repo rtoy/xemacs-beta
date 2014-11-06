@@ -122,7 +122,7 @@ tls_open (int s, const Extbyte *hostname)
     }
 
   /* Create the socket */
-  nspr = xmalloc (sizeof (*nspr));
+  nspr = (tls_state_t *) xmalloc (sizeof (*nspr));
   nspr->tls_refcount = 2;
   nspr->tls_file_desc =
     SSL_ImportFD (nss_model, PR_OpenTCPSocket (addr->sa_family));
@@ -507,7 +507,7 @@ tls_open (int s, const Extbyte *hostname)
   setsockopt (s, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
 
   /* Create the state object */
-  gnutls = xmalloc (sizeof (*gnutls));
+  gnutls = (tls_state_t *) xmalloc (sizeof (*gnutls));
   gnutls->tls_refcount = 2;
 
   /* Initialize the session object */
@@ -615,7 +615,9 @@ tls_open (int s, const Extbyte *hostname)
       gnutls_datum_t msg;
 
 #ifdef HAVE_GNUTLS_CERTIFICATE_VERIFICATION_STATUS_PRINT
-      int type = gnutls_certificate_type_get (gnutls->tls_session);
+      gnutls_certificate_type_t type;
+
+      type = gnutls_certificate_type_get (gnutls->tls_session);
       err =
 	gnutls_certificate_verification_status_print (status, type, &msg, 0);
 #else
@@ -966,7 +968,7 @@ tls_open (int s, const Extbyte *hostname)
   setsockopt (s, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
 
   /* Create the state object */
-  openssl = xmalloc (sizeof (*openssl));
+  openssl = (tls_state_t *) xmalloc (sizeof (*openssl));
   openssl->tls_refcount = 2;
 
   /* Create the connection object */
