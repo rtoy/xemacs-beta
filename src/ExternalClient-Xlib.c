@@ -134,9 +134,10 @@ ExternalClientEventHandler (Display *display, Window win, XEvent *event)
       else
 	return;
       XFindContext(display, win, focus_context, &current_focus);
-      if (focus_status != (int) current_focus)
+      if ((XPointer) (long) focus_status != current_focus)
 	{
-	  XSaveContext(display, win, focus_context, (XPointer) focus_status);
+	  XSaveContext(display, win, focus_context,
+		       (XPointer) (long) focus_status);
 	  extw_send_notify_3(display, win, focus_status ?
 			     extw_notify_focus_in : extw_notify_focus_out,
 			     0, 0, 0);

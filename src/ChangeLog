@@ -1,3 +1,18 @@
+2014-11-05  Jerry James  <james@xemacs.org>
+
+	* ExternalClient-Xlib.c (ExternalClientEventHandler): Cast integer
+	to long before casting to XPointer, which may be larger than int.
+	* database.c: Use BEGIN_C_DECLS/END_C_DECLS around dbm definitions.
+	* lisp.h (ALLOCA): Use NULL instead of (void) 0 to placate g++.
+	(MALLOC_OR_ALLOCA): Ditto.
+	(XSTRING_LENGTH): Use an explicit temporary with NEW_GC so g++ 4.8
+	won't create an uninitialized anonymous temporary.
+	(XSTRING_DATA): Ditto.
+	* sysdll.c: Check whether HAVE_LTDL is defined, not its value.
+	* tls.c (tls_open): Add typecast to xmalloc call in the nss,
+	gnutls, and openssl versions to satisfy g++.  In the gnutls version,
+	use gnutls_certificate_type_t appropriately.
+
 2014-10-25  Michael Sperber  <mike@xemacs.org>
 
 	* fontcolor-x.c (x_font_instance_truename): 
