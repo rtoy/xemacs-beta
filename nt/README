@@ -359,10 +359,10 @@ Please look at the PROBLEMS file for known problems. Any other problems you
 need clarified, please email us and we will endeavour to provide any
 assistance we can:
 
-The XEmacs NT Mailing List: xemacs-nt@xemacs.org
-Subscribe address:          xemacs-nt-request@xemacs.org
+The XEmacs developers' list: xemacs-beta@xemacs.org
 
-Ben Wing (current primary MS Windows maintainer; author of the MS Windows
+Vin Shelton (creator of the InnoSetup Windows native setup kits)
+Ben Wing (former primary MS Windows maintainer; author of the MS Windows
           Mule code and some of the dialog box code)
 Andy Piper (MS Windows contributor; author of the Cygwin support and the
             MS Windows glyph and widget code)
