@@ -376,8 +376,20 @@ EXFUN (Fcanonicalize_number, 1);
 #define NUMBER_TYPES(prefix) prefix##FIXNUM_T, prefix##BIGNUM_T, \
     prefix##RATIO_T, prefix##FLOAT_T, prefix##BIGFLOAT_T
 
+#ifdef _MSC_VER
+/* Disable warning 4003:
+ * warning C4003: not enough actual parameters for macro 'NUMBER_TYPES'
+ */
+#pragma warning( push )
+#pragma warning( disable : 4003)
+#endif
+
 enum number_type { NUMBER_TYPES() };
 enum lazy_number_type { NUMBER_TYPES(LAZY_), LAZY_MARKER_T };
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 #undef NUMBER_TYPES
 

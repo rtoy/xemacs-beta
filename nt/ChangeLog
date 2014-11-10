@@ -1,5 +1,10 @@
 2014-11-10  Vin Shelton  <acs@xemacs.org>
 
+	* xemacs.mak (TEXINFO_SRCS): XEmacs sources no longer include
+	texinfo.texi.
+
+2014-11-10  Vin Shelton  <acs@xemacs.org>
+
 	* README: Updated contributor information.
 
 2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
