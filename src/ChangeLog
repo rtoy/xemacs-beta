@@ -1,3 +1,10 @@
+2014-11-06  Vin Shelton  <acs@xemacs.org>
+
+	* sysdep.c (set_descriptor_non_blocking): Don't call ioctl() on
+	Windows native builds.
+	* emacs.c (main_1): Conditionalize tls variables and initialization.
+	* number.h: Elide Visual Studio warnings on NUMBER_TYPES expansion.
+
 2014-11-05  Jerry James  <james@xemacs.org>
 
 	* ExternalClient-Xlib.c (ExternalClientEventHandler): Cast integer
