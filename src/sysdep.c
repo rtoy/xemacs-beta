@@ -188,10 +188,12 @@ set_descriptor_non_blocking (
      lowry@watson.ibm.com (Andy Lowry). */
   /* #### Should this be conditionalized on FIONBIO? */
 #if defined (STRIDE) || (defined (pfa) && defined (HAVE_PTYS)) || defined (AIX)
+#if !defined(WIN32_NATIVE)
   {
     int one = 1;
     ioctl (fd, FIONBIO, &one);
   }
+#endif
 #endif
 
 #ifdef F_SETFL
