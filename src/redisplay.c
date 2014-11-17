@@ -637,11 +637,16 @@ static int
 redisplay_window_text_width_ichar_string (struct window *w, int findex,
 					  Ichar *str, Charcount len)
 {
+  Lisp_Object window = wrap_window (w);
   unsigned char charsets[NUM_LEADING_BYTES];
-  Lisp_Object window;
 
+#ifdef HAVE_GTK
+  memset (charsets, 0, NUM_LEADING_BYTES);
+  charsets[0] = 1;
+#else
   find_charsets_in_ichar_string (charsets, str, len);
-  window = wrap_window (w);
+#endif
+
   ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), window,
 			       charsets);
   return DEVMETH (WINDOW_XDEVICE (w),
@@ -688,7 +693,12 @@ redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
   convert_ibyte_string_into_ichar_dynarr (nonreloc, len, rtw_ichar_dynarr);
+#ifdef HAVE_GTK
+  memset (charsets, 0, NUM_LEADING_BYTES);
+  charsets[0] = 1;
+#else
   find_charsets_in_ibyte_string (charsets, nonreloc, len);
+#endif
   reset_face_cachel (&cachel);
   cachel.face = face;
   ensure_face_cachel_complete (&cachel,
@@ -1110,7 +1120,7 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
     }
   else
     {
-      Lisp_Object charset = ichar_charset (data->ch);
+      Lisp_Object charset = Vcharset_ascii;
       if (!EQ (charset, data->last_charset) ||
 	  data->findex != data->last_findex)
 	{
@@ -10053,7 +10063,7 @@ special effects are available using the following values:
 `top-bottom'    Flash only the top and bottom lines of the selected frame.
 
 When effects are unavailable on a platform, the visual bell is the
-default, whole screen.  (Currently only X supports any special effects.)
+default, whole screen.  (Currently only X and Gtk support any special effects.)
 */ );
   Vvisible_bell = Qnil;
 

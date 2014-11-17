@@ -24,7 +24,7 @@
 
 (globally-declare-fboundp
  '(gtk-dialog-new
-   gtk-dialog-vbox gtk-dialog-action-area
+   gtk-dialog-get-content-area gtk-dialog-get-action-area
    gtk-window-set-title gtk-button-new-with-label
    gtk-container-add gtk-signal-connect gtk-entry-get-text
    gtk-widget-destroy gtk-container-set-border-width gtk-label-new
@@ -56,8 +56,8 @@
   ;;  :verify-prompt string
   (let* ((callback (plist-get keywords :callback 'ignore))
 	 (dialog (gtk-dialog-new))
-	 (vbox (gtk-dialog-vbox dialog))
-	 (button-area (gtk-dialog-action-area dialog))
+	 (vbox (gtk-dialog-get-content-area dialog))
+	 (button-area (gtk-dialog-get-action-area dialog))
 	 (default (plist-get keywords :default))
 	 (widget nil))
     (gtk-window-set-title dialog (plist-get keywords :title "Enter password..."))

@@ -48,7 +48,8 @@ static Lisp_Object Vpopup_callbacks;
 void
 gcpro_popup_callbacks (GUI_ID id, Lisp_Object data)
 {
-  Vpopup_callbacks = Fcons (Fcons (make_fixnum (id), data), Vpopup_callbacks);
+  Vpopup_callbacks = Fcons (Fcons (make_fixnum (GPOINTER_TO_UINT (id)), data),
+                            Vpopup_callbacks);
 }
 
 void
@@ -62,7 +63,7 @@ ungcpro_popup_callbacks (GUI_ID id)
 Lisp_Object
 get_gcpro_popup_callbacks (GUI_ID id)
 {
-  Lisp_Object lid = make_fixnum (id);
+  Lisp_Object lid = make_fixnum (GPOINTER_TO_UINT (id));
   Lisp_Object this_callback = assq_no_quit (lid, Vpopup_callbacks);
 
   if (!NILP (this_callback))
@@ -85,6 +86,13 @@ vars_of_gui_gtk (void)
 {
   staticpro (&Vpopup_callbacks);
   Vpopup_callbacks = Qnil;
+
+  DEFVAR_LISP ("g-object-registry", &Vpopup_callbacks /*
+An alist of GObjects for garbage collection purposes.
+Each GObject has a unique id, and the wrapper will be nulled after the
+GObject is destroyed.
+Do not alter.
+*/ );
 #ifdef HAVE_POPUPS
   popup_up_p = 0;
 

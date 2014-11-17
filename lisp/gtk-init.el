@@ -1,4 +1,4 @@
-;;; gtk-init.el --- initialization code for mswindows
+;;; gtk-init.el --- initialization code for Gtk
 ;; Copyright (C) 1990, 1993, 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois.
 ;; Copyright (C) 1995, 1996 Ben Wing.
@@ -20,6 +20,9 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
+(defvaralias 'gtk-version-string 'gtk-version
+  "For FSF compatibility")
 
 (globally-declare-boundp
  '(gtk-initial-argv-list gtk-initial-geometry))

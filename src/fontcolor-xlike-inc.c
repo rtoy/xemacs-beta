@@ -222,6 +222,8 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
   return 0;
 }
 
+#ifndef HAVE_GTK
+
 static Lisp_Object
 xlistfonts_checking_charset (Lisp_Object device, const Ibyte *xlfd,
 			     Lisp_Object charset, 
@@ -237,7 +239,7 @@ xlistfonts_checking_charset (Lisp_Object device, const Ibyte *xlfd,
 		xlfd, stage == STAGE_INITIAL ? "initial" : "final");
   DEBUG_FONTS_LISP1 (" charset %s\n", charset);
   fontext = ITEXT_TO_EXTERNAL (xlfd, Qx_font_name_encoding); 
-  names = XListFonts (GET_XLIKE_DISPLAY (XDEVICE (device)),
+  names = XListFonts (GET_XLIKE_X_DISPLAY (XDEVICE (device)),
 		      fontext, MAX_FONT_COUNT, &count);
 
   for (i = 0; i < count; ++i)
@@ -263,6 +265,7 @@ xlistfonts_checking_charset (Lisp_Object device, const Ibyte *xlfd,
   DEBUG_FONTS_LISP1 ("xlistfonts_checking_charset returns %s\n", result);
   return result;
 }
+#endif
 
 #ifdef USE_XFT
 /* #### debug functions: find a better place for us */
@@ -697,6 +700,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 
 #endif /* USE_XFT */
 
+#if !defined (HAVE_GTK)
 /* find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
 static Lisp_Object
@@ -906,5 +910,6 @@ XFUN (find_charset_font) (Lisp_Object device, Lisp_Object font,
 
   return result;
 }
+#endif /* HAVE_GTK */
 
 #endif /* MULE */
