@@ -90,7 +90,7 @@ tty_make_frame_visible (struct frame *f)
 {
   if (!FRAME_VISIBLE_P (f))
     {
-      f->visible = -1;
+      FRAME_VISIBLE_P (f) = -1;
     }
 }
 
@@ -98,13 +98,13 @@ tty_make_frame_visible (struct frame *f)
 static void
 tty_make_frame_invisible (struct frame *f)
 {
-  f->visible = 0;
+  FRAME_VISIBLE_P (f) = 0;
 }
 
 static void
 tty_make_frame_hidden (struct frame *f)
 {
-  f->visible = -1;
+  FRAME_VISIBLE_P (f) = -1;
 }
 
 static void
@@ -113,7 +113,7 @@ tty_make_frame_unhidden (struct frame *f)
   if (!FRAME_REPAINT_P (f))
     {
       SET_FRAME_CLEAR (f);
-      f->visible = 1;
+      FRAME_VISIBLE_P (f) = 1;
     }
 }
 

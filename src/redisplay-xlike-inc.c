@@ -44,6 +44,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
+#include "text.h"
 
 #ifdef MULE
 #include "mule-ccl.h"
@@ -53,6 +54,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define NEED_GCCACHE_H
 #define NEED_GLYPHS_H
 #define NEED_OBJECTS_IMPL_H
+
+#if defined (HAVE_GTK) && !defined (THIS_IS_GTK)
+#define THIS_IS_GTK
+#endif
 #include "console-xlike-inc.h"
 
 #include "sysproc.h" /* for select() */
@@ -63,6 +68,14 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <X11/bitmaps/gray>
 #endif /* THIS_IS_X */
+
+#ifdef THIS_IS_GTK
+static void cr_set_foreground (cairo_t *cr, Lisp_Object color);
+static void gtk_draw_rectangle (cairo_t *cr, gint x, gint y,
+                                gint width, gint height);
+static void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
+                                gint width, gint height);
+#endif
 
 #define EOL_CURSOR_WIDTH	5
 
@@ -90,7 +103,15 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define XLIKE_get_gc XFUN (get_gc)
 #define XLIKE_output_blank XFUN (output_blank)
 #define XLIKE_text_width_single_run XFUN (text_width_single_run)
+#define XLIKE_output_horizontal_line XFUN (output_horizontal_line)
+#define XLIKE_output_eol_cursor XFUN (output_eol_cursor)
+#define XLIKE_clear_frame_window XFUN (clear_frame_window)
+#define XLIKE_clear_frame_windows XFUN (clear_frame_windows)
+#define XLIKE_text_width XFUN (text_width)
 
+static int XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
+                             const Ichar *str, Charcount len);
+static void XLIKE_output_vertical_divider (struct window *w, int clear);
 static void XLIKE_output_blank (struct window *w, struct display_line *dl,
 				struct rune *rb, int start_pixpos,
 				int cursor_start, int cursor_width);
@@ -100,13 +121,28 @@ static void XLIKE_output_horizontal_line (struct window *w,
 static void XLIKE_output_eol_cursor (struct window *w,
 				     struct display_line *dl,
 				     int xpos, face_index findex);
+static void XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
+				       int y, int xoffset, int yoffset,
+				       int width, int height,
+				       XLIKE_COLOR fg, XLIKE_COLOR bg);
+static void XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
+				struct display_box *db, struct display_glyph_area *dga,
+				face_index findex, int cursor_start, int cursor_width,
+				int cursor_height, int bg_pixmap);
 static void XLIKE_clear_frame_windows (Lisp_Object window);
+static void XLIKE_clear_frame (struct frame *f);
 static void XLIKE_bevel_area (struct window *w, face_index findex,
 			      int x, int y, int width, int height,
 			      int shadow_thickness, int edges,
 			      enum edge_style style);
 static void XLIKE_ring_bell (struct device *d, int volume, int pitch,
-			     int duration);
+			       int duration);
+static void XLIKE_clear_region (Lisp_Object local, struct frame *f,
+				face_index findex, int x, int y,
+				int width, int height, Lisp_Object fg,
+				Lisp_Object bg, Lisp_Object bg_pixmap,
+				Lisp_Object bg_placement);
+static int XLIKE_flash (struct device *d);
 
 #ifdef THIS_IS_X
 static void XLIKE_window_output_begin (struct window *UNUSED (w));
@@ -175,6 +211,7 @@ struct textual_run
    the 8-bit versions in computing runs and runes, it would seem.
 */
 
+#if !defined(THIS_IS_GTK)
 #if !defined(USE_XFT) && !defined(MULE)
 static int
 separate_textual_runs_nomule (unsigned char *text_storage,
@@ -452,14 +489,17 @@ separate_textual_runs (unsigned char *text_storage,
 #endif
 }
 
+/* !THIS_IS_GTK */
+#endif
+
 /****************************************************************************/
 /*                                                                          */
 /*                           Xlike output routines                          */
 /*                                                                          */
 /****************************************************************************/
-
+#ifndef THIS_IS_GTK
 static int
-XLIKE_text_width_single_run (XLIKE_DISPLAY USED_IF_XFT (dpy),
+XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
 			     struct face_cachel *cachel,
 			     struct textual_run *run)
 {
@@ -472,6 +512,9 @@ XLIKE_text_width_single_run (XLIKE_DISPLAY USED_IF_XFT (dpy),
   else if (FONT_INSTANCE_X_XFTFONT (fi))
     {
       static XGlyphInfo glyphinfo;
+
+      struct device *d = XDEVICE (f->device);
+      Display *dpy = DEVICE_X_DISPLAY (d);
 
       if (run->dimension == 2)
 	{
@@ -507,35 +550,7 @@ XLIKE_text_width_single_run (XLIKE_DISPLAY USED_IF_XFT (dpy),
     abort();
   return 0;			/* shut up GCC */
 }
-
-
-/*
-   XLIKE_text_width
-
-   Given a string and a merged face, return the string's length in pixels
-   when displayed in the fonts associated with the face.
-   */
-
-static int
-XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
-		  const Ichar *str, Charcount len)
-{
-  /* !!#### Needs review */
-  int width_so_far = 0;
-  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
-  struct textual_run *runs = alloca_array (struct textual_run, len);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (XDEVICE (f->device));
-  int nruns;
-  int i;
-
-  nruns = separate_textual_runs (text_storage, runs, str, len, 
-				 cachel);
-
-  for (i = 0; i < nruns; i++)
-    width_so_far += XLIKE_text_width_single_run (dpy, cachel, runs + i);
-
-  return width_so_far;
-}
+#endif
 
 /*****************************************************************************
  XLIKE_divider_height
@@ -606,7 +621,9 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
   findex = rb->findex;
   xpos = rb->xpos;
   if (rb->type == RUNE_CHAR)
-    charset = ichar_charset (rb->object.chr.ch);
+    {
+      charset = XLIKE_ICHAR_CHARSET (rb->object.chr.ch);
+    }
 
   if (end < 0)
     end = Dynarr_length (rba);
@@ -618,7 +635,7 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
+	  && EQ (charset, XLIKE_ICHAR_CHARSET (rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -641,7 +658,7 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = ichar_charset (rb->object.chr.ch);
+	      charset = XLIKE_ICHAR_CHARSET (rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{
@@ -807,7 +824,7 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
   Dynarr_free (buf);
 }
 
-/* Called as gtk_get_gc from gtk-glue.c */
+#ifdef THIS_IS_X
 
 XLIKE_GC XLIKE_get_gc (struct frame *f, Lisp_Object font,
 		       Lisp_Object fg, Lisp_Object bg,
@@ -849,9 +866,11 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #endif
       )
     {
+#ifndef HAVE_GTK
       gcv.font =
 	XLIKE_FONT_NUM (FONT_INSTANCE_XLIKE_FONT (XFONT_INSTANCE (font)));
       mask |= XLIKE_GC_FONT;
+#endif
     }
 
   /* evil kludge! */
@@ -892,6 +911,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
       gcv.stipple = DEVICE_XLIKE_GRAY_PIXMAP (d);
       mask |= (XLIKE_GC_FILL | XLIKE_GC_STIPPLE);
     }
+#ifdef THIS_IS_X
   else if (IMAGE_INSTANCEP (bg_pixmap)
 	   && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pixmap)))
     {
@@ -922,7 +942,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #endif
 	}
     }
-
+#endif
   if (!NILP (lwidth))
     {
       gcv.line_width = XFIXNUM (lwidth);
@@ -934,6 +954,8 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #endif
   return gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, mask);
 }
+
+#endif
 
 /*****************************************************************************
  XLIKE_output_string
@@ -968,17 +990,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
  Starting Y position of cursor is the top of the text line.
  The cursor is drawn sometimes whether or not CURSOR is set. ???
  ****************************************************************************/
-#ifdef THIS_IS_GTK
-static
-void gdk_draw_text_image (GdkDrawable *drawable,
-			  GdkFont     *font,
-			  GdkGC       *gc,
-			  gint         x,
-			  gint         y,
-			  const gchar *text,
-			  gint         text_length);
-
-#endif /* THIS_IS_GTK */
+#ifndef THIS_IS_GTK
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,
 		     Ichar_dynarr *buf, int xpos, int xoffset, int clip_start,
@@ -988,7 +1000,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   /* General variables */
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
   Lisp_Object window = wrap_window (w);
 
@@ -1003,12 +1015,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
   /* Text-related variables */
   Lisp_Object bg_pmap;
-  XLIKE_GC bgc, gc;
+  XLIKE_GC gc, bgc;
   int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
   int ypos = XLIKE_DISPLAY_LINE_YPOS (dl);
   int len = Dynarr_length (buf);
-  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
-  struct textual_run *runs = alloca_array (struct textual_run, len);
+  unsigned char *text_storage;
+  struct textual_run *runs;
   int nruns;
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
@@ -1042,9 +1054,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 			      Dynarr_length (buf));
 
   /* Regularize the variables passed in. */
-
-  if (clip_start < xpos)
-    clip_start = xpos;
+  clip_start = min (clip_start, xpos);
   clip_end = xpos + width;
   if (clip_start >= clip_end)
     /* It's all clipped out. */
@@ -1092,17 +1102,17 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
        && !NILP (w->text_cursor_visible_p)) || NILP (bg_pmap))
     bgc = 0;
   else
-    bgc = XLIKE_get_gc
-      (f, Qnil, NILP (bg_pmap) ? cachel->foreground : cachel->foreback,
-       cachel->background, bg_pmap, cachel->background_placement, Qnil);
-
-  if (bgc)
     {
+      /* Clear the cursor location? */
+      bgc = XLIKE_get_gc (f, Qnil, cachel->background, cachel->background,
+                          bg_pmap, cachel->background_placement, Qnil);
       XLIKE_FILL_RECTANGLE (dpy, x_win, bgc, clip_start,
-			    ypos, clip_end - clip_start,
-			    height);
+                           ypos, clip_end - clip_start,
+                           height);
     }
 
+  runs = alloca_array (struct textual_run, len);
+  text_storage = (unsigned char *) ALLOCA (2 * len);
   nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
 				 Dynarr_length (buf), cachel);
 
@@ -1116,7 +1126,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
-      this_width = XLIKE_text_width_single_run (dpy, cachel, runs + i);
+      this_width = XLIKE_text_width_single_run (f, cachel, runs + i);
       need_clipping = (dl->clip || clip_start > xpos ||
 		       clip_end < xpos + this_width);
 
@@ -1141,10 +1151,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
 	      /* Make sure we don't clear below the real bottom of the
 		 line. */
-	      if (ypos1_string > ypos2_line)
-		ypos1_string = ypos2_line;
-	      if (ypos2_string > ypos2_line)
-		ypos2_string = ypos2_line;
+              ypos1_string = min (ypos1_string, ypos2_line);
+              ypos2_string = min (ypos2_string, ypos2_line);
 
 	      if (ypos1_line < ypos1_string)
 		{
@@ -1182,14 +1190,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  /* Ensure the gray bitmap exists */
 	  if (DEVICE_XLIKE_GRAY_PIXMAP (d) == XLIKE_NONE)
 	    DEVICE_XLIKE_GRAY_PIXMAP (d) =
-#ifdef THIS_IS_X
 	      XCreateBitmapFromData (dpy, x_win, (char *)gray_bits,
-				     gray_width, gray_height)
-#else
-	      /* #### FIXME! Implement me! */
-	      XLIKE_NONE
-#endif
-	      ;
+				     gray_width, gray_height);
 
 	  /* Request a GC with the gray stipple pixmap to draw dimmed text */
 #ifdef USE_XFT
@@ -1197,7 +1199,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  bg = XFT_FROB_LISP_COLOR (cachel->background, 0);
 #endif
 	  gc = XLIKE_get_gc (f, font, cachel->foreground, cachel->background,
-			     Qdim, Qnil, Qnil);
+			     bg_pmap, cachel->background_placement, Qnil);
 	}
       else
 	{
@@ -1244,7 +1246,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		   rect_height by 1.  See x_output_display_block. -- sjt */
 		struct textual_run *run = &runs[i];
 		int rect_width
-		  = XLIKE_text_width_single_run (dpy, cachel, run);
+		  = XLIKE_text_width_single_run (f, cachel, run);
 #ifndef USE_XFTTEXTENTS_TO_AVOID_FONT_DROPPINGS
 		int rect_height = FONT_INSTANCE_ASCENT (fi)
 				  + FONT_INSTANCE_DESCENT (fi) + 1;
@@ -1279,9 +1281,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       }
 #endif /* USE_XFT */
 
-#ifdef THIS_IS_X
       if (use_x_font)
-#endif
 	{
 	  if (need_clipping)
 	    {
@@ -1295,7 +1295,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      XLIKE_SET_CLIP_RECTANGLE (dpy, gc, clip_start, ypos, &clip_box);
 	    }
 
-#ifdef THIS_IS_X
 	  if (runs[i].dimension == 1)
 	    (bgc ? XDrawString : XDrawImageString)
 	      (dpy, x_win, gc, xpos, dl->ypos,
@@ -1304,28 +1303,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	    (bgc ? XDrawString16 : XDrawImageString16)
 	      (dpy, x_win, gc, xpos, dl->ypos,
 	       (XChar2b *) runs[i].ptr, runs[i].len);
-#else /* THIS_IS_GTK */
-
-      /* The X specific called different functions (XDraw*String
-         vs. XDraw*String16), but apparently gdk_draw_text takes care
-         of that for us.
-
-	 BUT, gdk_draw_text also does too much, by dividing the length
-	 by 2.  So we fake them out my multiplying the length by the
-	 dimension of the text.  This will do the right thing for
-	 single-dimension runs as well of course.
-      */
-      (bgc ? gdk_draw_text : gdk_draw_text_image)
-	(GDK_DRAWABLE (x_win), FONT_INSTANCE_GTK_FONT (fi), gc, xpos,
-	 dl->ypos, (char *) runs[i].ptr, runs[i].len * runs[i].dimension);
-#endif /* (not) THIS_IS_X */
 	}
 
       /* We draw underlines in the same color as the text. */
       if (cachel->underline)
 	{
 	  int upos, uthick;
-#ifdef THIS_IS_X
 	  unsigned long upos_ext, uthick_ext;
 	  XFontStruct *fs =
 	    use_x_font ? FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)) : 0;
@@ -1334,17 +1317,12 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  if (fs && XGetFontProperty (fs, XA_UNDERLINE_POSITION, &upos_ext))
 	    upos = (int) upos_ext;
 	  else
-#else /* THIS_IS_GTK */
-	  /* Cannot get at font properties in Gtk, so we resort to
-             guessing */
-#endif /* THIS_IS_GTK */
 	    upos = dl->descent / 2;
-#ifdef THIS_IS_X
 	  if (fs && XGetFontProperty (fs, XA_UNDERLINE_THICKNESS, &uthick_ext))
 	    uthick = (int) uthick_ext;
 	  else
-#endif /* THIS_IS_X */
 	    uthick = 1;
+
 	  if (dl->ypos + upos < dl->ypos + dl->descent - dl->clip)
 	    {
 	      if (dl->ypos + upos + uthick > dl->ypos + dl->descent - dl->clip)
@@ -1365,16 +1343,10 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (cachel->strikethru)
 	{
-#ifdef THIS_IS_X
 	  int ascent, descent, upos, uthick;
 	  unsigned long ascent_ext, descent_ext, uthick_ext;
 	  XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
-#else /* THIS_IS_GTK */
-	  gint ascent, descent, upos, uthick;
-	  GdkFont *gfont = FONT_INSTANCE_GTK_FONT (fi);
-#endif /* THIS_IS_GTK */
-	  
-#ifdef THIS_IS_X
+
 	  if (!use_x_font)
 	    {
 	      ascent = dl->ascent;
@@ -1396,15 +1368,6 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      else
 		uthick = (int) uthick_ext;
 	    }
-#else /* THIS_IS_GTK */
-	/* Cannot get at font properties in Gtk, so we resort to
-           guessing */
-
-	  ascent = gfont->ascent;
-	  descent = gfont->descent;
-	  uthick = 1;
-#endif /* THIS_IS_GTK */
-
 	  upos = ascent - ((ascent + descent) / 2) + 1;
 
 	  /* Generally, upos will be positive (above the baseline),so
@@ -1418,11 +1381,10 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		XLIKE_DRAW_LINE (dpy, x_win, gc, xpos, dl->ypos - upos,
 				 xpos + this_width, dl->ypos - upos);
 	      else if (uthick > 1)
-		XLIKE_FILL_RECTANGLE (dpy, x_win, gc, xpos, dl->ypos + upos,
-				      this_width, uthick);
+                XLIKE_FILL_RECTANGLE (dpy, x_win, gc, xpos, dl->ypos + upos,
+                                      this_width, uthick);
 	    }
 	}
-
       /* Restore the GC */
       if (need_clipping)
 	{
@@ -1458,7 +1420,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		int rect_height = FONT_INSTANCE_ASCENT (fi)
 				  + FONT_INSTANCE_DESCENT (fi);
 		int rect_width
-		  = XLIKE_text_width_single_run (dpy, cachel, &runs[i]);
+		  = XLIKE_text_width_single_run (f, cachel, &runs[i]);
 		XftColor xft_color;
 
 		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->background, 0);
@@ -1489,30 +1451,14 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	      clip_box.width = cursor_width;
 	      clip_box.height = height;
 
-	      XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
-					&clip_box);
-#ifdef THIS_IS_X
+              XLIKE_SET_CLIP_RECTANGLE (dpy, cgc, cursor_start, ypos,
+                                        &clip_box);
 	      if (runs[i].dimension == 1)
 		XDrawImageString (dpy, x_win, cgc, xpos, dl->ypos,
 				  (char *) runs[i].ptr, runs[i].len);
 	      else
 		XDrawImageString16 (dpy, x_win, cgc, xpos, dl->ypos,
 				    (XChar2b *) runs[i].ptr, runs[i].len);
-#else
-	      /* The X specific called different functions (XDraw*String
-		 vs. XDraw*String16), but apparently gdk_draw_text takes care
-		 of that for us.
-
-		 BUT, gdk_draw_text also does too much, by dividing the
-		 length by 2.  So we fake them out my multiplying the
-		 length by the dimension of the text.  This will do the
-		 right thing for single-dimension runs as well of course.
-	      */
-	      gdk_draw_text_image (GDK_DRAWABLE (x_win),
-				   FONT_INSTANCE_GTK_FONT (fi), cgc, xpos,
-				   dl->ypos, (char *) runs[i].ptr,
-				   runs[i].len * runs[i].dimension);
-#endif /* (not) THIS_IS_X */
 
 	      XLIKE_CLEAR_CLIP_MASK (dpy, cgc);
 	    }
@@ -1562,14 +1508,13 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background,
 			     Qnil, Qnil, Qnil, Qnil);
 	}
-
       tmp_y = dl->ypos - bogusly_obtained_ascent_value;
+
       tmp_height = cursor_height;
       if (tmp_y + tmp_height > (int) (ypos + height))
 	{
 	  tmp_y = ypos + height - tmp_height;
-	  if (tmp_y < (int) ypos)
-	    tmp_y = ypos;
+          tmp_y = min (tmp_y, ypos);
 	  tmp_height = ypos + height - tmp_y;
 	}
 
@@ -1585,7 +1530,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       if (!focus && NILP (bar_cursor_value))
 	{
-	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, tmp_y,
+	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, tmp_y, 
 				cursor_width - 1, tmp_height - 1);
 	}
       else if (focus && !NILP (bar_cursor_value))
@@ -1606,107 +1551,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 #undef XFT_FROB_LISP_COLOR
 #endif
 }
-
-#ifdef THIS_IS_GTK
-static void
-our_draw_bitmap (GdkDrawable *drawable,
-		 GdkGC       *gc,
-		 GdkPixmap   *src,
-		 gint         xsrc,
-		 gint         ysrc,
-		 gint         xdest,
-		 gint         ydest,
-		 gint         width,
-		 gint         height);
-#endif /* THIS_IS_GTK */
-
-
-static void
-XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
-			   int y, int xoffset, int yoffset,
-			   int width, int height,
-			   XLIKE_COLOR fg, XLIKE_COLOR bg,
-			   XLIKE_GC override_gc)
-{
-  struct device *d = XDEVICE (f->device);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc;
-  XLIKE_GCVALUES gcv;
-  unsigned long pixmap_mask;
-
-  if (!override_gc)
-    {
-      memset (&gcv, ~0, sizeof (gcv));
-      gcv.graphics_exposures = XLIKE_FALSE;
-      XLIKE_SET_GC_COLOR (gcv.foreground, fg);
-      XLIKE_SET_GC_COLOR (gcv.background, bg);
-      pixmap_mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
-
-      if (IMAGE_INSTANCE_XLIKE_MASK (p))
-	{
-	  gcv.function = XLIKE_GX_COPY;
-	  gcv.clip_mask = IMAGE_INSTANCE_XLIKE_MASK (p);
-	  gcv.clip_x_origin = x - xoffset;
-	  gcv.clip_y_origin = y - yoffset;
-	  pixmap_mask |= (XLIKE_GC_FUNCTION | XLIKE_GC_CLIP_MASK |
-			  XLIKE_GC_CLIP_X_ORIGIN |
-			  XLIKE_GC_CLIP_Y_ORIGIN);
-	  /* Can't set a clip rectangle below because we already have a mask.
-	     We could conceivably create a new clipmask by zeroing out
-	     everything outside the clip region.  Is it worth it?
-	     Is it possible to get an equivalent effect by changing the
-	     args to XCopyArea below rather than messing with a clip box?
-	     - dkindred@cs.cmu.edu
-	     Yes. We don't clip at all now - andy@xemacs.org
-	  */
-	}
-
-      gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, pixmap_mask);
-    }
-  else
-    {
-      gc = override_gc;
-      /* override_gc might have a mask already--we don't want to nuke it.
-	 Maybe we can insist that override_gc have no mask, or use
-	 one of the suggestions above. */
-    }
-
-#ifdef THIS_IS_X
-  /* depth of 0 means it's a bitmap, not a pixmap, and we should use
-     XCopyPlane (1 = current foreground color, 0 = background) instead
-     of XCopyArea, which means that the bits in the pixmap are actual
-     pixel values, instead of symbolic of fg/bg. */
-#endif /* THIS_IS_X */
-  if (IMAGE_INSTANCE_PIXMAP_DEPTH (p) > 0)
-    {
-#ifdef THIS_IS_X
-      XCopyArea (dpy,
-		 IMAGE_INSTANCE_X_PIXMAP_SLICE
-		 (p, IMAGE_INSTANCE_PIXMAP_SLICE (p)), x_win, gc, xoffset,
-		 yoffset, width,
-		 height, x, y);
-#else /* THIS_IS_GTK */
-      USED (dpy);
-      gdk_draw_pixmap (GDK_DRAWABLE (x_win), gc,
-		       IMAGE_INSTANCE_GTK_PIXMAP (p),
-		       xoffset, yoffset, x, y, width, height);
-#endif /* THIS_IS_GTK */
-    }
-  else
-    {
-#ifdef THIS_IS_X
-      XCopyPlane (dpy, IMAGE_INSTANCE_X_PIXMAP_SLICE
-		  (p, IMAGE_INSTANCE_PIXMAP_SLICE (p)), x_win, gc,
-		  xoffset, yoffset, width, height, x, y, 1L);
-#else /* THIS_IS_GTK */
-      USED (dpy);
-      our_draw_bitmap (GDK_DRAWABLE (x_win), gc,
-		       IMAGE_INSTANCE_GTK_PIXMAP (p),
-		       xoffset, yoffset, x, y, width, height);
-#endif /* THIS_IS_GTK */
-    }
-}
+/* not THIS_IS_GTK */
+#endif
 
 static void
 XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
@@ -1717,8 +1563,10 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
+#ifdef THIS_IS_X
+  XLIKE_DISPLAY dpy = GET_XLIKE_X_DISPLAY (d);
   XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
+#endif
 
   /* Output the pixmap. */
   {
@@ -1733,7 +1581,7 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
     XLIKE_output_xlike_pixmap (f, p, db->xpos, db->ypos,
 			       dga->xoffset, dga->yoffset,
 			       dga->width, dga->height,
-			       tmp_fcolor, tmp_bcolor, 0);
+			       tmp_fcolor, tmp_bcolor);
   }
 
   /* Draw a cursor over top of the pixmap. */
@@ -1741,383 +1589,52 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
       && !NILP (w->text_cursor_visible_p)
       && (cursor_start < db->xpos + dga->width))
     {
-      XLIKE_GC gc;
       int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
       struct face_cachel *cursor_cachel =
 	WINDOW_FACE_CACHEL (w,
 			    get_builtin_face_cache_index
 			    (w, Vtext_cursor_face));
-
-      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil,
-			 Qnil);
-
       if (cursor_width > db->xpos + dga->width - cursor_start)
 	cursor_width = db->xpos + dga->width - cursor_start;
 
-      if (focus)
-	  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
-				cursor_width, cursor_height);
-      else
-	{
-	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
-				cursor_width, cursor_height);
-	}
-    }
-}
-
-/*****************************************************************************
- XLIKE_output_vertical_divider
-
- Draw a vertical divider down the right side of the given window.
- ****************************************************************************/
-static void
-XLIKE_output_vertical_divider (struct window *w, int USED_IF_X (clear))
-{
-  struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
-
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  Lisp_Object tmp_pixel;
-  XLIKE_GCVALUES gcv;
-  XLIKE_GC background_gc;
-  enum edge_style style;
-  unsigned long mask;
-  int x, ytop, ybottom, width, shadow_thickness, spacing, line_width;
-  face_index div_face =
-    get_builtin_face_cache_index (w, Vvertical_divider_face);
-
-  width = window_divider_width (w);
-  shadow_thickness = XFIXNUM (w->vertical_divider_shadow_thickness);
-  spacing = XFIXNUM (w->vertical_divider_spacing);
-  line_width = XFIXNUM (w->vertical_divider_line_width);
-  x = WINDOW_RIGHT (w) - width;
-  ytop = WINDOW_TOP (w);
-  ybottom = WINDOW_BOTTOM (w);
-
-  memset (&gcv, ~0, sizeof (gcv));
-
-  tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, div_face);
-
-  /* First, get the GC's. */
-  XLIKE_SET_GC_COLOR (gcv.background, XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
-  gcv.foreground = gcv.background;
-  gcv.graphics_exposures = XLIKE_FALSE;
-  mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
-
-  background_gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, mask);
-
-  /* Clear the divider area first.  This needs to be done when a
-     window split occurs. */
 #ifdef THIS_IS_X
-  if (clear)
-    XClearArea (dpy, x_win, x, ytop, width, ybottom - ytop, False);
-#else /* THIS_IS_GTK */
-  USED (dpy);
-  /* if (clear) */
-  gdk_draw_rectangle (GDK_DRAWABLE (x_win), background_gc, TRUE,
-		      x, ytop, width, ybottom - ytop);
-#endif /* THIS_IS_GTK */
+      {
+	XLIKE_GC gc;
 
-#ifndef THIS_IS_GTK
-   /* #### FIXME Why not? Formerly '#if 0' in the GDK code */
-  /* Draw the divider line. */
-  XLIKE_FILL_RECTANGLE (dpy, x_win, background_gc,
-			x + spacing + shadow_thickness, ytop,
-			line_width, ybottom - ytop);
-#endif /* not THIS_IS_GTK */
+	gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil,
+			   Qnil);
 
-  if (shadow_thickness < 0)
-    {
-      shadow_thickness = -shadow_thickness;
-      style = EDGE_BEVEL_IN;
-    }
-  else
-    {
-      style = EDGE_BEVEL_OUT;
-    }
-
-  /* Draw the shadows around the divider line */
-  XLIKE_bevel_area (w, div_face, x + spacing, ytop,
-		    width - 2 * spacing, ybottom - ytop,
-		    shadow_thickness, EDGE_ALL, style);
-}
-
-/*****************************************************************************
- XLIKE_output_blank
-
- Output a blank by clearing the area it covers in the background color
- of its face.
- ****************************************************************************/
-static void
-XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
-		    int start_pixpos, int cursor_start, int cursor_width)
-{
-  struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
-
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc;
-  struct face_cachel *cursor_cachel =
-    WINDOW_FACE_CACHEL (w,
-			get_builtin_face_cache_index
-			(w, Vtext_cursor_face));
-  Lisp_Object bg_pmap;
-  Lisp_Object buffer = WINDOW_BUFFER (w);
-  Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
-							 buffer);
-
-  int x = rb->xpos;
-  int y = XLIKE_DISPLAY_LINE_YPOS (dl);
-  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
-  int width = rb->width;
-
-  /* Unmap all subwindows in the area we are going to blank. */
-  redisplay_unmap_subwindows_maybe (f, x, y, width, height);
-
-  if (start_pixpos > x)
-    {
-      if (start_pixpos >= (x + width))
-	return;
-      else
-	{
-	  width -= (start_pixpos - x);
-	  x = start_pixpos;
-	}
-    }
-
-  bg_pmap = WINDOW_FACE_CACHEL_BACKGROUND_PIXMAP (w, rb->findex);
-  if (!IMAGE_INSTANCEP (bg_pmap)
-      || !IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pmap)))
-    bg_pmap = Qnil;
-
-  if (NILP (bg_pmap))
-    gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
-		       Qnil, Qnil, Qnil, Qnil);
-  else
-    gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_FOREBACK (w, rb->findex),
-		       WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
-		       bg_pmap,
-		       WINDOW_FACE_CACHEL_BACKGROUND_PLACEMENT (w, rb->findex),
-		       Qnil);
-
-  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, y, width, height);
-
-  /* If this rune is marked as having the cursor, then it is actually
-     representing a tab. */
-  if (!NILP (w->text_cursor_visible_p)
-      && (rb->cursor_type == CURSOR_ON
-	  || (cursor_width
-	      && (cursor_start + cursor_width > x)
-	      && cursor_start < (x + width))))
-    {
-      int cursor_height, cursor_y;
-      int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
-      Lisp_Font_Instance *fi;
-
-      fi = XFONT_INSTANCE (FACE_CACHEL_FONT
-			   (WINDOW_FACE_CACHEL (w, rb->findex),
-			    Vcharset_ascii));
-
-      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
-			 Qnil, Qnil, Qnil);
-
-      cursor_y = dl->ypos - fi->ascent;
-      cursor_height = fi->height;
-      if (cursor_y + cursor_height > y + height)
-	cursor_height = y + height - cursor_y;
-
-      if (focus)
-	{
-	  if (NILP (bar_cursor_value))
-	    {
-	      XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
-				    fi->width, cursor_height);
-	    }
-	  else
-	    {
-	      int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
-
-	      gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background,
-				 Qnil, Qnil, Qnil,
-				 make_fixnum (bar_width));
-	      XLIKE_DRAW_LINE (dpy, x_win, gc, cursor_start + bar_width - 1,
-			       cursor_y, cursor_start + bar_width - 1,
-			       cursor_y + cursor_height - 1);
-	    }
-	}
-      else if (NILP (bar_cursor_value))
-	{
-	  XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, cursor_y,
-				fi->width - 1, cursor_height - 1);
-	}
-    }
-}
-
-/*****************************************************************************
- XLIKE_output_horizontal_line
-
- Output a horizontal line in the foreground of its face.
- ****************************************************************************/
-static void
-XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
-			      struct rune *rb)
-{
-  struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
-
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc;
-
-  int x = rb->xpos;
-  int width = rb->width;
-  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
-  int ypos1, ypos2, ypos3, ypos4;
-
-  ypos1 = XLIKE_DISPLAY_LINE_YPOS (dl);
-  ypos2 = ypos1 + rb->object.hline.yoffset;
-  ypos3 = ypos2 + rb->object.hline.thickness;
-  ypos4 = dl->ypos + dl->descent - dl->clip;
-
-  /* First clear the area not covered by the line. */
-  if (height - rb->object.hline.thickness > 0)
-    {
-      gc = XLIKE_get_gc (f, Qnil,
-			 WINDOW_FACE_CACHEL_FOREGROUND (w, rb->findex),
-			 Qnil, Qnil, Qnil, Qnil);
-
-      if (ypos2 - ypos1 > 0)
-	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos1, width, ypos2 - ypos1);
-      if (ypos4 - ypos3 > 0)
-	XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos1, width, ypos2 - ypos1);
-    }
-
+	if (focus)
+	  {
+	    XLIKE_FILL_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
+				  cursor_width, cursor_height);
+	  }
+	else
+	  {
+	    XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, cursor_start, db->ypos,
+				  cursor_width, cursor_height);
+	  }
+      }
+#endif
 #ifdef THIS_IS_GTK
-  {
-    GtkStyle *style = FRAME_GTK_TEXT_WIDGET (f)->style;
-    gtk_paint_hline (style, x_win, GTK_STATE_NORMAL, NULL,
-		     FRAME_GTK_TEXT_WIDGET (f), "hline", x, x + width, ypos2);
-  }
-#else /* THIS_IS_X */
-  /* Now draw the line. */
-  gc = XLIKE_get_gc (f, Qnil, WINDOW_FACE_CACHEL_BACKGROUND (w, rb->findex),
-		     Qnil, Qnil, Qnil, Qnil);
+      {
+	GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+	cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
 
-  if (ypos2 < ypos1)
-    ypos2 = ypos1;
-  if (ypos3 > ypos4)
-    ypos3 = ypos4;
+	cr_set_foreground (cr, cursor_cachel->background);
 
-  if (ypos3 - ypos2 > 0)
-    XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, ypos2, width, ypos3 - ypos2);
-#endif /* THIS_IS_X */
-}
-
-/****************************************************************************
- XLIKE_clear_region
-
- Clear the area in the box defined by the given parameters using the
- given face.
- ****************************************************************************/
-static void
-XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
-		    face_index UNUSED (findex),
-		    int x, int y, int width, int height,
-		    Lisp_Object fcolor, Lisp_Object bcolor,
-		    Lisp_Object background_pixmap,
-		    Lisp_Object background_placement)
-{
-  XLIKE_DISPLAY dpy =  GET_XLIKE_DISPLAY (XDEVICE (f->device));
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc = NULL;
-
-  if (!UNBOUNDP (background_pixmap))
-    {
-      gc = XLIKE_get_gc (f, Qnil, fcolor, bcolor,
-			 background_pixmap, background_placement, Qnil);
-    }
-
-  if (gc)
-    XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, y, width, height);
-  else
-    XLIKE_CLEAR_AREA (dpy, x_win, x, y, width, height);
-}
-
-/*****************************************************************************
- xlike_output_eol_cursor
-
- Draw a cursor at the end of a line.  The end-of-line cursor is
- narrower than the normal cursor.
- ****************************************************************************/
-static void
-XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
-			 face_index findex)
-{
-  struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
-  Lisp_Object window;
-
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc = NULL;
-  face_index elt = get_builtin_face_cache_index (w, Vtext_cursor_face);
-  struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, elt);
-
-  int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
-  Lisp_Object bar_cursor_value = symbol_value_in_buffer (Qbar_cursor,
-							 WINDOW_BUFFER (w));
-
-  int x = xpos;
-  int y = XLIKE_DISPLAY_LINE_YPOS (dl);
-  int width = EOL_CURSOR_WIDTH;
-  int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
-  int cursor_height, cursor_y;
-  int defheight, defascent;
-
-  window = wrap_window (w);
-  redisplay_clear_region (window, findex, x, y, width, height);
-
-  if (NILP (w->text_cursor_visible_p))
-    return;
-
-  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
-		     Qnil, Qnil, Qnil);
-
-  default_face_font_info (window, &defascent, 0, 0, &defheight, 0);
-
-  /* make sure the cursor is entirely contained between y and y+height */
-  cursor_height = min (defheight, height);
-  cursor_y = max (y, min (y + height - cursor_height,
-			  dl->ypos - defascent));
-
-  if (focus)
-    {
-#ifdef HAVE_XIM
-      XIM_SetSpotLocation (f, x - 2 , cursor_y + cursor_height - 2);
-#endif /* HAVE_XIM */
-
-      if (NILP (bar_cursor_value))
-	{
-	  XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, cursor_y, width,
-				cursor_height);
-	}
-      else
-	{
-	  int bar_width = EQ (bar_cursor_value, Qt) ? 1 : 2;
-
-	  gc = XLIKE_get_gc (f, Qnil, cursor_cachel->background, Qnil,
-			     Qnil, Qnil,
-			     make_fixnum (bar_width));
-	  XLIKE_DRAW_LINE (dpy, x_win, gc, x + bar_width - 1, cursor_y,
-			   x + bar_width - 1, cursor_y + cursor_height - 1);
-	}
-    }
-  else if (NILP (bar_cursor_value))
-    {
-      XLIKE_DRAW_RECTANGLE (dpy, x_win, gc, x, cursor_y, width - 1,
-			    cursor_height - 1);
+	if (focus)
+	  {
+	    gtk_fill_rectangle (cr, cursor_start, db->ypos,
+				cursor_width, cursor_height);
+	  }
+	else
+	  {
+	    gtk_draw_rectangle (cr, cursor_start, db->ypos,
+				cursor_width, cursor_height);
+	  }
+      }
+#endif
     }
 }
 
@@ -2147,126 +1664,6 @@ XLIKE_clear_frame_windows (Lisp_Object window)
 {
   for (; !NILP (window); window = XWINDOW (window)->next)
     XLIKE_clear_frame_window (window);
-}
-
-static void
-XLIKE_clear_frame (struct frame *f)
-{
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (XDEVICE (f->device));
-  XLIKE_WINDOW x_win = GET_XLIKE_WINDOW (f);
-  int x, y, width, height;
-  Lisp_Object frame;
-
-  /* #### GEOM! This clears the internal border and gutter (and scrollbars)
-     but not the toolbar.  Correct? */
-  x = FRAME_LEFT_INTERNAL_BORDER_START (f);
-  width = (FRAME_RIGHT_INTERNAL_BORDER_END (f) - x);
-  /* #### This adjustment by 1 should be being done in the macros.
-     There is some small differences between when the menubar is on
-     and off that we still need to deal with.  The adjustment also occurs in
-     redisplay_clear_top_of_window(). */
-  y = FRAME_TOP_INTERNAL_BORDER_START (f) - 1;
-  height = (FRAME_BOTTOM_INTERNAL_BORDER_END (f) - y);
-
-  XLIKE_CLEAR_AREA (dpy, x_win, x, y, width, height);
-
-  frame = wrap_frame (f);
-
-  if (!UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vdefault_face, frame))
-      || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vleft_margin_face, frame))
-      || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vright_margin_face, frame)))
-    {
-      XLIKE_clear_frame_windows (f->root_window);
-    }
-#ifdef THIS_IS_X
-  {
-    struct device *d = XDEVICE (f->device);
-    if (!(check_if_pending_expose_event (d)))
-      XFlush (DEVICE_X_DISPLAY (d));
-  }
-#endif /* THIS_IS_X */
-}
-
-/* briefly swap the foreground and background colors.
- */
-
-static int
-XLIKE_flash (struct device *d)
-{
-  struct frame *f = device_selected_frame (d);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (d);
-  XLIKE_WINDOW win = GET_XLIKE_WINDOW (f);
-  XLIKE_GC gc = NULL;
-  XLIKE_GCVALUES gcv;
-  XLIKE_PIXEL tmp_fcolor, tmp_bcolor;
-  Lisp_Object tmp_pixel, frame;
-  struct window *w = XWINDOW (FRAME_ROOT_WINDOW (f));
-  int flash_height;
-
-  frame = wrap_frame (f);
-
-  tmp_pixel = FACE_FOREGROUND (Vdefault_face, frame);
-  tmp_fcolor = XLIKE_COLOR_TO_PIXEL (XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
-  tmp_pixel = FACE_BACKGROUND (Vdefault_face, frame);
-  tmp_bcolor = XLIKE_COLOR_TO_PIXEL (XCOLOR_INSTANCE_XLIKE_COLOR (tmp_pixel));
-  memset (&gcv, ~0, sizeof (gcv)); /* initialize all slots to ~0 */
-  XLIKE_SET_GC_PIXEL (gcv.foreground, tmp_fcolor ^ tmp_bcolor);
-  gcv.function = XLIKE_GX_XOR;
-  gcv.graphics_exposures = XLIKE_FALSE;
-  gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (XDEVICE (f->device)), &gcv,
-			XLIKE_GC_FOREGROUND | XLIKE_GC_FUNCTION | XLIKE_GC_EXPOSURES);
-  default_face_width_and_height (frame, 0, &flash_height);
-
-  /* If window is tall, flash top and bottom line.  */
-  if (EQ (Vvisible_bell, Qtop_bottom) && w->pixel_height > 3 * flash_height)
-    {
-      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
-			    w->pixel_width, flash_height);
-      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left,
-			    w->pixel_top + w->pixel_height - flash_height,
-			    w->pixel_width, flash_height);
-    }
-  else
-    /* If it is short, flash it all.  */
-    XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
-			  w->pixel_width, w->pixel_height);
-
-  XLIKE_FLUSH (dpy);
-
-#ifdef HAVE_SELECT
-  {
-    int usecs = 100000;
-    struct timeval tv;
-    tv.tv_sec  = usecs / 1000000L;
-    tv.tv_usec = usecs % 1000000L;
-    /* I'm sure someone is going to complain about this... */
-    select (0, 0, 0, 0, &tv);
-  }
-#else
-#ifdef HAVE_POLL
-  poll (0, 0, 100);
-#else /* !HAVE_POLL */
-#error bite me
-#endif /* HAVE_POLL */
-#endif /* HAVE_SELECT */
-
-  /* If window is tall, flash top and bottom line.  */
-  if (EQ (Vvisible_bell, Qtop_bottom) && w->pixel_height > 3 * flash_height)
-    {
-      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
-			    w->pixel_width, flash_height);
-      XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left,
-			    w->pixel_top + w->pixel_height - flash_height,
-			    w->pixel_width, flash_height);
-    }
-  else
-    /* If it is short, flash it all.  */
-    XLIKE_FILL_RECTANGLE (dpy, win, gc, w->pixel_left, w->pixel_top,
-			  w->pixel_width, w->pixel_height);
-
-  XLIKE_FLUSH (dpy);
-
-  return 1;
 }
 
 

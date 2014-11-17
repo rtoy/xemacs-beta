@@ -231,8 +231,11 @@ things are arranged in config.h.in.  In particular:
 #endif /* HAVE_X_WINDOWS */
 
 /* Defines for building Gtk applications */
-#undef HAVE_GNOME
+#undef HAVE_PANGO
+#undef HAVE_PANGOXFT
 #undef HAVE_GTK
+#undef HAVE_GTK2
+#undef HAVE_GTK3
 #undef HAVE_GDK_IMLIB_INIT
 #undef HAVE_GLADE_GLADE_H
 #undef HAVE_GLADE_H
@@ -313,7 +316,7 @@ things are arranged in config.h.in.  In particular:
 #undef STDC_HEADERS
 
 #undef TIME_WITH_SYS_TIME
-#undef WORDS_BIGENDIAN
+/* #undef WORDS_BIGENDIAN */
 
 #undef HAVE_LONG_FILE_NAMES
 

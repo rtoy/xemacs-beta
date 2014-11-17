@@ -36,7 +36,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 struct gtk_color_instance_data
 {
   GdkColor *color;
-  char dealloc_on_gc;
 };
 
 #define GTK_COLOR_INSTANCE_DATA(c) ((struct gtk_color_instance_data *) (c)->data)
@@ -50,13 +49,17 @@ struct gtk_color_instance_data
 
 struct gtk_font_instance_data
 {
-  /* Gtk-specific information */
-  GdkFont *font;
+  PangoFont *font;
+  PangoFontDescription *desc;
+  PangoFontMetrics *metrics;
 };
 
 #define GTK_FONT_INSTANCE_DATA(f) ((struct gtk_font_instance_data *) (f)->data)
 #define FONT_INSTANCE_GTK_FONT(f) (GTK_FONT_INSTANCE_DATA (f)->font)
 #define XFONT_INSTANCE_GTK_FONT(c) FONT_INSTANCE_GTK_FONT (XFONT_INSTANCE (c))
-
+#define FONT_INSTANCE_GTK_FONT_DESC(f) (GTK_FONT_INSTANCE_DATA (f)->desc)
+#define XFONT_INSTANCE_GTK_FONT_DESC(c) FONT_INSTANCE_GTK_FONT_DESC (XFONT_INSTANCE (c))
+#define FONT_INSTANCE_GTK_FONT_METRICS(f) (GTK_FONT_INSTANCE_DATA (f)->metrics)
+#define XFONT_INSTANCE_GTK_FONT_METRICS(c) FONT_INSTANCE_GTK_FONT_METRICS (XFONT_INSTANCE (c))
 #endif /* HAVE_GTK */
 #endif /* _XEMACS_OBJECTS_GTK_IMPL_H_ */

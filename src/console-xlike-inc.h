@@ -92,9 +92,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #  endif
 #else /* THIS_IS_GTK */
 #  include "console-gtk-impl.h"
-#  ifdef NEED_GCCACHE_H
-#    include "gccache-gtk.h"
-#  endif
 #  ifdef NEED_GLYPHS_H
 #    include "glyphs-gtk.h"
 #  endif
@@ -219,6 +216,7 @@ while (0)
 #define XLIKE_SET_GC_COLOR(lval, rval) ((lval) = (rval).pixel)
 #define XLIKE_SET_GC_PIXEL(lval, rval) ((lval) = (rval))
 #define XLIKE_FONT_NUM(val) ((val)->fid)
+#define XLIKE_ICHAR_CHARSET(c) ichar_charset (c)
 
 /************ End X flavor of XLIKE **********/
 
@@ -236,33 +234,13 @@ while (0)
 /*types */
 typedef void * XLIKE_DISPLAY;
 typedef GdkWindow * XLIKE_WINDOW;
-typedef GdkGC * XLIKE_GC;
 typedef GdkRectangle XLIKE_RECTANGLE;
-typedef GdkGCValues XLIKE_GCVALUES;
 typedef GdkColor XLIKE_COLOR;
 typedef gulong   XLIKE_PIXEL;
 
 /* constants */
 #define XLIKE_NONE 0
 #define XLIKE_FALSE FALSE
-
-#define XLIKE_GC_BACKGROUND GDK_GC_BACKGROUND
-#define XLIKE_GC_CLIP_MASK GDK_GC_CLIP_MASK
-#define XLIKE_GC_CLIP_X_ORIGIN GDK_GC_CLIP_X_ORIGIN
-#define XLIKE_GC_CLIP_Y_ORIGIN GDK_GC_CLIP_Y_ORIGIN
-#define XLIKE_GC_EXPOSURES GDK_GC_EXPOSURES
-#define XLIKE_GC_FILL GDK_GC_FILL
-#define XLIKE_GC_FONT GDK_GC_FONT
-#define XLIKE_GC_FOREGROUND GDK_GC_FOREGROUND
-#define XLIKE_GC_FUNCTION GDK_GC_FUNCTION
-#define XLIKE_GC_LINE_WIDTH GDK_GC_LINE_WIDTH
-#define XLIKE_GC_STIPPLE GDK_GC_STIPPLE
-#define XLIKE_GC_TILE GDK_GC_TILE
-#define XLIKE_GC_TS_X_ORIGIN GDK_GC_TS_X_ORIGIN
-#define XLIKE_GC_TS_Y_ORIGIN GDK_GC_TS_Y_ORIGIN
-
-#define XLIKE_GX_COPY GDK_COPY
-#define XLIKE_GX_XOR GDK_XOR
 
 #define XLIKE_FILL_STIPPLED GDK_STIPPLED
 #define XLIKE_FILL_OPAQUE_STIPPLED GDK_OPAQUE_STIPPLED
@@ -272,9 +250,9 @@ typedef gulong   XLIKE_PIXEL;
 /* functions */
 
 /* Avoid unused-variable warning involving D */
-#define GET_XLIKE_DISPLAY(d) (USED (d), NULL)
+#define GET_XLIKE_DISPLAY(d) (d)
 #define GET_XLIKE_X_DISPLAY(d) (USED (d), GDK_DISPLAY ())
-#define GET_XLIKE_WINDOW(w) GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (w))
+#define GET_XLIKE_WINDOW(w) gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (w))
 #define XLIKE_FILL_RECTANGLE(dpy, x_win, gc, x, y, width, height)	\
   (USED (dpy), gdk_draw_rectangle (GDK_DRAWABLE (x_win), gc, TRUE,	\
                                    x, y, width, height))
@@ -285,8 +263,13 @@ typedef gulong   XLIKE_PIXEL;
   (USED (dpy), gdk_draw_line (GDK_DRAWABLE (x_win), gc, x1, y1, x2, y2))
 #define XLIKE_TEXT_WIDTH(fi, ptr, len) \
   gdk_text_width (fi, (char *) ptr, len)
-#define XLIKE_TEXT_WIDTH_WIDE(fi, ptr, len) \
+#ifdef USE_PANGO
+#define XLIKE_TEXT_WIDTH_WIDE(fi, ptr, len)             \
+  pango_text_width_wc (fi, (GdkWChar *) ptr, len)
+#else
+#define XLIKE_TEXT_WIDTH_WIDE(fi, ptr, len)             \
   gdk_text_width_wc (fi, (GdkWChar *) ptr, len)
+#endif
 
 /* FIXME: This is totally bogus.  It removes dl->top_clip from the
    equations.  If there is a bug involving this, fix it properly!
@@ -321,11 +304,9 @@ while (0)
 #define FONT_INSTANCE_XLIKE_FONT FONT_INSTANCE_GTK_FONT
 #define DEVICE_XLIKE_GRAY_PIXMAP DEVICE_GTK_GRAY_PIXMAP
 #define DEVICE_XLIKE_GC_CACHE DEVICE_GTK_GC_CACHE
-#define XLIKE_SET_GC_FILL(gc, style) ((gc).fill = (style))
 #define XLIKE_COLOR_TO_PIXEL(c) ((c).pixel)
-#define XLIKE_SET_GC_COLOR(lval, rval) ((lval) = (rval))
-#define XLIKE_SET_GC_PIXEL(lval, rval) ((lval).pixel = (rval))
 #define XLIKE_FONT_NUM(val) (val)
+#define XLIKE_ICHAR_CHARSET(c) Vcharset_ascii
 
 /************ End GTK flavor of XLIKE **********/
 

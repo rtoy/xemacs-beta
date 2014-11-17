@@ -29,8 +29,20 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define INCLUDED_sysgtk_h_
 
 #include <gtk/gtk.h>
-#include <gtk/gtkfixed.h>
 #include <gdk/gdk.h>
+#include <gdk/gdkx.h>
 #include <gdk/gdkkeysyms.h>
+#include <glib.h>
+#include <glib-object.h>
+
+#include <pango/pango.h>
+#include <pango/pangoxft.h>
+
+BEGIN_C_DECLS
+
+extern PangoFontDescription *
+pango_fc_font_description_from_pattern (FcPattern *, gboolean);
+
+END_C_DECLS
 
 #endif /* INCLUDED_sysgtk_h_ */

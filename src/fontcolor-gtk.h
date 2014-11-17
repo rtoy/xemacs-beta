@@ -32,10 +32,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
  Color-Instance
  ****************************************************************************/
 
-int allocate_nearest_color (GdkColormap *screen_colormap, GdkVisual *visual,
-							GdkColor *color_def);
-int gtk_parse_nearest_color (struct device *d, GdkColor *color, Ibyte *name,
-							 Bytecount len, Error_Behavior errb);
+int gtk_parse_nearest_color (struct device *d, GdkColor *color,
+			     Lisp_Object name, Error_Behavior errb);
 
 /*****************************************************************************
  Font-Instance
