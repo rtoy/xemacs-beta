@@ -1,3 +1,8 @@
+2014-11-23  Michael Sperber  <mike@xemacs.org>
+
+	* font-mgr.c (Ffc_name_unparse): Do the previous change to this
+	file right and parse the pattern sans the charset.
+
 2014-11-06  Vin Shelton  <acs@xemacs.org>
 
 	* sysdep.c (set_descriptor_non_blocking): Don't call ioctl() on
