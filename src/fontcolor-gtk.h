@@ -28,11 +28,17 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #ifdef HAVE_GTK
 
+#ifdef HAVE_GTK2
+typedef GdkColor GDK_COLOR;
+#else
+typedef GdkRGBA GDK_COLOR;
+#endif
+
 /*****************************************************************************
  Color-Instance
  ****************************************************************************/
 
-int gtk_parse_nearest_color (struct device *d, GdkColor *color,
+int gtk_parse_nearest_color (struct device *d, GDK_COLOR *color,
 			     Lisp_Object name, Error_Behavior errb);
 
 /*****************************************************************************

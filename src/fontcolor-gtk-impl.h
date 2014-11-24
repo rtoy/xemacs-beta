@@ -35,7 +35,11 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 struct gtk_color_instance_data
 {
+#ifdef HAVE_GTK2
   GdkColor *color;
+#else
+  GdkRGBA *color;
+#endif
 };
 
 #define GTK_COLOR_INSTANCE_DATA(c) ((struct gtk_color_instance_data *) (c)->data)

@@ -65,6 +65,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "console-gtk-impl.h"
 #include "glyphs-gtk.h"
+#include "fontcolor-gtk.h"
 #include "fontcolor-gtk-impl.h"
 #include "ui-gtk.h"
 
@@ -676,7 +677,7 @@ check_pointer_sizes (GdkDisplay *display, guint width, guint height,
 
 static void
 generate_cursor_fg_bg (Lisp_Object device, Lisp_Object *foreground,
-		       Lisp_Object *background, GdkColor *xfg, GdkColor *xbg)
+		       Lisp_Object *background, GDK_COLOR *xfg, GDK_COLOR *xbg)
 {
   if (!NILP (*foreground) && !COLOR_INSTANCEP (*foreground))
     *foreground =
@@ -686,8 +687,11 @@ generate_cursor_fg_bg (Lisp_Object device, Lisp_Object *foreground,
     *xfg = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (*foreground));
   else
     {
-      xfg->pixel = 0;
-      xfg->red = xfg->green = xfg->blue = 0;
+#ifdef HAVE_GTK2
+      gdk_color_parse ("black", xfg);
+#else
+      gdk_rgba_parse (xfg, "black");
+#endif
     }
 
   if (!NILP (*background) && !COLOR_INSTANCEP (*background))
@@ -698,8 +702,11 @@ generate_cursor_fg_bg (Lisp_Object device, Lisp_Object *foreground,
     *xbg = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (*background));
   else
     {
-      xbg->pixel = 0;
-      xbg->red = xbg->green = xbg->blue = ~0;
+#ifdef HAVE_GTK2
+      gdk_color_parse ("white", xfg);
+#else
+      gdk_rgba_parse (xfg, "white");
+#endif
     }
 }
 
@@ -722,8 +729,18 @@ maybe_recolor_cursor (Lisp_Object UNUSED (image_instance),
       XIMAGE_INSTANCE_PIXMAP_FG (image_instance) = foreground;
       XIMAGE_INSTANCE_PIXMAP_BG (image_instance) = background;
     }
+#endif
+#ifdef HAVE_GTK3
+#if 0
+Lisp_Object device = XIMAGE_INSTANCE_DEVICE (image_instance);
+GdkRGBA  xfg, xbg;
+
+generate_cursor_fg_bg (device, &foreground, &background, &xfg, &xbg);
+/* Apply to all frames */
+/* gtk_widget_override_cursor (w, &xfg, &xfg); */
+#endif
 #else
-  /* stderr_out ("Don't know how to recolor cursors in Gtk!\n"); */
+/* stderr_out ("Don't know how to recolor cursors in Gtk!\n"); */
 #endif
 }
 
@@ -745,7 +762,12 @@ image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
   GdkDisplay *display = gtk_widget_get_display(widget);
   GdkPixbuf *pixbuf = IMAGE_INSTANCE_GTK_PIXMAP (ii);
   /* GdkPixbuf *mask = (GdkPixbuf *) IMAGE_INSTANCE_GTK_MASK (ii); */
-  GdkColor fg, bg;
+#ifdef HAVE_GTK2
+GdkColor fg, bg;
+#endif
+#ifdef HAVE_GTK3
+GdkRGBA fg, bg;
+#endif
   gint xhot = 0, yhot = 0;
   int w, h;
 
@@ -908,8 +930,8 @@ get_bit (const Extbyte *bits, int row, int col, int width)
 static GdkPixbuf *
 pixbuf_from_xbm_inline (Lisp_Object UNUSED (device), int width, int height,
 			/* Note that data is in ext-format! */
-			const Extbyte *bits, const GdkColor fg,
-			const GdkColor bg)
+			const Extbyte *bits, const GDK_COLOR fg,
+			const GDK_COLOR bg)
 {
   GdkPixbuf *out = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
   int rowstride;
@@ -931,6 +953,7 @@ pixbuf_from_xbm_inline (Lisp_Object UNUSED (device), int width, int height,
 	  int bit = get_bit (bits, i, j, width);
 	  guchar *dp = data + i * rowstride + j * n_channels;
 
+#ifdef HAVE_GTK2
 	  if (bit != 0)
 	    {
 	      *dp++ = fg.red;
@@ -945,6 +968,24 @@ pixbuf_from_xbm_inline (Lisp_Object UNUSED (device), int width, int height,
 	    }
 	  /* Alpha */
 	  *dp++ = 0xff;
+#else
+#define TO_BYTE(f) ((guchar)(f * 256))
+	  if (bit != 0)
+	    {
+	      *dp++ = TO_BYTE (fg.red);
+	      *dp++ = TO_BYTE (fg.green);
+	      *dp++ = TO_BYTE (fg.blue);
+	      *dp++ = TO_BYTE (fg.alpha);
+	    }
+	  else
+	    {
+	      *dp++ = TO_BYTE (bg.red);
+	      *dp++ = TO_BYTE (bg.green);
+	      *dp++ = TO_BYTE (bg.blue);
+	      *dp++ = TO_BYTE (bg.alpha);
+	    }
+#undef TO_BYTE
+#endif
 	}
     }
 
@@ -969,8 +1010,6 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Lisp_Object foreground = find_keyword_in_vector (instantiator, Q_foreground);
   Lisp_Object background = find_keyword_in_vector (instantiator, Q_background);
-  GdkColor fg;
-  GdkColor bg;
   enum image_instance_type type;
   GdkWindow *draw = gtk_widget_get_window (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
 #ifdef HAVE_GTK2
@@ -979,11 +1018,20 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 #ifdef HAVE_GTK3
   GdkDisplay *display = gdk_window_get_display (draw);
 #endif
+#ifdef HAVE_GTK2
   GdkColor black;
   GdkColor white;
 
   gdk_color_parse ("black", &black);
   gdk_color_parse ("white", &white);
+#endif
+#ifdef HAVE_GTK3
+  GdkRGBA black;
+  GdkRGBA white;
+
+  gdk_rgba_parse (&black, "black");
+  gdk_rgba_parse (&white, "white");
+#endif
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
     gui_error ("Not a Gtk device", device);
@@ -1031,18 +1079,20 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	  foreground =
 	    Fmake_color_instance (foreground, device,
 				  encode_error_behavior_flag (ERROR_ME));
-
+#if 0
 	if (COLOR_INSTANCEP (foreground))
 	  fg = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (foreground));
+#endif
 
 	if (!NILP (background) && !COLOR_INSTANCEP (background))
 	  background =
 	    Fmake_color_instance (background, device,
 				  encode_error_behavior_flag (ERROR_ME));
 
+#if 0
 	if (COLOR_INSTANCEP (background))
 	  bg = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (background));
-
+#endif
 	/* We used to duplicate the pixels using XAllocColor(), to protect
 	   against their getting freed.  Just as easy to just store the
 	   color instances here and GC-protect them, so this doesn't
@@ -1058,8 +1108,8 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 
     case IMAGE_POINTER:
     {
-	GdkColor fg_color, bg_color;
-	GdkPixbuf *source;
+      GDK_COLOR fg_color, bg_color;
+      GdkPixbuf *source;
 
 	check_pointer_sizes (display, width, height, instantiator);
 
@@ -1107,11 +1157,16 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   GdkPixbuf *mask = 0;
   const Extbyte *gcc_may_you_rot_in_hell;
-  GdkColor black;
-  GdkColor white;
+  GDK_COLOR black;
+  GDK_COLOR  white;
 
+#ifdef HAVE_GTK
   gdk_color_parse ("black", &black);
   gdk_color_parse ("white", &white);
+#else
+  gdk_rgba_parse (&black, "black");
+  gdk_rgba_parse (&white, "white");
+#endif
 
   if (!NILP (mask_data))
     {
@@ -1159,7 +1214,12 @@ gtk_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 struct color_symbol
 {
   Ibyte*	name;
+#ifdef HAVE_GTK2
   GdkColor	color;
+#endif
+#ifdef HAVE_GTK3
+  GdkRGBA color;
+#endif
 };
 
 static struct color_symbol*
@@ -1306,10 +1366,18 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		!qxestrcasecmp_ascii(color_symbols[i].name, image.colorTable[j].symbolic))
 	      {
 		image.colorTable[j].c_color = xnew_ascbytes (16);
-
+#ifdef HAVE_GTK2
 		sprintf(image.colorTable[j].c_color, "#%.4x%.4x%.4x",
-			color_symbols[i].color.red, color_symbols[i].color.green,
+			color_symbols[i].color.red,
+			color_symbols[i].color.green,
 			color_symbols[i].color.blue);
+#endif
+#ifdef HAVE_GTK3
+		sprintf(image.colorTable[j].c_color, "#%.4x%.4x%.4x",
+			(unsigned int)(color_symbols[i].color.red * 65535),
+			(unsigned int)(color_symbols[i].color.green * 65535),
+			(unsigned int)(color_symbols[i].color.blue * 65535));
+#endif
 	      }
 	  }
       }
@@ -2968,7 +3036,12 @@ gtk_colorize_image_instance (Lisp_Object image_instance,
     gint n_channels = gdk_pixbuf_get_n_channels (pb);
     guchar *data = gdk_pixbuf_get_pixels (pb);
     guchar *dp = data;
+#ifdef HAVE_GTK2
     GdkColor *color;
+#endif
+#ifdef HAVE_GTK3
+    GdkRGBA *color;
+#endif
     gint width = gdk_pixbuf_get_width (pb);
     gint height = gdk_pixbuf_get_height (pb);
     int i,j;
@@ -2982,11 +3055,22 @@ gtk_colorize_image_instance (Lisp_Object image_instance,
 	      color = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (foreground));
 	    else
 	      color = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (background));
+#ifdef HAVE_GTK2
 	    *dp++ = color->red;
 	    *dp++ = color->green;
 	    *dp++ = color->blue;
 	    if (n_channels == 4)
 	      *dp++ = 0xff;
+#endif
+#ifdef HAVE_GTK3
+#define TO_SHORT(f) ((guint16) (f * 65535))
+	    *dp++ = TO_SHORT (color->red);
+	    *dp++ = TO_SHORT (color->green);
+	    *dp++ = TO_SHORT (color->blue);
+	    if (n_channels == 4)
+	      *dp++ = TO_SHORT (color->alpha);
+#undef TO_SHORT
+#endif
 	  }
       }
     IMAGE_INSTANCE_PIXMAP_FG (p) = foreground;

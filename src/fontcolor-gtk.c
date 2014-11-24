@@ -43,7 +43,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
    XFree86 in 2005, at least. */
 #define MAX_FONT_COUNT INT_MAX
 
-#ifdef DEBUG_XEMACS 
+#ifdef DEBUG_XEMACS
 Fixnum debug_gtk_fonts;
 #endif /* DEBUG_XEMACS */
 static Lisp_Object Vgtk_fallback_font_name;
@@ -54,17 +54,21 @@ static Lisp_Object Vgtk_fallback_font_size;
 /*                          color instances                             */
 /************************************************************************/
 
-int
-gtk_parse_nearest_color (struct device * UNUSED (d), GdkColor *color,
+gboolean
+gtk_parse_nearest_color (struct device * UNUSED (d), GDK_COLOR *color,
 			 Lisp_Object name, Error_Behavior errb)
 {
   const Extbyte *extname;
-  int result;
+  gboolean result;
 
   xzero (*color);
   CHECK_STRING (name);
   extname = LISP_STRING_TO_EXTERNAL (name, Qutf_8);
+#ifdef HAVE_GTK2
   result = gdk_color_parse (extname, color);
+#else
+  result = gdk_rgba_parse (color, extname);
+#endif
 
   if (result == FALSE)
     {
@@ -74,24 +78,28 @@ gtk_parse_nearest_color (struct device * UNUSED (d), GdkColor *color,
   return result;
 }
 
-static int
+static gboolean
 gtk_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
 			       Lisp_Object device, Error_Behavior errb)
 {
-  GdkColor color;
-  int result;
+  GDK_COLOR color;
+  gboolean result;
 
   result = gtk_parse_nearest_color (XDEVICE (device), &color,
 				    name, errb);
 
   if (!result)
-    return 0;
+    return FALSE;
 
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   c->data = xnew (struct gtk_color_instance_data);
+#ifdef HAVE_GTK2
   COLOR_INSTANCE_GTK_COLOR (c) = gdk_color_copy (&color);
-  return 1;
+#else
+  COLOR_INSTANCE_GTK_COLOR (c) = gdk_rgba_copy (&color);
+#endif
+  return TRUE;
 }
 
 static void
@@ -99,9 +107,15 @@ gtk_print_color_instance (struct Lisp_Color_Instance *c,
 			  Lisp_Object printcharfun,
 			  int UNUSED (escapeflag))
 {
+#ifdef HAVE_GTK2
   GdkColor *color = COLOR_INSTANCE_GTK_COLOR (c);
   write_fmt_string (printcharfun, " %ld=(%X,%X,%X)",
 		    color->pixel, color->red, color->green, color->blue);
+#else
+  GdkRGBA *color = COLOR_INSTANCE_GTK_COLOR (c);
+  write_fmt_string (printcharfun, " (%0f,%0f,%0f,%0f)",
+		    color->red, color->green, color->blue, color->alpha);
+#endif
 }
 
 static void
@@ -111,53 +125,71 @@ gtk_finalize_color_instance (struct Lisp_Color_Instance *c)
     {
       if (DEVICE_LIVE_P (XDEVICE (c->device)))
 	{
+#ifdef HAVE_GTK2
 	  gdk_color_free (COLOR_INSTANCE_GTK_COLOR (c));
+#else
+	  gdk_rgba_free (COLOR_INSTANCE_GTK_COLOR (c));
+#endif
 	}
       xfree (c->data);
       c->data = 0;
     }
 }
 
-/* Color instances are equal if they resolve to the same color on the
-   screen (have the same RGB values).  I imagine that
-   "same RGB values" == "same cell in the colormap."  Arguably we should
-   be comparing their names or pixel values instead. */
-
 static int
 gtk_color_instance_equal (struct Lisp_Color_Instance *c1,
 			  struct Lisp_Color_Instance *c2,
 			  int UNUSED (depth))
 {
+#ifdef HAVE_GTK2
     return (gdk_color_equal (COLOR_INSTANCE_GTK_COLOR (c1),
 			     COLOR_INSTANCE_GTK_COLOR (c2)));
+#else
+    return (gdk_rgba_equal (COLOR_INSTANCE_GTK_COLOR (c1),
+			    COLOR_INSTANCE_GTK_COLOR (c2)));
+#endif
 }
 
 static Hashcode
 gtk_color_instance_hash (struct Lisp_Color_Instance *c, int UNUSED (depth))
 {
+#ifdef HAVE_GTK2
     return (gdk_color_hash (COLOR_INSTANCE_GTK_COLOR (c)));
+#else
+    return gdk_rgba_hash (COLOR_INSTANCE_GTK_COLOR (c));
+#endif
 }
 
 static Lisp_Object
 gtk_color_instance_rgb_components (struct Lisp_Color_Instance *c)
 {
+#ifdef HAVE_GTK2
   GdkColor *color = COLOR_INSTANCE_GTK_COLOR (c);
   return (list3 (make_fixnum (color->red),
 		 make_fixnum (color->green),
 		 make_fixnum (color->blue)));
+#else
+  GdkRGBA *color = COLOR_INSTANCE_GTK_COLOR (c);
+  return (list4 (make_float (color->red),
+		 make_float (color->green),
+		 make_float (color->blue),
+		 make_float (color->alpha)));
+#endif
 }
 
 static int
 gtk_valid_color_name_p (struct device *UNUSED (d), Lisp_Object color)
 {
-  GdkColor c;
+  GDK_COLOR c;
   const char *extname;
 
   extname = LISP_STRING_TO_EXTERNAL (color, Qutf_8);
 
-  if (gdk_color_parse (extname, &c) != TRUE)
-      return(0);
-  return (1);
+#ifdef HAVE_GTK2
+  return gdk_color_parse (extname, &c);
+#else
+  return gdk_rgba_parse (&c, extname);
+#endif
 }
 
 static Lisp_Object
