@@ -1,5 +1,24 @@
 2014-11-24  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* console-xlike-inc.h: Use GdkRGBA instead of GdkColor for Gtk 3
+	* fontcolor-gtk-impl.h (g): Ditto.
+	* fontcolor-gtk.c (gtk_parse_nearest_color): Ditto.
+	(gtk_initialize_color_instance): Ditto.
+	(gtk_print_color_instance): Ditto.
+	(gtk_color_instance_equal): Ditto.
+	(gtk_color_instance_hash): Ditto.
+	(gtk_color_instance_rbg_components): Ditto.
+	(gtk_valid_color_name_p): Ditto.
+	* fontcolor-gtk.h: Ditto.
+	* frame-gtk.c (gtk_update_frame_external_traits): Ditto.
+	* glyphs-gtk.c (generate_cursor_fg_bg): Ditto.
+	(maybe_recolor_cursor): Ditto.
+	(pixbuf_from_xbm_inline): Ditto.
+	(init_image_instance_from_xbm_inline): Ditto.
+	(gtk_xpm_instantiate): Ditto.
+	* redisplay-gtk.c (XLIKE_clear_frame): Ditto.
+	(gtk_text_attributes): Ditto.
+
 	* device-gtk.c (Fgtk_init): Disable Ubuntu Unity titlebar menu.
 	Our menus don't work with it.
 

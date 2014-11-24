@@ -433,12 +433,19 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
 static void
 cr_set_foreground (cairo_t *cr, Lisp_Object color)
 {
+#ifdef HAVE_GTK2
   GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (color);
 
   cairo_set_source_rgb (cr,
 			(double) fg->red/65535,
 			(double) fg->green/65535,
 			(double) fg->blue/65535);
+#endif
+#ifdef HAVE_GTK3
+  GdkRGBA *fg = XCOLOR_INSTANCE_GTK_COLOR (color);
+
+  cairo_set_source_rgba (cr, fg->red, fg->green, fg->blue, fg->alpha);
+#endif
 }
 
 static void
@@ -465,9 +472,9 @@ static PangoAttrList *
 gtk_text_attributes (struct face_cachel *cachel)
 {
   PangoAttrList *attr_list = pango_attr_list_new ();
+#ifdef HAVE_GTK2
   GdkColor *fg = XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground);
   GdkColor *bg = XCOLOR_INSTANCE_GTK_COLOR (cachel->background);
-
   pango_attr_list_insert (attr_list,
                           pango_attr_foreground_new (fg->red,
                                                      fg->green,
@@ -477,6 +484,22 @@ gtk_text_attributes (struct face_cachel *cachel)
                             pango_attr_background_new (bg->red,
                                                        bg->green,
                                                        bg->blue));
+
+#endif
+#if HAVE_GTK3
+  GdkRGBA *fg = XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground);
+  GdkRGBA *bg = XCOLOR_INSTANCE_GTK_COLOR (cachel->background);
+
+  pango_attr_list_insert (attr_list,
+                          pango_attr_foreground_new (fg->red * 65535,
+                                                     fg->green * 65535,
+                                                     fg->blue * 65535));
+  if (bg)
+    pango_attr_list_insert (attr_list,
+                            pango_attr_background_new (bg->red * 65535,
+                                                       bg->green * 65535,
+                                                       bg->blue * 65535));
+#endif
   if (cachel->strikethru)
     pango_attr_list_insert (attr_list,
                             pango_attr_strikethrough_new (TRUE));

@@ -235,7 +235,11 @@ while (0)
 typedef void * XLIKE_DISPLAY;
 typedef GdkWindow * XLIKE_WINDOW;
 typedef GdkRectangle XLIKE_RECTANGLE;
+#ifdef HAVE_GTK2
 typedef GdkColor XLIKE_COLOR;
+#else
+typedef GdkRGBA XLIKE_COLOR;
+#endif
 typedef gulong   XLIKE_PIXEL;
 
 /* constants */
