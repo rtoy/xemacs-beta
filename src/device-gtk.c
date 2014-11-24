@@ -180,8 +180,10 @@ mode.
   make_argc_argv (args, &argc, &argv);
 
   slow_down_interrupts ();
-  /* Turn ubuntu overlay scrollbars off.  They don't have per-line scrolling. */
+  /* Turn Ubuntu overlay scrollbars off.  They don't have per-line scrolling. */
   setenv("LIBOVERLAY_SCROLLBAR", "0", 0);
+  /* Turn of Ubuntu Unity title bar menu.  We don't handle it properly. */
+  setenv("UBUNTU_MENUPROXY", "0", 0);
 
   gtk_init (&argc, &argv);
 
