@@ -1,3 +1,8 @@
+2014-11-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_update_frame_external_traits): Avoid deprecated
+	function in 3.X.
+
 2014-11-16  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-xemacs.c (gtk_xemacs_new): Missing a cast.
