@@ -1033,18 +1033,20 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 /* Deal with getting/setting the menubar */
 
 static gboolean
-run_menubar_hook (GtkWidget *widget, GdkEventButton *UNUSED (event),
+run_menubar_hook (GtkWidget *UNUSED (widget), GdkEventButton *UNUSED (event),
 		  gpointer UNUSED (user_data))
 {
 #ifdef HAVE_GTK2
   if (!GTK_MENU_SHELL(widget)->active)
     {
-      run_hook (Qactivate_menubar_hook);
+      run_hook_trapping_problems (Qmenubar, Qactivate_menubar_hook,
+				  INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
     }
 #endif
 #ifdef HAVE_GTK3
   /* Do we have to be worried about being active here? */
-  run_hook (Qactivate_menubar_hook);
+  run_hook_trapping_problems (Qmenubar, Qactivate_menubar_hook,
+			      INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 #endif
   return(FALSE);
 }

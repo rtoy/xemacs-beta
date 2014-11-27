@@ -1,3 +1,7 @@
+2014-11-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (run_menubar_hook): Use run_hook_trapping_problems.
+
 2014-11-24  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* console-xlike-inc.h: Use GdkRGBA instead of GdkColor for Gtk 3
