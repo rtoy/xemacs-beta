@@ -5371,7 +5371,7 @@ if test "$with_tls" != "no"; then
     fi
     gnutls_libs=`pkg-config --libs gnutls`
     if test "$?" = 0; then
-      XE_PREPEND("$gnutls_libs", LDFLAGS)
+      XE_APPEND("$gnutls_libs", LIBS)
     fi
     AC_CHECK_FUNC(gnutls_certificate_verification_status_print,
 	[AC_DEFINE(HAVE_GNUTLS_CERTIFICATE_VERIFICATION_STATUS_PRINT)])
@@ -5385,7 +5385,7 @@ if test "$with_tls" != "no"; then
     fi
     nss_libs=`pkg-config --libs nss`
     if test "$?" = 0; then
-      XE_PREPEND("$nss_libs", LDFLAGS)
+      XE_APPEND("$nss_libs", LIBS)
     fi
   else
     AC_DEFINE(HAVE_OPENSSL)
@@ -5395,7 +5395,7 @@ if test "$with_tls" != "no"; then
     fi
     openssl_libs=`pkg-config --libs openssl`
     if test "$?" = 0; then
-      XE_PREPEND("$openssl_libs", LDFLAGS)
+      XE_APPEND("$openssl_libs", LIBS)
     fi
     AC_CHECK_FUNC(X509_check_host, [AC_DEFINE(HAVE_X509_CHECK_HOST)])
   fi

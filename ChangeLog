@@ -1,3 +1,8 @@
+2014-11-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (HAVE_GNUTLS): Add SSL/TLS libraries to $LIBS, not
+	$LDFLAGS.
+
 2014-10-10  Marcus Crestani  <crestani@xemacs.org>
         
 	* configure.ac: Disable ASLR on Yosemite.
