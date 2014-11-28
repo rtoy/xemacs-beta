@@ -21327,7 +21327,7 @@ if test "$with_tls" != "no"; then
     fi
     gnutls_libs=`pkg-config --libs gnutls`
     if test "$?" = 0; then
-      LDFLAGS=""$gnutls_libs" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$gnutls_libs"\" to \$LDFLAGS"; fi
+      LIBS="$LIBS "$gnutls_libs"" &&  if test "$verbose" = "yes"; then echo "    Appending \""$gnutls_libs"\" to \$LIBS"; fi
     fi
     ac_fn_c_check_func "$LINENO" "gnutls_certificate_verification_status_print" "ac_cv_func_gnutls_certificate_verification_status_print"
 if test "x$ac_cv_func_gnutls_certificate_verification_status_print" = xyes; then :
@@ -21350,7 +21350,7 @@ fi
     fi
     nss_libs=`pkg-config --libs nss`
     if test "$?" = 0; then
-      LDFLAGS=""$nss_libs" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$nss_libs"\" to \$LDFLAGS"; fi
+      LIBS="$LIBS "$nss_libs"" &&  if test "$verbose" = "yes"; then echo "    Appending \""$nss_libs"\" to \$LIBS"; fi
     fi
   else
     $as_echo "#define HAVE_OPENSSL 1" >>confdefs.h
@@ -21361,7 +21361,7 @@ fi
     fi
     openssl_libs=`pkg-config --libs openssl`
     if test "$?" = 0; then
-      LDFLAGS=""$openssl_libs" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$openssl_libs"\" to \$LDFLAGS"; fi
+      LIBS="$LIBS "$openssl_libs"" &&  if test "$verbose" = "yes"; then echo "    Appending \""$openssl_libs"\" to \$LIBS"; fi
     fi
     ac_fn_c_check_func "$LINENO" "X509_check_host" "ac_cv_func_X509_check_host"
 if test "x$ac_cv_func_X509_check_host" = xyes; then :
