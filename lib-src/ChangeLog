@@ -1,3 +1,8 @@
+2014-12-05  Jerry James  <james@xemacs.org>
+
+	* pop.c (socket_connection): Do not leak a socket if the POP
+	server's address cannot be determined.
+
 2014-10-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* ootags.c (substitute):
