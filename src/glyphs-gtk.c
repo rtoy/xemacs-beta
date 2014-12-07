@@ -1158,9 +1158,9 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
   GdkPixbuf *mask = 0;
   const Extbyte *gcc_may_you_rot_in_hell;
   GDK_COLOR black;
-  GDK_COLOR  white;
+  GDK_COLOR white;
 
-#ifdef HAVE_GTK
+#ifdef HAVE_GTK2
   gdk_color_parse ("black", &black);
   gdk_color_parse ("white", &white);
 #else
@@ -2082,6 +2082,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 	}
 
       gtk_widget_map (wid);
+      gtk_widget_show_all (wid);
       gtk_widget_queue_draw (wid);
     }
 }
