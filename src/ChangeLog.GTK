@@ -1,3 +1,8 @@
+2014-12-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_bevel_area): Use gtk_render_frame instead
+	of gtk_paint_shadow for Gtk.3.0
+
 2014-12-06  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* toolbar-gtk.c (gtk_output_toolbar): Use new 3.10+ API to make
