@@ -139,8 +139,7 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
   GdkWindow *x_win = gtk_widget_get_window (FRAME_GTK_TEXT_WIDGET (f));
 #endif
 #ifdef HAVE_GTK3
-  GtkStyle *gstyle = gtk_widget_get_style (widget);
-  /* GtkStyleContext *gstyle = gtk_widget_get_style_context (widget); */
+  GtkStyleContext *gstyle = gtk_widget_get_style_context (widget);
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
 #endif
   GtkShadowType stype;
@@ -165,13 +164,8 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
 		    x, y, width, height);
 #endif
 #ifdef HAVE_GTK3
-  /* This is already deprecated in Gtk 3 in favour of
-     gtk_render_frame(), which requires CSS settings to control */
-  gtk_paint_shadow (gstyle, cr, GTK_STATE_NORMAL, stype, widget,
-		    "modeline", x, y, width, height);
-#if 0
-  gtk_render_frame (gstyle, cr, ...);
-#endif
+  /* Should the edges be 0.0 and 1.0? Need to get shadows enabled to test. */
+  gtk_render_frame (gstyle, cr, x*1.0, y*1.0, width*1.0, height*1.0);
 #endif
 }
 
