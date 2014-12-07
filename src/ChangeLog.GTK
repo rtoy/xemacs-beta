@@ -1,3 +1,12 @@
+2014-12-06  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Use new 3.10+ API to make
+	toolbar buttons.
+	(init_gtk_toolbar_stock_icons): Stock icons are now obsolete.  Use
+	the standard icon set names instead.
+
+	* glyphs-gtk.c (xbm_instantiate_1): Meant HAVE_GTK2.
+
 2014-11-27  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (run_menubar_hook): Use run_hook_trapping_problems.
