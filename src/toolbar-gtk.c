@@ -189,14 +189,20 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 	      GtkWidget *pixmapwid;
 	      GdkPixbuf *pixmap;
 
-              /* Map toolbar actions to Gtk stock icons.  This mapping should be
-                 done in lisp.   Perhaps using a hashtable. */
-              stock_icon = Fgethash (tb->callback, Vgtk_toolbar_stock_icons, Qnil);
+              /* Map toolbar actions to Gtk stock icons. */
+              stock_icon = Fgethash (tb->callback, Vgtk_toolbar_stock_icons,
+				     Qnil);
               if (!NILP (stock_icon))
                 {
                   CHECK_STRING (stock_icon);
-                  item = gtk_tool_button_new_from_stock (LISP_STRING_TO_EXTERNAL (stock_icon,
-                                                                                  Qfile_name));
+#if GTK_CHECK_VERSION(3, 10, 0)
+		  item = gtk_tool_button_new (NULL,
+					      LISP_STRING_TO_EXTERNAL (stock_icon,
+								       Qfile_name));
+		  /* gtk_tool_button_set_icon_name */
+#else
+		  item = gtk_tool_button_new_from_stock (LISP_STRING_TO_EXTERNAL (stock_icon, Qfile_name));
+#endif
                 }
               if (item == NULL)
                 {
@@ -263,6 +269,22 @@ init_gtk_toolbar_stock_icons()
   Vgtk_toolbar_stock_icons = call0 (intern ("make-hash-table"));
   tbl = Vgtk_toolbar_stock_icons;
 
+#if GTK_CHECK_VERSION(3, 10, 0)
+  Fputhash (intern ("toolbar-open"), build_ascstring ("_Open"),  tbl);
+  /* No standard icon in 3.14.. */
+  Fputhash (intern ("toolbar-dired"), build_ascstring ("_Hard Disk"),  tbl);
+  Fputhash (intern ("toolbar-save"), build_ascstring ("_Save"),  tbl);
+  Fputhash (intern ("toolbar-print"), build_ascstring ("_Print"),  tbl);
+  Fputhash (intern ("toolbar-cut"), build_ascstring ("Cu_t"),  tbl);
+  Fputhash (intern ("toolbar-copy"), build_ascstring ("_Copy"),  tbl);
+  Fputhash (intern ("toolbar-paste"), build_ascstring ("_Paste"),  tbl);
+  Fputhash (intern ("toolbar-ispell"), build_ascstring ("_Spell Check"),  tbl);
+  Fputhash (intern ("toolbar-info"), build_ascstring ("_Information"),  tbl);
+  Fputhash (intern ("toolbar-replace"), build_ascstring ("Find and _Replace"),
+	    tbl);
+  Fputhash (intern ("toolbar-compile"), build_ascstring ("_Execute"),  tbl);
+  Fputhash (intern ("toolbar-undo"), build_ascstring ("_Undo"),  tbl);
+#else
   Fputhash (intern ("toolbar-open"), build_ascstring (GTK_STOCK_OPEN),  tbl);
   Fputhash (intern ("toolbar-dired"), build_ascstring (GTK_STOCK_DIRECTORY),  tbl);
   Fputhash (intern ("toolbar-save"), build_ascstring (GTK_STOCK_SAVE),  tbl);
@@ -275,7 +297,7 @@ init_gtk_toolbar_stock_icons()
   Fputhash (intern ("toolbar-replace"), build_ascstring (GTK_STOCK_FIND_AND_REPLACE),  tbl);
   Fputhash (intern ("toolbar-compile"), build_ascstring (GTK_STOCK_EXECUTE),  tbl);
   Fputhash (intern ("toolbar-undo"), build_ascstring (GTK_STOCK_UNDO),  tbl);
-
+#endif
 }
 
 
