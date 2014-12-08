@@ -269,7 +269,7 @@ use `\(fc-pattern-get PATTERN "charset")'.
   {
     FcPattern* temp = FcPatternDuplicate (XFC_PATTERN_PTR (pattern));
     FcPatternDel (temp, FC_CHARSET);
-    name = FcNameUnparse (XFC_PATTERN_PTR (pattern));
+    name = FcNameUnparse (temp);
     FcPatternDestroy (temp);
   }
   result = build_fcapi_string (name);

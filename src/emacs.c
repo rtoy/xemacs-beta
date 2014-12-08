@@ -1606,7 +1606,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_scrollbar ();
 #endif
       syms_of_text ();
+#ifdef WITH_TLS
       syms_of_tls ();
+#endif
 #ifdef HAVE_TOOLBARS
       syms_of_toolbar ();
 #endif
@@ -2218,7 +2220,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_symbols ();
       vars_of_syntax ();
       vars_of_text ();
+#ifdef WITH_TLS
       vars_of_tls ();
+#endif
 #ifdef HAVE_TOOLBARS
       vars_of_toolbar ();
 #endif
@@ -2687,8 +2691,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   init_device_tty ();
 #endif
   init_console_stream (restart); /* Create the first console */
+#ifdef WITH_TLS
   if (initialized && !restart)
     init_tls ();
+#endif
 
   /* try to get the actual pathname of the exec file we are running */
   if (!restart)
