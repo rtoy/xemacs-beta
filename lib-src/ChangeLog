@@ -1,5 +1,10 @@
 2014-12-05  Jerry James  <james@xemacs.org>
 
+	* gnuserv.c (echo_request): close the socket when done
+	(handle_unix_request): do not call echo_request on accept failure
+
+2014-12-05  Jerry James  <james@xemacs.org>
+
 	* pop.c (socket_connection): Do not leak a socket if the POP
 	server's address cannot be determined.
 

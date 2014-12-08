@@ -321,6 +321,7 @@ echo_request (int s)
     exit(1);
   } /* if */
 
+  close(s);
 } /* echo_request */
 
 
@@ -858,6 +859,7 @@ handle_unix_request (int ls)
     {
       perror(progname);
       fprintf(stderr,"%s: unable to accept\n",progname);
+      return;
     } /* if */
 
   echo_request(s);
