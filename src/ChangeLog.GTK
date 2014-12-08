@@ -1,3 +1,8 @@
+2014-12-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_widget_add_css_style): Define.
+	* fontcolor-gtk.h: Define.
+
 2014-12-07  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_bevel_area): Use gtk_render_frame instead

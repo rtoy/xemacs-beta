@@ -651,3 +651,29 @@ __get_gtk_font_truename (PangoFont *pf, int UNUSED (expandp))
   g_free (name);
   return font_name;
 }
+
+#ifdef HAVE_GTK2
+void
+gtk_add_css_style(GtkWidget *UNUSED (widget), char *UNUSED (css));
+{
+  /* No CSS support in Gtk 2.X */
+}
+#endif
+
+#ifdef HAVE_GTK3
+void
+gtk_widget_add_css_style(GtkWidget *widget, gchar *css)
+{
+  GtkStyleContext *style = gtk_widget_get_style_context (widget);
+  GtkCssProvider *css_prov = gtk_css_provider_new ();
+  GError *error;
+
+  gtk_css_provider_load_from_data (css_prov, css, -1, &error);
+
+  if (error != NULL)
+    gtk_style_context_add_provider (style,
+				    GTK_STYLE_PROVIDER (css_prov),
+				    GTK_STYLE_PROVIDER_PRIORITY_FALLBACK);
+  g_object_unref (css_prov);
+}
+#endif
