@@ -523,9 +523,9 @@ For other types variables, the effect is undefined."
 (defun custom-add-package-version (symbol version)
   "To the custom option SYMBOL add the package version VERSION."
   (unless (and (consp version)
-	       (stringp (car version))
+	       (symbolp (car version))
 	       (stringp (cdr version)))
-        (error "Invalid package version `%s'" value))
+        (error "Invalid package version `%s'" version))
   (put symbol 'custom-package-version version))
 
 (defun custom-add-load (symbol load)
