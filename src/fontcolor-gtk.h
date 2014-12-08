@@ -45,5 +45,8 @@ int gtk_parse_nearest_color (struct device *d, GDK_COLOR *color,
  Font-Instance
  ****************************************************************************/
 
+/* Add CSS style info at fallback priority. No-op in Gtk 2.0*/
+void
+gtk_widget_add_css_style(GtkWidget *widget, gchar *css);
 #endif /* HAVE_GTK */
 #endif /* _XEMACS_OBJECTS_GTK_H_ */
