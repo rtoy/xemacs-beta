@@ -1,5 +1,10 @@
 2014-12-13  Marcus Crestani  <crestani@xemacs.org>
 
+	* dumper.c (pdump_align_stream):
+	* dumper.c (pdump): Check return value of fseek.
+
+2014-12-13  Marcus Crestani  <crestani@xemacs.org>
+
 	* dumper.c (pdump_file_get): Check return value of lseek.
 
 2014-12-13  Marcus Crestani  <crestani@xemacs.org>
