@@ -2135,7 +2135,7 @@ pdump (void)
     report_file_error ("Unable to open dump file",
 		       build_ascstring (EMACS_PROGNAME ".dmp"));
   pdump_out = fdopen (pdump_fd, "w");
-  if (pdump_out < 0)
+  if (pdump_out == NULL)
     report_file_error ("Unable to open dump file for writing",
 		       build_ascstring (EMACS_PROGNAME ".dmp"));
 

@@ -1,3 +1,7 @@
+2014-12-13  Marcus Crestani  <crestani@xemacs.org>
+
+	* dumper.c (pdump): fdopen returns NULL when it fails.
+
 2014-12-05  Jerry James  <james@xemacs.org>
 
 	* src/fileio.c (Ffile_truename): Fix off-by-one error.
