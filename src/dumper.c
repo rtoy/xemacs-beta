@@ -2553,7 +2553,11 @@ pdump_file_get (const Wexttext *path)
       return 0;
     }
 
-  lseek (fd, 0, SEEK_SET);
+  if (lseek (fd, 0, SEEK_SET) == -1)
+    {
+      retry_close (fd);
+      return 0;
+    }
 
 #ifdef HAVE_MMAP
 /* Unix 98 requires that sys/mman.h define MAP_FAILED,
