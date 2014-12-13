@@ -850,6 +850,8 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	  {
 	    pdump_cv_ptr_info info;
 	    info.object = *(void **)rdata;
+	    info.index = 0;
+	    info.save_offset = 0;
 	    info.fcts = desc1->data2.funcs;
 	    if (!pdump_find_in_cv_ptr_dynarr (info.object))
 	      {
@@ -863,6 +865,8 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	    pdump_cv_data_info info;
 	    info.object = data;
 	    info.offset = offset;
+	    info.dest_offset = 0;
+	    info.save_offset = 0;
 	    info.fcts = desc1->data2.funcs;
 
 	    info.fcts->convert(rdata, &info.data, &info.size);

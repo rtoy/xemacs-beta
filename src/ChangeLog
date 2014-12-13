@@ -1,5 +1,9 @@
 2014-12-13  Marcus Crestani  <crestani@xemacs.org>
 
+	* dumper.c (pdump_register_sub): Don't leave fields uninitialized.
+
+2014-12-13  Marcus Crestani  <crestani@xemacs.org>
+
 	* dumper.c (pdump_align_stream):
 	* dumper.c (pdump): Check return value of fseek.
 
