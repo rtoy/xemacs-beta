@@ -206,7 +206,13 @@ pdump_align_stream (FILE *stream, Bytecount alignment)
   OFF_T offset = FTELL (stream);
   OFF_T adjustment = ALIGN_SIZE (offset, alignment) - offset;
   if (adjustment)
-    FSEEK (stream, adjustment, SEEK_CUR);
+    {
+      if (FSEEK (stream, adjustment, SEEK_CUR) == -1)
+	{
+	  report_file_error ("Unable to fseek dump file",
+			     build_ascstring (EMACS_PROGNAME ".dmp"));
+	}
+    }
 }
 
 #define PDUMP_ALIGN_OUTPUT(type) pdump_align_stream (pdump_out, ALIGNOF (type))
@@ -2168,7 +2174,11 @@ pdump (void)
 	elt->fcts->convert_free(elt->object, elt->data, elt->size);
     }
 
-  FSEEK (pdump_out, header.stab_offset, SEEK_SET);
+  if (FSEEK (pdump_out, header.stab_offset, SEEK_SET) == -1)
+    {
+      report_file_error ("Unable to fseek dump file",
+			 build_ascstring (EMACS_PROGNAME ".dmp"));
+    }
 
 #ifdef NEW_GC
   {
