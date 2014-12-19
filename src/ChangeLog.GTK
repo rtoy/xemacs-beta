@@ -1,3 +1,13 @@
+2014-12-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_clear_toolbar): Make static.
+	(gtk_clear_frame_toolbars): Ditto.
+	(gtk_output_frame_toolbars): Ditto.
+	(init_gtk_toolbar_stock_icons): Make static. Change to use default
+	icon theme names for 3.10+.
+	(gtk_output_toolbar): Free previous toolbar. Set icon name for
+	3.10+ icon themes.  Move variables to shorten code layout.
+
 2014-12-08  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* fontcolor-gtk.c (gtk_widget_add_css_style): Define.
