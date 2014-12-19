@@ -69,7 +69,7 @@ gtk_toolbar_callback (GtkWidget *UNUSED (w), gpointer user_data)
   call0 (tb->callback);
 }
 
-void
+static void
 gtk_clear_toolbar (struct frame *f, enum edge_pos pos)
 {
   FRAME_GTK_TOOLBAR_CHECKSUM (f, pos) = 0;
@@ -79,7 +79,7 @@ gtk_clear_toolbar (struct frame *f, enum edge_pos pos)
   FRAME_GTK_TOOLBAR_WIDGET(f)[pos] = NULL;
 }
 
-void
+static void
 gtk_clear_frame_toolbars (struct frame *f)
 {
   enum edge_pos pos;
@@ -136,7 +136,7 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
      function to use as a callback. */
 
   {
-    /* gtk_clear_toolbar (f, pos); */
+    gtk_clear_toolbar (f, pos);
     FRAME_GTK_TOOLBAR_WIDGET (f)[pos] = toolbar = GTK_TOOLBAR (gtk_toolbar_new ());
     gtk_widget_set_name (GTK_WIDGET (toolbar), "toolbar");
 
@@ -152,9 +152,11 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
   }
 
   /* if (NILP (w->toolbar_buttons_captioned_p)) */
+  /*   gtk_toolbar_set_style (toolbar, GTK_TOOLBAR_ICONS); */
+  /* else */
+  /*   gtk_toolbar_set_style (toolbar, GTK_TOOLBAR_BOTH); */
+
   gtk_toolbar_set_style (toolbar, GTK_TOOLBAR_ICONS);
-  /*  else
-      gtk_toolbar_set_style (toolbar, GTK_TOOLBAR_BOTH); */
 
   FRAME_GTK_TOOLBAR_CHECKSUM(f, pos) = checksum;
   button = FRAME_TOOLBAR_BUTTONS (f, pos);
@@ -186,28 +188,30 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 	  if (IMAGE_INSTANCEP(instance))
 	    {
               GtkToolItem *item  = NULL;
-	      GtkWidget *pixmapwid;
-	      GdkPixbuf *pixmap;
 
               /* Map toolbar actions to Gtk stock icons. */
               stock_icon = Fgethash (tb->callback, Vgtk_toolbar_stock_icons,
 				     Qnil);
               if (!NILP (stock_icon))
                 {
+		  char *icon_name;
                   CHECK_STRING (stock_icon);
+		  icon_name = LISP_STRING_TO_EXTERNAL (stock_icon, Qfile_name);
 #if GTK_CHECK_VERSION(3, 10, 0)
-		  item = gtk_tool_button_new (NULL,
-					      LISP_STRING_TO_EXTERNAL (stock_icon,
-								       Qfile_name));
-		  /* gtk_tool_button_set_icon_name */
+		  item = gtk_tool_button_new (NULL, icon_name);
 #else
-		  item = gtk_tool_button_new_from_stock (LISP_STRING_TO_EXTERNAL (stock_icon, Qfile_name));
+		  item = gtk_tool_button_new_from_stock (icon_name);
+#endif
+#if GTK_CHECK_VERSION(2, 8, 0)
+		  if (item != NULL)
+		    gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (item),
+						   icon_name);
 #endif
                 }
               if (item == NULL)
                 {
-                  pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
-                  pixmapwid = gtk_image_new_from_pixbuf (pixmap);
+                  GdkPixbuf *pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
+                  GtkWidget *pixmapwid = gtk_image_new_from_pixbuf (pixmap);
                   item = gtk_tool_button_new (pixmapwid, "");
                 }
 
@@ -227,8 +231,10 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
   SET_TOOLBAR_WAS_VISIBLE_FLAG (f, pos, 1);
 
   /* Are these border widths? */
+  /*
   x -= vert ? 3 : 2;
   y -= vert ? 2 : 3;
+  */
 
   gtk_widget_set_size_request (GTK_WIDGET (toolbar), bar_width, bar_height);
 
@@ -250,7 +256,7 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
     }
 }
 
-void
+static void
 gtk_output_frame_toolbars (struct frame *f)
 {
   enum edge_pos pos;
@@ -262,7 +268,7 @@ gtk_output_frame_toolbars (struct frame *f)
     }
 }
 
-void
+static void
 init_gtk_toolbar_stock_icons()
 {
   Lisp_Object tbl;
@@ -270,20 +276,22 @@ init_gtk_toolbar_stock_icons()
   tbl = Vgtk_toolbar_stock_icons;
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-  Fputhash (intern ("toolbar-open"), build_ascstring ("_Open"),  tbl);
+  Fputhash (intern ("toolbar-open"), build_ascstring ("document-open"),  tbl);
   /* No standard icon in 3.14.. */
-  Fputhash (intern ("toolbar-dired"), build_ascstring ("_Hard Disk"),  tbl);
-  Fputhash (intern ("toolbar-save"), build_ascstring ("_Save"),  tbl);
-  Fputhash (intern ("toolbar-print"), build_ascstring ("_Print"),  tbl);
-  Fputhash (intern ("toolbar-cut"), build_ascstring ("Cu_t"),  tbl);
-  Fputhash (intern ("toolbar-copy"), build_ascstring ("_Copy"),  tbl);
-  Fputhash (intern ("toolbar-paste"), build_ascstring ("_Paste"),  tbl);
-  Fputhash (intern ("toolbar-ispell"), build_ascstring ("_Spell Check"),  tbl);
-  Fputhash (intern ("toolbar-info"), build_ascstring ("_Information"),  tbl);
-  Fputhash (intern ("toolbar-replace"), build_ascstring ("Find and _Replace"),
+  Fputhash (intern ("toolbar-dired"), build_ascstring ("view-list-details"),
 	    tbl);
-  Fputhash (intern ("toolbar-compile"), build_ascstring ("_Execute"),  tbl);
-  Fputhash (intern ("toolbar-undo"), build_ascstring ("_Undo"),  tbl);
+  Fputhash (intern ("toolbar-save"), build_ascstring ("document-save"),  tbl);
+  Fputhash (intern ("toolbar-print"), build_ascstring ("document-print"),  tbl);
+  Fputhash (intern ("toolbar-cut"), build_ascstring ("edit-cut"),  tbl);
+  Fputhash (intern ("toolbar-copy"), build_ascstring ("edit-copy"),  tbl);
+  Fputhash (intern ("toolbar-paste"), build_ascstring ("edit-paste"),  tbl);
+  Fputhash (intern ("toolbar-ispell"), build_ascstring ("tools-check-spelling"),  tbl);
+  Fputhash (intern ("toolbar-info"), build_ascstring ("help-about"),  tbl);
+  Fputhash (intern ("toolbar-replace"), build_ascstring ("edit-find"), tbl);
+  Fputhash (intern ("toolbar-compile"), build_ascstring ("run-build"),  tbl);
+  Fputhash (intern ("toolbar-undo"), build_ascstring ("edit-undo"),  tbl);
+  Fputhash (intern ("toolbar-debug"), build_ascstring ("debug-run"), tbl);
+  Fputhash (intern ("toolbar-mail"), build_ascstring ("mail-receive"), tbl);
 #else
   Fputhash (intern ("toolbar-open"), build_ascstring (GTK_STOCK_OPEN),  tbl);
   Fputhash (intern ("toolbar-dired"), build_ascstring (GTK_STOCK_DIRECTORY),  tbl);
