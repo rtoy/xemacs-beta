@@ -2929,10 +2929,6 @@ if test "${GTK_CONFIG}" != "no"; then
       XE_APPEND(${GTK_CFLAGS}, c_switch_gtk)
       AC_MSG_RESULT(${GTK_CFLAGS})
 
-      AC_CHECK_LIB(gdk_imlib, main, XE_PREPEND(-lgdk_imlib, libs_gtk))
-      AC_CHECK_LIB(Imlib, Imlib_init, XE_APPEND(-lImlib, libs_gtk))
-      AC_CHECK_FUNCS(gdk_imlib_init)
-
       AC_SUBST(GTK_CONFIG)
 
       window_system=gtk

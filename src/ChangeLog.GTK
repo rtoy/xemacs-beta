@@ -1,3 +1,8 @@
+2014-12-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_init_device): Remove call to obsolete
+	gdk_imlib_init.
+
 2014-12-19  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* toolbar-gtk.c (gtk_clear_toolbar): Make static.
