@@ -142,10 +142,6 @@ gtk_init_device_class (struct device *d)
     DEVICE_CLASS (d) = Qmono;
 }
 
-#ifdef HAVE_GDK_IMLIB_INIT
-extern void gdk_imlib_init(void);
-#endif
-
 extern void emacs_gtk_selection_handle (GtkWidget *,
 					GtkSelectionData *selection_data,
 					guint info,
@@ -255,14 +251,6 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 
 #ifdef __FreeBSD__
   gdk_set_use_xshm (FALSE);
-#endif
-
-#ifdef HAVE_GDK_IMLIB_INIT
-  /* Some themes in Gtk are so lame (most notably the Pixmap theme)
-     that they rely on gdk_imlib, but don't call its initialization
-     routines.  This makes them USELESS for non-gnome applications.
-     So we bend over backwards to try and make them work.  Losers. */
-  gdk_imlib_init ();
 #endif
 
   if (NILP (DEVICE_NAME (d)))
