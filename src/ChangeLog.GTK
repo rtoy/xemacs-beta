@@ -1,3 +1,8 @@
+2014-12-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_convert): Set first time tag on parent item
+	as well.
+
 2014-12-22  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-xemacs.c (gtk_xemacs_size_request): Don't add the scrollbar

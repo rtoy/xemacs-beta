@@ -395,6 +395,8 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	  gtk_widget_destroy (GTK_WIDGET (gtk_menu_item_get_submenu (GTK_MENU_ITEM (menu_item))));
 	}
 
+      g_object_set_qdata (G_OBJECT (menu_item), XEMACS_MENU_FIRSTTIME_TAG,
+			  (gpointer) 0x01);
       gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_item), submenu);
 
       /* We put this bogus menu item in so that GTK does the right
