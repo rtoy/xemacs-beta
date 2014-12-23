@@ -1,3 +1,10 @@
+2014-12-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_size_request): Don't add the scrollbar
+	width here, it was a mistake.
+	(gtk_xemacs_size_allocate): Call the parent class function to do
+	the allocation.  This is okay now since all children are widgets.
+
 2014-12-20  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* device-gtk.c (gtk_init_device): Remove call to obsolete

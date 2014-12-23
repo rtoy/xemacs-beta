@@ -304,10 +304,7 @@ gtk_xemacs_size_request (GtkWidget *widget, GtkRequisition *requisition)
       {
 	frame_unit_to_pixel_size (f, FRAME_WIDTH (f), FRAME_HEIGHT (f),
 				  &width, &height);
-	/* The scrollbar width has to be included somewhere. If not,
-	   the frame resizes smaller when the font is changed to a
-	   larger size. */
-	requisition->width = width + 10;
+	requisition->width = width;
 	requisition->height = height;
       }
     else
@@ -350,72 +347,18 @@ gtk_xemacs_get_preferred_width (GtkWidget *widget,
 }
 #endif
 
-
-/* Assign a size and position to the child widgets.  This differs from the
-   super class method in that for all widgets except the scrollbars the size
-   and position are not caclulated here.  This is because these widgets have
-   this function performed for them by the redisplay code (see
-   gtk_map_subwindow()). If the superclass method is called then the widgets
-   can change size and position as the two pieces of code move the widgets at
-   random.
-*/
 static void
 gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
 {
     GtkXEmacs *x = GTK_XEMACS (widget);
-    GtkFixed *fixed = GTK_FIXED (widget);
     struct frame *f = GTK_XEMACS_FRAME (x);
     int columns, rows;
-    GList *children;
-    guint16 border_width;
 
-#ifdef HAVE_GTK2
-    widget->allocation = *allocation;
-#endif
-#ifdef HAVE_GTK3
-    gtk_widget_set_allocation (widget, allocation);
-#endif
-    if (gtk_widget_get_realized (widget))
-      gdk_window_move_resize (gtk_widget_get_window (widget),
-			      allocation->x,
-			      allocation->y,
-			      allocation->width,
-			      allocation->height);
-
-    border_width = gtk_container_get_border_width (GTK_CONTAINER (fixed));
-
-    children = gtk_container_get_children (GTK_CONTAINER (fixed));
-    while (children)
-      {
-	GtkFixedChild* child = (GtkFixedChild*) children->data;
-	children = children->next;
-
-	/*
-	  Scrollbars are the only widget that is managed by GTK.  See
-	  comments in gtk_create_scrollbar_instance().
-	*/
-	if (GTK_IS_SCROLLBAR (child->widget)
-	    && gtk_widget_get_visible (child->widget))
-	  {
-	    GtkAllocation child_allocation;
-	    GtkRequisition child_requisition;
-
-#ifdef HAVE_GTK2
-	    gtk_widget_get_child_requisition (child->widget,
-					      &child_requisition);
-#endif
-#ifdef HAVE_GTK3
-	    GtkRequisition minimum_size;
-	    gtk_widget_get_preferred_size (child->widget, &minimum_size,
-					   &child_requisition);
-#endif
-	    child_allocation.x = child->x + border_width;
-	    child_allocation.y = child->y + border_width;
-	    child_allocation.width = child_requisition.width;
-	    child_allocation.height = child_requisition.height;
-	    gtk_widget_size_allocate (child->widget, &child_allocation);
-	  }
-      }
+    /* Now that the toolbar is a widget, all of the children are
+       widgets.  This means that the standard size allocation function
+       is appropriate, no need for custom.  This fixes visibility of
+       both toolbar and scrollbars. */
+    GTK_WIDGET_CLASS (parent_class)->size_allocate (widget, allocation);
 
     if (f)
       {
