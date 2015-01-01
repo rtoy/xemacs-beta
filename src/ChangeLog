@@ -403,6 +403,11 @@
 	(with some extensions, to allow us to support non ASCII digit
 	characters).
 
+2015-01-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar.c (update_frame_toolbars_geometry): Only clear the
+	frame's toolbar if the frame size has changed.
+
 2015-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix progress bar crashes.

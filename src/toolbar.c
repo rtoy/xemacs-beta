@@ -798,13 +798,12 @@ update_frame_toolbars_geometry (struct frame *f)
 				   &width, &height);
 	  internal_set_frame_size (f, width, height, 0);
 	  MARK_FRAME_LAYOUT_CHANGED (f);
-	}
-      
-      /* Clear the previous toolbar locations. If we do it later
-	 (after redisplay) we end up clearing what we have just
-	 displayed. */
-      MAYBE_DEVMETH (d, clear_frame_toolbars, (f));
 
+          /* Clear the previous toolbar locations. If we do it later
+             (after redisplay) we end up clearing what we have just
+             displayed. */
+          MAYBE_DEVMETH (d, clear_frame_toolbars, (f));
+	}
     }
 }
 
