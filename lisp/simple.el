@@ -2441,7 +2441,7 @@ Use with care, as it slows down movement significantly.  Outline mode sets this.
 
 ;; This is the guts of next-line and previous-line.
 ;; Count says how many lines to move.
-(defun line-move (count)
+(defun line-move (count &optional noerror)
   ;; Don't run any point-motion hooks, and disregard intangibility,
   ;; for intermediate positions.
   (let ((inhibit-point-motion-hooks t)
@@ -2470,14 +2470,16 @@ Use with care, as it slows down movement significantly.  Outline mode sets this.
 			     (zerop (forward-line 1)))
 		    (and (zerop (forward-line count))
 			 (bolp)))
-		  (signal (if (< count 0)
-			      'beginning-of-buffer
-			    'end-of-buffer)
-			  nil))
+		  (if (not noerror)
+		      (signal (if (< count 0)
+				  'beginning-of-buffer
+				'end-of-buffer)
+			      nil)))
 	    ;; Move by count lines, but ignore invisible ones.
 	    (while (> count 0)
 	      (end-of-line)
 	      (and (zerop (vertical-motion 1))
+		   (not noerror)
 		   (signal 'end-of-buffer nil))
 	      ;; If the following character is currently invisible,
 	      ;; skip all characters with that same `invisible' property value.
@@ -2495,6 +2497,7 @@ Use with care, as it slows down movement significantly.  Outline mode sets this.
 	    (while (< count 0)
 	      (beginning-of-line)
 	      (and (zerop (vertical-motion -1))
+		   (not noerror)
 		   (signal 'beginning-of-buffer nil))
 	      (while (and (not (bobp))
 			  (let ((prop

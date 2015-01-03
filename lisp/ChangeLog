@@ -1,3 +1,8 @@
+2014-12-31  Michael Sperber  <mike@xemacs.org>
+
+	* simple.el (line-move): Add `noerror' optional argument, as in
+	GNU Emacs.
+
 2014-11-10  Michael Sperber  <mike@xemacs.org>
 
 	* custom.el (custom-add-package-version): The car of a
