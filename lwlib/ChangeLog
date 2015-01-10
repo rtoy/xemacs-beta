@@ -1,3 +1,11 @@
+2015-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix progress bar crashes.
+	Thanks to Ralf Soergel for diagnosis and a patch.
+
+	* xt-wrappers.h (HAVE_ATHENA_I18N):
+	Define XAW_INTERNATIONALIZATION when needed.
+
 2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.34 "kale" is released.

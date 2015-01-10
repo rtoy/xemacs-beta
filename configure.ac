@@ -4053,6 +4053,35 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
   dnl Do we actually have a usable Athena widget set? Please?
   if test -n "$athena_lib" -a -n "$athena_h_path"; then
     have_xaw=yes
+    have_athena_i18n=unset
+    dnl   X.org at some point added .international to SimplePart, protected
+    dnl by #ifdef XAW_INTERNATIONALIZATION in Xaw3d (only?).  Unfortunately,
+    dnl the distributed headers for Xaw3d don't set this to correspond to
+    dnl the distributed library.  (pkg-config does, if present.)
+    if test "$athena_variant" = "Xaw3d"; then
+      save_libs_x=$libs_x
+      XE_PREPEND(-lXaw3d, libs_x)
+      dnl The test below was provided by Ralf Soergel.
+      AC_MSG_CHECKING([for "international" resource in Xaw3d SimpleWidget])
+      AC_RUN_IFELSE(
+      [AC_LANG_PROGRAM(
+       [#include <stdlib.h>
+        #include <string.h>
+        #undef XAW_INTERNATIONALIZATION
+        #include <$athena_h_path/Simple.h>
+       ],
+       [[int i = simpleWidgetClass->core_class.num_resources;
+         while (i-- > 0)
+           if (!strcmp(simpleWidgetClass->core_class.resources[i].resource_name,
+                       "international"))
+             exit(0);
+         exit(253);
+       ]])],
+      [have_athena_i18n=yes],
+      [have_athena_i18n=no])
+      libs_x=$save_libs_x
+      AC_MSG_RESULT([$have_athena_i18n])
+    fi
   else
     have_xaw=no
   fi
@@ -4185,9 +4214,11 @@ case "$all_widgets" in
     AC_DEFINE(LWLIB_USES_ATHENA)
     AC_DEFINE(NEED_ATHENA)
     need_athena="yes"
-
     if test "$athena_3d" = "yes"; then
       AC_DEFINE(HAVE_ATHENA_3D)
+      if test "$have_athena_i18n" = "yes"; then
+        AC_DEFINE(HAVE_ATHENA_I18N)
+      fi
     fi
   ;;
 esac

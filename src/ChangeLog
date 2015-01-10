@@ -1,3 +1,10 @@
+2015-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix progress bar crashes.
+	Thanks to Ralf Soergel for diagnosis and a patch.
+
+	* config.h.in (HAVE_ATHENA_I18N): New #define.
+
 2014-12-13  Marcus Crestani  <crestani@xemacs.org>
 
 	* dumper.c (pdump_register_sub): Don't leave fields uninitialized.
