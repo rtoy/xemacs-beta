@@ -6039,7 +6039,7 @@ test "$with_ldap" = yes && echo "  Compiling in support for LDAP."
 if test "$with_postgresql" = yes; then
   echo "  Compiling in support for PostgreSQL."
   echo "    - Using PostgreSQL header file:  $libpq_fe_h_file"
-  test "$with_postgresqlv7" = yes && echo "    - Using PostgreSQL V7 bindings."
+  test "$with_postgresqlv7" = yes && echo "    - Using PostgreSQL V7+ bindings."
 fi
 
 echo "
