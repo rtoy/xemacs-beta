@@ -1,3 +1,12 @@
+2015-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix progress bar crashes.
+	Thanks to Ralf Soergel for diagnosis and a patch.
+
+	* configure.ac (Athena widgets):
+	Test for "international" resource in SimpleWidgetClass in libXaw3d.
+	* configure: Rebuild.
+
 2014-11-09  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac (HAVE_GNUTLS): Add SSL/TLS libraries to $LIBS, not
