@@ -1,3 +1,8 @@
+2015-01-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Scale the pixmap if
+	requested.
+
 2014-12-23  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* menubar-gtk.c (menu_convert): Set first time tag on parent item
