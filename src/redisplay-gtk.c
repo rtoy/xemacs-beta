@@ -991,17 +991,29 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 static void
 XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 			   int y, int xoffset, int yoffset,
-			   int UNUSED (width), int UNUSED (height),
+			   int width, int height,
 			   XLIKE_COLOR UNUSED (fg), XLIKE_COLOR UNUSED (bg))
 {
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  GdkPixbuf *pb, *scaled = NULL;
 
-  /* There is a possibility that callers expect the pixbuf to be
-     resized. */
+  assert (IMAGE_INSTANCE_GTK_PIXMAP (p) != NULL);
+  pb = IMAGE_INSTANCE_GTK_PIXMAP (p);
 
-  gdk_cairo_set_source_pixbuf (cr, IMAGE_INSTANCE_GTK_PIXMAP (p),
-			       x + xoffset, y + yoffset);
+  if (gdk_pixbuf_get_width (pb) == width &&
+      gdk_pixbuf_get_height (pb) == height)
+    {
+      gdk_cairo_set_source_pixbuf (cr, IMAGE_INSTANCE_GTK_PIXMAP (p),
+                                   x + xoffset, y + yoffset);
+    } else {
+      scaled = gdk_pixbuf_scale_simple (pb, width, height,
+                                        GDK_INTERP_BILINEAR);
+      gdk_cairo_set_source_pixbuf (cr, scaled, x + xoffset, y + yoffset);
+  }
   cairo_paint (cr);
   cairo_destroy (cr);
+
+  if (scaled)
+    g_object_unref (scaled);
 }
