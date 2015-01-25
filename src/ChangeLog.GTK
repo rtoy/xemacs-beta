@@ -1,5 +1,9 @@
 2015-01-25  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* redisplay-gtk.c (XLIKE_output_vertical_divider): Pass args to
+	gtk_render_line in correct order.
+	(XLIKE_output_horizontal_line): Ditto.
+
 	* device-gtk.c (Fgtk_load_css): Define.
 	(syms_of_device_gtk): DEFSUBR gtk-load-css.
 
