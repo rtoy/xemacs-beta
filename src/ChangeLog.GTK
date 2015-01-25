@@ -1,3 +1,8 @@
+2015-01-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (Fgtk_load_css): Define.
+	(syms_of_device_gtk): DEFSUBR gtk-load-css.
+
 2015-01-11  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Scale the pixmap if
