@@ -1,3 +1,8 @@
+2015-01-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-init.el (make-device-late-gtk-entry-point): Load
+	etc/xemacs.css here.
+
 2013-11-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-faces.el (gtk-init-device-faces): Only apply style

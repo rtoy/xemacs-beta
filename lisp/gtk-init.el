@@ -113,6 +113,8 @@ a GTK device is created; this variable allows for that.")
 (defun make-device-late-gtk-entry-point (device)
   "Entry-Point to do any Lisp-level GTK device-specific initialization."
   (unless make-device-late-gtk-entry-point-called-p
+    (gtk-load-css (expand-file-name "xemacs.css"
+                                    data-directory))
     (setq make-device-late-gtk-entry-point-called-p t)))
 
 (defun gtk-filter-arguments ()

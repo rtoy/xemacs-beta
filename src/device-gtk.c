@@ -844,6 +844,39 @@ Get the style information for a Gtk device.
   return (result);
 }
 
+DEFUN ("gtk-load-css", Fgtk_load_css, 1, 1, 0, /*
+Load a CSS FILE for styling widgets.
+*/
+       (file))
+{
+  GtkCssProvider *css_prov = gtk_css_provider_new ();
+  GError *error = NULL;
+  Extbyte *path = NULL;
+
+  CHECK_STRING (file);
+
+  path = LISP_STRING_TO_EXTERNAL (file, Qfile_name);
+  gtk_css_provider_load_from_path (css_prov, path, &error);
+
+  if (error == NULL)
+    {
+      gtk_style_context_add_provider_for_screen(gdk_screen_get_default (),
+                                                GTK_STYLE_PROVIDER (css_prov),
+                                                GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    }
+  else
+    {
+      if (css_prov != NULL)
+        g_object_unref (css_prov);
+      /* TODO put error message in here. */
+      gui_error ("Error loading CSS file", file);
+    }
+
+  if (css_prov != NULL)
+    g_object_unref (css_prov);
+  return Qt;
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -865,6 +898,7 @@ syms_of_device_gtk (void)
   DEFSUBR (Fgtk_grab_keyboard);
   DEFSUBR (Fgtk_ungrab_keyboard);
   DEFSUBR (Fgtk_init);
+  DEFSUBR (Fgtk_load_css);
 
   DEFSYMBOL (Qmake_device_early_gtk_entry_point);
   DEFSYMBOL (Qmake_device_late_gtk_entry_point);
