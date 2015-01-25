@@ -228,8 +228,8 @@ XLIKE_output_vertical_divider (struct window *w, int UNUSED (clear))
 		   ybottom + spacing , x + width / 2);
 #endif
 #ifdef HAVE_GTK3
-  gtk_render_line (gstyle, cr, x - (spacing/2), x + (spacing/2),
-		   ytop, ybottom);
+  gtk_render_line (gstyle, cr, x + (width/2), ytop + spacing,
+		   x + (width/2), ybottom + spacing);
 #endif
   cairo_destroy (cr);
 }
@@ -295,9 +295,8 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
       /* gtk_fill_rectangle (cr, x, ypos3, width, rb->object.hline.thickness); */
 #endif
 #ifdef HAVE_GTK3
-      gtk_render_line (gstyle, cr, x, x + width,
-		       ypos3 - (rb->object.hline.thickness / 2),
-		       ypos3 + (rb->object.hline.thickness / 2));
+      gtk_render_line (gstyle, cr, x, ypos2 - (rb->object.hline.thickness / 2),
+		       x + width, ypos3 + (rb->object.hline.thickness / 2));
 #endif
     }
   cairo_destroy (cr);
