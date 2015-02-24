@@ -1,3 +1,9 @@
+2015-02-23  Mike Kupfer  <mike.kupfer@xemacs.org>
+
+	* internals/internals.texi (The Redisplay Mechanism):
+	Add notes about pixel_to_glyph_translation and related code.
+	(pixel_to_glyph_translation): New section.	
+
 2014-03-28  Jerry James  <james@xemacs.org>
 
 	* Makefile.in: Do not build texinfo files.
