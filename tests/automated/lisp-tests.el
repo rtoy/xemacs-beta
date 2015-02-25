@@ -1473,8 +1473,8 @@ via the hepatic alpha-tocopherol transfer protein")))
     (progn
       (Check-Error wrong-type-argument (format "%u" most-negative-fixnum))
       (Check-Error wrong-type-argument (format "%u" -1)))
-  (Check-Error invalid-read-syntax (read (format "%u" most-negative-fixnum)))
-  (Check-Error invalid-read-syntax (read (format "%u" -1))))
+  (Check-Error invalid-argument (read (format "%u" most-negative-fixnum)))
+  (Check-Error invalid-argument (read (format "%u" -1))))
 
 ;; Check all-completions ignore element start with space.
 (Assert (not (all-completions "" '((" hidden" . "object")))))
@@ -3450,5 +3450,127 @@ via the hepatic alpha-tocopherol transfer protein")))
   (test-write-string write-sequence :sequences-too t)
   (test-write-string write-string :sequences-too nil)
   (test-write-string write-line :worry-about-newline t :sequences-too nil))
+
+;;-----------------------------------------------------
+;; Test #'parse-integer and friends.
+;;-----------------------------------------------------
+
+(Check-Error wrong-type-argument (parse-integer 123456789))
+(Check-Error wrong-type-argument (parse-integer "123456789" :start -1))
+(if (featurep 'bignum)
+    (progn
+      (Check-Error args-out-of-range
+                   (parse-integer "123456789" :start (1+ most-positive-fixnum)))
+      (Check-Error args-out-of-range
+                   (parse-integer "123456789" :end (1+ most-positive-fixnum))))
+  (Check-Error wrong-type-argument
+               (parse-integer "123456789" :start (1+ most-positive-fixnum)))
+  (Check-Error wrong-type-argument
+               (parse-integer "123456789" :end (1+ most-positive-fixnum))))
+
+(Check-Error args-out-of-range (parse-integer "123456789" :radix -1))
+(Check-Error args-out-of-range
+             (parse-integer "123456789" :radix (1+ most-positive-fixnum)))
+(Check-Error wrong-number-of-arguments
+             (parse-integer "123456789" :junk-allowed))
+(Check-Error invalid-keyword-argument
+             (parse-integer "123456789" :no-such-keyword t))
+
+;; Next two paragraphs of tests from GNU, thank you Leo Liu.
+(Assert (eql (digit-char-p ?3) 3))
+(Assert (eql (digit-char-p ?a 11) 10))
+(Assert (eql (digit-char-p ?w 36) 32))
+(Assert (not (digit-char-p ?a)))
+(Check-Error args-out-of-range (digit-char-p ?a 37))
+(Assert (not (digit-char-p ?a 1)))
+
+(Assert (equal (multiple-value-list (parse-integer "	-123  ")) '(-123 7)))
+(Assert (equal (multiple-value-list
+                   (parse-integer "-efz" :radix 16 :junk-allowed t))
+               '(-239 3)))
+(Assert (equal (multiple-value-list (parse-integer "zzef" :radix 16 :start 2))
+               '(239 4)))
+(Assert (equal (multiple-value-list
+                   (parse-integer "0123456789" :radix 8 :junk-allowed t))
+               '(342391 8)))
+(Assert (equal (multiple-value-list (parse-integer "" :junk-allowed t))
+               '(nil 0)))
+(Assert (equal (multiple-value-list (parse-integer "abc" :junk-allowed t))
+               '(nil 0)))
+(Check-Error invalid-argument (parse-integer "0123456789" :radix 8))
+(Check-Error invalid-argument (parse-integer "abc"))
+(Check-Error invalid-argument (parse-integer "efz" :radix 16))
+
+;; We don't allow a trailing decimal point, as the Lisp reader does.
+(Check-Error invalid-argument (parse-integer "12348."))
+
+;; In contravention of Common Lisp, we allow both 0 and 1 as values for RADIX,
+;; useless as that is.
+(Assert (equal (multiple-value-list (parse-integer "00000" :radix 1)) '(0 5))
+        "checking 1 is allowed as a value for RADIX")
+(Assert (equal (multiple-value-list
+                   (parse-integer "" :radix 0 :junk-allowed t))
+               '(nil 0))
+        "checking 0 is allowed as a value for RADIX")
+
+(let ((binary-table
+       (copy-char-table #s(char-table :type generic :default -1 :data ()))))
+  (loop for fixnum from 00 to #xff
+        do (put-char-table (int-char fixnum) fixnum binary-table))
+  (Assert (eql most-positive-fixnum
+               (parse-integer
+                (concatenate 'string "\x3f"
+                             (make-string
+                              (/ (- (integer-length most-positive-fixnum)
+                                    (integer-length #x3f)) 8)
+                              ?\xff))
+                :radix-table binary-table :radix #x100))
+          "checking parsing text using base 256 (big endian binary) works")
+  (Assert (equal
+           (multiple-value-list 
+               (parse-integer " \1\7\1\7 " :radix-table binary-table))
+           '(1717 6))
+          "checking whitespace treated as such when it is not < radix")
+  (Assert (equal
+           (multiple-value-list 
+               (parse-integer " \1\7\1\7 " :radix-table binary-table
+                              :junk-allowed t))
+           '(1717 5))
+          "checking whitespace treated as junk when it is not < radix")
+  (Check-Error invalid-argument
+               (parse-integer "1234" :radix-table binary-table))
+  (Assert (equal
+           (multiple-value-list
+               (parse-integer "--" :radix-table binary-table :radix #x100))
+           '(-45 2))
+          "checking ?- always treated as minus sign initially")
+  (Assert (equal
+           (multiple-value-list
+               (parse-integer "+20" :radix-table binary-table :radix #x100))
+           '(2830896 3))
+          "checking ?+ not dropped initially if it has integer weight")
+  (Assert (eql #xff (digit-char-p ?ÿ #x100 binary-table))
+          "checking `digit-char-p' behaves correctly with base 256")
+  (Assert (eql ?\xff (digit-char #xff #x100 binary-table))
+          "checking `digit-char' behaves correctly with base 256")
+  (Assert (eql (parse-integer " " :radix-table binary-table :radix #x100)
+               #x20)
+          "checking whitespace not treated as such when it has fixnum weight")
+  (Assert (null (digit-char-p ?0 nil binary-table))
+          "checking `digit-char-p' reflects RADIX-TABLE, ?0")
+  (Assert (null (digit-char-p ?9 nil binary-table))
+          "checking `digit-char-p' reflects RADIX-TABLE, ?9")
+  (Assert (null (digit-char-p ?a 16 binary-table))
+          "checking `digit-char-p' reflects RADIX-TABLE, ?a")
+  (Assert (eql ?ÿ (digit-char #xff #x100 binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, #xff")
+  (Assert (eql ?a (digit-char #x61 #x100 binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, #x61")
+  (Assert (null (digit-char #xff nil binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, #xff, base 10")
+  (Assert (eql ?\x0a (digit-char 10 16 binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, 10, base 16")
+  (Assert (eql ?\x09 (digit-char 9 nil binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, 9, base 10"))
 
 ;;; end of lisp-tests.el

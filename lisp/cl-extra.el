@@ -746,32 +746,6 @@ nondecreasing.")
     (char>= . "Return t if the character arguments are monotonically \
 nonincreasing.")))
 
-(defun* digit-char-p (character &optional (radix 10))
-  "Return non-nil if CHARACTER represents a digit in base RADIX.
-
-RADIX defaults to ten.  The actual non-nil value returned is the integer
-value of the character in base RADIX."
-  (check-type character character)
-  (check-type radix integer)
-  (if (<= radix 10)
-      (and (<= ?0 character (+ ?0 radix -1)) (- character ?0))
-    (or (and (<= ?0 character ?9) (- character ?0))
-	(and (<= ?a character (+ ?a (setq radix (- radix 11))))
-	     (+ character (- 10 ?a)))
-	(and (<= ?A character (+ ?A radix))
-	     (+ character (- 10 ?A))))))
-
-(defun* digit-char (weight &optional (radix 10))
-  "Return a character representing the integer WEIGHT in base RADIX.
-
-RADIX defaults to ten.  If no such character exists, return nil."
-  (check-type weight integer)
-  (check-type radix integer)
-  (and (natnump weight) (< weight radix)
-       (if (< weight 10)
-	   (int-char (+ ?0 weight))
-	 (int-char (+ ?A (- weight 10))))))
-
 (defun alpha-char-p (character)
   "Return t if CHARACTER is alphabetic, in some alphabet.
 

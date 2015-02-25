@@ -1922,8 +1922,6 @@ read_atom_0 (Lisp_Object readcharfun, Ichar firstchar, int *saw_a_backslash)
   return Lstream_byte_count (XLSTREAM (Vread_buffer_stream)) - 1;
 }
 
-static Lisp_Object parse_integer (const Ibyte *buf, Bytecount len, int base);
-
 static Lisp_Object
 read_atom (Lisp_Object readcharfun,
            Ichar firstchar,
@@ -1958,23 +1956,15 @@ read_atom (Lisp_Object readcharfun,
 	    p1++;
           if (p1 == p)
             {
+	      Ibyte *buf_end;
               /* It is an integer. */
 	      if (p1[-1] == '.')
-		p1[-1] = '\0';
-#if 0
-	      {
-		int number = 0;
-		if (sizeof (int) == sizeof (EMACS_INT))
-		  number = atoi (read_buffer);
-		else if (sizeof (long) == sizeof (EMACS_INT))
-		  number = atol (read_buffer);
-		else
-		  ABORT ();
-		return make_fixnum (number);
-	      }
-#else
-              return parse_integer ((Ibyte *) read_ptr, len, 10);
-#endif
+                {
+                  len -= 1;
+                }
+
+              return parse_integer ((Ibyte *) read_ptr, &buf_end, len, 10,
+                                    0, Qnil);
 	    }
 	}
 #ifdef HAVE_RATIO
@@ -2011,97 +2001,16 @@ read_atom (Lisp_Object readcharfun,
   }
 }
 
-
-static Lisp_Object
-parse_integer (const Ibyte *buf, Bytecount len, int base)
-{
-  const Ibyte *lim = buf + len;
-  const Ibyte *p = buf;
-  EMACS_UINT num = 0;
-  int negativland = 0;
-
-  if (*p == '-')
-    {
-      negativland = 1;
-      p++;
-    }
-  else if (*p == '+')
-    {
-      p++;
-      /* GMP deals with a leading plus sign, badly, make sure it doesn't see
-	 it. */
-      buf++;
-    }
-
-  if (p == lim)
-    goto loser;
-
-  for (; (p < lim) && (*p != '\0'); p++)
-    {
-      int c = *p;
-      EMACS_UINT onum;
-
-      if (isdigit (c))
-	c = c - '0';
-      else if (isupper (c))
-	c = c - 'A' + 10;
-      else if (islower (c))
-	c = c - 'a' + 10;
-      else
-	goto loser;
-
-      if (c < 0 || c >= base)
-	goto loser;
-
-      onum = num;
-      num = num * base + c;
-      if (num < onum)
-	goto overflow;
-    }
-
-  {
-    EMACS_INT int_result = negativland ? - (EMACS_INT) num : (EMACS_INT) num;
-    Lisp_Object result = make_fixnum (int_result);
-    if (num && ((XFIXNUM (result) < 0) != negativland))
-      goto overflow;
-    if (XFIXNUM (result) != int_result)
-      goto overflow;
-    return result;
-  }
- overflow:
-#ifdef HAVE_BIGNUM
-  {
-    bignum_set_string (scratch_bignum, (const char *) buf, base);
-    return make_bignum_bg (scratch_bignum);
-  }
-#else
-  return Fsignal (Qinvalid_read_syntax,
-                  list3 (build_msg_string
-			 ("Integer constant overflow in reader"),
-                         make_string (buf, len),
-                         make_fixnum (base)));
-#endif /* HAVE_BIGNUM */
- loser:
-  return Fsignal (Qinvalid_read_syntax,
-                  list3 (build_msg_string
-			 ("Invalid integer constant in reader"),
-                         make_string (buf, len),
-                         make_fixnum (base)));
-}
-
-
 static Lisp_Object
 read_integer (Lisp_Object readcharfun, int base)
 {
   /* This function can GC */
   int saw_a_backslash;
+  Ibyte *buf_end;
   Bytecount len = read_atom_0 (readcharfun, -1, &saw_a_backslash);
   return (parse_integer
 	  (resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream)),
-	   ((saw_a_backslash)
-	    ? 0 /* make parse_integer signal error */
-	    : len),
-	   base));
+           &buf_end, len, base, 0, Qnil));
 }
 
 static Lisp_Object
@@ -2700,6 +2609,7 @@ retry:
 	    /* Reader forms that can reuse previously read objects.  */
 	    {
 	      Lisp_Object parsed, found;
+	      Ibyte *buf_end;
 
 	      Lstream_rewind (XLSTREAM (Vread_buffer_stream));
 
@@ -2718,10 +2628,10 @@ retry:
 
 	      parsed
 		= parse_integer (resizing_buffer_stream_ptr
-				 (XLSTREAM (Vread_buffer_stream)),
+				 (XLSTREAM (Vread_buffer_stream)), &buf_end,
 				 Lstream_byte_count (XLSTREAM
 						     (Vread_buffer_stream))
-				 - 1, 10);
+				 - 1, 10, 0, Qnil);
 
 	      found = assoc_no_quit (parsed, Vread_objects);
 	      if (c == '=')
