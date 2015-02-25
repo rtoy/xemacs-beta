@@ -1,3 +1,26 @@
+2015-02-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read_atom): Use the new calling convention for
+	parse_integer(). 
+	* lisp.h: Change the declaration of parse_integer ().
+	* number.h (bignum_set_emacs_int, make_bignum_emacs_uint):
+	New #defines, used in data.c.
+	* lread.c (read_integer): Ditto.
+	* lread.c (read1): Ditto.
+	* data.c (find_highest_value): New.
+	* data.c (fill_ichar_array): New.
+	* data.c (build_fixnum_to_char_map): New.
+	* data.c (Fset_digit_fixnum_map): New.
+	* data.c (Fdigit_char_p): Moved from cl-extra.el.
+	* data.c (Fdigit_char): Moved from cl-extra.el.
+	* data.c (parse_integer): Moved from lread.c.
+	* data.c (Fparse_integer): Made available to Lisp.
+	* data.c (syms_of_data): Make the new subrs available.
+	* data.c (vars_of_data): Make the new vars available.
+	Expose parse_integer to Lisp, make it follow the Common Lisp API
+	(with some extensions, to allow us to support non ASCII digit
+	characters).
+
 2015-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix progress bar crashes.

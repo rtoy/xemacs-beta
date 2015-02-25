@@ -1,3 +1,13 @@
+2015-02-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	parse_integer(), used in #'read, now signals invalid-argument
+	rather than invalid-read-syntax, check for that.
+	* automated/lisp-tests.el:
+	Check #'parse-integer now it's available to Lisp, check
+	#'digit-char, #'digit-char-p and the congruence in behaviour,
+	check the XEmacs-specific RADIX-TABLE argument behaviour.
+
 2014-10-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/keymap-tests.el:
