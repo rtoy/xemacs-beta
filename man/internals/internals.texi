@@ -625,6 +625,7 @@ The Redisplay Mechanism
 * Critical Redisplay Sections::  
 * Line Start Cache::            
 * Redisplay Piece by Piece::    
+* pixel_to_glyph_translation::  
 * Modules for the Redisplay Mechanism::  
 * Modules for other Display-Related Lisp Objects::  
 
@@ -19049,11 +19050,17 @@ frame-displayable-pixel-*
 @chapter The Redisplay Mechanism
 @cindex redisplay mechanism, the
 
-  The redisplay mechanism is one of the most complicated sections of
+  The redisplay mechanism is responsible for updating the display,
+such as after an edit or a highlighting change.  It is one of the most
+complicated sections of
 XEmacs, especially from a conceptual standpoint.  This is doubly so
 because, unlike for the basic aspects of the Lisp interpreter, the
 computer science theories of how to efficiently handle redisplay are not
 well-developed.
+
+  The redisplay code also provides a low-level operation to 
+map window system coordinates to XEmacs objects.  This is used
+elsewhere in XEmacs, most notably for dealing with mouse events.
 
   When working with the redisplay mechanism, remember the Golden Rules
 of Redisplay:
@@ -19071,6 +19078,7 @@ It Is Better To Be Fast Than Not To Be.
 * Critical Redisplay Sections::  
 * Line Start Cache::            
 * Redisplay Piece by Piece::    
+* pixel_to_glyph_translation::  
 * Modules for the Redisplay Mechanism::  
 * Modules for other Display-Related Lisp Objects::  
 @end menu
@@ -19485,7 +19493,7 @@ the part of the cache starting at where the modification occurs.
   In case you're wondering, the Second Golden Rule of Redisplay is not
 applicable.
 
-@node Redisplay Piece by Piece, Modules for the Redisplay Mechanism, Line Start Cache, The Redisplay Mechanism
+@node Redisplay Piece by Piece, pixel_to_glyph_translation, Line Start Cache, The Redisplay Mechanism
 @section Redisplay Piece by Piece
 @cindex redisplay piece by piece
 
@@ -19582,7 +19590,30 @@ That is done by @code{redisplay_output_layout},
 @code{ensure_face_cachel_complete}, with the actual work being done by
 @code{ensure_face_cachel_contains_charset}.
 
-@node Modules for the Redisplay Mechanism, Modules for other Display-Related Lisp Objects, Redisplay Piece by Piece, The Redisplay Mechanism
+@node pixel_to_glyph_translation, Modules for the Redisplay Mechanism, Redisplay Piece by Piece, The Redisplay Mechanism
+@section pixel_to_glyph_translation
+@cindex pixel_to_glyph_translation
+@cindex events, mouse motion
+@cindex mouse motion events
+
+The data structures described in @ref{Redisplay Piece by Piece} are
+also the basis for mapping native window system coordinates to
+higher-level objects, such as a toolbar button, a modeline character,
+a glyph, or a text character.  @code{pixel_to_glyph_translation} does
+the bulk of this translation, with some further tweaking done by the
+functions in @file{events.c}.
+
+@code{pixel_to_glyph_translation} is called very frequently when
+XEmacs is processing mouse-motion events.  To improve performance,
+@code{pixel_to_glyph_translation} caches the most recently returned
+values.  The cache includes the pixel coordinate boundaries for which
+the cached results are valid.  So if the next event is within those
+boundaries, @code{pixel_to_glyph_translation} returns the cached
+results (fast path).  Otherwise, @code{pixel_to_glyph_translation}
+walks through the redisplay data structures, then updates the cache
+with the new results (slow path).
+
+@node Modules for the Redisplay Mechanism, Modules for other Display-Related Lisp Objects, pixel_to_glyph_translation, The Redisplay Mechanism
 @section Modules for the Redisplay Mechanism
 @cindex modules for the redisplay mechanism
 @cindex redisplay mechanism, modules for the
