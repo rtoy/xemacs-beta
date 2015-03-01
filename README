@@ -1,6 +1,7 @@
 This directory tree holds version 21.5 of XEmacs.
 
-Note: new changesets should be pushed to [the "xemacs" repository](https://bitbucket.org/xemacs/xemacs), not "xemacs-beta".
+Note: new changesets should be pushed to the "xemacs" repository
+(https://bitbucket.org/xemacs/xemacs), not "xemacs-beta".
 
 The information in this file has been superseded by the XEmacs FAQ.
 
