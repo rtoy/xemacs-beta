@@ -1,3 +1,18 @@
+2015-03-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (count_with_tail):
+	Accept COUNT from #'substitute, #'nsubstitute too.
+	* sequence.c (FdeleteX):
+	Only remove COUNT from the arguments if FROM-END is non-nil.
+	* sequence.c (Fnsubstitute):
+	Remove COUNT from the arguments if specified and FROM-END is
+	non-nil.
+	* sequence.c (Fsubstitute):
+	Remove COUNT from the arguments if specified and FROM-END is
+	non-nil. Do this before calling count_with_tail(). When we
+	encounter the cons return by count_with_tail(), use the
+	replacement object.
+
 2015-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix progress bar crashes.
