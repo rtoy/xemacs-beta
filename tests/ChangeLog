@@ -1,3 +1,8 @@
+2015-03-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add some tests for #'substitute.
+
 2014-10-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/keymap-tests.el:
