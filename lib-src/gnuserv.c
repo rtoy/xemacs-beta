@@ -321,7 +321,6 @@ echo_request (int s)
     exit(1);
   } /* if */
 
-  close(s);
 } /* echo_request */
 
 
@@ -754,6 +753,7 @@ handle_internet_request (int ls)
 
   echo_request(s);
 
+  close(s); 
 } /* handle_internet_request */
 #endif /* INTERNET_DOMAIN_SOCKETS */
 
@@ -864,6 +864,14 @@ handle_unix_request (int ls)
 
   echo_request(s);
 
+  /* Closing s here (or rather, within echo_request() with both
+     internet and local connections) meant gnuserv never returned
+     usefully under OS X, as of 20150308, reflecting changeset
+     https://bitbucket.org/xemacs/xemacs/commits/c03dd89 . Keeping it
+     open is not a significant security risk (it's a local connection,
+     with file system access restrictions) and given the practical
+     limitation on the number of handles gnuserv will keep around,
+     it's also not a significant resource issue. Leave it open.  */
 } /* handle_unix_request */
 #endif /* UNIX_DOMAIN_SOCKETS */
 

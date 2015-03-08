@@ -1,3 +1,16 @@
+2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gnuserv.c (echo_request):
+	No longer close the file handle unconditionally, leave this to the
+	individual socket types.
+	* gnuserv.c (handle_internet_request):
+	Close the file handle here.
+	* gnuserv.c (handle_unix_request):
+	Don't close the file handle here, document why (it broke gnuclient
+	under OS X). It should actually be OK, but my suspicion is that
+	the issues is that the Unix (local) domain sockets are still
+	underdocumented compared to the internet sockets.
+
 2014-12-05  Jerry James  <james@xemacs.org>
 
 	* gnuserv.c (echo_request): close the socket when done
