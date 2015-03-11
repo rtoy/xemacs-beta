@@ -1,3 +1,22 @@
+2015-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Correct #'clear-message and friends so the START and END supplied
+	to #'append-message are reflected when restoring messages from the
+	message stack.
+	* simple.el (remove-message-hook):
+	Update this to reflect the START and END keyword arguments.
+	* simple.el (log-message):
+	Update this to take START and END keyword arguments.
+	* simple.el (clear-message):
+	Update this to reflect a changed `message-stack' alist structure.
+	* simple.el (remove-message):
+	Update this to reflect a changed `message-stack' alist structure;
+	don't do `with-trapping-errors' and resignal use
+	#'call-with-condition-handler directly instead, for better
+	backtraces and easier debugging.
+	* simple.el (append-message):
+	Update this to reflect a changed message-stack structure.
+
 2014-12-31  Michael Sperber  <mike@xemacs.org>
 
 	* simple.el (line-move): Add `noerror' optional argument, as in
