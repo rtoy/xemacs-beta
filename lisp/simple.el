@@ -94,47 +94,70 @@
   "Warnings customizations."
   :group 'minibuffer)
 
-
 (defcustom search-caps-disable-folding t
   "*If non-nil, upper case chars disable case fold searching.
 This does not apply to \"yanked\" strings."
   :type 'boolean
   :group 'editing-basics)
 
-;; This is stolen (and slightly modified) from FSF emacs's
-;; `isearch-no-upper-case-p'.
-(defun no-upper-case-p (string &optional regexp-flag)
-  "Return t if there are no upper case chars in STRING.
-If REGEXP-FLAG is non-nil, disregard letters preceded by `\\' (but not `\\\\')
-since they have special meaning in a regexp."
-  (let ((case-fold-search nil))
-    (not (string-match (if regexp-flag
-			   "\\(^\\|\\\\\\\\\\|[^\\]\\)[A-Z]"
-			 "[A-Z]")
-		       string))
-    ))
+(defun no-case-regexp-p (regexp)
+  "Return t if there are no case-specific constructs in REGEXP.
 
-(defmacro with-search-caps-disable-folding (string regexp-flag &rest body) "\
-Eval BODY with `case-fold-search' let to nil if `search-caps-disable-folding'
-is non-nil, and if STRING (either a string or a regular expression according
-to REGEXP-FLAG) contains uppercase letters."
+Lower case characters are regarded as not case-specific.  Upper case
+characters are usually regarded as case-specific, but upper case characters
+used in special regexp constructs, where they do not match upper case
+characters specifically, are regarded as not case-specific.  In contrast, the
+character classes [:lower:] and [:upper:] are viewed as case-specific.
+
+This is intended to be used by interactive searching code to decide, in a
+do-what-I-mean fashion, whether a given search should be case-sensitive."
+  (let ((case-fold-search nil))
+    (save-match-data
+      (not (or (string-match "\\(^\\|\\\\\\\\\\|[^\\]\\)[[:upper:]]" regexp)
+               (and (string-match "\\[:\\(upp\\|low\\)er:]" regexp)
+                    (condition-case err
+                        (progn
+                          (string-match (substring regexp 0
+                                                   (match-beginning 0)) "")
+                          nil)
+                      (invalid-regexp
+                       (equal "Unmatched [ or [^" (cadr err))))))))))
+
+(defmacro* with-search-caps-disable-folding (string regexp-p &body body)
+  "Execute the forms in BODY, respecting `search-caps-disable-folding'.
+
+Within BODY, bind `case-fold-search' to nil if `search-caps-disable-folding'
+is non-nil, REGEXP-P is nil, and if STRING contains any uppercase characters.
+
+If REGEXP-P is non-nil, treat STRING as a regular expression, and bind
+`case-fold-search' to nil if it contains uppercase characters that are
+not special regular expression constructs, or if it contains
+case-specific character classes such as `[[:upper:]]' or
+`[[:lower:]]'.  See `no-case-regexp-p'."
   `(let ((case-fold-search
           (if (and case-fold-search search-caps-disable-folding)
-              (no-upper-case-p ,string ,regexp-flag)
+              (if ,regexp-p
+                  (no-case-regexp-p ,string)
+                (save-match-data
+                  (let (case-fold-search)
+                    (not (string-match "[[:upper:]]" ,string)))))
             case-fold-search)))
      ,@body))
 (put 'with-search-caps-disable-folding 'lisp-indent-function 2)
 (put 'with-search-caps-disable-folding 'edebug-form-spec
      '(sexp sexp &rest form))
 
-(defmacro with-interactive-search-caps-disable-folding (string regexp-flag
-							       &rest body)
-  "Same as `with-search-caps-disable-folding', but only in the case of a
-function called interactively."
+(defmacro* with-interactive-search-caps-disable-folding (string regexp-p
+                                                                &body body)
+  "Like `with-search-caps-disable-folding', but only when interactive."
   `(let ((case-fold-search
-	  (if (and (interactive-p)
-		   case-fold-search search-caps-disable-folding)
-              (no-upper-case-p ,string ,regexp-flag)
+	  (if (and (interactive-p) case-fold-search
+                   search-caps-disable-folding)
+              (if ,regexp-p
+                  (no-case-regexp-p ,string)
+                (save-match-data
+                  (let (case-fold-search)
+                    (not (string-match "[[:upper:]]" ,string)))))
             case-fold-search)))
      ,@body))
 (put 'with-interactive-search-caps-disable-folding 'lisp-indent-function 2)

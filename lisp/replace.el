@@ -563,7 +563,11 @@ When searching for a match, this function uses
 	 ;; XEmacs addition
 	 (qr-case-fold-search
 	  (if (and case-fold-search search-caps-disable-folding)
-	      (no-upper-case-p search-string regexp-flag)
+              (if regexp-flag
+                  (no-case-regexp-p search-string)
+                (save-match-data
+                  (let (case-fold-search)
+                    (not (string-match "[[:upper:]]" search-string)))))
 	    case-fold-search))
 	 (message
 	  (if query-flag
