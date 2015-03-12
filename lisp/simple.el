@@ -94,47 +94,70 @@
   "Warnings customizations."
   :group 'minibuffer)
 
-
 (defcustom search-caps-disable-folding t
   "*If non-nil, upper case chars disable case fold searching.
 This does not apply to \"yanked\" strings."
   :type 'boolean
   :group 'editing-basics)
 
-;; This is stolen (and slightly modified) from FSF emacs's
-;; `isearch-no-upper-case-p'.
-(defun no-upper-case-p (string &optional regexp-flag)
-  "Return t if there are no upper case chars in STRING.
-If REGEXP-FLAG is non-nil, disregard letters preceded by `\\' (but not `\\\\')
-since they have special meaning in a regexp."
-  (let ((case-fold-search nil))
-    (not (string-match (if regexp-flag
-			   "\\(^\\|\\\\\\\\\\|[^\\]\\)[A-Z]"
-			 "[A-Z]")
-		       string))
-    ))
+(defun no-case-regexp-p (regexp)
+  "Return t if there are no case-specific constructs in REGEXP.
 
-(defmacro with-search-caps-disable-folding (string regexp-flag &rest body) "\
-Eval BODY with `case-fold-search' let to nil if `search-caps-disable-folding'
-is non-nil, and if STRING (either a string or a regular expression according
-to REGEXP-FLAG) contains uppercase letters."
+Lower case characters are regarded as not case-specific.  Upper case
+characters are usually regarded as case-specific, but upper case characters
+used in special regexp constructs, where they do not match upper case
+characters specifically, are regarded as not case-specific.  In contrast, the
+character classes [:lower:] and [:upper:] are viewed as case-specific.
+
+This is intended to be used by interactive searching code to decide, in a
+do-what-I-mean fashion, whether a given search should be case-sensitive."
+  (let ((case-fold-search nil))
+    (save-match-data
+      (not (or (string-match "\\(^\\|\\\\\\\\\\|[^\\]\\)[[:upper:]]" regexp)
+               (and (string-match "\\[:\\(upp\\|low\\)er:]" regexp)
+                    (condition-case err
+                        (progn
+                          (string-match (substring regexp 0
+                                                   (match-beginning 0)) "")
+                          nil)
+                      (invalid-regexp
+                       (equal "Unmatched [ or [^" (cadr err))))))))))
+
+(defmacro* with-search-caps-disable-folding (string regexp-p &body body)
+  "Execute the forms in BODY, respecting `search-caps-disable-folding'.
+
+Within BODY, bind `case-fold-search' to nil if `search-caps-disable-folding'
+is non-nil, REGEXP-P is nil, and if STRING contains any uppercase characters.
+
+If REGEXP-P is non-nil, treat STRING as a regular expression, and bind
+`case-fold-search' to nil if it contains uppercase characters that are
+not special regular expression constructs, or if it contains
+case-specific character classes such as `[[:upper:]]' or
+`[[:lower:]]'.  See `no-case-regexp-p'."
   `(let ((case-fold-search
           (if (and case-fold-search search-caps-disable-folding)
-              (no-upper-case-p ,string ,regexp-flag)
+              (if ,regexp-p
+                  (no-case-regexp-p ,string)
+                (save-match-data
+                  (let (case-fold-search)
+                    (not (string-match "[[:upper:]]" ,string)))))
             case-fold-search)))
      ,@body))
 (put 'with-search-caps-disable-folding 'lisp-indent-function 2)
 (put 'with-search-caps-disable-folding 'edebug-form-spec
      '(sexp sexp &rest form))
 
-(defmacro with-interactive-search-caps-disable-folding (string regexp-flag
-							       &rest body)
-  "Same as `with-search-caps-disable-folding', but only in the case of a
-function called interactively."
+(defmacro* with-interactive-search-caps-disable-folding (string regexp-p
+                                                                &body body)
+  "Like `with-search-caps-disable-folding', but only when interactive."
   `(let ((case-fold-search
-	  (if (and (interactive-p)
-		   case-fold-search search-caps-disable-folding)
-              (no-upper-case-p ,string ,regexp-flag)
+	  (if (and (interactive-p) case-fold-search
+                   search-caps-disable-folding)
+              (if ,regexp-p
+                  (no-case-regexp-p ,string)
+                (save-match-data
+                  (let (case-fold-search)
+                    (not (string-match "[[:upper:]]" ,string)))))
             case-fold-search)))
      ,@body))
 (put 'with-interactive-search-caps-disable-folding 'lisp-indent-function 2)
@@ -4166,8 +4189,9 @@ Do not modify this directly--use the `message' or
 (defvar remove-message-hook 'log-message
   "A function or list of functions to be called when a message is removed
 from the echo area at the bottom of the frame.  The label of the removed
-message is passed as the first argument, and the text of the message
-as the second argument.")
+message is passed as the first argument, the text of the message as the second
+argument, and the start and end of the substring of the message can be
+supplied as keyword arguments.")
 
 (defcustom log-message-max-size 50000
   "Maximum size of the \" *Message-Log*\" buffer.  See `log-message'."
@@ -4300,7 +4324,7 @@ or whose label appears in `log-message-ignore-labels' are not saved."
   "For use as the `log-message-filter-function'.  Only logs error messages."
   (eq label 'error))
 
-(defun log-message (label message)
+(defun* log-message (label message &key (start 0) end)
   "Stuff a copy of the message into the \" *Message-Log*\" buffer,
 if it satisfies the `log-message-filter-function'.
 
@@ -4316,12 +4340,10 @@ For use on `remove-message-hook'."
       (let (extent)
 	;; Mark multiline message with an extent, which `view-lossage'
 	;; will recognize.
-	(save-match-data
-	  (when (string-match "\n" message)
-	    (setq extent (make-extent (point) (point)))
-	    (set-extent-properties extent '(end-open nil message-multiline t)))
-	  )
-	(insert message "\n")
+        (when (find ?\n message :start start :end end)
+          (setq extent (make-extent (point) (point)))
+          (set-extent-properties extent '(end-open nil message-multiline t)))
+	(write-line message (current-buffer) :start start :end end)
 	(when extent
 	  (set-extent-property extent 'end-open t)))
       (when (> (point-max) (max log-message-max-size (point-min)))
@@ -4377,42 +4399,48 @@ you should just use (message nil)."
     (if no-restore
 	nil			; just preparing to put another msg up
       (if message-stack
-	  (let ((oldmsg (cdr (car message-stack))))
-	    (raw-append-message oldmsg frame stdout-p)
-	    oldmsg)
+          (let ((oldmsg (second (car message-stack))))
+            (prog1
+                ;; #### Doesn't pass back information about the substring of
+                ;; OLDMSG displayed. None of our callers use this, as of
+                ;; 20150311, though.
+                oldmsg
+              (raw-append-message oldmsg frame stdout-p
+                                  :start (third (car message-stack))
+                                  :end (fourth (car message-stack)))))
 	;; #### Should we (redisplay-echo-area) here?  Messes some
 	;; things up.
 	nil))))
 
 (defun remove-message (&optional label frame)
-  ;; If label is nil, we want to remove all matching messages.
-  ;; Must reverse the stack first to log them in the right order.
-  (let ((log nil))
-    (while (and message-stack
-		(or (null label)	; null label means clear whole stack
-		    (eq label (car (car message-stack)))))
-      (push (car message-stack) log)
-      (setq message-stack (cdr message-stack)))
-    (let ((s  message-stack))
-      (while (cdr s)
-	(let ((msg (car (cdr s))))
-	  (if (eq label (car msg))
-	      (progn
-		(push msg log)
-		(setcdr s (cdr (cdr s))))
-	    (setq s (cdr s))))))
+  "Remove any message with a specified LABEL from `message-stack'.
+
+With nil LABEL, remove all messages from `message-stack'. Calls those
+functions specified by `remove-message-hook' with the details of each removed
+message."
+  (let (log)
+    (if label
+        (setq log (reverse (remove* label message-stack :test-not #'eq
+                                    :key #'car))
+              message-stack (delete* label message-stack :key #'car))
+      ;; If label is nil, we want to remove all messages.  Must reverse the
+      ;; stack first to log them in the right order.
+      (setq log (nreverse message-stack)
+            message-stack nil))
     ;; (possibly) log each removed message
     (while log
-      (with-trapping-errors
-	:operation 'remove-message-hook
-	:class 'message-log
-	:error-form (progn
-		      (setq remove-message-hook nil)
-		      (let ((inhibit-read-only t))
-			(erase-buffer " *Echo Area*")))
-	:resignal t
-	(run-hook-with-args 'remove-message-hook
-			    (car (car log)) (cdr (car log))))
+      (call-with-condition-handler
+          ((macro . (lambda (function) (subst '#:xEbgpd2 'error function)))
+           #'(lambda (error)
+               (setq remove-message-hook nil)
+               (let ((inhibit-read-only t))
+                 (erase-buffer " *Echo Area*"))
+               (lwarn 'message-log 'warning
+                 "Error in `remove-message-hook': %s\n\nBacktrace follows:\n%s"
+                 (error-message-string error)
+                 (backtrace-in-condition-handler-eliminating-handler 'error))))
+          #'run-hook-with-args 'remove-message-hook (caar log)
+	  (cadar log) :start (third (car log)) :end (fourth (car log)))
       (setq log (cdr log)))))
 
 (defun* append-message (label message &optional frame stdout-p
@@ -4436,10 +4464,16 @@ START and END, if supplied, designate a substring of MESSAGE to add. See
   ;; able to append to an existing message.
   (if (eq 'stream (frame-type frame))
       (set-device-clear-left-side (frame-device frame) nil))
-  (let ((top (car message-stack)))
-    (if (eq label (car top))
-	(setcdr top (concat (cdr top) message))
-      (push (cons label message) message-stack)))
+  (if (eq label (caar message-stack))
+      (setf (cadar message-stack)
+            (concat (subseq (cadar message-stack) (third (car message-stack))
+                            (fourth (car message-stack)))
+                    (if (or end (not (eql start 0)))
+                        (subseq message start end)
+                      message))
+            (caddar message-stack) 0
+            (car (cdddar message-stack)) nil)
+    (push (list label message start end) message-stack))
   (raw-append-message message frame stdout-p :start start :end end)
   (if (eq 'stream (frame-type frame))
       (set-device-clear-left-side (frame-device frame) t)))

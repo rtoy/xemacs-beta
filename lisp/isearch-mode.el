@@ -1068,7 +1068,11 @@ backwards."
 	   (not isearch-fixed-case)
 	   search-caps-disable-folding)
       (setq isearch-case-fold-search
-	    (no-upper-case-p isearch-string isearch-regexp)))
+            (if isearch-regexp
+                (no-case-regexp-p isearch-string)
+              (save-match-data
+                (let (case-fold-search)
+                  (not (string-match "[[:upper:]]" isearch-string)))))))
   (setq isearch-mode (if case-fold-search
                          (if isearch-case-fold-search
                              " Isearch"  ;As God Intended Mode
@@ -1856,15 +1860,6 @@ Before that, if search-invisible is `open', unhide the extents with an
 			 t))
 		     isearch-unhidden-extents)))))
 
-(defun isearch-no-upper-case-p (string)
-  "Return t if there are no upper case chars in string.
-But upper case chars preceded by \\ do not count since they
-have special meaning in a regexp."
-  ;; this incorrectly returns t for "\\\\A"
-  (let ((case-fold-search nil))
-    (not (string-match "\\(^\\|[^\\]\\)[A-Z]" string))))
-(make-obsolete 'isearch-no-upper-case-p 'no-upper-case-p)
-
 ;; Portability functions to support various Emacs versions.
 
 (defun isearch-char-to-string (c)
@@ -1876,20 +1871,6 @@ have special meaning in a regexp."
 ;  (isearch-char-to-string c))
 
 (define-function 'isearch-text-char-description 'text-char-description)
-
-;; Used by etags.el and info.el
-(defmacro with-caps-disable-folding (string &rest body) "\
-Eval BODY with `case-fold-search' let to nil if STRING contains
-uppercase letters and `search-caps-disable-folding' is t."
-  `(let ((case-fold-search
-          (if (and case-fold-search search-caps-disable-folding)
-              (isearch-no-upper-case-p ,string)
-            case-fold-search)))
-     ,@body))
-(make-obsolete 'with-caps-disable-folding 'with-search-caps-disable-folding)
-(put 'with-caps-disable-folding 'lisp-indent-function 1)
-(put 'with-caps-disable-folding 'edebug-form-spec '(form body))
-
 
 ;;;========================================================
 ;;; Advanced highlighting

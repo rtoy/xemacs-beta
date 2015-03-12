@@ -1,5 +1,8 @@
 This directory tree holds version 21.5 of XEmacs.
 
+Note: new changesets should be pushed to the "xemacs" repository
+(https://bitbucket.org/xemacs/xemacs), not "xemacs-beta".
+
 The information in this file has been superseded by the XEmacs FAQ.
 
 The easiest way to read the FAQ is to go to
@@ -11,5 +14,3 @@ use Help->XEmacs FAQ from the menu, or `C-h F'.
 
 If you don't have XEmacs running and can't access the web,
 look directly at `man/xemacs-faq.texi' or `info/xemacs-faq.info'.
-
-
