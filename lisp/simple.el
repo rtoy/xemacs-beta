@@ -4471,7 +4471,7 @@ START and END, if supplied, designate a substring of MESSAGE to add. See
                     (if (or end (not (eql start 0)))
                         (subseq message start end)
                       message))
-            (caddar message-stack) nil
+            (caddar message-stack) 0
             (car (cdddar message-stack)) nil)
     (push (list label message start end) message-stack))
   (raw-append-message message frame stdout-p :start start :end end)
