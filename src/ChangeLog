@@ -1,3 +1,12 @@
+2015-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-stream.c (lookup_command_event):
+	Check whether echo_buf_fill_pointer is negative before using it in
+	arithmetic, avoiding a crash in GC.
+	Oddly the old code didn't do this check and didn't crash, but its
+	echo_buf was from malloced memory, not from our string data, so
+	there may have been more room to manoeuvre.
+
 2015-03-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* sequence.c (count_with_tail):

@@ -4067,10 +4067,11 @@ lookup_command_event (struct command_builder *command_builder,
 #endif
 	  {
 	    Lisp_Object prompt = Fkeymap_prompt (leaf, Qt);
-	    if (STRINGP (prompt))
+	    if (STRINGP (prompt) && STRINGP (command_builder->echo_buf))
 	      {
 		/* Append keymap prompt to key echo buffer */
-		int buf_fill_pointer = command_builder->echo_buf_fill_pointer;
+		Bytecount buf_fill_pointer
+                  = max (command_builder->echo_buf_fill_pointer, 0);
 		Bytecount len = XSTRING_LENGTH (prompt);
 
 		if (len + buf_fill_pointer + 1
@@ -4090,7 +4091,8 @@ lookup_command_event (struct command_builder *command_builder,
                     /* Show the keymap prompt, but don't adjust the fill
                        pointer to reflect it. */
                     command_builder->echo_buf_end
-                      = command_builder->echo_buf_fill_pointer + len;
+                      = buf_fill_pointer + len;
+                    command_builder->echo_buf_fill_pointer = buf_fill_pointer;
 		  }
 		maybe_echo_keys (command_builder, 1);
 	      }
