@@ -1,3 +1,57 @@
+2015-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (append-message): Be more careful about saving a
+	non-nil value for START in message-stack.
+
+2015-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* isearch-mode.el:
+	* isearch-mode.el (isearch-fix-case):
+	Use the new #'no-case-regexp-p function if treating ISEARCH-STRING
+	as a regular expression; otherwise, use the [[:upper:]] character
+	class.
+	* isearch-mode.el (isearch-no-upper-case-p): Removed. 
+	* isearch-mode.el (with-caps-disable-folding): Removed.
+	These two haven't been used since 1998.
+	* occur.el (occur-1):
+	Use #'no-case-regexp-p here.
+	* replace.el (perform-replace):
+	Don't use #'no-upper-case-p, use #'no-case-regexp-p or
+	(string-match "[[:upper:]]" ...) as appropriate.
+	* simple.el:
+	* simple.el (no-upper-case-p): Removed. This did two different
+	things, and its secondary function (examining regular expressions)
+	just became much more complicated; move the regular expression
+	functionality to its own function, use character classes when
+	examining non-regular-expressions instead.
+	The code to look for character classes, and the design decision
+	that this should be done, are from GNU, thank you Stefan Monnier.
+	* simple.el (no-case-regexp-p): New.
+	Given a REGEXP, return non-nil if it has nothing to suggest an
+	interactive user wants a case-sensitive search.
+	* simple.el (with-search-caps-disable-folding):
+	* simple.el (with-interactive-search-caps-disable-folding):
+	Update both these macros to use #'no-case-regexp-p.
+
+2015-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Correct #'clear-message and friends so the START and END supplied
+	to #'append-message are reflected when restoring messages from the
+	message stack.
+	* simple.el (remove-message-hook):
+	Update this to reflect the START and END keyword arguments.
+	* simple.el (log-message):
+	Update this to take START and END keyword arguments.
+	* simple.el (clear-message):
+	Update this to reflect a changed `message-stack' alist structure.
+	* simple.el (remove-message):
+	Update this to reflect a changed `message-stack' alist structure;
+	don't do `with-trapping-errors' and resignal use
+	#'call-with-condition-handler directly instead, for better
+	backtraces and easier debugging.
+	* simple.el (append-message):
+	Update this to reflect a changed message-stack structure.
+
 2015-02-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (digit-char-p): Moved to data.c.
