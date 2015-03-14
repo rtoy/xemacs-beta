@@ -1,5 +1,14 @@
 2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* general-slots.h (Qno_character_typed): New error symbol.
+	* event-stream.c (syms_of_event_stream): Define it.
+	New error, for those cases when a keystroke is to be treated as a
+	character in some context but has no character equivalent.
+	* cmds.c (Fself_insert_command):
+	Use it.
+
+2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Add support for GNU's help-event-list here, useful for accepting
 	F1 and C-h as the help character at the same time.
 	* event-stream.c:

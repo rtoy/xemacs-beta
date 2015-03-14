@@ -4920,6 +4920,7 @@ syms_of_event_stream (void)
   DEFSYMBOL (Qcommand_event_p);
 
   DEFERROR_STANDARD (Qundefined_keystroke_sequence, Qsyntax_error);
+  DEFERROR_STANDARD (Qno_character_typed, Qundefined_keystroke_sequence);
   DEFERROR_STANDARD (Qinvalid_key_binding, Qinvalid_state);
 
   DEFSUBR (Frecent_keys);
