@@ -584,6 +584,13 @@ binding as a subcommand of the prefix key, it runs
 subcommands of the prefix key.
 @end defvar
 
+@defvar help-event-list
+This variable provides a means to specify other characters that should
+act in the same way @code{help-char} does, with regard to
+@code{help-form} and supplying help. It is usually set to include
+@kbd{f1}, so that this key is also treated as giving help.
+@end defvar
+
 @defvar help-form
 If this variable is non-@code{nil}, its value is a form to evaluate
 whenever the character @code{help-char} is read.  If evaluating the form
