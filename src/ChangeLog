@@ -1,5 +1,23 @@
 2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Add support for GNU's help-event-list here, useful for accepting
+	F1 and C-h as the help character at the same time.
+	* event-stream.c:
+	* event-stream.c (echo_key_event):
+	Be better about calculation, comments here, in passing.
+	* event-stream.c (help_char_p): New.
+	* event-stream.c (execute_help_form):
+	There's no need to reset the command builder here; the code that
+	did relied on zero-termination, which we can't anymore, and did
+	not actually discard the help character. Remove this.
+	* event-stream.c (Fnext_event): Use help_char_p ().
+	* event-stream.c (command_builder_find_leaf_no_jit_binding):
+	Use help_char_p ().
+	* event-stream.c (vars_of_event_stream):
+	Make help-event-list available.
+
+2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* .gdbinit.in.in (Lisp): lrecord_type_lcrecord_list is specific to
 	non-NEW_GC, lrecord_type_string_direct_data and
 	lrecord_type_string_indirect_data are specific to NEW_GC, correct
