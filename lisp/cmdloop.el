@@ -280,6 +280,10 @@ or go back to just one window (by deleting all but the selected window)."
          (princ (gettext " not defined.") stream) ; doo dah, doo dah.
          ))
 
+(put 'no-character-typed 'display-error
+     #'(lambda (error-object stream)
+         (write-sequence "Not a character keystroke, " stream)
+         (write-sequence (key-description (cadr error-object)) stream)))
 
 (defcustom teach-extended-commands-p t
   "*If true, then `\\[execute-extended-command]' will teach you keybindings.
@@ -593,8 +597,7 @@ input is received in that time, return nil."
                                     (aref (cdr binding) (caar binding)))))))
                       (return-from read-char-1 character)))
                 (if errorp
-                    (error 'invalid-key-binding "Not a character keystroke"
-                           (aref events 0)))
+                    (error 'no-character-typed (aref events 0)))
                 ;; If we're not erroring, loop until we get a character
                 (setq events []))
            (if timeout (disable-timeout timeout))))))

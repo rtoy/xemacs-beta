@@ -1,5 +1,13 @@
 2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cmdloop.el (no-character-typed):
+	New error, for those cases when a keystroke is to be treated as a
+	character but has no character equivalent.
+	* cmdloop.el (read-char-1): Use it.
+	* keymap.el (synthesize-keysym): Use it.
+
+2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cus-start.el (all): Describe help-event-list for Custom.
 	* keydefs.el (help-event-list): Initialise it.
 
