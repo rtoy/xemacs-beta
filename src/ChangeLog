@@ -1,3 +1,13 @@
+2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (event_matches_key_specifier_p):
+	If on a TTY, check the keysym and modifiers too, before converting
+	both events to characters and comparing them. We may well have
+	seen a function key (by means of function-key-map) and it is
+	actively unhelpful for
+	(event-matches-key-specifier-p (character-to-event 'f1) 'f1)
+	to given nil when the current device is a TTY.
+
 2015-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-stream.c (lookup_command_event):
