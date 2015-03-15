@@ -1,3 +1,23 @@
+2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* tty-init.el (make-frame-after-init-entry-point):
+	Behave better when TERM was not set; use
+	#'console-tty-terminal-type instead of (getenv "TERM") so we get
+	the value that reflects the current console. Thank you Uwe Brauer!
+
+	* mule/mule-tty-init.el (mule-tty-win-initted): Removed.
+	* mule/mule-tty-init.el (init-mule-tty-win): Removed.
+	* mule/mule-tty-init.el: Remove this file in its entirety.
+	* mule/mule-x-init.el (x-use-halfwidth-roman-font): Removed.
+	* mule/mule-x-init.el: Remove this file in its entirety.
+	* dumped-lisp.el (preloaded-file-list): Remove them from the
+	dumped file list. The functions within haven't been used since
+	they were imported from Mule in 1999, and the functionality of
+	init-mule-tty-win was already in tty-init.el. If someone wants to
+	automatically use a halfwidth roman font, they can go hunting for
+	the code, but there are no users on http://searchco.de/ as of
+	20150315. Leaving them around is confusing and distracting.
+
 2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cmdloop.el (no-character-typed):
