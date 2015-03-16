@@ -485,5 +485,15 @@ because its `find-charset-string' ignores ASCII charset."
 (make-obsolete 'remrassoc "use delete* with :test #'equal, :key #'cdr")
 (make-obsolete 'remrassq "use delete* with :test #'eq, :key #'cdr")
 
+(defun max-char ()
+  "Return a fixnum one less than `char-code-limit'.
+
+In contrast with GNU Emacs, this is not necessarily a valid character, but it
+is an inclusive upper bound on the possible values returned by `char-int'."
+  (1- char-code-limit))
+(make-compatible
+ 'max-char
+ "consider `char-code-limit', which gives an exclusive upper bound")
+
 (provide 'obsolete)
 ;;; obsolete.el ends here

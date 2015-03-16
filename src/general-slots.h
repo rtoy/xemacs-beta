@@ -213,6 +213,7 @@ SYMBOL (Qname);
 SYMBOL_MODULE_API (Qnative);
 SYMBOL (Qnatnum);
 SYMBOL (Qno);
+SYMBOL (Qno_character_typed);
 SYMBOL (Qnone);
 SYMBOL (Qnot);
 SYMBOL (Qnothing);
