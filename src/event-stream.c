@@ -197,10 +197,13 @@ Lisp_Object Vlast_input_time;
    of the last-command-event. */
 Lisp_Object Vlast_command_event_time;
 
-/* Character to recognize as the help char.  */
+/* Key specifier to recognize as the help char.  */
 Lisp_Object Vhelp_char;
 
-/* Form to execute when help char is typed.  */
+/* List of other key specifiers that work in the same way as Vhelp_char. */
+Lisp_Object Vhelp_event_list;
+
+/* Form to execute when Vhelp_char or one of Vhelp_event_list is typed.  */
 Lisp_Object Vhelp_form;
 
 /* Command to run when the help character follows a prefix key.  */
@@ -650,7 +653,7 @@ echo_key_event (struct command_builder *command_builder,
   len = eilen (buf);
 
   if (NILP (command_builder->echo_buf) ||
-      (len + buf_fill_pointer + 4 > XSTRING_LENGTH (command_builder->echo_buf)))
+      (len + buf_fill_pointer + 3 > XSTRING_LENGTH (command_builder->echo_buf)))
     {
       eifree (buf);
       return;
@@ -665,7 +668,7 @@ echo_key_event (struct command_builder *command_builder,
   sledgehammer_check_ascii_begin (command_builder->echo_buf);
 
   command_builder->echo_buf_end = buf_fill_pointer + eilen (buf);
-  /* *Not* including the trailing " - ". */
+  /* Including the first space of the trailing " - ". */
   command_builder->echo_buf_fill_pointer = buf_fill_pointer + len + 1;
   eifree (buf);
 }
@@ -790,6 +793,27 @@ print_help (Lisp_Object object)
   return Qnil;
 }
 
+/* Return true if should recognize C as "the help character".  */
+static Boolint
+help_char_p (Lisp_Object event)
+{
+  if (event_matches_key_specifier_p (event, Vhelp_char))
+    {
+      return 1;
+    }
+
+  {
+    EXTERNAL_LIST_LOOP_2 (key_sequence, Vhelp_event_list)
+      {
+        if (event_matches_key_specifier_p (event, key_sequence))
+          {
+            return 1;
+          }
+      }
+  }
+  return 0;
+}
+
 static void
 execute_help_form (struct command_builder *command_builder,
                    Lisp_Object event)
@@ -797,18 +821,13 @@ execute_help_form (struct command_builder *command_builder,
   /* This function can GC */
   Lisp_Object help = Qnil;
   int speccount = specpdl_depth ();
-  Bytecount buf_fill_pointer = command_builder->echo_buf_fill_pointer;
-  Bytecount buf_end = command_builder->echo_buf_end;
-  Lisp_Object echo = ((buf_fill_pointer <= 0) ? Qnil
-                      : Fcopy_sequence (command_builder->echo_buf));
 
-  struct gcpro gcpro1, gcpro2;
-  GCPRO2 (echo, help);
+  struct gcpro gcpro1;
+  GCPRO1 (help);
 
   record_unwind_protect (Feval,
                          list2 (Qset_window_configuration,
                                 call0 (Qcurrent_window_configuration)));
-  reset_key_echo (command_builder, 1);
 
   help = IGNORE_MULTIPLE_VALUES (Feval (Vhelp_form));
   if (STRINGP (help))
@@ -835,17 +854,11 @@ execute_help_form (struct command_builder *command_builder,
   if (event_matches_key_specifier_p (event, make_char (' ')))
     {
       /* Discard next key if it is a space */
-      reset_key_echo (command_builder, 1);
+      /* No need to reset the key echo here. */
+      /* reset_key_echo (command_builder, 1); */
       Fnext_command_event (event, Qnil);
     }
 
-  command_builder->echo_buf_fill_pointer = buf_fill_pointer;
-  command_builder->echo_buf_end = buf_end;
-
-  if (buf_fill_pointer > 0)
-    {
-      command_builder->echo_buf = echo;
-    }
   UNGCPRO;
 }
 
@@ -2379,8 +2392,7 @@ The returned event will be one of the following types:
      the help form and swallow this character.  Note that
      execute_help_form() calls Fnext_command_event(), which calls this
      function, as well as Fdispatch_event.  */
-  if (!NILP (Vhelp_form) &&
-      event_matches_key_specifier_p (event, Vhelp_char))
+  if (!NILP (Vhelp_form) && help_char_p (event))
     {
       /* temporarily reenable quit checking here, because we could get stuck */
       Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
@@ -3396,8 +3408,8 @@ command_builder_find_leaf_no_jit_binding (struct command_builder *builder,
     }
 
   /* help-char is `auto-bound' in every keymap */
-  if (!NILP (Vprefix_help_command) &&
-      event_matches_key_specifier_p (builder->most_current_event, Vhelp_char))
+  if (!NILP (Vprefix_help_command)
+      && help_char_p (builder->most_current_event))
     return Vprefix_help_command;
 
   return Qnil;
@@ -4067,10 +4079,11 @@ lookup_command_event (struct command_builder *command_builder,
 #endif
 	  {
 	    Lisp_Object prompt = Fkeymap_prompt (leaf, Qt);
-	    if (STRINGP (prompt))
+	    if (STRINGP (prompt) && STRINGP (command_builder->echo_buf))
 	      {
 		/* Append keymap prompt to key echo buffer */
-		int buf_fill_pointer = command_builder->echo_buf_fill_pointer;
+		Bytecount buf_fill_pointer
+                  = max (command_builder->echo_buf_fill_pointer, 0);
 		Bytecount len = XSTRING_LENGTH (prompt);
 
 		if (len + buf_fill_pointer + 1
@@ -4090,7 +4103,8 @@ lookup_command_event (struct command_builder *command_builder,
                     /* Show the keymap prompt, but don't adjust the fill
                        pointer to reflect it. */
                     command_builder->echo_buf_end
-                      = command_builder->echo_buf_fill_pointer + len;
+                      = buf_fill_pointer + len;
+                    command_builder->echo_buf_fill_pointer = buf_fill_pointer;
 		  }
 		maybe_echo_keys (command_builder, 1);
 	      }
@@ -4906,6 +4920,7 @@ syms_of_event_stream (void)
   DEFSYMBOL (Qcommand_event_p);
 
   DEFERROR_STANDARD (Qundefined_keystroke_sequence, Qsyntax_error);
+  DEFERROR_STANDARD (Qno_character_typed, Qundefined_keystroke_sequence);
   DEFERROR_STANDARD (Qinvalid_key_binding, Qinvalid_state);
 
   DEFSUBR (Frecent_keys);
@@ -5152,18 +5167,25 @@ in preference to looking at and/or setting `this-command'.
   Vthis_command_properties = Qnil;
 
   DEFVAR_LISP ("help-char", &Vhelp_char /*
-Character to recognize as meaning Help.
+Key specifier to recognize as meaning Help.
 When it is read, do `(eval help-form)', and display result if it's a string.
-If the value of `help-form' is nil, this char can be read normally.
-This can be any form recognized as a single key specifier.
-The help-char cannot be a negative number in XEmacs.
+If the value of `help-form' is nil, this key can be read normally.
+This can be any form recognized as a single key specifier; see
+`event-matches-key-specifier-p' and `define-key'.
 */ );
   Vhelp_char = make_char (8); /* C-h */
 
+  DEFVAR_LISP ("help-event-list", &Vhelp_event_list /*
+List of extra key specifiers to recognize as meaning Help.
+These are in addition to the value of `help-char', which see.  They function
+in the same way, and can equally be suppressed by binding `help-form' to nil.
+*/ );
+  Vhelp_event_list = Qnil;
+
   DEFVAR_LISP ("help-form", &Vhelp_form /*
-Form to execute when character help-char is read.
+Form to execute when `help-char' or an element of `help-event-list' is read.
 If the form returns a string, that string is displayed.
-If `help-form' is nil, the help char is not recognized.
+If `help-form' is nil, `help-char' and `help-event-list' are ignored.
 */ );
   Vhelp_form = Qnil;
 

@@ -512,7 +512,7 @@ terminated by RET (which is discarded)."
 	     (error "Illegal character in keysym: %c" char))
 	    (t
 	     ;; Illegal event.
-	     (error "Event has no character equivalent: %s" event))))
+	     (error 'no-character-typed event))))
     (vector (intern (concat "" (nreverse list))))))
 
 (defun synthesize-unicode-codepoint (ignore-prompt)

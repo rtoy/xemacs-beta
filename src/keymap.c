@@ -1582,6 +1582,9 @@ event_matches_key_specifier_p (Lisp_Object event, Lisp_Object key_specifier)
     event2 = Fcharacter_to_event (key_specifier, Qnil, Qnil, Qnil);
   if (XEVENT (event2)->event_type != key_press_event)
     retval = 0;
+  else if (EQ (XEVENT_KEY_KEYSYM (event), XEVENT_KEY_KEYSYM (event2)) &&
+	   XEVENT_KEY_MODIFIERS (event) == XEVENT_KEY_MODIFIERS (event2))
+    retval = 1;
   else if (CONSOLE_TTY_P (XCONSOLE (XEVENT_CHANNEL (event))))
     {
       int ch1, ch2;
@@ -1590,9 +1593,6 @@ event_matches_key_specifier_p (Lisp_Object event, Lisp_Object key_specifier)
       ch2 = event_to_character (event2, 0, 0);
       retval = (ch1 >= 0 && ch2 >= 0 && ch1 == ch2);
     }
-  else if (EQ (XEVENT_KEY_KEYSYM (event), XEVENT_KEY_KEYSYM (event2)) &&
-	   XEVENT_KEY_MODIFIERS (event) == XEVENT_KEY_MODIFIERS (event2))
-    retval = 1;
   else
     retval = 0;
   Fdeallocate_event (event2);

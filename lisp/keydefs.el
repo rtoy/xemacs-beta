@@ -162,6 +162,8 @@ Keymap for characters following C-c.")
 ;; do backspace.
 (define-key global-map '(meta ??) 'help-command)
 
+(setq help-event-list '(help f1 (meta ??)))
+
 ;; FSFmacs indent.el
 
 ;;(define-key global-map "\t" 'self-insert-command)

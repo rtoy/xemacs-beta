@@ -330,6 +330,17 @@ determine whether this is the case.  If the integer cannot be converted,
 @code{nil} is returned.
 @end defun
 
+@defvar char-code-limit
+This is a constant integer describing an exclusive upper bound on the
+results return by @code{char-int} and that set of integers (fixnums) for
+which @code{int-char} will give non-nil. Without @sc{mule}
+(internationalization) support this will be @code{#x100}, as described
+under @code{char-int}, but with @sc{mule} support the range of values is
+much bigger, at least 21 bits' worth.  If an integer is less than
+@var{char-code-limit}, it may still not have an associated character, it
+is still necessary to check with the next function, @code{char-int-p}.
+@end defvar
+
 @defun char-int-p object
 This function returns @code{t} if @var{object} is an integer that can be
 converted into a character.

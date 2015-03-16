@@ -178,8 +178,6 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/mule-composite"
 	   ))
        ;; may initialize coding systems
-       (when (featurep '(and mule x)) "mule/mule-x-init")
-       (when (featurep '(and mule tty)) "mule/mule-tty-init")
        (when (and (featurep 'mule) (memq system-type '(windows-nt cygwin32)))
 	 "mule/mule-win32-init")
        "code-init" ; set up defaults

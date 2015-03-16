@@ -46,10 +46,9 @@ that the buffer's contents are equivalent to the string.
 
 If FOR-TEST-HARNESS is specified, a temporary buffer is used, and
 the Assert macro checks for correctness."
-  (let ((max (expt 2 (if (featurep 'mule) 21 8)))
-	(list nil)
+  (let ((list nil)
 	(i 0))
-    (while (< i max)
+    (while (< i char-code-limit)
       (and (not for-test-harness)
 	   (zerop (% i 1000))
 	   (message "%d" i))

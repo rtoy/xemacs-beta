@@ -346,9 +346,9 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
     c = Fevent_to_character (Vlast_command_event, Qnil, Qnil, Qnil);
 
   if (NILP (c))
-    invalid_operation (
-	    "Last typed key has no character equivalent (that we know of)",
-	    Fcopy_event (Vlast_command_event, Qnil));
+    {
+      Fsignal (Qno_character_typed, Fcopy_event (Vlast_command_event, Qnil));
+    }
 
   CHECK_CHAR_COERCE_INT (c);
 
