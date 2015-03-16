@@ -1,3 +1,9 @@
+2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Extend the tests for #'parse-integer, #'digit-char, #'digit-char-p
+	substantially, testing the Unicode decimal digits in detail.
+
 2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (test-chars):

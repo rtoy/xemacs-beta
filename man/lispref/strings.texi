@@ -297,6 +297,22 @@ using @code{char-int}.
 This function returns @code{t} if @var{object} is an integer or character.
 @end defun
 
+@defun digit-char-p character &optional (radix 10) radix-table
+This function returns non-nil if @var{character} represents a digit in base
+@var{radix}. The non-nil value returned is the integer value associated with
+@var{character}. @var{radix} defaults to @code{10}.
+
+@var{radix-table}, if non-nil, specifies a character table mapping from
+characters to their digit values. See the function @code{parse-integer} in
+@ref{String Conversion}.
+@end defun
+
+@defun digit-char weight &optional (radix 10) radix-table
+This function is the inverse of @code{digit-char-p}. Given an integer
+@var{weight}, it returns a character representing @var{weight} when read with
+base @var{radix}. If no such character exists, it returns @code{nil}. 
+@end defun
+
 @node Character Codes, Text Comparison, Predicates for Characters, Strings and Characters
 @section Character Codes
 
@@ -556,6 +572,40 @@ negative.
 @code{int-to-string} is a semi-obsolete alias for this function.
 
 See also the function @code{format} in @ref{Formatting Strings}.
+@end defun
+
+@defun parse-integer string &key (start 0) end (radix 10) junk-allowed radix-table)
+@cindex parse-integer
+This function returns the fixnum or bignum value represented by @var{string}
+in base @var{radix}. If @var{start} or @var{end} are specified, they describe
+a subsequence of @var{string} to examine. @xref{Sequence Basics, Sequence
+Basics, Sequences, cl}.  It skips whitespace at the beginning and end of the
+digits seen. Leading @code{?+} and @code{?-} are accepted and have the usual
+meaning; there is no provision for recognition of a leading @code{#x} or
+@code{#o} to indicate a non-default @var{radix}, and there is no special
+provision for a trailing @code{.}.
+
+If @var{junk-allowed} is non-nil, @code{parse-integer} allows non-digit,
+non-whitespace characters before or after the number to be parsed.  Otherwise,
+it errors when presented with anything other than an optional series of
+whitespace characters, followed by a non-optional series of digit characters,
+followed by an optional series of whitespace characters.
+
+@code{parse-integer} returns two values, the second of which can be accessed
+by, e.g. @xref{Multiple values, multiple-value-bind, ,}.  If
+@var{junk-allowed} is nil, the second value is always the length of that
+subsequence of @var{string} specified.  Otherwise, it is the index of the
+first non-digit trailing character encountered.
+
+Normally, the digit values for each character encountered are those returned
+by @code{digit-char-p}. Specifying @var{radix-table} allows this to be
+overridden; if it is specified, it is a character table (@pxref{Char Tables})
+mapping from characters to fixnum digit values.  If a given character has both
+a digit value and a whitespace value, the digit value overrides. However, if a
+@code{?-} both has a digit value and is the first character examined, its
+digit value is ignored, it is treated as indicating the number is negative.
+A work-around is to prepend a character having digit value zero to positive
+integers and to double the leading @code{?-} for negative integers.
 @end defun
 
 @defun string-to-number string &optional base

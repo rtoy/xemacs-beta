@@ -3547,7 +3547,7 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;;-----------------------------------------------------
 
 (Check-Error wrong-type-argument (parse-integer 123456789))
-(Check-Error wrong-type-argument (parse-integer "123456789" :start -1))
+
 (if (featurep 'bignum)
     (progn
       (Check-Error args-out-of-range
@@ -3566,6 +3566,139 @@ via the hepatic alpha-tocopherol transfer protein")))
              (parse-integer "123456789" :junk-allowed))
 (Check-Error invalid-keyword-argument
              (parse-integer "123456789" :no-such-keyword t))
+(Check-Error wrong-type-argument (parse-integer "123456789" :start -1))
+(Check-Error invalid-argument (parse-integer "abc"))
+(Check-Error invalid-argument (parse-integer "efz" :radix 16))
+
+(macrolet
+    ((with-digits (ascii alternate script)
+       (let ((tree-alist (list (cons 'old 'new)))
+             (text-alist (mapcar* #'cons ascii alternate)))
+         (list*
+          'progn
+          (cons
+           'progn
+           (loop for ascii-digit across ascii
+                 for non-ascii across alternate
+                 collect `(Assert (eql (digit-char-p ,non-ascii)
+                                   ,(- ascii-digit ?0))
+                           ,(concat "checking `digit-char-p', base-10, "
+                                    script))))
+          (sublis
+           tree-alist 
+           '((Assert (equal (multiple-value-list
+                                (parse-integer "	-123  "))
+                      '(-123 7)))
+             (Assert (equal (multiple-value-list
+                               (parse-integer "-3efz" :radix 16
+                                              :junk-allowed t))
+                      '(-1007 4)))
+             (Assert (equal (multiple-value-list
+                                (parse-integer "zzef9" :radix 16 :start 2))
+                      '(3833 5)))
+             (Assert (equal (multiple-value-list
+                                (parse-integer "0123456789" :radix 8
+                                               :junk-allowed t))
+                      '(342391 8)))
+             (Assert (equal (multiple-value-list
+                                (parse-integer "":junk-allowed t))
+                      '(nil 0)))
+             (Assert (equal (multiple-value-list
+                                (parse-integer "abc" :junk-allowed t))
+                      '(nil 0)))
+             (Check-Error invalid-argument (parse-integer "0123456789"
+                                            :radix 8))
+             (Check-Error invalid-argument (parse-integer "abc"))
+             (Check-Error invalid-argument (parse-integer "efz" :radix 16))
+             
+             ;; In contravention of Common Lisp, we allow both 0 and 1 as
+             ;; values for RADIX, useless as that is.
+             (Assert (equal (multiple-value-list
+                                (parse-integer "00000" :radix 1)) '(0 5))
+              "checking 1 is allowed as a value for RADIX")
+             (Assert (equal (multiple-value-list
+                                (parse-integer "" :radix 0 :junk-allowed t))
+                      '(nil 0))
+              "checking 0 is allowed as a value for RADIX"))
+             :test #'(lambda (new old)
+                       ;; This function replaces any ASCII decimal digits in
+                       ;; any string encountered in the tree with the
+                       ;; non-ASCII digits supplied in ALTERNATE.
+                       (when (and (stringp old) (find-if #'digit-char-p old))
+                         (setf (cdar tree-alist)
+                               (concatenate 'string
+                                            (sublis text-alist
+                                                    (append old nil))))
+                         t))))))
+     (repeat-parse-integer-non-ascii ()
+       (when (featurep 'mule)
+         (cons
+          'progn
+          (loop for (code-point . script)
+            in '((#x0660 . "Arabic-Indic")
+                 (#x06f0 . "Extended Arabic-Indic")
+                 (#x07c0 . "Nko")
+                 (#x0966 . "Devanagari")
+                 (#x09e6 . "Bengali")
+                 (#x0a66 . "Gurmukhi")
+                 (#x0ae6 . "Gujarati")
+                 (#x0b66 . "Oriya")
+                 (#x0be6 . "Tamil")
+                 (#x0c66 . "Telugu")
+                 (#x0ce6 . "Kannada")
+                 (#x0d66 . "Malayalam")
+                 (#x0de6 . "Sinhala Lith")
+                 (#x0e50 . "Thai")
+                 (#x0ed0 . "Lao")
+                 (#x0f20 . "Tibetan")
+                 (#x1040 . "Myanmar")
+                 (#x1090 . "Myanmar Shan")
+                 (#x17e0 . "Khmer")
+                 (#x1810 . "Mongolian")
+                 (#x1946 . "Limbu")
+                 (#x19d0 . "New Tai Lue")
+                 (#x1a80 . "Tai Tham Hora")
+                 (#x1a90 . "Tai Tham Tham")
+                 (#x1b50 . "Balinese")
+                 (#x1bb0 . "Sundanese")
+                 (#x1c40 . "Lepcha")
+                 (#x1c50 . "Ol Chiki")
+                 (#xa620 . "Vai")
+                 (#xa8d0 . "Saurashtra")
+                 (#xa900 . "Kayah Li")
+                 (#xa9d0 . "Javanese")
+                 (#xa9f0 . "Myanmar Tai Laing")
+                 (#xaa50 . "Cham")
+                 (#xabf0 . "Meetei Mayek")
+                 (#xff10 . "Fullwidth")
+                 (#x000104a0 . "Osmanya")
+                 (#x00011066 . "Brahmi")
+                 (#x000110f0 . "Sora Sompeng")
+                 (#x00011136 . "Chakma")
+                 (#x000111d0 . "Sharada")
+                 (#x000112f0 . "Khudawadi")
+                 (#x000114d0 . "Tirhuta")
+                 (#x00011650 . "Modi")
+                 (#x000116c0 . "Takri")
+                 (#x000118e0 . "Warang Citi")
+                 (#x00016a60 . "Mro")
+                 (#x00016b50 . "Pahawh Hmong")
+                 (#x0001d7ce . "Mathematical Bold")
+                 (#x0001d7d8 . "Mathematical Double-Struck")
+                 (#x0001d7e2 . "Mathematical Sans-Serif")
+                 (#x0001d7ec . "Mathematical Sans-Serif Bold")
+                 (#x0001d7f6 . "Mathematical Monospace"))
+            collect `(with-digits "0123456789"
+                      ;; All the Unicode decimal digits have contiguous code
+                      ;; point ranges as documented by the Unicode standard,
+                      ;; we can just increment.
+                      ,(concat (loop for fixnum from code-point
+                                     to (+ code-point 9)
+                                     collect (decode-char 'ucs fixnum))
+                               "")
+		      ,script))))))
+  (with-digits "0123456789" "0123456789" "ASCII")
+  (repeat-parse-integer-non-ascii))
 
 ;; Next two paragraphs of tests from GNU, thank you Leo Liu.
 (Assert (eql (digit-char-p ?3) 3))
@@ -3575,34 +3708,25 @@ via the hepatic alpha-tocopherol transfer protein")))
 (Check-Error args-out-of-range (digit-char-p ?a 37))
 (Assert (not (digit-char-p ?a 1)))
 
-(Assert (equal (multiple-value-list (parse-integer "	-123  ")) '(-123 7)))
-(Assert (equal (multiple-value-list
-                   (parse-integer "-efz" :radix 16 :junk-allowed t))
-               '(-239 3)))
-(Assert (equal (multiple-value-list (parse-integer "zzef" :radix 16 :start 2))
-               '(239 4)))
-(Assert (equal (multiple-value-list
-                   (parse-integer "0123456789" :radix 8 :junk-allowed t))
-               '(342391 8)))
-(Assert (equal (multiple-value-list (parse-integer "" :junk-allowed t))
-               '(nil 0)))
-(Assert (equal (multiple-value-list (parse-integer "abc" :junk-allowed t))
-               '(nil 0)))
-(Check-Error invalid-argument (parse-integer "0123456789" :radix 8))
-(Check-Error invalid-argument (parse-integer "abc"))
-(Check-Error invalid-argument (parse-integer "efz" :radix 16))
+(loop for fixnum from 0 below 36
+      do (Assert (eql fixnum (digit-char-p (digit-char fixnum 36) 36))))
 
-;; We don't allow a trailing decimal point, as the Lisp reader does.
-(Check-Error invalid-argument (parse-integer "12348."))
-
-;; In contravention of Common Lisp, we allow both 0 and 1 as values for RADIX,
-;; useless as that is.
-(Assert (equal (multiple-value-list (parse-integer "00000" :radix 1)) '(0 5))
-        "checking 1 is allowed as a value for RADIX")
-(Assert (equal (multiple-value-list
-                   (parse-integer "" :radix 0 :junk-allowed t))
-               '(nil 0))
-        "checking 0 is allowed as a value for RADIX")
+(let ((max -1)
+      (min most-positive-fixnum)
+      (max-char nil) (min-char nil))
+  (map-char-table #'(lambda (key value)
+                      (if (> value max)
+                          (setf max value
+                                max-char key))
+                      (if (< value min)
+                          (setf min value
+                                min-char key))
+                      nil)
+                  digit-fixnum-map)
+  (Assert (>= 35 max) "checking base 36 is supported, `digit-fixnum-map'")
+  (Assert (<= min 2) "checking base two supported, `digit-fixnum-map'")
+  (Assert (eql (digit-char-p max-char (1+ max)) max))
+  (Assert (eql (digit-char-p min-char (1+ min)) min))
 
 (let ((binary-table
        (copy-char-table #s(char-table :type generic :default -1 :data ()))))

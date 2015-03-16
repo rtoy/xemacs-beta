@@ -91,6 +91,14 @@
 	* simple.el (append-message):
 	Update this to reflect a changed message-stack structure.
 
+2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+ 
+ 	* mule/digit.el: New file, specifying integer weights for those
+ 	decimal digits specified by Unicode, and for the Latin characters
+ 	in ASCII.
+ 	* dumped-lisp.el (preloaded-file-list):
+ 	Dump this file, so those weights are available at runtime.
+ 
 2015-02-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (digit-char-p): Moved to data.c.
