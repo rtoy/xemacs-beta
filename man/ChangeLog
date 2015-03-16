@@ -14,6 +14,13 @@
 	Add notes about pixel_to_glyph_translation and related code.
 	(pixel_to_glyph_translation): New section.	
 
+2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Predicates for Characters):
+	Document `digit-char-p', `digit-char' here.
+	* lispref/strings.texi (String Conversion):
+	Document `parse-integer' here.
+
 2014-03-28  Jerry James  <james@xemacs.org>
 
 	* Makefile.in: Do not build texinfo files.

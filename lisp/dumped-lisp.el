@@ -233,7 +233,8 @@ in dumped-lisp.el and is not itself listed.")
 	 "mule/mule-msw-init-late")
 
        (when (featurep 'mule)
-	 "mule/general-late")
+	 '("mule/digit"
+           "mule/general-late"))
 
 ;;; mule-load.el ends here
 

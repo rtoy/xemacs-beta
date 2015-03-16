@@ -1940,6 +1940,13 @@ RADIX must always be a non-negative fixnum.  RADIX-TABLE constrains its
 possible values further, and the maximum RADIX available is always the largest
 positive value available RADIX-TABLE.
 
+If RADIX-TABLE (or `digit-fixnum-map') assigns a numeric value to `-', its
+digit value will be ignored if ?- is the first character in a string. The
+number will be treated as negative.  To work around this, double it, or assign
+another character the value zero and prefix non-negative strings with that.  A
+digit value for ?+ will be respected even if it is the first character in the
+representation of an integer.
+
 arguments: (STRING &key (START 0) end (RADIX 10) junk-allowed radix-table)
 */
        (int nargs, Lisp_Object *args))

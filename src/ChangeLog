@@ -1,3 +1,9 @@
+2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+  
+	* data.c (Fparse_integer):
+	Document a complication that arises when a leading minus sign has
+	a digit weight but is nonetheles interpreted as a minus.
+
 2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.h: Make CHAR_CODE_LIMIT available as a #define.
