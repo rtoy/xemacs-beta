@@ -1,3 +1,9 @@
+2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obsolete.el (max-char):
+	Make this available for compatiblity with GNU, implement it in
+	terms of char-code-limit.
+
 2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* tty-init.el (make-frame-after-init-entry-point):

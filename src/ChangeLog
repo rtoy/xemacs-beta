@@ -1,3 +1,12 @@
+2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.h: Make CHAR_CODE_LIMIT available as a #define.
+	* text.h (valid_ichar_p): Use it.
+	* text.c: Make a fixnum Vchar_code_limit available here.
+	* text.c (non_ascii_valid_ichar_p): Use CHAR_CODE_LIMIT.
+	* text.c (vars_of_text): Make `char-code-limit' available to
+	Lisp.
+
 2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* general-slots.h (Qno_character_typed): New error symbol.

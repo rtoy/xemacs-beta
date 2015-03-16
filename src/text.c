@@ -1322,6 +1322,7 @@ static int composite_char_col_next;
 Lisp_Object QSin_char_byte_conversion;
 Lisp_Object QSin_internal_external_conversion;
 
+Fixnum Vchar_code_limit;
 
 /************************************************************************/
 /*                          qxestr***() functions                       */
@@ -4677,7 +4678,7 @@ non_ascii_valid_ichar_p (Ichar ch)
   int f1, f2, f3;
 
   /* Must have only lowest 21 bits set */
-  if (ch & ~0x1FFFFF)
+  if (ch & ~(CHAR_CODE_LIMIT - 1))
     return 0;
 
   f1 = ichar_field1 (ch);
@@ -5142,6 +5143,14 @@ vars_of_text (void)
   QSin_internal_external_conversion =
     build_defer_string ("(in internal-external conversion)");
   staticpro (&QSin_internal_external_conversion);
+
+  DEFVAR_CONST_INT ("char-code-limit", &Vchar_code_limit /*
+Exclusive upper bound on the values return by `char-int'.
+
+Note that not every fixnum with a value below `char-code-limit' has an
+associated character; check with `char-int-p' if necessary.
+*/);
+  Vchar_code_limit = CHAR_CODE_LIMIT;
 
 #ifdef ENABLE_COMPOSITE_CHARS
   /* #### not dumped properly */

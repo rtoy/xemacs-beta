@@ -121,6 +121,8 @@ enum converr
 #define rep_bytes_by_first_byte(fb) 1
 #define byte_ascii_p(byte) 1
 #define MAX_ICHAR_LEN 1
+/* Exclusive upper bound on character codes. */
+#define CHAR_CODE_LIMIT 0x100 
 
 #else /* MULE */
 
@@ -212,11 +214,11 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 
 #define ichar_ascii_p(c) (!ichar_multibyte_p (c))
 
-/* Maximum number of bytes per Emacs character when represented as text, in
- any format.
- */
-
+/* Maximum number of bytes per Ichar when represented as text. */
 #define MAX_ICHAR_LEN 4
+
+/* Exclusive upper bound on char codes. */
+#define CHAR_CODE_LIMIT 0x200000 
 
 #endif /* not MULE */
 
@@ -239,7 +241,7 @@ valid_ichar_p (Ichar ch)
 
 /* This works when CH is negative, and correctly returns non-zero only when CH
    is in the range [0, 255], inclusive. */
-#define valid_ichar_p(ch) (! (ch & ~0xFF))
+#define valid_ichar_p(ch) (! (ch & ~(CHAR_CODE_LIMIT - 1)))
 
 #endif /* not MULE */
 

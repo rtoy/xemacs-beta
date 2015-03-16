@@ -1,3 +1,8 @@
+2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Character Codes):
+	Document `char-code-limit' here too.
+
 2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/help.texi (Help Functions):
