@@ -1,5 +1,13 @@
 2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* tty-init.el (make-frame-after-init-entry-point):
+	Some parentheses were placed badly here with the last change,
+	thank you Mats for pointing it out; in passing, change to a
+	version of the code that doesn't create a string for garbage, not
+	that it matters.
+
+2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* obsolete.el (max-char):
 	Make this available for compatiblity with GNU, implement it in
 	terms of char-code-limit.
