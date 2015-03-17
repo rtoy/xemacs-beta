@@ -6,6 +6,9 @@
 	standard. Thank you Vin Shelton for reporting the Linux
 	segmentation violation this provokes, and happy St. Patrick's Day
 	to everyone reading the XEmacs lists!
+	(vars_of_data): Don't rely on zero termination here for
+	Vfixnum_to_char_map, give an explicit bytecount. Again, thank you
+	Vin!
 
 2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
   
