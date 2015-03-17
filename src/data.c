@@ -1484,9 +1484,15 @@ fill_ichar_array (struct chartab_range *range, Lisp_Object UNUSED (table),
 	}
       /* Maybe our own case infrastructure is not available yet. Use the C
          library's. */
-      else if (isupper (range->ch) && !isupper (cctable[valint]))
+      else if (current_buffer == NULL)
         {
-	  cctable[valint] = range->ch;          
+	  /* The C library can't necessarily handle values outside of
+	     the range EOF to CHAR_MAX, inclusive. */
+	  assert (range->ch == EOF || range->ch <= CHAR_MAX);
+	  if (isupper (range->ch) && !isupper (cctable[valint]))
+	    {
+	      cctable[valint] = range->ch;
+	    }
         }
       /* Otherwise, save it if this character has a numerically lower value
          (preferring ASCII over fullwidth Chinese and so on). */
