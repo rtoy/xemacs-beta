@@ -4302,7 +4302,9 @@ character does not have an assigned numeric value. See `parse-integer',
     /* Sigh, we can't call build_fixnum_to_char_map() on Vdigit_fixnum_map,
        this is too early in the boot sequence to map across a char table. Do
        it by hand. */
-    Vfixnum_to_char_map = build_ascstring (fixnum_tab);
+    ASSERT_ASCTEXT_ASCII_LEN (fixnum_tab, 36 * MAX_ICHAR_LEN);
+    Vfixnum_to_char_map
+	    = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
     staticpro (&Vfixnum_to_char_map);
   }
 
