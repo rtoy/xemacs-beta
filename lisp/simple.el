@@ -275,7 +275,14 @@ With arg N, insert N newlines."
 (defun quoted-insert (arg)
   "Read next input character and insert it.
 This is useful for inserting control characters.
-You may also type up to 3 octal digits, to insert a character with that code.
+With argument, insert ARG copies of the character.
+
+If the first character you type after this command is an octal digit,
+you should type a sequence of octal digits which specify a Unicode character.
+Any nondigit terminates the sequence.  If the terminator is a RET,
+it is discarded; any other terminator is used itself as input.
+The variable `read-quoted-char-radix' specifies the radix for this feature;
+set it to 10 or 16 to use decimal or hex instead of octal.
 
 In overwrite mode, this function inserts the character anyway, and
 does not handle octal digits specially.  This means that if you use
