@@ -34,6 +34,31 @@
 
 2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* simple.el (quoted-insert):
+	Update the docstring here, syncing GNU's, especially mentioning
+	read-quoted-char-radix.
+	* cmdloop.el:
+	* cmdloop.el (read-quoted-char-radix): Move this up here, outside
+	the functions.
+	* cmdloop.el (read-function-key-map): New label, reading and
+	replacing characters from function-key-map if appropriate.
+	* cmdloop.el (read-quoted-char): Multiple changes:
+	-- Take advantage of help-event-list, but be careful not to have
+	any keystrokes with character equivalents in it, so the user can
+	type C-q C-h and have the expected result.
+	-- Use function-key-map, as does #'read-char and
+	#'read-exclusive-char, helpful for character composition under
+	X11.
+	-- Pop up the help window ourselves if, e.g. F1 arrives on a TTY
+	via function-key-map, event-stream won't have done it.
+	-- Error if no keystroke that can be converted into a character is
+	specified, don't just insert ?\x00 as we used to and as does GNU
+	-- Use #'digit-char-p instead of reimplementing it.
+	-- Fix a bug of mine where I wasn't consistent about treating
+	character codes as Unicode.
+
+2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cmdloop.el (no-character-typed):
 	New error, for those cases when a keystroke is to be treated as a
 	character but has no character equivalent.
