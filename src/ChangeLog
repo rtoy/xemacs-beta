@@ -1,3 +1,10 @@
+2015-03-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (build_fixnum_to_char_map):
+	Whoops, highest_value is a Lisp_Object, no need to extract the
+	fixnum from radix_table->default_ when initialising it. Thank you
+	Robert Delius Royar, Uwe Brauer, and the union build.
+
 2015-03-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (fill_ichar_array):
