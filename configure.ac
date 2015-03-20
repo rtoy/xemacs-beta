@@ -5380,6 +5380,9 @@ elif test "$with_tls" = "openssl"; then
     [XE_DIE("Required openssl support cannot be provided.")])
 fi
 dnl Autodetection
+dnl Must be requested explicitly with --with-tls.
+dnl To default to autodetection, change the next three tests to
+dnl if test "$with_tls" != "no".
 if test "$with_tls" = "yes"; then
   AC_CHECK_HEADER([gnutls/gnutls.h],
     [AC_CHECK_LIB(gnutls, gnutls_global_init, [with_tls=gnutls])])
@@ -5393,7 +5396,6 @@ if test "$with_tls" = "yes"; then
     [AC_CHECK_LIB(ssl, SSL_library_init, [with_tls=openssl], [with_tls=no])])
 fi
 if test "$with_tls" != "no"; then
-  AC_DEFINE(WITH_TLS)
   if test "$with_tls" = "gnutls"; then
     AC_DEFINE(HAVE_GNUTLS)
     gnutls_cflags=`pkg-config --cflags gnutls`
@@ -5418,7 +5420,7 @@ if test "$with_tls" != "no"; then
     if test "$?" = 0; then
       XE_APPEND("$nss_libs", LIBS)
     fi
-  else
+  elif test "$with_tls" = "openssl"; then
     AC_DEFINE(HAVE_OPENSSL)
     openssl_cflags=`pkg-config --cflags openssl`
     if test "$?" = 0; then
@@ -5429,7 +5431,12 @@ if test "$with_tls" != "no"; then
       XE_APPEND("$openssl_libs", LIBS)
     fi
     AC_CHECK_FUNC(X509_check_host, [AC_DEFINE(HAVE_X509_CHECK_HOST)])
+  else
+    with_tls=no
   fi
+fi
+if test "$with_tls" != "no"; then
+  AC_DEFINE(WITH_TLS)
 fi
 
 dnl Unfortunately, just because we can link doesn't mean we can run.

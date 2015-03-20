@@ -21365,8 +21365,6 @@ fi
 
 fi
 if test "$with_tls" != "no"; then
-  $as_echo "#define WITH_TLS 1" >>confdefs.h
-
   if test "$with_tls" = "gnutls"; then
     $as_echo "#define HAVE_GNUTLS 1" >>confdefs.h
 
@@ -21401,7 +21399,7 @@ fi
     if test "$?" = 0; then
       LIBS="$LIBS "$nss_libs"" &&  if test "$verbose" = "yes"; then echo "    Appending \""$nss_libs"\" to \$LIBS"; fi
     fi
-  else
+  elif test "$with_tls" = "openssl"; then
     $as_echo "#define HAVE_OPENSSL 1" >>confdefs.h
 
     openssl_cflags=`pkg-config --cflags openssl`
@@ -21418,7 +21416,13 @@ if test "x$ac_cv_func_X509_check_host" = xyes; then :
 
 fi
 
+  else
+    with_tls=no
   fi
+fi
+if test "$with_tls" != "no"; then
+  $as_echo "#define WITH_TLS 1" >>confdefs.h
+
 fi
 
 if test "$cross_compiling" = yes; then :
