@@ -1517,7 +1517,8 @@ build_fixnum_to_char_map (Lisp_Object radix_table)
   /* What's the greatest fixnum value seen? In passing, check all the char
      table values are fixnums. */
   CHECK_FIXNUM (XCHAR_TABLE (radix_table)->default_);
-  highest_value = XFIXNUM (XCHAR_TABLE (radix_table)->default_);
+  highest_value = XCHAR_TABLE (radix_table)->default_;
+
   map_char_table (radix_table, &ctr, find_highest_value, &highest_value);
   cclen = XFIXNUM (highest_value) + 1;
 
