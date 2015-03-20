@@ -2,6 +2,11 @@
 
 	* README: fix note about which Bitbucket repository to push to.
 
+2015-03-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (TLS): Prevent unintended fall-through to OpenSSL.
+	* configure: Rebuild.
+
 2015-01-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (Postgresql): Improve Installation text.
