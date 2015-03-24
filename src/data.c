@@ -1522,7 +1522,7 @@ build_fixnum_to_char_map (Lisp_Object radix_table)
   map_char_table (radix_table, &ctr, find_highest_value, &highest_value);
   cclen = XFIXNUM (highest_value) + 1;
 
-  cctable = malloc (sizeof (Ichar) * cclen);
+  cctable = (Ichar *)malloc (sizeof (Ichar) * cclen);
   if (cctable == NULL)
     {
       out_of_memory ("Could not allocate data for `digit-char'", Qunbound);
