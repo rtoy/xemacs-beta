@@ -1,5 +1,8 @@
 2015-03-24  Vin Shelton  <acs@xemacs.org>
 
+	* data.c (build_fixnum_to_char_map): Cast cctable malloc call to
+	avoid warning from VS6.
+
 	* process-unix.c:  Move disconnect_controlling_terminal() call
 	later in create_process_unix().  This is necessary for Cygwin, but
 	seems to work on linux (at least), too.
