@@ -1,3 +1,9 @@
+2015-03-24  Vin Shelton  <acs@xemacs.org>
+
+	* process-unix.c:  Move disconnect_controlling_terminal() call
+	later in create_process_unix().  This is necessary for Cygwin, but
+	seems to work on linux (at least), too.
+
 2015-03-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (build_fixnum_to_char_map):
