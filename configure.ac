@@ -1309,6 +1309,7 @@ case "$ac_cv_build" in
   hppa-*-*         ) machine=hp800 ;;
   arm*             ) machine=arm ;;
   i[[3-9]]86-*-*   ) machine=intel386 ;;
+  x86_64-*-*       ) machine=x86_64 ;;
 esac
 
 dnl Straightforward OS determination
@@ -1393,6 +1394,14 @@ case "$ac_cv_build" in
     dnl Watch out for a compiler guaranteed not to work.
     test "$opsys $CC" = "sol2 /usr/ucb/cc" && CC=""
   ;;
+
+  dnl 64-bit machines where we do not care about the manufacturer
+  x86_64-*-* )
+    case "$ac_cv_build" in
+      *-cygwin* )	opsys=cygwin64 ;;
+      dnl Otherwise, we fall through to the generic opsys code at the bottom.
+    esac
+  ;;    
 
   dnl Intel 386 machines where we do not care about the manufacturer
   i[[3-9]]86-*-* )
