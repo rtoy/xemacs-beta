@@ -1,3 +1,11 @@
+2015-03-26  Vin Shelton  <acs@xemacs.org>
+
+	* s/cygwin32.h: Moved guts to cygwin-common.h.
+	* s/cygwin-common.h: Created from cygwin32.h.
+	* s/cygwin64.h:
+	* m/x86_64.h: Created to support 64-bit cygwin.
+	Work started by Henry S. Thompson  <ht@inf.ed.ac.uk>.
+
 2015-03-24  Vin Shelton  <acs@xemacs.org>
 
 	* data.c (build_fixnum_to_char_map): Cast cctable malloc call to
@@ -27,7 +35,7 @@
 	Vin!
 
 2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
-  
+
 	* data.c (Fparse_integer):
 	Document a complication that arises when a leading minus sign has
 	a digit weight but is nonetheles interpreted as a minus.
@@ -112,7 +120,7 @@
 2015-02-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (read_atom): Use the new calling convention for
-	parse_integer(). 
+	parse_integer().
 	* lisp.h: Change the declaration of parse_integer ().
 	* number.h (bignum_set_emacs_int, make_bignum_emacs_uint):
 	New #defines, used in data.c.
@@ -189,8 +197,8 @@
 
 2014-10-25  Michael Sperber  <mike@xemacs.org>
 
-	* fontcolor-x.c (x_font_instance_truename): 
-	* font-mgr.c (Ffc_name_unparse): 
+	* fontcolor-x.c (x_font_instance_truename):
+	* font-mgr.c (Ffc_name_unparse):
 	* font-mgr.h (PRINT_XFT_PATTERN): Don't modify
 	fontconfig pattern passed in in place.
 
@@ -336,7 +344,7 @@
 	Use the new START and END keyword arguments to #'append-message,
 	rather than consing a new string for basically every #'next-event
 	prompt displayed.
-	
+
 2014-07-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.c (Fkeymapp):
@@ -380,7 +388,7 @@
 	Fixes Michael Heinrich's problem of
 	http://mid.gmane.org/6zr42uxtf5.fsf@elektra.science-computing.de ,
 	introduced by Ben's patch of
-	https://bitbucket.org/xemacs/xemacs/commits/047d37eb70d70f43803 . 
+	https://bitbucket.org/xemacs/xemacs/commits/047d37eb70d70f43803 .
 
 2014-05-08  Jerry James  <james@xemacs.org>
 
@@ -499,7 +507,7 @@
 	unicode coding systems to the buffer insertion code, making
 	#'find-file on large buffers a little snappier (if
 	ERROR_CHECK_TEXT is not defined).
-	
+
 	* file-coding.c:
 	* file-coding.c (coding_character_tell): New.
 	* file-coding.c (conversion_coding_stream_description): New.
@@ -519,7 +527,7 @@
 	* fileio.c (Finsert_file_contents_internal):
 	Update this to pass charcount information to
 	buffer_insert_string_1(), if that is available from the lstream code.
-	
+
 	* insdel.c:
 	* insdel.c (buffer_insert_string_1):
 	Add a new CCLEN argument, giving the character count of the string
@@ -624,7 +632,7 @@
 	Call promote_args_lazy () here too if WITH_NUMBER_TYPES is defined.
 	We're not doing the equivalent with the non-NUMBER_TYPES code, but
 	that's mostly fine, we are doing it in the bytecode.
-	
+
 	* number.h:
 	* number.h (NUMBER_TYPES):
 	* number.h (promote_args_lazy):
@@ -650,7 +658,7 @@
 	* alloc.c (free_normal_lisp_object):
 	Mark unused argument.
 
-	* bytecode.c (bytecode_negate): 
+	* bytecode.c (bytecode_negate):
 	* data.c (Fsub1):
 	Shut up compiler warnings about always true comparisons.
 
@@ -809,7 +817,7 @@
 
 	* dired.c (Ffile_attributes): Added optional ID-FORMAT for
 	compatibility with GNU.
-	
+
 2013-03-28  Jerry James  <james@xemacs.org>
 
 	* config.h.in: AC_FUNC_FSEEKO is the name of the autoconf macro.
@@ -944,7 +952,7 @@
 	* file-coding.c (determine_real_coding_system):
 	* file-coding.c (undecided_convert):
 	Use this parameter.
-	* file-coding.c (Ffind_coding_system_magic_cookie_in_file):	
+	* file-coding.c (Ffind_coding_system_magic_cookie_in_file):
 	New, moved from files.el, so we can use
 	look_for_coding_system_magic_cookie's implementation.
 	* file-coding.c (syms_of_file_coding):
@@ -1173,20 +1181,20 @@
 	friends.
 	* minibuf.c (map_completion_list): New. Map a maphash_function_t
 	across a pseudo-alist, as appropriate for the completion
-	functions. 
+	functions.
 	* minibuf.c (ignore_completion_p): PRED needs to be called with
 	two args if and only if the collection is a hash table. Implement
 	this.
 	* minibuf.c (try_completion_mapper): New. The loop body of
 	#'try-completion, refactored out.
 	* minibuf.c (Ftry_completion): Use try_completion_mapper(),
-	map_completion(). 
+	map_completion().
 	* minibuf.c (all_completions_mapper): New. The loop body of
 	#'all-completions, refactored out.
 	* minibuf.c (Fall_completions): Use all_completions_mapper(),
 	map_completion().
 	* minibuf.c (test_completion_mapper): New. The loop body of
-	#'test-completion. 
+	#'test-completion.
 	* minibuf.c (Ftest_completion): New, API from GNU.
 	* minibuf.c (syms_of_minibuf): Make Ftest_completion available.
 
@@ -1347,7 +1355,7 @@
 	* redisplay.c (regenerate_window_extents_only_changed):
 	* redisplay.c (regenerate_window_incrementally): Update the
 	comparison tests between the current and desired display lines to
-	cope for different 'clear_findex values.	
+	cope for different 'clear_findex values.
 	* redisplay.c (create_text_block): Initialize the display line's
 	'clear_findex slot to DEFAULT_INDEX. Record a new 'clear_findex
 	value when we encounter a newline character displayed in a flushed
@@ -1399,7 +1407,7 @@
 	* alloc.c (internal_bit_vector_equalp_hash):
 	* alloc.c (bit_vector_hash):
 	* alloc.c (init_alloc_once_early):
-	Move the implementation of the bit vector type here from fns.c. 
+	Move the implementation of the bit vector type here from fns.c.
 
 	* emacs.c (main_1):
 	Call syms_of_sequence() here, now sequence.c is included.
@@ -2638,7 +2646,7 @@
 	The EMACS_INT typedef was not changed, it does not describe
 	non-bignum Lisp integers.
 	Script that did the change available in
-	http://mid.gmane.org/20067.17650.181273.12014@parhasard.net . 
+	http://mid.gmane.org/20067.17650.181273.12014@parhasard.net .
 
 2011-09-06  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -2774,7 +2782,7 @@
 
 	Fix performance regression in refactored syntax cache setup.
 	More doc improvements.
-	
+
 	* syntax.h (enum syntax_source):
 	New.  Specify whether syntax is from property or buffer.
 	(struct syntax_cache):
@@ -3254,10 +3262,10 @@
 
 2011-01-30  Michael Sperber  <mike@xemacs.org>
 
-	* redisplay.h: 
-	* redisplay.c: 
-	(redisplay_cancel_ritual_suicide): 
-	* eval.c (throw_or_bomb_out_unsafe): 
+	* redisplay.h:
+	* redisplay.c:
+	(redisplay_cancel_ritual_suicide):
+	* eval.c (throw_or_bomb_out_unsafe):
 	* device-x.c (x_IO_error_handler): Don't commit suicide when an X
 	device dies.
 
@@ -3298,7 +3306,7 @@
 
 	* device-msw.c (Fmswindows_printer_list): Remove a Fdelete ()
 	call here, remove the necessity for it.
-	* fns.c (Fdelete, Fdelq): 
+	* fns.c (Fdelete, Fdelq):
 	* lisp.h:
 	Move #'delete, #'delq to Lisp, implemented in terms of #'delete*
 	* select.c (Fown_selection_internal):
@@ -3313,7 +3321,7 @@
 
 2011-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* fns.c (FdeleteX, FremoveX, Fnsubstitute, Fsubstitute, syms_of_fns): 
+	* fns.c (FdeleteX, FremoveX, Fnsubstitute, Fsubstitute, syms_of_fns):
 	Don't repeat the declaration and DEFSYMBOL() for Qnintersection in
 	this file; don't assume that bignums are always available. Fixes
 	some of the build problems the buildbot is showing me at the
@@ -3381,7 +3389,7 @@
 
 2010-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* elhash.c (syms_of_elhash): 
+	* elhash.c (syms_of_elhash):
 	* chartab.c (syms_of_chartab):
 	* abbrev.c (syms_of_abbrev):
 	* general-slots.h:
@@ -3593,7 +3601,7 @@
 	version of this macro.
 	(PARSE_KEYWORDS): Use GET_DEFUN_LISP_OBJECT() for both the NEW_GC
 	and non-NEW_GC versions of this macro, when working out the
-	function's min args. 
+	function's min args.
 
 2010-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -3623,7 +3631,7 @@
 	Change to use the new PARSE_KEYWORDS syntax.
 	* elhash.c (Fmake_hash_table): Chance to the new PARSE_KEYWORDS
 	syntax, rename a define to correspond to what other files use.
-	
+
 	* symbols.c (intern_massaging_name):
 	* buffer.c (ADD_INT):
 	Rename intern_converting_underscores_to_dashes() to
@@ -3673,7 +3681,7 @@
 	(Ffill):
 	Only check the range arguments for a cons SEQUENCE if we have good
 	reason to think they were badly specified.
-	
+
 	(Freduce):
 	Handle multiple values properly. Add bounds checking to this
 	function, as specificied by ANSI Common Lisp.
@@ -3686,7 +3694,7 @@
 
 2010-09-07  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* fns.c (Freplace): 
+	* fns.c (Freplace):
 	Replace an accidental double semi-colon with a single semi-colon,
 	hopefully fixing Vin's Visual Studio 6 build. (Visual Studio 2005
 	had no problem with it, oddly.)
@@ -3709,7 +3717,7 @@
 2010-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* chartab.c (char_table_default_for_type,
-	chartab_default_validate): New. 
+	chartab_default_validate): New.
 	(print_char_table, Freset_char_table, chartab_default_validate)
 	(chartab_instantiate, structure_type_create_chartab):
 	Accept keyword :default in the read syntax for char tables, and
@@ -3771,7 +3779,7 @@
 	result for well-formedness once, which was not previously the
 	case, despite what the comments said.
 	(Fmaplist, Fmapl, Fmapcon):
-	Call maplist() with its new arguments.	
+	Call maplist() with its new arguments.
 
 2010-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -3800,7 +3808,7 @@
 	Correct some code formatting here.
 	* doprnt.c (emacs_doprnt_1):
 	Remove some needless #ifdef WITH_NUMBER_TYPES, now number.h is
-	always #included. 
+	always #included.
 
 2010-08-26  Adam Sjøgren <asjo@koldfront.dk>
 
@@ -3874,7 +3882,7 @@
 	* ui-gtk.c:
 	* ui-gtk.h:
 	Correct FSF address in permission notice.
-	
+
 2010-06-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alloc.c (Fpurecopy):
@@ -3931,7 +3939,7 @@
 	New #define, always 1 for the moment, replacing the previous
 	never-really-used NO_NEED_TO_HANDLE_21_4_CODE, and avoiding
 	confusing syntax.
-	
+
 	* eval.c (Ffuncall): Wrap the hack that allows #'throw to be
 	funcalled in #ifdef NEED_TO_HANDLE_21_4_CODE.
 	* elhash.c (syms_of_elhash): Move Q_type, Q_data to
@@ -3956,11 +3964,11 @@
 
 2010-05-28  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
-	* mc-alloc.c: 
-	* mc-alloc.c (visit_all_used_page_headers): 
-	* mc-alloc.c (install_page_in_used_list): 
-	* mc-alloc.c (mc_alloc_1): 
-	* mc-alloc.c (init_mc_allocator): 
+	* mc-alloc.c:
+	* mc-alloc.c (visit_all_used_page_headers):
+	* mc-alloc.c (install_page_in_used_list):
+	* mc-alloc.c (mc_alloc_1):
+	* mc-alloc.c (init_mc_allocator):
 	* mc-alloc.c (Fmc_alloc_memory_usage): Allocate lrecord arrays in
 	own size class.
 
@@ -3987,7 +3995,7 @@
 	Move `default-file-system-ignore-case' to C; pay attention to it
 	in creating the directory hash tables for #'locate-file. Fix a bug
 	where #'eq was specified when creating directory hash tables in
-	dired.c. 
+	dired.c.
 
 	* config.h.in (DEFAULT_FILE_SYSTEM_IGNORE_CASE): This is 1 on
 	Darwin.
@@ -4055,7 +4063,7 @@
 	Port charset_codepoint_to_itext(), buffer_itext_to_charset_codepoint(),
 	EXTBYTE_STRING_TO_ALLOCA(), `enum converr' from ben-unicode-internal,
 	for use with the mule-wnnfns.c changes.
-	
+
 	* mule-wnnfns.c:
 	* mule-wnnfns.c (Fwnn_open):
 	* mule-wnnfns.c (Fwnn_dict_add):
@@ -4133,7 +4141,7 @@
 	* elhash.c (internal_hash):
 	* elhash.c (Feql_hash):
 	Fix spacing before parens.
-	
+
 	* general-slots.h:
 	* xemacs.def.in.in:
 	Export Qfixnump to fix eldap.c link error.
@@ -4142,7 +4150,7 @@
 
 	* toolbar-msw.c (allocate_toolbar_item_id)
 	(mswindows_output_toolbar):
-	* menubar-msw.c (allocate_menu_item_id, checksum_menu_item): 
+	* menubar-msw.c (allocate_menu_item_id, checksum_menu_item):
 	* glyphs-msw.c (mswindows_image_instance_hash):
 	* fontcolor-msw.c (mswindows_color_instance_equal):
 	* device-msw.c (hash_devmode):
@@ -4206,11 +4214,11 @@
 	* font-mgr.c (complex_vars_of_font_mgr):
 	Fix the code to conform to GNU style standards.
 	Rename xft-debug-level to debug-xft.
-	
+
 	* fontcolor-x.c:
 	* fontcolor-x.c (vars_of_fontcolor_x):
 	Rename debug-x-objects to debug-x-fonts.
-	
+
 	* fontcolor-xlike-inc.c:
 	* fontcolor-xlike-inc.c (DEBUG_FONTS1):
 	* fontcolor-xlike-inc.c (DEBUG_FONTS2):
@@ -4223,7 +4231,7 @@
 	* fontcolor-xlike-inc.c (xft_find_charset_font):
 	Misc. code fixes, mostly cosmetic.  Get rid of some warnings.
 	Fix the code to conform to GNU style standards.
-	
+
 	* lisp.h:
 	* print.c:
 	* print.c (debug_out_lisp):
@@ -4324,7 +4332,7 @@
 	non-nil Lisp object if the first argument is less than the second,
 	rather than C integers.
 
-	* fontcolor-msw.c (sort_font_list_function): 
+	* fontcolor-msw.c (sort_font_list_function):
 	* fileio.c (build_annotations):
 	* dired.c (Fdirectory_files):
 	* abbrev.c (Finsert_abbrev_table_description):
@@ -4344,18 +4352,18 @@
 	* alloc.c (Fobject_memory_usage):
 	* alloc.c (lisp_object_memory_usage_full):
 	Don't crash if passed a non-record object (int or char).
-	
+
 	* alloc.c (tree_memory_usage_1):
 	* lrecord.h:
 	New function tree_memory_usage() to return the memory usage of
 	a tree of conses and/or vectors.
-	
+
 	* lisp.h:
 	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
 	Add SAFE_LIST_LOOP_* functions for looping over a list not known
 	to be correct or non-circular, but without signalling an error --
 	instead, just stop enumerating when an error detected.
-	
+
 	* emacs.c (main_1):
 	* specifier.c:
 	* specifier.c (specifier_memory_usage):
@@ -4367,7 +4375,7 @@
 
 	* window.c (find_window_mirror_internal):
 	Stop looking if no window mirror, and return 0.
-	
+
 	* window.c (window_display_lines):
 	* window.c (window_display_buffer):
 	* window.c (set_window_display_buffer):
@@ -4399,12 +4407,12 @@
 	lisp_object_memory_usage() to compute the total memory usage of an
 	object (sum of object, non-Lisp attached, and Lisp ancillary
 	memory).
-	
+
 	* array.c:
 	* array.c (gap_array_memory_usage):
 	* array.h:
 	Add function to return memory usage of a gap array.
-	
+
 	* buffer.c (struct buffer_stats):
 	* buffer.c (compute_buffer_usage):
 	* buffer.c (vars_of_buffer):
@@ -4421,13 +4429,13 @@
 
 	In compute_buffer_marker_usage(), use lisp_object_memory_usage()
 	rather than lisp_object_storage_size().
-	
+
 	* casetab.c:
 	* casetab.c (case_table_memory_usage):
 	* casetab.c (vars_of_casetab):
 	* emacs.c (main_1):
 	Add memory usage stats for case tables.
-	
+
 	* lisp.h:
 	Add comment explaining the `struct generic_usage_stats' more,
 	as well as the new fields in lrecord_implementation.
@@ -4465,7 +4473,7 @@
 	mirror, not a window; make it an ancillary Lisp-object field.
 	Window mirrors and scrollbar instances have their own statistics,
 	among other things.
-	 
+
 2010-03-24  Ben Wing  <ben@xemacs.org>
 
 	* array.h:
@@ -4519,7 +4527,7 @@
 	whether an object pushed onto the stack is a Lisp object or a
 	non-Lisp structure; in kkcc_backtrace_1(), don't try to print a
 	non-Lisp structure as a Lisp object.
-	
+
 	* elhash.c:
 	* extents.c:
 	* file-coding.c:
@@ -4538,7 +4546,7 @@
 	* extents.c (finalize_extent_info):
 	Don't zero out data->soe and data->extents before trying to free,
 	else we get memory leaks.
-	
+
 	* lrecord.h (enum lrecord_type):
 	Make the first lrecord type have value 1 not 0 so that 0 remains
 	without implementation and attempts to interpret zeroed memory
@@ -4733,7 +4741,7 @@
 	overhead used by long strings.  Don't try to call the
 	memory_usage() methods when NEW_GC because there's nowhere obvious
 	in the sweep stage to make the calls.
-	
+
 	* marker.c (compute_buffer_marker_usage):
 	Just use lisp_object_storage_size() rather than trying to
 	reimplement it.
@@ -4756,20 +4764,20 @@
 	stats that are related to non-Lisp memory storage to compute
 	a single value, and add it to the list of values returned by
 	`garbage-collect' and `object-memory-usage-stats'.
-	
+
 	* buffer.c (compute_buffer_text_usage):
 	Don't crash on buffers without text (killed buffers?) and don't
 	double-count indirect buffers.
-	
+
 	* elhash.c:
 	* elhash.c (hash_table_objects_create):
 	* elhash.c (vars_of_elhash):
 	* symsinit.h:
 	Add memory-usage method to count the size of `hentries'.
-	
+
 	* emacs.c (main_1):
 	Call new functions in elhash.c, frame.c at init.
-	
+
 	* frame.c:
 	* frame.c (compute_frame_usage):
 	* frame.c (frame_memory_usage):
@@ -4777,16 +4785,16 @@
 	* symsinit.h:
 	Add memory-usage method to count gutter display structures,
 	subwindow exposures.
-	
+
 	* gc.c (gc_finish):
 	* lisp.h:
 	Declare finish_object_memory_usage_stats(), call it in gc_finish().
-	
+
 	* lrecord.h (struct lrecord_implementation):
 	* lrecord.h (INIT_MEMORY_USAGE_STATS):
 	New value in implementation struct to track number of non-Lisp-memory
 	statistics.  Computed in alloc.c.
-	
+
 
 2010-03-18  Ben Wing  <ben@xemacs.org>
 
@@ -4990,8 +4998,8 @@
 
 	(4) Delete a bit of remaining unused C window_config stuff, also
 	unused lrecord_type_popup_data.
-	
-	
+
+
 2010-03-18  Ben Wing  <ben@xemacs.org>
 
 	* tests.c:
@@ -5004,7 +5012,7 @@
 	* alloc.c (make_lcrecord_list):
 	* alloc.c (alloc_managed_lcrecord):
 	Fix compilation problems identified by Robert Delius Royar.
-	
+
 2010-03-15  Ben Wing  <ben@xemacs.org>
 
 	* extents.c (Fprevious_single_property_change):
@@ -5156,7 +5164,7 @@
 	* lisp.h (redo-symbols): Removed.
 	Put the Lisp variables and symbols where they belong, with other
 	stuff related to the file they're in.
-	
+
 	* event-Xt.c (THIS_IS_X):
 	* event-Xt.c (syms_of_event_Xt):
 	* event-Xt.c (reinit_vars_of_event_Xt):
@@ -5172,10 +5180,10 @@
 	events-stream.c. `self-insert-command' was defsymbol'ed more than once.
 	Vevent_resource should be staticpro_nodump()ed as it's declared in
 	a reinit_*() method.
-	
+
 	* lread.c (vars_of_lread):
 	Vfile_domain wasn't staticpro'ed.
-	
+
 	* minibuf.c:
 	* minibuf.c (reinit_complex_vars_of_minibuf):
 	Vminibuffer_zero and Vecho_area_buffer weren't staticpro'ed.
@@ -5330,7 +5338,7 @@
 
 	* frame.c (change_frame_size_1):
 	Add a comment about where FRAME_PIXWIDTH/FRAME_PIXHEIGHT is set.
-	
+
 2010-03-05  Ben Wing  <ben@xemacs.org>
 
 	* frame.c:
@@ -5370,7 +5378,7 @@
 	frame size.
 
 	Add section headers to the various sections.
-	
+
 	Rearrange the location of some functions in the file to keep
 	related functions together.  This especially goes for frame-sizing
 	functions (internal_set_frame_size() and adjust_frame_size()),
@@ -5710,7 +5718,7 @@
 	that normal finalize methods don't have to worry about disksaving.
 
 	Other specifics:
-	
+
 	(1) Renaming:
 
 	LISP_OBJECT_HEADER -> NORMAL_LISP_OBJECT_HEADER
@@ -5723,7 +5731,7 @@
 	(the last two changes make the naming of these macros consistent
 	with the naming of all other macros, since the objects are named
 	fc-config and fc-pattern with a hyphen)
-	
+
 	(2) Lots of documentation fixes in lrecord.h.
 
 	(3) Eliminate macros for copying, freeing, zeroing objects, getting
@@ -5766,7 +5774,7 @@
 	now just creates the object, and attach_extent_auxiliary()
 	creates an extent auxiliary and attaches to an extent, like the
 	old allocate_extent_auxiliary().
-	
+
 	(6) Create EXTENT_AUXILIARY_SLOTS macro, similar to the foo-slots.h
 	files but in a macro instead of a file.  The purpose is to avoid
 	duplication when iterating over all the slots in an extent auxiliary.
@@ -5780,10 +5788,10 @@
 	(9) In print.c, clean up printing_unreadable_lcrecord(),
 	external_object_printer() to avoid lots of ifdef NEW_GC's.
 
-	(10) Separate toolbar-button allocation into a separate 
+	(10) Separate toolbar-button allocation into a separate
 	allocate_toolbar_button() function for use in the example code
 	in lrecord.h.
-	
+
 2010-01-20  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:
@@ -5919,7 +5927,7 @@
 	Change DEFINE_*_LISP_OBJECT_WITH_PROPS to DEFINE_*_GENERAL_LISP_OBJECT,
 	which is used for specifying either property methods or disksave
 	methods (or in the future, any other less-used methods).
-	
+
 	Remove the for_disksave argument to finalize_process_data.  Don't
 	provide a disksaver for processes because no one currently needs
 	it.
@@ -5934,7 +5942,7 @@
 	situations with dead objects, the conmeths structure is NULL,
 	and printing such objects from debug_print() will crash if we try
 	to look into the conmeths structure.
-	
+
 
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
@@ -6035,7 +6043,7 @@
 	DECLARE_LRECORD -> DECLARE_LISP_OBJECT
 	INIT_LRECORD_IMPLEMENTATION -> INIT_LISP_OBJECT
 	alloc_lrecord -> alloc_sized_lrecord (since it takes a size)
-	
+
 	Dynarr_newf, Dynarr_lisp_newf: takes a Bytecount instead of an int
 
 2010-03-05  Ben Wing  <ben@xemacs.org>
@@ -6058,7 +6066,7 @@
 	* lisp.h (assert_equal):
 	New fun assert_equal, asserting that two values == each other, and
 	printing out both values upon failure.
-	
+
 	* frame-gtk.c (gtk_initialize_frame_size):
 	* frame-impl.h:
 	* frame-impl.h (FRAME_TOP_INTERNAL_BORDER_START):
@@ -6112,7 +6120,7 @@
 	typically, it wasn't fixed up properly when the gutter was added.
 
 	Some cosmetic changes.
-	
+
 2010-03-02  Ben Wing  <ben@xemacs.org>
 
 	* lisp.h:
@@ -6131,14 +6139,14 @@
 	glyphs-shared.o, glyphs-eimage.o only needed when HAVE_WINDOW_SYSTEM.
 	glyphs-widget.o should be too, but we need a bit of work ifdeffing
 	out the subwindow stuff from redisplay.c et al.
-	
+
 	* bytecode.c (init_opcode_table_multi_op):
 	Change var name to avoid shadowing with `basename'.
-	
+
 	* emacs.c (main_1):
 	Don't call init/etc. routines for glyphs-shared, glyphs-eimage unless
 	HAVE_WINDOW_SYSTEM is defined.
-	
+
 	* linuxplay.c:
 	* linuxplay.c (sighandler):
 	* vdb-posix.c (vdb_fault_handler):
@@ -6220,7 +6228,7 @@
 	* objects.c (reinit_specifier_type_create_objects):
 	* objects.c (reinit_vars_of_objects): Update for the modifications
 	above.
-	* console-xlike-inc.h (XLIKE_GC_TS_X_ORIGIN, XLIKE_GC_TS_X_ORIGIN): 
+	* console-xlike-inc.h (XLIKE_GC_TS_X_ORIGIN, XLIKE_GC_TS_X_ORIGIN):
 	New X11/Gtk compatibility macros.
 	* redisplay-xlike-inc.c (XLIKE_get_gc): Add a background placement
 	argument and handle it.
@@ -6376,7 +6384,7 @@
 	the frame size by 15 bytes or so (could be 3 if we use Boolbytes)
 	but hardly seems w to matter -- frames are heavy weight objects
 	anyway.  Same with top_gutter_was_visible, etc.
-	
+
 	Remove duplicated SET_TOOLBAR_WAS_VISIBLE_FLAG and put defn in
 	one place (toolbar.h).
 
@@ -6682,7 +6690,7 @@
 
 	DeMorgan's Law's applied and manually simplified:
 	if (x && !y) ABORT (); --> assert (!x || y);
-	if (!x || y >= z) ABORT (); --> assert (x && y < z); 
+	if (!x || y >= z) ABORT (); --> assert (x && y < z);
 
 	Checked to make sure that assert() of an expression with side
 	effects ensures that the side effects get executed even when
@@ -6742,7 +6750,7 @@
 	* window.h:
 	IMPORTANT: Aidan and Carbon Repo, please pay attention and fix
 	appropriately!
-	
+
 	Rename: default_face_height_and_width -> default_face_width_and_height
 	and reverse width/height arguments.
 
@@ -6754,7 +6762,7 @@
 
 	Fix a redisplay bug where args to default_face_height_and_width
 	were in the wrong order.
-	
+
 
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
@@ -6764,7 +6772,7 @@
 
 	* frame.c:
 	Shrink size of diagram consistent with internals manual.
-	
+
 	* alloc.c:
 	* compiler.h:
 	* console.c:
@@ -6907,7 +6915,7 @@
 	   rather than total pixels and needs to be converted appropriately;
 	   take a look at the changes made to mswindows_set_frame_size()
 	   method if necessary.
-	
+
 	3. Add a big long comment in frame.c describing how frame geometry
 	   works.
 
@@ -6948,7 +6956,7 @@
 	* vdb.c:
 	Fix some compile warnings, make vdb test code conditional on
 	DEBUG_XEMACS.
-	
+
 2010-02-15  Ben Wing  <ben@xemacs.org>
 
 	* regex.c:
@@ -7011,7 +7019,7 @@
 	(1) Lots of documentation added.  Also fix places that
 	referenced a now-bogus internals node concerning redisplay
 	critical sections.
-	
+
 	(2) Rename:
 
 	Dynarr_add_lisp_string -> Dynarr_add_ext_lisp_string
@@ -7031,7 +7039,7 @@
 	Dynarr_resize_to_fit(): Resize as necessary to fit a given length.
 	Dynarr_set(): Set element at a given position, increasing length
 	  as necessary and setting any newly created positions to 0
-	
+
 	(4) Use Elemcount, Bytecount.
 
 	(5) Rewrite many macros as inline functions.
@@ -7086,7 +7094,7 @@
 	* dired.c (Ffile_attributes):
 	Use manifest constant IRIX6_5 instead of IRIX.
 	Eliminate constant BSD4_2, use BSD4_3 instead.
-	
+
 	* getloadavg.c:
 	* getloadavg.c (getloadavg):
 	* getloadavg.c (LDAV_PRIVILEGED):
@@ -7140,7 +7148,7 @@
 	Remove sco7.h, identical with usg5-4-2.h.
 
 	Remove unused POSIX flag, BROKEN_TIOC*, NO_SIOCTL_H.
-	
+
 2010-02-20  Ben Wing  <ben@xemacs.org>
 
 	* m/arm.h:
@@ -7211,7 +7219,7 @@
 	Cygwin has a working stderr that shows error output.
 
 	Update comment in Dynarr_verify_pos_atp().
-	
+
 
 2010-02-09  Ben Wing  <ben@xemacs.org>
 
@@ -7243,9 +7251,9 @@
 
 	* alloc.c:
 	Add prototypes for debugging functions.
-	
+
 	* alloc.c (compact_string_chars): Make static.
-	
+
 	* console-x.c (x_initially_selected_for_input):
 	* console-x.h:
 	* console-x.h (X_ERROR_OCCURRED):
@@ -7253,19 +7261,19 @@
 
 	* eval.c (multiple_value_call):
 	Real bug: Fix shadowing local vars.
-	
+
 	* event-unixoid.c (read_event_from_tty_or_stream_desc):
 	* event-unixoid.c (signal_fake_event):
 	* lread.c (check_if_suppressed):
 	* strftime.c (strftime):
 	Fix stupid global shadowing warnings.
-	
+
 	* event-unixoid.c (signal_fake_event):
 	* event-unixoid.c (drain_signal_event_pipe):
 	Use Rawbyte, not char.
-	
+
 	* frame.h: Remove old prototype.
-	
+
 	* gc.c:
 	* gc.c (show_gc_cursor_and_message):
 	* gc.c (remove_gc_cursor_and_message):
@@ -7279,13 +7287,13 @@
 	* gc.c (gc_mark):
 	* gc.c (gc_resume_mark):
 	Make fns static.
-	
+
 	* glyphs-eimage.c (gif_decode_error_string):
 	Fix non-prototype.
-	
+
 	* lisp.h:
 	Hack around global shadowing warnings involving `index'.
-	
+
 	* intl-win32.c (wcsncpy):
 	* number-gmp.c (bigfloat_to_string):
 	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
@@ -7294,7 +7302,7 @@
 	Declarations cannot follow statements in standard C.
 
 	* search.c (search_buffer): Fix local shadowing warnings.
-	
+
 2010-02-08  Ben Wing  <ben@xemacs.org>
 
 	* faces.c:
@@ -7358,12 +7366,12 @@
 	than just setting/resetting to avoid hosing things in case we're
 	called when the value is already non-zero.  Similarly increment/
 	decrement in_assert_failed.
-	
+
 	* gc.c (gc_prepare):
 	* gc.c (gc_finish):
 	Increment/decrement inhibit_non_essential_printing_operations
 	rather than setting/resetting.
-	
+
 	* print.c:
 	* print.c (debug_out):
 	* print.c (write_string_to_alternate_debugging_output):
@@ -7390,7 +7398,7 @@
 	static opaque structure holding all the bindings (and not handling
 	reentrancy).  Fix raw `char' to be `CIbyte' in the declaration of
 	`alternate_do_string'.
-	
+
 	* signal.c (check_what_happened):
 	Fix bug: Don't try to check for QUIT when
 	inhibit_non_essential_printing_operations or we may screw things
@@ -7566,10 +7574,10 @@
 
 	* emacs.c (make_argc_argv):
 	Cast to Wexttext * to fix compile error.
-	
+
 	* nt.c (init_user_info):
 	Cast to CIbyte * to fix compile error.
-	
+
 	* nt.c (open_unc_volume):
 	To fix compile error, store pathname into an Extbyte * variable
 	then write into the dest, casting to LPTSTR.
@@ -7596,7 +7604,7 @@
 	char[] but then compared the value to an Ichar.  Hence, any chars
 	in the range 128-255 would always appear changed -- in particular,
 	this algorithm would fail completely with binary data.
-	
+
 
 2010-02-07  Ben Wing  <ben@xemacs.org>
 
@@ -7607,7 +7615,7 @@
 
 	* mule-wnnfns.c:
 	Convert file to utf-8.
-	
+
 2010-02-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fns.c (mapcarX):
@@ -7648,7 +7656,7 @@
 	Regenerate.
 	* make-src-depend (PrintPatternDeps):
 	Remove refs to xgccache, no longer existent.
-	
+
 	* select-gtk.c (THIS_IS_GTK):
 	* select-gtk.c (gtk_decline_selection_request):
 	* select-x.c (THIS_IS_X):
@@ -7656,7 +7664,7 @@
 	* select-xlike-inc.c (selection_data_to_lisp_data):
 	Rename PROCESSING_X_CODE to THIS_IS_X and PROCESSING_GTK_CODE to
 	THIS_SI_GTK for consistency with other xlike code.
-	
+
 	Rename select-xlike-inc.c from select-common.h, in keeping with
 	xlike terminology.
 
@@ -7879,7 +7887,7 @@
 
 	The following four still return their values through parameters,
 	since they have more than one value to return:
-	
+
 	C_STRING_TO_SIZED_EXTERNAL -> ITEXT_TO_SIZED_EXTERNAL
 	LISP_STRING_TO_SIZED_EXTERNAL
 	C_STRING_TO_SIZED_EXTERNAL_MALLOC -> ITEXT_TO_SIZED_EXTERNAL_MALLOC
@@ -7918,7 +7926,7 @@
 	* lisp.h:
 	* lisp.h (staticpro_nodump_1):
 	Define staticpro_1 and staticpro_nodump_1 when not XEMACS_DEBUG.
-	
+
 	* symbols.c (defsymbol_massage_name_1):
 	* symbols.c (defsymbol_massage_multiword_predicate):
 	Cosmetic fixes.
@@ -8187,7 +8195,7 @@
 	* symbols.c (defkeyword):
 	* symeval.h (DEFVAR_SYMVAL_FWD_OBJECT):
 	Put this back again:
-	
+
 	Make the various calls to staticpro() instead call staticpro_1(),
 	passing in the name of the C var being staticpro'ed, so that it
 	shows up in staticpro_names.  Otherwise staticpro_names just has
@@ -8198,7 +8206,7 @@
 	* bytecode.c (assert_failed_with_remembered_ops):
 	* bytecode.c (init_opcode_table_multi_op):
 	Declare some things const to shut up G++ v4 warnings.
-	
+
 	* redisplay.c (add_ibyte_string_runes):
 	* redisplay.c (add_string_to_fstring_db_runes):
 	* redisplay.c (generate_fstring_runes):
@@ -8333,7 +8341,7 @@
 	verification additionally checks to make sure that the Dynarr
 	isn't locked. (This is used in redisplay to check for problems
 	with reentrancy.)
-	
+
 	* lrecord.h: Move XD_DYNARR_DESC to lisp.h, grouping with the dynarr code.
 
 2010-02-03  Jerry James  <james@xemacs.org>
@@ -8394,14 +8402,14 @@
 	Also enable byte-code metering when DEBUG_XEMACS -- this is a form
 	of profiling for computing histograms of which sequences of two
 	bytecodes are used most often.
-	
+
 	* bytecode-ops.h:
 	* bytecode-ops.h (OPCODE):
 	New file.  Extract out all the opcodes and declare them using
 	OPCODE(), a bit like frame slots and such.  This way the file can
 	be included multiple times if necessary to iterate multiple times
 	over the byte opcodes.
-	
+
 	* bytecode.c:
 	* bytecode.c (NUM_REMEMBERED_BYTE_OPS):
 	* bytecode.c (OPCODE):
@@ -8446,14 +8454,14 @@
 
 	Add some longish comments describing how the arrays that hold the
 	stack and instructions, and the pointers used to access them, work.
-	
+
 	* gc.c:
 	Import some code from my `latest-fix' workspace to mark the
 	staticpro's in order from lowest to highest, rather than highest to
 	lowest, so it's easier to debug when something goes wrong.
-	
+
 	* lisp.h (abort_with_message): Renamed from abort_with_msg().
-	
+
 	* symbols.c (defsymbol_massage_name_1):
 	* symbols.c (defsymbol_nodump):
 	* symbols.c (defsymbol):
@@ -8527,7 +8535,7 @@
 	* toolbar-xlike.h:
 	* toolbar-xlike.h (xlike_clear_frame_toolbars):
 	Rename some files to make them consistent with general naming rules:
-	
+
 	xgccache.c -> gccache-x.c
 	xgccache.h -> gccache-x.h
 	toolbar-common.c -> toolbar-xlike.c
@@ -8538,7 +8546,7 @@
 
 	Add a longish comment in console-xlike-inc.h describing the "xlike"
 	system, how it works and what the various files are used for.
-	
+
 
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
@@ -8603,7 +8611,7 @@
 	Create a USED() macro to force unused-var warnings to go away,
 	in certain cases where it's inconvenient to do otherwise (e.g.
 	when THIS_IS_GTK in redisplay-xlike-inc.c).
-	
+
 	* console-x.h:
 	Remove unneeded decls, make some static.
 
@@ -8612,9 +8620,9 @@
 	redisplay-xlike-inc.c that may be useful in other XLIKE files.
 	Correct the handling of colors and font-style setting functions
 	in the xlike defns.  Lots of fixes in the GTK-specific defns.
-	
+
 	* depend: Regenerate.
-	
+
 	* event-xlike-inc.c:
 	* event-xlike-inc.c (USE_UNICODE_MAP):
 	* event-xlike-inc.c (endif):
@@ -8629,10 +8637,10 @@
 	* gtk-xemacs.h (struct _GtkXEmacsClass):
 	* objects-xlike-inc.c:
 	Cosmetic, comment fixes.
-	
+
 	* glyphs.c (pixmap_to_lisp_data):
 	Unused var fixes.
-	
+
 
 	* gtk-glue.c:
 	* gccache-gtk.c:
@@ -8645,11 +8653,11 @@
 	* xgccache.c (GC_CACHE_SIZE):
 	* xgccache.h:
 	Misc include-file fixes.
-	
+
 	* objects-xlike-inc.c (XFUN):
 	* objects-xlike-inc.c (xlistfonts_checking_charset):
 	Combine some ifdeffed stuff using defs in console-xlike-inc.h.
-	
+
 	* redisplay-gtk.c:
 	* redisplay-gtk.c (THIS_IS_GTK):
 	* redisplay-gtk.c (XLIKE_bevel_area):
@@ -8659,7 +8667,7 @@
 	which mostly duplicates generic bevel_modeline().  Fix up
 	gtk_bevel_modeline() into XLIKE_bevel_area() and make use of
 	the style var properly to set the appropriate GTK constant.
-	
+
 	* redisplay-x.c:
 	* redisplay-x.c (XLIKE_window_output_begin):
 	* redisplay-x.c (XLIKE_window_output_end):
@@ -8669,7 +8677,7 @@
 	Make x_output_shadows be static.  Change the defn of various
 	functions to look like XLIKE_foo() so it matches the calling
 	convention elsewhere.
-	
+
 	* redisplay-xlike-inc.c:
 	* redisplay-xlike-inc.c (NEED_GCCACHE_H):
 	* redisplay-xlike-inc.c (XLIKE_text_width):
@@ -8687,14 +8695,14 @@
 	since it's called from gtk.  Change the color-function calls
 	and fill-style-setting calls to match the changes in
 	console-xlike-inc.h.  Use USED() to avoid some warnings.
-	
+
 	* symsinit.h:
 	Sort the prototypes, and add a fun `sort-symsinit' in a comment
 	that does the sorting (using sort-regexp-fields).
-	
+
 	* symsinit.h (init_number):
-	
-	
+
+
 	* sysgtk.h: New file, wraps the various GTK headers.
 	* sysgdkx.h: New file, wraps <gtk/gdkx.h>.  Keep this separate to
 	* event-gtk.h: Delete.  Combine stuff into console-gtk.h.
@@ -8728,7 +8736,7 @@
 	* text.c (qxetextcasecmp_matching):
 	Create new macro CANONCASE that converts to a canonical mapping
 	and use it to do caseless comparisons instead of DOWNCASE.
-	
+
 	* alloc.c:
 	* alloc.c (cons_equal):
 	* alloc.c (vector_equal):
@@ -8785,28 +8793,28 @@
 
 	Add internal_equal_0(), which takes a `foldcase' param and calls
 	either internal_equal() or internal_equalp().
-	
+
 	* buffer.h:
 	When given a 0 for buffer (which is the norm when functions don't
 	have a specific buffer available), use the current buffer's table,
 	not `standard-case-table'; otherwise the current settings are
 	ignored.
-	
+
 	* casetab.c:
 	* casetab.c (set_case_table):
 	When handling old-style vectors of 256 in `set-case-table' don't
 	overwrite the existing table!  Instead create a new table and
 	populate.
-	
+
 	* device-msw.c (sync_printer_with_devmode):
 	* lisp.h:
 	* text.c (lisp_strcasecmp_ascii):
 	Rename lisp_strcasecmp to lisp_strcasecmp_ascii and use
 	lisp_strcasecmp_i18n for caseless comparisons in some places.
-	
+
 	* elhash.c:
 	Delete unused lisp_string_hash and lisp_string_equal().
-	
+
 	* events.h:
 	* keymap-buttons.h:
 	* keymap.h:
@@ -8818,22 +8826,22 @@
 	* keymap.c (INCLUDE_BUTTON_ZERO):
 	New file keymap-buttons.h; use to handle buttons 1-26 in place of
 	duplicating code 26 times.
-	
+
 	* frame-gtk.c (allocate_gtk_frame_struct):
 	* frame-msw.c (mswindows_init_frame_1):
 	Fix some comments about internal_equal() in redisplay that don't
 	apply any more.
-	
+
 	* keymap-slots.h:
 	* keymap.c:
 	New file keymap-slots.h.  Use it to notate the slots in a keymap
 	structure, similar to frameslots.h or coding-system-slots.h.
-	
+
 	* keymap.c (MARKED_SLOT):
 	* keymap.c (keymap_equal):
 	* keymap.c (keymap_hash):
 	Implement.
-	
+
 2010-02-01  Ben Wing  <ben@xemacs.org>
 
 	* syntax.c:
@@ -8856,7 +8864,7 @@
 
 2010-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* search.c (search_buffer): 
+	* search.c (search_buffer):
 	When checking the octets of c for identity, don't compare the
 	same octet with itself. Thank you Ben Wing!
 
@@ -8873,7 +8881,7 @@
 	* intl-auto-encap-win32.c (qxeGetICMProfile):
 	* intl-auto-encap-win32.h:
 	Rebuild.
-	
+
 	* intl-encap-win32.c:
 	* intl-encap-win32.c (qxeUpdateICMRegKey):
 	Delete manual definitions of functions with former errors in
@@ -8917,7 +8925,7 @@
 	(Fmapcan, Fmapc, Fmap): Move these here from cl-extra.el.
 	(Fmap_into): New function, as specified by Common Lisp.
 	(maplist): New function, the guts of the implementation of
-	Fmaplist and Fmapl. 
+	Fmaplist and Fmapl.
 	(Fmaplist, Fmapl, Fmapcon): Move these from cl-extra.el.
 	(syms_of_fns):
 	Add a few needed symbols here, for the type tests
@@ -8947,7 +8955,7 @@
 	* search.c (boyer_moore): Fix longstanding bug involving
 	searching for Control-1 chars; code was trying to directly
 	extract the last byte in the textual representation of a char
-	from an Ichar (and doing it in a buggy fashion) rather than 
+	from an Ichar (and doing it in a buggy fashion) rather than
 	just converting the Ichar to text and looking at the last byte.
 
 2010-01-28  Ben Wing  <ben@xemacs.org>
@@ -8958,7 +8966,7 @@
 
 2010-01-27  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* number.c (Fdenominator): 
+	* number.c (Fdenominator):
 	Oops, change #else to #endif here; thank you Vin Shelton, thank
 	you Robert Delius Royar.
 
@@ -9544,7 +9552,7 @@
 	BASIC IDEA: Further fixing up uses of char * and CIbyte *
 	to reflect their actual semantics; Mule-izing some code;
 	redoing of the not-yet-working code to handle message translation.
-	
+
 	Clean up code to handle message-translation (not yet working).
 	Create separate versions of build_msg_string() for working with
 	Ibyte *, CIbyte *, and Ascbyte * arguments.  Assert that Ascbyte *
@@ -9560,7 +9568,7 @@
 	DEFER_GETTEXT() from error messages in sysdep.c and instead use
 	special comments /* @@@begin-snarf@@@ */ and /* @@@end-snarf@@@ */
 	that the message snarfer presumably knows about.
-	
+
 	Create build_ascstring() and use it in many instances in place
 	of build_string().  The purpose of having Ascbyte * variants is
 	to make the code more self-documenting in terms of what sort of
@@ -9595,7 +9603,7 @@
 	Mule-ize emodules.c, emodules.h, sysdll.h.
 
 	Fix some un-Mule-ized code in intl-win32.c.
-	
+
 	A comment in event-Xt.c and the limitations of the message
 	snarfer (make-msgfile or whatever) is presumably incorrect --
 	it should be smart enough to handle function calls spread over
@@ -9613,12 +9621,12 @@
 	them in xemacs.defs.in.in since postgresql.c now uses them.
 
 	Clean up indentation in lread.c and a few other places.
-	
+
 	In text.h, document ASSERT_ASCTEXT_ASCII() and
 	ASSERT_ASCTEXT_ASCII_LEN(), group together the stand-in
 	encodings and add some more for DLL symbols, function and
 	variable names, etc.
-	
+
 2010-01-26  Ben Wing  <ben@xemacs.org>
 
 	* .gdbinit.in.in: Allow an argument to check-xemacs and check-temacs
@@ -9632,7 +9640,7 @@
 	* process.c (Fgetenv):
 	* redisplay-output.c (get_next_display_block):
 	Fix warnings about possible use of uninitialized vars.
-	
+
 	* compiler.h:
 	* compiler.h (REGISTER):
 	* event-stream.c (is_scrollbar_event):
@@ -9669,7 +9677,7 @@
 
 	* lisp.h:
 	G++ 4.3 needs #include <limits> to avoid errors about min/max.
-	
+
 	* lisp.h (disabled_assert_with_message):
 	Use disabled_assert* whenever asserts are disabled.  Rewrite
 	disabled_assert* to avoid complaints about unused vars by
@@ -9678,15 +9686,15 @@
 	not USE_ASSERTIONS -- configure sets USE_ASSERTIONS automatically
 	when DEBUG_XEMACS, and if the user has forced it off, then
 	so be it.
-	
+
 	* lisp.h (SYMBOL_KEYWORD):
 	Put some of the combined `extern Lisp_Object's back under
 	the file they are declared in.  Cosmetic fix.
-	
+
 	* number.h:
 	Remove `extern Lisp_Object' decls that duplicate lisp.h,
 	since they have different C vs. C++ linkage.
-	
+
 2010-01-21  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:
@@ -9789,7 +9797,7 @@
 	Break separate_textual_runs_* functions from redisplay-x.c.
 	(Code in redisplay-gtk.c should have been identical but was
 	bit-rotted.)
-	
+
 	* redisplay-gtk.c:
 	* redisplay-x.c:
 	Delete code, replace with include statement.
@@ -9801,14 +9809,14 @@
 	* lisp.h:
 	* print.c:
 	New variable `in_debug_print'.
-	
+
 	* alloc.c:
 	* alloc.c (free_managed_lcrecord):
 	If gc_in_progress and in_debug_print, just return instead of
 	crashing. This only happens when the programmer calls debug_print()
 	or a variation inside of a debugger, and is probably already
 	diagnosing a crash.
-	
+
 	* print.c (struct debug_bindings):
 	* print.c (debug_prin1_exit):
 	* print.c (debug_prin1):
@@ -9816,7 +9824,7 @@
 	debug_bindings, set up an unwind-protect to restore the old value,
 	and set in_debug_print to 1.  In the unwind-protect, restore the
 	old value.
-	
+
 
 2010-01-16  Ben Wing  <ben@xemacs.org>
 
@@ -9829,7 +9837,7 @@
 	* doprnt.c (emacs_doprnt_1):
 	Cosmetic: Use Qunbound, not Qnil as second arg to call to
 	syntax_error() to get cleaner error message.
-	
+
 2010-01-15  Ben Wing  <ben@xemacs.org>
 
 	* intl-encap-win32.c:
@@ -9918,7 +9926,7 @@
 	* intl-auto-encap-win32.h:
 	* intl-auto-encap-win32.h (qxemciGetErrorString):
 	Regenerate these files from Cygwin headers.
-	
+
 	* intl-encap-win32.c:
 	Bracket more functions in HAVE_MS_WINDOWS, to fix build problems
 	when building --with-msw=no on Cygwin.
@@ -9989,7 +9997,7 @@
 	Rename Bintegerp to Bfixnump; change its semantics to reflect the
 	new name on builds with bignum support.
 
-	* data.c (Ffixnump, Fintegerp, syms_of_data, vars_of_data): 
+	* data.c (Ffixnump, Fintegerp, syms_of_data, vars_of_data):
 	Always make #'fixnump available, even on non-BIGNUM builds;
 	always implement #'integerp in this file, even on BIGNUM builds.
 	Move most-positive-fixnum, most-negative-fixnum here from
@@ -10027,7 +10035,7 @@
 	* fileio.c (check_writable): Fix compilation error under Visual
 	Studio 6.
 
-	* sysfile.h: 
+	* sysfile.h:
 	Add conditional definition for EOVERFLOW, which isn't defined
 	under Visual Studio 6.
 
@@ -10042,7 +10050,7 @@
 	* compiler.h:
 	Don't use USED_IF_MULE_OR_CHECK_TEXT in buffer.h.  Eliminate since
 	not used anywhere any more.
-	
+
 	* font-mgr.c (fontset_to_list):
 	* font-mgr.c (Ffc_config_substitute):
 	Don't use Fsignal() as it may return.  Use signal_error() instead
@@ -10064,15 +10072,15 @@
 	* glyphs-eimage.c:
 	Turn on fixes for conflicts between jmorecfg.h and windows.h on
 	Cygwin, too.
-	
+
 	* emacs.c (debug_can_access_memory):
 	* lisp.h:
 	Declare function const void * to avoid warnings.
-	
+
 	* sysfile.h:
 	Include syswindows.h on Windows to avoid problems using things like
 	PATHNAME_CONVERT_OUT.
-	
+
 	* sysfile.h (X_OK):
 	* dialog-msw.c (handle_directory_proc):
 	* dialog-msw.c (handle_directory_dialog_box):
@@ -10093,7 +10101,7 @@
 
 	* specifier.c (specifier_instance_from_inst_list):
 	Don't declare an unused variable, (void) 0 is enough.
-	
+
 	* text.h:
 	Don't use USED_IF_MULE_OR_CHECK_TEXT().
 
@@ -10242,7 +10250,7 @@
 	element) for clarity, and change code appropriately to use it.
 
 	Change code appropriately to use Dynarr_begin().
-	
+
 	Rewrite Dynarr_add_many().  New version can accept a NULL pointer
 	to mean "reserve space but don't put anything in it".  Used by
 	stack_like_malloc().
@@ -10269,17 +10277,17 @@
 
 	* cmdloop.c:
 	During really-early-error-handler, exit to the debugger and abort
-	if an error occurs and 
+	if an error occurs and
 	* lisp.h: extern Vdebug_on_error.
 
 2010-01-12  Ben Wing  <ben@xemacs.org>
 
 	* sheap.c:
-	* sheap.c (more_static_core): 
+	* sheap.c (more_static_core):
 	Increase STATIC_HEAP_SLOP.
 	Change heap-exhausted error message to mention the computed
 	static heap size.
-	
+
 	* unexcw.c: Include syswindows.h to avoid compile error.
 
 	* file-coding.c (default_query_method): Single = is intended.
@@ -10291,7 +10299,7 @@
 	* database.c:
 	* intl-encap-win32.c (qxeUpdateICMRegKey):
 	Cosmetic fixes.
-	
+
 	* device-x.c (signal_if_x_error):
 	* editfns.c (Fformat_time_string):
 	* editfns.c (Fencode_time):
@@ -10355,7 +10363,7 @@
 
 	* config.h.in:
 	Add def for HAVE_CYGWIN_CONV_PATH.
-	
+
 	* dialog-msw.c (handle_directory_dialog_box):
 	* dialog-msw.c (handle_file_dialog_box):
 	* fileio.c:
@@ -10424,7 +10432,7 @@
 	coding system.  Call it appropriately in emacs.c.  Sort the
 	prototypes of complex_vars_of_*() in symsinit.h, for cosmetic
 	reasons.
-	
+
 
 2010-01-11  Ben Wing  <ben@xemacs.org>
 
@@ -10458,13 +10466,13 @@
 	functions, either in eldap.o (if we don't include references to
 	ERROR_CHECK_TYPES in xemacs.def.in.in) or xemacs-export.o (if
 	we do include such references):
-	
+
 	Add line for USE_GPLUSPLUS, set by configure.
 	Define INLINE_HEADERS_ARE_STATIC when we add static to inline headers.
 	(Possibly used when setting NEED_ERROR_CHECK_TYPES_INLINES.)
 	Currently, set NEED_ERROR_CHECK_TYPES_INLINES when ERROR_CHECK_TYPES
 	and USE_GPLUSPLUS.
-	
+
 	* xemacs.def.in.in:
 	Use NEED_ERROR_CHECK_TYPES_INLINES here to bracket things like
 	`error_check_cons' instead of just ERROR_CHECK_TYPES.
@@ -10472,51 +10480,51 @@
 	* faces.c (complex_vars_of_faces):
 	Bracket various font variables with defined(USE_XFT or MULE) to
 	avoid warnings.
-	
+
 	* fileio.c:
 	Make sure the `expand-file-name' handler returns a string, to
 	avoid a potential crash.
-	
+
 	* floatfns.c (round_one_bigfloat_1):
 	#if-0 out an assert that can never be triggered and which
 	generates warnings "dereferencing type-punned pointer will break
 	strict-aliasing rules".
-	
+
 	* redisplay-x.c (separate_textual_runs_nomule):
 	Remove unused variable in non-Mule case.
-	
+
 	* specifier.c (charset_matches_specifier_tag_set_p):
 	Variable CHARSET is unused when not Mule.
-	
+
 	* specifier.c (specifier_instance_from_inst_list):
 	Add a comment questioning why font-specific stuff is littering
 	specifier.c.
-	
+
 	* syswindows.h:
 	Expand on the comments on a #if 0 I added in a previous patch.
-	
+
 	* vdb-win32.c:
 	* vdb-win32.c (win32_fault_handler):
 	* vdb-win32.c (vdb_install_signal_handler):
 	Change return type to LONG instead of DWORD to avoid warning or
 	error.
-	
+
 2010-01-11  Ben Wing  <ben@xemacs.org>
 
 	* database.c: Cygwin prototypes in ndbm.h are incomplete and
 	cause C++ compile errors; fix them.
-	
+
 	* fileio.c (check_writable):
 	Fix compile errors.  Also move the call to C_STRING_TO_TSTR
 	earlier, which is probably wrong, but fixed in a later patch.
-	
+
 	* intl-encap-win32.c (qxeGetICMProfile):
 	Ifdef out a fix to work around a previous bogosity in Cygwin
 	header files which has now been fixed.  Keeping in the fix
 	led to compile errors. #### Proper way to do it is to figure
 	out when it got fixed, perhaps put in a configure test, but it
 	seems not worth it.
-	
+
 	* intl-encap-win32.c (qxeUpdateICMRegKey):
 	Cosmetic change, undone in a later patch.
 	* mule-charset.c (Fset_charset_ccl_program):
@@ -10533,7 +10541,7 @@
 
 	* config.h.in:
 	Add def for HAVE_CYGWIN_CONV_PATH.
-	
+
 	* dialog-msw.c (handle_directory_dialog_box):
 	* dialog-msw.c (handle_file_dialog_box):
 	* fileio.c:
@@ -10602,7 +10610,7 @@
 	coding system.  Call it appropriately in emacs.c.  Sort the
 	prototypes of complex_vars_of_*() in symsinit.h, for cosmetic
 	reasons.
-	
+
 
 2010-02-07  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -10638,7 +10646,7 @@
 
 2010-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule-charset.c (Fmake_charset): 
+	* mule-charset.c (Fmake_charset):
 	Change build_string with an Ibyte argument to build_intstring,
 	fixing the build on Visual C++. Thank you for the report, Vin.
 
@@ -10699,7 +10707,7 @@
 
 2009-12-31  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* eval.c (Ffunctionp): 
+	* eval.c (Ffunctionp):
 	Special forms no longer give t in this function, in accordance
 	with recent GNU Emacs and with Common Lisp.
 
@@ -10733,7 +10741,7 @@
 
 2009-12-19  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* symbols.c (reject_constant_symbols): 
+	* symbols.c (reject_constant_symbols):
 	Indicate that accepting attempted modification of keywords is a
 	temporary thing.
 
@@ -10752,18 +10760,18 @@
 	the range ?\x80-?\xFF, and passed as the third argument to
 	character_to_event instead of the binary use_console_meta_flag.
 	* events.c (character_to_event, Fcharacter_to_event):
-	* event-unixoid.c (read_event_from_tty_or_stream_desc): 
-	* event-stream.c (maybe_kbd_translate, maybe_kbd_translate): 
+	* event-unixoid.c (read_event_from_tty_or_stream_desc):
+	* event-stream.c (maybe_kbd_translate, maybe_kbd_translate):
 	* event-msw.c (mswindows_need_event):
 	Use the new enumeration.
-	* event-Xt.c (x_to_emacs_keysym): 
+	* event-Xt.c (x_to_emacs_keysym):
 	Call character_to_event when we receive XLookupChars events,
 	passing latin_1_maps_to_itself as the meta_behavior flag,
 	addressing the problem FKtPp sees in 87bpi9mwpu.fsf@yahoo.com.cn
 
 2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD): 
+	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD):
 	That last change was wrong in theory though not in practice; we're
 	comparing function pointers, not enumeration values.
 
@@ -10777,15 +10785,15 @@
 
 	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD):
 	New macro, giving a default value for a hash table's rehash
-	threshold given its size and test function. 
+	threshold given its size and test function.
 	(print_hash_table): Print the hash table's rehash threshold if it
-	has a non-default value. Ditto for its rehash size. 
+	has a non-default value. Ditto for its rehash size.
 	(Fmake_hash_table): Supply the keyword arguments in a format
-	understood by #'function-arglist. 
+	understood by #'function-arglist.
 
 2009-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* alloc.c (resize_string): 
+	* alloc.c (resize_string):
 	Don't attempt to free dumped data in this function, avoiding an
 	assertion failure.
 
@@ -10822,8 +10830,8 @@
 	* elhash.c:
 	(print_hash_table, print_hash_table_data)
 	(hash_table_instantiate)
-	(structure_type_create_hash_table_structure_name): 
-	(syms_of_elhash): 
+	(structure_type_create_hash_table_structure_name):
+	(syms_of_elhash):
 	Use keywords, not ordinary symbols, in the hash table read syntax,
 	for compatibility with Common Lisp and recent GNU Emacs. Accept
 	the non-keyword syntax, but don't allow mixing of the two styles.
@@ -11180,7 +11188,7 @@
 	Add an argument for the test description.
 	(DFC_CHECK_DATA_COND_EOL_NUL)
 	(DFC_CHECK_DATA_COND_EOL)
-	(DFC_CHECK_DATA_COND_MULE_NUL): 
+	(DFC_CHECK_DATA_COND_MULE_NUL):
 	(DFC_CHECK_DATA_COND_MULE):
 	Add an argument for the test description.
 
@@ -11196,7 +11204,7 @@
 
 2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule-ccl.c (setup_ccl_program): 
+	* mule-ccl.c (setup_ccl_program):
 	Fix the union build, thank you Robert Delius Royar.
 
 2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
@@ -11208,7 +11216,7 @@
 	given CCL program before this function is called.
 	(find_ccl_program): New function, return a CCL program with all
 	its symbols resolved if it is valid (possibly allocating memory),
-	Qnil otherwise. 
+	Qnil otherwise.
 	(get_ccl_program): New function, exported to other files; call
 	find_ccl_program, and error if it gives nil.
 	(Fccl_program_p): Call find_ccl_program from this function instead
@@ -11218,7 +11226,7 @@
 	(Fccl_execute_on_string): Ditto.
 	* mule-ccl.h (Vfont_ccl_encoder_alist): Remove this declaration,
 	it hasn't been used in years.
-	(get_ccl_program): Declare this function. 
+	(get_ccl_program): Declare this function.
 	* mule-coding.c (ccl_putprop): Use get_ccl_program on any
 	specified encode or decode CCL program property.
 	(fixed_width_putprop): Ditto.
@@ -11228,7 +11236,7 @@
 
 2009-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* eval.c (Fquote_maybe): 
+	* eval.c (Fquote_maybe):
 	Move this function here from callint.c; make it more comprehensive
 	about which types are self-quoting.
 	* lisp.h: Declare Fquote_maybe here, since it's now used in
@@ -11242,16 +11250,16 @@
 
 2009-11-09  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* sysfile.h (DEFAULT_DIRECTORY_FALLBACK): 
+	* sysfile.h (DEFAULT_DIRECTORY_FALLBACK):
 	Move the WIN32_NATIVE definition inside the #ifdef emacs
 	conditional, clear up the comment after #else; thanks for the
 	build failure report, Vin!
 	Cast DEFAULT_DIRECTORY_FALLBACK to (const CIbyte *) by default,
 	which better reflects its contents.
-	* editfns.c (get_home_directory): 
-	* buffer.c (init_initial_directory): 
+	* editfns.c (get_home_directory):
+	* buffer.c (init_initial_directory):
 	Cast DEFAULT_DIRECTORY_FALLBACK to (Ibyte *) with functions that
-	take that type, now that is necessary. 
+	take that type, now that is necessary.
 
 2009-11-09  Jerry James  <james@xemacs.org>
 
@@ -11274,14 +11282,14 @@
 
 2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* window.c (Fsave_window_excursion, save_window_excursion_unwind): 
+	* window.c (Fsave_window_excursion, save_window_excursion_unwind):
 	Remove these functions, the first was masked by
 	#'save-window-excursion in window.el, and the second can be easily
 	replaced with Lisp primitives.
 	* bytecode.c (Bsave_window_excursion) : Don't pass
 	save_window_excursion_unwind to record_unwind_protect, now the
 	former is gone.
-	* event-stream.c (execute_help_form): 
+	* event-stream.c (execute_help_form):
 	Ditto.
 
 2009-11-08  Aidan Kehoe  <kehoea@parhasard.net>
@@ -11312,9 +11320,9 @@
 
 2009-10-26  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* config.h.in (REALPATH_CORRECTS_CASE): 
-	New #define, available on Darwin. 
-	* realpath.c (readlink_or_correct_case): 
+	* config.h.in (REALPATH_CORRECTS_CASE):
+	New #define, available on Darwin.
+	* realpath.c (readlink_or_correct_case):
 	On Darwin, use realpath(3)'s case correction to get the canonical
 	case for a file; thank you Robert Delius Royar!
 
@@ -11358,7 +11366,7 @@
 
 2009-10-10  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* rangetab.c (Frange_table_type): 
+	* rangetab.c (Frange_table_type):
 	Correct the docstring for this function, don't reuse that of
 	Frange_table_p.
 
@@ -11418,7 +11426,7 @@
 
 2009-09-30  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule-coding.c (fixed_width_putprop): 
+	* mule-coding.c (fixed_width_putprop):
 	Register any CCL programs, avoiding crashes described by Robert
 	Delius Royar. Though it's unclear why, I'll try to investigate
 	once I'm on a 32-bit Unix machine regularly again.
@@ -11442,62 +11450,62 @@
 
 2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* alloc.c (Flist): 
-	(Fvector): 
-	(Fbit_vector): 
-	(Fmake_byte_code): 
-	(Fstring): 
-	* data.c (Feqlsign): 
+	* alloc.c (Flist):
+	(Fvector):
+	(Fbit_vector):
+	(Fmake_byte_code):
+	(Fstring):
+	* data.c (Feqlsign):
 	(Flss):
 	(Fgtr):
 	(Fleq):
 	(Fgeq):
 	(Fneq):
-	(Fgtr):	
-	(Fplus): 
-	(Fminus): 
-	(Ftimes): 
-	(Fdiv): 
-	(Fquo): 
-	(Fmax): 
-	(Fmin): 
-	(Flogand): 
-	(Flogior): 
-	(Flogxor): 
-	* editfns.c (Fsave_excursion): 
-	(Fsave_current_buffer): 
-	(Fencode_time): 
-	(Finsert): 
-	(Finsert_before_markers): 
-	(Fsave_restriction): 
-	(Fformat): 
-	* elhash.c (Fmake_hash_table): 
-	* eval.c (Fdefun): 
-	(Fdefmacro): 
-	(Fcatch): 
-	(Funwind_protect): 
-	(Fcall_with_condition_handler): 
-	(Ffuncall): 
-	(Fapply): 
-	(Frun_hooks): 
-	* fns.c (Fappend): 
-	(Fconcat): 
-	(Fvconcat): 
-	(Fbvconcat): 
-	(Fnconc): 
-	* print.c (Fwith_output_to_temp_buffer): 
-	* process.c (Fstart_process_internal): 
-	* window.c (Fsave_window_excursion): 
-	* widget.c (Fwidget_apply): 
+	(Fgtr):
+	(Fplus):
+	(Fminus):
+	(Ftimes):
+	(Fdiv):
+	(Fquo):
+	(Fmax):
+	(Fmin):
+	(Flogand):
+	(Flogior):
+	(Flogxor):
+	* editfns.c (Fsave_excursion):
+	(Fsave_current_buffer):
+	(Fencode_time):
+	(Finsert):
+	(Finsert_before_markers):
+	(Fsave_restriction):
+	(Fformat):
+	* elhash.c (Fmake_hash_table):
+	* eval.c (Fdefun):
+	(Fdefmacro):
+	(Fcatch):
+	(Funwind_protect):
+	(Fcall_with_condition_handler):
+	(Ffuncall):
+	(Fapply):
+	(Frun_hooks):
+	* fns.c (Fappend):
+	(Fconcat):
+	(Fvconcat):
+	(Fbvconcat):
+	(Fnconc):
+	* print.c (Fwith_output_to_temp_buffer):
+	* process.c (Fstart_process_internal):
+	* window.c (Fsave_window_excursion):
+	* widget.c (Fwidget_apply):
 	Add argument information, in a form understood by
 	#'function-arglist, to all these MANY or UNEVALLED (that is to
 	say, special-operator) built-in functions.
 
 2009-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* general-slots.h: 
-	* mule-coding.c (syms_of_mule_coding): 
-	* mule-charset.c (syms_of_mule_charset): 
+	* general-slots.h:
+	* mule-coding.c (syms_of_mule_coding):
+	* mule-charset.c (syms_of_mule_charset):
 	Move Qfrom_unicode to general-slots.h, now it's used in more than
 	one file. Fixes the native Win32 build; thank you Vin!
 
@@ -11513,64 +11521,64 @@
 	mswindow-multibyte coding systems, there should be no functional
 	differences between an XEmacs with this change and one without it.
 
-	* mule-coding.c (struct fixed_width_coding_system): 
+	* mule-coding.c (struct fixed_width_coding_system):
 	Add a new coding system type, fixed_width, and implement it. It
 	uses the CCL infrastructure but has a much simpler creation API,
 	and its own query_method, formerly in lisp/mule/mule-coding.el.
 	* unicode.c:
 	Move the Unicode query method implementation here from
-	unicode.el. 
+	unicode.el.
 	* lisp.h: Declare Fmake_coding_system_internal, Fcopy_range_table
-	here. 
-	* intl-win32.c (complex_vars_of_intl_win32): 
+	here.
+	* intl-win32.c (complex_vars_of_intl_win32):
 	Use Fmake_coding_system_internal, not Fmake_coding_system.
 	* general-slots.h: Add Qsucceeded, Qunencodable, Qinvalid_sequence
-	here. 
+	here.
 	* file-coding.h (enum coding_system_variant):
-	Add fixed_width_coding_system here. 
-	(struct coding_system_methods): 
+	Add fixed_width_coding_system here.
+	(struct coding_system_methods):
 	Add query_method and query_lstream_method to the coding system
-	methods. 
+	methods.
 	Provide flags for the query methods.
 	Declare the default query method; initialise it correctly in
 	INITIALIZE_CODING_SYSTEM_TYPE.
-	* file-coding.c (default_query_method): 
+	* file-coding.c (default_query_method):
 	New function, the default query method for coding systems that do
 	not set it. Moved from coding.el.
-	(make_coding_system_1): 
+	(make_coding_system_1):
 	Accept new elements in PROPS in #'make-coding-system; aliases, a
 	list of aliases; safe-chars and safe-charsets (these were
 	previously accepted but not saved); and category.
-	(Fmake_coding_system_internal): 
+	(Fmake_coding_system_internal):
 	New function, what used to be #'make-coding-system--on Mule
 	builds, we've now moved some of the functionality of this to
-	Lisp. 
+	Lisp.
 	(Fcoding_system_canonical_name_p):
 	Move this earlier in the file, since it's now called from within
-	make_coding_system_1. 
-	(Fquery_coding_region): 
-	Move the implementation of this here, from coding.el. 
-	(complex_vars_of_file_coding): 
+	make_coding_system_1.
+	(Fquery_coding_region):
+	Move the implementation of this here, from coding.el.
+	(complex_vars_of_file_coding):
 	Call Fmake_coding_system_internal, not Fmake_coding_system;
-	specify safe-charsets properties when we're a mule build. 
+	specify safe-charsets properties when we're a mule build.
 	* extents.h (mouse_highlight_priority, Fset_extent_priority,
 	Fset_extent_face, Fmap_extents):
 	Make these available to other C files.
 
 2009-09-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* unicode.c (unicode_convert): 
+	* unicode.c (unicode_convert):
 	Fix a bug with error sequences and very short input strings.
 
 2009-08-31  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* eval.c (For, Fand): 
+	* eval.c (For, Fand):
 	Don't declare val as REGISTER in these functions, for some reason
 	it breaks the non-DEBUG union build. These functions are only
 	called from interpreted code, the performance implication doesn't
 	matter. Thank you Robert Delius Royar!
 	* eval.c (Fmultiple_value_list_internal):
-	Error on too many arguments. 
+	Error on too many arguments.
 
 2009-08-24  Jerry James  <james@xemacs.org>
 
@@ -11599,11 +11607,11 @@
 	(round_one_mundane_arg, truncate_two_fixnum)
 	(truncate_two_bignum, truncate_two_ratio, truncate_two_bigfloat)
 	(truncate_one_ratio, truncate_one_bigfloat, truncate_two_float)
-	(truncate_one_float, truncate_one_mundane_arg): 
+	(truncate_one_float, truncate_one_mundane_arg):
 	New functions, used in the implementation of the rounding
-	functions. 
+	functions.
 	(Fceiling, Ffloor, Fround, Ftruncate, Ffceiling, Fffloor)
-	(Ffround, Fftruncate): 
+	(Ffround, Fftruncate):
 	Revise to fully support Common Lisp conventions. This means:
 	-- All functions have optional DIVISOR arguments
 	-- All functions return multiple values; see #'values
@@ -11611,16 +11619,16 @@
 	according to the contamination rules.
 	-- #'round and #'fround always round towards the even number
 	in ambiguous cases.
-	* doprnt.c (emacs_doprnt_1): 
-	* number.c (internal_coerce_number): 
+	* doprnt.c (emacs_doprnt_1):
+	* number.c (internal_coerce_number):
 	Call Ftruncate with two arguments, not one.
-	* floatfns.c (Ffloat): 
+	* floatfns.c (Ffloat):
 	Correct this, if NUMBER is a bignum.
-	* lisp.h: 
-	Declare Ftruncate as taking two arguments. 
-	* number.c: 
-	Provide scratch_ratio2, init it appropriately. 
-	* number.h: 
+	* lisp.h:
+	Declare Ftruncate as taking two arguments.
+	* number.c:
+	Provide scratch_ratio2, init it appropriately.
+	* number.h:
 	Make scratch_ratio2 available.
 	* number.h (BIGFLOAT_ARITH_RETURN):
 	* number.h (BIGFLOAT_ARITH_RETURN1):
@@ -11628,118 +11636,118 @@
 
 2009-08-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* bytecode.c (enum Opcode /* Byte codes */): 
-	Add four new bytecodes, to deal with multiple values. 
-	(POP_WITH_MULTIPLE_VALUES): New macro. 
-	(POP): Modify this macro to ignore multiple values. 
-	(DISCARD_PRESERVING_MULTIPLE_VALUES): New macro. 
-	(DISCARD): Modify this macro to ignore multiple values. 
-	(TOP_WITH_MULTIPLE_VALUES): New macro. 
-	(TOP_ADDRESS): New macro. 
-	(TOP): Modify this macro to ignore multiple values. 
+	* bytecode.c (enum Opcode /* Byte codes */):
+	Add four new bytecodes, to deal with multiple values.
+	(POP_WITH_MULTIPLE_VALUES): New macro.
+	(POP): Modify this macro to ignore multiple values.
+	(DISCARD_PRESERVING_MULTIPLE_VALUES): New macro.
+	(DISCARD): Modify this macro to ignore multiple values.
+	(TOP_WITH_MULTIPLE_VALUES): New macro.
+	(TOP_ADDRESS): New macro.
+	(TOP): Modify this macro to ignore multiple values.
 	(TOP_LVALUE): New macro.
-	(Bcall): Ignore multiple values where appropriate. 
+	(Bcall): Ignore multiple values where appropriate.
 	(Breturn): Pass back multiple values.
 	(Bdup): Preserve multiple values.
 	Use TOP_LVALUE with most bytecodes that assign anything to
-	anything. 
+	anything.
 	(Bbind_multiple_value_limits, Bmultiple_value_call,
 	Bmultiple_value_list_internal, Bthrow): Implement the new
-	bytecodes. 
+	bytecodes.
 	(Bgotoifnilelsepop, Bgotoifnonnilelsepop, BRgotoifnilelsepop,
-	BRgotoifnonnilelsepop): 
+	BRgotoifnonnilelsepop):
 	Discard any multiple values.
 	* callint.c (Fcall_interactively):
 	Ignore multiple values when calling #'eval, in two places.
-	* device-x.c (x_IO_error_handler): 
-	* macros.c (pop_kbd_macro_event): 
-	* eval.c (Fsignal): 
-	* eval.c (flagged_a_squirmer): 
+	* device-x.c (x_IO_error_handler):
+	* macros.c (pop_kbd_macro_event):
+	* eval.c (Fsignal):
+	* eval.c (flagged_a_squirmer):
 	Call throw_or_bomb_out, not Fthrow, now that the latter is a
-	special form. 
-	* eval.c: 
-	Make Qthrow, Qobsolete_throw available as symbols. 
+	special form.
+	* eval.c:
+	Make Qthrow, Qobsolete_throw available as symbols.
 	Provide multiple_value_current_limit, multiple-values-limit (the
-	latter as specified by Common Lisp. 
-	* eval.c (For): 
+	latter as specified by Common Lisp.
+	* eval.c (For):
 	Ignore multiple values when comparing with Qnil, but pass any
 	multiple values back for the last arg.
-	* eval.c (Fand): 
+	* eval.c (Fand):
 	Ditto.
 	* eval.c (Fif):
 	Ignore multiple values when examining the result of the
-	condition. 
-	* eval.c (Fcond): 
+	condition.
+	* eval.c (Fcond):
 	Ignore multiple values when comparing what the clauses give, but
 	pass them back if a clause gave non-nil.
-	* eval.c (Fprog2): 
+	* eval.c (Fprog2):
 	Never pass back multiple values.
-	* eval.c (FletX, Flet): 
+	* eval.c (FletX, Flet):
 	Ignore multiple when evaluating what exactly symbols should be
 	bound to.
-	* eval.c (Fwhile): 
+	* eval.c (Fwhile):
 	Ignore multiple values when evaluating the test.
-	* eval.c (Fsetq, Fdefvar, Fdefconst): 
-	Ignore multiple values.	
-	* eval.c (Fthrow): 
+	* eval.c (Fsetq, Fdefvar, Fdefconst):
+	Ignore multiple values.
+	* eval.c (Fthrow):
 	Declare this as a special form; ignore multiple values for TAG,
 	preserve them for VALUE.
-	* eval.c (throw_or_bomb_out): 
+	* eval.c (throw_or_bomb_out):
 	Make this available to other files, now Fthrow is a special form.
-	* eval.c (Feval): 
+	* eval.c (Feval):
 	Ignore multiple values when calling a compiled function, a
 	non-special-form subr, or a lambda expression.
-	* eval.c (Ffuncall): 
+	* eval.c (Ffuncall):
 	If we attempt to call #'throw (now a special form) as a function,
-	don't error, call #'obsolete-throw instead. 
+	don't error, call #'obsolete-throw instead.
 	* eval.c (make_multiple_value, multiple_value_aset)
 	(multiple_value_aref, print_multiple_value, mark_multiple_value)
-	(size_multiple_value): 
+	(size_multiple_value):
 	Implement the multiple_value type. Add a long comment describing
 	our implementation.
-	* eval.c (bind_multiple_value_limits): 
+	* eval.c (bind_multiple_value_limits):
 	New function, used by the bytecode and by #'multiple-value-call,
-	#'multiple-value-list-internal. 
-	* eval.c (multiple_value_call): 
+	#'multiple-value-list-internal.
+	* eval.c (multiple_value_call):
 	New function, used by the bytecode and #'multiple-value-call.
-	* eval.c (Fmultiple_value_call): 
+	* eval.c (Fmultiple_value_call):
 	New special form.
-	* eval.c (multiple_value_list_internal): 
+	* eval.c (multiple_value_list_internal):
 	New function, used by the byte code and
 	#'multiple-value-list-internal.
-	* eval.c (Fmultiple_value_list_internal, Fmultiple_value_prog1): 
+	* eval.c (Fmultiple_value_list_internal, Fmultiple_value_prog1):
 	New special forms.
-	* eval.c (Fvalues, Fvalues_list): 
+	* eval.c (Fvalues, Fvalues_list):
 	New Lisp functions.
-	* eval.c (values2): 
+	* eval.c (values2):
 	New function, for C code returning multiple values.
-	* eval.c (syms_of_eval): 
+	* eval.c (syms_of_eval):
 	Make our new Lisp functions and symbols available.
-	* eval.c (multiple-values-limit): 
+	* eval.c (multiple-values-limit):
 	Make this available to Lisp.
-	* event-msw.c (dde_eval_string): 
-	* event-stream.c (execute_help_form): 
-	* glade.c (connector): 
-	* glyphs-widget.c (glyph_instantiator_to_glyph): 
-	* glyphs.c (evaluate_xpm_color_symbols): 
-	* gui-x.c (wv_set_evalable_slot, button_item_to_widget_value): 
-	* gui.c (gui_item_value, gui_item_display_flush_left): 
-	* lread.c (check_if_suppressed): 
-	* menubar-gtk.c (menu_convert, menu_descriptor_to_widget_1): 
-	* menubar-msw.c (populate_menu_add_item): 
-	* print.c (Fwith_output_to_temp_buffer): 
-	* symbols.c (Fsetq_default): 
+	* event-msw.c (dde_eval_string):
+	* event-stream.c (execute_help_form):
+	* glade.c (connector):
+	* glyphs-widget.c (glyph_instantiator_to_glyph):
+	* glyphs.c (evaluate_xpm_color_symbols):
+	* gui-x.c (wv_set_evalable_slot, button_item_to_widget_value):
+	* gui.c (gui_item_value, gui_item_display_flush_left):
+	* lread.c (check_if_suppressed):
+	* menubar-gtk.c (menu_convert, menu_descriptor_to_widget_1):
+	* menubar-msw.c (populate_menu_add_item):
+	* print.c (Fwith_output_to_temp_buffer):
+	* symbols.c (Fsetq_default):
 	Ignore multiple values when calling Feval.
-	* symeval.h: 
+	* symeval.h:
 	Add the header declarations necessary for the multiple-values
-	implementation. 
-	* inline.c: 
+	implementation.
+	* inline.c:
 	#include symeval.h, now that it has some inline functions.
-	* lisp.h: 
+	* lisp.h:
 	Update Fthrow's declaration. Make throw_or_bomb_out available to
-	all files. 
-	* lrecord.h (enum lrecord_type): 
-	Add the multiple_value type here. 
+	all files.
+	* lrecord.h (enum lrecord_type):
+	Add the multiple_value type here.
 
 2009-07-31  Stephen Turnbull  <stephen@xemacs.org>
 
@@ -11750,7 +11758,7 @@
 2009-07-31  Stephen Turnbull  <stephen@xemacs.org>
 
 	* config.h.in (HAVE_DBM):
-	* database.c (HAVE_DBM): 
+	* database.c (HAVE_DBM):
 	Use gdbm/ndbm.h if needed (via NDBM_H_FILE).
 	Thanks to Karl Kleinpaste for the report.
 
@@ -11767,13 +11775,13 @@
 
 2009-07-15 Aidan Kehoe <kehoea@parhasard.net>
 
-	* syntax.c (complex_vars_of_syntax): 
+	* syntax.c (complex_vars_of_syntax):
 	?\012 is whitespace, as it always should have been, thank you Karl
 	Kleinpaste and the Gnus team!
 
 2009-07-11  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* file-coding.c (undecided_canonicalize_after_coding): 
+	* file-coding.c (undecided_canonicalize_after_coding):
 	If no data have been seen, or if
 	coding_stream_canonicalize_after_coding gives nil, pass back
 	str->codesys, which will be of type undecided (the same as the old
@@ -11795,27 +11803,27 @@
 
 2009-06-14  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* eval.c (For): 
-	* eval.c (Fand): 
-	* eval.c (Fif): 
-	* eval.c (Fwhen): 
+	* eval.c (For):
+	* eval.c (Fand):
+	* eval.c (Fif):
+	* eval.c (Fwhen):
 	* eval.c (Fcond):
-	* eval.c (Fprogn): 
+	* eval.c (Fprogn):
 	* eval.c (Fprog1):
-	* eval.c (Fprog2): 
-	* eval.c (FletX): 
-	* eval.c (Flet): 
-	* eval.c (Fwhile): 
-	* eval.c (Fdefvar): 
-	* eval.c (Fdefconst): 
-	* eval.c (Frun_hooks): 
-	* eval.c (Frun_hooks_with_args): 
+	* eval.c (Fprog2):
+	* eval.c (FletX):
+	* eval.c (Flet):
+	* eval.c (Fwhile):
+	* eval.c (Fdefvar):
+	* eval.c (Fdefconst):
+	* eval.c (Frun_hooks):
+	* eval.c (Frun_hooks_with_args):
 	* eval.c (Frun_hooks_with_args_until_success):
 	* eval.c (Frun_hooks_with_args_until_failure):
 	Add arguments information, understood by #'function-arglist, to
-	all these special forms, functions and macros. Remove the 
+	all these special forms, functions and macros. Remove the
 	argument information that was already there that was not
-	understood by #'function-arglist. 
+	understood by #'function-arglist.
 
 2009-06-02  Ron Isaacson  <Ron.Isaacson@morganstanley.com>
 
@@ -11842,10 +11850,10 @@
 
 2009-02-10  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* lread.c (Fload_internal): 
+	* lread.c (Fload_internal):
 	Make load-file-name-internal readonly for Lisp code; make
-	load-file-name a modifiable copy. 
-	(init_lread): 
+	load-file-name a modifiable copy.
+	(init_lread):
 	Initialised Vload_file_name_internal, Vload_file_name to nil on
 	each post-dump start.
 
@@ -11861,45 +11869,45 @@
 
 2009-01-31  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* unicode.c (unicode_convert): 
-	Correct little-endian UTF-16 surrogate handling. 
+	* unicode.c (unicode_convert):
+	Correct little-endian UTF-16 surrogate handling.
 
 2009-01-16  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* chartab.c (print_table_entry): 
+	* chartab.c (print_table_entry):
 	Print char table values correctly, eliminating some confusion
 	between symbols and strings.
 
 2009-01-10  Aidan Kehoe <kehoea@parhasard.net>
 
-	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2): 
-	Accept msprinter as well as mswindows devices here. 
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	Accept msprinter as well as mswindows devices here.
 
 2008-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* device-x.c (Fx_get_font_path): 
-	Free the font path once we're finished with it. 
+	* device-x.c (Fx_get_font_path):
+	Free the font path once we're finished with it.
 
 2008-12-28  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* file-coding.c (Fmake_coding_system): 
+	* file-coding.c (Fmake_coding_system):
 	Document our use of the safe-chars and safe-charsets properties,
-	and the differences compared to GNU. 
+	and the differences compared to GNU.
 	(make_coding_system_1): Don't drop the safe-chars and
-	safe-charsets properties. 
+	safe-charsets properties.
 	(Fcoding_system_property): Return the safe-chars and safe-charsets
 	properties when asked for them.
-	* file-coding.h (CODING_SYSTEM_SAFE_CHARSETS): 
-	* coding-system-slots.h: 
+	* file-coding.h (CODING_SYSTEM_SAFE_CHARSETS):
+	* coding-system-slots.h:
 	Make the safe-chars and safe-charsets slots available in these
-	headers. 
+	headers.
 
 2008-12-27  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* doc.c (Fbuilt_in_symbol_file): 
+	* doc.c (Fbuilt_in_symbol_file):
 	Return a subr's filename immediately if we've found it. Check for
 	compiled function and compiled macro docstrings in DOC too, and
-	return them if they exist. 
+	return them if they exist.
 	The branch of the if statement focused on functions may have
 	executed, but we may still want to check variable bindings; an
 	else clause isn't appropriate.
@@ -11911,22 +11919,22 @@
 
 2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* symbols.c (Fdefine_function): 
-	* eval.c (define_function): 
+	* symbols.c (Fdefine_function):
+	* eval.c (define_function):
 	Record explicitly that we're defining a function in the load
-	history, in both these files. 
+	history, in both these files.
 
 2008-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* faces.c (Fbuilt_in_face_specifiers): 
-	Document that we're returning a copy. 
+	* faces.c (Fbuilt_in_face_specifiers):
+	Document that we're returning a copy.
 
 2008-12-21  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* faces.c (Fbuilt_in_face_specifiers): 
+	* faces.c (Fbuilt_in_face_specifiers):
 	Don't simply warn the user not to modify
 	Vbuilt_in_face_specifiers, enforce this by returning a copy of the
-	list. 
+	list.
 
 2008-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -12028,17 +12036,17 @@
 
 2008-08-27  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* symbols.c (Fuser_variable_p): 
-	(map_varalias_chain): 
+	* symbols.c (Fuser_variable_p):
+	(map_varalias_chain):
 	Use EQ() and !EQ(), don't compare two Lisp_Objects using == and
-	!=. Fixes the union build, thank you Robert Delius Royar. 
+	!=. Fixes the union build, thank you Robert Delius Royar.
 
 2008-08-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (Fuser_variable_p): Moved to symbols.c
-	* symbols.c (Fcustom_variable_p): Moved here from custom.el. 
+	* symbols.c (Fcustom_variable_p): Moved here from custom.el.
 	(user_variable_alias_check_fun): Mapper function used in
-	`user-variable-p'. 
+	`user-variable-p'.
 	(Fuser_variable_p): Moved here from eval.c, to allow it to examine
 	the variable alias chain. Expanded to check each entry in the
 	variable alias chain for signs of being a user variable;
@@ -12048,14 +12056,14 @@
 	Given a C function, call it at least once for each symbol in a
 	symbol's varalias chain, signalling an error if there's a cycle,
 	and returning immediately if the function returns something other
-	than Qzero. 
+	than Qzero.
 	(Fdefvaralias): Correct the use of the word "alias" in the
 	docstring and in the argument name. Motivate this in a
 	comment. Add support for a DOCSTRING argument, something GNU has
 	too, and document this
 	* gc.c (vars_of_gc): Start the docstring of
 	`garbage-collection-messages' with an asterisk, to indicate that
-	it's a user variable. 
+	it's a user variable.
 
 2008-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -12073,10 +12081,10 @@
 
 2008-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* mule-charset.c (complex_vars_of_mule_charset): 
+	* mule-charset.c (complex_vars_of_mule_charset):
 	Remove Vcharset_arabic_iso8859_7.
 	* lisp.h: Remove Vcharset_arabic_iso8859_7.
-	See commentary in lisp/mule/iso-with-esc.el for motivation. 
+	See commentary in lisp/mule/iso-with-esc.el for motivation.
 
 2008-08-03  Mats Lidell  <matsl@xemacs.org>
 
@@ -12090,15 +12098,15 @@
 
 2008-07-17  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* redisplay.c (init_redisplay): 
+	* redisplay.c (init_redisplay):
 	Don't set window-system to 'stream if running noninteractively,
-	revert to the documented behaviour. 
+	revert to the documented behaviour.
 
 2008-07-16  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* lread.c (read_escape): 
+	* lread.c (read_escape):
 	Error if we're handed an over-long hex character escape, something
-	which arises reasonably frequently in code written for GNU. 
+	which arises reasonably frequently in code written for GNU.
 
 2008-07-07  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -12106,89 +12114,89 @@
 	various Lisp functions should be called during device creation,
 	not relying on the startup code to decide this. Also, rename
 	initial-window-system to initial-device-type (which makes more
-	sense in this scheme), always set it. 
-	
+	sense in this scheme), always set it.
+
 	* redisplay.c (Vinitial_device_type): New.
 	(Vinitial_window_system): Removed.
 	Rename initial-window-system to initial-device type, making it
-	a stream if we're noninteractive. Update its docstring. 
+	a stream if we're noninteractive. Update its docstring.
 
 	* device-x.c (Qmake_device_early_x_entry_point,
-	Qmake_device_late_x_entry_point): New. 
-	Rename Qinit_pre_x_win, Qinit_post_x_win. 
+	Qmake_device_late_x_entry_point): New.
+	Rename Qinit_pre_x_win, Qinit_post_x_win.
 	(x_init_device): Call #'make-device-early-x-entry-point earlier,
 	now we rely on it to find the application class and the
-	app-defaults directory. 
+	app-defaults directory.
 	(x_finish_init_device): Call #'make-device-late-x-entry-point with
-	the created device. 
+	the created device.
 	(Vx_app_defaults_directory): Always make this available, to
-	simplify code in x-init.el. 
+	simplify code in x-init.el.
 
-	* device-tty.c (Qmake_device_early_tty_entry_point): New. 
+	* device-tty.c (Qmake_device_early_tty_entry_point): New.
 	Rename Qinit_pre_tty_win, rename Qinit_post_tty_win and move to
 	frame-tty.c as Qmake_frame_after_init_entry_point.
 	(tty_init_device): Call #'make-device-early-tty-entry-point before
-	doing anything. 
+	doing anything.
 	* frame-tty.c (Qmake_frame_after_init_entry_point): New.
 	* frame-tty.c (tty_after_init_frame): Have it call the
 	better-named #'make-frame-after-init-entry-point function
 	instead of #'init-post-tty-win (since it's called after frame, not
 	device, creation).
 
-	* device-msw.c (Qmake_device_early_mswindows_entry_point, 
+	* device-msw.c (Qmake_device_early_mswindows_entry_point,
 	Qmake_device_late_mswindows_entry_point): New.
-	Rename Qinit_pre_mswindows_win, Qinit_post_mswindows_win. 
+	Rename Qinit_pre_mswindows_win, Qinit_post_mswindows_win.
 	(mswindows_init_device): Call
 	#'make-device-early-mswindows-entry-point here, instead of having
-	its predecessor call us. 
+	its predecessor call us.
 	(mswindows_finish_init_device): Call
 	#'make-device-early-mswindows-entry-point, for symmetry with the
 	other device types (though it's an empty function).
 
 	* device-gtk.c (Qmake_device_early_gtk_entry_point,
 	Qmake_device_late_gtk_entry_point): New.
-	Rename Qinit_pre_gtk_win, Qinit_post_gtk_win. 
+	Rename Qinit_pre_gtk_win, Qinit_post_gtk_win.
 	(gtk_init_device): Call #'make-device-early-gtk-entry-point; don't
 	load ~/.xemacs/gtk-options.el ourselves, leave that to lisp.
 	(gtk_finish_init_device): Call #'make-device-late-gtk-entry-point
-	with the created device as an argument. 
+	with the created device as an argument.
 
 2008-07-10  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* redisplay-msw.c (mswindows_text_width_single_run): 
+	* redisplay-msw.c (mswindows_text_width_single_run):
 	Explicitly check for the null font instance, and return zero if
 	so. Avoids the crash documented in
 	http://mid.gmane.org/18473.32468.712317.149457@parhasard.net .
 
 2008-05-27  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* editfns.c (Ftranslate_region):  
+	* editfns.c (Ftranslate_region):
 	Correct a thinko in the last commit; I meant #'get-char-table, not
-	#'put-char-table. 
+	#'put-char-table.
 
 2008-05-25  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* chartab.c (Fmake_char_table): 
+	* chartab.c (Fmake_char_table):
 	Document the default return values for the various char table
-	types. 
+	types.
 	* editfns.c (Ftranslate_region): Document why `generic' char tables
-	are preferable to `char' char tables for this function. 
+	are preferable to `char' char tables for this function.
 
 2008-05-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (Fmake_symbolic_link):
 	Document behaviour when the underlying OS doesn't support symbolic
-	links. 
+	links.
 
 2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* emacs.c (SHEBANG_EXE_PROGNAME_LENGTH):
 	Use WEXTSTRING separately on the two concatenated strings,
-	avoiding an error on Win32. 
+	avoiding an error on Win32.
 
 2008-05-13  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* config.h.in (_CRT_NONSTDC_NO_DEPRECATE): 
+	* config.h.in (_CRT_NONSTDC_NO_DEPRECATE):
 	Define this, to avoid warnings about using standard POSIX and C9X
 	functions on Win32; fixes part of Matthew Persico's problems of
 	9ea6aaa80805081832r1a3308e9wb6d2bfea7457379f@mail.gmail.com .
@@ -12196,14 +12204,14 @@
 2008-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in: Add SHEBANG_PROGNAME.
-	* emacs.c (main_1): 
+	* emacs.c (main_1):
 	If we've been called using SHEBANG_PROGNAME, rewrite our arguments
-	to add a --script argument. 
+	to add a --script argument.
 	Also, handle the --script argument by setting noninteractive and
-	vanilla. 
-	* lread.c (Fload_internal): 
+	vanilla.
+	* lread.c (Fload_internal):
 	If the first two characters of a file are #!, replace them with ;!
-	before they get to the Lisp reader. 
+	before they get to the Lisp reader.
 
 2008-04-26  Mike Sperber  <mike@xemacs.org>
 
@@ -12215,8 +12223,8 @@
 
 2008-04-05  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* depend: 
-	Regenerate with LF line endings, not CRLF. 
+	* depend:
+	Regenerate with LF line endings, not CRLF.
 
 2008-03-15  Michael Sperber  <mike@xemacs.org>
 

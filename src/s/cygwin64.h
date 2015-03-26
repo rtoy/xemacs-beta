@@ -41,4 +41,4 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 /* SYSTEM_TYPE should indicate the kind of system you are using.
  It sets the Lisp variable system-type.  */
 
-#define SYSTEM_TYPE "cygwin32"
+#define SYSTEM_TYPE "cygwin64"

@@ -1,3 +1,9 @@
+2015-03-26  Vin Shelton  <acs@xemacs.org>
+
+	* configure.ac: Recognize and support 64-bit cygwin, thanks to
+	Henry S. Thompson  <ht@inf.ed.ac.uk>.
+	* configure: Regenerated.
+
 2015-02-28  Mike Kupfer  <mike.kupfer@xemacs.org>
 
 	* README: fix note about which Bitbucket repository to push to.
