@@ -99,7 +99,7 @@ struct each_buffer_change_data
   /* redisplay needs to know if a newline was deleted so its
      incremental-redisplay algorithm will fail */
   int newline_was_deleted;
-  Charcount begin_extent_unchanged, end_extent_unchanged;
+  Bytecount begin_extent_unchanged, end_extent_unchanged;
 };
 
 /* Number of characters at the beginning and end of the buffer that
@@ -111,7 +111,7 @@ struct each_buffer_change_data
 #define BUF_BEGIN_UNCHANGED(buf) ((buf)->changes->begin_unchanged)
 #define BUF_END_UNCHANGED(buf) ((buf)->changes->end_unchanged)
 
-/* Number of characters at the beginning and end of the buffer that
+/* Number of bytes at the beginning and end of the buffer that
    have not had a covering extent change since the last call to
    buffer_reset_changes ().  If no changes have occurred since then,
    both values will be -1.
