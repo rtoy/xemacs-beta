@@ -1,3 +1,9 @@
+2015-06-22  Michael Sperber  <mike@xemacs.org>
+
+	* lwlib-colors.h: 
+	* lwlib-colors.c (xft_convert_color_1): Introduce, and make
+	`xft_convert_color' use it.
+
 2015-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix progress bar crashes.

@@ -329,6 +329,29 @@ FIXME_allocate_nearest_color (Display *display, Colormap screen_colormap,
 #ifdef HAVE_XFT
 
 XftColor
+xft_convert_color_1 (Display *dpy, Colormap cmap, Visual *visual, XColor *pcolor, int dim)
+{
+  XColor color = *pcolor;
+  XftColor result;
+
+  if (dim)
+    {
+      color.red   = MINL (65535, color.red   * 1.5);
+      color.green = MINL (65535, color.green * 1.5);
+      color.blue  = MINL (65535, color.blue  * 1.5);
+      x_allocate_nearest_color (dpy, cmap, visual, &color);
+    }
+
+  result.pixel = color.pixel;
+  result.color.red = color.red;
+  result.color.green = color.green;
+  result.color.blue = color.blue;
+  result.color.alpha = 0xffff;
+
+  return result;
+}
+
+XftColor
 xft_convert_color (Display *dpy, Colormap cmap, Visual *visual, int c, int dim)
 {
   static XColor color;		/* #### why is this static ?? */
@@ -337,22 +360,10 @@ xft_convert_color (Display *dpy, Colormap cmap, Visual *visual, int c, int dim)
   color.pixel = c;
   XQueryColor(dpy, cmap, &color);
 
-  if (dim)
-    {
-      color.red   = MINL (65535, color.red   * 1.5);
-      color.green = MINL (65535, color.green * 1.5);
-      color.blue  = MINL (65535, color.blue  * 1.5);
-      x_allocate_nearest_color (dpy, cmap, visual, &color);
-    }     
-
-  result.pixel = color.pixel;
-  result.color.red = color.red;
-  result.color.green = color.green;
-  result.color.blue = color.blue;
-  result.color.alpha = 0xffff;
-  
-  return result;
+  return xft_convert_color_1 (dpy, cmap, visual, &color, dim);
 }
+
+
 
 #endif /* HAVE_XFT */
 

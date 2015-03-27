@@ -52,6 +52,8 @@ int x_allocate_nearest_color (Display *display, Colormap screen_colormap,
 
 XftColor xft_convert_color (Display *dpy, Colormap cmap, Visual *visual,
 			    int c, int dim);
+XftColor xft_convert_color_1 (Display *dpy, Colormap cmap, Visual *visual,
+			    XColor *pcolor, int dim);
 #endif /* HAVE_XFT */
 
 #endif /* INCLUDED_lwlib_colors_h_ */

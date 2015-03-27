@@ -1,3 +1,8 @@
+2015-06-22  Michael Sperber  <mike@xemacs.org>
+
+	* redisplay-xlike-inc.c (XFT_FROB_LISP_COLOR): Use
+	`xft_convert_color_1' instead of `xft_convert_color'.
+
 2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (Fload_internal):
