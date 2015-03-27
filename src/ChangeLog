@@ -1,5 +1,11 @@
 2015-03-26  Vin Shelton  <acs@xemacs.org>
 
+        * m/x86_64.h: Deleted; caused bogus GNUMakefile generation
+	on cygwin64.
+	* s/cygwin64.h: Fixed typo in comment at head of file.
+
+2015-03-26  Vin Shelton  <acs@xemacs.org>
+
 	* s/cygwin32.h: Moved guts to cygwin-common.h.
 	* s/cygwin-common.h: Created from cygwin32.h.
 	* s/cygwin64.h:

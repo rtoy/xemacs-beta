@@ -1,4 +1,4 @@
-/* system description file for cygwin32.
+/* system description file for 64-bet cygwin.
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 2001 Ben Wing.
 
