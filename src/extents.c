@@ -1473,8 +1473,8 @@ signal_single_extent_changed (EXTENT extent, Lisp_Object property,
 	  if (!in_modeline_generation)
 	    MARK_EXTENTS_CHANGED;
 	  gutter_extent_signal_changed_region_maybe
-	    (object, extent_endpoint_char (extent, 0),
-	     extent_endpoint_char (extent, 1));
+            (object, extent_endpoint_byte (extent, 0),
+	     extent_endpoint_byte (extent, 1));
 	}
       else if (BUFFERP (object))
 	{
@@ -1486,8 +1486,8 @@ signal_single_extent_changed (EXTENT extent, Lisp_Object property,
 	      EQ (property, Qinvisible))
 	    MARK_CLIP_CHANGED;
 	  buffer_extent_signal_changed_region
-	    (b, extent_endpoint_char (extent, 0),
-	     extent_endpoint_char (extent, 1));
+            (b, extent_endpoint_byte (extent, 0),
+	     extent_endpoint_byte (extent, 1));
 	}
     }
 
@@ -1696,10 +1696,8 @@ extent_detach (EXTENT extent)
   el = extent_extent_list (extent);
 
   /* call this before messing with the extent. */
-  signal_extent_changed (extent, Qnil,
-			 extent_endpoint_byte (extent, 0),
-			 extent_endpoint_char (extent, 0),
-			 0);
+  signal_extent_changed (extent, Qnil, extent_endpoint_byte (extent, 0),
+			 extent_endpoint_byte (extent, 1), 0);
   extent_list_delete (el, extent);
   soe_delete (extent_object (extent), extent);
   set_extent_start (extent, -1);
@@ -4632,7 +4630,7 @@ process_extents_for_deletion (Lisp_Object object, Bytexpos from,
 struct report_extent_modification_closure
 {
   Lisp_Object buffer;
-  Charxpos start, end;
+  Bytexpos start, end;
   int afterp;
   int speccount;
 };
@@ -4658,8 +4656,12 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
     return 0;
 
   exobj = wrap_extent (extent);
-  startobj = make_fixnum (closure->start);
-  endobj = make_fixnum (closure->end);
+  startobj
+    = make_fixnum (buffer_or_string_bytexpos_to_charxpos
+                   (extent_object (extent), closure->start));
+  endobj
+    = make_fixnum (buffer_or_string_bytexpos_to_charxpos
+                   (extent_object (extent), closure->end));
 
   /* Now that we are sure to call elisp, set up an unwind-protect so
      inside_change_hook gets restored in case we throw.  Also record
@@ -4704,7 +4706,7 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
 }
 
 void
-report_extent_modification (Lisp_Object buffer, Charbpos start, Charbpos end,
+report_extent_modification (Lisp_Object buffer, Bytexpos start, Bytexpos end,
 			    int afterp)
 {
   struct report_extent_modification_closure closure;
@@ -4715,10 +4717,8 @@ report_extent_modification (Lisp_Object buffer, Charbpos start, Charbpos end,
   closure.afterp = afterp;
   closure.speccount = -1;
 
-  map_extents (charbpos_to_bytebpos (XBUFFER (buffer), start),
-	       charbpos_to_bytebpos (XBUFFER (buffer), end),
-	       report_extent_modification_mapper, (void *)&closure,
-	       buffer, NULL, ME_MIGHT_CALL_ELISP);
+  map_extents (start, end, report_extent_modification_mapper,
+               (void *)&closure, buffer, NULL, ME_MIGHT_CALL_ELISP);
 }
 
 

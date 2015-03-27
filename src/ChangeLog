@@ -1,3 +1,42 @@
+2015-03-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Fix a small bug, extent_detach(); minimise needless char-byte
+	conversion, extents.c, sticking to byte positions in general in
+	this file.
+	* extents.c:
+	* extents.c (signal_single_extent_changed):
+	Pass byte endpoints to
+	gutter_extent_signal_changed_region_maybe(),
+	buffer_extent_signal_changed_region().
+	* extents.c (extent_detach):
+	Call signal_extent_changed() correctly, pass both extent endpoints
+	rather than just the byte and character variants of the start.
+	* extents.c (struct report_extent_modification_closure):
+	Do this in terms of byte positions.
+	* extents.c (report_extent_modification_mapper):
+	Use byte positions, only converting to characters when we are
+	definitely calling Lisp.
+	* extents.c (report_extent_modification):
+	Use byte positions in this API, move the byte-char conversion to
+	our callers, simplifying extents.c (it all now works in byte
+	positions). 
+	* extents.h:
+	Update report_extent_modification's prototype.
+	* gutter.c (gutter_extent_signal_changed_region_maybe):
+	Use byte positions here, avoids needless byte-char conversion.
+	* gutter.h:
+	Update the prototype here.
+	* insdel.c:
+	* insdel.c (buffer_extent_signal_changed_region):
+	Implement this in terms of byte positions.
+	* insdel.c (signal_before_change):
+	* insdel.c (signal_after_change):
+	Call report_extent_modification() with byte positions, doing the
+	char->byte conversion here rather than leaving it to extents.c.
+	* insdel.h:
+	* insdel.h (struct each_buffer_change_data):
+	The extent unchanged info now describes bytecounts. 
+
 2015-03-26  Vin Shelton  <acs@xemacs.org>
 
         * m/x86_64.h: Deleted; caused bogus GNUMakefile generation
