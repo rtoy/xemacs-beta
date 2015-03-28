@@ -1,3 +1,7 @@
+2015-03-27  Vin Shelton  <acs@xemacs.org>
+
+	* s/cygwin64.h: Fixed another stupid typo.
+
 2015-03-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Fix a small bug, extent_detach(); minimise needless char-byte
@@ -19,7 +23,7 @@
 	* extents.c (report_extent_modification):
 	Use byte positions in this API, move the byte-char conversion to
 	our callers, simplifying extents.c (it all now works in byte
-	positions). 
+	positions).
 	* extents.h:
 	Update report_extent_modification's prototype.
 	* gutter.c (gutter_extent_signal_changed_region_maybe):
@@ -35,7 +39,7 @@
 	char->byte conversion here rather than leaving it to extents.c.
 	* insdel.h:
 	* insdel.h (struct each_buffer_change_data):
-	The extent unchanged info now describes bytecounts. 
+	The extent unchanged info now describes bytecounts.
 
 2015-03-26  Vin Shelton  <acs@xemacs.org>
 
