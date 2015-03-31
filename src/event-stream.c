@@ -2617,7 +2617,6 @@ Return non-nil iff we received any output before the timeout expired.
   int timeout_id = -1;
   int timeout_enabled = 0;
   int done = 0;
-  struct buffer *old_buffer = current_buffer;
   int count;
 
   /* We preserve the current buffer but nothing else.  If a focus
@@ -2654,6 +2653,7 @@ Return non-nil iff we received any output before the timeout expired.
   record_unwind_protect (sit_for_unwind,
 			 timeout_enabled ? make_fixnum (timeout_id) : Qnil);
   recursive_sit_for = 1;
+  record_unwind_protect (Fset_buffer, wrap_buffer (current_buffer));
 
   while (!done &&
          ((NILP (process) && timeout_enabled) ||
@@ -2723,7 +2723,7 @@ Return non-nil iff we received any output before the timeout expired.
   status_notify ();
 
   UNGCPRO;
-  current_buffer = old_buffer;
+
   return result;
 }
 
