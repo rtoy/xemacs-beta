@@ -1,3 +1,10 @@
+2015-03-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-stream.c (Faccept_process_output):
+	Restore the current buffer even on non-local exit in this
+	function, none of the code that uses #'accept-process-output is
+	actually prepared to handle the current buffer changing.
+
 2015-03-27  Vin Shelton  <acs@xemacs.org>
 
 	* s/cygwin64.h: Fixed another stupid typo.
