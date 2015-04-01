@@ -62,17 +62,17 @@
 (defun hack-font-truename (fn)
   ;; #### This is duplicated from x-font-menu.el.
   "Filter the output of `font-instance-truename' to deal with font sets."
-  (if (string-match "," (font-instance-truename fn))
-      (let ((fpnt (nth 8 (split-string (font-instance-name fn) "-")))
-	    (flist (split-string (font-instance-truename fn) ","))
-	    ret)
-	(while flist
-	  (if (string-equal fpnt (nth 8 (split-string (car flist) "-")))
-	      (progn (setq ret (car flist)) (setq flist nil))
-	    (setq flist (cdr flist))
-	    ))
-	ret)
-    (font-instance-truename fn)))
+  (let ((font-instance-truename (font-instance-truename fn)))
+    (if (find ?, font-instance-truename)
+        (let ((fpnt (nth 8 (split-string-by-char (font-instance-name fn) ?-)))
+              (flist (split-string-by-char font-instance-truename ?,))
+              ret)
+          (while flist
+            (if (equal fpnt (nth 8 (split-string (car flist) "-")))
+                (progn (setq ret (car flist)) (setq flist nil))
+              (setq flist (cdr flist))))
+          ret)
+      font-instance-truename)))
 
 (defvar gtk-font-regexp-ascii nil
   "This is used to filter out font families that can't display ASCII text.

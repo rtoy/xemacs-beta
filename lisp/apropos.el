@@ -177,7 +177,7 @@ variables."
 					  (documentation symbol t)
 					(void-function "(aliased to undefined function)")
 					(error "(unexpected error from `documention')"))))
-			    (substring doc 0 (string-match "\n" doc))
+			    (subseq doc 0 (position ?\n doc))
 			  "(not documented)"))
 		    (and do-all
 			 (user-variable-p symbol)
@@ -188,8 +188,7 @@ variables."
 				    (variable-obsoleteness-doc symbol)
 				    (documentation-property
 				     symbol 'variable-documentation t)))
-			     (substring doc 0
-					    (string-match "\n" doc))))))
+			     (subseq doc 0 (position ?\n doc))))))
 	 (setq p (cdr p)))))
    nil))
 
@@ -230,7 +229,7 @@ Returns list of symbols and documentation found."
 					  (documentation symbol t)
 					(void-function "(aliased to undefined function)")
 					(error "(unexpected error from `documention')"))))
-			    (substring doc 0 (string-match "\n" doc))
+			    (subseq doc 0 (position ?\n doc))
 			  "(not documented)"))
 		    (if (boundp symbol)
 			(if (setq doc
@@ -240,8 +239,7 @@ Returns list of symbols and documentation found."
 				   (variable-obsoleteness-doc symbol)
 				   (documentation-property
 				    symbol 'variable-documentation t)))
-			    (substring doc 0
-				       (string-match "\n" doc))
+			    (subseq doc 0 (position ?\n doc))
 			  "(not documented)"))
 		    (if (setq doc (symbol-plist symbol))
 			(if (eq (/ (length doc) 2) 1)
@@ -250,19 +248,16 @@ Returns list of symbols and documentation found."
 		    (if (get symbol 'widget-type)
 			(if (setq doc (documentation-property
 				       symbol 'widget-documentation t))
-			    (substring doc 0
-				       (string-match "\n" doc))
+			    (subseq doc 0 (position ?\n doc))
 			  "(not documented)"))
 		    (if (find-face symbol)
 			(if (setq doc (face-doc-string symbol))
-			    (substring doc 0
-				       (string-match "\n" doc))
+			    (subseq doc 0 (position ?\n doc))
 			  "(not documented)"))
 		    (when (get symbol 'custom-group)
 		      (if (setq doc (documentation-property
 				     symbol 'group-documentation t))
-			  (substring doc 0
-				     (string-match "\n" doc))
+			  (subseq doc 0 (position ?\n doc))
 			"(not documented)"))))
 	 (setq p (cdr p)))))
    nil))

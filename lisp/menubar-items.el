@@ -1439,11 +1439,13 @@ Write your filter like this:
      ["Edit I%_nit File"
       ;; #### there should be something that holds the name that the init
       ;; file should be created as, when it's not present.
-      (let ((el-file (or user-init-file "~/.xemacs/init.el"))
-            el-file-directory)
-	(if (string-match "\\.elc$" el-file)
+      (let* ((el-file (or user-init-file "~/.xemacs/init.el"))
+             (position (position ?. el-file :from-end t))
+             el-file-directory)
+	(if (not (mismatch el-file ".elc"
+                           :start1 (or position (length el-file))))
 	    (setq el-file
-		  (substring user-init-file 0 (1- (length el-file)))))
+		  (subseq user-init-file 0 -1)))
         (unless (file-directory-p
                  (setq el-file-directory (file-name-directory el-file)))
           (message "Creating %s... " el-file-directory)
@@ -1479,7 +1481,7 @@ Write your filter like this:
       ["%_Home Page (www.xemacs.org)" xemacs-www-page
        :active (fboundp 'browse-url)])
      ["B%_eta Info" describe-beta
-      :included (string-match "beta" emacs-version)]
+      :included (search "beta" emacs-version)]
      "-----"
      ("%_Info (Online Docs)"
       ["%_Info Contents" (Info-goto-node "(dir)")]
@@ -1711,10 +1713,12 @@ Sorts the buffers in alphabetical order by name, but puts buffers beginning
 with a star at the end of the list."
   (let* ((nam1 (buffer-name buf1))
 	 (nam2 (buffer-name buf2))
-	 (inv1p (not (null (string-match "\\` " nam1))))
-	 (inv2p (not (null (string-match "\\` " nam2))))
-	 (star1p (not (null (string-match "\\`*" nam1))))
-	 (star2p (not (null (string-match "\\`*" nam2)))))
+         (len1 (length nam1))
+         (len2 (length nam2))
+	 (inv1p (eql ?\ (and (> len1 0) (aref nam1 0))))
+	 (inv2p (eql ?\ (and (> len2 0) (aref nam2 0))))
+	 (star1p (eql ?* (and (> len1 0) (aref nam1 0))))
+         (star2p (eql ?* (and (> len2 0) (aref nam2 0)))))
     (cond ((not (eq inv1p inv2p))
 	   (not inv1p))
 	  ((not (eq star1p star2p))
@@ -1728,23 +1732,37 @@ Sorts first by major mode and then alphabetically by name, but puts buffers
 beginning with a star at the end of the list."
   (let* ((nam1 (buffer-name buf1))
 	 (nam2 (buffer-name buf2))
-	 (inv1p (not (null (string-match "\\` " nam1))))
-	 (inv2p (not (null (string-match "\\` " nam2))))
-	 (star1p (not (null (string-match "\\`*" nam1))))
-	 (star2p (not (null (string-match "\\`*" nam2))))
-	 (mode1 (symbol-value-in-buffer 'major-mode buf1))
-	 (mode2 (symbol-value-in-buffer 'major-mode buf2)))
+	 (first1 (elt nam1 0))
+	 (first2 (elt nam2 0))
+	 (inv1p (eql ?\  first1))
+	 (inv2p (eql ?\  first2))
+	 (star1p (eql ?* first1))
+         (star2p (eql ?* first2))
+	 compare-strings)
     (cond ((not (eq inv1p inv2p))
 	   (not inv1p))
 	  ((not (eq star1p star2p))
 	   (not star1p))
-	  ((and star1p star2p (string-lessp nam1 nam2)))
-	  ((string-lessp mode1 mode2)
-	   t)
-	  ((string-lessp mode2 mode1)
-	   nil)
-	  (t
-	   (string-lessp nam1 nam2)))))
+	  ((and star1p star2p (prog2 
+				  (setq compare-strings
+					(compare-strings nam1 0 nil
+							 nam2 0 nil t))
+				  (and (fixnump compare-strings)
+				       (minusp compare-strings)))))
+	  ((eq (setq compare-strings
+                     (compare-strings (symbol-name
+                                       (symbol-value-in-buffer
+                                        'major-mode buf1))
+                                      0 nil
+                                      (symbol-name
+                                       (symbol-value-in-buffer
+                                        'major-mode buf2))
+                                      0 nil t))
+	       t)
+	   (setq compare-strings (compare-strings nam1 0 nil
+						  nam2 0 nil t))
+	   (and (fixnump compare-strings) (minusp compare-strings)))
+	  (t (minusp compare-strings)))))
 
 ;; this version is too slow on some machines.
 ;; (vintage 1990, that is)
@@ -1772,14 +1790,18 @@ This just returns the buffer's name."
 This groups buffers by major mode.  It only really makes sense if
 `buffers-menu-sorting-function' is
 `sort-buffers-menu-by-mode-then-alphabetically'."
-  (cond ((string-match "\\`*" (buffer-name buf1))
-	 (and (null buf2) "*Misc*"))
-	((or (null buf2)
-	     (string-match "\\`*" (buffer-name buf2))
-	     (not (eq (symbol-value-in-buffer 'major-mode buf1)
-		      (symbol-value-in-buffer 'major-mode buf2))))
-	 (symbol-value-in-buffer 'mode-name buf1))
-	(t nil)))
+  (let* ((nam1 (buffer-name buf1))
+	 (nam2 (buffer-name buf2))
+         (len1 (length nam1))
+         (len2 (length nam2)))
+    (cond ((eql ?* (and (> len1 0) (aref nam1 0)))
+           (and (null buf2) "*Misc*"))
+          ((or (null buf2)
+               (eql ?* (and (> len2 0) (aref nam2 0)))
+               (not (eq (symbol-value-in-buffer 'major-mode buf1)
+                        (symbol-value-in-buffer 'major-mode buf2))))
+           (symbol-value-in-buffer 'mode-name buf1))
+          (t nil))))
 
 (defun buffer-menu-save-buffer (buffer)
   (save-excursion
@@ -1902,7 +1924,7 @@ items by redefining the function `format-buffers-menu-line'."
 (defun list-all-buffers ()
   "Display a list of buffers.  Calls `list-all-buffers-function'."
   (interactive)
-  (funcall (if (fboundp list-all-buffers-function)
+  (funcall (if (functionp list-all-buffers-function)
 	       list-all-buffers-function
 	     'list-buffers)))
 
@@ -1926,10 +1948,10 @@ items by redefining the function `format-buffers-menu-line'."
 	(mapcan #'(lambda (lang)
 		    (let ((tut (assq 'tutorial lang)))
 		      (and tut
-			   (not (string= (car lang) "ASCII"))
+			   (not (equal (car lang) "ASCII"))
 			   ;; skip current language, since we already
 			   ;; included it first
-			   (not (string= (car lang)
+			   (not (equal (car lang)
 					 current-language-environment))
                            ;; Hackish approach; if a language environment
                            ;; doesn't have associated locale information,

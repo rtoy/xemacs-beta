@@ -913,12 +913,13 @@ actually get any text from."
 			  (message "Composing main Info directory..."))
 		      (set-buffer (or buf
 				      (generate-new-buffer
-				       (if (string-match "localdir" file)
+				       (if (search "localdir" file
+                                                   :test #'equalp)
 					   "localdir"
 					 "info dir"))))
 		      (if (not buf)
 			  (insert-file-contents file))
-		      (if (string-match "localdir" (buffer-name))
+		      (if (search "localdir" (buffer-name) :test #'equalp)
 			  (setq lbuffers (cons (current-buffer) lbuffers))
 			(setq buffers (cons (current-buffer) buffers)))
 		      (if attrs
@@ -954,7 +955,7 @@ actually get any text from."
       (while others
 	(let ((other (car others))
 	      (info-buffer (current-buffer)))
-	  (if (string-match "localdir" (buffer-name other))
+	  (if (search "localdir" (buffer-name other))
 	      (save-excursion
 		(set-buffer info-buffer)
 		(goto-char (point-max))
@@ -1527,7 +1528,7 @@ versions of NAME. Only the suffixes are tried."
 			 )))
       (setq suff (cdr suff)))
     (if (stringp (cdr (car suff)))
-	(let ((command (if (string-match "%s" (cdr (car suff)))
+	(let ((command (if (search "%s" (cdr (car suff)))
 			   (format (cdr (car suff)) file)
 			 (concat (cdr (car suff)) " < " file))))
 	  (message "%s..." command)
@@ -1958,9 +1959,9 @@ NAME may be an abbreviation of the reference name."
 	       (list default)
 	     (list item)))
        (error "No cross-references in this node"))))
-  (let (target i (str (concat "\\*" Info-footnote-tag " "
-			      (regexp-quote footnotename))))
-    (while (setq i (string-match " " str i))
+  (let (target (i 0) (str (concat "\\*" Info-footnote-tag " "
+                                  (regexp-quote footnotename))))
+    (while (setq i (position ?\  str :start i))
       (setq str (concat (substring str 0 i) "\\([ \t\n]+\\)"
 			(substring str (1+ i))))
       (setq i (+ i 10)))
@@ -2029,8 +2030,7 @@ NAME may be an abbreviation of the reference name."
 
 (defun Info-extract-menu-node-name (&optional errmessage multi-line)
   (skip-chars-forward " \t\n")
-  (let ((start (point))
-	str i)
+  (let ((start (point)) str)
     (skip-chars-forward "^:")
     (forward-char 1)
     (setq str
@@ -2050,9 +2050,7 @@ NAME may be an abbreviation of the reference name."
 		     ;; Skips sequential dots.
 		     "]\\|\\.+[^ \t\n)]\\)+\\)"))
 	    (match-string 1)))
-    (while (setq i (string-match "\n" str i))
-      (aset str i ?\ ))
-    str))
+    (substitute ?\  ?\n str)))
 
 (defun Info-menu (menu-item)
   "Go to node for menu item named (or abbreviated) NAME.

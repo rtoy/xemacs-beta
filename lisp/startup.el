@@ -1301,7 +1301,7 @@ a new format, when variables have changed, etc."
   `(
      (face (blue bold underline)
 	   "Useful Help-menu entries:\n\n")
-     ,@(if (string-match "beta" emacs-version)
+     ,@(if (search "beta" emacs-version)
 	   `((face bold "Beta Info:")
 	     (face (red bold)
 		   "                      This is an Experimental version of XEmacs.\n"))
@@ -1349,7 +1349,7 @@ Copyright (C) 1995-2005 Ben Wing.\n")
 (defun splash-screen-tty-body ()
   `(
     (face italic "[`C-' means the control key, `M-' means the meta key]\n\n")
-     ,@(if (string-match "beta" emacs-version)
+     ,@(if (search "beta" emacs-version)
 	   `((key describe-beta)
 	     ": " (face (red bold)
 			"This is an Experimental version of XEmacs.\n"))

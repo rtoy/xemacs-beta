@@ -736,7 +736,7 @@ This is used for `extra-line' style (or `box' style if BLOCK is specified)."
 				       (match-beginning 0) lcs 3)) c)))
 	(setq cs (replace-match fill t t s))
 	(when (and (not (string-match comment-start-skip cs))
-		   (string-match "a=m" s))
+		   (search "a=m" s))
 	  ;; The whitespace around CS cannot be ignored: put it back.
 	  (setq re "a=m")
 	  (setq fill (make-string (- width lcs) c))
