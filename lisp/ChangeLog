@@ -1,3 +1,148 @@
+2015-04-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	When calling #'string-match with a REGEXP without regular
+	expression special characters, call #'search, #'mismatch, #'find,
+	etc. instead, making our code less likely to side-effect other
+	functions' match data and a little faster.
+
+	* apropos.el (apropos-command):
+	* apropos.el (apropos):
+	Call (position ?\n ...) rather than (string-match "\n" ...) here.
+	* buff-menu.el:
+	* buff-menu.el (buffers-menu-omit-invisible-buffers):
+	Don't fire up the regexp engine just to check if a string starts
+	with a space.
+	* buff-menu.el (select-buffers-tab-buffers-by-mode):
+	Don't fire up the regexp engine just to compare mode basenames.
+	* buff-menu.el (format-buffers-tab-line):
+	* buff-menu.el (build-buffers-tab-internal): Moved to being a
+	label within the following.
+	* buff-menu.el (buffers-tab-items): Use the label.
+	* bytecomp.el (byte-compile-log-1):
+	Don't fire up the regexp engine just to look for a newline.
+	* cus-edit.el (get):
+	Ditto.
+	* cus-edit.el (custom-variable-value-create):
+	Ditto, but for a colon.
+	* descr-text.el (describe-text-sexp):
+	Ditto.
+	* descr-text.el (describe-char-unicode-data):
+	Use #'split-string-by-char given that we're just looking for a
+	semicolon.
+	* descr-text.el (describe-char):
+	Don't fire up the regexp engine just to look for a newline.
+	* disass.el (disassemble-internal):
+	Ditto.
+	* files.el (file-name-sans-extension):
+	Implement this using #'position.
+	* files.el (file-name-extension):
+	Correct this function's docstring, implement it in terms of
+	#'position.
+	* files.el (insert-directory):
+	Don't fire up the regexp engine to split a string by space; don't
+	reverse the list of switches, this is actually a longstand bug as
+	far as I can see.
+	* gnuserv.el (gnuserv-process-filter):
+	Use #'position here, instead of consing inside #'split-string
+	needlessly.
+	* gtk-file-dialog.el (gtk-file-dialog-update-dropdown):
+	Use #'split-string-by-char here, don't fire up #'split-string for
+	directory-sep-char. 
+	* gtk-font-menu.el (hack-font-truename):
+	Implement this more cheaply in terms of #'find,
+	#'split-string-by-char, #'equal, rather than #'string-match,
+	#'split-string, #'string-equal.
+	* hyper-apropos.el (hyper-apropos-grok-functions):
+	* hyper-apropos.el (hyper-apropos-grok-variables):
+	Look for a newline using #'position rather than #'string-match in
+	these functions.
+	* info.el (Info-insert-dir):
+	* info.el (Info-insert-file-contents):
+	* info.el (Info-follow-reference):
+	* info.el (Info-extract-menu-node-name):
+	* info.el (Info-menu):
+	Look for fixed strings using #'position or #'search as appropriate
+	in this file.
+	* ldap.el (ldap-decode-string):
+	* ldap.el (ldap-encode-string):
+	#'encode-coding-string, #'decode-coding-string are always
+	available, don't check if they're fboundp.
+	* ldap.el (ldap-decode-address):
+	* ldap.el (ldap-encode-address):
+	Use #'split-string-by-char in these functions.
+	* lisp-mnt.el (lm-creation-date):
+	* lisp-mnt.el (lm-last-modified-date):
+	Don't fire up the regexp engine just to look for spaces in this file.
+	* menubar-items.el (default-menubar):
+	Use (not (mismatch ...)) rather than #'string-match here, for
+	simple regexp.
+	Use (search "beta" ...) rather than (string-match "beta" ...)
+	* menubar-items.el (sort-buffers-menu-alphabetically):
+	* menubar-items.el (sort-buffers-menu-by-mode-then-alphabetically):
+	* menubar-items.el (group-buffers-menu-by-mode-then-alphabetically):
+	Don't fire up the regexp engine to check if a string starts with
+	a space or an asterisk.
+	Use the more fine-grained results of #'compare-strings; compare
+	case-insensitively for the buffer menu.
+	* menubar-items.el (list-all-buffers):
+	* menubar-items.el (tutorials-menu-filter):
+	Use #'equal rather than #'string-equal, which, in this context,
+	has the drawback of not having a bytecode, and no redeeming
+	features.
+	* minibuf.el:
+	* minibuf.el (un-substitute-in-file-name):
+	Use #'count, rather than counting the occurences of $ using the
+	regexp engine.
+	* minibuf.el (read-file-name-internal-1):
+	Don't fire up the regexp engine to search for ?=.
+	* mouse.el (mouse-eval-sexp):
+	Check for newline with #'find.
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	Split a string by newline with #'split-string-by-char.
+	* mule/japanese.el:
+	* mule/japanese.el ("Japanese"):
+	Use #'search rather than #'string-match; canoncase before
+	comparing; fix a bug I had introduced where I had been making case
+	insensitive comparisons where the case mattered.
+	* mule/korea-util.el (default-korean-keyboard):
+	Look for ?3 using #'find, not #'string-march.
+	* mule/korea-util.el (quail-hangul-switch-hanja):
+	Search for a fixed string using #'search.
+	* mule/mule-cmds.el (set-locale-for-language-environment):
+	#'position, #'substitute rather than #'string-match,
+	#'replace-in-string.
+	* newcomment.el (comment-make-extra-lines):
+	Use #'search rather than #'string-match for a simple string.
+	* package-get.el (package-get-remote-filename):
+	Use #'position when looking for ?@
+	* process.el (setenv):
+	* process.el (read-envvar-name):
+	Use #'position when looking for ?=.
+	* replace.el (map-query-replace-regexp):
+	Use #'split-string-by-char instead of using an inline
+	implementation of it.
+	* select.el (select-convert-from-cf-text):
+	* select.el (select-convert-from-cf-unicodetext):
+	Use #'position rather than #'string-match in these functions.
+	* setup-paths.el (paths-emacs-data-root-p):
+	Use #'search when looking for simple string.
+	* sound.el (load-sound-file):
+	Use #'split-string-by-char rather than an inline reimplementation
+	of same.
+	* startup.el (splash-screen-window-body):
+	* startup.el (splash-screen-tty-body):
+	Search for simple strings using #'search.
+	* version.el (emacs-version):
+	Ditto.
+	* x-font-menu.el (hack-font-truename):
+	Implement this more cheaply in terms of #'find,
+	#'split-string-by-char, #'equal, rather than #'string-match,
+	#'split-string, #'string-equal.
+	* x-font-menu.el (x-reset-device-font-menus-core):
+	Use #'split-string-by-char here.
+	* x-init.el (x-initialize-keyboard):
+	Search for a simple string using #'search.
+
 2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* tty-init.el (make-frame-after-init-entry-point):

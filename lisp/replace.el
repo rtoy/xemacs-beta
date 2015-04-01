@@ -148,20 +148,10 @@ before rotating to the next."
 	       nil nil nil
 	       'query-replace-history))
      (list from to current-prefix-arg)))
-  (let (replacements)
-    (if (listp to-strings)
-	(setq replacements to-strings)
-      (while (not (eql (length to-strings) 0))
-	(if (string-match " " to-strings)
-	    (setq replacements
-		  (append replacements
-			  (list (substring to-strings 0
-					   (string-match " " to-strings))))
-		  to-strings (substring to-strings
-				       (1+ (string-match " " to-strings))))
-	  (setq replacements (append replacements (list to-strings))
-		to-strings ""))))
-    (perform-replace regexp replacements t t nil arg)))
+  (perform-replace regexp (if (listp to-strings)
+                              to-strings
+                            (split-string-by-char to-strings ?\ ))
+                   t t nil arg))
 
 (defun replace-string (from-string to-string &optional delimited)
   "Replace occurrences of FROM-STRING with TO-STRING.

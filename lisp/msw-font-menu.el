@@ -77,7 +77,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	dev-cache cache families sizes weights)
     (dolist (name (cond ((null debug)	; debugging kludge
 			 (font-list "::::" device))
-			((stringp debug) (split-string debug "\n"))
+			((stringp debug) (split-string-by-char debug ?\n))
 			(t debug)))
       (when (and (string-match mswindows-font-regexp-ascii name)
 		 (string-match mswindows-font-regexp name))

@@ -637,10 +637,8 @@ specifies the value of ERROR-BUFFER."
 Optional second arg MUSTMATCH, if non-nil, means require existing envvar name.
 If it is also not t, RET does not exit if it does non-null completion."
   (completing-read prompt
-		   (mapcar (function
-			    (lambda (enventry)
-			      (list (substring enventry 0
-					       (string-match "=" enventry)))))
+		   (mapcar #'(lambda (variable)
+                               (substring variable 0 (position ?= variable)))
 			   process-environment)
 		   nil mustmatch nil 'read-envvar-name-history))
 
@@ -721,7 +719,7 @@ a side-effect."
 
   ;; But then right now our find-coding-systems analogue is in packages.
 
-  (if (string-match "=" variable)
+  (if (position ?= variable)
       (error "Environment variable name `%s' contains `='" variable)
     (let ((pattern (concat "\\`" (regexp-quote (concat variable "="))))
 	  (case-fold-search nil)

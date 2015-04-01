@@ -31,7 +31,7 @@
 
 ;;;###autoload
 (defvar default-korean-keyboard
-  (if (string-match "3" (or (getenv "HANGUL_KEYBOARD_TYPE") ""))
+  (if (find ?3 (getenv "HANGUL_KEYBOARD_TYPE"))
       "3"
     "")
   "*The kind of Korean keyboard for Korean input method.
@@ -60,7 +60,7 @@
   "Swith to/from Korean hanja package."
   (interactive "i")
   (and current-input-method
-       (if (string-match "korean-hanja" current-input-method)
+       (if (search "korean-hanja" current-input-method :test #'equalp)
 	   (activate-input-method (concat "korean-hangul"
 					  default-korean-keyboard))
 	 (activate-input-method (concat "korean-hanja"

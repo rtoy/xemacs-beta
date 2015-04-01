@@ -350,16 +350,13 @@ a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
 		  (string-match
 		   "\\`([^\n\t )]+[\t ]*\\([^\n)]+\\)?)\\(:[\t ]*\\|\n?\\'\\)"
 		   doc))
-		 (setq doc (substring doc (match-end 0)
-				      (string-match "\n" doc))))
+		 (setq doc (subseq doc (match-end 0) (position ?\n doc))))
 	     ;; Skip errant newlines at beginning of doc
 	     (if (and doc
 		      (string-match "\\`\n+" doc))
 		 (setq doc (substring doc (match-end 0))))
 	     (insert-face (if doc
-			      (concat " - "
-				      (substring doc 0
-						 (string-match "\n" doc)))
+			      (concat " - " (subseq doc 0 (position ?\n doc)))
 			    " - Not documented.")
 			  'hyper-apropos-documentation)))
       (insert ?\n))))
@@ -383,9 +380,8 @@ a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
 		      (string-match "\\`\n+" doc))
 		 (setq doc (substring doc (match-end 0))))
 	     (insert-face (if doc
-			      (concat " - " (substring
-					     doc (if userp 1 0)
-					     (string-match "\n" doc)))
+			      (concat " - " (subseq doc (if userp 1 0)
+                                                    (position ?\n doc)))
 			    " - Not documented.")
 			  'hyper-apropos-documentation)))
       (insert ?\n))))

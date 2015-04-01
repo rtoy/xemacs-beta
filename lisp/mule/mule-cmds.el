@@ -1285,9 +1285,10 @@ Returns non-nil if successfully set the locale(s)."
 		 ;; assume it's DEFAULT or NEUTRAL (or something else
 		 ;; without the language in it?) and prepend the
 		 ;; language.
-		 (if (string-match "_" (cdr ms-locale))
-		     (replace-in-string
-		      (replace-match "-" nil nil (cdr ms-locale)) "_" " ")
+		 (if (setq position (position ?_ (cdr ms-locale)))
+                     (substitute ?\  ?_
+                                 (substitute ?- ?_ (cdr ms-locale)
+                                             :end (1+ position)))
 		   (format "%s-%s" (car ms-locale) (cdr ms-locale))))
 		;; ???? huh ???? if failure, just try the language
 		;; name.

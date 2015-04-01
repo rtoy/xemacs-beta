@@ -649,10 +649,10 @@ The R column contains a % for buffers that are read-only."
 			     files-only))
     buffer))
 
-(defun buffers-menu-omit-invisible-buffers (buf)
+(defun buffers-menu-omit-invisible-buffers (buffer)
   "For use as a value of `buffers-menu-omit-function'.
 Omits normally invisible buffers (those whose name begins with a space)."
-  (not (null (string-match "\\` " (buffer-name buf)))))
+  (eql ?\  (elt (buffer-name buffer) 0)))
 
 ;;; The Buffers tab
 
@@ -788,14 +788,14 @@ This selects buffers by major mode `buffers-tab-grouping-regexp'."
 	(mode2 (symbol-name (symbol-value-in-buffer 'major-mode 
 						    buffer-to-select)))
 	(modenm1 (symbol-value-in-buffer 'mode-name buf1))
-	(modenm2 (symbol-value-in-buffer 'mode-name buffer-to-select)))
+	(modenm2 (symbol-value-in-buffer 'mode-name buffer-to-select))
+        position mismatch)
     (cond ((or (eq mode1 mode2)
 	       (eq modenm1 modenm2)
-	       (and (string-match "^[^-]+-" mode1)
-		    (string-match
-		     (concat "^" (regexp-quote 
-				  (substring mode1 0 (match-end 0))))
-		     mode2))
+	       (and (setq position (position ?- mode1)) (> position 0)
+                    (prog2
+                        (setq mismatch (mismatch mode1 mode2 :end1 position))
+                        (not (or (null mismatch) (eql mismatch position)))))
 	       (and buffers-tab-grouping-regexp
 		    (find-if #'(lambda (x)
 				 (or
@@ -810,30 +810,16 @@ This selects buffers by major mode `buffers-tab-grouping-regexp'."
 (defun format-buffers-tab-line (buffer)
   "For use as a value of `buffers-tab-format-buffer-line-function'.
 This just returns the buffer's name, optionally truncated."
-  (let ((len (specifier-instance buffers-tab-default-buffer-line-length)))
-    (if (and (> len 0)
-	     (> (length (buffer-name buffer)) len))
-	(if (string-match ".*<.>$" (buffer-name buffer))
-	    (concat (substring (buffer-name buffer) 
-			       0 (- len 6)) "..."
-			       (substring (buffer-name buffer) -3))
-	  (concat (substring (buffer-name buffer)
-			     0 (- len 3)) "..."))
-      (buffer-name buffer))))
-
-(defsubst build-buffers-tab-internal (buffers)
-  (let ((selected t))
-    (mapcar
-     #'(lambda (buffer)
-	 (prog1
-	     (vector 
-	      (funcall buffers-tab-format-buffer-line-function
-		       buffer)
-	      (list buffers-tab-switch-to-buffer-function
-		    (buffer-name buffer))
-	      :selected selected)
-	   (when selected (setq selected nil))))
-     buffers)))
+  (let* ((len (specifier-instance buffers-tab-default-buffer-line-length))
+         (buffer-name (buffer-name buffer))
+         (len1 (length buffer-name)))
+    (if (and (> len 0) (> len1 len))
+	(if (and (> len1 3) (eql ?< (aref buffer-name (- len1 3)))
+                 (eql ?> (aref buffer-name (1- len1))))
+	    (concat (subseq buffer-name 0 (- len 6))
+                    "..." (subseq buffer-name -3))
+          (concat (subseq buffer-name 0 (- len 3)) "..."))
+      buffer-name)))
 
 ;;; #### SJT would like this function to have a sort function list. I
 ;;; don't see how this could work given that sorting is not
@@ -868,16 +854,14 @@ redefining the function `format-buffers-menu-line'."
       ;; filter buffers
       (when buffers-tab-filter-functions
 	(setq buffers
-	      (delete-if 
-	       #'null 
-	       (mapcar #'(lambda (buf)
-			   (let ((tmp-buf buf))
-			     (mapc #'(lambda (fun)
-				       (unless (funcall fun buf first-buf)
-					 (setq tmp-buf nil)))
-				   buffers-tab-filter-functions)
-			     tmp-buf))
-		       buffers))))
+              (mapcan #'(lambda (buf)
+                          (let ((tmp-buf buf))
+                            (mapc #'(lambda (fun)
+                                      (unless (funcall fun buf first-buf)
+                                        (setq tmp-buf nil)))
+                                  buffers-tab-filter-functions)
+                            (and tmp-buf (list tmp-buf))))
+                      buffers)))
       ;; maybe shorten list of buffers
       (and (integerp buffers-tab-max-size)
 	   (> buffers-tab-max-size 1)
@@ -886,9 +870,23 @@ redefining the function `format-buffers-menu-line'."
       ;; sort buffers in group (default is most-recently-selected)
       (when buffers-tab-sort-function
 	(setq buffers (funcall buffers-tab-sort-function buffers)))
-      ;; convert list of buffers to list of structures used by tab widget
-      (setq buffers (build-buffers-tab-internal buffers))
-      buffers)))
+      (labels
+          ((build-buffers-tab-internal (buffers)
+             (let ((selected t))
+               (mapcar
+                #'(lambda (buffer)
+                    (prog1
+                        (vector 
+                         (funcall buffers-tab-format-buffer-line-function
+                                  buffer)
+                         (list buffers-tab-switch-to-buffer-function
+                               (buffer-name buffer))
+                         :selected selected)
+                      (when selected (setq selected nil))))
+                buffers))))
+        ;; convert list of buffers to list of structures used by tab widget
+        (setq buffers (build-buffers-tab-internal buffers))
+        buffers))))
 
 (provide 'buff-menu)
 

@@ -368,7 +368,8 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 		     (signal 'quit nil)))
 	     (setq gnuserv-string "")))
 	  (t
-	   (let ((response (car (split-string gnuserv-string "\C-d"))))
+	   (let ((response (subseq gnuserv-string 0
+				   (position ?\C-d gnuserv-string))))
 	     (setq gnuserv-string "")
 	     (error "%s: invalid response from gnuserv" response))))))
 

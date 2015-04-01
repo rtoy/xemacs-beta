@@ -274,7 +274,7 @@ It's also fantastic for debugging regular expressions."
     ;; #### -- need better test
     (if (and (not force-window)
 	     (<= (length result-str) (window-width (selected-window)))
-             (not (string-match "\n" result-str)))
+             (not (find ?\n result-str)))
 	(message "%s" result-str)
       (with-output-to-temp-buffer "*Mouse-Eval*"
         (loop

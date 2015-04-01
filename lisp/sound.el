@@ -159,7 +159,7 @@ nVolume (0 for default): ")
 		      (if (file-name-absolute-p filename)
 			  (list (file-name-directory filename))
 			default-sound-directory-list)
-		      (split-string sound-extension-list ":")))
+		      (split-string-by-char sound-extension-list ?:)))
 	buf data)
     (unless file
       (error "Couldn't load sound file %s" filename))

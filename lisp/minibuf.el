@@ -1483,15 +1483,11 @@ If DEFAULT-VALUE is non-nil, return that if user enters an empty
 
 ;; Quote "$" as "$$" to get it past substitute-in-file-name
 (defun un-substitute-in-file-name (string)
-  (let ((regexp "\\$")
+  (let ((n (count ?$ string))
         (olen (length string))
-        new
-        n o ch)
-    (if (not (string-match regexp string))
+        new o ch)
+    (if (eql n 0)
 	string
-      (setq n 1)
-      (while (string-match regexp string (match-end 0))
-	(setq n (1+ n)))
       (setq new (make-string (+ olen n) ?$))
       (setq n 0 o 0)
       (while (< o olen)
@@ -1502,7 +1498,6 @@ If DEFAULT-VALUE is non-nil, return that if user enters an empty
 	    ;; already aset by make-string initial-value
 	    (setq n (1+ n))))
       new)))
-
 
 ;; Wrapper for `directory-files' for use in generating completion lists.
 ;; Generates output in the same format as `file-name-all-completions'.
@@ -1775,9 +1770,7 @@ DIR defaults to current buffer's directory default."
                                     start))))
              (head (substring string 0 (1- start)))
              (alist #'(lambda ()
-                        (mapcar #'(lambda (x)
-                                    (cons (substring x 0 (string-match "=" x))
-                                          nil))
+                        (mapcar #'(lambda (x) (subseq x 0 (position ?= x)))
                                 process-environment))))
 
 	(cond ((eq action 'lambda)
