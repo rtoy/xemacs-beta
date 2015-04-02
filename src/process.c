@@ -2431,11 +2431,11 @@ When invoked interactively, prints the value in the echo area.
 {
   Ibyte *value = NULL;
   Bytecount valuelen;
-  Lisp_Object v = Qnil;
-  struct gcpro gcpro1;
+  Lisp_Object v = Qnil, formatted = Qnil;
+  struct gcpro gcpro1, gcpro2;
 
   CHECK_STRING (var);
-  GCPRO1 (v);
+  GCPRO2 (v, formatted);
   if (getenv_internal (XSTRING_DATA (var), XSTRING_LENGTH (var),
 		       &value, &valuelen))
     v = make_string (value, valuelen);
@@ -2444,9 +2444,11 @@ When invoked interactively, prints the value in the echo area.
       if (NILP (v))
 	message ("%s not defined in environment", XSTRING_DATA (var));
       else
-	/* #### Should use Fprin1_to_string or Fprin1 to handle string
-           containing quotes correctly.  */
-	message ("\"%s\"", value);
+        {
+          /* Backslash any quotation marks. */
+          formatted = Fprin1_to_string (v, Qnil);
+          message_internal (NULL, formatted, 0, -1);
+        }
     }
   RETURN_UNGCPRO (v);
 }
