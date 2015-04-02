@@ -1,3 +1,9 @@
+2015-04-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.c (Fgetenv):
+	When interactively showing a variable's value, use %S in the
+	format string so quotation marks are escaped correctly.	
+
 2015-03-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-stream.c (Faccept_process_output):
