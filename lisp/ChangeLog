@@ -1,3 +1,15 @@
+2015-04-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gnuserv.el (gnuserv-edit-files):
+	No need to memorise the device created for the sake of C-x #, if
+	the client is not waiting for us.
+	Fixes a bug in the following situation:
+	-- Start gnuserv from an XEmacs within screen
+	-- Call gnuclient with an X11 display available, connecting
+	   successfully to that XEmacs and creating an X11 frame
+	-- Then call gnuclient file-name.txt, save the file, then type C-x
+	#; this deletes all the frames on the device, which it shouldn't.
+
 2015-04-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	When calling #'string-match with a REGEXP without regular
