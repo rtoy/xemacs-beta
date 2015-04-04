@@ -4190,8 +4190,12 @@ when appropriate.  Calling this function will call the hook
 (defvar message-stack nil
   "An alist of label/string pairs representing active echo-area messages.
 The first element in the list is currently displayed in the echo area.
-Do not modify this directly--use the `message' or
-`display-message'/`clear-message' functions.")
+
+Each string is represented by a STRING START END triplet, reflecting the
+MESSAGE, START, and END arguments to `append-message'.
+
+Do not modify this directly--use the `message', `display-message', or
+`clear-message' functions.")
 
 (defvar remove-message-hook 'log-message
   "A function or list of functions to be called when a message is removed
@@ -4566,7 +4570,8 @@ by default--see the `log-message-ignore-labels' variable):
 (defun current-message (&optional frame)
   "Return the current message in the echo area, or nil.
 The FRAME argument is currently unused."
-  (cdr (car message-stack)))
+  (subseq (cadar message-stack) (or (caddar message-stack) 0)
+	  (fourth (car message-stack))))
 
 ;;; may eventually be frame-dependent
 (defun current-message-label (&optional frame)
