@@ -1780,7 +1780,7 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
 
       onum = num;
       num *= base;
-      if (num > fixnum_limit)
+      if (num > fixnum_limit || num < onum)
         {
           goto overflow;
         }
