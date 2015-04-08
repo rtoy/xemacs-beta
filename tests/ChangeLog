@@ -1,3 +1,9 @@
+2015-04-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add a couple of tests for #'parse-integer to check for a bug just
+	fixed.
+
 2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
