@@ -29,7 +29,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <netinet/tcp.h>
 
 static Lisp_Object prompt;
-static Lisp_Object Qread_password;
+static Lisp_Object Qread_passwd;
 Lisp_Object Qtls_error;
 
 #ifdef HAVE_NSS
@@ -313,7 +313,7 @@ nss_pk11_password (PK11SlotInfo *slot, PRBool retry, void * UNUSED (arg))
   if (token_name == NULL)
     token_name = "security token";
   lsp_password =
-    call1 (Qread_password, concat2 (prompt,
+    call1 (Qread_passwd, concat2 (prompt,
 				    build_extstring (token_name, Qnative)));
   c_password = LISP_STRING_TO_EXTERNAL (lsp_password, Qnative);
   nss_password = PL_strdup (c_password);
@@ -718,7 +718,7 @@ gnutls_pk11_password (void * UNUSED (userdata), int UNUSED (attempt),
   args[2] = build_ascstring (" (");
   args[3] = build_extstring (token_url, Qnative);
   args[4] = build_ascstring (")");
-  lsp_password = call1 (Qread_password, Fconcat (5, args));
+  lsp_password = call1 (Qread_passwd, Fconcat (5, args));
   c_password = LISP_STRING_TO_EXTERNAL (lsp_password, Qnative);
 
   /* Insert the password */
@@ -1079,7 +1079,7 @@ openssl_password (char *buf, int size, int UNUSED (rwflag),
   Extbyte *c_password;
 
   lsp_password =
-    call1 (Qread_password, concat2 (prompt, build_ascstring ("PEM")));
+    call1 (Qread_passwd, concat2 (prompt, build_ascstring ("PEM: ")));
   c_password = LISP_STRING_TO_EXTERNAL (lsp_password, Qnative);
   strncpy (buf, c_password, size);
 
@@ -1172,7 +1172,7 @@ void
 syms_of_tls (void)
 {
 #ifdef WITH_TLS
-  DEFSYMBOL (Qread_password);
+  DEFSYMBOL (Qread_passwd);
 #endif
   DEFERROR (Qtls_error, "TLS error", Qerror);
 }

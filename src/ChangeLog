@@ -1,5 +1,14 @@
 2015-04-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* tls.c (nss_pk11_password):
+	* tls.c (gnutls_pk11_password):
+	* tls.c (openssl_password):
+	* tls.c (syms_of_tls):
+	Our read-a-password function is #'read-passwd, not
+	#'read-password, correct that in this file.
+
+2015-04-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* tls.c:
 	#include <openssl/x509v3.h> for its prototype for
 	X509_check_host().
