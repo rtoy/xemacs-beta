@@ -782,6 +782,10 @@ init_tls (void)
 #include <openssl/conf.h>
 #include <openssl/err.h>
 
+#ifdef HAVE_X509_CHECK_HOST
+#include <openssl/x509v3.h>
+#endif
+
 /* The context used to create connections */
 static SSL_CTX *ssl_ctx;
 
@@ -1023,8 +1027,8 @@ tls_open (int s, const Extbyte *hostname)
     }
 
 #ifdef HAVE_X509_CHECK_HOST
-  err = X509_check_host (peer_cert, (const unsigned char *) hostname,
-			 strlen (hostname), 0);
+  err = X509_check_host (peer_cert, (const char *) hostname,
+			 strlen (hostname), 0, NULL);
   if (err < 0)
     {
       warn_when_safe (Qtls_error, Qerror,
