@@ -1,3 +1,11 @@
+2015-04-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* tls.c:
+	#include <openssl/x509v3.h> for its prototype for
+	X509_check_host().
+	* tls.c (tls_open):
+	Pass the new fifth argument to X509_check_host().
+
 2015-04-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (parse_integer):

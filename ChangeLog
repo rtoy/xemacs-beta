@@ -1,3 +1,14 @@
+2015-04-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac:
+	If X509_check_host() is available, check the number of arguments
+	it takes. Don't use it if it takes any number of arguments other
+	than five. Also don't use it if <openssl/x509v3.h> does not
+	declare it, since if that is so there is no portable way to tell
+	how many arguments it should take, and so we would end up smashing
+	the stack.
+	* configure: Regenerate.
+
 2015-03-26  Vin Shelton  <acs@xemacs.org>
 
 	* configure.ac: Recognize and support 64-bit cygwin, thanks to

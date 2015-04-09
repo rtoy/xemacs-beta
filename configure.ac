@@ -5439,7 +5439,27 @@ if test "$with_tls" != "no"; then
     if test "$?" = 0; then
       XE_APPEND("$openssl_libs", LIBS)
     fi
-    AC_CHECK_FUNC(X509_check_host, [AC_DEFINE(HAVE_X509_CHECK_HOST)])
+    dnl Check whether X509_check_host can be linked in.
+    AC_CHECK_FUNC(X509_check_host,
+        AC_COMPILE_IFELSE(
+            dnl It can; check that its declaration is compatible with five
+            dnl arguments. An early version of the function took only four.
+            [AC_LANG_PROGRAM([#include <openssl/x509v3.h>],
+                 [return X509_check_host ((void *) 0,
+                                          (const char *) 0, 0, 0, 
+                                          (void *) 0); ])],
+            dnl Now check that it is *not* compatible with just one argument,
+            dnl as would be the case if no declaration was in the header, and
+            dnl the header was old, compared to the DLL. This sort of version
+            dnl sanity-checking is particularly necessary with OpenSSL. E.g. on
+            dnl OS X there has always been an installed system version of it,
+            dnl but pkg-config, above, will pick up the MacPorts version.
+            [ AC_MSG_CHECKING(that X509_check_host is declared)
+              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <openssl/x509v3.h>],
+                                               [return X509_check_host (-1);])],
+                                AC_MSG_RESULT(no),
+                                [AC_MSG_RESULT(yes)
+                                 AC_DEFINE(HAVE_X509_CHECK_HOST)])]))
   else
     with_tls=no
   fi
