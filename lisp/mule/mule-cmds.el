@@ -1263,7 +1263,8 @@ Returns non-nil if successfully set the locale(s)."
                          (error nil))
                    (return msloc))))))))
     (if (eq system-type 'windows-nt)
-	(let ((ms-locale (mswindows-get-and-set-locale-from-langenv langenv)))
+	(let* ((ms-locale (mswindows-get-and-set-locale-from-langenv langenv))
+               (position (position ?_ (cdr ms-locale))))
 	  (when ms-locale
 	    ;; also need to set the clib locale.
 	    (or (set-current-locale
@@ -1285,7 +1286,7 @@ Returns non-nil if successfully set the locale(s)."
 		 ;; assume it's DEFAULT or NEUTRAL (or something else
 		 ;; without the language in it?) and prepend the
 		 ;; language.
-		 (if (setq position (position ?_ (cdr ms-locale)))
+		 (if position
                      (substitute ?\  ?_
                                  (substitute ?- ?_ (cdr ms-locale)
                                              :end (1+ position)))
