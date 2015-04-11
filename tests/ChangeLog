@@ -1,3 +1,8 @@
+2015-04-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check for a bug just fixed in cl-macs.el.
+
 2015-04-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
