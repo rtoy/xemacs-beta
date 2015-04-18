@@ -3,6 +3,14 @@
 	* automated/lisp-tests.el:
 	Check for a bug just fixed in cl-macs.el.
 
+2015-04-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test #'clear-string, just added. Unfortunately there's no way to
+	be certain from Lisp that the old password data has been erased
+	after realloc; it may be worth adding a test to tests.c, but
+	*we'll be reading memory we shouldn't be*, so that gives me pause.
+
 2015-04-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
