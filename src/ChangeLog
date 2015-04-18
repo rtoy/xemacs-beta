@@ -1,3 +1,15 @@
+2015-04-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (Fclear_string): New, API from GNU.  Zero a string's
+	contents, making sure the text is not kept around even when the
+	string's data is reallocated because of a changed character
+	length.
+	* sequence.c (syms_of_sequence): Make it available to Lisp.
+	* lisp.h: Make it available to C code.
+	* tls.c (nss_pk11_password): Use it.
+	* tls.c (gnutls_pk11_password): Use it.
+	* tls.c (openssl_password): Use it.
+
 2015-04-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* tls.c (nss_pk11_password):

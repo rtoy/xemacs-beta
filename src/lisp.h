@@ -5788,6 +5788,7 @@ extern Fixnum warn_about_possibly_incompatible_back_references;
 
 /* Defined in sequence.c */
 EXFUN (Ffill, MANY);
+EXFUN (Fclear_string, 1);
 EXFUN (Freplace, MANY);
 
 /* Defined in signal.c */
