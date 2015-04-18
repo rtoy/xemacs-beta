@@ -302,7 +302,7 @@ tls_set_x509_key_file (const Extbyte *certfile, const Extbyte *keyfile)
 static char *
 nss_pk11_password (PK11SlotInfo *slot, PRBool retry, void * UNUSED (arg))
 {
-  Lisp_Object lsp_password, args[2];
+  Lisp_Object lsp_password;
   Extbyte *c_password, *nss_password;
   const Extbyte *token_name;
 
@@ -319,10 +319,9 @@ nss_pk11_password (PK11SlotInfo *slot, PRBool retry, void * UNUSED (arg))
   nss_password = PL_strdup (c_password);
 
   /* Wipe out the password on the stack and in the Lisp string */
-  args[0] = lsp_password;
-  args[1] = make_char ('*');
-  Ffill (2, args);
+  Fclear_string (lsp_password);
   memset (c_password, '*', strlen (c_password));
+
   return nss_password;
 }
 
@@ -729,10 +728,9 @@ gnutls_pk11_password (void * UNUSED (userdata), int UNUSED (attempt),
   pin[len] = '\0';
 
   /* Wipe out the password on the stack and in the Lisp string */
-  args[0] = lsp_password;
-  args[1] = make_char ('*');
-  Ffill (2, args);
+  Fclear_string (lsp_password);
   memset (c_password, '*', strlen (c_password));
+
   return GNUTLS_E_SUCCESS;
 }
 
@@ -1075,7 +1073,7 @@ static int
 openssl_password (char *buf, int size, int UNUSED (rwflag),
 		  void *UNUSED (userdata))
 {
-  Lisp_Object lsp_password, args[2];
+  Lisp_Object lsp_password;
   Extbyte *c_password;
 
   lsp_password =
@@ -1084,10 +1082,9 @@ openssl_password (char *buf, int size, int UNUSED (rwflag),
   strncpy (buf, c_password, size);
 
   /* Wipe out the password on the stack and in the Lisp string */
-  args[0] = lsp_password;
-  args[1] = make_char ('*');
-  Ffill (2, args);
+  Fclear_string (lsp_password);
   memset (c_password, '*', strlen (c_password));
+
   return (int) strlen (buf);
 }
 
