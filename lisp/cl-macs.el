@@ -3034,8 +3034,10 @@ STRING is an optional description of the desired type."
 	       (condition-case nil
 		   `(while (not ,test)
 		     ,(macroexpand `(setf ,place ,signal-error)))
+                 ;; Common Lisp requires that PLACE be setfable, but this is
+                 ;; never a restriction that this package has enforced.
 		 (error
-		  `(if ,test (progn ,signal-error nil))))))
+		  `(if (not ,test) (progn ,signal-error nil))))))
 	 (if (eq temp place) `(progn ,body nil)
 	   `(let ((,temp ,place)) ,body nil)))))
 

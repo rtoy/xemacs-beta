@@ -1,3 +1,17 @@
+2015-04-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (set-locale-for-language-environment):
+	Bind `position' as a local variable here, as was the original
+	intention.
+
+2015-04-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (check-type):
+	Correct the sense of the type test here when PLACE is not
+	setf'able, something which gave confusing errors with literal
+	fixnums or, e.g., (+ 30 40).
+
 2015-04-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gutter-items.el (append-progress-feedback):
