@@ -3825,4 +3825,17 @@ via the hepatic alpha-tocopherol transfer protein")))
 
 ;; No way to check from Lisp whether the data was actually nulled.
 
+;; Check that a bug in #'check-type with non-setfable PLACE (something not
+;; actually specified by Common Lisp) has been fixed.
+(Assert (prog1 t (check-type 300 fixnum))
+        "checking #'check-type OK, fixnum literal PLACE")
+(Check-Error wrong-type-argument
+             (check-type 300 (integer -1 100))
+             "checking #'check-type errors properly on fixnum literal PLACE")
+(Assert (prog1 t (check-type (+ 100 200) fixnum))
+        "checking #'check-type OK, non-setfable PLACE")
+(Check-Error wrong-type-argument
+             (check-type (+ 600 1000) (integer 0 20))
+             "checking #'check-type errors properly, non-setfable PLACE")
+
 ;;; end of lisp-tests.el
