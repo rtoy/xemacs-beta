@@ -3796,6 +3796,35 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (eql ?\x09 (digit-char 9 nil binary-table))
           "checking `digit-char' reflects RADIX-TABLE, 9, base 10"))
 
+;; Test #'clear-string.
+
+(Check-Error wrong-type-argument (clear-string [?\x00 ?\xff]))
+(Check-Error wrong-type-argument (clear-string '(?\x00 ?\xff)))
+(Check-Error wrong-type-argument (clear-string #*1010))
+(Check-Error wrong-number-of-arguments (clear-string "hello" ?*))
+
+(let* ((template (concat
+                  "this is a template string, "
+                  (if (unicode-to-char #x06af)
+                      (decode-coding-string
+                       (concat
+                        "\xd8\xa8\xd9\x87 \xd9\x86\xd8\xb8\xd8\xb1 "
+                        "\xd9\x85\xd9\x86 \xd8\xae\xd9\x88\xda\xa9 "
+                        "\xd8\xae\xd9\x88\xd8\xb4\xd9\x85\xd8\xb2\xd9\x87 "
+                        "\xd8\xa7\xd8\xb3\xd8\xaa")
+                       'utf-8))))
+       (length (length template))
+       (null (make-string length ?\x00)))
+  (Assert (null (clear-string (copy-sequence template))))
+  (Assert (eql length (let ((string (copy-sequence template)))
+                        (clear-string string)
+                        (length string))))
+  (Assert (equal null (let ((string (copy-sequence template)))
+                        (clear-string string)
+                        string))))
+
+;; No way to check from Lisp whether the data was actually nulled.
+
 ;; Check that a bug in #'check-type with non-setfable PLACE (something not
 ;; actually specified by Common Lisp) has been fixed.
 (Assert (prog1 t (check-type 300 fixnum))

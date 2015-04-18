@@ -4154,6 +4154,52 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
   return sequence;
 }
 
+DEFUN ("clear-string", Fclear_string, 1, 1, 0, /*
+Fill STRING with ?\\x00 characters.  Return nil.
+
+This differs from `fill' with a ?\\x00 argument in that it ensures that
+STRING's existing contents are discarded, even in the event of reallocation
+due to a change in the byte length of STRING.  In this implementation, the
+character length of STRING is not changed.
+*/
+       (string))
+{
+  Ibyte nullbyte[MAX_ICHAR_LEN];
+  Bytecount zerolen = set_itext_ichar (nullbyte, 0);
+  Charcount scount;
+
+  CHECK_STRING (string);
+
+  scount = string_char_length (string);
+
+  /* First, clear the original string data. */
+  memset (XSTRING_DATA (string), 0, XSTRING_LENGTH (string));
+
+  /* Now, resize if that's necessary, to make sure Lisp isn't confused by the
+     character length of a string changing. */
+  if (string_char_length (string) != scount)
+    {
+      Ibyte *p, *pend;
+      Bytecount delta = (zerolen * scount) - XSTRING_LENGTH (string);
+
+      resize_string (string, 0, delta);
+      p = XSTRING_DATA (string);
+      pend = p + XSTRING_LENGTH (string);
+
+      while (p < pend)
+        {
+          memcpy (p, nullbyte, zerolen);
+          p += zerolen;
+        }
+    }
+
+  init_string_ascii_begin (string);
+  bump_string_modiff (string);
+  sledgehammer_check_ascii_begin (string);
+
+  return Qnil;
+}
+
 
 /* Replace the substring of DEST beginning at START and ending before END
    with the text at SOURCE, which is END - START characters long and
@@ -8316,6 +8362,7 @@ syms_of_sequence (void)
   DEFSUBR (Fmerge);
   DEFSUBR (FsortX);
   DEFSUBR (Ffill);
+  DEFSUBR (Fclear_string);
   DEFSUBR (Fmapconcat);
   DEFSUBR (FmapcarX);
   DEFSUBR (Fmapvector);
