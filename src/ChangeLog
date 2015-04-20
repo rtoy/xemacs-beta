@@ -1,3 +1,9 @@
+2015-04-20  Jerry James  <james@xemacs.org>
+
+	* lisp.h (max_align_t): Do not define if C11 or C++11, or a later
+	version of either, is in use.
+	(ALIGNOF): Define with native operators in C11 and C++11 and later.
+
 2015-04-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* sequence.c (Fclear_string): New, API from GNU.  Zero a string's
