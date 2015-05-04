@@ -3700,6 +3700,7 @@ if test "$with_postgresql" != "no"; then
 
   if test -n "$pg_header_dir" -a "$header_dir" != "$pg_header_dir"; then
     AC_WARN([--with-postgresql="$pg_header_dir" specified but not found; using "$libpq_fe_h_file"])
+  fi
 
   pq_libs=
   extra_libs=
