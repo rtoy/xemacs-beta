@@ -1917,7 +1917,11 @@ Database options
                           or a comma-separated list of one or more of `berkdb'
                           and either `dbm' or `gdbm'.
   --with-ldap             Support the LDAP protocol.
-  --with-postgresql       Support the PostgreSQL RDBMS.
+  --with-postgresql       Support the PostgreSQL RDBMS. Optional argument
+                          should be the basename of the subdirectory
+                          containing `libpq-fe.h'. The first subdirectory
+                          found on the -I path will be used. Currently
+                          autodetect must be used --with-modules.
 
 Mail options
 ------------
@@ -15600,15 +15604,27 @@ $as_echo_n "checking for PostgreSQL... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
 $as_echo "" >&6; }
 
-  for header_dir in "" "pgsql/" "postgresql/"; do
-    as_ac_Header=`$as_echo "ac_cv_header_${header_dir}libpq-fe.h" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "${header_dir}libpq-fe.h" "$as_ac_Header" "$ac_includes_default"
+  case "$with_postgresql" in
+  "" | "yes" | "no" | "true" | "false" | "auto")
+    pg_header_dir="" ;;
+  *)
+    pg_header_dir="$with_postgresql" ;;
+  esac
+
+          libpq_fe_h_file=""
+  for header_dir in $pg_header_dir "" "pgsql" "postgresql" "postgresql94" "postgresql-9.4" "postgresql84" "postgresql-8.4"; do
+    as_ac_Header=`$as_echo "ac_cv_header_${header_dir}/libpq-fe.h" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "${header_dir}/libpq-fe.h" "$as_ac_Header" "$ac_includes_default"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  libpq_fe_h_file=${header_dir}libpq-fe.h; break
+  libpq_fe_h_file=${header_dir}/libpq-fe.h; break
 fi
 
 
   done
+
+  if test -n "$pg_header_dir" -a "$header_dir" != "$pg_header_dir"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-postgresql=\"$pg_header_dir\" specified but not found; using \"$libpq_fe_h_file\"" >&5
+$as_echo "$as_me: WARNING: --with-postgresql=\"$pg_header_dir\" specified but not found; using \"$libpq_fe_h_file\"" >&2;}
 
   pq_libs=
   extra_libs=

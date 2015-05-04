@@ -885,7 +885,11 @@ XE_MERGED_ARG([ldap],
 	AS_HELP_STRING([--with-ldap],[Support the LDAP protocol.]),
 	[], [])
 XE_MERGED_ARG([postgresql],
-	AS_HELP_STRING([--with-postgresql],[Support the PostgreSQL RDBMS.]),
+	AS_HELP_STRING([--with-postgresql],[Support the PostgreSQL RDBMS.
+                        Optional argument should be the basename of the
+                        subdirectory containing `libpq-fe.h'.  The first
+                        subdirectory found on the -I path will be used.
+                        Currently autodetect must be used --with-modules.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Mail options])
@@ -3677,11 +3681,25 @@ if test "$with_postgresql" != "no"; then
   AC_MSG_CHECKING([for PostgreSQL])
   AC_MSG_RESULT()
 
-dnl Look for these standard header file locations, known to be used on Linux
-  for header_dir in "" "pgsql/" "postgresql/"; do
-    AC_CHECK_HEADER(${header_dir}libpq-fe.h,
-                    libpq_fe_h_file=${header_dir}libpq-fe.h; break)
+  case "$with_postgresql" in
+  "" | "yes" | "no" | "true" | "false" | "auto")
+    pg_header_dir="" ;;
+  *)
+    pg_header_dir="$with_postgresql" ;;
+  esac
+
+  dnl Look in standard header file locations.
+  dnl These are known to be used on Linux or MacPorts.
+  dnl Assume that the most recent version available is the most likely to be
+  dnl found in an unversioned directory.
+  libpq_fe_h_file=""
+  for header_dir in $pg_header_dir "" "pgsql" "postgresql" "postgresql94" "postgresql-9.4" "postgresql/9.4" "postgresql84" "postgresql-8.4" "postgresql/8.4"; do
+    AC_CHECK_HEADER(${header_dir}/libpq-fe.h,
+                    libpq_fe_h_file=${header_dir}/libpq-fe.h; break)
   done
+
+  if test -n "$pg_header_dir" -a "$header_dir" != "$pg_header_dir"; then
+    AC_WARN([--with-postgresql="$pg_header_dir" specified but not found; using "$libpq_fe_h_file"])
 
   pq_libs=
   extra_libs=
