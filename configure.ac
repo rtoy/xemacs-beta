@@ -107,6 +107,30 @@ define([USAGE_ERROR],
 echo " " $1
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1])dnl
 dnl
+dnl CPP_to_sh(CPP_SYMBOL, SH_VAR, DEFAULT_VALUE)
+define([CPP_to_sh],
+[[#]ifndef [$1]
+[#]define [$1]ifelse([$3],,, [ "$3"])
+[#]endif
+configure___ [$2]=[$1]
+])dnl CPP_to_sh
+dnl
+dnl CPP_boolean_to_sh(CPP_SYMBOL, SH_VAR)
+define([CPP_boolean_to_sh],
+[[#]ifdef [$1]
+configure___ [$2]=yes
+[#]else
+configure___ [$2]=no
+[#]endif
+])dnl CPP_boolean_to_sh
+dnl
+define(COLON_TO_SPACE_WARN,
+  [case "$[$1]" in *:* [)] dnl
+case "$opsys" in *cygwin* [)]
+  echo "  WARNING: Paths containing spaces will be misinterpreted." ;;
+esac
+[$1]="`echo '' $[$1] | sed -e 's/^ //' -e 's/:/ /g'`";; esac])dnl
+dnl
 dnl PRINT_VAR(var var ...)  prints values of shell variables
 define([PRINT_VAR],[for var in patsubst([$1],[[
 ]+],[ ]); do eval "echo \"$var = '\$$var'\""; done])dnl
@@ -234,12 +258,23 @@ fi
 dnl
 dnl The construct foo=`echo $w1 $w2 $w3` fails on some systems if $w1 = -e or -n
 dnl So we use the following instead.
+dnl #### Other macros save the computed value in the 2nd arg, but
+dnl #### XE_SPACE returns the value in the first arg.
 dnl XE_SPACE(var, words)
 define([XE_SPACE],[
 T=""
 for W in $2; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
 $1="$T"
 ])dnl XE_SPACE
+dnl XE_EXPAND_VARIABLE(original,expanded)
+define([XE_EXPAND_VARIABLE],
+[$2=[$]$1
+while true; do
+  case "[$]$2" in
+    *\[$]* ) eval "$2=[$]$2" ;;
+    *) break ;;
+  esac
+done])dnl XE_EXPAND_VARIABLE
 dnl Autoconf 2.59 and 2.60 have slightly different versions of m4_cdr that
 dnl return different values for an empty list.  XE_CDR is a copy of the 2.60
 dnl version which will be used with both versions.
@@ -1091,15 +1126,6 @@ else
   AC_DEFINE(EXEC_PREFIX_USER_DEFINED)
 fi
 
-define([XE_EXPAND_VARIABLE],
-[$2=[$]$1
-while true; do
-  case "[$]$2" in
-    *\[$]* ) eval "$2=[$]$2" ;;
-    *) break ;;
-  esac
-done])dnl XE_EXPAND_VARIABLE
-
 XE_EXPAND_VARIABLE(prefix,prefix_expanded)
 XE_EXPAND_VARIABLE(datadir,datadir_expanded)
 XE_EXPAND_VARIABLE(exec_prefix,exec_prefix_expanded)
@@ -1718,23 +1744,6 @@ dnl It is not important that this name contain the PID; you cannot run
 dnl two configures in the same directory and have anything work
 dnl anyway.
 tempcname="conftest.c"
-
-dnl CPP_to_sh(CPP_SYMBOL, SH_VAR, DEFAULT_VALUE)
-define([CPP_to_sh],
-[[#]ifndef [$1]
-[#]define [$1]ifelse([$3],,, [ "$3"])
-[#]endif
-configure___ [$2]=[$1]
-])dnl CPP_to_sh
-
-dnl CPP_boolean_to_sh(CPP_SYMBOL, SH_VAR)
-define([CPP_boolean_to_sh],
-[[#]ifdef [$1]
-configure___ [$2]=yes
-[#]else
-configure___ [$2]=no
-[#]endif
-])dnl CPP_boolean_to_sh
 
 cat > $tempcname < confdefs.h
 cat >> $tempcname <<EOF
@@ -5892,14 +5901,6 @@ case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
     - Consider configuring with --with-pdump." ;;
 esac
-
-define(COLON_TO_SPACE_WARN,
-  [case "$[$1]" in *:* [)] dnl
-case "$opsys" in *cygwin* [)]
-  echo "  WARNING: Paths containing spaces will be misinterpreted." ;;
-esac
-[$1]="`echo '' $[$1] | sed -e 's/^ //' -e 's/:/ /g'`";; esac])dnl
-
 echo "
 Package Search (a 'root' contains '{xemacs,mule,site}-packages'):"
 
