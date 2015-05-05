@@ -1,5 +1,14 @@
 2015-05-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* configure.ac (XE_EXPAND_VARIABLE):
+	(CPP_to_sh):
+	(CPP_boolean_to_sh):
+	(COLON_TO_SPACE_WARN):
+	Collect with other macro definitions.
+	* configure: Regenerate.
+
+2015-05-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* configure.ac (PostgreSQL): Fix shell syntax error.
 	* configure: Regenerate.
 

@@ -5514,7 +5514,6 @@ else
 
 fi
 
-
 prefix_expanded=$prefix
 while true; do
   case "$prefix_expanded" in
@@ -9291,8 +9290,6 @@ fi
 echo "Extracting information from the machine- and system-dependent headers..."
 
 tempcname="conftest.c"
-
-
 
 cat > $tempcname < confdefs.h
 cat >> $tempcname <<EOF
@@ -22059,8 +22056,6 @@ case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
     - Consider configuring with --with-pdump." ;;
 esac
-
-
 echo "
 Package Search (a 'root' contains '{xemacs,mule,site}-packages'):"
 
