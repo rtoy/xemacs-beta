@@ -22041,7 +22041,7 @@ echo "  Compiler version:                  $compiler_version"
 if test -n "$gcc_compiler_specs"; then
   echo "    - GCC specs file:                $gcc_compiler_specs"
 fi
-echo "    - Compiler command:              $XEMACS_CC $XE_CFLAGS"
+echo "    - Compiler command:              $XEMACS_CC $c_switch_all"
 if test "$CC" != "$XEMACS_CC"; then
   echo "  Compiler version for lib-src:      (detection code unimplemented)"
   echo "    - Compiler command for lib-src:  $CC $CFLAGS"
