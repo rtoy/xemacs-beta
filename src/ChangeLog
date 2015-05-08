@@ -1,3 +1,17 @@
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.h (get_char_table):
+	* chartab.h (get_char_table_mirrors_ok): New.
+	Provide get_char_table_mirrors_ok, which differs from
+	get_char_table only if ERROR_CHECK_TYPES is defined.
+	Implement it, and get_char_table, using a macro wrapper of
+	get_char_table_1, so that on builds without optimization each
+	get_char_table no longer requires two C function calls.
+	* chartab.c (updating_mirror_get_range_char_table):
+	Use get_char_table_mirrors_ok.
+	* syntax.h:
+	Ditto.
+
 2015-04-20  Jerry James  <james@xemacs.org>
 
 	* lisp.h (max_align_t): Do not define if C11 or C++11, or a later
