@@ -1,5 +1,7 @@
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* general-slots.h: Sort the symbols in this file using the Lisp
+	provided.
 	* chartab.h (get_char_table_mirrors_ok):
 	#define this correctly without ERROR_CHECK_TYPES.
 
