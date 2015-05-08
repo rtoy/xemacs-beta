@@ -1,5 +1,10 @@
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* chartab.h (get_char_table_mirrors_ok):
+	#define this correctly without ERROR_CHECK_TYPES.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* data.c (parse_integer):
 	Fix a bug here with the interaction of negative bignums and a
 	non-zero JUNK-ALLOWED argument.
