@@ -1361,7 +1361,7 @@ Floating point numbers always use base 10.
       ratio_set_string (scratch_ratio, (const char *) p, b);
       *end = save;
       ratio_canonicalize (scratch_ratio);
-      return make_ratio_rt (scratch_ratio);
+      return Fcanonicalize_number (make_ratio_rt (scratch_ratio));
     }
 #endif /* HAVE_RATIO */
 
