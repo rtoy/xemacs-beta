@@ -1899,7 +1899,13 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
       if (!NILP (result))
         {
           /* Bignum terminated by whitespace or by non-digit. */
-          return Fcanonicalize_number (result);
+          if (negativland)
+            {
+              bignum_set_long (scratch_bignum, -1L);
+              bignum_mul (XBIGNUM_DATA (result), XBIGNUM_DATA (result),
+                          scratch_bignum);
+            }
+          return result;
         }
 #endif
 
