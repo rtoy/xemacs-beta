@@ -1,5 +1,10 @@
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* data.c (Fstring_to_number):
+	Canonicalise ratios in this function, as we do bignums.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* chartab.h (get_char_table):
 	* chartab.h (get_char_table_mirrors_ok): New.
 	Provide get_char_table_mirrors_ok, which differs from
