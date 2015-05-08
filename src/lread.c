@@ -1930,62 +1930,123 @@ read_atom (Lisp_Object readcharfun,
   /* This function can GC */
   int saw_a_backslash;
   Bytecount len = read_atom_0 (readcharfun, firstchar, &saw_a_backslash);
-  char *read_ptr = (char *)
-    resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream));
+  Ibyte *read_ptr
+    = (Ibyte *) resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream));
 
-  /* Is it an integer? */
-  if (! (saw_a_backslash || uninterned_symbol))
+  /* Is it an integer?
+
+     If a token had any backslashes in it, it is disqualified from being an
+     integer or a float.  This means that 123\456 is a symbol, as is \123
+     (which is the way (intern "123") prints).  Also, if token was preceded by
+     #:, it's always a symbol. */
+
+  if (!(saw_a_backslash || uninterned_symbol))
     {
-      /* If a token had any backslashes in it, it is disqualified from
-	 being an integer or a float.  This means that 123\456 is a
-	 symbol, as is \123 (which is the way (intern "123") prints).
-	 Also, if token was preceded by #:, it's always a symbol.
-       */
-      char *p = read_ptr + len;
-      char *p1 = read_ptr;
+      Lisp_Object got = get_char_table (firstchar, Vdigit_fixnum_map);
+      Fixnum fixval = FIXNUMP (got) ? XREALFIXNUM (got) : -1;
+      Boolint starts_like_an_int_p = (fixval > -1 && fixval < 10)
+        || firstchar == '+' || firstchar == '-';
+      Ibyte *endp = NULL;
+      Lisp_Object num = Qnil;
 
-      if (*p1 == '+' || *p1 == '-') p1++;
-      if (p1 != p)
-	{
-          int c;
+      /* Attempt to parse as an integer, with :JUNK-ALLOWED t. Do a gross
+         plausibility check (above) first, though, we'd prefer not to call
+         parse_integer() on every symbol we see. */
+      if (starts_like_an_int_p)
+        {
+          num = parse_integer (read_ptr, &endp, len, 10, 1, Qnil);
+        }
 
-          while (p1 != p && (c = *p1) >= '0' && c <= '9')
-            p1++;
-	  /* Integers can have trailing decimal points.  */
-	  if (p1 > read_ptr && p1 < p && *p1 == '.')
-	    p1++;
-          if (p1 == p)
+      if (INTEGERP (num))
+        {
+          if (endp == (read_ptr + len))
             {
-	      Ibyte *buf_end;
-              /* It is an integer. */
-	      if (p1[-1] == '.')
+              /* We consumed the whole atom, it's definitely an integer. */
+              return num;
+            }
+          else if ('.' == itext_ichar (endp))
+            {
+              /* Trailing decimal point is allowed in the Lisp reader, this is
+                 an integer. */
+              INC_IBYTEPTR (endp);
+              if (endp == (read_ptr + len))
                 {
-                  len -= 1;
+                  return num;
+                }
+            }
+          else if ('/' == itext_ichar (endp))
+            {
+              /* Maybe it's a ratio? */
+              Lisp_Object denom = Qnil;
+
+              INC_IBYTEPTR (endp);
+
+              if (endp < (read_ptr + len))
+                {
+                  Ichar cc = itext_ichar (endp);
+                  /* No leading sign allowed in the denominator, that would
+                     make it a symbol (according to Common Lisp, of course).*/
+                  if (cc != '+' && cc != '-')
+                    {
+                      denom = parse_integer (endp, &endp,
+                                             len - (endp - read_ptr), 10,
+                                             1, Qnil);
+                    }
                 }
 
-              return parse_integer ((Ibyte *) read_ptr, &buf_end, len, 10,
-                                    0, Qnil);
-	    }
-	}
-#ifdef HAVE_RATIO
-      if (isratio_string (read_ptr))
-	{
-	  /* GMP ratio_set_string has no effect with initial + sign */
-	  if (*read_ptr == '+')
-	    read_ptr++;
-	  ratio_set_string (scratch_ratio, read_ptr, 0);
-	  if (bignum_sign (ratio_denominator (scratch_ratio)) != 0) {
-	    ratio_canonicalize (scratch_ratio);
-	    return Fcanonicalize_number (make_ratio_rt (scratch_ratio));
-	  }
-	  return Fsignal (Qinvalid_read_syntax,
-			  list2 (build_msg_string
-				 ("Invalid ratio constant in reader"),
-				 make_string ((Ibyte *) read_ptr, len)));
-	}
-#endif
-      if (isfloat_string (read_ptr))
-	return make_float (atof (read_ptr));
+              if (INTEGERP (denom) && endp == (read_ptr + len))
+                {
+                  if (ZEROP (denom))
+                    {
+                      Fsignal (Qinvalid_read_syntax,
+                               list2 (build_msg_string
+                                      ("Invalid ratio constant in reader"),
+                                      make_string (read_ptr, len)));
+                    }
+#ifndef HAVE_RATIO
+                  /* Support a couple of trivial ratios in the reader to allow
+                     people to test ratio syntax: */
+                  if (EQ (denom, make_fixnum (1)))
+                    {
+                      return num;
+                    }
+                  if (!NILP (Fequal (num, denom)))
+                    {
+                      return make_fixnum (1);
+                    }
+
+                  return Fsignal (Qunsupported_type,
+                                  list3 (build_ascstring ("ratio"),
+                                         num, denom));
+#else
+                  switch (promote_args (&num, &denom))
+                    {
+                    case FIXNUM_T:
+                      num = make_ratio (XREALFIXNUM (num),
+                                        XREALFIXNUM (denom));
+                      return Fcanonicalize_number (num);
+                      break;
+                    case BIGNUM_T:
+                      num = make_ratio_bg (XBIGNUM_DATA (num),
+                                           XBIGNUM_DATA (denom));
+                      return Fcanonicalize_number (num);
+                      break;
+                    default:
+                      assert (0);
+                    }
+#endif /* HAVE_RATIO */
+                }
+              /* Otherwise, not a ratio or integer, despite that the partial
+                 parse may have succeeded. The trailing junk disqualifies
+                 it. */
+            }
+        }
+
+      if ((starts_like_an_int_p || '.' == firstchar)
+          && isfloat_string ((char *) read_ptr))
+        {
+          return make_float (atof ((char *) read_ptr));
+        }
     }
 
   {
@@ -2002,15 +2063,77 @@ read_atom (Lisp_Object readcharfun,
 }
 
 static Lisp_Object
-read_integer (Lisp_Object readcharfun, int base)
+read_rational (Lisp_Object readcharfun, Fixnum base)
 {
   /* This function can GC */
   int saw_a_backslash;
-  Ibyte *buf_end;
+  Ibyte *buf_end, *buf_ptr, *slash;
   Bytecount len = read_atom_0 (readcharfun, -1, &saw_a_backslash);
-  return (parse_integer
-	  (resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream)),
-           &buf_end, len, base, 0, Qnil));
+  Lisp_Object num = Qnil, denom = Qzero;
+
+  buf_ptr = resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream));
+
+  if ((slash = memchr (buf_ptr, '/', len)) == NULL)
+    {
+      /* Can't be a ratio, parse as as an integer. */ 
+      return parse_integer (buf_ptr, &buf_end, len, base, 0, Qnil);
+    }
+
+  /* No need to call isratio_string, the detailed parsing (and erroring, as
+     necessary) will be done by parse_integer. */
+  num = parse_integer (buf_ptr, &buf_end, slash - buf_ptr, base, 0, Qnil);
+
+  INC_IBYTEPTR (slash);
+  if (slash < (buf_ptr + len))
+    {
+      Ichar cc = itext_ichar (slash);
+      if (cc != '+' && cc != '-')
+        {
+          denom = parse_integer (slash, &buf_end, len - (slash - buf_ptr),
+                                 base, 0, Qnil);
+        }
+    }
+
+  if (ZEROP (denom))
+    {
+      /* The denominator was zero, or it had a sign specified; these are
+         invalid ratios, for slightly different reasons. */
+      Fsignal (Qinvalid_read_syntax,
+               list2 (build_msg_string ("Invalid ratio constant in reader"),
+                      make_string (buf_ptr, len)));
+    }
+
+#ifndef HAVE_RATIO
+  /* Support a couple of trivial ratios in the reader to allow people to test
+     ratio syntax: */
+  if (EQ (denom, make_fixnum (1)))
+    {
+      return num;
+    }
+  if (!NILP (Fequal (num, denom)))
+    {
+      return make_fixnum (1);
+    }
+
+  return Fsignal (Qunsupported_type, list3 (build_ascstring ("ratio"),
+                                            num, denom));
+#else
+  switch (promote_args (&num, &denom))
+    {
+    case FIXNUM_T:
+      num = make_ratio (XREALFIXNUM (num), XREALFIXNUM (denom));
+      return Fcanonicalize_number (num);
+      break;
+    case BIGNUM_T:
+      num = make_ratio_bg (XBIGNUM_DATA (num), XBIGNUM_DATA (denom));
+      return Fcanonicalize_number (num);
+      break;
+    default:
+      assert (0); /* promote_args() with two integers won't give us anything
+                     but fixnums or bignums. */
+      return Qnil;
+    }
+#endif
 }
 
 static Lisp_Object
@@ -2569,11 +2692,11 @@ retry:
             /* bit vectors */
 	  case '*': return read_bit_vector (readcharfun);
             /* #o10 => 8 -- octal constant syntax */
-	  case 'o': case 'O': return read_integer (readcharfun, 8);
+	  case 'o': case 'O': return read_rational (readcharfun, 8);
             /* #xdead => 57005 -- hex constant syntax */
-	  case 'x': case 'X': return read_integer (readcharfun, 16);
+	  case 'x': case 'X': return read_rational (readcharfun, 16);
             /* #b010 => 2 -- binary constant syntax */
-	  case 'b': case 'B': return read_integer (readcharfun, 2);
+	  case 'b': case 'B': return read_rational (readcharfun, 2);
 	    /* #r"raw\stringt" -- raw string syntax */
 	  case 'r': return read_raw_string(readcharfun);
             /* #s(foobar key1 val1 key2 val2) -- structure syntax */
@@ -2606,32 +2729,44 @@ retry:
 #endif
 	  case '0': case '1': case '2': case '3': case '4':
 	  case '5': case '6': case '7': case '8': case '9':
-	    /* Reader forms that can reuse previously read objects.  */
+          hash_digit_syntax:
+	    /* Reader forms that can reuse previously read objects, or the
+               Common Lisp syntax for a rational of arbitrary base.  */
 	    {
-	      Lisp_Object parsed, found;
+              Lisp_Object got = get_char_table (c, Vdigit_fixnum_map);
+              Fixnum fixval = FIXNUMP (got) ? XREALFIXNUM (got) : -1;
+              Lisp_Object parsed, found;
 	      Ibyte *buf_end;
 
 	      Lstream_rewind (XLSTREAM (Vread_buffer_stream));
 
-	      /* Using read_integer() here is impossible, because it
+	      /* Using read_rational() here is impossible, because it
                  chokes on `='. */
-	      while (c >= '0' && c <= '9')
+	      while (fixval >= 0 && fixval <= 9)
 		{
 		  Lstream_put_ichar (XLSTREAM (Vread_buffer_stream), c);
 		  QUIT;
 		  c = readchar (readcharfun);
+                  got = get_char_table (c, Vdigit_fixnum_map);
+                  fixval = FIXNUMP (got) ? XREALFIXNUM (got) : -1;
 		}
 
-	      /* blasted terminating 0 */
-	      Lstream_put_ichar (XLSTREAM (Vread_buffer_stream), 0);
 	      Lstream_flush (XLSTREAM (Vread_buffer_stream));
 
 	      parsed
 		= parse_integer (resizing_buffer_stream_ptr
 				 (XLSTREAM (Vread_buffer_stream)), &buf_end,
 				 Lstream_byte_count (XLSTREAM
-						     (Vread_buffer_stream))
-				 - 1, 10, 0, Qnil);
+						     (Vread_buffer_stream)),
+                                 10, 0, Qnil);
+
+              if ('r' == c || 'R' == c)
+                {
+                  /* Common Lisp syntax to specify an integer of arbitrary
+                     base. */
+                  CHECK_FIXNUM (parsed);
+                  return read_rational (readcharfun, XFIXNUM (parsed));
+                }
 
 	      found = assoc_no_quit (parsed, Vread_objects);
 	      if (c == '=')
@@ -2681,6 +2816,14 @@ retry:
 	    }
 	  default:
 	    {
+              Lisp_Object got = get_char_table (c, Vdigit_fixnum_map);
+              Fixnum fixval = FIXNUMP (got) ? XREALFIXNUM (got) : -1;
+
+              if (fixval > -1 && fixval < 10)
+                {
+                  goto hash_digit_syntax;
+                }
+
 	      unreadchar (readcharfun, c);
 	      return Fsignal (Qinvalid_read_syntax,
 			      list1 (build_ascstring ("#")));

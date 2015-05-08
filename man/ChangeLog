@@ -1,3 +1,10 @@
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/numbers.texi (Numbers):
+	Describe the newly-supported arbitrary-base syntax for rationals
+	(integers and ratios). Describe that ratios can take the same base
+	specification as integers, something also new.
+
 2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/strings.texi (Character Codes):

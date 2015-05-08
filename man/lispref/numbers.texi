@@ -18,12 +18,16 @@ enabled on some platforms.
 of XEmacs) are whole numbers such as @minus{}3, 0, #b0111, #xFEED,
 #o744.  Their values are exact, and their range is limited.  The
 number prefixes `#b', `#o', and `#x' are supported to represent numbers
-in binary, octal, and hexadecimal notation (or radix).  Floating point
-numbers are numbers with fractional parts, such as @minus{}4.5, 0.0, or
-2.71828.  They can also be expressed in exponential notation: 1.5e2
-equals 150; in this example, @samp{e2} stands for ten to the second
-power, and is multiplied by 1.5.  Floating point values are not exact;
-they have a fixed, limited amount of precision.
+in binary, octal, and hexadecimal notation (or radix).  The syntax
+`#NNNrNUM' is also supported, allowing a radix to be explicitly
+specified; e.g. `#20r15' denotes the fixnum 25, expressed in base
+twenty.
+
+  Floating point numbers are numbers with fractional parts, such as
+@minus{}4.5, 0.0, or 2.71828.  They can also be expressed in exponential
+notation: 1.5e2 equals 150; in this example, @samp{e2} stands for ten to
+the second power, and is multiplied by 1.5.  Floating point values are
+not exact; they have a fixed, limited amount of precision.
 
   Bignums are arbitrary precision integers.  When supported, XEmacs can
 handle any integral calculations you have enough virtual memory to
@@ -33,9 +37,13 @@ are notated in the same way as other integers (fixnums).  XEmacs
 automatically converts results of computations from fixnum to bignum,
 and back, depending on the storage required to represent the number.
 Thus use of bignums are entirely transparent to the user, except for a
-few special applications that expect overflows.  Ratios are rational
-numbers with arbitrary precision.  They are notated in the
-usual way with the solidus, for example 5/3 or @minus{}22/7.
+few special applications that expect overflows.
+
+  Ratios are rational numbers with arbitrary precision.  They are notated
+in the usual way with the solidus, for example 5/3 or @minus{}22/7.  The
+syntax for using a particular radix is the same as that for integers,
+so, e.g., @samp{#x8/10} is equivalent to @samp{1/2} and @samp{#30r10/4}
+to @samp{15/2}, respectively.
 
   Bigfloats are floating point numbers with arbitrary precision, which
 may be specified by the user (and may be different for different

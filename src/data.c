@@ -1814,10 +1814,9 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
 
  overflow:
 #ifndef HAVE_BIGNUM
-  return Fsignal (Qinvalid_argument,
-                  list3 (build_msg_string ("Integer constant overflow"),
-                         make_string (buf, len), make_fixnum (base)));
-
+  return Fsignal (Qunsupported_type,
+                  list3 (build_ascstring ("bignum"), make_string (buf, len),
+                         make_fixnum (base)));
 #else /* HAVE_BIGNUM */
   result = make_bignum_emacs_uint (onum);
 
@@ -4100,6 +4099,10 @@ init_errors_once_early (void)
   DEFERROR (Qsingularity_error, "Arithmetic singularity error", Qdomain_error);
   DEFERROR (Qoverflow_error, "Arithmetic overflow error", Qdomain_error);
   DEFERROR (Qunderflow_error, "Arithmetic underflow error", Qdomain_error);
+
+  /* Moved here from number.c, so it's available when none of the new numeric
+     types are. */
+  DEFERROR_STANDARD (Qunsupported_type, Qwrong_type_argument);
 }
 
 void
