@@ -140,13 +140,28 @@ Lisp_Object get_non_ascii_char_table_value (Lisp_Char_Table *ct,
 					    int leading_byte,
 					    Ichar c);
 
+#ifdef ERROR_CHECK_TYPES
+DECLARE_INLINE_HEADER (
+Lisp_Object
+get_char_table_1 (Ichar ch, Lisp_Object table, Boolint mirrors_allowed)
+)
+#else
 DECLARE_INLINE_HEADER (
 Lisp_Object
 get_char_table_1 (Ichar ch, Lisp_Object table)
 )
+#endif
 {
   Lisp_Object retval;
   Lisp_Char_Table *ct = XCHAR_TABLE (table);
+
+#ifdef ERROR_CHECK_TYPES
+  if (!mirrors_allowed)
+    {
+      assert (!ct->mirror_table_p);
+    }
+#endif
+
 #ifdef MULE
   if (ch < NUM_ASCII_CHARS)
     retval = ct->ascii[ch];
@@ -168,16 +183,11 @@ get_char_table_1 (Ichar ch, Lisp_Object table)
 }
 
 #ifdef ERROR_CHECK_TYPES
-DECLARE_INLINE_HEADER (
-Lisp_Object
-get_char_table (Ichar ch, Lisp_Object table)
-)
-{
-  assert (!XCHAR_TABLE (table)->mirror_table_p);
-  return get_char_table_1 (ch, table);
-}
+#define get_char_table(ch, table) get_char_table_1 (ch, table, 0)
+#define get_char_table_mirrors_ok(ch, table) get_char_table_1 (ch, table, 1)
 #else
-#define get_char_table(ch, table) get_char_table_1 (ch, table)
+#define get_char_table get_char_table_1
+#define get_char_mirrors_ok get_char_table_1
 #endif
 
 enum chartab_range_type

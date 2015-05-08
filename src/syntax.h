@@ -92,7 +92,7 @@ SYNTAX_CODE (Lisp_Object table, Ichar c)
 {
   type_checking_assert (XCHAR_TABLE (table)->mirror_table_p);
   update_mirror_syntax_if_dirty (table);
-  return XFIXNUM (get_char_table_1 (c, table));
+  return XFIXNUM (get_char_table_mirrors_ok (c, table));
 }
 
 #ifdef NOT_WORTH_THE_EFFORT
@@ -105,7 +105,7 @@ SYNTAX_CODE_1 (Lisp_Object table, Ichar c)
 )
 {
   type_checking_assert (XCHAR_TABLE (table)->mirror_table_p);
-  return (enum syntaxcode) XFIXNUM (get_char_table_1 (c, table));
+  return (enum syntaxcode) XFIXNUM (get_char_table_mirrors_ok (c, table));
 }
 
 #endif /* NOT_WORTH_THE_EFFORT */
