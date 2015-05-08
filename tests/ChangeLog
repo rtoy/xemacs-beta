@@ -1,5 +1,12 @@
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/lisp-reader-tests.el:
+	Check the arbitrary-base integer reader syntax support, just
+	added.  Check the reader base support for ratios, just added.
+	Check the non-ASCII-digit support in the reader, just added.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* automated/lisp-tests.el:
 	Check for a bug just fixed with the interaction of negative
 	bignums and :junk-allowed non-nil.

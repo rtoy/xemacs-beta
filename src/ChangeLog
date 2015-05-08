@@ -1,5 +1,30 @@
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* data.c (init_errors_once_early):
+	Move the Qunsupported_type here from numbers.c, so it's available
+	when the majority of our types are not supported.
+	* general-slots.h: Add it here, too.
+	* number.c: Remove the definition of Qunsupported_type from here.
+
+	* lread.c (read_atom):
+	Check if the first character could reflect a rational, if so, call
+	parse_integer(), don't check the syntax of the other
+	characters. This allows us to accept the non-ASCII digit
+	characters too.
+	If that worked partially, but not completely, and the next char is
+	a slash, try to parse as a ratio.
+	If that fails, try isfloat_string(), but only if the first
+	character could plausibly be part of a float.
+	Otherwise, treat as a symbol.
+	* lread.c (read_rational):
+	Rename from read_integer. Handle ratios with the same radix
+	specification as was used for integers.
+	* lread.c (read1):
+	Rename read_integer in this function. Support the Common Lisp
+	#NNNrMMM syntax for parsing a number MMM of arbitrary radix NNN.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* general-slots.h: Sort the symbols in this file using the Lisp
 	provided.
 	* chartab.h (get_char_table_mirrors_ok):

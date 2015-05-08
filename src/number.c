@@ -32,7 +32,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 Lisp_Object Qrationalp, Qfloatingp, Qrealp;
 Lisp_Object Vdefault_float_precision;
 
-static Lisp_Object Qunsupported_type;
 static Lisp_Object Vbigfloat_max_prec;
 static int number_initialized;
 
@@ -811,9 +810,6 @@ syms_of_number (void)
   DEFSUBR (Frealp);
   DEFSUBR (Fcanonicalize_number);
   DEFSUBR (Fcoerce_number);
-
-  /* Errors */
-  DEFERROR_STANDARD (Qunsupported_type, Qwrong_type_argument);
 }
 
 void
