@@ -1,5 +1,11 @@
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* data.c (parse_integer):
+	Fix a bug here with the interaction of negative bignums and a
+	non-zero JUNK-ALLOWED argument.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* print.c (print_symbol):
 	Revise this. No longer call isfloat_string() and isratio_string()
 	on practically every symbol seen; check explicitly for the known

@@ -1,5 +1,11 @@
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/lisp-tests.el:
+	Check for a bug just fixed with the interaction of negative
+	bignums and :junk-allowed non-nil.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* automated/lisp-reader-tests.el:
 	Check read and print handling of symbols that look like
 	numbers. In passing, check the read and print handling of the

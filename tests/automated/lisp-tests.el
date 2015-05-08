@@ -3612,8 +3612,15 @@ via the hepatic alpha-tocopherol transfer protein")))
                      "checking an overflow bug has been fixed")
              (Assert (eql (ignore-errors (parse-integer "-100000000"
                                                         :radix 16))
-                          (if (featurep 'bignum) (- (lsh 1 32) nil))
+                          (if (featurep 'bignum) (- (lsh 1 32)) nil))
                      "checking an overflow bug has been fixed, negative int")
+             (Assert (eql (ignore-errors (parse-integer
+                                           (format "%d4/" most-negative-fixnum)
+                                           :junk-allowed t))
+                          (if (featurep 'bignum)
+                              (- (* most-negative-fixnum 10) 4)
+                            nil))
+                      "checking a bug with :junk-allowed, negative bignum")
              (Check-Error invalid-argument (parse-integer "0123456789"
                                             :radix 8))
              (Check-Error invalid-argument (parse-integer "abc"))
