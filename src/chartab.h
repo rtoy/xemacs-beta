@@ -187,7 +187,7 @@ get_char_table_1 (Ichar ch, Lisp_Object table)
 #define get_char_table_mirrors_ok(ch, table) get_char_table_1 (ch, table, 1)
 #else
 #define get_char_table get_char_table_1
-#define get_char_mirrors_ok get_char_table_1
+#define get_char_table_mirrors_ok get_char_table_1
 #endif
 
 enum chartab_range_type
