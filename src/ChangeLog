@@ -1,5 +1,18 @@
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* print.c (print_symbol):
+	Revise this. No longer call isfloat_string() and isratio_string()
+	on practically every symbol seen; check explicitly for the known
+	float format in this function, which turns out to be a more
+	limited and cheap job than you would think.
+	Also check for integer and ratio syntax in passing.
+	Use Vdigit_fixnum_map when working out whether a given character
+	is a digit.
+	* lisp.h:
+	Make Vdigit_fixnum_map available generally.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* data.c (Fstring_to_number):
 	Canonicalise ratios in this function, as we do bignums.
 

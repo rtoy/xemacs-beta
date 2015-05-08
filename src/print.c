@@ -2563,51 +2563,97 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       return;
     }
 
+  if (0 == size)
+    {
+      /* Compatible with GNU, but not with Common Lisp, where the syntax
+         for this symbol is ||. */
+      write_ascstring (printcharfun,
+                       (print_gensym && !IN_OBARRAY (obj)) ? "#:" : "##");
+      return;
+    }
+
   GCPRO2 (obj, printcharfun);
 
   if (print_gensym && !IN_OBARRAY (obj))
     {
       write_ascstring (printcharfun, "#:");
     }
-  else if (0 == size)
-    {
-      /* Compatible with GNU, but not with Common Lisp, where the syntax for
-         this symbol is ||. */
-      write_ascstring (printcharfun, "##");
-    }
 
-  /* Does it look like an integer or a float? */
+  /* Does it look like a rational or a float? */
   {
-    Ibyte *data = XSTRING_DATA (name);
-    Bytecount confusing = 0;
-
-    if (size == 0)
-      goto not_yet_confused;    /* Really confusing */
-    else if (isdigit (data[0]))
-      confusing = 0;
-    else if (size == 1)
-      goto not_yet_confused;
-    else if (data[0] == '-' || data[0] == '+')
-      confusing = 1;
-    else
-      goto not_yet_confused;
-
-    for (; confusing < size; confusing++)
+    Ibyte *data = XSTRING_DATA (name), *pend = data + XSTRING_LENGTH (name);
+    Fixnum nondigits = 0, fixval = -1;
+    Boolint confusing = 1;
+    Ichar cc = itext_ichar (data);
+    Lisp_Object got = Qnil;
+    
+    if (cc == '-' || cc == '+')
       {
-	if (!isdigit (data[confusing]) && '/' != data[confusing])
+        INC_IBYTEPTR (data);
+        if (data == pend)
           {
             confusing = 0;
-            break;
           }
       }
-  not_yet_confused:
 
-    if (!confusing)
-      /* #### Ugh, this is needlessly complex and slow for what we
-         need here.  It might be a good idea to copy equivalent code
-         from FSF.  --hniksic */
-      confusing = isfloat_string ((char *) data)
-	|| isratio_string ((char *) data);
+    /* No need to check for '.' when working out whether the symbol looks like
+       a number, '.' will get a backslash on printing no matter what,
+       disqualifying it from being a number when read. */
+    while (confusing && data < pend)
+      {
+        cc = itext_ichar (data);
+
+        switch (cc)
+          {
+            /* A symbol like 2e10 cound be confused with a float: */
+          case 'e':
+          case 'E':
+            /* As can one like 123/456: */
+          case '/':
+            nondigits++;
+            confusing = nondigits < 2
+              /* If it starts with an E or a slash, that's fine, it can't be a
+                 float. */
+              && data != XSTRING_DATA (name)
+              /* And if it ends with an e or a slash that's fine too. */
+              && (data + itext_ichar_len (data)) != pend;
+            break;
+
+            /* There can be a sign in the exponent. Such a sign needs to be
+               directly after an e and to have trailing digits after it to be
+               valid float syntax. */
+          case '+':
+          case '-':
+            confusing = (1 == nondigits)
+              && data != XSTRING_DATA (name)
+              && (data + itext_ichar_len (data));
+            if (confusing)
+              {
+                Ibyte *lastp = data;
+                Ichar clast;
+
+                DEC_IBYTEPTR (lastp);
+                clast = itext_ichar (lastp);
+
+                confusing = clast == 'E' || clast == 'e';
+              }
+            break;
+
+            /* A symbol that is all decimal digits could be confused with an
+               integer: */
+          default:
+            got = get_char_table (cc, Vdigit_fixnum_map);
+            fixval = FIXNUMP (got) ? XREALFIXNUM (got) : -1;
+            if (fixval < 0 || fixval > 9)
+              {
+                confusing = 0;
+              }
+            break;
+          }
+
+        INC_IBYTEPTR (data);
+      }
+
     if (confusing)
       write_ascstring (printcharfun, "\\");
   }
@@ -2618,6 +2664,9 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
     for (i = 0; i < size; i++)
       {
+        /* In the event that we adopt a non-ASCII-compatible internal format,
+           this will no longer be Mule-safe. As of May 2015, that is very,
+           very unlikely. */
 	switch (string_byte (name, i))
 	  {
 	  case  0: case  1: case  2: case  3:

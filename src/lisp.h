@@ -4605,6 +4605,8 @@ Lisp_Object parse_integer (const Ibyte *buf, Ibyte **buf_end_out,
 			   Bytecount len, EMACS_INT base,
 			   Boolint junk_allowed, Lisp_Object base_table);
 
+extern Lisp_Object Vdigit_fixnum_map;
+
 extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
     Qerror_conditions, Qerror_message, Qinteger_char_or_marker_p,
     Qinteger_or_char_p, Qinteger_or_marker_p, Qlambda, Qlistp, Qnatnump,

@@ -155,3 +155,65 @@
 					   (+ most-positive-fixnum 2)
 					   (+ most-positive-fixnum 2)))))
 	  "checking bignum object labels don't wrap on reading"))
+
+(Assert (not (eq (intern "") (read (prin1-to-string (make-symbol "")))))
+        "checking uninterned zero-length symbol printed distinctly")
+
+;; Check the read and print handling of symbols that look like numbers. In
+;; passing, check the read and print handling of the associated numbers.
+(Assert (eql (log 1) '0e0) "checking float syntax with e accepted")
+(Assert (eql (log 1) 0.0) "checking float syntax with decimal point accepted")
+(Assert (not (ratiop (read "2/-3")))
+        "ratios can't have a negative sign in the denominator")
+(Assert (not (ratiop (read "2/+3")))
+        "ratios can't have a positive sign in the denominator")
+
+(macrolet
+    ((Assert-no-symbol-number-confusion (&rest values)
+       `(let ((print-gensym t)
+              (print-readably t))
+         ,@(loop
+            for (type . rest) in values
+            collect (cons
+                     'progn
+                     (loop for string in rest
+                           collect
+                           `(progn
+                             (Assert (symbolp (read (prin1-to-string
+                                                     (make-symbol ,string)))))
+                             (Assert (equal (symbol-name
+                                             (read (prin1-to-string
+                                                    (make-symbol ,string))))
+                                             ,string))
+                             ,@(when (ignore-errors (coerce-number 1 type))
+                                     `((Assert (typep (read ,string)
+                                                      ',type))
+                                       (Assert (eql (string-to-number
+                                                     ,string)
+                                                (read ,string))))))))))))
+  (Assert-no-symbol-number-confusion
+   (float "0.0" "0E0" "-.0" "0.0e0" "3.1415926535897932384E0"
+          "6.02E+23" "602E+21" "3.010299957e-1" "-0.000000001e9")
+   (fixnum "1" "1." "1073741823" "-1" "-1073741824")
+   (ratio "1/2" "2/5" "-1073741822/1073741823"
+          "+2/3" "-3/2"
+          "2894802230932904885589274625217197696331749616641014100986439600\
+1978282409984/20"
+          "+289480223093290488558927462521719769633174961664101410098643960\
+01978282409984/20"
+          "-289480223093290488558927462521719769633174961664101410098643960\
+01978282409984/20"
+          "20/2894802230932904885589274625217197696331749616641014100986439\
+6001978282409984"
+          "+20/289480223093290488558927462521719769633174961664101410098643\
+96001978282409984"
+          "-20/289480223093290488558927462521719769633174961664101410098643\
+96001978282409984")
+   ;; These two are (lsh 1 254) and (lognot (lsh 1 254)). The assumption that
+   ;; they are always bignums if they can be made into rationals should hold
+   ;; for another couple of processor generations at least.
+   (bignum
+    "2894802230932904885589274625217197696331749616641014100986439600197828\
+2409984"
+    "-289480223093290488558927462521719769633174961664101410098643960019782\
+82409985")))
