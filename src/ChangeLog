@@ -1,5 +1,15 @@
 2015-05-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* data.c (Flogand):
+	* data.c (Flogior):
+	* data.c (Frem):
+	* data.c (Flsh):
+	Give less misleading errors in all these functions, e.g. supplying
+	#'integer-char-or-marker as the predicate on wrong-type-argument,
+	when float would not be accepted.
+
+2015-05-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* lread.c (read_rational):
 	Cast the call to memchr() here to placate the C++ compiler.
 

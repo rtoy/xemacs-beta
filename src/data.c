@@ -2695,7 +2695,7 @@ arguments: (&rest ARGS)
     return make_fixnum (~0);
 
   while (!(CHARP (args[0]) || MARKERP (args[0]) || INTEGERP (args[0])))
-    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+    args[0] = wrong_type_argument (Qinteger_char_or_marker_p, args[0]);
 
   result = args[0];
   if (CHARP (result))
@@ -2705,7 +2705,7 @@ arguments: (&rest ARGS)
   for (i = 1; i < nargs; i++)
     {
       while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
-	args[i] = wrong_type_argument (Qnumber_char_or_marker_p, args[i]);
+	args[i] = wrong_type_argument (Qinteger_char_or_marker_p, args[i]);
       other = args[i];
       switch (promote_args (&result, &other))
 	{
@@ -2747,7 +2747,7 @@ arguments: (&rest ARGS)
     return make_fixnum (0);
 
   while (!(CHARP (args[0]) || MARKERP (args[0]) || INTEGERP (args[0])))
-    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+    args[0] = wrong_type_argument (Qinteger_char_or_marker_p, args[0]);
 
   result = args[0];
   if (CHARP (result))
@@ -2757,7 +2757,7 @@ arguments: (&rest ARGS)
   for (i = 1; i < nargs; i++)
     {
       while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
-	args[i] = wrong_type_argument (Qnumber_char_or_marker_p, args[i]);
+	args[i] = wrong_type_argument (Qinteger_char_or_marker_p, args[i]);
       other = args[i];
       switch (promote_args (&result, &other))
 	{
@@ -2862,9 +2862,9 @@ Both must be integers, characters or markers.
 {
 #ifdef HAVE_BIGNUM
   while (!(CHARP (number1) || MARKERP (number1) || INTEGERP (number1)))
-    number1 = wrong_type_argument (Qnumber_char_or_marker_p, number1);
+    number1 = wrong_type_argument (Qinteger_char_or_marker_p, number1);
   while (!(CHARP (number2) || MARKERP (number2) || INTEGERP (number2)))
-    number2 = wrong_type_argument (Qnumber_char_or_marker_p, number2);
+    number2 = wrong_type_argument (Qinteger_char_or_marker_p, number2);
 
   if (promote_args (&number1, &number2) == FIXNUM_T)
     {
@@ -3033,7 +3033,7 @@ In this case, zeros are shifted in on the left.
 {
 #ifdef HAVE_BIGNUM
   while (!(CHARP (value) || MARKERP (value) || INTEGERP (value)))
-    wrong_type_argument (Qnumber_char_or_marker_p, value);
+    wrong_type_argument (Qinteger_char_or_marker_p, value);
   CONCHECK_INTEGER (count);
 
   if (promote_args (&value, &count) == FIXNUM_T)
@@ -3050,15 +3050,28 @@ In this case, zeros are shifted in on the left.
       if (bignum_sign (XBIGNUM_DATA (count)) <= 0)
 	{
 	  bignum_neg (scratch_bignum, XBIGNUM_DATA (count));
+          /* Sigh, this won't catch all overflows in the MPZ type under GMP,
+             and there's no way to hook into the library so that an overflow
+             errors rather than aborting. See
+             http://mid.gmane.org/5529.2096.e5823.ccba@parhasard.net . */
 	  if (!bignum_fits_ulong_p (scratch_bignum))
-	    args_out_of_range (Qnumber_char_or_marker_p, count);
+            {
+              args_out_of_range_3 (count,
+				   make_bignum_ll (- (long long)(ULONG_MAX)),
+                                   make_bignum_ll (ULONG_MAX));
+            }
 	  bignum_rshift (scratch_bignum2, XBIGNUM_DATA (value),
 			 bignum_to_ulong (scratch_bignum));
 	}
       else
 	{
+          /* See above re overflow. */
 	  if (!bignum_fits_ulong_p (XBIGNUM_DATA (count)))
-	    args_out_of_range (Qnumber_char_or_marker_p, count);
+            {
+              args_out_of_range_3 (count,
+				   make_bignum_ll (- (long long) (ULONG_MAX)),
+                                   make_bignum_ll (ULONG_MAX));
+            }
 	  bignum_lshift (scratch_bignum2, XBIGNUM_DATA (value),
 			 bignum_to_ulong (XBIGNUM_DATA (count)));
 	}
