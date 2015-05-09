@@ -1,3 +1,8 @@
+2015-05-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read_rational):
+	Cast the call to memchr() here to placate the C++ compiler.
+
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (init_errors_once_early):

@@ -2073,7 +2073,7 @@ read_rational (Lisp_Object readcharfun, Fixnum base)
 
   buf_ptr = resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream));
 
-  if ((slash = memchr (buf_ptr, '/', len)) == NULL)
+  if ((slash = (Ibyte *) memchr (buf_ptr, '/', len)) == NULL)
     {
       /* Can't be a ratio, parse as as an integer. */ 
       return parse_integer (buf_ptr, &buf_end, len, base, 0, Qnil);
