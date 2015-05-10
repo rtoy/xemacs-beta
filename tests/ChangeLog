@@ -1,3 +1,12 @@
+2015-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Backslash a few parentheses in the first column for the sake of
+	fontification.
+	* automated/lisp-tests.el:
+	Check that the rounding functions signal Lisp errors correctly
+	when handed positive and negative infinity and NaN.
+
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-reader-tests.el:

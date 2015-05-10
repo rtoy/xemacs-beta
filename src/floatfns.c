@@ -112,38 +112,6 @@ static const char *float_error_fn_name;
 #define domain_error2(op,a1,a2) \
   Fsignal (Qdomain_error, list3 (build_msg_string (op), a1, a2))
 
-
-/* Convert float to Lisp Integer if it fits, else signal a range
-   error using the given arguments.  If bignums are available, range errors
-   are never signaled.  */
-static Lisp_Object
-float_to_int (double x,
-#ifdef HAVE_BIGNUM
-	      const char *UNUSED (name), Lisp_Object UNUSED (num),
-	      Lisp_Object UNUSED (num2)
-#else
-	      const char *name, Lisp_Object num, Lisp_Object num2
-#endif
-	      )
-{
-#ifdef HAVE_BIGNUM
-  bignum_set_double (scratch_bignum, x);
-  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-#else
-  REGISTER EMACS_INT result = (EMACS_INT) x;
-
-  if (result > MOST_POSITIVE_FIXNUM || result < MOST_NEGATIVE_FIXNUM)
-    {
-      if (!UNBOUNDP (num2))
-	range_error2 (name, num, num2);
-      else
-	range_error (name, num);
-    }
-  return make_fixnum (result);
-#endif /* HAVE_BIGNUM */
-}
-
-
 static void
 in_float_error (void)
 {
@@ -165,7 +133,65 @@ in_float_error (void)
     break;
   }
 }
+
+/* Convert X to a Lisp integer, using bignums if available. If X does not
+   fit--if it is not finite, or, on a build without bignum support, if it is
+   outside the range (<= most-negative-fixnum X most-positive-fixnum)--signal
+   a range error. */
+static Lisp_Object
+double_to_integer (double x, const Ascbyte *operation, Lisp_Object num,
+                   Lisp_Object num2)
+{
+#ifdef HAVE_BIGNUM
+  if (isnan (x) || isinf (x))
+    {
+      if (UNBOUNDP (num2))
+        {
+          range_error (operation, num);
+        }
+      else
+        {
+          range_error2 (operation, num, num2);
+        }
+    }
 
+  bignum_set_double (scratch_bignum, x);
+  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+  REGISTER EMACS_INT result = (EMACS_INT) x;
+
+  if (result > MOST_POSITIVE_FIXNUM || result < MOST_NEGATIVE_FIXNUM)
+    {
+      if (!UNBOUNDP (num2))
+        range_error2 (operation, num, num2);
+      else
+        range_error (operation, num);
+    }
+  return make_fixnum (result);
+#endif /* HAVE_BIGNUM */
+}
+
+#ifdef HAVE_BIGFLOAT
+Lisp_Object float_to_bigfloat (const Ascbyte *operation, Lisp_Object num,
+                               unsigned long precision);
+
+Lisp_Object
+float_to_bigfloat (const Ascbyte *operation, Lisp_Object num,
+                   unsigned long precision)
+{
+  double d = extract_float (num);
+
+  if (isnan (d) || isinf (d))
+    {
+      range_error (operation, num);
+    }
+
+  bigfloat_set_prec (scratch_bigfloat, precision);
+  bigfloat_set_double (scratch_bigfloat, d);
+
+  return make_bigfloat_bf (scratch_bigfloat);
+}
+#endif
 
 static Lisp_Object
 mark_float (Lisp_Object UNUSED (obj))
@@ -1252,7 +1278,7 @@ ceiling_two_float (Lisp_Object number, Lisp_Object divisor,
     }
   else
     {
-      res0 = float_to_int (f0, MAYBE_EFF("ceiling"), number, divisor);
+      res0 = double_to_integer (f0, "ceiling", number, divisor);
     }
 
   return values2 (res0, make_float (remain));
@@ -1273,7 +1299,7 @@ ceiling_one_float (Lisp_Object number, int return_float)
     }
   else
     {
-      res0 = float_to_int (d, MAYBE_EFF("ceiling"), number, Qunbound);
+      res0 = double_to_integer (d, "ceiling", number, Qunbound);
     }
   return values2 (res0, make_float (remain));
 }
@@ -1535,7 +1561,7 @@ floor_two_float (Lisp_Object number, Lisp_Object divisor,
       return values2 (make_float (f0), make_float (remain));
     }
 
-  return values2 (float_to_int (f0, MAYBE_EFF ("floor"), number, divisor),
+  return values2 (double_to_integer (f0, "floor", number, divisor),
 		  make_float (remain));
 }
 
@@ -1553,7 +1579,7 @@ floor_one_float (Lisp_Object number, int return_float)
     }
   else
     {
-      return values2 (float_to_int (d, MAYBE_EFF ("floor"), number, Qunbound),
+      return values2 (double_to_integer (d, "floor", number, Qunbound),
                       make_float (d1));
     }
 }
@@ -1939,7 +1965,7 @@ round_two_float (Lisp_Object number, Lisp_Object divisor,
     }
   else
     {
-      return values2 (float_to_int (f0, MAYBE_EFF("round"), number, divisor),
+      return values2 (double_to_integer (f0, "round", number, divisor),
 		      make_float (remain));
     }
 }
@@ -1958,8 +1984,7 @@ round_one_float (Lisp_Object number, int return_float)
     }
   else
     {
-      return values2 ((float_to_int (d, MAYBE_EFF ("round"), number,
-				     Qunbound)),
+      return values2 ((double_to_integer (d, "round", number, Qunbound)),
 		      make_float (XFLOAT_DATA (number) - d));
     }
 }
@@ -2216,7 +2241,8 @@ truncate_two_float (Lisp_Object number, Lisp_Object divisor,
   if (f2 == 0.0)
     return arith_error2 ("truncate", number, divisor);
 
-  res0 = float_to_int (f1 / f2, MAYBE_EFF ("truncate"), number, Qunbound);
+  res0 = double_to_integer (f1 / f2, MAYBE_EFF ("truncate"), number,
+                            Qunbound);
   f0 = extract_float (res0);
 
   IN_FLOAT2 (remain = f1 - (f0 * f2), MAYBE_EFF ("truncate"), number, divisor);
@@ -2233,8 +2259,8 @@ static Lisp_Object
 truncate_one_float (Lisp_Object number, int return_float)
 {
   Lisp_Object res0
-    = float_to_int (XFLOAT_DATA (number), MAYBE_EFF ("truncate"),
-		    number, Qunbound);
+    = double_to_integer (XFLOAT_DATA (number), MAYBE_EFF ("truncate"),
+                         number, Qunbound);
   if (return_float)
     {
       res0 = make_float ((double)XFIXNUM(res0));

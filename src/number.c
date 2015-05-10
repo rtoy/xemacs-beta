@@ -309,6 +309,9 @@ DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bigfloat", bigfloat, 0,
 					bigfloat_equal, bigfloat_hash,
 					bigfloat_description, Lisp_Bigfloat);
 
+extern Lisp_Object float_to_bigfloat (const Ascbyte *, Lisp_Object,
+                                      unsigned long);
+
 #endif /* HAVE_BIGFLOAT */
 
 Lisp_Object Qbigfloatp;
@@ -601,15 +604,26 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  return Ftruncate (number, Qnil);
 	case BIGNUM_T:
 #ifdef HAVE_BIGNUM
-	  bignum_set_double (scratch_bignum, XFLOAT_DATA (number));
-	  return make_bignum_bg (scratch_bignum);
+          {
+            Lisp_Object truncate = Ftruncate (number, Qnil);
+            return FIXNUMP (truncate) ?
+              make_bignum (XREALFIXNUM (truncate)) : truncate;
+          }
 #else
 	  ABORT ();
 #endif /* HAVE_BIGNUM */
 	case RATIO_T:
 #ifdef HAVE_RATIO
-	  ratio_set_double (scratch_ratio, XFLOAT_DATA (number));
-	  return make_ratio_rt (scratch_ratio);
+          {
+            Lisp_Object truncate = Ftruncate (number, Qnil);
+            if (FIXNUMP (truncate))
+              {
+                return make_ratio (XREALFIXNUM (truncate), 1UL);
+              }
+
+            bignum_set_long (scratch_bignum, 1L);
+            return make_ratio_bg (XBIGNUM_DATA (truncate), scratch_bignum);
+          }
 #else
 	  ABORT ();
 #endif /* HAVE_RATIO */
@@ -617,9 +631,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  return number;
 	case BIGFLOAT_T:
 #ifdef HAVE_BIGFLOAT
-	  bigfloat_set_prec (scratch_bigfloat, precision);
-	  bigfloat_set_double (scratch_bigfloat, XFLOAT_DATA (number));
-	  return make_bigfloat_bf (scratch_bigfloat);
+          return float_to_bigfloat ("coerce-number", number, precision);
 #else
 	  ABORT ();
 #endif /* HAVE_BIGFLOAT */
