@@ -1,3 +1,30 @@
+2015-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* floatfns.c (double_to_integer):
+	Rename this from float_to_int to fit our newer, bignum-compatible
+	terminology.
+	GMP can signal SIGFPE when asked to turn NaN or infinity into a
+	bignum, and we're not prepared to handle that signal if the OS float
+	library routines don't do that, so check for those values
+	explicitly.
+
+	* floatfns.c (ceiling_two_float):
+	* floatfns.c (ceiling_one_float):
+	* floatfns.c (floor_two_float):
+	* floatfns.c (floor_one_float):
+	* floatfns.c (round_two_float):
+	* floatfns.c (round_one_float):
+	* floatfns.c (truncate_two_float):
+	* floatfns.c (truncate_one_float):
+	Call double_to_integer() with its new name.
+
+	* number.c:
+	Don't use the {bignum,ratio,bigfloat}_set_double functions
+	directly here, with GMP they can choke when handed non-finite C
+	doubles, call Ftruncate() and the new float_to_bigfloat() from
+	floatfns.c. Maybe we should extend number-gmp.c with GMP-specific
+	implementations that check for non-finite values.
+
 2015-05-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (Flogand):
