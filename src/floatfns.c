@@ -2263,14 +2263,14 @@ truncate_one_float (Lisp_Object number, int return_float)
                          number, Qunbound);
   if (return_float)
     {
-      res0 = make_float ((double)XFIXNUM(res0));
+      res0 = make_float (extract_float (res0));
       return values2 (res0, make_float ((XFLOAT_DATA (number)
 					 - XFLOAT_DATA (res0))));
     }
   else
     {
       return values2 (res0, make_float (XFLOAT_DATA (number)
-					- XREALFIXNUM (res0)));
+					- extract_float (res0)));
     }
 }
 
