@@ -6,6 +6,8 @@
 	* automated/lisp-tests.el:
 	Check that the rounding functions signal Lisp errors correctly
 	when handed positive and negative infinity and NaN.
+	Check that a bug when supplying #'truncate with one float that
+	rounds to a bignum, has been fixed.
 
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 

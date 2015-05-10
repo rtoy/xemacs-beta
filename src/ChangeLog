@@ -1,5 +1,13 @@
 2015-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* floatfns.c (truncate_one_float):
+	Fix a bug here when double_to_integer() (and previously
+	float_to_int()) returned a bignum; this was silently treated as a
+	fixnum, giving consistently incorrect remainders and less
+	consistently-incorrect but still buggy divisors.
+
+2015-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* floatfns.c (double_to_integer):
 	Rename this from float_to_int to fit our newer, bignum-compatible
 	terminology.
