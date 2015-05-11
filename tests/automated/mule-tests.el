@@ -460,6 +460,16 @@ This is a naive implementation in Lisp.  "
       finally (set-unicode-conversion scaron initial-unicode))
     (Check-Error args-out-of-range (set-unicode-conversion scaron -10000)))
 
+  (Assert (not (natnump (char-to-unicode (make-char 'japanese-jisx0208
+                                                    34 49))))
+          "checking character with no Unicode mapping treated as such")
+
+  (Assert (equal (decode-coding-string
+                  (encode-coding-string (make-char 'japanese-jisx0208 34 49)
+                                        'utf-8) 'utf-8)
+                 "\uFFFD")
+          "checking REPLACEMENT CHARACTER used correctly")
+
   (dolist (utf-8-char 
 	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK
 	     "\xe2\x81\x8a"	  ;; U+204A TIRONIAN SIGN ET

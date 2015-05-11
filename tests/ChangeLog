@@ -1,3 +1,10 @@
+2015-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Assert that a character which we know has no Unicode mapping is
+	represented as REPLACEMENT CHARACTER in UTF-8, rather than as a
+	character corresponding to a very large codepoint.
+
 2015-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

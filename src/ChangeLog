@@ -1,3 +1,10 @@
+2015-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.c (encode_unicode_char):
+	If we have no information on the Unicode mapping of a character,
+	write U+FFFD unconditionally. Remove an old, incomplete,
+	inappropriate attempt to preserve certain East Asian characters.
+
 2015-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* floatfns.c (truncate_one_float):
