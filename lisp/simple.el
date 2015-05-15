@@ -809,19 +809,7 @@ BUFFER defaults to the current buffer."
 		 (message "Line %d" buffer-line)))))))
   (setq zmacs-region-stays t))
 
-;; new in XEmacs 21.2 (not in FSF).
-(defun line-number (&optional pos respect-narrowing)
-  "Return the line number of POS (defaults to point).
-If RESPECT-NARROWING is non-nil, then the narrowed line number is returned;
-otherwise, the absolute line number is returned.  The returned line can always
-be given to `goto-line' to get back to the current line."
-  (if (and pos (/= pos (point)))
-      (save-excursion
-	(goto-char pos)
-	(line-number nil respect-narrowing))
-    (1+ (count-lines (if respect-narrowing (point-min) 1) (point-at-bol)))))
-
-;; FSF 22.0.50.1 (CVS) version of above.
+;; FSF 22.0.50.1 (CVS) version of #'line-number.
 (defun line-number-at-pos (&optional pos)
   (line-number pos t))
 
