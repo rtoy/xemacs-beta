@@ -266,16 +266,17 @@ add_position_to_cache (struct buffer *b, Charbpos pos, EMACS_INT line)
    If the calculation (with or without the cache lookup) required more
    than LINE_NUMBER_FAR characters of traversal, update the cache.  */
 EMACS_INT
-buffer_line_number (struct buffer *b, Charbpos pos, int cachep)
+buffer_line_number (struct buffer *b, Charbpos pos, Boolint cachep,
+                    Boolint respect_narrowing)
 {
-  Charbpos beg = BUF_BEGV (b);
+  Charbpos beg = respect_narrowing ? BUF_BEGV (b) : BUF_BEG (b);
   EMACS_INT cached_lines = 0;
   EMACS_INT shortage, line;
 
   if ((pos > beg ? pos - beg : beg - pos) <= LINE_NUMBER_FAR)
     cachep = 0;
 
-  if (cachep)
+  if (cachep && (respect_narrowing || BUF_BEG (b) == BUF_BEGV (b)))
     {
       if (NILP (b->text->line_number_cache))
 	allocate_line_number_cache (b);
@@ -285,13 +286,14 @@ buffer_line_number (struct buffer *b, Charbpos pos, int cachep)
 	  LINE_NUMBER_BEGV (b) = Qzero;
 	  /* #### This has a side-effect of changing the cache.  */
 	  LINE_NUMBER_BEGV (b) =
-	    make_fixnum (buffer_line_number (b, BUF_BEGV (b), 1));
+	    make_fixnum (buffer_line_number (b, BUF_BEGV (b), 1, 0));
 	}
       cached_lines = XFIXNUM (LINE_NUMBER_BEGV (b));
       get_nearest_line_number (b, &beg, pos, &cached_lines);
     }
 
-  scan_buffer (b, '\n', beg, pos, pos > beg ? MOST_POSITIVE_FIXNUM : -MOST_POSITIVE_FIXNUM,
+  scan_buffer (b, '\n', beg, pos,
+               pos > beg ? MOST_POSITIVE_FIXNUM : -MOST_POSITIVE_FIXNUM,
 	       &shortage, 0);
 
   line = MOST_POSITIVE_FIXNUM - shortage;
@@ -299,7 +301,7 @@ buffer_line_number (struct buffer *b, Charbpos pos, int cachep)
     line = -line;
   line += cached_lines;
 
-  if (cachep)
+  if (cachep && (respect_narrowing || BUF_BEG (b) == BUF_BEGV (b)))
     {
       /* If too far, update the cache. */
       if ((pos > beg ? pos - beg : beg - pos) > LINE_NUMBER_FAR)

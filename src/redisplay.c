@@ -7320,7 +7320,7 @@ window_line_number (struct window *w, int type)
      : marker_position (w->pointm[type]));
   EMACS_INT line;
 
-  line = buffer_line_number (b, pos, 1);
+  line = buffer_line_number (b, pos, 1, 1);
 
   {
     static Ascbyte window_line_number_buf[DECIMAL_PRINT_SIZE (long)];

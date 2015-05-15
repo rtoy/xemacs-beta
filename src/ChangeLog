@@ -1,3 +1,19 @@
+2015-05-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* buffer.c:
+	* buffer.c (Fline_number): New C implementation, using the line
+	number cache of line-number.c, with a new optional BUFFER
+	argument.
+	* buffer.c (syms_of_buffer):
+	Make it available to Lisp.
+	* line-number.c (buffer_line_number):
+	New argument, RESPECT-NARROWING, describing whether to count from
+	the beginning of the visible region or from the beginning of the
+	buffer.
+	* line-number.h:
+	* line-number.h (buffer_line_number): Update its declaration.
+	* redisplay.c (window_line_number): Call it with the new argument.
+
 2015-05-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.c (encode_unicode_char):
