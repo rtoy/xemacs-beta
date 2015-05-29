@@ -840,11 +840,41 @@ Otherwise, return CHARACTER."
   (with-case-table (standard-case-table) (downcase character)))
 
 (defun integer-length (integer)
-  "Return the number of bits need to represent INTEGER in two's complement."
-  (ecase (signum integer)
-    (0 0)
-    (-1 (1- (length (format "%b" (- integer)))))
-    (1 (length (format "%b" integer)))))
+  "Return the number of bits need to represent INTEGER in two's complement.
+
+Equivalent to `(ceiling (log (1+ integer) 2))' for positive integers, and
+`(ceiling (log (- integer) 2))' for negative integers."
+  (check-type integer integer)
+  (when (< integer 0)
+    ;; Don't use #'-, which fails silently with most-negative-fixnum.
+    (setf integer (lognot integer)))
+  (let ((count 0) (last integer))
+    (while (not (eql (setq integer (/ integer 16)) 0))
+      (setf last integer
+            count (+ count 4)))
+    (+ (aref (eval-when-compile
+              (vconcat [0] (loop for fixnum from 1 below 16
+                                 collect (length (format "%b" fixnum)))))
+             last)
+       count)))
+
+(defun logcount (integer)
+  "Return the number of one bits in INTEGER, if non-negative.
+
+If INTEGER is negative, return the number of zero bits of lower order than the
+most significant non-zero bit."
+  (let ((integer (if (>= integer 0) integer (- (1+ integer))))
+        (count 0))
+    (while (not (eql 0 integer))
+      (setf count
+            (+ count (aref
+                      (eval-when-compile
+                       (vconcat
+                        (loop for fixnum from 0 below 16
+                              collect (count ?1 (format "%b" fixnum)))))
+                      (% integer 16)))
+            integer (/ integer 16)))
+    count))
 
 ;; These are here because labels and symbol-macrolet are not available in
 ;; obsolete.el. They are, however, all marked as obsolete in that file.

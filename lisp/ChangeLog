@@ -4,6 +4,16 @@
 	* simple.el (line-number): Moved to buffer.c; we have an existing
 	line number cache in C, it's a shame not to have it available.
 
+2015-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (side-effect-free-fns):
+	Add #'integer-length, #'logcount here.
+	* cl-extra.el:
+	* cl-extra.el (integer-length):
+	Update this to avoid allocating memory.
+	* cl-extra.el (logcount): New. Return the number of one bits in
+	INTEGER, if non-negative. Function from Common Lisp.
+
 2015-04-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el (set-locale-for-language-environment):

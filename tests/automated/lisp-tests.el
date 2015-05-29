@@ -564,6 +564,56 @@ will be used to make debugging easier."
     (Assert (eq 2 (logxor one three)) (list one three))))
 
 ;;-----------------------------------------------------
+;; Test `integer-length', `logcount'
+;;-----------------------------------------------------
+
+(Check-Error wrong-type-argument (integer-length 0.0))
+(Check-Error wrong-type-argument (integer-length 'symbol))
+(Assert (eql (integer-length 0) 0))
+(Assert (eql (integer-length -1) 0))
+(Assert (eql (integer-length 1) 1))
+(Assert (eql (integer-length #x-F) 4))
+(Assert (eql (integer-length #xF) 4))
+(Assert (eql (integer-length #x-10) 4))
+(Assert (eql (integer-length #x10) 5))
+
+(Check-Error wrong-type-argument (logcount 0.0))
+(Check-Error wrong-type-argument (logcount 'symbol))
+(Assert (eql (logcount 0) 0))
+(Assert (eql (logcount 1) 1))
+(Assert (eql (logcount -1) 0))
+(Assert (eql (logcount #x-F) 3))
+(Assert (eql (logcount #xF) 4))
+(Assert (eql (logcount #x-10) 4))
+(Assert (eql (logcount #x10) 1))
+
+(macrolet
+    ((random-sample-n () 10) ;; Increase this to get a bigger sample.
+     (test-integer-length-random-sample ()
+       (cons
+        'progn
+        (loop for index from 0 to (random-sample-n)
+              nconc (let* ((value (random (if (featurep 'bignum)
+                                              (lsh most-positive-fixnum 4)
+                                            most-positive-fixnum)))
+                           (length (length (format "%b" value))))
+                      `((Assert (eql (integer-length ,value) ,length))
+                        (Assert (eql (integer-length ,(1- (- value)))
+                                                     ,length)))))))
+     (test-logcount-random-sample ()
+       (cons
+        'progn
+        (loop for index from 0 to (random-sample-n)
+              nconc (let* ((value (random (if (featurep 'bignum)
+                                              (lsh most-positive-fixnum 4)
+                                            most-positive-fixnum)))
+                           (count (count ?1 (format "%b" value))))
+                      `((Assert (eql (logcount ,value) ,count))
+                        (Assert (eql (logcount ,(lognot value)) ,count))))))))
+  (test-integer-length-random-sample)
+  (test-logcount-random-sample))
+
+;;-----------------------------------------------------
 ;; Test `%', mod
 ;;-----------------------------------------------------
 (Check-Error wrong-number-of-arguments (%))
