@@ -1,3 +1,16 @@
+2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (Fload_internal):
+	Delegate calling the handler and #'substitute-in-file-name to #'load.
+	Error correctly with a zero-length file name, instead of giving a
+	bus error on my machine.
+	Delegate the check for out-of-date ELC files to #'load, 
+	avoiding a bug where the encoding of the ELC file and the source
+	file differed.
+	* lread.c (PRINT_LOADING_MESSAGE_1):
+	This is simplified, now we no longer have to talk about
+	out-of-date ELC files.
+
 2015-05-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* buffer.c:

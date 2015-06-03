@@ -1,3 +1,9 @@
+2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/file-tests.el:
+	Gross sanity check for #'load and #'load-internal with a
+	zero-length FILE, something that crashed until today.
+
 2015-05-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
