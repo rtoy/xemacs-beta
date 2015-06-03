@@ -532,41 +532,25 @@ encoding detection or end-of-line detection.
   int fd = -1;
   int speccount = specpdl_depth ();
   int source_only = 0;
-  /* NEWER and OLDER are filenames w/o directory, used in loading messages
-     to e.g. warn of newer .el files when the .elc is being loaded. */
+  /* NEWER is a filename without directory, used in loading messages when
+     load-ignore-elc-files is non-nil. */
   Lisp_Object newer   = Qnil;
-  Lisp_Object older   = Qnil;
-  Lisp_Object handler = Qnil;
   Lisp_Object found   = Qnil;
   Lisp_Object retval;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  struct gcpro gcpro1, gcpro2, gcpro3;
   int reading_elc = 0;
   int from_require = EQ (nomessage, Qrequire);
   int message_p = NILP (nomessage) || load_always_display_messages;
-  struct stat s1, s2;
   Ibyte *spaces = alloca_ibytes (load_in_progress * 2 + 10);
   int i;
   PROFILE_DECLARE ();
 
-  GCPRO4 (file, newer, older, found);
   CHECK_STRING (file);
+  CHECK_SYMBOL (used_codesys); /* Either nil or another symbol to write to. */
+
+  GCPRO3 (file, newer, found);
 
   PROFILE_RECORD_ENTERING_SECTION (Qload_internal);
-
-  /* If file name is magic, call the handler.  */
-  handler = Ffind_file_name_handler (file, Qload);
-  if (!NILP (handler))
-    {
-      retval = call5 (handler, Qload, file, noerror, nomessage, nosuffix);
-      goto done;
-    }
-
-  /* Do this after the handler to avoid
-     the need to gcpro noerror, nomessage and nosuffix.
-     (Below here, we care only whether they are nil or not.)  */
-  file = Fsubstitute_in_file_name (file);
-  if (!NILP (used_codesys))
-    CHECK_SYMBOL (used_codesys);
 
   if (noninteractive)
     {
@@ -580,7 +564,17 @@ encoding detection or end-of-line detection.
   /* Avoid weird lossage with null string as arg,
      since it would try to load a directory as a Lisp file.
      Unix truly sucks. */
-  if (XSTRING_LENGTH (file) > 0)
+  if (XSTRING_LENGTH (file) == 0)
+    {
+      if (NILP (noerror))
+        signal_error (Qfile_error, "Cannot open load file", file);
+      else
+        {
+          retval = Qnil;
+          goto done;
+        }
+    }
+  else
     {
       Ibyte *foundstr;
       int foundlen;
@@ -611,44 +605,6 @@ encoding detection or end-of-line detection.
 	 differ. --ben */
       if (load_ignore_elc_files)
 	newer = Ffile_name_nondirectory (found);
-      else if ((load_warn_when_source_newer ||
-		load_ignore_out_of_date_elc_files) &&
-	       !memcmp (".elc", foundstr + foundlen - 4, 4))
-	{
-	  if (! qxe_fstat (fd, &s1))	/* can't fail, right? */
-	    {
-	      int result;
-	      /* temporarily hack the 'c' off the end of the filename */
-	      foundstr[foundlen - 1] = '\0';
-	      result = qxe_stat (foundstr, &s2);
-	      if (result >= 0 &&
-		  (unsigned) s1.st_mtime < (unsigned) s2.st_mtime)
-		{
-		  /* .elc exists and is out-of-date wrt .el */
-		  Lisp_Object el_name = make_string (foundstr, foundlen - 1);
-		  struct gcpro nngcpro1;
-		  NNGCPRO1 (el_name);
-		  newer = Ffile_name_nondirectory (el_name);
-		  if (load_ignore_out_of_date_elc_files)
-		    {
-		      int newfd =
-			locate_file_open_or_access_file
-			(XSTRING_DATA (el_name), -1);
-
-		      if (newfd >= 0)
-			{
-			  older = Ffile_name_nondirectory (found);
-			  found = el_name;
-			  retry_close (fd);
-			  fd = newfd;
-			}
-		    }
-		  NNUNGCPRO;
-		}
-	      /* put the 'c' back on (kludge-o-rama) */
-	      foundstr[foundlen - 1] = 'c';
-	    }
-	}
       else if (load_warn_when_source_only &&
 	       /* `found' ends in ".el" */
 	       !memcmp (".el", foundstr + foundlen - 3, 3) &&
@@ -671,19 +627,6 @@ encoding detection or end-of-line detection.
 		 XSTRING_DATA (load_show_full_path_in_messages ?	\
 			       found : newer));				\
     }									\
-  else if (!NILP (older))						\
-    {									\
-      assert (load_ignore_out_of_date_elc_files);			\
-      message (loading done " (file %s is out-of-date)", spaces,	\
-	       XSTRING_DATA (load_show_full_path_in_messages ?		\
-			     found : newer),				\
-	       XSTRING_DATA (older));					\
-    }									\
-  else if (!NILP (newer))						\
-    message (loading done " (file %s is newer)", spaces,		\
-	     XSTRING_DATA (load_show_full_path_in_messages ?		\
-			   found : file),				\
-	     XSTRING_DATA (newer));					\
   else if (source_only)							\
     message (loading done " (file %s.elc does not exist)", spaces,	\
 	     XSTRING_DATA (load_show_full_path_in_messages ?		\

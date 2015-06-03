@@ -1,3 +1,14 @@
+2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (load):
+	Revise this to respect load-ignore-out-of-date-elc-files, rather
+	than leaving that to #'load-internal. Avoids a corner case where
+	the source and the compiled file have different, incompatible
+	encodings.
+	Move the call to #'substitute-in-file-name here.
+	No longer check for a zero-length filename, since #'load-internal
+	no longer chokes on same and errors correctly.
+
 2015-05-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el:
