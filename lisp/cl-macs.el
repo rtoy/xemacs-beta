@@ -3722,8 +3722,7 @@ the byte optimizer in those cases."
 	   ;; zero-length.
 	   (cond
 	    ((member x '("" #* []))
-	     ;; No need to protect against multiple evaluation here:
-	     `(and (member ,original-y '("" #* [])) t))
+	     `(and (member ,(find x (cdr form) :test-not #'eq) '("" #* [])) t))
 	    (t form)))
 	  ((unordered-check (and (numberp x) (not (cl-const-expr-p y))))
 	   `(,@let-form
