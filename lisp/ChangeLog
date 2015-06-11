@@ -1,3 +1,9 @@
+2015-06-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (equalp):
+	Fix a bug in this compiler macro when passed constants in a
+	certain order.
+
 2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* code-files.el (load):

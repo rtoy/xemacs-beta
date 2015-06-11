@@ -1,3 +1,9 @@
+2015-06-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add a test looking for a bug just fixed in the equalp compiler
+	macro.
+
 2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/file-tests.el:

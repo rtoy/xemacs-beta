@@ -2390,6 +2390,8 @@ via the hepatic alpha-tocopherol transfer protein")))
 
     (Assert-equalp "hi there" "Hi There"
                    "checking equalp isn't case-sensitive")
+    (Assert (not (equalp (emacs-version) #*))
+	    "checking a bug with constants and equalp is fixed.")
     (Assert-equalp
      99 99.0
      "checking equalp compares numerical values of different types")
