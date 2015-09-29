@@ -1,3 +1,8 @@
+2015-09-26  Michael Sperber  <mike@xemacs.org>
+
+	* info.el (Info-read-subfile): Follow change in Makeinfo 5.0 with
+	arithmetic of node positions.
+
 2015-06-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (equalp):

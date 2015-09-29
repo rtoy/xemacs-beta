@@ -1440,7 +1440,7 @@ invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\"."
 	  (setq Info-current-subfile lastfilename)))
     (goto-char (point-min))
     (search-forward "\n\^_")
-    (+ (- nodepos lastfilepos) (point))))
+    (+ (- nodepos lastfilepos) (point-min))))
 
 (defun Info-all-case-regexp (str)
   (let ((regexp "")
