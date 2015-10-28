@@ -2842,8 +2842,9 @@ fi
 dnl Disable ASLR on systems where it breaks pdump.
 AC_MSG_CHECKING([whether ASLR needs to be disabled]) 
 case `uname -s`:`uname -r` in
-	dnl Mac OS X 10.7 Lion, 10.8 Mountain Lion, 10.9 Mavericks, 10.10 Yosemite
-    Darwin:1[[1234]].*)
+	dnl Mac OS X 10.7 Lion, 10.8 Mountain Lion, 10.9 Mavericks,
+	dnl 10.10 Yosemite, 10.11 El Capitan
+    Darwin:1[[12345]].*)
 	AC_MSG_RESULT(yes)
 	XE_APPEND([-Wl,-no_pie], LDFLAGS) 
 	;;
