@@ -1,3 +1,8 @@
+2015-10-28  Marcus Crestani  <crestani@xemacs.org>
+
+	* configure.ac: Disable ASLR on El Capitan.
+	* configure: Rebuild.
+
 2015-05-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (Installation): Report all compiler switches.
