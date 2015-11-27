@@ -1514,14 +1514,23 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 
      if (!EQ (color, Vthe_null_color_instance))
        {
-	 bgc = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (color));
-	 /* Is it necessary to set bg for other states as well?  -jsparkes */
+         bgc = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (color));
+         /* Is it necessary to set bg for other states as well?  -jsparkes */
 #if GTK_CHECK_VERSION (3, 0, 0)
-	 gtk_widget_override_background_color (FRAME_GTK_TEXT_WIDGET (frm),
-					       GTK_STATE_NORMAL, bgc);
+#if GTK_CHECK_VERSION (3, 16, 0)
+         /* From Gtk documentation: If you wish to change the way a
+            widget renders its background you should use a custom CSS
+            style, through an application-specific GtkStyleProvider
+            and a CSS style class. */
+         gtk_widget_override_background_color (FRAME_GTK_TEXT_WIDGET (frm),
+                                               GTK_STATE_FLAG_NORMAL, bgc);
 #else
-	 gtk_widget_modify_bg (FRAME_GTK_TEXT_WIDGET (frm), GTK_STATE_NORMAL,
-			       bgc);
+         gtk_widget_override_background_color (FRAME_GTK_TEXT_WIDGET (frm),
+                                               GTK_STATE_FLAG_NORMAL, bgc);
+#endif
+#else
+         gtk_widget_modify_bg (FRAME_GTK_TEXT_WIDGET (frm), GTK_STATE_NORMAL,
+                               bgc);
 #endif
        }
 
