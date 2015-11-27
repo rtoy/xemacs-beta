@@ -26,11 +26,13 @@
 
 ;; This file is dumped with XEmacs.
 
-(defvar gtk-type-aliases '((GtkType . guint)
+(defvar gtk-type-aliases '((GType . guint)
+                           (GtkString . gchararray)
 			   (GdkAtom . gulong)
 			   (GdkBitmap . GdkWindow)
 			   (time_t    . guint)
 			   (none      . void)
+                           (GdkWindow . gpointer)
 			   (GdkDrawable . GdkWindow)
 			   (GdkBitmap . GdkWindow)
 			   (GdkPixmap . GdkWindow))
