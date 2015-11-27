@@ -746,7 +746,7 @@ XE_COMPLEX_ARG([xft],
 	XE_COMPLEX_OPTION([tabs],[no]),
 	XE_COMPLEX_OPTION([gauges],[no])])
 XE_MERGED_ARG([gtk],
-	AS_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
+	AS_HELP_STRING([--with-gtk],[Support GTK on the X Window System. Can specify 2 or 3. (EXPERIMENTAL)]),
 	[true], [with_gtk=no])
 XE_MERGED_ARG([gnome],
 	AS_HELP_STRING([--with-gnome],[Support GNOME on the X Window System. (EXPERIMENTAL)]),
@@ -2866,14 +2866,23 @@ dnl you must use gtk12-config, etc, etc.
 
 GNOME_CONFIG=no
 GTK_CONFIG=no
+GTK_VERSION=""
+GTK_POSSIBLE="gtk+-3.0 gtk+-2.0"
+
+if test "$with_gtk" = "3"; then
+   GTK_POSSIBLE="gtk+-3.0"
+fi
+if test "$with_gtk" = "2"; then
+   GTK_POSSIBLE="gtk+-2.0"
+fi
 
 if test "$with_gnome" != "no"; then
    AC_MSG_CHECKING(for GNOME configuration script)
-   for possible in gnome-config
+   for possible in libgnome-2.0
    do
-      possible_version=`${possible} --version 2> /dev/null`
-      if test "x${possible_version}" != "x"; then
-              GNOME_CONFIG="${possible}"
+      pkg-config --exists $possible
+      if test $?; then
+              GNOME_CONFIG="pkg-config"
               with_gnome=yes
               with_gtk=yes
               break
@@ -2882,29 +2891,35 @@ if test "$with_gnome" != "no"; then
    AC_MSG_RESULT([${GNOME_CONFIG}])
 fi
 
-if test "${GNOME_CONFIG}" != "no"; then
-      GNOME_LIBS=`${GNOME_CONFIG} --libs gnomeui`
-      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags gnomeui`
-      AC_DEFINE(HAVE_GNOME)
-      XE_APPEND(${GNOME_LIBS}, libs_gtk)
-      XE_APPEND(${GNOME_CFLAGS}, c_switch_gtk)
-fi
-
 if test "$with_gtk" != "no";then
    AC_MSG_CHECKING(for GTK configuration script)
-   for possible in gtk12-config gtk14-config gtk-config
+   for possible in $GTK_POSSIBLE
    do
-      possible_version=`${possible} --version 2> /dev/null`
+      possible_version=`pkg-config --modversion ${possible} 2> /dev/null`
       if test "x${possible_version}" != "x"; then
-              GTK_CONFIG="${possible}"
+              GTK_CONFIG="pkg-config ${possible}"
+              GTK_VERSION=${possible_version}
 	      case "${possible_version}" in
-        	1.0.*) AC_MSG_WARN([GTK 1.2 is required, please upgrade your version of GTK.]); with_gtk=no;;
-	        1.3.*) AC_MSG_WARN([GTK 1.3 is not supported right now]); with_gtk=no;;
-		1.2.*)
-			with_gtk=yes
-			break
-			;;
-	        *)     AC_MSG_WARN([Found unsupported version of GTK: $possible_version]);;
+                dnl This case won't ever happen, gtk-config was used
+                dnl before pkg-config existed.  Included for completeness.
+	        1.*)    AC_MSG_WARN([GTK 1.X is not supported]);
+                        with_gtk=no
+                        break
+                        ;;
+                2.*)
+                        with_gtk=yes
+                        AC_DEFINE(HAVE_GTK2)
+                        break
+                        ;;
+                3.*)
+                        with_gtk=yes
+                        AC_DEFINE(HAVE_GTK3)
+                        break
+                        ;;
+	        *)
+                        with_gtk=no
+                        AC_MSG_WARN([Found unsupported version of GTK: $GTK_VERSION])
+                        ;;
 	      esac
       fi
    done
@@ -2913,12 +2928,20 @@ fi
 
 if test "${GTK_CONFIG}" != "no"; then
       AC_MSG_CHECKING(gtk version)
-      GTK_VERSION=`${GTK_CONFIG} --version`
       AC_MSG_RESULT(${GTK_VERSION})
+
+      AC_DEFINE(HAVE_XPM)
+      AC_DEFINE(HAVE_GTK)
+      AC_DEFINE(HAVE_PANGO)
 
       AC_MSG_CHECKING(gtk libs)
       GTK_LIBS=`${GTK_CONFIG} --libs`
       XE_APPEND(${GTK_LIBS}, libs_gtk)
+
+      dnl Add -lX11 for XKeycodeToKeysym()
+      dnl until event-gtk.c is rewritten to use GDK keyboard functions
+      XE_APPEND("-lX11", libs_gtk)
+
       AC_MSG_RESULT(${GTK_LIBS})
 
       AC_MSG_CHECKING(gtk cflags)
@@ -2929,12 +2952,6 @@ if test "${GTK_CONFIG}" != "no"; then
       XE_APPEND(${GTK_CFLAGS}, c_switch_gtk)
       AC_MSG_RESULT(${GTK_CFLAGS})
 
-      AC_CHECK_LIB(gdk_imlib, main, XE_PREPEND(-lgdk_imlib, libs_gtk))
-      AC_CHECK_LIB(Imlib, Imlib_init, XE_APPEND(-lImlib, libs_gtk))
-      AC_CHECK_FUNCS(gdk_imlib_init)
-
-      AC_DEFINE(HAVE_XPM)
-      AC_DEFINE(HAVE_GTK)
       AC_SUBST(GTK_CONFIG)
 
       window_system=gtk
@@ -2983,6 +3000,43 @@ if test "${GTK_CONFIG}" != "no"; then
       CFLAGS="${OLD_CFLAGS}"
       CPPFLAGS="${OLD_CPPFLAGS}"
       LDFLAGS="${OLD_LDFLAGS}"
+fi
+
+if test "${GTK_CONFIG}" != "no"; then
+   AC_MSG_CHECKING(for pangoxft configuration)
+   for possible in pangoxft
+   do
+      pkg-config --exists $possible
+      if test $?; then
+         PANGO_LIBS=`pkg-config --libs $possible`
+         PANGO_CFLAGS=`pkg-config --cflags $possible`
+         AC_DEFINE(HAVE_PANGOXFT)      
+         XE_APPEND(${PANGO_LIBS}, libs_gtk)
+         XE_APPEND(${PANGO_CFLAGS}, c_switch_gtk)
+         AC_MSG_RESULT([yes])
+      else
+         AC_MSG_RESULT([no])
+      fi
+   done
+fi
+
+if test "${GTK_CONFIG}" != "no"; then
+   AC_MSG_CHECKING(for GNOME gobject introspection)
+   for possible in gobject-introspection-1.0
+   do
+      pkg-config --exists $possible
+      if test $?; then
+         GIR_LIBS=`pkg-config --libs $possible`
+         GIR_CFLAGS=`pkg-config --cflags $possible`
+         AC_DEFINE(HAVE_GIR)
+         AC_DEFINE(HAVE_GIR_1_0)      
+         XE_APPEND(${GIR_LIBS}, libs_gtk)
+         XE_APPEND(${GIR_CFLAGS}, c_switch_gtk)
+         AC_MSG_RESULT([yes])
+      else
+         AC_MSG_RESULT([no])
+      fi
+   done
 fi
 
 dnl We may eventually prefer gtk/gdk over vanilla X11...
@@ -5973,6 +6027,10 @@ if test "$with_x11" = "yes"; then
   if test "$with_xft_emacs" = "yes"; then
     echo "    - Compiling in support for Xft antialiased fonts (EXPERIMENTAL)."
   fi
+fi
+if test "$with_gtk" = "yes"; then
+  echo "  Compiling in support for GTK."
+  echo "    - GTK version:                                $GTK_VERSION"
 fi
 if test "$need_motif" = "yes" ; then
   echo "  Compiling in support for Motif."

@@ -28,18 +28,25 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #ifdef HAVE_GTK
 
+#ifdef HAVE_GTK2
+typedef GdkColor GDK_COLOR;
+#else
+typedef GdkRGBA GDK_COLOR;
+#endif
+
 /*****************************************************************************
  Color-Instance
  ****************************************************************************/
 
-int allocate_nearest_color (GdkColormap *screen_colormap, GdkVisual *visual,
-							GdkColor *color_def);
-int gtk_parse_nearest_color (struct device *d, GdkColor *color, Ibyte *name,
-							 Bytecount len, Error_Behavior errb);
+int gtk_parse_nearest_color (struct device *d, GDK_COLOR *color,
+			     Lisp_Object name, Error_Behavior errb);
 
 /*****************************************************************************
  Font-Instance
  ****************************************************************************/
 
+/* Add CSS style info at fallback priority. No-op in Gtk 2.0*/
+void
+gtk_widget_add_css_style(GtkWidget *widget, gchar *css);
 #endif /* HAVE_GTK */
 #endif /* _XEMACS_OBJECTS_GTK_H_ */

@@ -36,17 +36,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 struct gtk_image_instance_data
 {
-  GdkPixmap **pixmaps;
+  GdkPixbuf **pixbufs;
   GdkCursor *cursor;
 
-  /* If depth>0, then that means that other colors were allocated when
-     this pixmap was loaded.  These are they; we need to free them when
-     finalizing the image instance. */
-  GdkColormap *colormap;
-  unsigned long *pixels;
-  int npixels;
-
-  /* Should we hang on to the extra info from the XpmAttributes, like
+ /* Should we hang on to the extra info from the XpmAttributes, like
      the textual color table and the comments?   Is that useful? */
 };
 
@@ -70,24 +63,23 @@ struct gtk_subwindow_data
   } data;
 };
 
-void init_image_instance_from_gdk_pixmap (struct Lisp_Image_Instance *ii,
+/*
+void init_image_instance_from_gdk_pixbuf (struct Lisp_Image_Instance *ii,
 					  struct device *device,
-					  GdkPixmap *gdk_pixmap,
+					  GdkPixbuf *gdk_pixbuf,
 					  int dest_mask,
 					  Lisp_Object instantiator);
+*/
 
 #define GTK_IMAGE_INSTANCE_DATA(i) ((struct gtk_image_instance_data *) (i)->data)
 
-#define IMAGE_INSTANCE_GTK_PIXMAP(i) (GTK_IMAGE_INSTANCE_DATA (i)->pixmaps[0])
+#define IMAGE_INSTANCE_GTK_PIXMAP(i) (GTK_IMAGE_INSTANCE_DATA (i)->pixbufs[0])
 #define IMAGE_INSTANCE_GTK_PIXMAP_SLICE(i,slice) \
-     (GTK_IMAGE_INSTANCE_DATA (i)->pixmaps[slice])
+     (GTK_IMAGE_INSTANCE_DATA (i)->pixbufs[slice])
 #define IMAGE_INSTANCE_GTK_PIXMAP_SLICES(i) \
-     (GTK_IMAGE_INSTANCE_DATA (i)->pixmaps)
-#define IMAGE_INSTANCE_GTK_MASK(i) ((GdkPixmap*)(IMAGE_INSTANCE_PIXMAP_MASK (i)))
+     (GTK_IMAGE_INSTANCE_DATA (i)->pixbufs)
+#define IMAGE_INSTANCE_GTK_MASK(i) ((GdkPixbuf*)(IMAGE_INSTANCE_PIXMAP_MASK (i)))
 #define IMAGE_INSTANCE_GTK_CURSOR(i) (GTK_IMAGE_INSTANCE_DATA (i)->cursor)
-#define IMAGE_INSTANCE_GTK_COLORMAP(i) (GTK_IMAGE_INSTANCE_DATA (i)->colormap)
-#define IMAGE_INSTANCE_GTK_PIXELS(i) (GTK_IMAGE_INSTANCE_DATA (i)->pixels)
-#define IMAGE_INSTANCE_GTK_NPIXELS(i) (GTK_IMAGE_INSTANCE_DATA (i)->npixels)
 
 #define XIMAGE_INSTANCE_GTK_PIXMAP(i) \
   IMAGE_INSTANCE_GTK_PIXMAP (XIMAGE_INSTANCE (i))

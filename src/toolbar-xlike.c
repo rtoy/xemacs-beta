@@ -52,7 +52,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 */
 #if defined(HAVE_GTK)
 #include "console-gtk-impl.h"
-#define __INTERNAL_MAPPED_P(f) GTK_WIDGET_REALIZED (FRAME_GTK_TEXT_WIDGET (f))
+#define __INTERNAL_MAPPED_P(f) gtk_widget_get_realized (FRAME_GTK_TEXT_WIDGET (f))
 #define __INTERNAL_FLUSH(d) gdk_flush()
 #define __INTERNAL_APPROPRIATENESS_CHECK(f) assert(FRAME_GTK_P (f))
 #elif defined(HAVE_X_WINDOWS)
