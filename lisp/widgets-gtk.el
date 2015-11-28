@@ -31,7 +31,9 @@
    gtk-signal-connect
    gtk-radio-button-new-with-label gtk-radio-button-group
    gtk-toggle-button-set-active gtk-check-button-new-with-label
-   gtk-widget-show-all gtk-notebook-new gtk-notebook-append-page
+   gtk-widget-show-all
+   ;; ifdef INTROSPECTION
+   ;; gtk-notebook-new gtk-notebook-append-page
    gtk-vbox-new gtk-label-new gtk-adjustment-new
    gtk-progress-bar-new-with-adjustment gtk-adjustment-set-value
    gtk-entry-new gtk-entry-set-text gtk-widget-set-style
@@ -85,16 +87,17 @@
     (gtk-widget-show-all widget)
     widget))
 
-(defun gtk-widget-instantiate-notebook-internal (plist instance)
-  (let ((widget (gtk-notebook-new))
-	;(items (plist-get plist :items))
-	)
-;    (while items
-;      (gtk-notebook-append-page widget
-;				(gtk-vbox-new nil 3)
-;				(gtk-label-new (aref (car items) 0)))
-;      (setq items (cdr items)))
-    widget))
+;; ifdef INTROSPECTION
+;;(defun gtk-widget-instantiate-notebook-internal (plist instance)
+;;  (let ((widget (gtk-notebook-new))
+;;	;(items (plist-get plist :items))
+;;	)
+;;    (while items
+;;      (gtk-notebook-append-page widget
+;;				(gtk-vbox-new nil 3)
+;;				(gtk-label-new (aref (car items) 0)))
+;;      (setq items (cdr items)))
+;;    widget))
 
 (defun gtk-widget-instantiate-progress-internal (plist instance)
   (let* ((adj (gtk-adjustment-new 0.0 0.0 100.0 1.0 5.0 5.0))
@@ -116,7 +119,8 @@
     widget))
 
 (put 'button         'instantiator 'gtk-widget-instantiate-button-internal)
-(put 'tab-control    'instantiator 'gtk-widget-instantiate-notebook-internal)
+;; ifndef INTROSPECTION
+(put 'tab-control    'ignore 'gtk-widget-instantiate-notebook-internal)
 (put 'progress-gauge 'instantiator 'gtk-widget-instantiate-progress-internal)
 (put 'tree-view      'instantiator 'ignore)
 (put 'edit-field     'instantiator 'gtk-widget-instantiate-entry-internal)

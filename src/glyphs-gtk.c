@@ -2694,7 +2694,12 @@ gtk_tab_control_instantiate (Lisp_Object image_instance,
   gtk_widget_instantiate (image_instance, instantiator, pointer_fg,
 			  pointer_bg, dest_mask, domain);
 
+#ifdef INTROSPECTION
   nb = GTK_NOTEBOOK (IMAGE_INSTANCE_GTK_CLIPWIDGET (ii));
+#else
+  nb = GTK_NOTEBOOK (gtk_notebook_new ());
+  IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = GTK_WIDGET (nb);
+#endif
 
   /* Add items to the tab, find the current selection */
   LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)))
