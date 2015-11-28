@@ -2,6 +2,8 @@
 
 	* widgets-gtk.el (gtk-button-new-with-label): Don't define
 	prototypes for gtk-notebook functions.
+	(gtk-widget-instantiate-notebook-internal): Comment out.
+	(tab-control): Ignore notebook-instantiator, it's moved to C.
 
 2015-01-25  Jeff Sparkes  <jsparkes@gmail.com>
 
