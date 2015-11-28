@@ -1,3 +1,8 @@
+2015-11-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el (gtk-button-new-with-label): Don't define
+	prototypes for gtk-notebook functions.
+
 2015-01-25  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* gtk-init.el (make-device-late-gtk-entry-point): Load
