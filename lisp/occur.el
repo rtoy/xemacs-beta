@@ -394,8 +394,7 @@ See also `multi-occur'."
 	(let ((count (occur-engine
 		      regexp active-bufs occur-buf
 		      (or nlines list-matching-lines-default-context-lines)
-		      (and case-fold-search
-			   (no-upper-case-p regexp t))
+		      (and case-fold-search (no-case-regexp-p regexp))
 		      list-matching-lines-buffer-name-face
 		      nil list-matching-lines-face t)))
 	  (let* ((bufcount (length active-bufs))

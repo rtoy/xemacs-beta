@@ -1,4 +1,4 @@
-/* system description file for cygwin32.
+/* system description file for both 32-bit and 64-bit cygwin.
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 2001 Ben Wing.
 
@@ -36,9 +36,52 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
  * Andy Piper <andy@xemacs.org> 8/1/98 
  * http://www.xemacs.freeserve.co.uk/ */
 
-#include "cygwin-common.h"
+#include "win32-common.h"
 
-/* SYSTEM_TYPE should indicate the kind of system you are using.
- It sets the Lisp variable system-type.  */
+/* Identify ourselves */
+#define CYGWIN
 
-#define SYSTEM_TYPE "cygwin32"
+/* We are using Cygwin-style headers in /usr/include, also used by MinGW */
+#define CYGWIN_HEADERS
+
+/* cheesy way to determine cygwin version */
+#ifndef NOT_C_CODE
+# include <signal.h>
+# include <cygwin/version.h>
+
+/* Still left out of 1.1! */
+double logb (double);
+int killpg (int pgrp, int sig);
+
+#endif
+
+#ifndef ORDINARY_LINK
+#define ORDINARY_LINK
+#endif
+
+#if __GNUC__ >= 3
+#define C_SWITCH_SYSTEM -fno-caller-saves
+#else
+#define C_SWITCH_SYSTEM -fno-caller-saves -fvtable-thunks
+#endif
+
+#define LIBS_SYSTEM -lwinmm
+#define WIN32_LEAN_AND_MEAN
+
+#define TEXT_START -1
+#define HEAP_IN_DATA
+#define NO_LIM_DATA
+
+#define BROKEN_SIGIO
+
+#define CYGWIN_BROKEN_SIGNALS
+
+#define strnicmp strncasecmp
+
+#undef MAIL_USE_SYSTEM_LOCK
+
+/* Cygwin bogusly forgets to copy mmap()ed regions into the child when
+   a fork is done; thus, any reference to anything in mmap()ed space
+   (under PDUMP, in particular, this bites, since all data loaded from
+   PDUMP is normally done using mmap()) will cause an immediate segfault. */
+#undef HAVE_MMAP

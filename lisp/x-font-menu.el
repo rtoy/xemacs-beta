@@ -85,17 +85,17 @@ E.g. cursor fonts.")
   ;; #### Is this useful if not configure'd --with-xfs?
   ;; #### This is duplicated in gtk-font-menu.el.
   "Filter the output of `font-instance-truename' to deal with font sets."
-  (if (string-match "," (font-instance-truename fn))
-      (let ((fpnt (nth 8 (split-string (font-instance-name fn) "-")))
-	    (flist (split-string (font-instance-truename fn) ","))
-	    ret)
-	(while flist
-	  (if (string-equal fpnt (nth 8 (split-string (car flist) "-")))
-	      (progn (setq ret (car flist)) (setq flist nil))
-	    (setq flist (cdr flist))
-	    ))
-	ret)
-    (font-instance-truename fn)))
+  (let ((font-instance-truename (font-instance-truename fn)))
+    (if (find ?, font-instance-truename)
+        (let ((fpnt (nth 8 (split-string-by-char (font-instance-name fn) ?-)))
+              (flist (split-string-by-char font-instance-truename ?,))
+              ret)
+          (while flist
+            (if (equal fpnt (nth 8 (split-string-by-char (car flist) ?-)))
+                (progn (setq ret (car flist)) (setq flist nil))
+              (setq flist (cdr flist))))
+          ret)
+      font-instance-truename)))
 
 (defvar x-font-regexp-ascii nil
   "This is used to filter out font families that can't display ASCII text.
@@ -187,7 +187,7 @@ or if you change your font path, you can call this to re-initialize the menus."
     (dolist (name (cond ((null debug)	; debugging kludge
 			 (font-list "*-*-*-*-*-*-*-*-*-*-*-*-*-*" device
 				     font-menu-max-number))
-			((stringp debug) (split-string debug "\n"))
+			((stringp debug) (split-string-by-char debug ?\n))
 			(t debug)))
       (when (and (string-match x-font-regexp-ascii name)
 		 (string-match x-font-regexp name))

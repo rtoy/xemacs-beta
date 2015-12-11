@@ -368,7 +368,8 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 		     (signal 'quit nil)))
 	     (setq gnuserv-string "")))
 	  (t
-	   (let ((response (car (split-string gnuserv-string "\C-d"))))
+	   (let ((response (subseq gnuserv-string 0
+				   (position ?\C-d gnuserv-string))))
 	     (setq gnuserv-string "")
 	     (error "%s: invalid response from gnuserv" response))))))
 
@@ -465,9 +466,6 @@ If a flag is `view', view the files read-only."
 				   :frame new-frame)))
       (select-frame frame)
       (setq gnuserv-current-client nil)
-      ;; If the device was created by this client, push it to the list.
-      (and (not (eql old-device-num (length (device-list))))
-	   (push device gnuserv-devices))
       (and (frame-iconified-p frame)
 	   (deiconify-frame frame))
       ;; Visit all the listed files.
@@ -502,6 +500,10 @@ If a flag is `view', view the files read-only."
        (t
 	;; Else, the client gets a vote.
 	(push client gnuserv-clients)
+        ;; If the device was created for this client, and we are memorizing
+        ;; the client, memorize the device too.
+        (and (not (eql old-device-num (length (device-list))))
+             (push device gnuserv-devices))
 	;; Explain buffer exit options.  If dest-frame is nil, the
 	;; user can exit via `delete-frame'.  OTOH, if FLAGS are nil
 	;; and there are some buffers, the user can exit via

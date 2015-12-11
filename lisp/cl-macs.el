@@ -3034,8 +3034,10 @@ STRING is an optional description of the desired type."
 	       (condition-case nil
 		   `(while (not ,test)
 		     ,(macroexpand `(setf ,place ,signal-error)))
+                 ;; Common Lisp requires that PLACE be setfable, but this is
+                 ;; never a restriction that this package has enforced.
 		 (error
-		  `(if ,test (progn ,signal-error nil))))))
+		  `(if (not ,test) (progn ,signal-error nil))))))
 	 (if (eq temp place) `(progn ,body nil)
 	   `(let ((,temp ,place)) ,body nil)))))
 
@@ -3720,8 +3722,7 @@ the byte optimizer in those cases."
 	   ;; zero-length.
 	   (cond
 	    ((member x '("" #* []))
-	     ;; No need to protect against multiple evaluation here:
-	     `(and (member ,original-y '("" #* [])) t))
+	     `(and (member ,(find x (cdr form) :test-not #'eq) '("" #* [])) t))
 	    (t form)))
 	  ((unordered-check (and (numberp x) (not (cl-const-expr-p y))))
 	   `(,@let-form

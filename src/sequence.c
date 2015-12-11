@@ -710,9 +710,6 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
 
       /* Our callers should have filtered out non-positive COUNT. */
       assert (counting >= 0);
-      /* And we're not prepared to handle COUNT from any other caller at the
-	 moment. */
-      assert (EQ (caller, QremoveX)|| EQ (caller, QdeleteX));
     }
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
@@ -1878,7 +1875,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 
   PARSE_KEYWORDS (FdeleteX, nargs, args, 9,
 		  (test, if_not, if_, test_not, key, start, end, from_end,
-		   count), (start = Qzero, count = Qunbound));
+		   count), (start = Qzero));
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
@@ -1890,45 +1887,41 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
       ending = BIGNUMP (end) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (end);
     }
 
-  if (!UNBOUNDP (count))
+  if (!NILP (count))
     {
-      if (!NILP (count))
-	{
-	  CHECK_INTEGER (count);
-          if (FIXNUMP (count))
-            {
-              counting = XFIXNUM (count);
-            }
+      CHECK_INTEGER (count);
+      if (FIXNUMP (count))
+        {
+          counting = XFIXNUM (count);
+        }
 #ifdef HAVE_BIGNUM
-          else
-            {
-              counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
-                1 + MOST_POSITIVE_FIXNUM : MOST_NEGATIVE_FIXNUM - 1;
-            }
+      else
+        {
+          counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
+            1 + MOST_POSITIVE_FIXNUM : MOST_NEGATIVE_FIXNUM - 1;
+        }
 #endif
+      if (counting < 1)
+        {
+          return sequence;
+        }
 
-	  if (counting < 1)
-	    {
-	      return sequence;
-	    }
-
-          if (!NILP (from_end))
+      if (!NILP (from_end))
+        {
+          /* Sigh, this is inelegant. Force count_with_tail () to ignore
+             the count keyword, so we get the actual number of matching
+             elements, and can start removing from the beginning for the
+             from-end case.  */
+          for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (FdeleteX))->min_args;
+               ii < nargs; ii += 2)
             {
-              /* Sigh, this is inelegant. Force count_with_tail () to ignore
-                 the count keyword, so we get the actual number of matching
-                 elements, and can start removing from the beginning for the
-                 from-end case.  */
-              for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (FdeleteX))->min_args;
-                   ii < nargs; ii += 2)
+              if (EQ (args[ii], Q_count))
                 {
-                  if (EQ (args[ii], Q_count))
-                    {
-                      args[ii + 1] = Qnil;
-                      break;
-                    }
+                  args[ii + 1] = Qnil;
+                  break;
                 }
-              ii = 0;
             }
+          ii = 0;
         }
     }
 
@@ -4161,6 +4154,52 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
   return sequence;
 }
 
+DEFUN ("clear-string", Fclear_string, 1, 1, 0, /*
+Fill STRING with ?\\x00 characters.  Return nil.
+
+This differs from `fill' with a ?\\x00 argument in that it ensures that
+STRING's existing contents are discarded, even in the event of reallocation
+due to a change in the byte length of STRING.  In this implementation, the
+character length of STRING is not changed.
+*/
+       (string))
+{
+  Ibyte nullbyte[MAX_ICHAR_LEN];
+  Bytecount zerolen = set_itext_ichar (nullbyte, 0);
+  Charcount scount;
+
+  CHECK_STRING (string);
+
+  scount = string_char_length (string);
+
+  /* First, clear the original string data. */
+  memset (XSTRING_DATA (string), 0, XSTRING_LENGTH (string));
+
+  /* Now, resize if that's necessary, to make sure Lisp isn't confused by the
+     character length of a string changing. */
+  if (string_char_length (string) != scount)
+    {
+      Ibyte *p, *pend;
+      Bytecount delta = (zerolen * scount) - XSTRING_LENGTH (string);
+
+      resize_string (string, 0, delta);
+      p = XSTRING_DATA (string);
+      pend = p + XSTRING_LENGTH (string);
+
+      while (p < pend)
+        {
+          memcpy (p, nullbyte, zerolen);
+          p += zerolen;
+        }
+    }
+
+  init_string_ascii_begin (string);
+  bump_string_modiff (string);
+  sledgehammer_check_ascii_begin (string);
+
+  return Qnil;
+}
+
 
 /* Replace the substring of DEST beginning at START and ending before END
    with the text at SOURCE, which is END - START characters long and
@@ -5797,6 +5836,20 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	{
 	  return sequence;
 	}
+
+      if (!NILP (from_end))
+        {
+          for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (Fnsubstitute))->min_args;
+               ii < nargs; ii += 2)
+            {
+              if (EQ (args[ii], Q_count))
+                {
+                  args[ii + 1] = Qnil;
+                  break;
+                }
+            }
+          ii = 0;
+        }
     }
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
@@ -6015,16 +6068,16 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 {
   Lisp_Object new_ = args[0], item = args[1], sequence = args[2], tail = Qnil;
   Lisp_Object result = Qnil, result_tail = Qnil;
-  Lisp_Object object, position0, matched_count;
+  Lisp_Object object, position0, matched;
   Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, encountered = 0;
-  Elemcount ii = 0, counting = MOST_POSITIVE_FIXNUM, presenting = 0;
+  Elemcount ii = 0, counting = MOST_POSITIVE_FIXNUM, skipping = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
   struct gcpro gcpro1;
 
   PARSE_KEYWORDS (Fsubstitute, nargs, args, 9,
 		  (test, if_, if_not, test_not, key, start, end, count,
-		   from_end), (start = Qzero, count = Qunbound));
+		   from_end), (start = Qzero));
 
   CHECK_SEQUENCE (sequence);
 
@@ -6039,30 +6092,6 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
 					key, &test_not_unboundp);
-
-  if (!UNBOUNDP (count))
-    {
-      if (!NILP (count))
-	{
-          CHECK_INTEGER (count);
-          if (FIXNUMP (count))
-            {
-              counting = XFIXNUM (count);
-            }
-#ifdef HAVE_BIGNUM
-          else
-            {
-              counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
-                1 + MOST_POSITIVE_FIXNUM : -1 + MOST_NEGATIVE_FIXNUM;
-            }
-#endif
-
-          if (counting <= 0)
-            {
-              return sequence;
-            }
-	}
-    }
 
   if (!CONSP (sequence))
     {
@@ -6081,17 +6110,62 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	}
     }
 
-  matched_count = count_with_tail (&tail, nargs - 1, args + 1, Qsubstitute);
+  if (!NILP (count))
+    {
+      CHECK_INTEGER (count);
+      if (FIXNUMP (count))
+        {
+          counting = XFIXNUM (count);
+        }
+#ifdef HAVE_BIGNUM
+      else
+        {
+          counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
+            1 + MOST_POSITIVE_FIXNUM : -1 + MOST_NEGATIVE_FIXNUM;
+        }
+#endif
 
-  if (ZEROP (matched_count))
+      if (counting <= 0)
+        {
+          return sequence;
+        }
+
+      /* Sigh, this is inelegant. Force count_with_tail () to ignore the count
+         keyword, so we get the actual number of matching elements, and can
+         start removing from the beginning for the from-end case.  */
+      if (!NILP (from_end))
+        {
+          for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (Fsubstitute))->min_args;
+               ii < nargs; ii += 2)
+            {
+              if (EQ (args[ii], Q_count))
+                {
+                  args[ii + 1] = Qnil;
+                  break;
+                }
+            }
+          ii = 0;
+        }
+    }
+
+  matched = count_with_tail (&tail, nargs - 1, args + 1, Qsubstitute);
+
+  if (ZEROP (matched))
     {
       return sequence;
     }
 
   if (!NILP (count) && !NILP (from_end))
     {
-      presenting = XFIXNUM (matched_count);
-      presenting = presenting <= counting ? 0 : presenting - counting;
+      Elemcount matching = XFIXNUM (matched);
+      if (matching > counting)
+        {
+          /* skipping is the number of elements to be skipped before we start
+             substituting. It is for those cases where both :count and
+             :from-end are specified, and the number of elements present is
+             greater than that limit specified with :count. */
+          skipping = matching - counting;
+        }
     }
 
   GCPRO1 (result);
@@ -6100,20 +6174,32 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
       {
         if (EQ (tail, tailing))
           {
+            /* No need to do check_test, we're sure that this element matches
+               because its cons is what count_with_tail returned as the
+               tail. */
+            if (skipping ? encountered >= skipping : encountered < counting)
+              {
+                if (NILP (result))
+                  {
+                    result = Fcons (new_, XCDR (tail));
+                  }
+                else
+                  {
+                    XSETCDR (result_tail, Fcons (new_, XCDR (tail)));
+                  }
+              }
+            else
+              {
+                XSETCDR (result_tail, tail);
+              }
+
 	    XUNGCPRO (elt);
 	    UNGCPRO;
-
-            if (NILP (result))
-              {
-                return XCDR (tail);
-              }
-	  
-            XSETCDR (result_tail, XCDR (tail));
-	    return result;
+            return result;
           }
         else if (starting <= ii && ii < ending &&
                  (check_test (test, key, item, elt) == test_not_unboundp)
-                 && (presenting ? encountered++ >= presenting
+                 && (skipping ? encountered++ >= skipping
                      : encountered++ < counting))
           {
             if (NILP (result))
@@ -8276,6 +8362,7 @@ syms_of_sequence (void)
   DEFSUBR (Fmerge);
   DEFSUBR (FsortX);
   DEFSUBR (Ffill);
+  DEFSUBR (Fclear_string);
   DEFSUBR (Fmapconcat);
   DEFSUBR (FmapcarX);
   DEFSUBR (Fmapvector);

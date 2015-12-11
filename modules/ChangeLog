@@ -1,3 +1,10 @@
+2015-05-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* postgresql/configure.ac (PostgreSQL): Allow specification of subdir.
+	Add most recent versioned directories for multiversion
+	installations (eg, MacPorts.
+	* postgresql/configure: Regenerate.
+
 2014-08-11  Jerry James  <james@xemacs.org>
 
 	* common/Makefile.common (CPPFLAGS): New variable.

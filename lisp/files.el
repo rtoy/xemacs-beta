@@ -2487,31 +2487,29 @@ we do not remove backup version numbers, only true file version numbers."
 (defun file-name-sans-extension (filename)
   "Return FILENAME sans final \"extension\".
 The extension, in a file name, is the part that follows the last `.'."
-  (save-match-data
-    (let ((file (file-name-sans-versions (file-name-nondirectory filename)))
-	  directory)
-      (if (string-match "\\.[^.]*\\'" file)
-	  (if (setq directory (file-name-directory filename))
-	      (expand-file-name (substring file 0 (match-beginning 0))
-				directory)
-	    (substring file 0 (match-beginning 0)))
-	filename))))
+  (let* ((file (file-name-sans-versions (file-name-nondirectory filename)))
+         (position (position ?. file :from-end t))
+         (directory (and position (file-name-directory filename))))
+    (if position
+        (if directory
+            (expand-file-name (subseq file 0 position) directory)
+          (subseq file 0 position))
+      filename)))
 
 (defun file-name-extension (filename &optional period)
   "Return FILENAME's final \"extension\".
 The extension, in a file name, is the part that follows the last `.'.
 Return nil for extensionless file names such as `foo'.
-Return the empty string for file names such as `foo'.
+Return the empty string for file names such as `foo.'
 
 If PERIOD is non-nil, then the returned value includes the period
 that delimits the extension, and if FILENAME has no extension,
 the value is \"\"."
-  (save-match-data
-    (let ((file (file-name-sans-versions (file-name-nondirectory filename))))
-      (if (string-match "\\.[^.]*\\'" file)
-          (substring file (+ (match-beginning 0) (if period 0 1)))
-        (if period
-            "")))))
+  (let* ((file (file-name-sans-versions (file-name-nondirectory filename)))
+         (position (position ?. file :from-end t)))
+    (if (and position (not (eql position 0)))
+        (subseq file (+ position (if period 0 1)))
+      (if period ""))))
 
 (defcustom make-backup-file-name-function nil
   "A function to use instead of the default `make-backup-file-name'.
@@ -4247,25 +4245,13 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 		;; directory if FILE is a symbolic link.
 		(apply 'call-process
 		       insert-directory-program nil t nil
-		       (let (list)
-			 (if (listp switches)
-			     (setq list switches)
-			   (if (not (equal switches ""))
-			       (let ((switches switches))
-				 ;; Split the switches at any spaces
-				 ;; so we can pass separate options as separate args.
-				 (while (string-match " " switches)
-				   (setq list (cons (substring switches 0 (match-beginning 0))
-						    list)
-					 switches (substring switches (match-end 0))))
-				 (setq list (cons switches list)))))
-			 (append list
-				 (list
-				  (if full-directory-p
-				      (concat (file-name-as-directory file)
-					      ;;#### Unix-specific
-					      ".")
-				    file))))))))
+                       (append (if (listp switches)
+                                   switches
+                                 (split-string-by-char switches ?\ ))
+                               (list
+                                (if full-directory-p
+                                    (concat (file-name-as-directory file) ".")
+                                  file)))))))
 
 	  ;; If we got "//DIRED//" in the output, it means we got a real
 	  ;; directory listing, even if `ls' returned nonzero.
@@ -4294,7 +4280,7 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 		     (buffer-string))))
 	      (if (string-match "ls (.*utils) \\([0-9.]*\\)$" version-out)
 		  (let* ((version (match-string 1 version-out))
-			 (split (split-string version "[.]"))
+			 (split (split-string-by-char version ?.))
 			 (numbers (mapcar 'string-to-int split))
 			 (min '(5 2 1))
 			 comparison)

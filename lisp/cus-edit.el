@@ -1340,7 +1340,7 @@ item in another window.\n\n"))
 	    :custom-show (lambda (widget value)
 			   ;; This used to call pp-to-string
 			   (let ((pp (widget-prettyprint-to-string value)))
-			     (cond ((string-match "\n" pp)
+			     (cond ((find ?\n pp)
 				    nil)
 				   ((> (length pp) 40)
 				    nil)
@@ -2119,11 +2119,11 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
 	  (t
 	   ;; Edit mode.
 	   (let* ((format (widget-get type :format))
-		  tag-format value-format)
-	     (while (not (string-match ":" format))
+		  tag-format value-format position)
+             (while (not (setq position (position ?: format)))
 	       (setq format (signal 'error (list "Bad format" format))))
-	     (setq tag-format (substring format 0 (match-end 0)))
-	     (setq value-format (substring format (match-end 0)))
+	     (setq tag-format (subseq format 0 (1+ position))
+                   value-format (subseq format (1+ position)))
 	     (push (widget-create-child-and-convert
 		    widget 'item
 		    :format tag-format

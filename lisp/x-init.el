@@ -147,7 +147,7 @@ it was previously unaware of, the predicate will take note of it, though."
   ;; APIs to identify the keyboard - those only work on the console.
   ;; xkeycaps has the same problem when running `remotely'.
   (let ((vendor (x-server-vendor device)))
-    (cond ((or (string-match "Sun Microsystems" vendor)
+    (cond ((or (search "Sun Microsystems" vendor)
 	       ;; MIT losingly fails to tell us what hardware the X server
 	       ;; is managing, so assume all MIT displays are Suns...  HA HA!
 	       (string-equal "MIT X Consortium" vendor)

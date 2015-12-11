@@ -40,4 +40,11 @@
   do
   (Assert (equal (file-truename (file-truename file)) (file-truename file))))
 
+;;
+;; Gross sanity check with #'load and a zero-length filename:
+(Check-Error file-error (load ""))
+(Assert (eq nil (load "" t)))
+(Check-Error file-error (load-internal ""))
+(Assert (eq nil (load-internal "" t)))
 
+;;; end of file-tests.el

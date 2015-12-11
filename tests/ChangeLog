@@ -1,3 +1,104 @@
+2015-06-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add a test looking for a bug just fixed in the equalp compiler
+	macro.
+
+2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/file-tests.el:
+	Gross sanity check for #'load and #'load-internal with a
+	zero-length FILE, something that crashed until today.
+
+2015-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test #'integer-length, #'logcount in this file.
+
+2015-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Assert that a character which we know has no Unicode mapping is
+	represented as REPLACEMENT CHARACTER in UTF-8, rather than as a
+	character corresponding to a very large codepoint.
+
+2015-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Backslash a few parentheses in the first column for the sake of
+	fontification.
+	* automated/lisp-tests.el:
+	Check that the rounding functions signal Lisp errors correctly
+	when handed positive and negative infinity and NaN.
+	Check that a bug when supplying #'truncate with one float that
+	rounds to a bignum, has been fixed.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	Check the arbitrary-base integer reader syntax support, just
+	added.  Check the reader base support for ratios, just added.
+	Check the non-ASCII-digit support in the reader, just added.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check for a bug just fixed with the interaction of negative
+	bignums and :junk-allowed non-nil.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	Check read and print handling of symbols that look like
+	numbers. In passing, check the read and print handling of the
+	associated numbers.
+
+2015-04-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check for a bug just fixed in cl-macs.el.
+
+2015-04-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test #'clear-string, just added. Unfortunately there's no way to
+	be certain from Lisp that the old password data has been erased
+	after realloc; it may be worth adding a test to tests.c, but
+	*we'll be reading memory we shouldn't be*, so that gives me pause.
+
+2015-04-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add a couple of tests for #'parse-integer to check for a bug just
+	fixed.
+
+2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Extend the tests for #'parse-integer, #'digit-char, #'digit-char-p
+	substantially, testing the Unicode decimal digits in detail.
+
+2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (test-chars):
+	Use char-code-limit explicitly here, instead of hardcoding the
+	corresponding values.
+
+2015-03-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add some tests for #'substitute.
+
+2015-02-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	parse_integer(), used in #'read, now signals invalid-argument
+	rather than invalid-read-syntax, check for that.
+	* automated/lisp-tests.el:
+	Check #'parse-integer now it's available to Lisp, check
+	#'digit-char, #'digit-char-p and the congruence in behaviour,
+	check the XEmacs-specific RADIX-TABLE argument behaviour.
+
 2014-10-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/keymap-tests.el:

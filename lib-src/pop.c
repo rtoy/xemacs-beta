@@ -1075,6 +1075,7 @@ socket_connection (char *host,
       try_count++;
       if ((! hostent) && ((h_errno != TRY_AGAIN) || (try_count == 5)))
 	{
+	  CLOSESOCKET (sock);
 	  strcpy (pop_error, "Could not determine POP server's address");
 	  return (-1);
 	}

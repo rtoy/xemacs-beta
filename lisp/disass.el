@@ -117,9 +117,10 @@ redefine OBJECT if it is a symbol."
 	  (progn (and (consp obj) (setq obj (cdr obj)))
 		 (indent-to indent)
 		 (princ "  doc:  " (current-buffer))
-		 (let ((frobbed nil))
-		   (if (string-match "\n" doc)
-		       (setq doc (substring doc 0 (match-beginning 0))
+		 (let ((frobbed nil)
+                       (position (position ?\n doc)))
+		   (if position
+		       (setq doc (subseq doc 0 position)
 			     frobbed t))
 		   (if (> (length doc) 70)
 		       (setq doc (substring doc 0 65) frobbed t))

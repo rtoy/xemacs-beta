@@ -155,3 +155,186 @@
 					   (+ most-positive-fixnum 2)
 					   (+ most-positive-fixnum 2)))))
 	  "checking bignum object labels don't wrap on reading"))
+
+(Assert (not (eq (intern "") (read (prin1-to-string (make-symbol "")))))
+        "checking uninterned zero-length symbol printed distinctly")
+
+;; Check the read and print handling of symbols that look like numbers. In
+;; passing, check the read and print handling of the associated numbers.
+(Assert (eql (log 1) '0e0) "checking float syntax with e accepted")
+(Assert (eql (log 1) 0.0) "checking float syntax with decimal point accepted")
+(Assert (not (ratiop (read "2/-3")))
+        "ratios can't have a negative sign in the denominator")
+(Assert (not (ratiop (read "2/+3")))
+        "ratios can't have a positive sign in the denominator")
+
+(macrolet
+    ((Assert-no-symbol-number-confusion (&rest values)
+       `(let ((print-gensym t)
+              (print-readably t))
+         ,@(loop
+            for (type . rest) in values
+            collect (cons
+                     'progn
+                     (loop for string in rest
+                           collect
+                           `(progn
+                             (Assert (symbolp (read (prin1-to-string
+                                                     (make-symbol ,string)))))
+                             (Assert (equal (symbol-name
+                                             (read (prin1-to-string
+                                                    (make-symbol ,string))))
+                                             ,string))
+                             ,@(when (ignore-errors (coerce-number 1 type))
+                                     `((Assert (typep (read ,string)
+                                                      ',type))
+                                       (Assert (eql (string-to-number
+                                                     ,string)
+                                                (read ,string))))))))))))
+  (Assert-no-symbol-number-confusion
+   (float "0.0" "0E0" "-.0" "0.0e0" "3.1415926535897932384E0"
+          "6.02E+23" "602E+21" "3.010299957e-1" "-0.000000001e9")
+   (fixnum "1" "1." "1073741823" "-1" "-1073741824")
+   (ratio "1/2" "2/5" "-1073741822/1073741823"
+          "+2/3" "-3/2"
+          "2894802230932904885589274625217197696331749616641014100986439600\
+1978282409984/20"
+          "+289480223093290488558927462521719769633174961664101410098643960\
+01978282409984/20"
+          "-289480223093290488558927462521719769633174961664101410098643960\
+01978282409984/20"
+          "20/2894802230932904885589274625217197696331749616641014100986439\
+6001978282409984"
+          "+20/289480223093290488558927462521719769633174961664101410098643\
+96001978282409984"
+          "-20/289480223093290488558927462521719769633174961664101410098643\
+96001978282409984")
+   ;; These two are (lsh 1 254) and (lognot (lsh 1 254)). The assumption that
+   ;; they are always bignums if they can be made into rationals should hold
+   ;; for another couple of processor generations at least.
+   (bignum
+    "2894802230932904885589274625217197696331749616641014100986439600197828\
+2409984"
+    "-289480223093290488558927462521719769633174961664101410098643960019782\
+82409985")))
+
+(macrolet
+    ((Assert-reading-rationals (&rest details)
+       (cons
+        'progn
+        (loop
+            for (guard first . rest) in details
+            collect `(when ,guard
+                      ,@(loop for value in rest
+                              collect `(Assert (eql ,first
+                                                (read ,value))))))))
+     (with-digits (ascii alternate &body body)
+       (let ((tree-alist (list (cons 'old 'new)))
+             (text-alist (mapcar* #'cons ascii alternate)))
+         (list*
+          'progn
+          (sublis tree-alist body
+                  :test #'(lambda (new old)
+                            ;; This function replaces any ASCII decimal digits
+                            ;; in any string encountered in the tree with the
+                            ;; non-ASCII digits supplied in ALTERNATE.
+                            (when (and (stringp old)
+                                       (find-if #'digit-char-p old))
+                              (setf (cdar tree-alist)
+                                    (concatenate 'string
+                                                 (sublis text-alist
+                                                         (append old nil))))
+                              t))))))
+     (with-all-digits (&body body)
+       (list
+        'progn
+        (list* 'with-digits "0123456789" "0123456789" body)
+        (when (featurep 'mule)
+          (cons
+           'progn
+           (loop for (code-point . script)
+             in '((#x0660 . "Arabic-Indic")
+                  (#x06f0 . "Extended Arabic-Indic")
+                  (#x07c0 . "Nko")
+                  (#x0966 . "Devanagari")
+                  (#x09e6 . "Bengali")
+                  (#x0a66 . "Gurmukhi")
+                  (#x0ae6 . "Gujarati")
+                  (#x0b66 . "Oriya")
+                  (#x0be6 . "Tamil")
+                  (#x0c66 . "Telugu")
+                  (#x0ce6 . "Kannada")
+                  (#x0d66 . "Malayalam")
+                  (#x0de6 . "Sinhala Lith")
+                  (#x0e50 . "Thai")
+                  (#x0ed0 . "Lao")
+                  (#x0f20 . "Tibetan")
+                  (#x1040 . "Myanmar")
+                  (#x1090 . "Myanmar Shan")
+                  (#x17e0 . "Khmer")
+                  (#x1810 . "Mongolian")
+                  (#x1946 . "Limbu")
+                  (#x19d0 . "New Tai Lue")
+                  (#x1a80 . "Tai Tham Hora")
+                  (#x1a90 . "Tai Tham Tham")
+                  (#x1b50 . "Balinese")
+                  (#x1bb0 . "Sundanese")
+                  (#x1c40 . "Lepcha")
+                  (#x1c50 . "Ol Chiki")
+                  (#xa620 . "Vai")
+                  (#xa8d0 . "Saurashtra")
+                  (#xa900 . "Kayah Li")
+                  (#xa9d0 . "Javanese")
+                  (#xa9f0 . "Myanmar Tai Laing")
+                  (#xaa50 . "Cham")
+                  (#xabf0 . "Meetei Mayek")
+                  (#xff10 . "Fullwidth")
+                  (#x000104a0 . "Osmanya")
+                  (#x00011066 . "Brahmi")
+                  (#x000110f0 . "Sora Sompeng")
+                  (#x00011136 . "Chakma")
+                  (#x000111d0 . "Sharada")
+                  (#x000112f0 . "Khudawadi")
+                  (#x000114d0 . "Tirhuta")
+                  (#x00011650 . "Modi")
+                  (#x000116c0 . "Takri")
+                  (#x000118e0 . "Warang Citi")
+                  (#x00016a60 . "Mro")
+                  (#x00016b50 . "Pahawh Hmong")
+                  (#x0001d7ce . "Mathematical Bold")
+                  (#x0001d7d8 . "Mathematical Double-Struck")
+                  (#x0001d7e2 . "Mathematical Sans-Serif")
+                  (#x0001d7ec . "Mathematical Sans-Serif Bold")
+                  (#x0001d7f6 . "Mathematical Monospace"))
+           collect 
+           (list* 'with-digits "0123456789"
+                  ;; All the Unicode decimal digits have contiguous code
+                  ;; point ranges as documented by the Unicode standard,
+                  ;; we can just increment.
+                  (concat (loop for fixnum from code-point
+                                to (+ code-point 9)
+                                collect (decode-char 'ucs fixnum))
+                          "")
+                  body)))))))
+  (with-all-digits  
+    (Assert-reading-rationals
+     (t 1 "1" "#b1" "#o1" "#x1" "#2r1" "#20r1" "#2000r1")
+     (t 0 "-0" "#b0" "#o0" "#x0" "#1r0" "#2r0" "#20r0" "#2000r0")
+     (t -1 "-1" "#b-1" "#o-1" "#x-1" "#2r-1" "#20r-1" "#2000r-1")
+     (t 1073741823 "#b111111111111111111111111111111" "#o7777777777"
+        "#x3fffffff" "#32rVVVVVV")
+     (t -1073741824 "#b-1000000000000000000000000000000" "#o-10000000000"
+        "#x-40000000" "#32r-1000000")
+     ((featurep 'ratio)
+      1 "1/1" "2/2" "#b1/1" "#o2/2" "#x3/3" "#2r1/1" "#20r2000/2000")
+     ((featurep 'ratio)
+      -1 "-1/1" "-2/2" "#b-1/1" "#o-2/2" "#x-3/3" "#2r-1/1"
+      "#20r-2000/2000"))
+    (Check-Error invalid-read-syntax (read "1234567/0"))
+    (Check-Error invalid-read-syntax (read "#x1234567/0"))
+    (Check-Error invalid-read-syntax (read "#20000r1234567/0"))
+    ;; Unintuitive, but that's the Common Lisp behaviour. Maybe we should
+    ;; error.
+    (Assert (symbolp (read "1234/-123")))))
+
+;;; end of lisp-reader-tests.el

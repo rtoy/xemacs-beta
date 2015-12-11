@@ -1303,8 +1303,8 @@
 	 hash-table-test
 	 hash-table-type
 	 ;;
-	 int-to-string
-	 length log log10 logand logb logior lognot logxor lsh
+	 integer-length int-to-string
+	 length log log10 logand logb logcount logior lognot logxor lsh
 	 marker-buffer max member memq min mod
 	 next-window nth nthcdr number-to-string numerator
 	 parse-colon-path plist-get previous-window

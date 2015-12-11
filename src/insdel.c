@@ -570,15 +570,15 @@ buffer_signal_changed_region (struct buffer *buf, Charbpos start,
 }
 
 void
-buffer_extent_signal_changed_region (struct buffer *buf, Charbpos start,
-				     Charbpos end)
+buffer_extent_signal_changed_region (struct buffer *buf, Bytebpos start,
+				     Bytebpos end)
 {
   if (buf->changes->begin_extent_unchanged < 0 ||
-      buf->changes->begin_extent_unchanged > start - BUF_BEG (buf))
-    buf->changes->begin_extent_unchanged = start - BUF_BEG (buf);
+      buf->changes->begin_extent_unchanged > start - BYTE_BUF_BEG (buf))
+    buf->changes->begin_extent_unchanged = start - BYTE_BUF_BEG (buf);
   if (buf->changes->end_extent_unchanged < 0 ||
-      buf->changes->end_extent_unchanged > BUF_Z (buf) - end)
-    buf->changes->end_extent_unchanged = BUF_Z (buf) - end;
+      buf->changes->end_extent_unchanged > BYTE_BUF_Z (buf) - end)
+    buf->changes->end_extent_unchanged = BYTE_BUF_Z (buf) - end;
 }
 
 void
@@ -837,10 +837,16 @@ signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
       if (end < BUF_BEGV (buf)) end = BUF_BEGV (buf);
       if (end > BUF_ZV (buf))   end = BUF_ZV (buf);
 
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  report_extent_modification (wrap_buffer (mbuf), start, end, 0);
-	}
+      {
+        Bytexpos byte_start = charbpos_to_bytebpos (buf, start);
+        Bytexpos byte_end = charbpos_to_bytebpos (buf, end);
+
+        MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
+          {
+            report_extent_modification (wrap_buffer (mbuf), byte_start,
+                                        byte_end, 0);
+          }
+      }
       unbind_to (speccount);
 
       /* Only now do we indicate that the before-change-functions have
@@ -930,12 +936,17 @@ signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
       if (orig_end < BUF_BEGV (buf)) orig_end = BUF_BEGV (buf);
       if (orig_end > BUF_ZV (buf))   orig_end = BUF_ZV (buf);
 
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  buffer = wrap_buffer (mbuf);
-	  report_extent_modification (buffer, start, new_end, 1);
-	}
-      unbind_to (speccount); /* sets inside_change_hook back to 0 */
+      {
+        Bytexpos byte_start = charbpos_to_bytebpos (buf, start);
+        Bytexpos byte_new_end = charbpos_to_bytebpos (buf, new_end);
+
+        MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
+          {
+            buffer = wrap_buffer (mbuf);
+            report_extent_modification (buffer, byte_start, byte_new_end, 1);
+          }
+        unbind_to (speccount); /* sets inside_change_hook back to 0 */
+      }
     }
 }
 

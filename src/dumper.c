@@ -206,7 +206,13 @@ pdump_align_stream (FILE *stream, Bytecount alignment)
   OFF_T offset = FTELL (stream);
   OFF_T adjustment = ALIGN_SIZE (offset, alignment) - offset;
   if (adjustment)
-    FSEEK (stream, adjustment, SEEK_CUR);
+    {
+      if (FSEEK (stream, adjustment, SEEK_CUR) == -1)
+	{
+	  report_file_error ("Unable to fseek dump file",
+			     build_ascstring (EMACS_PROGNAME ".dmp"));
+	}
+    }
 }
 
 #define PDUMP_ALIGN_OUTPUT(type) pdump_align_stream (pdump_out, ALIGNOF (type))
@@ -844,6 +850,8 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	  {
 	    pdump_cv_ptr_info info;
 	    info.object = *(void **)rdata;
+	    info.index = 0;
+	    info.save_offset = 0;
 	    info.fcts = desc1->data2.funcs;
 	    if (!pdump_find_in_cv_ptr_dynarr (info.object))
 	      {
@@ -857,6 +865,8 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	    pdump_cv_data_info info;
 	    info.object = data;
 	    info.offset = offset;
+	    info.dest_offset = 0;
+	    info.save_offset = 0;
 	    info.fcts = desc1->data2.funcs;
 
 	    info.fcts->convert(rdata, &info.data, &info.size);
@@ -2135,7 +2145,7 @@ pdump (void)
     report_file_error ("Unable to open dump file",
 		       build_ascstring (EMACS_PROGNAME ".dmp"));
   pdump_out = fdopen (pdump_fd, "w");
-  if (pdump_out < 0)
+  if (pdump_out == NULL)
     report_file_error ("Unable to open dump file for writing",
 		       build_ascstring (EMACS_PROGNAME ".dmp"));
 
@@ -2168,7 +2178,11 @@ pdump (void)
 	elt->fcts->convert_free(elt->object, elt->data, elt->size);
     }
 
-  FSEEK (pdump_out, header.stab_offset, SEEK_SET);
+  if (FSEEK (pdump_out, header.stab_offset, SEEK_SET) == -1)
+    {
+      report_file_error ("Unable to fseek dump file",
+			 build_ascstring (EMACS_PROGNAME ".dmp"));
+    }
 
 #ifdef NEW_GC
   {
@@ -2553,7 +2567,11 @@ pdump_file_get (const Wexttext *path)
       return 0;
     }
 
-  lseek (fd, 0, SEEK_SET);
+  if (lseek (fd, 0, SEEK_SET) == -1)
+    {
+      retry_close (fd);
+      return 0;
+    }
 
 #ifdef HAVE_MMAP
 /* Unix 98 requires that sys/mman.h define MAP_FAILED,

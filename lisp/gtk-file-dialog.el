@@ -103,12 +103,9 @@
 
 (defun gtk-file-dialog-update-dropdown (dialog dir)
   (let ((combo-box (get dialog 'x-file-dialog-select-list))
-	(components (reverse
-		     (delete ""
-			     (split-string dir
-					   (concat "[" (char-to-string directory-sep-char) "]")))))
+	(components (nreverse
+		     (delete "" (split-string-by-char dir directory-sep-char))))
 	(entries nil))
-
     (while components
       (push (concat "/" (mapconcat 'identity (reverse components)
 				   (char-to-string directory-sep-char)))
