@@ -1,3 +1,8 @@
+2015-12-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el gtk-widget-instantiate-progress-internal):
+	Delete.  Set progress-gauge instantiator to ignore.
+
 2015-11-28  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* widgets-gtk.el (gtk-button-new-with-label): Don't define

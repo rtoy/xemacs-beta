@@ -1,5 +1,12 @@
 2015-12-11  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_progress_gauge_instantiate): Move here from
+	lisp.
+	(gtk_progress_gauge_instantiate): Scale fraction by percent if
+	it's larger than 1.0.
+
+2015-12-11  Jeff Sparkes  <jsparkes@gmail.com>
+
 	* glyphs-gtk.c (gtk_label_instantiate): Define to create label
 	widget instead of lisp.
 

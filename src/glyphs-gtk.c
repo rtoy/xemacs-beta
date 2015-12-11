@@ -2394,7 +2394,6 @@ gtk_##x##_instantiate (Lisp_Object image_instance,			\
 
 FAKE_GTK_WIDGET_INSTANTIATOR(native_layout);
 FAKE_GTK_WIDGET_INSTANTIATOR(button);
-FAKE_GTK_WIDGET_INSTANTIATOR(progress_gauge);
 FAKE_GTK_WIDGET_INSTANTIATOR(edit_field);
 FAKE_GTK_WIDGET_INSTANTIATOR(combo_box);
 /* Note: tab_control has a custom instantiator (see below) */
@@ -2494,6 +2493,38 @@ gtk_button_property (Lisp_Object image_instance, Lisp_Object prop)
 
 
 /* Progress gauge functions. */
+static void
+gtk_progress_gauge_instantiate (Lisp_Object image_instance,
+                                Lisp_Object instantiator,
+                                Lisp_Object pointer_fg,
+                                Lisp_Object pointer_bg,
+                                int dest_mask, Lisp_Object domain)
+{
+  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  GtkWidget *pb;
+  Lisp_Object value;
+
+  /* The normal instantiation is still needed. */
+  gtk_widget_instantiate (image_instance, instantiator, pointer_fg,
+                          pointer_bg, dest_mask, domain);
+
+  pb = gtk_progress_bar_new ();
+  gtk_widget_set_size_request (pb,
+                               IMAGE_INSTANCE_WIDTH (ii),
+                               IMAGE_INSTANCE_HEIGHT (ii));
+  value = find_keyword_in_vector (instantiator, Q_value);
+  if (!NILP (value))
+    {
+      double val;
+      CHECK_FIXNUM_OR_FLOAT (value);
+      val = XFLOATFIXNUM (value);
+      if (val > 1.0)
+        val = val / 100.0;
+      gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (pb), val);
+    }
+  gtk_widget_show_all (pb);
+  IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = pb;
+}
 
 /* set the properties of a progress gauge */
 static void
@@ -2509,7 +2540,8 @@ gtk_progress_gauge_redisplay (Lisp_Object image_instance)
       val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii))->value;
       f = XFLOATFIXNUM (val);
 
-      gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (IMAGE_INSTANCE_SUBWINDOW_ID (ii)),
+      gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR
+                                     (IMAGE_INSTANCE_GTK_CLIPWIDGET (ii)),
                                      f / 100.0);
     }
 }
