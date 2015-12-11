@@ -96,12 +96,6 @@
 ;      (setq items (cdr items)))
     widget))
 
-(defun gtk-widget-instantiate-progress-internal (plist instance)
-  (let* ((adj (gtk-adjustment-new 0.0 0.0 100.0 1.0 5.0 5.0))
-	 (widget (gtk-progress-bar-new-with-adjustment adj)))
-    (gtk-adjustment-set-value adj (or (plist-get plist :value) 0.0))
-    widget))
-
 (defun gtk-widget-instantiate-entry-internal (plist instance)
   (let* ((widget (gtk-entry-new))
 	 (default (plist-get plist :descriptor)))
@@ -117,7 +111,7 @@
 
 (put 'button         'instantiator 'gtk-widget-instantiate-button-internal)
 (put 'tab-control    'instantiator 'gtk-widget-instantiate-notebook-internal)
-(put 'progress-gauge 'instantiator 'gtk-widget-instantiate-progress-internal)
+(put 'progress-gauge 'instantiator 'ignore)
 (put 'tree-view      'instantiator 'ignore)
 (put 'edit-field     'instantiator 'gtk-widget-instantiate-entry-internal)
 (put 'combo-box      'instantiator 'ignore)
