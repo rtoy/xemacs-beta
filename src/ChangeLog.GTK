@@ -1,3 +1,8 @@
+2015-12-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_label_instantiate): Define to create label
+	widget instead of lisp.
+
 2015-11-28  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_tab_control_instantiate): Create notebook

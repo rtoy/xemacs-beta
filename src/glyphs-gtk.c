@@ -2397,7 +2397,6 @@ FAKE_GTK_WIDGET_INSTANTIATOR(button);
 FAKE_GTK_WIDGET_INSTANTIATOR(progress_gauge);
 FAKE_GTK_WIDGET_INSTANTIATOR(edit_field);
 FAKE_GTK_WIDGET_INSTANTIATOR(combo_box);
-FAKE_GTK_WIDGET_INSTANTIATOR(label);
 /* Note: tab_control has a custom instantiator (see below) */
 
 /*
@@ -2806,6 +2805,33 @@ gtk_tab_control_redisplay (Lisp_Object image_instance)
 #endif
 }
 #endif /* HAVE_WIDGETS */
+
+
+/* Create a tab_control widget.  The special handling of the individual tabs
+   means that the normal instantiation code cannot be used. */
+static void
+gtk_label_instantiate (Lisp_Object image_instance,
+		       Lisp_Object instantiator,
+		       Lisp_Object pointer_fg,
+		       Lisp_Object pointer_bg,
+		       int dest_mask, Lisp_Object domain)
+{
+  const char *text;
+  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  GtkWidget *label;
+
+  /* The normal instantiation is still needed. */
+  gtk_widget_instantiate (image_instance, instantiator, pointer_fg,
+			  pointer_bg, dest_mask, domain);
+
+  text = LISP_STRING_TO_EXTERNAL (find_keyword_in_vector (instantiator,
+							  Q_descriptor), Qutf_8);
+  if (text == 0 || *text == 0)
+    text = "Label";
+
+  label = gtk_label_new (text);
+  IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = GTK_WIDGET (label);
+}
 
 
 /************************************************************************/
