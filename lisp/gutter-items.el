@@ -543,7 +543,7 @@ you should just use (progress nil)."
 
 (defun append-progress-feedback (label message &optional value frame)
   (or frame (setq frame (selected-frame)))
-  ;; Add a new entry to the message-stack, or modify an existing one
+  ;; Add a new entry to the progress-stack, or modify an existing one
   (let* ((top (car progress-stack))
 	 (tmsg (cdr top)))
     (if (eq label (car top))
@@ -568,7 +568,7 @@ you should just use (progress nil)."
 	  progress-feedback-use-echo-area)
       (display-message label (concat message "aborted.") frame)
     (or frame (setq frame (selected-frame)))
-    ;; Add a new entry to the message-stack, or modify an existing one
+    ;; Add a new entry to the progress-stack, or modify an existing one
     (let* ((top (car progress-stack))
 	   (inhibit-read-only t))
       (if (eq label (car top))

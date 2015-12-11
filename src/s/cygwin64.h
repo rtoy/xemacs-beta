@@ -1,4 +1,4 @@
-/* system description file for cygwin32.
+/* system description file for 64-bit cygwin.
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 2001 Ben Wing.
 
@@ -41,4 +41,4 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 /* SYSTEM_TYPE should indicate the kind of system you are using.
  It sets the Lisp variable system-type.  */
 
-#define SYSTEM_TYPE "cygwin32"
+#define SYSTEM_TYPE "cygwin64"

@@ -1154,6 +1154,8 @@ typedef int Boolint;
 
 /* ------------------------ alignment definitions ------------------- */
 
+#if (!defined (__STDC_VERSION__) || __STDC_VERSION__ < 201112L) && \
+    (!defined (__cplusplus) || __cplusplus < 201103L)
 /* No type has a greater alignment requirement than max_align_t.
    (except perhaps for types we don't use, like long double) */
 typedef union
@@ -1163,6 +1165,7 @@ typedef union
   struct { void (*f)(void); } f;
   struct { double d; } d;
 } max_align_t;
+#endif
 
 /* ALIGNOF returns the required alignment of a type -- i.e. a value such
    that data of this type must begin at a memory address which is a
@@ -1170,7 +1173,11 @@ typedef union
    as the type itself. */
 
 #ifndef ALIGNOF
-# if defined (__GNUC__) && (__GNUC__ >= 2)
+# if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#  define ALIGNOF(type) _Alignof(type)
+# elif defined (__cplusplus) && __cplusplus >= 201103L
+#  define ALIGNOF(type) alignof(type)
+# elif defined (__GNUC__) && (__GNUC__ >= 2)
 /* gcc has an extension that gives us exactly what we want. */
 #  define ALIGNOF(type) __alignof__ (type)
 # elif ! defined (__cplusplus)
@@ -4601,6 +4608,12 @@ Lisp_Object arithcompare (Lisp_Object, Lisp_Object, enum arith_comparison);
 Lisp_Object word_to_lisp (unsigned int);
 unsigned int lisp_to_word (Lisp_Object);
 
+Lisp_Object parse_integer (const Ibyte *buf, Ibyte **buf_end_out,
+			   Bytecount len, EMACS_INT base,
+			   Boolint junk_allowed, Lisp_Object base_table);
+
+extern Lisp_Object Vdigit_fixnum_map;
+
 extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
     Qerror_conditions, Qerror_message, Qinteger_char_or_marker_p,
     Qinteger_or_char_p, Qinteger_or_marker_p, Qlambda, Qlistp, Qnatnump,
@@ -5791,6 +5804,7 @@ extern Fixnum warn_about_possibly_incompatible_back_references;
 
 /* Defined in sequence.c */
 EXFUN (Ffill, MANY);
+EXFUN (Fclear_string, 1);
 EXFUN (Freplace, MANY);
 
 /* Defined in signal.c */

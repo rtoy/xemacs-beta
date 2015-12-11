@@ -1918,7 +1918,11 @@ Database options
                           or a comma-separated list of one or more of `berkdb'
                           and either `dbm' or `gdbm'.
   --with-ldap             Support the LDAP protocol.
-  --with-postgresql       Support the PostgreSQL RDBMS.
+  --with-postgresql       Support the PostgreSQL RDBMS. Optional argument
+                          should be the basename of the subdirectory
+                          containing `libpq-fe.h'. The first subdirectory
+                          found on the -I path will be used. Currently
+                          autodetect must be used --with-modules.
 
 Mail options
 ------------
@@ -5511,7 +5515,6 @@ else
 
 fi
 
-
 prefix_expanded=$prefix
 while true; do
   case "$prefix_expanded" in
@@ -5835,6 +5838,7 @@ case "$ac_cv_build" in
   hppa-*-*         ) machine=hp800 ;;
   arm*             ) machine=arm ;;
   i[3-9]86-*-*   ) machine=intel386 ;;
+  x86_64-*-*       ) machine=x86_64 ;;
 esac
 
 case "$ac_cv_build" in
@@ -5908,6 +5912,12 @@ _ACEOF
     esac
 
         test "$opsys $CC" = "sol2 /usr/ucb/cc" && CC=""
+  ;;
+
+    x86_64-*-* )
+    case "$ac_cv_build" in
+      *-cygwin* )	opsys=cygwin64 ;;
+          esac
   ;;
 
     i[3-9]86-*-* )
@@ -9282,8 +9292,6 @@ echo "Extracting information from the machine- and system-dependent headers..."
 
 tempcname="conftest.c"
 
-
-
 cat > $tempcname < confdefs.h
 cat >> $tempcname <<EOF
 #define NOT_C_CODE
@@ -12227,7 +12235,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ASLR needs to be disabled" >&5
 $as_echo_n "checking whether ASLR needs to be disabled... " >&6; }
 case `uname -s`:`uname -r` in
-	    Darwin:1[1234].*)
+		    Darwin:1[12345].*)
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 	LDFLAGS="$LDFLAGS -Wl,-no_pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-Wl,-no_pie\" to \$LDFLAGS"; fi
@@ -15572,15 +15580,28 @@ $as_echo_n "checking for PostgreSQL... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
 $as_echo "" >&6; }
 
-  for header_dir in "" "pgsql/" "postgresql/"; do
-    as_ac_Header=`$as_echo "ac_cv_header_${header_dir}libpq-fe.h" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "${header_dir}libpq-fe.h" "$as_ac_Header" "$ac_includes_default"
+  case "$with_postgresql" in
+  "" | "yes" | "no" | "true" | "false" | "auto")
+    pg_header_dir="" ;;
+  *)
+    pg_header_dir="$with_postgresql" ;;
+  esac
+
+          libpq_fe_h_file=""
+  for header_dir in $pg_header_dir "" "pgsql" "postgresql" "postgresql94" "postgresql-9.4" "postgresql/9.4" "postgresql84" "postgresql-8.4" "postgresql/8.4"; do
+    as_ac_Header=`$as_echo "ac_cv_header_${header_dir}/libpq-fe.h" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "${header_dir}/libpq-fe.h" "$as_ac_Header" "$ac_includes_default"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  libpq_fe_h_file=${header_dir}libpq-fe.h; break
+  libpq_fe_h_file=${header_dir}/libpq-fe.h; break
 fi
 
 
   done
+
+  if test -n "$pg_header_dir" -a "$header_dir" != "$pg_header_dir"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-postgresql=\"$pg_header_dir\" specified but not found; using \"$libpq_fe_h_file\"" >&5
+$as_echo "$as_me: WARNING: --with-postgresql=\"$pg_header_dir\" specified but not found; using \"$libpq_fe_h_file\"" >&2;}
+  fi
 
   pq_libs=
   extra_libs=
@@ -16781,6 +16802,52 @@ fi
 
     if test -n "$athena_lib" -a -n "$athena_h_path"; then
     have_xaw=yes
+    have_athena_i18n=unset
+                    if test "$athena_variant" = "Xaw3d"; then
+      save_libs_x=$libs_x
+      libs_x="-lXaw3d $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lXaw3d\" to \$libs_x"; fi
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"international\" resource in Xaw3d SimpleWidget" >&5
+$as_echo_n "checking for \"international\" resource in Xaw3d SimpleWidget... " >&6; }
+      if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdlib.h>
+        #include <string.h>
+        #undef XAW_INTERNATIONALIZATION
+        #include <$athena_h_path/Simple.h>
+
+int
+main ()
+{
+int i = simpleWidgetClass->core_class.num_resources;
+         while (i-- > 0)
+           if (!strcmp(simpleWidgetClass->core_class.resources[i].resource_name,
+                       "international"))
+             exit(0);
+         exit(253);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  have_athena_i18n=yes
+else
+  have_athena_i18n=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+      libs_x=$save_libs_x
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_athena_i18n" >&5
+$as_echo "$have_athena_i18n" >&6; }
+    fi
   else
     have_xaw=no
   fi
@@ -16985,10 +17052,13 @@ _ACEOF
     $as_echo "#define NEED_ATHENA 1" >>confdefs.h
 
     need_athena="yes"
-
     if test "$athena_3d" = "yes"; then
       $as_echo "#define HAVE_ATHENA_3D 1" >>confdefs.h
 
+      if test "$have_athena_i18n" = "yes"; then
+        $as_echo "#define HAVE_ATHENA_I18N 1" >>confdefs.h
+
+      fi
     fi
   ;;
 esac
@@ -21295,8 +21365,6 @@ fi
 
 fi
 if test "$with_tls" != "no"; then
-  $as_echo "#define WITH_TLS 1" >>confdefs.h
-
   if test "$with_tls" = "gnutls"; then
     $as_echo "#define HAVE_GNUTLS 1" >>confdefs.h
 
@@ -21331,7 +21399,7 @@ fi
     if test "$?" = 0; then
       LIBS="$LIBS "$nss_libs"" &&  if test "$verbose" = "yes"; then echo "    Appending \""$nss_libs"\" to \$LIBS"; fi
     fi
-  else
+  elif test "$with_tls" = "openssl"; then
     $as_echo "#define HAVE_OPENSSL 1" >>confdefs.h
 
     openssl_cflags=`pkg-config --cflags openssl`
@@ -21342,13 +21410,56 @@ fi
     if test "$?" = 0; then
       LIBS="$LIBS "$openssl_libs"" &&  if test "$verbose" = "yes"; then echo "    Appending \""$openssl_libs"\" to \$LIBS"; fi
     fi
-    ac_fn_c_check_func "$LINENO" "X509_check_host" "ac_cv_func_X509_check_host"
+        ac_fn_c_check_func "$LINENO" "X509_check_host" "ac_cv_func_X509_check_host"
 if test "x$ac_cv_func_X509_check_host" = xyes; then :
-  $as_echo "#define HAVE_X509_CHECK_HOST 1" >>confdefs.h
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+                        #include <openssl/x509v3.h>
+int
+main ()
+{
+return X509_check_host ((void *) 0,
+                                          (const char *) 0, 0, 0,
+                                          (void *) 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+                                                                           { $as_echo "$as_me:${as_lineno-$LINENO}: checking that X509_check_host is declared" >&5
+$as_echo_n "checking that X509_check_host is declared... " >&6; }
+              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <openssl/x509v3.h>
+int
+main ()
+{
+return X509_check_host (-1);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                                 $as_echo "#define HAVE_X509_CHECK_HOST 1" >>confdefs.h
 
 fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
 
+  else
+    with_tls=no
   fi
+fi
+if test "$with_tls" != "no"; then
+  $as_echo "#define WITH_TLS 1" >>confdefs.h
+
 fi
 
 if test "$cross_compiling" = yes; then :
@@ -21909,7 +22020,7 @@ echo "  Compiler version:                  $compiler_version"
 if test -n "$gcc_compiler_specs"; then
   echo "    - GCC specs file:                $gcc_compiler_specs"
 fi
-echo "    - Compiler command:              $XEMACS_CC $XE_CFLAGS"
+echo "    - Compiler command:              $XEMACS_CC $c_switch_all"
 if test "$CC" != "$XEMACS_CC"; then
   echo "  Compiler version for lib-src:      (detection code unimplemented)"
   echo "    - Compiler command for lib-src:  $CC $CFLAGS"
@@ -21924,8 +22035,6 @@ case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
     - Consider configuring with --with-pdump." ;;
 esac
-
-
 echo "
 Package Search (a 'root' contains '{xemacs,mule,site}-packages'):"
 
@@ -22137,7 +22246,7 @@ test "$with_ldap" = yes && echo "  Compiling in support for LDAP."
 if test "$with_postgresql" = yes; then
   echo "  Compiling in support for PostgreSQL."
   echo "    - Using PostgreSQL header file:  $libpq_fe_h_file"
-  test "$with_postgresqlv7" = yes && echo "    - Using PostgreSQL V7 bindings."
+  test "$with_postgresqlv7" = yes && echo "    - Using PostgreSQL V7+ bindings."
 fi
 
 echo "

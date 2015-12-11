@@ -1466,7 +1466,7 @@ No component of the resulting pathname will be a symbolic link, as
       if (elen > 0 && IS_DIRECTORY_SEP (string_byte (expanded_name, elen - 1))
           && !(rlen > 0 && IS_DIRECTORY_SEP (resolved_path[rlen - 1])))
 	{
-	  if (rlen + 1 > countof (resolved_path))
+	  if (rlen + 1 >= countof (resolved_path))
 	    goto toolong;
 	  resolved_path[rlen++] = DIRECTORY_SEP;
 	  resolved_path[rlen] = '\0';

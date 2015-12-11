@@ -21,6 +21,11 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Original author: Stephen J. Turnbull for 21.5.29 */
 
+/* #### Factor out into xaw-wrappers (which would #include this file)? */
+#ifdef HAVE_ATHENA_I18N
+#define XAW_INTERNATIONALIZATION 1
+#endif
+
 /* Generic utility macros, including coping with G++ whining.
    Used in lwlib via lwlib.h and X consoles via console-x.h.
 

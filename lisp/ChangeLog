@@ -1,3 +1,368 @@
+2015-09-26  Michael Sperber  <mike@xemacs.org>
+
+	* info.el (Info-read-subfile): Follow change in Makeinfo 5.0 with
+	arithmetic of node positions.
+
+2015-06-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (equalp):
+	Fix a bug in this compiler macro when passed constants in a
+	certain order.
+
+2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (load):
+	Revise this to respect load-ignore-out-of-date-elc-files, rather
+	than leaving that to #'load-internal. Avoids a corner case where
+	the source and the compiled file have different, incompatible
+	encodings.
+	Move the call to #'substitute-in-file-name here.
+	No longer check for a zero-length filename, since #'load-internal
+	no longer chokes on same and errors correctly.
+
+2015-05-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el:
+	* simple.el (line-number): Moved to buffer.c; we have an existing
+	line number cache in C, it's a shame not to have it available.
+
+2015-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* byte-optimize.el (side-effect-free-fns):
+	Add #'integer-length, #'logcount here.
+	* cl-extra.el:
+	* cl-extra.el (integer-length):
+	Update this to avoid allocating memory.
+	* cl-extra.el (logcount): New. Return the number of one bits in
+	INTEGER, if non-negative. Function from Common Lisp.
+
+2015-04-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (set-locale-for-language-environment):
+	Bind `position' as a local variable here, as was the original
+	intention.
+
+2015-04-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (check-type):
+	Correct the sense of the type test here when PLACE is not
+	setf'able, something which gave confusing errors with literal
+	fixnums or, e.g., (+ 30 40).
+
+2015-04-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gutter-items.el (append-progress-feedback):
+	* gutter-items.el (abort-progress-feedback):
+	Correct comments in both these functions, it's the progress stack
+	being adjusted, not the message stack.
+	* simple.el (message-stack):
+	Describe my recent change in the structure of this.
+	* simple.el (current-message):
+	Adjust the implementation of this to always return the string
+	displayed.
+
+2015-04-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gnuserv.el (gnuserv-edit-files):
+	No need to memorise the device created for the sake of C-x #, if
+	the client is not waiting for us.
+	Fixes a bug in the following situation:
+	-- Start gnuserv from an XEmacs within screen
+	-- Call gnuclient with an X11 display available, connecting
+	   successfully to that XEmacs and creating an X11 frame
+	-- Then call gnuclient file-name.txt, save the file, then type C-x
+	#; this deletes all the frames on the device, which it shouldn't.
+
+2015-04-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	When calling #'string-match with a REGEXP without regular
+	expression special characters, call #'search, #'mismatch, #'find,
+	etc. instead, making our code less likely to side-effect other
+	functions' match data and a little faster.
+
+	* apropos.el (apropos-command):
+	* apropos.el (apropos):
+	Call (position ?\n ...) rather than (string-match "\n" ...) here.
+	* buff-menu.el:
+	* buff-menu.el (buffers-menu-omit-invisible-buffers):
+	Don't fire up the regexp engine just to check if a string starts
+	with a space.
+	* buff-menu.el (select-buffers-tab-buffers-by-mode):
+	Don't fire up the regexp engine just to compare mode basenames.
+	* buff-menu.el (format-buffers-tab-line):
+	* buff-menu.el (build-buffers-tab-internal): Moved to being a
+	label within the following.
+	* buff-menu.el (buffers-tab-items): Use the label.
+	* bytecomp.el (byte-compile-log-1):
+	Don't fire up the regexp engine just to look for a newline.
+	* cus-edit.el (get):
+	Ditto.
+	* cus-edit.el (custom-variable-value-create):
+	Ditto, but for a colon.
+	* descr-text.el (describe-text-sexp):
+	Ditto.
+	* descr-text.el (describe-char-unicode-data):
+	Use #'split-string-by-char given that we're just looking for a
+	semicolon.
+	* descr-text.el (describe-char):
+	Don't fire up the regexp engine just to look for a newline.
+	* disass.el (disassemble-internal):
+	Ditto.
+	* files.el (file-name-sans-extension):
+	Implement this using #'position.
+	* files.el (file-name-extension):
+	Correct this function's docstring, implement it in terms of
+	#'position.
+	* files.el (insert-directory):
+	Don't fire up the regexp engine to split a string by space; don't
+	reverse the list of switches, this is actually a longstand bug as
+	far as I can see.
+	* gnuserv.el (gnuserv-process-filter):
+	Use #'position here, instead of consing inside #'split-string
+	needlessly.
+	* gtk-file-dialog.el (gtk-file-dialog-update-dropdown):
+	Use #'split-string-by-char here, don't fire up #'split-string for
+	directory-sep-char. 
+	* gtk-font-menu.el (hack-font-truename):
+	Implement this more cheaply in terms of #'find,
+	#'split-string-by-char, #'equal, rather than #'string-match,
+	#'split-string, #'string-equal.
+	* hyper-apropos.el (hyper-apropos-grok-functions):
+	* hyper-apropos.el (hyper-apropos-grok-variables):
+	Look for a newline using #'position rather than #'string-match in
+	these functions.
+	* info.el (Info-insert-dir):
+	* info.el (Info-insert-file-contents):
+	* info.el (Info-follow-reference):
+	* info.el (Info-extract-menu-node-name):
+	* info.el (Info-menu):
+	Look for fixed strings using #'position or #'search as appropriate
+	in this file.
+	* ldap.el (ldap-decode-string):
+	* ldap.el (ldap-encode-string):
+	#'encode-coding-string, #'decode-coding-string are always
+	available, don't check if they're fboundp.
+	* ldap.el (ldap-decode-address):
+	* ldap.el (ldap-encode-address):
+	Use #'split-string-by-char in these functions.
+	* lisp-mnt.el (lm-creation-date):
+	* lisp-mnt.el (lm-last-modified-date):
+	Don't fire up the regexp engine just to look for spaces in this file.
+	* menubar-items.el (default-menubar):
+	Use (not (mismatch ...)) rather than #'string-match here, for
+	simple regexp.
+	Use (search "beta" ...) rather than (string-match "beta" ...)
+	* menubar-items.el (sort-buffers-menu-alphabetically):
+	* menubar-items.el (sort-buffers-menu-by-mode-then-alphabetically):
+	* menubar-items.el (group-buffers-menu-by-mode-then-alphabetically):
+	Don't fire up the regexp engine to check if a string starts with
+	a space or an asterisk.
+	Use the more fine-grained results of #'compare-strings; compare
+	case-insensitively for the buffer menu.
+	* menubar-items.el (list-all-buffers):
+	* menubar-items.el (tutorials-menu-filter):
+	Use #'equal rather than #'string-equal, which, in this context,
+	has the drawback of not having a bytecode, and no redeeming
+	features.
+	* minibuf.el:
+	* minibuf.el (un-substitute-in-file-name):
+	Use #'count, rather than counting the occurences of $ using the
+	regexp engine.
+	* minibuf.el (read-file-name-internal-1):
+	Don't fire up the regexp engine to search for ?=.
+	* mouse.el (mouse-eval-sexp):
+	Check for newline with #'find.
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	Split a string by newline with #'split-string-by-char.
+	* mule/japanese.el:
+	* mule/japanese.el ("Japanese"):
+	Use #'search rather than #'string-match; canoncase before
+	comparing; fix a bug I had introduced where I had been making case
+	insensitive comparisons where the case mattered.
+	* mule/korea-util.el (default-korean-keyboard):
+	Look for ?3 using #'find, not #'string-march.
+	* mule/korea-util.el (quail-hangul-switch-hanja):
+	Search for a fixed string using #'search.
+	* mule/mule-cmds.el (set-locale-for-language-environment):
+	#'position, #'substitute rather than #'string-match,
+	#'replace-in-string.
+	* newcomment.el (comment-make-extra-lines):
+	Use #'search rather than #'string-match for a simple string.
+	* package-get.el (package-get-remote-filename):
+	Use #'position when looking for ?@
+	* process.el (setenv):
+	* process.el (read-envvar-name):
+	Use #'position when looking for ?=.
+	* replace.el (map-query-replace-regexp):
+	Use #'split-string-by-char instead of using an inline
+	implementation of it.
+	* select.el (select-convert-from-cf-text):
+	* select.el (select-convert-from-cf-unicodetext):
+	Use #'position rather than #'string-match in these functions.
+	* setup-paths.el (paths-emacs-data-root-p):
+	Use #'search when looking for simple string.
+	* sound.el (load-sound-file):
+	Use #'split-string-by-char rather than an inline reimplementation
+	of same.
+	* startup.el (splash-screen-window-body):
+	* startup.el (splash-screen-tty-body):
+	Search for simple strings using #'search.
+	* version.el (emacs-version):
+	Ditto.
+	* x-font-menu.el (hack-font-truename):
+	Implement this more cheaply in terms of #'find,
+	#'split-string-by-char, #'equal, rather than #'string-match,
+	#'split-string, #'string-equal.
+	* x-font-menu.el (x-reset-device-font-menus-core):
+	Use #'split-string-by-char here.
+	* x-init.el (x-initialize-keyboard):
+	Search for a simple string using #'search.
+
+2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* tty-init.el (make-frame-after-init-entry-point):
+	Some parentheses were placed badly here with the last change,
+	thank you Mats for pointing it out; in passing, change to a
+	version of the code that doesn't create a string for garbage, not
+	that it matters.
+
+2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obsolete.el (max-char):
+	Make this available for compatiblity with GNU, implement it in
+	terms of char-code-limit.
+
+2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* tty-init.el (make-frame-after-init-entry-point):
+	Behave better when TERM was not set; use
+	#'console-tty-terminal-type instead of (getenv "TERM") so we get
+	the value that reflects the current console. Thank you Uwe Brauer!
+
+	* mule/mule-tty-init.el (mule-tty-win-initted): Removed.
+	* mule/mule-tty-init.el (init-mule-tty-win): Removed.
+	* mule/mule-tty-init.el: Remove this file in its entirety.
+	* mule/mule-x-init.el (x-use-halfwidth-roman-font): Removed.
+	* mule/mule-x-init.el: Remove this file in its entirety.
+	* dumped-lisp.el (preloaded-file-list): Remove them from the
+	dumped file list. The functions within haven't been used since
+	they were imported from Mule in 1999, and the functionality of
+	init-mule-tty-win was already in tty-init.el. If someone wants to
+	automatically use a halfwidth roman font, they can go hunting for
+	the code, but there are no users on http://searchco.de/ as of
+	20150315. Leaving them around is confusing and distracting.
+
+2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (quoted-insert):
+	Update the docstring here, syncing GNU's, especially mentioning
+	read-quoted-char-radix.
+	* cmdloop.el:
+	* cmdloop.el (read-quoted-char-radix): Move this up here, outside
+	the functions.
+	* cmdloop.el (read-function-key-map): New label, reading and
+	replacing characters from function-key-map if appropriate.
+	* cmdloop.el (read-quoted-char): Multiple changes:
+	-- Take advantage of help-event-list, but be careful not to have
+	any keystrokes with character equivalents in it, so the user can
+	type C-q C-h and have the expected result.
+	-- Use function-key-map, as does #'read-char and
+	#'read-exclusive-char, helpful for character composition under
+	X11.
+	-- Pop up the help window ourselves if, e.g. F1 arrives on a TTY
+	via function-key-map, event-stream won't have done it.
+	-- Error if no keystroke that can be converted into a character is
+	specified, don't just insert ?\x00 as we used to and as does GNU
+	-- Use #'digit-char-p instead of reimplementing it.
+	-- Fix a bug of mine where I wasn't consistent about treating
+	character codes as Unicode.
+
+2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmdloop.el (no-character-typed):
+	New error, for those cases when a keystroke is to be treated as a
+	character but has no character equivalent.
+	* cmdloop.el (read-char-1): Use it.
+	* keymap.el (synthesize-keysym): Use it.
+
+2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cus-start.el (all): Describe help-event-list for Custom.
+	* keydefs.el (help-event-list): Initialise it.
+
+2015-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (append-message): Be more careful about saving a
+	non-nil value for START in message-stack.
+
+2015-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* isearch-mode.el:
+	* isearch-mode.el (isearch-fix-case):
+	Use the new #'no-case-regexp-p function if treating ISEARCH-STRING
+	as a regular expression; otherwise, use the [[:upper:]] character
+	class.
+	* isearch-mode.el (isearch-no-upper-case-p): Removed. 
+	* isearch-mode.el (with-caps-disable-folding): Removed.
+	These two haven't been used since 1998.
+	* occur.el (occur-1):
+	Use #'no-case-regexp-p here.
+	* replace.el (perform-replace):
+	Don't use #'no-upper-case-p, use #'no-case-regexp-p or
+	(string-match "[[:upper:]]" ...) as appropriate.
+	* simple.el:
+	* simple.el (no-upper-case-p): Removed. This did two different
+	things, and its secondary function (examining regular expressions)
+	just became much more complicated; move the regular expression
+	functionality to its own function, use character classes when
+	examining non-regular-expressions instead.
+	The code to look for character classes, and the design decision
+	that this should be done, are from GNU, thank you Stefan Monnier.
+	* simple.el (no-case-regexp-p): New.
+	Given a REGEXP, return non-nil if it has nothing to suggest an
+	interactive user wants a case-sensitive search.
+	* simple.el (with-search-caps-disable-folding):
+	* simple.el (with-interactive-search-caps-disable-folding):
+	Update both these macros to use #'no-case-regexp-p.
+
+2015-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Correct #'clear-message and friends so the START and END supplied
+	to #'append-message are reflected when restoring messages from the
+	message stack.
+	* simple.el (remove-message-hook):
+	Update this to reflect the START and END keyword arguments.
+	* simple.el (log-message):
+	Update this to take START and END keyword arguments.
+	* simple.el (clear-message):
+	Update this to reflect a changed `message-stack' alist structure.
+	* simple.el (remove-message):
+	Update this to reflect a changed `message-stack' alist structure;
+	don't do `with-trapping-errors' and resignal use
+	#'call-with-condition-handler directly instead, for better
+	backtraces and easier debugging.
+	* simple.el (append-message):
+	Update this to reflect a changed message-stack structure.
+
+2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+ 
+ 	* mule/digit.el: New file, specifying integer weights for those
+ 	decimal digits specified by Unicode, and for the Latin characters
+ 	in ASCII.
+ 	* dumped-lisp.el (preloaded-file-list):
+ 	Dump this file, so those weights are available at runtime.
+ 
+2015-02-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (digit-char-p): Moved to data.c.
+	* cl-extra.el (digit-char): Moved to data.c.
+	
+2014-12-31  Michael Sperber  <mike@xemacs.org>
+
+	* simple.el (line-move): Add `noerror' optional argument, as in
+	GNU Emacs.
+
 2014-11-10  Michael Sperber  <mike@xemacs.org>
 
 	* custom.el (custom-add-package-version): The car of a

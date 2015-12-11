@@ -470,6 +470,7 @@ define pobj
   if $lrecord_type == lrecord_type_lcrecord_list
     pstructtype lcrecord_list
   else
+#else
   if $lrecord_type == lrecord_type_string_direct_data
     pptype Lisp_String_Direct_Data
   else
@@ -483,8 +484,6 @@ define pobj
   ## Barf, gag, retch
   end
 #ifndef NEW_GC
-  end
-  end
   end
 #endif
   end

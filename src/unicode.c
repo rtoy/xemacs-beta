@@ -1966,20 +1966,7 @@ encode_unicode_char (Lisp_Object USED_IF_MULE (charset), int h,
 
   if (code == -1)
     {
-      if (type != UNICODE_UTF_16 &&
-	  XCHARSET_DIMENSION (charset) == 2 &&
-	  XCHARSET_CHARS (charset) == 94)
-	{
-	  unsigned char final = XCHARSET_FINAL (charset);
-
-	  if (('@' <= final) && (final < 0x7f))
-	    code = (0xe00000 + (final - '@') * 94 * 94
-		    + ((h & 127) - 33) * 94 + (l & 127) - 33);
-	  else
-	    code = '?';
-	}
-      else
-	code = '?';
+      code = 0xFFFD;
     }
 #else
   int code = h;

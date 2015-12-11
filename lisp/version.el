@@ -89,7 +89,7 @@ to the system configuration; look at `system-configuration' instead."
     (let ((version-string
 	   (format
 	    "XEmacs %s %s(%s%s) of %s %s on %s"
-	    (substring emacs-version 0 (string-match " XEmacs" emacs-version))
+	    (subseq emacs-version 0 (search " XEmacs" emacs-version))
             "[Lucid] "
 	    system-configuration
 	    (cond ((or (and (fboundp 'featurep)

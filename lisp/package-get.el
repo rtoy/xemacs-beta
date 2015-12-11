@@ -1222,7 +1222,7 @@ If (car search) is nil, (cadr search is interpreted as  a local directory).
     (let ((dir (cadr search)))
       (concat (when (car search)
 		(concat
-		 (if (string-match "@" (car search))
+		 (if (position ?@ (car search))
 		     "/"
 		   "/anonymous@")
 		 (car search) ":"))

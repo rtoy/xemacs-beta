@@ -46,10 +46,9 @@ that the buffer's contents are equivalent to the string.
 
 If FOR-TEST-HARNESS is specified, a temporary buffer is used, and
 the Assert macro checks for correctness."
-  (let ((max (expt 2 (if (featurep 'mule) 21 8)))
-	(list nil)
+  (let ((list nil)
 	(i 0))
-    (while (< i max)
+    (while (< i char-code-limit)
       (and (not for-test-harness)
 	   (zerop (% i 1000))
 	   (message "%d" i))
@@ -460,6 +459,16 @@ This is a naive implementation in Lisp.  "
 	(Assert (eq scaron (unicode-to-char code '(latin-iso8859-2)))))
       finally (set-unicode-conversion scaron initial-unicode))
     (Check-Error args-out-of-range (set-unicode-conversion scaron -10000)))
+
+  (Assert (not (natnump (char-to-unicode (make-char 'japanese-jisx0208
+                                                    34 49))))
+          "checking character with no Unicode mapping treated as such")
+
+  (Assert (equal (decode-coding-string
+                  (encode-coding-string (make-char 'japanese-jisx0208 34 49)
+                                        'utf-8) 'utf-8)
+                 "\uFFFD")
+          "checking REPLACEMENT CHARACTER used correctly")
 
   (dolist (utf-8-char 
 	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK

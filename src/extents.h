@@ -181,9 +181,8 @@ void process_extents_for_insertion (Lisp_Object object,
 				    Bytexpos opoint, Bytecount length);
 void process_extents_for_deletion (Lisp_Object object, Bytexpos from,
 				   Bytexpos to, int destroy_them);
-/* Note the following function is in Charbpos's */
-void report_extent_modification (Lisp_Object buffer, Charbpos start,
-				 Charbpos end, int afterp);
+void report_extent_modification (Lisp_Object buffer, Bytexpos start,
+				 Bytexpos end, int afterp);
 void add_string_extents (Lisp_Object string, struct buffer *buf,
 			 Bytexpos opoint, Bytecount length);
 void splice_in_string_extents (Lisp_Object string, struct buffer *buf,

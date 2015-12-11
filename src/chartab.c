@@ -1042,7 +1042,7 @@ updating_mirror_get_range_char_table (struct chartab_range *range,
 				      Lisp_Object multi)
 {
   if (range->type == CHARTAB_RANGE_CHAR)
-    return get_char_table_1 (range->ch, table);
+    return get_char_table_mirrors_ok (range->ch, table);
   else
     return get_range_char_table_1 (range, table, multi);
 }

@@ -148,20 +148,10 @@ before rotating to the next."
 	       nil nil nil
 	       'query-replace-history))
      (list from to current-prefix-arg)))
-  (let (replacements)
-    (if (listp to-strings)
-	(setq replacements to-strings)
-      (while (not (eql (length to-strings) 0))
-	(if (string-match " " to-strings)
-	    (setq replacements
-		  (append replacements
-			  (list (substring to-strings 0
-					   (string-match " " to-strings))))
-		  to-strings (substring to-strings
-				       (1+ (string-match " " to-strings))))
-	  (setq replacements (append replacements (list to-strings))
-		to-strings ""))))
-    (perform-replace regexp replacements t t nil arg)))
+  (perform-replace regexp (if (listp to-strings)
+                              to-strings
+                            (split-string-by-char to-strings ?\ ))
+                   t t nil arg))
 
 (defun replace-string (from-string to-string &optional delimited)
   "Replace occurrences of FROM-STRING with TO-STRING.
@@ -563,7 +553,11 @@ When searching for a match, this function uses
 	 ;; XEmacs addition
 	 (qr-case-fold-search
 	  (if (and case-fold-search search-caps-disable-folding)
-	      (no-upper-case-p search-string regexp-flag)
+              (if regexp-flag
+                  (no-case-regexp-p search-string)
+                (save-match-data
+                  (let (case-fold-search)
+                    (not (string-match "[[:upper:]]" search-string)))))
 	    case-fold-search))
 	 (message
 	  (if query-flag
