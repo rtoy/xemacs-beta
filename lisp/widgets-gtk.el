@@ -34,8 +34,7 @@
    gtk-widget-show-all
    ;; ifdef INTROSPECTION
    ;; gtk-notebook-new gtk-notebook-append-page
-   gtk-vbox-new gtk-label-new gtk-adjustment-new
-   gtk-progress-bar-new-with-adjustment gtk-adjustment-set-value
+   gtk-vbox-new
    gtk-entry-new gtk-entry-set-text gtk-widget-set-style
    gtk-widget-get-style))
 
@@ -113,7 +112,7 @@
     widget))
 
 (put 'button         'instantiator 'gtk-widget-instantiate-button-internal)
-(put 'tab-control    'instantiator 'gtk-widget-instantiate-notebook-internal)
+(put 'tab-control    'instantiator 'ignore)
 ;; ifndef INTROSPECTION
 (put 'progress-gauge 'instantiator 'ignore)
 (put 'tree-view      'instantiator 'ignore)
