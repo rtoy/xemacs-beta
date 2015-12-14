@@ -2023,7 +2023,8 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
       GtkAllocation a, wa;
       int moving;
 
-      if (!wid) return;
+      if (!wid)
+	return;
 
       a.x = x + IMAGE_INSTANCE_GTK_WIDGET_XOFFSET (p);
       a.y = y + IMAGE_INSTANCE_GTK_WIDGET_YOFFSET (p);
@@ -2082,8 +2083,6 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 	}
 
       gtk_widget_map (wid);
-      gtk_widget_show_all (wid);
-      gtk_widget_queue_draw (wid);
     }
 }
 
@@ -2184,6 +2183,7 @@ gtk_redisplay_widget (Lisp_Image_Instance *p)
       gtk_widget_get_preferred_size (IMAGE_INSTANCE_GTK_CLIPWIDGET (p), NULL, &r);
 #endif
       gtk_widget_size_allocate (IMAGE_INSTANCE_GTK_CLIPWIDGET (p), &a);
+      gtk_widget_map (IMAGE_INSTANCE_GTK_CLIPWIDGET (p));
     }
 
   /* Adjust offsets within the frame. */

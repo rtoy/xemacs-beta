@@ -1,3 +1,9 @@
+2015-12-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_map_subwindow): Remove extra calls, only map
+	widget is required.
+	(gtk_redisplay_widget): Map widget during redisplay as well.
+
 2015-12-11  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_label_instantiate): Define to create label
