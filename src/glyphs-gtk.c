@@ -2842,8 +2842,7 @@ gtk_tab_control_redisplay (Lisp_Object image_instance)
 #endif /* HAVE_WIDGETS */
 
 
-/* Create a tab_control widget.  The special handling of the individual tabs
-   means that the normal instantiation code cannot be used. */
+/* Create a label widget. */
 static void
 gtk_label_instantiate (Lisp_Object image_instance,
 		       Lisp_Object instantiator,

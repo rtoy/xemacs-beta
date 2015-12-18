@@ -1,6 +1,7 @@
 2015-12-18  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_button_redisplay): Avoid crash with null widget.
+	(gtk_label_instantiate): Fix comment.
 
 2015-12-13  Jeff Sparkes  <jsparkes@gmail.com>
 
