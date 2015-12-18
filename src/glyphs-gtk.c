@@ -2458,6 +2458,9 @@ gtk_button_redisplay (Lisp_Object image_instance)
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   GtkWidget *w = IMAGE_INSTANCE_GTK_CLIPWIDGET (p);
 
+  if (w == 0)
+    return;
+
   if (G_OBJECT_TYPE (w) == gtk_button_get_type ())
     {
     }
