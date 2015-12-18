@@ -1,3 +1,7 @@
+2015-12-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el (gtk-widget-instantiate-entry-internal): Delete.
+
 2015-12-11  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* widgets-gtk.el gtk-widget-instantiate-progress-internal):

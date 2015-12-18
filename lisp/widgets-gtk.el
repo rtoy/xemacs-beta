@@ -98,25 +98,25 @@
 ;;      (setq items (cdr items)))
 ;;    widget))
 
-(defun gtk-widget-instantiate-entry-internal (plist instance)
-  (let* ((widget (gtk-entry-new))
-	 (default (plist-get plist :descriptor)))
-    (cond
-     ((stringp default)
-      nil)
-     ((sequencep default)
-      (setq default (mapconcat 'identity default "")))
-     (t
-      (error "Invalid default value: %S" default)))
-    (gtk-entry-set-text widget default)
-    widget))
+;; (defun gtk-widget-instantiate-entry-internal (plist instance)
+;;   (let* ((widget (gtk-entry-new))
+;; 	 (default (plist-get plist :descriptor)))
+;;     (cond
+;;      ((stringp default)
+;;       nil)
+;;      ((sequencep default)
+;;       (setq default (mapconcat 'identity default "")))
+;;      (t
+;;       (error "Invalid default value: %S" default)))
+;;     (gtk-entry-set-text widget default)
+;;     widget))
 
 (put 'button         'instantiator 'gtk-widget-instantiate-button-internal)
 (put 'tab-control    'instantiator 'ignore)
 ;; ifndef INTROSPECTION
 (put 'progress-gauge 'instantiator 'ignore)
 (put 'tree-view      'instantiator 'ignore)
-(put 'edit-field     'instantiator 'gtk-widget-instantiate-entry-internal)
+(put 'edit-field     'instantiator 'ignore)
 (put 'combo-box      'instantiator 'ignore)
 (put 'label          'instantiator 'ignore)
 (put 'layout         'instantiator 'ignore)
