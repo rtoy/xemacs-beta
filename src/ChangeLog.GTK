@@ -1,5 +1,10 @@
 2015-12-18  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_edit_field_instantiate): Ported to here from
+	widgets-gtk.el
+
+	* lisp.h (do): Declare EXFUN(Fmapconcat).
+
 	* glyphs-gtk.c (gtk_button_redisplay): Avoid crash with null widget.
 	(gtk_label_instantiate): Fix comment.
 

@@ -2394,7 +2394,6 @@ gtk_##x##_instantiate (Lisp_Object image_instance,			\
 
 FAKE_GTK_WIDGET_INSTANTIATOR(native_layout);
 FAKE_GTK_WIDGET_INSTANTIATOR(button);
-FAKE_GTK_WIDGET_INSTANTIATOR(edit_field);
 FAKE_GTK_WIDGET_INSTANTIATOR(combo_box);
 /* Note: tab_control has a custom instantiator (see below) */
 
@@ -2867,6 +2866,45 @@ gtk_label_instantiate (Lisp_Object image_instance,
   IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = GTK_WIDGET (label);
 }
 
+
+/* Create a text entry widget. */
+static void
+gtk_edit_field_instantiate (Lisp_Object image_instance,
+			    Lisp_Object instantiator,
+			    Lisp_Object pointer_fg,
+			    Lisp_Object pointer_bg,
+			    int dest_mask, Lisp_Object domain)
+{
+  const char *text = "";
+  Lisp_Object value;
+  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  GtkWidget *entry;
+
+  /* The normal instantiation is still needed. */
+  gtk_widget_instantiate (image_instance, instantiator, pointer_fg,
+			  pointer_bg, dest_mask, domain);
+
+  value = find_keyword_in_vector (instantiator, Q_descriptor);
+
+  if (STRINGP (value))
+    {
+      text = LISP_STRING_TO_EXTERNAL (value, Qutf_8);
+    }
+  else if (SEQUENCEP (value))
+    {
+      Lisp_Object args[] = { Qidentity, value, build_ascstring("") };
+      text = LISP_STRING_TO_EXTERNAL (Fmapconcat (countof (args), args),
+				      Qutf_8);
+    }
+
+  entry = gtk_entry_new ();
+  if (text)
+    {
+      gtk_entry_set_text (GTK_ENTRY (entry), text);
+    }
+  IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = GTK_WIDGET (entry);
+  gtk_widget_map (entry);
+}
 
 /************************************************************************/
 /*                            initialization                            */

@@ -5806,6 +5806,7 @@ extern Fixnum warn_about_possibly_incompatible_back_references;
 EXFUN (Ffill, MANY);
 EXFUN (Fclear_string, 1);
 EXFUN (Freplace, MANY);
+EXFUN (Fmapconcat, MANY);
 
 /* Defined in signal.c */
 void init_interrupts_late (void);
