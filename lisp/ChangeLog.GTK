@@ -1,3 +1,8 @@
+2015-12-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el (gtk-widget-instantiate-button-internal): Comment
+	out; save for reference as C version is incomplete.
+
 2015-12-18  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* widgets-gtk.el (gtk-widget-instantiate-entry-internal): Delete.
