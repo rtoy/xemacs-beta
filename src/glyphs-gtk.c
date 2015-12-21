@@ -2473,7 +2473,13 @@ gtk_button_instantiate (Lisp_Object image_instance,
   if (NILP (descriptor))
     return;
 
-  type = find_keyword_in_vector (descriptor, Q_style);
+  if (VECTORP (descriptor))
+    type = find_keyword_in_vector (descriptor, Q_style);
+  else if (SYMBOLP (descriptor))
+    type = descriptor;
+  else
+    type = Qbutton;
+
   text = Felt (descriptor, make_fixnum (0));
   if (STRINGP (text))
     label = LISP_STRING_TO_EXTERNAL (text, Qutf_8);
