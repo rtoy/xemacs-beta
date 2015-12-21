@@ -1,3 +1,8 @@
+2015-12-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_redisplay_widget): Remove call to
+	gtk_widget_map, it can cause crashes.
+
 2015-12-18  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_edit_field_instantiate): Ported to here from
