@@ -1,5 +1,10 @@
 2015-12-21  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* glyphs-gtk.c (gtk_button_instantiate): Define, ported from lisp.
+	Callback code is incomplete.
+
+	* general-slots.h: Add new symbols for widget button actions.
+
 	* glyphs-gtk.c (gtk_redisplay_widget): Remove call to
 	gtk_widget_map, it can cause crashes.
 

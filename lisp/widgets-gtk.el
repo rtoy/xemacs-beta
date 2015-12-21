@@ -57,34 +57,34 @@
      (t
       nil))))
 
-(defun gtk-widget-instantiate-button-internal (plist instance)
-  (let* ((type (or (plist-get plist :style) 'button))
-	 (label (or (plist-get plist :descriptor) (symbol-name type)))
-	 (widget nil))
-    (case type
-      (button
-       (setq widget (gtk-button-new-with-label label))
-       (gtk-signal-connect widget 'clicked
-			   (gtk-widget-get-callback widget plist instance)))
-      (radio
-       (let ((aux nil)
-	     (selected-p (plist-get plist :selected)))
-	 (setq widget (gtk-radio-button-new-with-label nil label)
-	       aux (gtk-radio-button-new-with-label
-		    (gtk-radio-button-group widget)
-		    "bogus sibling"))
-	 (gtk-toggle-button-set-active widget (eval selected-p))
-	 (gtk-signal-connect widget 'toggled
-			     (gtk-widget-get-callback widget plist instance) aux)))
-      (otherwise
-       ;; Check boxes
-       (setq widget (gtk-check-button-new-with-label label))
-       (gtk-toggle-button-set-active widget
-				     (eval (plist-get plist :selected)))
-       (gtk-signal-connect widget 'toggled
-			   (gtk-widget-get-callback widget plist instance))))
-    (gtk-widget-show-all widget)
-    widget))
+;; (defun gtk-widget-instantiate-button-internal (plist instance)
+;;   (let* ((type (or (plist-get plist :style) 'button))
+;; 	 (label (or (plist-get plist :descriptor) (symbol-name type)))
+;; 	 (widget nil))
+;;     (case type
+;;       (button
+;;        (setq widget (gtk-button-new-with-label label))
+;;        (gtk-signal-connect widget 'clicked
+;; 			   (gtk-widget-get-callback widget plist instance)))
+;;       (radio
+;;        (let ((aux nil)
+;; 	     (selected-p (plist-get plist :selected)))
+;; 	 (setq widget (gtk-radio-button-new-with-label nil label)
+;; 	       aux (gtk-radio-button-new-with-label
+;; 		    (gtk-radio-button-group widget)
+;; 		    "bogus sibling"))
+;; 	 (gtk-toggle-button-set-active widget (eval selected-p))
+;; 	 (gtk-signal-connect widget 'toggled
+;; 			     (gtk-widget-get-callback widget plist instance) aux)))
+;;       (otherwise
+;;        ;; Check boxes
+;;        (setq widget (gtk-check-button-new-with-label label))
+;;        (gtk-toggle-button-set-active widget
+;; 				     (eval (plist-get plist :selected)))
+;;        (gtk-signal-connect widget 'toggled
+;; 			   (gtk-widget-get-callback widget plist instance))))
+;;     (gtk-widget-show-all widget)
+;;     widget))
 
 ;; ifdef INTROSPECTION
 ;;(defun gtk-widget-instantiate-notebook-internal (plist instance)
@@ -111,7 +111,7 @@
 ;;     (gtk-entry-set-text widget default)
 ;;     widget))
 
-(put 'button         'instantiator 'gtk-widget-instantiate-button-internal)
+(put 'button         'instantiator 'ignore)
 (put 'tab-control    'instantiator 'ignore)
 ;; ifndef INTROSPECTION
 (put 'progress-gauge 'instantiator 'ignore)

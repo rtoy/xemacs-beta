@@ -77,6 +77,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <X11/xpm.h>
 #endif
 
+EXFUN (Fgtk_signal_connect, MANY);
+
 /* Widget callback hash table callback slot. */
 #define WIDGET_GLYPH_SLOT 0
 
@@ -153,6 +155,7 @@ Lisp_Object Qgtk_resource;
 #ifdef HAVE_WIDGETS
 Lisp_Object Qgtk_widget_instantiate_internal, Qgtk_widget_property_internal;
 Lisp_Object Qgtk_widget_redisplay_internal, Qgtk_widget_set_style;
+Lisp_Object Qgtk_widget_get_callback;
 #endif
 
 #ifdef HAVE_GTK
@@ -2183,7 +2186,6 @@ gtk_redisplay_widget (Lisp_Image_Instance *p)
       gtk_widget_get_preferred_size (IMAGE_INSTANCE_GTK_CLIPWIDGET (p), NULL, &r);
 #endif
       gtk_widget_size_allocate (IMAGE_INSTANCE_GTK_CLIPWIDGET (p), &a);
-      gtk_widget_map (IMAGE_INSTANCE_GTK_CLIPWIDGET (p));
     }
 
   /* Adjust offsets within the frame. */
@@ -2393,7 +2395,6 @@ gtk_##x##_instantiate (Lisp_Object image_instance,			\
 }
 
 FAKE_GTK_WIDGET_INSTANTIATOR(native_layout);
-FAKE_GTK_WIDGET_INSTANTIATOR(button);
 FAKE_GTK_WIDGET_INSTANTIATOR(combo_box);
 /* Note: tab_control has a custom instantiator (see below) */
 
@@ -2448,6 +2449,81 @@ gtk_widget_query_geometry (Lisp_Object image_instance,
 
 
 /* Button functions. */
+static void
+gtk_button_instantiate (Lisp_Object image_instance,
+			Lisp_Object instantiator,
+			Lisp_Object pointer_fg,
+			Lisp_Object pointer_bg,
+			int dest_mask, Lisp_Object domain)
+{
+  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  GtkWidget *widget;
+  Lisp_Object type;
+  Lisp_Object descriptor;
+  Lisp_Object text;
+  Lisp_Object callback;
+  Lisp_Object action;
+  const char *label = "button";
+
+  /* The normal instantiation is still needed. */
+  gtk_widget_instantiate (image_instance, instantiator, pointer_fg,
+                          pointer_bg, dest_mask, domain);
+
+  descriptor = find_keyword_in_vector (instantiator, Q_descriptor);
+  if (NILP (descriptor))
+    return;
+
+  type = find_keyword_in_vector (descriptor, Q_style);
+  text = Felt (descriptor, make_fixnum (0));
+  if (STRINGP (text))
+    label = LISP_STRING_TO_EXTERNAL (text, Qutf_8);
+  else if (!NILP (type))
+    label = LISP_STRING_TO_EXTERNAL (Fsymbol_name (type), Qutf_8);
+
+  if (NILP (type) || EQ (type, Qbutton))
+    {
+      widget = gtk_button_new_with_label (label);
+      action = Qclicked;
+    }
+  else if (EQ (type, Qradio))
+    {
+      GtkWidget *aux;
+      Lisp_Object selected = find_keyword_in_vector (instantiator, Q_selected);
+
+      widget = gtk_radio_button_new_with_label (NULL, label);
+      aux = gtk_radio_button_new_with_label
+	(gtk_radio_button_get_group (GTK_RADIO_BUTTON (widget)),
+	 "bogus sibling");
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget),
+				    !NILP (Feval (selected)));
+      action = Qtoggled;
+    }
+  else if (EQ (type, Qtoggle))
+    {
+      Lisp_Object selected = find_keyword_in_vector (instantiator, Q_selected);
+
+      widget = gtk_check_button_new_with_label (label);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget),
+				    !NILP (Feval (selected)));
+      action = Qtoggled;
+    }
+  else
+    {
+      signal_error (Qinvalid_argument, "Unknown button type", type);
+    }
+  IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = widget;
+#if 0
+  callback = Feval (list4 (Qgtk_widget_get_callback,
+			   image_instance, /* this is wrong, should be wrapped widget */
+			   instantiator,
+			   image_instance));
+  {
+    Lisp_Object args[] = { image_instance, action, callback };
+    Fgtk_signal_connect (countof (args), args);
+  }
+#endif
+  gtk_widget_show_all (widget);
+}
 
 /* Update a button's clicked state. */
 static void
@@ -2903,7 +2979,6 @@ gtk_edit_field_instantiate (Lisp_Object image_instance,
       gtk_entry_set_text (GTK_ENTRY (entry), text);
     }
   IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = GTK_WIDGET (entry);
-  gtk_widget_map (entry);
 }
 
 /************************************************************************/
