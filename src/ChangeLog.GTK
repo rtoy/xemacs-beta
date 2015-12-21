@@ -2,6 +2,7 @@
 
 	* glyphs-gtk.c (gtk_button_instantiate): Define, ported from lisp.
 	Callback code is incomplete.
+	(gtk_button_instantiate): Handle non-vector descriptor.
 
 	* general-slots.h: Add new symbols for widget button actions.
 
