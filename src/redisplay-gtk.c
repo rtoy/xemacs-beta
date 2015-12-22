@@ -58,8 +58,14 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
     }
   else
     {
-      cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-      gtk_fill_rectangle (cr, x, y, width, height);
+#ifdef HAVE_GTK2
+      gdk_window_clear_area(gtk_widget_get_window (widget),
+			    x, y, width, height);
+#endif
+#ifdef HAVE_GTK3
+      gtk_render_background(gtk_widget_get_style_context (widget),
+			    cr, x, y, width, height);
+#endif
     }
   cairo_destroy (cr);
 }
@@ -77,9 +83,7 @@ XLIKE_clear_frame (struct frame *f)
   GdkColor *bg;
 #endif
 #ifdef HAVE_GTK3
-  cairo_rectangle_int_t r;
   GtkStyleContext *sc = gtk_widget_get_style_context (widget);
-  GdkRGBA bg;
 #endif
 
   /* #### GEOM! This clears the internal border and gutter (and scrollbars)
@@ -105,9 +109,7 @@ XLIKE_clear_frame (struct frame *f)
 #endif
 
 #ifdef HAVE_GTK3
-  gtk_style_context_get_background_color (sc, GTK_STATE_FLAG_NORMAL, &bg);
-  cairo_set_source_rgba (cr, bg.red, bg.green, bg.blue, bg.alpha);
-  gtk_fill_rectangle (cr, r.x, r.y, r.width, r.height);
+  gtk_render_background (sc, cr, r.x, r.y, r.width, r.height);
 #endif
 
 #if 1
@@ -405,6 +407,8 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
       if (NILP (bar_cursor_value))
 	{
 	  gtk_fill_rectangle (cr, x, cursor_y, width, cursor_height);
+	  stderr_out ("gtk_eol_cursor: %d,%d %dx%d\n", x, cursor_y,
+		      width, cursor_height);
 	}
       else
 	{
