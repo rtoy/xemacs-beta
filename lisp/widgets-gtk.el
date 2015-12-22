@@ -138,10 +138,4 @@
 ;		 widget)
     widget))
 
-(defun gtk-widget-property-internal ()
-  nil)
-
-(defun gtk-widget-redisplay-internal ()
-  nil)
-
 (provide 'widgets-gtk)

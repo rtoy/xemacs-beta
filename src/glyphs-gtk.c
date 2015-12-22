@@ -153,8 +153,8 @@ static GdkCursorType cursor_name_to_index (const char *name);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (gtk_resource);
 Lisp_Object Qgtk_resource;
 #ifdef HAVE_WIDGETS
-Lisp_Object Qgtk_widget_instantiate_internal, Qgtk_widget_property_internal;
-Lisp_Object Qgtk_widget_redisplay_internal, Qgtk_widget_set_style;
+Lisp_Object Qgtk_widget_instantiate_internal;
+Lisp_Object Qgtk_widget_set_style;
 Lisp_Object Qgtk_widget_get_callback;
 #endif
 

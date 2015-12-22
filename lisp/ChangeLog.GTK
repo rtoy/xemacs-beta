@@ -1,3 +1,8 @@
+2015-12-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el (gtk-widget-property-internal): Unused, so remove.
+	(gtk-widget-redisplay-internal): Ditto.
+
 2015-12-21  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* widgets-gtk.el (gtk-widget-instantiate-button-internal): Comment
