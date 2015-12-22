@@ -2995,8 +2995,6 @@ syms_of_glyphs_gtk (void)
 {
 #ifdef HAVE_WIDGETS
   DEFSYMBOL (Qgtk_widget_instantiate_internal);
-  DEFSYMBOL (Qgtk_widget_property_internal);
-  DEFSYMBOL (Qgtk_widget_redisplay_internal);
   DEFSYMBOL (Qgtk_widget_set_style);
 #endif
 }
