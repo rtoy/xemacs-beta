@@ -47,7 +47,7 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
 
-  if (!UNBOUNDP (background_pixmap))
+  if (!NILP (background_pixmap && !UNBOUNDP (background_pixmap))
     {
       /* XXX Implement me! */
       /*
@@ -55,6 +55,14 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
       background_pixmap, background_placement, Qnil);
       XLIKE_FILL_RECTANGLE (dpy, x_win, gc, x, y, width, height);
       */
+#ifdef HAVE_GTK2
+      gdk_window_clear_area(gtk_widget_get_window (widget),
+			    x, y, width, height);
+#endif
+#ifdef HAVE_GTK3
+      gtk_render_background(gtk_widget_get_style_context (widget),
+			    cr, x, y, width, height);
+#endif
     }
   else
     {
@@ -407,8 +415,6 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
       if (NILP (bar_cursor_value))
 	{
 	  gtk_fill_rectangle (cr, x, cursor_y, width, cursor_height);
-	  stderr_out ("gtk_eol_cursor: %d,%d %dx%d\n", x, cursor_y,
-		      width, cursor_height);
 	}
       else
 	{

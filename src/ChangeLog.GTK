@@ -2,6 +2,7 @@
 
 	* redisplay-gtk.c (XLIKE_clear_region): Use gtk_render_background
 	to avoid using obsolete gtk_style_context_get_background_color.
+	(XLIKE_clear_region): Fix logic around background pixmap.
 
 2015-12-21  Jeff Sparkes  <jsparkes@gmail.com>
 
