@@ -1,7 +1,7 @@
 /* CSS configuration for GTK 3.0.  ~/.xemacs/xemacs.css has precedence. */
 
 GtkToolbar, #primary-toolbar, .toolbar {
-    border-width: 0px 0px 0px 0px;
+    border-width: 1px;
     border-style: solid;
     padding: 0;
 }
