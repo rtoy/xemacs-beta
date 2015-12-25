@@ -218,11 +218,12 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
       gdk_visual_get_red_pixel_details(vis, &junk, NULL, NULL);
 #endif
       rshift = 0;
-      while ((junk & 0x1) == 0)
-	{
-	  junk = junk >> 1;
-	  rshift ++;
-	}
+      if (junk != 0)
+	while ((junk & 0x1) == 0)
+	  {
+	    junk = junk >> 1;
+	    rshift ++;
+	  }
       rbits = 0;
       while (junk != 0)
 	{
@@ -236,11 +237,12 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
       gdk_visual_get_green_pixel_details(vis, &junk, NULL, NULL);
 #endif
       gshift = 0;
-      while ((junk & 0x1) == 0)
-	{
-	  junk = junk >> 1;
-	  gshift ++;
-	}
+      if (junk != 0)
+	while ((junk & 0x1) == 0)
+	  {
+	    junk = junk >> 1;
+	    gshift ++;
+	  }
       gbits = 0;
       while (junk != 0)
 	{
@@ -254,11 +256,12 @@ convert_EImage_to_GDKPixbuf (Lisp_Object device, int width, int height,
       gdk_visual_get_blue_pixel_details(vis, &junk, NULL, NULL);
 #endif
       bshift = 0;
-      while ((junk & 0x1) == 0)
-	{
-	  junk = junk >> 1;
-	  bshift ++;
-	}
+      if (junk != 0)
+	while ((junk & 0x1) == 0)
+	  {
+	    junk = junk >> 1;
+	    bshift ++;
+	  }
       bbits = 0;
       while (junk != 0)
 	{
@@ -2004,6 +2007,7 @@ gtk_unmap_subwindow (Lisp_Image_Instance *p)
       if (IMAGE_INSTANCE_GTK_CLIPWIDGET (p))
 	gtk_widget_unmap (IMAGE_INSTANCE_GTK_CLIPWIDGET (p));
     }
+  stderr_out("unmap 0x%lx\n", (unsigned long)IMAGE_INSTANCE_GTK_CLIPWIDGET (p));
 }
 
 /* map the subwindow. This is used by redisplay via
@@ -2051,7 +2055,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 	  ** losers.
           ** Check if still true for Gtk 2.0 - jsparkes
 	  */
-          gtk_widget_hide (FRAME_GTK_TEXT_WIDGET (f));
+          //gtk_widget_hide (FRAME_GTK_TEXT_WIDGET (f));
 
 	  if (IMAGE_INSTANCE_GTK_ALREADY_PUT(p))
 	    {
@@ -2067,7 +2071,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 			     a.x, a.y);
 	    }
 
-          gtk_widget_show (FRAME_GTK_TEXT_WIDGET (f));
+          //gtk_widget_show (FRAME_GTK_TEXT_WIDGET (f));
 	}
       else
 	{
@@ -2084,7 +2088,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 			     a.x, a.y);
 	    }
 	}
-
+      stderr_out("map 0x%lx\n", (unsigned long)wid);
       gtk_widget_map (wid);
     }
 }
@@ -2813,6 +2817,7 @@ gtk_tab_control_instantiate (Lisp_Object image_instance,
   nb = GTK_NOTEBOOK (IMAGE_INSTANCE_GTK_CLIPWIDGET (ii));
 #else
   nb = GTK_NOTEBOOK (gtk_notebook_new ());
+  gtk_widget_set_name (GTK_WIDGET (nb), "notebook");
   IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = GTK_WIDGET (nb);
 #endif
 
@@ -2832,6 +2837,7 @@ gtk_tab_control_instantiate (Lisp_Object image_instance,
   /* Call per-tab lisp callback when a tab is pressed. */
   assert (g_signal_connect (G_OBJECT (nb), "switch-page",
                             G_CALLBACK (gtk_tab_control_callback), NULL));
+  gtk_widget_show_all (GTK_WIDGET (nb));
 }
 
 /* Set the properties of a tab control */
