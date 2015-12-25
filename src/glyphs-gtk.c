@@ -2467,7 +2467,7 @@ gtk_button_instantiate (Lisp_Object image_instance,
   Lisp_Object text;
   Lisp_Object callback;
   Lisp_Object action;
-  const char *label = "button";
+  const char *label = 0;
 
   /* The normal instantiation is still needed. */
   gtk_widget_instantiate (image_instance, instantiator, pointer_fg,
@@ -2481,14 +2481,22 @@ gtk_button_instantiate (Lisp_Object image_instance,
     type = find_keyword_in_vector (descriptor, Q_style);
   else if (SYMBOLP (descriptor))
     type = descriptor;
+  else if (STRINGP (descriptor))
+    {
+      label = LISP_STRING_TO_EXTERNAL (descriptor, Qutf_8);
+      type = Qbutton;
+    }
   else
     type = Qbutton;
 
-  text = Felt (descriptor, make_fixnum (0));
-  if (STRINGP (text))
-    label = LISP_STRING_TO_EXTERNAL (text, Qutf_8);
-  else if (!NILP (type))
-    label = LISP_STRING_TO_EXTERNAL (Fsymbol_name (type), Qutf_8);
+  if (label == 0)
+    {
+      text = Felt (descriptor, make_fixnum (0));
+      if (STRINGP (text))
+	label = LISP_STRING_TO_EXTERNAL (text, Qutf_8);
+      else if (!NILP (type))
+	label = LISP_STRING_TO_EXTERNAL (Fsymbol_name (type), Qutf_8);
+    }
 
   if (NILP (type) || EQ (type, Qbutton))
     {

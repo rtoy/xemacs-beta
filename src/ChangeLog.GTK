@@ -2,6 +2,8 @@
 
 	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Avoid infinite loops
 	when shifting by zero.
+	(gtk_button_instantiate): A button descriptor can be just a label
+	string as well.
 
 2015-12-22  Jeff Sparkes  <jsparkes@gmail.com>
 
