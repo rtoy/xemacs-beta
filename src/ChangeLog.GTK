@@ -1,3 +1,8 @@
+2015-12-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_unmap_subwindow): Only unmap mapped widgets.
+	(gtk_map_subwindow): Only map unmapped widgets.
+
 2015-12-25  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Avoid infinite loops
