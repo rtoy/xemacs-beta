@@ -2005,9 +2005,11 @@ gtk_unmap_subwindow (Lisp_Image_Instance *p)
 	 get focus. The losing with simple scrolling but is the safest
 	 thing to do. */
       if (IMAGE_INSTANCE_GTK_CLIPWIDGET (p))
-	gtk_widget_unmap (IMAGE_INSTANCE_GTK_CLIPWIDGET (p));
+#if GTK_CHECK_VERSION(2, 20, 0)
+	if (gtk_widget_get_mapped (IMAGE_INSTANCE_GTK_CLIPWIDGET (p)))
+#endif
+	  gtk_widget_unmap (IMAGE_INSTANCE_GTK_CLIPWIDGET (p));
     }
-  stderr_out("unmap 0x%lx\n", (unsigned long)IMAGE_INSTANCE_GTK_CLIPWIDGET (p));
 }
 
 /* map the subwindow. This is used by redisplay via
@@ -2088,8 +2090,10 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 			     a.x, a.y);
 	    }
 	}
-      stderr_out("map 0x%lx\n", (unsigned long)wid);
-      gtk_widget_map (wid);
+#if GTK_CHECK_VERSION(2, 20, 0)
+      if (!gtk_widget_get_mapped (wid))
+#endif
+	gtk_widget_map (wid);
     }
 }
 
