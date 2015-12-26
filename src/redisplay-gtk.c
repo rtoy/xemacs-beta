@@ -47,7 +47,7 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
 
-  if (!NILP (background_pixmap && !UNBOUNDP (background_pixmap))
+  if (!NILP (background_pixmap) && !UNBOUNDP (background_pixmap))
     {
       /* XXX Implement me! */
       /*
@@ -91,6 +91,7 @@ XLIKE_clear_frame (struct frame *f)
   GdkColor *bg;
 #endif
 #ifdef HAVE_GTK3
+  cairo_rectangle_t r;
   GtkStyleContext *sc = gtk_widget_get_style_context (widget);
 #endif
 
