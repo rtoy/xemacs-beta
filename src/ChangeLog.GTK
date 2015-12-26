@@ -2,6 +2,8 @@
 
 	* glyphs-gtk.c (gtk_unmap_subwindow): Only unmap mapped widgets.
 	(gtk_map_subwindow): Only map unmapped widgets.
+	(gtk_widget_instantiate_1): No widgets are instantiated in lisp
+	anymore, so no point in warning about it.
 
 2015-12-25  Jeff Sparkes  <jsparkes@gmail.com>
 

@@ -2342,7 +2342,7 @@ gtk_widget_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
     }
   else
     {
-      stderr_out ("Lisp-level creation of widget failed... falling back\n");
+      /* stderr_out ("Lisp-level creation of widget failed... falling back\n"); */
       w = gtk_label_new ("Widget Creation Failed...");
     }
 
