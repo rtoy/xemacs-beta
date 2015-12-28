@@ -1,3 +1,7 @@
+2015-12-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-eimage.c (png_instantiate): Handle non-GTK case.
+
 2015-12-26  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-gtk.c (gtk_unmap_subwindow): Only unmap mapped widgets.
