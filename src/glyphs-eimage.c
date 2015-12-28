@@ -1031,17 +1031,17 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	  Lisp_Object rgb = MAYBE_LISP_DEVMETH (XDEVICE (c->device),
 						color_instance_rgb_components,
 						(c));
-#ifdef HAVE_GTK2
-#define GETCOLOR(col) my_background.col = (unsigned short) XFIXNUM (XCAR (rgb))
-	  GETCOLOR(red); rgb = XCDR (rgb);
-	  GETCOLOR(green); rgb = XCDR (rgb);
-	  GETCOLOR(blue);
-#else
+#ifdef HAVE_GTK3
 #define GETCOLOR(col) my_background.col = (unsigned short) (XFLOATFIXNUM (XCAR (rgb)) * 65535.0)
 	  GETCOLOR(red); rgb = XCDR (rgb);
 	  GETCOLOR(green); rgb = XCDR (rgb);
 	  GETCOLOR(blue);
 	  /* What about alpha? - jsparkes */
+#else
+#define GETCOLOR(col) my_background.col = (unsigned short) XFIXNUM (XCAR (rgb))
+	  GETCOLOR(red); rgb = XCDR (rgb);
+	  GETCOLOR(green); rgb = XCDR (rgb);
+	  GETCOLOR(blue);
 #endif
 #undef GETCOLOR
 	}
