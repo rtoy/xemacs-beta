@@ -359,6 +359,43 @@ gtk_font_instance_properties (struct Lisp_Font_Instance *UNUSED (f))
   return result;
 }
 
+/* Return a list of font instance strings for a given face.
+
+   The only documentation I could find of these strings is in the GNU
+   Emacs manual. */
+static Lisp_Object
+gtk_font_describe_face(const char *name, PangoFontFace *face)
+{
+  Lisp_Object result = Qnil;
+  char *full_name = alloca(1024);
+  int *sizes, n_sizes;
+
+  memset (full_name, 0, 1024);
+  sprintf (full_name, "%s %s", name, pango_font_face_get_face_name (face));
+
+  pango_font_face_list_sizes (face, &sizes, &n_sizes);
+  if (sizes == 0)
+    {
+      /* Not sure Gtk font name encoding would be. */
+      result = list1 (build_extstring (full_name, Qutf_8));
+    }
+  else
+    {
+      int i;
+      char *buf = alloca (1024);
+
+      for (i = n_sizes - 1; i >= 0; i--)
+	{
+	  Lisp_Object args[] = { result, Qnil };
+	  sprintf (buf, "%s-%d", full_name, i);
+	  args[1] = build_extstring (buf, Qutf_8);
+	  result = Fappend (countof (args), args);
+	}
+      g_free (sizes);
+    }
+  return result;
+}
+
 static Lisp_Object
 gtk_font_list (Lisp_Object pattern, Lisp_Object device,
                Lisp_Object UNUSED (maxnumber))
@@ -378,15 +415,26 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object device,
   /* Should we restrict to monospace somehow?  That can be done with
      fontconfig fonts. */
   pango_font_map_list_families (font_map, &families, &n_families);
-  
-  for (i = 0; i < n_families; i++)
+
+  for (i = n_families - 1; i >= 0 ; i--)
     {
-      const char *name;
+      int j;
+      PangoFontFace **faces;
+      int n_faces;
 
       if (monospace_only && !pango_font_family_is_monospace (families[i]))
         continue;
-      name = pango_font_family_get_name (families[i]);
-      result = Fcons (build_extstring (name, Qutf_8), result);
+
+      pango_font_family_list_faces (families[i], &faces, &n_faces);
+      for (j = n_faces - 1 ; j >= 0; j--)
+	{
+	  Lisp_Object args[] = { result, Qnil };
+	  args[1] = gtk_font_describe_face
+	    (pango_font_family_get_name (families[i]),
+	     faces[j]),
+	  result = Fappend (countof (args), args);
+	}
+      g_free (faces);
     }
   g_free (families);
   return result;

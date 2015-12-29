@@ -1,3 +1,8 @@
+2015-12-29  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_font_describe_face): Define.  Describe font details like Bold, Italic, etc. along with sizes of bitmapped fonts.
+	(gtk_font_list): Call it to better describe fonts in font-list.
+
 2015-12-28  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* glyphs-eimage.c (png_instantiate): Handle non-GTK case.
