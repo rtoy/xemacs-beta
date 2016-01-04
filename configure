@@ -13903,6 +13903,15 @@ $as_echo_n "checking for Xrender, fontconfig, and Xft... " >&6; }
     xft_config_ok=`$xft_config_prog --cflags 2>/dev/null`
     if test "$?" = 0 ; then
 	xft_cflags=`$xft_config_prog --cflags`
+                        cleaned_xft_cflags=""
+        for xft_cflag in $xft_cflags; do
+          case $xft_cleaned_cflags in
+          *${xft_cflag}* ) ;;
+          * ) xft_cleaned_cflags="$xft_cleaned_cflags $xft_cflag" ;;
+          esac
+        done
+        xft_cflags=$xft_cleaned_cflags
+        unset xft_cflag xft_cleaned_cflags
 	xft_libs=`$xft_config_prog --libs`
 	c_switch_site="$c_switch_site $xft_cflags"
 	ld_switch_site="$ld_switch_site $xft_libs"

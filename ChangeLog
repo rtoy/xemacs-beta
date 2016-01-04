@@ -55,6 +55,10 @@
 	* configure.ac (TLS): Prevent unintended fall-through to OpenSSL.
 	* configure: Rebuild.
 
+2015-01-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Xft): Remove dupes from pkg-config --cflags.
+
 2015-01-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (Postgresql): Improve Installation text.
