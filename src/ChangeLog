@@ -3,6 +3,21 @@
 	* redisplay-xlike-inc.c (XFT_FROB_LISP_COLOR): Use
 	`xft_convert_color_1' instead of `xft_convert_color'.
 
+2014-06-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* device-x.c (x_IO_error_handler):  Check errno for a real error.
+
+	On Mac OS X 10.9 "Mavericks" and 10.10 "Yosemite", x_IO_error_handler
+	gets triggered by Cmd-W or clicking on the WM's close button:
+
+	 xemacs: Fatal I/O Error 0 (Undefined error: 0) on display connection \
+	 "/tmp/launch-HpN0rX/org.macosforge.xquartz:0.0"
+	 after 3746329 requests (3746329 known processed) \
+	with 0 events remaining.
+
+	This is inappropriate because there are other frames open on the
+	device.
+
 2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (Fload_internal):
