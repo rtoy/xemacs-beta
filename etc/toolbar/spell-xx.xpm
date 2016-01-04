@@ -1,0 +1,53 @@
+/* XPM */
+
+/* This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
+
+static char * dict[] = {
+"28 28 6 1",
+"X	c Gray75 s backgroundToolBarColor",
+"o	c Gray60",
+"O	c Gray90",
+"+	c Gray40",
+"@	c Gray60",
+"#	c white",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXoooooooooooooooooXXXXX",
+"XXXXXoXoOOOOOOOOOOOOO+oXXXXX",
+"XXXXXooooooooooooooooOoXXXXX",
+"XXXXoXo++o@@@@@@o+++oOoXXXXX",
+"XXXXXoo++o@@@@@@@o++oOoXXXXX",
+"XXXXXoo++o@@@@@@@@o+oOoXXXXX",
+"XXXXoXo++o@ooooooo@ooOoXXXXX",
+"XXXXXoo++o@o#####o@@oOoXXXXX",
+"XXXXXoo++o@ooooooo@@oOoXXXXX",
+"XXXXoXo++o@@@@@@@@@@oO###XXX",
+"XXXXXoo++o@ooooooo@@###++XXX",
+"XXXXXoo++o@@@@@@@@####+XXXXX",
+"XXXX#Xo++o@@@@@@####++oXXXXX",
+"XXX###o++o@@@@####++oOoXXXXX",
+"XX####o++o@@@####+@@oOoXXXXX",
+"XX+####++o@####++@@ooOoXXXXX",
+"XXX+####+o####+@@@o+oOoXXXXX",
+"XXXX+########+@@@o++oooXXXXX",
+"XXXXo+######+@@@o+++oXXXXXXX",
+"XXXXXo+####+oooooooooXXXXXXX",
+"XXXXXXX+##+XXXXXXXXXXXXXXXXX",
+"XXXXXXXX++XXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"};

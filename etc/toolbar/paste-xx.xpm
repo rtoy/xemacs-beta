@@ -1,0 +1,52 @@
+/* XPM */
+
+/* This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
+
+static char * paste[] = {
+"28 28 5 1",
+"X	c Gray75 s backgroundToolBarColor",
+"o	c Gray60",
+"O	c Gray90",
+"+	c Gray60",
+"@	c white",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXooXXXXXXXXXXXXX",
+"XXXXXXXXXXXXoOOoXXXXXXXXXXXX",
+"XXXXXXooooooOooOooooooXXXXXX",
+"XXXXXo++++oOOOOOOo++++oXXXXX",
+"XXXXXo+++oooooooooo+++oXXXXX",
+"XXXXXo++++++++++++++++oXXXXX",
+"XXXXXo++++++++++++++++oXXXXX",
+"XXXXXo++++++++++++++++oXXXXX",
+"XXXXXo++++++++++++++++oXXXXX",
+"XXXXXo++++++++++++++++oXXXXX",
+"XXXXXo++++++oooooooooooXXXXX",
+"XXXXXo++++++o@@@@@@@@ooXXXXX",
+"XXXXXo++++++o@@@@@@@@o+oXXXX",
+"XXXXXo++++++o@oooooo@ooooXXX",
+"XXXXXo++++++o@@@@@@@@@@@oXXX",
+"XXXXXo++++++o@oooo@@@@@@oXXX",
+"XXXXXo++++++o@@@@@@@@@@@oXXX",
+"XXXXXo++++++o@@@@@@@@@@@oXXX",
+"XXXXXo++++++o@oooooooo@@oXXX",
+"XXXXXoooooooo@@@@@@@@@@@oXXX",
+"XXXXXXXXXXXXo@@@@@@@@@@@oXXX",
+"XXXXXXXXXXXXo@@@@@@@@@@@oXXX",
+"XXXXXXXXXXXXoooooooooooooXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"};

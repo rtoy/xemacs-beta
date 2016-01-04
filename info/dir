@@ -1,0 +1,58 @@
+-*- Text -*-
+
+This is the file .../info/dir, which contains the topmost node of the Info
+hierarchy.  The first time you invoke Info you start off looking at that node,
+which is (dir)Top.
+
+Rather than adding new nodes to this directory (and this file) it is a better
+idea to put them in a site-local directory, and then configure info to search
+in that directory as well.  That way, you won't have to re-edit this file when
+a new release of the editor comes out.
+
+For example, you could add this code to .../lisp/site-start.el, which is
+loaded before ~/.emacs each time the editor starts up:
+
+  ;; find local info nodes
+  (setq Info-directory-list
+        (append Info-directory-list '("/private/info/")))
+
+Then, when you enter info, a dir file like this one will be automatically
+created and saved (provided you have write access to the directory).  The
+contents of that file "/private/info/dir" will be appended to the contents of
+this file.
+
+
+File: dir	Node: Top	This is the top of the INFO tree
+
+  This is Info, the online documentation browsing system.
+  This page (the Directory node) gives a menu of major topics.
+
+  button2 on a highlighted word follows that cross-reference.
+  button3 anywhere brings up a menu of commands.
+  ? lists additional keyboard commands.
+  h invokes the Info tutorial.
+
+* Menu:
+
+XEmacs 21.5
+===========
+* XEmacs: (xemacs).          XEmacs Editor.
+* Lispref: (lispref).        XEmacs Lisp Reference Manual.
+* Intro: (new-users-guide).  Introduction to the XEmacs Editor.
+* FAQ: (xemacs-faq).         XEmacs FAQ.
+* Info: (info).              Documentation browsing system.
+* Internals: (internals).    XEmacs Internals Manual.
+
+
+Other Documentation:
+
+* Common Lisp: (cl).                   XEmacs Common Lisp emulation package.
+* Customizations: (custom).            Customization Library.
+* Emodules: (emodules).                XEmacs dynamically loadable module support.
+* External Widget: (external-widget).  External Client Widget.
+* Standards: (standards).              GNU coding standards.
+* Term mode: (term).                   XEmacs Terminal Emulator Mode.
+* Termcap: (termcap).                  Termcap library of the GNU system.
+* Texinfo: (texinfo).                  The GNU documentation format.
+* Widgets: (widget).                   The Emacs Widget Library.
+
