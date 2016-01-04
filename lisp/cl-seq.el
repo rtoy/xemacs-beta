@@ -83,7 +83,7 @@ arguments: (PREDICATE SEQUENCE &key (KEY #'IDENTITY) (START 0) END FROM-END COUN
   "Remove all items satisfying PREDICATE in SEQUENCE.
 
 This is a destructive function; if SEQUENCE is a list, it reuses its
-storage.  If SEQUENCE is an array and some element satisfies SEQUENCE, a
+storage.  If SEQUENCE is an array and some element satisfies PREDICATE, a
 copy is always returned.
 
 See `remove*' for the meaning of the keywords.

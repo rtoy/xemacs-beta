@@ -1,3 +1,7 @@
+2016-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cl-seq.el (delete-if): Fix typo in docstring.
+
 2015-09-26  Michael Sperber  <mike@xemacs.org>
 
 	* info.el (Info-read-subfile): Follow change in Makeinfo 5.0 with
