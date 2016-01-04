@@ -1,4 +1,14 @@
+2016-01-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_widget_add_css_style): Renamed for consistency.
+
 2016-01-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_widget_add_css_style): Remove extraneous
+	semi-colon.
+	(monospace_only): Define for font load filtering.
+	(Fgtk_select_font): Define.  Select a font using GTK dialog.
+	(syms_of_fontcolor_gtk): Add gtk-select-font.
 
 	* device-gtk.c (Fgtk_load_css): This function can do nothing in
 	GTK 2.X.

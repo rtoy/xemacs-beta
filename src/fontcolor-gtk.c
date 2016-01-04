@@ -33,6 +33,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "device-impl.h"
 #include "insdel.h"
 
+#include "frame-impl.h"
 #include "console-gtk-impl.h"
 #include "fontcolor-gtk-impl.h"
 
@@ -601,7 +602,81 @@ Return a specifier for bold italic version of FONT on DEVICE.
   pango_font_description_free (pfd);
   return val;
 }
+
 
+#if GTK_CHECK_VERSION(3, 2, 0)
+static gboolean
+monospace_only (const PangoFontFamily *family,
+		const PangoFontFace * UNUSED (face),
+		gpointer UNUSED (data))
+{
+  if (pango_font_family_is_monospace (family))
+    return TRUE;
+  return FALSE;
+}
+#endif
+
+DEFUN ("gtk-select-font", Fgtk_select_font, 0, 1, 0, /*
+Select a font using a GTK dialog, using FONTNAME as default.
+If FRAME is omitted, selected frame is used.
+Only selects monospace fonts.
+*/
+       (fontname))
+{
+#if GTK_CHECK_VERSION(3, 2, 0)
+  struct frame *f = decode_gtk_frame (Fselected_frame (Qnil));
+#endif
+  Lisp_Object value = Qnil;
+  GtkWidget *w = NULL;
+  gint result;
+
+  if (!NILP (fontname))
+    CHECK_STRING (fontname);
+
+#if GTK_CHECK_VERSION(3, 2, 0)
+  w = gtk_font_chooser_dialog_new ("Select font",
+				   FRAME_GTK_SHELL_WIDGET (f));
+  gtk_font_chooser_set_filter_func (GTK_FONT_CHOOSER (w),
+				    monospace_only,
+				    NULL, NULL);
+  if (!NILP (fontname))
+    {
+      gtk_font_chooser_set_font (GTK_FONT_CHOOSER (w),
+				 LISP_STRING_TO_EXTERNAL (fontname, Qutf_8));
+    }
+#else
+  w = gtk_font_selection_dialog_new ("Select font");
+  if (!NILP (fontname))
+    {
+      gtk_font_selection_dialog_set_font_name (GTK_FONT_SELECTION_DIALOG (w),
+					       LISP_STRING_TO_EXTERNAL (fontname,
+									Qutf_8));
+    }
+#endif
+
+  result = gtk_dialog_run (GTK_DIALOG (w));
+  switch (result)
+    {
+    case GTK_RESPONSE_ACCEPT:
+    case GTK_RESPONSE_OK:
+      {
+#if GTK_CHECK_VERSION(3, 2, 0)
+	gchar *name = gtk_font_chooser_get_font (GTK_FONT_CHOOSER (w));
+#else
+	gchar *name = gtk_font_selection_dialog_get_font_name
+	  (GTK_FONT_SELECTION_DIALOG (w));
+#endif
+	value = build_extstring (name, Qutf_8);
+	g_free (name);
+      }
+      break;
+    default:
+      break;
+    }
+
+  gtk_widget_destroy (w);
+  return value;
+}
 
 /************************************************************************/
 /*                            initialization                            */
@@ -616,6 +691,7 @@ syms_of_fontcolor_gtk (void)
   DEFSUBR (Fgtk_make_font_italic);
   DEFSUBR (Fgtk_make_font_unitalic);
   DEFSUBR (Fgtk_make_font_bold_italic);
+  DEFSUBR (Fgtk_select_font);
 }
 
 void
@@ -702,7 +778,7 @@ __get_gtk_font_truename (PangoFont *pf, int UNUSED (expandp))
 
 #ifdef HAVE_GTK2
 void
-gtk_add_css_style(GtkWidget *UNUSED (widget), char *UNUSED (css));
+gtk_widget_add_css_style(GtkWidget *UNUSED (widget), char *UNUSED (css))
 {
   /* No CSS support in Gtk 2.X */
 }
