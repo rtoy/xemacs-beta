@@ -663,12 +663,15 @@ This function returns the tick counter for @samp{string}.
 Just as with symbols, extents, faces, and glyphs, you can attach
 additional information to strings in the form of @dfn{string
 properties}.  These differ from text properties, which are logically
-attached to particular characters in the string.
+attached to particular characters in the string, and from properties
+on extents in the string, which are attached to ranges of characters
+in the string.  In particular, a text or extent property that covers
+the whole string is not the same as a string property.
 
 To attach a property to a string, use @code{put}.  To retrieve a property
 from a string, use @code{get}.  You can also use @code{remprop} to remove
 a property from a string and @code{object-plist} to retrieve a list of
-all the properties in a string.
+all the properties of a string.
 
 @node Formatting Strings, Character Case, String Properties, Strings and Characters
 @section Formatting Strings

@@ -1,3 +1,8 @@
+2014-11-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/strings.texi (String Properties):
+	Note that string properties are separate from extent properties.
+
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/numbers.texi (Numbers):
