@@ -4,6 +4,11 @@
 	* lwlib-colors.c (xft_convert_color_1): Introduce, and make
 	`xft_convert_color' use it.
 
+2015-01-07  Jerry James  <james@xemacs.org>
+ 
+	* lwlib-Xaw.c (xaw_scrollbar_scroll): Add typecast to fix g++ build,
+	problem reported by Marcus Harnisch.
+
 2015-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix progress bar crashes.
