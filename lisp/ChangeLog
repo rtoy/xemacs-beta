@@ -3,6 +3,10 @@
 	* info.el (Info-read-subfile): Follow change in Makeinfo 5.0 with
 	arithmetic of node positions.
 
+2015-06-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* itimer-autosave.el (auto-save-timeout): Customize in group 'auto-save.
+
 2015-06-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (equalp):
