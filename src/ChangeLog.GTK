@@ -1,6 +1,10 @@
 2016-01-04  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* fontcolor-gtk.c (gtk_widget_add_css_style): Renamed for consistency.
+	* menubar-gtk.c (run_menubar_hook): Separate into GTK2 and GTK3
+	versions.
+
+	* fontcolor-gtk.c (gtk_widget_add_css_style): Renamed for
+	consistency.
 
 2016-01-03  Jeff Sparkes  <jsparkes@gmail.com>
 
