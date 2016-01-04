@@ -849,6 +849,7 @@ Load a CSS FILE for styling widgets.
 */
        (file))
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
   GtkCssProvider *css_prov = gtk_css_provider_new ();
   GError *error = NULL;
   Extbyte *path = NULL;
@@ -875,6 +876,9 @@ Load a CSS FILE for styling widgets.
   if (css_prov != NULL)
     g_object_unref (css_prov);
   return Qt;
+#else
+  return Qnil;
+#endif
 }
 
 
