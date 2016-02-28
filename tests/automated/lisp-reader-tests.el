@@ -335,6 +335,14 @@
     (Check-Error invalid-read-syntax (read "#20000r1234567/0"))
     ;; Unintuitive, but that's the Common Lisp behaviour. Maybe we should
     ;; error.
-    (Assert (symbolp (read "1234/-123")))))
+    (Assert (symbolp (read "1234/-123")))
+    (Assert (symbolp (read "1e+")))
+    (Assert (symbolp (read "20134e-")))))
+
+(Assert (equal "1e+" (prin1-to-string '1e+))
+        "checking Lisp printer recognises non-number syntax, trailing +")
+
+(Assert (equal "20000e-" (prin1-to-string '20000e-))
+        "checking Lisp printer recognises non-number syntax, trailing -")
 
 ;;; end of lisp-reader-tests.el

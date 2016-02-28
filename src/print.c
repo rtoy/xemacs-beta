@@ -2605,15 +2605,15 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
         switch (cc)
           {
-            /* A symbol like 2e10 cound be confused with a float: */
+            /* A symbol like 2e10 could be confused with a float: */
           case 'e':
           case 'E':
-            /* As can one like 123/456: */
+            /* And one like 123/456 could be confused with a ratio: */
           case '/':
             nondigits++;
             confusing = nondigits < 2
               /* If it starts with an E or a slash, that's fine, it can't be a
-                 float. */
+                 number. */
               && data != XSTRING_DATA (name)
               /* And if it ends with an e or a slash that's fine too. */
               && (data + itext_ichar_len (data)) != pend;
@@ -2621,12 +2621,13 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
             /* There can be a sign in the exponent. Such a sign needs to be
                directly after an e and to have trailing digits after it to be
-               valid float syntax. */
+               valid float syntax. Common Lisp does not allow signs in the
+               denominator in its ratio syntax, so this cannot be a ratio. */
           case '+':
           case '-':
             confusing = (1 == nondigits)
               && data != XSTRING_DATA (name)
-              && (data + itext_ichar_len (data));
+              && (data + itext_ichar_len (data)) != pend;
             if (confusing)
               {
                 Ibyte *lastp = data;
