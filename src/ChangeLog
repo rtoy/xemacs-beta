@@ -1,3 +1,41 @@
+2016-03-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Clean up and finish the implementation of regular expression
+	searching within relocating Lisp buffers. As well as relocating
+	local pointers within re_match_2_internal() and re_search_2(),
+	relocate pointers to regular expression register begin and end
+	values, and pointers that are saved in the failure stack.
+
+	* regex.c:
+	* regex.c (offset_post_relocation): Make this inline.
+	* regex.c (DEBUG_RUNTIME_FLAGS): New #define, zero on a non-debug
+	build, reflects debug_regexps on a debug build, makes various
+	things cheaper on a debug build.
+	* regex.c (malloc_checking_assert): Make this available and empty
+	if this is not XEmacs.
+	* regex.c (PUSH_FAILURE_POINTER_1): New. This was previously
+	PUSH_FAILURE_POINTER(). 
+	* regex.c (PUSH_FAILURE_POINTER): Sanity-check the argument here
+	when the relevant assertions are turned on.
+	* regex.c (PUSH_FAILURE_RELOCATABLE): New. Push a relocatable
+	pointer onto the failure stack; sanity-check its value when the
+	relevant assertions are turned on.
+	* regex.c (pop_failure_relocatable_1): New. Sanity-check a
+	relocatable pointer, then pop and return it from the failure
+	stack.
+	* regex.c (POP_FAILURE_RELOCATABLE): New. Pop a relocatable
+	pointer from the failure stack, calling
+	pop_failure_relocatable_1() if appropriate.
+	* regex.c (PUSH_FAILURE_POINT):
+	Reorganise this to keep debugging code more to itself, making it
+	easier to see what actual non-debug code is being excude.
+	* regex.c (POP_FAILURE_POINT): Ditto.
+	* regex.c (MAYBE_START_OVER_WITH_EXTENDED): Change the syntax of
+	this macro to something clang prefers, in passing.
+	* regex.c (re_match_2_internal):
+	Initialise best_regstart, best_regend here too, with the rest of
+	the register information.
+
 2016-02-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (print_symbol):
