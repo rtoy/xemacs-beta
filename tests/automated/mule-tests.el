@@ -817,8 +817,85 @@ This is a naive implementation in Lisp.  "
       (Assert (let (default-process-coding-system)
 		(shell-command "cat </dev/null >/dev/null")
 		t))))
+
+  ;; Test the Lisp printer when printing a string that has its data relocated
+  ;; in the course of printing, and, relatedly, when printing a symbol that
+  ;; has its name relocated in the course of printing.
+  (let
+      ((string
+        (decode-coding-string
+         ;; "ƒƒƒƒƒƒƒƒ\\a\\ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ")
+         (concat "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                 "\x92\x5c\x61\x5c\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                 "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                 "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                 "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                 "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                 "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                 "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92")
+         'utf-8))
+       (scratch-output (get-buffer-create (generate-new-buffer-name
+                                           " *temp*")))
+       symbol)
+    (labels
+        ((stream (character)
+           (when (eq character ?a)
+             (fill string ?a)
+             (aset string (- (length string) 3) ?\")
+	     (aset string 8 ?\\)
+	     (aset string 10 ?\\))
+           (write-char character scratch-output))
+         (stream1 (character)
+           (when (eq character ?\\)
+             (fill string ?b))
+           (write-char character scratch-output)))
+      (Assert (zerop (- (point-max scratch-output) (point-min scratch-output)))
+              "checking for empty buffer")
+      (print string #'stream)
+      (Assert (eql (- (point-max scratch-output) (point-min scratch-output))
+                   ;; #'print adds two newlines.
+                   (+ (length (prin1-to-string string)) 2))
+              "correct number of chars printed despite byte len changes")
+      (Assert (eql (encode-char (char-after 3 scratch-output) 'ucs)
+                   #x0192)
+              "first character printed as expected before byte len change")
+      (Assert (eql ?a (char-after (- (point-max scratch-output) 4)
+                                  scratch-output))
+              "character printed as expected after byte len change")
+      (delete-region (point-min scratch-output) (point-max scratch-output)
+                     scratch-output)
+      (setq string
+            ;; "ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ\\a\\ƒƒƒƒƒƒƒƒƒƒƒƒƒƒ")
+            (decode-coding-string
+             (concat "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                     "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                     "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                     "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                     "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                     "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                     "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\x5c\x61\x5c\xc6\x92"
+                     "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                     "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92")
+             'utf-8))
+      (Check-Error invalid-state (print string #'stream))
+      (delete-region (point-min scratch-output) (point-max scratch-output)
+                     scratch-output)
+
+      ;; "ƒƒƒ;aa"
+      (setq string (decode-coding-string "\xc6\x92\xc6\x92\xc6\x92;aa" 'utf-8)
+            symbol (make-symbol string))
+
+      ;; This would crash previously, since the offset inside print_symbol
+      ;; became invalid:
+      (print symbol #'stream1)
+      (Assert (equal (buffer-string scratch-output)
+                     (decode-coding-string "#:\xc6\x92\xc6\x92\xc6\x92\bb"
+                                           'utf-8))
+              "checking printing a symbol with relocated name does something")
+      (kill-buffer scratch-output)))
+
   ;;; Test suite for truncate-string-to-width, from Colin Walters' tests in
-  ;;; mult-util.el in GNU.
+  ;;; mule-util.el in GNU.
   (macrolet
       ((test-truncate-string-to-width (&rest tests)
          (let ((decode-any-string

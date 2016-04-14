@@ -1,3 +1,10 @@
+2016-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Check that the Lisp printer handles relocation of string data OK, 
+	something that only happens when strings are modified with
+	characters of differing byte lengths.
+
 2016-02-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-reader-tests.el:

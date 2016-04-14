@@ -1,3 +1,22 @@
+2016-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (output_string):
+	When RELOC is a string and FUNCTION is a function, be more careful
+	about FUNCTION possibly modifying RELOC and making our offset data
+	invalid.
+	Don't call bytecount_to_charcount when that is not necessary.
+	* print.c (print_string):
+	Check whether PRINTCHARFUN has made our string indices invalid,
+	update as appropriate.
+	Don't get the string char length when there's no need to.
+	Operate in terms of Ichars, don't assume internal-format text is
+	ASCII compatible.
+	* print.c (print_symbol):
+	Check whether PRINTCHARFUN has modified NAME's byte length, making
+	sure we don't run off the end.
+	Operate in terms of Ichars, don't assume internal-format text is
+	ASCII compatible.
+
 2016-03-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Clean up and finish the implementation of regular expression

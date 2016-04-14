@@ -442,7 +442,6 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 	       Lisp_Object reloc, Bytecount offset, Bytecount len)
 {
   /* This function can GC */
-  Charcount cclen;
   /* We change the value of nonreloc (fetching it from reloc as
      necessary), but we don't want to pass this changed value on to
      other functions that take both a nonreloc and a reloc, or things
@@ -463,11 +462,8 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 
   if (STRINGP (reloc))
     {
-      cclen = string_offset_byte_to_char_len (reloc, offset, len);
       newnonreloc = XSTRING_DATA (reloc);
     }
-  else
-    cclen = bytecount_to_charcount (newnonreloc + offset, len);
 
   if (LSTREAMP (function))
     {
@@ -510,14 +506,13 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
     }
   else if (MARKERP (function))
     {
-      /* marker_position() will err if marker doesn't point anywhere.  */
-      Charbpos spoint = marker_position (function);
-
       buffer_insert_string_1 (XMARKER (function)->buffer,
-			      spoint, nonreloc, reloc, offset, len,
-			      -1, 0);
-      Fset_marker (function, make_fixnum (spoint + cclen),
-		   Fmarker_buffer (function));
+			      /* marker_position() will err if marker
+				 doesn't point anywhere.  */
+			      marker_position (function), nonreloc, reloc,
+			      offset, len, -1, 0);
+      set_byte_marker_position (function,
+				byte_marker_position (function) + len);
     }
   else if (FRAMEP (function))
     {
@@ -547,30 +542,32 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
     }
   else
     {
-      Charcount ccoff;
-      Charcount iii;
+      Bytecount end = offset + len;
 
-      if (STRINGP (reloc))
-	ccoff = string_index_byte_to_char (reloc, offset);
-      else
-	ccoff = bytecount_to_charcount (newnonreloc, offset);
+      while (offset < end)
+	{
+	  call1 (function, make_char (itext_ichar (newnonreloc + offset)));
 
-      if (STRINGP (reloc))
-	{
-	  for (iii = ccoff; iii < cclen + ccoff; iii++)
-	    {
-	      call1 (function, make_char (string_ichar (reloc, iii)));
-	      if (STRINGP (reloc))
-		newnonreloc = XSTRING_DATA (reloc);
-	    }
-	}
-      else
-	{
-	  for (iii = ccoff; iii < cclen + ccoff; iii++)
-	    {
-	      call1 (function,
-		     make_char (itext_ichar_n (newnonreloc, iii)));
-	    }
+          if (STRINGP (reloc))
+            {
+              newnonreloc = XSTRING_DATA (reloc);
+
+              /* FUNCTION may have modified the byte length of RELOC and
+                 relocated it, update our pointer. */
+              if (offset >= XSTRING_LENGTH (reloc) || 
+                  !valid_ibyteptr_p (newnonreloc + offset))
+                {
+                  /* Error if we would run off the end of the string, or print
+                     corrupt data. We don't do the character accounting that
+                     print_string does, since we don't have the character
+                     count info available for free, and it doesn't make sense
+                     to add it for something that will happen this rarely. */
+                  invalid_state ("string modified while printing it", reloc);
+                  break;
+                }
+            }
+
+          offset += itext_ichar_len (newnonreloc + offset);
 	}
     }
 
@@ -1709,41 +1706,39 @@ print_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 void
 print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  /* We distinguish between Bytecounts and Charcounts, to make
-     Vprint_string_length work correctly under Mule.  */
-  Charcount size = string_char_length (obj);
-  Charcount max = size;
-  Bytecount bcmax = XSTRING_LENGTH (obj);
+  Bytecount bcmax = XSTRING_LENGTH (obj), bcsize = bcmax;
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
-  if (FIXNUMP (Vprint_string_length) &&
-      XFIXNUM (Vprint_string_length) < max)
+  if (FIXNUMP (Vprint_string_length)
+      && XFIXNUM (Vprint_string_length) < bcmax)
     {
-      max = XFIXNUM (Vprint_string_length);
-      bcmax = string_index_char_to_byte (obj, max);
-    }
-  if (max < 0)
-    {
-      max = 0;
-      bcmax = 0;
+      /* The byte length of OBJ is an inclusive upper bound on its character
+	 length. If PRINT-STRING-LENGTH is less than BCMAX, check OBJ's
+	 character length to get an exact length to print. Otherwise, print
+	 the entire string without worrying about its character length. */
+      Charcount cmax = min (string_char_length (obj),
+			    max (0, XREALFIXNUM (Vprint_string_length)));
+      bcmax = string_index_char_to_byte (obj, cmax);
     }
 
   if (!escapeflag)
     {
       /* This deals with GC-relocation and Mule. */
       output_string (printcharfun, 0, obj, 0, bcmax);
-      if (max < size)
+      if (bcmax < XSTRING_LENGTH (obj))
 	write_ascstring (printcharfun, " ...");
     }
   else
     {
       Bytecount i, last = 0;
+      Charcount ci = 0;
 
       write_ascstring (printcharfun, "\"");
-      for (i = 0; i < bcmax; i++)
+      for (i = 0; i < bcmax;
+           i += itext_ichar_len (string_byte_addr (obj, i)), ci++)
 	{
-	  Ibyte ch = string_byte (obj, i);
+	  Ichar ch = itext_ichar (string_byte_addr (obj, i));
 	  if (ch == '\"' || ch == '\\'
 	      || (ch == '\n' && print_escape_newlines))
 	    {
@@ -1766,6 +1761,32 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		  temp[1] = '\0';
 		  write_istring (printcharfun, temp);
 		}
+
+              /* If PRINTCHARFUN modified OBJ's byte length, attempt to ensure
+                 we print the right number of characters, ensure we don't run
+                 off the end.
+
+                 PRINTCHARFUN could also have silently added characters of
+                 varying byte length at different positions, maintaining the
+                 byte length of OBJ but corrupting our calculation of
+                 BCMAX. If it does that, our misbehaviour is its own damn
+                 fault.  PRINTCHARFUN really shouldn't be modifying OBJ at
+                 all, cf. the MAPPING-DESTRUCTIVE-INTERACTION Common Lisp
+                 issue. */
+              if (XSTRING_LENGTH (obj) != bcsize)
+                {
+                  bcmax = bcsize = XSTRING_LENGTH (obj);
+                  i = string_index_char_to_byte (obj, ci);
+
+                  if (FIXNUMP (Vprint_string_length)
+                      && XFIXNUM (Vprint_string_length) < bcmax)
+                    {
+                      Charcount cmax =
+                        min (string_char_length (obj),
+                             max (0, XREALFIXNUM (Vprint_string_length)));
+                      bcmax = string_index_char_to_byte (obj, cmax);
+                    }
+                }
 	      last = i + 1;
 	    }
 	}
@@ -1774,7 +1795,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  output_string (printcharfun, 0, obj, last,
 			 bcmax - last);
 	}
-      if (max < size)
+      if (bcmax < XSTRING_LENGTH (obj))
 	write_ascstring (printcharfun, " ...");
       write_ascstring (printcharfun, "\"");
     }
@@ -2660,15 +2681,13 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   }
 
   {
-    Bytecount i;
-    Bytecount last = 0;
+    Bytecount i, last = 0;
+    Charcount ci = 0;
 
-    for (i = 0; i < size; i++)
+    for (i = 0; i < size;
+         i += itext_ichar_len (string_byte_addr (name, i)), ci++)
       {
-        /* In the event that we adopt a non-ASCII-compatible internal format,
-           this will no longer be Mule-safe. As of May 2015, that is very,
-           very unlikely. */
-	switch (string_byte (name, i))
+	switch (itext_ichar (string_byte_addr (name, i)))
 	  {
 	  case  0: case  1: case  2: case  3:
 	  case  4: case  5: case  6: case  7:
@@ -2683,8 +2702,18 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  case ',': case '.' : case '`' :
 	  case '[': case ']' : case '?' :
 	    if (i > last)
-	      output_string (printcharfun, 0, name, last, i - last);
+              output_string (printcharfun, 0, name, last, i - last);
+
 	    write_ascstring (printcharfun, "\\");
+
+            /* If PRINTCHARFUN modified NAME's byte length, ensure we don't
+               run off the end, attempt to ensure we print the right number of
+               characters.  Cf. similar issues with print_string, above. */
+            if (XSTRING_LENGTH (name) != size)
+              {
+                size = XSTRING_LENGTH (name);
+                i = string_index_char_to_byte (name, ci);
+              }
 	    last = i;
 	  }
       }
