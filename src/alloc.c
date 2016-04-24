@@ -2672,15 +2672,21 @@ static const struct memory_description string_description[] = {
   { XD_END }
 };
 
-/* We store the string's extent info as the first element of the string's
-   property list; and the string's MODIFF as the first or second element
-   of the string's property list (depending on whether the extent info
-   is present), but only if the string has been modified.  This is ugly
-   but it reduces the memory allocated for the string in the vast
-   majority of cases, where the string is never modified and has no
-   extent info.
+/* The vast majority of strings have no associated extent info and will never
+   be modified. In the interest of conserving memory, we do not keep extent
+   info or the modified counter directly in the string object. Instead, we
+   abuse the string plist attribute.
 
-   #### This means you can't use an int as a key in a string's plist. */
+   If the first element of the plist is EXTENT_INFOP (a type of object not
+   visible to Lisp and which consequently will never end up in the plist in
+   the normal course of events), then that is the string's extent info.
+
+   If the next element of the plist is a fixnum and we have flipped a bit in
+   the header to document that this string has ever been modified, then that
+   fixnum is the string's modified counter.
+
+   The string's true plist starts after any extent info and any modified
+   tick. */
 
 static Lisp_Object *
 string_plist_ptr (Lisp_Object string)
@@ -2689,8 +2695,11 @@ string_plist_ptr (Lisp_Object string)
 
   if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
     ptr = &XCDR (*ptr);
-  if (CONSP (*ptr) && FIXNUMP (XCAR (*ptr)))
-    ptr = &XCDR (*ptr);
+  if (CONSP (*ptr) && XSTRING_MODIFFP (string))
+    {
+      structure_checking_assert (FIXNUMP (XCAR (*ptr)));
+      ptr = &XCDR (*ptr);
+    }
   return ptr;
 }
 
@@ -2717,6 +2726,42 @@ static Lisp_Object
 string_plist (Lisp_Object string)
 {
   return *string_plist_ptr (string);
+}
+
+struct extent_info *
+string_extent_info (Lisp_Object string)
+{
+  Lisp_Object plist = XSTRING_PLIST (string);
+
+  if (CONSP (plist) && EXTENT_INFOP (XCAR (plist)))
+    return XEXTENT_INFO (XCAR (plist));
+
+  return NULL;
+}
+
+void
+bump_string_modiff (Lisp_Object str)
+{
+  Lisp_Object *ptr = &XSTRING_PLIST (str);
+
+#ifdef I18N3
+  /* #### remove the `string-translatable' property from the string,
+     if there is one. */
+#endif
+
+  /* skip over extent info if it's there */
+  if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
+    ptr = &XCDR (*ptr);
+  if (CONSP (*ptr) && XSTRING_MODIFFP (str))
+    {
+      structure_checking_assert (FIXNUMP (XCAR (*ptr)));
+      XCAR (*ptr) = make_fixnum (1 + XFIXNUM (XCAR (*ptr)));
+    }
+  else
+    {
+      XSET_STRING_MODIFFP (str);
+      *ptr = Fcons (make_fixnum (1), *ptr);
+    }
 }
 
 #ifndef NEW_GC
@@ -2922,6 +2967,9 @@ make_uninit_string (Bytecount length)
   /* The above allocations set the UID field, which overlaps with the
      ascii-length field, to some non-zero value.  We need to zero it. */
   XSET_STRING_ASCII_BEGIN (wrap_string (s), 0);
+
+  /* They also override the MODIFFP flag. */
+  XCLEAR_STRING_MODIFFP (wrap_string (s));
 
 #ifdef NEW_GC
   set_lispstringp_direct (s);
@@ -3214,6 +3262,30 @@ arguments: (&rest ARGS)
       p += set_itext_ichar (p, XCHAR (lisp_char));
     }
   return make_string (storage, p - storage);
+}
+
+DEFUN ("string-modified-tick", Fstring_modified_tick, 1, 1, 0, /*
+Return STRING's tick counter, incremented for each change to the string.
+Each string has a tick counter which is incremented each time the contents
+of the string are changed (e.g. with `aset').  It wraps around occasionally.
+*/
+       (string))
+{
+  Lisp_Object plist;
+  CHECK_STRING (string);
+
+  plist = XSTRING_PLIST (string);
+  if (CONSP (plist) && EXTENT_INFOP (XCAR (plist)))
+    {
+      plist = XCDR (plist);
+    }
+
+  if (CONSP (plist) && XSTRING_MODIFFP (string))
+    {
+      return XCAR (plist);
+    }
+
+  return Qzero;
 }
 
 /* Initialize the ascii_begin member of a string to the correct value. */
@@ -5991,6 +6063,7 @@ syms_of_alloc (void)
   DEFSUBR (Fmake_bit_vector);
   DEFSUBR (Fmake_string);
   DEFSUBR (Fstring);
+  DEFSUBR (Fstring_modified_tick);
   DEFSUBR (Fmake_symbol);
   DEFSUBR (Fmake_marker);
 #ifdef ALLOC_TYPE_STATS

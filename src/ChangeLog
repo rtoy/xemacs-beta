@@ -1,3 +1,37 @@
+2016-04-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Fix a bug where a fixnum used as a key in a string's plist was
+	silently corrupted.
+	* alloc.c:
+	* alloc.c (string_plist_ptr):
+	Check a flag in the header to find out whether this string was
+	ever modified, rather than assuming based on the type of the
+	corresponding entry of the plist.
+	* alloc.c (string_extent_info):
+	New function, encapsulate access to the string's plist.
+	* alloc.c (bump_string_modiff):
+	Move this accessor here.
+	* alloc.c (make_uninit_string):
+	Clear the MODIFFP header flag on allocation.
+	* alloc.c (Fstring_modified_tick):
+	Move this here from fns.c, it's an accessor function, it makes
+	more sense to have it here.
+	* alloc.c (syms_of_alloc):
+	* extents.c:
+	* extents.c (buffer_or_string_extent_info):
+	Use string_extent_info () here.
+	* fns.c:
+	* fns.c (syms_of_fns):
+	Remove #'string-modified-tick, bump_string_modiff() from this
+	file.
+	* lisp.h:
+	* lisp.h (struct Lisp_String):
+	Add a header flag here, documenting whether a string has ever been
+	modified.
+	* lisp.h (MAX_STRING_ASCII_BEGIN): New definition.
+	* lisp.h (XSTRING_MODIFFP):
+	Make the flag available.
+
 2016-04-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (output_string):

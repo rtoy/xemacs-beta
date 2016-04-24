@@ -1347,11 +1347,11 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (eq t (remprop obj ?3)) obj)
   (when (or (stringp obj) (symbolp obj))
     (Assert (eq '() (object-plist obj)) obj))
-  (Assert (eq nil (remprop obj ?3)) obj)
-  (when (or (stringp obj) (symbolp obj))
-    (Assert (eq '() (object-plist obj)) obj))
+  (Assert (eql 200 (put obj most-positive-fixnum 200)))
+  (Assert (eql (get obj most-positive-fixnum) 200))
   (Assert (eq 5 (get obj ?3 5)) obj)
-  )
+  (when (or (stringp obj) (symbolp obj))
+    (Assert (eq '() (object-plist obj)) obj)))
 
 (Check-Error-Message
  error "Object type has no properties"

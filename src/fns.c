@@ -320,38 +320,6 @@ is implemented.
   return end < len2 ? Qt : Qnil;
 }
 
-DEFUN ("string-modified-tick", Fstring_modified_tick, 1, 1, 0, /*
-Return STRING's tick counter, incremented for each change to the string.
-Each string has a tick counter which is incremented each time the contents
-of the string are changed (e.g. with `aset').  It wraps around occasionally.
-*/
-       (string))
-{
-  CHECK_STRING (string);
-  if (CONSP (XSTRING_PLIST (string)) && FIXNUMP (XCAR (XSTRING_PLIST (string))))
-    return XCAR (XSTRING_PLIST (string));
-  else
-    return Qzero;
-}
-
-void
-bump_string_modiff (Lisp_Object str)
-{
-  Lisp_Object *ptr = &XSTRING_PLIST (str);
-
-#ifdef I18N3
-  /* #### remove the `string-translatable' property from the string,
-     if there is one. */
-#endif
-  /* skip over extent info if it's there */
-  if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
-    ptr = &XCDR (*ptr);
-  if (CONSP (*ptr) && FIXNUMP (XCAR (*ptr)))
-    XCAR (*ptr) = make_fixnum (1+XFIXNUM (XCAR (*ptr)));
-  else
-    *ptr = Fcons (make_fixnum (1), *ptr);
-}
-
 
 enum  concat_target_type { c_cons, c_string, c_vector, c_bit_vector };
 static Lisp_Object concat (int nargs, Lisp_Object *args,
@@ -3360,7 +3328,6 @@ syms_of_fns (void)
   DEFSUBR (Fstring_equal);
   DEFSUBR (Fcompare_strings);
   DEFSUBR (Fstring_lessp);
-  DEFSUBR (Fstring_modified_tick);
   DEFSUBR (Fappend);
   DEFSUBR (Fconcat);
   DEFSUBR (Fvconcat);

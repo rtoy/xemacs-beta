@@ -1,3 +1,9 @@
+2016-04-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that a fixnum works correctly as a key in a string plist, a
+	bug just fixed.
+
 2016-04-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:

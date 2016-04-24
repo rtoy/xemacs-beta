@@ -947,20 +947,17 @@ extent_ancestor_1 (EXTENT e)
 }
 
 /* Given an extent object (string or buffer or nil), return its extent info.
-   This may be 0 for a string. */
+   This may be NULL for a string. */
 
 static struct extent_info *
 buffer_or_string_extent_info (Lisp_Object object)
 {
   if (STRINGP (object))
     {
-      Lisp_Object plist = XSTRING_PLIST (object);
-      if (!CONSP (plist) || !EXTENT_INFOP (XCAR (plist)))
-	return 0;
-      return XEXTENT_INFO (XCAR (plist));
+      return string_extent_info (object);
     }
   else if (NILP (object))
-    return 0;
+    return NULL;
   else
     return XEXTENT_INFO (XBUFFER (object)->extent_info);
 }
