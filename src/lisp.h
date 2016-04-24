@@ -2585,25 +2585,28 @@ struct Lisp_String
       struct lrecord_header lheader;
       struct
 	{
-	  /* WARNING: Everything before ascii_begin must agree exactly with
+	  /* WARNING: Everything before modiffp must agree exactly with
 	     struct lrecord_header. (Actually, the `free' field in old-GC
-	     overlaps with ascii_begin there; we can get away with this
+	     overlaps with modiffp there; we can get away with this
 	     because in old-GC the `free' field is used only for lcrecords. */
 	  unsigned int type :8;
 #ifdef NEW_GC
 	  unsigned int lisp_readonly :1;
 	  unsigned int free :1;
-	  /* Number of chars at beginning of string that are one byte in length
-	     (byte_ascii_p) */
-	  unsigned int ascii_begin :22;
+#define NUM_ASCII_BEGIN_BITS 21
 #else /* not NEW_GC */
 	  unsigned int mark :1;
 	  unsigned int c_readonly :1;
 	  unsigned int lisp_readonly :1;
+#define NUM_ASCII_BEGIN_BITS 20
+#endif /* not NEW_GC */
+	  /* A flag describing whether this string has ever been
+	     modified; the actual modified tick is stored on the plist
+	     if and only if this flag is non-zero. */
+	  unsigned int modiffp :1;
 	  /* Number of chars at beginning of string that are one byte in length
 	     (byte_ascii_p) */
-	  unsigned int ascii_begin :21;
-#endif /* not NEW_GC */
+	  unsigned int ascii_begin :NUM_ASCII_BEGIN_BITS;
 	} v;
     } u;
 #ifdef NEW_GC
@@ -2617,11 +2620,7 @@ struct Lisp_String
 };
 typedef struct Lisp_String Lisp_String;
 
-#ifdef NEW_GC
-#define MAX_STRING_ASCII_BEGIN ((1 << 22) - 1)
-#else /* not NEW_GC */
-#define MAX_STRING_ASCII_BEGIN ((1 << 21) - 1)
-#endif /* not NEW_GC */
+#define MAX_STRING_ASCII_BEGIN ((1 << NUM_ASCII_BEGIN_BITS) - 1)
 
 DECLARE_MODULE_API_LISP_OBJECT (string, Lisp_String);
 #define XSTRING(x) XRECORD (x, string, Lisp_String)
@@ -2682,6 +2681,10 @@ XSTRING_DATA (Lisp_Object s)
 #define XSET_STRING_ASCII_BEGIN(s, val) \
   ((void) (XSTRING (s)->u.v.ascii_begin = (val)))
 #define XSTRING_FORMAT(s) FORMAT_DEFAULT
+
+#define XSTRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp + 0)
+#define XSET_STRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp = 1)
+#define XCLEAR_STRING_MODIFFP(s) ((XSTRING (s)->u.v.modiffp = 0), 1)
 
 /* Return the true aligned size of a struct whose last member is a
    variable-length array field.  (this is known as the "struct hack") */
@@ -4407,6 +4410,8 @@ MODULE_API Lisp_Object make_string (const Ibyte *, Bytecount);
 MODULE_API Lisp_Object make_extstring (const Extbyte *, EMACS_INT, Lisp_Object);
 void init_string_ascii_begin (Lisp_Object string);
 Lisp_Object make_uninit_string (Bytecount);
+void bump_string_modiff (Lisp_Object);
+struct extent_info *string_extent_info (Lisp_Object);
 MODULE_API Lisp_Object make_float (double);
 Lisp_Object make_string_nocopy (const Ibyte *, Bytecount);
 void free_cons (Lisp_Object);
@@ -5370,7 +5375,6 @@ Lisp_Object list_sort (Lisp_Object list,
 		       check_test_func_t check_merge,
                        Lisp_Object predicate, Lisp_Object key_func);
 
-void bump_string_modiff (Lisp_Object);
 Lisp_Object memq_no_quit (Lisp_Object, Lisp_Object);
 Lisp_Object assoc_no_quit (Lisp_Object, Lisp_Object);
 Lisp_Object assq_no_quit (Lisp_Object, Lisp_Object);
