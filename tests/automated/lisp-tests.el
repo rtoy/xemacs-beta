@@ -3174,6 +3174,35 @@ via the hepatic alpha-tocopherol transfer protein")))
            (and (equal nomodif x) y))
          '(1 300 3 300 6 1 300 4 1 3 300 7)))
 
+;; Test a bug fixed in #'sublis. Again, Paul Dietz has much more
+;; comprehensive tests.
+(let ((tree-alist (list (cons 'old 'new)))
+      box1 box2)
+  (Assert
+   (equal
+    (sublis tree-alist 
+	    '(baa baa ("black1" sheep ("have2" you any wool) yes sir))
+	    :test #'(lambda (new old)
+		      (garbage-collect) ; Attempt to GC the
+					; replacement for "black1"
+					; just created
+		      (cond
+		       ((and (stringp old) (find ?1 old))
+			(setf (cdar tree-alist)
+			      (string ?a ?b ?c ?d ?e)
+			      box1 (make-weak-box (cdar tree-alist)))
+			t)
+		       ((and (stringp old) (find ?2 old))
+			(setf (cdar tree-alist)
+			      (string ?f ?g ?h ?i ?j)
+			      box2 (make-weak-box (cdar tree-alist)))
+			t))))
+    '(baa baa ("abcde" sheep ("fghij" you any wool) yes sir))))
+  (Assert (equal (weak-box-ref box1) "abcde")
+	  "checking first string newly-created inside #'sublis not GCed")
+  (Assert (equal (weak-box-ref box2) "fghij")
+	  "checking second string newly-created inside #'sublis not GCed"))
+
 ;; Test labels and inlining.
 (labels
     ((+ (&rest arguments)
