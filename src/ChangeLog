@@ -1,3 +1,10 @@
+2016-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (sublis): GC protect the results returned by
+	invocations of sublis(), if TEST does fancy things with ALIST they
+	can become garbage behind our back.
+	* sequence.c (subst): Document why GC protection not needed.
+
 2016-04-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Fix a bug where a fixnum used as a key in a string's plist was

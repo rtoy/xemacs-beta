@@ -6255,6 +6255,7 @@ subst (Lisp_Object new_, Lisp_Object old, Lisp_Object tree, int depth)
     }
   else if (CONSP (tree))
     {
+      /* Can't funcall, no need to GCPRO. */
       Lisp_Object aa = subst (new_, old, XCAR (tree), depth + 1);
       Lisp_Object dd = subst (new_, old, XCDR (tree), depth + 1);
 
@@ -6278,12 +6279,15 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 	check_test_func_t check_test, Boolint test_not_unboundp,
 	Lisp_Object test, Lisp_Object key, int depth)
 {
-  Lisp_Object keyed = KEY (key, tree), aa, dd;
+  Lisp_Object keyed = KEY (key, tree), aa = Qnil, dd = Qnil;
+  struct gcpro gcpro1, gcpro2, gcpro3;
 
   if (depth + lisp_eval_depth > max_lisp_eval_depth)
     {
       stack_overflow ("Stack overflow in sublis", tree); 
     }
+
+  GCPRO3 (aa, dd, keyed);
 
   {
     GC_EXTERNAL_LIST_LOOP_2 (elt, alist)
@@ -6292,6 +6296,7 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 	    check_test (test, key, XCAR (elt), keyed) == test_not_unboundp)
           {
 	    XUNGCPRO (elt);
+            UNGCPRO;
 	    return XCDR (elt);
           }
       }
@@ -6300,19 +6305,21 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 
   if (!CONSP (tree))
     {
-      return tree;
+      RETURN_UNGCPRO (tree);
     }
 
   aa = sublis (alist, XCAR (tree), check_test, test_not_unboundp, test, key,
 	       depth + 1);
   dd = sublis (alist, XCDR (tree), check_test, test_not_unboundp, test, key,
 	       depth + 1);
+  UNGCPRO;
 
   if (EQ (aa, XCAR (tree)) && EQ (dd, XCDR (tree)))
     {
       return tree;
     }
 
+  /* Our caller gcprotects this. */
   return Fcons (aa, dd);
 }
 
