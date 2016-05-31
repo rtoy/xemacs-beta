@@ -1,3 +1,9 @@
+2016-05-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (Freduce):
+	Behave sensibly with a cons sequence, :from-end non-nil, and a
+	zero-length range, avoid a crash in this context.
+
 2016-05-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* sequence.c (sublis): GC protect the results returned by

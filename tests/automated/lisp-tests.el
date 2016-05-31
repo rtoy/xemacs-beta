@@ -2587,6 +2587,11 @@ via the hepatic alpha-tocopherol transfer protein")))
 				     (garbage-collect))))))
  "checking we can amputate lists without crashing #'reduce")
 
+(Assert (eq 'placeholder (reduce #'cons '(a b c d e f g h i j)
+                                 :from-end t :start 0 :end 0
+                                 :initial-value 'placeholder))
+        "checking :from-end and zero-length ranges don't crash, #'reduce")
+
 (Assert (not (eq t (canonicalize-inst-list
 		    `(((mswindows) . [string :data ,(make-string 20 0)])
 		      ((tty) . [string :data " "])) 'image t)))

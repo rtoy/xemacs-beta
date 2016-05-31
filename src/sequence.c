@@ -5178,22 +5178,19 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 		 reachable via SEQUENCE.  */
 	      GCPRO1 (subsequence[0]);
 	      gcpro1.nvars = len;
-	    }
 
-          if (need_accum)
-            {
-              accum = KEY (key, subsequence[len - 1]);
-              --len;
-            }
+              if (need_accum)
+                {
+                  accum = KEY (key, subsequence[len - 1]);
+                  --len;
+                }
 
-          for (ii = len; ii != 0;)
-            {
-              --ii;
-              accum = CALL2 (function, KEY (key, subsequence[ii]), accum);
-            }
+              for (ii = len; ii != 0;)
+                {
+                  --ii;
+                  accum = CALL2 (function, KEY (key, subsequence[ii]), accum);
+                }
 
-	  if (subsequence != NULL)
-	    {
 	      UNGCPRO;
 	    }
         }
