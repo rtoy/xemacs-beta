@@ -370,12 +370,14 @@ init_tls (void)
   /* Set options on the model socket */
   if (SSL_OptionSet (nss_model, SSL_SECURITY, PR_TRUE) != SECSuccess)
     signal_error (Qtls_error, "NSS cannot enable model socket", NSS_ERRSTR);
+#if NSS_VMAJOR < 3 || (NSS_VMAJOR == 3 && NSS_VMINOR < 24)
   if (SSL_OptionSet (nss_model, SSL_ENABLE_SSL2, PR_FALSE) != SECSuccess)
     signal_error (Qtls_error, "NSS unable to disable SSLv2", NSS_ERRSTR);
   if (SSL_OptionSet (nss_model, SSL_V2_COMPATIBLE_HELLO, PR_FALSE)
       != SECSuccess)
     signal_error (Qtls_error, "NSS unable to disable SSLv2 handshake",
 		  NSS_ERRSTR);
+#endif
   if (SSL_OptionSet (nss_model, SSL_ENABLE_DEFLATE, PR_FALSE) != SECSuccess)
     signal_error (Qtls_error, "NSS unable to disable deflate", NSS_ERRSTR);
   if (SSL_OptionSet (nss_model, SSL_HANDSHAKE_AS_CLIENT, PR_TRUE)
