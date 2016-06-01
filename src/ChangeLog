@@ -1,3 +1,8 @@
+2016-05-31  Jerry James  <james@xemacs.org>
+
+	* tls.c (init_tls): Do no attempt to disable SSLv2 with NSS 3.24.0
+	and newer, where SSLv2 cannot be enabled.
+
 2016-05-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* sequence.c (Freduce):
