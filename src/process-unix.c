@@ -1122,10 +1122,13 @@ unix_create_process (Lisp_Process *p,
 
 	/* Disconnect the current controlling terminal, pursuant to
 	   making the pty be the controlling terminal of the process.
-	   Also put us in our own process group.
-	   Moved this call to later in the function, because on Cygwin,
-	   setsid() causes the pty setup to fail in some way.
-	disconnect_controlling_terminal (); */
+	   Also put us in our own process group.  On Cygwin, we make
+	   this call later, because making it here causes the pty setup
+	   to fail in some way.  Moving it later for Linux causes
+	   M-x shell to fail under tcsh for unknown reasons. */
+#ifndef CYGWIN
+	disconnect_controlling_terminal ();
+#endif
 
 	if (pty_flag)
 	  {
@@ -1244,11 +1247,13 @@ unix_create_process (Lisp_Process *p,
 	    child_setup_tty (xforkout);
 	  } /* if (pty_flag) */
 
-	/* Moved this here because of Cygwin. Vin Shelton 2015-03-24. */
+#ifdef CYGWIN
+	/* Moved this here for Cygwin. Vin Shelton 2015-03-24. */
 	/* Disconnect the current controlling terminal, pursuant to
 	   making the pty be the controlling terminal of the process.
 	   Also put us in our own process group. */
 	disconnect_controlling_terminal ();
+#endif
 
 	EMACS_SIGNAL (SIGINT,  SIG_DFL);
 	EMACS_SIGNAL (SIGQUIT, SIG_DFL);

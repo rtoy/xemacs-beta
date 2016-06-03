@@ -1,5 +1,11 @@
 2016-05-31  Jerry James  <james@xemacs.org>
 
+	* process-unix.c (unix_create_process): Move setsid call back to
+	its original location for non-Cygwin platforms to fix M-x shell
+	breakage under tcsh.
+
+2016-05-31  Jerry James  <james@xemacs.org>
+
 	* tls.c (init_tls): Do no attempt to disable SSLv2 with NSS 3.24.0
 	and newer, where SSLv2 cannot be enabled.
 
