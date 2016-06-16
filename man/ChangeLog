@@ -1,3 +1,8 @@
+2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/searching.texi (Syntax of Regexps):
+	Clarify that backreferences can use numbers greater than ten.
+
 2014-11-24  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/strings.texi (String Properties):

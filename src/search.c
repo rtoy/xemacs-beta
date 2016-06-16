@@ -2890,51 +2890,104 @@ rare.)
 	      if (c == '\\' && strpos < stlen - 1)
 		{
 		  c = string_ichar (replacement, ++strpos);
-		  if (c == '&')
+		  switch (c)
 		    {
+		    case '&':
 		      literal_end = strpos - 1;
 		      substart = search_regs.start[0];
 		      subend = search_regs.end[0];
+		      break;
+		    case '\\':
+		      /* So we get just one backslash. */
+		      literal_end = strpos;
+		      break;
+		    case '1': case '2': case '3': case '4': case '5':
+		    case '6': case '7': case '8': case '9':
+		      {
+			Ibyte *charpos
+                          = string_char_addr (replacement, strpos);
+			Ibyte *regend = NULL;
+                        Bytecount limit = min (XSTRING_LENGTH (replacement)
+                                               - (charpos -
+                                                  XSTRING_DATA (replacement)),
+                                                /* most-positive-fixnum on 32
+                                                   bit is ten decimal digits,
+                                                   nine will keep us in fixnum
+                                                   territory. */
+                                               9);
+                        Bytecount ii = 0;
+			Lisp_Object regno;
+			Fixnum regnoing;
+
+                        /* Don't accept non-ASCII decimal digits. See the
+                           reasoning in regex.c. */
+                        while (ii < limit)
+                          {
+                            if (itext_ichar (charpos + ii) > 0x7f) 
+                              {
+                                limit = ii;
+                                break;
+                              }
+                            ii += rep_bytes_by_first_byte (charpos[ii]);
+                          }
+
+                        /* Parse the longest backreference we can, but don't
+                           produce a bignum, that can't correspond to a
+                           backreference and would needlessly complicate code
+                           further down.  */
+                        regno = parse_integer (charpos, &regend, limit, 10, 1,
+                                               Qnil);
+
+			if (FIXNUMP (regno) &&
+                            ((regnoing = XREALFIXNUM (regno), regnoing > -1)))
+                          {
+                            /* Progressively divide down the backreference
+                               until we find one that corresponds to an
+                               existing register. */
+                            while (regnoing > 10 &&
+                                   !(regnoing <= search_regs.num_regs))
+                              {
+                                DEC_IBYTEPTR (regend);
+                                regnoing /= 10;
+                              }
+
+                            if (regnoing <= search_regs.num_regs)
+                              {
+                                literal_end = strpos - 1;
+                                strpos = string_index_byte_to_char
+                                  (replacement,
+                                   regend - XSTRING_DATA (replacement)) - 1;
+                                substart = search_regs.start[regnoing];
+                                subend = search_regs.end[regnoing];
+                              }
+                          }
+			break;
+		      }
+		    case 'U': case 'u': case 'L': case 'l': case 'E':
+		      {
+			/* Keep track of all case changes requested, but don't
+			   make them now.  Do them later so we override
+			   everything else. */
+			if (!ul_pos_dynarr)
+			  {
+			    ul_pos_dynarr = Dynarr_new (int);
+			    ul_action_dynarr = Dynarr_new (int);
+			    record_unwind_protect
+			      (free_created_dynarrs,
+			       noseeum_cons
+			       (make_opaque_ptr (ul_pos_dynarr),
+				make_opaque_ptr (ul_action_dynarr)));
+			  }
+			literal_end = strpos - 1;
+			Dynarr_add (ul_pos_dynarr,
+				    (!NILP (accum)
+				     ? string_char_length (accum)
+				     : 0) + (literal_end - literal_start));
+			Dynarr_add (ul_action_dynarr, c);
+		      }
 		    }
-		  /* #### This logic is totally broken,
-		     since we can have backrefs like "\99", right? */
-		  else if (c >= '1' && c <= '9' &&
-			   c <= search_regs.num_regs + '0')
-		    {
-		      if (search_regs.start[c - '0'] >= 0)
-			{
-			  literal_end = strpos - 1;
-			  substart = search_regs.start[c - '0'];
-			  subend = search_regs.end[c - '0'];
-			}
-		    }
-		  else if (c == 'U' || c == 'u' || c == 'L' || c == 'l' ||
-			   c == 'E')
-		    {
-		      /* Keep track of all case changes requested, but don't
-			 make them now.  Do them later so we override
-			 everything else. */
-		      if (!ul_pos_dynarr)
-			{
-			  ul_pos_dynarr = Dynarr_new (int);
-			  ul_action_dynarr = Dynarr_new (int);
-			  record_unwind_protect
-			    (free_created_dynarrs,
-			     noseeum_cons
-			     (make_opaque_ptr (ul_pos_dynarr),
-			      make_opaque_ptr (ul_action_dynarr)));
-			}
-		      literal_end = strpos - 1;
-		      Dynarr_add (ul_pos_dynarr,
-				  (!NILP (accum)
-				  ? string_char_length (accum)
-				  : 0) + (literal_end - literal_start));
-		      Dynarr_add (ul_action_dynarr, c);
-		    }
-		  else if (c == '\\')
-		    /* So we get just one backslash. */
-		    literal_end = strpos;
 		}
+
 	      if (literal_end >= 0)
 		{
 		  Lisp_Object literal_text = Qnil;
@@ -3051,42 +3104,107 @@ rare.)
 		 handles this correctly.
 	      */
 	      c = string_ichar (replacement, ++strpos);
-	      if (c == '&')
-		Finsert_buffer_substring
-                  (buffer,
-                   make_fixnum (search_regs.start[0] + offset),
-                   make_fixnum (search_regs.end[0] + offset));
-	      /* #### This logic is totally broken,
-		 since we can have backrefs like "\99", right? */
-	      else if (c >= '1' && c <= '9' &&
-		       c <= search_regs.num_regs + '0')
-		{
-		  if (search_regs.start[c - '0'] >= 1)
-		    Finsert_buffer_substring
-                      (buffer,
-                       make_fixnum (search_regs.start[c - '0'] + offset),
-                       make_fixnum (search_regs.end[c - '0'] + offset));
-		}
-	      else if (c == 'U' || c == 'u' || c == 'L' || c == 'l' ||
-		       c == 'E')
-		{
-		  /* Keep track of all case changes requested, but don't
-		     make them now.  Do them later so we override
-		     everything else. */
-		  if (!ul_pos_dynarr)
-		    {
-		      ul_pos_dynarr = Dynarr_new (int);
-		      ul_action_dynarr = Dynarr_new (int);
-		      record_unwind_protect
-			(free_created_dynarrs,
-			 Fcons (make_opaque_ptr (ul_pos_dynarr),
-				make_opaque_ptr (ul_action_dynarr)));
-		    }
-		  Dynarr_add (ul_pos_dynarr, BUF_PT (buf));
-		  Dynarr_add (ul_action_dynarr, c);
-		}
-	      else
-		buffer_insert_emacs_char (buf, c);
+              switch (c)
+                {
+                case '&':
+                  Finsert_buffer_substring
+                    (buffer,
+                     make_fixnum (search_regs.start[0] + offset),
+                     make_fixnum (search_regs.end[0] + offset));
+                  break;
+                case '1': case '2': case '3': case '4': case '5':
+                case '6': case '7': case '8': case '9':
+                  {
+                    Ibyte *charpos
+                      = string_char_addr (replacement, strpos);
+                    Ibyte *regend = NULL;
+                    Bytecount limit = min (XSTRING_LENGTH (replacement)
+                                           - (charpos -
+                                              XSTRING_DATA (replacement)),
+                                           /* most-positive-fixnum on 32
+                                              bit is ten decimal digits,
+                                              nine will keep us in fixnum
+                                              territory. */
+                                           9);
+                    Bytecount ii = 0;
+                    Lisp_Object regno;
+                    Fixnum regnoing;
+
+                    /* Don't accept non-ASCII decimal digits. See the
+                       reasoning in regex.c. */
+                    while (ii < limit)
+                      {
+                        if (itext_ichar (charpos + ii) > 0x7f) 
+                          {
+                            limit = ii;
+                            break;
+                          }
+                        ii += rep_bytes_by_first_byte (charpos[ii]);
+                      }
+
+                    /* Parse the longest backreference we can, but don't
+                       produce a bignum, that can't correspond to a
+                       backreference and would needlessly complicate code
+                       further down.  */
+                    regno
+                      = parse_integer (charpos, &regend, limit, 10, 1, Qnil);
+
+                    if (FIXNUMP (regno) &&
+                        ((regnoing = XREALFIXNUM (regno), regnoing > -1)))
+                      {
+                        /* Progressively divide down the backreference until
+                           we find one that corresponds to an existing
+                           register. */
+                        while (regnoing > 10 &&
+                               !(regnoing <= search_regs.num_regs))
+                          {
+                            DEC_IBYTEPTR (regend);
+                            regnoing /= 10;
+                          }
+
+                        if (regnoing <= search_regs.num_regs
+                            && search_regs.start[regnoing] >= 1)
+                          {
+                            Finsert_buffer_substring
+                              (buffer,
+                               make_fixnum (search_regs.start[regnoing]
+                                            + offset),
+                               make_fixnum (search_regs.end[regnoing]
+                                            + offset));
+                          }
+                        else
+                          {
+                            goto otherwise;
+                          }
+                      }
+                    else
+                      {
+                        goto otherwise;
+                      }
+                    break;
+                  }
+                case 'U': case 'u': case 'L': case 'l': case 'E':
+                  {
+                    /* Keep track of all case changes requested, but don't
+                       make them now.  Do them later so we override
+                       everything else. */
+                    if (!ul_pos_dynarr)
+                      {
+                        ul_pos_dynarr = Dynarr_new (int);
+                        ul_action_dynarr = Dynarr_new (int);
+                        record_unwind_protect
+                          (free_created_dynarrs,
+                           Fcons (make_opaque_ptr (ul_pos_dynarr),
+                                  make_opaque_ptr (ul_action_dynarr)));
+                      }
+                    Dynarr_add (ul_pos_dynarr, BUF_PT (buf));
+                    Dynarr_add (ul_action_dynarr, c);
+                    break;
+                  }
+                default:
+                otherwise:
+                  buffer_insert_emacs_char (buf, c);
+                }
 	    }
 	  else
 	    buffer_insert_emacs_char (buf, c);

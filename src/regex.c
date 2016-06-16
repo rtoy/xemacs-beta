@@ -2137,6 +2137,47 @@ typedef struct
 
 #endif
 
+#ifdef emacs
+/* Parse the longest number we can, but don't produce a bignum, that can't
+   correspond to anything we're interested in and would needlessly complicate
+   code. Also avoid the silent overflow issues of the non-emacs code below. */
+#define GET_UNSIGNED_NUMBER(num) do \
+    {                                                                   \
+      Ibyte *_gus_numend = NULL;                                        \
+      Lisp_Object _gus_numno;                                           \
+      /* most-positive-fixnum on 32 bit XEmacs is 10 decimal digits,    \
+         nine will keep us in fixnum territory no matter our            \
+         architecture */                                                \
+      Bytecount limit = min (pend - p, 9), ii = 0;                      \
+                                                                        \
+      /* Require that any digits are ASCII. We already require that     \
+         the user type ASCII in order to type {,(,|, etc, and there is  \
+         the potential for security holes in the future if we allow     \
+         non-ASCII digits to specify groups in regexps and other        \
+         code that parses regexps is not aware of this. */              \
+      while (ii < limit)                                                \
+        {                                                               \
+          if (itext_ichar (p + ii) > 0x7f)                              \
+            {                                                           \
+              limit = ii;                                               \
+              break;                                                    \
+            }                                                           \
+          ii += rep_bytes_by_first_byte (p[ii]);                        \
+        }                                                               \
+                                                                        \
+      _gus_numno = parse_integer (p, &_gus_numend, limit, 10, 1, Qnil); \
+      PATFETCH (c);                                                     \
+      if (c != '-' && FIXNUMP (_gus_numno))                             \
+        {                                                               \
+          num = XREALFIXNUM (_gus_numno);                               \
+          p = _gus_numend;                                              \
+          if (p != pend)                                                \
+            {                                                           \
+              PATFETCH (c);                                             \
+            }                                                           \
+        }                                                               \
+    } while (0)
+#else
 /* Get the next unsigned number in the uncompiled pattern.  */
 #define GET_UNSIGNED_NUMBER(num) 					\
   { if (p != pend)							\
@@ -2153,6 +2194,7 @@ typedef struct
          } 								\
        } 								\
     }
+#endif
 
 /* Map a string to the char class it names (if any).  */
 re_wctype_t
@@ -3414,8 +3456,10 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 
                 if (!(syntax & RE_NO_BK_BRACES))
                   {
-                    if (c != '\\') FREE_STACK_RETURN (REG_EBRACE);
-
+		    if (c != '\\')
+		      FREE_STACK_RETURN (REG_BADBR);
+		    if (p == pend)
+		      FREE_STACK_RETURN (REG_EESCAPE);
                     PATFETCH (c);
                   }
 
@@ -3622,46 +3666,43 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
             case '1': case '2': case '3': case '4': case '5':
             case '6': case '7': case '8': case '9':
 	      {
-		regnum_t reg, regint;
-		int may_need_to_unfetch = 0;
+		regnum_t reg = -1, regint;
+                re_char *oldp = p;
+
 		if (syntax & RE_NO_BK_REFS)
 		  goto normal_char;
 
-		/* This only goes up to 99.  It could be extended to work
-		   up to 255 (the maximum number of registers that can be
-		   handled by the current regexp engine, because it stores
-		   its register numbers in the compiled pattern as one byte,
-		   ugh).  Doing that's a bit trickier, because you might
-		   have the case where \25 a back-ref but \255 is not, ... */
-		reg = c - '0';
-		if (p < pend)
-		  {
-		    PATFETCH (c);
-		    if (c >= '0' && c <= '9')
-		      {
-			regnum_t new_reg = reg * 10 + c - '0';
-			if (new_reg <= bufp->re_nsub)
-			  {
-			    reg = new_reg;
-			    may_need_to_unfetch = 1;
-			  }
-			else
-			  PATUNFETCH;
-		      }
-		    else
-		      PATUNFETCH;
-		  }
+                PATUNFETCH;
+                GET_UNSIGNED_NUMBER (reg);
 		  
-		if (reg > bufp->re_nsub)
-		  FREE_STACK_RETURN (REG_ESUBREG);
+                /* Progressively divide down the backreference until we find
+                   one that corresponds to an existing register. */
+                while (reg > 10 &&
+                       (syntax & RE_NO_MULTI_DIGIT_BK_REFS
+                        || (reg > bufp->re_nsub)))
+                  {
+                    PATUNFETCH;
+                    reg /= 10;
+                  }
+
+                if (reg > bufp->re_nsub)
+                  {
+                    /* \N with one digit with a non-existing group has always
+                       been a syntax error. */
+                    FREE_STACK_RETURN (REG_ESUBREG);
+                  }
 
 		regint = bufp->external_to_internal_register[reg];
 		/* Can't back reference to a subexpression if inside of it.  */
 		if (group_in_compile_stack (compile_stack, regint))
 		  {
-		    if (may_need_to_unfetch)
-		      PATUNFETCH;
-		    goto normal_char;
+                    /* Check REG, not REGINT. */
+                    while (reg > 10)
+                      {
+                        PATUNFETCH;
+                        reg = reg / 10;
+                      }
+                    goto normal_char;
 		  }
 
 #ifdef emacs

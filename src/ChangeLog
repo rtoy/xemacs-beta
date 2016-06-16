@@ -1,3 +1,11 @@
+2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c:
+	* regex.c (regex_compile):
+	Improve support for high-numbered backreferences here.
+	* search.c (Freplace_match):
+	Support backreferences greater than 9 in this function.
+
 2016-05-31  Jerry James  <james@xemacs.org>
 
 	* process-unix.c (unix_create_process): Move setsid call back to
