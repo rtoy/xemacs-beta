@@ -533,6 +533,84 @@ baaaa
 						     2))
       )))
 
+;; Testing matching of backreferences with numbers greater than 9.
+(macrolet
+    ((probe-backref-limits (&rest limits)
+       (list*
+        'let
+        '((log-warning-suppressed-classes
+           (cons 'regex log-warning-suppressed-classes))
+          (display-warning-suppressed-classes
+           (cons 'regex display-warning-suppressed-classes)))
+        (cons
+	 'progn
+	 (loop for limit in limits
+	   collect
+	   `(,(if (fixnump limit)
+		  'progn
+		(progn
+		  (setq limit (cdr limit))
+		  'Known-Bug-Expect-Failure))
+	     (Assert 
+	      (equal
+	       (replace-regexp-in-string
+		(with-output-to-string
+		  (loop for ii from 1 to ,(- limit 1)
+		    do (write-sequence #r"\(\)"))
+		  (write-sequence ,(format #r"\(a\)\%d" limit)))
+		"ZZ" "bbaacc")
+	       "bbZZcc")
+                ,(format "checking matching backreference %d works \
+appropriately, ASCII digits" limit)))))
+        (loop for (code-point . script)
+          in '((#x0660 . "Arabic-Indic")
+               (#x06f0 . "Extended Arabic-Indic")
+	       ;; Not checking the full list of decimal digits in
+	       ;; Unicode, that gets tedious.
+               (#x0001d7f6 . "Mathematical Monospace"))
+          with decimal-fixnum-to-string =
+          #'(lambda (fixnum zero-code-point)
+              (let (list)
+                (while (not (zerop fixnum))
+                  (push (decode-char 'ucs (+ zero-code-point (% fixnum 10)))
+                        list)
+                  (setq fixnum (/ fixnum 10)))
+                (concat list nil)))
+          collect
+          (cons
+           'progn
+           (loop
+               for limit in limits
+               collect
+               `(Assert
+                 (equal
+                  (replace-regexp-in-string
+                   (with-output-to-string
+                     (loop for ii from 1 to ,(- (if (consp limit)
+                                                    (setq limit (cdr limit))
+                                                  limit)
+                                                1)
+                           do (write-sequence #r"\(\)"))
+                     (write-sequence ,(concat #r"\(a\)" "\\"
+                                              (funcall
+                                               decimal-fixnum-to-string
+                                               limit code-point))))
+                   "ZZ" "bbaacc")
+                  "bbaacc")
+                 ,(format "checking matching backreference %d does not work\
+ work, %s" limit script))))))))
+  (probe-backref-limits 1 9 10 50 100 150 200 255 (fail . 500)))
+
+(Assert
+ (equal
+  (replace-regexp-in-string #r"\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(a\)\101"
+                            #r"\101000" "aa01bb")
+  ;; Gives "a01000bb" under GNU, where there are no backreferences greater
+  ;; than nine, and "aa01bb" before support for backreferences greater than 99
+  ;; was added.
+  "a00001bb") 
+ "checking high-numbered backreference in replacing code")
+
 ;; Not very comprehensive tests of skip-chars-forward, skip-chars-background: 
 
 (with-string-as-buffer-contents 
@@ -1117,3 +1195,4 @@ baaaa
   (Assert (null (re-search-forward "[[:alnum:]]" nil t))
           "checking that a bug with dirty syntax table caches has been fixed"))
   
+;;; end of regexp-tests.el
