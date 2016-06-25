@@ -3208,13 +3208,12 @@ under Mule, is very difficult.)
 	    break;
 	  }
 
+        this_tell = Lstream_character_tell (XLSTREAM (stream));
 	cc_inserted
           = buffer_insert_string_1 (buf, cur_point, read_buf, Qnil,
-                                    0, this_len, last_tell >= 0
-                                    ? (this_tell
-                                       = Lstream_character_tell (XLSTREAM
-                                                                 (stream)))
-                                    - last_tell : -1,
+                                    0, this_len,
+                                    (last_tell >= 0 && this_tell >= 0) ?
+                                    (this_tell - last_tell) : -1,
                                     !NILP (visit) ? INSDEL_NO_LOCKING : 0);
 	inserted  += cc_inserted;
 	cur_point += cc_inserted;

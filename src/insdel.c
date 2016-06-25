@@ -1142,12 +1142,14 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
     }
   else
     {
+#ifdef ERROR_CHECK_TEXT
       text_checking_assert (cclen > 0 && cclen
                             == (STRINGP (reloc) ?
                                 string_offset_byte_to_char_len (reloc, offset,
                                                                 length)
                                 : bytecount_to_charcount (nonreloc + offset,
                                                           length)));
+#endif /* ERROR_CHECK_TEXT */
     }
 
   /* &&#### Here we check if the text can't fit into the format of the buffer,
