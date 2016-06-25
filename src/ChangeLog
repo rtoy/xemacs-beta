@@ -1,3 +1,18 @@
+2016-06-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Finsert_file_contents_internal):
+	If the Lstream character count info wasn't available for one
+	buffer read, don't assume it will never be available again for
+	this stream, keep checking. We may be in the middle of a character
+	in a Unicode coding system, which can throw off our calculation
+	briefly.
+	* insdel.c (buffer_insert_string_1):
+	Ben changed the semantics of assertions on builds without
+	assertions enabled--the statement is now always executed--so wrap
+	an assertion that, when enabled, misses the point of the Lstream
+	character count infrastructure entirely, in #ifdef
+	ERROR_CHECK_TEXT.
+
 2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* regex.c:
