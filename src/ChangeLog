@@ -1,3 +1,60 @@
+2016-06-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move #'concatenate to C, improve the implementation and
+	algorithmic complexity of #'concat.
+	* bytecode.c:
+	* event-msw.c (dde_eval_string):
+	* gc.c (show_gc_cursor_and_message):
+	* gc.c (remove_gc_cursor_and_message):
+	* gutter.c (construct_window_gutter_spec):
+	* tls.c (gnutls_pk11_password):
+	* tls.c (openssl_error_string):
+	Call concatenate(), not Fconcat(), in these files.
+
+	* fns.c (concat2, concat3, vconcat2, vconcat3, Fappend, Fconcat):
+	Move these to sequence.c
+	* fns.c (copy_list):
+	Call concatenate() here, not concat().
+	* fns.c (Also see): Removed.
+	* fns.c (Fcopy_sequence):
+	* fns.c (Fcopy_alist):
+	* fns.c (arguments): Removed.
+	* fns.c (nconc2):
+	bytecode_nconc2() now does its own GCing, no need for us to.
+	* fns.c (bytecode_nconc2):
+	GCPRO in this function, document why.
+	* fns.c (Fnconc):
+	Don't GCPRO in this function, it is not called from C, and any
+	Lisp calls will have their arguments GCPROd automatically.
+	* fns.c (syms_of_fns):
+	Move Fappend to sequence.c; move #'concat, #'vconcat, #'bvconcat
+	to subr.el.
+	* general-slots.h:
+	Move 'bit-vector, 'vector here.
+	* lisp.h:
+	Declare concatenate(), the heavy lifting of #'concat.
+	* sequence.c:
+	* sequence.c (Fmapconcat):
+	Call concatenate() rather than Fconcat().
+	* sequence.c (Fmapcan):
+	GCPRO the arguments to Fnconc() ourselves here.
+	* sequence.c (struct merge_string_extents_struct):
+	Move this here from fns.c().
+	* sequence.c (concatenate):
+	Re-implement concat(), previously in fns.c, in this file; use a
+	much cheaper algorithm for the common case of all-string arguments and
+	a string result, use a cheaper algorithm for append(), only
+	traversing lists and strings once, call #'coerce as necessary.
+	* sequence.c (Fconcatenate):
+	Make concatenate() available to Lisp.
+	* sequence.c (concat2, concat3, vconcat2, vconcat3): Moved here
+	from fns.c.
+	* sequence.c (Fappend): Moved here from fns.c, implemented in
+	terms of concatenate().
+	* sequence.c (syms_of_sequence):
+	Make some subrs available here, move some symbols to
+	general-slots.h.
+
 2016-06-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecode.c (ADJUST_STACK_GCPRO):

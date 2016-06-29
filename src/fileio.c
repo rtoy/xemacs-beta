@@ -1848,7 +1848,7 @@ A prefix arg makes KEEP-TIME non-nil.
 
 	args[i++] = Fchar_to_string (Vdirectory_sep_char);
       args[i++] = Ffile_name_nondirectory (filename);
-      newname = Fconcat (i, args);
+      newname = concatenate (i, args, Qstring, 0);
       NUNGCPRO;
     }
 
@@ -2088,7 +2088,7 @@ This is what happens in interactive use with M-x.
       if (string_byte (newname, XSTRING_LENGTH (newname) - 1) != '/')
 	args[i++] = build_ascstring ("/");
       args[i++] = Ffile_name_nondirectory (filename);
-      newname = Fconcat (i, args);
+      newname = concatenate (i, args, Qstring, 0);
       NUNGCPRO;
     }
 

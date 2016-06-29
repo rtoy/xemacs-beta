@@ -243,7 +243,7 @@ static Lisp_Object construct_window_gutter_spec (struct window* w,
 	}
     }
 
-  return Fconcat (nargs, args);
+  return concatenate (nargs, args, Qstring, 0);
 }
 
 /* Sizing gutters is a pain so we try and help the user by determining

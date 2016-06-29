@@ -1753,7 +1753,7 @@ dde_eval_string (Lisp_Object str)
   args[0] = build_ascstring ("(progn ");
   args[1] = str;
   args[2] = build_ascstring (")");
-  str = Fconcat (3, args);
+  str = concatenate (3, args, Qstring, 0);
 
   obj = Fread_from_string (str, Qnil, Qnil);
   UNGCPRO;

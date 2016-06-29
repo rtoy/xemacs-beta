@@ -364,17 +364,7 @@ If STATE is t, return a new state object seeded from the time of day."
 
 ;;; Sequence functions.
 
-;; XEmacs; #'subseq is in C.
-
-(defun concatenate (type &rest seqs)
-  "Concatenate, into a sequence of type TYPE, the argument SEQUENCES."
-  ;; XEmacs change: use case instead of cond for clarity
-  (case type
-    (vector (apply 'vconcat seqs))
-    (string (apply 'concat seqs))
-    (list   (reduce 'append seqs :from-end t :initial-value nil))
-    (bit-vector (apply 'bvconcat seqs))
-    (t (coerce (reduce 'append seqs :from-end t :initial-value nil) type))))
+;; XEmacs; #'subseq, #'concatenate are in C.
 
 ;;; List functions.
 

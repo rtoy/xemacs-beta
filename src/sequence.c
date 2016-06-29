@@ -4556,7 +4556,7 @@ arguments: (FUNCTION SEQUENCE SEPARATOR &rest SEQUENCES)
   for (i = 1; i < nargs0; i += 2)
     args0[i] = separator;
 
-  return Fconcat (nargs0, args0);
+  return concatenate (nargs0, args0, Qstring, 0);
 }
 
 DEFUN ("mapcar*", FmapcarX, 2, MANY, 0, /*
@@ -4627,11 +4627,14 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
 {
   Elemcount len = shortest_length_among_sequences (nargs - 1, args + 1);
   Lisp_Object function = args[0], *result = alloca_array (Lisp_Object, len);
+  struct gcpro gcpro1;
 
   mapcarX (len, result, Qnil, function, nargs - 1, args + 1, Qmapcan);
 
-  /* #'nconc GCPROs its args in case of signals and error. */
-  return Fnconc (len, result);
+  GCPRO1 (result[0]);
+  gcpro1.nvars = len;
+
+  RETURN_UNGCPRO (Fnconc (len, result));
 }
 
 DEFUN ("mapc", Fmapc, 2, MANY, 0, /*
@@ -4802,6 +4805,356 @@ arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
   return result;
 }
 
+
+struct merge_string_extents_struct
+{
+  Lisp_Object string;
+  Bytecount entry_offset;
+  Bytecount entry_length;
+};
+
+Lisp_Object
+concatenate (int nsequences, Lisp_Object *sequences,
+             Lisp_Object result_type, Boolint reuse_last_listp)
+{
+  Lisp_Object *lisp_staging = NULL, *lisp_cursor = NULL, result = Qnil;
+  Elemcount ii, jj, staging_len = 0;
+  struct gcpro gcpro1, gcpro2;
+
+  /* We can GC in #'coerce, and in copy_string_extents(). Our callers don't
+     all GCPRO our arguments, despite that this is the usual protocol, and we
+     need to GCPRO RESULT ourselves anyway. */
+  GCPRO2 (sequences[0], result);
+  gcpro1.nvars = nsequences;
+
+  /* String result is the commonest case, and can be very cheap for
+     exclusively-string arguments; get the complete byte length, make an
+     uninited string of that length, and memcpy all the arguments' string data
+     into the new string, O(+ NSEQUENCES (reduce #'+ SEQUENCES :key
+     #'byte-length)), no need for character lengths or INC_IBYTEPTR. */
+  if (EQ (result_type, Qstring))
+    {
+      Bytecount bstaging_len = 0;
+      Ibyte *bstaging = NULL, *cursor = NULL;
+      struct merge_string_extents_struct *args_mse
+        = alloca_array (struct merge_string_extents_struct, nsequences);
+      struct merge_string_extents_struct *args_mse_cursor = args_mse;
+
+      for (ii = 0; ii < nsequences; ++ii)
+        {
+          if (STRINGP (sequences[ii]))
+            {
+              bstaging_len += XSTRING_LENGTH (sequences[ii]);
+              if (NULL != string_extent_info (sequences[ii]))
+                {
+                  args_mse_cursor->string = sequences[ii];
+                  args_mse_cursor->entry_length
+                    = XSTRING_LENGTH (sequences[ii]);
+                  args_mse_cursor++;
+                }
+              else if (args_mse == args_mse_cursor)
+                {
+                  /* Make sure that the code checking below for string with
+                     extent info in args_mse[] has a valid Lisp object to
+                     compare to. */
+                  args_mse[0].string = Qnil;
+                }
+            }
+          else
+            {
+              /* Get the item count of each sequence; in passing, check their
+                 type and circularity, well-formedness. Allocate item_count *
+                 MAX_ICHAR_LEN of staging space for each non-string sequence
+                 encountered. */
+              bstaging_len
+                += (XFIXNUM (Flength (sequences[ii]))) * MAX_ICHAR_LEN;
+            }
+        }
+
+      result = make_uninit_string (bstaging_len);
+
+#if defined (ERROR_CHECK_TEXT)
+      /* Make sure the data of the string is valid internal-format
+         text. Relatively expensive, in that it adds another traversal of the
+         string data to our algorithm, but avoids an assertion failure with
+         ERROR_CHECK_TEXT. */
+      memset (XSTRING_DATA (result), 0, XSTRING_LENGTH (result));
+#endif
+
+      bstaging = cursor = XSTRING_DATA (result);
+      args_mse_cursor = args_mse;
+
+      for (ii = 0; ii < nsequences; ++ii)
+        {
+          if (STRINGP (sequences[ii]))
+            {
+              memcpy (cursor, XSTRING_DATA (sequences[ii]),
+                      XSTRING_LENGTH (sequences[ii]));
+              if (EQ (args_mse_cursor->string, sequences[ii]))
+                {
+                  args_mse_cursor->entry_offset = cursor - bstaging;
+                  args_mse_cursor++;
+                }
+              cursor += XSTRING_LENGTH (sequences[ii]);
+            }
+          else if (CONSP (sequences[ii]))
+            {
+              /* We know the list is well-formed, because #'length succeeded,
+                 above, so we can use a simpler loop than usual for external
+                 lists. */
+              LIST_LOOP_2 (elt, sequences[ii])
+                {
+                  CHECK_CHAR_COERCE_INT (elt);
+                  cursor += set_itext_ichar (cursor, XCHAR (elt));
+                }
+            }
+          else if (ARRAYP (sequences[ii]))
+            {
+              Lisp_Object elt = Qnil;
+              Elemcount len = XFIXNUM (Flength (sequences[ii]));
+
+              for (jj = 0; jj < len; ++jj)
+                {
+                  elt = Faref (sequences[ii], make_fixnum (jj));
+                  CHECK_CHAR_COERCE_INT (elt);
+                  cursor += set_itext_ichar (cursor, XCHAR (elt));
+                }
+            }
+          else
+            {
+              assert (NILP (sequences[ii]));
+            }
+        }
+
+      if ((cursor - bstaging) != bstaging_len)
+        {
+          Bytecount used_len = cursor - bstaging;
+
+          text_checking_assert (used_len < bstaging_len);
+
+          /* No-one else has a pointer to RESULT, and calling resize_string()
+             gives crashes in temacs, its implementation isn't thoroughly
+             debugged and its performance is sub-optimal. Create a new RESULT,
+             let the first be GCed instead. */
+          result = make_string (bstaging, used_len);
+        }
+      else
+        {
+          /* copy_string_extents() can call Lisp, make sure
+             init_string_ascii_begin() is called on RESULT before its
+             invocation. */
+          init_string_ascii_begin (result);
+          sledgehammer_check_ascii_begin (result);
+        }
+
+      while (args_mse < args_mse_cursor)
+        {
+          copy_string_extents (result, args_mse->string,
+                               args_mse->entry_offset, 0,
+                               args_mse->entry_length);
+          args_mse++;
+        }
+
+      RETURN_UNGCPRO (result);
+    }
+
+  /* List result is the next commonest case, and benefits from starting from
+     the end and moving towards the beginning; for cons sequences we don't
+     need traverse the list twice to get the element count, we can traverse
+     once and add as we go, and for string sequences we again don't need the
+     char length if we start at the end and DEC_IBYTEPTR.x  */
+  if (EQ (result_type, Qlist))
+    {
+      ii = nsequences;
+
+      if (reuse_last_listp && ii > 0)
+        {
+          result = sequences[--ii];
+        }
+
+      while (--ii >= 0)
+        {
+          if (CONSP (sequences[ii]))
+            {
+              Lisp_Object seqcopy = Fcons (XCAR (sequences[ii]), Qnil);
+              Lisp_Object head = seqcopy;
+
+              EXTERNAL_LIST_LOOP_2 (list_elt, XCDR (sequences[ii]))
+                {
+                  XSETCDR (seqcopy, Fcons (list_elt, Qnil));
+                  seqcopy = XCDR (seqcopy);
+                }
+
+              XSETCDR (seqcopy, result);
+              result = head;
+
+            }
+          else if (STRINGP (sequences [ii]))
+            {
+              Ibyte *bstart = XSTRING_DATA (sequences[ii]);
+              Ibyte *bcursor = bstart + XSTRING_LENGTH (sequences[ii]);
+
+              while (bcursor > bstart)
+                {
+                  DEC_IBYTEPTR (bcursor);
+
+                  result = Fcons (make_char (itext_ichar (bcursor)), result);
+                }
+            }
+          else if (ARRAYP (sequences[ii]))
+            {
+              jj = XFIXNUM (Flength (sequences[ii]));
+
+              for (--jj; jj >= 0; --jj)
+                {
+                  result = Fcons (Faref (sequences[ii], make_fixnum (jj)),
+                                  result);
+                }
+            }
+          else if (!NILP (sequences[ii]))
+            {
+              CHECK_SEQUENCE (sequences[ii]);
+            }
+        }
+
+      RETURN_UNGCPRO (result);
+    }
+
+  for (ii = 0; ii < nsequences; ++ii)
+    {
+      if (STRINGP (sequences[ii]))
+        {
+          /* No need to actually get the char length, since the byte length
+             will always be greater than or equal to the char length. We just
+             allocate the byte-count of items, the extra space for the staging
+             doesn't matter. */
+          staging_len += XSTRING_LENGTH (sequences[ii]);
+        }
+      else
+        {
+          /* Get the item count of each sequence; in passing, check their
+             type and circularity, well-formedness. */
+          staging_len += (XFIXNUM (Flength (sequences[ii])));
+        }
+    }
+
+  /* No need to GCPRO lisp_staging, all its elements are in SEQUENCES. */
+  lisp_staging = lisp_cursor = alloca_array (Lisp_Object, staging_len);
+
+  for (ii = 0; ii < nsequences; ++ii)
+    {
+      if (CONSP (sequences[ii]))
+        {
+          /* We know the list is well-formed, because #'length succeeded,
+             above, so we can use a cheaper loop than is usual for external
+             lists. */
+          LIST_LOOP_2 (elt, sequences[ii])
+            {
+              *lisp_cursor = elt, lisp_cursor++;
+            }
+        }
+      else if (STRINGP (sequences[ii]))
+        {
+          Ibyte *stringp = XSTRING_DATA (sequences[ii]);
+          Ibyte *endp = stringp + XSTRING_LENGTH (sequences[ii]);
+
+          while (stringp < endp)
+            {
+              *lisp_cursor = make_char (itext_ichar (stringp));
+              INC_IBYTEPTR (stringp);
+              ++lisp_cursor;
+            }
+        }
+      else if (VECTORP (sequences[ii]))
+        {
+          Elemcount len = XVECTOR_LENGTH (sequences[ii]);
+          memcpy (lisp_cursor, XVECTOR_DATA (sequences[ii]),
+                  len * sizeof (Lisp_Object));
+          lisp_cursor += len;
+        }
+      else if (ARRAYP (sequences[ii]))
+        {
+          Elemcount len = XFIXNUM (Flength (sequences[ii]));
+
+          for (jj = 0; jj < len; ++jj, ++lisp_cursor)
+            {
+              *lisp_cursor = Faref (sequences[ii], make_fixnum (jj));
+            }
+        }
+      else
+        {
+          assert (NILP (sequences[ii]));
+        }
+    }
+
+  if (EQ (result_type, Qvector) || EQ (result_type, Qarray))
+    {
+      RETURN_UNGCPRO (Fvector (lisp_cursor - lisp_staging, lisp_staging));
+    }
+
+  if (EQ (result_type, Qbit_vector))
+    {
+      RETURN_UNGCPRO (Fbit_vector (lisp_cursor - lisp_staging, lisp_staging));
+    }
+
+  result = Flist (lisp_cursor - lisp_staging, lisp_staging);
+  result = call2 (Qcoerce, result, result_type);
+  RETURN_UNGCPRO (result);
+}
+
+DEFUN ("concatenate", Fconcatenate, 1, MANY, 0, /*
+Concatenate, into a sequence of type TYPE, the argument SEQUENCES.
+
+arguments: (TYPE &rest SEQUENCES)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object type = args[0];
+
+  return concatenate (nargs - 1, args + 1, type, 0);
+}
+
+Lisp_Object
+concat2 (Lisp_Object seq1, Lisp_Object seq2)
+{
+  Lisp_Object args[] = { seq1, seq2 };
+  return concatenate (countof (args), args, Qstring, 0);
+}
+
+Lisp_Object
+concat3 (Lisp_Object seq1, Lisp_Object seq2, Lisp_Object seq3)
+{
+  Lisp_Object args[] = { seq1, seq2, seq3 };
+  return concatenate (countof (args), args, Qstring, 0);
+}
+
+Lisp_Object
+vconcat2 (Lisp_Object seq1, Lisp_Object seq2)
+{
+  Lisp_Object args[] = { seq1, seq2 };
+  return concatenate (countof (args), args, Qvector, 0);
+}
+
+Lisp_Object
+vconcat3 (Lisp_Object seq1, Lisp_Object seq2, Lisp_Object seq3)
+{
+  Lisp_Object args[] = { seq1, seq2, seq3 };
+  return concatenate (countof (args), args, Qvector, 0);
+}
+
+DEFUN ("append", Fappend, 0, MANY, 0, /*
+Concatenate all the arguments and make the result a list.
+The result is a list whose elements are the elements of all the arguments.
+Each argument may be a list, vector, bit vector, or string.
+The last argument is not copied, just used as the tail of the new list.
+Also see: `nconc'.
+
+arguments: (&rest ARGS)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return concatenate (nargs, args, Qlist, 1);
+}
 
 DEFUN ("reduce", Freduce, 2, MANY, 0, /*
 Combine the elements of SEQUENCE using FUNCTION, a binary operation.
@@ -8293,11 +8646,9 @@ syms_of_sequence (void)
   DEFSYMBOL (Qmerge);
   DEFSYMBOL (Qfill);
   DEFSYMBOL (Qidentity);
-  DEFSYMBOL (Qvector);
   DEFSYMBOL (Qarray);
   DEFSYMBOL (Qstring);
   DEFSYMBOL (Qlist);
-  DEFSYMBOL (Qbit_vector);
   defsymbol (&QsortX, "sort*");
   DEFSYMBOL (Qreduce);
   DEFSYMBOL (Qreplace);
@@ -8378,6 +8729,8 @@ syms_of_sequence (void)
   DEFSUBR (Fmap_into);
   DEFSUBR (Fsome);
   DEFSUBR (Fevery);
+  DEFSUBR (Fconcatenate);
+  DEFSUBR (Fappend);
   DEFSUBR (Freduce);
   DEFSUBR (Freplace);
   DEFSUBR (Fnsubstitute);

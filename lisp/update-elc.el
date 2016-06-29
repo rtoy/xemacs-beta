@@ -217,8 +217,8 @@ If any of these files are changed, we need to redump.")
                   ;;                invocation-directory invocation-name)))
 		  (kill-emacs))
 	      (update-elc-chop-extension full-arg)))
-	   (full-arg-el (concat full-arg-sans-extension ".el"))
-	   (full-arg-elc (concat full-arg-sans-extension ".elc"))
+	   (full-arg-el (concatenate 'string full-arg-sans-extension ".el"))
+	   (full-arg-elc (concatenate 'string full-arg-sans-extension ".elc"))
 	   (full-arg-dir (file-name-directory full-arg-el)))
 	   
       ; (print full-arg-el)
@@ -349,13 +349,15 @@ If any of these files are changed, we need to redump.")
 	(t
 	 (let ((bc-bootstrap
 		(mapcar #'(lambda (arg) 
-			    (concat (update-elc-chop-extension
-				     (locate-library arg)) ".el"))
+			    (concatenate 'string
+                                         (update-elc-chop-extension
+                                          (locate-library arg)) ".el"))
 			lisp-files-needed-for-byte-compilation))
 	       (bootstrap-other
 		(mapcar #'(lambda (arg) 
-			    (concat (update-elc-chop-extension
-				     (locate-library arg)) ".el"))
+			    (concatenate 'string
+                                         (update-elc-chop-extension
+                                          (locate-library arg)) ".el"))
 			lisp-files-needing-early-byte-compilation)))
 	   (setq inhibit-autoloads t)
 	   ;; if bytecomp or byte-optimize need recompiling, then load
