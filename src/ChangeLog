@@ -1,3 +1,11 @@
+2016-06-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (ADJUST_STACK_GCPRO):
+	Rename GCPRO_STACK to the less misleading ADJUST_STACK_GCPRO.
+	Clarify what it does in a comment.
+	Remove commented-out, confusing calls to GCPRO_STACK from before
+	the active stack was systematically GCPRO'd.
+
 2016-06-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (Finsert_file_contents_internal):
