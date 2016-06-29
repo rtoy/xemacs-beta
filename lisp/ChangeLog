@@ -1,3 +1,30 @@
+2016-06-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (concatenate): Implement #'concatenate in
+	sequence.c, implement #'concat, #'vconcat, #'bvconcat in terms of
+	it rather than the other way around.
+
+	* find-paths.el (paths-no-lisp-directory-regexp):
+	* find-paths.el (paths-construct-path):
+	* find-paths.el (paths-construct-emacs-directory):
+	* find-paths.el (construct-emacs-version-name):
+	* find-paths.el (paths-directories-which-exist):
+	* loadup.el (really-early-error-handler):
+	* make-docfile.el (process-args):
+	* packages.el (packages-add-suffix):
+	* packages.el (packages-list-autoloads-path):
+	* update-elc.el (preloaded-file-list):
+	* update-elc.el (do-autoload-commands):
+	Use #'concatenate rather than #'concat in these files run at build
+	time, where #'concat's new implementation from subr.el is not
+	available.
+	* subr.el:
+	* subr.el (concat): Moved here from fns.c.
+	* subr.el (vconcat): Moved here from fns.c.
+	* subr.el (bvconcat): Moved here from fns.c.
+	Implement all three in terms of #'concatenate. Maintain the
+	#'concat bytecode for the moment.
+
 2016-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* cl-seq.el (delete-if): Fix typo in docstring.

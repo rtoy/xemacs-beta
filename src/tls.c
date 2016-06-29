@@ -719,7 +719,7 @@ gnutls_pk11_password (void * UNUSED (userdata), int UNUSED (attempt),
   args[2] = build_ascstring (" (");
   args[3] = build_extstring (token_url, Qnative);
   args[4] = build_ascstring (")");
-  lsp_password = call1 (Qread_passwd, Fconcat (5, args));
+  lsp_password = call1 (Qread_passwd, concatenate (5, args, Qstring, 0));
   c_password = LISP_STRING_TO_EXTERNAL (lsp_password, Qnative);
 
   /* Insert the password */
@@ -800,7 +800,7 @@ openssl_error_string (void)
   args[2] = build_ascstring (ERR_func_error_string (err));
   args[3] = build_ascstring (":");
   args[4] = build_ascstring (ERR_reason_error_string (err));
-  return Fconcat (5, args);
+  return concatenate (countof (args), args, Qstring, 0);
 }
 
 static unsigned long

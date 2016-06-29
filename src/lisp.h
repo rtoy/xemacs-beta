@@ -5804,6 +5804,9 @@ EXFUN (Ffill, MANY);
 EXFUN (Fclear_string, 1);
 EXFUN (Freplace, MANY);
 
+Lisp_Object concatenate (int nsequences, Lisp_Object *sequences,
+                         Lisp_Object result_type, Boolint reuse_last_listp);
+
 /* Defined in signal.c */
 void init_interrupts_late (void);
 

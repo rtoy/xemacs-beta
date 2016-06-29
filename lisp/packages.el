@@ -180,7 +180,7 @@ is used instead of `load-path'."
 
 (defun packages-add-suffix (str)
   (if (null (string-match "\\.el\\'" str))
-      (concat str ".elc")
+      (concatenate 'string str ".elc")
     str))
 
 (defun packages-list-autoloads-path ()

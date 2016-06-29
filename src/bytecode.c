@@ -1185,7 +1185,7 @@ execute_optimized_program (const Opbyte *program,
 	do_concat:
 	  DISCARD (n - 1);
           TOP_LVALUE = TOP; /* Ignore multiple values. */
-	  TOP_LVALUE = Fconcat (n, TOP_ADDRESS);
+	  TOP_LVALUE = concatenate (n, TOP_ADDRESS, Qstring, 0);
 	  break;
 
 

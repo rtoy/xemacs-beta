@@ -321,106 +321,8 @@ is implemented.
 }
 
 
-enum  concat_target_type { c_cons, c_string, c_vector, c_bit_vector };
-static Lisp_Object concat (int nargs, Lisp_Object *args,
-                           enum concat_target_type target_type,
-                           int last_special);
-
-Lisp_Object
-concat2 (Lisp_Object string1, Lisp_Object string2)
-{
-  Lisp_Object args[2];
-  args[0] = string1;
-  args[1] = string2;
-  return concat (2, args, c_string, 0);
-}
-
-Lisp_Object
-concat3 (Lisp_Object string1, Lisp_Object string2, Lisp_Object string3)
-{
-  Lisp_Object args[3];
-  args[0] = string1;
-  args[1] = string2;
-  args[2] = string3;
-  return concat (3, args, c_string, 0);
-}
-
-Lisp_Object
-vconcat2 (Lisp_Object vec1, Lisp_Object vec2)
-{
-  Lisp_Object args[2];
-  args[0] = vec1;
-  args[1] = vec2;
-  return concat (2, args, c_vector, 0);
-}
-
-Lisp_Object
-vconcat3 (Lisp_Object vec1, Lisp_Object vec2, Lisp_Object vec3)
-{
-  Lisp_Object args[3];
-  args[0] = vec1;
-  args[1] = vec2;
-  args[2] = vec3;
-  return concat (3, args, c_vector, 0);
-}
-
-DEFUN ("append", Fappend, 0, MANY, 0, /*
-Concatenate all the arguments and make the result a list.
-The result is a list whose elements are the elements of all the arguments.
-Each argument may be a list, vector, bit vector, or string.
-The last argument is not copied, just used as the tail of the new list.
-Also see: `nconc'.
-
-arguments: (&rest ARGS)
-*/
-       (int nargs, Lisp_Object *args))
-{
-  return concat (nargs, args, c_cons, 1);
-}
-
-DEFUN ("concat", Fconcat, 0, MANY, 0, /*
-Concatenate all the arguments and make the result a string.
-The result is a string whose elements are the elements of all the arguments.
-Each argument may be a string or a list or vector of characters.
-
-As of XEmacs 21.0, this function does NOT accept individual integers
-as arguments.  Old code that relies on, for example, (concat "foo" 50)
-returning "foo50" will fail.  To fix such code, either apply
-`int-to-string' to the integer argument, or use `format'.
-
-arguments: (&rest ARGS)
-*/
-       (int nargs, Lisp_Object *args))
-{
-  return concat (nargs, args, c_string, 0);
-}
-
-DEFUN ("vconcat", Fvconcat, 0, MANY, 0, /*
-Concatenate all the arguments and make the result a vector.
-The result is a vector whose elements are the elements of all the arguments.
-Each argument may be a list, vector, bit vector, or string.
-
-arguments: (&rest ARGS)
-*/
-       (int nargs, Lisp_Object *args))
-{
-  return concat (nargs, args, c_vector, 0);
-}
-
-DEFUN ("bvconcat", Fbvconcat, 0, MANY, 0, /*
-Concatenate all the arguments and make the result a bit vector.
-The result is a bit vector whose elements are the elements of all the
-arguments.  Each argument may be a list, vector, bit vector, or string.
-
-arguments: (&rest ARGS)
-*/
-       (int nargs, Lisp_Object *args))
-{
-  return concat (nargs, args, c_bit_vector, 0);
-}
-
-/* Copy a (possibly dotted) list.  LIST must be a cons.
-   Can't use concat (1, &alist, c_cons, 0) - doesn't handle dotted lists. */
+/* Copy a (possibly dotted) list.  LIST must be a cons.  Can't use concatenate
+   (1, &alist, Qlist, 0) - doesn't handle dotted lists. */
 static Lisp_Object
 copy_list (Lisp_Object list)
 {
@@ -470,254 +372,16 @@ with the original. SEQUENCE may be a dotted list.
        (sequence))
 {
  again:
-  if (NILP        (sequence)) return sequence;
-  if (CONSP       (sequence)) return copy_list (sequence);
-  if (STRINGP     (sequence)) return concat (1, &sequence, c_string,     0);
-  if (VECTORP     (sequence)) return concat (1, &sequence, c_vector,     0);
-  if (BIT_VECTORP (sequence)) return concat (1, &sequence, c_bit_vector, 0);
+  if (NILP (sequence)) return sequence;
+  if (CONSP (sequence)) return copy_list (sequence);
+  if (STRINGP (sequence)) return concatenate (1, &sequence, Qstring, 0);
+  if (VECTORP (sequence)) return concatenate (1, &sequence, Qvector, 0);
+  if (BIT_VECTORP (sequence))
+    return concatenate (1, &sequence, Qbit_vector, 0);
 
   check_losing_bytecode ("copy-sequence", sequence);
   sequence = wrong_type_argument (Qsequencep, sequence);
   goto again;
-}
-
-struct merge_string_extents_struct
-{
-  Lisp_Object string;
-  Bytecount entry_offset;
-  Bytecount entry_length;
-};
-
-static Lisp_Object
-concat (int nargs, Lisp_Object *args,
-        enum concat_target_type target_type,
-        int last_special)
-{
-  Lisp_Object val;
-  Lisp_Object tail = Qnil;
-  int toindex;
-  int argnum;
-  Lisp_Object last_tail;
-  Lisp_Object prev;
-  struct merge_string_extents_struct *args_mse = 0;
-  Ibyte *string_result = 0;
-  Ibyte *string_result_ptr = 0;
-  struct gcpro gcpro1;
-  int sdep = specpdl_depth ();
-
-  /* The modus operandi in Emacs is "caller gc-protects args".
-     However, concat is called many times in Emacs on freshly
-     created stuff.  So we help those callers out by protecting
-     the args ourselves to save them a lot of temporary-variable
-     grief. */
-
-  GCPRO1 (args[0]);
-  gcpro1.nvars = nargs;
-
-#ifdef I18N3
-  /* #### if the result is a string and any of the strings have a string
-     for the `string-translatable' property, then concat should also
-     concat the args but use the `string-translatable' strings, and store
-     the result in the returned string's `string-translatable' property. */
-#endif
-  if (target_type == c_string)
-    args_mse = alloca_array (struct merge_string_extents_struct, nargs);
-
-  /* In append, the last arg isn't treated like the others */
-  if (last_special && nargs > 0)
-    {
-      nargs--;
-      last_tail = args[nargs];
-    }
-  else
-    last_tail = Qnil;
-
-  /* Check and coerce the arguments. */
-  for (argnum = 0; argnum < nargs; argnum++)
-    {
-      Lisp_Object seq = args[argnum];
-      if (LISTP (seq))
-        ;
-      else if (VECTORP (seq) || STRINGP (seq) || BIT_VECTORP (seq))
-        ;
-#if 0				/* removed for XEmacs 21 */
-      else if (FIXNUMP (seq))
-        /* This is too revolting to think about but maintains
-           compatibility with FSF (and lots and lots of old code). */
-        args[argnum] = Fnumber_to_string (seq);
-#endif
-      else
-	{
-          check_losing_bytecode ("concat", seq);
-          args[argnum] = wrong_type_argument (Qsequencep, seq);
-	}
-
-      if (args_mse)
-        {
-          if (STRINGP (seq))
-            args_mse[argnum].string = seq;
-          else
-            args_mse[argnum].string = Qnil;
-        }
-    }
-
-  {
-    /* Charcount is a misnomer here as we might be dealing with the
-       length of a vector or list, but emphasizes that we're not dealing
-       with Bytecounts in strings */
-    Charcount total_length;
-
-    for (argnum = 0, total_length = 0; argnum < nargs; argnum++)
-      {
-        Charcount thislen = XFIXNUM (Flength (args[argnum]));
-        total_length += thislen;
-      }
-
-    switch (target_type)
-      {
-      case c_cons:
-        if (total_length == 0)
-	  {
-	    unbind_to (sdep);
-	    /* In append, if all but last arg are nil, return last arg */
-	    RETURN_UNGCPRO (last_tail);
-	  }
-        val = Fmake_list (make_fixnum (total_length), Qnil);
-        break;
-      case c_vector:
-        val = make_vector (total_length, Qnil);
-        break;
-      case c_bit_vector:
-        val = make_bit_vector (total_length, Qzero);
-        break;
-      case c_string:
-	/* We don't make the string yet because we don't know the
-	   actual number of bytes.  This loop was formerly written
-	   to call Fmake_string() here and then call set_string_char()
-	   for each char.  This seems logical enough but is waaaaaaaay
-	   slow -- set_string_char() has to scan the whole string up
-	   to the place where the substitution is called for in order
-	   to find the place to change, and may have to do some
-	   realloc()ing in order to make the char fit properly.
-	   O(N^2) yuckage. */
-        val = Qnil;
-	string_result =
-	  (Ibyte *) MALLOC_OR_ALLOCA (total_length * MAX_ICHAR_LEN);
-	string_result_ptr = string_result;
-        break;
-      default:
-	val = Qnil;
-        ABORT ();
-      }
-  }
-
-
-  if (CONSP (val))
-    tail = val, toindex = -1;	/* -1 in toindex is flag we are
-				    making a list */
-  else
-    toindex = 0;
-
-  prev = Qnil;
-
-  for (argnum = 0; argnum < nargs; argnum++)
-    {
-      Charcount thisleni = 0;
-      Charcount thisindex = 0;
-      Lisp_Object seq = args[argnum];
-      Ibyte *string_source_ptr = 0;
-      Ibyte *string_prev_result_ptr = string_result_ptr;
-
-      if (!CONSP (seq))
-	{
-	  thisleni = XFIXNUM (Flength (seq));
-	}
-      if (STRINGP (seq))
-	string_source_ptr = XSTRING_DATA (seq);
-
-      while (1)
-	{
-	  Lisp_Object elt;
-
-	  /* We've come to the end of this arg, so exit. */
-	  if (NILP (seq))
-	    break;
-
-	  /* Fetch next element of `seq' arg into `elt' */
-	  if (CONSP (seq))
-            {
-              elt = XCAR (seq);
-              seq = XCDR (seq);
-            }
-	  else
-	    {
-	      if (thisindex >= thisleni)
-		break;
-
-	      if (STRINGP (seq))
-		{
-		  elt = make_char (itext_ichar (string_source_ptr));
-		  INC_IBYTEPTR (string_source_ptr);
-		}
-	      else if (VECTORP (seq))
-                elt = XVECTOR_DATA (seq)[thisindex];
-	      else if (BIT_VECTORP (seq))
-		elt = make_fixnum (bit_vector_bit (XBIT_VECTOR (seq),
-						thisindex));
-              else
-		elt = Felt (seq, make_fixnum (thisindex));
-              thisindex++;
-	    }
-
-	  /* Store into result */
-	  if (toindex < 0)
-	    {
-	      /* toindex negative means we are making a list */
-	      XCAR (tail) = elt;
-	      prev = tail;
-	      tail = XCDR (tail);
-	    }
-	  else if (VECTORP (val))
-	    XVECTOR_DATA (val)[toindex++] = elt;
-	  else if (BIT_VECTORP (val))
-	    {
-	      CHECK_BIT (elt);
-	      set_bit_vector_bit (XBIT_VECTOR (val), toindex++, XFIXNUM (elt));
-	    }
-	  else
-	    {
-	      CHECK_CHAR_COERCE_INT (elt);
-	      string_result_ptr += set_itext_ichar (string_result_ptr,
-						    XCHAR (elt));
-	    }
-	}
-      if (args_mse)
-	{
-	  args_mse[argnum].entry_offset =
-	    string_prev_result_ptr - string_result;
-	  args_mse[argnum].entry_length =
-	    string_result_ptr - string_prev_result_ptr;
-	}
-    }
-
-  /* Now we finally make the string. */
-  if (target_type == c_string)
-    {
-      val = make_string (string_result, string_result_ptr - string_result);
-      for (argnum = 0; argnum < nargs; argnum++)
-	{
-	  if (STRINGP (args_mse[argnum].string))
-	    copy_string_extents (val, args_mse[argnum].string,
-				 args_mse[argnum].entry_offset, 0,
-				 args_mse[argnum].entry_length);
-	}
-    }
-
-  if (!NILP (prev))
-    XCDR (prev) = last_tail;
-
-  unbind_to (sdep);
-  RETURN_UNGCPRO (val);
 }
 
 DEFUN ("copy-alist", Fcopy_alist, 1, 1, 0, /*
@@ -736,7 +400,7 @@ Elements of ALIST that are not conses are also shared.
     return alist;
   CHECK_CONS (alist);
 
-  alist = concat (1, &alist, c_cons, 0);
+  alist = concatenate (1, &alist, Qlist, 0);
   for (tail = alist; CONSP (tail); tail = XCDR (tail))
     {
       Lisp_Object car = XCAR (tail);
@@ -2352,20 +2016,25 @@ Do not use this function!
 Lisp_Object
 nconc2 (Lisp_Object arg1, Lisp_Object arg2)
 {
-  Lisp_Object args[2];
-  struct gcpro gcpro1;
-  args[0] = arg1;
-  args[1] = arg2;
-
-  GCPRO1 (args[0]);
-  gcpro1.nvars = 2;
-
-  RETURN_UNGCPRO (bytecode_nconc2 (args));
+  Lisp_Object args[] = { arg1, arg2 };
+  return bytecode_nconc2 (args);
 }
 
 Lisp_Object
 bytecode_nconc2 (Lisp_Object *args)
 {
+  struct gcpro gcpro1;
+
+  /* The modus operandi in Emacs is "caller gc-protects args".  In the normal
+     course of events, we don't funcall and thus don't GC, so this would not
+     matter, but wrong_type_argument() signals a continuable error, which will
+     funcall and GC. There is incompete GC protection of our arguments when
+     nconc2() is called from C. GCPRO our args.
+
+     This does not apply to Fnconc(). */
+  GCPRO1 (args[0]);
+  gcpro1.nvars = 2;
+
  retry:
 
   if (CONSP (args[0]))
@@ -2386,11 +2055,11 @@ bytecode_nconc2 (Lisp_Object *args)
 	    signal_circular_list_error (args[0]);
 	}
       XCDR (hare) = args[1];
-      return args[0];
+      RETURN_UNGCPRO (args[0]);
     }
   else if (NILP (args[0]))
     {
-      return args[1];
+      RETURN_UNGCPRO (args[1]);
     }
   else
     {
@@ -2412,17 +2081,6 @@ arguments: (&rest ARGS)
        (int nargs, Lisp_Object *args))
 {
   int argnum = 0;
-  struct gcpro gcpro1;
-
-  /* The modus operandi in Emacs is "caller gc-protects args".
-     However, nconc (particularly nconc2 ()) is called many times
-     in Emacs on freshly created stuff (e.g. you see the idiom
-     nconc2 (Fcopy_sequence (foo), bar) a lot).  So we help those
-     callers out by protecting the args ourselves to save them
-     a lot of temporary-variable grief. */
-
-  GCPRO1 (args[0]);
-  gcpro1.nvars = nargs;
 
   while (argnum < nargs)
     {
@@ -2468,19 +2126,19 @@ arguments: (&rest ARGS)
 		  goto retry_next;
 		}
 	    }
-	  RETURN_UNGCPRO (val);
+	  return val;
         }
       else if (NILP (val))
 	argnum++;
       else if (argnum == nargs - 1) /* last arg? */
-	RETURN_UNGCPRO (val);
+	return val;
       else
 	{
 	  args[argnum] = wrong_type_argument (Qlistp, val);
 	  goto retry;
 	}
     }
-  RETURN_UNGCPRO (Qnil);  /* No non-nil args provided. */
+  return Qnil;  /* No non-nil args provided. */
 }
 
 
@@ -3328,10 +2986,6 @@ syms_of_fns (void)
   DEFSUBR (Fstring_equal);
   DEFSUBR (Fcompare_strings);
   DEFSUBR (Fstring_lessp);
-  DEFSUBR (Fappend);
-  DEFSUBR (Fconcat);
-  DEFSUBR (Fvconcat);
-  DEFSUBR (Fbvconcat);
   DEFSUBR (Fcopy_list);
   DEFSUBR (Fcopy_sequence);
   DEFSUBR (Fcopy_alist);

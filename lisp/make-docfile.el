@@ -118,10 +118,11 @@
 		   (not (member arg processed)))
 	  (when (string-match "\\(.*\\)\\.obj$" arg)
 	    (setq arg (expand-file-name
-		       (concat 
-			(file-name-nondirectory
-			 ;; no match-string so use its implementation.
-			 (subseq arg (match-beginning 1) (match-end 1)))
+		       (concatenate
+                        'string 
+                        (file-name-nondirectory
+                         ;; no match-string so use its implementation.
+                         (subseq arg (match-beginning 1) (match-end 1)))
 			".c")
 		       source-src)))
 	  (if (and (null docfile-out-of-date)
