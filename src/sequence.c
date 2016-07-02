@@ -4810,7 +4810,6 @@ struct merge_string_extents_struct
 {
   Lisp_Object string;
   Bytecount entry_offset;
-  Bytecount entry_length;
 };
 
 Lisp_Object
@@ -4845,20 +4844,6 @@ concatenate (int nsequences, Lisp_Object *sequences,
           if (STRINGP (sequences[ii]))
             {
               bstaging_len += XSTRING_LENGTH (sequences[ii]);
-              if (NULL != string_extent_info (sequences[ii]))
-                {
-                  args_mse_cursor->string = sequences[ii];
-                  args_mse_cursor->entry_length
-                    = XSTRING_LENGTH (sequences[ii]);
-                  args_mse_cursor++;
-                }
-              else if (args_mse == args_mse_cursor)
-                {
-                  /* Make sure that the code checking below for string with
-                     extent info in args_mse[] has a valid Lisp object to
-                     compare to. */
-                  args_mse[0].string = Qnil;
-                }
             }
           else
             {
@@ -4890,8 +4875,12 @@ concatenate (int nsequences, Lisp_Object *sequences,
             {
               memcpy (cursor, XSTRING_DATA (sequences[ii]),
                       XSTRING_LENGTH (sequences[ii]));
-              if (EQ (args_mse_cursor->string, sequences[ii]))
+              if (NULL != string_extent_info (sequences[ii]))
                 {
+                  /* This string has extent info; push its details onto our
+                     stack for copy_string_extents once its string data is
+                     sane. */
+                  args_mse_cursor->string = sequences[ii];
                   args_mse_cursor->entry_offset = cursor - bstaging;
                   args_mse_cursor++;
                 }
@@ -4951,7 +4940,7 @@ concatenate (int nsequences, Lisp_Object *sequences,
         {
           copy_string_extents (result, args_mse->string,
                                args_mse->entry_offset, 0,
-                               args_mse->entry_length);
+                               XSTRING_LENGTH (args_mse->string));
           args_mse++;
         }
 

@@ -1,3 +1,14 @@
+2016-07-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (struct merge_string_extents_struct):
+	Drop ENTRY_LENGTH from this structure, we always use the string's
+	length, and we have the string available.
+	* sequence.c (concatenate):
+	Only look for string extent info once, in the main loop, avoiding
+	possible confusion and assertion failures if garbage (or worse,
+	valid string pointers that were not expected to be there) end up
+	in args_mse.  Thank you for the bug report, Stephen Turnbull.
+
 2016-06-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Move #'concatenate to C, improve the implementation and
