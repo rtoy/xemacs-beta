@@ -1,3 +1,11 @@
+2016-07-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Correct a bug in these tests looking at object plists.
+	* automated/mule-tests.el:
+	Correct a bug in this test, I was inaccurate in what I expected to
+	be output with modification of a symbol name while printing it.
+
 2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el:
