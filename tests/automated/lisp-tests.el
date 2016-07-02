@@ -1350,6 +1350,7 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (eql 200 (put obj most-positive-fixnum 200)))
   (Assert (eql (get obj most-positive-fixnum) 200))
   (Assert (eq 5 (get obj ?3 5)) obj)
+  (Assert (eq t (remprop obj most-positive-fixnum)))
   (when (or (stringp obj) (symbolp obj))
     (Assert (eq '() (object-plist obj)) obj)))
 
