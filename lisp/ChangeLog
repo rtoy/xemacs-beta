@@ -1,3 +1,14 @@
+2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (terpri): Move this here from print.c.
+	* cl-macs.el: Document why there's no benefit to a compiler macro
+	for #'terpri.
+	* make-docfile.el:
+	* make-docfile.el (message):
+	* make-docfile.el (docfile-out-of-date):
+	Don't use #'terpri at build time, it's no longer available,
+	(write-char ?\n) instead.
+
 2016-06-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (concatenate): Implement #'concatenate in

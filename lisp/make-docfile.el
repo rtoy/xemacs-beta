@@ -50,8 +50,8 @@
 (defvar source-src (expand-file-name "../src" source-lisp))
 
 (defun message (fmt &rest args)
-  (princ (apply #'format fmt args))
-  (terpri))
+  (write-sequence (apply #'format fmt args))
+  (write-char ?\n))
 
 ;; Gobble up the stuff we don't wish to pass on.
 (setq command-line-args (cdr (cdr (cdr (cdr command-line-args)))))
@@ -222,7 +222,7 @@
 
 (setq processed (nreverse processed))
 
-(terpri)
+(write-sequence "\n")
 
 ;(message (prin1-to-string (append options processed)))
 

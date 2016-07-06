@@ -639,6 +639,11 @@ OUTPUT-STREAM)."
   (prog1
       (write-sequence string output-stream :start start :end end)
     (terpri output-stream)))
+
+(defun terpri (&optional stream)
+  "Output a newline to STREAM.  Return t.
+If STREAM is omitted or nil, the value of `standard-output' is used."
+  (not (not (write-char ?\n stream))))
 
 ;; Implementation limits.
 
