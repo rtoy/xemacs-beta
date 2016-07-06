@@ -1,3 +1,10 @@
+2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (Fterpri): Move this to cl-extra.el, no need to have it
+	in C, it's perfectly fine in performance terms and takes less
+	space in the binary to have it in Lisp.
+	* print.c (syms_of_print): Remove it from here too.
+
 2016-07-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* sequence.c (struct merge_string_extents_struct):

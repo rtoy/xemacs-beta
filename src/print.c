@@ -1098,17 +1098,6 @@ arguments: (BUFNAME &rest BODY)
   return unbind_to_1 (speccount, val);
 }
 
-DEFUN ("terpri", Fterpri, 0, 1, 0, /*
-Output a newline to STREAM.
-If STREAM is omitted or nil, the value of `standard-output' is used.
-*/
-       (stream))
-{
-  /* This function can GC */
-  write_ascstring (canonicalize_printcharfun (stream), "\n");
-  return Qt;
-}
-
 DEFUN ("prin1", Fprin1, 1, 2, 0, /*
 Output the printed representation of OBJECT, any Lisp object.
 Quoting characters are printed when needed to make output that `read'
@@ -3244,7 +3233,6 @@ syms_of_print (void)
   DEFSUBR (Fprint);
   DEFSUBR (Ferror_message_string);
   DEFSUBR (Fdisplay_error);
-  DEFSUBR (Fterpri);
   DEFSUBR (Fwrite_char);
   DEFSUBR (Fwrite_sequence);
   DEFSUBR (Falternate_debugging_output);
