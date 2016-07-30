@@ -1,3 +1,22 @@
+2016-07-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* menubar-items.el (build-buffers-menu-internal): Move to being a
+	label within #'buffers-menu-filter.
+	* menubar-items.el (buffers-menu-filter):
+	Implement #'build-buffers-menu-filter as an inlined label. Remove
+	a compatibility hack in its implementation.
+	Use backquotes to construct the individual menu items, making
+	things a little clearer.
+	Avoid uselessly calling #'length a few times, where #'nthcdr is
+	appropriate to determine if a list's length is larger than a given
+	value.
+	Avoid uselessly calling #'nreverse twice if dealing with groups.
+	* menubar-items.el (coding-system-menu-filter):
+	Correct a docstring in passing.
+	* menubar-items.el (buffers-menu-format-buffer-line-function):
+	Update the documentation of this function to document that we've
+	removed a compatibility hack.
+
 2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (terpri): Move this here from print.c.
