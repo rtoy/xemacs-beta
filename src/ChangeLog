@@ -236,6 +236,50 @@
 	When reading a ratio, check for Qunbound, which we may see on
 	non-bignum builds.
 
+2016-08-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Create less garbage when reading symbols, lread.c.
+	To support this, move intern_istring to taking LEN and RELOC
+	arguments in the same way output_string() does.
+	Implement Fintern () in terms of intern_istring (), not the other
+	way around, since most symbols created are created by the Lisp
+	reader, no point making Fintern () the cheaper path.
+
+	* file-coding.c (find_coding_system):
+	* file-coding.c (setup_eol_coding_systems):
+	* file-coding.c (snarf_coding_system):
+	Use intern() instead of intern_istring () in these functions.
+	* file-coding.c (make_coding_system_1):
+	Use Fintern() with emacs_sprintf_string_lisp() in this function to
+	create symbols in a couple of places, since we're going to need a
+	Lisp string anyway no need to output to malloc ().
+	* fontcolor-tty.c (tty_initialize_font_instance):
+	* fontcolor-x.c (x_font_instance_properties):
+	* keymap.c (make_key_description):
+	Use intern () in these functions rather than intern_istring ().
+	* lisp.h:
+	Provide intern_istring's new declaration.
+	* lread.c (read_atom):
+	Return early if we see an uninterned symbol.
+	Don't cons up the symbol's name as a string if the symbol would be
+	interned, leave that to intern_istring() if necessary.
+
+	* select-gtk.c (atom_to_symbol):
+	* select-x.c (x_atom_to_symbol):
+	Usee intern() in these functions as appropriate.
+	* symbols.c (intern_istring):
+	Change to take a bytecount, a Lisp string, and a package
+	argument.
+	* symbols.c (intern):
+	* symbols.c (intern_massaging_name):
+	Call intern_istring() from these two functions.
+	* symbols.c (Fintern):
+	Call intern_istring() from this function, the implementation has
+	been moved there.
+	* unicode.c (unicode_to_ichar):
+	Call intern () as appropriate, use listu () rather than awkwardly
+	nconc'ing together sublists for the call to #'make-charset.
+
 2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (Fterpri): Move this to cl-extra.el, no need to have it

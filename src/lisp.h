@@ -5857,7 +5857,8 @@ EXFUN (Fsymbol_plist, 1);
 EXFUN (Fsymbol_value, 1);
 
 unsigned int hash_string (const Ibyte *, Bytecount);
-Lisp_Object intern_istring (const Ibyte *str);
+Lisp_Object intern_istring (const Ibyte *str, Bytecount len,
+			    Lisp_Object reloc, Lisp_Object package);
 MODULE_API Lisp_Object intern (const CIbyte *str);
 Lisp_Object intern_massaging_name (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);
