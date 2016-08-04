@@ -659,7 +659,9 @@ find_coding_system (Lisp_Object coding_system_or_name,
                 }
             }
 
-          coding_system_or_name = intern_istring (eidata (desired_base));
+          coding_system_or_name = intern_istring (eidata (desired_base),
+						  eilen (desired_base),
+						  Qnil, Vobarray);
 
           /* Remove this coding system and its subsidiary coding
              systems from the hash, to avoid calling this code recursively. */
@@ -1086,7 +1088,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
       enum eol_type eol = coding_subsidiary_list[i].eol;
 
       qxestrcpy_ascii (codesys_name + len, extension);
-      codesys_name_sym = intern_istring (codesys_name);
+      codesys_name_sym = intern ((const CIbyte*) codesys_name);
       if (mlen != -1)
 	qxestrcpy_ascii (codesys_mnemonic + mlen, mnemonic_ext);
 
@@ -1185,29 +1187,26 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 
   if (prefix)
     {
-      Ibyte *newname =
-	emacs_sprintf_malloc (NULL, "%s-%s-%d",
-			      prefix,
-			      NILP (name_or_existing) ? (Ibyte *) "nil" :
-			      XSTRING_DATA (Fsymbol_name (XCODING_SYSTEM_NAME
-							  (name_or_existing))),
-			      ++coding_system_tick);
-      name_or_existing = intern_istring (newname);
-      xfree (newname);
+      name_or_existing
+        = Fintern (emacs_sprintf_string_lisp
+                   ("%s-%s-%d", Qnil, 3,
+                    build_ascstring (prefix), 
+                    NILP (name_or_existing) ? XSYMBOL_NAME (Qnil) :
+                    Fsymbol_name (XCODING_SYSTEM_NAME (name_or_existing)),
+                    make_fixnum (++coding_system_tick)),
+                   Vobarray);
       
       if (UNBOUNDP (description))
 	{
-	  newname =
-	    emacs_sprintf_malloc
-	      (NULL, "For Internal Use (%s)",
-	       XSTRING_DATA (Fsymbol_name (name_or_existing)));
-	  description = build_istring (newname);
-	  xfree (newname);
+          description
+            = emacs_sprintf_string_lisp ("For Internal Use (%s)",
+                                         Qnil, 1,
+                                         Fsymbol_name (name_or_existing));
 	}
 
-      newname = emacs_sprintf_malloc (NULL, "Int%d", coding_system_tick);
-      defmnem = build_istring (newname);
-      xfree (newname);
+      defmnem
+        = emacs_sprintf_string_lisp ("Int%d", Qnil, 1,
+                                     make_fixnum (coding_system_tick));
     }
   else
     CHECK_SYMBOL (name_or_existing);
@@ -1350,14 +1349,13 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	   creating will have canonicalization expansion done on it,
 	   leading to infinite recursion.  So we have to generate a new,
 	   internal coding system with the previous value of CANONICAL. */
-	Ibyte *newname =
-	  emacs_sprintf_malloc
-	    (NULL, "internal-eol-copy-%s-%d",
-	     XSTRING_DATA (Fsymbol_name (name_or_existing)),
-	     ++coding_system_tick);
-	Lisp_Object newnamesym = intern_istring (newname);
+	Lisp_Object newname =
+	  emacs_sprintf_string_lisp
+	  ("internal-eol-copy-%s-%d", Qnil, 2,
+           Fsymbol_name (name_or_existing),
+           make_fixnum (++coding_system_tick));
+	Lisp_Object newnamesym = Fintern (newname, Vobarray);
 	Lisp_Object copied = Fcopy_coding_system (csobj, newnamesym);
-	xfree (newname);
 	
 	XCODING_SYSTEM_CANONICAL (csobj) =
 	  make_internal_coding_system
@@ -3771,8 +3769,8 @@ snarf_coding_system (const UExtbyte *p, Bytecount len,
       if (find_coding_system_p)
         {
           return
-            find_coding_system_for_text_file (intern_istring ((Ibyte *) name),
-                                              0);
+            find_coding_system_for_text_file (intern ((const CIbyte *) name),
+					      0);
         }
       else
         {

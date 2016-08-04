@@ -189,7 +189,7 @@ x_atom_to_symbol (struct device *d, Atom atom)
 
     intstr = EXTERNAL_TO_ITEXT (str, Qctext);
     XFree (str);
-    return intern_istring (intstr);
+    return intern ((const CIbyte *) intstr);
   }
 }
 

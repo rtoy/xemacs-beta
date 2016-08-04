@@ -469,7 +469,7 @@ make_key_description (const Lisp_Key_Data *key, int prettify)
   int modifiers = KEY_DATA_MODIFIERS (key);
   if (prettify && CHARP (keysym))
     {
-      /* This is a little slow, but (control a) is prettier than (control 65).
+      /* This is a little slow, but (control a) is prettier than (control ?a).
 	 It's now ok to do this for digit-chars too, since we've fixed the
 	 bug where \9 read as the integer 9 instead of as the symbol with
 	 "9" as its name.
@@ -478,7 +478,7 @@ make_key_description (const Lisp_Key_Data *key, int prettify)
       Ibyte str [1 + MAX_ICHAR_LEN];
       Bytecount count = set_itext_ichar (str, XCHAR (keysym));
       str[count] = 0;
-      keysym = intern_istring (str);
+      keysym = intern ((const CIbyte *) str);
     }
   return control_meta_superify (keysym, modifiers);
 }

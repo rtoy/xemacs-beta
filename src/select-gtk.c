@@ -76,7 +76,7 @@ atom_to_symbol (struct device *UNUSED (d), GdkAtom atom)
 
     intstr = EXTERNAL_TO_ITEXT (str, Qctext);
     g_free (str);
-    return intern_istring (intstr);
+    return intern ((const CIbyte *) intstr);
   }
 }
 

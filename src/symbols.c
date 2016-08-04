@@ -182,27 +182,51 @@ check_obarray (Lisp_Object obarray)
 }
 
 Lisp_Object
-intern_istring (const Ibyte *str)
+intern_istring (const Ibyte *str, Bytecount len, Lisp_Object reloc,
+                Lisp_Object package)
 {
-  Bytecount len = qxestrlen (str);
-  Lisp_Object obarray = Vobarray;
+  Lisp_Object lookup, *ptr, symbol;
 
-  if (!VECTORP (obarray) || XVECTOR_LENGTH (obarray) == 0)
-    obarray = check_obarray (obarray);
+  lookup = oblookup (package, str, len);
+  if (FIXNUMP (lookup))
+    {
+      ptr = &XVECTOR_DATA (package)[XREALFIXNUM (lookup)];
+      if (NILP (reloc))
+	{
+	  reloc = make_string (str, len);
+	}
+      symbol = Fmake_symbol (reloc);
 
-  {
-    Lisp_Object tem = oblookup (obarray, str, len);
-    if (SYMBOLP (tem))
-      return tem;
-  }
+      if (SYMBOLP (*ptr))
+	XSYMBOL_NEXT (symbol) = XSYMBOL (*ptr);
+      else
+	XSYMBOL_NEXT (symbol) = 0;
+      *ptr = symbol;
 
-  return Fintern (make_string (str, len), obarray);
+      XSYMBOL (symbol)->u.v.package_count = 1;
+      XSYMBOL (symbol)->u.v.first_package_id
+	= (EQ (package, Vobarray)) ? 1 : 2;
+
+      if (string_byte (XSYMBOL_NAME (symbol), 0) == ':'
+	  && EQ (package, Vobarray))
+	{
+	  /* The LISP way is to put keywords in their own package, but we
+	     don't have packages, so we do something simpler.  Someday,
+	     maybe we'll have packages and then this will be reworked.
+	     --Stig. */
+	  XSYMBOL_VALUE (symbol) = symbol;
+	}
+      return symbol;
+    }
+
+  return lookup;
 }
 
 Lisp_Object
 intern (const CIbyte *str)
 {
-  return intern_istring ((Ibyte *) str);
+  return intern_istring ((Ibyte *) str, qxestrlen ((Ibyte *) str), Qnil,
+                         Vobarray);
 }
 
 Lisp_Object
@@ -223,7 +247,7 @@ intern_massaging_name (const CIbyte *str)
 	  tmp[i] = '*';
 	}
     }
-  return intern_istring ((Ibyte *) tmp);
+  return intern_istring ((Ibyte *) tmp, len, Qnil, Vobarray);
 }
 
 DEFUN ("intern", Fintern, 1, 2, 0, /*
@@ -234,45 +258,13 @@ it defaults to the value of the variable `obarray'.
 */
        (string, obarray))
 {
-  Lisp_Object object, *ptr;
-  Lisp_Object symbol;
-  Bytecount len;
+  CHECK_STRING (string);
 
   if (NILP (obarray)) obarray = Vobarray;
   obarray = check_obarray (obarray);
 
-  CHECK_STRING (string);
-
-  len = XSTRING_LENGTH (string);
-  object = oblookup (obarray, XSTRING_DATA (string), len);
-  if (!FIXNUMP (object))
-    /* Found it */
-    return object;
-
-  ptr = &XVECTOR_DATA (obarray)[XFIXNUM (object)];
-
-  object = Fmake_symbol (string);
-  symbol = object;
-
-  if (SYMBOLP (*ptr))
-    XSYMBOL_NEXT (symbol) = XSYMBOL (*ptr);
-  else
-    XSYMBOL_NEXT (symbol) = 0;
-  *ptr = object;
-
-  XSYMBOL (object)->u.v.package_count = 1;
-  XSYMBOL (object)->u.v.first_package_id = (EQ (obarray, Vobarray)) ? 1 : 2;
-
-  if (string_byte (XSYMBOL_NAME (symbol), 0) == ':' && EQ (obarray, Vobarray))
-    {
-      /* The LISP way is to put keywords in their own package, but we
-	 don't have packages, so we do something simpler.  Someday,
-	 maybe we'll have packages and then this will be reworked.
-	 --Stig. */
-      XSYMBOL_VALUE (symbol) = object;
-    }
-
-  return object;
+  return intern_istring (XSTRING_DATA (string), XSTRING_LENGTH (string),
+			 string, obarray);
 }
 
 DEFUN ("intern-soft", Fintern_soft, 1, 3, 0, /*

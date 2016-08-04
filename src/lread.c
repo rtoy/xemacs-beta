@@ -1875,14 +1875,21 @@ read_atom (Lisp_Object readcharfun,
   Ibyte *read_ptr
     = (Ibyte *) resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream));
 
+  /* If a token was preceded by #:, it's always a symbol. */
+  if (uninterned_symbol)
+    {
+      /* SBCL errors if an uninterned symbol has numeric
+         syntax. Maybe we should too. GNU doesn't, CLISP doesn't,
+         we never have. */
+      return Fmake_symbol (make_string (read_ptr, len));
+    }
+
   /* Is it an integer?
 
      If a token had any backslashes in it, it is disqualified from being an
      integer or a float.  This means that 123\456 is a symbol, as is \123
-     (which is the way (intern "123") prints).  Also, if token was preceded by
-     #:, it's always a symbol. */
-
-  if (!(saw_a_backslash || uninterned_symbol))
+     (which is the way (intern "123") prints). */
+  if (!saw_a_backslash)
     {
       Lisp_Object got = get_char_table (firstchar, Vdigit_fixnum_map);
       Fixnum fixval = FIXNUMP (got) ? XREALFIXNUM (got) : -1;
@@ -2017,17 +2024,9 @@ read_atom (Lisp_Object readcharfun,
         }
     }
 
-  {
-    Lisp_Object sym;
-    if (uninterned_symbol)
-      sym = Fmake_symbol ( make_string ((Ibyte *) read_ptr, len));
-    else
-      {
-	Lisp_Object name = make_string ((Ibyte *) read_ptr, len);
-	sym = Fintern (name, Qnil);
-      }
-    return sym;
-  }
+  /* XEmacs change; delay allocating the Lisp string until we're sure we need
+     to. */
+  return intern_istring (read_ptr, len, Qnil, Vobarray);
 }
 
 static Lisp_Object
