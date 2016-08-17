@@ -912,8 +912,7 @@ emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc,
 		strlen (format_nonreloc) : 0,
 		format_reloc, nargs, largs);
   Lstream_flush (XLSTREAM (stream));
-  obj = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
-		     Lstream_byte_count (XLSTREAM (stream)));
+  obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
   UNGCPRO;
   return obj;
@@ -1007,8 +1006,7 @@ emacs_vsprintf_string (const CIbyte *format, va_list vargs)
   emacs_doprnt_va (stream, (Ibyte *) format, strlen (format), Qnil,
 		   vargs);
   Lstream_flush (XLSTREAM (stream));
-  obj = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
-		     Lstream_byte_count (XLSTREAM (stream)));
+  obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
   end_gc_forbidden (count);
   return obj;

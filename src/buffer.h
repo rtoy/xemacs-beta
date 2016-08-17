@@ -704,18 +704,18 @@ charbpos_to_membpos (struct buffer *buf, Charbpos x)
 }
 
 /*----------------------------------------------------------------------*/
-/*             Generalized buffer/string position convertors            */
+/*       Generalized buffer/other object position convertors            */
 /*----------------------------------------------------------------------*/
 
 /* These macros generalize many standard buffer-position functions to
-   either a buffer or a string. */
+   either a buffer or another object that can have an associated extent. */
 
-/* Converting between Memxpos's and Bytexpos's, for a buffer-or-string.
-   For strings, this is a no-op.  For buffers, this resolves
-   to the standard membpos<->bytebpos converters. */
+/* Converting between Memxpos's and Bytexpos's, for some object that has
+   extents.  For buffers, this resolves to the standard membpos<->bytebpos
+   converters.  For other objects, this is a no-op.  */
 
 DECLARE_INLINE_HEADER (
-Memxpos buffer_or_string_bytexpos_to_memxpos (Lisp_Object obj, Bytexpos pos)
+Memxpos object_bytexpos_to_memxpos (Lisp_Object obj, Bytexpos pos)
 )
 {
   return (BUFFERP (obj) ? bytebpos_to_membpos (XBUFFER (obj), pos) :
@@ -723,7 +723,7 @@ Memxpos buffer_or_string_bytexpos_to_memxpos (Lisp_Object obj, Bytexpos pos)
 }
 
 DECLARE_INLINE_HEADER (
-Bytexpos buffer_or_string_memxpos_to_bytexpos (Lisp_Object obj, Memxpos pos)
+Bytexpos object_memxpos_to_bytexpos (Lisp_Object obj, Memxpos pos)
 )
 {
   return (BUFFERP (obj) ? membpos_to_bytebpos (XBUFFER (obj), pos) :
@@ -763,6 +763,14 @@ DECLARE_INLINE_HEADER (
 Charxpos buffer_or_string_memxpos_to_charxpos (Lisp_Object obj, Memxpos pos)
 )
 {	
+  /* This is intentionally unimplemented for lstreams, nothing that is
+     interested in char positions (in particular, no Lisp code) should
+     be looking at the contents of a resizing_buffer_lstream without
+     calling #'get-string-output-stream.
+
+     When ERROR_CHECK_TYPES is turned on, treating OBJECT as a string inside
+     string_index_byte_to_char() will trip an assertion failure, so we'll get
+     appropriate warning that this isn't working. */
   return (BUFFERP (obj) ? membpos_to_charbpos (XBUFFER (obj), pos) :
    (Charxpos) string_index_byte_to_char (obj, pos));
 }

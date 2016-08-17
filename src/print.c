@@ -469,32 +469,28 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
     {
       if (STRINGP (reloc))
 	{
-	  /* Protect against Lstream_write() causing a GC and
-	     relocating the string.  For small strings, we do it by
-	     alloc'ing the string and using a copy; for large strings,
-	     we inhibit GC.  */
-	  if (len < 65536)
-	    {
-	      Ibyte *copied = alloca_ibytes (len);
-	      memcpy (copied, newnonreloc + offset, len);
-	      Lstream_write (XLSTREAM (function), copied, len);
-	    }
-	  else if (gc_currently_forbidden)
+	  /* Protect against Lstream_write() calling Lisp that changes the
+             byte length of the string and, as a result, relocates it. */
+	  if (gc_currently_forbidden)
 	    {
 	      /* Avoid calling begin_gc_forbidden, which conses.  We can reach
 		 this point from the cons debug code, which will get us into
 		 an infinite loop if we cons again. */
-	      Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
+	      Lstream_write_with_extents (XLSTREAM (function), reloc, offset,
+                                          len);
 	    }
 	  else
 	    {
 	      int speccount = begin_gc_forbidden ();
-	      Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
+	      Lstream_write_with_extents (XLSTREAM (function), reloc, offset,
+                                          len);
 	      unbind_to (speccount);
 	    }
 	}
       else
-	Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
+        {
+          Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
+        }
 
       if (print_unbuffered)
 	Lstream_flush (XLSTREAM (function));
@@ -672,15 +668,34 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
     {
       struct frame *f = XFRAME (frame_kludge);
       Lstream *str = XLSTREAM (stream);
-      CHECK_LIVE_FRAME (frame_kludge);
+      Lisp_Object printed = Qnil;
+      struct gcpro gcpro1;
 
+      CHECK_LIVE_FRAME (frame_kludge);
       Lstream_flush (str);
+
+      GCPRO1 (printed);
+
       if (!EQ (Vprint_message_label, echo_area_status (f)))
 	clear_echo_area_from_print (f, Qnil, 1);
-      echo_area_append (f, resizing_buffer_stream_ptr (str),
-			Qnil, 0, Lstream_byte_count (str),
-			Vprint_message_label);
+
+      if (Lstream_extent_info (str) != NULL)
+        {
+          /* Only create the string if there is associated extent info,
+             otherwise no need to allocate something that will be immediately
+             GCed. */
+          printed = resizing_buffer_to_lisp_string (str);          
+          echo_area_append (f, NULL, printed, 0, XSTRING_LENGTH (printed),
+                            Vprint_message_label);
+        }
+      else
+        {
+          echo_area_append (f, resizing_buffer_stream_ptr (str), Qnil, 0,
+                            Lstream_byte_count (str), Vprint_message_label);
+        }
+          
       Lstream_delete (str);
+      UNGCPRO;
     }
 }
 
@@ -1133,8 +1148,7 @@ prin1_to_string (Lisp_Object object, int noescape)
   print_internal (object, stream, !noescape);
   Lstream_flush (str);
   UNGCPRO;
-  result = make_string (resizing_buffer_stream_ptr (str),
-			Lstream_byte_count (str));
+  result = resizing_buffer_to_lisp_string (str);
   Lstream_delete (str);
   return result;
 }
@@ -1316,8 +1330,7 @@ message is equivalent to the one that would be issued by
 
   print_error_message (error_object, stream);
   Lstream_flush (XLSTREAM (stream));
-  result = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
-			Lstream_byte_count (XLSTREAM (stream)));
+  result = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
 
   UNGCPRO;

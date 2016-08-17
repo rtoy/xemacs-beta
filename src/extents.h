@@ -98,6 +98,7 @@ void flush_cached_extent_info (Lisp_Object extent_info);
 void set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
 		       glyph_layout layout);
 
+Lisp_Object allocate_extent_info (void);
 
 /* flags for map_extents() and friends */
 #define ME_END_CLOSED (1 << 0)
@@ -188,7 +189,7 @@ void add_string_extents (Lisp_Object string, struct buffer *buf,
 void splice_in_string_extents (Lisp_Object string, struct buffer *buf,
 			       Bytexpos opoint, Bytecount length,
 			       Bytecount pos);
-void copy_string_extents (Lisp_Object new_string,
+void copy_string_extents (Lisp_Object new_object,
 			  Lisp_Object old_string,
 			  Bytecount new_pos, Bytecount old_pos,
 			  Bytecount length);

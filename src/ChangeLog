@@ -280,6 +280,122 @@
 	Call intern () as appropriate, use listu () rather than awkwardly
 	nconc'ing together sublists for the call to #'make-charset.
 
+2016-08-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Pass extent info to lstreams when writing strings to them.
+
+	Make the resizing_buffer lstream type visible to Lisp using the
+	Common Lisp #'make-string-output-stream API, allowing, for
+	example, gnuserv.el to make much less garbage, and allowing the
+	extent-preservation code to be tested at Lisp level.
+	* buffer.h:
+	buffer_or_string_{bytexpos_to_memxpos,memxpos_to_bytexpos}
+	->object_{bytexpos_to_memxpos,memxpos_to_bytexpos}.
+	* doprnt.c (emacs_vsprintf_string_lisp):
+	* doprnt.c (emacs_vsprintf_string):
+	Use resizing_buffer_to_lisp_string in these functions, preserve
+	extent data.
+	* extents.c:
+	* extents.c (allocate_extent_info):
+	Make this non-static, now it's used in lstream.c.
+	* extents.c (object_bytexpos_to_startind):
+	* extents.c (object_bytexpos_to_endind):
+	* extents.c (object_extent_info):
+	* extents.c (object_extent_list):
+	* extents.c (object_extent_info_force):
+	* extents.c (object_stack_of_extents):
+	* extents.c (object_stack_of_extents_force):
+	* extents.c (detach_all_extents):
+	* extents.c (extent_extent_list):
+	* extents.c (sledgehammer_extent_check):
+	* extents.c (soe_dump):
+	* extents.c (soe_insert):
+	* extents.c (soe_delete):
+	* extents.c (soe_move):
+	* extents.c (soe_invalidate):
+	* extents.c (extent_endpoint_byte):
+	* extents.c (extent_endpoint_char):
+	* extents.c (make_extent_detached):
+	* extents.c (extent_first):
+	* extents.c (extent_e_first):
+	* extents.c (extent_last):
+	* extents.c (extent_e_last):
+	* extents.c (extent_in_region_p):
+	* extents.c (map_extents):
+	* extents.c (adjust_extents):
+	* extents.c (adjust_extents_for_deletion):
+	* extents.c (extent_find_end_of_run):
+	* extents.c (extent_find_beginning_of_run):
+	* extents.c (extent_fragment_update):
+	* extents.c (decode_extent):
+	* extents.c (set_extent_endpoints):
+	* extents.c (Fset_extent_endpoints):
+	* extents.c (verify_extent_modification):
+	* extents.c (process_extents_for_insertion_mapper):
+	* extents.c (process_extents_for_deletion):
+	* extents.c (run_extent_copy_paste_internal):
+	* extents.c (run_extent_copy_function):
+	* extents.c (run_extent_paste_function):
+	* extents.c (splice_in_string_extents_mapper):
+	* extents.c (splice_in_string_extents_the_hard_way_mapper):
+	* extents.c (struct copy_string_extents_arg):
+	* extents.c (copy_string_extents_mapper):
+	* extents.c (copy_string_extents):
+	Change buffer_or_string -> object in calls to the renamed
+	functions.
+	Be lazier about byte->char offset conversion, only do it when Lisp
+	is definitely going to be called.
+	* extents.h:
+	* lstream.c:
+	* lstream.c (print_lstream):
+	Resizing-buffer lstreams now escape to Lisp, print them as normal
+	Lisp objects. 
+	* lstream.c (Lstream_write_with_extents): New. Like Lstream_write,
+	but preserve any extent information.
+	* lstream.c (Lstream_extent_info): New. Return any extent
+	information for an lstream.
+	* lstream.c (struct resizing_buffer_stream):
+	Rename and re-declare some elements of this structure.
+	* lstream.c (make_resizing_buffer_output_stream):
+	Allocate the extent info in this stream on creating it.
+	* lstream.c (resizing_buffer_writer):
+	* lstream.c (resizing_buffer_write_with_extents): New.
+	Write to this resizing buffer preserving extent info.
+	* lstream.c (resizing_buffer_marker): New. Mark the extent_info object
+	associated with this lstream.
+	* lstream.c (resizing_buffer_to_lisp_string):
+	Copy extent info into the created string in this function.
+	* lstream.c (Fmake_string_output_stream): New.
+	Provide this Common Lisp API, used to access the already-existing
+	resizing_buffer lstream type from Lisp.
+	* lstream.c (Fget_output_stream_string): New.
+	Return the content of a resizing_buffer as a string with extent
+	info, and reset it. API from Common Lisp.
+	* lstream.c (Fclear_output):
+	Reset the contents of a resizing buffer without returning a
+	string. API from Common Lisp.
+	* lstream.c (syms_of_lstream):
+	Make the new Lisp subrs available.
+	* lstream.c (lstream_type_create):
+	Make new Lstream methods available.
+	* lstream.h:
+	* lstream.h (CHECK_LSTREAM):
+	Uncomment this, now resizing_buffer lstreams intentionally escape
+	to Lisp.
+	* lstream.h (lstream_implementation):
+	Make the write_with_extents() and extent_info() lstream methods
+	available outside this file.
+	* print.c (output_string):
+	Use write_with_extents () when ouputting a string to an Lstream,
+	giving the extent info a chance to be preserved.
+	* print.c (print_finish):
+	In the frame kludge code, create a Lisp string from the resizing
+	buffer and print that if that is needed to preserve extent info.
+	* print.c (prin1_to_string):
+	Use resizing_buffer_to_lisp_string() here, preserving extent info.
+	* print.c (Ferror_message_string):
+	Ditto.
+
 2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (Fterpri): Move this to cl-extra.el, no need to have it

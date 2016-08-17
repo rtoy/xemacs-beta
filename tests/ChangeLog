@@ -12,6 +12,16 @@
 	encounters a ratio. Revise these files to delay calling #'read
 	until we're sure there is ratio support available.
 
+2016-08-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el: 
+	Test #'make-string-output-stream, #'get-output-stream-string.
+	Test the associated newly-added support for extents in the
+	underlying resizing_buffer stream implementation.
+	* automated/mule-tests.el:
+	Whoops, #'print, not #'princ here, so surround the output when
+	checked with newlines.
+
 2016-07-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
