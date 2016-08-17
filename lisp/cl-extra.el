@@ -609,6 +609,17 @@ This also does some trivial optimizations to make the form prettier."
 (eval-when-compile (or (cl-compiling-file) (load "cl-macs")))
 
 ;; XEmacs, functions from Common Lisp.
+(defun streamp (object)
+  "Return non-nil if OBJECT is a stream.
+
+This is something accepted as the OUTPUT-STREAM argument to `write-string' and
+created with, e.g., `make-string-output-stream'.
+
+This function returns nil for the symbols `t', `nil' or `standard-output',
+despite that these values are accepted as the OUTPUT-STREAM argument to
+`write-string'."
+  (eq (type-of object) 'stream))
+
 (defun* write-string (string &optional output-stream &key (start 0) end)
   "Output STRING to stream OUTPUT-STREAM.
 

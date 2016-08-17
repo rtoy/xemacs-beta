@@ -624,14 +624,9 @@ See also `with-temp-file' and `with-output-to-string'."
 
 (defmacro with-output-to-string (&rest body)
   "Execute BODY, return the text it sent to `standard-output', as a string."
-  `(let ((standard-output
-	  (get-buffer-create (generate-new-buffer-name " *string-output*"))))
-     (let ((standard-output standard-output))
-       ,@body)
-     (with-current-buffer standard-output
-       (prog1
-	   (buffer-string)
-	 (kill-buffer nil)))))
+  `(get-output-stream-string 
+    (let ((standard-output (make-string-output-stream)))
+      (prog1 standard-output ,@body))))
 
 (defmacro with-local-quit (&rest body)
   "Execute BODY with `inhibit-quit' temporarily bound to nil."

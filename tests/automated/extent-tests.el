@@ -394,4 +394,64 @@
   (Assert (eql t (get (car list) property-name))
           "checking it was our duplicable extent that was preserved"))
 
+;;-----------------------------------------------------
+;; Extents and string output streams.
+;;-----------------------------------------------------
 
+(let* ((stream (make-string-output-stream :element-type 'character))
+       (string (copy-sequence "Tod und Verzweiflung flammet um mich her!"))
+       (e (make-extent (search "Verzweiflung" string) (search "flammet" string)
+                       string))
+       (ee (make-extent (search " um " string) (search "her!" string)
+                       string))
+       (property-name '#:secret-token)
+       event list output)
+  (Assert (eq 'stream (type-of stream))
+          "checking string output stream created OK")
+  (Assert (equal "" (get-output-stream-string stream))
+          "checking newly created string output stream empty")
+  (setf (extent-property e 'duplicable) t
+        (extent-property e property-name) t
+        (extent-property ee 'count) most-positive-fixnum
+        (extent-property ee 'duplicable) nil) ;; Actually the default.
+  (write-sequence string stream) ;; Includes both ee and e, since the
+                                 ;; stream is treated like a string,
+                                 ;; not a buffer.
+  (write-sequence " " stream)
+  ;; Now write a string that only includes part of the text of e.
+  (write-sequence string stream :end (search "flung" string))
+  (terpri stream)
+  (setf output (get-output-stream-string stream))
+  (Assert
+   (equal "Tod und Verzweiflung flammet um mich her! Tod und Verzwei\n"
+          output)
+   "checking #'get-output-stream-string functioned as expected")
+  (setf list (extent-list output))
+  (Assert (eql 3 (length list)))
+  (Assert (eq (get (car list) property-name) t)
+          "checking property preserved, duplicable extent")
+  (Assert (eql (get (cadr list) 'count) most-positive-fixnum)
+          "checking property preserved, non-duplicable extent")
+  (Assert (eq (get (caddr list) property-name) t)
+          "checking property preserved, second duplicable extent")
+
+  (Assert (eq string (write-sequence string stream))
+          "checking return value of #'write-sequence")
+  (Assert (eq nil (clear-output stream))
+          "checking return value of #'clear-output")
+  (Assert (equal "" (get-output-stream-string stream))
+          "checking #'clear-output succeeded"))
+
+(Check-Error unimplemented (make-string-output-stream
+                            :element-type '(unsigned-byte 8)))
+(Check-Error wrong-number-of-arguments
+             (make-string-output-stream :element-type))
+
+(Assert (eq 'stream (type-of (make-string-output-stream)))
+        "checking passing no arguments to #'make-string-output-stream fine")
+
+(Check-Error wrong-type-argument (clear-output most-positive-fixnum))
+(Assert (eq nil (clear-output (current-buffer)))
+        "checking #'clear-output doesn't choke on a buffer argument")
+
+;;; end of extent-tests.el

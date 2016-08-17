@@ -889,8 +889,9 @@ This is a naive implementation in Lisp.  "
       ;; became invalid:
       (print symbol #'stream1)
       (Assert (equal (buffer-string scratch-output)
-                     (decode-coding-string "#:\xc6\x92\xc6\x92\xc6\x92\\bbb"
-                                           'utf-8))
+                     (decode-coding-string
+                      "\n#:\xc6\x92\xc6\x92\xc6\x92\\bbb\n"
+                      'utf-8))
               "checking printing a symbol with relocated name does something")
       (kill-buffer scratch-output)))
 

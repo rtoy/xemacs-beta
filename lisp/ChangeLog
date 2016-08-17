@@ -275,6 +275,21 @@
 	Update the documentation of this function to document that we've
 	removed a compatibility hack.
 
+2016-08-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gnuserv.el (gnuserv-string): Removed.
+	* gnuserv.el (gnuserv-request-stream): New.
+	Replace gnuserv-string with gnuserv-request-stream, now we have
+	native support for string output streams.
+	* gnuserv.el (gnuserv-process-filter):
+	Avoid using the regexp engine in this function. Avoid using the
+	Lisp reader, use #'parse-integer, it's cheaper when parsing
+	integers.
+	* gnuserv.el (gnuserv-start-1):
+	Use #'clear-output here.
+	* subr.el (with-output-to-string):
+	Implement this using #'make-string-output-stream.
+
 2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (terpri): Move this here from print.c.

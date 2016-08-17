@@ -29,6 +29,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "insdel.h"
 #include "lstream.h"
 #include "tls.h"
+#include "extents.h"
+#include "frame.h"
 
 #include "sysfile.h"
 
@@ -49,6 +51,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define DEFAULT_BLOCK_BUFFERING_SIZE 512
 #define MAX_READ_SIZE 512
 
+Lisp_Object Q_element_type, Qstreamp;
+
 static Lisp_Object
 mark_lstream (Lisp_Object obj)
 {
@@ -62,9 +66,8 @@ print_lstream (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lstream *lstr = XLSTREAM (obj);
 
-  write_fmt_string (printcharfun,
-		    "#<INTERNAL OBJECT (XEmacs bug?) (%s lstream) 0x%x>",
-		    lstr->imp->name, LISP_OBJECT_UID (obj));
+  write_fmt_string (printcharfun, "#<stream :type %s :uid 0x%x>",
+                    lstr->imp->name, LISP_OBJECT_UID (obj));
 }
 
 static void
@@ -599,6 +602,60 @@ Lstream_write (Lstream *lstr, const void *data, Bytecount size)
 	break;
     }
   return i == 0 ? -1 : 0;
+}
+
+int
+Lstream_write_with_extents (Lstream *lstr, Lisp_Object object,
+                            Bytexpos position, Bytecount len)
+{
+  if (lstr->imp->write_with_extents)
+    {
+      if (Lstream_flush (lstr) < 0)
+        {
+          return -1;
+        }
+
+      lstr->byte_count += len;
+      return lstr->imp->write_with_extents (lstr, object, position, len);
+    }
+
+  if (STRINGP (object))
+    {
+      return Lstream_write (lstr, XSTRING_DATA (object) + position, len);
+    }
+
+  if (BUFFERP (object))
+    {
+      Bytecount needed = copy_buffer_text_out (XBUFFER (object), position,
+                                              len, NULL, -1, FORMAT_DEFAULT,
+                                              Qnil, NULL);
+      Bytecount copied;
+      Lstream_adding (lstr, needed, 1);
+      copied = copy_buffer_text_out (XBUFFER (object), position, len,
+                                     lstr->out_buffer + lstr->out_buffer_ind,
+                                     needed, FORMAT_DEFAULT, Qnil, NULL);
+      lstr->byte_count += copied;
+      if (copied < needed)
+        {
+          return -1;
+        }
+                                     
+      Lstream_flush (lstr);
+      return copied;
+    }
+
+  RETURN_NOT_REACHED (-1);
+}
+
+struct extent_info *
+Lstream_extent_info (Lstream *lstr)
+{
+  if (lstr->imp->extent_info)
+    {
+      return (lstr->imp->extent_info)(lstr);
+    }
+
+  return NULL;
 }
 
 int
@@ -1679,18 +1736,29 @@ fixed_buffer_output_stream_ptr (Lstream *stream)
 
 struct resizing_buffer_stream
 {
-  unsigned char *buf;
+  Ibyte *buf;
   Bytecount allocked;
-  int max_stored;
-  int stored;
+  Bytecount stored;
+  Lisp_Object extent_info;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("resizing-buffer", resizing_buffer);
+static const struct memory_description resizing_buffer_lstream_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct resizing_buffer_stream, extent_info) },
+  { XD_END }
+};
+
+DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA ("resizing-buffer", resizing_buffer);
 
 Lisp_Object
 make_resizing_buffer_output_stream (void)
 {
-  return wrap_lstream (Lstream_new (lstream_resizing_buffer, "w"));
+  Lstream *stream = Lstream_new (lstream_resizing_buffer, "w");
+
+  Lstream_set_buffering (stream, LSTREAM_UNBUFFERED, 0);
+  RESIZING_BUFFER_STREAM_DATA (stream)->extent_info
+    = allocate_extent_info ();
+
+  return wrap_lstream (stream);
 }
 
 static Bytecount
@@ -1698,17 +1766,47 @@ resizing_buffer_writer (Lstream *stream, const unsigned char *data,
 			Bytecount size)
 {
   struct resizing_buffer_stream *str = RESIZING_BUFFER_STREAM_DATA (stream);
-  DO_REALLOC (str->buf, str->allocked, str->stored + size, unsigned char);
+  /* #### should implement this with mc_alloc() and its realloc. */
+  DO_REALLOC (str->buf, str->allocked, str->stored + size, Ibyte);  
   memcpy (str->buf + str->stored, data, size);
   str->stored += size;
-  str->max_stored = max (str->max_stored, str->stored);
   return size;
+}
+
+static Bytecount
+resizing_buffer_write_with_extents (Lstream *stream, Lisp_Object object,
+                                    Bytexpos position, Bytecount len)
+{
+  struct resizing_buffer_stream *str = RESIZING_BUFFER_STREAM_DATA (stream);
+  Bytecount start = str->stored;
+
+  DO_REALLOC (str->buf, str->allocked, str->stored + len, Ibyte);
+
+  if (STRINGP (object))
+    {
+      memcpy (str->buf + str->stored, XSTRING_DATA (object) + position, len);
+      copy_string_extents (wrap_lstream (stream), object, start, position, len);
+    }
+  else if (BUFFERP (object))
+    {
+      copy_buffer_text_out (XBUFFER (object), position, len,
+                            str->buf + str->stored, len, FORMAT_DEFAULT,
+                            wrap_lstream (stream), NULL);
+      add_string_extents (wrap_lstream (stream), XBUFFER (object),
+                          position, len);
+    }
+  else assert (0);
+
+  str->stored += len;
+
+  return len;
 }
 
 static int
 resizing_buffer_rewinder (Lstream *stream)
 {
   RESIZING_BUFFER_STREAM_DATA (stream)->stored = 0;
+  detach_all_extents (wrap_lstream (stream));
   return 0;
 }
 
@@ -1724,7 +1822,21 @@ resizing_buffer_closer (Lstream *stream)
   return 0;
 }
 
-unsigned char *
+static Lisp_Object
+resizing_buffer_marker (Lisp_Object stream)
+{
+  struct resizing_buffer_stream *str
+    = RESIZING_BUFFER_STREAM_DATA (XLSTREAM (stream));
+  return str->extent_info;
+}
+
+static struct extent_info *
+resizing_buffer_extent_info (Lstream *stream)
+{
+  return XEXTENT_INFO (RESIZING_BUFFER_STREAM_DATA (stream)->extent_info);
+}
+
+const Ibyte *
 resizing_buffer_stream_ptr (Lstream *stream)
 {
   return RESIZING_BUFFER_STREAM_DATA (stream)->buf;
@@ -1733,10 +1845,64 @@ resizing_buffer_stream_ptr (Lstream *stream)
 Lisp_Object
 resizing_buffer_to_lisp_string (Lstream *stream)
 {
-  return make_string (resizing_buffer_stream_ptr (stream),
-		     Lstream_byte_count (stream));
+  Lisp_Object result = make_string (RESIZING_BUFFER_STREAM_DATA (stream)->buf,
+                                    Lstream_byte_count (stream));
+
+  copy_string_extents (result, wrap_lstream (stream), 0, 0,
+                       Lstream_byte_count (stream));
+  return result;
 }
 
+DEFUN ("make-string-output-stream", Fmake_string_output_stream, 0, MANY, 0, /*
+Return an output stream for use with `print', and `write-sequence'.
+
+This output stream stores the characters written to it, for later access using
+`get-output-stream-string'.  Any extent information is preserved.
+
+Keyword argument ELEMENT-TYPE, if supplied, must be the symbol `character'.
+
+arguments: (&key (ELEMENT-TYPE character))
+*/
+        (int nargs, Lisp_Object *args))
+{
+  PARSE_KEYWORDS (Fmake_string_output_stream, nargs, args, 1, (element_type),
+                  (element_type = Qcharacter));
+
+  if (!EQ (element_type, Qcharacter))
+    {
+      signal_error (Qunimplemented, "More complex character types",
+                    element_type);
+    }
+
+  return make_resizing_buffer_output_stream ();
+}
+
+DEFUN ("get-output-stream-string", Fget_output_stream_string, 1, 1, 0, /*
+Given STREAM, a string-output stream, return its contents as a string.
+
+Rewind STREAM, such that future calls to `get-output-stream-string' no longer
+provide the same data.
+*/
+       (stream))
+{
+  Lisp_Object result;
+
+  CHECK_LSTREAM (stream);
+
+  if (!LSTREAM_TYPE_P (XLSTREAM (stream), resizing_buffer))
+    {
+      wtaerror ("Not a stream created with `make-string-output-stream",
+                stream);
+    }
+
+  result = resizing_buffer_to_lisp_string (XLSTREAM (stream));
+
+  Lstream_rewind (XLSTREAM (stream));
+
+  return result;
+}
+
+
 /*********** write to an unsigned-char dynarr ***********/
 
 /* Note: If you have a dynarr whose type is not unsigned_char_dynarr
@@ -1982,7 +2148,28 @@ lisp_buffer_stream_startpos (Lstream *stream)
 {
   return marker_position (LISP_BUFFER_STREAM_DATA (stream)->start);
 }
+
+DEFUN ("clear-output", Fclear_output, 0, 1, 0, /*
+Discard any buffered output data in OUTPUT-STREAM.
 
+OUTPUT-STREAM defaults to standard-output.
+*/
+       (output_stream))
+{
+  if (LSTREAMP (output_stream))
+    {
+      Lstream_rewind (XLSTREAM (output_stream));
+    }
+  else if (!(BUFFERP (output_stream) || MARKERP (output_stream) ||
+             FRAMEP (output_stream) || NILP (output_stream) ||
+             EQ (output_stream, Qt) ||
+             !NILP (Ffunctionp (output_stream))))
+    {
+      dead_wrong_type_argument (Qstreamp, output_stream);
+    }
+
+  return Qnil;
+}
 
 /************************************************************************/
 /*                            initialization                            */
@@ -1992,6 +2179,14 @@ void
 syms_of_lstream (void)
 {
   INIT_LISP_OBJECT (lstream);
+
+  DEFKEYWORD (Q_element_type);
+  DEFSYMBOL (Qstreamp);
+
+  DEFSUBR (Fmake_string_output_stream);
+  DEFSUBR (Fget_output_stream_string);
+
+  DEFSUBR (Fclear_output);
 }
 
 void
@@ -2029,6 +2224,9 @@ lstream_type_create (void)
   LSTREAM_HAS_METHOD (fixed_buffer, rewinder);
 
   LSTREAM_HAS_METHOD (resizing_buffer, writer);
+  LSTREAM_HAS_METHOD (resizing_buffer, write_with_extents);
+  LSTREAM_HAS_METHOD (resizing_buffer, extent_info);
+  LSTREAM_HAS_METHOD (resizing_buffer, marker);
   LSTREAM_HAS_METHOD (resizing_buffer, rewinder);
   LSTREAM_HAS_METHOD (resizing_buffer, closer);
 
