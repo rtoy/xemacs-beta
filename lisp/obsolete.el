@@ -381,6 +381,12 @@ Predefined tests are `eq', `eql', and `equal'.  Default is `eql'."
   (cdr (mouse-position (frame-device frame))))
 (make-obsolete 'read-mouse-position 'mouse-position)
 
+(define-obsolete-function-alias 'mwheel-scroll 'mouse-wheel-scroll)
+(define-obsolete-variable-alias 'mwheel-scroll-amount
+    'mouse-wheel-scroll-amount nil "Now a list with modifiers specified")
+(define-obsolete-variable-alias 'mwheel-follow-mouse
+    'mouse-wheel-follow-mouse)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; paths
 
 (defvar Info-default-directory-list nil

@@ -1,3 +1,162 @@
+2016-08-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mwheel.el:
+	Sync functionality (though surprisingly little code) from
+	GNU. Thank you GNU.
+	Remove some unneeded compatibility code.
+	
+	* mwheel.el (mwheel-scroll-amount): Removed.
+	* mwheel.el (mouse-wheel-scroll-amount): New.
+	Use GNU's newer, more sensible name for this variable.
+	
+	* mwheel.el (mouse-wheel-click-event): New.
+	Event to ignore for a brief period after using the mouse wheel.
+	* mwheel.el (mouse-wheel-inhibit-click-time): New.
+	Numbeer of seconds to inhibit `mouse-wheel-click-event' after
+	using the mouse wheel.
+
+	* mwheel.el (mouse-wheel-progressive-speed): New.
+	Should the mouse wheel scroll more quickly if it is moved more
+	energetically?
+	
+	* mwheel.el (mwheel-follow-mouse): Removed.
+	* mwheel.el (mouse-wheel-follow-mouse): New.
+	Rename the former to the latter.
+
+	* mwheel.el (mouse-wheel-scroll-up-function): New variable, the
+	command to call when scrolling up using the wheel, defaulting to
+	#'scroll-up-command.
+	* mwheel.el (mouse-wheel-scroll-down-function): New variable,
+	defaulting to #'scroll-down-command.
+	* mwheel.el (mwheel-install):
+	Support
+	* mwheel.el (mwheel-scroll): 
+	* mwheel.el (mouse-wheel-scroll): Rename `mwheel-scroll' to
+	`mouse-wheel-scroll', something GNU (oddly) haven't, but something
+	that is clearer and more sensible.
+
+	* mwheel.el (mouse-wheel-scroll, mwheel-install):
+	Add autoload forms for these, since the auto-autoload code doesn't
+	understand how to parse symbol-macrolet.
+
+	* obsolete.el:
+	* obsolete.el ('mwheel-scroll): Make this available as an obsolete
+	alias for #'mouse-wheel-scroll.
+	* obsolete.el ('mwheel-scroll-amount): New.
+	Make this available as an obsolete variable alias for
+	mouse-wheel-scroll-amount.
+	* obsolete.el ('mwheel-follow-mouse): New.
+	Make this available as an obsolete variable alias for
+	mouse-wheel-follow-mouse.
+
+	* behavior-defs.el:
+	* behavior-defs.el (mwheel): Move the mwheel behavior here from
+	mwheel.el, so users can disable it from their init file.
+	* keydefs.el:
+	Be a little clearer in the implementation of this, bind the mouse
+	wheel events to #'mouse-wheel-scroll, which is autoloaded.
+
+	Incorporates the following GNU changes:
+
+    2002-12-02  Andreas Schwab  <schwab@suse.de>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Fix customize type.
+
+    2002-11-29  Markus Rost  <rost@math.ohio-state.edu>
+
+	* mwheel.el (mouse-wheel-inhibit-click-time): Fix custom type.
+
+    2002-11-29  Kim F. Storm  <storm@cua.dk>
+
+	* mwheel.el: Avoid accidental yanking of text while scrolling with
+	the mouse wheel.  This adds a short period after each mouse wheel
+	scroll event where a click on the mouse wheel button is ignored.
+	(mouse-wheel-click-event, mouse-wheel-inhibit-click-time): New customs.
+	(mouse-wheel-click-button, mwheel-inhibit-click-event-timer): New vars.
+	(mwheel-inhibit-click-timeout, mwheel-filter-click-events): New defuns.
+	(mwheel-scroll): Add mwheel-filter-click-events as pre-command-hook.
+	Start mwheel-inhibit-click-event-timer with timeout handler
+	mwheel-inhibit-click-timeout.
+
+    2002-11-11  Markus Rost  <rost@math.ohio-state.edu>
+
+	* mwheel.el (mouse-wheel-down-button, mouse-wheel-up-button):
+	Declare with defvar, not with defcustom.
+
+    2002-08-29  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* mwheel.el (mouse-wheel-up-button): Doc fix.
+
+    2002-06-27  Stefan Monnier  <monnier@cs.yale.edu>
+
+	* mwheel.el (mouse-wheel-change-button): Deactivate before changing.
+	(mouse-wheel-up-button, mouse-wheel-down-button): Obsolete.
+	(mouse-wheel-up-event, mouse-wheel-down-event): New vars.
+	(mouse-wheel-follow-mouse): Change default to t.
+	(mwheel-event-button): Return the basic event symbol.
+	(mwheel-scroll): Work with non-mouse events.
+	(mouse-wheel-mode): Use the new vars.
+	(mwheel-install): Obey `uninstall'.
+
+    2002-06-24  Stefan Monnier  <monnier@cs.yale.edu>
+
+	* mwheel.el (mouse-wheel-scroll-amount, mwheel-scroll)
+	(mouse-wheel-mode): Don't require the first element to be modifier-free.
+
+    2002-02-19  Sam Steingold  <sds@gnu.org>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Can specify different
+	scroll amounts for different modifiers now.
+	(mwheel-scroll): Handle the new `mouse-wheel-scroll-amount'
+	format properly.
+	(mouse-wheel-mode): Ditto.
+
+    2001-11-19  Stefan Monnier  <monnier@cs.yale.edu>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Allow float values.
+	(mouse-wheel-progressive-speed): New var.
+	(mwheel-scroll): Use it and handle float values.
+
+    2004-11-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Allow float values.
+	(mouse-wheel-progressive-speed): New var.
+	(mwheel-scroll): Use it and handle float values.
+
+    2006-02-14  Juanma Barranquero  <lekktu@gmail.com>
+
+	* help.el (where-is): Fix message for remapped commands.
+
+	* mwheel.el (mouse-wheel-click-event, mouse-wheel-mode):
+	Fix typos in docstrings.
+
+    2006-02-11  Martin Rudalics  <rudalics@gmx.at>
+
+	* mwheel.el (mouse-wheel-up-event): Doc fix.
+
+    2008-06-12  Glenn Morris  <rgm@gnu.org>
+
+	* mwheel.el (mouse-wheel-follow-mouse, mwheel-event-window):
+	Evaluate definitions when compiling.  Reverse tests.
+
+    2009-11-25  Juri Linkov  <juri@jurta.org>
+
+	Mouse-wheel scrolling for DocView Continuous mode.  (Bug#4896)
+
+	* mwheel.el (mwheel-scroll-up-function)
+	(mwheel-scroll-down-function): New defvars.
+	(mwheel-scroll): Funcall `mwheel-scroll-up-function' instead of
+	`scroll-up', and `mwheel-scroll-down-function' instead of
+	`scroll-down'.
+
+    2000-11-06  Miles Bader  <miles@lsi.nec.co.jp>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Rename from
+	`mwheel-scroll-amount'.
+	(mouse-wheel-follow-mouse): Rename from `mwheel-follow-mouse'.
+	(mouse-wheel-mode): Use (featurep 'xemacs) instead of
+	string-matching against the version string.
+	
 2016-07-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* menubar-items.el (build-buffers-menu-internal): Move to being a

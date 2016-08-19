@@ -721,7 +721,7 @@ maybe_echo_keys (struct command_builder *command_builder, int no_snooze)
 	}
 
       echo_area_message (f, NULL, command_builder->echo_buf, 0,
-                         command_builder->echo_buf_end, Qcommand);
+                         max (command_builder->echo_buf_end, 0), Qcommand);
     }
 
  done:
@@ -2303,13 +2303,20 @@ The returned event will be one of the following types:
 
   switch (XEVENT_TYPE (event))
     {
+    case button_press_event:	/* key or mouse input can trigger prompting */
+      {
+        if (!event_mouse_wheel_p (event))
+          {
+            goto STORE_AND_EXECUTE_KEY;
+          }
+        /* Fallthrough in the case of wheel events, echoing them is
+           pointless. */
+      }
     case button_release_event:
     case misc_user_event:
       /* don't echo menu accelerator keys */
       reset_key_echo (command_builder, 1);
       goto EXECUTE_KEY;
-    case button_press_event:	/* key or mouse input can trigger prompting */
-      goto STORE_AND_EXECUTE_KEY;
     case key_press_event:         /* any key input can trigger autosave */
       break;
     default:

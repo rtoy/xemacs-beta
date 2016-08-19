@@ -61,6 +61,17 @@
 	* search.c (skip_chars):
 	Use re_wctype()'s new calling convention.
 
+2016-08-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-stream.c (maybe_echo_keys):
+	If there is nothing to echo in command_builder->echo_buf, don't
+	echo from it.
+	* event-stream.c (Fnext_event):
+	Don't echo mouse wheel events, this adds nothing to the user's
+	decision as to what to type next.
+	* events.h (event_mouse_wheel_p): New.
+	Return non-zero if an event is a mouse wheel event.
+
 2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (Fterpri): Move this to cl-extra.el, no need to have it
