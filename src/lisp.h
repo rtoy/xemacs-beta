@@ -5700,7 +5700,7 @@ void print_float (Lisp_Object, Lisp_Object, int);
    constant. */
 #define DECIMAL_PRINT_SIZE(integral_type) \
 (((2410824 * sizeof (integral_type)) / 1000000) + 3)
-void long_to_string (char *, long);
+Bytecount long_to_string (Ascbyte *, long);
 void ulong_to_bit_string (char *, unsigned long);
 extern int print_escape_newlines;
 extern MODULE_API int print_readably;

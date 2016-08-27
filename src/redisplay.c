@@ -7374,10 +7374,8 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 	int col = column_at_point (b, pt, 1) + !!column_number_start_at_one;
 	Ascbyte buf[DECIMAL_PRINT_SIZE (long)];
 
-	long_to_string (buf, col);
-
 	Dynarr_add_many (mode_spec_ibyte_string,
-			 (const Ibyte *) buf, strlen (buf));
+			 (const Ibyte *) buf, long_to_string (buf, col));
 
 	goto decode_mode_spec_done;
       }
