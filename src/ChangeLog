@@ -280,6 +280,24 @@
 	Call intern () as appropriate, use listu () rather than awkwardly
 	nconc'ing together sublists for the call to #'make-charset.
 
+2016-08-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_doprnt_va):
+	Use the new bytecount result of long_to_string instead of calling
+	strlen on its result.
+	* lisp.h:
+	New declaration for long_to_string, return a bytecount, not
+	void. Change the type of the BUFFER argument to be Ascbyte *
+	rather than char *.
+	* print.c (long_to_string):
+	Implement this change, returning the length of the string without
+	the terminating '\0'.
+	* print.c (print_internal):
+	Use the new return value of long_to_string instead of calling
+	strlen on its result.
+	* redisplay.c (decode_mode_spec):
+	Use the new return value of long_to_string.
+
 2016-08-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Pass extent info to lstreams when writing strings to them.

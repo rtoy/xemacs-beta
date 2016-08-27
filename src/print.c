@@ -1475,16 +1475,16 @@ float_to_string (char *buf, double data)
    bytes.  That includes the worst-case digits, the optional `-' sign,
    and the trailing \0.  */
 
-void
-long_to_string (char *buffer, long number)
+Bytecount
+long_to_string (Ascbyte *buffer, long number)
 {
-  char *p = buffer;
+  Ascbyte *p = buffer;
   long n = number;
 
 #if (SIZEOF_LONG != 4) && (SIZEOF_LONG != 8)
   /* We are running in a strange or misconfigured environment.  Let
      sprintf cope with it.  */
-  sprintf (buffer, "%ld", n);
+  return sprintf ((char *) buffer, "%ld", n);
 #else  /* (SIZEOF_LONG == 4) || (SIZEOF_LONG == 8) */
 
   if (n < 0)
@@ -1519,6 +1519,8 @@ long_to_string (char *buffer, long number)
 #endif /* SIZEOF_LONG != 4 */
 
   *p = '\0';
+
+  return p - buffer;
 #endif /* (SIZEOF_LONG == 4) || (SIZEOF_LONG == 8) */
 }
 
@@ -2275,8 +2277,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Type_Fixnum_Odd:
       {
 	Ascbyte buf[DECIMAL_PRINT_SIZE (EMACS_INT)];
-	long_to_string (buf, XFIXNUM (obj));
-	write_ascstring (printcharfun, buf);
+        write_string_1 (printcharfun, buf,
+                        long_to_string (buf, XFIXNUM (obj)));
 	break;
       }
 

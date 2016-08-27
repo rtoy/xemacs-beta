@@ -813,14 +813,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 
 	      if (spec->minwidth >= 0)
 		{
-		  long_to_string (p, spec->minwidth);
-		  p += strlen (p);
+		  p += long_to_string (p, spec->minwidth);
 		}
 	      if (spec->precision >= 0)
 		{
 		  *p++ = '.';
-		  long_to_string (p, spec->precision);
-		  p += strlen (p);
+		  p += long_to_string (p, spec->precision);
 		}
 	      
 	      if (strchr (double_converters, ch))
