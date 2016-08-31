@@ -574,10 +574,56 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	  doprnt_2 (stream, string, string_len, spec->minwidth,
 		    spec->precision, spec->minus_flag, spec->zero_flag);
 	}
+      else if (ch == 'c')
+        {
+          Ibyte charbuf[MAX_ICHAR_LEN];
+          Ichar a = CHAR_CODE_LIMIT; /* Not a valid ichar. */
+          Lisp_Object obj = Qnil;
 
+	  if (!largs)
+	    {
+	      a = (Ichar) Dynarr_at (args, spec->argnum - 1).l;
+              obj = make_fixnum (a);
+            }
+          else
+            {
+              obj = largs[spec->argnum - 1];
+            }
+
+          if (CHARP (obj))
+            {
+              a = XCHAR (obj);
+            }
+          else
+            {
+              if (FIXNUMP (obj))
+                {
+                  a = XREALFIXNUM (obj);
+                }
+
+              if (!valid_ichar_p (a))
+                {
+                  syntax_error ("Invalid value for %c spec", obj);
+                }
+            }
+
+          if (spec->precision != -1)
+            {
+              syntax_error ("Precision nonsensical for %c",
+                            NILP (format_reloc) ?
+                            make_string (format_nonreloc, format_length) :
+                            format_reloc);
+            }
+
+          /* XEmacs; don't attempt (badly) to handle floats, bignums or ratios
+             when 'c' is specified, error instead, "Format specifier doesn't
+             match arg type". */
+	  doprnt_2 (stream, charbuf, set_itext_ichar (charbuf, a), 
+                    spec->minwidth, -1, spec->minus_flag, spec->zero_flag);
+        }
       else
 	{
-	  /* Must be a number. */
+	  /* Must be a number or character. */
 	  union printf_arg arg;
 
 	  if (!largs)
@@ -587,19 +633,11 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	  else
 	    {
 	      Lisp_Object obj = largs[spec->argnum - 1];
-	      if (CHARP (obj))
-		obj = make_fixnum (XCHAR (obj));
-	      if (!NUMBERP (obj))
+
+	      if (strchr (double_converters, ch))
 		{
-		  /* WARNING!  This MUST be big enough for the sprintf below */
-		  CIbyte msg[48];
-		  sprintf (msg,
-			   "format specifier %%%c doesn't match argument type",
-			   ch);
-		  syntax_error (msg, Qunbound);
-		}
-	      else if (strchr (double_converters, ch))
-		{
+                  /* Don't accept a character argument for a float format
+                     spec. */
 		  if (FIXNUMP (obj))
 		    arg.d = XFIXNUM (obj);
 		  else if (FLOATP (obj))
@@ -629,8 +667,16 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		}
 	      else
 		{
-		  if (FLOATP (obj))
-		    obj = Ftruncate (obj, Qnil);
+                  if (CHARP (obj))
+                    {
+                      /* Do accept a character argument for an integer format
+                         spec. */
+                      obj = make_fixnum (XCHAR (obj));
+                    }
+                  else if (FLOATP (obj))
+                    {
+                      obj = IGNORE_MULTIPLE_VALUES (Ftruncate (obj, Qnil));
+                    }
 #ifdef HAVE_BIGFLOAT
 		  else if (BIGFLOATP (obj))
 		    {
@@ -700,30 +746,25 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		      else
 			arg.l = XFIXNUM (obj);
 		    }
+
 		}
-	    }
 
-	  if (ch == 'c')
-	    {
-	      Ichar a;
-	      Bytecount charlen;
-	      Ibyte charbuf[MAX_ICHAR_LEN];
-
-	      a = (Ichar) arg.l;
-
-	      if (!valid_ichar_p (a))
+	      if (!NUMBERP (obj))
 		{
-		  /* WARNING!  This MUST be big enough for the sprintf below */
-		  CIbyte msg[60];
-		  sprintf (msg, "invalid character value %d to %%c spec",
-			   a);
-		  syntax_error (msg, Qunbound);
+                  syntax_error_2 ("Format specifier doesn't match arg type",
+                                  make_char (ch), obj);
 		}
+            }
 
-	      charlen = set_itext_ichar (charbuf, a);
-	      doprnt_2 (stream, charbuf, charlen, spec->minwidth,
-			-1, spec->minus_flag, spec->zero_flag);
-	    }
+          if (ch == 'b')
+            {
+              Ascbyte *text_to_print = alloca_array (char, SIZEOF_LONG * 8 + 1);
+              
+              ulong_to_bit_string (text_to_print, arg.ul);
+              doprnt_2 (stream, (Ibyte *)text_to_print,
+                        qxestrlen ((Ibyte *)text_to_print), 
+                        spec->minwidth, -1, spec->minus_flag, spec->zero_flag);
+            }
 #if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
 	  else if (strchr (bignum_converters, ch))
 	    {
@@ -774,15 +815,6 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      xfree (text_to_print);
 	    }
 #endif /* HAVE_BIGFLOAT */
-          else if (ch == 'b')
-            {
-              Ascbyte *text_to_print = alloca_array (char, SIZEOF_LONG * 8 + 1);
-              
-              ulong_to_bit_string (text_to_print, arg.ul);
-              doprnt_2 (stream, (Ibyte *)text_to_print,
-                        qxestrlen ((Ibyte *)text_to_print), 
-                        spec->minwidth, -1, spec->minus_flag, spec->zero_flag);
-            }
 	  else
 	    {
 	      Ascbyte *text_to_print;
@@ -827,16 +859,16 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		  *p++ = '\0';
 		  sprintf (text_to_print, constructed_spec, arg.d);
 		}
-	      else
+	      else 
 		{
 		  *p++ = 'l';	/* Always use longs with sprintf() */
 		  *p++ = ch;
 		  *p++ = '\0';
 
-		  if (strchr (unsigned_int_converters, ch))
-		    sprintf (text_to_print, constructed_spec, arg.ul);
-		  else
-		    sprintf (text_to_print, constructed_spec, arg.l);
+                  if (strchr (unsigned_int_converters, ch))
+                    sprintf (text_to_print, constructed_spec, arg.ul);
+                  else
+                    sprintf (text_to_print, constructed_spec, arg.l);
 		}
 
 	      doprnt_2 (stream, (Ibyte *) text_to_print,

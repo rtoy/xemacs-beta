@@ -2236,8 +2236,11 @@ It may contain %-sequences meaning to substitute the next argument.
 %g or %G means print as a floating-point number in "pretty format";
   depending on the number, either %f or %e/%E format will be used, and
   trailing zeroes are removed from the fractional part.
-The argument used for all but %s and %S must be a number.  It will be
-  converted to an integer or a floating-point number as necessary.
+The argument used for all but %s, %S, and %c must be a number.  It will be
+  converted to an integer or a floating-point number as necessary.  In
+  addition, the integer %-sequences accept character arguments as equivalent
+  to the corresponding fixnums (see `char-int'), while the floating point
+  sequences do not.
 
 %$ means reposition to read a specific numbered argument; for example,
   %3$s would apply the `%s' to the third argument after the control string,
@@ -2270,7 +2273,7 @@ An optional period character and precision may be specified after any
   of significant digits printed in %g and %G conversions; and the
   maximum number of non-padding characters printed in %s and %S
   conversions.  The default precision for floating-point conversions
-  is six.
+  is six. Using a precision with %c is an error.
 If the precision is specified as `*', the precision is assumed to have been
   specified as an argument.  The argument used will be the next argument
   after the field width argument, if any.  If the field width was not
