@@ -283,6 +283,15 @@
 2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c (emacs_doprnt_1):
+	Our long_to_string () is documented as being faster than sprintf's
+	%d, and that remains the case with my testing today (about 20%
+	faster for sixteen-bit numbers than the C library implementation
+	on this OS X machine). Use long_to_string() instead of calling
+	sprintf for fixnums within #'format.
+
+2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_doprnt_1):
 	%c does not specify a number, handle it separate from the
 	numbers. Accept a fixnum argument that is a valid character code,
 	but do no accept other number values, in particular, fail on

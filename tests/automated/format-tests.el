@@ -65,4 +65,66 @@
 (Check-Error 'syntax-error (format "%.20c" ?a)) ;; Newly fails.
 (Check-Error 'syntax-error (format "%.*c" 20 ?a)) ;; Newly fails.
 
+(defun slow-integer-to-string (integer)
+  (check-type integer integer)
+  (loop with minusp = (if (< integer 0)
+                          (prog1 t (setq integer (- integer))))
+        with result = nil
+        until (eql integer 0)
+        do (setf result (cons (cdr (assoc* (mod integer 10)
+                                           '((0 . ?0) (1 . ?1)
+                                             (2 . ?2) (3 . ?3)
+                                             (4 . ?4) (5 . ?5)
+                                             (6 . ?6) (7 . ?7)
+                                             (8 . ?8) (9 . ?9))))
+                              result)
+                 integer (/ integer 10))
+        finally return (concatenate 'string (if minusp "-")
+                                    result)))
+(macrolet
+    ((Assert-formatting-integers (&rest integers)
+       (cons 'progn
+             (loop for integer in integers
+                   collect (progn
+                             (if (not (integerp integer))
+                                 (setq integer (eval integer)))
+                             `(Assert (equal (format "%d" ,integer)
+                                       ,(slow-integer-to-string
+                                         integer))))))))
+  (Assert-formatting-integers 1 -2 #xFFFF #x-FFFF most-positive-fixnum
+                              most-negative-fixnum))
+
+(Assert (equal (format "%d" (expt 2 32))
+                 (if (natnump (1+ #x3fffffff)) "4294967296" "0")))
+
+(Assert (equal (format "%d" 1) "1"))
+(Assert (equal (format "%d" -1) "-1"))
+(Assert (equal (format "%d" #xFFFF) "65535"))
+(Assert (equal (format "%d" #x-FFFF) "-65535"))
+
+(Assert (equal (format "%d" 97) "97"))
+(Assert (equal (format "%d" (char-int ?A)) "65"))
+(Assert (equal (format "% 20d" ?A)
+               (concatenate 'string (make-string 18 ?\x20) "65")))
+(Assert (equal (format "% 20d" 99)
+               (concatenate 'string (make-string 18 ?\x20) "99")))
+(Assert (equal (format "% *d" 20 ?A)
+               (concatenate 'string (make-string 18 ?\x20) "65")))
+(Assert (equal (format "% *d" 20 99)
+               (concatenate 'string (make-string 18 ?\x20) "99")))
+(Assert (equal (format "% *d" 20 ?A)
+               (concatenate 'string (make-string 18 ?\x20) "65")))
+(Assert (equal (format "%020d" ?A)
+               (concatenate 'string (make-string 18 ?0) "65")))
+(Assert (equal (format "%0*d" 20 ?A)
+               (concatenate 'string (make-string 18 ?0) "65")))
+(Assert (equal (format "%-20d" ?A)
+               (concatenate 'string "65" (make-string 18 ?\x20))))
+(Assert (equal (format "%-*d" 20 ?A)
+               (concatenate 'string "65" (make-string 18 ?\x20))))
+(Assert (equal (format "%-020d" 65)
+               (concatenate 'string "65" (make-string 18 ?0))))
+(Assert (equal (format "%-0*d" 20 ?A)
+               (concatenate 'string "65" (make-string 18 ?0))))
+
 ;; end of format-tests.el
