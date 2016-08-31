@@ -280,6 +280,20 @@
 	Call intern () as appropriate, use listu () rather than awkwardly
 	nconc'ing together sublists for the call to #'make-charset.
 
+2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_doprnt_1):
+	%c does not specify a number, handle it separate from the
+	numbers. Accept a fixnum argument that is a valid character code,
+	but do no accept other number values, in particular, fail on
+	floats (instead of printing a random subset of the bit values as
+	we did previously), ratios and bignums.
+	Error when supplied with a precision, this makes no sense for a
+	character value.
+	* editfns.c (Fformat):
+	Update the docstring of this to reflect a new restriction, that %c
+	does not accept non-integer arguments.
+
 2016-08-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c (emacs_doprnt_va):
