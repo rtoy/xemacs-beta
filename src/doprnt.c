@@ -756,7 +756,29 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		}
             }
 
-          if (ch == 'b')
+	  if (strchr (int_converters, ch))
+            {
+              Ibyte buf[DECIMAL_PRINT_SIZE (EMACS_INT) + MAX_ICHAR_LEN];
+              Ibyte *ptr = buf;
+
+              if (arg.l > -1)
+                {
+                  if (spec->plus_flag)
+                    {
+                      ptr += set_itext_ichar (buf, '+');
+                    }
+                  else if (spec->space_flag)
+                    {
+                      ptr += set_itext_ichar (buf, ' ');
+                    }
+                }
+              
+              doprnt_2 (stream, buf,
+                        (ptr + long_to_string ((Ascbyte *) ptr, arg.l)) - buf,
+                        spec->minwidth, spec->precision, spec->minus_flag,
+                        spec->zero_flag);
+            }
+          else if (ch == 'b')
             {
               Ascbyte *text_to_print = alloca_array (char, SIZEOF_LONG * 8 + 1);
               
@@ -859,17 +881,18 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		  *p++ = '\0';
 		  sprintf (text_to_print, constructed_spec, arg.d);
 		}
-	      else 
+	      else if (strchr (unsigned_int_converters, ch))
 		{
 		  *p++ = 'l';	/* Always use longs with sprintf() */
 		  *p++ = ch;
 		  *p++ = '\0';
 
-                  if (strchr (unsigned_int_converters, ch))
-                    sprintf (text_to_print, constructed_spec, arg.ul);
-                  else
-                    sprintf (text_to_print, constructed_spec, arg.l);
+                  sprintf (text_to_print, constructed_spec, arg.ul);
 		}
+              else
+                {
+                  assert (0);
+                }
 
 	      doprnt_2 (stream, (Ibyte *) text_to_print,
 			strlen (text_to_print), 0, -1, 0, 0);
