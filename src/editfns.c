@@ -2220,90 +2220,6 @@ arguments: (&rest BODY)
 }
 
 
-DEFUN ("format", Fformat, 1, MANY, 0, /*
-Format a string out of a control-string and arguments.
-The first argument is a control string.
-The other arguments are substituted into it to make the result, a string.
-It may contain %-sequences meaning to substitute the next argument.
-%s means print all objects as-is, using `princ'.
-%S means print all objects as s-expressions, using `prin1'.
-%d or %i means print as an integer in decimal (%o octal, %x lowercase hex,
-  %X uppercase hex, %b binary).
-%c means print as a single character.
-%f means print as a floating-point number in fixed notation (e.g. 785.200).
-%e or %E means print as a floating-point number in scientific notation
-  (e.g. 7.85200e+03).
-%g or %G means print as a floating-point number in "pretty format";
-  depending on the number, either %f or %e/%E format will be used, and
-  trailing zeroes are removed from the fractional part.
-The argument used for all but %s, %S, and %c must be a number.  It will be
-  converted to an integer or a floating-point number as necessary.  In
-  addition, the integer %-sequences accept character arguments as equivalent
-  to the corresponding fixnums (see `char-int'), while the floating point
-  sequences do not.
-
-%$ means reposition to read a specific numbered argument; for example,
-  %3$s would apply the `%s' to the third argument after the control string,
-  and the next format directive would use the fourth argument, the
-  following one the fifth argument, etc. (There must be a positive integer
-  between the % and the $).
-Zero or more of the flag characters `-', `+', ` ', `0', and `#' may be
-  specified between the optional repositioning spec and the conversion
-  character; see below.
-An optional minimum field width may be specified after any flag characters
-  and before the conversion character; it specifies the minimum number of
-  characters that the converted argument will take up.  Padding will be
-  added on the left (or on the right, if the `-' flag is specified), as
-  necessary.  Padding is done with spaces, or with zeroes if the `0' flag
-  is specified.
-If the field width is specified as `*', the field width is assumed to have
-  been specified as an argument.  Any repositioning specification that
-  would normally specify the argument to be converted will now specify
-  where to find this field width argument, not where to find the argument
-  to be converted.  If there is no repositioning specification, the normal
-  next argument is used.  The argument to be converted will be the next
-  argument after the field width argument unless the precision is also
-  specified as `*' (see below).
-
-An optional period character and precision may be specified after any
-  minimum field width.  It specifies the minimum number of digits to
-  appear in %d, %i, %o, %x, and %X conversions (the number is padded
-  on the left with zeroes as necessary); the number of digits printed
-  after the decimal point for %f, %e, and %E conversions; the number
-  of significant digits printed in %g and %G conversions; and the
-  maximum number of non-padding characters printed in %s and %S
-  conversions.  The default precision for floating-point conversions
-  is six. Using a precision with %c is an error.
-If the precision is specified as `*', the precision is assumed to have been
-  specified as an argument.  The argument used will be the next argument
-  after the field width argument, if any.  If the field width was not
-  specified as an argument, any repositioning specification that would
-  normally specify the argument to be converted will now specify where to
-  find the precision argument.  If there is no repositioning specification,
-  the normal next argument is used.
-
-The ` ' and `+' flags mean prefix non-negative numbers with a space or
-  plus sign, respectively.
-The `#' flag means print numbers in an alternate, more verbose format:
-  octal numbers begin with zero; hex numbers begin with a 0x or 0X;
-  a decimal point is printed in %f, %e, and %E conversions even if no
-  numbers are printed after it; and trailing zeroes are not omitted in
-   %g and %G conversions.
-
-Use %% to put a single % into the output.
-
-arguments: (CONTROL-STRING &rest ARGS)
-*/
-       (int nargs, Lisp_Object *args))
-{
-  /* It should not be necessary to GCPRO ARGS, because
-     the caller in the interpreter should take care of that.  */
-
-  CHECK_STRING (args[0]);
-  return emacs_vsprintf_string_lisp (0, args[0], nargs - 1, args + 1);
-}
-
-
 DEFUN ("char-equal", Fchar_equal, 2, 3, 0, /*
 Return t if two characters match, optionally ignoring case.
 Both arguments must be characters (i.e. NOT integers).
@@ -2500,7 +2416,6 @@ syms_of_editfns (void)
   DEFSUBR (Fcurrent_time_zone);
   DEFSUBR (Fset_time_zone_rule);
   DEFSUBR (Fsystem_name);
-  DEFSUBR (Fformat);
 
   DEFSUBR (Finsert_buffer_substring);
   DEFSUBR (Fcompare_buffer_substrings);

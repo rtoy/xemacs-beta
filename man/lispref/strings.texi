@@ -718,6 +718,17 @@ second such value, and so on.  Any extra format specifications (those
 for which there are no corresponding values) cause unpredictable
 behavior.  Any extra values to be formatted are ignored.
 
+  Any extents in @var{string} or in @var{objects} are carried over into
+the output string, as with @code{concat} @pxref{Creating Strings}.  If
+the format specification makes the output string longer than
+@var{string}, the new characters are inserted before the @samp{%} of
+each format specification, and whether extent info applies to them
+depends on the @code{start-open} and @code{end-open} properties of those
+extents that abut the spec. @pxref{Extent Endpoints}. If you are not
+curious about extent endpoints and their implications, but still would
+like to use extents in format sequences, have your extents apply either
+to the entirety of a @samp{%}-sequence, or not at all.
+
   Certain format specifications require values of particular types.
 However, no error is signaled if the value actually supplied fails to
 have the expected type.  Instead, the output is likely to be

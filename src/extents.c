@@ -6215,6 +6215,235 @@ copy_string_extents (Lisp_Object new_object, Lisp_Object old_string,
   UNGCPRO;
 }
 
+struct stretch_string_extents_arg
+{
+  Bytecount old_pos;
+  Bytecount new_pos;
+  Bytecount old_length;
+  Bytecount new_length;
+  Lisp_Object new_object;
+};
+
+static int
+stretch_string_extents_buffer_mapper (EXTENT extent, void *arg)
+{
+  /* This function can GC */
+  struct stretch_string_extents_arg *closure =
+    (struct stretch_string_extents_arg *) arg;
+  Bytecount old_start = extent_endpoint_byte (extent, 0);
+  Bytecount old_end = extent_endpoint_byte (extent, 1);
+
+  /* If the old extent started before the beginning of the old chunk of
+     string, or it started at the beginning of the old chunk of string and the
+     extent's start was not open, we want the new start to be at
+     closure->OPOINT.
+
+     Conceptually, any text inserted with a format string (which is the main
+     practical application of this code) is inserted at the start of the
+     relevant format sequence. The advantage of having it at the start rather
+     than at the end is that the start-open property is nil by default, so
+     extent information over the control sequence in the format string carries
+     over to the output text in the expected way. */
+  Boolint stretchp = old_start < closure->old_pos
+    || (old_start == closure->old_pos && !extent_start_open_p (extent));
+  Bytexpos new_start, new_end;
+  Bytecount delta;
+  struct buffer *buffer;
+
+  old_start = max (closure->old_pos, old_start);
+  if (old_start >= old_end)
+    {
+      return 0;
+    }
+  old_end = min (closure->old_pos + closure->old_length, old_end);
+
+  buffer = XBUFFER (closure->new_object);
+  delta = (closure->old_pos + closure->old_length) - old_end;
+
+  new_end = closure->new_pos + closure->new_length;
+  if (delta)
+    {
+      /* Get the number of characters the end of this extent was from the end
+         of the origin string, then decrement the bytebpos by that number of
+         characters to arrive at the correct character offset from the new
+         end.  */
+      Charcount from_section_end
+        = string_offset_byte_to_char_len (extent_object (extent),
+                                          old_end, delta);
+      do
+        {
+          DEC_BYTEBPOS (buffer, new_end);          
+        }
+      while (--from_section_end && new_end >= closure->new_pos);
+
+      if (from_section_end)
+        {
+          return 0; /* We would decrement past the beginning of the new
+                       stretch. */
+        }
+    }
+
+  if (stretchp)
+    {
+      new_start = closure->new_pos;
+    }
+  else
+    {
+      /* Get the character length of the relevant positions in the original
+         string, and, starting at new_end, decrease the bytebpos by that
+         number of characters to get new_start. This will usually be cheap,
+         the relevant strings are from format converter sequences, a matter of
+         < 10 octets.  */
+      Charcount from_extent_end
+        = string_offset_byte_to_char_len (extent_object (extent),
+                                          old_start, old_end - old_start);
+      new_start = new_end;
+      do
+        {
+          DEC_BYTEBPOS (buffer, new_start);
+        }
+      while (--from_extent_end && new_start >= closure->new_pos);
+    }
+
+  if (new_start >= new_end)
+    {
+      return 0;
+    }
+
+  if (!extent_duplicable_p (extent))
+    return 0;
+
+  if (!inside_undo &&
+      !run_extent_paste_function (extent, new_start, new_end,
+                                  closure->new_object))
+    return 0;
+
+  copy_extent (extent, new_start, new_end, closure->new_object);
+  return 0;
+}
+
+/* This function is used for strings and lstream NEW_OBJECTs. */
+static int
+stretch_string_extents_mapper (EXTENT extent, void *arg)
+{
+  /* This function can GC */
+  struct stretch_string_extents_arg *closure =
+    (struct stretch_string_extents_arg *) arg;
+  Bytecount old_start = extent_endpoint_byte (extent, 0);
+  Bytecount old_end = extent_endpoint_byte (extent, 1);
+  /* See above for this reasoning. */
+  Boolint stretchp = old_start < closure->old_pos
+    || (old_start == closure->old_pos && !extent_start_open_p (extent));
+  Bytecount new_start, new_end;
+  Bytecount delta;
+  const Ibyte *data, *limit, *cursor;
+
+  old_start = max (closure->old_pos, old_start);
+  if (old_start >= old_end)
+    {
+      return 0;
+    }
+  old_end = min (closure->old_pos + closure->old_length, old_end);
+
+  data = STRINGP (closure->new_object) ?
+    XSTRING_DATA (closure->new_object)
+    : resizing_buffer_stream_ptr (XLSTREAM (closure->new_object));
+
+  delta = (closure->old_pos + closure->old_length) - old_end;
+  limit = data + closure->new_pos;
+  new_end = closure->new_pos + closure->new_length;
+  cursor = data + new_end;
+
+  if (delta)
+    {
+      /* Get the character distance from the end of this extent to the end of
+         the origin string subsection, then decrement the bytebpos by that
+         number of characters to arrive at the correct character offset from
+         the new end. We can't simply subtract the byte length, that might put
+         us in the middle of a character, and we wouldn't even know if it was
+         a relevant character. */
+      Charcount from_section_end
+        = string_offset_byte_to_char_len (extent_object (extent), old_end,
+                                          delta);
+      do
+        {
+          DEC_IBYTEPTR (cursor);
+        }
+      while (--from_section_end && cursor >= limit);
+      if (from_section_end)
+        {
+          return 0; /* We would decrement past the beginning of the new
+                       stretch. */
+        }
+      new_end = cursor - data;
+    }
+
+  if (stretchp)
+    {
+      new_start = closure->new_pos;
+    }
+  else
+    {
+      /* Get the character length between the relevant positions in the
+         original string, and, starting at new_end, decrease the bytebpos by
+         that number of characters to get new_start. This will usually be
+         cheap, the relevant strings are from format converter sequences, a
+         matter of < 10 octets.  */
+      Charcount from_extent_end
+        = string_offset_byte_to_char_len (extent_object (extent),
+                                          old_start, old_end - old_start);
+      do
+        {
+          DEC_IBYTEPTR (cursor);
+        }
+      while (--from_extent_end && cursor >= limit);
+
+      new_start = cursor - data;
+    }
+
+  if (new_start >= new_end)
+    {
+      return 0;
+    }
+
+  copy_extent (extent, new_start, new_end, closure->new_object);
+  return 0;
+}
+
+/* The string, lstream, or buffer NEW_OBJECT was partially constructed from
+   OLD_STRING. In particular, the section of length NEW_LENGTH starting at
+   NEW_POS in NEW_OBJECT came from the section of length OLD_LENGTH starting
+   at OLD_POS in OLD_STRING. Copy the extents as appropriate, in particular,
+   copy any extents that extended beyond or to the end of the old section into
+   the new section. */
+void
+stretch_string_extents (Lisp_Object new_object, Lisp_Object old_string,
+                        Bytecount new_pos, Bytecount old_pos,
+                        Bytecount old_length, Bytecount new_length)
+{
+  struct gcpro gcpro1, gcpro2;
+  struct stretch_string_extents_arg closure;
+
+  closure.new_pos = new_pos;
+  closure.old_pos = old_pos;
+  closure.new_length = new_length;
+  closure.old_length = old_length;
+  closure.new_object = new_object;
+
+  GCPRO2 (new_object, old_string);
+
+  map_extents (old_pos, old_pos + old_length,
+               BUFFERP (new_object) ? stretch_string_extents_buffer_mapper
+               : stretch_string_extents_mapper,
+               (void *) &closure, old_string, 0,
+               /* ignore extents that just abut the region */
+               ME_END_CLOSED | ME_ALL_EXTENTS_OPEN |
+               /* we are calling E-Lisp (the extent's copy function)
+                  so anything might happen */
+               ME_MIGHT_CALL_ELISP);
+  UNGCPRO;
+}
+
 /* Checklist for sanity checking:
    - {kill, yank, copy} at {open, closed} {start, end} of {writable, read-only} extent
    - {kill, copy} & yank {once, repeatedly} duplicable extent in {same, different} buffer

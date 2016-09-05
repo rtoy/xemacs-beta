@@ -51,7 +51,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define DEFAULT_BLOCK_BUFFERING_SIZE 512
 #define MAX_READ_SIZE 512
 
-Lisp_Object Q_element_type, Qstreamp;
+Lisp_Object Q_element_type;
 
 static Lisp_Object
 mark_lstream (Lisp_Object obj)
