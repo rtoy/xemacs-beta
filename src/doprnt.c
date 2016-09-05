@@ -57,8 +57,6 @@ struct printf_spec
   int argnum; /* which argument does this spec want?  This is one-based:
 		 The first argument given is numbered 1, the second
 		 is 2, etc.  This is to handle %##$x-type specs. */
-  int minwidth;
-  int precision;
   unsigned int minus_flag:1;
   unsigned int plus_flag:1;
   unsigned int space_flag:1;
@@ -70,9 +68,13 @@ struct printf_spec
   char converter; /* converter character or 0 for dummy marker
 		     indicating literal text at the end of the
 		     specification */
+  Charcount minwidth;
+  Charcount precision;
   Bytecount text_before; /* position of the first character of the
 			    block of literal text before this spec */
   Bytecount text_before_len; /* length of that text */
+  Bytecount format_length; /* Length of this format spec itself, starting at
+                              text_before + text_before_len.  */
 };
 
 typedef union printf_arg printf_arg;
@@ -101,37 +103,100 @@ typedef struct
   Dynarr_declare (union printf_arg);
 } printf_arg_dynarr;
 
-/* Append STRING (of length LEN bytes) to STREAM.
-   MINLEN is the minimum field width.
-   If MINUS_FLAG is set, left-justify the string in its field;
+/* Append the string of length LEN starting at OFFSET to STREAM. Preserve any
+   extent information.  If RELOC is non-nil, use its string data as the base
+   for OFFSET. Otherwise, use NONRELOC.
+
+   RELOC is a Lisp string, or Qnil. NONRELOC is a pointer to internal-format
+   text, or NULL, to specify to use RELOC's string data. OFFSET is the byte
+   offset within NONRELOC to start.  LEN is the byte length from OFFSET to
+   append.
+
+   PFSP is a pointer to a struct printf_spec. If it is non-NULL, the following
+   fields within it are respected:
+   MINWIDTH is taken as the minimum character field width.
+   If MINUS_FLAG is non-zero, left-justify the string in its field;
     otherwise, right-justify.
    If ZERO_FLAG is set, pad with 0's; otherwise pad with spaces.
-   If MAXLEN is non-negative, the string is first truncated on the
-    right to that many characters.
+   If PRECISION is non-negative, the string is first truncated on the
+   right to that many characters.
 
-   Note that MINLEN and MAXLEN are Charcounts but LEN is a Bytecount. */
+   FORMAT_OBJECT, if non-nil, is taken to be Lisp object that the format spec
+   came from. It should not be specified if it is identical to RELOC. If
+   FORMAT_OBJECT has extent information, the following fields in PFSP are also
+   used to access it:
+
+   FORMAT_LENGTH is taken to be the length of this format spec within
+   FORMAT_OBJECT.
+   TEXT_BEFORE and TEXT_BEFORE_LEN are summed to find the offset within
+   FORMAT_OBJECT where the format spec started. */
 
 static void
-doprnt_2 (Lisp_Object stream, const Ibyte *string, Bytecount len,
-	  Charcount minlen, Charcount maxlen, int minus_flag, int zero_flag)
+doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
+          Bytecount offset, Bytecount len,
+          struct printf_spec *pfsp, Lisp_Object format_object)
 {
   Lstream *lstr = XLSTREAM (stream);
-  Charcount cclen = bytecount_to_charcount (string, len);
-  int to_add = minlen - cclen;
+  Bytecount begin = Lstream_byte_count (lstr);
+  const Ibyte *newnonreloc = ((NILP (reloc)) ? nonreloc : XSTRING_DATA (reloc));
 
-  /* Padding at beginning to right-justify ... */
-  if (!minus_flag)
-    while (to_add-- > 0)
-      (void) Lstream_putc (lstr, zero_flag ? '0' : ' ');
+  assert (!(EQ (reloc, format_object)) || NILP (reloc));
 
-  if (0 <= maxlen && maxlen < cclen)
-    len = charcount_to_bytecount (string, maxlen);
-  Lstream_write (lstr, string, len);
+  if (pfsp != NULL)
+    {
+      Charcount to_add = -1, minlen = pfsp->minwidth;
+      Charcount maxlen = pfsp->precision;
+      Boolint minus_flag = pfsp->minus_flag, zero_flag = pfsp->zero_flag;
 
-  /* Padding at end to left-justify ... */
-  if (minus_flag)
-    while (to_add-- > 0)
-      (void) Lstream_putc (lstr, zero_flag ? '0' : ' ');
+      /* LEN / MAX_ICHAR_LEN is an inclusive lower bound on CCLEN. It
+         represents the case where NEWNONRELOC comprises exclusively
+         characters of the maximum byte length. If minlen is zero or < (LEN /
+         MAX_ICHAR_LEN), definitely no need to pad; otherwise we need to
+         calculate the character length to work out whether we need to pad. */
+      if ((minlen != 0 && minlen >= (len / MAX_ICHAR_LEN))
+          /* LEN is an inclusive upper bound on CCLEN. It represents the case
+             where NEWNONRELOC comprises exclusively ASCII characters. If
+             MAXLEN is greater than or equal to LEN, no need to truncate. */
+          || (0 <= maxlen && maxlen < len))
+        {
+          Charcount cclen = bytecount_to_charcount (newnonreloc + offset, len);
+          to_add = minlen - cclen;
+          if (maxlen >= 0 && (maxlen = min (maxlen, cclen), maxlen != cclen))
+            {
+              len = charcount_to_bytecount (newnonreloc + offset, maxlen);
+            }
+        }
+
+      /* Padding at beginning to right-justify ... */
+      if (!minus_flag)
+        while (to_add-- > 0)
+          (void) Lstream_putc (lstr, zero_flag ? '0' : ' ');
+      
+      Lstream_write (lstr, newnonreloc + offset, len);
+
+      /* Padding at end to left-justify ... */
+      if (minus_flag)
+        while (to_add-- > 0)
+          (void) Lstream_putc (lstr, zero_flag ? '0' : ' ');
+
+      if (!NILP (format_object) && string_extent_info (format_object) != NULL)
+        {
+          stretch_string_extents (stream, format_object, begin,
+                                  pfsp->text_before + pfsp->text_before_len,
+                                  pfsp->format_length,
+                                  Lstream_byte_count (lstr) - begin);
+        }
+    }
+  else
+    {
+      Lstream_write (lstr, newnonreloc + offset, len);
+    }
+ 
+  if (!NILP (reloc) && string_extent_info (reloc) != NULL)
+    {
+      stretch_string_extents (stream, reloc, begin,
+                              offset, len, Lstream_byte_count (lstr) - begin);
+    }
 }
 
 static const Ibyte *
@@ -186,14 +251,17 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
       const Ibyte *text_end;
       Ibyte ch;
 
-      xzero (spec);
       if (fmt == fmt_end)
 	return specs;
+
+      xzero (spec);
       text_end = (Ibyte *) memchr (fmt, '%', fmt_end - fmt);
       if (!text_end)
 	text_end = fmt_end;
       spec.text_before = fmt - format;
       spec.text_before_len = text_end - fmt;
+      spec.precision = -1;
+      
       fmt = text_end;
       if (fmt != fmt_end)
 	{
@@ -204,6 +272,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	  if (fmt != fmt_end && *fmt == '%')
 	    {
 	      spec.converter = '%';
+              spec.format_length = fmt - text_end;
 	      Dynarr_add (specs, spec);
 	      fmt++;
 	      continue;
@@ -254,6 +323,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	  if (fmt != fmt_end && *fmt == '*')
 	    {
 	      spec.converter = '*';
+              spec.format_length = fmt - text_end;
 	      RESOLVE_FLAG_CONFLICTS(spec);
 	      Dynarr_add (specs, spec);
 	      xzero (spec);
@@ -281,6 +351,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	      if (fmt != fmt_end && *fmt == '*')
 		{
 		  spec.converter = '*';
+                  spec.format_length = fmt - text_end;
 		  spec.forwarding_precision = 1;
 		  RESOLVE_FLAG_CONFLICTS(spec);
 		  Dynarr_add (specs, spec);
@@ -313,6 +384,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	  if (!strchr (valid_converters, ch))
 	    syntax_error ("Invalid converter character", make_char (ch));
 	  spec.converter = ch;
+          spec.format_length = fmt - text_end;
 	}
 
       RESOLVE_FLAG_CONFLICTS(spec);
@@ -441,8 +513,10 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
       format_nonreloc = XSTRING_DATA (format_reloc);
       format_length = XSTRING_LENGTH (format_reloc);
     }
-  if (format_length < 0)
-    format_length = (Bytecount) strlen ((const char *) format_nonreloc);
+  else if (format_length < 0)
+    {
+      format_length = qxestrlen (format_nonreloc);
+    }
 
   specs = parse_doprnt_spec (format_nonreloc, format_length);
   count = record_unwind_protect_freeing_dynarr (specs);
@@ -470,10 +544,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 
       /* Copy the text before */
       if (!NILP (format_reloc)) /* refetch in case of GC below */
-	format_nonreloc = XSTRING_DATA (format_reloc);
+        {
+          format_nonreloc = XSTRING_DATA (format_reloc);
+        }
 
-      doprnt_2 (stream, format_nonreloc + spec->text_before,
-		spec->text_before_len, 0, -1, 0, 0);
+      doprnt_2 (stream, format_nonreloc, format_reloc, spec->text_before,
+                spec->text_before_len, NULL, Qnil);
 
       ch = spec->converter;
 
@@ -482,7 +558,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 
       if (ch == '%')
 	{
-	  doprnt_2 (stream, (Ibyte *) &ch, 1, 0, -1, 0, 0);
+          Ibyte chbuf[MAX_ICHAR_LEN];
+          /* No field widths, no precisions, take any extents from the format
+             string.  */
+          doprnt_2 (stream, format_nonreloc, format_reloc,
+                    spec->text_before + spec->text_before_len,
+                    set_itext_ichar (chbuf, '%'), NULL, Qnil);
 	  continue;
 	}
 
@@ -527,6 +608,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	{
 	  Ibyte *string;
 	  Bytecount string_len;
+          Lisp_Object ls = Qnil;
 
 	  if (!largs)
 	    {
@@ -550,7 +632,6 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	  else
 	    {
 	      Lisp_Object obj = largs[spec->argnum - 1];
-	      Lisp_Object ls;
 
 	      if (ch == 'S')
 		{
@@ -571,8 +652,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      string_len = XSTRING_LENGTH (ls);
 	    }
 
-	  doprnt_2 (stream, string, string_len, spec->minwidth,
-		    spec->precision, spec->minus_flag, spec->zero_flag);
+	  doprnt_2 (stream, string, ls, 0, string_len, spec, format_reloc);
 	}
       else if (ch == 'c')
         {
@@ -618,8 +698,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
           /* XEmacs; don't attempt (badly) to handle floats, bignums or ratios
              when 'c' is specified, error instead, "Format specifier doesn't
              match arg type". */
-	  doprnt_2 (stream, charbuf, set_itext_ichar (charbuf, a), 
-                    spec->minwidth, -1, spec->minus_flag, spec->zero_flag);
+          doprnt_2 (stream, charbuf, Qnil, 0, set_itext_ichar (charbuf, a),
+                    spec, format_reloc);
         }
       else
 	{
@@ -773,19 +853,17 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                     }
                 }
               
-              doprnt_2 (stream, buf,
+              doprnt_2 (stream, buf, Qnil, 0,
                         (ptr + long_to_string ((Ascbyte *) ptr, arg.l)) - buf,
-                        spec->minwidth, spec->precision, spec->minus_flag,
-                        spec->zero_flag);
+                        spec, format_reloc);
             }
           else if (ch == 'b')
             {
               Ascbyte *text_to_print = alloca_array (char, SIZEOF_LONG * 8 + 1);
               
               ulong_to_bit_string (text_to_print, arg.ul);
-              doprnt_2 (stream, (Ibyte *)text_to_print,
-                        qxestrlen ((Ibyte *)text_to_print), 
-                        spec->minwidth, -1, spec->minus_flag, spec->zero_flag);
+              doprnt_2 (stream, (const Ibyte *) text_to_print, Qnil,
+                        0, strlen (text_to_print), spec, format_reloc);
             }
 #if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
 	  else if (strchr (bignum_converters, ch))
@@ -805,10 +883,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		  Ibyte *text_to_print =
 		    (Ibyte *) bignum_to_string (XBIGNUM_DATA (arg.obj),
 						base);
-		  doprnt_2 (stream, text_to_print,
-			    strlen ((const char *) text_to_print),
-			    spec->minwidth, -1, spec->minus_flag,
-			    spec->zero_flag);
+                  doprnt_2 (stream, text_to_print, Qnil,
+                            0, qxestrlen (text_to_print), spec, format_reloc);
 		  xfree (text_to_print);
 		}
 #endif
@@ -817,10 +893,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		{
 		  Ibyte *text_to_print =
 		    (Ibyte *) ratio_to_string (XRATIO_DATA (arg.obj), base);
-		  doprnt_2 (stream, text_to_print,
-			    strlen ((const char *) text_to_print),
-			    spec->minwidth, -1, spec->minus_flag,
-			    spec->zero_flag);
+                  doprnt_2 (stream, text_to_print, Qnil,
+                            0, qxestrlen (text_to_print), spec, format_reloc);
 		  xfree (text_to_print);
 		}
 #endif
@@ -831,9 +905,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	    {
 	      Ibyte *text_to_print =
 		(Ibyte *) bigfloat_to_string (XBIGFLOAT_DATA (arg.obj), 10);
-	      doprnt_2 (stream, text_to_print,
-			strlen ((const char *) text_to_print),
-			spec->minwidth, -1, spec->minus_flag, spec->zero_flag);
+	      doprnt_2 (stream, text_to_print, Qnil,
+			0, qxestrlen (text_to_print), spec, format_reloc);
 	      xfree (text_to_print);
 	    }
 #endif /* HAVE_BIGFLOAT */
@@ -894,8 +967,24 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                   assert (0);
                 }
 
-	      doprnt_2 (stream, (Ibyte *) text_to_print,
-			strlen (text_to_print), 0, -1, 0, 0);
+              if (!NILP (format_reloc))
+                {
+                  struct printf_spec minimal_spec;
+                  bzero (&minimal_spec, sizeof (minimal_spec));
+                  minimal_spec.precision = -1;
+                  minimal_spec.format_length = spec->format_length;
+                  minimal_spec.text_before = spec->text_before;
+                  minimal_spec.text_before_len = spec->text_before_len;
+
+                  doprnt_2 (stream, (Ibyte *) text_to_print, Qnil, 0,
+                            strlen (text_to_print), &minimal_spec,
+                            format_reloc);
+                }
+              else
+                {
+                  doprnt_2 (stream, (Ibyte *) text_to_print, Qnil, 0,
+                            strlen (text_to_print), NULL, format_reloc);
+                }
 	    }
 	}
     }
@@ -1162,4 +1251,103 @@ emacs_sprintf (Ibyte *output, const CIbyte *format, ...)
   retval = emacs_vsprintf (output, format, vargs);
   va_end (vargs);
   return retval;
+}
+
+
+DEFUN ("format", Fformat, 1, MANY, 0, /*
+Format a string out of a control-string and arguments.
+The first argument is a control string.
+The other arguments are substituted into it to make the result, a string.
+It may contain %-sequences meaning to substitute the next argument.
+%s means print all objects as-is, using `princ'.
+%S means print all objects as s-expressions, using `prin1'.
+%d or %i means print as an integer in decimal (%o octal, %x lowercase hex,
+  %X uppercase hex, %b binary).
+%c means print as a single character.
+%f means print as a floating-point number in fixed notation (e.g. 785.200).
+%e or %E means print as a floating-point number in scientific notation
+  (e.g. 7.85200e+03).
+%g or %G means print as a floating-point number in "pretty format";
+  depending on the number, either %f or %e/%E format will be used, and
+  trailing zeroes are removed from the fractional part.
+The argument used for all but %s, %S, and %c must be a number.  It will be
+  converted to an integer or a floating-point number as necessary.  In
+  addition, the integer %-sequences accept character arguments as equivalent
+  to the corresponding fixnums (see `char-int'), while the floating point
+  sequences do not.
+
+%$ means reposition to read a specific numbered argument; for example,
+  %3$s would apply the `%s' to the third argument after the control string,
+  and the next format directive would use the fourth argument, the
+  following one the fifth argument, etc. (There must be a positive integer
+  between the % and the $).
+Zero or more of the flag characters `-', `+', ` ', `0', and `#' may be
+  specified between the optional repositioning spec and the conversion
+  character; see below.
+An optional minimum field width may be specified after any flag characters
+  and before the conversion character; it specifies the minimum number of
+  characters that the converted argument will take up.  Padding will be
+  added on the left (or on the right, if the `-' flag is specified), as
+  necessary.  Padding is done with spaces, or with zeroes if the `0' flag
+  is specified.
+If the field width is specified as `*', the field width is assumed to have
+  been specified as an argument.  Any repositioning specification that
+  would normally specify the argument to be converted will now specify
+  where to find this field width argument, not where to find the argument
+  to be converted.  If there is no repositioning specification, the normal
+  next argument is used.  The argument to be converted will be the next
+  argument after the field width argument unless the precision is also
+  specified as `*' (see below).
+
+An optional period character and precision may be specified after any
+  minimum field width.  It specifies the minimum number of digits to
+  appear in %d, %i, %o, %x, and %X conversions (the number is padded
+  on the left with zeroes as necessary); the number of digits printed
+  after the decimal point for %f, %e, and %E conversions; the number
+  of significant digits printed in %g and %G conversions; and the
+  maximum number of non-padding characters printed in %s and %S
+  conversions.  The default precision for floating-point conversions
+  is six. Using a precision with %c is an error.
+If the precision is specified as `*', the precision is assumed to have been
+  specified as an argument.  The argument used will be the next argument
+  after the field width argument, if any.  If the field width was not
+  specified as an argument, any repositioning specification that would
+  normally specify the argument to be converted will now specify where to
+  find the precision argument.  If there is no repositioning specification,
+  the normal next argument is used.
+
+The ` ' and `+' flags mean prefix non-negative numbers with a space or
+  plus sign, respectively.
+The `#' flag means print numbers in an alternate, more verbose format:
+  octal numbers begin with zero; hex numbers begin with a 0x or 0X;
+  a decimal point is printed in %f, %e, and %E conversions even if no
+  numbers are printed after it; and trailing zeroes are not omitted in
+   %g and %G conversions.
+
+Use %% to put a single % into the output.
+
+Extent information in CONTROL-STRING and in ARGS are carried over into the
+output, in the same way as `concatenate'.  Any text created by a character or
+numeric %-sequence inherits the extents of the text around it, or of the text
+abutting it if those extents' `start-open' and `end-open' properties have the
+appropriate values.
+
+arguments: (CONTROL-STRING &rest ARGS)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  /* It should not be necessary to GCPRO ARGS, because the caller in the
+     interpreter should take care of that.  */
+  CHECK_STRING (args[0]);
+  return emacs_vsprintf_string_lisp (0, args[0], nargs - 1, args + 1);
+}
+
+/************************************************************************/
+/*                            initialization                            */
+/************************************************************************/
+
+void
+syms_of_doprnt (void)
+{
+  DEFSUBR (Fformat);
 }

@@ -127,4 +127,87 @@
 (Assert (equal (format "%-0*d" 20 ?A)
                (concatenate 'string "65" (make-string 18 ?0))))
 
+(macrolet
+    ((Assert-with-format-extents (&rest list)
+       (cons
+        'progn
+        (loop for (before control-string after argument length) in list
+              collect
+              `(let* ((format
+                       ;; #### strip any extents the byte-compiler has
+                       ;; uncleanly introduced.
+                       (substring-no-properties (concatenate 'string ,before
+                                                             ,control-string
+                                                             ,after)))
+                      (extent (make-extent ,(length before)
+                                           ,(+ (length before)
+                                               (length control-string))
+                                           format))
+                      (ee (make-extent ,(+ (length before)
+                                           (length control-string) -1)
+                                       ,(+ (length before)
+                                           (length control-string))
+                                       format))
+                      result)
+                (setf (extent-property ee 'start-open) t
+                      (extent-property ee 'shorter) t
+                      (extent-property extent 'longer) t
+                      result (format format ,argument))
+                (Assert (eql (length result)
+                             ,(+ (length before) length (length after))))
+                (Assert (eql (length (extent-list result)) 2)
+                        ,(concatenate 'string "checking " control-string
+                                      " produces only two extents"))
+                (Assert (eql (extent-start-position
+                              (find-if
+                               #'(lambda (extent) (extent-property
+                                                   extent 'longer))
+                               (extent-list result)))
+                             ,(length before))
+                         ,(concatenate 'string
+                                       "checking extent start position fine, "
+                                       control-string))
+                (Assert (eql (extent-end-position
+                              (find-if
+                               #'(lambda (extent) (extent-property
+                                                   extent 'longer))
+                               (extent-list result)))
+                             ,(+ (length before) length))
+                         ,(concatenate 'string
+                                       "checking extent end position fine, "
+                                       control-string))
+                (Assert (eql (extent-start-position
+                              (find-if
+                               #'(lambda (extent) (extent-property
+                                                    extent 'shorter))
+                               (extent-list result)))
+                             ,(+ (length before) length -1))
+                        ,(concatenate 'string
+                                      "checking length of non-stretching "
+                                      "extent, control-string "
+                                      control-string))
+                (Assert (eql (extent-end-position
+                              (find-if
+                               #'(lambda (extent) (extent-property
+                                                   extent 'shorter))
+                               (extent-list result)))
+                             ,(+ (length before) length))))))))
+  (Assert-with-format-extents
+   ("hello there " "%d" " everyone" 1 1)
+   ("hello there " "%.20d" " everyone" 1 1)
+   ("hello there " "%.20d" " everyone" 1 1)
+   ("hello there " "%020d" " everyone" 1 20)
+   ("hello there " "%i" " everyone" 1 1)
+   ("hello there " "%.20i" " everyone" 1 1)
+   ("hello there " "%.20i" " everyone" 1 1)
+   ("hello there " "%020i" " everyone" 1 20)
+   ("hello there " "%d" " everyone" 1 1)
+   ("hello there " "%.20d" " everyone" 1 1)
+   ("hello there " "%.20d" " everyone" 1 1)
+   ("hello there " "%020d" " everyone" 1 20)
+   ("hello there " "%s" " everyone" "a" 1)
+   ("hello there " "%.20s" " everyone" "a" 1)
+   ("hello there " "%.20s" " everyone" "aaaaabbbccddee" 14)
+   ("hello there " "%020s" " everyone" "aaaaabbbccddee" 20)))
+
 ;; end of format-tests.el

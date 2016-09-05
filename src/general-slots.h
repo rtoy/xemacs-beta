@@ -277,6 +277,7 @@ SYMBOL (Qspecifier);
 SYMBOL (Qstandard);
 SYMBOL_KEYWORD (Q_start);
 SYMBOL (Qstream);
+SYMBOL (Qstreamp);
 SYMBOL (Qstring);
 SYMBOL (Qstring_match);
 SYMBOL_KEYWORD (Q_style);

@@ -193,6 +193,10 @@ void copy_string_extents (Lisp_Object new_object,
 			  Lisp_Object old_string,
 			  Bytecount new_pos, Bytecount old_pos,
 			  Bytecount length);
+void stretch_string_extents (Lisp_Object new_object, Lisp_Object old_string,
+                             Bytecount new_pos, Bytecount old_pos,
+                             Bytecount old_length, Bytecount new_length);
+
 void detach_all_extents (Lisp_Object object);
 Lisp_Object extent_at (Bytexpos position, Lisp_Object object,
 		       Lisp_Object property, EXTENT before,

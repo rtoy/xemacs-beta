@@ -12,6 +12,12 @@
 	encounters a ratio. Revise these files to delay calling #'read
 	until we're sure there is ratio support available.
 
+2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	* automated/format-tests.el (Assert-with-format-extents):
+	Test support for extents in #'format, just added. Not exhaustive.
+
 2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/format-tests.el (slow-integer-to-string): New.

@@ -280,6 +280,56 @@
 	Call intern () as appropriate, use listu () rather than awkwardly
 	nconc'ing together sublists for the call to #'make-charset.
 
+2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c:
+	* doprnt.c (struct printf_spec):
+	In this structure minwidth and precision are Charcounts; declare
+	them as such, rearrange things a little to group similary-sized
+	objects together. There is still more scope for this, but I don't
+	plan to do it now.
+	New field, format_length, a bytecount describing the size of this
+	format spec.
+	* doprnt.c (doprnt_2):
+	Revise this function significantly to support passing extent info
+	to STREAM.
+	Take new arguments, analogous to output_string() in print.c.
+	Be lazy about counting characters except when absolutely
+	necessary. Be lazy about padding except when absolutely
+	necessary.
+	Copy extent information across using the new
+	stretch_string_extents.
+	* doprnt.c (parse_doprnt_spec):
+	Fill the spec.format_length field in SPEC in this function.
+	* doprnt.c (emacs_doprnt_1):
+	Call doprnt_2 with its new arguments.
+	* doprnt.c (Fformat): Move this here from editfns.c.
+	* doprnt.c (syms_of_doprnt): New. Now necessary.
+	* emacs.c (main_1): Call syms_of_doprnt();
+	* editfns.c (Fformat): Move to doprnt.c.
+	* editfns.c (syms_of_editfns): Fformat removed from here.
+	* extents.c:
+	* extents.c (struct copy_string_extents_arg):
+	Extend this to allow a difference in byte length between the new
+	and the old object.
+	* extents.c (copy_string_extents_mapper):
+	Calculate the delta between the new and old byte length; if
+	positive, insert the new text, conceptually, just after the new
+	position, moving later extents even later in the string.
+	Apply existing extent info as appropriate.
+	* extents.c (copy_string_extents): Use the new fields in
+	copy_string_extents_arg here.
+	* extents.c (stretch_string_extents): New. Like
+	copy_string_extents(), but the new length and the old_length can
+	differ.
+	* extents.h:
+	Declare stretch_string_extents ();
+	* lstream.c:
+	* general-slots.h:
+	Move Qstreamp here from lstream.c
+	* symsinit.h:
+	Add syms_of_doprnt here.
+
 2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c (emacs_doprnt_1):

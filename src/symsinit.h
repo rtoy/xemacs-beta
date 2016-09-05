@@ -100,6 +100,7 @@ void syms_of_dialog_x (void);
 void syms_of_dired (void);
 void syms_of_dired_mswindows (void);
 void syms_of_doc (void);
+void syms_of_doprnt (void);
 void syms_of_dragdrop (void);
 void syms_of_editfns (void);
 EXTERN_C void syms_of_eldap (void);

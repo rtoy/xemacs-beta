@@ -1,3 +1,9 @@
+2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document the new support for extents in control string and in
+	arguments to #'format.
+
 2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/searching.texi (Syntax of Regexps):

@@ -1525,6 +1525,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       syms_of_dired ();
       syms_of_doc ();
+      syms_of_doprnt ();
       syms_of_editfns ();
       syms_of_elhash ();
       syms_of_emacs ();
