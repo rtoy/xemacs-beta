@@ -4,6 +4,14 @@
 	Check we don't crash with arguments to #'decode-time where
 	localtime() may return nil.
 
+2016-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	* automated/lisp-tests.el:
+	The Lisp reader now errors when it has no ratio support but
+	encounters a ratio. Revise these files to delay calling #'read
+	until we're sure there is ratio support available.
+
 2016-07-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

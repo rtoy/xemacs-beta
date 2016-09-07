@@ -4609,9 +4609,15 @@ Lisp_Object int32_t_to_lisp (INT_32_BIT);
 UINT_32_BIT lisp_to_uint32_t (Lisp_Object);
 INT_32_BIT lisp_to_int32_t (Lisp_Object);
 
+enum parse_integer_flags
+{
+  JUNK_ALLOWED = 1 << 0,
+  CHECK_OVERFLOW_SYNTAX = 1 << 1
+};
+
 Lisp_Object parse_integer (const Ibyte *buf, Ibyte **buf_end_out,
 			   Bytecount len, EMACS_INT base,
-			   Boolint junk_allowed, Lisp_Object base_table);
+			   int flags, Lisp_Object base_table);
 
 extern Lisp_Object Vdigit_fixnum_map;
 
