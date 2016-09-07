@@ -1792,7 +1792,7 @@ since the inverse map needs to be calculated.
 
 Lisp_Object
 parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
-               EMACS_INT base, Boolint junk_allowed, Lisp_Object radix_table)
+               EMACS_INT base, int flags, Lisp_Object radix_table)
 {
   const Ibyte *lim = buf + len, *p = buf;
   EMACS_UINT num = 0, onum = (EMACS_UINT) -1;
@@ -1899,6 +1899,39 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
 
  overflow:
 #ifndef HAVE_BIGNUM
+  if ((flags & CHECK_OVERFLOW_SYNTAX))
+    {
+      /* No bignum support, but our callers want our syntax checking, rather
+         than simply erroring on overflow. */
+      result = Qunbound;
+
+      while (p < lim)
+        {
+          c = itext_ichar (p);    
+
+          got = get_char_table (c, radix_table);
+          if (!FIXNUMP (got))
+            {
+              goto loser;
+            }
+
+          cint = XFIXNUM (got);
+          if (cint < 0 || cint >= base)
+            {
+              goto loser;
+            }
+
+          /* Nothing to do in terms of checking for overflow, just advance
+             through the string. */
+
+          INC_IBYTEPTR (p);
+        }
+
+      *buf_end_out = (Ibyte *)  p;
+
+      return result;
+    }
+
   return Fsignal (Qunsupported_type,
                   list3 (build_ascstring ("bignum"), make_string (buf, len),
                          make_fixnum (base)));
@@ -1952,7 +1985,7 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
 #endif /* HAVE_BIGNUM */
  loser:
 
-  if (p < lim && !junk_allowed)
+  if (p < lim && !(flags & JUNK_ALLOWED))
     {
       /* JUNK-ALLOWED is zero. If we have stopped parsing because we
 	 encountered whitespace, then we need to check that the rest if the
@@ -1976,12 +2009,12 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
 
   *buf_end_out = (Ibyte *) p;
 
-  if (junk_allowed || (p == lim && onum != (EMACS_UINT) -1))
+  if ((flags & JUNK_ALLOWED) || (p == lim && onum != (EMACS_UINT) -1))
     {
-
-#ifdef HAVE_BIGNUM
       if (!NILP (result))
         {
+
+#ifdef HAVE_BIGNUM
           /* Bignum terminated by whitespace or by non-digit. */
           if (negativland)
             {
@@ -1989,9 +2022,10 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
               bignum_mul (XBIGNUM_DATA (result), XBIGNUM_DATA (result),
                           scratch_bignum);
             }
+#endif
+          /* When HAVE_BIGNUM is not defined, this can be Qunbound. */
           return result;
         }
-#endif
 
       if (onum == (EMACS_UINT) -1)
         {
@@ -2108,7 +2142,8 @@ arguments: (STRING &key (START 0) end (RADIX 10) junk-allowed radix-table)
     }
 
   result = parse_integer (startp, &end_read, cursor - startp, radixing,
-                          !NILP (junk_allowed), radix_table);
+                          !NILP (junk_allowed) ? JUNK_ALLOWED : 0,
+                          radix_table);
 
   /* This code hasn't been written to handle relocating string data. */ 
   assert (saved_start == XSTRING_DATA (string));

@@ -2137,23 +2137,39 @@ via the hepatic alpha-tocopherol transfer protein")))
 			      1)))
   (when (featurep 'ratio)
     (Assert-rounding (read "4/3") (read "8/7")
-     :one-floor-result '(1 1/3) :two-floor-result '(1 4/21)
-     :one-ffloor-result '(1.0 1/3) :two-ffloor-result '(1.0 4/21)
-     :one-ceiling-result '(2 -2/3) :two-ceiling-result '(2 -20/21)
-     :one-fceiling-result '(2.0 -2/3) :two-fceiling-result '(2.0 -20/21)
-     :one-round-result '(1 1/3) :two-round-result '(1 4/21)
-     :one-fround-result '(1.0 1/3) :two-fround-result '(1.0 4/21)
-     :one-truncate-result '(1 1/3) :two-truncate-result '(1 4/21)
-     :one-ftruncate-result '(1.0 1/3) :two-ftruncate-result '(1.0 4/21))
+     :one-floor-result `(1 ,(read "1/3"))
+     :two-floor-result `(1 ,(read "4/21"))
+     :one-ffloor-result `(1.0 ,(read "1/3"))
+     :two-ffloor-result `(1.0 ,(read "4/21"))
+     :one-ceiling-result `(2 ,(read "-2/3"))
+     :two-ceiling-result `(2 ,(read "-20/21"))
+     :one-fceiling-result `(2.0 ,(read "-2/3"))
+     :two-fceiling-result `(2.0 ,(read "-20/21"))
+     :one-round-result `(1 ,(read "1/3"))
+     :two-round-result `(1 ,(read "4/21"))
+     :one-fround-result `(1.0 ,(read "1/3"))
+     :two-fround-result `(1.0 ,(read "4/21"))
+     :one-truncate-result `(1 ,(read "1/3"))
+     :two-truncate-result `(1 ,(read "4/21"))
+     :one-ftruncate-result `(1.0 ,(read "1/3"))
+     :two-ftruncate-result `(1.0 ,(read "4/21")))
     (Assert-rounding (read "-4/3") (read "8/7")
-     :one-floor-result '(-2 2/3) :two-floor-result '(-2 20/21)
-     :one-ffloor-result '(-2.0 2/3) :two-ffloor-result '(-2.0 20/21)
-     :one-ceiling-result '(-1 -1/3) :two-ceiling-result '(-1 -4/21)
-     :one-fceiling-result '(-1.0 -1/3) :two-fceiling-result '(-1.0 -4/21)
-     :one-round-result '(-1 -1/3) :two-round-result '(-1 -4/21)
-     :one-fround-result '(-1.0 -1/3) :two-fround-result '(-1.0 -4/21)
-     :one-truncate-result '(-1 -1/3) :two-truncate-result '(-1 -4/21)
-     :one-ftruncate-result '(-1.0 -1/3) :two-ftruncate-result '(-1.0 -4/21))))
+     :one-floor-result `(-2 ,(read "2/3"))
+     :two-floor-result `(-2 ,(read "20/21"))
+     :one-ffloor-result `(-2.0 ,(read "2/3"))
+     :two-ffloor-result `(-2.0 ,(read "20/21"))
+     :one-ceiling-result `(-1 ,(read "-1/3"))
+     :two-ceiling-result `(-1 ,(read "-4/21"))
+     :one-fceiling-result `(-1.0 ,(read "-1/3"))
+     :two-fceiling-result `(-1.0 ,(read "-4/21"))
+     :one-round-result `(-1 ,(read "-1/3"))
+     :two-round-result `(-1 ,(read "-4/21"))
+     :one-fround-result `(-1.0 ,(read "-1/3"))
+     :two-fround-result `(-1.0 ,(read "-4/21"))
+     :one-truncate-result `(-1 ,(read "-1/3"))
+     :two-truncate-result `(-1 ,(read "-4/21"))
+     :one-ftruncate-result `(-1.0 ,(read "-1/3"))
+     :two-ftruncate-result `(-1.0 ,(read "-4/21")))))
 
 ;; Run this function in a Common Lisp with two arguments to get results that
 ;; we should compare against, above. Though note the dancing-around with the
@@ -2369,23 +2385,27 @@ via the hepatic alpha-tocopherol transfer protein")))
      `(,@(when (featurep 'bignum)
 	  (read "((111111111111111111111111111111111111111111111111111
 		111111111111111111111111111111111111111111111111111.0))"))
-       (0 0.0 0.000 -0 -0.0 -0.000 #b0 ,@(when (featurep 'ratio) '(0/5 -0/5)))
+       (0 0.0 0.000 -0 -0.0 -0.000 #b0 ,@(when (featurep 'ratio)
+                                               (read "(0/5 -0/5)")))
        (21845 #b101010101010101 #x5555)
        (1.5 1.500000000000000000000000000000000000000000000000000000000
-	    ,@(when (featurep 'ratio) '(3/2)))
+	    ,@(when (featurep 'ratio) (read "(3/2)")))
        ;; Can't use this, these values aren't `='.
        ;;(-12345678901234567890123457890123457890123457890123457890123457890
        ;; -12345678901234567890123457890123457890123457890123457890123457890.0)
-       (-55 -55.000 ,@(when (featurep 'ratio) '(-110/2)))))
+       (-55 -55.000 ,@(when (featurep 'ratio) (read "(-110/2)")))))
     (equalp-diff-list-tests
      `(0 1 2 3 1000 5000000000
        ,@(when (featurep 'bignum)
 	   (read "(5555555555555555555555555555555555555
                        -5555555555555555555555555555555555555)"))
        -1 -2 -3 -1000 -5000000000 
-       1/2 1/3 2/3 8/2 355/113
-       ,@(when (featurep 'ratio) (mapcar* #'/ '(3/2 3/2) '(0.2 0.7)))
-       55555555555555555555555555555555555555555/2718281828459045
+       ,@(if (featurep 'ratio) 
+             (list
+              (read "(1/2 1/3 2/3 8/2 355/113)")
+              (mapcar* #'/ (read "(3/2 3/2)") '(0.2 0.7))
+              (read
+               "55555555555555555555555555555555555555555/2718281828459045")))
        0.111111111111111111111111111111111111111111111111111111111111111
        1e+300 1e+301 -1e+300 -1e+301))
 
@@ -2623,9 +2643,9 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;; in series rather than in parallel.
 
 (when (featurep 'ratio)
-  (Assert (not (eql '1/2 (read (prin1-to-string (intern "1/2")))))
+  (Assert (not (eql (div 1 2) (read (prin1-to-string (intern "1/2")))))
 	  "checking symbols with ratio-like names are printed distinctly")
-  (Assert (not (eql '1/5 (read (prin1-to-string (intern "2/10")))))
+  (Assert (not (eql (div 1 5) (read (prin1-to-string (intern "2/10")))))
 	  "checking symbol named \"2/10\" not eql to ratio 1/5 on read"))
 
 (let* ((count 0)

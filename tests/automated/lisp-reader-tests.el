@@ -163,10 +163,11 @@
 ;; passing, check the read and print handling of the associated numbers.
 (Assert (eql (log 1) '0e0) "checking float syntax with e accepted")
 (Assert (eql (log 1) 0.0) "checking float syntax with decimal point accepted")
-(Assert (not (ratiop (read "2/-3")))
-        "ratios can't have a negative sign in the denominator")
-(Assert (not (ratiop (read "2/+3")))
-        "ratios can't have a positive sign in the denominator")
+(when (featurep 'ratio)
+  (Assert (not (ratiop (read "2/-3")))
+	  "ratios can't have a negative sign in the denominator")
+  (Assert (not (ratiop (read "2/+3")))
+	  "ratios can't have a positive sign in the denominator"))
 
 (macrolet
     ((Assert-no-symbol-number-confusion (&rest values)

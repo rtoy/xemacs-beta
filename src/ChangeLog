@@ -176,6 +176,29 @@
 	* events.h (event_mouse_wheel_p): New.
 	Return non-zero if an event is a mouse wheel event.
 
+2016-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Handle reading numbers better on builds without bignum support,
+	read_atom ().
+
+	* lisp.h:
+	* lisp.h (enum parse_integer_flags): New.
+	Add a new flag to parse_integer (), CHECK_OVERFLOW_SYNTAX. This is
+	useful on builds without bignum support, where it tells
+	parse_integer () to continue to check syntax rather than erroring
+	immediately when it would otherwise overflow.
+	parse_integer () can return Qunbound when this flag is set.
+	* data.c (parse_integer):
+	Change JUNK_ALLOWED to be FLAGS, instead.
+	When we would overflow without bignum support, if
+	CHECK_OVERFLOW_SYNTAX is non-zero, keep looking at the string, and
+	return Qunbound if it is syntactically a valid integer.
+	* data.c (Fparse_integer):
+	Use parse_integer()'s new calling convention.
+	* lread.c (read_atom):
+	When reading a ratio, check for Qunbound, which we may see on
+	non-bignum builds.
+
 2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (Fterpri): Move this to cl-extra.el, no need to have it
