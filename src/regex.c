@@ -2196,28 +2196,83 @@ typedef struct
     }
 #endif
 
-/* Map a string to the char class it names (if any).  */
+/* Map a string to the char class it names (if any). BEG points to the string
+   to be parsed and LIMIT is the length, in bytes, of that string.
+
+   XEmacs; this only handles the NAME part of the [:NAME:] specification of a
+   character class name. The GNU emacs version of this function attempts to
+   handle the string from [: onwards, and is called re_wctype_parse. Our
+   approach means the function doesn't need to be called with every character
+   class encountered.
+
+   LENGTH would be a Bytecount if this function didn't need to be compiled
+   also for executables that don't include lisp.h
+
+   Return RECC_ERROR if STRP doesn't match a known character class. */
 re_wctype_t
-re_wctype (const char *string)
+re_wctype (const re_char *beg, int limit)
 {
-  if      (STREQ (string, "alnum"))	return RECC_ALNUM;
-  else if (STREQ (string, "alpha"))	return RECC_ALPHA;
-  else if (STREQ (string, "word"))	return RECC_WORD;
-  else if (STREQ (string, "ascii"))	return RECC_ASCII;
-  else if (STREQ (string, "nonascii"))	return RECC_NONASCII;
-  else if (STREQ (string, "graph"))	return RECC_GRAPH;
-  else if (STREQ (string, "lower"))	return RECC_LOWER;
-  else if (STREQ (string, "print"))	return RECC_PRINT;
-  else if (STREQ (string, "punct"))	return RECC_PUNCT;
-  else if (STREQ (string, "space"))	return RECC_SPACE;
-  else if (STREQ (string, "upper"))	return RECC_UPPER;
-  else if (STREQ (string, "unibyte"))	return RECC_UNIBYTE;
-  else if (STREQ (string, "multibyte"))	return RECC_MULTIBYTE;
-  else if (STREQ (string, "digit"))	return RECC_DIGIT;
-  else if (STREQ (string, "xdigit"))	return RECC_XDIGIT;
-  else if (STREQ (string, "cntrl"))	return RECC_CNTRL;
-  else if (STREQ (string, "blank"))	return RECC_BLANK;
-  else return RECC_ERROR;
+  /* Sort tests in the length=five case by frequency the classes to minimize
+     number of times we fail the comparison.  The frequencies of character class
+     names used in Emacs sources as of 2016-07-27:
+
+     $ find \( -name \*.c -o -name \*.el \) -exec grep -h '\[:[a-z]*:]' {} + |
+           sed 's/]/]\n/g' |grep -o '\[:[a-z]*:]' |sort |uniq -c |sort -nr
+         213 [:alnum:]
+         104 [:alpha:]
+          62 [:space:]
+          39 [:digit:]
+          36 [:blank:]
+          26 [:word:]
+          26 [:upper:]
+          21 [:lower:]
+          10 [:xdigit:]
+          10 [:punct:]
+          10 [:ascii:]
+           4 [:nonascii:]
+           4 [:graph:]
+           2 [:print:]
+           2 [:cntrl:]
+           1 [:ff:]
+
+     If you update this list, consider also updating chain of or'ed conditions
+     in execute_charset function. XEmacs; our equivalent is the condition
+     checking class_bits in the charset_mule and charset_mule_not opcodes.
+   */
+
+  switch (limit) {
+  case 4:
+    if (!memcmp (beg, "word", 4))      return RECC_WORD;
+    break;
+  case 5:
+    if (!memcmp (beg, "alnum", 5))     return RECC_ALNUM;
+    if (!memcmp (beg, "alpha", 5))     return RECC_ALPHA;
+    if (!memcmp (beg, "space", 5))     return RECC_SPACE;
+    if (!memcmp (beg, "digit", 5))     return RECC_DIGIT;
+    if (!memcmp (beg, "blank", 5))     return RECC_BLANK;
+    if (!memcmp (beg, "upper", 5))     return RECC_UPPER;
+    if (!memcmp (beg, "lower", 5))     return RECC_LOWER;
+    if (!memcmp (beg, "punct", 5))     return RECC_PUNCT;
+    if (!memcmp (beg, "ascii", 5))     return RECC_ASCII;
+    if (!memcmp (beg, "graph", 5))     return RECC_GRAPH;
+    if (!memcmp (beg, "print", 5))     return RECC_PRINT;
+    if (!memcmp (beg, "cntrl", 5))     return RECC_CNTRL;
+    break;
+  case 6:
+    if (!memcmp (beg, "xdigit", 6))    return RECC_XDIGIT;
+    break;
+  case 7:
+    if (!memcmp (beg, "unibyte", 7))   return RECC_UNIBYTE;
+    break;
+  case 8:
+    if (!memcmp (beg, "nonascii", 8))  return RECC_NONASCII;
+    break;
+  case 9:
+    if (!memcmp (beg, "multibyte", 9)) return RECC_MULTIBYTE;
+    break;
+  }
+
+  return RECC_ERROR;
 }
 
 /* True if CH is in the char class CC.  */
@@ -2912,9 +2967,8 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                    class.  */
 
                 else if (syntax & RE_CHAR_CLASSES && c == '[' && *p == ':')
-                  { /* Leave room for the null.  */
-                    char str[CHAR_CLASS_MAX_LENGTH + 1];
-                    int ch = 0;
+                  { 
+                    re_char *str = p + 1;
 
                     PATFETCH (c);
                     c1 = 0;
@@ -2925,22 +2979,21 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                     for (;;)
                       {
 		        PATFETCH (c);
-		        if ((c == ':' && *p == ']') || p == pend)
-		          break;
-			if (c1 < CHAR_CLASS_MAX_LENGTH)
-			  str[c1++] = c;
-			else
-			  /* This is in any case an invalid class name.  */
-			  str[0] = '\0';
+                        if ((c == ':' && *p == ']') || p == pend)
+                          {
+                            break;
+                          }
+
+                        c1++;
                       }
-                    str[c1] = '\0';
 
                     /* If isn't a word bracketed by `[:' and `:]':
                        undo the ending character, the letters, and leave
                        the leading `:' and `[' (but set bits for them).  */
                     if (c == ':' && *p == ']')
                       {
-			re_wctype_t cc = re_wctype (str);
+			re_wctype_t cc = re_wctype (str, c1);
+                        int ch;
 
 			if (cc == RECC_ERROR)
 			  FREE_STACK_RETURN (REG_ECTYPE);
@@ -3080,8 +3133,8 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                    class.  */
 
                 else if (syntax & RE_CHAR_CLASSES && c == '[' && *p == ':')
-                  { /* Leave room for the null.  */
-                    char str[CHAR_CLASS_MAX_LENGTH + 1];
+                  {
+                    const re_char *str = p + 1;
 
                     PATFETCH (c);
                     c1 = 0;
@@ -3093,21 +3146,19 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                       {
                         PATFETCH (c);
                         if ((c == ':' && *p == ']') || p == pend)
-                          break;
-                        if (c1 < CHAR_CLASS_MAX_LENGTH)
-                          str[c1++] = c;
-                        else
-                          /* This is in any case an invalid class name.  */
-                          str[0] = '\0';
+                          {
+                            break;
+                          }
+
+                        c1++;
                       }
-                    str[c1] = '\0';
 
                     /* If isn't a word bracketed by `[:' and `:]':
                        undo the ending character, the letters, and leave
                        the leading `:' and `[' (but set bits for them).  */
                     if (c == ':' && *p == ']')
                       {
-                        re_wctype_t cc = re_wctype (str);
+                        re_wctype_t cc = re_wctype (str, c1);
                         reg_errcode_t ret = REG_NOERROR;
 
                         if (cc == RECC_ERROR)
@@ -3667,7 +3718,6 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
             case '6': case '7': case '8': case '9':
 	      {
 		regnum_t reg = -1, regint;
-                re_char *oldp = p;
 
 		if (syntax & RE_NO_BK_REFS)
 		  goto normal_char;
@@ -4147,7 +4197,7 @@ compile_char_class (re_wctype_t cc, Lisp_Object rtab, Bitbyte *flags_out)
       break;
     }
 
-    return REG_NOERROR;
+  return REG_NOERROR;
 }
 
 #endif /* MULE */
@@ -5885,16 +5935,17 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    re_bool not_p = (re_opcode_t) *(p - 1) == charset_mule_not;
 	    Bitbyte class_bits = *p++;
 
-            DEBUG_MATCH_PRINT2 ("EXECUTING charset_mule%s.\n", not_p ? "_not" : "");
+            DEBUG_MATCH_PRINT2 ("EXECUTING charset_mule%s.\n",
+                                not_p ? "_not" : "");
 	    REGEX_PREFETCH ();
 	    c = itext_ichar_fmt (d, fmt, lispobj);
 	    c = RE_TRANSLATE (c); /* The character to match.  */
 
 	    if ((class_bits &&
-		 ((class_bits & BIT_ALPHA && ISALPHA (c))
+		 ((class_bits & BIT_WORD && ISWORD (c)) /* = ALNUM */
+                  || (class_bits & BIT_ALPHA && ISALPHA (c))
 		  || (class_bits & BIT_SPACE && ISSPACE (c))
 		  || (class_bits & BIT_PUNCT && ISPUNCT (c))
-                  || (class_bits & BIT_WORD && ISWORD (c))
                   || (TRANSLATE_P (translate) ?
                       (class_bits & (BIT_UPPER | BIT_LOWER)
                        && !NOCASEP (lispbuf, c))

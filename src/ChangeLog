@@ -25,6 +25,29 @@
 	(openssl_free): Ditto.
 	(init_tls): New initialization sequence for OpenSSL >= 1.1.0.
 
+2016-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c (re_wctype):
+	Take a new LENGTH argument.
+	Update the implementation of the function to take into account
+	the relative frequencies of the various character classes.
+
+	This change is from Micha Nazarewicz introduced in GNU changeset
+	4538a5e37, of 20160717, thank you Micha.
+	* regex.c (regex_compile):
+	Call re_wctype with its new argument.
+	* regex.c (re_match_2_internal):
+	Order the CLASS_BITS check to take into account relevant
+	frequencies of the various character classes.
+	* regex.h:
+	Declare re_wctype with its new argument.
+	Remove CHAR_CLASS_MAX_LENGTH, now it's no longer used.
+	Add to the clarity of this file by defining ISALNUM to be
+	equivalent in implementation to ISWORD, something it already was
+	in regexp searches,
+	* search.c (skip_chars):
+	Use re_wctype()'s new calling convention.
+
 2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (Fterpri): Move this to cl-extra.el, no need to have it
