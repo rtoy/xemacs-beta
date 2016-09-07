@@ -960,7 +960,6 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
           else if ('[' == c && p != pend && *p == ':')
             {
               Ibyte *colonp;
-              Extbyte *classname;
               int ch = 0;
               re_wctype_t cc;
 
@@ -979,15 +978,11 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
                   continue;
                 }
 
-              classname = alloca_extbytes (colonp - p + 1);
-              memmove (classname, p, colonp - p);
-              classname[colonp - p] = '\0';
-              cc = re_wctype (classname);
-                  
+              cc = re_wctype (p, colonp - p);
               if (cc == RECC_ERROR)
                 {
                   invalid_argument ("Invalid character class",
-                                    build_extstring (classname, Qbinary));
+                                    make_string (p, colonp - p));
                 }
 
               for (ch = 0; ch < countof (fastmap); ++ch)

@@ -563,10 +563,8 @@ typedef enum
     RECC_ASCII, RECC_UNIBYTE
 } re_wctype_t;
 
-#define CHAR_CLASS_MAX_LENGTH  9 /* Namely, `multibyte'.  */
-
 /* Map a string to the char class it names (if any).  */
-re_wctype_t re_wctype (const char *);
+re_wctype_t re_wctype (const unsigned char *, int length);
 
 /* Is character CH a member of the character class CC? */
 int re_iswctype (int ch, re_wctype_t cc RE_ISWCTYPE_ARG_DECL);
@@ -623,7 +621,7 @@ reg_errcode_t compile_char_class (re_wctype_t cc, Lisp_Object rtab,
 #define ISALPHA(c) (ISASCII (c) ? (((c) >= 'a' && (c) <= 'z')		\
 				   || ((c) >= 'A' && (c) <= 'Z'))	\
 		    : ISWORD (c))
-#define ISALNUM(c) (ISALPHA (c) || ISDIGIT (c))
+#define ISALNUM(c) ISWORD (c)
 
 #define ISLOWER(c) LOWERCASEP (lispbuf, c)
 
