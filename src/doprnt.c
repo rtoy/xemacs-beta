@@ -54,9 +54,6 @@ static const char * const bigfloat_converters = "FhHkK";
 typedef struct printf_spec printf_spec;
 struct printf_spec
 {
-  int argnum; /* which argument does this spec want?  This is one-based:
-		 The first argument given is numbered 1, the second
-		 is 2, etc.  This is to handle %##$x-type specs. */
   unsigned int minus_flag:1;
   unsigned int plus_flag:1;
   unsigned int space_flag:1;
@@ -68,6 +65,9 @@ struct printf_spec
   char converter; /* converter character or 0 for dummy marker
 		     indicating literal text at the end of the
 		     specification */
+  Elemcount argnum; /* Which argument does this spec want?  This is one-based:
+                       The first argument given is numbered 1, the second
+                       is 2, etc.  This is to handle %##$x-type specs. */
   Charcount minwidth;
   Charcount precision;
   Bytecount text_before; /* position of the first character of the
@@ -199,25 +199,6 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
     }
 }
 
-static const Ibyte *
-parse_off_posnum (const Ibyte *start, const Ibyte *end, int *returned_num)
-{
-  Ibyte arg_convert[100];
-  REGISTER Ibyte *arg_ptr = arg_convert;
-
-  *returned_num = -1;
-  while (start != end && isdigit (*start))
-    {
-      if (arg_ptr - arg_convert >= (int) sizeof (arg_convert) - 1)
-	syntax_error ("Format converter number too large", Qunbound);
-      *arg_ptr++ = *start++;
-    }
-  *arg_ptr = '\0';
-  if (arg_convert != arg_ptr)
-    *returned_num = atoi ((char *) arg_convert);
-  return start;
-}
-
 #define NEXT_ASCII_BYTE(ch)						\
   do {									\
     if (fmt == fmt_end)							\
@@ -243,7 +224,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
   const Ibyte *fmt = format;
   const Ibyte *fmt_end = format + format_length;
   printf_spec_dynarr *specs = Dynarr_new (printf_spec);
-  int prev_argnum = 0;
+  Elemcount prev_argnum = 0;
 
   while (1)
     {
@@ -278,20 +259,28 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	      continue;
 	    }
 
-	  /* Is there a field number specifier? */
+	  /* Is there a repositioning specifier? */
 	  {
-	    const Ibyte *ptr;
-	    int fieldspec;
+            Ibyte *fmt1;
+            Lisp_Object posnum
+              = parse_integer (fmt, &fmt1, fmt_end - fmt, 10, 1,
+                               Vdigit_fixnum_ascii);
 
-	    ptr = parse_off_posnum (fmt, fmt_end, &fieldspec);
-	    if (fieldspec > 0 && ptr != fmt_end && *ptr == '$')
-	      {
-		/* There is a format specifier */
-		prev_argnum = fieldspec;
-		fmt = ptr + 1;
-	      }
-	    else
-	      prev_argnum++;
+            if (FIXNUMP (posnum) && XREALFIXNUM (posnum) > 0
+                && itext_ichar (fmt1) == '$')
+              {
+                /* There is a repositioning specifier: */
+                prev_argnum = XREALFIXNUM (posnum);
+                fmt = fmt1;
+                INC_IBYTEPTR (fmt);
+              }
+            else 
+              {
+                prev_argnum++;
+                /* Don't check POSNUM further (e.g. for sign, range), since it
+                   may actually be a field width. */
+              }
+
 	    spec.argnum = prev_argnum;
 	  }
 
@@ -332,9 +321,26 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	    }
 	  else
 	    {
-	      fmt = parse_off_posnum (fmt, fmt_end, &spec.minwidth);
-	      if (spec.minwidth == -1)
-		spec.minwidth = 0;
+              Lisp_Object mwidth
+                = parse_integer (fmt, (Ibyte **) (&fmt), fmt_end - fmt, 10, 1,
+                                 Vdigit_fixnum_ascii);
+              if (NILP (mwidth))
+                {
+                  spec.minwidth = 0; /* Failed to parse an integer, which is
+                                        fine, use our default. */
+                }
+              else if (FIXNUMP (mwidth) && XREALFIXNUM (mwidth) > -1)
+                {
+                  /* We have a (somewhat) sensible minwidth. */
+                  spec.minwidth = XREALFIXNUM (mwidth); 
+                }
+              else 
+                {
+                  /* This will error, since we have a bignum or a negative
+                     fixnum. */
+                  check_integer_range (mwidth, Qzero,
+                                       make_fixnum (MOST_POSITIVE_FIXNUM));
+                }
 	    }
 
 	  /* Parse off any precision specified */
@@ -361,9 +367,24 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 		}
 	      else
 		{
-		  fmt = parse_off_posnum (fmt, fmt_end, &spec.precision);
-		  if (spec.precision == -1)
-		    spec.precision = 0;
+                  Lisp_Object precis
+                    = parse_integer (fmt, (Ibyte **) (&fmt), fmt_end - fmt,
+                                     10, 1, Vdigit_fixnum_ascii);
+                  if (NILP (precis))
+                    {
+                      spec.precision = 0; /* Failed to parse a fixnum. */
+                    }
+                  else if (FIXNUMP (precis) && XREALFIXNUM (precis) > -1)
+                    {
+                      spec.precision = XREALFIXNUM (precis);
+                    }
+                  else 
+                    {
+                      /* This will error, since we have a bignum or a negative
+                         fixnum. */
+                      check_integer_range (precis, Qzero,
+                                           make_fixnum (MOST_POSITIVE_FIXNUM));
+                    }
 		}
 	      NEXT_ASCII_BYTE (ch);
 	    }
