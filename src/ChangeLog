@@ -280,6 +280,45 @@
 	Call intern () as appropriate, use listu () rather than awkwardly
 	nconc'ing together sublists for the call to #'make-charset.
 
+2016-09-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Add digit-fixnum-ascii, a version of digit-fixnum-map supporting
+	only the ASCII digits; use this in parsing format specification
+	offsets, width, and in regular expression parsing.
+	* data.c:
+	* data.c (Vdigit_fixnum_ascii): New.
+	Version of `digit-fixnum-map' that supports only ASCII, used in
+	parsing regular expressions and format specifications.
+	* doprnt.c:
+	* doprnt.c (struct printf_spec):
+	ARGNUM is now an Elemcount, fitting better with the fact that it 
+	* doprnt.c (parse_off_posnum): Delete.
+	* doprnt.c (parse_doprnt_spec):
+	Use parse_integer (), not parse_off_posnum in this function.
+	* doprnt.c (syms_of_doprnt):
+	* file-coding.c (find_coding_system_for_text_file):
+	Add a dash to the end of the PREFIX arg to
+	make_coding_system_internal.
+	* file-coding.c (setup_eol_coding_systems):
+	Ditto.
+	* file-coding.c (make_coding_system_1):
+	Call concat3 () rather than firing up the functions from doprnt.c
+	before e.g. the syntax tables are available.
+	Don't intern the name of our internal coding system when there's
+	no need to; the symbol is reachable from
+	Vcoding_system_hash_table, the coding system is reachable through
+	of the non-internal coding system.
+	* file-coding.c (chain_canonicalize_after_coding):
+	Add a trailing dash here to the PREFIX argument of
+	make_internal_coding_system.
+	* lisp.h:
+	Make Vdigit_fixnum_ascii available here.
+	* regex.c (GET_UNSIGNED_NUMBER):
+	Don't explicitly check for non-ASCII characters, leave that to
+	parse_integer.
+	* search.c (Freplace_match):
+	Ditto.
+
 2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c:

@@ -2910,28 +2910,18 @@ rare.)
                                                    nine will keep us in fixnum
                                                    territory. */
                                                9);
-                        Bytecount ii = 0;
 			Lisp_Object regno;
 			Fixnum regnoing;
-
-                        /* Don't accept non-ASCII decimal digits. See the
-                           reasoning in regex.c. */
-                        while (ii < limit)
-                          {
-                            if (itext_ichar (charpos + ii) > 0x7f) 
-                              {
-                                limit = ii;
-                                break;
-                              }
-                            ii += rep_bytes_by_first_byte (charpos[ii]);
-                          }
 
                         /* Parse the longest backreference we can, but don't
                            produce a bignum, that can't correspond to a
                            backreference and would needlessly complicate code
                            further down.  */
                         regno = parse_integer (charpos, &regend, limit, 10, 1,
-                                               Qnil);
+                                               /* Don't accept non-ASCII
+                                                  decimal digits. See the
+                                                  reasoning in regex.c. */
+                                               Vdigit_fixnum_ascii);
 
 			if (FIXNUMP (regno) &&
                             ((regnoing = XREALFIXNUM (regno), regnoing > -1)))
@@ -3121,28 +3111,19 @@ rare.)
                                               nine will keep us in fixnum
                                               territory. */
                                            9);
-                    Bytecount ii = 0;
                     Lisp_Object regno;
                     Fixnum regnoing;
-
-                    /* Don't accept non-ASCII decimal digits. See the
-                       reasoning in regex.c. */
-                    while (ii < limit)
-                      {
-                        if (itext_ichar (charpos + ii) > 0x7f) 
-                          {
-                            limit = ii;
-                            break;
-                          }
-                        ii += rep_bytes_by_first_byte (charpos[ii]);
-                      }
 
                     /* Parse the longest backreference we can, but don't
                        produce a bignum, that can't correspond to a
                        backreference and would needlessly complicate code
                        further down.  */
                     regno
-                      = parse_integer (charpos, &regend, limit, 10, 1, Qnil);
+                      = parse_integer (charpos, &regend, limit, 10, 1,
+                                       /* Don't accept non-ASCII decimal
+                                          digits. See the reasoning in
+                                          regex.c. */
+                                       Vdigit_fixnum_ascii);
 
                     if (FIXNUMP (regno) &&
                         ((regnoing = XREALFIXNUM (regno), regnoing > -1)))

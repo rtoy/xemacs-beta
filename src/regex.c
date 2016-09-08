@@ -2148,24 +2148,15 @@ typedef struct
       /* most-positive-fixnum on 32 bit XEmacs is 10 decimal digits,    \
          nine will keep us in fixnum territory no matter our            \
          architecture */                                                \
-      Bytecount limit = min (pend - p, 9), ii = 0;                      \
+      Bytecount limit = min (pend - p, 9);                              \
                                                                         \
       /* Require that any digits are ASCII. We already require that     \
          the user type ASCII in order to type {,(,|, etc, and there is  \
          the potential for security holes in the future if we allow     \
          non-ASCII digits to specify groups in regexps and other        \
          code that parses regexps is not aware of this. */              \
-      while (ii < limit)                                                \
-        {                                                               \
-          if (itext_ichar (p + ii) > 0x7f)                              \
-            {                                                           \
-              limit = ii;                                               \
-              break;                                                    \
-            }                                                           \
-          ii += rep_bytes_by_first_byte (p[ii]);                        \
-        }                                                               \
-                                                                        \
-      _gus_numno = parse_integer (p, &_gus_numend, limit, 10, 1, Qnil); \
+      _gus_numno = parse_integer (p, &_gus_numend, limit, 10, 1,        \
+                                  Vdigit_fixnum_ascii);                 \
       PATFETCH (c);                                                     \
       if (c != '-' && FIXNUMP (_gus_numno))                             \
         {                                                               \

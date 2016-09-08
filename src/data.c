@@ -68,7 +68,7 @@ Lisp_Object Qerror_lacks_explanatory_string;
 Lisp_Object Qfloatp;
 Lisp_Object Q_junk_allowed,  Q_radix, Q_radix_table;
 
-Lisp_Object Vdigit_fixnum_map, Vfixnum_to_char_map;
+Lisp_Object Vdigit_fixnum_map, Vdigit_fixnum_ascii, Vfixnum_to_char_map;
 
 Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
 
@@ -4324,6 +4324,33 @@ The fixnum closest in value to positive infinity.
 */);
   Vmost_positive_fixnum = MOST_POSITIVE_FIXNUM;
 
+  DEFVAR_CONST_LISP ("digit-fixnum-ascii", &Vdigit_fixnum_ascii /*
+Version of `digit-fixnum-map' supporting only ASCII digits.
+
+See the documentation for that variable, and for `parse-integer',
+`digit-char-p', and `digit-char'.  `digit-fixnum-ascii' is most useful for
+parsing text formats defined to support only ASCII digits.
+*/);
+  Vdigit_fixnum_ascii = Fmake_char_table (Qgeneric);
+  set_char_table_default (Vdigit_fixnum_ascii, make_fixnum (-1));
+  {
+    int ii = 0;
+
+    for (ii = 0; ii < 10; ++ii)
+      {
+        XCHAR_TABLE (Vdigit_fixnum_ascii)->ascii['0' + ii] = make_fixnum(ii);
+      }
+
+    for (ii = 10; ii < 36; ++ii)
+      {
+        XCHAR_TABLE (Vdigit_fixnum_ascii)->ascii['a' + (ii - 10)]
+          = make_fixnum(ii);
+        XCHAR_TABLE (Vdigit_fixnum_ascii)->ascii['A' + (ii - 10)]
+          = make_fixnum(ii);
+      }
+  }
+  LISP_READONLY (Vdigit_fixnum_ascii) = 1;
+
   DEFVAR_CONST_LISP ("digit-fixnum-map", &Vdigit_fixnum_map /*
 Table used to determine a character's numeric value when parsing.
 
@@ -4331,24 +4358,7 @@ This is a character table with fixnum values. A value of -1 indicates this
 character does not have an assigned numeric value. See `parse-integer',
 `digit-char-p', and `digit-char'.
 */);
-  Vdigit_fixnum_map = Fmake_char_table (Qgeneric);
-  set_char_table_default (Vdigit_fixnum_map, make_fixnum (-1));
-  {
-    int ii = 0;
-
-    for (ii = 0; ii < 10; ++ii)
-      {
-        XCHAR_TABLE (Vdigit_fixnum_map)->ascii['0' + ii] = make_fixnum(ii);
-      }
-
-    for (ii = 10; ii < 36; ++ii)
-      {
-        XCHAR_TABLE (Vdigit_fixnum_map)->ascii['a' + (ii - 10)]
-          = make_fixnum(ii);
-        XCHAR_TABLE (Vdigit_fixnum_map)->ascii['A' + (ii - 10)]
-          = make_fixnum(ii);
-      }
-  }
+  Vdigit_fixnum_map = Fcopy_char_table (Vdigit_fixnum_ascii);
   {
     Ascbyte *fixnum_tab = alloca_ascbytes (36 * MAX_ICHAR_LEN), *ptr;
     int ii;

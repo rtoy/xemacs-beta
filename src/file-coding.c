@@ -876,7 +876,7 @@ find_coding_system_for_text_file (Lisp_Object name, int eol_wrap)
           wrapper =
 	    make_internal_coding_system
 	      (coding_system,
-	       "internal-text-file-wrapper",
+	       "internal-text-file-wrapper-",
 	       Qchain,
 	       Qunbound, list4 (Qchain, chain,
 				Qcanonicalize_after_coding, coding_system));
@@ -894,7 +894,7 @@ find_coding_system_for_text_file (Lisp_Object name, int eol_wrap)
   wrapper =
     make_internal_coding_system
       (coding_system,
-       "internal-auto-eol-wrapper",
+       "internal-auto-eol-wrapper-",
        Qundecided, Qunbound,
        list4 (Qcoding_system, coding_system,
 	      Qdo_eol, Qt));
@@ -1105,7 +1105,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
 				     Qconvert_eol_crlf);
 	  Lisp_Object canon =
 	    make_internal_coding_system
-	      (sub_codesys, "internal-subsidiary-eol-wrapper",
+	      (sub_codesys, "internal-subsidiary-eol-wrapper-",
 	       Qchain, Qunbound,
 	       mlen != -1 ?
 	       list6 (Qmnemonic, build_istring (codesys_mnemonic),
@@ -1188,25 +1188,21 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
   if (prefix)
     {
       name_or_existing
-        = Fintern (emacs_sprintf_string_lisp
-                   ("%s-%s-%d", Qnil, 3,
-                    build_ascstring (prefix), 
-                    NILP (name_or_existing) ? XSYMBOL_NAME (Qnil) :
-                    Fsymbol_name (XCODING_SYSTEM_NAME (name_or_existing)),
-                    make_fixnum (++coding_system_tick)),
-                   Vobarray);
-      
+        = Fmake_symbol (concat3 (build_ascstring (prefix),
+                                 NILP (name_or_existing) ? Fsymbol_name (Qnil)
+                                 : Fsymbol_name (XCODING_SYSTEM_NAME
+                                                 (name_or_existing)),
+                                 Fnumber_to_string (make_fixnum
+                                                    (++coding_system_tick))));
       if (UNBOUNDP (description))
 	{
-          description
-            = emacs_sprintf_string_lisp ("For Internal Use (%s)",
-                                         Qnil, 1,
-                                         Fsymbol_name (name_or_existing));
+          description = concat3 (build_ascstring ("For Internal Use ("),
+                                 Fsymbol_name (name_or_existing),
+                                 build_ascstring (")"));
 	}
 
-      defmnem
-        = emacs_sprintf_string_lisp ("Int%d", Qnil, 1,
-                                     make_fixnum (coding_system_tick));
+      defmnem = concat2 (build_ascstring ("Int"),
+                         Fnumber_to_string (make_fixnum (coding_system_tick)));
     }
   else
     CHECK_SYMBOL (name_or_existing);
@@ -1349,18 +1345,17 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	   creating will have canonicalization expansion done on it,
 	   leading to infinite recursion.  So we have to generate a new,
 	   internal coding system with the previous value of CANONICAL. */
-	Lisp_Object newname =
-	  emacs_sprintf_string_lisp
-	  ("internal-eol-copy-%s-%d", Qnil, 2,
-           Fsymbol_name (name_or_existing),
-           make_fixnum (++coding_system_tick));
-	Lisp_Object newnamesym = Fintern (newname, Vobarray);
+	Lisp_Object newnamesym
+          = Fmake_symbol (concat3 (build_ascstring ("internal-eol-copy-"),
+                                   Fsymbol_name (name_or_existing),
+                                   Fnumber_to_string (make_fixnum
+                                                      (++coding_system_tick))));
 	Lisp_Object copied = Fcopy_coding_system (csobj, newnamesym);
 	
 	XCODING_SYSTEM_CANONICAL (csobj) =
 	  make_internal_coding_system
 	    (csobj,
-	     "internal-eol-wrapper",
+	     "internal-eol-wrapper-",
 	     Qchain, Qunbound,
 	     list4 (Qchain,
 		    list2 (copied,
@@ -2582,7 +2577,7 @@ chain_canonicalize_after_coding (struct coding_stream *str)
   if (!NILP (codesys))
     return codesys;
   return make_internal_coding_system
-    (us, "internal-chain-canonicalizer-wrapper",
+    (us, "internal-chain-canonicalizer-wrapper-",
      Qchain, Qunbound, list2 (Qchain, chain));
 #endif /* 0 */
 }
