@@ -92,7 +92,8 @@ See `current-menubar' for a description of the syntax of a menubar."
       (setq menuitem (car menu))
       (cond
        ((stringp menuitem)
-	(and (string-match "^\\(-+\\|=+\\):\\(.*\\)" menuitem)
+	(and (find ?: menuitem)
+             (string-match "^\\(-+\\|=+\\):\\(.*\\)" menuitem)
 	     (setq item (match-string 2 menuitem))
 	     (or (member item '(;; Motif-compatible
 				"singleLine"
@@ -493,8 +494,10 @@ which will not be used as accelerators."
   "Strip an auto-generated accelerator spec off of ITEM.
 ITEM should be a string.  This removes specs added by
 `menu-item-generate-accelerator-spec' and `submenu-generate-accelerator-spec'."
-  (if (string-match "%_. " item)
-      (substring item 4)
+  ; (if (string-match "%_. " item) ...)
+  (if (and (> (length item) 3) (eql (aref item 3) ?\x20)
+           (eql (aref item 1) ?_) (eql (aref item 0) ?%))
+      (subseq item 4)
     item))
 
 (defun menu-item-generate-accelerator-spec (n &optional omit-chars-list)
@@ -506,21 +509,20 @@ allows the Nth line to be selected by the number N.  '0' is used for the
 If OMIT-CHARS-LIST is given, it should be a list of lowercase characters,
 which will not be used as accelerators."
   (cond ((< n 10) (concat "%_" (int-to-string n) " "))
-	((= n 10) "%_0 ")
+	((eql n 10) "%_0 ")
 	((<= n 36)
 	 (setq n (- n 10))
 	 (let ((m 0))
-	   (while (> n 0)
-	     (setq m (1+ m))
-	     (while (memq (int-to-char (+ m (- (char-to-int ?a) 1)))
-			  omit-chars-list)
-	       (setq m (1+ m)))
-	     (setq n (1- n)))
+           (if omit-chars-list
+               (while (> n 0)
+                 (setq m (1+ m))
+                 (while (memq (int-to-char (+ m (- (char-to-int ?a) 1)))
+                              omit-chars-list)
+                   (setq m (1+ m)))
+                 (setq n (1- n)))
+             (setq m n))
 	   (if (<= m 26)
-	       (concat
-		"%_"
-		(char-to-string (int-to-char (+ m (- (char-to-int ?a) 1))))
-		" ")
+	       (concat "%_" (char-to-string (+ m (- ?a 1))) " ")
 	     "")))
 	(t "")))
 
