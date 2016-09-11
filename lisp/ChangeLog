@@ -35,6 +35,33 @@
 	Only include CF_TEXT in these alists conditionally (at dump time),
 	if the relevant coding system is available.
 
+2016-09-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gutter-items.el (buffers-tab-switch-to-buffer):
+	Don't walk windows and cons up the windows-of-buffers list twice,
+	needlessly, we only need one window and #'get-buffer-window does
+	the same thing without consing.
+	* gutter-items.el (select-buffers-tab-buffers-by-mode):
+	Use the regexp engine a little less in this function.
+	* gutter-items.el (format-buffers-tab-line):
+	Don't use the regexp engine in this function. Don't repeatedly
+	call #'buffer-name, save its result.
+	* gutter-items.el (build-buffers-tab-internal): Move this to being
+	a label within #'buffers-tab-items.
+	* gutter-items.el (buffers-tab-items):
+	Be more idiomatic in checking buffers-tab-filter-function, no need
+	to traverse the list twice.
+	Improve the algorithmic complexity of the code to implement the
+	buffers-tab-max-size functionality.
+	* menubar.el (check-menu-syntax):
+	* menubar.el (menu-item-strip-accelerator-spec):
+	Don't use the regexp engine in this function, we're called a good
+	deal in long menus and it's easy to implement it with functions
+	that have bytecodes.
+	* menubar.el (menu-item-generate-accelerator-spec):
+	Make this function's implementation faster in the common case
+	where OMIT-CHARS-LIST is nil.
+
 2016-08-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mwheel.el:
