@@ -688,11 +688,22 @@ fact, the functions @code{message} and @code{error} provide the same
 formatting feature described here; they differ from @code{format} only
 in how they use the result of formatting.
 
-@defun format string &rest objects
+@defun format control-string &rest objects
   This function returns a new string that is made by copying
-@var{string} and then replacing any format specification
-in the copy with encodings of the corresponding @var{objects}.  The
-arguments @var{objects} are the computed values to be formatted.
+those parts of @var{control-string} that are not format specifications
+literally, and replacing any format specifications seen in the original
+with encodings of the corresponding @var{objects}, in order. The arguments
+@var{objects} are the computed values to be formatted.
+@end defun
+
+@defun format-into stream control-string &rest objects
+  This function accepts @var{control-string} and @var{objects} in the
+same way as @code{format}. It takes an additional argument @var{stream},
+an output stream as created by e.g. @code{make-string-output-stream},
+and writes the output string into that stream. It returns
+@var{stream}. The expectation is that the caller calls
+@code{get-string-output-stream} or a related function on @var{stream} at
+some point in the future to produce the string output.
 @end defun
 
 @cindex @samp{%} in format

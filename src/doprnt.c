@@ -1362,6 +1362,29 @@ arguments: (CONTROL-STRING &rest ARGS)
   CHECK_STRING (args[0]);
   return emacs_vsprintf_string_lisp (0, args[0], nargs - 1, args + 1);
 }
+
+DEFUN ("format-into", Fformat_into, 2, MANY, 0, /*
+Like `format', but write the constructed string into STREAM.
+
+STREAM is a Lisp stream as created by, e.g. `make-string-output-stream'.
+
+Return STREAM.  See the documentation for `format' for details of
+CONTROL-STRING and the other arguments.
+
+arguments: (STREAM CONTROL-STRING &rest ARGS)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object stream = args[0], control_string = args[1];
+
+  CHECK_LSTREAM (stream);
+  CHECK_STRING (control_string);
+  
+  emacs_doprnt (stream, NULL, XSTRING_LENGTH (control_string),
+                control_string, nargs - 2, args + 2);
+
+  return stream;
+}
 
 /************************************************************************/
 /*                            initialization                            */
@@ -1371,4 +1394,5 @@ void
 syms_of_doprnt (void)
 {
   DEFSUBR (Fformat);
+  DEFSUBR (Fformat_into);
 }

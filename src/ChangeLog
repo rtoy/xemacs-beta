@@ -1,3 +1,13 @@
+2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c:
+	* doprnt.c (Fformat_into): New.
+	* doprnt.c (syms_of_doprnt): Make it available.
+	Provide #'format-into, allowing callers to provide the
+	resizing-buffer lstream object now that is visible from
+	Lisp. Similar in concept to the first argument to Common Lisp
+	#'format, though not (yet) as general.
+
 2016-09-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alloc.c:
