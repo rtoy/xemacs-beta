@@ -1,3 +1,11 @@
+2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Describe #'format a little more clearly, don't mislead readers
+	about the algorithm.
+	Describe the newly-added #'format-into, something that makes more
+	sense now the resizing-buffer time is visible from Lisp.
+
 2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/strings.texi (Formatting Strings):

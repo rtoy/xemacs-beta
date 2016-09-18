@@ -127,11 +127,23 @@
 (Assert (equal (format "%-0*d" 20 ?A)
                (concatenate 'string "65" (make-string 18 ?0))))
 
+(Check-Error wrong-type-argument (format-into "hello" "hello"))
+(Check-Error wrong-type-argument
+             (format-into (make-string-output-stream)
+                          (make-string-output-stream)))
+(let ((stream (make-string-output-stream)))
+  (Assert (eq stream (format-into stream "L'amour est un oiseau rebelle ")))
+  (Assert (eq stream (format-into stream "que %#x ne peut apprivoiser" 0)))
+  (Assert (equal (get-output-stream-string stream)
+                 "L'amour est un oiseau rebelle que 0 ne peut apprivoiser")))
+
 (macrolet
     ((Assert-with-format-extents (&rest list)
        (cons
         'progn
         (loop for (before control-string after argument length) in list
+              with prefix = "prefixing stream output "
+              with suffix = " suffixing stream output"
               collect
               `(let* ((format
                        ;; #### strip any extents the byte-compiler has
@@ -148,7 +160,8 @@
                                        ,(+ (length before)
                                            (length control-string))
                                        format))
-                      result)
+                      (stream (make-string-output-stream))
+                      result stream-result)
                 (setf (extent-property ee 'start-open) t
                       (extent-property ee 'shorter) t
                       (extent-property extent 'longer) t
@@ -191,7 +204,53 @@
                                #'(lambda (extent) (extent-property
                                                    extent 'shorter))
                                (extent-list result)))
-                             ,(+ (length before) length))))))))
+                             ,(+ (length before) length)))
+
+                (write-sequence ,prefix stream)
+                (format-into stream format ,argument)
+                (write-sequence ,suffix stream)
+                (setf stream-result (get-output-stream-string stream))
+
+                (Assert (eql (length stream-result)
+                             ,(+ (length prefix) (length before) length
+                                 (length after) (length suffix))))
+                (Assert (eql (length (extent-list stream-result)) 2)
+                        ,(concatenate 'string "checking " control-string
+                                      " produces only two extents"))
+                (Assert (eql (extent-start-position
+                              (find-if
+                               #'(lambda (extent) (extent-property
+                                                   extent 'longer))
+                               (extent-list stream-result)))
+                             ,(+ (length prefix) (length before)))
+                        ,(concatenate 'string
+                                      "checking extent start position fine, "
+                                      control-string))
+                (Assert (eql (extent-end-position
+                              (find-if
+                               #'(lambda (extent) (extent-property
+                                                   extent 'longer))
+                               (extent-list stream-result)))
+                             ,(+ (length prefix) (length before) length))
+                         ,(concatenate 'string
+                                       "checking extent end position fine, "
+                                       control-string))
+                (Assert (eql (extent-start-position
+                              (find-if
+                               #'(lambda (extent) (extent-property
+                                                    extent 'shorter))
+                               (extent-list stream-result)))
+                             ,(+ (length prefix) (length before) length -1))
+                        ,(concatenate 'string
+                                      "checking length of non-stretching "
+                                      "extent, control-string "
+                                      control-string))
+                (Assert (eql (extent-end-position
+                              (find-if
+                               #'(lambda (extent) (extent-property
+                                                   extent 'shorter))
+                               (extent-list stream-result)))
+                             ,(+ (length prefix) (length before) length))))))))
   (Assert-with-format-extents
    ("hello there " "%d" " everyone" 1 1)
    ("hello there " "%.20d" " everyone" 1 1)
