@@ -1473,24 +1473,25 @@ float_to_string (char *buf, double data)
    BUFFER should accept as many bytes as you expect the number to take
    up.  On machines with 64-bit longs the maximum needed size is 24
    bytes.  That includes the worst-case digits, the optional `-' sign,
-   and the trailing \0.  */
+   and the trailing \0.  See the DECIMAL_PRINT_SIZE() macro. */
 
 Bytecount
 long_to_string (Ascbyte *buffer, long number)
 {
   Ascbyte *p = buffer;
-  long n = number;
+  /* So -number doesn't fail silently for LONG_MIN. */
+  unsigned long n = number;
 
 #if (SIZEOF_LONG != 4) && (SIZEOF_LONG != 8)
   /* We are running in a strange or misconfigured environment.  Let
      sprintf cope with it.  */
-  return sprintf ((char *) buffer, "%ld", n);
+  return sprintf ((char *) buffer, "%ld", number);
 #else  /* (SIZEOF_LONG == 4) || (SIZEOF_LONG == 8) */
 
-  if (n < 0)
+  if (number < 0)
     {
       *p++ = '-';
-      n = -n;
+      n = -number;
     }
 
   if      (n < 10)                   { DIGITS_1 (1); }

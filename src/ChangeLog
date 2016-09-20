@@ -1,3 +1,14 @@
+2016-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c:
+	* print.c (long_to_string):
+	Fix a bug here when supplied with LONG_MIN, since negation of that
+	value fails.
+	* tests.c (Ftest_long_to_string):
+	Test this.
+	* tests.c (syms_of_tests):
+	Make the test available.
+
 2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c:
