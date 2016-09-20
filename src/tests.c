@@ -879,6 +879,67 @@ while (0)
   return list1 (list3 (build_ascstring ("STORE_VOID_IN_LISP"), Qt, Qnil));
 }
 
+DEFUN ("test-long-to-string", Ftest_long_to_string, 0, 0, "", /*
+Make sure `long_to_string' can print LONG_MIN as a decimal correctly.
+*/
+       ())
+{
+  Ascbyte buf[DECIMAL_PRINT_SIZE (long) + 1];
+  Bytecount res = long_to_string (buf, LONG_MIN);
+  Ascbyte buf1[DECIMAL_PRINT_SIZE (long) + 1];
+  Bytecount res1 = snprintf (buf1, sizeof (buf1) - 1, "%ld", LONG_MIN);
+  Lisp_Object result = Qnil;
+
+  if (res == res1)
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("checking result length, long_to_string"),
+                             Qt, Qnil), result);
+    }
+  else
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("checking result length, long_to_string"),
+                             Qnil, build_ascstring (buf)), result);
+    }
+
+  if (!strcmp (buf, buf1))
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("cross-check against sprintf, long_to_string"),
+                             Qt, Qnil), result);
+    }
+  else
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("cross-check against sprintf, long_to_string"),
+                             Qnil, build_ascstring (buf)), result);
+    }
+
+  if (1 
+#if SIZEOF_LONG == 4
+      && !strcmp (buf, "-2147483648")
+#elif SIZEOF_LONG == 8
+      && !strcmp (buf, "-9223372036854775808")
+#else
+#warning "unimplemented"
+      && 0
+#endif
+      && 1)
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("checking result text, long_to_string"),
+                             Qt, Qnil), result);
+    }
+  else
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("checking result text, long_to_string"),
+                             Qnil, build_ascstring (buf)), result);
+    }
+
+  return result;
+}
 
 
 #ifdef NEW_GC
@@ -907,6 +968,7 @@ syms_of_tests (void)
   TESTS_DEFSUBR (Ftest_character_tell);
   TESTS_DEFSUBR (Ftest_hash_tables);
   TESTS_DEFSUBR (Ftest_store_void_in_lisp);
+  TESTS_DEFSUBR (Ftest_long_to_string);
   /* Add other test functions here with TESTS_DEFSUBR */
 }
 
