@@ -8,6 +8,13 @@
 	* configure.ac: Fix OpenSSL detection for versions >= 1.1.0.
 	* configure: Regenerate.
 
+2016-09-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* src/doprnt.c (doprnt_2): Increase the complexity of this
+	function, handle flags as appropriate for rationals (not just
+	strings). We don't take rationals as arguments just yet, this is
+	an incremental change.
+
 2015-10-28  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Disable ASLR on El Capitan.
