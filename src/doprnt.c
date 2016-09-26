@@ -805,7 +805,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	syntax_error ("Invalid repositioning argument",
 		      make_fixnum (spec->argnum));
 
-      else if (ch == 'S' || ch == 's')
+      else if (ch == 's')
 	{
 	  Ibyte *string;
 	  Bytecount string_len;
@@ -814,33 +814,14 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	  if (!largs)
 	    {
 	      string = Dynarr_at (args, spec->argnum - 1).bp;
-#if 0
-	      /* [[ error() can be called with null string arguments.
-		 E.g., in fileio.c, the return value of strerror()
-		 is never checked.  We'll print (null), like some
-		 printf implementations do.  Would it be better (and safe)
-		 to signal an error instead?  Or should we just use the
-                 empty string?  -dkindred@cs.cmu.edu 8/1997 ]]
-		 Do not hide bugs. --ben
-	      */
-	      if (!string)
-		string = (Ibyte *) "(null)";
-#else
-	      assert (string);
-#endif
-	      string_len = strlen ((char *) string);
+              text_checking_assert (string != NULL);
+	      string_len = qxestrlen (string);
 	    }
 	  else
 	    {
 	      Lisp_Object obj = largs[spec->argnum - 1];
 
-	      if (ch == 'S')
-		{
-		  /* For `S', prin1 the argument and then treat like
-		     a string.  */
-		  ls = prin1_to_string (obj, 0);
-		}
-	      else if (STRINGP (obj))
+	      if (STRINGP (obj))
 		ls = obj;
 	      else if (SYMBOLP (obj))
 		ls = XSYMBOL (obj)->name;
@@ -855,6 +836,28 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 
 	  doprnt_2 (stream, string, ls, 0, string_len, spec, format_reloc);
 	}
+      else if (ch == 'S')
+        {
+          Lisp_Object obj = Qnil;
+
+          if (largs == NULL)
+            {
+              signal_error (Qunimplemented,
+                            "can't handle %S format with non Lisp arguments",
+                            NILP (format_reloc) ?
+                            make_string (format_nonreloc,
+                                         format_length) :
+                            format_reloc);
+            }
+          else
+            {
+              /* For `S', prin1 the argument and then treat like a string.  */
+	      obj = prin1_to_string (largs[spec->argnum - 1], 0);
+            }
+          
+	  doprnt_2 (stream, NULL, obj, 0, XSTRING_LENGTH (obj), spec,
+                    format_reloc);
+        }
       else if (ch == 'c')
         {
           Ibyte charbuf[MAX_ICHAR_LEN];
