@@ -11,6 +11,12 @@
 
 2016-09-26  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* doprnt.c (emacs_doprnt_1):
+	Separate the clauses handling 's' and 'S', part of a broader
+	simplification, of which more details coming later.
+
+2016-09-26  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* data.c (Fnumber_to_string):
 	Use make_string here, now float_to_string returns the string
 	length of the float.
