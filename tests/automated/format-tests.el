@@ -23,21 +23,140 @@
 ;;; Synched up with: Not in FSF.
 
 ;; This file tests the code in doprnt.c, implementing #'format, especially
-;; those changes to it made in August of 2016.
+;; those changes to it made in autumn 2016.
+
+;;-----------------------------------------------------
+;; Basic tests, refactored from lisp-tests.el
+;;-----------------------------------------------------
+(Assert (string= (format "%d" 10) "10"))
+(Assert (string= (format "%o" 8) "10"))
+(Assert (string= (format "%b" 2) "10"))
+(Assert (string= (format "%x" 31) "1f"))
+(Assert (string= (format "%X" 31) "1F"))
+(Assert (string= (format "%b" 0) "0"))
+(Assert (string= (format "%b" 3) "11"))
+;; MS-Windows uses +002 in its floating-point numbers.  #### We should
+;; perhaps fix this, but writing our own floating-point support in doprnt.c
+;; is very hard.
+(Assert (or (string= (format "%e" 100) "1.000000e+02")
+	    (string= (format "%e" 100) "1.000000e+002")))
+(Assert (or (string= (format "%E" 100) "1.000000E+02")
+	    (string= (format "%E" 100) "1.000000E+002")))
+(Assert (or (string= (format "%E" 100) "1.000000E+02")
+	    (string= (format "%E" 100) "1.000000E+002")))
+(Assert (string= (format "%f" 100) "100.000000"))
+(Assert (string= (format "%7.3f" 12.12345) " 12.123"))
+(Assert (string= (format "%07.3f" 12.12345) "012.123"))
+(Assert (string= (format "%-7.3f" 12.12345) "12.123 "))
+(Assert (string= (format "%-07.3f" 12.12345) "12.123 "))
+(Assert (string= (format "%g" 100.0) "100"))
+(Assert (or (string= (format "%g" 0.000001) "1e-06")
+	    (string= (format "%g" 0.000001) "1e-006")))
+(Assert (string= (format "%g" 0.0001) "0.0001"))
+(Assert (string= (format "%G" 100.0) "100"))
+(Assert (or (string= (format "%G" 0.000001) "1E-06")
+	    (string= (format "%G" 0.000001) "1E-006")))
+(Assert (string= (format "%G" 0.0001) "0.0001"))
+
+(Assert (string= (format "%2$d%1$d" 10 20) "2010"))
+(Assert (string= (format "%-d" 10) "10"))
+(Assert (string= (format "%-4d" 10) "10  "))
+(Assert (string= (format "%+d" 10) "+10"))
+(Assert (string= (format "%+d" -10) "-10"))
+(Assert (string= (format "%+4d" 10) " +10"))
+(Assert (string= (format "%+4d" -10) " -10"))
+(Assert (string= (format "% d" 10) " 10"))
+(Assert (string= (format "% d" -10) "-10"))
+(Assert (string= (format "% 4d" 10) "  10"))
+(Assert (string= (format "% 4d" -10) " -10"))
+(Assert (string= (format "%0d" 10) "10"))
+(Assert (string= (format "%0d" -10) "-10"))
+(Assert (string= (format "%04d" 10) "0010"))
+(Assert (string= (format "%04d" -10) "-010"))
+(Assert (string= (format "%*d" 4 10) "  10"))
+(Assert (string= (format "%*d" 4 -10) " -10"))
+(Assert (string= (format "%*d" -4 10) "10  "))
+(Assert (string= (format "%*d" -4 -10) "-10 "))
+(Assert (string= (format "%#d" 10) "10"))
+(Assert (string= (format "%#o" 8) "010"))
+(Assert (string= (format "%#x" 16) "0x10"))
+(Assert (or (string= (format "%#e" 100) "1.000000e+02")
+	    (string= (format "%#e" 100) "1.000000e+002")))
+(Assert (or (string= (format "%#E" 100) "1.000000E+02")
+	    (string= (format "%#E" 100) "1.000000E+002")))
+(Assert (string= (format "%#f" 100) "100.000000"))
+(Assert (string= (format "%#g" 100.0) "100.000"))
+(Assert (or (string= (format "%#g" 0.000001) "1.00000e-06")
+	    (string= (format "%#g" 0.000001) "1.00000e-006")))
+(Assert (string= (format "%#g" 0.0001) "0.000100000"))
+(Assert (string= (format "%#G" 100.0) "100.000"))
+(Assert (or (string= (format "%#G" 0.000001) "1.00000E-06")
+	    (string= (format "%#G" 0.000001) "1.00000E-006")))
+(Assert (string= (format "%#G" 0.0001) "0.000100000"))
+(Assert (string= (format "%.1d" 10) "10"))
+(Assert (string= (format "%.4d" 10) "0010"))
+;; Combination of `-', `+', ` ', `0', `#', `.', `*'
+(Assert (string= (format "%-04d" 10) "10  "))
+(Assert (string= (format "%-*d" 4 10) "10  "))
+;; #### Correctness of this behavior is questionable.
+;; It might be better to signal error.
+(Assert (string= (format "%-*d" -4 10) "10  "))
+;; These behavior is not specified.
+;; (format "%-+d" 10)
+;; (format "%- d" 10)
+;; (format "%-01d" 10)
+;; (format "%-#4x" 10)
+;; (format "%-.1d" 10)
+
+(Assert (string= (format "%01.1d" 10) "10"))
+(Assert (string= (format "%03.1d" 10) " 10"))
+(Assert (string= (format "%01.3d" 10) "010"))
+(Assert (string= (format "%1.3d" 10) "010"))
+(Assert (string= (format "%3.1d" 10) " 10"))
+
+;;; The following two tests used to use 1000 instead of 100,
+;;; but that merely found buffer overflow bugs in Solaris sprintf().
+(Assert (= 102 (length (format "%.100f" 3.14))))
+(Assert (= 100 (length (format "%100f" 3.14))))
+
+;;; Check for 64-bit cleanness on LP64 platforms.
+(Assert (= (read (format "%d"  most-positive-fixnum)) most-positive-fixnum))
+(Assert (= (read (format "%ld" most-positive-fixnum)) most-positive-fixnum))
+(Assert (= (read (format "%u"  most-positive-fixnum)) most-positive-fixnum))
+(Assert (= (read (format "%lu" most-positive-fixnum)) most-positive-fixnum))
+(Assert (= (read (format "%d"  most-negative-fixnum)) most-negative-fixnum))
+(Assert (= (read (format "%ld" most-negative-fixnum)) most-negative-fixnum))
+
+;; These used to crash. 
+(Assert (eql (read (format "%f" 1.2e+302)) 1.2e+302))
+(Assert (eql (read (format "%.1000d" 1)) 1))
+
+;;; "%u" is undocumented, and Emacs Lisp has no unsigned type.
+;;; What to do if "%u" is used with a negative number?
+;;; For non-bignum XEmacsen, the most reasonable thing seems to be to print an
+;;; un-read-able number.  The printed value might be useful to a human, if not
+;;; to Emacs Lisp.
+;;; For bignum XEmacsen, we make %u with a negative value throw an error.
+(if (featurep 'bignum)
+    (progn
+      (Check-Error wrong-type-argument (format "%u" most-negative-fixnum))
+      (Check-Error wrong-type-argument (format "%u" -1)))
+  (Check-Error invalid-argument (read (format "%u" most-negative-fixnum)))
+  (Check-Error invalid-argument (read (format "%u" -1))))
 
 (Assert (equal (format "%c" ?a) "a"))
 (Assert (equal (format "%c" (char-int ?A)) "A"))
-(Assert (equal (format "% 20c" ?A)
+(Assert (equal (format "%20c" ?A)
                (concatenate 'string (make-string 19 ?\x20) "A")))
-(Assert (equal (format "% *c" 20 ?A)
+(Assert (equal (format "%*c" 20 ?A)
                (concatenate 'string (make-string 19 ?\x20) "A")))
 (Assert (equal (format "%020c" ?A)
                (concatenate 'string (make-string 19 ?0) "A")))
 (Assert (equal (format "%0*c" 20 ?A)
                (concatenate 'string (make-string 19 ?0) "A")))
-(Assert (equal (format "% -20c" ?A)
+(Assert (equal (format "%-20c" ?A)
                (concatenate 'string "A" (make-string 19 ?\x20))))
-(Assert (equal (format "% -*c" 20 ?A)
+(Assert (equal (format "%-*c" 20 ?A)
                (concatenate 'string "A" (make-string 19 ?\x20))))
 (Assert (equal (format "%-020c" ?A)
                (concatenate 'string "A" (make-string 19 ?0))))
@@ -48,11 +167,11 @@
   ;; Same tests, but for a very non-ASCII character.
   (Assert (equal (format "%c" (aref "\u0627" 0)) "\u0627"))
   (Assert (equal (format "%c" (char-int (aref "\u0627" 0))) "\u0627"))
-  (Assert (equal (format "% 20c" (aref "\u0627" 0))
+  (Assert (equal (format "%20c" (aref "\u0627" 0))
                  (concatenate 'string (make-string 19 ?\x20) "\u0627")))
   (Assert (equal (format "%020c" (aref "\u0627" 0))
                  (concatenate 'string (make-string 19 ?0) "\u0627")))
-  (Assert (equal (format "% -20c" (aref "\u0627" 0))
+  (Assert (equal (format "%-20c" (aref "\u0627" 0))
                  (concatenate 'string "\u0627" (make-string 19 ?\x20))))
   (Assert (equal (format "%-020c" (aref "\u0627" 0))
                  (concatenate 'string "\u0627" (make-string 19 ?0)))))
@@ -123,9 +242,9 @@
 (Assert (equal (format "%-*d" 20 ?A)
                (concatenate 'string "65" (make-string 18 ?\x20))))
 (Assert (equal (format "%-020d" 65)
-               (concatenate 'string "65" (make-string 18 ?0))))
+               (concatenate 'string "65" (make-string 18 ?\x20))))
 (Assert (equal (format "%-0*d" 20 ?A)
-               (concatenate 'string "65" (make-string 18 ?0))))
+               (concatenate 'string "65" (make-string 18 ?\x20))))
 
 (Check-Error wrong-type-argument (format-into "hello" "hello"))
 (Check-Error wrong-type-argument
@@ -167,7 +286,9 @@
                       (extent-property extent 'longer) t
                       result (format format ,argument))
                 (Assert (eql (length result)
-                             ,(+ (length before) length (length after))))
+                             ,(+ (length before) length (length after)))
+			,(concatenate 'string "checking " control-string
+				      " gives an appropriate-length result"))
                 (Assert (eql (length (extent-list result)) 2)
                         ,(concatenate 'string "checking " control-string
                                       " produces only two extents"))
@@ -253,20 +374,111 @@
                              ,(+ (length prefix) (length before) length))))))))
   (Assert-with-format-extents
    ("hello there " "%d" " everyone" 1 1)
-   ("hello there " "%.20d" " everyone" 1 1)
-   ("hello there " "%.20d" " everyone" 1 1)
+   ("hello there " "%.20d" " everyone" 1 20)
+   ("hello there " "%.20d" " everyone" 1 20)
    ("hello there " "%020d" " everyone" 1 20)
    ("hello there " "%i" " everyone" 1 1)
-   ("hello there " "%.20i" " everyone" 1 1)
-   ("hello there " "%.20i" " everyone" 1 1)
+   ("hello there " "%.20i" " everyone" 1 20)
+   ("hello there " "%.20i" " everyone" 1 20)
    ("hello there " "%020i" " everyone" 1 20)
    ("hello there " "%d" " everyone" 1 1)
-   ("hello there " "%.20d" " everyone" 1 1)
-   ("hello there " "%.20d" " everyone" 1 1)
+   ("hello there " "%.20d" " everyone" 1 20)
+   ("hello there " "% .20d" " everyone" 1 21)
    ("hello there " "%020d" " everyone" 1 20)
    ("hello there " "%s" " everyone" "a" 1)
    ("hello there " "%.20s" " everyone" "a" 1)
    ("hello there " "%.20s" " everyone" "aaaaabbbccddee" 14)
    ("hello there " "%020s" " everyone" "aaaaabbbccddee" 20)))
+
+;; Following test cases are modified from Wine's printf test suite, which has
+;; the following copyright notice:
+;; 
+;; Copyright 2002 Uwe Bonnes
+;; Copyright 2004 Aneurin Price
+;; Copyright 2005 Mike McCormack
+;; 
+;; This library is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU Lesser General Public
+;; License as published by the Free Software Foundation; either
+;; version 2.1 of the License, or (at your option) any later version.
+;; 
+;; This library is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; Lesser General Public License for more details.
+;; 
+;; You should have received a copy of the GNU Lesser General Public
+;; License along with this library; if not, write to the Free Software
+;; Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+;; 
+
+(Assert (equal (format "%+#23.15e" 789456123) "+7.894561230000000e+08"))
+(Assert (equal (format "%-#23.15e" 789456123) "7.894561230000000e+08 "))
+(Assert (equal (format "%#23.15e" 789456123) " 7.894561230000000e+08"))
+(Assert (equal (format "%#1.1g" 789456123) "8.e+08") "checking #1.1g")
+(Assert
+ (equal
+  (format "% .80d" 1)
+  " 00000000000000000000000000000000000000000000000000000000000000000000000000000001"))
+(Assert (equal (format "% d" 1) " 1") "checking sign place-holder")
+(Assert (equal (format "%+ d" 1) "+1") "checking with sign flags")
+(Assert (equal (format "%04c" ?1) "0001") "checking character zero-prefixed")
+(Assert (equal (format "%-04c" ?1) "1   ")
+        "character zero-padded and/or not left-adjusted")
+(Assert (equal (format "%#012x" 1) "0x0000000001")
+        "checking hexadecimal zero-padded")
+(Assert (equal (format "%#012x" 0) "000000000000") "hexadecimal zero-padded")
+(Assert (equal (format "%#04.8x" 1) "0x00000001")
+        "hexadecimal zero-padded precision")
+(Assert (equal (format "%#04.8x" 0) "00000000")
+        "hexadecimal zero-padded precision")
+(Assert (equal (format "%#-08.2x" 1) "0x01    ")
+        "hexadecimal zero-padded left-adjusted")
+(Assert (equal (format "%#-08.2x" 0) "00      ")
+        "hexadecimal zero-padded not left-adjusted")
+(Assert (equal (format "%#.0x" 1) "0x1")
+        "hexadecimal zero-padded zero-precision")
+(Assert (equal (format "%#.0x" 0) "")
+        "hexadecimal zero-padded zero-precision")
+
+(Assert (equal (format "%#08o" 1) "00000001") "octal zero-padded")
+(Assert (equal (format "%#o" 1) "01") "octal zero-padded")
+(Assert (equal (format "%#o" 0) "0") "octal zero-padded")
+(Assert (equal (format "%04s" "foo") "0foo") "checking string zero-prefixed")
+(Assert (equal (format "%.1s" "foo") "f") "checking precision")
+(Assert (equal (format "%.*s" 1 "foo") "f") "checking precision")
+(Assert (equal (format "%*s" -5 "foo") "foo  ") "checking field width < 0")
+(Assert (equal (format "hello") "hello") "checking simple string")
+(Assert (equal (format "%3c" ?a) "  a") "checking single char with padding")
+(Assert (equal (format "%3d" 1234) "1234"))
+(Assert (equal (format "%-1d" 2) "2"))
+(Assert (equal (format "%2.4f" 8.6) "8.6000"))
+(Assert (equal (format "%0f" 0.6) "0.600000"))
+(Assert (equal (format "%.0f" 0.6) "1"))
+(Assert (equal (format "%2.4e" 8.6) "8.6000e+00"))
+(Assert (equal (format "% 2.4e" 8.6) " 8.6000e+00"))
+(Assert (equal (format "% 014.4e" 8.6) " 008.6000e+000"))
+(Assert (equal (format "% 2.4e" -8.6) "-8.6000e+00"))
+(Assert (equal (format "%+2.4e" 8.6) "+8.6000e+00"))
+(Assert (equal (format "%2.4g" 8.6) "8.6"))
+(Assert (equal (format "%-i" -1) "-1"))
+(Assert (equal (format "%-i" 1) "1"))
+(Assert (equal (format "%+i" 1) "+1"))
+(Assert (equal (format "%o" 10) "12"))
+(Assert (equal (format "%s" 0) "0"))
+(Assert (equal (format "%s" "%%%%") "%%%%"))
+(Assert (equal (format "%%0") "%0"))
+(Assert (equal (format "%hx" #x12345) "2345")) ;; field size no longer ignored
+
+(Check-Error syntax-error (format "%hhx" #x123)) ;; Double field size errors.
+(Check-Error syntax-error (format "%I64d" 1))
+(Check-Error syntax-error (format "%I32d" 1))
+
+(Check-Error syntax-error (format "%n" pi)) ;; This used to crash with bignum
+					    ;; builds.
+
+(Check-Error args-out-of-range (format (concat "%" (number-to-string
+                                                    most-positive-fixnum)
+                                               "d") 1))
 
 ;; end of format-tests.el

@@ -12,6 +12,16 @@
 	encounters a ratio. Revise these files to delay calling #'read
 	until we're sure there is ratio support available.
 
+2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	Refactor out the format tests in lisp-tests.el.
+	Correct the checks for the extent lengths.
+	Add extensive tests from Wine's printf test suite, document the
+	authors and licence.
+	* automated/lisp-tests.el:
+	Move the format tests from here to format.el
+
 2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/format-tests.el (Assert-with-format-extents):
