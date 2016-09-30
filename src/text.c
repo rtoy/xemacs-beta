@@ -4751,20 +4751,6 @@ non_ascii_valid_ichar_p (Ichar ch)
     }
 }
 
-/* Copy the character pointed to by SRC into DST.  Do not call this
-   directly.  Use the macro itext_copy_ichar() instead.
-   Return the number of bytes copied.  */
-
-Bytecount
-non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst)
-{
-  Bytecount bytes = rep_bytes_by_first_byte (*src);
-  Bytecount i;
-  for (i = bytes; i; i--, dst++, src++)
-    *dst = *src;
-  return bytes;
-}
-
 #endif /* MULE */
 
 

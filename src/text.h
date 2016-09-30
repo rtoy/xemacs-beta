@@ -987,20 +987,17 @@ itext_n_addr (const Ibyte *ptr, Charcount offset)
 } while (0)
 
 /* -------------------------------------------------------------------- */
-/*      Retrieving or changing the character pointed to by a itext    */
+/*      Retrieving the character pointed to by a itext    */
 /* -------------------------------------------------------------------- */
 
 #define simple_itext_ichar(ptr)		((Ichar) (ptr)[0])
 #define simple_set_itext_ichar(ptr, x) \
 	((ptr)[0] = (Ibyte) (x), (Bytecount) 1)
-#define simple_itext_copy_ichar(src, dst) \
-	((dst)[0] = *(src), (Bytecount) 1)
 
 #ifdef MULE
 
 MODULE_API Ichar non_ascii_itext_ichar (const Ibyte *ptr);
 MODULE_API Bytecount non_ascii_set_itext_ichar (Ibyte *ptr, Ichar c);
-MODULE_API Bytecount non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst);
 
 /* Retrieve the character pointed to by PTR as an Ichar. */
 
@@ -1148,20 +1145,6 @@ set_itext_ichar_fmt (Ibyte *ptr, Ichar x, Internal_Format fmt,
     }
 }
 
-/* Retrieve the character pointed to by SRC and store it as
-   internally-formatted text in DST.
-*/
-
-DECLARE_INLINE_HEADER (
-Bytecount
-itext_copy_ichar (const Ibyte *src, Ibyte *dst)
-)
-{
-  return byte_ascii_p (*src) ?
-    simple_itext_copy_ichar (src, dst) :
-    non_ascii_itext_copy_ichar (src, dst);
-}
-
 #else /* not MULE */
 
 # define itext_ichar(ptr) simple_itext_ichar (ptr)
@@ -1170,9 +1153,70 @@ itext_copy_ichar (const Ibyte *src, Ibyte *dst)
 # define itext_ichar_raw_fmt(ptr, fmt) itext_ichar (ptr)
 # define set_itext_ichar(ptr, x) simple_set_itext_ichar (ptr, x)
 # define set_itext_ichar_fmt(ptr, x, fmt, obj) set_itext_ichar (ptr, x)
-# define itext_copy_ichar(src, dst) simple_itext_copy_ichar (src, dst)
 
 #endif /* not MULE */
+
+/* Retrieve the character pointed to by SRC and store it as
+   internally-formatted text in DST. */
+DECLARE_INLINE_HEADER (
+Bytecount
+itext_copy_ichar (const Ibyte *src, Ibyte *dst)
+)
+{
+  Bytecount len = itext_ichar_len (src);
+  switch (len)
+    {
+#if MAX_ICHAR_LEN > 4
+#error "unimplemented"
+#endif
+    case 4:
+      *dst++ = *src++;
+    case 3:
+      *dst++ = *src++;
+    case 2:
+      *dst++ = *src++;
+    case 1:
+      *dst++ = *src++;
+    }
+  return len;
+}
+
+/* Return non-zero if the CH represents the same character as that character
+   stored at STR. Equivalent to (ch == itext_ichar (str)), but simplifies to
+   less work at runtime for constant ASCII CH. */
+DECLARE_INLINE_HEADER (
+Boolint
+itext_ichar_eql (const Ibyte *str, Ichar ch)
+)
+{
+  if (ichar_ascii_p (ch))
+    /* This is fine, since ASCII characters are not part of the subsequent
+       octets of non-ASCII characters. */
+    return simple_itext_ichar (str) == ch; 
+#ifdef MULE
+  return non_ascii_itext_ichar (str) == ch;
+#endif
+}
+
+/* Return a number between 1 and MAX_ICHAR_LEN, inclusive, reflecting how many
+   octets are needed to represent CH. Most useful for constant ASCII CH. */
+DECLARE_INLINE_HEADER (
+Bytecount
+ichar_itext_len (Ichar ch)
+)
+{
+  if (ichar_ascii_p (ch))
+    {
+      return 1;
+    }
+#ifdef MULE
+  else
+    {
+      Ibyte chbuf[MAX_ICHAR_LEN];
+      return non_ascii_set_itext_ichar (chbuf, ch);
+    }
+#endif
+}
 
 /* Retrieve the character at offset N (in characters) from PTR, as an
    Ichar.

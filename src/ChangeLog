@@ -9,6 +9,18 @@
 	* tests.c (syms_of_tests):
 	Make the test available.
 
+2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.h (itext_copy_ichar):
+	Revise to be simpler and faster.
+	* text.h (itext_ichar_eql): New.
+	Return non-zero if a given Ichar is equivalent to that Ichar
+	stored at a text address.
+	* text.h (ichar_itext_len): New.
+	Return the length in octets of an Ichar when represented as an
+	Ibyte array.
+	* text.c: (non_ascii_itext_copy_ichar): Removed.
+
 2016-09-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c (emacs_doprnt_1):
