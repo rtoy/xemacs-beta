@@ -68,7 +68,9 @@ Lisp_Object Qerror_lacks_explanatory_string;
 Lisp_Object Qfloatp;
 Lisp_Object Q_junk_allowed,  Q_radix, Q_radix_table;
 
-Lisp_Object Vdigit_fixnum_map, Vdigit_fixnum_ascii, Vfixnum_to_char_map;
+Lisp_Object Vdigit_fixnum_map, Vdigit_fixnum_ascii;
+Lisp_Object Vfixnum_to_majuscule_map, Vfixnum_to_minuscule_map;
+Lisp_Object Vfixnum_to_majuscule_ascii;
 
 Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
 
@@ -1597,7 +1599,8 @@ RADIX-TABLE itself is not saved, a read-only copy of it is made and returned.
 
   Vdigit_fixnum_map = Fcopy_char_table (radix_table);
   LISP_READONLY (Vdigit_fixnum_map) = 1;
-  Vfixnum_to_char_map = ftctable;
+  Vfixnum_to_majuscule_map = ftctable;
+  Vfixnum_to_minuscule_map = Fcanoncase (ftctable, Qnil);
 
   return Vdigit_fixnum_map;
 }
@@ -1628,7 +1631,7 @@ values. See `parse-integer' and `digit-fixnum-map'.
                               maximum possible value for the radix is
                               available to us now. */
                            make_fixnum
-                           (XSTRING_LENGTH (Vfixnum_to_char_map)
+                           (XSTRING_LENGTH (Vfixnum_to_majuscule_map)
                             / MAX_ICHAR_LEN)
                            /* Otherwise, calculating that is expensive. Check
                               at least that the radix is not a bignum, the
@@ -1669,8 +1672,8 @@ integer of value less than the maximum value in RADIX-TABLE.
 RADIX-TABLE, if non-nil, is a character table describing characters' numeric
 values. It defaults to the value of `digit-fixnum-map'; see the documentation
 for that variable and for `parse-integer'. This is not specified by Common
-Lisp, and using a value other than the default in `digit-char' is expensive,
-since the inverse map needs to be calculated.
+Lisp, and using a value other than the default, or `digit-fixnum-ascii' is
+expensive, since the inverse map needs to be calculated.
 */
        (weight, radix, radix_table))
 {
@@ -1683,13 +1686,20 @@ since the inverse map needs to be calculated.
   if (!NILP (radix_table) && !EQ (radix_table, Vdigit_fixnum_map))
     {
       CHECK_CHAR_TABLE (radix_table);
-      /* The result of this isn't GCPROd, but the rest of this function
-	 won't GC and continue. */
-      fixnum_to_char_table = build_fixnum_to_char_map (radix_table);
+      if (EQ (Vdigit_fixnum_ascii, radix_table))
+        {
+          fixnum_to_char_table = Vfixnum_to_majuscule_ascii;
+        }
+      else
+        {
+          /* The result of this isn't GCPROd, but the rest of this function
+             won't GC and continue. */
+          fixnum_to_char_table = build_fixnum_to_char_map (radix_table);
+        }
     }
   else
     {
-      fixnum_to_char_table = Vfixnum_to_char_map;
+      fixnum_to_char_table = Vfixnum_to_majuscule_map;
     }
 
   if (!NILP (radix))
@@ -1701,7 +1711,7 @@ since the inverse map needs to be calculated.
     }
 
   /* If weight is in its canonical form (and there's no reason to think it
-     isn't), Vfixnum_to_char_map can't be long enough to handle
+     isn't), Vfixnum_to_majuscule_map can't be long enough to handle
      this. */
   if (BIGNUMP (weight))
     {
@@ -2042,7 +2052,7 @@ arguments: (STRING &key (START 0) end (RADIX 10) junk-allowed radix-table)
 
   check_integer_range (radix, Qzero,
                        EQ (radix_table, Vdigit_fixnum_map) ?
-                       make_fixnum (XSTRING_LENGTH (Vfixnum_to_char_map)
+                       make_fixnum (XSTRING_LENGTH (Vfixnum_to_majuscule_map)
                                     / MAX_ICHAR_LEN)
                        /* Non-default radix table; calculating the upper limit
                           is is expensive. Check at least that the radix is
@@ -4378,9 +4388,25 @@ character does not have an assigned numeric value. See `parse-integer',
        this is too early in the boot sequence to map across a char table. Do
        it by hand. */
     ASSERT_ASCTEXT_ASCII_LEN (fixnum_tab, 36 * MAX_ICHAR_LEN);
-    Vfixnum_to_char_map
-	    = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
-    staticpro (&Vfixnum_to_char_map);
+    Vfixnum_to_majuscule_map
+      = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
+    staticpro (&Vfixnum_to_majuscule_map);
+
+    /* For those occasional times we don't want localised numbers. */
+    Vfixnum_to_majuscule_ascii
+      = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
+    staticpro (&Vfixnum_to_majuscule_ascii);
+
+    memset ((void *)fixnum_tab, 0, 36 * MAX_ICHAR_LEN);
+
+    for (ii = 0, ptr = fixnum_tab; ii < 36; ++ii, ptr += MAX_ICHAR_LEN)
+      {
+	cc = ii < 10 ? '0' + ii : 'a' + (ii - 10);
+	set_itext_ichar ((Ibyte *) ptr, cc);
+      }
+    Vfixnum_to_minuscule_map 
+      = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
+    staticpro (&Vfixnum_to_minuscule_map);
   }
 
 #ifdef DEBUG_XEMACS
