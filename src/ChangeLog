@@ -11,6 +11,23 @@
 
 2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* data.c:
+	* data.c (Fset_digit_fixnum_map):
+	* data.c (Fdigit_char_p):
+	* data.c (Fdigit_char):
+	Update this to use Vfixnum_to_majuscule_ascii if appropriate.
+	* data.c (Fparse_integer):
+	* data.c (vars_of_data):
+	Rename Vfixnum_to_char_map to Vfixnum_to_majuscule_map; add 
+	Vfixnum_to_minuscule_map, for %x format strings, and
+	Vfixnum_to_majuscule_ascii, for those cases where using the
+	non-ASCII digits will definitely lead to errors.
+	* lisp.h:
+	Make Vfixnum_to_majuscule_map, Vfixnum_to_minuscule_map,
+	Vfixnum_to_majuscule_ascii available to other files.
+
+2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* text.h (itext_copy_ichar):
 	Revise to be simpler and faster.
 	* text.h (itext_ichar_eql): New.

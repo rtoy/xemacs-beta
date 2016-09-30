@@ -4621,6 +4621,8 @@ Lisp_Object parse_integer (const Ibyte *buf, Ibyte **buf_end_out,
 			   int flags, Lisp_Object base_table);
 
 extern Lisp_Object Vdigit_fixnum_map, Vdigit_fixnum_ascii;
+extern Lisp_Object Vfixnum_to_majuscule_map, Vfixnum_to_minuscule_map;
+extern Lisp_Object Vfixnum_to_majuscule_ascii;
 
 extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
     Qerror_conditions, Qerror_message, Qinteger_char_or_marker_p,
