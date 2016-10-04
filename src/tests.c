@@ -879,13 +879,14 @@ while (0)
   return list1 (list3 (build_ascstring ("STORE_VOID_IN_LISP"), Qt, Qnil));
 }
 
-DEFUN ("test-long-to-string", Ftest_long_to_string, 0, 0, "", /*
-Make sure `long_to_string' can print LONG_MIN as a decimal correctly.
+DEFUN ("test-fixnum-to-string", Ftest_fixnum_to_string, 0, 0, "", /*
+Make sure `fixnum_to_string' can print LONG_MIN as a decimal correctly.
 */
        ())
 {
-  Ascbyte buf[DECIMAL_PRINT_SIZE (long) + 1];
-  Bytecount res = long_to_string (buf, LONG_MIN);
+  Ibyte buf[DECIMAL_PRINT_SIZE (Fixnum) + 1];
+  Bytecount res = fixnum_to_string (buf, sizeof (buf), LONG_MIN, 10,
+                                    FIXNUM_FORCE_ASCII);
   Ascbyte buf1[DECIMAL_PRINT_SIZE (long) + 1];
   Bytecount res1 = snprintf (buf1, sizeof (buf1) - 1, "%ld", LONG_MIN);
   Lisp_Object result = Qnil;
@@ -893,26 +894,26 @@ Make sure `long_to_string' can print LONG_MIN as a decimal correctly.
   if (res == res1)
     {
       result = Fcons (list3 (build_ascstring
-                             ("checking result length, long_to_string"),
+                             ("checking result length, fixnum_to_string"),
                              Qt, Qnil), result);
     }
   else
     {
       result = Fcons (list3 (build_ascstring
-                             ("checking result length, long_to_string"),
+                             ("checking result length, fixnum_to_string"),
                              Qnil, build_ascstring (buf)), result);
     }
 
   if (!strcmp (buf, buf1))
     {
       result = Fcons (list3 (build_ascstring
-                             ("cross-check against sprintf, long_to_string"),
+                             ("cross-check against sprintf, fixnum_to_string"),
                              Qt, Qnil), result);
     }
   else
     {
       result = Fcons (list3 (build_ascstring
-                             ("cross-check against sprintf, long_to_string"),
+                             ("cross-check against sprintf, fixnum_to_string"),
                              Qnil, build_ascstring (buf)), result);
     }
 
@@ -928,13 +929,13 @@ Make sure `long_to_string' can print LONG_MIN as a decimal correctly.
       && 1)
     {
       result = Fcons (list3 (build_ascstring
-                             ("checking result text, long_to_string"),
+                             ("checking result text, fixnum_to_string"),
                              Qt, Qnil), result);
     }
   else
     {
       result = Fcons (list3 (build_ascstring
-                             ("checking result text, long_to_string"),
+                             ("checking result text, fixnum_to_string"),
                              Qnil, build_ascstring (buf)), result);
     }
 
@@ -968,7 +969,7 @@ syms_of_tests (void)
   TESTS_DEFSUBR (Ftest_character_tell);
   TESTS_DEFSUBR (Ftest_hash_tables);
   TESTS_DEFSUBR (Ftest_store_void_in_lisp);
-  TESTS_DEFSUBR (Ftest_long_to_string);
+  TESTS_DEFSUBR (Ftest_fixnum_to_string);
   /* Add other test functions here with TESTS_DEFSUBR */
 }
 

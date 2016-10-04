@@ -31,6 +31,524 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "buffer.h"
 #include "lstream.h"
 
+
+/* Radix handling for rationals. */
+
+/* Print a signed NUMBER into BUFFER, which comprises SIZE octets, as a base
+   (expt 2 POWOF2) string, using TABLE (usually Vfixnum_to_majuscule_map) to
+   transform fixnums to character values. Start at the *end*, and return the
+   length of the string written. Note that this usually means there is slack
+   before the actual text wanted. Do not zero-terminate. Throw an assertion
+   failure if text checking is turned on and the conversion overruns BUFFER.
+
+   See fixnum_to_string() for a more reasonable function for callers. */
+static Bytecount
+fixnum_to_string_rshift_1 (Ibyte *buffer, Bytecount size, Fixnum number,
+                           UINT_16_BIT powof2, Lisp_Object table)
+{
+  Ibyte *end = buffer + size, *cursor = end;
+  const Ibyte *this_digit, *ftmdata = XSTRING_DATA (table);
+  Boolint minusp = number < 0;
+  EMACS_UINT uval = minusp ? -number : number, mask = (1 << powof2) - 1;
+
+  text_checking_assert (XSTRING_LENGTH (table) >=
+                        ((EMACS_INT) mask + 1) * MAX_ICHAR_LEN);
+
+  while (uval)
+    {
+      this_digit = ftmdata + ((uval & mask) * MAX_ICHAR_LEN);
+      cursor -= itext_ichar_len (this_digit);
+      itext_copy_ichar (this_digit, cursor);
+      uval >>= powof2;
+    }
+
+  if (end == cursor)
+    {
+      this_digit = ftmdata + 0;
+      cursor -= itext_ichar_len (this_digit);
+      itext_copy_ichar (this_digit, cursor);
+    }
+
+  if (minusp)
+    {
+      Ibyte chbuf[MAX_ICHAR_LEN];
+      cursor -= set_itext_ichar (chbuf, '-');
+      itext_copy_ichar (chbuf, cursor);
+    }
+
+  text_checking_assert (cursor >= buffer);
+
+  return end - cursor;
+}
+
+/* Print an unsigned NUMBER into BUFFER, which comprises SIZE octets, as a
+   base (expt 2 POWOF2) string, using TABLE (usually Vfixnum_to_majuscule_map)
+   to transform fixnums to character values.  Start at the *end*, and return
+   the length of the string written. Note that this usually means there is
+   slack before the actual text wanted. Do not zero-terminate. Throw an
+   assertion failure if text checking is turned on and the conversion overruns
+   BUFFER.
+
+   See fixnum_to_string() for a more reasonable function for callers. */
+static Bytecount
+emacs_uint_to_string_rshift_1 (Ibyte *buffer, Bytecount size, EMACS_UINT number,
+                               UINT_16_BIT powof2, Lisp_Object table)
+{
+  Ibyte *end = buffer + size, *cursor = end;
+  const Ibyte *this_digit, *ftmdata = XSTRING_DATA (table);
+  EMACS_UINT mask = (1 << powof2) - 1;
+
+  text_checking_assert (XSTRING_LENGTH (table) >=
+                        ((EMACS_INT) mask + 1) * MAX_ICHAR_LEN);
+
+  while (number)
+    {
+      this_digit = ftmdata + ((number & mask) * MAX_ICHAR_LEN);
+      cursor -= itext_ichar_len (this_digit);
+      itext_copy_ichar (this_digit, cursor);
+      number >>= powof2;
+    }
+
+  if (end == cursor)
+    {
+      this_digit = ftmdata + 0;
+      cursor -= itext_ichar_len (this_digit);
+      itext_copy_ichar (this_digit, cursor);
+    }
+
+  text_checking_assert (cursor >= buffer);
+
+  return end - cursor;
+}
+
+/* Print a signed NUMBER into BUFFER, which comprises SIZE octets, as a base
+   RADIX string, using TABLE (usually Vfixnum_to_majuscule_map) to transform
+   fixnums to character values.  Start at the *end*, and return the length of
+   the string written. Note that this usually means there is slack before the
+   actual text wanted. Do not zero-terminate. Throw an assertion failure if
+   text checking is turned on and the conversion overruns BUFFER.
+
+   See fixnum_to_string() for a more reasonable function for callers. */
+static Bytecount
+fixnum_to_string_general_1 (Ibyte *buffer, Bytecount size, Fixnum number,
+                            Fixnum radix, Lisp_Object table)
+{
+  Ibyte *end = buffer + size, *cursor = end, *this_digit;
+  Ibyte *ftmdata = XSTRING_DATA (table);
+  Boolint minusp = number < 0;
+  EMACS_UINT uval = minusp ? -number : number;
+
+  text_checking_assert (XSTRING_LENGTH (Vfixnum_to_majuscule_map)
+                        >= (radix) * MAX_ICHAR_LEN);
+
+  while (uval)
+    {
+      this_digit = ftmdata + ((uval % radix) * MAX_ICHAR_LEN);
+      cursor -= itext_ichar_len (this_digit);
+      itext_copy_ichar (this_digit, cursor);
+      uval /= radix;
+    }
+
+  if (end == cursor)
+    {
+      this_digit = ftmdata + 0;
+      cursor -= itext_ichar_len (this_digit);
+      itext_copy_ichar (this_digit, cursor);
+    }
+
+  if (minusp)
+    {
+      cursor -= ichar_itext_len ('-');
+      set_itext_ichar (cursor, '-');
+    }
+
+  text_checking_assert (cursor >= buffer);
+
+  return end - cursor;
+}
+
+#define ONE_DIGIT(figure) \
+  p += itext_copy_ichar (ftmdata + ((n / (figure)) * MAX_ICHAR_LEN), p)
+#define ONE_DIGIT_ADVANCE(figure) (ONE_DIGIT (figure), n %= (figure))
+
+#define DIGITS_1(figure) ONE_DIGIT (figure)
+#define DIGITS_2(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_1 ((figure) / 10)
+#define DIGITS_3(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_2 ((figure) / 10)
+#define DIGITS_4(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_3 ((figure) / 10)
+#define DIGITS_5(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_4 ((figure) / 10)
+#define DIGITS_6(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_5 ((figure) / 10)
+#define DIGITS_7(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_6 ((figure) / 10)
+#define DIGITS_8(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_7 ((figure) / 10)
+#define DIGITS_9(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_8 ((figure) / 10)
+#define DIGITS_10(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_9 ((figure) / 10)
+
+/* DIGITS_<11-20> are only used on machines with 64-bit longs. */
+
+#define DIGITS_11(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_10 ((figure) / 10)
+#define DIGITS_12(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_11 ((figure) / 10)
+#define DIGITS_13(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_12 ((figure) / 10)
+#define DIGITS_14(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_13 ((figure) / 10)
+#define DIGITS_15(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_14 ((figure) / 10)
+#define DIGITS_16(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_15 ((figure) / 10)
+#define DIGITS_17(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_16 ((figure) / 10)
+#define DIGITS_18(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_17 ((figure) / 10)
+#define DIGITS_19(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_18 ((figure) / 10)
+
+/* Print NUMBER to BUFFER in base 10, starting with its most significant digit
+   at the beginning, and zero-terminating. SIZE is the number of octets
+   comprising BUFFER. TABLE describes a mapping from fixnum to characters and
+   is usually Vfixnum_to_majuscule_map. Return length of the printed
+   representation, without the zero termination. Throw an assertion failure if
+   printing has overrun BUFFER.
+
+   fixnum_to_string_base_10 (buf, sizeof (buf), number,
+   Vfixnum_to_majuscule_ascii) is equivalent to snprintf (buf, sizeof (buf),
+   "%ld" number), except for behaviour on overrun (snprintf won't throw an
+   assertion failure).
+
+   Use the DECIMAL_PRINT_SIZE() macro to size a buffer for
+   fixnum_to_string_base_10(). */
+static Bytecount
+fixnum_to_string_base_10 (Ibyte *buffer, Bytecount size, Fixnum number,
+                          Lisp_Object table)
+{
+  Ibyte *p = buffer;
+  Ibyte *ftmdata = XSTRING_DATA (table);
+  /* So -number doesn't fail silently for LONG_MIN. */
+  EMACS_UINT n;
+
+  if (number < 0)
+    {
+      p += set_itext_ichar (p, '-');
+      n = -number;
+    }
+  else
+    {
+      n = number;
+    }
+
+  if      (n < 10)                   { DIGITS_1 (1); }
+  else if (n < 100)                  { DIGITS_2 (10); }
+  else if (n < 1000)                 { DIGITS_3 (100); }
+  else if (n < 10000)                { DIGITS_4 (1000); }
+  else if (n < 100000)               { DIGITS_5 (10000); }
+  else if (n < 1000000)              { DIGITS_6 (100000); }
+  else if (n < 10000000)             { DIGITS_7 (1000000); }
+  else if (n < 100000000)            { DIGITS_8 (10000000); }
+  else if (n < 1000000000)           { DIGITS_9 (100000000); }
+#if SIZEOF_LONG == 4
+  /* ``if (1)'' serves only to preserve editor indentation. */
+  else if (1)                        { DIGITS_10 (1000000000); }
+#else  /* SIZEOF_LONG != 4 */
+  else if (n < 10000000000L)         { DIGITS_10 (1000000000L); }
+  else if (n < 100000000000L)        { DIGITS_11 (10000000000L); }
+  else if (n < 1000000000000L)       { DIGITS_12 (100000000000L); }
+  else if (n < 10000000000000L)      { DIGITS_13 (1000000000000L); }
+  else if (n < 100000000000000L)     { DIGITS_14 (10000000000000L); }
+  else if (n < 1000000000000000L)    { DIGITS_15 (100000000000000L); }
+  else if (n < 10000000000000000L)   { DIGITS_16 (1000000000000000L); }
+  else if (n < 100000000000000000L)  { DIGITS_17 (10000000000000000L); }
+  else if (n < 1000000000000000000L) { DIGITS_18 (100000000000000000L); }
+  else                               { DIGITS_19 (1000000000000000000L); }
+#endif /* SIZEOF_LONG != 4 */
+
+  *p = '\0';
+
+  text_checking_assert ((p - buffer) <= size);
+
+  return p - buffer;
+}
+
+#undef ONE_DIGIT
+#undef ONE_DIGIT_ADVANCE
+
+#undef DIGITS_1
+#undef DIGITS_2
+#undef DIGITS_3
+#undef DIGITS_4
+#undef DIGITS_5
+#undef DIGITS_6
+#undef DIGITS_7
+#undef DIGITS_8
+#undef DIGITS_9
+#undef DIGITS_10
+#undef DIGITS_11
+#undef DIGITS_12
+#undef DIGITS_13
+#undef DIGITS_14
+#undef DIGITS_15
+#undef DIGITS_16
+#undef DIGITS_17
+#undef DIGITS_18
+#undef DIGITS_19
+
+/* Print NUMBER, a signed integer, into BUFFER, which comprises SIZE octets,
+   as a base RADIX string. The returned number will start with its most
+   significant digits at the beginning of BUFFER, and will be zero terminated.
+
+   FLAGS can be RATIONAL_DOWNCASE, to print (e.g.) hexadecimal numbers as a-f
+   rather than A-F, the default. Alternatively, it can be RATIONAL_FORCE_ASCII,
+   to avoid language-specific digit characters (e.g. Persian, fullwidth
+   Chinese). In this case (#### for the moment) RATIONAL_DOWNCASE is ignored and
+   any alphabetic characters with case are returned with their upper case
+   values.
+
+   Return the length of the printed string, without the terminating zero. If
+   assertions are enabled, throw an assertion failure if BUFFER overflows.
+
+   See also bignum_to_string(), ratio_to_string(). */
+Bytecount
+fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
+                  UINT_16_BIT radix, int flags)
+{
+  Bytecount len = 0, slack;
+  Lisp_Object table = (flags & RATIONAL_DOWNCASE)
+    ? Vfixnum_to_minuscule_map
+    : ((flags & RATIONAL_FORCE_ASCII) ? Vfixnum_to_majuscule_ascii
+       : Vfixnum_to_majuscule_map);
+
+  if (10 == radix)
+    {
+      return fixnum_to_string_base_10 (buffer, size, number, table);
+    }
+  else if ((number & (number - 1)) == 0) /* Power of two? */
+    {
+      EMACS_UINT powof2 = 0;
+
+      text_checking_assert (radix != 0);
+
+      while (radix != 1)
+        {
+          powof2++;
+          radix >>= 1;
+        }
+
+      len = fixnum_to_string_rshift_1 (buffer, size - 1, number, powof2,
+                                       table);
+    }
+  else
+    {
+      len = fixnum_to_string_general_1 (buffer, size - 1, number, radix,
+                                        table);
+    }
+
+  slack = size - len;
+  text_checking_assert (slack >= 0);
+  if (slack)
+    {
+      /* There will be overlap if LEN > size / 2, use memmove(). */
+      memmove (buffer, buffer + slack, len);
+    }
+
+  /* Add a trailing '\0'. */
+  buffer[len] = '\0';
+  return len;
+}
+
+extern bignum scratch_bignum;
+
+static Bytecount
+bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
+                    EMACS_UINT radix, Lisp_Object table)
+{
+  Boolint minusp = bignum_sign (bn) < 0, heap_allocp = size_inout < 0;
+  Ibyte *buf1 = *size_inout > -1 ? *buf :
+    ((*size_inout = 128 * MAX_ICHAR_LEN),
+     (*buf = xnew_array (Ibyte, *size_inout)));
+  Ibyte *end = buf1 + *size_inout, *cursor = end, *this_digit = NULL;
+  Ibyte *ftmdata = XSTRING_DATA (table);
+
+  if (minusp)
+    {
+      bignum_neg (scratch_bignum, bn);
+      /* Reserve space for the minus sign in our accounting. */
+      buf1 += ichar_itext_len ('-');
+    }
+  else
+    {
+      bignum_set (scratch_bignum, bn);
+    }
+
+  while ((bignum_sign (scratch_bignum)) != 0)
+    {
+      this_digit
+        = ftmdata + (bignum_div_rem_uint_16_bit (scratch_bignum,
+                                                 scratch_bignum, radix)
+                     * MAX_ICHAR_LEN);
+      cursor -= itext_ichar_len (this_digit);
+      itext_copy_ichar (this_digit, cursor);
+      if (cursor - MAX_ICHAR_LEN <= buf1)
+        {
+          text_checking_assert (!heap_allocp);
+          XREALLOC_ARRAY (*buf, Ibyte, *size_inout << 1);
+          memcpy (*buf, *buf + *size_inout, *size_inout);
+          *size_inout <<= 1;
+          buf1 = *buf + minusp * ichar_itext_len ('-');
+        }
+    }
+
+  if (end == cursor)
+    {
+      this_digit = ftmdata + 0;
+      cursor -= itext_ichar_len (this_digit);
+      /* Haven't written anything yet, can't yet overflow */ 
+      itext_copy_ichar (this_digit, cursor);
+    }
+
+  if (minusp)
+    {
+      Ibyte chbuf[MAX_ICHAR_LEN];
+      cursor -= set_itext_ichar (chbuf, '-');
+      itext_copy_ichar (this_digit, cursor);
+    }
+
+  text_checking_assert (cursor >= *buf);
+
+  return end - cursor;
+}
+
+Bytecount
+bignum_to_string (Ibyte **buffer_inout, Bytecount size, bignum number,
+                  UINT_16_BIT radix, int flags)
+{
+  Bytecount len = 0, slack;
+  Lisp_Object table = (flags & RATIONAL_DOWNCASE)
+    ? Vfixnum_to_minuscule_map
+    : ((flags & RATIONAL_FORCE_ASCII) ? Vfixnum_to_majuscule_ascii
+       : Vfixnum_to_majuscule_map);
+
+  len = bignum_to_string_1 (buffer_inout, &size, number, radix, table);
+
+  slack = size - len;
+  text_checking_assert (slack > 0);
+  if (slack)
+    {
+      /* There will be overlap if LEN > size / 2, use memmove(). */
+      memmove (*buffer_inout, *buffer_inout + slack, len);
+    }
+
+  /* Add a trailing '\0'. */
+  (*buffer_inout)[len] = '\0';
+  return len;
+}
+
+static Bytecount
+ratio_to_string_1 (Ibyte **buf, Bytecount size, ratio rat, UINT_16_BIT base,
+                   Lisp_Object table)
+{
+  Bytecount len;
+  Ibyte *cursor;
+
+  text_checking_assert (*buf);
+  len = bignum_to_string_1 (buf, &size, ratio_denominator (rat),
+                            base, table); 
+  cursor = *buf + size - len;
+
+  cursor -= ichar_itext_len ('/');
+  len += set_itext_ichar (cursor, '/');
+  size -= len;
+  len += bignum_to_string_1 (buf, &size, ratio_numerator (rat), base, table);
+  return len;
+}
+
+Bytecount
+ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
+                 UINT_16_BIT radix, int flags)
+{
+  Bytecount len = 0, slack;
+  Lisp_Object table = (flags & RATIONAL_DOWNCASE)
+    ? Vfixnum_to_minuscule_map
+    : ((flags & RATIONAL_FORCE_ASCII) ? Vfixnum_to_majuscule_ascii
+       : Vfixnum_to_majuscule_map);
+
+  len = ratio_to_string_1 (buffer_inout, size, number, radix, table);
+
+  slack = size - len;
+  text_checking_assert (slack >= 0);
+  if (slack)
+    {
+      /* There will be overlap if LEN > size / 2, use memmove(). */
+      memmove (*buffer_inout, *buffer_inout + slack, len);
+    }
+
+  /* Add a trailing '\0'. */
+  (*buffer_inout)[len] = '\0';
+  return len;
+}
+
+DEFUN ("number-to-string", Fnumber_to_string, 1, 1, 0, /*
+Convert NUMBER to a string by printing it in decimal.
+Uses a minus sign if negative.
+NUMBER may be an integer or a floating point number.
+If supported, it may also be a ratio.
+*/
+       (number))
+{
+  CHECK_NUMBER (number);
+
+  if (FLOATP (number))
+    {
+      Ascbyte pigbuf[350];	/* see comments in float_to_string */
+
+      return make_string ((const Ibyte *) pigbuf,
+                          float_to_string (pigbuf, XFLOAT_DATA (number)));
+    }
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (number))
+    {
+      Bytecount size, len;
+      Ibyte *buf, *cursor;
+      Lisp_Object retval;
+
+#ifdef bignum_size_decimal
+      size = bignum_size_decimal (XBIGNUM_DATA (number));
+      buf = alloca_ibytes (size);
+#else
+      size = -1;
+      buf = NULL;
+#endif
+      len = bignum_to_string_1 (&buf, &size, XBIGNUM_DATA (number), 10,
+                                Vfixnum_to_char_map);
+      retval = make_string (buf + size - len, len);
+
+#ifndef bignum_size_decimal
+      xfree (buf);
+#endif
+
+      return retval;
+    }
+#endif
+#ifdef HAVE_RATIO
+  if (RATIOP (number))
+    {
+      Bytecount size = ratio_size_in_base (XRATIO_DATA (number), 10), len;
+      Ibyte *buffer = alloca_ibytes (size);
+
+      len = ratio_to_string_1 (&buffer, &size, XRATIO_DATA (number), 10,
+                               Vfixnum_to_char_map);
+      return make_string (buf + size - len, len);
+    }
+#endif
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (number))
+    {
+      Ascbyte *str = bigfloat_to_string (XBIGFLOAT_DATA (number), 10);
+      Lisp_Object retval = build_ascstring (str);
+      xfree (str);
+      return retval;
+    }
+#endif
+
+  {
+    Ibyte buffer[DECIMAL_PRINT_SIZE (Fixnum)];
+
+    return make_string (buffer,
+                        fixnum_to_string_base_10 (buffer, sizeof (buffer),
+                                                  XFIXNUM (number),
+                                                  Vfixnum_to_majuscule_map));
+  }
+}
+
 static const Ascbyte * const valid_flags = "-+ #0&~";
 
 /* Don't add the bignum, ratio and bigfloat converters to these.
@@ -1090,22 +1608,36 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 #ifdef HAVE_BIGNUM
 	      if (BIGNUMP (arg.obj))
 		{
-		  Ibyte *text_to_print =
-		    (Ibyte *) bignum_to_string (XBIGNUM_DATA (arg.obj),
-						base);
-                  doprnt_2 (stream, text_to_print, Qnil,
-                            0, qxestrlen (text_to_print), spec, format_reloc);
-		  xfree (text_to_print);
+                  Ibyte *text_to_print;
+                  Bytecount size, len;
+
+#ifdef bignum_size_decimal
+                  size = bignum_size_decimal (XBIGNUM_DATA (arg.obj));
+                  text_to_print = alloca_ibytes (size);
+#else
+                  size = -1;
+                  text_to_print = NULL;
+#endif
+                  len = bignum_to_string (&text_to_print, size,
+                                          XBIGNUM_DATA (arg.obj), base, 0);
+                  doprnt_2 (stream, text_to_print, Qnil, 0, len, spec,
+                            format_reloc);
+#ifndef bignum_size_decimal
+                  xfree (text_to_print);
+#endif
 		}
 #endif
 #ifdef HAVE_RATIO
 	      if (RATIOP (arg.obj))
 		{
-		  Ibyte *text_to_print =
-		    (Ibyte *) ratio_to_string (XRATIO_DATA (arg.obj), base);
+                  Bytecount size = ratio_size_in_base (XRATIO_DATA (arg.obj),
+                                                       base);
+                  Ibyte *text_to_print = alloca_ibytes (size);
+
                   doprnt_2 (stream, text_to_print, Qnil,
-                            0, qxestrlen (text_to_print), spec, format_reloc);
-		  xfree (text_to_print);
+                            0, ratio_to_string (&text_to_print, size,
+                                                XRATIO_DATA (arg.obj), base,
+                                                0), spec, format_reloc);
 		}
 #endif
 	    }

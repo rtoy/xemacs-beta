@@ -124,7 +124,9 @@ extern Lisp_Object make_bignum_ll (long long);
 extern Lisp_Object make_bignum_ull (unsigned long long);
 extern Lisp_Object make_bignum_bg (bignum);
 extern bignum scratch_bignum, scratch_bignum2;
-
+extern Bytecount bignum_to_string (Ibyte **buffer_inout, Bytecount size,
+                                   bignum number, UINT_16_BIT radix,
+                                   int flags);
 #else /* !HAVE_BIGNUM */
 
 #define BIGNUMP(x)         0
@@ -246,6 +248,9 @@ extern Lisp_Object make_ratio (long, unsigned long);
 extern Lisp_Object make_ratio_bg (bignum, bignum);
 extern Lisp_Object make_ratio_rt (ratio);
 extern ratio scratch_ratio, scratch_ratio2;
+
+extern Bytecount ratio_to_string (Ibyte **buffer_inout, Bytecount size,
+                                  ratio number, UINT_16_BIT radix, int flags);
 
 #else /* !HAVE_RATIO */
 

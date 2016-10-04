@@ -1212,59 +1212,6 @@ lisp_to_int32_t (Lisp_Object item)
     }
 }
 
-DEFUN ("number-to-string", Fnumber_to_string, 1, 1, 0, /*
-Convert NUMBER to a string by printing it in decimal.
-Uses a minus sign if negative.
-NUMBER may be an integer or a floating point number.
-If supported, it may also be a ratio.
-*/
-       (number))
-{
-  CHECK_NUMBER (number);
-
-  if (FLOATP (number))
-    {
-      Ascbyte pigbuf[350];	/* see comments in float_to_string */
-
-      return make_string ((const Ibyte *) pigbuf,
-                          float_to_string (pigbuf, XFLOAT_DATA (number)));
-    }
-#ifdef HAVE_BIGNUM
-  if (BIGNUMP (number))
-    {
-      Ascbyte *str = bignum_to_string (XBIGNUM_DATA (number), 10);
-      Lisp_Object retval = build_ascstring (str);
-      xfree (str);
-      return retval;
-    }
-#endif
-#ifdef HAVE_RATIO
-  if (RATIOP (number))
-    {
-      Ascbyte *str = ratio_to_string (XRATIO_DATA (number), 10);
-      Lisp_Object retval = build_ascstring (str);
-      xfree (str);
-      return retval;
-    }
-#endif
-#ifdef HAVE_BIGFLOAT
-  if (BIGFLOATP (number))
-    {
-      Ascbyte *str = bigfloat_to_string (XBIGFLOAT_DATA (number), 10);
-      Lisp_Object retval = build_ascstring (str);
-      xfree (str);
-      return retval;
-    }
-#endif
-
-  {
-    Ascbyte buffer[DECIMAL_PRINT_SIZE (long)];
-
-    long_to_string (buffer, XFIXNUM (number));
-    return build_ascstring (buffer);
-  }
-}
-
 #ifndef HAVE_BIGNUM
 static int
 digit_to_number (int character, int base)
