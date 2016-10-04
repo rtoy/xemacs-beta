@@ -1596,7 +1596,8 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 		  switch (c)
 		    {
 		      /*case 'x':
-		      dst += long_to_string_base ((char *)dst, data->ch, 16);
+		      dst += fixnum_to_string ((char *)dst, len - dst - result,
+                                               c, 16, 0);
 		      break;*/
 		    case '%':
 		      dst += set_itext_ichar (dst, '%');
@@ -7323,9 +7324,10 @@ window_line_number (struct window *w, int type)
   line = buffer_line_number (b, pos, 1, 1);
 
   {
-    static Ascbyte window_line_number_buf[DECIMAL_PRINT_SIZE (long)];
+    static Ibyte window_line_number_buf[DECIMAL_PRINT_SIZE (Fixnum)];
 
-    long_to_string (window_line_number_buf, line + 1);
+    fixnum_to_string (window_line_number_buf, sizeof (window_line_number_buf),
+                      line + 1, 10, 0);
 
     return window_line_number_buf;
   }
@@ -7372,11 +7374,10 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 		    ? BUF_PT (b)
 		    : marker_position (w->pointm[type]);
 	int col = column_at_point (b, pt, 1) + !!column_number_start_at_one;
-	Ascbyte buf[DECIMAL_PRINT_SIZE (long)];
+	Ibyte buf[DECIMAL_PRINT_SIZE (long)];
 
-	Dynarr_add_many (mode_spec_ibyte_string,
-			 (const Ibyte *) buf, long_to_string (buf, col));
-
+	Dynarr_add_many (mode_spec_ibyte_string, buf,
+                         fixnum_to_string (buf, sizeof (buf), col, 10, 0));
 	goto decode_mode_spec_done;
       }
       /* print the file coding system */

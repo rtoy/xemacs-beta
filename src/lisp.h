@@ -4673,6 +4673,23 @@ Lisp_Object read_doc_string (Lisp_Object);
 extern Lisp_Object Vinternal_doc_file_name;
 
 /* Defined in doprnt.c */
+
+enum fixnum_to_string_flags
+{
+  RATIONAL_DOWNCASE    = 1 << 0,
+  RATIONAL_FORCE_ASCII = 1 << 1
+};
+
+Bytecount fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
+                            UINT_16_BIT radix, int flags);
+#ifdef HAVE_BIGNUM
+Bytecount bignum_to_string (Ibyte **buffer_inout, Bytecount size,
+                            bignum number, UINT_16_BIT radix, int flags);
+#endif
+#ifdef HAVE_RATIO
+Bytecount ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
+                           UINT_16_BIT radix, int flags);
+#endif
 Bytecount emacs_doprnt_va (Lisp_Object stream, const Ibyte *format_nonreloc,
 			   Bytecount format_length, Lisp_Object format_reloc,
 			   va_list vargs);

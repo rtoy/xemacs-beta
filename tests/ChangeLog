@@ -20,7 +20,7 @@
 	Add extensive tests from Wine's printf test suite, document the
 	authors and licence.
 	* automated/lisp-tests.el:
-	Move the format tests from here to format.el
+	Move the format tests from here to format-tests.el
 
 2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 

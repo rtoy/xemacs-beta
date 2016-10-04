@@ -9,6 +9,78 @@
 	* tests.c (syms_of_tests):
 	Make the test available.
 
+2016-10-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Add functionality to convert rationals to strings of arbitrary
+	base to doprnt.c, in preparation for integrating that
+	functionality into #'format.
+
+	* data.c:
+	* data.c (digit_to_number):
+	Move to doprnt.c.
+	* doprnt.c:
+	* doprnt.c (fixnum_to_string_rshift_1):
+	New; convert a fixnum to a printed representation with radix a
+	power of two.
+	* doprnt.c (emacs_uint_to_string_rshift_1):
+	New; convert an EMACS_UINT to a printed representation with radix
+	a power of two.
+	* doprnt.c (fixnum_to_string_general_1):
+	New; convert a fixnum to a printed representation of arbitrary
+	base.
+	* doprnt.c (fixnum_to_string_base_10):
+	New; convert a fixnum to a printed representation base ten, same
+	algorithm as long_to_string ().
+	* doprnt.c (fixnum_to_string):
+	New general function, subsuming the functionality of
+	long_to_string().
+	* doprnt.c (bignum_to_string_1):
+	New; converted a bignum to a string using Vfixnum_to_majuscule_map.
+	* doprnt.c (bignum_to_string):
+	Move this function here, extend it to allow its buffer to be
+	stack-allocated.
+	* doprnt.c (ratio_to_string_1):
+	New; converted a ratio to a string using Vfixnum_to_majuscule_map.
+	* doprnt.c (ratio_to_string):
+	Move this function here, extend it to allow its buffer to be
+	stack-allocated.
+	* doprnt.c (Fnumber_to_string):
+	Move this function here, use the _1 functions for ratios, bignums,
+	and fixnums.
+	* doprnt.c (emacs_doprnt_1):
+	Use the new calling convention for bignum_to_string(),
+	ratio_to_string(). 
+	* lisp.h:
+	Make {fixnum,bignum,ratio}_to_string() available here.
+	* number-gmp.h:
+	Make macros to size a buffer for text output available.
+	Make mpz_tdiv_q_ui accessible, useful for the calculations for
+	converting a bignum to a string in a given base.
+	* number-mp.h:
+	* number.c (bignum_print):
+	Allocate the text to print on the stack when appropriate.
+	* number.c (bignum_convert):
+	Serialise this object more cheaply using base 16 rather than base 10.
+	* number.c (bignum_deconvert):
+	Deserialise this object using base 16.
+	* number.c (ratio_print):
+	Allocate the text for this on the stack.
+	* print.c (print_internal):
+	Use fixnum_to_string() when printing fixnums and checking for
+	recursive structures.
+	* redisplay.c (add_disp_table_entry_runes_1):
+	Update documentation to use fixnum_to_string().
+	* redisplay.c (window_line_number):
+	Use fixnum_to_string() instead of long_to_string()
+	* redisplay.c (decode_mode_spec):
+	Ditto.
+	* tests.c (Ftest_fixnum_to_string):
+	Rename this from Ftest_long_to_string().
+	* tooltalk.c (tt_message_arg_ival_string):
+	Use fixnum_to_string () here.
+	* tooltalk.c (tt_message_arg_bval_vector):
+	Ditto.
+
 2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c:

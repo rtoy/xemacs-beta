@@ -2282,9 +2282,10 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Type_Fixnum_Even:
     case Lisp_Type_Fixnum_Odd:
       {
-	Ascbyte buf[DECIMAL_PRINT_SIZE (EMACS_INT)];
+	Ibyte buf[DECIMAL_PRINT_SIZE (Fixnum)];
         write_string_1 (printcharfun, buf,
-                        long_to_string (buf, XFIXNUM (obj)));
+                        fixnum_to_string (buf, sizeof (buf),
+                                          XREALFIXNUM (obj), 10, 0));
 	break;
       }
 
@@ -2500,10 +2501,14 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	    for (i = 0; i < print_depth - 1; i++)
 	      if (EQ (obj, being_printed[i]))
 		{
-		  Ascbyte buf[DECIMAL_PRINT_SIZE (long) + 1];
-		  *buf = '#';
-		  long_to_string (buf + 1, i);
-		  write_ascstring (printcharfun, buf);
+		  Ibyte buf[DECIMAL_PRINT_SIZE (long) + MAX_ICHAR_LEN];
+
+		  set_itext_ichar (buf, '#');
+                  write_string_1 (printcharfun, buf, 
+                                  ichar_itext_len ('#')
+                                  + fixnum_to_string (buf + ichar_itext_len
+                                                      ('#'), sizeof (buf),
+                                                      i, 10, 0));
 		  break;
 		}
 	    if (i < print_depth - 1) /* Did we print something? */
