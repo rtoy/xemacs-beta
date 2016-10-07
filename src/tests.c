@@ -886,7 +886,7 @@ Make sure `fixnum_to_string' can print LONG_MIN as a decimal correctly.
 {
   Ibyte buf[DECIMAL_PRINT_SIZE (Fixnum) + 1];
   Bytecount res = fixnum_to_string (buf, sizeof (buf), LONG_MIN, 10,
-                                    FIXNUM_FORCE_ASCII);
+                                    RATIONAL_FORCE_ASCII);
   Ascbyte buf1[DECIMAL_PRINT_SIZE (long) + 1];
   Bytecount res1 = snprintf (buf1, sizeof (buf1) - 1, "%ld", LONG_MIN);
   Lisp_Object result = Qnil;
@@ -901,10 +901,10 @@ Make sure `fixnum_to_string' can print LONG_MIN as a decimal correctly.
     {
       result = Fcons (list3 (build_ascstring
                              ("checking result length, fixnum_to_string"),
-                             Qnil, build_ascstring (buf)), result);
+                             Qnil, make_string (buf, res)), result);
     }
 
-  if (!strcmp (buf, buf1))
+  if (!strcmp ((Ascbyte *) buf, buf1))
     {
       result = Fcons (list3 (build_ascstring
                              ("cross-check against sprintf, fixnum_to_string"),
@@ -914,14 +914,14 @@ Make sure `fixnum_to_string' can print LONG_MIN as a decimal correctly.
     {
       result = Fcons (list3 (build_ascstring
                              ("cross-check against sprintf, fixnum_to_string"),
-                             Qnil, build_ascstring (buf)), result);
+                             Qnil, make_string (buf, res)), result);
     }
 
   if (1 
 #if SIZEOF_LONG == 4
-      && !strcmp (buf, "-2147483648")
+      && !strcmp ((Ascbyte *) buf, "-2147483648")
 #elif SIZEOF_LONG == 8
-      && !strcmp (buf, "-9223372036854775808")
+      && !strcmp ((Ascbyte *) buf, "-9223372036854775808")
 #else
 #warning "unimplemented"
       && 0
@@ -936,7 +936,7 @@ Make sure `fixnum_to_string' can print LONG_MIN as a decimal correctly.
     {
       result = Fcons (list3 (build_ascstring
                              ("checking result text, fixnum_to_string"),
-                             Qnil, build_ascstring (buf)), result);
+                             Qnil, make_string (buf, res)), result);
     }
 
   return result;

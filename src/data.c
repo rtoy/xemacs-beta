@@ -4211,7 +4211,6 @@ syms_of_data (void)
   DEFSUBR (Faref);
   DEFSUBR (Faset);
 
-  DEFSUBR (Fnumber_to_string);
   DEFSUBR (Fstring_to_number);
   DEFSUBR (Fset_digit_fixnum_map);
   DEFSUBR (Fdigit_char_p);

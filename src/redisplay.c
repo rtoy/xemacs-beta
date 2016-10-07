@@ -7304,7 +7304,7 @@ eval_within_redisplay (Lisp_Object dont_trust_this_damn_sucker)
    line-number-mode is on.  The first line in the buffer is counted as
    1.  If narrowing is in effect, the lines are counted from the
    beginning of the visible portion of the buffer.  */
-static Ascbyte *
+static Ibyte *
 window_line_number (struct window *w, int type)
 {
   struct device *d = XDEVICE (XFRAME (w->frame)->device);

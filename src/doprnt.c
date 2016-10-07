@@ -1,4 +1,4 @@
-/* Output like sprintf to a buffer of specified size.
+/* Output like sprintf to resizing buffer.
    Also takes args differently: pass one pointer to an array of strings
    in addition to the format string which is separate.
    Copyright (C) 1995 Free Software Foundation, Inc.
@@ -207,7 +207,11 @@ fixnum_to_string_general_1 (Ibyte *buffer, Bytecount size, Fixnum number,
    assertion failure).
 
    Use the DECIMAL_PRINT_SIZE() macro to size a buffer for
-   fixnum_to_string_base_10(). */
+   fixnum_to_string_base_10().
+
+   Adding support for TABLE impacts the speed of this by about 1% on an
+   optimized build, compared to the old long_to_string(), as of October
+   2016. */
 static Bytecount
 fixnum_to_string_base_10 (Ibyte *buffer, Bytecount size, Fixnum number,
                           Lisp_Object table)
@@ -497,7 +501,7 @@ If supported, it may also be a ratio.
   if (BIGNUMP (number))
     {
       Bytecount size, len;
-      Ibyte *buf, *cursor;
+      Ibyte *buf;
       Lisp_Object retval;
 
 #ifdef bignum_size_decimal
@@ -508,7 +512,7 @@ If supported, it may also be a ratio.
       buf = NULL;
 #endif
       len = bignum_to_string_1 (&buf, &size, XBIGNUM_DATA (number), 10,
-                                Vfixnum_to_char_map);
+                                Vfixnum_to_majuscule_map);
       retval = make_string (buf + size - len, len);
 
 #ifndef bignum_size_decimal
@@ -524,9 +528,9 @@ If supported, it may also be a ratio.
       Bytecount size = ratio_size_in_base (XRATIO_DATA (number), 10), len;
       Ibyte *buffer = alloca_ibytes (size);
 
-      len = ratio_to_string_1 (&buffer, &size, XRATIO_DATA (number), 10,
-                               Vfixnum_to_char_map);
-      return make_string (buf + size - len, len);
+      len = ratio_to_string_1 (&buffer, size, XRATIO_DATA (number), 10,
+                               Vfixnum_to_majuscule_map);
+      return make_string (buffer + size - len, len);
     }
 #endif
 #ifdef HAVE_BIGFLOAT
@@ -560,8 +564,11 @@ static const Ascbyte * const int_converters = "dic";
 static const Ascbyte * const base_converters = "oxXb";
 static const Ascbyte * const double_converters = "feEgG";
 static const Ascbyte * const string_converters = "sS";
-#if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
-static const Ascbyte * const bignum_converters = "npyY\337";
+#ifdef HAVE_BIGNUM
+static const Ascbyte * const bignum_converters = "nPyYB";
+#endif
+#ifdef HAVE_RATIO
+static const Ascbyte * const ratio_converters = "mQvVW";
 #endif
 #ifdef HAVE_BIGFLOAT
 static const Ascbyte * const bigfloat_converters = "FhHkK";
@@ -718,7 +725,7 @@ enum number_flag {
    that number given in PRECISION. This overrides ZERO_FLAG. There can be
    additional space padding as specified by MINWIDTH.
 
-   If SIGN_FLAG is SIGN_FLAG_SPACE, output a plus between any space padding
+   If SIGN_FLAG is SIGN_FLAG_PLUS, output a plus between any space padding
    and before any zero padding. If it is SIGN_FLAG_MINUS, output a minus in
    that position. If it is SIGN_FLAG_SPACE, output a space.
    If it is SIGN_FLAG_HEX_UPPERCASE or SIGN_FLAG_HEX_LOWERCASE, output 0X or
@@ -983,7 +990,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
                     }
                   break;
  		case '0': spec.zero_flag   = 1; break;
-                  /* So we get at helpful value on abort. */
+                  /* So we get a helpful value on abort. */
  		default: text_checking_assert (format == NULL);
 		}
 	      NEXT_ASCII_BYTE (ch);
@@ -1098,8 +1105,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 
 	  if (!strchr (valid_converters, ch))
 	    syntax_error ("Invalid converter character", make_char (ch));
-          /* Transform %i to %d silently. */
-          spec.converter = 'i' == ch ? 'd' : ch;
+	  spec.converter = ch;
           spec.spec_length = fmt - text_end;
 	}
 
@@ -1163,7 +1169,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 
       ch = spec->converter;
 
-      if (strchr (int_converters, ch))
+      if (strchr (int_converters, ch) || strchr (base_converters, ch))
 	{
 	  if (spec->l_flag)
 	    arg.l = va_arg (vargs, long);
@@ -1174,26 +1180,20 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 	       Hence we read an int, not a short, if spec->h_flag. */
 	    arg.l = va_arg (vargs, int);
 	}
-      else if (strchr (base_converters, ch))
+      else if ('u' == ch)
 	{
 	  if (spec->l_flag)
 	    arg.ul = va_arg (vargs, unsigned long);
 	  else
-	    /* unsigned int even if ch == 'c' or spec->h_flag */
+	    /* unsigned int even if spec->h_flag */
 	    arg.ul = (unsigned long) va_arg (vargs, unsigned int);
 	}
       else if (strchr (double_converters, ch))
 	arg.d = va_arg (vargs, double);
       else if (strchr (string_converters, ch))
 	arg.bp = va_arg (vargs, Ibyte *);
-#if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
-      else if (strchr (bignum_converters, ch))
-	arg.obj = va_arg (vargs, Lisp_Object);
-#endif
-#ifdef HAVE_BIGFLOAT
-      else if (strchr (bigfloat_converters, ch))
-	arg.obj = va_arg (vargs, Lisp_Object);
-#endif
+      /* We get here, e.g., if a repositioning field width or precision was
+         supplied at the C level, something not implemented. */
       else ABORT ();
 
       Dynarr_add (args, arg);
@@ -1202,26 +1202,185 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
   return args;
 }
 
+static Ascbyte
+rewrite_rational_spec (printf_spec *spec, Lisp_Object *obj)
+{
+  Ascbyte ch = spec->converter;
+
+  if (CHARP (*obj))
+    {
+      /* Do accept a character argument for an integer format spec. */
+      *obj = make_fixnum (XCHAR (*obj));
+    }
+  else if (FLOATP (*obj))
+    {
+      *obj = IGNORE_MULTIPLE_VALUES (Ftruncate (*obj, Qnil));
+    }
+#ifdef HAVE_BIGFLOAT
+  else if (BIGFLOATP (obj))
+    {
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, XBIGFLOAT_DATA (*obj));
+      if (ch == 'u' && bignum_sign (scratch_bignum) < 0)
+        {
+          dead_wrong_type_argument (Qnonnegativep, *obj);
+        }
+      *obj = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else /* !HAVE_BIGNUM */
+      *obj = make_fixnum (bigfloat_to_long (XBIGFLOAT_DATA (*obj)));
+#endif /* HAVE_BIGNUM */
+    }
+#endif /* HAVE_BIGFLOAT */
+#ifdef HAVE_RATIO
+  else if (RATIOP (*obj))
+    {
+      switch (ch)
+        {
+        case 'i': case 'd': ch = 'm'; break;
+        case 'o': ch = 'Q'; break;
+        case 'x': ch = 'v'; break;
+        case 'X': ch = 'V'; break;
+        case 'b': ch = 'W'; break;
+        case 'u':
+          if (ratio_sign (XRATIO_DATA (*obj)) < 0)
+            {
+              dead_wrong_type_argument (Qnonnegativep, *obj);
+            }
+          /* Fallthrough. */
+        default:
+          ch = 'm';
+          break;
+        }
+    }
+#endif
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (*obj))
+    {
+      if (spec->h_flag || spec->l_flag)
+        {
+          *obj = make_fixnum (bignum_to_long (XBIGNUM_DATA (*obj)));
+        }
+      else
+        {
+          switch (ch)
+            {
+            case 'i': case 'd': ch = 'n'; break;
+            case 'o': ch = 'P'; break;
+            case 'x': ch = 'y'; break;
+            case 'X': ch = 'Y'; break;
+            case 'b': ch = 'B'; break;
+            case 'u':
+              if (bignum_sign (XBIGNUM_DATA (*obj)) < 0)
+                {
+                  dead_wrong_type_argument (Qnatnump, *obj);
+                }
+              /* Fallthrough */
+            default:
+              ch = 'n';
+            }
+        }
+    }
+#endif
+
+#ifdef HAVE_BIGNUM
+  if (FIXNUMP (*obj) && ch == 'u' && XFIXNUM (*obj) < 0)
+    {
+      dead_wrong_type_argument (Qnatnump, *obj);
+    }
+#endif
+
+  if (!NUMBERP (*obj))
+    {
+      syntax_error_2 ("Format specifier doesn't match arg type",
+                      make_char (ch), *obj);
+    }
+
+  return ch;
+}
+
+static Ascbyte
+rewrite_floating_spec (printf_spec *spec, printf_arg *arg, Lisp_Object *obj)
+{
+  Ascbyte ch = spec->converter;
+
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (obj))
+    {
+      switch (ch)
+        {
+        case 'f': ch = 'F'; break;
+        case 'e': ch = 'h'; break;
+        case 'E': ch = 'H'; break;
+        case 'g': ch = 'k'; break;
+        case 'G': ch = 'K'; break;
+        }
+
+      /* Leave *obj alone. */
+      return ch;
+    }
+#endif
+
+  arg->d = extract_float (*obj);
+  *obj = Qunbound;
+  
+  return ch;
+}
+
+#define FIXNUM_SPEC_PREAMBLE()                                          \
+      do {                                                              \
+        if (largs)                                                      \
+          {                                                             \
+            obj = largs[spec->argnum - 1];                              \
+            if (!FIXNUMP (obj))                                         \
+              {                                                         \
+                ch = rewrite_rational_spec (spec,                       \
+                                            largs + spec->argnum - 1);  \
+                goto reconsider;                                        \
+              }                                                         \
+            val = XREALFIXNUM (obj);                                    \
+          }                                                             \
+        else                                                            \
+          {                                                             \
+            arg = Dynarr_at (args, spec->argnum - 1);                   \
+            val = arg.l;                                                \
+          }                                                             \
+                                                                        \
+        if (spec->precision > -1)                                       \
+          {                                                             \
+            spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;       \
+            spec->zero_flag = 0;                                        \
+          }                                                             \
+                                                                        \
+        if (spec->h_flag)                                               \
+          {                                                             \
+            val &= 0xFFFF;                                              \
+          }                                                             \
+        else if (spec->l_flag)                                          \
+          {                                                             \
+            val &= 0xFFFFFFFF;                                          \
+          }                                                             \
+      }                                                                 \
+      while (0)
+
 /* Most basic entry point into string formatting.
 
-   Generate output from a format-spec (either a Lisp string
-   FORMAT_RELOC, or a C string FORMAT_NONRELOC of length FORMAT_LENGTH
-   -- which *MUST NOT* come from Lisp string data, unless GC is
-   inhibited).  Output goes to STREAM.  Returns the number of bytes
-   stored into STREAM.  Arguments are either C-type arguments in
-   va_list VARGS, or an array of Lisp objects in LARGS of size
-   NARGS. (Behavior is different in the two cases -- you either get
+   Generate output from a format-spec (either a Lisp string FORMAT_RELOC, or a
+   C string FORMAT_NONRELOC of length FORMAT_LENGTH -- which *MUST NOT* come
+   from Lisp string data, unless GC is inhibited).  Output goes to STREAM.
+   Returns the number of bytes stored into STREAM.  Arguments are either
+   C-type arguments in va_list VARGS, or an array of Lisp objects in LARGS of
+   size NARGS. (Behavior is different in the two cases -- you either get
    standard sprintf() behavior or `format' behavior.) */
 
 static Bytecount
 emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		Bytecount format_length, Lisp_Object format_reloc,
-		int nargs, const Lisp_Object *largs, va_list vargs)
+		int nargs, Lisp_Object *largs, va_list vargs)
 {
   printf_spec_dynarr *specs = 0;
   printf_arg_dynarr *args = 0;
   REGISTER int i;
-  int init_byte_count = Lstream_byte_count (XLSTREAM (stream));
+  Bytecount byte_count = 0;
   int count;
 
   if (!NILP (format_reloc))
@@ -1239,13 +1398,36 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 
   if (largs)
     {
+      int args_needed = get_args_needed (specs);
       /* allow too many args for string, but not too few */
-      if (nargs < get_args_needed (specs))
-	signal_error_1 (Qwrong_number_of_arguments,
-			list3 (Qformat,
-			       make_fixnum (nargs),
-			       !NILP (format_reloc) ? format_reloc :
-			       make_string (format_nonreloc, format_length)));
+      if (nargs < args_needed)
+        {
+          signal_error_1 (Qwrong_number_of_arguments,
+                          list3 (Qformat,
+                                 make_fixnum (nargs),
+                                 !NILP (format_reloc) ? format_reloc :
+                                 make_string (format_nonreloc,
+                                              format_length)));
+        }
+#ifdef DEBUG_XEMACS
+      else if (nargs > args_needed)
+        {
+          Lisp_Object argz[] = { build_ascstring ("Format string \""),
+                                 !NILP (format_reloc) ? format_reloc :
+                                 make_string (format_nonreloc,
+                                              format_length),
+                                 build_ascstring ("\" takes "),
+                                 Fnumber_to_string (make_fixnum (args_needed)),
+                                 build_ascstring (" arguments, "),
+                                 Fnumber_to_string (make_fixnum (nargs)),
+                                 build_ascstring (" supplied.") };
+          /* Don't use warn_when_safe, since that ultimately calls
+             emacs_doprnt_1(). */
+          warn_when_safe_lispobj (Qformat, Qinfo,
+                                  concatenate (countof (argz), argz, Qstring,
+                                               0));
+        }
+#endif
     }
   else
     {
@@ -1256,7 +1438,9 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
   for (i = 0; i < Dynarr_length (specs); i++)
     {
       struct printf_spec *spec = Dynarr_atp (specs, i);
-      char ch;
+      union printf_arg arg;
+      Ascbyte ch;
+      Lisp_Object obj = Qnil;
 
       /* Copy the text before */
       if (!NILP (format_reloc)) /* refetch in case of GC below */
@@ -1264,475 +1448,978 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
           format_nonreloc = XSTRING_DATA (format_reloc);
         }
 
-      doprnt_2 (stream, format_nonreloc, format_reloc, spec->text_before,
-                spec->text_before_len, NULL, Qnil);
-
+      byte_count += doprnt_2 (stream, format_nonreloc, format_reloc,
+                              spec->text_before, spec->text_before_len, NULL,
+                              Qnil);
       ch = spec->converter;
 
-      if (!ch)
-	continue;
-
-      if (ch == '%')
-	{
-          Ibyte chbuf[MAX_ICHAR_LEN];
-          /* No field widths, no precisions, take any extents from the format
-             string.  */
-          doprnt_2 (stream, format_nonreloc, format_reloc,
-                    spec->text_before + spec->text_before_len,
-                    set_itext_ichar (chbuf, '%'), NULL, Qnil);
-	  continue;
-	}
-
-      /* The char '*' as converter means the field width, precision
-         was specified as an argument.  Extract the data and forward
-         it to the next spec, to which it will apply.  */
-      if (ch == '*')
-	{
-	  struct printf_spec *nextspec = Dynarr_atp (specs, i + 1);
-	  Lisp_Object obj = largs[spec->argnum - 1];
-
-          /* No bignums or random Lisp objects, thanks, and restrict range as
-             appropriate for a charcount. */
-          check_integer_range (obj,
-                               make_fixnum (MOST_NEGATIVE_FIXNUM /
-                                            MAX_ICHAR_LEN),
-                               make_fixnum (MOST_POSITIVE_FIXNUM /
-                                            MAX_ICHAR_LEN));
-          if (spec->forwarding_precisionp)
-            {
-              nextspec->precision = XREALFIXNUM (obj);
-              nextspec->minwidth = spec->minwidth;
-            }
-          else
-            {
-              nextspec->minwidth = XREALFIXNUM (obj);
-              if (XREALFIXNUM (obj) < 0)
-                {
-                  spec->left_justify = 1;
-                  nextspec->minwidth = - nextspec->minwidth;
-                }
-            }
-          nextspec->left_justify = spec->left_justify;
-          nextspec->sign_flag = spec->sign_flag;
-          nextspec->number_flag = spec->number_flag;
-          nextspec->zero_flag = spec->zero_flag;
-	  continue;
-	}
-
-      if (largs && (spec->argnum < 1 || spec->argnum > nargs))
-	syntax_error ("Invalid repositioning argument",
-		      make_fixnum (spec->argnum));
-
-      else if (ch == 's')
-	{
-	  Ibyte *string;
-	  Bytecount string_len;
-          Lisp_Object ls = Qnil;
-
-	  if (!largs)
-	    {
-	      string = Dynarr_at (args, spec->argnum - 1).bp;
-              text_checking_assert (string != NULL);
-	      string_len = qxestrlen (string);
-	    }
-	  else
-	    {
-	      Lisp_Object obj = largs[spec->argnum - 1];
-
-	      if (STRINGP (obj))
-		ls = obj;
-	      else if (SYMBOLP (obj))
-		ls = XSYMBOL (obj)->name;
-	      else
-		{
-		  /* convert to string using princ. */
-		  ls = prin1_to_string (obj, 1);
-		}
-	      string = XSTRING_DATA (ls);
-	      string_len = XSTRING_LENGTH (ls);
-	    }
-
-	  doprnt_2 (stream, string, ls, 0, string_len, spec, format_reloc);
-	}
-      else if (ch == 'S')
+      /* These are organised roughly in decreasing order of frequency. */ 
+    reconsider:
+      switch (ch)
         {
-          Lisp_Object obj = Qnil;
+        case 0:
+          {
+            /* This is the trailing spec, just present so the text_before gets
+               output, above.  */
+            text_checking_assert (i + 1 == Dynarr_length (specs));
+            continue;
+          }
+        case 's':
+          {
+            /* String, or some other Lisp object to be printed using
+               #'princ. */
+            Ibyte *string;
+            Bytecount string_len;
+            Lisp_Object ls = Qnil;
+            struct gcpro gcpro1;
 
-          if (largs == NULL)
-            {
-              signal_error (Qunimplemented,
-                            "can't handle %S format with non Lisp arguments",
-                            NILP (format_reloc) ?
-                            make_string (format_nonreloc,
-                                         format_length) :
-                            format_reloc);
-            }
-          else
-            {
-              /* For `S', prin1 the argument and then treat like a string.  */
-	      obj = prin1_to_string (largs[spec->argnum - 1], 0);
-            }
-          
-	  doprnt_2 (stream, NULL, obj, 0, XSTRING_LENGTH (obj), spec,
-                    format_reloc);
-        }
-      else if (ch == 'c')
-        {
-          Ibyte charbuf[MAX_ICHAR_LEN];
-          Ichar a = CHAR_CODE_LIMIT; /* Not a valid ichar. */
-          Lisp_Object obj = Qnil;
+            if (!largs)
+              {
+                string = Dynarr_at (args, spec->argnum - 1).bp;
+                text_checking_assert (string != NULL);
+                string_len = qxestrlen (string);
+              }
+            else
+              {
+                obj = largs[spec->argnum - 1];
 
-	  if (!largs)
-	    {
-	      a = (Ichar) Dynarr_at (args, spec->argnum - 1).l;
-              obj = make_fixnum (a);
-            }
-          else
-            {
-              obj = largs[spec->argnum - 1];
-            }
+                if (STRINGP (obj))
+                  ls = obj;
+                else if (SYMBOLP (obj))
+                  ls = XSYMBOL (obj)->name;
+                else
+                  {
+                    /* Convert to string using princ. */
+                    ls = prin1_to_string (obj, 1);
+                  }
+                string = XSTRING_DATA (ls);
+                string_len = XSTRING_LENGTH (ls);
+              }
 
-          if (CHARP (obj))
-            {
-              a = XCHAR (obj);
-            }
-          else
-            {
-              if (FIXNUMP (obj))
-                {
-                  a = XREALFIXNUM (obj);
-                }
+            GCPRO1 (ls);
+            doprnt_2 (stream, string, ls, 0, string_len, spec, format_reloc);
+            UNGCPRO;
+            continue;
+          }
+        case 'd':
+          {
+            /* Decimal fixnum. */
+            Ibyte to_print[DECIMAL_PRINT_SIZE (EMACS_INT) * MAX_ICHAR_LEN
+                           + MAX_ICHAR_LEN + 1], *cursor = to_print;
+            Bytecount len;
+            EMACS_INT val;
 
-              if (!valid_ichar_p (a))
-                {
-                  syntax_error ("Invalid value for %c spec", obj);
-                }
-            }
+            FIXNUM_SPEC_PREAMBLE();
+            
+            spec->number_flag = NUMBER_FLAG_NOTHING;
 
-          if (spec->precision != -1)
-            {
-              syntax_error ("Precision nonsensical for %c",
+            len = fixnum_to_string_base_10 (to_print, sizeof (to_print),
+                                            val, Vfixnum_to_majuscule_map);
+
+            if (val < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor);
+                len -= ichar_itext_len ('-');
+                
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, len, spec,
+                                    format_reloc);
+            continue;
+          }
+        case 'i':
+          {
+            /* Decimal fixnum. Deletion pending, since it's equivalent to 'd',
+               but kept here to allow access to long_to_string () for
+               comparative testing.  */
+            Ibyte to_print[DECIMAL_PRINT_SIZE (EMACS_INT) * MAX_ICHAR_LEN
+                           + MAX_ICHAR_LEN + 1], *cursor = to_print;
+            Bytecount len;
+            EMACS_INT val;
+
+            FIXNUM_SPEC_PREAMBLE();
+            
+            spec->number_flag = NUMBER_FLAG_NOTHING;
+
+            len = long_to_string (to_print, val);
+
+            if (val < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor);
+                len -= ichar_itext_len ('-');
+                
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, len, spec,
+                                    format_reloc);
+            continue;
+          }
+        case 'c':
+          {
+            /* Character. Accept fixnum arguments, but not other numbers. */
+            Ibyte charbuf[MAX_ICHAR_LEN];
+            Ichar a = CHAR_CODE_LIMIT; /* Not a valid ichar. */
+
+            if (!largs)
+              {
+                a = (Ichar) Dynarr_at (args, spec->argnum - 1).l;
+                obj = make_fixnum (a);
+              }
+            else
+              {
+                obj = largs[spec->argnum - 1];
+              }
+
+            if (CHARP (obj))
+              {
+                a = XCHAR (obj);
+              }
+            else if (FIXNUMP (obj))
+              {
+                a = XREALFIXNUM (obj);
+                if (!valid_ichar_p (a))
+                  {
+                    syntax_error ("Invalid integer value for %c spec", obj);
+                  }
+              }
+            else
+              {
+                syntax_error ("Value doesn't match char specifier", obj);
+              }
+
+            if (spec->precision != -1)
+              {
+                syntax_error ("Precision nonsensical for %c",
                             NILP (format_reloc) ?
                             make_string (format_nonreloc, format_length) :
                             format_reloc);
             }
 
-          /* XEmacs; don't attempt (badly) to handle floats, bignums or ratios
-             when 'c' is specified, error instead, "Format specifier doesn't
-             match arg type". */
-          doprnt_2 (stream, charbuf, Qnil, 0, set_itext_ichar (charbuf, a),
-                    spec, format_reloc);
-        }
-      else
-	{
-	  /* Must be a number or character. */
-	  union printf_arg arg;
+            /* XEmacs; don't attempt (badly) to handle floats, bignums or
+               ratios when 'c' is specified, error instead, "Format specifier
+               doesn't match arg type". */
+            byte_count += doprnt_2 (stream, charbuf, Qnil, 0,
+                                    set_itext_ichar (charbuf, a),
+                                    spec, format_reloc);
+            continue;
+          }
+        case 'S':
+          {
+	    /* Print the argument as a Lisp object using #'prin1. */
+            struct gcpro gcpro1;
 
-	  if (!largs)
-	    {
-	      arg = Dynarr_at (args, spec->argnum - 1);
-	    }
-	  else
-	    {
-	      Lisp_Object obj = largs[spec->argnum - 1];
+            if (!largs)
+              {
+                obj = Dynarr_at (args, spec->argnum - 1).obj;
+              }
+            else
+              {
+                obj = largs[spec->argnum - 1];
+              }
 
-              if (ch == 'u')
-                {
-                  ch = 'd';
-                }
+            obj = prin1_to_string (obj, 0);
 
-	      if (strchr (double_converters, ch))
-		{
-                  /* Don't accept a character argument for a float format
-                     spec. */
-		  if (FIXNUMP (obj))
-		    arg.d = XFIXNUM (obj);
-		  else if (FLOATP (obj))
-		    arg.d = XFLOAT_DATA (obj);
+            GCPRO1 (obj);
+            byte_count += doprnt_2 (stream, NULL, obj, 0, XSTRING_LENGTH (obj),
+                                    spec, format_reloc);
+            UNGCPRO;
+            continue;
+          }
+        case 'x':
+        case 'X':
+          {
+            /* Hexadecimal fixnum. */
+            Ibyte to_print[SIZEOF_EMACS_INT * 2 * MAX_ICHAR_LEN
+                           + MAX_ICHAR_LEN + 1];
+            Ibyte *end = to_print + sizeof (to_print), *cursor;
+            Bytecount len;
+            EMACS_INT val;
+ 
+            FIXNUM_SPEC_PREAMBLE();
+
+            len = fixnum_to_string_rshift_1 (to_print, sizeof (to_print),
+                                             val, 4,
+                                             ch == 'X' ?
+                                             Vfixnum_to_majuscule_map
+                                             : Vfixnum_to_minuscule_map);
+            cursor = end - len;
+            if (val < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+            else if (NUMBER_FLAG_C_LIKEP (spec->number_flag) && val == 0)
+              {
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
+            continue;
+          }
+        case 'o':
+          {
+            /* Octal fixnum. */
+            Ibyte to_print[SIZEOF_EMACS_INT * 3 * MAX_ICHAR_LEN + 1];
+            Ibyte *end = to_print + sizeof (to_print), *cursor;
+            Bytecount len;
+            EMACS_INT val;
+
+            FIXNUM_SPEC_PREAMBLE();
+
+            len = fixnum_to_string_rshift_1 (to_print, sizeof (to_print),
+                                             val, 3, Vfixnum_to_majuscule_map);
+            cursor = end - len;
+
+            if (val < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+
+            if (NUMBER_FLAG_C_LIKEP (spec->number_flag))
+              {
+                if (val != 0)
+                  {
+                    /* Note, ASCII zero, not the current
+                       Vfixnum_to_majuscule_map value for zero. */
+                    *--cursor = '0';
+                  }
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+
+            byte_count += doprnt_2 (stream, (const Ibyte *)cursor, Qnil,
+                                    0, end - cursor, spec, format_reloc);
+            continue;
+          }
+        case 'f':
+        case 'e':
+        case 'E':
+        case 'g':
+        case 'G':
+          {
+            /* Printing floats; fall through to the C library's support,
+               construct a spec to pass to snprintf().
+
+               The size Length of this spec plus sufficient size to print two
+               EMACS_INTS, needed if the minwidth and precision were supplied
+               using repositioning specs. */
+            Ascbyte constructed_spec[spec->spec_length + 
+                                     DECIMAL_PRINT_SIZE (EMACS_INT) +
+                                     DECIMAL_PRINT_SIZE (EMACS_INT) + 1];
+            Ascbyte *p = constructed_spec, *text_to_print;
+
+            /* See comment at float_to_string (). This is unsigned because
+               otherwise the compiler defeats our overflow trapping
+               below when optimizing. */
+            EMACS_UINT alloca_sz = 350; 
+            Bytecount text_to_print_length;
+
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+                if (FLOATP (obj))
+                  {
+                    arg.d = XFLOAT_DATA (obj);
+                  }
+                else if (!UNBOUNDP (obj)) /* If it's Qunbound, it's already
+                                             rewritten, use arg.d */
+                  {
+                    ch = rewrite_floating_spec (spec, &arg,
+                                                largs + spec->argnum - 1);
+                    goto reconsider;
+                  }
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+              }
+
+            if ((alloca_sz += max (0, spec->minwidth) * MAX_ICHAR_LEN,
+                 (Bytecount) alloca_sz < 350) ||
+                (alloca_sz += max (0, spec->precision) * MAX_ICHAR_LEN,
+                 (Bytecount) alloca_sz < 350))
+              {
+                signal_error (Qunimplemented,
+                              "can't handle sum of minwidth and precision",
+                              NILP (format_reloc) ?
+                              make_string (format_nonreloc,
+                                           format_length) : format_reloc);
+              }
+
+            /* We won't blow the stack, see ALLOCA() in lisp.h. */
+            text_to_print = alloca_ascbytes ((Bytecount) alloca_sz);
+
+            /* Mostly reconstruct the spec and use snprintf() to format
+               the string. */
+            *p++ = '%';
+            switch (spec->sign_flag)
+              {
+              case SIGN_FLAG_SPACE:
+                *p++ = ' ';
+                break;
+              case SIGN_FLAG_PLUS:
+                *p++ = '+';
+                break;
+              case SIGN_FLAG_MINUS:
+                text_checking_assert (0);
+              case SIGN_FLAG_NOTHING:
+                break;
+              }
+            if (spec->number_flag == NUMBER_FLAG_C_SYNTAX) *p++ = '#';
+            if (spec->left_justify) *p++ = '-';
+            if (spec->zero_flag) *p++ = '0';
+
+            if (spec->minwidth >= 0)
+              {
+                p += long_to_string (p, spec->minwidth);
+              }
+            if (spec->precision >= 0)
+              {
+                *p++ = '.';
+                p += long_to_string (p, spec->precision);
+              }
+            *p++ = ch;
+            *p++ = '\0';
+            text_checking_assert ((p - constructed_spec)
+                                  < (signed) (sizeof (constructed_spec)));
+
+            text_to_print_length = snprintf (text_to_print, alloca_sz,
+                                             constructed_spec, arg.d);
+            text_checking_assert (text_to_print_length
+                                  < (Bytecount) alloca_sz);
+
+            if (!NILP (format_reloc))
+              {
+                struct printf_spec minimal_spec;
+                bzero (&minimal_spec, sizeof (minimal_spec));
+                minimal_spec.precision = -1;
+                minimal_spec.spec_length = spec->spec_length;
+                minimal_spec.text_before = spec->text_before;
+                minimal_spec.text_before_len = spec->text_before_len;
+
+                byte_count += doprnt_2 (stream, (Ibyte *) text_to_print,
+                                        Qnil, 0, text_to_print_length,
+                                        &minimal_spec, format_reloc);
+              }
+            else
+              {
+                byte_count += doprnt_2 (stream, (Ibyte *) text_to_print,
+                                        Qnil, 0, text_to_print_length,
+                                        NULL, format_reloc);
+              }
+            continue;
+          }
+        case '%':
+          {
+            Ibyte chbuf[MAX_ICHAR_LEN];
+            /* No field widths, no precisions, take any extents from the
+               format string.  */
+            byte_count += doprnt_2 (stream, format_nonreloc, format_reloc,
+                                    spec->text_before + spec->text_before_len,
+                                    set_itext_ichar (chbuf, '%'), NULL, Qnil);
+            continue;
+          }
+        case '*':
+          {
+            /* The char '*' as converter means the field width, precision was
+               specified as an argument.  Extract the data and forward it to
+               the next spec, to which it will apply.  */
+            struct printf_spec *nextspec = Dynarr_atp (specs, i + 1);
+            obj = largs[spec->argnum - 1];
+
+            /* No bignums or random Lisp objects, thanks, and restrict range
+               as appropriate for a charcount. */
+            check_integer_range (obj,
+                                 make_fixnum (MOST_NEGATIVE_FIXNUM /
+                                              MAX_ICHAR_LEN),
+                                 make_fixnum (MOST_POSITIVE_FIXNUM /
+                                              MAX_ICHAR_LEN));
+            if (spec->forwarding_precisionp)
+              {
+                nextspec->precision = XREALFIXNUM (obj);
+                nextspec->minwidth = spec->minwidth;
+              }
+            else
+              {
+                nextspec->minwidth = XREALFIXNUM (obj);
+                if (XREALFIXNUM (obj) < 0)
+                  {
+                    spec->left_justify = 1;
+                    nextspec->minwidth = - nextspec->minwidth;
+                  }
+              }
+            nextspec->left_justify = spec->left_justify;
+            nextspec->sign_flag = spec->sign_flag;
+            nextspec->number_flag = spec->number_flag;
+            nextspec->zero_flag = spec->zero_flag;
+            continue;
+          }
+        case 'b':
+          {
+            /* Binary fixnum. */
+            Ibyte to_print[SIZEOF_EMACS_INT * 8 * MAX_ICHAR_LEN + 1];
+            Ibyte *end = to_print + sizeof (to_print), *cursor;
+            Bytecount len;
+            EMACS_INT val;
+
+            FIXNUM_SPEC_PREAMBLE();
+
+            if (NUMBER_FLAG_C_LIKEP (spec->number_flag))
+              {
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+
+            len = fixnum_to_string_rshift_1 (to_print, sizeof (to_print),
+                                             val, 1, Vfixnum_to_majuscule_map);
+            cursor = end - len;
+
+            if (val < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil,
+                                    0, end - cursor, spec, format_reloc);
+            continue;
+          }
+        case 'u':
+          {
+            /* Unsigned long. Fixnums are treated as if they don't have tag
+               bits. */
+            Ibyte to_print[SIZEOF_EMACS_INT * 2 * MAX_ICHAR_LEN
+                           + MAX_ICHAR_LEN + 1];
+            Ibyte *cursor;
+            Bytecount len;
+
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+
 #ifdef HAVE_BIGNUM
-		  else if (BIGNUMP (obj))
-		    arg.d = bignum_to_double (XBIGNUM_DATA (obj));
+                text_checking_assert (!BIGNUMP (obj));
 #endif
-#ifdef HAVE_RATIO
-		  else if (RATIOP (obj))
-		    arg.d = ratio_to_double (XRATIO_DATA (obj));
-#endif
-#ifdef HAVE_BIGFLOAT
-		  else if (BIGFLOATP (obj))
-		    {
-		      arg.obj = obj;
-		      switch (ch)
-			{
-			case 'f': ch = 'F'; break;
-			case 'e': ch = 'h'; break;
-			case 'E': ch = 'H'; break;
-			case 'g': ch = 'k'; break;
-			case 'G': ch = 'K'; break;
-			}
-		    }
-#endif
-		}
-	      else
-		{
-                  if (CHARP (obj))
-                    {
-                      /* Do accept a character argument for an integer format
-                         spec. */
-                      obj = make_fixnum (XCHAR (obj));
-                    }
-                  else if (FLOATP (obj))
-                    {
-                      obj = IGNORE_MULTIPLE_VALUES (Ftruncate (obj, Qnil));
-                    }
-#ifdef HAVE_BIGFLOAT
-		  else if (BIGFLOATP (obj))
-		    {
+                if (FIXNUMP (obj))
+                  {
 #ifdef HAVE_BIGNUM
-		      bignum_set_bigfloat (scratch_bignum,
-					   XBIGFLOAT_DATA (obj));
-		      if (strchr (base_converters, ch) &&
-			  bignum_sign (scratch_bignum) < 0)
-			dead_wrong_type_argument (Qnonnegativep, obj);
-		      obj =
-			Fcanonicalize_number (make_bignum_bg (scratch_bignum));
-#else /* !HAVE_BIGNUM */
-		      obj = make_fixnum (bigfloat_to_long (XBIGFLOAT_DATA (obj)));
+                    /* #### Can't we make a better design decision here? */
+                    if (XFIXNUM (obj) < 0)
+                      {
+                        dead_wrong_type_argument (Qnatnump, obj);
+                      }
+#endif
+                    arg.ul = XUINT (obj);
+                  }
+                else
+                  {
+                    dead_wrong_type_argument (Qintegerp, obj);
+                  }
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+              }
+
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
+
+            /* Don't bother implementing unsigned_f_to_s_base_10, print the
+               high-order digits and the lowest-order digit separately
+               instead.  */
+            len = fixnum_to_string_base_10 (to_print, sizeof (to_print),
+                                            arg.ul / 10,
+                                            Vfixnum_to_majuscule_map);
+            cursor = to_print + len;
+            if (arg.ul)
+              {
+                len
+                  += itext_copy_ichar (XSTRING_DATA (Vfixnum_to_majuscule_map)
+                                       + ((arg.ul % 10) * MAX_ICHAR_LEN),
+                                       cursor);
+              }
+            byte_count += doprnt_2 (stream, to_print, Qnil, 0, len, spec,
+                                    format_reloc);
+            continue;
+          }
+        case 'p':
+          {
+            /* "Pointer". Print as a hex-format EMACS_UINT preceded by 0x. */
+            Ibyte to_print[SIZEOF_EMACS_INT * 2 * MAX_ICHAR_LEN
+                           + MAX_ICHAR_LEN + 1];
+            Ibyte *end = to_print + sizeof (to_print), *cursor;
+            Bytecount len;
+
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+
+#ifdef HAVE_BIGNUM
+                if (BIGNUMP (obj))
+                  {
+                    arg.ul = bignum_to_emacs_int (XBIGNUM_DATA (obj));
+                  }
+                else
+#endif
+                if (FIXNUMP (obj))
+                  {
+                    arg.ul = XUINT (obj);
+                  }
+                else
+                  {
+                    dead_wrong_type_argument (Qintegerp, obj);
+                  }
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+              }
+
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
+
+            spec->number_flag = NUMBER_FLAG_C_SYNTAX;
+            spec->converter = 'x';
+            len = emacs_uint_to_string_rshift_1 (to_print, sizeof (to_print),
+                                                 arg.ul, 4,
+                                                 Vfixnum_to_minuscule_map);
+            cursor = end - len;
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
+            continue;
+          }
+#ifdef HAVE_BIGNUM
+        case 'n': /* Decimal bignum. */
+          {
+            Ibyte *to_print, *cursor, *end;
+            Bytecount len, size;
+
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+                text_checking_assert (BIGNUMP (obj));
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+                obj = arg.obj;
+              }
+
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
+
+            size = bignum_size_decimal (XBIGNUM_DATA (obj));
+            to_print = alloca_ibytes (size);
+            end = to_print + size; 
+
+            spec->number_flag = NUMBER_FLAG_NOTHING;
+
+            len = bignum_to_string_1 (&to_print, &size, XBIGNUM_DATA (obj),
+                                      10, Vfixnum_to_majuscule_map);
+            cursor = end - len;
+
+            if (bignum_sign (XBIGNUM_DATA (obj)) < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
+            continue;
+          }
+        case 'P': /* Octal bignum. */
+          {
+            Ibyte *to_print, *cursor, *end;
+            Bytecount len, size;
+            int signum;
+
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+                text_checking_assert (BIGNUMP (obj));
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+                obj = arg.obj;
+              }
+
+            signum = bignum_sign (XBIGNUM_DATA (obj));
+
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
+
+            size = bignum_size_octal (XBIGNUM_DATA (obj));
+            to_print = alloca_ibytes (size);
+            end = to_print + size; 
+
+            len = bignum_to_string_1 (&to_print, &size, XBIGNUM_DATA (obj),
+                                      8, Vfixnum_to_majuscule_map);
+            cursor = end - len;
+
+            if (signum < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+
+            if (NUMBER_FLAG_C_LIKEP (spec->number_flag))
+              {
+                if (signum == 0)
+                  {
+                    /* Note, ASCII zero, not the current
+                       Vfixnum_to_majuscule_map value for zero. */
+                    *--cursor = '0';
+                  }
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
+            continue;
+          }
+        case 'B': /* Base 2 bignum. */
+          {
+            Ibyte *to_print, *cursor, *end;
+            Bytecount len, size;
+
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+                text_checking_assert (BIGNUMP (obj));
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+                obj = arg.obj;
+              }
+
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
+
+            size = bignum_size_binary (XBIGNUM_DATA (obj));
+            to_print = alloca_ibytes (size);
+            end = to_print + size; 
+
+            if (NUMBER_FLAG_C_LIKEP (spec->number_flag))
+              {
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+
+            len = bignum_to_string_1 (&to_print, &size, XBIGNUM_DATA (obj),
+                                      8, Vfixnum_to_majuscule_map);
+            cursor = end - len;
+
+            if (bignum_sign (XBIGNUM_DATA (obj)) < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
+            continue;
+          }
+        case 'y':
+        case 'Y': /* Hex bignum */
+          {
+            Ibyte *to_print, *cursor, *end;
+            Bytecount len, size;
+            int signum;
+
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+                text_checking_assert (BIGNUMP (obj));
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+                obj = arg.obj;
+              }
+
+            signum = bignum_sign (XBIGNUM_DATA (obj));
+
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
+
+            size = bignum_size_hex (XBIGNUM_DATA (obj));
+            to_print = alloca_ibytes (size);
+            end = to_print + size; 
+
+            len = bignum_to_string_1 (&to_print, &size, XBIGNUM_DATA (obj),
+                                      16, ch == 'X' ? Vfixnum_to_majuscule_map
+                                      : Vfixnum_to_minuscule_map);
+            cursor = end - len;
+
+            if (signum < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+            else if (NUMBER_FLAG_C_LIKEP (spec->number_flag) && signum == 0)
+              {
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+
+            byte_count += doprnt_2 (stream, (const Ibyte *) cursor, Qnil,
+                                    0, end - cursor, spec, format_reloc);
+            continue;
+          }
 #endif /* HAVE_BIGNUM */
-		    }
-#endif /* HAVE_BIGFLOAT */
 #ifdef HAVE_RATIO
-		  else if (RATIOP (obj))
-		    {
-		      arg.obj = obj;
-		      switch (ch)
-			{
-			case 'i': case 'd': ch = 'n'; break;
-			case 'o': ch = 'p'; break;
-			case 'x': ch = 'y'; break;
-			case 'X': ch = 'Y'; break;
-                        case 'b': ch = '\337'; break;
-			default: /* ch == 'u' */
-			  if (strchr (base_converters, ch) &&
-			      ratio_sign (XRATIO_DATA (obj)) < 0)
-			    dead_wrong_type_argument (Qnonnegativep, obj);
-			  else
-			    ch = 'n';
-			}
-		    }
-#endif
-#ifdef HAVE_BIGNUM
-		  if (BIGNUMP (obj))
-		    {
-		      arg.obj = obj;
-		      switch (ch)
-			{
-			case 'i': case 'd': ch = 'n'; break;
-			case 'o': ch = 'p'; break;
-			case 'x': ch = 'y'; break;
-			case 'X': ch = 'Y'; break;
-                        case 'b': ch = '\337'; break;
-			default: /* ch == 'u' */
-			  if (strchr (base_converters, ch) &&
-			      bignum_sign (XBIGNUM_DATA (obj)) < 0)
-			    dead_wrong_type_argument (Qnatnump, obj);
-			  else
-			    ch = 'n';
-			}
-		    }
-#endif
-		  if (FIXNUMP (obj))
-		    {
-		      if (strchr (base_converters, ch))
-			{
-#ifdef HAVE_BIGNUM
-			  if (XFIXNUM (obj) < 0)
-			    dead_wrong_type_argument (Qnatnump, obj);
-#endif
-			  arg.ul = (unsigned long) XUINT (obj);
-			}
-		      else
-			arg.l = XFIXNUM (obj);
-		    }
+        case 'm': /* Decimal ratio. */
+          {
+            Ibyte *to_print, *cursor, *end;
+            Bytecount len, size;
+            
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+                text_checking_assert (RATIOP (obj));
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+                obj = arg.obj;
+              }
 
-		}
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
 
+            size = ratio_size_in_base (XRATIO_DATA (obj), 10);
+            to_print = alloca_ibytes (size);
+            end = to_print + size; 
 
-	      if (!NUMBERP (obj))
-		{
-                  syntax_error_2 ("Format specifier doesn't match arg type",
-                                  make_char (ch), obj);
-		}
-            }
+            spec->number_flag = NUMBER_FLAG_NOTHING;
 
-	  if (strchr (int_converters, ch))
-            {
-              Ibyte buf[DECIMAL_PRINT_SIZE (EMACS_INT) + MAX_ICHAR_LEN];
-              Ibyte *ptr = buf;
+            len = ratio_to_string_1 (&to_print, size, XRATIO_DATA (obj),
+                                      10, Vfixnum_to_majuscule_map);
+            cursor = end - len;
 
-              if (arg.l > -1)
-                {
-                  if (SIGN_FLAG_PLUS == spec->sign_flag)
-                    {
-                      ptr += set_itext_ichar (buf, '+');
-                    }
-                  else if (SIGN_FLAG_SPACE == spec->sign_flag)
-                    {
-                      ptr += set_itext_ichar (buf, ' ');
-                    }
-                }
-              
-              doprnt_2 (stream, buf, Qnil, 0,
-                        (ptr + long_to_string ((Ascbyte *) ptr, arg.l)) - buf,
-                        spec, format_reloc);
-            }
-          else if (ch == 'b')
-            {
-              Ascbyte *text_to_print = alloca_array (char, SIZEOF_LONG * 8 + 1);
-              
-              ulong_to_bit_string (text_to_print, arg.ul);
-              doprnt_2 (stream, (const Ibyte *) text_to_print, Qnil,
-                        0, strlen (text_to_print), spec, format_reloc);
-            }
-#if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
-	  else if (strchr (bignum_converters, ch))
-	    {
-              int base = 16;
-              
-              if (ch == 'n')
-                base = 10;
-              else if (ch == 'p')
-                base = 8;
-              else if (ch == '\337')
-                base = 2;
+            if (ratio_sign (XRATIO_DATA (obj)) < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
 
-#ifdef HAVE_BIGNUM
-	      if (BIGNUMP (arg.obj))
-		{
-                  Ibyte *text_to_print;
-                  Bytecount size, len;
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
+            continue;
+          }
+        case 'Q': /* Octal ratio. */
+          {
+            Ibyte *to_print, *cursor, *end;
+            Bytecount len, size;
+            int signum;
 
-#ifdef bignum_size_decimal
-                  size = bignum_size_decimal (XBIGNUM_DATA (arg.obj));
-                  text_to_print = alloca_ibytes (size);
-#else
-                  size = -1;
-                  text_to_print = NULL;
-#endif
-                  len = bignum_to_string (&text_to_print, size,
-                                          XBIGNUM_DATA (arg.obj), base, 0);
-                  doprnt_2 (stream, text_to_print, Qnil, 0, len, spec,
-                            format_reloc);
-#ifndef bignum_size_decimal
-                  xfree (text_to_print);
-#endif
-		}
-#endif
-#ifdef HAVE_RATIO
-	      if (RATIOP (arg.obj))
-		{
-                  Bytecount size = ratio_size_in_base (XRATIO_DATA (arg.obj),
-                                                       base);
-                  Ibyte *text_to_print = alloca_ibytes (size);
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+                text_checking_assert (RATIOP (obj));
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+                obj = arg.obj;
+              }
 
-                  doprnt_2 (stream, text_to_print, Qnil,
-                            0, ratio_to_string (&text_to_print, size,
-                                                XRATIO_DATA (arg.obj), base,
-                                                0), spec, format_reloc);
-		}
-#endif
-	    }
-#endif /* HAVE_BIGNUM || HAVE_RATIO */
+            signum = ratio_sign (XRATIO_DATA (obj));
+
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
+
+            size = ratio_size_in_base (XRATIO_DATA (obj), 8);
+            to_print = alloca_ibytes (size);
+            end = to_print + size; 
+
+            len = ratio_to_string_1 (&to_print, size, XRATIO_DATA (obj),
+                                      8, Vfixnum_to_majuscule_map);
+            cursor = end - len;
+
+            if (signum < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+
+            if (NUMBER_FLAG_C_LIKEP (spec->number_flag))
+              {
+                if (signum == 0)
+                  {
+                    /* Note, ASCII zero, not the current
+                       Vfixnum_to_majuscule_map value for zero. */
+                    *--cursor = '0';
+                  }
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
+            continue;
+          }
+        case 'W': /* Base 2 ratio. */
+          {
+            Ibyte *to_print, *cursor, *end;
+            Bytecount len, size;
+
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+                text_checking_assert (RATIOP (obj));
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+                obj = arg.obj;
+              }
+
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
+
+            size = ratio_size_in_base (XRATIO_DATA (obj), 2);
+            to_print = alloca_ibytes (size);
+            end = to_print + size; 
+
+            if (NUMBER_FLAG_C_LIKEP (spec->number_flag))
+              {
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+
+            len = ratio_to_string_1 (&to_print, size, XRATIO_DATA (obj),
+                                      8, Vfixnum_to_majuscule_map);
+            cursor = end - len;
+
+            if (ratio_sign (XRATIO_DATA (obj)) < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
+            continue;
+          }
+        case 'v':
+        case 'V': /* Hex ratio */
+          {
+            Ibyte *to_print, *cursor, *end;
+            Bytecount len, size;
+            int signum;
+
+            if (largs)
+              {
+                obj = largs[spec->argnum - 1];
+                text_checking_assert (RATIOP (obj));
+              }
+            else
+              {
+                arg = Dynarr_at (args, spec->argnum - 1);
+                obj = arg.obj;
+              }
+
+            signum = ratio_sign (XRATIO_DATA (obj));
+
+            if (spec->precision > -1)
+              {
+                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
+                spec->zero_flag = 0;
+              }
+
+            size = ratio_size_in_base (XRATIO_DATA (obj), 16);
+            to_print = alloca_ibytes (size);
+            end = to_print + size; 
+
+            len = ratio_to_string_1 (&to_print, size, XRATIO_DATA (obj),
+                                      16, ch == 'X' ? Vfixnum_to_majuscule_map
+                                      : Vfixnum_to_minuscule_map);
+            cursor = end - len;
+
+            if (signum < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                /* Go forward past the minus. */
+                INC_IBYTEPTR (cursor); 
+              }
+            else if (NUMBER_FLAG_C_LIKEP (spec->number_flag) && signum == 0)
+              {
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+
+            byte_count += doprnt_2 (stream, (const Ibyte *) cursor, Qnil,
+                                    0, end - cursor, spec, format_reloc);
+            continue;
+          }
+#endif /* HAVE_RATIO */
 #ifdef HAVE_BIGFLOAT
-	  else if (strchr (bigfloat_converters, ch))
-	    {
-	      Ibyte *text_to_print =
-		(Ibyte *) bigfloat_to_string (XBIGFLOAT_DATA (arg.obj), 10);
-	      doprnt_2 (stream, text_to_print, Qnil,
-			0, qxestrlen (text_to_print), spec, format_reloc);
-	      xfree (text_to_print);
-	    }
+        case 'F':
+        case 'h':
+        case 'H':
+        case 'k':
+        case 'K':
+          {
+            /* #### We don't even attempt to do this right. */
+            Ibyte *text_to_print =
+              (Ibyte *) bigfloat_to_string (XBIGFLOAT_DATA (arg.obj), 10);
+            byte_count += doprnt_2 (stream, text_to_print, Qnil,
+                                    0, qxestrlen (text_to_print), spec,
+                                    format_reloc);
+            xfree (text_to_print);
+            continue;
+          }
 #endif /* HAVE_BIGFLOAT */
-	  else
-	    {
-	      Ascbyte *text_to_print;
-	      Ascbyte constructed_spec[100];
-	      Ascbyte *p = constructed_spec;
-              int alloca_sz = 350;
-              int min = spec->minwidth, prec = spec->precision;
-
-              if (prec < 0)
-                prec = 0;
-              if (min < 0)
-                min = 0;
-
-              if (32+min+prec > alloca_sz)
-                alloca_sz = 32 + min + prec;
-
-              text_to_print = alloca_array(char, alloca_sz);
-
-	      /* Mostly reconstruct the spec and use sprintf() to
-		 format the string. */
-
-	      *p++ = '%';
-	      if (spec->sign_flag == SIGN_FLAG_PLUS)   *p++ = '+';
-	      if (spec->sign_flag == SIGN_FLAG_SPACE)  *p++ = ' ';
-	      if (spec->number_flag == NUMBER_FLAG_C_SYNTAX) *p++ = '#';
-	      if (spec->sign_flag == SIGN_FLAG_MINUS)  *p++ = '-';
-	      if (spec->zero_flag)   *p++ = '0';
-
-	      if (spec->minwidth >= 0)
-		{
-		  p += long_to_string (p, spec->minwidth);
-		}
-	      if (spec->precision >= 0)
-		{
-		  *p++ = '.';
-		  p += long_to_string (p, spec->precision);
-		}
-	      
-	      if (strchr (double_converters, ch))
-		{
-		  *p++ = ch;
-		  *p++ = '\0';
-		  sprintf (text_to_print, constructed_spec, arg.d);
-		}
-	      else if (strchr (base_converters, ch))
-		{
-		  *p++ = 'l';	/* Always use longs with sprintf() */
-		  *p++ = ch;
-		  *p++ = '\0';
-
-                  sprintf (text_to_print, constructed_spec, arg.ul);
-		}
-              else
-                {
-                  assert (0);
-                }
-
-              if (!NILP (format_reloc))
-                {
-                  struct printf_spec minimal_spec;
-                  bzero (&minimal_spec, sizeof (minimal_spec));
-                  minimal_spec.precision = -1;
-                  minimal_spec.spec_length = spec->spec_length;
-                  minimal_spec.text_before = spec->text_before;
-                  minimal_spec.text_before_len = spec->text_before_len;
-
-                  doprnt_2 (stream, (Ibyte *) text_to_print, Qnil, 0,
-                            strlen (text_to_print), &minimal_spec,
-                            format_reloc);
-                }
-              else
-                {
-                  doprnt_2 (stream, (Ibyte *) text_to_print, Qnil, 0,
-                            strlen (text_to_print), NULL, format_reloc);
-                }
-	    }
-	}
+        default:
+          {
+            text_checking_assert (0);
+            break;
+          }
+        }
     }
-
+      
   unbind_to (count);
-  return Lstream_byte_count (XLSTREAM (stream)) - init_byte_count;
+  return byte_count;
 }
 
 /* Basic external entry point into string formatting.  See
@@ -1761,7 +2448,7 @@ emacs_doprnt (Lisp_Object stream, const Ibyte *format_nonreloc,
   Bytecount val;
   va_start (vargs, largs);
   val = emacs_doprnt_1 (stream, format_nonreloc, format_length,
-			 format_reloc, nargs, largs, vargs);
+			format_reloc, nargs, (Lisp_Object *) largs, vargs);
   va_end (vargs);
   return val;
 }
@@ -2114,6 +2801,7 @@ arguments: (STREAM CONTROL-STRING &rest ARGS)
 void
 syms_of_doprnt (void)
 {
+  DEFSUBR (Fnumber_to_string);
   DEFSUBR (Fformat);
   DEFSUBR (Fformat_into);
 }
