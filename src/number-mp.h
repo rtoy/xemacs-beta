@@ -115,7 +115,7 @@ extern Bytecount bignum_to_string (Ibyte **buffer_inout, Bytecount size,
                                    bignum number, UINT_16_BIT radix,
                                    int flags);
 #ifdef BN_num_bytes
-#define bignum_size_decimal(b) (DECIMAL_PRINT_SIZE (BN_num_bytes (b)) * MAX_ICHAR_LEN)
+#define bignum_size_decimal(b) (DECIMAL_PRINT_SIZE (BN_num_bytes (b)))
 #define bignum_size_octal(b) (BN_num_bytes (b) * MAX_ICHAR_LEN * 3)
 #define bignum_size_hex(b) (BN_num_bytes (b) * MAX_ICHAR_LEN * 2)
 #define bignum_size_binary(b) (BN_num_bytes (b) * MAX_ICHAR_LEN * 4)
