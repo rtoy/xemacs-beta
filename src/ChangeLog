@@ -9,6 +9,38 @@
 	* tests.c (syms_of_tests):
 	Make the test available.
 
+2016-10-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (syms_of_data):
+	Move the DEFSUBR() for #'number-to-string to doprnt.c, with its
+	implementation.
+	* doprnt.c:
+	Document relative performance of fixnum_to_string_base_10 vs. the
+	old long_to_string.
+	* doprnt.c (Fnumber_to_string):
+	* doprnt.c (parse_doprnt_spec):
+	Don't support the enhanced-number-types-specific format
+	converters when being called on C objects.
+	* doprnt.c (get_doprnt_args):
+	* doprnt.c (rewrite_rational_spec): New, refactored out.
+	If SPEC reflects a rational number, rewrite it according to the
+	type of *OBJ, if necessary.
+	* doprnt.c (rewrite_floating_spec): New, refactored out.
+	If SPEC reflects a float or a bigfloat, rewrite according to the
+	type of *OBJ, if necessary.
+	* doprnt.c (emacs_doprnt_1):
+	Restructure this, make a big switch statement on the value of
+	SPEC->CONVERTER, commonest cases first. Only adjust CONVERTER
+	based on the type of OBJ if OBJ is not the expected Lisp type.
+	* doprnt.c (emacs_doprnt):
+	* doprnt.c (syms_of_doprnt):
+	Move the DEFSUBR for #'number-to-string here.
+	* redisplay.c (window_line_number):
+	Return Ibyte * now, as does fixnum_to_string ().
+	* tests.c (Ftest_fixnum_to_string):
+	Update this with a correct value in the flag to
+	fixnum_to_string().
+
 2016-10-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Add functionality to convert rationals to strings of arbitrary
