@@ -5718,9 +5718,8 @@ void print_float (Lisp_Object, Lisp_Object, int);
    floating point computations to define a compile-time integral
    constant. */
 #define DECIMAL_PRINT_SIZE(integral_type) \
-(((2410824 * sizeof (integral_type)) / 1000000) + 3)
-Bytecount long_to_string (Ascbyte *, long);
-void ulong_to_bit_string (char *, unsigned long);
+  ((((2410824 * sizeof (integral_type)) / 1000000) + 3) * MAX_ICHAR_LEN)
+
 extern int print_escape_newlines;
 extern MODULE_API int print_readably;
 extern int in_debug_print;

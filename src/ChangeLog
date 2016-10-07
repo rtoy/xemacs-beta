@@ -11,6 +11,24 @@
 
 2016-10-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Remove the now-obsolete long_to_string(), ulong_to_bit_string ().
+	* doprnt.c (emacs_doprnt_1):
+	Remove the separate case for ?i, implement it with the same code
+	as ?d.
+	Use fixnum_to_string_base_10() when writing a float spec to pass
+	to snprintf (), now long_to_string() is gone.
+	* lisp.h:
+	* lisp.h (DECIMAL_PRINT_SIZE): Take account of MAX_ICHAR_LEN in
+	this value, since our number-to-string functions now support
+	non-ASCII.
+	Remove declarations for long_to_string(), ulong_to_bit_string().
+	* number-mp.h (bignum_size_decimal):
+	Update this to reflect the new definition of DECIMAL_PRINT_SIZE.
+	* print.c:
+	Remove implementations of long_to_string, ulong_to_bit_string.
+
+2016-10-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* data.c (syms_of_data):
 	Move the DEFSUBR() for #'number-to-string to doprnt.c, with its
 	implementation.

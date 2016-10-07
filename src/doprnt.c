@@ -1502,10 +1502,11 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             continue;
           }
         case 'd':
+        case 'i':
           {
             /* Decimal fixnum. */
-            Ibyte to_print[DECIMAL_PRINT_SIZE (EMACS_INT) * MAX_ICHAR_LEN
-                           + MAX_ICHAR_LEN + 1], *cursor = to_print;
+            Ibyte to_print[DECIMAL_PRINT_SIZE (EMACS_INT) + MAX_ICHAR_LEN + 1];
+            Ibyte *cursor = to_print;
             Bytecount len;
             EMACS_INT val;
 
@@ -1515,35 +1516,6 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 
             len = fixnum_to_string_base_10 (to_print, sizeof (to_print),
                                             val, Vfixnum_to_majuscule_map);
-
-            if (val < 0)
-              {
-                spec->sign_flag = SIGN_FLAG_MINUS;
-                /* Go forward past the minus. */
-                INC_IBYTEPTR (cursor);
-                len -= ichar_itext_len ('-');
-                
-              }
-
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, len, spec,
-                                    format_reloc);
-            continue;
-          }
-        case 'i':
-          {
-            /* Decimal fixnum. Deletion pending, since it's equivalent to 'd',
-               but kept here to allow access to long_to_string () for
-               comparative testing.  */
-            Ibyte to_print[DECIMAL_PRINT_SIZE (EMACS_INT) * MAX_ICHAR_LEN
-                           + MAX_ICHAR_LEN + 1], *cursor = to_print;
-            Bytecount len;
-            EMACS_INT val;
-
-            FIXNUM_SPEC_PREAMBLE();
-            
-            spec->number_flag = NUMBER_FLAG_NOTHING;
-
-            len = long_to_string (to_print, val);
 
             if (val < 0)
               {
@@ -1778,12 +1750,22 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 
             if (spec->minwidth >= 0)
               {
-                p += long_to_string (p, spec->minwidth);
+                p += fixnum_to_string_base_10 ((Ibyte *) p,
+                                               (Bytecount)
+                                               (sizeof (constructed_spec))
+                                               - (p - constructed_spec),
+                                               spec->minwidth,
+                                               Vfixnum_to_majuscule_ascii);
               }
             if (spec->precision >= 0)
               {
                 *p++ = '.';
-                p += long_to_string (p, spec->precision);
+                p += fixnum_to_string_base_10 ((Ibyte *) p,
+                                               (Bytecount)
+                                               (sizeof (constructed_spec))
+                                               - (p - constructed_spec),
+                                               spec->precision,
+                                               Vfixnum_to_majuscule_ascii);
               }
             *p++ = ch;
             *p++ = '\0';
