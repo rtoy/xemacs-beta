@@ -1,3 +1,10 @@
+2016-10-13  Jerry James  <james@xemacs.org>
+
+	* tls.c (openssl_malloc): New function for use with OpenSSL >= 1.1.0.
+	(openssl_realloc): Ditto.
+	(openssl_free): Ditto.
+	(init_tls): New initialization sequence for OpenSSL >= 1.1.0.
+
 2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (Fterpri): Move this to cl-extra.el, no need to have it

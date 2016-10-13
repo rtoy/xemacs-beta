@@ -1090,9 +1090,37 @@ openssl_password (char *buf, int size, int UNUSED (rwflag),
   return (int) strlen (buf);
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x1010000fL
+static void *
+openssl_malloc (size_t size, const char * UNUSED (file), int UNUSED (line))
+{
+  return xmalloc (size);
+}
+
+static void *
+openssl_realloc (void *ptr, size_t size, const char * UNUSED (file),
+		 int UNUSED (line))
+{
+  return xrealloc (ptr, size);
+}
+
+static void
+openssl_free (void *ptr, const char * UNUSED (file), int UNUSED (line))
+{
+  xfree (ptr);
+}
+#endif
+
 void
 init_tls (void)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x1010000fL
+  /* Load the default configuration */
+  OPENSSL_init_crypto (OPENSSL_INIT_LOAD_CONFIG, NULL);
+
+  /* Tell openssl to use our memory allocation functions */
+  CRYPTO_set_mem_functions (openssl_malloc, openssl_realloc, openssl_free );
+#else
   /* Load the default configuration */
   OPENSSL_config (NULL);
 
@@ -1100,6 +1128,7 @@ init_tls (void)
   CRYPTO_set_mem_functions ((void * (*)(size_t)) xmalloc,
 			    (void * (*)(void *, size_t)) xrealloc,
 			    xfree_1);
+#endif
 
   /* Load human-readable error messages */
   SSL_load_error_strings ();
