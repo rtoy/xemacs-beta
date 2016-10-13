@@ -1,3 +1,8 @@
+2016-10-13  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Fix OpenSSL detection for versions >= 1.1.0.
+	* configure: Regenerate.
+
 2015-10-28  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Disable ASLR on El Capitan.

@@ -5425,7 +5425,8 @@ elif test "$with_tls" = "nss"; then
 elif test "$with_tls" = "openssl"; then
   AC_CHECK_HEADER([openssl/ssl.h],
     [AC_CHECK_LIB(ssl, SSL_library_init, [with_tls=openssl],
-      [XE_DIE("Required openssl support cannot be provided.")])],
+      [AC_CHECK_LIB(ssl, OPENSSL_init_crypto, [with_tls=openssl],
+        [XE_DIE("Required openssl support cannot be provided.")])])],
     [XE_DIE("Required openssl support cannot be provided.")])
 fi
 dnl Autodetection
