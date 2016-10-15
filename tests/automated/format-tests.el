@@ -77,6 +77,12 @@
 (Assert (string= (format "%*d" 4 -10) " -10"))
 (Assert (string= (format "%*d" -4 10) "10  "))
 (Assert (string= (format "%*d" -4 -10) "-10 "))
+
+;; Pad chars. See also the Mule-specific tests.
+(Assert (string= (format "%!\xa0*d" 4 10) "\xa0\xa0\x31\x30"))
+(Assert (string= (format "%!\xa0*d" 4 -10) "\xa0-10"))
+(Assert (string= (format "%!\xa0*\x64" -4 10) "10\xa0\xa0"))
+(Assert (string= (format "%!\xa0*\x64" -4 -10) "-10\xa0"))
 (Assert (string= (format "%#d" 10) "10"))
 (Assert (string= (format "%#o" 8) "010"))
 (Assert (string= (format "%#x" 16) "0x10"))
@@ -174,7 +180,37 @@
   (Assert (equal (format "%-20c" (aref "\u0627" 0))
                  (concatenate 'string "\u0627" (make-string 19 ?\x20))))
   (Assert (equal (format "%-020c" (aref "\u0627" 0))
-                 (concatenate 'string "\u0627" (make-string 19 ?0)))))
+                 (concatenate 'string "\u0627" (make-string 19 ?0))))
+
+  ;; And the pad char.
+  (macrolet
+      ((checking-pad-chars (&rest expressions)
+         (cons
+          'progn
+          (loop
+              for ucs in expressions
+              collect
+              (let* ((character (decode-char 'ucs ucs))
+                     (string (string character)))
+              `(progn
+                (Assert (equal (format ,(concat "%!" string "*d") 4 10)
+                               ,(concat string string "10")))
+                (Assert (equal (format ,(concat "%!" string "*d") 4 -10)
+                               ,(concat string "-10")))
+                (Assert (equal (format ,(concat "%!" string "4d") 10)
+                               ,(concat string string "10")))
+                (Assert (equal (format ,(concat "%!" string "04d") 10)
+                               "0010"))
+                (Assert (equal (format ,(concat "%!" string "-04d") 10)
+                               ;; Zero flag ignored for trailing padding.
+                               ,(concat "10" string string)))
+                (Assert (equal (format ,(concat "%!" string "*d") 22 10)
+                               ,(concat (make-string 20 character)  "10")))
+                (Assert (equal (format ,(concat "%!" string "*d") 23 -10)
+                               ,(concat (make-string 20 character)
+                                        "-10")))))))))
+    (checking-pad-chars
+     #xa0 #xff #x4e00 #x2194 #x2122 #x0e9e #xd55c)))
 
 (Check-Error 'syntax-error (format "%c" char-code-limit))
 (Check-Error 'syntax-error (format "%c" 'a))
@@ -200,18 +236,43 @@
                  integer (/ integer 10))
         finally return (concatenate 'string (if minusp "-")
                                     result)))
+
+(defun slow-ratio-to-string (ratio)
+  (check-type ratio ratio)
+  (concatenate 'string (slow-integer-to-string (numerator ratio))
+               "/" (slow-integer-to-string (denominator ratio))))
+
 (macrolet
-    ((Assert-formatting-integers (&rest integers)
-       (cons 'progn
-             (loop for integer in integers
-                   collect (progn
-                             (if (not (integerp integer))
-                                 (setq integer (eval integer)))
-                             `(Assert (equal (format "%d" ,integer)
-                                       ,(slow-integer-to-string
-                                         integer))))))))
-  (Assert-formatting-integers 1 -2 #xFFFF #x-FFFF most-positive-fixnum
-                              most-negative-fixnum))
+    ((Assert-formatting-integers (guard &rest integers)
+       (when (featurep guard)
+         (cons 'progn
+               (loop for integer in integers
+                     collect (progn
+                               (if (not (integerp integer))
+                                   (setq integer (eval integer)))
+                               `(Assert (equal (format "%d" ,integer)
+                                         ,(slow-integer-to-string
+                                           integer))))))))
+     (Assert-formatting-ratios (guard &rest ratios)
+       (when (featurep guard)
+         (cons 'progn
+               (loop for ratio in ratios
+                     collect (progn
+                               (if (not (ratiop ratio))
+                                   (setq ratio (eval ratio)))
+                               `(Assert (equal (format "%d" ,ratio)
+                                         ,(slow-ratio-to-string
+                                           ratio)))))))))
+  (Assert-formatting-integers xemacs 1 -2 #xFFFF #x-FFFF most-positive-fixnum
+                              most-negative-fixnum)
+  (Assert-formatting-integers bignum (1+ most-positive-fixnum)
+                              (1- most-positive-fixnum)
+                              (lsh most-positive-fixnum 20)
+                              (lsh most-negative-fixnum 20))
+  (Assert-formatting-ratios ratio (div 1 5) (div #xFFFF #xFFFE)
+                            (div most-positive-fixnum most-negative-fixnum)
+                            (div (1+ most-positive-fixnum)
+                                 (1- most-negative-fixnum))))
 
 (Assert (equal (format "%d" (expt 2 32))
                  (if (natnump (1+ #x3fffffff)) "4294967296" "0")))
@@ -423,7 +484,8 @@
 (Assert (equal (format "% d" 1) " 1") "checking sign place-holder")
 (Assert (equal (format "%+ d" 1) "+1") "checking with sign flags")
 (Assert (equal (format "%04c" ?1) "0001") "checking character zero-prefixed")
-(Assert (equal (format "%-04c" ?1) "1   ")
+;; XEmacs change; %c is not a number specifier, allow trailing zeroes.
+(Assert (equal (format "%-04c" ?1) "1000")
         "character zero-padded and/or not left-adjusted")
 (Assert (equal (format "%#012x" 1) "0x0000000001")
         "checking hexadecimal zero-padded")
@@ -469,13 +531,116 @@
 (Assert (equal (format "%s" "%%%%") "%%%%"))
 (Assert (equal (format "%%0") "%0"))
 (Assert (equal (format "%hx" #x12345) "2345")) ;; field size no longer ignored
+(Assert (equal (format "%hhx" #x123) "23")) ;; Truncate to 8 bits
+(Assert (equal (format "%lx" #x123) "123")) ;; To 32
+(Assert (equal (format "%lx" #x123456789a) "3456789a")) ;; Really, to 32
+(when (featurep 'bignum)
+  (macrolet
+      ((very-positive-bignum () (1- (expt 2 96)))
+       (very-negative-bignum () (- (1- (expt 2 96)))))
+    (Assert (equal (format "%hhux" (very-positive-bignum)) "ff"))
+    (Assert (equal (format "%hux" (very-positive-bignum))  "ffff"))
+    (Assert (equal (format "%lux" (very-positive-bignum))  "ffffffff"))
+    (Assert (equal (format "%llux" (very-positive-bignum)) "ffffffffffffffff"))
+    (Assert (equal (format "%hhx" (very-positive-bignum)) "-1"))
+    (Assert (equal (format "%hx" (very-positive-bignum))  "-1"))
+    (Assert (equal (format "%lx" (very-positive-bignum))  "-1"))
+    (Assert (equal (format "%llx" (very-positive-bignum)) "-1"))
+    (Assert (equal (format "%x" (very-positive-bignum))
+                   "ffffffffffffffffffffffff"))
+    (Assert (equal (format "%hhux" (very-negative-bignum)) "ff"))
+    (Assert (equal (format "%hux" (very-negative-bignum))  "ffff"))
+    (Assert (equal (format "%lux" (very-negative-bignum))  "ffffffff"))
+    (Assert (equal (format "%llux" (very-negative-bignum)) "ffffffffffffffff"))
+    (Assert (equal (format "%hhx" (very-negative-bignum)) "-1"))
+    (Assert (equal (format "%hx" (very-negative-bignum))  "-1"))
+    (Assert (equal (format "%lx" (very-negative-bignum))  "-1"))
+    (Assert (equal (format "%llx" (very-negative-bignum)) "-1"))
+    (Assert (equal (format "%x" (very-negative-bignum))
+                   "-ffffffffffffffffffffffff"))
+    (Assert (equal (format "%hhud" (very-positive-bignum)) "255"))
+    (Assert (equal (format "%hud" (very-positive-bignum)) "65535"))
+    (Assert (equal (format "%lud" (very-positive-bignum)) "4294967295"))
+    (Assert (equal (format "%llud" (very-positive-bignum))
+                   "18446744073709551615"))
+    (Assert (equal (format "%hhd" (very-positive-bignum)) "-1"))
+    (Assert (equal (format "%hd" (very-positive-bignum)) "-1"))
+    (Assert (equal (format "%ld" (very-positive-bignum)) "-1"))
+    (Assert (equal (format "%lld" (very-positive-bignum)) "-1"))
+    (Assert (equal (format "%d" (very-positive-bignum))
+                   "79228162514264337593543950335"))
+    (Assert (equal (format "%hhud" (very-negative-bignum)) "255"))
+    (Assert (equal (format "%hud" (very-negative-bignum)) "65535"))
+    (Assert (equal (format "%lud" (very-negative-bignum)) "4294967295"))
+    (Assert (equal (format "%llud" (very-negative-bignum))
+                   "18446744073709551615"))
+    (Assert (equal (format "%hhd" (very-negative-bignum)) "-1"))
+    (Assert (equal (format "%hd" (very-negative-bignum)) "-1"))
+    (Assert (equal (format "%ld" (very-negative-bignum)) "-1"))
+    (Assert (equal (format "%lld" (very-negative-bignum)) "-1"))
+    (Assert (equal (format "%d" (very-negative-bignum))
+                   "-79228162514264337593543950335"))
+    (Assert (equal (format "%hhuo" (very-positive-bignum)) "377"))
+    (Assert (equal (format "%huo" (very-positive-bignum))  "177777"))
+    (Assert (equal (format "%luo" (very-positive-bignum))  "37777777777"))
+    (Assert (equal (format "%lluo" (very-positive-bignum))
+		   "1777777777777777777777"))
+    (Assert (equal (format "%hho" (very-positive-bignum))  "-1"))
+    (Assert (equal (format "%ho" (very-positive-bignum))   "-1"))
+    (Assert (equal (format "%lo" (very-positive-bignum))   "-1"))
+    (Assert (equal (format "%llo" (very-positive-bignum))  "-1"))
+    (Assert (equal (format "%o" (very-positive-bignum))
+		   "77777777777777777777777777777777"))
+    (Assert (equal (format "%hhuo" (very-negative-bignum)) "377"))
+    (Assert (equal (format "%huo" (very-negative-bignum))  "177777"))
+    (Assert (equal (format "%luo" (very-negative-bignum))  "37777777777"))
+    (Assert (equal (format "%lluo" (very-negative-bignum))
+		   "1777777777777777777777"))
+    (Assert (equal (format "%hho" (very-negative-bignum))  "-1"))
+    (Assert (equal (format "%ho" (very-negative-bignum))   "-1"))
+    (Assert (equal (format "%lo" (very-negative-bignum))   "-1"))
+    (Assert (equal (format "%llo" (very-negative-bignum))  "-1"))
+    (Assert (equal (format "%o" (very-negative-bignum))
+		   "-77777777777777777777777777777777"))
+    (Assert (equal (format "%hhub" (very-positive-bignum)) "11111111"))
+    (Assert (equal (format "%hub" (very-positive-bignum)) 
+                   "1111111111111111"))
+    (Assert (equal (format "%lub" (very-positive-bignum))
+                   "11111111111111111111111111111111"))
+    (Assert
+     (equal
+      (format "%llub" (very-positive-bignum))
+      "1111111111111111111111111111111111111111111111111111111111111111"))
+    (Assert (equal (format "%hhb" (very-positive-bignum))  "-1"))
+    (Assert (equal (format "%hb" (very-positive-bignum))   "-1"))
+    (Assert (equal (format "%lb" (very-positive-bignum))   "-1"))
+    (Assert (equal (format "%llb" (very-positive-bignum))  "-1"))
+    (Assert
+     (equal
+      (format "%b" (very-positive-bignum))
+      "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"))
+    (Assert (equal (format "%hhub" (very-negative-bignum)) "11111111"))
+    (Assert (equal (format "%hub" (very-negative-bignum))
+                   "1111111111111111"))
+    (Assert (equal (format "%lub" (very-negative-bignum))
+                   "11111111111111111111111111111111"))
+    (Assert
+     (equal (format "%llub" (very-negative-bignum))
+            "1111111111111111111111111111111111111111111111111111111111111111"))
+    (Assert (equal (format "%hhb" (very-negative-bignum))  "-1"))
+    (Assert (equal (format "%hb" (very-negative-bignum))   "-1"))
+    (Assert (equal (format "%lb" (very-negative-bignum))   "-1"))
+    (Assert (equal (format "%llb" (very-negative-bignum))  "-1"))
+    (Assert
+     (equal
+      (format "%b" (very-negative-bignum))
+      "-111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"))))
 
-(Check-Error syntax-error (format "%hhx" #x123)) ;; Double field size errors.
 (Check-Error syntax-error (format "%I64d" 1))
 (Check-Error syntax-error (format "%I32d" 1))
 
-(Check-Error syntax-error (format "%n" pi)) ;; This used to crash with bignum
-					    ;; builds.
+;; This used to crash with bignum builds.
+(Check-Error wrong-type-argument (format "%n" pi)) 
 
 (Check-Error args-out-of-range (format (concat "%" (number-to-string
                                                     most-positive-fixnum)

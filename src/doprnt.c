@@ -1,7 +1,7 @@
 /* Output like sprintf to resizing buffer.
    Also takes args differently: pass one pointer to an array of strings
    in addition to the format string which is separate.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 2016 Free Software Foundation, Inc.
    Copyright (C) 2001, 2002 Ben Wing.
    Rewritten by mly to use varargs.h.
    Rewritten from scratch by Ben Wing (February 1995) for Mule; expanded
@@ -32,58 +32,11 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lstream.h"
 
 
-/* Radix handling for rationals. */
-
-/* Print a signed NUMBER into BUFFER, which comprises SIZE octets, as a base
-   (expt 2 POWOF2) string, using TABLE (usually Vfixnum_to_majuscule_map) to
-   transform fixnums to character values. Start at the *end*, and return the
-   length of the string written. Note that this usually means there is slack
-   before the actual text wanted. Do not zero-terminate. Throw an assertion
-   failure if text checking is turned on and the conversion overruns BUFFER.
-
-   See fixnum_to_string() for a more reasonable function for callers. */
-static Bytecount
-fixnum_to_string_rshift_1 (Ibyte *buffer, Bytecount size, Fixnum number,
-                           UINT_16_BIT powof2, Lisp_Object table)
-{
-  Ibyte *end = buffer + size, *cursor = end;
-  const Ibyte *this_digit, *ftmdata = XSTRING_DATA (table);
-  Boolint minusp = number < 0;
-  EMACS_UINT uval = minusp ? -number : number, mask = (1 << powof2) - 1;
-
-  text_checking_assert (XSTRING_LENGTH (table) >=
-                        ((EMACS_INT) mask + 1) * MAX_ICHAR_LEN);
-
-  while (uval)
-    {
-      this_digit = ftmdata + ((uval & mask) * MAX_ICHAR_LEN);
-      cursor -= itext_ichar_len (this_digit);
-      itext_copy_ichar (this_digit, cursor);
-      uval >>= powof2;
-    }
-
-  if (end == cursor)
-    {
-      this_digit = ftmdata + 0;
-      cursor -= itext_ichar_len (this_digit);
-      itext_copy_ichar (this_digit, cursor);
-    }
-
-  if (minusp)
-    {
-      Ibyte chbuf[MAX_ICHAR_LEN];
-      cursor -= set_itext_ichar (chbuf, '-');
-      itext_copy_ichar (chbuf, cursor);
-    }
-
-  text_checking_assert (cursor >= buffer);
-
-  return end - cursor;
-}
+/* Conversion to string, radix handling for rationals. */
 
 /* Print an unsigned NUMBER into BUFFER, which comprises SIZE octets, as a
    base (expt 2 POWOF2) string, using TABLE (usually Vfixnum_to_majuscule_map)
-   to transform fixnums to character values.  Start at the *end*, and return
+   to transform numbers to character values. Start at the *end*, and return
    the length of the string written. Note that this usually means there is
    slack before the actual text wanted. Do not zero-terminate. Throw an
    assertion failure if text checking is turned on and the conversion overruns
@@ -91,8 +44,9 @@ fixnum_to_string_rshift_1 (Ibyte *buffer, Bytecount size, Fixnum number,
 
    See fixnum_to_string() for a more reasonable function for callers. */
 static Bytecount
-emacs_uint_to_string_rshift_1 (Ibyte *buffer, Bytecount size, EMACS_UINT number,
-                               UINT_16_BIT powof2, Lisp_Object table)
+emacs_uint_to_string_rshift_1 (Ibyte *buffer, Bytecount size,
+                               EMACS_UINT number, UINT_16_BIT powof2,
+                               Lisp_Object table)
 {
   Ibyte *end = buffer + size, *cursor = end;
   const Ibyte *this_digit, *ftmdata = XSTRING_DATA (table);
@@ -121,26 +75,66 @@ emacs_uint_to_string_rshift_1 (Ibyte *buffer, Bytecount size, EMACS_UINT number,
   return end - cursor;
 }
 
-/* Print a signed NUMBER into BUFFER, which comprises SIZE octets, as a base
-   RADIX string, using TABLE (usually Vfixnum_to_majuscule_map) to transform
-   fixnums to character values.  Start at the *end*, and return the length of
-   the string written. Note that this usually means there is slack before the
-   actual text wanted. Do not zero-terminate. Throw an assertion failure if
-   text checking is turned on and the conversion overruns BUFFER.
+/* Print an unsigned NUMBER into BUFFER, which comprises SIZE octets, as a
+   base RADIX string, using TABLE (usually Vfixnum_to_majuscule_map) to
+   transform numbers to character values.  Start at the *end*, and return the
+   length of the string written. Note that this usually means there is slack
+   before the actual text wanted. Do not zero-terminate. Throw an assertion
+   failure if text checking is turned on and the conversion overruns BUFFER.
 
    See fixnum_to_string() for a more reasonable function for callers. */
 static Bytecount
-fixnum_to_string_general_1 (Ibyte *buffer, Bytecount size, Fixnum number,
-                            Fixnum radix, Lisp_Object table)
+emacs_uint_to_string_general_1 (Ibyte *buffer, Bytecount size,
+                                EMACS_UINT number, UINT_16_BIT radix,
+                                Lisp_Object table)
 {
   Ibyte *end = buffer + size, *cursor = end, *this_digit;
   Ibyte *ftmdata = XSTRING_DATA (table);
-  Boolint minusp = number < 0;
-  EMACS_UINT uval = minusp ? -number : number;
 
   text_checking_assert (XSTRING_LENGTH (Vfixnum_to_majuscule_map)
                         >= (radix) * MAX_ICHAR_LEN);
 
+  while (number)
+    {
+      this_digit = ftmdata + ((number % radix) * MAX_ICHAR_LEN);
+      cursor -= itext_ichar_len (this_digit);
+      itext_copy_ichar (this_digit, cursor);
+      number /= radix;
+    }
+
+  if (end == cursor)
+    {
+      this_digit = ftmdata + 0;
+      cursor -= itext_ichar_len (this_digit);
+      itext_copy_ichar (this_digit, cursor);
+    }
+
+  text_checking_assert (cursor >= buffer);
+
+  return end - cursor;
+}
+
+#if SIZEOF_EMACS_INT == 8
+#define uint_64_bit_to_string emacs_uint_to_string_general_1
+#else
+/* Print an unsigned 64-bit UVAL into BUFFER, which comprises SIZE octets, as
+   a base RADIX string, using TABLE (usually Vfixnum_to_majuscule_map) to
+   transform numbers to character values.  Start at the *end*, and return the
+   length of the string written. Note that this usually means there is slack
+   before the actual text wanted. Do not zero-terminate. Throw an assertion
+   failure if text checking is turned on and the conversion overruns BUFFER.
+
+   This is used in the unsigned integer handling, for negative integers only.
+
+   See fixnum_to_string() for a more reasonable function for callers. */
+static Bytecount
+uint_64_bit_to_string (Ibyte *buffer, Bytecount size, UINT_64_BIT uval,
+                       UINT_16_BIT radix, Lisp_Object table)
+{
+  Ibyte *end = buffer + size, *cursor = end, *this_digit;
+  Ibyte *ftmdata = XSTRING_DATA (table);
+  text_checking_assert (XSTRING_LENGTH (Vfixnum_to_majuscule_map)
+                        >= (radix) * MAX_ICHAR_LEN);
   while (uval)
     {
       this_digit = ftmdata + ((uval % radix) * MAX_ICHAR_LEN);
@@ -156,16 +150,11 @@ fixnum_to_string_general_1 (Ibyte *buffer, Bytecount size, Fixnum number,
       itext_copy_ichar (this_digit, cursor);
     }
 
-  if (minusp)
-    {
-      cursor -= ichar_itext_len ('-');
-      set_itext_ichar (cursor, '-');
-    }
-
   text_checking_assert (cursor >= buffer);
 
   return end - cursor;
 }
+#endif
 
 #define ONE_DIGIT(figure) \
   p += itext_copy_ichar (ftmdata + ((n / (figure)) * MAX_ICHAR_LEN), p)
@@ -194,12 +183,12 @@ fixnum_to_string_general_1 (Ibyte *buffer, Bytecount size, Fixnum number,
 #define DIGITS_18(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_17 ((figure) / 10)
 #define DIGITS_19(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_18 ((figure) / 10)
 
-/* Print NUMBER to BUFFER in base 10, starting with its most significant digit
-   at the beginning, and zero-terminating. SIZE is the number of octets
-   comprising BUFFER. TABLE describes a mapping from fixnum to characters and
-   is usually Vfixnum_to_majuscule_map. Return length of the printed
-   representation, without the zero termination. Throw an assertion failure if
-   printing has overrun BUFFER.
+/* Print a signed NUMBER to BUFFER in base 10, starting with its most
+   significant digit at the beginning, and zero-terminating. SIZE is the
+   number of octets comprising BUFFER. TABLE describes a mapping from fixnum
+   to characters and is usually Vfixnum_to_majuscule_map. Return length of the
+   printed representation, without the zero termination. Throw an assertion
+   failure if printing has overrun BUFFER.
 
    fixnum_to_string_base_10 (buf, sizeof (buf), number,
    Vfixnum_to_majuscule_ascii) is equivalent to snprintf (buf, sizeof (buf),
@@ -310,12 +299,24 @@ fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
     ? Vfixnum_to_minuscule_map
     : ((flags & RATIONAL_FORCE_ASCII) ? Vfixnum_to_majuscule_ascii
        : Vfixnum_to_majuscule_map);
+  Boolint minusp;
+  EMACS_UINT uval;
 
   if (10 == radix)
     {
       return fixnum_to_string_base_10 (buffer, size, number, table);
     }
-  else if ((number & (number - 1)) == 0) /* Power of two? */
+
+  if ((minusp = number < 0))
+    {
+      uval = -number;
+    }
+  else
+    {
+      uval = number;
+    }
+
+  if ((number & (number - 1)) == 0) /* Power of two? */
     {
       EMACS_UINT powof2 = 0;
 
@@ -327,13 +328,19 @@ fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
           radix >>= 1;
         }
 
-      len = fixnum_to_string_rshift_1 (buffer, size - 1, number, powof2,
-                                       table);
+      len = emacs_uint_to_string_rshift_1 (buffer, size - 1, uval, powof2,
+                                           table);
     }
   else
     {
-      len = fixnum_to_string_general_1 (buffer, size - 1, number, radix,
-                                        table);
+      len = emacs_uint_to_string_general_1 (buffer, size - 1, uval, radix,
+                                            table);
+    }
+
+  if (minusp)
+    {
+      len += ichar_itext_len ('-');
+      set_itext_ichar (buffer + size - len, '-');
     }
 
   slack = size - len;
@@ -348,21 +355,33 @@ fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
   buffer[len] = '\0';
   return len;
 }
+
+#ifdef HAVE_BIGNUM
 
-extern bignum scratch_bignum;
+/* Print BN, a signed bignum, in base RADIX using TABLE. If BUF points to a
+   non-NULL Ibyte * pointer, take it to be a buffer into which to write, and
+   use the value of *SIZE_INOUT as its size. Otherwise, allocate a new buffer
+   using malloc() and store a pointer to it in *BUF. Store the size of the new
+   buffer in *SIZE_INOUT.
 
+   Start at the *end* with BN's least signficant digit, and return the length
+   of the string written. Do not zero-terminate. Write a minus sign at the
+   beginning if BN is negative. */
 static Bytecount
 bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
                     EMACS_UINT radix, Lisp_Object table)
 {
-  Boolint minusp = bignum_sign (bn) < 0, heap_allocp = size_inout < 0;
+  Boolint minusp, heap_allocp = size_inout < 0;
   Ibyte *buf1 = *size_inout > -1 ? *buf :
     ((*size_inout = 128 * MAX_ICHAR_LEN),
      (*buf = xnew_array (Ibyte, *size_inout)));
   Ibyte *end = buf1 + *size_inout, *cursor = end, *this_digit = NULL;
   Ibyte *ftmdata = XSTRING_DATA (table);
+  /* Since, in contrast with the fixnum code, we are repeatedly checking the
+   sign anyway, print the minus sign in this function if appropriate. */
+  int signum = bignum_sign (bn);
 
-  if (minusp)
+  if ((minusp = signum < 0))
     {
       bignum_neg (scratch_bignum, bn);
       /* Reserve space for the minus sign in our accounting. */
@@ -373,7 +392,7 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
       bignum_set (scratch_bignum, bn);
     }
 
-  while ((bignum_sign (scratch_bignum)) != 0)
+  while (signum)
     {
       this_digit
         = ftmdata + (bignum_div_rem_uint_16_bit (scratch_bignum,
@@ -389,6 +408,7 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
           *size_inout <<= 1;
           buf1 = *buf + minusp * ichar_itext_len ('-');
         }
+      signum = bignum_sign (scratch_bignum);
     }
 
   if (end == cursor)
@@ -401,9 +421,8 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
 
   if (minusp)
     {
-      Ibyte chbuf[MAX_ICHAR_LEN];
-      cursor -= set_itext_ichar (chbuf, '-');
-      itext_copy_ichar (this_digit, cursor);
+      cursor -= ichar_itext_len ('-');
+      set_itext_ichar (cursor, '-');
     }
 
   text_checking_assert (cursor >= *buf);
@@ -411,6 +430,26 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
   return end - cursor;
 }
 
+/* Print NUMBER, a signed bignum, as a base RADIX string. If BUFFER_INOUT
+   points to a non-NULL Ibyte * pointer, take that to be a buffer into which
+   to write, and use the value of *SIZE_INOUT as its size. Otherwise, allocate
+   a new buffer using malloc() and store a pointer to it in
+   *BUFFER_INOUT. Store the size of the new buffer in *SIZE_INOUT.
+
+   The returned printed number will start with its most significant digits at
+   the beginning of *BUFFER_INOUT, and will be zero-terminated.
+
+   FLAGS can be RATIONAL_DOWNCASE, to print (e.g.) hexadecimal numbers as a-f
+   rather than A-F, the default. Alternatively, it can be
+   RATIONAL_FORCE_ASCII, to avoid language-specific digit characters
+   (e.g. Persian, fullwidth Chinese). In this case (#### for the moment)
+   RATIONAL_DOWNCASE is ignored and any alphabetic characters with case are
+   returned with their upper case values.
+
+   Return the length of the printed string, without the terminating zero. If
+   Throw an assertion failure if BUFFER overflows and ERROR_CHECK_TEXT is
+   turned on.  If *BUFFER_INOUT was NULL, the value written to it needs to be
+   freed with free() once the caller is finished with it. */
 Bytecount
 bignum_to_string (Ibyte **buffer_inout, Bytecount size, bignum number,
                   UINT_16_BIT radix, int flags)
@@ -435,6 +474,9 @@ bignum_to_string (Ibyte **buffer_inout, Bytecount size, bignum number,
   (*buffer_inout)[len] = '\0';
   return len;
 }
+#endif /* HAVE_BIGNUM */
+
+#ifdef HAVE_RATIO
 
 static Bytecount
 ratio_to_string_1 (Ibyte **buf, Bytecount size, ratio rat, UINT_16_BIT base,
@@ -443,9 +485,20 @@ ratio_to_string_1 (Ibyte **buf, Bytecount size, ratio rat, UINT_16_BIT base,
   Bytecount len;
   Ibyte *cursor;
 
-  text_checking_assert (*buf);
-  len = bignum_to_string_1 (buf, &size, ratio_denominator (rat),
-                            base, table); 
+  if (NULL == *buf)
+    {
+#ifdef mpz_sizeinbase
+      size = ((mpz_sizeinbase (ratio_numerator (rat), base) +
+               mpz_sizeinbase (ratio_denominator (rat), base))
+              * MAX_ICHAR_LEN)
+        + ichar_itext_len ('/') + ichar_itext_len ('-') + 1;
+      *buf = xnew_ibytes (size);
+#else
+#error "unimplemented"
+#endif      
+    }
+
+  len = bignum_to_string_1 (buf, &size, ratio_denominator (rat), base, table); 
   cursor = *buf + size - len;
 
   cursor -= ichar_itext_len ('/');
@@ -479,6 +532,8 @@ ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
   (*buffer_inout)[len] = '\0';
   return len;
 }
+
+#endif /* HAVE_RATIO */
 
 DEFUN ("number-to-string", Fnumber_to_string, 1, 1, 0, /*
 Convert NUMBER to a string by printing it in decimal.
@@ -553,13 +608,13 @@ If supported, it may also be a ratio.
   }
 }
 
-static const Ascbyte * const valid_flags = "-+ #0&~";
+static const Ascbyte * const valid_flags = "-+ #0&~!";
 
 /* Don't add the bignum, ratio and bigfloat converters to these.
    valid_converters is just used to check format strings supplied by the user,
    and the bignum, ratio and bigfloat converters are only used internally
    within doprnt.c, they are not to be user-visible. */
-static const Ascbyte * const valid_converters = "dic" "ouxX" "feEgG" "sS" "b";
+static const Ascbyte * const valid_converters = "dic" "ouxXp" "feEgG" "sS" "b";
 static const Ascbyte * const int_converters = "dic";
 static const Ascbyte * const base_converters = "oxXb";
 static const Ascbyte * const double_converters = "feEgG";
@@ -580,16 +635,6 @@ struct printf_spec
   Bytecount text_before; /* Position of the first character of the block of
                             literal text before this spec. */
   Bytecount text_before_len; /* Length of that text. */
-  Ascbyte converter; /* Converter character, or 0 for dummy marker indicating
-                        literal text at the end of the specification. */
-  unsigned int left_justify:1;
-  unsigned int number_flag:2;
-  unsigned int zero_flag:1;
-  unsigned int h_flag:1;
-  unsigned int l_flag:1;
-  unsigned int forwarding_precisionp:1;
-  unsigned int sign_flag:2;
-  unsigned int precision_details:2;
   Elemcount argnum; /* Which argument does this spec want?  This is one-based:
                        The first argument given is numbered 1, the second is
                        2, etc.  This is to handle %##$x-type specs. */
@@ -597,23 +642,35 @@ struct printf_spec
   Charcount precision;
   Bytecount spec_length; /* Length of this format spec itself, starting at
                             text_before + text_before_len.  */
+  Ibyte pad_char[MAX_ICHAR_LEN]; /* Usually space. */
+  unsigned int converter:7; /* Converter character, or 0 for dummy marker
+                               indicating literal text at the end of the
+                               specification. */
+  unsigned int hl_flag:3;
+  unsigned int number_flag:2;
+  unsigned int sign_flag:2;
+  unsigned int precision_details:2;
+  unsigned int left_justify:1;
+  unsigned int zero_flag:1;
+  unsigned int unsigned_flag:1;
+  unsigned int forwarding_precisionp:1;
 };
 
 typedef union printf_arg printf_arg;
 union printf_arg
 {
-  long l;
-  unsigned long ul;
+  EMACS_INT l;
+  EMACS_UINT ul;
   double d;
   Ibyte *bp;
+  UINT_64_BIT u64;
   Lisp_Object obj;
 };
 
-/* We maintain a list of all the % specs in the specification,
-   along with the offset and length of the block of literal text
-   before each spec.  In addition, we have a "dummy" spec that
-   represents all the literal text at the end of the specification.
-   Its converter is 0. */
+/* We maintain a list of all the % specs in the specification, along with the
+   offset and length of the block of literal text before each spec.  In
+   addition, we have a "dummy" spec that represents all the literal text at
+   the end of the specification.  Its converter is 0. */
 typedef struct
 {
   Dynarr_declare (struct printf_spec);
@@ -629,7 +686,7 @@ typedef struct
 /* What sign information should be displayed? */
 enum sign_flag {
   SIGN_FLAG_NOTHING = 0,
-  SIGN_FLAG_SPACE,
+  SIGN_FLAG_PADCHAR,
   SIGN_FLAG_PLUS,
   SIGN_FLAG_MINUS
 };
@@ -652,25 +709,37 @@ enum number_flag {
                            before. */
 };
 
+/* Was the h, the l, the hh, or the ll flag specified? */
+enum hl_flag {
+  HL_FLAG_NOTHING,
+  HL_FLAG_HH,
+  HL_FLAG_H,
+  HL_FLAG_L,
+  HL_FLAG_LL
+};
+
 #define NUMBER_FLAG_C_LIKEP(flag) (flag >= NUMBER_FLAG_C_SYNTAX)
 
-#define HANDLE_SIGN_FLAG(sf) do switch (sf)                     \
-        {                                                       \
-        case SIGN_FLAG_SPACE:                                   \
-          Lstream_putc (lstr, ' '),                             \
-            result_len += set_itext_ichar (chbuf, ' ');         \
-          break;                                                \
-        case SIGN_FLAG_PLUS:                                    \
-          Lstream_putc (lstr, '+'),                             \
-            result_len += set_itext_ichar (chbuf, '+');         \
-          break;                                                \
-        case SIGN_FLAG_MINUS:                                   \
-          Lstream_putc (lstr, '-'),                             \
-            result_len += set_itext_ichar (chbuf, '-');         \
-          break;                                                \
-        default:                                                \
-          break;                                                \
-        } while (0)
+#define HANDLE_SIGN_FLAG(sf) do switch (sf)                             \
+    {                                                                   \
+    case SIGN_FLAG_PADCHAR:                                             \
+      {                                                                 \
+        Bytecount plen = itext_ichar_len (pfsp->pad_char);              \
+        Lstream_write (lstr, pfsp->pad_char, plen);                     \
+        result_len += plen;                                             \
+        break;                                                          \
+      }                                                                 \
+    case SIGN_FLAG_PLUS:                                                \
+      Lstream_putc (lstr, '+'),                                         \
+        result_len += ichar_itext_len ('+');                            \
+      break;                                                            \
+    case SIGN_FLAG_MINUS:                                               \
+      Lstream_putc (lstr, '-'),                                         \
+        result_len += ichar_itext_len ('-');                            \
+      break;                                                            \
+    default:                                                            \
+      break;                                                            \
+    } while (0)
 
 #define HANDLE_SIGN_AND_NUMBER(nf, sf)                              \
   do switch (nf)                                                    \
@@ -681,22 +750,22 @@ enum number_flag {
     case NUMBER_FLAG_C_SYNTAX:                                      \
       HANDLE_SIGN_FLAG (sf);                                        \
       Lstream_putc (lstr, '0'),                                     \
-        result_len += set_itext_ichar (chbuf, '0');                 \
+        result_len += ichar_itext_len ('0');                        \
       Lstream_putc (lstr, pfsp->converter),                         \
-        result_len += set_itext_ichar (chbuf, pfsp->converter);     \
+        result_len += ichar_itext_len (pfsp->converter);            \
       break;                                                        \
     case NUMBER_FLAG_LISP_SYNTAX:                                   \
       Lstream_putc (lstr, '#'),                                     \
-        result_len += set_itext_ichar (chbuf, '#');                 \
+        result_len += ichar_itext_len ('#');                        \
       Lstream_putc (lstr, pfsp->converter),                         \
-        result_len += set_itext_ichar (chbuf, pfsp->converter);     \
+        result_len += ichar_itext_len (pfsp->converter);            \
       HANDLE_SIGN_FLAG (sf);                                        \
       break;                                                        \
     case NUMBER_FLAG_MASOCHISM:                                     \
       Lstream_putc (lstr, '0'),                                     \
-        result_len += set_itext_ichar (chbuf, '0');                 \
+        result_len += ichar_itext_len ('0');                        \
       Lstream_putc (lstr, pfsp->converter),                         \
-        result_len += set_itext_ichar (chbuf, pfsp->converter);     \
+        result_len += ichar_itext_len (pfsp->converter);            \
       HANDLE_SIGN_FLAG (sf);                                        \
       break;                                                        \
     } while (0)
@@ -715,7 +784,7 @@ enum number_flag {
    MINWIDTH is taken as the minimum character field width.
    If LEFT_JUSTIFY is non-zero, left-justify the string in its field;
     otherwise, right-justify.
-   If ZERO_FLAG is set, pad with 0's; otherwise pad with spaces.
+   If ZERO_FLAG is set, pad with 0s; otherwise pad with PFSP->PAD_CHAR.
 
    Handling of PRECISION depends on the PRECISON_DETAILS enum value.
    If it is PRECISION_MAX_CHARACTERS, the string is first truncated on the
@@ -727,7 +796,7 @@ enum number_flag {
 
    If SIGN_FLAG is SIGN_FLAG_PLUS, output a plus between any space padding
    and before any zero padding. If it is SIGN_FLAG_MINUS, output a minus in
-   that position. If it is SIGN_FLAG_SPACE, output a space.
+   that position. If it is SIGN_FLAG_PADCHAR, output a space.
    If it is SIGN_FLAG_HEX_UPPERCASE or SIGN_FLAG_HEX_LOWERCASE, output 0X or
    0x as appropriate. If it is SIGN_FLAG_NOTHING, do not output anything extra
    in this position.
@@ -750,13 +819,12 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
   Lstream *lstr = XLSTREAM (stream);
   Bytecount result_len = 0, begin = Lstream_byte_count (lstr);
   const Ibyte *newnonreloc = ((NILP (reloc)) ? nonreloc : XSTRING_DATA (reloc));
-  Ibyte chbuf [MAX_ICHAR_LEN];
 
   assert (!(EQ (reloc, format_object)) || NILP (reloc));
 
   if (pfsp != NULL)
     {
-      Charcount spaces_to_add = -1, minwidth = pfsp->minwidth;
+      Charcount padding_to_add = -1, minwidth = pfsp->minwidth;
       Charcount maxlen = -1, insert_zeros_until = -1, zeros_to_add = -1;
       Boolint left_justify = pfsp->left_justify, zero_flag = pfsp->zero_flag;
       enum sign_flag sign_flag = (enum sign_flag) (pfsp->sign_flag);
@@ -788,7 +856,7 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
           /* Sigh, INSERT_ZEROS_UNTIL and ZERO_FLAG need to be interpreted
              separately. While it is not possible to combine
              PRECISION_MIN_TOTAL_DIGITS and ZERO_FLAG, it is possible to
-             combine the former with SPACES_TO_ADD, which is managed by the
+             combine the former with PADDING_TO_ADD, which is managed by the
              same code. */
           || (insert_zeros_until > -1 &&
               insert_zeros_until >= (len / MAX_ICHAR_LEN))
@@ -803,7 +871,7 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
           zeros_to_add = max (insert_zeros_until - cclen, 0);
           cclen += (sign_flag != SIGN_FLAG_NOTHING);
           cclen += (number_flag != NUMBER_FLAG_NOTHING) * 2;
-          spaces_to_add = minwidth - (cclen + zeros_to_add);
+          padding_to_add = minwidth - (cclen + zeros_to_add);
 
           if (maxlen >= 0 && (maxlen = min (maxlen, cclen), maxlen != cclen))
             {
@@ -823,32 +891,55 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
              characters, then any sign information has to be before those
              zeroes. */
           HANDLE_SIGN_AND_NUMBER (number_flag, sign_flag);
-          while (spaces_to_add-- > 0)
+          while (padding_to_add-- > 0)
             {
-              Lstream_putc (lstr, '0'),
-                result_len += set_itext_ichar (chbuf, '0');
+              Lstream_putc (lstr, '0');
+              result_len += ichar_itext_len ('0');
             }
         }
       else
         {
-          while (spaces_to_add-- > 0)
-            Lstream_putc (lstr, ' '),
-              result_len += set_itext_ichar (chbuf, ' ');
+          Bytecount pad_len = itext_ichar_len (pfsp->pad_char);
+          while (padding_to_add-- > 0)
+            {
+              Lstream_write (lstr, pfsp->pad_char, pad_len);
+              result_len += pad_len;
+            }
           /* Sign information comes after the spaces. */
           HANDLE_SIGN_AND_NUMBER (number_flag, sign_flag);
         }
 
       while (zeros_to_add-- > 0)
-        Lstream_putc (lstr, '0'), result_len += set_itext_ichar (chbuf, '0');
+        {
+          Lstream_putc (lstr, '0');
+          result_len += ichar_itext_len ('0');
+        }
 
       Lstream_write (lstr, newnonreloc + offset, len);
       result_len += len;
 
       /* Padding at end to left-justify ... */
       if (left_justify)
-        while (spaces_to_add-- > 0)
-          Lstream_putc (lstr, zero_flag ? '0' : ' '),
-            result_len += set_itext_ichar (chbuf, zero_flag ? '0' : ' ');
+        {
+          if (zero_flag)
+            {
+              while (padding_to_add-- > 0)
+                {
+                  Lstream_putc (lstr, '0');
+                  result_len += ichar_itext_len ('0');
+                }
+            }
+          else
+            {
+              Bytecount pad_len = itext_ichar_len (pfsp->pad_char);
+              while (padding_to_add-- > 0)
+                {
+                  Lstream_write (lstr, pfsp->pad_char, pad_len);
+                  result_len += pad_len;
+                }
+            }
+
+        }
 
       if (!NILP (format_object) && string_extent_info (format_object) != NULL)
         {
@@ -873,26 +964,28 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
   return result_len;
 }
 
-#define NEXT_ASCII_BYTE(ch)						\
+#define NEXT_ASCBYTE(ch)						\
   do {									\
     if (fmt == fmt_end)							\
       syntax_error ("Premature end of format string", Qunbound);	\
     ch = *fmt;								\
-    if (ch >= 0200)							\
-      syntax_error ("Non-ASCII character in format converter spec",	\
-		    Qunbound);						\
+    if (!byte_ascii_p (ch))                                             \
+      syntax_error ("Not a valid character, format converter spec",	\
+                    make_char (itext_ichar (fmt)));                     \
     fmt++;								\
   } while (0)
 
 #define RESOLVE_FLAG_CONFLICTS(spec)				\
   do {								\
     if (spec.number_flag == NUMBER_FLAG_LISP_SYNTAX &&          \
-        spec.sign_flag == SIGN_FLAG_SPACE)                      \
+        spec.sign_flag == SIGN_FLAG_PADCHAR)                    \
       {                                                         \
         spec.sign_flag = SIGN_FLAG_NOTHING;                     \
       }                                                         \
-    if (spec.zero_flag && spec.sign_flag == SIGN_FLAG_SPACE)    \
-      spec.zero_flag = 0;					\
+    if (spec.zero_flag && spec.sign_flag == SIGN_FLAG_PADCHAR)  \
+      {                                                         \
+        spec.zero_flag = 0;					\
+      }                                                         \
   } while (0)
 
 static printf_spec_dynarr *
@@ -900,8 +993,13 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 {
   const Ibyte *fmt = format;
   const Ibyte *fmt_end = format + format_length;
-  printf_spec_dynarr *specs = Dynarr_new (printf_spec);
   Elemcount prev_argnum = 0;
+  printf_spec_dynarr *specs = Dynarr_new (printf_spec);
+  /* As a somewhat-representative survey, of the format specs used while
+     building XEmacs, as of 20161013, there were 16168 where the length of
+     specs was one, 21198 where it was two, 664 when it was 3, 86 when it was
+     4, 35 when it was 5, and 4 when it was 7. Nothing greater than that. */
+  Dynarr_resize_to_fit (specs, 8);
 
   while (1)
     {
@@ -910,7 +1008,9 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
       Ibyte ch;
 
       if (fmt == fmt_end)
-	return specs;
+        {
+          return specs;
+        }
 
       xzero (spec);
       text_end = (Ibyte *) memchr (fmt, '%', fmt_end - fmt);
@@ -918,6 +1018,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	text_end = fmt_end;
       spec.text_before = fmt - format;
       spec.text_before_len = text_end - fmt;
+      set_itext_ichar (spec.pad_char, ' ');
       spec.precision = -1;
       
       fmt = text_end;
@@ -927,24 +1028,29 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 
 	  /* A % is special -- no arg number.  According to ANSI specs,
 	     field width does not apply to %% conversion. */
-	  if (fmt != fmt_end && *fmt == '%')
+	  if (fmt != fmt_end && itext_ichar_eql (fmt, '%'))
 	    {
 	      spec.converter = '%';
               spec.spec_length = fmt - text_end;
-	      Dynarr_add (specs, spec);
-	      fmt++;
+              /* Argnum is zero here, which is intended. */
+	      Dynarr_add (specs, spec); 
+              fmt += ichar_itext_len ('%');
 	      continue;
 	    }
 
 	  /* Is there a repositioning specifier? */
 	  {
+            /* Do a gross plausibility check instead of calling parse_integer
+               on every converter we see. */
             Ibyte *fmt1;
-            Lisp_Object posnum
-              = parse_integer (fmt, &fmt1, fmt_end - fmt, 10, 1,
-                               Vdigit_fixnum_ascii);
+            Lisp_Object got = get_char_table (itext_ichar (fmt),
+                                              Vdigit_fixnum_ascii);
+            Lisp_Object posnum = (XFIXNUM (got) > 0 && XFIXNUM (got) < 10) ?
+              parse_integer (fmt, &fmt1, fmt_end - fmt, 10, 1,
+                             Vdigit_fixnum_ascii) : Qnil;
 
             if (FIXNUMP (posnum) && XREALFIXNUM (posnum) > 0
-                && itext_ichar (fmt1) == '$')
+                && itext_ichar_eql (fmt1, '$'))
               {
                 /* There is a repositioning specifier: */
                 prev_argnum = XREALFIXNUM (posnum);
@@ -961,10 +1067,10 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	    spec.argnum = prev_argnum;
 	  }
 
-	  /* Parse off any flags */
-	  NEXT_ASCII_BYTE (ch);
-	  while (strchr (valid_flags, ch))
+	  /* Parse off any flags. */
+	  while (1)
 	    {
+              NEXT_ASCBYTE (ch);
 	      switch (ch)
 		{
 		case '-': spec.left_justify  = 1; break;
@@ -973,7 +1079,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
                   if (spec.sign_flag != SIGN_FLAG_PLUS)
                     {
                       /* The plus flag overrides. */
-                      spec.sign_flag = SIGN_FLAG_SPACE; 
+                      spec.sign_flag = SIGN_FLAG_PADCHAR; 
                     }
                   break;
 		case '#':
@@ -990,36 +1096,56 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
                     }
                   break;
  		case '0': spec.zero_flag   = 1; break;
-                  /* So we get a helpful value on abort. */
- 		default: text_checking_assert (format == NULL);
+                case '!':
+                  {
+                    if (fmt == fmt_end)
+                      {
+                        syntax_error ("Premature end of format string",
+                                      Qunbound);
+                      }
+                    fmt += itext_copy_ichar (fmt, spec.pad_char);
+                    break;
+                  }
+ 		default: /* Not a known flag. */
+                  {
+                    DEC_IBYTEPTR (fmt); /* Back up */
+                    goto done_with_flags;
+                  }
 		}
-	      NEXT_ASCII_BYTE (ch);
 	    }
-
+        done_with_flags:
 	  /* Parse off the minimum field width */
-	  fmt--; /* back up */
-
 	  /*
 	   * * means the field width was passed as an argument.
 	   * Mark the current spec as one that forwards its
 	   * field width and flags to the next spec in the array.
 	   * Then create a new spec and continue with the parsing.
 	   */
-	  if (fmt != fmt_end && *fmt == '*')
+	  if (fmt != fmt_end && itext_ichar_eql (fmt, '*'))
 	    {
 	      spec.converter = '*';
               spec.spec_length = fmt - text_end;
 	      RESOLVE_FLAG_CONFLICTS(spec);
 	      Dynarr_add (specs, spec);
-	      xzero (spec);
+              /* Zero the spec, but preserve the pad char. */
+              memset ((Binbyte *)(&spec), 0,
+                      offsetof (struct printf_spec, pad_char));
+              memset ((Binbyte *)(&spec) + offsetof (struct printf_spec,
+                                                     pad_char)
+                      + MAX_ICHAR_LEN, 0, sizeof (struct printf_spec)
+                      - offsetof (struct printf_spec, pad_char)
+                      - MAX_ICHAR_LEN);
 	      spec.argnum = ++prev_argnum;
-	      fmt++;
+              fmt += ichar_itext_len ('*');
 	    }
 	  else
 	    {
+              Lisp_Object got = get_char_table (itext_ichar (fmt),
+                                                Vdigit_fixnum_ascii);
               Lisp_Object mwidth
-                = parse_integer (fmt, (Ibyte **) (&fmt), fmt_end - fmt, 10, 1,
-                                 Vdigit_fixnum_ascii);
+                = (XFIXNUM (got) > 0 && XFIXNUM (got) < 10) ?
+                parse_integer (fmt, (Ibyte **) (&fmt), fmt_end - fmt, 10, 1,
+                               Vdigit_fixnum_ascii) : Qnil;
               if (NILP (mwidth))
                 {
                   spec.minwidth = -1; /* Failed to parse an integer, which is
@@ -1041,7 +1167,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	    }
 
 	  /* Parse off any precision specified */
-	  NEXT_ASCII_BYTE (ch);
+	  NEXT_ASCBYTE (ch);
 	  if (ch == '.')
 	    {
 	      /*
@@ -1051,19 +1177,30 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 	       * the array.  Then create a new spec and continue
 	       * with the parse.
 	       */
-	      if (fmt != fmt_end && *fmt == '*')
+	      if (fmt != fmt_end && itext_ichar_eql (fmt, '*'))
 		{
 		  spec.converter = '*';
                   spec.spec_length = fmt - text_end;
 		  spec.forwarding_precisionp = 1;
 		  RESOLVE_FLAG_CONFLICTS(spec);
 		  Dynarr_add (specs, spec);
-		  xzero (spec);
+                  /* Zero the spec, but preserve the pad char. */
+                  memset ((Binbyte *)(&spec), 0,
+                          offsetof (struct printf_spec, pad_char));
+                  memset ((Binbyte *)(&spec) + offsetof (struct printf_spec,
+                                                         pad_char)
+                          + MAX_ICHAR_LEN, 0, sizeof (struct printf_spec)
+                          - offsetof (struct printf_spec, pad_char)
+                          - MAX_ICHAR_LEN);
 		  spec.argnum = ++prev_argnum;
-		  fmt++;
+                  fmt += ichar_itext_len ('*');
 		}
 	      else
 		{
+                  /* Not checking for a possible digit before calling
+                     parse_integer(), since this code will be called if we've
+                     seen a '.', which is a small minority rather than a vast
+                     majority of times. */
                   Lisp_Object precis
                     = parse_integer (fmt, (Ibyte **) (&fmt), fmt_end - fmt,
                                      10, 1, Vdigit_fixnum_ascii);
@@ -1087,24 +1224,61 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
                       spec.precision = max (XFIXNUM (precis), -1);
                     }
 		}
-	      NEXT_ASCII_BYTE (ch);
+	      NEXT_ASCBYTE (ch);
 	    }
 	  else
 	    /* No precision specified */
 	    spec.precision = -1;
 
-	  /* Parse off h or l flag */
-	  if (ch == 'h' || ch == 'l')
-	    {
-	      if (ch == 'h')
-		spec.h_flag = 1;
-	      else
-		spec.l_flag = 1;
-	      NEXT_ASCII_BYTE (ch);
-	    }
+	  /* Parse off h or l flag. */
+          if (ch == 'h')
+            {
+              NEXT_ASCBYTE (ch);
+              if (ch == 'h')
+                {
+                  spec.hl_flag = HL_FLAG_HH;
+                  NEXT_ASCBYTE (ch);
+                }
+              else
+                {
+                  spec.hl_flag = HL_FLAG_H;
+                }
+            }
+          else if (ch == 'l')
+            {
+              NEXT_ASCBYTE (ch);
+              if (ch == 'l')
+                {
+                  spec.hl_flag = HL_FLAG_LL;
+                  NEXT_ASCBYTE (ch);
+                }
+              else
+                {
+                  spec.hl_flag = HL_FLAG_L;
+                }
+            }
 
-	  if (!strchr (valid_converters, ch))
-	    syntax_error ("Invalid converter character", make_char (ch));
+          /* In contrast with C, u is a *modifier* for a following d, b, x, X,
+             or o converter. If seen on its own it is equivalent to ud, which
+             is compatible with the old behaviour. */
+          if (ch == 'u')
+            {
+              spec.unsigned_flag = 1;
+              if (fmt != fmt_end)
+                {
+                  NEXT_ASCBYTE (ch);
+                  if (!strchr (int_converters, ch)
+                      && !strchr (base_converters, ch))
+                    {
+                      ch = 'd';
+                    }
+                }
+              else
+                {
+                  ch = 'd';
+                }
+            }
+
 	  spec.converter = ch;
           spec.spec_length = fmt - text_end;
 	}
@@ -1169,24 +1343,36 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 
       ch = spec->converter;
 
-      if (strchr (int_converters, ch) || strchr (base_converters, ch))
+      if (spec->unsigned_flag)
 	{
-	  if (spec->l_flag)
-	    arg.l = va_arg (vargs, long);
+	  if (spec->hl_flag == HL_FLAG_L)
+            {
+              arg.ul = va_arg (vargs, UINT_32_BIT);
+            }
+          else if (spec->hl_flag == HL_FLAG_LL)
+            {
+              arg.l = va_arg (vargs, UINT_64_BIT);
+            }
+	  else
+	    /* unsigned int even if spec->h_flag */
+	    arg.ul = va_arg (vargs, EMACS_UINT);
+	}
+      else if (strchr (int_converters, ch) || strchr (base_converters, ch))
+	{
+	  if (spec->hl_flag == HL_FLAG_L)
+            {
+              arg.l = va_arg (vargs, INT_32_BIT);
+            }
+          else if (spec->hl_flag == HL_FLAG_LL)
+            {
+              arg.l = va_arg (vargs, INT_64_BIT);
+            }
 	  else
 	    /* int even if ch == 'c' or spec->h_flag:
 	       "the type used in va_arg is supposed to match the
 	       actual type **after default promotions**."
 	       Hence we read an int, not a short, if spec->h_flag. */
-	    arg.l = va_arg (vargs, int);
-	}
-      else if ('u' == ch)
-	{
-	  if (spec->l_flag)
-	    arg.ul = va_arg (vargs, unsigned long);
-	  else
-	    /* unsigned int even if spec->h_flag */
-	    arg.ul = (unsigned long) va_arg (vargs, unsigned int);
+	    arg.l = va_arg (vargs, EMACS_INT);
 	}
       else if (strchr (double_converters, ch))
 	arg.d = va_arg (vargs, double);
@@ -1202,8 +1388,17 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
   return args;
 }
 
+#if FIXNUM_VALBITS >= 64
+#define FIXNUM_SPEC_WIDEST_WIDTH_SPEC HL_FLAG_LL
+#elif FIXNUM_VALBITS >= 32
+#define FIXNUM_SPEC_WIDEST_WIDTH_SPEC HL_FLAG_L
+#else
+#define FIXNUM_SPEC_WIDEST_WIDTH_SPEC HL_FLAG_H
+#endif
+
 static Ascbyte
-rewrite_rational_spec (printf_spec *spec, Lisp_Object *obj)
+rewrite_rational_spec (struct printf_spec *spec, printf_arg *arg,
+                       Lisp_Object *obj)
 {
   Ascbyte ch = spec->converter;
 
@@ -1217,11 +1412,11 @@ rewrite_rational_spec (printf_spec *spec, Lisp_Object *obj)
       *obj = IGNORE_MULTIPLE_VALUES (Ftruncate (*obj, Qnil));
     }
 #ifdef HAVE_BIGFLOAT
-  else if (BIGFLOATP (obj))
+  else if (BIGFLOATP (*obj))
     {
 #ifdef HAVE_BIGNUM
       bignum_set_bigfloat (scratch_bignum, XBIGFLOAT_DATA (*obj));
-      if (ch == 'u' && bignum_sign (scratch_bignum) < 0)
+      if (spec->unsigned_flag && bignum_sign (scratch_bignum) < 0)
         {
           dead_wrong_type_argument (Qnonnegativep, *obj);
         }
@@ -1234,6 +1429,10 @@ rewrite_rational_spec (printf_spec *spec, Lisp_Object *obj)
 #ifdef HAVE_RATIO
   else if (RATIOP (*obj))
     {
+      if (spec->unsigned_flag && ratio_sign (XRATIO_DATA (*obj)) < 0)
+        {
+          dead_wrong_type_argument (Qnonnegativep, *obj);
+        }
       switch (ch)
         {
         case 'i': case 'd': ch = 'm'; break;
@@ -1241,11 +1440,6 @@ rewrite_rational_spec (printf_spec *spec, Lisp_Object *obj)
         case 'x': ch = 'v'; break;
         case 'X': ch = 'V'; break;
         case 'b': ch = 'W'; break;
-        case 'u':
-          if (ratio_sign (XRATIO_DATA (*obj)) < 0)
-            {
-              dead_wrong_type_argument (Qnonnegativep, *obj);
-            }
           /* Fallthrough. */
         default:
           ch = 'm';
@@ -1256,12 +1450,82 @@ rewrite_rational_spec (printf_spec *spec, Lisp_Object *obj)
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (*obj))
     {
-      if (spec->h_flag || spec->l_flag)
+      if (spec->hl_flag != HL_FLAG_NOTHING)
         {
-          *obj = make_fixnum (bignum_to_long (XBIGNUM_DATA (*obj)));
+         /* Truncate it, and print as a fixnum. */
+          if (spec->unsigned_flag)
+            {
+              arg->u64 = bignum_to_uint_64_bit (XBIGNUM_DATA (*obj));
+
+              if (spec->hl_flag <= FIXNUM_SPEC_WIDEST_WIDTH_SPEC)
+                {
+                  *obj
+                    = make_fixnum (arg->u64 & MOST_POSITIVE_FIXNUM_UNSIGNED);
+                  /* Don't return here just yet, fallthrough to the fixnum
+                     code. */
+                }
+              else
+                {
+                  if (spec->hl_flag == HL_FLAG_L)
+                    {
+                      arg->u64 &= 0xFFFFFFFF;
+                    }
+
+                  *obj = Qunbound;
+
+                  spec->hl_flag = HL_FLAG_NOTHING;
+                  return 'u';
+                }
+            }
+          else
+            {
+              /* For consistent behaviour with C casts, use
+                 bignum_to_uint_64_bit() and then convert the result into a
+                 signed value. */
+              INT_64_BIT i64val = bignum_to_uint_64_bit (XBIGNUM_DATA (*obj));
+
+              switch ((enum hl_flag) (spec->hl_flag))
+                {
+                case HL_FLAG_HH:
+                  *obj = make_fixnum ((signed char) i64val);
+                  spec->hl_flag = HL_FLAG_NOTHING;
+                  break;
+                case HL_FLAG_H:
+                  *obj = make_fixnum ((INT_16_BIT) i64val);
+                  spec->hl_flag = HL_FLAG_NOTHING;
+                  break;
+                case HL_FLAG_L:
+                  /* The normal fixnum code can handle this, if the value is
+                     not supplied as a Lisp object. */
+                  arg->l = (INT_32_BIT) i64val;
+                  *obj = Qunbound;
+                  spec->hl_flag = HL_FLAG_NOTHING;
+                  return ch;
+#if SIZEOF_EMACS_INT == 4
+                case HL_FLAG_LL:
+                  *obj = make_bignum_int_64_bit (i64val);
+                  spec->hl_flag = HL_FLAG_NOTHING;
+                  /* i64val already reflects what we want. */
+                  break;
+#else
+                case HL_FLAG_LL:
+                  /* The normal fixnum code can handle this, if the value is
+                     not supplied as a Lisp object. */
+                  arg->l = (INT_64_BIT) i64val;
+                  *obj = Qunbound;
+                  spec->hl_flag = HL_FLAG_NOTHING;
+                  return ch;
+#endif
+                }
+            }
         }
       else
         {
+          if (spec->unsigned_flag && bignum_sign (XBIGNUM_DATA (*obj)) < 0)
+            {
+              dead_wrong_type_argument (Qnatnump, *obj);
+            }
+
           switch (ch)
             {
             case 'i': case 'd': ch = 'n'; break;
@@ -1269,12 +1533,6 @@ rewrite_rational_spec (printf_spec *spec, Lisp_Object *obj)
             case 'x': ch = 'y'; break;
             case 'X': ch = 'Y'; break;
             case 'b': ch = 'B'; break;
-            case 'u':
-              if (bignum_sign (XBIGNUM_DATA (*obj)) < 0)
-                {
-                  dead_wrong_type_argument (Qnatnump, *obj);
-                }
-              /* Fallthrough */
             default:
               ch = 'n';
             }
@@ -1282,12 +1540,63 @@ rewrite_rational_spec (printf_spec *spec, Lisp_Object *obj)
     }
 #endif
 
-#ifdef HAVE_BIGNUM
-  if (FIXNUMP (*obj) && ch == 'u' && XFIXNUM (*obj) < 0)
+  if (FIXNUMP (*obj) && spec->hl_flag != HL_FLAG_NOTHING)
     {
-      dead_wrong_type_argument (Qnatnump, *obj);
-    }
+      if (spec->unsigned_flag)
+        {
+          switch ((enum hl_flag) (spec->hl_flag))
+            {
+            case HL_FLAG_HH:
+              *obj = make_fixnum ((unsigned char) (XREALFIXNUM (*obj)));
+              spec->hl_flag = HL_FLAG_NOTHING;
+              break;
+            case HL_FLAG_H:
+              *obj = make_fixnum ((UINT_16_BIT) (XREALFIXNUM (*obj)));
+              spec->hl_flag = HL_FLAG_NOTHING;
+              break;
+#if FIXNUM_VALBITS > 31
+            case HL_FLAG_L:
+              *obj = make_fixnum ((UINT_32_BIT) XREALFIXNUM (*obj));
+              spec->hl_flag = HL_FLAG_NOTHING;
+              break;
+#else
+            case HL_FLAG_L:          
+              arg->u64 = ((UINT_32_BIT) XREALFIXNUM (*obj));
+              spec->hl_flag = HL_FLAG_NOTHING;
+              *obj = Qunbound;
+              return 'u';
 #endif
+            case HL_FLAG_LL:          
+              arg->u64 = XREALFIXNUM (*obj);
+              spec->hl_flag = HL_FLAG_NOTHING;
+              *obj = Qunbound;
+              return 'u';
+            }
+        }
+      else
+        {
+          switch ((enum hl_flag) (spec->hl_flag))
+            {
+            case HL_FLAG_HH:
+              *obj = make_fixnum ((signed char) XREALFIXNUM (*obj));
+              spec->hl_flag = HL_FLAG_NOTHING;
+              break;
+            case HL_FLAG_H:
+              *obj = make_fixnum ((INT_16_BIT) XREALFIXNUM (*obj));
+              spec->hl_flag = HL_FLAG_NOTHING;
+              break;
+            case HL_FLAG_L:
+              *obj = make_fixnum ((INT_32_BIT) XREALFIXNUM (*obj));
+              spec->hl_flag = HL_FLAG_NOTHING;
+              break;
+            case HL_FLAG_LL:
+              /* No-op on a 32-bit machine. */
+              *obj = make_fixnum ((INT_64_BIT) XREALFIXNUM (*obj));
+              spec->hl_flag = HL_FLAG_NOTHING;
+              break;
+            }
+        }
+    }
 
   if (!NUMBERP (*obj))
     {
@@ -1299,7 +1608,7 @@ rewrite_rational_spec (printf_spec *spec, Lisp_Object *obj)
 }
 
 static Ascbyte
-rewrite_floating_spec (printf_spec *spec, printf_arg *arg, Lisp_Object *obj)
+rewrite_floating_spec (struct printf_spec *spec, Lisp_Object obj)
 {
   Ascbyte ch = spec->converter;
 
@@ -1315,55 +1624,50 @@ rewrite_floating_spec (printf_spec *spec, printf_arg *arg, Lisp_Object *obj)
         case 'G': ch = 'K'; break;
         }
 
-      /* Leave *obj alone. */
+      /* Leave obj alone. */
       return ch;
     }
 #endif
 
-  arg->d = extract_float (*obj);
-  *obj = Qunbound;
-  
+  /* The float spec code calls extract_float(), this is a far less complex
+     function than rewrite_rational_spec(). */
   return ch;
 }
 
-#define FIXNUM_SPEC_PREAMBLE()                                          \
-      do {                                                              \
-        if (largs)                                                      \
-          {                                                             \
-            obj = largs[spec->argnum - 1];                              \
-            if (!FIXNUMP (obj))                                         \
-              {                                                         \
-                ch = rewrite_rational_spec (spec,                       \
-                                            largs + spec->argnum - 1);  \
-                goto reconsider;                                        \
-              }                                                         \
-            val = XREALFIXNUM (obj);                                    \
-          }                                                             \
-        else                                                            \
-          {                                                             \
-            arg = Dynarr_at (args, spec->argnum - 1);                   \
-            val = arg.l;                                                \
-          }                                                             \
+#define FIXNUM_SPEC_PREAMBLE_1(buffer, size, radix, table, noargs) do   \
+    {                                                                   \
+      if (spec->precision > -1)                                         \
+        {                                                               \
+          spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;         \
+          spec->zero_flag = 0;                                          \
+        }                                                               \
+      else if (spec->left_justify)                                      \
+        {                                                               \
+          spec->zero_flag = 0;                                          \
+        }                                                               \
                                                                         \
-        if (spec->precision > -1)                                       \
-          {                                                             \
-            spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;       \
-            spec->zero_flag = 0;                                        \
-          }                                                             \
-                                                                        \
-        if (spec->h_flag)                                               \
-          {                                                             \
-            val &= 0xFFFF;                                              \
-          }                                                             \
-        else if (spec->l_flag)                                          \
-          {                                                             \
-            val &= 0xFFFFFFFF;                                          \
-          }                                                             \
+      if (!UNBOUNDP (obj))                                              \
+        {                                                               \
+          if (!FIXNUMP (obj) || spec->hl_flag != HL_FLAG_NOTHING)       \
+            {                                                           \
+              ch = rewrite_rational_spec (spec, &arg, &obj);            \
+              goto reconsider;                                          \
+            }                                                           \
+          arg.l = XREALFIXNUM (obj);                                    \
+        }                                                               \
+    } while (0)
+
+#define FIXNUM_SPEC_PREAMBLE(buffer, size, radix, table) do             \
+  {                                                                     \
+    FIXNUM_SPEC_PREAMBLE_1 (buffer, size, radix, table, 0);             \
+    if (spec->unsigned_flag && arg.l < 0)                               \
+      {                                                                 \
+        dead_wrong_type_argument (Qnatnump, make_integer (arg.l));      \
       }                                                                 \
-      while (0)
+  } while (0)
+
 
 /* Most basic entry point into string formatting.
-
    Generate output from a format-spec (either a Lisp string FORMAT_RELOC, or a
    C string FORMAT_NONRELOC of length FORMAT_LENGTH -- which *MUST NOT* come
    from Lisp string data, unless GC is inhibited).  Output goes to STREAM.
@@ -1375,7 +1679,7 @@ rewrite_floating_spec (printf_spec *spec, printf_arg *arg, Lisp_Object *obj)
 static Bytecount
 emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		Bytecount format_length, Lisp_Object format_reloc,
-		int nargs, Lisp_Object *largs, va_list vargs)
+		int nargs, const Lisp_Object *largs, va_list vargs)
 {
   printf_spec_dynarr *specs = 0;
   printf_arg_dynarr *args = 0;
@@ -1438,9 +1742,9 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
   for (i = 0; i < Dynarr_length (specs); i++)
     {
       struct printf_spec *spec = Dynarr_atp (specs, i);
+      Lisp_Object obj = Qunbound;
       union printf_arg arg;
-      Ascbyte ch;
-      Lisp_Object obj = Qnil;
+      Ascbyte ch = spec->converter;
 
       /* Copy the text before */
       if (!NILP (format_reloc)) /* refetch in case of GC below */
@@ -1451,6 +1755,18 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
       byte_count += doprnt_2 (stream, format_nonreloc, format_reloc,
                               spec->text_before, spec->text_before_len, NULL,
                               Qnil);
+      if (spec->argnum)
+        {
+          if (largs)
+            {
+              obj = largs[spec->argnum - 1];
+            }
+          else
+            {
+              arg = Dynarr_at (args, spec->argnum - 1);
+            }
+        }
+
       ch = spec->converter;
 
       /* These are organised roughly in decreasing order of frequency. */ 
@@ -1459,7 +1775,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
         {
         case 0:
           {
-            /* This is the trailing spec, just present so the text_before gets
+            /* This is the trailing spec, just present so text_before gets
                output, above.  */
             text_checking_assert (i + 1 == Dynarr_length (specs));
             continue;
@@ -1473,16 +1789,14 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Lisp_Object ls = Qnil;
             struct gcpro gcpro1;
 
-            if (!largs)
+            if (UNBOUNDP (obj))
               {
-                string = Dynarr_at (args, spec->argnum - 1).bp;
+                string = arg.bp;
                 text_checking_assert (string != NULL);
                 string_len = qxestrlen (string);
               }
             else
               {
-                obj = largs[spec->argnum - 1];
-
                 if (STRINGP (obj))
                   ls = obj;
                 else if (SYMBOLP (obj))
@@ -1508,22 +1822,21 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte to_print[DECIMAL_PRINT_SIZE (EMACS_INT) + MAX_ICHAR_LEN + 1];
             Ibyte *cursor = to_print;
             Bytecount len;
-            EMACS_INT val;
 
-            FIXNUM_SPEC_PREAMBLE();
+            /* Print as unsigned if that's requested; handle various flags. */
+            FIXNUM_SPEC_PREAMBLE (to_print, sizeof (to_print), 10,
+                                  Vfixnum_to_majuscule_map);
             
             spec->number_flag = NUMBER_FLAG_NOTHING;
 
             len = fixnum_to_string_base_10 (to_print, sizeof (to_print),
-                                            val, Vfixnum_to_majuscule_map);
+                                            arg.l, Vfixnum_to_majuscule_map);
 
-            if (val < 0)
+            if (arg.l < 0)
               {
                 spec->sign_flag = SIGN_FLAG_MINUS;
-                /* Go forward past the minus. */
-                INC_IBYTEPTR (cursor);
+                cursor += ichar_itext_len ('-');
                 len -= ichar_itext_len ('-');
-                
               }
 
             byte_count += doprnt_2 (stream, cursor, Qnil, 0, len, spec,
@@ -1534,16 +1847,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
           {
             /* Character. Accept fixnum arguments, but not other numbers. */
             Ibyte charbuf[MAX_ICHAR_LEN];
-            Ichar a = CHAR_CODE_LIMIT; /* Not a valid ichar. */
-
-            if (!largs)
+            Ichar a;
+            
+            if (UNBOUNDP (obj))
               {
-                a = (Ichar) Dynarr_at (args, spec->argnum - 1).l;
+                a = arg.l;
                 obj = make_fixnum (a);
-              }
-            else
-              {
-                obj = largs[spec->argnum - 1];
               }
 
             if (CHARP (obj))
@@ -1566,10 +1875,10 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             if (spec->precision != -1)
               {
                 syntax_error ("Precision nonsensical for %c",
-                            NILP (format_reloc) ?
-                            make_string (format_nonreloc, format_length) :
-                            format_reloc);
-            }
+                              NILP (format_reloc) ?
+                              make_string (format_nonreloc, format_length) :
+                              format_reloc);
+              }
 
             /* XEmacs; don't attempt (badly) to handle floats, bignums or
                ratios when 'c' is specified, error instead, "Format specifier
@@ -1584,13 +1893,9 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	    /* Print the argument as a Lisp object using #'prin1. */
             struct gcpro gcpro1;
 
-            if (!largs)
+            if (UNBOUNDP (obj))
               {
-                obj = Dynarr_at (args, spec->argnum - 1).obj;
-              }
-            else
-              {
-                obj = largs[spec->argnum - 1];
+                obj = arg.obj;
               }
 
             obj = prin1_to_string (obj, 0);
@@ -1608,24 +1913,28 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte to_print[SIZEOF_EMACS_INT * 2 * MAX_ICHAR_LEN
                            + MAX_ICHAR_LEN + 1];
             Ibyte *end = to_print + sizeof (to_print), *cursor;
+            Lisp_Object table = (ch == 'X') ? Vfixnum_to_majuscule_map
+              : Vfixnum_to_minuscule_map;
             Bytecount len;
-            EMACS_INT val;
+            EMACS_UINT uval;
  
-            FIXNUM_SPEC_PREAMBLE();
+            /* Print as unsigned if that's requested; handle various flags. */
+            FIXNUM_SPEC_PREAMBLE (to_print, sizeof (to_print), 16, table);
 
-            len = fixnum_to_string_rshift_1 (to_print, sizeof (to_print),
-                                             val, 4,
-                                             ch == 'X' ?
-                                             Vfixnum_to_majuscule_map
-                                             : Vfixnum_to_minuscule_map);
-            cursor = end - len;
-            if (val < 0)
+            if (arg.l < 0)
               {
                 spec->sign_flag = SIGN_FLAG_MINUS;
-                /* Go forward past the minus. */
-                INC_IBYTEPTR (cursor); 
+                uval = -(arg.l);
               }
-            else if (NUMBER_FLAG_C_LIKEP (spec->number_flag) && val == 0)
+            else
+              {
+                uval = arg.l;
+              }
+
+            len = emacs_uint_to_string_rshift_1 (to_print, sizeof (to_print),
+                                                 uval, 4, table);
+            cursor = end - len;
+            if (NUMBER_FLAG_C_LIKEP (spec->number_flag) && uval == 0)
               {
                 spec->number_flag = NUMBER_FLAG_NOTHING;
               }
@@ -1640,24 +1949,28 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte to_print[SIZEOF_EMACS_INT * 3 * MAX_ICHAR_LEN + 1];
             Ibyte *end = to_print + sizeof (to_print), *cursor;
             Bytecount len;
-            EMACS_INT val;
+            EMACS_UINT uval;
 
-            FIXNUM_SPEC_PREAMBLE();
-
-            len = fixnum_to_string_rshift_1 (to_print, sizeof (to_print),
-                                             val, 3, Vfixnum_to_majuscule_map);
-            cursor = end - len;
-
-            if (val < 0)
+            FIXNUM_SPEC_PREAMBLE (to_print, sizeof (to_print), 8,
+                                  Vfixnum_to_majuscule_map);
+            if (arg.l < 0)
               {
                 spec->sign_flag = SIGN_FLAG_MINUS;
-                /* Go forward past the minus. */
-                INC_IBYTEPTR (cursor); 
+                uval = -(arg.l);
               }
+            else
+              {
+                uval = arg.l;
+              }
+
+            len = emacs_uint_to_string_rshift_1 (to_print, sizeof (to_print),
+                                                 uval, 3,
+                                                 Vfixnum_to_majuscule_map);
+            cursor = end - len;
 
             if (NUMBER_FLAG_C_LIKEP (spec->number_flag))
               {
-                if (val != 0)
+                if (arg.l != 0)
                   {
                     /* Note, ASCII zero, not the current
                        Vfixnum_to_majuscule_map value for zero. */
@@ -1693,24 +2006,18 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             EMACS_UINT alloca_sz = 350; 
             Bytecount text_to_print_length;
 
-            if (largs)
+            if (!UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-                if (FLOATP (obj))
+                /* This is a bit different from the rational cases, in that we
+                   only want to rewrite the spec if we were explicitly handed
+                   a bigfloat, we handle other number types ourselves. */
+                if (BIGFLOATP (obj))
                   {
-                    arg.d = XFLOAT_DATA (obj);
-                  }
-                else if (!UNBOUNDP (obj)) /* If it's Qunbound, it's already
-                                             rewritten, use arg.d */
-                  {
-                    ch = rewrite_floating_spec (spec, &arg,
-                                                largs + spec->argnum - 1);
+                    ch = rewrite_floating_spec (spec, obj);
                     goto reconsider;
                   }
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
+
+                arg.d = extract_float (obj);
               }
 
             if ((alloca_sz += max (0, spec->minwidth) * MAX_ICHAR_LEN,
@@ -1733,7 +2040,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             *p++ = '%';
             switch (spec->sign_flag)
               {
-              case SIGN_FLAG_SPACE:
+              case SIGN_FLAG_PADCHAR:
                 *p++ = ' ';
                 break;
               case SIGN_FLAG_PLUS:
@@ -1814,7 +2121,6 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                specified as an argument.  Extract the data and forward it to
                the next spec, to which it will apply.  */
             struct printf_spec *nextspec = Dynarr_atp (specs, i + 1);
-            obj = largs[spec->argnum - 1];
 
             /* No bignums or random Lisp objects, thanks, and restrict range
                as appropriate for a charcount. */
@@ -1835,6 +2141,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                   {
                     spec->left_justify = 1;
                     nextspec->minwidth = - nextspec->minwidth;
+                    spec->zero_flag = 0;
                   }
               }
             nextspec->left_justify = spec->left_justify;
@@ -1849,89 +2156,32 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte to_print[SIZEOF_EMACS_INT * 8 * MAX_ICHAR_LEN + 1];
             Ibyte *end = to_print + sizeof (to_print), *cursor;
             Bytecount len;
-            EMACS_INT val;
+            EMACS_UINT uval;
 
-            FIXNUM_SPEC_PREAMBLE();
+            FIXNUM_SPEC_PREAMBLE (to_print, sizeof (to_print), 2,
+                                  Vfixnum_to_majuscule_map);
+            if (arg.l < 0)
+              {
+                spec->sign_flag = SIGN_FLAG_MINUS;
+                uval = -(arg.l);
+              }
+            else
+              {
+                uval = arg.l;
+              }
 
             if (NUMBER_FLAG_C_LIKEP (spec->number_flag))
               {
                 spec->number_flag = NUMBER_FLAG_NOTHING;
               }
 
-            len = fixnum_to_string_rshift_1 (to_print, sizeof (to_print),
-                                             val, 1, Vfixnum_to_majuscule_map);
+            len = emacs_uint_to_string_rshift_1 (to_print, sizeof (to_print),
+                                                 uval, 1,
+                                                 Vfixnum_to_majuscule_map);
             cursor = end - len;
-
-            if (val < 0)
-              {
-                spec->sign_flag = SIGN_FLAG_MINUS;
-                /* Go forward past the minus. */
-                INC_IBYTEPTR (cursor); 
-              }
 
             byte_count += doprnt_2 (stream, cursor, Qnil,
                                     0, end - cursor, spec, format_reloc);
-            continue;
-          }
-        case 'u':
-          {
-            /* Unsigned long. Fixnums are treated as if they don't have tag
-               bits. */
-            Ibyte to_print[SIZEOF_EMACS_INT * 2 * MAX_ICHAR_LEN
-                           + MAX_ICHAR_LEN + 1];
-            Ibyte *cursor;
-            Bytecount len;
-
-            if (largs)
-              {
-                obj = largs[spec->argnum - 1];
-
-#ifdef HAVE_BIGNUM
-                text_checking_assert (!BIGNUMP (obj));
-#endif
-                if (FIXNUMP (obj))
-                  {
-#ifdef HAVE_BIGNUM
-                    /* #### Can't we make a better design decision here? */
-                    if (XFIXNUM (obj) < 0)
-                      {
-                        dead_wrong_type_argument (Qnatnump, obj);
-                      }
-#endif
-                    arg.ul = XUINT (obj);
-                  }
-                else
-                  {
-                    dead_wrong_type_argument (Qintegerp, obj);
-                  }
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
-              }
-
-            if (spec->precision > -1)
-              {
-                spec->precision_details = PRECISION_MIN_TOTAL_DIGITS;
-                spec->zero_flag = 0;
-              }
-
-            /* Don't bother implementing unsigned_f_to_s_base_10, print the
-               high-order digits and the lowest-order digit separately
-               instead.  */
-            len = fixnum_to_string_base_10 (to_print, sizeof (to_print),
-                                            arg.ul / 10,
-                                            Vfixnum_to_majuscule_map);
-            cursor = to_print + len;
-            if (arg.ul)
-              {
-                len
-                  += itext_copy_ichar (XSTRING_DATA (Vfixnum_to_majuscule_map)
-                                       + ((arg.ul % 10) * MAX_ICHAR_LEN),
-                                       cursor);
-              }
-            byte_count += doprnt_2 (stream, to_print, Qnil, 0, len, spec,
-                                    format_reloc);
             continue;
           }
         case 'p':
@@ -1942,14 +2192,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte *end = to_print + sizeof (to_print), *cursor;
             Bytecount len;
 
-            if (largs)
+            if (!UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-
 #ifdef HAVE_BIGNUM
                 if (BIGNUMP (obj))
                   {
-                    arg.ul = bignum_to_emacs_int (XBIGNUM_DATA (obj));
+                    arg.ul = bignum_to_emacs_uint (XBIGNUM_DATA (obj));
                   }
                 else
 #endif
@@ -1961,10 +2209,6 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                   {
                     dead_wrong_type_argument (Qintegerp, obj);
                   }
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
               }
 
             if (spec->precision > -1)
@@ -1989,16 +2233,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte *to_print, *cursor, *end;
             Bytecount len, size;
 
-            if (largs)
+            if (UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-                text_checking_assert (BIGNUMP (obj));
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
                 obj = arg.obj;
               }
+
+            CHECK_BIGNUM (obj);
 
             if (spec->precision > -1)
               {
@@ -2033,16 +2273,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Bytecount len, size;
             int signum;
 
-            if (largs)
+            if (UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-                text_checking_assert (BIGNUMP (obj));
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
                 obj = arg.obj;
               }
+
+            CHECK_BIGNUM (obj);
 
             signum = bignum_sign (XBIGNUM_DATA (obj));
 
@@ -2087,16 +2323,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte *to_print, *cursor, *end;
             Bytecount len, size;
 
-            if (largs)
+            if (UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-                text_checking_assert (BIGNUMP (obj));
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
                 obj = arg.obj;
               }
+
+            CHECK_BIGNUM (obj);
 
             if (spec->precision > -1)
               {
@@ -2114,7 +2346,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
               }
 
             len = bignum_to_string_1 (&to_print, &size, XBIGNUM_DATA (obj),
-                                      8, Vfixnum_to_majuscule_map);
+                                      2, Vfixnum_to_majuscule_map);
             cursor = end - len;
 
             if (bignum_sign (XBIGNUM_DATA (obj)) < 0)
@@ -2135,16 +2367,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Bytecount len, size;
             int signum;
 
-            if (largs)
+            if (UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-                text_checking_assert (BIGNUMP (obj));
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
                 obj = arg.obj;
               }
+
+            CHECK_BIGNUM (obj);
 
             signum = bignum_sign (XBIGNUM_DATA (obj));
 
@@ -2185,16 +2413,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte *to_print, *cursor, *end;
             Bytecount len, size;
             
-            if (largs)
+            if (UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-                text_checking_assert (RATIOP (obj));
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
                 obj = arg.obj;
               }
+
+            CHECK_RATIO (obj);
 
             if (spec->precision > -1)
               {
@@ -2229,16 +2453,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Bytecount len, size;
             int signum;
 
-            if (largs)
+            if (UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-                text_checking_assert (RATIOP (obj));
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
                 obj = arg.obj;
               }
+
+            CHECK_RATIO (obj);
 
             signum = ratio_sign (XRATIO_DATA (obj));
 
@@ -2283,16 +2503,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte *to_print, *cursor, *end;
             Bytecount len, size;
 
-            if (largs)
+            if (UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-                text_checking_assert (RATIOP (obj));
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
                 obj = arg.obj;
               }
+
+            CHECK_RATIO (obj);
 
             if (spec->precision > -1)
               {
@@ -2331,16 +2547,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Bytecount len, size;
             int signum;
 
-            if (largs)
+            if (UNBOUNDP (obj))
               {
-                obj = largs[spec->argnum - 1];
-                text_checking_assert (RATIOP (obj));
-              }
-            else
-              {
-                arg = Dynarr_at (args, spec->argnum - 1);
                 obj = arg.obj;
               }
+
+            CHECK_RATIO (obj);
 
             signum = ratio_sign (XRATIO_DATA (obj));
 
@@ -2381,10 +2593,16 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
         case 'H':
         case 'k':
         case 'K':
+          if (UNBOUNDP (obj))
+            {
+              obj = arg.obj;
+            }
+
+          CHECK_BIGFLOAT (obj);
           {
             /* #### We don't even attempt to do this right. */
             Ibyte *text_to_print =
-              (Ibyte *) bigfloat_to_string (XBIGFLOAT_DATA (arg.obj), 10);
+              (Ibyte *) bigfloat_to_string (XBIGFLOAT_DATA (obj), 10);
             byte_count += doprnt_2 (stream, text_to_print, Qnil,
                                     0, qxestrlen (text_to_print), spec,
                                     format_reloc);
@@ -2392,9 +2610,60 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             continue;
           }
 #endif /* HAVE_BIGFLOAT */
+        case 'u':
+          {
+            Ibyte buffer[(sizeof (INT_64_BIT) * 8 + 1) * MAX_ICHAR_LEN];
+
+            Ibyte *end = buffer + sizeof (buffer), *cursor;
+            Bytecount len;
+            Lisp_Object table = spec->converter == 'x' ?
+              Vfixnum_to_minuscule_map : Vfixnum_to_majuscule_map;
+            UINT_16_BIT radix = 10;
+
+            switch (spec->converter)
+              {
+              case 'b': radix = 2; break;
+              case 'o': radix = 8; break;
+              case 'x': radix = 16; break;
+              case 'X': radix = 16; break;
+              default: break;
+              }
+
+            FIXNUM_SPEC_PREAMBLE_1 (buffer, sizeof (buffer), radix, table, 1);
+
+            len = uint_64_bit_to_string (buffer, sizeof (buffer), arg.u64,
+                                         radix, table);
+            cursor = end - len;
+
+            if (radix == 10)
+              {
+                spec->number_flag = NUMBER_FLAG_NOTHING;
+              }
+            else if (NUMBER_FLAG_C_LIKEP (spec->number_flag))
+              {
+                if (arg.u64 == 0)
+                  {
+                    if (8 == radix)
+                      {
+                        /* Note, ASCII zero, not the current
+                           Vfixnum_to_majuscule_map value for zero. */
+                        *--cursor = '0';
+                      }
+                    spec->number_flag = NUMBER_FLAG_NOTHING;
+                  }
+                else if (radix != 16)
+                  {
+                    spec->number_flag = NUMBER_FLAG_NOTHING;
+                  }
+              }
+
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
+            continue;
+          }
         default:
           {
-            text_checking_assert (0);
+	    syntax_error ("Invalid converter character", make_char (ch));
             break;
           }
         }
@@ -2430,7 +2699,7 @@ emacs_doprnt (Lisp_Object stream, const Ibyte *format_nonreloc,
   Bytecount val;
   va_start (vargs, largs);
   val = emacs_doprnt_1 (stream, format_nonreloc, format_length,
-			format_reloc, nargs, (Lisp_Object *) largs, vargs);
+			format_reloc, nargs, largs, vargs);
   va_end (vargs);
   return val;
 }
@@ -2672,8 +2941,9 @@ The other arguments are substituted into it to make the result, a string.
 It may contain %-sequences meaning to substitute the next argument.
 %s means print all objects as-is, using `princ'.
 %S means print all objects as s-expressions, using `prin1'.
-%d or %i means print as an integer in decimal (%o octal, %x lowercase hex,
-  %X uppercase hex, %b binary).
+%d or %i means print as a signed integer in decimal (%o octal, %x lowercase
+  hex, %X uppercase hex, %b binary).
+
 %c means print as a single character.
 %f means print as a floating-point number in fixed notation (e.g. 785.200).
 %e or %E means print as a floating-point number in scientific notation
@@ -2692,15 +2962,19 @@ The argument used for all but %s, %S, and %c must be a number.  It will be
   and the next format directive would use the fourth argument, the
   following one the fifth argument, etc. (There must be a positive integer
   between the % and the $).
-Zero or more of the flag characters `-', `+', ` ', `0', and `#' may be
-  specified between the optional repositioning spec and the conversion
+
+Zero or more of the flag characters `-', `+', ` ', `0', `!', '&', `~' and `#'
+  may be specified between the optional repositioning spec and the conversion
   character; see below.
+
 An optional minimum field width may be specified after any flag characters
   and before the conversion character; it specifies the minimum number of
   characters that the converted argument will take up.  Padding will be
   added on the left (or on the right, if the `-' flag is specified), as
-  necessary.  Padding is done with spaces, or with zeroes if the `0' flag
-  is specified.
+  necessary.  Padding is with zeroes if the `0' flag is specified, with the
+  character specified following the `!' flag if that is supplied (see below),
+  or by default with spaces.
+
 If the field width is specified as `*', the field width is assumed to have
   been specified as an argument.  Any repositioning specification that
   would normally specify the argument to be converted will now specify
@@ -2727,6 +3001,25 @@ If the precision is specified as `*', the precision is assumed to have been
   find the precision argument.  If there is no repositioning specification,
   the normal next argument is used.
 
+An optional length modifier may be specified after any minimum field width or
+  precision.  The length modifiers available are `hh', `h', `l' (ell), `ll'
+  \(ell-ell).  These mean that a following integer conversion character will
+  print an integer truncated to eight, sixteen, thirty-two, or sixty-four
+  bits, respectively.  Note that this contrasts with ANSI C, where the bit
+  length depends on the machine choices for the bit width of various integer
+  types.
+
+An optional unsigned modifier, the character `u', may be specified after any
+  length modifier and before an integer conversion character.  This specifies
+  that the following integer conversion is to treat its argument as unsigned.
+  If no length modifier is specified, this simply means that `format' will
+  error if the corresponding integer is negative.  With a length modifier
+  `format' will print a positive integer reflecting the twos' complement
+  representation of the argument in the given number of bits. E.g. `(format
+  "%hux" -1)' will return the string "ffff".  If no integer conversion
+  character follows `u', the specification is regarded as equivalent to `ud',
+  and the argument will be printed in decimal.
+
 The ` ' and `+' flags mean prefix non-negative numbers with a space or
   plus sign, respectively.
 The `#' flag means print numbers in an alternate, more verbose format:
@@ -2734,6 +3027,14 @@ The `#' flag means print numbers in an alternate, more verbose format:
   a decimal point is printed in %f, %e, and %E conversions even if no
   numbers are printed after it; and trailing zeroes are not omitted in
    %g and %G conversions.
+The `&' flag is analogous to the `#' flag for rationals, but the syntax used
+  to print numbers is that of Common Lisp, rather than C, so octal numbers are
+  preceded by `#o', binary numbers by `#b' and hexadecimal numbers by `#X' or
+  `#x' depending on the particular converter character specified.
+The `!' flag is followed by a single character, to be used as a pad character
+  instead of space.  It does not override the zero flag.
+The `~' flag, when combined with `&' or `#', means to place any sign before
+  the radix specifier.
 
 Use %% to put a single % into the output.
 
