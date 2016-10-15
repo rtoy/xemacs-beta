@@ -38,7 +38,7 @@ long long
 bignum_to_llong (const bignum b)
 {
   unsigned long long sign_mask
-    = bignum_sign (b) < 0 ? LLONG_MAX : ((signed long long) -1);
+    = bignum_sign (b) < 0 ? ((signed long long) -1) : LLONG_MAX;
   return
     (
 #if (GMP_NUMB_BITS * 9) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
