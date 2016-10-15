@@ -1,6 +1,12 @@
 2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* number-gmp.c (bignum_to_llong):
+	Correct the sense of the initialisation of the sign mask. I will
+	have tests for this code soon.
+
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-gmp.c (bignum_to_llong):
 	* number-gmp.c (bignum_to_ullong):
 	Don't implement this in terms of mpz_export(), since that always
 	exports the whole bignum, and we don't actually want that, we only
