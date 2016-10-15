@@ -1,3 +1,16 @@
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document %u here.
+	Correct the spelling of zeroes.
+	Add documentation of the new &, !, and ~ flags.
+	Add documentation of the length modifiers, specifying truncation
+	to a bit width, newly implemented though long accepted.
+	Document the new u modifier, used to specify that integer
+	converters should treat their arguments as unsigned. (It is new to
+	XEmacs that the non-base-10 converters treat their arguments as
+	signed).
+
 2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/strings.texi (Formatting Strings):

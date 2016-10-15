@@ -348,6 +348,112 @@
 
 2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	1. Make most of the fixnum conversion functions in doprnt.c take
+	unsigned arguments, since emacs_doprnt_1() isn't interested in the
+	minus sign anyway and that's simpler to implement.
+	2. Add support for a pad character alternative to space, as
+	implemented in SXEmacs.
+	3. Document SXEmacs-compatible flags already implemented.
+	4. Actually implement the h and l flags for Lisp arguments, where
+	previously they were silently ignored. Implement hh and ll flags
+	too.
+	5. Now that %x, %o, and %b are signed by default, add an unsigned
+	modifier u, and make %u on its own an alias for %ud.
+
+	* doprnt.c (fixnum_to_string_rshift_1):
+	Removed, in favour of emacs_uint_to_string_rshift_1().
+	* doprnt.c (emacs_uint_to_string_rshift_1):
+	Correct the comment documenting this function, fix some
+	indentation.
+	* doprnt.c (emacs_uint_to_string_general_1):
+	Renamed and reworked from fixnum_to_string_general_1; take an
+	unsigned argument, since our callers are not necessarily
+	interested in the minus sign and the range is bigger.
+	* doprnt.c (uint_64_bit_to_string):
+	Make this available for supporting the ll bit length portably.
+	* doprnt.c (fixnum_to_string):
+	Adjust this to match the changed APIs of its called functions.
+	* doprnt.c (bignum_to_string_1):
+	Document this.
+	* doprnt.c (bignum_to_string):
+	Document this.
+	* doprnt.c (ratio_to_string_1):
+	* doprnt.c (ratio_to_string):
+	Document these, wrap them in #ifdef HAVE_RATIO, implement code to
+	allocate the buffer on the heap if that's appropriate.
+	* doprnt.c (struct printf_spec):
+	Order this more mercilessly from widest to narrowest, hopefully
+	minimising padding needed.
+	* doprnt.c (union printf_arg):
+	Change the type of the l element to EMACS_INT and the type of the
+	ul element to EMACS_UINT.
+	Add a u64 element to this, for an explicitly-64-bit unsigned
+	integer, used in implementing the combination of the unsigned
+	modifier and the bit length.
+	* doprnt.c (enum sign_flag): Rename SIGN_FLAG_SPACE to
+	SIGN_FLAG_PADCHAR, now we support an explicit pad character.
+	* doprnt.c (enum hl_flag): New.
+	Parse C's length specifiers into this new enum.
+	* doprnt.c (HANDLE_SIGN_FLAG):
+	Support the pad character.
+	* doprnt.c (HANDLE_SIGN_AND_NUMBER):
+	Use ichar_itext_len here, so no need to set a second character
+	buffer at runtime.
+	* doprnt.c (doprnt_2):
+	Rename the various variables that referred to spaces to reflect
+	that they now mean an explicit pad character.
+	* doprnt.c (NEXT_ASCBYTE):
+	Rename this from NEXT_ASCII_BYTE, choosing a name with commonality
+	with, e.g. write_ascbyte (), emphasising that I've thought
+	carefully about it from a Mule perspective and it's fine as it is.
+	Be a bit clearer in our error message.
+	* doprnt.c (RESOLVE_FLAG_CONFLICTS):
+	Update this to reflect the pad character.
+	* doprnt.c (parse_doprnt_spec):
+	On creating the specs dynarr, immediately size it such that it
+	shouldn't need expansion the vast majority of the time.
+	Add pad char handling.
+	Use itext_ichar_eql, rather than uncleanly directly dereferencing
+	an Ibyte *.
+	Instead of calling parse_integer() on every converter seen, do a
+	gross plausibility check for a possible digit first.
+	Handle the new padchar flag, API taken from SXEmacs.
+	Since we're examining the flag characters exhaustively, don't
+	redundantly call strchr() on every iteration of the loop.
+	Back up within the loop when we encounter an unknown character.
+	Add support for the hh and ll flags.
+	Accept u as a modifier, no longer as a converter character on its
+	own; compromise on this for compatibility with C and with old
+	XEmacs code by rewriting a non-modifier 'u' to "ud".
+	* doprnt.c (get_doprnt_args):
+	Be more internally consistent within XEmacs in the size of the
+	arguments read when a length modifier is supplied, even if that is
+	not consistent with the machine's C compiler.
+	* doprnt.c (rewrite_rational_spec):
+	Update this to do the work of supporting the bit length
+	modifiers, relevant with fixnums and bignums.
+	* doprnt.c (rewrite_floating_spec):
+	rewrite_floating_spec() is only called from one place, it can be
+	made simpler than I had planned originally.
+	* doprnt.c (FIXNUM_SPEC_PREAMBLE_1): New. Refactored out from
+	FIXNUM_SPEC_PREAMBLE(), to allow better handling of the bit length
+	flags.
+	* doprnt.c (emacs_doprnt_1):
+	Make *largs const again, rewrite_rational_spec now modifies OBJ.
+	Initialize OBJ, ARG outside the switch ().
+	Call the fixnum conversion functions with their new calling
+	conventions.
+	Explicitly have a case to handle unsigned fixnum <= 64 bits in
+	width, for the sake of the bit length support.
+	* doprnt.c (Fformat):
+	Extend the documentation of this function to include the new flag
+	characters, the pad character, the newly-implemented (but not new)
+	length modifiers, and the new unsigned modifier.
+	* number.h (bignum_to_emacs_uint):
+	Add this #define.
+
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* number-gmp.c (bignum_to_llong):
 	Correct the sense of the initialisation of the sign mask. I will
 	have tests for this code soon.

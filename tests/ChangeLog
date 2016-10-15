@@ -12,6 +12,20 @@
 	encounters a ratio. Revise these files to delay calling #'read
 	until we're sure there is ratio support available.
 
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el (slow-ratio-to-string): New.
+	* automated/format-tests.el:
+	Extent assert-formatting-integers to accept a GUARD argument, a
+	feature to check for before doing some tests.
+	Check formatting of various bignums.
+	Check formatting of various ratios, using #'slow-ratio-to-string.
+	%c is not a number specifier, allow trailing zeroes with it since
+	they do not guarantee misinterpretation in the way they do for
+	numbers.
+	Check the pad char implementation.
+	Check the newly-implemented bit-width modifiers.
+	
 2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/format-tests.el:
