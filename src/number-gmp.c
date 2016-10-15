@@ -27,22 +27,78 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 static mp_exp_t float_print_min, float_print_max;
 gmp_randstate_t random_state;
 
+#define GMP_GET_AND_SHIFT_LIMB(bn, n)                           \
+  (((unsigned long long) (mpz_getlimbn (bn, n) & GMP_NUMB_MASK) \
+    << (GMP_LIMB_BITS * n)))
+
+/* Return the lower-order ((SIZEOF_LONG_LONG * BITS_PER CHAR) - 1) bits of
+   bignum B as a signed long long, with the sign reflecting B's sign rather
+   than the corresponding bit within the bignum's value. */
 long long
 bignum_to_llong (const bignum b)
 {
-  long long l;
-
-  mpz_export (&l, NULL, 1, sizeof (l), 0, 0U, b);
-  return (mpz_sgn (b) < 0) ? -l : l;
+  unsigned long long sign_mask
+    = bignum_sign (b) < 0 ? LLONG_MAX : ((signed long long) -1);
+  return
+    (
+#if (GMP_NUMB_BITS * 9) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+#error "Unimplemented" /* But easy to implement! */
+#endif
+#if (GMP_NUMB_BITS * 8) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 7) |
+#endif
+#if (GMP_NUMB_BITS * 7) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 6) |    
+#endif
+#if (GMP_NUMB_BITS * 6) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 5) |    
+#endif
+#if (GMP_NUMB_BITS * 5) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 4) |    
+#endif
+#if (GMP_NUMB_BITS * 4) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 3) |    
+#endif
+#if (GMP_NUMB_BITS * 3) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 2) |
+#endif
+#if (GMP_NUMB_BITS * 2) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 1) |
+#endif
+     GMP_GET_AND_SHIFT_LIMB (b, 0)) & sign_mask;
 }
 
+/* Return the lower-order (SIZEOF_LONG_LONG * BITS_PER CHAR) bits of bignum B
+   as an unsigned long long. */
 unsigned long long
 bignum_to_ullong (const bignum b)
 {
-  unsigned long long l;
-
-  mpz_export (&l, NULL, 1, sizeof (l), 0, 0U, b);
-  return l;
+  return 
+#if (GMP_NUMB_BITS * 9) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+#error "Unimplemented"
+#endif
+#if (GMP_NUMB_BITS * 8) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 7) |
+#endif
+#if (GMP_NUMB_BITS * 7) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 6) |    
+#endif
+#if (GMP_NUMB_BITS * 6) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 5) |    
+#endif
+#if (GMP_NUMB_BITS * 5) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 4) |    
+#endif
+#if (GMP_NUMB_BITS * 4) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 3) |    
+#endif
+#if (GMP_NUMB_BITS * 3) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 2) |
+#endif
+#if (GMP_NUMB_BITS * 2) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 1) |
+#endif
+    GMP_GET_AND_SHIFT_LIMB (b, 0);
 }
 
 void

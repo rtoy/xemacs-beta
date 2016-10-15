@@ -1,3 +1,17 @@
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-gmp.c (bignum_to_llong):
+	* number-gmp.c (bignum_to_ullong):
+	Don't implement this in terms of mpz_export(), since that always
+	exports the whole bignum, and we don't actually want that, we only
+	want those low-order bits that will fit into a long long.
+	
+	This hasn't caused any problems so far because we only
+	called bignum_to_{u,}llong() in contexts where the bignum *fit* into
+	the long long, but is an incompatiblity with what the MP bignum
+	support does, with what one expects coming from C, and it has
+	caused me a problem in some other (new) code.
+
 2016-10-13  Jerry James  <james@xemacs.org>
 
 	* tls.c (openssl_malloc): New function for use with OpenSSL >= 1.1.0.
