@@ -307,7 +307,7 @@
 (Assert (equal (format "%-0*d" 20 ?A)
                (concatenate 'string "65" (make-string 18 ?\x20))))
 
-(Check-Error wrong-type-argument (format-into "hello" "hello"))
+(Check-Error invalid-function (format-into "hello" "hello"))
 (Check-Error wrong-type-argument
              (format-into (make-string-output-stream)
                           (make-string-output-stream)))

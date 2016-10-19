@@ -346,6 +346,74 @@
 	Two new profiling strings, for byte->char and external->internal
 	conversion.
 
+2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	1. Accept any output stream (as accepted by #'write-sequence,
+	#'print, etc) in #'format-into.
+	2. Implement stretching of string extents for text written to
+	buffers as well as strings, lstreams.
+	Correct the implementation for strings, lstreams.
+	Add tests.
+	* doprnt.c:
+	* doprnt.c (struct printf_spec):
+	Reorder this slightly given changed frequency of field access.
+	* doprnt.c (HANDLE_SIGN_FLAG):
+	* doprnt.c (HANDLE_SIGN_AND_NUMBER):
+	Implement both of these with buffering local to doprnt_2(), rather
+	than relying than relying on the lstream buffering as we used to.
+	* doprnt.c (write_string_1_lstream):
+	* doprnt.c (write_lisp_string_lstream):
+	* doprnt.c (write_string_1_buffer):
+	* doprnt.c (write_lisp_string_buffer):
+	* doprnt.c (write_string_1_marker):
+	* doprnt.c (write_lisp_string_marker):
+	Static functions called by doprnt_2(), avoiding calls to
+	output_string that make #'format needlessly slow for these common
+	cases.
+	* doprnt.c (doprnt_2):
+	Buffer the padding, sign info with a local alloca'd array, rather
+	than using the lstream buffering. This makes it possible to pass
+	output to any stream accepted by #'write-sequence or
+	write_string_1().
+	When writing a string and not truncating it, use
+	write_lisp_string() and thence copy_string_extents() rather than
+	stretch_string_extents ().
+	* doprnt.c (emacs_doprnt_1):
+	Check text_before_len is non-zero before attempting to output the
+	text before this format sequence.
+	* doprnt.c (Fformat_into):
+	Update this to avoid rejection of non-LSTREAMs, update the
+	docstring accordingly. We will error now on a lower level.
+	* extents.c:
+	* extents.c (struct copy_string_extents_arg):
+	* extents.c (copy_string_extents_mapper):
+	* extents.c (copy_string_extents):
+	Revert to the old implementation of this function, separate out
+	copy_string_extents() and stretch_string_extents().
+	* extents.c (struct stretch_string_extents_arg): New.
+	* extents.c (stretch_string_extents_buffer_mapper): New.
+	Mapper to copy extents where the source and the destination have
+	differing byte lengths, and the target is a buffer.
+	* extents.c (stretch_string_extents_mapper):
+	Mapper to copy extents where the source and the destination have
+	differing byte lengths, and the target is an lstream or a string.
+	* extents.c (stretch_string_extents):
+	Call the above two functions when appropriate.
+	* extents.h (stream_extent_position): New.
+	Return a bytecount appropriate for use when creating an extent
+	with STREAM's current position as its end position or its start
+	position.
+	* lisp.h (write_lisp_string): New. Alternative to #'princ that
+	doesn't require the preparation the Lisp printer does and doesn't
+	truncate your string according to print-string-length.
+	* lstream.h:
+	extents.h now #includes this file, don't #include it, just declare
+	struct extent info.
+	* print.c:
+	* print.c (write_lisp_string): New.
+	* print.c (write_string_1): Make a text checking assertion a bit
+	more idiomatic.
+
 2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	1. Make most of the fixnum conversion functions in doprnt.c take

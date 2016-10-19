@@ -699,11 +699,10 @@ with encodings of the corresponding @var{objects}, in order. The arguments
 @defun format-into stream control-string &rest objects
   This function accepts @var{control-string} and @var{objects} in the
 same way as @code{format}. It takes an additional argument @var{stream},
-an output stream as created by e.g. @code{make-string-output-stream},
-and writes the output string into that stream. It returns
-@var{stream}. The expectation is that the caller calls
-@code{get-string-output-stream} or a related function on @var{stream} at
-some point in the future to produce the string output.
+a valid output stream, @pxref{Output Functions}.  It writes the output
+string into that stream and returns @var{stream}. See the function
+@code{make-string-output-stream} for one way of buffering output to be
+accessed later.
 @end defun
 
 @cindex @samp{%} in format

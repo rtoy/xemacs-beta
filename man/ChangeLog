@@ -11,6 +11,12 @@
 	XEmacs that the non-base-10 converters treat their arguments as
 	signed).
 
+2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document that #'format-into now accepts any stream argument as
+	accepted by #'print.
+
 2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/strings.texi (Formatting Strings):
