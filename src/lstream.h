@@ -25,7 +25,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define INCLUDED_lstream_h_
 
 #include "tls.h"
-#include "extents.h"
+
+struct extent_info;
 
 /************************************************************************/
 /*                     definition of Lstream object                     */

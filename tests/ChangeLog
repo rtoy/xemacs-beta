@@ -12,6 +12,16 @@
 	encounters a ratio. Revise these files to delay calling #'read
 	until we're sure there is ratio support available.
 
+2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	* automated/extent-tests.el (Assert-format-into-extents) New.
+	Check the combination of #'format-into, buffer, marker, string
+	arguments, check that extent info is passed through as expected.
+	* automated/format-tests.el (invalid-function):
+	(format-into "hello" "hello") now throws a slightly different
+	error.
+
 2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/format-tests.el (slow-ratio-to-string): New.

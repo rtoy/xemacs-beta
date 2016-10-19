@@ -454,4 +454,136 @@
 (Assert (eq nil (clear-output (current-buffer)))
         "checking #'clear-output doesn't choke on a buffer argument")
 
+(macrolet
+ ((Assert-format-into-extents (&rest pad-chars)
+    (cons
+     'progn
+     (loop for pad-char in pad-chars
+       collect
+       `(let* ((format (concatenate 'string
+				    "hello there "
+				    "%!" (string (or ,pad-char ?\x20))
+				    "400s everyone"))
+	       ;; This extent will stretch, because it's at the beginning
+	       ;; and its start is closed (the default).
+	       (extent (make-extent (search "%" format)
+				    (search " everyone" format) format))
+	       ;; This extent won't, it will move later with insertion of a
+	       ;; longer string.
+	       (ee (make-extent (1- (extent-end-position extent))
+				(extent-end-position extent) format))
+	       (string
+		(copy-sequence "So bist du meine Tochter nimmer mehr!"))
+	       ;; These two extents should just pass through.
+	       (E (make-extent (search "meine" string)
+			       (search "nimmer" string) string))
+	       (EE (make-extent (search " mehr" string) (search "!" string)
+				string))
+	       (property-name '#:secret-token)
+               last marker)
+	 (setf (extent-property E 'duplicable) t
+	       (extent-property E property-name) t
+	       (extent-property E 'face) 'green
+	       (extent-property EE 'count) most-positive-fixnum
+	       (extent-property EE 'duplicable) nil ;; Actually the default.
+	       (extent-property ee 'start-open) t
+	       (extent-property ee 'face) 'isearch
+	       (extent-property ee 'duplicable) 't
+	       (extent-property ee 'shorter) t
+	       (extent-property extent 'longer) t
+	       (extent-property extent 'face) 'blue
+	       (extent-property extent 'duplicable) 't)
+	 (with-temp-buffer
+	   (Assert (eq (format-into (current-buffer) format string)
+		       (current-buffer))
+		   "checking return value of #'format-into")
+	   (Assert (eql (point) (1+ (+ (length format) 400
+				       (- (length "%! 400s")))))
+		   "checking #'format-into did the expected with a buffer arg")
+	   (Assert (eql (point) (point-max))
+		   "checking no random unpredicted garbage inserted")
+	   (Assert (null (extent-list (current-buffer) nil nil nil
+				      'count))
+		   "checking non-duplcable extent not passed through")
+	   (Assert (eql (extent-length
+			 (car (extent-list (current-buffer) nil nil nil
+					   'shorter)))
+			1)
+		   "checking shorter extent has expected length")
+	   (Assert (eql (extent-length
+			 (car (extent-list (current-buffer) nil nil nil
+					   'longer)))
+			400)
+		   "checking longer extent has expected length")
+	   (Assert (eql (extent-length 
+			 (car (extent-list (current-buffer) nil nil nil
+					   property-name)))
+			(extent-length E))
+		   "checking first pass-through extent has expected length")
+	   (Assert (equal (buffer-substring
+			   (extent-start-position 
+			    (car (extent-list (current-buffer) nil nil nil
+					      property-name)))
+			   (extent-end-position 
+			    (car (extent-list (current-buffer) nil nil nil
+					      property-name))))
+			  "meine Tochter ")
+		   "checking first pass-through extent reflects text OK")
+	   (Assert (not (cdr (extent-list (current-buffer) nil nil nil
+					  'shorter)))
+		   "checking no duplicates passed through")
+	   (Assert (not (cdr (extent-list (current-buffer) nil nil nil
+					  'longer)))
+		   "checking no duplicates passed through")
+	   (Assert (not (cdr (extent-list (current-buffer) nil nil nil
+					  property-name)))
+		   "checking no duplicates passed through")
+           (setf last (point) marker (point-marker))
+	   (Assert (eq (format-into marker format string) marker)
+		   "checking return value of #'format-into, marker")
+	   (Assert (= marker (+ (length format) 400
+                                (- (length "%! 400s")) last))
+		   "checking #'format-into did the expected, marker arg")
+	   (Assert (= marker (point-max))
+		   "checking no random unpredicted garbage inserted, marker")
+	   (Assert (null (extent-list (current-buffer)
+                                      last marker nil 'count))
+		   "checking non-duplcable extent not passed through, marker")
+	   (Assert (eql (extent-length
+			 (car (extent-list (current-buffer) last marker nil
+					   'shorter)))
+			1)
+		   "checking shorter extent has expected length, marker")
+	   (Assert (eql (extent-length
+			 (car (extent-list (current-buffer) last marker nil
+					   'longer)))
+			400)
+		   "checking longer extent has expected length, marker")
+	   (Assert (eql (extent-length 
+			 (car (extent-list (current-buffer) last marker nil
+					   property-name)))
+			(extent-length E))
+		   "checking length first pass-through extent, marker")
+	   (Assert (equal (buffer-substring
+			   (extent-start-position 
+			    (car (extent-list (current-buffer) last marker
+                                              nil property-name)))
+			   (extent-end-position 
+			    (car (extent-list (current-buffer) last marker
+                                              nil property-name))))
+			  "meine Tochter ")
+		   "checking first pass-through reflects text OK, marker")
+	   (Assert (not (cdr (extent-list (current-buffer) last marker
+                                          nil 'shorter)))
+		   "checking no duplicates passed through, marker")
+	   (Assert (not (cdr (extent-list (current-buffer) last marker
+                                          nil 'longer)))
+		   "checking no duplicates passed through, marker")
+	   (Assert (not (cdr (extent-list (current-buffer) last marker
+                                          nil property-name)))
+		   "checking no duplicates passed through, marker")))))))
+  (Assert-format-into-extents
+    ?\x20 ?a ?z ?A ?Z ?\xa0 (decode-char 'ucs #x20ac)
+    (decode-char 'ucs #x2012) (decode-char 'ucs #x2020)))
+
 ;;; end of extent-tests.el

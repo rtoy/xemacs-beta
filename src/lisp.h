@@ -5676,9 +5676,12 @@ void debug_p4 (Lisp_Object obj);
 void debug_p3 (Lisp_Object obj);
 void debug_short_backtrace (int);
 void debug_backtrace (void);
-/* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
- * Note: stream should be defaulted before calling
- *  (eg Qnil means stdout, not Vstandard_output, etc) */
+MODULE_API void write_lisp_string (Lisp_Object stream, Lisp_Object string,
+                                   Bytecount offset, Bytecount len);
+/* NOTE: Do not call the following with the data of a Lisp_String.  Use
+   write_lisp_string().
+   Note: stream should be defaulted before calling (eg Qnil means stdout, not
+   Vstandard_output, etc). Use canonicalize_printcharfun(). */
 MODULE_API void write_istring (Lisp_Object stream, const Ibyte *str);
 /* Same goes for this function. */
 MODULE_API void write_cistring (Lisp_Object stream, const CIbyte *str);

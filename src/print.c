@@ -699,26 +699,36 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
     }
 }
 
+/* Write a Lisp string to STREAM, preserving extent data if STREAM can handle
+   it, and protecting its string data from relocation when appropriate. */
+void
+write_lisp_string (Lisp_Object stream, Lisp_Object string, Bytecount offset,
+                   Bytecount len)
+{
+  /* This function can GC */
+  output_string (stream, NULL, string, offset, len);
+}  
 
 /* Write internal-format data to STREAM.  See output_string() for
    interpretation of STREAM.
 
-   NOTE: Do not call this with the data of a Lisp_String, as
-   printcharfun might cause a GC, which might cause the string's data
-   to be relocated.  To princ a Lisp string, use:
+   NOTE: Do not call this with the data of a Lisp_String, as printcharfun
+   might cause the octet length of the string to be changed, which might cause
+   the string's data to be relocated.  You will also discard any extent data,
+   which is usually the wrong thing to do. To write a Lisp string, use
+   write_lisp_string (), above.
 
-       print_internal (string, printcharfun, 0);
+   You could also use print_internal (string, printcharfun, 0), but that will
+   be truncated depending on the value of PRINT-STRING-LENGTH, which you
+   probably don't want.
 
-   Also note that STREAM should be the result of
-   canonicalize_printcharfun() (i.e. Qnil means stdout, not
-   Vstandard_output, etc.)  */
+   Also note that STREAM should be the result of canonicalize_printcharfun()
+   (i.e. Qnil means stdout, not Vstandard_output, etc.)  */
 void
 write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size)
 {
   /* This function can GC */
-#ifdef ERROR_CHECK_TEXT
-  assert (size >= 0);
-#endif
+  text_checking_assert (size >= 0);
   output_string (stream, str, Qnil, 0, size);
 }
 

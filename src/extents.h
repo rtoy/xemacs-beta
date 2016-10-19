@@ -21,6 +21,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #ifndef INCLUDED_extents_h_
 #define INCLUDED_extents_h_
 
+#include "lstream.h"
+
 DECLARE_LISP_OBJECT (extent, struct extent);
 #define XEXTENT(x) XRECORD (x, extent, struct extent)
 #define wrap_extent(p) wrap_record (p, extent)
@@ -196,6 +198,29 @@ void copy_string_extents (Lisp_Object new_object,
 void stretch_string_extents (Lisp_Object new_object, Lisp_Object old_string,
                              Bytecount new_pos, Bytecount old_pos,
                              Bytecount old_length, Bytecount new_length);
+
+/* Return a bytecount appropriate for use when creating an extent with
+   STREAM's current position as its end-position or its start-position.  Most
+   appropriate for use with stretch_string_extents(). */
+DECLARE_INLINE_HEADER (
+Bytexpos
+stream_extent_position (Lisp_Object stream)
+)
+{
+  if (LRECORDP (stream))
+    {
+      switch ((enum lrecord_type) (XRECORD_LHEADER (stream)->type))
+        {
+        case lrecord_type_lstream:
+          return Lstream_byte_count (XLSTREAM (stream));
+        case lrecord_type_buffer:
+          return BYTE_BUF_PT (XBUFFER (stream));
+        case lrecord_type_marker:
+          return byte_marker_position (stream);
+        }
+    }
+  return -1;
+}
 
 void detach_all_extents (Lisp_Object object);
 Lisp_Object extent_at (Bytexpos position, Lisp_Object object,

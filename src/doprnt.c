@@ -30,7 +30,9 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "buffer.h"
 #include "lstream.h"
-
+#include "insdel.h"
+#include "lrecord.h"
+#include "extents.h"
 
 /* Conversion to string, radix handling for rationals. */
 
@@ -632,12 +634,13 @@ static const Ascbyte * const bigfloat_converters = "FhHkK";
 typedef struct printf_spec printf_spec;
 struct printf_spec
 {
-  Bytecount text_before; /* Position of the first character of the block of
-                            literal text before this spec. */
-  Bytecount text_before_len; /* Length of that text. */
+  Bytecount text_before_len; /* Length of the block of literal text before
+                                this spec. */
   Elemcount argnum; /* Which argument does this spec want?  This is one-based:
                        The first argument given is numbered 1, the second is
                        2, etc.  This is to handle %##$x-type specs. */
+  Bytecount text_before; /* Position of the first character of the block of
+                            literal text before this spec. */
   Charcount minwidth;
   Charcount precision;
   Bytecount spec_length; /* Length of this format spec itself, starting at
@@ -723,52 +726,88 @@ enum hl_flag {
 #define HANDLE_SIGN_FLAG(sf) do switch (sf)                             \
     {                                                                   \
     case SIGN_FLAG_PADCHAR:                                             \
-      {                                                                 \
-        Bytecount plen = itext_ichar_len (pfsp->pad_char);              \
-        Lstream_write (lstr, pfsp->pad_char, plen);                     \
-        result_len += plen;                                             \
-        break;                                                          \
-      }                                                                 \
+      fill_cursor += itext_copy_ichar (pfsp->pad_char, fill_cursor);    \
+      break;                                                            \
     case SIGN_FLAG_PLUS:                                                \
-      Lstream_putc (lstr, '+'),                                         \
-        result_len += ichar_itext_len ('+');                            \
+      fill_cursor += set_itext_ichar (fill_cursor, '+');                \
       break;                                                            \
     case SIGN_FLAG_MINUS:                                               \
-      Lstream_putc (lstr, '-'),                                         \
-        result_len += ichar_itext_len ('-');                            \
+      fill_cursor += set_itext_ichar (fill_cursor, '-');                \
       break;                                                            \
     default:                                                            \
       break;                                                            \
     } while (0)
 
-#define HANDLE_SIGN_AND_NUMBER(nf, sf)                              \
-  do switch (nf)                                                    \
-    {                                                               \
-    case NUMBER_FLAG_NOTHING:                                       \
-      HANDLE_SIGN_FLAG (sf);                                        \
-      break;                                                        \
-    case NUMBER_FLAG_C_SYNTAX:                                      \
-      HANDLE_SIGN_FLAG (sf);                                        \
-      Lstream_putc (lstr, '0'),                                     \
-        result_len += ichar_itext_len ('0');                        \
-      Lstream_putc (lstr, pfsp->converter),                         \
-        result_len += ichar_itext_len (pfsp->converter);            \
-      break;                                                        \
-    case NUMBER_FLAG_LISP_SYNTAX:                                   \
-      Lstream_putc (lstr, '#'),                                     \
-        result_len += ichar_itext_len ('#');                        \
-      Lstream_putc (lstr, pfsp->converter),                         \
-        result_len += ichar_itext_len (pfsp->converter);            \
-      HANDLE_SIGN_FLAG (sf);                                        \
-      break;                                                        \
-    case NUMBER_FLAG_MASOCHISM:                                     \
-      Lstream_putc (lstr, '0'),                                     \
-        result_len += ichar_itext_len ('0');                        \
-      Lstream_putc (lstr, pfsp->converter),                         \
-        result_len += ichar_itext_len (pfsp->converter);            \
-      HANDLE_SIGN_FLAG (sf);                                        \
-      break;                                                        \
+#define HANDLE_SIGN_AND_NUMBER(nf, sf)                                  \
+  do switch (nf)                                                        \
+    {                                                                   \
+    case NUMBER_FLAG_NOTHING:                                           \
+      HANDLE_SIGN_FLAG (sf);                                            \
+      break;                                                            \
+    case NUMBER_FLAG_C_SYNTAX:                                          \
+      HANDLE_SIGN_FLAG (sf);                                            \
+      fill_cursor += set_itext_ichar (fill_cursor, '0');                \
+      fill_cursor += set_itext_ichar (fill_cursor, pfsp->converter);    \
+      break;                                                            \
+    case NUMBER_FLAG_LISP_SYNTAX:                                       \
+      fill_cursor += set_itext_ichar (fill_cursor, '#');                \
+      fill_cursor += set_itext_ichar (fill_cursor, pfsp->converter);    \
+      HANDLE_SIGN_FLAG (sf);                                            \
+      break;                                                            \
+    case NUMBER_FLAG_MASOCHISM:                                         \
+      fill_cursor += set_itext_ichar (fill_cursor, '0');                \
+      fill_cursor += set_itext_ichar (fill_cursor, pfsp->converter);    \
+      HANDLE_SIGN_FLAG (sf);                                            \
+      break;                                                            \
     } while (0)
+
+static void
+write_string_1_lstream (Lisp_Object stream, const Ibyte *str, Bytecount size)
+{
+  /* This becomes just a jmp _Lstream_write in the assembler. */
+  Lstream_write (XLSTREAM (stream), (const void *) str, size);
+}
+
+static void
+write_lisp_string_lstream (Lisp_Object stream, Lisp_Object string,
+                           Bytecount offset, Bytecount len)
+{
+  /* Ditto. */
+  Lstream_write_with_extents (XLSTREAM (stream), string, offset, len);
+}
+
+/* You could argue that the next few are overkill. */
+static void
+write_string_1_buffer (Lisp_Object stream, const Ibyte *str, Bytecount size)
+{
+  buffer_insert_string_1 (XBUFFER (stream), -1, str, Qnil, 0, size,
+                          -1, 0);
+}
+
+static void
+write_lisp_string_buffer (Lisp_Object stream, Lisp_Object string,
+                          Bytecount offset, Bytecount len)
+{
+  buffer_insert_string_1 (XBUFFER (stream), -1, NULL, string, offset, len,
+                          -1, 0);
+}
+
+static void
+write_string_1_marker (Lisp_Object stream, const Ibyte *str, Bytecount size)
+{
+  buffer_insert_string_1 (XMARKER (stream)->buffer, marker_position (stream),
+                          str, Qnil, 0, size, -1, 0);
+  set_byte_marker_position (stream, byte_marker_position (stream) + size);
+}
+
+static void
+write_lisp_string_marker (Lisp_Object stream, Lisp_Object string,
+                          Bytecount offset, Bytecount len)
+{
+  buffer_insert_string_1 (XMARKER (stream)->buffer, marker_position (stream),
+                          NULL, string, offset, len, -1, 0);
+  set_byte_marker_position (stream, byte_marker_position (stream) + len);
+}
 
 /* Append the string of length LEN starting at OFFSET to STREAM. Preserve any
    extent information.  If RELOC is non-nil, use its string data as the base
@@ -816,11 +855,42 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
           Bytecount offset, Bytecount len,
           struct printf_spec *pfsp, Lisp_Object format_object)
 {
-  Lstream *lstr = XLSTREAM (stream);
-  Bytecount result_len = 0, begin = Lstream_byte_count (lstr);
-  const Ibyte *newnonreloc = ((NILP (reloc)) ? nonreloc : XSTRING_DATA (reloc));
+  Bytecount result_len = 0, begin;
+  const Ibyte *newnonreloc
+    = ((NILP (reloc)) ? nonreloc : XSTRING_DATA (reloc));
+  void (*write_string_2) (Lisp_Object, const Ibyte *, Bytecount);
+  void (*write_lisp_string_2) (Lisp_Object, Lisp_Object, Bytecount, Bytecount);
 
-  assert (!(EQ (reloc, format_object)) || NILP (reloc));
+  text_checking_assert (!(EQ (reloc, format_object)) || NILP (reloc));
+
+  switch (LRECORDP (stream) ?
+          (XRECORD_LHEADER (stream)->type) : lrecord_type_last_built_in_type)
+    {
+    case lrecord_type_lstream:
+      begin = Lstream_byte_count (XLSTREAM (stream));
+      write_string_2 = write_string_1_lstream;
+      write_lisp_string_2 = write_lisp_string_lstream;
+      break;
+    case lrecord_type_buffer:
+      CHECK_LIVE_BUFFER (stream);
+      begin = BYTE_BUF_PT (XBUFFER (stream));
+      write_string_2 = write_string_1_buffer;
+      write_lisp_string_2 = write_lisp_string_buffer;
+      break;
+    case lrecord_type_marker:
+      begin = byte_marker_position (stream);
+      write_string_2 = write_string_1_marker;
+      write_lisp_string_2 = write_lisp_string_marker;
+      break;
+    default:
+      /* All the above is an optimization, for the usual lstream case calling
+         write_string_1() instead of write_string_1_lstream () doubles our
+         run-time in my tests. */
+      begin = stream_extent_position (stream);
+      write_string_2 = write_string_1;
+      write_lisp_string_2 = write_lisp_string;
+      break;
+    }
 
   if (pfsp != NULL)
     {
@@ -829,6 +899,8 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
       Boolint left_justify = pfsp->left_justify, zero_flag = pfsp->zero_flag;
       enum sign_flag sign_flag = (enum sign_flag) (pfsp->sign_flag);
       enum number_flag number_flag = (enum number_flag) (pfsp->number_flag);
+      Ibyte *filling, *fill_cursor;
+      Bytecount filllen, realfill;
 
       switch ((enum precision_details) (pfsp->precision_details))
         {
@@ -880,6 +952,10 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
               text_checking_assert (sign_flag == SIGN_FLAG_NOTHING);
             }
         }
+      filllen = (max (zeros_to_add, 0) + 1 /* sign flag */
+                 + 2 /* number flag */ + labs (padding_to_add))
+        * MAX_ICHAR_LEN;
+      filling = fill_cursor = alloca_ibytes (filllen);
 
       if (left_justify)
         {
@@ -893,17 +969,14 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
           HANDLE_SIGN_AND_NUMBER (number_flag, sign_flag);
           while (padding_to_add-- > 0)
             {
-              Lstream_putc (lstr, '0');
-              result_len += ichar_itext_len ('0');
+              fill_cursor += set_itext_ichar (fill_cursor, '0');
             }
         }
       else
         {
-          Bytecount pad_len = itext_ichar_len (pfsp->pad_char);
           while (padding_to_add-- > 0)
             {
-              Lstream_write (lstr, pfsp->pad_char, pad_len);
-              result_len += pad_len;
+              fill_cursor += itext_copy_ichar (pfsp->pad_char, fill_cursor);
             }
           /* Sign information comes after the spaces. */
           HANDLE_SIGN_AND_NUMBER (number_flag, sign_flag);
@@ -911,11 +984,31 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
 
       while (zeros_to_add-- > 0)
         {
-          Lstream_putc (lstr, '0');
-          result_len += ichar_itext_len ('0');
+          fill_cursor += set_itext_ichar (fill_cursor, '0');
         }
 
-      Lstream_write (lstr, newnonreloc + offset, len);
+      realfill = fill_cursor - filling;
+      text_checking_assert (realfill <= filllen);
+      if (realfill)
+        {
+          write_string_2 (stream, filling, realfill);
+          result_len += realfill;
+          fill_cursor = filling;
+        }
+
+      if (NILP (reloc))
+        {
+          write_string_2 (stream, newnonreloc + offset, len);
+        }
+      else
+        {
+          /* 1. Handle RELOC possibly having its data relocated when Lisp code
+             adjusts it such that it bytecount changes.
+             2. Copy RELOC's extent information directly to this point in the
+             output, do not stretch it. */
+          write_lisp_string_2 (stream, reloc, offset, len);
+        }
+
       result_len += len;
 
       /* Padding at end to left-justify ... */
@@ -925,40 +1018,52 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
             {
               while (padding_to_add-- > 0)
                 {
-                  Lstream_putc (lstr, '0');
-                  result_len += ichar_itext_len ('0');
+                  fill_cursor += set_itext_ichar (fill_cursor, '0');
                 }
             }
           else
             {
-              Bytecount pad_len = itext_ichar_len (pfsp->pad_char);
               while (padding_to_add-- > 0)
                 {
-                  Lstream_write (lstr, pfsp->pad_char, pad_len);
-                  result_len += pad_len;
+                  fill_cursor
+                    += itext_copy_ichar (pfsp->pad_char, fill_cursor);
                 }
             }
 
+          realfill = fill_cursor - filling;
+          text_checking_assert (realfill < filllen);
+          if (realfill)
+            {
+              write_string_2 (stream, filling, realfill);
+              result_len += realfill;
+            }
         }
 
-      if (!NILP (format_object) && string_extent_info (format_object) != NULL)
+      if (!NILP (format_object) && begin != -1 &&
+          string_extent_info (format_object) != NULL)
         {
-          stretch_string_extents (stream, format_object, begin,
+          stretch_string_extents (MARKERP (stream) ? Fmarker_buffer (stream)
+                                  : stream, format_object, begin,
                                   pfsp->text_before + pfsp->text_before_len,
                                   pfsp->spec_length,
-                                  Lstream_byte_count (lstr) - begin);
+                                  stream_extent_position (stream) - begin);
         }
     }
   else
     {
-      Lstream_write (lstr, newnonreloc + offset, len);
+      if (NILP (reloc))
+        {
+          write_string_2 (stream, newnonreloc + offset, len);
+        }
+      else
+        {
+          /* 1. Handle RELOC possibly having its data relocated when Lisp code
+             adjusts it such that it bytecount changes.
+             2. Copy RELOC's extent information directly to this point in the
+             output, do not stretch it. */
+          write_lisp_string_2 (stream, reloc, offset, len);
+        }
       result_len += len;
-    }
- 
-  if (!NILP (reloc) && string_extent_info (reloc) != NULL)
-    {
-      stretch_string_extents (stream, reloc, begin,
-                              offset, len, Lstream_byte_count (lstr) - begin);
     }
 
   return result_len;
@@ -1752,9 +1857,16 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
           format_nonreloc = XSTRING_DATA (format_reloc);
         }
 
-      byte_count += doprnt_2 (stream, format_nonreloc, format_reloc,
-                              spec->text_before, spec->text_before_len, NULL,
-                              Qnil);
+      if (spec->text_before_len)
+        {
+          /* 28106 of the 61063 iterations of this loop when building core
+             Lisp as of October 2016 have a zero text_before_len, it's worth
+             checking that before calling doprnt_2(). */
+          byte_count += doprnt_2 (stream, format_nonreloc, format_reloc,
+                                  spec->text_before, spec->text_before_len,
+                                  NULL, Qnil);
+        }
+
       if (spec->argnum)
         {
           if (largs)
@@ -1979,8 +2091,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 spec->number_flag = NUMBER_FLAG_NOTHING;
               }
 
-            byte_count += doprnt_2 (stream, (const Ibyte *)cursor, Qnil,
-                                    0, end - cursor, spec, format_reloc);
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+                                    spec, format_reloc);
             continue;
           }
         case 'f':
@@ -2180,8 +2292,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                                                  Vfixnum_to_majuscule_map);
             cursor = end - len;
 
-            byte_count += doprnt_2 (stream, cursor, Qnil,
-                                    0, end - cursor, spec, format_reloc);
+            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor, 
+                                    spec, format_reloc);
             continue;
           }
         case 'p':
@@ -3057,7 +3169,8 @@ arguments: (CONTROL-STRING &rest ARGS)
 DEFUN ("format-into", Fformat_into, 2, MANY, 0, /*
 Like `format', but write the constructed string into STREAM.
 
-STREAM is a Lisp stream as created by, e.g. `make-string-output-stream'.
+STREAM is an object accepted by `print' or `write-sequence' as an output
+destination.  See the documentation of `standard-output'.
 
 Return STREAM.  See the documentation for `format' for details of
 CONTROL-STRING and the other arguments.
@@ -3066,11 +3179,11 @@ arguments: (STREAM CONTROL-STRING &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object stream = args[0], control_string = args[1];
+  Lisp_Object stream = canonicalize_printcharfun (args[0]);
+  Lisp_Object control_string = args[1];
 
-  CHECK_LSTREAM (stream);
   CHECK_STRING (control_string);
-  
+  /* #### Consider implementing the frame kludge of print_prepare (). */
   emacs_doprnt (stream, NULL, XSTRING_LENGTH (control_string),
                 control_string, nargs - 2, args + 2);
 
