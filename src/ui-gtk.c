@@ -329,7 +329,7 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string_lisp (printcharfun, "#<ffi %S", 1, XFFI (obj)->function_name);
+  write_fmt_string_lisp (printcharfun, "#<ffi %S", XFFI (obj)->function_name);
   if (XFFI (obj)->n_args)
     write_fmt_string (printcharfun, " %d arguments", XFFI (obj)->n_args);
   write_fmt_string (printcharfun, " %p>", (void *)XFFI (obj)->function_ptr);

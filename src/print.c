@@ -781,71 +781,6 @@ write_eistring (Lisp_Object stream, const Eistring *ei)
 {
   write_string_1 (stream, eidata (ei), eilen (ei));
 }
-
-/* Write a printf-style string to STREAM; see output_string(). */
-
-void
-write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
-{
-  va_list va;
-  Ibyte *str;
-  Bytecount len;
-  int count;
-
-  va_start (va, fmt);
-  str = emacs_vsprintf_malloc (fmt, va, &len);
-  va_end (va);
-  count = record_unwind_protect_freeing (str);
-  write_string_1 (stream, str, len);
-  unbind_to (count);
-}
-
-/* Write a printf-style string to STREAM, where the arguments are
-   Lisp objects and not C strings or integers; see output_string().
-
-   #### It shouldn't be necessary to specify the number of arguments.
-   This would require some rewriting of the doprnt() functions, though. */
-
-void
-write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt, int nargs, ...)
-{
-  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
-  va_list va;
-  int i;
-  Ibyte *str;
-  Bytecount len;
-  int count;
-
-  va_start (va, nargs);
-  for (i = 0; i < nargs; i++)
-    args[i] = va_arg (va, Lisp_Object);
-  va_end (va);
-  str = emacs_vsprintf_malloc_lisp (fmt, Qnil, nargs, args, &len);
-  count = record_unwind_protect_freeing (str);
-  write_string_1 (stream, str, len);
-  unbind_to (count);
-}
-
-void
-stderr_out_lisp (const CIbyte *fmt, int nargs, ...)
-{
-  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
-  va_list va;
-  int i;
-  Ibyte *str;
-  Bytecount len;
-  int count;
-
-  va_start (va, nargs);
-  for (i = 0; i < nargs; i++)
-    args[i] = va_arg (va, Lisp_Object);
-  va_end (va);
-  str = emacs_vsprintf_malloc_lisp (fmt, Qnil, nargs, args, &len);
-  count = record_unwind_protect_freeing (str);
-  write_string_1 (Qexternal_debugging_output, str, len);
-  unbind_to (count);
-}
-
 
 DEFUN ("write-char", Fwrite_char, 1, 2, 0, /*
 Output character CHARACTER to stream STREAM.
@@ -1156,7 +1091,6 @@ prin1_to_string (Lisp_Object object, int noescape)
   GCPRO3 (object, stream, result);
 
   print_internal (object, stream, !noescape);
-  Lstream_flush (str);
   UNGCPRO;
   result = resizing_buffer_to_lisp_string (str);
   Lstream_delete (str);
@@ -1339,7 +1273,6 @@ message is equivalent to the one that would be issued by
   GCPRO1 (stream);
 
   print_error_message (error_object, stream);
-  Lstream_flush (XLSTREAM (stream));
   result = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
 
@@ -2990,26 +2923,24 @@ debug_print (Lisp_Object debug_print_obj)
 /* Printf-style output when the objects being printed are Lisp objects.
    Calling style is e.g.
 
-   debug_out_lisp ("Called foo(%s %s)\n", 2, arg0, arg1)
+   debug_out_lisp ("Called foo(%s %s)\n", arg0, arg1)
 */
 
 void
-debug_out_lisp (const CIbyte *format, int nargs, ...)
+debug_out_lisp (const CIbyte *format, ...)
 {
   /* This function cannot GC, since GC is forbidden */
   struct debug_bindings bindings;
   int specdepth = debug_print_enter (&bindings);
-  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
+  Bytecount len;
   va_list va;
-  int i;
   Ibyte *msgout;
 
-  va_start (va, nargs);
-  for (i = 0; i < nargs; i++)
-    args[i] = va_arg (va, Lisp_Object);
+  va_start (va, format);
+  msgout = emacs_vsprintf_malloc_lisp (format, va, &len);
   va_end (va);
-  msgout = emacs_vsprintf_malloc_lisp (format, Qnil, nargs, args, NULL);
-  debug_out ("%s", msgout);
+
+  write_string_to_external_output (msgout, len, EXT_PRINT_ALL);
   xfree (msgout);
   unbind_to (specdepth);
 }

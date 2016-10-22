@@ -461,7 +461,7 @@ print_table_entry (struct chartab_range *range, Lisp_Object UNUSED (table),
   a->first = 0;
   lisprange = encode_char_table_range (range);
   GCPRO1 (lisprange);
-  write_fmt_string_lisp (a->printcharfun, "%s %S", 2, lisprange, val);
+  write_fmt_string_lisp (a->printcharfun, "%s %S", lisprange, val);
   UNGCPRO;
   return 0;
 }
@@ -479,11 +479,11 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
   arg.first = 1;
 
   write_fmt_string_lisp (printcharfun,
-			 "#s(char-table :type %s", 1,
+			 "#s(char-table :type %s",
 			 char_table_type_to_symbol (ct->type));
   if (!(EQ (ct->default_, char_table_default_for_type (ct->type))))
     {
-      write_fmt_string_lisp (printcharfun, " :default %S", 1, ct->default_);
+      write_fmt_string_lisp (printcharfun, " :default %S", ct->default_);
     }
 
   write_ascstring (printcharfun, " :data (");

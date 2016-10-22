@@ -4690,24 +4690,31 @@ Bytecount bignum_to_string (Ibyte **buffer_inout, Bytecount size,
 Bytecount ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
                            UINT_16_BIT radix, int flags);
 #endif
-Bytecount emacs_doprnt_va (Lisp_Object stream, const Ibyte *format_nonreloc,
-			   Bytecount format_length, Lisp_Object format_reloc,
-			   va_list vargs);
-Bytecount emacs_doprnt (Lisp_Object stream, const Ibyte *format_nonreloc,
-			Bytecount format_length, Lisp_Object format_reloc,
-			int nargs, const Lisp_Object *largs, ...);
+
+Lisp_Object format_into (Lisp_Object stream, Lisp_Object format_reloc,
+                         int nargs, const Lisp_Object *largs);
+Lisp_Object format (Lisp_Object format_reloc, int nargs,
+                    const Lisp_Object *largs);
+
+MODULE_API void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
+  PRINTF_ARGS (2, 3);
+MODULE_API void write_fmt_string_va (Lisp_Object stream,
+                                     const CIbyte *fmt, va_list);
+MODULE_API void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
+				       ...);
+MODULE_API void write_fmt_string_lisp_va (Lisp_Object stream,
+                                          const CIbyte *fmt, va_list);
+
 Lisp_Object emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc,
-				   Lisp_Object format_reloc, int nargs,
-				   const Lisp_Object *largs);
-Lisp_Object emacs_sprintf_string_lisp (const CIbyte *format_nonreloc,
-				 Lisp_Object format_reloc, int nargs, ...);
+                                        va_list vargs);
+Lisp_Object emacs_sprintf_string_lisp (const CIbyte *format_nonreloc, ...);
+
 Ibyte *emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc,
-				     Lisp_Object format_reloc, int nargs,
-				     const Lisp_Object *largs,
-				     Bytecount *len_out);
+                                   va_list vargs, Bytecount *len_out);
 Ibyte *emacs_sprintf_malloc_lisp (Bytecount *len_out,
-				    const CIbyte *format_nonreloc,
-				    Lisp_Object format_reloc, int nargs, ...);
+                                  const CIbyte *format_nonreloc,
+                                  ...)
+  PRINTF_ARGS (2, 3);
 Lisp_Object emacs_vsprintf_string (const CIbyte *format, va_list vargs);
 Lisp_Object emacs_sprintf_string (const CIbyte *format, ...)
      PRINTF_ARGS (1, 2);
@@ -4715,11 +4722,12 @@ Ibyte *emacs_vsprintf_malloc (const CIbyte *format, va_list vargs,
 				Bytecount *len_out);
 Ibyte *emacs_sprintf_malloc (Bytecount *len_out, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
-Bytecount emacs_vsprintf (Ibyte *output, const CIbyte *format,
-			  va_list vargs);
-Bytecount emacs_sprintf (Ibyte *output, const CIbyte *format, ...)
-     PRINTF_ARGS (2, 3);
 
+Bytecount emacs_vsnprintf (Ibyte *output, Bytecount size,
+                           const CIbyte *format, va_list vargs);
+Bytecount emacs_snprintf (Ibyte *output, Bytecount size,
+                          const CIbyte *format, ...)
+  PRINTF_ARGS (3, 4);
 
 /* Defined in editfns.c */
 EXFUN (Fbobp, 1);
@@ -5691,16 +5699,12 @@ MODULE_API void write_ascstring (Lisp_Object stream, const Ascbyte *str);
 void write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size);
 void write_eistring (Lisp_Object stream, const Eistring *ei);
 
-/* Higher-level (printf-style) ways to output data: */
-MODULE_API void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...);
-MODULE_API void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
-				       int nargs, ...);
 void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
-void stderr_out_lisp (const CIbyte *, int nargs, ...);
+void stderr_out_lisp (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
 void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
-void debug_out_lisp (const CIbyte *, int nargs, ...);
+void debug_out_lisp (const CIbyte *, ...);
 DECLARE_DOESNT_RETURN (fatal (const CIbyte *, ...)) PRINTF_ARGS(1, 2);
 
 /* Internal functions: */

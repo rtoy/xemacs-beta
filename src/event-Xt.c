@@ -2387,7 +2387,7 @@ describe_event_window (Window window, Display *display, Lisp_Object pstream)
 		      w->core.widget_class->core_class.class_name);
   f = x_any_window_to_frame (get_device_from_display (display), window);
   if (f)
-    write_fmt_string_lisp (pstream, " \"%s\"", 1, f->name);
+    write_fmt_string_lisp (pstream, " \"%s\"", f->name);
   write_fmt_string (pstream, "\n");
 }
 

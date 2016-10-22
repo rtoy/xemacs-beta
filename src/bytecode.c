@@ -2266,7 +2266,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
     {
       Lisp_Object ann = compiled_function_annotation (f);
       if (!NILP (ann))
-	write_fmt_string_lisp (printcharfun, "(from %S) ", 1, ann);
+	write_fmt_string_lisp (printcharfun, "(from %S) ", ann);
     }
 #endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
   /* COMPILED_ARGLIST = 0 */

@@ -679,12 +679,7 @@ typedef struct
   Dynarr_declare (struct printf_spec);
 } printf_spec_dynarr;
 
-typedef struct
-{
-  Dynarr_declare (union printf_arg);
-} printf_arg_dynarr;
-
-/* Enums, macros for doprnt_2(). */
+/* Enums, macros for doprnt_1(). */
 
 /* What sign information should be displayed? */
 enum sign_flag {
@@ -772,41 +767,8 @@ static void
 write_lisp_string_lstream (Lisp_Object stream, Lisp_Object string,
                            Bytecount offset, Bytecount len)
 {
-  /* Ditto. */
+  /* And this becomes just a jmp _Lstream_write_with_extents. */
   Lstream_write_with_extents (XLSTREAM (stream), string, offset, len);
-}
-
-/* You could argue that the next few are overkill. */
-static void
-write_string_1_buffer (Lisp_Object stream, const Ibyte *str, Bytecount size)
-{
-  buffer_insert_string_1 (XBUFFER (stream), -1, str, Qnil, 0, size,
-                          -1, 0);
-}
-
-static void
-write_lisp_string_buffer (Lisp_Object stream, Lisp_Object string,
-                          Bytecount offset, Bytecount len)
-{
-  buffer_insert_string_1 (XBUFFER (stream), -1, NULL, string, offset, len,
-                          -1, 0);
-}
-
-static void
-write_string_1_marker (Lisp_Object stream, const Ibyte *str, Bytecount size)
-{
-  buffer_insert_string_1 (XMARKER (stream)->buffer, marker_position (stream),
-                          str, Qnil, 0, size, -1, 0);
-  set_byte_marker_position (stream, byte_marker_position (stream) + size);
-}
-
-static void
-write_lisp_string_marker (Lisp_Object stream, Lisp_Object string,
-                          Bytecount offset, Bytecount len)
-{
-  buffer_insert_string_1 (XMARKER (stream)->buffer, marker_position (stream),
-                          NULL, string, offset, len, -1, 0);
-  set_byte_marker_position (stream, byte_marker_position (stream) + len);
 }
 
 /* Append the string of length LEN starting at OFFSET to STREAM. Preserve any
@@ -851,45 +813,32 @@ write_lisp_string_marker (Lisp_Object stream, Lisp_Object string,
    FORMAT_OBJECT where the format spec started. */
 
 static Bytecount
-doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
+doprnt_1 (Lisp_Object stream,
+          const Ibyte *nonreloc, Lisp_Object reloc,
           Bytecount offset, Bytecount len,
           struct printf_spec *pfsp, Lisp_Object format_object)
 {
   Bytecount result_len = 0, begin;
-  const Ibyte *newnonreloc
-    = ((NILP (reloc)) ? nonreloc : XSTRING_DATA (reloc));
+  const Ibyte *newnonreloc = NILP (reloc) ? nonreloc : XSTRING_DATA (reloc);
   void (*write_string_2) (Lisp_Object, const Ibyte *, Bytecount);
   void (*write_lisp_string_2) (Lisp_Object, Lisp_Object, Bytecount, Bytecount);
 
   text_checking_assert (!(EQ (reloc, format_object)) || NILP (reloc));
 
-  switch (LRECORDP (stream) ?
-          (XRECORD_LHEADER (stream)->type) : lrecord_type_last_built_in_type)
+  if (LSTREAMP (stream))
     {
-    case lrecord_type_lstream:
+      /* This is an optimization, for the usual lstream case calling
+         write_string_1() instead of write_string_1_lstream () doubles our
+         run-time in my tests. */
       begin = Lstream_byte_count (XLSTREAM (stream));
       write_string_2 = write_string_1_lstream;
       write_lisp_string_2 = write_lisp_string_lstream;
-      break;
-    case lrecord_type_buffer:
-      CHECK_LIVE_BUFFER (stream);
-      begin = BYTE_BUF_PT (XBUFFER (stream));
-      write_string_2 = write_string_1_buffer;
-      write_lisp_string_2 = write_lisp_string_buffer;
-      break;
-    case lrecord_type_marker:
-      begin = byte_marker_position (stream);
-      write_string_2 = write_string_1_marker;
-      write_lisp_string_2 = write_lisp_string_marker;
-      break;
-    default:
-      /* All the above is an optimization, for the usual lstream case calling
-         write_string_1() instead of write_string_1_lstream () doubles our
-         run-time in my tests. */
+    }
+  else
+    {
       begin = stream_extent_position (stream);
       write_string_2 = write_string_1;
       write_lisp_string_2 = write_lisp_string;
-      break;
     }
 
   if (pfsp != NULL)
@@ -1072,11 +1021,17 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
 #define NEXT_ASCBYTE(ch)						\
   do {									\
     if (fmt == fmt_end)							\
-      syntax_error ("Premature end of format string", Qunbound);	\
+      {                                                                 \
+        Dynarr_free (specs);                                            \
+        syntax_error ("Premature end of format string", Qunbound);	\
+      }                                                                 \
     ch = *fmt;								\
     if (!byte_ascii_p (ch))                                             \
-      syntax_error ("Not a valid character, format converter spec",	\
-                    make_char (itext_ichar (fmt)));                     \
+      {                                                                 \
+        Dynarr_free (specs);                                            \
+        syntax_error ("Not a valid character, format converter spec",	\
+                      make_char (itext_ichar (fmt)));                   \
+      }                                                                 \
     fmt++;								\
   } while (0)
 
@@ -1094,11 +1049,12 @@ doprnt_2 (Lisp_Object stream, const Ibyte *nonreloc, Lisp_Object reloc,
   } while (0)
 
 static printf_spec_dynarr *
-parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
+parse_doprnt_spec (const Ibyte *format, Bytecount format_length,
+                   Elemcount *args_needed_out)
 {
   const Ibyte *fmt = format;
   const Ibyte *fmt_end = format + format_length;
-  Elemcount prev_argnum = 0;
+  Elemcount prev_argnum = 0, max_argnum = 0;
   printf_spec_dynarr *specs = Dynarr_new (printf_spec);
   /* As a somewhat-representative survey, of the format specs used while
      building XEmacs, as of 20161013, there were 16168 where the length of
@@ -1114,6 +1070,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 
       if (fmt == fmt_end)
         {
+          *args_needed_out = max_argnum;
           return specs;
         }
 
@@ -1170,6 +1127,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
               }
 
 	    spec.argnum = prev_argnum;
+            max_argnum = max (max_argnum, prev_argnum);
 	  }
 
 	  /* Parse off any flags. */
@@ -1205,6 +1163,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
                   {
                     if (fmt == fmt_end)
                       {
+                        Dynarr_free (specs);
                         syntax_error ("Premature end of format string",
                                       Qunbound);
                       }
@@ -1241,6 +1200,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
                       - offsetof (struct printf_spec, pad_char)
                       - MAX_ICHAR_LEN);
 	      spec.argnum = ++prev_argnum;
+              max_argnum = max (max_argnum, prev_argnum);
               fmt += ichar_itext_len ('*');
 	    }
 	  else
@@ -1298,6 +1258,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
                           - offsetof (struct printf_spec, pad_char)
                           - MAX_ICHAR_LEN);
 		  spec.argnum = ++prev_argnum;
+                  max_argnum = max (max_argnum, prev_argnum);
                   fmt += ichar_itext_len ('*');
 		}
 	      else
@@ -1395,39 +1356,13 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
   RETURN_NOT_REACHED(specs); /* suppress compiler warning */
 }
 
-static int
-get_args_needed (printf_spec_dynarr *specs)
+static void
+get_doprnt_args (printf_arg *args, Elemcount args_needed,
+                 printf_spec_dynarr *specs, va_list vargs)
 {
-  int args_needed = 0;
-  REGISTER int i;
-
-  /* Figure out how many args are needed.  This may be less than
-     the number of specs because a spec could be %% or could be
-     missing (literal text at end of format string) or there
-     could be specs where the field number is explicitly given.
-     We just look for the maximum argument number that's referenced. */
-
-  for (i = 0; i < Dynarr_length (specs); i++)
-    {
-      char ch = Dynarr_at (specs, i).converter;
-      if (ch && ch != '%')
-	{
-	  int argnum = Dynarr_at (specs, i).argnum;
-	  if (argnum > args_needed)
-	    args_needed = argnum;
-	}
-    }
-
-  return args_needed;
-}
-
-static printf_arg_dynarr *
-get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
-{
-  printf_arg_dynarr *args = Dynarr_new (printf_arg);
+  printf_arg *argp = args;
   union printf_arg arg;
   REGISTER int i;
-  int args_needed = get_args_needed (specs);
 
   xzero (arg);
   for (i = 1; i <= args_needed; i++)
@@ -1444,7 +1379,9 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 	}
 
       if (j == Dynarr_length (specs))
-	syntax_error ("No conversion spec for argument", make_fixnum (i));
+        {
+          syntax_error ("No conversion spec for argument", make_fixnum (i));
+        }
 
       ch = spec->converter;
 
@@ -1487,10 +1424,9 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
          supplied at the C level, something not implemented. */
       else ABORT ();
 
-      Dynarr_add (args, arg);
+      *argp++ = arg;
+      text_checking_assert (argp - args <= args_needed);
     }
-
-  return args;
 }
 
 #if FIXNUM_VALBITS >= 64
@@ -1772,25 +1708,34 @@ rewrite_floating_spec (struct printf_spec *spec, Lisp_Object obj)
   } while (0)
 
 
-/* Most basic entry point into string formatting.
-   Generate output from a format-spec (either a Lisp string FORMAT_RELOC, or a
-   C string FORMAT_NONRELOC of length FORMAT_LENGTH -- which *MUST NOT* come
-   from Lisp string data, unless GC is inhibited).  Output goes to STREAM.
-   Returns the number of bytes stored into STREAM.  Arguments are either
-   C-type arguments in va_list VARGS, or an array of Lisp objects in LARGS of
-   size NARGS. (Behavior is different in the two cases -- you either get
-   standard sprintf() behavior or `format' behavior.) */
+/* Most basic entry point into string formatting.  Generate output from a
+   format-spec (either a Lisp string FORMAT_RELOC, or a C string
+   FORMAT_NONRELOC of length FORMAT_LENGTH -- which *MUST NOT* come from Lisp
+   string data, unless GC is inhibited).  Output goes to STREAM.  Returns the
+   number of bytes stored into STREAM.  Arguments are either C-type arguments
+   in ARGS, or an array of Lisp objects in LARGS.  (Behavior is different in
+   the two cases -- you either get standard sprintf() behavior or `format'
+   behavior.)
+
+   The maximum index into the argument vector that is used depends on SPECS;
+   see the ARGS_NEEDED_OUT argument to parse_doprnt_spec (). */
 
 static Bytecount
-emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
-		Bytecount format_length, Lisp_Object format_reloc,
-		int nargs, const Lisp_Object *largs, va_list vargs)
+emacs_doprnt (Lisp_Object stream,
+              const Ibyte *format_nonreloc, Bytecount format_length,
+              Lisp_Object format_reloc,
+              printf_spec_dynarr *specs,
+              const Lisp_Object *largs, const printf_arg *args)
 {
-  printf_spec_dynarr *specs = 0;
-  printf_arg_dynarr *args = 0;
   REGISTER int i;
   Bytecount byte_count = 0;
-  int count;
+  Lisp_Object obj = Qunbound;
+  struct gcpro gcpro1;
+
+  /* A small fraction of the time OBJ can be a freshly-created bignum; a
+     larger fraction of the time it can be a freshly-created string for the %S
+     converter.  */
+  GCPRO1 (obj);
 
   if (!NILP (format_reloc))
     {
@@ -1802,54 +1747,15 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
       format_length = qxestrlen (format_nonreloc);
     }
 
-  specs = parse_doprnt_spec (format_nonreloc, format_length);
-  count = record_unwind_protect_freeing_dynarr (specs);
-
-  if (largs)
-    {
-      int args_needed = get_args_needed (specs);
-      /* allow too many args for string, but not too few */
-      if (nargs < args_needed)
-        {
-          signal_error_1 (Qwrong_number_of_arguments,
-                          list3 (Qformat,
-                                 make_fixnum (nargs),
-                                 !NILP (format_reloc) ? format_reloc :
-                                 make_string (format_nonreloc,
-                                              format_length)));
-        }
-#ifdef DEBUG_XEMACS
-      else if (nargs > args_needed)
-        {
-          Lisp_Object argz[] = { build_ascstring ("Format string \""),
-                                 !NILP (format_reloc) ? format_reloc :
-                                 make_string (format_nonreloc,
-                                              format_length),
-                                 build_ascstring ("\" takes "),
-                                 Fnumber_to_string (make_fixnum (args_needed)),
-                                 build_ascstring (" arguments, "),
-                                 Fnumber_to_string (make_fixnum (nargs)),
-                                 build_ascstring (" supplied.") };
-          /* Don't use warn_when_safe, since that ultimately calls
-             emacs_doprnt_1(). */
-          warn_when_safe_lispobj (Qformat, Qinfo,
-                                  concatenate (countof (argz), argz, Qstring,
-                                               0));
-        }
-#endif
-    }
-  else
-    {
-      args = get_doprnt_args (specs, vargs);
-      record_unwind_protect_freeing_dynarr (args);
-    }
-
+  text_checking_assert (largs || args);
+  
   for (i = 0; i < Dynarr_length (specs); i++)
     {
       struct printf_spec *spec = Dynarr_atp (specs, i);
-      Lisp_Object obj = Qunbound;
       union printf_arg arg;
       Ascbyte ch = spec->converter;
+
+      obj = Qunbound;
 
       /* Copy the text before */
       if (!NILP (format_reloc)) /* refetch in case of GC below */
@@ -1861,8 +1767,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
         {
           /* 28106 of the 61063 iterations of this loop when building core
              Lisp as of October 2016 have a zero text_before_len, it's worth
-             checking that before calling doprnt_2(). */
-          byte_count += doprnt_2 (stream, format_nonreloc, format_reloc,
+             checking that before calling doprnt_1(). */
+          byte_count += doprnt_1 (stream, format_nonreloc, format_reloc,
                                   spec->text_before, spec->text_before_len,
                                   NULL, Qnil);
         }
@@ -1875,7 +1781,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             }
           else
             {
-              arg = Dynarr_at (args, spec->argnum - 1);
+              arg = args[spec->argnum - 1];
             }
         }
 
@@ -1898,33 +1804,32 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                #'princ. */
             Ibyte *string;
             Bytecount string_len;
-            Lisp_Object ls = Qnil;
-            struct gcpro gcpro1;
 
             if (UNBOUNDP (obj))
               {
                 string = arg.bp;
                 text_checking_assert (string != NULL);
                 string_len = qxestrlen (string);
+                obj = Qnil;
               }
             else
               {
-                if (STRINGP (obj))
-                  ls = obj;
-                else if (SYMBOLP (obj))
-                  ls = XSYMBOL (obj)->name;
-                else
+                if (!STRINGP (obj))
                   {
-                    /* Convert to string using princ. */
-                    ls = prin1_to_string (obj, 1);
+                    if (SYMBOLP (obj))
+                      obj = XSYMBOL (obj)->name;
+                    else
+                      {
+                        /* Convert to string using princ. OBJ is GCPRO'd. */
+                        obj = prin1_to_string (obj, 1);
+                      }
                   }
-                string = XSTRING_DATA (ls);
-                string_len = XSTRING_LENGTH (ls);
+                string = NULL;
+                string_len = XSTRING_LENGTH (obj);
               }
 
-            GCPRO1 (ls);
-            doprnt_2 (stream, string, ls, 0, string_len, spec, format_reloc);
-            UNGCPRO;
+            byte_count += doprnt_1 (stream, string, obj, 0, string_len, spec,
+                                    format_reloc);
             continue;
           }
         case 'd':
@@ -1951,7 +1856,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 len -= ichar_itext_len ('-');
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, len, spec,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, len, spec,
                                     format_reloc);
             continue;
           }
@@ -1976,16 +1881,19 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 a = XREALFIXNUM (obj);
                 if (!valid_ichar_p (a))
                   {
+                    UNGCPRO;
                     syntax_error ("Invalid integer value for %c spec", obj);
                   }
               }
             else
               {
+                UNGCPRO;
                 syntax_error ("Value doesn't match char specifier", obj);
               }
 
             if (spec->precision != -1)
               {
+                UNGCPRO;
                 syntax_error ("Precision nonsensical for %c",
                               NILP (format_reloc) ?
                               make_string (format_nonreloc, format_length) :
@@ -1995,7 +1903,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             /* XEmacs; don't attempt (badly) to handle floats, bignums or
                ratios when 'c' is specified, error instead, "Format specifier
                doesn't match arg type". */
-            byte_count += doprnt_2 (stream, charbuf, Qnil, 0,
+            byte_count += doprnt_1 (stream, charbuf, Qnil, 0,
                                     set_itext_ichar (charbuf, a),
                                     spec, format_reloc);
             continue;
@@ -2003,8 +1911,6 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
         case 'S':
           {
 	    /* Print the argument as a Lisp object using #'prin1. */
-            struct gcpro gcpro1;
-
             if (UNBOUNDP (obj))
               {
                 obj = arg.obj;
@@ -2012,10 +1918,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 
             obj = prin1_to_string (obj, 0);
 
-            GCPRO1 (obj);
-            byte_count += doprnt_2 (stream, NULL, obj, 0, XSTRING_LENGTH (obj),
+            byte_count += doprnt_1 (stream, NULL, obj, 0, XSTRING_LENGTH (obj),
                                     spec, format_reloc);
-            UNGCPRO;
             continue;
           }
         case 'x':
@@ -2051,7 +1955,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 spec->number_flag = NUMBER_FLAG_NOTHING;
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
@@ -2091,7 +1995,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 spec->number_flag = NUMBER_FLAG_NOTHING;
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
@@ -2137,6 +2041,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 (alloca_sz += max (0, spec->precision) * MAX_ICHAR_LEN,
                  (Bytecount) alloca_sz < 350))
               {
+                UNGCPRO;
                 signal_error (Qunimplemented,
                               "can't handle sum of minwidth and precision",
                               NILP (format_reloc) ?
@@ -2205,13 +2110,13 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 minimal_spec.text_before = spec->text_before;
                 minimal_spec.text_before_len = spec->text_before_len;
 
-                byte_count += doprnt_2 (stream, (Ibyte *) text_to_print,
+                byte_count += doprnt_1 (stream, (Ibyte *) text_to_print,
                                         Qnil, 0, text_to_print_length,
                                         &minimal_spec, format_reloc);
               }
             else
               {
-                byte_count += doprnt_2 (stream, (Ibyte *) text_to_print,
+                byte_count += doprnt_1 (stream, (Ibyte *) text_to_print,
                                         Qnil, 0, text_to_print_length,
                                         NULL, format_reloc);
               }
@@ -2222,7 +2127,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             Ibyte chbuf[MAX_ICHAR_LEN];
             /* No field widths, no precisions, take any extents from the
                format string.  */
-            byte_count += doprnt_2 (stream, format_nonreloc, format_reloc,
+            byte_count += doprnt_1 (stream, format_nonreloc, format_reloc,
                                     spec->text_before + spec->text_before_len,
                                     set_itext_ichar (chbuf, '%'), NULL, Qnil);
             continue;
@@ -2292,7 +2197,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                                                  Vfixnum_to_majuscule_map);
             cursor = end - len;
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor, 
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor, 
                                     spec, format_reloc);
             continue;
           }
@@ -2335,7 +2240,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                                                  arg.ul, 4,
                                                  Vfixnum_to_minuscule_map);
             cursor = end - len;
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
@@ -2375,7 +2280,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 INC_IBYTEPTR (cursor); 
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
@@ -2426,7 +2331,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 spec->number_flag = NUMBER_FLAG_NOTHING;
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
@@ -2468,7 +2373,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 INC_IBYTEPTR (cursor); 
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
@@ -2514,7 +2419,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 spec->number_flag = NUMBER_FLAG_NOTHING;
               }
 
-            byte_count += doprnt_2 (stream, (const Ibyte *) cursor, Qnil,
+            byte_count += doprnt_1 (stream, (const Ibyte *) cursor, Qnil,
                                     0, end - cursor, spec, format_reloc);
             continue;
           }
@@ -2555,7 +2460,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 INC_IBYTEPTR (cursor); 
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
@@ -2606,7 +2511,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 spec->number_flag = NUMBER_FLAG_NOTHING;
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
@@ -2648,7 +2553,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 INC_IBYTEPTR (cursor); 
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
@@ -2694,7 +2599,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                 spec->number_flag = NUMBER_FLAG_NOTHING;
               }
 
-            byte_count += doprnt_2 (stream, (const Ibyte *) cursor, Qnil,
+            byte_count += doprnt_1 (stream, (const Ibyte *) cursor, Qnil,
                                     0, end - cursor, spec, format_reloc);
             continue;
           }
@@ -2715,7 +2620,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
             /* #### We don't even attempt to do this right. */
             Ibyte *text_to_print =
               (Ibyte *) bigfloat_to_string (XBIGFLOAT_DATA (obj), 10);
-            byte_count += doprnt_2 (stream, text_to_print, Qnil,
+            byte_count += doprnt_1 (stream, text_to_print, Qnil,
                                     0, qxestrlen (text_to_print), spec,
                                     format_reloc);
             xfree (text_to_print);
@@ -2769,131 +2674,178 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
                   }
               }
 
-            byte_count += doprnt_2 (stream, cursor, Qnil, 0, end - cursor,
+            byte_count += doprnt_1 (stream, cursor, Qnil, 0, end - cursor,
                                     spec, format_reloc);
             continue;
           }
         default:
           {
+            UNGCPRO;
 	    syntax_error ("Invalid converter character", make_char (ch));
             break;
           }
         }
     }
-      
+
+  RETURN_UNGCPRO (byte_count);
+}
+
+/* Write a printf-style string to STREAM, an object accepted by
+   output_string(), using FMT as the format string, and taking C arguments
+   from the va_list VA. */
+void
+write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
+{
+  Bytecount len = strlen (fmt);
+  Elemcount nargs = 0;
+  printf_spec_dynarr *specs = parse_doprnt_spec ((const Ibyte *) fmt, len,
+                                                 &nargs);
+  int count = record_unwind_protect_freeing_dynarr (specs);
+  printf_arg *args = alloca_array (printf_arg, nargs);
+
+  get_doprnt_args (args, nargs, specs, va);
+
+  emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs, NULL, args);
   unbind_to (count);
-  return byte_count;
 }
 
-/* Basic external entry point into string formatting.  See
- emacs_doprnt_1().
- */
+/* Write a printf-style string to STREAM; see output_string(). Arguments are C
+   doubles, longs, uints, char *s, etc, rather than uniformly Lisp_Objects.
 
-Bytecount
-emacs_doprnt_va (Lisp_Object stream, const Ibyte *format_nonreloc,
-		 Bytecount format_length, Lisp_Object format_reloc,
-		 va_list vargs)
+   We could implement this with write_fmt_string_va (stream, fmt, va), but
+   write_fmt_string() itself is the most called function of this family. */
+void
+write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
 {
-  return emacs_doprnt_1 (stream, format_nonreloc, format_length,
-			 format_reloc, 0, 0, vargs);
+  Bytecount len = strlen (fmt);
+  Elemcount nargs = 0;
+  printf_spec_dynarr *specs = parse_doprnt_spec ((const Ibyte *) fmt, len,
+                                                 &nargs);
+  int count = record_unwind_protect_freeing_dynarr (specs);
+  printf_arg *args = alloca_array (printf_arg, nargs);
+  va_list va;
+
+  va_start (va, fmt);
+  get_doprnt_args (args, nargs, specs, va);
+  va_end (va);
+
+  emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs, NULL, args);
+  unbind_to (count);
 }
 
-/* Basic external entry point into string formatting.  See
- emacs_doprnt_1().
- */
-
-Bytecount
-emacs_doprnt (Lisp_Object stream, const Ibyte *format_nonreloc,
-	      Bytecount format_length, Lisp_Object format_reloc,
-	      int nargs, const Lisp_Object *largs, ...)
+/* Write a printf-style string to STREAM, an object accepted by
+   output_string(), using FMT as the format string, and taking Lisp_Object
+   arguments from the va_list VA. */
+void
+write_fmt_string_lisp_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
 {
-  va_list vargs;
-  Bytecount val;
-  va_start (vargs, largs);
-  val = emacs_doprnt_1 (stream, format_nonreloc, format_length,
-			format_reloc, nargs, largs, vargs);
-  va_end (vargs);
-  return val;
-}
-
-/* Similar to `format' in that its arguments are Lisp objects rather than C
-   objects. (For the versions that take C objects, see the
-   emacs_[v]sprintf... functions below.) Accepts the format string as
-   either a C string (FORMAT_NONRELOC, which *MUST NOT* come from Lisp
-   string data, unless GC is inhibited) or a Lisp string (FORMAT_RELOC).
-   Return resulting formatted string as a Lisp string.
-
-   All arguments are GCPRO'd, including FORMAT_RELOC; this makes it OK to
-   pass newly created objects into this function (as often happens).
-
-   #### It shouldn't be necessary to specify the number of arguments.
-   This would require some rewriting of the doprnt() functions, though.
-   */
-
-Lisp_Object
-emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc,
-			    Lisp_Object format_reloc, int nargs,
-			    const Lisp_Object *largs)
-{
-  Lisp_Object stream;
-  Lisp_Object obj;
+  Bytecount len = strlen (fmt);
+  Elemcount nargs = 0, ii = 0;
+  printf_spec_dynarr *specs = parse_doprnt_spec ((const Ibyte *) fmt, len,
+                                                 &nargs);
+  int count = record_unwind_protect_freeing_dynarr (specs);
+  Lisp_Object *largs = alloca_array (Lisp_Object, nargs);
   struct gcpro gcpro1, gcpro2;
-  GCPRO2 (largs[0], format_reloc);
-  gcpro1.nvars = nargs;
 
-  stream = make_resizing_buffer_output_stream ();
-  emacs_doprnt (stream, (Ibyte *) format_nonreloc, format_nonreloc ?
-		strlen (format_nonreloc) : 0,
-		format_reloc, nargs, largs);
-  Lstream_flush (XLSTREAM (stream));
+  for (ii = 0; ii < nargs; ii++)
+    largs[ii] = va_arg (va, Lisp_Object);
+
+  GCPRO2 (largs[0], stream);
+  gcpro1.nvars = nargs;
+  emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs, largs, NULL);
+  UNGCPRO;
+  unbind_to (count);
+}
+
+/* Write a printf-style string to STREAM, where the arguments are Lisp objects
+   and not C strings or integers; see output_string().
+
+   We could implement this with write_fmt_string_lisp_va (stream, fmt, va),
+   but write_fmt_string_lisp () itself is called far more often, and since
+   write_fmt_string_lisp_va is externally visible, the compiler is unlikely to
+   inline it. */
+void
+write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt, ...)
+{
+  Bytecount len = strlen (fmt);
+  Elemcount nargs = 0, ii = 0;
+  printf_spec_dynarr *specs = parse_doprnt_spec ((const Ibyte *) fmt, len,
+                                                 &nargs);
+  int count = record_unwind_protect_freeing_dynarr (specs);
+  Lisp_Object *largs = alloca_array (Lisp_Object, nargs);
+  struct gcpro gcpro1, gcpro2;
+  va_list va;
+
+  va_start (va, fmt);
+  for (ii = 0; ii < nargs; ii++)
+    largs[ii] = va_arg (va, Lisp_Object);
+  va_end (va);
+
+  GCPRO2 (largs[0], stream);
+  gcpro1.nvars = nargs;
+  emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs, largs, NULL);
+  UNGCPRO;
+  unbind_to (count);
+}
+
+/* Write a printf-style string to standard output, where the arguments are
+   Lisp_Objects. */
+void
+stderr_out_lisp (const CIbyte *fmt, ...)
+{
+  va_list va;
+
+  va_start (va, fmt);
+  write_fmt_string_lisp_va (Qexternal_debugging_output, fmt, va);
+  va_end (va);
+}
+
+/* Return a Lisp string reflecting FORMAT_NONRELOC and VARGS, where VARGS
+   reflects an array of Lisp_Objects and FORMAT_NONRELOC is a zero-terminated
+   C string that *does not* come from Lisp string data. */
+Lisp_Object
+emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc, va_list vargs)
+{
+  Lisp_Object stream = make_resizing_buffer_output_stream (), obj;
+  struct gcpro gcpro1;
+
+  GCPRO1 (stream);
+
+  write_fmt_string_lisp (stream, format_nonreloc, vargs);
+
   obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
-  UNGCPRO;
-  return obj;
+  RETURN_UNGCPRO (obj);
 }
 
-/* Like emacs_vsprintf_string_lisp() but accepts its extra args directly
-   (using variable arguments), rather than as an array. */
-
+/* Like emacs_vsprintf_string_lisp() but accepts its extra args directly. */
 Lisp_Object
-emacs_sprintf_string_lisp (const CIbyte *format_nonreloc,
-			   Lisp_Object format_reloc, int nargs, ...)
+emacs_sprintf_string_lisp (const CIbyte *format_nonreloc, ...)
 {
-  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
-  va_list va;
-  int i;
   Lisp_Object obj;
+  va_list va;
 
-  va_start (va, nargs);
-  for (i = 0; i < nargs; i++)
-    args[i] = va_arg (va, Lisp_Object);
+  va_start (va, format_nonreloc);
+  obj = emacs_vsprintf_string_lisp (format_nonreloc, va);
   va_end (va);
-  obj = emacs_vsprintf_string_lisp (format_nonreloc, format_reloc, nargs,
-				    args);
+
   return obj;
 }
 
 /* Like emacs_vsprintf_string_lisp() but returns a malloc()ed memory block.
    Return length out through LEN_OUT, if not null. */
-
 Ibyte *
-emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc,
-			    Lisp_Object format_reloc, int nargs,
-			    const Lisp_Object *largs, Bytecount *len_out)
+emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc, va_list vargs,
+                            Bytecount *len_out)
 {
-  Lisp_Object stream;
+  Lisp_Object stream = make_resizing_buffer_output_stream ();
   Ibyte *retval;
+  struct gcpro gcpro1;
   Bytecount len;
-  struct gcpro gcpro1, gcpro2;
 
-  GCPRO2 (largs[0], format_reloc);
-  gcpro1.nvars = nargs;
+  GCPRO1 (stream);
 
-  stream = make_resizing_buffer_output_stream ();
-  emacs_doprnt (stream, (Ibyte *) format_nonreloc, format_nonreloc ?
-		strlen (format_nonreloc) : 0,
-		format_reloc, nargs, largs);
-  Lstream_flush (XLSTREAM (stream));
+  write_fmt_string_lisp_va (stream, format_nonreloc, vargs);
   len = Lstream_byte_count (XLSTREAM (stream));
   retval = xnew_ibytes (len + 1);
   memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
@@ -2902,53 +2854,46 @@ emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc,
 
   if (len_out)
     *len_out = len;
+
   UNGCPRO;
   return retval;
 }
 
 /* Like emacs_sprintf_string_lisp() but returns a malloc()ed memory block.
    Return length out through LEN_OUT, if not null. */
-
 Ibyte *
 emacs_sprintf_malloc_lisp (Bytecount *len_out, const CIbyte *format_nonreloc,
-			   Lisp_Object format_reloc, int nargs, ...)
+			   ...)
 {
-  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
   va_list va;
-  int i;
   Ibyte *retval;
 
-  va_start (va, nargs);
-  for (i = 0; i < nargs; i++)
-    args[i] = va_arg (va, Lisp_Object);
+  va_start (va, format_nonreloc);
+  retval = emacs_vsprintf_malloc_lisp (format_nonreloc, va, len_out);
   va_end (va);
-  retval = emacs_vsprintf_malloc_lisp (format_nonreloc, format_reloc, nargs,
-				       args, len_out);
   return retval;
 }
 
-/* vsprintf()-like replacement.  Returns a Lisp string.  Data
+/* vsprintf()-like replacement. Arguments are interpreted as C
+   objects--doubles, char *s, EMACS_INTs, etc. Returns a Lisp string.  Data
    from Lisp strings is OK because we explicitly inhibit GC. */
-
 Lisp_Object
 emacs_vsprintf_string (const CIbyte *format, va_list vargs)
 {
-  Lisp_Object stream = make_resizing_buffer_output_stream ();
-  Lisp_Object obj;
+  Lisp_Object stream = make_resizing_buffer_output_stream (), obj;
   int count = begin_gc_forbidden ();
 
-  emacs_doprnt_va (stream, (Ibyte *) format, strlen (format), Qnil,
-		   vargs);
-  Lstream_flush (XLSTREAM (stream));
+  write_fmt_string_va (stream, format, vargs);
   obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
   end_gc_forbidden (count);
+
   return obj;
 }
 
-/* sprintf()-like replacement.  Returns a Lisp string.  Data
-   from Lisp strings is OK because we explicitly inhibit GC. */
-
+/* sprintf()-like replacement. Arguments are interpreted as C objects
+   --doubles, char *s, EMACS_INTs, etc. Returns a Lisp string.  Data from Lisp
+   strings is OK because we explicitly inhibit GC. */
 Lisp_Object
 emacs_sprintf_string (const CIbyte *format, ...)
 {
@@ -2961,38 +2906,42 @@ emacs_sprintf_string (const CIbyte *format, ...)
   return retval;
 }
 
-/* vsprintf()-like replacement.  Returns a malloc()ed memory block.  Data
-   from Lisp strings is OK because we explicitly inhibit GC.  Return
-   length out through LEN_OUT, if not null. */
-
+/* vsprintf()-like replacement. Arguments are interpreted as C
+   objects--doubles, char *s, EMACS_INTs, etc. Returns a malloc()ed memory
+   block.  Data from Lisp strings is OK because we explicitly inhibit GC.
+   Return length out through LEN_OUT, if LEN_OUT is not NULL. */
 Ibyte *
 emacs_vsprintf_malloc (const CIbyte *format, va_list vargs,
 		       Bytecount *len_out)
 {
-  int count = begin_gc_forbidden ();
   Lisp_Object stream = make_resizing_buffer_output_stream ();
-  Ibyte *retval;
+  int count = begin_gc_forbidden ();
   Bytecount len;
+  Ibyte *retval;
 
-  emacs_doprnt_va (stream, (Ibyte *) format, strlen (format), Qnil,
-		   vargs);
+  write_fmt_string_va (stream, format, vargs);
+
   Lstream_flush (XLSTREAM (stream));
   len = Lstream_byte_count (XLSTREAM (stream));
   retval = xnew_ibytes (len + 1);
   memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
   retval[len] = '\0';
-  end_gc_forbidden (count);
   Lstream_delete (XLSTREAM (stream));
 
+  end_gc_forbidden (count);
+
   if (len_out)
-    *len_out = len;
+    {
+      *len_out = len;
+    }
+
   return retval;
 }
 
-/* sprintf()-like replacement.  Returns a malloc()ed memory block.  Data
-   from Lisp strings is OK because we explicitly inhibit GC.  Return length
-   out through LEN_OUT, if not null. */
-
+/* sprintf()-like replacement. Arguments are interpreted as C
+   objects--doubles, char *s, EMACS_INTs, etc. Returns a malloc()ed memory
+   block.  Data from Lisp strings is OK because we explicitly inhibit GC.
+   Return length out through LEN_OUT, if not null. */
 Ibyte *
 emacs_sprintf_malloc (Bytecount *len_out, const CIbyte *format, ...)
 {
@@ -3005,46 +2954,133 @@ emacs_sprintf_malloc (Bytecount *len_out, const CIbyte *format, ...)
   return retval;
 }
 
-/* vsprintf() replacement.  Writes output into OUTPUT, which better
-   have enough space for the output.  Data from Lisp strings is OK
-   because we explicitly inhibit GC.  */
+/* vsnprintf() replacement.  Writes output into OUTPUT, which has SIZE octets.
+   Data from Lisp strings is OK because we explicitly inhibit GC.
 
+   Return the number of octets that would have been written were the buffer
+   unlimited in size, which will be equivalent to the number of octets written
+   if that number is less that SIZE - 1.
+
+   Always zero-terminates. This differs from the standard C behaviour, which
+   will not zero-terminate if the number of octets is greater than SIZE -
+   1.  The terminating zero is not included in the returned value. */
 Bytecount
-emacs_vsprintf (Ibyte *output, const CIbyte *format, va_list vargs)
+emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
+                 va_list vargs)
 {
   Bytecount retval;
   int count = begin_gc_forbidden ();
-  Lisp_Object stream = make_resizing_buffer_output_stream ();
-  Bytecount len;
+  Lisp_Object stream = make_fixed_buffer_output_stream (output, size - 1);
 
-  retval = emacs_doprnt_va (stream, (Ibyte *) format, strlen (format), Qnil,
-			    vargs);
-  Lstream_flush (XLSTREAM (stream));
-  len = Lstream_byte_count (XLSTREAM (stream));
-  memcpy (output, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
-  output[len] = '\0';
-  end_gc_forbidden (count);
+  write_fmt_string_va (stream, format, vargs);
+  retval = Lstream_byte_count (XLSTREAM (stream));
+
+  if (retval < size - 1)
+    {
+      output[retval] = '\0';
+    }
+  else
+    {
+      output[size - 1] = '\0';
+    }
+
   Lstream_delete (XLSTREAM (stream));
-  
+  end_gc_forbidden (count);
+
   return retval;
 }
 
-/* sprintf() replacement.  Writes output into OUTPUT, which better
-   have enough space for the output.  Data from Lisp strings is OK
-   because we explicitly inhibit GC.  */
+/* snprintf() replacement. Writes output into OUTPUT, which is a buffer
+   comprising SIZE octets. Data from Lisp strings is OK because we explicitly
+   inhibit GC. 
 
+   Return the number of octets that would have been written were the buffer
+   unlimited in size, which will be equivalent to the number of octets written
+   if that number is less that SIZE - 1.
+
+   Always zero-terminates. This differs from the standard C behaviour, which
+   will not zero-terminate if the number of octets is greater than SIZE -
+   1. The terminating zero is not included in the returned value. */
 Bytecount
-emacs_sprintf (Ibyte *output, const CIbyte *format, ...)
+emacs_snprintf (Ibyte *output, Bytecount size, const CIbyte *format, ...)
 {
   va_list vargs;
   Bytecount retval;
 
   va_start (vargs, format);
-  retval = emacs_vsprintf (output, format, vargs);
+  retval = emacs_vsnprintf (output, size, format, vargs);
   va_end (vargs);
+
   return retval;
 }
+
+/* The implementation of #'format-into. Take a relocatable Lisp control string
+   FORMAT_RELOC, together with an array of Lisp_Object arguments, and return
+   a constructed Lisp string object, preserving extents as appropriate.
 
+   All Lisp_Object arguments are GCPRO'd, including FORMAT_RELOC; this makes
+   it acceptable to pass newly created objects into this function. */
+Lisp_Object
+format_into (Lisp_Object stream, Lisp_Object format_reloc, int nargs,
+             const Lisp_Object *largs)
+{
+  Elemcount args_needed = 0;
+  Bytecount format_length = XSTRING_LENGTH (format_reloc);
+  printf_spec_dynarr *specs
+    = parse_doprnt_spec (XSTRING_DATA (format_reloc), format_length,
+                         &args_needed);
+  int count = record_unwind_protect_freeing_dynarr (specs);
+  struct gcpro gcpro1, gcpro2, gcpro3;
+
+  if (nargs < args_needed)
+    {
+      /* Allow too many args for string, but not too few */
+      signal_error_1 (Qwrong_number_of_arguments,
+                      list3 (Qformat, make_fixnum (nargs), format_reloc));
+    }
+#ifdef DEBUG_XEMACS
+  else if (nargs > args_needed)
+    {
+      Lisp_Object argz[] = { build_ascstring ("Format string \""),
+                             format_reloc,
+                             build_ascstring ("\" takes "),
+                             Fnumber_to_string (make_fixnum (args_needed)),
+                             build_ascstring (" arguments, "),
+                             Fnumber_to_string (make_fixnum (nargs)),
+                             build_ascstring (" supplied.") };
+      /* Don't use warn_when_safe, since that ultimately calls
+         emacs_doprnt(). */
+      warn_when_safe_lispobj (Qformat, Qinfo,
+                              concatenate (countof (argz), argz, Qstring,
+                                           0));
+    
+    }
+#endif
+  GCPRO3 (largs[0], format_reloc, stream);
+  gcpro1.nvars = nargs;
+
+  emacs_doprnt (stream, NULL, format_length, format_reloc, specs, largs,
+                NULL);
+
+  UNGCPRO;
+  unbind_to (count);
+  return stream;
+}
+
+/* Like format_into (), but return a string Lisp_Object reflecting the
+   formatted data.  */
+Lisp_Object
+format (Lisp_Object format_reloc, int nargs, const Lisp_Object *largs)
+{
+  /* format_into() does the GCPRO. */
+  Lisp_Object stream = make_resizing_buffer_output_stream (), obj;
+
+  format_into (stream, format_reloc, nargs, largs);
+  obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+
+  return obj;
+}
 
 DEFUN ("format", Fformat, 1, MANY, 0, /*
 Format a string out of a control-string and arguments.
@@ -3160,17 +3196,26 @@ arguments: (CONTROL-STRING &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
-  /* It should not be necessary to GCPRO ARGS, because the caller in the
-     interpreter should take care of that.  */
-  CHECK_STRING (args[0]);
-  return emacs_vsprintf_string_lisp (0, args[0], nargs - 1, args + 1);
+  /* format_into() does the GCPRO. */
+  Lisp_Object stream = make_resizing_buffer_output_stream (), obj;
+  Lisp_Object control_string = args[0];
+
+  CHECK_STRING (control_string);
+
+  format_into (stream, control_string, nargs - 1, args + 1);
+
+  obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+  return obj;
 }
 
 DEFUN ("format-into", Fformat_into, 2, MANY, 0, /*
 Like `format', but write the constructed string into STREAM.
 
 STREAM is an object accepted by `print' or `write-sequence' as an output
-destination.  See the documentation of `standard-output'.
+destination.  See the documentation of `standard-output'.  Note in particular
+that a value for STREAM of `t' means text will be written to the minibuffer,
+rather than `format-into' returning a string, as is the case in Common Lisp.
 
 Return STREAM.  See the documentation for `format' for details of
 CONTROL-STRING and the other arguments.
@@ -3184,10 +3229,7 @@ arguments: (STREAM CONTROL-STRING &rest ARGS)
 
   CHECK_STRING (control_string);
   /* #### Consider implementing the frame kludge of print_prepare (). */
-  emacs_doprnt (stream, NULL, XSTRING_LENGTH (control_string),
-                control_string, nargs - 2, args + 2);
-
-  return stream;
+  return format_into (stream, control_string, nargs - 2, args + 2);
 }
 
 /************************************************************************/

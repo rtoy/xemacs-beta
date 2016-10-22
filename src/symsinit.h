@@ -486,6 +486,7 @@ void vars_of_fontcolor_x (void);
 EXTERN_C void vars_of_postgresql (void);
 void vars_of_print (void);
 void reinit_vars_of_print (void);
+void reinit_complex_vars_of_print (void);
 void vars_of_process (void);
 void vars_of_process_nt (void);
 void vars_of_process_unix (void);

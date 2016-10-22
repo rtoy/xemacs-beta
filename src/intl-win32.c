@@ -1875,7 +1875,7 @@ mswindows_multibyte_to_unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
     print_internal (make_fixnum (data->cp), printcharfun, 1);
   else
     {
-      write_fmt_string_lisp (printcharfun, "%s, ", 1, mswindows_multibyte_to_unicode_getprop (cs, Qlocale));
+      write_fmt_string_lisp (printcharfun, "%s, ", mswindows_multibyte_to_unicode_getprop (cs, Qlocale));
       print_internal (mswindows_multibyte_to_unicode_getprop (cs, Qcode_page), printcharfun, 0);
     }
   write_ascstring (printcharfun, ")");
