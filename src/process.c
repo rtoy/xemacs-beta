@@ -174,7 +174,7 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       print_internal (process->name, printcharfun, 1);
       write_ascstring (printcharfun, (netp ? " " : " pid "));
       print_internal (process->pid, printcharfun, 1);
-      write_fmt_string_lisp (printcharfun, " state:%S", 1, process->status_symbol);
+      write_fmt_string_lisp (printcharfun, " state:%S", process->status_symbol);
       MAYBE_PROCMETH (print_process_data, (process, printcharfun));
       write_ascstring (printcharfun, ">");
     }

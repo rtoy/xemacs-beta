@@ -302,7 +302,7 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
   write_ascstring (printcharfun, "#<keymap ");
   if (!NILP (keymap->name))
     {
-      write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
+      write_fmt_string_lisp (printcharfun, "%S ", keymap->name);
     }
   write_fmt_string (printcharfun, "size %ld 0x%x>",
 		    (long) XFIXNUM (Fkeymap_fullness (obj)),

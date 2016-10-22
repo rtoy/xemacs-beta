@@ -182,11 +182,10 @@ typedef struct lstream_implementation
   Bytecount (*writer) (Lstream *stream, const unsigned char *data,
 		       Bytecount size);
 
-  /* Like WRITER, but take the data from OBJECT, a string or a buffer, and
-     copy any extent information to the other end of the stream. */
-
-  Bytecount (*write_with_extents) (Lstream *stream, Lisp_Object object,
-                                   Bytexpos position, Bytecount length);
+  /* Like WRITER, but take the data from RELOC, a Lisp string, and copy any
+     extent information to the other end of the stream. */
+  Bytecount (*write_with_extents) (Lstream *stream, Lisp_Object reloc,
+                                   Bytecount position, Bytecount length);
 
   /* Return non-zero if the last write operation on the stream resulted
      in an attempt to block (EWOULDBLOCK). If this method does not

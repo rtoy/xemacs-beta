@@ -549,7 +549,7 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
 	    break;
 	  }
 	print_internal (e->key, printcharfun, 1);
-	write_fmt_string_lisp (printcharfun, " %S", 1, e->value);
+	write_fmt_string_lisp (printcharfun, " %S", e->value);
 	count++;
       }
 
@@ -569,7 +569,7 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
   if (!(EQ (ht->test, Vhash_table_test_eql)))
     {
       write_fmt_string_lisp (printcharfun, " :test %S",
-                             1, XHASH_TABLE_TEST (ht->test)->name);
+                             XHASH_TABLE_TEST (ht->test)->name);
     }
 
   if (ht->count || !print_readably)

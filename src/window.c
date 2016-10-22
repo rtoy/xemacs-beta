@@ -318,7 +318,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
     {
       
       Lisp_Object name = XBUFFER (buf)->name;
-      write_fmt_string_lisp (printcharfun, " on %S", 1, name);
+      write_fmt_string_lisp (printcharfun, " on %S", name);
     }
   write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }

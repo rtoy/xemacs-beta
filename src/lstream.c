@@ -605,8 +605,8 @@ Lstream_write (Lstream *lstr, const void *data, Bytecount size)
 }
 
 int
-Lstream_write_with_extents (Lstream *lstr, Lisp_Object object,
-                            Bytexpos position, Bytecount len)
+Lstream_write_with_extents (Lstream *lstr, Lisp_Object string,
+                            Bytecount position, Bytecount len)
 {
   if (lstr->imp->write_with_extents)
     {
@@ -616,35 +616,10 @@ Lstream_write_with_extents (Lstream *lstr, Lisp_Object object,
         }
 
       lstr->byte_count += len;
-      return lstr->imp->write_with_extents (lstr, object, position, len);
+      return lstr->imp->write_with_extents (lstr, string, position, len);
     }
 
-  if (STRINGP (object))
-    {
-      return Lstream_write (lstr, XSTRING_DATA (object) + position, len);
-    }
-
-  if (BUFFERP (object))
-    {
-      Bytecount needed = copy_buffer_text_out (XBUFFER (object), position,
-                                              len, NULL, -1, FORMAT_DEFAULT,
-                                              Qnil, NULL);
-      Bytecount copied;
-      Lstream_adding (lstr, needed, 1);
-      copied = copy_buffer_text_out (XBUFFER (object), position, len,
-                                     lstr->out_buffer + lstr->out_buffer_ind,
-                                     needed, FORMAT_DEFAULT, Qnil, NULL);
-      lstr->byte_count += copied;
-      if (copied < needed)
-        {
-          return -1;
-        }
-                                     
-      Lstream_flush (lstr);
-      return copied;
-    }
-
-  RETURN_NOT_REACHED (-1);
+  return Lstream_write (lstr, XSTRING_DATA (string) + position, len);
 }
 
 struct extent_info *
@@ -1774,7 +1749,7 @@ resizing_buffer_writer (Lstream *stream, const unsigned char *data,
 }
 
 static Bytecount
-resizing_buffer_write_with_extents (Lstream *stream, Lisp_Object object,
+resizing_buffer_write_with_extents (Lstream *stream, Lisp_Object string,
                                     Bytexpos position, Bytecount len)
 {
   struct resizing_buffer_stream *str = RESIZING_BUFFER_STREAM_DATA (stream);
@@ -1782,23 +1757,10 @@ resizing_buffer_write_with_extents (Lstream *stream, Lisp_Object object,
 
   DO_REALLOC (str->buf, str->allocked, str->stored + len, Ibyte);
 
-  if (STRINGP (object))
-    {
-      memcpy (str->buf + str->stored, XSTRING_DATA (object) + position, len);
-      copy_string_extents (wrap_lstream (stream), object, start, position, len);
-    }
-  else if (BUFFERP (object))
-    {
-      copy_buffer_text_out (XBUFFER (object), position, len,
-                            str->buf + str->stored, len, FORMAT_DEFAULT,
-                            wrap_lstream (stream), NULL);
-      add_string_extents (wrap_lstream (stream), XBUFFER (object),
-                          position, len);
-    }
-  else assert (0);
+  memcpy (str->buf + str->stored, XSTRING_DATA (string) + position, len);
+  copy_string_extents (wrap_lstream (stream), string, start, position, len);
 
   str->stored += len;
-
   return len;
 }
 
@@ -1845,9 +1807,11 @@ resizing_buffer_stream_ptr (Lstream *stream)
 Lisp_Object
 resizing_buffer_to_lisp_string (Lstream *stream)
 {
-  Lisp_Object result = make_string (RESIZING_BUFFER_STREAM_DATA (stream)->buf,
-                                    Lstream_byte_count (stream));
+  Lisp_Object result;
 
+  Lstream_flush (stream);
+  result = make_string (RESIZING_BUFFER_STREAM_DATA (stream)->buf,
+                        Lstream_byte_count (stream));
   copy_string_extents (result, wrap_lstream (stream), 0, 0,
                        Lstream_byte_count (stream));
   return result;
@@ -2112,6 +2076,27 @@ lisp_buffer_writer (Lstream *stream, const Ibyte *data,
   return size;
 }
 
+static Bytecount
+lisp_buffer_write_with_extents (Lstream *stream, Lisp_Object string,
+                                Bytexpos position, Bytecount len)
+{
+  struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);
+  struct buffer *buf = XBUFFER (str->buffer);
+  Charbpos pos;
+
+  if (!BUFFER_LIVE_P (buf))
+    return 0; /* Fut. */
+
+  pos = marker_position (str->start);
+  pos += buffer_insert_string_1 (buf, pos, NULL, string, position, len,
+                                 string_offset_byte_to_char_len (string,
+                                                                 position,
+                                                                 len),
+                                 0);
+  set_marker_position (str->start, pos);
+  return len;
+}
+
 static int
 lisp_buffer_rewinder (Lstream *stream)
 {
@@ -2236,6 +2221,7 @@ lstream_type_create (void)
 
   LSTREAM_HAS_METHOD (lisp_buffer, reader);
   LSTREAM_HAS_METHOD (lisp_buffer, writer);
+  LSTREAM_HAS_METHOD (lisp_buffer, write_with_extents);
   LSTREAM_HAS_METHOD (lisp_buffer, rewinder);
   LSTREAM_HAS_METHOD (lisp_buffer, marker);
 }

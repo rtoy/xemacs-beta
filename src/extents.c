@@ -2880,7 +2880,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun,
     {
       Lisp_Object v = XCAR (XCDR (tail));
       if (NILP (v)) continue;
-      write_fmt_string_lisp (printcharfun, "%S ", 1, XCAR (tail));
+      write_fmt_string_lisp (printcharfun, "%S ", XCAR (tail));
     }
 }
 

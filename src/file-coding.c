@@ -287,7 +287,7 @@ print_coding_system_properties (Lisp_Object obj, Lisp_Object printcharfun)
   MAYBE_CODESYSMETH (c, print, (obj, printcharfun, 1));
   if (CODING_SYSTEM_EOL_TYPE (c) != EOL_AUTODETECT)
     write_fmt_string_lisp (printcharfun, " eol-type=%s",
-			   1, Fcoding_system_property (obj, Qeol_type));
+			   Fcoding_system_property (obj, Qeol_type));
 }
 
 static void
@@ -298,7 +298,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string_lisp (printcharfun, "#<coding-system %s ", 1, c->name);
+  write_fmt_string_lisp (printcharfun, "#<coding-system %s ", c->name);
   print_coding_system_properties (obj, printcharfun);
   write_ascstring (printcharfun, ">");
 }
@@ -310,7 +310,7 @@ static void
 print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 				     int UNUSED (escapeflag))
 {
-  write_fmt_string_lisp (printcharfun, "%s[", 1, XCODING_SYSTEM_NAME (cs));
+  write_fmt_string_lisp (printcharfun, "%s[", XCODING_SYSTEM_NAME (cs));
   print_coding_system_properties (cs, printcharfun);
   write_ascstring (printcharfun, "]");
 }
@@ -3624,7 +3624,6 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
       for (i = 0; i < coding_detector_category_count; i++)
 	stderr_out_lisp
 	  ("%s: %s\n",
-	   2,
 	   coding_category_id_to_symbol (i),
 	   detection_result_number_to_symbol ((enum detection_result)
 					      st->categories[i]));
@@ -3720,7 +3719,7 @@ detected_coding_system (struct detection_state *st)
 		       emacs_sprintf_string_lisp
 		       (
 "Detected coding %s is unlikely to be correct (likelihood == `%s')",
-			Qnil, 2, XCODING_SYSTEM_NAME (retval),
+                        XCODING_SYSTEM_NAME (retval),
 			detection_result_number_to_symbol
 			((enum detection_result) likelihood)));
 		  return retval;
@@ -3932,7 +3931,7 @@ undecided_init_coding_stream (struct coding_stream *str)
 
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
-    stderr_out_lisp ("detected coding system: %s\n", 1, data->actual);
+    stderr_out_lisp ("detected coding system: %s\n", data->actual);
 #endif /* DEBUG_XEMACS */
 }
 

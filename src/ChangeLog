@@ -346,6 +346,201 @@
 	Two new profiling strings, for byte->char and external->internal
 	conversion.
 
+2016-10-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	1. Refactor functions in doprnt.c so emacs_doprnt_1 does less work
+	and is cleaner, moving all the vargs parsing into its callers.
+
+	2. Remove emacs_doprnt(), emacs_doprnt_va(), nothing outside this
+	file calls them. Now the corresponding area of the XEmacs
+	namespace is available, make emacs_doprnt_1() into emacs_doprnt(),
+	doprnt_2() into doprnt_1().
+	
+	3. Remove get_args_needed(), its calculation can be done in
+	passing by parse_doprnt_spec().
+
+	4. Don't leak the specs dynarr when giving a syntax error in
+	parse_doprnt_spec().
+
+	5. Move the write_fmt_string{,_lisp} functions into doprnt.c from
+	print.c.
+	Make their implementations less expensive now emacs_doprnt() can
+	write to an arbitrary stream itself, so no malloc() needed for
+	every constructed string.
+	Remove the need for an NARGS argument, now write_fmt_string_lisp
+	calls parse_doprnt_spec itself.
+	Update all the callers to write_fmt_string_lisp to no longer
+	specify the NARGS argument.
+
+	6. Remove emacs_sprintf, emacs_vsprintf, there was never any way
+	to call them safely. Provide emacs_snprintf, emacs_vsnprintf
+	instead.
+
+	* doprnt.c:
+	Remove the printf_arg_dynarr typedef, since we always know the
+	length needed it's perfectly practical to allocate it on the
+	stack.
+	* doprnt.c (write_lisp_string_lstream):
+	Update a comment here.
+	Remove write_string_1_buffer(), write_lisp_string_buffer(), 
+	write_string_1_marker(), write_lisp_string_marker(), they're
+	overkill.
+	* doprnt.c (doprnt_1):
+	Rename this function from doprnt_2().
+	* doprnt.c (NEXT_ASCBYTE):
+	When throwing a syntax error, free the specs dynarr, don't leak it.
+	* doprnt.c (parse_doprnt_spec):
+	Return the maximum argnum seen into a new ARGS_NEEDED_OUT pointer.
+	When throwing a syntax error, free the specs dynarr, don't leak
+	it.
+	Remove get_args_needed (), its logic is easily incorporated into
+	parse_doprnt_spec().
+	* doprnt.c (get_doprnt_args):
+	No longer return a dynarr, instead write into the fixed-length
+	buffer supplied, since we know how many args we need.
+	* doprnt.c (emacs_doprnt):
+	Remove the old emacs_doprnt, rename emacs_doprnt_1() to
+	emacs_doprnt().
+	Move much of the logic of this function to our callers.  In
+	particular, all the vargs parsing and spec parsing is now
+	performed by our callers, since the vargs parsing is dependent on
+	the spec parsing to determine the number of arguments needed.
+	GCPRO the local variable OBJ, since it may reflect a
+	freshly-allocated string from prin1_to_string(), or a fresh bignum.
+	Rename doprnt_2() to doprnt_1()
+	Remove emacs_doprnt_va() and the old emacs_doprnt().
+	* doprnt.c (format_into):
+	New. The implementation of #'format-into.
+	* doprnt.c (format):
+	New. The implementation of #'format.
+	* doprnt.c (write_fmt_string_va):
+	New. Write a constructed string made from a C format string and C
+	vargs to a given stream.
+	* doprnt.c (write_fmt_string):
+	Moved here from print.c. Write a constructed string made from a C
+	format string and C args to a given stream.	
+	* doprnt.c (write_fmt_string_lisp_va):
+	New. Write a constructed string made from a C format string and
+	Lisp_Object vargs to a given stream.
+	* doprnt.c (write_fmt_string_lisp):
+	Moved here from print.c. Write a constructed string made from a C
+	format string and C args to a given stream.	
+	* doprnt.c (stderr_out_lisp):
+	Moved here from print.c, adjusted to no longer take an NARGS
+	argument.
+	* doprnt.c (emacs_vsprintf_string_lisp):
+	API changed; return a Lisp string reflecting a C format string and
+	an array of Lisp objects supplied using vargs.
+	* doprnt.c (emacs_sprintf_string_lisp):
+	API changed here to no longer need an NARGS argument.
+	* doprnt.c (emacs_vsprintf_malloc_lisp):
+	API changed here to no longer need an NARGS argument.
+	* doprnt.c (emacs_sprintf_malloc_lisp):
+	API changed here to no longer need an NARGS argument.
+	* doprnt.c (emacs_vsprintf_string):
+	Implementation changed slightly to call write_fmt_string_va ().
+	* doprnt.c (emacs_sprintf_string):
+	Implementation not changed.
+	* doprnt.c (emacs_vsprintf_malloc):
+	Implementation changed slightly.
+	* doprnt.c (emacs_sprintf_malloc):
+	Implementation not changed here.
+	* doprnt.c (emacs_vsnprintf): New.  Remove emacs_vsprintf, writing
+	to a fixed C buffer, since there is no way to call it safely. Add
+	emacs_vsnprintf, which refuses to write beyond the specified end of the
+	fixed C buffer, instead.
+	* doprnt.c (emacs_snprintf):
+	Remove emacs_sprintf, since there is no way to call it
+	safely. Provide emacs_snprintf() instead.
+	* doprnt.c (Fformat):
+	Implement this in terms of format_into (), rather than the
+	poorly-chosen emacs_vsprintf_string_lisp API.
+	* doprnt.c (Fformat_into):
+	Expand on the docstring for this a little.
+
+	* callint.c:
+	* callint.c (callint_prompt):
+	Call the new format() now, not the badly-named
+	emacs_vsprintf_string_lisp().
+
+	* print.c:
+	Move write_fmt_string(), write_fmt_string_lisp(),
+	stderr_out_lisp() to doprnt.c.
+
+	* print.c (Fprin1_to_string):
+	No need to flush before calling resizing_buffer_to_lisp_string().
+	* print.c (debug_out_lisp):
+	Change this to no longer take the argument count, now we've
+	updated doprnt.c to better handle that case.
+
+	* lstream.c:
+	* lstream.c (Lstream_write_with_extents):
+	Change this to only accept string object arguments.
+	* lstream.c (resizing_buffer_write_with_extents):
+	Update this to only accept string object arguments.
+	* lstream.c (resizing_buffer_to_lisp_string):
+	* lstream.c (lisp_buffer_write_with_extents):
+	New, write a string to a buffer with its extents.
+	* lstream.c (lstream_type_create):
+	Make this available.
+	* lstream.h (lstream_implementation):
+	Update the documentation for the write_with_extents() method to
+	reflect the changed decision.
+
+	* buffer.c (print_buffer):
+	* bytecode.c (print_compiled_function):
+	* casetab.c (print_case_table):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* console.c:
+	* console.c (print_console):
+	* database.c (print_database):
+	* device-msw.c (print_devmode):
+	* device-msw.c (finalize_devmode):
+	* device.c:
+	* device.c (print_device):
+	* elhash.c (print_hash_table_data):
+	* elhash.c (print_hash_table):
+	* eval.c (maybe_get_trapping_problems_backtrace):
+	* eval.c (issue_call_trapping_problems_warning):
+	* event-Xt.c (describe_event_window):
+	* event-Xt.c (XEvent_mode_to_string):
+	* events.c (print_event):
+	* extents.c (print_extent_1):
+	* extents.c (print_extent):
+	* faces.c (print_face):
+	* file-coding.c (print_coding_system_properties):
+	* file-coding.c (print_coding_system):
+	* file-coding.c (print_coding_system_in_print_method):
+	* file-coding.c (detect_coding_type):
+	* file-coding.c (detected_coding_system):
+	* file-coding.c (undecided_init_coding_stream):
+	* file-coding.c (undecided_rewind_coding_stream):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP1):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP4):
+	* fontcolor.c (print_color_instance):
+	* fontcolor.c (print_font_instance):
+	* glyphs.c:
+	* glyphs.c (print_image_instance):
+	* glyphs.c (incompatible_image_types):
+	* glyphs.c (print_glyph):
+	* intl-win32.c (mswindows_multibyte_to_unicode_print):
+	* keymap.c (print_keymap):
+	* mule-charset.c (print_charset):
+	* mule-coding.c (FROB):
+	* mule-coding.c (iso2022_print):
+	* process.c (print_process):
+	* rangetab.c (print_range_table):
+	* specifier.c (print_specifier):
+	* symsinit.h:
+	* ui-gtk.c (ffi_object_printer):
+	* unicode.c (unicode_print):
+	* window.c (print_window):
+	Remove the NARGS argument from the write_fmt_string_lisp() calls
+	in these files.
+
 2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	1. Accept any output stream (as accepted by #'write-sequence,

@@ -213,7 +213,7 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
     printing_unreadable_lisp_object (obj, 0);
 
   write_fmt_string_lisp (printcharfun, "#<database \"%s\" (%s/%s/",
-			 3, db->fname, db->funcs->get_type (db),
+			 db->fname, db->funcs->get_type (db),
 			 db->funcs->get_subtype (db));
 
   write_fmt_string (printcharfun, "%s) ",
@@ -221,7 +221,7 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun,
 		     (db->access_ & O_WRONLY) ? "writeonly" :
 		     (db->access_ & O_RDWR)   ? "readwrite" : "readonly"));
 
-  write_fmt_string_lisp (printcharfun, "coding: %s ", 1,
+  write_fmt_string_lisp (printcharfun, "coding: %s ",
                          XSYMBOL_NAME (XCODING_SYSTEM_NAME
                                        (db->coding_system)));
 

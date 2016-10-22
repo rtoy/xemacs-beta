@@ -2942,7 +2942,7 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun,
 #define FROB(prop)					        \
   if (!NILP (iso2022_getprop (cs, prop)))		        \
     {						                \
-      write_fmt_string_lisp (printcharfun, ", %s", 1, prop);	\
+      write_fmt_string_lisp (printcharfun, ", %s", prop);	\
     }
   
   FROB (Qshort);
@@ -2959,14 +2959,14 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun,
       (XCODING_SYSTEM_ISO2022_INPUT_CONV (cs), 1);
     if (!NILP (val))
       {
-	write_fmt_string_lisp (printcharfun, ", input-charset-conversion=%s", 1, val);
+	write_fmt_string_lisp (printcharfun, ", input-charset-conversion=%s", val);
       }
     val =
       unparse_charset_conversion_specs
       (XCODING_SYSTEM_ISO2022_OUTPUT_CONV (cs), 1);
     if (!NILP (val))
       {
-	write_fmt_string_lisp (printcharfun, ", output-charset-conversion=%s", 1, val);
+	write_fmt_string_lisp (printcharfun, ", output-charset-conversion=%s", val);
       }
     write_ascstring (printcharfun, ")");
   }

@@ -992,11 +992,11 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string_lisp (printcharfun, "#<image-instance (%s) ", 1,
+  write_fmt_string_lisp (printcharfun, "#<image-instance (%s) ",
 			 Fimage_instance_type (obj));
   if (!NILP (ii->name))
-    write_fmt_string_lisp (printcharfun, "%S ", 1, ii->name);
-  write_fmt_string_lisp (printcharfun, "on %s ", 1, ii->domain);
+    write_fmt_string_lisp (printcharfun, "%S ", ii->name);
+  write_fmt_string_lisp (printcharfun, "on %s ", ii->domain);
   switch (IMAGE_INSTANCE_TYPE (ii))
     {
     case IMAGE_NOTHING:
@@ -1069,11 +1069,11 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
       print_internal (IMAGE_INSTANCE_WIDGET_TYPE (ii), printcharfun, 0);
 
       if (GUI_ITEMP (IMAGE_INSTANCE_WIDGET_ITEM (ii)))
-	write_fmt_string_lisp (printcharfun, " %S", 1,
+	write_fmt_string_lisp (printcharfun, " %S",
 			       IMAGE_INSTANCE_WIDGET_TEXT (ii));
 
       if (!NILP (IMAGE_INSTANCE_WIDGET_FACE (ii)))
-	write_fmt_string_lisp (printcharfun, " face=%s", 1,
+	write_fmt_string_lisp (printcharfun, " face=%s",
 			       IMAGE_INSTANCE_WIDGET_FACE (ii));
       /* fallthrough */
 
@@ -1447,7 +1447,7 @@ incompatible_image_types (Lisp_Object instantiator, int given_dest_mask,
      list2
      (emacs_sprintf_string_lisp
       ("No compatible image-instance types given: wanted one of %s, got %s",
-       Qnil, 2, encode_image_instance_type_list (desired_dest_mask),
+       encode_image_instance_type_list (desired_dest_mask),
        encode_image_instance_type_list (given_dest_mask)),
       instantiator));
 }
@@ -3734,8 +3734,8 @@ print_glyph (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string_lisp (printcharfun, "#<glyph (%s", 1, Fglyph_type (obj));
-  write_fmt_string_lisp (printcharfun, ") %S", 1, glyph->image);
+  write_fmt_string_lisp (printcharfun, "#<glyph (%s", Fglyph_type (obj));
+  write_fmt_string_lisp (printcharfun, ") %S", glyph->image);
   write_fmt_string (printcharfun, "0x%x>", LISP_OBJECT_UID (obj));
 }
 

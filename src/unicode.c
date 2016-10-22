@@ -2833,7 +2833,7 @@ static void
 unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
 	       int UNUSED (escapeflag))
 {
-  write_fmt_string_lisp (printcharfun, "(%s", 1,
+  write_fmt_string_lisp (printcharfun, "(%s",
                          unicode_getprop (cs, Qunicode_type));
   if (XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (cs))
     write_ascstring (printcharfun, ", little-endian");
