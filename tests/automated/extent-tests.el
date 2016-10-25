@@ -609,7 +609,7 @@
   (Assert (equal (format "%s %s " ostring
                          (key-description (where-is-internal 'find-file
                                                              nil t)))
-                 (setf substituted (substitute-command-keys string))))
+                 (setq substituted (substitute-command-keys string))))
   (Assert (setf pE (car (extent-list substituted nil nil nil property-name)))
           "checking duplicable extent returned")
   (Assert (eql (extent-start-position pE) (extent-start-position E))
@@ -623,7 +623,7 @@
   (when pEE
     (Assert (eql (extent-start-position pEE) (extent-start-position EE))
             "checking non-duplicable extent start position preserved")
-    (Assert (eql (extent-end-position pEE) (extent-start-position EE))
+    (Assert (eql (extent-end-position pEE) (extent-end-position EE))
             "checking non-duplicable extent end position preserved"))
   (Assert (equal (concat ostring "\\=")
                  (substitute-command-keys (concat ostring "\\="))))

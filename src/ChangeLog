@@ -348,6 +348,23 @@
 
 2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* doc.c (Fsubstitute_command_keys):
+	Use our resizing_buffer output stream rather than a Lisp buffer
+	here. This preserves non-duplicable extents, as described below,
+	and avoids side effects from Lisp code that runs in every buffer
+	created.
+	* keymap.c:
+	* keymap.c (describe_map_tree):
+	Rename the BUFFER argument to STREAM.
+	* keymap.c (describe_command):
+	Use the generic stream functions, no need to make this specific to
+	a buffer.
+	* keymap.c (describe_map):
+	Do the column accounting previously done within describe_command()
+	here, so the output doesn't have to be a Lisp buffer.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* doc.c:
 	* doc.c (Fsubstitute_command_keys):
 	Revise this to pass through extent information when doing the
