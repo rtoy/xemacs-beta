@@ -12,6 +12,12 @@
 	encounters a ratio. Revise these files to delay calling #'read
 	until we're sure there is ratio support available.
 
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Test #'substitute-command-keys, particularly that extents are
+	passed through.
+
 2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/extent-tests.el:

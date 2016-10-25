@@ -346,6 +346,19 @@
 	Two new profiling strings, for byte->char and external->internal
 	conversion.
 
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c:
+	* doc.c (Fsubstitute_command_keys):
+	Revise this to pass through extent information when doing the
+	substitution. This cut of the change does it by extending the use
+	of the Lisp buffer, already used in this function, but has the
+	problem that non-duplicable extents are not preserved (#'concat
+	preserves them, as (now) does #'format, but most buffer-string
+	interaction situations don't), and Lisp buffers the problem that
+	too much of their implementation is exposed to Lisp; see GNU's
+	problem with inhibit-modification-hooks.
+
 2016-10-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	1. Refactor functions in doprnt.c so emacs_doprnt_1 does less work
