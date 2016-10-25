@@ -15,6 +15,12 @@
 2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/extent-tests.el:
+	Correct a couple of details with the #'substitute-command-keys
+	tests.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
 	Test #'substitute-command-keys, particularly that extents are
 	passed through.
 

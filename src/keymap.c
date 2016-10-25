@@ -198,13 +198,13 @@ EXFUN (Fsingle_key_description, 1);
 
 static Lisp_Object remap_command (Lisp_Object keymap, Lisp_Object old,
                                   Lisp_Object new_);
-static void describe_command (Lisp_Object definition, Lisp_Object buffer);
+static void describe_command (Lisp_Object definition, Lisp_Object stream);
 static void describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 			  void (*elt_describer) (Lisp_Object, Lisp_Object),
 			  int partial,
 			  Lisp_Object shadow,
 			  int mice_only_p,
-			  Lisp_Object buffer);
+			  Lisp_Object stream);
 static Lisp_Object keymap_submaps (Lisp_Object keymap);
 static int get_relevant_keymaps (Lisp_Object, Lisp_Object, int,
                                  Lisp_Object maps[]);
@@ -4144,7 +4144,7 @@ Fifth argument MOUSE-ONLY-P says to only print bindings for mouse clicks.
 
 void
 describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
-                   Lisp_Object prefix, int mice_only_p, Lisp_Object buffer)
+                   Lisp_Object prefix, int mice_only_p, Lisp_Object stream)
 {
   /* This function can GC */
   Lisp_Object maps = Qnil;
@@ -4205,7 +4205,7 @@ describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
                       partial,
                       sub_shadow,
                       mice_only_p,
-		      buffer);
+		      stream);
       }
     SKIP:
       NUNGCPRO;
@@ -4213,55 +4213,58 @@ describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
   UNGCPRO;
 }
 
-
 static void
-describe_command (Lisp_Object definition, Lisp_Object buffer)
+describe_command (Lisp_Object definition, Lisp_Object stream)
 {
   /* This function can GC */
   int keymapp = !NILP (Fkeymapp (definition));
   struct gcpro gcpro1;
   GCPRO1 (definition);
 
-  Findent_to (make_fixnum (16), make_fixnum (3), buffer);
   if (keymapp)
-    buffer_insert_ascstring (XBUFFER (buffer), "<< ");
+    write_ascstring (stream, "<< ");
 
   if (SYMBOLP (definition))
     {
-      buffer_insert1 (XBUFFER (buffer), Fsymbol_name (definition));
+      write_lisp_string (stream, XSYMBOL_NAME (definition), 0,
+                         XSTRING_LENGTH (XSYMBOL_NAME (definition)));
     }
   else if (STRINGP (definition) || VECTORP (definition))
     {
-      buffer_insert_ascstring (XBUFFER (buffer), "Kbd Macro: ");
-      buffer_insert1 (XBUFFER (buffer), Fkey_description (definition));
+      write_ascstring (stream, "Kbd Macro: ");
+      definition = Fkey_description (definition);
+      write_lisp_string (stream, definition, 0, XSTRING_LENGTH (definition));
     }
   else if (COMPILED_FUNCTIONP (definition))
-    buffer_insert_ascstring (XBUFFER (buffer), "Anonymous Compiled Function");
+    write_ascstring (stream, "Anonymous Compiled Function");
   else if (CONSP (definition) && EQ (XCAR (definition), Qlambda))
-    buffer_insert_ascstring (XBUFFER (buffer), "Anonymous Lambda");
+    write_ascstring (stream, "Anonymous Lambda");
   else if (KEYMAPP (definition))
     {
       Lisp_Object name = XKEYMAP (definition)->name;
       if (STRINGP (name) || (SYMBOLP (name) && !NILP (name)))
 	{
-	  buffer_insert_ascstring (XBUFFER (buffer), "Prefix command ");
+	  write_ascstring (stream, "Prefix command ");
 	  if (SYMBOLP (name)
 	      && EQ (find_symbol_value (name), definition))
-	    buffer_insert1 (XBUFFER (buffer), Fsymbol_name (name));
+            {
+              write_lisp_string (stream, XSYMBOL_NAME (name), 0,
+                                 XSTRING_LENGTH (XSYMBOL_NAME (name)));
+            }
 	  else
 	    {
-	      buffer_insert1 (XBUFFER (buffer), Fprin1_to_string (name, Qnil));
+              Fprin1 (stream, name);
 	    }
 	}
       else
-	buffer_insert_ascstring (XBUFFER (buffer), "Prefix Command");
+	write_ascstring (stream, "Prefix Command");
     }
   else
-    buffer_insert_ascstring (XBUFFER (buffer), "??");
+    write_ascstring (stream, "??");
 
   if (keymapp)
-    buffer_insert_ascstring (XBUFFER (buffer), " >>");
-  buffer_insert_ascstring (XBUFFER (buffer), "\n");
+    write_ascstring (stream, " >>");
+  write_ascstring (stream, "\n");
   UNGCPRO;
 }
 
@@ -4466,12 +4469,12 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	      int partial,
 	      Lisp_Object shadow,
 	      int mice_only_p,
-	      Lisp_Object buffer)
+	      Lisp_Object stream)
 {
   /* This function can GC */
   struct describe_map_closure describe_map_closure;
   Lisp_Object list = Qnil;
-  struct buffer *buf = XBUFFER (buffer);
+  struct buffer *buf = BUFFERP (stream) ? XBUFFER (stream) : current_buffer;
   Ichar printable_min = (CHAR_OR_CHAR_INTP (buf->ctl_arrow)
 			  ? XCHAR_OR_CHAR_INT (buf->ctl_arrow)
 			  : ((EQ (buf->ctl_arrow, Qt)
@@ -4495,8 +4498,9 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 
   if (!NILP (list))
     {
+      Charcount columns = 0;
       list = list_sort (list, describe_map_sort_predicate, Qnil, Qnil);
-      buffer_insert_ascstring (buf, "\n");
+      write_ascstring (stream, "\n");
       while (!NILP (list))
 	{
           Lisp_Object elt = XCAR (XCAR (list));
@@ -4504,20 +4508,43 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	  int modifiers = XFIXNUM (XCDR (elt));
 
 	  if (!NILP (elt_prefix))
-	    buffer_insert_lisp_string (buf, elt_prefix);
+            {
+              write_lisp_string (stream, elt_prefix, 0,
+                                 XSTRING_LENGTH (elt_prefix));
+              columns += string_char_length (elt_prefix);
+            }
 
 	  if (modifiers & XEMACS_MOD_META)
-	    buffer_insert_ascstring (buf, "M-");
+            {
+              write_ascstring (stream, "M-");
+              columns += 2;
+            }
 	  if (modifiers & XEMACS_MOD_CONTROL)
-	    buffer_insert_ascstring (buf, "C-");
+            {
+              write_ascstring (stream, "C-");
+              columns += 2;
+            }
 	  if (modifiers & XEMACS_MOD_SUPER)
-	    buffer_insert_ascstring (buf, "S-");
+            {
+              write_ascstring (stream, "S-");
+              columns += 2;
+            }
 	  if (modifiers & XEMACS_MOD_HYPER)
-	    buffer_insert_ascstring (buf, "H-");
+            {
+              write_ascstring (stream, "H-");
+              columns += 2;
+            }
 	  if (modifiers & XEMACS_MOD_ALT)
-	    buffer_insert_ascstring (buf, "Alt-");
+            {
+              write_ascstring (stream, "Alt-");
+              columns += 4;
+            }
 	  if (modifiers & XEMACS_MOD_SHIFT)
-	    buffer_insert_ascstring (buf, "Sh-");
+            {
+              write_ascstring (stream, "Sh-");
+              columns += 3;
+            }
+
 	  if (SYMBOLP (keysym))
 	    {
 	      Lisp_Object code = Fget (keysym, Qcharacter_of_keysym, Qnil);
@@ -4526,29 +4553,47 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	      /* Calling Fsingle_key_description() would cons more */
 #if 0                           /* This is bogus */
 	      if (EQ (keysym, QKlinefeed))
-		buffer_insert_ascstring (buf, "LFD");
+		write_ascstring (stream, "LFD");
 	      else if (EQ (keysym, QKtab))
-		buffer_insert_ascstring (buf, "TAB");
+		write_ascstring (stream, "TAB");
 	      else if (EQ (keysym, QKreturn))
-		buffer_insert_ascstring (buf, "RET");
+		write_ascstring (stream, "RET");
 	      else if (EQ (keysym, QKescape))
-		buffer_insert_ascstring (buf, "ESC");
+		write_ascstring (stream, "ESC");
 	      else if (EQ (keysym, QKdelete))
-		buffer_insert_ascstring (buf, "DEL");
+		write_ascstring (stream, "DEL");
 	      else if (EQ (keysym, QKspace))
-		buffer_insert_ascstring (buf, "SPC");
+		write_ascstring (stream, "SPC");
 	      else if (EQ (keysym, QKbackspace))
-		buffer_insert_ascstring (buf, "BS");
+		write_ascstring (stream, "BS");
 	      else
 #endif
                 if (c >= printable_min)
-		  buffer_insert_emacs_char (buf, c);
-		else buffer_insert1 (buf, Fsymbol_name (keysym));
+                  {
+                    Ibyte cbuf[MAX_ICHAR_LEN];
+                    write_string_1 (stream, cbuf, set_itext_ichar (cbuf, c));
+                    columns += 1;
+                  }
+	      else
+                {
+                  write_lisp_string (stream, XSYMBOL_NAME (keysym), 0,
+                                     XSTRING_LENGTH (XSYMBOL_NAME (keysym)));
+                  columns += string_char_length (XSYMBOL_NAME (keysym));
+                }
 	    }
 	  else if (CHARP (keysym))
-	    buffer_insert_emacs_char (buf, XCHAR (keysym));
+            {
+              Ibyte cbuf[MAX_ICHAR_LEN];
+              
+              write_string_1 (stream, cbuf,
+                              set_itext_ichar (cbuf, XCHAR (keysym)));
+              columns += 1;
+            }
 	  else
-	    buffer_insert_ascstring (buf, "---bad keysym---");
+            {
+              write_ascstring (stream, "---bad keysym---");
+              columns += sizeof ("---bad keysym---") - 1;
+            }
 
 	  if (elided)
 	    elided = 0;
@@ -4564,16 +4609,27 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	      if (k != 0)
 		{
 		  if (k == 1)
-		    buffer_insert_ascstring (buf, ", ");
+                    {
+                      write_ascstring (stream, ", ");
+                      columns += 2;
+                    }
 		  else
-		    buffer_insert_ascstring (buf, " .. ");
+                    {
+                      write_ascstring (stream, " .. ");
+                      columns += 4;
+                    }
 		  elided = 1;
 		  continue;
 		}
 	    }
 
+          /* Indent to column 16, or at least 3 columns if already at column
+             16. */
+          write_string_1 (stream, (const Ibyte *)"                ",
+                          columns < 16 ? 16 - columns : 3);
 	  /* Print a description of the definition of this character.  */
-	  (*elt_describer) (XCDR (XCAR (list)), buffer);
+	  (*elt_describer) (XCDR (XCAR (list)), stream);
+	  columns = 0;
 	  list = XCDR (list);
 	}
     }

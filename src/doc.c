@@ -1083,16 +1083,16 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
   Ibyte *strp, *backslashp, *symname;
   Boolint changed = 0;
   REGISTER Ibyte *strdata;
-  Bytecount strlength;
+  Bytecount strlength = MOST_POSITIVE_FIXNUM, stretch_begin;
   Bytecount idx = 0, symlen, partlen;
-  Lisp_Object tem = Qnil, keymap = Qnil, name = Qnil, buffer = Qnil;
+  Lisp_Object tem = Qnil, keymap = Qnil, name = Qnil, stream = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
 
   if (NILP (string))
     return Qnil;
 
   CHECK_STRING (string);
-  GCPRO5 (string, tem, keymap, name, buffer);
+  GCPRO5 (string, tem, keymap, name, stream);
 
   /* There is the possibility that the string is not destined for a
      translating stream, and it could be argued that we should do the
@@ -1118,7 +1118,10 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 #endif
 
   /* XEmacs; revise this extensively to preserve extent information coming
-     from the source string describe_map_tree (). */
+     from the source string in the output of describe_map_tree (); use our
+     resizing buffer rather than a full-on Lisp buffer to preserve
+     non-duplicable string extents and to avoid entertainment with default
+     values for hooks. */
   while (idx < strlength)
     {
       /* Re-fetch the string data after Lisp has been called. */
@@ -1130,8 +1133,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
       if (changed)
         {
-          buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, idx,
-                                  partlen, -1, 0);
+          write_lisp_string (stream, string, idx, partlen);
         }
 
       if (!backslashp)
@@ -1147,16 +1149,13 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
       if (idx + ichar_itext_len ('[') < strlength
 	  && itext_ichar_eql (strp, '['))
         {
-          Bytecount stretch_begin = stream_extent_position (buffer);
-
           if (!changed)
             {
               changed = 1;
-              buffer = Fget_buffer_create (QSsubstitute);
-              Ferase_buffer (buffer);
-              buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, 0,
-                                      idx - ichar_itext_len ('\\'), -1, 0);
-              strdata = XSTRING_DATA (string);
+              stream = make_resizing_buffer_output_stream ();
+              Lstream_write_with_extents (XLSTREAM (stream),
+                                          string, 0,
+                                          idx - ichar_itext_len ('\\'));
             }
           
           idx += ichar_itext_len ('[');
@@ -1175,26 +1174,28 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
           tem = intern ((const CIbyte *) symname);
           tem = Fwhere_is_internal (tem, keymap, Qt, Qnil, Qnil);
+
+          stretch_begin = stream_extent_position (stream);
           
           if (NILP (tem))
             {
-              write_ascstring (buffer, "M-x ");
-              write_string_1 (buffer, symname, symlen);
+              write_ascstring (stream, "M-x ");
+              write_string_1 (stream, symname, symlen);
             }
           else
             {
               /* Don't do the assignment within the write_lisp_string()
                  arglist, TEM is GCPROd while the argument may not be. */
               tem = Fkey_description (tem);
-              write_lisp_string (buffer, tem, 0, XSTRING_LENGTH (tem));
+              write_lisp_string (stream, tem, 0, XSTRING_LENGTH (tem));
             }
 
-          stretch_string_extents (buffer, string, stretch_begin,
+          stretch_string_extents (stream, string, stretch_begin,
                                   idx - ichar_itext_len ('\\') -
                                   ichar_itext_len ('['),
                                   symlen + ichar_itext_len ('\\') +
                                   ichar_itext_len ('['),
-                                  stream_extent_position (buffer)
+                                  stream_extent_position (stream)
                                   - stretch_begin);
           idx = idx + symlen;
           if (idx < strlength)
@@ -1205,16 +1206,13 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
       else if (idx + ichar_itext_len ('{') < strlength
                && itext_ichar_eql (strp, '{'))
         {
-          Bytecount stretch_begin = stream_extent_position (buffer);
-
           if (!changed)
             {
               changed = 1;
-              buffer = Fget_buffer_create (QSsubstitute);
-              Ferase_buffer (buffer);
-              buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, 0,
-                                      idx - ichar_itext_len ('\\'), -1, 0);
-              strdata = XSTRING_DATA (string);
+              stream = make_resizing_buffer_output_stream ();
+              Lstream_write_with_extents (XLSTREAM (stream),
+                                          string, 0,
+                                          idx - ichar_itext_len ('\\'));
             }
           
           idx += ichar_itext_len ('{');
@@ -1241,25 +1239,27 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
                 tem = get_keymap (tem, 0, 1);
             }
 
+          stretch_begin = stream_extent_position (stream);
+
           if (NILP (tem))
             {
-              write_ascstring (buffer, "(uses keymap \"");
-              write_lisp_string (buffer, XSYMBOL_NAME (name), 0, 
+              write_ascstring (stream, "(uses keymap \"");
+              write_lisp_string (stream, XSYMBOL_NAME (name), 0, 
                                  XSTRING_LENGTH (XSYMBOL_NAME (name)));
-              write_ascstring (buffer,
+              write_ascstring (stream,
                                "\", which is not currently defined) ");
             }
           else
             {
-              describe_map_tree (tem, 1, Qnil, Qnil, 0, buffer);
+              describe_map_tree (tem, 1, Qnil, Qnil, 0, stream);
             }
 
-          stretch_string_extents (buffer, string, stretch_begin,
+          stretch_string_extents (stream, string, stretch_begin,
                                   idx - ichar_itext_len ('\\') -
                                   ichar_itext_len ('{'),
                                   symlen + ichar_itext_len ('\\') +
                                   ichar_itext_len ('{'),
-                                  stream_extent_position (buffer)
+                                  stream_extent_position (stream)
                                   - stretch_begin);
           idx = idx + symlen;
           if (idx < strlength)
@@ -1275,33 +1275,29 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
           if (!changed)
             {
               changed = 1;
-              buffer = Fget_buffer_create (QSsubstitute);
-              Ferase_buffer (buffer);
-              buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, 0,
-                                      idx - ichar_itext_len ('\\'), -1, 0);
-              strdata = XSTRING_DATA (string);
+              stream = make_resizing_buffer_output_stream ();
+              Lstream_write_with_extents (XLSTREAM (stream),
+                                          string, 0,
+                                          idx - ichar_itext_len ('\\'));
             }
 
           idx += ichar_itext_len ('=');
           /* \= quotes the next character; thus, to put in \[ without its
              special meaning, use \=\[.  */
           blen = itext_ichar_len (strdata + idx);
-          write_lisp_string (buffer, string, idx, blen);
+          write_lisp_string (stream, string, idx, blen);
           idx += blen;
         }
       else if (idx + ichar_itext_len ('<') < strlength
                && itext_ichar_eql (strp, '<'))
         {
-          Bytecount stretch_begin = stream_extent_position (buffer);
-	  
           if (!changed)
             {
               changed = 1;
-              buffer = Fget_buffer_create (QSsubstitute);
-              Ferase_buffer (buffer);
-              buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, 0,
-                                      idx - ichar_itext_len ('\\'), -1, 0);
-              strdata = XSTRING_DATA (string);
+              stream = make_resizing_buffer_output_stream ();
+              Lstream_write_with_extents (XLSTREAM (stream),
+                                          string, 0,
+                                          idx - ichar_itext_len ('\\'));
             }
 
           idx += ichar_itext_len ('<');
@@ -1327,13 +1323,15 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
               if (!NILP (tem))
                 tem = get_keymap (tem, 0, 1);
             }
+
+          stretch_begin = stream_extent_position (stream);
           
           if (NILP (tem))
             {
-              write_ascstring (buffer, "(uses keymap \"");
-              write_lisp_string (buffer, XSYMBOL_NAME (name), 0, 
+              write_ascstring (stream, "(uses keymap \"");
+              write_lisp_string (stream, XSYMBOL_NAME (name), 0, 
                                  XSTRING_LENGTH (XSYMBOL_NAME (name)));
-              write_ascstring (buffer,
+              write_ascstring (stream,
                                "\", which is not currently defined) ");
             }
           else
@@ -1341,12 +1339,12 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
               keymap = tem;
             }
           
-          stretch_string_extents (buffer, string, stretch_begin,
+          stretch_string_extents (stream, string, stretch_begin,
                                   idx - ichar_itext_len ('\\') -
                                   ichar_itext_len ('<'),
                                   symlen + ichar_itext_len ('\\') +
                                   ichar_itext_len ('<'),
-                                  stream_extent_position (buffer)
+                                  stream_extent_position (stream)
                                   - stretch_begin);
           idx = idx + symlen;
           if (idx < strlength)
@@ -1356,9 +1354,9 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
         }
       else if (changed)
         {
-          buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string,
-                                  idx - ichar_itext_len ('\\'),
-                                  ichar_itext_len ('\\'), -1, 0);
+          Lstream_write_with_extents (XLSTREAM (stream), string,
+                                      idx - ichar_itext_len ('\\'),
+                                      ichar_itext_len ('\\'));
         }
       /* If !changed, do nothing with this backslash, just increment past
          it, which we've done above already. */
@@ -1366,11 +1364,8 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
   if (changed)			/* don't bother if nothing substituted */
     {
-      tem = make_string_from_buffer (XBUFFER (buffer),
-                                     BUF_BEG (XBUFFER (buffer)),
-                                     BUF_Z (XBUFFER (buffer))
-                                     - BUF_BEG (XBUFFER (buffer)));
-      Ferase_buffer (buffer);
+      tem = resizing_buffer_to_lisp_string (XLSTREAM (stream));
+      Lstream_delete (XLSTREAM (stream));
     }
   else
     {
