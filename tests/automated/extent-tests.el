@@ -586,4 +586,50 @@
     ?\x20 ?a ?z ?A ?Z ?\xa0 (decode-char 'ucs #x20ac)
     (decode-char 'ucs #x2012) (decode-char 'ucs #x2020)))
 
+;; Check that substitute-command-keys preserves extents.
+
+(let*
+    ((string
+      (copy-sequence "So bist du meine Tochter nimmer mehr!"))
+     (ostring string)
+     ;; These two extents should just pass through.
+     (E (make-extent (search "meine" string)
+                     (search "nimmer" string) string))
+     (EE (make-extent (search " mehr" string) (search "!" string)
+                      string))
+     (property-name '#:secret-token) substituted pE pEE)
+  (setf (extent-property E 'duplicable) t
+        (extent-property E property-name) t
+        (extent-property E 'face) 'green
+        (extent-property EE 'count) most-positive-fixnum
+        (extent-property EE 'duplicable) nil) ;; Actually the default.
+  (Assert (eq string (substitute-command-keys string))
+          "check substitute-command-keys gives identical string, no changes")
+  (setf string (concat string " \\[find-file] "))
+  (Assert (equal (format "%s %s " ostring
+                         (key-description (where-is-internal 'find-file
+                                                             nil t)))
+                 (setf substituted (substitute-command-keys string))))
+  (Assert (setf pE (car (extent-list substituted nil nil nil property-name)))
+          "checking duplicable extent returned")
+  (Assert (eql (extent-start-position pE) (extent-start-position E))
+          "checking duplicable extent start position preserved")
+  (Assert (eql (extent-end-position pE) (extent-end-position E))
+          "checking duplicable extent end position preserved")
+  ;; This is a string operation returning a string, it should preserve
+  ;; non-duplicable extents, as do #'concat, #'format.
+  (Assert (setf pEE (car (extent-list substituted nil nil nil 'count)))
+          "checking non-duplicable extent returned")
+  (when pEE
+    (Assert (eql (extent-start-position pEE) (extent-start-position EE))
+            "checking non-duplicable extent start position preserved")
+    (Assert (eql (extent-end-position pEE) (extent-start-position EE))
+            "checking non-duplicable extent end position preserved"))
+  (Assert (equal (concat ostring "\\=")
+                 (substitute-command-keys (concat ostring "\\="))))
+  
+  (Assert (equal (concat ostring "\\{find-file}")
+                 (substitute-command-keys (concat ostring
+                                                  "\\=\\{find-file}")))))
+
 ;;; end of extent-tests.el

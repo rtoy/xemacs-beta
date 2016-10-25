@@ -32,6 +32,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "keymap.h"
 #include "lstream.h"
 #include "sysfile.h"
+#include "extents.h"
 
 Lisp_Object Vinternal_doc_file_name;
 
@@ -1079,26 +1080,19 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
        (string))
 {
   /* This function can GC */
-  Ibyte *buf;
-  int changed = 0;
+  Ibyte *strp, *backslashp, *symname;
+  Boolint changed = 0;
   REGISTER Ibyte *strdata;
-  REGISTER Ibyte *bufp;
   Bytecount strlength;
-  Bytecount idx;
-  Bytecount bsize;
-  Ibyte *new_;
-  Lisp_Object tem = Qnil;
-  Lisp_Object keymap = Qnil;
-  Lisp_Object name = Qnil;
-  Ibyte *start;
-  Bytecount length;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  Bytecount idx = 0, symlen, partlen;
+  Lisp_Object tem = Qnil, keymap = Qnil, name = Qnil, buffer = Qnil;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
 
   if (NILP (string))
     return Qnil;
 
   CHECK_STRING (string);
-  GCPRO4 (string, tem, keymap, name);
+  GCPRO5 (string, tem, keymap, name, buffer);
 
   /* There is the possibility that the string is not destined for a
      translating stream, and it could be argued that we should do the
@@ -1123,172 +1117,266 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
   */
 #endif
 
-  strlength = XSTRING_LENGTH (string);
-  bsize = ITEXT_ZTERM_SIZE + strlength;
-  buf = xnew_ibytes (bsize);
-  bufp = buf;
-
-  /* Have to reset strdata every time GC might be called */
-  strdata = XSTRING_DATA (string);
-  for (idx = 0; idx < strlength; )
+  /* XEmacs; revise this extensively to preserve extent information coming
+     from the source string describe_map_tree (). */
+  while (idx < strlength)
     {
-      Ibyte *strp = strdata + idx;
+      /* Re-fetch the string data after Lisp has been called. */
+      strdata = XSTRING_DATA (string);
+      strlength = XSTRING_LENGTH (string);
+      strp = strdata + idx;
+      backslashp = memchr (strp, '\\', strlength - idx);
+      partlen = backslashp ? backslashp - strp : strlength - idx;
 
-      if (strp[0] != '\\')
-	{
-	  /* just copy other chars */
-	  /* As it happens, this will work with Mule even if the
-	     character quoted is multi-byte; the remaining multi-byte
-	     characters will just be copied by this loop. */
-	  *bufp++ = *strp;
-	  idx++;
-	}
-      else switch (strp[1])
-	{
-	default:
-	  {
-	    /* just copy unknown escape sequences */
-	    *bufp++ = *strp;
-	    idx++;
-	    break;
-	  }
-	case '=':
-	  {
-	    /* \= quotes the next character;
-	       thus, to put in \[ without its special meaning, use \=\[.  */
-	    /* As it happens, this will work with Mule even if the
-	       character quoted is multi-byte; the remaining multi-byte
-	       characters will just be copied by this loop. */
-	    changed = 1;
-	    *bufp++ = strp[2];
-	    idx += 3;
-	    break;
-	  }
-	case '[':
-	  {
-	    changed = 1;
-	    idx += 2;		/* skip \[ */
-	    strp += 2;
-	    start = strp;
+      if (changed)
+        {
+          buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, idx,
+                                  partlen, -1, 0);
+        }
 
-	    while ((idx < strlength)
-		   && *strp != ']')
-	      {
-		strp++;
-		idx++;
-	      }
-	    length = strp - start;
-	    idx++;		/* skip ] */
+      if (!backslashp)
+        {
+          break;
+        }
+      
+      idx = backslashp - strdata + ichar_itext_len ('\\');
+      strdata = XSTRING_DATA (string);
+      strlength = XSTRING_LENGTH (string);
+      strp = strdata + idx;
 
-	    tem = Fintern (make_string (start, length), Qnil);
-	    tem = Fwhere_is_internal (tem, keymap, Qt, Qnil, Qnil);
+      if (idx + ichar_itext_len ('[') < strlength
+	  && itext_ichar_eql (strp, '['))
+        {
+          Bytecount stretch_begin = stream_extent_position (buffer);
 
-#if 0 /* FSFmacs */
-	    /* Disregard menu bar bindings; it is positively annoying to
-	       mention them when there's no menu bar, and it isn't terribly
-	       useful even when there is a menu bar.  */
-	    if (!NILP (tem))
-	      {
-		firstkey = Faref (tem, Qzero);
-		if (EQ (firstkey, Qmenu_bar))
-		  tem = Qnil;
-	      }
-#endif
+          if (!changed)
+            {
+              changed = 1;
+              buffer = Fget_buffer_create (QSsubstitute);
+              Ferase_buffer (buffer);
+              buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, 0,
+                                      idx - ichar_itext_len ('\\'), -1, 0);
+              strdata = XSTRING_DATA (string);
+            }
+          
+          idx += ichar_itext_len ('[');
+          strp = strdata + idx;
+          strp = memchr (strp, ']', strlength - idx);
+ 
+          if (!strp)
+            {
+              strp = strdata + strlength;
+            }
+ 
+          symlen = (strp - strdata) - idx;
+          symname = alloca_ibytes (symlen + 1);
+          memcpy (symname, strdata + idx, symlen);
+          symname[symlen] = '\0';
 
-	    if (NILP (tem))	/* but not on any keys */
-	      {
-		new_ = (Ibyte *) xrealloc (buf, bsize += 4);
-		bufp += new_ - buf;
-		buf = new_;
-		memcpy (bufp, "M-x ", 4);
-		bufp += 4;
-		goto subst;
-	      }
-	    else
-	      {			/* function is on a key */
-		tem = Fkey_description (tem);
-		goto subst_string;
-	      }
-	  }
-	case '{':
-	case '<':
-	  {
-	    Lisp_Object buffer = Fget_buffer_create (QSsubstitute);
-	    struct buffer *buf_ = XBUFFER (buffer);
+          tem = intern ((const CIbyte *) symname);
+          tem = Fwhere_is_internal (tem, keymap, Qt, Qnil, Qnil);
+          
+          if (NILP (tem))
+            {
+              write_ascstring (buffer, "M-x ");
+              write_string_1 (buffer, symname, symlen);
+            }
+          else
+            {
+              /* Don't do the assignment within the write_lisp_string()
+                 arglist, TEM is GCPROd while the argument may not be. */
+              tem = Fkey_description (tem);
+              write_lisp_string (buffer, tem, 0, XSTRING_LENGTH (tem));
+            }
 
-	    Fbuffer_disable_undo (buffer);
-	    Ferase_buffer (buffer);
+          stretch_string_extents (buffer, string, stretch_begin,
+                                  idx - ichar_itext_len ('\\') -
+                                  ichar_itext_len ('['),
+                                  symlen + ichar_itext_len ('\\') +
+                                  ichar_itext_len ('['),
+                                  stream_extent_position (buffer)
+                                  - stretch_begin);
+          idx = idx + symlen;
+          if (idx < strlength)
+            {
+              idx += ichar_itext_len (']');
+            }
+        }
+      else if (idx + ichar_itext_len ('{') < strlength
+               && itext_ichar_eql (strp, '{'))
+        {
+          Bytecount stretch_begin = stream_extent_position (buffer);
 
-	    /* \{foo} is replaced with a summary of keymap (symbol-value foo).
-	       \<foo> just sets the keymap used for \[cmd].  */
-	    changed = 1;
-	    idx += 2;		/* skip \{ or \< */
-	    strp += 2;
-	    start = strp;
+          if (!changed)
+            {
+              changed = 1;
+              buffer = Fget_buffer_create (QSsubstitute);
+              Ferase_buffer (buffer);
+              buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, 0,
+                                      idx - ichar_itext_len ('\\'), -1, 0);
+              strdata = XSTRING_DATA (string);
+            }
+          
+          idx += ichar_itext_len ('{');
+          strdata = XSTRING_DATA (string);
+          strp = strdata + idx;
+          strp = memchr (strp, '}', strlength - idx);
+ 
+          if (!strp)
+            {
+              strp = strdata + strlength;
+            }
+ 
+          symlen = (strp - strdata) - idx;
+          symname = alloca_ibytes (symlen + 1);
+          memcpy (symname, strdata + idx, symlen);
+          symname[symlen] = '\0';
 
-	    while ((idx < strlength)
-		   && *strp != '}' && *strp != '>')
-	      {
-		strp++;
-		idx++;
-	      }
-	    length = strp - start;
-	    idx++;		/* skip } or > */
+          name = intern ((const CIbyte *) symname);
+          tem = Fboundp (name);
+          if (!NILP (tem))
+            {
+              tem = Fsymbol_value (name);
+              if (!NILP (tem))
+                tem = get_keymap (tem, 0, 1);
+            }
 
-	    /* Get the value of the keymap in TEM, or nil if undefined.
-	       Do this while still in the user's current buffer
-	       in case it is a local variable.  */
-	    name = Fintern (make_string (start, length), Qnil);
-	    tem = Fboundp (name);
-	    if (! NILP (tem))
-	      {
-		tem = Fsymbol_value (name);
-		if (! NILP (tem))
-		  tem = get_keymap (tem, 0, 1);
-	      }
+          if (NILP (tem))
+            {
+              write_ascstring (buffer, "(uses keymap \"");
+              write_lisp_string (buffer, XSYMBOL_NAME (name), 0, 
+                                 XSTRING_LENGTH (XSYMBOL_NAME (name)));
+              write_ascstring (buffer,
+                               "\", which is not currently defined) ");
+            }
+          else
+            {
+              describe_map_tree (tem, 1, Qnil, Qnil, 0, buffer);
+            }
 
-	    if (NILP (tem))
-	      {
-		buffer_insert_ascstring (buf_, "(uses keymap \"");
-		buffer_insert_lisp_string (buf_, Fsymbol_name (name));
-		buffer_insert_ascstring (buf_, "\", which is not currently defined) ");
+          stretch_string_extents (buffer, string, stretch_begin,
+                                  idx - ichar_itext_len ('\\') -
+                                  ichar_itext_len ('{'),
+                                  symlen + ichar_itext_len ('\\') +
+                                  ichar_itext_len ('{'),
+                                  stream_extent_position (buffer)
+                                  - stretch_begin);
+          idx = idx + symlen;
+          if (idx < strlength)
+            {
+              idx += ichar_itext_len ('}');
+            }
+        }
+      else if (idx + ichar_itext_len ('=') < strlength
+	       && itext_ichar_eql (strp, '='))
+        {
+          Bytecount blen;
 
-		if (start[-1] == '<') keymap = Qnil;
-	      }
-	    else if (start[-1] == '<')
-	      keymap = tem;
-	    else
-	      describe_map_tree (tem, 1, Qnil, Qnil, 0, buffer);
+          if (!changed)
+            {
+              changed = 1;
+              buffer = Fget_buffer_create (QSsubstitute);
+              Ferase_buffer (buffer);
+              buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, 0,
+                                      idx - ichar_itext_len ('\\'), -1, 0);
+              strdata = XSTRING_DATA (string);
+            }
 
-	    tem = make_string_from_buffer (buf_, BUF_BEG (buf_),
-					   BUF_Z (buf_) - BUF_BEG (buf_));
-	    Ferase_buffer (buffer);
-	  }
-	  goto subst_string;
+          idx += ichar_itext_len ('=');
+          /* \= quotes the next character; thus, to put in \[ without its
+             special meaning, use \=\[.  */
+          blen = itext_ichar_len (strdata + idx);
+          write_lisp_string (buffer, string, idx, blen);
+          idx += blen;
+        }
+      else if (idx + ichar_itext_len ('<') < strlength
+               && itext_ichar_eql (strp, '<'))
+        {
+          Bytecount stretch_begin = stream_extent_position (buffer);
+	  
+          if (!changed)
+            {
+              changed = 1;
+              buffer = Fget_buffer_create (QSsubstitute);
+              Ferase_buffer (buffer);
+              buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string, 0,
+                                      idx - ichar_itext_len ('\\'), -1, 0);
+              strdata = XSTRING_DATA (string);
+            }
 
-	subst_string:
-	  start = XSTRING_DATA (tem);
-	  length = XSTRING_LENGTH (tem);
-	subst:
-	  bsize += length;
-	  new_ = (Ibyte *) xrealloc (buf, bsize);
-	  bufp += new_ - buf;
-	  buf = new_;
-	  memcpy (bufp, start, length);
-	  bufp += length;
+          idx += ichar_itext_len ('<');
+          strdata = XSTRING_DATA (string);
+          strp = strdata + idx;
+          strp = memchr (strp, '>', strlength - idx);
+ 
+          if (!strp)
+            {
+              strp = strdata + strlength;
+            }
+ 
+          symlen = (strp - strdata) - idx;
+          symname = alloca_ibytes (symlen + 1);
+          memcpy (symname, strdata + idx, symlen);
+          symname[symlen] = '\0';
 
-	  /* Reset STRDATA in case gc relocated it.  */
-	  strdata = XSTRING_DATA (string);
-
-	  break;
-	}
+          name = intern ((const CIbyte *) symname);
+          tem = Fboundp (name);
+          if (!NILP (tem))
+            {
+              tem = Fsymbol_value (name);
+              if (!NILP (tem))
+                tem = get_keymap (tem, 0, 1);
+            }
+          
+          if (NILP (tem))
+            {
+              write_ascstring (buffer, "(uses keymap \"");
+              write_lisp_string (buffer, XSYMBOL_NAME (name), 0, 
+                                 XSTRING_LENGTH (XSYMBOL_NAME (name)));
+              write_ascstring (buffer,
+                               "\", which is not currently defined) ");
+            }
+          else
+            {
+              keymap = tem;
+            }
+          
+          stretch_string_extents (buffer, string, stretch_begin,
+                                  idx - ichar_itext_len ('\\') -
+                                  ichar_itext_len ('<'),
+                                  symlen + ichar_itext_len ('\\') +
+                                  ichar_itext_len ('<'),
+                                  stream_extent_position (buffer)
+                                  - stretch_begin);
+          idx = idx + symlen;
+          if (idx < strlength)
+            {
+              idx += ichar_itext_len ('>');
+            }
+        }
+      else if (changed)
+        {
+          buffer_insert_string_1 (XBUFFER (buffer), -1, NULL, string,
+                                  idx - ichar_itext_len ('\\'),
+                                  ichar_itext_len ('\\'), -1, 0);
+        }
+      /* If !changed, do nothing with this backslash, just increment past
+         it, which we've done above already. */
     }
 
   if (changed)			/* don't bother if nothing substituted */
-    tem = make_string (buf, bufp - buf);
+    {
+      tem = make_string_from_buffer (XBUFFER (buffer),
+                                     BUF_BEG (XBUFFER (buffer)),
+                                     BUF_Z (XBUFFER (buffer))
+                                     - BUF_BEG (XBUFFER (buffer)));
+      Ferase_buffer (buffer);
+    }
   else
-    tem = string;
-  xfree (buf);
+    {
+      tem = string;
+    }
+
   UNGCPRO;
   return tem;
 }
