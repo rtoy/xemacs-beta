@@ -447,7 +447,7 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
      other functions that take both a nonreloc and a reloc, or things
      may get confused and an assertion failure in
      fixup_internal_substring() may get triggered. */
-  const Ibyte *newnonreloc = nonreloc;
+  const Ibyte *newnonreloc;
   struct gcpro gcpro1, gcpro2;
 
   /* Emacs won't print while GCing, but an external debugger might */
@@ -458,34 +458,25 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
   /* Perhaps not necessary but probably safer. */
   GCPRO2 (function, reloc);
 
-  fixup_internal_substring (newnonreloc, reloc, offset, &len);
+  fixup_internal_substring (nonreloc, reloc, offset, &len);
 
-  if (STRINGP (reloc))
-    {
-      newnonreloc = XSTRING_DATA (reloc);
-    }
+  newnonreloc = STRINGP (reloc) ? XSTRING_DATA (reloc) : nonreloc;
 
   if (LSTREAMP (function))
     {
       if (STRINGP (reloc))
 	{
-	  /* Protect against Lstream_write() calling Lisp that changes the
-             byte length of the string and, as a result, relocates it. */
-	  if (gc_currently_forbidden)
-	    {
-	      /* Avoid calling begin_gc_forbidden, which conses.  We can reach
-		 this point from the cons debug code, which will get us into
-		 an infinite loop if we cons again. */
-	      Lstream_write_with_extents (XLSTREAM (function), reloc, offset,
-                                          len);
-	    }
-	  else
-	    {
-	      int speccount = begin_gc_forbidden ();
-	      Lstream_write_with_extents (XLSTREAM (function), reloc, offset,
-                                          len);
-	      unbind_to (speccount);
-	    }
+          /* We used to inhibit GC here. There's no need, the only Lstreams
+             that may funcall + GC are the Lisp buffer lstreams, and the
+             buffer insertion code is perfectly able to handle relocation of
+             string data, as we see in the next clause. There used to be a
+             print_stream lstream that called output_string recursively, and
+             that would have tripped the problem, but no more. Plus, we now
+             have write_with_extents (), which knows it has been handed a Lisp
+             string, and can take appropriate action to re-fetch string
+             data. */
+          Lstream_write_with_extents (XLSTREAM (function), reloc, offset,
+                                      len);
 	}
       else
         {
@@ -528,11 +519,10 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
     }
   else if (EQ (function, Qexternal_debugging_output))
     {
-      /* This is not strictly necessary, and somewhat of a hack, but it
-	 avoids having each character passed separately to
-	 `external-debugging-output'. #### Why do we pass each character
-	 separately, anyway?
-	 */
+      /* This is not strictly necessary, and somewhat of a hack, but it avoids
+	 having each character passed separately to
+	 `external-debugging-output'.  The API says to pass each character
+	 separately because that is the Lisp Way. */
       write_string_to_stdio_stream (stderr, 0, newnonreloc + offset, len,
 				    print_unbuffered);
     }

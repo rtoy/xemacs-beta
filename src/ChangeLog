@@ -348,6 +348,16 @@
 
 2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* insdel.c:
+	* insdel.h:
+	fixup_internal_substring() is very short and called every time
+	output_string() is called; make it inline.
+	* print.c (output_string):
+	There's no need to GC protect with an lstream FUNCTION; remove
+	it, document why.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* doc.c (Fsubstitute_command_keys):
 	Use our resizing_buffer output stream rather than a Lisp buffer
 	here. This preserves non-duplicable extents, as described below,
