@@ -4568,7 +4568,7 @@ EXFUN (Flss, MANY);
 EXFUN (Fmax, MANY);
 EXFUN (Fmin, MANY);
 EXFUN (Fminus, MANY);
-EXFUN (Fnumber_to_string, 1);
+EXFUN (Fnumber_to_string, 3);
 EXFUN (Fplus, MANY);
 EXFUN (Fquo, MANY);
 EXFUN (Frem, 2);
@@ -4674,21 +4674,17 @@ extern Lisp_Object Vinternal_doc_file_name;
 
 /* Defined in doprnt.c */
 
-enum fixnum_to_string_flags
-{
-  RATIONAL_DOWNCASE    = 1 << 0,
-  RATIONAL_FORCE_ASCII = 1 << 1
-};
-
 Bytecount fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
-                            UINT_16_BIT radix, int flags);
+                            UINT_16_BIT radix, Lisp_Object table_or_nil);
 #ifdef HAVE_BIGNUM
 Bytecount bignum_to_string (Ibyte **buffer_inout, Bytecount size,
-                            bignum number, UINT_16_BIT radix, int flags);
+                            bignum number, UINT_16_BIT radix,
+                            Lisp_Object table_or_nil);
 #endif
 #ifdef HAVE_RATIO
 Bytecount ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
-                           UINT_16_BIT radix, int flags);
+                           UINT_16_BIT radix, 
+                           Lisp_Object table_or_nil);
 #endif
 
 Lisp_Object format_into (Lisp_Object stream, Lisp_Object format_reloc,

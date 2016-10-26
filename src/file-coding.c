@@ -1193,7 +1193,8 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
                                  : Fsymbol_name (XCODING_SYSTEM_NAME
                                                  (name_or_existing)),
                                  Fnumber_to_string (make_fixnum
-                                                    (++coding_system_tick))));
+                                                    (++coding_system_tick),
+                                                    Qnil, Qnil)));
       if (UNBOUNDP (description))
 	{
           description = concat3 (build_ascstring ("For Internal Use ("),
@@ -1202,7 +1203,8 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	}
 
       defmnem = concat2 (build_ascstring ("Int"),
-                         Fnumber_to_string (make_fixnum (coding_system_tick)));
+                         Fnumber_to_string (make_fixnum (coding_system_tick),
+                                            Qnil, Qnil));
     }
   else
     CHECK_SYMBOL (name_or_existing);
@@ -1349,7 +1351,8 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
           = Fmake_symbol (concat3 (build_ascstring ("internal-eol-copy-"),
                                    Fsymbol_name (name_or_existing),
                                    Fnumber_to_string (make_fixnum
-                                                      (++coding_system_tick))));
+                                                      (++coding_system_tick),
+                                                      Qnil, Qnil)));
 	Lisp_Object copied = Fcopy_coding_system (csobj, newnamesym);
 	
 	XCODING_SYSTEM_CANONICAL (csobj) =

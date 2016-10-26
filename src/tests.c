@@ -886,7 +886,7 @@ Make sure `fixnum_to_string' can print LONG_MIN as a decimal correctly.
 {
   Ibyte buf[DECIMAL_PRINT_SIZE (Fixnum) + 1];
   Bytecount res = fixnum_to_string (buf, sizeof (buf), LONG_MIN, 10,
-                                    RATIONAL_FORCE_ASCII);
+                                    Vfixnum_to_majuscule_ascii);
   Ascbyte buf1[DECIMAL_PRINT_SIZE (long) + 1];
   Bytecount res1 = snprintf (buf1, sizeof (buf1) - 1, "%ld", LONG_MIN);
   Lisp_Object result = Qnil;

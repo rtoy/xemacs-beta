@@ -1,12 +1,24 @@
-/* Output like sprintf to resizing buffer.
-   Also takes args differently: pass one pointer to an array of strings
-   in addition to the format string which is separate.
+/* Formatted printing to an output stream. See the documentation for the Lisp
+   variable `standard-output'.
+
+   Also, since the emacs `format' language is basically that of C, this file
+   makes analogues of the standard C sprintf(), vsprintf(), functions
+   available to the XEmacs C code. These provide output to, e.g. malloc'd
+   buffers, Lisp strings, fixed buffers and support the repositioning specs,
+   necessary for decent internationalization and often not supported by the
+   system C library.
+
    Copyright (C) 1995, 2016 Free Software Foundation, Inc.
    Copyright (C) 2001, 2002 Ben Wing.
    Rewritten by mly to use varargs.h.
    Rewritten from scratch by Ben Wing (February 1995) for Mule; expanded
    to full printf spec.
    Support for bignums, ratios, and bigfloats added April 2004 by Jerry James.
+   Rewritten extensively October 2016 by Aidan Kehoe to support signed
+   rationals where the base is not 10, direct output to streams, preservation
+   of extents, arbitrary padding characters, specific bit lengths, non-ASCII
+   digits; to provide C-level rational-to-base conversion to the rest of the
+   XEmacs code.
 
 This file is part of XEmacs.
 
@@ -23,7 +35,8 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
-/* Synched up with: Rewritten by Ben Wing.  Not in FSF. */
+/* Synched up with: Rewritten by Ben Wing.  This code has nothing in common
+   with the FSF's doprnt.c. */
 
 #include <config.h>
 #include "lisp.h"
@@ -281,12 +294,10 @@ fixnum_to_string_base_10 (Ibyte *buffer, Bytecount size, Fixnum number,
    as a base RADIX string. The returned number will start with its most
    significant digits at the beginning of BUFFER, and will be zero terminated.
 
-   FLAGS can be RATIONAL_DOWNCASE, to print (e.g.) hexadecimal numbers as a-f
-   rather than A-F, the default. Alternatively, it can be RATIONAL_FORCE_ASCII,
-   to avoid language-specific digit characters (e.g. Persian, fullwidth
-   Chinese). In this case (#### for the moment) RATIONAL_DOWNCASE is ignored and
-   any alphabetic characters with case are returned with their upper case
-   values.
+   TABLE_OR_NIL describes a map from fixnums to digits. If Qnil, it defaults
+   to Vfixnum_to_majuscule_map. Another useful value is
+   Vfixnum_to_majuscule_ascii, to avoid language-specific digit characters
+   (e.g. Persian, fullwidth Chinese).
 
    Return the length of the printed string, without the terminating zero. If
    assertions are enabled, throw an assertion failure if BUFFER overflows.
@@ -294,13 +305,11 @@ fixnum_to_string_base_10 (Ibyte *buffer, Bytecount size, Fixnum number,
    See also bignum_to_string(), ratio_to_string(). */
 Bytecount
 fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
-                  UINT_16_BIT radix, int flags)
+                  UINT_16_BIT radix, Lisp_Object table_or_nil)
 {
   Bytecount len = 0, slack;
-  Lisp_Object table = (flags & RATIONAL_DOWNCASE)
-    ? Vfixnum_to_minuscule_map
-    : ((flags & RATIONAL_FORCE_ASCII) ? Vfixnum_to_majuscule_ascii
-       : Vfixnum_to_majuscule_map);
+  Lisp_Object table
+    = NILP (table_or_nil) ? Vfixnum_to_majuscule_map : table_or_nil;
   Boolint minusp;
   EMACS_UINT uval;
 
@@ -318,7 +327,7 @@ fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
       uval = number;
     }
 
-  if ((number & (number - 1)) == 0) /* Power of two? */
+  if ((radix & (radix - 1)) == 0) /* Power of two? */
     {
       EMACS_UINT powof2 = 0;
 
@@ -330,12 +339,12 @@ fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
           radix >>= 1;
         }
 
-      len = emacs_uint_to_string_rshift_1 (buffer, size - 1, uval, powof2,
+      len = emacs_uint_to_string_rshift_1 (buffer, size, uval, powof2,
                                            table);
     }
   else
     {
-      len = emacs_uint_to_string_general_1 (buffer, size - 1, uval, radix,
+      len = emacs_uint_to_string_general_1 (buffer, size, uval, radix,
                                             table);
     }
 
@@ -346,7 +355,7 @@ fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
     }
 
   slack = size - len;
-  text_checking_assert (slack >= 0);
+  text_checking_assert (slack > 0);
   if (slack)
     {
       /* There will be overlap if LEN > size / 2, use memmove(). */
@@ -441,12 +450,10 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
    The returned printed number will start with its most significant digits at
    the beginning of *BUFFER_INOUT, and will be zero-terminated.
 
-   FLAGS can be RATIONAL_DOWNCASE, to print (e.g.) hexadecimal numbers as a-f
-   rather than A-F, the default. Alternatively, it can be
-   RATIONAL_FORCE_ASCII, to avoid language-specific digit characters
-   (e.g. Persian, fullwidth Chinese). In this case (#### for the moment)
-   RATIONAL_DOWNCASE is ignored and any alphabetic characters with case are
-   returned with their upper case values.
+   TABLE_OR_NIL describes a map from fixnums to digits. If Qnil, it defaults
+   to Vfixnum_to_majuscule_map. Another useful value is
+   Vfixnum_to_majuscule_ascii, to avoid language-specific digit characters
+   (e.g. Persian, fullwidth Chinese).
 
    Return the length of the printed string, without the terminating zero. If
    Throw an assertion failure if BUFFER overflows and ERROR_CHECK_TEXT is
@@ -454,13 +461,11 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
    freed with free() once the caller is finished with it. */
 Bytecount
 bignum_to_string (Ibyte **buffer_inout, Bytecount size, bignum number,
-                  UINT_16_BIT radix, int flags)
+                  UINT_16_BIT radix, Lisp_Object table_or_nil)
 {
   Bytecount len = 0, slack;
-  Lisp_Object table = (flags & RATIONAL_DOWNCASE)
-    ? Vfixnum_to_minuscule_map
-    : ((flags & RATIONAL_FORCE_ASCII) ? Vfixnum_to_majuscule_ascii
-       : Vfixnum_to_majuscule_map);
+  Lisp_Object table
+    = NILP (table_or_nil) ? Vfixnum_to_majuscule_map : table_or_nil;
 
   len = bignum_to_string_1 (buffer_inout, &size, number, radix, table);
 
@@ -512,13 +517,11 @@ ratio_to_string_1 (Ibyte **buf, Bytecount size, ratio rat, UINT_16_BIT base,
 
 Bytecount
 ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
-                 UINT_16_BIT radix, int flags)
+                 UINT_16_BIT radix, Lisp_Object table_or_nil)
 {
   Bytecount len = 0, slack;
-  Lisp_Object table = (flags & RATIONAL_DOWNCASE)
-    ? Vfixnum_to_minuscule_map
-    : ((flags & RATIONAL_FORCE_ASCII) ? Vfixnum_to_majuscule_ascii
-       : Vfixnum_to_majuscule_map);
+  Lisp_Object table
+    = NILP (table_or_nil) ? Vfixnum_to_majuscule_map : table_or_nil;
 
   len = ratio_to_string_1 (buffer_inout, size, number, radix, table);
 
@@ -537,19 +540,63 @@ ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
 
 #endif /* HAVE_RATIO */
 
-DEFUN ("number-to-string", Fnumber_to_string, 1, 1, 0, /*
-Convert NUMBER to a string by printing it in decimal.
-Uses a minus sign if negative.
-NUMBER may be an integer or a floating point number.
-If supported, it may also be a ratio.
+extern Lisp_Object build_fixnum_to_char_map (Lisp_Object radix_table);
+
+DEFUN ("number-to-string", Fnumber_to_string, 1, 3, 0, /*
+Convert NUMBER to a string by printing it in base RADIX.
+
+Uses a minus sign if negative.  NUMBER may be an integer or a floating point
+number.  If supported, it may also be a ratio.  There is no support for a
+non-decimal RADIX if NUMBER is a float.
+
+See `digit-char' for details of the limitations on RADIX and RADIX-TABLE.
+
+arguments: (NUMBER &optional (RADIX 10) RADIX_TABLE)
 */
-       (number))
+       (number, radix, radix_table))
 {
+  EMACS_UINT radixing = 10;
+  Lisp_Object fixnum_to_char_table;
+
   CHECK_NUMBER (number);
+
+  if (!NILP (radix_table) && !EQ (radix_table, Vdigit_fixnum_map))
+    {
+      CHECK_CHAR_TABLE (radix_table);
+      if (EQ (Vdigit_fixnum_ascii, radix_table))
+        {
+          fixnum_to_char_table = Vfixnum_to_majuscule_ascii;
+        }
+      else
+        {
+          /* The result of this isn't GCPROd, but the rest of this function
+             won't GC and continue. */
+          fixnum_to_char_table = build_fixnum_to_char_map (radix_table);
+        }
+    }
+  else
+    {
+      fixnum_to_char_table = Vfixnum_to_majuscule_map;
+    }
+
+  if (!NILP (radix))
+    {
+      check_integer_range (radix, make_fixnum (2),
+                           make_fixnum (XSTRING_LENGTH (fixnum_to_char_table)
+                                        / MAX_ICHAR_LEN));
+      radixing = XFIXNUM (radix);
+    }
 
   if (FLOATP (number))
     {
       Ascbyte pigbuf[350];	/* see comments in float_to_string */
+
+      if (radixing != 10)
+        {
+          signal_error_2 (Qunimplemented,
+                          "non-decimal printing of floats",
+                          number, radix);
+        }
 
       return make_string ((const Ibyte *) pigbuf,
                           float_to_string (pigbuf, XFLOAT_DATA (number)));
@@ -561,15 +608,15 @@ If supported, it may also be a ratio.
       Ibyte *buf;
       Lisp_Object retval;
 
-#ifdef bignum_size_decimal
-      size = bignum_size_decimal (XBIGNUM_DATA (number));
+#ifdef bignum_size_binary
+      size = bignum_size_binary (XBIGNUM_DATA (number));
       buf = alloca_ibytes (size);
 #else
       size = -1;
       buf = NULL;
 #endif
-      len = bignum_to_string_1 (&buf, &size, XBIGNUM_DATA (number), 10,
-                                Vfixnum_to_majuscule_map);
+      len = bignum_to_string_1 (&buf, &size, XBIGNUM_DATA (number), radixing,
+                                fixnum_to_char_table);
       retval = make_string (buf + size - len, len);
 
 #ifndef bignum_size_decimal
@@ -582,31 +629,41 @@ If supported, it may also be a ratio.
 #ifdef HAVE_RATIO
   if (RATIOP (number))
     {
-      Bytecount size = ratio_size_in_base (XRATIO_DATA (number), 10), len;
+      Bytecount size = ratio_size_in_base (XRATIO_DATA (number),
+                                           radixing), len;
       Ibyte *buffer = alloca_ibytes (size);
 
-      len = ratio_to_string_1 (&buffer, size, XRATIO_DATA (number), 10,
-                               Vfixnum_to_majuscule_map);
+      len = ratio_to_string_1 (&buffer, size, XRATIO_DATA (number), radixing,
+                               fixnum_to_char_table);
       return make_string (buffer + size - len, len);
     }
 #endif
 #ifdef HAVE_BIGFLOAT
   if (BIGFLOATP (number))
     {
-      Ascbyte *str = bigfloat_to_string (XBIGFLOAT_DATA (number), 10);
-      Lisp_Object retval = build_ascstring (str);
+      Ascbyte *str;
+      Lisp_Object retval;
+      if (radixing != 10)
+        {
+          signal_error_2 (Qunimplemented,
+                          "non-decimal printing of bigfloats",
+                          number, radix);
+        }
+
+      str = bigfloat_to_string (XBIGFLOAT_DATA (number), 10);
+      retval = build_ascstring (str);
       xfree (str);
       return retval;
     }
 #endif
 
   {
-    Ibyte buffer[DECIMAL_PRINT_SIZE (Fixnum)];
+    Ibyte to_print[SIZEOF_EMACS_INT * 8 * MAX_ICHAR_LEN + 1];
 
-    return make_string (buffer,
-                        fixnum_to_string_base_10 (buffer, sizeof (buffer),
-                                                  XFIXNUM (number),
-                                                  Vfixnum_to_majuscule_map));
+    return make_string (to_print,
+                        fixnum_to_string (to_print, sizeof (to_print),
+                                          XFIXNUM (number), radixing,
+                                          fixnum_to_char_table));
   }
 }
 
@@ -1048,6 +1105,18 @@ doprnt_1 (Lisp_Object stream,
       }                                                         \
   } while (0)
 
+/* Given FORMAT, an internal-format string of length FORMAT_LENGTH, parse it
+   into a Dynarr of struct printf_spec reflecting the % conversion specifiers
+   within FORMAT, and return that Dynarr. In ARGS_NEEDED_OUT, return the
+   greatest argument number encountered. Note this function has no access to
+   the actual args specified, and in theory could run at compile time.
+
+   Error if FORMAT ends in the middle of a conversion specifier, if its
+   conversion specifiers contain non-ASCII non-pad characters, or if the
+   minimum widths and precisions supplied are nonsensical.
+
+   The returned Dynarr should be freed once callers are finished with it,
+   e.g. with record_unwind_protect_freeing_dynarr(). */
 static printf_spec_dynarr *
 parse_doprnt_spec (const Ibyte *format, Bytecount format_length,
                    Elemcount *args_needed_out)
@@ -1086,7 +1155,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length,
       fmt = text_end;
       if (fmt != fmt_end)
 	{
-	  fmt++; /* skip over % */
+          fmt += ichar_itext_len ('%'); /* skip over % */
 
 	  /* A % is special -- no arg number.  According to ANSI specs,
 	     field width does not apply to %% conversion. */
@@ -1437,6 +1506,13 @@ get_doprnt_args (printf_arg *args, Elemcount args_needed,
 #define FIXNUM_SPEC_WIDEST_WIDTH_SPEC HL_FLAG_H
 #endif
 
+/* *SPEC is a printf_spec appropriate for printing a rational. *ARG or *OBJ
+   reflect the corresponding argument supplied. If *OBJ or *ARG need to be
+   coerced (e.g. a float needs to be truncated, a fixnum needs to be cast to a
+   given bit field width), do so now . If the type of *OBJ means another
+   conversion character is appropriate (e.g. %d was supplied, and the argument
+   is a ratio), return a new conversion character. Do not change the
+   conversion character within *SPEC. Error if *OBJ is not a number. */
 static Ascbyte
 rewrite_rational_spec (struct printf_spec *spec, printf_arg *arg,
                        Lisp_Object *obj)
@@ -1648,6 +1724,10 @@ rewrite_rational_spec (struct printf_spec *spec, printf_arg *arg,
   return ch;
 }
 
+/* *SPEC is a printf_spec appropriate for printing a floating point number.
+   OBJ reflects the corresponding argument supplied.  If OBJ is a bigfloat,
+   return a new conversion character appropriate for it. Do not change the
+   conversion character within *SPEC. */
 static Ascbyte
 rewrite_floating_spec (struct printf_spec *spec, Lisp_Object obj)
 {
@@ -1711,11 +1791,11 @@ rewrite_floating_spec (struct printf_spec *spec, Lisp_Object obj)
 /* Most basic entry point into string formatting.  Generate output from a
    format-spec (either a Lisp string FORMAT_RELOC, or a C string
    FORMAT_NONRELOC of length FORMAT_LENGTH -- which *MUST NOT* come from Lisp
-   string data, unless GC is inhibited).  Output goes to STREAM.  Returns the
-   number of bytes stored into STREAM.  Arguments are either C-type arguments
-   in ARGS, or an array of Lisp objects in LARGS.  (Behavior is different in
-   the two cases -- you either get standard sprintf() behavior or `format'
-   behavior.)
+   string data, unless GC is inhibited).  SPECS is a printf_spec_dynarr
+   reflecting the forrmat spec. Output goes to STREAM.  Returns the number of
+   bytes stored into STREAM.  Arguments are either C-type arguments in ARGS,
+   or an array of Lisp objects in LARGS.  (Behavior is different in the two
+   cases -- you either get standard sprintf() behavior or `format' behavior.)
 
    The maximum index into the argument vector that is used depends on SPECS;
    see the ARGS_NEEDED_OUT argument to parse_doprnt_spec (). */
@@ -1910,16 +1990,42 @@ emacs_doprnt (Lisp_Object stream,
           }
         case 'S':
           {
+            Bytecount begin = stream_extent_position (stream);
 	    /* Print the argument as a Lisp object using #'prin1. */
             if (UNBOUNDP (obj))
               {
                 obj = arg.obj;
               }
 
-            obj = prin1_to_string (obj, 0);
-
-            byte_count += doprnt_1 (stream, NULL, obj, 0, XSTRING_LENGTH (obj),
-                                    spec, format_reloc);
+            if (spec->spec_length == (sizeof ("%S") - 1) && begin != -1)
+              {
+                Bytecount ended;
+                /* Usual case; no modifiers, printing to something we can
+                   query for a byte position--no need to create the string
+                   which will be immediately garbage, print the object
+                   directly to the stream instead. */
+                print_internal (obj, stream, 0);
+                ended = stream_extent_position (stream);
+                if (!NILP (format_reloc)
+                    && string_extent_info (format_reloc) != NULL)
+                  {
+                    stretch_string_extents (MARKERP (stream) ?
+                                            Fmarker_buffer (stream)
+                                            : stream, format_reloc, begin,
+                                            spec->text_before +
+                                            spec->text_before_len,
+                                            spec->spec_length,
+                                            ended - begin);
+                  }
+                byte_count += ended - begin;
+              }
+            else
+              {
+                obj = prin1_to_string (obj, 0);
+                byte_count += doprnt_1 (stream, NULL, obj, 0,
+                                        XSTRING_LENGTH (obj),
+                                        spec, format_reloc);
+              }
             continue;
           }
         case 'x':
@@ -2124,12 +2230,11 @@ emacs_doprnt (Lisp_Object stream,
           }
         case '%':
           {
-            Ibyte chbuf[MAX_ICHAR_LEN];
             /* No field widths, no precisions, take any extents from the
                format string.  */
             byte_count += doprnt_1 (stream, format_nonreloc, format_reloc,
                                     spec->text_before + spec->text_before_len,
-                                    set_itext_ichar (chbuf, '%'), NULL, Qnil);
+                                    ichar_itext_len ('%'), NULL, Qnil);
             continue;
           }
         case '*':
@@ -3044,9 +3149,11 @@ format_into (Lisp_Object stream, Lisp_Object format_reloc, int nargs,
       Lisp_Object argz[] = { build_ascstring ("Format string \""),
                              format_reloc,
                              build_ascstring ("\" takes "),
-                             Fnumber_to_string (make_fixnum (args_needed)),
+                             Fnumber_to_string (make_fixnum (args_needed),
+                                                Qnil, Qnil),
                              build_ascstring (" arguments, "),
-                             Fnumber_to_string (make_fixnum (nargs)),
+                             Fnumber_to_string (make_fixnum (nargs),
+                                                Qnil, Qnil),
                              build_ascstring (" supplied.") };
       /* Don't use warn_when_safe, since that ultimately calls
          emacs_doprnt(). */

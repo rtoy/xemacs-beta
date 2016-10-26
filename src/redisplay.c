@@ -1597,7 +1597,7 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 		    {
 		      /*case 'x':
 		      dst += fixnum_to_string ((char *)dst, len - dst - result,
-                                               c, 16, 0);
+                                               c, 16, Qnil);
 		      break;*/
 		    case '%':
 		      dst += set_itext_ichar (dst, '%');
@@ -7327,7 +7327,7 @@ window_line_number (struct window *w, int type)
     static Ibyte window_line_number_buf[DECIMAL_PRINT_SIZE (Fixnum)];
 
     fixnum_to_string (window_line_number_buf, sizeof (window_line_number_buf),
-                      line + 1, 10, 0);
+                      line + 1, 10, Qnil);
 
     return window_line_number_buf;
   }
@@ -7377,7 +7377,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 	Ibyte buf[DECIMAL_PRINT_SIZE (long)];
 
 	Dynarr_add_many (mode_spec_ibyte_string, buf,
-                         fixnum_to_string (buf, sizeof (buf), col, 10, 0));
+                         fixnum_to_string (buf, sizeof (buf), col, 10, Qnil));
 	goto decode_mode_spec_done;
       }
       /* print the file coding system */

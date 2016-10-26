@@ -1652,7 +1652,7 @@ status_message (Lisp_Process *p)
     {
       if (code == 0)
 	return build_msg_string ("finished\n");
-      string = Fnumber_to_string (make_fixnum (code));
+      string = Fnumber_to_string (make_fixnum (code), Qnil, Qnil);
       if (coredump)
 	string2 = build_msg_string (" (core dumped)\n");
       else
