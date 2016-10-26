@@ -2811,7 +2811,7 @@ emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc, va_list vargs)
 
   GCPRO1 (stream);
 
-  write_fmt_string_lisp (stream, format_nonreloc, vargs);
+  write_fmt_string_lisp_va (stream, format_nonreloc, vargs);
 
   obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
