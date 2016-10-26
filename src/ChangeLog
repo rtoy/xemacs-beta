@@ -348,6 +348,54 @@
 
 2016-10-26  Aidan Kehoe  <kehoea@parhasard.net>
 
+	1. Add RADIX, RADIX-TABLE optional arguments to
+	Fnumber_to_string().
+	2. Extend the documentation comments in doprnt.c.
+	3. With %S and no modifiers, call print_internal directly rather
+	than prin1_to_string, saving a little memory.
+	* data.c (build_fixnum_to_char_map):
+	Make this function available to doprnt.c.
+	* doprnt.c:
+	Document the broad strokes of this file a bit better.
+	* doprnt.c (fixnum_to_string):
+	* doprnt.c (bignum_to_string):
+	* doprnt.c (ratio_to_string):
+	Revise these, no longer take a flags argument, take the fixnum ->
+	char table explicitly, or Qnil for the default.
+	Correct a check for a power-of-two radix in fixnum_to_string ().
+	Correct a buffer-size calculation, fixnum_to_string ().
+	* doprnt.c (Fnumber_to_string):
+	Extend this to take optional RADIX, RADIX_TABLE arguments, as does
+	#'digit-char.  Error if we're supplied a radix and a float, this
+	is unimplemented.
+	* doprnt.c (parse_doprnt_spec, rewrite_rational_spec,
+	rewrite_floating_spec): Give docstrings for these functions.
+	* doprnt.c (emacs_doprnt):
+	When handling %S without any modifiers, call print_internal with
+	STREAM as the PRINTCHARFUN argument, rather than creating and then
+	immediately GCing a string.
+	* doprnt.c (format_into):
+	Call #'number-to-string with its new args.
+	* file-coding.c (make_coding_system_1):
+	Ditto.
+	* lisp.h:
+	Update the declarations for Fnumber_to_string(),
+	fixnum_to_string(), bignum_to_string(), ratio_to_string().
+	* number.h:
+	Ditto.
+	* print.c (print_internal):
+	Call Fnumber_to_string with its new args.
+	* process.c (status_message):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* redisplay.c (window_line_number):
+	* redisplay.c (decode_mode_spec):
+	* tests.c (Ftest_fixnum_to_string):
+	* tooltalk.c (tt_message_arg_ival_string):
+	Call fixnum_to_string() with its new calling convention in these
+	files.
+
+2016-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* doprnt.c (emacs_vsprintf_string_lisp):
 	Call write_fmt_string_lisp_va() here, not
 	write_fmt_string_lisp(), fix a bug.

@@ -2077,7 +2077,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	Ibyte buf[DECIMAL_PRINT_SIZE (Fixnum)];
         write_string_1 (printcharfun, buf,
                         fixnum_to_string (buf, sizeof (buf),
-                                          XREALFIXNUM (obj), 10, 0));
+                                          XREALFIXNUM (obj), 10, Qnil));
 	break;
       }
 
@@ -2300,7 +2300,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
                                   ichar_itext_len ('#')
                                   + fixnum_to_string (buf + ichar_itext_len
                                                       ('#'), sizeof (buf),
-                                                      i, 10, 0));
+                                                      i, 10, Qnil));
 		  break;
 		}
 	    if (i < print_depth - 1) /* Did we print something? */

@@ -11,6 +11,14 @@
 	XEmacs that the non-base-10 converters treat their arguments as
 	signed).
 
+2016-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi :
+	* internals/internals.texi (Old Future Work -- Everything should
+	obey duplicable extents):
+	Move this section to Old Future Work from Future Work, now it is
+	implemented.
+
 2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/strings.texi (Formatting Strings):

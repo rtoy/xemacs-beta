@@ -1469,7 +1469,7 @@ fill_ichar_array (struct chartab_range *range, Lisp_Object UNUSED (table),
   return 0;
 }
 
-static Lisp_Object
+Lisp_Object
 build_fixnum_to_char_map (Lisp_Object radix_table)
 {
   Lisp_Object highest_value, result;

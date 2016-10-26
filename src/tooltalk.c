@@ -528,7 +528,7 @@ tt_message_arg_ival_string (Tt_message m, int n)
 
   check_status (tt_message_arg_ival (m, n, &value));
   return make_string (buf, fixnum_to_string (buf, sizeof (buf), value,
-                                             10, 0));
+                                             10, Qnil));
 }
 
 static Lisp_Object
