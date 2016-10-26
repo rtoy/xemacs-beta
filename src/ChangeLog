@@ -346,6 +346,12 @@
 	Two new profiling strings, for byte->char and external->internal
 	conversion.
 
+2016-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_vsprintf_string_lisp):
+	Call write_fmt_string_lisp_va() here, not
+	write_fmt_string_lisp(), fix a bug.
+
 2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* insdel.c:
