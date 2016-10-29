@@ -3856,125 +3856,6 @@ Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth,
 
 
 /************************************************************************/
-/*			 String translation				*/
-/************************************************************************/
-
-/* When support for message translation exists, GETTEXT() translates a
-   string from English into the language defined by
-   `current-language-environment'.  This is done by looking the string
-   up in a large predefined table; if no translation is found, the
-   original string is returned, and the failure is possibly logged so
-   that the translation can later be entered into the table.
-
-   In addition to this, there is a mechanism to snarf message strings
-   out of the source code so that they can be entered into the tables.
-   This is what make-msgfile.lex does.
-
-   Handling `format' strings is more difficult: The format string
-   should get translated, but not under all circumstances.  When the
-   format string is a Lisp string, what should happen is that
-   Fformat() should format the untranslated args[0] and return that,
-   and also call Fgettext() on args[0] and, if that is different,
-   format it and store it in the `string-translatable' property of the
-   returned string.  See Fgettext().
-
-   The variations IGETTEXT, CIGETTEXT and ASCGETTEXT operate on
-   Ibyte *, CIbyte *, and Ascbyte * strings, respectively.  The
-   ASCGETTEXT version has an assert check to verify that its string
-   really is pure-ASCII.  Plain GETTEXT is defined as ASCGETTEXT, and
-   so works the same way. (There are no versions that work for Extbyte *.
-   Translate to internal format before working on it.)
-
-   There are similar functions for building a Lisp string from a C
-   string and translating in the process.  They again come in three
-   variants: build_msg_istring(), build_msg_cistring(), and
-   build_msg_ascstring().  Again, build_msg_ascstring() asserts that
-   its text is pure-ASCII, and build_msg_string() is the same as
-   build_msg_ascstring().
-   */
-
-/* Return value NOT Ascbyte, because the result in general will have been
-   translated into a foreign language. */
-DECLARE_INLINE_HEADER (const CIbyte *ASCGETTEXT (const Ascbyte *s))
-{
-  ASSERT_ASCTEXT_ASCII (s);
-  return s;
-}
-
-DECLARE_INLINE_HEADER (const Ibyte *IGETTEXT (const Ibyte *s))
-{
-  return s;
-}
-
-DECLARE_INLINE_HEADER (const CIbyte *CIGETTEXT (const CIbyte *s))
-{
-  return s;
-}
-
-DECLARE_INLINE_HEADER (Lisp_Object LISP_GETTEXT (Lisp_Object s))
-{
-  return s;
-}
-
-#define GETTEXT ASCGETTEXT
-
-MODULE_API Lisp_Object build_msg_istring (const Ibyte *);
-MODULE_API Lisp_Object build_msg_cistring (const CIbyte *);
-MODULE_API Lisp_Object build_msg_ascstring (const Ascbyte *);
-#define build_msg_string build_msg_ascstring
-
-
-/* DEFER_GETTEXT() and variants are used to identify strings which are not
-   meant to be translated immediately, but instead at some later time.
-   This is used in strings that are stored somewhere at dump or
-   initialization time, at a time when the current language environment is
-   not set.  It is the duty of the user of the string to call GETTEXT or
-   some variant at the appropriate time.  DEFER_GETTTEXT() serves only as a
-   marker that the string is translatable, and will as a result be snarfed
-   during message snarfing (see above).
-
-   build_defer_string() and variants are the deferred equivalents of
-   build_msg_string() and variants.  Similarly to DEFER_GETTEXT(), they
-   don't actually do any translation, but serve as place markers for
-   message snarfing.  However, they may do something more than just build
-   a Lisp string -- in particular, they may store a string property
-   indicating that the string is translatable (see discussion above about
-   this property).
-*/
-
-DECLARE_INLINE_HEADER (const Ascbyte *DEFER_ASCGETTEXT (const Ascbyte *s))
-{
-  ASSERT_ASCTEXT_ASCII (s);
-  return s;
-}
-
-DECLARE_INLINE_HEADER (const Ibyte *DEFER_IGETTEXT (const Ibyte *s))
-{
-  return s;
-}
-
-DECLARE_INLINE_HEADER (const CIbyte *DEFER_CIGETTEXT (const CIbyte *s))
-{
-  return s;
-}
-
-#define DEFER_GETTEXT DEFER_ASCGETTEXT
-
-MODULE_API Lisp_Object build_defer_istring (const Ibyte *);
-MODULE_API Lisp_Object build_defer_cistring (const CIbyte *);
-MODULE_API Lisp_Object build_defer_ascstring (const Ascbyte *);
-
-#define build_defer_string build_defer_ascstring
-
-
-void write_msg_istring (Lisp_Object stream, const Ibyte *str);
-void write_msg_cistring (Lisp_Object stream, const CIbyte *str);
-void write_msg_ascstring (Lisp_Object stream, const Ascbyte *str);
-
-#define write_msg_string write_msg_ascstring
-
-
-/************************************************************************/
 /*		     Garbage collection / GC-protection			*/
 /************************************************************************/
 
@@ -4676,6 +4557,17 @@ extern Lisp_Object Vinternal_doc_file_name;
 
 Bytecount fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
                             UINT_16_BIT radix, Lisp_Object table_or_nil);
+
+/* The number of bytes required to store the decimal printed representation of
+   an integral type.  Add a few bytes for truncation, optional sign prefix,
+   and null byte terminator.  2.40824 == log (256) / log (10).  Appropriate
+   for sizing a buffer for fixnum_to_string ().
+
+   We don't use floating point since Sun cc (buggily?) cannot use floating
+   point computations to define a compile-time integral constant. */
+#define DECIMAL_PRINT_SIZE(integral_type) \
+  ((((2410824 * sizeof (integral_type)) / 1000000) + 3) * MAX_ICHAR_LEN)
+
 #ifdef HAVE_BIGNUM
 Bytecount bignum_to_string (Ibyte **buffer_inout, Bytecount size,
                             bignum number, UINT_16_BIT radix,
@@ -5682,17 +5574,43 @@ void debug_short_backtrace (int);
 void debug_backtrace (void);
 MODULE_API void write_lisp_string (Lisp_Object stream, Lisp_Object string,
                                    Bytecount offset, Bytecount len);
+
 /* NOTE: Do not call the following with the data of a Lisp_String.  Use
    write_lisp_string().
-   Note: stream should be defaulted before calling (eg Qnil means stdout, not
-   Vstandard_output, etc). Use canonicalize_printcharfun(). */
-MODULE_API void write_istring (Lisp_Object stream, const Ibyte *str);
-/* Same goes for this function. */
-MODULE_API void write_cistring (Lisp_Object stream, const CIbyte *str);
-/* Same goes for this function. */
-MODULE_API void write_ascstring (Lisp_Object stream, const Ascbyte *str);
-/* Same goes for this function. */
+
+   If you would like a STREAM value of Qt, Qnil to indicate output to the
+   selected frame, rather than C's standard output, call
+   canonicalize_printcharfun () before calling this function. */
 void write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size);
+
+/* Same goes for this function. */
+DECLARE_INLINE_HEADER (
+void write_istring (Lisp_Object stream, const Ibyte *str)
+)
+{
+  /* This function can GC. We'd like to qxestrlen, but that's not yet
+     available in this file. */
+  write_string_1 (stream, str, strlen ((const char *) str));
+}
+/* Same goes for this function. */
+DECLARE_INLINE_HEADER (
+void write_cistring (Lisp_Object stream, const CIbyte *str)
+)
+{
+  /* This function can GC. We'd like to qxestrlen, but that's not yet
+     available in this file. */
+  write_string_1 (stream, (const Ibyte *) str,
+                  strlen ((const char *) str));
+}
+/* Same goes for this function. */
+DECLARE_INLINE_HEADER (
+void write_ascstring (Lisp_Object stream, const Ascbyte *str)
+)
+{
+  /* This function can GC. */
+  write_string_1 (stream, (const Ibyte *) str,
+                  strlen ((char *) str));
+}
 void write_eistring (Lisp_Object stream, const Eistring *ei);
 
 void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
@@ -5712,16 +5630,6 @@ void print_vector (Lisp_Object, Lisp_Object, int);
 void print_string (Lisp_Object, Lisp_Object, int);
 void print_symbol (Lisp_Object, Lisp_Object, int);
 void print_float (Lisp_Object, Lisp_Object, int);
-/* The number of bytes required to store the decimal printed
-   representation of an integral type.  Add a few bytes for truncation,
-   optional sign prefix, and null byte terminator.
-   2.40824 == log (256) / log (10).
-
-   We don't use floating point since Sun cc (buggily?) cannot use
-   floating point computations to define a compile-time integral
-   constant. */
-#define DECIMAL_PRINT_SIZE(integral_type) \
-  ((((2410824 * sizeof (integral_type)) / 1000000) + 3) * MAX_ICHAR_LEN)
 
 extern int print_escape_newlines;
 extern MODULE_API int print_readably;
@@ -6349,5 +6257,151 @@ extern Lisp_Object Vmswindows_downcase_file_names;
 extern Lisp_Object Qwindow_live_p;
 
 END_C_DECLS
+
+
+/************************************************************************/
+/*			 String translation				*/
+/************************************************************************/
+
+/* When support for message translation exists, GETTEXT() translates a
+   string from English into the language defined by
+   `current-language-environment'.  This is done by looking the string
+   up in a large predefined table; if no translation is found, the
+   original string is returned, and the failure is possibly logged so
+   that the translation can later be entered into the table.
+
+   In addition to this, there is a mechanism to snarf message strings
+   out of the source code so that they can be entered into the tables.
+   This is what make-msgfile.lex does.
+
+   Handling `format' strings is more difficult: The format string
+   should get translated, but not under all circumstances.  When the
+   format string is a Lisp string, what should happen is that
+   Fformat() should format the untranslated args[0] and return that,
+   and also call Fgettext() on args[0] and, if that is different,
+   format it and store it in the `string-translatable' property of the
+   returned string.  See Fgettext().
+
+   The variations IGETTEXT, CIGETTEXT and ASCGETTEXT operate on
+   Ibyte *, CIbyte *, and Ascbyte * strings, respectively.  The
+   ASCGETTEXT version has an assert check to verify that its string
+   really is pure-ASCII.  Plain GETTEXT is defined as ASCGETTEXT, and
+   so works the same way. (There are no versions that work for Extbyte *.
+   Translate to internal format before working on it.)
+
+   There are similar functions for building a Lisp string from a C
+   string and translating in the process.  They again come in three
+   variants: build_msg_istring(), build_msg_cistring(), and
+   build_msg_ascstring().  Again, build_msg_ascstring() asserts that
+   its text is pure-ASCII, and build_msg_string() is the same as
+   build_msg_ascstring().
+   */
+
+/* Return value NOT Ascbyte, because the result in general will have been
+   translated into a foreign language. */
+DECLARE_INLINE_HEADER (const CIbyte *ASCGETTEXT (const Ascbyte *s))
+{
+  ASSERT_ASCTEXT_ASCII (s);
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const Ibyte *IGETTEXT (const Ibyte *s))
+{
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const CIbyte *CIGETTEXT (const CIbyte *s))
+{
+  return s;
+}
+
+DECLARE_INLINE_HEADER (Lisp_Object LISP_GETTEXT (Lisp_Object s))
+{
+  return s;
+}
+
+#define GETTEXT ASCGETTEXT
+
+MODULE_API Lisp_Object build_msg_istring (const Ibyte *);
+MODULE_API Lisp_Object build_msg_cistring (const CIbyte *);
+MODULE_API Lisp_Object build_msg_ascstring (const Ascbyte *);
+#define build_msg_string build_msg_ascstring
+
+
+/* DEFER_GETTEXT() and variants are used to identify strings which are not
+   meant to be translated immediately, but instead at some later time.
+   This is used in strings that are stored somewhere at dump or
+   initialization time, at a time when the current language environment is
+   not set.  It is the duty of the user of the string to call GETTEXT or
+   some variant at the appropriate time.  DEFER_GETTTEXT() serves only as a
+   marker that the string is translatable, and will as a result be snarfed
+   during message snarfing (see above).
+
+   build_defer_string() and variants are the deferred equivalents of
+   build_msg_string() and variants.  Similarly to DEFER_GETTEXT(), they
+   don't actually do any translation, but serve as place markers for
+   message snarfing.  However, they may do something more than just build
+   a Lisp string -- in particular, they may store a string property
+   indicating that the string is translatable (see discussion above about
+   this property).
+*/
+
+DECLARE_INLINE_HEADER (const Ascbyte *DEFER_ASCGETTEXT (const Ascbyte *s))
+{
+  ASSERT_ASCTEXT_ASCII (s);
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const Ibyte *DEFER_IGETTEXT (const Ibyte *s))
+{
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const CIbyte *DEFER_CIGETTEXT (const CIbyte *s))
+{
+  return s;
+}
+
+#define DEFER_GETTEXT DEFER_ASCGETTEXT
+
+MODULE_API Lisp_Object build_defer_istring (const Ibyte *);
+MODULE_API Lisp_Object build_defer_cistring (const CIbyte *);
+MODULE_API Lisp_Object build_defer_ascstring (const Ascbyte *);
+
+#define build_defer_string build_defer_ascstring
+
+DECLARE_INLINE_HEADER (
+void
+write_msg_istring (Lisp_Object stream, const Ibyte *str)
+)
+{
+  /* This function can GC */
+  str = IGETTEXT (str);
+  write_string_1 (stream, str, qxestrlen (str));
+}
+
+DECLARE_INLINE_HEADER (
+void
+write_msg_cistring (Lisp_Object stream, const CIbyte *str)
+)
+{
+  /* This function can GC */
+  str = CIGETTEXT (str);
+  write_string_1 (stream, (const Ibyte *) str,
+                  qxestrlen ((const Ibyte *) str));
+}
+
+DECLARE_INLINE_HEADER (
+void
+write_msg_ascstring (Lisp_Object stream, const Ascbyte *str)
+)
+{
+  /* This function can GC */
+  str = ASCGETTEXT (str);
+  write_string_1 (stream, (const Ibyte *) str,
+                  strlen ((const Ascbyte *) str));
+}
+
+#define write_msg_string write_msg_ascstring
 
 #endif /* INCLUDED_lisp_h_ */

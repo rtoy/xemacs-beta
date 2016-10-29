@@ -348,6 +348,28 @@
 
 2016-10-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Give the compiler a chance to do strlen() at compile time,
+	write_ascstring().
+
+	* lisp.h:
+	Move the string translation macros and inline functions to the end
+	of the file, since they now need access to write_string_1(),
+	qxestrlen().
+	Make write_istring(), write_ascstring(), write_cistring() inline,
+	since they are just wrappers around write_string_1() + strlen(),
+	their arguments are often constant, and there is no prospect of
+	our moving to a non-ASCII internal encoding soon.
+	Move the DECIMAL_PRINT_SIZE() define beside fixnum_to_string (),
+	for which it's most relevant.
+	* print.c (write_istring, write_cistring, write_ascstring,
+	write_msg_istring, write_msg_cistring, write_msg_ascstring):
+	Move all these functions to lisp.h, make them inline.
+	* print.c (print_string):
+	No need to strlen() when writing an escaped backslash or double
+	quote, just call write_string_1().
+
+2016-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Handle integer default promotions, non-fixnum rationals better,
 	write_fmt_string ().
 
