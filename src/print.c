@@ -723,50 +723,6 @@ write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size)
 }
 
 void
-write_istring (Lisp_Object stream, const Ibyte *str)
-{
-  /* This function can GC */
-  write_string_1 (stream, str, qxestrlen (str));
-}
-
-void
-write_cistring (Lisp_Object stream, const CIbyte *str)
-{
-  /* This function can GC */
-  write_istring (stream, (const Ibyte *) str);
-}
-
-void
-write_ascstring (Lisp_Object stream, const Ascbyte *str)
-{
-  /* This function can GC */
-  ASSERT_ASCTEXT_ASCII (str);
-  write_istring (stream, (const Ibyte *) str);
-}
-
-void
-write_msg_istring (Lisp_Object stream, const Ibyte *str)
-{
-  /* This function can GC */
-  write_istring (stream, IGETTEXT (str));
-}
-
-void
-write_msg_cistring (Lisp_Object stream, const CIbyte *str)
-{
-  /* This function can GC */
-  write_msg_istring (stream, (const Ibyte *) str);
-}
-
-void
-write_msg_ascstring (Lisp_Object stream, const Ascbyte *str)
-{
-  /* This function can GC */
-  ASSERT_ASCTEXT_ASCII (str);
-  write_msg_istring (stream, (const Ibyte *) str);
-}
-
-void
 write_eistring (Lisp_Object stream, const Eistring *ei)
 {
   write_string_1 (stream, eidata (ei), eilen (ei));
@@ -1545,13 +1501,10 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		}
 	      else
 		{
-		  Ibyte temp[2];
-		  write_ascstring (printcharfun, "\\");
-		  /* This is correct for Mule because the
-		     character is either \ or " */
-		  temp[0] = string_byte (obj, i);
-		  temp[1] = '\0';
-		  write_istring (printcharfun, temp);
+		  /* This is correct for Mule because the character is either
+		     \ or " */
+		  Ibyte temp[] = { '\\', string_byte (obj, i) };
+                  write_string_1 (printcharfun, temp, sizeof (temp));
 		}
 
               /* If PRINTCHARFUN modified OBJ's byte length, attempt to ensure
