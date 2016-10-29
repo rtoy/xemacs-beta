@@ -61,9 +61,9 @@ bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
   size = -1;
   buf = NULL;
 #endif
-  write_string_1 (printcharfun, buf, 
-                  bignum_to_string (&buf, size, XBIGNUM_DATA (obj), 10, 0));
-
+  write_string_1 (printcharfun, buf,
+                  bignum_to_string (&buf, size, XBIGNUM_DATA (obj), 10,
+                                    Qnil));
 #ifndef bignum_size_decimal
   xfree (buf);
 #endif
@@ -105,16 +105,13 @@ bignum_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
 static void
 bignum_convert (const void *object, void **data, Bytecount *size)
 {
-  Bytecount len;
-
   CIbyte *bstr = mpz_get_str (NULL, 16, *(bignum *)object);
   *data = bstr;
   *size = strlen(bstr)+1;
 
   return;
 #if 0
-  len = bignum_to_string (&bstr, -1, *(bignum *)object, 16,
-                          FIXNUM_FORCE_ASCII);
+  len = bignum_to_string (&bstr, -1, *(bignum *)object, 16, Qnil);
   *data = bstr;
   *size = len + 1;
 #endif
@@ -175,7 +172,7 @@ ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
   Ibyte *rstr = alloca_ibytes (size);
 
   write_string_1 (printcharfun, rstr,
-                  ratio_to_string (&rstr, size, XRATIO_DATA (obj), 10, 0));
+                  ratio_to_string (&rstr, size, XRATIO_DATA (obj), 10, Qnil));
 }
 
 #ifdef NEW_GC

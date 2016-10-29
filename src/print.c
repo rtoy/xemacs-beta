@@ -1920,7 +1920,7 @@ print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
         }
       else if (XFIXNUM (seen) & PRINT_NUMBER_PRINTED_MASK)
         {
-          write_fmt_string (printcharfun, "#%d#",
+          write_fmt_string (printcharfun, "#%ld#",
                             (XFIXNUM (seen) & PRINT_NUMBER_ORDINAL_MASK)
                             >> PRINT_NUMBER_ORDINAL_SHIFT);
 
@@ -1929,13 +1929,14 @@ print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
         }
       else
         {
-          write_fmt_string (printcharfun, "#%d=",
+          write_fmt_string (printcharfun, "#%ld=",
                             (XFIXNUM (seen) & PRINT_NUMBER_ORDINAL_MASK)
                             >> PRINT_NUMBER_ORDINAL_SHIFT);
 
           /* We set PRINT_NUMBER_PRINTED_MASK immediately here, so the
              object itself is written as #%d# when printing its contents. */
-          Fputhash (obj, make_fixnum (XFIXNUM (seen) | PRINT_NUMBER_PRINTED_MASK),
+          Fputhash (obj,
+                    make_fixnum (XFIXNUM (seen) | PRINT_NUMBER_PRINTED_MASK),
                     Vprint_number_table);
 
           /* This is the first time the object has been seen while

@@ -549,7 +549,8 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
 	    break;
 	  }
 	print_internal (e->key, printcharfun, 1);
-	write_fmt_string_lisp (printcharfun, " %S", e->value);
+        write_ascstring (printcharfun, " ");
+	print_internal (e->value, printcharfun, 1);        
 	count++;
       }
 
@@ -568,17 +569,18 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
 
   if (!(EQ (ht->test, Vhash_table_test_eql)))
     {
-      write_fmt_string_lisp (printcharfun, " :test %S",
-                             XHASH_TABLE_TEST (ht->test)->name);
+      write_ascstring (printcharfun, " :test ");
+      /* Can't just write the symbol name, it may be uninterned. */
+      print_internal (XHASH_TABLE_TEST (ht->test)->name, printcharfun, 1);
     }
 
   if (ht->count || !print_readably)
     {
       if (print_readably)
-	write_fmt_string (printcharfun, " :size %ld", (long) ht->count);
+	write_fmt_string (printcharfun, " :size %ld", ht->count);
       else
-	write_fmt_string (printcharfun, " :size %ld/%ld", (long) ht->count,
-			  (long) ht->size);
+	write_fmt_string (printcharfun, " :size %ld/%ld", ht->count,
+			  ht->size);
     }
 
   if (ht->weakness != HASH_TABLE_NON_WEAK)

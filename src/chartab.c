@@ -461,8 +461,11 @@ print_table_entry (struct chartab_range *range, Lisp_Object UNUSED (table),
   a->first = 0;
   lisprange = encode_char_table_range (range);
   GCPRO1 (lisprange);
-  write_fmt_string_lisp (a->printcharfun, "%s %S", lisprange, val);
+  print_internal (lisprange, a->printcharfun, 1);
   UNGCPRO;
+  write_ascstring (a->printcharfun, " ");
+  print_internal (val, a->printcharfun, 1);  
+
   return 0;
 }
 
@@ -471,6 +474,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
 		  int UNUSED (escapeflag))
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
+  Lisp_Object typename = XSYMBOL_NAME (char_table_type_to_symbol (ct->type));
   struct chartab_range range;
   struct ptemap arg;
 
@@ -478,20 +482,19 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
   arg.printcharfun = printcharfun;
   arg.first = 1;
 
-  write_fmt_string_lisp (printcharfun,
-			 "#s(char-table :type %s",
-			 char_table_type_to_symbol (ct->type));
+  write_ascstring (printcharfun, "#s(char-table :type ");
+  /* write_lisp_string() is fine, we know it's not an uninterned symbol. */
+  write_lisp_string (printcharfun, typename, 0, XSTRING_LENGTH (typename));
+			 
   if (!(EQ (ct->default_, char_table_default_for_type (ct->type))))
     {
-      write_fmt_string_lisp (printcharfun, " :default %S", ct->default_);
+      write_ascstring (printcharfun, " :default ");
+      print_internal (ct->default_, printcharfun, 1);
     }
 
   write_ascstring (printcharfun, " :data (");
   map_char_table (obj, &range, print_table_entry, &arg);
   write_ascstring (printcharfun, "))");
-
-  /* #### need to print and read the default; but that will allow the
-     default to be modified, which we don't (yet) support -- but FSF does */
 }
 
 static int
