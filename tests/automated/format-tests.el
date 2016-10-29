@@ -220,27 +220,32 @@
 (Check-Error 'syntax-error (format "%.20c" ?a)) ;; Newly fails.
 (Check-Error 'syntax-error (format "%.*c" 20 ?a)) ;; Newly fails.
 
-(defun slow-integer-to-string (integer)
+(defun* slow-integer-to-string (integer &optional (radix 10))
   (check-type integer integer)
+  (check-type radix (integer 2 16))
   (loop with minusp = (if (< integer 0)
                           (prog1 t (setq integer (- integer))))
         with result = nil
         until (eql integer 0)
-        do (setf result (cons (cdr (assoc* (mod integer 10)
+        do (setf result (cons (cdr (assoc* (mod integer radix)
                                            '((0 . ?0) (1 . ?1)
                                              (2 . ?2) (3 . ?3)
                                              (4 . ?4) (5 . ?5)
                                              (6 . ?6) (7 . ?7)
-                                             (8 . ?8) (9 . ?9))))
+                                             (8 . ?8) (9 . ?9)
+                                             (10 . ?A) (11 . ?B) 
+                                             (12 . ?C) (13 . ?D) 
+                                             (14 . ?E) (14 . ?E) 
+                                             (15 . ?F) (15 . ?F))))
                               result)
-                 integer (/ integer 10))
+                 integer (/ integer radix))
         finally return (concatenate 'string (if minusp "-")
                                     result)))
 
-(defun slow-ratio-to-string (ratio)
+(defun* slow-ratio-to-string (ratio &optional (radix 10))
   (check-type ratio ratio)
-  (concatenate 'string (slow-integer-to-string (numerator ratio))
-               "/" (slow-integer-to-string (denominator ratio))))
+  (concatenate 'string (slow-integer-to-string (numerator ratio) radix)
+               "/" (slow-integer-to-string (denominator ratio) radix)))
 
 (macrolet
     ((Assert-formatting-integers (guard &rest integers)
@@ -250,9 +255,22 @@
                      collect (progn
                                (if (not (integerp integer))
                                    (setq integer (eval integer)))
-                               `(Assert (equal (format "%d" ,integer)
-                                         ,(slow-integer-to-string
-                                           integer))))))))
+                               `(progn
+                                 (Assert (equal (format "%d" ,integer)
+                                          ,(slow-integer-to-string integer)))
+                                 (Assert (equal (format "%b" ,integer)
+                                          ,(slow-integer-to-string integer
+                                                                   2)))
+                                 (Assert (equal (format "%o" ,integer)
+                                          ,(slow-integer-to-string integer
+                                                                   8)))
+                                 (Assert (equal (format "%X" ,integer)
+                                          ,(slow-integer-to-string integer
+                                                                   16)))
+                                 (Assert (equal (format "%x" ,integer)
+                                          ,(downcase
+                                            (slow-integer-to-string
+                                             integer 16))))))))))
      (Assert-formatting-ratios (guard &rest ratios)
        (when (featurep guard)
          (cons 'progn
@@ -260,9 +278,18 @@
                      collect (progn
                                (if (not (ratiop ratio))
                                    (setq ratio (eval ratio)))
-                               `(Assert (equal (format "%d" ,ratio)
-                                         ,(slow-ratio-to-string
-                                           ratio)))))))))
+                               `(progn
+                                 (Assert (equal (format "%d" ,ratio)
+                                          ,(slow-ratio-to-string ratio)))
+                                 (Assert (equal (format "%b" ,ratio)
+                                          ,(slow-ratio-to-string ratio 2)))
+                                 (Assert (equal (format "%o" ,ratio)
+                                          ,(slow-ratio-to-string ratio 8)))
+                                 (Assert (equal (format "%X" ,ratio)
+                                          ,(slow-ratio-to-string ratio 16)))
+                                 (Assert (equal (format "%x" ,ratio)
+                                          ,(downcase (slow-ratio-to-string
+                                                      ratio 16)))))))))))
   (Assert-formatting-integers xemacs 1 -2 #xFFFF #x-FFFF most-positive-fixnum
                               most-negative-fixnum)
   (Assert-formatting-integers bignum (1+ most-positive-fixnum)
@@ -500,7 +527,10 @@
         "hexadecimal zero-padded not left-adjusted")
 (Assert (equal (format "%#.0x" 1) "0x1")
         "hexadecimal zero-padded zero-precision")
-(Assert (equal (format "%#.0x" 0) "")
+;; This is an intentional difference from the C standard and from what GNU
+;; Emacs and Wine do. Our thinking is that we should never do a value-altering
+;; truncation of a numeric value.
+(Assert (equal (format "%#.0x" 0) "0")
         "hexadecimal zero-padded zero-precision")
 
 (Assert (equal (format "%#08o" 1) "00000001") "octal zero-padded")
@@ -635,6 +665,19 @@
      (equal
       (format "%b" (very-negative-bignum))
       "-111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"))))
+
+(macrolet
+    ((check-%S (&rest list)
+       (cons 'progn
+             (mapcan (function*
+                      (lambda ((object . representation))
+                       `((Assert (equal (prin1-to-string ,(quote-maybe object))
+                                        (format "%S" ,(quote-maybe object))))
+                         (Assert (equal (format "%S" ,(quote-maybe object))
+                                        ,representation))))) list))))
+  (check-%S (1e+ . "1e+") (20000e- . "20000e-") ("hello" . "\"hello\"")
+            ("hello\"everyone" . "\"hello\\\"everyone\"")
+            (?\n . "?\\n") (?a . "?a") ([hello there] . "[hello there]")))
 
 (Check-Error syntax-error (format "%I64d" 1))
 (Check-Error syntax-error (format "%I32d" 1))

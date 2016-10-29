@@ -12,6 +12,18 @@
 	encounters a ratio. Revise these files to delay calling #'read
 	until we're sure there is ratio support available.
 
+2016-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	* automated/format-tests.el (slow-integer-to-string):
+	Extend this to take an optional RADIX argument.
+	* automated/format-tests.el (slow-ratio-to-string):
+	Ditto.
+	* automated/format-tests.el (Assert-formatting-integers):
+	Use this RADIX argument.
+	* automated/format-tests.el:
+	Test %S with a selection of objects.
+
 2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/extent-tests.el:

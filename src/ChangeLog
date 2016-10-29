@@ -346,6 +346,50 @@
 	Two new profiling strings, for byte->char and external->internal
 	conversion.
 
+2016-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Handle integer default promotions, non-fixnum rationals better,
+	write_fmt_string ().
+
+	* doprnt.c:
+	Make the various converter strings into #defines, now they're
+	mostly not used and the compiler complains about unused
+	variables.
+	* doprnt.c (parse_doprnt_spec):
+	Document that we don't accept the u modifier for explicit-bignum
+	converters, something only really relevant to C-level
+	arguments. Document why.
+	* doprnt.c (get_doprnt_args):
+	Handle default integer promotions correctly according to the C
+	specs, something that the old code did too.
+	Treat a %S spec as pointing to a Lisp object, with C-style args as
+	well as Lisp style args.
+	Handle the explicit bignum, ratio, and bigfloat converters, should
+	C code need to use them.
+	* doprnt.c (rewrite_rational_spec):
+	With bit length flags and explicit bignum conversion specifiers,
+	rewrite to the fixnum conversion specifiers when we're truncating
+	the value.
+	Use our 64-bit string conversion function when supplied with a bit
+	length flag and the value may not fit in a fixnum.
+	* doprnt.c (FIXNUM_SPEC_PREAMBLE):
+	Handle the unsigned flag better when a C-level untagged integer is
+	supplied.
+	* doprnt.c (emacs_doprnt):
+	Correct the optimisation for %S, print the object with quoting
+	characters.
+	When bit length flags are supplied with explicit bignum conversion
+	specifiers, rewrite to a fixnum call as appropriate.
+	* number.c (bignum_print):
+	Use Vfixnum_to_majuscule_map correctly here.
+	* number-mp.c (bignum_to_int): 
+	Remove this, it's now in doprnt.c
+	* number.c (bignum_convert):
+	* number.c (ratio_print):
+	Use Vfixnum_to_majuscule_map correctly here.
+	* casetab.c (print_case_table):
+	Use %S, now that's cheaper than %s for Lisp objects.
+
 2016-10-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	1. Add RADIX, RADIX-TABLE optional arguments to

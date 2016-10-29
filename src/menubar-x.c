@@ -1166,7 +1166,7 @@ menu_accelerator_junk_on_error (Lisp_Object errordata,
       warn_when_safe_lispobj
 	(Qerror, Qwarning,
 	 emacs_sprintf_string_lisp
-	 ("%s: %s", Qnil, 2,
+	 ("%s: %s",
 	  build_msg_string ("Error in menu accelerators (setting to nil)"),
 	  errordata));
     }
