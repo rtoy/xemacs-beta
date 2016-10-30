@@ -10,6 +10,29 @@
 	* subr.el (number-char-or-marker-p): New.
 	Move these basic predicates to subr.el from data.c
 
+2016-10-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Dump (preload) "font-menu" when the menubar is available,
+	"x-font-menu" when X and the menubar is available.
+	* font-menu.el (font-menu-family-constructor):
+	* font-menu.el (font-menu-size-constructor):
+	* font-menu.el (font-menu-weight-constructor):
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* gtk-font-menu.el (gtk-font-menu-font-data):
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	* msw-font-menu.el (mswindows-font-menu-font-data):
+	* x-font-menu.el (x-reset-device-font-menus-core):
+	* x-font-menu.el (x-font-menu-font-data-xft):
+	* x-font-menu.el (x-font-menu-font-data-core):
+	Use #'assoc, which has a native implementation, instead of
+	#'vassoc, which is implemented in non-dumped Lisp, for the font
+	menu device cache.
+	Dump the font menu implementation code when the relevant features
+	are compiled in.
+	Makes the font face menu a little faster, though the bottleneck is
+	still loading the faces from the X server.
+
 2016-09-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* abbrev.el (abbrev-symbol):
