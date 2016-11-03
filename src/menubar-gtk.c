@@ -780,7 +780,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
       Lisp_Object config_tag = Qnil;
       Lisp_Object accel = Qnil;
       GtkWidget *main_label = NULL;
-      int length = XVECTOR_LENGTH (descr);
+      Elemcount length = XVECTOR_LENGTH (descr);
       Lisp_Object *contents = XVECTOR_DATA (descr);
       int plist_p;
       int selected_spec = 0, included_spec = 0;

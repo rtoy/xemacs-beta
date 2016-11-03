@@ -292,7 +292,7 @@ when reading the arguments.
 
   if (!NILP (keys))
     {
-      int i, len;
+      Elemcount i, len;
 
       CHECK_VECTOR (keys);
       len = XVECTOR_LENGTH (keys);

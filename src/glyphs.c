@@ -427,7 +427,7 @@ find_keyword_in_vector_or_given (Lisp_Object vector, Lisp_Object keyword,
 				 Lisp_Object default_)
 {
   Lisp_Object *elt;
-  int instantiator_len;
+  Elemcount instantiator_len;
 
   elt = XVECTOR_DATA (vector);
   instantiator_len = XVECTOR_LENGTH (vector);
@@ -458,7 +458,7 @@ find_instantiator_differences (Lisp_Object new_, Lisp_Object old)
   Lisp_Object alist = Qnil;
   Lisp_Object *elt = XVECTOR_DATA (new_);
   Lisp_Object *old_elt = XVECTOR_DATA (old);
-  int len = XVECTOR_LENGTH (new_);
+  Elemcount len = XVECTOR_LENGTH (new_);
   struct gcpro gcpro1;
 
   /* If the vector length has changed then consider everything
@@ -496,7 +496,7 @@ Use `set-glyph-image' on glyphs to register instantiator changes.  */
        (instantiator, keyword, value))
 {
   Lisp_Object *elt;
-  int len;
+  Elemcount len;
 
   CHECK_VECTOR (instantiator);
   if (!KEYWORDP (keyword))
@@ -618,7 +618,7 @@ Lisp_Object
 tagged_vector_to_alist (Lisp_Object vector)
 {
   Lisp_Object *elt = XVECTOR_DATA (vector);
-  int len = XVECTOR_LENGTH (vector);
+  Elemcount len = XVECTOR_LENGTH (vector);
   Lisp_Object result = Qnil;
 
   assert (len & 1);
@@ -3499,7 +3499,7 @@ image_validate (Lisp_Object instantiator)
   else if (VECTORP (instantiator))
     {
       Lisp_Object *elt = XVECTOR_DATA (instantiator);
-      int instantiator_len = XVECTOR_LENGTH (instantiator);
+      Elemcount instantiator_len = XVECTOR_LENGTH (instantiator);
       struct image_instantiator_methods *meths;
       Lisp_Object already_seen = Qnil;
       struct gcpro gcpro1;
@@ -3637,7 +3637,7 @@ image_copy_vector_instantiator (Lisp_Object instantiator)
   int i;
   struct image_instantiator_methods *meths;
   Lisp_Object *elt;
-  int instantiator_len;
+  Elemcount instantiator_len;
 
   CHECK_VECTOR (instantiator);
 

@@ -162,9 +162,8 @@ store_kbd_macro_event (Lisp_Object event)
 
   if (con->kbd_macro_ptr == XVECTOR_LENGTH (con->kbd_macro_builder))
     {
-      int i;
-      int old_size = XVECTOR_LENGTH (con->kbd_macro_builder);
-      int new_size = old_size * 2;
+      Elemcount old_size = XVECTOR_LENGTH (con->kbd_macro_builder);
+      Elemcount new_size = old_size * 2, i;
       Lisp_Object new_ = make_vector (new_size, Qnil);
       for (i = 0; i < old_size; i++)
 	XVECTOR_DATA (new_) [i] = XVECTOR_DATA (con->kbd_macro_builder) [i];

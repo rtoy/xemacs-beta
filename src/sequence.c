@@ -1189,8 +1189,8 @@ safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth)
     }
   else if (VECTORP (arg) && ! NILP (vecp))
     {
-      int i = XVECTOR_LENGTH (arg);
-      int j;
+      Elemcount i = XVECTOR_LENGTH (arg), j;
+
       arg = Fcopy_sequence (arg);
       for (j = 0; j < i; j++)
 	{

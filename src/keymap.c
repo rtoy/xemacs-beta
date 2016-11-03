@@ -1897,7 +1897,7 @@ it is possible to redefine only one of those sequences like so:
   /* This function can GC */
   int idx;
   int metized = 0;
-  int len;
+  Elemcount len;
   int ascii_hack;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
@@ -2556,7 +2556,7 @@ get_relevant_keymaps (Lisp_Object keys, Lisp_Object position, int max_maps,
     terminal = event_chain_tail (keys);
   else if (VECTORP (keys))
     {
-      int len = XVECTOR_LENGTH (keys);
+      Elemcount len = XVECTOR_LENGTH (keys);
       if (len > 0)
 	terminal = XVECTOR_DATA (keys)[len - 1];
     }
@@ -3404,8 +3404,7 @@ accessible_keymaps_mapper_1 (Lisp_Object keysym, Lisp_Object contents,
       Lisp_Object thisseq = Fcar (Fcar (closure->tail));
       Lisp_Object cmd = get_keyelt (contents, 1);
       Lisp_Object vec;
-      int j;
-      int len;
+      Elemcount len, j;
       Lisp_Key_Data key;
       key.keysym = keysym;
       key.modifiers = modifiers;
@@ -3413,9 +3412,9 @@ accessible_keymaps_mapper_1 (Lisp_Object keysym, Lisp_Object contents,
       assert (!NILP (cmd));
       cmd = get_keymap (cmd, 0, 1);
       assert (KEYMAPP (cmd));
-
-      vec = make_vector (XVECTOR_LENGTH (thisseq) + 1, Qnil);
       len = XVECTOR_LENGTH (thisseq);
+      vec = make_vector (len + 1, Qnil);
+
       for (j = 0; j < len; j++)
 	XVECTOR_DATA (vec) [j] = XVECTOR_DATA (thisseq) [j];
       XVECTOR_DATA (vec) [j] = make_key_description (&key, 1);

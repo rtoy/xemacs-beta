@@ -1779,8 +1779,7 @@ static Lisp_Object
 mark_vector (Lisp_Object obj)
 {
   Lisp_Vector *ptr = XVECTOR (obj);
-  int len = vector_length (ptr);
-  int i;
+  Elemcount len = vector_length (ptr), i;
 
   for (i = 0; i < len - 1; i++)
     mark_object (ptr->contents[i]);
@@ -1798,7 +1797,7 @@ size_vector (Lisp_Object obj)
 static int
 vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
-  int len = XVECTOR_LENGTH (obj1);
+  Elemcount len = XVECTOR_LENGTH (obj1);
   if (len != XVECTOR_LENGTH (obj2))
     return 0;
 
@@ -1860,7 +1859,7 @@ vector_nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
 }
 
 static const struct memory_description vector_description[] = {
-  { XD_LONG,              offsetof (Lisp_Vector, size) },
+  { XD_ELEMCOUNT,              offsetof (Lisp_Vector, size) },
   { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Vector, contents), XD_INDIRECT(0, 0) },
   { XD_END }
 };
@@ -2079,7 +2078,7 @@ bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 static Hashcode
 internal_bit_vector_equalp_hash (Lisp_Bit_Vector *v)
 {
-  int ii, size = bit_vector_length (v);
+  Elemcount ii, size = bit_vector_length (v);
   Hashcode hash = 0;
 
   if (size <= 5)
@@ -4683,8 +4682,7 @@ tree_memory_usage_1 (Lisp_Object arg, int vectorp, int depth)
     }
   else if (VECTORP (arg) && vectorp)
     {
-      int i = XVECTOR_LENGTH (arg);
-      int j;
+      Elemcount i = XVECTOR_LENGTH (arg), j;
       total += lisp_object_memory_usage (arg);
       for (j = 0; j < i; j++)
 	{

@@ -3935,8 +3935,7 @@ extract_this_command_keys_nth_mouse_event (int n)
 Lisp_Object
 extract_vector_nth_mouse_event (Lisp_Object vector, int n)
 {
-  int i;
-  int len = XVECTOR_LENGTH (vector);
+  Elemcount len = XVECTOR_LENGTH (vector), i;
 
   for (i = 0; i < len; i++)
     {
