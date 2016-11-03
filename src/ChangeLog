@@ -1,3 +1,16 @@
+2016-11-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c (bytebpos_to_charbpos_func):
+	Differentiate between char->byte and byte->char conversion when
+	profiling.
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	Ditto, differentiate between external->internal and
+	internal->external conversion when profiling.
+	* text.c (vars_of_text):
+	Two new profiling strings, for byte->char and external->internal
+	conversion.
+
 2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* number-gmp.c (bignum_to_llong):
