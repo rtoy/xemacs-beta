@@ -912,7 +912,7 @@ and use the text that appears at the top of the window.
 */
        (charset, registries, force))
 {
-  int i; 
+  Elemcount i; 
   charset = Fget_charset (charset);
   CHECK_VECTOR (registries);
 

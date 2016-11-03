@@ -115,8 +115,7 @@ get_local_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
 	       XCAR (target_type) == QMULTIPLE)
 	{
 	  Lisp_Object pairs = XCDR (target_type);
-	  int len = XVECTOR_LENGTH (pairs);
-	  int i;
+	  Elemcount len = XVECTOR_LENGTH (pairs), i;
 	  /* If the target is MULTIPLE, then target_type looks like
 	     (MULTIPLE . [[SELECTION1 TARGET1] [SELECTION2 TARGET2] ... ])
 	     We modify the second element of each pair in the vector and

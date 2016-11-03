@@ -1,3 +1,45 @@
+2016-10-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (mark_vector):
+	* alloc.c (vector_equal):
+	* alloc.c (internal_bit_vector_equalp_hash):
+	* alloc.c (tree_memory_usage_1):
+	* bytecode.c (check_constants_index):
+	* callint.c (Fcall_interactively):
+	* event-Xt.c (x_event_to_emacs_event):
+	* event-stream.c (extract_vector_nth_mouse_event):
+	* events.c (Fdeallocate_event):
+	* fontcolor-xlike-inc.c (XFUN):
+	* fontcolor.c (face_boolean_instantiate):
+	* glyphs-widget.c (substitute_keyword_value):
+	* glyphs.c (find_keyword_in_vector_or_given):
+	* glyphs.c (find_instantiator_differences):
+	* glyphs.c (if):
+	* glyphs.c (tagged_vector_to_alist):
+	* glyphs.c (image_validate):
+	* glyphs.c (image_copy_vector_instantiator):
+	* gui.c (make_gui_item_from_keywords_internal):
+	* gui.c (widget_gui_parse_item_keywords):
+	* keymap.c (Fdefine_key):
+	* keymap.c (get_relevant_keymaps):
+	* keymap.c (accessible_keymaps_mapper_1):
+	* lread.c (ebolify_bytecode_constants):
+	* macros.c (store_kbd_macro_event):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* mule-ccl.h:
+	* print.c (print_vector):
+	Remove print_vector_internal(), no need for it.
+	* print.c (debug_p4):
+	* select.c:
+	* sequence.c (safe_copy_tree):
+	* symbols.c (map_obarray):
+	* symbols.c (flush_all_buffer_local_cache):
+	* toolbar.c (update_toolbar_button):
+	* ui-byhand.c (Fgtk_curve_set_vector):
+	Don't store the result of vector_length (), XVECTOR_LENGTH () into
+	an int, it needs to be an Elemcount, which is the width of an
+	EMACS_INT.
+
 2016-11-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c (bytebpos_to_charbpos_func):

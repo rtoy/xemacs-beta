@@ -387,8 +387,7 @@ check_if_suppressed (Ibyte *nonreloc, Lisp_Object reloc)
 void
 ebolify_bytecode_constants (Lisp_Object vector)
 {
-  int len = XVECTOR_LENGTH (vector);
-  int i;
+  Elemcount len = XVECTOR_LENGTH (vector), i;
 
   for (i = 0; i < len; i++)
     {

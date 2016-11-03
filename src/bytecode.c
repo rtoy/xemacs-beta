@@ -1804,7 +1804,7 @@ check_opcode (Opcode opcode)
 static void
 check_constants_index (int idx, Lisp_Object constants)
 {
-  if (idx < 0 || idx >= XVECTOR_LENGTH (constants))
+  if (idx < 0 || (Elemcount) idx >= XVECTOR_LENGTH (constants))
     signal_ferror
       (Qinvalid_byte_code,
        "reference %d to constants array out of range 0, %ld",

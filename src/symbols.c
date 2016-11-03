@@ -448,7 +448,7 @@ void
 map_obarray (Lisp_Object obarray,
 	     int (*fn) (Lisp_Object, Lisp_Object, void *), void *arg)
 {
-  REGISTER int i;
+  REGISTER Elemcount i;
 
   CHECK_VECTOR (obarray);
   for (i = XVECTOR_LENGTH (obarray) - 1; i >= 0; i--)
@@ -1577,10 +1577,9 @@ void
 flush_all_buffer_local_cache (void)
 {
   Lisp_Object *syms = XVECTOR_DATA (Vobarray);
-  long count = XVECTOR_LENGTH (Vobarray);
-  long i;
+  Elemcount count = XVECTOR_LENGTH (Vobarray), i;
 
-  for (i=0; i<count; i++)
+  for (i = 0; i < count; i++)
     {
       Lisp_Object sym = syms[i];
       Lisp_Object value;
@@ -1592,7 +1591,8 @@ flush_all_buffer_local_cache (void)
 	    assert (SYMBOLP (sym));
 	    value = fetch_value_maybe_past_magic (sym, Qt);
 	    if (SYMBOL_VALUE_BUFFER_LOCAL_P (value))
-	      flush_buffer_local_cache (sym, XSYMBOL_VALUE_BUFFER_LOCAL (value));
+	      flush_buffer_local_cache (sym,
+                                        XSYMBOL_VALUE_BUFFER_LOCAL (value));
 
 	    next = symbol_next (XSYMBOL (sym));
 	    if (!next)

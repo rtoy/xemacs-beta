@@ -128,7 +128,7 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
 				  enum font_specifier_matchspec_stages stage)
 {
   Lisp_Object registries = Qnil;
-  long i, registries_len;
+  Elemcount i, registries_len;
   const Ibyte *the_nonreloc;
   Bytecount the_length;
 

@@ -339,10 +339,9 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
      button. */
   if (KEYWORDP (glyphs))
     {
-      int pos;
-      int style_seen = 0;
-      int size_seen = 0;
-      int len = XVECTOR_LENGTH (desc);
+      Boolint style_seen = 0;
+      Boolint size_seen = 0;
+      Elemcount len = XVECTOR_LENGTH (desc), pos;
 
       if (!tb->blank)
 	{

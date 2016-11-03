@@ -869,7 +869,7 @@ that it is safe to do so.
 
 #if 0
   {
-    int i, len;
+    Elemcount i, len;
 
     assert (!(EQ (event, Vlast_command_event) ||
 	      EQ (event, Vlast_input_event)   ||
@@ -880,7 +880,7 @@ that it is safe to do so.
       assert (!EQ (event, XVECTOR_DATA (Vthis_command_keys) [i]));
     if (!NILP (Vrecent_keys_ring))
       {
-	int recent_ring_len = XVECTOR_LENGTH (Vrecent_keys_ring);
+	Elemcount recent_ring_len = XVECTOR_LENGTH (Vrecent_keys_ring);
 	for (i = 0; i < recent_ring_len; i++)
 	  assert (!EQ (event, XVECTOR_DATA (Vrecent_keys_ring) [i]));
       }

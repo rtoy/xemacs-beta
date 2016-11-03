@@ -1144,11 +1144,10 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	       easier or more maintainable than storing a correspondence in
 	       Lisp. */
 
-	    if (!NILP(Vx_us_keymap_description) && 
-		VECTORP(Vx_us_keymap_description) && 
-		ev->keycode >= (unsigned)Vx_us_keymap_first_keycode && 
-		ev->keycode 
-		< (unsigned)XVECTOR_LENGTH(Vx_us_keymap_description)) 
+	    if ((Elemcount) ev->keycode >= Vx_us_keymap_first_keycode
+                && VECTORP (Vx_us_keymap_description)
+                && (Elemcount) ev->keycode 
+		< XVECTOR_LENGTH (Vx_us_keymap_description))
 	      {
 		Lisp_Object entr = XVECTOR_DATA(Vx_us_keymap_description)
 		  [ev->keycode - Vx_us_keymap_first_keycode];
@@ -1156,35 +1155,36 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 
 		if (!NILP (entr))
 		  {
-		    if (CHARP(entr)) 
+		    if (CHARP (entr)) 
 		      {
-			alternate = XCHAR(entr);
+			alternate = XCHAR (entr);
 		      }
-		    else if (VECTORP(entr))
+		    else if (VECTORP (entr))
 		      {
 			if (modifiers & XEMACS_MOD_SHIFT
-			    && XVECTOR_LENGTH(Vx_us_keymap_description) > 1)
+			    && XVECTOR_LENGTH (Vx_us_keymap_description) > 1)
 			  {
-			    entr = XVECTOR_DATA(entr)[1];
+			    entr = XVECTOR_DATA (entr)[1];
 			    if (CHARP(entr))
 			      {
-				alternate = XCHAR(entr);
+				alternate = XCHAR (entr);
 			      }
 			  }
-			else if (XVECTOR_LENGTH(Vx_us_keymap_description) 
+			else if (XVECTOR_LENGTH (Vx_us_keymap_description) 
 				 > 0)
 			  {
-			    entr = XVECTOR_DATA(entr)[0];
-			    if (CHARP(entr))
+			    entr = XVECTOR_DATA(entr) [0];
+			    if (CHARP (entr))
 			      {
-				alternate = XCHAR(entr);
+				alternate = XCHAR (entr);
 			      }
 			  }
 		      }
 		    if ('\0' != alternate)
 		      {
-			SET_EVENT_KEY_ALT_KEYCHARS(emacs_event, KEYCHAR_QWERTY,
-						   alternate);
+			SET_EVENT_KEY_ALT_KEYCHARS (emacs_event,
+                                                    KEYCHAR_QWERTY,
+                                                    alternate);
 		      }
 		  }
 	      }

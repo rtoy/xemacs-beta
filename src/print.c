@@ -1561,25 +1561,21 @@ ulong_to_bit_string (char *p, unsigned long number)
   *p = '\0';
 }
 
-static void
-print_vector_internal (const char *start, const char *end,
-                       Lisp_Object obj,
-                       Lisp_Object printcharfun, int escapeflag)
+void
+print_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
-  int i;
-  int len = XVECTOR_LENGTH (obj);
-  int last = len;
+  Elemcount i, len = XVECTOR_LENGTH (obj), last = len;
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
   if (FIXNUMP (Vprint_length))
     {
-      int max = XFIXNUM (Vprint_length);
+      Elemcount max = XFIXNUM (Vprint_length);
       if (max < len) last = max;
     }
 
-  write_cistring (printcharfun, start);
+  write_ascstring (printcharfun, "[");
   for (i = 0; i < last; i++)
     {
       Lisp_Object elt = XVECTOR_DATA (obj)[i];
@@ -1589,7 +1585,7 @@ print_vector_internal (const char *start, const char *end,
   UNGCPRO;
   if (last != len)
     write_ascstring (printcharfun, " ...");
-  write_cistring (printcharfun, end);
+  write_ascstring (printcharfun, "]");
 }
 
 void
@@ -1684,12 +1680,6 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   write_ascstring (printcharfun, ")");
   return;
-}
-
-void
-print_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
-{
-  print_vector_internal ("[", "]", obj, printcharfun, escapeflag);
 }
 
 void
@@ -3019,9 +3009,7 @@ debug_p4 (Lisp_Object obj)
     }
   else if (VECTORP (obj))
     {
-      int size = XVECTOR_LENGTH (obj);
-      int i;
-      int first = 1;
+      Elemcount size = XVECTOR_LENGTH (obj), i, first = 1;
 
       for (i = 0; i < size; i++)
 	{

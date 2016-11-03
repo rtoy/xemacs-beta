@@ -1110,7 +1110,7 @@ face_boolean_instantiate (Lisp_Object specifier,
     {
       Lisp_Object retval;
       Lisp_Object prop;
-      int instantiator_len = XVECTOR_LENGTH (instantiator);
+      Elemcount instantiator_len = XVECTOR_LENGTH (instantiator);
 
       assert (instantiator_len >= 1 && instantiator_len <= 3);
       if (instantiator_len > 1)
