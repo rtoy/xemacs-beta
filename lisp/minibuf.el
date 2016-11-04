@@ -889,31 +889,27 @@ Return nil if there is no valid completion, else t."
           (t
            (cond ((or (eq status 'uncompleted)
                       (eq status 'exact))
-                  (let ((foo #'(lambda (s)
-				 (condition-case nil
-				     (if (try-completion
-					  (concat buffer-string s)
-					  minibuffer-completion-table
-					  minibuffer-completion-predicate)
-					 (progn
-					   (goto-char (point-max))
-					   (insert s)
-					   t)
-                                       nil)
-                                   (error nil))))
-                        (char last-command-char))
-                    ;; Try to complete by adding a word-delimiter
-                    (or (and (characterp char) (> char 0)
-                             (funcall foo (char-to-string char)))
-                        (and (not (eq char ?\ ))
-                             (funcall foo " "))
-                        (and (not (eq char ?\-))
-                             (funcall foo "-"))
+                  (labels ((foo (c)
+                             (ignore-errors
+                               (when (try-completion
+                                      (concat buffer-string `(,c))
+                                      minibuffer-completion-table
+                                      minibuffer-completion-predicate)
+                                 (goto-char (point-max))
+                                 (insert c)
+                                 t))))
+                    (declare (inline foo))
+                    (or (and (characterp last-command-char)
+                             (> last-command-char 0)
+                             (foo last-command-char))
+                        ;; Try to complete by adding a word-delimiter
+                        (and (not (eql last-command-char ?\ )) (foo ?\ ))
+                        (and (not (eql last-command-char ?\-)) (foo ?-))
                         (progn
                           (if completion-auto-help
                               (minibuffer-completion-help)
-                              ;; New message, only in this new Lisp code
-			    ;; rewritten for I18N3 snarfing
+                            ;; New message, only in this new Lisp code
+                            ;; rewritten for I18N3 snarfing
 			    (if (eq status 'exact)
 				(temp-minibuffer-message
 				 " [Complete, but not unique]")
@@ -1778,10 +1774,7 @@ DIR defaults to current buffer's directory default."
               ((eq action 't)
                ;; all completions
                (mapcar #'(lambda (p)
-			   (if (and (> (length p) 0)
-				    ;;#### Unix-specific
-				    ;;####  -- need absolute-pathname-p
-				    (/= (aref p 0) ?/))
+			   (if (not (file-name-absolute-p p))
 			       (concat "$" p)
                              (concat head "$" p)))
                        (all-completions env (funcall alist))))
@@ -1849,19 +1842,15 @@ DIR defaults to current buffer's directory default."
   (read-file-name-internal-1
    string dir action
    #'(lambda (action orig string specdir dir name)
-      (let* ((dirs #'(lambda (fn)
-		       (let ((l (if (equal name "")
-				    (minibuf-directory-files
-				     dir
-				     ""
-				     'directories)
-				  (minibuf-directory-files
-				   dir
-				   (concat "\\`" (regexp-quote name))
-				   'directories))))
-			 (mapcar fn
-				 ;; Wretched unix
-				 (delete "." l))))))
+      (labels ((dirs (fn)
+                 (let ((l (if (equal name "")
+                              (minibuf-directory-files dir "" 'directories)
+                            (minibuf-directory-files
+                             dir (concat "\\`" (regexp-quote name))
+                             'directories))))
+                   (mapcar fn
+                           ;; Wretched unix
+                           (delete "." l)))))
         (cond ((eq action 'lambda)
                ;; complete?
                (if (not orig)
@@ -1869,17 +1858,14 @@ DIR defaults to current buffer's directory default."
 		 (file-directory-p string)))
               ((eq action 't)
                ;; all completions
-               (funcall dirs #'(lambda (n)
-				 (un-substitute-in-file-name
-				  (file-name-as-directory n)))))
+               (dirs #'(lambda (n) (un-substitute-in-file-name
+                                    (file-name-as-directory n)))))
               (t
                ;; complete
                (let ((val (try-completion
                            name
-                           (funcall dirs
-                                    #'(lambda (n)
-					(list (file-name-as-directory
-					       n)))))))
+                           (dirs #'(lambda (n)
+                                     (list (file-name-as-directory n)))))))
                  (if (stringp val)
                      (un-substitute-in-file-name (if specdir
                                                      (concat specdir val)
@@ -2023,24 +2009,23 @@ whether it is a file(/result) or a directory (/result/)."
 	  (set-window-buffer (frame-lowest-window frame) butbuf)
 
 	  ;; set up completion buffers.
-	  (let ((rfcshookfun
+	  (labels
+              ((rfcshookfun ()
 		 ;; kludge!
 		 ;; #### I really need to flesh out the object
 		 ;; hierarchy better to avoid these kludges.
 		 ;; (?? I wrote this comment above some time ago,
 		 ;; and I don't understand what I'm referring to
 		 ;; any more. --ben
-		 (lambda ()
-		   (mouse-rfn-setup-vars prompt)
-		   (when-boundp 'scrollbar-width
-		     (set-specifier scrollbar-width 0 (current-buffer)))
-		   (setq truncate-lines t))))
-	    
+                 (mouse-rfn-setup-vars prompt)
+                 (when-boundp 'scrollbar-width
+                   (set-specifier scrollbar-width 0 (current-buffer)))
+                 (setq truncate-lines t)))
 	    (set-buffer filebuf)
-	    (add-local-hook 'completion-setup-hook rfcshookfun)
+	    (add-local-hook 'completion-setup-hook #'rfcshookfun)
 	    (when file-p
 	      (set-buffer dirbuf)
-	      (add-local-hook 'completion-setup-hook rfcshookfun)))
+	      (add-local-hook 'completion-setup-hook #'rfcshookfun)))
 
 	  ;; set up minibuffer.
 	  (add-one-shot-hook

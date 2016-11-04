@@ -339,9 +339,9 @@
       (progn
 	(local-set-key "q" 'bury-buffer)
 	(local-set-key "l" 'bury-buffer))
-    (let ((dispose (lambda () (interactive) (kill-buffer (current-buffer)))))
-      (local-set-key "q" dispose)
-      (local-set-key "l" dispose)))
+    (labels ((dispose (interactive) (kill-buffer (current-buffer))))
+      (local-set-key "q" #'dispose)
+      (local-set-key "l" #'dispose)))
   (local-set-key " " 'scroll-up)
   (local-set-key [backspace] 'scroll-down)
   (local-set-key "\177" 'scroll-down)

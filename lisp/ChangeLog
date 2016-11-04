@@ -1,3 +1,26 @@
+2016-09-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.el (abbrev-symbol):
+	Use a label rather than binding a lambda when examining the local
+	and global tables.
+	* about.el (about-finish-buffer):
+	Use a label instead of binding a lambda.
+	* gtk-password-dialog.el (gtk-password-dialog-new):
+	Ditto.
+	* minibuf.el (minibuffer-complete-word):
+	Use a label rather than binding a lambda here; don't needlessly
+	bind something to the value of last-command-char.
+	* minibuf.el (read-file-name-internal-1):
+	Use #'file-name-absolute-p here, as an old comment suggested.
+	* minibuf.el (read-directory-name-internal):
+	Use a label rather than binding a lambda here.
+	* minibuf.el (mouse-read-file-name-1):
+	Ditto.
+	* mouse.el (default-mouse-track-cleanup-hook):
+	Ditto.
+	* mouse.el (default-mouse-track-cleanup-extent):
+	Ditto.
+
 2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select.el:

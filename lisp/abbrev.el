@@ -145,17 +145,15 @@ it is interned in an abbrev-table rather than the normal obarray.
 The value is nil if that abbrev is not defined.
 Optional second arg TABLE is abbrev table to look it up in.
 The default is to try buffer's mode-specific abbrev table, then global table."
-  (let ((frob (function (lambda (table)
-                (let ((sym (intern-soft abbrev table)))
-                  (if (and (boundp sym)
-                           (stringp (symbol-value sym)))
-                      sym
-                      nil))))))
+  (labels ((frob (table)
+             (let ((sym (intern-soft abbrev table)))
+               (if (and (boundp sym)
+                        (stringp (symbol-value sym)))
+                   sym))))
     (if table
-        (funcall frob table)
-        (or (and local-abbrev-table
-                 (funcall frob local-abbrev-table))
-            (funcall frob global-abbrev-table)))))
+        (frob table)
+      (or (and local-abbrev-table (frob local-abbrev-table))
+          (frob global-abbrev-table)))))
 
 (defun abbrev-expansion (abbrev &optional table)
   "Return the string that ABBREV expands into in the current buffer.
