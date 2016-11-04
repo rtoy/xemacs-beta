@@ -64,7 +64,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #endif /* WIN32_NATIVE || CYGWIN */
 
 int lisp_to_time (Lisp_Object, time_t *);
-Lisp_Object time_to_lisp (time_t);
 
 /* Nonzero during writing of auto-save files */
 static int auto_saving;
@@ -3931,7 +3930,7 @@ that `file-attributes' returns.
 */
        ())
 {
-  return time_to_lisp ((time_t) current_buffer->modtime);
+  return make_time ((time_t) current_buffer->modtime);
 }
 
 DEFUN ("set-visited-file-modtime", Fset_visited_file_modtime, 0, 1, 0, /*

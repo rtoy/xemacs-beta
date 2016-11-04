@@ -1,3 +1,9 @@
+2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check we don't crash with arguments to #'decode-time where
+	localtime() may return nil.
+
 2016-07-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

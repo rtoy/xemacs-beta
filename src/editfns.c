@@ -974,6 +974,46 @@ lisp_to_time (Lisp_Object specified_time, time_t *result)
   if (NILP (specified_time))
     return time (result) != -1;
 
+  if (INTEGERP (specified_time))
+    {
+#ifdef HAVE_BIGNUM
+      if (BIGNUMP (specified_time))
+        {
+          if (sizeof (time_t) == sizeof (int))
+            {
+              check_integer_range (specified_time, make_integer (INT_MIN),
+                                   make_integer (INT_MAX));
+              *result = bignum_to_int (XBIGNUM_DATA (specified_time));
+            }
+          else if (sizeof (time_t) == sizeof (long))
+            {
+              check_integer_range (specified_time, make_integer (LONG_MIN),
+                                   make_integer (LONG_MAX));
+              *result = bignum_to_long (XBIGNUM_DATA (specified_time));
+            }
+          else if (sizeof (time_t) == sizeof (long long))
+            {
+              check_integer_range (specified_time, make_integer (LLONG_MIN),
+                                   make_integer (LLONG_MAX));
+              *result = bignum_to_llong (XBIGNUM_DATA (specified_time));
+            }
+          else
+            {
+              /* Unimplemented. Would be nice to have this error at compile
+                 time. */
+              signal_error (Qunimplemented,
+                            "time_t size not supported by XEmacs",
+                            make_fixnum (sizeof (time_t)));
+            }
+
+          return 1;
+        }
+#endif
+      *result = XFIXNUM (specified_time);
+      
+      return *result == XREALFIXNUM (specified_time);
+    }
+
   CHECK_CONS (specified_time);
   high = XCAR (specified_time);
   low  = XCDR (specified_time);
@@ -983,14 +1023,6 @@ lisp_to_time (Lisp_Object specified_time, time_t *result)
   CHECK_FIXNUM (low);
   *result = (XFIXNUM (high) << 16) + (XFIXNUM (low) & 0xffff);
   return *result >> 16 == XFIXNUM (high);
-}
-
-Lisp_Object time_to_lisp (time_t the_time);
-Lisp_Object
-time_to_lisp (time_t the_time)
-{
-  unsigned int item = (unsigned int) the_time;
-  return Fcons (make_fixnum (item >> 16), make_fixnum (item & 0xffff));
 }
 
 size_t emacs_strftime (Extbyte *string, size_t max, const Extbyte *format,
@@ -1066,9 +1098,19 @@ The number of options reflects the `strftime' function.
     {
       Extbyte *buf = alloca_extbytes (size);
       Extbyte *formext;
+      struct tm *tmp, tm;
+
+      tmp = NILP (universal) ? localtime (&value) : gmtime (&value);
+
+      if (!tmp)
+	{
+	  signal_error (Qunimplemented,
+			"Decoding time failed, year probably too big",
+			time_);
+	}
+
       /* make a copy of the static buffer returned by localtime() */
-      struct tm tm = NILP (universal) ? *localtime (&value) : *gmtime (&value);
-      
+      tm = *tmp;
       *buf = 1;
 
       /* !!#### this use of external here is not totally safe, and
@@ -1108,6 +1150,13 @@ ZONE is an integer indicating the number of seconds east of Greenwich.
 
   decoded_time = localtime (&time_spec);
 
+  if (!decoded_time)
+    {
+      signal_error (Qunimplemented,
+		    "Decoding time failed, year probably too big",
+		    specified_time);
+    }
+
   /* Make a copy, in case gmtime modifies the struct.  */
   save_tm = *decoded_time;
   decoded_time = gmtime (&time_spec);
@@ -1133,7 +1182,7 @@ static void set_time_zone_rule (Extbyte *tzstring);
 Lisp_Object
 make_time (time_t tiempo)
 {
-  return list2 (make_fixnum (tiempo < 0 ? tiempo / 0x10000 : tiempo >> 16),
+  return Fcons (make_fixnum (tiempo < 0 ? tiempo / 0x10000 : tiempo >> 16),
 		make_fixnum (tiempo & 0xFFFF));
 }
 
@@ -1312,6 +1361,13 @@ the data it can't find.
       Lisp_Object tem;
 
       t = localtime (&value);
+      if (t == NULL)
+	{
+	  signal_error (Qunimplemented,
+			"localtime() failed, year value probably too big",
+			specified_time);
+	}
+
       offset = difftm (t, &gmt);
       s = 0;
 #ifdef HAVE_TM_ZONE

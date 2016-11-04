@@ -1166,34 +1166,119 @@ Return t if NUMBER is zero.
     }
 }
 
-/* Convert between a 32-bit value and a cons of two 16-bit values.
-   This is used to pass 32-bit integers to and from the user.
-   Use time_to_lisp() and lisp_to_time() for time values.
+/* Convert between an unsigned 32-bit value and some Lisp value that preserves
+   all its bits. Use an integer if the value will fit (that is, if the value
+   is <= MOST_POSITIVE_FIXNUM, or if we have bignums available); otherwise,
+   return a cons of two sixteen-bit values.  Both types of return value need
+   GC protection.
+
+   This is used to pass 32-bit integers to and from the user.  Use
+   make_time() and lisp_to_time() for time_t values.
 
    If you're thinking of using this to store a pointer into a Lisp Object
    for internal purposes (such as when calling record_unwind_protect()),
    try using make_opaque_ptr()/get_opaque_ptr() instead. */
 Lisp_Object
-word_to_lisp (unsigned int item)
+uint32_t_to_lisp (UINT_32_BIT item)
 {
+  if ((EMACS_INT) item <= MOST_POSITIVE_FIXNUM)
+    {
+      return make_fixnum (item);
+    }
+
+#ifdef HAVE_BIGNUM
+  return make_unsigned_integer ((EMACS_UINT) item);
+#else
   return Fcons (make_fixnum (item >> 16), make_fixnum (item & 0xffff));
+#endif
 }
 
-unsigned int
-lisp_to_word (Lisp_Object item)
+UINT_32_BIT
+lisp_to_uint32_t (Lisp_Object item)
 {
-  if (FIXNUMP (item))
-    return XFIXNUM (item);
+  if (INTEGERP (item))
+    {
+      check_integer_range (item, Qzero,
+#ifdef HAVE_BIGNUM
+                           make_unsigned_integer (MAKE_32_BIT_UNSIGNED_CONSTANT
+                                                  (0xffffffff))
+#else
+                           Vmost_positive_fixnum
+#endif
+                           );
+#ifdef HAVE_BIGNUM
+      if (BIGNUMP (item))
+        {
+          /* EMACS_UINT will have at least 32 value bits, and we've checked
+             the range above, this value is not greater than #xFFFFFFFF. */
+          return (UINT_32_BIT) bignum_to_emacs_uint (XBIGNUM_DATA (item));
+        }
+#endif
+      return XFIXNUM (item);
+    }
   else
     {
       Lisp_Object top = Fcar (item);
       Lisp_Object bot = Fcdr (item);
-      CHECK_FIXNUM (top);
-      CHECK_FIXNUM (bot);
+
+      check_integer_range (top, Qzero, make_fixnum (0xFFFF));
+      check_integer_range (bot, Qzero, make_fixnum (0xFFFF));
+
+      type_checking_assert (FIXNUMP (top) && FIXNUMP (bot));
+
       return (XFIXNUM (top) << 16) | (XFIXNUM (bot) & 0xffff);
     }
 }
 
+Lisp_Object
+int32_t_to_lisp (INT_32_BIT item)
+{
+  if ((EMACS_INT) item <= MOST_POSITIVE_FIXNUM
+      && (EMACS_INT) item >= MOST_NEGATIVE_FIXNUM)
+    {
+      return make_fixnum (item);
+    }
+
+#ifdef HAVE_BIGNUM
+  return make_integer ((EMACS_INT) item);
+#else
+  return Fcons (make_fixnum ((UINT_32_BIT) item >> 16),
+                make_fixnum (item & 0xffff));
+#endif
+}
+
+INT_32_BIT
+lisp_to_int32_t (Lisp_Object item)
+{
+  if (INTEGERP (item))
+    {
+#if (FIXNUM_VALBITS > 32) || defined(HAVE_BIGNUM)
+      check_integer_range (item, make_integer ((INT_32_BIT) (~0x7FFFFFFF)),
+                           make_integer (0x7fffffff));
+#endif
+#ifdef HAVE_BIGNUM
+      if (BIGNUMP (item))
+        {
+          /* EMACS_INT will have at least 32 value bits, and we've checked the
+             range above, this value fits 32 bits. */
+          return (INT_32_BIT) bignum_to_emacs_int (XBIGNUM_DATA (item));
+        }
+#endif
+      return XFIXNUM (item);
+    }
+  else
+    {
+      Lisp_Object top = Fcar (item);
+      Lisp_Object bot = XCDR (item);
+
+      check_integer_range (top, Qzero, make_fixnum (0xFFFF));
+      check_integer_range (bot, Qzero, make_fixnum (0xFFFF));
+
+      type_checking_assert (FIXNUMP (top) && FIXNUMP (bot));
+
+      return (XFIXNUM (top) << 16) | (XFIXNUM (bot) & 0xffff);
+    }
+}
 
 DEFUN ("number-to-string", Fnumber_to_string, 1, 1, 0, /*
 Convert NUMBER to a string by printing it in decimal.

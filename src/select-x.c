@@ -36,7 +36,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "systime.h"
 
 int lisp_to_time (Lisp_Object, time_t *);
-Lisp_Object time_to_lisp (time_t);
 
 #ifdef LWLIB_USES_MOTIF
 # define MOTIF_CLIPBOARDS
@@ -220,7 +219,6 @@ x_own_selection (Lisp_Object selection_name,
   Display *display = DEVICE_X_DISPLAY (d);
   struct frame *sel_frame = selected_frame ();
   Window selecting_window = XtWindow (FRAME_X_TEXT_WIDGET (sel_frame));
-  Lisp_Object selection_time;
   /* Use the time of the last-read mouse or keyboard event.
      For selection purposes, we use this as a sleazy way of knowing what the
      current time is in server-time.  This assumes that the most recently read
@@ -235,28 +233,14 @@ x_own_selection (Lisp_Object selection_name,
 
   XSetSelectionOwner (display, selection_atom, selecting_window, thyme);
 
-  /* [[ We do NOT use time_to_lisp() here any more, like we used to.
-     That assumed equivalence of time_t and Time, which is not
-     necessarily the case (e.g. under OSF on the Alphas, where
-     Time is a 64-bit quantity and time_t is a 32-bit quantity).]]
-
-     This is wrong--on Digital Unix, time_t is a sixty-four-bit quantity,
-     and Time is, as the X protocol dictates, a thirty-two-bit quantity.
-
-     [[ Opaque pointers are the clean way to go here. ]]
-
-     Again, I disagree--the Lisp selection infrastructure needs to be
-     able to manipulate the selection timestamps if it is, as we want
-     it to, to be able to do most of the work. Though I have moved the
-     conversion to lisp to get-xemacs-selection-timestamp. -- Aidan. */
-	
-  selection_time = make_opaque (&thyme, sizeof (thyme));
 
 #ifdef MOTIF_CLIPBOARDS
   hack_motif_clipboard_selection (selection_atom, selection_value,
 				  thyme, display, selecting_window, owned_p);
 #endif
-  return selection_time;
+
+  /* Time is a 32-bit unsigned value, its size dictated by the X protocol. */
+  return uint32_t_to_lisp (thyme);
 }
 
 #ifdef MOTIF_CLIPBOARDS /* Bend over baby.  Take it and like it. */
@@ -651,7 +635,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
       goto DONE_LABEL;
     }
 
-  local_selection_time = * (Time *) XOPAQUE_DATA (temp_obj);
+  local_selection_time = lisp_to_uint32_t (temp_obj);
 
   if (event->time != CurrentTime &&
       local_selection_time > event->time)
@@ -728,7 +712,7 @@ x_handle_selection_clear (XSelectionClearEvent *event)
   if (NILP (local_selection_time_lisp))
     return;
 
-  local_selection_time = * (Time *) XOPAQUE_DATA (local_selection_time_lisp);
+  local_selection_time = lisp_to_uint32_t (local_selection_time_lisp);
 
   /* This SelectionClear is for a selection that we no longer own, so we can
      disregard it.  (That is, we have reasserted the selection since this
@@ -1263,19 +1247,8 @@ x_disown_selection (Lisp_Object selection, Lisp_Object timeval)
   Atom selection_atom;
 
   CHECK_SYMBOL (selection);
-  if (NILP (timeval))
-    timestamp = DEVICE_X_MOUSE_TIMESTAMP (d);
-  else
-    {
-      /* #### This is bogus.  See the comment above about problems
-	 on OSF/1 and DEC Alphas.  Yet another reason why it sucks
-	 to have the implementation (i.e. cons of two 16-bit
-	 integers) exposed. */
-      time_t the_time;
-      lisp_to_time (timeval, &the_time);
-      timestamp = (Time) the_time;
-    }
-
+  timestamp = NILP (timeval) ? DEVICE_X_MOUSE_TIMESTAMP (d)
+    : lisp_to_uint32_t (timeval);
   selection_atom = symbol_to_x_atom (d, selection, 0);
 
   XSetSelectionOwner (display, selection_atom, None, timestamp);

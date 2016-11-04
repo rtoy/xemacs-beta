@@ -91,12 +91,15 @@ Lisp_Object
 make_fixnum_verify (EMACS_INT val)
 )
 {
-  Lisp_Object obj = (Lisp_Object) ((val << FIXNUM_GCBITS) | Lisp_Type_Fixnum_Bit);
+  Lisp_Object obj = (Lisp_Object) (((EMACS_UINT) val << FIXNUM_GCBITS)
+				   | Lisp_Type_Fixnum_Bit);
   type_checking_assert (XREALFIXNUM (obj) == val);
   return obj;
 }
 
-#define make_fixnum(x) ((Lisp_Object) ((((EMACS_INT)(x)) << FIXNUM_GCBITS) | Lisp_Type_Fixnum_Bit))
+/* Yes, EMACS_UINT is intentional here, left shift is technically an
+   undefined operation in C. */
+#define make_fixnum(x) ((Lisp_Object) ((((EMACS_UINT)(x)) << FIXNUM_GCBITS) | Lisp_Type_Fixnum_Bit))
 
 #define make_char_1(x) ((Lisp_Object) ((((EMACS_UINT)(x)) << GCBITS) | Lisp_Type_Char))
 

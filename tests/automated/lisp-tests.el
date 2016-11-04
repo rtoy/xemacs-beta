@@ -3975,4 +3975,21 @@ via the hepatic alpha-tocopherol transfer protein")))
              (check-type (+ 600 1000) (integer 0 20))
              "checking #'check-type errors properly, non-setfable PLACE")
 
+;; Probe some limits with #'decode-time.
+
+(Assert (progn
+	  (ignore-errors (decode-time '(#x3fffffff . #xffff)))
+	  t))
+
+(when (ignore-errors (coerce 2147483647.0 'integer))
+  (Assert (consp (decode-time (coerce 2147483647.0 'integer))))
+  (when (ignore-errors (coerce 1099511627776.0 'integer))
+    (Assert (progn 
+	      (ignore-errors (decode-time
+			      (cons
+			       (coerce 1099511627776.0 'integer)
+			       0)))
+	      t)
+	    "checking we haven't crashed, localtime returning NULL")))
+
 ;;; end of lisp-tests.el
