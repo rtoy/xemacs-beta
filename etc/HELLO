@@ -1,0 +1,95 @@
+This is a list of ways to say hello in various languages.
+
+Non-ASCII examples:
+  Europe: ,A!(BHola!, Gr,A|_(B Gott, Hyv,Add(B p,Ad(Biv,Add(B, Tere ,Au(Bhtust, Bon,Cu(Bu
+          Cze,B6f(B!, Dobr,B}(B den, ,L7T`PRabRcYbU(B!, ,FCei\(B ,Fsar(B,  %Gგამარჯობა%@
+  Africa: $(3!A!,!>(B
+  Middle/Near East: [2],Hylem[0](B, [2],GGdSqdGe[0](B [2],GYdjce[0](B
+  South Asia: %Gનમસ્તે%@, (5FLWhBa(B, %Gನಮಸ್ಕಾರ%@, %Gനമസ്കാരം%@, %Gଶୁଣିବେ%@,
+              %Gආයුබෝවන්%@, %Gவணக்கம்%@, %Gనమస్కారం%@, %Gབཀ%@$(7#C!;%Gཤ%@"S%Gས%@!;%Gབད%@"[!;%Gལ%@"[%Gགས%@!>(B
+  South East Asia: %Gជំរាបសួរ%@, (1JP:R-4U(B, %Gမင်္ဂလာပါ%@, %Gสวัสดีครับ%@, Ch,A`(Bo b,1U(Bn
+  East Asia: $ADc:C(B, $(0*/=((B, $B$3$s$K$A$O(B, $(C>H3gGO<<?d(B
+  Misc: E$(D+>(Bo$(D+](Ban$(D+:(Bo $(D+,(Biu$(D+H(Ba$(D+f(Bde, %G⠓⠑⠇⠇⠕%@, $B"O(B p $B":(B world %G•%@ hello p  %G□%@
+  CJK variety: GB($AT*Fx(B,$A?*7"(B), BIG5($(0&x86(B,$(0DeBv(B), JIS($B855$(B,$B3+H/(B), KSC($(Cj*Q((B,$(CKR[!(B)
+  Unicode charset: E$(D+>(Bo$(D+](Ban$(D+:(Bo $(D+,(Biu$(D+H(Ba$(D+f(Bde, ,FCei\(B ,Fsar(B, [2],Hylem[0](B, ,L7T`PRabRcYbU(B!
+
+LANGUAGE (NATIVE NAME)	HELLO
+----------------------	-----
+Amharic ($(3"c!<!N"^(B)	$(3!A!,!>(B
+Arabic [2],H~[0](B([2],GGdYQHjqI[0](B)	[2],GGdSqdGe[0](B [2],GYdjce[0](B
+Bengali (%Gবাংলা%@)	%Gনমস্কার%@
+Braille	%G⠓⠑⠇⠇⠕%@
+Burmese (%Gမြန်မာ%@)	%Gမင်္ဂလာပါ%@
+C	printf ("Hello, world!\n");
+Czech (,Bh(Be,B9(Btina)	Dobr,A}(B den
+Danish (dansk)	Hej / Goddag / Hall,Ax(Bj
+Dutch (Nederlands)	Hallo / Dag
+Emacs	emacs --no-splash -f view-hello-file
+English /,0p!,D?%Gɡ%@(Bl,0!L(B/	Hello
+Esperanto	Saluton (E,C6(Bo,C~(Ban,Cx(Bo ,Cf(Biu,C<(Ba,C}(Bde)
+Estonian (eesti keel)	Tere p,Ad(Bevast / Tere ,Au(Bhtust
+Finnish (suomi)	Hei / Hyv,Add(B p,Ad(Biv,Add(B
+French (fran,Ag(Bais)	Bonjour / Salut
+Georgian (%Gქართველი%@)	%Gგამარჯობა%@
+German (Deutsch)	Guten Tag / Gr,A|_(B Gott
+Greek (,Fekkgmij\(B)	,FCei\(B ,Fsar(B
+Gujarati (%Gગુજરાતી%@)	%Gનમસ્તે%@
+Hebrew [2],H~[0](B([2],Hraxiz[0](B)	[2],Hylem[0](B
+Hungarian (magyar)	Sz,Bi(Bp j,Bs(B napot!
+Hindi ((5X["D\(B)	(5FLWhBa(B / (5FLWh3ZO(B (5j(B
+Italian (italiano)	Ciao / Buon giorno
+Javanese (Jawa)	System.out.println("Sugeng siang!");
+Kannada (%Gಕನ್ನಡ%@)	%Gನಮಸ್ಕಾರ%@
+Khmer (%Gភាសាខ្មែរ%@)	%Gជំរាបសួរ%@
+Lao ((1>RJRERG(B)	(1JP:R-4U(B / (1"mcKib*!4U(B
+Malayalam (%Gമലയാളം%@)	%Gനമസ്കാരം%@
+Maltese (il-Malti)	Bon,Cu(Bu / Sa,C11(Ba
+Mathematics	$B"O(B p $B":(B world %G•%@ hello p  %G□%@
+Nederlands, Vlaams	Hallo / Dag
+Norwegian (norsk)	Hei / God dag
+Oriya (%Gଓଡ଼ିଆ%@)	%Gଶୁଣିବେ%@
+Polish  (j,Bj(Bzyk polski)	Dzie,Bq(B dobry! / Cze,B6f(B!
+Russian (,L`caaZXY(B)	,L7T`P%Ǵ%@RabRcYbU(B!
+Sinhala (%Gසිංහල%@)	%Gආයුබෝවන්%@
+Slovak (sloven,Bh(Bina)	Dobr,A}(B de,Br(B
+Slovenian (sloven,B9h(Bina)	Pozdravljeni!
+Spanish (espa,Aq(Bol)	,A!(BHola!
+Swedish (p,Ae(B svenska)	Hej / Goddag / Hall,Ae(B
+Tamil (%Gதமிழ்%@)	%Gவணக்கம்%@
+Telugu (%Gతెలుగు%@)	%Gనమస్కారం%@
+Thai (,T@RIRd7B(B)	,TJGQJ4U$CQ:(B / ,TJGQJ4U$hP(B
+Tibetan (%Gབ%@$(7"]%Gད%@!;%Gས%@#!%Gད%@!;(B)	%Gབཀ%@$(7#C!;%Gཤ%@"S%Gས%@!;%Gབད%@"[!;%Gལ%@"[%Gགས%@!>(B
+Tigrigna ($(3"8#r!N"^(B)	$(3!Q!,!<"8(B
+Turkish (T,A|(Brk,Ag(Be)	Merhaba
+Ukrainian (,LcZ`Pw]alZP(B)	,L2vbPn(B
+Vietnamese (ti,1*(Bng Vi,1.(Bt)	Ch,A`(Bo b,1U(Bn
+
+Japanese ($BF|K\8l(B)	$B$3$s$K$A$O(B / (I:]FAJ(B
+Chinese ($AVPND(B,$AFUM(;0(B,$A::So(B)	$ADc:C(B
+Cantonese ($(0GnM$(B,$(0N]0*Hd(B)	$(0*/=((B, $(0+$)p(B
+Korean ($(CGQ1[(B)	$(C>H3gGO<<?d(B / $(C>H3gGO=J4O1n(B
+
+
+
+Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+  Free Software Foundation, Inc.
+
+This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Local Variables:
+;;; tab-width: 32
+;;; bidi-display-reordering: t
+;;; End:

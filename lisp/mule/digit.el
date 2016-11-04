@@ -1,0 +1,630 @@
+;;; mule/digit.el --- Weight information for characters known to be digits.
+;;
+;; Copyright (C) 2015 Free Software Foundation
+
+;; Author: Aidan Kehoe
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the
+;; Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+;; for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+(loop for (character . fixnum)
+  ;; Those characters from UnicodeData.txt that are of category "decimal
+  ;; digit":
+  in '((?\u0030 . 0) ;; DIGIT ZERO
+       (?\u0031 . 1) ;; DIGIT ONE
+       (?\u0032 . 2) ;; DIGIT TWO
+       (?\u0033 . 3) ;; DIGIT THREE
+       (?\u0034 . 4) ;; DIGIT FOUR
+       (?\u0035 . 5) ;; DIGIT FIVE
+       (?\u0036 . 6) ;; DIGIT SIX
+       (?\u0037 . 7) ;; DIGIT SEVEN
+       (?\u0038 . 8) ;; DIGIT EIGHT
+       (?\u0039 . 9) ;; DIGIT NINE
+       (?\u0660 . 0) ;; ARABIC-INDIC DIGIT ZERO
+       (?\u0661 . 1) ;; ARABIC-INDIC DIGIT ONE
+       (?\u0662 . 2) ;; ARABIC-INDIC DIGIT TWO
+       (?\u0663 . 3) ;; ARABIC-INDIC DIGIT THREE
+       (?\u0664 . 4) ;; ARABIC-INDIC DIGIT FOUR
+       (?\u0665 . 5) ;; ARABIC-INDIC DIGIT FIVE
+       (?\u0666 . 6) ;; ARABIC-INDIC DIGIT SIX
+       (?\u0667 . 7) ;; ARABIC-INDIC DIGIT SEVEN
+       (?\u0668 . 8) ;; ARABIC-INDIC DIGIT EIGHT
+       (?\u0669 . 9) ;; ARABIC-INDIC DIGIT NINE
+       (?\u06F0 . 0) ;; EXTENDED ARABIC-INDIC DIGIT ZERO
+       (?\u06F1 . 1) ;; EXTENDED ARABIC-INDIC DIGIT ONE
+       (?\u06F2 . 2) ;; EXTENDED ARABIC-INDIC DIGIT TWO
+       (?\u06F3 . 3) ;; EXTENDED ARABIC-INDIC DIGIT THREE
+       (?\u06F4 . 4) ;; EXTENDED ARABIC-INDIC DIGIT FOUR
+       (?\u06F5 . 5) ;; EXTENDED ARABIC-INDIC DIGIT FIVE
+       (?\u06F6 . 6) ;; EXTENDED ARABIC-INDIC DIGIT SIX
+       (?\u06F7 . 7) ;; EXTENDED ARABIC-INDIC DIGIT SEVEN
+       (?\u06F8 . 8) ;; EXTENDED ARABIC-INDIC DIGIT EIGHT
+       (?\u06F9 . 9) ;; EXTENDED ARABIC-INDIC DIGIT NINE
+       (?\u07C0 . 0) ;; NKO DIGIT ZERO
+       (?\u07C1 . 1) ;; NKO DIGIT ONE
+       (?\u07C2 . 2) ;; NKO DIGIT TWO
+       (?\u07C3 . 3) ;; NKO DIGIT THREE
+       (?\u07C4 . 4) ;; NKO DIGIT FOUR
+       (?\u07C5 . 5) ;; NKO DIGIT FIVE
+       (?\u07C6 . 6) ;; NKO DIGIT SIX
+       (?\u07C7 . 7) ;; NKO DIGIT SEVEN
+       (?\u07C8 . 8) ;; NKO DIGIT EIGHT
+       (?\u07C9 . 9) ;; NKO DIGIT NINE
+       (?\u0966 . 0) ;; DEVANAGARI DIGIT ZERO
+       (?\u0967 . 1) ;; DEVANAGARI DIGIT ONE
+       (?\u0968 . 2) ;; DEVANAGARI DIGIT TWO
+       (?\u0969 . 3) ;; DEVANAGARI DIGIT THREE
+       (?\u096A . 4) ;; DEVANAGARI DIGIT FOUR
+       (?\u096B . 5) ;; DEVANAGARI DIGIT FIVE
+       (?\u096C . 6) ;; DEVANAGARI DIGIT SIX
+       (?\u096D . 7) ;; DEVANAGARI DIGIT SEVEN
+       (?\u096E . 8) ;; DEVANAGARI DIGIT EIGHT
+       (?\u096F . 9) ;; DEVANAGARI DIGIT NINE
+       (?\u09E6 . 0) ;; BENGALI DIGIT ZERO
+       (?\u09E7 . 1) ;; BENGALI DIGIT ONE
+       (?\u09E8 . 2) ;; BENGALI DIGIT TWO
+       (?\u09E9 . 3) ;; BENGALI DIGIT THREE
+       (?\u09EA . 4) ;; BENGALI DIGIT FOUR
+       (?\u09EB . 5) ;; BENGALI DIGIT FIVE
+       (?\u09EC . 6) ;; BENGALI DIGIT SIX
+       (?\u09ED . 7) ;; BENGALI DIGIT SEVEN
+       (?\u09EE . 8) ;; BENGALI DIGIT EIGHT
+       (?\u09EF . 9) ;; BENGALI DIGIT NINE
+       (?\u0A66 . 0) ;; GURMUKHI DIGIT ZERO
+       (?\u0A67 . 1) ;; GURMUKHI DIGIT ONE
+       (?\u0A68 . 2) ;; GURMUKHI DIGIT TWO
+       (?\u0A69 . 3) ;; GURMUKHI DIGIT THREE
+       (?\u0A6A . 4) ;; GURMUKHI DIGIT FOUR
+       (?\u0A6B . 5) ;; GURMUKHI DIGIT FIVE
+       (?\u0A6C . 6) ;; GURMUKHI DIGIT SIX
+       (?\u0A6D . 7) ;; GURMUKHI DIGIT SEVEN
+       (?\u0A6E . 8) ;; GURMUKHI DIGIT EIGHT
+       (?\u0A6F . 9) ;; GURMUKHI DIGIT NINE
+       (?\u0AE6 . 0) ;; GUJARATI DIGIT ZERO
+       (?\u0AE7 . 1) ;; GUJARATI DIGIT ONE
+       (?\u0AE8 . 2) ;; GUJARATI DIGIT TWO
+       (?\u0AE9 . 3) ;; GUJARATI DIGIT THREE
+       (?\u0AEA . 4) ;; GUJARATI DIGIT FOUR
+       (?\u0AEB . 5) ;; GUJARATI DIGIT FIVE
+       (?\u0AEC . 6) ;; GUJARATI DIGIT SIX
+       (?\u0AED . 7) ;; GUJARATI DIGIT SEVEN
+       (?\u0AEE . 8) ;; GUJARATI DIGIT EIGHT
+       (?\u0AEF . 9) ;; GUJARATI DIGIT NINE
+       (?\u0B66 . 0) ;; ORIYA DIGIT ZERO
+       (?\u0B67 . 1) ;; ORIYA DIGIT ONE
+       (?\u0B68 . 2) ;; ORIYA DIGIT TWO
+       (?\u0B69 . 3) ;; ORIYA DIGIT THREE
+       (?\u0B6A . 4) ;; ORIYA DIGIT FOUR
+       (?\u0B6B . 5) ;; ORIYA DIGIT FIVE
+       (?\u0B6C . 6) ;; ORIYA DIGIT SIX
+       (?\u0B6D . 7) ;; ORIYA DIGIT SEVEN
+       (?\u0B6E . 8) ;; ORIYA DIGIT EIGHT
+       (?\u0B6F . 9) ;; ORIYA DIGIT NINE
+       (?\u0BE6 . 0) ;; TAMIL DIGIT ZERO
+       (?\u0BE7 . 1) ;; TAMIL DIGIT ONE
+       (?\u0BE8 . 2) ;; TAMIL DIGIT TWO
+       (?\u0BE9 . 3) ;; TAMIL DIGIT THREE
+       (?\u0BEA . 4) ;; TAMIL DIGIT FOUR
+       (?\u0BEB . 5) ;; TAMIL DIGIT FIVE
+       (?\u0BEC . 6) ;; TAMIL DIGIT SIX
+       (?\u0BED . 7) ;; TAMIL DIGIT SEVEN
+       (?\u0BEE . 8) ;; TAMIL DIGIT EIGHT
+       (?\u0BEF . 9) ;; TAMIL DIGIT NINE
+       (?\u0C66 . 0) ;; TELUGU DIGIT ZERO
+       (?\u0C67 . 1) ;; TELUGU DIGIT ONE
+       (?\u0C68 . 2) ;; TELUGU DIGIT TWO
+       (?\u0C69 . 3) ;; TELUGU DIGIT THREE
+       (?\u0C6A . 4) ;; TELUGU DIGIT FOUR
+       (?\u0C6B . 5) ;; TELUGU DIGIT FIVE
+       (?\u0C6C . 6) ;; TELUGU DIGIT SIX
+       (?\u0C6D . 7) ;; TELUGU DIGIT SEVEN
+       (?\u0C6E . 8) ;; TELUGU DIGIT EIGHT
+       (?\u0C6F . 9) ;; TELUGU DIGIT NINE
+       (?\u0CE6 . 0) ;; KANNADA DIGIT ZERO
+       (?\u0CE7 . 1) ;; KANNADA DIGIT ONE
+       (?\u0CE8 . 2) ;; KANNADA DIGIT TWO
+       (?\u0CE9 . 3) ;; KANNADA DIGIT THREE
+       (?\u0CEA . 4) ;; KANNADA DIGIT FOUR
+       (?\u0CEB . 5) ;; KANNADA DIGIT FIVE
+       (?\u0CEC . 6) ;; KANNADA DIGIT SIX
+       (?\u0CED . 7) ;; KANNADA DIGIT SEVEN
+       (?\u0CEE . 8) ;; KANNADA DIGIT EIGHT
+       (?\u0CEF . 9) ;; KANNADA DIGIT NINE
+       (?\u0D66 . 0) ;; MALAYALAM DIGIT ZERO
+       (?\u0D67 . 1) ;; MALAYALAM DIGIT ONE
+       (?\u0D68 . 2) ;; MALAYALAM DIGIT TWO
+       (?\u0D69 . 3) ;; MALAYALAM DIGIT THREE
+       (?\u0D6A . 4) ;; MALAYALAM DIGIT FOUR
+       (?\u0D6B . 5) ;; MALAYALAM DIGIT FIVE
+       (?\u0D6C . 6) ;; MALAYALAM DIGIT SIX
+       (?\u0D6D . 7) ;; MALAYALAM DIGIT SEVEN
+       (?\u0D6E . 8) ;; MALAYALAM DIGIT EIGHT
+       (?\u0D6F . 9) ;; MALAYALAM DIGIT NINE
+       (?\u0DE6 . 0) ;; SINHALA LITH DIGIT ZERO
+       (?\u0DE7 . 1) ;; SINHALA LITH DIGIT ONE
+       (?\u0DE8 . 2) ;; SINHALA LITH DIGIT TWO
+       (?\u0DE9 . 3) ;; SINHALA LITH DIGIT THREE
+       (?\u0DEA . 4) ;; SINHALA LITH DIGIT FOUR
+       (?\u0DEB . 5) ;; SINHALA LITH DIGIT FIVE
+       (?\u0DEC . 6) ;; SINHALA LITH DIGIT SIX
+       (?\u0DED . 7) ;; SINHALA LITH DIGIT SEVEN
+       (?\u0DEE . 8) ;; SINHALA LITH DIGIT EIGHT
+       (?\u0DEF . 9) ;; SINHALA LITH DIGIT NINE
+       (?\u0E50 . 0) ;; THAI DIGIT ZERO
+       (?\u0E51 . 1) ;; THAI DIGIT ONE
+       (?\u0E52 . 2) ;; THAI DIGIT TWO
+       (?\u0E53 . 3) ;; THAI DIGIT THREE
+       (?\u0E54 . 4) ;; THAI DIGIT FOUR
+       (?\u0E55 . 5) ;; THAI DIGIT FIVE
+       (?\u0E56 . 6) ;; THAI DIGIT SIX
+       (?\u0E57 . 7) ;; THAI DIGIT SEVEN
+       (?\u0E58 . 8) ;; THAI DIGIT EIGHT
+       (?\u0E59 . 9) ;; THAI DIGIT NINE
+       (?\u0ED0 . 0) ;; LAO DIGIT ZERO
+       (?\u0ED1 . 1) ;; LAO DIGIT ONE
+       (?\u0ED2 . 2) ;; LAO DIGIT TWO
+       (?\u0ED3 . 3) ;; LAO DIGIT THREE
+       (?\u0ED4 . 4) ;; LAO DIGIT FOUR
+       (?\u0ED5 . 5) ;; LAO DIGIT FIVE
+       (?\u0ED6 . 6) ;; LAO DIGIT SIX
+       (?\u0ED7 . 7) ;; LAO DIGIT SEVEN
+       (?\u0ED8 . 8) ;; LAO DIGIT EIGHT
+       (?\u0ED9 . 9) ;; LAO DIGIT NINE
+       (?\u0F20 . 0) ;; TIBETAN DIGIT ZERO
+       (?\u0F21 . 1) ;; TIBETAN DIGIT ONE
+       (?\u0F22 . 2) ;; TIBETAN DIGIT TWO
+       (?\u0F23 . 3) ;; TIBETAN DIGIT THREE
+       (?\u0F24 . 4) ;; TIBETAN DIGIT FOUR
+       (?\u0F25 . 5) ;; TIBETAN DIGIT FIVE
+       (?\u0F26 . 6) ;; TIBETAN DIGIT SIX
+       (?\u0F27 . 7) ;; TIBETAN DIGIT SEVEN
+       (?\u0F28 . 8) ;; TIBETAN DIGIT EIGHT
+       (?\u0F29 . 9) ;; TIBETAN DIGIT NINE
+       (?\u1040 . 0) ;; MYANMAR DIGIT ZERO
+       (?\u1041 . 1) ;; MYANMAR DIGIT ONE
+       (?\u1042 . 2) ;; MYANMAR DIGIT TWO
+       (?\u1043 . 3) ;; MYANMAR DIGIT THREE
+       (?\u1044 . 4) ;; MYANMAR DIGIT FOUR
+       (?\u1045 . 5) ;; MYANMAR DIGIT FIVE
+       (?\u1046 . 6) ;; MYANMAR DIGIT SIX
+       (?\u1047 . 7) ;; MYANMAR DIGIT SEVEN
+       (?\u1048 . 8) ;; MYANMAR DIGIT EIGHT
+       (?\u1049 . 9) ;; MYANMAR DIGIT NINE
+       (?\u1090 . 0) ;; MYANMAR SHAN DIGIT ZERO
+       (?\u1091 . 1) ;; MYANMAR SHAN DIGIT ONE
+       (?\u1092 . 2) ;; MYANMAR SHAN DIGIT TWO
+       (?\u1093 . 3) ;; MYANMAR SHAN DIGIT THREE
+       (?\u1094 . 4) ;; MYANMAR SHAN DIGIT FOUR
+       (?\u1095 . 5) ;; MYANMAR SHAN DIGIT FIVE
+       (?\u1096 . 6) ;; MYANMAR SHAN DIGIT SIX
+       (?\u1097 . 7) ;; MYANMAR SHAN DIGIT SEVEN
+       (?\u1098 . 8) ;; MYANMAR SHAN DIGIT EIGHT
+       (?\u1099 . 9) ;; MYANMAR SHAN DIGIT NINE
+       (?\u17E0 . 0) ;; KHMER DIGIT ZERO
+       (?\u17E1 . 1) ;; KHMER DIGIT ONE
+       (?\u17E2 . 2) ;; KHMER DIGIT TWO
+       (?\u17E3 . 3) ;; KHMER DIGIT THREE
+       (?\u17E4 . 4) ;; KHMER DIGIT FOUR
+       (?\u17E5 . 5) ;; KHMER DIGIT FIVE
+       (?\u17E6 . 6) ;; KHMER DIGIT SIX
+       (?\u17E7 . 7) ;; KHMER DIGIT SEVEN
+       (?\u17E8 . 8) ;; KHMER DIGIT EIGHT
+       (?\u17E9 . 9) ;; KHMER DIGIT NINE
+       (?\u1810 . 0) ;; MONGOLIAN DIGIT ZERO
+       (?\u1811 . 1) ;; MONGOLIAN DIGIT ONE
+       (?\u1812 . 2) ;; MONGOLIAN DIGIT TWO
+       (?\u1813 . 3) ;; MONGOLIAN DIGIT THREE
+       (?\u1814 . 4) ;; MONGOLIAN DIGIT FOUR
+       (?\u1815 . 5) ;; MONGOLIAN DIGIT FIVE
+       (?\u1816 . 6) ;; MONGOLIAN DIGIT SIX
+       (?\u1817 . 7) ;; MONGOLIAN DIGIT SEVEN
+       (?\u1818 . 8) ;; MONGOLIAN DIGIT EIGHT
+       (?\u1819 . 9) ;; MONGOLIAN DIGIT NINE
+       (?\u1946 . 0) ;; LIMBU DIGIT ZERO
+       (?\u1947 . 1) ;; LIMBU DIGIT ONE
+       (?\u1948 . 2) ;; LIMBU DIGIT TWO
+       (?\u1949 . 3) ;; LIMBU DIGIT THREE
+       (?\u194A . 4) ;; LIMBU DIGIT FOUR
+       (?\u194B . 5) ;; LIMBU DIGIT FIVE
+       (?\u194C . 6) ;; LIMBU DIGIT SIX
+       (?\u194D . 7) ;; LIMBU DIGIT SEVEN
+       (?\u194E . 8) ;; LIMBU DIGIT EIGHT
+       (?\u194F . 9) ;; LIMBU DIGIT NINE
+       (?\u19D0 . 0) ;; NEW TAI LUE DIGIT ZERO
+       (?\u19D1 . 1) ;; NEW TAI LUE DIGIT ONE
+       (?\u19D2 . 2) ;; NEW TAI LUE DIGIT TWO
+       (?\u19D3 . 3) ;; NEW TAI LUE DIGIT THREE
+       (?\u19D4 . 4) ;; NEW TAI LUE DIGIT FOUR
+       (?\u19D5 . 5) ;; NEW TAI LUE DIGIT FIVE
+       (?\u19D6 . 6) ;; NEW TAI LUE DIGIT SIX
+       (?\u19D7 . 7) ;; NEW TAI LUE DIGIT SEVEN
+       (?\u19D8 . 8) ;; NEW TAI LUE DIGIT EIGHT
+       (?\u19D9 . 9) ;; NEW TAI LUE DIGIT NINE
+       (?\u1A80 . 0) ;; TAI THAM HORA DIGIT ZERO
+       (?\u1A81 . 1) ;; TAI THAM HORA DIGIT ONE
+       (?\u1A82 . 2) ;; TAI THAM HORA DIGIT TWO
+       (?\u1A83 . 3) ;; TAI THAM HORA DIGIT THREE
+       (?\u1A84 . 4) ;; TAI THAM HORA DIGIT FOUR
+       (?\u1A85 . 5) ;; TAI THAM HORA DIGIT FIVE
+       (?\u1A86 . 6) ;; TAI THAM HORA DIGIT SIX
+       (?\u1A87 . 7) ;; TAI THAM HORA DIGIT SEVEN
+       (?\u1A88 . 8) ;; TAI THAM HORA DIGIT EIGHT
+       (?\u1A89 . 9) ;; TAI THAM HORA DIGIT NINE
+       (?\u1A90 . 0) ;; TAI THAM THAM DIGIT ZERO
+       (?\u1A91 . 1) ;; TAI THAM THAM DIGIT ONE
+       (?\u1A92 . 2) ;; TAI THAM THAM DIGIT TWO
+       (?\u1A93 . 3) ;; TAI THAM THAM DIGIT THREE
+       (?\u1A94 . 4) ;; TAI THAM THAM DIGIT FOUR
+       (?\u1A95 . 5) ;; TAI THAM THAM DIGIT FIVE
+       (?\u1A96 . 6) ;; TAI THAM THAM DIGIT SIX
+       (?\u1A97 . 7) ;; TAI THAM THAM DIGIT SEVEN
+       (?\u1A98 . 8) ;; TAI THAM THAM DIGIT EIGHT
+       (?\u1A99 . 9) ;; TAI THAM THAM DIGIT NINE
+       (?\u1B50 . 0) ;; BALINESE DIGIT ZERO
+       (?\u1B51 . 1) ;; BALINESE DIGIT ONE
+       (?\u1B52 . 2) ;; BALINESE DIGIT TWO
+       (?\u1B53 . 3) ;; BALINESE DIGIT THREE
+       (?\u1B54 . 4) ;; BALINESE DIGIT FOUR
+       (?\u1B55 . 5) ;; BALINESE DIGIT FIVE
+       (?\u1B56 . 6) ;; BALINESE DIGIT SIX
+       (?\u1B57 . 7) ;; BALINESE DIGIT SEVEN
+       (?\u1B58 . 8) ;; BALINESE DIGIT EIGHT
+       (?\u1B59 . 9) ;; BALINESE DIGIT NINE
+       (?\u1BB0 . 0) ;; SUNDANESE DIGIT ZERO
+       (?\u1BB1 . 1) ;; SUNDANESE DIGIT ONE
+       (?\u1BB2 . 2) ;; SUNDANESE DIGIT TWO
+       (?\u1BB3 . 3) ;; SUNDANESE DIGIT THREE
+       (?\u1BB4 . 4) ;; SUNDANESE DIGIT FOUR
+       (?\u1BB5 . 5) ;; SUNDANESE DIGIT FIVE
+       (?\u1BB6 . 6) ;; SUNDANESE DIGIT SIX
+       (?\u1BB7 . 7) ;; SUNDANESE DIGIT SEVEN
+       (?\u1BB8 . 8) ;; SUNDANESE DIGIT EIGHT
+       (?\u1BB9 . 9) ;; SUNDANESE DIGIT NINE
+       (?\u1C40 . 0) ;; LEPCHA DIGIT ZERO
+       (?\u1C41 . 1) ;; LEPCHA DIGIT ONE
+       (?\u1C42 . 2) ;; LEPCHA DIGIT TWO
+       (?\u1C43 . 3) ;; LEPCHA DIGIT THREE
+       (?\u1C44 . 4) ;; LEPCHA DIGIT FOUR
+       (?\u1C45 . 5) ;; LEPCHA DIGIT FIVE
+       (?\u1C46 . 6) ;; LEPCHA DIGIT SIX
+       (?\u1C47 . 7) ;; LEPCHA DIGIT SEVEN
+       (?\u1C48 . 8) ;; LEPCHA DIGIT EIGHT
+       (?\u1C49 . 9) ;; LEPCHA DIGIT NINE
+       (?\u1C50 . 0) ;; OL CHIKI DIGIT ZERO
+       (?\u1C51 . 1) ;; OL CHIKI DIGIT ONE
+       (?\u1C52 . 2) ;; OL CHIKI DIGIT TWO
+       (?\u1C53 . 3) ;; OL CHIKI DIGIT THREE
+       (?\u1C54 . 4) ;; OL CHIKI DIGIT FOUR
+       (?\u1C55 . 5) ;; OL CHIKI DIGIT FIVE
+       (?\u1C56 . 6) ;; OL CHIKI DIGIT SIX
+       (?\u1C57 . 7) ;; OL CHIKI DIGIT SEVEN
+       (?\u1C58 . 8) ;; OL CHIKI DIGIT EIGHT
+       (?\u1C59 . 9) ;; OL CHIKI DIGIT NINE
+       (?\uA620 . 0) ;; VAI DIGIT ZERO
+       (?\uA621 . 1) ;; VAI DIGIT ONE
+       (?\uA622 . 2) ;; VAI DIGIT TWO
+       (?\uA623 . 3) ;; VAI DIGIT THREE
+       (?\uA624 . 4) ;; VAI DIGIT FOUR
+       (?\uA625 . 5) ;; VAI DIGIT FIVE
+       (?\uA626 . 6) ;; VAI DIGIT SIX
+       (?\uA627 . 7) ;; VAI DIGIT SEVEN
+       (?\uA628 . 8) ;; VAI DIGIT EIGHT
+       (?\uA629 . 9) ;; VAI DIGIT NINE
+       (?\uA8D0 . 0) ;; SAURASHTRA DIGIT ZERO
+       (?\uA8D1 . 1) ;; SAURASHTRA DIGIT ONE
+       (?\uA8D2 . 2) ;; SAURASHTRA DIGIT TWO
+       (?\uA8D3 . 3) ;; SAURASHTRA DIGIT THREE
+       (?\uA8D4 . 4) ;; SAURASHTRA DIGIT FOUR
+       (?\uA8D5 . 5) ;; SAURASHTRA DIGIT FIVE
+       (?\uA8D6 . 6) ;; SAURASHTRA DIGIT SIX
+       (?\uA8D7 . 7) ;; SAURASHTRA DIGIT SEVEN
+       (?\uA8D8 . 8) ;; SAURASHTRA DIGIT EIGHT
+       (?\uA8D9 . 9) ;; SAURASHTRA DIGIT NINE
+       (?\uA900 . 0) ;; KAYAH LI DIGIT ZERO
+       (?\uA901 . 1) ;; KAYAH LI DIGIT ONE
+       (?\uA902 . 2) ;; KAYAH LI DIGIT TWO
+       (?\uA903 . 3) ;; KAYAH LI DIGIT THREE
+       (?\uA904 . 4) ;; KAYAH LI DIGIT FOUR
+       (?\uA905 . 5) ;; KAYAH LI DIGIT FIVE
+       (?\uA906 . 6) ;; KAYAH LI DIGIT SIX
+       (?\uA907 . 7) ;; KAYAH LI DIGIT SEVEN
+       (?\uA908 . 8) ;; KAYAH LI DIGIT EIGHT
+       (?\uA909 . 9) ;; KAYAH LI DIGIT NINE
+       (?\uA9D0 . 0) ;; JAVANESE DIGIT ZERO
+       (?\uA9D1 . 1) ;; JAVANESE DIGIT ONE
+       (?\uA9D2 . 2) ;; JAVANESE DIGIT TWO
+       (?\uA9D3 . 3) ;; JAVANESE DIGIT THREE
+       (?\uA9D4 . 4) ;; JAVANESE DIGIT FOUR
+       (?\uA9D5 . 5) ;; JAVANESE DIGIT FIVE
+       (?\uA9D6 . 6) ;; JAVANESE DIGIT SIX
+       (?\uA9D7 . 7) ;; JAVANESE DIGIT SEVEN
+       (?\uA9D8 . 8) ;; JAVANESE DIGIT EIGHT
+       (?\uA9D9 . 9) ;; JAVANESE DIGIT NINE
+       (?\uA9F0 . 0) ;; MYANMAR TAI LAING DIGIT ZERO
+       (?\uA9F1 . 1) ;; MYANMAR TAI LAING DIGIT ONE
+       (?\uA9F2 . 2) ;; MYANMAR TAI LAING DIGIT TWO
+       (?\uA9F3 . 3) ;; MYANMAR TAI LAING DIGIT THREE
+       (?\uA9F4 . 4) ;; MYANMAR TAI LAING DIGIT FOUR
+       (?\uA9F5 . 5) ;; MYANMAR TAI LAING DIGIT FIVE
+       (?\uA9F6 . 6) ;; MYANMAR TAI LAING DIGIT SIX
+       (?\uA9F7 . 7) ;; MYANMAR TAI LAING DIGIT SEVEN
+       (?\uA9F8 . 8) ;; MYANMAR TAI LAING DIGIT EIGHT
+       (?\uA9F9 . 9) ;; MYANMAR TAI LAING DIGIT NINE
+       (?\uAA50 . 0) ;; CHAM DIGIT ZERO
+       (?\uAA51 . 1) ;; CHAM DIGIT ONE
+       (?\uAA52 . 2) ;; CHAM DIGIT TWO
+       (?\uAA53 . 3) ;; CHAM DIGIT THREE
+       (?\uAA54 . 4) ;; CHAM DIGIT FOUR
+       (?\uAA55 . 5) ;; CHAM DIGIT FIVE
+       (?\uAA56 . 6) ;; CHAM DIGIT SIX
+       (?\uAA57 . 7) ;; CHAM DIGIT SEVEN
+       (?\uAA58 . 8) ;; CHAM DIGIT EIGHT
+       (?\uAA59 . 9) ;; CHAM DIGIT NINE
+       (?\uABF0 . 0) ;; MEETEI MAYEK DIGIT ZERO
+       (?\uABF1 . 1) ;; MEETEI MAYEK DIGIT ONE
+       (?\uABF2 . 2) ;; MEETEI MAYEK DIGIT TWO
+       (?\uABF3 . 3) ;; MEETEI MAYEK DIGIT THREE
+       (?\uABF4 . 4) ;; MEETEI MAYEK DIGIT FOUR
+       (?\uABF5 . 5) ;; MEETEI MAYEK DIGIT FIVE
+       (?\uABF6 . 6) ;; MEETEI MAYEK DIGIT SIX
+       (?\uABF7 . 7) ;; MEETEI MAYEK DIGIT SEVEN
+       (?\uABF8 . 8) ;; MEETEI MAYEK DIGIT EIGHT
+       (?\uABF9 . 9) ;; MEETEI MAYEK DIGIT NINE
+       (?\uFF10 . 0) ;; FULLWIDTH DIGIT ZERO
+       (?\uFF11 . 1) ;; FULLWIDTH DIGIT ONE
+       (?\uFF12 . 2) ;; FULLWIDTH DIGIT TWO
+       (?\uFF13 . 3) ;; FULLWIDTH DIGIT THREE
+       (?\uFF14 . 4) ;; FULLWIDTH DIGIT FOUR
+       (?\uFF15 . 5) ;; FULLWIDTH DIGIT FIVE
+       (?\uFF16 . 6) ;; FULLWIDTH DIGIT SIX
+       (?\uFF17 . 7) ;; FULLWIDTH DIGIT SEVEN
+       (?\uFF18 . 8) ;; FULLWIDTH DIGIT EIGHT
+       (?\uFF19 . 9) ;; FULLWIDTH DIGIT NINE
+       (?\U000104A0 . 0) ;; OSMANYA DIGIT ZERO
+       (?\U000104A1 . 1) ;; OSMANYA DIGIT ONE
+       (?\U000104A2 . 2) ;; OSMANYA DIGIT TWO
+       (?\U000104A3 . 3) ;; OSMANYA DIGIT THREE
+       (?\U000104A4 . 4) ;; OSMANYA DIGIT FOUR
+       (?\U000104A5 . 5) ;; OSMANYA DIGIT FIVE
+       (?\U000104A6 . 6) ;; OSMANYA DIGIT SIX
+       (?\U000104A7 . 7) ;; OSMANYA DIGIT SEVEN
+       (?\U000104A8 . 8) ;; OSMANYA DIGIT EIGHT
+       (?\U000104A9 . 9) ;; OSMANYA DIGIT NINE
+       (?\U00011066 . 0) ;; BRAHMI DIGIT ZERO
+       (?\U00011067 . 1) ;; BRAHMI DIGIT ONE
+       (?\U00011068 . 2) ;; BRAHMI DIGIT TWO
+       (?\U00011069 . 3) ;; BRAHMI DIGIT THREE
+       (?\U0001106A . 4) ;; BRAHMI DIGIT FOUR
+       (?\U0001106B . 5) ;; BRAHMI DIGIT FIVE
+       (?\U0001106C . 6) ;; BRAHMI DIGIT SIX
+       (?\U0001106D . 7) ;; BRAHMI DIGIT SEVEN
+       (?\U0001106E . 8) ;; BRAHMI DIGIT EIGHT
+       (?\U0001106F . 9) ;; BRAHMI DIGIT NINE
+       (?\U000110F0 . 0) ;; SORA SOMPENG DIGIT ZERO
+       (?\U000110F1 . 1) ;; SORA SOMPENG DIGIT ONE
+       (?\U000110F2 . 2) ;; SORA SOMPENG DIGIT TWO
+       (?\U000110F3 . 3) ;; SORA SOMPENG DIGIT THREE
+       (?\U000110F4 . 4) ;; SORA SOMPENG DIGIT FOUR
+       (?\U000110F5 . 5) ;; SORA SOMPENG DIGIT FIVE
+       (?\U000110F6 . 6) ;; SORA SOMPENG DIGIT SIX
+       (?\U000110F7 . 7) ;; SORA SOMPENG DIGIT SEVEN
+       (?\U000110F8 . 8) ;; SORA SOMPENG DIGIT EIGHT
+       (?\U000110F9 . 9) ;; SORA SOMPENG DIGIT NINE
+       (?\U00011136 . 0) ;; CHAKMA DIGIT ZERO
+       (?\U00011137 . 1) ;; CHAKMA DIGIT ONE
+       (?\U00011138 . 2) ;; CHAKMA DIGIT TWO
+       (?\U00011139 . 3) ;; CHAKMA DIGIT THREE
+       (?\U0001113A . 4) ;; CHAKMA DIGIT FOUR
+       (?\U0001113B . 5) ;; CHAKMA DIGIT FIVE
+       (?\U0001113C . 6) ;; CHAKMA DIGIT SIX
+       (?\U0001113D . 7) ;; CHAKMA DIGIT SEVEN
+       (?\U0001113E . 8) ;; CHAKMA DIGIT EIGHT
+       (?\U0001113F . 9) ;; CHAKMA DIGIT NINE
+       (?\U000111D0 . 0) ;; SHARADA DIGIT ZERO
+       (?\U000111D1 . 1) ;; SHARADA DIGIT ONE
+       (?\U000111D2 . 2) ;; SHARADA DIGIT TWO
+       (?\U000111D3 . 3) ;; SHARADA DIGIT THREE
+       (?\U000111D4 . 4) ;; SHARADA DIGIT FOUR
+       (?\U000111D5 . 5) ;; SHARADA DIGIT FIVE
+       (?\U000111D6 . 6) ;; SHARADA DIGIT SIX
+       (?\U000111D7 . 7) ;; SHARADA DIGIT SEVEN
+       (?\U000111D8 . 8) ;; SHARADA DIGIT EIGHT
+       (?\U000111D9 . 9) ;; SHARADA DIGIT NINE
+       (?\U000112F0 . 0) ;; KHUDAWADI DIGIT ZERO
+       (?\U000112F1 . 1) ;; KHUDAWADI DIGIT ONE
+       (?\U000112F2 . 2) ;; KHUDAWADI DIGIT TWO
+       (?\U000112F3 . 3) ;; KHUDAWADI DIGIT THREE
+       (?\U000112F4 . 4) ;; KHUDAWADI DIGIT FOUR
+       (?\U000112F5 . 5) ;; KHUDAWADI DIGIT FIVE
+       (?\U000112F6 . 6) ;; KHUDAWADI DIGIT SIX
+       (?\U000112F7 . 7) ;; KHUDAWADI DIGIT SEVEN
+       (?\U000112F8 . 8) ;; KHUDAWADI DIGIT EIGHT
+       (?\U000112F9 . 9) ;; KHUDAWADI DIGIT NINE
+       (?\U000114D0 . 0) ;; TIRHUTA DIGIT ZERO
+       (?\U000114D1 . 1) ;; TIRHUTA DIGIT ONE
+       (?\U000114D2 . 2) ;; TIRHUTA DIGIT TWO
+       (?\U000114D3 . 3) ;; TIRHUTA DIGIT THREE
+       (?\U000114D4 . 4) ;; TIRHUTA DIGIT FOUR
+       (?\U000114D5 . 5) ;; TIRHUTA DIGIT FIVE
+       (?\U000114D6 . 6) ;; TIRHUTA DIGIT SIX
+       (?\U000114D7 . 7) ;; TIRHUTA DIGIT SEVEN
+       (?\U000114D8 . 8) ;; TIRHUTA DIGIT EIGHT
+       (?\U000114D9 . 9) ;; TIRHUTA DIGIT NINE
+       (?\U00011650 . 0) ;; MODI DIGIT ZERO
+       (?\U00011651 . 1) ;; MODI DIGIT ONE
+       (?\U00011652 . 2) ;; MODI DIGIT TWO
+       (?\U00011653 . 3) ;; MODI DIGIT THREE
+       (?\U00011654 . 4) ;; MODI DIGIT FOUR
+       (?\U00011655 . 5) ;; MODI DIGIT FIVE
+       (?\U00011656 . 6) ;; MODI DIGIT SIX
+       (?\U00011657 . 7) ;; MODI DIGIT SEVEN
+       (?\U00011658 . 8) ;; MODI DIGIT EIGHT
+       (?\U00011659 . 9) ;; MODI DIGIT NINE
+       (?\U000116C0 . 0) ;; TAKRI DIGIT ZERO
+       (?\U000116C1 . 1) ;; TAKRI DIGIT ONE
+       (?\U000116C2 . 2) ;; TAKRI DIGIT TWO
+       (?\U000116C3 . 3) ;; TAKRI DIGIT THREE
+       (?\U000116C4 . 4) ;; TAKRI DIGIT FOUR
+       (?\U000116C5 . 5) ;; TAKRI DIGIT FIVE
+       (?\U000116C6 . 6) ;; TAKRI DIGIT SIX
+       (?\U000116C7 . 7) ;; TAKRI DIGIT SEVEN
+       (?\U000116C8 . 8) ;; TAKRI DIGIT EIGHT
+       (?\U000116C9 . 9) ;; TAKRI DIGIT NINE
+       (?\U000118E0 . 0) ;; WARANG CITI DIGIT ZERO
+       (?\U000118E1 . 1) ;; WARANG CITI DIGIT ONE
+       (?\U000118E2 . 2) ;; WARANG CITI DIGIT TWO
+       (?\U000118E3 . 3) ;; WARANG CITI DIGIT THREE
+       (?\U000118E4 . 4) ;; WARANG CITI DIGIT FOUR
+       (?\U000118E5 . 5) ;; WARANG CITI DIGIT FIVE
+       (?\U000118E6 . 6) ;; WARANG CITI DIGIT SIX
+       (?\U000118E7 . 7) ;; WARANG CITI DIGIT SEVEN
+       (?\U000118E8 . 8) ;; WARANG CITI DIGIT EIGHT
+       (?\U000118E9 . 9) ;; WARANG CITI DIGIT NINE
+       (?\U00016A60 . 0) ;; MRO DIGIT ZERO
+       (?\U00016A61 . 1) ;; MRO DIGIT ONE
+       (?\U00016A62 . 2) ;; MRO DIGIT TWO
+       (?\U00016A63 . 3) ;; MRO DIGIT THREE
+       (?\U00016A64 . 4) ;; MRO DIGIT FOUR
+       (?\U00016A65 . 5) ;; MRO DIGIT FIVE
+       (?\U00016A66 . 6) ;; MRO DIGIT SIX
+       (?\U00016A67 . 7) ;; MRO DIGIT SEVEN
+       (?\U00016A68 . 8) ;; MRO DIGIT EIGHT
+       (?\U00016A69 . 9) ;; MRO DIGIT NINE
+       (?\U00016B50 . 0) ;; PAHAWH HMONG DIGIT ZERO
+       (?\U00016B51 . 1) ;; PAHAWH HMONG DIGIT ONE
+       (?\U00016B52 . 2) ;; PAHAWH HMONG DIGIT TWO
+       (?\U00016B53 . 3) ;; PAHAWH HMONG DIGIT THREE
+       (?\U00016B54 . 4) ;; PAHAWH HMONG DIGIT FOUR
+       (?\U00016B55 . 5) ;; PAHAWH HMONG DIGIT FIVE
+       (?\U00016B56 . 6) ;; PAHAWH HMONG DIGIT SIX
+       (?\U00016B57 . 7) ;; PAHAWH HMONG DIGIT SEVEN
+       (?\U00016B58 . 8) ;; PAHAWH HMONG DIGIT EIGHT
+       (?\U00016B59 . 9) ;; PAHAWH HMONG DIGIT NINE
+       (?\U0001D7CE . 0) ;; MATHEMATICAL BOLD DIGIT ZERO
+       (?\U0001D7CF . 1) ;; MATHEMATICAL BOLD DIGIT ONE
+       (?\U0001D7D0 . 2) ;; MATHEMATICAL BOLD DIGIT TWO
+       (?\U0001D7D1 . 3) ;; MATHEMATICAL BOLD DIGIT THREE
+       (?\U0001D7D2 . 4) ;; MATHEMATICAL BOLD DIGIT FOUR
+       (?\U0001D7D3 . 5) ;; MATHEMATICAL BOLD DIGIT FIVE
+       (?\U0001D7D4 . 6) ;; MATHEMATICAL BOLD DIGIT SIX
+       (?\U0001D7D5 . 7) ;; MATHEMATICAL BOLD DIGIT SEVEN
+       (?\U0001D7D6 . 8) ;; MATHEMATICAL BOLD DIGIT EIGHT
+       (?\U0001D7D7 . 9) ;; MATHEMATICAL BOLD DIGIT NINE
+       (?\U0001D7D8 . 0) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT ZERO
+       (?\U0001D7D9 . 1) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT ONE
+       (?\U0001D7DA . 2) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT TWO
+       (?\U0001D7DB . 3) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT THREE
+       (?\U0001D7DC . 4) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT FOUR
+       (?\U0001D7DD . 5) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT FIVE
+       (?\U0001D7DE . 6) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT SIX
+       (?\U0001D7DF . 7) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT SEVEN
+       (?\U0001D7E0 . 8) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT EIGHT
+       (?\U0001D7E1 . 9) ;; MATHEMATICAL DOUBLE-STRUCK DIGIT NINE
+       (?\U0001D7E2 . 0) ;; MATHEMATICAL SANS-SERIF DIGIT ZERO
+       (?\U0001D7E3 . 1) ;; MATHEMATICAL SANS-SERIF DIGIT ONE
+       (?\U0001D7E4 . 2) ;; MATHEMATICAL SANS-SERIF DIGIT TWO
+       (?\U0001D7E5 . 3) ;; MATHEMATICAL SANS-SERIF DIGIT THREE
+       (?\U0001D7E6 . 4) ;; MATHEMATICAL SANS-SERIF DIGIT FOUR
+       (?\U0001D7E7 . 5) ;; MATHEMATICAL SANS-SERIF DIGIT FIVE
+       (?\U0001D7E8 . 6) ;; MATHEMATICAL SANS-SERIF DIGIT SIX
+       (?\U0001D7E9 . 7) ;; MATHEMATICAL SANS-SERIF DIGIT SEVEN
+       (?\U0001D7EA . 8) ;; MATHEMATICAL SANS-SERIF DIGIT EIGHT
+       (?\U0001D7EB . 9) ;; MATHEMATICAL SANS-SERIF DIGIT NINE
+       (?\U0001D7EC . 0) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT ZERO
+       (?\U0001D7ED . 1) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT ONE
+       (?\U0001D7EE . 2) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT TWO
+       (?\U0001D7EF . 3) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT THREE
+       (?\U0001D7F0 . 4) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT FOUR
+       (?\U0001D7F1 . 5) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT FIVE
+       (?\U0001D7F2 . 6) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT SIX
+       (?\U0001D7F3 . 7) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT SEVEN
+       (?\U0001D7F4 . 8) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT EIGHT
+       (?\U0001D7F5 . 9) ;; MATHEMATICAL SANS-SERIF BOLD DIGIT NINE
+       (?\U0001D7F6 . 0) ;; MATHEMATICAL MONOSPACE DIGIT ZERO
+       (?\U0001D7F7 . 1) ;; MATHEMATICAL MONOSPACE DIGIT ONE
+       (?\U0001D7F8 . 2) ;; MATHEMATICAL MONOSPACE DIGIT TWO
+       (?\U0001D7F9 . 3) ;; MATHEMATICAL MONOSPACE DIGIT THREE
+       (?\U0001D7FA . 4) ;; MATHEMATICAL MONOSPACE DIGIT FOUR
+       (?\U0001D7FB . 5) ;; MATHEMATICAL MONOSPACE DIGIT FIVE
+       (?\U0001D7FC . 6) ;; MATHEMATICAL MONOSPACE DIGIT SIX
+       (?\U0001D7FD . 7) ;; MATHEMATICAL MONOSPACE DIGIT SEVEN
+       (?\U0001D7FE . 8) ;; MATHEMATICAL MONOSPACE DIGIT EIGHT
+       (?\U0001D7FF . 9) ;; MATHEMATICAL MONOSPACE DIGIT NINE
+
+       ;; Latin ASCII characters. To do; consider separating the Unicode
+       ;; decimal digits into their own table, and having another table with
+       ;; ASCII equivalents, checking that within digit-char-p. This does not
+       ;; support the fullwidth Latin characters currently, and supporting a
+       ;; radix above 36 with Greek, Hebrew, Cyrillic etc. would be
+       ;; reasonable.
+       (?\u0041 . 10) ;; LATIN CAPITAL LETTER A
+       (?\u0042 . 11) ;; LATIN CAPITAL LETTER B
+       (?\u0043 . 12) ;; LATIN CAPITAL LETTER C
+       (?\u0044 . 13) ;; LATIN CAPITAL LETTER D
+       (?\u0045 . 14) ;; LATIN CAPITAL LETTER E
+       (?\u0046 . 15) ;; LATIN CAPITAL LETTER F
+       (?\u0047 . 16) ;; LATIN CAPITAL LETTER G
+       (?\u0048 . 17) ;; LATIN CAPITAL LETTER H
+       (?\u0049 . 18) ;; LATIN CAPITAL LETTER I
+       (?\u004A . 19) ;; LATIN CAPITAL LETTER J
+       (?\u004B . 20) ;; LATIN CAPITAL LETTER K
+       (?\u004C . 21) ;; LATIN CAPITAL LETTER L
+       (?\u004D . 22) ;; LATIN CAPITAL LETTER M
+       (?\u004E . 23) ;; LATIN CAPITAL LETTER N
+       (?\u004F . 24) ;; LATIN CAPITAL LETTER O
+       (?\u0050 . 25) ;; LATIN CAPITAL LETTER P
+       (?\u0051 . 26) ;; LATIN CAPITAL LETTER Q
+       (?\u0052 . 27) ;; LATIN CAPITAL LETTER R
+       (?\u0053 . 28) ;; LATIN CAPITAL LETTER S
+       (?\u0054 . 29) ;; LATIN CAPITAL LETTER T
+       (?\u0055 . 30) ;; LATIN CAPITAL LETTER U
+       (?\u0056 . 31) ;; LATIN CAPITAL LETTER V
+       (?\u0057 . 32) ;; LATIN CAPITAL LETTER W
+       (?\u0058 . 33) ;; LATIN CAPITAL LETTER X
+       (?\u0059 . 34) ;; LATIN CAPITAL LETTER Y
+       (?\u005A . 35) ;; LATIN CAPITAL LETTER Z
+       (?\u0061 . 10) ;; LATIN SMALL LETTER A
+       (?\u0062 . 11) ;; LATIN SMALL LETTER B
+       (?\u0063 . 12) ;; LATIN SMALL LETTER C
+       (?\u0064 . 13) ;; LATIN SMALL LETTER D
+       (?\u0065 . 14) ;; LATIN SMALL LETTER E
+       (?\u0066 . 15) ;; LATIN SMALL LETTER F
+       (?\u0067 . 16) ;; LATIN SMALL LETTER G
+       (?\u0068 . 17) ;; LATIN SMALL LETTER H
+       (?\u0069 . 18) ;; LATIN SMALL LETTER I
+       (?\u006A . 19) ;; LATIN SMALL LETTER J
+       (?\u006B . 20) ;; LATIN SMALL LETTER K
+       (?\u006C . 21) ;; LATIN SMALL LETTER L
+       (?\u006D . 22) ;; LATIN SMALL LETTER M
+       (?\u006E . 23) ;; LATIN SMALL LETTER N
+       (?\u006F . 24) ;; LATIN SMALL LETTER O
+       (?\u0070 . 25) ;; LATIN SMALL LETTER P
+       (?\u0071 . 26) ;; LATIN SMALL LETTER Q
+       (?\u0072 . 27) ;; LATIN SMALL LETTER R
+       (?\u0073 . 28) ;; LATIN SMALL LETTER S
+       (?\u0074 . 29) ;; LATIN SMALL LETTER T
+       (?\u0075 . 30) ;; LATIN SMALL LETTER U
+       (?\u0076 . 31) ;; LATIN SMALL LETTER V
+       (?\u0077 . 32) ;; LATIN SMALL LETTER W
+       (?\u0078 . 33) ;; LATIN SMALL LETTER X
+       (?\u0079 . 34) ;; LATIN SMALL LETTER Y
+       (?\u007A . 35));; LATIN SMALL LETTER Z
+  with char-table = (copy-char-table digit-fixnum-map)
+  do (put-char-table character fixnum char-table)
+  finally (set-digit-fixnum-map char-table))
+
+;; end of mule/digit.el

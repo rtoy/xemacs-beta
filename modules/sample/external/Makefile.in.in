@@ -1,0 +1,58 @@
+##   Makefile for the sample module in XEmacs.
+##   Copyright (C) 2002 Jerry James.
+##
+##   This sample Makefile is free; you can redistribute it and/or modify it
+##   under the terms of the GNU General Public License as published by the
+##   Free Software Foundation, either version 3 of the License, or (at your
+##   option) any later version.
+
+## This file is not part of XEmacs.
+
+### Specialize this part for your module
+MODNAME=sample
+MODVER=0.0.1
+MODTITLE="Sample module for XEmacs"
+SRCS=sample.c
+
+### You should not need to modify anything below this line
+DESTDIR=
+SHELL=/bin/sh
+RM=rm -f
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@
+
+srcdir=@srcdir@
+VPATH=@srcdir@
+
+SRC_SRCS=$(SRCS:%=$(srcdir)/%)
+OBJS=$(SRCS:.c=.o)
+
+ELLCC=@ELLCC@
+MODARCHDIR=$(shell @ELLCC@ --mod-archdir)
+INSTALLPATH=$(shell @ELLCC@ --mod-site-location)
+INSTALL=@INSTALL@
+INSTALL_PROGRAM=@INSTALL_PROGRAM@
+
+.PHONY:	clean distclean install
+all: $(MODNAME).ell
+
+.c.o:
+	$(ELLCC) $(CFLAGS) --mode=compile --mod-output=$@ \
+	-I$(MODARCHDIR)/include -c $<
+
+$(MODNAME).ell: $(OBJS) $(MODNAME)_i.o
+	$(ELLCC) --mode=link --mod-output=$@ $(OBJS) $(MODNAME)_i.o $(LDFLAGS)
+
+$(MODNAME)_i.c: $(SRCS)
+	ELLMAKEDOC=$(MODARCHDIR)/make-docfile $(ELLCC) --mode=init \
+	--mod-output=$@ --mod-name=$(MODNAME) --mod-version=$(MODVER) \
+	--mod-title=$(MODTITLE) $(SRC_SRCS)
+
+clean:
+	$(RM) $(MODNAME).ell $(OBJS) $(MODNAME)_i.* *~
+
+distclean: clean
+	$(RM) Makefile config.* configure
+
+install: $(MODNAME).ell
+	$(INSTALL_PROGRAM) $< $(DESTDIR)$(INSTALLPATH)

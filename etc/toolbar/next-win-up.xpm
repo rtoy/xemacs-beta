@@ -1,0 +1,54 @@
+/* XPM */
+
+/* This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
+
+static char * next_win_xpm[] = {
+"28 28 5 1",
+"       c Gray75 s backgroundToolBarColor",
+".      c black",
+"x      c white",
+"y      c Gray90",
+"z      c Gray60",
+"                            ",
+"                            ",
+" ...........                ",
+" .zzzz.zzzz.                ",
+" .zzzz.z...........         ",
+" .zzzz.z.yyyy.yyyy.         ",
+" .zzzz.z.yyyy.y...........  ",
+" .zzzz.z.yyyy.y.xxxx.xxxx.  ",
+" ........yyyy.y.xxxx.xxxx.  ",
+" .zzzz.z.yyyy.y.xxxx.xxxx.  ",
+" .zzzz.z........xxxx.xxxx.  ",
+" .zzzz.z.yyyy.y.xxxx.xxxx.  ",
+" .zzzz.z.yyyy.y...........  ",
+" .zzzz.z.yyyy.y.xxxx.xxxx.  ",
+" ........yyyy.y.xxxx.xxxx.  ",
+"        .yyyy.y.xxxx.xxxx.  ",
+"        ........xxxx.xxxx.  ",
+"               .xxxx.xxxx.  ",
+"               ...........  ",
+"                            ",
+"                            ",
+"                 ..         ",
+"                  ...       ",
+"    ...................     ",
+"                  ...       ",
+"                 ..         ",
+"                            ",
+"                            "};
+
+

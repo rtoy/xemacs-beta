@@ -1,0 +1,78 @@
+/* XPM */
+
+/* This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
+
+static char * xemacs_xpm[] = {
+/* XEmacs pixmap
+ * width height ncolors chars_per_pixel */
+"50 50 5 1",
+/**/
+"       s None  c None",
+".      m black c darkslategrey",
+"X      m white c orange",
+"o      m black c slate blue",
+"O      m white c white",
+/* pixels */
+"                                                  ",
+"                                                  ",
+"                                ......    ...     ",
+"                                    ..    ...     ",
+"                                .............     ",
+"                               .XXXXXXXXXX...     ",
+"                              .XX............     ",
+"                              .X.         ...     ",
+"                             .....        ...     ",
+"                                          ...     ",
+"                               o          ...     ",
+"                              o           ...     ",
+"                                          ...     ",
+"                            o  o  o       ...     ",
+"                            oo   oo       ...     ",
+"                              ooo         ...     ",
+"    ..........................................    ",
+"   o .........................................    ",
+"   o  .......................................     ",
+"   o   .....................................      ",
+"   o   .....................................      ",
+"       .....................................      ",
+"       .....................................      ",
+"   o   .....................................      ",
+"  oo   ..O...O.OOOOO........................      ",
+"   o   ..O...O.O............................      ",
+"       ...O.O..O.....OO.OO..OOO...OO...OOO..      ",
+"       ....O...OOOO..O.O.O.O..O..O..O.O.....      ",
+"       ...O.O..O.....O.O.O.O..O..O.....OO...      ",
+"  o    ..O...O.O.....O...O.O..O..O..O....O..      ",
+"  oo   ..O...O.OOOOO.O...O..OO.O..OO..OOO...      ",
+"   o   .....................................      ",
+"       .....................................      ",
+"       .....................................      ",
+"       .....................................      ",
+"       .....................................      ",
+"   o    ...................................       ",
+"   o     .................................        ",
+"  oo                 ..X..                        ",
+"                      .X.    ....                 ",
+"                      .X.   .XXXX.                ",
+"                      .X.  .XX..XX.               ",
+"                      .X.  .X.  .X.               ",
+"   o                  .XX..XX.  .X.               ",
+"   o                   .XXXX.   .X.               ",
+"  o o                   ....    .X.               ",
+"                                .X.               ",
+"                                                  ",
+"                                                  ",
+"                                                  "};

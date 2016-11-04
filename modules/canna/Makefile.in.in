@@ -1,0 +1,34 @@
+##   Makefile for the sample module in XEmacs.
+##   Copyright (C) 2002 Jerry James.
+
+## This file is part of XEmacs.
+
+## XEmacs is free software: you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by the
+## Free Software Foundation, either version 3 of the License, or (at your
+## option) any later version.
+
+## XEmacs is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+
+## Synched up with: Not synched with FSF.
+
+## This is more complicated than would normally be the case, as this makefile
+## has been tailored to work both inside and independently of the XEmacs
+## source tree, and to support both module and non-module building inside the
+## source tree.
+
+### Specialize this part for your module
+MODNAME=canna_api
+MODVER=0.5.0
+MODTITLE="Module wrapping Canna libraries for XEmacs"
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@ @ld_switch_all@ @canna_libs@
+SRCS=canna_api.c
+
+## Note: modules/common/Makefile.common will be appended by configure
