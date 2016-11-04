@@ -20,8 +20,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #ifndef INCLUDED_syswait_h_
 #define INCLUDED_syswait_h_
 
-#include <sys/types.h>
-
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif

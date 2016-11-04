@@ -36,6 +36,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "casetab.h"
 #include "commands.h"
 #include "device.h"
 #include "events.h"

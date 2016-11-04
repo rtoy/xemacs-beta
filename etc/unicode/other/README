@@ -1,0 +1,7 @@
+The file lao.txt was made up based on the comment in lao.el:
+
+## ;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
+
+This isn't quite right, since lao is a 94-char charset and 0x20 and 0x7F
+don't exist.  So we mapped 0xE81 .. 0xEDE to 0x21 .. 0x7E.
+

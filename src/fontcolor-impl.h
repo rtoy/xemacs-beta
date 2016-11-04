@@ -130,6 +130,8 @@ struct Lisp_Color_Instance
   /* See comment in struct console about console variants. */
   enum console_variant color_instance_type;
 
+  /* ~~#### Instead of doing this, attach this data to the end of the same
+     structure; avoids the need to create new TTY, X, etc. Lisp objects */
   /* console-type-specific data */
   void *data;
 };
@@ -166,6 +168,8 @@ struct Lisp_Font_Instance
   unsigned short height;
   int proportional_p;
 
+  /* ~~#### Instead of doing this, attach this data to the end of the same
+     structure; avoids the need to create new TTY, X, etc. Lisp objects */
   /* console-type-specific data */
   void *data;
 };

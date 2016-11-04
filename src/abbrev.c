@@ -1,6 +1,6 @@
 /* Primitives for word-abbrev mode.
    Copyright (C) 1985, 1986, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -34,6 +34,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "casetab.h"
 #include "commands.h"
 #include "insdel.h"
 #include "syntax.h"
@@ -161,7 +162,7 @@ abbrev_match (struct buffer *buf, Lisp_Object obarray)
   closure.buf = buf;
   closure.point = BUF_PT (buf);
   closure.maxlen = closure.point - BUF_BEGV (buf);
-  closure.chartab = buf->mirror_syntax_table;
+  closure.chartab = BUFFER_MIRROR_SYNTAX_TABLE (buf);
   closure.found = 0;
 
   map_obarray (obarray, abbrev_match_mapper, &closure);
@@ -387,7 +388,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
       Charbpos pos = abbrev_start;
       /* Find the initial.  */
       while (pos < point
-	     && !WORD_SYNTAX_P (buf->mirror_syntax_table,
+	     && !WORD_SYNTAX_P (BUFFER_MIRROR_SYNTAX_TABLE (buf),
 				BUF_FETCH_CHAR (buf, pos)))
 	pos++;
       /* Change just that.  */
@@ -438,7 +439,7 @@ write_abbrev (Lisp_Object sym, Lisp_Object stream)
 static void
 describe_abbrev (Lisp_Object sym, Lisp_Object stream)
 {
-  Lisp_Object one, count, system_flag;
+  Lisp_Object count, system_flag;
   /* This function can GC */
   struct buffer *buf = current_buffer;
 
@@ -456,23 +457,23 @@ describe_abbrev (Lisp_Object sym, Lisp_Object stream)
   if (NILP (XSYMBOL_VALUE (sym)))
     return;
 
-  one = make_fixnum (1);
   Fprin1 (Fsymbol_name (sym), stream);
 
   if (!NILP (system_flag))
     {
       buffer_insert_ascstring (buf, " (sys)");
-      Findent_to (make_fixnum (20), one, Qnil);
+      Findent_to (make_fixnum (20), Qone, Qnil);
     }
   else
-    Findent_to (make_fixnum (15), one, Qnil);
+    Findent_to (make_fixnum (15), Qone, Qnil);
 
   Fprin1 (count, stream);
-  Findent_to (make_fixnum (20), one, Qnil);
+  Findent_to (make_fixnum (20), Qone, Qnil);
+
   Fprin1 (XSYMBOL_VALUE (sym), stream);
   if (!NILP (XSYMBOL (sym)->function))
     {
-      Findent_to (make_fixnum (45), one, Qnil);
+      Findent_to (make_fixnum (45), Qone, Qnil);
       Fprin1 (XSYMBOL (sym)->function, stream);
     }
   buffer_insert_ascstring (buf, "\n");

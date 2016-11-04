@@ -530,7 +530,7 @@ init_buffer_markers (struct buffer *b)
   b->point_marker = Fmake_marker ();
   Fset_marker (b->point_marker,
 	       /* For indirect buffers, point is already set.  */
-	       b->base_buffer ? make_fixnum (BUF_PT (b)) : make_fixnum (1),
+	       b->base_buffer ? make_fixnum (BUF_PT (b)) : Qone,
 	       buf);
 }
 

@@ -295,6 +295,14 @@ check:
 check-features: all
 	cd ./src && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@
 
+.PHONY: unicode-encapsulate
+unicode-encapsulate:
+	cd ./src && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@
+
+.PHONY: make-case-conv
+make-case-conv:
+	cd ./src && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@
+
 ## We have to force the building of Emacs.ad.h as well in order to get it
 ## updated correctly when VPATH is being used.  Since we use move-if-change,
 ## it will only actually change if the user modified ${etcdir}/Emacs.ad.

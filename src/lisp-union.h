@@ -130,7 +130,7 @@ wrap_pointer_1 (const void *ptr)
   return obj;
 }
 
-extern MODULE_API Lisp_Object Qnull_pointer, Qzero;
+extern MODULE_API Lisp_Object Qnull_pointer, Qzero, Qone;
 
 #define FIXNUMP(x) ((x).s.bits)
 #define FIXNUM_PLUS(x,y)  make_fixnum (XFIXNUM (x) + XFIXNUM (y))

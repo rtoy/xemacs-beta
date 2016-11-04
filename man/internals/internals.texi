@@ -7193,12 +7193,13 @@ the executable was dumped, and all memory that was allocated with
 as @file{xemacs} or @file{temacs} because it sets the global variable
 @code{initialized} to 1 after step (4) above.) At this point,
 @file{xemacs} calls a Lisp function to do any further initialization,
-which includes parsing the command-line (the C code can only do limited
-command-line parsing, which includes looking for the @samp{-batch} and
-@samp{-l} flags and a few other flags that it needs to know about before
-initialization is complete), creating the first frame (or @dfn{window}
-in standard window-system parlance), running the user's init file
-(usually the file @file{.emacs} in the user's home directory), etc.  The
+which includes parsing the command-line (the C code can only do
+limited command-line parsing, which includes looking for the
+@samp{-batch} and @samp{-l} flags and a few other flags that it needs
+to know about before initialization is complete), creating the first
+frame (or @dfn{window} in standard window-system parlance), running
+the user's init file (usually the file @file{init.el} in the
+@file{xemacs} subdirectory of the user's home directory), etc.  The
 function to do this is usually called @code{normal-top-level};
 @file{loadup.el} tells the C code about this function by setting its
 name as the value of the Lisp variable @code{top-level}.
@@ -11898,22 +11899,29 @@ previous sections.
 @cindex character sets
 
   A @dfn{character set} (or @dfn{charset}) is an ordered set of
-characters.  A particular character in a charset is indexed using one or
-more @dfn{position codes}, which are non-negative integers.  The number
-of position codes needed to identify a particular character in a charset
-is called the @dfn{dimension} of the charset.  In XEmacs/Mule, all
-charsets have dimension 1 or 2, and the size of all charsets (except for
-a few special cases) is either 94, 96, 94 by 94, or 96 by 96.  The range
-of position codes used to index characters from any of these types of
-character sets is as follows:
+characters.  A particular character in a charset is indexed using one
+or more @dfn{position codes}, which are non-negative integers.  The
+number of position codes needed to identify a particular character in
+a charset is called the @dfn{dimension} of the charset.  In
+XEmacs/Mule, all charsets have dimension 1 or 2.  Formerly the size of
+all charsets (except for a few special cases) was either 94, 96, 94 by
+94, or 96 by 96.  Now, however, the size of either dimension of a
+charset can be anywhere between 1 and 256 and an offset (minimum
+allowed value) can be specified for either dimension, anywhere between
+0 and 255 provided that the maximum value also falls within this
+range.
+
+Some charsets are @dfn{ISO-2022-compatible}, meaning that they can be
+used in an ISO-2022 encoding.  Such charsets must have position codes
+in the following range:
 
 @example
 Charset type            Position code 1         Position code 2
-------------------------------------------------------------
-94                      33 - 126                N/A
-96                      32 - 127                N/A
-94x94                   33 - 126                33 - 126
-96x96                   32 - 127                32 - 127
+---------------------------------------------------------------
+94                      33 - 126 or 161-254     N/A
+96                      32 - 127 or 160-255     N/A
+94x94                   33 - 126 or 161-254     33 - 126 or 161-254
+96x96                   32 - 127 or 160-255     32 - 127 or 160-255
 @end example
 
   Note that in the above cases position codes do not start at an
@@ -11929,19 +11937,17 @@ fact be empty.  This is the case for JISX0208, for example, where (e.g.)
 all the slots whose first position code is in the range 118 - 127 are
 empty.]
 
-  There are three charsets that do not follow the above rules.  All of
-them have one dimension, and have ranges of position codes as follows:
+  There are some charsets that do not follow the above rules, e.g.:
 
 @example
-Charset name            Position code 1
-------------------------------------
-ASCII                   0 - 127
-Control-1               0 - 31
-Composite               0 - some large number
+Charset type            Position code 1         Position code 2
+---------------------------------------------------------------
+ASCII                   0 - 127                 N/A
+Control-1               128 - 159               N/A
+Composite               not implemented         not implemented
+Big5                    161 - 254               64 - 254
+Johab                   132 - 249               49 - 254
 @end example
-
-  (The upper bound of the position code for composite characters has not
-yet been determined, but it will probably be at least 16,383).
 
   ASCII is the union of two subsidiary character sets: Printing-ASCII
 (the printing ASCII character set, consisting of position codes 33 -
@@ -11952,28 +11958,12 @@ non-printing characters that would appear in a binary file with codes 0
   Control-1 contains the non-printing characters that would appear in a
 binary file with codes 128 - 159.
 
-  Composite contains characters that are generated by overstriking one
-or more characters from other charsets.
-
   Note that some characters in ASCII, and all characters in Control-1,
 are @dfn{control} (non-printing) characters.  These have no printed
 representation but instead control some other function of the printing
 (e.g. TAB or 8 moves the current character position to the next tab
 stop).  All other characters in all charsets are @dfn{graphic}
 (printing) characters.
-
-  When a binary file is read in, the bytes in the file are assigned to
-character sets as follows:
-
-@example
-Bytes           Character set           Range
---------------------------------------------------
-0 - 127         ASCII                   0 - 127
-128 - 159       Control-1               0 - 31
-160 - 255       Latin-1                 32 - 127
-@end example
-
-  This is a bit ad-hoc but gets the job done.
 
 @node Encodings, Internal Mule Encodings, Character Sets, Multilingual Support
 @section Encodings
@@ -12082,33 +12072,36 @@ Escape sequence   ASCII equivalent   Meaning
 @cindex Mule encodings, internal
 @cindex encodings, internal Mule
 
-In XEmacs/Mule, each character set is assigned a unique number, called a
-@dfn{leading byte}.  This is used in the encodings of a character.
-Leading bytes are in the range 0x80 - 0xFF (except for ASCII, which has
-a leading byte of 0), although some leading bytes are reserved.
+In XEmacs/Mule, each character set is assigned a unique number, called
+a @dfn{charset ID} (formerly @dfn{leading byte}).  This is used in the
+encodings of a character.  In the old-Mule internal encoding, Charset
+ID's are in the range 0x7F - 0x15F for "encodable" charsets (those
+which can be encoded into a string or character), while other charsets
+have higher ID's.
 
-Charsets whose leading byte is in the range 0x80 - 0x9F are called
-@dfn{official} and are used for built-in charsets.  Other charsets are
-called @dfn{private} and have leading bytes in the range 0xA0 - 0xFF;
-these are user-defined charsets.
+Charsets whose ID in the range 0x7F - 0x9F are called @dfn{official}
+and take up less space in the string encoding; these are used for
+built-in charsets.  Other encodable charsets are called @dfn{private}
+and have higher ID's, in the range 0xA0 - 0x15F; these are mostly for
+user-defined charsets, although some built-in charsets are in this
+range.
 
   More specifically:
 
 @example
-Character set                Leading byte
--------------                ------------
-ASCII                        0 (0x7F in arrays indexed by leading byte)
-Composite                    0x8D
-Dimension-1 Official         0x80 - 0x8C/0x8D
-                               (0x8E is free)
-Control                      0x8F
-Dimension-2 Official         0x90 - 0x99
+Character set                ID
+-------------                --
+ASCII                        0x7F
+Control-1                    0x80
+Dimension-1 Official         0x81 - 0x8C/0x8D (subject to change)
+Dimension-2 Official         0x8D/0x8E - 0x9D (subject to change)
                                (0x9A - 0x9D are free)
-Dimension-1 Private Marker   0x9E
-Dimension-2 Private Marker   0x9F
-Dimension-1 Private          0xA0 - 0xEF
-Dimension-2 Private          0xF0 - 0xFF
+Dimension-1 Private          0xA0 - 0xFF
+Dimension-2 Private          0x100 - 0x15F
 @end example
+
+0x9E and 0x9F are reserved; these are used in the string encoding for the
+Dimension-1 Private Marker and Dimension-2 Private Marker, respectively.
 
 There are two internal encodings for characters in XEmacs/Mule.  One is
 called @dfn{string encoding} and is an 8-bit encoding that is used for
@@ -12124,6 +12117,7 @@ followed later by the exact details.)
 @menu
 * Internal String Encoding::    
 * Internal Character Encoding::  
+* Old Internal Character Encoding::
 @end menu
 
 @node Internal String Encoding, Internal Character Encoding, Internal Mule Encodings, Internal Mule Encodings
@@ -12132,25 +12126,29 @@ followed later by the exact details.)
 @cindex string encoding, internal
 @cindex encoding, internal string
 
-ASCII characters are encoded using their position code directly.  Other
-characters are encoded using their leading byte followed by their
-position code(s) with the high bit set.  Characters in private character
-sets have their leading byte prefixed with a @dfn{leading byte prefix},
-which is either 0x9E or 0x9F. (No character sets are ever assigned these
-leading bytes.) Specifically:
+ASCII characters are encoded using their position code directly.
+Other characters are encoded using their @dfn{lead byte}, which is
+derived from the charset ID, followed by their position code(s) with
+the high bit set.  Characters in private character sets have their
+lead byte prefixed with a @dfn{lead byte prefix}, which is either 0x9E
+or 0x9F. (No character sets are ever assigned these lead bytes.) 
+Specifically:
 
 @example
-Character set           Encoding (PC=position-code, LB=leading-byte)
+Character set           Encoding (PC=position-code, ID=charset ID)
 -------------           --------
 ASCII                   PC-1 |
-Control-1               LB   |  PC1 + 0xA0 |
-Dimension-1 official    LB   |  PC1 + 0x80 |
-Dimension-1 private     0x9E |  LB         | PC1 + 0x80 |
-Dimension-2 official    LB   |  PC1 + 0x80 | PC2 + 0x80 |
-Dimension-2 private     0x9F |  LB         | PC1 + 0x80 | PC2 + 0x80
+Control-1               ID   |  PC1 + 0xA0 |
+Dimension-1 official    ID   |  PC1 + 0x80 |
+Dimension-1 private     0x9E |  ID         | PC1 + 0x80 |
+Dimension-2 official    ID   |  PC1 + 0x80 | PC2 + 0x80 |
+Dimension-2 private     0x9F |  ID - 0x60  | PC1 + 0x80 | PC2 + 0x80
 @end example
 
-  The basic characteristic of this encoding is that the first byte
+Notice how the lead byte is usually the same as the charset ID, but
+is offset by 0x60 for dimension-2 private charsets.
+
+The basic characteristic of this encoding is that the first byte
 of all characters is in the range 0x00 - 0x9F, and the second and
 following bytes of all characters is in the range 0xA0 - 0xFF.
 This means that it is impossible to get out of sync, or more
@@ -12181,14 +12179,86 @@ encodings must satisfy (2), in order to be unambiguous.)  UTF-8,
 however, meets all three, and we are considering moving to it as an
 internal encoding.
 
-@node Internal Character Encoding,  , Internal String Encoding, Internal Mule Encodings
+@strong{NOTE}: The Boyer-Moore code in @file{search.c} can only work
+in the presence of a translation table if all characters with a
+distinct translation differ in their string representation from the
+translation only in the final byte. (This is because the Boyer-Moore
+algorithm works on the byte level and uses the last byte of the search
+string to determine how far to jump ahead on each comparison.
+Modifying the algorithm to handle translations of that particular byte
+is reasonable, but trying to handle translations of other bytes makes
+things too complicated.) The code in @code{search_buffer()} that
+determines whether to use Boyer-Moore knows this and only uses it when
+appropriate.  The choice of internal representation can have an effect
+on how often Boyer-Moore can be used; luckily, both the
+Unicode-internal (UTF-8) and old-Mule representations work reasonably
+because characters near each other tend to differ only in their final
+byte, and translation pairs tend to be near each other because
+alphabets are grouped together.
+
+@node Internal Character Encoding, Old Internal Character Encoding, Internal String Encoding, Internal Mule Encodings
 @subsection Internal Character Encoding
 @cindex internal character encoding
 @cindex character encoding, internal
 @cindex encoding, internal character
 
-  One 21-bit word represents a single character.  The word is
-separated into three fields:
+In the new old-Mule encoding, one 21-bit word represents a single
+character.  The word is again separated into three fields:
+
+@example
+Bit number:  20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
+             <------------------> <------------------> <------------------>
+Field:                 1                    2                    3
+@end example
+
+The big difference compared to the older old-Mule encoding is that
+field 1 has grown to 7 bits.  This relates to the number of encodable
+charsets: The old encoding could encode 80 private dimension-1
+charsets and only 16 private dimension-2 charsets; the new encoding
+encodes 96 of both.
+
+@example
+Character set           Field 1         Field 2         Field 3
+-------------           -------         -------         -------
+ASCII                      0               0              PC1
+   range:                                                   (00 - 7F)
+Control-1                  0               1              PC1
+   range:                                                   (00 - 1F)
+Dimension-1 official       0            ID - 0x80         PC1
+   range:                                    (01 - 1D)      (20 - 7F)
+Dimension-1 private        0            ID - 0x80         PC1
+   range:                                    (20 - 7F)      (20 - 7F)
+Dimension-2 official    ID - 0x80         PC1             PC2
+   range:                    (01 - 1D)       (20 - 7F)      (20 - 7F)
+Dimension-2 private     ID - 0xE0         PC1             PC2
+   range:                    (20 - 7F)       (20 - 7F)      (20 - 7F)
+@end example
+
+The critical thing to note is that a distinction has been made between
+charset ID's and ``lead bytes''.  A @dfn{lead byte} (formerly a
+``leading byte'') is a byte that forms the first byte in a multibyte
+string representation of a character.  This is very different from a
+@dfn{charset ID}, which is a unique identifier for a character.  The
+charset ID may sometimes correspond to one of the bytes in the
+representation of the character, but not necessarily, and not
+necessarily the first one.
+
+Note that character codes 0 - 255 are the same as the ``binary
+encoding'' described above.
+
+Most of the code in XEmacs knows nothing of the representation of a
+character other than that values 0 - 255 represent ASCII, Control 1,
+and Latin 1.
+
+@node Old Internal Character Encoding,  , Internal Character Encoding, Internal Mule Encodings
+@subsection Old Internal Character Encoding
+@cindex internal character encoding, old
+@cindex old internal character encoding
+@cindex character encoding, internal, old
+@cindex encoding, internal character, old
+
+In the original old-Mule encoding, one 19-bit word represented a single
+character.  The word was separated into three fields:
 
 @example
 Bit number:     20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
@@ -12216,19 +12286,6 @@ Dimension-2 private     LB - 0x80         PC1             PC2
 Composite                 0x1F             ?               ?
 @end example
 
-Note also that character codes 0 - 255 are the same as the ``binary
-encoding'' described above.
-
-Most of the code in XEmacs knows nothing of the representation of a
-character other than that values 0 - 255 represent ASCII, Control 1,
-and Latin 1.
-
-@strong{WARNING WARNING WARNING}: The Boyer-Moore code in
-@file{search.c}, and the code in @code{search_buffer()} that determines
-whether that code can be used, knows that ``field 3'' in a character
-always corresponds to the last byte in the textual representation of the
-character. (This is important because the Boyer-Moore algorithm works by
-looking at the last byte of the search string and &&#### finish this.
 
 @node Byte/Character Types; Buffer Positions; Other Typedefs, Internal Text APIs, Internal Mule Encodings, Multilingual Support
 @section Byte/Character Types; Buffer Positions; Other Typedefs
@@ -12448,10 +12505,10 @@ the same as the representation of that same character in a string; thus,
 you cannot do the standard C trick of passing a pointer to a character
 to a function that expects a string.
 
-An Ichar takes up 21 bits of representation and (for code compatibility
-and such) is compatible with an int.  This representation is visible on
-the Lisp level.  The important characteristics of the Ichar
-representation are
+An Ichar takes up 21 bits of representation in old-Mule and up to 30
+bits in Unicode-internal and (for code compatibility and such) is
+compatible with an int.  This representation is visible on the Lisp
+level.  The important characteristics of the Ichar representation are
 
 @itemize @minus
 @item
@@ -13501,11 +13558,11 @@ If you followed the previous section, you can guess that, logically,
 multiplying a @code{Charcount} value with @code{MAX_ICHAR_LEN} produces
 a @code{Bytecount} value.
 
-In the current Mule implementation, @code{MAX_ICHAR_LEN} equals 4.
-Without Mule, it is 1.  In a mature Unicode-based XEmacs, it will also
-be 4 (since all Unicode characters can be encoded in UTF-8 in 4 bytes or
-less), but some versions may use up to 6, in order to use the large
-private space provided by ISO 10646 to ``mirror'' the Mule code space.
+In old-Mule, @code{MAX_ICHAR_LEN} equals 4.  Without Mule, it is 1.
+In Unicode-internal, it is 6, which is the maximum size of UTF-8.
+Although all official Unicode characters can be encoded using 4 bytes
+or less in UTF-8, we support characters up to 30 bits wide, for
+private use.
 
 @item itext_ichar
 @itemx set_itext_ichar
@@ -13636,7 +13693,7 @@ different buffers, faces, or windows.  The specifier mechanism gives the
 user complete control over this kind of behavior.
 @item
 On output, characters 0--255 are converted into bytes 0--255 and other
-characters are converted into @samp{~}.
+characters are converted into @samp{?}.
 @end enumerate
 
 @item Qnative
@@ -14851,7 +14908,7 @@ In addition:
 note further that you are not limited to the language/sublanguage
 combinations predefined by Windows.  You can set weird combinations
 like "Chinese_Kenya.1255" (Chinese spoken in Kenya, represented by
-Windows-1255, i.e. Hebrew!) and Windows don't complain, despite the
+Windows-1255, i.e. Hebrew!) and Windows doesn't complain, despite the
 language-encoding inconsistency.  You can also make up a weird
 combination and leave out the encoding, e.g. "Chinese_Qatar", which
 maps to "Chinese_Qatar.1256", where Windows-1256 is Arabic -- i.e. it
@@ -20422,7 +20479,7 @@ allowing functions to throw all the way to the top level if they really
 need to.  Before invoking @code{command_loop_2()},
 @code{initial_command_loop()} calls @code{top_level_1()}, which handles
 all of the startup stuff (creating the initial frame, handling the
-command-line options, loading the user's @file{.emacs} file, etc.).  The
+command-line options, loading the user's @file{init.el} file, etc.).  The
 function that actually does this is in Lisp and is pointed to by the
 variable @code{top-level}; normally this function is
 @code{normal-top-level}.  @code{top_level_1()} is just an error-handling
@@ -25935,7 +25992,7 @@ imply any specific actions based on that information.
 
 @item
 The @dfn{default} case is POSIX locale, and no environment
-information in ~/.emacs.
+information in ~/.xemacs/init.el.
 
 N.B.  This @strong{will} cause breakage for all 1-byte users because
 the default case can no longer assume Latin-1.  You @strong{may} be
@@ -25954,7 +26011,7 @@ likely to be obsoleted.
 
 @item
 The @dfn{European} case is any Latin-* locale, either implied by
-setlocale() and friends or set in ~/.emacs.  Latin-1 is
+setlocale() and friends or set in ~/.xemacs/init.el.  Latin-1 is
 specifically not given precedence over other Latin-*, or
 non-Latin or non-ISO-8859 for that matter.  I suspect but am
 not sure that this case extends to all ISO-8859 encodings, and
@@ -26301,10 +26358,10 @@ free to change the current locale at any time; accessor and mutator functions
 are provided to do this so that various locale-specific areas can optionally
 be changed together with it.
 
-[Then you describe how the XEmacs locale is extracted from .emacs, from
-@code{setlocale()}, from the LANG environment variables, from -font, or wherever
-else.  All other sections assume this dirty work is done and never even
-mention it]
+[Then you describe how the XEmacs locale is extracted from
+@file{init.el}, from @code{setlocale()}, from the LANG environment
+variables, from -font, or wherever else.  All other sections assume
+this dirty work is done and never even mention it]
 
 @subsubheading Section 7
 
@@ -28812,7 +28869,7 @@ searched for, and used to locate the existing generated stuff to
 replace.  Custom currently doesn't do this.
 
 PRINCIPLE #2: Currently, lots of functions want to add code to the
-.emacs. (e.g. I get prompted for my mail address from
+@file{init.el}. (e.g. I get prompted for my mail address from
 add-change-log-entry, and then prompted if I want to make this
 permanent).  There needs to be a Lisp API for working with arbitrary
 code to be added to a user's startup.  This API hides all the details
