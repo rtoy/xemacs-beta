@@ -767,6 +767,217 @@
 	Test escape-quoted for the range U+0000 to U+00FF.
 	Inspired by Ben's patch to fix quoting of specials from C1 controls.
 
+2010-03-15  Ben Wing  <ben@xemacs.org>
+
+	* automated/c-tests.el:
+	* automated/c-tests.el (boundp):
+	* automated/ccl-tests.el:
+	* automated/ccl-tests.el (ccl-test-normal-expr):
+	Fix remaining test failures with c-tests and ccl-tests -- problem
+	was with the tests, not the code being tested.
+
+2010-03-14  Ben Wing  <ben@xemacs.org>
+
+	* automated/query-coding-tests.el:
+	* automated/query-coding-tests.el (featurep):
+	Lots of changes for new implementation of query-coding-region.  In
+	particular, ISO-2022 now signals errors on invalid escape
+	sequences so need to take that into account when using
+	greek-iso-8bit-with-esc, since 0x1B 0x1C is not a valid escape
+	sequence nor is 0x9B 0x9C.  Also, print out the particular coding
+	system triggering assert failures.
+
+2010-03-07  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el (featurep):
+	Doing all 256 rows was way too slow interactively (#### don't know
+	why it was OK when noninteractive).
+
+2010-03-06  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el:
+	* automated/mule-tests.el (test-file-name):
+	* automated/mule-tests.el (featurep):
+	Fix a number of bad tests in mule-tests.el.
+
+	-- One test broke for some reason unless utf-8 was explicitly
+	given as the encoding.  (#### The fix actually hides the bug
+	rather than fixing it.  We have to investigate to see why
+	detection isn't working.)
+	
+	-- Another test seemed to depend on `ascii' having 94 chars instead
+	of 128.
+
+	-- Also, the test involving changing the Unicode conversion
+	for Latin-2 s-caron didn't put the conversions back correctly,
+	which messed up later tests. (And the code in unicode.c
+	implementing `set-unicode-conversion' didn't correctly handle the
+	case where an existing conversion is changed.)
+
+	-- Finally, a test for the value of language-info `charset' had to
+	be fixed to take into account the fact that charset tags are now
+	allowed.
+
+	-- We also added a more thorough test of `set-unicode-conversion';
+	see ChangeLog entry for this date in src/ChangeLog.
+	
+2010-02-28  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el (featurep):
+	Add a few more Mule tests for Unicode-merging behavior of
+	`multibyte' coding system.
+
+2010-02-22  Ben Wing  <ben@xemacs.org>
+
+	* automated/case-tests.el:
+	* automated/case-tests.el (downcase1):
+	Fix so that `make check' no longer fails on this file.
+
+2010-02-15  Ben Wing  <ben@xemacs.org>
+
+	* automated/search-tests.el (let):
+	* automated/search-tests.el (boundp):
+	debug-xemacs-searches renamed to debug-searches.
+
+2010-02-20  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el (featurep):
+	Various fixes to make tests more correct in Unicode-internal.
+
+2010-04-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/hash-table-tests.el:
+	Test the new built-in #'equalp hash table test. Test
+	#'define-hash-table-test.
+	* automated/lisp-tests.el:
+	When asserting that two objects are #'equalp, also assert that 
+	their #'equalp-hash is identical. 
+
+2010-04-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Correct the parentheses in the equalp tests, so they get run more
+	often.
+	Within them, only attempt to read a bignum if the bignum
+	feature is present; actually evaluate (/ 3/2 0.2), (/ 3/2 0.7) if
+	the ratio feature is present.
+	Construct the (Assert ...) calls at
+	macroexpansion time, so the output in the *Test-Log* buffer is
+	more informative.
+
+2010-03-18  Ben Wing  <ben@xemacs.org>
+
+	* automated/c-tests.el:
+	* automated/c-tests.el (when):
+	Use `with-temp-buffer' so results don't get written into source
+	file.
+
+2010-03-12  Ben Wing  <ben@xemacs.org>
+
+	* automated/base64-tests.el (bt-base64-encode-string):
+	* automated/base64-tests.el (bt-base64-decode-string):
+	* automated/base64-tests.el (for):
+	* automated/byte-compiler-tests.el:
+	* automated/byte-compiler-tests.el (before-and-after-compile-equal):
+	* automated/case-tests.el (downcase-string):
+	* automated/case-tests.el (uni-mappings):
+	* automated/ccl-tests.el (ccl-test-normal-expr):
+	* automated/ccl-tests.el (ccl-test-map-instructions):
+	* automated/ccl-tests.el (ccl-test-suites):
+	* automated/database-tests.el (delete-database-files):
+	* automated/extent-tests.el (let):
+	* automated/extent-tests.el (insert):
+	* automated/extent-tests.el (props):
+	* automated/file-tests.el:
+	* automated/file-tests.el (for):
+	* automated/hash-table-tests.el (test):
+	* automated/hash-table-tests.el (for):
+	* automated/hash-table-tests.el (ht):
+	* automated/hash-table-tests.el (iterations):
+	* automated/hash-table-tests.el (h1):
+	* automated/hash-table-tests.el (equal):
+	* automated/hash-table-tests.el (=):
+	* automated/lisp-tests.el:
+	* automated/lisp-tests.el (eq):
+	* automated/lisp-tests.el (test-setq):
+	* automated/lisp-tests.el (my-vector):
+	* automated/lisp-tests.el (x):
+	* automated/lisp-tests.el (equal):
+	* automated/lisp-tests.el (y):
+	* automated/lisp-tests.el (featurep):
+	* automated/lisp-tests.el (=):
+	* automated/lisp-tests.el (six):
+	* automated/lisp-tests.el (three):
+	* automated/lisp-tests.el (one):
+	* automated/lisp-tests.el (two):
+	* automated/lisp-tests.el (five):
+	* automated/lisp-tests.el (test1):
+	* automated/lisp-tests.el (division-test):
+	* automated/lisp-tests.el (for):
+	* automated/lisp-tests.el (check-function-argcounts):
+	* automated/lisp-tests.el (z):
+	* automated/lisp-tests.el (eql):
+	* automated/lisp-tests.el (test-harness-risk-infloops):
+	* automated/lisp-tests.el (erase-buffer):
+	* automated/lisp-tests.el (sym):
+	* automated/lisp-tests.el (new-char):
+	* automated/lisp-tests.el (new-load-file-name):
+	* automated/lisp-tests.el (cl-floor):
+	* automated/lisp-tests.el (foo):
+	* automated/md5-tests.el (lambda):
+	* automated/md5-tests.el (large-string):
+	* automated/md5-tests.el (mapcar):
+	* automated/md5-tests.el (insert):
+	* automated/mule-tests.el:
+	* automated/mule-tests.el (test-chars):
+	* automated/mule-tests.el (existing-file-name):
+	* automated/mule-tests.el (featurep):
+	* automated/query-coding-tests.el (featurep):
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (insert):
+	* automated/regexp-tests.el (Assert):
+	* automated/regexp-tests.el (=):
+	* automated/regexp-tests.el (featurep):
+	* automated/regexp-tests.el (text):
+	* automated/regexp-tests.el (text1):
+	* automated/regexp-tests.el ("aáa"):
+	* automated/regexp-tests.el (eql):
+	* automated/search-tests.el (insert):
+	* automated/search-tests.el (featurep):
+	* automated/search-tests.el (let):
+	* automated/search-tests.el (boundp):
+	* automated/symbol-tests.el:
+	* automated/symbol-tests.el (name):
+	* automated/symbol-tests.el (check-weak-list-unique):
+	* automated/symbol-tests.el (string):
+	* automated/symbol-tests.el (list):
+	* automated/symbol-tests.el (foo):
+	* automated/symbol-tests.el (eq):
+	* automated/symbol-tests.el (fresh-keyword-name):
+	* automated/symbol-tests.el (print-gensym):
+	* automated/symbol-tests.el (mysym):
+	* automated/syntax-tests.el (test-forward-word):
+	* automated/syntax-tests.el (test-backward-word):
+	* automated/syntax-tests.el (test-syntax-table):
+	* automated/syntax-tests.el (with-syntax-table):
+	* automated/syntax-tests.el (Skip-Test-Unless):
+	* automated/syntax-tests.el (with):
+	* automated/tag-tests.el (testfile):
+	* automated/weak-tests.el (w):
+	* automated/weak-tests.el (p):
+	* automated/weak-tests.el (a):
+	Undo change of e.g. (Assert (equalp ...)) to (Assert-equalp ...).
+	Get rid of `Assert-equalp' and friends, `Assert-test', and
+	`Assert-test-not'.  Instead, make `Assert' smart enough to do the
+	equivalent functionality when an expression like (Assert (equalp ...))
+	is seen.
+
+2010-03-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el (string character conversion):
+	Test escape-quoted for the range U+0000 to U+00FF.
+	Inspired by Ben's patch to fix quoting of specials from C1 controls.
+
 2010-02-22  Ben Wing  <ben@xemacs.org>
 
 	* reproduce-crashes.el (8):
