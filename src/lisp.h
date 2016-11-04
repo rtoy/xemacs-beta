@@ -4600,11 +4600,14 @@ enum arith_comparison {
   arith_grtr_or_equal };
 Lisp_Object arithcompare (Lisp_Object, Lisp_Object, enum arith_comparison);
 
-/* Do NOT use word_to_lisp or wasteful_word_to_lisp to decode time_t's
-   unless you KNOW arg is non-negative.  They cannot return negative
-   values!  Use make_time.  */
-Lisp_Object word_to_lisp (unsigned int);
-unsigned int lisp_to_word (Lisp_Object);
+/* Do NOT use uint32_t_to_lisp to decode time_t's unless you KNOW arg is
+   non-negative. They cannot return negative values!  Use make_time. */
+Lisp_Object uint32_t_to_lisp (UINT_32_BIT);
+Lisp_Object int32_t_to_lisp (INT_32_BIT);
+
+/* Use lisp_to_time() for time_t instead of these functions. */
+UINT_32_BIT lisp_to_uint32_t (Lisp_Object);
+INT_32_BIT lisp_to_int32_t (Lisp_Object);
 
 Lisp_Object parse_integer (const Ibyte *buf, Ibyte **buf_end_out,
 			   Bytecount len, EMACS_INT base,

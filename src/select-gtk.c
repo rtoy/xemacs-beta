@@ -166,7 +166,7 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
       goto DONE_LABEL;
     }
 
-  local_selection_time = * (guint32 *) XOPAQUE_DATA (temp_obj);
+  local_selection_time = lisp_to_uint32_t (temp_obj);
 
   if (time_stamp != GDK_CURRENT_TIME &&
       local_selection_time > time_stamp)
@@ -259,7 +259,7 @@ emacs_gtk_selection_clear_event_handle (GtkWidget *UNUSED (widget),
   if (NILP (local_selection_time_lisp))
     return;
 
-  local_selection_time = *(guint32 *) XOPAQUE_DATA (local_selection_time_lisp);
+  local_selection_time = lisp_to_uint32_t (local_selection_time_lisp);
 
   /* This SelectionClear is for a selection that we no longer own, so we can
      disregard it.  (That is, we have reasserted the selection since this
@@ -422,19 +422,9 @@ gtk_own_selection (Lisp_Object selection_name,
   CHECK_SYMBOL (selection_name);
   selection_atom = symbol_to_gtk_atom (d, selection_name, 0);
 
-  gtk_selection_owner_set (selecting_window,
-			   selection_atom,
-			   thyme);
+  gtk_selection_owner_set (selecting_window, selection_atom, thyme);
 
-  /* [[ We do NOT use time_to_lisp() here any more, like we used to.
-     That assumed equivalence of time_t and Time, which is not
-     necessarily the case (e.g. under OSF on the Alphas, where
-     Time is a 64-bit quantity and time_t is a 32-bit quantity).
-
-     Opaque pointers are the clean way to go here. ]] 
-
-     See my comment on the same issue in select-x.c -- Aidan. */
-  return make_opaque (&thyme, sizeof (thyme));
+  return uint32_t_to_lisp (thyme);
 }
 
 static void

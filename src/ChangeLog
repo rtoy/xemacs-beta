@@ -1,3 +1,65 @@
+2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove the badly-named word_to_lisp(), lisp_to_word(). Add
+	{u,}int32_t_to_lisp and its inverse.
+
+	* data.c:
+	* data.c (uint32_t_to_lisp): New.
+	* data.c (lisp_to_uint32_t): New.
+	* data.c (int32_t_to_lisp): New.
+	* data.c (lisp_to_int32_t): New.
+	General functions to convert between Lisp values and thirty-two
+	bit C integers. Use fixnums if they fit, otherwise bignums (if
+	available), otherwise the traditional cons of two fixnums.
+	Replace the badly-named word_to_lisp(), lisp_to_word() functions,
+	used especially in the X11 code, where the C
+	word-width-depends-on-the-machine-type constraint doesn't apply.
+	* dired.c:
+	Remove the #if 0'd wasteful_word_to_lisp() function, not used in
+	decades.
+	* editfns.c:
+	* editfns.c (lisp_to_time):
+	Accept bignums and fixnums in this function, for XEmacs builds
+	where there is no need for the cons implementation.
+	time_to_lisp(); removed.
+	* editfns.c (Fformat_time_string):
+	localtime(), gmtime() can return NULL, don't crash with this.
+	* editfns.c (Fdecode_time):
+	Ditto.
+	* editfns.c (make_time):
+	Just use a cons, not a list, for these time values.
+	* editfns.c (Fcurrent_time_zone):
+	Don't crash if localtime() gives NULL, as it may well.
+	* fileio.c:
+	* fileio.c (Fvisited_file_modtime):
+	Use make_time () here, not the duplicated time_to_lisp ().
+	* lisp-disunion.h:
+	* lisp-disunion.h (make_fixnum):
+	* lisp-disunion.h (FIXNUMP):
+	Cast to EMACS_UINT before left-shifting a signed fixnum.
+	* lisp.h:
+	Document our new conversion functions.
+	* number.h (bignum_to_emacs_uint):
+	New #define.
+	* select-gtk.c (emacs_gtk_selection_handle):
+	* select-gtk.c (emacs_gtk_selection_clear_event_handle):
+	* select-gtk.c (gtk_own_selection):
+	* select-gtk.c (gtk_disown_selection):
+	Use our new functions converting to 32-bit C integers.
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (x_handle_selection_clear):
+	* select-x.c (x_disown_selection):
+	Use our new convert-to-32-bits functions, don't faff around with
+	our own implementations of this.
+	* select-xlike-inc.c:
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	* select-xlike-inc.c (lisp_data_to_selection_data):
+	Use our new convert-to-32-bits functions for selection data.
+	* select.c (get_selection_raw_time):
+	* select.c (Fget_selection_timestamp):
+	No longer use word_to_lisp() in this file.
+
 2016-10-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alloc.c (mark_vector):

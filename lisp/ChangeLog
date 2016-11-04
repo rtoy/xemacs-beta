@@ -1,3 +1,17 @@
+2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el:
+	* select.el (select-convert-in):
+	Pass through VALUE if it is non-nil and there is no handler, don't
+	discard it.  Useful for TARGETS, timestamps.
+	* select.el (select-convert-from-cf-unicodetext):
+	Supply this with an implementation even when mswindows-unicode
+	isn't available as a coding system.
+	* select.el (selection-converter-out-alist):
+	* select.el (selection-converter-in-alist):
+	Only include CF_TEXT in these alists conditionally (at dump time),
+	if the relevant coding system is available.
+
 2016-08-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mwheel.el:

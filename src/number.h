@@ -101,16 +101,19 @@ DECLARE_LISP_OBJECT (bignum, Lisp_Bignum);
 #if SIZEOF_EMACS_INT == SIZEOF_LONG
 # define bignum_fits_emacs_int_p(b) bignum_fits_long_p(b)
 # define bignum_to_emacs_int(b) bignum_to_long(b)
+# define bignum_to_emacs_uint(b) bignum_to_ulong(b)
 # define bignum_set_emacs_int bignum_set_long
 # define make_bignum_emacs_uint(b) make_bignum_un(b)
 #elif SIZEOF_EMACS_INT == SIZEOF_INT
 # define bignum_fits_emacs_int_p(b) bignum_fits_int_p(b)
 # define bignum_to_emacs_int(b) bignum_to_int(b)
+# define bignum_to_emacs_uint(b) bignum_to_uint(b)
 # define bignum_set_emacs_int bignum_set_long
 # define make_bignum_emacs_uint(b) make_bignum_un(b)
 #else
 # define bignum_fits_emacs_int_p(b) bignum_fits_llong_p(b)
 # define bignum_to_emacs_int(b) bignum_to_llong(b)
+# define bignum_to_emacs_uint(b) bignum_to_ullong(b)
 # define bignum_set_emacs_int bignum_set_llong
 # define make_bignum_emacs_uint(b) make_bignum_ull(b)
 #endif
