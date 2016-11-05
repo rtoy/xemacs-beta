@@ -1,3 +1,8 @@
+2016-11-05  Michael Sperber  <mike@xemacs.org>
+
+	* configure.ac: Disable ASLR on macOS Sierra..
+	* configure: Rebuild.
+
 2016-10-13  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Fix OpenSSL detection for versions >= 1.1.0.
