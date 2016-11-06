@@ -1177,6 +1177,8 @@ typedef int Boolint;
 
 /* ------------------------ alignment definitions ------------------- */
 
+#if (!defined (__STDC_VERSION__) || __STDC_VERSION__ < 201112L) && \
+    (!defined (__cplusplus) || __cplusplus < 201103L)
 /* No type has a greater alignment requirement than max_align_t.
    (except perhaps for types we don't use, like long double) */
 typedef union
@@ -1186,6 +1188,7 @@ typedef union
   struct { void (*f)(void); } f;
   struct { double d; } d;
 } max_align_t;
+#endif
 
 /* ALIGNOF returns the required alignment of a type -- i.e. a value such
    that data of this type must begin at a memory address which is a
@@ -4793,6 +4796,8 @@ Lisp_Object make_directory_hash_table (Lisp_Object);
 
 /* Defined in doc.c */
 EXFUN (Fsubstitute_command_keys, 1);
+
+extern Lisp_Object Qfunction_documentation;
 
 Lisp_Object unparesseuxify_doc_string (int fd, EMACS_INT position,
 				       Ibyte *name_nonreloc,

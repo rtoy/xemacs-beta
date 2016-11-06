@@ -762,12 +762,6 @@ Lstream_read (Lstream *lstr, void *data, Bytecount size)
   return Lstream_read_1 (lstr, data, size, 0);
 }
 
-int
-Lstream_errno (Lstream *lstr)
-{
-  return (lstr->imp->error) ? (lstr->imp->error) (lstr) : 0;
-}
-
 Charcount
 Lstream_character_tell (Lstream *lstr)
 {
@@ -1387,13 +1381,13 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
   /**** start of non-PTY-crap ****/
   if (size > 0)
     retval = str->tls_state
-      ? tls_write (str->tls_state, data, size, str->allow_quit)
+      ? tls_write (str->tls_state, data, size, stream->flags & LSTR_ALLOW_QUIT)
       : (stream->flags & LSTR_ALLOW_QUIT ?
 	 write_allowing_quit (str->fd, data, size) :
 	 retry_write (str->fd, data, size));
   else
     retval = 0;
-  if (retval < 0 && errno_would_block_p (errno)
+  if (retval < 0 && errno_would_block_p (errno) &&
       (stream->flags & LSTR_BLOCKED_OK))
     {
       str->blocking_error_p = 1;

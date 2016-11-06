@@ -441,7 +441,7 @@ get_char_table_raw (Ichar ch, Lisp_Object chartab)
 
 /* Get the value of CHARTAB for character CH.  If the character's value has
    not been set, this returns the default value for the char table. */
-#ifdef ERROR_CHECK_TYPES
+#if defined(ERROR_CHECK_TYPES) && defined(MIRROR_TABLE)
 DECLARE_INLINE_HEADER (
 Lisp_Object
 get_char_table_1 (Ichar ch, Lisp_Object table, Boolint mirrors_allowed)
@@ -453,9 +453,9 @@ get_char_table_1 (Ichar ch, Lisp_Object table)
 )
 #endif
 {
-  Lisp_Object retval = get_char_table_raw (ch, chartab);
+  Lisp_Object retval = get_char_table_raw (ch, table);
 
-#ifdef ERROR_CHECK_TYPES
+#if defined(ERROR_CHECK_TYPES) && defined(MIRROR_TABLE)
   if (!mirrors_allowed)
     {
       assert (!XCHAR_TABLE (table)->mirror_table_p);
@@ -465,10 +465,10 @@ get_char_table_1 (Ichar ch, Lisp_Object table)
   if (!EQ (retval, Qunbound))
     return retval;
   else
-    return XCHAR_TABLE_DEFAULT (chartab);
+    return XCHAR_TABLE_DEFAULT (table);
 }
 
-#ifdef ERROR_CHECK_TYPES
+#if defined (ERROR_CHECK_TYPES) && defined (MIRROR_TABLE)
 #define get_char_table(ch, table) get_char_table_1 (ch, table, 0)
 #define get_char_table_mirrors_ok(ch, table) get_char_table_1 (ch, table, 1)
 #else

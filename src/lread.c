@@ -32,6 +32,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lstream.h"
 #include "opaque.h"
 #include "profile.h"
+#include "chartab.h"
 
 #include "sysfile.h"
 #include "sysfloat.h"
@@ -303,7 +304,7 @@ unreadchar (Lisp_Object readcharfun, Ichar c)
         if (testing_mule)
           fprintf (stderr,
                    (c >= 0x20 && c <= 0x7E) ? "UU%c" :
-                   ((c == '\n') ? "UU\\n\n" : "UU\\%o"), c);
+                   ((c == '\n') ? "UU\\n%c" : "UU\\%o"), c);
       }
 #endif
     }
@@ -655,7 +656,7 @@ do {								\
     struct gcpro ngcpro1;
 
     NGCPRO1 (lispstream);
-    lispstream = make_filedesc_input_stream (fd, 0, -1, LSTR_CLOSING);
+    lispstream = make_filedesc_input_stream (fd, 0, -1, LSTR_CLOSING, NULL);
     /* 64K is used for normal files; 8K should be OK here because Lisp
        files aren't really all that big. */
     Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,

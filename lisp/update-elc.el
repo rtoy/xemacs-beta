@@ -205,7 +205,8 @@ differently depending on the presence of certain features, especially
   (let ((config-file (expand-file-name "src/config.h" build-directory)))
     (while files-to-process
       (let* ((arg (car files-to-process))
-	     (elc-file (expand-file-name (concat arg ".elc") source-lisp)))
+	     (elc-file (expand-file-name (concatenate 'string arg ".elc")
+					 source-lisp)))
 	(when (file-newer-than-file-p config-file elc-file)
 	  ;; no error if file doesn't exist or for some reason we can't
 	  ;; remove it
