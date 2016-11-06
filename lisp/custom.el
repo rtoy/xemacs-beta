@@ -41,10 +41,6 @@
 ;; prevent require/provide loop with custom and cus-face.
 (provide 'custom)
 
-(eval-when-compile
-  ;; To elude warnings.
-  (require 'cus-face))
-
 (autoload 'custom-declare-face "cus-face")
 
 (require 'widget)

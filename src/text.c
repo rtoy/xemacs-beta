@@ -1367,11 +1367,12 @@ static int composite_char_col_next;
 
 int firstbyte_mask[7] = {0, 0, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC};
 
-Lisp_Object QSin_char_byte_conversion;
-Lisp_Object QSin_internal_external_conversion;
+Lisp_Object QSin_char_byte_conversion, QSin_byte_char_conversion;
+Lisp_Object QSin_internal_external_conversion, QSin_external_internal_conversion;
 
 Lisp_Object /* Qfail, Qsubstitute, */ Qsubstitute_negated, Quse_private;
 
+Fixnum Vchar_code_limit;
 
 /************************************************************************/
 /*                       Basic Ichar functions                          */
@@ -1876,7 +1877,7 @@ round_up_to_valid_ichar (int charpos)
 #ifdef UNICODE_INTERNAL
   if (valid_unicode_surrogate (charpos))
     return (Ichar) (LAST_UTF_16_SURROGATE + 1);
-  text_checking_assert (charpos > ICHAR_MAX);
+  text_checking_assert (charpos >= CHAR_CODE_LIMIT);
   return -1;
 #elif defined (MULE)
   return old_mule_round_up_to_valid_ichar (charpos);
@@ -1895,8 +1896,8 @@ round_down_to_valid_ichar (int charpos)
   if (valid_ichar_p (charpos))
     return (Ichar) charpos;
 #ifdef UNICODE_INTERNAL
-  if (charpos > ICHAR_MAX)
-    return ICHAR_MAX;
+  if (charpos >= CHAR_CODE_LIMIT)
+    return CHAR_CODE_LIMIT - 1;
   text_checking_assert (valid_unicode_surrogate (charpos));
   return (Ichar) (FIRST_UTF_16_SURROGATE - 1);
 #elif defined (MULE)
@@ -2834,82 +2835,7 @@ eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out, Internal_Format fmt,
 /*                    Charcount/Bytecount conversion                    */
 /************************************************************************/
 
-/* Optimization.  Do it.  Live it.  Love it.  */
-
 #ifdef MULE
-
-#ifdef EFFICIENT_INT_128_BIT
-# define STRIDE_TYPE INT_128_BIT
-# define HIGH_BIT_MASK \
-    MAKE_128_BIT_UNSIGNED_CONSTANT (0x80808080808080808080808080808080)
-#elif defined (EFFICIENT_INT_64_BIT)
-# define STRIDE_TYPE INT_64_BIT
-# define HIGH_BIT_MASK MAKE_64_BIT_UNSIGNED_CONSTANT (0x8080808080808080)
-#else
-# define STRIDE_TYPE INT_32_BIT
-# define HIGH_BIT_MASK MAKE_32_BIT_UNSIGNED_CONSTANT (0x80808080)
-#endif
-
-#define ALIGN_BITS ((EMACS_UINT) (ALIGNOF (STRIDE_TYPE) - 1))
-#define ALIGN_MASK (~ ALIGN_BITS)
-#define ALIGNED(ptr) ((((EMACS_UINT) ptr) & ALIGN_BITS) == 0)
-#define STRIDE sizeof (STRIDE_TYPE)
-
-/* Skip as many ASCII bytes as possible in the memory block [PTR, END).
-   Return pointer to the first non-ASCII byte.  optimized for long
-   stretches of ASCII. */
-inline static const Ibyte *
-skip_ascii (const Ibyte *ptr, const Ibyte *end)
-{
-  const unsigned STRIDE_TYPE *ascii_end;
-
-  /* Need to do in 3 sections -- before alignment start, aligned chunk,
-     after alignment end. */
-  while (!ALIGNED (ptr))
-    {
-      if (ptr == end || !byte_ascii_p (*ptr))
-	return ptr;
-      ptr++;
-    }
-  ascii_end = (const unsigned STRIDE_TYPE *) ptr;
-  /* This loop screams, because we can detect ASCII
-     characters 4 or 8 at a time. */
-  while ((const Ibyte *) ascii_end + STRIDE <= end
-	 && !(*ascii_end & HIGH_BIT_MASK))
-    ascii_end++;
-  ptr = (Ibyte *) ascii_end;
-  while (ptr < end && byte_ascii_p (*ptr))
-    ptr++;
-  return ptr;
-}
-
-/* Skip as many ASCII bytes as possible in the memory block [END, PTR),
-   going downwards.  Return pointer to the location above the first
-   non-ASCII byte.  Optimized for long stretches of ASCII. */
-inline static const Ibyte *
-skip_ascii_down (const Ibyte *ptr, const Ibyte *end)
-{
-  const unsigned STRIDE_TYPE *ascii_end;
-
-  /* Need to do in 3 sections -- before alignment start, aligned chunk,
-     after alignment end. */
-  while (!ALIGNED (ptr))
-    {
-      if (ptr == end || !byte_ascii_p (*(ptr - 1)))
-	return ptr;
-      ptr--;
-    }
-  ascii_end = (const unsigned STRIDE_TYPE *) ptr - 1;
-  /* This loop screams, because we can detect ASCII
-     characters 4 or 8 at a time. */
-  while ((const Ibyte *) ascii_end >= end
-	 && !(*ascii_end & HIGH_BIT_MASK))
-    ascii_end--;
-  ptr = (Ibyte *) (ascii_end + 1);
-  while (ptr > end && byte_ascii_p (*(ptr - 1)))
-    ptr--;
-  return ptr;
-}
 
 /* Function equivalents of bytecount_to_charcount/charcount_to_bytecount.
    These work on strings of all sizes but are more efficient than a simple

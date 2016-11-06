@@ -51,6 +51,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "sysfile.h"
 #include "elhash.h"
+#include "chartab.h"
 
 #include <float.h>
 /* Define if not in float.h */
@@ -2690,36 +2691,6 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 
-
-DEFUN ("set-device-clear-left-side", Fset_device_clear_left_side, 2, 2, 0, /*
-Set whether to output a newline before the next output to a stream device.
-This will happen only if the most recently-outputted character was not
-a newline -- i.e. it will make sure the left side is "clear" of text.
-*/
-       (device, value))
-{
-  if (!NILP (device))
-    CHECK_LIVE_DEVICE (device);
-  if (NILP (device) || DEVICE_STREAM_P (XDEVICE (device)))
-    /* #### This should be per-device */
-    stdout_clear_before_next_output = !NILP (value);
-  return Qnil;
-}
-
-DEFUN ("device-left-side-clear-p", Fdevice_left_side_clear_p, 0, 1, 0, /*
-For stream devices, true if the most recent-outputted character was a newline.
-*/
-       (device))
-{
-  if (!NILP (device))
-    CHECK_LIVE_DEVICE (device);
-  if (NILP (device) || DEVICE_STREAM_P (XDEVICE (device)))
-    /* #### This should be per-device */
-    return stdout_needs_newline ? Qt : Qnil;
-  return Qnil;
-}
-
-
 /*************************************************************************/
 /*                    debug-printing: implementation                     */
 /*************************************************************************/
@@ -3248,88 +3219,6 @@ debug_short_backtrace (int length)
       bt = bt->next;
     }
   debug_out ("]\n");
-}
-
-/* Somewhat like debug_print() but looks at the contents of the objects
-   directly.  Useful mainly when something has gone seriously wrong and
-   debug_print() crashes. */
-
-void
-debug_p4 (Lisp_Object obj)
-{
-  if (STRINGP (obj))
-    debug_out ("\"%s\"", XSTRING_DATA (obj));
-  else if (CONSP (obj))
-    {
-      int first = 1;
-      do {
-	debug_out (first ? "(" : " ");
-	first = 0;
-	debug_p4 (XCAR (obj));
-	obj = XCDR (obj);
-      } while (CONSP (obj));
-      if (NILP (obj))
-	debug_out (")");
-      else
-	{
-	  debug_out (" . ");
-	  debug_p4 (obj);
-	  debug_out (")");
-	}
-    }
-  else if (VECTORP (obj))
-    {
-      int size = XVECTOR_LENGTH (obj);
-      int i;
-      int first = 1;
-
-      for (i = 0; i < size; i++)
-	{
-	  debug_out (first ? "[" : " ");
-	  first = 0;
-	  debug_p4 (XVECTOR_DATA (obj)[i]);
-	  debug_out ("]");
-	}
-    }
-  else if (SYMBOLP (obj))
-    {
-      Lisp_Object name = XSYMBOL_NAME (obj);
-      if (!STRINGP (name))
-	debug_out ("<<bad symbol>>");
-      else
-	debug_out ("%s", XSTRING_DATA (name));
-    }
-  else if (FIXNUMP (obj))
-    {
-      debug_out ("%ld", XFIXNUM (obj));
-    }
-  else if (FLOATP (obj))
-    {
-      debug_out ("%g", XFLOAT_DATA (obj));
-    }
-  else
-    {
-      struct lrecord_header *header =
-	(struct lrecord_header *) XPNTR (obj);
-
-      if (header->type >= lrecord_type_last_built_in_type)
-	debug_out ("<< bad object type=%d 0x%lx>>", header->type,
-		   (EMACS_INT) header);
-      else
-	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
-		   LHEADER_IMPLEMENTATION (header)->name,
-		   (EMACS_INT) header,
-		   (EMACS_INT) ((struct lrecord_header *) header)->uid);
-    }
-}
-
-/* Same as debug_p4() but output a newline at the end. */
-
-void
-debug_p3 (Lisp_Object obj)
-{
-  debug_p4 (obj);
-  debug_out ("\n");
 }
 
 

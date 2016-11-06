@@ -380,7 +380,9 @@ unicode_error_octet_code_p (int code)
 #define ibyte_first_byte_p(ptr) ((void) (ptr), 1)
 #define byte_ascii_p(byte) ((void) (byte), 1)
 #define MAX_ICHAR_LEN 1
-#define ICHAR_MAX 255
+/* Exclusive upper bound on character codes. */
+#define CHAR_CODE_LIMIT 0x100 
+
 /* This appears to work both for values > 255 and < 0. */
 #define valid_ichar_p(ch) (! ((ch) & ~0xFF))
 
@@ -508,6 +510,9 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 #define MAX_ICHAR_LEN 4
 #endif
 
+/* Exclusive upper bound on char codes. */
+#define CHAR_CODE_LIMIT 0x40000000
+
 #ifdef UNICODE_INTERNAL
 #define FIRST_TRAILING_BYTE 0x80
 #define LAST_TRAILING_BYTE 0xBF
@@ -520,19 +525,6 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 MODULE_API int old_mule_non_ascii_valid_ichar_p (Ichar ch);
 #endif
 
-/* Ichar is defined to be a 32-bit integer.  However, non-negative Ichar
-   values need to be storable as a Lisp character, which is unsigned.  If
-   we have 64-bit EMACS_INTs, then we have 62 bits available to hold a
-   character, more than enough to hold the 31 bits of nonnegativeness
-   available in a 32-bit integer.  However, if we have 32-bit EMACS_INTs,
-   then we have only 30 bits available to hold a character. so Ichars have
-   to be restricted to 30 bits of nonnegativeness. */
-#if SIZEOF_EMACS_INT > 4
-#define ICHAR_MAX INT_32_BIT_MAX
-#else
-#define ICHAR_MAX 0x3FFFFFFF
-#endif
-
 /* Return whether the given Ichar is valid.
  */
 
@@ -542,7 +534,7 @@ valid_ichar_p (Ichar ch)
 )
 {
 #ifdef UNICODE_INTERNAL
-  return ch <= ICHAR_MAX &&
+  return ch < CHAR_CODE_LIMIT &&
     valid_unicode_codepoint_p ((EMACS_INT) ch, UNICODE_ALLOW_PRIVATE);
 #else
   return (! (ch & ~0xFF)) || old_mule_non_ascii_valid_ichar_p (ch);
@@ -781,7 +773,7 @@ ichar_columns (Ichar c)
 
 DECLARE_INLINE_HEADER (
 void
-DECODE_ADD_BINARY_CHAR (Ibyte c, unsigned_char_dynarr *dst)
+DECODE_ADD_BINARY_CHAR (Ibyte c, Ibyte_dynarr *dst)
 )
 {
 #ifndef MULE

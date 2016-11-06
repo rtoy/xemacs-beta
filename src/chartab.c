@@ -1644,7 +1644,7 @@ put_char_table_range (Lisp_Object table, struct chartab_range *range,
   switch (range->type)
     {
     case CHARTAB_RANGE_ALL:
-      put_char_table (table, 0, ICHAR_MAX, val);
+      put_char_table (table, 0, CHAR_CODE_LIMIT - 1, val);
       break;
 
     case CHARTAB_RANGE_RANGE:
@@ -2535,7 +2535,7 @@ vars_of_chartab (void)
   chartab_span_top[1] = (1 << 8) - 1;
   chartab_span_top[2] = (1 << 16) - 1;
   chartab_span_top[3] = (1 << 24) - 1;
-  chartab_span_top[4] = ICHAR_MAX;
+  chartab_span_top[4] = CHAR_CODE_LIMIT - 1;
   dump_add_opaque (chartab_span_top, sizeof (chartab_span_top));
 }
 
