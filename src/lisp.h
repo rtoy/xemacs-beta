@@ -5812,6 +5812,7 @@ extern Fixnum warn_about_possibly_incompatible_back_references;
 EXFUN (Ffill, MANY);
 EXFUN (Fclear_string, 1);
 EXFUN (Freplace, MANY);
+EXFUN (Fposition, MANY);
 
 Lisp_Object concatenate (int nsequences, Lisp_Object *sequences,
                          Lisp_Object result_type, Boolint reuse_last_listp);

@@ -911,14 +911,18 @@ See `set-frame-properties', `default-x-frame-plist', and
 	}
     }
 
-  if (NILP(name) && STRINGP(Vdefault_frame_name))
+  if (NILP (name) && STRINGP (Vdefault_frame_name))
     {
       name = Vdefault_frame_name;
     }
 
-  if (!NILP (Fstring_match (make_string ((const Ibyte *) "\\.", 2), name,
-			    Qnil, Qnil)))
-    syntax_error (". not allowed in frame names", name);
+  {
+    Lisp_Object args[] = { make_char ('.'), name, Q_test, Qeq };
+    if (!NILP (Fposition (countof (args), args)))
+      {
+        syntax_error (". not allowed in frame names", name);
+      }
+  }
 
   f = allocate_frame_core (device);
   frame = wrap_frame (f);
@@ -1057,8 +1061,7 @@ See `set-frame-properties', `default-x-frame-plist', and
 
   first_frame_on_console =
     (first_frame_on_device &&
-     XFIXNUM (Flength (CONSOLE_DEVICE_LIST (XCONSOLE (DEVICE_CONSOLE (d)))))
-     == 1);
+     NILP (Fcdr (CONSOLE_DEVICE_LIST (XCONSOLE (DEVICE_CONSOLE (d))))));
 
   /* #### all this calling of frame methods at various odd times
      is somewhat of a mess.  It's necessary to do it this way due
