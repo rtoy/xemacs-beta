@@ -3372,7 +3372,7 @@ Like `format', but write the constructed string into STREAM.
 
 STREAM is an object accepted by `print' or `write-sequence' as an output
 destination.  See the documentation of `standard-output'.  Note in particular
-that a value for STREAM of `t' means text will be written to the minibuffer,
+that a value for STREAM of `nil' means text will be written to the minibuffer,
 rather than `format-into' returning a string, as is the case in Common Lisp.
 
 Return STREAM.  See the documentation for `format' for details of
