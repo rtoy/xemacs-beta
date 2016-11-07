@@ -1759,10 +1759,13 @@ read_escape (Lisp_Object readcharfun)
 	  }
 	if (i >= 0400)
 	  {
-	    read_syntax_error ((Ascbyte *) emacs_sprintf_malloc
-			       (NULL,
-				"Non-ISO-8859-1 octal character escape, "
-				"?\\%.3o", i));
+#define OVERLONG_OCTAL_INFO "Non-ISO-8859-1 octal character escape, ?\\%.3o"
+            Ascbyte buf[sizeof (OVERLONG_OCTAL_INFO) + MAX_ICHAR_LEN * 3];
+            emacs_snprintf ((Ibyte *) buf, sizeof (buf),
+                            OVERLONG_OCTAL_INFO, i);
+            read_syntax_error (buf);
+
+#undef OVERLONG_OCTAL_INFO
 	  }
 	return i;
       }
