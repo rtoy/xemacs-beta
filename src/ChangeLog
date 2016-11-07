@@ -1,5 +1,17 @@
 2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* data.c:
+	* data.c (Fchar_or_string_p, Fchar_int_p, Fchar_or_char_int_p):
+	* data.c (Finteger_or_marker_p, Finteger_or_char_p):
+	* data.c (Finteger_char_or_marker_p, Fnumber_or_marker_p):
+	* data.c (Fnumber_char_or_marker_p):
+	* data.c (syms_of_data):
+	None of these functions are loop hotspots, they are all easily
+	implemented in Lisp, and doing it that way is more economic of
+	memory with NEW_GC. Move them to Lisp.
+
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* frame.c (Fmake_frame):
 	Don't fire up the regexp engine to look for a dot in the frame
 	name, Fposition() is perfectly fine.

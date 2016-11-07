@@ -416,35 +416,6 @@ nil is returned.
   else
     return Qnil;
 }
-
-DEFUN ("char-int-p", Fchar_int_p, 1, 1, 0, /*
-Return t if OBJECT is an integer that can be converted into a character.
-See `char-int'.
-*/
-       (object))
-{
-  return CHAR_INTP (object) ? Qt : Qnil;
-}
-
-DEFUN ("char-or-char-int-p", Fchar_or_char_int_p, 1, 1, 0, /*
-Return t if OBJECT is a character or an integer that can be converted into one.
-*/
-       (object))
-{
-  return CHAR_OR_CHAR_INTP (object) ? Qt : Qnil;
-}
-
-DEFUN ("char-or-string-p", Fchar_or_string_p, 1, 1, 0, /*
-Return t if OBJECT is a character (or a char-int) or a string.
-It is semi-hateful that we allow a char-int here, as it goes against
-the name of this function, but it makes the most sense considering the
-other steps we take to maintain compatibility with the old character/integer
-confoundedness in older versions of E-Lisp.
-*/
-       (object))
-{
-  return CHAR_OR_CHAR_INTP (object) || STRINGP (object) ? Qt : Qnil;
-}
 
 DEFUN ("fixnump", Ffixnump, 1, 1, 0, /*
 Return t if OBJECT is a fixnum.
@@ -466,30 +437,6 @@ On builds without bignum support, this function is identical to `fixnump'.
        (object))
 {
   return INTEGERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("integer-or-marker-p", Finteger_or_marker_p, 1, 1, 0, /*
-Return t if OBJECT is an integer or a marker (editor pointer).
-*/
-       (object))
-{
-  return INTEGERP (object) || MARKERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("integer-or-char-p", Finteger_or_char_p, 1, 1, 0, /*
-Return t if OBJECT is an integer or a character.
-*/
-       (object))
-{
-  return INTEGERP (object) || CHARP (object) ? Qt : Qnil;
-}
-
-DEFUN ("integer-char-or-marker-p", Finteger_char_or_marker_p, 1, 1, 0, /*
-Return t if OBJECT is an integer, character or a marker (editor pointer).
-*/
-       (object))
-{
-  return INTEGERP (object) || CHARP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
 DEFUN ("natnump", Fnatnump, 1, 1, 0, /*
@@ -529,23 +476,6 @@ Return t if OBJECT is a number (floating point or integer).
        (object))
 {
   return NUMBERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("number-or-marker-p", Fnumber_or_marker_p, 1, 1, 0, /*
-Return t if OBJECT is a number or a marker.
-*/
-       (object))
-{
-  return NUMBERP (object) || MARKERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("number-char-or-marker-p", Fnumber_char_or_marker_p, 1, 1, 0, /*
-Return t if OBJECT is a number, character or a marker.
-*/
-       (object))
-{
-  return (NUMBERP (object) || CHARP (object) || MARKERP (object))
-    ? Qt : Qnil;
 }
 
 DEFUN ("floatp", Ffloatp, 1, 1, 0, /*
@@ -4291,20 +4221,12 @@ syms_of_data (void)
   DEFSUBR (Ftrue_list_p);
   DEFSUBR (Fconsp);
   DEFSUBR (Fatom);
-  DEFSUBR (Fchar_or_string_p);
   DEFSUBR (Fcharacterp);
-  DEFSUBR (Fchar_int_p);
   DEFSUBR (Fchar_to_int);
   DEFSUBR (Fint_to_char);
-  DEFSUBR (Fchar_or_char_int_p);
   DEFSUBR (Ffixnump);
   DEFSUBR (Fintegerp);
-  DEFSUBR (Finteger_or_marker_p);
-  DEFSUBR (Finteger_or_char_p);
-  DEFSUBR (Finteger_char_or_marker_p);
   DEFSUBR (Fnumberp);
-  DEFSUBR (Fnumber_or_marker_p);
-  DEFSUBR (Fnumber_char_or_marker_p);
   DEFSUBR (Ffloatp);
   DEFSUBR (Fnatnump);
   DEFSUBR (Fnonnegativep);
