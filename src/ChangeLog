@@ -293,6 +293,29 @@
 
 2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Rename the emacs_v?sprintf_malloc* functions analogously to their
+	usual Unix equivalents, asprintf and vasprintf. Update their
+	callers appropriately.
+
+	* doprnt.c:
+	* doprnt.c (emacs_vasprintf_lisp): Renamed from
+	emacs_vsprintf_malloc_lisp().
+	* doprnt.c (emacs_asprintf_lisp): Renamed from
+	emacs_sprintf_malloc_lisp().
+	* doprnt.c (emacs_vasprintf): Renamed from
+	emacs_vsprintf_malloc().
+	* doprnt.c (emacs_asprintf): Renamed from emacs_sprintf_malloc().
+	* lisp.h:
+	Update the corresponding prototypes.
+	* lread.c (OVERLONG_OCTAL_INFO):
+	* lread.c (read_escape):
+	Don't leak a string when erroring with a non-ISO-8859-1 octal
+	character escape.
+	* print.c (debug_out_lisp):
+	Use emacs_vsprintf_malloc_lisp()'s new name.
+
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* doprnt.c (Fformat_into):
 	Be a little clearer in documenting the STREAM argument.
 

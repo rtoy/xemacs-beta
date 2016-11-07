@@ -4597,19 +4597,19 @@ Lisp_Object emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc,
                                         va_list vargs);
 Lisp_Object emacs_sprintf_string_lisp (const CIbyte *format_nonreloc, ...);
 
-Ibyte *emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc,
-                                   va_list vargs, Bytecount *len_out);
-Ibyte *emacs_sprintf_malloc_lisp (Bytecount *len_out,
-                                  const CIbyte *format_nonreloc,
-                                  ...)
+Bytecount emacs_vasprintf_lisp (Ibyte **retval_out, const CIbyte *format,
+                           va_list vargs);
+Bytecount emacs_asprintf_lisp (Ibyte **retval_out, const CIbyte *format, ...)
   PRINTF_ARGS (2, 3);
+
 Lisp_Object emacs_vsprintf_string (const CIbyte *format, va_list vargs);
 Lisp_Object emacs_sprintf_string (const CIbyte *format, ...)
      PRINTF_ARGS (1, 2);
-Ibyte *emacs_vsprintf_malloc (const CIbyte *format, va_list vargs,
-				Bytecount *len_out);
-Ibyte *emacs_sprintf_malloc (Bytecount *len_out, const CIbyte *format, ...)
-     PRINTF_ARGS (2, 3);
+
+Bytecount emacs_vasprintf (Ibyte **retval_out, const CIbyte *format,
+                           va_list vargs);
+Bytecount emacs_asprintf (Ibyte **retval_out, const CIbyte *format, ...)
+  PRINTF_ARGS (2, 3);
 
 Bytecount emacs_vsnprintf (Ibyte *output, Bytecount size,
                            const CIbyte *format, va_list vargs);

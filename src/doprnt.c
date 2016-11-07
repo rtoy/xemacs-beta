@@ -2988,14 +2988,14 @@ emacs_sprintf_string_lisp (const CIbyte *format_nonreloc, ...)
   return obj;
 }
 
-/* Like emacs_vsprintf_string_lisp() but returns a malloc()ed memory block.
-   Return length out through LEN_OUT, if not null. */
-Ibyte *
-emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc, va_list vargs,
-                            Bytecount *len_out)
+/* Like emacs_vsprintf_string_lisp(), but writes into a malloc()ed memory
+   block, stored in *RETVAL_OUT. Returned value is the length, without the
+   terminating zero. */
+Bytecount
+emacs_vasprintf_lisp (Ibyte **retval_out, const CIbyte *format_nonreloc,
+                      va_list vargs)
 {
   Lisp_Object stream = make_resizing_buffer_output_stream ();
-  Ibyte *retval;
   struct gcpro gcpro1;
   Bytecount len;
 
@@ -3003,31 +3003,30 @@ emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc, va_list vargs,
 
   write_fmt_string_lisp_va (stream, format_nonreloc, vargs);
   len = Lstream_byte_count (XLSTREAM (stream));
-  retval = xnew_ibytes (len + 1);
-  memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
-  retval[len] = '\0';
+  *retval_out = xnew_ibytes (len + 1);
+  memcpy (*retval_out, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
+  (*retval_out)[len] = '\0';
   Lstream_delete (XLSTREAM (stream));
 
-  if (len_out)
-    *len_out = len;
-
   UNGCPRO;
-  return retval;
+  return len;
 }
 
-/* Like emacs_sprintf_string_lisp() but returns a malloc()ed memory block.
-   Return length out through LEN_OUT, if not null. */
-Ibyte *
-emacs_sprintf_malloc_lisp (Bytecount *len_out, const CIbyte *format_nonreloc,
-			   ...)
+/* Like emacs_sprintf_string_lisp(), but writes into a malloc()ed memory
+   block, stored in *RETVAL_OUT. Returned value is the length, without the
+   terminating zero. */
+Bytecount
+emacs_asprintf_lisp (Ibyte **retval_out, const CIbyte *format_nonreloc,
+                     ...)
 {
   va_list va;
-  Ibyte *retval;
+  Bytecount len;
 
   va_start (va, format_nonreloc);
-  retval = emacs_vsprintf_malloc_lisp (format_nonreloc, va, len_out);
+  len = emacs_vasprintf_lisp (retval_out, format_nonreloc, va);
   va_end (va);
-  return retval;
+
+  return len;
 }
 
 /* vsprintf()-like replacement. Arguments are interpreted as C
@@ -3062,52 +3061,46 @@ emacs_sprintf_string (const CIbyte *format, ...)
   return retval;
 }
 
-/* vsprintf()-like replacement. Arguments are interpreted as C
-   objects--doubles, char *s, EMACS_INTs, etc. Returns a malloc()ed memory
-   block.  Data from Lisp strings is OK because we explicitly inhibit GC.
-   Return length out through LEN_OUT, if LEN_OUT is not NULL. */
-Ibyte *
-emacs_vsprintf_malloc (const CIbyte *format, va_list vargs,
-		       Bytecount *len_out)
+/* vasprintf() implementation. Arguments are interpreted as C
+   objects--doubles, char *s, EMACS_INTs, etc.  Data from Lisp strings is OK
+   because we explicitly inhibit GC.  Returns length (not including the
+   terminating zero). Stores a pointer to be freed with free() into
+   *RETVAL_OUT. */
+Bytecount
+emacs_vasprintf (Ibyte **retval_out, const CIbyte *format, va_list vargs)
 {
   Lisp_Object stream = make_resizing_buffer_output_stream ();
   int count = begin_gc_forbidden ();
   Bytecount len;
-  Ibyte *retval;
 
   write_fmt_string_va (stream, format, vargs);
 
   Lstream_flush (XLSTREAM (stream));
   len = Lstream_byte_count (XLSTREAM (stream));
-  retval = xnew_ibytes (len + 1);
-  memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
-  retval[len] = '\0';
+  *retval_out = xnew_ibytes (len + 1);
+  memcpy (*retval_out, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
+  (*retval_out)[len] = '\0';
   Lstream_delete (XLSTREAM (stream));
 
   end_gc_forbidden (count);
 
-  if (len_out)
-    {
-      *len_out = len;
-    }
-
-  return retval;
+  return len;
 }
 
-/* sprintf()-like replacement. Arguments are interpreted as C
-   objects--doubles, char *s, EMACS_INTs, etc. Returns a malloc()ed memory
-   block.  Data from Lisp strings is OK because we explicitly inhibit GC.
-   Return length out through LEN_OUT, if not null. */
-Ibyte *
-emacs_sprintf_malloc (Bytecount *len_out, const CIbyte *format, ...)
+/* asprintf() implementation. Arguments are interpreted as C objects--doubles,
+   char *s, EMACS_INTs, etc. Data from Lisp strings is OK because we
+   explicitly inhibit GC.  Returns length (not including the terminating
+   zero), Stores a pointer to be freed with free() into *RETVAL_OUT. */
+Bytecount
+emacs_asprintf (Ibyte **retval_out, const CIbyte *format, ...)
 {
   va_list vargs;
-  Ibyte *retval;
+  Bytecount len;
 
   va_start (vargs, format);
-  retval = emacs_vsprintf_malloc (format, vargs, len_out);
+  len = emacs_vasprintf (retval_out, format, vargs);
   va_end (vargs);
-  return retval;
+  return len;
 }
 
 /* vsnprintf() replacement.  Writes output into OUTPUT, which has SIZE octets.

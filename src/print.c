@@ -2881,7 +2881,7 @@ debug_out_lisp (const CIbyte *format, ...)
   Ibyte *msgout;
 
   va_start (va, format);
-  msgout = emacs_vsprintf_malloc_lisp (format, va, &len);
+  len = emacs_vasprintf_lisp (&msgout, format, va);
   va_end (va);
 
   write_string_to_external_output (msgout, len, EXT_PRINT_ALL);
