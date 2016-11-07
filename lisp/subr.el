@@ -226,6 +226,47 @@ The result is a bit vector whose elements are the elements of all the
 arguments.  Each argument may be a list, vector, bit vector, or string."
   (apply #'concatenate 'bit-vector args))
 
+;; XEmacs; move these non-basic predicates that can be easily implemented in
+;; Lisp from data.c.
+
+(defun char-int-p (object)
+  "Return t if OBJECT is an integer that can be converted into a character.
+See `char-int'."
+  (and (fixnump object) (int-to-char object) t))
+
+(defun char-or-char-int-p (object)
+  "Return t if OBJECT is a character or a fixnum that can be converted to one."
+  (or (and (fixnump object) (int-to-char object) t) (characterp object)))
+
+(defun char-or-string-p (object)
+  "Return t if OBJECT is a character (or a char-int) or a string.
+It is semi-hateful that we allow a char-int here, as it goes against
+the name of this function, but it makes the most sense considering the
+other steps we take to maintain compatibility with the old character/integer
+confoundedness in older versions of E-Lisp."
+  (or (stringp object) (and (fixnump object) (int-to-char object) t)
+      (characterp object)))
+
+(defun integer-or-marker-p (object)
+  "Return t if OBJECT is an integer or a marker (editor pointer)."
+  (or (integerp object) (markerp object)))
+
+(defun integer-or-char-p (object)
+  "Return t if OBJECT is an integer or a character."
+  (or (integerp object) (characterp object)))
+
+(defun integer-char-or-marker-p (object)
+  "Return t if OBJECT is an integer, character or a marker (editor pointer)."
+  (or (integerp object) (markerp object) (characterp object)))
+
+(defun number-or-marker-p (object)
+  "Return t if OBJECT is a number or a marker."
+  (or (numberp object) (markerp object)))
+
+(defun number-char-or-marker-p (object)
+  "Return t if OBJECT is a number, character or a marker."
+  (or (numberp object) (characterp object) (markerp object)))
+
 ;;;; Keymap support.
 ;; XEmacs: removed to keymap.el
 

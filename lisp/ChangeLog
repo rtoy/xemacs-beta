@@ -1,3 +1,15 @@
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (char-int-p): New.
+	* subr.el (char-or-char-int-p): New.
+	* subr.el (char-or-string-p): New.
+	* subr.el (integer-or-marker-p): New.
+	* subr.el (integer-or-char-p): New.
+	* subr.el (integer-char-or-marker-p): New.
+	* subr.el (number-or-marker-p): New.
+	* subr.el (number-char-or-marker-p): New.
+	Move these basic predicates to subr.el from data.c
+
 2016-09-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* abbrev.el (abbrev-symbol):
