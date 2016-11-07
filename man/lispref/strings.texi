@@ -702,7 +702,10 @@ same way as @code{format}. It takes an additional argument @var{stream},
 a valid output stream, @pxref{Output Functions}.  It writes the output
 string into that stream and returns @var{stream}. See the function
 @code{make-string-output-stream} for one way of buffering output to be
-accessed later.
+accessed later.  This function is analagous to Common Lisp's
+@code{format}, but note that supplying a @var{stream} of @code{nil}
+means the text will be printed to the minibuffer rather than into a
+string that is returned.
 @end defun
 
 @cindex @samp{%} in format

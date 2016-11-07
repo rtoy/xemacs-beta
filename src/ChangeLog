@@ -291,6 +291,11 @@
 	* select.c (Fget_selection_timestamp):
 	No longer use word_to_lisp() in this file.
 
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (Fformat_into):
+	Be a little clearer in documenting the STREAM argument.
+
 2016-10-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alloc.c (mark_vector):
