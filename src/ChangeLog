@@ -1,3 +1,20 @@
+2016-09-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c:
+	* alloc.c (make_uninit_vector): Rename make_vector_internal() to
+	make_uninit_vector(), by analogy to its string homologue.
+	* alloc.c (make_vector):
+	Use the new name.
+	* alloc.c (Fvector):
+	Use the new name; use memcpy() in the implementation of this
+	function, which should scream.
+	* lisp.h:
+	Provide a declaration for make_uninit_vector here.
+	* sequence.c (concatenate):
+	By analogy with the string code, if we know we're creating a
+	vector, stage into the result rather than allocating space on the
+	stack.
+
 2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c:

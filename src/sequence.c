@@ -4949,9 +4949,9 @@ concatenate (int nsequences, Lisp_Object *sequences,
 
   /* List result is the next commonest case, and benefits from starting from
      the end and moving towards the beginning; for cons sequences we don't
-     need traverse the list twice to get the element count, we can traverse
+     need to traverse the list twice to get the element count, we can traverse
      once and add as we go, and for string sequences we again don't need the
-     char length if we start at the end and DEC_IBYTEPTR.x  */
+     char length if we start at the end and DEC_IBYTEPTR. */
   if (EQ (result_type, Qlist))
     {
       ii = nsequences;
@@ -5027,8 +5027,18 @@ concatenate (int nsequences, Lisp_Object *sequences,
         }
     }
 
-  /* No need to GCPRO lisp_staging, all its elements are in SEQUENCES. */
-  lisp_staging = lisp_cursor = alloca_array (Lisp_Object, staging_len);
+  if (EQ (result_type, Qvector) || EQ (result_type, Qarray))
+    {
+      /* If we know we're creating a vector, be more economic of stack
+         space. */
+      result = make_uninit_vector (staging_len);
+      lisp_staging = lisp_cursor = XVECTOR_DATA (result);
+    }
+  else
+    {
+      /* No need to GCPRO lisp_staging, all its elements are in SEQUENCES. */
+      lisp_staging = lisp_cursor = alloca_array (Lisp_Object, staging_len);
+    }
 
   for (ii = 0; ii < nsequences; ++ii)
     {
@@ -5076,9 +5086,18 @@ concatenate (int nsequences, Lisp_Object *sequences,
         }
     }
 
-  if (EQ (result_type, Qvector) || EQ (result_type, Qarray))
+  if (!NILP (result))
     {
-      RETURN_UNGCPRO (Fvector (lisp_cursor - lisp_staging, lisp_staging));
+      if ((lisp_cursor - lisp_staging) == XVECTOR_LENGTH (result))
+        {
+          RETURN_UNGCPRO (result);
+        }
+      else
+        {
+          /* Let the intermediate heap-allocated vector be GCed if its length
+             was not right. It usually will be right. */
+          RETURN_UNGCPRO (Fvector (lisp_cursor - lisp_staging, lisp_staging));
+        }
     }
 
   if (EQ (result_type, Qbit_vector))
