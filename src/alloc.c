@@ -1871,8 +1871,9 @@ DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("vector", vector,
 				     vector_description,
 				     size_vector, Lisp_Vector);
 /* #### should allocate `small' vectors from a frob-block */
-static Lisp_Vector *
-make_vector_internal (Elemcount sizei)
+
+Lisp_Object
+make_uninit_vector (Elemcount sizei)
 {
   /* no `next' field; we use lcrecords */
   Bytecount sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object,
@@ -1881,19 +1882,19 @@ make_vector_internal (Elemcount sizei)
   Lisp_Vector *p = XVECTOR (obj);
 
   p->size = sizei;
-  return p;
+  return obj;
 }
 
 Lisp_Object
 make_vector (Elemcount length, Lisp_Object object)
 {
-  Lisp_Vector *vecp = make_vector_internal (length);
-  Lisp_Object *p = vector_data (vecp);
+  Lisp_Object result = make_uninit_vector (length);
+  Lisp_Object *p = XVECTOR_DATA (result);
 
   while (length--)
     *p++ = object;
 
-  return wrap_vector (vecp);
+  return result;
 }
 
 DEFUN ("make-vector", Fmake_vector, 2, 2, 0, /*
@@ -1914,13 +1915,9 @@ arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Vector *vecp = make_vector_internal (nargs);
-  Lisp_Object *p = vector_data (vecp);
-
-  while (nargs--)
-    *p++ = *args++;
-
-  return wrap_vector (vecp);
+  Lisp_Object result = make_uninit_vector (nargs);
+  memcpy (XVECTOR_DATA (result), args, sizeof (Lisp_Object) * nargs);
+  return result;
 }
 
 Lisp_Object

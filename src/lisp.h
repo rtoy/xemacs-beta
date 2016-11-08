@@ -4373,6 +4373,7 @@ MODULE_API Lisp_Object make_vector (Elemcount, Lisp_Object);
 MODULE_API Lisp_Object vector1 (Lisp_Object);
 MODULE_API Lisp_Object vector2 (Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object vector3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object make_uninit_vector (Elemcount);
 Lisp_Object make_bit_vector (Elemcount, Lisp_Object);
 Lisp_Object make_bit_vector_from_byte_vector (unsigned char *, Elemcount);
 Lisp_Object noseeum_make_marker (void);
