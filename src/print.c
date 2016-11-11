@@ -1363,16 +1363,17 @@ Lisp_Object Vfloat_output_format;
  * re-writing _doprnt to be more sane)?
  * 			-wsr
  */
-void
+Bytecount
 float_to_string (char *buf, double data)
 {
   Ibyte *cp, c;
   int width;
+  Bytecount plen;
 
   if (NILP (Vfloat_output_format)
       || !STRINGP (Vfloat_output_format))
   lose:
-    sprintf (buf, "%.16g", data);
+    plen = sprintf (buf, "%.16g", data);
   else			/* oink oink */
     {
       /* Check that the spec we have is fully valid.
@@ -1401,8 +1402,8 @@ float_to_string (char *buf, double data)
       if (cp[1] != 0)
 	goto lose;
 
-      sprintf (buf, (char *) XSTRING_DATA (Vfloat_output_format),
-	       data);
+      plen = sprintf (buf, (char *) XSTRING_DATA (Vfloat_output_format),
+                      data);
     }
 
   /* added by jwz: don't allow "1.0" to print as "1"; that destroys
@@ -1423,6 +1424,7 @@ float_to_string (char *buf, double data)
     *s++ = '.';
     *s++ = '0';
     *s = 0;
+    plen += 2;
   }
  DONE_LABEL:
 
@@ -1430,10 +1432,13 @@ float_to_string (char *buf, double data)
   if (buf [0] == '.' || (buf [0] == '-' && buf [1] == '.'))
     {
       int i;
-      for (i = strlen (buf) + 1; i >= 0; i--)
+      for (i = plen + 1; i >= 0; i--)
 	buf [i+1] = buf [i];
       buf [(buf [0] == '-' ? 1 : 0)] = '0';
+      plen += 1;
     }
+
+  return plen;
 }
 
 #define ONE_DIGIT(figure) *p++ = (char) (n / (figure) + '0')
@@ -2560,8 +2565,8 @@ print_float (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Ascbyte pigbuf[350];	/* see comments in float_to_string */
 
-  float_to_string (pigbuf, XFLOAT_DATA (obj));
-  write_ascstring (printcharfun, pigbuf);
+  write_string_1 (printcharfun, (const Ibyte *) pigbuf,
+                  float_to_string (pigbuf, XFLOAT_DATA (obj)));
 }
 
 void
