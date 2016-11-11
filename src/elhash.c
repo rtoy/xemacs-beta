@@ -594,15 +594,17 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
 
   if (ht->rehash_size != HASH_TABLE_DEFAULT_REHASH_SIZE)
     {
-      float_to_string (pigbuf, ht->rehash_size);
-      write_fmt_string (printcharfun, " :rehash-size %s", pigbuf);
+      write_ascstring (printcharfun, " :rehash-size ");
+      write_string_1 (printcharfun, (const Ibyte *) pigbuf,
+                      float_to_string (pigbuf, ht->rehash_size));
     }
 
   if (ht->rehash_threshold
       != HASH_TABLE_DEFAULT_REHASH_THRESHOLD (ht->size, ht->test))
     {
-      float_to_string (pigbuf, ht->rehash_threshold);
-      write_fmt_string (printcharfun, " :rehash-threshold %s", pigbuf);
+      write_ascstring (printcharfun, " :rehash-threshold ");
+      write_string_1 (printcharfun, (const Ibyte *) pigbuf,
+                      float_to_string (pigbuf, ht->rehash_threshold));
     }
 
   if (ht->count)

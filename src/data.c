@@ -1224,8 +1224,8 @@ If supported, it may also be a ratio.
     {
       Ascbyte pigbuf[350];	/* see comments in float_to_string */
 
-      float_to_string (pigbuf, XFLOAT_DATA (number));
-      return build_ascstring (pigbuf);
+      return make_string ((const Ibyte *) pigbuf,
+                          float_to_string (pigbuf, XFLOAT_DATA (number)));
     }
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (number))
