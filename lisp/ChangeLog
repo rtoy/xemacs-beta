@@ -1,3 +1,14 @@
+2016-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* about.el (about-finish-buffer):
+	Restore an omitted arglist here.
+	* bytecomp.el (byte-compile-output-docform):
+	No need for char= here, use #'eql which will compile to a byte code.
+	* bytecomp.el (byte-compile-lambda):
+	Check for a likely interactive spec when examining the arglist
+	here, warn if encountered, the programmer probably omitted the
+	arglist (see the above about.el change for context).
+
 2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (char-int-p): New.

@@ -2276,7 +2276,7 @@ list that represents a doc string reference.
 		;; negate POSITION.
 		(if (and (stringp (nth (nth 1 info) form))
 			 (> (length (nth (nth 1 info) form)) 0)
-			 (char= (aref (nth (nth 1 info) form) 0) ?*))
+			 (eql (aref (nth (nth 1 info) form) 0) ?*))
 		    (setq position (- position)))))
          (byte-compile-flush-pending)
 	 (let* ((print-escape-newlines t)
@@ -2843,7 +2843,12 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	     (byte-compile-warn "non-symbol in arglist: %S" arg))
 	    ((byte-compile-constant-symbol-p arg)
 	     (byte-compile-warn "constant symbol in arglist: %s" arg))
-	    ((and (char= ?\& (aref (symbol-name arg) 0))
+            ((eq arg 'interactive)
+             (and (eq (car arglist) 'interactive)
+                  (byte-compile-warn
+                   "arglist likely omitted, interactive spec in its place: %s"
+                   arglist)))
+	    ((and (eql ?\& (aref (symbol-name arg) 0))
 		  (not (eq arg '&optional))
 		  (not (eq arg '&rest)))
 	     (byte-compile-warn "unrecognized `&' keyword in arglist: %s"
