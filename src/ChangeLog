@@ -291,6 +291,66 @@
 	* select.c (Fget_selection_timestamp):
 	No longer use word_to_lisp() in this file.
 
+2016-11-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	1. Call emacs_vsnprintf() from
+	write_string_to_external_output_va(), and:
+	2. Minimize non-stack allocation in emacs_vsnprintf() to make that
+	workable, given that write_string_to_external_output_va() is
+	called from various contexts where XEmacs is crashing and we may
+	not have a working C heap or Lisp object allocation system.
+
+	* lstream.h (DECLARE_STACK_FIXED_BUFFER_LSTREAM):
+	Make various details of the fixed buffer lstream implementation
+	visible here, but only if specifically requested.
+	* lstream.c:
+	* lstream.c (EXPOSE_FIXED_BUFFER_INTERNALS):
+	* lstream.c (make_fixed_buffer_input_stream):
+	* lstream.c (make_fixed_buffer_output_stream):
+	* lstream.c (fixed_buffer_input_stream_ptr):
+	* lstream.c (fixed_buffer_output_stream_ptr):
+	Make the fixed buffer internal pointers into Ibyte pointers
+	rather than unsigned char *. Move much of the implementation of
+	this stream type to lstream.h, now doprnt.c uses it.
+	* doprnt.c:
+	#define EXPOSE_FIXED_BUFFER_INTERNALS before including lstream.h
+	so emacs_vsnprintf() can force stack allocation of its
+	fixed-buffer lstream.
+	* doprnt.c (parse_doprnt_spec):
+	Take a new SPECS argument, the specs Dynarr into which to write
+	the parsed specs.  Allow a NULL value to specify that we should
+	allocate it ourselves.
+	* doprnt.c (write_fmt_string_va):
+	* doprnt.c (write_fmt_string):
+	* doprnt.c (write_fmt_string_lisp_va):
+	* doprnt.c (write_fmt_string_lisp):
+	* doprnt.c (format_into):
+	Call parse_doprnt_spec with its new argument.
+	* doprnt.c (emacs_vsnprintf):
+	Revise this significantly, since it's now called from
+	write_string_to_external_output_va() and is more likely to be
+	called when XEmacs is crashing.
+	In particular: count the number of percent signs in FORMAT, when
+	checking for its string length.
+	If there are no percent signs, just memmove the format string,
+	don't even call emacs_doprnt().
+	If there are percent signs, allocate the corresponding SPECS
+	dynarr on the stack, so no heap allocation needs to take place.
+	Then allocate the fixed-buffer lstream that emacs_doprnt() needs
+	to write to on the stack, too, together with the ARGS array.
+	This avoids relying on the C heap or on Lisp object allocation
+	when printing, useful when preparing for armageddon.
+	* print.c:
+	* print.c (write_string_to_external_output_va):
+	Use emacs_vsnprintf() here, rather than vsprintf(). Allocate a
+	smaller buffer for it on the stack, though one certainly large enough to
+	saturate the usual terminal emulator scrollback buffer.
+
+	An old comment here mentions the idea of creating a new lstream
+	that outputs using mswindows_output_console_string(), but it was
+	written before we had the current reasonable code that calls that
+	function.
+
 2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Rename the emacs_v?sprintf_malloc* functions analogously to their
